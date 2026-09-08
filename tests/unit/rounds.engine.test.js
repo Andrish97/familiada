@@ -88,7 +88,7 @@ test("RETRY_DUEL: czyści błędne/przypadkowe zgłoszenie sprzed przyjęcia, zo
   assert.equal(store.state.rounds.duel.firstTeam, null); // pojedynek się jeszcze nie zaczął
 });
 
-test("RETRY_DUEL: no-op po przyjęciu zgłoszenia (firstTeam już ustawione) — do tego służy Cofnij, nie Ponów", async () => {
+test("RETRY_DUEL: no-op po przyjęciu zgłoszenia (firstTeam już ustawione) — nie ma już czego ponawiać", async () => {
   const { store, dispatch } = makeEngine();
   await dispatch({ type: "START_ROUND" });
   await dispatch({ type: "ACCEPT_BUZZ", team: "A" });

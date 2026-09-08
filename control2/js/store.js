@@ -117,13 +117,5 @@ export function createStore(gameId) {
     return row;
   }
 
-  async function undo() {
-    const row = await persist.undo();
-    applyRow(row);
-    emit();
-    ringDoorbell(gameId, row.rev);
-    return row;
-  }
-
-  return { state, subscribe, emit, hydrate, commit, undo, applyRow };
+  return { state, subscribe, emit, hydrate, commit, applyRow };
 }

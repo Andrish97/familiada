@@ -1,8 +1,8 @@
 // control2/js/persist.js
-// Cienka warstwa nad RPC public.game_state_write / game_state_undo
+// Cienka warstwa nad RPC public.game_state_write
 // (supabase/migrations/2026-09-03_260_game_state_rpcs.sql). Jedyne miejsce
-// w control2, które zna nazwy RPC i kształt ich argumentów — store.js woła
-// tylko write()/undo(), nie buduje samodzielnie zapytań do Supabase.
+// w control2, które zna nazwę RPC i kształt jej argumentów — store.js woła
+// tylko write(), nie buduje samodzielnie zapytań do Supabase.
 //
 // Zasada z planu, sekcja 4: żaden zapis nie jest "cichy" — sukces zwraca
 // pełny nowy wiersz, błąd zawsze rzuca (z rozróżnieniem stale_write, żeby
@@ -38,11 +38,5 @@ export function createPersist(gameId) {
     return data;
   }
 
-  async function undo() {
-    const { data, error } = await sb().rpc("game_state_undo", { p_game_id: gameId });
-    if (error) throw error;
-    return data;
-  }
-
-  return { write, undo };
+  return { write };
 }

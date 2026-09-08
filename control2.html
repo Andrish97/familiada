@@ -73,7 +73,7 @@
     .c2-stepper { font-size:.75rem; letter-spacing:.08em; text-transform:uppercase; opacity:.65; border-bottom:1px solid rgba(255,255,255,.12); padding-bottom:8px; }
     .c2-gameplay-body { flex:1; overflow:hidden; display:flex; flex-direction:column; gap:12px; min-height:0; }
     .c2-gameplay-nav { display:flex; gap:8px; justify-content:flex-end; border-top:1px solid rgba(255,255,255,.12); padding-top:10px; flex-wrap:wrap; }
-    .c2-question { font-size:1.1rem; font-weight:700; }
+    .c2-question { font-size:1.4rem; font-weight:700; }
     /* Blok podpowiedzi — ten sam wizualny wzorzec co dzisiejsze
        .summaryDefaultHint w control.css (bursztynowy pasek), tylko krócej,
        bo tu treść zmienia się co kliknięcie zamiast być statycznym opisem.
@@ -85,7 +85,7 @@
        widok). Bez własnej lewej kreski — w Rundach i tak stoi tuż obok
        .c2-roundlayout-divider, więc druga kreska tylko dublowała się z
        pierwszą. */
-    .c2-hint { font-size:.85rem; line-height:1.4; opacity:.85; flex:none; }
+    .c2-hint { font-size:1.05rem; line-height:1.4; opacity:.85; flex:none; }
     /* ---- Rundy: siatka odpowiedzi (lewo) + pionowa kreska + podpowiedź
        (prawo). Tylko renderRounds() używa tego — Finał-mapowanie zostaje
        przy dawnym układzie (hint nad siatką), nie było proszone o zmianę. ---- */
@@ -121,7 +121,7 @@
     .c2-tile {
       display:flex; align-items:center; justify-content:center; text-align:center;
       padding:8px 10px; border-radius:14px; border:1px solid var(--line2);
-      background:rgba(255,255,255,.06); color:#fff; font-weight:800; font-size:.92rem; line-height:1.25;
+      background:rgba(255,255,255,.06); color:#fff; font-weight:800; font-size:1.15rem; line-height:1.3;
       cursor:pointer; user-select:none; -webkit-tap-highlight-color:transparent;
       transition:filter .12s ease, background .12s ease, border-color .12s ease;
     }
@@ -133,8 +133,8 @@
     .c2-tile-warn { border-color:rgba(255,196,110,.4); background:rgba(255,196,110,.12); color:#ffd9a0; }
     .c2-tile-primary { border-color:rgba(255,234,166,.4); background:rgba(255,234,166,.12); color:var(--gold); }
     .c2-tile-timer { border-color:rgba(122,178,255,.4); background:rgba(122,178,255,.12); color:#bcd9ff; font-variant-numeric:tabular-nums; font-size:1.3rem; cursor:default; }
-    .c2-tile-timer.startable { cursor:pointer; font-size:.85rem; }
-    .c2-tile-sub { display:block; margin-top:2px; font-size:.7rem; font-weight:700; opacity:.8; }
+    .c2-tile-timer.startable { cursor:pointer; font-size:1rem; }
+    .c2-tile-sub { display:block; margin-top:2px; font-size:.8rem; font-weight:700; opacity:.8; }
     /* Uzbrojony kafel (zaznacz -> potwierdź, control2/js/ui.js's armableTile) —
        złota obwódka NAD kolorem kafla (danger/primary/zwykły), żeby "jeszcze
        tylko zaznaczone, kliknij drugi raz" wyglądało tak samo niezależnie od
@@ -176,7 +176,6 @@
     </div>
     <div class="topbar-section topbar-section-3">
       <button class="btn" id="btnMute" type="button" title="Wycisz dźwięk">🔊</button>
-      <button class="btn" id="btnUndo" type="button" title="Cofnij ostatnią akcję">⤺</button>
       <button class="btn" id="btnStartOver" type="button" title="Zacznij od nowa">↺</button>
       <button class="btn" id="btnManual" type="button">ℹ️</button>
     </div>

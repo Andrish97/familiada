@@ -265,7 +265,7 @@ async function hostPeekSwipe(hostPage) {
 // i tak czeka prawdziwy operator (patrz plan, sekcja 4: "przycisk pokazuje
 // stan wysyłania, dopiero po potwierdzeniu... ekran się aktualizuje").
 const CLICK_PACE_MS = 300;
-const WRITE_RPC_RE = /\/rpc\/(game_state_write|game_state_buzzer_press|game_state_undo)(\?|$)/;
+const WRITE_RPC_RE = /\/rpc\/(game_state_write|game_state_buzzer_press)(\?|$)/;
 
 function waitForWrite(page) {
   // Zarejestruj oczekiwanie PRZED akcją, żeby nie przegapić odpowiedzi,

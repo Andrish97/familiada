@@ -569,22 +569,6 @@ async function main() {
   syncMuteButton();
   btnMute?.addEventListener("click", () => { soundReactor.toggleMuted(); syncMuteButton(); });
 
-  // "Cofnij ostatnią akcję" (plan, sekcja 4) — jednopoziomowe cofnięcie
-  // przez game_state_undo/game_state_history. Nigdy nie było wcześniej
-  // wystawione w UI (tylko store.undo() istniał) — dopięte tu.
-  document.getElementById("btnUndo")?.addEventListener("click", async () => {
-    try {
-      await store.undo();
-    } catch (e) {
-      if (String(e?.message || e).includes("no_history")) {
-        alert("Brak akcji do cofnięcia.");
-      } else {
-        console.error("[control2] cofnięcie nie powiodło się:", e);
-        alert(`Błąd cofnięcia: ${e.message || e}`);
-      }
-    }
-  });
-
   document.getElementById("btnStartOver")?.addEventListener("click", async () => {
     const ok = await confirmModal({
       title: "Zacznij od nowa",

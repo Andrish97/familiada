@@ -16,21 +16,20 @@
 //      mnożnik, koniec gry bez finału + "Zakończ rozgrywkę".
 //   4. Finał: próg w rundzie -> finał, wczesne zakończenie po osiągnięciu
 //      celu w połowie mapowania gracza 1 (pomija gracza 2 całkowicie).
-//   5-8. Nietypowe zachowania operatora: physicalBuzzer + noHostTablet,
-//      "Zacznij od nowa", "Cofnij ostatnią akcję", druga karta Control
-//      blokowana (resource-lock), QR host/buzzer niezależne na Display.
-//   9. QR host/buzzer niezależne na Display.
-//   10. Finał BEZ wczesnego wyjścia — obaj gracze, wszystkie 10 pytań,
+//   5-7. Nietypowe zachowania operatora: physicalBuzzer + noHostTablet,
+//      "Zacznij od nowa", druga karta Control blokowana (resource-lock).
+//   8. QR host/buzzer niezależne na Display.
+//   9. Finał BEZ wczesnego wyjścia — obaj gracze, wszystkie 10 pytań,
 //       naturalne wygaśnięcie timera gracza 1, flaga "powtórzenie" u
 //       gracza 2, i — najważniejsze — dowód, że odpowiedzi gracza 1
 //       faktycznie wracają na Display I Host w momencie startu rundy 2
 //       (dokładnie ta luka, która była naprawiana w tej sesji audytu).
-//   11. Mnożnik rundy — runda 4. z ×2 faktycznie przemnaża bank.
-//   12. Wyścig dwóch przycisków Buzzera naciśniętych w tej samej chwili —
+//   10. Mnożnik rundy — runda 4. z ×2 faktycznie przemnaża bank.
+//   11. Wyścig dwóch przycisków Buzzera naciśniętych w tej samej chwili —
 //       tylko jeden zaakceptowany, oba urządzenia się zgadzają.
-//   13. Wyciszenie dźwięku — po kliknięciu Mute żaden klucz SFX się nie
+//   12. Wyciszenie dźwięku — po kliknięciu Mute żaden klucz SFX się nie
 //       odtwarza mimo normalnie grającej akcji.
-//   14. Zmiana języka propaguje się do Hosta, w tym samą TREŚĆ tytułu fazy
+//   13. Zmiana języka propaguje się do Hosta, w tym samą TREŚĆ tytułu fazy
 //       (nie tylko chrome strony) — regresja na dzisiejszą naprawę i18n.
 //
 // Każdy test tworzy i kasuje własną grę testową — niezależne od siebie,
@@ -567,56 +566,7 @@ test("control2: \"Zacznij od nowa\" w trakcie gry wraca do D0", async ({ page, b
   }
 });
 
-// ===== 7. "Cofnij ostatnią akcję" =====
-
-test("control2: \"Cofnij ostatnią akcję\" cofa ostatni zapis (3. pudło -> z powrotem 2.)", async ({ page, browser }) => {
-  await loginAsTestUser(page, page.context());
-  const game = await makeGame(page, `E2E-CONTROL2-UNDO-${Date.now()}`, { roundQuestions: [TWO_QUESTIONS[0]] });
-  const contexts = [];
-  try {
-    const buzzerPage = await openAnon(browser, contexts, `/buzzer2?id=${game.id}&key=${game.share_key_buzzer}`, "buzzer", []);
-    await openAnon(browser, contexts, `/display2?id=${game.id}&key=${game.share_key_display}`, "display", []);
-    await openAnon(browser, contexts, `/host2?id=${game.id}&key=${game.share_key_host}`, "host", []);
-
-    await page.goto(`/control2?id=${game.id}`, { waitUntil: "domcontentloaded" });
-    await expect(page.locator(".stepTitle")).toHaveText("Urządzenia", { timeout: 15000 });
-    await expect(page.locator("#dotDisplay")).toHaveClass(/\bok\b/, { timeout: 15000 });
-    await expect(page.locator("#dotHost")).toHaveClass(/\bok\b/, { timeout: 15000 });
-    await page.getByRole("button", { name: "Dalej" }).click();
-    await page.getByRole("button", { name: "Gotowe — przejdź do rund" }).click();
-    await page.getByRole("button", { name: "Dalej" }).click();
-    await page.getByRole("button", { name: "Start rundy" }).click();
-
-    await expect(buzzerPage.getByRole("button", { name: "Buzzer A" })).toBeEnabled({ timeout: 10000 });
-    await buzzerPage.getByRole("button", { name: "Buzzer A" }).click();
-    await expect(page.getByRole("button", { name: "Zatwierdź: Alfa" })).toBeEnabled({ timeout: 10000 });
-    await page.getByRole("button", { name: "Zatwierdź: Alfa" }).click();
-    await revealAnswer(page, 1); // A przejmuje kontrolę, bank 40
-
-    // Nie ma już osobnego przycisku "Kradzież" (odpala się sama po 3. X) —
-    // sprawdzamy to samo przejście PLAY->STEAL przez licznik pudeł na
-    // samym przycisku X (aria-hidden, więc getByText zamiast getByRole —
-    // nazwa dostępna przycisku zostaje stałe "X") i pojawienie się
-    // "Kradzież: <drużyna>" w pasku statusu.
-    await expect(page.getByText("Kradzież:")).toHaveCount(0);
-    await clickX(page); // xA=1
-    await expect(page.getByText("1 / 3")).toBeVisible({ timeout: 10000 });
-    await clickX(page); // xA=2
-    await expect(page.getByText("2 / 3")).toBeVisible();
-    await clickX(page); // xA=3 -> auto-STEAL
-    await expect(page.getByText("Kradzież: Beta")).toBeVisible({ timeout: 10000 });
-
-    await page.locator("#btnUndo").click();
-    // Cofnięcie 3. pudła -> z powrotem w PLAY z xA=2 -> licznik "2 / 3", kradzież znika.
-    await expect(page.getByText("Kradzież:")).toHaveCount(0, { timeout: 10000 });
-    await expect(page.getByText("2 / 3")).toBeVisible();
-  } finally {
-    for (const ctx of contexts) await ctx.close().catch(() => {});
-    await deleteGame(page, game.id);
-  }
-});
-
-// ===== 8. Druga karta Control blokowana (resource-lock) =====
+// ===== 7. Druga karta Control blokowana (resource-lock) =====
 
 test("control2: druga karta Control na tę samą grę jest zablokowana (resource-lock, kontekst \"control\")", async ({ page, context }) => {
   await loginAsTestUser(page, context);
@@ -637,7 +587,7 @@ test("control2: druga karta Control na tę samą grę jest zablokowana (resource
   }
 });
 
-// ===== 9. QR host/buzzer niezależne na Display =====
+// ===== 8. QR host/buzzer niezależne na Display =====
 
 test("control2: QR na wyświetlaczu — host i buzzer niezależne, jeden LUB oba naraz", async ({ page, browser }) => {
   await loginAsTestUser(page, page.context());
@@ -670,7 +620,7 @@ test("control2: QR na wyświetlaczu — host i buzzer niezależne, jeden LUB oba
   }
 });
 
-// ===== 10. Finał bez wczesnego wyjścia: obaj gracze, wszystkie 10 pytań =====
+// ===== 9. Finał bez wczesnego wyjścia: obaj gracze, wszystkie 10 pytań =====
 //
 // Odwrotność testu 4 (który celowo pomija gracza 2). Punkty dobrane tak, że
 // suma finału NIGDY nie osiąga finalTarget (200) nawet po 10 trafieniach
@@ -817,7 +767,7 @@ test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśni�
   }
 });
 
-// ===== 11. Mnożnik rundy =====
+// ===== 10. Mnożnik rundy =====
 
 test("control2: mnożnik rundy — runda 4. z domyślnym ×2 faktycznie przemnaża bank", async ({ page, browser }) => {
   await loginAsTestUser(page, page.context());
@@ -875,7 +825,7 @@ test("control2: mnożnik rundy — runda 4. z domyślnym ×2 faktycznie przemna�
   }
 });
 
-// ===== 12. Wyścig dwóch przycisków Buzzera =====
+// ===== 11. Wyścig dwóch przycisków Buzzera =====
 
 test("control2: wyścig — oba przyciski Buzzera naciśnięte w tej samej chwili, tylko jeden zaakceptowany", async ({ page, browser }) => {
   await loginAsTestUser(page, page.context());
@@ -923,7 +873,7 @@ test("control2: wyścig — oba przyciski Buzzera naciśnięte w tej samej chwil
   }
 });
 
-// ===== 13. Wyciszenie dźwięku =====
+// ===== 12. Wyciszenie dźwięku =====
 
 test("control2: wyciszenie dźwięku — po Mute żaden klucz SFX się nie odtwarza", async ({ page, browser }) => {
   await loginAsTestUser(page, page.context());
@@ -964,7 +914,7 @@ test("control2: wyciszenie dźwięku — po Mute żaden klucz SFX się nie odtwa
   }
 });
 
-// ===== 14. Zmiana języka propaguje się do urządzeń, w tym treść Hosta =====
+// ===== 13. Zmiana języka propaguje się do urządzeń, w tym treść Hosta =====
 //
 // Sprawdza całą ścieżkę na raz: przełącznik w topbarze Control -> zapis
 // settings.uiLang do game_state -> odczyt przez host2/js/main.js -> setUiLang
