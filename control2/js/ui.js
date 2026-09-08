@@ -150,7 +150,12 @@ export function createUI({ root, emit }) {
     }, [document.createTextNode("Dalej")]);
 
     root.appendChild(h("div", { class: "cardBody" }, [
+      // .stepTitle zostaje (niewidoczny, display:none w control.css — testy
+      // E2E celują w niego jako stabilny selektor kroku, dokładnie jak w
+      // starym Control) — widoczny nagłówek to osobny .c2-stepper, ten sam
+      // wzorzec (mały, uppercase, linia pod spodem) co w Rundach/Finale.
       h("div", { class: "stepTitle", text: "Urządzenia" }),
+      h("div", { class: "c2-stepper", text: "Urządzenia" }),
       ...rows,
       h("div", { class: "device-code-hint", text: "Wejdź na familiada.online, kliknij „Podłącz urządzenie” i wprowadź kod urządzenia." }),
       h("div", { class: "stepFoot" }, [h("div", { class: "stepFootButtons" }, [next])]),
@@ -262,13 +267,19 @@ export function createUI({ root, emit }) {
     }, [document.createTextNode("Gotowe — przejdź do rund")]);
     const changeSettings = h("button", { class: "btn sm", type: "button", onclick: () => emit("setup.openSettings") }, [document.createTextNode("Zmień ustawienia")]);
 
-    const body = [h("div", { class: "stepTitle", text: "Podsumowanie" }), h("div", { class: "card" }, [
-      h("div", { class: "cardBody" }, sections),
+    // Płasko, tak jak renderDevicesStep — jedno .cardBody na root, BEZ
+    // zagnieżdżonego wewnątrz .card (to była druga, zbędna warstwa: root
+    // już siedzi w .control-main-card, które jest jedynym widocznym
+    // obramowaniem).
+    const body = [
+      h("div", { class: "stepTitle", text: "Podsumowanie" }),
+      h("div", { class: "c2-stepper", text: "Podsumowanie" }),
+      ...sections,
       h("div", { class: "stepFoot" }, [
         h("div", { class: "stepFootButtons" }, [changeSettings, ...reshuffleBtns, start]),
         finalIncomplete ? h("div", { class: "msg msg-pill", text: "Finał ustawiony na \"wybrane ręcznie\", ale nie wybrano 5 pytań w ustawieniach gry." }) : null,
       ]),
-    ])];
+    ];
 
     root.appendChild(h("div", { class: "cardBody" }, body));
   }
