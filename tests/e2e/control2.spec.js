@@ -556,7 +556,7 @@ test("control2: \"Zacznij od nowa\" w trakcie gry wraca do D0", async ({ page, b
     await expect(page.locator("#dotDisplay")).toHaveClass(/\bok\b/, { timeout: 15000 });
     await page.getByRole("button", { name: "Dalej" }).click();
     await page.getByRole("button", { name: "Gotowe — przejdź do rund" }).click();
-    await expect(page.locator(".c2-stepper")).toContainText("Intro gry", { timeout: 10000 });
+    await expect(page.locator(".c2-stepper")).toContainText("Rozpoczęcie gry", { timeout: 10000 });
 
     await page.locator("#btnStartOver").click();
     await page.getByRole("button", { name: "Tak" }).click();

@@ -343,10 +343,13 @@ export function createUI({ root, emit }) {
     // obramowaniem).
     const body = [
       // .stepTitle zostaje bare "Podsumowanie" — stabilny selektor testów
-      // E2E (patrz control2.spec.js). Widoczny .c2-stepper dostaje pełny,
-      // opisowy nagłówek "Podsumowanie — podsumowanie ustawień".
+      // E2E (patrz control2.spec.js). Widoczny .c2-stepper dostaje opisowy
+      // nagłówek "Podsumowanie ustawień" — PODMIENIONY, nie doklejony za
+      // myślnikiem (w odróżnieniu od "Runda N — rozgrywka"/"— kradzież",
+      // gdzie oba człony niosą osobną informację, tu "Podsumowanie —
+      // podsumowanie ustawień" było czystą tautologią).
       h("div", { class: "stepTitle", text: "Podsumowanie" }),
-      h("div", { class: "c2-stepper", text: "Podsumowanie — podsumowanie ustawień" }),
+      h("div", { class: "c2-stepper", text: "Podsumowanie ustawień" }),
       // .c2-scroll-area: dolne przyciski (Wstecz/Zmień ustawienia/Gotowe) mają
       // zostać wyłączone z przewijania — przewija się TYLKO treść sekcji
       // podsumowania, .stepFoot zawsze zostaje widoczny na dole karty.
@@ -505,13 +508,13 @@ export function createUI({ root, emit }) {
     // rundę" odpala START_ROUND (pusta plansza+pytanie, dźwięk
     // round_transition — engine.js/soundReactor.js).
     if (state.step === "r_intro") {
-      // Nagłówek = "Intro gry" (dokładnie jak stare control.html's
-      // stepTitle="Intro gry", NIE "Rundy — wprowadzenie") — to jeszcze nie
-      // jest sekcja Rund, tylko jednorazowe intro logo+dźwięk poprzedzające
-      // pierwszą rundę (zgłoszone jako mylące: "Gotowe — przejdź do rund"
+      // Nagłówek = "Rozpoczęcie gry" — PODMIENIONY z dawnego "Intro gry"
+      // (nie doklejony za myślnikiem — "Intro gry — rozpoczęcie gry" było
+      // tautologią, tak samo jak przy Podsumowaniu). To jeszcze nie jest
+      // sekcja Rund (zgłoszone jako mylące: "Gotowe — przejdź do rund"
       // prowadziło na ekran podpisany "Rundy", zanim runda w ogóle istnieje).
       gameplayShell({
-        stepLabel: "Intro gry — rozpoczęcie gry",
+        stepLabel: "Rozpoczęcie gry",
         body: [h("div", { class: "c2-intro" }, [
           h("div", { class: "c2-intro-title", text: "Rozpocznij grę" }),
           h("div", { class: "c2-intro-hint", text: "Na wyświetlaczu pojawi się logo programu i zostanie odtworzone intro. Po zakończeniu przejdziesz do pierwszej rundy." }),
