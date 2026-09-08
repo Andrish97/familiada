@@ -133,9 +133,21 @@ export function createUI({ root, emit }) {
       ])]);
     }
 
-    const next = h("button", { class: "btn gold", type: "button", onclick: () => emit("devices.next") }, [
-      document.createTextNode("Dalej"),
-    ]);
+    // Dokładnie jak dzisiejsze btnDevicesNext (control/js/app.js's
+    // requiredOnline): Wyświetlacz jest WYMAGANY zawsze (nie ma dla niego
+    // odpowiednika opt-outu), Prowadzący/Przycisk są wymagane tylko gdy
+    // operator NIE odznaczył odpowiedniej flagi (noHostTablet/physicalBuzzer)
+    // — bez tego "Dalej" zostaje zablokowane.
+    const displayReady = !!presenceFlags.display;
+    const hostReady = !!presenceFlags.host || state.settings.noHostTablet;
+    const buzzerReady = !!presenceFlags.buzzer || state.settings.physicalBuzzer;
+    const requiredOnline = displayReady && hostReady && buzzerReady;
+
+    const next = h("button", {
+      class: "btn gold", type: "button",
+      disabled: requiredOnline ? undefined : "",
+      onclick: requiredOnline ? () => emit("devices.next") : undefined,
+    }, [document.createTextNode("Dalej")]);
 
     root.appendChild(h("div", { class: "cardBody" }, [
       h("div", { class: "stepTitle", text: "Urządzenia" }),

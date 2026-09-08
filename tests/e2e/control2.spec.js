@@ -457,14 +457,22 @@ test("control2: próg w rundzie -> finał, wczesne zakończenie po 4/5 pytaniach
 
 // ===== 5. physicalBuzzer + noHostTablet =====
 
-test("control2: physicalBuzzer + noHostTablet — urządzenia pominięte, ręczny wybór drużyny", async ({ page }) => {
+test("control2: physicalBuzzer + noHostTablet — urządzenia pominięte, ręczny wybór drużyny", async ({ page, browser }) => {
   await loginAsTestUser(page, page.context());
   const game = await makeGame(page, `E2E-CONTROL2-PHYSBUZZ-${Date.now()}`, {
     roundQuestions: [TWO_QUESTIONS[0]],
   });
+  const contexts = [];
   try {
+    // Wyświetlacz jest wymagany ZAWSZE — nie ma dla niego opt-outu (patrz
+    // control/js/app.js's requiredOnline) — więc nawet w tym scenariuszu
+    // (host+buzzer pominięte) trzeba go realnie podłączyć, inaczej "Dalej"
+    // zostaje trwale zablokowane.
+    await openAnon(browser, contexts, `/display2?id=${game.id}&key=${game.share_key_display}`, "display", []);
+
     await page.goto(`/control2?id=${game.id}`, { waitUntil: "domcontentloaded" });
     await expect(page.locator(".stepTitle")).toHaveText("Urządzenia", { timeout: 15000 });
+    await expect(page.locator("#dotDisplay")).toHaveClass(/\bok\b/, { timeout: 15000 });
 
     await page.getByLabel("Fizyczny przycisk").check();
     await page.getByLabel("Nie używaj tabletu prowadzącego").check();
@@ -492,18 +500,23 @@ test("control2: physicalBuzzer + noHostTablet — urządzenia pominięte, ręczn
     await page.getByRole("button", { name: "#1" }).click(); // B trafia -> przejmuje kontrolę
     await expect(page.getByText("Bank: 40")).toBeVisible({ timeout: 10000 });
   } finally {
+    for (const ctx of contexts) await ctx.close().catch(() => {});
     await deleteGame(page, game.id);
   }
 });
 
 // ===== 6. "Zacznij od nowa" =====
 
-test("control2: \"Zacznij od nowa\" w trakcie gry wraca do D0", async ({ page }) => {
+test("control2: \"Zacznij od nowa\" w trakcie gry wraca do D0", async ({ page, browser }) => {
   await loginAsTestUser(page, page.context());
   const game = await makeGame(page, `E2E-CONTROL2-RESTART-${Date.now()}`);
+  const contexts = [];
   try {
+    await openAnon(browser, contexts, `/display2?id=${game.id}&key=${game.share_key_display}`, "display", []);
+
     await page.goto(`/control2?id=${game.id}`, { waitUntil: "domcontentloaded" });
     await expect(page.locator(".stepTitle")).toHaveText("Urządzenia", { timeout: 15000 });
+    await expect(page.locator("#dotDisplay")).toHaveClass(/\bok\b/, { timeout: 15000 });
     await page.getByRole("button", { name: "Dalej" }).click();
     await page.getByRole("button", { name: "Gotowe — przejdź do rund" }).click();
     await expect(page.locator(".c2-stepper")).toContainText("Rundy — wprowadzenie", { timeout: 10000 });
@@ -513,6 +526,7 @@ test("control2: \"Zacznij od nowa\" w trakcie gry wraca do D0", async ({ page })
 
     await expect(page.locator(".stepTitle")).toHaveText("Urządzenia", { timeout: 10000 });
   } finally {
+    for (const ctx of contexts) await ctx.close().catch(() => {});
     await deleteGame(page, game.id);
   }
 });
@@ -525,9 +539,13 @@ test("control2: \"Cofnij ostatnią akcję\" cofa ostatni zapis (3. pudło -> z p
   const contexts = [];
   try {
     const buzzerPage = await openAnon(browser, contexts, `/buzzer2?id=${game.id}&key=${game.share_key_buzzer}`, "buzzer", []);
+    await openAnon(browser, contexts, `/display2?id=${game.id}&key=${game.share_key_display}`, "display", []);
+    await openAnon(browser, contexts, `/host2?id=${game.id}&key=${game.share_key_host}`, "host", []);
 
     await page.goto(`/control2?id=${game.id}`, { waitUntil: "domcontentloaded" });
     await expect(page.locator(".stepTitle")).toHaveText("Urządzenia", { timeout: 15000 });
+    await expect(page.locator("#dotDisplay")).toHaveClass(/\bok\b/, { timeout: 15000 });
+    await expect(page.locator("#dotHost")).toHaveClass(/\bok\b/, { timeout: 15000 });
     await page.getByRole("button", { name: "Dalej" }).click();
     await page.getByRole("button", { name: "Gotowe — przejdź do rund" }).click();
     await page.getByRole("button", { name: "Dalej" }).click();
@@ -767,8 +785,12 @@ test("control2: mnożnik rundy — runda 4. z domyślnym ×2 faktycznie przemna�
   const contexts = [];
   try {
     const buzzerPage = await openAnon(browser, contexts, `/buzzer2?id=${game.id}&key=${game.share_key_buzzer}`, "buzzer", []);
+    await openAnon(browser, contexts, `/display2?id=${game.id}&key=${game.share_key_display}`, "display", []);
+    await openAnon(browser, contexts, `/host2?id=${game.id}&key=${game.share_key_host}`, "host", []);
     await page.goto(`/control2?id=${game.id}`, { waitUntil: "domcontentloaded" });
     await expect(page.locator(".stepTitle")).toHaveText("Urządzenia", { timeout: 15000 });
+    await expect(page.locator("#dotDisplay")).toHaveClass(/\bok\b/, { timeout: 15000 });
+    await expect(page.locator("#dotHost")).toHaveClass(/\bok\b/, { timeout: 15000 });
     await page.getByRole("button", { name: "Dalej" }).click();
     await page.getByRole("button", { name: "Gotowe — przejdź do rund" }).click();
     await page.getByRole("button", { name: "Dalej" }).click();
@@ -818,8 +840,12 @@ test("control2: wyścig — oba przyciski Buzzera naciśnięte w tej samej chwil
   const contexts = [];
   try {
     const buzzerPage = await openAnon(browser, contexts, `/buzzer2?id=${game.id}&key=${game.share_key_buzzer}`, "buzzer", []);
+    await openAnon(browser, contexts, `/display2?id=${game.id}&key=${game.share_key_display}`, "display", []);
+    await openAnon(browser, contexts, `/host2?id=${game.id}&key=${game.share_key_host}`, "host", []);
     await page.goto(`/control2?id=${game.id}`, { waitUntil: "domcontentloaded" });
     await expect(page.locator(".stepTitle")).toHaveText("Urządzenia", { timeout: 15000 });
+    await expect(page.locator("#dotDisplay")).toHaveClass(/\bok\b/, { timeout: 15000 });
+    await expect(page.locator("#dotHost")).toHaveClass(/\bok\b/, { timeout: 15000 });
     await page.getByRole("button", { name: "Dalej" }).click();
     await page.getByRole("button", { name: "Gotowe — przejdź do rund" }).click();
     await page.getByRole("button", { name: "Dalej" }).click();
@@ -857,8 +883,12 @@ test("control2: wyciszenie dźwięku — po Mute żaden klucz SFX się nie odtwa
   const contexts = [];
   try {
     const buzzerPage = await openAnon(browser, contexts, `/buzzer2?id=${game.id}&key=${game.share_key_buzzer}`, "buzzer", []);
+    await openAnon(browser, contexts, `/display2?id=${game.id}&key=${game.share_key_display}`, "display", []);
+    await openAnon(browser, contexts, `/host2?id=${game.id}&key=${game.share_key_host}`, "host", []);
     await page.goto(`/control2?id=${game.id}`, { waitUntil: "domcontentloaded" });
     await expect(page.locator(".stepTitle")).toHaveText("Urządzenia", { timeout: 15000 });
+    await expect(page.locator("#dotDisplay")).toHaveClass(/\bok\b/, { timeout: 15000 });
+    await expect(page.locator("#dotHost")).toHaveClass(/\bok\b/, { timeout: 15000 });
     await page.getByRole("button", { name: "Dalej" }).click();
     await page.getByRole("button", { name: "Gotowe — przejdź do rund" }).click();
     await page.getByRole("button", { name: "Dalej" }).click();
@@ -901,8 +931,13 @@ test("control2: zmiana języka w Control propaguje się do Hosta — tytuł fazy
   const contexts = [];
   try {
     const hostPage = await openAnon(browser, contexts, `/host2?id=${game.id}&key=${game.share_key_host}`, "host", []);
+    await openAnon(browser, contexts, `/display2?id=${game.id}&key=${game.share_key_display}`, "display", []);
+    await openAnon(browser, contexts, `/buzzer2?id=${game.id}&key=${game.share_key_buzzer}`, "buzzer", []);
     await page.goto(`/control2?id=${game.id}`, { waitUntil: "domcontentloaded" });
     await expect(page.locator(".stepTitle")).toHaveText("Urządzenia", { timeout: 15000 });
+    await expect(page.locator("#dotDisplay")).toHaveClass(/\bok\b/, { timeout: 15000 });
+    await expect(page.locator("#dotHost")).toHaveClass(/\bok\b/, { timeout: 15000 });
+    await expect(page.locator("#dotBuzzer")).toHaveClass(/\bok\b/, { timeout: 15000 });
     await page.getByRole("button", { name: "Dalej" }).click();
     await page.getByRole("button", { name: "Gotowe — przejdź do rund" }).click();
     await page.getByRole("button", { name: "Dalej" }).click();
