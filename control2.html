@@ -114,9 +114,12 @@
     .c2-intro-score-sep { opacity:.5; font-weight:400; }
     .c2-intro-btn { padding:14px 34px; font-size:1.1rem; border-radius:16px; }
     /* Drugorzędny przycisk w c2-intro (np. "Dźwięk powtórzenia" na
-       "Rozpocznij 2 rundę") — mniejszy, bez złotego obramowania, żeby nie
-       konkurował wizualnie z głównym przyciskiem nawigacji na dole. */
-    .c2-intro-secondary { font-size:.85rem; padding:8px 16px; opacity:.85; }
+       "Rozpocznij 2 rundę") — bez złotego obramowania (nie konkuruje
+       wizualnie z głównym przyciskiem nawigacji na dole), ale WYRAŹNIE
+       widoczny — zgłoszone jako za mały, dociągnięty do tej samej skali co
+       reszta ekranów startu (blisko .c2-intro-btn, tylko bez gold/padding
+       ekstremalnego jak główna akcja). */
+    .c2-intro-secondary { font-size:1rem; padding:12px 26px; border-radius:14px; opacity:1; }
     /* Blok podpowiedzi — ten sam wizualny wzorzec co dzisiejsze
        .summaryDefaultHint w control.css (bursztynowy pasek), tylko krócej,
        bo tu treść zmienia się co kliknięcie zamiast być statycznym opisem.

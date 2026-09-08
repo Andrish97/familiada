@@ -684,24 +684,33 @@ export function createUI({ root, emit }) {
     gameplayShell({ stepLabel: `Runda ${r.roundNo} — ${roundStepSuffix}`, body, nav: null });
   }
 
+  // 3 przypadki końca gry — wygrana A, wygrana B, remis — jedna linia
+  // zamiast osobnego wyniku każdej drużyny obok siebie (zgłoszone: "ekran
+  // zakończenia można tylko napisać wygrała drużyna taka z wynikiem takim").
+  function gameEndSummary(state) {
+    const { A, B } = state.rounds.totals;
+    if (A === B) return `Remis — ${A}:${B}`;
+    const winner = A > B ? "A" : "B";
+    return `Wygrała drużyna ${teamName(state, winner)} wynikiem ${Math.max(A, B)}:${Math.min(A, B)}`;
+  }
+
   function renderGameEnd(state) {
     gameplayShell({
       stepLabel: "Koniec gry",
-      // Nazwy drużyn wszędzie, nie gołe litery A/B (jak w r_roundStart's
-      // wyniku i pasku statusu Rund) — ta sama c2-intro-score stylistyka.
       body: [h("div", { class: "c2-intro" }, [
         h("div", { class: "c2-intro-title", text: "Koniec gry" }),
-        h("div", { class: "c2-intro-score" }, [
-          h("span", { class: "c2-intro-score-a", text: `${teamName(state, "A")}: ${state.rounds.totals.A}` }),
-          h("span", { class: "c2-intro-score-sep", text: "—" }),
-          h("span", { class: "c2-intro-score-b", text: `${teamName(state, "B")}: ${state.rounds.totals.B}` }),
-        ]),
+        h("div", { class: "c2-intro-hint", text: gameEndSummary(state) }),
       ])],
-      nav: [
-        state.locks.gameEnded
-          ? h("button", { class: "c2-btn primary c2-intro-btn", onclick: () => emit("session.finish") }, [document.createTextNode("Wróć do moich gier")])
-          : h("button", { class: "c2-btn primary c2-intro-btn", onclick: () => emit("game.dispatch", { type: "GAME_END_SHOW" }) }, [document.createTextNode("Pokaż koniec gry")]),
-      ],
+      // Po pokazaniu wyniku (gameEnded) — dwa przyciski: "Zacznij od nowa"
+      // (obok "Wróć do moich gier", ta sama funkcja co topbar's #btnStartOver
+      // — app.js's "game.restart") i "Wróć do moich gier" jako główna,
+      // ostatnia akcja (prawa krawędź).
+      nav: state.locks.gameEnded
+        ? [
+            h("button", { class: "c2-btn c2-intro-btn", type: "button", onclick: () => emit("game.restart") }, [document.createTextNode("Zacznij od nowa")]),
+            h("button", { class: "c2-btn primary c2-intro-btn", type: "button", onclick: () => emit("session.finish") }, [document.createTextNode("Wróć do moich gier")]),
+          ]
+        : [h("button", { class: "c2-btn primary c2-intro-btn", onclick: () => emit("game.dispatch", { type: "GAME_END_SHOW" }) }, [document.createTextNode("Pokaż koniec gry")])],
     });
   }
 
@@ -860,25 +869,22 @@ export function createUI({ root, emit }) {
 
   // Ten sam c2-intro hero co "Rozpoczęcie gry"/"Koniec gry" (zgłoszone: ma
   // wyglądać podobnie) — wcześniej goły <p>, jedyny niedopasowany ekran w
-  // całym Finale.
+  // całym Finale. Jedna linia wyniku (gameEndSummary, ta sama co "Koniec
+  // gry" — suma finału jest już wtopiona w rounds.totals, patrz engine.js's
+  // FINISH_FINAL) + dwa przyciski, tak samo jak "Koniec gry".
   function renderFinalEnd(state) {
-    const f = state.final;
     gameplayShell({
       stepLabel: "Finał — koniec",
       body: [h("div", { class: "c2-intro" }, [
         h("div", { class: "c2-intro-title", text: "Koniec finału" }),
-        h("div", { class: "c2-intro-hint", text: `Suma finału: ${f.runtime.sum} pkt — zwycięzca: ${f.winnerTeam ? teamName(state, f.winnerTeam) : "—"}` }),
-        h("div", { class: "c2-intro-score" }, [
-          h("span", { class: "c2-intro-score-a", text: `${teamName(state, "A")}: ${state.rounds.totals.A}` }),
-          h("span", { class: "c2-intro-score-sep", text: "—" }),
-          h("span", { class: "c2-intro-score-b", text: `${teamName(state, "B")}: ${state.rounds.totals.B}` }),
-        ]),
+        h("div", { class: "c2-intro-hint", text: gameEndSummary(state) }),
       ])],
-      nav: [
-        state.locks.gameEnded
-          ? h("button", { class: "c2-btn primary c2-intro-btn", onclick: () => emit("session.finish") }, [document.createTextNode("Wróć do moich gier")])
-          : h("button", { class: "c2-btn primary c2-intro-btn", onclick: () => emit("game.dispatch", { type: "FINISH_FINAL" }) }, [document.createTextNode("Zakończ")]),
-      ],
+      nav: state.locks.gameEnded
+        ? [
+            h("button", { class: "c2-btn c2-intro-btn", type: "button", onclick: () => emit("game.restart") }, [document.createTextNode("Zacznij od nowa")]),
+            h("button", { class: "c2-btn primary c2-intro-btn", type: "button", onclick: () => emit("session.finish") }, [document.createTextNode("Wróć do moich gier")]),
+          ]
+        : [h("button", { class: "c2-btn primary c2-intro-btn", onclick: () => emit("game.dispatch", { type: "FINISH_FINAL" }) }, [document.createTextNode("Zakończ")])],
     });
   }
 

@@ -631,6 +631,9 @@ async function main() {
         await advance("r_roundStart", { phase: "READY" }, "show_intro");
         return;
       }
+      // "Zacznij od nowa" wołane z przycisku na ekranie końca gry (obok
+      // "Wróć do moich gier") — ta sama funkcja co topbar's #btnStartOver.
+      if (action === "game.restart") { await restartGame(); return; }
       // Próbka dźwięku powtórzenia na ekranie "Rozpocznij 2 rundę" — dokładnie
       // jak stare control.html's "final.repeatTest": czysto lokalny podgląd
       // dźwięku, bez żadnego zapisu do game_state (nic w grze się nie zmienia).
@@ -647,7 +650,11 @@ async function main() {
   syncMuteButton();
   btnMute?.addEventListener("click", () => { soundReactor.toggleMuted(); syncMuteButton(); });
 
-  document.getElementById("btnStartOver")?.addEventListener("click", async () => {
+  // Wydzielone z topbara, żeby ten sam "Zacznij od nowa" dało się też
+  // wywołać z przycisku na ekranach końca gry (control2/js/ui.js's
+  // renderGameEnd/renderFinalEnd, akcja "game.restart" w handle() niżej) —
+  // dokładnie ta sama logika, dwa miejsca wywołania.
+  async function restartGame() {
     const ok = await confirmModal({
       title: "Zacznij od nowa",
       text: "To wróci do podłączania urządzeń i wyzeruje postęp gry (drużyny, pytania, wyniki). Parowanie urządzeń zostaje. Ustawienia zaawansowane zostają zachowane.",
@@ -690,7 +697,8 @@ async function main() {
       console.warn("[control2] odświeżenie games.settings po 'Zacznij od nowa' nie powiodło się:", e);
     }
     await store.commit();
-  });
+  }
+  document.getElementById("btnStartOver")?.addEventListener("click", restartGame);
 
   store.subscribe(renderCurrent);
   renderCurrent();
