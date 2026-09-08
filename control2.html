@@ -49,12 +49,12 @@
        przeniesione tutaj, żeby krótsze ekrany (np. Urządzenia) nie zapadały
        się wizualnie bez .card's dawnego min-height:320px. */
     #app { min-height:320px; }
-    /* Wąska, wyśrodkowana szerokość (720px) dotyczy WYŁĄCZNIE trzech
-       przeprojektowanych ekranów rozgrywki (Rundy/Final — plan, sekcja 3b)
-       — control2/js/ui.js's gameplayShell() dokłada tę klasę do SWOJEGO
-       wewnętrznego kontenera, nie do #app. Urządzenia/Podsumowanie mają
-       zostać na pełną szerokość .control-main-card, tak jak w starym
-       Control — to NIE jest klasa na #app. */
+    /* .c2-gameplay-card oznacza ekrany rozgrywki (Rundy/Final —
+       control2/js/ui.js's gameplayShell()) do celów pełnowysokościowego
+       :has() łańcucha niżej — sama w sobie NIE zawęża szerokości. Wszystkie
+       elementy (nagłówek/siatka/pasek statusu) mają wypełniać pełną
+       szerokość .control-main-card, dokładnie jak Urządzenia/Podsumowanie i
+       jak w starym Control — bez wąskiej, wyśrodkowanej kolumny. */
     .c2-gameplay { height: 100%; display:flex; flex-direction:column; gap:12px; }
     /* "Karta ma być na całą wysokość" (Rundy) — cały łańcuch od .wrap.wide
        w dół dostaje display:flex/flex:1, żeby #app faktycznie wypełniał
@@ -69,7 +69,7 @@
     .shell:has(.c2-gameplay-card) > .control-tabs-card { flex:1; min-height:0; display:flex; flex-direction:column; }
     .control-tabs-card:has(.c2-gameplay-card) > .control-main-card { flex:1; min-height:0; display:flex; flex-direction:column; }
     .control-main-card:has(.c2-gameplay-card) > #app { flex:1; min-height:0; display:flex; flex-direction:column; }
-    .c2-gameplay-card { width:min(720px, 100%); margin:0 auto; flex:1; min-height:0; display:flex; flex-direction:column; }
+    .c2-gameplay-card { flex:1; min-height:0; display:flex; flex-direction:column; }
     .c2-stepper { font-size:.75rem; letter-spacing:.08em; text-transform:uppercase; opacity:.65; border-bottom:1px solid rgba(255,255,255,.12); padding-bottom:8px; }
     .c2-gameplay-body { flex:1; overflow:hidden; display:flex; flex-direction:column; gap:12px; min-height:0; }
     .c2-gameplay-nav { display:flex; gap:8px; justify-content:flex-end; border-top:1px solid rgba(255,255,255,.12); padding-top:10px; flex-wrap:wrap; }
