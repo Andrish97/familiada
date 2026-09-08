@@ -705,12 +705,12 @@ export function createUI({ root, emit }) {
     const { A, B } = state.rounds.totals;
     const mode = state.settings.endScreenMode;
     if (A === B || mode === "logo" || !mode) {
-      return "Zabrzmi muzyka intro programu, a na wyświetlaczu pojawi się logo.";
+      return "Zabrzmi outro, a na wyświetlaczu pojawi się logo.";
     }
     if (mode === "money" && isFinal) {
-      return "Zabrzmi muzyka intro programu, a na wyświetlaczu pojawi się wygrana kwota pieniędzy.";
+      return "Zabrzmi outro, a na wyświetlaczu pojawi się wygrana kwota pieniędzy.";
     }
-    return "Zabrzmi muzyka intro programu, a na wyświetlaczu pojawi się wynik w punktach.";
+    return "Zabrzmi outro, a na wyświetlaczu pojawi się wynik w punktach.";
   }
 
   // Ekran końca gry — wspólny szablon dla "Koniec gry" (bez finału) i
