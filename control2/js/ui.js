@@ -696,26 +696,20 @@ export function createUI({ root, emit }) {
 
   // Ekran końca gry — wspólny szablon dla "Koniec gry" (bez finału) i
   // "Koniec finału" (renderFinalEnd niżej), ujednolicone: ten sam dwuetapowy
-  // c2-intro hero, ta sama nazwa przycisku odsłaniającego wynik ("Zakończ
-  // grę" — było osobno "Pokaż koniec gry"/"Zakończ"), z wyjaśnieniem co się
-  // pokaże (jak reszta hero-ekranów: "Na wyświetlaczu pojawi się...").
-  // Zawsze "Koniec gry" — finał KOŃCZY grę, to nie osobny, drugi rodzaj
-  // zakończenia (było mylące: "Koniec finału" obok "Koniec gry" sugerowało
-  // dwa różne ekrany). Bez hintu tłumaczącego co zrobi "Zakończ grę" —
-  // oczywiste z samej nazwy przycisku, nie trzeba tego pisać.
+  // c2-intro hero. Zawsze "Koniec gry" — finał KOŃCZY grę, to nie osobny,
+  // drugi rodzaj zakończenia (było mylące: "Koniec finału" obok "Koniec
+  // gry" sugerowało dwa różne ekrany). Przycisk odsłaniający wynik
+  // ujednolicony na "Zakończ grę" (było osobno "Pokaż koniec gry"/"Zakończ").
   function renderEndScreen(state, { revealAction }) {
     if (!state.locks.gameEnded) {
-      // Hint = ten sam gameEndSummary co po kliknięciu — wynik jest już
-      // znany (rundy się skończyły / drużyna wiodąca w finale tylko
-      // dokłada punkty, nigdy nie traci prowadzenia), więc "co się stanie"
-      // ma 3 warianty (wygrana A / wygrana B / remis), tak samo jak wynik
-      // po odsłonięciu. Usunięte tylko zdanie o tym, co dadzą przyciski
-      // niżej (oczywiste z ich nazw).
+      // BEZ podglądu wyniku tutaj — kliknięcie "Zakończ grę" to moment
+      // odsłonięcia (Wyświetlacz pokazuje dopiero teraz logo/pieniądze/wynik,
+      // leci outro), więc pokazanie zwycięzcy wcześniej w Control byłoby
+      // spoilerem względem tego, co widzowie zobaczą na żywo.
       gameplayShell({
         stepLabel: "Koniec gry",
         body: [h("div", { class: "c2-intro" }, [
           h("div", { class: "c2-intro-title", text: "Koniec gry" }),
-          h("div", { class: "c2-intro-hint", text: gameEndSummary(state) }),
         ])],
         nav: [h("button", { class: "c2-btn primary c2-intro-btn", onclick: () => emit("game.dispatch", revealAction) }, [document.createTextNode("Zakończ grę")])],
       });
