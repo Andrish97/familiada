@@ -146,10 +146,13 @@
        obok 1.15rem summarySectionValue. */
     .c2-summary-row .btn.sm { font-size:1rem; padding:9px 15px; }
     /* Podgląd wylosowanej puli pytań (rounds._questionPool / final.pickedPreview)
-       — ciąg małych "tagów" pod wierszem trybu, żeby dało się zobaczyć CO
-       wylosowano bez osobnego ekranu. */
-    .c2-qpreview { display:flex; flex-wrap:wrap; gap:6px 10px; margin-top:8px; }
-    .c2-qpreview-item { font-size:.85rem; opacity:.82; padding:3px 0; }
+       — pionowa, numerowana lista pod wierszem trybu (zgłoszone: poprzedni,
+       zawijany ciąg "tagów" wyglądał jak jeden zlepiony akapit) — każde
+       pytanie we własnym wierszu, z małym okrągłym numerkiem z lewej. */
+    .c2-qpreview { display:flex; flex-direction:column; gap:2px; margin-top:10px; padding-top:10px; border-top:1px solid rgba(255,255,255,.08); }
+    .c2-qpreview-item { display:flex; align-items:baseline; gap:10px; font-size:.92rem; opacity:.85; padding:4px 0; }
+    .c2-qpreview-num { flex:none; display:inline-flex; align-items:center; justify-content:center; width:20px; height:20px; border-radius:50%; background:rgba(255,234,166,.12); color:var(--gold); font-size:.7rem; font-weight:800; }
+    .c2-qpreview-text { flex:1; min-width:0; }
     /* Czcionki Urządzeń/Podsumowania dociągnięte do wielkości, którą mają już
        Rundy (.c2-tile/.c2-question/.c2-hint) — bazowe rozmiary z control.css
        (15px/11px/10px...) są za małe przy tak dużej karcie. Scoped do
@@ -167,8 +170,11 @@
        (gameplayShell's nav). Krótkie pary etykieta:wartość w jednym wierszu,
        nie osobny blok na każdą — to jest "dodatkowe info", nie treść do
        przeczytania w całości. */
-    .c2-statusbar { display:flex; gap:18px; flex-wrap:wrap; padding:8px 2px 0; border-top:1px solid rgba(255,255,255,.12); font-size:.85rem; opacity:.92; flex:none; }
+    .c2-statusbar { display:flex; align-items:center; gap:18px; flex-wrap:wrap; padding:8px 2px 0; border-top:1px solid rgba(255,255,255,.12); font-size:.85rem; opacity:.92; flex:none; }
     .c2-statusbar b { color:var(--gold); font-weight:800; }
+    /* "Zakończ rundę" — obok Gra:/Bank: w TYM SAMYM pasku (zgłoszone: miejsce
+       obok, nie osobny wiersz nawigacji z własnym odstępem u dołu). */
+    .c2-statusbar-end { margin-left:auto; padding:8px 16px; font-size:.85rem; opacity:1; }
     /* .c2-btn: przyciski POZA siatką (start rundy/finału, przyjęcie zgłoszenia,
        "Dalej" na ekranach przejściowych) — nigdy nie miały żadnego stylu,
        dograne tu, żeby nie odstawały wizualnie od nowej siatki obok nich. */

@@ -224,7 +224,10 @@ export function createUI({ root, emit }) {
   function questionPreviewList(items) {
     if (!items || !items.length) return null;
     return h("div", { class: "c2-qpreview" }, items.map((q, i) =>
-      h("span", { class: "c2-qpreview-item", text: `${i + 1}. ${q.text}` })
+      h("div", { class: "c2-qpreview-item" }, [
+        h("span", { class: "c2-qpreview-num", text: String(i + 1) }),
+        h("span", { class: "c2-qpreview-text", text: q.text }),
+      ])
     ));
   }
 
@@ -499,8 +502,13 @@ export function createUI({ root, emit }) {
     // rundę" odpala START_ROUND (pusta plansza+pytanie, dźwięk
     // round_transition — engine.js/soundReactor.js).
     if (state.step === "r_intro") {
+      // Nagłówek = "Intro gry" (dokładnie jak stare control.html's
+      // stepTitle="Intro gry", NIE "Rundy — wprowadzenie") — to jeszcze nie
+      // jest sekcja Rund, tylko jednorazowe intro logo+dźwięk poprzedzające
+      // pierwszą rundę (zgłoszone jako mylące: "Gotowe — przejdź do rund"
+      // prowadziło na ekran podpisany "Rundy", zanim runda w ogóle istnieje).
       gameplayShell({
-        stepLabel: "Rundy — wprowadzenie",
+        stepLabel: "Intro gry",
         body: [h("div", { class: "c2-intro" }, [
           h("div", { class: "c2-intro-title", text: "Rozpocznij grę" }),
           h("div", { class: "c2-intro-hint", text: "Na wyświetlaczu pojawi się logo programu i zostanie odtworzone intro. Po zakończeniu przejdziesz do pierwszej rundy." }),
@@ -510,17 +518,20 @@ export function createUI({ root, emit }) {
       return;
     }
     if (state.step === "r_roundStart") {
+      // Wynik pokazany dopiero OD RUNDY 2 — w rundzie 1 zawsze 0:0 (nic
+      // jeszcze się nie rozegrało), więc nie niesie żadnej informacji.
+      const scoreRow = r.roundNo > 1 ? h("div", { class: "c2-intro-score" }, [
+        h("span", { class: "c2-intro-score-a", text: `${teamName(state, "A")}: ${r.totals.A}` }),
+        h("span", { class: "c2-intro-score-sep", text: "—" }),
+        h("span", { class: "c2-intro-score-b", text: `${teamName(state, "B")}: ${r.totals.B}` }),
+      ]) : null;
       gameplayShell({
         stepLabel: `Runda ${r.roundNo}`,
         body: [h("div", { class: "c2-intro" }, [
           h("div", { class: "c2-intro-title", text: "Rozpocznij rundę" }),
           h("div", { class: "c2-intro-hint", text: "Na wyświetlaczu pojawi się pusta plansza rundy, a prowadzący dostanie treść pytania." }),
-          h("div", { class: "c2-intro-score" }, [
-            h("span", { class: "c2-intro-score-a", text: `${teamName(state, "A")}: ${r.totals.A}` }),
-            h("span", { class: "c2-intro-score-sep", text: "—" }),
-            h("span", { class: "c2-intro-score-b", text: `${teamName(state, "B")}: ${r.totals.B}` }),
-          ]),
-        ])],
+          scoreRow,
+        ].filter(Boolean))],
         nav: [h("button", { class: "c2-btn primary c2-intro-btn", onclick: () => emit("game.dispatch", { type: "START_ROUND" }) }, [document.createTextNode("Rozpocznij rundę")])],
       });
       return;
@@ -647,17 +658,20 @@ export function createUI({ root, emit }) {
     if (state.phase === "STEAL" && r.steal.active) {
       statusItems.push(h("span", {}, [document.createTextNode("Kradzież: "), h("b", { text: r.steal.team ? teamName(state, r.steal.team) : "—" })]));
     }
+    // "Zakończ rundę" mieszka OBOK Gra/Bank, w tym samym pasku (zgłoszone:
+    // za duży odstęp pod kaflami + przycisk ma być obok Gra/Bank) —
+    // .c2-statusbar-end popycha go do prawej krawędzi tego samego wiersza,
+    // zamiast osobnego .c2-gameplay-nav z własnym border-top/padding-top
+    // (stąd nav:null niżej — bez oddzielnego paska nawigacji na tym ekranie).
+    if ((state.phase === "PLAY" || state.phase === "STEAL") && r.canEndRound) {
+      statusItems.push(h("button", {
+        class: "c2-btn primary c2-statusbar-end", type: "button",
+        onclick: () => emit("game.dispatch", { type: "END_ROUND" }),
+      }, [document.createTextNode("Zakończ rundę")]));
+    }
     body.push(h("div", { class: "c2-statusbar" }, statusItems));
 
-    // Nav na dole (jak Finał) — tylko "Zakończ rundę" ("Oddaj kontrolę"
-    // przeniesione do pustego wiersza 4 siatki, patrz wyżej).
-    // justify-content:flex-end w .c2-gameplay-nav ustawia go po prawej.
-    const nav = [];
-    if ((state.phase === "PLAY" || state.phase === "STEAL") && r.canEndRound) {
-      nav.push(h("button", { class: "c2-btn primary", onclick: () => emit("game.dispatch", { type: "END_ROUND" }) }, [document.createTextNode("Zakończ rundę")]));
-    }
-
-    gameplayShell({ stepLabel: `Runda ${r.roundNo}`, body, nav: nav.length ? nav : null });
+    gameplayShell({ stepLabel: `Runda ${r.roundNo}`, body, nav: null });
   }
 
   function renderGameEnd(state) {
