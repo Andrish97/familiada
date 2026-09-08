@@ -68,7 +68,7 @@ export function createUI({ root, emit }) {
   // ============================================================
   function renderDevicesStep(state, ctx) {
     clear();
-    const { urls, presenceFlags = {}, connectCodes = {} } = ctx;
+    const { urls, presenceFlags = {}, connectCodes = {}, shareBadges = {} } = ctx;
 
     const deviceRow = (label, kind, url, { withQr = false } = {}) => {
       const online = !!presenceFlags[kind];
@@ -76,7 +76,6 @@ export function createUI({ root, emit }) {
       const row2 = [
         h("div", { class: "device-connect-code" }, [h("span", { class: "device-connect-code-val", text: code || "——————" })]),
         h("button", { class: "btn gold", type: "button", onclick: () => emit("devices.copyCode", kind) }, [document.createTextNode("Kopiuj")]),
-        h("a", { class: "btn", href: url, target: "_blank", rel: "noopener" }, [document.createTextNode("Otwórz")]),
       ];
       if (withQr) {
         const shown = !!state.display.qr[kind].show;
@@ -85,7 +84,22 @@ export function createUI({ root, emit }) {
           class: `btn ${shown ? "primary" : ""}`, type: "button",
           onclick: () => emit(kind === "host" ? "qr.host.toggle" : "qr.buzzer.toggle"),
         }, [document.createTextNode(shown ? "Ukryj QR" : "QR na wyświetlaczu")]));
+      } else {
+        // "Otwórz" ma sens WYŁĄCZNIE dla Wyświetlacza — Prowadzący/Przycisk
+        // otwiera się na CUDZYM urządzeniu (tablet/telefon), nie w karcie
+        // operatora, więc stare Control (control.html) nigdy nie dawało im
+        // tego przycisku (patrz device-row markup: btnOpenDisplay istnieje,
+        // analogów dla host/buzzer nie ma).
+        row2.push(h("a", { class: "btn", href: url, target: "_blank", rel: "noopener" }, [document.createTextNode("Otwórz")]));
       }
+      const shared = !!shareBadges[kind];
+      row2.push(h("button", {
+        class: `btn ${shared ? "has-badge" : ""}`.trim(), type: "button",
+        onclick: () => emit("devices.shareOpen", kind),
+      }, [
+        document.createTextNode("Udostępnij"),
+        h("span", { class: "badge", "aria-hidden": "true", text: shared ? "1" : "" }),
+      ]));
       return h("div", { class: "device-row", "data-device": kind }, [
         h("div", { class: "device-row-1" }, [
           h("div", { class: "device-name", text: label }),
@@ -275,6 +289,9 @@ export function createUI({ root, emit }) {
       onclick: () => emit("setup.start"),
     }, [document.createTextNode("Gotowe — przejdź do rund")]);
     const changeSettings = h("button", { class: "btn sm", type: "button", onclick: () => emit("setup.openSettings") }, [document.createTextNode("Zmień ustawienia")]);
+    // "Wstecz" pierwszy w rzędzie (jak stare control.html's
+    // btnSetupFinishBack) — swobodny powrót do Urządzeń, nic nie resetuje.
+    const back = h("button", { class: "btn", type: "button", onclick: () => emit("setup.back") }, [document.createTextNode("Wstecz")]);
 
     // Płasko, tak jak renderDevicesStep — jedno .cardBody na root, BEZ
     // zagnieżdżonego wewnątrz .card (to była druga, zbędna warstwa: root
@@ -285,7 +302,7 @@ export function createUI({ root, emit }) {
       h("div", { class: "c2-stepper", text: "Podsumowanie" }),
       ...sections,
       h("div", { class: "stepFoot" }, [
-        h("div", { class: "stepFootButtons" }, [changeSettings, ...reshuffleBtns, start]),
+        h("div", { class: "stepFootButtons" }, [back, changeSettings, ...reshuffleBtns, start]),
         finalIncomplete ? h("div", { class: "msg msg-pill", text: "Finał ustawiony na \"wybrane ręcznie\", ale nie wybrano 5 pytań w ustawieniach gry." }) : null,
       ]),
     ];

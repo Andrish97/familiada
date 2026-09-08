@@ -253,8 +253,10 @@ test("control2: parowanie urządzeń — linki renderują się bez błędu, Cont
     await expect(page.locator("#dotDisplay")).toHaveClass(/\bok\b/, { timeout: 15000 });
     await expect(page.locator("#dotHost")).toHaveClass(/\bok\b/, { timeout: 15000 });
     await expect(page.locator("#dotBuzzer")).toHaveClass(/\bok\b/, { timeout: 15000 });
-    await expect(page.locator('.device-row[data-device="host"] .badge')).toHaveText("Online", { timeout: 10000 });
-    await expect(page.locator('.device-row[data-device="buzzer"] .badge')).toHaveText("Online", { timeout: 10000 });
+    // .device-row-1 (nie cały .device-row) — od dodania "Udostępnij" każdy
+    // wiersz ma DRUGI .badge (znaczek udostępnienia) w device-row-2.
+    await expect(page.locator('.device-row[data-device="host"] .device-row-1 .badge')).toHaveText("Online", { timeout: 10000 });
+    await expect(page.locator('.device-row[data-device="buzzer"] .device-row-1 .badge')).toHaveText("Online", { timeout: 10000 });
 
     await page.getByRole("button", { name: "Dalej" }).click();
     await expect(page.locator(".stepTitle")).toHaveText("Podsumowanie", { timeout: 10000 });

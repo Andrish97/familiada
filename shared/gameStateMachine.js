@@ -47,7 +47,11 @@ export const STEPS = {
     host: "Nieaktywny.",
     buzzer: "Nieaktywny.",
     soundCues: [],
-    next: ["r_intro"],
+    // "Wstecz" (control/js/app.js's setup.finish.back -> setActiveCard
+    // ("devices")) — stary Control pozwalał swobodnie wracać z Podsumowania
+    // do Urządzeń, to samo tu: powrót nie resetuje niczego, po prostu
+    // pokazuje ponownie krok urządzeń.
+    next: ["r_intro", "devices_display"],
   },
 
   r_intro: {

@@ -90,6 +90,7 @@ import { createDevices } from "./devices.js?v=v2026-09-08T18231";
 import { createPresence } from "./presence.js?v=v2026-09-08T18231";
 import { createSoundReactor } from "./soundReactor.js?v=v2026-09-08T18231";
 import { createUI } from "./ui.js?v=v2026-09-08T18231";
+import { createShareDevice } from "./shareDevice.js?v=v2026-09-08T18231";
 
 guardDesktopOnly();
 
@@ -245,6 +246,18 @@ async function main() {
   });
   presence.start();
 
+  // "Udostępnij" per urządzenie (D0/D1) — modal 1:1 ze starym Control
+  // (control2/js/shareDevice.js). Znaczek (badge "1"/puste) na przycisku
+  // idzie przez ctx.shareBadges zamiast bezpośredniej mutacji DOM, bo wiersz
+  // urządzenia jest przebudowywany przy każdym renderDevicesStep().
+  let shareBadges = {};
+  const shareDevice = createShareDevice({
+    currentUser: user,
+    game,
+    onBadgesChanged: (badges) => { shareBadges = badges; renderCurrent(); },
+  });
+  shareDevice.refreshBadges();
+
   const soundReactor = createSoundReactor(store);
 
   // Odblokowanie audio po cichu na pierwszej dowolnej interakcji (sekcja 3a
@@ -285,7 +298,7 @@ async function main() {
   function renderCurrent() {
     scheduleFinalTimerWatch();
     scheduleTimer3Watch();
-    ui.render(store.state, { urls, presenceFlags, connectCodes });
+    ui.render(store.state, { urls, presenceFlags, connectCodes, shareBadges });
   }
 
   // Samo renderCurrent() maluje cyfry timera3 tylko RAZ, w momencie zmiany
@@ -293,7 +306,7 @@ async function main() {
   // pokazywałby tę samą liczbę aż do wygaśnięcia. Odświeżamy tylko wtedy,
   // gdy faktycznie coś odlicza — reszta czasu bez zbędnej pracy.
   setInterval(() => {
-    if (store.state.rounds?.timer3?.running) ui.render(store.state, { urls, presenceFlags, connectCodes });
+    if (store.state.rounds?.timer3?.running) ui.render(store.state, { urls, presenceFlags, connectCodes, shareBadges });
   }, 250);
 
   // ===== Modal QR z topbaru (prywatny podgląd operatora — nie to samo co
@@ -427,6 +440,9 @@ async function main() {
       });
       if (!ok) return;
     }
+    // Fire-and-forget, jak dzisiejsze control/js/app.js — nie blokujemy
+    // wyjścia na tym, przeglądarka i tak zaraz nawiguje dalej.
+    shareDevice.expireShares().catch(() => {});
     location.href = "/builder";
   });
 
@@ -500,6 +516,10 @@ async function main() {
         if (code) { try { await navigator.clipboard.writeText(code); } catch {} }
         return;
       }
+      if (action === "devices.shareOpen") {
+        await shareDevice.open(payload);
+        return;
+      }
       if (action === "devices.next") {
         // Wyjście z podłączania: wracamy do BLACK, jeśli operator zostawił widoczny QR.
         store.state.display.mode = "BLACK";
@@ -510,6 +530,14 @@ async function main() {
       }
       if (action === "setup.openSettings") {
         openGsModal();
+        return;
+      }
+      if (action === "setup.back") {
+        // Dokładnie jak stare control/js/app.js's setup.finish.back ->
+        // setActiveCard("devices") — swobodny powrót, nic nie resetuje
+        // (parowanie urządzeń i tak zostaje, bo to osobny mechanizm
+        // presence, nie stan gry).
+        await advance("devices_display");
         return;
       }
       if (action === "setup.start") {
