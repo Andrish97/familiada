@@ -113,6 +113,26 @@ async function pickQuestionPool(state) {
   return pool;
 }
 
+// Ten sam algorytm co dawne "setup.reshuffleFinal" (wykluczenie ręcznie
+// wybranej puli rund, tasowanie, pierwsze 5) — wydzielone, żeby móc go
+// wołać zarówno z tamtej akcji, jak i z automatycznego pierwszego losowania
+// (ensureQuestionsDrawn niżej). Zwraca też "pickedPreview" (id+tekst) —
+// samo `picked` to tylko ID, za mało żeby operator zobaczył CO wylosowano
+// w Podsumowaniu, zanim finał się realnie zacznie.
+async function drawFinalPicks(state) {
+  const all = await loadQuestions(state.gameId);
+  const roundsPicked = new Set((state.settings.roundsPicked || []).map((q) => String(q.id)));
+  const pool = state.settings.roundsQuestionsMode === "pick" && roundsPicked.size
+    ? all.filter((q) => !roundsPicked.has(String(q.id)))
+    : all.slice();
+  for (let i = pool.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+  const picks = pool.slice(0, 5);
+  return { picked: picks.map((q) => q.id), pickedPreview: picks.map((q) => ({ id: q.id, text: q.text })) };
+}
+
 async function main() {
   await initI18n({ withSwitcher: true });
 
@@ -357,6 +377,18 @@ async function main() {
     if (code) { try { await navigator.clipboard.writeText(code); } catch {} }
   });
 
+  // Kropki statusu w topbarze są klikalne PRZEZ CAŁĄ GRĘ (nie tylko na
+  // kroku Urządzenia) — po to są te modale: jeśli urządzenie trzeba
+  // ponownie podłączyć w trakcie rozgrywki (np. tablet się zrestartował),
+  // operator musi mieć skąd wziąć kod/QR bez cofania się do kroku
+  // Urządzenia (które i tak nie jest już wtedy dostępne — poza D0/D3 nie
+  // ma przejścia z powrotem). Te elementy są statyczne (poza #app), więc
+  // jednorazowe podpięcie tu jest bezpieczne, w odróżnieniu od przycisków
+  // w device-row, patrz control2/js/shareDevice.js.
+  document.getElementById("dotDisplayRow")?.addEventListener("click", () => showQrModal("display"));
+  document.getElementById("dotHostRow")?.addEventListener("click", () => showQrModal("host"));
+  document.getElementById("dotBuzzerRow")?.addEventListener("click", () => showQrModal("buzzer"));
+
   // ===== Info / Polityka prywatności — identyczna logika co dzisiejszy
   // control/js/app.js (helpOverlay -> iframe /manual, legalOverlay -> /privacy). =====
   const helpOverlay = document.getElementById("helpOverlay");
@@ -446,6 +478,24 @@ async function main() {
     location.href = "/builder";
   });
 
+  // "Losowo" ma losować RAZ, od razu przy wejściu w Podsumowanie (D3), i
+  // pokazać co wylosowano — nie dopiero leniwie przy pierwszym Starcie
+  // rundy/finału (plan, sekcja 3a pkt 1). Bezpieczne wołać wielokrotnie:
+  // no-op jeśli pula już wylosowana (a "Losuj ponownie" i tak nadpisuje
+  // jawnie, osobną akcją).
+  async function ensureQuestionsDrawn() {
+    const st = store.state;
+    if (st.settings.roundsQuestionsMode !== "pick" && !st.rounds._questionPool?.length) {
+      st.rounds._questionPool = await pickQuestionPool(st);
+    }
+    if (st.settings.hasFinal === true && st.settings.finalQuestionsMode !== "pick" && !st.final.picked?.length) {
+      const { picked, pickedPreview } = await drawFinalPicks(st);
+      st.final.picked = picked;
+      st.final.pickedPreview = pickedPreview;
+      st.final.confirmed = true;
+    }
+  }
+
   async function advance(nextStep, extra = {}, soundCueKey) {
     assertTransition(store.state.step, nextStep);
     store.state.step = nextStep;
@@ -525,6 +575,9 @@ async function main() {
         store.state.display.mode = "BLACK";
         store.state.display.qr.host = { show: false, url: null, code: null };
         store.state.display.qr.buzzer = { show: false, url: null, code: null };
+        // "Losowo" ma losować OD RAZU i pokazać co wylosowano w Podsumowaniu
+        // — nie leniwie dopiero przy pierwszym Starcie rundy/finału.
+        await ensureQuestionsDrawn();
         await advance("setup_finish");
         return;
       }
@@ -559,16 +612,9 @@ async function main() {
       }
       if (action === "setup.reshuffleFinal") {
         if (store.state.settings.finalQuestionsMode === "pick" || store.state.locks.gameStarted) return;
-        const all = await loadQuestions(store.state.gameId);
-        const roundsPicked = new Set((store.state.settings.roundsPicked || []).map((q) => String(q.id)));
-        const pool = store.state.settings.roundsQuestionsMode === "pick" && roundsPicked.size
-          ? all.filter((q) => !roundsPicked.has(String(q.id)))
-          : all.slice();
-        for (let i = pool.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
-          [pool[i], pool[j]] = [pool[j], pool[i]];
-        }
-        store.state.final.picked = pool.slice(0, 5).map((q) => q.id);
+        const { picked, pickedPreview } = await drawFinalPicks(store.state);
+        store.state.final.picked = picked;
+        store.state.final.pickedPreview = pickedPreview;
         store.state.final.confirmed = true;
         await store.commit();
         return;

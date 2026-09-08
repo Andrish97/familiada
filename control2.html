@@ -64,16 +64,43 @@
        — Urządzenia/Podsumowanie (bez tego elementu) zostają na dotychczasowej,
        dopasowanej-do-treści wysokości, nietknięte. Reguły żyją tu (scoped do
        tej jednej strony), nie w współdzielonym control.css. */
-    .wrap.wide:has(.c2-gameplay-card) { display:flex; flex-direction:column; }
-    .wrap.wide:has(.c2-gameplay-card) > .shell { flex:1; min-height:0; display:flex; flex-direction:column; }
-    .shell:has(.c2-gameplay-card) > .control-tabs-card { flex:1; min-height:0; display:flex; flex-direction:column; }
-    .control-tabs-card:has(.c2-gameplay-card) > .control-main-card { flex:1; min-height:0; display:flex; flex-direction:column; }
-    .control-main-card:has(.c2-gameplay-card) > #app { flex:1; min-height:0; display:flex; flex-direction:column; }
+    /* :has(.stepFoot) dokłada Urządzenia/Podsumowanie do tego samego
+       łańcucha pełnej wysokości co Rundy/Final — potrzebne, żeby ich
+       .stepFoot (dolne przyciski) dało się przypiąć POZA przewijaną treścią
+       (patrz .c2-scroll-area niżej), zamiast scrollować razem z całą stroną.
+       UWAGA: musi to być RZECZYWISTA (nie tylko min-) wysokość — inaczej
+       flex:1/min-height:0 niżej nie mają czego realnie ograniczać (strona i
+       tak rośnie wg treści) i .c2-scroll-area nigdy nie zaczyna scrollować.
+       overflow:hidden na .wrap.wide samo w sobie nic nie ucina — reszta
+       łańcucha (karta, cardBody, scroll-area) i tak dostaje własne
+       ograniczenie wysokości niżej, więc to tylko domyka górny poziom. */
+    .wrap.wide:has(.c2-gameplay-card, .stepFoot) { height:calc(100dvh - var(--topbar-h, 70px)); min-height:0; display:flex; flex-direction:column; overflow:hidden; }
+    .wrap.wide:has(.c2-gameplay-card, .stepFoot) > .shell { flex:1; min-height:0; display:flex; flex-direction:column; overflow:hidden; }
+    .shell:has(.c2-gameplay-card, .stepFoot) > .control-tabs-card { flex:1; min-height:0; display:flex; flex-direction:column; overflow:hidden; }
+    .control-tabs-card:has(.c2-gameplay-card, .stepFoot) > .control-main-card { flex:1; min-height:0; display:flex; flex-direction:column; overflow:hidden; }
+    .control-main-card:has(.c2-gameplay-card, .stepFoot) > #app { flex:1; min-height:0; display:flex; flex-direction:column; overflow:hidden; }
     .c2-gameplay-card { flex:1; min-height:0; display:flex; flex-direction:column; }
+    /* .cardBody (Urządzenia/Podsumowanie) ma już flex:1 z control.css — brakuje
+       tylko min-height:0, inaczej flex item nie chce się skurczyć poniżej
+       wysokości treści i .c2-scroll-area nigdy realnie nie zaczyna scrollować. */
+    #app > .cardBody { min-height:0; overflow:hidden; }
+    /* Środkowa, przewijana treść Urządzeń/Podsumowania — .stepFoot (obok, NIE
+       w środku) zawsze zostaje widoczny na dole karty, wyłączony z tego
+       przewijania (zgłoszone: "dolne przyciski mają być wyłączone z
+       przewijania"). */
+    .c2-scroll-area { flex:1; min-height:0; overflow-y:auto; display:flex; flex-direction:column; gap:10px; }
     .c2-stepper { font-size:.75rem; letter-spacing:.08em; text-transform:uppercase; opacity:.65; border-bottom:1px solid rgba(255,255,255,.12); padding-bottom:8px; }
     .c2-gameplay-body { flex:1; overflow:hidden; display:flex; flex-direction:column; gap:12px; min-height:0; }
     .c2-gameplay-nav { display:flex; gap:8px; justify-content:flex-end; border-top:1px solid rgba(255,255,255,.12); padding-top:10px; flex-wrap:wrap; }
     .c2-question { font-size:1.4rem; font-weight:700; }
+    /* r_intro/r_roundStart ("Rozpocznij grę"/"Rozpocznij rundę") — wyśrodkowana
+       "hero" treść zamiast gołego akapitu, zgłoszone jako wyglądające źle. */
+    .c2-intro { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; gap:16px; padding:20px; }
+    .c2-intro-title { font-size:2rem; font-weight:900; color:var(--gold); letter-spacing:.02em; }
+    .c2-intro-hint { font-size:1.05rem; line-height:1.5; opacity:.85; max-width:520px; }
+    .c2-intro-score { display:flex; align-items:center; gap:12px; font-size:1.15rem; font-weight:800; margin-top:6px; }
+    .c2-intro-score-sep { opacity:.5; font-weight:400; }
+    .c2-intro-btn { padding:14px 34px; font-size:1.1rem; border-radius:16px; }
     /* Blok podpowiedzi — ten sam wizualny wzorzec co dzisiejsze
        .summaryDefaultHint w control.css (bursztynowy pasek), tylko krócej,
        bo tu treść zmienia się co kliknięcie zamiast być statycznym opisem.
@@ -95,6 +122,47 @@
     .c2-roundlayout-divider { width:1px; background:rgba(255,255,255,.14); flex:none; }
     .c2-roundlayout-side { flex:0 0 240px; min-width:0; display:flex; flex-direction:column; }
     .c2-roundlayout-side .c2-hint { flex:1; }
+    /* Urządzenia (renderDevicesStep) reużywa ten sam c2-roundlayout — lista
+       urządzeń po lewej (pionowy stos, stąd flex-direction:column zamiast
+       .c2-roundlayout-main's domyślnego row), hint o wpisywaniu kodu po
+       prawej, zamiast dawnego paska na całą szerokość pod spodem. */
+    .c2-devicerows { flex:1; min-width:0; display:flex; flex-direction:column; gap:14px; }
+    /* Dolne przyciski kroku (Urządzenia/Podsumowanie, control.css's
+       .stepFootButtons) — "Dalej"/akcja pierwotna zawsze po prawej krawędzi;
+       "Wstecz" (klasa c2-btn-back) dostaje margin-right:auto, więc odrywa
+       się na lewą krawędź, a reszta grupy zostaje razem po prawej. Scoped
+       tutaj (nie w control.css), bo to reguła tylko dla control2 — stary
+       Control ma swój dotychczasowy, niezmieniony układ. */
+    /* flex:1 — bez tego .stepFootButtons jest tylko tak szerokie jak jego
+       treść (dzieckiem .stepFoot, który sam nie narzuca szerokości), więc
+       justify-content:flex-end nie miałby czego przesuwać. */
+    .stepFootButtons { flex:1; justify-content:flex-end; }
+    .c2-btn-back { margin-right:auto; }
+    /* Wiersz "Pytania rund/finału" w Podsumowaniu — treść i "Losuj ponownie"
+       w jednej linii, przycisk przy prawej krawędzi sekcji. */
+    .c2-summary-row { display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; }
+    /* "Losuj ponownie" (zgłoszone jako "zbyt mały") — btn.sm z base.css (13px)
+       dociągnięty do tej samej skali co reszta Podsumowania, żeby nie ginął
+       obok 1.15rem summarySectionValue. */
+    .c2-summary-row .btn.sm { font-size:1rem; padding:9px 15px; }
+    /* Podgląd wylosowanej puli pytań (rounds._questionPool / final.pickedPreview)
+       — ciąg małych "tagów" pod wierszem trybu, żeby dało się zobaczyć CO
+       wylosowano bez osobnego ekranu. */
+    .c2-qpreview { display:flex; flex-wrap:wrap; gap:6px 10px; margin-top:8px; }
+    .c2-qpreview-item { font-size:.85rem; opacity:.82; padding:3px 0; }
+    /* Czcionki Urządzeń/Podsumowania dociągnięte do wielkości, którą mają już
+       Rundy (.c2-tile/.c2-question/.c2-hint) — bazowe rozmiary z control.css
+       (15px/11px/10px...) są za małe przy tak dużej karcie. Scoped do
+       konkretnych klas (nie całego .btn), żeby nie urosły przyciski
+       topbara/modali poza tym kontekstem. */
+    .device-name { font-size:1.2rem; }
+    .device-row-2 .btn { font-size:1rem; }
+    .device-opt-check-label { font-size:1rem; }
+    .device-opt-check-hint { font-size:.85rem; }
+    .summarySectionTitle { font-size:.8rem; }
+    .summarySectionValue { font-size:1.15rem; }
+    .summaryQMode { font-size:1rem; }
+    .summaryDisplayLabel, .summaryDisplayRow { font-size:1rem; }
     /* Pasek statusu — pod siatką/podpowiedzią, nad dolnymi przyciskami
        (gameplayShell's nav). Krótkie pary etykieta:wartość w jednym wierszu,
        nie osobny blok na każdą — to jest "dodatkowe info", nie treść do
@@ -162,14 +230,19 @@
       <button class="btn" id="btnBack" type="button" data-i18n="control.backToGames">← Moje gry</button>
     </div>
     <div class="topbar-section topbar-section-2">
+      <!-- Klikalne przez cały czas gry (nie tylko na kroku Urządzenia) — po
+           to są te modale: jeśli urządzenie trzeba ponownie podłączyć w
+           trakcie rozgrywki (restart tabletu itp.), operator musi mieć skąd
+           wziąć kod/QR bez wracania do kroku Urządzenia. Otwiera ten sam
+           #qrModalOverlay co przycisk "Kod QR" w kroku Urządzenia. -->
       <div class="top-status" aria-label="Status urządzeń" data-i18n-aria-label="control.statusLabel">
-        <div class="dotRow" title="Wyświetlacz" id="dotDisplayRow" data-i18n-title="control.deviceDisplay">
+        <div class="dotRow" title="Wyświetlacz — kliknij, żeby pokazać kod/link" id="dotDisplayRow" data-i18n-title="control.deviceDisplay" style="cursor:pointer;">
           <span class="dot mid" id="dotDisplay"></span><span class="lbl" data-i18n="control.deviceDisplay">Wyświetlacz</span>
         </div>
-        <div class="dotRow" title="Prowadzący" id="dotHostRow" data-i18n-title="control.deviceHost">
+        <div class="dotRow" title="Prowadzący — kliknij, żeby pokazać kod QR" id="dotHostRow" data-i18n-title="control.deviceHost" style="cursor:pointer;">
           <span class="dot mid" id="dotHost"></span><span class="lbl" data-i18n="control.deviceHost">Prowadzący</span>
         </div>
-        <div class="dotRow" title="Przycisk" id="dotBuzzerRow" data-i18n-title="control.deviceBuzzer">
+        <div class="dotRow" title="Przycisk — kliknij, żeby pokazać kod QR" id="dotBuzzerRow" data-i18n-title="control.deviceBuzzer" style="cursor:pointer;">
           <span class="dot mid" id="dotBuzzer"></span><span class="lbl" data-i18n="control.deviceBuzzer">Przycisk</span>
         </div>
       </div>

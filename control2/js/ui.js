@@ -179,8 +179,19 @@ export function createUI({ root, emit }) {
       // wzorzec (mały, uppercase, linia pod spodem) co w Rundach/Finale.
       h("div", { class: "stepTitle", text: "Urządzenia" }),
       h("div", { class: "c2-stepper", text: "Urządzenia" }),
-      ...rows,
-      h("div", { class: "device-code-hint", text: "Wejdź na familiada.online, kliknij „Podłącz urządzenie” i wprowadź kod urządzenia." }),
+      // .c2-scroll-area: TYLKO ta środkowa treść przewija się, gdyby lista
+      // urządzeń kiedyś nie zmieściła się na ekranie — .stepFoot (Dalej)
+      // zostaje na dole, poza obszarem przewijania, zawsze widoczny.
+      h("div", { class: "c2-scroll-area" }, [
+        // Ten sam c2-roundlayout co w Rundach (siatka/lista + kreska + hint po
+        // prawej) — lista urządzeń po lewej, hint o wpisywaniu kodu po prawej,
+        // zamiast osobnego paska pod spodem na całą szerokość.
+        h("div", { class: "c2-roundlayout" }, [
+          h("div", { class: "c2-roundlayout-main" }, [h("div", { class: "c2-devicerows" }, rows)]),
+          h("div", { class: "c2-roundlayout-divider" }),
+          h("div", { class: "c2-roundlayout-side" }, [hintBlock("Wejdź na familiada.online, kliknij „Podłącz urządzenie” i wprowadź kod urządzenia.")]),
+        ]),
+      ]),
       h("div", { class: "stepFoot" }, [h("div", { class: "stepFootButtons" }, [next])]),
     ]));
   }
@@ -204,6 +215,17 @@ export function createUI({ root, emit }) {
       h("div", { class: "summarySectionTitle", text: title }),
       valueNode,
     ]);
+  }
+
+  // Podgląd wylosowanej puli ("Losowo ma losować i pokazywać co wylosowano")
+  // — przyjmuje tablicę {text} (rounds._questionPool ma je już wprost;
+  // final.pickedPreview to ta sama sygnatura, wypełniana przez
+  // app.js's drawFinalPicks). Puste/brak = nic jeszcze nie wylosowano.
+  function questionPreviewList(items) {
+    if (!items || !items.length) return null;
+    return h("div", { class: "c2-qpreview" }, items.map((q, i) =>
+      h("span", { class: "c2-qpreview-item", text: `${i + 1}. ${q.text}` })
+    ));
   }
 
   // Wiersz-atrapa "rundy w toku" do podglądu D3 — Display umie renderować
@@ -267,19 +289,36 @@ export function createUI({ root, emit }) {
       ])),
       summarySection("Finał", h("div", { class: "summarySectionValue", text: hasFinal ? "Tak" : "Nie" })),
     ];
-    sections.push(summarySection("Pytania rund", h("div", { class: "summaryQMode", text:
-      s.roundsQuestionsMode === "pick" ? `Ustalona kolejność (${s.roundsPicked?.length || 0})` : "Losowo" })));
-    if (hasFinal) {
-      sections.push(summarySection("Pytania finału", h("div", { class: "summaryQMode", text:
-        s.finalQuestionsMode === "pick" ? `Wybrane ręcznie (${state.final.picked?.length || 0}/5)` : "Losowo" })));
-    }
-
-    const reshuffleBtns = [];
+    // "Losuj ponownie" mieszka PRZY danej sekcji pytań (nie w stopce z resztą
+    // nawigacji) — to akcja dotycząca konkretnie tej puli, nie kroku jako
+    // całości. Tylko w trybie losowym (w "pick" kolejność jest już ustalona
+    // ręcznie, nie ma czego losować). "Losowo" losuje OD RAZU przy wejściu w
+    // ten krok (app.js's ensureQuestionsDrawn) — poniższy podgląd pokazuje
+    // CO faktycznie wylosowano, nie tylko sam fakt trybu.
+    const roundsValueRow = [document.createTextNode(
+      s.roundsQuestionsMode === "pick" ? `Ustalona kolejność (${s.roundsPicked?.length || 0})` : "Losowo"
+    )];
     if (s.roundsQuestionsMode !== "pick") {
-      reshuffleBtns.push(h("button", { class: "btn sm", type: "button", onclick: () => emit("setup.reshuffleRounds") }, [document.createTextNode("Losuj ponownie pytania rund")]));
+      roundsValueRow.push(h("button", { class: "btn sm", type: "button", onclick: () => emit("setup.reshuffleRounds") }, [document.createTextNode("Losuj ponownie")]));
     }
-    if (hasFinal && s.finalQuestionsMode !== "pick") {
-      reshuffleBtns.push(h("button", { class: "btn sm", type: "button", onclick: () => emit("setup.reshuffleFinal") }, [document.createTextNode("Losuj ponownie pytania finału")]));
+    const roundsPreview = s.roundsQuestionsMode !== "pick" ? questionPreviewList(state.rounds._questionPool) : null;
+    sections.push(summarySection("Pytania rund", h("div", {}, [
+      h("div", { class: "summaryQMode c2-summary-row" }, roundsValueRow),
+      roundsPreview,
+    ].filter(Boolean))));
+
+    if (hasFinal) {
+      const finalValueRow = [document.createTextNode(
+        s.finalQuestionsMode === "pick" ? `Wybrane ręcznie (${state.final.picked?.length || 0}/5)` : "Losowo"
+      )];
+      if (s.finalQuestionsMode !== "pick") {
+        finalValueRow.push(h("button", { class: "btn sm", type: "button", onclick: () => emit("setup.reshuffleFinal") }, [document.createTextNode("Losuj ponownie")]));
+      }
+      const finalPreview = s.finalQuestionsMode !== "pick" ? questionPreviewList(state.final.pickedPreview) : null;
+      sections.push(summarySection("Pytania finału", h("div", {}, [
+        h("div", { class: "summaryQMode c2-summary-row" }, finalValueRow),
+        finalPreview,
+      ].filter(Boolean))));
     }
 
     const finalIncomplete = hasFinal && s.finalQuestionsMode === "pick" && (state.final.picked?.length !== 5 || !state.final.confirmed);
@@ -289,9 +328,11 @@ export function createUI({ root, emit }) {
       onclick: () => emit("setup.start"),
     }, [document.createTextNode("Gotowe — przejdź do rund")]);
     const changeSettings = h("button", { class: "btn sm", type: "button", onclick: () => emit("setup.openSettings") }, [document.createTextNode("Zmień ustawienia")]);
-    // "Wstecz" pierwszy w rzędzie (jak stare control.html's
-    // btnSetupFinishBack) — swobodny powrót do Urządzeń, nic nie resetuje.
-    const back = h("button", { class: "btn", type: "button", onclick: () => emit("setup.back") }, [document.createTextNode("Wstecz")]);
+    // "Wstecz" (jak stare control.html's btnSetupFinishBack) — swobodny
+    // powrót do Urządzeń, nic nie resetuje. c2-btn-back popycha go do
+    // lewej krawędzi stopki (patrz control2.html: .stepFootButtons ma
+    // justify-content:flex-end, ten jeden dostaje margin-right:auto).
+    const back = h("button", { class: "btn c2-btn-back", type: "button", onclick: () => emit("setup.back") }, [document.createTextNode("Wstecz")]);
 
     // Płasko, tak jak renderDevicesStep — jedno .cardBody na root, BEZ
     // zagnieżdżonego wewnątrz .card (to była druga, zbędna warstwa: root
@@ -300,9 +341,12 @@ export function createUI({ root, emit }) {
     const body = [
       h("div", { class: "stepTitle", text: "Podsumowanie" }),
       h("div", { class: "c2-stepper", text: "Podsumowanie" }),
-      ...sections,
+      // .c2-scroll-area: dolne przyciski (Wstecz/Zmień ustawienia/Gotowe) mają
+      // zostać wyłączone z przewijania — przewija się TYLKO treść sekcji
+      // podsumowania, .stepFoot zawsze zostaje widoczny na dole karty.
+      h("div", { class: "c2-scroll-area" }, sections),
       h("div", { class: "stepFoot" }, [
-        h("div", { class: "stepFootButtons" }, [back, changeSettings, ...reshuffleBtns, start]),
+        h("div", { class: "stepFootButtons" }, [back, changeSettings, start]),
         finalIncomplete ? h("div", { class: "msg msg-pill", text: "Finał ustawiony na \"wybrane ręcznie\", ale nie wybrano 5 pytań w ustawieniach gry." }) : null,
       ]),
     ];
@@ -447,19 +491,37 @@ export function createUI({ root, emit }) {
   // ---- Rundy (r_intro..r_gameEnd) ----
   function renderRounds(state) {
     const r = state.rounds;
+    // r_intro/r_roundStart: te same dwa przejściowe ekrany co stare
+    // control.html's data-step="r_intro"/"r_roundStart" (duży tytuł +
+    // wyjaśnienie co się zaraz stanie na Wyświetlaczu/u Prowadzącego + jeden
+    // złoty przycisk) — nie goły "Dalej" bez kontekstu. "Rozpocznij grę"
+    // odpala intro (logo+dźwięk, app.js's rounds.introNext), "Rozpocznij
+    // rundę" odpala START_ROUND (pusta plansza+pytanie, dźwięk
+    // round_transition — engine.js/soundReactor.js).
     if (state.step === "r_intro") {
       gameplayShell({
         stepLabel: "Rundy — wprowadzenie",
-        body: [h("p", { text: "Gotowi? Kliknij dalej, żeby zacząć pierwszą rundę." })],
-        nav: [h("button", { class: "c2-btn primary", onclick: () => emit("rounds.introNext") }, [document.createTextNode("Dalej")])],
+        body: [h("div", { class: "c2-intro" }, [
+          h("div", { class: "c2-intro-title", text: "Rozpocznij grę" }),
+          h("div", { class: "c2-intro-hint", text: "Na wyświetlaczu pojawi się logo programu i zostanie odtworzone intro. Po zakończeniu przejdziesz do pierwszej rundy." }),
+        ])],
+        nav: [h("button", { class: "c2-btn primary c2-intro-btn", onclick: () => emit("rounds.introNext") }, [document.createTextNode("Rozpocznij grę")])],
       });
       return;
     }
     if (state.step === "r_roundStart") {
       gameplayShell({
         stepLabel: `Runda ${r.roundNo}`,
-        body: [h("p", { text: `Wyniki: A ${r.totals.A} — B ${r.totals.B}` })],
-        nav: [h("button", { class: "c2-btn primary", onclick: () => emit("game.dispatch", { type: "START_ROUND" }) }, [document.createTextNode("Start rundy")])],
+        body: [h("div", { class: "c2-intro" }, [
+          h("div", { class: "c2-intro-title", text: "Rozpocznij rundę" }),
+          h("div", { class: "c2-intro-hint", text: "Na wyświetlaczu pojawi się pusta plansza rundy, a prowadzący dostanie treść pytania." }),
+          h("div", { class: "c2-intro-score" }, [
+            h("span", { class: "c2-intro-score-a", text: `${teamName(state, "A")}: ${r.totals.A}` }),
+            h("span", { class: "c2-intro-score-sep", text: "—" }),
+            h("span", { class: "c2-intro-score-b", text: `${teamName(state, "B")}: ${r.totals.B}` }),
+          ]),
+        ])],
+        nav: [h("button", { class: "c2-btn primary c2-intro-btn", onclick: () => emit("game.dispatch", { type: "START_ROUND" }) }, [document.createTextNode("Rozpocznij rundę")])],
       });
       return;
     }

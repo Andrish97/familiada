@@ -65,6 +65,11 @@ export function makeDefaultState(gameId) {
     },
     final: {
       picked: [],
+      // Podgląd wylosowanej puli (id+tekst) do pokazania w Podsumowaniu D3 —
+      // "picked" samo w sobie to tylko surowe ID, za mało żeby operator
+      // zobaczył CO wylosowano bez czekania do finału (engine.js's
+      // START_FINAL dopiero wtedy wypełnia pełne `questions`).
+      pickedPreview: [],
       confirmed: false,
       winnerTeam: null,
       // Pełne dane 5 wybranych pytań (tekst + lista odpowiedzi z punktami),

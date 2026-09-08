@@ -367,10 +367,10 @@ async function scenarioRoundsMechanics(pages) {
 
   await clickPaced(control.getByRole("button", { name: "Dalej" }));
   await clickPaced(control.getByRole("button", { name: "Gotowe — przejdź do rund" }));
-  await clickPaced(control.getByRole("button", { name: "Dalej" }));
+  await clickPaced(control.getByRole("button", { name: "Rozpocznij grę" }));
 
   // ===== RUNDA 1 =====
-  await clickPaced(control.getByRole("button", { name: "Start rundy" }));
+  await clickPaced(control.getByRole("button", { name: "Rozpocznij rundę" }));
   await clickPaced(buzzer.getByRole("button", { name: "Buzzer A" }));
   await clickPaced(control.getByRole("button", { name: "Zatwierdź: Alfa" }));
   await armAndConfirmPaced(control.getByRole("button", { name: "X", exact: true })); // A pudłuje -> kolej B
@@ -386,7 +386,7 @@ async function scenarioRoundsMechanics(pages) {
   await armAndConfirmPaced(answerTile(control, 3)); // dosłanianie reszty
 
   // ===== RUNDA 2 =====
-  await clickPaced(control.getByRole("button", { name: "Start rundy" }));
+  await clickPaced(control.getByRole("button", { name: "Rozpocznij rundę" }));
   await clickPaced(buzzer.getByRole("button", { name: "Buzzer B" }));
   await clickPaced(control.getByRole("button", { name: "Zatwierdź: Beta" }));
   await armAndConfirmPaced(answerTile(control, 1)); // B trafia -> kontrola B, allowPass
@@ -420,10 +420,10 @@ async function scenarioRoundsThreshold(pages, { expectFinal }) {
 
   await clickPaced(control.getByRole("button", { name: "Dalej" }));
   await clickPaced(control.getByRole("button", { name: "Gotowe — przejdź do rund" }));
-  await clickPaced(control.getByRole("button", { name: "Dalej" }));
+  await clickPaced(control.getByRole("button", { name: "Rozpocznij grę" }));
 
   // ===== RUNDA 1: pojedynek wygrany za pierwszym razem (bez pudła) =====
-  await clickPaced(control.getByRole("button", { name: "Start rundy" }));
+  await clickPaced(control.getByRole("button", { name: "Rozpocznij rundę" }));
   await clickPaced(buzzer.getByRole("button", { name: "Buzzer A" }));
   await clickPaced(control.getByRole("button", { name: "Zatwierdź: Alfa" }));
   await armAndConfirmPaced(answerTile(control, 1)); // A trafia topową odpowiedź od razu -> wygrywa pojedynek
@@ -433,7 +433,7 @@ async function scenarioRoundsThreshold(pages, { expectFinal }) {
 
   // ===== RUNDA 2: B pudłuje -> BEZ resetu, druga próba (A) wygrywa
   // odpowiedzią nie-topową =====
-  await clickPaced(control.getByRole("button", { name: "Start rundy" }));
+  await clickPaced(control.getByRole("button", { name: "Rozpocznij rundę" }));
   await clickPaced(buzzer.getByRole("button", { name: "Buzzer B" }));
   await clickPaced(control.getByRole("button", { name: "Zatwierdź: Beta" }));
   await armAndConfirmPaced(control.getByRole("button", { name: "X", exact: true })); // B pudłuje -> kolej na drugą próbę (A), NIE reset
@@ -442,7 +442,7 @@ async function scenarioRoundsThreshold(pages, { expectFinal }) {
   await clickPaced(control.getByRole("button", { name: "Zakończ rundę" }));
 
   // ===== RUNDA 3: pojedynek wygrany za pierwszym razem, dobicie do progu =====
-  await clickPaced(control.getByRole("button", { name: "Start rundy" }));
+  await clickPaced(control.getByRole("button", { name: "Rozpocznij rundę" }));
   await clickPaced(buzzer.getByRole("button", { name: "Buzzer A" }));
   await clickPaced(control.getByRole("button", { name: "Zatwierdź: Alfa" }));
   await armAndConfirmPaced(answerTile(control, 1));
@@ -468,8 +468,8 @@ async function scenarioFinalFull(pages) {
 
   await clickPaced(control.getByRole("button", { name: "Dalej" }));
   await clickPaced(control.getByRole("button", { name: "Gotowe — przejdź do rund" }));
-  await clickPaced(control.getByRole("button", { name: "Dalej" }));
-  await clickPaced(control.getByRole("button", { name: "Start rundy" }));
+  await clickPaced(control.getByRole("button", { name: "Rozpocznij grę" }));
+  await clickPaced(control.getByRole("button", { name: "Rozpocznij rundę" }));
 
   await clickPaced(buzzer.getByRole("button", { name: "Buzzer A" }));
   await clickPaced(control.getByRole("button", { name: "Zatwierdź: Alfa" }));
@@ -565,8 +565,8 @@ async function scenarioFinalEarlyExit(pages) {
 
   await clickPaced(control.getByRole("button", { name: "Dalej" }));
   await clickPaced(control.getByRole("button", { name: "Gotowe — przejdź do rund" }));
-  await clickPaced(control.getByRole("button", { name: "Dalej" }));
-  await clickPaced(control.getByRole("button", { name: "Start rundy" }));
+  await clickPaced(control.getByRole("button", { name: "Rozpocznij grę" }));
+  await clickPaced(control.getByRole("button", { name: "Rozpocznij rundę" }));
 
   await clickPaced(buzzer.getByRole("button", { name: "Buzzer A" }));
   await clickPaced(control.getByRole("button", { name: "Zatwierdź: Alfa" }));
