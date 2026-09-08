@@ -705,10 +705,17 @@ export function createUI({ root, emit }) {
   // oczywiste z samej nazwy przycisku, nie trzeba tego pisać.
   function renderEndScreen(state, { revealAction }) {
     if (!state.locks.gameEnded) {
+      // Hint = ten sam gameEndSummary co po kliknięciu — wynik jest już
+      // znany (rundy się skończyły / drużyna wiodąca w finale tylko
+      // dokłada punkty, nigdy nie traci prowadzenia), więc "co się stanie"
+      // ma 3 warianty (wygrana A / wygrana B / remis), tak samo jak wynik
+      // po odsłonięciu. Usunięte tylko zdanie o tym, co dadzą przyciski
+      // niżej (oczywiste z ich nazw).
       gameplayShell({
         stepLabel: "Koniec gry",
         body: [h("div", { class: "c2-intro" }, [
           h("div", { class: "c2-intro-title", text: "Koniec gry" }),
+          h("div", { class: "c2-intro-hint", text: gameEndSummary(state) }),
         ])],
         nav: [h("button", { class: "c2-btn primary c2-intro-btn", onclick: () => emit("game.dispatch", revealAction) }, [document.createTextNode("Zakończ grę")])],
       });
