@@ -13,7 +13,7 @@ import { requireAuth } from "../../js/core/auth.js?v=v2026-09-08T18231";
 import { setTopbarAccount } from "../../js/core/topbar-controller.js?v=v2026-09-08T18231";
 import { sb } from "../../js/core/supabase.js?v=v2026-09-08T18231";
 import { loadQuestions, loadAnswers } from "../../js/core/game-validate.js?v=v2026-09-08T18231";
-import { loadSfxManifest, initSfx, setCurrentGameId, unlockAudio, applySfxGameSettings, loadSfxFromCloud } from "../../js/core/sfx.js?v=v2026-09-08T18231";
+import { loadSfxManifest, initSfx, setCurrentGameId, unlockAudio, applySfxGameSettings, loadSfxFromCloud, playSfx } from "../../js/core/sfx.js?v=v2026-09-08T18231";
 import { listGameSounds } from "../../js/core/sfx-cloud.js?v=v2026-09-08T18231";
 import { assertTransition } from "../../shared/gameStateMachine.js?v=v2026-09-08T18231";
 import { confirmModal } from "../../js/core/modal.js?v=v2026-09-08T18231";
@@ -631,6 +631,10 @@ async function main() {
         await advance("r_roundStart", { phase: "READY" }, "show_intro");
         return;
       }
+      // Próbka dźwięku powtórzenia na ekranie "Rozpocznij 2 rundę" — dokładnie
+      // jak stare control.html's "final.repeatTest": czysto lokalny podgląd
+      // dźwięku, bez żadnego zapisu do game_state (nic w grze się nie zmienia).
+      if (action === "final.repeatTest") { playSfx("answer_repeat"); return; }
       if (action === "game.dispatch") { await engine.dispatch(payload); return; }
     } catch (e) {
       console.error("[control2] akcja nie powiodła się:", action, e);

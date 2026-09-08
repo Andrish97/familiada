@@ -457,7 +457,7 @@ test("control2: próg w rundzie -> finał, wczesne zakończenie po 4/5 pytaniach
     // Próg (300) trafiony, hasFinal=true, finalQuestionsMode="pick" + 5
     // potwierdzonych pytań -> prosto do finału.
     await expect(page.locator(".c2-stepper")).toContainText("Finał", { timeout: 10000 });
-    await page.getByRole("button", { name: "Start finału" }).click();
+    await page.getByRole("button", { name: "Rozpocznij finał" }).click();
 
     await expect(page.locator(".c2-stepper")).toContainText("Finał — gracz 1, wpisywanie", { timeout: 10000 });
     await page.getByRole("button", { name: "Start timera" }).click();
@@ -669,7 +669,7 @@ test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśni�
     // ===== F1: start finału =====
     await clearSfxLog(page);
     await clearDisplayLog(displayPage);
-    await page.getByRole("button", { name: "Start finału" }).click();
+    await page.getByRole("button", { name: "Rozpocznij finał" }).click();
     // final_theme -> reveal, sekwencyjnie (soundReactor.js's playSequentialCombo).
     await waitForSfxSequence(page, ["final_theme", "reveal"], 15000);
     // Wskaźnik na zwycięzcy (A) i zapowiedź "15" na jego stronie (dzisiejsza naprawa) —
@@ -712,7 +712,7 @@ test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśni�
     // ===== F6: przejście do gracza 2 — TU jest sedno testu =====
     await expect(page.locator(".c2-stepper")).toContainText("Finał — start rundy 2", { timeout: 10000 });
     await clearDisplayLog(displayPage);
-    await page.getByRole("button", { name: "Start rundy 2" }).click();
+    await page.getByRole("button", { name: "Rozpocznij 2 rundę" }).click();
 
     // Display: odpowiedzi gracza 1 wracają odsłonięte (animIn), NIE placeholder.
     await expect.poll(async () => {

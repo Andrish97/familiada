@@ -450,7 +450,7 @@ async function scenarioRoundsThreshold(pages, { expectFinal }) {
   await clickPaced(control.getByRole("button", { name: "Zakończ rundę" })); // próg (180) osiągnięty
 
   if (expectFinal) {
-    await clickPaced(control.getByRole("button", { name: "Start finału" }));
+    await clickPaced(control.getByRole("button", { name: "Rozpocznij finał" }));
     await control.waitForTimeout(3000); // ekran wpisywania gracza 1 widoczny chwilę — pełny final to osobne scenariusze
   } else {
     await clickPaced(control.getByRole("button", { name: "Pokaż koniec gry" }));
@@ -479,7 +479,7 @@ async function scenarioFinalFull(pages) {
   await armAndConfirmPaced(control.getByRole("button", { name: "X", exact: true }));
   await clickPaced(control.getByRole("button", { name: "Zakończ rundę" }));
 
-  await clickPaced(control.getByRole("button", { name: "Start finału" }));
+  await clickPaced(control.getByRole("button", { name: "Rozpocznij finał" }));
   await control.waitForTimeout(4000); // final_theme + reveal
 
   // Host: zasłona pasma 2 właśnie się włączyła (startFinal). Prowadzący
@@ -520,7 +520,7 @@ async function scenarioFinalFull(pages) {
     await clickPaced(control.getByRole("button", { name: "Dalej" }));
   }
 
-  await clickPaced(control.getByRole("button", { name: "Start rundy 2" }));
+  await clickPaced(control.getByRole("button", { name: "Rozpocznij 2 rundę" }));
   await control.waitForTimeout(1500); // niech nagranie złapie pełne odsłonięcie odpowiedzi gracza 1 na Display
 
   // Host NIE dostaje żadnego automatycznego odsłonięcia razem z Display —
@@ -582,7 +582,7 @@ async function scenarioFinalEarlyExit(pages) {
   await armAndConfirmPaced(control.getByRole("button", { name: "X", exact: true }));
   await clickPaced(control.getByRole("button", { name: "Zakończ rundę" }));
 
-  await clickPaced(control.getByRole("button", { name: "Start finału" }));
+  await clickPaced(control.getByRole("button", { name: "Rozpocznij finał" }));
   await control.waitForTimeout(4000); // final_theme + reveal
 
   await hostPeekSwipe(host);

@@ -703,11 +703,18 @@ export function createUI({ root, emit }) {
   }
 
   // ---- Finał ----
+  // f_start/f_p2_start: te same dwa "hero" ekrany przejściowe co r_intro/
+  // r_roundStart (duży tytuł + wyjaśnienie + złoty przycisk) — "Rozpocznij
+  // finał" faktycznie startuje i finał, i pierwszą jego rundę (gracz 1),
+  // dokładnie jak "Rozpocznij grę" startuje i grę, i pierwszą rundę.
   function renderFinalStart(state) {
     gameplayShell({
       stepLabel: "Finał",
-      body: [h("p", { text: "Start finału" })],
-      nav: [h("button", { class: "c2-btn primary", onclick: () => emit("game.dispatch", { type: "START_FINAL" }) }, [document.createTextNode("Start finału")])],
+      body: [h("div", { class: "c2-intro" }, [
+        h("div", { class: "c2-intro-title", text: "Rozpocznij finał" }),
+        h("div", { class: "c2-intro-hint", text: "Zabrzmi dźwięk finału, stara plansza zniknie, a wjedzie plansza finału. Prowadzący dostanie pytania." }),
+      ])],
+      nav: [h("button", { class: "c2-btn primary c2-intro-btn", onclick: () => emit("game.dispatch", { type: "START_FINAL" }) }, [document.createTextNode("Rozpocznij finał")])],
     });
   }
 
@@ -834,8 +841,17 @@ export function createUI({ root, emit }) {
   function renderFinalP2Start(state) {
     gameplayShell({
       stepLabel: "Finał — start rundy 2",
-      body: [h("p", { text: "Gracz 2 startuje z połową odpowiedzi gracza 1 zasłoniętą." })],
-      nav: [h("button", { class: "c2-btn primary", onclick: () => emit("game.dispatch", { type: "START_P2_ROUND" }) }, [document.createTextNode("Start rundy 2")])],
+      body: [h("div", { class: "c2-intro" }, [
+        h("div", { class: "c2-intro-title", text: "Rozpocznij 2 rundę" }),
+        h("div", { class: "c2-intro-hint", text: "Zabrzmi dźwięk rundy, odpowiedzi gracza 1 zostaną ukryte. Tutaj możesz odtworzyć próbkę dźwięku powtórzenia." }),
+        // Próbka dźwięku powtórzenia — POD napisem, na środku (jak reszta
+        // c2-intro), NIE w dolnym pasku nawigacji obok "Rozpocznij 2 rundę"
+        // (stare control.html trzymało oba przyciski razem w stepFoot —
+        // zgłoszone jako złe miejsce). Czysto lokalny podgląd dźwięku, bez
+        // zapisu do stanu gry (patrz app.js's "final.repeatTest").
+        h("button", { class: "c2-btn c2-intro-secondary", type: "button", onclick: () => emit("final.repeatTest") }, [document.createTextNode("Dźwięk powtórzenia")]),
+      ])],
+      nav: [h("button", { class: "c2-btn primary c2-intro-btn", onclick: () => emit("game.dispatch", { type: "START_P2_ROUND" }) }, [document.createTextNode("Rozpocznij 2 rundę")])],
     });
   }
 
