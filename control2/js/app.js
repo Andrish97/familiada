@@ -1,11 +1,10 @@
 // control2/js/app.js
 // Punkt wejścia Control v2 — spina store/engine/devices/presence/
 // soundReactor/ui. Nawigacja przedmeczowa (devices_display →
-// devices_hostbuzzer → setup_finish → r_intro → r_roundStart) jest liniowa,
-// bez rozgałęzień, więc żyje tu (app-level), nie w engine.js (patrz
-// komentarz na górze engine.js) — ale i tak przechodzi przez
-// assertTransition(), żeby tabela stanów była mechanizmem wszędzie, nie
-// tylko wewnątrz silnika reguł gry.
+// setup_finish → r_intro → r_roundStart) jest liniowa, bez rozgałęzień,
+// więc żyje tu (app-level), nie w engine.js (patrz komentarz na górze
+// engine.js) — ale i tak przechodzi przez assertTransition(), żeby tabela
+// stanów była mechanizmem wszędzie, nie tylko wewnątrz silnika reguł gry.
 
 import { guardDesktopOnly } from "../../js/core/device-guard.js?v=v2026-09-07T20322";
 import { guardResourceLock } from "../../js/core/resource-lock.js?v=v2026-09-07T20322";
@@ -502,8 +501,7 @@ async function main() {
         return;
       }
       if (action === "devices.next") {
-        if (store.state.step === "devices_display") { await advance("devices_hostbuzzer"); return; }
-        // Wyjście z D1: wracamy do BLACK, jeśli operator zostawił widoczny QR.
+        // Wyjście z podłączania: wracamy do BLACK, jeśli operator zostawił widoczny QR.
         store.state.display.mode = "BLACK";
         store.state.display.qr.host = { show: false, url: null, code: null };
         store.state.display.qr.buzzer = { show: false, url: null, code: null };

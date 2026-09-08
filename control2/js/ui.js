@@ -86,36 +86,40 @@ export function createUI({ root, emit }) {
       ]);
     };
 
+    // Jeden ekran, wszystkie 3 urządzenia naraz — dokładnie jak dzisiejsze
+    // control.html (patrz komentarz wprost w jego kodzie: "Step 2
+    // (host+buzzer) – usunięty, scalony z step 1"). Wcześniejsza wersja tego
+    // pliku rozdzielała Wyświetlacz od Prowadzącego/Przycisku na dwa osobne
+    // kroki — to był błąd (odtworzenie martwego, celowo scalonego kodu),
+    // poprawiony po korekcie właściciela projektu.
     const rows = [deviceRow("Wyświetlacz", "display", urls.displayUrl)];
 
-    if (state.step === "devices_hostbuzzer") {
-      if (!state.settings.noHostTablet) {
-        const hostRow = deviceRow("Prowadzący", "host", urls.hostUrl, { withQr: true });
-        const noHostChk = h("input", { type: "checkbox" });
-        on(noHostChk, "change", () => emit("devices.noHostTablet", noHostChk.checked));
-        hostRow.appendChild(h("div", { class: "device-row-opt" }, [
-          h("label", { class: "device-opt-check" }, [noHostChk, h("div", { class: "device-opt-check-text" }, [
-            h("span", { class: "device-opt-check-label", text: "Nie używaj tabletu prowadzącego" }),
-          ])]),
-        ]));
-        rows.push(hostRow);
-      } else {
-        rows.push(h("div", { class: "device-row" }, [reenableRow("Prowadzący", "noHostTablet")]));
-      }
+    if (!state.settings.noHostTablet) {
+      const hostRow = deviceRow("Prowadzący", "host", urls.hostUrl, { withQr: true });
+      const noHostChk = h("input", { type: "checkbox" });
+      on(noHostChk, "change", () => emit("devices.noHostTablet", noHostChk.checked));
+      hostRow.appendChild(h("div", { class: "device-row-opt" }, [
+        h("label", { class: "device-opt-check" }, [noHostChk, h("div", { class: "device-opt-check-text" }, [
+          h("span", { class: "device-opt-check-label", text: "Nie używaj tabletu prowadzącego" }),
+        ])]),
+      ]));
+      rows.push(hostRow);
+    } else {
+      rows.push(h("div", { class: "device-row" }, [reenableRow("Prowadzący", "noHostTablet")]));
+    }
 
-      if (!state.settings.physicalBuzzer) {
-        const buzzerRow = deviceRow("Przycisk", "buzzer", urls.buzzerUrl, { withQr: true });
-        const physBuzzChk = h("input", { type: "checkbox" });
-        on(physBuzzChk, "change", () => emit("devices.physicalBuzzer", physBuzzChk.checked));
-        buzzerRow.appendChild(h("div", { class: "device-row-opt" }, [
-          h("label", { class: "device-opt-check" }, [physBuzzChk, h("div", { class: "device-opt-check-text" }, [
-            h("span", { class: "device-opt-check-label", text: "Fizyczny przycisk" }),
-          ])]),
-        ]));
-        rows.push(buzzerRow);
-      } else {
-        rows.push(h("div", { class: "device-row" }, [reenableRow("Przycisk", "physicalBuzzer")]));
-      }
+    if (!state.settings.physicalBuzzer) {
+      const buzzerRow = deviceRow("Przycisk", "buzzer", urls.buzzerUrl, { withQr: true });
+      const physBuzzChk = h("input", { type: "checkbox" });
+      on(physBuzzChk, "change", () => emit("devices.physicalBuzzer", physBuzzChk.checked));
+      buzzerRow.appendChild(h("div", { class: "device-row-opt" }, [
+        h("label", { class: "device-opt-check" }, [physBuzzChk, h("div", { class: "device-opt-check-text" }, [
+          h("span", { class: "device-opt-check-label", text: "Fizyczny przycisk" }),
+        ])]),
+      ]));
+      rows.push(buzzerRow);
+    } else {
+      rows.push(h("div", { class: "device-row" }, [reenableRow("Przycisk", "physicalBuzzer")]));
     }
 
     function reenableRow(label, flagKey) {
@@ -128,11 +132,11 @@ export function createUI({ root, emit }) {
     }
 
     const next = h("button", { class: "btn gold", type: "button", onclick: () => emit("devices.next") }, [
-      document.createTextNode(state.step === "devices_display" ? "Dalej" : "Zakończ podłączanie"),
+      document.createTextNode("Dalej"),
     ]);
 
     root.appendChild(h("div", { class: "cardBody" }, [
-      h("div", { class: "stepTitle", text: state.step === "devices_display" ? "Urządzenia — Wyświetlacz" : "Urządzenia — Prowadzący i Przycisk" }),
+      h("div", { class: "stepTitle", text: "Urządzenia" }),
       ...rows,
       h("div", { class: "stepFoot" }, [h("div", { class: "stepFootButtons" }, [next])]),
     ]));
@@ -581,7 +585,7 @@ export function createUI({ root, emit }) {
   function render(state, ctx = {}) {
     updateTopbarDots(ctx.presenceFlags);
     const s = state.step;
-    if (s === "devices_display" || s === "devices_hostbuzzer") return renderDevicesStep(state, ctx);
+    if (s === "devices_display") return renderDevicesStep(state, ctx);
     if (s === "setup_finish") return renderSetupFinish(state, ctx);
     if (s === "r_intro" || s === "r_roundStart") return renderRounds(state);
     if (s === "r_duel" || s === "r_play") return renderRounds(state);

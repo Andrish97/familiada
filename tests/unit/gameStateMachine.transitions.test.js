@@ -48,7 +48,6 @@ test("assertTransition dopuszcza pozostanie w tym samym kroku (self-loop, np. r_
 test("pełna liniowa ścieżka od urządzeń do końca gry bez finału jest osiągalna", () => {
   const path = [
     "devices_display",
-    "devices_hostbuzzer",
     "setup_finish",
     "r_intro",
     "r_roundStart",

@@ -344,7 +344,6 @@ async function scenarioRoundsMechanics(pages) {
   const { control, buzzer } = pages;
 
   await clickPaced(control.getByRole("button", { name: "Dalej" }));
-  await clickPaced(control.getByRole("button", { name: "Zakończ podłączanie" }));
   await clickPaced(control.getByRole("button", { name: "Gotowe — przejdź do rund" }));
   await clickPaced(control.getByRole("button", { name: "Dalej" }));
 
@@ -398,7 +397,6 @@ async function scenarioRoundsThreshold(pages, { expectFinal }) {
   const { control, buzzer } = pages;
 
   await clickPaced(control.getByRole("button", { name: "Dalej" }));
-  await clickPaced(control.getByRole("button", { name: "Zakończ podłączanie" }));
   await clickPaced(control.getByRole("button", { name: "Gotowe — przejdź do rund" }));
   await clickPaced(control.getByRole("button", { name: "Dalej" }));
 
@@ -447,7 +445,6 @@ async function scenarioFinalFull(pages) {
   const { control, buzzer, host } = pages;
 
   await clickPaced(control.getByRole("button", { name: "Dalej" }));
-  await clickPaced(control.getByRole("button", { name: "Zakończ podłączanie" }));
   await clickPaced(control.getByRole("button", { name: "Gotowe — przejdź do rund" }));
   await clickPaced(control.getByRole("button", { name: "Dalej" }));
   await clickPaced(control.getByRole("button", { name: "Start rundy" }));
@@ -545,7 +542,6 @@ async function scenarioFinalEarlyExit(pages) {
   const { control, buzzer, host } = pages;
 
   await clickPaced(control.getByRole("button", { name: "Dalej" }));
-  await clickPaced(control.getByRole("button", { name: "Zakończ podłączanie" }));
   await clickPaced(control.getByRole("button", { name: "Gotowe — przejdź do rund" }));
   await clickPaced(control.getByRole("button", { name: "Dalej" }));
   await clickPaced(control.getByRole("button", { name: "Start rundy" }));

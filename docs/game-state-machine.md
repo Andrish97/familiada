@@ -10,19 +10,8 @@ Ta strona jest wygenerowana z `shared/gameStateMachine.js` — jedynego źródł
 
 - **Karta**: `devices`
 - **Wejście**: start gry / pierwsze wejście w Control
-- **Zapis (`detail`)**: detail.display.mode='BLACK' (wartość domyślna)
-- **Display**: Czarny ekran — wynika z odczytu domyślnego wiersza, nie ze specjalnej komendy startowej.
-- **Host**: Nieaktywny/nieotwarty.
-- **Buzzer**: Nieaktywny/nieotwarty.
-- **Dźwięki**: —
-- **Dozwolone kolejne kroki**: `devices_hostbuzzer`
-
-### `devices_hostbuzzer`
-
-- **Karta**: `devices`
-- **Wejście**: operator potwierdza połączenie Display
 - **Zapis (`detail`)**: detail.display.mode ('BLACK'|'QR'), detail.display.qr.{host,buzzer}.show (niezależne, jeden LUB oba naraz)
-- **Display**: BLACK domyślnie; QR z qr.host.show/qr.buzzer.show gdy operator kliknie 'QR na wyświetlaczu' dla Hosta/Buzzera (niezależnie).
+- **Display**: Czarny ekran domyślnie — wynika z odczytu domyślnego wiersza, nie ze specjalnej komendy startowej; QR z qr.host.show/qr.buzzer.show gdy operator kliknie 'QR na wyświetlaczu' dla Hosta/Buzzera (niezależnie).
 - **Host**: Czeka na połączenie (lub pominięty przez flags.noHostTablet).
 - **Buzzer**: Czeka na połączenie (lub pominięty przez flags.physicalBuzzer).
 - **Dźwięki**: —

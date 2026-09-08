@@ -10,7 +10,7 @@
 // akcji) rzuca wyjątek zamiast po cichu zepsuć stan gry.
 //
 // Zakres celowo NIE obejmuje nawigacji przedmeczowej (devices_display →
-// devices_hostbuzzer → setup_finish → r_intro → r_roundStart) — to liniowe
+// setup_finish → r_intro → r_roundStart) — to liniowe
 // przechodzenie bez żadnych reguł/rozgałęzień, obsługiwane wprost w
 // control2.html (app-level), a nie w silniku reguł gry. Ten plik odpowiada
 // za wszystko, co ma realną logikę: R2-R10 (rundy) i F0-F14 (finał).

@@ -21,23 +21,18 @@ export const TEAMS = ["A", "B"];
 // uzasadnienie każdej reguły), soundCues (nazwy z audio/sounds.json),
 // next (dozwolone kolejne kroki — źródło TRANSITIONS niżej).
 export const STEPS = {
+  // Jeden krok, wszystkie 3 urządzenia naraz (Wyświetlacz + Prowadzący +
+  // Przycisk) — dokładnie jak dzisiejsze control.html: "Step 2 (host+buzzer)
+  // – usunięty, scalony z step 1" (control.html, w kodzie wprost). Dawniejszy
+  // zapis w tym pliku (osobny krok devices_hostbuzzer) błędnie "przywracał"
+  // martwy, celowo scalony/usunięty krok zamiast podążać za tym, co stary
+  // Control faktycznie robi — poprawione po korekcie właściciela projektu.
   devices_display: {
     card: "devices",
     entryTrigger: "start gry / pierwsze wejście w Control",
-    dataShape: "detail.display.mode='BLACK' (wartość domyślna)",
-    gatedBy: [],
-    display: "Czarny ekran — wynika z odczytu domyślnego wiersza, nie ze specjalnej komendy startowej.",
-    host: "Nieaktywny/nieotwarty.",
-    buzzer: "Nieaktywny/nieotwarty.",
-    soundCues: [],
-    next: ["devices_hostbuzzer"],
-  },
-  devices_hostbuzzer: {
-    card: "devices",
-    entryTrigger: "operator potwierdza połączenie Display",
     dataShape: "detail.display.mode ('BLACK'|'QR'), detail.display.qr.{host,buzzer}.show (niezależne, jeden LUB oba naraz)",
     gatedBy: [],
-    display: "BLACK domyślnie; QR z qr.host.show/qr.buzzer.show gdy operator kliknie 'QR na wyświetlaczu' dla Hosta/Buzzera (niezależnie).",
+    display: "Czarny ekran domyślnie — wynika z odczytu domyślnego wiersza, nie ze specjalnej komendy startowej; QR z qr.host.show/qr.buzzer.show gdy operator kliknie 'QR na wyświetlaczu' dla Hosta/Buzzera (niezależnie).",
     host: "Czeka na połączenie (lub pominięty przez flags.noHostTablet).",
     buzzer: "Czeka na połączenie (lub pominięty przez flags.physicalBuzzer).",
     soundCues: [],
