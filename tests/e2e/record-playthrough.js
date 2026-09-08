@@ -264,17 +264,29 @@ async function fillPaced(locator, text, ms = CLICK_PACE_MS) {
 
 // To nagranie ma pokazywać, jak realnie wygląda praca operatora — .fill()
 // wsadza cały tekst do pola w jednej klatce, co na wideo wygląda jak wklejenie,
-// nie jak wpisywanie. Tu wpisujemy znak po znaku (page.keyboard.insertText —
-// obsługuje polskie znaki, w odróżnieniu od .press(), które operuje na
-// nazwach klawiszy). ui.js's "input" listener wysyła SET_ENTRY_TEXT po
-// KAŻDYM znaku (tak samo jak przy prawdziwym pisaniu na klawiaturze), więc
-// każdy znak czeka na własną odpowiedź zapisu — ten sam wyścig co przy
-// clickPaced, tylko na poziomie pojedynczego znaku zamiast kliknięcia.
+// nie jak wpisywanie. Tu wpisujemy znak po znaku.
+//
+// WAŻNE: ui.js po KAŻDYM zapisie (SET_ENTRY_TEXT) przebudowuje cały #app —
+// stary <input> znika, w jego miejsce wchodzi nowy element DOM. Pierwsza
+// wersja robiła jeden .click() (focus) na starcie i dalej sypała znaki przez
+// page.keyboard.insertText() na to, co ma focus na poziomie systemu — po
+// pierwszym znaku, gdy DOM się przebudował, focus ginął i żaden kolejny znak
+// nigdzie nie trafiał (każde oczekiwanie na zapis czekało pełne 15s zanim
+// przechodziło dalej — stąd nagranie "wisiało" kilkanaście minut).
+// locator.press("End") samo od nowa odnajduje element w DOM, focusuje go I
+// przestawia kursor na koniec aktualnej wartości — przeżywa więc przebudowę
+// DOM po każdym znaku ORAZ gwarantuje, że kolejny znak dopisze się na końcu,
+// a nie wstawi się w środek (zwykły .click() nie gwarantuje pozycji kursora
+// przy klikaniu w pole z już wpisanym tekstem). page.keyboard.insertText()
+// obsługuje polskie znaki (w odróżnieniu od .press(), które operuje na
+// nazwach klawiszy, nie na dowolnym Unicode) — wywoływane dopiero PO
+// ustawieniu focusu/kursora przez press("End"), więc trafia we właściwe,
+// aktualne miejsce.
 async function typePaced(locator, text, msPerChar = 90) {
   const page = locator.page();
-  await locator.click();
   for (const ch of text) {
     const responded = waitForWrite(page);
+    await locator.press("End");
     await page.keyboard.insertText(ch);
     await responded;
     await page.waitForTimeout(msPerChar);
