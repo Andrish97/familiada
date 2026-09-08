@@ -42,6 +42,15 @@ export function createUI({ root, emit }) {
   // (nic się jeszcze nie zmieniło w grze, dopóki nie ma potwierdzenia).
   let pendingPhysicalTeam = null;
 
+  // Kafle Rund, które faktycznie zmieniają wynik/przebieg gry (odpowiedź,
+  // X, Oddaj kontrolę) też idą przez zaznacz → potwierdź, jak sekcja 3a
+  // pkt 7 — pierwsze kliknięcie tylko "uzbraja" kafel (złota obwódka, zero
+  // zapisu), drugie kliknięcie NA TYM SAMYM kaflu wysyła akcję. Kliknięcie
+  // innego kafla przezbraja zamiast zaliczać stare zaznaczenie. Lokalny
+  // stan UI, jak pendingPhysicalTeam — nic się nie zmienia w grze, dopóki
+  // nie ma drugiego kliknięcia.
+  let armedKey = null;
+
   // Statusy urządzeń w TOPBARZE (poza #app, statyczne w control2.html) —
   // dokładnie jak dzisiejsze control/js/ui.js's setDeviceBadges: aktualizacja
   // imperatywna przy każdym renderze, nie przebudowa DOM.
@@ -329,6 +338,27 @@ export function createUI({ root, emit }) {
     return h("div", { class: "c2-tilegrid" }, tiles.filter(Boolean));
   }
 
+  // Wariant tile() z zaznacz → potwierdź (patrz armedKey wyżej): pierwsze
+  // kliknięcie tylko uzbraja (dopisuje c2-tile-armed, złota obwódka w CSS),
+  // drugie na tym samym kaflu odpala prawdziwe onclick.
+  function armableTile(key, content, { onclick, disabled, cls = "", ...rest }) {
+    const armed = !disabled && armedKey === key;
+    return tile(content, {
+      ...rest,
+      disabled,
+      cls: `${cls} ${armed ? "c2-tile-armed" : ""}`.trim(),
+      onclick: disabled ? undefined : () => {
+        if (armedKey === key) {
+          armedKey = null;
+          onclick();
+        } else {
+          armedKey = key;
+          emit("ui.rerender");
+        }
+      },
+    });
+  }
+
   // Blok podpowiedzi — zawsze bezpośrednio NAD siatką/wierszami wpisywania,
   // dokładnie jak stary control/js/gameRounds.js's msgDuel/msgRoundsPlay/
   // msgSteal itd. Pusty tekst = nic nie renderujemy (nie zostawiamy pustego
@@ -398,6 +428,24 @@ export function createUI({ root, emit }) {
       pendingPhysicalTeam = null; // faza się zmieniła spod nas — porzuć nieaktualne zaznaczenie
     }
 
+    // Raz osiągnięte canEndRound (wszystko odsłonięte albo kradzież już
+    // rozstrzygnięta) nie ma już nic do pudłowania/odmierzania — X i zegarek
+    // znikają razem, zostaje tylko "Zakończ rundę" w nav na dole.
+    const xAvailable = ((state.phase === "DUEL" && r.duel.firstTeam) || state.phase === "PLAY" || state.phase === "STEAL")
+      && !r.canEndRound && !r.lockPlayControls;
+    const passAvailable = state.phase === "PLAY" && r.allowPass && !r.passUsed;
+
+    // Uzbrojony kafel z poprzedniego renderu mógł przestać być prawdziwy
+    // (odpowiedź już odsłonięta gdzie indziej, runda się skończyła...) —
+    // walidacja przy każdym renderze, żeby złota obwódka nigdy nie została
+    // "zawieszona" na czymś nieaktualnym.
+    if (armedKey) {
+      const validAnswerArm = armedKey.startsWith("ans:") && !r.revealed.includes(Number(armedKey.slice(4)));
+      const validPassArm = armedKey === "pass" && passAvailable;
+      const validXArm = armedKey === "x" && xAvailable;
+      if (!validAnswerArm && !validPassArm && !validXArm) armedKey = null;
+    }
+
     // Siatka 3x5: wiersze 1-3 to do 6 odpowiedzi (2 na wiersz, 1,5 jednostki
     // szerokości) — TREŚĆ i PUNKTY widoczne zawsze (operator musi wiedzieć,
     // co klika i ile to warte, zanim jeszcze odsłoni), po odsłonięciu zmienia
@@ -406,11 +454,15 @@ export function createUI({ root, emit }) {
     // dopóki dostępny. Wiersz 5: X (z licznikiem pudeł na przycisku) /
     // przycisk zegarka 3s, po 1,5 jednostki szerokości każdy — osobny kafel
     // licznika zniknął, bo liczba pudeł mieści się w etykiecie samego X.
+    // Odpowiedź/X/Oddaj kontrolę idą przez armableTile (zaznacz → potwierdź,
+    // sekcja 3a pkt 7) — to jedyne trzy kafle, które realnie zmieniają
+    // wynik/przebieg rundy, więc każdy dostaje ten sam bufor przeciwko
+    // przypadkowemu kliknięciu na żywej transmisji.
     const tiles = [];
     const sortedAnswers = r.answers.slice().sort((a, b) => a.ord - b.ord).slice(0, 6);
     sortedAnswers.forEach((a, i) => {
       const revealed = r.revealed.includes(a.ord);
-      tiles.push(tile(`${a.text} — ${a.fixed_points}`, {
+      tiles.push(armableTile(`ans:${a.ord}`, `${a.text} — ${a.fixed_points}`, {
         row: Math.floor(i / 2) + 1,
         col: HALF(i % 2),
         cls: revealed ? "c2-tile-revealed" : "",
@@ -419,18 +471,13 @@ export function createUI({ root, emit }) {
       }));
     });
 
-    if (state.phase === "PLAY" && r.allowPass && !r.passUsed) {
-      tiles.push(tile("Oddaj kontrolę", {
+    if (passAvailable) {
+      tiles.push(armableTile("pass", "Oddaj kontrolę", {
         row: 4, col: "1 / 7", cls: "c2-tile-primary",
         onclick: () => emit("game.dispatch", { type: "PASS" }),
       }));
     }
 
-    // Raz osiągnięte canEndRound (wszystko odsłonięte albo kradzież już
-    // rozstrzygnięta) nie ma już nic do pudłowania/odmierzania — X i zegarek
-    // znikają razem, zostaje tylko "Zakończ rundę" w nav na dole.
-    const xAvailable = ((state.phase === "DUEL" && r.duel.firstTeam) || state.phase === "PLAY" || state.phase === "STEAL")
-      && !r.canEndRound && !r.lockPlayControls;
     const timer3 = r.timer3;
     const timer3Available = xAvailable;
     if (xAvailable) {
@@ -444,7 +491,7 @@ export function createUI({ root, emit }) {
         // testy/czytniki ekranu widziałyby za każdym razem inny label.
         h("div", { class: "c2-tile-sub", "aria-hidden": "true", text: `${strikes} / 3` }),
       ]);
-      tiles.push(tile(xLabel, { row: 5, col: HALF(0), cls: "c2-tile-danger", onclick: () => emit("game.dispatch", { type: "ADD_X" }) }));
+      tiles.push(armableTile("x", xLabel, { row: 5, col: HALF(0), cls: "c2-tile-danger", onclick: () => emit("game.dispatch", { type: "ADD_X" }) }));
     }
     if (timer3Available) {
       const running = !!timer3?.running;
@@ -463,10 +510,15 @@ export function createUI({ root, emit }) {
       h("div", { class: "c2-roundlayout-side" }, [hintBlock(getRoundsHint(state))]),
     ]));
 
-    // Pasek statusu — kto ma kontrolę, bank, status kradzieży. Bank żył
-    // wcześniej DWA razy (nad siatką i w nagłówku kroku) — teraz wyłącznie tu.
+    // Pasek statusu — kto gra, bank, status kradzieży. Bank żył wcześniej
+    // DWA razy (nad siatką i w nagłówku kroku) — teraz wyłącznie tu.
+    // "Gra:" zamiast "Kontrolę ma:" — od momentu przyjęcia zgłoszenia w
+    // pojedynku (jeszcze przed formalnym controlTeam z PLAY) ktoś już
+    // faktycznie odpowiada, więc dawna nazwa myliła: sugerowała, że w
+    // DUEL nikt nie ma "kontroli", a jednak ktoś zawsze wtedy gra.
+    const activeTeam = state.controlTeam || (state.phase === "DUEL" ? r.duel.currentTeam : null);
     const statusItems = [
-      h("span", {}, [document.createTextNode("Kontrolę ma: "), h("b", { text: state.controlTeam ? teamName(state, state.controlTeam) : "—" })]),
+      h("span", {}, [document.createTextNode("Gra: "), h("b", { text: activeTeam ? teamName(state, activeTeam) : "—" })]),
       h("span", {}, [document.createTextNode("Bank: "), h("b", { text: String(r.bankPts) })]),
     ];
     if (state.phase === "STEAL" && r.steal.active) {

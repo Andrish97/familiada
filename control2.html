@@ -80,7 +80,12 @@
        bo tu treść zmienia się co kliknięcie zamiast być statycznym opisem.
        W Rundach żyje w prawej kolumnie (.c2-roundlayout-side), nie nad
        siatką — stąd height:100%, żeby wypełniał całą wysokość tej kolumny. */
-    .c2-hint { padding:8px 12px; border-radius:10px; background:rgba(180,140,0,.13); border:1px solid rgba(200,160,0,.35); font-size:.85rem; line-height:1.4; flex:none; }
+    /* Zwykły .hint z base.css/builder.css to płaski tekst (bez obwódki/tła)
+       — ten sam wzorzec tutaj, żeby podpowiedź NIE wyglądała jak własna,
+       osobna karta obok siatki (plan, sekcja 3b: jedna otoczka na cały
+       widok). Lekki lewy akcent zamiast pełnej ramki wystarczy, żeby było
+       widać, że to osobny blok, bez udawania drugiej karty. */
+    .c2-hint { padding-left:10px; border-left:2px solid rgba(200,160,0,.4); font-size:.85rem; line-height:1.4; opacity:.85; flex:none; }
     /* ---- Rundy: siatka odpowiedzi (lewo) + pionowa kreska + podpowiedź
        (prawo). Tylko renderRounds() używa tego — Finał-mapowanie zostaje
        przy dawnym układzie (hint nad siatką), nie było proszone o zmianę. ---- */
@@ -130,6 +135,11 @@
     .c2-tile-timer { border-color:rgba(122,178,255,.4); background:rgba(122,178,255,.12); color:#bcd9ff; font-variant-numeric:tabular-nums; font-size:1.3rem; cursor:default; }
     .c2-tile-timer.startable { cursor:pointer; font-size:.85rem; }
     .c2-tile-sub { display:block; margin-top:2px; font-size:.7rem; font-weight:700; opacity:.8; }
+    /* Uzbrojony kafel (zaznacz -> potwierdź, control2/js/ui.js's armableTile) —
+       złota obwódka NAD kolorem kafla (danger/primary/zwykły), żeby "jeszcze
+       tylko zaznaczone, kliknij drugi raz" wyglądało tak samo niezależnie od
+       tego, jaki to kafel. */
+    .c2-tile-armed { border-color:var(--gold); box-shadow:0 0 0 2px rgba(255,234,166,.55) inset, 0 0 10px rgba(255,234,166,.25); }
 
     /* ---- Wpisywanie (finał): ta sama rytmika 5 wierszy co siatka wyżej
        (jeden wiersz na pytanie), ale podział W POZIOMIE inny — treść pytania
