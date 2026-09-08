@@ -694,13 +694,32 @@ export function createUI({ root, emit }) {
     return `Wygrała drużyna ${teamName(state, winner)} wynikiem ${Math.max(A, B)}:${Math.min(A, B)}`;
   }
 
+  // Co POKAŻE Wyświetlacz po "Zakończ grę" — 3 warianty (plan, sekcje R10/
+  // F14), nie "logo, wynik i punkty" naraz (błąd — pokazuje się TYLKO
+  // jedno z nich): remis -> zawsze logo, niezależnie od ustawienia;
+  // inaczej wg detail.settings.endScreenMode — "logo"->logo, "points"->
+  // wynik w punktach, "money"->pieniądze (w rundach BEZ finału 'money'
+  // jest w silniku traktowane jak 'points' — nie ma z czego policzyć
+  // realnej kwoty; w finale to prawdziwa, przeliczona kwota).
+  function endRevealHint(state, isFinal) {
+    const { A, B } = state.rounds.totals;
+    const mode = state.settings.endScreenMode;
+    if (A === B || mode === "logo" || !mode) {
+      return "Zabrzmi outro, a na wyświetlaczu pojawi się logo.";
+    }
+    if (mode === "money" && isFinal) {
+      return "Zabrzmi outro, a na wyświetlaczu pojawi się wygrana kwota pieniędzy.";
+    }
+    return "Zabrzmi outro, a na wyświetlaczu pojawi się wynik w punktach.";
+  }
+
   // Ekran końca gry — wspólny szablon dla "Koniec gry" (bez finału) i
   // "Koniec finału" (renderFinalEnd niżej), ujednolicone: ten sam dwuetapowy
   // c2-intro hero. Zawsze "Koniec gry" — finał KOŃCZY grę, to nie osobny,
   // drugi rodzaj zakończenia (było mylące: "Koniec finału" obok "Koniec
   // gry" sugerowało dwa różne ekrany). Przycisk odsłaniający wynik
   // ujednolicony na "Zakończ grę" (było osobno "Pokaż koniec gry"/"Zakończ").
-  function renderEndScreen(state, { revealAction }) {
+  function renderEndScreen(state, { revealAction, isFinal }) {
     if (!state.locks.gameEnded) {
       // Hint opisuje co ZROBI kliknięcie (dźwięk + Wyświetlacz), tak jak
       // reszta hero-ekranów ("Na wyświetlaczu pojawi się..." w r_intro/
@@ -710,7 +729,7 @@ export function createUI({ root, emit }) {
         stepLabel: "Koniec gry",
         body: [h("div", { class: "c2-intro" }, [
           h("div", { class: "c2-intro-title", text: "Koniec gry" }),
-          h("div", { class: "c2-intro-hint", text: "Zabrzmi outro, a na wyświetlaczu pojawi się logo, wynik i punkty." }),
+          h("div", { class: "c2-intro-hint", text: endRevealHint(state, isFinal) }),
         ])],
         nav: [h("button", { class: "c2-btn primary c2-intro-btn", onclick: () => emit("game.dispatch", revealAction) }, [document.createTextNode("Zakończ grę")])],
       });
@@ -730,7 +749,7 @@ export function createUI({ root, emit }) {
   }
 
   function renderGameEnd(state) {
-    renderEndScreen(state, { revealAction: { type: "GAME_END_SHOW" } });
+    renderEndScreen(state, { revealAction: { type: "GAME_END_SHOW" }, isFinal: false });
   }
 
   // ---- Finał ----
@@ -892,7 +911,7 @@ export function createUI({ root, emit }) {
   // gry" — suma finału jest już wtopiona w rounds.totals, patrz engine.js's
   // FINISH_FINAL) + dwa przyciski, tak samo jak "Koniec gry".
   function renderFinalEnd(state) {
-    renderEndScreen(state, { revealAction: { type: "FINISH_FINAL" } });
+    renderEndScreen(state, { revealAction: { type: "FINISH_FINAL" }, isFinal: true });
   }
 
   function render(state, ctx = {}) {
