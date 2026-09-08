@@ -702,14 +702,15 @@ export function createUI({ root, emit }) {
   // ujednolicony na "Zakończ grę" (było osobno "Pokaż koniec gry"/"Zakończ").
   function renderEndScreen(state, { revealAction }) {
     if (!state.locks.gameEnded) {
-      // BEZ podglądu wyniku tutaj — kliknięcie "Zakończ grę" to moment
-      // odsłonięcia (Wyświetlacz pokazuje dopiero teraz logo/pieniądze/wynik,
-      // leci outro), więc pokazanie zwycięzcy wcześniej w Control byłoby
-      // spoilerem względem tego, co widzowie zobaczą na żywo.
+      // Hint opisuje co ZROBI kliknięcie (dźwięk + Wyświetlacz), tak jak
+      // reszta hero-ekranów ("Na wyświetlaczu pojawi się..." w r_intro/
+      // f_start) — NIE zdradza samego wyniku (kto wygrał), bo to jest
+      // moment odsłonięcia dla widzów, nie wcześniej w Control.
       gameplayShell({
         stepLabel: "Koniec gry",
         body: [h("div", { class: "c2-intro" }, [
           h("div", { class: "c2-intro-title", text: "Koniec gry" }),
+          h("div", { class: "c2-intro-hint", text: "Zabrzmi outro, a na wyświetlaczu pojawi się logo, wynik i punkty." }),
         ])],
         nav: [h("button", { class: "c2-btn primary c2-intro-btn", onclick: () => emit("game.dispatch", revealAction) }, [document.createTextNode("Zakończ grę")])],
       });
