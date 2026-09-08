@@ -526,12 +526,12 @@ test("control2: physicalBuzzer + noHostTablet — urządzenia pominięte, ręczn
     // Przyciski pokazują realną nazwę drużyny (Alfa/Beta), nie kod "A"/"B".
     await expect(page.getByRole("button", { name: "Alfa" })).toBeVisible({ timeout: 10000 });
     await page.getByRole("button", { name: "Alfa" }).click();
-    await expect(page.getByText("Wybrano: Alfa")).toBeVisible();
+    await expect(page.getByRole("button", { name: "Potwierdź: Alfa" })).toBeVisible();
     await page.getByRole("button", { name: "Anuluj" }).click();
     await expect(page.getByRole("button", { name: "Alfa" })).toBeVisible();
     await page.getByRole("button", { name: "Beta" }).click();
-    await expect(page.getByText("Wybrano: Beta")).toBeVisible();
-    await page.getByRole("button", { name: "Potwierdź" }).click();
+    await expect(page.getByRole("button", { name: "Potwierdź: Beta" })).toBeVisible();
+    await page.getByRole("button", { name: "Potwierdź: Beta" }).click();
 
     await revealAnswer(page, 1); // B trafia -> przejmuje kontrolę
     await expect(page.getByText("Bank: 40")).toBeVisible({ timeout: 10000 });

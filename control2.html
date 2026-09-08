@@ -74,28 +74,6 @@
     .c2-gameplay-body { flex:1; overflow:hidden; display:flex; flex-direction:column; gap:12px; min-height:0; }
     .c2-gameplay-nav { display:flex; gap:8px; justify-content:flex-end; border-top:1px solid rgba(255,255,255,.12); padding-top:10px; flex-wrap:wrap; }
     .c2-question { font-size:1.1rem; font-weight:700; }
-    .c2-duel { display:flex; align-items:center; gap:10px; }
-    /* renderDuelAccept() — ekran "kto naciśnie pierwszy", BEZ pytania/
-       siatki/X/timera (nic z tego nie jest jeszcze grywalne). Dwa duże
-       kafle na całą szerokość: nieklikalny/wyszarzony placeholder dla obu
-       drużyn, dopóki któraś faktycznie nie naciśnie — wtedy jej kafel
-       "budzi się" (.ready) i staje się jedynym klikalnym, dokładnie jak
-       stare btnBuzzAcceptA/B w control.html. Karta jest pełnowysokościowa,
-       ale ta treść jest skromna — .c2-duelaccept-wrap wypełnia resztę
-       miejsca i WYŚRODKOWUJE w nim przyciski, żeby same przyciski nie
-       rozciągały się na całą, nienaturalną wysokość karty. */
-    .c2-duelaccept-wrap { flex:1; display:flex; flex-direction:column; justify-content:center; gap:14px; min-height:0; }
-    .c2-duelaccept { display:flex; gap:16px; }
-    .c2-duelaccept-btn {
-      flex:1; display:flex; align-items:center; justify-content:center; text-align:center;
-      min-height:120px; max-height:220px; border-radius:14px; border:1px solid var(--line2);
-      background:rgba(255,255,255,.06); color:#fff; font-weight:800; font-size:1.05rem;
-      cursor:default; opacity:.4; transition:filter .12s ease, background .12s ease, border-color .12s ease, opacity .12s ease;
-    }
-    .c2-duelaccept-btn.ready { cursor:pointer; opacity:1; border-color:var(--gold); background:rgba(255,234,166,.12); color:var(--gold); }
-    .c2-duelaccept-btn.ready:hover { filter:brightness(1.1); }
-    .c2-duelaccept-btn.ready:active { transform:translateY(1px); }
-    .c2-duelaccept-retry { display:flex; justify-content:center; }
     /* Blok podpowiedzi — ten sam wizualny wzorzec co dzisiejsze
        .summaryDefaultHint w control.css (bursztynowy pasek), tylko krócej,
        bo tu treść zmienia się co kliknięcie zamiast być statycznym opisem.

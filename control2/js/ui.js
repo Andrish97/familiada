@@ -367,47 +367,34 @@ export function createUI({ root, emit }) {
     return text ? h("div", { class: "c2-hint", text }) : null;
   }
 
-  // Duży kafel "Zatwierdź drużynę" (renderDuelAccept) — `ready=false`
-  // renderuje się jako wyszarzony, nieklikalny placeholder (dokładnie stary
-  // control.html's btnBuzzAcceptA/B, wyłączone dopóki ta konkretna drużyna
-  // nie nacisnęła przycisku).
-  function duelAcceptButton(text, ready, onclick) {
-    const el = h("button", {
-      class: `c2-duelaccept-btn ${ready ? "ready" : ""}`.trim(),
-      type: "button",
-      onclick: ready ? onclick : undefined,
-    }, [document.createTextNode(text)]);
-    if (!ready) el.disabled = true;
-    return el;
-  }
-
   // r_duel PRZED przyjęciem zgłoszenia — patrz komentarz przy jego jedynym
   // wywołaniu w renderRounds(). Odpowiednik starego control.html's osobnego
   // data-step="r_duel": brak pytania/siatki, tylko "kto naciśnie pierwszy".
+  // Ten sam wspólny szablon co reszta Rund — TA SAMA siatka 6-kolumnowa
+  // (tile/tileGrid) i ten sam c2-roundlayout (siatka + kreska + hint po
+  // prawej), tylko zamiast odpowiedzi w kaflach siedzą przyciski
+  // zatwierdzania: 2 przyciski = jeden rząd (HALF+HALF), 3 przyciski = dwa
+  // w jednym rzędzie + jeden na całą szerokość w drugim (jak "Oddaj
+  // kontrolę"). Nieaktywny kafel korzysta z tego samego :disabled co reszta
+  // siatki (wyszarzony, nieklikalny placeholder) — nic tu nie jest osobnym,
+  // bespoke komponentem.
   function renderDuelAccept(state) {
     const r = state.rounds;
-    const body = [hintBlock(getRoundsHint(state))];
-    // Karta jest pełnowysokościowa, ale ten ekran ma mało treści (celowo —
-    // brak pytania/siatki) — zamiast rozciągać same przyciski na całą
-    // wysokość, wypełniamy resztę miejsca tym otoczkowym flex-kontenerem i
-    // WYŚRODKOWUJEMY w nim rozsądnej wielkości przyciski.
-    const acceptArea = [];
+    const tiles = [];
 
     if (state.settings.physicalBuzzer === true) {
       // Brak Buzzera na ekranie — operator sam wskazuje, kto pierwszy
       // nacisnął fizyczny przycisk. Zaznacz → potwierdź, żeby nie zaliczyć
       // przypadkowego kliknięcia (plan: "physicalSelectTeam→potwierdź").
       if (!pendingPhysicalTeam) {
-        acceptArea.push(h("div", { class: "c2-duelaccept" }, [
-          duelAcceptButton(teamName(state, "A"), true, () => { pendingPhysicalTeam = "A"; emit("ui.rerender"); }),
-          duelAcceptButton(teamName(state, "B"), true, () => { pendingPhysicalTeam = "B"; emit("ui.rerender"); }),
-        ]));
+        tiles.push(tile(teamName(state, "A"), { row: 1, col: HALF(0), onclick: () => { pendingPhysicalTeam = "A"; emit("ui.rerender"); } }));
+        tiles.push(tile(teamName(state, "B"), { row: 1, col: HALF(1), onclick: () => { pendingPhysicalTeam = "B"; emit("ui.rerender"); } }));
       } else {
-        acceptArea.push(h("div", { class: "c2-duel" }, [
-          h("span", { text: `Wybrano: ${teamName(state, pendingPhysicalTeam)}` }),
-          h("button", { class: "c2-btn primary", onclick: () => { const t = pendingPhysicalTeam; pendingPhysicalTeam = null; emit("game.dispatch", { type: "ACCEPT_BUZZ", team: t }); } }, [document.createTextNode("Potwierdź")]),
-          h("button", { class: "c2-btn", onclick: () => { pendingPhysicalTeam = null; emit("ui.rerender"); } }, [document.createTextNode("Anuluj")]),
-        ]));
+        tiles.push(tile(`Potwierdź: ${teamName(state, pendingPhysicalTeam)}`, {
+          row: 1, col: HALF(0), cls: "c2-tile-primary",
+          onclick: () => { const t = pendingPhysicalTeam; pendingPhysicalTeam = null; emit("game.dispatch", { type: "ACCEPT_BUZZ", team: t }); },
+        }));
+        tiles.push(tile("Anuluj", { row: 1, col: HALF(1), onclick: () => { pendingPhysicalTeam = null; emit("ui.rerender"); } }));
       }
     } else {
       // Tryb normalny (Buzzer): obie drużyny widoczne od razu, ale tylko
@@ -416,17 +403,26 @@ export function createUI({ root, emit }) {
       // stary control.html's btnBuzzAcceptA/B. "Ponów naciśnięcie" (nowe
       // RETRY_DUEL) pojawia się dopiero, gdy jest co odrzucić.
       const lastPressed = r.duel.lastPressed;
-      acceptArea.push(h("div", { class: "c2-duelaccept" }, [
-        duelAcceptButton(`Zatwierdź: ${teamName(state, "A")}`, lastPressed === "A", () => emit("game.dispatch", { type: "ACCEPT_BUZZ", team: "A" })),
-        duelAcceptButton(`Zatwierdź: ${teamName(state, "B")}`, lastPressed === "B", () => emit("game.dispatch", { type: "ACCEPT_BUZZ", team: "B" })),
-      ]));
+      tiles.push(tile(`Zatwierdź: ${teamName(state, "A")}`, {
+        row: 1, col: HALF(0), cls: lastPressed === "A" ? "c2-tile-primary" : "",
+        disabled: lastPressed !== "A",
+        onclick: () => emit("game.dispatch", { type: "ACCEPT_BUZZ", team: "A" }),
+      }));
+      tiles.push(tile(`Zatwierdź: ${teamName(state, "B")}`, {
+        row: 1, col: HALF(1), cls: lastPressed === "B" ? "c2-tile-primary" : "",
+        disabled: lastPressed !== "B",
+        onclick: () => emit("game.dispatch", { type: "ACCEPT_BUZZ", team: "B" }),
+      }));
       if (lastPressed) {
-        acceptArea.push(h("div", { class: "c2-duelaccept-retry" }, [
-          h("button", { class: "c2-btn", onclick: () => emit("game.dispatch", { type: "RETRY_DUEL" }) }, [document.createTextNode("Ponów naciśnięcie")]),
-        ]));
+        tiles.push(tile("Ponów naciśnięcie", { row: 2, col: "1 / 7", onclick: () => emit("game.dispatch", { type: "RETRY_DUEL" }) }));
       }
     }
-    body.push(h("div", { class: "c2-duelaccept-wrap" }, acceptArea));
+
+    const body = [h("div", { class: "c2-roundlayout" }, [
+      h("div", { class: "c2-roundlayout-main" }, [tileGrid(tiles)]),
+      h("div", { class: "c2-roundlayout-divider" }),
+      h("div", { class: "c2-roundlayout-side" }, [hintBlock(getRoundsHint(state))]),
+    ])];
 
     gameplayShell({ stepLabel: `Runda ${r.roundNo} — pojedynek`, body, nav: null });
   }
