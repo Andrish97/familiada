@@ -54,28 +54,31 @@ test("getRoundsHint: r_duel po zgłoszeniu (przed przyjęciem) pokazuje kto się
   const { store, dispatch } = makeEngine();
   await dispatch({ type: "START_ROUND" });
   store.state.rounds.duel.lastPressed = "A";
-  assert.match(getRoundsHint(store.state), /Pierwsza: A/);
+  assert.match(getRoundsHint(store.state), /Pierwsza: Drużyna A/);
 });
 
 test("getRoundsHint: faza DUEL po ACCEPT_BUZZ — pierwsza i druga próba mają różny tekst", async () => {
   const { store, dispatch } = makeEngine();
   await dispatch({ type: "START_ROUND" });
   await dispatch({ type: "ACCEPT_BUZZ", team: "A" });
-  assert.match(getRoundsHint(store.state), /Pojedynek — odpowiada: A/);
+  assert.match(getRoundsHint(store.state), /Pojedynek — odpowiada: Drużyna A/);
 
   await dispatch({ type: "REVEAL_ANSWER", ord: 3 }); // nie-topowa -> CONTINUE_SECOND
-  assert.match(getRoundsHint(store.state), /Teraz odpowiada: B/);
+  assert.match(getRoundsHint(store.state), /Teraz odpowiada: Drużyna B/);
 });
 
+// Hinty celowo NIE powtarzają, kto ma kontrolę/ile jest w banku — to już
+// pokazuje pasek statusu pod siatką (control2/js/ui.js) — tylko podpowiadają
+// kolejny krok operatora.
 test("getRoundsHint: faza PLAY — z opcją oddania pytania vs bez", async () => {
   const { store, dispatch } = makeEngine();
   await dispatch({ type: "START_ROUND" });
   await dispatch({ type: "ACCEPT_BUZZ", team: "A" });
   await dispatch({ type: "REVEAL_ANSWER", ord: 1 }); // WIN -> PLAY, allowPass=true
-  assert.match(getRoundsHint(store.state), /Może zagrać albo oddać pytanie/);
+  assert.match(getRoundsHint(store.state), /Może zagrać dalej albo oddać kontrolę/);
 
   await dispatch({ type: "REVEAL_ANSWER", ord: 2 }); // allowPass -> false
-  assert.equal(getRoundsHint(store.state), "Kontrolę ma: A.");
+  assert.equal(getRoundsHint(store.state), "Wskaż trafioną odpowiedź albo kliknij X (pudło).");
 });
 
 test("getRoundsHint: faza STEAL — przed i po rozstrzygnięciu", async () => {
@@ -86,7 +89,7 @@ test("getRoundsHint: faza STEAL — przed i po rozstrzygnięciu", async () => {
   await dispatch({ type: "ADD_X" });
   await dispatch({ type: "ADD_X" });
   await dispatch({ type: "ADD_X" }); // STEAL, drużyna B
-  assert.match(getRoundsHint(store.state), /Szansa na kradzież. Odpowiada: B/);
+  assert.match(getRoundsHint(store.state), /Szansa na kradzież. Kliknij trafioną odpowiedź/);
 
   await dispatch({ type: "ADD_X" }); // B pudłuje kradzież
   assert.match(getRoundsHint(store.state), /Kradzież nietrafiona/);

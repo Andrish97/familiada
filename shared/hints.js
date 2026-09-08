@@ -11,30 +11,47 @@
 // Zero importów przeglądarkowych — testowalne w gołym Node, jak
 // gameStateMachine.js/deriveEvents.js.
 
+// "A"/"B" to wewnętrzne kody drużyn (public.game_team) — nigdy nie
+// pokazujemy ich operatorowi wprost, tylko realną nazwę wpisaną w
+// ustawieniach gry (state.teams.teamA/teamB). Reużywane przez
+// control2/js/ui.js (pasek statusu, ekran pojedynku), żeby te same litery
+// nie były tłumaczone w dwóch miejscach dwoma różnymi kawałkami kodu.
+export function teamName(state, code) {
+  if (code === "A") return state.teams?.teamA || "Drużyna A";
+  if (code === "B") return state.teams?.teamB || "Drużyna B";
+  return code || "—";
+}
+
 export function getRoundsHint(state) {
   const r = state.rounds;
   if (state.step === "r_intro") return "Gra gotowa. Ekran oczekuje na start.";
   if (state.step === "r_roundStart") return `Runda ${r.roundNo} gotowa. Kliknij „Start rundy”, żeby zacząć.`;
   if (state.step !== "r_duel" && state.step !== "r_play") return "";
 
+  // Uwaga: hinty celowo NIE powtarzają tego, co już widać na pasku statusu
+  // pod siatką (kto ma kontrolę / bank / kradzież) — tylko podpowiadają
+  // KOLEJNY krok. Kto teraz odpowiada w pojedynku (DUEL) nie jest na pasku
+  // statusu (ten pokazuje tylko controlTeam, który w DUEL jest jeszcze
+  // pusty), więc tu zostaje.
   if (state.phase === "DUEL") {
     if (!r.duel.firstTeam) {
       if (r.duel.lastPressed) {
-        return `Pierwsza: ${r.duel.lastPressed}. Kliknij „Przyjmij”, żeby zatwierdzić.`;
+        return `Pierwsza: ${teamName(state, r.duel.lastPressed)}. Kliknij „Przyjmij”, żeby zatwierdzić.`;
       }
       return state.settings.physicalBuzzer
         ? "Obserwuj, kto nacisnął przycisk jako pierwszy. Kliknij drużynę, a potem „Potwierdź”."
         : "Przycisk aktywny. Czekam na zgłoszenie drużyny.";
     }
     return r.duel.cycleFirstAnswered
-      ? `Teraz odpowiada: ${r.duel.currentTeam}.`
-      : `Pojedynek — odpowiada: ${r.duel.currentTeam}.`;
+      ? `Teraz odpowiada: ${teamName(state, r.duel.currentTeam)}.`
+      : `Pojedynek — odpowiada: ${teamName(state, r.duel.currentTeam)}.`;
   }
 
   if (state.phase === "PLAY") {
     if (!state.controlTeam) return "Brak drużyny grającej.";
-    if (r.allowPass && !r.passUsed) return `Kontrolę ma: ${state.controlTeam}. Może zagrać albo oddać pytanie.`;
-    return `Kontrolę ma: ${state.controlTeam}.`;
+    if (r.canEndRound) return "Wszystkie odpowiedzi odsłonięte. Kliknij „Zakończ rundę”.";
+    if (r.allowPass && !r.passUsed) return "Może zagrać dalej albo oddać kontrolę.";
+    return "Wskaż trafioną odpowiedź albo kliknij X (pudło).";
   }
 
   if (state.phase === "STEAL") {
@@ -43,7 +60,7 @@ export function getRoundsHint(state) {
         ? "Kradzież udana — bank przechodzi do drużyny kradnącej."
         : "Kradzież nietrafiona — bank zostaje przy drużynie grającej.";
     }
-    return `Szansa na kradzież. Odpowiada: ${r.steal.team}. Kliknij odpowiedź albo X (pudło).`;
+    return "Szansa na kradzież. Kliknij trafioną odpowiedź albo X (pudło).";
   }
 
   if (state.phase === "REVEAL") {

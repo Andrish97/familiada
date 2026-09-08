@@ -278,7 +278,7 @@ test("control2: pełna runda przez 4 urządzenia + wznowienie Control po przeła
 
     await expect(buzzerPage.getByRole("button", { name: "Buzzer A" })).toBeEnabled({ timeout: 10000 });
     await buzzerPage.getByRole("button", { name: "Buzzer A" }).click();
-    await expect(page.getByText("Zgłoszono: A")).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText("Zgłoszono: Alfa")).toBeVisible({ timeout: 10000 });
     await page.getByRole("button", { name: "Przyjmij" }).click();
 
     // Odpowiedź #1 ma najwyższe punkty (40) — trafienie wygrywa pojedynek.
@@ -329,7 +329,7 @@ test("control2: reset pojedynku, pass, kradzież wygrana/przegrana, odkrywanie r
 
     await expect(buzzerPage.getByRole("button", { name: "Buzzer A" })).toBeEnabled({ timeout: 10000 });
     await buzzerPage.getByRole("button", { name: "Buzzer A" }).click();
-    await expect(page.getByText("Zgłoszono: A")).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText("Zgłoszono: Alfa")).toBeVisible({ timeout: 10000 });
     await page.getByRole("button", { name: "Przyjmij" }).click();
     await page.getByRole("button", { name: "X", exact: true }).click(); // A pudłuje -> kolej B
     // B pudłuje też -> RESET CYKLU: kolej wraca do A, BEZ nowego zgłoszenia
@@ -357,7 +357,7 @@ test("control2: reset pojedynku, pass, kradzież wygrana/przegrana, odkrywanie r
     await page.getByRole("button", { name: "Start rundy" }).click();
     await expect(buzzerPage.getByRole("button", { name: "Buzzer B" })).toBeEnabled({ timeout: 10000 });
     await buzzerPage.getByRole("button", { name: "Buzzer B" }).click();
-    await expect(page.getByText("Zgłoszono: B")).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText("Zgłoszono: Beta")).toBeVisible({ timeout: 10000 });
     await page.getByRole("button", { name: "Przyjmij" }).click();
 
     await answerTile(page, 1).click(); // B trafia (40 pkt) -> kontrola B, allowPass
@@ -419,7 +419,7 @@ test("control2: próg w rundzie -> finał, wczesne zakończenie po 4/5 pytaniach
 
     await expect(buzzerPage.getByRole("button", { name: "Buzzer A" })).toBeEnabled({ timeout: 10000 });
     await buzzerPage.getByRole("button", { name: "Buzzer A" }).click();
-    await expect(page.getByText("Zgłoszono: A")).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText("Zgłoszono: Alfa")).toBeVisible({ timeout: 10000 });
     await page.getByRole("button", { name: "Przyjmij" }).click();
     await answerTile(page, 1).click(); // jedyna odpowiedź, 300 pkt -> bank 300
 
@@ -500,13 +500,14 @@ test("control2: physicalBuzzer + noHostTablet — urządzenia pominięte, ręczn
     await page.getByRole("button", { name: "Start rundy" }).click();
 
     // Bez Buzzera na ekranie: zaznacz -> anuluj -> zaznacz -> potwierdź.
-    await expect(page.getByRole("button", { name: "Drużyna A" })).toBeVisible({ timeout: 10000 });
-    await page.getByRole("button", { name: "Drużyna A" }).click();
-    await expect(page.getByText("Wybrano: A")).toBeVisible();
+    // Przyciski pokazują realną nazwę drużyny (Alfa/Beta), nie kod "A"/"B".
+    await expect(page.getByRole("button", { name: "Alfa" })).toBeVisible({ timeout: 10000 });
+    await page.getByRole("button", { name: "Alfa" }).click();
+    await expect(page.getByText("Wybrano: Alfa")).toBeVisible();
     await page.getByRole("button", { name: "Anuluj" }).click();
-    await expect(page.getByRole("button", { name: "Drużyna A" })).toBeVisible();
-    await page.getByRole("button", { name: "Drużyna B" }).click();
-    await expect(page.getByText("Wybrano: B")).toBeVisible();
+    await expect(page.getByRole("button", { name: "Alfa" })).toBeVisible();
+    await page.getByRole("button", { name: "Beta" }).click();
+    await expect(page.getByText("Wybrano: Beta")).toBeVisible();
     await page.getByRole("button", { name: "Potwierdź" }).click();
 
     await answerTile(page, 1).click(); // B trafia -> przejmuje kontrolę
@@ -565,25 +566,27 @@ test("control2: \"Cofnij ostatnią akcję\" cofa ostatni zapis (3. pudło -> z p
 
     await expect(buzzerPage.getByRole("button", { name: "Buzzer A" })).toBeEnabled({ timeout: 10000 });
     await buzzerPage.getByRole("button", { name: "Buzzer A" }).click();
-    await expect(page.getByText("Zgłoszono: A")).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText("Zgłoszono: Alfa")).toBeVisible({ timeout: 10000 });
     await page.getByRole("button", { name: "Przyjmij" }).click();
     await answerTile(page, 1).click(); // A przejmuje kontrolę, bank 40
 
     // Nie ma już osobnego przycisku "Kradzież" (odpala się sama po 3. X) —
-    // sprawdzamy to samo przejście PLAY->STEAL przez licznik pudeł (X/3) i
-    // pojawienie się "Kradzież: <drużyna>" w pasku statusu.
+    // sprawdzamy to samo przejście PLAY->STEAL przez licznik pudeł na
+    // samym przycisku X (aria-hidden, więc getByText zamiast getByRole —
+    // nazwa dostępna przycisku zostaje stałe "X") i pojawienie się
+    // "Kradzież: <drużyna>" w pasku statusu.
     await expect(page.getByText("Kradzież:")).toHaveCount(0);
     await page.getByRole("button", { name: "X", exact: true }).click(); // xA=1
-    await expect(page.getByRole("button", { name: "1 / 3" })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText("1 / 3")).toBeVisible({ timeout: 10000 });
     await page.getByRole("button", { name: "X", exact: true }).click(); // xA=2
-    await expect(page.getByRole("button", { name: "2 / 3" })).toBeVisible();
+    await expect(page.getByText("2 / 3")).toBeVisible();
     await page.getByRole("button", { name: "X", exact: true }).click(); // xA=3 -> auto-STEAL
-    await expect(page.getByText("Kradzież: B")).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText("Kradzież: Beta")).toBeVisible({ timeout: 10000 });
 
     await page.locator("#btnUndo").click();
     // Cofnięcie 3. pudła -> z powrotem w PLAY z xA=2 -> licznik "2 / 3", kradzież znika.
     await expect(page.getByText("Kradzież:")).toHaveCount(0, { timeout: 10000 });
-    await expect(page.getByRole("button", { name: "2 / 3" })).toBeVisible();
+    await expect(page.getByText("2 / 3")).toBeVisible();
   } finally {
     for (const ctx of contexts) await ctx.close().catch(() => {});
     await deleteGame(page, game.id);
@@ -679,7 +682,7 @@ test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśni�
     // ===== Runda jedyna: A wygrywa próg finału (300 pkt) =====
     await expect(buzzerPage.getByRole("button", { name: "Buzzer A" })).toBeEnabled({ timeout: 10000 });
     await buzzerPage.getByRole("button", { name: "Buzzer A" }).click();
-    await expect(page.getByText("Zgłoszono: A")).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText("Zgłoszono: Alfa")).toBeVisible({ timeout: 10000 });
     await page.getByRole("button", { name: "Przyjmij" }).click();
     await answerTile(page, 1).click();
     await page.getByRole("button", { name: "X", exact: true }).click();
@@ -818,7 +821,7 @@ test("control2: mnożnik rundy — runda 4. z domyślnym ×2 faktycznie przemna�
       await page.getByRole("button", { name: "Start rundy" }).click();
       await expect(buzzerPage.getByRole("button", { name: "Buzzer A" })).toBeEnabled({ timeout: 10000 });
       await buzzerPage.getByRole("button", { name: "Buzzer A" }).click();
-      await expect(page.getByText("Zgłoszono: A")).toBeVisible({ timeout: 10000 });
+      await expect(page.getByText("Zgłoszono: Alfa")).toBeVisible({ timeout: 10000 });
       await page.getByRole("button", { name: "Przyjmij" }).click();
       await answerTile(page, 1).click();
       await page.getByRole("button", { name: "X", exact: true }).click();
@@ -833,7 +836,7 @@ test("control2: mnożnik rundy — runda 4. z domyślnym ×2 faktycznie przemna�
     await page.getByRole("button", { name: "Start rundy" }).click();
     await expect(buzzerPage.getByRole("button", { name: "Buzzer A" })).toBeEnabled({ timeout: 10000 });
     await buzzerPage.getByRole("button", { name: "Buzzer A" }).click();
-    await expect(page.getByText("Zgłoszono: A")).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText("Zgłoszono: Alfa")).toBeVisible({ timeout: 10000 });
     await page.getByRole("button", { name: "Przyjmij" }).click();
     await answerTile(page, 1).click();
     await expect(page.getByText("Bank: 40")).toBeVisible({ timeout: 10000 });
@@ -877,9 +880,12 @@ test("control2: wyścig — oba przyciski Buzzera naciśnięte w tej samej chwil
       document.getElementById("btnB")?.click();
     });
 
-    const zgloszono = page.getByText(/Zgłoszono: (A|B)/);
+    // "Zgłoszono:" pokazuje realną nazwę drużyny (Alfa/Beta), nie
+    // wewnętrzny kod "A"/"B" — trzeba go odtworzyć z nazwy, żeby wskazać
+    // właściwy #btnA/#btnB na stronie Buzzera.
+    const zgloszono = page.getByText(/Zgłoszono: (Alfa|Beta)/);
     await expect(zgloszono).toBeVisible({ timeout: 10000 });
-    const winner = (await zgloszono.textContent()).includes("A") ? "A" : "B";
+    const winner = (await zgloszono.textContent()).includes("Alfa") ? "A" : "B";
     const loser = winner === "A" ? "B" : "A";
 
     // Buzzer i Control muszą się zgadzać co do tego, KTO wygrał wyścig.
@@ -921,7 +927,7 @@ test("control2: wyciszenie dźwięku — po Mute żaden klucz SFX się nie odtwa
 
     await clearSfxLog(page);
     await buzzerPage.getByRole("button", { name: "Buzzer A" }).click();
-    await expect(page.getByText("Zgłoszono: A")).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText("Zgłoszono: Alfa")).toBeVisible({ timeout: 10000 });
     await page.getByRole("button", { name: "Przyjmij" }).click();
     await answerTile(page, 1).click(); // normalnie: buzzer_press + answer_correct
     await expect(page.getByText("Bank: 40")).toBeVisible({ timeout: 10000 });

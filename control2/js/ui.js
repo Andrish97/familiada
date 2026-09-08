@@ -16,7 +16,7 @@
 // setStealMsg/setRevealMsg/ROUNDS_MSG/FINAL_MSG, ale jako czysta funkcja
 // bieżącego game_state (shared/hints.js), nie ulotny stan ustawiany przy
 // każdym zdarzeniu — "wszystko idzie przez tabelę stanów".
-import { getRoundsHint, getFinalHint } from "../../shared/hints.js?v=v2026-09-08T18231";
+import { getRoundsHint, getFinalHint, teamName } from "../../shared/hints.js?v=v2026-09-08T18231";
 
 const $ = (id) => document.getElementById(id);
 const on = (el, ev, fn) => el && el.addEventListener(ev, fn);
@@ -376,19 +376,19 @@ export function createUI({ root, emit }) {
         // przypadkowego kliknięcia (plan: "physicalSelectTeam→potwierdź").
         if (!pendingPhysicalTeam) {
           body.push(h("div", { class: "c2-duel" }, [
-            h("button", { class: "c2-btn", onclick: () => { pendingPhysicalTeam = "A"; emit("ui.rerender"); } }, [document.createTextNode("Drużyna A")]),
-            h("button", { class: "c2-btn", onclick: () => { pendingPhysicalTeam = "B"; emit("ui.rerender"); } }, [document.createTextNode("Drużyna B")]),
+            h("button", { class: "c2-btn", onclick: () => { pendingPhysicalTeam = "A"; emit("ui.rerender"); } }, [document.createTextNode(teamName(state, "A"))]),
+            h("button", { class: "c2-btn", onclick: () => { pendingPhysicalTeam = "B"; emit("ui.rerender"); } }, [document.createTextNode(teamName(state, "B"))]),
           ]));
         } else {
           body.push(h("div", { class: "c2-duel" }, [
-            h("span", { text: `Wybrano: ${pendingPhysicalTeam}` }),
+            h("span", { text: `Wybrano: ${teamName(state, pendingPhysicalTeam)}` }),
             h("button", { class: "c2-btn primary", onclick: () => { const t = pendingPhysicalTeam; pendingPhysicalTeam = null; emit("game.dispatch", { type: "ACCEPT_BUZZ", team: t }); } }, [document.createTextNode("Potwierdź")]),
             h("button", { class: "c2-btn", onclick: () => { pendingPhysicalTeam = null; emit("ui.rerender"); } }, [document.createTextNode("Anuluj")]),
           ]));
         }
       } else {
         body.push(h("div", { class: "c2-duel" }, [
-          h("span", { text: `Zgłoszono: ${r.duel.lastPressed || "—"}` }),
+          h("span", { text: `Zgłoszono: ${r.duel.lastPressed ? teamName(state, r.duel.lastPressed) : "—"}` }),
           r.duel.lastPressed && !r.duel.firstTeam
             ? h("button", { class: "c2-btn primary", onclick: () => emit("game.dispatch", { type: "ACCEPT_BUZZ", team: r.duel.lastPressed }) }, [document.createTextNode("Przyjmij")])
             : null,
@@ -399,17 +399,18 @@ export function createUI({ root, emit }) {
     }
 
     // Siatka 3x5: wiersze 1-3 to do 6 odpowiedzi (2 na wiersz, 1,5 jednostki
-    // szerokości) — TREŚĆ odpowiedzi widoczna zawsze (operator musi wiedzieć,
-    // co klika), po odsłonięciu zmienia się tylko KOLOR/styl kafla (zielony),
-    // nie treść — dopisywane są tylko punkty. Wiersz 4 zostaje pusty (Pass i
-    // Kradzież już tu nie mieszkają — Kradzież znika całkiem, odpala się sama
-    // po 3. X; Pass/"Oddaj kontrolę" przeniesiony do nav na dole). Wiersz 5:
-    // X / licznik pudeł / przycisk zegarka 3s.
+    // szerokości) — TREŚĆ i PUNKTY widoczne zawsze (operator musi wiedzieć,
+    // co klika i ile to warte, zanim jeszcze odsłoni), po odsłonięciu zmienia
+    // się tylko KOLOR/styl kafla (zielony), nie treść. Wiersz 4: "Oddaj
+    // kontrolę" (dawny Pass) — jedyny kafel w tym wierszu, widoczny tylko
+    // dopóki dostępny. Wiersz 5: X (z licznikiem pudeł na przycisku) /
+    // przycisk zegarka 3s, po 1,5 jednostki szerokości każdy — osobny kafel
+    // licznika zniknął, bo liczba pudeł mieści się w etykiecie samego X.
     const tiles = [];
     const sortedAnswers = r.answers.slice().sort((a, b) => a.ord - b.ord).slice(0, 6);
     sortedAnswers.forEach((a, i) => {
       const revealed = r.revealed.includes(a.ord);
-      tiles.push(tile(revealed ? `${a.text} — ${a.fixed_points}` : a.text, {
+      tiles.push(tile(`${a.text} — ${a.fixed_points}`, {
         row: Math.floor(i / 2) + 1,
         col: HALF(i % 2),
         cls: revealed ? "c2-tile-revealed" : "",
@@ -418,24 +419,38 @@ export function createUI({ root, emit }) {
       }));
     });
 
-    // Wiersz 5: X (lewo) / licznik pudeł tej drużyny — tylko PLAY/STEAL, w
-    // DUEL nie ma sensu (tam nie liczy się do 3) — (środek) / przycisk
-    // zegarka 3s (prawo).
-    const timer3 = r.timer3;
-    const timer3Available = (state.phase === "PLAY" || state.phase === "STEAL" || (state.phase === "DUEL" && r.duel.firstTeam))
-      && !r.canEndRound && !r.lockPlayControls;
-    if ((state.phase === "DUEL" && r.duel.firstTeam) || state.phase === "PLAY" || state.phase === "STEAL") {
-      tiles.push(tile("X", { row: 5, col: THIRD(0), cls: "c2-tile-danger", onclick: () => emit("game.dispatch", { type: "ADD_X" }) }));
+    if (state.phase === "PLAY" && r.allowPass && !r.passUsed) {
+      tiles.push(tile("Oddaj kontrolę", {
+        row: 4, col: "1 / 7", cls: "c2-tile-primary",
+        onclick: () => emit("game.dispatch", { type: "PASS" }),
+      }));
     }
-    if ((state.phase === "PLAY" || state.phase === "STEAL") && state.controlTeam) {
-      const strikes = state.controlTeam === "A" ? r.xA : r.xB;
-      tiles.push(tile(`${strikes} / 3`, { row: 5, col: THIRD(1), cls: "c2-tile-timer" }));
+
+    // Raz osiągnięte canEndRound (wszystko odsłonięte albo kradzież już
+    // rozstrzygnięta) nie ma już nic do pudłowania/odmierzania — X i zegarek
+    // znikają razem, zostaje tylko "Zakończ rundę" w nav na dole.
+    const xAvailable = ((state.phase === "DUEL" && r.duel.firstTeam) || state.phase === "PLAY" || state.phase === "STEAL")
+      && !r.canEndRound && !r.lockPlayControls;
+    const timer3 = r.timer3;
+    const timer3Available = xAvailable;
+    if (xAvailable) {
+      const strikes = (state.phase === "PLAY" || state.phase === "STEAL") && state.controlTeam
+        ? (state.controlTeam === "A" ? r.xA : r.xB)
+        : null;
+      const xLabel = strikes == null ? "X" : h("div", {}, [
+        document.createTextNode("X"),
+        // aria-hidden: licznik jest czysto wizualny, żeby dostępna nazwa
+        // przycisku ("X") zostawała stała między kliknięciami — inaczej
+        // testy/czytniki ekranu widziałyby za każdym razem inny label.
+        h("div", { class: "c2-tile-sub", "aria-hidden": "true", text: `${strikes} / 3` }),
+      ]);
+      tiles.push(tile(xLabel, { row: 5, col: HALF(0), cls: "c2-tile-danger", onclick: () => emit("game.dispatch", { type: "ADD_X" }) }));
     }
     if (timer3Available) {
       const running = !!timer3?.running;
       const secLeft = running ? Math.max(0, Math.ceil((timer3.endsAt - Date.now()) / 1000)) : null;
       tiles.push(tile(running ? String(secLeft) : "Timer 3s", {
-        row: 5, col: THIRD(2),
+        row: 5, col: HALF(1),
         cls: running ? "c2-tile-timer" : "c2-tile-timer startable",
         disabled: running,
         onclick: running ? undefined : () => emit("game.dispatch", { type: "START_TIMER3" }),
@@ -451,21 +466,18 @@ export function createUI({ root, emit }) {
     // Pasek statusu — kto ma kontrolę, bank, status kradzieży. Bank żył
     // wcześniej DWA razy (nad siatką i w nagłówku kroku) — teraz wyłącznie tu.
     const statusItems = [
-      h("span", {}, [document.createTextNode("Kontrolę ma: "), h("b", { text: state.controlTeam || "—" })]),
+      h("span", {}, [document.createTextNode("Kontrolę ma: "), h("b", { text: state.controlTeam ? teamName(state, state.controlTeam) : "—" })]),
       h("span", {}, [document.createTextNode("Bank: "), h("b", { text: String(r.bankPts) })]),
     ];
     if (state.phase === "STEAL" && r.steal.active) {
-      statusItems.push(h("span", {}, [document.createTextNode("Kradzież: "), h("b", { text: r.steal.team || "—" })]));
+      statusItems.push(h("span", {}, [document.createTextNode("Kradzież: "), h("b", { text: r.steal.team ? teamName(state, r.steal.team) : "—" })]));
     }
     body.push(h("div", { class: "c2-statusbar" }, statusItems));
 
-    // Nav na dole (jak Finał) — "Oddaj kontrolę" (dawny Pass) i "Zakończ
-    // rundę" (dawniej kafle w siatce). justify-content:flex-end w
-    // .c2-gameplay-nav ustawia je po prawej samo z siebie.
+    // Nav na dole (jak Finał) — tylko "Zakończ rundę" ("Oddaj kontrolę"
+    // przeniesione do pustego wiersza 4 siatki, patrz wyżej).
+    // justify-content:flex-end w .c2-gameplay-nav ustawia go po prawej.
     const nav = [];
-    if (state.phase === "PLAY" && r.allowPass && !r.passUsed) {
-      nav.push(h("button", { class: "c2-btn", onclick: () => emit("game.dispatch", { type: "PASS" }) }, [document.createTextNode("Oddaj kontrolę")]));
-    }
     if ((state.phase === "PLAY" || state.phase === "STEAL") && r.canEndRound) {
       nav.push(h("button", { class: "c2-btn primary", onclick: () => emit("game.dispatch", { type: "END_ROUND" }) }, [document.createTextNode("Zakończ rundę")]));
     }
