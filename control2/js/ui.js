@@ -367,6 +367,70 @@ export function createUI({ root, emit }) {
     return text ? h("div", { class: "c2-hint", text }) : null;
   }
 
+  // Duży kafel "Zatwierdź drużynę" (renderDuelAccept) — `ready=false`
+  // renderuje się jako wyszarzony, nieklikalny placeholder (dokładnie stary
+  // control.html's btnBuzzAcceptA/B, wyłączone dopóki ta konkretna drużyna
+  // nie nacisnęła przycisku).
+  function duelAcceptButton(text, ready, onclick) {
+    const el = h("button", {
+      class: `c2-duelaccept-btn ${ready ? "ready" : ""}`.trim(),
+      type: "button",
+      onclick: ready ? onclick : undefined,
+    }, [document.createTextNode(text)]);
+    if (!ready) el.disabled = true;
+    return el;
+  }
+
+  // r_duel PRZED przyjęciem zgłoszenia — patrz komentarz przy jego jedynym
+  // wywołaniu w renderRounds(). Odpowiednik starego control.html's osobnego
+  // data-step="r_duel": brak pytania/siatki, tylko "kto naciśnie pierwszy".
+  function renderDuelAccept(state) {
+    const r = state.rounds;
+    const body = [hintBlock(getRoundsHint(state))];
+    // Karta jest pełnowysokościowa, ale ten ekran ma mało treści (celowo —
+    // brak pytania/siatki) — zamiast rozciągać same przyciski na całą
+    // wysokość, wypełniamy resztę miejsca tym otoczkowym flex-kontenerem i
+    // WYŚRODKOWUJEMY w nim rozsądnej wielkości przyciski.
+    const acceptArea = [];
+
+    if (state.settings.physicalBuzzer === true) {
+      // Brak Buzzera na ekranie — operator sam wskazuje, kto pierwszy
+      // nacisnął fizyczny przycisk. Zaznacz → potwierdź, żeby nie zaliczyć
+      // przypadkowego kliknięcia (plan: "physicalSelectTeam→potwierdź").
+      if (!pendingPhysicalTeam) {
+        acceptArea.push(h("div", { class: "c2-duelaccept" }, [
+          duelAcceptButton(teamName(state, "A"), true, () => { pendingPhysicalTeam = "A"; emit("ui.rerender"); }),
+          duelAcceptButton(teamName(state, "B"), true, () => { pendingPhysicalTeam = "B"; emit("ui.rerender"); }),
+        ]));
+      } else {
+        acceptArea.push(h("div", { class: "c2-duel" }, [
+          h("span", { text: `Wybrano: ${teamName(state, pendingPhysicalTeam)}` }),
+          h("button", { class: "c2-btn primary", onclick: () => { const t = pendingPhysicalTeam; pendingPhysicalTeam = null; emit("game.dispatch", { type: "ACCEPT_BUZZ", team: t }); } }, [document.createTextNode("Potwierdź")]),
+          h("button", { class: "c2-btn", onclick: () => { pendingPhysicalTeam = null; emit("ui.rerender"); } }, [document.createTextNode("Anuluj")]),
+        ]));
+      }
+    } else {
+      // Tryb normalny (Buzzer): obie drużyny widoczne od razu, ale tylko
+      // ta, która faktycznie nacisnęła (duel.lastPressed), jest klikalna —
+      // druga zostaje wyszarzonym, nieklikalnym placeholderem, dokładnie jak
+      // stary control.html's btnBuzzAcceptA/B. "Ponów naciśnięcie" (nowe
+      // RETRY_DUEL) pojawia się dopiero, gdy jest co odrzucić.
+      const lastPressed = r.duel.lastPressed;
+      acceptArea.push(h("div", { class: "c2-duelaccept" }, [
+        duelAcceptButton(`Zatwierdź: ${teamName(state, "A")}`, lastPressed === "A", () => emit("game.dispatch", { type: "ACCEPT_BUZZ", team: "A" })),
+        duelAcceptButton(`Zatwierdź: ${teamName(state, "B")}`, lastPressed === "B", () => emit("game.dispatch", { type: "ACCEPT_BUZZ", team: "B" })),
+      ]));
+      if (lastPressed) {
+        acceptArea.push(h("div", { class: "c2-duelaccept-retry" }, [
+          h("button", { class: "c2-btn", onclick: () => emit("game.dispatch", { type: "RETRY_DUEL" }) }, [document.createTextNode("Ponów naciśnięcie")]),
+        ]));
+      }
+    }
+    body.push(h("div", { class: "c2-duelaccept-wrap" }, acceptArea));
+
+    gameplayShell({ stepLabel: `Runda ${r.roundNo} — pojedynek`, body, nav: null });
+  }
+
   // ---- Rundy (r_intro..r_gameEnd) ----
   function renderRounds(state) {
     const r = state.rounds;
@@ -387,46 +451,27 @@ export function createUI({ root, emit }) {
       return;
     }
 
-    // r_duel / r_play (wspólny ekran gry właściwej). Układ: pytanie na
-    // górze; poniżej dwie kolumny — siatka odpowiedzi (lewo) i podpowiedź za
-    // pionową kreską (prawo); pod tym pasek statusu (kto ma kontrolę, bank,
-    // inne info); na samym dole przyciski nawigacji (Oddaj kontrolę/Zakończ
-    // rundę — dawniej kafle w siatce, teraz gameplayShell's nav, jak Finał).
-    const body = [];
-    body.push(h("div", { class: "c2-question", text: r.question?.text || "—" }));
-
-    // Status pojedynku (Zgłoszono/Przyjmij albo wybór ręczny) idzie PRZED
-    // siatką, nie po niej — siatka ma flex:1 i wypełnia całą resztę miejsca,
-    // więc coś wepchnięte za nią przy overflow:hidden (zero przewijania)
-    // zostałoby niewidocznie obcięte.
-    if (state.phase === "DUEL") {
-      if (state.settings.physicalBuzzer === true) {
-        // Brak Buzzera na ekranie — operator sam wskazuje, kto pierwszy
-        // nacisnął fizyczny przycisk. Zaznacz → potwierdź, żeby nie zaliczyć
-        // przypadkowego kliknięcia (plan: "physicalSelectTeam→potwierdź").
-        if (!pendingPhysicalTeam) {
-          body.push(h("div", { class: "c2-duel" }, [
-            h("button", { class: "c2-btn", onclick: () => { pendingPhysicalTeam = "A"; emit("ui.rerender"); } }, [document.createTextNode(teamName(state, "A"))]),
-            h("button", { class: "c2-btn", onclick: () => { pendingPhysicalTeam = "B"; emit("ui.rerender"); } }, [document.createTextNode(teamName(state, "B"))]),
-          ]));
-        } else {
-          body.push(h("div", { class: "c2-duel" }, [
-            h("span", { text: `Wybrano: ${teamName(state, pendingPhysicalTeam)}` }),
-            h("button", { class: "c2-btn primary", onclick: () => { const t = pendingPhysicalTeam; pendingPhysicalTeam = null; emit("game.dispatch", { type: "ACCEPT_BUZZ", team: t }); } }, [document.createTextNode("Potwierdź")]),
-            h("button", { class: "c2-btn", onclick: () => { pendingPhysicalTeam = null; emit("ui.rerender"); } }, [document.createTextNode("Anuluj")]),
-          ]));
-        }
-      } else {
-        body.push(h("div", { class: "c2-duel" }, [
-          h("span", { text: `Zgłoszono: ${r.duel.lastPressed ? teamName(state, r.duel.lastPressed) : "—"}` }),
-          r.duel.lastPressed && !r.duel.firstTeam
-            ? h("button", { class: "c2-btn primary", onclick: () => emit("game.dispatch", { type: "ACCEPT_BUZZ", team: r.duel.lastPressed }) }, [document.createTextNode("Przyjmij")])
-            : null,
-        ]));
-      }
-    } else if (pendingPhysicalTeam) {
+    // r_duel PRZED przyjęciem zgłoszenia (r.duel.firstTeam jeszcze puste) —
+    // osobny, mniejszy ekran: nic z pytania/siatki/X/timera nie jest jeszcze
+    // grywalne (nikt nie wygrał prawa do odpowiedzi), więc nie pokazujemy
+    // tego wcale, dokładnie jak stary control.html's osobny
+    // data-step="r_duel" (sama "Zatwierdź drużynę A/B"+"Ponów naciśnięcie",
+    // bez treści pytania) — patrz renderDuelAccept().
+    if (state.phase === "DUEL" && !r.duel.firstTeam) {
+      return renderDuelAccept(state);
+    }
+    if (pendingPhysicalTeam) {
       pendingPhysicalTeam = null; // faza się zmieniła spod nas — porzuć nieaktualne zaznaczenie
     }
+
+    // r_play / dalsza część DUEL po przyjęciu zgłoszenia (wspólny ekran gry
+    // właściwej — drużyna, która wygrała pojedynek, odpowiada na TĘ SAMĄ
+    // widoczną siatkę). Układ: pytanie na górze; poniżej dwie kolumny —
+    // siatka odpowiedzi (lewo) i podpowiedź za pionową kreską (prawo); pod
+    // tym pasek statusu (kto gra, bank, inne info); na samym dole przyciski
+    // nawigacji ("Zakończ rundę" — gameplayShell's nav, jak Finał).
+    const body = [];
+    body.push(h("div", { class: "c2-question", text: r.question?.text || "—" }));
 
     // Raz osiągnięte canEndRound (wszystko odsłonięte albo kradzież już
     // rozstrzygnięta) nie ma już nic do pudłowania/odmierzania — X i zegarek
@@ -481,7 +526,10 @@ export function createUI({ root, emit }) {
     const timer3 = r.timer3;
     const timer3Available = xAvailable;
     if (xAvailable) {
-      const strikes = (state.phase === "PLAY" || state.phase === "STEAL") && state.controlTeam
+      // Licznik na X ma sens TYLKO w zwykłym PLAY (buduje się do 3, po
+      // trzecim aut. STEAL) — w DUEL i w samej kradzieży to zawsze
+      // pojedyncza próba, xA/xB drużyny grającej nie ma tam nic do rzeczy.
+      const strikes = state.phase === "PLAY" && state.controlTeam
         ? (state.controlTeam === "A" ? r.xA : r.xB)
         : null;
       const xLabel = strikes == null ? "X" : h("div", {}, [

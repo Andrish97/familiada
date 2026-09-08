@@ -372,7 +372,7 @@ async function scenarioRoundsMechanics(pages) {
   // ===== RUNDA 1 =====
   await clickPaced(control.getByRole("button", { name: "Start rundy" }));
   await clickPaced(buzzer.getByRole("button", { name: "Buzzer A" }));
-  await clickPaced(control.getByRole("button", { name: "Przyjmij" }));
+  await clickPaced(control.getByRole("button", { name: "Zatwierdź: Alfa" }));
   await armAndConfirmPaced(control.getByRole("button", { name: "X", exact: true })); // A pudłuje -> kolej B
   // B pudłuje też -> RESET CYKLU: kolej wraca do A, BEZ nowego zgłoszenia
   // buzzera (firstTeam/secondTeam nie są czyszczone — nie ma ponownego buzera).
@@ -388,7 +388,7 @@ async function scenarioRoundsMechanics(pages) {
   // ===== RUNDA 2 =====
   await clickPaced(control.getByRole("button", { name: "Start rundy" }));
   await clickPaced(buzzer.getByRole("button", { name: "Buzzer B" }));
-  await clickPaced(control.getByRole("button", { name: "Przyjmij" }));
+  await clickPaced(control.getByRole("button", { name: "Zatwierdź: Beta" }));
   await armAndConfirmPaced(answerTile(control, 1)); // B trafia -> kontrola B, allowPass
   await armAndConfirmPaced(control.getByRole("button", { name: "Oddaj kontrolę" })); // dawny "Pass" -> kontrola A
   await armAndConfirmPaced(answerTile(control, 2)); // A trafia
@@ -425,7 +425,7 @@ async function scenarioRoundsThreshold(pages, { expectFinal }) {
   // ===== RUNDA 1: pojedynek wygrany za pierwszym razem (bez pudła) =====
   await clickPaced(control.getByRole("button", { name: "Start rundy" }));
   await clickPaced(buzzer.getByRole("button", { name: "Buzzer A" }));
-  await clickPaced(control.getByRole("button", { name: "Przyjmij" }));
+  await clickPaced(control.getByRole("button", { name: "Zatwierdź: Alfa" }));
   await armAndConfirmPaced(answerTile(control, 1)); // A trafia topową odpowiedź od razu -> wygrywa pojedynek
   await armAndConfirmPaced(answerTile(control, 2));
   await armAndConfirmPaced(answerTile(control, 3)); // wszystko odsłonięte -> koniec rundy pomija ekran dosłaniania
@@ -435,7 +435,7 @@ async function scenarioRoundsThreshold(pages, { expectFinal }) {
   // odpowiedzią nie-topową =====
   await clickPaced(control.getByRole("button", { name: "Start rundy" }));
   await clickPaced(buzzer.getByRole("button", { name: "Buzzer B" }));
-  await clickPaced(control.getByRole("button", { name: "Przyjmij" }));
+  await clickPaced(control.getByRole("button", { name: "Zatwierdź: Beta" }));
   await armAndConfirmPaced(control.getByRole("button", { name: "X", exact: true })); // B pudłuje -> kolej na drugą próbę (A), NIE reset
   await armAndConfirmPaced(answerTile(control, 2)); // A trafia odpowiedź nie-topową -> WYGRYWA, bo B miał 0 pkt
   await armAndConfirmPaced(answerTile(control, 1)); // A dosłania resztę
@@ -444,7 +444,7 @@ async function scenarioRoundsThreshold(pages, { expectFinal }) {
   // ===== RUNDA 3: pojedynek wygrany za pierwszym razem, dobicie do progu =====
   await clickPaced(control.getByRole("button", { name: "Start rundy" }));
   await clickPaced(buzzer.getByRole("button", { name: "Buzzer A" }));
-  await clickPaced(control.getByRole("button", { name: "Przyjmij" }));
+  await clickPaced(control.getByRole("button", { name: "Zatwierdź: Alfa" }));
   await armAndConfirmPaced(answerTile(control, 1));
   await armAndConfirmPaced(answerTile(control, 2));
   await clickPaced(control.getByRole("button", { name: "Zakończ rundę" })); // próg (180) osiągnięty
@@ -472,7 +472,7 @@ async function scenarioFinalFull(pages) {
   await clickPaced(control.getByRole("button", { name: "Start rundy" }));
 
   await clickPaced(buzzer.getByRole("button", { name: "Buzzer A" }));
-  await clickPaced(control.getByRole("button", { name: "Przyjmij" }));
+  await clickPaced(control.getByRole("button", { name: "Zatwierdź: Alfa" }));
   await armAndConfirmPaced(answerTile(control, 1)); // A dobija do progu finału (300 pkt)
   await armAndConfirmPaced(control.getByRole("button", { name: "X", exact: true }));
   await armAndConfirmPaced(control.getByRole("button", { name: "X", exact: true }));
@@ -569,7 +569,7 @@ async function scenarioFinalEarlyExit(pages) {
   await clickPaced(control.getByRole("button", { name: "Start rundy" }));
 
   await clickPaced(buzzer.getByRole("button", { name: "Buzzer A" }));
-  await clickPaced(control.getByRole("button", { name: "Przyjmij" }));
+  await clickPaced(control.getByRole("button", { name: "Zatwierdź: Alfa" }));
   await armAndConfirmPaced(answerTile(control, 1)); // A dobija do progu rund (300 pkt) -> wchodzimy w finał
   // Ta jedyna odpowiedź w pytaniu została już odsłonięta PRZEZ sam pojedynek
   // (wygrana na pierwszej próbie odsłania ją od razu) — canEndRound ustawia

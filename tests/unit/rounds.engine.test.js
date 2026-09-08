@@ -77,6 +77,27 @@ test("START_ROUND: ustawia pytanie/odpowiedzi, step->r_duel, phase->DUEL (przez 
   assert.equal(store.commits.at(-1).soundCueKey, "round_transition");
 });
 
+test("RETRY_DUEL: czyści błędne/przypadkowe zgłoszenie sprzed przyjęcia, zostaje w r_duel", async () => {
+  const { store, dispatch } = makeEngine();
+  await dispatch({ type: "START_ROUND" });
+  store.state.rounds.duel.lastPressed = "A"; // symuluje game_state_buzzer_press
+  await dispatch({ type: "RETRY_DUEL" });
+  assert.equal(store.state.rounds.duel.lastPressed, null);
+  assert.equal(store.state.step, "r_duel");
+  assert.equal(store.state.phase, "DUEL");
+  assert.equal(store.state.rounds.duel.firstTeam, null); // pojedynek się jeszcze nie zaczął
+});
+
+test("RETRY_DUEL: no-op po przyjęciu zgłoszenia (firstTeam już ustawione) — do tego służy Cofnij, nie Ponów", async () => {
+  const { store, dispatch } = makeEngine();
+  await dispatch({ type: "START_ROUND" });
+  await dispatch({ type: "ACCEPT_BUZZ", team: "A" });
+  const before = JSON.stringify(store.state.rounds.duel);
+  const result = await dispatch({ type: "RETRY_DUEL" });
+  assert.equal(result, null);
+  assert.equal(JSON.stringify(store.state.rounds.duel), before);
+});
+
 test("pojedynek: trafienie w odpowiedź #1 przy pierwszej próbie -> WIN, phase=PLAY, controlTeam ustawiony", async () => {
   const { store, dispatch } = makeEngine();
   await dispatch({ type: "START_ROUND" });

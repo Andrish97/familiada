@@ -36,7 +36,7 @@ export function getRoundsHint(state) {
   if (state.phase === "DUEL") {
     if (!r.duel.firstTeam) {
       if (r.duel.lastPressed) {
-        return `Pierwsza: ${teamName(state, r.duel.lastPressed)}. Kliknij „Przyjmij”, żeby zatwierdzić.`;
+        return `Pierwsza: ${teamName(state, r.duel.lastPressed)}. Kliknij „Zatwierdź”, żeby przyjąć zgłoszenie.`;
       }
       return state.settings.physicalBuzzer
         ? "Obserwuj, kto nacisnął przycisk jako pierwszy. Kliknij drużynę, a potem „Potwierdź”."

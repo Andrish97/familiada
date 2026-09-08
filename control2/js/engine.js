@@ -224,6 +224,19 @@ const REDUCERS = {
     return { step: "r_play", phase: "DUEL", controlTeam: null, topCard: "rounds", soundCueKey };
   },
 
+  // ---- R2: "Ponów naciśnięcie" — operator odrzuca zgłoszenie sprzed
+  // przyjęcia (np. błędny/przypadkowy sygnał z Buzzera) i otwiera przycisk
+  // na nowo, bez cofania całej rundy. Tylko przed ACCEPT_BUZZ — po
+  // przyjęciu (firstTeam już ustawione) nie ma czego "ponawiać", do tego
+  // służy ogólne "Cofnij ostatnią akcję". Odpowiednik starego
+  // control/js/gameRounds.js's retryDuel().
+  async RETRY_DUEL(state) {
+    const r = state.rounds;
+    if (state.phase !== "DUEL" || r.duel.firstTeam) return null;
+    r.duel.lastPressed = null;
+    return { step: "r_duel", phase: "DUEL", controlTeam: null, topCard: "rounds" };
+  },
+
   // ---- R3/R4/R5/R8: odsłonięcie odpowiedzi — jeden reducer, gałąź wg
   // aktualnej fazy (DUEL/PLAY/STEAL/REVEAL), dokładnie jak w tabeli A ----
   async REVEAL_ANSWER(state, action) {
