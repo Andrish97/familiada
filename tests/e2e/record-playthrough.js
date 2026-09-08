@@ -400,7 +400,7 @@ async function scenarioRoundsMechanics(pages) {
   await armAndConfirmPaced(answerTile(control, 3)); // dosłanianie reszty
 
   // ===== Koniec gry bez finału =====
-  await clickPaced(control.getByRole("button", { name: "Pokaż koniec gry" }));
+  await clickPaced(control.getByRole("button", { name: "Zakończ grę" }));
   await control.waitForTimeout(2500); // zostaw ekran końcowy widoczny chwilę na nagraniu
 }
 
@@ -453,7 +453,7 @@ async function scenarioRoundsThreshold(pages, { expectFinal }) {
     await clickPaced(control.getByRole("button", { name: "Rozpocznij finał" }));
     await control.waitForTimeout(3000); // ekran wpisywania gracza 1 widoczny chwilę — pełny final to osobne scenariusze
   } else {
-    await clickPaced(control.getByRole("button", { name: "Pokaż koniec gry" }));
+    await clickPaced(control.getByRole("button", { name: "Zakończ grę" }));
     await control.waitForTimeout(2500);
   }
 }
@@ -546,7 +546,7 @@ async function scenarioFinalFull(pages) {
     await clickPaced(control.getByRole("button", { name: "Dalej" }));
   }
 
-  await clickPaced(control.getByRole("button", { name: "Zakończ", exact: true }));
+  await clickPaced(control.getByRole("button", { name: "Zakończ grę", exact: true }));
   await control.waitForTimeout(3000); // ekran końcowy widoczny chwilę na nagraniu
 }
 
@@ -602,7 +602,7 @@ async function scenarioFinalEarlyExit(pages) {
   // "Pokaż punkty" to ostatnie kliknięcie w mapowaniu w tym scenariuszu.
   await clickPaced(control.getByRole("button", { name: "Pokaż punkty" }));
 
-  await clickPaced(control.getByRole("button", { name: "Zakończ", exact: true }));
+  await clickPaced(control.getByRole("button", { name: "Zakończ grę", exact: true }));
   await control.waitForTimeout(3000); // ekran końcowy widoczny chwilę na nagraniu
 }
 

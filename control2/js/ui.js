@@ -694,24 +694,40 @@ export function createUI({ root, emit }) {
     return `Wygrała drużyna ${teamName(state, winner)} wynikiem ${Math.max(A, B)}:${Math.min(A, B)}`;
   }
 
-  function renderGameEnd(state) {
+  // Ekran końca gry — wspólny szablon dla "Koniec gry" (bez finału) i
+  // "Koniec finału" (renderFinalEnd niżej), ujednolicone: ten sam dwuetapowy
+  // c2-intro hero, ta sama nazwa przycisku odsłaniającego wynik ("Zakończ
+  // grę" — było osobno "Pokaż koniec gry"/"Zakończ"), z wyjaśnieniem co się
+  // pokaże (jak reszta hero-ekranów: "Na wyświetlaczu pojawi się...").
+  function renderEndScreen(state, { stepLabel, title, revealAction }) {
+    if (!state.locks.gameEnded) {
+      gameplayShell({
+        stepLabel,
+        body: [h("div", { class: "c2-intro" }, [
+          h("div", { class: "c2-intro-title", text: title }),
+          h("div", { class: "c2-intro-hint", text: "Pokaże się końcowy wynik i zwycięska drużyna. Stąd będzie można zacząć od nowa albo wrócić do listy gier." }),
+        ])],
+        nav: [h("button", { class: "c2-btn primary c2-intro-btn", onclick: () => emit("game.dispatch", revealAction) }, [document.createTextNode("Zakończ grę")])],
+      });
+      return;
+    }
     gameplayShell({
-      stepLabel: "Koniec gry",
+      stepLabel,
       body: [h("div", { class: "c2-intro" }, [
-        h("div", { class: "c2-intro-title", text: "Koniec gry" }),
+        h("div", { class: "c2-intro-title", text: title }),
         h("div", { class: "c2-intro-hint", text: gameEndSummary(state) }),
       ])],
-      // Po pokazaniu wyniku (gameEnded) — dwa przyciski: "Zacznij od nowa"
-      // (obok "Wróć do moich gier", ta sama funkcja co topbar's #btnStartOver
-      // — app.js's "game.restart") i "Wróć do moich gier" jako główna,
-      // ostatnia akcja (prawa krawędź).
-      nav: state.locks.gameEnded
-        ? [
-            h("button", { class: "c2-btn c2-intro-btn", type: "button", onclick: () => emit("game.restart") }, [document.createTextNode("Zacznij od nowa")]),
-            h("button", { class: "c2-btn primary c2-intro-btn", type: "button", onclick: () => emit("session.finish") }, [document.createTextNode("Wróć do moich gier")]),
-          ]
-        : [h("button", { class: "c2-btn primary c2-intro-btn", onclick: () => emit("game.dispatch", { type: "GAME_END_SHOW" }) }, [document.createTextNode("Pokaż koniec gry")])],
+      // Zostają w dolnym pasku nawigacji (nie wyśrodkowane pod tekstem) —
+      // tak jak na zrzucie ekranu, który już zatwierdziłeś.
+      nav: [
+        h("button", { class: "c2-btn c2-intro-btn", type: "button", onclick: () => emit("game.restart") }, [document.createTextNode("Zacznij od nowa")]),
+        h("button", { class: "c2-btn primary c2-intro-btn", type: "button", onclick: () => emit("session.finish") }, [document.createTextNode("Wróć do moich gier")]),
+      ],
     });
+  }
+
+  function renderGameEnd(state) {
+    renderEndScreen(state, { stepLabel: "Koniec gry", title: "Koniec gry", revealAction: { type: "GAME_END_SHOW" } });
   }
 
   // ---- Finał ----
@@ -873,19 +889,7 @@ export function createUI({ root, emit }) {
   // gry" — suma finału jest już wtopiona w rounds.totals, patrz engine.js's
   // FINISH_FINAL) + dwa przyciski, tak samo jak "Koniec gry".
   function renderFinalEnd(state) {
-    gameplayShell({
-      stepLabel: "Finał — koniec",
-      body: [h("div", { class: "c2-intro" }, [
-        h("div", { class: "c2-intro-title", text: "Koniec finału" }),
-        h("div", { class: "c2-intro-hint", text: gameEndSummary(state) }),
-      ])],
-      nav: state.locks.gameEnded
-        ? [
-            h("button", { class: "c2-btn c2-intro-btn", type: "button", onclick: () => emit("game.restart") }, [document.createTextNode("Zacznij od nowa")]),
-            h("button", { class: "c2-btn primary c2-intro-btn", type: "button", onclick: () => emit("session.finish") }, [document.createTextNode("Wróć do moich gier")]),
-          ]
-        : [h("button", { class: "c2-btn primary c2-intro-btn", onclick: () => emit("game.dispatch", { type: "FINISH_FINAL" }) }, [document.createTextNode("Zakończ")])],
-    });
+    renderEndScreen(state, { stepLabel: "Finał — koniec", title: "Koniec finału", revealAction: { type: "FINISH_FINAL" } });
   }
 
   function render(state, ctx = {}) {

@@ -403,7 +403,7 @@ test("control2: reset pojedynku, pass, kradzież wygrana/przegrana, odkrywanie r
     await expect(page.locator(".c2-stepper")).toContainText("Koniec gry", { timeout: 10000 });
     await expect(page.getByText("Wynik końcowy: A 70 — B 70")).toBeVisible({ timeout: 10000 });
 
-    await page.getByRole("button", { name: "Pokaż koniec gry" }).click();
+    await page.getByRole("button", { name: "Zakończ grę" }).click();
     const finishBtn = page.getByRole("button", { name: "Wróć do moich gier" });
     await expect(finishBtn).toBeVisible({ timeout: 10000 });
     await finishBtn.click();
@@ -477,7 +477,7 @@ test("control2: próg w rundzie -> finał, wczesne zakończenie po 4/5 pytaniach
     await expect(page.locator(".c2-stepper")).toContainText("Finał — koniec", { timeout: 10000 });
     await expect(page.getByText("Suma finału: 200")).toBeVisible({ timeout: 10000 });
 
-    await page.getByRole("button", { name: "Zakończ", exact: true }).click();
+    await page.getByRole("button", { name: "Zakończ grę", exact: true }).click();
     const finishBtn = page.getByRole("button", { name: "Wróć do moich gier" });
     await expect(finishBtn).toBeVisible({ timeout: 10000 });
     await finishBtn.click();
@@ -755,7 +755,7 @@ test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśni�
 
     // ===== F10: koniec finału =====
     await clearSfxLog(page);
-    await page.getByRole("button", { name: "Zakończ", exact: true }).click();
+    await page.getByRole("button", { name: "Zakończ grę", exact: true }).click();
     await waitForSfxKeysAnyOrder(page, ["round_transition", "reveal"], 15000); // final_end combo (synced, kolejność zależy od realnych czasów trwania plików)
     await expect.poll(async () => {
       const calls = await getDisplayCalls(displayPage, "api.indicator.set");
