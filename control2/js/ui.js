@@ -342,8 +342,11 @@ export function createUI({ root, emit }) {
     // już siedzi w .control-main-card, które jest jedynym widocznym
     // obramowaniem).
     const body = [
+      // .stepTitle zostaje bare "Podsumowanie" — stabilny selektor testów
+      // E2E (patrz control2.spec.js). Widoczny .c2-stepper dostaje pełny,
+      // opisowy nagłówek "Podsumowanie — podsumowanie ustawień".
       h("div", { class: "stepTitle", text: "Podsumowanie" }),
-      h("div", { class: "c2-stepper", text: "Podsumowanie" }),
+      h("div", { class: "c2-stepper", text: "Podsumowanie — podsumowanie ustawień" }),
       // .c2-scroll-area: dolne przyciski (Wstecz/Zmień ustawienia/Gotowe) mają
       // zostać wyłączone z przewijania — przewija się TYLKO treść sekcji
       // podsumowania, .stepFoot zawsze zostaje widoczny na dole karty.
@@ -508,7 +511,7 @@ export function createUI({ root, emit }) {
       // pierwszą rundę (zgłoszone jako mylące: "Gotowe — przejdź do rund"
       // prowadziło na ekran podpisany "Rundy", zanim runda w ogóle istnieje).
       gameplayShell({
-        stepLabel: "Intro gry",
+        stepLabel: "Intro gry — rozpoczęcie gry",
         body: [h("div", { class: "c2-intro" }, [
           h("div", { class: "c2-intro-title", text: "Rozpocznij grę" }),
           h("div", { class: "c2-intro-hint", text: "Na wyświetlaczu pojawi się logo programu i zostanie odtworzone intro. Po zakończeniu przejdziesz do pierwszej rundy." }),
@@ -671,7 +674,11 @@ export function createUI({ root, emit }) {
     }
     body.push(h("div", { class: "c2-statusbar" }, statusItems));
 
-    gameplayShell({ stepLabel: `Runda ${r.roundNo}`, body, nav: null });
+    // "— kradzież" w STEAL, "— rozgrywka" poza tym (PLAY i odkrywanie
+    // reszty w REVEAL) — zgłoszone: te dwa etapy mają się rozróżniać w
+    // nagłówku, tak jak pojedynek już ma swoje "— pojedynek".
+    const roundStepSuffix = state.phase === "STEAL" ? "kradzież" : "rozgrywka";
+    gameplayShell({ stepLabel: `Runda ${r.roundNo} — ${roundStepSuffix}`, body, nav: null });
   }
 
   function renderGameEnd(state) {
