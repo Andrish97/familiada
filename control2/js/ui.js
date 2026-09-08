@@ -699,8 +699,8 @@ export function createUI({ root, emit }) {
       ])],
       nav: [
         state.locks.gameEnded
-          ? h("button", { class: "c2-btn primary", onclick: () => emit("session.finish") }, [document.createTextNode("Zakończ rozgrywkę")])
-          : h("button", { class: "c2-btn primary", onclick: () => emit("game.dispatch", { type: "GAME_END_SHOW" }) }, [document.createTextNode("Pokaż koniec gry")]),
+          ? h("button", { class: "c2-btn primary c2-intro-btn", onclick: () => emit("session.finish") }, [document.createTextNode("Wróć do moich gier")])
+          : h("button", { class: "c2-btn primary c2-intro-btn", onclick: () => emit("game.dispatch", { type: "GAME_END_SHOW" }) }, [document.createTextNode("Pokaż koniec gry")]),
       ],
     });
   }
@@ -858,14 +858,26 @@ export function createUI({ root, emit }) {
     });
   }
 
+  // Ten sam c2-intro hero co "Rozpoczęcie gry"/"Koniec gry" (zgłoszone: ma
+  // wyglądać podobnie) — wcześniej goły <p>, jedyny niedopasowany ekran w
+  // całym Finale.
   function renderFinalEnd(state) {
+    const f = state.final;
     gameplayShell({
       stepLabel: "Finał — koniec",
-      body: [h("p", { text: `Suma finału: ${state.final.runtime.sum}` })],
+      body: [h("div", { class: "c2-intro" }, [
+        h("div", { class: "c2-intro-title", text: "Koniec finału" }),
+        h("div", { class: "c2-intro-hint", text: `Suma finału: ${f.runtime.sum} pkt — zwycięzca: ${f.winnerTeam ? teamName(state, f.winnerTeam) : "—"}` }),
+        h("div", { class: "c2-intro-score" }, [
+          h("span", { class: "c2-intro-score-a", text: `${teamName(state, "A")}: ${state.rounds.totals.A}` }),
+          h("span", { class: "c2-intro-score-sep", text: "—" }),
+          h("span", { class: "c2-intro-score-b", text: `${teamName(state, "B")}: ${state.rounds.totals.B}` }),
+        ]),
+      ])],
       nav: [
         state.locks.gameEnded
-          ? h("button", { class: "c2-btn primary", onclick: () => emit("session.finish") }, [document.createTextNode("Zakończ rozgrywkę")])
-          : h("button", { class: "c2-btn primary", onclick: () => emit("game.dispatch", { type: "FINISH_FINAL" }) }, [document.createTextNode("Zakończ")]),
+          ? h("button", { class: "c2-btn primary c2-intro-btn", onclick: () => emit("session.finish") }, [document.createTextNode("Wróć do moich gier")])
+          : h("button", { class: "c2-btn primary c2-intro-btn", onclick: () => emit("game.dispatch", { type: "FINISH_FINAL" }) }, [document.createTextNode("Zakończ")]),
       ],
     });
   }

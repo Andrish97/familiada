@@ -13,7 +13,7 @@
 //      faktycznie wznawia stan, zamiast go kasować jak dziś).
 //   3. Mechanika rund poza ścieżką idealną: reset pojedynku obustronnym
 //      pudłem, pass, kradzież wygrana/przegrana, odkrywanie reszty,
-//      mnożnik, koniec gry bez finału + "Zakończ rozgrywkę".
+//      mnożnik, koniec gry bez finału + "Wróć do moich gier".
 //   4. Finał: próg w rundzie -> finał, wczesne zakończenie po osiągnięciu
 //      celu w połowie mapowania gracza 1 (pomija gracza 2 całkowicie).
 //   5-7. Nietypowe zachowania operatora: physicalBuzzer + noHostTablet,
@@ -328,7 +328,7 @@ test("control2: pełna runda przez 4 urządzenia + wznowienie Control po przeła
 
 // ===== 3. Mechanika rund: reset pojedynku, pass, kradzież win/loss, R8 =====
 
-test("control2: reset pojedynku, pass, kradzież wygrana/przegrana, odkrywanie reszty, koniec gry + Zakończ rozgrywkę", async ({ page, browser }) => {
+test("control2: reset pojedynku, pass, kradzież wygrana/przegrana, odkrywanie reszty, koniec gry + Wróć do moich gier", async ({ page, browser }) => {
   await loginAsTestUser(page, page.context());
   const game = await makeGame(page, `E2E-CONTROL2-ROUNDMECH-${Date.now()}`, { roundQuestions: TWO_QUESTIONS });
   const contexts = [];
@@ -404,7 +404,7 @@ test("control2: reset pojedynku, pass, kradzież wygrana/przegrana, odkrywanie r
     await expect(page.getByText("Wynik końcowy: A 70 — B 70")).toBeVisible({ timeout: 10000 });
 
     await page.getByRole("button", { name: "Pokaż koniec gry" }).click();
-    const finishBtn = page.getByRole("button", { name: "Zakończ rozgrywkę" });
+    const finishBtn = page.getByRole("button", { name: "Wróć do moich gier" });
     await expect(finishBtn).toBeVisible({ timeout: 10000 });
     await finishBtn.click();
     await expect(page).toHaveURL(/\/builder/, { timeout: 10000 });
@@ -478,7 +478,7 @@ test("control2: próg w rundzie -> finał, wczesne zakończenie po 4/5 pytaniach
     await expect(page.getByText("Suma finału: 200")).toBeVisible({ timeout: 10000 });
 
     await page.getByRole("button", { name: "Zakończ", exact: true }).click();
-    const finishBtn = page.getByRole("button", { name: "Zakończ rozgrywkę" });
+    const finishBtn = page.getByRole("button", { name: "Wróć do moich gier" });
     await expect(finishBtn).toBeVisible({ timeout: 10000 });
     await finishBtn.click();
     await expect(page).toHaveURL(/\/builder/, { timeout: 10000 });
