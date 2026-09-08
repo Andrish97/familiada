@@ -6,20 +6,20 @@
 // engine.js) — ale i tak przechodzi przez assertTransition(), żeby tabela
 // stanów była mechanizmem wszędzie, nie tylko wewnątrz silnika reguł gry.
 
-import { guardDesktopOnly } from "../../js/core/device-guard.js?v=v2026-09-08T18231";
-import { guardResourceLock } from "../../js/core/resource-lock.js?v=v2026-09-08T18231";
-import { initI18n, getUiLang, t } from "../../translation/translation.js?v=v2026-09-08T18231";
-import { requireAuth } from "../../js/core/auth.js?v=v2026-09-08T18231";
-import { setTopbarAccount } from "../../js/core/topbar-controller.js?v=v2026-09-08T18231";
-import { sb } from "../../js/core/supabase.js?v=v2026-09-08T18231";
-import { loadQuestions, loadAnswers } from "../../js/core/game-validate.js?v=v2026-09-08T18231";
-import { loadSfxManifest, initSfx, setCurrentGameId, unlockAudio, applySfxGameSettings, loadSfxFromCloud } from "../../js/core/sfx.js?v=v2026-09-08T18231";
-import { listGameSounds } from "../../js/core/sfx-cloud.js?v=v2026-09-08T18231";
-import { assertTransition } from "../../shared/gameStateMachine.js?v=v2026-09-08T18231";
-import { confirmModal } from "../../js/core/modal.js?v=v2026-09-08T18231";
-import { DEFAULT_SETTINGS } from "../../shared/gameStateShape.js?v=v2026-09-08T18231";
-import { rt } from "../../js/core/realtime.js?v=v2026-09-08T18231";
-import { doorbellTopic } from "../../js/core/game-state-doorbell.js?v=v2026-09-08T18231";
+import { guardDesktopOnly } from "../../js/core/device-guard.js?v=v2026-09-08T18342";
+import { guardResourceLock } from "../../js/core/resource-lock.js?v=v2026-09-08T18342";
+import { initI18n, getUiLang, t } from "../../translation/translation.js?v=v2026-09-08T18342";
+import { requireAuth } from "../../js/core/auth.js?v=v2026-09-08T18342";
+import { setTopbarAccount } from "../../js/core/topbar-controller.js?v=v2026-09-08T18342";
+import { sb } from "../../js/core/supabase.js?v=v2026-09-08T18342";
+import { loadQuestions, loadAnswers } from "../../js/core/game-validate.js?v=v2026-09-08T18342";
+import { loadSfxManifest, initSfx, setCurrentGameId, unlockAudio, applySfxGameSettings, loadSfxFromCloud } from "../../js/core/sfx.js?v=v2026-09-08T18342";
+import { listGameSounds } from "../../js/core/sfx-cloud.js?v=v2026-09-08T18342";
+import { assertTransition } from "../../shared/gameStateMachine.js?v=v2026-09-08T18342";
+import { confirmModal } from "../../js/core/modal.js?v=v2026-09-08T18342";
+import { DEFAULT_SETTINGS } from "../../shared/gameStateShape.js?v=v2026-09-08T18342";
+import { rt } from "../../js/core/realtime.js?v=v2026-09-08T18342";
+import { doorbellTopic } from "../../js/core/game-state-doorbell.js?v=v2026-09-08T18342";
 
 function qrImgSrc(url) {
   const u = encodeURIComponent(String(url ?? ""));
@@ -84,12 +84,12 @@ function applyGameSettingsToState(settings, state) {
   }
 }
 
-import { createStore } from "./store.js?v=v2026-09-08T18231";
-import { createEngine } from "./engine.js?v=v2026-09-08T18231";
-import { createDevices } from "./devices.js?v=v2026-09-08T18231";
-import { createPresence } from "./presence.js?v=v2026-09-08T18231";
-import { createSoundReactor } from "./soundReactor.js?v=v2026-09-08T18231";
-import { createUI } from "./ui.js?v=v2026-09-08T18231";
+import { createStore } from "./store.js?v=v2026-09-08T18342";
+import { createEngine } from "./engine.js?v=v2026-09-08T18342";
+import { createDevices } from "./devices.js?v=v2026-09-08T18342";
+import { createPresence } from "./presence.js?v=v2026-09-08T18342";
+import { createSoundReactor } from "./soundReactor.js?v=v2026-09-08T18342";
+import { createUI } from "./ui.js?v=v2026-09-08T18342";
 
 guardDesktopOnly();
 
