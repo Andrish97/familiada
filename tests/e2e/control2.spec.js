@@ -474,7 +474,7 @@ test("control2: próg w rundzie -> finał, wczesne zakończenie po 4/5 pytaniach
 
     // Po 4. pytaniu suma = 200 = finalTarget -> natychmiastowy skok do
     // f_end, BEZ 5. pytania i BEZ gracza 2.
-    await expect(page.locator(".c2-stepper")).toContainText("Finał — koniec", { timeout: 10000 });
+    await expect(page.locator(".c2-stepper")).toContainText("Koniec gry", { timeout: 10000 });
     await expect(page.getByText("Suma finału: 200")).toBeVisible({ timeout: 10000 });
 
     await page.getByRole("button", { name: "Zakończ grę", exact: true }).click();
@@ -750,7 +750,7 @@ test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśni�
       await page.getByRole("button", { name: "Dalej" }).click();
     }
     // 75 (gracz 1) + 0 (powtórzenie) + 4x15 (gracz 2) = 135 < 200 — pełne 10/10, bez wczesnego wyjścia.
-    await expect(page.locator(".c2-stepper")).toContainText("Finał — koniec", { timeout: 10000 });
+    await expect(page.locator(".c2-stepper")).toContainText("Koniec gry", { timeout: 10000 });
     await expect(page.getByText("Suma finału: 135")).toBeVisible({ timeout: 10000 });
 
     // ===== F10: koniec finału =====

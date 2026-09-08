@@ -699,26 +699,27 @@ export function createUI({ root, emit }) {
   // c2-intro hero, ta sama nazwa przycisku odsłaniającego wynik ("Zakończ
   // grę" — było osobno "Pokaż koniec gry"/"Zakończ"), z wyjaśnieniem co się
   // pokaże (jak reszta hero-ekranów: "Na wyświetlaczu pojawi się...").
-  function renderEndScreen(state, { stepLabel, title, revealAction }) {
+  // Zawsze "Koniec gry" — finał KOŃCZY grę, to nie osobny, drugi rodzaj
+  // zakończenia (było mylące: "Koniec finału" obok "Koniec gry" sugerowało
+  // dwa różne ekrany). Bez hintu tłumaczącego co zrobi "Zakończ grę" —
+  // oczywiste z samej nazwy przycisku, nie trzeba tego pisać.
+  function renderEndScreen(state, { revealAction }) {
     if (!state.locks.gameEnded) {
       gameplayShell({
-        stepLabel,
+        stepLabel: "Koniec gry",
         body: [h("div", { class: "c2-intro" }, [
-          h("div", { class: "c2-intro-title", text: title }),
-          h("div", { class: "c2-intro-hint", text: "Pokaże się końcowy wynik i zwycięska drużyna. Stąd będzie można zacząć od nowa albo wrócić do listy gier." }),
+          h("div", { class: "c2-intro-title", text: "Koniec gry" }),
         ])],
         nav: [h("button", { class: "c2-btn primary c2-intro-btn", onclick: () => emit("game.dispatch", revealAction) }, [document.createTextNode("Zakończ grę")])],
       });
       return;
     }
     gameplayShell({
-      stepLabel,
+      stepLabel: "Koniec gry",
       body: [h("div", { class: "c2-intro" }, [
-        h("div", { class: "c2-intro-title", text: title }),
+        h("div", { class: "c2-intro-title", text: "Koniec gry" }),
         h("div", { class: "c2-intro-hint", text: gameEndSummary(state) }),
       ])],
-      // Zostają w dolnym pasku nawigacji (nie wyśrodkowane pod tekstem) —
-      // tak jak na zrzucie ekranu, który już zatwierdziłeś.
       nav: [
         h("button", { class: "c2-btn c2-intro-btn", type: "button", onclick: () => emit("game.restart") }, [document.createTextNode("Zacznij od nowa")]),
         h("button", { class: "c2-btn primary c2-intro-btn", type: "button", onclick: () => emit("session.finish") }, [document.createTextNode("Wróć do moich gier")]),
@@ -727,7 +728,7 @@ export function createUI({ root, emit }) {
   }
 
   function renderGameEnd(state) {
-    renderEndScreen(state, { stepLabel: "Koniec gry", title: "Koniec gry", revealAction: { type: "GAME_END_SHOW" } });
+    renderEndScreen(state, { revealAction: { type: "GAME_END_SHOW" } });
   }
 
   // ---- Finał ----
@@ -889,7 +890,7 @@ export function createUI({ root, emit }) {
   // gry" — suma finału jest już wtopiona w rounds.totals, patrz engine.js's
   // FINISH_FINAL) + dwa przyciski, tak samo jak "Koniec gry".
   function renderFinalEnd(state) {
-    renderEndScreen(state, { stepLabel: "Finał — koniec", title: "Koniec finału", revealAction: { type: "FINISH_FINAL" } });
+    renderEndScreen(state, { revealAction: { type: "FINISH_FINAL" } });
   }
 
   function render(state, ctx = {}) {
