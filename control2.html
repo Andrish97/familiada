@@ -260,9 +260,22 @@
     .c2-entrytile-q { font-weight:800; font-size:1rem; line-height:1.25; overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
     .c2-entrytile-p1ans { font-size:.85rem; opacity:.75; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
     .c2-entrytile-p1ans b { color:var(--gold); font-weight:800; }
-    .c2-entrytile-input { justify-content:center; }
-    .c2-entrytile-input input { width:100%; box-sizing:border-box; padding:6px 2px; border:0; background:transparent; color:#fff; font-size:1.05rem; font-weight:700; outline:none; }
-    .c2-entrytile-input input::placeholder { font-weight:400; opacity:.5; }
+    /* Pole wpisywania ma wyglądać jak realne pole formularza (obramowanie +
+       własne, ciemniejsze tło), nie jak goły tekst na tle kafla — zgłoszone.
+       Mniejszy padding zewnętrznego kafla, żeby input miał gdzie "oddychać"
+       w środku, sam input dostaje swoją ramkę/tło. Wpisana wartość dostaje
+       lekko inny (niebieskawy) odcień niż reszta napisów (pytanie/etykiety
+       są bielą) — żeby na pierwszy rzut oka było widać, co jest TREŚCIĄ
+       wpisaną przez operatora, a co statycznym opisem. */
+    .c2-entrytile.c2-entrytile-input { justify-content:center; padding:6px; }
+    .c2-entrytile-input input {
+      width:100%; height:100%; box-sizing:border-box; padding:8px 12px;
+      border-radius:10px; border:1px solid rgba(255,255,255,.2);
+      background:rgba(0,0,0,.22);
+      color:#bcd9ff; font-size:1.05rem; font-weight:700; outline:none;
+    }
+    .c2-entrytile-input input:focus { border-color:rgba(122,178,255,.65); background:rgba(122,178,255,.1); }
+    .c2-entrytile-input input::placeholder { font-weight:400; opacity:.5; color:#fff; }
     /* "Powtórzenie" — przycisk (nie checkbox), czerwony odcień jak stare
        control/js/gameFinal.js's ".btn.sm.danger" (P2_BTN_REPEAT_ON/OFF).
        Reużywana TA SAMA klasa na "Dźwięk powtórzenia" (renderFinalP2Start) —
