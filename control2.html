@@ -300,10 +300,20 @@
        I poziomie), pole na 2/3, OBOK siebie. Runda 1: ten kafelek zajmuje
        cały wiersz 1. Runda 2: ten sam kafelek zwężony do 2/3 wiersza, obok
        osobnego kafelka "Gracz 1" (1/3) — patrz .c2-map-p1tile niżej. */
+    /* Bez align-items:center: kolumny (etykieta/pole) mają wypełniać całą
+       wysokość kafelka, nie stać wyśrodkowane w jego środku — inaczej samo
+       pole (mimo flex:1 na <input> niżej) nie ma się w co rozciągnąć, bo
+       jego rodzic w tej siatce już dostaje tylko naturalną wysokość treści
+       (zgłoszone: wysokość pola w mapowaniu ma być taka sama jak we
+       wpisywaniu). c2-mapinput-labelcol ma własne justify-content:center,
+       więc etykieta zostaje wyśrodkowana mimo że kolumna się rozciąga. */
+    /* Pionowy padding 6px (nie 8px) — DOKŁADNIE jak c2-entrytile.c2-entrytile-
+       input w kroku wpisywania — żeby samo pole miało identyczną wysokość w
+       obu miejscach, nie tylko cały kafelek. */
     .c2-mapinput {
-      display:grid; grid-template-columns:1fr 2fr; align-items:center; gap:12px;
+      display:grid; grid-template-columns:1fr 2fr; gap:12px;
       border-radius:14px; border:1px solid var(--line2); background:rgba(255,255,255,.06);
-      padding:8px 14px;
+      padding:6px 14px;
     }
     /* Kolumna etykiety — wyśrodkowana w bloku. */
     .c2-mapinput-labelcol { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; text-align:center; }
