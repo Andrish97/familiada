@@ -197,6 +197,23 @@ const FINAL_SETUP_ROUND = {
   ],
 };
 
+// Dwie rundy do scenariusza 6 (zerwanie i ponowne podłączenie urządzeń) —
+// runda 1 przerwana W ŚRODKU pojedynku (rozłączenie następuje PO wygranym
+// pojedynku, ale PRZED odsłonięciem reszty), runda 2 to nowy pojedynek
+// rozegrany W CAŁOŚCI na już PONOWNIE podłączonym Buzzerze — dowód, że nowe
+// urządzenie nie tylko "świeci na zielono", ale faktycznie bierze udział w
+// rozgrywce (nie tylko presence, ale i realny zapis do game_state).
+const RECONNECT_ROUND_1 = FINAL_SETUP_ROUND;
+const RECONNECT_ROUND_2 = {
+  ord: 2, text: "Co robimy, gdy zerwie się internet", answers: [
+    { ord: 1, text: "Restartujemy router", fixed_points: 35 },
+    { ord: 2, text: "Dzwonimy do dostawcy", fixed_points: 25 },
+    { ord: 3, text: "Czekamy", fixed_points: 20 },
+    { ord: 4, text: "Sprawdzamy telefon", fixed_points: 12 },
+    { ord: 5, text: "Idziemy do sąsiada", fixed_points: 8 },
+  ],
+};
+
 // ===== Kafelkowanie okien 2x2 na wirtualnym ekranie (CDP Browser.setWindowBounds) =====
 
 const QUADRANTS = {
@@ -267,6 +284,66 @@ async function openTiledDevices(browser, game) {
 
 async function closeAll(contexts) {
   for (const ctx of Object.values(contexts)) await ctx.close().catch(() => {});
+}
+
+// ===== Zerwanie i ponowne podłączenie urządzenia PRZEZ MODAL (scenariusz 6) =====
+
+const DOT_ID = { display: "dotDisplay", host: "dotHost", buzzer: "dotBuzzer" };
+
+// control2/js/presence.js: urządzenie liczy się jako offline dopiero
+// 15s (ONLINE_MS) po ostatnim pingu, sprawdzane co 1.5s (POLL_MS) —
+// zamknięcie kontekstu przeglądarki nie zmienia kropki NATYCHMIAST, trzeba
+// poczekać, aż ostatni ping faktycznie się zestarzeje. Timeout z zapasem
+// ponad ten najgorszy przypadek (ostatni ping tuż przed zamknięciem +
+// 15s + kolejny tick pollowania).
+async function waitForDotStatus(control, kind, status, timeoutMs = 30_000) {
+  await control.waitForFunction(
+    ({ id, status }) => document.getElementById(id)?.className.includes(status),
+    { id: DOT_ID[kind], status },
+    { timeout: timeoutMs },
+  );
+}
+
+// Modal kropki statusu (control2/js/app.js's showQrModal) koduje URL
+// urządzenia jako obrazek qrserver.com's `data=` query param dla Hosta/
+// Buzzera (jedyny sposób pokazania QR bez biblioteki po stronie klienta),
+// a dla Wyświetlacza dodatkowo jako bezpośredni link "Otwórz" (#qrModalOpen
+// — jedyny kind z widocznym przyciskiem, patrz komentarz przy tym elemencie
+// w app.js). Czytamy URL DOKŁADNIE z tego, co modal pokazuje operatorowi —
+// nie z osobno złożonego game.share_key_* — żeby scenariusz sprawdzał, że
+// modal faktycznie prowadzi do właściwego urządzenia, a nie tylko że
+// nawigacja pod z góry znanym URL-em działa.
+async function readDeviceUrlFromModal(control, kind) {
+  if (kind === "display") {
+    return control.locator("#qrModalOpen").getAttribute("href");
+  }
+  const src = await control.locator("#qrModalImg").getAttribute("src");
+  return decodeURIComponent(new URL(src).searchParams.get("data") || "");
+}
+
+// Pełny cykl "operator odzyskuje rozłączone urządzenie": klik na kropkę
+// statusu w topbarze (klikalna PRZEZ CAŁĄ GRĘ, nie tylko na kroku
+// Urządzenia — patrz app.js), odczyt linku/QR z modala, otwarcie go w
+// ZUPEŁNIE NOWYM kontekście przeglądarki (świeży localStorage/deviceId —
+// wierniejsza symulacja realnego ponownego podłączenia niż zwykły
+// page.reload() tej samej, wciąż istniejącej karty), zamknięcie modala,
+// czekanie na zieloną kropkę. Zwraca nowy {context, page} do podmiany w
+// mapach contexts/pages wywołującego.
+async function reconnectDeviceViaModal(browser, control, kind) {
+  await control.locator(`#dot${kind[0].toUpperCase()}${kind.slice(1)}Row`).click();
+  await control.waitForTimeout(1200); // widz ma zdążyć zobaczyć modal z kodem/QR/linkiem
+
+  const url = await readDeviceUrlFromModal(control, kind);
+  if (!url) throw new Error(`[record] modal (${kind}) nie pokazał żadnego URL-a do ponownego podłączenia`);
+
+  const context = await browser.newContext({ baseURL: BASE_URL, viewport: null });
+  const page = await context.newPage();
+  await positionWindow(context, page, QUADRANTS[kind]);
+  await page.goto(url, { waitUntil: "domcontentloaded" });
+
+  await control.locator("#qrModalClose").click();
+  await waitForDotStatus(control, kind, "ok");
+  return { context, page };
 }
 
 // Symuluje gest przesunięcia (peek) na Hoście — host2/js/main.js's
@@ -668,6 +745,86 @@ async function scenarioFinalEarlyExit(pages) {
   await control.waitForTimeout(4000); // ekran końcowy widoczny chwilę na nagraniu
 }
 
+// ===== Scenariusz 6: zerwanie połączenia WSZYSTKICH trzech urządzeń naraz
+// (np. restart routera) W ŚRODKU rundy i ponowne podłączenie PRZEZ MODAL —
+// kropka statusu w topbarze, klikalna przez całą grę (nie tylko na kroku
+// Urządzeń), pokazuje kod/QR/link DOKŁADNIE tak, jak trzeba by je odczytać
+// w prawdziwej awarii (patrz reconnectDeviceViaModal). To jest dosłownie
+// scenariusz, po który cała przebudowa game_state (wspólna tabela stanu
+// zamiast komend, plan sekcja 4) powstała — dowód, że stan gry przeżywa
+// rozłączenie każdego urządzenia niezależnie od Control, bez żadnej ręcznej
+// resynchronizacji poza samym ponownym wejściem na URL urządzenia.
+//
+// Runda 1: pojedynek wygrany, JEDNA odpowiedź odsłonięta — DOPIERO wtedy
+// wszystkie trzy urządzenia tracą połączenie na raz, żeby nagranie wyraźnie
+// pokazało "grę w toku, nagle rozłączoną", nie tylko rozłączenie na czystym
+// ekranie startowym. Po ponownym podłączeniu runda kończy się normalnie
+// (dowód: Control->Display/Host nadal działa na świeżych urządzeniach).
+// Runda 2: całkowicie NOWY pojedynek rozegrany na już podłączonym z powrotem
+// Buzzerze — dowód, że nowe urządzenie nie tylko "świeci na zielono"
+// (presence), ale faktycznie bierze udział w rozgrywce (realny zapis do
+// game_state przez game_state_buzzer_press).
+async function scenarioDeviceReconnect(pages, { contexts, browser }) {
+  const { control } = pages;
+
+  await clickPaced(control.getByRole("button", { name: "Dalej" }));
+  await clickPaced(control.getByRole("button", { name: "Gotowe — przejdź do rund" }));
+  await clickPaced(control.getByRole("button", { name: "Rozpocznij grę" }));
+  await clickPaced(control.getByRole("button", { name: "Rozpocznij rundę" }));
+
+  await clickPaced(pages.buzzer.getByRole("button", { name: "Buzzer A" }));
+  await clickPaced(control.getByRole("button", { name: "Zatwierdź: Alfa" }));
+  await armAndConfirmPaced(answerTile(control, 1)); // Lato, 120 -> wygrywa pojedynek, reszta rundy zostaje NIEODSŁONIĘTA
+
+  // ===== Zerwanie połączenia WSZYSTKICH trzech urządzeń naraz =====
+  console.log("[record] symulacja zerwania połączenia: zamykam Display/Host/Buzzer");
+  await Promise.all([contexts.display.close(), contexts.host.close(), contexts.buzzer.close()]);
+  await Promise.all([
+    waitForDotStatus(control, "display", "bad"),
+    waitForDotStatus(control, "host", "bad"),
+    waitForDotStatus(control, "buzzer", "bad"),
+  ]);
+  await control.waitForTimeout(2000); // widz ma zdążyć zobaczyć wszystkie trzy kropki na czerwono naraz
+
+  // ===== Ponowne podłączenie PO KOLEI, przez modal (Display -> Host -> Buzzer) =====
+  const display2 = await reconnectDeviceViaModal(browser, control, "display");
+  contexts.display = display2.context; pages.display = display2.page;
+  await control.waitForTimeout(1500); // widz ma zdążyć zobaczyć zieloną kropkę I odzyskany obraz gry na Display
+
+  const host2 = await reconnectDeviceViaModal(browser, control, "host");
+  contexts.host = host2.context; pages.host = host2.page;
+  await control.waitForTimeout(1500);
+
+  const buzzer2 = await reconnectDeviceViaModal(browser, control, "buzzer");
+  contexts.buzzer = buzzer2.context; pages.buzzer = buzzer2.page;
+  await control.waitForTimeout(1500);
+
+  // ===== Dowód, że gra działa dalej: dokończ rundę 1 na świeżo podłączonych
+  // urządzeniach (Display/Host odbierają odsłonięcia normalnie) =====
+  await armAndConfirmPaced(answerTile(control, 2));
+  await armAndConfirmPaced(answerTile(control, 3));
+  await armAndConfirmPaced(answerTile(control, 4));
+  await armAndConfirmPaced(answerTile(control, 5));
+  await clickPaced(control.getByRole("button", { name: "Zakończ rundę" }));
+  await control.waitForTimeout(2000);
+
+  // ===== Runda 2, w CAŁOŚCI na ponownie podłączonym Buzzerze — nie tylko
+  // presence, prawdziwy udział w grze. =====
+  await clickPaced(control.getByRole("button", { name: "Rozpocznij rundę" }));
+  await clickPaced(pages.buzzer.getByRole("button", { name: "Buzzer B" }));
+  await clickPaced(control.getByRole("button", { name: "Zatwierdź: Beta" }));
+  await armAndConfirmPaced(answerTile(control, 1)); // Restartujemy router, 35
+  await armAndConfirmPaced(answerTile(control, 2));
+  await armAndConfirmPaced(answerTile(control, 3));
+  await armAndConfirmPaced(answerTile(control, 4));
+  await armAndConfirmPaced(answerTile(control, 5));
+  await clickPaced(control.getByRole("button", { name: "Zakończ rundę" }));
+  await control.waitForTimeout(2000);
+
+  await clickPaced(control.getByRole("button", { name: "Zakończ grę" }));
+  await control.waitForTimeout(4000); // ekran końcowy widoczny chwilę na nagraniu
+}
+
 // ===== Orkiestracja: jedna przeglądarka, po kolei każdy scenariusz z
 // własną grą testową, własnym zestawem 4 okien i własnym plikiem nagrania. =====
 
@@ -713,6 +870,13 @@ const SCENARIOS = [
       finalAnswerPts: 250,
     }),
     run: scenarioFinalEarlyExit,
+  },
+  {
+    file: "06-zerwanie-i-ponowne-podlaczenie.mp4",
+    makeGame: (setupPage) => makeGame(setupPage, `E2E-REC-RECONNECT-${Date.now()}`, {
+      roundQuestions: [RECONNECT_ROUND_1, RECONNECT_ROUND_2],
+    }),
+    run: scenarioDeviceReconnect,
   },
 ];
 
@@ -769,7 +933,11 @@ async function main() {
       const { contexts, pages } = await openTiledDevices(browser, game);
       const rec = startRecording(path.join(OUT_DIR, scenario.file));
       try {
-        await scenario.run(pages);
+        // { contexts, browser } — tylko scenariusz 6 (scenarioDeviceReconnect)
+        // z tego korzysta (zamyka/otwiera kontensty urządzeń w locie); reszta
+        // scenariuszy deklaruje run(pages) i ten drugi argument po prostu
+        // ignoruje.
+        await scenario.run(pages, { contexts, browser });
       } catch (err) {
         console.error(`[record] scenariusz ${scenario.file} rzucił błąd:`, err);
         await dumpFailureDiagnostics(pages.control, scenario.file).catch((diagErr) => {
