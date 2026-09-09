@@ -1138,12 +1138,14 @@ export function createUI({ root, emit }) {
     // 6 wierszy zamiast domyślnych 5 (nadpisanie inline, tylko tu — Rundy
     // mają teraz 6 wierszy przez własne nadpisanie w renderRounds): wiersz 5
     // celowo PUSTY, żeby dać kaflom odsłaniania w wierszu 6 CAŁY wiersz
-    // przerwy nad sobą, nie tylko margines. Wiersz 1 (Wpisano) dostaje
-    // WĘŻSZĄ wagę niż pozostałe — zgłoszone: "chodziło [o] odwrót" (pole ma
-    // być NIŻSZE niż reszta wierszy, nie wyższe) — dokładnie odwrotnie niż
-    // poprzednia wersja tej reguły.
+    // przerwy nad sobą, nie tylko margines. Wszystkie 6 wierszy równe —
+    // wcześniejsze przeważanie wiersza 1 (Wpisano) było próbą naprawienia
+    // wysokości POLA przez wysokość WIERSZA; prawdziwa naprawa (zgłoszone:
+    // "pola wpisywania lepiej żeby były na wysokość kafelka") jest w CSS
+    // (.c2-entrytile-input input's flex:1/height:100%) — samo pole
+    // wypełnia teraz cały kafelek niezależnie od tego, ile miejsca ma wiersz.
     const mappingGrid = tileGrid([...row1Tiles, revealAnswerTile, revealPointsTile, ...optionTiles]);
-    mappingGrid.style.gridTemplateRows = "minmax(0,0.9fr) repeat(5, minmax(0,1fr))";
+    mappingGrid.style.gridTemplateRows = "repeat(6, minmax(0,1fr))";
 
     const body = [
       h("div", { class: "c2-question", text: question?.text || `Pytanie ${idx + 1}` }),

@@ -285,7 +285,11 @@
        lekko inny (niebieskawy) odcień niż reszta napisów (pytanie/etykiety
        są bielą) — żeby na pierwszy rzut oka było widać, co jest TREŚCIĄ
        wpisaną przez operatora, a co statycznym opisem. */
-    .c2-entrytile.c2-entrytile-input { justify-content:center; padding:6px; }
+    /* Pole ma wypełniać CAŁĄ wysokość kafelka, nie stać małym prostokątem
+       wyśrodkowanym w dużo większym pustym kaflu (zgłoszone: "pola
+       wpisywania lepiej żeby były na wysokość kafelka") — stąd flex:1 na
+       samym <input> niżej zamiast justify-content:center tutaj. */
+    .c2-entrytile.c2-entrytile-input { padding:6px; }
     /* Mała etykieta nad polem (np. mapowania finału's "Wpisano") — bez niej
        samo obramowane pole nie ma żadnego określenia (zgłoszone). Wpisywanie
        (renderFinalEntry) jej nie dokłada — tam kontekst już daje sam wiersz. */
@@ -304,13 +308,15 @@
     /* Kolumna etykiety — wyśrodkowana w bloku. */
     .c2-mapinput-labelcol { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; text-align:center; }
     .c2-mapinput .c2-field-label { font-size:.85rem; }
-    .c2-mapinput .c2-entrytile-input { display:flex; align-items:center; min-width:0; }
+    /* Bez align-items:center: pole ma wypełniać całą wysokość tego kafla
+       (jak w kroku wpisywania), nie stać wyśrodkowanym prostokątem. */
+    .c2-mapinput .c2-entrytile-input { display:flex; min-width:0; }
     /* Kafelek "Gracz 1" (runda 2, obok c2-mapinput) — ta sama obramówka co
        c2-entrytile, wyśrodkowany w pionie, wartość złota jak wszędzie indziej. */
     .c2-map-p1tile { justify-content:center; align-items:center; text-align:center; gap:6px; }
     .c2-map-p1tile .c2-entrytile-p1ans { font-size:1rem; white-space:normal; opacity:1; }
     .c2-entrytile-input input {
-      width:100%; box-sizing:border-box; padding:8px 12px;
+      width:100%; height:100%; flex:1; box-sizing:border-box; padding:8px 12px;
       border-radius:10px; border:1px solid rgba(255,255,255,.2);
       background:rgba(0,0,0,.22);
       color:#bcd9ff; font-size:1.05rem; font-weight:700; outline:none;
