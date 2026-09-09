@@ -17,7 +17,7 @@
 // zdążyć zanim wizualna sekwencja się skończy — to właśnie ten dźwięk (nie
 // zgadywana stała animacji) jest tu jedynym źródłem czasu blokady, dokładnie
 // jak w oryginale.
-import { getSfxDuration } from "../../js/core/sfx.js?v=v2026-09-08T18231";
+import { getSfxDuration } from "../../js/core/sfx.js?v=v2026-09-09T17244";
 
 async function dur(key) {
   try { return (await getSfxDuration(key)) || 0; } catch { return 0; }
