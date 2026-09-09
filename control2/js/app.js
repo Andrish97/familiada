@@ -7,7 +7,7 @@
 // stanów była mechanizmem wszędzie, nie tylko wewnątrz silnika reguł gry.
 
 import { guardDesktopOnly } from "../../js/core/device-guard.js?v=v2026-09-09T17244";
-import { guardResourceLock } from "../../js/core/resource-lock.js?v=v2026-09-09T17244";
+import { guardResourceLock, guardResourceBusy } from "../../js/core/resource-lock.js?v=v2026-09-09T17244";
 import { initI18n, getUiLang, t } from "../../translation/translation.js?v=v2026-09-09T17244";
 import { requireAuth } from "../../js/core/auth.js?v=v2026-09-09T17244";
 import { setTopbarAccount } from "../../js/core/topbar-controller.js?v=v2026-09-09T17244";
@@ -153,9 +153,8 @@ async function main() {
   // punkt odłożony do teraz, bo dopiero game_state daje realny stan do
   // przejęcia). resourceType:"game" to WSPÓLNY klucz z game-settings.js/
   // game-settings2.js/editor.js — Control blokuje edycję ustawień w trakcie
-  // rozgrywki, i
-  // widzi odwrotnie, gdy ktoś inny (druga karta Control, ustawienia,
-  // edytor) już trzyma tę samą grę.
+  // rozgrywki, i widzi odwrotnie, gdy ktoś inny (druga karta Control,
+  // ustawienia, edytor) już trzyma tę samą grę.
   const lock = await guardResourceLock({
     resourceType: "game",
     resourceId: gameId,
@@ -164,6 +163,25 @@ async function main() {
     backHref: "/builder",
   });
   if (!lock.ok) return;
+
+  // "Logo ↔ Control" (docs/plan-testy-i-poprawki.md, sekcja "Krzyżowe
+  // blokady między zasobami" — druga połowa pary "Logo ↔ trwająca
+  // rozgrywka", odłożona tam na "fundament Control", który właśnie powyżej
+  // powstał). Control nie EDYTUJE logo — tylko je referuje (na żywo na
+  // Wyświetlaczu), więc nie zajmuje własnej blokady "logo" (guardResourceBusy,
+  // w odróżnieniu od guardResourceLock, nic nie trzyma/nie zwalnia) — tylko
+  // czeka, aż logo-editor.js zwolni SWOJĄ. Domyślne logo (logoId === null)
+  // nie ma odpowiadającego wiersza user_logos — nic do sprawdzenia.
+  const gameLogoId = game.settings?.display?.logoId;
+  if (gameLogoId) {
+    const logoLock = await guardResourceBusy({
+      resourceType: "logo",
+      resourceId: gameLogoId,
+      message: t("resourceLock.logoMessage"),
+      backHref: "/builder",
+    });
+    if (!logoLock.ok) return;
+  }
 
   setCurrentGameId(gameId);
   await loadSfxManifest();

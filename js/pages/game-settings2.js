@@ -22,7 +22,7 @@ import {
   uploadGameSound, deleteGameSound, deleteAllGameSounds,
 } from "../core/sfx-cloud.js?v=v2026-09-09T17244";
 import { guardDesktopOnly } from "../core/device-guard.js?v=v2026-09-09T17244";
-import { guardResourceLock } from "../core/resource-lock.js?v=v2026-09-09T17244";
+import { guardResourceLock, guardResourceBusy } from "../core/resource-lock.js?v=v2026-09-09T17244";
 import { updateChecked, ROW_GONE } from "../core/db-guard.js?v=v2026-09-09T17244";
 
 guardDesktopOnly();
@@ -1572,6 +1572,24 @@ async function main() {
     backHref: "/builder",
   });
   if (!lock.ok) return;
+
+  // "Logo ↔ ustawienia gry" (docs/plan-testy-i-poprawki.md, sekcja
+  // "Krzyżowe blokady między zasobami") — ta strona nie EDYTUJE logo, tylko
+  // je referuje (podgląd Wyświetlacza), więc nie zajmuje własnej blokady
+  // "logo" (guardResourceBusy, w odróżnieniu od guardResourceLock, nic nie
+  // trzyma/nie zwalnia) — tylko czeka, aż logo-editor.js zwolni SWOJĄ.
+  // Domyślne logo (logoId === null) nie ma odpowiadającego wiersza
+  // user_logos — nic do sprawdzenia.
+  const gameLogoId = game.settings?.display?.logoId;
+  if (gameLogoId) {
+    const logoLock = await guardResourceBusy({
+      resourceType: "logo",
+      resourceId: gameLogoId,
+      message: t("resourceLock.logoMessage"),
+      backHref: "/builder",
+    });
+    if (!logoLock.ok) return;
+  }
 
   lastSavedSettingsRaw = game.settings ?? {};
 
