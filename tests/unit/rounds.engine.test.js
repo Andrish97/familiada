@@ -279,6 +279,34 @@ test("timer3: EXPIRE_TIMER3 jest no-opem, jeśli operator sam rozstrzygnął wcz
   assert.equal(store.state.rev, revBefore);
 });
 
+test("timer3: CANCEL_TIMER3 (zastany wygasły przy wznowieniu Control) kasuje zegarek BEZ naliczania X, w odróżnieniu od EXPIRE_TIMER3", async () => {
+  let t = 2_000_000;
+  const { store, dispatch } = makeEngine({}, () => t);
+  await dispatch({ type: "START_ROUND" });
+  await dispatch({ type: "ACCEPT_BUZZ", team: "A" });
+  await dispatch({ type: "REVEAL_ANSWER", ord: 1 }); // WIN -> PLAY, controlTeam=A
+
+  await dispatch({ type: "START_TIMER3" });
+  t += 5000; // operator "nieobecny" — czas mija bez niczyjej decyzji
+
+  await dispatch({ type: "CANCEL_TIMER3" });
+  assert.equal(store.state.rounds.timer3.running, false);
+  assert.equal(store.state.rounds.timer3.resolved, null, "brak naliczonego pudła — w odróżnieniu od EXPIRE_TIMER3's resolved:'X'");
+  assert.equal(store.state.rounds.xA, 0, "cofnięcie, nie naliczenie: drużyna nie dostaje pudła za czas, kiedy nikt nie patrzył");
+});
+
+test("timer3: CANCEL_TIMER3 jest no-opem, gdy nic nie odlicza", async () => {
+  const { store, dispatch } = makeEngine();
+  await dispatch({ type: "START_ROUND" });
+  await dispatch({ type: "ACCEPT_BUZZ", team: "A" });
+  await dispatch({ type: "REVEAL_ANSWER", ord: 1 });
+
+  const revBefore = store.state.rev;
+  const result = await dispatch({ type: "CANCEL_TIMER3" });
+  assert.equal(result, null);
+  assert.equal(store.state.rev, revBefore);
+});
+
 test("timer3: ADD_X/PASS/GO_STEAL/END_ROUND ręcznie też czyszczą aktywny zegarek", async () => {
   const { store, dispatch } = makeEngine();
   await dispatch({ type: "START_ROUND" });
