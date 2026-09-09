@@ -18,6 +18,7 @@
 // każdym zdarzeniu — "wszystko idzie przez tabelę stanów".
 import { getRoundsHint, getFinalHint, getFinalEntryShortcuts, teamName } from "../../shared/hints.js?v=v2026-09-09T11294";
 import { getSfxDuration } from "../../js/core/sfx.js?v=v2026-09-09T11294";
+import { ANSWER_ANIM } from "../../shared/displayAnim.js?v=v2026-09-09T11294";
 
 const $ = (id) => document.getElementById(id);
 const on = (el, ev, fn) => el && el.addEventListener(ev, fn);
@@ -56,30 +57,31 @@ export function createUI({ root, emit }) {
   // Wyświetlacza albo dźwięku (poprawka zgłoszona po pierwszej wersji:
   // "czasem dźwięk jest krótszy niż animacja, trzeba wybierać do dłuższe" —
   // sam dźwięk to za mało, bo animacja na Wyświetlaczu czasem trwa dłużej
-  // niż próbka audio). Animacja pojedynczego odsłonięcia to zawsze "matrix
-  // right", 500ms — ta sama stała co ANSWER_ANIM w display2/js/render.js,
-  // używana identycznie dla ANSWER_REVEALED/FINAL_ANSWER_REVEALED/
-  // FINAL_POINTS_REVEALED (sprawdzone w kodzie, nie zgadywane). Ustawiana w
-  // momencie WYSŁANIA akcji odsłaniającej (nie w momencie kliknięcia —
-  // armowanie samo w sobie nic nie odsłania), blokuje WSZYSTKIE kafle
-  // odsłaniania (nie tylko ten właśnie kliknięty), dopóki dłuższe z tych
-  // dwóch nie dobiegnie końca — także w Finale (Pokaż odpowiedź/Pokaż
+  // niż próbka audio). Czas animacji NIE jest tu zgadywany osobno — to
+  // dokładnie ten sam ANSWER_ANIM.ms co display2/js/render.js faktycznie
+  // odtwarza dla ANSWER_REVEALED/FINAL_ANSWER_REVEALED/
+  // FINAL_POINTS_REVEALED (import z shared/displayAnim.js, jedno źródło
+  // prawdy dla obu plików — jeśli ten czas się kiedyś zmieni, zmienia się
+  // tu automatycznie razem z Wyświetlaczem, bez ręcznego przepisywania).
+  // Ustawiana w momencie WYSŁANIA akcji odsłaniającej (nie w momencie
+  // kliknięcia — armowanie samo w sobie nic nie odsłania), blokuje WSZYSTKIE
+  // kafle odsłaniania (nie tylko ten właśnie kliknięty), dopóki dłuższe z
+  // tych dwóch nie dobiegnie końca — także w Finale (Pokaż odpowiedź/Pokaż
   // punkty). Każdy wywołujący przekazuje dokładny klucz dźwięku, który
   // faktycznie poleci dla TEJ akcji (np. "answer_correct" dla odsłonięcia
   // odpowiedzi w Rundach, "reveal" dla Finału's "Pokaż odpowiedź") — patrz
   // engine.js's soundCueKey per reducer.
-  const DISPLAY_ANSWER_ANIM_MS = 500;
   let revealLockedUntil = 0;
   function armRevealCooldown(soundKey) {
     const applyLock = (ms) => {
-      const floored = Math.max(ms, DISPLAY_ANSWER_ANIM_MS);
+      const floored = Math.max(ms, ANSWER_ANIM.ms);
       revealLockedUntil = Date.now() + floored;
       setTimeout(() => emit("ui.rerender"), floored + 20);
     };
     // Zanim poznamy realny czas trwania dźwięku (metadane audio mogą nie
     // być jeszcze wczytane), blokujemy co najmniej na czas animacji —
     // nigdy krócej, więc nie ma okna bez blokady.
-    applyLock(DISPLAY_ANSWER_ANIM_MS);
+    applyLock(ANSWER_ANIM.ms);
     if (soundKey) {
       getSfxDuration(soundKey).then((durationS) => {
         if (durationS > 0) applyLock(Math.round(durationS * 1000));

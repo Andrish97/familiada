@@ -21,13 +21,14 @@
 
 import { deriveEvents } from "../../shared/deriveEvents.js?v=v2026-09-09T11294";
 import { resolveRoundsEndScreen, resolveFinalEndScreen } from "../../shared/endScreen.js?v=v2026-09-09T11294";
-
-const ROUND_INTRO_ANIM = { type: "matrix", axis: "down", ms: 1500 };
-const ROUND_OUT_ANIM = { type: "edge", dir: "down", ms: 1000 };
-const ANSWER_ANIM = { type: "matrix", axis: "right", ms: 500 };
-const FINAL_BOARD_ANIM = { type: "matrix", axis: "down", ms: 1500 };
-const FINAL_OUT_ANIM = { type: "edge", dir: "down", ms: 1000 };
-const LOGO_IN_ANIM = { type: "edge", dir: "up", ms: 1000 };
+import {
+  ROUND_INTRO_ANIM,
+  ROUND_OUT_ANIM,
+  ANSWER_ANIM,
+  FINAL_BOARD_ANIM,
+  FINAL_OUT_ANIM,
+  LOGO_IN_ANIM,
+} from "../../shared/displayAnim.js?v=v2026-09-09T11294";
 
 function pad3(n) { return String(Math.max(0, Number(n) || 0)).padStart(3, " "); }
 
