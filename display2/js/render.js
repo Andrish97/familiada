@@ -48,9 +48,30 @@ export function createRenderer({ scene, qr }) {
     const winnerTeam = row.detail?.final?.winnerTeam;
     const tick = () => {
       const remaining = Math.max(0, Math.ceil((timer.endsAt - Date.now()) / 1000));
+      if (remaining <= 0) {
+        // control/js/gameFinal.js's startTimerForPhase(): przy wygaśnięciu
+        // NA ŻYWO stary Control jawnie kazał Displayowi "restoreTotalsTriplets()"
+        // — wrócić do prawdziwych wyników drużyn zamiast zamrożonych zer.
+        // Tu Display robi to SAM, z własnego zegara (endsAt to i tak
+        // jedyne wiążące źródło — to nic nowego, ten sam sposób liczenia co
+        // samo tykanie wyżej), zamiast czekać na komendę/nowy zapis stanu.
+        // Bez tego: gdyby Control było zamknięte dokładnie w momencie
+        // wygaśnięcia (zgłoszone: "jest timer na wyświetlaczu, który
+        // zostanie przerwany"), Wyświetlacz zostawałby zamrożony na "00"
+        // dla widzów, dopóki Control by nie wrócił i nie dopisał
+        // EXPIRE_TIMER do game_state — game_state.detail.final.runtime.timer.running
+        // może więc chwilowo mijać się z prawdą (nieaktualizowane, bo
+        // Control nieobecny), ale to nie problem: to jest czysto lokalna
+        // decyzja RENDEROWANIA z tego samego endsAt, nie nowe źródło
+        // prawdy — kiedy Control faktycznie dopisze EXPIRE_TIMER, ten sam
+        // paintTotals() i tak wykona się ponownie (TIMER_STOPPED), bez
+        // różnicy w wyniku.
+        stopTimerTick();
+        paintTotals(row);
+        return;
+      }
       const digits = String(remaining).padStart(2, "0");
       if (winnerTeam === "A") api.small.leftDigits(digits); else api.small.rightDigits(digits);
-      if (remaining <= 0) stopTimerTick();
     };
     tick();
     timerHandle = setInterval(tick, 250);
