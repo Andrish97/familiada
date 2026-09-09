@@ -152,7 +152,8 @@ async function main() {
   // Warstwa 1 blokady (docs/plan-testy-i-poprawki.md, sekcja "Control" —
   // punkt odłożony do teraz, bo dopiero game_state daje realny stan do
   // przejęcia). resourceType:"game" to WSPÓLNY klucz z game-settings.js/
-  // editor.js — Control blokuje edycję ustawień w trakcie rozgrywki, i
+  // game-settings2.js/editor.js — Control blokuje edycję ustawień w trakcie
+  // rozgrywki, i
   // widzi odwrotnie, gdy ktoś inny (druga karta Control, ustawienia,
   // edytor) już trzyma tę samą grę.
   const lock = await guardResourceLock({
@@ -433,18 +434,18 @@ async function main() {
   document.getElementById("btnLegalClose")?.addEventListener("click", (ev) => { ev.stopImmediatePropagation(); closeLegalModal(); });
   legalOverlay?.addEventListener("click", (ev) => { if (ev.target === legalOverlay) closeLegalModal(); });
 
-  // ===== Modal ustawień gry (edycja WYŁĄCZNIE w game-settings — Control
+  // ===== Modal ustawień gry (edycja WYŁĄCZNIE w game-settings2 — kopia
+  // game-settings.js dedykowana dla Control v2, patrz jej nagłówek — Control
   // tylko otwiera ten sam modal co dzisiejszy btnOpenGsModal/gsOverlay,
-  // identyczny protokół postMessage gs:requestClose / gs:close). Inaczej
-  // niż dziś: nie przekazujemy gs:displayCmd do żadnego prawdziwego
-  // urządzenia — sekcja 3a pkt 5 planu: Display zostaje BLACK przez cały
-  // etap ustawień, podgląd na żywo to tylko lokalna miniaturka w D3 (patrz
-  // niżej), odświeżana po ZAMKNIĘCIU modala, nie w locie przy każdej
-  // zmianie suwaka.
+  // identyczny protokół postMessage gs:requestClose / gs:close). Podgląd
+  // Wyświetlacza wewnątrz modala to WŁASNY iframe game-settings2 (/display2?
+  // preview=1 + shared/previewRow.js), aktualizowany na żywo przy każdej
+  // zmianie — nie jest to sterowanie prawdziwym, sparowanym Display (ten
+  // zostaje BLACK przez cały etap ustawień, sekcja 3a pkt 5 planu).
   const gsOverlayEl = document.getElementById("gsOverlay");
   const gsFrameEl = document.getElementById("gsFrame");
   function openGsModal() {
-    if (gsFrameEl) gsFrameEl.src = `/game-settings?id=${encodeURIComponent(gameId)}&modal=1`;
+    if (gsFrameEl) gsFrameEl.src = `/game-settings2?id=${encodeURIComponent(gameId)}&modal=1`;
     gsOverlayEl?.classList.remove("hidden");
   }
   async function onGsModalClose() {

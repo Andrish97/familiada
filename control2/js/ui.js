@@ -315,7 +315,7 @@ export function createUI({ root, emit }) {
   }
 
   // Wiersz-atrapa "rundy w toku" do podglądu D3 — patrz shared/previewRow.js
-  // (ta sama funkcja, którą używa też js/pages/game-settings.js's modal
+  // (ta sama funkcja, którą używa też js/pages/game-settings2.js's modal
   // ustawień, żeby oba miejsca nie rozjechały się osobnymi implementacjami).
   function buildPreviewRow(state) {
     return buildDisplayPreviewRow({ teams: state.teams, display: state.display });

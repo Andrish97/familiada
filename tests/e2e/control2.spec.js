@@ -31,7 +31,7 @@
 //       odtwarza mimo normalnie grającej akcji.
 //   13. Zmiana języka propaguje się do Hosta, w tym samą TREŚĆ tytułu fazy
 //       (nie tylko chrome strony) — regresja na dzisiejszą naprawę i18n.
-//   14. Modal ustawień gry (js/pages/game-settings.js) — zmiana nazwy
+//   14. Modal ustawień gry (js/pages/game-settings2.js) — zmiana nazwy
 //       drużyny faktycznie odświeża zagnieżdżony podgląd Wyświetlacza
 //       (/display2?preview=1) — regresja na naprawę martwego podglądu w
 //       trybie modalu.
@@ -966,7 +966,7 @@ test("control2: zmiana języka w Control propaguje się do Hosta — tytuł fazy
 
 // ===== 14. Modal ustawień gry — zmiana nazwy drużyny odświeża podgląd Wyświetlacza =====
 //
-// Zgłoszone: podgląd Wyświetlacza w modalu ustawień (js/pages/game-settings.js)
+// Zgłoszone: podgląd Wyświetlacza w modalu ustawień (js/pages/game-settings2.js)
 // był całkowicie martwy — sendDisplayCmd() w trybie modalu tylko przekazywał
 // tekstowe komendy do window.parent, licząc na Control, żeby je dalej
 // przekazał "prawdziwemu" Displayowi (czego Control v2 nigdy nie robi —
