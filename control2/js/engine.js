@@ -374,6 +374,24 @@ const REDUCERS = {
     return REDUCERS.ADD_X(state);
   },
 
+  // Zgłoszone: "chodzi o to, żeby wrócić o krok, a nie pójść dalej" —
+  // w odróżnieniu od EXPIRE_TIMER3 (naliczenie X, gdy timer3 wygasł NA ŻYWO,
+  // Control otwarty i obserwujący), to jest wersja dla timera3 zastanego
+  // JUŻ wygasłego przy wznowieniu (store.hydrate(), operator był
+  // nieobecny — nie mógł ani ręcznie rozstrzygnąć, ani obserwować
+  // auto-rozstrzygnięcia). Naliczanie X za czas, który upłynął podczas gdy
+  // nikt nie patrzył, byłoby niesprawiedliwe wobec drużyny — więc zamiast
+  // ADD_X po prostu kasuje timer3 do stanu SPRZED jego startu (jak
+  // "Zacznij od nowa" jest cofnięciem gry, nie kontynuacją) i zostawia
+  // rundę dokładnie tam, gdzie była: operator sam decyduje X-em/odpowiedzią
+  // po powrocie.
+  async CANCEL_TIMER3(state) {
+    const r = state.rounds;
+    if (!r.timer3?.running) return null;
+    r.timer3 = { running: false, endsAt: 0, resolved: null };
+    return sameStep(state);
+  },
+
   // ---- R6-R7: koniec rundy ----
   async END_ROUND(state) {
     const r = state.rounds;

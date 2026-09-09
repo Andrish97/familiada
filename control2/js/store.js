@@ -18,6 +18,7 @@ import { sb } from "../../js/core/supabase.js?v=v2026-09-09T16253";
 import { ringDoorbell } from "../../js/core/game-state-doorbell.js?v=v2026-09-09T16253";
 import { createPersist, StaleWriteError } from "./persist.js?v=v2026-09-09T16253";
 import { makeDefaultState, DEFAULT_SETTINGS, PERSISTED_KEYS } from "../../shared/gameStateShape.js?v=v2026-09-09T16253";
+import { expiredTimerOnHydrate } from "./timerResume.js?v=v2026-09-09T16253";
 
 // Kanał broadcastowy "dzwonek" (plan, sekcja 1 — decyzja końcowa: anon nie
 // ma bezpośredniego dostępu do odczytu game_state wcale, więc postgres_changes
@@ -35,6 +36,8 @@ function buildDetail(state) {
   for (const key of PERSISTED_KEYS) detail[key] = state[key];
   return detail;
 }
+
+export { expiredTimerOnHydrate };
 
 export function createStore(gameId) {
   const listeners = new Set();
@@ -86,18 +89,6 @@ export function createStore(gameId) {
     applyRow(data);
     emit();
     return expiredTimerOnHydrate(state);
-  }
-
-  // Zwraca opis wygasłego (w trakcie nieobecności Control) timera finału, do
-  // natychmiastowej obsługi przez gameFinal.js — patrz plan, sekcja 4
-  // ("dogonienie" wygasłego timera przy hydrate(), zanim cokolwiek się
-  // wyrenderuje operatorowi).
-  function expiredTimerOnHydrate(s) {
-    const t = s.final?.runtime?.timer;
-    if (t?.running && typeof t.endsAt === "number" && t.endsAt <= Date.now()) {
-      return { phase: t.phase, endsAt: t.endsAt };
-    }
-    return null;
   }
 
   // ---- zapis: pełny wiersz, synchronicznie potwierdzony (plan, sekcja 4) ----

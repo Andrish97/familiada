@@ -224,11 +224,20 @@ async function main() {
     now: Date.now,
   });
 
-  if (expiredTimer) {
-    // "Dogonienie" wygasłego timera przy wznowieniu (plan, sekcja 4) —
-    // zanim cokolwiek się wyrenderuje operatorowi.
-    await engine.dispatch({ type: "EXPIRE_TIMER" });
+  // "Dogonienie" timerów zastanych już wygasłych przy wznowieniu (plan,
+  // sekcja 4) — zanim cokolwiek się wyrenderuje operatorowi. Dwa timery,
+  // dwie różne reakcje (patrz store.js's expiredTimerOnHydrate): final.timer
+  // idzie NAPRZÓD (EXPIRE_TIMER — bez realnej konsekwencji, plan wymaga
+  // natychmiastowego zastosowania), rounds.timer3 idzie WSTECZ
+  // (CANCEL_TIMER3 — nalicza pudło, więc nie może się "zdarzyć" podczas gdy
+  // nikt nie patrzył; zgłoszone: "chodzi o to, żeby wrócić o krok, a nie
+  // pójść dalej w takich sytuacjach").
+  async function applyExpiredTimersOnResume(expired) {
+    if (!expired) return;
+    if (expired.final) await engine.dispatch({ type: "EXPIRE_TIMER" });
+    if (expired.timer3) await engine.dispatch({ type: "CANCEL_TIMER3" });
   }
+  await applyExpiredTimersOnResume(expiredTimer);
 
   // Control jest jedynym urządzeniem "authenticated" — może czytać
   // game_state bezpośrednio (dla siebie), więc na dzwonek reaguje pełnym
@@ -246,7 +255,7 @@ async function main() {
     externalRefreshInFlight = true;
     try {
       const expiredNow = await store.hydrate();
-      if (expiredNow) await engine.dispatch({ type: "EXPIRE_TIMER" });
+      await applyExpiredTimersOnResume(expiredNow);
     } finally {
       externalRefreshInFlight = false;
     }
