@@ -80,10 +80,7 @@ export function getFinalHint(state) {
     const round = step === "f_p1_entry" ? 1 : 2;
     const t = f.runtime.timer;
     const phaseKey = round === 1 ? "P1" : "P2";
-    // Bez tekstu tutaj — odliczanie i "Zatrzymaj" są już widoczne wprost na
-    // kaflu odliczania (control2/js/ui.js's finalTimerRow), więc osobne
-    // "Odliczanie trwa…" w hincie było czystą duplikacją (zgłoszone).
-    if (t.running && t.phase === phaseKey) return "";
+    if (t.running && t.phase === phaseKey) return "Odliczanie trwa…";
     const used = round === 1 ? t.usedP1 : t.usedP2;
     if (used) return "Czas wykorzystany. Kliknij „Dalej”, żeby przejść do odsłaniania.";
     return `Wpisz odpowiedzi gracza ${round}. Możesz opcjonalnie uruchomić odliczanie (${round === 1 ? "15" : "20"}s) — jednorazowo.`;

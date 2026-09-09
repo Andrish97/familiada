@@ -110,10 +110,8 @@ test("getFinalHint: f_start i etap wpisywania (zegarek jeszcze nieużyty / w tra
   await engine.dispatch({ type: "START_FINAL" });
   assert.match(getFinalHint(store.state), /Wpisz odpowiedzi gracza 1.*15s/);
 
-  // Bez tekstu podczas odliczania — cyfry i "Zatrzymaj" są już na kaflu
-  // (control2/js/ui.js's finalTimerRow), osobny hint byłby duplikacją.
   await engine.dispatch({ type: "START_TIMER", phase: "P1" });
-  assert.equal(getFinalHint(store.state), "");
+  assert.match(getFinalHint(store.state), /Odliczanie trwa/);
 
   await engine.dispatch({ type: "EXPIRE_TIMER" });
   assert.match(getFinalHint(store.state), /Czas wykorzystany/);
