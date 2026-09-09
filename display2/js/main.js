@@ -90,6 +90,7 @@ function instrumentSceneApi(api) {
 // przekazywać do iframe klucza dostępu do prawdziwej gry.
 async function bootPreview(params) {
   const scene = await createScene();
+  scene.api = instrumentSceneApi(scene.api);
   // Logo prawdziwej gry (jeśli jest) — jedyna rzecz w podglądzie wymagająca
   // realnego id+key (Control i tak już je zna i pokazuje w kodach QR/modalu
   // kopiowania, więc to nie jest nowy wyciek danych).
@@ -108,12 +109,17 @@ async function bootPreview(params) {
   $("qrScreen")?.classList.add("hidden");
   $("gameScreen")?.classList.remove("hidden");
 
-  let prevRow = null;
+  // ZAWSZE renderSnapshot, nigdy renderDiff — w odróżnieniu od prawdziwej
+  // gry, tu nie ma czego animować płynnie (to formularz ustawień, nie mecz),
+  // a co ważniejsze: shared/deriveEvents.js w ogóle nie ma zdarzenia na
+  // zmianę kolorów/motywu (bo w prawdziwej grze te pola nigdy się nie
+  // zmieniają w trakcie rozgrywki — blokada ustawień po starcie) — gdyby
+  // korzystać z renderDiff() tutaj, KAŻDA kolejna wiadomość po pierwszej
+  // zgubiłaby zmianę koloru/motywu (deriveEvents nie ma jak jej wykryć),
+  // mimo że sam wiersz niesie już nową wartość.
   window.addEventListener("message", (e) => {
     if (e.data?.type !== "familiada:preview-row") return;
-    if (!prevRow) renderer.renderSnapshot(e.data.row);
-    else renderer.renderDiff(prevRow, e.data.row);
-    prevRow = e.data.row;
+    renderer.renderSnapshot(e.data.row);
   });
 
   document.documentElement.classList.remove("page-loading");
