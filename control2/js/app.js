@@ -642,6 +642,13 @@ async function main() {
         // D3 to już tylko podsumowanie — drużyny/finał/pytania są od dawna
         // ustawione w games.settings i zdenormalizowane wyżej w main().
         store.state.locks.gameStarted = true;
+        // Plan, sekcja 3a pkt 5: "Display zostaje BLACK aż do faktycznego
+        // rozpoczęcia gry" — to jest dokładnie ten moment. Bez tego
+        // display.mode NIGDZIE indziej nie przechodzi na "GAME" (jedyne inne
+        // miejsca ustawiają "BLACK"/"QR"), więc Wyświetlacz zostawałby czarny
+        // przez całą grę mimo jej realnego postępu — potwierdzony błąd, nie
+        // tylko wrażenie z nagrania.
+        store.state.display.mode = "GAME";
         await advance("r_intro", { topCard: "rounds" });
         return;
       }
