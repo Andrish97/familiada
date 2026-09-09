@@ -98,12 +98,15 @@ export function getFinalHint(state) {
     const idx = Number(step.slice(-1)) - 1;
     const entry = f.runtime[round === 1 ? "p1" : "p2"][idx] || {};
     const row = f.runtime[round === 1 ? "map1" : "map2"][idx];
-    if (round === 2 && entry.repeat) return "Oznaczone jako powtórzenie odpowiedzi gracza 1 — liczy się jak brak dopasowania.";
+    if (round === 2 && entry.repeat) return "Oznaczone jako powtórzenie odpowiedzi gracza 1 — liczy się jak brak odpowiedzi.";
     if (!row.revealedAnswer) {
+      // Bez "Wpisano: „...”" tutaj — to samo pokazuje już kafel "Odpowiedź
+      // gracza" na górze siatki (control2/js/ui.js's mapInfoTile), więc było
+      // czystą duplikacją (zgłoszone).
       const text = (entry.text || "").trim();
       return text
-        ? `Wpisano: „${text}”. Wybierz dopasowanie z listy albo kliknij „Pokaż odpowiedź”.`
-        : "Brak wpisu — kliknij „Pokaż odpowiedź”, żeby oznaczyć brak dopasowania.";
+        ? "Wybierz dopasowanie z listy albo kliknij „Pokaż odpowiedź”."
+        : "Brak wpisu — kliknij „Pokaż odpowiedź”, żeby oznaczyć brak odpowiedzi.";
     }
     if (!row.revealedPoints) return "Odpowiedź odsłonięta. Kliknij „Pokaż punkty”, żeby dopisać je do sumy.";
     return "Punkty odsłonięte. Kliknij „Dalej”, żeby przejść do kolejnego pytania.";

@@ -132,8 +132,10 @@ test("getFinalHint: mapowanie pytania — puste, wpisane, odsłonięte, z punkta
 
   assert.match(getFinalHint(store.state), /Brak wpisu/);
 
+  // Bez "Wpisano: „...”" tutaj — to samo pokazuje już kafel "Odpowiedź
+  // gracza" (control2/js/ui.js's mapInfoTile), było czystą duplikacją.
   await engine.dispatch({ type: "SET_ENTRY_TEXT", round: 1, idx: 0, text: "Mleko" });
-  assert.match(getFinalHint(store.state), /Wpisano: „Mleko”/);
+  assert.match(getFinalHint(store.state), /Wybierz dopasowanie/);
 
   await engine.dispatch({ type: "RESOLVE_MAPPING", round: 1, idx: 0, mode: "MANUAL", kind: "MATCH", matchId: "a1", outText: "Mleko", pts: 10 });
   await engine.dispatch({ type: "REVEAL_ANSWER_ONLY", round: 1, idx: 0 });
