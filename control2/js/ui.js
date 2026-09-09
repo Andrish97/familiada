@@ -1087,14 +1087,15 @@ export function createUI({ root, emit }) {
       onclick: () => emit("game.dispatch", { type: "RESOLVE_MAPPING", round, idx, mode: "MANUAL", kind: "MATCH", matchId: a.id, outText: a.text, pts: a.fixed_points }),
     }));
     const missOption = {
-      // Pod nazwą przycisku, w nawiasie, KOMENTARZ sugerujący SKUTEK wyboru
-      // tej opcji — wybranie "Nie ma na liście" = na Wyświetlaczu pokaże się
-      // to, co gracz wpisał (dokładnie to samo policzone w resolveMappingPreview
-      // dla MISS) — nie goła etykieta "wpisana odpowiedź". Stała nazwa +
-      // aria-hidden druga linijka, ten sam wzorzec co kafle odsłaniania.
+      // Pod nazwą przycisku, w nawiasie, DOSŁOWNIE stała etykieta
+      // "(odpowiedź gracza)" — sama WARTOŚĆ jest już widoczna na kaflu
+      // odsłaniania (jego podgląd pokazuje, co konkretnie się odsłoni), więc
+      // tu nie powtarzamy jej drugi raz, tylko podpisujemy, co reprezentuje
+      // ta opcja. Stała nazwa + aria-hidden druga linijka, ten sam wzorzec
+      // co kafle odsłaniania.
       content: hasTyped ? h("div", {}, [
         document.createTextNode("Nie ma na liście (0 pkt)"),
-        h("div", { class: "c2-tile-sub", "aria-hidden": "true", text: `(pokaże się: ${inputText})` }),
+        h("div", { class: "c2-tile-sub", "aria-hidden": "true", text: "(odpowiedź gracza)" }),
       ]) : "Nie ma na liście (0 pkt)",
       active: !p2IsRepeat && effective.kind === "MISS",
       disabled: locked || !hasTyped,
