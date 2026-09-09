@@ -31,6 +31,10 @@
 //       odtwarza mimo normalnie grającej akcji.
 //   13. Zmiana języka propaguje się do Hosta, w tym samą TREŚĆ tytułu fazy
 //       (nie tylko chrome strony) — regresja na dzisiejszą naprawę i18n.
+//   14. Modal ustawień gry (js/pages/game-settings.js) — zmiana nazwy
+//       drużyny faktycznie odświeża zagnieżdżony podgląd Wyświetlacza
+//       (/display2?preview=1) — regresja na naprawę martwego podglądu w
+//       trybie modalu.
 //
 // Każdy test tworzy i kasuje własną grę testową — niezależne od siebie,
 // można je uruchamiać pojedynczo (--grep) przy diagnozowaniu awarii.
@@ -956,6 +960,55 @@ test("control2: zmiana języka w Control propaguje się do Hosta — tytuł fazy
     await expect(hostPage.locator("#paperText1")).not.toContainText("PRZYCISK");
   } finally {
     for (const ctx of contexts) await ctx.close().catch(() => {});
+    await deleteGame(page, game.id);
+  }
+});
+
+// ===== 14. Modal ustawień gry — zmiana nazwy drużyny odświeża podgląd Wyświetlacza =====
+//
+// Zgłoszone: podgląd Wyświetlacza w modalu ustawień (js/pages/game-settings.js)
+// był całkowicie martwy — sendDisplayCmd() w trybie modalu tylko przekazywał
+// tekstowe komendy do window.parent, licząc na Control, żeby je dalej
+// przekazał "prawdziwemu" Displayowi (czego Control v2 nigdy nie robi —
+// komend już nie ma). Naprawa: modal sam osadza /display2?preview=1 i
+// przesyła mu postMessage familiada:preview-row, ten sam mechanizm co D3.
+// Ten test dowodzi, że to faktycznie działa: zmiana nazwy drużyny w polu
+// formularza musi się pojawić w window.__displayLog ZAGNIEŻDŻONEGO iframe'a
+// podglądu (display2/js/main.js's instrumentSceneApi(), dodane też do trybu
+// podglądu w tej samej naprawie) jako wywołanie api.small.long1(...).
+test("control2: modal ustawień gry — zmiana nazwy drużyny odświeża podgląd Wyświetlacza", async ({ page }) => {
+  await loginAsTestUser(page, page.context());
+  const game = await makeGame(page, `E2E-CONTROL2-GSPREVIEW-${Date.now()}`);
+  try {
+    await page.goto(`/control2?id=${game.id}`, { waitUntil: "domcontentloaded" });
+    await page.getByRole("button", { name: "Dalej" }).click();
+    await expect(page.locator(".stepTitle")).toHaveText("Podsumowanie", { timeout: 10000 });
+
+    await page.getByRole("button", { name: "Zmień ustawienia" }).click();
+    await expect(page.locator("#gsOverlay")).not.toHaveClass(/hidden/, { timeout: 5000 });
+
+    const gsFrame = page.frameLocator("#gsFrame");
+    // Kategoria "Drużyny" jest domyślnie aktywna po otwarciu modala —
+    // pole nazwy drużyny A jest widoczne od razu, bez przełączania zakładek.
+    await expect(gsFrame.locator("#gsTeamA")).toBeVisible({ timeout: 10000 });
+
+    // Zagnieżdżony iframe podglądu (display2/js/main.js's bootPreview()) —
+    // dostępny wprost z page.frames() (ten sam origin, zwykła strona), nie
+    // przez frameLocator zagnieżdżony w innym frameLocator.
+    const previewFrame = () => page.frames().find((f) => f.url().includes("/display2") && f.url().includes("preview=1"));
+    await expect.poll(() => previewFrame()?.url(), { timeout: 10000 }).toBeTruthy();
+    await expect.poll(async () => {
+      try { return await previewFrame().evaluate(() => Array.isArray(window.__displayLog)); } catch { return false; }
+    }, { timeout: 10000 }).toBe(true);
+
+    await previewFrame().evaluate(() => { window.__displayLog = []; });
+    await gsFrame.locator("#gsTeamA").fill("Testowi Mistrzowie");
+
+    await expect.poll(async () => {
+      const log = await previewFrame().evaluate(() => window.__displayLog || []);
+      return log.some((e) => e.call === "api.small.long1" && e.args?.[0] === "Testowi Mistrzowie");
+    }, { timeout: 10000 }).toBe(true);
+  } finally {
     await deleteGame(page, game.id);
   }
 });

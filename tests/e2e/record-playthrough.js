@@ -481,6 +481,22 @@ async function scenarioRoundsMechanics(pages) {
   const { control, buzzer } = pages;
 
   await clickPaced(control.getByRole("button", { name: "Dalej" }));
+
+  // Zgłoszone: "dodaj zmianę ustawień do... nagrywania" — pokaż na nagraniu,
+  // że modal ustawień gry (naprawiony w tej sesji: podgląd Wyświetlacza był
+  // martwy w trybie modalu) faktycznie działa. Zmiana nazwy drużyny w
+  // formularzu, zapis, zamknięcie kliknięciem poza treścią modala (tak
+  // zamyka się go naprawdę — control2/js/app.js's gsOverlayEl click handler).
+  await clickPaced(control.getByRole("button", { name: "Zmień ustawienia" }));
+  await control.waitForTimeout(1000); // niech nagranie złapie otwarcie modala
+  const gsTeamAInput = control.frameLocator("#gsFrame").locator("#gsTeamA");
+  await gsTeamAInput.fill("Mistrzowie Quizu");
+  await control.waitForTimeout(1200); // niech nagranie złapie podgląd Wyświetlacza aktualizujący się na żywo
+  await clickPaced(control.getByRole("button", { name: "Zapisz wszystko" }));
+  await control.locator("#gsOverlay").click({ position: { x: 5, y: 5 } });
+  await control.locator("#gsOverlay").waitFor({ state: "hidden", timeout: 10_000 });
+  await control.waitForTimeout(800);
+
   await clickPaced(control.getByRole("button", { name: "Gotowe — przejdź do rund" }));
   await clickPaced(control.getByRole("button", { name: "Rozpocznij grę" }));
 
