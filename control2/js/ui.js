@@ -16,7 +16,7 @@
 // setStealMsg/setRevealMsg/ROUNDS_MSG/FINAL_MSG, ale jako czysta funkcja
 // bieżącego game_state (shared/hints.js), nie ulotny stan ustawiany przy
 // każdym zdarzeniu — "wszystko idzie przez tabelę stanów".
-import { getRoundsHint, getFinalHint, teamName } from "../../shared/hints.js?v=v2026-09-08T18231";
+import { getRoundsHint, getFinalHint, getFinalEntryShortcuts, teamName } from "../../shared/hints.js?v=v2026-09-08T18231";
 
 const $ = (id) => document.getElementById(id);
 const on = (el, ev, fn) => el && el.addEventListener(ev, fn);
@@ -433,8 +433,20 @@ export function createUI({ root, emit }) {
   // dokładnie jak stary control/js/gameRounds.js's msgDuel/msgRoundsPlay/
   // msgSteal itd. Pusty tekst = nic nie renderujemy (nie zostawiamy pustego
   // paska).
-  function hintBlock(text) {
-    return text ? h("div", { class: "c2-hint", text }) : null;
+  // `shortcuts`, gdy podane (control2/js/ui.js's renderFinalEntry) — lista
+  // opisów skrótów klawiszowych (shared/hints.js's getFinalEntryShortcuts),
+  // dopisana POD głównym hintem, oddzielona własną kreską, nie zamiast niego.
+  function hintBlock(text, shortcuts) {
+    if (!text && !(shortcuts && shortcuts.length)) return null;
+    const children = [];
+    if (text) children.push(h("div", { class: "c2-hint-main", text }));
+    if (shortcuts && shortcuts.length) {
+      children.push(h("div", { class: "c2-hint-shortcuts" }, [
+        h("div", { class: "c2-hint-shortcuts-title", text: "Skróty klawiszowe" }),
+        ...shortcuts.map((s) => h("div", { class: "c2-hint-shortcut", text: s })),
+      ]));
+    }
+    return h("div", { class: "c2-hint" }, children);
   }
 
   // r_duel PRZED przyjęciem zgłoszenia — patrz komentarz przy jego jedynym
@@ -768,11 +780,74 @@ export function createUI({ root, emit }) {
     });
   }
 
-  // Ta sama rytmika 5 wierszy co siatka odsłaniania (jeden wiersz na
-  // pytanie), ale podział W POZIOMIE inny — treść pytania | pole tekstowe |
-  // (runda 2) checkbox powtórzenia — zamiast kafli-przycisków, bo tu treścią
-  // jest wpisywanie, nie wybór z listy. "Jednolity styl" z resztą: te same
-  // tokeny koloru/obramowania/zaokrąglenia co .c2-tile.
+  // Co pokazać jako "Gracz 1: ..." w wierszach rundy 2 — dokładnie stare
+  // control/js/gameFinal.js's resolveShownText(1, idx): jeśli operator już
+  // dopasował odpowiedź gracza 1 do prawdziwej odpowiedzi z planszy (MATCH),
+  // pokazujemy TĘ odpowiedź (nie surowy wpisany tekst); przy MISS pokazujemy
+  // to, co gracz 1 faktycznie wpisał; SKIP/nierozstrzygnięte -> "—". Runda 1
+  // zawsze kończy mapowanie (F2-F6) zanim runda 2 w ogóle się zacznie
+  // (f_p2_start między nimi), więc map1[idx] jest tu już rozstrzygnięte.
+  function resolveP1AnswerShown(state, idx) {
+    const f = state.final;
+    const row = f.runtime.map1?.[idx];
+    const question = f.questions?.[idx];
+    if (!row) return "—";
+    if (row.kind === "MATCH") {
+      const a = (question?.answers || []).find((x) => x.id === row.matchId);
+      return (a?.text || "").trim() || "—";
+    }
+    if (row.kind === "MISS") return (f.runtime.p1[idx]?.text || "").trim() || "—";
+    return "—";
+  }
+
+  // Kafel odliczania — jeden wiersz na pełną szerokość, ta sama skala co
+  // reszta siatki wpisywania (zgłoszone: "akcja odliczania/zatrzymywanie ma
+  // być jako 1 rząd w podobnej skali kafelkowej"). Toggle idzie przez
+  // "final.toggleTimer" (control2/js/app.js), reużywane też przez skrót
+  // Ctrl/Cmd+Shift — jedna, wspólna logika start/wczesne-zatrzymanie zamiast
+  // dwóch kopii. Wczesne zatrzymanie klikalne TYLKO gdy wszystkie pola są
+  // wypełnione (dokładnie jak stare timerStopEarlyIfAllowed) — inaczej
+  // odliczanie jest tylko wyświetlane, nie da się go przerwać.
+  function finalTimerRow(state, round) {
+    const f = state.final;
+    const t = f.runtime.timer;
+    const phase = round === 1 ? "P1" : "P2";
+    const seconds = round === 1 ? 15 : 20;
+    const running = t.running && t.phase === phase;
+    const used = round === 1 ? t.usedP1 : t.usedP2;
+
+    if (running) {
+      const secLeft = Math.max(0, Math.ceil((t.endsAt - Date.now()) / 1000));
+      const filled = round === 1
+        ? f.runtime.p1.every((x) => String(x?.text || "").trim().length > 0)
+        : f.runtime.p2.every((x) => (x?.repeat ? true : String(x?.text || "").trim().length > 0));
+      return h("button", {
+        class: `c2-tile c2-timer-row c2-tile-timer ${filled ? "startable" : ""}`.trim(),
+        type: "button",
+        disabled: filled ? undefined : "",
+        onclick: filled ? () => emit("final.toggleTimer", { round }) : undefined,
+      }, [document.createTextNode(filled ? `${secLeft}s — kliknij, aby zatrzymać` : `${secLeft}s`)]);
+    }
+    if (used) {
+      return h("button", { class: "c2-tile c2-timer-row c2-tile-timer", type: "button", disabled: "" }, [document.createTextNode("Czas wykorzystany")]);
+    }
+    return h("button", {
+      class: "c2-tile c2-timer-row c2-tile-timer startable",
+      type: "button",
+      onclick: () => emit("final.toggleTimer", { round }),
+    }, [document.createTextNode(`Rozpocznij odliczanie (${seconds}s)`)]);
+  }
+
+  // Wpisywanie finału — jeden wiersz na pytanie, ułożony jak kafle rund
+  // (obramowanie/zaokrąglenie/tło ujednolicone z .c2-tile), a nie tabela ani
+  // gołe wiersze. Runda 1: [Pytanie] [Odpowiedź gracza] (2 kafle). Runda 2:
+  // [Pytanie + Odpowiedź gracza 1, jedno pod drugim W JEDNYM kaflu]
+  // [Odpowiedź gracza 2] [Powtórzenie — przycisk, nie checkbox] (3 kafle) —
+  // dokładnie jak stary control/js/gameFinal.js's 4-kolumnowa tabela
+  // (Pytanie/Odp. gracza 1/Odpowiedź/Powtórzenie), tylko z pytaniem i
+  // odpowiedzią gracza 1 połączonymi w jeden kafel zamiast dwóch osobnych
+  // kolumn. Hint (+ skróty klawiszowe) po prawej, jak w Rundach — nie nad
+  // siatką.
   function renderFinalEntry(state, round) {
     const f = state.final;
     const key = round === 1 ? "p1" : "p2";
@@ -780,36 +855,61 @@ export function createUI({ root, emit }) {
     for (let i = 0; i < 5; i++) {
       const row = f.runtime[key][i] || {};
       const question = f.questions?.[i];
-      const inp = h("input", { type: "text", value: row.text || "", placeholder: "Odpowiedź gracza" });
+      const inp = h("input", { type: "text", value: row.text || "", placeholder: "Odpowiedź gracza", autocomplete: "off" });
       on(inp, "input", () => emit("game.dispatch", { type: "SET_ENTRY_TEXT", round, idx: i, text: inp.value }));
-      const rowChildren = [
-        h("div", { class: "c2-entryrow-q", text: question?.text || `Pytanie ${i + 1}` }),
-        h("div", { class: "c2-entryrow-input" }, [inp]),
+      on(inp, "keydown", (e) => {
+        if (e.key === "ArrowDown") {
+          e.preventDefault();
+          root.querySelector(`.c2-entryrow[data-i="${i + 1}"] input`)?.focus();
+          return;
+        }
+        if (e.key === "ArrowUp") {
+          e.preventDefault();
+          root.querySelector(`.c2-entryrow[data-i="${i - 1}"] input`)?.focus();
+          return;
+        }
+        // Shift+Enter w pustym polu (tylko runda 2) — przełącza "Powtórzenie",
+        // dokładnie jak stare control/js/gameFinal.js's renderP2Entry.
+        if (round === 2 && e.key === "Enter" && e.shiftKey) {
+          e.preventDefault();
+          emit("game.dispatch", { type: "SET_REPEAT", round: 2, idx: i, repeat: !row.repeat });
+          root.querySelector(`.c2-entryrow[data-i="${i + 1}"] input`)?.focus();
+          return;
+        }
+        if (e.key === "Enter") {
+          e.preventDefault();
+          root.querySelector(`.c2-entryrow[data-i="${i + 1}"] input`)?.focus();
+        }
+      });
+
+      const cells = round === 2 ? [
+        h("div", { class: "c2-entrytile" }, [
+          h("div", { class: "c2-entrytile-q", text: question?.text || `Pytanie ${i + 1}` }),
+          h("div", { class: "c2-entrytile-p1ans" }, [document.createTextNode("Gracz 1: "), h("b", { text: resolveP1AnswerShown(state, i) })]),
+        ]),
+        h("div", { class: "c2-entrytile c2-entrytile-input" }, [inp]),
+      ] : [
+        h("div", { class: "c2-entrytile" }, [h("div", { class: "c2-entrytile-q", text: question?.text || `Pytanie ${i + 1}` })]),
+        h("div", { class: "c2-entrytile c2-entrytile-input" }, [inp]),
       ];
       if (round === 2) {
-        const repeatChk = h("input", { type: "checkbox" });
-        repeatChk.checked = !!row.repeat;
-        on(repeatChk, "change", () => emit("game.dispatch", { type: "SET_REPEAT", round: 2, idx: i, repeat: repeatChk.checked }));
-        rowChildren.push(h("label", { class: "c2-repeat-label" }, [repeatChk, document.createTextNode(" powtórzenie")]));
+        const repeat = row.repeat === true;
+        cells.push(h("button", {
+          class: `c2-btn-repeat ${repeat ? "on" : ""}`.trim(), type: "button",
+          onclick: () => emit("game.dispatch", { type: "SET_REPEAT", round: 2, idx: i, repeat: !repeat }),
+        }, [document.createTextNode(repeat ? "Powtórzenie ✓" : "Powtórzenie")]));
       }
-      rows.push(h("div", { class: "c2-entryrow" }, rowChildren));
+      rows.push(h("div", { class: `c2-entryrow ${round === 2 ? "p2" : "p1"}`, "data-i": String(i) }, cells));
     }
-    const body = [hintBlock(getFinalHint(state)), h("div", { class: "c2-entryrows" }, rows)];
+    rows.push(finalTimerRow(state, round));
 
-    const timerRunning = f.runtime.timer.running;
-    // Zegarek jest jednorazowy (engine.js's START_TIMER, usedP1/usedP2) —
-    // przycisk zostaje widoczny po naturalnym wygaśnięciu (tak jak w starym
-    // Control, setTimerBtnEnabled(phase,false)), ale zablokowany, zamiast
-    // dawać złudzenie, że można go kliknąć drugi raz.
-    const used = round === 1 ? f.runtime.timer.usedP1 : f.runtime.timer.usedP2;
-    const nav = [
-      !timerRunning ? h("button", {
-        class: "c2-btn",
-        disabled: used ? "" : undefined,
-        onclick: used ? undefined : () => emit("game.dispatch", { type: "START_TIMER", phase: round === 1 ? "P1" : "P2" }),
-      }, [document.createTextNode("Start timera")]) : null,
-      h("button", { class: "c2-btn primary", onclick: () => emit("game.dispatch", { type: "START_MAPPING", round }) }, [document.createTextNode("Dalej")]),
-    ];
+    const body = [h("div", { class: "c2-roundlayout" }, [
+      h("div", { class: "c2-roundlayout-main" }, [h("div", { class: "c2-entryrows" }, rows)]),
+      h("div", { class: "c2-roundlayout-divider" }),
+      h("div", { class: "c2-roundlayout-side" }, [hintBlock(getFinalHint(state), getFinalEntryShortcuts(round))]),
+    ])];
+
+    const nav = [h("button", { class: "c2-btn primary", onclick: () => emit("game.dispatch", { type: "START_MAPPING", round }) }, [document.createTextNode("Dalej")])];
     gameplayShell({ stepLabel: `Finał — gracz ${round}, wpisywanie`, body, nav });
   }
 
@@ -828,7 +928,8 @@ export function createUI({ root, emit }) {
   // projektu): wiersze 1-3 to kafle odpowiedzi + "Brak dopasowania" (do 6,
   // 2 na wiersz), wiersz 4 zostaje pusty, wiersz 5 to "Pokaż odpowiedź"
   // (lewo) / "Pokaż punkty" (prawo, zmienia się w "Dalej" po odsłonięciu
-  // punktów) — środek pusty.
+  // punktów) — środek pusty. Hint po prawej stronie siatki (c2-roundlayout),
+  // dokładnie jak w Rundach — nie nad siatką.
   function renderFinalMapping(state, round, idx) {
     const f = state.final;
     const mapArr = f.runtime[round === 1 ? "map1" : "map2"];
@@ -882,8 +983,11 @@ export function createUI({ root, emit }) {
       // sam krok).
       tiles.push(tile("Dalej", { row: 5, col: THIRD(2), cls: "c2-tile-primary", onclick: () => emit("game.dispatch", { type: "NEXT_QUESTION", round, idx: idx + 1 }) }));
     }
-    body.push(hintBlock(getFinalHint(state)));
-    body.push(tileGrid(tiles));
+    body.push(h("div", { class: "c2-roundlayout" }, [
+      h("div", { class: "c2-roundlayout-main" }, [tileGrid(tiles)]),
+      h("div", { class: "c2-roundlayout-divider" }),
+      h("div", { class: "c2-roundlayout-side" }, [hintBlock(getFinalHint(state))]),
+    ]));
 
     gameplayShell({ stepLabel: `Finał — mapowanie ${idx + 1}/5`, body, nav: null });
   }
@@ -897,9 +1001,12 @@ export function createUI({ root, emit }) {
         // Próbka dźwięku powtórzenia — POD napisem, na środku (jak reszta
         // c2-intro), NIE w dolnym pasku nawigacji obok "Rozpocznij 2 rundę"
         // (stare control.html trzymało oba przyciski razem w stepFoot —
-        // zgłoszone jako złe miejsce). Czysto lokalny podgląd dźwięku, bez
-        // zapisu do stanu gry (patrz app.js's "final.repeatTest").
-        h("button", { class: "c2-btn c2-intro-secondary", type: "button", onclick: () => emit("final.repeatTest") }, [document.createTextNode("Dźwięk powtórzenia")]),
+        // zgłoszone jako złe miejsce). c2-btn-repeat — TA SAMA klasa co
+        // przycisk "Powtórzenie" w wierszach wpisywania (renderFinalEntry),
+        // żeby "sample" był identyczny wielkościowo i kolorystycznie z
+        // prawdziwym przełącznikiem powtórzenia. Czysto lokalny podgląd
+        // dźwięku, bez zapisu do stanu gry (patrz app.js's "final.repeatTest").
+        h("button", { class: "c2-btn-repeat", type: "button", onclick: () => emit("final.repeatTest") }, [document.createTextNode("Dźwięk powtórzenia")]),
       ])],
       nav: [h("button", { class: "c2-btn primary c2-intro-btn", onclick: () => emit("game.dispatch", { type: "START_P2_ROUND" }) }, [document.createTextNode("Rozpocznij 2 rundę")])],
     });

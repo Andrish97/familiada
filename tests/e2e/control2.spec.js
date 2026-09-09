@@ -460,7 +460,7 @@ test("control2: próg w rundzie -> finał, wczesne zakończenie po 4/5 pytaniach
     await page.getByRole("button", { name: "Rozpocznij finał" }).click();
 
     await expect(page.locator(".c2-stepper")).toContainText("Finał — gracz 1, wpisywanie", { timeout: 10000 });
-    await page.getByRole("button", { name: "Start timera" }).click();
+    await page.getByRole("button", { name: "Rozpocznij odliczanie (15s)" }).click();
     await page.getByRole("button", { name: "Dalej" }).click();
 
     for (let i = 0; i < 4; i++) {
@@ -688,13 +688,14 @@ test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśni�
     for (let i = 0; i < 5; i++) await p1Inputs.nth(i).fill(`Odp. finałowa`);
 
     await clearSfxLog(page);
-    await page.getByRole("button", { name: "Start timera" }).click();
+    await page.getByRole("button", { name: "Rozpocznij odliczanie (15s)" }).click();
     // Bez klikania niczego: dograny dziś zegarek w control2/js/app.js sam
     // dispatch'uje EXPIRE_TIMER po 15s. Zegarek jest jednorazowy (usedP1) —
-    // przycisk "Start timera" wraca WIDOCZNY (jak w starym Control), ale
-    // ZABLOKOWANY, bo nie da się już odpalić go drugi raz w tej samej rundzie.
-    await expect(page.getByRole("button", { name: "Start timera" })).toBeVisible({ timeout: 20000 });
-    await expect(page.getByRole("button", { name: "Start timera" })).toBeDisabled();
+    // kafel wraca WIDOCZNY (jak w starym Control), ale pokazuje "Czas
+    // wykorzystany" i jest ZABLOKOWANY, bo nie da się go odpalić drugi raz
+    // w tej samej rundzie.
+    await expect(page.getByRole("button", { name: "Czas wykorzystany" })).toBeVisible({ timeout: 20000 });
+    await expect(page.getByRole("button", { name: "Czas wykorzystany" })).toBeDisabled();
     await expect.poll(() => getSfxKeys(page), { timeout: 5000 }).toEqual(expect.arrayContaining(["time_over"]));
 
     // ===== F4/F5: mapowanie gracza 1 — trafienie wszystkich 5x15 pkt =====
@@ -730,12 +731,12 @@ test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśni�
     // ===== F7: gracz 2 — pytanie #1 oznaczone jako "powtórzenie" =====
     await expect(page.locator(".c2-stepper")).toContainText("Finał — gracz 2, wpisywanie", { timeout: 10000 });
     await clearSfxLog(page);
-    await page.getByLabel("powtórzenie").first().check();
+    await page.getByRole("button", { name: "Powtórzenie" }).first().click();
     await expect.poll(() => getSfxKeys(page), { timeout: 5000 }).toEqual(expect.arrayContaining(["answer_repeat"]));
 
     const p2Inputs = page.locator("#app input[type=text]");
     for (let i = 1; i < 5; i++) await p2Inputs.nth(i).fill("Odp. finałowa");
-    await page.getByRole("button", { name: "Start timera" }).click();
+    await page.getByRole("button", { name: "Rozpocznij odliczanie (20s)" }).click();
     // Tym razem NIE czekamy na naturalne wygaśnięcie — klikamy "Dalej" od
     // razu (jak w teście 4), sprawdzając DRUGĄ naprawę z dzisiejszego audytu:
     // START_MAPPING musi wyzerować timer, inaczej zostałby "running" na zawsze.

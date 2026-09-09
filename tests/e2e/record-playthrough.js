@@ -349,14 +349,6 @@ async function typePaced(locator, text, msPerChar = 90) {
   }
 }
 
-async function checkPaced(locator, ms = CLICK_PACE_MS) {
-  const page = locator.page();
-  const responded = waitForWrite(page);
-  await locator.check();
-  await responded;
-  await page.waitForTimeout(ms);
-}
-
 // ===== Scenariusz 1: pojedynek z resetem, pass, kradzież wygrana i
 // przegrana, dosłanianie reszty, mnożnik pominięty (2 pytania), koniec gry
 // bez finału. Ten sam przebieg co control2.spec.js's test "reset
@@ -509,7 +501,7 @@ async function scenarioFinalFull(pages) {
     else if (P1_PLAN[i] === "miss") await typePaced(p1Inputs.nth(i), "Zła odpowiedź");
     // false: nic nie wpisujemy -> AUTO+SKIP przy "Pokaż odpowiedź"
   }
-  await clickPaced(control.getByRole("button", { name: "Start timera" }));
+  await clickPaced(control.getByRole("button", { name: "Rozpocznij odliczanie (15s)" }));
   await control.waitForTimeout(16_000);
 
   await clickPaced(control.getByRole("button", { name: "Dalej" }));
@@ -530,13 +522,13 @@ async function scenarioFinalFull(pages) {
   await host.waitForTimeout(1500);
 
   // Gracz 2: pytanie #1 = powtórzenie, reszta wg P2_PLAN.
-  await checkPaced(control.getByLabel("powtórzenie").first());
+  await clickPaced(control.getByRole("button", { name: "Powtórzenie" }).first());
   const p2Inputs = control.locator("#app input[type=text]");
   for (let i = 1; i < 5; i++) {
     if (P2_PLAN[i] === true) await typePaced(p2Inputs.nth(i), "Odp. finałowa");
     // false: nic nie wpisujemy -> AUTO+SKIP
   }
-  await clickPaced(control.getByRole("button", { name: "Start timera" }));
+  await clickPaced(control.getByRole("button", { name: "Rozpocznij odliczanie (20s)" }));
   await clickPaced(control.getByRole("button", { name: "Dalej" })); // tym razem NIE czekamy na naturalne wygaśnięcie
 
   for (let i = 0; i < 5; i++) {

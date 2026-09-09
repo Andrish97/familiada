@@ -108,3 +108,18 @@ export function getFinalHint(state) {
 
   return "";
 }
+
+// Skróty klawiszowe z dawnego control/js/gameFinal.js's renderP1Entry/
+// renderP2Entry/handleFinalTimerHotkey — działają WYŁĄCZNIE na krokach
+// wpisywania (f_p1_entry/f_p2_entry), dopisywane pod głównym hintem
+// (control2/js/ui.js's hintBlock), nie osobno. Runda 2 dostaje dodatkowo
+// Shift+Enter (przełącznik "Powtórzenie") — runda 1 go nie ma, bo tam nie
+// ma czego powtarzać.
+export function getFinalEntryShortcuts(round) {
+  const shortcuts = [
+    "↑ / ↓ / Enter — przejście do kolejnego pola",
+    "Ctrl+Shift (Cmd+Shift na Mac) — start/zatrzymanie odliczania",
+  ];
+  if (round === 2) shortcuts.push("Shift+Enter w pustym polu — przełącza „Powtórzenie”");
+  return shortcuts;
+}

@@ -326,7 +326,9 @@ async function main() {
   // pokazywałby tę samą liczbę aż do wygaśnięcia. Odświeżamy tylko wtedy,
   // gdy faktycznie coś odlicza — reszta czasu bez zbędnej pracy.
   setInterval(() => {
-    if (store.state.rounds?.timer3?.running) ui.render(store.state, { urls, presenceFlags, connectCodes, shareBadges });
+    if (store.state.rounds?.timer3?.running || store.state.final?.runtime?.timer?.running) {
+      ui.render(store.state, { urls, presenceFlags, connectCodes, shareBadges });
+    }
   }, 250);
 
   // ===== Modal QR z topbaru (prywatny podgląd operatora — nie to samo co
@@ -503,6 +505,49 @@ async function main() {
     await store.commit({ soundCueKey });
   }
 
+  // Wpisywanie finału (F1/F8): "Rozpocznij odliczanie"/"Zatrzymaj" to jeden
+  // toggle, dokładnie jak stare control/js/gameFinal.js's p1StartTimer()/
+  // p2StartTimer() — wczesne zatrzymanie dozwolone TYLKO gdy wszystkie pola
+  // są wypełnione (allFilledP1/P2, jak dawne timerStopEarlyIfAllowed),
+  // inaczej klik/skrót nic nie robi. Jedno miejsce prawdy, reużywane przez
+  // kafel w control2/js/ui.js i przez skrót Ctrl/Cmd+Shift niżej.
+  function allFilledP1() {
+    return store.state.final.runtime.p1.every((x) => String(x?.text || "").trim().length > 0);
+  }
+  function allFilledP2() {
+    return store.state.final.runtime.p2.every((x) => (x?.repeat ? true : String(x?.text || "").trim().length > 0));
+  }
+  async function toggleFinalTimer(round) {
+    const phase = round === 1 ? "P1" : "P2";
+    const timer = store.state.final.runtime.timer;
+    if (timer.running && timer.phase === phase) {
+      const filled = round === 1 ? allFilledP1() : allFilledP2();
+      if (!filled) return;
+      await engine.dispatch({ type: "EXPIRE_TIMER" });
+      return;
+    }
+    const used = round === 1 ? timer.usedP1 : timer.usedP2;
+    if (used) return;
+    await engine.dispatch({ type: "START_TIMER", phase });
+  }
+
+  // ---------------- SKRÓT: Ctrl/Cmd+Shift -> start/zatrzymanie odliczania ----------------
+  // 1:1 z dawnym control/js/gameFinal.js's wantsFinalTimerHotkey/
+  // handleFinalTimerHotkey — działa tylko na krokach wpisywania finału
+  // (f_p1_entry/f_p2_entry), celowo nawet gdy operator akurat pisze w polu.
+  function isMacLike() {
+    const p = navigator.platform || "";
+    return /Mac|iPhone|iPad|iPod/i.test(p);
+  }
+  document.addEventListener("keydown", (e) => {
+    const main = isMacLike() ? e.metaKey : e.ctrlKey;
+    if (!main || !e.shiftKey || e.altKey || e.repeat) return;
+    const step = store.state.step;
+    if (step !== "f_p1_entry" && step !== "f_p2_entry") return;
+    e.preventDefault();
+    toggleFinalTimer(step === "f_p1_entry" ? 1 : 2).catch(() => {});
+  }, { capture: true });
+
   async function handle(action, payload) {
     try {
       if (action === "ui.rerender") {
@@ -638,6 +683,9 @@ async function main() {
       // jak stare control.html's "final.repeatTest": czysto lokalny podgląd
       // dźwięku, bez żadnego zapisu do game_state (nic w grze się nie zmienia).
       if (action === "final.repeatTest") { playSfx("answer_repeat"); return; }
+      // Kafel odliczania na ekranie wpisywania finału — ten sam toggle co
+      // skrót Ctrl/Cmd+Shift (patrz toggleFinalTimer wyżej).
+      if (action === "final.toggleTimer") { await toggleFinalTimer(payload.round); return; }
       if (action === "game.dispatch") { await engine.dispatch(payload); return; }
     } catch (e) {
       console.error("[control2] akcja nie powiodła się:", action, e);
