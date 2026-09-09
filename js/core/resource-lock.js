@@ -254,6 +254,43 @@ export async function guardResourceLock({ resourceType, resourceId, message, tit
 }
 
 /**
+ * Wariant guardResourceLock() dla obserwatora, który sam NIE edytuje ten
+ * zasób i nie ma czego trzymać/zwalniać — tylko referuje go (np. Control
+ * albo game-settings pokazujące logo, które gra ma ustawione w
+ * settings.display.logoId) i chce się zablokować, dopóki go ktoś inny
+ * faktycznie edytuje. Bez acquireOnce/heartbeat/release — tylko
+ * jednorazowy isResourceBusy() + (gdy busy) ten sam pełnoekranowy overlay
+ * i mechanizm odzyskania (broadcast RELEASED + polling) co
+ * guardResourceLock(), zakończony location.reload() gdy zasób się zwolni.
+ *
+ * Zwraca { ok: true } od razu, gdy zasób jest wolny — wywołujący renderuje
+ * dalej. Zwraca { ok: false }, gdy zasób jest zajęty — overlay jest już
+ * pokazany, wywołujący powinien przerwać (return).
+ */
+export async function guardResourceBusy({ resourceType, resourceId, message, title, backHref }) {
+  const busy = await isResourceBusy(resourceType, resourceId);
+  if (!busy) return { ok: true };
+
+  showOverlay({ title, message, backHref });
+
+  let done = false;
+  async function recheckAndReload() {
+    if (done) return;
+    const stillBusy = await isResourceBusy(resourceType, resourceId).catch(() => true);
+    if (!stillBusy) {
+      done = true;
+      clearInterval(retryTimer);
+      location.reload();
+    }
+  }
+
+  lockChannel(resourceType, resourceId).onBroadcast("RELEASED", recheckAndReload);
+  const retryTimer = setInterval(recheckAndReload, RETRY_POLL_MS);
+
+  return { ok: false };
+}
+
+/**
  * Zajmuje blokadę bez pełnoekranowego guarda. Ten wariant służy elementom
  * edytowanym wewnątrz większego ekranu (pytanie/folder/tag w bazie pytań).
  * Wywołujący sam decyduje, jak pokazać konflikt i MUSI wywołać release().
