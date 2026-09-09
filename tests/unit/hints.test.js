@@ -110,8 +110,9 @@ test("getFinalHint: f_start i etap wpisywania (zegarek jeszcze nieużyty / w tra
   await engine.dispatch({ type: "START_FINAL" });
   assert.match(getFinalHint(store.state), /Wpisz odpowiedzi gracza 1.*15s/);
 
+  // Hint zostaje ten sam podczas odliczania — nie chowamy go (zgłoszone).
   await engine.dispatch({ type: "START_TIMER", phase: "P1" });
-  assert.match(getFinalHint(store.state), /Odliczanie trwa/);
+  assert.match(getFinalHint(store.state), /Wpisz odpowiedzi gracza 1.*15s/);
 
   await engine.dispatch({ type: "EXPIRE_TIMER" });
   assert.match(getFinalHint(store.state), /Czas wykorzystany/);

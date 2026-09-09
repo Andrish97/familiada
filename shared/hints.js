@@ -80,9 +80,14 @@ export function getFinalHint(state) {
     const round = step === "f_p1_entry" ? 1 : 2;
     const t = f.runtime.timer;
     const phaseKey = round === 1 ? "P1" : "P2";
-    if (t.running && t.phase === phaseKey) return "Odliczanie trwa…";
+    // Odliczanie w toku NIE dostaje osobnego tekstu — hint "Wpisz
+    // odpowiedzi..." ma zostać ten sam, nie chowamy go na czas odliczania
+    // (zgłoszone). `used` (ustawiane już w momencie startu, nie dopiero po
+    // wygaśnięciu) samo w sobie więc NIE wystarcza do "Czas wykorzystany" —
+    // trzeba dodatkowo sprawdzić, że zegarek faktycznie już nie chodzi.
+    const running = t.running && t.phase === phaseKey;
     const used = round === 1 ? t.usedP1 : t.usedP2;
-    if (used) return "Czas wykorzystany. Kliknij „Dalej”, żeby przejść do odsłaniania.";
+    if (used && !running) return "Czas wykorzystany. Kliknij „Dalej”, żeby przejść do odsłaniania.";
     return `Wpisz odpowiedzi gracza ${round}. Możesz opcjonalnie uruchomić odliczanie (${round === 1 ? "15" : "20"}s) — jednorazowo.`;
   }
 
