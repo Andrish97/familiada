@@ -16,9 +16,9 @@
 // setStealMsg/setRevealMsg/ROUNDS_MSG/FINAL_MSG, ale jako czysta funkcja
 // bieżącego game_state (shared/hints.js), nie ulotny stan ustawiany przy
 // każdym zdarzeniu — "wszystko idzie przez tabelę stanów".
-import { getRoundsHint, getFinalHint, getFinalEntryShortcuts, teamName } from "../../shared/hints.js?v=v2026-09-09T11320";
-import { getSfxDuration } from "../../js/core/sfx.js?v=v2026-09-09T11320";
-import { ANSWER_ANIM } from "../../shared/displayAnim.js?v=v2026-09-09T11320";
+import { getRoundsHint, getFinalHint, getFinalEntryShortcuts, teamName } from "../../shared/hints.js?v=v2026-09-09T13545";
+import { getSfxDuration } from "../../js/core/sfx.js?v=v2026-09-09T13545";
+import { ANSWER_ANIM } from "../../shared/displayAnim.js?v=v2026-09-09T13545";
 
 const $ = (id) => document.getElementById(id);
 const on = (el, ev, fn) => el && el.addEventListener(ev, fn);
