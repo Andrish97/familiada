@@ -499,7 +499,9 @@ async function scenarioFinalFull(pages) {
   for (let i = 0; i < 5; i++) {
     if (P1_PLAN[i] === true) await typePaced(p1Inputs.nth(i), "Odp. finałowa");
     else if (P1_PLAN[i] === "miss") await typePaced(p1Inputs.nth(i), "Zła odpowiedź");
-    // false: nic nie wpisujemy -> AUTO+SKIP przy "Pokaż odpowiedź"
+    // false: nic nie wpisujemy -> AUTO+SKIP, widoczne od razu jako domyślne
+    // zaznaczenie na kaflu "Brak odpowiedzi" (control2/js/ui.js's
+    // effectiveMappingResolution), potwierdzane przez "Pokazana" niżej.
   }
   await clickPaced(control.getByRole("button", { name: "Rozpocznij odliczanie (15s)" }));
   await control.waitForTimeout(16_000);
@@ -507,8 +509,10 @@ async function scenarioFinalFull(pages) {
   await clickPaced(control.getByRole("button", { name: "Dalej" }));
   for (let i = 0; i < 5; i++) {
     if (P1_PLAN[i] === true) await clickPaced(control.getByRole("button", { name: "Odp. finałowa (15)" }));
-    await clickPaced(control.getByRole("button", { name: "Pokaż odpowiedź" }));
-    await clickPaced(control.getByRole("button", { name: "Pokaż punkty" }));
+    // "Pokazana"/"Punkty" — kafle odsłaniania, zaznacz -> potwierdź jak
+    // odpowiedzi w Rundach (stały aria-label, treść to żywy podgląd).
+    await armAndConfirmPaced(control.getByRole("button", { name: "Pokazana" }));
+    await armAndConfirmPaced(control.getByRole("button", { name: "Punkty" }));
     await clickPaced(control.getByRole("button", { name: "Dalej" }));
   }
 
@@ -533,8 +537,8 @@ async function scenarioFinalFull(pages) {
 
   for (let i = 0; i < 5; i++) {
     if (P2_PLAN[i] === true) await clickPaced(control.getByRole("button", { name: "Odp. finałowa (15)" }));
-    await clickPaced(control.getByRole("button", { name: "Pokaż odpowiedź" }));
-    await clickPaced(control.getByRole("button", { name: "Pokaż punkty" }));
+    await armAndConfirmPaced(control.getByRole("button", { name: "Pokazana" }));
+    await armAndConfirmPaced(control.getByRole("button", { name: "Punkty" }));
     await clickPaced(control.getByRole("button", { name: "Dalej" }));
   }
 
@@ -588,11 +592,11 @@ async function scenarioFinalEarlyExit(pages) {
   await clickPaced(control.getByRole("button", { name: "Dalej" }));
 
   await clickPaced(control.getByRole("button", { name: "Odp. finałowa (250)" }));
-  await clickPaced(control.getByRole("button", { name: "Pokaż odpowiedź" }));
+  await armAndConfirmPaced(control.getByRole("button", { name: "Pokazana" }));
   // 250 >= finalTarget (200) -> REVEAL_POINTS w engine.js skacze prosto do
   // f_end, pomijając NEXT_QUESTION/pytania 2-5 gracza 1 i CAŁEGO gracza 2 —
-  // "Pokaż punkty" to ostatnie kliknięcie w mapowaniu w tym scenariuszu.
-  await clickPaced(control.getByRole("button", { name: "Pokaż punkty" }));
+  // "Punkty" to ostatni kafel odsłaniania w tym scenariuszu.
+  await armAndConfirmPaced(control.getByRole("button", { name: "Punkty" }));
 
   await clickPaced(control.getByRole("button", { name: "Zakończ grę", exact: true }));
   await control.waitForTimeout(3000); // ekran końcowy widoczny chwilę na nagraniu

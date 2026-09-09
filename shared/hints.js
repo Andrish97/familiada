@@ -99,16 +99,13 @@ export function getFinalHint(state) {
     const entry = f.runtime[round === 1 ? "p1" : "p2"][idx] || {};
     const row = f.runtime[round === 1 ? "map1" : "map2"][idx];
     if (round === 2 && entry.repeat) return "Oznaczone jako powtórzenie odpowiedzi gracza 1 — liczy się jak brak odpowiedzi.";
-    if (!row.revealedAnswer) {
-      // Bez "Wpisano: „...”" tutaj — to samo pokazuje już kafel "Odpowiedź
-      // gracza" na górze siatki (control2/js/ui.js's mapInfoTile), więc było
-      // czystą duplikacją (zgłoszone).
-      const text = (entry.text || "").trim();
-      return text
-        ? "Wybierz dopasowanie z listy albo kliknij „Pokaż odpowiedź”."
-        : "Brak wpisu — kliknij „Pokaż odpowiedź”, żeby oznaczyć brak odpowiedzi.";
-    }
-    if (!row.revealedPoints) return "Odpowiedź odsłonięta. Kliknij „Pokaż punkty”, żeby dopisać je do sumy.";
+    // Rozstrzygnięcie jest ZAWSZE już jakieś, nawet zanim operator cokolwiek
+    // kliknął (domyślnie: dopasowanie z listy jeśli wybrane ręcznie, inaczej
+    // "Nie ma na liście" gdy coś wpisano / "Brak odpowiedzi" gdy pusto —
+    // control2/js/ui.js's effectiveMappingResolution) — nie ma tu wyboru
+    // "X albo Y", tylko potwierdzenie tego, co już jest zaznaczone.
+    if (!row.revealedAnswer) return "Zmień zaznaczone dopasowanie, jeśli trzeba, i potwierdź kafel „Pokazana”, żeby odsłonić na Wyświetlaczu.";
+    if (!row.revealedPoints) return "Odpowiedź odsłonięta. Potwierdź kafel „Punkty”, żeby dopisać je do sumy.";
     return "Punkty odsłonięte. Kliknij „Dalej”, żeby przejść do kolejnego pytania.";
   }
 

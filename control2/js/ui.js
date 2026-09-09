@@ -934,30 +934,50 @@ export function createUI({ root, emit }) {
       : { mode: "AUTO", kind: "SKIP", matchId: null, outText: "", pts: 0 };
   }
 
-  // Górny wiersz kafli — status "co gracz wpisał / co pokazano / ile
-  // punktów", lekko inny (niebieskawy) odcień niż kafle odpowiedzi poniżej
-  // (zgłoszone) — czysto informacyjne, więc div, nie klikalny button.
-  function mapInfoTile(label, value, col) {
-    const el = h("div", { class: "c2-tile c2-tile-info" }, [
-      h("div", { class: "c2-tile-info-label", text: label }),
-      h("div", { class: "c2-tile-info-value", text: value }),
-    ]);
-    el.style.gridRow = "1";
-    el.style.gridColumn = col;
-    return el;
+  // Rozstrzygnięcie, które FAKTYCZNIE się odsłoni, jeśli operator jeszcze
+  // niczego ręcznie nie wybrał — dokładnie jak stare gameFinal.js's
+  // ensureDefaultMapping(): MISS gdy coś wpisano, SKIP gdy pusto. To NIE
+  // jest zapisywane do stanu tutaj (ui.js zostaje czystym renderem) — służy
+  // wyłącznie do pokazania, które MISS/SKIP jest "już wybrane" (złoty kafel
+  // od razu, nie dopiero po pierwszym kliknięciu — zgłoszone: "zaznaczenie
+  // zawsze jakieś jest na kafelkach wyboru, nawet domyślne"). Rzeczywisty
+  // zapis tego wyboru do game_state następuje dopiero przy potwierdzeniu
+  // kafla "Pokazana" (patrz niżej), dokładnie tak jak stare "Pokaż
+  // odpowiedź" domyślnie rozstrzygało dopiero w momencie kliknięcia.
+  function effectiveMappingResolution(row, hasTyped) {
+    if (row.kind != null) return { kind: row.kind, matchId: row.matchId };
+    return { kind: hasTyped ? "MISS" : "SKIP", matchId: null };
   }
 
-  // Ta sama siatka 3x5 co Rundy-odsłanianie: wiersz 1 to teraz status
-  // (mapInfoTile, zgłoszone), wiersze 2-4 to kafle odpowiedzi/MISS/SKIP (do
-  // 6, 2 na wiersz), wiersz 5 to "Pokaż odpowiedź"/"Pokaż punkty". "Dalej"
-  // NIE jest już kaflem w siatce — to zwykły przycisk nawigacji na dole
-  // (gameplayShell's nav), taki sam jak "Dalej" gdzie indziej (zgłoszone).
-  // MISS ("Nie ma na liście") i SKIP ("Brak odpowiedzi") to DWA osobne
-  // przyciski jak w starym control/js/gameFinal.js's renderMapOne — różny
-  // kolor (MISS czerwony/danger, SKIP zwykły) i różny warunek dostępności
-  // (MISS tylko gdy coś wpisano, SKIP tylko gdy pusto) — nie jeden łączony
-  // "brak dopasowania". Wybrana opcja (dowolna) dostaje złoty c2-tile-primary,
-  // dokładnie jak stary Control's ".gold" na aktywnym przycisku.
+  // Co DOKŁADNIE odsłoni się na Wyświetlaczu — bez żadnych dodatkowych
+  // informacji (zgłoszone), tylko sama wartość: dopasowana odpowiedź z
+  // listy / to co gracz wpisał (MISS) / nic (SKIP).
+  function resolveMappingPreview(question, inputText, effective) {
+    if (effective.kind === "MATCH") {
+      const a = (question?.answers || []).find((x) => x.id === effective.matchId);
+      return { text: a?.text || "—", pts: a ? a.fixed_points : 0 };
+    }
+    if (effective.kind === "MISS") return { text: inputText || "—", pts: 0 };
+    return { text: "—", pts: 0 };
+  }
+
+  // Wpisywanie (finał, mapowanie): wiersz 1 to edytowalne "Wpisano" (ten sam
+  // wygląd co pole w kroku wpisywania — c2-entrytile/c2-entrytile-input),
+  // żeby dało się poprawić literówkę tuż przed rozstrzygnięciem — blokuje
+  // się dopiero po odsłonięciu odpowiedzi. Wiersz 2 to DWA kafle odsłaniania
+  // ("Pokazana"/"Punkty"), ZAWSZE obecne w tym samym miejscu (nie znikają
+  // warunkowo jak dawne "Pokaż odpowiedź"/"Pokaż punkty") — "Punkty" jest
+  // po prostu wyszarzony/zablokowany dopóki odpowiedź nie jest odsłonięta.
+  // Oba pokazują na żywo dokładnie to, co się odsłoni (resolveMappingPreview),
+  // i idą przez zaznacz->potwierdź jak w Rundach (armableTile) — to są
+  // jedyne dwa kafle na tym ekranie, które realnie coś odsłaniają na wizji,
+  // więc dostają ten sam bufor przeciwko przypadkowemu kliknięciu. Po
+  // odsłonięciu każdy z nich wyszarza się na stałe (disabled, nic więcej do
+  // zrobienia). Wiersze 3-5: dopasowania z listy + MISS/SKIP (do 6, 2 na
+  // wiersz) — jedno z nich jest ZAWSZE złote, nawet domyślnie (MISS gdy
+  // coś wpisano, SKIP gdy pusto), nie dopiero po pierwszym kliknięciu.
+  // "Dalej" to zwykły przycisk nawigacji na dole (gameplayShell's nav), taki
+  // sam jak "Dalej" gdzie indziej — nie kafel w siatce.
   function renderFinalMapping(state, round, idx) {
     const f = state.final;
     const mapArr = f.runtime[round === 1 ? "map1" : "map2"];
@@ -966,60 +986,74 @@ export function createUI({ root, emit }) {
     const entryKey = round === 1 ? "p1" : "p2";
     const inputText = f.runtime[entryKey][idx]?.text || "";
     const hasTyped = inputText.trim().length > 0;
-    const locked = row.revealedAnswer; // po odsłonięciu odpowiedzi wybór jest zamrożony
+    const locked = row.revealedAnswer; // po odsłonięciu odpowiedzi pole i wybór są zamrożone
 
-    const infoTiles = [
-      mapInfoTile("Odpowiedź gracza", inputText || "—", THIRD(0)),
-      mapInfoTile("Pokazana", row.revealedAnswer ? (row.outText || "—") : "—ukryte—", THIRD(1)),
-      mapInfoTile("Punkty", row.revealedPoints ? String(row.pts) : "—", THIRD(2)),
-    ];
+    const effective = effectiveMappingResolution(row, hasTyped);
+    const preview = resolveMappingPreview(question, inputText, effective);
+
+    const inp = h("input", { type: "text", value: inputText, placeholder: "Odpowiedź gracza", autocomplete: "off" });
+    if (locked) inp.disabled = true;
+    on(inp, "input", () => emit("game.dispatch", { type: "SET_ENTRY_TEXT", round, idx, text: inp.value }));
+    const inputTile = h("div", { class: "c2-entrytile c2-entrytile-input" }, [inp]);
+    inputTile.style.gridRow = "1";
+    inputTile.style.gridColumn = "1 / 7";
+
+    // aria-label stały ("Pokazana"/"Punkty") niezależnie od treści widocznej
+    // (podgląd się zmienia) — ten sam wzorzec co c2-tile-sub przy X w Rundach:
+    // dostępna nazwa nie ma migać przy każdej zmianie podglądu/zaznaczenia.
+    const revealAnswerTile = armableTile(`map-answer:${round}:${idx}`,
+      row.revealedAnswer ? (row.outText || "—") : preview.text,
+      {
+        row: 2, col: HALF(0), cls: "c2-tile-primary",
+        disabled: locked,
+        onclick: async () => {
+          if (row.kind == null) await emit("game.dispatch", { type: "RESOLVE_MAPPING", round, idx, ...defaultResolve(inputText) });
+          await emit("game.dispatch", { type: "REVEAL_ANSWER_ONLY", round, idx });
+        },
+      });
+    revealAnswerTile.setAttribute("aria-label", "Pokazana");
+    const revealPointsTile = armableTile(`map-points:${round}:${idx}`,
+      row.revealedPoints ? String(row.pts) : String(preview.pts),
+      {
+        row: 2, col: HALF(1), cls: "c2-tile-primary",
+        disabled: !row.revealedAnswer || row.revealedPoints,
+        onclick: () => emit("game.dispatch", { type: "REVEAL_POINTS", round, idx }),
+      });
+    revealPointsTile.setAttribute("aria-label", "Punkty");
 
     const matchOptions = (question?.answers || []).map((a) => ({
       text: `${a.text} (${a.fixed_points})`,
-      active: row.kind === "MATCH" && row.matchId === a.id,
+      active: effective.kind === "MATCH" && effective.matchId === a.id,
       disabled: locked || !hasTyped,
       onclick: () => emit("game.dispatch", { type: "RESOLVE_MAPPING", round, idx, mode: "MANUAL", kind: "MATCH", matchId: a.id, outText: a.text, pts: a.fixed_points }),
     }));
     const missOption = {
       text: "Nie ma na liście (0 pkt)",
-      active: row.kind === "MISS",
+      active: effective.kind === "MISS",
       disabled: locked || !hasTyped,
       danger: true,
       onclick: () => emit("game.dispatch", { type: "RESOLVE_MAPPING", round, idx, mode: "MANUAL", kind: "MISS", matchId: null, outText: inputText, pts: 0 }),
     };
     const skipOption = {
       text: "Brak odpowiedzi",
-      active: row.kind === "SKIP",
+      active: effective.kind === "SKIP",
       disabled: locked || hasTyped,
       onclick: () => emit("game.dispatch", { type: "RESOLVE_MAPPING", round, idx, mode: "MANUAL", kind: "SKIP", matchId: null, outText: "", pts: 0 }),
     };
     const options = [...matchOptions, missOption, skipOption];
 
     const optionTiles = options.slice(0, 6).map((o, i) => tile(o.text, {
-      row: Math.floor(i / 2) + 2,
+      row: Math.floor(i / 2) + 3,
       col: HALF(i % 2),
       cls: o.active ? "c2-tile-primary" : (o.danger ? "c2-tile-danger" : ""),
       disabled: o.disabled,
       onclick: o.onclick,
     }));
 
-    const actionTiles = [];
-    if (!row.revealedAnswer) {
-      actionTiles.push(tile("Pokaż odpowiedź", {
-        row: 5, col: THIRD(0), cls: "c2-tile-primary",
-        onclick: async () => {
-          if (row.kind == null) await emit("game.dispatch", { type: "RESOLVE_MAPPING", round, idx, ...defaultResolve(inputText) });
-          await emit("game.dispatch", { type: "REVEAL_ANSWER_ONLY", round, idx });
-        },
-      }));
-    } else if (!row.revealedPoints) {
-      actionTiles.push(tile("Pokaż punkty", { row: 5, col: THIRD(2), cls: "c2-tile-primary", onclick: () => emit("game.dispatch", { type: "REVEAL_POINTS", round, idx }) }));
-    }
-
     const body = [
       h("div", { class: "c2-question", text: question?.text || `Pytanie ${idx + 1}` }),
       h("div", { class: "c2-roundlayout" }, [
-        h("div", { class: "c2-roundlayout-main" }, [tileGrid([...infoTiles, ...optionTiles, ...actionTiles])]),
+        h("div", { class: "c2-roundlayout-main" }, [tileGrid([inputTile, revealAnswerTile, revealPointsTile, ...optionTiles])]),
         h("div", { class: "c2-roundlayout-divider" }),
         h("div", { class: "c2-roundlayout-side" }, [hintBlock(getFinalHint(state))]),
       ]),
