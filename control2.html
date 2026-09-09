@@ -307,13 +307,14 @@
        (zgłoszone: wysokość pola w mapowaniu ma być taka sama jak we
        wpisywaniu). c2-mapinput-labelcol ma własne justify-content:center,
        więc etykieta zostaje wyśrodkowana mimo że kolumna się rozciąga. */
-    /* Pionowy padding 6px (nie 8px) — DOKŁADNIE jak c2-entrytile.c2-entrytile-
-       input w kroku wpisywania — żeby samo pole miało identyczną wysokość w
-       obu miejscach, nie tylko cały kafelek. */
+    /* Padding RÓWNY na wszystkie strony (6px, nie 6px/14px) — dokładnie jak
+       c2-entrytile.c2-entrytile-input w kroku wpisywania (zgłoszone: tam
+       odstępy od krawędzi kafla do pola są równe, tutaj były różne) — przy
+       okazji samo pole ma tę samą wysokość co w kroku wpisywania. */
     .c2-mapinput {
       display:grid; grid-template-columns:1fr 2fr; gap:12px;
       border-radius:14px; border:1px solid var(--line2); background:rgba(255,255,255,.06);
-      padding:6px 14px;
+      padding:6px;
     }
     /* Kolumna etykiety — wyśrodkowana w bloku. */
     .c2-mapinput-labelcol { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; text-align:center; }
