@@ -26,6 +26,7 @@ import {
   gameEndGateMs,
   finishFinalGateMs,
 } from "./transitionGate.js?v=v2026-09-08T18231";
+import { buildDisplayPreviewRow } from "../../shared/previewRow.js?v=v2026-09-08T18231";
 
 const $ = (id) => document.getElementById(id);
 const on = (el, ev, fn) => el && el.addEventListener(ev, fn);
@@ -309,37 +310,11 @@ export function createUI({ root, emit }) {
     ));
   }
 
-  // Wiersz-atrapa "rundy w toku" do podglądu D3 — Display umie renderować
-  // WYŁĄCZNIE prawdziwy wiersz game_state, więc żeby operator zobaczył
-  // realny wygląd (kolory/motyw/logo/nazwy drużyn) przed startem gry,
-  // trzeba mu dać kompletny, choć zmyślony, taki wiersz. Treść przykładowa,
-  // ale kształt 1:1 z tym, co produkuje control2/js/engine.js.
+  // Wiersz-atrapa "rundy w toku" do podglądu D3 — patrz shared/previewRow.js
+  // (ta sama funkcja, którą używa też js/pages/game-settings.js's modal
+  // ustawień, żeby oba miejsca nie rozjechały się osobnymi implementacjami).
   function buildPreviewRow(state) {
-    const d = state.display;
-    return {
-      top_card: "rounds", step: "r_play", phase: "PLAY", control_team: "A",
-      sound_cue_key: null, sound_cue_seq: 0,
-      detail: {
-        teams: { teamA: state.teams.teamA || "Drużyna A", teamB: state.teams.teamB || "Drużyna B" },
-        rounds: {
-          roundNo: 1, bankPts: 70, xA: 1, xB: 0, totals: { A: 120, B: 80 },
-          question: { text: "PRZYKŁADOWE PYTANIE" },
-          answers: [
-            { ord: 1, text: "Pierwsza odpowiedź", fixed_points: 40 },
-            { ord: 2, text: "Druga odpowiedź", fixed_points: 30 },
-            { ord: 3, text: "Trzecia odpowiedź", fixed_points: 20 },
-            { ord: 4, text: "Czwarta odpowiedź", fixed_points: 10 },
-            { ord: 5, text: "Piąta odpowiedź", fixed_points: 6 },
-            { ord: 6, text: "Szósta odpowiedź", fixed_points: 4 },
-          ],
-          revealed: [1, 2], steal: {}, duel: {},
-        },
-        final: { runtime: {} },
-        display: { mode: "GAME", colors: d.colors, theme: d.theme, logoId: d.logoId, qr: { host: { show: false }, buzzer: { show: false } } },
-        host: { covered: false },
-        locks: { gameEnded: false },
-      },
-    };
+    return buildDisplayPreviewRow({ teams: state.teams, display: state.display });
   }
 
   function renderSetupFinish(state, ctx = {}) {
