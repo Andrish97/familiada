@@ -52,26 +52,34 @@ export function createUI({ root, emit }) {
   // nie ma drugiego kliknięcia.
   let armedKey = null;
 
-  // Blokada odsłaniania na czas TRWANIA DŹWIĘKU (poprawka zgłoszona po
-  // pierwszej wersji: "chodziło mi o długość dźwięku, akcja ma być
-  // blokowana póki dźwięk gra" — nie zgadywany czas animacji Wyświetlacza).
-  // Ustawiana w momencie WYSŁANIA akcji odsłaniającej (nie w momencie
-  // kliknięcia — armowanie samo w sobie nic nie odsłania), blokuje WSZYSTKIE
-  // kafle odsłaniania (nie tylko ten właśnie kliknięty), dopóki dźwięk nie
-  // dogra — także w Finale (Pokaż odpowiedź/Pokaż punkty). Każdy wywołujący
-  // przekazuje dokładny klucz dźwięku, który faktycznie poleci dla TEJ akcji
-  // (np. "answer_correct" dla odsłonięcia odpowiedzi w Rundach, "reveal" dla
-  // Finału's "Pokaż odpowiedź") — patrz engine.js's soundCueKey per reducer.
-  // Krótki fallback (na wypadek, gdyby czas trwania nie był jeszcze znany —
-  // metadane audio nie doczytane) zamiast wiszącej blokady bez końca.
-  const REVEAL_FALLBACK_LOCK_MS = 650;
+  // Blokada odsłaniania na czas TRWANIA DŁUŻSZEGO z dwóch: animacji
+  // Wyświetlacza albo dźwięku (poprawka zgłoszona po pierwszej wersji:
+  // "czasem dźwięk jest krótszy niż animacja, trzeba wybierać do dłuższe" —
+  // sam dźwięk to za mało, bo animacja na Wyświetlaczu czasem trwa dłużej
+  // niż próbka audio). Animacja pojedynczego odsłonięcia to zawsze "matrix
+  // right", 500ms — ta sama stała co ANSWER_ANIM w display2/js/render.js,
+  // używana identycznie dla ANSWER_REVEALED/FINAL_ANSWER_REVEALED/
+  // FINAL_POINTS_REVEALED (sprawdzone w kodzie, nie zgadywane). Ustawiana w
+  // momencie WYSŁANIA akcji odsłaniającej (nie w momencie kliknięcia —
+  // armowanie samo w sobie nic nie odsłania), blokuje WSZYSTKIE kafle
+  // odsłaniania (nie tylko ten właśnie kliknięty), dopóki dłuższe z tych
+  // dwóch nie dobiegnie końca — także w Finale (Pokaż odpowiedź/Pokaż
+  // punkty). Każdy wywołujący przekazuje dokładny klucz dźwięku, który
+  // faktycznie poleci dla TEJ akcji (np. "answer_correct" dla odsłonięcia
+  // odpowiedzi w Rundach, "reveal" dla Finału's "Pokaż odpowiedź") — patrz
+  // engine.js's soundCueKey per reducer.
+  const DISPLAY_ANSWER_ANIM_MS = 500;
   let revealLockedUntil = 0;
   function armRevealCooldown(soundKey) {
     const applyLock = (ms) => {
-      revealLockedUntil = Date.now() + ms;
-      setTimeout(() => emit("ui.rerender"), ms + 20);
+      const floored = Math.max(ms, DISPLAY_ANSWER_ANIM_MS);
+      revealLockedUntil = Date.now() + floored;
+      setTimeout(() => emit("ui.rerender"), floored + 20);
     };
-    applyLock(REVEAL_FALLBACK_LOCK_MS);
+    // Zanim poznamy realny czas trwania dźwięku (metadane audio mogą nie
+    // być jeszcze wczytane), blokujemy co najmniej na czas animacji —
+    // nigdy krócej, więc nie ma okna bez blokady.
+    applyLock(DISPLAY_ANSWER_ANIM_MS);
     if (soundKey) {
       getSfxDuration(soundKey).then((durationS) => {
         if (durationS > 0) applyLock(Math.round(durationS * 1000));
