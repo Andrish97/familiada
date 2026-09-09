@@ -987,34 +987,45 @@ export function createUI({ root, emit }) {
     const inputText = f.runtime[entryKey][idx]?.text || "";
     const hasTyped = inputText.trim().length > 0;
     const locked = row.revealedAnswer; // po odsłonięciu odpowiedzi pole i wybór są zamrożone
+    // control/js/gameFinal.js's p2IsRepeat: gdy gracz 2 oznaczył powtórzenie,
+    // MISS/SKIP nie pokazują się jako aktywne mimo że row.kind==="SKIP" (to
+    // właśnie ustawia SET_REPEAT) — aktywność "przechodzi" na sam kafel
+    // Powtórzenie.
+    const p2IsRepeat = round === 2 && f.runtime.p2[idx]?.repeat === true;
 
     const effective = effectiveMappingResolution(row, hasTyped);
     const preview = resolveMappingPreview(question, inputText, effective);
 
     // Etykieta "Wpisano" (1/3, wyśrodkowana w pionie) + pole (2/3, ten sam
     // wygląd co w kroku wpisywania) OBOK siebie, nie jedno nad drugim
-    // (zgłoszone). c2-mapinput: BEZ własnej ramki/tła na zewnętrznym div
-    // (zgłoszone: "wygląda brzydko" — dwie zagnieżdżone ramki jedna w
-    // drugiej) — jedyna widoczna "skrzynka" to sam input. Runda 2 dostaje
-    // pod etykietą dodatkowo "Gracz 1: ..." (ten sam resolveP1AnswerShown
-    // co w kroku wpisywania) — brakowało tego odniesienia (zgłoszone: "czy
-    // przy drugim graczu nie pokazujemy odpowiedzi pierwszego").
+    // (zgłoszone). Wiersz 1 to teraz PRAWDZIWY kafelek/kafelki (obramowanie
+    // jak c2-entrytile) — zgłoszone: "pierwszy rząd mam mieć kafelek a teraz
+    // nie ma". Runda 1: jeden kafelek na całą szerokość. Runda 2: DWA osobne
+    // kafelki — "Wpisano" (2/3 szerokości) + "Gracz 1" (1/3 szerokości),
+    // osobno od etykiety, nie jedna linijka pod spodem jak dawniej.
     const inp = h("input", { type: "text", value: inputText, placeholder: "Odpowiedź gracza", autocomplete: "off" });
     if (locked) inp.disabled = true;
     on(inp, "input", () => emit("game.dispatch", { type: "SET_ENTRY_TEXT", round, idx, text: inp.value }));
-    const labelChildren = [h("div", { class: "c2-field-label", text: "Wpisano" })];
-    if (round === 2) {
-      labelChildren.push(h("div", { class: "c2-entrytile-p1ans" }, [
-        document.createTextNode("Gracz 1: "),
-        h("b", { text: resolveP1AnswerShown(state, idx) }),
-      ]));
-    }
-    const inputTile = h("div", { class: "c2-mapinput" }, [
-      h("div", { class: "c2-mapinput-labelcol" }, labelChildren),
+    const wpisanoTile = h("div", { class: "c2-mapinput" }, [
+      h("div", { class: "c2-mapinput-labelcol" }, [h("div", { class: "c2-field-label", text: "Wpisano" })]),
       h("div", { class: "c2-entrytile-input" }, [inp]),
     ]);
-    inputTile.style.gridRow = "1";
-    inputTile.style.gridColumn = "1 / 7";
+    wpisanoTile.style.gridRow = "1";
+
+    let row1Tiles;
+    if (round === 2) {
+      wpisanoTile.style.gridColumn = "1 / 5"; // 2/3
+      const p1Tile = h("div", { class: "c2-entrytile c2-map-p1tile" }, [
+        h("div", { class: "c2-field-label", text: "Gracz 1" }),
+        h("div", { class: "c2-entrytile-p1ans" }, [h("b", { text: resolveP1AnswerShown(state, idx) })]),
+      ]);
+      p1Tile.style.gridRow = "1";
+      p1Tile.style.gridColumn = "5 / 7"; // 1/3
+      row1Tiles = [wpisanoTile, p1Tile];
+    } else {
+      wpisanoTile.style.gridColumn = "1 / 7"; // pełna szerokość
+      row1Tiles = [wpisanoTile];
+    }
 
     // Nazwa przycisku ZOSTAJE ("Pokaż odpowiedź"/"Pokaż punkty", ta sama co
     // dawniej) — dopisana jest tylko DRUGA LINIJKA pokazująca na bieżąco, co
@@ -1050,40 +1061,66 @@ export function createUI({ root, emit }) {
 
     const matchOptions = (question?.answers || []).map((a) => ({
       text: `${a.text} (${a.fixed_points})`,
-      active: effective.kind === "MATCH" && effective.matchId === a.id,
+      active: !p2IsRepeat && effective.kind === "MATCH" && effective.matchId === a.id,
       disabled: locked || !hasTyped,
       onclick: () => emit("game.dispatch", { type: "RESOLVE_MAPPING", round, idx, mode: "MANUAL", kind: "MATCH", matchId: a.id, outText: a.text, pts: a.fixed_points }),
     }));
     const missOption = {
       text: "Nie ma na liście (0 pkt)",
-      active: effective.kind === "MISS",
+      active: !p2IsRepeat && effective.kind === "MISS",
       disabled: locked || !hasTyped,
       danger: true,
       onclick: () => emit("game.dispatch", { type: "RESOLVE_MAPPING", round, idx, mode: "MANUAL", kind: "MISS", matchId: null, outText: inputText, pts: 0 }),
     };
     const skipOption = {
       text: "Brak odpowiedzi",
-      active: effective.kind === "SKIP",
+      active: !p2IsRepeat && effective.kind === "SKIP",
       disabled: locked || hasTyped,
       onclick: () => emit("game.dispatch", { type: "RESOLVE_MAPPING", round, idx, mode: "MANUAL", kind: "SKIP", matchId: null, outText: "", pts: 0 }),
     };
     const options = [...matchOptions, missOption, skipOption];
+    // Powtórzenie (tylko runda 2) — control/js/gameFinal.js's data-kind="repeat":
+    // JEDNOKIERUNKOWO włącza (klik gdy już aktywne to no-op), nigdy nie
+    // blokuje pozostałych przycisków (operator może potem kliknąć MATCH/MISS/
+    // SKIP, co samo z siebie zgasi flagę repeat przez SET_ENTRY_TEXT/
+    // RESOLVE_MAPPING — patrz app.js). Dostępne niezależnie od hasTyped
+    // (allowRepeat = isR2, "nigdy disabled" poza revealedAnswer/Points).
+    if (round === 2) {
+      options.push({
+        text: "Powtórzenie",
+        active: p2IsRepeat,
+        disabled: locked,
+        danger: true,
+        onclick: () => {
+          if (locked || f.runtime.p2[idx]?.repeat === true) return;
+          emit("game.dispatch", { type: "SET_REPEAT", round: 2, idx, repeat: true });
+        },
+      });
+    }
 
-    // MISS zaznaczony trzyma czerwoną ramkę/tło PLUS złoty tekst (jak stare
-    // control/js/gameFinal.js's ".btn.sm.danger.gold" razem) — nie staje się
-    // czystym złotem jak MATCH/SKIP, żeby nie tracić czerwonej tożsamości.
-    const optionTiles = options.slice(0, 6).map((o, i) => tile(o.text, {
-      row: Math.floor(i / 2) + 2,
-      col: HALF(i % 2),
+    // Siatka wyboru 3x3 (zawsze 3 rzędy, zgłoszone: "przyciski wyboru mają
+    // się układać w 3 rzędach a nie dwóch") — dokładnie jak stare
+    // gameFinal.js's `tiles = [...matchTiles, ...actionTiles].slice(0,9)`
+    // dopełnione pustymi `mapSlot`-ami do 9, żeby rytm siatki był stały
+    // niezależnie od liczby prawdziwych odpowiedzi na liście.
+    const optionTiles = options.slice(0, 9).map((o, i) => tile(o.text, {
+      row: Math.floor(i / 3) + 2,
+      col: THIRD(i % 3),
       cls: [o.active && "c2-tile-primary", o.danger && "c2-tile-danger"].filter(Boolean).join(" "),
       disabled: o.disabled,
       onclick: o.onclick,
     }));
+    while (optionTiles.length < 9) {
+      const slotEl = h("div", { class: "c2-tile-slot" });
+      slotEl.style.gridRow = String(Math.floor(optionTiles.length / 3) + 2);
+      slotEl.style.gridColumn = THIRD(optionTiles.length % 3);
+      optionTiles.push(slotEl);
+    }
 
     // 6 wierszy zamiast domyślnych 5 (nadpisanie inline, tylko tu — Rundy
     // zostają przy 5): wiersz 5 celowo PUSTY, żeby dać kaflom odsłaniania w
     // wierszu 6 CAŁY wiersz przerwy nad sobą, nie tylko margines.
-    const mappingGrid = tileGrid([inputTile, revealAnswerTile, revealPointsTile, ...optionTiles]);
+    const mappingGrid = tileGrid([...row1Tiles, revealAnswerTile, revealPointsTile, ...optionTiles]);
     mappingGrid.style.gridTemplateRows = "repeat(6, minmax(0,1fr))";
 
     const body = [

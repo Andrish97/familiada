@@ -458,7 +458,12 @@ const REDUCERS = {
   async SET_ENTRY_TEXT(state, action) {
     const key = entryKey(action.round);
     const prev = state.final.runtime[key][action.idx] || {};
-    state.final.runtime[key][action.idx] = { ...prev, text: action.text };
+    // control/js/gameFinal.js: wpisanie nowego tekstu gasi "powtórzenie" —
+    // repeat włącza się wyłącznie przyciskiem, ale gaśnie jako efekt uboczny
+    // innych akcji operatora (tu: edycja pola).
+    const next = { ...prev, text: action.text };
+    if (action.round === 2 && prev.repeat === true) next.repeat = false;
+    state.final.runtime[key][action.idx] = next;
     return sameStep(state);
   },
 
@@ -507,6 +512,12 @@ const REDUCERS = {
     if (action.matchId !== undefined) row.matchId = action.matchId;
     if (action.outText !== undefined) row.outText = action.outText;
     if (action.pts !== undefined) row.pts = action.pts;
+    // control/js/gameFinal.js: kliknięcie MATCH/MISS/SKIP też gasi
+    // "powtórzenie" (ta sama zasada co przy wpisywaniu — patrz SET_ENTRY_TEXT).
+    if (action.round === 2) {
+      const p2 = state.final.runtime.p2[action.idx];
+      if (p2?.repeat === true) state.final.runtime.p2[action.idx] = { ...p2, repeat: false };
+    }
     return sameStep(state);
   },
 

@@ -248,6 +248,11 @@
        tylko zaznaczone, kliknij drugi raz" wyglądało tak samo niezależnie od
        tego, jaki to kafel. */
     .c2-tile-armed { border-color:var(--gold); box-shadow:0 0 0 2px rgba(255,234,166,.55) inset, 0 0 10px rgba(255,234,166,.25); }
+    /* Puste miejsce w siatce 3x3 wyboru mapowania finału (control2/js/ui.js's
+       renderFinalMapping), gdy pytanie ma mniej niż 9 opcji — dokładnie jak
+       stare control/js/gameFinal.js's `.mapSlot`: sam trzyma rytm siatki,
+       bez własnego obramowania/tła/interakcji. */
+    .c2-tile-slot { pointer-events:none; }
 
     /* ---- Wpisywanie (finał): jeden wiersz na pytanie + jeden wiersz
        odliczania na dole (6 rzędów razem) — kafle w stylu .c2-tile
@@ -285,18 +290,25 @@
        samo obramowane pole nie ma żadnego określenia (zgłoszone). Wpisywanie
        (renderFinalEntry) jej nie dokłada — tam kontekst już daje sam wiersz. */
     .c2-field-label { font-size:.72rem; text-transform:uppercase; letter-spacing:.05em; opacity:.6; font-weight:800; }
-    /* Pole "Wpisano" na mapowaniu (renderFinalMapping) — etykieta na 1/3
-       (wyśrodkowana w pionie I poziomie), pole na 2/3, OBOK siebie
-       (zgłoszone), nie jedno nad drugim. BEZ własnej ramki/tła na
-       zewnętrznym div (zgłoszone: "wygląda brzydko" — dwie zagnieżdżone
-       skrzynki jedna w drugiej) — jedyna widoczna "skrzynka" to sam input. */
-    .c2-mapinput { display:grid; grid-template-columns:1fr 2fr; align-items:center; gap:12px; padding:2px 4px; }
-    /* Kolumna etykiety — "Wpisano" + (runda 2) "Gracz 1: ..." pod spodem,
-       oba wyśrodkowane w bloku, nie osobno. */
+    /* Pole "Wpisano" na mapowaniu (renderFinalMapping) — teraz prawdziwy
+       kafelek (obramowanie jak c2-entrytile — zgłoszone: "pierwszy rząd mam
+       mieć kafelek a teraz nie ma"): etykieta na 1/3 (wyśrodkowana w pionie
+       I poziomie), pole na 2/3, OBOK siebie. Runda 1: ten kafelek zajmuje
+       cały wiersz 1. Runda 2: ten sam kafelek zwężony do 2/3 wiersza, obok
+       osobnego kafelka "Gracz 1" (1/3) — patrz .c2-map-p1tile niżej. */
+    .c2-mapinput {
+      display:grid; grid-template-columns:1fr 2fr; align-items:center; gap:12px;
+      border-radius:14px; border:1px solid var(--line2); background:rgba(255,255,255,.06);
+      padding:8px 14px;
+    }
+    /* Kolumna etykiety — wyśrodkowana w bloku. */
     .c2-mapinput-labelcol { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; text-align:center; }
     .c2-mapinput .c2-field-label { font-size:.85rem; }
-    .c2-mapinput .c2-entrytile-p1ans { font-size:.8rem; white-space:normal; }
     .c2-mapinput .c2-entrytile-input { display:flex; align-items:center; min-width:0; }
+    /* Kafelek "Gracz 1" (runda 2, obok c2-mapinput) — ta sama obramówka co
+       c2-entrytile, wyśrodkowany w pionie, wartość złota jak wszędzie indziej. */
+    .c2-map-p1tile { justify-content:center; align-items:center; text-align:center; gap:6px; }
+    .c2-map-p1tile .c2-entrytile-p1ans { font-size:1rem; white-space:normal; opacity:1; }
     .c2-entrytile-input input {
       width:100%; box-sizing:border-box; padding:8px 12px;
       border-radius:10px; border:1px solid rgba(255,255,255,.2);
