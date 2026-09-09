@@ -10,12 +10,12 @@
 // autorytatywny wiersz już to wie), błąd sieci (przycisk wraca do ON,
 // można spróbować ponownie).
 
-import { initI18n, setUiLang } from "../../translation/translation.js?v=v2026-09-09T17421";
-import { startKeepAlive } from "../../js/core/keep-alive.js?v=v2026-09-09T17421";
-import { sb } from "../../js/core/supabase.js?v=v2026-09-09T17421";
-import { createSubscription } from "../../js/core/game-state-subscribe.js?v=v2026-09-09T17421";
-import { createButtonRenderer, STATE, deriveButtonState } from "./render.js?v=v2026-09-09T17421";
-import { ringDoorbell } from "../../js/core/game-state-doorbell.js?v=v2026-09-09T17421";
+import { initI18n, setUiLang } from "../../translation/translation.js?v=v2026-09-09T17512";
+import { startKeepAlive } from "../../js/core/keep-alive.js?v=v2026-09-09T17512";
+import { sb } from "../../js/core/supabase.js?v=v2026-09-09T17512";
+import { createSubscription } from "../../js/core/game-state-subscribe.js?v=v2026-09-09T17512";
+import { createButtonRenderer, STATE, deriveButtonState } from "./render.js?v=v2026-09-09T17512";
+import { ringDoorbell } from "../../js/core/game-state-doorbell.js?v=v2026-09-09T17512";
 
 startKeepAlive();
 
