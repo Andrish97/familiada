@@ -17,6 +17,7 @@
 // bieżącego game_state (shared/hints.js), nie ulotny stan ustawiany przy
 // każdym zdarzeniu — "wszystko idzie przez tabelę stanów".
 import { getRoundsHint, getFinalHint, getFinalEntryShortcuts, teamName } from "../../shared/hints.js?v=v2026-09-09T17244";
+import { t } from "../../translation/translation.js?v=v2026-09-09T17244";
 import { getSfxDuration } from "../../js/core/sfx.js?v=v2026-09-09T17244";
 import { ANSWER_ANIM } from "../../shared/displayAnim.js?v=v2026-09-09T17244";
 import {
@@ -154,35 +155,35 @@ export function createUI({ root, emit }) {
       const code = connectCodes[kind];
       const row2 = [
         h("div", { class: "device-connect-code" }, [h("span", { class: "device-connect-code-val", text: code || "——————" })]),
-        h("button", { class: "btn gold", type: "button", onclick: () => emit("devices.copyCode", kind) }, [document.createTextNode("Kopiuj")]),
+        h("button", { class: "btn gold", type: "button", onclick: () => emit("devices.copyCode", kind) }, [document.createTextNode(t("common.copy"))]),
       ];
       if (withQr) {
         const shown = !!state.display.qr[kind].show;
-        row2.push(h("button", { class: "btn", type: "button", onclick: () => emit("qr.modal.show", kind) }, [document.createTextNode("Kod QR")]));
+        row2.push(h("button", { class: "btn", type: "button", onclick: () => emit("qr.modal.show", kind) }, [document.createTextNode(t("control.qrCodeBtn"))]));
         row2.push(h("button", {
           class: `btn ${shown ? "primary" : ""}`, type: "button",
           onclick: () => emit(kind === "host" ? "qr.host.toggle" : "qr.buzzer.toggle"),
-        }, [document.createTextNode(shown ? "Ukryj QR" : "QR na wyświetlaczu")]));
+        }, [document.createTextNode(shown ? t("control.qrHide") : t("control.qrOnDisplayToggle"))]));
       } else {
         // "Otwórz" ma sens WYŁĄCZNIE dla Wyświetlacza — Prowadzący/Przycisk
         // otwiera się na CUDZYM urządzeniu (tablet/telefon), nie w karcie
         // operatora, więc stare Control (control.html) nigdy nie dawało im
         // tego przycisku (patrz device-row markup: btnOpenDisplay istnieje,
         // analogów dla host/buzzer nie ma).
-        row2.push(h("a", { class: "btn", href: url, target: "_blank", rel: "noopener" }, [document.createTextNode("Otwórz")]));
+        row2.push(h("a", { class: "btn", href: url, target: "_blank", rel: "noopener" }, [document.createTextNode(t("common.open"))]));
       }
       const shared = !!shareBadges[kind];
       row2.push(h("button", {
         class: `btn ${shared ? "has-badge" : ""}`.trim(), type: "button",
         onclick: () => emit("devices.shareOpen", kind),
       }, [
-        document.createTextNode("Udostępnij"),
+        document.createTextNode(t("control.shareDevice")),
         h("span", { class: "badge", "aria-hidden": "true", text: shared ? "1" : "" }),
       ]));
       return h("div", { class: "device-row", "data-device": kind }, [
         h("div", { class: "device-row-1" }, [
           h("div", { class: "device-name", text: label }),
-          h("div", { class: `badge ${online ? "ok" : "bad"}`, text: online ? "Online" : "Offline" }),
+          h("div", { class: `badge ${online ? "ok" : "bad"}`, text: online ? t("control.deviceStatusOk") : t("control.deviceStatusOffline") }),
         ]),
         h("div", { class: "device-row-2" }, row2),
       ]);
@@ -194,36 +195,36 @@ export function createUI({ root, emit }) {
     // pliku rozdzielała Wyświetlacz od Prowadzącego/Przycisku na dwa osobne
     // kroki — to był błąd (odtworzenie martwego, celowo scalonego kodu),
     // poprawiony po korekcie właściciela projektu.
-    const rows = [deviceRow("Wyświetlacz", "display", urls.displayUrl)];
+    const rows = [deviceRow(t("control.deviceDisplay"), "display", urls.displayUrl)];
 
     if (!state.settings.noHostTablet) {
-      const hostRow = deviceRow("Prowadzący", "host", urls.hostUrl, { withQr: true });
+      const hostRow = deviceRow(t("control.deviceHost"), "host", urls.hostUrl, { withQr: true });
       const noHostChk = h("input", { type: "checkbox" });
       on(noHostChk, "change", () => emit("devices.noHostTablet", noHostChk.checked));
       hostRow.appendChild(h("div", { class: "device-row-opt" }, [
         h("label", { class: "device-opt-check" }, [noHostChk, h("div", { class: "device-opt-check-text" }, [
-          h("span", { class: "device-opt-check-label", text: "Nie używaj tabletu prowadzącego" }),
-          h("span", { class: "device-opt-check-hint", text: "Jeśli prowadzący nie używa osobnego tabletu/telefonu, zaznacz tę opcję." }),
+          h("span", { class: "device-opt-check-label", text: t("control.noHostTablet") }),
+          h("span", { class: "device-opt-check-hint", text: t("control.noHostTabletHint") }),
         ])]),
       ]));
       rows.push(hostRow);
     } else {
-      rows.push(h("div", { class: "device-row" }, [reenableRow("Prowadzący", "noHostTablet")]));
+      rows.push(h("div", { class: "device-row" }, [reenableRow(t("control.deviceHost"), "noHostTablet")]));
     }
 
     if (!state.settings.physicalBuzzer) {
-      const buzzerRow = deviceRow("Przycisk", "buzzer", urls.buzzerUrl, { withQr: true });
+      const buzzerRow = deviceRow(t("control.deviceBuzzer"), "buzzer", urls.buzzerUrl, { withQr: true });
       const physBuzzChk = h("input", { type: "checkbox" });
       on(physBuzzChk, "change", () => emit("devices.physicalBuzzer", physBuzzChk.checked));
       buzzerRow.appendChild(h("div", { class: "device-row-opt" }, [
         h("label", { class: "device-opt-check" }, [physBuzzChk, h("div", { class: "device-opt-check-text" }, [
-          h("span", { class: "device-opt-check-label", text: "Fizyczny przycisk" }),
-          h("span", { class: "device-opt-check-hint", text: "Jeśli posiadasz fizyczny przycisk buzzer, zaznacz tę opcję." }),
+          h("span", { class: "device-opt-check-label", text: t("control.physicalBuzzer") }),
+          h("span", { class: "device-opt-check-hint", text: t("control.physicalBuzzerHint") }),
         ])]),
       ]));
       rows.push(buzzerRow);
     } else {
-      rows.push(h("div", { class: "device-row" }, [reenableRow("Przycisk", "physicalBuzzer")]));
+      rows.push(h("div", { class: "device-row" }, [reenableRow(t("control.deviceBuzzer"), "physicalBuzzer")]));
     }
 
     function reenableRow(label, flagKey) {
@@ -231,7 +232,7 @@ export function createUI({ root, emit }) {
       chk.checked = true;
       on(chk, "change", () => emit(flagKey === "noHostTablet" ? "devices.noHostTablet" : "devices.physicalBuzzer", chk.checked));
       return h("label", { class: "device-opt-check" }, [chk, h("div", { class: "device-opt-check-text" }, [
-        h("span", { class: "device-opt-check-label", text: `${label} pominięty (odznacz, żeby podłączyć)` }),
+        h("span", { class: "device-opt-check-label", text: t("control.deviceSkippedLabel", { label }) }),
       ])]);
     }
 
@@ -249,15 +250,18 @@ export function createUI({ root, emit }) {
       class: "btn gold", type: "button",
       disabled: requiredOnline ? undefined : "",
       onclick: requiredOnline ? () => emit("devices.next") : undefined,
-    }, [document.createTextNode("Dalej")]);
+    }, [document.createTextNode(t("common.next"))]);
 
     root.appendChild(h("div", { class: "cardBody" }, [
       // .stepTitle zostaje (niewidoczny, display:none w control.css — testy
       // E2E celują w niego jako stabilny selektor kroku, dokładnie jak w
       // starym Control) — widoczny nagłówek to osobny .c2-stepper, ten sam
       // wzorzec (mały, uppercase, linia pod spodem) co w Rundach/Finale.
+      // Tekst .stepTitle NIE idzie przez t() celowo — jest zawsze niewidoczny
+      // (display:none) i istnieje wyłącznie jako stabilny selektor testów E2E,
+      // więc nie jest to string user-facing.
       h("div", { class: "stepTitle", text: "Urządzenia" }),
-      h("div", { class: "c2-stepper", text: "Urządzenia" }),
+      h("div", { class: "c2-stepper", text: t("control.stepDevices") }),
       // .c2-scroll-area: TYLKO ta środkowa treść przewija się, gdyby lista
       // urządzeń kiedyś nie zmieściła się na ekranie — .stepFoot (Dalej)
       // zostaje na dole, poza obszarem przewijania, zawsze widoczny.
@@ -268,7 +272,7 @@ export function createUI({ root, emit }) {
         h("div", { class: "c2-roundlayout" }, [
           h("div", { class: "c2-roundlayout-main" }, [h("div", { class: "c2-devicerows" }, rows)]),
           h("div", { class: "c2-roundlayout-divider" }),
-          h("div", { class: "c2-roundlayout-side" }, [hintBlock("Wejdź na familiada.online, kliknij „Podłącz urządzenie” i wprowadź kod urządzenia.")]),
+          h("div", { class: "c2-roundlayout-side" }, [hintBlock(t("control.deviceCodeHint"))]),
         ]),
       ]),
       h("div", { class: "stepFoot" }, [h("div", { class: "stepFootButtons" }, [next])]),
@@ -326,7 +330,7 @@ export function createUI({ root, emit }) {
     const previewSrc = ctx.urls?.displayUrl
       ? `${ctx.urls.displayUrl}${ctx.urls.displayUrl.includes("?") ? "&" : "?"}preview=1`
       : null;
-    const previewFrame = previewSrc ? h("iframe", { src: previewSrc, title: "Podgląd wyświetlacza" }) : null;
+    const previewFrame = previewSrc ? h("iframe", { src: previewSrc, title: t("control.displayPreviewTitle") }) : null;
     if (previewFrame) {
       window.addEventListener("message", function onReady(e) {
         if (e.data?.type !== "familiada:preview-ready" || e.source !== previewFrame.contentWindow) return;
@@ -336,14 +340,17 @@ export function createUI({ root, emit }) {
     }
 
     const sections = [
-      summarySection("Drużyny", h("div", { class: "summarySectionValue", text: `${state.teams.teamA || "Drużyna A"} vs ${state.teams.teamB || "Drużyna B"}` })),
-      summarySection("Wygląd", h("div", { class: "summaryDisplayInfo" }, [
-        h("div", { class: "summaryDisplayRow" }, [h("span", { class: "summaryDisplayLabel", text: "Kolory: " }), colorDots(d.colors)]),
-        h("div", { class: "summaryDisplayRow" }, [h("span", { class: "summaryDisplayLabel", text: "Motyw: " }), document.createTextNode(d.theme || "domyślny")]),
-        h("div", { class: "summaryDisplayRow" }, [h("span", { class: "summaryDisplayLabel", text: "Logo: " }), document.createTextNode(d.logoId ? "niestandardowe" : "domyślne")]),
+      summarySection(t("control.summaryTeams"), h("div", { class: "summarySectionValue", text: t("control.teamsVsFormat", {
+        teamA: state.teams.teamA || t("control.teamADefault"),
+        teamB: state.teams.teamB || t("control.teamBDefault"),
+      }) })),
+      summarySection(t("control.summaryDisplay"), h("div", { class: "summaryDisplayInfo" }, [
+        h("div", { class: "summaryDisplayRow" }, [h("span", { class: "summaryDisplayLabel", text: `${t("control.summaryColors")}: ` }), colorDots(d.colors)]),
+        h("div", { class: "summaryDisplayRow" }, [h("span", { class: "summaryDisplayLabel", text: `${t("control.summaryTheme")}: ` }), document.createTextNode(d.theme || t("control.summaryDefault"))]),
+        h("div", { class: "summaryDisplayRow" }, [h("span", { class: "summaryDisplayLabel", text: `${t("control.summaryLogo")}: ` }), document.createTextNode(d.logoId ? t("control.summaryLogoCustom") : t("control.summaryDefault"))]),
         h("div", { id: "c2DisplayPreview" }, previewFrame ? [previewFrame] : []),
       ])),
-      summarySection("Finał", h("div", { class: "summarySectionValue", text: hasFinal ? "Tak" : "Nie" })),
+      summarySection(t("control.summaryFinal"), h("div", { class: "summarySectionValue", text: hasFinal ? t("control.toggleYes") : t("control.toggleNo") })),
     ];
     // "Losuj ponownie" mieszka PRZY danej sekcji pytań (nie w stopce z resztą
     // nawigacji) — to akcja dotycząca konkretnie tej puli, nie kroku jako
@@ -352,26 +359,26 @@ export function createUI({ root, emit }) {
     // ten krok (app.js's ensureQuestionsDrawn) — poniższy podgląd pokazuje
     // CO faktycznie wylosowano, nie tylko sam fakt trybu.
     const roundsValueRow = [document.createTextNode(
-      s.roundsQuestionsMode === "pick" ? `Ustalona kolejność (${s.roundsPicked?.length || 0})` : "Losowo"
+      s.roundsQuestionsMode === "pick" ? t("control.roundsOrderFixed", { count: s.roundsPicked?.length || 0 }) : t("control.summaryQModeRandom")
     )];
     if (s.roundsQuestionsMode !== "pick") {
-      roundsValueRow.push(h("button", { class: "btn sm", type: "button", onclick: () => emit("setup.reshuffleRounds") }, [document.createTextNode("Losuj ponownie")]));
+      roundsValueRow.push(h("button", { class: "btn sm", type: "button", onclick: () => emit("setup.reshuffleRounds") }, [document.createTextNode(t("control.reshuffleQuestions"))]));
     }
     const roundsPreview = s.roundsQuestionsMode !== "pick" ? questionPreviewList(state.rounds._questionPool) : null;
-    sections.push(summarySection("Pytania rund", h("div", {}, [
+    sections.push(summarySection(t("control.summaryRoundsQuestions"), h("div", {}, [
       h("div", { class: "summaryQMode c2-summary-row" }, roundsValueRow),
       roundsPreview,
     ].filter(Boolean))));
 
     if (hasFinal) {
       const finalValueRow = [document.createTextNode(
-        s.finalQuestionsMode === "pick" ? `Wybrane ręcznie (${state.final.picked?.length || 0}/5)` : "Losowo"
+        s.finalQuestionsMode === "pick" ? t("control.finalPickedCount", { count: state.final.picked?.length || 0 }) : t("control.summaryQModeRandom")
       )];
       if (s.finalQuestionsMode !== "pick") {
-        finalValueRow.push(h("button", { class: "btn sm", type: "button", onclick: () => emit("setup.reshuffleFinal") }, [document.createTextNode("Losuj ponownie")]));
+        finalValueRow.push(h("button", { class: "btn sm", type: "button", onclick: () => emit("setup.reshuffleFinal") }, [document.createTextNode(t("control.reshuffleQuestions"))]));
       }
       const finalPreview = s.finalQuestionsMode !== "pick" ? questionPreviewList(state.final.pickedPreview) : null;
-      sections.push(summarySection("Pytania finału", h("div", {}, [
+      sections.push(summarySection(t("control.summaryFinalQuestions"), h("div", {}, [
         h("div", { class: "summaryQMode c2-summary-row" }, finalValueRow),
         finalPreview,
       ].filter(Boolean))));
@@ -382,13 +389,13 @@ export function createUI({ root, emit }) {
       class: "btn gold", type: "button",
       disabled: finalIncomplete ? "" : undefined,
       onclick: () => emit("setup.start"),
-    }, [document.createTextNode("Gotowe — przejdź do rund")]);
-    const changeSettings = h("button", { class: "btn sm", type: "button", onclick: () => emit("setup.openSettings") }, [document.createTextNode("Zmień ustawienia")]);
+    }, [document.createTextNode(t("control.setupDoneBtn"))]);
+    const changeSettings = h("button", { class: "btn sm", type: "button", onclick: () => emit("setup.openSettings") }, [document.createTextNode(t("control.summarySettingsLink"))]);
     // "Wstecz" (jak stare control.html's btnSetupFinishBack) — swobodny
     // powrót do Urządzeń, nic nie resetuje. c2-btn-back popycha go do
     // lewej krawędzi stopki (patrz control2.html: .stepFootButtons ma
     // justify-content:flex-end, ten jeden dostaje margin-right:auto).
-    const back = h("button", { class: "btn c2-btn-back", type: "button", onclick: () => emit("setup.back") }, [document.createTextNode("Wstecz")]);
+    const back = h("button", { class: "btn c2-btn-back", type: "button", onclick: () => emit("setup.back") }, [document.createTextNode(t("common.back"))]);
 
     // Płasko, tak jak renderDevicesStep — jedno .cardBody na root, BEZ
     // zagnieżdżonego wewnątrz .card (to była druga, zbędna warstwa: root
@@ -402,14 +409,14 @@ export function createUI({ root, emit }) {
       // gdzie oba człony niosą osobną informację, tu "Podsumowanie —
       // podsumowanie ustawień" było czystą tautologią).
       h("div", { class: "stepTitle", text: "Podsumowanie" }),
-      h("div", { class: "c2-stepper", text: "Podsumowanie ustawień" }),
+      h("div", { class: "c2-stepper", text: t("control.summaryStepperTitle") }),
       // .c2-scroll-area: dolne przyciski (Wstecz/Zmień ustawienia/Gotowe) mają
       // zostać wyłączone z przewijania — przewija się TYLKO treść sekcji
       // podsumowania, .stepFoot zawsze zostaje widoczny na dole karty.
       h("div", { class: "c2-scroll-area" }, sections),
       h("div", { class: "stepFoot" }, [
         h("div", { class: "stepFootButtons" }, [back, changeSettings, start]),
-        finalIncomplete ? h("div", { class: "msg msg-pill", text: "Finał ustawiony na \"wybrane ręcznie\", ale nie wybrano 5 pytań w ustawieniach gry." }) : null,
+        finalIncomplete ? h("div", { class: "msg msg-pill", text: t("control.finalPickIncompleteWarning") }) : null,
       ]),
     ];
 
@@ -508,7 +515,7 @@ export function createUI({ root, emit }) {
     if (text) children.push(h("div", { class: "c2-hint-main", text }));
     if (shortcuts && shortcuts.length) {
       children.push(h("div", { class: "c2-hint-shortcuts" }, [
-        h("div", { class: "c2-hint-shortcuts-title", text: "Skróty klawiszowe" }),
+        h("div", { class: "c2-hint-shortcuts-title", text: t("control.keyboardShortcutsTitle") }),
         ...shortcuts.map((s) => h("div", { class: "c2-hint-shortcut", text: s })),
       ]));
     }
@@ -543,11 +550,11 @@ export function createUI({ root, emit }) {
         tiles.push(tile(teamName(state, "A"), { row: 1, col: HALF(0), disabled: boardBusy(), onclick: () => { pendingPhysicalTeam = "A"; emit("ui.rerender"); } }));
         tiles.push(tile(teamName(state, "B"), { row: 1, col: HALF(1), disabled: boardBusy(), onclick: () => { pendingPhysicalTeam = "B"; emit("ui.rerender"); } }));
       } else {
-        tiles.push(tile(`Potwierdź: ${teamName(state, pendingPhysicalTeam)}`, {
+        tiles.push(tile(t("control.physicalConfirmTeam", { name: teamName(state, pendingPhysicalTeam) }), {
           row: 1, col: HALF(0), cls: "c2-tile-primary", disabled: boardBusy(),
-          onclick: () => { const t = pendingPhysicalTeam; pendingPhysicalTeam = null; emit("game.dispatch", { type: "ACCEPT_BUZZ", team: t }); },
+          onclick: () => { const team = pendingPhysicalTeam; pendingPhysicalTeam = null; emit("game.dispatch", { type: "ACCEPT_BUZZ", team }); },
         }));
-        tiles.push(tile("Anuluj", { row: 1, col: HALF(1), onclick: () => { pendingPhysicalTeam = null; emit("ui.rerender"); } }));
+        tiles.push(tile(t("common.cancel"), { row: 1, col: HALF(1), onclick: () => { pendingPhysicalTeam = null; emit("ui.rerender"); } }));
       }
     } else {
       // Tryb normalny (Buzzer): obie drużyny widoczne od razu, ale tylko
@@ -556,18 +563,18 @@ export function createUI({ root, emit }) {
       // stary control.html's btnBuzzAcceptA/B. "Ponów naciśnięcie" (nowe
       // RETRY_DUEL) pojawia się dopiero, gdy jest co odrzucić.
       const lastPressed = r.duel.lastPressed;
-      tiles.push(tile(`Zatwierdź: ${teamName(state, "A")}`, {
+      tiles.push(tile(t("control.roundsBuzzAcceptTeam", { name: teamName(state, "A") }), {
         row: 1, col: HALF(0), cls: lastPressed === "A" ? "c2-tile-primary" : "",
         disabled: lastPressed !== "A" || boardBusy(),
         onclick: () => emit("game.dispatch", { type: "ACCEPT_BUZZ", team: "A" }),
       }));
-      tiles.push(tile(`Zatwierdź: ${teamName(state, "B")}`, {
+      tiles.push(tile(t("control.roundsBuzzAcceptTeam", { name: teamName(state, "B") }), {
         row: 1, col: HALF(1), cls: lastPressed === "B" ? "c2-tile-primary" : "",
         disabled: lastPressed !== "B" || boardBusy(),
         onclick: () => emit("game.dispatch", { type: "ACCEPT_BUZZ", team: "B" }),
       }));
       if (lastPressed) {
-        tiles.push(tile("Ponów naciśnięcie", { row: 2, col: "1 / 7", disabled: boardBusy(), onclick: () => emit("game.dispatch", { type: "RETRY_DUEL" }) }));
+        tiles.push(tile(t("control.roundsBuzzRetry"), { row: 2, col: "1 / 7", disabled: boardBusy(), onclick: () => emit("game.dispatch", { type: "RETRY_DUEL" }) }));
       }
     }
 
@@ -577,7 +584,7 @@ export function createUI({ root, emit }) {
       h("div", { class: "c2-roundlayout-side" }, [hintBlock(getRoundsHint(state))]),
     ])];
 
-    gameplayShell({ stepLabel: `Runda ${r.roundNo} — pojedynek`, body, nav: null });
+    gameplayShell({ stepLabel: t("control.stepDuelTitle", { round: r.roundNo }), body, nav: null });
   }
 
   // ---- Rundy (r_intro..r_gameEnd) ----
@@ -597,12 +604,12 @@ export function createUI({ root, emit }) {
       // sekcja Rund (zgłoszone jako mylące: "Gotowe — przejdź do rund"
       // prowadziło na ekran podpisany "Rundy", zanim runda w ogóle istnieje).
       gameplayShell({
-        stepLabel: "Rozpoczęcie gry",
+        stepLabel: t("control.introStepTitle"),
         body: [h("div", { class: "c2-intro" }, [
-          h("div", { class: "c2-intro-title", text: "Rozpocznij grę" }),
-          h("div", { class: "c2-intro-hint", text: "Na wyświetlaczu pojawi się logo programu i zostanie odtworzone intro. Po zakończeniu przejdziesz do pierwszej rundy." }),
+          h("div", { class: "c2-intro-title", text: t("control.roundsIntroBtn") }),
+          h("div", { class: "c2-intro-hint", text: t("control.roundsIntroHint") }),
         ])],
-        nav: [h("button", { class: "c2-btn primary c2-intro-btn", onclick: () => emit("rounds.introNext") }, [document.createTextNode("Rozpocznij grę")])],
+        nav: [h("button", { class: "c2-btn primary c2-intro-btn", onclick: () => emit("rounds.introNext") }, [document.createTextNode(t("control.roundsIntroBtn"))])],
       });
       return;
     }
@@ -610,18 +617,18 @@ export function createUI({ root, emit }) {
       // Wynik pokazany dopiero OD RUNDY 2 — w rundzie 1 zawsze 0:0 (nic
       // jeszcze się nie rozegrało), więc nie niesie żadnej informacji.
       const scoreRow = r.roundNo > 1 ? h("div", { class: "c2-intro-score" }, [
-        h("span", { class: "c2-intro-score-a", text: `${teamName(state, "A")}: ${r.totals.A}` }),
-        h("span", { class: "c2-intro-score-sep", text: "—" }),
-        h("span", { class: "c2-intro-score-b", text: `${teamName(state, "B")}: ${r.totals.B}` }),
+        h("span", { class: "c2-intro-score-a", text: t("control.scoreLine", { name: teamName(state, "A"), points: r.totals.A }) }),
+        h("span", { class: "c2-intro-score-sep", text: t("control.dash") }),
+        h("span", { class: "c2-intro-score-b", text: t("control.scoreLine", { name: teamName(state, "B"), points: r.totals.B }) }),
       ]) : null;
       gameplayShell({
-        stepLabel: `Runda ${r.roundNo}`,
+        stepLabel: t("control.roundStepLabel", { round: r.roundNo }),
         body: [h("div", { class: "c2-intro" }, [
-          h("div", { class: "c2-intro-title", text: "Rozpocznij rundę" }),
-          h("div", { class: "c2-intro-hint", text: "Na wyświetlaczu pojawi się pusta plansza rundy, a prowadzący dostanie treść pytania." }),
+          h("div", { class: "c2-intro-title", text: t("control.roundsStartTitle") }),
+          h("div", { class: "c2-intro-hint", text: t("control.roundsStartHint") }),
           scoreRow,
         ].filter(Boolean))],
-        nav: [navButton("Rozpocznij rundę", {
+        nav: [navButton(t("control.roundsStartBtn"), {
           disabled: boardBusy(),
           onclick: () => { armBoardTransition(startRoundGateMs()); emit("game.dispatch", { type: "START_ROUND" }); },
         })],
@@ -649,7 +656,7 @@ export function createUI({ root, emit }) {
     // tym pasek statusu (kto gra, bank, inne info); na samym dole przyciski
     // nawigacji ("Zakończ rundę" — gameplayShell's nav, jak Finał).
     const body = [];
-    body.push(h("div", { class: "c2-question", text: r.question?.text || "—" }));
+    body.push(h("div", { class: "c2-question", text: r.question?.text || t("control.dash") }));
 
     // Raz osiągnięte canEndRound (wszystko odsłonięte albo kradzież już
     // rozstrzygnięta) nie ma już nic do pudłowania/odmierzania — X i zegarek
@@ -710,7 +717,7 @@ export function createUI({ root, emit }) {
     // schodzi więc na wiersz 5, X/Timer na wiersz 6 — siatka ma teraz 6
     // wierszy zamiast 5 (nadpisane inline niżej, jak w mapowaniu).
     if (passAvailable) {
-      tiles.push(armableTile("pass", "Oddaj kontrolę", {
+      tiles.push(armableTile("pass", t("control.roundsPassControl"), {
         row: 5, col: "1 / 7", cls: "c2-tile-primary",
         onclick: () => emit("game.dispatch", { type: "PASS" }),
       }));
@@ -737,7 +744,7 @@ export function createUI({ root, emit }) {
     if (timer3Available) {
       const running = !!timer3?.running;
       const secLeft = running ? Math.max(0, Math.ceil((timer3.endsAt - Date.now()) / 1000)) : null;
-      tiles.push(tile(running ? String(secLeft) : "Timer 3s", {
+      tiles.push(tile(running ? String(secLeft) : t("control.roundsStartTimer3"), {
         row: 6, col: HALF(1),
         cls: running ? "c2-tile-timer" : "c2-tile-timer startable",
         disabled: running,
@@ -761,11 +768,11 @@ export function createUI({ root, emit }) {
     // DUEL nikt nie ma "kontroli", a jednak ktoś zawsze wtedy gra.
     const activeTeam = state.controlTeam || (state.phase === "DUEL" ? r.duel.currentTeam : null);
     const statusItems = [
-      h("span", {}, [document.createTextNode("Gra: "), h("b", { text: activeTeam ? teamName(state, activeTeam) : "—" })]),
-      h("span", {}, [document.createTextNode("Bank: "), h("b", { text: String(r.bankPts) })]),
+      h("span", {}, [document.createTextNode(t("control.statusPlayingLabel")), h("b", { text: activeTeam ? teamName(state, activeTeam) : t("control.dash") })]),
+      h("span", {}, [document.createTextNode(t("control.statusBankLabel")), h("b", { text: String(r.bankPts) })]),
     ];
     if (state.phase === "STEAL" && r.steal.active) {
-      statusItems.push(h("span", {}, [document.createTextNode("Kradzież: "), h("b", { text: r.steal.team ? teamName(state, r.steal.team) : "—" })]));
+      statusItems.push(h("span", {}, [document.createTextNode(t("control.statusStealLabel")), h("b", { text: r.steal.team ? teamName(state, r.steal.team) : t("control.dash") })]));
     }
     // "Zakończ rundę" mieszka OBOK Gra/Bank, w tym samym pasku (zgłoszone:
     // za duży odstęp pod kaflami + przycisk ma być obok Gra/Bank) —
@@ -773,7 +780,7 @@ export function createUI({ root, emit }) {
     // zamiast osobnego .c2-gameplay-nav z własnym border-top/padding-top
     // (stąd nav:null niżej — bez oddzielnego paska nawigacji na tym ekranie).
     if ((state.phase === "PLAY" || state.phase === "STEAL") && r.canEndRound) {
-      statusItems.push(navButton("Zakończ rundę", {
+      statusItems.push(navButton(t("control.roundsEndRound"), {
         cls: "c2-btn primary c2-statusbar-end",
         disabled: boardBusy(),
         onclick: () => { armBoardTransition(endRoundGateMs()); emit("game.dispatch", { type: "END_ROUND" }); },
@@ -784,8 +791,10 @@ export function createUI({ root, emit }) {
     // "— kradzież" w STEAL, "— rozgrywka" poza tym (PLAY i odkrywanie
     // reszty w REVEAL) — zgłoszone: te dwa etapy mają się rozróżniać w
     // nagłówku, tak jak pojedynek już ma swoje "— pojedynek".
-    const roundStepSuffix = state.phase === "STEAL" ? "kradzież" : "rozgrywka";
-    gameplayShell({ stepLabel: `Runda ${r.roundNo} — ${roundStepSuffix}`, body, nav: null });
+    const stepLabel = state.phase === "STEAL"
+      ? t("control.stepStealTitle", { round: r.roundNo })
+      : t("control.stepPlayTitle", { round: r.roundNo });
+    gameplayShell({ stepLabel, body, nav: null });
   }
 
   // 3 przypadki końca gry — wygrana A, wygrana B, remis — jedna linia
@@ -793,9 +802,9 @@ export function createUI({ root, emit }) {
   // zakończenia można tylko napisać wygrała drużyna taka z wynikiem takim").
   function gameEndSummary(state) {
     const { A, B } = state.rounds.totals;
-    if (A === B) return `Remis — ${A}:${B}`;
+    if (A === B) return t("control.gameEndSummaryDraw", { a: A, b: B });
     const winner = A > B ? "A" : "B";
-    return `Wygrała drużyna ${teamName(state, winner)} wynikiem ${Math.max(A, B)}:${Math.min(A, B)}`;
+    return t("control.gameEndSummaryWin", { team: teamName(state, winner), hi: Math.max(A, B), lo: Math.min(A, B) });
   }
 
   // Co POKAŻE Wyświetlacz po "Zakończ grę" — 3 warianty (plan, sekcje R10/
@@ -809,12 +818,12 @@ export function createUI({ root, emit }) {
     const { A, B } = state.rounds.totals;
     const mode = state.settings.endScreenMode;
     if (A === B || mode === "logo" || !mode) {
-      return "Zabrzmi outro, a na wyświetlaczu pojawi się logo.";
+      return t("control.endHintLogo");
     }
     if (mode === "money" && isFinal) {
-      return "Zabrzmi outro, a na wyświetlaczu pojawi się wygrana kwota pieniędzy.";
+      return t("control.endHintMoney");
     }
-    return "Zabrzmi outro, a na wyświetlaczu pojawi się wynik w punktach.";
+    return t("control.endHintPoints");
   }
 
   // Ekran końca gry — wspólny szablon dla "Koniec gry" (bez finału) i
@@ -830,12 +839,12 @@ export function createUI({ root, emit }) {
       // f_start) — NIE zdradza samego wyniku (kto wygrał), bo to jest
       // moment odsłonięcia dla widzów, nie wcześniej w Control.
       gameplayShell({
-        stepLabel: "Koniec gry",
+        stepLabel: t("control.roundsGameEndTitle"),
         body: [h("div", { class: "c2-intro" }, [
-          h("div", { class: "c2-intro-title", text: "Koniec gry" }),
+          h("div", { class: "c2-intro-title", text: t("control.roundsGameEndTitle") }),
           h("div", { class: "c2-intro-hint", text: endRevealHint(state, isFinal) }),
         ])],
-        nav: [navButton("Zakończ grę", {
+        nav: [navButton(t("control.roundsGameEndBtn"), {
           disabled: boardBusy(),
           onclick: () => { armBoardTransition(isFinal ? finishFinalGateMs() : gameEndGateMs()); emit("game.dispatch", revealAction); },
         })],
@@ -843,14 +852,14 @@ export function createUI({ root, emit }) {
       return;
     }
     gameplayShell({
-      stepLabel: "Koniec gry",
+      stepLabel: t("control.roundsGameEndTitle"),
       body: [h("div", { class: "c2-intro" }, [
-        h("div", { class: "c2-intro-title", text: "Koniec gry" }),
+        h("div", { class: "c2-intro-title", text: t("control.roundsGameEndTitle") }),
         h("div", { class: "c2-intro-hint", text: gameEndSummary(state) }),
       ])],
       nav: [
-        h("button", { class: "c2-btn c2-intro-btn", type: "button", onclick: () => emit("game.restart") }, [document.createTextNode("Zacznij od nowa")]),
-        h("button", { class: "c2-btn primary c2-intro-btn", type: "button", onclick: () => emit("session.finish") }, [document.createTextNode("Wróć do moich gier")]),
+        h("button", { class: "c2-btn c2-intro-btn", type: "button", onclick: () => emit("game.restart") }, [document.createTextNode(t("control.restartGame"))]),
+        h("button", { class: "c2-btn primary c2-intro-btn", type: "button", onclick: () => emit("session.finish") }, [document.createTextNode(t("control.returnToMyGames"))]),
       ],
     });
   }
@@ -866,12 +875,12 @@ export function createUI({ root, emit }) {
   // dokładnie jak "Rozpocznij grę" startuje i grę, i pierwszą rundę.
   function renderFinalStart(state) {
     gameplayShell({
-      stepLabel: "Finał",
+      stepLabel: t("control.stepFinal"),
       body: [h("div", { class: "c2-intro" }, [
-        h("div", { class: "c2-intro-title", text: "Rozpocznij finał" }),
-        h("div", { class: "c2-intro-hint", text: "Zabrzmi dźwięk finału, stara plansza zniknie, a wjedzie plansza finału. Prowadzący dostanie pytania." }),
+        h("div", { class: "c2-intro-title", text: t("control.finalStartName") }),
+        h("div", { class: "c2-intro-hint", text: t("control.finalStartHint") }),
       ])],
-      nav: [navButton("Rozpocznij finał", {
+      nav: [navButton(t("control.finalStartBtn"), {
         disabled: boardBusy(),
         onclick: () => { armBoardTransition(startFinalGateMs()); emit("game.dispatch", { type: "START_FINAL" }); },
       })],
@@ -889,13 +898,13 @@ export function createUI({ root, emit }) {
     const f = state.final;
     const row = f.runtime.map1?.[idx];
     const question = f.questions?.[idx];
-    if (!row) return "—";
+    if (!row) return t("control.dash");
     if (row.kind === "MATCH") {
       const a = (question?.answers || []).find((x) => x.id === row.matchId);
-      return (a?.text || "").trim() || "—";
+      return (a?.text || "").trim() || t("control.dash");
     }
-    if (row.kind === "MISS") return (f.runtime.p1[idx]?.text || "").trim() || "—";
-    return "—";
+    if (row.kind === "MISS") return (f.runtime.p1[idx]?.text || "").trim() || t("control.dash");
+    return t("control.dash");
   }
 
   // Kafel odliczania — jeden wiersz na pełną szerokość, ta sama skala co
@@ -908,14 +917,13 @@ export function createUI({ root, emit }) {
   // odliczanie jest tylko wyświetlane, nie da się go przerwać.
   function finalTimerRow(state, round) {
     const f = state.final;
-    const t = f.runtime.timer;
+    const timer = f.runtime.timer;
     const phase = round === 1 ? "P1" : "P2";
-    const seconds = round === 1 ? 15 : 20;
-    const running = t.running && t.phase === phase;
-    const used = round === 1 ? t.usedP1 : t.usedP2;
+    const running = timer.running && timer.phase === phase;
+    const used = round === 1 ? timer.usedP1 : timer.usedP2;
 
     if (running) {
-      const secLeft = Math.max(0, Math.ceil((t.endsAt - Date.now()) / 1000));
+      const secLeft = Math.max(0, Math.ceil((timer.endsAt - Date.now()) / 1000));
       const filled = round === 1
         ? f.runtime.p1.every((x) => String(x?.text || "").trim().length > 0)
         : f.runtime.p2.every((x) => (x?.repeat ? true : String(x?.text || "").trim().length > 0));
@@ -927,7 +935,7 @@ export function createUI({ root, emit }) {
       // wzorzec co c2-tile-sub przy X w Rundach (renderRounds's xLabel).
       const content = h("div", {}, [
         h("span", { "aria-hidden": "true" }, [document.createTextNode(`${secLeft}s`)]),
-        h("div", { class: "c2-tile-sub", text: "Zatrzymaj" }),
+        h("div", { class: "c2-tile-sub", text: t("control.finalTimerStopShort") }),
       ]);
       return h("button", {
         class: `c2-tile c2-timer-row c2-tile-timer ${filled ? "startable" : ""}`.trim(),
@@ -937,13 +945,13 @@ export function createUI({ root, emit }) {
       }, [content]);
     }
     if (used) {
-      return h("button", { class: "c2-tile c2-timer-row c2-tile-timer", type: "button", disabled: "" }, [document.createTextNode("Czas wykorzystany")]);
+      return h("button", { class: "c2-tile c2-timer-row c2-tile-timer", type: "button", disabled: "" }, [document.createTextNode(t("control.finalTimerUsed"))]);
     }
     return h("button", {
       class: "c2-tile c2-timer-row c2-tile-timer startable",
       type: "button",
       onclick: () => emit("final.toggleTimer", { round }),
-    }, [document.createTextNode(`Rozpocznij odliczanie (${seconds}s)`)]);
+    }, [document.createTextNode(round === 1 ? t("control.finalUi.timerStart15") : t("control.finalUi.timerStart20"))]);
   }
 
   // Wpisywanie finału — jeden wiersz na pytanie, ułożony jak kafle rund
@@ -963,7 +971,7 @@ export function createUI({ root, emit }) {
     for (let i = 0; i < 5; i++) {
       const row = f.runtime[key][i] || {};
       const question = f.questions?.[i];
-      const inp = h("input", { type: "text", value: row.text || "", placeholder: "Odpowiedź gracza", autocomplete: "off" });
+      const inp = h("input", { type: "text", value: row.text || "", placeholder: t("control.finalUi.playerAnswer"), autocomplete: "off" });
       on(inp, "input", () => emit("game.dispatch", { type: "SET_ENTRY_TEXT", round, idx: i, text: inp.value }));
       on(inp, "keydown", (e) => {
         if (e.key === "ArrowDown") {
@@ -992,12 +1000,12 @@ export function createUI({ root, emit }) {
 
       const cells = round === 2 ? [
         h("div", { class: "c2-entrytile" }, [
-          h("div", { class: "c2-entrytile-q", text: question?.text || `Pytanie ${i + 1}` }),
-          h("div", { class: "c2-entrytile-p1ans" }, [document.createTextNode("Gracz 1: "), h("b", { text: resolveP1AnswerShown(state, i) })]),
+          h("div", { class: "c2-entrytile-q", text: question?.text || t("control.finalUi.questionLabel", { n: i + 1 }) }),
+          h("div", { class: "c2-entrytile-p1ans" }, [document.createTextNode(t("control.finalUi.p2HintP1Prefix")), h("b", { text: resolveP1AnswerShown(state, i) })]),
         ]),
         h("div", { class: "c2-entrytile c2-entrytile-input" }, [inp]),
       ] : [
-        h("div", { class: "c2-entrytile" }, [h("div", { class: "c2-entrytile-q", text: question?.text || `Pytanie ${i + 1}` })]),
+        h("div", { class: "c2-entrytile" }, [h("div", { class: "c2-entrytile-q", text: question?.text || t("control.finalUi.questionLabel", { n: i + 1 }) })]),
         h("div", { class: "c2-entrytile c2-entrytile-input" }, [inp]),
       ];
       if (round === 2) {
@@ -1005,7 +1013,7 @@ export function createUI({ root, emit }) {
         cells.push(h("button", {
           class: `c2-btn-repeat ${repeat ? "on" : ""}`.trim(), type: "button",
           onclick: () => emit("game.dispatch", { type: "SET_REPEAT", round: 2, idx: i, repeat: !repeat }),
-        }, [document.createTextNode(repeat ? "Powtórzenie ✓" : "Powtórzenie")]));
+        }, [document.createTextNode(repeat ? t("control.finalUi.p2RepeatOn") : t("control.finalUi.p2RepeatOff"))]));
       }
       rows.push(h("div", { class: `c2-entryrow ${round === 2 ? "p2" : "p1"}`, "data-i": String(i) }, cells));
     }
@@ -1019,7 +1027,7 @@ export function createUI({ root, emit }) {
     // treści pytania pokazuje, czyj to krok — sama treść nieważna, chodzi o
     // zarezerwowanie tej samej wysokości nagłówka co u mapowania.
     const body = [
-      h("div", { class: "c2-question", text: `Odpowiedzi gracza ${round}` }),
+      h("div", { class: "c2-question", text: t("control.finalEntryHeading", { round }) }),
       h("div", { class: "c2-roundlayout" }, [
         h("div", { class: "c2-roundlayout-main" }, [h("div", { class: "c2-entryrows" }, rows)]),
         h("div", { class: "c2-roundlayout-divider" }),
@@ -1027,8 +1035,8 @@ export function createUI({ root, emit }) {
       ]),
     ];
 
-    const nav = [h("button", { class: "c2-btn primary", onclick: () => emit("game.dispatch", { type: "START_MAPPING", round }) }, [document.createTextNode("Dalej")])];
-    gameplayShell({ stepLabel: `Finał — gracz ${round}, wpisywanie`, body, nav });
+    const nav = [h("button", { class: "c2-btn primary", onclick: () => emit("game.dispatch", { type: "START_MAPPING", round }) }, [document.createTextNode(t("common.next"))])];
+    gameplayShell({ stepLabel: t("control.finalEntryStepLabel", { round }), body, nav });
   }
 
   // Dokładnie jak dzisiejsze gameFinal.js's ensureDefaultMapping(): dopóki
@@ -1063,10 +1071,10 @@ export function createUI({ root, emit }) {
   function resolveMappingPreview(question, inputText, effective) {
     if (effective.kind === "MATCH") {
       const a = (question?.answers || []).find((x) => x.id === effective.matchId);
-      return { text: a?.text || "—", pts: a ? a.fixed_points : 0 };
+      return { text: a?.text || t("control.dash"), pts: a ? a.fixed_points : 0 };
     }
-    if (effective.kind === "MISS") return { text: inputText || "—", pts: 0 };
-    return { text: "—", pts: 0 };
+    if (effective.kind === "MISS") return { text: inputText || t("control.dash"), pts: 0 };
+    return { text: t("control.dash"), pts: 0 };
   }
 
   // Wpisywanie (finał, mapowanie): wiersz 1 to edytowalne "Wpisano" (ten sam
@@ -1111,11 +1119,11 @@ export function createUI({ root, emit }) {
     // nie ma". Runda 1: jeden kafelek na całą szerokość. Runda 2: DWA osobne
     // kafelki — "Wpisano" (2/3 szerokości) + "Gracz 1" (1/3 szerokości),
     // osobno od etykiety, nie jedna linijka pod spodem jak dawniej.
-    const inp = h("input", { type: "text", value: inputText, placeholder: "Odpowiedź gracza", autocomplete: "off" });
+    const inp = h("input", { type: "text", value: inputText, placeholder: t("control.finalUi.playerAnswer"), autocomplete: "off" });
     if (locked) inp.disabled = true;
     on(inp, "input", () => emit("game.dispatch", { type: "SET_ENTRY_TEXT", round, idx, text: inp.value }));
     const wpisanoTile = h("div", { class: "c2-mapinput" }, [
-      h("div", { class: "c2-mapinput-labelcol" }, [h("div", { class: "c2-field-label", text: "Wpisano" })]),
+      h("div", { class: "c2-mapinput-labelcol" }, [h("div", { class: "c2-field-label", text: t("control.finalUi.mapInputLabel") })]),
       h("div", { class: "c2-entrytile-input" }, [inp]),
     ]);
     wpisanoTile.style.gridRow = "1";
@@ -1124,7 +1132,7 @@ export function createUI({ root, emit }) {
     if (round === 2) {
       wpisanoTile.style.gridColumn = "1 / 5"; // 2/3
       const p1Tile = h("div", { class: "c2-entrytile c2-map-p1tile" }, [
-        h("div", { class: "c2-field-label", text: "Gracz 1" }),
+        h("div", { class: "c2-field-label", text: t("control.finalHost.player1Label") }),
         h("div", { class: "c2-entrytile-p1ans" }, [h("b", { text: resolveP1AnswerShown(state, idx) })]),
       ]);
       p1Tile.style.gridRow = "1";
@@ -1145,8 +1153,8 @@ export function createUI({ root, emit }) {
     // (nadpisane inline niżej, tileGridForMapping).
     const revealAnswerTile = armableTile(`map-answer:${round}:${idx}`,
       h("div", {}, [
-        document.createTextNode("Pokaż odpowiedź"),
-        h("div", { class: "c2-tile-sub", "aria-hidden": "true", text: row.revealedAnswer ? (row.outText || "—") : preview.text }),
+        document.createTextNode(t("control.finalRevealAnswerLabel")),
+        h("div", { class: "c2-tile-sub", "aria-hidden": "true", text: row.revealedAnswer ? (row.outText || t("control.dash")) : preview.text }),
       ]),
       {
         row: 6, col: HALF(0), cls: "c2-tile-primary",
@@ -1162,7 +1170,7 @@ export function createUI({ root, emit }) {
       });
     const revealPointsTile = armableTile(`map-points:${round}:${idx}`,
       h("div", {}, [
-        document.createTextNode("Pokaż punkty"),
+        document.createTextNode(t("control.finalRevealPointsLabel")),
         h("div", { class: "c2-tile-sub", "aria-hidden": "true", text: row.revealedPoints ? String(row.pts) : String(preview.pts) }),
       ]),
       {
@@ -1188,16 +1196,16 @@ export function createUI({ root, emit }) {
       // ta opcja. Stała nazwa + aria-hidden druga linijka, ten sam wzorzec
       // co kafle odsłaniania.
       content: hasTyped ? h("div", {}, [
-        document.createTextNode("Nie ma na liście (0 pkt)"),
-        h("div", { class: "c2-tile-sub", "aria-hidden": "true", text: "(odpowiedź gracza)" }),
-      ]) : "Nie ma na liście (0 pkt)",
+        document.createTextNode(t("control.finalUi.mapBtnMiss")),
+        h("div", { class: "c2-tile-sub", "aria-hidden": "true", text: t("control.finalUi.mapMissSubLabel") }),
+      ]) : t("control.finalUi.mapBtnMiss"),
       active: !p2IsRepeat && effective.kind === "MISS",
       disabled: locked || !hasTyped,
       danger: true,
       onclick: () => emit("game.dispatch", { type: "RESOLVE_MAPPING", round, idx, mode: "MANUAL", kind: "MISS", matchId: null, outText: inputText, pts: 0 }),
     };
     const skipOption = {
-      text: "Brak odpowiedzi",
+      text: t("control.finalUi.mapBtnSkip"),
       active: !p2IsRepeat && effective.kind === "SKIP",
       disabled: locked || hasTyped,
       onclick: () => emit("game.dispatch", { type: "RESOLVE_MAPPING", round, idx, mode: "MANUAL", kind: "SKIP", matchId: null, outText: "", pts: 0 }),
@@ -1211,7 +1219,7 @@ export function createUI({ root, emit }) {
     // (allowRepeat = isR2, "nigdy disabled" poza revealedAnswer/Points).
     if (round === 2) {
       options.push({
-        text: "Powtórzenie",
+        text: t("control.finalUi.p2RepeatOff"),
         active: p2IsRepeat,
         disabled: locked,
         danger: true,
@@ -1254,7 +1262,7 @@ export function createUI({ root, emit }) {
     mappingGrid.style.gridTemplateRows = "repeat(6, minmax(0,1fr))";
 
     const body = [
-      h("div", { class: "c2-question", text: question?.text || `Pytanie ${idx + 1}` }),
+      h("div", { class: "c2-question", text: question?.text || t("control.finalUi.questionLabel", { n: idx + 1 }) }),
       h("div", { class: "c2-roundlayout" }, [
         h("div", { class: "c2-roundlayout-main" }, [mappingGrid]),
         h("div", { class: "c2-roundlayout-divider" }),
@@ -1275,17 +1283,17 @@ export function createUI({ root, emit }) {
       class: "c2-btn primary", type: "button",
       disabled: row.revealedPoints ? undefined : "",
       onclick: row.revealedPoints ? () => emit("game.dispatch", { type: "NEXT_QUESTION", round, idx: idx + 1 }) : undefined,
-    }, [document.createTextNode("Dalej")])];
+    }, [document.createTextNode(t("common.next"))])];
 
-    gameplayShell({ stepLabel: `Finał — mapowanie ${idx + 1}/5`, body, nav });
+    gameplayShell({ stepLabel: t("control.finalMappingStepLabel", { n: idx + 1 }), body, nav });
   }
 
   function renderFinalP2Start(state) {
     gameplayShell({
-      stepLabel: "Finał — start rundy 2",
+      stepLabel: t("control.finalP2StartStepLabel"),
       body: [h("div", { class: "c2-intro" }, [
-        h("div", { class: "c2-intro-title", text: "Rozpocznij 2 rundę" }),
-        h("div", { class: "c2-intro-hint", text: "Zabrzmi dźwięk rundy, odpowiedzi gracza 1 zostaną ukryte. Tutaj możesz odtworzyć próbkę dźwięku powtórzenia." }),
+        h("div", { class: "c2-intro-title", text: t("control.finalP2StartName") }),
+        h("div", { class: "c2-intro-hint", text: t("control.finalP2StartHint") }),
         // Próbka dźwięku powtórzenia — POD napisem, na środku (jak reszta
         // c2-intro), NIE w dolnym pasku nawigacji obok "Rozpocznij 2 rundę"
         // (stare control.html trzymało oba przyciski razem w stepFoot —
@@ -1294,9 +1302,9 @@ export function createUI({ root, emit }) {
         // żeby "sample" był identyczny wielkościowo i kolorystycznie z
         // prawdziwym przełącznikiem powtórzenia. Czysto lokalny podgląd
         // dźwięku, bez zapisu do stanu gry (patrz app.js's "final.repeatTest").
-        h("button", { class: "c2-btn-repeat", type: "button", onclick: () => emit("final.repeatTest") }, [document.createTextNode("Dźwięk powtórzenia")]),
+        h("button", { class: "c2-btn-repeat", type: "button", onclick: () => emit("final.repeatTest") }, [document.createTextNode(t("control.finalRepeatSound"))]),
       ])],
-      nav: [h("button", { class: "c2-btn primary c2-intro-btn", onclick: () => emit("game.dispatch", { type: "START_P2_ROUND" }) }, [document.createTextNode("Rozpocznij 2 rundę")])],
+      nav: [h("button", { class: "c2-btn primary c2-intro-btn", onclick: () => emit("game.dispatch", { type: "START_P2_ROUND" }) }, [document.createTextNode(t("control.finalP2StartBtn"))])],
     });
   }
 
@@ -1325,7 +1333,7 @@ export function createUI({ root, emit }) {
     if (s.startsWith("f_p2_map_q")) return renderFinalMapping(state, 2, Number(s.slice(-1)) - 1);
     if (s === "f_end") return renderFinalEnd(state);
     clear();
-    root.appendChild(h("div", { class: "c2-card-inner" }, [h("p", { text: `Nieobsłużony krok: ${s}` })]));
+    root.appendChild(h("div", { class: "c2-card-inner" }, [h("p", { text: t("control.unhandledStepDebug", { step: s }) })]));
   }
 
   return { render };
