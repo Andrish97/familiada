@@ -821,12 +821,22 @@ export function createUI({ root, emit }) {
       const filled = round === 1
         ? f.runtime.p1.every((x) => String(x?.text || "").trim().length > 0)
         : f.runtime.p2.every((x) => (x?.repeat ? true : String(x?.text || "").trim().length > 0));
+      // Dokładnie jak stare control/js/gameFinal.js's setTimerBtnLabel: gdy
+      // odliczanie trwa, przycisk ZAWSZE pokazuje etykietę "Zatrzymaj" (nie
+      // tylko gdy da się kliknąć) — tylko klikalność zależy od allFilled.
+      // Cyfry odliczania są aria-hidden (dekoracyjne, tykają co sekundę) —
+      // stabilna, dostępna nazwa przycisku to samo "Zatrzymaj", ten sam
+      // wzorzec co c2-tile-sub przy X w Rundach (renderRounds's xLabel).
+      const content = h("div", {}, [
+        h("span", { "aria-hidden": "true" }, [document.createTextNode(`${secLeft}s`)]),
+        h("div", { class: "c2-tile-sub", text: "Zatrzymaj" }),
+      ]);
       return h("button", {
         class: `c2-tile c2-timer-row c2-tile-timer ${filled ? "startable" : ""}`.trim(),
         type: "button",
         disabled: filled ? undefined : "",
         onclick: filled ? () => emit("final.toggleTimer", { round }) : undefined,
-      }, [document.createTextNode(filled ? `${secLeft}s — kliknij, aby zatrzymać` : `${secLeft}s`)]);
+      }, [content]);
     }
     if (used) {
       return h("button", { class: "c2-tile c2-timer-row c2-tile-timer", type: "button", disabled: "" }, [document.createTextNode("Czas wykorzystany")]);
