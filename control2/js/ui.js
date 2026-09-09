@@ -995,12 +995,22 @@ export function createUI({ root, emit }) {
     // wygląd co w kroku wpisywania) OBOK siebie, nie jedno nad drugim
     // (zgłoszone). c2-mapinput: BEZ własnej ramki/tła na zewnętrznym div
     // (zgłoszone: "wygląda brzydko" — dwie zagnieżdżone ramki jedna w
-    // drugiej) — jedyna widoczna "skrzynka" to sam input.
+    // drugiej) — jedyna widoczna "skrzynka" to sam input. Runda 2 dostaje
+    // pod etykietą dodatkowo "Gracz 1: ..." (ten sam resolveP1AnswerShown
+    // co w kroku wpisywania) — brakowało tego odniesienia (zgłoszone: "czy
+    // przy drugim graczu nie pokazujemy odpowiedzi pierwszego").
     const inp = h("input", { type: "text", value: inputText, placeholder: "Odpowiedź gracza", autocomplete: "off" });
     if (locked) inp.disabled = true;
     on(inp, "input", () => emit("game.dispatch", { type: "SET_ENTRY_TEXT", round, idx, text: inp.value }));
+    const labelChildren = [h("div", { class: "c2-field-label", text: "Wpisano" })];
+    if (round === 2) {
+      labelChildren.push(h("div", { class: "c2-entrytile-p1ans" }, [
+        document.createTextNode("Gracz 1: "),
+        h("b", { text: resolveP1AnswerShown(state, idx) }),
+      ]));
+    }
     const inputTile = h("div", { class: "c2-mapinput" }, [
-      h("div", { class: "c2-field-label", text: "Wpisano" }),
+      h("div", { class: "c2-mapinput-labelcol" }, labelChildren),
       h("div", { class: "c2-entrytile-input" }, [inp]),
     ]);
     inputTile.style.gridRow = "1";
@@ -1010,17 +1020,17 @@ export function createUI({ root, emit }) {
     // dawniej) — dopisana jest tylko DRUGA LINIJKA pokazująca na bieżąco, co
     // się odsłoni po kliknięciu. Wartość w podglądzie jest aria-hidden —
     // dostępna nazwa przycisku zostaje stała, ten sam wzorzec co c2-tile-sub
-    // przy X w Rundach. Wiersz 5 (DÓŁ) — tam gdzie te przyciski zawsze były
-    // (zgłoszone), nie wyżej. c2-tile-reveal dokłada przerwę nad tym
-    // wierszem — bez niej zlewały się wizualnie z kaflami wyboru nad nimi
-    // (zgłoszone).
+    // przy X w Rundach. Wiersz 6 (DÓŁ), z CAŁYM PUSTYM wierszem 5 jako
+    // przerwą przed nim (zgłoszone: "chodzi mi o cały rząd przerwy", nie
+    // tylko margines) — siatka tego ekranu ma więc 6 wierszy, nie 5
+    // (nadpisane inline niżej, tileGridForMapping).
     const revealAnswerTile = armableTile(`map-answer:${round}:${idx}`,
       h("div", {}, [
         document.createTextNode("Pokaż odpowiedź"),
         h("div", { class: "c2-tile-sub", "aria-hidden": "true", text: row.revealedAnswer ? (row.outText || "—") : preview.text }),
       ]),
       {
-        row: 5, col: HALF(0), cls: "c2-tile-primary c2-tile-reveal",
+        row: 6, col: HALF(0), cls: "c2-tile-primary",
         disabled: locked,
         onclick: async () => {
           if (row.kind == null) await emit("game.dispatch", { type: "RESOLVE_MAPPING", round, idx, ...defaultResolve(inputText) });
@@ -1033,7 +1043,7 @@ export function createUI({ root, emit }) {
         h("div", { class: "c2-tile-sub", "aria-hidden": "true", text: row.revealedPoints ? String(row.pts) : String(preview.pts) }),
       ]),
       {
-        row: 5, col: HALF(1), cls: "c2-tile-primary c2-tile-reveal",
+        row: 6, col: HALF(1), cls: "c2-tile-primary",
         disabled: !row.revealedAnswer || row.revealedPoints,
         onclick: () => emit("game.dispatch", { type: "REVEAL_POINTS", round, idx }),
       });
@@ -1070,10 +1080,16 @@ export function createUI({ root, emit }) {
       onclick: o.onclick,
     }));
 
+    // 6 wierszy zamiast domyślnych 5 (nadpisanie inline, tylko tu — Rundy
+    // zostają przy 5): wiersz 5 celowo PUSTY, żeby dać kaflom odsłaniania w
+    // wierszu 6 CAŁY wiersz przerwy nad sobą, nie tylko margines.
+    const mappingGrid = tileGrid([inputTile, revealAnswerTile, revealPointsTile, ...optionTiles]);
+    mappingGrid.style.gridTemplateRows = "repeat(6, minmax(0,1fr))";
+
     const body = [
       h("div", { class: "c2-question", text: question?.text || `Pytanie ${idx + 1}` }),
       h("div", { class: "c2-roundlayout" }, [
-        h("div", { class: "c2-roundlayout-main" }, [tileGrid([inputTile, revealAnswerTile, revealPointsTile, ...optionTiles])]),
+        h("div", { class: "c2-roundlayout-main" }, [mappingGrid]),
         h("div", { class: "c2-roundlayout-divider" }),
         h("div", { class: "c2-roundlayout-side" }, [hintBlock(getFinalHint(state))]),
       ]),

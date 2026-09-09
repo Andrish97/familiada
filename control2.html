@@ -243,9 +243,6 @@
     .c2-tile-timer { border-color:rgba(122,178,255,.4); background:rgba(122,178,255,.12); color:#bcd9ff; font-variant-numeric:tabular-nums; font-size:1.3rem; cursor:default; }
     .c2-tile-timer.startable { cursor:pointer; font-size:1rem; }
     .c2-tile-sub { display:block; margin-top:2px; font-size:.8rem; font-weight:700; opacity:.8; }
-    /* Kafle odsłaniania mapowania (Pokaż odpowiedź/Pokaż punkty) — odstęp od
-       kafli wyboru nad nimi, żeby się wizualnie nie zlewały (zgłoszone). */
-    .c2-tile-reveal { margin-top:10px; }
     /* Uzbrojony kafel (zaznacz -> potwierdź, control2/js/ui.js's armableTile) —
        złota obwódka NAD kolorem kafla (danger/primary/zwykły), żeby "jeszcze
        tylko zaznaczone, kliknij drugi raz" wyglądało tak samo niezależnie od
@@ -294,7 +291,11 @@
        zewnętrznym div (zgłoszone: "wygląda brzydko" — dwie zagnieżdżone
        skrzynki jedna w drugiej) — jedyna widoczna "skrzynka" to sam input. */
     .c2-mapinput { display:grid; grid-template-columns:1fr 2fr; align-items:center; gap:12px; padding:2px 4px; }
-    .c2-mapinput .c2-field-label { text-align:center; font-size:.85rem; }
+    /* Kolumna etykiety — "Wpisano" + (runda 2) "Gracz 1: ..." pod spodem,
+       oba wyśrodkowane w bloku, nie osobno. */
+    .c2-mapinput-labelcol { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; text-align:center; }
+    .c2-mapinput .c2-field-label { font-size:.85rem; }
+    .c2-mapinput .c2-entrytile-p1ans { font-size:.8rem; white-space:normal; }
     .c2-mapinput .c2-entrytile-input { display:flex; align-items:center; min-width:0; }
     .c2-entrytile-input input {
       width:100%; box-sizing:border-box; padding:8px 12px;
