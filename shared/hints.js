@@ -80,15 +80,23 @@ export function getFinalHint(state) {
     const round = step === "f_p1_entry" ? 1 : 2;
     const t = f.runtime.timer;
     const phaseKey = round === 1 ? "P1" : "P2";
-    // Odliczanie w toku NIE dostaje osobnego tekstu — hint "Wpisz
-    // odpowiedzi..." ma zostać ten sam, nie chowamy go na czas odliczania
-    // (zgłoszone). `used` (ustawiane już w momencie startu, nie dopiero po
-    // wygaśnięciu) samo w sobie więc NIE wystarcza do "Czas wykorzystany" —
-    // trzeba dodatkowo sprawdzić, że zegarek faktycznie już nie chodzi.
     const running = t.running && t.phase === phaseKey;
+    // `used` (ustawiane już w momencie startu, nie dopiero po wygaśnięciu)
+    // samo w sobie więc NIE wystarcza do "Czas wykorzystany" — trzeba
+    // dodatkowo sprawdzić, że zegarek faktycznie już nie chodzi.
     const used = round === 1 ? t.usedP1 : t.usedP2;
-    if (used && !running) return "Czas wykorzystany. Kliknij „Dalej”, żeby przejść do odsłaniania.";
-    return `Wpisz odpowiedzi gracza ${round}. Możesz opcjonalnie uruchomić odliczanie (${round === 1 ? "15" : "20"}s) — jednorazowo.`;
+    // Runda 2: przypomnienie o przycisku "Powtórzenie" — dopisane do KAŻDEJ
+    // gałęzi poza "czas wykorzystany" (tam nie ma już czego pilnować),
+    // żeby operator nie wpisywał ręcznie tego, co gracz 2 tylko powtórzył.
+    const repeatNote = round === 2
+      ? " Jeśli gracz powtórzy odpowiedź gracza 1, użyj przycisku „Powtórzenie” zamiast wpisywać ją ponownie."
+      : "";
+    if (used && !running) return "Czas wykorzystany. Kliknij „Dalej”, żeby przejść do odsłaniania — możesz jeszcze dokończyć wpisywanie odpowiedzi, zanim klikniesz.";
+    // Odliczanie w toku: drugie zdanie mówi o zatrzymaniu, nie o starcie
+    // (zgłoszone) — "Możesz opcjonalnie uruchomić..." nie ma już sensu, skoro
+    // już trwa.
+    if (running) return `Wpisz odpowiedzi gracza ${round}. Jeśli wpiszesz wszystkie odpowiedzi, będziesz mógł zatrzymać odliczanie wcześniej.${repeatNote}`;
+    return `Wpisz odpowiedzi gracza ${round}. Możesz opcjonalnie uruchomić odliczanie (${round === 1 ? "15" : "20"}s) — jednorazowo.${repeatNote}`;
   }
 
   if (step === "f_p2_start") return "Odpowiedzi gracza 1 zostają zasłonięte na Display przed startem tury gracza 2.";
@@ -98,12 +106,17 @@ export function getFinalHint(state) {
     const idx = Number(step.slice(-1)) - 1;
     const entry = f.runtime[round === 1 ? "p1" : "p2"][idx] || {};
     const row = f.runtime[round === 1 ? "map1" : "map2"][idx];
-    if (round === 2 && entry.repeat) return "Oznaczone jako powtórzenie odpowiedzi gracza 1 — liczy się jak brak odpowiedzi.";
     // Rozstrzygnięcie jest ZAWSZE już jakieś, nawet zanim operator cokolwiek
     // kliknął (domyślnie: dopasowanie z listy jeśli wybrane ręcznie, inaczej
     // "Nie ma na liście" gdy coś wpisano / "Brak odpowiedzi" gdy pusto —
     // control2/js/ui.js's effectiveMappingResolution) — nie ma tu wyboru
     // "X albo Y", tylko potwierdzenie tego, co już jest zaznaczone.
+    // Powtórzenie + jeszcze nieodsłonięte: oba zdania razem (zgłoszone) —
+    // operator ma wiedzieć NARAZ że to powtórzenie ORAZ co ma zrobić dalej,
+    // nie dwa osobne, następujące po sobie stany hinta.
+    if (round === 2 && entry.repeat && !row.revealedAnswer) {
+      return "Oznaczone jako powtórzenie odpowiedzi gracza 1 — liczy się jak brak odpowiedzi. Zmień zaznaczone dopasowanie, jeśli trzeba, i potwierdź „Pokaż odpowiedź”, żeby odsłonić na Wyświetlaczu.";
+    }
     if (!row.revealedAnswer) return "Zmień zaznaczone dopasowanie, jeśli trzeba, i potwierdź „Pokaż odpowiedź”, żeby odsłonić na Wyświetlaczu.";
     if (!row.revealedPoints) return "Odpowiedź odsłonięta. Potwierdź „Pokaż punkty”, żeby dopisać je do sumy.";
     return "Punkty odsłonięte. Kliknij „Dalej”, żeby przejść do kolejnego pytania.";

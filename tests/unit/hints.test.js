@@ -110,12 +110,14 @@ test("getFinalHint: f_start i etap wpisywania (zegarek jeszcze nieużyty / w tra
   await engine.dispatch({ type: "START_FINAL" });
   assert.match(getFinalHint(store.state), /Wpisz odpowiedzi gracza 1.*15s/);
 
-  // Hint zostaje ten sam podczas odliczania — nie chowamy go (zgłoszone).
+  // Hint zostaje widoczny podczas odliczania, ale drugie zdanie mówi o
+  // zatrzymaniu zamiast o starcie (zgłoszone) — "15s" znika, bo odliczanie
+  // już trwa, nie trzeba już mówić, ile trwa start.
   await engine.dispatch({ type: "START_TIMER", phase: "P1" });
-  assert.match(getFinalHint(store.state), /Wpisz odpowiedzi gracza 1.*15s/);
+  assert.match(getFinalHint(store.state), /Wpisz odpowiedzi gracza 1.*zatrzymać odliczanie/);
 
   await engine.dispatch({ type: "EXPIRE_TIMER" });
-  assert.match(getFinalHint(store.state), /Czas wykorzystany/);
+  assert.match(getFinalHint(store.state), /Czas wykorzystany.*dokończyć wpisywanie/);
 });
 
 test("getFinalHint: mapowanie pytania — puste, wpisane, odsłonięte, z punktami; powtórzenie u gracza 2", async () => {
@@ -145,7 +147,7 @@ test("getFinalHint: mapowanie pytania — puste, wpisane, odsłonięte, z punkta
   assert.match(getFinalHint(store.state), /Punkty odsłonięte/);
 });
 
-test("getFinalHint: powtórzenie u gracza 2 nadpisuje zwykłą podpowiedź mapowania", async () => {
+test("getFinalHint: powtórzenie u gracza 2 pokazuje się RAZEM ze zwykłą podpowiedzią mapowania", async () => {
   let t = 1_000_000;
   const store = createFakeStore("g1", { settings: { ...DEFAULT_SETTINGS, hasFinal: true, finalTarget: 999 }, final: { picked: ["q1", "q2", "q3", "q4", "q5"], confirmed: true, winnerTeam: null, questions: [], runtime: {} }, rounds: { totals: { A: 300, B: 0 } }, step: "f_start", topCard: "final" });
   const engine = createEngine({
@@ -163,5 +165,13 @@ test("getFinalHint: powtórzenie u gracza 2 nadpisuje zwykłą podpowiedź mapow
   assert.match(getFinalHint(store.state), /potwierdź „Pokaż odpowiedź”/);
 
   await engine.dispatch({ type: "SET_REPEAT", round: 2, idx: 0, repeat: true });
-  assert.match(getFinalHint(store.state), /Oznaczone jako powtórzenie/);
+  // Oba zdania naraz (zgłoszone), nie tylko "Oznaczone jako powtórzenie"
+  // zamiast instrukcji odsłonięcia.
+  assert.match(getFinalHint(store.state), /Oznaczone jako powtórzenie.*potwierdź „Pokaż odpowiedź”/);
+
+  await engine.dispatch({ type: "RESOLVE_MAPPING", round: 2, idx: 0, mode: "MANUAL", kind: "SKIP", matchId: null, outText: "", pts: 0 });
+  await engine.dispatch({ type: "REVEAL_ANSWER_ONLY", round: 2, idx: 0 });
+  // Po odsłonięciu wraca zwykły hint bez wzmianki o powtórzeniu — repeat jest
+  // już historią, nie ma czego dalej pilnować.
+  assert.match(getFinalHint(store.state), /„Pokaż punkty”/);
 });
