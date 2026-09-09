@@ -51,6 +51,24 @@ export function createUI({ root, emit }) {
   // nie ma drugiego kliknięcia.
   let armedKey = null;
 
+  // Blokada odsłaniania na czas animacji Wyświetlacza (zgłoszone: "nie idzie
+  // odsłonić następnej odpowiedzi jeśli pierwsza się nie pojawiła jeszcze na
+  // ekranie") — dokładnie ten sam czas co animacja pojedynczego odsłonięcia
+  // po stronie display2/js/render.js ("matrix right", 500ms), z niewielkim
+  // buforem. Ustawiana w momencie WYSŁANIA akcji odsłaniającej (nie w
+  // momencie kliknięcia — armowanie samo w sobie nic nie odsłania), blokuje
+  // WSZYSTKIE kafle odsłaniania (nie tylko ten właśnie kliknięty), dopóki
+  // czas nie minie — także w Finale (Pokaż odpowiedź/Pokaż punkty).
+  const REVEAL_ANIM_MS = 650;
+  let revealLockedUntil = 0;
+  function armRevealCooldown() {
+    revealLockedUntil = Date.now() + REVEAL_ANIM_MS;
+    setTimeout(() => emit("ui.rerender"), REVEAL_ANIM_MS + 20);
+  }
+  function revealLocked() {
+    return Date.now() < revealLockedUntil;
+  }
+
   // Statusy urządzeń w TOPBARZE (poza #app, statyczne w control2.html) —
   // dokładnie jak dzisiejsze control/js/ui.js's setDeviceBadges: aktualizacja
   // imperatywna przy każdym renderze, nie przebudowa DOM.
@@ -618,8 +636,12 @@ export function createUI({ root, emit }) {
         row: Math.floor(i / 2) + 1,
         col: HALF(i % 2),
         cls: revealed ? "c2-tile-revealed" : "",
-        disabled: revealed,
-        onclick: () => emit("game.dispatch", { type: state.phase === "REVEAL" ? "REVEAL_LEFT" : "REVEAL_ANSWER", ord: a.ord }),
+        // revealLocked(): dopóki animacja POPRZEDNIEGO odsłonięcia jeszcze
+        // trwa na Wyświetlaczu, żaden kolejny kafel nie jest klikalny
+        // (zgłoszone: "nie idzie odsłonić następnej odpowiedzi jeśli
+        // pierwsza się nie pojawiła jeszcze na ekranie").
+        disabled: revealed || revealLocked(),
+        onclick: () => { armRevealCooldown(); emit("game.dispatch", { type: state.phase === "REVEAL" ? "REVEAL_LEFT" : "REVEAL_ANSWER", ord: a.ord }); },
       }));
     });
 
@@ -1063,9 +1085,13 @@ export function createUI({ root, emit }) {
       ]),
       {
         row: 6, col: HALF(0), cls: "c2-tile-primary",
-        disabled: locked,
+        // Ta sama blokada animacji co w Rundach — "Pokaż punkty" i tak nie
+        // odblokuje się, dopóki animacja "Pokaż odpowiedź" nie dobiegnie
+        // końca na Wyświetlaczu.
+        disabled: locked || revealLocked(),
         onclick: async () => {
           if (row.kind == null) await emit("game.dispatch", { type: "RESOLVE_MAPPING", round, idx, ...defaultResolve(inputText) });
+          armRevealCooldown();
           await emit("game.dispatch", { type: "REVEAL_ANSWER_ONLY", round, idx });
         },
       });
@@ -1076,8 +1102,8 @@ export function createUI({ root, emit }) {
       ]),
       {
         row: 6, col: HALF(1), cls: "c2-tile-primary",
-        disabled: !row.revealedAnswer || row.revealedPoints,
-        onclick: () => emit("game.dispatch", { type: "REVEAL_POINTS", round, idx }),
+        disabled: !row.revealedAnswer || row.revealedPoints || revealLocked(),
+        onclick: () => { armRevealCooldown(); emit("game.dispatch", { type: "REVEAL_POINTS", round, idx }); },
       });
 
     const matchOptions = (question?.answers || []).map((a) => ({
