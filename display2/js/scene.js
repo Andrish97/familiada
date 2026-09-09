@@ -252,6 +252,12 @@ export async function createScene() {
   })();
 
   const roundsState = { text: Array(6).fill(""), pts: Array(6).fill(""), suma: "", sumaRow: 9 };
+  // Śledzi, która plansza jest aktualnie namalowana — wyłącznie po to, żeby
+  // refreshSumaLabel() (i18n:lang) wiedziało, KTÓRĄ z dwóch osobnych etykiet
+  // "SUMA" bezpiecznie przemalować, nie ryzykując narysowania fragmentu
+  // planszy finału na planszy rund (i odwrotnie) w nieużywanym, ale wciąż
+  // widocznym rogu siatki.
+  let activeBoard = null;
   const xState = { "1A":false,"2A":false,"3A":false,"4A":false,"1B":false,"2B":false,"3B":false,"4B":false };
 
   const hasVisibleText = (s) => (s ?? "").toString().trim().length > 0;
@@ -298,9 +304,17 @@ export async function createScene() {
     else { writeField(GLYPHS, big, FINAL.sumaBLabel, SUMA_LABEL, LIT.main); writeField(GLYPHS, big, FINAL.sumaBVal, alignRight(finalState.sumB,3), LIT.main); }
   };
 
+  // Zgłoszone: etykieta "SUMA" nie tłumaczyła się na żywo w Finale (tylko
+  // w Rundach) — refreshSumaLabel() sprawdzał wyłącznie roundsState.sumaRow,
+  // nigdy nie wołał drawFinalSum() dla planszy finału. activeBoard (nie np.
+  // obecność finalState.sumA/sumB — te bywają puste, zanim gracz zdobędzie
+  // pierwsze punkty, mimo że plansza finału już jest widoczna) mówi wprost,
+  // która plansza jest teraz namalowana, więc nie ma ryzyka przemalowania
+  // złej etykiety na nieużywany fragment siatki.
   const refreshSumaLabel = () => {
     SUMA_LABEL = t("display.sumLabel");
-    if (roundsState.sumaRow) { const F = roundsSumaFields(); writeField(GLYPHS, big, F.label, SUMA_LABEL, LIT.main); }
+    if (activeBoard === "rounds" && roundsState.sumaRow) { const F = roundsSumaFields(); writeField(GLYPHS, big, F.label, SUMA_LABEL, LIT.main); }
+    if (activeBoard === "final") drawFinalSum();
   };
   window.addEventListener("i18n:lang", refreshSumaLabel);
 
@@ -483,7 +497,7 @@ export async function createScene() {
         if (type==="edge") return anim.outEdge(big, A, dir, speed, opts||{});
         if (type==="matrix") return anim.outMatrix(big, A, axis, speed, opts||{});
       },
-      clear: () => clearBig(big),
+      clear: () => { activeBoard = null; clearBig(big); },
       put: (col, row, ch, color=LIT.main) => putCharAt(GLYPHS, big, col, row, ch, color),
       clearArea: (c1,r1,c2,r2) => clearArea(big, c1,r1,c2,r2),
     },
@@ -542,6 +556,7 @@ export async function createScene() {
         xState[key]=true; if (isBig) drawRoundsBigX(GLYPHS, big, side, LIT.main); else drawBigX_3x3(GLYPHS, big, cell.c1, cell.r1, LIT.main);
       },
       setAll: async ({ rows=[], suma=undefined, animOut=null, animIn=null } = {}) => {
+        activeBoard = "rounds";
         const A_ALL = api.big.areaAll();
         const hasAnyRowData = rows.some(r => isNonEmpty(r?.text)||isNonEmpty(r?.pts));
         if (animOut && !animIn && !hasAnyRowData && suma===undefined) { await api.big.animOut({...animOut, area:A_ALL}); clearBig(big); roundsState.text=Array(6).fill(""); roundsState.pts=Array(6).fill(""); roundsState.suma=""; roundsState.sumaRow=9; return; }
@@ -562,6 +577,7 @@ export async function createScene() {
       setSuma: async (val, { animOut=null, animIn=null } = {}) => { if (finalState.sumMode==="A") finalState.sumA=(val??"").toString(); else finalState.sumB=(val??"").toString(); const isA=(finalState.sumMode==="A"); clearFinalSumRow(); writeField(GLYPHS, big, isA?FINAL.sumaALabel:FINAL.sumaBLabel, SUMA_LABEL, LIT.main); await updateField(GLYPHS, big, isA?FINAL.sumaAVal:FINAL.sumaBVal, alignRight((val??"").toString(),3), {out:animOut, in:animIn, color:LIT.main}); },
       setSumaFor: async (side, val, anims={}) => { const s=(side??"").toString().toUpperCase(); if (s!=="A"&&s!=="B") throw new Error(`setSumaFor: nieznana strona: ${side}`); finalState.sumMode=s; return api.final.setSuma(val, anims); },
       setAll: async ({ rows=[], suma=undefined, sumaSide=null, animOut=null, animIn=null } = {}) => {
+        activeBoard = "final";
         const A_ALL = api.big.areaAll();
         const hasAnyRowData = rows.some(r => isNonEmpty(r?.left)||isNonEmpty(r?.a)||isNonEmpty(r?.b)||isNonEmpty(r?.right));
         if (animOut&&!animIn&&!hasAnyRowData&&suma===undefined) { await api.big.animOut({...animOut, area:A_ALL}); clearBig(big); finalState.sumA=""; finalState.sumB=""; return; }
