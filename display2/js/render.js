@@ -182,6 +182,15 @@ export function createRenderer({ scene, qr }) {
       else await api.win.set(screen.amount, { animIn: LOGO_IN_ANIM });
       return;
     }
+    // Sama plansza finału jest w tym momencie WCIĄŻ w pełni namalowana na
+    // "big" (nic wcześniej jej nie chowa — inaczej niż r_gameEnd, gdzie
+    // STEP_CHANGE do "r_gameEnd" już wcześniej odpalił animOut na etapie
+    // "Zakończ rundę") — bez tego animOut logo/WIN rysowałoby się WPROST na
+    // planszy finału, ten sam rodzaj artefaktu co naprawiony wcześniej przy
+    // pierwszej rundzie. Stary plan (sekcja 2a, F14): "FBATCH ANIMOUT edge
+    // down 1000" zawsze PRZED ekranem końcowym finału — osobna komenda od
+    // R10's RBATCH ANIMOUT, ale ten sam mechanizm (ROUND_OUT_ANIM).
+    await api.big.animOut(ROUND_OUT_ANIM);
     const winnerTeam = row.detail.final.winnerTeam;
     const totals = row.detail.rounds.totals || { A: 0, B: 0 };
     const screen = resolveFinalEndScreen(row.detail.settings, {
