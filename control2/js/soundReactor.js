@@ -27,8 +27,8 @@
 //   - F14 (finishFinal): synced "round_transition"+"reveal" jak przy
 //     starcie rundy, a PO całej tej parze dodatkowo "show_intro".
 
-import { deriveEvents } from "../../shared/deriveEvents.js?v=v2026-09-09T16253";
-import { playSfx, getSfxDuration } from "../../js/core/sfx.js?v=v2026-09-09T16253";
+import { deriveEvents } from "../../shared/deriveEvents.js?v=v2026-09-09T16593";
+import { playSfx, getSfxDuration } from "../../js/core/sfx.js?v=v2026-09-09T16593";
 
 const MUTE_KEY = "familiada_control2_muted";
 
