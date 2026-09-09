@@ -924,11 +924,21 @@ export function createUI({ root, emit }) {
     }
     rows.push(finalTimerRow(state, round));
 
-    const body = [h("div", { class: "c2-roundlayout" }, [
-      h("div", { class: "c2-roundlayout-main" }, [h("div", { class: "c2-entryrows" }, rows)]),
-      h("div", { class: "c2-roundlayout-divider" }),
-      h("div", { class: "c2-roundlayout-side" }, [hintBlock(getFinalHint(state), getFinalEntryShortcuts(round))]),
-    ])];
+    // Nagłówek nad siatką — Finał-mapowanie ma nad swoją siatką c2-question
+    // (treść pytania), wpisywanie go dotąd nie miało wcale, przez co jego
+    // siatka dostawała więcej wysokości niż mapowania i wiersze między tymi
+    // dwoma ekranami nie kończyły się na tej samej wysokości (zgłoszone).
+    // Ten ekran nie ma JEDNEGO pytania (5 naraz w wierszach), więc zamiast
+    // treści pytania pokazuje, czyj to krok — sama treść nieważna, chodzi o
+    // zarezerwowanie tej samej wysokości nagłówka co u mapowania.
+    const body = [
+      h("div", { class: "c2-question", text: `Odpowiedzi gracza ${round}` }),
+      h("div", { class: "c2-roundlayout" }, [
+        h("div", { class: "c2-roundlayout-main" }, [h("div", { class: "c2-entryrows" }, rows)]),
+        h("div", { class: "c2-roundlayout-divider" }),
+        h("div", { class: "c2-roundlayout-side" }, [hintBlock(getFinalHint(state), getFinalEntryShortcuts(round))]),
+      ]),
+    ];
 
     const nav = [h("button", { class: "c2-btn primary", onclick: () => emit("game.dispatch", { type: "START_MAPPING", round }) }, [document.createTextNode("Dalej")])];
     gameplayShell({ stepLabel: `Finał — gracz ${round}, wpisywanie`, body, nav });
@@ -1077,13 +1087,13 @@ export function createUI({ root, emit }) {
       onclick: () => emit("game.dispatch", { type: "RESOLVE_MAPPING", round, idx, mode: "MANUAL", kind: "MATCH", matchId: a.id, outText: a.text, pts: a.fixed_points }),
     }));
     const missOption = {
-      // Pod nazwą przycisku, w nawiasie, dokładnie to, co gracz wpisał —
-      // zgłoszone: operator ma widzieć NA KAFLU, co konkretnie oznacza jako
-      // "nie ma na liście", bez zerkania w pole Wpisano osobno. Stała nazwa
-      // + aria-hidden druga linijka, ten sam wzorzec co kafle odsłaniania.
+      // Pod nazwą przycisku, w nawiasie, KOMENTARZ opisujący co tam jest,
+      // nie sama goła wartość — zgłoszone: "(wpisana odpowiedź)", nie
+      // "odpowiedź gracza". Stała nazwa + aria-hidden druga linijka, ten
+      // sam wzorzec co kafle odsłaniania.
       content: hasTyped ? h("div", {}, [
         document.createTextNode("Nie ma na liście (0 pkt)"),
-        h("div", { class: "c2-tile-sub", "aria-hidden": "true", text: `(${inputText})` }),
+        h("div", { class: "c2-tile-sub", "aria-hidden": "true", text: `(wpisana odpowiedź: ${inputText})` }),
       ]) : "Nie ma na liście (0 pkt)",
       active: !p2IsRepeat && effective.kind === "MISS",
       disabled: locked || !hasTyped,
