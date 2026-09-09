@@ -1077,7 +1077,14 @@ export function createUI({ root, emit }) {
       onclick: () => emit("game.dispatch", { type: "RESOLVE_MAPPING", round, idx, mode: "MANUAL", kind: "MATCH", matchId: a.id, outText: a.text, pts: a.fixed_points }),
     }));
     const missOption = {
-      text: "Nie ma na liście (0 pkt)",
+      // Pod nazwą przycisku, w nawiasie, dokładnie to, co gracz wpisał —
+      // zgłoszone: operator ma widzieć NA KAFLU, co konkretnie oznacza jako
+      // "nie ma na liście", bez zerkania w pole Wpisano osobno. Stała nazwa
+      // + aria-hidden druga linijka, ten sam wzorzec co kafle odsłaniania.
+      content: hasTyped ? h("div", {}, [
+        document.createTextNode("Nie ma na liście (0 pkt)"),
+        h("div", { class: "c2-tile-sub", "aria-hidden": "true", text: `(${inputText})` }),
+      ]) : "Nie ma na liście (0 pkt)",
       active: !p2IsRepeat && effective.kind === "MISS",
       disabled: locked || !hasTyped,
       danger: true,
@@ -1114,7 +1121,7 @@ export function createUI({ root, emit }) {
     // gameFinal.js's `tiles = [...matchTiles, ...actionTiles].slice(0,9)`
     // dopełnione pustymi `mapSlot`-ami do 9, żeby rytm siatki był stały
     // niezależnie od liczby prawdziwych odpowiedzi na liście.
-    const optionTiles = options.slice(0, 9).map((o, i) => tile(o.text, {
+    const optionTiles = options.slice(0, 9).map((o, i) => tile(o.content || o.text, {
       row: Math.floor(i / 3) + 2,
       col: THIRD(i % 3),
       cls: [o.active && "c2-tile-primary", o.danger && "c2-tile-danger"].filter(Boolean).join(" "),
