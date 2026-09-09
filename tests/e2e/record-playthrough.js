@@ -651,6 +651,35 @@ const SCENARIOS = [
   },
 ];
 
+// Zrzut diagnostyczny na wypadek błędu scenariusza — video samo w sobie nie
+// jest dostępne z poziomu tej sesji do wglądu (artefakt CI, nie plik lokalny
+// dostępny stąd bez ręcznego pobrania), więc przy TimeoutError na
+// locator.click() (np. "waiting for locator(...).nth(N)") potrzebny jest
+// zrzut ekranu + treść tego, co faktycznie jest w DOM w tym momencie:
+// dokładny tekst/stan każdego kafla w .c2-tilegrid, aktualny krok
+// (.c2-stepper), i czy przypadkiem nie wisi natywny alert() (control2/js/
+// app.js's dispatch handler pokazuje alert() na każdym nieobsłużonym
+// błędzie zapisu — to jest jedyne miejsce, gdzie mogłoby zablokować dalsze
+// kliknięcia bez żadnego śladu w konsoli).
+async function dumpFailureDiagnostics(controlPage, scenarioFile) {
+  const base = path.join(OUT_DIR, `${scenarioFile.replace(/\.mp4$/, "")}-FAILURE`);
+  await controlPage.screenshot({ path: `${base}.png`, fullPage: true }).catch((e) => {
+    console.error("[record] screenshot się nie powiódł:", e.message);
+  });
+  const dump = await controlPage.evaluate(() => {
+    const stepper = document.querySelector(".c2-stepper")?.textContent || null;
+    const tiles = [...document.querySelectorAll(".c2-tilegrid button")].map((el) => ({
+      text: el.textContent.trim(),
+      disabled: el.disabled,
+      visible: el.offsetParent !== null,
+      classes: el.className,
+    }));
+    return { stepper, tileCount: tiles.length, tiles };
+  }).catch((e) => ({ evalError: e.message }));
+  fs.writeFileSync(`${base}.json`, JSON.stringify(dump, null, 2));
+  console.log(`[record] diagnostyka ${scenarioFile}:`, JSON.stringify(dump));
+}
+
 async function main() {
   for (const env of ["E2E_BYPASS_SECRET", "TEST_USERNAME", "TEST_PASSWORD"]) {
     if (!process.env[env]) throw new Error(`Brak ${env} w zmiennych środowiskowych`);
@@ -678,6 +707,9 @@ async function main() {
         await scenario.run(pages);
       } catch (err) {
         console.error(`[record] scenariusz ${scenario.file} rzucił błąd:`, err);
+        await dumpFailureDiagnostics(pages.control, scenario.file).catch((diagErr) => {
+          console.error("[record] zrzut diagnostyczny się nie powiódł:", diagErr);
+        });
         throw err;
       } finally {
         await stopRecording(rec);
