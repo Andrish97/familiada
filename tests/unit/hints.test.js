@@ -132,14 +132,14 @@ test("getFinalHint: mapowanie pytania — puste, wpisane, odsłonięte, z punkta
 
   // Rozstrzygnięcie jest zawsze już jakieś (domyślne MISS/SKIP) — hint nie
   // różnicuje już puste/wpisane, tylko mówi "potwierdź, żeby odsłonić".
-  assert.match(getFinalHint(store.state), /potwierdź kafel „Pokazana”/);
+  assert.match(getFinalHint(store.state), /potwierdź „Pokaż odpowiedź”/);
 
   await engine.dispatch({ type: "SET_ENTRY_TEXT", round: 1, idx: 0, text: "Mleko" });
-  assert.match(getFinalHint(store.state), /potwierdź kafel „Pokazana”/);
+  assert.match(getFinalHint(store.state), /potwierdź „Pokaż odpowiedź”/);
 
   await engine.dispatch({ type: "RESOLVE_MAPPING", round: 1, idx: 0, mode: "MANUAL", kind: "MATCH", matchId: "a1", outText: "Mleko", pts: 10 });
   await engine.dispatch({ type: "REVEAL_ANSWER_ONLY", round: 1, idx: 0 });
-  assert.match(getFinalHint(store.state), /kafel „Punkty”/);
+  assert.match(getFinalHint(store.state), /„Pokaż punkty”/);
 
   await engine.dispatch({ type: "REVEAL_POINTS", round: 1, idx: 0 });
   assert.match(getFinalHint(store.state), /Punkty odsłonięte/);
@@ -160,7 +160,7 @@ test("getFinalHint: powtórzenie u gracza 2 nadpisuje zwykłą podpowiedź mapow
   await engine.dispatch({ type: "START_P2_ROUND" });
   await engine.dispatch({ type: "START_MAPPING", round: 2 });
 
-  assert.match(getFinalHint(store.state), /potwierdź kafel „Pokazana”/);
+  assert.match(getFinalHint(store.state), /potwierdź „Pokaż odpowiedź”/);
 
   await engine.dispatch({ type: "SET_REPEAT", round: 2, idx: 0, repeat: true });
   assert.match(getFinalHint(store.state), /Oznaczone jako powtórzenie/);

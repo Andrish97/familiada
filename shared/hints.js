@@ -104,8 +104,8 @@ export function getFinalHint(state) {
     // "Nie ma na liście" gdy coś wpisano / "Brak odpowiedzi" gdy pusto —
     // control2/js/ui.js's effectiveMappingResolution) — nie ma tu wyboru
     // "X albo Y", tylko potwierdzenie tego, co już jest zaznaczone.
-    if (!row.revealedAnswer) return "Zmień zaznaczone dopasowanie, jeśli trzeba, i potwierdź kafel „Pokazana”, żeby odsłonić na Wyświetlaczu.";
-    if (!row.revealedPoints) return "Odpowiedź odsłonięta. Potwierdź kafel „Punkty”, żeby dopisać je do sumy.";
+    if (!row.revealedAnswer) return "Zmień zaznaczone dopasowanie, jeśli trzeba, i potwierdź „Pokaż odpowiedź”, żeby odsłonić na Wyświetlaczu.";
+    if (!row.revealedPoints) return "Odpowiedź odsłonięta. Potwierdź „Pokaż punkty”, żeby dopisać je do sumy.";
     return "Punkty odsłonięte. Kliknij „Dalej”, żeby przejść do kolejnego pytania.";
   }
 

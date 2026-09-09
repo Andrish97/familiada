@@ -466,11 +466,12 @@ test("control2: próg w rundzie -> finał, wczesne zakończenie po 4/5 pytaniach
     for (let i = 0; i < 4; i++) {
       await expect(page.locator(".c2-stepper")).toContainText(`Finał — mapowanie ${i + 1}/5`, { timeout: 10000 });
       await page.getByRole("button", { name: "Odp. finałowa (50)" }).click();
-      // "Pokazana"/"Punkty" — kafle odsłaniania (zaznacz -> potwierdź, jak
-      // odpowiedzi w Rundach), stały aria-label, treść to żywy podgląd.
-      await armAndConfirm(page.getByRole("button", { name: "Pokazana" }));
-      await armAndConfirm(page.getByRole("button", { name: "Punkty" }));
-      await expect(page.getByRole("button", { name: "Punkty" })).toHaveText("50", { timeout: 10000 });
+      // "Pokaż odpowiedź"/"Pokaż punkty" — kafle odsłaniania (zaznacz ->
+      // potwierdź, jak odpowiedzi w Rundach), nazwa stała, druga linijka to
+      // żywy podgląd (aria-hidden, więc dostępna nazwa nie zawiera wartości).
+      await armAndConfirm(page.getByRole("button", { name: "Pokaż odpowiedź" }));
+      await armAndConfirm(page.getByRole("button", { name: "Pokaż punkty" }));
+      await expect(page.getByRole("button", { name: "Pokaż punkty" })).toContainText("50", { timeout: 10000 });
       if (i < 3) await page.getByRole("button", { name: "Dalej" }).click();
     }
 
@@ -705,8 +706,8 @@ test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśni�
     for (let i = 0; i < 5; i++) {
       await expect(page.locator(".c2-stepper")).toContainText(`Finał — mapowanie ${i + 1}/5`, { timeout: 10000 });
       await page.getByRole("button", { name: "Odp. finałowa (15)" }).click();
-      await armAndConfirm(page.getByRole("button", { name: "Pokazana" }));
-      await armAndConfirm(page.getByRole("button", { name: "Punkty" }));
+      await armAndConfirm(page.getByRole("button", { name: "Pokaż odpowiedź" }));
+      await armAndConfirm(page.getByRole("button", { name: "Pokaż punkty" }));
       await page.getByRole("button", { name: "Dalej" }).click();
     }
     // Suma 75 < finalTarget (200) — BEZ wczesnego wyjścia, prosto do F6.
@@ -748,8 +749,8 @@ test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśni�
     for (let i = 0; i < 5; i++) {
       await expect(page.locator(".c2-stepper")).toContainText(`Finał — mapowanie ${i + 1}/5`, { timeout: 10000 });
       if (i > 0) await page.getByRole("button", { name: "Odp. finałowa (15)" }).click();
-      await armAndConfirm(page.getByRole("button", { name: "Pokazana" }));
-      await armAndConfirm(page.getByRole("button", { name: "Punkty" }));
+      await armAndConfirm(page.getByRole("button", { name: "Pokaż odpowiedź" }));
+      await armAndConfirm(page.getByRole("button", { name: "Pokaż punkty" }));
       await page.getByRole("button", { name: "Dalej" }).click();
     }
     // 75 (gracz 1) + 0 (powtórzenie) + 4x15 (gracz 2) = 135 < 200 — pełne 10/10, bez wczesnego wyjścia.

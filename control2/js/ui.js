@@ -991,18 +991,29 @@ export function createUI({ root, emit }) {
     const effective = effectiveMappingResolution(row, hasTyped);
     const preview = resolveMappingPreview(question, inputText, effective);
 
+    // Etykieta "Wpisano" nad polem — bez tego samo obramowane pole nie miało
+    // żadnego określenia, co to jest (zgłoszone).
     const inp = h("input", { type: "text", value: inputText, placeholder: "Odpowiedź gracza", autocomplete: "off" });
     if (locked) inp.disabled = true;
     on(inp, "input", () => emit("game.dispatch", { type: "SET_ENTRY_TEXT", round, idx, text: inp.value }));
-    const inputTile = h("div", { class: "c2-entrytile c2-entrytile-input" }, [inp]);
+    const inputTile = h("div", { class: "c2-entrytile c2-entrytile-input" }, [
+      h("div", { class: "c2-field-label", text: "Wpisano" }),
+      inp,
+    ]);
     inputTile.style.gridRow = "1";
     inputTile.style.gridColumn = "1 / 7";
 
-    // aria-label stały ("Pokazana"/"Punkty") niezależnie od treści widocznej
-    // (podgląd się zmienia) — ten sam wzorzec co c2-tile-sub przy X w Rundach:
-    // dostępna nazwa nie ma migać przy każdej zmianie podglądu/zaznaczenia.
+    // Nazwa przycisku ZOSTAJE ("Pokaż odpowiedź"/"Pokaż punkty", ta sama co
+    // dawniej) — dopisana jest tylko DRUGA LINIJKA pokazująca na bieżąco, co
+    // się odsłoni po kliknięciu (poprawka: poprzednia wersja błędnie
+    // PODMIENIAŁA nazwę na wartość zamiast ją dopisać). Wartość w podglądzie
+    // jest aria-hidden — dostępna nazwa przycisku zostaje stała, ten sam
+    // wzorzec co c2-tile-sub przy X w Rundach.
     const revealAnswerTile = armableTile(`map-answer:${round}:${idx}`,
-      row.revealedAnswer ? (row.outText || "—") : preview.text,
+      h("div", {}, [
+        document.createTextNode("Pokaż odpowiedź"),
+        h("div", { class: "c2-tile-sub", "aria-hidden": "true", text: row.revealedAnswer ? (row.outText || "—") : preview.text }),
+      ]),
       {
         row: 2, col: HALF(0), cls: "c2-tile-primary",
         disabled: locked,
@@ -1011,15 +1022,16 @@ export function createUI({ root, emit }) {
           await emit("game.dispatch", { type: "REVEAL_ANSWER_ONLY", round, idx });
         },
       });
-    revealAnswerTile.setAttribute("aria-label", "Pokazana");
     const revealPointsTile = armableTile(`map-points:${round}:${idx}`,
-      row.revealedPoints ? String(row.pts) : String(preview.pts),
+      h("div", {}, [
+        document.createTextNode("Pokaż punkty"),
+        h("div", { class: "c2-tile-sub", "aria-hidden": "true", text: row.revealedPoints ? String(row.pts) : String(preview.pts) }),
+      ]),
       {
         row: 2, col: HALF(1), cls: "c2-tile-primary",
         disabled: !row.revealedAnswer || row.revealedPoints,
         onclick: () => emit("game.dispatch", { type: "REVEAL_POINTS", round, idx }),
       });
-    revealPointsTile.setAttribute("aria-label", "Punkty");
 
     const matchOptions = (question?.answers || []).map((a) => ({
       text: `${a.text} (${a.fixed_points})`,
@@ -1042,10 +1054,13 @@ export function createUI({ root, emit }) {
     };
     const options = [...matchOptions, missOption, skipOption];
 
+    // MISS zaznaczony trzyma czerwoną ramkę/tło PLUS złoty tekst (jak stare
+    // control/js/gameFinal.js's ".btn.sm.danger.gold" razem) — nie staje się
+    // czystym złotem jak MATCH/SKIP, żeby nie tracić czerwonej tożsamości.
     const optionTiles = options.slice(0, 6).map((o, i) => tile(o.text, {
       row: Math.floor(i / 2) + 3,
       col: HALF(i % 2),
-      cls: o.active ? "c2-tile-primary" : (o.danger ? "c2-tile-danger" : ""),
+      cls: [o.active && "c2-tile-primary", o.danger && "c2-tile-danger"].filter(Boolean).join(" "),
       disabled: o.disabled,
       onclick: o.onclick,
     }));
