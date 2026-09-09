@@ -28,6 +28,7 @@ import {
   FINAL_BOARD_ANIM,
   FINAL_OUT_ANIM,
   LOGO_IN_ANIM,
+  LOGO_OUT_ANIM,
 } from "../../shared/displayAnim.js?v=v2026-09-09T11320";
 
 function pad3(n) { return String(Math.max(0, Number(n) || 0)).padStart(3, " "); }
@@ -80,7 +81,7 @@ export function createRenderer({ scene, qr }) {
     api.indicator.set("OFF");
   }
 
-  function applyDisplayMode(row) {
+  async function applyDisplayMode(row) {
     const mode = row.detail?.display?.mode || "BLACK";
     if (mode === "QR") {
       qr.show(row.detail.display.qr);
@@ -94,7 +95,7 @@ export function createRenderer({ scene, qr }) {
       return;
     }
     // mode === "GAME" — namaluj planszę odpowiednią dla bieżącego kroku.
-    paintForStep(row);
+    await paintForStep(row);
   }
 
   // control/js/display.js's PLACE.roundsText/roundsPts — sloty nieodkryte
@@ -103,7 +104,7 @@ export function createRenderer({ scene, qr }) {
   const ROUNDS_TEXT_PLACEHOLDER = "…".repeat(17);
   const ROUNDS_PTS_PLACEHOLDER = "——";
 
-  function paintRoundsBoard(row, { animIn, animOut } = {}) {
+  async function paintRoundsBoard(row, { animIn, animOut } = {}) {
     const r = row.detail.rounds;
     const answerCount = Math.max(1, Math.min(6, r.answers?.length || 6));
     const rows = Array.from({ length: 6 }, (_, i) => {
@@ -114,7 +115,11 @@ export function createRenderer({ scene, qr }) {
       if (ord <= answerCount) return { text: ROUNDS_TEXT_PLACEHOLDER, pts: ROUNDS_PTS_PLACEHOLDER };
       return { text: "", pts: "" };
     });
-    api.rounds.setAll({ rows, suma: String(r.bankPts ?? 0), animIn, animOut });
+    // await: animOut MUSI dobiec końca, zanim cokolwiek innego zacznie
+    // rysować na tym samym płótnie ("big") — inaczej dwie animacje na raz
+    // (np. logo wchodzące i stara plansza rund jeszcze schodząca) nakładają
+    // się wizualnie (zgłoszone: "wszystko się nakłada jedno na drugie").
+    await api.rounds.setAll({ rows, suma: String(r.bankPts ?? 0), animIn, animOut });
     for (const key of ["1A", "2A", "3A", "4A", "1B", "2B", "3B", "4B"]) {
       const [n, side] = [key[0], key[1]];
       const count = side === "A" ? r.xA : r.xB;
@@ -134,7 +139,7 @@ export function createRenderer({ scene, qr }) {
   const FINAL_TEXT_PLACEHOLDER = "—".repeat(11);
   const FINAL_PTS_PLACEHOLDER = "▒▒";
 
-  function paintFinalBoard(row, { animIn } = {}) {
+  async function paintFinalBoard(row, { animIn } = {}) {
     const f = row.detail.final;
     const rows = Array.from({ length: 5 }, (_, i) => {
       const m1 = f.runtime.map1[i], m2 = f.runtime.map2[i];
@@ -145,7 +150,7 @@ export function createRenderer({ scene, qr }) {
         right: m2?.revealedAnswer ? m2.outText : FINAL_TEXT_PLACEHOLDER,
       };
     });
-    api.final.setAll({ rows, animIn });
+    await api.final.setAll({ rows, animIn });
     applyIndicator(row);
     startTimerTick(row);
     if (!f.runtime.timer?.running) paintTotals(row);
@@ -160,21 +165,21 @@ export function createRenderer({ scene, qr }) {
     api.small.long2(teams.teamB || "");
   }
 
-  function paintForStep(row) {
-    if (row.top_card === "rounds") { paintTeamNames(row); paintRoundsBoard(row); return; }
-    if (row.top_card === "final") { paintTeamNames(row); paintFinalBoard(row); return; }
-    if (row.step === "r_intro") { api.logo.show(); return; }
+  async function paintForStep(row) {
+    if (row.top_card === "rounds") { paintTeamNames(row); await paintRoundsBoard(row); return; }
+    if (row.top_card === "final") { paintTeamNames(row); await paintFinalBoard(row); return; }
+    if (row.step === "r_intro") { await api.logo.show(); return; }
     api.big.clear();
   }
 
-  function showEndScreen(row) {
+  async function showEndScreen(row) {
     api.indicator.set("OFF");
     api.small.topDigits("000");
     if (row.top_card === "rounds") {
       const totals = row.detail.rounds.totals || { A: 0, B: 0 };
       const screen = resolveRoundsEndScreen(row.detail.settings, { isDraw: totals.A === totals.B, totals });
-      if (screen.kind === "logo") api.logo.show(LOGO_IN_ANIM);
-      else api.win.set(screen.amount, { animIn: LOGO_IN_ANIM });
+      if (screen.kind === "logo") await api.logo.show(LOGO_IN_ANIM);
+      else await api.win.set(screen.amount, { animIn: LOGO_IN_ANIM });
       return;
     }
     const winnerTeam = row.detail.final.winnerTeam;
@@ -183,14 +188,14 @@ export function createRenderer({ scene, qr }) {
       totalPointsAll: totals[winnerTeam] || 0,
       hitTarget: !!row.detail.final.runtime.reached200,
     });
-    if (screen.kind === "logo") api.logo.show(LOGO_IN_ANIM);
-    else api.win.set(screen.amount, { animIn: LOGO_IN_ANIM });
+    if (screen.kind === "logo") await api.logo.show(LOGO_IN_ANIM);
+    else await api.win.set(screen.amount, { animIn: LOGO_IN_ANIM });
   }
 
   // ============================================================
   // Pierwsze renderowanie / reconnect — bez animacji.
   // ============================================================
-  function renderSnapshot(row) {
+  async function renderSnapshot(row) {
     stopTimerTick();
     if (row.detail?.display?.colors) {
       const c = row.detail.display.colors;
@@ -201,32 +206,48 @@ export function createRenderer({ scene, qr }) {
     }
     if (row.detail?.display?.theme) api.theme.set(row.detail.display.theme);
 
-    if (row.detail?.locks?.gameEnded) { showEndScreen(row); return; }
-    applyDisplayMode(row);
+    if (row.detail?.locks?.gameEnded) { await showEndScreen(row); return; }
+    await applyDisplayMode(row);
   }
 
   // ============================================================
   // Kolejne zmiany na żywo.
   // ============================================================
-  function renderDiff(prevRow, nextRow) {
+  // WAŻNE: async i await w KAŻDYM branchu, który rysuje na współdzielonym
+  // płótnie "big" (logo/plansza rund/plansza finału/WIN) — zgłoszony bug
+  // ("wszystko się nakłada jedno na drugie") miał jedną przyczynę: kolejne
+  // animacje na tym samym płótnie odpalane RÓWNOLEGLE (fire-and-forget)
+  // zamiast po kolei. deriveEvents może w JEDNYM wywołaniu zwrócić kilka
+  // zdarzeń dla tej samej zmiany stanu (np. STEP_CHANGE do "r_gameEnd" I
+  // GAME_ENDED naraz — patrz shared/deriveEvents.js) — bez await nad pętlą
+  // drugie zdarzenie zaczynało rysować, zanim pierwsze skończyło znikać.
+  // Stare control/js/gameRounds.js/gameFinal.js robiły to zawsze przez
+  // `await display.coś()` w ścisłej kolejności — to jest dokładnie ten sam
+  // wzorzec, tylko przeniesiony na stronę odbiorcy (Display samo sekwencjonuje
+  // to, co kiedyś sekwencjonował nadawca poleceń).
+  async function renderDiff(prevRow, nextRow) {
     const events = deriveEvents(prevRow, nextRow);
     for (const ev of events) {
       switch (ev.kind) {
         case "SNAPSHOT_RENDER":
-          renderSnapshot(nextRow);
+          await renderSnapshot(nextRow);
           break;
         case "STEP_CHANGE":
           if (ev.to === "r_duel" && ev.from === "r_roundStart") {
-            // Pierwsza runda: sama SUMA...ANIMIN (plansza wjeżdża na pusto).
+            // Pierwsza runda: LOGO HIDE (await — MUSI dobiec końca, inaczej
+            // logo i wjeżdżająca plansza nakładają się) DOPIERO POTEM sama
+            // SUMA...ANIMIN (plansza wjeżdża na pusto) — dokładnie
+            // control/js/gameRounds.js's startRound(): `await display.hideLogo()`
+            // zawsze PRZED roundsBoardPlaceholders(), nigdy równolegle.
             // Kolejne rundy: najpierw ANIMOUT starej planszy, DOPIERO PO NIM
-            // (nie równolegle — setAll() sam sekwencjonuje) nowa SUMA...ANIMIN
-            // — dokładnie control/js/display.js's roundsBoardPlaceholdersNewRound().
+            // (setAll() sam sekwencjonuje wewnątrz) nowa SUMA...ANIMIN —
+            // control/js/display.js's roundsBoardPlaceholdersNewRound().
             const isFirstRound = nextRow.detail.rounds.roundNo === 1;
-            paintRoundsBoard(nextRow, { animIn: ROUND_INTRO_ANIM, animOut: isFirstRound ? null : ROUND_OUT_ANIM });
+            if (isFirstRound) await api.logo.hide(LOGO_OUT_ANIM);
+            await paintRoundsBoard(nextRow, { animIn: ROUND_INTRO_ANIM, animOut: isFirstRound ? null : ROUND_OUT_ANIM });
           } else if (ev.to === "r_gameEnd" || ev.to === "f_start") {
-            api.big.animOut(ROUND_OUT_ANIM).then(() => {
-              if (ev.to === "f_start") paintFinalBoard(nextRow, { animIn: FINAL_BOARD_ANIM });
-            });
+            await api.big.animOut(ROUND_OUT_ANIM);
+            if (ev.to === "f_start") await paintFinalBoard(nextRow, { animIn: FINAL_BOARD_ANIM });
           } else if (ev.to === "f_p1_entry" && ev.from === "f_start") {
             // control/js/gameFinal.js's startFinal(): zapowiedź "15" po
             // stronie zwycięzcy, zanim operator w ogóle uruchomi timer.
@@ -234,7 +255,7 @@ export function createRenderer({ scene, qr }) {
           } else if (ev.to === "f_p2_start") {
             // Zamaskuj odpowiedzi gracza 1 z powrotem na placeholdery.
             const rows = Array.from({ length: 5 }, () => ({ left: FINAL_TEXT_PLACEHOLDER, a: FINAL_PTS_PLACEHOLDER }));
-            api.final.setHalf("A", { rows, animOut: FINAL_OUT_ANIM });
+            await api.final.setHalf("A", { rows, animOut: FINAL_OUT_ANIM });
           } else if (ev.to === "f_p2_entry" && ev.from === "f_p2_start") {
             // Naprawiona luka (uzgodniona z Tobą, patrz engine.js's
             // START_P2_ROUND): odpowiedzi gracza 1 wracają na Display W TYM
@@ -248,12 +269,12 @@ export function createRenderer({ scene, qr }) {
                 a: m1?.revealedPoints ? String(m1.pts) : FINAL_PTS_PLACEHOLDER,
               };
             });
-            api.final.setHalf("A", { rows, animIn: FINAL_BOARD_ANIM });
+            await api.final.setHalf("A", { rows, animIn: FINAL_BOARD_ANIM });
             // control/js/gameFinal.js's startP2Round(): zapowiedź "20" po
             // stronie zwycięzcy, ten sam mechanizm co przy f_p1_entry.
             showTimerPlaceholder(nextRow, "20");
           } else if (ev.to === "r_intro") {
-            api.logo.show();
+            await api.logo.show();
           }
           break;
         case "CONTROL_CHANGED":
@@ -317,10 +338,15 @@ export function createRenderer({ scene, qr }) {
           paintTotals(nextRow);
           break;
         case "DISPLAY_MODE_CHANGED":
-          applyDisplayMode(nextRow);
+          await applyDisplayMode(nextRow);
           break;
         case "GAME_ENDED":
-          showEndScreen(nextRow);
+          // Ten sam events[] może nieść STEP_CHANGE (do "r_gameEnd") TUŻ
+          // PRZED tym zdarzeniem (patrz shared/deriveEvents.js) — dzięki
+          // await nad całą pętlą to zdarzenie startuje dopiero PO tym, jak
+          // animOut planszy rund z poprzedniego case'a faktycznie się
+          // skończył, zamiast malować logo/WIN w tym samym momencie.
+          await showEndScreen(nextRow);
           break;
         // HOST_COVER_CHANGED, SOUND_CUE — nie dotyczą Display.
         default:

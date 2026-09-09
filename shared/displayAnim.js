@@ -16,3 +16,8 @@ export const ANSWER_ANIM = { type: "matrix", axis: "right", ms: 500 };
 export const FINAL_BOARD_ANIM = { type: "matrix", axis: "down", ms: 1500 };
 export const FINAL_OUT_ANIM = { type: "edge", dir: "down", ms: 1000 };
 export const LOGO_IN_ANIM = { type: "edge", dir: "up", ms: 1000 };
+// control/js/display.js's hideLogo(): "LOGO HIDE ANIMOUT edge down 1000" —
+// zejście logo PRZED wjazdem pierwszej planszy rund (control/js/gameRounds.js's
+// startRound(): `await display.hideLogo()` zawsze PRZED
+// roundsBoardPlaceholders(), nigdy równolegle).
+export const LOGO_OUT_ANIM = { type: "edge", dir: "down", ms: 1000 };
