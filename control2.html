@@ -49,24 +49,158 @@
        przeniesione tutaj, żeby krótsze ekrany (np. Urządzenia) nie zapadały
        się wizualnie bez .card's dawnego min-height:320px. */
     #app { min-height:320px; }
-    /* Wąska, wyśrodkowana szerokość (720px) dotyczy WYŁĄCZNIE trzech
-       przeprojektowanych ekranów rozgrywki (Rundy/Final — plan, sekcja 3b)
-       — control2/js/ui.js's gameplayShell() dokłada tę klasę do SWOJEGO
-       wewnętrznego kontenera, nie do #app. Urządzenia/Podsumowanie mają
-       zostać na pełną szerokość .control-main-card, tak jak w starym
-       Control — to NIE jest klasa na #app. */
-    .c2-gameplay-card { width:min(720px, 100%); max-height:100%; margin:0 auto; }
-    .c2-gameplay { height: 100%; max-height: 640px; display:flex; flex-direction:column; gap:12px; }
+    /* .c2-gameplay-card oznacza ekrany rozgrywki (Rundy/Final —
+       control2/js/ui.js's gameplayShell()) do celów pełnowysokościowego
+       :has() łańcucha niżej — sama w sobie NIE zawęża szerokości. Wszystkie
+       elementy (nagłówek/siatka/pasek statusu) mają wypełniać pełną
+       szerokość .control-main-card, dokładnie jak Urządzenia/Podsumowanie i
+       jak w starym Control — bez wąskiej, wyśrodkowanej kolumny. */
+    .c2-gameplay { height: 100%; display:flex; flex-direction:column; gap:12px; }
+    /* "Karta ma być na całą wysokość" (Rundy) — cały łańcuch od .wrap.wide
+       w dół dostaje display:flex/flex:1, żeby #app faktycznie wypełniał
+       resztę wysokości strony, ZAMIAST tylko dopasowywać się do treści.
+       :has(.c2-gameplay-card) ogranicza to WYŁĄCZNIE do ekranów rozgrywki
+       (Rundy/Final, jedyne które wstawiają ten element przez gameplayShell())
+       — Urządzenia/Podsumowanie (bez tego elementu) zostają na dotychczasowej,
+       dopasowanej-do-treści wysokości, nietknięte. Reguły żyją tu (scoped do
+       tej jednej strony), nie w współdzielonym control.css. */
+    /* :has(.stepFoot) dokłada Urządzenia/Podsumowanie do tego samego
+       łańcucha pełnej wysokości co Rundy/Final — potrzebne, żeby ich
+       .stepFoot (dolne przyciski) dało się przypiąć POZA przewijaną treścią
+       (patrz .c2-scroll-area niżej), zamiast scrollować razem z całą stroną.
+       UWAGA: musi to być RZECZYWISTA (nie tylko min-) wysokość — inaczej
+       flex:1/min-height:0 niżej nie mają czego realnie ograniczać (strona i
+       tak rośnie wg treści) i .c2-scroll-area nigdy nie zaczyna scrollować.
+       overflow:hidden na .wrap.wide samo w sobie nic nie ucina — reszta
+       łańcucha (karta, cardBody, scroll-area) i tak dostaje własne
+       ograniczenie wysokości niżej, więc to tylko domyka górny poziom. */
+    .wrap.wide:has(.c2-gameplay-card, .stepFoot) { height:calc(100dvh - var(--topbar-h, 70px)); min-height:0; display:flex; flex-direction:column; overflow:hidden; }
+    .wrap.wide:has(.c2-gameplay-card, .stepFoot) > .shell { flex:1; min-height:0; display:flex; flex-direction:column; overflow:hidden; }
+    .shell:has(.c2-gameplay-card, .stepFoot) > .control-tabs-card { flex:1; min-height:0; display:flex; flex-direction:column; overflow:hidden; }
+    .control-tabs-card:has(.c2-gameplay-card, .stepFoot) > .control-main-card { flex:1; min-height:0; display:flex; flex-direction:column; overflow:hidden; }
+    .control-main-card:has(.c2-gameplay-card, .stepFoot) > #app { flex:1; min-height:0; display:flex; flex-direction:column; overflow:hidden; }
+    .c2-gameplay-card { flex:1; min-height:0; display:flex; flex-direction:column; }
+    /* .cardBody (Urządzenia/Podsumowanie) ma już flex:1 z control.css — brakuje
+       tylko min-height:0, inaczej flex item nie chce się skurczyć poniżej
+       wysokości treści i .c2-scroll-area nigdy realnie nie zaczyna scrollować.
+       padding-bottom:0 — control.css's własne 12px tu się SUMOWAŁY z
+       .control-main-card's 16px pod spodem (28px razem), podczas gdy nad
+       przyciskami było tylko .stepFoot's 10px (zgłoszone: nierówna
+       przestrzeń nad/pod przyciskami) — teraz dół to WYŁĄCZNIE
+       .control-main-card's 16px, dokładnie tyle, ile .stepFoot dostaje u
+       góry (patrz niżej). */
+    #app > .cardBody { min-height:0; overflow:hidden; padding-bottom:0; }
+    /* Środkowa, przewijana treść Urządzeń/Podsumowania — .stepFoot (obok, NIE
+       w środku) zawsze zostaje widoczny na dole karty, wyłączony z tego
+       przewijania (zgłoszone: "dolne przyciski mają być wyłączone z
+       przewijania"). */
+    .c2-scroll-area { flex:1; min-height:0; overflow-y:auto; display:flex; flex-direction:column; gap:10px; }
     .c2-stepper { font-size:.75rem; letter-spacing:.08em; text-transform:uppercase; opacity:.65; border-bottom:1px solid rgba(255,255,255,.12); padding-bottom:8px; }
     .c2-gameplay-body { flex:1; overflow:hidden; display:flex; flex-direction:column; gap:12px; min-height:0; }
-    .c2-gameplay-nav { display:flex; gap:8px; justify-content:flex-end; border-top:1px solid rgba(255,255,255,.12); padding-top:10px; flex-wrap:wrap; }
-    .c2-question { font-size:1.1rem; font-weight:700; }
-    .c2-bank { font-size:.9rem; opacity:.8; }
-    .c2-duel { display:flex; align-items:center; gap:10px; }
-    /* Blok podpowiedzi nad siatką — ten sam wizualny wzorzec co dzisiejsze
+    /* padding-top:16px == .control-main-card's własne padding-bottom:16px
+       pod spodem — nad i pod przyciskami tyle samo miejsca (zgłoszone). */
+    .c2-gameplay-nav { display:flex; gap:8px; justify-content:flex-end; border-top:1px solid rgba(255,255,255,.12); padding-top:16px; flex-wrap:wrap; }
+    /* To samo dla Urządzeń/Podsumowania (control.css's .stepFoot, domyślnie
+       tylko 10px u góry vs 28px u dołu po odjęciu cardBody's paddingu
+       wyżej — teraz 16px u góry == 16px .control-main-card u dołu). */
+    .stepFoot { padding-top:16px; }
+    .c2-question { font-size:1.4rem; font-weight:700; }
+    /* r_intro/r_roundStart ("Rozpocznij grę"/"Rozpocznij rundę") — wyśrodkowana
+       "hero" treść zamiast gołego akapitu, zgłoszone jako wyglądające źle. */
+    .c2-intro { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; gap:16px; padding:20px; }
+    .c2-intro-title { font-size:2rem; font-weight:900; color:var(--gold); letter-spacing:.02em; }
+    .c2-intro-hint { font-size:1.05rem; line-height:1.5; opacity:.85; max-width:520px; }
+    .c2-intro-score { display:flex; align-items:center; gap:12px; font-size:1.15rem; font-weight:800; margin-top:6px; }
+    .c2-intro-score-sep { opacity:.5; font-weight:400; }
+    .c2-intro-btn { padding:14px 34px; font-size:1.1rem; border-radius:16px; }
+    /* Drugorzędny przycisk w c2-intro (np. "Dźwięk powtórzenia" na
+       "Rozpocznij 2 rundę") — bez złotego obramowania (nie konkuruje
+       wizualnie z głównym przyciskiem nawigacji na dole), ale WYRAŹNIE
+       widoczny — zgłoszone jako za mały, dociągnięty do tej samej skali co
+       reszta ekranów startu (blisko .c2-intro-btn, tylko bez gold/padding
+       ekstremalnego jak główna akcja). */
+    .c2-intro-secondary { font-size:1rem; padding:12px 26px; border-radius:14px; opacity:1; }
+    /* Blok podpowiedzi — ten sam wizualny wzorzec co dzisiejsze
        .summaryDefaultHint w control.css (bursztynowy pasek), tylko krócej,
-       bo tu treść zmienia się co kliknięcie zamiast być statycznym opisem. */
-    .c2-hint { padding:8px 12px; border-radius:10px; background:rgba(180,140,0,.13); border:1px solid rgba(200,160,0,.35); font-size:.85rem; line-height:1.4; flex:none; }
+       bo tu treść zmienia się co kliknięcie zamiast być statycznym opisem.
+       W Rundach żyje w prawej kolumnie (.c2-roundlayout-side), nie nad
+       siatką — stąd height:100%, żeby wypełniał całą wysokość tej kolumny. */
+    /* Zwykły .hint z base.css/builder.css to płaski tekst (bez obwódki/tła)
+       — ten sam wzorzec tutaj, żeby podpowiedź NIE wyglądała jak własna,
+       osobna karta obok siatki (plan, sekcja 3b: jedna otoczka na cały
+       widok). Bez własnej lewej kreski — w Rundach i tak stoi tuż obok
+       .c2-roundlayout-divider, więc druga kreska tylko dublowała się z
+       pierwszą. */
+    .c2-hint { flex:none; display:flex; flex-direction:column; }
+    .c2-hint-main { font-size:1.05rem; line-height:1.4; opacity:.85; }
+    /* Skróty klawiszowe (shared/hints.js's getFinalEntryShortcuts) — dopisane
+       POD głównym hintem na wpisywaniu finału, oddzielone własną kreską, żeby
+       nie zlewały się z dynamicznym tekstem hintu nad nimi. */
+    .c2-hint-shortcuts { margin-top:14px; padding-top:12px; border-top:1px solid rgba(255,255,255,.12); display:flex; flex-direction:column; gap:4px; }
+    .c2-hint-shortcuts-title { font-size:.75rem; text-transform:uppercase; letter-spacing:.06em; opacity:.6; font-weight:800; }
+    .c2-hint-shortcut { font-size:.85rem; opacity:.75; line-height:1.35; }
+    /* ---- Rundy: siatka odpowiedzi (lewo) + pionowa kreska + podpowiedź
+       (prawo). Reużywane też przez Finał-wpisywanie i Finał-mapowanie
+       (zgłoszone: hinty mają iść na prawo wszędzie tak jak w Rundach). ---- */
+    .c2-roundlayout { display:flex; gap:16px; flex:1; min-height:0; }
+    .c2-roundlayout-main { flex:1; min-width:0; display:flex; }
+    .c2-roundlayout-main .c2-tilegrid { flex:1; }
+    .c2-roundlayout-divider { width:1px; background:rgba(255,255,255,.14); flex:none; }
+    .c2-roundlayout-side { flex:0 0 240px; min-width:0; display:flex; flex-direction:column; }
+    .c2-roundlayout-side .c2-hint { flex:1; }
+    /* Urządzenia (renderDevicesStep) reużywa ten sam c2-roundlayout — lista
+       urządzeń po lewej (pionowy stos, stąd flex-direction:column zamiast
+       .c2-roundlayout-main's domyślnego row), hint o wpisywaniu kodu po
+       prawej, zamiast dawnego paska na całą szerokość pod spodem. */
+    .c2-devicerows { flex:1; min-width:0; display:flex; flex-direction:column; gap:14px; }
+    /* Dolne przyciski kroku (Urządzenia/Podsumowanie, control.css's
+       .stepFootButtons) — "Dalej"/akcja pierwotna zawsze po prawej krawędzi;
+       "Wstecz" (klasa c2-btn-back) dostaje margin-right:auto, więc odrywa
+       się na lewą krawędź, a reszta grupy zostaje razem po prawej. Scoped
+       tutaj (nie w control.css), bo to reguła tylko dla control2 — stary
+       Control ma swój dotychczasowy, niezmieniony układ. */
+    /* flex:1 — bez tego .stepFootButtons jest tylko tak szerokie jak jego
+       treść (dzieckiem .stepFoot, który sam nie narzuca szerokości), więc
+       justify-content:flex-end nie miałby czego przesuwać. */
+    .stepFootButtons { flex:1; justify-content:flex-end; }
+    .c2-btn-back { margin-right:auto; }
+    /* Wiersz "Pytania rund/finału" w Podsumowaniu — treść i "Losuj ponownie"
+       w jednej linii, przycisk przy prawej krawędzi sekcji. */
+    .c2-summary-row { display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; }
+    /* "Losuj ponownie" (zgłoszone jako "zbyt mały") — btn.sm z base.css (13px)
+       dociągnięty do tej samej skali co reszta Podsumowania, żeby nie ginął
+       obok 1.15rem summarySectionValue. */
+    .c2-summary-row .btn.sm { font-size:1rem; padding:9px 15px; }
+    /* Podgląd wylosowanej puli pytań (rounds._questionPool / final.pickedPreview)
+       — pionowa, numerowana lista pod wierszem trybu (zgłoszone: poprzedni,
+       zawijany ciąg "tagów" wyglądał jak jeden zlepiony akapit) — każde
+       pytanie we własnym wierszu, z małym okrągłym numerkiem z lewej. */
+    .c2-qpreview { display:flex; flex-direction:column; gap:2px; margin-top:10px; padding-top:10px; border-top:1px solid rgba(255,255,255,.08); }
+    .c2-qpreview-item { display:flex; align-items:baseline; gap:10px; font-size:.92rem; opacity:.85; padding:4px 0; }
+    .c2-qpreview-num { flex:none; display:inline-flex; align-items:center; justify-content:center; width:20px; height:20px; border-radius:50%; background:rgba(255,234,166,.12); color:var(--gold); font-size:.7rem; font-weight:800; }
+    .c2-qpreview-text { flex:1; min-width:0; }
+    /* Czcionki Urządzeń/Podsumowania dociągnięte do wielkości, którą mają już
+       Rundy (.c2-tile/.c2-question/.c2-hint) — bazowe rozmiary z control.css
+       (15px/11px/10px...) są za małe przy tak dużej karcie. Scoped do
+       konkretnych klas (nie całego .btn), żeby nie urosły przyciski
+       topbara/modali poza tym kontekstem. */
+    .device-name { font-size:1.2rem; }
+    .device-row-2 .btn { font-size:1rem; }
+    .device-opt-check-label { font-size:1rem; }
+    .device-opt-check-hint { font-size:.85rem; }
+    .summarySectionTitle { font-size:.8rem; }
+    .summarySectionValue { font-size:1.15rem; }
+    .summaryQMode { font-size:1rem; }
+    .summaryDisplayLabel, .summaryDisplayRow { font-size:1rem; }
+    /* Pasek statusu — pod siatką/podpowiedzią, nad dolnymi przyciskami
+       (gameplayShell's nav). Krótkie pary etykieta:wartość w jednym wierszu,
+       nie osobny blok na każdą — to jest "dodatkowe info", nie treść do
+       przeczytania w całości. */
+    .c2-statusbar { display:flex; align-items:center; gap:18px; flex-wrap:wrap; padding:8px 2px 0; border-top:1px solid rgba(255,255,255,.12); font-size:.85rem; opacity:.92; flex:none; }
+    .c2-statusbar b { color:var(--gold); font-weight:800; }
+    /* "Zakończ rundę" — obok Gra:/Bank: w TYM SAMYM pasku (zgłoszone: miejsce
+       obok, nie osobny wiersz nawigacji z własnym odstępem u dołu). */
+    .c2-statusbar-end { margin-left:auto; padding:8px 16px; font-size:.85rem; opacity:1; }
     /* .c2-btn: przyciski POZA siatką (start rundy/finału, przyjęcie zgłoszenia,
        "Dalej" na ekranach przejściowych) — nigdy nie miały żadnego stylu,
        dograne tu, żeby nie odstawały wizualnie od nowej siatki obok nich. */
@@ -75,7 +209,6 @@
     .c2-btn:active:not(:disabled) { transform:translateY(1px); }
     .c2-btn:disabled { opacity:.4; cursor:default; }
     .c2-btn.primary { border-color:rgba(255,234,166,.4); background:rgba(255,234,166,.12); color:var(--gold); }
-    .c2-repeat-label { display:flex; align-items:center; gap:6px; margin-top:0; font-size:.85rem; }
 
     /* ---- Siatka 3x5 (jednostka = 1/3 wiersza, "1,5" = pół wiersza) —
        współdzielona przez Rundy-odsłanianie i Finał-odsłanianie. Wewnętrznie
@@ -87,29 +220,136 @@
     .c2-tile {
       display:flex; align-items:center; justify-content:center; text-align:center;
       padding:8px 10px; border-radius:14px; border:1px solid var(--line2);
-      background:rgba(255,255,255,.06); color:#fff; font-weight:800; font-size:.92rem; line-height:1.25;
+      background:rgba(255,255,255,.06); color:#fff; font-weight:800; font-size:1.15rem; line-height:1.3;
       cursor:pointer; user-select:none; -webkit-tap-highlight-color:transparent;
       transition:filter .12s ease, background .12s ease, border-color .12s ease;
     }
     .c2-tile:hover:not(:disabled) { filter:brightness(1.1); }
     .c2-tile:active:not(:disabled) { transform:translateY(1px); }
-    .c2-tile:disabled { opacity:.4; cursor:default; }
+    /* Dokładnie jak stare css/base.css's .btn:disabled — opacity .45 +
+       saturate(.6), nie tylko przyciemnienie (zgłoszone: "wyszarzać się jak
+       w starym Control"). */
+    .c2-tile:disabled { opacity:.45; cursor:not-allowed; filter:saturate(.6); }
     .c2-tile-revealed { background:rgba(95,217,122,.16); border-color:rgba(95,217,122,.45); color:#a8ecba; opacity:1; }
     .c2-tile-danger { border-color:rgba(255,120,120,.4); background:rgba(255,120,120,.12); }
     .c2-tile-warn { border-color:rgba(255,196,110,.4); background:rgba(255,196,110,.12); color:#ffd9a0; }
     .c2-tile-primary { border-color:rgba(255,234,166,.4); background:rgba(255,234,166,.12); color:var(--gold); }
+    /* MISS zaznaczony (control2/js/ui.js's renderFinalMapping) — czerwona
+       ramka/tło ZOSTAJE, tylko tekst robi się złoty, dokładnie jak stare
+       control/js/gameFinal.js's ".btn.sm.danger.gold" razem na jednym
+       przycisku. Osobna, jawna reguła zamiast polegania na kolejności w
+       arkuszu — nie ma znaczenia, która z dwóch klas jest zadeklarowana wyżej. */
+    .c2-tile-primary.c2-tile-danger { border-color:rgba(255,120,120,.4); background:rgba(255,120,120,.12); color:var(--gold); }
     .c2-tile-timer { border-color:rgba(122,178,255,.4); background:rgba(122,178,255,.12); color:#bcd9ff; font-variant-numeric:tabular-nums; font-size:1.3rem; cursor:default; }
-    .c2-tile-timer.startable { cursor:pointer; font-size:.85rem; }
+    .c2-tile-timer.startable { cursor:pointer; font-size:1rem; }
+    .c2-tile-sub { display:block; margin-top:2px; font-size:.8rem; font-weight:700; opacity:.8; }
+    /* Uzbrojony kafel (zaznacz -> potwierdź, control2/js/ui.js's armableTile) —
+       złota obwódka NAD kolorem kafla (danger/primary/zwykły), żeby "jeszcze
+       tylko zaznaczone, kliknij drugi raz" wyglądało tak samo niezależnie od
+       tego, jaki to kafel. */
+    .c2-tile-armed { border-color:var(--gold); box-shadow:0 0 0 2px rgba(255,234,166,.55) inset, 0 0 10px rgba(255,234,166,.25); }
+    /* Puste miejsce w siatce 3x3 wyboru mapowania finału (control2/js/ui.js's
+       renderFinalMapping), gdy pytanie ma mniej niż 9 opcji — dokładnie jak
+       stare control/js/gameFinal.js's `.mapSlot`: sam trzyma rytm siatki,
+       bez własnego obramowania/tła/interakcji. */
+    .c2-tile-slot { pointer-events:none; }
 
-    /* ---- Wpisywanie (finał): ta sama rytmika 5 wierszy co siatka wyżej
-       (jeden wiersz na pytanie), ale podział W POZIOMIE inny — treść pytania
-       + pole tekstowe + (runda 2) checkbox powtórzenia, nie kafle-przyciski. ---- */
-    .c2-entryrows { display:grid; grid-template-rows:repeat(5, minmax(0,1fr)); gap:8px; flex:1; min-height:0; }
-    .c2-entryrow { display:flex; align-items:center; gap:10px; border:1px solid var(--line2); border-radius:14px; padding:8px 12px; background:rgba(255,255,255,.04); }
-    .c2-entryrow-q { flex:1 1 40%; font-weight:700; font-size:.85rem; opacity:.9; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-    .c2-entryrow-input { flex:1 1 45%; min-width:0; }
-    .c2-entryrow-input input { width:100%; box-sizing:border-box; padding:8px 10px; border-radius:10px; border:1px solid var(--line2); background:rgba(255,255,255,.06); color:#fff; font-size:.92rem; }
-    .c2-entryrow .c2-repeat-label { flex:0 0 auto; }
+    /* ---- Wpisywanie (finał): jeden wiersz na pytanie + jeden wiersz
+       odliczania na dole (6 rzędów razem) — kafle w stylu .c2-tile
+       (obramowanie/tło/zaokrąglenie ujednolicone), nie gołe wiersze z
+       inputem. Runda 1: [Pytanie][Odpowiedź] (2 kafle w wierszu). Runda 2:
+       [Pytanie + Odpowiedź gracza 1, jedno pod drugim W JEDNYM kaflu]
+       [Odpowiedź gracza 2][Powtórzenie] (3 kafle), dokładnie jak stara
+       4-kolumnowa tabela control/js/gameFinal.js's renderP2Entry, tylko z
+       pierwszymi dwiema kolumnami połączonymi w jeden kafel. ---- */
+    .c2-entryrows { display:grid; grid-template-rows:repeat(6, minmax(0,1fr)); gap:10px; flex:1; min-height:0; }
+    .c2-entryrow { display:grid; gap:10px; min-height:0; }
+    .c2-entryrow.p1 { grid-template-columns:2fr 1.3fr; }
+    /* Powtórzenie węższe niż odpowiedź gracza 2 (zgłoszone: "trochę mniejsza
+       szerokość") — 0.85fr zamiast 1fr, reszta idzie do pytania+odp. gracza 1. */
+    .c2-entryrow.p2 { grid-template-columns:2fr 1.1fr .85fr; }
+    .c2-entrytile {
+      display:flex; flex-direction:column; justify-content:center; gap:4px; min-width:0; min-height:0;
+      border-radius:14px; border:1px solid var(--line2); background:rgba(255,255,255,.06);
+      padding:8px 14px;
+    }
+    .c2-entrytile-q { font-weight:800; font-size:1rem; line-height:1.25; overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
+    /* "Gracz 1: ..." — ta sama wielkość co treść kafelka (pytanie), nie
+       mniejsza (zgłoszone) — odróżnia się kolorem (gold na wartości), nie rozmiarem. */
+    .c2-entrytile-p1ans { font-size:1rem; opacity:.75; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .c2-entrytile-p1ans b { color:var(--gold); font-weight:800; }
+    /* Pole wpisywania ma wyglądać jak realne pole formularza (obramowanie +
+       własne, ciemniejsze tło), nie jak goły tekst na tle kafla — zgłoszone.
+       Mniejszy padding zewnętrznego kafla, żeby input miał gdzie "oddychać"
+       w środku, sam input dostaje swoją ramkę/tło. Wpisana wartość dostaje
+       lekko inny (niebieskawy) odcień niż reszta napisów (pytanie/etykiety
+       są bielą) — żeby na pierwszy rzut oka było widać, co jest TREŚCIĄ
+       wpisaną przez operatora, a co statycznym opisem. */
+    /* Pole ma wypełniać CAŁĄ wysokość kafelka, nie stać małym prostokątem
+       wyśrodkowanym w dużo większym pustym kaflu (zgłoszone: "pola
+       wpisywania lepiej żeby były na wysokość kafelka") — stąd flex:1 na
+       samym <input> niżej zamiast justify-content:center tutaj. */
+    .c2-entrytile.c2-entrytile-input { padding:6px; }
+    /* Mała etykieta nad polem (np. mapowania finału's "Wpisano") — bez niej
+       samo obramowane pole nie ma żadnego określenia (zgłoszone). Wpisywanie
+       (renderFinalEntry) jej nie dokłada — tam kontekst już daje sam wiersz. */
+    .c2-field-label { font-size:.72rem; text-transform:uppercase; letter-spacing:.05em; opacity:.6; font-weight:800; }
+    /* Pole "Wpisano" na mapowaniu (renderFinalMapping) — teraz prawdziwy
+       kafelek (obramowanie jak c2-entrytile — zgłoszone: "pierwszy rząd mam
+       mieć kafelek a teraz nie ma"): etykieta na 1/3 (wyśrodkowana w pionie
+       I poziomie), pole na 2/3, OBOK siebie. Runda 1: ten kafelek zajmuje
+       cały wiersz 1. Runda 2: ten sam kafelek zwężony do 2/3 wiersza, obok
+       osobnego kafelka "Gracz 1" (1/3) — patrz .c2-map-p1tile niżej. */
+    /* Bez align-items:center: kolumny (etykieta/pole) mają wypełniać całą
+       wysokość kafelka, nie stać wyśrodkowane w jego środku — inaczej samo
+       pole (mimo flex:1 na <input> niżej) nie ma się w co rozciągnąć, bo
+       jego rodzic w tej siatce już dostaje tylko naturalną wysokość treści
+       (zgłoszone: wysokość pola w mapowaniu ma być taka sama jak we
+       wpisywaniu). c2-mapinput-labelcol ma własne justify-content:center,
+       więc etykieta zostaje wyśrodkowana mimo że kolumna się rozciąga. */
+    /* Padding RÓWNY na wszystkie strony (6px, nie 6px/14px) — dokładnie jak
+       c2-entrytile.c2-entrytile-input w kroku wpisywania (zgłoszone: tam
+       odstępy od krawędzi kafla do pola są równe, tutaj były różne) — przy
+       okazji samo pole ma tę samą wysokość co w kroku wpisywania. */
+    .c2-mapinput {
+      display:grid; grid-template-columns:1fr 2fr; gap:12px;
+      border-radius:14px; border:1px solid var(--line2); background:rgba(255,255,255,.06);
+      padding:6px;
+    }
+    /* Kolumna etykiety — wyśrodkowana w bloku. */
+    .c2-mapinput-labelcol { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; text-align:center; }
+    .c2-mapinput .c2-field-label { font-size:.85rem; }
+    /* Bez align-items:center: pole ma wypełniać całą wysokość tego kafla
+       (jak w kroku wpisywania), nie stać wyśrodkowanym prostokątem. */
+    .c2-mapinput .c2-entrytile-input { display:flex; min-width:0; }
+    /* Kafelek "Gracz 1" (runda 2, obok c2-mapinput) — ta sama obramówka co
+       c2-entrytile, wyśrodkowany w pionie, wartość złota jak wszędzie indziej. */
+    .c2-map-p1tile { justify-content:center; align-items:center; text-align:center; gap:6px; }
+    .c2-map-p1tile .c2-entrytile-p1ans { font-size:1rem; white-space:normal; opacity:1; }
+    .c2-entrytile-input input {
+      width:100%; height:100%; flex:1; box-sizing:border-box; padding:8px 12px;
+      border-radius:10px; border:1px solid rgba(255,255,255,.2);
+      background:rgba(0,0,0,.22);
+      color:#bcd9ff; font-size:1.05rem; font-weight:700; outline:none;
+    }
+    .c2-entrytile-input input:focus { border-color:rgba(122,178,255,.65); background:rgba(122,178,255,.1); }
+    .c2-entrytile-input input::placeholder { font-weight:400; opacity:.5; color:#fff; }
+    /* "Powtórzenie" — przycisk (nie checkbox), czerwony odcień jak stare
+       control/js/gameFinal.js's ".btn.sm.danger" (P2_BTN_REPEAT_ON/OFF).
+       Reużywana TA SAMA klasa na "Dźwięk powtórzenia" (renderFinalP2Start) —
+       zgłoszone: sample ma być identyczny wielkościowo i kolorystycznie. */
+    .c2-btn-repeat {
+      border-radius:14px; border:1px solid rgba(255,120,120,.4); background:rgba(255,120,120,.12);
+      color:#ffb3b3; font-weight:800; font-size:1rem; padding:12px 26px; cursor:pointer;
+      display:flex; align-items:center; justify-content:center; text-align:center;
+    }
+    .c2-btn-repeat:hover:not(:disabled) { filter:brightness(1.15); }
+    .c2-btn-repeat:active:not(:disabled) { transform:translateY(1px); }
+    .c2-btn-repeat.on { background:rgba(255,120,120,.34); border-color:rgba(255,120,120,.75); color:#fff; box-shadow:0 0 0 2px rgba(255,120,120,.35) inset; }
+    .c2-btn-repeat:disabled { opacity:.4; cursor:default; }
+    /* Kafel odliczania (start/countdown/zatrzymaj) — jeden pełnoszerokościowy
+       wiersz w tej samej skali co reszta siatki wpisywania (zgłoszone). */
+    .c2-timer-row { width:100%; font-size:1.15rem; }
 
     #c2DisplayPreview { width:100%; aspect-ratio:16/9; background:#000; border-radius:10px; overflow:hidden; position:relative; border:1px solid var(--line2); }
     #c2DisplayPreview iframe { width:100%; height:100%; border:0; display:block; }
@@ -122,21 +362,25 @@
       <button class="btn" id="btnBack" type="button" data-i18n="control.backToGames">← Moje gry</button>
     </div>
     <div class="topbar-section topbar-section-2">
+      <!-- Klikalne przez cały czas gry (nie tylko na kroku Urządzenia) — po
+           to są te modale: jeśli urządzenie trzeba ponownie podłączyć w
+           trakcie rozgrywki (restart tabletu itp.), operator musi mieć skąd
+           wziąć kod/QR bez wracania do kroku Urządzenia. Otwiera ten sam
+           #qrModalOverlay co przycisk "Kod QR" w kroku Urządzenia. -->
       <div class="top-status" aria-label="Status urządzeń" data-i18n-aria-label="control.statusLabel">
-        <div class="dotRow" title="Wyświetlacz" id="dotDisplayRow" data-i18n-title="control.deviceDisplay">
+        <div class="dotRow" title="Wyświetlacz — kliknij, żeby pokazać kod/link" id="dotDisplayRow" data-i18n-title="control.deviceDisplay" style="cursor:pointer;">
           <span class="dot mid" id="dotDisplay"></span><span class="lbl" data-i18n="control.deviceDisplay">Wyświetlacz</span>
         </div>
-        <div class="dotRow" title="Prowadzący" id="dotHostRow" data-i18n-title="control.deviceHost">
+        <div class="dotRow" title="Prowadzący — kliknij, żeby pokazać kod QR" id="dotHostRow" data-i18n-title="control.deviceHost" style="cursor:pointer;">
           <span class="dot mid" id="dotHost"></span><span class="lbl" data-i18n="control.deviceHost">Prowadzący</span>
         </div>
-        <div class="dotRow" title="Przycisk" id="dotBuzzerRow" data-i18n-title="control.deviceBuzzer">
+        <div class="dotRow" title="Przycisk — kliknij, żeby pokazać kod QR" id="dotBuzzerRow" data-i18n-title="control.deviceBuzzer" style="cursor:pointer;">
           <span class="dot mid" id="dotBuzzer"></span><span class="lbl" data-i18n="control.deviceBuzzer">Przycisk</span>
         </div>
       </div>
     </div>
     <div class="topbar-section topbar-section-3">
       <button class="btn" id="btnMute" type="button" title="Wycisz dźwięk">🔊</button>
-      <button class="btn" id="btnUndo" type="button" title="Cofnij ostatnią akcję">⤺</button>
       <button class="btn" id="btnStartOver" type="button" title="Zacznij od nowa">↺</button>
       <button class="btn" id="btnManual" type="button">ℹ️</button>
     </div>
@@ -196,6 +440,39 @@
           <a class="btn hidden" id="qrModalOpen" target="_blank" rel="noopener" data-i18n="common.open">Otwórz</a>
         </div>
         <div class="qrModalCodeHint" data-i18n="control.qrModalCodeHint">Wejdź na familiada.online → Podłącz urządzenie → wprowadź kod</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal "Udostępnij urządzenie" — dokładnie jak dzisiejsze control.html,
+       reużywa control/js/share-device.js bez zmian (patrz control2/js/app.js). -->
+  <div class="overlay" id="shareDeviceOverlay" style="display:none;">
+    <div class="modal shareModal">
+      <div class="mHead">
+        <div class="mTitle" id="shareDeviceTitle" data-i18n="control.shareDeviceModal.title">Udostępnij urządzenie</div>
+        <button class="btn sm" id="btnShareDeviceClose" type="button" aria-label="Zamknij">✕</button>
+      </div>
+      <div class="mSub" data-i18n="control.shareDeviceModal.subtitle">Wybierz subskrybenta lub wpisz e-mail / nazwę użytkownika.</div>
+
+      <div id="shareDeviceCurrentWrap" class="shareCurrent" style="display:none;">
+        <div class="shareCurrentLabel" data-i18n="control.shareDeviceModal.currentLabel">Aktualnie udostępnione dla:</div>
+        <div id="shareDeviceCurrentContent"></div>
+      </div>
+
+      <div class="shareSection">
+        <div class="shareSectionTitle" data-i18n="control.shareDeviceModal.sectionAdd">Przez e-mail / nazwę</div>
+        <div class="importRow">
+          <input id="shareDeviceEmail" class="inp" type="text"
+                 placeholder="Nazwa użytkownika lub e-mail..."
+                 data-i18n-placeholder="bases.shareModal.placeholder"/>
+          <button class="btn sm gold" id="btnShareDeviceAdd" type="button" data-i18n="bases.shareModal.add">Dodaj</button>
+        </div>
+        <div class="importMsg" id="shareDeviceMsg"></div>
+      </div>
+
+      <div class="shareSection">
+        <div class="shareSectionTitle" data-i18n="bases.shareModal.sectionSubscribers">Moi subskrybenci</div>
+        <div class="shareList" id="shareDeviceSubsList"></div>
       </div>
     </div>
   </div>

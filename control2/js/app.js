@@ -6,20 +6,20 @@
 // engine.js) — ale i tak przechodzi przez assertTransition(), żeby tabela
 // stanów była mechanizmem wszędzie, nie tylko wewnątrz silnika reguł gry.
 
-import { guardDesktopOnly } from "../../js/core/device-guard.js?v=v2026-09-08T18342";
-import { guardResourceLock } from "../../js/core/resource-lock.js?v=v2026-09-08T18342";
-import { initI18n, getUiLang, t } from "../../translation/translation.js?v=v2026-09-08T18342";
-import { requireAuth } from "../../js/core/auth.js?v=v2026-09-08T18342";
-import { setTopbarAccount } from "../../js/core/topbar-controller.js?v=v2026-09-08T18342";
-import { sb } from "../../js/core/supabase.js?v=v2026-09-08T18342";
-import { loadQuestions, loadAnswers } from "../../js/core/game-validate.js?v=v2026-09-08T18342";
-import { loadSfxManifest, initSfx, setCurrentGameId, unlockAudio, applySfxGameSettings, loadSfxFromCloud } from "../../js/core/sfx.js?v=v2026-09-08T18342";
-import { listGameSounds } from "../../js/core/sfx-cloud.js?v=v2026-09-08T18342";
-import { assertTransition } from "../../shared/gameStateMachine.js?v=v2026-09-08T18342";
-import { confirmModal } from "../../js/core/modal.js?v=v2026-09-08T18342";
-import { DEFAULT_SETTINGS } from "../../shared/gameStateShape.js?v=v2026-09-08T18342";
-import { rt } from "../../js/core/realtime.js?v=v2026-09-08T18342";
-import { doorbellTopic } from "../../js/core/game-state-doorbell.js?v=v2026-09-08T18342";
+import { guardDesktopOnly } from "../../js/core/device-guard.js?v=v2026-09-08T18231";
+import { guardResourceLock } from "../../js/core/resource-lock.js?v=v2026-09-08T18231";
+import { initI18n, getUiLang, t } from "../../translation/translation.js?v=v2026-09-08T18231";
+import { requireAuth } from "../../js/core/auth.js?v=v2026-09-08T18231";
+import { setTopbarAccount } from "../../js/core/topbar-controller.js?v=v2026-09-08T18231";
+import { sb } from "../../js/core/supabase.js?v=v2026-09-08T18231";
+import { loadQuestions, loadAnswers } from "../../js/core/game-validate.js?v=v2026-09-08T18231";
+import { loadSfxManifest, initSfx, setCurrentGameId, unlockAudio, applySfxGameSettings, loadSfxFromCloud, playSfx } from "../../js/core/sfx.js?v=v2026-09-08T18231";
+import { listGameSounds } from "../../js/core/sfx-cloud.js?v=v2026-09-08T18231";
+import { assertTransition } from "../../shared/gameStateMachine.js?v=v2026-09-08T18231";
+import { confirmModal } from "../../js/core/modal.js?v=v2026-09-08T18231";
+import { DEFAULT_SETTINGS } from "../../shared/gameStateShape.js?v=v2026-09-08T18231";
+import { rt } from "../../js/core/realtime.js?v=v2026-09-08T18231";
+import { doorbellTopic } from "../../js/core/game-state-doorbell.js?v=v2026-09-08T18231";
 
 function qrImgSrc(url) {
   const u = encodeURIComponent(String(url ?? ""));
@@ -84,12 +84,13 @@ function applyGameSettingsToState(settings, state) {
   }
 }
 
-import { createStore } from "./store.js?v=v2026-09-08T18342";
-import { createEngine } from "./engine.js?v=v2026-09-08T18342";
-import { createDevices } from "./devices.js?v=v2026-09-08T18342";
-import { createPresence } from "./presence.js?v=v2026-09-08T18342";
-import { createSoundReactor } from "./soundReactor.js?v=v2026-09-08T18342";
-import { createUI } from "./ui.js?v=v2026-09-08T18342";
+import { createStore } from "./store.js?v=v2026-09-08T18231";
+import { createEngine } from "./engine.js?v=v2026-09-08T18231";
+import { createDevices } from "./devices.js?v=v2026-09-08T18231";
+import { createPresence } from "./presence.js?v=v2026-09-08T18231";
+import { createSoundReactor } from "./soundReactor.js?v=v2026-09-08T18231";
+import { createUI } from "./ui.js?v=v2026-09-08T18231";
+import { createShareDevice } from "./shareDevice.js?v=v2026-09-08T18231";
 
 guardDesktopOnly();
 
@@ -110,6 +111,26 @@ async function pickQuestionPool(state) {
     [pool[i], pool[j]] = [pool[j], pool[i]];
   }
   return pool;
+}
+
+// Ten sam algorytm co dawne "setup.reshuffleFinal" (wykluczenie ręcznie
+// wybranej puli rund, tasowanie, pierwsze 5) — wydzielone, żeby móc go
+// wołać zarówno z tamtej akcji, jak i z automatycznego pierwszego losowania
+// (ensureQuestionsDrawn niżej). Zwraca też "pickedPreview" (id+tekst) —
+// samo `picked` to tylko ID, za mało żeby operator zobaczył CO wylosowano
+// w Podsumowaniu, zanim finał się realnie zacznie.
+async function drawFinalPicks(state) {
+  const all = await loadQuestions(state.gameId);
+  const roundsPicked = new Set((state.settings.roundsPicked || []).map((q) => String(q.id)));
+  const pool = state.settings.roundsQuestionsMode === "pick" && roundsPicked.size
+    ? all.filter((q) => !roundsPicked.has(String(q.id)))
+    : all.slice();
+  for (let i = pool.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+  const picks = pool.slice(0, 5);
+  return { picked: picks.map((q) => q.id), pickedPreview: picks.map((q) => ({ id: q.id, text: q.text })) };
 }
 
 async function main() {
@@ -245,6 +266,18 @@ async function main() {
   });
   presence.start();
 
+  // "Udostępnij" per urządzenie (D0/D1) — modal 1:1 ze starym Control
+  // (control2/js/shareDevice.js). Znaczek (badge "1"/puste) na przycisku
+  // idzie przez ctx.shareBadges zamiast bezpośredniej mutacji DOM, bo wiersz
+  // urządzenia jest przebudowywany przy każdym renderDevicesStep().
+  let shareBadges = {};
+  const shareDevice = createShareDevice({
+    currentUser: user,
+    game,
+    onBadgesChanged: (badges) => { shareBadges = badges; renderCurrent(); },
+  });
+  shareDevice.refreshBadges();
+
   const soundReactor = createSoundReactor(store);
 
   // Odblokowanie audio po cichu na pierwszej dowolnej interakcji (sekcja 3a
@@ -285,7 +318,7 @@ async function main() {
   function renderCurrent() {
     scheduleFinalTimerWatch();
     scheduleTimer3Watch();
-    ui.render(store.state, { urls, presenceFlags, connectCodes });
+    ui.render(store.state, { urls, presenceFlags, connectCodes, shareBadges });
   }
 
   // Samo renderCurrent() maluje cyfry timera3 tylko RAZ, w momencie zmiany
@@ -293,7 +326,9 @@ async function main() {
   // pokazywałby tę samą liczbę aż do wygaśnięcia. Odświeżamy tylko wtedy,
   // gdy faktycznie coś odlicza — reszta czasu bez zbędnej pracy.
   setInterval(() => {
-    if (store.state.rounds?.timer3?.running) ui.render(store.state, { urls, presenceFlags, connectCodes });
+    if (store.state.rounds?.timer3?.running || store.state.final?.runtime?.timer?.running) {
+      ui.render(store.state, { urls, presenceFlags, connectCodes, shareBadges });
+    }
   }, 250);
 
   // ===== Modal QR z topbaru (prywatny podgląd operatora — nie to samo co
@@ -343,6 +378,18 @@ async function main() {
     const code = kind && connectCodes[kind];
     if (code) { try { await navigator.clipboard.writeText(code); } catch {} }
   });
+
+  // Kropki statusu w topbarze są klikalne PRZEZ CAŁĄ GRĘ (nie tylko na
+  // kroku Urządzenia) — po to są te modale: jeśli urządzenie trzeba
+  // ponownie podłączyć w trakcie rozgrywki (np. tablet się zrestartował),
+  // operator musi mieć skąd wziąć kod/QR bez cofania się do kroku
+  // Urządzenia (które i tak nie jest już wtedy dostępne — poza D0/D3 nie
+  // ma przejścia z powrotem). Te elementy są statyczne (poza #app), więc
+  // jednorazowe podpięcie tu jest bezpieczne, w odróżnieniu od przycisków
+  // w device-row, patrz control2/js/shareDevice.js.
+  document.getElementById("dotDisplayRow")?.addEventListener("click", () => showQrModal("display"));
+  document.getElementById("dotHostRow")?.addEventListener("click", () => showQrModal("host"));
+  document.getElementById("dotBuzzerRow")?.addEventListener("click", () => showQrModal("buzzer"));
 
   // ===== Info / Polityka prywatności — identyczna logika co dzisiejszy
   // control/js/app.js (helpOverlay -> iframe /manual, legalOverlay -> /privacy). =====
@@ -427,8 +474,29 @@ async function main() {
       });
       if (!ok) return;
     }
+    // Fire-and-forget, jak dzisiejsze control/js/app.js — nie blokujemy
+    // wyjścia na tym, przeglądarka i tak zaraz nawiguje dalej.
+    shareDevice.expireShares().catch(() => {});
     location.href = "/builder";
   });
+
+  // "Losowo" ma losować RAZ, od razu przy wejściu w Podsumowanie (D3), i
+  // pokazać co wylosowano — nie dopiero leniwie przy pierwszym Starcie
+  // rundy/finału (plan, sekcja 3a pkt 1). Bezpieczne wołać wielokrotnie:
+  // no-op jeśli pula już wylosowana (a "Losuj ponownie" i tak nadpisuje
+  // jawnie, osobną akcją).
+  async function ensureQuestionsDrawn() {
+    const st = store.state;
+    if (st.settings.roundsQuestionsMode !== "pick" && !st.rounds._questionPool?.length) {
+      st.rounds._questionPool = await pickQuestionPool(st);
+    }
+    if (st.settings.hasFinal === true && st.settings.finalQuestionsMode !== "pick" && !st.final.picked?.length) {
+      const { picked, pickedPreview } = await drawFinalPicks(st);
+      st.final.picked = picked;
+      st.final.pickedPreview = pickedPreview;
+      st.final.confirmed = true;
+    }
+  }
 
   async function advance(nextStep, extra = {}, soundCueKey) {
     assertTransition(store.state.step, nextStep);
@@ -436,6 +504,49 @@ async function main() {
     Object.assign(store.state, extra);
     await store.commit({ soundCueKey });
   }
+
+  // Wpisywanie finału (F1/F8): "Rozpocznij odliczanie"/"Zatrzymaj" to jeden
+  // toggle, dokładnie jak stare control/js/gameFinal.js's p1StartTimer()/
+  // p2StartTimer() — wczesne zatrzymanie dozwolone TYLKO gdy wszystkie pola
+  // są wypełnione (allFilledP1/P2, jak dawne timerStopEarlyIfAllowed),
+  // inaczej klik/skrót nic nie robi. Jedno miejsce prawdy, reużywane przez
+  // kafel w control2/js/ui.js i przez skrót Ctrl/Cmd+Shift niżej.
+  function allFilledP1() {
+    return store.state.final.runtime.p1.every((x) => String(x?.text || "").trim().length > 0);
+  }
+  function allFilledP2() {
+    return store.state.final.runtime.p2.every((x) => (x?.repeat ? true : String(x?.text || "").trim().length > 0));
+  }
+  async function toggleFinalTimer(round) {
+    const phase = round === 1 ? "P1" : "P2";
+    const timer = store.state.final.runtime.timer;
+    if (timer.running && timer.phase === phase) {
+      const filled = round === 1 ? allFilledP1() : allFilledP2();
+      if (!filled) return;
+      await engine.dispatch({ type: "EXPIRE_TIMER" });
+      return;
+    }
+    const used = round === 1 ? timer.usedP1 : timer.usedP2;
+    if (used) return;
+    await engine.dispatch({ type: "START_TIMER", phase });
+  }
+
+  // ---------------- SKRÓT: Ctrl/Cmd+Shift -> start/zatrzymanie odliczania ----------------
+  // 1:1 z dawnym control/js/gameFinal.js's wantsFinalTimerHotkey/
+  // handleFinalTimerHotkey — działa tylko na krokach wpisywania finału
+  // (f_p1_entry/f_p2_entry), celowo nawet gdy operator akurat pisze w polu.
+  function isMacLike() {
+    const p = navigator.platform || "";
+    return /Mac|iPhone|iPad|iPod/i.test(p);
+  }
+  document.addEventListener("keydown", (e) => {
+    const main = isMacLike() ? e.metaKey : e.ctrlKey;
+    if (!main || !e.shiftKey || e.altKey || e.repeat) return;
+    const step = store.state.step;
+    if (step !== "f_p1_entry" && step !== "f_p2_entry") return;
+    e.preventDefault();
+    toggleFinalTimer(step === "f_p1_entry" ? 1 : 2).catch(() => {});
+  }, { capture: true });
 
   async function handle(action, payload) {
     try {
@@ -500,16 +611,31 @@ async function main() {
         if (code) { try { await navigator.clipboard.writeText(code); } catch {} }
         return;
       }
+      if (action === "devices.shareOpen") {
+        await shareDevice.open(payload);
+        return;
+      }
       if (action === "devices.next") {
         // Wyjście z podłączania: wracamy do BLACK, jeśli operator zostawił widoczny QR.
         store.state.display.mode = "BLACK";
         store.state.display.qr.host = { show: false, url: null, code: null };
         store.state.display.qr.buzzer = { show: false, url: null, code: null };
+        // "Losowo" ma losować OD RAZU i pokazać co wylosowano w Podsumowaniu
+        // — nie leniwie dopiero przy pierwszym Starcie rundy/finału.
+        await ensureQuestionsDrawn();
         await advance("setup_finish");
         return;
       }
       if (action === "setup.openSettings") {
         openGsModal();
+        return;
+      }
+      if (action === "setup.back") {
+        // Dokładnie jak stare control/js/app.js's setup.finish.back ->
+        // setActiveCard("devices") — swobodny powrót, nic nie resetuje
+        // (parowanie urządzeń i tak zostaje, bo to osobny mechanizm
+        // presence, nie stan gry).
+        await advance("devices_display");
         return;
       }
       if (action === "setup.start") {
@@ -531,16 +657,9 @@ async function main() {
       }
       if (action === "setup.reshuffleFinal") {
         if (store.state.settings.finalQuestionsMode === "pick" || store.state.locks.gameStarted) return;
-        const all = await loadQuestions(store.state.gameId);
-        const roundsPicked = new Set((store.state.settings.roundsPicked || []).map((q) => String(q.id)));
-        const pool = store.state.settings.roundsQuestionsMode === "pick" && roundsPicked.size
-          ? all.filter((q) => !roundsPicked.has(String(q.id)))
-          : all.slice();
-        for (let i = pool.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
-          [pool[i], pool[j]] = [pool[j], pool[i]];
-        }
-        store.state.final.picked = pool.slice(0, 5).map((q) => q.id);
+        const { picked, pickedPreview } = await drawFinalPicks(store.state);
+        store.state.final.picked = picked;
+        store.state.final.pickedPreview = pickedPreview;
         store.state.final.confirmed = true;
         await store.commit();
         return;
@@ -557,6 +676,16 @@ async function main() {
         await advance("r_roundStart", { phase: "READY" }, "show_intro");
         return;
       }
+      // "Zacznij od nowa" wołane z przycisku na ekranie końca gry (obok
+      // "Wróć do moich gier") — ta sama funkcja co topbar's #btnStartOver.
+      if (action === "game.restart") { await restartGame(); return; }
+      // Próbka dźwięku powtórzenia na ekranie "Rozpocznij 2 rundę" — dokładnie
+      // jak stare control.html's "final.repeatTest": czysto lokalny podgląd
+      // dźwięku, bez żadnego zapisu do game_state (nic w grze się nie zmienia).
+      if (action === "final.repeatTest") { playSfx("answer_repeat"); return; }
+      // Kafel odliczania na ekranie wpisywania finału — ten sam toggle co
+      // skrót Ctrl/Cmd+Shift (patrz toggleFinalTimer wyżej).
+      if (action === "final.toggleTimer") { await toggleFinalTimer(payload.round); return; }
       if (action === "game.dispatch") { await engine.dispatch(payload); return; }
     } catch (e) {
       console.error("[control2] akcja nie powiodła się:", action, e);
@@ -569,23 +698,11 @@ async function main() {
   syncMuteButton();
   btnMute?.addEventListener("click", () => { soundReactor.toggleMuted(); syncMuteButton(); });
 
-  // "Cofnij ostatnią akcję" (plan, sekcja 4) — jednopoziomowe cofnięcie
-  // przez game_state_undo/game_state_history. Nigdy nie było wcześniej
-  // wystawione w UI (tylko store.undo() istniał) — dopięte tu.
-  document.getElementById("btnUndo")?.addEventListener("click", async () => {
-    try {
-      await store.undo();
-    } catch (e) {
-      if (String(e?.message || e).includes("no_history")) {
-        alert("Brak akcji do cofnięcia.");
-      } else {
-        console.error("[control2] cofnięcie nie powiodło się:", e);
-        alert(`Błąd cofnięcia: ${e.message || e}`);
-      }
-    }
-  });
-
-  document.getElementById("btnStartOver")?.addEventListener("click", async () => {
+  // Wydzielone z topbara, żeby ten sam "Zacznij od nowa" dało się też
+  // wywołać z przycisku na ekranach końca gry (control2/js/ui.js's
+  // renderGameEnd/renderFinalEnd, akcja "game.restart" w handle() niżej) —
+  // dokładnie ta sama logika, dwa miejsca wywołania.
+  async function restartGame() {
     const ok = await confirmModal({
       title: "Zacznij od nowa",
       text: "To wróci do podłączania urządzeń i wyzeruje postęp gry (drużyny, pytania, wyniki). Parowanie urządzeń zostaje. Ustawienia zaawansowane zostają zachowane.",
@@ -628,7 +745,8 @@ async function main() {
       console.warn("[control2] odświeżenie games.settings po 'Zacznij od nowa' nie powiodło się:", e);
     }
     await store.commit();
-  });
+  }
+  document.getElementById("btnStartOver")?.addEventListener("click", restartGame);
 
   store.subscribe(renderCurrent);
   renderCurrent();

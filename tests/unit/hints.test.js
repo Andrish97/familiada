@@ -54,28 +54,31 @@ test("getRoundsHint: r_duel po zgłoszeniu (przed przyjęciem) pokazuje kto się
   const { store, dispatch } = makeEngine();
   await dispatch({ type: "START_ROUND" });
   store.state.rounds.duel.lastPressed = "A";
-  assert.match(getRoundsHint(store.state), /Pierwsza: A/);
+  assert.match(getRoundsHint(store.state), /Pierwsza: Drużyna A/);
 });
 
 test("getRoundsHint: faza DUEL po ACCEPT_BUZZ — pierwsza i druga próba mają różny tekst", async () => {
   const { store, dispatch } = makeEngine();
   await dispatch({ type: "START_ROUND" });
   await dispatch({ type: "ACCEPT_BUZZ", team: "A" });
-  assert.match(getRoundsHint(store.state), /Pojedynek — odpowiada: A/);
+  assert.match(getRoundsHint(store.state), /Pojedynek — odpowiada: Drużyna A/);
 
   await dispatch({ type: "REVEAL_ANSWER", ord: 3 }); // nie-topowa -> CONTINUE_SECOND
-  assert.match(getRoundsHint(store.state), /Teraz odpowiada: B/);
+  assert.match(getRoundsHint(store.state), /Teraz odpowiada: Drużyna B/);
 });
 
+// Hinty celowo NIE powtarzają, kto ma kontrolę/ile jest w banku — to już
+// pokazuje pasek statusu pod siatką (control2/js/ui.js) — tylko podpowiadają
+// kolejny krok operatora.
 test("getRoundsHint: faza PLAY — z opcją oddania pytania vs bez", async () => {
   const { store, dispatch } = makeEngine();
   await dispatch({ type: "START_ROUND" });
   await dispatch({ type: "ACCEPT_BUZZ", team: "A" });
   await dispatch({ type: "REVEAL_ANSWER", ord: 1 }); // WIN -> PLAY, allowPass=true
-  assert.match(getRoundsHint(store.state), /Może zagrać albo oddać pytanie/);
+  assert.match(getRoundsHint(store.state), /Może zagrać dalej albo oddać kontrolę/);
 
   await dispatch({ type: "REVEAL_ANSWER", ord: 2 }); // allowPass -> false
-  assert.equal(getRoundsHint(store.state), "Kontrolę ma: A.");
+  assert.equal(getRoundsHint(store.state), "Wskaż trafioną odpowiedź albo kliknij X (pudło).");
 });
 
 test("getRoundsHint: faza STEAL — przed i po rozstrzygnięciu", async () => {
@@ -86,7 +89,7 @@ test("getRoundsHint: faza STEAL — przed i po rozstrzygnięciu", async () => {
   await dispatch({ type: "ADD_X" });
   await dispatch({ type: "ADD_X" });
   await dispatch({ type: "ADD_X" }); // STEAL, drużyna B
-  assert.match(getRoundsHint(store.state), /Szansa na kradzież. Odpowiada: B/);
+  assert.match(getRoundsHint(store.state), /Szansa na kradzież. Kliknij trafioną odpowiedź/);
 
   await dispatch({ type: "ADD_X" }); // B pudłuje kradzież
   assert.match(getRoundsHint(store.state), /Kradzież nietrafiona/);
@@ -107,11 +110,14 @@ test("getFinalHint: f_start i etap wpisywania (zegarek jeszcze nieużyty / w tra
   await engine.dispatch({ type: "START_FINAL" });
   assert.match(getFinalHint(store.state), /Wpisz odpowiedzi gracza 1.*15s/);
 
+  // Hint zostaje widoczny podczas odliczania, ale drugie zdanie mówi o
+  // zatrzymaniu zamiast o starcie (zgłoszone) — "15s" znika, bo odliczanie
+  // już trwa, nie trzeba już mówić, ile trwa start.
   await engine.dispatch({ type: "START_TIMER", phase: "P1" });
-  assert.match(getFinalHint(store.state), /Odliczanie trwa/);
+  assert.match(getFinalHint(store.state), /Wpisz odpowiedzi gracza 1.*zatrzymać odliczanie/);
 
   await engine.dispatch({ type: "EXPIRE_TIMER" });
-  assert.match(getFinalHint(store.state), /Czas wykorzystany/);
+  assert.match(getFinalHint(store.state), /Czas wykorzystany.*dokończyć wpisywanie/);
 });
 
 test("getFinalHint: mapowanie pytania — puste, wpisane, odsłonięte, z punktami; powtórzenie u gracza 2", async () => {
@@ -126,20 +132,22 @@ test("getFinalHint: mapowanie pytania — puste, wpisane, odsłonięte, z punkta
   await engine.dispatch({ type: "START_FINAL" });
   await engine.dispatch({ type: "START_MAPPING", round: 1 });
 
-  assert.match(getFinalHint(store.state), /Brak wpisu/);
+  // Rozstrzygnięcie jest zawsze już jakieś (domyślne MISS/SKIP) — hint nie
+  // różnicuje już puste/wpisane, tylko mówi "potwierdź, żeby odsłonić".
+  assert.match(getFinalHint(store.state), /potwierdź „Pokaż odpowiedź”/);
 
   await engine.dispatch({ type: "SET_ENTRY_TEXT", round: 1, idx: 0, text: "Mleko" });
-  assert.match(getFinalHint(store.state), /Wpisano: „Mleko”/);
+  assert.match(getFinalHint(store.state), /potwierdź „Pokaż odpowiedź”/);
 
   await engine.dispatch({ type: "RESOLVE_MAPPING", round: 1, idx: 0, mode: "MANUAL", kind: "MATCH", matchId: "a1", outText: "Mleko", pts: 10 });
   await engine.dispatch({ type: "REVEAL_ANSWER_ONLY", round: 1, idx: 0 });
-  assert.match(getFinalHint(store.state), /Pokaż punkty/);
+  assert.match(getFinalHint(store.state), /„Pokaż punkty”/);
 
   await engine.dispatch({ type: "REVEAL_POINTS", round: 1, idx: 0 });
   assert.match(getFinalHint(store.state), /Punkty odsłonięte/);
 });
 
-test("getFinalHint: powtórzenie u gracza 2 nadpisuje zwykłą podpowiedź mapowania", async () => {
+test("getFinalHint: powtórzenie u gracza 2 pokazuje się RAZEM ze zwykłą podpowiedzią mapowania", async () => {
   let t = 1_000_000;
   const store = createFakeStore("g1", { settings: { ...DEFAULT_SETTINGS, hasFinal: true, finalTarget: 999 }, final: { picked: ["q1", "q2", "q3", "q4", "q5"], confirmed: true, winnerTeam: null, questions: [], runtime: {} }, rounds: { totals: { A: 300, B: 0 } }, step: "f_start", topCard: "final" });
   const engine = createEngine({
@@ -154,8 +162,16 @@ test("getFinalHint: powtórzenie u gracza 2 nadpisuje zwykłą podpowiedź mapow
   await engine.dispatch({ type: "START_P2_ROUND" });
   await engine.dispatch({ type: "START_MAPPING", round: 2 });
 
-  assert.match(getFinalHint(store.state), /Brak wpisu/);
+  assert.match(getFinalHint(store.state), /potwierdź „Pokaż odpowiedź”/);
 
   await engine.dispatch({ type: "SET_REPEAT", round: 2, idx: 0, repeat: true });
-  assert.match(getFinalHint(store.state), /Oznaczone jako powtórzenie/);
+  // Oba zdania naraz (zgłoszone), nie tylko "Oznaczone jako powtórzenie"
+  // zamiast instrukcji odsłonięcia.
+  assert.match(getFinalHint(store.state), /Oznaczone jako powtórzenie.*potwierdź „Pokaż odpowiedź”/);
+
+  await engine.dispatch({ type: "RESOLVE_MAPPING", round: 2, idx: 0, mode: "MANUAL", kind: "SKIP", matchId: null, outText: "", pts: 0 });
+  await engine.dispatch({ type: "REVEAL_ANSWER_ONLY", round: 2, idx: 0 });
+  // Po odsłonięciu wraca zwykły hint bez wzmianki o powtórzeniu — repeat jest
+  // już historią, nie ma czego dalej pilnować.
+  assert.match(getFinalHint(store.state), /„Pokaż punkty”/);
 });

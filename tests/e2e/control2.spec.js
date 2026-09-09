@@ -13,24 +13,23 @@
 //      faktycznie wznawia stan, zamiast go kasować jak dziś).
 //   3. Mechanika rund poza ścieżką idealną: reset pojedynku obustronnym
 //      pudłem, pass, kradzież wygrana/przegrana, odkrywanie reszty,
-//      mnożnik, koniec gry bez finału + "Zakończ rozgrywkę".
+//      mnożnik, koniec gry bez finału + "Wróć do moich gier".
 //   4. Finał: próg w rundzie -> finał, wczesne zakończenie po osiągnięciu
 //      celu w połowie mapowania gracza 1 (pomija gracza 2 całkowicie).
-//   5-8. Nietypowe zachowania operatora: physicalBuzzer + noHostTablet,
-//      "Zacznij od nowa", "Cofnij ostatnią akcję", druga karta Control
-//      blokowana (resource-lock), QR host/buzzer niezależne na Display.
-//   9. QR host/buzzer niezależne na Display.
-//   10. Finał BEZ wczesnego wyjścia — obaj gracze, wszystkie 10 pytań,
+//   5-7. Nietypowe zachowania operatora: physicalBuzzer + noHostTablet,
+//      "Zacznij od nowa", druga karta Control blokowana (resource-lock).
+//   8. QR host/buzzer niezależne na Display.
+//   9. Finał BEZ wczesnego wyjścia — obaj gracze, wszystkie 10 pytań,
 //       naturalne wygaśnięcie timera gracza 1, flaga "powtórzenie" u
 //       gracza 2, i — najważniejsze — dowód, że odpowiedzi gracza 1
 //       faktycznie wracają na Display I Host w momencie startu rundy 2
 //       (dokładnie ta luka, która była naprawiana w tej sesji audytu).
-//   11. Mnożnik rundy — runda 4. z ×2 faktycznie przemnaża bank.
-//   12. Wyścig dwóch przycisków Buzzera naciśniętych w tej samej chwili —
+//   10. Mnożnik rundy — runda 4. z ×2 faktycznie przemnaża bank.
+//   11. Wyścig dwóch przycisków Buzzera naciśniętych w tej samej chwili —
 //       tylko jeden zaakceptowany, oba urządzenia się zgadzają.
-//   13. Wyciszenie dźwięku — po kliknięciu Mute żaden klucz SFX się nie
+//   12. Wyciszenie dźwięku — po kliknięciu Mute żaden klucz SFX się nie
 //       odtwarza mimo normalnie grającej akcji.
-//   14. Zmiana języka propaguje się do Hosta, w tym samą TREŚĆ tytułu fazy
+//   13. Zmiana języka propaguje się do Hosta, w tym samą TREŚĆ tytułu fazy
 //       (nie tylko chrome strony) — regresja na dzisiejszą naprawę i18n.
 //
 // Każdy test tworzy i kasuje własną grę testową — niezależne od siebie,
@@ -90,6 +89,41 @@ async function waitForSfxKeysAnyOrder(page, keys, timeout = 15000) {
 
 async function clearDisplayLog(displayPage) {
   await displayPage.evaluate(() => { window.__displayLog = []; });
+}
+
+// Kafelki odpowiedzi w Rundach (control2/js/ui.js's renderRounds()) nie
+// pokazują już "#N" — pokazują prawdziwy tekst odpowiedzi (i zmieniają się
+// po odsłonięciu), więc nie da się ich stabilnie wybrać po treści. Kolejność
+// w DOM jest za to stała: renderRounds() dopisuje kafelki odpowiedzi do
+// tablicy `tiles` w kolejności `ord` PRZED kafelkami X/licznika/timera, więc
+// n-ty (1-bazowy) przycisk w jedynym renderowanym `.c2-tilegrid` to zawsze
+// odpowiedź o ord=n — dokładnie ten sam kafelek, który dawniej pokazywał
+// tekst "#n".
+function answerTile(page, n) {
+  return page.locator(".c2-tilegrid button").nth(n - 1);
+}
+
+// Odpowiedź/X/"Oddaj kontrolę" idą przez zaznacz -> potwierdź
+// (control2/js/ui.js's armableTile): pierwsze kliknięcie tylko uzbraja
+// (złota obwódka, zero zapisu), drugie na TYM SAMYM elemencie faktycznie
+// wysyła akcję. Locator jest "żywy" (przeliczany przy każdym użyciu), więc
+// dwa kolejne .click() poprawnie trafiają w ten sam kafel mimo przebudowy
+// DOM między nimi.
+async function armAndConfirm(locator) {
+  await locator.click();
+  await locator.click();
+}
+
+async function revealAnswer(page, n) {
+  await armAndConfirm(answerTile(page, n));
+}
+
+function xTile(page) {
+  return page.getByRole("button", { name: "X", exact: true });
+}
+
+async function clickX(page) {
+  await armAndConfirm(xTile(page));
 }
 
 async function getDisplayCalls(displayPage, filterPrefix = "") {
@@ -219,8 +253,10 @@ test("control2: parowanie urządzeń — linki renderują się bez błędu, Cont
     await expect(page.locator("#dotDisplay")).toHaveClass(/\bok\b/, { timeout: 15000 });
     await expect(page.locator("#dotHost")).toHaveClass(/\bok\b/, { timeout: 15000 });
     await expect(page.locator("#dotBuzzer")).toHaveClass(/\bok\b/, { timeout: 15000 });
-    await expect(page.locator('.device-row[data-device="host"] .badge')).toHaveText("Online", { timeout: 10000 });
-    await expect(page.locator('.device-row[data-device="buzzer"] .badge')).toHaveText("Online", { timeout: 10000 });
+    // .device-row-1 (nie cały .device-row) — od dodania "Udostępnij" każdy
+    // wiersz ma DRUGI .badge (znaczek udostępnienia) w device-row-2.
+    await expect(page.locator('.device-row[data-device="host"] .device-row-1 .badge')).toHaveText("Online", { timeout: 10000 });
+    await expect(page.locator('.device-row[data-device="buzzer"] .device-row-1 .badge')).toHaveText("Online", { timeout: 10000 });
 
     await page.getByRole("button", { name: "Dalej" }).click();
     await expect(page.locator(".stepTitle")).toHaveText("Podsumowanie", { timeout: 10000 });
@@ -253,9 +289,9 @@ test("control2: pełna runda przez 4 urządzenia + wznowienie Control po przeła
     await expect(page.getByText("Alfa vs Beta")).toBeVisible();
     await page.getByRole("button", { name: "Gotowe — przejdź do rund" }).click();
 
-    await page.getByRole("button", { name: "Dalej" }).click();
+    await page.getByRole("button", { name: "Rozpocznij grę" }).click();
     await expect(page.locator(".c2-stepper")).toContainText("Runda 1", { timeout: 10000 });
-    await page.getByRole("button", { name: "Start rundy" }).click();
+    await page.getByRole("button", { name: "Rozpocznij rundę" }).click();
 
     // Regresja: Prowadzący musi widzieć PEŁNĄ treść i punkty KAŻDEJ
     // odpowiedzi od początku rundy, nie tylko już odsłoniętych dla widzów
@@ -266,13 +302,13 @@ test("control2: pełna runda przez 4 urządzenia + wznowienie Control po przeła
 
     await expect(buzzerPage.getByRole("button", { name: "Buzzer A" })).toBeEnabled({ timeout: 10000 });
     await buzzerPage.getByRole("button", { name: "Buzzer A" }).click();
-    await expect(page.getByText("Zgłoszono: A")).toBeVisible({ timeout: 10000 });
-    await page.getByRole("button", { name: "Przyjmij" }).click();
+    await expect(page.getByRole("button", { name: "Zatwierdź: Alfa" })).toBeEnabled({ timeout: 10000 });
+    await page.getByRole("button", { name: "Zatwierdź: Alfa" }).click();
 
     // Odpowiedź #1 ma najwyższe punkty (40) — trafienie wygrywa pojedynek.
-    await page.getByRole("button", { name: "#1" }).click();
-    await page.getByRole("button", { name: "#2" }).click();
-    await page.getByRole("button", { name: "#3" }).click();
+    await revealAnswer(page, 1);
+    await revealAnswer(page, 2);
+    await revealAnswer(page, 3);
     await page.getByRole("button", { name: "Zakończ rundę" }).click();
 
     // finalizeRound(): próg (300) nieosiągnięty, pula ma jeszcze pytanie 2.
@@ -292,7 +328,7 @@ test("control2: pełna runda przez 4 urządzenia + wznowienie Control po przeła
 
 // ===== 3. Mechanika rund: reset pojedynku, pass, kradzież win/loss, R8 =====
 
-test("control2: reset pojedynku, pass, kradzież wygrana/przegrana, odkrywanie reszty, koniec gry + Zakończ rozgrywkę", async ({ page, browser }) => {
+test("control2: reset pojedynku, pass, kradzież wygrana/przegrana, odkrywanie reszty, koniec gry + Wróć do moich gier", async ({ page, browser }) => {
   await loginAsTestUser(page, page.context());
   const game = await makeGame(page, `E2E-CONTROL2-ROUNDMECH-${Date.now()}`, { roundQuestions: TWO_QUESTIONS });
   const contexts = [];
@@ -309,66 +345,66 @@ test("control2: reset pojedynku, pass, kradzież wygrana/przegrana, odkrywanie r
     await page.getByRole("button", { name: "Dalej" }).click();
     await expect(page.locator(".stepTitle")).toHaveText("Podsumowanie", { timeout: 10000 });
     await page.getByRole("button", { name: "Gotowe — przejdź do rund" }).click();
-    await page.getByRole("button", { name: "Dalej" }).click();
+    await page.getByRole("button", { name: "Rozpocznij grę" }).click();
 
     // ===== RUNDA 1 =====
     await expect(page.locator(".c2-stepper")).toContainText("Runda 1", { timeout: 10000 });
-    await page.getByRole("button", { name: "Start rundy" }).click();
+    await page.getByRole("button", { name: "Rozpocznij rundę" }).click();
 
     await expect(buzzerPage.getByRole("button", { name: "Buzzer A" })).toBeEnabled({ timeout: 10000 });
     await buzzerPage.getByRole("button", { name: "Buzzer A" }).click();
-    await expect(page.getByText("Zgłoszono: A")).toBeVisible({ timeout: 10000 });
-    await page.getByRole("button", { name: "Przyjmij" }).click();
-    await page.getByRole("button", { name: "X", exact: true }).click(); // A pudłuje -> kolej B
+    await expect(page.getByRole("button", { name: "Zatwierdź: Alfa" })).toBeEnabled({ timeout: 10000 });
+    await page.getByRole("button", { name: "Zatwierdź: Alfa" }).click();
+    await clickX(page); // A pudłuje -> kolej B
     // B pudłuje też -> RESET CYKLU: kolej wraca do A, BEZ nowego zgłoszenia
     // buzzera (firstTeam/secondTeam nie są czyszczone — "nie ma czegoś
     // takiego jak ponowny buzer").
-    await page.getByRole("button", { name: "X", exact: true }).click();
+    await clickX(page);
 
-    await page.getByRole("button", { name: "#1" }).click(); // A trafia (40 pkt) -> wygrywa pojedynek, BEZ nowego zgłoszenia
+    await revealAnswer(page, 1); // A trafia (40 pkt) -> wygrywa pojedynek, BEZ nowego zgłoszenia
     await expect(page.getByText("Bank: 40")).toBeVisible({ timeout: 10000 });
 
-    await page.getByRole("button", { name: "X", exact: true }).click();
-    await page.getByRole("button", { name: "X", exact: true }).click();
-    await page.getByRole("button", { name: "X", exact: true }).click(); // 3x pudło A -> auto-KRADZIEŻ dla B
+    await clickX(page);
+    await clickX(page);
+    await clickX(page); // 3x pudło A -> auto-KRADZIEŻ dla B
 
-    await page.getByRole("button", { name: "#2" }).click(); // B kradnie WYGRANĄ (30 pkt)
+    await revealAnswer(page, 2); // B kradnie WYGRANĄ (30 pkt)
     await expect(page.getByText("Bank: 70")).toBeVisible({ timeout: 10000 });
 
     await page.getByRole("button", { name: "Zakończ rundę" }).click();
-    await page.getByRole("button", { name: "#3" }).click(); // #3 nieodkryte -> R8
+    await revealAnswer(page, 3); // #3 nieodkryte -> R8
 
     await expect(page.locator(".c2-stepper")).toContainText("Runda 2", { timeout: 10000 });
     await expect(page.getByText(/Wyniki: A 0 — B 70/)).toBeVisible({ timeout: 10000 });
 
     // ===== RUNDA 2 =====
-    await page.getByRole("button", { name: "Start rundy" }).click();
+    await page.getByRole("button", { name: "Rozpocznij rundę" }).click();
     await expect(buzzerPage.getByRole("button", { name: "Buzzer B" })).toBeEnabled({ timeout: 10000 });
     await buzzerPage.getByRole("button", { name: "Buzzer B" }).click();
-    await expect(page.getByText("Zgłoszono: B")).toBeVisible({ timeout: 10000 });
-    await page.getByRole("button", { name: "Przyjmij" }).click();
+    await expect(page.getByRole("button", { name: "Zatwierdź: Beta" })).toBeEnabled({ timeout: 10000 });
+    await page.getByRole("button", { name: "Zatwierdź: Beta" }).click();
 
-    await page.getByRole("button", { name: "#1" }).click(); // B trafia (40 pkt) -> kontrola B, allowPass
-    await page.getByRole("button", { name: "Pass" }).click(); // "Oddaj pytanie" -> kontrola A
+    await revealAnswer(page, 1); // B trafia (40 pkt) -> kontrola B, allowPass
+    await armAndConfirm(page.getByRole("button", { name: "Oddaj kontrolę" })); // dawny "Pass" -> kontrola A
 
-    await page.getByRole("button", { name: "#2" }).click(); // A trafia (30 pkt) -> bank 70
+    await revealAnswer(page, 2); // A trafia (30 pkt) -> bank 70
     await expect(page.getByText("Bank: 70")).toBeVisible({ timeout: 10000 });
 
-    await page.getByRole("button", { name: "X", exact: true }).click();
-    await page.getByRole("button", { name: "X", exact: true }).click();
-    await page.getByRole("button", { name: "X", exact: true }).click(); // 3x pudło A -> auto-KRADZIEŻ dla B
+    await clickX(page);
+    await clickX(page);
+    await clickX(page); // 3x pudło A -> auto-KRADZIEŻ dla B
 
-    await page.getByRole("button", { name: "X", exact: true }).click(); // B kradnie, ale też PUDŁUJE -> kradzież PRZEGRANA
+    await clickX(page); // B kradnie, ale też PUDŁUJE -> kradzież PRZEGRANA
     await page.getByRole("button", { name: "Zakończ rundę" }).click();
-    await page.getByRole("button", { name: "#3" }).click(); // R8 ponownie
+    await revealAnswer(page, 3); // R8 ponownie
 
     // Pula wyczerpana (2/2), próg nieosiągnięty, hasFinal=false -> r_gameEnd.
     // Runda 1 dała bank drużynie B (70), runda 2 zostaje przy A (70) -> remis.
     await expect(page.locator(".c2-stepper")).toContainText("Koniec gry", { timeout: 10000 });
     await expect(page.getByText("Wynik końcowy: A 70 — B 70")).toBeVisible({ timeout: 10000 });
 
-    await page.getByRole("button", { name: "Pokaż koniec gry" }).click();
-    const finishBtn = page.getByRole("button", { name: "Zakończ rozgrywkę" });
+    await page.getByRole("button", { name: "Zakończ grę" }).click();
+    const finishBtn = page.getByRole("button", { name: "Wróć do moich gier" });
     await expect(finishBtn).toBeVisible({ timeout: 10000 });
     await finishBtn.click();
     await expect(page).toHaveURL(/\/builder/, { timeout: 10000 });
@@ -402,47 +438,50 @@ test("control2: próg w rundzie -> finał, wczesne zakończenie po 4/5 pytaniach
     await page.getByRole("button", { name: "Dalej" }).click();
     await expect(page.locator(".stepTitle")).toHaveText("Podsumowanie", { timeout: 10000 });
     await page.getByRole("button", { name: "Gotowe — przejdź do rund" }).click();
-    await page.getByRole("button", { name: "Dalej" }).click();
-    await page.getByRole("button", { name: "Start rundy" }).click();
+    await page.getByRole("button", { name: "Rozpocznij grę" }).click();
+    await page.getByRole("button", { name: "Rozpocznij rundę" }).click();
 
     await expect(buzzerPage.getByRole("button", { name: "Buzzer A" })).toBeEnabled({ timeout: 10000 });
     await buzzerPage.getByRole("button", { name: "Buzzer A" }).click();
-    await expect(page.getByText("Zgłoszono: A")).toBeVisible({ timeout: 10000 });
-    await page.getByRole("button", { name: "Przyjmij" }).click();
-    await page.getByRole("button", { name: "#1" }).click(); // jedyna odpowiedź, 300 pkt -> bank 300
+    await expect(page.getByRole("button", { name: "Zatwierdź: Alfa" })).toBeEnabled({ timeout: 10000 });
+    await page.getByRole("button", { name: "Zatwierdź: Alfa" }).click();
+    await revealAnswer(page, 1); // jedyna odpowiedź, 300 pkt -> bank 300
 
     // Jedna odpowiedź: revealed==answers od razu, ale canEndRound ustawia
     // się dopiero przy 3. X (DUEL-branch REVEAL_ANSWER tego nie sprawdza).
-    await page.getByRole("button", { name: "X", exact: true }).click();
-    await page.getByRole("button", { name: "X", exact: true }).click();
-    await page.getByRole("button", { name: "X", exact: true }).click();
+    await clickX(page);
+    await clickX(page);
+    await clickX(page);
     await page.getByRole("button", { name: "Zakończ rundę" }).click();
 
     // Próg (300) trafiony, hasFinal=true, finalQuestionsMode="pick" + 5
     // potwierdzonych pytań -> prosto do finału.
     await expect(page.locator(".c2-stepper")).toContainText("Finał", { timeout: 10000 });
-    await page.getByRole("button", { name: "Start finału" }).click();
+    await page.getByRole("button", { name: "Rozpocznij finał" }).click();
 
     await expect(page.locator(".c2-stepper")).toContainText("Finał — gracz 1, wpisywanie", { timeout: 10000 });
-    await page.getByRole("button", { name: "Start timera" }).click();
+    await page.getByRole("button", { name: "Rozpocznij odliczanie (15s)" }).click();
     await page.getByRole("button", { name: "Dalej" }).click();
 
     for (let i = 0; i < 4; i++) {
       await expect(page.locator(".c2-stepper")).toContainText(`Finał — mapowanie ${i + 1}/5`, { timeout: 10000 });
       await page.getByRole("button", { name: "Odp. finałowa (50)" }).click();
-      await page.getByRole("button", { name: "Pokaż odpowiedź" }).click();
-      await page.getByRole("button", { name: "Pokaż punkty" }).click();
-      await expect(page.getByText("Punkty: 50")).toBeVisible({ timeout: 10000 });
+      // "Pokaż odpowiedź"/"Pokaż punkty" — kafle odsłaniania (zaznacz ->
+      // potwierdź, jak odpowiedzi w Rundach), nazwa stała, druga linijka to
+      // żywy podgląd (aria-hidden, więc dostępna nazwa nie zawiera wartości).
+      await armAndConfirm(page.getByRole("button", { name: "Pokaż odpowiedź" }));
+      await armAndConfirm(page.getByRole("button", { name: "Pokaż punkty" }));
+      await expect(page.getByRole("button", { name: "Pokaż punkty" })).toContainText("50", { timeout: 10000 });
       if (i < 3) await page.getByRole("button", { name: "Dalej" }).click();
     }
 
     // Po 4. pytaniu suma = 200 = finalTarget -> natychmiastowy skok do
     // f_end, BEZ 5. pytania i BEZ gracza 2.
-    await expect(page.locator(".c2-stepper")).toContainText("Finał — koniec", { timeout: 10000 });
+    await expect(page.locator(".c2-stepper")).toContainText("Koniec gry", { timeout: 10000 });
     await expect(page.getByText("Suma finału: 200")).toBeVisible({ timeout: 10000 });
 
-    await page.getByRole("button", { name: "Zakończ", exact: true }).click();
-    const finishBtn = page.getByRole("button", { name: "Zakończ rozgrywkę" });
+    await page.getByRole("button", { name: "Zakończ grę", exact: true }).click();
+    const finishBtn = page.getByRole("button", { name: "Wróć do moich gier" });
     await expect(finishBtn).toBeVisible({ timeout: 10000 });
     await finishBtn.click();
     await expect(page).toHaveURL(/\/builder/, { timeout: 10000 });
@@ -484,20 +523,21 @@ test("control2: physicalBuzzer + noHostTablet — urządzenia pominięte, ręczn
     await page.getByRole("button", { name: "Dalej" }).click();
     await expect(page.locator(".stepTitle")).toHaveText("Podsumowanie", { timeout: 10000 });
     await page.getByRole("button", { name: "Gotowe — przejdź do rund" }).click();
-    await page.getByRole("button", { name: "Dalej" }).click();
-    await page.getByRole("button", { name: "Start rundy" }).click();
+    await page.getByRole("button", { name: "Rozpocznij grę" }).click();
+    await page.getByRole("button", { name: "Rozpocznij rundę" }).click();
 
     // Bez Buzzera na ekranie: zaznacz -> anuluj -> zaznacz -> potwierdź.
-    await expect(page.getByRole("button", { name: "Drużyna A" })).toBeVisible({ timeout: 10000 });
-    await page.getByRole("button", { name: "Drużyna A" }).click();
-    await expect(page.getByText("Wybrano: A")).toBeVisible();
+    // Przyciski pokazują realną nazwę drużyny (Alfa/Beta), nie kod "A"/"B".
+    await expect(page.getByRole("button", { name: "Alfa" })).toBeVisible({ timeout: 10000 });
+    await page.getByRole("button", { name: "Alfa" }).click();
+    await expect(page.getByRole("button", { name: "Potwierdź: Alfa" })).toBeVisible();
     await page.getByRole("button", { name: "Anuluj" }).click();
-    await expect(page.getByRole("button", { name: "Drużyna A" })).toBeVisible();
-    await page.getByRole("button", { name: "Drużyna B" }).click();
-    await expect(page.getByText("Wybrano: B")).toBeVisible();
-    await page.getByRole("button", { name: "Potwierdź" }).click();
+    await expect(page.getByRole("button", { name: "Alfa" })).toBeVisible();
+    await page.getByRole("button", { name: "Beta" }).click();
+    await expect(page.getByRole("button", { name: "Potwierdź: Beta" })).toBeVisible();
+    await page.getByRole("button", { name: "Potwierdź: Beta" }).click();
 
-    await page.getByRole("button", { name: "#1" }).click(); // B trafia -> przejmuje kontrolę
+    await revealAnswer(page, 1); // B trafia -> przejmuje kontrolę
     await expect(page.getByText("Bank: 40")).toBeVisible({ timeout: 10000 });
   } finally {
     for (const ctx of contexts) await ctx.close().catch(() => {});
@@ -519,7 +559,7 @@ test("control2: \"Zacznij od nowa\" w trakcie gry wraca do D0", async ({ page, b
     await expect(page.locator("#dotDisplay")).toHaveClass(/\bok\b/, { timeout: 15000 });
     await page.getByRole("button", { name: "Dalej" }).click();
     await page.getByRole("button", { name: "Gotowe — przejdź do rund" }).click();
-    await expect(page.locator(".c2-stepper")).toContainText("Rundy — wprowadzenie", { timeout: 10000 });
+    await expect(page.locator(".c2-stepper")).toContainText("Rozpoczęcie gry", { timeout: 10000 });
 
     await page.locator("#btnStartOver").click();
     await page.getByRole("button", { name: "Tak" }).click();
@@ -531,49 +571,7 @@ test("control2: \"Zacznij od nowa\" w trakcie gry wraca do D0", async ({ page, b
   }
 });
 
-// ===== 7. "Cofnij ostatnią akcję" =====
-
-test("control2: \"Cofnij ostatnią akcję\" cofa ostatni zapis (3. pudło -> z powrotem 2.)", async ({ page, browser }) => {
-  await loginAsTestUser(page, page.context());
-  const game = await makeGame(page, `E2E-CONTROL2-UNDO-${Date.now()}`, { roundQuestions: [TWO_QUESTIONS[0]] });
-  const contexts = [];
-  try {
-    const buzzerPage = await openAnon(browser, contexts, `/buzzer2?id=${game.id}&key=${game.share_key_buzzer}`, "buzzer", []);
-    await openAnon(browser, contexts, `/display2?id=${game.id}&key=${game.share_key_display}`, "display", []);
-    await openAnon(browser, contexts, `/host2?id=${game.id}&key=${game.share_key_host}`, "host", []);
-
-    await page.goto(`/control2?id=${game.id}`, { waitUntil: "domcontentloaded" });
-    await expect(page.locator(".stepTitle")).toHaveText("Urządzenia", { timeout: 15000 });
-    await expect(page.locator("#dotDisplay")).toHaveClass(/\bok\b/, { timeout: 15000 });
-    await expect(page.locator("#dotHost")).toHaveClass(/\bok\b/, { timeout: 15000 });
-    await page.getByRole("button", { name: "Dalej" }).click();
-    await page.getByRole("button", { name: "Gotowe — przejdź do rund" }).click();
-    await page.getByRole("button", { name: "Dalej" }).click();
-    await page.getByRole("button", { name: "Start rundy" }).click();
-
-    await expect(buzzerPage.getByRole("button", { name: "Buzzer A" })).toBeEnabled({ timeout: 10000 });
-    await buzzerPage.getByRole("button", { name: "Buzzer A" }).click();
-    await expect(page.getByText("Zgłoszono: A")).toBeVisible({ timeout: 10000 });
-    await page.getByRole("button", { name: "Przyjmij" }).click();
-    await page.getByRole("button", { name: "#1" }).click(); // A przejmuje kontrolę, bank 40
-
-    await expect(page.getByRole("button", { name: "Kradzież" })).toBeVisible({ timeout: 10000 });
-    await page.getByRole("button", { name: "X", exact: true }).click(); // xA=1
-    await page.getByRole("button", { name: "X", exact: true }).click(); // xA=2
-    await expect(page.getByRole("button", { name: "Kradzież" })).toBeVisible();
-    await page.getByRole("button", { name: "X", exact: true }).click(); // xA=3 -> auto-STEAL, "Kradzież" znika
-    await expect(page.getByRole("button", { name: "Kradzież" })).toHaveCount(0, { timeout: 10000 });
-
-    await page.locator("#btnUndo").click();
-    // Cofnięcie 3. pudła -> z powrotem w PLAY z xA=2 -> "Kradzież" znów dostępna.
-    await expect(page.getByRole("button", { name: "Kradzież" })).toBeVisible({ timeout: 10000 });
-  } finally {
-    for (const ctx of contexts) await ctx.close().catch(() => {});
-    await deleteGame(page, game.id);
-  }
-});
-
-// ===== 8. Druga karta Control blokowana (resource-lock) =====
+// ===== 7. Druga karta Control blokowana (resource-lock) =====
 
 test("control2: druga karta Control na tę samą grę jest zablokowana (resource-lock, kontekst \"control\")", async ({ page, context }) => {
   await loginAsTestUser(page, context);
@@ -594,7 +592,7 @@ test("control2: druga karta Control na tę samą grę jest zablokowana (resource
   }
 });
 
-// ===== 9. QR host/buzzer niezależne na Display =====
+// ===== 8. QR host/buzzer niezależne na Display =====
 
 test("control2: QR na wyświetlaczu — host i buzzer niezależne, jeden LUB oba naraz", async ({ page, browser }) => {
   await loginAsTestUser(page, page.context());
@@ -627,7 +625,7 @@ test("control2: QR na wyświetlaczu — host i buzzer niezależne, jeden LUB oba
   }
 });
 
-// ===== 10. Finał bez wczesnego wyjścia: obaj gracze, wszystkie 10 pytań =====
+// ===== 9. Finał bez wczesnego wyjścia: obaj gracze, wszystkie 10 pytań =====
 //
 // Odwrotność testu 4 (który celowo pomija gracza 2). Punkty dobrane tak, że
 // suma finału NIGDY nie osiąga finalTarget (200) nawet po 10 trafieniach
@@ -656,25 +654,25 @@ test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśni�
     await page.getByRole("button", { name: "Dalej" }).click();
     await expect(page.locator(".stepTitle")).toHaveText("Podsumowanie", { timeout: 10000 });
     await page.getByRole("button", { name: "Gotowe — przejdź do rund" }).click();
-    await page.getByRole("button", { name: "Dalej" }).click();
-    await page.getByRole("button", { name: "Start rundy" }).click();
+    await page.getByRole("button", { name: "Rozpocznij grę" }).click();
+    await page.getByRole("button", { name: "Rozpocznij rundę" }).click();
 
     // ===== Runda jedyna: A wygrywa próg finału (300 pkt) =====
     await expect(buzzerPage.getByRole("button", { name: "Buzzer A" })).toBeEnabled({ timeout: 10000 });
     await buzzerPage.getByRole("button", { name: "Buzzer A" }).click();
-    await expect(page.getByText("Zgłoszono: A")).toBeVisible({ timeout: 10000 });
-    await page.getByRole("button", { name: "Przyjmij" }).click();
-    await page.getByRole("button", { name: "#1" }).click();
-    await page.getByRole("button", { name: "X", exact: true }).click();
-    await page.getByRole("button", { name: "X", exact: true }).click();
-    await page.getByRole("button", { name: "X", exact: true }).click();
+    await expect(page.getByRole("button", { name: "Zatwierdź: Alfa" })).toBeEnabled({ timeout: 10000 });
+    await page.getByRole("button", { name: "Zatwierdź: Alfa" }).click();
+    await revealAnswer(page, 1);
+    await clickX(page);
+    await clickX(page);
+    await clickX(page);
     await page.getByRole("button", { name: "Zakończ rundę" }).click();
     await expect(page.locator(".c2-stepper")).toContainText("Finał", { timeout: 10000 });
 
     // ===== F1: start finału =====
     await clearSfxLog(page);
     await clearDisplayLog(displayPage);
-    await page.getByRole("button", { name: "Start finału" }).click();
+    await page.getByRole("button", { name: "Rozpocznij finał" }).click();
     // final_theme -> reveal, sekwencyjnie (soundReactor.js's playSequentialCombo).
     await waitForSfxSequence(page, ["final_theme", "reveal"], 15000);
     // Wskaźnik na zwycięzcy (A) i zapowiedź "15" na jego stronie (dzisiejsza naprawa) —
@@ -693,13 +691,14 @@ test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśni�
     for (let i = 0; i < 5; i++) await p1Inputs.nth(i).fill(`Odp. finałowa`);
 
     await clearSfxLog(page);
-    await page.getByRole("button", { name: "Start timera" }).click();
+    await page.getByRole("button", { name: "Rozpocznij odliczanie (15s)" }).click();
     // Bez klikania niczego: dograny dziś zegarek w control2/js/app.js sam
     // dispatch'uje EXPIRE_TIMER po 15s. Zegarek jest jednorazowy (usedP1) —
-    // przycisk "Start timera" wraca WIDOCZNY (jak w starym Control), ale
-    // ZABLOKOWANY, bo nie da się już odpalić go drugi raz w tej samej rundzie.
-    await expect(page.getByRole("button", { name: "Start timera" })).toBeVisible({ timeout: 20000 });
-    await expect(page.getByRole("button", { name: "Start timera" })).toBeDisabled();
+    // kafel wraca WIDOCZNY (jak w starym Control), ale pokazuje "Czas
+    // wykorzystany" i jest ZABLOKOWANY, bo nie da się go odpalić drugi raz
+    // w tej samej rundzie.
+    await expect(page.getByRole("button", { name: "Czas wykorzystany" })).toBeVisible({ timeout: 20000 });
+    await expect(page.getByRole("button", { name: "Czas wykorzystany" })).toBeDisabled();
     await expect.poll(() => getSfxKeys(page), { timeout: 5000 }).toEqual(expect.arrayContaining(["time_over"]));
 
     // ===== F4/F5: mapowanie gracza 1 — trafienie wszystkich 5x15 pkt =====
@@ -707,8 +706,8 @@ test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśni�
     for (let i = 0; i < 5; i++) {
       await expect(page.locator(".c2-stepper")).toContainText(`Finał — mapowanie ${i + 1}/5`, { timeout: 10000 });
       await page.getByRole("button", { name: "Odp. finałowa (15)" }).click();
-      await page.getByRole("button", { name: "Pokaż odpowiedź" }).click();
-      await page.getByRole("button", { name: "Pokaż punkty" }).click();
+      await armAndConfirm(page.getByRole("button", { name: "Pokaż odpowiedź" }));
+      await armAndConfirm(page.getByRole("button", { name: "Pokaż punkty" }));
       await page.getByRole("button", { name: "Dalej" }).click();
     }
     // Suma 75 < finalTarget (200) — BEZ wczesnego wyjścia, prosto do F6.
@@ -717,7 +716,7 @@ test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśni�
     // ===== F6: przejście do gracza 2 — TU jest sedno testu =====
     await expect(page.locator(".c2-stepper")).toContainText("Finał — start rundy 2", { timeout: 10000 });
     await clearDisplayLog(displayPage);
-    await page.getByRole("button", { name: "Start rundy 2" }).click();
+    await page.getByRole("button", { name: "Rozpocznij 2 rundę" }).click();
 
     // Display: odpowiedzi gracza 1 wracają odsłonięte (animIn), NIE placeholder.
     await expect.poll(async () => {
@@ -735,12 +734,12 @@ test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśni�
     // ===== F7: gracz 2 — pytanie #1 oznaczone jako "powtórzenie" =====
     await expect(page.locator(".c2-stepper")).toContainText("Finał — gracz 2, wpisywanie", { timeout: 10000 });
     await clearSfxLog(page);
-    await page.getByLabel("powtórzenie").first().check();
+    await page.getByRole("button", { name: "Powtórzenie" }).first().click();
     await expect.poll(() => getSfxKeys(page), { timeout: 5000 }).toEqual(expect.arrayContaining(["answer_repeat"]));
 
     const p2Inputs = page.locator("#app input[type=text]");
     for (let i = 1; i < 5; i++) await p2Inputs.nth(i).fill("Odp. finałowa");
-    await page.getByRole("button", { name: "Start timera" }).click();
+    await page.getByRole("button", { name: "Rozpocznij odliczanie (20s)" }).click();
     // Tym razem NIE czekamy na naturalne wygaśnięcie — klikamy "Dalej" od
     // razu (jak w teście 4), sprawdzając DRUGĄ naprawę z dzisiejszego audytu:
     // START_MAPPING musi wyzerować timer, inaczej zostałby "running" na zawsze.
@@ -750,17 +749,17 @@ test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśni�
     for (let i = 0; i < 5; i++) {
       await expect(page.locator(".c2-stepper")).toContainText(`Finał — mapowanie ${i + 1}/5`, { timeout: 10000 });
       if (i > 0) await page.getByRole("button", { name: "Odp. finałowa (15)" }).click();
-      await page.getByRole("button", { name: "Pokaż odpowiedź" }).click();
-      await page.getByRole("button", { name: "Pokaż punkty" }).click();
+      await armAndConfirm(page.getByRole("button", { name: "Pokaż odpowiedź" }));
+      await armAndConfirm(page.getByRole("button", { name: "Pokaż punkty" }));
       await page.getByRole("button", { name: "Dalej" }).click();
     }
     // 75 (gracz 1) + 0 (powtórzenie) + 4x15 (gracz 2) = 135 < 200 — pełne 10/10, bez wczesnego wyjścia.
-    await expect(page.locator(".c2-stepper")).toContainText("Finał — koniec", { timeout: 10000 });
+    await expect(page.locator(".c2-stepper")).toContainText("Koniec gry", { timeout: 10000 });
     await expect(page.getByText("Suma finału: 135")).toBeVisible({ timeout: 10000 });
 
     // ===== F10: koniec finału =====
     await clearSfxLog(page);
-    await page.getByRole("button", { name: "Zakończ", exact: true }).click();
+    await page.getByRole("button", { name: "Zakończ grę", exact: true }).click();
     await waitForSfxKeysAnyOrder(page, ["round_transition", "reveal"], 15000); // final_end combo (synced, kolejność zależy od realnych czasów trwania plików)
     await expect.poll(async () => {
       const calls = await getDisplayCalls(displayPage, "api.indicator.set");
@@ -774,7 +773,7 @@ test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśni�
   }
 });
 
-// ===== 11. Mnożnik rundy =====
+// ===== 10. Mnożnik rundy =====
 
 test("control2: mnożnik rundy — runda 4. z domyślnym ×2 faktycznie przemnaża bank", async ({ page, browser }) => {
   await loginAsTestUser(page, page.context());
@@ -793,36 +792,36 @@ test("control2: mnożnik rundy — runda 4. z domyślnym ×2 faktycznie przemna�
     await expect(page.locator("#dotHost")).toHaveClass(/\bok\b/, { timeout: 15000 });
     await page.getByRole("button", { name: "Dalej" }).click();
     await page.getByRole("button", { name: "Gotowe — przejdź do rund" }).click();
-    await page.getByRole("button", { name: "Dalej" }).click();
+    await page.getByRole("button", { name: "Rozpocznij grę" }).click();
 
     // Rundy 1-3: mnożnik x1 (domyślne roundMultipliers [1,1,1,2,3]) — A wygrywa za każdym razem, bank 40.
     for (let round = 1; round <= 3; round++) {
       await expect(page.locator(".c2-stepper")).toContainText(`Runda ${round}`, { timeout: 10000 });
-      await page.getByRole("button", { name: "Start rundy" }).click();
+      await page.getByRole("button", { name: "Rozpocznij rundę" }).click();
       await expect(buzzerPage.getByRole("button", { name: "Buzzer A" })).toBeEnabled({ timeout: 10000 });
       await buzzerPage.getByRole("button", { name: "Buzzer A" }).click();
-      await expect(page.getByText("Zgłoszono: A")).toBeVisible({ timeout: 10000 });
-      await page.getByRole("button", { name: "Przyjmij" }).click();
-      await page.getByRole("button", { name: "#1" }).click();
-      await page.getByRole("button", { name: "X", exact: true }).click();
-      await page.getByRole("button", { name: "X", exact: true }).click();
-      await page.getByRole("button", { name: "X", exact: true }).click();
+      await expect(page.getByRole("button", { name: "Zatwierdź: Alfa" })).toBeEnabled({ timeout: 10000 });
+      await page.getByRole("button", { name: "Zatwierdź: Alfa" }).click();
+      await revealAnswer(page, 1);
+      await clickX(page);
+      await clickX(page);
+      await clickX(page);
       await page.getByRole("button", { name: "Zakończ rundę" }).click();
     }
     await expect(page.getByText(/Wyniki: A 120/)).toBeVisible({ timeout: 10000 });
 
     // Runda 4: mnożnik x2 — bank 40 ma dać +80, nie +40.
     await expect(page.locator(".c2-stepper")).toContainText("Runda 4", { timeout: 10000 });
-    await page.getByRole("button", { name: "Start rundy" }).click();
+    await page.getByRole("button", { name: "Rozpocznij rundę" }).click();
     await expect(buzzerPage.getByRole("button", { name: "Buzzer A" })).toBeEnabled({ timeout: 10000 });
     await buzzerPage.getByRole("button", { name: "Buzzer A" }).click();
-    await expect(page.getByText("Zgłoszono: A")).toBeVisible({ timeout: 10000 });
-    await page.getByRole("button", { name: "Przyjmij" }).click();
-    await page.getByRole("button", { name: "#1" }).click();
+    await expect(page.getByRole("button", { name: "Zatwierdź: Alfa" })).toBeEnabled({ timeout: 10000 });
+    await page.getByRole("button", { name: "Zatwierdź: Alfa" }).click();
+    await revealAnswer(page, 1);
     await expect(page.getByText("Bank: 40")).toBeVisible({ timeout: 10000 });
-    await page.getByRole("button", { name: "X", exact: true }).click();
-    await page.getByRole("button", { name: "X", exact: true }).click();
-    await page.getByRole("button", { name: "X", exact: true }).click();
+    await clickX(page);
+    await clickX(page);
+    await clickX(page);
     await page.getByRole("button", { name: "Zakończ rundę" }).click();
 
     await expect(page.getByText(/Wyniki: A 200/)).toBeVisible({ timeout: 10000 }); // 120 + 40x2, nie 160
@@ -832,7 +831,7 @@ test("control2: mnożnik rundy — runda 4. z domyślnym ×2 faktycznie przemna�
   }
 });
 
-// ===== 12. Wyścig dwóch przycisków Buzzera =====
+// ===== 11. Wyścig dwóch przycisków Buzzera =====
 
 test("control2: wyścig — oba przyciski Buzzera naciśnięte w tej samej chwili, tylko jeden zaakceptowany", async ({ page, browser }) => {
   await loginAsTestUser(page, page.context());
@@ -848,8 +847,8 @@ test("control2: wyścig — oba przyciski Buzzera naciśnięte w tej samej chwil
     await expect(page.locator("#dotHost")).toHaveClass(/\bok\b/, { timeout: 15000 });
     await page.getByRole("button", { name: "Dalej" }).click();
     await page.getByRole("button", { name: "Gotowe — przejdź do rund" }).click();
-    await page.getByRole("button", { name: "Dalej" }).click();
-    await page.getByRole("button", { name: "Start rundy" }).click();
+    await page.getByRole("button", { name: "Rozpocznij grę" }).click();
+    await page.getByRole("button", { name: "Rozpocznij rundę" }).click();
 
     await expect(buzzerPage.getByRole("button", { name: "Buzzer A" })).toBeEnabled({ timeout: 10000 });
     // Oba kliknięcia wystrzelone w tym samym ticku JS — dwa równoległe
@@ -860,9 +859,14 @@ test("control2: wyścig — oba przyciski Buzzera naciśnięte w tej samej chwil
       document.getElementById("btnB")?.click();
     });
 
-    const zgloszono = page.getByText(/Zgłoszono: (A|B)/);
-    await expect(zgloszono).toBeVisible({ timeout: 10000 });
-    const winner = (await zgloszono.textContent()).includes("A") ? "A" : "B";
+    // renderDuelAccept() pokazuje oba kafle "Zatwierdź: <drużyna>" od razu,
+    // ale tylko TEN, kto naprawdę wygrał wyścig, budzi się (enabled) — drugi
+    // zostaje wyszarzonym placeholderem. Trzeba odtworzyć literę drużyny z
+    // nazwy, żeby wskazać właściwy #btnA/#btnB na stronie Buzzera.
+    const acceptAlfa = page.getByRole("button", { name: "Zatwierdź: Alfa" });
+    const acceptBeta = page.getByRole("button", { name: "Zatwierdź: Beta" });
+    await expect.poll(async () => (await acceptAlfa.isEnabled()) || (await acceptBeta.isEnabled()), { timeout: 10000 }).toBe(true);
+    const winner = (await acceptAlfa.isEnabled()) ? "A" : "B";
     const loser = winner === "A" ? "B" : "A";
 
     // Buzzer i Control muszą się zgadzać co do tego, KTO wygrał wyścig.
@@ -875,7 +879,7 @@ test("control2: wyścig — oba przyciski Buzzera naciśnięte w tej samej chwil
   }
 });
 
-// ===== 13. Wyciszenie dźwięku =====
+// ===== 12. Wyciszenie dźwięku =====
 
 test("control2: wyciszenie dźwięku — po Mute żaden klucz SFX się nie odtwarza", async ({ page, browser }) => {
   await loginAsTestUser(page, page.context());
@@ -891,11 +895,11 @@ test("control2: wyciszenie dźwięku — po Mute żaden klucz SFX się nie odtwa
     await expect(page.locator("#dotHost")).toHaveClass(/\bok\b/, { timeout: 15000 });
     await page.getByRole("button", { name: "Dalej" }).click();
     await page.getByRole("button", { name: "Gotowe — przejdź do rund" }).click();
-    await page.getByRole("button", { name: "Dalej" }).click();
+    await page.getByRole("button", { name: "Rozpocznij grę" }).click();
 
     // Referencja: BEZ wyciszenia start rundy gra normalnie.
     await clearSfxLog(page);
-    await page.getByRole("button", { name: "Start rundy" }).click();
+    await page.getByRole("button", { name: "Rozpocznij rundę" }).click();
     await waitForSfxSequence(page, ["round_transition"], 10000);
 
     await expect(buzzerPage.getByRole("button", { name: "Buzzer A" })).toBeEnabled({ timeout: 10000 });
@@ -904,9 +908,9 @@ test("control2: wyciszenie dźwięku — po Mute żaden klucz SFX się nie odtwa
 
     await clearSfxLog(page);
     await buzzerPage.getByRole("button", { name: "Buzzer A" }).click();
-    await expect(page.getByText("Zgłoszono: A")).toBeVisible({ timeout: 10000 });
-    await page.getByRole("button", { name: "Przyjmij" }).click();
-    await page.getByRole("button", { name: "#1" }).click(); // normalnie: buzzer_press + answer_correct
+    await expect(page.getByRole("button", { name: "Zatwierdź: Alfa" })).toBeEnabled({ timeout: 10000 });
+    await page.getByRole("button", { name: "Zatwierdź: Alfa" }).click();
+    await revealAnswer(page, 1); // normalnie: buzzer_press + answer_correct
     await expect(page.getByText("Bank: 40")).toBeVisible({ timeout: 10000 });
 
     expect(await getSfxKeys(page), "wyciszenie ma zablokować KAŻDY dźwięk, nie tylko część").toEqual([]);
@@ -916,7 +920,7 @@ test("control2: wyciszenie dźwięku — po Mute żaden klucz SFX się nie odtwa
   }
 });
 
-// ===== 14. Zmiana języka propaguje się do urządzeń, w tym treść Hosta =====
+// ===== 13. Zmiana języka propaguje się do urządzeń, w tym treść Hosta =====
 //
 // Sprawdza całą ścieżkę na raz: przełącznik w topbarze Control -> zapis
 // settings.uiLang do game_state -> odczyt przez host2/js/main.js -> setUiLang
@@ -940,8 +944,8 @@ test("control2: zmiana języka w Control propaguje się do Hosta — tytuł fazy
     await expect(page.locator("#dotBuzzer")).toHaveClass(/\bok\b/, { timeout: 15000 });
     await page.getByRole("button", { name: "Dalej" }).click();
     await page.getByRole("button", { name: "Gotowe — przejdź do rund" }).click();
-    await page.getByRole("button", { name: "Dalej" }).click();
-    await page.getByRole("button", { name: "Start rundy" }).click();
+    await page.getByRole("button", { name: "Rozpocznij grę" }).click();
+    await page.getByRole("button", { name: "Rozpocznij rundę" }).click();
 
     await expect(hostPage.locator("#paperText1")).toContainText("PRZYCISK", { timeout: 10000 });
 

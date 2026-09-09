@@ -224,6 +224,19 @@ const REDUCERS = {
     return { step: "r_play", phase: "DUEL", controlTeam: null, topCard: "rounds", soundCueKey };
   },
 
+  // ---- R2: "Ponów naciśnięcie" — operator odrzuca zgłoszenie sprzed
+  // przyjęcia (np. błędny/przypadkowy sygnał z Buzzera) i otwiera przycisk
+  // na nowo, bez cofania całej rundy. Tylko przed ACCEPT_BUZZ — po
+  // przyjęciu (firstTeam już ustawione) nie ma czego "ponawiać" (no-op,
+  // patrz niżej). Odpowiednik starego control/js/gameRounds.js's
+  // retryDuel().
+  async RETRY_DUEL(state) {
+    const r = state.rounds;
+    if (state.phase !== "DUEL" || r.duel.firstTeam) return null;
+    r.duel.lastPressed = null;
+    return { step: "r_duel", phase: "DUEL", controlTeam: null, topCard: "rounds" };
+  },
+
   // ---- R3/R4/R5/R8: odsłonięcie odpowiedzi — jeden reducer, gałąź wg
   // aktualnej fazy (DUEL/PLAY/STEAL/REVEAL), dokładnie jak w tabeli A ----
   async REVEAL_ANSWER(state, action) {
@@ -445,7 +458,12 @@ const REDUCERS = {
   async SET_ENTRY_TEXT(state, action) {
     const key = entryKey(action.round);
     const prev = state.final.runtime[key][action.idx] || {};
-    state.final.runtime[key][action.idx] = { ...prev, text: action.text };
+    // control/js/gameFinal.js: wpisanie nowego tekstu gasi "powtórzenie" —
+    // repeat włącza się wyłącznie przyciskiem, ale gaśnie jako efekt uboczny
+    // innych akcji operatora (tu: edycja pola).
+    const next = { ...prev, text: action.text };
+    if (action.round === 2 && prev.repeat === true) next.repeat = false;
+    state.final.runtime[key][action.idx] = next;
     return sameStep(state);
   },
 
@@ -494,6 +512,12 @@ const REDUCERS = {
     if (action.matchId !== undefined) row.matchId = action.matchId;
     if (action.outText !== undefined) row.outText = action.outText;
     if (action.pts !== undefined) row.pts = action.pts;
+    // control/js/gameFinal.js: kliknięcie MATCH/MISS/SKIP też gasi
+    // "powtórzenie" (ta sama zasada co przy wpisywaniu — patrz SET_ENTRY_TEXT).
+    if (action.round === 2) {
+      const p2 = state.final.runtime.p2[action.idx];
+      if (p2?.repeat === true) state.final.runtime.p2[action.idx] = { ...p2, repeat: false };
+    }
     return sameStep(state);
   },
 

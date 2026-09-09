@@ -29,7 +29,7 @@ Ta strona jest wygenerowana z `shared/gameStateMachine.js` — jedynego źródł
 - **Host**: Nieaktywny.
 - **Buzzer**: Nieaktywny.
 - **Dźwięki**: —
-- **Dozwolone kolejne kroki**: `r_intro`
+- **Dozwolone kolejne kroki**: `r_intro`, `devices_display`
 
 ## Karta: `rounds`
 

@@ -265,7 +265,7 @@ async function hostPeekSwipe(hostPage) {
 // i tak czeka prawdziwy operator (patrz plan, sekcja 4: "przycisk pokazuje
 // stan wysyłania, dopiero po potwierdzeniu... ekran się aktualizuje").
 const CLICK_PACE_MS = 300;
-const WRITE_RPC_RE = /\/rpc\/(game_state_write|game_state_buzzer_press|game_state_undo)(\?|$)/;
+const WRITE_RPC_RE = /\/rpc\/(game_state_write|game_state_buzzer_press)(\?|$)/;
 
 function waitForWrite(page) {
   // Zarejestruj oczekiwanie PRZED akcją, żeby nie przegapić odpowiedzi,
@@ -283,6 +283,28 @@ async function clickPaced(locator, ms = CLICK_PACE_MS) {
   await locator.click();
   await responded;
   await page.waitForTimeout(ms);
+}
+
+// Odpowiedź/X/"Oddaj kontrolę" idą przez zaznacz -> potwierdź
+// (control2/js/ui.js's armableTile): pierwsze kliknięcie tylko uzbraja
+// (złota obwódka) — CZYSTO LOKALNA zmiana UI, zero zapisu do game_state,
+// więc clickPaced's waitForWrite by na niej wisiał do timeoutu. Uzbrojenie
+// dostaje więc zwykły klik + krótką pauzę (żeby złota obwódka było widać w
+// nagraniu), a dopiero drugi klik na TYM SAMYM elemencie idzie przez
+// clickPaced jak każda inna akcja zapisująca stan.
+async function armAndConfirmPaced(locator, ms = CLICK_PACE_MS) {
+  const page = locator.page();
+  await locator.click();
+  await page.waitForTimeout(400);
+  await clickPaced(locator, ms);
+}
+
+// Kafelki odpowiedzi w Rundach nie pokazują już "#N" (control2/js/ui.js's
+// renderRounds() pokazuje prawdziwy tekst odpowiedzi) — n-ty (1-bazowy)
+// przycisk w jedynym renderowanym `.c2-tilegrid` to zawsze odpowiedź o
+// ord=n, patrz identyczny komentarz przy control2.spec.js's answerTile().
+function answerTile(control, n) {
+  return control.locator(".c2-tilegrid button").nth(n - 1);
 }
 
 // Jak clickPaced, ale dla .fill()/.check() — SET_ENTRY_TEXT/SET_REPEAT też
@@ -327,14 +349,6 @@ async function typePaced(locator, text, msPerChar = 90) {
   }
 }
 
-async function checkPaced(locator, ms = CLICK_PACE_MS) {
-  const page = locator.page();
-  const responded = waitForWrite(page);
-  await locator.check();
-  await responded;
-  await page.waitForTimeout(ms);
-}
-
 // ===== Scenariusz 1: pojedynek z resetem, pass, kradzież wygrana i
 // przegrana, dosłanianie reszty, mnożnik pominięty (2 pytania), koniec gry
 // bez finału. Ten sam przebieg co control2.spec.js's test "reset
@@ -345,40 +359,40 @@ async function scenarioRoundsMechanics(pages) {
 
   await clickPaced(control.getByRole("button", { name: "Dalej" }));
   await clickPaced(control.getByRole("button", { name: "Gotowe — przejdź do rund" }));
-  await clickPaced(control.getByRole("button", { name: "Dalej" }));
+  await clickPaced(control.getByRole("button", { name: "Rozpocznij grę" }));
 
   // ===== RUNDA 1 =====
-  await clickPaced(control.getByRole("button", { name: "Start rundy" }));
+  await clickPaced(control.getByRole("button", { name: "Rozpocznij rundę" }));
   await clickPaced(buzzer.getByRole("button", { name: "Buzzer A" }));
-  await clickPaced(control.getByRole("button", { name: "Przyjmij" }));
-  await clickPaced(control.getByRole("button", { name: "X", exact: true })); // A pudłuje -> kolej B
+  await clickPaced(control.getByRole("button", { name: "Zatwierdź: Alfa" }));
+  await armAndConfirmPaced(control.getByRole("button", { name: "X", exact: true })); // A pudłuje -> kolej B
   // B pudłuje też -> RESET CYKLU: kolej wraca do A, BEZ nowego zgłoszenia
   // buzzera (firstTeam/secondTeam nie są czyszczone — nie ma ponownego buzera).
-  await clickPaced(control.getByRole("button", { name: "X", exact: true }));
-  await clickPaced(control.getByRole("button", { name: "#1" })); // A trafia -> wygrywa pojedynek, bez nowego zgłoszenia
-  await clickPaced(control.getByRole("button", { name: "X", exact: true }));
-  await clickPaced(control.getByRole("button", { name: "X", exact: true }));
-  await clickPaced(control.getByRole("button", { name: "X", exact: true })); // 3x pudło A -> auto-KRADZIEŻ dla B
-  await clickPaced(control.getByRole("button", { name: "#2" })); // B kradnie WYGRANĄ
+  await armAndConfirmPaced(control.getByRole("button", { name: "X", exact: true }));
+  await armAndConfirmPaced(answerTile(control, 1)); // A trafia -> wygrywa pojedynek, bez nowego zgłoszenia
+  await armAndConfirmPaced(control.getByRole("button", { name: "X", exact: true }));
+  await armAndConfirmPaced(control.getByRole("button", { name: "X", exact: true }));
+  await armAndConfirmPaced(control.getByRole("button", { name: "X", exact: true })); // 3x pudło A -> auto-KRADZIEŻ dla B
+  await armAndConfirmPaced(answerTile(control, 2)); // B kradnie WYGRANĄ
   await clickPaced(control.getByRole("button", { name: "Zakończ rundę" }));
-  await clickPaced(control.getByRole("button", { name: "#3" })); // dosłanianie reszty
+  await armAndConfirmPaced(answerTile(control, 3)); // dosłanianie reszty
 
   // ===== RUNDA 2 =====
-  await clickPaced(control.getByRole("button", { name: "Start rundy" }));
+  await clickPaced(control.getByRole("button", { name: "Rozpocznij rundę" }));
   await clickPaced(buzzer.getByRole("button", { name: "Buzzer B" }));
-  await clickPaced(control.getByRole("button", { name: "Przyjmij" }));
-  await clickPaced(control.getByRole("button", { name: "#1" })); // B trafia -> kontrola B, allowPass
-  await clickPaced(control.getByRole("button", { name: "Pass" })); // oddaje pytanie -> kontrola A
-  await clickPaced(control.getByRole("button", { name: "#2" })); // A trafia
-  await clickPaced(control.getByRole("button", { name: "X", exact: true }));
-  await clickPaced(control.getByRole("button", { name: "X", exact: true }));
-  await clickPaced(control.getByRole("button", { name: "X", exact: true })); // 3x pudło A -> auto-KRADZIEŻ dla B
-  await clickPaced(control.getByRole("button", { name: "X", exact: true })); // B kradnie, ale PUDŁUJE -> kradzież PRZEGRANA
+  await clickPaced(control.getByRole("button", { name: "Zatwierdź: Beta" }));
+  await armAndConfirmPaced(answerTile(control, 1)); // B trafia -> kontrola B, allowPass
+  await armAndConfirmPaced(control.getByRole("button", { name: "Oddaj kontrolę" })); // dawny "Pass" -> kontrola A
+  await armAndConfirmPaced(answerTile(control, 2)); // A trafia
+  await armAndConfirmPaced(control.getByRole("button", { name: "X", exact: true }));
+  await armAndConfirmPaced(control.getByRole("button", { name: "X", exact: true }));
+  await armAndConfirmPaced(control.getByRole("button", { name: "X", exact: true })); // 3x pudło A -> auto-KRADZIEŻ dla B
+  await armAndConfirmPaced(control.getByRole("button", { name: "X", exact: true })); // B kradnie, ale PUDŁUJE -> kradzież PRZEGRANA
   await clickPaced(control.getByRole("button", { name: "Zakończ rundę" }));
-  await clickPaced(control.getByRole("button", { name: "#3" })); // dosłanianie reszty
+  await armAndConfirmPaced(answerTile(control, 3)); // dosłanianie reszty
 
   // ===== Koniec gry bez finału =====
-  await clickPaced(control.getByRole("button", { name: "Pokaż koniec gry" }));
+  await clickPaced(control.getByRole("button", { name: "Zakończ grę" }));
   await control.waitForTimeout(2500); // zostaw ekran końcowy widoczny chwilę na nagraniu
 }
 
@@ -398,40 +412,40 @@ async function scenarioRoundsThreshold(pages, { expectFinal }) {
 
   await clickPaced(control.getByRole("button", { name: "Dalej" }));
   await clickPaced(control.getByRole("button", { name: "Gotowe — przejdź do rund" }));
-  await clickPaced(control.getByRole("button", { name: "Dalej" }));
+  await clickPaced(control.getByRole("button", { name: "Rozpocznij grę" }));
 
   // ===== RUNDA 1: pojedynek wygrany za pierwszym razem (bez pudła) =====
-  await clickPaced(control.getByRole("button", { name: "Start rundy" }));
+  await clickPaced(control.getByRole("button", { name: "Rozpocznij rundę" }));
   await clickPaced(buzzer.getByRole("button", { name: "Buzzer A" }));
-  await clickPaced(control.getByRole("button", { name: "Przyjmij" }));
-  await clickPaced(control.getByRole("button", { name: "#1" })); // A trafia topową odpowiedź od razu -> wygrywa pojedynek
-  await clickPaced(control.getByRole("button", { name: "#2" }));
-  await clickPaced(control.getByRole("button", { name: "#3" })); // wszystko odsłonięte -> koniec rundy pomija ekran dosłaniania
+  await clickPaced(control.getByRole("button", { name: "Zatwierdź: Alfa" }));
+  await armAndConfirmPaced(answerTile(control, 1)); // A trafia topową odpowiedź od razu -> wygrywa pojedynek
+  await armAndConfirmPaced(answerTile(control, 2));
+  await armAndConfirmPaced(answerTile(control, 3)); // wszystko odsłonięte -> koniec rundy pomija ekran dosłaniania
   await clickPaced(control.getByRole("button", { name: "Zakończ rundę" }));
 
   // ===== RUNDA 2: B pudłuje -> BEZ resetu, druga próba (A) wygrywa
   // odpowiedzią nie-topową =====
-  await clickPaced(control.getByRole("button", { name: "Start rundy" }));
+  await clickPaced(control.getByRole("button", { name: "Rozpocznij rundę" }));
   await clickPaced(buzzer.getByRole("button", { name: "Buzzer B" }));
-  await clickPaced(control.getByRole("button", { name: "Przyjmij" }));
-  await clickPaced(control.getByRole("button", { name: "X", exact: true })); // B pudłuje -> kolej na drugą próbę (A), NIE reset
-  await clickPaced(control.getByRole("button", { name: "#2" })); // A trafia odpowiedź nie-topową -> WYGRYWA, bo B miał 0 pkt
-  await clickPaced(control.getByRole("button", { name: "#1" })); // A dosłania resztę
+  await clickPaced(control.getByRole("button", { name: "Zatwierdź: Beta" }));
+  await armAndConfirmPaced(control.getByRole("button", { name: "X", exact: true })); // B pudłuje -> kolej na drugą próbę (A), NIE reset
+  await armAndConfirmPaced(answerTile(control, 2)); // A trafia odpowiedź nie-topową -> WYGRYWA, bo B miał 0 pkt
+  await armAndConfirmPaced(answerTile(control, 1)); // A dosłania resztę
   await clickPaced(control.getByRole("button", { name: "Zakończ rundę" }));
 
   // ===== RUNDA 3: pojedynek wygrany za pierwszym razem, dobicie do progu =====
-  await clickPaced(control.getByRole("button", { name: "Start rundy" }));
+  await clickPaced(control.getByRole("button", { name: "Rozpocznij rundę" }));
   await clickPaced(buzzer.getByRole("button", { name: "Buzzer A" }));
-  await clickPaced(control.getByRole("button", { name: "Przyjmij" }));
-  await clickPaced(control.getByRole("button", { name: "#1" }));
-  await clickPaced(control.getByRole("button", { name: "#2" }));
+  await clickPaced(control.getByRole("button", { name: "Zatwierdź: Alfa" }));
+  await armAndConfirmPaced(answerTile(control, 1));
+  await armAndConfirmPaced(answerTile(control, 2));
   await clickPaced(control.getByRole("button", { name: "Zakończ rundę" })); // próg (180) osiągnięty
 
   if (expectFinal) {
-    await clickPaced(control.getByRole("button", { name: "Start finału" }));
+    await clickPaced(control.getByRole("button", { name: "Rozpocznij finał" }));
     await control.waitForTimeout(3000); // ekran wpisywania gracza 1 widoczny chwilę — pełny final to osobne scenariusze
   } else {
-    await clickPaced(control.getByRole("button", { name: "Pokaż koniec gry" }));
+    await clickPaced(control.getByRole("button", { name: "Zakończ grę" }));
     await control.waitForTimeout(2500);
   }
 }
@@ -446,18 +460,18 @@ async function scenarioFinalFull(pages) {
 
   await clickPaced(control.getByRole("button", { name: "Dalej" }));
   await clickPaced(control.getByRole("button", { name: "Gotowe — przejdź do rund" }));
-  await clickPaced(control.getByRole("button", { name: "Dalej" }));
-  await clickPaced(control.getByRole("button", { name: "Start rundy" }));
+  await clickPaced(control.getByRole("button", { name: "Rozpocznij grę" }));
+  await clickPaced(control.getByRole("button", { name: "Rozpocznij rundę" }));
 
   await clickPaced(buzzer.getByRole("button", { name: "Buzzer A" }));
-  await clickPaced(control.getByRole("button", { name: "Przyjmij" }));
-  await clickPaced(control.getByRole("button", { name: "#1" })); // A dobija do progu finału (300 pkt)
-  await clickPaced(control.getByRole("button", { name: "X", exact: true }));
-  await clickPaced(control.getByRole("button", { name: "X", exact: true }));
-  await clickPaced(control.getByRole("button", { name: "X", exact: true }));
+  await clickPaced(control.getByRole("button", { name: "Zatwierdź: Alfa" }));
+  await armAndConfirmPaced(answerTile(control, 1)); // A dobija do progu finału (300 pkt)
+  await armAndConfirmPaced(control.getByRole("button", { name: "X", exact: true }));
+  await armAndConfirmPaced(control.getByRole("button", { name: "X", exact: true }));
+  await armAndConfirmPaced(control.getByRole("button", { name: "X", exact: true }));
   await clickPaced(control.getByRole("button", { name: "Zakończ rundę" }));
 
-  await clickPaced(control.getByRole("button", { name: "Start finału" }));
+  await clickPaced(control.getByRole("button", { name: "Rozpocznij finał" }));
   await control.waitForTimeout(4000); // final_theme + reveal
 
   // Host: zasłona pasma 2 właśnie się włączyła (startFinal). Prowadzący
@@ -485,20 +499,25 @@ async function scenarioFinalFull(pages) {
   for (let i = 0; i < 5; i++) {
     if (P1_PLAN[i] === true) await typePaced(p1Inputs.nth(i), "Odp. finałowa");
     else if (P1_PLAN[i] === "miss") await typePaced(p1Inputs.nth(i), "Zła odpowiedź");
-    // false: nic nie wpisujemy -> AUTO+SKIP przy "Pokaż odpowiedź"
+    // false: nic nie wpisujemy -> AUTO+SKIP, widoczne od razu jako domyślne
+    // zaznaczenie na kaflu "Brak odpowiedzi" (control2/js/ui.js's
+    // effectiveMappingResolution), potwierdzane przez "Pokazana" niżej.
   }
-  await clickPaced(control.getByRole("button", { name: "Start timera" }));
+  await clickPaced(control.getByRole("button", { name: "Rozpocznij odliczanie (15s)" }));
   await control.waitForTimeout(16_000);
 
   await clickPaced(control.getByRole("button", { name: "Dalej" }));
   for (let i = 0; i < 5; i++) {
     if (P1_PLAN[i] === true) await clickPaced(control.getByRole("button", { name: "Odp. finałowa (15)" }));
-    await clickPaced(control.getByRole("button", { name: "Pokaż odpowiedź" }));
-    await clickPaced(control.getByRole("button", { name: "Pokaż punkty" }));
+    // "Pokaż odpowiedź"/"Pokaż punkty" — kafle odsłaniania, zaznacz ->
+    // potwierdź jak odpowiedzi w Rundach (nazwa stała, druga linijka to
+    // żywy podgląd).
+    await armAndConfirmPaced(control.getByRole("button", { name: "Pokaż odpowiedź" }));
+    await armAndConfirmPaced(control.getByRole("button", { name: "Pokaż punkty" }));
     await clickPaced(control.getByRole("button", { name: "Dalej" }));
   }
 
-  await clickPaced(control.getByRole("button", { name: "Start rundy 2" }));
+  await clickPaced(control.getByRole("button", { name: "Rozpocznij 2 rundę" }));
   await control.waitForTimeout(1500); // niech nagranie złapie pełne odsłonięcie odpowiedzi gracza 1 na Display
 
   // Host NIE dostaje żadnego automatycznego odsłonięcia razem z Display —
@@ -508,23 +527,23 @@ async function scenarioFinalFull(pages) {
   await host.waitForTimeout(1500);
 
   // Gracz 2: pytanie #1 = powtórzenie, reszta wg P2_PLAN.
-  await checkPaced(control.getByLabel("powtórzenie").first());
+  await clickPaced(control.getByRole("button", { name: "Powtórzenie" }).first());
   const p2Inputs = control.locator("#app input[type=text]");
   for (let i = 1; i < 5; i++) {
     if (P2_PLAN[i] === true) await typePaced(p2Inputs.nth(i), "Odp. finałowa");
     // false: nic nie wpisujemy -> AUTO+SKIP
   }
-  await clickPaced(control.getByRole("button", { name: "Start timera" }));
+  await clickPaced(control.getByRole("button", { name: "Rozpocznij odliczanie (20s)" }));
   await clickPaced(control.getByRole("button", { name: "Dalej" })); // tym razem NIE czekamy na naturalne wygaśnięcie
 
   for (let i = 0; i < 5; i++) {
     if (P2_PLAN[i] === true) await clickPaced(control.getByRole("button", { name: "Odp. finałowa (15)" }));
-    await clickPaced(control.getByRole("button", { name: "Pokaż odpowiedź" }));
-    await clickPaced(control.getByRole("button", { name: "Pokaż punkty" }));
+    await armAndConfirmPaced(control.getByRole("button", { name: "Pokaż odpowiedź" }));
+    await armAndConfirmPaced(control.getByRole("button", { name: "Pokaż punkty" }));
     await clickPaced(control.getByRole("button", { name: "Dalej" }));
   }
 
-  await clickPaced(control.getByRole("button", { name: "Zakończ", exact: true }));
+  await clickPaced(control.getByRole("button", { name: "Zakończ grę", exact: true }));
   await control.waitForTimeout(3000); // ekran końcowy widoczny chwilę na nagraniu
 }
 
@@ -543,24 +562,24 @@ async function scenarioFinalEarlyExit(pages) {
 
   await clickPaced(control.getByRole("button", { name: "Dalej" }));
   await clickPaced(control.getByRole("button", { name: "Gotowe — przejdź do rund" }));
-  await clickPaced(control.getByRole("button", { name: "Dalej" }));
-  await clickPaced(control.getByRole("button", { name: "Start rundy" }));
+  await clickPaced(control.getByRole("button", { name: "Rozpocznij grę" }));
+  await clickPaced(control.getByRole("button", { name: "Rozpocznij rundę" }));
 
   await clickPaced(buzzer.getByRole("button", { name: "Buzzer A" }));
-  await clickPaced(control.getByRole("button", { name: "Przyjmij" }));
-  await clickPaced(control.getByRole("button", { name: "#1" })); // A dobija do progu rund (300 pkt) -> wchodzimy w finał
+  await clickPaced(control.getByRole("button", { name: "Zatwierdź: Alfa" }));
+  await armAndConfirmPaced(answerTile(control, 1)); // A dobija do progu rund (300 pkt) -> wchodzimy w finał
   // Ta jedyna odpowiedź w pytaniu została już odsłonięta PRZEZ sam pojedynek
   // (wygrana na pierwszej próbie odsłania ją od razu) — canEndRound ustawia
   // się TYLKO w gałęzi PLAY po odsłonięciu (engine.js's REVEAL_ANSWER), a
   // gałąź DUEL tego nie robi. Bez nic więcej do odsłonięcia jedyną drogą do
   // canEndRound jest 3x X w PLAY (ADD_X: xA>=STRIKE_LIMIT -> canEndRound),
   // dokładnie jak w scenarioFinalFull's identycznej rundzie na 300 pkt.
-  await clickPaced(control.getByRole("button", { name: "X", exact: true }));
-  await clickPaced(control.getByRole("button", { name: "X", exact: true }));
-  await clickPaced(control.getByRole("button", { name: "X", exact: true }));
+  await armAndConfirmPaced(control.getByRole("button", { name: "X", exact: true }));
+  await armAndConfirmPaced(control.getByRole("button", { name: "X", exact: true }));
+  await armAndConfirmPaced(control.getByRole("button", { name: "X", exact: true }));
   await clickPaced(control.getByRole("button", { name: "Zakończ rundę" }));
 
-  await clickPaced(control.getByRole("button", { name: "Start finału" }));
+  await clickPaced(control.getByRole("button", { name: "Rozpocznij finał" }));
   await control.waitForTimeout(4000); // final_theme + reveal
 
   await hostPeekSwipe(host);
@@ -574,13 +593,13 @@ async function scenarioFinalEarlyExit(pages) {
   await clickPaced(control.getByRole("button", { name: "Dalej" }));
 
   await clickPaced(control.getByRole("button", { name: "Odp. finałowa (250)" }));
-  await clickPaced(control.getByRole("button", { name: "Pokaż odpowiedź" }));
+  await armAndConfirmPaced(control.getByRole("button", { name: "Pokaż odpowiedź" }));
   // 250 >= finalTarget (200) -> REVEAL_POINTS w engine.js skacze prosto do
   // f_end, pomijając NEXT_QUESTION/pytania 2-5 gracza 1 i CAŁEGO gracza 2 —
-  // "Pokaż punkty" to ostatnie kliknięcie w mapowaniu w tym scenariuszu.
-  await clickPaced(control.getByRole("button", { name: "Pokaż punkty" }));
+  // "Pokaż punkty" to ostatni kafel odsłaniania w tym scenariuszu.
+  await armAndConfirmPaced(control.getByRole("button", { name: "Pokaż punkty" }));
 
-  await clickPaced(control.getByRole("button", { name: "Zakończ", exact: true }));
+  await clickPaced(control.getByRole("button", { name: "Zakończ grę", exact: true }));
   await control.waitForTimeout(3000); // ekran końcowy widoczny chwilę na nagraniu
 }
 
