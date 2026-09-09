@@ -991,17 +991,17 @@ export function createUI({ root, emit }) {
     const effective = effectiveMappingResolution(row, hasTyped);
     const preview = resolveMappingPreview(question, inputText, effective);
 
-    // Etykieta "Wpisano" nad polem — bez tego samo obramowane pole nie miało
-    // żadnego określenia, co to jest (zgłoszone). c2-mapinput: BEZ własnej
-    // ramki/tła na zewnętrznym div (zgłoszone: "wygląda brzydko" — dwie
-    // zagnieżdżone ramki jedna w drugiej) — jedyna widoczna "skrzynka" to sam
-    // input, etykieta to zwykły tekst nad nim.
+    // Etykieta "Wpisano" (1/3, wyśrodkowana w pionie) + pole (2/3, ten sam
+    // wygląd co w kroku wpisywania) OBOK siebie, nie jedno nad drugim
+    // (zgłoszone). c2-mapinput: BEZ własnej ramki/tła na zewnętrznym div
+    // (zgłoszone: "wygląda brzydko" — dwie zagnieżdżone ramki jedna w
+    // drugiej) — jedyna widoczna "skrzynka" to sam input.
     const inp = h("input", { type: "text", value: inputText, placeholder: "Odpowiedź gracza", autocomplete: "off" });
     if (locked) inp.disabled = true;
     on(inp, "input", () => emit("game.dispatch", { type: "SET_ENTRY_TEXT", round, idx, text: inp.value }));
-    const inputTile = h("div", { class: "c2-entrytile-input c2-mapinput" }, [
+    const inputTile = h("div", { class: "c2-mapinput" }, [
       h("div", { class: "c2-field-label", text: "Wpisano" }),
-      inp,
+      h("div", { class: "c2-entrytile-input" }, [inp]),
     ]);
     inputTile.style.gridRow = "1";
     inputTile.style.gridColumn = "1 / 7";
@@ -1011,14 +1011,16 @@ export function createUI({ root, emit }) {
     // się odsłoni po kliknięciu. Wartość w podglądzie jest aria-hidden —
     // dostępna nazwa przycisku zostaje stała, ten sam wzorzec co c2-tile-sub
     // przy X w Rundach. Wiersz 5 (DÓŁ) — tam gdzie te przyciski zawsze były
-    // (zgłoszone), nie wyżej.
+    // (zgłoszone), nie wyżej. c2-tile-reveal dokłada przerwę nad tym
+    // wierszem — bez niej zlewały się wizualnie z kaflami wyboru nad nimi
+    // (zgłoszone).
     const revealAnswerTile = armableTile(`map-answer:${round}:${idx}`,
       h("div", {}, [
         document.createTextNode("Pokaż odpowiedź"),
         h("div", { class: "c2-tile-sub", "aria-hidden": "true", text: row.revealedAnswer ? (row.outText || "—") : preview.text }),
       ]),
       {
-        row: 5, col: HALF(0), cls: "c2-tile-primary",
+        row: 5, col: HALF(0), cls: "c2-tile-primary c2-tile-reveal",
         disabled: locked,
         onclick: async () => {
           if (row.kind == null) await emit("game.dispatch", { type: "RESOLVE_MAPPING", round, idx, ...defaultResolve(inputText) });
@@ -1031,7 +1033,7 @@ export function createUI({ root, emit }) {
         h("div", { class: "c2-tile-sub", "aria-hidden": "true", text: row.revealedPoints ? String(row.pts) : String(preview.pts) }),
       ]),
       {
-        row: 5, col: HALF(1), cls: "c2-tile-primary",
+        row: 5, col: HALF(1), cls: "c2-tile-primary c2-tile-reveal",
         disabled: !row.revealedAnswer || row.revealedPoints,
         onclick: () => emit("game.dispatch", { type: "REVEAL_POINTS", round, idx }),
       });
@@ -1081,10 +1083,16 @@ export function createUI({ root, emit }) {
     // (nextIdx = action.idx+1 w engine.js) — nie 0-bazowy indeks tablicy,
     // którym operuje reszta tego ekranu. Bez +1 operator zostawałby
     // uwięziony na tym samym pytaniu (nextIdx trafiałby z powrotem w ten
-    // sam krok).
-    const nav = row.revealedPoints
-      ? [h("button", { class: "c2-btn primary", type: "button", onclick: () => emit("game.dispatch", { type: "NEXT_QUESTION", round, idx: idx + 1 }) }, [document.createTextNode("Dalej")])]
-      : null;
+    // sam krok). Pasek nawigacji ZAWSZE widoczny (zgłoszone: "jak w starym
+    // Control"), "Dalej" wyszarzony/nieklikalny dopóki punkty nie są
+    // odsłonięte — nie znika, tylko czeka zablokowany (onclick też
+    // undefined, nie tylko atrybut disabled — podwójne zabezpieczenie przed
+    // przedwczesnym przejściem dalej).
+    const nav = [h("button", {
+      class: "c2-btn primary", type: "button",
+      disabled: row.revealedPoints ? undefined : "",
+      onclick: row.revealedPoints ? () => emit("game.dispatch", { type: "NEXT_QUESTION", round, idx: idx + 1 }) : undefined,
+    }, [document.createTextNode("Dalej")])];
 
     gameplayShell({ stepLabel: `Finał — mapowanie ${idx + 1}/5`, body, nav });
   }
