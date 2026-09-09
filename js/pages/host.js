@@ -1,7 +1,7 @@
 // /familiada/js/pages/host.js
-import { initI18n, setUiLang, t } from "../../translation/translation.js?v=v2026-09-09T17244";
-import { sb } from "../core/supabase.js?v=v2026-09-09T17244";
-import { startKeepAlive } from "../core/keep-alive.js?v=v2026-09-09T17244";
+import { initI18n, setUiLang, t } from "../../translation/translation.js?v=v2026-09-09T17421";
+import { sb } from "../core/supabase.js?v=v2026-09-09T17421";
+import { startKeepAlive } from "../core/keep-alive.js?v=v2026-09-09T17421";
 startKeepAlive();
 
 /* ========= PARAMS ========= */
