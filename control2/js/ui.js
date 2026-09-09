@@ -611,7 +611,10 @@ export function createUI({ root, emit }) {
     const sortedAnswers = r.answers.slice().sort((a, b) => a.ord - b.ord).slice(0, 6);
     sortedAnswers.forEach((a, i) => {
       const revealed = r.revealed.includes(a.ord);
-      tiles.push(armableTile(`ans:${a.ord}`, `${a.text} — ${a.fixed_points}`, {
+      // Punkty w nawiasie, TAK SAMO jak Finał-mapowanie (control2/js/ui.js's
+      // renderFinalMapping) i stary Control — dawny myślnik tutaj był
+      // niespójny z resztą aplikacji (zgłoszone).
+      tiles.push(armableTile(`ans:${a.ord}`, `${a.text} (${a.fixed_points})`, {
         row: Math.floor(i / 2) + 1,
         col: HALF(i % 2),
         cls: revealed ? "c2-tile-revealed" : "",
@@ -620,9 +623,15 @@ export function createUI({ root, emit }) {
       }));
     });
 
+    // Wiersz 4 celowo PUSTY — ta sama przerwa nad akcjami co w Finale-
+    // mapowaniu (renderFinalMapping's pusty wiersz 5 przed kaflami
+    // odsłaniania), żeby rytm siatki (treść / przerwa / akcje) zgadzał się
+    // między wszystkimi kartami rozgrywki (zgłoszone). "Oddaj kontrolę"
+    // schodzi więc na wiersz 5, X/Timer na wiersz 6 — siatka ma teraz 6
+    // wierszy zamiast 5 (nadpisane inline niżej, jak w mapowaniu).
     if (passAvailable) {
       tiles.push(armableTile("pass", "Oddaj kontrolę", {
-        row: 4, col: "1 / 7", cls: "c2-tile-primary",
+        row: 5, col: "1 / 7", cls: "c2-tile-primary",
         onclick: () => emit("game.dispatch", { type: "PASS" }),
       }));
     }
@@ -643,21 +652,23 @@ export function createUI({ root, emit }) {
         // testy/czytniki ekranu widziałyby za każdym razem inny label.
         h("div", { class: "c2-tile-sub", "aria-hidden": "true", text: `${strikes} / 3` }),
       ]);
-      tiles.push(armableTile("x", xLabel, { row: 5, col: HALF(0), cls: "c2-tile-danger", onclick: () => emit("game.dispatch", { type: "ADD_X" }) }));
+      tiles.push(armableTile("x", xLabel, { row: 6, col: HALF(0), cls: "c2-tile-danger", onclick: () => emit("game.dispatch", { type: "ADD_X" }) }));
     }
     if (timer3Available) {
       const running = !!timer3?.running;
       const secLeft = running ? Math.max(0, Math.ceil((timer3.endsAt - Date.now()) / 1000)) : null;
       tiles.push(tile(running ? String(secLeft) : "Timer 3s", {
-        row: 5, col: HALF(1),
+        row: 6, col: HALF(1),
         cls: running ? "c2-tile-timer" : "c2-tile-timer startable",
         disabled: running,
         onclick: running ? undefined : () => emit("game.dispatch", { type: "START_TIMER3" }),
       }));
     }
 
+    const roundsGrid = tileGrid(tiles);
+    roundsGrid.style.gridTemplateRows = "repeat(6, minmax(0,1fr))";
     body.push(h("div", { class: "c2-roundlayout" }, [
-      h("div", { class: "c2-roundlayout-main" }, [tileGrid(tiles)]),
+      h("div", { class: "c2-roundlayout-main" }, [roundsGrid]),
       h("div", { class: "c2-roundlayout-divider" }),
       h("div", { class: "c2-roundlayout-side" }, [hintBlock(getRoundsHint(state))]),
     ]));
@@ -1118,10 +1129,14 @@ export function createUI({ root, emit }) {
     }
 
     // 6 wierszy zamiast domyślnych 5 (nadpisanie inline, tylko tu — Rundy
-    // zostają przy 5): wiersz 5 celowo PUSTY, żeby dać kaflom odsłaniania w
-    // wierszu 6 CAŁY wiersz przerwy nad sobą, nie tylko margines.
+    // mają teraz 6 wierszy przez własne nadpisanie w renderRounds): wiersz 5
+    // celowo PUSTY, żeby dać kaflom odsłaniania w wierszu 6 CAŁY wiersz
+    // przerwy nad sobą, nie tylko margines. Wiersz 1 (Wpisano) dostaje
+    // WĘŻSZĄ wagę niż pozostałe — zgłoszone: "chodziło [o] odwrót" (pole ma
+    // być NIŻSZE niż reszta wierszy, nie wyższe) — dokładnie odwrotnie niż
+    // poprzednia wersja tej reguły.
     const mappingGrid = tileGrid([...row1Tiles, revealAnswerTile, revealPointsTile, ...optionTiles]);
-    mappingGrid.style.gridTemplateRows = "repeat(6, minmax(0,1fr))";
+    mappingGrid.style.gridTemplateRows = "minmax(0,0.9fr) repeat(5, minmax(0,1fr))";
 
     const body = [
       h("div", { class: "c2-question", text: question?.text || `Pytanie ${idx + 1}` }),
