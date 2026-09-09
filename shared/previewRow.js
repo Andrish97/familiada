@@ -8,10 +8,11 @@
 // wierszem), więc każde miejsce chcące pokazać ten podgląd musi dostarczyć
 // wiersz w tym samym kształcie.
 //
-// UŻYWANE W DWÓCH MIEJSCACH — jedna funkcja zamiast dwóch niezależnych
+// UŻYWANE W KILKU MIEJSCACH — jedna funkcja zamiast osobnych niezależnych
 // implementacji, żeby się nie rozjechały:
 //   - control2/js/ui.js's renderSetupFinish (D3, podsumowanie przed startem)
-//   - js/pages/game-settings.js (modal ustawień gry, otwierany z Control ORAZ
+//   - js/pages/game-settings2.js (modal ustawień gry w Control v2)
+//   - js/pages/game-settings.js (oryginał — modal w starym control.html ORAZ
 //     samodzielnie spod /game-settings)
 //
 // Treść (pytanie/odpowiedzi/wynik) jest zmyślona — to nie ma pokazywać
