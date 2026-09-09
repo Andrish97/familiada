@@ -19,6 +19,13 @@
 import { getRoundsHint, getFinalHint, getFinalEntryShortcuts, teamName } from "../../shared/hints.js?v=v2026-09-09T16080";
 import { getSfxDuration } from "../../js/core/sfx.js?v=v2026-09-09T16080";
 import { ANSWER_ANIM } from "../../shared/displayAnim.js?v=v2026-09-09T16080";
+import {
+  startRoundGateMs,
+  endRoundGateMs,
+  startFinalGateMs,
+  gameEndGateMs,
+  finishFinalGateMs,
+} from "./transitionGate.js?v=v2026-09-09T16080";
 
 const $ = (id) => document.getElementById(id);
 const on = (el, ev, fn) => el && el.addEventListener(ev, fn);
@@ -87,6 +94,36 @@ export function createUI({ root, emit }) {
         if (durationS > 0) applyLock(Math.round(durationS * 1000));
       });
     }
+  }
+  // Blokada DUŻYCH przejść planszy (Rozpocznij rundę/Zakończ rundę/
+  // Rozpocznij finał/Zakończ grę — oba warianty) — zgłoszone: "nagranie
+  // dalej jest zbyt szybkie", zbadane wprost w starym Control
+  // (control/js/gameRounds.js/gameFinal.js): każde z tych pięciu miejsc
+  // dosłownie `await`-owało czas realnego dźwięku (nie zgadywaną stałą
+  // animacji) przed odblokowaniem KOLEJNEGO ekranu (enableBuzzerDuel()/
+  // setStep()/sessionEnd() itd.) — wizualna sekwencja startowała z osobnym,
+  // stałym offsetem w głąb tego samego dźwięku (920ms/1000ms), a sam dźwięk
+  // był tak dobrany, żeby zdążyć zanim animacja się skończy. Dokładne wzory
+  // per przejście — patrz control2/js/transitionGate.js (1:1 z tym, co
+  // stary kod faktycznie liczył przez getSfxDuration(), nie zgadywane).
+  // Współdzieli licznik z armRevealCooldown() — to ten sam rodzaj blokady
+  // ("nie idź dalej, dopóki poprzednie się nie domalowało/dograło"), tylko
+  // innej skali; oba warianty nigdy nie są uzbrajane jednocześnie (operator
+  // klika jedno na raz), więc wspólny stan jest bezpieczny.
+  function armBoardTransition(gateMsPromise) {
+    const applyLock = (ms) => {
+      revealLockedUntil = Date.now() + ms;
+      setTimeout(() => emit("ui.rerender"), ms + 20);
+    };
+    // Krótki, bezpieczny floor zanim poznamy realny czas (identyczny wzorzec
+    // co armRevealCooldown) — same funkcje gate w transitionGate.js już
+    // liczą właściwy dolny próg (np. Math.max(...,2)*1000), więc to tylko
+    // zabezpieczenie na czas oczekiwania na odpowiedź getSfxDuration().
+    applyLock(1500);
+    gateMsPromise.then((ms) => { if (ms > 0) applyLock(ms); });
+  }
+  function boardBusy() {
+    return revealLocked();
   }
   function revealLocked() {
     return Date.now() < revealLockedUntil;
@@ -445,6 +482,19 @@ export function createUI({ root, emit }) {
     return el;
   }
 
+  // Samodzielny przycisk nawigacji (nie kafel siatki) z tym samym
+  // bezpiecznym wzorcem obsługi `disabled` co tile() — h()'s generic
+  // setAttribute("disabled", false) zostawiłoby atrybut OBECNY (a więc
+  // przycisk martwy) nawet przy disabled=false, więc właściwość ustawiana
+  // jest wprost, TYLKO gdy true. Używane przez pięć dużych przejść planszy
+  // (Rozpocznij rundę/Zakończ rundę/Rozpocznij finał/Zakończ grę×2),
+  // blokowanych przez boardBusy() — patrz armBoardTransition() wyżej.
+  function navButton(label, { cls = "c2-btn primary c2-intro-btn", onclick, disabled = false } = {}) {
+    const el = h("button", { class: cls, type: "button", onclick: disabled ? undefined : onclick }, [document.createTextNode(label)]);
+    if (disabled) el.disabled = true;
+    return el;
+  }
+
   function tileGrid(tiles) {
     return h("div", { class: "c2-tilegrid" }, tiles.filter(Boolean));
   }
@@ -509,12 +559,17 @@ export function createUI({ root, emit }) {
       // Brak Buzzera na ekranie — operator sam wskazuje, kto pierwszy
       // nacisnął fizyczny przycisk. Zaznacz → potwierdź, żeby nie zaliczyć
       // przypadkowego kliknięcia (plan: "physicalSelectTeam→potwierdź").
+      // boardBusy(): ten sam floor co control/js/gameRounds.js's
+      // enableBuzzerDuel(), które stary kod wołał DOPIERO po `await`
+      // dźwięku/animacji startu rundy (armowane przy "Rozpocznij rundę",
+      // patrz armBoardTransition powyżej) — ten ekran nie ma być klikalny,
+      // zanim ta sekwencja się nie skończy.
       if (!pendingPhysicalTeam) {
-        tiles.push(tile(teamName(state, "A"), { row: 1, col: HALF(0), onclick: () => { pendingPhysicalTeam = "A"; emit("ui.rerender"); } }));
-        tiles.push(tile(teamName(state, "B"), { row: 1, col: HALF(1), onclick: () => { pendingPhysicalTeam = "B"; emit("ui.rerender"); } }));
+        tiles.push(tile(teamName(state, "A"), { row: 1, col: HALF(0), disabled: boardBusy(), onclick: () => { pendingPhysicalTeam = "A"; emit("ui.rerender"); } }));
+        tiles.push(tile(teamName(state, "B"), { row: 1, col: HALF(1), disabled: boardBusy(), onclick: () => { pendingPhysicalTeam = "B"; emit("ui.rerender"); } }));
       } else {
         tiles.push(tile(`Potwierdź: ${teamName(state, pendingPhysicalTeam)}`, {
-          row: 1, col: HALF(0), cls: "c2-tile-primary",
+          row: 1, col: HALF(0), cls: "c2-tile-primary", disabled: boardBusy(),
           onclick: () => { const t = pendingPhysicalTeam; pendingPhysicalTeam = null; emit("game.dispatch", { type: "ACCEPT_BUZZ", team: t }); },
         }));
         tiles.push(tile("Anuluj", { row: 1, col: HALF(1), onclick: () => { pendingPhysicalTeam = null; emit("ui.rerender"); } }));
@@ -528,16 +583,16 @@ export function createUI({ root, emit }) {
       const lastPressed = r.duel.lastPressed;
       tiles.push(tile(`Zatwierdź: ${teamName(state, "A")}`, {
         row: 1, col: HALF(0), cls: lastPressed === "A" ? "c2-tile-primary" : "",
-        disabled: lastPressed !== "A",
+        disabled: lastPressed !== "A" || boardBusy(),
         onclick: () => emit("game.dispatch", { type: "ACCEPT_BUZZ", team: "A" }),
       }));
       tiles.push(tile(`Zatwierdź: ${teamName(state, "B")}`, {
         row: 1, col: HALF(1), cls: lastPressed === "B" ? "c2-tile-primary" : "",
-        disabled: lastPressed !== "B",
+        disabled: lastPressed !== "B" || boardBusy(),
         onclick: () => emit("game.dispatch", { type: "ACCEPT_BUZZ", team: "B" }),
       }));
       if (lastPressed) {
-        tiles.push(tile("Ponów naciśnięcie", { row: 2, col: "1 / 7", onclick: () => emit("game.dispatch", { type: "RETRY_DUEL" }) }));
+        tiles.push(tile("Ponów naciśnięcie", { row: 2, col: "1 / 7", disabled: boardBusy(), onclick: () => emit("game.dispatch", { type: "RETRY_DUEL" }) }));
       }
     }
 
@@ -591,7 +646,10 @@ export function createUI({ root, emit }) {
           h("div", { class: "c2-intro-hint", text: "Na wyświetlaczu pojawi się pusta plansza rundy, a prowadzący dostanie treść pytania." }),
           scoreRow,
         ].filter(Boolean))],
-        nav: [h("button", { class: "c2-btn primary c2-intro-btn", onclick: () => emit("game.dispatch", { type: "START_ROUND" }) }, [document.createTextNode("Rozpocznij rundę")])],
+        nav: [navButton("Rozpocznij rundę", {
+          disabled: boardBusy(),
+          onclick: () => { armBoardTransition(startRoundGateMs()); emit("game.dispatch", { type: "START_ROUND" }); },
+        })],
       });
       return;
     }
@@ -740,10 +798,11 @@ export function createUI({ root, emit }) {
     // zamiast osobnego .c2-gameplay-nav z własnym border-top/padding-top
     // (stąd nav:null niżej — bez oddzielnego paska nawigacji na tym ekranie).
     if ((state.phase === "PLAY" || state.phase === "STEAL") && r.canEndRound) {
-      statusItems.push(h("button", {
-        class: "c2-btn primary c2-statusbar-end", type: "button",
-        onclick: () => emit("game.dispatch", { type: "END_ROUND" }),
-      }, [document.createTextNode("Zakończ rundę")]));
+      statusItems.push(navButton("Zakończ rundę", {
+        cls: "c2-btn primary c2-statusbar-end",
+        disabled: boardBusy(),
+        onclick: () => { armBoardTransition(endRoundGateMs()); emit("game.dispatch", { type: "END_ROUND" }); },
+      }));
     }
     body.push(h("div", { class: "c2-statusbar" }, statusItems));
 
@@ -801,7 +860,10 @@ export function createUI({ root, emit }) {
           h("div", { class: "c2-intro-title", text: "Koniec gry" }),
           h("div", { class: "c2-intro-hint", text: endRevealHint(state, isFinal) }),
         ])],
-        nav: [h("button", { class: "c2-btn primary c2-intro-btn", onclick: () => emit("game.dispatch", revealAction) }, [document.createTextNode("Zakończ grę")])],
+        nav: [navButton("Zakończ grę", {
+          disabled: boardBusy(),
+          onclick: () => { armBoardTransition(isFinal ? finishFinalGateMs() : gameEndGateMs()); emit("game.dispatch", revealAction); },
+        })],
       });
       return;
     }
@@ -834,7 +896,10 @@ export function createUI({ root, emit }) {
         h("div", { class: "c2-intro-title", text: "Rozpocznij finał" }),
         h("div", { class: "c2-intro-hint", text: "Zabrzmi dźwięk finału, stara plansza zniknie, a wjedzie plansza finału. Prowadzący dostanie pytania." }),
       ])],
-      nav: [h("button", { class: "c2-btn primary c2-intro-btn", onclick: () => emit("game.dispatch", { type: "START_FINAL" }) }, [document.createTextNode("Rozpocznij finał")])],
+      nav: [navButton("Rozpocznij finał", {
+        disabled: boardBusy(),
+        onclick: () => { armBoardTransition(startFinalGateMs()); emit("game.dispatch", { type: "START_FINAL" }); },
+      })],
     });
   }
 
