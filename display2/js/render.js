@@ -19,8 +19,8 @@
 // opóźnienia między krokami tej samej zmiany) wymagają dostrojenia
 // wizualnego względem prawdziwego wyglądu — nie zgadywane tu na ślepo.
 
-import { deriveEvents } from "../../shared/deriveEvents.js?v=v2026-09-09T11294";
-import { resolveRoundsEndScreen, resolveFinalEndScreen } from "../../shared/endScreen.js?v=v2026-09-09T11294";
+import { deriveEvents } from "../../shared/deriveEvents.js?v=v2026-09-09T11320";
+import { resolveRoundsEndScreen, resolveFinalEndScreen } from "../../shared/endScreen.js?v=v2026-09-09T11320";
 import {
   ROUND_INTRO_ANIM,
   ROUND_OUT_ANIM,
@@ -28,7 +28,7 @@ import {
   FINAL_BOARD_ANIM,
   FINAL_OUT_ANIM,
   LOGO_IN_ANIM,
-} from "../../shared/displayAnim.js?v=v2026-09-09T11294";
+} from "../../shared/displayAnim.js?v=v2026-09-09T11320";
 
 function pad3(n) { return String(Math.max(0, Number(n) || 0)).padStart(3, " "); }
 
