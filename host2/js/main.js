@@ -7,11 +7,11 @@
 // snap-to-grid z dzisiejszego host.js (kosmetyka do dostrojenia wizualnie
 // później, nie architektura).
 
-import { initI18n, setUiLang } from "../../translation/translation.js?v=v2026-09-09T16030";
-import { startKeepAlive } from "../../js/core/keep-alive.js?v=v2026-09-09T16030";
-import { sb } from "../../js/core/supabase.js?v=v2026-09-09T16030";
-import { createSubscription } from "../../js/core/game-state-subscribe.js?v=v2026-09-09T16030";
-import { createHostRenderer } from "./render.js?v=v2026-09-09T16030";
+import { initI18n, setUiLang } from "../../translation/translation.js?v=v2026-09-09T16080";
+import { startKeepAlive } from "../../js/core/keep-alive.js?v=v2026-09-09T16080";
+import { sb } from "../../js/core/supabase.js?v=v2026-09-09T16080";
+import { createSubscription } from "../../js/core/game-state-subscribe.js?v=v2026-09-09T16080";
+import { createHostRenderer } from "./render.js?v=v2026-09-09T16080";
 
 startKeepAlive();
 
