@@ -962,22 +962,22 @@ export function createUI({ root, emit }) {
   }
 
   // Wpisywanie (finał, mapowanie): wiersz 1 to edytowalne "Wpisano" (ten sam
-  // wygląd co pole w kroku wpisywania — c2-entrytile/c2-entrytile-input),
-  // żeby dało się poprawić literówkę tuż przed rozstrzygnięciem — blokuje
-  // się dopiero po odsłonięciu odpowiedzi. Wiersz 2 to DWA kafle odsłaniania
-  // ("Pokazana"/"Punkty"), ZAWSZE obecne w tym samym miejscu (nie znikają
-  // warunkowo jak dawne "Pokaż odpowiedź"/"Pokaż punkty") — "Punkty" jest
-  // po prostu wyszarzony/zablokowany dopóki odpowiedź nie jest odsłonięta.
-  // Oba pokazują na żywo dokładnie to, co się odsłoni (resolveMappingPreview),
-  // i idą przez zaznacz->potwierdź jak w Rundach (armableTile) — to są
-  // jedyne dwa kafle na tym ekranie, które realnie coś odsłaniają na wizji,
-  // więc dostają ten sam bufor przeciwko przypadkowemu kliknięciu. Po
-  // odsłonięciu każdy z nich wyszarza się na stałe (disabled, nic więcej do
-  // zrobienia). Wiersze 3-5: dopasowania z listy + MISS/SKIP (do 6, 2 na
-  // wiersz) — jedno z nich jest ZAWSZE złote, nawet domyślnie (MISS gdy
-  // coś wpisano, SKIP gdy pusto), nie dopiero po pierwszym kliknięciu.
-  // "Dalej" to zwykły przycisk nawigacji na dole (gameplayShell's nav), taki
-  // sam jak "Dalej" gdzie indziej — nie kafel w siatce.
+  // wygląd co pole w kroku wpisywania), żeby dało się poprawić literówkę tuż
+  // przed rozstrzygnięciem — blokuje się dopiero po odsłonięciu odpowiedzi.
+  // Wiersze 2-4: dopasowania z listy + MISS/SKIP (do 6, 2 na wiersz) — jedno
+  // z nich jest ZAWSZE złote, nawet domyślnie (MISS gdy coś wpisano, SKIP
+  // gdy pusto), nie dopiero po pierwszym kliknięciu. Wiersz 5 (DÓŁ, tam gdzie
+  // były zawsze — zgłoszone): DWA kafle odsłaniania ("Pokaż odpowiedź"/
+  // "Pokaż punkty"), ZAWSZE obecne w tym samym miejscu (nie znikają
+  // warunkowo jak dawniej) — "Pokaż punkty" jest po prostu wyszarzony/
+  // zablokowany dopóki odpowiedź nie jest odsłonięta. Nazwa przycisku
+  // zostaje stała, druga linijka (aria-hidden) pokazuje na żywo dokładnie to,
+  // co się odsłoni — resolveMappingPreview. Idą przez zaznacz->potwierdź jak
+  // w Rundach (armableTile) — jedyne dwa kafle na tym ekranie, które realnie
+  // coś odsłaniają na wizji — i wyszarzają się na stałe po własnym
+  // odsłonięciu. "Dalej" to zwykły przycisk nawigacji na dole
+  // (gameplayShell's nav), taki sam jak "Dalej" gdzie indziej — nie kafel w
+  // siatce, żyje POD tą siatką (patrz nav niżej).
   function renderFinalMapping(state, round, idx) {
     const f = state.final;
     const mapArr = f.runtime[round === 1 ? "map1" : "map2"];
@@ -992,11 +992,14 @@ export function createUI({ root, emit }) {
     const preview = resolveMappingPreview(question, inputText, effective);
 
     // Etykieta "Wpisano" nad polem — bez tego samo obramowane pole nie miało
-    // żadnego określenia, co to jest (zgłoszone).
+    // żadnego określenia, co to jest (zgłoszone). c2-mapinput: BEZ własnej
+    // ramki/tła na zewnętrznym div (zgłoszone: "wygląda brzydko" — dwie
+    // zagnieżdżone ramki jedna w drugiej) — jedyna widoczna "skrzynka" to sam
+    // input, etykieta to zwykły tekst nad nim.
     const inp = h("input", { type: "text", value: inputText, placeholder: "Odpowiedź gracza", autocomplete: "off" });
     if (locked) inp.disabled = true;
     on(inp, "input", () => emit("game.dispatch", { type: "SET_ENTRY_TEXT", round, idx, text: inp.value }));
-    const inputTile = h("div", { class: "c2-entrytile c2-entrytile-input" }, [
+    const inputTile = h("div", { class: "c2-entrytile-input c2-mapinput" }, [
       h("div", { class: "c2-field-label", text: "Wpisano" }),
       inp,
     ]);
@@ -1005,17 +1008,17 @@ export function createUI({ root, emit }) {
 
     // Nazwa przycisku ZOSTAJE ("Pokaż odpowiedź"/"Pokaż punkty", ta sama co
     // dawniej) — dopisana jest tylko DRUGA LINIJKA pokazująca na bieżąco, co
-    // się odsłoni po kliknięciu (poprawka: poprzednia wersja błędnie
-    // PODMIENIAŁA nazwę na wartość zamiast ją dopisać). Wartość w podglądzie
-    // jest aria-hidden — dostępna nazwa przycisku zostaje stała, ten sam
-    // wzorzec co c2-tile-sub przy X w Rundach.
+    // się odsłoni po kliknięciu. Wartość w podglądzie jest aria-hidden —
+    // dostępna nazwa przycisku zostaje stała, ten sam wzorzec co c2-tile-sub
+    // przy X w Rundach. Wiersz 5 (DÓŁ) — tam gdzie te przyciski zawsze były
+    // (zgłoszone), nie wyżej.
     const revealAnswerTile = armableTile(`map-answer:${round}:${idx}`,
       h("div", {}, [
         document.createTextNode("Pokaż odpowiedź"),
         h("div", { class: "c2-tile-sub", "aria-hidden": "true", text: row.revealedAnswer ? (row.outText || "—") : preview.text }),
       ]),
       {
-        row: 2, col: HALF(0), cls: "c2-tile-primary",
+        row: 5, col: HALF(0), cls: "c2-tile-primary",
         disabled: locked,
         onclick: async () => {
           if (row.kind == null) await emit("game.dispatch", { type: "RESOLVE_MAPPING", round, idx, ...defaultResolve(inputText) });
@@ -1028,7 +1031,7 @@ export function createUI({ root, emit }) {
         h("div", { class: "c2-tile-sub", "aria-hidden": "true", text: row.revealedPoints ? String(row.pts) : String(preview.pts) }),
       ]),
       {
-        row: 2, col: HALF(1), cls: "c2-tile-primary",
+        row: 5, col: HALF(1), cls: "c2-tile-primary",
         disabled: !row.revealedAnswer || row.revealedPoints,
         onclick: () => emit("game.dispatch", { type: "REVEAL_POINTS", round, idx }),
       });
@@ -1058,7 +1061,7 @@ export function createUI({ root, emit }) {
     // control/js/gameFinal.js's ".btn.sm.danger.gold" razem) — nie staje się
     // czystym złotem jak MATCH/SKIP, żeby nie tracić czerwonej tożsamości.
     const optionTiles = options.slice(0, 6).map((o, i) => tile(o.text, {
-      row: Math.floor(i / 2) + 3,
+      row: Math.floor(i / 2) + 2,
       col: HALF(i % 2),
       cls: [o.active && "c2-tile-primary", o.danger && "c2-tile-danger"].filter(Boolean).join(" "),
       disabled: o.disabled,

@@ -285,6 +285,13 @@
        samo obramowane pole nie ma żadnego określenia (zgłoszone). Wpisywanie
        (renderFinalEntry) jej nie dokłada — tam kontekst już daje sam wiersz. */
     .c2-field-label { font-size:.72rem; text-transform:uppercase; letter-spacing:.05em; opacity:.6; font-weight:800; }
+    /* Pole "Wpisano" na mapowaniu (renderFinalMapping) — BEZ własnej ramki/tła
+       (w odróżnieniu od .c2-entrytile powyżej, używanego w kroku wpisywania,
+       gdzie kafel sam jest jedną z kilku kolumn wiersza) — tu jest jedynym
+       elementem w całym wierszu, więc druga, zewnętrzna ramka wyglądała jak
+       dwie zagnieżdżone skrzynki (zgłoszone: "wygląda brzydko"). Jedyna
+       widoczna "skrzynka" to sam input poniżej. */
+    .c2-mapinput { display:flex; flex-direction:column; justify-content:center; gap:6px; padding:2px 4px; }
     .c2-entrytile-input input {
       width:100%; box-sizing:border-box; padding:8px 12px;
       border-radius:10px; border:1px solid rgba(255,255,255,.2);
