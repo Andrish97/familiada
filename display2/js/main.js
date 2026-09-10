@@ -119,7 +119,26 @@ async function bootPreview(params) {
   // mimo że sam wiersz niesie już nową wartość.
   window.addEventListener("message", (e) => {
     if (e.data?.type !== "familiada:preview-row") return;
-    renderer.renderSnapshot(e.data.row);
+    const row = e.data.row;
+    // logoPreview (wyłącznie w wierszu podglądu — nigdy w prawdziwym
+    // game_state) to jeszcze NIEZAPISANY wybór logo w formularzu ustawień —
+    // bindGame/reload czytają logo z bazy, więc nie zobaczyłyby tego wcale.
+    // Musi się wykonać PRZED renderSnapshot, żeby paintForStep's
+    // api.logo.show() (step==="r_intro") narysował już właściwe logo, a nie
+    // stare/domyślne z poprzedniej klatki.
+    if ("logoPreview" in (row.detail?.display || {})) {
+      scene.api.logo.setPreview(row.detail.display.logoPreview);
+    }
+    renderer.renderSnapshot(row);
+    // Reszta tego układu (plan podglądu: prawo/góra/lewo = przykładowe
+    // cyfry, wskaźnik wyłączony) nie odpowiada ŻADNEMU prawdziwemu stanowi
+    // gry — to czysto demonstracyjne wypełnienie "small" (płótno niezależne
+    // od "big", gdzie jest logo), więc idzie bezpośrednio przez scene.api,
+    // nie przez wspólny (z prawdziwą grą) render.js's paintForStep.
+    scene.api.small.rightDigits("123");
+    scene.api.small.topDigits("456");
+    scene.api.small.leftDigits("789");
+    scene.api.indicator.set("OFF");
   });
 
   document.documentElement.classList.remove("page-loading");

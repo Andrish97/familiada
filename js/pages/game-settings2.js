@@ -117,12 +117,6 @@ let _loadedLogos = [];
 // Display preview iframe
 let _displayIframe = null;
 let _displayReady = false;
-// "big" (logo vs plansza rund) to jedno, współdzielone płótno na prawdziwym
-// Wyświetlaczu — nie da się pokazać obu naraz (shared/previewRow.js's
-// buildDisplayPreviewRow's `focus`). Domyślnie "rounds" (kolory "w akcji"),
-// przełącza się na "logo" konkretnie przy wyborze kafla logo, z powrotem na
-// "rounds" przy zmianie nazwy drużyny/koloru/motywu.
-let _previewFocus = "rounds";
 
 // Wykryj modal mode już na poziomie modułu (inline script w <head> dodaje klasę przed renderem)
 const _isModal = document.documentElement.classList.contains("gs-modal-mode");
@@ -133,7 +127,6 @@ let colorModalR = 0, colorModalG = 0, colorModalB = 0;
 
 // ===== ELEMENTS =====
 const titleEl = document.getElementById("gsTitle");
-const unsavedBadge = document.getElementById("gsUnsavedBadge");
 const btnSaveAll = document.getElementById("btnSaveAll");
 const btnResetAll = document.getElementById("btnResetAll");
 const btnPlay = document.getElementById("btnPlay");
@@ -160,13 +153,11 @@ const colorModalDone = document.getElementById("gsColorModalDone");
 // ===== DIRTY / SAVE =====
 function markDirty() {
   isDirty = true;
-  unsavedBadge?.classList.remove("hidden");
   document.getElementById("gsFooterMsg")?.classList.remove("hidden");
 }
 
 function clearDirty() {
   isDirty = false;
-  unsavedBadge?.classList.add("hidden");
   document.getElementById("gsFooterMsg")?.classList.add("hidden");
 }
 
@@ -394,7 +385,6 @@ function applyColorModal() {
   content?.querySelectorAll(`[data-color-key="${colorModalTarget}"]`).forEach(el => {
     el.style.background = hex;
   });
-  _previewFocus = "rounds";
   postPreviewRow();
   colorModal?.classList.add("hidden");
 }
@@ -481,13 +471,11 @@ function renderTeams() {
   document.getElementById("gsTeamA")?.addEventListener("input", e => {
     localSettings.teams.teamA = e.target.value;
     markDirty();
-    _previewFocus = "rounds";
     postPreviewRow();
   });
   document.getElementById("gsTeamB")?.addEventListener("input", e => {
     localSettings.teams.teamB = e.target.value;
     markDirty();
-    _previewFocus = "rounds";
     postPreviewRow();
   });
 }
@@ -503,12 +491,24 @@ function renderTeams() {
 // game_state) i przesyła mu spreparowany wiersz — dokładnie ten sam
 // mechanizm i ta sama funkcja budująca wiersz (shared/previewRow.js) co
 // control2's D3.
+// Wybrane logo (localSettings.display.logoId) jest JESZCZE NIEZAPISANE —
+// przekazujemy jego surowy payload wprost do podglądu (shared/previewRow.js's
+// logoPreview), bo scene.js's bindGame()/reload() czytają logo z bazy i
+// nie zobaczyłyby tego wyboru wcale, dopóki operator nie kliknie "Zapisz
+// wszystko". null = domyślne logo.
+function resolveLogoPreview() {
+  const id = localSettings.display.logoId;
+  if (!id) return null;
+  const logo = _loadedLogos.find(l => l.id === id);
+  return logo ? { type: logo.type, payload: logo.payload } : null;
+}
+
 function postPreviewRow() {
   if (!_displayReady || !_displayIframe?.contentWindow) return;
   try {
     _displayIframe.contentWindow.postMessage({
       type: "familiada:preview-row",
-      row: buildDisplayPreviewRow({ teams: localSettings.teams, display: localSettings.display, focus: _previewFocus }),
+      row: buildDisplayPreviewRow({ teams: localSettings.teams, display: localSettings.display, logoPreview: resolveLogoPreview() }),
     }, "*");
   } catch {}
 }
@@ -588,7 +588,6 @@ function renderDisplay() {
     onChange: (val) => {
       localSettings.display.theme = val || null;
       markDirty();
-      _previewFocus = "rounds";
       postPreviewRow();
     },
   });
@@ -657,7 +656,6 @@ async function renderLogoGrid() {
       markDirty();
       grid.querySelectorAll(".gs-logo-tile").forEach(t => t.classList.remove("selected"));
       tile.classList.add("selected");
-      _previewFocus = "logo";
       postPreviewRow();
     });
   });

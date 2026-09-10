@@ -514,6 +514,12 @@ export async function createScene() {
     logo: {
       _gameId: null, _key: null,
       bindGame: async (gameId) => { const u = new URL(location.href); const key = u.searchParams.get("key")||""; api.logo._gameId = (gameId??"").toString(); api.logo._key = key; const dbLogo = await loadActiveLogoFromDb(api.logo._gameId, key); ACTIVE_LOGO = (dbLogo&&dbLogo.type&&dbLogo.payload) ? dbLogo : null; },
+      // WYŁĄCZNIE dla podglądu (display2/js/main.js's bootPreview) — ustawia
+      // logo wprost z gotowego payloadu (np. jeszcze NIEZAPISANEGO wyboru w
+      // formularzu ustawień gry), bez odpytywania bazy jak bindGame/reload.
+      // logo=null -> wraca do wbudowanego domyślnego logo (ten sam fallback
+      // co _getSource() ma i tak, gdy ACTIVE_LOGO jest puste).
+      setPreview: (logo) => { ACTIVE_LOGO = (logo?.type && logo?.payload) ? logo : null; },
       _getSource: () => { if (ACTIVE_LOGO?.type==="GLYPH_30x10") return { type:"GLYPH_30x10", payload: ACTIVE_LOGO.payload }; if (ACTIVE_LOGO?.type==="PIX_150x70") return { type:"PIX_150x70", payload: ACTIVE_LOGO.payload }; return { type:"GLYPH_30x10", payload: DEFAULT_LOGO }; },
       draw: () => { const src = api.logo._getSource(); if (src.type==="GLYPH_30x10") { drawLogoGrid30x10(src.payload); return; } if (src.type==="PIX_150x70") { drawLogoPix150x70(src.payload?.bits_b64||src.payload?.bits_base64||src.payload?.bitsBase64||"", LIT.main); return; } throw new Error("LOGO: nieznany typ: "+src.type); },
       show: async (animIn = {type:"edge",dir:"left",ms:14}) => { api.logo.draw(); await api.big.animIn({ ...animIn, area: api.big.areaAll() }); },

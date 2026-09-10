@@ -8,7 +8,6 @@ import { loadFont5x7, buildLogoPreviewCanvas } from "../core/logo-preview.js?v=v
 import { v as cacheBust } from "../core/cache-bust.js?v=v2026-09-10T17564";
 import { alertModal, confirmModal } from "../core/modal.js?v=v2026-09-10T17564";
 import { initUiSelect } from "../core/ui-select.js?v=v2026-09-10T17564";
-import { buildDisplayPreviewRow } from "../../shared/previewRow.js?v=v2026-09-10T17564";
 import {
   loadSfxManifest, getSfxCategories,
   setSfxCustomBlob, clearSfxCustomFile, clearAllSfxCustomFiles, getSfxCustomFiles,
@@ -113,12 +112,6 @@ let _loadedLogos = [];
 // Display preview iframe
 let _displayIframe = null;
 let _displayReady = false;
-// "big" (logo vs plansza rund) to jedno, współdzielone płótno na prawdziwym
-// Wyświetlaczu — nie da się pokazać obu naraz (shared/previewRow.js's
-// buildDisplayPreviewRow's `focus`). Domyślnie "rounds" (kolory "w akcji"),
-// przełącza się na "logo" konkretnie przy wyborze kafla logo, z powrotem na
-// "rounds" przy zmianie nazwy drużyny/koloru/motywu.
-let _previewFocus = "rounds";
 
 // Wykryj modal mode już na poziomie modułu (inline script w <head> dodaje klasę przed renderem)
 const _isModal = document.documentElement.classList.contains("gs-modal-mode");
@@ -129,7 +122,6 @@ let colorModalR = 0, colorModalG = 0, colorModalB = 0;
 
 // ===== ELEMENTS =====
 const titleEl = document.getElementById("gsTitle");
-const unsavedBadge = document.getElementById("gsUnsavedBadge");
 const btnSaveAll = document.getElementById("btnSaveAll");
 const btnResetAll = document.getElementById("btnResetAll");
 const btnPlay = document.getElementById("btnPlay");
@@ -156,13 +148,11 @@ const colorModalDone = document.getElementById("gsColorModalDone");
 // ===== DIRTY / SAVE =====
 function markDirty() {
   isDirty = true;
-  unsavedBadge?.classList.remove("hidden");
   document.getElementById("gsFooterMsg")?.classList.remove("hidden");
 }
 
 function clearDirty() {
   isDirty = false;
-  unsavedBadge?.classList.add("hidden");
   document.getElementById("gsFooterMsg")?.classList.add("hidden");
 }
 
@@ -390,8 +380,7 @@ function applyColorModal() {
   content?.querySelectorAll(`[data-color-key="${colorModalTarget}"]`).forEach(el => {
     el.style.background = hex;
   });
-  _previewFocus = "rounds";
-  postPreviewRow();
+  sendDisplayCmd(`COLOR ${colorModalTarget} ${hex}`);
   colorModal?.classList.add("hidden");
 }
 
@@ -477,36 +466,109 @@ function renderTeams() {
   document.getElementById("gsTeamA")?.addEventListener("input", e => {
     localSettings.teams.teamA = e.target.value;
     markDirty();
-    _previewFocus = "rounds";
-    postPreviewRow();
+    const q = (s) => `"${String(s ?? "").replace(/"/g, "'")}"`;
+    sendDisplayCmd(`LONG1 ${q(e.target.value || t("gameSettings.teams.defaultA"))}`);
   });
   document.getElementById("gsTeamB")?.addEventListener("input", e => {
     localSettings.teams.teamB = e.target.value;
     markDirty();
-    _previewFocus = "rounds";
-    postPreviewRow();
+    const q = (s) => `"${String(s ?? "").replace(/"/g, "'")}"`;
+    sendDisplayCmd(`LONG2 ${q(e.target.value || t("gameSettings.teams.defaultB"))}`);
   });
 }
 
 // --- WYGLĄD ---
-// Podgląd Wyświetlacza: NIE komendy tekstowe do starego /display (dawny
-// _isModal-forward do window.parent liczył na to, że Control ma gdzie je
-// przekazać — w Control v2 nikt tego nie robi, komend już nie ma wcale, więc
-// ta ścieżka była martwa: podgląd w modalu nic nie pokazywał). Zamiast tego,
-// niezależnie od trybu (modal/samodzielnie), ta strona sama osadza
-// /display2?preview=1 (display2/js/main.js's bootPreview() — tryb podglądu:
-// zero autoryzacji/subskrypcji, tylko postMessage z gotowym wierszem
-// game_state) i przesyła mu spreparowany wiersz — dokładnie ten sam
-// mechanizm i ta sama funkcja budująca wiersz (shared/previewRow.js) co
-// control2's D3.
-function postPreviewRow() {
-  if (!_displayReady || !_displayIframe?.contentWindow) return;
+// Podgląd Wyświetlacza: STARY /display + komendy tekstowe (COLOR/THEME/
+// LOGO/...), tak jak zawsze w tym pliku — w trybie modala (otwartego z
+// control.html) komenda leci do window.parent, licząc, że stary Control ją
+// dalej przekaże prawdziwemu Displayowi (control/js/app.js's gs:displayCmd
+// handler to robi). NIE zamieniać na nowy mechanizm /display2?preview=1 +
+// postMessage z wierszem — ten plik obsługuje starego Control i ma zostać
+// nietknięty, kopia (js/pages/game-settings2.js) już ma nowy mechanizm.
+function sendDisplayCmd(cmd) {
   try {
-    _displayIframe.contentWindow.postMessage({
-      type: "familiada:preview-row",
-      row: buildDisplayPreviewRow({ teams: localSettings.teams, display: localSettings.display, focus: _previewFocus }),
-    }, "*");
+    if (_isModal) {
+      window.parent.postMessage({ type: "gs:displayCmd", cmd }, "*");
+      return;
+    }
+    if (_displayIframe?.contentWindow?.handleCommand) {
+      _displayIframe.contentWindow.handleCommand(cmd);
+    }
   } catch {}
+}
+
+function logoToBase64(data) {
+  const json = JSON.stringify(data);
+  const bytes = new TextEncoder().encode(json);
+  let bin = "";
+  bytes.forEach(b => bin += String.fromCharCode(b));
+  return btoa(bin);
+}
+
+function previewLogo(id) {
+  if (_isModal) {
+    try {
+      if (id === null) {
+        sendDisplayCmd(`LOGO JSON ${logoToBase64(null)}`);
+      } else {
+        const logo = _loadedLogos.find(l => l.id === id);
+        if (!logo) return;
+        sendDisplayCmd(`LOGO JSON ${logoToBase64({ type: logo.type, payload: logo.payload })}`);
+      }
+    } catch {}
+    return;
+  }
+  try {
+    const logoApi = _displayIframe?.contentWindow?.scene?.api?.logo;
+    if (!logoApi) {
+      // scene.api.logo not ready yet — fallback to LOGO JSON command
+      if (id === null) {
+        sendDisplayCmd(`LOGO JSON ${logoToBase64(null)}`);
+      } else {
+        const logo = _loadedLogos.find(l => l.id === id);
+        if (logo) sendDisplayCmd(`LOGO JSON ${logoToBase64({ type: logo.type, payload: logo.payload })}`);
+      }
+      return;
+    }
+    if (!logoApi._origGetSource) logoApi._origGetSource = logoApi._getSource;
+    if (id === null) {
+      logoApi._getSource = logoApi._origGetSource;
+    } else {
+      const logo = _loadedLogos.find(l => l.id === id);
+      if (!logo) return;
+      logoApi._getSource = () => ({ type: logo.type, payload: logo.payload });
+    }
+    logoApi.draw();
+  } catch {}
+}
+
+function sendDisplayInitCmds() {
+  const c = localSettings.display.colors;
+  const q = (s) => `"${String(s ?? "").replace(/"/g, "'")}"`;
+  const teamA = localSettings.teams.teamA || t("gameSettings.teams.defaultA");
+  const teamB = localSettings.teams.teamB || t("gameSettings.teams.defaultB");
+  sendDisplayCmd("APP GAME");
+  sendDisplayCmd(`COLOR A ${c.A}`);
+  sendDisplayCmd(`COLOR B ${c.B}`);
+  sendDisplayCmd(`COLOR BACKGROUND ${c.BACKGROUND}`);
+  sendDisplayCmd(`COLOR DOT ${c.DOT}`);
+  const theme = localSettings.display.theme || (themeList[0]?.key ?? "");
+  if (theme) sendDisplayCmd(`THEME ${theme}`);
+  if (_isModal) {
+    sendDisplayCmd("LOGO RELOAD");
+  } else if (localSettings.display.logoId === null || _loadedLogos.length > 0) {
+    // logos already loaded (or default selected) — preview correctly
+    previewLogo(localSettings.display.logoId);
+  } else {
+    // logos not yet loaded — draw default for now; renderLogoGrid will call previewLogo after load
+    sendDisplayCmd("LOGO DRAW");
+  }
+  sendDisplayCmd("LEFT 123");
+  sendDisplayCmd("RIGHT 123");
+  sendDisplayCmd("TOP 1");
+  sendDisplayCmd(`LONG1 ${q(teamA)}`);
+  sendDisplayCmd(`LONG2 ${q(teamB)}`);
+  sendDisplayCmd("INDICATOR OFF");
 }
 
 function createDisplayIframe() {
@@ -516,18 +578,42 @@ function createDisplayIframe() {
 
   _displayIframe = document.createElement("iframe");
   _displayIframe.id = "gsDisplayPreview";
-  _displayIframe.src = "/display2?preview=1";
+  _displayIframe.src = "/display";
   _displayIframe.style.cssText = "width:100%;height:100%;border:none;display:block";
   _displayIframe.title = "Display preview";
   _displayReady = false;
 
-  // display2/js/main.js's bootPreview() posła "familiada:preview-ready" po
-  // starcie sceny — sygnał gotowości zamiast pollowania obecności
-  // window.handleCommand (który już nie istnieje, komend nie ma).
-  window.addEventListener("message", (e) => {
-    if (e.data?.type !== "familiada:preview-ready" || e.source !== _displayIframe?.contentWindow) return;
-    _displayReady = true;
-    if (activeCat === "display") postPreviewRow();
+  // Chrome odpala load najpierw dla about:blank, a potem dla /display.
+  // NIE używamy { once:true } — pomijamy blank, startujemy poll dopiero przy prawdziwym /display.
+  let _pollInterval = null;
+  _displayIframe.addEventListener("load", () => {
+    // Pomiń load z about:blank (przed właściwym /display)
+    try {
+      const loc = _displayIframe.contentWindow?.location?.href ?? "";
+      if (!loc || loc === "about:blank") return;
+    } catch { return; }
+
+    if (_pollInterval) clearInterval(_pollInterval);
+    let attempts = 0;
+    _pollInterval = setInterval(() => {
+      attempts++;
+      try {
+        if (_displayIframe?.contentWindow?.handleCommand) {
+          clearInterval(_pollInterval);
+          _pollInterval = null;
+          _displayReady = true;
+          if (activeCat === "display") {
+            sendDisplayInitCmds();
+          }
+        } else if (attempts >= 50) {
+          clearInterval(_pollInterval);
+          _pollInterval = null;
+        }
+      } catch {
+        clearInterval(_pollInterval);
+        _pollInterval = null;
+      }
+    }, 100);
   });
 
   holder.appendChild(_displayIframe);
@@ -584,8 +670,8 @@ function renderDisplay() {
     onChange: (val) => {
       localSettings.display.theme = val || null;
       markDirty();
-      _previewFocus = "rounds";
-      postPreviewRow();
+      const key = val || (themeList[0]?.key ?? "");
+      if (key) sendDisplayCmd(`THEME ${key}`);
     },
   });
 
@@ -598,7 +684,7 @@ function renderDisplay() {
 
   // Iframe jest zawsze w gsDisplayIframeHolder (sibling gsContentInner) — tylko show/hide
   showDisplayIframe();
-  if (_displayReady) postPreviewRow();
+  if (_displayReady) sendDisplayInitCmds();
   renderLogoGrid();
 }
 
@@ -626,7 +712,7 @@ async function renderLogoGrid() {
     if (error) throw error;
     _loadedLogos = data || [];
     // After loading: update preview iframe with the selected logo
-    if (_displayReady) postPreviewRow();
+    if (_displayReady && !_isModal) previewLogo(localSettings.display.logoId);
   } catch (e) {
     if (document.getElementById("gsLogoGrid")) {
       grid.innerHTML = `<div class="hint">${escText(e?.message || String(e))}</div>`;
@@ -653,8 +739,7 @@ async function renderLogoGrid() {
       markDirty();
       grid.querySelectorAll(".gs-logo-tile").forEach(t => t.classList.remove("selected"));
       tile.classList.add("selected");
-      _previewFocus = "logo";
-      postPreviewRow();
+      previewLogo(id);
     });
   });
 }
@@ -1763,11 +1848,9 @@ async function main() {
   btnLegalClose?.addEventListener("click", () => legalOverlay?.classList.add("hidden"));
   legalOverlay?.addEventListener("click", (ev) => { if (ev.target === legalOverlay) legalOverlay.classList.add("hidden"); });
 
-  // Podgląd Wyświetlacza — ta strona sama osadza /display2?preview=1 i
-  // przesyła mu postMessage (patrz postPreviewRow() wyżej), niezależnie od
-  // trybu (modal/samodzielnie): modal nie polega już na Control, żeby
-  // przekazać dalej "prawdziwemu" Displayowi — komend już nie ma.
-  createDisplayIframe();
+  // Create display preview iframe — skip in modal mode (real display managed by control-new)
+  if (!isModal) createDisplayIframe();
+  else sendDisplayInitCmds();
 
   setActiveCat("teams");
   document.querySelectorAll('[data-skel-step]').forEach(el => el.classList.add('skel-step-ready'));

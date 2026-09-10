@@ -317,12 +317,11 @@ export function createUI({ root, emit }) {
   // Wiersz-atrapa "rundy w toku" do podglądu D3 — patrz shared/previewRow.js
   // (ta sama funkcja, którą używa też js/pages/game-settings2.js's modal
   // ustawień, żeby oba miejsca nie rozjechały się osobnymi implementacjami).
-  // D3 to statyczne podsumowanie (bez własnej edycji na żywo) — focus:"logo"
-  // pokazuje faktycznie skonfigurowane logo, bo to jedyna rzecz z tej
-  // sekcji, której NIE da się w pełni ocenić z samego tekstu (kolory/motyw
-  // już mają swoje próbki/nazwę w summarySection wyżej).
+  // BEZ logoPreview — logo tej JUŻ ZAPISANEJ gry pokazuje się przez
+  // scene.js's bindGame(id), wołane w display2/js/main.js's bootPreview()
+  // wprost z ?id= w URL-u iframe'a (patrz previewSrc niżej).
   function buildPreviewRow(state) {
-    return buildDisplayPreviewRow({ teams: state.teams, display: state.display, focus: "logo" });
+    return buildDisplayPreviewRow({ teams: state.teams, display: state.display });
   }
 
   function renderSetupFinish(state, ctx = {}) {

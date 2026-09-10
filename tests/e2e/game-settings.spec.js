@@ -188,7 +188,7 @@ test("ustawienia gry: Warstwa 2 — zapis filtruje pytanie finału usunięte w m
     }, q2Id);
 
     await openSettings(page, gameId);
-    // Tu nic wcześniej nie ustawiło isDirty, więc #gsUnsavedBadge jest
+    // Tu nic wcześniej nie ustawiło isDirty, więc #gsFooterMsg jest
     // ukryty od początku — toBeHidden przeszłoby natychmiast bez czekania
     // na realne zakończenie zapisu; saveAndWait() (network response) nie
     // ma tego problemu i działa niezależnie od stanu isDirty.
@@ -526,7 +526,7 @@ test("ustawienia gry: przycisk Wstecz z niezapisanymi zmianami pyta o potwierdze
   try {
     await openSettings(page, gameId);
     await page.locator("#gsTeamA").fill("Coś nowego");
-    await expect(page.locator("#gsUnsavedBadge")).toBeVisible();
+    await expect(page.locator("#gsFooterMsg")).toBeVisible();
 
     await page.locator("#btnBack").click();
     await expect(page.locator(".mSub")).toHaveText(

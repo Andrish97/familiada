@@ -15,59 +15,52 @@
 //   - js/pages/game-settings.js (oryginał — modal w starym control.html ORAZ
 //     samodzielnie spod /game-settings)
 //
-// Treść (pytanie/odpowiedzi/wynik) jest zmyślona — to nie ma pokazywać
-// prawdziwej gry, tylko jak kolory/motyw/nazwy drużyn wyglądają na
-// faktycznej planszy LED-matrix, zamiast gołych próbek koloru w formularzu.
+// Stały układ podglądu (ustalony wprost, nie zgadywany):
+//   - big: aktualne logo gry (step="r_intro" — jedyny krok, w którym
+//     display2/js/render.js's paintForStep() maluje logo na "big")
+//   - small: prawo=123, góra=456, lewo=789 — przykładowe cyfry, każda
+//     trójka inna, żeby pokazać wszystkie kształty czcionki na raz
+//   - długie: lewo=drużyna A, prawo=drużyna B (paintTeamNames, wywoływane
+//     też dla r_intro — "small" to płótno NIEZALEŻNE od "big", więc logo i
+//     nazwy drużyn/cyfry pokazują się razem, mimo że w prawdziwej grze te
+//     cyfry akurat o tej porze jeszcze nie istnieją)
+//   - wskaźnik: wyłączony
+//   - motyw/kolory: aktualnie ustawione (stosowane bezwarunkowo w
+//     display2/js/render.js's renderSnapshot(), niezależnie od kroku)
+// Cyfry/wskaźnik idą wprost przez scene.api w display2/js/main.js's
+// bootPreview() (czysto demonstracyjne, żaden prawdziwy stan gry ich tak
+// nie niesie) — ten moduł buduje tylko to, co MA sens jako realny wiersz
+// game_state (logo/drużyny/kolory/motyw).
 //
-// `focus` wybiera, KTÓRY realny moment gry ten podgląd udaje — "big" (logo
-// vs plansza rund) to jedno, współdzielone płótno na prawdziwym
-// Wyświetlaczu, więc te dwa stany są fizycznie wzajemnie wykluczające się
-// i nie da się ich pokazać naraz w jednym wierszu:
-//   - "rounds" (domyślne) — plansza rund w trakcie gry (r_play), pokazuje
-//     kolory/motyw "w akcji" na kaflach/X-ach odpowiedzi.
-//   - "logo" — ekran startowy gry (r_intro), pokazuje FAKTYCZNIE
-//     skonfigurowane logo (logoId) na "big". Nazwy drużyn nadal malowane na
-//     "small" niezależnie od tego, co jest na "big" (display2/js/render.js's
-//     paintForStep, oba płótna niezależne) — więc podgląd nazw drużyn
-//     działa w obu trybach.
-export function buildDisplayPreviewRow({ teams, display, focus = "rounds" } = {}) {
-  const base = {
-    control_team: "A", sound_cue_key: null, sound_cue_seq: 0,
-    detail: {
-      teams: { teamA: teams?.teamA || "Drużyna A", teamB: teams?.teamB || "Drużyna B" },
-      final: { runtime: {} },
-      display: { mode: "GAME", colors: display?.colors, theme: display?.theme, logoId: display?.logoId, qr: { host: { show: false }, buzzer: { show: false } } },
-      host: { covered: false },
-      locks: { gameEnded: false },
-    },
+// `logoPreview` — jawny payload logo {type, payload} (albo null dla
+// domyślnego) do podglądu WYŁĄCZNIE JESZCZE NIEZAPISANEGO wyboru w
+// formularzu (js/pages/game-settings2.js's logo grid) — scene.js's
+// bindGame()/reload() czytają logo z bazy, więc nie zobaczyłyby takiego
+// wyboru wcale. Pomiń ten parametr całkowicie (D3 — control2/js/ui.js),
+// gdy podgląd ma pokazywać logo JUŻ ZAPISANEJ gry: iframe wtedy dostaje
+// prawdziwe ?id= w URL, a display2/js/main.js's bootPreview() sam woła
+// bindGame(id) — przekazanie tu logoPreview:null nadpisałoby to z powrotem
+// na domyślne.
+export function buildDisplayPreviewRow({ teams, display, logoPreview } = {}) {
+  const displayDetail = {
+    mode: "GAME",
+    colors: display?.colors,
+    theme: display?.theme,
+    logoId: display?.logoId,
+    qr: { host: { show: false }, buzzer: { show: false } },
   };
-
-  if (focus === "logo") {
-    return {
-      ...base,
-      top_card: "rounds", step: "r_intro", phase: null,
-      detail: { ...base.detail, rounds: { roundNo: 1, bankPts: 0, xA: 0, xB: 0, totals: { A: 0, B: 0 } } },
-    };
-  }
+  if (logoPreview !== undefined) displayDetail.logoPreview = logoPreview;
 
   return {
-    ...base,
-    top_card: "rounds", step: "r_play", phase: "PLAY",
+    top_card: "rounds", step: "r_intro", phase: null, control_team: null,
+    sound_cue_key: null, sound_cue_seq: 0,
     detail: {
-      ...base.detail,
-      rounds: {
-        roundNo: 1, bankPts: 70, xA: 1, xB: 0, totals: { A: 120, B: 80 },
-        question: { text: "PRZYKŁADOWE PYTANIE" },
-        answers: [
-          { ord: 1, text: "Pierwsza odpowiedź", fixed_points: 40 },
-          { ord: 2, text: "Druga odpowiedź", fixed_points: 30 },
-          { ord: 3, text: "Trzecia odpowiedź", fixed_points: 20 },
-          { ord: 4, text: "Czwarta odpowiedź", fixed_points: 10 },
-          { ord: 5, text: "Piąta odpowiedź", fixed_points: 6 },
-          { ord: 6, text: "Szósta odpowiedź", fixed_points: 4 },
-        ],
-        revealed: [1, 2], steal: {}, duel: {},
-      },
+      teams: { teamA: teams?.teamA || "Drużyna A", teamB: teams?.teamB || "Drużyna B" },
+      rounds: { roundNo: 1, bankPts: 0, xA: 0, xB: 0, totals: { A: 0, B: 0 } },
+      final: { runtime: {} },
+      display: displayDetail,
+      host: { covered: false },
+      locks: { gameEnded: false },
     },
   };
 }
