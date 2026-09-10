@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict LYLa6LrwBzQr0VacXG6qUS87bqF1WFPSgnmmEnuz76xzAbyJv43DlDN0AdqqDz4
+\restrict a1mYEHodBf87pKdX0obySdbt6k0egt97CfUqr1CZga3iCMS3bRbGnnbCVS2IHoJ
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -1926,7 +1926,7 @@ declare
   v_logo_id  uuid;
   v_logo     jsonb;
 begin
-  select (g.share_key_display = p_key),
+  select (g.share_key_display = p_key or g.share_key_host = p_key),
          g.owner_id,
          (g.settings -> 'display' ->> 'logoId')::uuid
     into v_ok, v_owner, v_logo_id
@@ -14946,5 +14946,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict LYLa6LrwBzQr0VacXG6qUS87bqF1WFPSgnmmEnuz76xzAbyJv43DlDN0AdqqDz4
+\unrestrict a1mYEHodBf87pKdX0obySdbt6k0egt97CfUqr1CZga3iCMS3bRbGnnbCVS2IHoJ
 
