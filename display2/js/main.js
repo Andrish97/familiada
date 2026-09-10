@@ -14,6 +14,8 @@ import { createScene } from "./scene.js?v=v2026-09-10T20410";
 import { createQRController } from "./qr.js?v=v2026-09-10T20410";
 import { createSubscription } from "../../js/core/game-state-subscribe.js?v=v2026-09-10T20410";
 import { createRenderer } from "./render.js?v=v2026-09-10T20410";
+import { createDisplaySoundReactor } from "./soundReactor.js?v=v2026-09-10T20410";
+import { loadSfxManifest, initSfx, setCurrentGameId, applySfxGameSettings, unlockAudio, isAudioUnlocked } from "../../js/core/sfx.js?v=v2026-09-10T20410";
 
 startKeepAlive();
 
@@ -160,6 +162,27 @@ window.addEventListener("DOMContentLoaded", async () => {
     const game = await authDisplayOrThrow(gameId, key);
     startPresenceHeartbeat({ gameId: game.id, key });
 
+    // Dźwięk "ze źródła Wyświetlacz" (zgłoszone) — ten sam js/core/sfx.js co
+    // Control, wczytany niezależnie tutaj. Głośności/warianty (BEZ własnych
+    // plików — patrz shared/gameStateShape.js) dociągane niżej z pierwszego
+    // wiersza game_state, gdzie control2/js/app.js je zdenormalizowało.
+    setCurrentGameId(game.id);
+    await loadSfxManifest();
+    await initSfx();
+    const soundReactor = createDisplaySoundReactor();
+
+    const audioUnlockScreen = $("audioUnlockScreen");
+    const btnAudioUnlock = $("btnAudioUnlock");
+    function syncAudioUnlockScreen(row) {
+      if (!audioUnlockScreen) return;
+      const wantsDisplaySound = row.detail?.settings?.soundSource === "display";
+      audioUnlockScreen.classList.toggle("hidden", !wantsDisplaySound || isAudioUnlocked());
+    }
+    btnAudioUnlock?.addEventListener("click", () => {
+      unlockAudio();
+      audioUnlockScreen?.classList.add("hidden");
+    });
+
     const scene = await createScene();
     scene.api = instrumentSceneApi(scene.api);
     const qrCtrl = createQRController({
@@ -206,6 +229,18 @@ window.addEventListener("DOMContentLoaded", async () => {
           appliedLang = lang;
           setUiLang(lang, { persist: true, updateUrl: true, apply: true }).catch(() => {});
         }
+
+        // Dźwięk — patrz komentarz przy setCurrentGameId() wyżej. Reaplikowane
+        // na KAŻDY wiersz (tanie — kilka localStorage.setItem), nie tylko raz:
+        // operator może zmienić głośność w modalu ustawień PO tym, jak Display
+        // już dostał pierwszy (pusty) wiersz `sound` — "raz" zamroziłoby
+        // ustawienia sprzed realnej konfiguracji (złapane przy pisaniu testu
+        // E2E, nie w prawdziwej grze — ale ten sam mechanizm tam też obowiązuje).
+        if (row.detail?.settings?.sound) {
+          applySfxGameSettings(row.detail.settings.sound);
+        }
+        soundReactor.onRow(row);
+        syncAudioUnlockScreen(row);
 
         // Widoczność kontenerów zależy wyłącznie od trybu — samo malowanie
         // planszy/QR/czarnego to render.js.

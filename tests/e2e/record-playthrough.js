@@ -519,7 +519,20 @@ async function typePaced(locator, text, msPerChar = 90) {
 // pojedynku, pass, kradzież wygrana/przegrana, odkrywanie reszty...". =====
 
 async function scenarioRoundsMechanics(pages) {
-  const { control, buzzer } = pages;
+  const { control, buzzer, display } = pages;
+
+  // Zgłoszone: "dodaj testy... jeden test niech używa dźwięku z display" —
+  // przełącznik "Dźwięk" jest widoczny WYŁĄCZNIE na kroku Urządzeń (stąd na
+  // samym początku scenariusza, przed "Dalej"). Po przełączeniu Display
+  // pokazuje pełnoekranowy #audioUnlockScreen — przeglądarki wymagają
+  // gestu użytkownika, zanim odtwarzanie w ogóle zadziała (nikt normalnie
+  // nie dotyka ekranu Wyświetlacza w trakcie gry), więc to jest ten gest.
+  await control.getByLabel("Odtwarzaj dźwięk na Wyświetlaczu zamiast Panelu sterowania").check();
+  await control.waitForTimeout(600);
+  await display.waitForSelector("#audioUnlockScreen", { state: "visible", timeout: 10_000 });
+  await display.waitForTimeout(1000); // niech nagranie złapie ekran odblokowania na Display
+  await display.locator("#btnAudioUnlock").click();
+  await control.waitForTimeout(500);
 
   await clickPaced(control.getByRole("button", { name: "Dalej" }));
 
@@ -530,9 +543,23 @@ async function scenarioRoundsMechanics(pages) {
   // zamyka się go naprawdę — control2/js/app.js's gsOverlayEl click handler).
   await clickPaced(control.getByRole("button", { name: "Zmień ustawienia" }));
   await control.waitForTimeout(1000); // niech nagranie złapie otwarcie modala
-  const gsTeamAInput = control.frameLocator("#gsFrame").locator("#gsTeamA");
+  const gsFrame = control.frameLocator("#gsFrame");
+  const gsTeamAInput = gsFrame.locator("#gsTeamA");
   await gsTeamAInput.fill("Mistrzowie Quizu");
   await control.waitForTimeout(1200); // niech nagranie złapie podgląd Wyświetlacza aktualizujący się na żywo
+
+  // Zgłoszone: "...i pokręć głośności" — kategoria Dźwięk w tym samym
+  // modalu, ten sam zapis co zmiana nazwy drużyny wyżej.
+  await gsFrame.locator('.gs-sidebar-item[data-cat="sound"]').click();
+  await control.waitForTimeout(600);
+  const revealSlider = gsFrame.locator('input.sfx-vol[data-sfx-vol="reveal"]');
+  await revealSlider.waitFor({ state: "visible", timeout: 10_000 });
+  // .fill() na range input nie zawsze niezawodnie odpala "input" (na czym
+  // wisi handler zapisujący głośność) — ustawiamy value i wysyłamy
+  // zdarzenie wprost, tak samo jak w control2.spec.js's analogicznym teście.
+  await revealSlider.evaluate((el) => { el.value = "40"; el.dispatchEvent(new Event("input", { bubbles: true })); });
+  await control.waitForTimeout(1000); // niech nagranie złapie suwak i zaktualizowaną etykietę %
+
   await clickPaced(control.getByRole("button", { name: "Zapisz wszystko" }));
   await control.locator("#gsOverlay").click({ position: { x: 5, y: 5 } });
   await control.locator("#gsOverlay").waitFor({ state: "hidden", timeout: 10_000 });
@@ -567,9 +594,18 @@ async function scenarioRoundsMechanics(pages) {
   // buzzera (firstTeam/secondTeam nie są czyszczone — nie ma ponownego buzera).
   await armAndConfirmPaced(control.getByRole("button", { name: "X", exact: true }));
   await armAndConfirmPaced(answerTile(control, 1)); // A trafia -> wygrywa pojedynek, bez nowego zgłoszenia
+
+  // Zgłoszone: "...tez sprawdź mute na chwilę w jednej z rund" — wyciszenie
+  // (#btnMute w topbarze Control, współdzielone przez game_state — patrz
+  // control2/js/soundReactor.js) na czas trzech X, wznowione tuż przed
+  // odsłonięciem kradzieży, żeby widz USŁYSZAŁ powrót dźwięku.
+  await control.locator("#btnMute").click();
+  await control.waitForTimeout(600);
   await armAndConfirmPaced(control.getByRole("button", { name: "X", exact: true }));
   await armAndConfirmPaced(control.getByRole("button", { name: "X", exact: true }));
   await armAndConfirmPaced(control.getByRole("button", { name: "X", exact: true })); // 3x pudło A -> auto-KRADZIEŻ dla B
+  await control.locator("#btnMute").click();
+  await control.waitForTimeout(600);
   await armAndConfirmPaced(answerTile(control, 2)); // B kradnie WYGRANĄ
   await clickPaced(control.getByRole("button", { name: "Zakończ rundę" }));
   await control.waitForTimeout(2000); // widz ma zdążyć zobaczyć zaktualizowany wynik przed startem kolejnej rundy

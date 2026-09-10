@@ -240,6 +240,29 @@ export function createUI({ root, emit }) {
       rows.push(h("div", { class: "device-row" }, [reenableRow(t("control.deviceBuzzer"), "physicalBuzzer")]));
     }
 
+    // ===== Dźwięk — jeden przełącznik (zgłoszone): źródło odtwarzania,
+    // "Panel sterowania" (domyślnie) albo "Wyświetlacz". Osobny wiersz w tej
+    // samej liście co urządzenia, ten sam .device-row/.device-opt-check
+    // szkielet — bez nowego CSS. Hint o przycisku "Odblokuj dźwięk" na
+    // Wyświetlaczu pokazuje się TYLKO gdy przełącznik jest włączony (dopiero
+    // wtedy jest w ogóle istotny). =====
+    const soundOnDisplay = state.settings.soundSource === "display";
+    const soundChk = h("input", { type: "checkbox" });
+    soundChk.checked = soundOnDisplay;
+    on(soundChk, "change", () => emit("devices.soundSource", soundChk.checked ? "display" : "control"));
+    const soundHintText = soundOnDisplay ? t("control.soundSourceDisplayHint") : t("control.soundSourceHint");
+    rows.push(h("div", { class: "device-row" }, [
+      h("div", { class: "device-row-1" }, [
+        h("div", { class: "device-name", text: t("control.soundSection") }),
+      ]),
+      h("div", { class: "device-row-opt" }, [
+        h("label", { class: "device-opt-check" }, [soundChk, h("div", { class: "device-opt-check-text" }, [
+          h("span", { class: "device-opt-check-label", text: t("control.soundSourceLabel") }),
+          h("span", { class: "device-opt-check-hint", text: soundHintText }),
+        ])]),
+      ]),
+    ]));
+
     function reenableRow(label, flagKey) {
       const chk = h("input", { type: "checkbox" });
       chk.checked = true;

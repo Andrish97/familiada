@@ -67,6 +67,17 @@ function applyGameSettingsToState(settings, state) {
     }
   }
 
+  // Zdenormalizowane głośności/warianty (BEZ własnych plików — patrz
+  // shared/gameStateShape.js's komentarz przy `sound`) — Display2 (anon)
+  // czyta je stąd zamiast osobnego zapytania do games.settings, dokładnie
+  // jak resztę ustawień na tym ekranie.
+  if (settings.sound && typeof settings.sound === "object") {
+    state.settings.sound = {
+      volumes: { ...(settings.sound.volumes || {}) },
+      variants: { ...(settings.sound.variants || {}) },
+    };
+  }
+
   if (questions) {
     // Tak jak w starym applyGameSettingsToStore: tylko gdy finał faktycznie
     // włączony — inaczej martwa lista pytań finałowych niepotrzebnie
@@ -347,6 +358,11 @@ async function main() {
     scheduleFinalTimerWatch();
     scheduleTimer3Watch();
     ui.render(store.state, { urls, presenceFlags, connectCodes, shareBadges });
+    // Mute jest teraz częścią game_state (nie lokalny stan tej karty) —
+    // musi się odświeżyć na KAŻDĄ zmianę stanu, nie tylko po kliknięciu tu,
+    // żeby np. druga karta Control (blokada resource-lock zwolniona) albo
+    // wznowienie po przeładowaniu pokazywały poprawną ikonę od razu.
+    syncMuteButton();
   }
 
   // Samo renderCurrent() maluje cyfry timera3 tylko RAZ, w momencie zmiany
@@ -630,6 +646,23 @@ async function main() {
         await syncQrDisplay();
         return;
       }
+      if (action === "devices.soundSource") {
+        // Jeden przełącznik (zgłoszone) — "control" (domyślnie) albo
+        // "display". Gated w obu soundReactor.js (control2 i display2), tak
+        // że dokładnie jedno z dwóch urządzeń faktycznie odtwarza w danej
+        // chwili — bez żadnego dodatkowego zapisu tutaj poza samym polem.
+        store.state.settings.soundSource = payload === "display" ? "display" : "control";
+        await store.commit();
+        return;
+      }
+      if (action === "settings.toggleSoundMuted") {
+        // Współdzielone (nie lokalne — patrz komentarz w soundReactor.js),
+        // żeby wyciszenie działało niezależnie od tego, które urządzenie
+        // faktycznie gra.
+        store.state.settings.soundMuted = !store.state.settings.soundMuted;
+        await store.commit();
+        return;
+      }
       if (action === "qr.modal.show") {
         showQrModal(payload);
         return;
@@ -729,9 +762,9 @@ async function main() {
   }
 
   const btnMute = document.getElementById("btnMute");
-  function syncMuteButton() { if (btnMute) btnMute.textContent = soundReactor.isMuted() ? "🔇" : "🔊"; }
+  function syncMuteButton() { if (btnMute) btnMute.textContent = store.state.settings.soundMuted ? "🔇" : "🔊"; }
   syncMuteButton();
-  btnMute?.addEventListener("click", () => { soundReactor.toggleMuted(); syncMuteButton(); });
+  btnMute?.addEventListener("click", () => { handle("settings.toggleSoundMuted"); });
 
   // Wydzielone z topbara, żeby ten sam "Zacznij od nowa" dało się też
   // wywołać z przycisku na ekranach końca gry (control2/js/ui.js's
