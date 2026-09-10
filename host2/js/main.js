@@ -14,7 +14,12 @@ import { createSubscription } from "../../js/core/game-state-subscribe.js?v=v202
 import { createHostRenderer } from "./render.js?v=v2026-09-10T20150";
 import { createCoverLogoRenderer } from "./coverLogo.js?v=v2026-09-10T20150";
 
-startKeepAlive();
+// videoWakeLockFallback: Host jest zwykle na osobnym tablecie/telefonie
+// prowadzącego (patrz plan) — dokładnie to urządzenie, które przeglądarka
+// najchętniej usypia w trakcie długiej gry. Włączone tylko tu i w
+// buzzer2/js/main.js (nie w display2 — ten zwykle stoi podłączony do
+// zasilania/TV, mniejsze ryzyko), zgodnie z tym, co zgłoszone.
+startKeepAlive({ videoWakeLockFallback: true });
 
 function parseParams() {
   const u = new URL(location.href);
