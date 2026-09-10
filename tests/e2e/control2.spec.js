@@ -1066,6 +1066,12 @@ test("control2: dźwięk ze źródła Wyświetlacz — odblokowanie, głośnoś�
     await page.getByRole("button", { name: "Zmień ustawienia" }).click();
     await expect(page.locator("#gsOverlay")).not.toHaveClass(/hidden/, { timeout: 5000 });
     const gsFrame = page.frameLocator("#gsFrame");
+    // W trybie modal (iframe z control2) sidebar startuje jako schowany
+    // drawer (css/game-settings.css's .gs-modal-mode .gs-sidebar — domyślnie
+    // display:none, otwierany dopiero po kliknięciu ☰ #btnToggleSidebar,
+    // patrz js/pages/game-settings2.js's openSidebar()) — bez tego kliknięcia
+    // .gs-sidebar-item istnieje w DOM, ale nie jest "visible" dla Playwrighta.
+    await gsFrame.locator("#btnToggleSidebar").click();
     await gsFrame.locator('.gs-sidebar-item[data-cat="sound"]').click();
     const transitionSlider = gsFrame.locator('input.sfx-vol[data-sfx-vol="round_transition"]');
     await expect(transitionSlider).toBeVisible({ timeout: 10000 });

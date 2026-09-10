@@ -558,6 +558,15 @@ async function scenarioRoundsMechanics(pages) {
   // games.settings.sound jako punkt wyjściowy — osobny suwak
   // ("round_transition") od tego w samym Podsumowaniu niżej ("reveal"), żeby
   // nagranie pokazywało obie ścieżki osobno, nie jedną zamiast drugiej.
+  //
+  // W trybie modal sidebar startuje jako schowany drawer (css/game-settings.css's
+  // .gs-modal-mode .gs-sidebar — domyślnie display:none, otwierany dopiero po
+  // kliknięciu ☰ #btnToggleSidebar, patrz js/pages/game-settings2.js's
+  // openSidebar()) — bez tego kliknięcia .gs-sidebar-item istnieje w DOM, ale
+  // nie jest "visible" (real bug znaleziony przez failed nagranie: locator.click
+  // Timeout 30000ms, "element is not visible").
+  await gsFrame.locator("#btnToggleSidebar").click();
+  await control.waitForTimeout(400); // niech nagranie złapie drawer się otwierający
   await gsFrame.locator('.gs-sidebar-item[data-cat="sound"]').click();
   await control.waitForTimeout(600);
   const transitionSlider = gsFrame.locator('input.sfx-vol[data-sfx-vol="round_transition"]');
