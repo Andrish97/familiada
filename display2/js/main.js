@@ -6,14 +6,14 @@
 // (device_ping) i walidacja klucza (display_auth) to te same, generyczne,
 // niezwiązane z komendami RPC co dziś — reużyte bez zmian.
 
-import { initFullscreenButton } from "../../display/js/fullscreen.js?v=v2026-09-10T20150";
-import { initI18n, setUiLang } from "../../translation/translation.js?v=v2026-09-10T20150";
-import { startKeepAlive } from "../../js/core/keep-alive.js?v=v2026-09-10T20150";
-import { sb } from "../../js/core/supabase.js?v=v2026-09-10T20150";
-import { createScene } from "./scene.js?v=v2026-09-10T20150";
-import { createQRController } from "./qr.js?v=v2026-09-10T20150";
-import { createSubscription } from "../../js/core/game-state-subscribe.js?v=v2026-09-10T20150";
-import { createRenderer } from "./render.js?v=v2026-09-10T20150";
+import { initFullscreenButton } from "../../display/js/fullscreen.js?v=v2026-09-10T20254";
+import { initI18n, setUiLang } from "../../translation/translation.js?v=v2026-09-10T20254";
+import { startKeepAlive } from "../../js/core/keep-alive.js?v=v2026-09-10T20254";
+import { sb } from "../../js/core/supabase.js?v=v2026-09-10T20254";
+import { createScene } from "./scene.js?v=v2026-09-10T20254";
+import { createQRController } from "./qr.js?v=v2026-09-10T20254";
+import { createSubscription } from "../../js/core/game-state-subscribe.js?v=v2026-09-10T20254";
+import { createRenderer } from "./render.js?v=v2026-09-10T20254";
 
 startKeepAlive();
 
