@@ -312,6 +312,24 @@ html.landscape .cover2.coverOff {
     user-select: none
 }
 
+/* host2.html WYŁĄCZNIE: #cover2Logo to <div> (host2/js/coverLogo.js rysuje
+   do niego <svg>/<canvas>), nie <img> jak w starym host.html — css/host.css
+   jest WSPÓLNE dla obu stron, więc te reguły celują w ID (istnieje tylko w
+   host2.html), żeby .cover2Logo (klasa, dalej używana przez starego <img>
+   w host.html) zostało kompletnie nietknięte. */
+div#cover2Logo {
+    display: flex;
+    align-items: center;
+    justify-content: center
+}
+
+#cover2Logo>svg,#cover2Logo>canvas {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block
+}
+
 .cover2Swipe {
     flex: 0 0 auto;
     max-width: min(92%,720px);

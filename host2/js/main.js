@@ -12,6 +12,7 @@ import { startKeepAlive } from "../../js/core/keep-alive.js?v=v2026-09-09T17244"
 import { sb } from "../../js/core/supabase.js?v=v2026-09-09T17244";
 import { createSubscription } from "../../js/core/game-state-subscribe.js?v=v2026-09-09T17244";
 import { createHostRenderer } from "./render.js?v=v2026-09-09T17244";
+import { createCoverLogoRenderer } from "./coverLogo.js?v=v2026-09-10T17564";
 
 startKeepAlive();
 
@@ -108,6 +109,7 @@ async function main() {
 
   startPresenceHeartbeat({ gameId, key });
   const renderer = createHostRenderer();
+  const coverLogo = createCoverLogoRenderer({ gameId, key });
   setupPeekSwipe(renderer);
 
   let appliedLang = null;
@@ -124,6 +126,7 @@ async function main() {
         setUiLang(lang, { persist: true, updateUrl: true, apply: true }).catch(() => {});
       }
       renderer.render(row);
+      coverLogo.apply(row);
     },
     onError: (error) => console.warn("[host2] game_state_get failed:", error),
   });

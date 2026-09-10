@@ -39,7 +39,7 @@ export async function loadFont5x7(url = "/display/font_5x7.json?v=v2026-09-09T17
   return buildGlyphMap(json);
 }
 
-function rows30x10ToBits150(rows10, glyphs) {
+export function rows30x10ToBits150(rows10, glyphs) {
   const out = new Uint8Array(DOT_W * DOT_H);
   if (!glyphs) return out;
   for (let ty = 0; ty < TILES_Y; ty++) {
@@ -72,7 +72,7 @@ function base64ToBytes(b64) {
   }
 }
 
-function unpackBitsRowMajorMSB(bitsB64, w, h) {
+export function unpackBitsRowMajorMSB(bitsB64, w, h) {
   const bytes = base64ToBytes(bitsB64);
   const bytesPerRow = Math.ceil(w / 8);
   const out = new Uint8Array(w * h);
@@ -107,6 +107,36 @@ function drawThumbFlat150x70(canvas, bits150) {
 }
 
 /**
+ * Spłaszcza dowolny zapisany w bazie payload logo ({type, payload} —
+ * GLYPH_30x10 albo PIX_150x70) do jednej, jednolitej siatki bitów 150x70
+ * (Uint8Array, 1=zapalony/lit, 0=zgaszony) — ten sam kształt niezależnie od
+ * typu źródłowego. Wydzielone z buildLogoPreviewCanvas(), żeby dało się
+ * reużyć samo rozstrzygnięcie bitów bez rysowania na canvasie (np.
+ * host2/js/coverLogo.js rysuje siatkę litych kwadratów SVG zamiast obrazka).
+ * @param {object|null} logo   - { type, payload } — wiersz z bazy albo skonstruowany obiekt
+ * @param {Map|null}    glyphs - wynik loadFont5x7() (Map) — wymagane dla typu GLYPH
+ */
+export function logoToBits150(logo, glyphs) {
+  if (logo?.type === "GLYPH_30x10") {
+    const rows = logo?.payload?.layers?.[0]?.rows;
+    const rows10 = Array.isArray(rows) && rows.length
+      ? rows.map(r => String(r || "").padEnd(30, " ").slice(0, 30)).slice(0, 10)
+      : Array.from({ length: 10 }, () => " ".repeat(30));
+    return rows30x10ToBits150(rows10, glyphs);
+  }
+  if (logo?.type === "PIX_150x70") {
+    const p = logo.payload || {};
+    const w = Number(p.w) || DOT_W;
+    const h = Number(p.h) || DOT_H;
+    const raw = p.bits_b64 || p.bits_base64 || p.bitsBase64 || "";
+    return (w === DOT_W && h === DOT_H)
+      ? unpackBitsRowMajorMSB(raw, w, h)
+      : new Uint8Array(DOT_W * DOT_H);
+  }
+  return new Uint8Array(DOT_W * DOT_H);
+}
+
+/**
  * Build a preview canvas for a DB logo record (or a raw logo payload object).
  * @param {object|null} logo     - { type, payload } — DB row or constructed object
  * @param {Map|null}    glyphs   - result of loadFont5x7() (Map) — needed for GLYPH type
@@ -117,26 +147,6 @@ export function buildLogoPreviewCanvas(logo, glyphs, width = 300, height = 140) 
   const c = document.createElement("canvas");
   c.width = width;
   c.height = height;
-
-  let bits150;
-  if (logo?.type === "GLYPH_30x10") {
-    const rows = logo?.payload?.layers?.[0]?.rows;
-    const rows10 = Array.isArray(rows) && rows.length
-      ? rows.map(r => String(r || "").padEnd(30, " ").slice(0, 30)).slice(0, 10)
-      : Array.from({ length: 10 }, () => " ".repeat(30));
-    bits150 = rows30x10ToBits150(rows10, glyphs);
-  } else if (logo?.type === "PIX_150x70") {
-    const p = logo.payload || {};
-    const w = Number(p.w) || DOT_W;
-    const h = Number(p.h) || DOT_H;
-    const raw = p.bits_b64 || p.bits_base64 || p.bitsBase64 || "";
-    bits150 = (w === DOT_W && h === DOT_H)
-      ? unpackBitsRowMajorMSB(raw, w, h)
-      : new Uint8Array(DOT_W * DOT_H);
-  } else {
-    bits150 = new Uint8Array(DOT_W * DOT_H);
-  }
-
-  drawThumbFlat150x70(c, bits150);
+  drawThumbFlat150x70(c, logoToBits150(logo, glyphs));
   return c;
 }
