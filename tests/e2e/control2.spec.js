@@ -1025,7 +1025,7 @@ test("control2: dźwięk ze źródła Wyświetlacz — odblokowanie, głośnoś�
     // Przed przełączeniem: Display nigdy nie pokazuje ekranu odblokowania.
     await expect(displayPage.locator("#audioUnlockScreen")).toHaveClass(/\bhidden\b/);
 
-    await page.getByLabel("Odtwarzaj dźwięk na Wyświetlaczu zamiast Panelu sterowania").check();
+    await page.getByLabel("Dźwięk z Wyświetlacza").check();
     await expect(displayPage.locator("#audioUnlockScreen")).not.toHaveClass(/\bhidden\b/, { timeout: 10000 });
     await displayPage.locator("#btnAudioUnlock").click();
     await expect(displayPage.locator("#audioUnlockScreen")).toHaveClass(/\bhidden\b/);

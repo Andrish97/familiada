@@ -527,7 +527,7 @@ async function scenarioRoundsMechanics(pages) {
   // pokazuje pełnoekranowy #audioUnlockScreen — przeglądarki wymagają
   // gestu użytkownika, zanim odtwarzanie w ogóle zadziała (nikt normalnie
   // nie dotyka ekranu Wyświetlacza w trakcie gry), więc to jest ten gest.
-  await control.getByLabel("Odtwarzaj dźwięk na Wyświetlaczu zamiast Panelu sterowania").check();
+  await control.getByLabel("Dźwięk z Wyświetlacza").check();
   await control.waitForTimeout(600);
   await display.waitForSelector("#audioUnlockScreen", { state: "visible", timeout: 10_000 });
   await display.waitForTimeout(1000); // niech nagranie złapie ekran odblokowania na Display
