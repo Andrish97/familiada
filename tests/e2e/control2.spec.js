@@ -524,11 +524,24 @@ test("control2: physicalBuzzer + noHostTablet — urządzenia pominięte, ręczn
     await expect(page.getByText("Przycisk pominięty")).toBeVisible({ timeout: 10000 });
     await expect(page.getByText("Prowadzący pominięty")).toBeVisible({ timeout: 10000 });
 
+    // Zgłoszone: przycisk nieaktywnego urządzenia w topbarze ma zniknąć
+    // CAŁKOWICIE (nie tylko przygasnąć) — już na kroku Urządzeń, nie
+    // dopiero na Podsumowaniu. Wyświetlacz (zawsze wymagany) zostaje.
+    await expect(page.locator("#dotHostRow")).toHaveClass(/\bhidden\b/, { timeout: 5000 });
+    await expect(page.locator("#dotBuzzerRow")).toHaveClass(/\bhidden\b/, { timeout: 5000 });
+    await expect(page.locator("#dotDisplayRow")).not.toHaveClass(/\bhidden\b/);
+
     await page.getByRole("button", { name: "Dalej" }).click();
     await expect(page.locator(".stepTitle")).toHaveText("Podsumowanie", { timeout: 10000 });
+    // Utrzymuje się na Podsumowaniu i dalej w rozgrywce, nie tylko na
+    // samym kroku Urządzeń.
+    await expect(page.locator("#dotHostRow")).toHaveClass(/\bhidden\b/);
+    await expect(page.locator("#dotBuzzerRow")).toHaveClass(/\bhidden\b/);
     await page.getByRole("button", { name: "Gotowe — przejdź do rund" }).click();
     await page.getByRole("button", { name: "Rozpocznij grę" }).click();
     await page.getByRole("button", { name: "Rozpocznij rundę" }).click();
+    await expect(page.locator("#dotHostRow")).toHaveClass(/\bhidden\b/);
+    await expect(page.locator("#dotBuzzerRow")).toHaveClass(/\bhidden\b/);
 
     // Bez Buzzera na ekranie: zaznacz -> anuluj -> zaznacz -> potwierdź.
     // Przyciski pokazują realną nazwę drużyny (Alfa/Beta), nie kod "A"/"B".
@@ -542,6 +555,100 @@ test("control2: physicalBuzzer + noHostTablet — urządzenia pominięte, ręczn
     await page.getByRole("button", { name: "Potwierdź: Beta" }).click();
 
     await revealAnswer(page, 1); // B trafia -> przejmuje kontrolę
+    await expect(page.getByText("Bank: 40")).toBeVisible({ timeout: 10000 });
+  } finally {
+    for (const ctx of contexts) await ctx.close().catch(() => {});
+    await deleteGame(page, game.id);
+  }
+});
+
+// ===== 5b. Tylko host pominięty (Buzzer normalny) =====
+
+test("control2: samo noHostTablet — tylko Prowadzący pominięty, Przycisk działa normalnie", async ({ page, browser }) => {
+  await loginAsTestUser(page, page.context());
+  const game = await makeGame(page, `E2E-CONTROL2-NOHOST-${Date.now()}`, {
+    roundQuestions: [TWO_QUESTIONS[0]],
+  });
+  const contexts = [];
+  try {
+    await openAnon(browser, contexts, `/display2?id=${game.id}&key=${game.share_key_display}`, "display", []);
+    const buzzerPage = await openAnon(browser, contexts, `/buzzer2?id=${game.id}&key=${game.share_key_buzzer}`, "buzzer", []);
+
+    await page.goto(`/control2?id=${game.id}`, { waitUntil: "domcontentloaded" });
+    await expect(page.locator(".stepTitle")).toHaveText("Urządzenia", { timeout: 15000 });
+    await expect(page.locator("#dotBuzzer")).toHaveClass(/\bok\b/, { timeout: 15000 });
+
+    await page.getByLabel("Nie używaj tabletu prowadzącego").check();
+    await expect(page.locator('.device-row[data-device="host"]')).toHaveCount(0, { timeout: 10000 });
+    await expect(page.getByText("Prowadzący pominięty")).toBeVisible({ timeout: 10000 });
+    // Przycisk zostaje normalnym, wciąż widocznym urządzeniem — pominięcie
+    // dotyczy WYŁĄCZNIE hosta, nie propaguje się na inne wiersze.
+    await expect(page.locator('.device-row[data-device="buzzer"]')).toHaveCount(1);
+
+    await expect(page.locator("#dotHostRow")).toHaveClass(/\bhidden\b/, { timeout: 5000 });
+    await expect(page.locator("#dotBuzzerRow")).not.toHaveClass(/\bhidden\b/);
+    await expect(page.locator("#dotDisplayRow")).not.toHaveClass(/\bhidden\b/);
+
+    await page.getByRole("button", { name: "Dalej" }).click();
+    await expect(page.locator(".stepTitle")).toHaveText("Podsumowanie", { timeout: 10000 });
+    await expect(page.locator("#dotHostRow")).toHaveClass(/\bhidden\b/);
+    await page.getByRole("button", { name: "Gotowe — przejdź do rund" }).click();
+    await page.getByRole("button", { name: "Rozpocznij grę" }).click();
+    await page.getByRole("button", { name: "Rozpocznij rundę" }).click();
+
+    // Buzzer realny (nie ręczny wybór drużyny) — dowód, że pominięcie hosta
+    // nie zmienia mechaniki pojedynku.
+    await expect(buzzerPage.getByRole("button", { name: "Przycisk A" })).toBeEnabled({ timeout: 10000 });
+    await buzzerPage.getByRole("button", { name: "Przycisk A" }).click();
+    await expect(page.getByRole("button", { name: "Zatwierdź: Alfa" })).toBeEnabled({ timeout: 10000 });
+    await page.getByRole("button", { name: "Zatwierdź: Alfa" }).click();
+    await revealAnswer(page, 1);
+    await expect(page.getByText("Bank: 40")).toBeVisible({ timeout: 10000 });
+  } finally {
+    for (const ctx of contexts) await ctx.close().catch(() => {});
+    await deleteGame(page, game.id);
+  }
+});
+
+// ===== 5c. Tylko buzzer pominięty (Prowadzący normalny) =====
+
+test("control2: samo physicalBuzzer — tylko Przycisk pominięty, Prowadzący działa normalnie", async ({ page, browser }) => {
+  await loginAsTestUser(page, page.context());
+  const game = await makeGame(page, `E2E-CONTROL2-NOBUZZ-${Date.now()}`, {
+    roundQuestions: [TWO_QUESTIONS[0]],
+  });
+  const contexts = [];
+  try {
+    await openAnon(browser, contexts, `/display2?id=${game.id}&key=${game.share_key_display}`, "display", []);
+    const hostPage = await openAnon(browser, contexts, `/host2?id=${game.id}&key=${game.share_key_host}`, "host", []);
+
+    await page.goto(`/control2?id=${game.id}`, { waitUntil: "domcontentloaded" });
+    await expect(page.locator(".stepTitle")).toHaveText("Urządzenia", { timeout: 15000 });
+    await expect(page.locator("#dotHost")).toHaveClass(/\bok\b/, { timeout: 15000 });
+
+    await page.getByLabel("Fizyczny przycisk").check();
+    await expect(page.locator('.device-row[data-device="buzzer"]')).toHaveCount(0, { timeout: 10000 });
+    await expect(page.getByText("Przycisk pominięty")).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('.device-row[data-device="host"]')).toHaveCount(1);
+
+    await expect(page.locator("#dotBuzzerRow")).toHaveClass(/\bhidden\b/, { timeout: 5000 });
+    await expect(page.locator("#dotHostRow")).not.toHaveClass(/\bhidden\b/);
+    await expect(page.locator("#dotDisplayRow")).not.toHaveClass(/\bhidden\b/);
+
+    await page.getByRole("button", { name: "Dalej" }).click();
+    await expect(page.locator(".stepTitle")).toHaveText("Podsumowanie", { timeout: 10000 });
+    await expect(page.locator("#dotBuzzerRow")).toHaveClass(/\bhidden\b/);
+    await page.getByRole("button", { name: "Gotowe — przejdź do rund" }).click();
+    await page.getByRole("button", { name: "Rozpocznij grę" }).click();
+    await page.getByRole("button", { name: "Rozpocznij rundę" }).click();
+
+    // Ręczny wybór drużyny (brak Buzzera), Host wciąż realnie podłączony —
+    // dowód, że tytuł fazy faktycznie dociera do NIEUŻYWANEGO przy wejściu
+    // urządzenia (pominięcie buzzera nie odłącza hosta od stanu gry).
+    await page.getByRole("button", { name: "Alfa" }).click();
+    await page.getByRole("button", { name: "Potwierdź: Alfa" }).click();
+    await expect(hostPage.locator("#paperText1")).not.toBeEmpty({ timeout: 10000 });
+    await revealAnswer(page, 1);
     await expect(page.getByText("Bank: 40")).toBeVisible({ timeout: 10000 });
   } finally {
     for (const ctx of contexts) await ctx.close().catch(() => {});

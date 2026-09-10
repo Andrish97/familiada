@@ -134,10 +134,23 @@ export function createUI({ root, emit }) {
   // Statusy urządzeń w TOPBARZE (poza #app, statyczne w control2.html) —
   // dokładnie jak dzisiejsze control/js/ui.js's setDeviceBadges: aktualizacja
   // imperatywna przy każdym renderze, nie przebudowa DOM.
-  function updateTopbarDots(presenceFlags = {}) {
+  //
+  // Zgłoszone: przycisk nieaktywnego urządzenia (noHostTablet/physicalBuzzer)
+  // ma zniknąć CAŁKOWICIE, nie tylko przygasnąć jak dawne .opted-out w
+  // control/js/app.js (opacity:.3 + pointer-events:none — kropka wciąż tam
+  // była, tylko nieklikalna). Tu cały wiersz (#dotHostRow/#dotBuzzerRow)
+  // dostaje .hidden (display:none, css/base.css) — reaguje natychmiast, gdy
+  // operator zaznaczy checkbox na kroku Urządzeń (ten sam render() na każdą
+  // zmianę stanu), więc do kroku Podsumowania wiersz jest już niewidoczny, i
+  // zostaje tak przez resztę gry (ten sam warunek co blokada "Dalej" w
+  // renderDevicesStep — state.settings.noHostTablet/physicalBuzzer).
+  function updateTopbarDots(state, presenceFlags = {}) {
+    const skip = { display: false, host: !!state.settings.noHostTablet, buzzer: !!state.settings.physicalBuzzer };
     for (const kind of ["display", "host", "buzzer"]) {
       const dot = $(`dot${kind[0].toUpperCase()}${kind.slice(1)}`);
       if (dot) dot.className = `dot ${presenceFlags[kind] ? "ok" : "bad"}`;
+      const row = $(`dot${kind[0].toUpperCase()}${kind.slice(1)}Row`);
+      if (row) row.classList.toggle("hidden", skip[kind]);
     }
   }
 
@@ -1321,7 +1334,7 @@ export function createUI({ root, emit }) {
   }
 
   function render(state, ctx = {}) {
-    updateTopbarDots(ctx.presenceFlags);
+    updateTopbarDots(state, ctx.presenceFlags);
     const s = state.step;
     if (s === "devices_display") return renderDevicesStep(state, ctx);
     if (s === "setup_finish") return renderSetupFinish(state, ctx);
