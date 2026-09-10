@@ -7,12 +7,12 @@
 // snap-to-grid z dzisiejszego host.js (kosmetyka do dostrojenia wizualnie
 // później, nie architektura).
 
-import { initI18n, setUiLang } from "../../translation/translation.js?v=v2026-09-10T20410";
-import { startKeepAlive } from "../../js/core/keep-alive.js?v=v2026-09-10T20410";
-import { sb } from "../../js/core/supabase.js?v=v2026-09-10T20410";
-import { createSubscription } from "../../js/core/game-state-subscribe.js?v=v2026-09-10T20410";
-import { createHostRenderer } from "./render.js?v=v2026-09-10T20410";
-import { createCoverLogoRenderer } from "./coverLogo.js?v=v2026-09-10T20410";
+import { initI18n, setUiLang } from "../../translation/translation.js?v=v2026-09-10T23082";
+import { startKeepAlive } from "../../js/core/keep-alive.js?v=v2026-09-10T23082";
+import { sb } from "../../js/core/supabase.js?v=v2026-09-10T23082";
+import { createSubscription } from "../../js/core/game-state-subscribe.js?v=v2026-09-10T23082";
+import { createHostRenderer } from "./render.js?v=v2026-09-10T23082";
+import { createCoverLogoRenderer } from "./coverLogo.js?v=v2026-09-10T23082";
 
 // videoWakeLockFallback: Host jest zwykle na osobnym tablecie/telefonie
 // prowadzącego (patrz plan) — dokładnie to urządzenie, które przeglądarka
