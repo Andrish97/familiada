@@ -530,8 +530,9 @@ const pl = {
     qrHostAlt: "QR Prowadzący",
     qrBuzzerAlt: "QR Przyciski",
     sumLabel: "SUMA",
-    audioUnlockTitle: "Dźwięk gry odtwarza się z tego ekranu",
-    audioUnlockBtn: "🔊 Odblokuj dźwięk",
+    audioUnlockTitle: "Odblokuj dźwięk",
+    audioUnlockHint: "Dźwięk gry będzie odtwarzany na tym urządzeniu — kliknij, żeby przeglądarka na to pozwoliła.",
+    audioUnlockBtn: "🔊 Odblokuj",
   },
   host: {
     title: "Familiada — prowadzący",
