@@ -17,7 +17,10 @@ import { createSubscription } from "../../js/core/game-state-subscribe.js?v=v202
 import { createButtonRenderer, STATE, deriveButtonState } from "./render.js?v=v2026-09-09T17244";
 import { ringDoorbell } from "../../js/core/game-state-doorbell.js?v=v2026-09-09T17244";
 
-startKeepAlive();
+// videoWakeLockFallback: patrz identyczny komentarz w host2/js/main.js —
+// Buzzer jest telefonem/tabletem kontestanta, dokładnie tym samym rodzajem
+// urządzenia, które przeglądarka usypia najchętniej.
+startKeepAlive({ videoWakeLockFallback: true });
 
 function parseParams() {
   const u = new URL(location.href);
