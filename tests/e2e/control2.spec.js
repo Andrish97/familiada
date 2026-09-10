@@ -1012,3 +1012,90 @@ test("control2: modal ustawień gry — zmiana nazwy drużyny odświeża podglą
     await deleteGame(page, game.id);
   }
 });
+
+// ===== 15. Blokada logo — Control (i modal ustawień gry) czekają, aż
+// logo-editor.js zwolni logo referencowane przez grę =====
+//
+// js/core/resource-lock.js's guardResourceBusy() — dodane w tej sesji do
+// control2/js/app.js i js/pages/game-settings2.js (patrz komentarze przy
+// obu wywołaniach): to urządzenie NIE edytuje logo, tylko je referuje na
+// żywo (podgląd Wyświetlacza), więc nie trzyma własnej blokady — tylko
+// czeka, aż logo-editor.js (jedyny prawdziwy posiadacz "logo" locka)
+// zwolni swoją. Ten sam wzorzec i te same asercje (#resourceLockGuard) co
+// cross-resource-locks.spec.js's testy Warstwy A/B dla logo, tu
+// zweryfikowany od strony Control v2 zamiast game-settings.js/logo-editor.js
+// wprost. Blokada jest zajmowana bezpośrednio przez RPC (bez faktycznego
+// otwierania logo-editor.html) — to samo, co realnie robi ta strona po
+// kliknięciu "Edytuj", tylko bez UI, żeby test nie zależał od jej
+// konkretnych selektorów.
+function blankGlyphPayload() {
+  return {
+    layers: [{ color: "main", rows: Array.from({ length: 10 }, () => " ".repeat(30)) }],
+    source: { mode: "TEXT" },
+  };
+}
+
+async function acquireLogoLock(page, logoId, tabId) {
+  return page.evaluate(async ({ logoId, tabId }) => {
+    const { data, error } = await window.__sbClient.rpc("acquire_edit_lock", {
+      p_resource_type: "logo", p_resource_id: logoId, p_tab_id: tabId, p_context: "logo-editor",
+    });
+    if (error) throw new Error("acquire_edit_lock failed: " + error.message);
+    return data;
+  }, { logoId, tabId });
+}
+
+async function releaseLogoLock(page, logoId, tabId) {
+  await page.evaluate(async ({ logoId, tabId }) => {
+    await window.__sbClient.rpc("release_edit_lock", {
+      p_resource_type: "logo", p_resource_id: logoId, p_tab_id: tabId,
+    });
+  }, { logoId, tabId }).catch(() => {});
+}
+
+test("control2: zablokowany, gdy logo gry jest edytowane w logo-editorze — i wznawia się samo po zwolnieniu", async ({ page, context }) => {
+  await loginAsTestUser(page, context);
+
+  const logoName = `E2E-CONTROL2-LOGOLOCK-${Date.now()}`;
+  const { logoId, gameId } = await page.evaluate(async ({ name, payload }) => {
+    const sb = window.__sbClient;
+    const { data: userData } = await sb.auth.getUser();
+    const { data: logo, error: logoErr } = await sb.from("user_logos")
+      .insert({ user_id: userData.user.id, name, type: "GLYPH_30x10", payload })
+      .select("id").single();
+    if (logoErr) throw new Error("insert logo failed: " + logoErr.message);
+    const { data: game, error: gameErr } = await sb.from("games")
+      .insert({
+        name: `E2E-CONTROL2-LOGOLOCKGAME-${Date.now()}`,
+        owner_id: userData.user.id, type: "prepared", status: "ready",
+        settings: { teams: { teamA: "Alfa", teamB: "Beta" }, game: { hasFinal: false }, display: { logoId: logo.id } },
+      })
+      .select("id").single();
+    if (gameErr) throw new Error("insert game failed: " + gameErr.message);
+    return { logoId: logo.id, gameId: game.id };
+  }, { name: logoName, payload: blankGlyphPayload() });
+
+  const lockTabId = `e2e-fake-logo-editor-${Date.now()}`;
+  try {
+    await acquireLogoLock(page, logoId, lockTabId);
+
+    await page.goto(`/control2?id=${gameId}`, { waitUntil: "domcontentloaded" });
+    await expect(page.locator("#resourceLockGuard")).toBeVisible({ timeout: 15000 });
+    await expect(page.locator("#resourceLockGuardMsg")).toContainText("edytowane", { timeout: 5000 });
+    // Zablokowany PRZED wyrenderowaniem czegokolwiek z #app (guardResourceBusy
+    // jest wołane zanim Control zdąży namalować krok "Urządzenia").
+    await expect(page.locator(".stepTitle")).toHaveCount(0);
+
+    await releaseLogoLock(page, logoId, lockTabId);
+
+    // Odzyskanie działa DWIEMA niezależnymi drogami (broadcast RELEASED +
+    // polling co 5s) — ten test celowo nie synchronizuje się z broadcastem,
+    // żeby przy okazji sprawdzić fallback pollingu.
+    await expect(page.locator("#resourceLockGuard")).toBeHidden({ timeout: 15000 });
+    await expect(page.locator(".stepTitle")).toHaveText("Urządzenia", { timeout: 15000 });
+  } finally {
+    await releaseLogoLock(page, logoId, lockTabId);
+    await page.evaluate(async (id) => { await window.__sbClient.from("games").delete().eq("id", id); }, gameId);
+    await page.evaluate(async (id) => { await window.__sbClient.from("user_logos").delete().eq("id", id); }, logoId);
+  }
+});

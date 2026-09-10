@@ -25,7 +25,7 @@
 // Ten skrypt zakłada gotowe środowisko (Xvfb/PulseAudio) — nie uruchamia
 // ich sam.
 
-const { chromium } = require("@playwright/test");
+const { chromium, expect } = require("@playwright/test");
 const { spawn } = require("node:child_process");
 const fs = require("node:fs");
 const path = require("node:path");
@@ -115,6 +115,47 @@ async function deleteGame(page, gameId) {
     const sb = window.__sbClient;
     await sb.from("games").delete().eq("id", gid);
   }, gameId).catch(() => {});
+}
+
+// ===== Blokada logo (scenariusz 7) — te same RPC co
+// js/core/resource-lock.js's acquireOnce()/releaseOnce(), wołane
+// bezpośrednio (bez faktycznego otwierania logo-editor.html): zgłoszone
+// "samego otwartego logo edytować nie musisz pokazywać na nagraniu" — ten
+// sam skutek (aktywny wiersz w edit_locks) bez zależności od selektorów
+// zupełnie innej strony. =====
+
+function blankGlyphPayload() {
+  return {
+    layers: [{ color: "main", rows: Array.from({ length: 10 }, () => " ".repeat(30)) }],
+    source: { mode: "TEXT" },
+  };
+}
+
+async function insertLogo(setupPage, name) {
+  return setupPage.evaluate(async ({ name, payload }) => {
+    const sb = window.__sbClient;
+    const { data: userData } = await sb.auth.getUser();
+    const { data, error } = await sb.from("user_logos")
+      .insert({ user_id: userData.user.id, name, type: "GLYPH_30x10", payload })
+      .select("id").single();
+    if (error) throw new Error("insert logo failed: " + error.message);
+    return data.id;
+  }, { name, payload: blankGlyphPayload() });
+}
+
+async function acquireLogoLockExternally(setupPage, logoId, tabId) {
+  await setupPage.evaluate(async ({ logoId, tabId }) => {
+    const { error } = await window.__sbClient.rpc("acquire_edit_lock", {
+      p_resource_type: "logo", p_resource_id: logoId, p_tab_id: tabId, p_context: "logo-editor",
+    });
+    if (error) throw new Error("acquire_edit_lock failed: " + error.message);
+  }, { logoId, tabId });
+}
+
+async function releaseLogoLockExternally(setupPage, logoId, tabId) {
+  await setupPage.evaluate(async ({ logoId, tabId }) => {
+    await window.__sbClient.rpc("release_edit_lock", { p_resource_type: "logo", p_resource_id: logoId, p_tab_id: tabId });
+  }, { logoId, tabId }).catch(() => {});
 }
 
 // 5 odpowiedzi (nie 3, zgłoszone: "pytanie nie może mieć 3 odpowiedzi") —
@@ -502,6 +543,23 @@ async function scenarioRoundsMechanics(pages) {
 
   // ===== RUNDA 1 =====
   await clickPaced(control.getByRole("button", { name: "Rozpocznij rundę" }));
+
+  // Zgłoszone: "dostosuj testy, żeby też testowały zmianę języka" — ten sam
+  // przełącznik i propagacja co control2.spec.js's test "zmiana języka w
+  // Control propaguje się do Hosta". Przełączamy na angielski (widz łapie
+  // tytuł fazy zmieniający się na Hoście), potem WRACAMY na polski, bo cała
+  // reszta scenariusza celuje w polskie etykiety przycisków (uiLang jest
+  // częścią game_state.detail.settings, więc dotyczy WSZYSTKICH urządzeń,
+  // łącznie z etykietami "Buzzer A/B" na przyciskach Buzzera).
+  await control.locator(".lang-btn").click();
+  await control.waitForTimeout(500);
+  await control.locator('.lang-option[data-lang="en"]').click();
+  await control.waitForTimeout(2500); // niech nagranie złapie zmianę na Hoście/Display/Buzzerze
+  await control.locator(".lang-btn").click();
+  await control.waitForTimeout(500);
+  await control.locator('.lang-option[data-lang="pl"]').click();
+  await control.waitForTimeout(1500);
+
   await clickPaced(buzzer.getByRole("button", { name: "Przycisk A" }));
   await clickPaced(control.getByRole("button", { name: "Zatwierdź: Alfa" }));
   await armAndConfirmPaced(control.getByRole("button", { name: "X", exact: true })); // A pudłuje -> kolej B
@@ -841,6 +899,57 @@ async function scenarioDeviceReconnect(pages, { contexts, browser }) {
   await control.waitForTimeout(4000); // ekran końcowy widoczny chwilę na nagraniu
 }
 
+// ===== Scenariusz 7: blokada logo — Control czeka, aż logo-editor.js
+// zwolni logo referencowane przez grę, i wznawia się SAM, gdy się zwolni.
+// Zgłoszone: "dostosuj testy, żeby też testowały... blokadę logo (samego
+// otwartego logo edytować nie musisz pokazywać na nagraniu, albo możesz w
+// miejscu gdzie potem będzie inne urządzenie" — blokada jest zajęta
+// zewnętrznie, PRZED otwarciem okna Control (patrz makeGame w definicji
+// scenariusza niżej: acquireLogoLockExternally() woła dokładnie to samo
+// RPC co logo-editor.js po kliknięciu "Edytuj", bez pokazywania samej tej
+// strony), a okno "control" pokazuje zablokowany ekran DOKŁADNIE w tym
+// samym miejscu (ćwiartka "control"), w które chwilę później wejdzie
+// normalne parowanie urządzeń — ten sam kwadrat na ekranie, dwa kolejne
+// etapy tej samej gry testowej. =====
+
+async function scenarioLogoLock(pages, { setupPage, logoId, logoLockTabId }) {
+  const { control, buzzer } = pages;
+
+  // Okno Control zostało otwarte (przez openTiledDevices, PRZED startem
+  // nagrania) z logiem już zablokowanym — overlay jest więc widoczny od
+  // pierwszej klatki tego pliku wideo.
+  await control.waitForSelector("#resourceLockGuard", { state: "visible", timeout: 15000 });
+  await control.waitForTimeout(3500); // widz ma zdążyć przeczytać komunikat blokady
+
+  console.log("[record] zwalniam zewnętrzną blokadę logo");
+  await releaseLogoLockExternally(setupPage, logoId, logoLockTabId);
+
+  // Odzyskanie samo w sobie jest tym, co ten scenariusz ma pokazać —
+  // #resourceLockGuard znika i control2 wznawia się (reload + realne
+  // wyrenderowanie kroku "Urządzenia") bez żadnej ręcznej interwencji.
+  await control.waitForSelector("#resourceLockGuard", { state: "hidden", timeout: 20000 });
+  await expect(control.locator(".stepTitle")).toHaveText("Urządzenia", { timeout: 15000 });
+  await control.waitForTimeout(1000);
+
+  // Krótka runda — dowód, że po odzyskaniu Control działa normalnie, nie
+  // tylko "odblokował się i stoi".
+  await clickPaced(control.getByRole("button", { name: "Dalej" }));
+  await clickPaced(control.getByRole("button", { name: "Gotowe — przejdź do rund" }));
+  await clickPaced(control.getByRole("button", { name: "Rozpocznij grę" }));
+  await clickPaced(control.getByRole("button", { name: "Rozpocznij rundę" }));
+  await clickPaced(buzzer.getByRole("button", { name: "Przycisk A" }));
+  await clickPaced(control.getByRole("button", { name: "Zatwierdź: Alfa" }));
+  await armAndConfirmPaced(answerTile(control, 1)); // Lato, 120
+  await armAndConfirmPaced(answerTile(control, 2)); // Wiosna, 80
+  await armAndConfirmPaced(answerTile(control, 3)); // Jesień, 50
+  await armAndConfirmPaced(answerTile(control, 4)); // Zima, 30
+  await armAndConfirmPaced(answerTile(control, 5)); // Nie mam ulubionej, 20
+  await clickPaced(control.getByRole("button", { name: "Zakończ rundę" }));
+  await control.waitForTimeout(2000);
+  await clickPaced(control.getByRole("button", { name: "Zakończ grę" }));
+  await control.waitForTimeout(4000); // ekran końcowy widoczny chwilę na nagraniu
+}
+
 // ===== Orkiestracja: jedna przeglądarka, po kolei każdy scenariusz z
 // własną grą testową, własnym zestawem 4 okien i własnym plikiem nagrania. =====
 
@@ -895,6 +1004,39 @@ const SCENARIOS = [
     run: scenarioDeviceReconnect,
   },
 ];
+
+// Scenariusz 7 (blokada logo) potrzebuje dzielić logoId/tabId między
+// makeGame() (zajmuje blokadę, ZANIM okno Control w ogóle się otworzy) a
+// run() (zwalnia ją i dowodzi odzyskania) — stąd fabryka z małym, prywatnym
+// stanem zamiast dwóch niezależnych top-level funkcji jak reszta scenariuszy.
+function makeLogoLockScenario() {
+  const shared = {};
+  return {
+    file: "07-blokada-logo.mp4",
+    makeGame: async (setupPage) => {
+      shared.setupPage = setupPage;
+      shared.logoId = await insertLogo(setupPage, `E2E-REC-LOGOLOCK-${Date.now()}`);
+      shared.logoLockTabId = `rec-fake-logo-editor-${Date.now()}`;
+      await acquireLogoLockExternally(setupPage, shared.logoId, shared.logoLockTabId);
+      return makeGame(setupPage, `E2E-REC-LOGOLOCK-GAME-${Date.now()}`, {
+        roundQuestions: [FINAL_SETUP_ROUND],
+        settings: { display: { logoId: shared.logoId } },
+      });
+    },
+    run: (pages) => scenarioLogoLock(pages, shared),
+    // Wołane z main() PO deleteGame(), niezależnie od tego, czy run() zdążyło
+    // samo zwolnić blokadę (np. scenariusz rzucił błąd w połowie) — logo
+    // testowe nie może zostać w bazie z osieroconą blokadą.
+    cleanup: async () => {
+      if (!shared.logoId) return;
+      await releaseLogoLockExternally(shared.setupPage, shared.logoId, shared.logoLockTabId);
+      await shared.setupPage.evaluate(async (id) => {
+        await window.__sbClient.from("user_logos").delete().eq("id", id);
+      }, shared.logoId).catch(() => {});
+    },
+  };
+}
+SCENARIOS.push(makeLogoLockScenario());
 
 // Zrzut diagnostyczny na wypadek błędu scenariusza — video samo w sobie nie
 // jest dostępne z poziomu tej sesji do wglądu (artefakt CI, nie plik lokalny
@@ -966,6 +1108,7 @@ async function main() {
       }
 
       await deleteGame(setupPage, game.id);
+      if (scenario.cleanup) await scenario.cleanup();
       await setupCtx.close().catch(() => {});
     }
   } finally {
