@@ -18,12 +18,43 @@
 // Treść (pytanie/odpowiedzi/wynik) jest zmyślona — to nie ma pokazywać
 // prawdziwej gry, tylko jak kolory/motyw/nazwy drużyn wyglądają na
 // faktycznej planszy LED-matrix, zamiast gołych próbek koloru w formularzu.
-export function buildDisplayPreviewRow({ teams, display } = {}) {
-  return {
-    top_card: "rounds", step: "r_play", phase: "PLAY", control_team: "A",
-    sound_cue_key: null, sound_cue_seq: 0,
+//
+// `focus` wybiera, KTÓRY realny moment gry ten podgląd udaje — "big" (logo
+// vs plansza rund) to jedno, współdzielone płótno na prawdziwym
+// Wyświetlaczu, więc te dwa stany są fizycznie wzajemnie wykluczające się
+// i nie da się ich pokazać naraz w jednym wierszu:
+//   - "rounds" (domyślne) — plansza rund w trakcie gry (r_play), pokazuje
+//     kolory/motyw "w akcji" na kaflach/X-ach odpowiedzi.
+//   - "logo" — ekran startowy gry (r_intro), pokazuje FAKTYCZNIE
+//     skonfigurowane logo (logoId) na "big". Nazwy drużyn nadal malowane na
+//     "small" niezależnie od tego, co jest na "big" (display2/js/render.js's
+//     paintForStep, oba płótna niezależne) — więc podgląd nazw drużyn
+//     działa w obu trybach.
+export function buildDisplayPreviewRow({ teams, display, focus = "rounds" } = {}) {
+  const base = {
+    control_team: "A", sound_cue_key: null, sound_cue_seq: 0,
     detail: {
       teams: { teamA: teams?.teamA || "Drużyna A", teamB: teams?.teamB || "Drużyna B" },
+      final: { runtime: {} },
+      display: { mode: "GAME", colors: display?.colors, theme: display?.theme, logoId: display?.logoId, qr: { host: { show: false }, buzzer: { show: false } } },
+      host: { covered: false },
+      locks: { gameEnded: false },
+    },
+  };
+
+  if (focus === "logo") {
+    return {
+      ...base,
+      top_card: "rounds", step: "r_intro", phase: null,
+      detail: { ...base.detail, rounds: { roundNo: 1, bankPts: 0, xA: 0, xB: 0, totals: { A: 0, B: 0 } } },
+    };
+  }
+
+  return {
+    ...base,
+    top_card: "rounds", step: "r_play", phase: "PLAY",
+    detail: {
+      ...base.detail,
       rounds: {
         roundNo: 1, bankPts: 70, xA: 1, xB: 0, totals: { A: 120, B: 80 },
         question: { text: "PRZYKŁADOWE PYTANIE" },
@@ -37,10 +68,6 @@ export function buildDisplayPreviewRow({ teams, display } = {}) {
         ],
         revealed: [1, 2], steal: {}, duel: {},
       },
-      final: { runtime: {} },
-      display: { mode: "GAME", colors: display?.colors, theme: display?.theme, logoId: display?.logoId, qr: { host: { show: false }, buzzer: { show: false } } },
-      host: { covered: false },
-      locks: { gameEnded: false },
     },
   };
 }

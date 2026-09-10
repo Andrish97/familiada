@@ -187,9 +187,18 @@ export function createRenderer({ scene, qr }) {
   }
 
   async function paintForStep(row) {
+    // r_intro MUSI być sprawdzone przed top_card==="rounds" — r_intro sam
+    // ma top_card="rounds" (cała sekcja Rund, patrz plan, tabela A), więc
+    // sprawdzenie w odwrotnej kolejności nigdy by tu nie trafiło (ten sam
+    // bug: renderSnapshot()/reconnect W TRAKCIE r_intro malowałby pustą
+    // planszę rund zamiast logo — renderDiff()'s STEP_CHANGE do "r_intro"
+    // niżej to zawsze robił poprawnie, tylko pierwsze malowanie nie).
+    // Nazwy drużyn są już wtedy znane (denormalizowane z game-settings
+    // przed startem gry) — pokazujemy je na "small" razem z logo na "big",
+    // to dwa niezależne płótna.
+    if (row.step === "r_intro") { paintTeamNames(row); await api.logo.show(); return; }
     if (row.top_card === "rounds") { paintTeamNames(row); await paintRoundsBoard(row); return; }
     if (row.top_card === "final") { paintTeamNames(row); await paintFinalBoard(row); return; }
-    if (row.step === "r_intro") { await api.logo.show(); return; }
     api.big.clear();
   }
 
@@ -304,6 +313,7 @@ export function createRenderer({ scene, qr }) {
             // stronie zwycięzcy, ten sam mechanizm co przy f_p1_entry.
             showTimerPlaceholder(nextRow, "20");
           } else if (ev.to === "r_intro") {
+            paintTeamNames(nextRow);
             await api.logo.show();
           }
           break;
