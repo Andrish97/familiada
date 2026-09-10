@@ -117,6 +117,12 @@ let _loadedLogos = [];
 // Display preview iframe
 let _displayIframe = null;
 let _displayReady = false;
+// "big" (logo vs plansza rund) to jedno, współdzielone płótno na prawdziwym
+// Wyświetlaczu — nie da się pokazać obu naraz (shared/previewRow.js's
+// buildDisplayPreviewRow's `focus`). Domyślnie "rounds" (kolory "w akcji"),
+// przełącza się na "logo" konkretnie przy wyborze kafla logo, z powrotem na
+// "rounds" przy zmianie nazwy drużyny/koloru/motywu.
+let _previewFocus = "rounds";
 
 // Wykryj modal mode już na poziomie modułu (inline script w <head> dodaje klasę przed renderem)
 const _isModal = document.documentElement.classList.contains("gs-modal-mode");
@@ -388,6 +394,7 @@ function applyColorModal() {
   content?.querySelectorAll(`[data-color-key="${colorModalTarget}"]`).forEach(el => {
     el.style.background = hex;
   });
+  _previewFocus = "rounds";
   postPreviewRow();
   colorModal?.classList.add("hidden");
 }
@@ -474,11 +481,13 @@ function renderTeams() {
   document.getElementById("gsTeamA")?.addEventListener("input", e => {
     localSettings.teams.teamA = e.target.value;
     markDirty();
+    _previewFocus = "rounds";
     postPreviewRow();
   });
   document.getElementById("gsTeamB")?.addEventListener("input", e => {
     localSettings.teams.teamB = e.target.value;
     markDirty();
+    _previewFocus = "rounds";
     postPreviewRow();
   });
 }
@@ -499,7 +508,7 @@ function postPreviewRow() {
   try {
     _displayIframe.contentWindow.postMessage({
       type: "familiada:preview-row",
-      row: buildDisplayPreviewRow({ teams: localSettings.teams, display: localSettings.display }),
+      row: buildDisplayPreviewRow({ teams: localSettings.teams, display: localSettings.display, focus: _previewFocus }),
     }, "*");
   } catch {}
 }
@@ -579,6 +588,7 @@ function renderDisplay() {
     onChange: (val) => {
       localSettings.display.theme = val || null;
       markDirty();
+      _previewFocus = "rounds";
       postPreviewRow();
     },
   });
@@ -647,6 +657,7 @@ async function renderLogoGrid() {
       markDirty();
       grid.querySelectorAll(".gs-logo-tile").forEach(t => t.classList.remove("selected"));
       tile.classList.add("selected");
+      _previewFocus = "logo";
       postPreviewRow();
     });
   });
