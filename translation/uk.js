@@ -524,8 +524,9 @@ const uk = {
     qrHostAlt: "QR Ведучий",
     qrBuzzerAlt: "QR Кнопки",
     sumLabel: "СУМА",
-    audioUnlockTitle: "Звук гри відтворюється з цього екрана",
-    audioUnlockBtn: "🔊 Розблокувати звук",
+    audioUnlockTitle: "Розблокувати звук",
+    audioUnlockHint: "Звук гри відтворюватиметься на цьому пристрої — натисни, щоб дозволити це браузеру.",
+    audioUnlockBtn: "🔊 Розблокувати",
   },
   host: {
     title: "Familiada — ведучий",

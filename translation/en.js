@@ -529,8 +529,9 @@ const en = {
     // pustą 4. kratkę z prawej zamiast wyśrodkować etykietę jak w pozostałych
     // językach. Zgłoszone: ma być przesunięte o jedną kratkę w prawo.
     sumLabel: " SUM",
-    audioUnlockTitle: "Game sound plays from this screen",
-    audioUnlockBtn: "🔊 Unlock sound",
+    audioUnlockTitle: "Unlock audio",
+    audioUnlockHint: "Game sound will play on this device — click to let the browser allow it.",
+    audioUnlockBtn: "🔊 Unlock",
   },
   host: {
     title: "Familiada — host",
