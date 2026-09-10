@@ -611,7 +611,45 @@ test("control2: druga karta Control na tę samą grę jest zablokowana (resource
 
 // ===== 8. QR host/buzzer niezależne na Display =====
 
-test("control2: QR na wyświetlaczu — host i buzzer niezależne, jeden LUB oba naraz", async ({ page, browser }) => {
+// Przycisk "QR na wyświetlaczu"/"Ukryj QR" żyje wewnątrz `.device-row` dla
+// danego urządzenia (control2/js/ui.js's deviceRow()) — po każdym kliknięciu
+// etykieta się przełącza, więc kolejne wywołanie tej funkcji z tym samym
+// `kind` musi na nowo odnaleźć przycisk po AKTUALNEJ etykiecie (stąd `wantOn`
+// — czy oczekujemy stanu "wyłączony -> włącz" czy odwrotnie), a nie polegać
+// na złapanym wcześniej Locatorze.
+function qrToggleBtn(page, kind, wantOn) {
+  // t("control.qrOnDisplayToggle")/t("control.qrHide") — translation/pl.js:
+  // "QR na wyświetlaczu" / "Schowaj QR" (NIE "Ukryj QR" — literał z
+  // poprzedniej wersji tego testu nie pasował do żadnego tłumaczenia w
+  // ogóle, więc ten selektor nigdy realnie nie trafiał w przycisk).
+  const label = wantOn ? "QR na wyświetlaczu" : "Schowaj QR";
+  return page.locator(`.device-row[data-device="${kind}"] button`, { hasText: label });
+}
+
+// Krok 1: brak QR w ogóle -> mode="BLACK" -> #qrScreen ukryty CAŁKOWICIE
+// (nie samo puste .qr-grid) — control2/js/app.js's syncQrDisplay() ustawia
+// display.mode="QR" TYLKO gdy chociaż jedno z dwóch jest show:true, inaczej
+// wraca do "BLACK". Ta asercja dowodzi, że wyłączenie OBU naraz faktycznie
+// gasi cały ekran QR na Display, nie zostawia go widocznego z pustą siatką.
+async function expectQrOff(displayPage) {
+  await expect(displayPage.locator("#qrScreen")).toHaveClass(/hidden/, { timeout: 10000 });
+}
+async function expectQrSingle(displayPage, visibleKind) {
+  await expect(displayPage.locator("#qrScreen")).not.toHaveClass(/hidden/, { timeout: 10000 });
+  await expect(displayPage.locator(".qr-grid")).toHaveClass(/qr-single/);
+  const visibleCard = visibleKind === "host" ? "#qrHostCard" : "#qrBuzzerCard";
+  const hiddenCard = visibleKind === "host" ? "#qrBuzzerCard" : "#qrHostCard";
+  await expect(displayPage.locator(visibleCard)).not.toHaveClass(/hidden/);
+  await expect(displayPage.locator(hiddenCard)).toHaveClass(/hidden/);
+}
+async function expectQrBoth(displayPage) {
+  await expect(displayPage.locator("#qrScreen")).not.toHaveClass(/hidden/, { timeout: 10000 });
+  await expect(displayPage.locator(".qr-grid")).not.toHaveClass(/qr-single/);
+  await expect(displayPage.locator("#qrHostCard")).not.toHaveClass(/hidden/);
+  await expect(displayPage.locator("#qrBuzzerCard")).not.toHaveClass(/hidden/);
+}
+
+test("control2: QR na wyświetlaczu — host i buzzer niezależne, każdy z osobna i oba naraz", async ({ page, browser }) => {
   await loginAsTestUser(page, page.context());
   const game = await makeGame(page, `E2E-CONTROL2-DUALQR-${Date.now()}`);
   const contexts = [];
@@ -621,21 +659,42 @@ test("control2: QR na wyświetlaczu — host i buzzer niezależne, jeden LUB oba
     await page.goto(`/control2?id=${game.id}`, { waitUntil: "domcontentloaded" });
     await expect(page.locator(".stepTitle")).toHaveText("Urządzenia", { timeout: 15000 });
 
-    await page.locator('.device-row[data-device="host"] button', { hasText: "QR na wyświetlaczu" }).click();
-    await expect(displayPage.locator("#qrScreen")).not.toHaveClass(/hidden/, { timeout: 10000 });
-    await expect(displayPage.locator(".qr-grid")).toHaveClass(/qr-single/);
-    await expect(displayPage.locator("#qrHostCard")).not.toHaveClass(/hidden/);
-    await expect(displayPage.locator("#qrBuzzerCard")).toHaveClass(/hidden/);
+    // Stan początkowy: żaden QR nie jest jeszcze pokazany.
+    await expectQrOff(displayPage);
 
-    await page.locator('.device-row[data-device="buzzer"] button', { hasText: "QR na wyświetlaczu" }).click();
-    await expect(displayPage.locator(".qr-grid")).not.toHaveClass(/qr-single/, { timeout: 10000 });
-    await expect(displayPage.locator("#qrHostCard")).not.toHaveClass(/hidden/);
-    await expect(displayPage.locator("#qrBuzzerCard")).not.toHaveClass(/hidden/);
+    // ===== Sam host: włącz -> sprawdź -> wyłącz -> sprawdź powrót do BLACK =====
+    await qrToggleBtn(page, "host", true).click();
+    await expectQrSingle(displayPage, "host");
+    await qrToggleBtn(page, "host", false).click();
+    await expectQrOff(displayPage);
 
-    await page.locator('.device-row[data-device="host"] button', { hasText: "Ukryj QR" }).click();
-    await expect(displayPage.locator(".qr-grid")).toHaveClass(/qr-single/, { timeout: 10000 });
-    await expect(displayPage.locator("#qrBuzzerCard")).not.toHaveClass(/hidden/);
-    await expect(displayPage.locator("#qrHostCard")).toHaveClass(/hidden/);
+    // ===== Sam buzzer: włącz -> sprawdź -> wyłącz -> sprawdź powrót do BLACK =====
+    await qrToggleBtn(page, "buzzer", true).click();
+    await expectQrSingle(displayPage, "buzzer");
+    await qrToggleBtn(page, "buzzer", false).click();
+    await expectQrOff(displayPage);
+
+    // ===== Oba naraz: host, potem buzzer -> siatka podwójna (nie qr-single) =====
+    await qrToggleBtn(page, "host", true).click();
+    await expectQrSingle(displayPage, "host");
+    await qrToggleBtn(page, "buzzer", true).click();
+    await expectQrBoth(displayPage);
+
+    // Wyłączenie JEDNEGO z dwóch wraca do pojedynczego układu (drugi zostaje).
+    await qrToggleBtn(page, "host", false).click();
+    await expectQrSingle(displayPage, "buzzer");
+
+    // Dołożenie hosta z powrotem -> znów oba naraz (kolejność włączenia
+    // odwrotna niż za pierwszym razem — dowód, że to naprawdę niezależne
+    // flagi, nie sekwencja/kolejka).
+    await qrToggleBtn(page, "host", true).click();
+    await expectQrBoth(displayPage);
+
+    // Wyłączenie OBU (buzzer, potem host) -> z powrotem całkowicie ukryty ekran QR.
+    await qrToggleBtn(page, "buzzer", false).click();
+    await expectQrSingle(displayPage, "host");
+    await qrToggleBtn(page, "host", false).click();
+    await expectQrOff(displayPage);
   } finally {
     for (const ctx of contexts) await ctx.close().catch(() => {});
     await deleteGame(page, game.id);
