@@ -1000,17 +1000,20 @@ test("control2: wyciszenie dźwięku — po Mute żaden klucz SFX się nie odtwa
 //
 // Zgłoszone: "dodaj testy... jeden test niech używa dźwięku z display i tez
 // sprawdź mute na chwilę w jednej z rund np. i pokrec głośności" — i po
-// doprecyzowaniu: "ale chodziło mi o suwaki w podsumowaniu a nie tylko w
-// samych ustawieniach". Przechodzi przez CAŁĄ ścieżkę na raz: przełącznik
-// "Dźwięk" w kroku Urządzeń -> #audioUnlockScreen na Display (musi się
-// pojawić, kliknięcie musi je schować) -> suwak głośności BEZPOŚREDNIO w
-// Podsumowaniu (control2/js/ui.js's soundSummarySection, nie modal "Zmień
-// ustawienia") musi dotrzeć do Display na żywo (nie do Control — sprawdzone
-// osobno, że Control zostaje cicho przez cały czas) -> Mute (współdzielony,
-// patrz control2/js/soundReactor.js) wyciszony na chwilę w środku rundy,
-// potem wznowiony — ten sam #btnMute co w teście "wyciszenie dźwięku"
-// wyżej, tylko że tym razem wycisza urządzenie, które FAKTYCZNIE gra
-// (Display).
+// doprecyzowaniu: "suwaki w ustawieniach a suwaki w podsumowaniu to różne
+// rzeczy". Przechodzi przez CAŁĄ ścieżkę na raz: przełącznik "Dźwięk" w
+// kroku Urządzeń -> #audioUnlockScreen na Display (musi się pojawić,
+// kliknięcie musi je schować) -> DWA różne suwaki, dwie różne kategorie
+// dźwięku (żeby nie dało się ich pomylić w asercjach): (a) modal "Zmień
+// ustawienia" -> games.settings.sound jako punkt wyjściowy, denormalizacja
+// do game_state dopiero po zamknięciu modala; (b) suwak BEZPOŚREDNIO w
+// sekcji "Dźwięk" Podsumowania (control2/js/ui.js's soundSummarySection)
+// -> zapis prosto do game_state na żywo, bez modala. Oba muszą dotrzeć do
+// Display (nie do Control — sprawdzone osobno, że Control zostaje cicho
+// przez cały czas) -> Mute (współdzielony, patrz control2/js/soundReactor.js)
+// wyciszony na chwilę w środku rundy, potem wznowiony — ten sam #btnMute co
+// w teście "wyciszenie dźwięku" wyżej, tylko że tym razem wycisza
+// urządzenie, które FAKTYCZNIE gra (Display).
 
 test("control2: dźwięk ze źródła Wyświetlacz — odblokowanie, głośność z ustawień, chwilowe mute w rundzie", async ({ page, browser }) => {
   await loginAsTestUser(page, page.context());
@@ -1041,15 +1044,51 @@ test("control2: dźwięk ze źródła Wyświetlacz — odblokowanie, głośnoś�
     await page.getByRole("button", { name: "Dalej" }).click();
     await expect(page.locator(".stepTitle")).toHaveText("Podsumowanie", { timeout: 10000 });
 
-    // Suwak głośności BEZPOŚREDNIO w Podsumowaniu (nie w modalu "Zmień
-    // ustawienia") — zgłoszone wprost: zmiana tu ma iść do game_state na
-    // żywo, więc dociera do Display natychmiast, bez otwierania/zamykania
-    // modala ustawień (control2/js/ui.js's soundSummarySection +
-    // app.js's "settings.setSoundVolume").
+    // Dwa RÓŻNE mechanizmy, dwie różne kategorie dźwięku, żeby nie dało się
+    // ich pomylić w asercjach:
+    //
+    // (a) Modal "Zmień ustawienia" -> games.settings.sound -> denormalizacja
+    //     do game_state DOPIERO po zamknięciu modala (onGsModalClose() w
+    //     control2/js/app.js). To jest "punkt wyjściowy" — trwały, per-gra
+    //     domyślny zapis, edytowalny tylko tam (warianty/pliki własne też).
+    //
+    // (b) Suwak BEZPOŚREDNIO w sekcji "Dźwięk" Podsumowania
+    //     (control2/js/ui.js's soundSummarySection) -> zapis PROSTO do
+    //     game_state ("settings.setSoundVolume" w app.js), NA ŻYWO, bez
+    //     dotykania games.settings i bez otwierania modala w ogóle.
+    //
+    // Zgłoszone wprost: to są różne rzeczy, oba mają działać i oba mają być
+    // przetestowane osobno — modal zmienia "round_transition", Podsumowanie
+    // zmienia "reveal", więc każda asercja wiąże się jednoznacznie z jednym
+    // z dwóch mechanizmów.
+
+    // (a) games.settings jako punkt wyjściowy — modal ustawień.
+    await page.getByRole("button", { name: "Zmień ustawienia" }).click();
+    await expect(page.locator("#gsOverlay")).not.toHaveClass(/hidden/, { timeout: 5000 });
+    const gsFrame = page.frameLocator("#gsFrame");
+    await gsFrame.locator('.gs-sidebar-item[data-cat="sound"]').click();
+    const transitionSlider = gsFrame.locator('input.sfx-vol[data-sfx-vol="round_transition"]');
+    await expect(transitionSlider).toBeVisible({ timeout: 10000 });
+    // .fill() na <input type="range"> nie zawsze niezawodnie odpala "input"
+    // (na czym wisi handler ustawiający localSettings.sound.volumes w
+    // js/pages/game-settings2.js) — ustawiamy value i wysyłamy zdarzenie
+    // wprost.
+    await transitionSlider.evaluate((el) => {
+      el.value = "70";
+      el.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    await gsFrame.getByRole("button", { name: "Zapisz wszystko" }).click();
+    await page.locator("#gsOverlay").click({ position: { x: 5, y: 5 } });
+    await page.locator("#gsOverlay").waitFor({ state: "hidden", timeout: 10000 });
+
+    await expect.poll(
+      () => displayPage.evaluate(() => localStorage.getItem("sfx_vol_round_transition")),
+      { timeout: 10000, message: "głośność 'round_transition' skonfigurowana w games.settings (modal) powinna dotrzeć do Display" }
+    ).toBe("0.7");
+
+    // (b) game_state na żywo — suwak w Podsumowaniu, bez modala.
     const revealSlider = page.locator('input.summarySoundVol[data-sfx-vol="reveal"]');
     await expect(revealSlider).toBeVisible({ timeout: 10000 });
-    // .fill() na <input type="range"> nie zawsze niezawodnie odpala
-    // "input"/"change" — ustawiamy value i wysyłamy oba zdarzenia wprost.
     // "input" (przeciąganie) tylko podgląd lokalny; dopiero "change"
     // (puszczenie suwaka) commituje do game_state — patrz komentarz w ui.js.
     await revealSlider.evaluate((el) => {
@@ -1061,7 +1100,7 @@ test("control2: dźwięk ze źródła Wyświetlacz — odblokowanie, głośnoś�
 
     await expect.poll(
       () => displayPage.evaluate(() => localStorage.getItem("sfx_vol_reveal")),
-      { timeout: 10000, message: "głośność 'reveal' zmieniona w Podsumowaniu powinna dotrzeć do Display" }
+      { timeout: 10000, message: "głośność 'reveal' zmieniona w Podsumowaniu (game_state) powinna dotrzeć do Display natychmiast" }
     ).toBe("0.4");
 
     await page.getByRole("button", { name: "Gotowe — przejdź do rund" }).click();
