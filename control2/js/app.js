@@ -663,6 +663,19 @@ async function main() {
         await store.commit();
         return;
       }
+      if (action === "settings.setSoundVolume") {
+        // Suwak w Podsumowaniu (D3) — właściciel gry wprost zażądał, żeby
+        // zmiana głośności TU zapisywała się do game_state (nie do
+        // games.settings, skąd wartość początkowa jest tylko wczytana raz
+        // przy applyGameSettingsToState) — dzięki temu jest widoczna
+        // natychmiast na Wyświetlaczu, jeśli to on gra (soundSource="display").
+        const { key, pct } = payload || {};
+        if (!key || typeof pct !== "number") return;
+        const clamped = Math.max(0, Math.min(100, Math.round(pct)));
+        store.state.settings.sound.volumes[key] = clamped;
+        await store.commit();
+        return;
+      }
       if (action === "qr.modal.show") {
         showQrModal(payload);
         return;

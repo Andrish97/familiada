@@ -552,22 +552,28 @@ async function scenarioRoundsMechanics(pages) {
   await gsTeamAInput.fill("Mistrzowie Quizu");
   await control.waitForTimeout(1200); // niech nagranie złapie podgląd Wyświetlacza aktualizujący się na żywo
 
-  // Zgłoszone: "...i pokręć głośności" — kategoria Dźwięk w tym samym
-  // modalu, ten sam zapis co zmiana nazwy drużyny wyżej.
-  await gsFrame.locator('.gs-sidebar-item[data-cat="sound"]').click();
-  await control.waitForTimeout(600);
-  const revealSlider = gsFrame.locator('input.sfx-vol[data-sfx-vol="reveal"]');
-  await revealSlider.waitFor({ state: "visible", timeout: 10_000 });
-  // .fill() na range input nie zawsze niezawodnie odpala "input" (na czym
-  // wisi handler zapisujący głośność) — ustawiamy value i wysyłamy
-  // zdarzenie wprost, tak samo jak w control2.spec.js's analogicznym teście.
-  await revealSlider.evaluate((el) => { el.value = "40"; el.dispatchEvent(new Event("input", { bubbles: true })); });
-  await control.waitForTimeout(1000); // niech nagranie złapie suwak i zaktualizowaną etykietę %
-
   await clickPaced(control.getByRole("button", { name: "Zapisz wszystko" }));
   await control.locator("#gsOverlay").click({ position: { x: 5, y: 5 } });
   await control.locator("#gsOverlay").waitFor({ state: "hidden", timeout: 10_000 });
   await control.waitForTimeout(800);
+
+  // Zgłoszone: "...i pokręć głośności" — doprecyzowane później: "chodziło mi
+  // o suwaki w podsumowaniu a nie tylko w samych ustawieniach". Suwak
+  // BEZPOŚREDNIO w sekcji "Dźwięk" Podsumowania (control2/js/ui.js's
+  // soundSummarySection), nie w modalu ustawień — zmiana tu leci na żywo do
+  // game_state, widoczna od razu na Wyświetlaczu (bo soundSource="display").
+  const revealSlider = control.locator('input.summarySoundVol[data-sfx-vol="reveal"]');
+  await revealSlider.scrollIntoViewIfNeeded();
+  await revealSlider.waitFor({ state: "visible", timeout: 10_000 });
+  // .fill() na range input nie zawsze niezawodnie odpala "input"/"change"
+  // (na czym wiszą handlery podglądu lokalnego i commitu do game_state) —
+  // ustawiamy value i wysyłamy oba zdarzenia wprost.
+  await revealSlider.evaluate((el) => {
+    el.value = "40";
+    el.dispatchEvent(new Event("input", { bubbles: true }));
+    el.dispatchEvent(new Event("change", { bubbles: true }));
+  });
+  await control.waitForTimeout(1000); // niech nagranie złapie suwak i zaktualizowaną etykietę %
 
   await clickPaced(control.getByRole("button", { name: "Gotowe — przejdź do rund" }));
   await clickPaced(control.getByRole("button", { name: "Rozpocznij grę" }));

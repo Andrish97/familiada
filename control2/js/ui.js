@@ -17,8 +17,8 @@
 // bieżącego game_state (shared/hints.js), nie ulotny stan ustawiany przy
 // każdym zdarzeniu — "wszystko idzie przez tabelę stanów".
 import { getRoundsHint, getFinalHint, getFinalEntryShortcuts, teamName } from "../../shared/hints.js?v=v2026-09-09T17244";
-import { t } from "../../translation/translation.js?v=v2026-09-09T17244";
-import { getSfxDuration } from "../../js/core/sfx.js?v=v2026-09-09T17244";
+import { t, getUiLang } from "../../translation/translation.js?v=v2026-09-09T17244";
+import { getSfxDuration, getSfxCategories, getSfxVariant, isSfxPlaying, playSfx, stopSfx, onSfxEnd, setSfxVolume } from "../../js/core/sfx.js?v=v2026-09-09T17244";
 import { ANSWER_ANIM } from "../../shared/displayAnim.js?v=v2026-09-09T17244";
 import {
   startRoundGateMs,
@@ -357,6 +357,73 @@ export function createUI({ root, emit }) {
     ));
   }
 
+  // Sekcja "Dźwięk" w Podsumowaniu (D3) — odpowiednik starego control.html's
+  // #summarySoundList (control/js/app.js:1306+). Suwak tu zmienia głośność
+  // NA ŻYWO we wspólnym game_state (nie w games.settings — właściciel gry
+  // wprost tego zażądał: "zmiana głośności w podsumowaniu nie zmienia jej w
+  // ustawieniach... to musi być w game state"), więc słychać ją też na
+  // Wyświetlaczu, gdy soundSource="display". Warianty/pliki własne zostają
+  // edytowalne wyłącznie w modalu "Zmień ustawienia" (setup.openSettings) —
+  // tu tylko odczyt etykiety + podgląd odtwarzania, bez edycji.
+  //
+  // Re-render pełnej listy sekcji leci przy KAŻDYM store.commit() (patrz
+  // renderCurrent()), więc suwak commitowałby (i pisał do bazy) przy każdym
+  // pikselu przeciągnięcia, gdyby robić to na "input" — zamiast tego: "input"
+  // tylko aktualizuje etykietę % i głośność lokalnego podglądu/odtwarzania
+  // (setSfxVolume, bez zapisu do game_state), "change" (puszczenie suwaka)
+  // dopiero emituje właściwy zapis. Dokładnie ten sam kompromis co plan,
+  // sekcja 4: "czysto kosmetyczne... może zostać fire-and-forget/debounce".
+  function soundSummarySection(state) {
+    const cats = getSfxCategories();
+    if (!cats.length) return null;
+    const lang = getUiLang() || "pl";
+    const SVG_PLAY = `<svg width="16" height="16" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><polygon points="2,1 11,6 2,11" fill="currentColor"/></svg>`;
+    const SVG_STOP = `<svg width="16" height="16" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="1.5" y="1.5" width="9" height="9" fill="currentColor"/></svg>`;
+
+    const rows = cats.map((cat) => {
+      const key = cat.key;
+      const variant = getSfxVariant(key);
+      const variantLabel = cat.sounds?.find((s) => s.file.split("?")[0] === variant.split("?")[0])?.label?.[lang] || variant.split("?")[0];
+      const desc = t("control.sfxDesc." + key) || key;
+      const volPct = Math.round((state.settings.sound?.volumes?.[key] ?? 100));
+
+      const playBtn = h("button", { class: "btn sm summarySoundPlay", type: "button" });
+      playBtn.innerHTML = SVG_PLAY;
+      on(playBtn, "click", () => {
+        if (isSfxPlaying(key)) {
+          stopSfx(key);
+          playBtn.innerHTML = SVG_PLAY;
+        } else {
+          playSfx(key);
+          playBtn.innerHTML = SVG_STOP;
+          onSfxEnd(key, () => { playBtn.innerHTML = SVG_PLAY; });
+        }
+      });
+
+      const volLabel = h("span", { class: "summarySoundVolLabel", text: `${volPct}%` });
+      const slider = h("input", { class: "summarySoundVol", type: "range", min: "0", max: "100", step: "1", "data-sfx-vol": key });
+      slider.value = String(volPct);
+      on(slider, "input", () => {
+        const pct = parseInt(slider.value, 10);
+        volLabel.textContent = `${pct}%`;
+        setSfxVolume(key, pct / 100);
+      });
+      on(slider, "change", () => {
+        emit("settings.setSoundVolume", { key, pct: parseInt(slider.value, 10) });
+      });
+
+      return h("div", { class: "summarySoundRow" }, [
+        h("span", { class: "summarySoundDesc", text: desc }),
+        h("span", { class: "summarySoundVariant", text: variantLabel }),
+        playBtn,
+        slider,
+        volLabel,
+      ]);
+    });
+
+    return summarySection(t("control.summarySound"), h("div", { id: "summarySoundList" }, rows));
+  }
+
   // Wiersz-atrapa "rundy w toku" do podglądu D3 — patrz shared/previewRow.js
   // (ta sama funkcja, którą używa też js/pages/game-settings2.js's modal
   // ustawień, żeby oba miejsca nie rozjechały się osobnymi implementacjami).
@@ -396,8 +463,9 @@ export function createUI({ root, emit }) {
         h("div", { class: "summaryDisplayRow" }, [h("span", { class: "summaryDisplayLabel", text: `${t("control.summaryLogo")}: ` }), document.createTextNode(d.logoId ? t("control.summaryLogoCustom") : t("control.summaryDefault"))]),
         h("div", { id: "c2DisplayPreview" }, previewFrame ? [previewFrame] : []),
       ])),
+      soundSummarySection(state),
       summarySection(t("control.summaryFinal"), h("div", { class: "summarySectionValue", text: hasFinal ? t("control.toggleYes") : t("control.toggleNo") })),
-    ];
+    ].filter(Boolean);
     // "Losuj ponownie" mieszka PRZY danej sekcji pytań (nie w stopce z resztą
     // nawigacji) — to akcja dotycząca konkretnie tej puli, nie kroku jako
     // całości. Tylko w trybie losowym (w "pick" kolejność jest już ustalona
