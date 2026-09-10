@@ -1025,7 +1025,12 @@ test("control2: dźwięk ze źródła Wyświetlacz — odblokowanie, głośnoś�
     // Przed przełączeniem: Display nigdy nie pokazuje ekranu odblokowania.
     await expect(displayPage.locator("#audioUnlockScreen")).toHaveClass(/\bhidden\b/);
 
-    await page.getByLabel("Dźwięk z Wyświetlacza").check();
+    // Przełącznik dwustanowy (.toggle-group, jak "Losowo"/"Wybierz" w
+    // ustawieniach gry) — widoczny tekst opcji to CSS content:attr(data-text)
+    // na ::before, niewidoczny dla getByLabel/getByText; klikamy widoczną
+    // etykietę .toggle-item po wartości ukrytego radio, ten sam wzorzec co
+    // game-settings.spec.js's analogiczne przełączniki.
+    await page.locator('.toggle-item:has(input[name="soundSource"][value="display"])').click();
     await expect(displayPage.locator("#audioUnlockScreen")).not.toHaveClass(/\bhidden\b/, { timeout: 10000 });
     await displayPage.locator("#btnAudioUnlock").click();
     await expect(displayPage.locator("#audioUnlockScreen")).toHaveClass(/\bhidden\b/);

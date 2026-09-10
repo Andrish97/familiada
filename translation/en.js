@@ -529,9 +529,7 @@ const en = {
     // pustą 4. kratkę z prawej zamiast wyśrodkować etykietę jak w pozostałych
     // językach. Zgłoszone: ma być przesunięte o jedną kratkę w prawo.
     sumLabel: " SUM",
-    audioUnlockTitle: "Unlock audio",
-    audioUnlockHint: "Game sound will play on this device — click to let the browser allow it.",
-    audioUnlockBtn: "🔊 Unlock",
+    audioUnlockBtn: "🔊 Unlock sound",
   },
   host: {
     title: "Familiada — host",
@@ -4769,9 +4767,10 @@ const en = {
     noHostTablet: "No host tablet",
     noHostTabletHint: "If the host does not use a separate tablet/phone, check this option. Connecting a host device will not be required.",
     soundSection: "Sound",
-    soundSourceLabel: "Sound from the Display",
-    soundSourceHint: "By default plays from this device.",
-    soundSourceDisplayHint: "An unlock button will appear on the Display.",
+    soundSourceIntro: "If the Display is open on another device (e.g. a TV) and you want sound to play from there, choose the source below.",
+    soundSourceControlOpt: "Control panel",
+    soundSourceDisplayOpt: "Display",
+    soundSourceDisplayHint: "After switching to Display, an unlock button will appear there — click it to unlock playback.",
     roundsPlayTitle: "Round",
     roundsPlayName: "Gameplay",
     roundsPlayHint: "Reveal answers or add X.",

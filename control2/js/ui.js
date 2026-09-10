@@ -240,27 +240,34 @@ export function createUI({ root, emit }) {
       rows.push(h("div", { class: "device-row" }, [reenableRow(t("control.deviceBuzzer"), "physicalBuzzer")]));
     }
 
-    // ===== Dźwięk — jeden przełącznik (zgłoszone): źródło odtwarzania,
-    // "Panel sterowania" (domyślnie) albo "Wyświetlacz". Osobny wiersz w tej
-    // samej liście co urządzenia, ten sam .device-row/.device-opt-check
-    // szkielet — bez nowego CSS. Hint o przycisku "Odblokuj dźwięk" na
-    // Wyświetlaczu pokazuje się TYLKO gdy przełącznik jest włączony (dopiero
-    // wtedy jest w ogóle istotny). =====
+    // ===== Dźwięk — JEDNA sekcja, przełącznik dwustanowy w tym samym stylu
+    // co "Losowo"/"Wybierz" w ustawieniach gry (.toggle-group/.toggle-item/
+    // .toggle-slider, control.css — reużyte 1:1, control2.html i tak już
+    // linkuje control.css). Zgłoszone: dawny checkbox z dwoma osobnymi
+    // wierszami tekstu wyglądał jak dwie sekcje i był za gadatliwy. =====
     const soundOnDisplay = state.settings.soundSource === "display";
-    const soundChk = h("input", { type: "checkbox" });
-    soundChk.checked = soundOnDisplay;
-    on(soundChk, "change", () => emit("devices.soundSource", soundChk.checked ? "display" : "control"));
-    const soundHintText = soundOnDisplay ? t("control.soundSourceDisplayHint") : t("control.soundSourceHint");
+    const soundRadioControl = h("input", { type: "radio", name: "soundSource", value: "control" });
+    soundRadioControl.checked = !soundOnDisplay;
+    on(soundRadioControl, "change", () => emit("devices.soundSource", "control"));
+    const soundRadioDisplay = h("input", { type: "radio", name: "soundSource", value: "display" });
+    soundRadioDisplay.checked = soundOnDisplay;
+    on(soundRadioDisplay, "change", () => emit("devices.soundSource", "display"));
+
+    const soundRowChildren = [
+      h("div", { class: "device-opt-check-hint", text: t("control.soundSourceIntro") }),
+      h("div", { class: "toggle-group", style: "margin-top:8px" }, [
+        h("label", { class: "toggle-item" }, [soundRadioControl, h("span", { class: "toggle-slider", "data-text": t("control.soundSourceControlOpt") })]),
+        h("label", { class: "toggle-item" }, [soundRadioDisplay, h("span", { class: "toggle-slider", "data-text": t("control.soundSourceDisplayOpt") })]),
+      ]),
+    ];
+    if (soundOnDisplay) {
+      soundRowChildren.push(h("div", { class: "device-opt-check-hint", style: "margin-top:8px", text: t("control.soundSourceDisplayHint") }));
+    }
     rows.push(h("div", { class: "device-row" }, [
       h("div", { class: "device-row-1" }, [
         h("div", { class: "device-name", text: t("control.soundSection") }),
       ]),
-      h("div", { class: "device-row-opt" }, [
-        h("label", { class: "device-opt-check" }, [soundChk, h("div", { class: "device-opt-check-text" }, [
-          h("span", { class: "device-opt-check-label", text: t("control.soundSourceLabel") }),
-          h("span", { class: "device-opt-check-hint", text: soundHintText }),
-        ])]),
-      ]),
+      h("div", { class: "device-row-opt" }, soundRowChildren),
     ]));
 
     function reenableRow(label, flagKey) {

@@ -527,7 +527,11 @@ async function scenarioRoundsMechanics(pages) {
   // pokazuje pełnoekranowy #audioUnlockScreen — przeglądarki wymagają
   // gestu użytkownika, zanim odtwarzanie w ogóle zadziała (nikt normalnie
   // nie dotyka ekranu Wyświetlacza w trakcie gry), więc to jest ten gest.
-  await control.getByLabel("Dźwięk z Wyświetlacza").check();
+  // Przełącznik dwustanowy (.toggle-group, jak "Losowo"/"Wybierz" w
+  // ustawieniach gry) — tekst opcji to CSS content:attr(data-text),
+  // niewidoczny dla getByLabel; klikamy widoczną etykietę po wartości
+  // ukrytego radio, ten sam wzorzec co control2.spec.js.
+  await control.locator('.toggle-item:has(input[name="soundSource"][value="display"])').click();
   await control.waitForTimeout(600);
   await display.waitForSelector("#audioUnlockScreen", { state: "visible", timeout: 10_000 });
   await display.waitForTimeout(1000); // niech nagranie złapie ekran odblokowania na Display
