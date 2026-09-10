@@ -23,6 +23,23 @@ export const DEFAULT_SETTINGS = {
   endScreenMode: "logo",
   finalPrizeMultiplier: 3,
   mainPrizeAmount: 25000,
+  // Dźwięk (zgłoszone: przełącznik źródła w kroku Urządzeń) — "control"
+  // (domyślnie, jak dotąd) albo "display": dokładnie JEDNO z dwóch urządzeń
+  // faktycznie odtwarza, gated w control2/js/soundReactor.js i display2/js/
+  // soundReactor.js osobno, oba przez ten sam shared/soundCueEngine.js.
+  // soundMuted było wcześniej WYŁĄCZNIE lokalne dla Control (localStorage,
+  // patrz control2/js/soundReactor.js) — teraz musi być tutaj, bo mute ma
+  // działać niezależnie od tego, które urządzenie faktycznie gra.
+  soundSource: "control",
+  soundMuted: false,
+  // Głośności/warianty z games.settings.sound, zdenormalizowane tu RAZ przy
+  // starcie (control2/js/app.js's applyGameSettingsToState), dokładnie jak
+  // reszta ustawień gry — Display2 (anon, bez dostępu do games.settings
+  // wprost) czyta je stąd, nie osobnym zapytaniem. Pliki własne (wariant
+  // "__custom__") NIE są tu wspierane — wymagałyby osobnego RPC do
+  // podpisanych URL-i Storage dla anon; z braku takiego Display2 po prostu
+  // zostaje przy domyślnym, dołączonym wariancie dla tych kluczy.
+  sound: { volumes: {}, variants: {} },
 };
 
 export function makeDefaultState(gameId) {
@@ -103,10 +120,6 @@ export function makeDefaultState(gameId) {
       logoId: null,
     },
     host: { covered: false },
-
-    // --- czysto lokalne dla Control, NIGDY nie trafia do game_state.detail ---
-    audioUnlocked: false,
-    soundMuted: false,
   };
 }
 

@@ -996,6 +996,114 @@ test("control2: wyciszenie dźwięku — po Mute żaden klucz SFX się nie odtwa
   }
 });
 
+// ===== 12b. Dźwięk ze źródła Wyświetlacz: odblokowanie, głośność, mute =====
+//
+// Zgłoszone: "dodaj testy... jeden test niech używa dźwięku z display i tez
+// sprawdź mute na chwilę w jednej z rund np. i pokrec głośności". Przechodzi
+// przez CAŁĄ ścieżkę na raz: przełącznik "Dźwięk" w kroku Urządzeń ->
+// #audioUnlockScreen na Display (musi się pojawić, kliknięcie musi je
+// schować) -> głośność ustawiona w modalu ustawień PRZED startem gry musi
+// dotrzeć do Display (nie do Control — sprawdzone osobno, że Control
+// zostaje cicho przez cały czas) -> Mute (współdzielony, patrz
+// control2/js/soundReactor.js) wyciszony na chwilę w środku rundy, potem
+// wznowiony — ten sam #btnMute co w teście "wyciszenie dźwięku" wyżej,
+// tylko że tym razem wycisza urządzenie, które FAKTYCZNIE gra (Display).
+
+test("control2: dźwięk ze źródła Wyświetlacz — odblokowanie, głośność z ustawień, chwilowe mute w rundzie", async ({ page, browser }) => {
+  await loginAsTestUser(page, page.context());
+  const game = await makeGame(page, `E2E-CONTROL2-SOUNDSRC-${Date.now()}`, { roundQuestions: [TWO_QUESTIONS[0]] });
+  const contexts = [];
+  try {
+    const buzzerPage = await openAnon(browser, contexts, `/buzzer2?id=${game.id}&key=${game.share_key_buzzer}`, "buzzer", []);
+    const displayPage = await openAnon(browser, contexts, `/display2?id=${game.id}&key=${game.share_key_display}`, "display", []);
+    await openAnon(browser, contexts, `/host2?id=${game.id}&key=${game.share_key_host}`, "host", []);
+
+    await page.goto(`/control2?id=${game.id}`, { waitUntil: "domcontentloaded" });
+    await expect(page.locator(".stepTitle")).toHaveText("Urządzenia", { timeout: 15000 });
+    await expect(page.locator("#dotDisplay")).toHaveClass(/\bok\b/, { timeout: 15000 });
+
+    // Przed przełączeniem: Display nigdy nie pokazuje ekranu odblokowania.
+    await expect(displayPage.locator("#audioUnlockScreen")).toHaveClass(/\bhidden\b/);
+
+    await page.getByLabel("Odtwarzaj dźwięk na Wyświetlaczu zamiast Panelu sterowania").check();
+    await expect(displayPage.locator("#audioUnlockScreen")).not.toHaveClass(/\bhidden\b/, { timeout: 10000 });
+    await displayPage.locator("#btnAudioUnlock").click();
+    await expect(displayPage.locator("#audioUnlockScreen")).toHaveClass(/\bhidden\b/);
+
+    await page.getByRole("button", { name: "Dalej" }).click();
+    await expect(page.locator(".stepTitle")).toHaveText("Podsumowanie", { timeout: 10000 });
+
+    // Głośność ustawiona TERAZ (przed startem gry) musi dotrzeć do Display —
+    // control2/js/app.js's onGsModalClose() odświeża store.state z fresh
+    // games.settings po zamknięciu modala, co obejmuje teraz też `sound`.
+    await page.getByRole("button", { name: "Zmień ustawienia" }).click();
+    await expect(page.locator("#gsOverlay")).not.toHaveClass(/hidden/, { timeout: 5000 });
+    const gsFrame = page.frameLocator("#gsFrame");
+    await gsFrame.locator('.gs-sidebar-item[data-cat="sound"]').click();
+    const revealSlider = gsFrame.locator('input.sfx-vol[data-sfx-vol="reveal"]');
+    await expect(revealSlider).toBeVisible({ timeout: 10000 });
+    // .fill() na <input type="range"> nie zawsze niezawodnie odpala "input"
+    // (na czym wisi handler ustawiający localSettings.sound.volumes w
+    // js/pages/game-settings2.js) — ustawiamy value i wysyłamy zdarzenie
+    // wprost, bez zależności od tego, jak dana wersja Playwrighta obsługuje
+    // range input.
+    await revealSlider.evaluate((el) => {
+      el.value = "40";
+      el.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    await gsFrame.getByRole("button", { name: "Zapisz wszystko" }).click();
+    await page.locator("#gsOverlay").click({ position: { x: 5, y: 5 } });
+    await page.locator("#gsOverlay").waitFor({ state: "hidden", timeout: 10000 });
+
+    await expect.poll(
+      () => displayPage.evaluate(() => localStorage.getItem("sfx_vol_reveal")),
+      { timeout: 10000, message: "głośność 'reveal' skonfigurowana w ustawieniach powinna dotrzeć do Display" }
+    ).toBe("0.4");
+
+    await page.getByRole("button", { name: "Gotowe — przejdź do rund" }).click();
+    await page.getByRole("button", { name: "Rozpocznij grę" }).click();
+
+    await clearSfxLog(page);
+    await clearSfxLog(displayPage);
+    await page.getByRole("button", { name: "Rozpocznij rundę" }).click();
+    await waitForSfxSequence(displayPage, ["round_transition"], 10000);
+    // Control ma soundSource="control" domyślnie wyłączone — zero dźwięku
+    // powinno polecieć TAM, wszystko idzie przez Display.
+    expect(await getSfxKeys(page), "Control nie powinien grać nic, gdy źródłem jest Wyświetlacz").toEqual([]);
+
+    // ===== Odpowiedź #1 (bez mute) — dowód normalnego odtwarzania z Display =====
+    await expect(buzzerPage.getByRole("button", { name: "Przycisk A" })).toBeEnabled({ timeout: 10000 });
+    await buzzerPage.getByRole("button", { name: "Przycisk A" }).click();
+    await expect(page.getByRole("button", { name: "Zatwierdź: Alfa" })).toBeEnabled({ timeout: 10000 });
+    await page.getByRole("button", { name: "Zatwierdź: Alfa" }).click();
+    await clearSfxLog(displayPage);
+    await revealAnswer(page, 1); // Odpowiedź A, 40 pkt -> wygrywa pojedynek
+    await waitForSfxSequence(displayPage, ["answer_correct"], 10000);
+
+    // ===== Mute na chwilę w tej samej rundzie — odpowiedź #2 podczas wyciszenia =====
+    await page.locator("#btnMute").click();
+    await expect(page.locator("#btnMute")).toHaveText("🔇");
+    await clearSfxLog(displayPage);
+    await revealAnswer(page, 2); // Odpowiedź B, 30 pkt
+    await expect(page.getByText("Bank: 70")).toBeVisible({ timeout: 10000 });
+    expect(await getSfxKeys(displayPage), "wyciszone -> Display nie powinien nic odtworzyć").toEqual([]);
+
+    // ===== Un-mute — odpowiedź #3 znów słyszalna =====
+    await page.locator("#btnMute").click();
+    await expect(page.locator("#btnMute")).toHaveText("🔊");
+    await clearSfxLog(displayPage);
+    await revealAnswer(page, 3); // Odpowiedź C, 20 pkt -> wszystko odkryte
+    await waitForSfxSequence(displayPage, ["answer_correct"], 10000);
+
+    // Control przez całą rundę zostaje cicho — dowód, że gating jest
+    // symetryczny (nie tylko "Display gra", ale i "Control naprawdę nie gra").
+    expect(await getSfxKeys(page)).toEqual([]);
+  } finally {
+    for (const ctx of contexts) await ctx.close().catch(() => {});
+    await deleteGame(page, game.id);
+  }
+});
+
 // ===== 13. Zmiana języka propaguje się do urządzeń, w tym treść Hosta =====
 //
 // Sprawdza całą ścieżkę na raz: przełącznik w topbarze Control -> zapis

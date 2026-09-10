@@ -529,6 +529,8 @@ const en = {
     // pustą 4. kratkę z prawej zamiast wyśrodkować etykietę jak w pozostałych
     // językach. Zgłoszone: ma być przesunięte o jedną kratkę w prawo.
     sumLabel: " SUM",
+    audioUnlockTitle: "Game sound plays from this screen",
+    audioUnlockBtn: "🔊 Unlock sound",
   },
   host: {
     title: "Familiada — host",
@@ -4765,6 +4767,10 @@ const en = {
     physicalBuzzerHint: "Use this option if you have a physical buzzer button. The operator decides who pressed first based on observation.",
     noHostTablet: "No host tablet",
     noHostTabletHint: "If the host does not use a separate tablet/phone, check this option. Connecting a host device will not be required.",
+    soundSection: "Sound",
+    soundSourceLabel: "Play sound on the Display instead of the Control panel",
+    soundSourceHint: "By default, game sounds play from this device (Control panel).",
+    soundSourceDisplayHint: "Sounds will play from the Display — an \"Unlock sound\" button will appear there, which must be tapped once before sound can play.",
     roundsPlayTitle: "Round",
     roundsPlayName: "Gameplay",
     roundsPlayHint: "Reveal answers or add X.",
