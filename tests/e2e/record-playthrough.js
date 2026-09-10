@@ -552,16 +552,31 @@ async function scenarioRoundsMechanics(pages) {
   await gsTeamAInput.fill("Mistrzowie Quizu");
   await control.waitForTimeout(1200); // niech nagranie złapie podgląd Wyświetlacza aktualizujący się na żywo
 
+  // Zgłoszone: "...i pokręć głośności" — doprecyzowane później: "suwaki w
+  // ustawieniach a suwaki w podsumowaniu to różne rzeczy", oba mają być
+  // pokazane. To TU (kategoria Dźwięk w tym samym modalu ustawień gry) to
+  // games.settings.sound jako punkt wyjściowy — osobny suwak
+  // ("round_transition") od tego w samym Podsumowaniu niżej ("reveal"), żeby
+  // nagranie pokazywało obie ścieżki osobno, nie jedną zamiast drugiej.
+  await gsFrame.locator('.gs-sidebar-item[data-cat="sound"]').click();
+  await control.waitForTimeout(600);
+  const transitionSlider = gsFrame.locator('input.sfx-vol[data-sfx-vol="round_transition"]');
+  await transitionSlider.waitFor({ state: "visible", timeout: 10_000 });
+  // .fill() na range input nie zawsze niezawodnie odpala "input" (na czym
+  // wisi handler zapisujący głośność) — ustawiamy value i wysyłamy zdarzenie
+  // wprost.
+  await transitionSlider.evaluate((el) => { el.value = "70"; el.dispatchEvent(new Event("input", { bubbles: true })); });
+  await control.waitForTimeout(1000); // niech nagranie złapie suwak i zaktualizowaną etykietę %
+
   await clickPaced(control.getByRole("button", { name: "Zapisz wszystko" }));
   await control.locator("#gsOverlay").click({ position: { x: 5, y: 5 } });
   await control.locator("#gsOverlay").waitFor({ state: "hidden", timeout: 10_000 });
   await control.waitForTimeout(800);
 
-  // Zgłoszone: "...i pokręć głośności" — doprecyzowane później: "chodziło mi
-  // o suwaki w podsumowaniu a nie tylko w samych ustawieniach". Suwak
-  // BEZPOŚREDNIO w sekcji "Dźwięk" Podsumowania (control2/js/ui.js's
-  // soundSummarySection), nie w modalu ustawień — zmiana tu leci na żywo do
-  // game_state, widoczna od razu na Wyświetlaczu (bo soundSource="display").
+  // Drugi, NIEZALEŻNY mechanizm — suwak BEZPOŚREDNIO w sekcji "Dźwięk"
+  // Podsumowania (control2/js/ui.js's soundSummarySection), bez modala —
+  // zmiana tu leci na żywo do game_state, widoczna od razu na Wyświetlaczu
+  // (bo soundSource="display"), bez zapisu do games.settings w ogóle.
   const revealSlider = control.locator('input.summarySoundVol[data-sfx-vol="reveal"]');
   await revealSlider.scrollIntoViewIfNeeded();
   await revealSlider.waitFor({ state: "visible", timeout: 10_000 });
