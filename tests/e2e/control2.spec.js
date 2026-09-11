@@ -399,7 +399,7 @@ test("control2: pełna runda przez 4 urządzenia + wznowienie Control po przeła
     // ===== KLUCZOWY MOMENT: przeładowanie Control w środku rundy 2 =====
     await page.reload({ waitUntil: "domcontentloaded" });
     await expect(page.locator(".c2-stepper")).toContainText("Runda 2", { timeout: 15000 });
-    await expect(page.getByText(/Wyniki: A 90/)).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText("Alfa: 90")).toBeVisible({ timeout: 10000 });
 
     expect(errors, "żadne z 4 urządzeń nie powinno rzucić błędu JS: " + errors.join(" | ")).toEqual([]);
   } finally {
@@ -436,7 +436,7 @@ test("control2: reset pojedynku, pass, kradzież wygrana/przegrana, odkrywanie r
     await expect(buzzerPage.getByRole("button", { name: "Przycisk A" })).toBeEnabled({ timeout: 10000 });
     await buzzerPage.getByRole("button", { name: "Przycisk A" }).click();
     await expect(page.getByRole("button", { name: "Zatwierdź: Alfa" })).toBeEnabled({ timeout: 10000 });
-    await page.getByRole("button", { name: "Zatwierdź: Alfa" }).click();
+    await clickConfirmed(page.getByRole("button", { name: "Zatwierdź: Alfa" }));
     await clickX(page); // A pudłuje -> kolej B
     // B pudłuje też -> RESET CYKLU: kolej wraca do A, BEZ nowego zgłoszenia
     // buzzera (firstTeam/secondTeam nie są czyszczone — "nie ma czegoś
@@ -457,14 +457,15 @@ test("control2: reset pojedynku, pass, kradzież wygrana/przegrana, odkrywanie r
     await revealAnswer(page, 3); // #3 nieodkryte -> R8
 
     await expect(page.locator(".c2-stepper")).toContainText("Runda 2", { timeout: 10000 });
-    await expect(page.getByText(/Wyniki: A 0 — B 70/)).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText("Alfa: 0")).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText("Beta: 70")).toBeVisible({ timeout: 10000 });
 
     // ===== RUNDA 2 =====
     await page.getByRole("button", { name: "Rozpocznij rundę" }).click();
     await expect(buzzerPage.getByRole("button", { name: "Przycisk B" })).toBeEnabled({ timeout: 10000 });
     await buzzerPage.getByRole("button", { name: "Przycisk B" }).click();
     await expect(page.getByRole("button", { name: "Zatwierdź: Beta" })).toBeEnabled({ timeout: 10000 });
-    await page.getByRole("button", { name: "Zatwierdź: Beta" }).click();
+    await clickConfirmed(page.getByRole("button", { name: "Zatwierdź: Beta" }));
 
     await revealAnswer(page, 1); // B trafia (40 pkt) -> kontrola B, allowPass
     await armAndConfirm(page.getByRole("button", { name: "Oddaj kontrolę" })); // dawny "Pass" -> kontrola A
@@ -526,7 +527,7 @@ test("control2: próg w rundzie -> finał, wczesne zakończenie po 4/5 pytaniach
     await expect(buzzerPage.getByRole("button", { name: "Przycisk A" })).toBeEnabled({ timeout: 10000 });
     await buzzerPage.getByRole("button", { name: "Przycisk A" }).click();
     await expect(page.getByRole("button", { name: "Zatwierdź: Alfa" })).toBeEnabled({ timeout: 10000 });
-    await page.getByRole("button", { name: "Zatwierdź: Alfa" }).click();
+    await clickConfirmed(page.getByRole("button", { name: "Zatwierdź: Alfa" }));
     await revealAnswer(page, 1); // jedyna odpowiedź, 300 pkt -> bank 300
 
     // Jedna odpowiedź: revealed==answers od razu, ale canEndRound ustawia
@@ -815,7 +816,7 @@ test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśni�
     await expect(buzzerPage.getByRole("button", { name: "Przycisk A" })).toBeEnabled({ timeout: 10000 });
     await buzzerPage.getByRole("button", { name: "Przycisk A" }).click();
     await expect(page.getByRole("button", { name: "Zatwierdź: Alfa" })).toBeEnabled({ timeout: 10000 });
-    await page.getByRole("button", { name: "Zatwierdź: Alfa" }).click();
+    await clickConfirmed(page.getByRole("button", { name: "Zatwierdź: Alfa" }));
     await revealAnswer(page, 1);
     await clickX(page);
     await clickX(page);
@@ -955,14 +956,14 @@ test("control2: mnożnik rundy — runda 4. z domyślnym ×2 faktycznie przemna�
       await expect(buzzerPage.getByRole("button", { name: "Przycisk A" })).toBeEnabled({ timeout: 10000 });
       await buzzerPage.getByRole("button", { name: "Przycisk A" }).click();
       await expect(page.getByRole("button", { name: "Zatwierdź: Alfa" })).toBeEnabled({ timeout: 10000 });
-      await page.getByRole("button", { name: "Zatwierdź: Alfa" }).click();
+      await clickConfirmed(page.getByRole("button", { name: "Zatwierdź: Alfa" }));
       await revealAnswer(page, 1);
       await clickX(page);
       await clickX(page);
       await clickX(page);
       await page.getByRole("button", { name: "Zakończ rundę" }).click();
     }
-    await expect(page.getByText(/Wyniki: A 120/)).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText("Alfa: 120")).toBeVisible({ timeout: 10000 });
 
     // Runda 4: mnożnik x2 — bank 40 ma dać +80, nie +40.
     await expect(page.locator(".c2-stepper")).toContainText("Runda 4", { timeout: 10000 });
@@ -970,7 +971,7 @@ test("control2: mnożnik rundy — runda 4. z domyślnym ×2 faktycznie przemna�
     await expect(buzzerPage.getByRole("button", { name: "Przycisk A" })).toBeEnabled({ timeout: 10000 });
     await buzzerPage.getByRole("button", { name: "Przycisk A" }).click();
     await expect(page.getByRole("button", { name: "Zatwierdź: Alfa" })).toBeEnabled({ timeout: 10000 });
-    await page.getByRole("button", { name: "Zatwierdź: Alfa" }).click();
+    await clickConfirmed(page.getByRole("button", { name: "Zatwierdź: Alfa" }));
     await revealAnswer(page, 1);
     await expect(page.getByText("Bank: 40")).toBeVisible({ timeout: 10000 });
     await clickX(page);
@@ -978,7 +979,7 @@ test("control2: mnożnik rundy — runda 4. z domyślnym ×2 faktycznie przemna�
     await clickX(page);
     await page.getByRole("button", { name: "Zakończ rundę" }).click();
 
-    await expect(page.getByText(/Wyniki: A 200/)).toBeVisible({ timeout: 10000 }); // 120 + 40x2, nie 160
+    await expect(page.getByText("Alfa: 200")).toBeVisible({ timeout: 10000 }); // 120 + 40x2, nie 160
   } finally {
     for (const ctx of contexts) await ctx.close().catch(() => {});
     await deleteGame(page, game.id);
@@ -1063,7 +1064,7 @@ test("control2: wyciszenie dźwięku — po Mute żaden klucz SFX się nie odtwa
     await clearSfxLog(page);
     await buzzerPage.getByRole("button", { name: "Przycisk A" }).click();
     await expect(page.getByRole("button", { name: "Zatwierdź: Alfa" })).toBeEnabled({ timeout: 10000 });
-    await page.getByRole("button", { name: "Zatwierdź: Alfa" }).click();
+    await clickConfirmed(page.getByRole("button", { name: "Zatwierdź: Alfa" }));
     await revealAnswer(page, 1); // normalnie: buzzer_press + answer_correct
     await expect(page.getByText("Bank: 40")).toBeVisible({ timeout: 10000 });
 
@@ -1202,7 +1203,7 @@ test("control2: dźwięk ze źródła Wyświetlacz — odblokowanie, głośnoś�
     await expect(buzzerPage.getByRole("button", { name: "Przycisk A" })).toBeEnabled({ timeout: 10000 });
     await buzzerPage.getByRole("button", { name: "Przycisk A" }).click();
     await expect(page.getByRole("button", { name: "Zatwierdź: Alfa" })).toBeEnabled({ timeout: 10000 });
-    await page.getByRole("button", { name: "Zatwierdź: Alfa" }).click();
+    await clickConfirmed(page.getByRole("button", { name: "Zatwierdź: Alfa" }));
     await clearSfxLog(displayPage);
     await revealAnswer(page, 1); // Odpowiedź A, 40 pkt -> wygrywa pojedynek
     await waitForSfxSequence(displayPage, ["answer_correct"], 10000);
