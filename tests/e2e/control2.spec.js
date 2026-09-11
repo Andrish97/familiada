@@ -137,6 +137,24 @@ async function revealAnswer(page, n) {
   await armAndConfirm(answerTile(page, n));
 }
 
+// DIAGNOSTYKA TYMCZASOWA — "pełna runda" wisi na "Zakończ rundę" bez
+// żadnego błędu w konsoli nawet po naprawie stale_write i timingu
+// armAndConfirm. console.log() z page.evaluate() NIE trafia do loga CI
+// (tests/e2e/helpers/login.js's instrumentPage łapie tylko error/warning),
+// więc to zwykłe console.log() PO STRONIE NODE (Playwright/test runner —
+// leci prosto na stdout, widoczne w CI bez żadnego haka).
+async function dumpControlState(page, label) {
+  const stepper = await page.locator(".c2-stepper").textContent().catch((e) => `<err: ${e.message}>`);
+  const tiles = await page.locator(".c2-tilegrid button").allTextContents().catch((e) => [`<err: ${e.message}>`]);
+  const endBtn = page.getByRole("button", { name: "Zakończ rundę" });
+  const endCount = await endBtn.count().catch(() => -1);
+  const endVisible = endCount > 0 ? await endBtn.first().isVisible().catch(() => false) : false;
+  const endEnabled = endVisible ? await endBtn.first().isEnabled().catch(() => false) : false;
+  const bodyText = await page.locator("body").innerText().catch((e) => `<err: ${e.message}>`);
+  console.log(`[diag:${label}] stepper=${JSON.stringify(stepper)} tiles=${JSON.stringify(tiles)} endRoundBtn(count=${endCount} visible=${endVisible} enabled=${endEnabled})`);
+  console.log(`[diag:${label}] body(500)=${JSON.stringify(bodyText.slice(0, 500))}`);
+}
+
 function xTile(page) {
   return page.getByRole("button", { name: "X", exact: true });
 }
@@ -330,10 +348,23 @@ test("control2: pełna runda przez 4 urządzenia + wznowienie Control po przeła
     await page.getByRole("button", { name: "Zatwierdź: Alfa" }).click();
 
     // Odpowiedź #1 ma najwyższe punkty (40) — trafienie wygrywa pojedynek.
+    await dumpControlState(page, "przed-reveal-1");
     await revealAnswer(page, 1);
+    await dumpControlState(page, "po-reveal-1");
     await revealAnswer(page, 2);
+    await dumpControlState(page, "po-reveal-2");
     await revealAnswer(page, 3);
-    await page.getByRole("button", { name: "Zakończ rundę" }).click();
+    await dumpControlState(page, "po-reveal-3");
+    // Krótki, jawny timeout (zamiast domyślnego 150s testu) — jeśli to
+    // zawiśnie, chcemy szybki, kompletny dump zamiast czekać 2.5 min na
+    // każdą z dwóch prób (5 min razem) tylko po to, żeby dostać ten sam,
+    // pusty "Timeout of 150000ms exceeded".
+    try {
+      await page.getByRole("button", { name: "Zakończ rundę" }).click({ timeout: 15000 });
+    } catch (e) {
+      await dumpControlState(page, "PO-TIMEOUCIE-zakoncz-runde");
+      throw e;
+    }
 
     // finalizeRound(): próg (300) nieosiągnięty, pula ma jeszcze pytanie 2.
     await expect(page.locator(".c2-stepper")).toContainText("Runda 2", { timeout: 10000 });
