@@ -93,19 +93,43 @@ export function createStore(gameId) {
 
   // ---- zapis: pełny wiersz, synchronicznie potwierdzony (plan, sekcja 4) ----
   async function commit({ soundCueKey } = {}) {
-    const row = await persist.write({
+    // Zamrożone TERAZ, przed jakimkolwiek hydrate() — to jest zamierzona
+    // zmiana operatora, niezależna od tego, co hydrate() potem nadpisze w
+    // state (patrz retry niżej).
+    const payload = {
       step: state.step,
       topCard: state.topCard,
       phase: state.phase,
       controlTeam: state.controlTeam,
       soundCueKey: soundCueKey ?? null,
-      expectedRev: state.rev,
       detail: buildDetail(state),
-    });
-    applyRow(row);
-    emit();
-    ringDoorbell(gameId, row.rev);
-    return row;
+    };
+
+    async function attempt() {
+      const row = await persist.write({ ...payload, expectedRev: state.rev });
+      applyRow(row);
+      emit();
+      ringDoorbell(gameId, row.rev);
+      return row;
+    }
+
+    try {
+      return await attempt();
+    } catch (e) {
+      if (!(e instanceof StaleWriteError)) throw e;
+      // Warstwa 2 (docs/plan-testy-i-poprawki.md) zrobiła dokładnie to, co
+      // powinna — ktoś inny zdążył podbić rev pierwszy, zanim nasz zapis
+      // dotarł. Jedyny realny "ktoś inny" to Buzzer (game_state_buzzer_press,
+      // zapis z pominięciem tego store'a — patrz plan, sekcja 1/4) albo dwa
+      // nakładające się kliknięcia w tej samej karcie Control. Zamiast
+      // twardego błędu operatorowi: doczytaj świeży wiersz (hydrate
+      // aktualizuje state.rev, w tym wszystko inne co się zmieniło) i
+      // spróbuj RAZ jeszcze DOKŁADNIE tę samą, zamierzoną zmianę z nowym
+      // rev — dokładnie ten "bezpieczny retry" z planu, wcześniej opisany
+      // ale nigdy nie zaimplementowany.
+      await hydrate();
+      return await attempt();
+    }
   }
 
   return { state, subscribe, emit, hydrate, commit, applyRow };
