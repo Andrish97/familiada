@@ -11,11 +11,11 @@ import {
   selectionToggle,
   rememberBrowseLocation,
   restoreBrowseLocation,
-} from "./state.js?v=v2026-09-10T23354";
+} from "./state.js?v=v2026-09-11T07351";
 
-import { importGame } from "../../js/pages/builder-import-export.js?v=v2026-09-10T23354";
+import { importGame } from "../../js/pages/builder-import-export.js?v=v2026-09-11T07351";
 
-import { renderAll, renderToolbar, renderList, renderTree, renderTags } from "./render.js?v=v2026-09-10T23354";
+import { renderAll, renderToolbar, renderList, renderTree, renderTags } from "./render.js?v=v2026-09-11T07351";
 
 import {
   listQuestionsByCategory,
@@ -23,18 +23,18 @@ import {
   listCategories,
   listQuestionTags,
   listCategoryTags
-} from "./repo.js?v=v2026-09-10T23354";
+} from "./repo.js?v=v2026-09-11T07351";
 
-import { showContextMenu, hideContextMenu } from "./context-menu.js?v=v2026-09-10T23354";
-import { openTagsModal } from "./tags-modal.js?v=v2026-09-10T23354";
-import { initExportModal } from "./export-modal.js?v=v2026-09-10T23354";
-import { initQuestionModal } from "./question-modal.js?v=v2026-09-10T23354";
-import { sb } from "../../js/core/supabase.js?v=v2026-09-10T23354";
-import { updateChecked, updateCheckedMany, ROW_GONE } from "../../js/core/db-guard.js?v=v2026-09-10T23354";
-import { acquireResourceLock, acquireResourceLocks } from "../../js/core/resource-lock.js?v=v2026-09-10T23354";
-import { alertModal, confirmModal } from "../../js/core/modal.js?v=v2026-09-10T23354";
-import { t } from "../../translation/translation.js?v=v2026-09-10T23354";
-import { addLongPress, addDoubleTap, isTouchContextMenuWindow } from "./mobile.js?v=v2026-09-10T23354";
+import { showContextMenu, hideContextMenu } from "./context-menu.js?v=v2026-09-11T07351";
+import { openTagsModal } from "./tags-modal.js?v=v2026-09-11T07351";
+import { initExportModal } from "./export-modal.js?v=v2026-09-11T07351";
+import { initQuestionModal } from "./question-modal.js?v=v2026-09-11T07351";
+import { sb } from "../../js/core/supabase.js?v=v2026-09-11T07351";
+import { updateChecked, updateCheckedMany, ROW_GONE } from "../../js/core/db-guard.js?v=v2026-09-11T07351";
+import { acquireResourceLock, acquireResourceLocks } from "../../js/core/resource-lock.js?v=v2026-09-11T07351";
+import { alertModal, confirmModal } from "../../js/core/modal.js?v=v2026-09-11T07351";
+import { t } from "../../translation/translation.js?v=v2026-09-11T07351";
+import { addLongPress, addDoubleTap, isTouchContextMenuWindow } from "./mobile.js?v=v2026-09-11T07351";
 
 let exportModal = null;
 
