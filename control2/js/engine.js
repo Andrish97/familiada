@@ -621,7 +621,7 @@ const REDUCERS = {
 export function createEngine({ store, loadQuestionPool, loadQuestions, loadAnswers, now = Date.now }) {
   const deps = { loadQuestionPool, loadQuestions, loadAnswers, now };
 
-  async function dispatch(action) {
+  async function dispatchNow(action) {
     const reducer = REDUCERS[action.type];
     if (!reducer) throw new Error(`Nieznana akcja: ${action.type}`);
 
@@ -639,6 +639,31 @@ export function createEngine({ store, loadQuestionPool, loadQuestions, loadAnswe
     store.state.topCard = result.topCard ?? store.state.topCard;
 
     return store.commit({ soundCueKey: result.soundCueKey });
+  }
+
+  // Zserializowane — bez tego dwa dispatch() wystrzelone bez odczekania na
+  // pierwszy (potwierdzony na żywo w control2.spec.js's "pełna runda": test
+  // klika kolejne odsłonięcia odpowiedzi bez czekania na zapis, `.click()`
+  // Playwrighta wraca zanim async handler w app.js w ogóle zacznie czekać na
+  // sieć) mogą nachodzić na siebie DWA razy nad tym samym `store.state` —
+  // reducer #2 czyta stan PRZED zmutowaniem go przez #1 (bo `await
+  // reducer(...)` oddaje sterowanie choć na jeden mikrotask, nawet gdy
+  // reducer nic realnie nie czeka), gubiąc zmianę #1 (lost update), a ich
+  // store.commit() ścigają się o ten sam `rev` — potwierdzone na żywo
+  // (`[store] commit() NAKŁADA SIĘ — 3 równocześnie w locie`), gdzie nawet
+  // pojedynczy retry na stale_write w store.js nie wystarczał na 3-stronny
+  // wyścig. Kolejka gwarantuje, że KAŻDY dispatch (reducer + commit razem)
+  // w pełni się kończy, zanim zacznie się następny — więc każdy reducer
+  // zawsze widzi już w pełni osiadły stan z poprzedniej akcji, nie tylko
+  // sam zapis do bazy. Testy jednostkowe już zawsze `await`-ują każdy
+  // dispatch po kolei, więc kolejka jest dla nich no-opem (kolejny dispatch
+  // i tak nigdy nie startuje, zanim poprzedni się nie rozstrzygnie).
+  let _queue = Promise.resolve();
+  function dispatch(action) {
+    const run = () => dispatchNow(action);
+    const result = _queue.then(run, run);
+    _queue = result.catch(() => {});
+    return result;
   }
 
   return { dispatch };
