@@ -43,6 +43,13 @@ export function createStore(gameId) {
   const listeners = new Set();
   const state = makeDefaultState(gameId);
   const persist = createPersist(gameId);
+  // DIAGNOSTYKA TYMCZASOWA (do usunięcia po zdiagnozowaniu stale_write w
+  // control2.spec.js's "pełna runda") — retry z poprzedniego commita nie
+  // rozwiązał problemu (4 nieudane HTTP 400 przed jednym zalogowanym
+  // błędem = DWA nakładające się commit(), oba nieudane nawet z retry).
+  // Ten licznik + log ma dać twardy dowód, czy rzeczywiście dwa commit()
+  // nachodzą na siebie z TEJ SAMEJ karty Control, zamiast dalej zgadywać.
+  let _inFlightCommits = 0;
 
   function emit() {
     for (const fn of listeners) fn(state);
@@ -105,8 +112,14 @@ export function createStore(gameId) {
       detail: buildDetail(state),
     };
 
+    _inFlightCommits++;
+    if (_inFlightCommits > 1) {
+      console.warn(`[store] commit() NAKŁADA SIĘ — ${_inFlightCommits} równocześnie w locie (rev=${state.rev}, step=${payload.step})`);
+    }
+
     async function attempt() {
-      const row = await persist.write({ ...payload, expectedRev: state.rev });
+      const sentRev = state.rev;
+      const row = await persist.write({ ...payload, expectedRev: sentRev });
       applyRow(row);
       emit();
       ringDoorbell(gameId, row.rev);
@@ -114,21 +127,26 @@ export function createStore(gameId) {
     }
 
     try {
-      return await attempt();
-    } catch (e) {
-      if (!(e instanceof StaleWriteError)) throw e;
-      // Warstwa 2 (docs/plan-testy-i-poprawki.md) zrobiła dokładnie to, co
-      // powinna — ktoś inny zdążył podbić rev pierwszy, zanim nasz zapis
-      // dotarł. Jedyny realny "ktoś inny" to Buzzer (game_state_buzzer_press,
-      // zapis z pominięciem tego store'a — patrz plan, sekcja 1/4) albo dwa
-      // nakładające się kliknięcia w tej samej karcie Control. Zamiast
-      // twardego błędu operatorowi: doczytaj świeży wiersz (hydrate
-      // aktualizuje state.rev, w tym wszystko inne co się zmieniło) i
-      // spróbuj RAZ jeszcze DOKŁADNIE tę samą, zamierzoną zmianę z nowym
-      // rev — dokładnie ten "bezpieczny retry" z planu, wcześniej opisany
-      // ale nigdy nie zaimplementowany.
-      await hydrate();
-      return await attempt();
+      try {
+        return await attempt();
+      } catch (e) {
+        if (!(e instanceof StaleWriteError)) throw e;
+        console.warn(`[store] stale_write, retry z rev=${state.rev} (po hydrate)`);
+        // Warstwa 2 (docs/plan-testy-i-poprawki.md) zrobiła dokładnie to, co
+        // powinna — ktoś inny zdążył podbić rev pierwszy, zanim nasz zapis
+        // dotarł. Jedyny realny "ktoś inny" to Buzzer (game_state_buzzer_press,
+        // zapis z pominięciem tego store'a — patrz plan, sekcja 1/4) albo dwa
+        // nakładające się kliknięcia w tej samej karcie Control. Zamiast
+        // twardego błędu operatorowi: doczytaj świeży wiersz (hydrate
+        // aktualizuje state.rev, w tym wszystko inne co się zmieniło) i
+        // spróbuj RAZ jeszcze DOKŁADNIE tę samą, zamierzoną zmianę z nowym
+        // rev — dokładnie ten "bezpieczny retry" z planu, wcześniej opisany
+        // ale nigdy nie zaimplementowany.
+        await hydrate();
+        return await attempt();
+      }
+    } finally {
+      _inFlightCommits--;
     }
   }
 
