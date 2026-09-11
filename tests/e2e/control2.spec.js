@@ -113,9 +113,24 @@ function answerTile(page, n) {
 // wysyła akcję. Locator jest "żywy" (przeliczany przy każdym użyciu), więc
 // dwa kolejne .click() poprawnie trafiają w ten sam kafel mimo przebudowy
 // DOM między nimi.
+//
+// Realny bug znaleziony na żywo (2026-09-11, "pełna runda"): Playwright's
+// .click() wraca, gdy tylko zdarzenie DOM zostanie wysłane — NIE czeka na
+// to, aż async handler w app.js skończy odsłać zapis do bazy i ui.js
+// przebuduje DOM na podstawie potwierdzonego stanu. Bez czekania na to
+// kolejne wywołanie armAndConfirm (np. druga odpowiedź w rzędzie) mogło
+// trafić w kafel z NIEAKTUALNEGO renderu (sprzed zastosowania poprzedniej
+// akcji) — nie gubi to już danych (control2/js/engine.js's dispatch() ma
+// teraz własną kolejkę), ale test klika nie tam, gdzie myśli. Po potwierdzeniu:
+// czekamy aż KONKRETNY klikany element zniknie z DOM (ui.js's clear()+rebuild
+// przy każdej zmianie stanu zawsze go realnie zastępuje nowym) — to dowód,
+// że render po tej akcji faktycznie się już wydarzył, zanim wywołujący
+// przejdzie do kolejnego kafla.
 async function armAndConfirm(locator) {
   await locator.click();
+  const handle = await locator.elementHandle();
   await locator.click();
+  if (handle) await handle.waitForElementState("hidden", { timeout: 10000 }).catch(() => {});
 }
 
 async function revealAnswer(page, n) {
