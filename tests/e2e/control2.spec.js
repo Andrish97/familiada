@@ -109,28 +109,31 @@ function answerTile(page, n) {
 
 // Odpowiedź/X/"Oddaj kontrolę" idą przez zaznacz -> potwierdź
 // (control2/js/ui.js's armableTile): pierwsze kliknięcie tylko uzbraja
-// (złota obwódka, zero zapisu), drugie na TYM SAMYM elemencie faktycznie
-// wysyła akcję. Locator jest "żywy" (przeliczany przy każdym użyciu), więc
-// dwa kolejne .click() poprawnie trafiają w ten sam kafel mimo przebudowy
-// DOM między nimi.
+// (złota obwódka, zero zapisu — czysto lokalny "ui.rerender", bez sieci),
+// drugie na TYM SAMYM elemencie faktycznie wysyła akcję (game.dispatch ->
+// zapis do bazy). Locator jest "żywy" (przeliczany przy każdym użyciu),
+// więc dwa kolejne .click() poprawnie trafiają w ten sam kafel mimo
+// przebudowy DOM między nimi.
 //
 // Realny bug znaleziony na żywo (2026-09-11, "pełna runda"): Playwright's
 // .click() wraca, gdy tylko zdarzenie DOM zostanie wysłane — NIE czeka na
-// to, aż async handler w app.js skończy odsłać zapis do bazy i ui.js
-// przebuduje DOM na podstawie potwierdzonego stanu. Bez czekania na to
-// kolejne wywołanie armAndConfirm (np. druga odpowiedź w rzędzie) mogło
-// trafić w kafel z NIEAKTUALNEGO renderu (sprzed zastosowania poprzedniej
-// akcji) — nie gubi to już danych (control2/js/engine.js's dispatch() ma
-// teraz własną kolejkę), ale test klika nie tam, gdzie myśli. Po potwierdzeniu:
-// czekamy aż KONKRETNY klikany element zniknie z DOM (ui.js's clear()+rebuild
-// przy każdej zmianie stanu zawsze go realnie zastępuje nowym) — to dowód,
-// że render po tej akcji faktycznie się już wydarzył, zanim wywołujący
-// przejdzie do kolejnego kafla.
+// to, aż async handler w app.js skończy zapis do bazy i ui.js przebuduje
+// DOM na podstawie potwierdzonego stanu. Pierwsza próba (czekanie aż
+// klikany element zniknie z DOM) okazała się NIEWYSTARCZAJĄCA — kolejne
+// wywołanie armAndConfirm mogło ruszyć, zanim POTWIERDZAJĄCY zapis
+// faktycznie doleciał do serwera (dowód na żywo: druga i trzecia
+// odpowiedź w rzędzie kończyły się tak, jakby to WCIĄŻ była ta sama, już
+// uzbrojona odpowiedź z poprzedniego wywołania). Właściwy sygnał to sama
+// odpowiedź sieciowa z RPC zapisu — dokładnie ten sam, sprawdzony wzorzec
+// co record-playthrough.js's clickPaced/waitForWrite.
+const WRITE_RPC_RE = /\/rpc\/(game_state_write|game_state_buzzer_press)(\?|$)/;
+
 async function armAndConfirm(locator) {
-  await locator.click();
-  const handle = await locator.elementHandle();
-  await locator.click();
-  if (handle) await handle.waitForElementState("hidden", { timeout: 10000 }).catch(() => {});
+  const page = locator.page();
+  await locator.click(); // uzbrojenie — lokalne, bez zapisu
+  const responded = page.waitForResponse((resp) => WRITE_RPC_RE.test(resp.url()), { timeout: 15000 }).catch(() => null);
+  await locator.click(); // potwierdzenie — faktyczny zapis do game_state
+  await responded;
 }
 
 async function revealAnswer(page, n) {
