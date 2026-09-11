@@ -128,12 +128,36 @@ function answerTile(page, n) {
 // co record-playthrough.js's clickPaced/waitForWrite.
 const WRITE_RPC_RE = /\/rpc\/(game_state_write|game_state_buzzer_press)(\?|$)/;
 
+// Margines PO odebraniu odpowiedzi sieciowej: page.waitForResponse()
+// rozstrzyga się, gdy CDP zobaczy odpowiedź na poziomie sieci — to NIE to
+// samo co "JS na stronie zdążył już wywołać applyRow()/emit() i
+// przemalować DOM" (osobny kanał komunikacji, bez gwarancji tej samej
+// kolejki mikrozadań co strona). Krótki bufor eliminuje tę resztkową
+// szczelinę zamiast dalej gonić rzadkie "prawie na czas" niedopasowania.
+async function settleAfterWrite(page) {
+  await page.waitForTimeout(150);
+}
+
 async function armAndConfirm(locator) {
   const page = locator.page();
   await locator.click(); // uzbrojenie — lokalne, bez zapisu
   const responded = page.waitForResponse((resp) => WRITE_RPC_RE.test(resp.url()), { timeout: 15000 }).catch(() => null);
   await locator.click(); // potwierdzenie — faktyczny zapis do game_state
   await responded;
+  await settleAfterWrite(page);
+}
+
+// Ten sam problem (klik wraca zanim zapis faktycznie dotarł do serwera)
+// dotyczy KAŻDEGO klikniecia prowadzącego wprost do zapisu do game_state,
+// nie tylko dwuklikowego armAndConfirm — np. "Zatwierdź: X" (przyjęcie
+// zgłoszenia z Buzzera) to pojedynczy klik bez żadnej asercji po drodze do
+// następnej akcji, więc ten sam wyścig.
+async function clickConfirmed(locator) {
+  const page = locator.page();
+  const responded = page.waitForResponse((resp) => WRITE_RPC_RE.test(resp.url()), { timeout: 15000 }).catch(() => null);
+  await locator.click();
+  await responded;
+  await settleAfterWrite(page);
 }
 
 async function revealAnswer(page, n) {
@@ -348,7 +372,7 @@ test("control2: pełna runda przez 4 urządzenia + wznowienie Control po przeła
     await expect(buzzerPage.getByRole("button", { name: "Przycisk A" })).toBeEnabled({ timeout: 10000 });
     await buzzerPage.getByRole("button", { name: "Przycisk A" }).click();
     await expect(page.getByRole("button", { name: "Zatwierdź: Alfa" })).toBeEnabled({ timeout: 10000 });
-    await page.getByRole("button", { name: "Zatwierdź: Alfa" }).click();
+    await clickConfirmed(page.getByRole("button", { name: "Zatwierdź: Alfa" }));
 
     // Odpowiedź #1 ma najwyższe punkty (40) — trafienie wygrywa pojedynek.
     await dumpControlState(page, "przed-reveal-1");
