@@ -139,9 +139,9 @@ test("Host — przegląd stanów (zrzuty ekranu każdego etapu)", async ({ page,
     roundQuestions: [{
       ord: 1, text: "Pytanie testowe (runda)",
       answers: [
-        { ord: 1, text: "Odpowiedź A", fixed_points: 40 },
-        { ord: 2, text: "Odpowiedź B", fixed_points: 30 },
-        { ord: 3, text: "Odpowiedź C", fixed_points: 20 },
+        { ord: 1, text: "Odpowiedź A", fixed_points: 150 },
+        { ord: 2, text: "Odpowiedź B", fixed_points: 100 },
+        { ord: 3, text: "Odpowiedź C", fixed_points: 50 },
       ],
     }],
     finalAnswerPts: 15,
