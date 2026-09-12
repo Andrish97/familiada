@@ -5029,6 +5029,7 @@ const uk = {
     statusPlayingLabel: "Грає: ",
     statusBankLabel: "Банк: ",
     statusStealLabel: "Крадіжка: ",
+    statusFinalSumLabel: "Сума фіналу: ",
     gameEndSummaryDraw: "Нічия — {a}:{b}",
     gameEndSummaryWin: "Перемогла команда {team} з рахунком {hi}:{lo}",
     endHintLogo: "Прозвучить аутро, а на екрані з'явиться логотип.",

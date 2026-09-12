@@ -4761,6 +4761,7 @@ const pl = {
     statusPlayingLabel: "Gra: ",
     statusBankLabel: "Bank: ",
     statusStealLabel: "Kradzież: ",
+    statusFinalSumLabel: "Suma finału: ",
     gameEndSummaryDraw: "Remis — {a}:{b}",
     gameEndSummaryWin: "Wygrała drużyna {team} wynikiem {hi}:{lo}",
     endHintLogo: "Zabrzmi outro, a na wyświetlaczu pojawi się logo.",

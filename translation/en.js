@@ -5041,6 +5041,7 @@ const en = {
     statusPlayingLabel: "Playing: ",
     statusBankLabel: "Bank: ",
     statusStealLabel: "Steal: ",
+    statusFinalSumLabel: "Final sum: ",
     gameEndSummaryDraw: "Draw — {a}:{b}",
     gameEndSummaryWin: "Team {team} won with a score of {hi}:{lo}",
     endHintLogo: "The outro will play and the logo will appear on the display.",

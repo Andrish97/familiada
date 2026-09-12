@@ -120,15 +120,18 @@ async function main() {
   let appliedLang = null;
   const subscription = createSubscription({
     gameId, deviceType: "host", key,
-    onRow: (row) => {
+    onRow: async (row) => {
       // Język idzie za operatorem w Control (patrz display2/js/main.js —
-      // ta sama zasada). Uwaga: samo pasmo 1/2 (tytuł/pytanie/odpowiedzi)
-      // render.js buduje dziś na sztywno po polsku — to NIE tłumaczy treści
-      // gry, tylko resztę chrome'u strony (data-i18n w host2.html).
+      // ta sama zasada). render.js's pasmo 1/2 JEST tłumaczone przez t()
+      // (roundTitle()/renderFinalMapping() używają rh()/fh()) — ale
+      // setUiLang() ładuje słownik asynchronicznie, więc bez await
+      // renderer.render(row) niżej potrafił wystartować PRZED podmianą
+      // słownika i namalować tytuł jeszcze starym językiem (zauważone na
+      // żywo: zmiana na "en" nie zmieniała od razu treści paperText1).
       const lang = row.detail?.settings?.uiLang;
       if (lang && lang !== appliedLang) {
         appliedLang = lang;
-        setUiLang(lang, { persist: true, updateUrl: true, apply: true }).catch(() => {});
+        await setUiLang(lang, { persist: true, updateUrl: true, apply: true }).catch(() => {});
       }
       renderer.render(row);
       coverLogo.apply(row);
