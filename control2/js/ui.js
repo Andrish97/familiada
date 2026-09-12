@@ -881,7 +881,16 @@ export function createUI({ root, emit }) {
     // faktycznie odpowiada, więc dawna nazwa myliła: sugerowała, że w
     // DUEL nikt nie ma "kontroli", a jednak ktoś zawsze wtedy gra.
     const activeTeam = state.controlTeam || (state.phase === "DUEL" ? r.duel.currentTeam : null);
+    // Wynik obu drużyn NA ŻYWO, nie tylko na ekranie przejścia między
+    // rundami (r_roundStart) — zgłoszone: operator chce wiedzieć W TRAKCIE
+    // gry, czy ta runda przybliża do progu finału, bez patrzenia na
+    // Wyświetlacz. Ten sam wzorzec (etykieta + pogrubiona wartość) co
+    // "Gra:"/"Bank:" niżej, nie duży nagłówkowy c2-intro-score (ten ma
+    // rozmiar czcionki dobrany pod pełnoekranowy ekran przejścia, nie pod
+    // wąski pasek statusu).
     const statusItems = [
+      h("span", {}, [document.createTextNode(`${teamName(state, "A")}: `), h("b", { text: String(r.totals.A) })]),
+      h("span", {}, [document.createTextNode(`${teamName(state, "B")}: `), h("b", { text: String(r.totals.B) })]),
       h("span", {}, [document.createTextNode(t("control.statusPlayingLabel")), h("b", { text: activeTeam ? teamName(state, activeTeam) : t("control.dash") })]),
       h("span", {}, [document.createTextNode(t("control.statusBankLabel")), h("b", { text: String(r.bankPts) })]),
     ];
