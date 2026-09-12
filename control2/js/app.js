@@ -812,7 +812,7 @@ async function main() {
       qr: { host: { show: false, url: null, code: null }, buzzer: { show: false, url: null, code: null } },
       colors: store.state.display.colors, theme: store.state.display.theme, logoId: store.state.display.logoId,
     };
-    store.state.host = { covered: false };
+    store.state.host = { covered: true }; // ta sama domyślna zasłona co makeDefaultState() — patrz shared/gameStateShape.js
     store.state.step = "devices_display";
     store.state.phase = null;
     store.state.controlTeam = null;
