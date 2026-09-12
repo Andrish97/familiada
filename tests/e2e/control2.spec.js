@@ -577,9 +577,15 @@ test("control2: próg w rundzie -> finał, wczesne zakończenie po 4/5 pytaniach
     // Po 4. pytaniu suma = 200 = finalTarget -> natychmiastowy skok do
     // f_end, BEZ 5. pytania i BEZ gracza 2.
     await expect(page.locator(".c2-stepper")).toContainText("Koniec gry", { timeout: 10000 });
-    await expect(page.getByText("Suma finału: 200")).toBeVisible({ timeout: 10000 });
 
+    // finalStatusBar (ui.js's renderFinalMapping) istnieje tylko na
+    // ekranach mapowania — tu już zeszliśmy na f_end, gdzie go nie ma.
+    // Realna weryfikacja sumy (200): FINISH_FINAL wtapia ją w rounds.totals
+    // (bank rundy 300×1 + suma finału 200 = 500), widoczne dopiero po
+    // "Zakończ grę" jako gameEndSummary (ta sama funkcja co w teście
+    // "reset pojedynku...", tam już sprawdzona dla remisu).
     await page.getByRole("button", { name: "Zakończ grę", exact: true }).click();
+    await expect(page.getByText("Wygrała drużyna Alfa wynikiem 500:0")).toBeVisible({ timeout: 10000 });
     const finishBtn = page.getByRole("button", { name: "Wróć do moich gier" });
     await expect(finishBtn).toBeVisible({ timeout: 10000 });
     await finishBtn.click();
