@@ -119,7 +119,17 @@ export function makeDefaultState(gameId) {
       theme: null,
       logoId: null,
     },
-    host: { covered: false },
+    // Domyślnie zasłonięte, nie odsłonięte — ustalona zasada dla całego
+    // Control, nie tylko finału: Prowadzący widzi treść odpowiedzi (w
+    // Rundach: pełną listę i punkty od początku rundy — patrz
+    // control2/js/host2/render.js's renderRounds()), a jej fizyczne
+    // ujawnienie kontestantowi zależy od tego, czy ekran jest w danym
+    // momencie odwrócony/z dala od wzroku widza — coś, co ocenia sam
+    // operator na miejscu, nie silnik gry. Zasłona jest jednokierunkowa
+    // (silnik ją tylko włącza, nigdy nie wyłącza) — odsłonięcie to
+    // wyłącznie lokalny, nieprzechowywany w game_state gest "peek" na
+    // urządzeniu Hosta, gdy operator sam się upewni, że jest bezpiecznie.
+    host: { covered: true },
   };
 }
 
