@@ -28,9 +28,9 @@
 // odzwierciedlał TYLKO to, czym faktycznie świecą kropki na prawdziwym
 // Wyświetlaczu (settings.display.colors.A/B/BACKGROUND nie mają tu wpływu).
 
-import { sb } from "../../js/core/supabase.js?v=v2026-09-12T19345";
-import { v as cacheBust } from "../../js/core/cache-bust.js?v=v2026-09-12T19345";
-import { loadFont5x7, logoToBits150 } from "../../js/core/logo-preview.js?v=v2026-09-12T19345";
+import { sb } from "../../js/core/supabase.js?v=v2026-09-12T20092";
+import { v as cacheBust } from "../../js/core/cache-bust.js?v=v2026-09-12T20092";
+import { loadFont5x7, logoToBits150 } from "../../js/core/logo-preview.js?v=v2026-09-12T20092";
 
 const DOT_W = 150, DOT_H = 70;
 const DEFAULT_DOT_COLOR = "#d7ff3d"; // shared/gameStateShape.js's default
