@@ -291,6 +291,12 @@ export function createRenderer({ scene, qr }) {
             // control/js/gameFinal.js's startFinal(): zapowiedź "15" po
             // stronie zwycięzcy, zanim operator w ogóle uruchomi timer.
             showTimerPlaceholder(nextRow, "15");
+            // Wskaźnik na zwycięzcę zapala się TU (plan, sekcja 2a: "zostaje
+            // zapalony przez cały finał, gaśnie dopiero na F14") — nie przez
+            // CONTROL_CHANGED, bo control_team zostaje null przez cały
+            // finał (winner idzie z detail.final.winnerTeam, osobnego pola,
+            // którego deriveEvents nie diffuje jako CONTROL_CHANGED).
+            applyIndicator(nextRow);
           } else if (ev.to === "f_p2_start") {
             // Zamaskuj odpowiedzi gracza 1 z powrotem na placeholdery.
             const rows = Array.from({ length: 5 }, () => ({ left: FINAL_TEXT_PLACEHOLDER, a: FINAL_PTS_PLACEHOLDER }));

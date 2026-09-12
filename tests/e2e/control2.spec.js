@@ -484,7 +484,7 @@ test("control2: reset pojedynku, pass, kradzież wygrana/przegrana, odkrywanie r
     // Pula wyczerpana (2/2), próg nieosiągnięty, hasFinal=false -> r_gameEnd.
     // Runda 1 dała bank drużynie B (70), runda 2 zostaje przy A (70) -> remis.
     await expect(page.locator(".c2-stepper")).toContainText("Koniec gry", { timeout: 10000 });
-    await expect(page.getByText("Wynik końcowy: A 70 — B 70")).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText("Remis — 70:70")).toBeVisible({ timeout: 10000 });
 
     await page.getByRole("button", { name: "Zakończ grę" }).click();
     const finishBtn = page.getByRole("button", { name: "Wróć do moich gier" });
@@ -543,6 +543,12 @@ test("control2: próg w rundzie -> finał, wczesne zakończenie po 4/5 pytaniach
     await page.getByRole("button", { name: "Rozpocznij finał" }).click();
 
     await expect(page.locator(".c2-stepper")).toContainText("Finał — gracz 1, wpisywanie", { timeout: 10000 });
+    // Bez wpisanej odpowiedzi gracza kafel dopasowania zostaje trwale
+    // disabled (ui.js's hasTyped) — ta sama luka co w drugim, pełnym teście
+    // finału (linia ~846), ale tu brakowało tego kroku w ogóle.
+    const p1Inputs = page.locator("#app input[type=text]");
+    await expect(p1Inputs).toHaveCount(5, { timeout: 10000 });
+    for (let i = 0; i < 5; i++) await p1Inputs.nth(i).fill("Odp. finałowa");
     await page.getByRole("button", { name: "Rozpocznij odliczanie (15s)" }).click();
     await page.getByRole("button", { name: "Dalej" }).click();
 
@@ -631,7 +637,7 @@ test("control2: physicalBuzzer + noHostTablet — urządzenia pominięte, ręczn
     await expect(page.getByRole("button", { name: "Alfa" })).toBeVisible();
     await page.getByRole("button", { name: "Beta" }).click();
     await expect(page.getByRole("button", { name: "Potwierdź: Beta" })).toBeVisible();
-    await page.getByRole("button", { name: "Potwierdź: Beta" }).click();
+    await clickConfirmed(page.getByRole("button", { name: "Potwierdź: Beta" }));
 
     await revealAnswer(page, 1); // B trafia -> przejmuje kontrolę
     await expect(page.getByText("Bank: 40")).toBeVisible({ timeout: 10000 });
@@ -1023,6 +1029,14 @@ test("control2: wyścig — oba przyciski Buzzera naciśnięte w tej samej chwil
     await expect.poll(async () => (await acceptAlfa.isEnabled()) || (await acceptBeta.isEnabled()), { timeout: 10000 }).toBe(true);
     const winner = (await acceptAlfa.isEnabled()) ? "A" : "B";
     const loser = winner === "A" ? "B" : "A";
+    const winnerName = winner === "A" ? "Alfa" : "Beta";
+
+    // buzzer2/js/render.js's deriveButtonState czyta duel.firstTeam, nie
+    // duel.lastPressed — a firstTeam ustawia dopiero ACCEPT_BUZZ (Control
+    // klika "Zatwierdź: X"). Bez tego kliknięcia Buzzer zostaje w STATE.ON
+    // (oba przyciski "dim") na zawsze — trzeba faktycznie przyjąć zgłoszenie,
+    // zanim sprawdzimy, który przycisk się zaświecił.
+    await clickConfirmed(page.getByRole("button", { name: `Zatwierdź: ${winnerName}` }));
 
     // Buzzer i Control muszą się zgadzać co do tego, KTO wygrał wyścig.
     await expect(buzzerPage.locator(`#btn${winner}`)).toHaveClass(/lit/, { timeout: 10000 });
@@ -1052,10 +1066,14 @@ test("control2: wyciszenie dźwięku — po Mute żaden klucz SFX się nie odtwa
     await page.getByRole("button", { name: "Gotowe — przejdź do rund" }).click();
     await page.getByRole("button", { name: "Rozpocznij grę" }).click();
 
-    // Referencja: BEZ wyciszenia start rundy gra normalnie.
+    // Referencja: BEZ wyciszenia start rundy gra normalnie. Czekamy na CAŁY
+    // combo (soundCueEngine.js's playSyncedCombo: "reveal", jako krótszy
+    // dźwięk, leci z setTimeout PO "round_transition") — inaczej ten
+    // opóźniony "reveal" wystrzeliłby dopiero PO włączeniu Mute niżej,
+    // fałszywie wyglądając jak wyciek dźwięku mimo wyciszenia.
     await clearSfxLog(page);
     await page.getByRole("button", { name: "Rozpocznij rundę" }).click();
-    await waitForSfxSequence(page, ["round_transition"], 10000);
+    await waitForSfxKeysAnyOrder(page, ["round_transition", "reveal"], 10000);
 
     await expect(buzzerPage.getByRole("button", { name: "Przycisk A" })).toBeEnabled({ timeout: 10000 });
     await page.locator("#btnMute").click();
@@ -1262,7 +1280,10 @@ test("control2: zmiana języka w Control propaguje się do Hosta — tytuł fazy
     await expect(hostPage.locator("#paperText1")).toContainText("PRZYCISK", { timeout: 10000 });
 
     await page.locator(".lang-btn").click();
-    await page.locator('.lang-option[data-lang="en"]').click();
+    // Zmiana języka leci przez window "i18n:lang" -> store.commit() poza
+    // kolejką engine.dispatch() (ten sam wzorzec co Mute) — bez czekania na
+    // faktyczny zapis test sprawdzał Hosta, zanim uiLang w ogóle dotarło.
+    await clickConfirmed(page.locator('.lang-option[data-lang="en"]'));
 
     await expect(hostPage.locator("#paperText1")).toContainText("BUZZER", { timeout: 10000 });
     await expect(hostPage.locator("#paperText1")).not.toContainText("PRZYCISK");
