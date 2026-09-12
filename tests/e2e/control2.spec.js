@@ -809,9 +809,11 @@ test("control2: QR na wyświetlaczu — host i buzzer niezależne, każdy z osob
 // (5×15 + 4×15 = 135, jedno pytanie gracza 2 to "powtórzenie" = 0 pkt) —
 // gwarantuje przejście przez KAŻDY krok F1-F10, w tym ten, którego dotyczyła
 // dzisiejsza naprawa: odpowiedzi gracza 1 muszą wrócić widoczne na Display
-// I Host w momencie startu rundy 2, nie zostać zasłonięte do końca gry.
+// w momencie startu rundy 2. Host NIE — ustalona zasada dla całego Control:
+// zasłonięcie jest jednokierunkowe (silnik sam nigdy nie odsłania, tylko
+// lokalny "peek" operatora), więc Host zostaje zasłonięty przez cały finał.
 
-test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśnięcie timera, powtórzenie, odsłonięcie P1 przy starcie P2", async ({ page, browser }) => {
+test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśnięcie timera, powtórzenie, odsłonięcie P1 na Display przy starcie P2", async ({ page, browser }) => {
   test.setTimeout(180_000); // + realne 15s oczekiwania na naturalne wygaśnięcie timera gracza 1
   await loginAsTestUser(page, page.context());
   const game = await makeGame(page, `E2E-CONTROL2-FINALFULL-${Date.now()}`, {
@@ -908,9 +910,13 @@ test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśni�
         && !!last.args[1].animIn
         && last.args[1].rows.every((r) => r.left === "Odp. finałowa" && r.a === "15");
     }, { timeout: 10000 }).toBe(true);
-    // Host: odsłania się W TYM SAMYM momencie (naprawiona luka — dawniej
-    // zostawał zasłonięty do końca gry mimo że Display już odsłaniał).
-    await expect(hostPage.locator("#cover2")).not.toHaveClass(/coverOn/, { timeout: 10000 });
+    // Host NIE odsłania się tutaj — ustalona zasada dla całego Control
+    // (nie tylko finału): zasłonięcie wrażliwej treści jest jednokierunkowe,
+    // silnik nigdy sam jej nie zdejmuje (state.host.covered ustawiane na
+    // true raz, w START_FINAL, i nigdy z powrotem na false w engine.js).
+    // Jedyny sposób odsłonięcia to lokalny, nieprzechowywany w game_state
+    // gest "peek" operatora na urządzeniu Hosta.
+    await expect(hostPage.locator("#cover2")).toHaveClass(/coverOn/, { timeout: 10000 });
 
     // ===== F7: gracz 2 — pytanie #1 oznaczone jako "powtórzenie" =====
     await expect(page.locator(".c2-stepper")).toContainText("Finał — gracz 2, wpisywanie", { timeout: 10000 });
