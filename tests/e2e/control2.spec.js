@@ -484,9 +484,12 @@ test("control2: reset pojedynku, pass, kradzież wygrana/przegrana, odkrywanie r
     // Pula wyczerpana (2/2), próg nieosiągnięty, hasFinal=false -> r_gameEnd.
     // Runda 1 dała bank drużynie B (70), runda 2 zostaje przy A (70) -> remis.
     await expect(page.locator(".c2-stepper")).toContainText("Koniec gry", { timeout: 10000 });
-    await expect(page.getByText("Remis — 70:70")).toBeVisible({ timeout: 10000 });
 
+    // gameEndSummary() (ui.js) renderuje się dopiero PO locks.gameEnded —
+    // czyli PO tym kliknięciu, nie przed nim (poprzednia kolejność w tym
+    // teście była odwrócona względem UI).
     await page.getByRole("button", { name: "Zakończ grę" }).click();
+    await expect(page.getByText("Remis — 70:70")).toBeVisible({ timeout: 10000 });
     const finishBtn = page.getByRole("button", { name: "Wróć do moich gier" });
     await expect(finishBtn).toBeVisible({ timeout: 10000 });
     await finishBtn.click();
@@ -560,8 +563,15 @@ test("control2: próg w rundzie -> finał, wczesne zakończenie po 4/5 pytaniach
       // żywy podgląd (aria-hidden, więc dostępna nazwa nie zawiera wartości).
       await armAndConfirm(page.getByRole("button", { name: "Pokaż odpowiedź" }));
       await armAndConfirm(page.getByRole("button", { name: "Pokaż punkty" }));
-      await expect(page.getByRole("button", { name: "Pokaż punkty" })).toContainText("50", { timeout: 10000 });
-      if (i < 3) await page.getByRole("button", { name: "Dalej" }).click();
+      // Na i===3 suma trafia finalTarget (200) i REVEAL_POINTS (engine.js)
+      // SAMO, synchronicznie w tej samej akcji, przeskakuje do f_end —
+      // kafel "Pokaż punkty" znika z DOM natychmiast, zanim ten check by
+      // zdążył go zobaczyć. Suma i tak jest zweryfikowana niżej ("Suma
+      // finału: 200").
+      if (i < 3) {
+        await expect(page.getByRole("button", { name: "Pokaż punkty" })).toContainText("50", { timeout: 10000 });
+        await page.getByRole("button", { name: "Dalej" }).click();
+      }
     }
 
     // Po 4. pytaniu suma = 200 = finalTarget -> natychmiastowy skok do
@@ -869,10 +879,14 @@ test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśni�
       await page.getByRole("button", { name: "Odp. finałowa (15)" }).click();
       await armAndConfirm(page.getByRole("button", { name: "Pokaż odpowiedź" }));
       await armAndConfirm(page.getByRole("button", { name: "Pokaż punkty" }));
+      // Suma widoczna na ekranie mapowania (ui.js's finalStatusBar) —
+      // sprawdzona TU, na ostatnim pytaniu, PRZED "Dalej", bo ten klik
+      // (NEXT_QUESTION, nextIdx>5) już przenosi na f_p2_start, gdzie tego
+      // statusbara nie ma.
+      if (i === 4) await expect(page.getByText("Suma finału: 75")).toBeVisible({ timeout: 10000 });
       await page.getByRole("button", { name: "Dalej" }).click();
     }
     // Suma 75 < finalTarget (200) — BEZ wczesnego wyjścia, prosto do F6.
-    await expect(page.getByText("Suma finału: 75")).toBeVisible({ timeout: 10000 });
 
     // ===== F6: przejście do gracza 2 — TU jest sedno testu =====
     await expect(page.locator(".c2-stepper")).toContainText("Finał — start rundy 2", { timeout: 10000 });
