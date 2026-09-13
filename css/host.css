@@ -37,11 +37,26 @@
        zostaje zawsze tym samym brandowym gradientem (--cover-grad-a/b). */
     --h-paper-bg: #fffdf5;
     --h-ink: #111;
-    --h-font: "Caveat-Variable", cursive
+    --h-font: "Caveat-Variable", cursive;
+    --h-letter-spacing: normal
 }
 
 @font-face {
     font-family:"Caveat-Variable";src:url(Caveat-Variable.woff2)format("woff2");font-weight:100 900;font-style:normal;font-display:swap
+}
+
+/* Czcionka motywu "modern" (host2/js/themes/modern.js) — samohostowana
+   (SIL OFL, jak Caveat-Variable powyżej), dwa pliki bo Google Fonts
+   dzieli glify na podzbiory: "latin" = ASCII/łacina-1 (cyfry, nawiasy,
+   też "ó"), "latin-ext" = reszta polskich znaków diakrytycznych
+   (ą ć ę ł ń ś ź ż itd.) — bez obu przeglądarka po cichu dobrałaby
+   fallback tylko dla brakującego zakresu. */
+@font-face {
+    font-family:"JetBrainsMono-Variable";src:url(JetBrainsMono-Variable-latin.woff2)format("woff2");font-weight:100 800;font-style:normal;font-display:swap;unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD
+}
+
+@font-face {
+    font-family:"JetBrainsMono-Variable";src:url(JetBrainsMono-Variable-latinext.woff2)format("woff2");font-weight:100 800;font-style:normal;font-display:swap;unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF
 }
 
 * {
@@ -213,7 +228,8 @@ html.landscape .pane2::before {
     line-height: var(--line);
     padding-top: calc(var(--line)*var(--baseline-shift));
     transform: translateY(var(--ios-text-shift));
-    color: var(--h-ink)
+    color: var(--h-ink);
+    letter-spacing: var(--h-letter-spacing)
 }
 
 /* Kolory statusu — TE SAME w każdym motywie (host2/js/render.js's
