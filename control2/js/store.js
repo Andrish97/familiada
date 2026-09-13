@@ -105,6 +105,40 @@ export function createStore(gameId) {
       detail: buildDetail(state),
     };
 
+    // Dźwięk (soundReactor.js) i "dzwonek" budzący Wyświetlacz siedziały
+    // dotąd za TYM SAMYM emit() — dopiero po pełnym network round-tripie
+    // niżej. Dzwonek zostaje tam (Wyświetlacz i tak musi doczytać
+    // POTWIERDZONY wiersz przez RPC, wcześniejszy dzwonek byłby pusty),
+    // ale dźwięk grał zauważalnie później niż plansza na Wyświetlaczu —
+    // zgłoszone, zaakceptowane świadomie jako kompromis: rozgłoś OD RAZU
+    // (emit() niżej, PRZED await) optymistyczny wiersz zbudowany z już
+    // zmutowanego lokalnie stanu (reducer w engine.js's dispatchNow()
+    // ustawia store.state.step/phase/... PRZED wywołaniem commit() —
+    // "optymistyczny" znaczy tu wyłącznie "jeszcze niepotwierdzony przez
+    // serwer", nie "zgadywany"). sound_cue_seq liczony 1:1 wg tej samej
+    // reguły co SQL (game_state_write, migracja 260: rośnie TYLKO gdy nowy
+    // klucz różni się od poprzedniego) — więc druga, prawdziwa notyfikacja
+    // po potwierdzeniu zwykle nie znajdzie już nic nowego (ten sam seq) i
+    // nie zagra drugi raz. W rzadkim przegranym wyścigu z Buzzerem
+    // (StaleWriteError niżej) ten wiersz zostanie skorygowany przez
+    // hydrate() — zaakceptowane ryzyko, nie błąd.
+    const newKey = payload.soundCueKey;
+    const optimisticKey = newKey ?? state.soundCueKey;
+    const optimisticSeq = (newKey != null && newKey !== state.soundCueKey) ? (state.soundCueSeq || 0) + 1 : (state.soundCueSeq || 0);
+    state.__row = {
+      ...state.__row,
+      top_card: payload.topCard,
+      step: payload.step,
+      phase: payload.phase,
+      control_team: payload.controlTeam,
+      sound_cue_key: optimisticKey,
+      sound_cue_seq: optimisticSeq,
+      detail: payload.detail,
+    };
+    state.soundCueKey = optimisticKey;
+    state.soundCueSeq = optimisticSeq;
+    emit();
+
     async function attempt() {
       const row = await persist.write({ ...payload, expectedRev: state.rev });
       applyRow(row);
