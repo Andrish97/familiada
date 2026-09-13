@@ -256,6 +256,14 @@
     .c2-btn:active:not(:disabled) { transform:translateY(1px); }
     .c2-btn:disabled { opacity:.4; cursor:default; }
     .c2-btn.primary { border-color:rgba(255,234,166,.4); background:rgba(255,234,166,.12); color:var(--gold); }
+    /* Blokada dużych przejść planszy (Rozpocznij rundę/Zakończ rundę/
+       Rozpocznij finał/Zakończ grę — navButton()'s disabled) — samo
+       wyszarzenie wyglądało jak zawieszony, martwy ekran przez cały czas
+       trwania blokady (network round-trip zapisu + reszta animacji/
+       dźwięku), zgłoszone. Pulsowanie komunikuje "trwa coś", nie "nic się
+       nie dzieje" — cursor:wait dokłada to samo na poziomie kursora myszy. */
+    @keyframes c2-btn-busy-pulse { 0%, 100% { opacity:.55 } 50% { opacity:1 } }
+    .c2-btn-busy:disabled { animation:c2-btn-busy-pulse 1.1s ease-in-out infinite; cursor:wait; }
 
     /* ---- Siatka 3x5 (jednostka = 1/3 wiersza, "1,5" = pół wiersza) —
        współdzielona przez Rundy-odsłanianie i Finał-odsłanianie. Wewnętrznie
