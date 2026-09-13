@@ -44,11 +44,9 @@ function answerLine(ord, text, pts, revealed) {
 export function createHostRenderer() {
   const paperText1 = $("paperText1");
   const paperText2 = $("paperText2");
-  const cover1 = $("cover1");
   const cover2 = $("cover2");
 
-  let authoritativeCovered = false; // pasmo 2 (odpowiedzi) — z game_state.detail.host.covered
-  let authoritativeDuelCover = false; // pasmo 1 (pytanie) — WYŁĄCZNIE lokalna decyzja renderowania z row.phase, nic w bazie
+  let authoritativeCovered = false;
   let peeked = false;
   let timerHandle = null;
 
@@ -56,23 +54,10 @@ export function createHostRenderer() {
     if (timerHandle) { clearInterval(timerHandle); timerHandle = null; }
   }
 
-  // Pytanie jest tajemnicą TYLKO w kroku przycisku (DUEL) — zanim je się
-  // faktycznie ogłosi kontestantom, łącznie z próbą pierwszej (najwyżej
-  // punktowanej) odpowiedzi, bo to wciąż faza DUEL. Od PLAY (ktoś już
-  // wygrał pojedynek i pyta się dalej) treść nie jest już tajemnicą —
-  // widzowie i tak już ją usłyszeli.
-  function duelCoverActive(row) {
-    return row.top_card === "rounds" && row.phase === "DUEL";
-  }
-
   function applyCover() {
-    const covered2 = authoritativeCovered && !peeked;
-    cover2?.classList.toggle("coverOn", covered2);
-    cover2?.classList.toggle("coverOff", !covered2);
-
-    const covered1 = authoritativeDuelCover && !peeked;
-    cover1?.classList.toggle("coverOn", covered1);
-    cover1?.classList.toggle("coverOff", !covered1);
+    const covered = authoritativeCovered && !peeked;
+    cover2?.classList.toggle("coverOn", covered);
+    cover2?.classList.toggle("coverOff", !covered);
   }
 
   function setPane1(text) { if (paperText1) paperText1.textContent = text; }
@@ -98,12 +83,24 @@ export function createHostRenderer() {
 
   function renderRounds(row) {
     const r = row.detail.rounds;
-    setPane1(`${roundTitle(row)}\n\n${r.question?.text || ""}`);
-    const lines = (r.answers || [])
+    const title = roundTitle(row);
+    const answerLines = (r.answers || [])
       .slice()
       .sort((a, b) => a.ord - b.ord)
       .map((a) => answerLine(a.ord, a.text, a.fixed_points, (r.revealed || []).includes(a.ord)));
-    setPane2(lines.join("\n"));
+
+    // Pytanie jest tajemnicą TYLKO w kroku przycisku (DUEL, łącznie z próbą
+    // pierwszej/najwyżej punktowanej odpowiedzi — to wciąż ta sama faza) —
+    // zamiast osobnej zasłony dla pasma 1, po prostu przenosimy pytanie na
+    // pasmo 2, które i tak jest już zasłonięte (cover2, patrz applyCover()).
+    // Od PLAY wraca na swoje zwykłe miejsce — nie jest już tajemnicą.
+    if (row.phase === "DUEL") {
+      setPane1(title);
+      setPane2([r.question?.text || "", "", ...answerLines].join("\n"));
+      return;
+    }
+    setPane1(`${title}\n\n${r.question?.text || ""}`);
+    setPane2(answerLines.join("\n"));
   }
 
   // Dokładnie ten sam zestaw informacji co dzisiejsze gameFinal.js's
@@ -188,7 +185,6 @@ export function createHostRenderer() {
 
   function render(row) {
     authoritativeCovered = !!row.detail?.host?.covered;
-    authoritativeDuelCover = duelCoverActive(row);
     peeked = false; // nowy stan resetuje podgląd
     stopTimerTick(); // nowy wiersz zastępuje ewentualny poprzedni tick jednorazowo w renderFinalEntry
     if (row.top_card === "rounds") renderRounds(row);
@@ -202,10 +198,8 @@ export function createHostRenderer() {
     applyCover();
   }
 
-  // Jeden wspólny gest peek na oba pasma — cokolwiek jest akurat zasłonięte
-  // (pytanie w DUEL, odpowiedzi zawsze), operator odsłania jednym przesunięciem.
-  function isCovered() { return (authoritativeCovered || authoritativeDuelCover) && !peeked; }
-  function isCoverableAtAll() { return authoritativeCovered || authoritativeDuelCover; }
+  function isCovered() { return authoritativeCovered && !peeked; }
+  function isCoverableAtAll() { return authoritativeCovered; }
 
   return { render, setPeek, isCovered, isCoverableAtAll };
 }
