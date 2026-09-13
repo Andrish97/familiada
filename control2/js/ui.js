@@ -16,18 +16,18 @@
 // setStealMsg/setRevealMsg/ROUNDS_MSG/FINAL_MSG, ale jako czysta funkcja
 // bieżącego game_state (shared/hints.js), nie ulotny stan ustawiany przy
 // każdym zdarzeniu — "wszystko idzie przez tabelę stanów".
-import { getRoundsHint, getFinalHint, getFinalEntryShortcuts, teamName } from "../../shared/hints.js?v=v2026-09-13T21222";
-import { t, getUiLang } from "../../translation/translation.js?v=v2026-09-13T21222";
-import { getSfxDuration, getSfxCategories, getSfxVariant, isSfxPlaying, playSfx, stopSfx, onSfxEnd, setSfxVolume } from "../../js/core/sfx.js?v=v2026-09-13T21222";
-import { ANSWER_ANIM } from "../../shared/displayAnim.js?v=v2026-09-13T21222";
+import { getRoundsHint, getFinalHint, getFinalEntryShortcuts, teamName } from "../../shared/hints.js?v=v2026-09-13T21240";
+import { t, getUiLang } from "../../translation/translation.js?v=v2026-09-13T21240";
+import { getSfxDuration, getSfxCategories, getSfxVariant, isSfxPlaying, playSfx, stopSfx, onSfxEnd, setSfxVolume } from "../../js/core/sfx.js?v=v2026-09-13T21240";
+import { ANSWER_ANIM } from "../../shared/displayAnim.js?v=v2026-09-13T21240";
 import {
   startRoundGateMs,
   endRoundGateMs,
   startFinalGateMs,
   gameEndGateMs,
   finishFinalGateMs,
-} from "./transitionGate.js?v=v2026-09-13T21222";
-import { buildDisplayPreviewRow } from "../../shared/previewRow.js?v=v2026-09-13T21222";
+} from "./transitionGate.js?v=v2026-09-13T21240";
+import { buildDisplayPreviewRow } from "../../shared/previewRow.js?v=v2026-09-13T21240";
 
 const $ = (id) => document.getElementById(id);
 const on = (el, ev, fn) => el && el.addEventListener(ev, fn);
