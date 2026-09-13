@@ -7,7 +7,7 @@
 // host2.html leży w tym samym katalogu głównym co display2.html, więc ta
 // sama względna ścieżka działa tu bez zmian. Host czyta stamtąd wyłącznie
 // "key"/"default" — pole "module" (fabryka SVG planszy) go nie dotyczy.
-const THEMES_JSON_URL = "./display/js/themes.json";
+const THEMES_JSON_URL = "./display/js/themes.json?v=v2026-09-13T18571";
 const FALLBACK_KEY = "classic";
 
 async function loadRegistryDefault() {
