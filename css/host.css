@@ -30,7 +30,14 @@
     --top-pad-2: calc(var(--line) * 1.0);
     --bottom-pad-2: calc(var(--line) * 2.2);
     --cover-grad-a: #c4002f;
-    --cover-grad-b: #2a62ff
+    --cover-grad-b: #2a62ff;
+    /* Motyw wnętrza (host2/js/hostThemeManager.js) — domyślnie (bez motywu
+       zastosowanego jeszcze na <html>) to dzisiejszy, jedyny dotąd wygląd:
+       papier w linie + atrament. Zasłona (cover2) NIE jest częścią motywu —
+       zostaje zawsze tym samym brandowym gradientem (--cover-grad-a/b). */
+    --h-paper-bg: #fffdf5;
+    --h-ink: #111;
+    --h-font: "Caveat-Variable", cursive
 }
 
 @font-face {
@@ -47,7 +54,7 @@ body,html {
     height: 100dvh;
     width: 100dvw;
     overflow: hidden;
-    background: #fffdf5;
+    background: var(--h-paper-bg);
     /* iOS Safari: prevent white bar at bottom */
     position: fixed;
     top: 0;
@@ -96,10 +103,21 @@ body,html {
     right: 0;
     bottom: 0;
     z-index: 10;
-    background-color: #fffdf5;
+    background-color: var(--h-paper-bg);
     background-image: linear-gradient(to bottom,#e7e2d3 1px,transparent 1px);
     background-size: 100% var(--line);
     background-position: 0 0
+}
+
+/* Motyw "modern" (host2/js/themes/modern.js): tablet — bez linijowania
+   papieru i bez czerwonego marginesu (to elementy "kartki", nie tabletu);
+   kolor tła/atramentu/czcionka idą przez --h-paper-bg/--h-ink/--h-font. */
+html[data-host-theme="modern"] .paper {
+    background-image: none
+}
+
+html[data-host-theme="modern"] .redMargin {
+    display: none
 }
 
 .redMargin {
@@ -184,7 +202,7 @@ html.landscape .pane2::before {
 }
 
 .p2Hint,.text {
-    font-family: "Caveat-Variable",cursive
+    font-family: var(--h-font)
 }
 
 .text {
@@ -195,8 +213,17 @@ html.landscape .pane2::before {
     line-height: var(--line);
     padding-top: calc(var(--line)*var(--baseline-shift));
     transform: translateY(var(--ios-text-shift));
-    color: #111
+    color: var(--h-ink)
 }
+
+/* Kolory statusu — TE SAME w każdym motywie (host2/js/render.js's
+   answerLine()/renderFinalMapping(): odsłonięta/trafiona odpowiedź,
+   brak/status wpisu w finale) — tylko neutralny atrament (--h-ink) idzie
+   za motywem, znaczenie kolorów zostaje stałe niezależnie od tła. */
+.text .hostGreen { color: #2ecc71 }
+.text .hostRed { color: #ff3333 }
+.text .hostYellow { color: gold }
+.text .hostStrike { text-decoration: line-through }
 
 .text span {
     font: inherit;

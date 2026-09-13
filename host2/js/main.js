@@ -13,6 +13,7 @@ import { sb } from "../../js/core/supabase.js?v=v2026-09-09T17244";
 import { createSubscription } from "../../js/core/game-state-subscribe.js?v=v2026-09-09T17244";
 import { createHostRenderer } from "./render.js?v=v2026-09-09T17244";
 import { createCoverLogoRenderer } from "./coverLogo.js?v=v2026-09-10T17564";
+import { createHostThemeApplier } from "./hostThemeManager.js?v=v2026-09-09T17244";
 
 // videoWakeLockFallback: Host jest zwykle na osobnym tablecie/telefonie
 // prowadzącego (patrz plan) — dokładnie to urządzenie, które przeglądarka
@@ -115,6 +116,7 @@ async function main() {
   startPresenceHeartbeat({ gameId, key });
   const renderer = createHostRenderer();
   const coverLogo = createCoverLogoRenderer({ gameId, key });
+  const hostTheme = await createHostThemeApplier();
   setupPeekSwipe(renderer);
 
   let appliedLang = null;
@@ -133,6 +135,7 @@ async function main() {
         appliedLang = lang;
         await setUiLang(lang, { persist: true, updateUrl: true, apply: true }).catch(() => {});
       }
+      await hostTheme.apply(row);
       renderer.render(row);
       coverLogo.apply(row);
     },
