@@ -91,6 +91,14 @@ export function createUI({ root, emit }) {
     // być jeszcze wczytane), blokujemy co najmniej na czas animacji —
     // nigdy krócej, więc nie ma okna bez blokady.
     applyLock(ANSWER_ANIM.ms);
+    // Blokada sama w sobie NIE maluje niczego — poprzedni render (ten na
+    // ekranie w momencie kliknięcia) miał jeszcze disabled:false, bo
+    // dopiero co odblokowany kafel dał się kliknąć. Bez tego wymuszonego,
+    // natychmiastowego przerysowania interfejs zostawał klikalny aż do
+    // NASTĘPNEGO rerenderu wywołanego czymś innym (setTimeout po upływie
+    // blokady — czyli PO fakcie — albo przypadkowa zmiana stanu z sieci) —
+    // realne okno na podwójne kliknięcie, zgłoszone.
+    emit("ui.rerender");
     if (soundKey) {
       getSfxDuration(soundKey).then((durationS) => {
         if (durationS > 0) applyLock(Math.round(durationS * 1000));
@@ -122,6 +130,11 @@ export function createUI({ root, emit }) {
     // liczą właściwy dolny próg (np. Math.max(...,2)*1000), więc to tylko
     // zabezpieczenie na czas oczekiwania na odpowiedź getSfxDuration().
     applyLock(1500);
+    // Ten sam powód co w armRevealCooldown() wyżej — bez wymuszonego
+    // natychmiastowego przerysowania przycisk klikany właśnie teraz
+    // (np. "Rozpocznij rundę") zostaje klikalny aż do przypadkowego
+    // kolejnego rerenderu, nie od razu po kliknięciu (zgłoszone).
+    emit("ui.rerender");
     gateMsPromise.then((ms) => { if (ms > 0) applyLock(ms); });
   }
   function boardBusy() {
@@ -429,8 +442,8 @@ export function createUI({ root, emit }) {
     return buildDisplayPreviewRow({ teams: state.teams, display: state.display });
   }
 
+  let setupFinishFingerprint = null;
   function renderSetupFinish(state, ctx = {}) {
-    clear();
     const s = state.settings;
     const d = state.display;
     const hasFinal = s.hasFinal === true;
@@ -438,6 +451,33 @@ export function createUI({ root, emit }) {
     const previewSrc = ctx.urls?.displayUrl
       ? `${ctx.urls.displayUrl}${ctx.urls.displayUrl.includes("?") ? "&" : "?"}preview=1`
       : null;
+
+    // Podgląd Wyświetlacza żyje w <iframe> — zweryfikowane (lokalny test z
+    // Playwrightem): PRZENIESIENIE/PRZEBUDOWA <iframe> w DOM zawsze
+    // przeładowuje jego zawartość od zera, nawet bez zmiany src, nawet
+    // czystym appendChild bez wcześniejszego removeChild. renderSetupFinish()
+    // leci na KAŻDĄ zmianę store'a (nie tylko realną zmianę TEGO ekranu —
+    // np. presence ping z innych urządzeń co ~3s), a clear()+odbudowa niżej
+    // za każdym razem tworzyła NOWY <iframe> — podgląd nigdy nie zdążył
+    // domalować się do końca zanim leciał kolejny reload (zgłoszone: "mruga,
+    // a tak głównie jest czarny"). Odcisk palca z tego, co faktycznie widać
+    // na tym ekranie — gdy się nie zmienił i ekran już jest zamontowany
+    // (iframe żyje), w ogóle nie przebudowujemy; przebudowa (i tym samym
+    // reload podglądu) dzieje się tylko przy REALNEJ zmianie (np. operator
+    // przelosował pytania albo zmienił ustawienia w innej karcie).
+    const fingerprint = JSON.stringify({
+      previewSrc,
+      teamA: state.teams.teamA, teamB: state.teams.teamB,
+      colors: d.colors, theme: d.theme, logoId: d.logoId, hasFinal,
+      roundsMode: s.roundsQuestionsMode, roundsPicked: s.roundsPicked, roundsPool: state.rounds._questionPool,
+      finalMode: hasFinal ? s.finalQuestionsMode : null, finalPicked: state.final.picked,
+      finalPreview: state.final.pickedPreview, finalConfirmed: state.final.confirmed,
+      sound: state.settings.sound,
+    });
+    if (fingerprint === setupFinishFingerprint && root.querySelector("#c2DisplayPreview")) return;
+    setupFinishFingerprint = fingerprint;
+
+    clear();
     const previewFrame = previewSrc ? h("iframe", { src: previewSrc, title: t("control.displayPreviewTitle") }) : null;
     if (previewFrame) {
       window.addEventListener("message", function onReady(e) {
@@ -1445,22 +1485,36 @@ export function createUI({ root, emit }) {
   }
 
   function render(state, ctx = {}) {
+    // Każdy renderXxx() woła clear() (root.innerHTML="") i buduje CAŁE #app
+    // od zera — .c2-scroll-area dostaje więc świeży element przy KAŻDYM
+    // renderze, nie tylko przy realnej zmianie ekranu (np. co ~3s presence
+    // ping z innego urządzenia, albo teraz też armRevealCooldown/
+    // armBoardTransition's wymuszone przerysowanie) — nowy element zaczyna
+    // od scrollTop:0, więc operator scrollujący listę (Urządzenia/
+    // Podsumowanie) był bez przerwy odrzucany na górę (zgłoszone). Zapisz
+    // pozycję przed przebudową, przywróć po — działa dla wszystkich ekranów
+    // jednym miejscem, bez dotykania każdego renderXxx() osobno.
+    const scrollBefore = root.querySelector(".c2-scroll-area")?.scrollTop ?? 0;
     updateTopbarDots(state, ctx.presenceFlags);
     const s = state.step;
-    if (s === "devices_display") return renderDevicesStep(state, ctx);
-    if (s === "setup_finish") return renderSetupFinish(state, ctx);
-    if (s === "r_intro" || s === "r_roundStart") return renderRounds(state);
-    if (s === "r_duel" || s === "r_play") return renderRounds(state);
-    if (s === "r_gameEnd") return renderGameEnd(state);
-    if (s === "f_start") return renderFinalStart(state);
-    if (s === "f_p1_entry") return renderFinalEntry(state, 1);
-    if (s.startsWith("f_p1_map_q")) return renderFinalMapping(state, 1, Number(s.slice(-1)) - 1);
-    if (s === "f_p2_start") return renderFinalP2Start(state);
-    if (s === "f_p2_entry") return renderFinalEntry(state, 2);
-    if (s.startsWith("f_p2_map_q")) return renderFinalMapping(state, 2, Number(s.slice(-1)) - 1);
-    if (s === "f_end") return renderFinalEnd(state);
-    clear();
-    root.appendChild(h("div", { class: "c2-card-inner" }, [h("p", { text: t("control.unhandledStepDebug", { step: s }) })]));
+    if (s === "devices_display") renderDevicesStep(state, ctx);
+    else if (s === "setup_finish") renderSetupFinish(state, ctx);
+    else if (s === "r_intro" || s === "r_roundStart") renderRounds(state);
+    else if (s === "r_duel" || s === "r_play") renderRounds(state);
+    else if (s === "r_gameEnd") renderGameEnd(state);
+    else if (s === "f_start") renderFinalStart(state);
+    else if (s === "f_p1_entry") renderFinalEntry(state, 1);
+    else if (s.startsWith("f_p1_map_q")) renderFinalMapping(state, 1, Number(s.slice(-1)) - 1);
+    else if (s === "f_p2_start") renderFinalP2Start(state);
+    else if (s === "f_p2_entry") renderFinalEntry(state, 2);
+    else if (s.startsWith("f_p2_map_q")) renderFinalMapping(state, 2, Number(s.slice(-1)) - 1);
+    else if (s === "f_end") renderFinalEnd(state);
+    else {
+      clear();
+      root.appendChild(h("div", { class: "c2-card-inner" }, [h("p", { text: t("control.unhandledStepDebug", { step: s }) })]));
+    }
+    const scrollArea = root.querySelector(".c2-scroll-area");
+    if (scrollArea) scrollArea.scrollTop = scrollBefore;
   }
 
   return { render };
