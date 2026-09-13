@@ -2055,7 +2055,7 @@ const uk = {
       </div>
 
       <p class="m-p">
-        Коли все виглядає правильно — натисни <span class="m-strong">Готово — перейти до раундів</span>, щоб розпочати гру.
+        Коли все виглядає правильно — натисни <span class="m-strong">Готово — почати гру</span>.
       </p>
 
       <h3 class="m-h2">3) Раунди — покрокове ведення гри</h3>
@@ -5013,7 +5013,7 @@ const uk = {
     roundsOrderFixed: "Фіксований порядок ({count})",
     finalPickedCount: "Вибрано вручну ({count}/5)",
     reshuffleQuestions: "Перемішати ще раз",
-    setupDoneBtn: "Готово — перейти до раундів",
+    setupDoneBtn: "Готово — почати гру",
     summaryStepperTitle: "Підсумок налаштувань",
     finalPickIncompleteWarning: "Фінал встановлено на \"вибір вручну\", але в налаштуваннях гри не вибрано 5 питань.",
     keyboardShortcutsTitle: "Клавіатурні скорочення",

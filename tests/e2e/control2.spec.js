@@ -356,7 +356,7 @@ test("control2: pełna runda przez 4 urządzenia + wznowienie Control po przeła
     await page.getByRole("button", { name: "Dalej" }).click();
     await expect(page.locator(".stepTitle")).toHaveText("Podsumowanie", { timeout: 10000 });
     await expect(page.getByText("Alfa vs Beta")).toBeVisible();
-    await page.getByRole("button", { name: "Gotowe — przejdź do rund" }).click();
+    await page.getByRole("button", { name: "Gotowe — przejdź do rozgrywki" }).click();
 
     await page.getByRole("button", { name: "Rozpocznij grę" }).click();
     await expect(page.locator(".c2-stepper")).toContainText("Runda 1", { timeout: 10000 });
@@ -426,7 +426,7 @@ test("control2: reset pojedynku, pass, kradzież wygrana/przegrana, odkrywanie r
 
     await page.getByRole("button", { name: "Dalej" }).click();
     await expect(page.locator(".stepTitle")).toHaveText("Podsumowanie", { timeout: 10000 });
-    await page.getByRole("button", { name: "Gotowe — przejdź do rund" }).click();
+    await page.getByRole("button", { name: "Gotowe — przejdź do rozgrywki" }).click();
     await page.getByRole("button", { name: "Rozpocznij grę" }).click();
 
     // ===== RUNDA 1 =====
@@ -523,7 +523,7 @@ test("control2: próg w rundzie -> finał, wczesne zakończenie po 4/5 pytaniach
     await expect(page.locator(".stepTitle")).toHaveText("Urządzenia", { timeout: 15000 });
     await page.getByRole("button", { name: "Dalej" }).click();
     await expect(page.locator(".stepTitle")).toHaveText("Podsumowanie", { timeout: 10000 });
-    await page.getByRole("button", { name: "Gotowe — przejdź do rund" }).click();
+    await page.getByRole("button", { name: "Gotowe — przejdź do rozgrywki" }).click();
     await page.getByRole("button", { name: "Rozpocznij grę" }).click();
     await page.getByRole("button", { name: "Rozpocznij rundę" }).click();
 
@@ -640,7 +640,7 @@ test("control2: physicalBuzzer + noHostTablet — urządzenia pominięte, ręczn
     // samym kroku Urządzeń.
     await expect(page.locator("#dotHostRow")).toHaveClass(/\bhidden\b/);
     await expect(page.locator("#dotBuzzerRow")).toHaveClass(/\bhidden\b/);
-    await page.getByRole("button", { name: "Gotowe — przejdź do rund" }).click();
+    await page.getByRole("button", { name: "Gotowe — przejdź do rozgrywki" }).click();
     await page.getByRole("button", { name: "Rozpocznij grę" }).click();
     await page.getByRole("button", { name: "Rozpocznij rundę" }).click();
     await expect(page.locator("#dotHostRow")).toHaveClass(/\bhidden\b/);
@@ -678,7 +678,7 @@ test("control2: \"Zacznij od nowa\" w trakcie gry wraca do D0", async ({ page, b
     await expect(page.locator(".stepTitle")).toHaveText("Urządzenia", { timeout: 15000 });
     await expect(page.locator("#dotDisplay")).toHaveClass(/\bok\b/, { timeout: 15000 });
     await page.getByRole("button", { name: "Dalej" }).click();
-    await page.getByRole("button", { name: "Gotowe — przejdź do rund" }).click();
+    await page.getByRole("button", { name: "Gotowe — przejdź do rozgrywki" }).click();
     await expect(page.locator(".c2-stepper")).toContainText("Rozpoczęcie gry", { timeout: 10000 });
 
     await page.locator("#btnStartOver").click();
@@ -834,7 +834,7 @@ test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśni�
     await expect(page.locator(".stepTitle")).toHaveText("Urządzenia", { timeout: 15000 });
     await page.getByRole("button", { name: "Dalej" }).click();
     await expect(page.locator(".stepTitle")).toHaveText("Podsumowanie", { timeout: 10000 });
-    await page.getByRole("button", { name: "Gotowe — przejdź do rund" }).click();
+    await page.getByRole("button", { name: "Gotowe — przejdź do rozgrywki" }).click();
     await page.getByRole("button", { name: "Rozpocznij grę" }).click();
     await page.getByRole("button", { name: "Rozpocznij rundę" }).click();
 
@@ -980,7 +980,7 @@ test("control2: mnożnik rundy — runda 4. z domyślnym ×2 faktycznie przemna�
     await expect(page.locator("#dotDisplay")).toHaveClass(/\bok\b/, { timeout: 15000 });
     await expect(page.locator("#dotHost")).toHaveClass(/\bok\b/, { timeout: 15000 });
     await page.getByRole("button", { name: "Dalej" }).click();
-    await page.getByRole("button", { name: "Gotowe — przejdź do rund" }).click();
+    await page.getByRole("button", { name: "Gotowe — przejdź do rozgrywki" }).click();
     await page.getByRole("button", { name: "Rozpocznij grę" }).click();
 
     // Rundy 1-3: mnożnik x1 (domyślne roundMultipliers [1,1,1,2,3]) — A wygrywa za każdym razem, bank 40.
@@ -1035,7 +1035,7 @@ test("control2: wyścig — oba przyciski Buzzera naciśnięte w tej samej chwil
     await expect(page.locator("#dotDisplay")).toHaveClass(/\bok\b/, { timeout: 15000 });
     await expect(page.locator("#dotHost")).toHaveClass(/\bok\b/, { timeout: 15000 });
     await page.getByRole("button", { name: "Dalej" }).click();
-    await page.getByRole("button", { name: "Gotowe — przejdź do rund" }).click();
+    await page.getByRole("button", { name: "Gotowe — przejdź do rozgrywki" }).click();
     await page.getByRole("button", { name: "Rozpocznij grę" }).click();
     await page.getByRole("button", { name: "Rozpocznij rundę" }).click();
 
@@ -1091,7 +1091,7 @@ test("control2: wyciszenie dźwięku — po Mute żaden klucz SFX się nie odtwa
     await expect(page.locator("#dotDisplay")).toHaveClass(/\bok\b/, { timeout: 15000 });
     await expect(page.locator("#dotHost")).toHaveClass(/\bok\b/, { timeout: 15000 });
     await page.getByRole("button", { name: "Dalej" }).click();
-    await page.getByRole("button", { name: "Gotowe — przejdź do rund" }).click();
+    await page.getByRole("button", { name: "Gotowe — przejdź do rozgrywki" }).click();
     await page.getByRole("button", { name: "Rozpocznij grę" }).click();
 
     // Referencja: BEZ wyciszenia start rundy gra normalnie. Czekamy na CAŁY
@@ -1234,7 +1234,7 @@ test("control2: dźwięk ze źródła Wyświetlacz — odblokowanie, głośnoś�
       { timeout: 10000, message: "głośność 'reveal' zmieniona w Podsumowaniu (game_state) powinna dotrzeć do Display natychmiast" }
     ).toBe("0.4");
 
-    await page.getByRole("button", { name: "Gotowe — przejdź do rund" }).click();
+    await page.getByRole("button", { name: "Gotowe — przejdź do rozgrywki" }).click();
     await page.getByRole("button", { name: "Rozpocznij grę" }).click();
 
     await clearSfxLog(page);
@@ -1301,7 +1301,7 @@ test("control2: zmiana języka w Control propaguje się do Hosta — tytuł fazy
     await expect(page.locator("#dotHost")).toHaveClass(/\bok\b/, { timeout: 15000 });
     await expect(page.locator("#dotBuzzer")).toHaveClass(/\bok\b/, { timeout: 15000 });
     await page.getByRole("button", { name: "Dalej" }).click();
-    await page.getByRole("button", { name: "Gotowe — przejdź do rund" }).click();
+    await page.getByRole("button", { name: "Gotowe — przejdź do rozgrywki" }).click();
     await page.getByRole("button", { name: "Rozpocznij grę" }).click();
     await page.getByRole("button", { name: "Rozpocznij rundę" }).click();
 
