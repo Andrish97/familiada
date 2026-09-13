@@ -49,12 +49,39 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError }) 
     }
   }
 
-  async function start() {
-    await fetchGuarded();
+  function subscribeDoorbell() {
     rt(doorbellTopic(gameId)).onBroadcast("rev", (msg) => {
       const rev = msg?.payload?.rev;
       if (typeof rev === "number" && rev > lastRev) fetchGuarded();
     });
+  }
+
+  async function start() {
+    await fetchGuarded();
+    subscribeDoorbell();
+
+    // Karta w tle (np. Wyświetlacz na monitorze/TV, nie w foreground; albo
+    // ekran urządzenia zgaszony) — przeglądarka potrafi po cichu ubić/zamrozić
+    // ten WebSocket bez żadnego widocznego błędu po stronie klienta (zwłaszcza
+    // po dłuższej nieaktywności). Nic wtedy nie budzi kanału z powrotem — nie
+    // ma żadnego heartbeatu ani reconnecta w tym pliku — więc dzwonek milknie
+    // NA ZAWSZE, dopóki ktoś ręcznie nie przeładuje strony (zgłoszone: "Display
+    // nie pokazuje rund, odświeża dopiero po przeładowaniu, jeśli był w tle").
+    // Gdy karta wraca na pierwszy plan / urządzenie znów ma sieć: dociągnij
+    // stan OD RAZU (na wypadek zgubionego dzwonka w trakcie przerwy) i
+    // bezwarunkowo zbuduj kanał na nowo — nie polegamy na status'ie kanału
+    // (po zamrożeniu JS-u status wciąż pokazuje ostatnią znaną, "zdrową"
+    // wartość, bo nic nie miało szansy jej zaktualizować w tle).
+    const resync = () => {
+      fetchGuarded();
+      rt(doorbellTopic(gameId)).reset();
+      subscribeDoorbell();
+    };
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible") resync();
+    });
+    window.addEventListener("pageshow", resync);
+    window.addEventListener("online", resync);
   }
 
   // Dla Buzzera: game_state_buzzer_press zwraca już świeży wiersz w tej
