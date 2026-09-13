@@ -5020,7 +5020,6 @@ const en = {
     controlTitle: "Control panel",
     copyOk: "Copied.",
     copyFail: "Can't copy.",
-    deviceSkippedLabel: "{label} skipped (uncheck to connect)",
     teamsVsFormat: "{teamA} vs {teamB}",
     summaryLogoCustom: "custom",
     roundsOrderFixed: "Fixed order ({count})",

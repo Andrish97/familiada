@@ -620,10 +620,12 @@ test("control2: physicalBuzzer + noHostTablet — urządzenia pominięte, ręczn
 
     await page.getByLabel("Fizyczny przycisk").check();
     await page.getByLabel("Nie używaj tabletu prowadzącego").check();
-    await expect(page.locator('.device-row[data-device="buzzer"]')).toHaveCount(0, { timeout: 10000 });
-    await expect(page.locator('.device-row[data-device="host"]')).toHaveCount(0, { timeout: 10000 });
-    await expect(page.getByText("Przycisk pominięty")).toBeVisible({ timeout: 10000 });
-    await expect(page.getByText("Prowadzący pominięty")).toBeVisible({ timeout: 10000 });
+    // Zwijanie jak stare control.html (data-opted-out) — wiersz zostaje w
+    // DOM (nazwa/badge/checkbox widoczne), tylko kod/przyciski się chowają.
+    await expect(page.locator('.device-row[data-device="buzzer"]')).toHaveAttribute("data-opted-out", "", { timeout: 10000 });
+    await expect(page.locator('.device-row[data-device="host"]')).toHaveAttribute("data-opted-out", "", { timeout: 10000 });
+    await expect(page.locator('.device-row[data-device="buzzer"] .device-row-2')).toBeHidden();
+    await expect(page.locator('.device-row[data-device="host"] .device-row-2')).toBeHidden();
 
     // Zgłoszone: przycisk nieaktywnego urządzenia w topbarze ma zniknąć
     // CAŁKOWICIE (nie tylko przygasnąć) — już na kroku Urządzeń, nie
