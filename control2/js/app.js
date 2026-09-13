@@ -156,6 +156,14 @@ async function main() {
   if (!user) return; // requireAuth already redirected
 
   setTopbarAccount(user, { showAuthEntry: true });
+  // css/base.css's skel-body reveal (".topbar-section-3/4" — mute/"Zacznij
+  // od nowa"/info, who/wyloguj — trzymane na opacity:0 aż to się doda,
+  // wzorem KAŻDEJ innej strony w repo, np. control/js/app.js:237) —
+  // zgubione przy pisaniu control2 od zera. Bez tego te przyciski są
+  // NA STAŁE niewidoczne (ale wciąż klikalne/obecne w DOM — dlatego testy
+  // E2E, które celują w selektory, tego nie złapały; zgłoszone przez
+  // właściciela na żywej grze, gdzie po prostu nie było widać ↺/ℹ️/wyloguj).
+  document.querySelector(".topbar")?.classList.add("topbar-ready");
 
   const { data: game, error: gameError } = await sb().from("games").select("*").eq("id", gameId).single();
   if (gameError || !game) { root.textContent = "Nie znaleziono gry."; return; }
