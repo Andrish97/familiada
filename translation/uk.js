@@ -5008,7 +5008,6 @@ const uk = {
     controlTitle: "Панель керування",
     copyOk: "Скопійовано.",
     copyFail: "Не можу скопіювати.",
-    deviceSkippedLabel: "{label} пропущено (зніміть позначку, щоб підключити)",
     teamsVsFormat: "{teamA} проти {teamB}",
     summaryLogoCustom: "власне",
     roundsOrderFixed: "Фіксований порядок ({count})",

@@ -4740,7 +4740,6 @@ const pl = {
     copyOk: "Skopiowano.",
     copyFail: "Nie mogę skopiować.",
     // --- control2/js/ui.js (i18n wiring, dopisane, nie z audytu control.html) ---
-    deviceSkippedLabel: "{label} pominięty (odznacz, żeby podłączyć)",
     teamsVsFormat: "{teamA} vs {teamB}",
     summaryLogoCustom: "niestandardowe",
     roundsOrderFixed: "Ustalona kolejność ({count})",
