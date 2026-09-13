@@ -49,6 +49,15 @@
        przeniesione tutaj, żeby krótsze ekrany (np. Urządzenia) nie zapadały
        się wizualnie bez .card's dawnego min-height:320px. */
     #app { min-height:320px; }
+    /* base.css's .wrap ma padding:18px na WSZYSTKIE strony — nad kartą to
+       ZBĘDNY, dodatkowy odstęp DO odstępu, który już daje body's
+       padding-top:var(--topbar-h) (dokładnie wysokość topbara — sam topbar
+       jest fixed). Zgłoszone jako zbyt duża przerwa między topbarem a kartą;
+       .wrap.wide's height (patrz niżej) jest już policzone względem
+       --topbar-h, więc mniejszy padding-top oznacza po prostu więcej
+       miejsca dla samej karty (border-box), bez dotykania niczego innego —
+       boki/dół zostają jak w reszcie aplikacji. */
+    .wrap.wide { padding-top:8px; }
     /* .c2-gameplay-card oznacza ekrany rozgrywki (Rundy/Final —
        control2/js/ui.js's gameplayShell()) do celów pełnowysokościowego
        :has() łańcucha niżej — sama w sobie NIE zawęża szerokości. Wszystkie
@@ -211,19 +220,25 @@
        Rundy (.c2-tile/.c2-question/.c2-hint) — bazowe rozmiary z control.css
        (15px/11px/10px...) są za małe przy tak dużej karcie. Scoped do
        konkretnych klas (nie całego .btn), żeby nie urosły przyciski
-       topbara/modali poza tym kontekstem. */
-    .device-name { font-size:1.05rem; }
-    .device-row-2 .btn { font-size:.85rem; }
-    .device-opt-check-label { font-size:.9rem; }
-    .device-opt-check-hint { font-size:.78rem; }
+       topbara/modali poza tym kontekstem.
+       Dalsze zmniejszenie (zgłoszone po siatce 2x2) + clamp() zamiast
+       sztywnego rem: skalują się z szerokością okna/wyświetlacza zamiast
+       być tym samym rozmiarem na 13" laptopie i 32" monitorze — mały
+       telefon/tablet i tak nie wchodzi tutaj (guardDesktopOnly()), więc
+       dolny próg celuje w skromny laptop (~1000px), górny w duży zewnętrzny
+       monitor (~2200px+). */
+    .device-name { font-size:clamp(.78rem, .6rem + .45vw, .98rem); }
+    .device-row-2 .btn { font-size:clamp(.62rem, .48rem + .35vw, .8rem); }
+    .device-opt-check-label { font-size:clamp(.68rem, .52rem + .4vw, .88rem); }
+    .device-opt-check-hint { font-size:clamp(.6rem, .46rem + .35vw, .76rem); }
     /* Kod parowania — bazowe 1.45rem (control.css) z rozstrzelonym
        letter-spacing zawija się/wychodzi poza kartę w węższej, 2-kolumnowej
        siatce (zgłoszone razem z resztą czcionek na tym kroku). */
-    .c2-devicerows .device-connect-code-val { font-size:1.15rem; letter-spacing:.14em; }
-    .summarySectionTitle { font-size:.8rem; }
-    .summarySectionValue { font-size:1.15rem; }
-    .summaryQMode { font-size:1rem; }
-    .summaryDisplayLabel, .summaryDisplayRow { font-size:1rem; }
+    .c2-devicerows .device-connect-code-val { font-size:clamp(.85rem, .65rem + .5vw, 1.05rem); letter-spacing:.1em; }
+    .summarySectionTitle { font-size:clamp(.62rem, .48rem + .35vw, .78rem); }
+    .summarySectionValue { font-size:clamp(.85rem, .65rem + .5vw, 1.05rem); }
+    .summaryQMode { font-size:clamp(.72rem, .56rem + .4vw, .9rem); }
+    .summaryDisplayLabel, .summaryDisplayRow { font-size:clamp(.72rem, .56rem + .4vw, .9rem); }
     /* Pasek statusu — pod siatką/podpowiedzią, nad dolnymi przyciskami
        (gameplayShell's nav). Krótkie pary etykieta:wartość w jednym wierszu,
        nie osobny blok na każdą — to jest "dodatkowe info", nie treść do
