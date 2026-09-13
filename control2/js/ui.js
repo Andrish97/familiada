@@ -620,8 +620,14 @@ export function createUI({ root, emit }) {
   // jest wprost, TYLKO gdy true. Używane przez pięć dużych przejść planszy
   // (Rozpocznij rundę/Zakończ rundę/Rozpocznij finał/Zakończ grę×2),
   // blokowanych przez boardBusy() — patrz armBoardTransition() wyżej.
+  // disabled tutaj ZAWSZE oznacza boardBusy() (wszystkie 4 wywołania w tym
+  // pliku) — czyli "trwa animacja/dźwięk dużego przejścia planszy". Bez
+  // żadnej widocznej zmiany poza wyszarzeniem operator widział martwy,
+  // nieruchomy ekran przez cały czas trwania blokady (network round-trip +
+  // resztę czasu animacji/dźwięku) i brał to za zawieszenie (zgłoszone) —
+  // pulsujący przycisk komunikuje "trwa coś", nie "nic się nie dzieje".
   function navButton(label, { cls = "c2-btn primary c2-intro-btn", onclick, disabled = false } = {}) {
-    const el = h("button", { class: cls, type: "button", onclick: disabled ? undefined : onclick }, [document.createTextNode(label)]);
+    const el = h("button", { class: disabled ? `${cls} c2-btn-busy` : cls, type: "button", onclick: disabled ? undefined : onclick }, [document.createTextNode(label)]);
     if (disabled) el.disabled = true;
     return el;
   }
