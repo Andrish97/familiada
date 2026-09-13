@@ -2068,7 +2068,7 @@ const en = {
       </div>
 
       <p class=”m-p”>
-        When everything looks good — click <span class=”m-strong”>Done — go to rounds</span> to start the game.
+        When everything looks good — click <span class=”m-strong”>Done — start the game</span>.
       </p>
 
       <h3 class=”m-h2”>3) Rounds — gameplay step by step</h3>
@@ -5025,7 +5025,7 @@ const en = {
     roundsOrderFixed: "Fixed order ({count})",
     finalPickedCount: "Manually selected ({count}/5)",
     reshuffleQuestions: "Reshuffle",
-    setupDoneBtn: "Done — go to rounds",
+    setupDoneBtn: "Done — start the game",
     summaryStepperTitle: "Settings summary",
     finalPickIncompleteWarning: "The final is set to \"manually selected\", but 5 questions have not been picked in the game settings.",
     keyboardShortcutsTitle: "Keyboard shortcuts",

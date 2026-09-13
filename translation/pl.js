@@ -2070,7 +2070,7 @@ const pl = {
       </div>
 
       <p class="m-p">
-        Gdy wszystko się zgadza — kliknij <span class="m-strong">Gotowe — przejdź do rund</span>, żeby rozpocząć rozgrywkę.
+        Gdy wszystko się zgadza — kliknij <span class="m-strong">Gotowe — przejdź do rozgrywki</span>.
       </p>
 
       <h3 class="m-h2">3) Rundy — przebieg gry krok po kroku</h3>
@@ -4745,7 +4745,7 @@ const pl = {
     roundsOrderFixed: "Ustalona kolejność ({count})",
     finalPickedCount: "Wybrane ręcznie ({count}/5)",
     reshuffleQuestions: "Losuj ponownie",
-    setupDoneBtn: "Gotowe — przejdź do rund",
+    setupDoneBtn: "Gotowe — przejdź do rozgrywki",
     summaryStepperTitle: "Podsumowanie ustawień",
     finalPickIncompleteWarning: "Finał ustawiony na \"wybrane ręcznie\", ale nie wybrano 5 pytań w ustawieniach gry.",
     keyboardShortcutsTitle: "Skróty klawiszowe",
