@@ -1,12 +1,12 @@
-import { sb } from "../core/supabase.js?v=v2026-09-13T19054";
-import { cooldownGet, cooldownReserve, cooldownRelease, cooldownEmailReserve } from "../core/cooldown.js?v=v2026-09-13T19054";
-import { requireAuth, updateUserLanguage, validatePassword, validateUsername, signOut, niceAuthError, initPasswordToggles, convertGuestToRegisteredEmailOnly } from "../core/auth.js?v=v2026-09-13T19054";
-import { getUserEmailNotificationsFlag, setUserEmailNotificationsFlag } from "../core/user-flags.js?v=v2026-09-13T19054";
-import { initI18n, t, getUiLang, withLangParam } from "../../translation/translation.js?v=v2026-09-13T19054";
-import { confirmModal } from "../core/modal.js?v=v2026-09-13T19054";
-import { isGuestUser, hideForGuest } from "../core/guest-mode.js?v=v2026-09-13T19054";
+import { sb } from "../core/supabase.js?v=v2026-09-13T19090";
+import { cooldownGet, cooldownReserve, cooldownRelease, cooldownEmailReserve } from "../core/cooldown.js?v=v2026-09-13T19090";
+import { requireAuth, updateUserLanguage, validatePassword, validateUsername, signOut, niceAuthError, initPasswordToggles, convertGuestToRegisteredEmailOnly } from "../core/auth.js?v=v2026-09-13T19090";
+import { getUserEmailNotificationsFlag, setUserEmailNotificationsFlag } from "../core/user-flags.js?v=v2026-09-13T19090";
+import { initI18n, t, getUiLang, withLangParam } from "../../translation/translation.js?v=v2026-09-13T19090";
+import { confirmModal } from "../core/modal.js?v=v2026-09-13T19090";
+import { isGuestUser, hideForGuest } from "../core/guest-mode.js?v=v2026-09-13T19090";
 import "../core/contact-modal.js";
-import { deleteGameSoundsFolder } from "../core/sfx-cloud.js?v=v2026-09-13T19054";
+import { deleteGameSoundsFolder } from "../core/sfx-cloud.js?v=v2026-09-13T19090";
 
 
 const status = document.getElementById("status");
