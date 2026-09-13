@@ -142,17 +142,32 @@
     /* ---- Rundy: siatka odpowiedzi (lewo) + pionowa kreska + podpowiedź
        (prawo). Reużywane też przez Finał-wpisywanie i Finał-mapowanie
        (zgłoszone: hinty mają iść na prawo wszędzie tak jak w Rundach). ---- */
+    /* min-height:0 na KAŻDYM ogniwie tego łańcucha (main/side, nie tylko
+       roundlayout samego) — bez tego flex-item domyślnie nie chce się
+       skurczyć poniżej wysokości własnej treści (znane "min-height:auto"
+       zachowanie flexboxa), więc .c2-scroll-area's overflow-y:auto wyżej
+       nigdy realnie nie dostawało czego przewijać — treść po prostu
+       wychodziła poza kartę zamiast scrollować (zgłoszone). */
     .c2-roundlayout { display:flex; gap:16px; flex:1; min-height:0; }
-    .c2-roundlayout-main { flex:1; min-width:0; display:flex; }
+    .c2-roundlayout-main { flex:1; min-width:0; min-height:0; display:flex; }
     .c2-roundlayout-main .c2-tilegrid { flex:1; }
     .c2-roundlayout-divider { width:1px; background:rgba(255,255,255,.14); flex:none; }
-    .c2-roundlayout-side { flex:0 0 240px; min-width:0; display:flex; flex-direction:column; }
+    .c2-roundlayout-side { flex:0 0 240px; min-width:0; min-height:0; display:flex; flex-direction:column; }
     .c2-roundlayout-side .c2-hint { flex:1; }
     /* Urządzenia (renderDevicesStep) reużywa ten sam c2-roundlayout — lista
-       urządzeń po lewej (pionowy stos, stąd flex-direction:column zamiast
-       .c2-roundlayout-main's domyślnego row), hint o wpisywaniu kodu po
-       prawej, zamiast dawnego paska na całą szerokość pod spodem. */
-    .c2-devicerows { flex:1; min-width:0; display:flex; flex-direction:column; gap:14px; }
+       urządzeń po lewej, hint o wpisywaniu kodu po prawej, zamiast dawnego
+       paska na całą szerokość pod spodem. Zawsze dokładnie 4 kafle (Wyświetlacz/
+       Prowadzący/Przycisk/Dźwięk) — siatka 2x2 zamiast pionowego stosu
+       (zgłoszone: 4 w pionie za dużo miejsca), gap grida zastępuje
+       .device-row's własny margin-bottom (control.css, reużywane też przez
+       stary, jednokolumnowy control.html — tam margin ma sens, tu dublowałby
+       się z gapem). Duży pionowy monitor (portrait) ma miejsca pod dostatkiem
+       w pionie — tam zostaje dawny, czytelniejszy pojedynczy słupek. */
+    .c2-devicerows { flex:1; min-width:0; min-height:0; display:grid; grid-template-columns:repeat(2, 1fr); gap:14px; align-content:start; }
+    .c2-devicerows .device-row { margin-bottom:0; }
+    @media (orientation:portrait) {
+      .c2-devicerows { grid-template-columns:1fr; }
+    }
     /* Dolne przyciski kroku (Urządzenia/Podsumowanie, control.css's
        .stepFootButtons) — "Dalej"/akcja pierwotna zawsze po prawej krawędzi;
        "Wstecz" (klasa c2-btn-back) dostaje margin-right:auto, więc odrywa
@@ -184,10 +199,14 @@
        (15px/11px/10px...) są za małe przy tak dużej karcie. Scoped do
        konkretnych klas (nie całego .btn), żeby nie urosły przyciski
        topbara/modali poza tym kontekstem. */
-    .device-name { font-size:1.2rem; }
-    .device-row-2 .btn { font-size:1rem; }
-    .device-opt-check-label { font-size:1rem; }
-    .device-opt-check-hint { font-size:.85rem; }
+    .device-name { font-size:1.05rem; }
+    .device-row-2 .btn { font-size:.85rem; }
+    .device-opt-check-label { font-size:.9rem; }
+    .device-opt-check-hint { font-size:.78rem; }
+    /* Kod parowania — bazowe 1.45rem (control.css) z rozstrzelonym
+       letter-spacing zawija się/wychodzi poza kartę w węższej, 2-kolumnowej
+       siatce (zgłoszone razem z resztą czcionek na tym kroku). */
+    .c2-devicerows .device-connect-code-val { font-size:1.15rem; letter-spacing:.14em; }
     .summarySectionTitle { font-size:.8rem; }
     .summarySectionValue { font-size:1.15rem; }
     .summaryQMode { font-size:1rem; }
