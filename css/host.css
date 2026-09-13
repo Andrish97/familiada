@@ -38,7 +38,8 @@
     --h-paper-bg: #fffdf5;
     --h-ink: #111;
     --h-font: "Caveat-Variable", cursive;
-    --h-letter-spacing: normal
+    --h-letter-spacing: normal;
+    --h-line-height-mult: 1
 }
 
 @font-face {
@@ -225,7 +226,7 @@ html.landscape .pane2::before {
     white-space: pre-wrap;
     word-break: break-word;
     font-size: calc(var(--line)*var(--font-ratio));
-    line-height: var(--line);
+    line-height: calc(var(--line)*var(--h-line-height-mult));
     padding-top: calc(var(--line)*var(--baseline-shift));
     transform: translateY(var(--ios-text-shift));
     color: var(--h-ink);
