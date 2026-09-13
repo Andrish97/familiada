@@ -32,13 +32,40 @@ const fu = (key, vars) => t(`control.finalUi.${key}`, vars);
 // treść i punkty KAŻDEJ odpowiedzi od razu, niezależnie od tego, czy jest
 // już odsłonięta dla widzów — inaczej nie mógłby ocenić, czy to, co
 // powiedział kontestant, w ogóle pasuje do listy. Odsłonięcie zmienia tam
-// tylko kolor (kosmetyka, pominięta — patrz komentarz przy renderFinalMapping);
-// tu zamiast koloru: znacznik "✓" (ten sam styl co w renderFinalMapping niżej).
+// kolor linii na zielony (control/js/gameRounds.js's hostTag("#2ecc71", ...)
+// przez własny parser znaczników [kolor]tekst[/] w dzisiejszym
+// js/pages/host.js) — 1:1 przywrócone tu jako klasa CSS (.hostGreen w
+// css/host.css) zamiast tamtego parsera, patrz setLines()/appendFragment()
+// niżej.
 // Naprawiona luka: wcześniejsza wersja chowała tekst i punkty pod "______"
 // aż do odsłonięcia, co w praktyce robiłoby ekran Prowadzącego bezużytecznym.
 function answerLine(ord, text, pts, revealed) {
-  const marker = revealed ? "✓ " : "  ";
-  return `${marker}${ord}) ${text} (${pts})`;
+  const line = `${ord}) ${text} (${pts})`;
+  return revealed ? { text: line, cls: "hostGreen" } : line;
+}
+
+// "Wiersz" to: zwykły string (kolor atramentu z motywu), {text,cls} (cała
+// linia jednym kolorem) albo tablica takich fragmentów (mieszana linia,
+// np. "Status: " zwykłe + wynik kolorowy — dokładnie jak dawne
+// hostTag("u", label) + hostGreen(status) w control/js/gameFinal.js).
+function appendFragment(el, frag) {
+  if (typeof frag === "string") {
+    el.appendChild(document.createTextNode(frag));
+    return;
+  }
+  const span = document.createElement("span");
+  if (frag.cls) span.className = frag.cls;
+  span.textContent = frag.text;
+  el.appendChild(span);
+}
+
+function setLines(el, lines) {
+  el.textContent = "";
+  lines.forEach((line, i) => {
+    if (Array.isArray(line)) line.forEach((frag) => appendFragment(el, frag));
+    else appendFragment(el, line);
+    if (i < lines.length - 1) el.appendChild(document.createTextNode("\n"));
+  });
 }
 
 export function createHostRenderer() {
@@ -60,8 +87,18 @@ export function createHostRenderer() {
     cover2?.classList.toggle("coverOff", !covered);
   }
 
-  function setPane1(text) { if (paperText1) paperText1.textContent = text; }
-  function setPane2(text) { if (paperText2) paperText2.textContent = text; }
+  // content: zwykły string (jak dawniej) albo tablica "wierszy" (patrz
+  // setLines() wyżej) — używana tam, gdzie trzeba pokolorować fragment tekstu.
+  function setPane1(content) {
+    if (!paperText1) return;
+    if (Array.isArray(content)) setLines(paperText1, content);
+    else paperText1.textContent = content;
+  }
+  function setPane2(content) {
+    if (!paperText2) return;
+    if (Array.isArray(content)) setLines(paperText2, content);
+    else paperText2.textContent = content;
+  }
 
   // control/js/gameRounds.js's hostTitleForRounds() — dokładnie te same 4
   // warianty tytułu wg fazy (translation/pl.js's roundTitle*). Pominięty:
@@ -96,17 +133,17 @@ export function createHostRenderer() {
     // Od PLAY wraca na swoje zwykłe miejsce — nie jest już tajemnicą.
     if (row.phase === "DUEL") {
       setPane1(title);
-      setPane2([r.question?.text || "", "", ...answerLines].join("\n"));
+      setPane2([r.question?.text || "", "", ...answerLines]);
       return;
     }
     setPane1(`${title}\n\n${r.question?.text || ""}`);
-    setPane2(answerLines.join("\n"));
+    setPane2(answerLines);
   }
 
   // Dokładnie ten sam zestaw informacji co dzisiejsze gameFinal.js's
   // hostMappingLeft/hostMappingRight (pytanie, co wpisał gracz, status
-  // dopasowania, pełna lista możliwych odpowiedzi z zaznaczoną trafioną) —
-  // bez kolorowego formatowania (to kosmetyka), ale ta sama treść.
+  // dopasowania, pełna lista możliwych odpowiedzi z zaznaczoną trafioną),
+  // łącznie z kolorami statusu (przywrócone, patrz komentarz przy answerLine()).
   function renderFinalMapping(row, round, idx) {
     const f = row.detail.final;
     const question = f.questions?.[idx];
@@ -125,19 +162,22 @@ export function createHostRenderer() {
       lines.push(`${fh("player1Label")}: ${p1Text || fu("fallbackAnswer")}`, "");
     }
     if (!rep && input) lines.push(`${fh("enteredLabel")}: ${input}`);
-    let status;
-    if (rep) status = fh("statusRepeat");
-    else if (!input) status = fh("statusEmpty");
-    else if (row1.kind === "MATCH" && row1.matchId) status = fh("statusMatch");
-    else status = fh("statusMissing");
-    lines.push(`${fh("statusLabel")}: ${status}`, "");
+    // Kolory statusu 1:1 z dawnym control/js/gameFinal.js's hostGreenStrike/
+    // hostRed/hostYellowUnderline (patrz komentarz przy answerLine() wyżej).
+    let status, statusCls;
+    if (rep) { status = fh("statusRepeat"); statusCls = "hostYellow"; }
+    else if (!input) { status = fh("statusEmpty"); statusCls = "hostRed"; }
+    else if (row1.kind === "MATCH" && row1.matchId) { status = fh("statusMatch"); statusCls = "hostGreen hostStrike"; }
+    else { status = fh("statusMissing"); statusCls = "hostYellow"; }
+    lines.push([`${fh("statusLabel")}: `, { text: status, cls: statusCls }], "");
     lines.push(fh("answersListLabel"));
     const sorted = (question?.answers || []).slice().sort((a, b) => b.fixed_points - a.fixed_points);
     for (const a of sorted) {
-      const marker = row1.kind === "MATCH" && row1.matchId === a.id ? "✓ " : "  ";
-      lines.push(`${marker}${a.text} (${a.fixed_points})`);
+      const text = `${a.text} (${a.fixed_points})`;
+      const isMatch = row1.kind === "MATCH" && row1.matchId === a.id;
+      lines.push(isMatch ? { text, cls: "hostGreen hostStrike" } : text);
     }
-    setPane2(lines.join("\n"));
+    setPane2(lines);
   }
 
   // control/js/gameFinal.js's hostEntryStatus(): per-pytanie status widoczny
