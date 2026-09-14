@@ -729,15 +729,20 @@ export function createUI({ root, emit }) {
       // stary control.html's btnBuzzAcceptA/B. "Ponów naciśnięcie" (nowe
       // RETRY_DUEL) pojawia się dopiero, gdy jest co odrzucić.
       const lastPressed = r.duel.lastPressed;
+      // Zgłoszone (audyt sync dźwięk/plansza): przyjęcie zgłoszenia gra
+      // "buzzer_press" (engine.js's ACCEPT_BUZZ), ale nic dotąd nie
+      // blokowało operatora przed odsłonięciem odpowiedzi w tej samej
+      // chwili — armRevealCooldown tutaj daje temu dźwiękowi ten sam bufor
+      // co każdej innej akcji odsłaniającej.
       tiles.push(tile(t("control.roundsBuzzAcceptTeam", { name: teamName(state, "A") }), {
         row: 1, col: HALF(0), cls: lastPressed === "A" ? "c2-tile-primary" : "",
         disabled: lastPressed !== "A" || boardBusy(),
-        onclick: () => emit("game.dispatch", { type: "ACCEPT_BUZZ", team: "A" }),
+        onclick: () => { armRevealCooldown("buzzer_press"); emit("game.dispatch", { type: "ACCEPT_BUZZ", team: "A" }); },
       }));
       tiles.push(tile(t("control.roundsBuzzAcceptTeam", { name: teamName(state, "B") }), {
         row: 1, col: HALF(1), cls: lastPressed === "B" ? "c2-tile-primary" : "",
         disabled: lastPressed !== "B" || boardBusy(),
-        onclick: () => emit("game.dispatch", { type: "ACCEPT_BUZZ", team: "B" }),
+        onclick: () => { armRevealCooldown("buzzer_press"); emit("game.dispatch", { type: "ACCEPT_BUZZ", team: "B" }); },
       }));
       if (lastPressed) {
         tiles.push(tile(t("control.roundsBuzzRetry"), { row: 2, col: "1 / 7", disabled: boardBusy(), onclick: () => emit("game.dispatch", { type: "RETRY_DUEL" }) }));
@@ -905,7 +910,19 @@ export function createUI({ root, emit }) {
         // testy/czytniki ekranu widziałyby za każdym razem inny label.
         h("div", { class: "c2-tile-sub", "aria-hidden": "true", text: `${strikes} / 3` }),
       ]);
-      tiles.push(armableTile("x", xLabel, { row: 6, col: HALF(0), cls: "c2-tile-danger", onclick: () => emit("game.dispatch", { type: "ADD_X" }) }));
+      // Zgłoszone (audyt sync dźwięk/plansza): X był JEDYNYM z kafli
+      // odsłaniania bez blokady na czas dźwięku poprzedniej akcji —
+      // odpowiedzi/"Pokaż punkty" mają revealLocked()+armRevealCooldown(),
+      // ten nie miał żadnego z nich. Dwa X-y kliknięte szybko z rzędu
+      // (albo X zaraz po odsłonięciu odpowiedzi) mogły więc dispatchować,
+      // zanim Wyświetlacz/dźwięk poprzedniej akcji zdążyły dobiec końca —
+      // prawdopodobne źródło nakładających się/"brzydkich" dźwięków
+      // niezależnie od poprawki w js/core/game-state-subscribe.js.
+      tiles.push(armableTile("x", xLabel, {
+        row: 6, col: HALF(0), cls: "c2-tile-danger",
+        disabled: revealLocked(),
+        onclick: () => { armRevealCooldown("answer_wrong"); emit("game.dispatch", { type: "ADD_X" }); },
+      }));
     }
     if (timer3Available) {
       const running = !!timer3?.running;
@@ -1501,10 +1518,25 @@ export function createUI({ root, emit }) {
     // odsłonięte — nie znika, tylko czeka zablokowany (onclick też
     // undefined, nie tylko atrybut disabled — podwójne zabezpieczenie przed
     // przedwczesnym przejściem dalej).
+    //
+    // Zgłoszone (audyt sync dźwięk/plansza): "Dalej" na OSTATNIM pytaniu
+    // rundy 1 (idx===4) przechodzi do f_p2_start i gra ten sam synced combo
+    // round_transition+reveal co "Rozpocznij rundę" (soundCueEngine.js's
+    // isFinalP2Start — jawnie potwierdzone jako TEN SAM przypadek co
+    // startRound w komentarzu tego pliku) — ale nic dotąd nie blokowało
+    // operatora na czas tego dźwięku, w odróżnieniu od KAŻDEGO innego
+    // dużego przejścia w tej appce. Pozostałe 8 kliknięć "Dalej" (pytania
+    // 1-4 obu rund i 6-9) nie grają żadnego dźwięku (sameStep w engine.js),
+    // więc same nie potrzebują bramki — boardBusy() i tak jest tanim,
+    // uniwersalnym zabezpieczeniem przeciw podwójnym kliknięciom.
+    const isLastQuestionOfRound1 = round === 1 && idx === 4;
     const nav = [h("button", {
       class: "c2-btn primary", type: "button",
-      disabled: row.revealedPoints ? undefined : "",
-      onclick: row.revealedPoints ? () => emit("game.dispatch", { type: "NEXT_QUESTION", round, idx: idx + 1 }) : undefined,
+      disabled: row.revealedPoints && !boardBusy() ? undefined : "",
+      onclick: row.revealedPoints ? () => {
+        if (isLastQuestionOfRound1) armBoardTransition(startRoundGateMs());
+        emit("game.dispatch", { type: "NEXT_QUESTION", round, idx: idx + 1 });
+      } : undefined,
     }, [document.createTextNode(t("common.next"))])];
 
     gameplayShell({ stepLabel: t("control.finalMappingStepLabel", { n: idx + 1 }), body, nav });

@@ -96,6 +96,20 @@ export function createRenderer({ scene, qr }) {
   function applyIndicator(row) {
     if (row.control_team === "A") return api.indicator.set("ON_A");
     if (row.control_team === "B") return api.indicator.set("ON_B");
+    // Zgłoszone (przy okazji audytu synchronizacji dźwięk/animacja): control_team
+    // zostaje null przez CAŁY pojedynek (R2/R3) — ustawiane dopiero, gdy ktoś
+    // go wygra — więc do tej pory wskaźnik w ogóle się nie zapalał, dopóki
+    // pojedynek trwał, mimo że plan (sekcja 2a) wprost każe: "acceptBuzz →
+    // INDICATOR ON_A/ON_B na drużynę, która ma teraz odpowiadać". To, kto ma
+    // teraz próbować, żyje w detail.rounds.duel.currentTeam (osobne pole,
+    // którego deriveEvents.js nie diffuje jako CONTROL_CHANGED) — stąd
+    // dodatkowe wywołania applyIndicator() w STEP_CHANGE(r_duel->r_play)/
+    // ANSWER_REVEALED/DUEL_MISS niżej, nie tylko przy CONTROL_CHANGED.
+    if (row.phase === "DUEL") {
+      const cur = row.detail?.rounds?.duel?.currentTeam;
+      if (cur === "A") return api.indicator.set("ON_A");
+      if (cur === "B") return api.indicator.set("ON_B");
+    }
     if (row.detail?.locks?.finalActive && row.detail?.final?.winnerTeam) {
       return api.indicator.set(row.detail.final.winnerTeam === "A" ? "ON_A" : "ON_B");
     }
@@ -284,6 +298,12 @@ export function createRenderer({ scene, qr }) {
             const isFirstRound = nextRow.detail.rounds.roundNo === 1;
             if (isFirstRound) await api.logo.hide(LOGO_OUT_ANIM);
             await paintRoundsBoard(nextRow, { animIn: ROUND_INTRO_ANIM, animOut: isFirstRound ? null : ROUND_OUT_ANIM });
+          } else if (ev.to === "r_play" && ev.from === "r_duel") {
+            // R2->R3 (ACCEPT_BUZZ): control_team zostaje null (dopiero PLAY
+            // go ustawia), ale duel.currentTeam już wskazuje, kto ma teraz
+            // próbować — applyIndicator() (patrz jej komentarz) to teraz
+            // odczytuje. Bez tego wskaźnik milczał przez CAŁY pojedynek.
+            applyIndicator(nextRow);
           } else if (ev.to === "r_roundStart" && ev.from === "r_play") {
             // R9 (koniec WŁAŚNIE ROZEGRANEJ rundy, bez finału/końca gry) —
             // zgłoszone: LEFT/RIGHT mają skoczyć na nowe wyniki DOSŁOWNIE w
@@ -381,6 +401,13 @@ export function createRenderer({ scene, qr }) {
             api.rounds.setSuma(String(r.bankPts ?? 0), { animIn: ANSWER_ANIM });
             api.small.topDigits(pad3(r.bankPts));
           }
+          // W pojedynku trafienie nie-topowej odpowiedzi oddaje głos DRUGIEJ
+          // drużynie (duel.currentTeam się zmienia), bez żadnej zmiany
+          // control_team (ta zostaje null aż do wygranej) — CONTROL_CHANGED
+          // się tu nie odpali, więc applyIndicator() trzeba wywołać wprost
+          // (patrz jej komentarz). Poza DUEL to tylko nieszkodliwe powtórzenie
+          // tego, co CONTROL_CHANGED już ustawił.
+          applyIndicator(nextRow);
           break;
         }
         case "DUEL_MISS":
@@ -390,6 +417,9 @@ export function createRenderer({ scene, qr }) {
             api.rounds.setX(`4${ev.team}`, true);
             setTimeout(() => api.rounds.setX(`4${ev.team}`, false), 1000);
           }
+          // Pudło w pojedynku też oddaje głos drugiej drużynie (ten sam
+          // powód co w ANSWER_REVEALED wyżej).
+          applyIndicator(nextRow);
           break;
         case "STRIKE":
           api.rounds.setX(`${ev.count}${ev.team}`, true);
