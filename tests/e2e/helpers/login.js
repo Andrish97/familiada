@@ -152,4 +152,40 @@ async function loginAsGuest(page, context) {
   await clearE2EBypass(context);
 }
 
-module.exports = { loginAsTestUser, loginAsGuest };
+/**
+ * Pula kont dedykowana WYŁĄCZNIE control2.spec.js — osobna od TEST_USERNAME
+ * (reszta testów) i TEST_USERNAME_2 (base-explorer/bases), żeby nie
+ * odtworzyć tego samego wyścigu "dwa jednoczesne logowania na jedno konto"
+ * między równoległymi CI jobami. Jeden sekret, CONTROL2_TEST_ACCOUNTS,
+ * lista loginów rozdzielona przecinkami (wspólne TEST_PASSWORD dla
+ * wszystkich, jak reszta puli kont) -- dodanie/usunięcie konta to tylko
+ * edycja treści tego jednego sekretu w GitHub, bez zmian w kodzie. Gdy
+ * sekret jest pusty/brak (np. lokalne odpalenie bez CI), pada z powrotem na
+ * samo TEST_USERNAME (pula jednoelementowa == dzisiejsze zachowanie).
+ */
+function getControl2AccountPool() {
+  const raw = process.env.CONTROL2_TEST_ACCOUNTS || "";
+  const usernames = raw.split(",").map((s) => s.trim()).filter(Boolean);
+  if (usernames.length) return usernames;
+  return process.env.TEST_USERNAME ? [process.env.TEST_USERNAME] : [];
+}
+
+/**
+ * Loguje jako jedno z kont puli CONTROL2_TEST_ACCOUNTS, wybrane po
+ * `workerIndex` (przekaż testInfo.parallelIndex z testu Playwrighta) --
+ * różne workery równoległe lądują na różnych kontach, więc nigdy nie
+ * ścigają się o to samo logowanie.
+ */
+async function loginAsControl2TestUser(page, context, workerIndex) {
+  const pool = getControl2AccountPool();
+  if (!pool.length) {
+    throw new Error(
+      "Brak CONTROL2_TEST_ACCOUNTS ani TEST_USERNAME w zmiennych środowiskowych -- " +
+      "control2.spec.js potrzebuje przynajmniej jednego konta testowego."
+    );
+  }
+  const username = pool[workerIndex % pool.length];
+  return loginAsTestUser(page, context, { username });
+}
+
+module.exports = { loginAsTestUser, loginAsGuest, loginAsControl2TestUser, getControl2AccountPool };
