@@ -15,7 +15,7 @@ import { createQRController } from "./qr.js?v=v2026-09-14T15152";
 import { createSubscription } from "../../js/core/game-state-subscribe.js?v=v2026-09-14T15152";
 import { createRenderer } from "./render.js?v=v2026-09-14T15152";
 import { createDisplaySoundReactor } from "./soundReactor.js?v=v2026-09-14T15152";
-import { loadSfxManifest, initSfx, setCurrentGameId, applySfxGameSettings, unlockAudio, isAudioUnlocked } from "../../js/core/sfx.js?v=v2026-09-14T15152";
+import { loadSfxManifest, initSfx, setCurrentGameId, applySfxGameSettings, unlockAudio, isAudioUnlocked, getSfxDuration } from "../../js/core/sfx.js?v=v2026-09-14T15152";
 
 startKeepAlive();
 
@@ -212,7 +212,7 @@ window.addEventListener("DOMContentLoaded", async () => {
       },
     };
 
-    const renderer = createRenderer({ scene, qr });
+    const renderer = createRenderer({ scene, qr, getSfxDuration });
     let prevRow = null;
     let appliedLang = null;
 
