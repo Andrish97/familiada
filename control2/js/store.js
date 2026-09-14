@@ -116,15 +116,19 @@ export function createStore(gameId) {
     // ustawia store.state.step/phase/... PRZED wywołaniem commit() —
     // "optymistyczny" znaczy tu wyłącznie "jeszcze niepotwierdzony przez
     // serwer", nie "zgadywany"). sound_cue_seq liczony 1:1 wg tej samej
-    // reguły co SQL (game_state_write, migracja 260: rośnie TYLKO gdy nowy
-    // klucz różni się od poprzedniego) — więc druga, prawdziwa notyfikacja
-    // po potwierdzeniu zwykle nie znajdzie już nic nowego (ten sam seq) i
-    // nie zagra drugi raz. W rzadkim przegranym wyścigu z Buzzerem
-    // (StaleWriteError niżej) ten wiersz zostanie skorygowany przez
-    // hydrate() — zaakceptowane ryzyko, nie błąd.
+    // reguły co SQL (game_state_write, migracja 263: rośnie przy KAŻDYM
+    // zapisie z niepustym soundCueKey, NIE tylko gdy klucz różni się od
+    // poprzedniego — dwa różne zdarzenia w grze, np. dwa trafienia z rzędu,
+    // często dzielą ten sam klucz "answer_correct"/"answer_wrong", a mimo to
+    // każde z nich ma zagrać dźwięk osobno; migracja 260 tego nie robiła,
+    // co gubiło dźwięk przy drugim z pary — patrz komentarz w migracji 263)
+    // — więc druga, prawdziwa notyfikacja po potwierdzeniu zwykle nie
+    // znajdzie już nic nowego (ten sam seq) i nie zagra drugi raz. W rzadkim
+    // przegranym wyścigu z Buzzerem (StaleWriteError niżej) ten wiersz
+    // zostanie skorygowany przez hydrate() — zaakceptowane ryzyko, nie błąd.
     const newKey = payload.soundCueKey;
     const optimisticKey = newKey ?? state.soundCueKey;
-    const optimisticSeq = (newKey != null && newKey !== state.soundCueKey) ? (state.soundCueSeq || 0) + 1 : (state.soundCueSeq || 0);
+    const optimisticSeq = newKey != null ? (state.soundCueSeq || 0) + 1 : (state.soundCueSeq || 0);
     state.__row = {
       ...state.__row,
       top_card: payload.topCard,

@@ -67,6 +67,12 @@ export function makeDefaultState(gameId) {
       allowPass: false,
       canEndRound: false,
       lockPlayControls: false,
+      // Dokąd pójdzie gra po R8 (odkrywanie reszty) — "NEXT_ROUND"/"FINAL"/
+      // "GAME_END", obliczone RAZ przez engine.js's END_ROUND (totals w tym
+      // momencie już ostateczne dla tej rundy) i tu tylko zapisane, żeby
+      // control2/js/ui.js mogło podpisać przycisk kontekstowo bez importu
+      // logiki silnika (patrz komentarz przy END_ROUND).
+      roundEndDestination: null,
       question: null,
       answers: [],
       revealed: [],

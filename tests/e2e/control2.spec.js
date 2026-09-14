@@ -456,6 +456,14 @@ test("control2: reset pojedynku, pass, kradzież wygrana/przegrana, odkrywanie r
     await page.getByRole("button", { name: "Zakończ rundę" }).click();
     await revealAnswer(page, 3); // #3 nieodkryte -> R8
 
+    // Zgłoszone: ostatnie odsłonięcie w R8 NIE MA już samo odpalać ekranu
+    // kolejnej rundy "znikąd" — operator musi kliknąć osobny, kontekstowo
+    // podpisany przycisk (tu: "Przejdź do następnej rundy", bo próg
+    // nieosiągnięty i pula ma jeszcze pytanie 2).
+    const nextRoundBtn = page.getByRole("button", { name: "Przejdź do następnej rundy" });
+    await expect(nextRoundBtn).toBeEnabled({ timeout: 10000 });
+    await nextRoundBtn.click();
+
     await expect(page.locator(".c2-stepper")).toContainText("Runda 2", { timeout: 10000 });
     await expect(page.getByText("Alfa: 0")).toBeVisible({ timeout: 10000 });
     await expect(page.getByText("Beta: 70")).toBeVisible({ timeout: 10000 });
@@ -481,7 +489,12 @@ test("control2: reset pojedynku, pass, kradzież wygrana/przegrana, odkrywanie r
     await page.getByRole("button", { name: "Zakończ rundę" }).click();
     await revealAnswer(page, 3); // R8 ponownie
 
-    // Pula wyczerpana (2/2), próg nieosiągnięty, hasFinal=false -> r_gameEnd.
+    // Pula wyczerpana (2/2), próg nieosiągnięty, hasFinal=false -> r_gameEnd
+    // — przycisk R8 podpisuje się "Przejdź do zakończenia gry".
+    const gameEndBtn = page.getByRole("button", { name: "Przejdź do zakończenia gry" });
+    await expect(gameEndBtn).toBeEnabled({ timeout: 10000 });
+    await gameEndBtn.click();
+
     // Runda 1 dała bank drużynie B (70), runda 2 zostaje przy A (70) -> remis.
     await expect(page.locator(".c2-stepper")).toContainText("Koniec gry", { timeout: 10000 });
 
