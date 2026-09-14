@@ -28,7 +28,16 @@ const SOURCE_EXT = ['.html', '.js', '.json', '.css', '.webmanifest'];
 // do plików .mp3 przez pole "file") i musi być wersjonowany jak każdy inny
 // JSON. "img" zostaje pominięte — zawiera wyłącznie binarne obrazy, żadnych
 // plików źródłowych do przeskanowania.
-const IGNORE_DIRS = ['.git', 'node_modules', '.claude', '.qwen', '.github', 'img', 'tests'];
+// "cloudflare" pomijane od tej zmiany: regex wersjonujący dopasowywał się
+// też do porównań ścieżek w routingu Workera, np.
+// `url.pathname === "/sitemap.xml?v=..."` — url.pathname z definicji nigdy
+// nie zawiera "?...", więc taki warunek nigdy nie jest prawdziwy. Efekt:
+// /sitemap.xml po cichu serwował statyczny plik zapasowy (3 adresy) zamiast
+// dynamicznej listy gier, a /maintenance-state.json zwracał 404 zamiast
+// żywego stanu z KV — przy każdym deployu ten sam auto-wersjoner na nowo
+// psuł ręcznie naprawiony kod. Worker nie potrzebuje wersjonowania swoich
+// referencji tym mechanizmem (to kod routingu, nie strona ładująca assety).
+const IGNORE_DIRS = ['.git', 'node_modules', '.claude', '.qwen', '.github', 'img', 'tests', 'cloudflare'];
 
 /**
  * Rekurencyjnie pobiera listę plików do przetworzenia
