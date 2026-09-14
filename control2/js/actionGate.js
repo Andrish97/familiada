@@ -16,10 +16,13 @@
 // to więc dokładnie tyle, ile realnie trwa to, co Display w tym samym
 // momencie maluje.
 //
-// Cztery miejsca nakładają DWA dźwięki na jedną zmianę (shared/
+// Pięć miejsc nakłada DWA dźwięki na jedną zmianę (shared/
 // soundCueEngine.js, sprawdzone 1:1 w kodzie):
-//   - START_ROUND i NEXT_QUESTION->f_p2_start: "round_transition"+"reveal"
-//     ZSYNCHRONIZOWANE na koniec — blokujący czas to max(obu).
+//   - START_ROUND, NEXT_QUESTION->f_p2_start i START_P2_ROUND
+//     (F7->F8, "Start rundy 2"): "round_transition"+"reveal" ZSYNCHRONIZOWANE
+//     na koniec — blokujący czas to max(obu). Zgłoszone wprost dla F7->F8:
+//     "dźwięk przejścia rundy plus odsłonięcie" — to DOSŁOWNIE przejście do
+//     kolejnej rundy finału, ta sama kombinacja co pozostałe dwa.
 //   - END_ROUND/NEXT_AFTER_REVEAL: "reveal" najpierw (blokujący), POTEM
 //     "round_transition" (już nad nowym, interaktywnym ekranem —
 //     nieblokujący).
@@ -47,6 +50,7 @@ export function createActionGate({ getSfxDuration }) {
     START_ROUND: () => timing.syncedMs("round_transition", "reveal"),
     NEXT_QUESTION: async (prevRow, nextRow) =>
       nextRow?.step === "f_p2_start" ? timing.syncedMs("round_transition", "reveal") : 0,
+    START_P2_ROUND: () => timing.syncedMs("round_transition", "reveal"),
     END_ROUND: () => timing.dur("reveal"),
     NEXT_AFTER_REVEAL: () => timing.dur("reveal"),
     START_FINAL: () => timing.dur("final_theme"),

@@ -404,10 +404,16 @@ export function createRenderer({ scene, qr, getSfxDuration }) {
             // START_P2_ROUND): odpowiedzi gracza 1 wracają na Display W TYM
             // SAMYM momencie co odsłonięcie Hosta (HOST_COVER_CHANGED,
             // obsłużone niżej dla host2, Display samo o tym nie wie).
-            // engine.js's START_P2_ROUND emituje teraz "reveal" (wcześniej
-            // ta akcja była całkiem bezdźwięczna, mimo realnej animacji —
-            // zgłoszone) — animacja odsłonięcia trwa dokładnie tyle, ile on.
-            const revealMs = await timing.dur("reveal");
+            // Zgłoszone wprost: "między F7 i F8 miał być dźwięk przejścia
+            // rundy plus odsłonięcie" — engine.js's START_P2_ROUND emituje
+            // teraz "round_transition" (synced combo z "reveal", ta sama
+            // kombinacja co START_ROUND/F7-wejście, NIE samo "reveal").
+            // offsetMs to czas ZANIM "reveal" zacznie grać (nic się jeszcze
+            // nie zmienia na ekranie — plansza zostaje zamaskowana), animIn
+            // zaczyna się dokładnie wtedy, kiedy zaczyna grać "reveal", i
+            // trwa dokładnie tyle co on.
+            const { offsetMs, revealMs } = await timing.revealSyncSplit("round_transition");
+            if (offsetMs > 0) await new Promise((resolve) => setTimeout(resolve, offsetMs));
             const f = nextRow.detail.final;
             const rows = Array.from({ length: 5 }, (_, i) => {
               const m1 = f.runtime.map1[i];
