@@ -24,7 +24,11 @@ const SOURCE_EXT = ['.html', '.js', '.json', '.css', '.webmanifest'];
 // dopasowywał się też do składni JSON `"klucz": "cli.js"` w polach "bin"
 // w tests/package-lock.json, dopisując tam "?v=..." i psując binarkę
 // playwright w CI (npm ci przechodziło, ale bin/playwright nie istniał).
-const IGNORE_DIRS = ['.git', 'node_modules', '.claude', '.qwen', '.github', 'audio', 'img', 'tests'];
+// "audio" NIE jest tu pomijane: audio/sounds.json to plik źródłowy (odsyła
+// do plików .mp3 przez pole "file") i musi być wersjonowany jak każdy inny
+// JSON. "img" zostaje pominięte — zawiera wyłącznie binarne obrazy, żadnych
+// plików źródłowych do przeskanowania.
+const IGNORE_DIRS = ['.git', 'node_modules', '.claude', '.qwen', '.github', 'img', 'tests'];
 
 /**
  * Rekurencyjnie pobiera listę plików do przetworzenia
