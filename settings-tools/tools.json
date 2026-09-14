@@ -11,6 +11,10 @@
     {
       "title": "Kora — builder 3×10",
       "path": "/settings-tools/kora-builder.html"
+    },
+    {
+      "title": "Theme Builder (edytor motywów)",
+      "path": "/settings-tools/theme_builder.html"
     }
   ]
 }
