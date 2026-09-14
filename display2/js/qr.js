@@ -3,4 +3,4 @@
 // display.html) — to jest czysty kontroler DOM, zero związku z systemem
 // komend tekstowych, więc reużywamy dosłownie ten sam plik co dzisiejszy
 // display.html zamiast pisać drugą kopię tej samej logiki.
-export { createQRController } from "../../display/js/qr.js?v=v2026-09-14T21091";
+export { createQRController } from "../../display/js/qr.js?v=v2026-09-14T21125";
