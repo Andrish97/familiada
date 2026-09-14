@@ -261,10 +261,29 @@ function _fadeVolume(a, ct, dur, target) {
 
 function _startFade(key, a) {
   _cancelFade(key);
+  // Zgłoszone: sam początek pojedynczego dźwięku (np. "reveal" przy
+  // odsłonięciu, "round_transition" przy przejściu rundy) brzmi "brzydko" —
+  // znaleziony realny mechanizm: fade-in liczony był z a.currentTime, a NIE
+  // z czasu, który faktycznie upłynął. `a.currentTime` tuż po `a.play()`
+  // potrafi stać w miejscu (na 0) przez pierwsze kilka klatek RAF, dopóki
+  // silnik audio faktycznie nie zacznie odtwarzać zbuforowanego dźwięku,
+  // a POTEM skoczyć naraz do wartości odpowiadającej realnie upłynionemu
+  // czasowi — przy domyślnym, krótkim oknie fade-in (dolny próg 80ms, patrz
+  // FADE_IN_MIN) to właśnie te pierwsze klatki decydują o całym efekcie:
+  // zamiast płynnej rampy 0->docelowa głośność, głośność stoi w miejscu,
+  // POTEM skacze od razu na wysoką wartość — słyszalne jako "brzydki",
+  // nierówny start zamiast miękkiego wejścia. Poprawka: fade-in (i fade-out,
+  // dla spójności z tą samą funkcją) liczone z zegara ściennego
+  // (performance.now() od chwili wywołania play()), który narasta gładko
+  // klatka po klatce niezależnie od wewnętrznego, czasem "zacinającego się"
+  // zegara samego elementu <audio> — a.currentTime zostaje użyte wyłącznie
+  // do poznania a.duration (już i tak przekazywanego osobno).
+  const startedAt = performance.now();
   function tick() {
     if (!a || a.paused || a.ended) { _fadeRafs.delete(key); return; }
     const target = _getEffectiveVolume(key); // czyta na żywo — reaguje na zmianę głośności
-    a.volume = Math.max(0, Math.min(1, _fadeVolume(a, a.currentTime, a.duration, target)));
+    const elapsed = (performance.now() - startedAt) / 1000;
+    a.volume = Math.max(0, Math.min(1, _fadeVolume(a, elapsed, a.duration, target)));
     _fadeRafs.set(key, requestAnimationFrame(tick));
   }
   _fadeRafs.set(key, requestAnimationFrame(tick));
