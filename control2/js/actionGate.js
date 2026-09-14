@@ -61,7 +61,7 @@ import {
   FINAL_OUT_ANIM,
   LOGO_IN_ANIM,
   LOGO_OUT_ANIM,
-} from "../../shared/displayAnim.js?v=v2026-09-14T14581";
+} from "../../shared/displayAnim.js?v=v2026-09-14T15152";
 
 const FALLBACK_S = 2; // metadane audio (jeszcze) niedostępne — bezpieczny domysł
 
