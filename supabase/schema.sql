@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict a1mYEHodBf87pKdX0obySdbt6k0egt97CfUqr1CZga3iCMS3bRbGnnbCVS2IHoJ
+\restrict aHhuoAqyqRN6UoeCcKZp08TM1Nu0IoCZ0NVWCh1s6ncsefO1LgJ7vIkxQehZXz5
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -2633,11 +2633,7 @@ begin
 
   if p_sound_cue_key is not null then
     v_next_sound_key := p_sound_cue_key;
-    if v_old.sound_cue_key is distinct from p_sound_cue_key then
-      v_next_sound_seq := coalesce(v_old.sound_cue_seq, 0) + 1;
-    else
-      v_next_sound_seq := coalesce(v_old.sound_cue_seq, 0);
-    end if;
+    v_next_sound_seq := coalesce(v_old.sound_cue_seq, 0) + 1;
   else
     v_next_sound_key := v_old.sound_cue_key;
     v_next_sound_seq := coalesce(v_old.sound_cue_seq, 0);
@@ -14946,5 +14942,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict a1mYEHodBf87pKdX0obySdbt6k0egt97CfUqr1CZga3iCMS3bRbGnnbCVS2IHoJ
+\unrestrict aHhuoAqyqRN6UoeCcKZp08TM1Nu0IoCZ0NVWCh1s6ncsefO1LgJ7vIkxQehZXz5
 
