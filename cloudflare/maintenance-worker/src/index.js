@@ -263,7 +263,7 @@ async function getState(env) {
 // js/ dla każdej strony: display/, display2/, control/, control2/, host2/,
 // buzzer2/, logo-editor/, base-explorer/...) i lista przybywa z każdą nową
 // stroną. Rozszerzenie jest stałe niezależnie od tego, gdzie plik leży.
-const STATIC_ASSET_RE = /\.(?:js|mjs|css|json|webmanifest|png|jpe?g|gif|svg|webp|avif|ico|woff2?|ttf|otf|eot|mp3|wav|ogg|mp4|webm)$/i;
+const STATIC_ASSET_RE = /\.(?:js|mjs|css|json|webmanifest|png|jpe?g|gif|svg|webp|avif|ico|woff2?|ttf|otf|eot|mp3|wav|ogg|mp4|webm|txt)$/i;
 
 // Jedyny wyjątek: /maintenance-state.json ma rozszerzenie .json, ale czyta
 // KV na żywo i musi zostać w normalnej bramce (patrz PUBLIC STATE ENDPOINT
