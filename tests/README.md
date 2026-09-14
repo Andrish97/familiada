@@ -65,6 +65,11 @@ osobno.
   zalogowanych stron naraz (np. subskrypcje). **Hasło to to samo
   `TEST_PASSWORD` co dla `TEST_USERNAME`** — nie ma osobnego
   `TEST_PASSWORD_2`, oba konta mają wspólne hasło.
+- `CONTROL2_TEST_ACCOUNTS` — **opcjonalny**, tylko dla `control2.spec.js`.
+  Lista loginów po przecinku, wspólne `TEST_PASSWORD`. Patrz sekcja
+  "Równoległość `control2.spec.js`" niżej — bez tego sekretu ten plik
+  po prostu pada z powrotem na samo `TEST_USERNAME` (1 worker, jak reszta
+  testów).
 
 **Cloudflare Worker** (`familiada`, `cloudflare/maintenance-worker`):
 - `E2E_BYPASS_SECRET` — ta sama wartość co w GitHub Actions. Ustawiane
@@ -127,6 +132,41 @@ wzorzec zamiast całego zestawu:
 Puste pole = wszystkie testy. Lokalnie to samo bez żadnego dodatkowego
 ustawienia: `npx playwright test e2e/nazwa-testu.spec.js`.
 
+## Równoległość `control2.spec.js` — pula kont testowych
+
+Reguła "testy na współdzielonym `TEST_USERNAME` muszą iść sekwencyjnie"
+(patrz `workers: 1` w `playwright.config.js` i sekcja "Pułapki" niżej)
+nadal obowiązuje dla wszystkich pozostałych plików. `control2.spec.js` ma
+jednak osobny, dedykowany job w CI (`e2e-control2` w
+`.github/workflows/e2e-tests.yml`) z **własną, skalowalną pulą kont** —
+bo to jedyny plik na tyle ciężki (pełne rozgrywki przez 4 urządzenia,
+realne wygaśnięcie timerów finału ~15-20s), żeby prawdziwa równoległość
+w jego przypadku była warta zachodu.
+
+**Mechanizm:**
+- Sekret `CONTROL2_TEST_ACCOUNTS` = loginy po przecinku, np.
+  `a@przyklad.pl,b@przyklad.pl,c@przyklad.pl` (hasło wspólne,
+  `TEST_PASSWORD`, tak jak `TEST_USERNAME_2`).
+- Job `e2e-control2` liczy w locie długość tej listy i odpala
+  `npx playwright test e2e/control2.spec.js --workers=<liczba kont>`.
+- `loginAsControl2TestUser(page, context, testInfo.parallelIndex)`
+  (`e2e/helpers/login.js`) wybiera konto z puli po indeksie workera —
+  każdy równoległy worker loguje się na **inne** konto, więc nikt nie czeka
+  w kolejce za cudzym logowaniem (to właśnie ten wyścig, przez który reszta
+  testów ma `workers: 1`).
+
+**Skalowanie — wzorzec zawsze ten sam, zmienia się tylko liczba kont**:
+chcesz więcej równoległości → załóż więcej kont testowych na produkcji i
+dopisz je do treści sekretu `CONTROL2_TEST_ACCOUNTS`, oddzielone
+przecinkiem. Nic więcej się nie zmienia — ani w workflow, ani w kodzie
+testów, ani w `login.js`. Realnie sensowny zakres to gdzieś do ~10 kont
+(control2.spec.js ma 16 testów — przy 10 workerach większość i tak
+dostaje 1-2 testy, więc powyżej tego liczba kont przestaje realnie skracać
+czas, a tylko mnoży liczbę równoległych sesji na tej samej produkcji).
+Brak sekretu albo pusta wartość = pula jednoelementowa (samo
+`TEST_USERNAME`), `workers=1` — dokładnie dzisiejsze zachowanie, więc nic
+się nie psuje, jeśli sekretu nie dodasz.
+
 ## Pułapki, na które łatwo wpaść (znalezione przy pierwszym realnym przebiegu)
 
 Bot Fight Mode blokował ruch przez wszystkie pierwsze przebiegi CI, więc
@@ -158,6 +198,10 @@ strony. Zapisane tu, żeby nie trzeba było ich znowu wyłapywać po kolei:
   samo konto testowe powodowały niedeterministyczne błędy (raz timeout
   logowania, raz "zawieszony" modal), bo sesje się gryzły. Jeśli kiedyś
   dojdzie tu drugi test na `loginAsTestUser`, zostaw `workers: 1`.
+  **Wyjątek: `control2.spec.js`** ma własny job z pulą kont i realnym
+  `--workers` > 1 — patrz sekcja "Równoległość `control2.spec.js`" wyżej;
+  to działa właśnie dlatego, że każdy worker dostaje inne konto, nie to
+  samo.
 - **Selektor karty gry musi być zawężony do `#grid`.** Sam kontener karty
   ma klasę `.card`, ale ma ją też otaczający panel `.card.builder-card`
   w `builder.html` — goły `.card` łapie oba i Playwright rzuca strict
@@ -222,6 +266,13 @@ Dodatkowe różnice gościa, nieblokujące UI, ale istotne dla testów:
   przycisk "Wejdź jako gość", też przez prawdziwy formularz + bypass.
   Gość ma osobne ograniczenia w appce — używaj tego trybu gdy test ma
   sprawdzać właśnie te ograniczenia.
+- `loginAsControl2TestUser(page, context, workerIndex)` — **tylko
+  `control2.spec.js`**. Loguje na konto wybrane z puli
+  `CONTROL2_TEST_ACCOUNTS` po `workerIndex` (przekaż
+  `testInfo.parallelIndex`) — patrz sekcja "Równoległość
+  `control2.spec.js`" wyżej. Nowy test w tym pliku ma używać tego trybu,
+  nie zwykłego `loginAsTestUser` — inaczej wraca do szeregowego
+  logowania na jedno, stałe konto.
 
   **Każdy test używający `loginAsGuest` musi na końcu sam usunąć to
   konto** (przez prawdziwy UI flow — `#deleteAccount` +
