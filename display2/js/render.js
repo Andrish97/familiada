@@ -284,8 +284,30 @@ export function createRenderer({ scene, qr }) {
             const isFirstRound = nextRow.detail.rounds.roundNo === 1;
             if (isFirstRound) await api.logo.hide(LOGO_OUT_ANIM);
             await paintRoundsBoard(nextRow, { animIn: ROUND_INTRO_ANIM, animOut: isFirstRound ? null : ROUND_OUT_ANIM });
+          } else if (ev.to === "r_roundStart" && ev.from === "r_play") {
+            // R9 (koniec WŁAŚNIE ROZEGRANEJ rundy, bez finału/końca gry) —
+            // zgłoszone: LEFT/RIGHT mają skoczyć na nowe wyniki DOSŁOWNIE w
+            // momencie dźwięku końca rundy (reveal+round_transition), nie
+            // dopiero przy "Start rundy" NASTĘPNEJ rundy. Ta gałąź wcześniej
+            // w ogóle nie istniała — engine.js's finalizeRound() dolicza
+            // bank×mnożnik do totals PRZED tym przejściem (patrz END_ROUND/
+            // NEXT_AFTER_REVEAL), ale nic tu nigdy nie kazało Displayowi tego
+            // przerysować, więc stare wyniki wisiały na małych cyfrach aż do
+            // kolejnego kliknięcia operatora — kompletnie oderwane od
+            // dźwięku, który miał je "zapowiadać". Sama duża plansza (z
+            // ostatniej rundy) świadomie zostaje bez zmian — animOut dopiero
+            // przy starcie następnej rundy (gałąź wyżej), dokładnie jak w
+            // planie (sekcja 2a: R6-R7 aktualizuje tylko LEFT/RIGHT/TOP,
+            // R1->R2 dopiero chowa/pokazuje planszę).
+            api.small.topDigits("000");
+            paintTotals(nextRow);
           } else if (ev.to === "r_gameEnd" || ev.to === "f_start") {
             await api.big.animOut(ROUND_OUT_ANIM);
+            // Ten sam powód co w gałęzi r_roundStart wyżej — totals mają być
+            // aktualne od razu, nie dopiero po GAME_ENDED (osobny, późniejszy
+            // klik "Zakończ grę"/"Pokaż koniec gry").
+            api.small.topDigits("000");
+            paintTotals(nextRow);
             if (ev.to === "f_start") await paintFinalBoard(nextRow, { animIn: FINAL_BOARD_ANIM });
           } else if (ev.to === "f_p1_entry" && ev.from === "f_start") {
             // control/js/gameFinal.js's startFinal(): zapowiedź "15" po
@@ -321,6 +343,22 @@ export function createRenderer({ scene, qr }) {
           } else if (ev.to === "r_intro") {
             paintTeamNames(nextRow);
             await api.logo.show();
+          }
+          break;
+        // engine.js's END_ROUND (R6-R7) rusza WCZEŚNIEJ niż STEP_CHANGE do
+        // r_roundStart/r_gameEnd/f_start powyżej, gdy zostały jeszcze
+        // nieodsłonięte odpowiedzi — step zostaje "r_play", zmienia się
+        // tylko phase (PLAY/STEAL -> REVEAL), więc to jedyny sygnał na tę
+        // chwilę. Bank×mnożnik jest w totals i TOP=0 już w samym engine.js
+        // (patrz END_ROUND) — ten sam totals/TOP-reset co w gałęziach
+        // r_roundStart/r_gameEnd/f_start wyżej, tylko wywołany wcześniej, bo
+        // tu kończy się runda BEZ R8 do przejścia. Bez tego LEFT/RIGHT
+        // pokazywały stare wyniki przez CAŁY czas odkrywania reszty (R8),
+        // mimo że dźwięk końca rundy już zagrał.
+        case "PHASE_CHANGE":
+          if (ev.to === "REVEAL") {
+            api.small.topDigits("000");
+            paintTotals(nextRow);
           }
           break;
         case "CONTROL_CHANGED":

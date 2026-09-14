@@ -421,7 +421,7 @@ test("control2: reset pojedynku, pass, kradzież wygrana/przegrana, odkrywanie r
     await expect(page.locator(".stepTitle")).toHaveText("Urządzenia", { timeout: 15000 });
 
     const buzzerPage = await openAnon(browser, contexts, `/buzzer2?id=${game.id}&key=${game.share_key_buzzer}`, "buzzer", errors);
-    await openAnon(browser, contexts, `/display2?id=${game.id}&key=${game.share_key_display}`, "display", errors);
+    const displayPage = await openAnon(browser, contexts, `/display2?id=${game.id}&key=${game.share_key_display}`, "display", errors);
     await openAnon(browser, contexts, `/host2?id=${game.id}&key=${game.share_key_host}`, "host", errors);
 
     await page.getByRole("button", { name: "Dalej" }).click();
@@ -454,6 +454,21 @@ test("control2: reset pojedynku, pass, kradzież wygrana/przegrana, odkrywanie r
     await expect(page.getByText("Bank: 70")).toBeVisible({ timeout: 10000 });
 
     await page.getByRole("button", { name: "Zakończ rundę" }).click();
+
+    // Zgłoszone: wynik na Wyświetlaczu (LEFT/RIGHT) ma skoczyć na nowy wynik
+    // DOSŁOWNIE w momencie dźwięku końca rundy — nie dopiero przy starcie
+    // NASTĘPNEJ rundy. Sprawdzone TU, W TRAKCIE R8 (jeszcze przed
+    // odsłonięciem #3), żeby złapać regresję na wcześniejszy brak
+    // jakiejkolwiek obsługi tego przejścia w display2/js/render.js.
+    await expect.poll(async () => {
+      const calls = await getDisplayCalls(displayPage, "api.small.rightDigits");
+      return calls.at(-1)?.args?.[0];
+    }, { timeout: 10000 }).toBe("70");
+    await expect.poll(async () => {
+      const calls = await getDisplayCalls(displayPage, "api.small.leftDigits");
+      return calls.at(-1)?.args?.[0];
+    }, { timeout: 10000 }).toBe("0");
+
     await revealAnswer(page, 3); // #3 nieodkryte -> R8
 
     // Zgłoszone: ostatnie odsłonięcie w R8 NIE MA już samo odpalać ekranu
