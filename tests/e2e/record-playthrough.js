@@ -87,16 +87,14 @@ async function restoreDemoGame(setupPage, { pickOrds = [], settings = {}, finalA
     const byQ = new Map(questions.map((q) => [q.id, { ...q, answers: [] }]));
     for (const a of answers) byQ.get(a.question_id)?.answers.push(a);
 
-    // Scenariusze zakładają DOKŁADNIE 5 odpowiedzi na pytanie rundy (jak
-    // dawna syntetyczna fixtura, "pytanie nie może mieć 3 odpowiedzi" —
-    // 5 to minimum realistycznej rundy) — realne demo ma ich 6; usuwamy
-    // najsłabszą (ord=6, najniższe punkty), żeby istniejąca logika klikania
-    // (tile 1..5, "wszystko odsłonięte" po piątej) działała bez zmian.
+    // Zgłoszone wprost: "nie zmieniaj progu punktów... rozgrywka ma być
+    // naturalna" — treść demo NIE jest tu w żaden sposób modyfikowana
+    // (wszystkie 6 odpowiedzi, realne punkty sumujące się do 100), a próg
+    // (finalMinPoints) zostaje domyślny (300, shared/gameStateShape.js), o
+    // ile scenariusz go jawnie nie nadpisze.
     const picked = pickOrds.map((ord) => byQ.get(questions.find((q) => q.ord === ord)?.id));
     for (const q of picked) {
       if (!q) throw new Error("nie znaleziono pytania demo o żądanym ord");
-      const weakest = q.answers.find((a) => a.ord === 6);
-      if (weakest) await sb.from("answers").delete().eq("id", weakest.id);
     }
 
     let finalPicked = [];
@@ -182,39 +180,17 @@ async function releaseLogoLockExternally(setupPage, logoId, tabId) {
 }
 
 // Które z 16 realnych pytań demo (supabase/migrations/2026-03-09_040_
-// demo_in_db.sql, lang="pl", slot="prepared" — 6 odpowiedzi każde, sumujące
-// się do 100 pkt) idzie do której rundy każdego scenariusza — restoreDemoGame()
-// wyżej usuwa dla KAŻDEGO z nich najsłabszą, 6. odpowiedź (więc realny bank
-// pełnej rundy to 100 minus ta jedna wartość, nie równe 100 — stąd konkretne
-// liczby w komentarzach niżej, PRZELICZONE z rzeczywistej treści migracji,
-// nie zgadywane). Scenariusze BEZ progu (1/6/7) nie są wrażliwe na dokładne
-// punkty — dowolne różne pytania wystarczą, byle #1 (ord odpowiedzi) było
-// zawsze topowe (co w realnym demo jest zawsze prawdą — odpowiedzi są tam
-// posortowane malejąco po fixed_points).
-//
-//   ord=1 (Podaj coś, co ludzie robią zaraz po przebudzeniu): 38,24,18,11,6 (bez 3) = 97
-//   ord=2 (Podaj coś, co zabiera się na wakacje):              34,26,18,12,6 (bez 4) = 96
-//   ord=3 (Podaj powód spóźnienia do pracy lub szkoły):        42,23,15,9,7  (bez 4) = 96
-//   ord=4 (Podaj coś, co kupisz na stacji benzynowej):         40,22,17,11,6 (bez 4) = 96
-//   ord=5 (Podaj zwierzę, którego ludzie się boją):            44,26,13,7,6  (bez 4) = 96
-//   ord=6 (Wymień coś, co robi się codziennie w kuchni):       33,27,18,11,7 (bez 4) = 96
-//   ord=9 (Podaj miejsce, gdzie nie wypada mówić głośno):      36,28,17,8,7  (bez 4) = 96
-//   ord=10 (Podaj coś, co często się gubi):                    43,24,14,10,6 (bez 3) = 97
-//   ord=11 (Wymień domowy obowiązek...):                       37,23,16,13,7 (bez 4) = 96
-
-// Scenariusz "progresja + próg" (2/3): R1=96 (ord3), R2=96 (ord4), R3=96
-// (ord5) — mnożnik rund 1-3 domyślnie ×1 (shared/gameStateShape.js's
-// DEFAULT_SETTINGS.roundMultipliers=[1,1,1,2,3]) — kumulatywnie 96/192/288.
-// finalMinPoints=250 (poniżej domyślnego 300, żeby scenariusz nie musiał
-// grać 4-5 rund) trafiony dopiero PO R3 (192<250<=288), nigdy wcześniej.
-const PROGRESSION_ROUND_ORDS = [3, 4, 5];
-const PROGRESSION_FINAL_MIN_POINTS = 250;
-
-// Scenariusze "final" (4/5): JEDNA runda musi sama przekroczyć próg —
-// ord=6 daje bank=96, więc finalMinPoints=90 (poniżej tego) trafiony od
-// razu po pierwszej rundzie, jak w oryginalnym (syntetycznym) FINAL_SETUP_ROUND.
-const FINAL_SETUP_ROUND_ORD = 6;
-const FINAL_SETUP_MIN_POINTS = 90;
+// demo_in_db.sql, lang="pl", slot="prepared" — 6 odpowiedzi każde, realnie
+// sumujące się do 100 pkt) idzie do której rundy każdego scenariusza.
+// Zgłoszone wprost: "nie zmieniaj progu punktów... rozgrywka ma być
+// naturalna" — treść demo NIE jest tu w żaden sposób modyfikowana (ŻADNA
+// odpowiedź nie jest usuwana, próg (finalMinPoints) zostaje domyślny — 300,
+// shared/gameStateShape.js) — więc "naturalne" 3 pełne rundy po 100 pkt
+// (mnożnik rund 1-3 domyślnie ×1, DEFAULT_SETTINGS.roundMultipliers=
+// [1,1,1,2,3]) dają kumulatywnie 100/200/300: próg trafiony dopiero na
+// końcu 3. rundy, nigdy wcześniej — bez żadnego ręcznego strojenia ustawień.
+const PROGRESSION_ROUND_ORDS = [3, 4, 5]; // scenariusz "progresja + próg" (2/3)
+const FINAL_SETUP_ROUND_ORDS = [6, 7, 8]; // scenariusze "final" (4/5) — ten sam wzorzec, inne pytania
 
 // Dwie rundy scenariusza 6 (zerwanie i ponowne podłączenie) — bez progu,
 // dowolne dwa różne pytania.
@@ -614,11 +590,12 @@ async function scenarioRoundsMechanics(pages) {
   await armAndConfirmPaced(answerTile(control, 2)); // B kradnie WYGRANĄ
   await clickPaced(control.getByRole("button", { name: "Zakończ rundę" }));
   await control.waitForTimeout(2000); // widz ma zdążyć zobaczyć zaktualizowany wynik przed startem kolejnej rundy
-  // Dosłanianie reszty — 5 odpowiedzi, ord 1-2 już odsłonięte (pojedynek+kradzież),
-  // zostają 3-4-5.
+  // Dosłanianie reszty — 6 odpowiedzi, ord 1-2 już odsłonięte (pojedynek+kradzież),
+  // zostają 3-4-5-6.
   await armAndConfirmPaced(answerTile(control, 3));
   await armAndConfirmPaced(answerTile(control, 4));
   await armAndConfirmPaced(answerTile(control, 5));
+  await armAndConfirmPaced(answerTile(control, 6));
   // Po odsłonięciu WSZYSTKIEGO w R8 przycisk "Zakończ rundę" już nie
   // wystarcza — dochodzi kontekstowo podpisany krok pośredni
   // (NEXT_AFTER_REVEAL, engine.js's r.roundEndDestination), zanim w ogóle
@@ -638,10 +615,11 @@ async function scenarioRoundsMechanics(pages) {
   await armAndConfirmPaced(control.getByRole("button", { name: "X", exact: true })); // B kradnie, ale PUDŁUJE -> kradzież PRZEGRANA
   await clickPaced(control.getByRole("button", { name: "Zakończ rundę" }));
   await control.waitForTimeout(2000); // widz ma zdążyć zobaczyć zaktualizowany wynik przed startem kolejnej rundy
-  // Dosłanianie reszty — ord 1-2 już odsłonięte, zostają 3-4-5.
+  // Dosłanianie reszty — ord 1-2 już odsłonięte, zostają 3-4-5-6.
   await armAndConfirmPaced(answerTile(control, 3));
   await armAndConfirmPaced(answerTile(control, 4));
   await armAndConfirmPaced(answerTile(control, 5));
+  await armAndConfirmPaced(answerTile(control, 6));
   // Tu docelowo jest koniec gry (bez finału), nie kolejna runda — ten sam
   // krok pośredni, ale kontekstowo inny label (r.roundEndDestination==="GAME_END").
   await clickPaced(control.getByRole("button", { name: "Przejdź do zakończenia gry" }));
@@ -651,9 +629,14 @@ async function scenarioRoundsMechanics(pages) {
   await control.waitForTimeout(4000); // zostaw ekran końcowy widoczny chwilę na nagraniu
 }
 
-// ===== Scenariusz 2/3: progresja przez KILKA rund aż do naturalnego
-// osiągnięcia progu (finalMinPoints, obniżony do PROGRESSION_FINAL_MIN_POINTS
-// — patrz PROGRESSION_ROUND_ORDS) — nie jeden sztuczny strzał na dużą liczbę punktów.
+// ===== Scenariusz 2/3: progresja przez 3 rundy aż do NATURALNEGO
+// osiągnięcia domyślnego progu (finalMinPoints=300, shared/gameStateShape.js)
+// — zgłoszone: "nie zmieniaj progu punktów... rozgrywka ma być naturalna".
+// Każda z 3 rund to inne, prawdziwe pytanie demo (PROGRESSION_ROUND_ORDS),
+// odsłonięte w CAŁOŚCI (6 odpowiedzi, realnie sumujące się do 100 —
+// zweryfikowane w treści migracji), mnożnik rund 1-3 domyślnie ×1
+// (DEFAULT_SETTINGS.roundMultipliers=[1,1,1,2,3]) — kumulatywnie
+// 100/200/300, próg trafiony DOPIERO na końcu 3. rundy, nigdy wcześniej.
 // Runda 2. dodatkowo pokazuje jedyną gałąź pojedynku, której nie było w
 // żadnym innym scenariuszu: pierwsza drużyna pudłuje, DRUGA wygrywa na
 // swojej próbie odpowiedzią NIE-topową, bez żadnego resetu (to inny
@@ -670,15 +653,16 @@ async function scenarioRoundsThreshold(pages, { expectFinal }) {
   await clickPaced(control.getByRole("button", { name: "Rozpocznij grę" }));
 
   // ===== RUNDA 1: pojedynek wygrany za pierwszym razem (bez pudła), potem
-  // wszystkie 5 odpowiedzi odsłonięte naturalnie w PLAY =====
+  // wszystkie 6 odpowiedzi odsłonięte naturalnie w PLAY =====
   await clickPaced(control.getByRole("button", { name: "Rozpocznij rundę" }));
   await clickPaced(buzzer.getByRole("button", { name: "Przycisk A" }));
   await clickPaced(control.getByRole("button", { name: "Zatwierdź: Alfa" }));
-  await armAndConfirmPaced(answerTile(control, 1)); // A trafia topową odpowiedź od razu -> wygrywa pojedynek (Pies, 40)
+  await armAndConfirmPaced(answerTile(control, 1)); // A trafia topową odpowiedź od razu -> wygrywa pojedynek
   await armAndConfirmPaced(answerTile(control, 2)); // odp. #2
   await armAndConfirmPaced(answerTile(control, 3)); // odp. #3
   await armAndConfirmPaced(answerTile(control, 4)); // odp. #4
-  await armAndConfirmPaced(answerTile(control, 5)); // odp. #5 -> wszystko odsłonięte -> koniec rundy pomija ekran dosłaniania
+  await armAndConfirmPaced(answerTile(control, 5)); // odp. #5
+  await armAndConfirmPaced(answerTile(control, 6)); // odp. #6 -> wszystko odsłonięte -> koniec rundy pomija ekran dosłaniania
   await clickPaced(control.getByRole("button", { name: "Zakończ rundę" }));
   await control.waitForTimeout(2000); // widz ma zdążyć zobaczyć zaktualizowany wynik przed startem kolejnej rundy
 
@@ -692,12 +676,13 @@ async function scenarioRoundsThreshold(pages, { expectFinal }) {
   await armAndConfirmPaced(answerTile(control, 1)); // odp. #1 (top, dosłaniane normalnie)
   await armAndConfirmPaced(answerTile(control, 3)); // odp. #3
   await armAndConfirmPaced(answerTile(control, 4)); // odp. #4
-  await armAndConfirmPaced(answerTile(control, 5)); // odp. #5 -> wszystko odsłonięte
+  await armAndConfirmPaced(answerTile(control, 5)); // odp. #5
+  await armAndConfirmPaced(answerTile(control, 6)); // odp. #6 -> wszystko odsłonięte
   await clickPaced(control.getByRole("button", { name: "Zakończ rundę" }));
   await control.waitForTimeout(2000); // widz ma zdążyć zobaczyć zaktualizowany wynik przed startem kolejnej rundy
 
   // ===== RUNDA 3: pojedynek wygrany za pierwszym razem, reszta w PLAY,
-  // dobicie do progu (180) =====
+  // dobicie do domyślnego progu (300) =====
   await clickPaced(control.getByRole("button", { name: "Rozpocznij rundę" }));
   await clickPaced(buzzer.getByRole("button", { name: "Przycisk A" }));
   await clickPaced(control.getByRole("button", { name: "Zatwierdź: Alfa" }));
@@ -705,8 +690,9 @@ async function scenarioRoundsThreshold(pages, { expectFinal }) {
   await armAndConfirmPaced(answerTile(control, 2)); // odp. #2
   await armAndConfirmPaced(answerTile(control, 3)); // odp. #3
   await armAndConfirmPaced(answerTile(control, 4)); // odp. #4
-  await armAndConfirmPaced(answerTile(control, 5)); // odp. #5 -> wszystko odsłonięte
-  await clickPaced(control.getByRole("button", { name: "Zakończ rundę" })); // próg (180) osiągnięty
+  await armAndConfirmPaced(answerTile(control, 5)); // odp. #5
+  await armAndConfirmPaced(answerTile(control, 6)); // odp. #6 -> wszystko odsłonięte
+  await clickPaced(control.getByRole("button", { name: "Zakończ rundę" })); // domyślny próg (300) osiągnięty
 
   if (expectFinal) {
     await clickPaced(control.getByRole("button", { name: "Rozpocznij finał" }));
@@ -714,6 +700,29 @@ async function scenarioRoundsThreshold(pages, { expectFinal }) {
   } else {
     await clickPaced(control.getByRole("button", { name: "Zakończ grę" }));
     await control.waitForTimeout(4000);
+  }
+}
+
+// Wspólne dla scenariuszy 4/5 — JEDNA runda (100 pkt) nie wystarcza, żeby
+// naturalnie osiągnąć domyślny próg (finalMinPoints=300, zgłoszone: "nie
+// zmieniaj progu punktów... rozgrywka ma być naturalna"), więc oba
+// scenariusze rozgrywają te same 3 pełne, proste rundy (pojedynek wygrany
+// od razu na topowej, reszta odsłonięta w PLAY) co scenariusz 2/3 — ten sam
+// mechanizm liczenia progu, inne (FINAL_SETUP_ROUND_ORDS) pytania.
+async function playThreeNaturalRoundsToThreshold(pages) {
+  const { control, buzzer } = pages;
+  for (let round = 1; round <= 3; round++) {
+    await clickPaced(control.getByRole("button", { name: "Rozpocznij rundę" }));
+    await clickPaced(buzzer.getByRole("button", { name: "Przycisk A" }));
+    await clickPaced(control.getByRole("button", { name: "Zatwierdź: Alfa" }));
+    await armAndConfirmPaced(answerTile(control, 1)); // odp. #1 (top) -> wygrywa pojedynek
+    await armAndConfirmPaced(answerTile(control, 2)); // odp. #2
+    await armAndConfirmPaced(answerTile(control, 3)); // odp. #3
+    await armAndConfirmPaced(answerTile(control, 4)); // odp. #4
+    await armAndConfirmPaced(answerTile(control, 5)); // odp. #5
+    await armAndConfirmPaced(answerTile(control, 6)); // odp. #6 -> wszystko odsłonięte
+    await clickPaced(control.getByRole("button", { name: "Zakończ rundę" })); // R3: domyślny próg (300) osiągnięty
+    await control.waitForTimeout(2000); // widz ma zdążyć zobaczyć zaktualizowany wynik przed startem kolejnej rundy
   }
 }
 
@@ -728,17 +737,8 @@ async function scenarioFinalFull(pages) {
   await clickPaced(control.getByRole("button", { name: "Dalej" }));
   await clickPaced(control.getByRole("button", { name: "Gotowe — przejdź do rund" }));
   await clickPaced(control.getByRole("button", { name: "Rozpocznij grę" }));
-  await clickPaced(control.getByRole("button", { name: "Rozpocznij rundę" }));
 
-  await clickPaced(buzzer.getByRole("button", { name: "Przycisk A" }));
-  await clickPaced(control.getByRole("button", { name: "Zatwierdź: Alfa" }));
-  await armAndConfirmPaced(answerTile(control, 1)); // odp. #1 (top) -> wygrywa pojedynek
-  await armAndConfirmPaced(answerTile(control, 2)); // odp. #2
-  await armAndConfirmPaced(answerTile(control, 3)); // odp. #3
-  await armAndConfirmPaced(answerTile(control, 4)); // odp. #4
-  await armAndConfirmPaced(answerTile(control, 5)); // odp. #5 -> wszystko odsłonięte, bank pełny -> próg osiągnięty
-  await clickPaced(control.getByRole("button", { name: "Zakończ rundę" }));
-  await control.waitForTimeout(2000); // widz ma zdążyć zobaczyć zaktualizowany wynik przed startem kolejnej rundy
+  await playThreeNaturalRoundsToThreshold(pages);
 
   await clickPaced(control.getByRole("button", { name: "Rozpocznij finał" }));
   await control.waitForTimeout(4000); // final_theme + reveal
@@ -832,17 +832,8 @@ async function scenarioFinalEarlyExit(pages) {
   await clickPaced(control.getByRole("button", { name: "Dalej" }));
   await clickPaced(control.getByRole("button", { name: "Gotowe — przejdź do rund" }));
   await clickPaced(control.getByRole("button", { name: "Rozpocznij grę" }));
-  await clickPaced(control.getByRole("button", { name: "Rozpocznij rundę" }));
 
-  await clickPaced(buzzer.getByRole("button", { name: "Przycisk A" }));
-  await clickPaced(control.getByRole("button", { name: "Zatwierdź: Alfa" }));
-  await armAndConfirmPaced(answerTile(control, 1)); // odp. #1 (top) -> wygrywa pojedynek
-  await armAndConfirmPaced(answerTile(control, 2)); // odp. #2
-  await armAndConfirmPaced(answerTile(control, 3)); // odp. #3
-  await armAndConfirmPaced(answerTile(control, 4)); // odp. #4
-  await armAndConfirmPaced(answerTile(control, 5)); // odp. #5 -> wszystko odsłonięte, bank pełny -> próg osiągnięty, wchodzimy w finał
-  await clickPaced(control.getByRole("button", { name: "Zakończ rundę" }));
-  await control.waitForTimeout(2000); // widz ma zdążyć zobaczyć zaktualizowany wynik przed startem kolejnej rundy
+  await playThreeNaturalRoundsToThreshold(pages);
 
   await clickPaced(control.getByRole("button", { name: "Rozpocznij finał" }));
   await control.waitForTimeout(4000); // final_theme + reveal
@@ -928,6 +919,7 @@ async function scenarioDeviceReconnect(pages, { contexts, browser }) {
   await armAndConfirmPaced(answerTile(control, 3));
   await armAndConfirmPaced(answerTile(control, 4));
   await armAndConfirmPaced(answerTile(control, 5));
+  await armAndConfirmPaced(answerTile(control, 6));
   await clickPaced(control.getByRole("button", { name: "Zakończ rundę" }));
   await control.waitForTimeout(2000);
 
@@ -941,6 +933,7 @@ async function scenarioDeviceReconnect(pages, { contexts, browser }) {
   await armAndConfirmPaced(answerTile(control, 3));
   await armAndConfirmPaced(answerTile(control, 4));
   await armAndConfirmPaced(answerTile(control, 5));
+  await armAndConfirmPaced(answerTile(control, 6));
   await clickPaced(control.getByRole("button", { name: "Zakończ rundę" }));
   await control.waitForTimeout(2000);
 
@@ -993,6 +986,7 @@ async function scenarioLogoLock(pages, { setupPage, logoId, logoLockTabId }) {
   await armAndConfirmPaced(answerTile(control, 3)); // odp. #3
   await armAndConfirmPaced(answerTile(control, 4)); // odp. #4
   await armAndConfirmPaced(answerTile(control, 5)); // odp. #5
+  await armAndConfirmPaced(answerTile(control, 6)); // odp. #6
   await clickPaced(control.getByRole("button", { name: "Zakończ rundę" }));
   await control.waitForTimeout(2000);
   await clickPaced(control.getByRole("button", { name: "Zakończ grę" }));
@@ -1014,37 +1008,26 @@ const SCENARIOS = [
     file: "02-rundy-progresja-final.mp4",
     makeGame: (setupPage) => restoreDemoGame(setupPage, {
       pickOrds: PROGRESSION_ROUND_ORDS,
-      settings: { game: { hasFinal: true, advanced: { finalMinPoints: PROGRESSION_FINAL_MIN_POINTS } } },
+      settings: { game: { hasFinal: true } },
       finalAnswerPts: 15, // treść finału nieużywana (scenariusz zatrzymuje się na f_p1_entry) — wymagana tylko, żeby canEnterFinal() przepuściło
     }),
     run: (pages) => scenarioRoundsThreshold(pages, { expectFinal: true }),
   },
   {
     file: "03-rundy-progresja-bez-finalu.mp4",
-    makeGame: (setupPage) => restoreDemoGame(setupPage, {
-      pickOrds: PROGRESSION_ROUND_ORDS,
-      settings: { game: { advanced: { finalMinPoints: PROGRESSION_FINAL_MIN_POINTS } } },
-    }),
+    makeGame: (setupPage) => restoreDemoGame(setupPage, { pickOrds: PROGRESSION_ROUND_ORDS }),
     run: (pages) => scenarioRoundsThreshold(pages, { expectFinal: false }),
   },
   {
     file: "04-final-pelny.mp4",
-    makeGame: (setupPage) => restoreDemoGame(setupPage, {
-      pickOrds: [FINAL_SETUP_ROUND_ORD],
-      settings: { game: { advanced: { finalMinPoints: FINAL_SETUP_MIN_POINTS } } },
-      finalAnswerPts: 15,
-    }),
+    makeGame: (setupPage) => restoreDemoGame(setupPage, { pickOrds: FINAL_SETUP_ROUND_ORDS, finalAnswerPts: 15 }),
     run: scenarioFinalFull,
   },
   {
     // finalAnswerPts=250 > finalTarget domyślne (200) -> pierwsza trafiona
     // odpowiedź gracza 1 sama kończy finał wcześniej.
     file: "05-final-wczesne-zakonczenie.mp4",
-    makeGame: (setupPage) => restoreDemoGame(setupPage, {
-      pickOrds: [FINAL_SETUP_ROUND_ORD],
-      settings: { game: { advanced: { finalMinPoints: FINAL_SETUP_MIN_POINTS } } },
-      finalAnswerPts: 250,
-    }),
+    makeGame: (setupPage) => restoreDemoGame(setupPage, { pickOrds: FINAL_SETUP_ROUND_ORDS, finalAnswerPts: 250 }),
     run: scenarioFinalEarlyExit,
   },
   {
