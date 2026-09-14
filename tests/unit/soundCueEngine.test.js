@@ -71,6 +71,15 @@ test("start rundy 2 finału (f_p2_start) z cue round_transition też gra synced 
   assert.deepEqual(played.slice().sort(), ["reveal", "round_transition"].sort());
 });
 
+test("F7->F8 (START_P2_ROUND, f_p2_start -> f_p2_entry) z cue round_transition gra synced combo z reveal — zgłoszone: 'dźwięk przejścia rundy plus odsłonięcie'", async () => {
+  const { engine, played } = makeEngine();
+  const a = row({ step: "f_p2_start", sound_cue_seq: 0 });
+  const b = row({ step: "f_p2_entry", sound_cue_seq: 1, sound_cue_key: "round_transition" });
+  engine.handleTransition(a, b);
+  await flush();
+  assert.deepEqual(played.slice().sort(), ["reveal", "round_transition"].sort());
+});
+
 test("koniec rundy (step r_play, phase PLAY -> dowolny) z cue round_transition gra SEKWENCYJNIE: reveal, potem round_transition", async () => {
   const { engine, played } = makeEngine({ reveal: 0.05 });
   const a = row({ step: "r_play", phase: "PLAY", sound_cue_seq: 0 });

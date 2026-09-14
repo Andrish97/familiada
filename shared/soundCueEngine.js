@@ -9,12 +9,15 @@
 // wstrzykiwanymi przez wywołującego — testowalne bez window/document,
 // tak jak deriveEvents.js.
 //
-// Cztery miejsca w control/js/gameRounds.js i gameFinal.js nakładają DWA
+// Pięć miejsc w control/js/gameRounds.js i gameFinal.js nakłada DWA
 // dźwięki na jedną zmianę zamiast jednego bare cue — sprawdzone linia po
 // linii, żeby nie zgadywać (patrz oryginalny komentarz w
 // control2/js/soundReactor.js, historia niezmieniona):
-//   - R1->R2 (startRound) i F7 (toP2Start): "round_transition"+"reveal"
-//     ZSYNCHRONIZOWANE na koniec.
+//   - R1->R2 (startRound), F7-wejście (toP2Start, NEXT_QUESTION -> f_p2_start)
+//     i F7->F8 (START_P2_ROUND, "Start rundy 2"): "round_transition"+"reveal"
+//     ZSYNCHRONIZOWANE na koniec — to samo "przejście rundy + odsłonięcie",
+//     zgłoszone wprost dla F7->F8 (wcześniej ta akcja niesłusznie grała samo
+//     "reveal", bez "round_transition").
 //   - R6-R7 (goEndRound): "reveal" najpierw, "round_transition" po nim.
 //   - F0 (startFinal): "final_theme" najpierw, "reveal" po nim.
 //   - F14 (finishFinal): synced "round_transition"+"reveal", a PO całej
@@ -68,12 +71,17 @@ export function createSoundCueEngine({ playSfx, getSfxDuration }) {
     // wyglądać identycznie w obu przypadkach, nie tylko gdy nic nie było do
     // odsłonięcia.
     const isRoundEnd = prevRow.step === "r_play" && (prevRow.phase === "PLAY" || prevRow.phase === "STEAL" || prevRow.phase === "REVEAL");
-    // F7: NEXT_QUESTION -> f_p2_start niesie ten sam klucz "round_transition",
-    // ale to synced-combo jak start rundy, nie koniec.
+    // F7-wejście: NEXT_QUESTION -> f_p2_start niesie ten sam klucz
+    // "round_transition", ale to synced-combo jak start rundy, nie koniec.
     const isFinalP2Start = nextRow.step === "f_p2_start";
+    // F7->F8: START_P2_ROUND ("Start rundy 2") — DOSŁOWNIE przejście do
+    // kolejnej rundy finału, ta sama synced-combo co R1->R2/F7-wejście
+    // (zgłoszone: "między F7 i F8 miał być dźwięk przejścia rundy plus
+    // odsłonięcie" — nie samo "reveal").
+    const isP2RoundReveal = prevRow.step === "f_p2_start" && nextRow.step === "f_p2_entry";
     for (const ev of events) {
       if (ev.kind !== "SOUND_CUE" || !ev.key) continue;
-      if (ev.key === "round_transition" && (isRoundStart || isFinalP2Start)) playSyncedCombo("round_transition", "reveal");
+      if (ev.key === "round_transition" && (isRoundStart || isFinalP2Start || isP2RoundReveal)) playSyncedCombo("round_transition", "reveal");
       else if (ev.key === "round_transition" && isRoundEnd) playSequentialCombo("reveal", "round_transition");
       else if (ev.key === "final_theme") playSequentialCombo("final_theme", "reveal");
       else if (ev.key === "final_end") playFinalEndCombo();

@@ -640,13 +640,17 @@ const REDUCERS = {
   // peek na urządzeniu Hosta (host2/js/render.js), nigdy zapis do
   // game_state. Display, w odróżnieniu od Hosta, dostaje pełne odsłonięcie
   // odpowiedzi gracza 1 przy starcie zegarka gracza 2 (patrz START_TIMER).
-  // soundCueKey "reveal": ta akcja dosłownie ODSŁANIA z powrotem odpowiedzi
-  // gracza 1 na Displayu — wcześniej była całkiem bezdźwięczna mimo realnej
-  // animacji (zgłoszone: "Animacja... zawsze = dźwięki" — bez dźwięku nie
-  // było z czego wyliczyć czasu tej animacji ani zablokować operatora na
-  // czas jej trwania, patrz control2/js/actionGate.js).
+  // soundCueKey "round_transition": zgłoszone wprost — "między F7 i F8 miał
+  // być dźwięk przejścia rundy plus odsłonięcie". To DOSŁOWNIE przejście do
+  // rundy 2 finału (ten sam rodzaj przejścia co R1->R2/F7-wejście), więc ta
+  // sama kombinacja "round_transition"+"reveal" zsynchronizowana na koniec
+  // (shared/soundCueEngine.js's isP2RoundReveal), nie samo "reveal" —
+  // wcześniej ta akcja była całkiem bezdźwięczna mimo realnej animacji
+  // (zgłoszone: "Animacja... zawsze = dźwięki" — bez dźwięku nie było z
+  // czego wyliczyć czasu tej animacji ani zablokować operatora na czas jej
+  // trwania, patrz control2/js/actionGate.js).
   async START_P2_ROUND(state) {
-    return { step: "f_p2_entry", phase: null, controlTeam: null, topCard: "final", soundCueKey: "reveal" };
+    return { step: "f_p2_entry", phase: null, controlTeam: null, topCard: "final", soundCueKey: "round_transition" };
   },
 
   // ---- F14: koniec finału ----

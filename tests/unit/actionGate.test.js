@@ -58,12 +58,20 @@ test("nieznany czas trwania (0/niezaładowane metadane) => bezpieczny fallback, 
   assert.equal(ms, 2000, "FALLBACK_S=2s, żeby nigdy nie zablokować na 0ms z powodu brakujących metadanych");
 });
 
-test("START_P2_ROUND: ma teraz soundCueKey 'reveal' (wcześniej było bezdźwięczne) => domyślna gałąź, gate = dur(reveal)", async () => {
-  const gate = makeGate({ reveal: 1.5 });
+test("START_P2_ROUND: teraz synced(round_transition,reveal) — 'dźwięk przejścia rundy plus odsłonięcie', nie samo 'reveal'", async () => {
+  const gate = makeGate({ round_transition: 0.4, reveal: 1.5 });
   const prev = row({ step: "f_p2_start", sound_cue_seq: 3 });
-  const next = row({ step: "f_p2_entry", sound_cue_key: "reveal", sound_cue_seq: 4 });
+  const next = row({ step: "f_p2_entry", sound_cue_key: "round_transition", sound_cue_seq: 4 });
   const ms = await gate.computeGateMs("START_P2_ROUND", prev, next);
-  assert.equal(ms, 1500, "ta sama liczba, którą display2/js/render.js liczy dla animIn tej samej akcji");
+  assert.equal(ms, 1500, "max(round_transition,reveal) — ta sama liczba, którą display2/js/render.js liczy dla animIn tej samej akcji");
+});
+
+test("START_P2_ROUND: round_transition dłuższy niż reveal", async () => {
+  const gate = makeGate({ round_transition: 2.2, reveal: 0.5 });
+  const prev = row({ step: "f_p2_start", sound_cue_seq: 3 });
+  const next = row({ step: "f_p2_entry", sound_cue_key: "round_transition", sound_cue_seq: 4 });
+  const ms = await gate.computeGateMs("START_P2_ROUND", prev, next);
+  assert.equal(ms, 2200);
 });
 
 test("GAME_END_SHOW: NIE jest już specjalnym przypadkiem — domyślna gałąź, gate = dur(show_intro)", async () => {
