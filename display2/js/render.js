@@ -10,7 +10,11 @@
 //   stan naraz, bez animacji (nie ma "poprzedniego" stanu do porównania).
 // - renderDiff(prevRow, nextRow): każda kolejna zmiana na żywo — liczy
 //   zdarzenia przez deriveEvents i dla każdego woła konkretny fragment
-//   `api` z animacją zaszytą na sztywno (tabelka z planu, sekcja 2/2a).
+//   `api` z animacją, której CZAS TRWANIA liczy się na żywo z rzeczywistego
+//   dźwięku (shared/transitionTiming.js), nie ze sztywnych stałych —
+//   zgłoszone wprost: "Pozbądźmy się sztywnych zapisanych ram czasowych...
+//   Animacja... zawsze = dźwięki". shared/displayAnim.js zostaje wyłącznie
+//   jako STYL (typ wjazdu/wyjazdu: matrix/edge, kierunek), nie jako czas.
 //
 // UWAGA: to pierwszy przebieg tego mapowania — pokrywa główne, najczęściej
 // używane ścieżki (start rundy, odsłonięcie odpowiedzi, X, kradzież, koniec
@@ -21,6 +25,7 @@
 
 import { deriveEvents } from "../../shared/deriveEvents.js?v=v2026-09-14T14592";
 import { resolveRoundsEndScreen, resolveFinalEndScreen } from "../../shared/endScreen.js?v=v2026-09-14T14592";
+import { createTransitionTiming } from "../../shared/transitionTiming.js?v=v2026-09-14T14592";
 import {
   ROUND_INTRO_ANIM,
   ROUND_OUT_ANIM,
@@ -33,7 +38,8 @@ import {
 
 function pad3(n) { return String(Math.max(0, Number(n) || 0)).padStart(3, " "); }
 
-export function createRenderer({ scene, qr }) {
+export function createRenderer({ scene, qr, getSfxDuration }) {
+  const timing = createTransitionTiming({ getSfxDuration });
   const { api } = scene;
   let timerHandle = null;
 
@@ -220,29 +226,43 @@ export function createRenderer({ scene, qr }) {
     api.indicator.set("OFF");
     api.small.topDigits("000");
     if (row.top_card === "rounds") {
+      // Bez finału: jedyny dźwięk tego kroku (GAME_END_SHOW) to "show_intro"
+      // — animacja logo/WIN trwa dokładnie tyle, ile on, nie sztywną liczbę.
+      const showIntroMs = await timing.dur("show_intro");
       const totals = row.detail.rounds.totals || { A: 0, B: 0 };
       const screen = resolveRoundsEndScreen(row.detail.settings, { isDraw: totals.A === totals.B, totals });
-      if (screen.kind === "logo") await api.logo.show(LOGO_IN_ANIM);
-      else await api.win.set(screen.amount, { animIn: LOGO_IN_ANIM });
+      if (screen.kind === "logo") await api.logo.show({ ...LOGO_IN_ANIM, ms: showIntroMs });
+      else await api.win.set(screen.amount, { animIn: { ...LOGO_IN_ANIM, ms: showIntroMs } });
       return;
     }
+    // Finał (FINISH_FINAL): dźwięk to synced("round_transition","reveal")
+    // + sequential "show_intro" (patrz shared/soundCueEngine.js). Zgłoszone
+    // wprost: "Animacja logo ma się zacząć wtedy, kiedy gra reveal" i
+    // "Punkty z drużyn przeskakują też na reveal" — offsetMs to czas ZANIM
+    // "reveal" zacznie grać (animOut planszy finału trwa dokładnie tyle),
+    // revealMs to czas samego "reveal" (logo/WIN i doliczony wynik finału
+    // pojawiają się W TYM MOMENCIE, trwając dokładnie tyle co on — kończą
+    // się razem z dźwiękiem, nie wcześniej/później).
+    const { offsetMs, revealMs } = await timing.revealSyncSplit("round_transition");
     // Sama plansza finału jest w tym momencie WCIĄŻ w pełni namalowana na
     // "big" (nic wcześniej jej nie chowa — inaczej niż r_gameEnd, gdzie
     // STEP_CHANGE do "r_gameEnd" już wcześniej odpalił animOut na etapie
     // "Zakończ rundę") — bez tego animOut logo/WIN rysowałoby się WPROST na
     // planszy finału, ten sam rodzaj artefaktu co naprawiony wcześniej przy
-    // pierwszej rundzie. Stary plan (sekcja 2a, F14): "FBATCH ANIMOUT edge
-    // down 1000" zawsze PRZED ekranem końcowym finału — osobna komenda od
-    // R10's RBATCH ANIMOUT, ale ten sam mechanizm (ROUND_OUT_ANIM).
-    await api.big.animOut(ROUND_OUT_ANIM);
+    // pierwszej rundzie.
+    await api.big.animOut({ ...ROUND_OUT_ANIM, ms: offsetMs });
+    // "reveal" zaczyna grać TERAZ — punkty (z doliczonym wynikiem finału,
+    // już w row.detail.rounds.totals — engine.js's FINISH_FINAL dolicza go
+    // PRZED tym zapisem) i logo/WIN pojawiają się w tym samym momencie.
+    paintTotals(row);
     const winnerTeam = row.detail.final.winnerTeam;
     const totals = row.detail.rounds.totals || { A: 0, B: 0 };
     const screen = resolveFinalEndScreen(row.detail.settings, {
       totalPointsAll: totals[winnerTeam] || 0,
       hitTarget: !!row.detail.final.runtime.reached200,
     });
-    if (screen.kind === "logo") await api.logo.show(LOGO_IN_ANIM);
-    else await api.win.set(screen.amount, { animIn: LOGO_IN_ANIM });
+    if (screen.kind === "logo") await api.logo.show({ ...LOGO_IN_ANIM, ms: revealMs });
+    else await api.win.set(screen.amount, { animIn: { ...LOGO_IN_ANIM, ms: revealMs } });
   }
 
   // ============================================================
@@ -280,6 +300,11 @@ export function createRenderer({ scene, qr }) {
   // to, co kiedyś sekwencjonował nadawca poleceń).
   async function renderDiff(prevRow, nextRow) {
     const events = deriveEvents(prevRow, nextRow);
+    // Jeden dispatch = jeden potwierdzony sound_cue_key dla CAŁEGO wiersza —
+    // odsłonięcia (odpowiedzi/punkty rund lub finału) animują się dokładnie
+    // tyle, ile trwa TEN dźwięk (answer_correct/answer_wrong/reveal, zależnie
+    // od kontekstu), zamiast sztywnej stałej ANSWER_ANIM.
+    const answerAnimMs = await timing.dur(nextRow.sound_cue_key);
     for (const ev of events) {
       switch (ev.kind) {
         case "SNAPSHOT_RENDER":
@@ -295,9 +320,19 @@ export function createRenderer({ scene, qr }) {
             // Kolejne rundy: najpierw ANIMOUT starej planszy, DOPIERO PO NIM
             // (setAll() sam sekwencjonuje wewnątrz) nowa SUMA...ANIMIN —
             // control/js/display.js's roundsBoardPlaceholdersNewRound().
+            // "round_transition"+"reveal" grają zsynchronizowane na koniec
+            // (shared/soundCueEngine.js's playSyncedCombo) — offsetMs to
+            // czas ZANIM "reveal" zacznie grać (tyle trwa logo.hide/stara
+            // plansza znikająca), revealMs to czas samego "reveal" (tyle
+            // trwa wjazd nowej planszy — zaczyna się dokładnie wtedy, kiedy
+            // zaczyna grać "reveal", i kończy się z nim razem).
+            const { offsetMs, revealMs } = await timing.revealSyncSplit("round_transition");
             const isFirstRound = nextRow.detail.rounds.roundNo === 1;
-            if (isFirstRound) await api.logo.hide(LOGO_OUT_ANIM);
-            await paintRoundsBoard(nextRow, { animIn: ROUND_INTRO_ANIM, animOut: isFirstRound ? null : ROUND_OUT_ANIM });
+            if (isFirstRound) await api.logo.hide({ ...LOGO_OUT_ANIM, ms: offsetMs });
+            await paintRoundsBoard(nextRow, {
+              animIn: { ...ROUND_INTRO_ANIM, ms: revealMs },
+              animOut: isFirstRound ? null : { ...ROUND_OUT_ANIM, ms: offsetMs },
+            });
           } else if (ev.to === "r_play" && ev.from === "r_duel") {
             // R2->R3 (ACCEPT_BUZZ): control_team zostaje null (dopiero PLAY
             // go ustawia), ale duel.currentTeam już wskazuje, kto ma teraz
@@ -322,13 +357,30 @@ export function createRenderer({ scene, qr }) {
             api.small.topDigits("000");
             paintTotals(nextRow);
           } else if (ev.to === "r_gameEnd" || ev.to === "f_start") {
-            await api.big.animOut(ROUND_OUT_ANIM);
+            // "reveal" gra od razu (shared/soundCueEngine.js's isRoundEnd:
+            // sequential "reveal" PRZED "round_transition") — zgłoszone:
+            // punkty mają przeskoczyć NA reveal, więc paintTotals leci PRZED
+            // animOut, nie po nim (animOut trwa tyle, ile realnie gra reveal
+            // — kończą się razem, zamiast animOut na sztywną, niezależną
+            // liczbę).
+            const revealMs = await timing.dur("reveal");
             // Ten sam powód co w gałęzi r_roundStart wyżej — totals mają być
             // aktualne od razu, nie dopiero po GAME_ENDED (osobny, późniejszy
             // klik "Zakończ grę"/"Pokaż koniec gry").
             api.small.topDigits("000");
             paintTotals(nextRow);
-            if (ev.to === "f_start") await paintFinalBoard(nextRow, { animIn: FINAL_BOARD_ANIM });
+            if (ev.to === "f_start") {
+              // Dwie animacje z rzędu (stara plansza znika, nowa plansza
+              // finału wjeżdża), ale tylko JEDEN relewantny dźwięk tutaj
+              // ("round_transition" gra już nad tym nowym ekranem, więc nie
+              // determinuje jego wjazdu) — podział na pół, żeby SUMA obu
+              // faz wciąż była dokładnie tyle, ile trwa "reveal", bez
+              // zmyślania osobnej stałej.
+              await api.big.animOut({ ...ROUND_OUT_ANIM, ms: revealMs / 2 });
+              await paintFinalBoard(nextRow, { animIn: { ...FINAL_BOARD_ANIM, ms: revealMs / 2 } });
+            } else {
+              await api.big.animOut({ ...ROUND_OUT_ANIM, ms: revealMs });
+            }
           } else if (ev.to === "f_p1_entry" && ev.from === "f_start") {
             // control/js/gameFinal.js's startFinal(): zapowiedź "15" po
             // stronie zwycięzcy, zanim operator w ogóle uruchomi timer.
@@ -340,14 +392,22 @@ export function createRenderer({ scene, qr }) {
             // którego deriveEvents nie diffuje jako CONTROL_CHANGED).
             applyIndicator(nextRow);
           } else if (ev.to === "f_p2_start") {
-            // Zamaskuj odpowiedzi gracza 1 z powrotem na placeholdery.
+            // Zamaskuj odpowiedzi gracza 1 z powrotem na placeholdery — sam
+            // dźwięk to wciąż synced("round_transition","reveal") (F7, ta
+            // sama kombinacja co START_ROUND), jedna faza (samo maskowanie,
+            // bez odpowiadającej animIn na tym kroku), więc pełny czas combo.
+            const maskMs = await timing.syncedMs("round_transition", "reveal");
             const rows = Array.from({ length: 5 }, () => ({ left: FINAL_TEXT_PLACEHOLDER, a: FINAL_PTS_PLACEHOLDER }));
-            await api.final.setHalf("A", { rows, animOut: FINAL_OUT_ANIM });
+            await api.final.setHalf("A", { rows, animOut: { ...FINAL_OUT_ANIM, ms: maskMs } });
           } else if (ev.to === "f_p2_entry" && ev.from === "f_p2_start") {
             // Naprawiona luka (uzgodniona z Tobą, patrz engine.js's
             // START_P2_ROUND): odpowiedzi gracza 1 wracają na Display W TYM
             // SAMYM momencie co odsłonięcie Hosta (HOST_COVER_CHANGED,
             // obsłużone niżej dla host2, Display samo o tym nie wie).
+            // engine.js's START_P2_ROUND emituje teraz "reveal" (wcześniej
+            // ta akcja była całkiem bezdźwięczna, mimo realnej animacji —
+            // zgłoszone) — animacja odsłonięcia trwa dokładnie tyle, ile on.
+            const revealMs = await timing.dur("reveal");
             const f = nextRow.detail.final;
             const rows = Array.from({ length: 5 }, (_, i) => {
               const m1 = f.runtime.map1[i];
@@ -356,7 +416,7 @@ export function createRenderer({ scene, qr }) {
                 a: m1?.revealedPoints ? String(m1.pts) : FINAL_PTS_PLACEHOLDER,
               };
             });
-            await api.final.setHalf("A", { rows, animIn: FINAL_BOARD_ANIM });
+            await api.final.setHalf("A", { rows, animIn: { ...FINAL_BOARD_ANIM, ms: revealMs } });
             // control/js/gameFinal.js's startP2Round(): zapowiedź "20" po
             // stronie zwycięzcy, ten sam mechanizm co przy f_p1_entry.
             showTimerPlaceholder(nextRow, "20");
@@ -389,7 +449,7 @@ export function createRenderer({ scene, qr }) {
           for (const ord of ev.ords) {
             const ans = r.answers.find((a) => a.ord === ord);
             if (!ans) continue;
-            api.rounds.setRow(ord, { text: ans.text, pts: String(ans.fixed_points), animIn: ANSWER_ANIM });
+            api.rounds.setRow(ord, { text: ans.text, pts: String(ans.fixed_points), animIn: { ...ANSWER_ANIM, ms: answerAnimMs } });
           }
           // R8 (odkrywanie reszty, phase REVEAL) jest czysto pokazowe —
           // bankPts się wtedy nie zmienia (control/js/display.js's
@@ -398,7 +458,7 @@ export function createRenderer({ scene, qr }) {
           // liczbę przy każdym kliknięciu w R8.
           const prevBank = prevRow.detail?.rounds?.bankPts ?? 0;
           if (r.bankPts !== prevBank) {
-            api.rounds.setSuma(String(r.bankPts ?? 0), { animIn: ANSWER_ANIM });
+            api.rounds.setSuma(String(r.bankPts ?? 0), { animIn: { ...ANSWER_ANIM, ms: answerAnimMs } });
             api.small.topDigits(pad3(r.bankPts));
           }
           // W pojedynku trafienie nie-topowej odpowiedzi oddaje głos DRUGIEJ
@@ -432,16 +492,16 @@ export function createRenderer({ scene, qr }) {
           break;
         case "FINAL_ANSWER_REVEALED": {
           const row = nextRow.detail.final.runtime[ev.round === 1 ? "map1" : "map2"][ev.idx];
-          if (ev.round === 1) api.final.setLeft(ev.idx + 1, row.outText, { animIn: ANSWER_ANIM });
-          else api.final.setRight(ev.idx + 1, row.outText, { animIn: ANSWER_ANIM });
+          if (ev.round === 1) api.final.setLeft(ev.idx + 1, row.outText, { animIn: { ...ANSWER_ANIM, ms: answerAnimMs } });
+          else api.final.setRight(ev.idx + 1, row.outText, { animIn: { ...ANSWER_ANIM, ms: answerAnimMs } });
           break;
         }
         case "FINAL_POINTS_REVEALED": {
           const f = nextRow.detail.final;
           const row = f.runtime[ev.round === 1 ? "map1" : "map2"][ev.idx];
-          if (ev.round === 1) api.final.setA(ev.idx + 1, String(row.pts), { animIn: ANSWER_ANIM });
-          else api.final.setB(ev.idx + 1, String(row.pts), { animIn: ANSWER_ANIM });
-          api.final.setSumaFor(ev.round === 1 ? "A" : "B", String(f.runtime.sum), { animIn: ANSWER_ANIM });
+          if (ev.round === 1) api.final.setA(ev.idx + 1, String(row.pts), { animIn: { ...ANSWER_ANIM, ms: answerAnimMs } });
+          else api.final.setB(ev.idx + 1, String(row.pts), { animIn: { ...ANSWER_ANIM, ms: answerAnimMs } });
+          api.final.setSumaFor(ev.round === 1 ? "A" : "B", String(f.runtime.sum), { animIn: { ...ANSWER_ANIM, ms: answerAnimMs } });
           break;
         }
         case "TIMER_STARTED":
