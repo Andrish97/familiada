@@ -198,26 +198,53 @@ export default {
   }
 };
 
+// Every request that isn't caught by an earlier route (including every
+// CSS/JS/image/audio asset on the main host) hits this gate, so a raw KV
+// read here multiplies into KV's daily operation quota many times over per
+// pageview. KV itself takes up to ~60s to propagate globally anyway, so a
+// short in-isolate cache trades that same order of staleness for a large
+// cut in KV reads.
+const STATE_CACHE_TTL_MS = 30_000;
+let _stateCache = null;
+let _stateCacheAt = 0;
+
+function setStateCache(state) {
+  _stateCache = state;
+  _stateCacheAt = Date.now();
+}
+
 async function getState(env) {
+  if (_stateCache && Date.now() - _stateCacheAt < STATE_CACHE_TTL_MS) {
+    return _stateCache;
+  }
+
   const raw = await env.MAINT_KV.get("state");
-  if (!raw) return { enabled: false, mode: "off", returnAt: null, customComments: { pl: null, en: null, uk: null }, useStandardText: true };
+  if (!raw) {
+    const empty = { enabled: false, mode: "off", returnAt: null, customComments: { pl: null, en: null, uk: null }, useStandardText: true };
+    setStateCache(empty);
+    return empty;
+  }
   try {
     const s = JSON.parse(raw);
     // minimal sanity
     if (typeof s.enabled !== "boolean") throw new Error("bad enabled");
-    
+
     // Migration from old single field to object
     let comments = s.customComments || { pl: s.customComment || null, en: null, uk: null };
-    
-    return {
+
+    const state = {
       enabled: s.enabled,
       mode: s.mode || "off",
       returnAt: s.returnAt ?? null,
       customComments: comments,
       useStandardText: s.useStandardText ?? (comments.pl || comments.en || comments.uk ? false : true)
     };
+    setStateCache(state);
+    return state;
   } catch {
-    return { enabled: false, mode: "off", returnAt: null, customComments: { pl: null, en: null, uk: null }, useStandardText: true };
+    const empty = { enabled: false, mode: "off", returnAt: null, customComments: { pl: null, en: null, uk: null }, useStandardText: true };
+    setStateCache(empty);
+    return empty;
   }
 }
 
@@ -360,6 +387,7 @@ async function handleAdminApi(request, env) {
         return new Response(validated.error, { status: 400 });
       }
       await env.MAINT_KV.put("state", JSON.stringify(validated.value));
+      _stateCacheAt = 0; // force a fresh read on this isolate's next request
       return json(validated.value);
     }
     return new Response("Method Not Allowed", { status: 405 });
@@ -371,6 +399,7 @@ async function handleAdminApi(request, env) {
     }
     const next = { enabled: false, mode: "off", returnAt: null };
     await env.MAINT_KV.put("state", JSON.stringify(next));
+    _stateCacheAt = 0; // force a fresh read on this isolate's next request
     return json(next);
   }
 
