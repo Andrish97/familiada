@@ -165,22 +165,25 @@
     .c2-roundlayout-side .c2-hint { flex:1; }
     /* Urządzenia (renderDevicesStep) reużywa ten sam c2-roundlayout — lista
        urządzeń po lewej, hint o wpisywaniu kodu po prawej, zamiast dawnego
-       paska na całą szerokość pod spodem. Zawsze dokładnie 4 kafle (Wyświetlacz/
-       Prowadzący/Przycisk/Dźwięk) — siatka 2x2 zamiast pionowego stosu
-       (zgłoszone: 4 w pionie za dużo miejsca), gap grida zastępuje
+       paska na całą szerokość pod spodem. Z powrotem pojedynczy słupek 1x4
+       (zgłoszone: wariant 2x2 się nie sprawdził) — gap grida zastępuje
        .device-row's własny margin-bottom (control.css, reużywane też przez
        stary, jednokolumnowy control.html — tam margin ma sens, tu dublowałby
-       się z gapem). Duży pionowy monitor (portrait) ma miejsca pod dostatkiem
-       w pionie — tam zostaje dawny, czytelniejszy pojedynczy słupek.
-       Ściśle 2x2 (zgłoszone: nie podobał się wcześniejszy wariant z
-       Prowadzący/Przycisk na pełną szerokość) — .device-row-2 (control.css)
-       ma flex-wrap:wrap, więc 4 przyciski Prowadzącego/Przycisku w wąskiej
-       połówce zawijają się na kolejną linię zamiast wychodzić poza kartę. */
-    .c2-devicerows { flex:1; min-width:0; min-height:0; display:grid; grid-template-columns:repeat(2, 1fr); gap:14px; align-content:start; }
-    .c2-devicerows .device-row { margin-bottom:0; }
-    @media (orientation:portrait) {
-      .c2-devicerows { grid-template-columns:1fr; }
-    }
+       się z gapem), zmniejszony (zgłoszone: za duży odstęp między kaflami).
+       align-content:start na WEWNĘTRZNYM gridzie każdej karty (.device-row)
+       trzyma jej treść przy górze, gdyby kiedyś któraś karta była wyższa od
+       swojej naturalnej zawartości. */
+    .c2-devicerows { flex:1; min-width:0; min-height:0; display:grid; grid-template-columns:1fr; gap:8px; align-content:start; }
+    .c2-devicerows .device-row { margin-bottom:0; align-content:start; }
+    /* Zgłoszone: przyciski wyłączonego urządzenia (checkbox "Bez tabletu
+       prowadzącego"/"Fizyczny przycisk") mają się NAJPIERW wyszarzyć, nie
+       zniknąć od razu — control.css's globalne data-opted-out chowa je
+       (display:none) całkowicie, bo to też zachowanie starego,
+       jednokolumnowego control.html; tu, scoped tylko do control2, ten sam
+       stan pokazujemy jako nieaktywny (wyszarzony, nieklikalny) zamiast
+       usuwać z widoku — znikają naturalnie dopiero, gdy operator zejdzie z
+       tego kroku (cała karta Urządzeń przestaje się renderować). */
+    .c2-devicerows .device-row[data-opted-out] .device-row-2 { display:flex; opacity:.35; pointer-events:none; }
     /* Dolne przyciski kroku (Urządzenia/Podsumowanie, control.css's
        .stepFootButtons) — "Dalej"/akcja pierwotna zawsze po prawej krawędzi;
        "Wstecz" (klasa c2-btn-back) dostaje margin-right:auto, więc odrywa

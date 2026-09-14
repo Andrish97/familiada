@@ -18,15 +18,7 @@
 // każdym zdarzeniu — "wszystko idzie przez tabelę stanów".
 import { getRoundsHint, getFinalHint, getFinalEntryShortcuts, teamName } from "../../shared/hints.js?v=v2026-09-14T14331";
 import { t, getUiLang } from "../../translation/translation.js?v=v2026-09-14T14331";
-import { getSfxDuration, getSfxCategories, getSfxVariant, isSfxPlaying, playSfx, stopSfx, onSfxEnd, setSfxVolume } from "../../js/core/sfx.js?v=v2026-09-14T14331";
-import { ANSWER_ANIM } from "../../shared/displayAnim.js?v=v2026-09-14T14331";
-import {
-  startRoundGateMs,
-  endRoundGateMs,
-  startFinalGateMs,
-  gameEndGateMs,
-  finishFinalGateMs,
-} from "./transitionGate.js?v=v2026-09-14T14331";
+import { getSfxCategories, getSfxVariant, isSfxPlaying, playSfx, stopSfx, onSfxEnd, setSfxVolume } from "../../js/core/sfx.js?v=v2026-09-14T14331";
 import { buildDisplayPreviewRow } from "../../shared/previewRow.js?v=v2026-09-14T14331";
 
 const $ = (id) => document.getElementById(id);
@@ -62,87 +54,23 @@ export function createUI({ root, emit }) {
   // nie ma drugiego kliknięcia.
   let armedKey = null;
 
-  // Blokada odsłaniania na czas TRWANIA DŁUŻSZEGO z dwóch: animacji
-  // Wyświetlacza albo dźwięku (poprawka zgłoszona po pierwszej wersji:
-  // "czasem dźwięk jest krótszy niż animacja, trzeba wybierać do dłuższe" —
-  // sam dźwięk to za mało, bo animacja na Wyświetlaczu czasem trwa dłużej
-  // niż próbka audio). Czas animacji NIE jest tu zgadywany osobno — to
-  // dokładnie ten sam ANSWER_ANIM.ms co display2/js/render.js faktycznie
-  // odtwarza dla ANSWER_REVEALED/FINAL_ANSWER_REVEALED/
-  // FINAL_POINTS_REVEALED (import z shared/displayAnim.js, jedno źródło
-  // prawdy dla obu plików — jeśli ten czas się kiedyś zmieni, zmienia się
-  // tu automatycznie razem z Wyświetlaczem, bez ręcznego przepisywania).
-  // Ustawiana w momencie WYSŁANIA akcji odsłaniającej (nie w momencie
-  // kliknięcia — armowanie samo w sobie nic nie odsłania), blokuje WSZYSTKIE
-  // kafle odsłaniania (nie tylko ten właśnie kliknięty), dopóki dłuższe z
-  // tych dwóch nie dobiegnie końca — także w Finale (Pokaż odpowiedź/Pokaż
-  // punkty). Każdy wywołujący przekazuje dokładny klucz dźwięku, który
-  // faktycznie poleci dla TEJ akcji (np. "answer_correct" dla odsłonięcia
-  // odpowiedzi w Rundach, "reveal" dla Finału's "Pokaż odpowiedź") — patrz
-  // engine.js's soundCueKey per reducer.
-  let revealLockedUntil = 0;
-  function armRevealCooldown(soundKey) {
-    const applyLock = (ms) => {
-      const floored = Math.max(ms, ANSWER_ANIM.ms);
-      revealLockedUntil = Date.now() + floored;
-      setTimeout(() => emit("ui.rerender"), floored + 20);
-    };
-    // Zanim poznamy realny czas trwania dźwięku (metadane audio mogą nie
-    // być jeszcze wczytane), blokujemy co najmniej na czas animacji —
-    // nigdy krócej, więc nie ma okna bez blokady.
-    applyLock(ANSWER_ANIM.ms);
-    // Blokada sama w sobie NIE maluje niczego — poprzedni render (ten na
-    // ekranie w momencie kliknięcia) miał jeszcze disabled:false, bo
-    // dopiero co odblokowany kafel dał się kliknąć. Bez tego wymuszonego,
-    // natychmiastowego przerysowania interfejs zostawał klikalny aż do
-    // NASTĘPNEGO rerenderu wywołanego czymś innym (setTimeout po upływie
-    // blokady — czyli PO fakcie — albo przypadkowa zmiana stanu z sieci) —
-    // realne okno na podwójne kliknięcie, zgłoszone.
-    emit("ui.rerender");
-    if (soundKey) {
-      getSfxDuration(soundKey).then((durationS) => {
-        if (durationS > 0) applyLock(Math.round(durationS * 1000));
-      });
-    }
-  }
-  // Blokada DUŻYCH przejść planszy (Rozpocznij rundę/Zakończ rundę/
-  // Rozpocznij finał/Zakończ grę — oba warianty) — zgłoszone: "nagranie
-  // dalej jest zbyt szybkie", zbadane wprost w starym Control
-  // (control/js/gameRounds.js/gameFinal.js): każde z tych pięciu miejsc
-  // dosłownie `await`-owało czas realnego dźwięku (nie zgadywaną stałą
-  // animacji) przed odblokowaniem KOLEJNEGO ekranu (enableBuzzerDuel()/
-  // setStep()/sessionEnd() itd.) — wizualna sekwencja startowała z osobnym,
-  // stałym offsetem w głąb tego samego dźwięku (920ms/1000ms), a sam dźwięk
-  // był tak dobrany, żeby zdążyć zanim animacja się skończy. Dokładne wzory
-  // per przejście — patrz control2/js/transitionGate.js (1:1 z tym, co
-  // stary kod faktycznie liczył przez getSfxDuration(), nie zgadywane).
-  // Współdzieli licznik z armRevealCooldown() — to ten sam rodzaj blokady
-  // ("nie idź dalej, dopóki poprzednie się nie domalowało/dograło"), tylko
-  // innej skali; oba warianty nigdy nie są uzbrajane jednocześnie (operator
-  // klika jedno na raz), więc wspólny stan jest bezpieczny.
-  function armBoardTransition(gateMsPromise) {
-    const applyLock = (ms) => {
-      revealLockedUntil = Date.now() + ms;
-      setTimeout(() => emit("ui.rerender"), ms + 20);
-    };
-    // Krótki, bezpieczny floor zanim poznamy realny czas (identyczny wzorzec
-    // co armRevealCooldown) — same funkcje gate w transitionGate.js już
-    // liczą właściwy dolny próg (np. Math.max(...,2)*1000), więc to tylko
-    // zabezpieczenie na czas oczekiwania na odpowiedź getSfxDuration().
-    applyLock(1500);
-    // Ten sam powód co w armRevealCooldown() wyżej — bez wymuszonego
-    // natychmiastowego przerysowania przycisk klikany właśnie teraz
-    // (np. "Rozpocznij rundę") zostaje klikalny aż do przypadkowego
-    // kolejnego rerenderu, nie od razu po kliknięciu (zgłoszone).
-    emit("ui.rerender");
-    gateMsPromise.then((ms) => { if (ms > 0) applyLock(ms); });
-  }
-  function boardBusy() {
-    return revealLocked();
-  }
-  function revealLocked() {
-    return Date.now() < revealLockedUntil;
-  }
+  // Blokada operatora względem dźwięku/animacji (odsłanianie POJEDYNCZYCH
+  // kafli I duże przejścia planszy — Rozpocznij/Zakończ rundę, Rozpocznij
+  // finał, Zakończ grę×2 — to dziś JEDEN, wspólny mechanizm, nie dwa różne
+  // jak wcześniej) — teraz liczona CENTRALNIE, raz, w control2/js/app.js's
+  // dispatchGated() (i actionGate.js) przy KAŻDYM dispatch(), automatycznie,
+  // z rzeczywistego, potwierdzonego czasu dźwięku. Zgłoszone: "blokowanie
+  // akcji względem dźwięku animacji... wszędzie" — poprzedni mechanizm
+  // wymagał, żeby KAŻDY onclick w tym pliku z osobna pamiętał wywołać
+  // armRevealCooldown()/armBoardTransition() z poprawnym kluczem z góry;
+  // znalezione tu kilka miejsc, które o tym zapomniały (ADD_X, ACCEPT_BUZZ,
+  // ostatnie "Dalej" rundy 1 finału), dowiodło że to z natury zawodne.
+  // ui.js dostaje wynik gotowy, przez ctx.busy — sam nie zarządza już żadnym
+  // zegarkiem (zgodne z komentarzem na górze pliku: "ui.js nie zna
+  // store'a/silnika wprost... zero logiki gry tutaj").
+  let busy = false;
+  function boardBusy() { return busy; }
+  function revealLocked() { return busy; }
 
   // Statusy urządzeń w TOPBARZE (poza #app, statyczne w control2.html) —
   // dokładnie jak dzisiejsze control/js/ui.js's setDeviceBadges: aktualizacja
@@ -619,7 +547,7 @@ export function createUI({ root, emit }) {
   // przycisk martwy) nawet przy disabled=false, więc właściwość ustawiana
   // jest wprost, TYLKO gdy true. Używane przez pięć dużych przejść planszy
   // (Rozpocznij rundę/Zakończ rundę/Rozpocznij finał/Zakończ grę×2),
-  // blokowanych przez boardBusy() — patrz armBoardTransition() wyżej.
+  // blokowanych przez boardBusy() — patrz control2/js/app.js's dispatchGated().
   // disabled tutaj ZAWSZE oznacza boardBusy() (wszystkie 4 wywołania w tym
   // pliku) — czyli "trwa animacja/dźwięk dużego przejścia planszy". Bez
   // żadnej widocznej zmiany poza wyszarzeniem operator widział martwy,
@@ -709,9 +637,9 @@ export function createUI({ root, emit }) {
       // przypadkowego kliknięcia (plan: "physicalSelectTeam→potwierdź").
       // boardBusy(): ten sam floor co control/js/gameRounds.js's
       // enableBuzzerDuel(), które stary kod wołał DOPIERO po `await`
-      // dźwięku/animacji startu rundy (armowane przy "Rozpocznij rundę",
-      // patrz armBoardTransition powyżej) — ten ekran nie ma być klikalny,
-      // zanim ta sekwencja się nie skończy.
+      // dźwięku/animacji startu rundy — ten ekran nie ma być klikalny,
+      // zanim ta sekwencja (dziś: control2/js/app.js's dispatchGated() po
+      // "Rozpocznij rundę") się nie skończy.
       if (!pendingPhysicalTeam) {
         tiles.push(tile(teamName(state, "A"), { row: 1, col: HALF(0), disabled: boardBusy(), onclick: () => { pendingPhysicalTeam = "A"; emit("ui.rerender"); } }));
         tiles.push(tile(teamName(state, "B"), { row: 1, col: HALF(1), disabled: boardBusy(), onclick: () => { pendingPhysicalTeam = "B"; emit("ui.rerender"); } }));
@@ -729,20 +657,15 @@ export function createUI({ root, emit }) {
       // stary control.html's btnBuzzAcceptA/B. "Ponów naciśnięcie" (nowe
       // RETRY_DUEL) pojawia się dopiero, gdy jest co odrzucić.
       const lastPressed = r.duel.lastPressed;
-      // Zgłoszone (audyt sync dźwięk/plansza): przyjęcie zgłoszenia gra
-      // "buzzer_press" (engine.js's ACCEPT_BUZZ), ale nic dotąd nie
-      // blokowało operatora przed odsłonięciem odpowiedzi w tej samej
-      // chwili — armRevealCooldown tutaj daje temu dźwiękowi ten sam bufor
-      // co każdej innej akcji odsłaniającej.
       tiles.push(tile(t("control.roundsBuzzAcceptTeam", { name: teamName(state, "A") }), {
         row: 1, col: HALF(0), cls: lastPressed === "A" ? "c2-tile-primary" : "",
         disabled: lastPressed !== "A" || boardBusy(),
-        onclick: () => { armRevealCooldown("buzzer_press"); emit("game.dispatch", { type: "ACCEPT_BUZZ", team: "A" }); },
+        onclick: () => emit("game.dispatch", { type: "ACCEPT_BUZZ", team: "A" }),
       }));
       tiles.push(tile(t("control.roundsBuzzAcceptTeam", { name: teamName(state, "B") }), {
         row: 1, col: HALF(1), cls: lastPressed === "B" ? "c2-tile-primary" : "",
         disabled: lastPressed !== "B" || boardBusy(),
-        onclick: () => { armRevealCooldown("buzzer_press"); emit("game.dispatch", { type: "ACCEPT_BUZZ", team: "B" }); },
+        onclick: () => emit("game.dispatch", { type: "ACCEPT_BUZZ", team: "B" }),
       }));
       if (lastPressed) {
         tiles.push(tile(t("control.roundsBuzzRetry"), { row: 2, col: "1 / 7", disabled: boardBusy(), onclick: () => emit("game.dispatch", { type: "RETRY_DUEL" }) }));
@@ -801,7 +724,7 @@ export function createUI({ root, emit }) {
         ].filter(Boolean))],
         nav: [navButton(t("control.roundsStartBtn"), {
           disabled: boardBusy(),
-          onclick: () => { armBoardTransition(startRoundGateMs()); emit("game.dispatch", { type: "START_ROUND" }); },
+          onclick: () => emit("game.dispatch", { type: "START_ROUND" }),
         })],
       });
       return;
@@ -877,7 +800,7 @@ export function createUI({ root, emit }) {
         // soundCueKey "answer_correct" (engine.js) — trafienie odpowiedzi
         // zawsze oznacza dźwięk poprawnej odpowiedzi, niezależnie od fazy.
         disabled: revealed || revealLocked(),
-        onclick: () => { armRevealCooldown("answer_correct"); emit("game.dispatch", { type: state.phase === "REVEAL" ? "REVEAL_LEFT" : "REVEAL_ANSWER", ord: a.ord }); },
+        onclick: () => emit("game.dispatch", { type: state.phase === "REVEAL" ? "REVEAL_LEFT" : "REVEAL_ANSWER", ord: a.ord }),
       }));
     });
 
@@ -910,18 +833,10 @@ export function createUI({ root, emit }) {
         // testy/czytniki ekranu widziałyby za każdym razem inny label.
         h("div", { class: "c2-tile-sub", "aria-hidden": "true", text: `${strikes} / 3` }),
       ]);
-      // Zgłoszone (audyt sync dźwięk/plansza): X był JEDYNYM z kafli
-      // odsłaniania bez blokady na czas dźwięku poprzedniej akcji —
-      // odpowiedzi/"Pokaż punkty" mają revealLocked()+armRevealCooldown(),
-      // ten nie miał żadnego z nich. Dwa X-y kliknięte szybko z rzędu
-      // (albo X zaraz po odsłonięciu odpowiedzi) mogły więc dispatchować,
-      // zanim Wyświetlacz/dźwięk poprzedniej akcji zdążyły dobiec końca —
-      // prawdopodobne źródło nakładających się/"brzydkich" dźwięków
-      // niezależnie od poprawki w js/core/game-state-subscribe.js.
       tiles.push(armableTile("x", xLabel, {
         row: 6, col: HALF(0), cls: "c2-tile-danger",
         disabled: revealLocked(),
-        onclick: () => { armRevealCooldown("answer_wrong"); emit("game.dispatch", { type: "ADD_X" }); },
+        onclick: () => emit("game.dispatch", { type: "ADD_X" }),
       }));
     }
     if (timer3Available) {
@@ -987,7 +902,7 @@ export function createUI({ root, emit }) {
       statusItems.push(navButton(t("control.roundsEndRound"), {
         cls: "c2-btn primary c2-statusbar-end",
         disabled: boardBusy(),
-        onclick: () => { armBoardTransition(endRoundGateMs()); emit("game.dispatch", { type: "END_ROUND" }); },
+        onclick: () => emit("game.dispatch", { type: "END_ROUND" }),
       }));
     }
     // R8 (odkrywanie reszty nieodgadniętych odpowiedzi) — zgłoszone: ekran
@@ -1002,7 +917,7 @@ export function createUI({ root, emit }) {
       statusItems.push(navButton(label, {
         cls: "c2-btn primary c2-statusbar-end",
         disabled: boardBusy() || r.revealed.length < r.answers.length,
-        onclick: () => { armBoardTransition(endRoundGateMs()); emit("game.dispatch", { type: "NEXT_AFTER_REVEAL" }); },
+        onclick: () => emit("game.dispatch", { type: "NEXT_AFTER_REVEAL" }),
       }));
     }
     body.push(h("div", { class: "c2-statusbar" }, statusItems));
@@ -1065,7 +980,7 @@ export function createUI({ root, emit }) {
         ])],
         nav: [navButton(t("control.roundsGameEndBtn"), {
           disabled: boardBusy(),
-          onclick: () => { armBoardTransition(isFinal ? finishFinalGateMs() : gameEndGateMs()); emit("game.dispatch", revealAction); },
+          onclick: () => emit("game.dispatch", revealAction),
         })],
       });
       return;
@@ -1101,7 +1016,7 @@ export function createUI({ root, emit }) {
       ])],
       nav: [navButton(t("control.finalStartBtn"), {
         disabled: boardBusy(),
-        onclick: () => { armBoardTransition(startFinalGateMs()); emit("game.dispatch", { type: "START_FINAL" }); },
+        onclick: () => emit("game.dispatch", { type: "START_FINAL" }),
       })],
     });
   }
@@ -1383,7 +1298,6 @@ export function createUI({ root, emit }) {
         disabled: locked || revealLocked(),
         onclick: async () => {
           if (row.kind == null) await emit("game.dispatch", { type: "RESOLVE_MAPPING", round, idx, ...defaultResolve(inputText) });
-          armRevealCooldown("reveal");
           await emit("game.dispatch", { type: "REVEAL_ANSWER_ONLY", round, idx });
         },
       });
@@ -1398,7 +1312,7 @@ export function createUI({ root, emit }) {
         // REVEAL_POINTS zwraca soundCueKey "answer_correct"/"answer_wrong"
         // zależnie od row.kind (engine.js) — kind jest już znane w tym
         // momencie, bo kafel jest klikalny dopiero po odsłonięciu odpowiedzi.
-        onclick: () => { armRevealCooldown(row.kind === "MATCH" ? "answer_correct" : "answer_wrong"); emit("game.dispatch", { type: "REVEAL_POINTS", round, idx }); },
+        onclick: () => emit("game.dispatch", { type: "REVEAL_POINTS", round, idx }),
       });
 
     const matchOptions = (question?.answers || []).map((a) => ({
@@ -1519,24 +1433,10 @@ export function createUI({ root, emit }) {
     // undefined, nie tylko atrybut disabled — podwójne zabezpieczenie przed
     // przedwczesnym przejściem dalej).
     //
-    // Zgłoszone (audyt sync dźwięk/plansza): "Dalej" na OSTATNIM pytaniu
-    // rundy 1 (idx===4) przechodzi do f_p2_start i gra ten sam synced combo
-    // round_transition+reveal co "Rozpocznij rundę" (soundCueEngine.js's
-    // isFinalP2Start — jawnie potwierdzone jako TEN SAM przypadek co
-    // startRound w komentarzu tego pliku) — ale nic dotąd nie blokowało
-    // operatora na czas tego dźwięku, w odróżnieniu od KAŻDEGO innego
-    // dużego przejścia w tej appce. Pozostałe 8 kliknięć "Dalej" (pytania
-    // 1-4 obu rund i 6-9) nie grają żadnego dźwięku (sameStep w engine.js),
-    // więc same nie potrzebują bramki — boardBusy() i tak jest tanim,
-    // uniwersalnym zabezpieczeniem przeciw podwójnym kliknięciom.
-    const isLastQuestionOfRound1 = round === 1 && idx === 4;
     const nav = [h("button", {
       class: "c2-btn primary", type: "button",
       disabled: row.revealedPoints && !boardBusy() ? undefined : "",
-      onclick: row.revealedPoints ? () => {
-        if (isLastQuestionOfRound1) armBoardTransition(startRoundGateMs());
-        emit("game.dispatch", { type: "NEXT_QUESTION", round, idx: idx + 1 });
-      } : undefined,
+      onclick: row.revealedPoints ? () => emit("game.dispatch", { type: "NEXT_QUESTION", round, idx: idx + 1 }) : undefined,
     }, [document.createTextNode(t("common.next"))])];
 
     gameplayShell({ stepLabel: t("control.finalMappingStepLabel", { n: idx + 1 }), body, nav });
@@ -1572,15 +1472,20 @@ export function createUI({ root, emit }) {
   }
 
   function render(state, ctx = {}) {
+    // Jedno źródło prawdy o blokadzie na cały render — patrz komentarz przy
+    // boardBusy()/revealLocked() wyżej. Ustawiane TU, na początku, zamiast
+    // przekazywane osobno do każdego renderXxx() — te dwie funkcje je już i
+    // tak czytają z domknięcia.
+    busy = !!ctx.busy;
     // Każdy renderXxx() woła clear() (root.innerHTML="") i buduje CAŁE #app
     // od zera — .c2-scroll-area dostaje więc świeży element przy KAŻDYM
-    // renderze, nie tylko przy realnej zmianie ekranu (np. co ~3s presence
-    // ping z innego urządzenia, albo teraz też armRevealCooldown/
-    // armBoardTransition's wymuszone przerysowanie) — nowy element zaczyna
-    // od scrollTop:0, więc operator scrollujący listę (Urządzenia/
-    // Podsumowanie) był bez przerwy odrzucany na górę (zgłoszone). Zapisz
-    // pozycję przed przebudową, przywróć po — działa dla wszystkich ekranów
-    // jednym miejscem, bez dotykania każdego renderXxx() osobno.
+    // renderze, nie tylko przy realnej zmianie ekranu (np. presence ping z
+    // innego urządzenia, albo teraz też dispatchGated()'s wymuszone
+    // przerysowanie) — nowy element zaczyna od scrollTop:0, więc operator
+    // scrollujący listę (Urządzenia/Podsumowanie) był bez przerwy odrzucany
+    // na górę (zgłoszone). Zapisz pozycję przed przebudową, przywróć po —
+    // działa dla wszystkich ekranów jednym miejscem, bez dotykania każdego
+    // renderXxx() osobno.
     const scrollBefore = root.querySelector(".c2-scroll-area")?.scrollTop ?? 0;
     updateTopbarDots(state, ctx.presenceFlags);
     const s = state.step;

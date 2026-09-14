@@ -13,7 +13,7 @@ import { requireAuth } from "../../js/core/auth.js?v=v2026-09-14T14331";
 import { setTopbarAccount } from "../../js/core/topbar-controller.js?v=v2026-09-14T14331";
 import { sb } from "../../js/core/supabase.js?v=v2026-09-14T14331";
 import { loadQuestions, loadAnswers } from "../../js/core/game-validate.js?v=v2026-09-14T14331";
-import { loadSfxManifest, initSfx, setCurrentGameId, unlockAudio, applySfxGameSettings, loadSfxFromCloud, playSfx } from "../../js/core/sfx.js?v=v2026-09-14T14331";
+import { loadSfxManifest, initSfx, setCurrentGameId, unlockAudio, applySfxGameSettings, loadSfxFromCloud, playSfx, getSfxDuration } from "../../js/core/sfx.js?v=v2026-09-14T14331";
 import { listGameSounds } from "../../js/core/sfx-cloud.js?v=v2026-09-14T14331";
 import { assertTransition } from "../../shared/gameStateMachine.js?v=v2026-09-14T14331";
 import { confirmModal } from "../../js/core/modal.js?v=v2026-09-14T14331";
@@ -97,6 +97,7 @@ function applyGameSettingsToState(settings, state) {
 
 import { createStore } from "./store.js?v=v2026-09-14T14331";
 import { createEngine } from "./engine.js?v=v2026-09-14T14331";
+import { createActionGate } from "./actionGate.js?v=v2026-09-14T14331";
 import { createDevices } from "./devices.js?v=v2026-09-14T14331";
 import { createPresence } from "./presence.js?v=v2026-09-14T14331";
 import { createSoundReactor } from "./soundReactor.js?v=v2026-09-14T14331";
@@ -261,6 +262,48 @@ async function main() {
     loadAnswers,
     now: Date.now,
   });
+  const actionGate = createActionGate({ getSfxDuration });
+
+  // JEDEN silnik blokady operatora względem dźwięku/animacji (zgłoszone:
+  // "blokowanie akcji względem dźwięku animacji... wszędzie" — patrz
+  // actionGate.js's komentarz na górze). Dwie fazy, obie odzwierciedlone w
+  // tym samym `busy()`, czytanym przez KAŻDY kafel w ui.js (ctx.busy w
+  // render()), zamiast osobnego, ręcznie uzbrajanego zegarka na każdy
+  // przycisk:
+  //  1. `committing` — true od kliknięcia do potwierdzonego zapisu (czas
+  //     sieci, nieznany z góry — bez sztucznego "floora", po prostu czekamy
+  //     na prawdziwą odpowiedź).
+  //  2. `lockedUntil` — po potwierdzeniu, na czas REALNEGO dźwięku
+  //     (actionGate.computeGateMs(), policzony z POTWIERDZONEGO
+  //     sound_cue_key, nie zgadywany z wyprzedzeniem).
+  let committing = false;
+  let lockedUntil = 0;
+  function busy() { return committing || Date.now() < lockedUntil; }
+
+  // JEDYNE miejsce, które w ogóle woła engine.dispatch() — wywoływane zarówno
+  // z operatorskich kliknięć (handle()'s "game.dispatch" niżej) jak i z
+  // automatycznych, niezwiązanych z żadnym kliknięciem wygaśnięć zegarków
+  // (makeTimerWatch niżej — EXPIRE_TIMER/EXPIRE_TIMER3) — oba źródła mają
+  // dostawać DOKŁADNIE tę samą blokadę, inaczej auto-pudło z 3s zegarka
+  // zostawiałoby okno bez ochrony, którego ręczne ADD_X już nie ma.
+  async function dispatchGated(action) {
+    const prevRow = store.state.__row || null;
+    committing = true;
+    renderCurrent();
+    let nextRow = null;
+    try {
+      nextRow = await engine.dispatch(action);
+    } finally {
+      committing = false;
+    }
+    const ms = await actionGate.computeGateMs(action.type, prevRow, nextRow);
+    if (ms > 0) {
+      lockedUntil = Date.now() + ms;
+      setTimeout(renderCurrent, ms + 20);
+    }
+    renderCurrent();
+    return nextRow;
+  }
 
   // "Dogonienie" timerów zastanych już wygasłych przy wznowieniu (plan,
   // sekcja 4) — zanim cokolwiek się wyrenderuje operatorowi. Dwa timery,
@@ -355,17 +398,21 @@ async function main() {
       w.endsAt = endsAt;
       if (endsAt == null) return;
       w.handle = setTimeout(() => {
-        engine.dispatch({ type: expireAction }).catch(() => {});
+        dispatchGated({ type: expireAction }).catch(() => {});
       }, Math.max(0, endsAt - Date.now()));
     };
   }
   const scheduleFinalTimerWatch = makeTimerWatch(() => store.state.final?.runtime?.timer, "EXPIRE_TIMER");
   const scheduleTimer3Watch = makeTimerWatch(() => store.state.rounds?.timer3, "EXPIRE_TIMER3");
 
+  function renderCtx() {
+    return { urls, presenceFlags, connectCodes, shareBadges, busy: busy() };
+  }
+
   function renderCurrent() {
     scheduleFinalTimerWatch();
     scheduleTimer3Watch();
-    ui.render(store.state, { urls, presenceFlags, connectCodes, shareBadges });
+    ui.render(store.state, renderCtx());
     // Mute jest teraz częścią game_state (nie lokalny stan tej karty) —
     // musi się odświeżyć na KAŻDĄ zmianę stanu, nie tylko po kliknięciu tu,
     // żeby np. druga karta Control (blokada resource-lock zwolniona) albo
@@ -379,7 +426,7 @@ async function main() {
   // gdy faktycznie coś odlicza — reszta czasu bez zbędnej pracy.
   setInterval(() => {
     if (store.state.rounds?.timer3?.running || store.state.final?.runtime?.timer?.running) {
-      ui.render(store.state, { urls, presenceFlags, connectCodes, shareBadges });
+      ui.render(store.state, renderCtx());
     }
   }, 250);
 
@@ -775,7 +822,7 @@ async function main() {
       // Kafel odliczania na ekranie wpisywania finału — ten sam toggle co
       // skrót Ctrl/Cmd+Shift (patrz toggleFinalTimer wyżej).
       if (action === "final.toggleTimer") { await toggleFinalTimer(payload.round); return; }
-      if (action === "game.dispatch") { await engine.dispatch(payload); return; }
+      if (action === "game.dispatch") { await dispatchGated(payload); return; }
     } catch (e) {
       console.error("[control2] akcja nie powiodła się:", action, e);
       alert(`Błąd: ${e.message || e}`);
