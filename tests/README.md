@@ -65,11 +65,9 @@ osobno.
   zalogowanych stron naraz (np. subskrypcje). **Hasło to to samo
   `TEST_PASSWORD` co dla `TEST_USERNAME`** — nie ma osobnego
   `TEST_PASSWORD_2`, oba konta mają wspólne hasło.
-- `CONTROL2_TEST_ACCOUNTS` — **opcjonalny**, tylko dla `control2.spec.js`.
-  Lista loginów po przecinku, wspólne `TEST_PASSWORD`. Patrz sekcja
-  "Równoległość `control2.spec.js`" niżej — bez tego sekretu ten plik
-  po prostu pada z powrotem na samo `TEST_USERNAME` (1 worker, jak reszta
-  testów).
+- Dla `control2.spec.js` **nie ma osobnego sekretu z listą loginów** —
+  konta wyliczają się wzorcem z `TEST_USERNAME`/`TEST_PASSWORD` powyżej.
+  Patrz sekcja "Równoległość `control2.spec.js`" niżej.
 
 **Cloudflare Worker** (`familiada`, `cloudflare/maintenance-worker`):
 - `E2E_BYPASS_SECRET` — ta sama wartość co w GitHub Actions. Ustawiane
@@ -132,40 +130,46 @@ wzorzec zamiast całego zestawu:
 Puste pole = wszystkie testy. Lokalnie to samo bez żadnego dodatkowego
 ustawienia: `npx playwright test e2e/nazwa-testu.spec.js`.
 
-## Równoległość `control2.spec.js` — pula kont testowych
+## Równoległość `control2.spec.js` — pula kont wzorcem `testN@…`
 
 Reguła "testy na współdzielonym `TEST_USERNAME` muszą iść sekwencyjnie"
 (patrz `workers: 1` w `playwright.config.js` i sekcja "Pułapki" niżej)
-nadal obowiązuje dla wszystkich pozostałych plików. `control2.spec.js` ma
-jednak osobny, dedykowany job w CI (`e2e-control2` w
-`.github/workflows/e2e-tests.yml`) z **własną, skalowalną pulą kont** —
-bo to jedyny plik na tyle ciężki (pełne rozgrywki przez 4 urządzenia,
-realne wygaśnięcie timerów finału ~15-20s), żeby prawdziwa równoległość
-w jego przypadku była warta zachodu.
+nadal obowiązuje dla wszystkich pozostałych plików/grup. `control2.spec.js`
+ma jednak własną gałąź w kroku "Run E2E tests" grupy `control2`
+(`.github/workflows/e2e-tests.yml`, job `e2e-grouped`) z **prawdziwą
+równoległością** — bo to jedyny plik na tyle ciężki (pełne rozgrywki przez
+4 urządzenia, realne wygaśnięcie timerów finału ~15-20s), żeby było warto.
 
-**Mechanizm:**
-- Sekret `CONTROL2_TEST_ACCOUNTS` = loginy po przecinku, np.
-  `a@przyklad.pl,b@przyklad.pl,c@przyklad.pl` (hasło wspólne,
-  `TEST_PASSWORD`, tak jak `TEST_USERNAME_2`).
-- Job `e2e-control2` liczy w locie długość tej listy i odpala
-  `npx playwright test e2e/control2.spec.js --workers=<liczba kont>`.
+**Mechanizm — celowo BEZ żadnego sekretu z listą loginów:**
+- Konta wyliczają się wzorcem **`test<N>@<domena z TEST_USERNAME>`**
+  (`test1@…`, `test2@…`, ... — `getControl2AccountPool()` w
+  `e2e/helpers/login.js`), z tym samym `TEST_PASSWORD` co reszta puli
+  kont. Sam wzorzec loginu nie jest sekretem — bez prawdziwego hasła
+  niczego nie odsłania — więc nie trzeba go trzymać w GitHub Secrets.
+- Jedyna sterowana wartość to **`CONTROL2_TEST_ACCOUNT_COUNT`** — zwykła,
+  jawna liczba w `env:` na górze `e2e-tests.yml` (NIE sekret). Krok
+  odpala `npx playwright test e2e/control2.spec.js
+  --workers="$CONTROL2_TEST_ACCOUNT_COUNT"`.
 - `loginAsControl2TestUser(page, context, testInfo.parallelIndex)`
-  (`e2e/helpers/login.js`) wybiera konto z puli po indeksie workera —
-  każdy równoległy worker loguje się na **inne** konto, więc nikt nie czeka
-  w kolejce za cudzym logowaniem (to właśnie ten wyścig, przez który reszta
-  testów ma `workers: 1`).
+  wybiera konto z puli po indeksie workera — każdy równoległy worker
+  loguje się na **inne** konto, więc nikt nie czeka w kolejce za cudzym
+  logowaniem (to właśnie ten wyścig, przez który reszta testów ma
+  `workers: 1`).
 
-**Skalowanie — wzorzec zawsze ten sam, zmienia się tylko liczba kont**:
-chcesz więcej równoległości → załóż więcej kont testowych na produkcji i
-dopisz je do treści sekretu `CONTROL2_TEST_ACCOUNTS`, oddzielone
-przecinkiem. Nic więcej się nie zmienia — ani w workflow, ani w kodzie
-testów, ani w `login.js`. Realnie sensowny zakres to gdzieś do ~10 kont
-(control2.spec.js ma 16 testów — przy 10 workerach większość i tak
-dostaje 1-2 testy, więc powyżej tego liczba kont przestaje realnie skracać
-czas, a tylko mnoży liczbę równoległych sesji na tej samej produkcji).
-Brak sekretu albo pusta wartość = pula jednoelementowa (samo
-`TEST_USERNAME`), `workers=1` — dokładnie dzisiejsze zachowanie, więc nic
-się nie psuje, jeśli sekretu nie dodasz.
+**Skalowanie — wzorzec zawsze ten sam, zmienia się tylko cyferka**:
+1. Załóż na produkcji tyle kont `test1@…`, `test2@…`, ... ile chcesz
+   workerów (domena taka sama jak w `TEST_USERNAME`, hasło jak
+   `TEST_PASSWORD`).
+2. Podnieś `CONTROL2_TEST_ACCOUNT_COUNT` w `.github/workflows/e2e-tests.yml`
+   do tej samej liczby.
+
+Nic więcej się nie zmienia — żaden sekret, żaden kod testów. Realnie
+sensowny zakres to gdzieś do ~10 kont (control2.spec.js ma 16 testów —
+przy 10 workerach większość i tak dostaje 1-2 testy, więc powyżej tego
+liczba kont przestaje realnie skracać czas, a tylko mnoży liczbę
+równoległych sesji na tej samej produkcji). Brak `TEST_USERNAME` albo
+`CONTROL2_TEST_ACCOUNT_COUNT < 1` = pula jednoelementowa (samo
+`TEST_USERNAME`), `workers=1` — bezpieczny fallback, nic się nie psuje.
 
 ## Pułapki, na które łatwo wpaść (znalezione przy pierwszym realnym przebiegu)
 
@@ -267,12 +271,11 @@ Dodatkowe różnice gościa, nieblokujące UI, ale istotne dla testów:
   Gość ma osobne ograniczenia w appce — używaj tego trybu gdy test ma
   sprawdzać właśnie te ograniczenia.
 - `loginAsControl2TestUser(page, context, workerIndex)` — **tylko
-  `control2.spec.js`**. Loguje na konto wybrane z puli
-  `CONTROL2_TEST_ACCOUNTS` po `workerIndex` (przekaż
-  `testInfo.parallelIndex`) — patrz sekcja "Równoległość
-  `control2.spec.js`" wyżej. Nowy test w tym pliku ma używać tego trybu,
-  nie zwykłego `loginAsTestUser` — inaczej wraca do szeregowego
-  logowania na jedno, stałe konto.
+  `control2.spec.js`**. Loguje na konto wybrane po `workerIndex` (przekaż
+  `testInfo.parallelIndex`) z puli wyliczonej wzorcem `test<N>@…` —
+  patrz sekcja "Równoległość `control2.spec.js`" wyżej. Nowy test w tym
+  pliku ma używać tego trybu, nie zwykłego `loginAsTestUser` — inaczej
+  wraca do szeregowego logowania na jedno, stałe konto.
 
   **Każdy test używający `loginAsGuest` musi na końcu sam usunąć to
   konto** (przez prawdziwy UI flow — `#deleteAccount` +

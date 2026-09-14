@@ -156,32 +156,42 @@ async function loginAsGuest(page, context) {
  * Pula kont dedykowana WYŁĄCZNIE control2.spec.js — osobna od TEST_USERNAME
  * (reszta testów) i TEST_USERNAME_2 (base-explorer/bases), żeby nie
  * odtworzyć tego samego wyścigu "dwa jednoczesne logowania na jedno konto"
- * między równoległymi CI jobami. Jeden sekret, CONTROL2_TEST_ACCOUNTS,
- * lista loginów rozdzielona przecinkami (wspólne TEST_PASSWORD dla
- * wszystkich, jak reszta puli kont) -- dodanie/usunięcie konta to tylko
- * edycja treści tego jednego sekretu w GitHub, bez zmian w kodzie. Gdy
- * sekret jest pusty/brak (np. lokalne odpalenie bez CI), pada z powrotem na
- * samo TEST_USERNAME (pula jednoelementowa == dzisiejsze zachowanie).
+ * między równoległymi CI jobami. Celowo BEZ osobnego sekretu z listą
+ * loginów -- konta są wyliczane wzorcem "test<N>@<domena TEST_USERNAME>"
+ * (test1@…, test2@…, ...), wspólne TEST_PASSWORD jak reszta puli kont.
+ * Jedyna sterowana wartość to CONTROL2_TEST_ACCOUNT_COUNT (zwykła, jawna
+ * liczba w workflow, NIE sekret -- sam wzorzec loginu niczego nie
+ * odsłania bez prawdziwego hasła) -- więcej równoległości = zmiana jednej
+ * cyfry, zero nowych sekretów. Konta test1@…, test2@…, ... trzeba
+ * oczywiście realnie założyć na produkcji, tyle ile wynosi
+ * CONTROL2_TEST_ACCOUNT_COUNT. Brak TEST_USERNAME lub COUNT<1 -> pada z
+ * powrotem na samo TEST_USERNAME (pula jednoelementowa == dzisiejsze
+ * zachowanie reszty testów).
  */
 function getControl2AccountPool() {
-  const raw = process.env.CONTROL2_TEST_ACCOUNTS || "";
-  const usernames = raw.split(",").map((s) => s.trim()).filter(Boolean);
-  if (usernames.length) return usernames;
-  return process.env.TEST_USERNAME ? [process.env.TEST_USERNAME] : [];
+  const base = process.env.TEST_USERNAME || "";
+  const atIdx = base.indexOf("@");
+  if (atIdx === -1) return base ? [base] : [];
+  const domain = base.slice(atIdx); // np. "@familiada.online"
+
+  const count = parseInt(process.env.CONTROL2_TEST_ACCOUNT_COUNT || "1", 10);
+  const n = Number.isFinite(count) && count > 0 ? count : 1;
+  return Array.from({ length: n }, (_, i) => `test${i + 1}${domain}`);
 }
 
 /**
- * Loguje jako jedno z kont puli CONTROL2_TEST_ACCOUNTS, wybrane po
- * `workerIndex` (przekaż testInfo.parallelIndex z testu Playwrighta) --
- * różne workery równoległe lądują na różnych kontach, więc nigdy nie
- * ścigają się o to samo logowanie.
+ * Loguje jako jedno z kont puli test1@…/test2@…/... (patrz
+ * getControl2AccountPool), wybrane po `workerIndex` (przekaż
+ * testInfo.parallelIndex z testu Playwrighta) -- różne workery równoległe
+ * lądują na różnych kontach, więc nigdy nie ścigają się o to samo
+ * logowanie.
  */
 async function loginAsControl2TestUser(page, context, workerIndex) {
   const pool = getControl2AccountPool();
   if (!pool.length) {
     throw new Error(
-      "Brak CONTROL2_TEST_ACCOUNTS ani TEST_USERNAME w zmiennych środowiskowych -- " +
-      "control2.spec.js potrzebuje przynajmniej jednego konta testowego."
+      "Brak TEST_USERNAME w zmiennych środowiskowych -- control2.spec.js potrzebuje " +
+      "przynajmniej jednego konta testowego (wzorzec test<N>@<domena TEST_USERNAME>)."
     );
   }
   const username = pool[workerIndex % pool.length];

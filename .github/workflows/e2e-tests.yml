@@ -29,24 +29,31 @@ on:
 # (loginAsGuest — świeże konto za każdym razem) i static-assets-routing
 # (brak logowania w ogóle) nie dotykają żadnego współdzielonego konta.
 #
-# Grupa "control2" ma WŁASNĄ pulę kont (sekret CONTROL2_TEST_ACCOUNTS,
-# lista loginów po przecinku, wspólne TEST_PASSWORD) -- to jedyny plik na
-# tyle ciężki (pełne rozgrywki 4 urządzeń, naturalne wygaśnięcie timerów
-# finału), że warto dać mu prawdziwą równoległość WEWNĄTRZ pliku
-# (Playwright --workers=<rozmiar puli>, każdy worker przypisany do innego
-# konta po testInfo.parallelIndex, patrz e2e/helpers/login.js's
+# Grupa "control2" ma WŁASNĄ pulę kont -- to jedyny plik na tyle ciężki
+# (pełne rozgrywki 4 urządzeń, naturalne wygaśnięcie timerów finału), że
+# warto dać mu prawdziwą równoległość WEWNĄTRZ pliku (Playwright
+# --workers=<CONTROL2_TEST_ACCOUNT_COUNT>, każdy worker przypisany do
+# innego konta po testInfo.parallelIndex, patrz e2e/helpers/login.js's
 # loginAsControl2TestUser) zamiast tylko szeregowej kolejki -- stąd
 # poniższy krok "Run E2E tests" ma osobną gałąź tylko dla tej grupy.
-# Rozmiar puli (a więc liczba workerów) liczony jest w locie z treści
-# sekretu -- dodanie/usunięcie konta to tylko edycja tego jednego sekretu,
-# bez zmian w tym workflow. Pusty/brak sekretu -> pada z powrotem na samo
-# TEST_USERNAME, workers=1 (jak reszta grup).
+# CELOWO bez osobnego sekretu z listą loginów: konta są wyliczane wzorcem
+# "test<N>@<domena TEST_USERNAME>" (test1@…, test2@…, ...), wspólne
+# TEST_PASSWORD. CONTROL2_TEST_ACCOUNT_COUNT (env poniżej) to zwykła,
+# jawna liczba -- NIE sekret, sam wzorzec loginu niczego nie odsłania bez
+# prawdziwego hasła -- więcej równoległości = zmiana tej jednej cyfry.
+# Konta test1@…, test2@…, ... trzeba realnie założyć na produkcji, tyle
+# ile wynosi ta liczba.
 #
 # Wszystkie grupy to jeden job (macierz, "strategy.matrix") w jednym
 # pliku -- nie osobne joby -- więc instalacja/cache/upload artefaktów są
 # zdefiniowane raz. Podział na równoległe uruchomienia macierzy przez
 # GitHub Actions (nie tylko workers Playwrighta) skraca REALNY czas
 # oczekiwania z sumy wszystkich testów do czasu najdłuższej grupy.
+env:
+  # Liczba kont test1@…/test2@…/... dla grupy "control2" -- podnieś tę
+  # jedną liczbę, jeśli założysz więcej kont na produkcji.
+  CONTROL2_TEST_ACCOUNT_COUNT: "4"
+
 jobs:
   e2e-grouped:
     if: ${{ github.event.inputs.spec_filter == '' }}
@@ -116,26 +123,23 @@ jobs:
       # stałe. Turnstile na /login (osobny mechanizm, patrz e2e-token.js)
       # zostaje jako właściwa ochrona przed botami przy logowaniu.
       #
-      # Grupa "control2" dostaje osobną gałąź: liczba workerów = liczba
-      # kont w puli CONTROL2_TEST_ACCOUNTS (po przecinku) — każdy worker
-      # loguje się na inne konto (loginAsControl2TestUser), więc żaden nie
-      # czeka w kolejce za innym. Reszta grup zostaje na domyślnym
-      # `npm test` (workers:1 z playwright.config.js — współdzielone
-      # konto w danej grupie nadal wymaga szeregowości).
+      # Grupa "control2" dostaje osobną gałąź: liczba workerów =
+      # CONTROL2_TEST_ACCOUNT_COUNT (jawna liczba, patrz komentarz na
+      # górze pliku) — każdy worker loguje się na konto test<N>@… (patrz
+      # loginAsControl2TestUser), więc żaden nie czeka w kolejce za innym.
+      # Reszta grup zostaje na domyślnym `npm test` (workers:1 z
+      # playwright.config.js — współdzielone konto w danej grupie nadal
+      # wymaga szeregowości).
       - name: Run E2E tests (${{ matrix.group.name }})
         env:
           E2E_BYPASS_SECRET: ${{ secrets.E2E_BYPASS_SECRET }}
           TEST_USERNAME: ${{ secrets.TEST_USERNAME }}
           TEST_USERNAME_2: ${{ secrets.TEST_USERNAME_2 }}
-          CONTROL2_TEST_ACCOUNTS: ${{ secrets.CONTROL2_TEST_ACCOUNTS }}
           TEST_PASSWORD: ${{ secrets.TEST_PASSWORD }}
         run: |
           if [ "${{ matrix.group.name }}" = "control2" ]; then
-            IFS=',' read -ra ACCS <<< "$CONTROL2_TEST_ACCOUNTS"
-            WORKERS=${#ACCS[@]}
-            if [ "$WORKERS" -lt 1 ]; then WORKERS=1; fi
-            echo "Pula kont control2: $WORKERS worker(ów)"
-            npx playwright test ${{ matrix.group.files }} --workers="$WORKERS"
+            echo "Pula kont control2: $CONTROL2_TEST_ACCOUNT_COUNT worker(ów)"
+            npx playwright test ${{ matrix.group.files }} --workers="$CONTROL2_TEST_ACCOUNT_COUNT"
           else
             npm test -- ${{ matrix.group.files }}
           fi
@@ -189,7 +193,6 @@ jobs:
           E2E_BYPASS_SECRET: ${{ secrets.E2E_BYPASS_SECRET }}
           TEST_USERNAME: ${{ secrets.TEST_USERNAME }}
           TEST_USERNAME_2: ${{ secrets.TEST_USERNAME_2 }}
-          CONTROL2_TEST_ACCOUNTS: ${{ secrets.CONTROL2_TEST_ACCOUNTS }}
           TEST_PASSWORD: ${{ secrets.TEST_PASSWORD }}
         run: npm test -- ${{ github.event.inputs.spec_filter }}
         working-directory: tests
