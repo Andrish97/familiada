@@ -20,6 +20,16 @@ export function createPresence({ gameId, onChange }) {
   let timer = null;
   let flags = { display: false, host: false, buzzer: false };
   let lastSeenAt = { display: null, host: null, buzzer: null };
+  // Zgłoszone: "cały panel jest zlagowany, przewijanie też" — onChange()
+  // (control2/js/app.js's renderCurrent(), pełny root.innerHTML="" +
+  // odbudowa dla większości ekranów) leciał na KAŻDY tick (co 1.5s), NAWET
+  // gdy obecność faktycznie się nie zmieniła — czyli cały panel przebudowywał
+  // się destrukcyjnie co 1.5s bez przerwy przez całą grę, niezależnie od
+  // tego, co operator akurat robił (w tym w trakcie przewijania). Odcisk
+  // palca ostatnio zgłoszonego stanu — ten sam wzorzec co ui.js's
+  // renderSetupFinish() już stosuje dla podglądu Wyświetlacza — ogranicza
+  // onChange() wyłącznie do realnych zmian obecności.
+  let lastReported = null;
 
   function isOnline(lastSeen) {
     if (!lastSeen) return false;
@@ -40,7 +50,7 @@ export function createPresence({ gameId, onChange }) {
 
     if (error) {
       flags = { display: false, host: false, buzzer: false };
-      onChange?.({ flags, lastSeenAt, error });
+      reportIfChanged({ flags, lastSeenAt, error });
       return;
     }
 
@@ -50,9 +60,23 @@ export function createPresence({ gameId, onChange }) {
     const b = pickNewest(rows, "buzzer");
 
     lastSeenAt = { display: d?.last_seen_at ?? null, host: h?.last_seen_at ?? null, buzzer: b?.last_seen_at ?? null };
+    // isOnline() liczy się od Date.now() — flags może się zmienić (online
+    // -> offline) samym upływem czasu, BEZ żadnej zmiany w bazie, więc
+    // porównanie musi patrzeć na WYLICZONE flags, nie na surowe lastSeenAt.
     flags = { display: isOnline(lastSeenAt.display), host: isOnline(lastSeenAt.host), buzzer: isOnline(lastSeenAt.buzzer) };
 
-    onChange?.({ flags, lastSeenAt, error: null });
+    reportIfChanged({ flags, lastSeenAt, error: null });
+  }
+
+  // App.js's onChange tylko destrukturyzuje `flags` (renderCurrent() go
+  // zapisuje i przerysowuje cały panel) — reszta payloadu (lastSeenAt/error)
+  // nie wpływa na to, czy warto zawiadamiać. Wywołanie tylko przy realnej
+  // zmianie flags.
+  function reportIfChanged(payload) {
+    const fp = JSON.stringify(payload.flags);
+    if (fp === lastReported) return;
+    lastReported = fp;
+    onChange?.(payload);
   }
 
   function start() {

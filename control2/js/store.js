@@ -91,8 +91,29 @@ export function createStore(gameId) {
     return expiredTimerOnHydrate(state);
   }
 
+  // Zserializowane — engine.js's dispatch() serializuje WŁASNE wywołania, ale
+  // to nie jedyny wywołujący commit(): app.js's proste ustawienia (checkboxy
+  // "Bez tabletu prowadzącego"/"Fizyczny przycisk", QR na Wyświetlaczu,
+  // wyciszenie...) wołają store.commit() WPROST, z pominięciem tej kolejki —
+  // zgłoszony na żywo dowód (szybkie odznaczanie/zaznaczanie checkboxa
+  // urządzeń): "Błąd: stale_write" wyskakujący operatorowi jako goły alert.
+  // Dwa (albo więcej) commit() wystrzelone bez odczekania na siebie ścigają
+  // się o ten sam `rev` — retry-po-stale_write niżej jest tylko JEDNORAZOWY,
+  // więc trzeci nakładający się zapis i tak by przegrał. Kolejka tutaj (ten
+  // sam wzorzec co engine.js's dispatch()) gwarantuje, że KAŻDY zapis do
+  // game_state — z dowolnego miejsca w appce, nie tylko z silnika reguł gry —
+  // w pełni się kończy, zanim zacznie się następny, więc dwa commit() nigdy
+  // nie widzą tego samego `rev` naraz.
+  let _writeQueue = Promise.resolve();
+  function commit(opts) {
+    const run = () => commitNow(opts);
+    const result = _writeQueue.then(run, run);
+    _writeQueue = result.catch(() => {});
+    return result;
+  }
+
   // ---- zapis: pełny wiersz, synchronicznie potwierdzony (plan, sekcja 4) ----
-  async function commit({ soundCueKey } = {}) {
+  async function commitNow({ soundCueKey } = {}) {
     // Zamrożone TERAZ, przed jakimkolwiek hydrate() — to jest zamierzona
     // zmiana operatora, niezależna od tego, co hydrate() potem nadpisze w
     // state (patrz retry niżej).
@@ -157,10 +178,10 @@ export function createStore(gameId) {
       if (!(e instanceof StaleWriteError)) throw e;
       // Warstwa 2 (docs/plan-testy-i-poprawki.md) zrobiła dokładnie to, co
       // powinna — ktoś inny zdążył podbić rev pierwszy, zanim nasz zapis
-      // dotarł. Odkąd control2/js/engine.js's dispatch() serializuje własne
-      // wywołania, jedyny realny "ktoś inny" to Buzzer
-      // (game_state_buzzer_press, zapis z pominięciem tego store'a — patrz
-      // plan, sekcja 1/4). Zamiast twardego błędu operatorowi: doczytaj
+      // dotarł. Odkąd commit() (wyżej) serializuje WSZYSTKIE własne
+      // wywołania niezależnie od tego, skąd przyszły, jedyny realny "ktoś
+      // inny" to Buzzer (game_state_buzzer_press, zapis z pominięciem tego
+      // store'a — patrz plan, sekcja 1/4). Zamiast twardego błędu operatorowi: doczytaj
       // świeży wiersz (hydrate aktualizuje state.rev, w tym wszystko inne co
       // się zmieniło) i spróbuj RAZ jeszcze DOKŁADNIE tę samą, zamierzoną
       // zmianę z nowym rev — dokładnie ten "bezpieczny retry" z planu,
