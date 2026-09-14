@@ -706,12 +706,19 @@ async function scenarioRoundsThreshold(pages, { expectFinal }) {
 // Wspólne dla scenariuszy 4/5 — JEDNA runda (100 pkt) nie wystarcza, żeby
 // naturalnie osiągnąć domyślny próg (finalMinPoints=300, zgłoszone: "nie
 // zmieniaj progu punktów... rozgrywka ma być naturalna"), więc oba
-// scenariusze rozgrywają te same 3 pełne, proste rundy (pojedynek wygrany
-// od razu na topowej, reszta odsłonięta w PLAY) co scenariusz 2/3 — ten sam
-// mechanizm liczenia progu, inne (FINAL_SETUP_ROUND_ORDS) pytania.
+// scenariusze rozgrywają 3 rundy (inne pytania niż scenariusz 2/3 —
+// FINAL_SETUP_ROUND_ORDS). Zgłoszone: "też chodzi o przetestowanie
+// kradzieży... w warunkach zbliżonych do naturalnych" — R1-2 to proste
+// pojedynki (jak w 2/3), R3 dokłada TRZECI, jeszcze niećwiczony w tym pliku
+// przebieg kradzieży (patrz komentarz przy R3 niżej): wygrana kradzież W
+// RUNDZIE, która akurat kończy się progiem, więc trzeba dokończyć
+// dosłanianie (R8) i kliknąć kontekstowy "Przejdź do finału" zamiast
+// automatycznego pominięcia R8.
 async function playThreeNaturalRoundsToThreshold(pages) {
   const { control, buzzer } = pages;
-  for (let round = 1; round <= 3; round++) {
+
+  // ===== RUNDA 1-2: proste, pojedynek wygrany od razu, reszta w PLAY =====
+  for (let round = 1; round <= 2; round++) {
     await clickPaced(control.getByRole("button", { name: "Rozpocznij rundę" }));
     await clickPaced(buzzer.getByRole("button", { name: "Przycisk A" }));
     await clickPaced(control.getByRole("button", { name: "Zatwierdź: Alfa" }));
@@ -721,9 +728,34 @@ async function playThreeNaturalRoundsToThreshold(pages) {
     await armAndConfirmPaced(answerTile(control, 4)); // odp. #4
     await armAndConfirmPaced(answerTile(control, 5)); // odp. #5
     await armAndConfirmPaced(answerTile(control, 6)); // odp. #6 -> wszystko odsłonięte
-    await clickPaced(control.getByRole("button", { name: "Zakończ rundę" })); // R3: domyślny próg (300) osiągnięty
+    await clickPaced(control.getByRole("button", { name: "Zakończ rundę" }));
     await control.waitForTimeout(2000); // widz ma zdążyć zobaczyć zaktualizowany wynik przed startem kolejnej rundy
   }
+
+  // ===== RUNDA 3: zgłoszone — "też chodzi o przetestowanie kradzieży...
+  // w warunkach zbliżonych do naturalnych". Scenariusz 1 już pokazuje OBIE
+  // kradzieże (wygraną i przegraną), ta runda dokłada TRZECI, jeszcze
+  // niećwiczony przebieg: kradzież wygrana W RUNDZIE, która akurat kończy
+  // się progiem — więc po "Zakończ rundę" trzeba dokończyć dosłanianie
+  // (R8) i dopiero potem kliknąć kontekstowy "Przejdź do finału" (destination
+  // FINAL), zamiast automatycznego pominięcia R8 jak w rundach 1-2. Steal
+  // WYGRANA (nie przegrana) — bank nadal liczy się w CAŁOŚCI (skradziona
+  // odpowiedź i tak trafia do banku, tylko innej drużyny), więc suma progu
+  // (100 pkt na rundę × 3) zostaje nienaruszona. =====
+  await clickPaced(control.getByRole("button", { name: "Rozpocznij rundę" }));
+  await clickPaced(buzzer.getByRole("button", { name: "Przycisk B" }));
+  await clickPaced(control.getByRole("button", { name: "Zatwierdź: Beta" }));
+  await armAndConfirmPaced(answerTile(control, 1)); // B trafia top -> wygrywa pojedynek, kontrola B
+  await armAndConfirmPaced(answerTile(control, 2)); // odp. #2
+  await armAndConfirmPaced(control.getByRole("button", { name: "X", exact: true }));
+  await armAndConfirmPaced(control.getByRole("button", { name: "X", exact: true }));
+  await armAndConfirmPaced(control.getByRole("button", { name: "X", exact: true })); // 3x pudło B -> auto-KRADZIEŻ dla A
+  await armAndConfirmPaced(answerTile(control, 3)); // A kradnie WYGRANĄ -> bank nadal pełny (skradziona odpowiedź trafia do banku)
+  await clickPaced(control.getByRole("button", { name: "Zakończ rundę" })); // domyślny próg (300) osiągnięty, ale zostały nieodsłonięte odpowiedzi
+  await armAndConfirmPaced(answerTile(control, 4)); // dosłanianie reszty
+  await armAndConfirmPaced(answerTile(control, 5));
+  await armAndConfirmPaced(answerTile(control, 6));
+  await clickPaced(control.getByRole("button", { name: "Przejdź do finału" }));
 }
 
 // ===== Scenariusz 4: finał pełny — oba bloki, naturalne wygaśnięcie
