@@ -950,6 +950,21 @@ export function createUI({ root, emit }) {
         onclick: () => { armBoardTransition(endRoundGateMs()); emit("game.dispatch", { type: "END_ROUND" }); },
       }));
     }
+    // R8 (odkrywanie reszty nieodgadniętych odpowiedzi) — zgłoszone: ekran
+    // kolejnej rundy/finału/końca gry odpalał się sam po ostatnim
+    // odsłonięciu, "znikąd". Teraz to osobny, kontekstowo podpisany przycisk
+    // (label z engine.js's END_ROUND, zapisany w r.roundEndDestination —
+    // patrz komentarz tam), zablokowany dopóki nie odsłonięto WSZYSTKIEGO.
+    if (state.phase === "REVEAL") {
+      const label = r.roundEndDestination === "FINAL" ? t("control.roundsGoToFinalBtn")
+        : r.roundEndDestination === "GAME_END" ? t("control.roundsGoToGameEndBtn")
+        : t("control.roundsNextRoundBtn");
+      statusItems.push(navButton(label, {
+        cls: "c2-btn primary c2-statusbar-end",
+        disabled: boardBusy() || r.revealed.length < r.answers.length,
+        onclick: () => { armBoardTransition(endRoundGateMs()); emit("game.dispatch", { type: "NEXT_AFTER_REVEAL" }); },
+      }));
+    }
     body.push(h("div", { class: "c2-statusbar" }, statusItems));
 
     // "— kradzież" w STEAL, "— rozgrywka" poza tym (PLAY i odkrywanie

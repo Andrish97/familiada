@@ -362,19 +362,35 @@ test("END_ROUND: mnożnik z settings.roundMultipliers stosowany do banku, wynik 
   assert.equal(store.state.rounds.bankPts, 0);
 });
 
-test("END_ROUND: niepełny bank przechodzi w REVEAL i wymaga REVEAL_LEFT, dopiero ostatnia odpowiedź finalizuje rundę", async () => {
+test("END_ROUND: niepełny bank przechodzi w REVEAL i wymaga REVEAL_LEFT; NEXT_AFTER_REVEAL zablokowany aż do odsłonięcia wszystkiego, dopiero wtedy finalizuje rundę", async () => {
   const { store, dispatch } = makeEngine();
   await dispatch({ type: "START_ROUND" });
   await dispatch({ type: "ACCEPT_BUZZ", team: "A" });
   await dispatch({ type: "REVEAL_ANSWER", ord: 1 }); // tylko jedna odpowiedź odkryta
   await dispatch({ type: "END_ROUND" });
   assert.equal(store.state.phase, "REVEAL");
+  assert.ok(store.state.rounds.roundEndDestination, "destination policzona z wyprzedzeniem, do podpisu przycisku");
+
+  // Zgłoszone: ostatnie odsłonięcie NIE MA już samo finalizować rundy —
+  // operator musi kliknąć osobno (NEXT_AFTER_REVEAL), inaczej ekran kolejnej
+  // rundy odpalał się "znikąd".
   await dispatch({ type: "REVEAL_ANSWER", ord: 2 }); // REVEAL_ANSWER w fazie REVEAL deleguje do REVEAL_LEFT
   await dispatch({ type: "REVEAL_ANSWER", ord: 3 });
   const roundNoBefore = store.state.rounds.roundNo;
-  await dispatch({ type: "REVEAL_ANSWER", ord: 4 }); // ostatnia -> finalizacja rundy
+
+  const blocked = await dispatch({ type: "NEXT_AFTER_REVEAL" }); // jeszcze nie wszystko odsłonięte -> no-op
+  assert.equal(blocked, null);
+  assert.equal(store.state.rounds.roundNo, roundNoBefore);
+  assert.equal(store.state.phase, "REVEAL", "ostatnia odpowiedź jeszcze nie odsłonięta — runda NIE finalizuje się sama");
+
+  await dispatch({ type: "REVEAL_ANSWER", ord: 4 }); // ostatnia — nadal tylko odsłania, nie finalizuje
+  assert.equal(store.state.rounds.roundNo, roundNoBefore);
+  assert.equal(store.state.phase, "REVEAL");
+
+  await dispatch({ type: "NEXT_AFTER_REVEAL" }); // teraz wszystko odsłonięte -> operator potwierdza -> finalizacja
   assert.equal(store.state.rounds.roundNo, roundNoBefore + 1);
   assert.equal(store.state.phase, "READY");
+  assert.equal(store.state.rounds.roundEndDestination, null, "resetowane po finalizacji");
 });
 
 test("finalizacja rundy: próg NIE osiągnięty i pula pytań niewyczerpana -> pętla do r_roundStart", async () => {

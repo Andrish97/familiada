@@ -172,23 +172,14 @@
        stary, jednokolumnowy control.html — tam margin ma sens, tu dublowałby
        się z gapem). Duży pionowy monitor (portrait) ma miejsca pod dostatkiem
        w pionie — tam zostaje dawny, czytelniejszy pojedynczy słupek.
-       Prowadzący/Przycisk mają o 2 przyciski więcej niż Wyświetlacz (Kod QR +
-       QR na wyświetlaczu) — w wąskiej połówce siatki się nie mieściły i
-       zawijały brzydko na dwie linie (zgłoszone). [data-device="host"/"buzzer"]
-       (patrz renderDevicesStep) dostają pełną szerokość ZAWSZE, aktywne i
-       zwinięte (data-opted-out, jak stare control.html) jednakowo — dokładnie
-       jak w starym, jednokolumnowym Control, gdzie każdy wiersz i tak zajmował
-       całą szerokość niezależnie od stanu. grid-auto-flow:dense podciąga
-       Wyświetlacz+Dźwięk (oba mieszczą się w połówce) na wolne miejsce obok
-       siebie zamiast zostawiać puste pół-kafle. */
-    .c2-devicerows { flex:1; min-width:0; min-height:0; display:grid; grid-template-columns:repeat(2, 1fr); grid-auto-flow:dense; gap:14px; align-content:start; }
+       Ściśle 2x2 (zgłoszone: nie podobał się wcześniejszy wariant z
+       Prowadzący/Przycisk na pełną szerokość) — .device-row-2 (control.css)
+       ma flex-wrap:wrap, więc 4 przyciski Prowadzącego/Przycisku w wąskiej
+       połówce zawijają się na kolejną linię zamiast wychodzić poza kartę. */
+    .c2-devicerows { flex:1; min-width:0; min-height:0; display:grid; grid-template-columns:repeat(2, 1fr); gap:14px; align-content:start; }
     .c2-devicerows .device-row { margin-bottom:0; }
-    .c2-devicerows .device-row[data-device="host"],
-    .c2-devicerows .device-row[data-device="buzzer"] { grid-column:span 2; }
     @media (orientation:portrait) {
       .c2-devicerows { grid-template-columns:1fr; }
-      .c2-devicerows .device-row[data-device="host"],
-      .c2-devicerows .device-row[data-device="buzzer"] { grid-column:span 1; }
     }
     /* Dolne przyciski kroku (Urządzenia/Podsumowanie, control.css's
        .stepFootButtons) — "Dalej"/akcja pierwotna zawsze po prawej krawędzi;

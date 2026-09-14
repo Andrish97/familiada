@@ -90,6 +90,20 @@ test("koniec rundy z fazy STEAL (rozstrzygnięta kradzież) liczy się tak samo 
   assert.deepEqual(played.slice().sort(), ["reveal", "round_transition"].sort());
 });
 
+test("koniec rundy z fazy REVEAL (R8, po NEXT_AFTER_REVEAL) liczy się tak samo jak PLAY/STEAL", async () => {
+  // control2/js/engine.js's NEXT_AFTER_REVEAL — operator ręcznie potwierdza
+  // koniec rundy PO odsłonięciu reszty odpowiedzi (zgłoszone: ekran kolejnej
+  // rundy nie ma się już odpalać sam, tylko po jawnym kliknięciu) — ten sam
+  // "koniec rundy" fanfar ma zagrać jak przy END_ROUND bez nic do odsłonięcia.
+  const { engine, played } = makeEngine({ reveal: 0.05 });
+  const a = row({ step: "r_play", phase: "REVEAL", sound_cue_seq: 0 });
+  const b = row({ step: "r_roundStart", phase: "READY", sound_cue_seq: 1, sound_cue_key: "round_transition" });
+  engine.handleTransition(a, b);
+  assert.deepEqual(played, ["reveal"]); // od razu, bez czekania na drugi
+  await new Promise((resolve) => setTimeout(resolve, 100));
+  assert.deepEqual(played, ["reveal", "round_transition"]);
+});
+
 test("final_theme gra SEKWENCYJNIE: final_theme, potem reveal", async () => {
   const { engine, played } = makeEngine({ final_theme: 0.05 });
   const a = row({ sound_cue_seq: 0 });

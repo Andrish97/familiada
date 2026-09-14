@@ -59,9 +59,15 @@ export function createSoundCueEngine({ playSfx, getSfxDuration }) {
     const isRoundStart = nextRow.step === "r_duel" && nextRow.phase === "DUEL" && prevRow.step === "r_roundStart";
     // END_ROUND jest zawsze dispatchowany z step="r_play", phase PLAY lub
     // STEAL (rozstrzygnięta kradzież zostaje w fazie STEAL aż do końca
-    // rundy) — to jedyne miejsce, gdzie "round_transition" oznacza koniec
-    // rundy, nie jej start ani przejście do 2. rundy finału.
-    const isRoundEnd = prevRow.step === "r_play" && (prevRow.phase === "PLAY" || prevRow.phase === "STEAL");
+    // rundy) — to jedno miejsce, gdzie "round_transition" oznacza koniec
+    // rundy. Drugie: NEXT_AFTER_REVEAL (engine.js), operator ręcznie
+    // potwierdzający koniec R8 (odkrywanie reszty, phase REVEAL) — ten sam
+    // "koniec rundy" fanfar ma zagrać niezależnie od tego, czy było coś do
+    // odsłonięcia (END_ROUND, prevRow.phase PLAY/STEAL) czy nie (R8 ->
+    // NEXT_AFTER_REVEAL, prevRow.phase REVEAL) — zgłoszone: przejście ma
+    // wyglądać identycznie w obu przypadkach, nie tylko gdy nic nie było do
+    // odsłonięcia.
+    const isRoundEnd = prevRow.step === "r_play" && (prevRow.phase === "PLAY" || prevRow.phase === "STEAL" || prevRow.phase === "REVEAL");
     // F7: NEXT_QUESTION -> f_p2_start niesie ten sam klucz "round_transition",
     // ale to synced-combo jak start rundy, nie koniec.
     const isFinalP2Start = nextRow.step === "f_p2_start";

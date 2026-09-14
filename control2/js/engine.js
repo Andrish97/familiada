@@ -139,11 +139,29 @@ function gotoEnd(state) {
   return { step: "f_end", phase: null, controlTeam: null, topCard: "final" };
 }
 
+// R9: dokąd pójdzie gra po końcu bieżącej rundy — CZYSTA funkcja (żadnej
+// mutacji), więc control2/js/ui.js może ją wywołać wprost, żeby z
+// wyprzedzeniem podpisać przycisk R8 ("przejdź do następnej rundy"/
+// "przejdź do finału"/"przejdź do zakończenia gry" — zgłoszone: przycisk ma
+// się podpisać PRZED kliknięciem, nie dopiero po). state.rounds.totals w
+// tym momencie już zawiera wynik właśnie kończonej rundy (END_ROUND dolicza
+// bankPts×mnożnik PRZED wejściem w R8 — patrz niżej), więc isThresholdHit()
+// tu i przy faktycznym finalizeRound() zawsze widzą te same liczby.
+export function previewRoundEndDestination(state) {
+  if (isThresholdHit(state)) {
+    return canEnterFinal(state) ? "FINAL" : "GAME_END";
+  }
+  if (!state.rounds._questionPool.length) return "GAME_END";
+  return "NEXT_ROUND";
+}
+
 // R9: koniec rundy — jedyny punkt, gdzie decyduje się co dalej (kolejna
-// runda / finał / koniec gry). Wywoływany z END_ROUND i REVEAL_LEFT (gdy
-// to była ostatnia nieodkryta odpowiedź) — patrz plan, tabela A, R9.
+// runda / finał / koniec gry). Wywoływany z END_ROUND (gdy nie ma nic do
+// odsłonięcia) i NEXT_AFTER_REVEAL (po R8, gdy operator sam potwierdzi, że
+// odsłonił już wszystko) — patrz plan, tabela A, R9.
 function finalizeRound(state) {
   const r = state.rounds;
+  const destination = previewRoundEndDestination(state);
   r.roundNo += 1;
   r.bankPts = 0;
   r.xA = 0;
@@ -152,15 +170,13 @@ function finalizeRound(state) {
   r.allowPass = false;
   r.canEndRound = false;
   r.lockPlayControls = false;
+  r.roundEndDestination = null;
 
-  if (isThresholdHit(state)) {
-    if (canEnterFinal(state)) {
-      state.locks.finalActive = true;
-      return { step: "f_start", phase: null, controlTeam: null, topCard: "final" };
-    }
-    return { step: "r_gameEnd", phase: null, controlTeam: null, topCard: "rounds" };
+  if (destination === "FINAL") {
+    state.locks.finalActive = true;
+    return { step: "f_start", phase: null, controlTeam: null, topCard: "final" };
   }
-  if (!r._questionPool.length) {
+  if (destination === "GAME_END") {
     return { step: "r_gameEnd", phase: null, controlTeam: null, topCard: "rounds" };
   }
   return { step: "r_roundStart", phase: "READY", controlTeam: null, topCard: "rounds" };
@@ -405,20 +421,37 @@ const REDUCERS = {
     r.bankPts = 0;
 
     if (r.revealed.length < r.answers.length) {
+      // Destination policzone TERAZ (totals już ostateczne dla tej rundy) i
+      // zapisane w state — control2/js/ui.js czyta je wprost, żeby podpisać
+      // przycisk R8 kontekstowo, bez importu logiki silnika (patrz komentarz
+      // przy previewRoundEndDestination).
+      r.roundEndDestination = previewRoundEndDestination(state);
       return { step: "r_play", phase: "REVEAL", controlTeam: state.controlTeam, topCard: "rounds", soundCueKey: "round_transition" };
     }
     return { ...finalizeRound(state), soundCueKey: "round_transition" };
   },
 
   // ---- R8: odkrywanie reszty (czysto pokazowe, nie dolicza do banku) ----
+  // Zgłoszone: po odsłonięciu OSTATNIEJ odpowiedzi ekran następnej
+  // rundy/finału/końca gry odpalał się sam, "znikąd" — bez żadnego kliknięcia
+  // operatora. Poprawka: odsłonięcie ostatniej odpowiedzi już NIE finalizuje
+  // rundy samo z siebie — tylko odblokowuje przycisk NEXT_AFTER_REVEAL
+  // (patrz control2/js/ui.js), który operator musi kliknąć sam, dokładnie
+  // jak każde inne "duże przejście" w tej appce.
   async REVEAL_LEFT(state, action) {
     const r = state.rounds;
     if (r.revealed.includes(action.ord)) return null;
     r.revealed.push(action.ord);
-    if (r.revealed.length >= r.answers.length) {
-      return { ...finalizeRound(state), soundCueKey: "answer_correct" };
-    }
     return { step: "r_play", phase: "REVEAL", controlTeam: state.controlTeam, topCard: "rounds", soundCueKey: "answer_correct" };
+  },
+
+  // ---- R8->R9: operator potwierdza koniec rundy PO ręcznym odsłonięciu
+  // wszystkich pozostałych odpowiedzi (patrz komentarz w REVEAL_LEFT) ----
+  async NEXT_AFTER_REVEAL(state) {
+    const r = state.rounds;
+    if (state.phase !== "REVEAL") return null;
+    if (r.revealed.length < r.answers.length) return null;
+    return { ...finalizeRound(state), soundCueKey: "round_transition" };
   },
 
   // ---- R10: ekran końca gry bez finału ----
