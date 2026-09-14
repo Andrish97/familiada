@@ -220,7 +220,7 @@ window.addEventListener("DOMContentLoaded", async () => {
       gameId: game.id,
       deviceType: "display",
       key,
-      onRow: (row) => {
+      onRow: async (row) => {
         // Język idzie za operatorem w Control (control2/js/app.js's
         // LANG-push, dawniej osobna komenda `LANG <code>` — dziś zwykłe
         // pole w game_state, patrz shared/gameStateShape.js).
@@ -257,9 +257,18 @@ window.addEventListener("DOMContentLoaded", async () => {
           $("blackScreen")?.classList.remove("hidden");
         }
 
-        if (!prevRow) renderer.renderSnapshot(row);
-        else renderer.renderDiff(prevRow, row);
+        // Zapisz PRZED await-em na render — jeśli malowanie tego wiersza się
+        // wywali w połowie, kolejny wiersz ma i tak diffować względem
+        // NAJNOWSZEGO znanego stanu, nie zawiesić się na starym na zawsze.
+        // await tutaj (js/core/game-state-subscribe.js's fetchOnce() sam
+        // czeka na to wywołanie) jest tym, co faktycznie serializuje kolejne
+        // przebiegi renderDiff() — bez tego dwa dzwonki z rzędu potrafiły
+        // odpalić dwa NAKŁADAJĄCE SIĘ malowania na tym samym płótnie SVG
+        // (zgłoszone: lagi, podwójny/brzydki dźwięk przy odsłanianiu).
+        const prev = prevRow;
         prevRow = row;
+        if (!prev) await renderer.renderSnapshot(row);
+        else await renderer.renderDiff(prev, row);
       },
       onError: (error) => {
         console.warn("[display2] game_state_get failed:", error);

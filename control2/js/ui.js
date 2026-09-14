@@ -645,8 +645,19 @@ export function createUI({ root, emit }) {
       ...rest,
       disabled,
       cls: `${cls} ${armed ? "c2-tile-armed" : ""}`.trim(),
-      onclick: disabled ? undefined : () => {
-        if (armedKey === key) {
+      // Zgłoszone: "zaznaczanie jest zlagowane" — dwa OSOBNE kliknięcia
+      // (zaznacz -> potwierdź) czasem gubiły się w wyścigu z przychodzącym
+      // odświeżeniem stanu (walidacja armedKey przy każdym renderze wyżej
+      // potrafi cofnąć zaznaczenie MIĘDZY dwoma kliknięciami operatora, jeśli
+      // akurat w tej chwili dotarł nowy wiersz z sieci) — drugie kliknięcie
+      // trafiało wtedy na świeżo zresetowany kafel i tylko go zaznaczało
+      // ponownie, zamiast potwierdzać. `event.detail>=2` (drugie kliknięcie
+      // natywnego podwójnego kliknięcia — licznik od przeglądarki, niezależny
+      // od naszego stanu armedKey) daje niezawodne obejście: podwójny klik
+      // ZAWSZE potwierdza od razu, niezależnie od tego, czy pierwsze
+      // kliknięcie zdążyło zaznaczyć kafel w naszym stanie czy nie.
+      onclick: disabled ? undefined : (e) => {
+        if (armedKey === key || (e && e.detail >= 2)) {
           armedKey = null;
           onclick();
         } else {

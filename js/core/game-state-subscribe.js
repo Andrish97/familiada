@@ -35,7 +35,19 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError }) 
     if (!data) return; // Control jeszcze nigdy nic nie zapisał dla tej gry
     if (data.rev <= lastRev) return; // dzwonek spóźniony/zdublowany — nic nowego
     lastRev = data.rev;
-    onRow(data);
+    // await: display2/js/render.js's renderSnapshot()/renderDiff() mają
+    // realne animacje trwające setki ms-kilka s (matrix down/right, ANIMOUT
+    // przed ANIMIN...) — bez tego await, `fetching` niżej wracał do false
+    // (i fetchGuarded() wpuszczał KOLEJNY dzwonek) ZANIM poprzedni render w
+    // ogóle skończył malować, więc dwa renderDiff() na tym samym płótnie SVG
+    // potrafiły się realnie nałożyć (zgłoszone: "lagi", "podwójny dźwięk
+    // przy odsłanianiu" — dwa nakładające się przebiegi renderDiff() to też
+    // dwa nakładające się wywołania soundReactor.js's handleTransition() dla
+    // RÓŻNYCH par prevRow/nextRow, więc ten sam SOUND_CUE mógł się odtworzyć
+    // z dwóch niezależnych, częściowo równoległych przebiegów). Dla
+    // urządzeń bez realnych animacji (buzzer2, host2) onRow zwraca
+    // undefined/rozwiązaną obietnicę — await na tym jest zerowym kosztem.
+    await onRow(data);
   }
 
   async function fetchGuarded() {
