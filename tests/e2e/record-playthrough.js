@@ -47,37 +47,56 @@ const QUAD_W = SCREEN_W / 2, QUAD_H = SCREEN_H / 2;
 // działającego pliku testowego (żeby nie ryzykować jego zepsucia bez
 // możliwości uruchomienia go stąd dla sprawdzenia). =====
 
-async function makeGame(page, name, { settings = {}, roundQuestions = [], finalAnswerPts = null } = {}) {
-  return page.evaluate(async ({ name, settings, roundQuestions, finalAnswerPts }) => {
-    // js/pages/editor.js's clip17()/normQ() clip answer/question text
-    // client-side before a real user's save ever reaches the DB (maxlength=17
-    // on the input, same limit here) — the DB's CHECK constraint is a second
-    // line of defense, not the primary UX. Ten test wstawia bezpośrednio przez
-    // Supabase, z pominięciem tego UI, więc musi sam sobie zrobić to samo
-    // obcięcie, żeby literał wpisany tutaj nigdy nie wywalał 400 z bazy.
+// Zgłoszone: "żeby to była żywa rozgrywka za każdym razem możesz użyć np.
+// gry demo preparowanej (znajdziesz ją w migracji bazy)" — zamiast ręcznie
+// wpisanych fixture'ów (TWO_QUESTIONS/PROGRESSION_QUESTIONS/..., syntetyczny
+// tekst "Podaj coś...") ta funkcja woła to samo RPC co przycisk "Przywróć
+// demo" w prawdziwej appce (public.restore_my_demo, migracja
+// 2026-03-09_040_demo_in_db.sql): KASUJE i ZASIEWA NA NOWO demo bieżącego
+// użytkownika, więc każde wywołanie to naprawdę świeży, żywy wiersz w
+// bazie — nie ta sama, raz wstawiona fixtura odtwarzana w kółko. Demo
+// "prepared" niesie 16 prawdziwych pytań rund (6 odpowiedzi każde,
+// sumujące się do 100 punktów — realny content, jakim gra prawdziwy
+// operator), ale startuje jako status="draft" bez żadnych ustawień
+// (settings) — dociągamy je do stanu "gotowa do grania" tym samym patchem
+// co dawny makeGame().
+async function restoreDemoGame(setupPage, { pickOrds = [], settings = {}, finalAnswerPts = null } = {}) {
+  return setupPage.evaluate(async ({ pickOrds, settings, finalAnswerPts }) => {
     const clip17 = (s) => String(s ?? "").trim().slice(0, 17);
     const clip200 = (s) => String(s ?? "").trim().slice(0, 200);
-
     const sb = window.__sbClient;
+
+    const { error: rErr } = await sb.rpc("restore_my_demo", { p_lang: "pl" });
+    if (rErr) throw new Error("restore_my_demo failed: " + rErr.message);
+
     const { data: userData } = await sb.auth.getUser();
     const { data: g, error: gErr } = await sb
       .from("games")
-      .insert({
-        name, owner_id: userData.user.id, type: "prepared", status: "ready",
-        settings: { teams: { teamA: "Alfa", teamB: "Beta" }, game: { hasFinal: false }, ...settings },
-      })
       .select("id, share_key_display, share_key_host, share_key_buzzer")
+      .eq("owner_id", userData.user.id).eq("is_demo", true).eq("type", "prepared")
       .single();
-    if (gErr) throw new Error("insert games failed: " + gErr.message);
+    if (gErr) throw new Error("select demo game failed: " + gErr.message);
 
-    for (const q of roundQuestions) {
-      const { data: qRow, error: qErr } = await sb
-        .from("questions").insert({ game_id: g.id, ord: q.ord, text: clip200(q.text) }).select("id").single();
-      if (qErr) throw new Error("insert questions failed: " + qErr.message);
-      const { error: aErr } = await sb.from("answers").insert(
-        q.answers.map((a) => ({ ...a, question_id: qRow.id, text: clip17(a.text) }))
-      );
-      if (aErr) throw new Error("insert answers failed: " + aErr.message);
+    const { data: questions, error: qErr } = await sb
+      .from("questions").select("id, ord").eq("game_id", g.id).order("ord");
+    if (qErr) throw new Error("select demo questions failed: " + qErr.message);
+    const { data: answers, error: aErr } = await sb
+      .from("answers").select("id, question_id, ord")
+      .in("question_id", questions.map((q) => q.id));
+    if (aErr) throw new Error("select demo answers failed: " + aErr.message);
+    const byQ = new Map(questions.map((q) => [q.id, { ...q, answers: [] }]));
+    for (const a of answers) byQ.get(a.question_id)?.answers.push(a);
+
+    // Scenariusze zakładają DOKŁADNIE 5 odpowiedzi na pytanie rundy (jak
+    // dawna syntetyczna fixtura, "pytanie nie może mieć 3 odpowiedzi" —
+    // 5 to minimum realistycznej rundy) — realne demo ma ich 6; usuwamy
+    // najsłabszą (ord=6, najniższe punkty), żeby istniejąca logika klikania
+    // (tile 1..5, "wszystko odsłonięte" po piątej) działała bez zmian.
+    const picked = pickOrds.map((ord) => byQ.get(questions.find((q) => q.ord === ord)?.id));
+    for (const q of picked) {
+      if (!q) throw new Error("nie znaleziono pytania demo o żądanym ord");
+      const weakest = q.answers.find((a) => a.ord === 6);
+      if (weakest) await sb.from("answers").delete().eq("id", weakest.id);
     }
 
     let finalPicked = [];
@@ -92,22 +111,26 @@ async function makeGame(page, name, { settings = {}, roundQuestions = [], finalA
         if (faErr) throw new Error("insert final answer failed: " + faErr.message);
         finalPicked.push({ id: fq.id });
       }
-      // Scal z tym, co już przyszło w `settings` (np. game.advanced.finalMinPoints
-      // dla scenariuszy progresji rund) zamiast nadpisywać cały obiekt — inaczej
-      // ten update kasowałby ustawienia zaawansowane wstawione przy tworzeniu gry.
-      const { error: upErr } = await sb.from("games").update({
-        settings: {
-          teams: { teamA: "Alfa", teamB: "Beta" },
-          ...settings,
-          game: { ...(settings.game || {}), hasFinal: true, finalQuestionsMode: "pick" },
-          questions: { final: finalPicked, rounds: [] },
-        },
-      }).eq("id", g.id);
-      if (upErr) throw new Error("update final settings failed: " + upErr.message);
     }
 
+    const { error: upErr } = await sb.from("games").update({
+      status: "ready",
+      settings: {
+        teams: { teamA: "Alfa", teamB: "Beta" },
+        display: settings.display || {},
+        game: {
+          hasFinal: !!finalAnswerPts,
+          roundsQuestionsMode: "pick",
+          ...(finalAnswerPts ? { finalQuestionsMode: "pick" } : {}),
+          ...(settings.game || {}),
+        },
+        questions: { rounds: picked.map((q) => ({ id: q.id })), final: finalPicked },
+      },
+    }).eq("id", g.id);
+    if (upErr) throw new Error("update demo settings failed: " + upErr.message);
+
     return g;
-  }, { name, settings, roundQuestions, finalAnswerPts });
+  }, { pickOrds, settings, finalAnswerPts });
 }
 
 async function deleteGame(page, gameId) {
@@ -158,102 +181,50 @@ async function releaseLogoLockExternally(setupPage, logoId, tabId) {
   }, { logoId, tabId }).catch(() => {});
 }
 
-// 5 odpowiedzi (nie 3, zgłoszone: "pytanie nie może mieć 3 odpowiedzi") —
-// realistycznie brzmiąca treść zamiast gołych "Odpowiedź A/B/C", żeby
-// nagranie wyglądało jak prawdziwa gra, nie syntetyczny fixture.
-const TWO_QUESTIONS = [
-  { ord: 1, text: "Co ludzie robią rano przed pracą?", answers: [
-    { ord: 1, text: "Piją kawę", fixed_points: 40 },
-    { ord: 2, text: "Biorą prysznic", fixed_points: 25 },
-    { ord: 3, text: "Sprawdzają telefon", fixed_points: 15 },
-    { ord: 4, text: "Jedzą śniadanie", fixed_points: 12 },
-    { ord: 5, text: "Ścielą łóżko", fixed_points: 8 },
-  ] },
-  { ord: 2, text: "Co ludzie najczęściej zapominają zabrać z domu?", answers: [
-    { ord: 1, text: "Klucze", fixed_points: 38 },
-    { ord: 2, text: "Telefon", fixed_points: 27 },
-    { ord: 3, text: "Portfel", fixed_points: 18 },
-    { ord: 4, text: "Parasol", fixed_points: 10 },
-    { ord: 5, text: "Okulary", fixed_points: 7 },
-  ] },
-];
+// Które z 16 realnych pytań demo (supabase/migrations/2026-03-09_040_
+// demo_in_db.sql, lang="pl", slot="prepared" — 6 odpowiedzi każde, sumujące
+// się do 100 pkt) idzie do której rundy każdego scenariusza — restoreDemoGame()
+// wyżej usuwa dla KAŻDEGO z nich najsłabszą, 6. odpowiedź (więc realny bank
+// pełnej rundy to 100 minus ta jedna wartość, nie równe 100 — stąd konkretne
+// liczby w komentarzach niżej, PRZELICZONE z rzeczywistej treści migracji,
+// nie zgadywane). Scenariusze BEZ progu (1/6/7) nie są wrażliwe na dokładne
+// punkty — dowolne różne pytania wystarczą, byle #1 (ord odpowiedzi) było
+// zawsze topowe (co w realnym demo jest zawsze prawdą — odpowiedzi są tam
+// posortowane malejąco po fixed_points).
+//
+//   ord=1 (Podaj coś, co ludzie robią zaraz po przebudzeniu): 38,24,18,11,6 (bez 3) = 97
+//   ord=2 (Podaj coś, co zabiera się na wakacje):              34,26,18,12,6 (bez 4) = 96
+//   ord=3 (Podaj powód spóźnienia do pracy lub szkoły):        42,23,15,9,7  (bez 4) = 96
+//   ord=4 (Podaj coś, co kupisz na stacji benzynowej):         40,22,17,11,6 (bez 4) = 96
+//   ord=5 (Podaj zwierzę, którego ludzie się boją):            44,26,13,7,6  (bez 4) = 96
+//   ord=6 (Wymień coś, co robi się codziennie w kuchni):       33,27,18,11,7 (bez 4) = 96
+//   ord=9 (Podaj miejsce, gdzie nie wypada mówić głośno):      36,28,17,8,7  (bez 4) = 96
+//   ord=10 (Podaj coś, co często się gubi):                    43,24,14,10,6 (bez 3) = 97
+//   ord=11 (Wymień domowy obowiązek...):                       37,23,16,13,7 (bez 4) = 96
 
-// 3 rundy do scenariusza "progresja + próg", KAŻDA z 5 odpowiedziami
-// (zgłoszone: "pytanie nie może mieć 3 odpowiedzi") i wszystkimi
-// odsłoniętymi naturalnie przez PLAY (nie tylko duel-win + jedna reszta) —
-// kolejność i wartości punktów dobrane tak, żeby próg (finalMinPoints,
-// obniżony do 180 w ustawieniach gry poniżej) padał dopiero PO trzeciej
-// rundzie, nie wcześniej — inaczej runda 3. nigdy by się nie odbyła.
-// Ręczne przeliczenie (patrz REDUCERS w control2/js/engine.js — R.revealed
-// >= R.answers.length ustawia canEndRound niezależnie od tego, czy to
-// zaszło przez pojedynek + zwykłe PLAY, czy przez STEAL):
-//   R1: pojedynek wygrany za pierwszym razem (A, #1=40 top) -> reszta
-//       (25+15+12+8) odsłonięta zwykłym PLAY -> bank 100 -> mnożnik r1=1
-//       -> totals.A=100
-//   R2: pojedynek — B pudłuje (X) -> BEZ resetu (to nie jest RESET, tylko
-//       CONTINUE_SECOND) kolej NA DRUGĄ próbę idzie do A, która trafia
-//       odpowiedź NIE-topową (#2=15) i WYGRYWA, bo B miał 0 -> reszta
-//       (25 top + 12+5+3) odsłonięta w PLAY -> bank 60 -> mnożnik r2=1
-//       -> totals.A=160
-//   R3: pojedynek wygrany za pierwszym razem (A, #1=18 top) -> reszta
-//       (14+10+6+4) odsłonięta w PLAY -> bank 52 -> mnożnik r3=1
-//       -> totals.A=212 >= 180 -> PRÓG OSIĄGNIĘTY (dopiero teraz)
-const PROGRESSION_QUESTIONS = [
-  { ord: 1, text: "Ulubione zwierzę domowe", answers: [
-    { ord: 1, text: "Pies", fixed_points: 40 },
-    { ord: 2, text: "Kot", fixed_points: 25 },
-    { ord: 3, text: "Chomik", fixed_points: 15 },
-    { ord: 4, text: "Rybka", fixed_points: 12 },
-    { ord: 5, text: "Papuga", fixed_points: 8 },
-  ] },
-  { ord: 2, text: "Czym ludzie jeżdżą do pracy", answers: [
-    { ord: 1, text: "Samochodem", fixed_points: 25 },
-    { ord: 2, text: "Autobusem", fixed_points: 15 },
-    { ord: 3, text: "Rowerem", fixed_points: 12 },
-    { ord: 4, text: "Pieszo", fixed_points: 5 },
-    { ord: 5, text: "Metrem", fixed_points: 3 },
-  ] },
-  { ord: 3, text: "Co robimy w weekend", answers: [
-    { ord: 1, text: "Odpoczywamy", fixed_points: 18 },
-    { ord: 2, text: "Sprzątamy", fixed_points: 14 },
-    { ord: 3, text: "Idziemy do kina", fixed_points: 10 },
-    { ord: 4, text: "Spotykamy znajomych", fixed_points: 6 },
-    { ord: 5, text: "Gotujemy", fixed_points: 4 },
-  ] },
-];
-const PROGRESSION_FINAL_MIN_POINTS = 180;
+// Scenariusz "progresja + próg" (2/3): R1=96 (ord3), R2=96 (ord4), R3=96
+// (ord5) — mnożnik rund 1-3 domyślnie ×1 (shared/gameStateShape.js's
+// DEFAULT_SETTINGS.roundMultipliers=[1,1,1,2,3]) — kumulatywnie 96/192/288.
+// finalMinPoints=250 (poniżej domyślnego 300, żeby scenariusz nie musiał
+// grać 4-5 rund) trafiony dopiero PO R3 (192<250<=288), nigdy wcześniej.
+const PROGRESSION_ROUND_ORDS = [3, 4, 5];
+const PROGRESSION_FINAL_MIN_POINTS = 250;
 
-// Runda "wejście do finału" dla scenariuszy 4/5 — 5 odpowiedzi (nie 1,
-// zgłoszone: "pytanie nie może mieć 3 odpowiedzi", a jedna to było jeszcze
-// gorzej), sumujące się do finalMinPoints domyślnego (300). Duel-win na
-// topowej (120), reszta odsłonięta naturalnie w PLAY — dokładnie ten sam
-// wzorzec co PROGRESSION_QUESTIONS, "wszystko odsłonięte" kończy rundę.
-const FINAL_SETUP_ROUND = {
-  ord: 1, text: "Ulubiona pora roku", answers: [
-    { ord: 1, text: "Lato", fixed_points: 120 },
-    { ord: 2, text: "Wiosna", fixed_points: 80 },
-    { ord: 3, text: "Jesień", fixed_points: 50 },
-    { ord: 4, text: "Zima", fixed_points: 30 },
-    { ord: 5, text: "Nie mam ulubionej", fixed_points: 20 },
-  ],
-};
+// Scenariusze "final" (4/5): JEDNA runda musi sama przekroczyć próg —
+// ord=6 daje bank=96, więc finalMinPoints=90 (poniżej tego) trafiony od
+// razu po pierwszej rundzie, jak w oryginalnym (syntetycznym) FINAL_SETUP_ROUND.
+const FINAL_SETUP_ROUND_ORD = 6;
+const FINAL_SETUP_MIN_POINTS = 90;
 
-// Dwie rundy do scenariusza 6 (zerwanie i ponowne podłączenie urządzeń) —
-// runda 1 przerwana W ŚRODKU pojedynku (rozłączenie następuje PO wygranym
-// pojedynku, ale PRZED odsłonięciem reszty), runda 2 to nowy pojedynek
-// rozegrany W CAŁOŚCI na już PONOWNIE podłączonym Buzzerze — dowód, że nowe
-// urządzenie nie tylko "świeci na zielono", ale faktycznie bierze udział w
-// rozgrywce (nie tylko presence, ale i realny zapis do game_state).
-const RECONNECT_ROUND_1 = FINAL_SETUP_ROUND;
-const RECONNECT_ROUND_2 = {
-  ord: 2, text: "Co robimy, gdy zerwie się internet", answers: [
-    { ord: 1, text: "Restartujemy router", fixed_points: 35 },
-    { ord: 2, text: "Dzwonimy do dostawcy", fixed_points: 25 },
-    { ord: 3, text: "Czekamy", fixed_points: 20 },
-    { ord: 4, text: "Sprawdzamy telefon", fixed_points: 12 },
-    { ord: 5, text: "Idziemy do sąsiada", fixed_points: 8 },
-  ],
-};
+// Dwie rundy scenariusza 6 (zerwanie i ponowne podłączenie) — bez progu,
+// dowolne dwa różne pytania.
+const RECONNECT_ROUND_ORDS = [9, 10];
+
+// Runda scenariusza 7 (blokada logo) — bez progu, byle inna niż powyższe
+// (żeby recording z osobnych scenariuszy nie polegał przypadkiem na tym
+// samym pytaniu, mimo że restore_my_demo() i tak resetuje demo między
+// scenariuszami).
+const LOGO_LOCK_ROUND_ORD = 11;
 
 // ===== Kafelkowanie okien 2x2 na wirtualnym ekranie (CDP Browser.setWindowBounds) =====
 
@@ -648,6 +619,11 @@ async function scenarioRoundsMechanics(pages) {
   await armAndConfirmPaced(answerTile(control, 3));
   await armAndConfirmPaced(answerTile(control, 4));
   await armAndConfirmPaced(answerTile(control, 5));
+  // Po odsłonięciu WSZYSTKIEGO w R8 przycisk "Zakończ rundę" już nie
+  // wystarcza — dochodzi kontekstowo podpisany krok pośredni
+  // (NEXT_AFTER_REVEAL, engine.js's r.roundEndDestination), zanim w ogóle
+  // pojawi się ekran startowy kolejnej rundy z "Rozpocznij rundę".
+  await clickPaced(control.getByRole("button", { name: "Przejdź do następnej rundy" }));
 
   // ===== RUNDA 2 =====
   await clickPaced(control.getByRole("button", { name: "Rozpocznij rundę" }));
@@ -666,6 +642,9 @@ async function scenarioRoundsMechanics(pages) {
   await armAndConfirmPaced(answerTile(control, 3));
   await armAndConfirmPaced(answerTile(control, 4));
   await armAndConfirmPaced(answerTile(control, 5));
+  // Tu docelowo jest koniec gry (bez finału), nie kolejna runda — ten sam
+  // krok pośredni, ale kontekstowo inny label (r.roundEndDestination==="GAME_END").
+  await clickPaced(control.getByRole("button", { name: "Przejdź do zakończenia gry" }));
 
   // ===== Koniec gry bez finału =====
   await clickPaced(control.getByRole("button", { name: "Zakończ grę" }));
@@ -673,8 +652,8 @@ async function scenarioRoundsMechanics(pages) {
 }
 
 // ===== Scenariusz 2/3: progresja przez KILKA rund aż do naturalnego
-// osiągnięcia progu (finalMinPoints, obniżony do 180 — patrz
-// PROGRESSION_QUESTIONS) — nie jeden sztuczny strzał na dużą liczbę punktów.
+// osiągnięcia progu (finalMinPoints, obniżony do PROGRESSION_FINAL_MIN_POINTS
+// — patrz PROGRESSION_ROUND_ORDS) — nie jeden sztuczny strzał na dużą liczbę punktów.
 // Runda 2. dodatkowo pokazuje jedyną gałąź pojedynku, której nie było w
 // żadnym innym scenariuszu: pierwsza drużyna pudłuje, DRUGA wygrywa na
 // swojej próbie odpowiedzią NIE-topową, bez żadnego resetu (to inny
@@ -696,10 +675,10 @@ async function scenarioRoundsThreshold(pages, { expectFinal }) {
   await clickPaced(buzzer.getByRole("button", { name: "Przycisk A" }));
   await clickPaced(control.getByRole("button", { name: "Zatwierdź: Alfa" }));
   await armAndConfirmPaced(answerTile(control, 1)); // A trafia topową odpowiedź od razu -> wygrywa pojedynek (Pies, 40)
-  await armAndConfirmPaced(answerTile(control, 2)); // Kot, 25
-  await armAndConfirmPaced(answerTile(control, 3)); // Chomik, 15
-  await armAndConfirmPaced(answerTile(control, 4)); // Rybka, 12
-  await armAndConfirmPaced(answerTile(control, 5)); // Papuga, 8 -> wszystko odsłonięte -> koniec rundy pomija ekran dosłaniania
+  await armAndConfirmPaced(answerTile(control, 2)); // odp. #2
+  await armAndConfirmPaced(answerTile(control, 3)); // odp. #3
+  await armAndConfirmPaced(answerTile(control, 4)); // odp. #4
+  await armAndConfirmPaced(answerTile(control, 5)); // odp. #5 -> wszystko odsłonięte -> koniec rundy pomija ekran dosłaniania
   await clickPaced(control.getByRole("button", { name: "Zakończ rundę" }));
   await control.waitForTimeout(2000); // widz ma zdążyć zobaczyć zaktualizowany wynik przed startem kolejnej rundy
 
@@ -709,11 +688,11 @@ async function scenarioRoundsThreshold(pages, { expectFinal }) {
   await clickPaced(buzzer.getByRole("button", { name: "Przycisk B" }));
   await clickPaced(control.getByRole("button", { name: "Zatwierdź: Beta" }));
   await armAndConfirmPaced(control.getByRole("button", { name: "X", exact: true })); // B pudłuje -> kolej na drugą próbę (A), NIE reset
-  await armAndConfirmPaced(answerTile(control, 2)); // A trafia odpowiedź nie-topową (Autobusem, 15) -> WYGRYWA, bo B miał 0 pkt
-  await armAndConfirmPaced(answerTile(control, 1)); // Samochodem, 25 (top, dosłaniane normalnie)
-  await armAndConfirmPaced(answerTile(control, 3)); // Rowerem, 12
-  await armAndConfirmPaced(answerTile(control, 4)); // Pieszo, 5
-  await armAndConfirmPaced(answerTile(control, 5)); // Metrem, 3 -> wszystko odsłonięte
+  await armAndConfirmPaced(answerTile(control, 2)); // A trafia odpowiedź NIE-topową -> WYGRYWA, bo B miał 0 pkt
+  await armAndConfirmPaced(answerTile(control, 1)); // odp. #1 (top, dosłaniane normalnie)
+  await armAndConfirmPaced(answerTile(control, 3)); // odp. #3
+  await armAndConfirmPaced(answerTile(control, 4)); // odp. #4
+  await armAndConfirmPaced(answerTile(control, 5)); // odp. #5 -> wszystko odsłonięte
   await clickPaced(control.getByRole("button", { name: "Zakończ rundę" }));
   await control.waitForTimeout(2000); // widz ma zdążyć zobaczyć zaktualizowany wynik przed startem kolejnej rundy
 
@@ -722,11 +701,11 @@ async function scenarioRoundsThreshold(pages, { expectFinal }) {
   await clickPaced(control.getByRole("button", { name: "Rozpocznij rundę" }));
   await clickPaced(buzzer.getByRole("button", { name: "Przycisk A" }));
   await clickPaced(control.getByRole("button", { name: "Zatwierdź: Alfa" }));
-  await armAndConfirmPaced(answerTile(control, 1)); // Odpoczywamy, 18
-  await armAndConfirmPaced(answerTile(control, 2)); // Sprzątamy, 14
-  await armAndConfirmPaced(answerTile(control, 3)); // Idziemy do kina, 10
-  await armAndConfirmPaced(answerTile(control, 4)); // Spotykamy znajomych, 6
-  await armAndConfirmPaced(answerTile(control, 5)); // Gotujemy, 4 -> wszystko odsłonięte
+  await armAndConfirmPaced(answerTile(control, 1)); // odp. #1 (top)
+  await armAndConfirmPaced(answerTile(control, 2)); // odp. #2
+  await armAndConfirmPaced(answerTile(control, 3)); // odp. #3
+  await armAndConfirmPaced(answerTile(control, 4)); // odp. #4
+  await armAndConfirmPaced(answerTile(control, 5)); // odp. #5 -> wszystko odsłonięte
   await clickPaced(control.getByRole("button", { name: "Zakończ rundę" })); // próg (180) osiągnięty
 
   if (expectFinal) {
@@ -753,11 +732,11 @@ async function scenarioFinalFull(pages) {
 
   await clickPaced(buzzer.getByRole("button", { name: "Przycisk A" }));
   await clickPaced(control.getByRole("button", { name: "Zatwierdź: Alfa" }));
-  await armAndConfirmPaced(answerTile(control, 1)); // Lato, 120 -> wygrywa pojedynek
-  await armAndConfirmPaced(answerTile(control, 2)); // Wiosna, 80
-  await armAndConfirmPaced(answerTile(control, 3)); // Jesień, 50
-  await armAndConfirmPaced(answerTile(control, 4)); // Zima, 30
-  await armAndConfirmPaced(answerTile(control, 5)); // Nie mam ulubionej, 20 -> wszystko odsłonięte, bank=300 -> próg osiągnięty
+  await armAndConfirmPaced(answerTile(control, 1)); // odp. #1 (top) -> wygrywa pojedynek
+  await armAndConfirmPaced(answerTile(control, 2)); // odp. #2
+  await armAndConfirmPaced(answerTile(control, 3)); // odp. #3
+  await armAndConfirmPaced(answerTile(control, 4)); // odp. #4
+  await armAndConfirmPaced(answerTile(control, 5)); // odp. #5 -> wszystko odsłonięte, bank pełny -> próg osiągnięty
   await clickPaced(control.getByRole("button", { name: "Zakończ rundę" }));
   await control.waitForTimeout(2000); // widz ma zdążyć zobaczyć zaktualizowany wynik przed startem kolejnej rundy
 
@@ -857,11 +836,11 @@ async function scenarioFinalEarlyExit(pages) {
 
   await clickPaced(buzzer.getByRole("button", { name: "Przycisk A" }));
   await clickPaced(control.getByRole("button", { name: "Zatwierdź: Alfa" }));
-  await armAndConfirmPaced(answerTile(control, 1)); // Lato, 120 -> wygrywa pojedynek
-  await armAndConfirmPaced(answerTile(control, 2)); // Wiosna, 80
-  await armAndConfirmPaced(answerTile(control, 3)); // Jesień, 50
-  await armAndConfirmPaced(answerTile(control, 4)); // Zima, 30
-  await armAndConfirmPaced(answerTile(control, 5)); // Nie mam ulubionej, 20 -> wszystko odsłonięte, bank=300 -> próg osiągnięty, wchodzimy w finał
+  await armAndConfirmPaced(answerTile(control, 1)); // odp. #1 (top) -> wygrywa pojedynek
+  await armAndConfirmPaced(answerTile(control, 2)); // odp. #2
+  await armAndConfirmPaced(answerTile(control, 3)); // odp. #3
+  await armAndConfirmPaced(answerTile(control, 4)); // odp. #4
+  await armAndConfirmPaced(answerTile(control, 5)); // odp. #5 -> wszystko odsłonięte, bank pełny -> próg osiągnięty, wchodzimy w finał
   await clickPaced(control.getByRole("button", { name: "Zakończ rundę" }));
   await control.waitForTimeout(2000); // widz ma zdążyć zobaczyć zaktualizowany wynik przed startem kolejnej rundy
 
@@ -918,7 +897,7 @@ async function scenarioDeviceReconnect(pages, { contexts, browser }) {
 
   await clickPaced(pages.buzzer.getByRole("button", { name: "Przycisk A" }));
   await clickPaced(control.getByRole("button", { name: "Zatwierdź: Alfa" }));
-  await armAndConfirmPaced(answerTile(control, 1)); // Lato, 120 -> wygrywa pojedynek, reszta rundy zostaje NIEODSŁONIĘTA
+  await armAndConfirmPaced(answerTile(control, 1)); // odp. #1 (top) -> wygrywa pojedynek, reszta rundy zostaje NIEODSŁONIĘTA
 
   // ===== Zerwanie połączenia WSZYSTKICH trzech urządzeń naraz =====
   console.log("[record] symulacja zerwania połączenia: zamykam Display/Host/Buzzer");
@@ -957,7 +936,7 @@ async function scenarioDeviceReconnect(pages, { contexts, browser }) {
   await clickPaced(control.getByRole("button", { name: "Rozpocznij rundę" }));
   await clickPaced(pages.buzzer.getByRole("button", { name: "Przycisk B" }));
   await clickPaced(control.getByRole("button", { name: "Zatwierdź: Beta" }));
-  await armAndConfirmPaced(answerTile(control, 1)); // Restartujemy router, 35
+  await armAndConfirmPaced(answerTile(control, 1)); // odp. #1 (top)
   await armAndConfirmPaced(answerTile(control, 2));
   await armAndConfirmPaced(answerTile(control, 3));
   await armAndConfirmPaced(answerTile(control, 4));
@@ -1009,11 +988,11 @@ async function scenarioLogoLock(pages, { setupPage, logoId, logoLockTabId }) {
   await clickPaced(control.getByRole("button", { name: "Rozpocznij rundę" }));
   await clickPaced(buzzer.getByRole("button", { name: "Przycisk A" }));
   await clickPaced(control.getByRole("button", { name: "Zatwierdź: Alfa" }));
-  await armAndConfirmPaced(answerTile(control, 1)); // Lato, 120
-  await armAndConfirmPaced(answerTile(control, 2)); // Wiosna, 80
-  await armAndConfirmPaced(answerTile(control, 3)); // Jesień, 50
-  await armAndConfirmPaced(answerTile(control, 4)); // Zima, 30
-  await armAndConfirmPaced(answerTile(control, 5)); // Nie mam ulubionej, 20
+  await armAndConfirmPaced(answerTile(control, 1)); // odp. #1 (top)
+  await armAndConfirmPaced(answerTile(control, 2)); // odp. #2
+  await armAndConfirmPaced(answerTile(control, 3)); // odp. #3
+  await armAndConfirmPaced(answerTile(control, 4)); // odp. #4
+  await armAndConfirmPaced(answerTile(control, 5)); // odp. #5
   await clickPaced(control.getByRole("button", { name: "Zakończ rundę" }));
   await control.waitForTimeout(2000);
   await clickPaced(control.getByRole("button", { name: "Zakończ grę" }));
@@ -1026,15 +1005,15 @@ async function scenarioLogoLock(pages, { setupPage, logoId, logoLockTabId }) {
 const SCENARIOS = [
   {
     file: "01-rundy-mechanika.mp4",
-    makeGame: (setupPage) => makeGame(setupPage, `E2E-REC-ROUNDS-${Date.now()}`, { roundQuestions: TWO_QUESTIONS }),
+    makeGame: (setupPage) => restoreDemoGame(setupPage, { pickOrds: [1, 2] }),
     run: scenarioRoundsMechanics,
   },
   {
     // Ta sama progresja rund co scenariusz 3, ale hasFinal=true -> R9 kończy
     // się wejściem w finał zamiast w ekran końca gry.
     file: "02-rundy-progresja-final.mp4",
-    makeGame: (setupPage) => makeGame(setupPage, `E2E-REC-PROGRESJA-FINAL-${Date.now()}`, {
-      roundQuestions: PROGRESSION_QUESTIONS,
+    makeGame: (setupPage) => restoreDemoGame(setupPage, {
+      pickOrds: PROGRESSION_ROUND_ORDS,
       settings: { game: { hasFinal: true, advanced: { finalMinPoints: PROGRESSION_FINAL_MIN_POINTS } } },
       finalAnswerPts: 15, // treść finału nieużywana (scenariusz zatrzymuje się na f_p1_entry) — wymagana tylko, żeby canEnterFinal() przepuściło
     }),
@@ -1042,16 +1021,17 @@ const SCENARIOS = [
   },
   {
     file: "03-rundy-progresja-bez-finalu.mp4",
-    makeGame: (setupPage) => makeGame(setupPage, `E2E-REC-PROGRESJA-KONIEC-${Date.now()}`, {
-      roundQuestions: PROGRESSION_QUESTIONS,
-      settings: { game: { hasFinal: false, advanced: { finalMinPoints: PROGRESSION_FINAL_MIN_POINTS } } },
+    makeGame: (setupPage) => restoreDemoGame(setupPage, {
+      pickOrds: PROGRESSION_ROUND_ORDS,
+      settings: { game: { advanced: { finalMinPoints: PROGRESSION_FINAL_MIN_POINTS } } },
     }),
     run: (pages) => scenarioRoundsThreshold(pages, { expectFinal: false }),
   },
   {
     file: "04-final-pelny.mp4",
-    makeGame: (setupPage) => makeGame(setupPage, `E2E-REC-FINAL-${Date.now()}`, {
-      roundQuestions: [FINAL_SETUP_ROUND],
+    makeGame: (setupPage) => restoreDemoGame(setupPage, {
+      pickOrds: [FINAL_SETUP_ROUND_ORD],
+      settings: { game: { advanced: { finalMinPoints: FINAL_SETUP_MIN_POINTS } } },
       finalAnswerPts: 15,
     }),
     run: scenarioFinalFull,
@@ -1060,17 +1040,16 @@ const SCENARIOS = [
     // finalAnswerPts=250 > finalTarget domyślne (200) -> pierwsza trafiona
     // odpowiedź gracza 1 sama kończy finał wcześniej.
     file: "05-final-wczesne-zakonczenie.mp4",
-    makeGame: (setupPage) => makeGame(setupPage, `E2E-REC-FINAL-WCZESNY-${Date.now()}`, {
-      roundQuestions: [FINAL_SETUP_ROUND],
+    makeGame: (setupPage) => restoreDemoGame(setupPage, {
+      pickOrds: [FINAL_SETUP_ROUND_ORD],
+      settings: { game: { advanced: { finalMinPoints: FINAL_SETUP_MIN_POINTS } } },
       finalAnswerPts: 250,
     }),
     run: scenarioFinalEarlyExit,
   },
   {
     file: "06-zerwanie-i-ponowne-podlaczenie.mp4",
-    makeGame: (setupPage) => makeGame(setupPage, `E2E-REC-RECONNECT-${Date.now()}`, {
-      roundQuestions: [RECONNECT_ROUND_1, RECONNECT_ROUND_2],
-    }),
+    makeGame: (setupPage) => restoreDemoGame(setupPage, { pickOrds: RECONNECT_ROUND_ORDS }),
     run: scenarioDeviceReconnect,
   },
 ];
@@ -1088,8 +1067,8 @@ function makeLogoLockScenario() {
       shared.logoId = await insertLogo(setupPage, `E2E-REC-LOGOLOCK-${Date.now()}`);
       shared.logoLockTabId = `rec-fake-logo-editor-${Date.now()}`;
       await acquireLogoLockExternally(setupPage, shared.logoId, shared.logoLockTabId);
-      return makeGame(setupPage, `E2E-REC-LOGOLOCK-GAME-${Date.now()}`, {
-        roundQuestions: [FINAL_SETUP_ROUND],
+      return restoreDemoGame(setupPage, {
+        pickOrds: [LOGO_LOCK_ROUND_ORD],
         settings: { display: { logoId: shared.logoId } },
       });
     },
