@@ -37,7 +37,15 @@ const SOURCE_EXT = ['.html', '.js', '.json', '.css', '.webmanifest'];
 // żywego stanu z KV — przy każdym deployu ten sam auto-wersjoner na nowo
 // psuł ręcznie naprawiony kod. Worker nie potrzebuje wersjonowania swoich
 // referencji tym mechanizmem (to kod routingu, nie strona ładująca assety).
-const IGNORE_DIRS = ['.git', 'node_modules', '.claude', '.qwen', '.github', 'img', 'tests', 'cloudflare'];
+// "supabase" i "services" pomijane z tego samego powodu co "cloudflare" —
+// to kod backendu (Edge Functions, migracje, osobno wdrażany serwis
+// lead-finder), nigdy nie trafia na GitHub Pages, więc nie ma czego
+// wersjonować, a skanowanie go to tylko niepotrzebna praca i ryzyko takiej
+// samej pomyłki jak w Workerze. Cała ta lista jest teraz świadomie
+// lustrem wykluczeń z rsync w .github/workflows/deploy-pages.yml (krok
+// "Prepare public-only deployment directory") — jeśli tamta lista się
+// zmieni, zmień i tę.
+const IGNORE_DIRS = ['.git', 'node_modules', '.claude', '.qwen', '.github', 'img', 'tests', 'cloudflare', 'supabase', 'services', 'docs', 'searxng'];
 
 /**
  * Rekurencyjnie pobiera listę plików do przetworzenia

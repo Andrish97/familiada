@@ -172,7 +172,7 @@ export default {
 
     // Dynamic sitemap — includes all published game URLs
     if (request.method === "GET" && url.pathname === "/sitemap.xml") {
-      return serveDynamicSitemap(env);
+      return serveDynamicSitemap(env, ctx);
     }
 
     // Boty zawsze dostają prawdziwą treść niezależnie od maintenance
@@ -2709,7 +2709,28 @@ async function serveGameDetailSsr(request, env, url, originBase, originHost, res
   });
 }
 
-async function serveDynamicSitemap(env) {
+// Bez tego Worker wołał Supabase (market_admin_list) na KAŻDY request do
+// /sitemap.xml - a to jedyny "dynamiczny" endpoint na tej domenie, który
+// crawler może odpytać wielokrotnie w krótkim czasie bez żadnego dobrego
+// powodu, żeby robić to za każdym razem od nowa. Stały klucz cache
+// (ignorujący ewentualny query string requestu) + Cache API Workera:
+// generujemy raz na godzinę, resztę requestów w tym oknie serwujemy bez
+// dotykania Supabase w ogóle. Świeżość: nowo opublikowana/wycofana gra
+// pojawi się w sitemapie z max. godzinnym opóźnieniem - do zaakceptowania
+// dla crawlerów, nie dla realnych użytkowników (ci i tak nie czytają XML).
+const SITEMAP_CACHE_KEY = new Request("https://www.familiada.online/sitemap.xml");
+
+async function serveDynamicSitemap(env, ctx) {
+  const edgeCache = caches.default;
+  const cached = await edgeCache.match(SITEMAP_CACHE_KEY);
+  if (cached) return cached;
+
+  const res = await buildDynamicSitemap(env);
+  ctx.waitUntil(edgeCache.put(SITEMAP_CACHE_KEY, res.clone()));
+  return res;
+}
+
+async function buildDynamicSitemap(env) {
   const STATIC_PAGES = [
     { loc: "https://www.familiada.online/",          lastmod: "2026-03-14", changefreq: "monthly",  priority: "1.0" },
     { loc: "https://www.familiada.online/marketplace", lastmod: "2026-03-14", changefreq: "weekly",   priority: "0.9" },
