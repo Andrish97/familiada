@@ -2,9 +2,15 @@
 // Modal eksportu: open() zwraca Promise z wynikiem {ok, payload}
 
 import { t } from "../../translation/translation.js?v=v2026-09-14T21243";
+import { TYPES as GAME_TYPES, RULES } from "../../js/core/game-validate.js?v=v2026-09-14T21243";
+import { validateQuestionForType } from "../../js/core/base-export-validate.js?v=v2026-09-14T21243";
 
-const RULES = { QN_MIN: 10, AN_MIN: 3, AN_MAX: 6, SUM_PREPARED: 100 };
-const TYPES = ["poll_text", "poll_points", "prepared"];
+// Kolejność = pozycje suwaka typu w UI (0/1/2, patrz typeIndex). GAME_TYPES
+// to obiekt nazwa->wartość, nie tablica, więc kolejność zostaje jawna tutaj
+// -- ale WARTOŚCI biorą z kanonicznego źródła (game-validate.js), nie z
+// osobno wpisanych literałów, które mogłyby z czasem rozjechać się od
+// reguł używanych gdzie indziej (RULES analogicznie).
+const TYPES = [GAME_TYPES.POLL_TEXT, GAME_TYPES.POLL_POINTS, GAME_TYPES.PREPARED];
 
 const $ = (id) => document.getElementById(id);
 
@@ -43,26 +49,6 @@ function qText(q) {
 function qAnswers(q) {
   const a = (q && typeof q === "object") ? (q.answers ?? q.payload?.answers) : null;
   return Array.isArray(a) ? a : [];
-}
-
-function validateForType(q, type) {
-  const answers = qAnswers(q);
-
-  if (type === "poll_text") return true;
-
-  if (type === "poll_points") {
-    const an = answers.length;
-    return an >= RULES.AN_MIN && an <= RULES.AN_MAX;
-  }
-
-  if (type === "prepared") {
-    const an = answers.length;
-    if (!(an >= RULES.AN_MIN && an <= RULES.AN_MAX)) return false;
-    const s = sumPoints(answers);
-    return s <= RULES.SUM_PREPARED;
-  }
-
-  return true;
 }
 
 function buildExportPayload({ name, type, questions }) {
@@ -140,7 +126,7 @@ export function initExportModal({ state } = {}) {
   let resolveClose = null;
 
   function updateTypeUI() {
-    const type = TYPES[typeIndex] || "prepared";
+    const type = TYPES[typeIndex] || GAME_TYPES.PREPARED;
     if (xTypeHint) {
       if (type === "poll_text") xTypeHint.textContent = t("baseExplorer.export.typeHintPollText");
       if (type === "poll_points") xTypeHint.textContent = t("baseExplorer.export.typeHintPollPoints");
@@ -154,12 +140,13 @@ export function initExportModal({ state } = {}) {
   // Podtytuł modala mówi wprost "czerwone nie spełniają warunków wybranego
   // typu -- odhacz je albo popraw dane", ale nic tego nie egzekwowało:
   // buildExportPayload() bierze WSZYSTKO co jest w selectedIds bez względu
-  // na validateForType(), więc zaznaczone-a-czerwone pytanie i tak trafiało
-  // do utworzonej gry. "Utwórz" musi być zablokowane dopóki którekolwiek
-  // zaznaczone pytanie jest czerwone dla aktualnie wybranego typu.
+  // na validateQuestionForType(), więc zaznaczone-a-czerwone pytanie i tak
+  // trafiało do utworzonej gry. "Utwórz" musi być zablokowane dopóki
+  // którekolwiek zaznaczone pytanie jest czerwone dla aktualnie wybranego
+  // typu.
   function hasBadSelected() {
-    const type = TYPES[typeIndex] || "prepared";
-    return allQuestions.some((q) => selectedIds.has(q.id) && !validateForType(q, type));
+    const type = TYPES[typeIndex] || GAME_TYPES.PREPARED;
+    return allQuestions.some((q) => selectedIds.has(q.id) && !validateQuestionForType(q, type));
   }
 
   function updateCountUI() {
@@ -189,11 +176,11 @@ export function initExportModal({ state } = {}) {
     if (!xList) return;
     xList.innerHTML = "";
 
-    const type = TYPES[typeIndex] || "prepared";
+    const type = TYPES[typeIndex] || GAME_TYPES.PREPARED;
 
     for (const q of allQuestions) {
-      
-      const ok = validateForType(q, type);
+
+      const ok = validateQuestionForType(q, type);
       const label = qText(q) || t("baseExplorer.common.dash");
       const checked = selectedIds.has(q.id);
 
@@ -367,7 +354,7 @@ export function initExportModal({ state } = {}) {
 
     const payload = buildExportPayload({
       name: String(xName?.value || t("baseExplorer.export.defaultGameName")),
-      type: TYPES[typeIndex] || "prepared",
+      type: TYPES[typeIndex] || GAME_TYPES.PREPARED,
       questions: picked,
     });
 

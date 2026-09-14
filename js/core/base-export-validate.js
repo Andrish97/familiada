@@ -130,3 +130,26 @@ export function validateExport(gameType, questionsInput) {
 export function canExport(gameType, questionsInput) {
   return validateExport(gameType, questionsInput).ok;
 }
+
+/**
+ * Walidacja POJEDYNCZEGO pytania pod dany typ gry — osobno od validateExport()
+ * (ocenia całą listę na raz, zwraca reason), bo UI (export-modal.js) koloruje
+ * pytania na liście red/green pojedynczo, na żywo, zanim user w ogóle
+ * kliknie "Utwórz".
+ */
+export function validateQuestionForType(q, gameType) {
+  if (gameType === TYPES.POLL_TEXT) return true;
+
+  const ans = getAnswersArray(q);
+  if (!clampAnswersCountOk(ans.length)) return false;
+  if (gameType === TYPES.POLL_POINTS) return true;
+
+  if (gameType === TYPES.PREPARED) {
+    const pts = ans.map(getAnswerPoints);
+    if (pts.some((p) => p < 0 || p > 100)) return false;
+    const sum = pts.reduce((s, x) => s + x, 0);
+    return sum <= RULES.SUM_PREPARED;
+  }
+
+  return true;
+}
