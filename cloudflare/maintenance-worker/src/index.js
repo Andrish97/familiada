@@ -270,8 +270,19 @@ const STATIC_ASSET_RE = /\.(?:js|mjs|css|json|webmanifest|png|jpe?g|gif|svg|webp
 // wyżej) - nie wolno mu omijać GLOBAL GATE ani być cache'owanym.
 const DYNAMIC_JSON_PATHS = new Set(["/maintenance-state.json"]);
 
+// isBlockedPath() dalej w tym pliku 404-uje /tools/* i /settings-tools/*
+// na publicznym hoście (te ścieżki mają działać tylko z poziomu
+// settings.familiada.online) - ale ten skrót działa WCZEŚNIEJ w fetch(),
+// więc bez tego wykluczenia np. /settings-tools/tools.json (rozszerzenie
+// .json) omijałby tamten blok i wyciekał publicznie mimo blokady.
+function isPubliclyBlockedAssetPath(pathname) {
+  return pathname.startsWith("/tools/") || pathname.startsWith("/settings-tools/");
+}
+
 function isStaticAssetPath(pathname) {
-  return STATIC_ASSET_RE.test(pathname) && !DYNAMIC_JSON_PATHS.has(pathname);
+  return STATIC_ASSET_RE.test(pathname)
+    && !DYNAMIC_JSON_PATHS.has(pathname)
+    && !isPubliclyBlockedAssetPath(pathname);
 }
 
 // scripts/version-assets.js dopisuje ?v=<deploy> do każdej wersjonowanej

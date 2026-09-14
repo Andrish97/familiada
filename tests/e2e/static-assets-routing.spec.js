@@ -84,4 +84,14 @@ test.describe("routing Workera: statyczne assety vs. endpointy dynamiczne", () =
     expect(versioned.headers()["cache-control"]).toContain("immutable");
     expect(versioned.headers()["cache-control"]).toContain("max-age=31536000");
   });
+
+  test("/settings-tools/ i /tools/ zostają zablokowane na publicznym hoście mimo rozszerzenia .json/.js/.css", async ({ request }) => {
+    // Regresja znaleziona przy audycie: isStaticAssetPath() dopasowuje po
+    // samym rozszerzeniu i działa WCZEŚNIEJ niż isBlockedPath() w fetch(),
+    // więc bez jawnego wykluczenia np. /settings-tools/tools.json (ma
+    // rozszerzenie .json) ominąłby blokadę i wyciekłby publicznie mimo że
+    // /settings-tools/* ma działać tylko z settings.familiada.online.
+    const res = await request.get("/settings-tools/tools.json");
+    expect(res.status(), "wyciekło mimo isBlockedPath()").toBe(404);
+  });
 });
