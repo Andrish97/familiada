@@ -401,6 +401,13 @@ const REDUCERS = {
   // "Zacznij od nowa" jest cofnięciem gry, nie kontynuacją) i zostawia
   // rundę dokładnie tam, gdzie była: operator sam decyduje X-em/odpowiedzią
   // po powrocie.
+  //
+  // DRUGI użytkownik tego samego reducera (zgłoszone): control2/js/ui.js
+  // dispatchuje to również z kliknięcia W TRAKCIE odliczania na żywo (kafel
+  // zegarka, ten sam wzorzec co finalTimerRow's "Zatrzymaj") — operator
+  // rozmyślił się i chce przerwać 3s zegarek ręcznie, bez czekania na
+  // wygaśnięcie i bez naliczania pudła. Zachowanie identyczne w obu
+  // przypadkach (kasuje timer3, nic więcej), więc jeden reducer wystarcza.
   async CANCEL_TIMER3(state) {
     const r = state.rounds;
     if (!r.timer3?.running) return null;

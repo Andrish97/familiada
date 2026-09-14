@@ -570,7 +570,7 @@ test("control2: próg w rundzie -> finał, wczesne zakończenie po 4/5 pytaniach
 
     for (let i = 0; i < 4; i++) {
       await expect(page.locator(".c2-stepper")).toContainText(`Finał — mapowanie ${i + 1}/5`, { timeout: 10000 });
-      await page.getByRole("button", { name: "Odp. finałowa (50)" }).click();
+      await armAndConfirm(page.getByRole("button", { name: "Odp. finałowa (50)" }));
       // "Pokaż odpowiedź"/"Pokaż punkty" — kafle odsłaniania (zaznacz ->
       // potwierdź, jak odpowiedzi w Rundach), nazwa stała, druga linijka to
       // żywy podgląd (aria-hidden, więc dostępna nazwa nie zawiera wartości).
@@ -899,7 +899,9 @@ test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśni�
     await page.getByRole("button", { name: "Dalej" }).click();
     for (let i = 0; i < 5; i++) {
       await expect(page.locator(".c2-stepper")).toContainText(`Finał — mapowanie ${i + 1}/5`, { timeout: 10000 });
-      await page.getByRole("button", { name: "Odp. finałowa (15)" }).click();
+      // Zgłoszone: wybór dopasowania w finale też idzie przez zaznacz ->
+      // potwierdź (armableTile), jak reszta konsekwentnych kafli.
+      await armAndConfirm(page.getByRole("button", { name: "Odp. finałowa (15)" }));
       await armAndConfirm(page.getByRole("button", { name: "Pokaż odpowiedź" }));
       await armAndConfirm(page.getByRole("button", { name: "Pokaż punkty" }));
       // Suma widoczna na ekranie mapowania (ui.js's finalStatusBar) —
@@ -936,7 +938,7 @@ test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśni�
     // ===== F7: gracz 2 — pytanie #1 oznaczone jako "powtórzenie" =====
     await expect(page.locator(".c2-stepper")).toContainText("Finał — gracz 2, wpisywanie", { timeout: 10000 });
     await clearSfxLog(page);
-    await page.getByRole("button", { name: "Powtórzenie" }).first().click();
+    await armAndConfirm(page.getByRole("button", { name: "Powtórzenie" }).first());
     await expect.poll(() => getSfxKeys(page), { timeout: 5000 }).toEqual(expect.arrayContaining(["answer_repeat"]));
 
     const p2Inputs = page.locator("#app input[type=text]");
@@ -950,7 +952,7 @@ test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśni�
     // ===== F8/F9: mapowanie gracza 2 — pytanie #1 to SKIP (powtórzenie), reszta MATCH =====
     for (let i = 0; i < 5; i++) {
       await expect(page.locator(".c2-stepper")).toContainText(`Finał — mapowanie ${i + 1}/5`, { timeout: 10000 });
-      if (i > 0) await page.getByRole("button", { name: "Odp. finałowa (15)" }).click();
+      if (i > 0) await armAndConfirm(page.getByRole("button", { name: "Odp. finałowa (15)" }));
       await armAndConfirm(page.getByRole("button", { name: "Pokaż odpowiedź" }));
       await armAndConfirm(page.getByRole("button", { name: "Pokaż punkty" }));
       await page.getByRole("button", { name: "Dalej" }).click();

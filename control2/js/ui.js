@@ -910,11 +910,23 @@ export function createUI({ root, emit }) {
     if (timer3Available) {
       const running = !!timer3?.running;
       const secLeft = running ? Math.max(0, Math.ceil((timer3.endsAt - Date.now()) / 1000)) : null;
-      tiles.push(tile(running ? String(secLeft) : t("control.roundsStartTimer3"), {
+      // Zgłoszone: da się zatrzymać zegarek ponownym kliknięciem — tak jak
+      // już działa dla zegarka finału (finalTimerRow niżej). Ponowne
+      // kliknięcie w trakcie odliczania dispatchuje CANCEL_TIMER3 (ten sam
+      // reducer, co dziś kasuje TYLKO zastały, wygasły podczas nieobecności
+      // zegarek przy wznowieniu Control — tu użyty też do świadomego,
+      // ręcznego przerwania na żywo: bez naliczania X, runda zostaje
+      // dokładnie tam, gdzie była). Stała, dostępna nazwa przycisku
+      // ("Zatrzymaj") + cyfry aria-hidden, ten sam wzorzec co licznik X i
+      // finalTimerRow — czytnik ekranu/testy nie widzą innego labelu co sekundę.
+      const content = running ? h("div", {}, [
+        h("span", { "aria-hidden": "true" }, [document.createTextNode(String(secLeft))]),
+        h("div", { class: "c2-tile-sub", text: t("control.finalTimerStopShort") }),
+      ]) : t("control.roundsStartTimer3");
+      tiles.push(tile(content, {
         row: 6, col: HALF(1),
         cls: running ? "c2-tile-timer" : "c2-tile-timer startable",
-        disabled: running,
-        onclick: running ? undefined : () => emit("game.dispatch", { type: "START_TIMER3" }),
+        onclick: () => emit("game.dispatch", { type: running ? "CANCEL_TIMER3" : "START_TIMER3" }),
       }));
     }
 
@@ -1373,6 +1385,7 @@ export function createUI({ root, emit }) {
       });
 
     const matchOptions = (question?.answers || []).map((a) => ({
+      key: `map-match:${round}:${idx}:${a.id}`,
       text: `${a.text} (${a.fixed_points})`,
       active: !p2IsRepeat && effective.kind === "MATCH" && effective.matchId === a.id,
       disabled: locked || !hasTyped,
@@ -1385,6 +1398,7 @@ export function createUI({ root, emit }) {
       // tu nie powtarzamy jej drugi raz, tylko podpisujemy, co reprezentuje
       // ta opcja. Stała nazwa + aria-hidden druga linijka, ten sam wzorzec
       // co kafle odsłaniania.
+      key: `map-miss:${round}:${idx}`,
       content: hasTyped ? h("div", {}, [
         document.createTextNode(t("control.finalUi.mapBtnMiss")),
         h("div", { class: "c2-tile-sub", "aria-hidden": "true", text: t("control.finalUi.mapMissSubLabel") }),
@@ -1395,6 +1409,7 @@ export function createUI({ root, emit }) {
       onclick: () => emit("game.dispatch", { type: "RESOLVE_MAPPING", round, idx, mode: "MANUAL", kind: "MISS", matchId: null, outText: inputText, pts: 0 }),
     };
     const skipOption = {
+      key: `map-skip:${round}:${idx}`,
       text: t("control.finalUi.mapBtnSkip"),
       active: !p2IsRepeat && effective.kind === "SKIP",
       disabled: locked || hasTyped,
@@ -1409,6 +1424,7 @@ export function createUI({ root, emit }) {
     // (allowRepeat = isR2, "nigdy disabled" poza revealedAnswer/Points).
     if (round === 2) {
       options.push({
+        key: `map-repeat:${round}:${idx}`,
         text: t("control.finalUi.p2RepeatOff"),
         active: p2IsRepeat,
         disabled: locked,
@@ -1425,7 +1441,14 @@ export function createUI({ root, emit }) {
     // gameFinal.js's `tiles = [...matchTiles, ...actionTiles].slice(0,9)`
     // dopełnione pustymi `mapSlot`-ami do 9, żeby rytm siatki był stały
     // niezależnie od liczby prawdziwych odpowiedzi na liście.
-    const optionTiles = options.slice(0, 9).map((o, i) => tile(o.content || o.text, {
+    // Zgłoszone: wybór dopasowania w finale (MATCH/MISS/SKIP/Powtórzenie) ma
+    // reagować jak reszta konsekwentnych kafli w tej appce — zaznacz ->
+    // potwierdź (armableTile, jak odpowiedzi/X/Oddaj kontrolę w Rundach), z
+    // podwójnym kliknięciem jako skrótem (armableTile's event.detail>=2).
+    // Wcześniej te kafle dispatchowały RESOLVE_MAPPING/SET_REPEAT od razu na
+    // pierwszy klik — jedyne miejsce w tym ekranie bez bufora przeciwko
+    // przypadkowemu kliknięciu.
+    const optionTiles = options.slice(0, 9).map((o, i) => armableTile(o.key, o.content || o.text, {
       row: Math.floor(i / 3) + 2,
       col: THIRD(i % 3),
       cls: [o.active && "c2-tile-primary", o.danger && "c2-tile-danger"].filter(Boolean).join(" "),
