@@ -12,7 +12,7 @@ export default {
     ctx.waitUntil(cleanupExpiredAttachments(env));
   },
 
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     const url = new URL(request.url);
     const host = url.host.toLowerCase();
     // Fetch from apex origin but resolve directly to GitHub Pages to avoid recursion.
@@ -103,6 +103,16 @@ export default {
         return serveNotFoundPage(request, ORIGIN_BASE, ORIGIN_HOST, ORIGIN_RESOLVE);
       }
       return serveMaintenance(request, ORIGIN_BASE, ORIGIN_HOST, ORIGIN_RESOLVE);
+    }
+
+    // Statyczne assety (dowolny folder, dopasowane po rozszerzeniu, nie po
+    // prefiksie ścieżki) — omijają całkowicie GLOBAL GATE i KV. Tu host jest
+    // zawsze www.familiada.online: apex zawsze przekierowuje wyżej, a
+    // settings/panel/supabase/api/leads/nieznane subdomeny już zwróciły
+    // odpowiedź w blokach powyżej. Patrz isStaticAssetPath — jeden wyjątek
+    // (/maintenance-state.json) zostaje w normalnej bramce, bo czyta KV.
+    if ((request.method === "GET" || request.method === "HEAD") && isStaticAssetPath(url.pathname)) {
+      return serveStaticAsset(request, url, ctx, ORIGIN_BASE, ORIGIN_HOST, ORIGIN_RESOLVE);
     }
 
     // E2E test bypass — tylko strona logowania, tylko z poprawnym jednorazowym
@@ -246,6 +256,52 @@ async function getState(env) {
     setStateCache(empty);
     return empty;
   }
+}
+
+// Dopasowanie po rozszerzeniu, nie po folderze — assety żyją w dziesiątkach
+// osobnych katalogów (css/, js/, img/, audio/, translation/, plus własny
+// js/ dla każdej strony: display/, display2/, control/, control2/, host2/,
+// buzzer2/, logo-editor/, base-explorer/...) i lista przybywa z każdą nową
+// stroną. Rozszerzenie jest stałe niezależnie od tego, gdzie plik leży.
+const STATIC_ASSET_RE = /\.(?:js|mjs|css|json|webmanifest|png|jpe?g|gif|svg|webp|avif|ico|woff2?|ttf|otf|eot|mp3|wav|ogg|mp4|webm)$/i;
+
+// Jedyny wyjątek: /maintenance-state.json ma rozszerzenie .json, ale czyta
+// KV na żywo i musi zostać w normalnej bramce (patrz PUBLIC STATE ENDPOINT
+// wyżej) - nie wolno mu omijać GLOBAL GATE ani być cache'owanym.
+const DYNAMIC_JSON_PATHS = new Set(["/maintenance-state.json"]);
+
+function isStaticAssetPath(pathname) {
+  return STATIC_ASSET_RE.test(pathname) && !DYNAMIC_JSON_PATHS.has(pathname);
+}
+
+// scripts/version-assets.js dopisuje ?v=<deploy> do każdej wersjonowanej
+// referencji, więc URL z ?v= jest z definicji unikalny per deploy - wolno go
+// cache'ować długo i "na sztywno" (immutable). Coś bez ?v= (przeoczone albo
+// referencja spoza konwencji wersjonowania) dostaje ostrożny, krótki TTL,
+// żeby ewentualna pomyłka nie zostawiła kogoś na starej wersji na długo.
+function cacheControlFor(url) {
+  return url.searchParams.has("v")
+    ? "public, max-age=31536000, immutable"
+    : "public, max-age=600";
+}
+
+async function serveStaticAsset(request, url, ctx, originBase, originHost, resolveOverride) {
+  const edgeCache = caches.default;
+  const cacheKey = new Request(url.toString(), request);
+
+  const cached = await edgeCache.match(cacheKey);
+  if (cached) return cached;
+
+  const target = new URL(url.pathname + url.search, originBase);
+  const res = await fetchWithOrigin(target.toString(), request, originHost, resolveOverride, {
+    staticAsset: true,
+    cacheControl: cacheControlFor(url),
+  });
+
+  if (request.method === "GET" && res.status === 200) {
+    ctx.waitUntil(edgeCache.put(cacheKey, res.clone()));
+  }
+  return res;
 }
 
 function json(data, status = 200) {
@@ -3078,7 +3134,7 @@ async function fetchWith404(request, originBase, originHost, resolveOverride) {
   return res;
 }
 
-async function fetchWithOrigin(url, request, originHost, resolveOverride) {
+async function fetchWithOrigin(url, request, originHost, resolveOverride, opts = {}) {
   const headers = new Headers(request.headers);
   if (originHost) headers.set("Host", originHost);
 
@@ -3098,6 +3154,19 @@ async function fetchWithOrigin(url, request, originHost, resolveOverride) {
 
   const ct = res.headers.get("Content-Type") || "";
   const accept = headers.get("Accept") || "";
+
+  // Wywołane wyłącznie przez serveStaticAsset(): odwrotność reszty tej
+  // funkcji, która celowo wymusza no-store na WSZYSTKICH innych odpowiedziach
+  // (łącznie z tymi samymi rozszerzeniami niżej) - HTML z bramki maintenance,
+  // odpowiedzi SSR itd. muszą zostać świeże. Tylko ta jedna ścieżka wie, że
+  // serwuje coś, co faktycznie wolno cache'ować.
+  if (opts.staticAsset && res.status === 200) {
+    return new Response(res.body, {
+      status: res.status,
+      headers: { "Content-Type": ct, "Cache-Control": opts.cacheControl || "public, max-age=600" }
+    });
+  }
+
   if (ct.includes("text/html") || accept.includes("text/html")) {
     return new Response(res.body, {
       status: res.status,
