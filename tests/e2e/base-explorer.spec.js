@@ -37,7 +37,7 @@
 //    treść pytania jest niepusta (tylko punkty/sumę).
 
 const { test, expect } = require("@playwright/test");
-const { loginAsTestUser } = require("./helpers/login");
+const { loginAsTestUser, testAccountUsername } = require("./helpers/login");
 
 const BASE_URL = "https://www.familiada.online/base-explorer";
 
@@ -358,7 +358,7 @@ test.describe("base-explorer: naprawy z audytu (nie tylko wiele kart naraz)", ()
 
   test("eksport ('Utwórz grę') faktycznie tworzy grę zamiast rzucać błąd", async ({ page, context }) => {
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
 
     const baseId = await createBase(page, `E2E-XB-EXPORT-${Date.now()}`);
     const gameName = `E2E-XB-CREATED-${Date.now()}`;
@@ -419,7 +419,7 @@ test.describe("base-explorer: naprawy z audytu (nie tylko wiele kart naraz)", ()
 
   test("drag&drop folderu w tryb before/after na jego dziecko jest blokowany (bez cyklu parent_id)", async ({ page, context }) => {
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
 
     const baseId = await createBase(page, `E2E-XB-CYCLE-${Date.now()}`);
 
@@ -459,7 +459,7 @@ test.describe("base-explorer: naprawy z audytu (nie tylko wiele kart naraz)", ()
 
   test("F2 (zmień nazwę pytania) nie nadpisuje odpowiedzi dodanych w międzyczasie gdzie indziej", async ({ page, context }) => {
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
 
     const baseId = await createBase(page, `E2E-XB-RENAME-${Date.now()}`);
 
@@ -518,7 +518,7 @@ test.describe("base-explorer: naprawy z audytu (nie tylko wiele kart naraz)", ()
 
   test("usunięcie folderu z pytaniem w środku kasuje też to pytanie (nie osiera go do 'Wszystkie')", async ({ page, context }) => {
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
 
     const baseId = await createBase(page, `E2E-XB-DELFOLDER-${Date.now()}`);
 
@@ -560,7 +560,7 @@ test.describe("base-explorer: naprawy z audytu (nie tylko wiele kart naraz)", ()
 
   test("zamknięcie modala tagów podczas wolnej sieci nie zawiesza Promise ani nie rzuca wyjątku", async ({ page, context }) => {
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
 
     const pageErrors = [];
     page.on("pageerror", (err) => pageErrors.push(err));
@@ -637,7 +637,7 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
 
   test("Ctrl+A zaznacza wszystkie widoczne elementy (regresja: filtrował po nieistniejącym data-key)", async ({ page, context }) => {
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
 
     const baseId = await createBase(page, `E2E-XB-SELECTALL-${Date.now()}`);
 
@@ -668,7 +668,7 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
     // is-selected) znikało poprawnie, ale np. "Usuń"/"Zmień nazwę" dalej dawały
     // się kliknąć mimo braku realnej selekcji.
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
 
     const baseId = await createBase(page, `E2E-XB-TBDESELECT-${Date.now()}`);
 
@@ -715,7 +715,7 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
     // showContextMenu() sam zaznacza cel PRZED policzeniem disabled (tak jak
     // już wcześniej robił dla tagów w lewym panelu).
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
 
     const baseId = await createBase(page, `E2E-XB-PPMSELECT-${Date.now()}`);
 
@@ -770,7 +770,7 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
     // weryfikuje to zwykłą myszą (hover pokazuje, klik gdzie indziej chowa),
     // bo mechanizm jest wspólny dla obu (pointerdown odpala się też dla myszy).
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
 
     const baseId = await createBase(page, `E2E-XB-METATIP-${Date.now()}`);
 
@@ -815,7 +815,7 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
 
   test("question-modal: dodanie odpowiedzi z punktami zapisuje się w DB", async ({ page, context }) => {
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
 
     const baseId = await createBase(page, `E2E-XB-QADD-${Date.now()}`);
 
@@ -860,7 +860,7 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
 
   test("question-modal: blokuje dodanie 7. odpowiedzi (limit 6)", async ({ page, context }) => {
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
 
     const baseId = await createBase(page, `E2E-XB-QMAX-${Date.now()}`);
 
@@ -896,7 +896,7 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
 
   test("question-modal: blokuje zapis, gdy suma punktów przekracza 100", async ({ page, context }) => {
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
 
     const baseId = await createBase(page, `E2E-XB-QSUM-${Date.now()}`);
 
@@ -937,7 +937,7 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
 
   test("tagi: utworzenie i przypisanie do jednego pytania (stan 'wszyscy')", async ({ page, context }) => {
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
 
     const baseId = await createBase(page, `E2E-XB-TAGONE-${Date.now()}`);
 
@@ -978,7 +978,7 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
 
   test("tagi: zaznaczenie częściowe (some) -- klik ustawia tag wszystkim zaznaczonym pytaniom", async ({ page, context }) => {
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
 
     const baseId = await createBase(page, `E2E-XB-TAGSOME-${Date.now()}`);
 
@@ -1024,7 +1024,7 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
 
   test("tagi: usunięcie tagu kasuje jego przypisania do pytań", async ({ page, context }) => {
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
 
     const baseId = await createBase(page, `E2E-XB-TAGDEL-${Date.now()}`);
 
@@ -1058,7 +1058,7 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
 
   test("wyszukiwanie tekstowe filtruje listę pytań po treści", async ({ page, context }) => {
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
 
     const baseId = await createBase(page, `E2E-XB-SEARCH-${Date.now()}`);
 
@@ -1082,7 +1082,7 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
 
   test("wyszukiwanie po #tagu (chip) pokazuje tylko oznaczone pytania", async ({ page, context }) => {
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
 
     const baseId = await createBase(page, `E2E-XB-SEARCHTAG-${Date.now()}`);
 
@@ -1112,7 +1112,7 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
 
   test("wytnij + wklej pytanie przenosi je do innego folderu (bez duplikatu)", async ({ page, context }) => {
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
 
     const baseId = await createBase(page, `E2E-XB-CUTPASTE-${Date.now()}`);
 
@@ -1146,7 +1146,7 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
 
   test("kopiuj + wklej pytanie tworzy duplikat, oryginał zostaje na miejscu", async ({ page, context }) => {
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
 
     const baseId = await createBase(page, `E2E-XB-COPYPASTE-${Date.now()}`);
 
@@ -1176,7 +1176,7 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
 
   test("przeciągnięcie pytania na folder w liście przenosi je (category_id)", async ({ page, context }) => {
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
 
     const baseId = await createBase(page, `E2E-XB-DRAGQ-${Date.now()}`);
 
@@ -1207,7 +1207,7 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
 
   test("editor współdzielonej bazy może dodawać foldery i pytania", async ({ page, context, browser }) => {
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
 
     const baseId = await createBase(page, `E2E-XB-SHAREEDIT-${Date.now()}`);
     let context2 = null;
@@ -1215,7 +1215,7 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
     try {
       context2 = await browser.newContext();
       const page2 = await context2.newPage();
-      await loginAsTestUser(page2, context2, { username: process.env.TEST_USERNAME_2 });
+      await loginAsTestUser(page2, context2, { username: testAccountUsername(2) });
 
       const user2Id = await page2.evaluate(async () => {
         const { data } = await window.__sbClient.auth.getUser();
@@ -1243,7 +1243,7 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
 
   test("viewer współdzielonej bazy nie może pisać -- UI wyszarzone i RLS blokuje bezpośredni zapis", async ({ page, context, browser }) => {
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
 
     const baseId = await createBase(page, `E2E-XB-SHAREVIEW-${Date.now()}`);
     let context2 = null;
@@ -1251,7 +1251,7 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
     try {
       context2 = await browser.newContext();
       const page2 = await context2.newPage();
-      await loginAsTestUser(page2, context2, { username: process.env.TEST_USERNAME_2 });
+      await loginAsTestUser(page2, context2, { username: testAccountUsername(2) });
 
       const user2Id = await page2.evaluate(async () => {
         const { data } = await window.__sbClient.auth.getUser();
@@ -1284,7 +1284,7 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
 
   test("sortowanie po nazwie: klik nagłówka przełącza rosnąco/malejąco", async ({ page, context }) => {
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
     const baseId = await createBase(page, `E2E-XB-SORTNAME-${Date.now()}`);
 
     try {
@@ -1310,7 +1310,7 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
 
   test("sortowanie po typie: foldery zawsze przed pytaniami, niezależnie od nazwy", async ({ page, context }) => {
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
     const baseId = await createBase(page, `E2E-XB-SORTTYPE-${Date.now()}`);
 
     try {
@@ -1342,7 +1342,7 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
 
   test("breadcrumbs: nawigacja w głąb i powrót do korzenia", async ({ page, context }) => {
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
     const baseId = await createBase(page, `E2E-XB-CRUMBS-${Date.now()}`);
 
     try {
@@ -1370,7 +1370,7 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
 
   test("Ctrl+D duplikuje zaznaczone pytanie w tym samym miejscu", async ({ page, context }) => {
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
     const baseId = await createBase(page, `E2E-XB-CTRLD-${Date.now()}`);
 
     try {
@@ -1399,7 +1399,7 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
 
   test("Ctrl+T pokazuje realny stan tri-state zaznaczenia (regresja: wcześniej zawsze 'none')", async ({ page, context }) => {
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
     const baseId = await createBase(page, `E2E-XB-CTRLT-${Date.now()}`);
 
     try {
@@ -1433,7 +1433,7 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
 
   test("przeciągnięcie kilku zaznaczonych elementów naraz (folder + pytanie) przenosi oba", async ({ page, context }) => {
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
     const baseId = await createBase(page, `E2E-XB-DRAGMULTI-${Date.now()}`);
 
     try {
@@ -1472,7 +1472,7 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
 
   test("reorder rodzeństwa w drzewie (before/after) działa normalnie, gdy to nie jest cykl", async ({ page, context }) => {
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
     const baseId = await createBase(page, `E2E-XB-REORDER-${Date.now()}`);
 
     try {
@@ -1505,7 +1505,7 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
 
   test("kopiowanie folderu z podfolderem i pytaniem duplikuje całe poddrzewo", async ({ page, context }) => {
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
     const baseId = await createBase(page, `E2E-XB-COPYSUBTREE-${Date.now()}`);
 
     try {
@@ -1550,7 +1550,7 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
 
   test("Delete działa w widoku wyszukiwania (regresja: druga, zbędna bramka cicho blokowała SEARCH)", async ({ page, context }) => {
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
     const baseId = await createBase(page, `E2E-XB-DELSEARCH-${Date.now()}`);
 
     try {
@@ -1587,7 +1587,7 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
 
   test("Edytuj pytanie (menu kontekstowe) działa w widoku wyszukiwania (regresja: zbędna blokada widoku)", async ({ page, context }) => {
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
     const baseId = await createBase(page, `E2E-XB-EDITSEARCH-${Date.now()}`);
 
     try {
@@ -1618,7 +1618,7 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
 
   test("sortowanie po dacie: klik nagłówka przełącza rosnąco/malejąco", async ({ page, context }) => {
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
     const baseId = await createBase(page, `E2E-XB-SORTDATE-${Date.now()}`);
 
     try {
@@ -1650,7 +1650,7 @@ test.describe("base-explorer: question-modal.js (edycja pytania)", () => {
 
   test("edycja istniejącej odpowiedzi aktualizuje ją, nie dokłada nowej", async ({ page, context }) => {
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
     const baseId = await createBase(page, `E2E-QM-EDIT-${Date.now()}`);
 
     try {
@@ -1692,7 +1692,7 @@ test.describe("base-explorer: question-modal.js (edycja pytania)", () => {
 
   test("usunięcie odpowiedzi przyciskiem ✕ persystuje po zapisie", async ({ page, context }) => {
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
     const baseId = await createBase(page, `E2E-QM-DELANS-${Date.now()}`);
 
     try {
@@ -1734,7 +1734,7 @@ test.describe("base-explorer: question-modal.js (edycja pytania)", () => {
 
   test("tekst odpowiedzi jest obcinany do 17 znaków w locie", async ({ page, context }) => {
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
     const baseId = await createBase(page, `E2E-QM-TXTLEN-${Date.now()}`);
 
     try {
@@ -1773,7 +1773,7 @@ test.describe("base-explorer: question-modal.js (edycja pytania)", () => {
 
   test("treść pytania jest ograniczana do 200 znaków (ten sam limit co przy F2)", async ({ page, context }) => {
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
     const baseId = await createBase(page, `E2E-QM-QTXTLEN-${Date.now()}`);
 
     try {
@@ -1808,7 +1808,7 @@ test.describe("base-explorer: question-modal.js (edycja pytania)", () => {
 
   test("punkty odpowiedzi są ograniczane do zakresu 0-100 w locie", async ({ page, context }) => {
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
     const baseId = await createBase(page, `E2E-QM-PTSCLAMP-${Date.now()}`);
 
     try {
@@ -1838,7 +1838,7 @@ test.describe("base-explorer: question-modal.js (edycja pytania)", () => {
 
   test("zamknięcie modala krzyżykiem (X) nie zapisuje żadnych zmian", async ({ page, context }) => {
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
     const baseId = await createBase(page, `E2E-QM-CANCEL-${Date.now()}`);
 
     try {
@@ -1871,7 +1871,7 @@ test.describe("base-explorer: question-modal.js (edycja pytania)", () => {
 
   test("pusta treść pytania blokuje zapis (regresja: qSave w ogóle nie sprawdzał tekstu)", async ({ page, context }) => {
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
     const baseId = await createBase(page, `E2E-QM-EMPTYTEXT-${Date.now()}`);
 
     try {
@@ -1907,7 +1907,7 @@ test.describe("base-explorer: export-modal.js ('Utwórz grę')", () => {
 
   test("odznaczenie pytania poniżej progu 10 wyłącza przycisk Utwórz", async ({ page, context }) => {
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
     const baseId = await createBase(page, `E2E-XM-COUNT-${Date.now()}`);
 
     try {
@@ -1954,7 +1954,7 @@ test.describe("base-explorer: export-modal.js ('Utwórz grę')", () => {
     // validateForType(). Naprawa: "Utwórz" jest wyłączone dopóki
     // którekolwiek zaznaczone pytanie jest czerwone dla aktualnego typu.
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
     const baseId = await createBase(page, `E2E-XM-BADBLOCKS-${Date.now()}`);
 
     try {
@@ -1998,7 +1998,7 @@ test.describe("base-explorer: export-modal.js ('Utwórz grę')", () => {
     // -- selekcja w modalu = dokładnie to co user zaznaczył, nawet jeśli to
     // mniej niż 10 (przycisk "Utwórz" zostaje wtedy po prostu wyłączony).
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
     const baseId = await createBase(page, `E2E-XM-NORANDOM-${Date.now()}`);
 
     try {
@@ -2044,7 +2044,7 @@ test.describe("base-explorer: export-modal.js ('Utwórz grę')", () => {
 
   test("Utwórz grę z zaznaczonego folderu podpowiada jego nazwę jako nazwę gry", async ({ page, context }) => {
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
     const baseId = await createBase(page, `E2E-XM-FOLDERNAME-${Date.now()}`);
 
     try {
@@ -2073,7 +2073,7 @@ test.describe("base-explorer: export-modal.js ('Utwórz grę')", () => {
 
   test("modal typu gry: bez angielskich podpisów technicznych pod przyciskami, suwak cały złoty", async ({ page, context }) => {
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
     const baseId = await createBase(page, `E2E-XM-TYPEUI-${Date.now()}`);
 
     try {
@@ -2106,7 +2106,7 @@ test.describe("base-explorer: export-modal.js ('Utwórz grę')", () => {
 
   test("zmiana typu na PUNKTACJA oznacza pytania spoza zakresu 3-6 odpowiedzi jako niepasujące", async ({ page, context }) => {
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
     const baseId = await createBase(page, `E2E-XM-TYPEBADGE-${Date.now()}`);
 
     try {
@@ -2146,7 +2146,7 @@ test.describe("base-explorer: export-modal.js ('Utwórz grę')", () => {
 
   test("eksport typu PUNKTACJA zeruje punkty w utworzonej grze niezależnie od źródła", async ({ page, context }) => {
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
     const baseId = await createBase(page, `E2E-XM-POINTSZERO-${Date.now()}`);
     let gameId = null;
 
@@ -2196,7 +2196,7 @@ test.describe("base-explorer: export-modal.js ('Utwórz grę')", () => {
 
   test("eksport typu PREPAROWANA zachowuje tekst i punkty odpowiedzi", async ({ page, context }) => {
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
     const baseId = await createBase(page, `E2E-XM-PREPKEEP-${Date.now()}`);
     let gameId = null;
 
@@ -2247,7 +2247,7 @@ test.describe("base-explorer: export-modal.js ('Utwórz grę')", () => {
 
   test("zamknięcie modala eksportu krzyżykiem nie tworzy gry", async ({ page, context }) => {
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
     const baseId = await createBase(page, `E2E-XM-CLOSENOCREATE-${Date.now()}`);
 
     try {
@@ -2276,7 +2276,7 @@ test.describe("base-explorer: export-modal.js ('Utwórz grę')", () => {
 
   test("baza z mniej niż 10 pytaniami pokazuje błąd i nie pozwala na eksport", async ({ page, context }) => {
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
     const baseId = await createBase(page, `E2E-XM-TOOFEW-${Date.now()}`);
 
     try {
@@ -2303,7 +2303,7 @@ test.describe("base-explorer: export-modal.js ('Utwórz grę')", () => {
 /* ================= 5) współdzielenie i uprawnienia (dwóch RÓŻNYCH użytkowników) =================
  *
  * W odróżnieniu od grupy 2) (jeden user, dwa konteksty tej samej sesji),
- * tu logujemy NAPRAWDĘ drugie konto (TEST_USERNAME_2) na tej samej,
+ * tu logujemy NAPRAWDĘ drugie konto (testAccountUsername(2), test2@…) na tej samej,
  * współdzielonej bazie -- punkty B) i C) z planu audytu base-explorera.
  * Cel: nie tylko "czy da się kliknąć", ale co się dzieje z DANYMI, gdy
  * dwie osoby faktycznie nachodzą na siebie w czasie.
@@ -2313,7 +2313,7 @@ test.describe("base-explorer: współdzielenie i uprawnienia (dwóch różnych u
 
   test("edycja tego samego pytania przez dwie osoby niemal jednocześnie -- późniejszy zapis cicho nadpisuje wcześniejszy", async ({ page, context, browser }) => {
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
 
     const baseId = await createBase(page, `E2E-XS-RACE-${Date.now()}`);
     let context2 = null;
@@ -2321,7 +2321,7 @@ test.describe("base-explorer: współdzielenie i uprawnienia (dwóch różnych u
     try {
       context2 = await browser.newContext();
       const page2 = await context2.newPage();
-      await loginAsTestUser(page2, context2, { username: process.env.TEST_USERNAME_2 });
+      await loginAsTestUser(page2, context2, { username: testAccountUsername(2) });
       const user2Id = await getUserId(page2);
 
       await shareBaseWith(page, baseId, user2Id, "editor");
@@ -2376,7 +2376,7 @@ test.describe("base-explorer: współdzielenie i uprawnienia (dwóch różnych u
 
   test("usunięcie pytania przez jednego usera, gdy drugi ma je otwarte do edycji -- zapis kończy się cicho, pytanie nie wraca", async ({ page, context, browser }) => {
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
 
     const baseId = await createBase(page, `E2E-XS-DELWHILEEDIT-${Date.now()}`);
     let context2 = null;
@@ -2384,7 +2384,7 @@ test.describe("base-explorer: współdzielenie i uprawnienia (dwóch różnych u
     try {
       context2 = await browser.newContext();
       const page2 = await context2.newPage();
-      await loginAsTestUser(page2, context2, { username: process.env.TEST_USERNAME_2 });
+      await loginAsTestUser(page2, context2, { username: testAccountUsername(2) });
       const user2Id = await getUserId(page2);
       await shareBaseWith(page, baseId, user2Id, "editor");
 
@@ -2422,7 +2422,7 @@ test.describe("base-explorer: współdzielenie i uprawnienia (dwóch różnych u
 
   test("cofnięcie dostępu w trakcie sesji -- kolejny zapis jest odrzucony przez RLS mimo wciąż otwartej karty", async ({ page, context, browser }) => {
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
 
     const baseId = await createBase(page, `E2E-XS-REVOKE-${Date.now()}`);
     let context2 = null;
@@ -2430,7 +2430,7 @@ test.describe("base-explorer: współdzielenie i uprawnienia (dwóch różnych u
     try {
       context2 = await browser.newContext();
       const page2 = await context2.newPage();
-      await loginAsTestUser(page2, context2, { username: process.env.TEST_USERNAME_2 });
+      await loginAsTestUser(page2, context2, { username: testAccountUsername(2) });
       const user2Id = await getUserId(page2);
       await shareBaseWith(page, baseId, user2Id, "editor");
 
@@ -2459,7 +2459,7 @@ test.describe("base-explorer: współdzielenie i uprawnienia (dwóch różnych u
 
   test("degradacja roli editor -> viewer na żywo -- RLS blokuje zapis mimo nieodświeżonej karty", async ({ page, context, browser }) => {
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
 
     const baseId = await createBase(page, `E2E-XS-DOWNGRADE-${Date.now()}`);
     let context2 = null;
@@ -2467,7 +2467,7 @@ test.describe("base-explorer: współdzielenie i uprawnienia (dwóch różnych u
     try {
       context2 = await browser.newContext();
       const page2 = await context2.newPage();
-      await loginAsTestUser(page2, context2, { username: process.env.TEST_USERNAME_2 });
+      await loginAsTestUser(page2, context2, { username: testAccountUsername(2) });
       const user2Id = await getUserId(page2);
       await shareBaseWith(page, baseId, user2Id, "editor");
 
@@ -2492,7 +2492,7 @@ test.describe("base-explorer: współdzielenie i uprawnienia (dwóch różnych u
 
   test("viewer nie zapisze bezpośrednio ani pytań, ani tagów (nie tylko kategorii)", async ({ page, context, browser }) => {
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
 
     const baseId = await createBase(page, `E2E-XS-VIEWERWRITE-${Date.now()}`);
     let context2 = null;
@@ -2500,7 +2500,7 @@ test.describe("base-explorer: współdzielenie i uprawnienia (dwóch różnych u
     try {
       context2 = await browser.newContext();
       const page2 = await context2.newPage();
-      await loginAsTestUser(page2, context2, { username: process.env.TEST_USERNAME_2 });
+      await loginAsTestUser(page2, context2, { username: testAccountUsername(2) });
       const user2Id = await getUserId(page2);
       await shareBaseWith(page, baseId, user2Id, "viewer");
 
@@ -2528,7 +2528,7 @@ test.describe("base-explorer: współdzielenie i uprawnienia (dwóch różnych u
 
   test("editor nie może zmienić nazwy bazy -- to uprawnienie wyłącznie właściciela", async ({ page, context, browser }) => {
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
 
     const originalName = `E2E-XS-RENAME-${Date.now()}`;
     const baseId = await createBase(page, originalName);
@@ -2537,7 +2537,7 @@ test.describe("base-explorer: współdzielenie i uprawnienia (dwóch różnych u
     try {
       context2 = await browser.newContext();
       const page2 = await context2.newPage();
-      await loginAsTestUser(page2, context2, { username: process.env.TEST_USERNAME_2 });
+      await loginAsTestUser(page2, context2, { username: testAccountUsername(2) });
       const user2Id = await getUserId(page2);
       await shareBaseWith(page, baseId, user2Id, "editor");
 
@@ -2565,7 +2565,7 @@ test.describe("base-explorer: współdzielenie i uprawnienia (dwóch różnych u
 
   test("blokada pytania: drugi user je edytuje, pierwszy dostaje komunikat zamiast modala, zwolnienie odblokowuje od razu", async ({ page, context, browser }) => {
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
 
     const baseId = await createBase(page, `E2E-XL-QLOCK-${Date.now()}`);
     let context2 = null;
@@ -2573,7 +2573,7 @@ test.describe("base-explorer: współdzielenie i uprawnienia (dwóch różnych u
     try {
       context2 = await browser.newContext();
       const page2 = await context2.newPage();
-      await loginAsTestUser(page2, context2, { username: process.env.TEST_USERNAME_2 });
+      await loginAsTestUser(page2, context2, { username: testAccountUsername(2) });
       const user2Id = await getUserId(page2);
       await shareBaseWith(page, baseId, user2Id, "editor");
 
@@ -2609,7 +2609,7 @@ test.describe("base-explorer: współdzielenie i uprawnienia (dwóch różnych u
 
   test("blokada folderu obejmuje poddrzewo: usunięcie folderu jest zablokowane, gdy drugi user edytuje ZAGNIEŻDŻONE pytanie", async ({ page, context, browser }) => {
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
 
     const baseId = await createBase(page, `E2E-XL-FOLDERSUBTREE-${Date.now()}`);
     let context2 = null;
@@ -2617,7 +2617,7 @@ test.describe("base-explorer: współdzielenie i uprawnienia (dwóch różnych u
     try {
       context2 = await browser.newContext();
       const page2 = await context2.newPage();
-      await loginAsTestUser(page2, context2, { username: process.env.TEST_USERNAME_2 });
+      await loginAsTestUser(page2, context2, { username: testAccountUsername(2) });
       const user2Id = await getUserId(page2);
       await shareBaseWith(page, baseId, user2Id, "editor");
 
@@ -2656,7 +2656,7 @@ test.describe("base-explorer: współdzielenie i uprawnienia (dwóch różnych u
 
   test("tagi (assign): blokada innego, niezmienianego tagu NIE przeszkadza zapisać innego tagu w tym samym modalu", async ({ page, context, browser }) => {
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
 
     const baseId = await createBase(page, `E2E-XL-TAGSCOPE-${Date.now()}`);
     let context2 = null;
@@ -2664,7 +2664,7 @@ test.describe("base-explorer: współdzielenie i uprawnienia (dwóch różnych u
     try {
       context2 = await browser.newContext();
       const page2 = await context2.newPage();
-      await loginAsTestUser(page2, context2, { username: process.env.TEST_USERNAME_2 });
+      await loginAsTestUser(page2, context2, { username: testAccountUsername(2) });
       const user2Id = await getUserId(page2);
       await shareBaseWith(page, baseId, user2Id, "editor");
 
@@ -2723,7 +2723,7 @@ test.describe("base-explorer: Warstwa 2 (updateChecked, ROW_GONE)", () => {
 
   test("F2: zmiana nazwy pytania usuniętego tuż przed Zapisz pokazuje komunikat zamiast cichego sukcesu", async ({ page, context }) => {
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
     const baseId = await createBase(page, `E2E-XV-RENAMEGONE-${Date.now()}`);
 
     try {
@@ -2756,7 +2756,7 @@ test.describe("base-explorer: Warstwa 2 (updateChecked, ROW_GONE)", () => {
 
   test("Ctrl+E: zapis treści pytania usuniętego tuż przed Zapisz pokazuje komunikat zamiast cichego sukcesu", async ({ page, context }) => {
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
     const baseId = await createBase(page, `E2E-XV-QSAVEGONE-${Date.now()}`);
 
     try {
@@ -2787,7 +2787,7 @@ test.describe("base-explorer: Warstwa 2 (updateChecked, ROW_GONE)", () => {
 
   test("Edytuj tag: zapis nazwy/koloru tagu usuniętego tuż przed Zapisz pokazuje komunikat w modalu", async ({ page, context }) => {
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
     const baseId = await createBase(page, `E2E-XV-TAGEDITGONE-${Date.now()}`);
 
     try {
@@ -2871,7 +2871,7 @@ test.describe("base-explorer: mobile.js (drawer, long-press, podwójny tap)", ()
     // tle, user zamyka drawer ręcznie (hamburger albo klik w overlay).
     test.setTimeout(60_000);
     await page.setViewportSize({ width: 400, height: 800 });
-    await loginAsTestUser(page, context);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
     const baseId = await createBase(page, `E2E-XM-DRAWER-${Date.now()}`);
 
     try {
@@ -2924,7 +2924,7 @@ test.describe("base-explorer: mobile.js (drawer, long-press, podwójny tap)", ()
     // mierzy realną wysokość #toolbar i doi ją do --be-toolbar-h.
     test.setTimeout(60_000);
     await page.setViewportSize({ width: 400, height: 800 });
-    await loginAsTestUser(page, context);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
     const baseId = await createBase(page, `E2E-XM-DRAWERTOOLBAR-${Date.now()}`);
 
     try {
@@ -2960,7 +2960,7 @@ test.describe("base-explorer: mobile.js (drawer, long-press, podwójny tap)", ()
     // .explorer-right -> flex:1 1 auto zamiast sztywnego min-height:50vh.
     test.setTimeout(60_000);
     await page.setViewportSize({ width: 400, height: 800 });
-    await loginAsTestUser(page, context);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
     const baseId = await createBase(page, `E2E-XM-LISTSTRETCH-${Date.now()}`);
 
     try {
@@ -2985,7 +2985,7 @@ test.describe("base-explorer: mobile.js (drawer, long-press, podwójny tap)", ()
   test("long-press na wierszu listy otwiera menu kontekstowe (zamiennik PPM na dotyku)", async ({ page, context }) => {
     test.setTimeout(60_000);
     await page.setViewportSize({ width: 400, height: 800 });
-    await loginAsTestUser(page, context);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
     const baseId = await createBase(page, `E2E-XM-LONGPRESS-${Date.now()}`);
 
     try {
@@ -3009,7 +3009,7 @@ test.describe("base-explorer: mobile.js (drawer, long-press, podwójny tap)", ()
   test("long-press anulowany przez ruch palca > 10px nie otwiera menu (nie blokuje zwykłego przewijania/scrollowania)", async ({ page, context }) => {
     test.setTimeout(60_000);
     await page.setViewportSize({ width: 400, height: 800 });
-    await loginAsTestUser(page, context);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
     const baseId = await createBase(page, `E2E-XM-LONGPRESSMOVE-${Date.now()}`);
 
     try {
@@ -3067,7 +3067,7 @@ test.describe("base-explorer: mobile.js (drawer, long-press, podwójny tap)", ()
   test("podwójny tap na pytaniu otwiera modal edycji (zamiennik dblclick na dotyku)", async ({ page, context }) => {
     test.setTimeout(60_000);
     await page.setViewportSize({ width: 400, height: 800 });
-    await loginAsTestUser(page, context);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
     const baseId = await createBase(page, `E2E-XM-DOUBLETAPQ-${Date.now()}`);
 
     try {
@@ -3091,7 +3091,7 @@ test.describe("base-explorer: mobile.js (drawer, long-press, podwójny tap)", ()
   test("podwójny tap na folderze nawiguje do jego wnętrza", async ({ page, context }) => {
     test.setTimeout(60_000);
     await page.setViewportSize({ width: 400, height: 800 });
-    await loginAsTestUser(page, context);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
     const baseId = await createBase(page, `E2E-XM-DOUBLETAPCAT-${Date.now()}`);
 
     try {

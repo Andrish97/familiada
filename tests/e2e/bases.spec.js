@@ -17,7 +17,7 @@
 //    komunikat zamiast cichego "sukcesu" (updateChecked, ROW_GONE).
 
 const { test, expect } = require("@playwright/test");
-const { loginAsTestUser } = require("./helpers/login");
+const { loginAsTestUser, testAccountUsername } = require("./helpers/login");
 
 const BASE_URL = "https://www.familiada.online/bases";
 
@@ -106,7 +106,7 @@ test.describe("bases: codzienna funkcjonalność (tworzenie/zmiana nazwy/usunię
 
   test("kafelek '+' tworzy nową bazę i trafia na listę 'Moje'", async ({ page, context }) => {
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
 
     const name = `E2E-BS-CREATE-${Date.now()}`;
     let baseId = null;
@@ -135,7 +135,7 @@ test.describe("bases: codzienna funkcjonalność (tworzenie/zmiana nazwy/usunię
 
   test("podwójny klik w kafelek otwiera zmianę nazwy, zapis aktualizuje nazwę wszędzie", async ({ page, context }) => {
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
 
     const oldName = `E2E-BS-RENAME-${Date.now()}`;
     const newName = `${oldName}-zmieniona`;
@@ -165,7 +165,7 @@ test.describe("bases: codzienna funkcjonalność (tworzenie/zmiana nazwy/usunię
 
   test("przycisk 'x' + potwierdzenie usuwa bazę z listy i z DB", async ({ page, context }) => {
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
 
     const name = `E2E-BS-DELETE-${Date.now()}`;
     const baseId = await createBaseDirect(page, name);
@@ -194,7 +194,7 @@ test.describe("bases: codzienna funkcjonalność (tworzenie/zmiana nazwy/usunię
 
   test("udostępniona baza pojawia się u drugiego, prawdziwego użytkownika na liście 'Udostępnione' z właściwą rolą", async ({ page, context, browser }) => {
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
 
     const name = `E2E-BS-SHARE-${Date.now()}`;
     const baseId = await createBaseDirect(page, name);
@@ -203,7 +203,7 @@ test.describe("bases: codzienna funkcjonalność (tworzenie/zmiana nazwy/usunię
     try {
       context2 = await browser.newContext();
       const page2 = await context2.newPage();
-      await loginAsTestUser(page2, context2, { username: process.env.TEST_USERNAME_2 });
+      await loginAsTestUser(page2, context2, { username: testAccountUsername(2) });
       const user2Id = await getUserId(page2);
       await shareBaseWith(page, baseId, user2Id, "editor");
 
@@ -226,7 +226,7 @@ test.describe("bases: ochrona bazy jako całości (delete_resource_checked + upd
 
   test("usunięcie bazy jest zablokowane, gdy drugi, prawdziwy użytkownik edytuje pytanie w jej wnętrzu", async ({ page, context, browser }) => {
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
 
     const name = `E2E-BS-DELLOCKED-${Date.now()}`;
     const baseId = await createBaseDirect(page, name);
@@ -235,7 +235,7 @@ test.describe("bases: ochrona bazy jako całości (delete_resource_checked + upd
     try {
       context2 = await browser.newContext();
       const page2 = await context2.newPage();
-      await loginAsTestUser(page2, context2, { username: process.env.TEST_USERNAME_2 });
+      await loginAsTestUser(page2, context2, { username: testAccountUsername(2) });
       const user2Id = await getUserId(page2);
       await shareBaseWith(page, baseId, user2Id, "editor");
 
@@ -270,7 +270,7 @@ test.describe("bases: ochrona bazy jako całości (delete_resource_checked + upd
 
   test("usunięcie bazy działa normalnie, gdy nic w jej wnętrzu nie jest zablokowane", async ({ page, context, browser }) => {
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
 
     const name = `E2E-BS-DELFREE-${Date.now()}`;
     const baseId = await createBaseDirect(page, name);
@@ -280,7 +280,7 @@ test.describe("bases: ochrona bazy jako całości (delete_resource_checked + upd
     try {
       context2 = await browser.newContext();
       const page2 = await context2.newPage();
-      await loginAsTestUser(page2, context2, { username: process.env.TEST_USERNAME_2 });
+      await loginAsTestUser(page2, context2, { username: testAccountUsername(2) });
       const user2Id = await getUserId(page2);
       await shareBaseWith(page, baseId, user2Id, "editor");
       await createQuestionDirect(page, baseId, { text: "Wolne pytanie", answers: [] });
@@ -307,7 +307,7 @@ test.describe("bases: ochrona bazy jako całości (delete_resource_checked + upd
 
   test("zmiana nazwy bazy usuniętej tuż przed zapisem pokazuje komunikat zamiast cichego 'sukcesu'", async ({ page, context }) => {
     test.setTimeout(60_000);
-    await loginAsTestUser(page, context);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
 
     const name = `E2E-BS-RENAMEGONE-${Date.now()}`;
     const baseId = await createBaseDirect(page, name);
