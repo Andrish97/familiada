@@ -472,10 +472,13 @@ export function createRenderer({ scene, qr, getSfxDuration }) {
         }
         case "DUEL_MISS":
           // Krótki błysk (slot 4), nie stały X — control/js/display.js's
-          // roundsFlashDuelX: ON, potem OFF po ~1s, bez czekania.
+          // roundsFlashDuelX: ON, potem OFF, bez czekania. Czas błysku to
+          // TERAZ answerAnimMs (nextRow.sound_cue_key dla tego zapisu to
+          // "answer_wrong" — ADD_X's gałąź DUEL) zamiast sztywnego 1000ms —
+          // ten sam dźwięk, który faktycznie gra na pudło w pojedynku.
           if (ev.team) {
             api.rounds.setX(`4${ev.team}`, true);
-            setTimeout(() => api.rounds.setX(`4${ev.team}`, false), 1000);
+            setTimeout(() => api.rounds.setX(`4${ev.team}`, false), answerAnimMs);
           }
           // Pudło w pojedynku też oddaje głos drugiej drużynie (ten sam
           // powód co w ANSWER_REVEALED wyżej).
