@@ -19,7 +19,13 @@ on:
 jobs:
   e2e:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    # Było 25 — cały zestaw leci SZEREGOWO (workers:1 w playwright.config.js,
+    # celowo: współdzielone konto testowe na produkcji, żeby uniknąć
+    # wyścigów) + retries:1 (każdy niepowodzony test kosztuje podwójnie) —
+    # 25 minut potrafiło uciąć job W POŁOWIE zestawu, zamiast pokazać
+    # rzeczywisty, kompletny wynik. Instalacja (checkout/npm ci/Playwright
+    # browsers) to ~30-60s, nie ona jest wąskim gardłem.
+    timeout-minutes: 60
 
     steps:
       - name: Checkout
