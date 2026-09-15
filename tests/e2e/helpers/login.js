@@ -27,6 +27,18 @@ function instrumentPage(page) {
       console.log("[e2e-diag] HTTP", res.status(), res.url());
     }
   });
+  // control2/js/app.js's handleAction() łapie KAŻDY błąd akcji w try/catch
+  // i pokazuje go operatorowi jako goły window.alert(`Błąd: ${e.message}`)
+  // -- Playwright domyślnie po cichu odrzuca takie dialogi (auto-dismiss),
+  // więc bez tego listenera taki błąd jest CAŁKOWICIE niewidoczny w logu CI
+  // (nie pageerror, nie console.error -- alert() nie trafia do żadnego z
+  // nich). Znalezione na żywo: 10/16 testów control2 utykało bez śladu
+  // błędu w logach, mimo realnego, powtarzalnego zawieszenia stanu gry --
+  // to jest dokładnie ta luka w diagnostyce.
+  page.on("dialog", (dialog) => {
+    console.log(`[e2e-diag] dialog:${dialog.type()}`, dialog.message());
+    dialog.dismiss().catch(() => {});
+  });
 }
 
 async function withE2EBypass(context) {
