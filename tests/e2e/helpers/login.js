@@ -26,6 +26,23 @@ function instrumentPage(page) {
     if (res.status() >= 400) {
       console.log("[e2e-diag] HTTP", res.status(), res.url());
     }
+    // Wołania RPC (np. game_state_write) logowane ZAWSZE, nie tylko przy
+    // błędzie -- żeby odróżnić "RPC w ogóle nie wystrzeliło" od "wystrzeliło,
+    // dostało 200, ale zajęło podejrzanie długo" od zwykłego "poszło szybko
+    // i OK". Status/czas trwania nie ujawnia tokenu bypass (ten jest w
+    // nagłówku żądania, nie w URL ani tu logowanym statusie).
+    if (res.url().includes("/rpc/")) {
+      const timing = res.request().timing();
+      const ms = timing ? Math.round(timing.responseEnd - timing.requestStart) : null;
+      console.log(`[e2e-diag] rpc ${res.status()} ${ms != null ? ms + "ms" : "?ms"}`, res.url());
+    }
+  });
+  // Zerwane na poziomie sieci (DNS, reset połączenia, timeout w samej
+  // przeglądarce) -- NIE trafia do "response" wyżej wcale, bo nigdy nie
+  // dostało odpowiedzi. To jest inna dziura niż "HTTP >=400": żądanie mogło
+  // po prostu zniknąć bez śladu.
+  page.on("requestfailed", (req) => {
+    console.log("[e2e-diag] requestfailed", req.failure()?.errorText, req.url());
   });
   // control2/js/app.js's handleAction() łapie KAŻDY błąd akcji w try/catch
   // i pokazuje go operatorowi jako goły window.alert(`Błąd: ${e.message}`)
