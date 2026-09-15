@@ -68,16 +68,25 @@ export default {
 
       return new Response("Not Found", { status: 404 });
     }
-
+    
     // Known service hosts (no maintenance gate here)
+
     if (
       host === "panel.familiada.online" ||
       host === "supabase.familiada.online" ||
       host === "api.familiada.online"
     ) {
-      return fetch(request);
+      
+      // Przekazujemy żądanie do rekordów DNS skonfigurowanych w Cloudflare
+      return fetch(request, {
+        cf: {
+          // Jeśli masz rekord CNAME/A zdefiniowany w DNS Cloudflare dla tego hosta,
+          // resolveOverride wymusi użycie wpisu DNS z Twojego panelu Cloudflare:
+          resolveOverride: host
+        }
+      });
     }
-
+    
     // Lead Finder - passthrough for settings frontend communication
     if (host === "leads.familiada.online") {
       if (request.method === "OPTIONS") {
