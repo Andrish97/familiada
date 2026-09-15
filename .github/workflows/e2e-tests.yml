@@ -9,60 +9,43 @@ on:
         default: ""
 
 # WAŻNE: celowo tylko workflow_dispatch — ani push, ani pull_request.
-# Ten workflow loguje się na prawdziwe konta na produkcji (TEST_USERNAME,
-# świeże konta gości) i ma dostęp do E2E_BYPASS_SECRET/TEST_PASSWORD;
-# odpalany wyłącznie ręcznie, świadomie, kiedy faktycznie trzeba:
-# Actions → "E2E Tests (Playwright)" → Run workflow. Pole "spec_filter"
-# pozwala odpalić wyrywkowo tylko jeden plik/wzorzec zamiast całego
-# zestawu (wtedy leci jeden job, e2e-custom-filter, bez podziału na grupy
-# niżej) -- to zdecydowanie najczęstszy sposób odpalania. Jeden silnik
-# testów przez cały czas: jeden playwright.config.js, jedna komenda
-# `playwright test` (przez `npm test`) w obu jobach -- różni się tylko to,
-# CO dokładnie się odpala i z jakim `--workers`, nie JAK.
+# Ten workflow loguje się na prawdziwe konta na produkcji i ma dostęp do
+# E2E_BYPASS_SECRET/TEST_PASSWORD; odpalany wyłącznie ręcznie, świadomie,
+# kiedy faktycznie trzeba: Actions → "E2E Tests (Playwright)" → Run
+# workflow. Pole "spec_filter" pozwala odpalić wyrywkowo tylko jeden
+# plik/wzorzec zamiast całego zestawu (wtedy leci jeden job,
+# e2e-custom-filter, bez podziału na grupy niżej) -- to zdecydowanie
+# najczęstszy sposób odpalania.
 #
-# Dlaczego kilka grup zamiast jednego joba na workers:1 (historia):
-# Cały zestaw leciał SZEREGOWO (workers:1 w playwright.config.js) bo
-# game-deletion/restore-demo/cross-resource-locks/... dzielą jedno konto
-# TEST_USERNAME i dwa jednoczesne logowania na to samo konto dawały
-# niedeterministyczne błędy (zawieszony modal / timeout logowania) —
-# workers:1 w Playwright zostaje z tego właśnie powodu wewnątrz KAŻDEJ
-# grupy poniżej, chyba że dana grupa ma własną pulę kont (patrz "control2"
-# niżej). account-deletion/guest-migration (loginAsGuest — świeże konto za
-# każdym razem) i static-assets-routing (brak logowania w ogóle) nie
-# dotykają żadnego współdzielonego konta.
+# TYLKO DWA SEKRETY W OGÓLE: E2E_BYPASS_SECRET (omija Turnstile) i
+# TEST_PASSWORD (wspólne hasło wszystkich kont testowych). Loginy kont
+# testowych to zawsze wzorzec test<N>@familiada.online -- domena jest
+# stałą w kodzie (e2e/helpers/login.js), nie sekretem, bo produkcja to
+# zawsze ta sama domena i sam login bez prawdziwego hasła niczego nie
+# odsłania. Zero sekretu z listą loginów, zero osobnego konta "głównego".
 #
-# PULA KONT "testX" (test1@…...test10@…, do 10, wspólne TEST_PASSWORD,
-# wyliczane z domeny TEST_USERNAME przez e2e/helpers/login.js's
-# testAccountUsername(n) -- CELOWO bez żadnego sekretu z listą loginów,
-# sam wzorzec loginu bez prawdziwego hasła niczego nie odsłania) jest
-# rozdzielona NA STAŁE, żeby dwie grupy uruchomione równolegle nigdy nie
-# dzieliły konta:
-#   - test1, test2 — base-explorer.spec.js/bases.spec.js (pierwsze i
-#     drugie zalogowane konto w tych plikach, do testów interakcji dwóch
-#     użytkowników naraz -- to właśnie odróżnia grupę "konto-drugie" od
-#     "konto-glowne", nie żaden osobny sekret).
-#   - test3..test10 (do 8 kont) — control2.spec.js, pula do prawdziwej
-#     równoległości WEWNĄTRZ pliku (Playwright --workers=N, każdy worker
-#     na innym koncie po testInfo.parallelIndex, patrz
-#     loginAsControl2TestUser) -- to jedyny plik na tyle ciężki (pełne
-#     rozgrywki 4 urządzeń, naturalne wygaśnięcie timerów finału), że
-#     warto. Rozmiar sterowany jedną, jawną (NIE sekretną)
-#     CONTROL2_TEST_ACCOUNT_COUNT poniżej -- więcej równoległości = zmiana
-#     tej jednej cyfry. Konta test1@…...testN@… trzeba realnie założyć na
-#     produkcji, tyle ile faktycznie wykorzystywane.
+# JEDEN SILNIK TESTÓW, JEDNA KOMENDA WSZĘDZIE: ten sam playwright.config.js,
+# ta sama `playwright test ... --workers="$TEST_ACCOUNT_COUNT"` w KAŻDEJ
+# grupie e2e-grouped i w e2e-custom-filter -- bez żadnego "jeśli to ten
+# plik, to inaczej". Pula kont test1@…...test10@… (TEST_ACCOUNT_COUNT
+# kolejnych, licząc od test1 — patrz getTestAccountPool w
+# e2e/helpers/login.js) jest dostępna w CAŁOŚCI każdemu filtrowi/grupie,
+# bez sztywnego podziału między plikami — który dokładnie numer trafia do
+# którego testu decyduje kod TEGO pliku (np. control2.spec.js woła
+# loginAsPooledTestUser z testInfo.parallelIndex; base-explorer.spec.js/
+# bases.spec.js jawnie wybierają testAccountUsername(1)/(2) na dwa
+# jednocześnie zalogowane konta w tym samym teście). Podnieś
+# TEST_ACCOUNT_COUNT (jedna, jawna liczba w env: poniżej, NIE sekret),
+# jeśli założysz więcej kont na produkcji -- więcej równoległości = zmiana
+# jednej cyfry, bez zmian w kodzie czy w tym workflow.
 #
-# Wszystkie grupy pełnego zestawu to jeden job (macierz,
-# "strategy.matrix") w jednym pliku -- nie osobne joby -- więc
-# instalacja/cache/upload artefaktów są zdefiniowane raz. Podział na
-# równoległe uruchomienia macierzy przez GitHub Actions (nie tylko
-# workers Playwrighta) skraca REALNY czas oczekiwania z sumy wszystkich
-# testów do czasu najdłuższej grupy.
+# Reszta testów (game-deletion, editor, cross-resource-locks, ...) używa
+# domyślnego loginAsTestUser bez jawnego username -> zawsze test1, więc
+# idzie szeregowo w swojej grupie (workers:1 z playwright.config.js jest
+# używane tylko lokalnie/poza CI — w CI workers zawsze nadpisuje ten
+# jeden, wspólny --workers).
 env:
-  # Liczba kont test3@…/test4@…/... dla control2.spec.js (test1/test2 są
-  # zarezerwowane dla base-explorer/bases, patrz wyżej) -- podnieś tę jedną
-  # liczbę, jeśli założysz więcej kont na produkcji (max 8, żeby zmieścić
-  # się w budżecie 10 kont razem z test1/test2).
-  CONTROL2_TEST_ACCOUNT_COUNT: "4"
+  TEST_ACCOUNT_COUNT: "4"
 
 jobs:
   e2e-grouped:
@@ -132,28 +115,11 @@ jobs:
       # nie dotyczą), więc jedyną opcją było albo płacić, albo wyłączyć na
       # stałe. Turnstile na /login (osobny mechanizm, patrz e2e-token.js)
       # zostaje jako właściwa ochrona przed botami przy logowaniu.
-      #
-      # Grupa "control2" dostaje osobną gałąź: liczba workerów =
-      # CONTROL2_TEST_ACCOUNT_COUNT (jawna liczba, patrz komentarz na
-      # górze pliku) — każdy worker loguje się na konto test<N>@… (patrz
-      # loginAsControl2TestUser), więc żaden nie czeka w kolejce za innym.
-      # Reszta grup zostaje na domyślnym `npm test` (workers:1 z
-      # playwright.config.js — współdzielone konto w danej grupie nadal
-      # wymaga szeregowości; "konto-drugie" jest bezpieczna obok
-      # "konto-glowne" właśnie dlatego, że loguje się na test1/test2, nie
-      # na zwykłe TEST_USERNAME).
       - name: Run E2E tests (${{ matrix.group.name }})
         env:
           E2E_BYPASS_SECRET: ${{ secrets.E2E_BYPASS_SECRET }}
-          TEST_USERNAME: ${{ secrets.TEST_USERNAME }}
           TEST_PASSWORD: ${{ secrets.TEST_PASSWORD }}
-        run: |
-          if [ "${{ matrix.group.name }}" = "control2" ]; then
-            echo "Pula kont control2: $CONTROL2_TEST_ACCOUNT_COUNT worker(ów)"
-            npx playwright test ${{ matrix.group.files }} --workers="$CONTROL2_TEST_ACCOUNT_COUNT"
-          else
-            npm test -- ${{ matrix.group.files }}
-          fi
+        run: npx playwright test ${{ matrix.group.files }} --workers="$TEST_ACCOUNT_COUNT"
         working-directory: tests
 
       - name: Upload failure screenshots
@@ -199,25 +165,11 @@ jobs:
         run: npx playwright install --with-deps chromium
         working-directory: tests
 
-      # spec_filter jest najczęstszą drogą odpalania (patrz komentarz na
-      # górze pliku) -- gdy filtr celuje w control2.spec.js, dostaje tę
-      # samą pulę kont/workers co w e2e-grouped (dopasowanie po samej
-      # nazwie pliku w filtrze, nie po osobnym polu) zamiast czekać na
-      # zwykłe workers:1. Każdy inny filtr leci przez zwykłe `npm test`,
-      # tak jak dziś.
       - name: Run E2E tests (spec_filter)
         env:
           E2E_BYPASS_SECRET: ${{ secrets.E2E_BYPASS_SECRET }}
-          TEST_USERNAME: ${{ secrets.TEST_USERNAME }}
           TEST_PASSWORD: ${{ secrets.TEST_PASSWORD }}
-        run: |
-          FILTER="${{ github.event.inputs.spec_filter }}"
-          if echo "$FILTER" | grep -q "control2"; then
-            echo "Pula kont control2: $CONTROL2_TEST_ACCOUNT_COUNT worker(ów)"
-            npx playwright test $FILTER --workers="$CONTROL2_TEST_ACCOUNT_COUNT"
-          else
-            npm test -- $FILTER
-          fi
+        run: npx playwright test ${{ github.event.inputs.spec_filter }} --workers="$TEST_ACCOUNT_COUNT"
         working-directory: tests
 
       - name: Upload failure screenshots

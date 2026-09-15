@@ -6,12 +6,13 @@ module.exports = defineConfig({
   testDir: "./e2e",
   timeout: 90_000, // logowanie gościa (auth signup + seed demo) bywa wolne w CI
   retries: 1,
-  // game-deletion i restore-demo logują się na to samo TEST_USERNAME —
-  // przy domyślnej równoległości (2 workery) dwa jednoczesne logowania na
-  // jedno konto powodowały niedeterministyczne błędy (raz zawieszony modal
-  // potwierdzenia, raz timeout samego logowania). Testy w tym repo i tak
-  // dotykają współdzielonego stanu na produkcji, więc szeregowe wykonanie
-  // jest właściwym trade-offem, nie tylko obejściem.
+  // Domyślnie (bez jawnego username) każdy test loguje się na to samo
+  // test1@familiada.online — przy domyślnej równoległości dwa jednoczesne
+  // logowania na jedno konto powodowały niedeterministyczne błędy (raz
+  // zawieszony modal potwierdzenia, raz timeout samego logowania). To jest
+  // wartość TYLKO dla lokalnego `npx playwright test` — w CI
+  // (.github/workflows/e2e-tests.yml) każde wywołanie jawnie nadpisuje to
+  // przez `--workers="$TEST_ACCOUNT_COUNT"`.
   workers: 1,
   reporter: [["list"]],
   use: {
