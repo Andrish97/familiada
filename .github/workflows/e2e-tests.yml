@@ -45,7 +45,7 @@ on:
 # używane tylko lokalnie/poza CI — w CI workers zawsze nadpisuje ten
 # jeden, wspólny --workers).
 env:
-  TEST_ACCOUNT_COUNT: "4"
+  TEST_ACCOUNT_COUNT: "10"
 
 jobs:
   e2e-grouped:
