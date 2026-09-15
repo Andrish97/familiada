@@ -70,23 +70,25 @@ export default {
     }
     
     // Known service hosts (no maintenance gate here)
-
     if (
       host === "panel.familiada.online" ||
       host === "supabase.familiada.online" ||
       host === "api.familiada.online"
     ) {
-      
-      // Przekazujemy żądanie do rekordów DNS skonfigurowanych w Cloudflare
-      return fetch(request, {
-        cf: {
-          // Jeśli masz rekord CNAME/A zdefiniowany w DNS Cloudflare dla tego hosta,
-          // resolveOverride wymusi użycie wpisu DNS z Twojego panelu Cloudflare:
-          resolveOverride: host
-        }
-      });
+      // NIE dodawaj tu cf.resolveOverride wskazującego z powrotem na ten sam
+      // `host` — to nie jest "wymuszenie użycia rekordu DNS", tylko każe
+      // temu subrequestowi z Workera ponownie wejść w edge Cloudflare dla
+      // TEJ SAMEJ strefy/hosta. panel.familiada.online i
+      // supabase.familiada.online mają politykę Cloudflare Access — taki
+      // subrequest (bez sesji/ciasteczka logowania) wpada w bramkę Access i
+      // origin staje się nieosiągalny (błąd "3 warstwy Cloudflare" widoczny
+      // 15.09 po wdrożeniu tej zmiany, cofniętej w tym samym commicie).
+      // resolveOverride ma sens tylko gdy wskazuje NA ZEWNĄTRZ strefy (patrz
+      // ORIGIN_RESOLVE = "andrish97.github.io" niżej) - żeby ominąć
+      // zapętlenie subrequestu w tego samego Workera, nie żeby "użyć DNS".
+      return fetch(request);
     }
-    
+
     // Lead Finder - passthrough for settings frontend communication
     if (host === "leads.familiada.online") {
       if (request.method === "OPTIONS") {
