@@ -49,7 +49,7 @@
 // narysował (SVG dot-matrix, nie tekst).
 
 const { test, expect } = require("@playwright/test");
-const { loginAsControl2TestUser } = require("./helpers/login");
+const { loginAsPooledTestUser } = require("./helpers/login");
 
 test.setTimeout(150_000);
 
@@ -291,7 +291,7 @@ async function openAnon(browser, contexts, path, label, errors) {
 // ===== 1. Parowanie urządzeń =====
 
 test("control2: parowanie urządzeń — linki renderują się bez błędu, Control widzi je jako online", async ({ page, browser }, testInfo) => {
-  await loginAsControl2TestUser(page, page.context(), testInfo.parallelIndex);
+  await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
   const game = await makeGame(page, `E2E-CONTROL2-PAIRING-${Date.now()}`);
   const contexts = [];
   try {
@@ -340,7 +340,7 @@ test("control2: parowanie urządzeń — linki renderują się bez błędu, Cont
 // ===== 2. Pełna runda + wznowienie po przeładowaniu =====
 
 test("control2: pełna runda przez 4 urządzenia + wznowienie Control po przeładowaniu w środku rundy 2", async ({ page, browser }, testInfo) => {
-  await loginAsControl2TestUser(page, page.context(), testInfo.parallelIndex);
+  await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
   const game = await makeGame(page, `E2E-CONTROL2-FULLGAME-${Date.now()}`, { roundQuestions: TWO_QUESTIONS });
   const contexts = [];
   const errors = [];
@@ -411,7 +411,7 @@ test("control2: pełna runda przez 4 urządzenia + wznowienie Control po przeła
 // ===== 3. Mechanika rund: reset pojedynku, pass, kradzież win/loss, R8 =====
 
 test("control2: reset pojedynku, pass, kradzież wygrana/przegrana, odkrywanie reszty, koniec gry + Wróć do moich gier", async ({ page, browser }, testInfo) => {
-  await loginAsControl2TestUser(page, page.context(), testInfo.parallelIndex);
+  await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
   const game = await makeGame(page, `E2E-CONTROL2-ROUNDMECH-${Date.now()}`, { roundQuestions: TWO_QUESTIONS });
   const contexts = [];
   const errors = [];
@@ -534,7 +534,7 @@ test("control2: reset pojedynku, pass, kradzież wygrana/przegrana, odkrywanie r
 // ===== 4. Finał: próg -> finał, wczesne zakończenie w połowie mapowania =====
 
 test("control2: próg w rundzie -> finał, wczesne zakończenie po 4/5 pytaniach, pomija gracza 2", async ({ page, browser }, testInfo) => {
-  await loginAsControl2TestUser(page, page.context(), testInfo.parallelIndex);
+  await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
   const game = await makeGame(page, `E2E-CONTROL2-FINAL-${Date.now()}`, {
     roundQuestions: [{ ord: 1, text: "Pytanie testowe (runda)", answers: [{ ord: 1, text: "Odp. warta 300", fixed_points: 300 }] }],
     finalAnswerPts: 50,
@@ -630,7 +630,7 @@ test("control2: próg w rundzie -> finał, wczesne zakończenie po 4/5 pytaniach
 // ===== 5. physicalBuzzer + noHostTablet =====
 
 test("control2: physicalBuzzer + noHostTablet — urządzenia pominięte, ręczny wybór drużyny", async ({ page, browser }, testInfo) => {
-  await loginAsControl2TestUser(page, page.context(), testInfo.parallelIndex);
+  await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
   const game = await makeGame(page, `E2E-CONTROL2-PHYSBUZZ-${Date.now()}`, {
     roundQuestions: [TWO_QUESTIONS[0]],
   });
@@ -696,7 +696,7 @@ test("control2: physicalBuzzer + noHostTablet — urządzenia pominięte, ręczn
 // ===== 6. "Zacznij od nowa" =====
 
 test("control2: \"Zacznij od nowa\" w trakcie gry wraca do D0", async ({ page, browser }, testInfo) => {
-  await loginAsControl2TestUser(page, page.context(), testInfo.parallelIndex);
+  await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
   const game = await makeGame(page, `E2E-CONTROL2-RESTART-${Date.now()}`);
   const contexts = [];
   try {
@@ -722,7 +722,7 @@ test("control2: \"Zacznij od nowa\" w trakcie gry wraca do D0", async ({ page, b
 // ===== 7. Druga karta Control blokowana (resource-lock) =====
 
 test("control2: druga karta Control na tę samą grę jest zablokowana (resource-lock, kontekst \"control\")", async ({ page, context }, testInfo) => {
-  await loginAsControl2TestUser(page, context, testInfo.parallelIndex);
+  await loginAsPooledTestUser(page, context, testInfo.parallelIndex);
   const game = await makeGame(page, `E2E-CONTROL2-LOCK-${Date.now()}`);
   try {
     await page.goto(`/control2?id=${game.id}`, { waitUntil: "domcontentloaded" });
@@ -781,7 +781,7 @@ async function expectQrBoth(displayPage) {
 }
 
 test("control2: QR na wyświetlaczu — host i buzzer niezależne, każdy z osobna i oba naraz", async ({ page, browser }, testInfo) => {
-  await loginAsControl2TestUser(page, page.context(), testInfo.parallelIndex);
+  await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
   const game = await makeGame(page, `E2E-CONTROL2-DUALQR-${Date.now()}`);
   const contexts = [];
   try {
@@ -845,7 +845,7 @@ test("control2: QR na wyświetlaczu — host i buzzer niezależne, każdy z osob
 
 test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśnięcie timera, powtórzenie, odsłonięcie P1 na Display przy starcie P2", async ({ page, browser }, testInfo) => {
   test.setTimeout(180_000); // + realne 15s oczekiwania na naturalne wygaśnięcie timera gracza 1
-  await loginAsControl2TestUser(page, page.context(), testInfo.parallelIndex);
+  await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
   const game = await makeGame(page, `E2E-CONTROL2-FINALFULL-${Date.now()}`, {
     roundQuestions: [{ ord: 1, text: "Pytanie testowe (runda)", answers: [{ ord: 1, text: "Odp. warta 300", fixed_points: 300 }] }],
     finalAnswerPts: 15,
@@ -995,7 +995,7 @@ test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśni�
 // ===== 10. Mnożnik rundy =====
 
 test("control2: mnożnik rundy — runda 4. z domyślnym ×2 faktycznie przemnaża bank", async ({ page, browser }, testInfo) => {
-  await loginAsControl2TestUser(page, page.context(), testInfo.parallelIndex);
+  await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
   const roundQ = (n) => ({ ord: n, text: `Pytanie rundowe ${n}`, answers: [{ ord: 1, text: "Jedyna odpowiedź", fixed_points: 40 }] });
   const game = await makeGame(page, `E2E-CONTROL2-MULTIPLIER-${Date.now()}`, {
     roundQuestions: [roundQ(1), roundQ(2), roundQ(3), roundQ(4)],
@@ -1053,7 +1053,7 @@ test("control2: mnożnik rundy — runda 4. z domyślnym ×2 faktycznie przemna�
 // ===== 11. Wyścig dwóch przycisków Buzzera =====
 
 test("control2: wyścig — oba przyciski Buzzera naciśnięte w tej samej chwili, tylko jeden zaakceptowany", async ({ page, browser }, testInfo) => {
-  await loginAsControl2TestUser(page, page.context(), testInfo.parallelIndex);
+  await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
   const game = await makeGame(page, `E2E-CONTROL2-BUZZRACE-${Date.now()}`, { roundQuestions: [TWO_QUESTIONS[0]] });
   const contexts = [];
   try {
@@ -1109,7 +1109,7 @@ test("control2: wyścig — oba przyciski Buzzera naciśnięte w tej samej chwil
 // ===== 12. Wyciszenie dźwięku =====
 
 test("control2: wyciszenie dźwięku — po Mute żaden klucz SFX się nie odtwarza", async ({ page, browser }, testInfo) => {
-  await loginAsControl2TestUser(page, page.context(), testInfo.parallelIndex);
+  await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
   const game = await makeGame(page, `E2E-CONTROL2-MUTE-${Date.now()}`, { roundQuestions: [TWO_QUESTIONS[0]] });
   const contexts = [];
   try {
@@ -1171,7 +1171,7 @@ test("control2: wyciszenie dźwięku — po Mute żaden klucz SFX się nie odtwa
 // urządzenie, które FAKTYCZNIE gra (Display).
 
 test("control2: dźwięk ze źródła Wyświetlacz — odblokowanie, głośność z ustawień, chwilowe mute w rundzie", async ({ page, browser }, testInfo) => {
-  await loginAsControl2TestUser(page, page.context(), testInfo.parallelIndex);
+  await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
   const game = await makeGame(page, `E2E-CONTROL2-SOUNDSRC-${Date.now()}`, { roundQuestions: [TWO_QUESTIONS[0]] });
   const contexts = [];
   try {
@@ -1318,7 +1318,7 @@ test("control2: dźwięk ze źródła Wyświetlacz — odblokowanie, głośnoś�
 // zmieniła.
 
 test("control2: zmiana języka w Control propaguje się do Hosta — tytuł fazy faktycznie się tłumaczy", async ({ page, browser }, testInfo) => {
-  await loginAsControl2TestUser(page, page.context(), testInfo.parallelIndex);
+  await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
   const game = await makeGame(page, `E2E-CONTROL2-LANG-${Date.now()}`, { roundQuestions: [TWO_QUESTIONS[0]] });
   const contexts = [];
   try {
@@ -1364,7 +1364,7 @@ test("control2: zmiana języka w Control propaguje się do Hosta — tytuł fazy
 // podglądu (display2/js/main.js's instrumentSceneApi(), dodane też do trybu
 // podglądu w tej samej naprawie) jako wywołanie api.small.long1(...).
 test("control2: modal ustawień gry — zmiana nazwy drużyny odświeża podgląd Wyświetlacza", async ({ page }, testInfo) => {
-  await loginAsControl2TestUser(page, page.context(), testInfo.parallelIndex);
+  await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
   const game = await makeGame(page, `E2E-CONTROL2-GSPREVIEW-${Date.now()}`);
   try {
     await page.goto(`/control2?id=${game.id}`, { waitUntil: "domcontentloaded" });
@@ -1441,7 +1441,7 @@ async function releaseLogoLock(page, logoId, tabId) {
 }
 
 test("control2: zablokowany, gdy logo gry jest edytowane w logo-editorze — i wznawia się samo po zwolnieniu", async ({ page, context }, testInfo) => {
-  await loginAsControl2TestUser(page, context, testInfo.parallelIndex);
+  await loginAsPooledTestUser(page, context, testInfo.parallelIndex);
 
   const logoName = `E2E-CONTROL2-LOGOLOCK-${Date.now()}`;
   const { logoId, gameId } = await page.evaluate(async ({ name, payload }) => {

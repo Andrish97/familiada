@@ -3,6 +3,13 @@ const { generateE2EToken } = require("./e2e-token");
 
 const LOGIN_URL = "https://www.familiada.online/login";
 
+// Domena kont testowych jest zawsze taka sama -- produkcja to zawsze
+// familiada.online -- więc jest to stała w kodzie, nie sekret. Dzięki temu
+// CI potrzebuje tylko DWÓCH sekretów w ogóle: E2E_BYPASS_SECRET i
+// TEST_PASSWORD. Loginy (test1@…, test2@…, ...) same w sobie niczego nie
+// odsłaniają bez prawdziwego hasła.
+const TEST_ACCOUNT_DOMAIN = "familiada.online";
+
 // Trwała diagnostyka (nie tylko na czas jednego debugowania) — logowanie
 // bywa niedeterministycznie wolne/nieudane w CI (waitForURL timeout) bez
 // żadnego wcześniejszego sygnału dlaczego. Podpięte raz na page, żeby przy
@@ -74,31 +81,29 @@ async function dumpPageDiagnostics(page, gotoResponse) {
 }
 
 /**
- * Loguje jako konto testowe (TEST_USERNAME/TEST_PASSWORD domyślnie), zostawia
- * stronę na /builder. Przekaż { username: testAccountUsername(2) } (patrz
- * niżej) żeby zalogować DRUGIE konto testowe w scenariuszach z dwoma
- * użytkownikami naraz -- ma to samo TEST_PASSWORD (nie ma osobnego
- * TEST_PASSWORD_2/3/...).
+ * Loguje jako konto testowe (domyślnie test1@familiada.online, patrz
+ * testAccountUsername), zostawia stronę na /builder. Przekaż
+ * { username: testAccountUsername(2) } żeby zalogować INNE konto z puli
+ * w scenariuszach z dwoma+ użytkownikami naraz -- wszystkie konta puli
+ * mają to samo TEST_PASSWORD (nie ma osobnych haseł per konto).
  */
 async function loginAsTestUser(page, context, opts = {}) {
-  // Rozróżniamy "nie podano username w ogóle" (użyj domyślnego TEST_USERNAME)
-  // od "podano klucz username, ale wartość jest pusta" (np. TEST_USERNAME nie
-  // jest ustawione, więc testAccountUsername(n) zwróciło "") -- to drugie
-  // MUSI głośno wybuchnąć, bo inaczej cicho logujemy się na TO SAMO konto co
-  // "pierwszy" user, co przy testach dwóch-kont (editor/viewer na
-  // współdzielonej bazie) daje mylący, trudny do zdiagnozowania fail (np.
-  // "toolbar viewera jest enabled" zamiast czytelnego komunikatu o
-  // brakującym sekrecie).
+  // Rozróżniamy "nie podano username w ogóle" (użyj domyślnego test1@…) od
+  // "podano klucz username, ale wartość jest pusta" -- to drugie MUSI
+  // głośno wybuchnąć, bo inaczej cicho logujemy się na domyślne konto
+  // zamiast na to, o które faktycznie chodziło, co przy testach
+  // wielokontowych (editor/viewer na współdzielonej bazie) daje mylący,
+  // trudny do zdiagnozowania fail.
   if ("username" in opts && !opts.username) {
     throw new Error(
-      "loginAsTestUser wywołane z jawnym { username } które jest puste -- brakuje TEST_USERNAME " +
-      "w konfiguracji CI (testAccountUsername(n) wyprowadza konta z jego domeny). Dodaj je jako " +
-      "sekret, inaczej test cicho zalogowałby się na domyślne TEST_USERNAME zamiast na drugie konto."
+      "loginAsTestUser wywołane z jawnym { username } które jest puste -- sprawdź wywołanie " +
+      "testAccountUsername(n), inaczej test cicho zalogowałby się na domyślne konto zamiast na " +
+      "to, o które chodziło."
     );
   }
-  const username = opts.username || process.env.TEST_USERNAME;
+  const username = opts.username || testAccountUsername(1);
   const password = process.env.TEST_PASSWORD;
-  if (!username || !password) throw new Error("Brak TEST_USERNAME/TEST_PASSWORD w zmiennych środowiskowych");
+  if (!username || !password) throw new Error("Brak TEST_PASSWORD w zmiennych środowiskowych");
 
   instrumentPage(page);
   await withE2EBypass(context);
@@ -155,64 +160,43 @@ async function loginAsGuest(page, context) {
 }
 
 /**
- * Globalna pula kont testowych "testX" — do 10 kont, wspólne TEST_PASSWORD,
- * loginy wyliczane z domeny TEST_USERNAME (test1@…, test2@…, ..., test10@…).
- * Celowo BEZ osobnego sekretu z listą loginów ani z TEST_USERNAME_2 — sam
- * wzorzec loginu niczego nie odsłania bez prawdziwego hasła, więc nie trzeba
- * go trzymać w GitHub Secrets. Konta trzeba oczywiście realnie założyć na
- * produkcji, tyle ile faktycznie wykorzystywane jest niżej.
- *
- * Budżet 10 kont jest rozdzielony NA STAŁE między grupy testów, żeby dwie
- * grupy uruchomione równolegle w CI (`.github/workflows/e2e-tests.yml`)
- * nigdy nie dzieliły tego samego konta:
- *   - test1, test2 — base-explorer.spec.js/bases.spec.js (pierwsze i
- *     drugie zalogowane konto, do testów interakcji dwóch użytkowników
- *     naraz na tej samej bazie/koszyku),
- *   - test3..test10 (do 8 kont) — control2.spec.js, pula do równoległych
- *     workerów (patrz getControl2AccountPool niżej).
- * Zwykłe TEST_USERNAME (bez liczbowego sufiksu) zostaje osobnym kontem dla
- * reszty testów (game-deletion, editor, cross-resource-locks, ...), które
- * nadal idą szeregowo (workers:1) i nigdy nie sięgają po testX.
+ * Login n-tego konta z globalnej puli testX (1-indeksowane) —
+ * test1@familiada.online, test2@familiada.online, ..., do test10.
+ * Wszystkie z tym samym TEST_PASSWORD. Domena jest stałą w kodzie (patrz
+ * TEST_ACCOUNT_DOMAIN), więc wygenerowanie loginu nie zależy od żadnego
+ * sekretu -- sam login bez prawdziwego hasła niczego nie odsłania.
+ * Dowolny plik/filtr testów może użyć DOWOLNEGO numeru z całej puli 1-10 —
+ * brak sztywnego podziału/rezerwacji między plikami. Konta trzeba
+ * oczywiście realnie założyć na produkcji, tyle ile faktycznie
+ * wykorzystywane.
  */
 function testAccountUsername(n) {
-  const base = process.env.TEST_USERNAME || "";
-  const atIdx = base.indexOf("@");
-  if (atIdx === -1) return base;
-  return `test${n}${base.slice(atIdx)}`; // np. "test3@familiada.online"
+  return `test${n}@${TEST_ACCOUNT_DOMAIN}`;
 }
 
 /**
- * Pula kont control2.spec.js — test3, test4, ... (patrz przydział wyżej;
- * test1/test2 są zarezerwowane dla base-explorer/bases, więc control2
- * zaczyna od test3, żeby dwie równoległe grupy nigdy się nie zderzyły).
- * Rozmiar sterowany jedną, jawną (NIE sekretną) liczbą w workflow —
- * CONTROL2_TEST_ACCOUNT_COUNT — więcej równoległości = zmiana jednej
- * cyfry. Brak TEST_USERNAME lub COUNT<1 -> pada z powrotem na samo
- * TEST_USERNAME (pula jednoelementowa == dzisiejsze zachowanie reszty
- * testów).
+ * Pula N kolejnych kont z testX (test1, test2, ..., testN) do prawdziwej
+ * równoległości WEWNĄTRZ jednego pliku testów -- każdy worker Playwrighta
+ * loguje się na inne konto, więc nikt nie czeka w kolejce za cudzym
+ * logowaniem. Rozmiar sterowany jedną, jawną (NIE sekretną) liczbą w
+ * workflow -- TEST_ACCOUNT_COUNT -- więcej równoległości = zmiana jednej
+ * cyfry, bez zmian w kodzie. COUNT<1 -> pula jednoelementowa (samo test1).
  */
-function getControl2AccountPool() {
-  if (!process.env.TEST_USERNAME) return [];
-  const count = parseInt(process.env.CONTROL2_TEST_ACCOUNT_COUNT || "1", 10);
+function getTestAccountPool() {
+  const count = parseInt(process.env.TEST_ACCOUNT_COUNT || "1", 10);
   const n = Number.isFinite(count) && count > 0 ? count : 1;
-  if (n === 1 && !process.env.CONTROL2_TEST_ACCOUNT_COUNT) return [process.env.TEST_USERNAME];
-  return Array.from({ length: n }, (_, i) => testAccountUsername(i + 3));
+  return Array.from({ length: n }, (_, i) => testAccountUsername(i + 1));
 }
 
 /**
- * Loguje jako jedno z kont puli control2 (patrz getControl2AccountPool),
- * wybrane po `workerIndex` (przekaż testInfo.parallelIndex z testu
- * Playwrighta) -- różne workery równoległe lądują na różnych kontach,
- * więc nigdy nie ścigają się o to samo logowanie.
+ * Loguje jako jedno z kont puli testX (patrz getTestAccountPool), wybrane
+ * po `workerIndex` (przekaż testInfo.parallelIndex z testu Playwrighta) --
+ * różne workery równoległe lądują na różnych kontach, więc nigdy nie
+ * ścigają się o to samo logowanie. Używane dziś przez control2.spec.js,
+ * ale nie jest do niego przywiązane -- każdy plik może po to sięgnąć.
  */
-async function loginAsControl2TestUser(page, context, workerIndex) {
-  const pool = getControl2AccountPool();
-  if (!pool.length) {
-    throw new Error(
-      "Brak TEST_USERNAME w zmiennych środowiskowych -- control2.spec.js potrzebuje " +
-      "przynajmniej jednego konta testowego (wzorzec test<N>@<domena TEST_USERNAME>)."
-    );
-  }
+async function loginAsPooledTestUser(page, context, workerIndex) {
+  const pool = getTestAccountPool();
   const username = pool[workerIndex % pool.length];
   return loginAsTestUser(page, context, { username });
 }
@@ -220,7 +204,7 @@ async function loginAsControl2TestUser(page, context, workerIndex) {
 module.exports = {
   loginAsTestUser,
   loginAsGuest,
-  loginAsControl2TestUser,
-  getControl2AccountPool,
+  loginAsPooledTestUser,
+  getTestAccountPool,
   testAccountUsername,
 };

@@ -58,17 +58,17 @@ osobno.
 - `E2E_BYPASS_SECRET` — losowy string (np. `openssl rand -hex 32`),
   **musi być identyczny** z sekretem `E2E_BYPASS_SECRET` ustawionym
   w Cloudflare Workerze (patrz niżej).
-- `TEST_USERNAME` / `TEST_PASSWORD` — dane logowania konta testowego
-  (zwykłe konto, nie gość — używane tam gdzie test wymaga zalogowanego
-  usera, np. `game-deletion.spec.js`).
-- **Nie ma osobnego sekretu na drugie/kolejne konto testowe** (dawne
-  `TEST_USERNAME_2` — usunięte). Testy wymagające więcej niż jednego
-  zalogowanego konta (subskrypcje, base-explorer/bases, control2) sięgają
-  po pulę **`test1@…`, `test2@…`, ... `test10@…`** — loginy wyliczane w
-  locie z domeny `TEST_USERNAME` (`testAccountUsername(n)` w
-  `e2e/helpers/login.js`), z tym samym `TEST_PASSWORD`. Patrz sekcja
-  "Pula kont testX" niżej — trzeba realnie założyć te konta na produkcji,
-  tyle ile faktycznie jest używane.
+- `TEST_PASSWORD` — wspólne hasło **wszystkich** kont testowych.
+
+**Tylko te dwa sekrety w ogóle.** Nie ma sekretu na nazwy użytkowników —
+wszystkie konta testowe to wzorzec **`test1@familiada.online`,
+`test2@familiada.online`, ... `test10@familiada.online`**
+(`testAccountUsername(n)` w `e2e/helpers/login.js`) — domena jest stałą
+w kodzie, nie sekretem, bo produkcja to zawsze `familiada.online`, a sam
+login bez prawdziwego hasła niczego nie odsłania. Domyślne konto (gdy
+test nie podaje jawnego `username`) to `test1@familiada.online`. Patrz
+sekcja "Pula kont testX" niżej — trzeba realnie założyć te konta na
+produkcji, tyle ile faktycznie jest używane.
 
 **Cloudflare Worker** (`familiada`, `cloudflare/maintenance-worker`):
 - `E2E_BYPASS_SECRET` — ta sama wartość co w GitHub Actions. Ustawiane
@@ -108,7 +108,7 @@ w issues/PR-y.
 cd tests
 npm install
 npx playwright install --with-deps chromium
-E2E_BYPASS_SECRET="..." TEST_USERNAME="..." TEST_PASSWORD="..." npm test
+E2E_BYPASS_SECRET="..." TEST_PASSWORD="..." npm test
 ```
 
 ## Uruchomienie w CI
@@ -131,19 +131,21 @@ workflow**, nie pełny zestaw:
 
 Puste pole = wszystkie testy, w równoległych grupach (job `e2e-grouped`,
 patrz sekcja "Pula kont testX" niżej). Filtr trafia w osobny job
-(`e2e-custom-filter`) — jeden silnik testów przez cały czas (ten sam
-`playwright.config.js`, ta sama komenda `playwright test` w obu jobach),
-różni się tylko CO się odpala i z jakim `--workers`: filtr zawierający
-"control2" dostaje tę samą pulę kont/równoległość co grupa `control2` w
-pełnym zestawie, każdy inny filtr leci zwykłym `workers: 1`. Lokalnie to
-samo bez żadnego dodatkowego ustawienia:
+(`e2e-custom-filter`) — **jeden silnik testów, jedna komenda wszędzie**:
+ten sam `playwright.config.js`, ta sama
+`playwright test <pliki/filtr> --workers="$TEST_ACCOUNT_COUNT"` w KAŻDEJ
+grupie `e2e-grouped` i w `e2e-custom-filter` — bez żadnego "jeśli to ten
+plik, to inaczej". Lokalnie to samo bez żadnego dodatkowego ustawienia:
 `npx playwright test e2e/nazwa-testu.spec.js`.
 
-## Pula kont testX (`test1@…` … `test10@…`)
+## Pula kont testX (`test1@familiada.online` … `test10@…`)
 
-Każdy test **może** korzystać z do 10 kont testowych o loginach
-wyliczonych wzorcem `test<N>@<domena TEST_USERNAME>` (`test1@…`, `test2@…`,
-... `test10@…`), wspólne `TEST_PASSWORD`. Dwa zastosowania:
+Każdy plik/filtr testów **może** korzystać z całej puli do 10 kont
+testowych — login `test<N>@familiada.online` (`testAccountUsername(n)` w
+`e2e/helpers/login.js`, domena stała w kodzie, nie sekret), wspólne
+`TEST_PASSWORD`. **Brak sztywnego podziału/rezerwacji między plikami** —
+który dokładnie numer trafia do którego testu decyduje kod TEGO pliku, nie
+jakaś globalna alokacja:
 
 1. **Testy interakcji między kontami** — scenariusz z dwoma (albo więcej)
    naprawdę różnymi, jednocześnie zalogowanymi użytkownikami (np. editor +
@@ -154,51 +156,21 @@ wyliczonych wzorcem `test<N>@<domena TEST_USERNAME>` (`test1@…`, `test2@…`,
    że warto dać mu prawdziwą równoległość Playwrighta (`--workers=N`), a
    nie tylko szeregową kolejkę. Jedyny dziś taki plik to `control2.spec.js`
    (16 testów, pełne rozgrywki przez 4 urządzenia, realne wygaśnięcie
-   timerów finału ~15-20s) — patrz "Równoległość `control2.spec.js`" niżej.
+   timerów finału ~15-20s): `loginAsPooledTestUser(page, context,
+   testInfo.parallelIndex)` wybiera `test1@…`, `test2@…`, ... z całej puli
+   po indeksie workera — każdy równoległy worker loguje się na **inne**
+   konto, więc nikt nie czeka w kolejce za cudzym logowaniem.
 
-**Celowo BEZ żadnego sekretu z listą loginów** — `testAccountUsername(n)`
-(`e2e/helpers/login.js`) wylicza `test<n>@…` w locie z domeny
-`TEST_USERNAME`. Sam wzorzec loginu nie jest sekretem — bez prawdziwego
-hasła niczego nie odsłania — więc nie trzeba go trzymać w GitHub Secrets.
-Reguła "testy na współdzielonym `TEST_USERNAME` muszą iść sekwencyjnie"
-(patrz `workers: 1` w `playwright.config.js` i sekcja "Pułapki" niżej)
-nadal obowiązuje dla plików, które NIE sięgają po pulę testX — te idą
-szeregowo na zwykłym `TEST_USERNAME`.
+Domyślne konto (gdy test nie podaje jawnego `username`) to zawsze
+`test1@familiada.online` — reszta testów (game-deletion, editor,
+cross-resource-locks, ...) loguje się właśnie na nie i idzie szeregowo w
+swojej grupie.
 
-**Przydział puli jest na stałe rozdzielony między grupy** (patrz komentarz
-na górze `.github/workflows/e2e-tests.yml`), żeby dwie grupy uruchomione
-równolegle w CI nigdy nie dzieliły tego samego konta:
-- **`test1`, `test2`** — `base-explorer.spec.js`/`bases.spec.js` (pierwsze
-  i drugie konto w tych plikach).
-- **`test3` .. `test10`** (do 8 kont) — `control2.spec.js`, pula do
-  równoległych workerów.
-
-### Równoległość `control2.spec.js`
-
-`control2.spec.js` ma własną gałąź w kroku "Run E2E tests" grupy
-`control2` (`e2e-grouped`) — oraz analogiczną gałąź w `e2e-custom-filter`,
-uruchamianą gdy filtr zawiera "control2" (patrz niżej, to najczęstsza
-droga odpalania) — z **prawdziwą równoległością**:
-- Jedyna sterowana wartość to **`CONTROL2_TEST_ACCOUNT_COUNT`** — zwykła,
-  jawna liczba w `env:` na górze `e2e-tests.yml` (NIE sekret, max 8 — patrz
-  przydział wyżej). Krok odpala `npx playwright test e2e/control2.spec.js
-  --workers="$CONTROL2_TEST_ACCOUNT_COUNT"`.
-- `loginAsControl2TestUser(page, context, testInfo.parallelIndex)`
-  wybiera konto `test3@…`, `test4@…`, ... z puli po indeksie workera —
-  każdy równoległy worker loguje się na **inne** konto, więc nikt nie
-  czeka w kolejce za cudzym logowaniem.
-
-**Skalowanie — wzorzec zawsze ten sam, zmienia się tylko cyferka**:
-1. Załóż na produkcji tyle kont `test3@…`, `test4@…`, ... ile chcesz
-   workerów (domena taka sama jak w `TEST_USERNAME`, hasło jak
-   `TEST_PASSWORD`).
-2. Podnieś `CONTROL2_TEST_ACCOUNT_COUNT` w `.github/workflows/e2e-tests.yml`
-   do tej samej liczby.
-
-Nic więcej się nie zmienia — żaden sekret, żaden kod testów. Brak
-`TEST_USERNAME` albo `CONTROL2_TEST_ACCOUNT_COUNT < 1` = pula
-jednoelementowa (samo `TEST_USERNAME`), `workers=1` — bezpieczny fallback,
-nic się nie psuje.
+**Rozmiar puli sterowany jedną, jawną (NIE sekretną) liczbą** —
+`TEST_ACCOUNT_COUNT` w `env:` na górze `.github/workflows/e2e-tests.yml`
+— więcej równoległości = zmiana jednej cyfry, zero zmian w kodzie czy w
+workflow. Załóż na produkcji tyle kont `test1@…`, `test2@…`, ... ile
+wynosi ta liczba.
 
 ## Pułapki, na które łatwo wpaść (znalezione przy pierwszym realnym przebiegu)
 
@@ -217,8 +189,8 @@ strony. Zapisane tu, żeby nie trzeba było ich znowu wyłapywać po kolei:
   tę wymuszoną wartość i selektory z polskim tekstem przestaną trafiać.
 - **Overlay z prośbą o ocenę appki** (`js/core/rating-system.js`) pokazuje
   się każdemu zalogowanemu (nie-gościowi) kontu starszemu niż 7 dni —
-  a `TEST_USERNAME` takie właśnie jest. Zasłania klikalne elementy na
-  całej stronie. Suppresowany tym samym `addInitScript`
+  a konta testowe (`test1@…` itd.) takie właśnie są. Zasłania klikalne
+  elementy na całej stronie. Suppresowany tym samym `addInitScript`
   (`localStorage["fam:app_rating_suppressed"] = "true"`).
 - **`/account` dla gościa pokazuje tylko sekcję "Usuń konto"** — reszta
   (w tym `#demoRestoreBtn`) jest schowana przez `hideForGuest()`
@@ -226,15 +198,16 @@ strony. Zapisane tu, żeby nie trzeba było ich znowu wyłapywać po kolei:
   usuwaniem konta (np. restore-demo) nadal muszą logować się przez
   `loginAsTestUser`, nie `loginAsGuest` — patrz pełny opis w sekcji
   "Co jest zablokowane dla gościa" niżej.
-- **Testy na współdzielonym `TEST_USERNAME` muszą iść sekwencyjnie.**
-  `playwright.config.js` ma `workers: 1` — dwa równoległe logowania na to
-  samo konto testowe powodowały niedeterministyczne błędy (raz timeout
-  logowania, raz "zawieszony" modal), bo sesje się gryzły. Jeśli kiedyś
-  dojdzie tu drugi test na `loginAsTestUser` bez jawnego `username`,
-  zostaw `workers: 1`. **Wyjątek: `control2.spec.js`** ma realny
-  `--workers` > 1 — patrz sekcja "Pula kont testX" wyżej; to działa
-  właśnie dlatego, że każdy worker dostaje inne konto (`test3@…`,
-  `test4@…`, ...), nie to samo.
+- **Testy na współdzielonym koncie (bez jawnego `username`) muszą iść
+  sekwencyjnie.** Dwa równoległe logowania na to samo konto testowe
+  powodowały niedeterministyczne błędy (raz timeout logowania, raz
+  "zawieszony" modal), bo sesje się gryzły. `playwright.config.js` ma
+  `workers: 1` jako lokalną wartość domyślną; w CI zawsze nadpisuje to
+  jawne `--workers="$TEST_ACCOUNT_COUNT"`. Plik, który chce realnej
+  równoległości, musi więc sam przypisywać KAŻDEMU workerowi inne konto z
+  puli (patrz `loginAsPooledTestUser`, sekcja "Pula kont testX" wyżej) —
+  inaczej wszystkie workery i tak trafią na to samo domyślne `test1@…` i
+  wróci ten sam wyścig.
 - **Selektor karty gry musi być zawężony do `#grid`.** Sam kontener karty
   ma klasę `.card`, ale ma ją też otaczający panel `.card.builder-card`
   w `builder.html` — goły `.card` łapie oba i Playwright rzuca strict
@@ -293,25 +266,27 @@ Dodatkowe różnice gościa, nieblokujące UI, ale istotne dla testów:
 
 ## Tryby logowania w testach (`tests/e2e/helpers/login.js`)
 
-- `loginAsTestUser(page, context)` — loguje się loginem/hasłem konta
-  testowego, przez prawdziwy formularz, z ominięciem captchy.
+- `loginAsTestUser(page, context)` — loguje się jako `test1@familiada.online`
+  (domyślnie) loginem/hasłem konta testowego, przez prawdziwy formularz, z
+  ominięciem captchy. Przekaż `{ username: testAccountUsername(n) }` żeby
+  zalogować inne konto z puli.
 - `loginAsGuest(page, context)` — zakłada świeże konto gościa przez
   przycisk "Wejdź jako gość", też przez prawdziwy formularz + bypass.
   Gość ma osobne ograniczenia w appce — używaj tego trybu gdy test ma
   sprawdzać właśnie te ograniczenia.
 - `testAccountUsername(n)` — **czysta funkcja, nie loguje sama w sobie**.
-  Zwraca login n-tego konta z globalnej puli testX (`test<n>@<domena
-  TEST_USERNAME>`). Użyj razem z `loginAsTestUser(page, context,
+  Zwraca login n-tego konta z puli testX (`test<n>@familiada.online`,
+  domena stała w kodzie). Użyj razem z `loginAsTestUser(page, context,
   { username: testAccountUsername(2) })` w testach interakcji między
   kontami — patrz sekcja "Pula kont testX" wyżej (`base-explorer.spec.js`/
   `bases.spec.js` już tak robią, dla `test1`/`test2`).
-- `loginAsControl2TestUser(page, context, workerIndex)` — **tylko
-  `control2.spec.js`**. Loguje na konto wybrane po `workerIndex` (przekaż
-  `testInfo.parallelIndex`) z puli `test3@…`, `test4@…`, ... (patrz
-  `getControl2AccountPool`) — sekcja "Równoległość `control2.spec.js`"
-  wyżej. Nowy test w tym pliku ma używać tego trybu, nie zwykłego
-  `loginAsTestUser` — inaczej wraca do szeregowego logowania na jedno,
-  stałe konto.
+- `getTestAccountPool()` / `loginAsPooledTestUser(page, context,
+  workerIndex)` — pula `test1@…`, `test2@…`, ... `testN@…` (rozmiar =
+  `TEST_ACCOUNT_COUNT`) do prawdziwej równoległości wewnątrz jednego pliku;
+  `loginAsPooledTestUser` wybiera konto po `workerIndex` (przekaż
+  `testInfo.parallelIndex`). Używane dziś przez `control2.spec.js`, ale
+  nie jest do niego przywiązane — każdy plik może po to sięgnąć, patrz
+  sekcja "Pula kont testX" wyżej.
 
   **Każdy test używający `loginAsGuest` musi na końcu sam usunąć to
   konto** (przez prawdziwy UI flow — `#deleteAccount` +

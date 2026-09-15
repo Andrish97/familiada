@@ -68,7 +68,6 @@ jobs:
       - name: Run recorded playthroughs
         env:
           E2E_BYPASS_SECRET: ${{ secrets.E2E_BYPASS_SECRET }}
-          TEST_USERNAME: ${{ secrets.TEST_USERNAME }}
           TEST_PASSWORD: ${{ secrets.TEST_PASSWORD }}
           RECORD_OUT_DIR: ${{ github.workspace }}/tests/recordings
         run: node tests/e2e/record-playthrough.js

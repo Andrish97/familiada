@@ -14,13 +14,15 @@
 // przygotowywane przez ten workflow PRZED odpaleniem tego pliku.
 //
 // Wymagane zmienne środowiskowe (te same co istniejący e2e-tests.yml):
-// E2E_BYPASS_SECRET, TEST_USERNAME, TEST_PASSWORD.
+// E2E_BYPASS_SECRET, TEST_PASSWORD. Loguje się jako test1@familiada.online
+// (domyślne konto puli testX, patrz e2e/helpers/login.js) -- domena jest
+// stałą w kodzie, nie sekretem.
 // Opcjonalnie: DISPLAY (domyślnie ":99"), PULSE_SINK (domyślnie "CaptureSink"),
 // RECORD_OUT_DIR (domyślnie "tests/recordings").
 //
 // Uruchomienie lokalne (Linux z realnym X11 + audio, np. do próby przed CI):
 //   DISPLAY=:0 PULSE_SINK=<istniejący sink> \
-//     E2E_BYPASS_SECRET=... TEST_USERNAME=... TEST_PASSWORD=... \
+//     E2E_BYPASS_SECRET=... TEST_PASSWORD=... \
 //     node tests/e2e/record-playthrough.js
 // Ten skrypt zakłada gotowe środowisko (Xvfb/PulseAudio) — nie uruchamia
 // ich sam.
@@ -1132,7 +1134,7 @@ async function dumpFailureDiagnostics(controlPage, scenarioFile) {
 }
 
 async function main() {
-  for (const env of ["E2E_BYPASS_SECRET", "TEST_USERNAME", "TEST_PASSWORD"]) {
+  for (const env of ["E2E_BYPASS_SECRET", "TEST_PASSWORD"]) {
     if (!process.env[env]) throw new Error(`Brak ${env} w zmiennych środowiskowych`);
   }
 
