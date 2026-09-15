@@ -25,19 +25,31 @@ on:
 # odsłania. Zero sekretu z listą loginów, zero osobnego konta "głównego".
 #
 # JEDEN SILNIK TESTÓW, JEDNA KOMENDA WSZĘDZIE: ten sam playwright.config.js,
-# ta sama `playwright test ... --workers="$TEST_ACCOUNT_COUNT"` w KAŻDEJ
-# grupie e2e-grouped i w e2e-custom-filter -- bez żadnego "jeśli to ten
-# plik, to inaczej". Pula kont test1@…...test10@… (TEST_ACCOUNT_COUNT
-# kolejnych, licząc od test1 — patrz getTestAccountPool w
-# e2e/helpers/login.js) jest dostępna w CAŁOŚCI każdemu filtrowi/grupie,
-# bez sztywnego podziału między plikami — który dokładnie numer trafia do
-# którego testu decyduje kod TEGO pliku (np. control2.spec.js woła
-# loginAsPooledTestUser z testInfo.parallelIndex; base-explorer.spec.js/
-# bases.spec.js jawnie wybierają testAccountUsername(1)/(2) na dwa
-# jednocześnie zalogowane konta w tym samym teście). Podnieś
-# TEST_ACCOUNT_COUNT (jedna, jawna liczba w env: poniżej, NIE sekret),
-# jeśli założysz więcej kont na produkcji -- więcej równoległości = zmiana
-# jednej cyfry, bez zmian w kodzie czy w tym workflow.
+# ta sama `playwright test ... --workers="$TEST_WORKERS"` w KAŻDEJ grupie
+# e2e-grouped i w e2e-custom-filter -- bez żadnego "jeśli to ten plik, to
+# inaczej". Pula kont test1@…...test10@… (TEST_ACCOUNT_COUNT kolejnych,
+# licząc od test1 — patrz getTestAccountPool w e2e/helpers/login.js) jest
+# dostępna w CAŁOŚCI każdemu filtrowi/grupie, bez sztywnego podziału
+# między plikami — który dokładnie numer trafia do którego testu decyduje
+# kod TEGO pliku (np. control2.spec.js woła loginAsPooledTestUser z
+# testInfo.parallelIndex; base-explorer.spec.js/bases.spec.js jawnie
+# wybierają testAccountUsername(1)/(2) na dwa jednocześnie zalogowane
+# konta w tym samym teście).
+#
+# WAŻNE, znalezione na własnej skórze (run #122, 12/16 testów control2
+# failed, 57 minut): TEST_ACCOUNT_COUNT (rozmiar puli kont) i TEST_WORKERS
+# (realna liczba RÓWNOLEGŁYCH workerów Playwrighta) to CELOWO DWIE RÓŻNE
+# liczby, nie jedna. Runner GitHub Actions (ubuntu-latest) ma ograniczoną
+# liczbę rdzeni, a każdy POJEDYNCZY test control2.spec.js sam otwiera do 4
+# kontekstów przeglądarki naraz (Control+Display+Host+Buzzer) -- przy
+# --workers=10 to do 40 jednoczesnych instancji Chromium na jednej
+# maszynie. Runner fizycznie nie nadążał renderować strony w czasie, na
+# jaki czekał Playwright -- stąd masowe "element is not stable"/"element
+# is not enabled" i timeouty, NIE błąd logiki testów. TEST_ACCOUNT_COUNT
+# może bezpiecznie zostać wysoki (więcej kont w pogotowiu na przyszłość,
+# np. mocniejszy runner) -- to TEST_WORKERS reguluje faktyczne obciążenie
+# i musi zostać niski. Podnoś TEST_WORKERS ostrożnie, po jednym, sprawdzając
+# realny wynik, nie zgadując.
 #
 # Reszta testów (game-deletion, editor, cross-resource-locks, ...) używa
 # domyślnego loginAsTestUser bez jawnego username -> zawsze test1, więc
@@ -46,6 +58,7 @@ on:
 # jeden, wspólny --workers).
 env:
   TEST_ACCOUNT_COUNT: "10"
+  TEST_WORKERS: "2"
 
 jobs:
   e2e-grouped:
@@ -119,7 +132,7 @@ jobs:
         env:
           E2E_BYPASS_SECRET: ${{ secrets.E2E_BYPASS_SECRET }}
           TEST_PASSWORD: ${{ secrets.TEST_PASSWORD }}
-        run: npx playwright test ${{ matrix.group.files }} --workers="$TEST_ACCOUNT_COUNT"
+        run: npx playwright test ${{ matrix.group.files }} --workers="$TEST_WORKERS"
         working-directory: tests
 
       - name: Upload failure screenshots
@@ -169,7 +182,7 @@ jobs:
         env:
           E2E_BYPASS_SECRET: ${{ secrets.E2E_BYPASS_SECRET }}
           TEST_PASSWORD: ${{ secrets.TEST_PASSWORD }}
-        run: npx playwright test ${{ github.event.inputs.spec_filter }} --workers="$TEST_ACCOUNT_COUNT"
+        run: npx playwright test ${{ github.event.inputs.spec_filter }} --workers="$TEST_WORKERS"
         working-directory: tests
 
       - name: Upload failure screenshots

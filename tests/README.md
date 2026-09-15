@@ -133,7 +133,7 @@ Puste pole = wszystkie testy, w równoległych grupach (job `e2e-grouped`,
 patrz sekcja "Pula kont testX" niżej). Filtr trafia w osobny job
 (`e2e-custom-filter`) — **jeden silnik testów, jedna komenda wszędzie**:
 ten sam `playwright.config.js`, ta sama
-`playwright test <pliki/filtr> --workers="$TEST_ACCOUNT_COUNT"` w KAŻDEJ
+`playwright test <pliki/filtr> --workers="$TEST_WORKERS"` w KAŻDEJ
 grupie `e2e-grouped` i w `e2e-custom-filter` — bez żadnego "jeśli to ten
 plik, to inaczej". Lokalnie to samo bez żadnego dodatkowego ustawienia:
 `npx playwright test e2e/nazwa-testu.spec.js`.
@@ -166,11 +166,15 @@ Domyślne konto (gdy test nie podaje jawnego `username`) to zawsze
 cross-resource-locks, ...) loguje się właśnie na nie i idzie szeregowo w
 swojej grupie.
 
-**Rozmiar puli sterowany jedną, jawną (NIE sekretną) liczbą** —
-`TEST_ACCOUNT_COUNT` w `env:` na górze `.github/workflows/e2e-tests.yml`
-— więcej równoległości = zmiana jednej cyfry, zero zmian w kodzie czy w
-workflow. Załóż na produkcji tyle kont `test1@…`, `test2@…`, ... ile
-wynosi ta liczba.
+**Dwie osobne, jawne (NIE sekretne) liczby w `env:` na górze
+`.github/workflows/e2e-tests.yml`** — celowo NIE jedna:
+- `TEST_ACCOUNT_COUNT` — rozmiar puli kont (`test1@…`…`testN@…`). Załóż na
+  produkcji tyle kont, ile wynosi ta liczba — bezpiecznie może być wysoka
+  (np. 10), bo samo istnienie konta niczego nie kosztuje.
+- `TEST_WORKERS` — ile z tych kont **faktycznie działa naraz** (przekazywane
+  jako `--workers`). **Musi zostać niskie** (patrz "Pułapki" niżej) —
+  podnoś ostrożnie, po jednym, sprawdzając realny wynik przebiegu, nie z
+  góry na maksa.
 
 ## Pułapki, na które łatwo wpaść (znalezione przy pierwszym realnym przebiegu)
 
@@ -203,11 +207,25 @@ strony. Zapisane tu, żeby nie trzeba było ich znowu wyłapywać po kolei:
   powodowały niedeterministyczne błędy (raz timeout logowania, raz
   "zawieszony" modal), bo sesje się gryzły. `playwright.config.js` ma
   `workers: 1` jako lokalną wartość domyślną; w CI zawsze nadpisuje to
-  jawne `--workers="$TEST_ACCOUNT_COUNT"`. Plik, który chce realnej
+  jawne `--workers="$TEST_WORKERS"`. Plik, który chce realnej
   równoległości, musi więc sam przypisywać KAŻDEMU workerowi inne konto z
   puli (patrz `loginAsPooledTestUser`, sekcja "Pula kont testX" wyżej) —
   inaczej wszystkie workery i tak trafią na to samo domyślne `test1@…` i
   wróci ten sam wyścig.
+- **Za wysoki `TEST_WORKERS` przeciąża runnera, nie przyspiesza.** Run #122
+  (`TEST_WORKERS`/wtedy jeszcze jedna wspólna zmienna = 10, na
+  `control2.spec.js`): **12 z 16 testów failed, 57 minut**. Przyczyna: każdy
+  POJEDYNCZY test control2 sam otwiera do 4 kontekstów przeglądarki
+  (Control+Display+Host+Buzzer) — przy 10 workerach to do 40 jednoczesnych
+  Chromium na jednym runnerze GitHub Actions. Runner fizycznie nie nadążał
+  renderować strony w czasie, na jaki czekał Playwright — stąd masowe
+  `element is not stable`/`element is not enabled` (setki powtórzeń, nie
+  pojedyncze) i timeouty, **nie błąd logiki testów**. Dlatego
+  `TEST_ACCOUNT_COUNT` (rozmiar puli) i `TEST_WORKERS` (realna
+  równoległość) to dwie osobne zmienne — pierwsza może być wysoka, druga
+  musi być niska (patrz sekcja "Pula kont testX" wyżej). Podnoś
+  `TEST_WORKERS` po jednym i sprawdzaj wynik, zamiast zakładać, że więcej
+  kont = można dać `--workers` na maksa.
 - **Selektor karty gry musi być zawężony do `#grid`.** Sam kontener karty
   ma klasę `.card`, ale ma ją też otaczający panel `.card.builder-card`
   w `builder.html` — goły `.card` łapie oba i Playwright rzuca strict
