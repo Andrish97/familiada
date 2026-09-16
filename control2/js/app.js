@@ -886,6 +886,17 @@ async function main() {
 
   store.subscribe(renderCurrent);
   renderCurrent();
+
+  // TYMCZASOWA diagnostyka (do usunięcia po znalezieniu przyczyny testów
+  // control2 utykających na "Rozpocznij grę" mimo game_state_write
+  // zwracającego 200) -- loguje KAŻDĄ zmianę store.state (własny commit
+  // ALBO cudzy hydrate() z dzwonka) z realnym stemplem czasu, żeby
+  // rozstrzygnąć czy store.state.step faktycznie dochodzi do
+  // "r_roundStart" lokalnie (bug w renderze) czy nigdy tam nie dociera
+  // (bug wcześniej w łańcuchu -- advance()/commit()/handle()).
+  store.subscribe((s) => {
+    console.log(`[e2e-diag-state] t=${Date.now()} step=${s.step} phase=${s.phase} rev=${s.rev} topCard=${s.topCard}`);
+  });
 }
 
 main().catch((e) => {

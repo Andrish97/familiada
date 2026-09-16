@@ -21,6 +21,14 @@ function instrumentPage(page) {
     if (msg.type() === "error" || msg.type() === "warning") {
       console.log(`[e2e-diag] console:${msg.type()}`, msg.text());
     }
+    // "[e2e-diag-state]" to TYMCZASOWA diagnostyka w control2/js/app.js
+    // (console.log, nie warning/error -- inaczej niewidoczne wyżej) --
+    // loguje KAŻDĄ zmianę store.state.step z realnym timestampem, żeby
+    // rozstrzygnąć, czy stan lokalnie dochodzi do "r_roundStart" (bug w
+    // renderze) czy nigdy tam nie dociera (bug wcześniej w łańcuchu).
+    else if (msg.text().startsWith("[e2e-diag-state]")) {
+      console.log(msg.text());
+    }
   });
   page.on("response", (res) => {
     if (res.status() >= 400) {
