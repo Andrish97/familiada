@@ -17,8 +17,25 @@ export class StaleWriteError extends Error {
   }
 }
 
+// Migracja 264 — odrzucenie zapisu, dopóki game_state.locked_until > now()
+// (dźwięk/animacja poprzedniego przejścia jeszcze trwa, egzekwowane w
+// bazie, nie tylko w JS jednej karty przeglądarki).
+export class LockedError extends Error {
+  constructor() {
+    super("locked");
+    this.name = "LockedError";
+  }
+}
+
+function throwForRpcError(error) {
+  const msg = String(error?.message || "");
+  if (msg.includes("stale_write")) throw new StaleWriteError();
+  if (msg.includes("locked")) throw new LockedError();
+  throw error;
+}
+
 export function createPersist(gameId) {
-  async function write({ step, topCard, phase, controlTeam, detail, soundCueKey, expectedRev }) {
+  async function write({ step, topCard, phase, controlTeam, detail, soundCueKey, expectedRev, lockMs }) {
     const { data, error } = await sb().rpc("game_state_write", {
       p_game_id: gameId,
       p_step: step,
@@ -28,15 +45,24 @@ export function createPersist(gameId) {
       p_detail: detail ?? null,
       p_sound_cue_key: soundCueKey ?? null,
       p_expected_rev: expectedRev ?? null,
+      p_lock_ms: lockMs ?? null,
     });
-    if (error) {
-      if (String(error.message || "").includes("stale_write")) {
-        throw new StaleWriteError();
-      }
-      throw error;
-    }
+    if (error) throwForRpcError(error);
     return data;
   }
 
-  return { write };
+  // Wołane PO potwierdzeniu write() powyżej -- realny czas dźwięku liczony
+  // z POTWIERDZONEGO sound_cue_key (control2/js/app.js's dispatchGated/
+  // advance), więc to zawsze osobne, drugie wywołanie, nie część write().
+  async function setLock({ expectedRev, lockMs }) {
+    const { data, error } = await sb().rpc("game_state_set_lock", {
+      p_game_id: gameId,
+      p_expected_rev: expectedRev ?? null,
+      p_lock_ms: lockMs,
+    });
+    if (error) throwForRpcError(error);
+    return data;
+  }
+
+  return { write, setLock };
 }

@@ -191,5 +191,32 @@ export function createStore(gameId) {
     }
   }
 
-  return { state, subscribe, emit, hydrate, commit, applyRow };
+  // Migracja 264 — ustawia game_state.locked_until w bazie, PO
+  // potwierdzeniu głównego zapisu (wołający liczy `ms` z POTWIERDZONEGO
+  // sound_cue_key, dokładnie jak dziś dla klienckiego lockedUntil w
+  // control2/js/app.js). Przez tę samą kolejkę co commit() — żeby nigdy
+  // nie wyścigał się z kolejnym, prawdziwym zapisem treści.
+  function setLock(ms) {
+    const run = () => setLockNow(ms);
+    const result = _writeQueue.then(run, run);
+    _writeQueue = result.catch(() => {});
+    return result;
+  }
+
+  async function setLockNow(ms) {
+    try {
+      const row = await persist.setLock({ expectedRev: state.rev, lockMs: ms });
+      applyRow(row);
+      emit();
+    } catch (e) {
+      // Najlepszy wysiłek — treść stanu jest już poprawnie zapisana przez
+      // wcześniejszy commit(), tylko serwerowa blokada się nie ustawiła
+      // (np. rev już nieaktualny, bo coś innego zdążyło napisać pierwsze).
+      // Klencki lockedUntil (control2/js/app.js) działa niezależnie, więc
+      // to nie jest błąd, który operator musi widzieć jako alert.
+      console.warn("[store] setLock nie powiodło się (nieszkodliwe):", e);
+    }
+  }
+
+  return { state, subscribe, emit, hydrate, commit, setLock, applyRow };
 }
