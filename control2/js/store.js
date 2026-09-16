@@ -205,7 +205,12 @@ export function createStore(gameId) {
 
   async function setLockNow(ms) {
     try {
-      const row = await persist.setLock({ expectedRev: state.rev, lockMs: ms });
+      // p_lock_ms jest w bazie typu integer -- realny czas dźwięku (z
+      // metadanych pliku mp3, control2/js/actionGate.js's timing.dur())
+      // przychodzi jako float z ułamkiem ms (np. 19751.995), co Postgres
+      // odrzuca (22P02 invalid input syntax for type integer). Zaokrąglenie
+      // o ~1ms nie ma znaczenia dla samej blokady.
+      const row = await persist.setLock({ expectedRev: state.rev, lockMs: Math.round(ms) });
       applyRow(row);
       emit();
     } catch (e) {
