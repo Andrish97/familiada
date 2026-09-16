@@ -472,7 +472,7 @@ export function createUI({ root, emit }) {
     // powrót do Urządzeń, nic nie resetuje. c2-btn-back popycha go do
     // lewej krawędzi stopki (patrz control2.html: .stepFootButtons ma
     // justify-content:flex-end, ten jeden dostaje margin-right:auto).
-    const back = h("button", { class: "btn c2-btn-back", type: "button", onclick: () => emit("setup.back") }, [document.createTextNode(t("common.back"))]);
+    const back = h("button", { class: "btn c2-btn-back", type: "button", disabled: boardBusy() ? "" : undefined, onclick: boardBusy() ? undefined : () => emit("setup.back") }, [document.createTextNode(t("common.back"))]);
 
     // Płasko, tak jak renderDevicesStep — jedno .cardBody na root, BEZ
     // zagnieżdżonego wewnątrz .card (to była druga, zbędna warstwa: root
@@ -1077,10 +1077,10 @@ export function createUI({ root, emit }) {
         h("div", { class: "c2-tile-sub", text: t("control.finalTimerStopShort") }),
       ]);
       return h("button", {
-        class: `c2-tile c2-timer-row c2-tile-timer ${filled ? "startable" : ""}`.trim(),
+        class: `c2-tile c2-timer-row c2-tile-timer ${filled && !revealLocked() ? "startable" : ""}`.trim(),
         type: "button",
-        disabled: filled ? undefined : "",
-        onclick: filled ? () => emit("final.toggleTimer", { round }) : undefined,
+        disabled: filled && !revealLocked() ? undefined : "",
+        onclick: filled && !revealLocked() ? () => emit("final.toggleTimer", { round }) : undefined,
       }, [content]);
     }
     if (used) {
@@ -1089,7 +1089,8 @@ export function createUI({ root, emit }) {
     return h("button", {
       class: "c2-tile c2-timer-row c2-tile-timer startable",
       type: "button",
-      onclick: () => emit("final.toggleTimer", { round }),
+      disabled: revealLocked() ? "" : undefined,
+      onclick: revealLocked() ? undefined : () => emit("final.toggleTimer", { round }),
     }, [document.createTextNode(round === 1 ? t("control.finalUi.timerStart15") : t("control.finalUi.timerStart20"))]);
   }
 

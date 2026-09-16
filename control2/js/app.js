@@ -669,6 +669,15 @@ async function main() {
     if (!main || !e.shiftKey || e.altKey || e.repeat) return;
     const step = store.state.step;
     if (step !== "f_p1_entry" && step !== "f_p2_entry") return;
+    // Skrót woła engine.dispatch() BEZPOŚREDNIO, z pominięciem
+    // dispatchGated() -- jedyne miejsce w całej appce, które mogło
+    // wystrzelić zapis zupełnie bez sprawdzenia busy() (ani przycisk w
+    // ui.js, którego kliknięcie i tak przechodzi przez emit(), nie miał tu
+    // wcześniej żadnej ochrony -- patrz finalTimerRow). Bez tego dwa razy
+    // szybko wciśnięty skrót (albo skrót w trakcie jeszcze trwającej
+    // blokady po poprzednim przejściu) mógł tak samo pomieszać intencje,
+    // jak opisany wcześniej wyścig na przycisku r_intro.
+    if (busy()) return;
     e.preventDefault();
     toggleFinalTimer(step === "f_p1_entry" ? 1 : 2).catch(() => {});
   }, { capture: true });
