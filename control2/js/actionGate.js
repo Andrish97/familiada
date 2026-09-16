@@ -70,5 +70,9 @@ export function createActionGate({ getSfxDuration }) {
     return timing.dur(nextRow.sound_cue_key);
   }
 
-  return { computeGateMs };
+  // `timing` wystawione też wprost -- control2/js/app.js's advance() (proste
+  // przejścia UI-nawigacyjne, z pominięciem dispatchGated/computeGateMs)
+  // liczy nim własną blokadę z soundCueKey, którą samo dostaje jako
+  // argument, zamiast tworzyć drugą, osobną instancję createTransitionTiming.
+  return { computeGateMs, timing };
 }

@@ -300,6 +300,11 @@ async function main() {
     if (ms > 0) {
       lockedUntil = Date.now() + ms;
       setTimeout(renderCurrent, ms + 20);
+      // Migracja 264 -- ta sama blokada, egzekwowana też w bazie (nie tylko
+      // w tej karcie przeglądarki). Best-effort: nieudane ustawienie nie
+      // cofa już potwierdzonego zapisu treści powyżej, patrz store.js's
+      // setLockNow().
+      store.setLock(ms);
     }
     renderCurrent();
     return nextRow;
@@ -597,11 +602,32 @@ async function main() {
     }
   }
 
+  // W odróżnieniu od dispatchGated() ten tor (proste przejścia UI-
+  // nawigacyjne, np. "Rozpocznij grę" -> r_roundStart/"show_intro") nie
+  // liczył DOTĄD żadnej blokady wcale -- ani klienckiej, ani bazodanowej.
+  // Migracja 264: domykamy oba na raz, tym samym `timing` co actionGate.js
+  // (ta sama liczba, co realnie steruje animacją na Displayu), zamiast
+  // zgadywać nowy zestaw stałych.
   async function advance(nextStep, extra = {}, soundCueKey) {
     assertTransition(store.state.step, nextStep);
     store.state.step = nextStep;
     Object.assign(store.state, extra);
-    await store.commit({ soundCueKey });
+    committing = true;
+    renderCurrent();
+    try {
+      await store.commit({ soundCueKey });
+    } finally {
+      committing = false;
+    }
+    if (soundCueKey) {
+      const ms = await actionGate.timing.dur(soundCueKey);
+      if (ms > 0) {
+        lockedUntil = Date.now() + ms;
+        setTimeout(renderCurrent, ms + 20);
+        store.setLock(ms);
+      }
+    }
+    renderCurrent();
   }
 
   // Wpisywanie finału (F1/F8): "Rozpocznij odliczanie"/"Zatrzymaj" to jeden
