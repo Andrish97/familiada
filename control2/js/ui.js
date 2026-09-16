@@ -464,7 +464,7 @@ export function createUI({ root, emit }) {
     const finalIncomplete = hasFinal && s.finalQuestionsMode === "pick" && (state.final.picked?.length !== 5 || !state.final.confirmed);
     const start = h("button", {
       class: "btn gold", type: "button",
-      disabled: finalIncomplete ? "" : undefined,
+      disabled: finalIncomplete || boardBusy() ? "" : undefined,
       onclick: () => emit("setup.start"),
     }, [document.createTextNode(t("control.setupDoneBtn"))]);
     const changeSettings = h("button", { class: "btn sm", type: "button", onclick: () => emit("setup.openSettings") }, [document.createTextNode(t("control.summarySettingsLink"))]);
@@ -816,6 +816,7 @@ export function createUI({ root, emit }) {
     if (passAvailable) {
       tiles.push(armableTile("pass", t("control.roundsPassControl"), {
         row: 5, col: "1 / 7", cls: "c2-tile-primary",
+        disabled: revealLocked(),
         onclick: () => emit("game.dispatch", { type: "PASS" }),
       }));
     }
@@ -861,6 +862,7 @@ export function createUI({ root, emit }) {
       tiles.push(tile(content, {
         row: 6, col: HALF(1),
         cls: running ? "c2-tile-timer" : "c2-tile-timer startable",
+        disabled: revealLocked(),
         onclick: () => emit("game.dispatch", { type: running ? "CANCEL_TIMER3" : "START_TIMER3" }),
       }));
     }
@@ -1326,7 +1328,7 @@ export function createUI({ root, emit }) {
       key: `map-match:${round}:${idx}:${a.id}`,
       text: `${a.text} (${a.fixed_points})`,
       active: !p2IsRepeat && effective.kind === "MATCH" && effective.matchId === a.id,
-      disabled: locked || !hasTyped,
+      disabled: locked || !hasTyped || revealLocked(),
       onclick: () => emit("game.dispatch", { type: "RESOLVE_MAPPING", round, idx, mode: "MANUAL", kind: "MATCH", matchId: a.id, outText: a.text, pts: a.fixed_points }),
     }));
     const missOption = {
@@ -1342,7 +1344,7 @@ export function createUI({ root, emit }) {
         h("div", { class: "c2-tile-sub", "aria-hidden": "true", text: t("control.finalUi.mapMissSubLabel") }),
       ]) : t("control.finalUi.mapBtnMiss"),
       active: !p2IsRepeat && effective.kind === "MISS",
-      disabled: locked || !hasTyped,
+      disabled: locked || !hasTyped || revealLocked(),
       danger: true,
       onclick: () => emit("game.dispatch", { type: "RESOLVE_MAPPING", round, idx, mode: "MANUAL", kind: "MISS", matchId: null, outText: inputText, pts: 0 }),
     };
@@ -1350,7 +1352,7 @@ export function createUI({ root, emit }) {
       key: `map-skip:${round}:${idx}`,
       text: t("control.finalUi.mapBtnSkip"),
       active: !p2IsRepeat && effective.kind === "SKIP",
-      disabled: locked || hasTyped,
+      disabled: locked || hasTyped || revealLocked(),
       onclick: () => emit("game.dispatch", { type: "RESOLVE_MAPPING", round, idx, mode: "MANUAL", kind: "SKIP", matchId: null, outText: "", pts: 0 }),
     };
     const options = [...matchOptions, missOption, skipOption];
@@ -1365,10 +1367,10 @@ export function createUI({ root, emit }) {
         key: `map-repeat:${round}:${idx}`,
         text: t("control.finalUi.p2RepeatOff"),
         active: p2IsRepeat,
-        disabled: locked,
+        disabled: locked || revealLocked(),
         danger: true,
         onclick: () => {
-          if (locked || f.runtime.p2[idx]?.repeat === true) return;
+          if (locked || revealLocked() || f.runtime.p2[idx]?.repeat === true) return;
           emit("game.dispatch", { type: "SET_REPEAT", round: 2, idx, repeat: true });
         },
       });
