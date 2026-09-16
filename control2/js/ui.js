@@ -703,7 +703,10 @@ export function createUI({ root, emit }) {
           h("div", { class: "c2-intro-title", text: t("control.roundsIntroBtn") }),
           h("div", { class: "c2-intro-hint", text: t("control.roundsIntroHint") }),
         ])],
-        nav: [h("button", { class: "c2-btn primary c2-intro-btn", onclick: () => emit("rounds.introNext") }, [document.createTextNode(t("control.roundsIntroBtn"))])],
+        nav: [navButton(t("control.roundsIntroBtn"), {
+          disabled: boardBusy(),
+          onclick: () => emit("rounds.introNext"),
+        })],
       });
       return;
     }
@@ -1169,7 +1172,11 @@ export function createUI({ root, emit }) {
       ]),
     ];
 
-    const nav = [h("button", { class: "c2-btn primary", onclick: () => emit("game.dispatch", { type: "START_MAPPING", round }) }, [document.createTextNode(t("common.next"))])];
+    const nav = [navButton(t("common.next"), {
+      cls: "c2-btn primary",
+      disabled: boardBusy(),
+      onclick: () => emit("game.dispatch", { type: "START_MAPPING", round }),
+    })];
     gameplayShell({ stepLabel: t("control.finalEntryStepLabel", { round }), body, nav });
   }
 
@@ -1458,7 +1465,10 @@ export function createUI({ root, emit }) {
         // dźwięku, bez zapisu do stanu gry (patrz app.js's "final.repeatTest").
         h("button", { class: "c2-btn-repeat", type: "button", onclick: () => emit("final.repeatTest") }, [document.createTextNode(t("control.finalRepeatSound"))]),
       ])],
-      nav: [h("button", { class: "c2-btn primary c2-intro-btn", onclick: () => emit("game.dispatch", { type: "START_P2_ROUND" }) }, [document.createTextNode(t("control.finalP2StartBtn"))])],
+      nav: [navButton(t("control.finalP2StartBtn"), {
+        disabled: boardBusy(),
+        onclick: () => emit("game.dispatch", { type: "START_P2_ROUND" }),
+      })],
     });
   }
 
