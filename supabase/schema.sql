@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict aHhuoAqyqRN6UoeCcKZp08TM1Nu0IoCZ0NVWCh1s6ncsefO1LgJ7vIkxQehZXz5
+\restrict eG7Wn5eWLfLvn8f92FDDA6Wne0VFB2hkpbLcx2SO7LLlI6LMJgGT2ZrEqZMRiRz
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -11211,6 +11211,18 @@ CREATE TABLE "public"."guest_migration_staging" (
 
 
 --
+-- Name: konta_do_stworzenia; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE "public"."konta_do_stworzenia" (
+    "new_user_id" "uuid",
+    "user_username" "text",
+    "user_email" "text",
+    "encrypted_pw" "text"
+);
+
+
+--
 -- Name: mail_function_logs; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -14942,5 +14954,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict aHhuoAqyqRN6UoeCcKZp08TM1Nu0IoCZ0NVWCh1s6ncsefO1LgJ7vIkxQehZXz5
+\unrestrict eG7Wn5eWLfLvn8f92FDDA6Wne0VFB2hkpbLcx2SO7LLlI6LMJgGT2ZrEqZMRiRz
 
