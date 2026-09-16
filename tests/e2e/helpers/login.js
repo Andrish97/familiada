@@ -29,12 +29,25 @@ function instrumentPage(page) {
     // Wołania RPC (np. game_state_write) logowane ZAWSZE, nie tylko przy
     // błędzie -- żeby odróżnić "RPC w ogóle nie wystrzeliło" od "wystrzeliło,
     // dostało 200, ale zajęło podejrzanie długo" od zwykłego "poszło szybko
-    // i OK". Status/czas trwania nie ujawnia tokenu bypass (ten jest w
-    // nagłówku żądania, nie w URL ani tu logowanym statusie).
+    // i OK". Sam status/URL nie ujawnia tokenu bypass (ten jest w nagłówku
+    // żądania, nigdzie tu nielogowanym).
     if (res.url().includes("/rpc/")) {
-      const timing = res.request().timing();
-      const ms = timing ? Math.round(timing.responseEnd - timing.requestStart) : null;
-      console.log(`[e2e-diag] rpc ${res.status()} ${ms != null ? ms + "ms" : "?ms"}`, res.url());
+      console.log(`[e2e-diag] rpc ${res.status()}`, res.url());
+    }
+    // game_state_write: 200 NIE dowodzi, że zwrócony wiersz faktycznie ma
+    // oczekiwany step -- loguj TREŚĆ odpowiedzi (tylko pola stanu, nie całe
+    // detail), żeby odróżnić "serwer zapisał coś innego niż wysłaliśmy" od
+    // "serwer zapisał poprawnie, ale UI się nie przerysowało". Async handler
+    // na "response" jest przez Playwrighta obsługiwany poprawnie (nie trzeba
+    // czekać na niego explicite).
+    if (res.url().includes("/rpc/game_state_write") && res.status() < 400) {
+      res.json().then((body) => {
+        const row = Array.isArray(body) ? body[0] : body;
+        console.log("[e2e-diag] game_state_write ->", JSON.stringify({
+          rev: row?.rev, step: row?.step, phase: row?.phase, top_card: row?.top_card,
+          sound_cue_key: row?.sound_cue_key, sound_cue_seq: row?.sound_cue_seq,
+        }));
+      }).catch((e) => console.log("[e2e-diag] game_state_write body read failed:", e.message));
     }
   });
   // Zerwane na poziomie sieci (DNS, reset połączenia, timeout w samej
