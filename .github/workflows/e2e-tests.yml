@@ -56,9 +56,15 @@ on:
 # idzie szeregowo w swojej grupie (workers:1 z playwright.config.js jest
 # używane tylko lokalnie/poza CI — w CI workers zawsze nadpisuje ten
 # jeden, wspólny --workers).
+# Podniesione 2 -> 4 na wyraźną prośbę (2026-09-17), żeby skrócić czas
+# przebiegu -- 4 workery x do 4 kontekstów/test = do 16 jednoczesnych
+# Chromium, wciąż wyraźnie poniżej 40, które przeciążyło runner w run #122.
+# Jeśli znowu pojawi się masowe "element is not stable"/"not enabled" (nie
+# logika testów, tylko runner nie nadążający renderować), to sygnał żeby
+# cofnąć do 2-3, nie iść dalej w górę.
 env:
   TEST_ACCOUNT_COUNT: "10"
-  TEST_WORKERS: "2"
+  TEST_WORKERS: "4"
 
 jobs:
   e2e-grouped:
