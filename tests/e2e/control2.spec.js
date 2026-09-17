@@ -698,6 +698,13 @@ test("control2: physicalBuzzer + noHostTablet — urządzenia pominięte, ręczn
 
     await page.getByRole("button", { name: "Dalej" }).click();
     await expect(page.locator(".stepTitle")).toHaveText("Podsumowanie", { timeout: 10000 });
+    // Wyszarzenie (.device-row-2 pointer-events:none) dotyczy WYŁĄCZNIE
+    // samego kroku Urządzeń -- po "Dalej" cała karta Urządzeń przestaje się
+    // renderować (renderDevicesStep już nie jest wywoływane), więc wiersze
+    // host/buzzer znikają naprawdę (nie ma ich już w DOM), nie tylko dalej
+    // wyszarzone.
+    await expect(page.locator('.device-row[data-device="host"]')).toHaveCount(0);
+    await expect(page.locator('.device-row[data-device="buzzer"]')).toHaveCount(0);
     // Utrzymuje się na Podsumowaniu i dalej w rozgrywce, nie tylko na
     // samym kroku Urządzeń.
     await expect(page.locator("#dotHostRow")).toHaveClass(/\bhidden\b/);
