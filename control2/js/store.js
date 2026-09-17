@@ -104,28 +104,45 @@ export function createStore(gameId) {
   // game_state — z dowolnego miejsca w appce, nie tylko z silnika reguł gry —
   // w pełni się kończy, zanim zacznie się następny, więc dwa commit() nigdy
   // nie widzą tego samego `rev` naraz.
+  //
+  // Payload budowany TU, SYNCHRONICZNIE, od razu przy wywołaniu commit() —
+  // NIE leniwie dopiero w commitNow() (które czeka w kolejce, czasem setki
+  // ms). Bez tego dwa commit() wystrzelone blisko siebie z RÓŻNYCH źródeł
+  // (np. dwa checkboxy urządzeń, dwa suwaki głośności, "Losuj ponownie" dla
+  // rund i finału) mogły złapać się nawzajem w locie: payload budowany
+  // leniwie, dopiero gdy przyszła kolej w kolejce, czytał state.settings/
+  // rounds/final PO TYM, jak applyRow() z WCZEŚNIEJSZEGO, już potwierdzonego
+  // zapisu zdążyło nadpisać state TYMI SAMYMI polami z serwera (które go
+  // jeszcze nie znały) — co bezpowrotnie kasowało nowszą, jeszcze
+  // niewysłaną lokalną zmianę, zanim ten drugi zapis w ogóle zdążył ją
+  // wysłać. Zgłoszone na żywo (control2.spec.js's test "physicalBuzzer +
+  // noHostTablet"): oba checkboxy zaznaczone szybko po sobie, druga flaga
+  // nigdy nie docierała do bazy — bez żadnego błędu, wyglądało jak "nic się
+  // nie odświeża". `detail` musi być PRAWDZIWĄ, głęboką kopią
+  // (structuredClone) — PERSISTED_KEYS to zagnieżdżone obiekty (settings/
+  // rounds/final/...), płytkie przypisanie (buildDetail sam w sobie) dzieli
+  // te same referencje z `state`, więc późniejsza mutacja i tak przeciekałaby
+  // do już "zbudowanego" payloadu, unieważniając cały ten fix.
   let _writeQueue = Promise.resolve();
-  function commit(opts) {
-    const run = () => commitNow(opts);
-    const result = _writeQueue.then(run, run);
-    _writeQueue = result.catch(() => {});
-    return result;
-  }
-
-  // ---- zapis: pełny wiersz, synchronicznie potwierdzony (plan, sekcja 4) ----
-  async function commitNow({ soundCueKey } = {}) {
-    // Zamrożone TERAZ, przed jakimkolwiek hydrate() — to jest zamierzona
-    // zmiana operatora, niezależna od tego, co hydrate() potem nadpisze w
-    // state (patrz retry niżej).
+  function commit({ soundCueKey } = {}) {
     const payload = {
       step: state.step,
       topCard: state.topCard,
       phase: state.phase,
       controlTeam: state.controlTeam,
       soundCueKey: soundCueKey ?? null,
-      detail: buildDetail(state),
+      detail: structuredClone(buildDetail(state)),
     };
+    const run = () => commitNow(payload);
+    const result = _writeQueue.then(run, run);
+    _writeQueue = result.catch(() => {});
+    return result;
+  }
 
+  // ---- zapis: pełny wiersz, synchronicznie potwierdzony (plan, sekcja 4) ----
+  // payload: zbudowany i zamrożony PRZEZ commit() wyżej, synchronicznie, w
+  // momencie wywołania -- nie tutaj (patrz komentarz przy commit()).
+  async function commitNow(payload) {
     // Dźwięk (soundReactor.js) i "dzwonek" budzący Wyświetlacz siedziały
     // dotąd za TYM SAMYM emit() — dopiero po pełnym network round-tripie
     // niżej. Dzwonek zostaje tam (Wyświetlacz i tak musi doczytać
