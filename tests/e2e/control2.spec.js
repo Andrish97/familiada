@@ -279,11 +279,42 @@ const TWO_QUESTIONS = [
   ] },
 ];
 
+// DIAGNOSTYKA TYMCZASOWA — do teraz TYLKO strona Control (authenticated)
+// miała jakąkolwiek widoczność RPC (tests/e2e/helpers/login.js's
+// instrumentPage) -- Buzzer/Host/Display (anon, otwierane tu) były całkowicie
+// nieme w logu CI. Znalezione na żywo: test #2 wisi 10s na "Zatwierdź: Alfa"
+// po kliknięciu "Przycisk A" na Buzzerze, zero game_state_buzzer_press w
+// logu -- ale bez tego nie da się rozstrzygnąć, czy to dlatego, że RPC
+// faktycznie się nie wystrzeliło (press()'s wewnętrzny guard
+// deriveButtonState()!==ON go zablokował), czy wystrzeliło i dostało błąd,
+// czy wystrzeliło OK ale dzwonek/hydrate po stronie Control zgubił
+// potwierdzenie. Etykieta z `label` odróżnia urządzenia w jednym logu.
+function instrumentAnon(p, label) {
+  p.on("console", (msg) => {
+    if (msg.type() === "error" || msg.type() === "warning") {
+      console.log(`[e2e-diag:${label}] console:${msg.type()}`, msg.text());
+    }
+  });
+  p.on("response", (res) => {
+    if (res.url().includes("/rpc/")) {
+      console.log(`[e2e-diag:${label}] rpc ${res.status()}`, res.url());
+    }
+    if (res.url().includes("/rpc/game_state_buzzer_press")) {
+      res.text().then((body) => console.log(`[e2e-diag:${label}] buzzer_press ->`, body))
+        .catch((e) => console.log(`[e2e-diag:${label}] buzzer_press body read failed:`, e.message));
+    }
+  });
+  p.on("requestfailed", (req) => {
+    console.log(`[e2e-diag:${label}] requestfailed`, req.failure()?.errorText, req.url());
+  });
+}
+
 async function openAnon(browser, contexts, path, label, errors) {
   const ctx = await browser.newContext();
   contexts.push(ctx);
   const p = await ctx.newPage();
   trackErrors(p, label, errors);
+  instrumentAnon(p, label);
   await p.goto(path, { waitUntil: "domcontentloaded" });
   return p;
 }
