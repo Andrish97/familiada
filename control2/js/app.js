@@ -920,18 +920,10 @@ async function main() {
   // renderGameEnd/renderFinalEnd, akcja "game.restart" w handle() niżej) —
   // dokładnie ta sama logika, dwa miejsca wywołania.
   async function restartGame() {
-    // TYMCZASOWA diagnostyka (do usunięcia po znalezieniu przyczyny) --
-    // e2e: "Zacznij od nowa" po kliknięciu "Tak" zostaje na starym ekranie,
-    // bez ŻADNEGO błędu w konsoli i bez żadnej kolejnej zmiany store.state
-    // (patrz [e2e-diag-state] -- ostatni wpis to jeszcze SPRZED kliknięcia
-    // #btnStartOver) -- czyli funkcja utyka na którymś await, nie rzuca.
-    // Loguje każdy krok, żeby następny przebieg CI pokazał dokładnie który.
-    console.log("[e2e-diag-state] restartGame: start, otwieram confirmModal");
     const ok = await confirmModal({
       title: "Zacznij od nowa",
       text: "To wróci do podłączania urządzeń i wyzeruje postęp gry (drużyny, pytania, wyniki). Parowanie urządzeń zostaje. Ustawienia zaawansowane zostają zachowane.",
     });
-    console.log(`[e2e-diag-state] restartGame: confirmModal rozstrzygnięty, ok=${ok}`);
     if (!ok) return;
     const keptAdvanced = {};
     for (const key of ADVANCED_SETTINGS_KEYS) keptAdvanced[key] = store.state.settings[key];
@@ -961,19 +953,31 @@ async function main() {
     store.state.phase = null;
     store.state.controlTeam = null;
     store.state.topCard = "devices";
+    // Naprawiona luka (znaleziona diagnostyką [e2e-diag-state] powyżej):
+    // commit() MUSI iść zaraz PO mutacji, bez żadnego await pomiędzy --
+    // store.js's commit() czyta state.step/topCard/... SYNCHRONICZNIE, W
+    // MOMENCIE WYWOŁANIA, nie w momencie mutacji. Poprzednia wersja robiła
+    // await sb().from("games").select(...) PRZED commit() -- w tym oknie
+    // (realny network round-trip) potrafiło się dokończyć INNE, już
+    // wcześniej w locie będące potwierdzenie zapisu (np. przejście
+    // "Gotowe" -> r_intro, którego commitNow() wciąż czekał na sieć),
+    // którego applyRow() nadpisywało state.step z powrotem na "r_intro" --
+    // więc gdy restartGame() W KOŃCU wołał commit(), payload budował się
+    // już z NADPISANEGO, złego state.step, i cały reset ginął bez śladu
+    // błędu (na żywo: "Zacznij od nowa" zostawał na starym ekranie).
+    // Rozwiązanie: dwa OSOBNE commity -- najpierw reset (zero await
+    // pomiędzy mutacją a commit()), dopiero PO nim (na już bezpiecznie
+    // zapisanym stanie) odśwież i dograj games.settings drugim commitem.
+    await store.commit();
     // D3 znów pokaże podsumowanie games.settings (drużyny/finał/pytania) —
     // odśwież je z bazy, bo mogły się zmienić od czasu wejścia w Control.
-    console.log("[e2e-diag-state] restartGame: state zmutowany lokalnie, odświeżam games.settings");
     try {
       const { data: freshGame } = await sb().from("games").select("settings").eq("id", gameId).single();
       applyGameSettingsToState(freshGame?.settings, store.state);
-      console.log("[e2e-diag-state] restartGame: games.settings odświeżone");
+      await store.commit();
     } catch (e) {
       console.warn("[control2] odświeżenie games.settings po 'Zacznij od nowa' nie powiodło się:", e);
     }
-    console.log("[e2e-diag-state] restartGame: wołam store.commit()");
-    await store.commit();
-    console.log("[e2e-diag-state] restartGame: store.commit() zakończony");
   }
   // Przez handle(), NIE bezpośrednio restartGame -- jedyny try/catch (linia
   // ~887, alert() na błąd) chroni WYŁĄCZNIE wywołania idące przez handle()
