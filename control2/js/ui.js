@@ -401,6 +401,15 @@ export function createUI({ root, emit }) {
       finalMode: hasFinal ? s.finalQuestionsMode : null, finalPicked: state.final.picked,
       finalPreview: state.final.pickedPreview, finalConfirmed: state.final.confirmed,
       sound: state.settings.sound,
+      // busy() dodane do odcisku PO tym, jak "Zakończ konfigurację"/"Wstecz"
+      // dostały disabled: boardBusy() -- bez tego pola tranzycja
+      // committing:true->false NIGDY nie unieważnia cache'u (żadne z
+      // powyższych pól faktycznie się nie zmienia), więc przycisk raz
+      // wyrenderowany jako disabled zostawał tak NA ZAWSZE, mimo że
+      // poprzedni zapis dawno się potwierdził -- znalezione na żywo przez
+      // control2.spec.js (test wisiał w nieskończoność na "Zakończ
+      // konfigurację" po devices.next).
+      busy: boardBusy(),
     });
     if (fingerprint === setupFinishFingerprint && root.querySelector("#c2DisplayPreview")) return;
     setupFinishFingerprint = fingerprint;
