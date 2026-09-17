@@ -286,7 +286,7 @@ async function main() {
   // (makeTimerWatch niżej — EXPIRE_TIMER/EXPIRE_TIMER3) — oba źródła mają
   // dostawać DOKŁADNIE tę samą blokadę, inaczej auto-pudło z 3s zegarka
   // zostawiałoby okno bez ochrony, którego ręczne ADD_X już nie ma.
-  async function dispatchGated(action) {
+  async function dispatchGatedNow(action) {
     const prevRow = store.state.__row || null;
     committing = true;
     renderCurrent();
@@ -308,6 +308,32 @@ async function main() {
     }
     renderCurrent();
     return nextRow;
+  }
+
+  // Zserializowane -- dokładnie ten sam wzorzec i powód co engine.js's
+  // własna `_queue` (patrz komentarz tam), tylko jeden poziom wyżej.
+  // engine.dispatch() samo w sobie już chroni reducer+commit przed
+  // nachodzeniem, ALE dispatchGated() dokłada WŁASNY, synchroniczny
+  // renderCurrent() na SAMYM START (linia `committing = true;
+  // renderCurrent();`, PRZED jeszcze reducerem) -- bez kolejki tutaj dwa
+  // wywołania dispatchGated() wystrzelone bez odczekania (np. pole
+  // "Odpowiedź gracza" wpisywane w f_p1_entry: on(inp,"input",...) woła
+  // emit("game.dispatch",...) na KAŻDY .fill()/wpis, bez await) mogły
+  // nachodzić na siebie -- renderCurrent() z DRUGIEGO, wcześniej
+  // nieuruchomionego jeszcze reducera przebudowywał WSZYSTKIE pola input
+  // od zera z JESZCZE STAREGO stanu (reducer PIERWSZEGO wywołania nie
+  // zdążył jeszcze dopisać swojego tekstu), gubiąc wizualnie to, co
+  // operator/test właśnie wpisał w INNE, równolegle edytowane pole (na
+  // żywo: pole 2/5 w finale zostawało puste -- hasTyped=false -- mimo że
+  // test .fill()'ował je tak samo jak resztę). Kolejka gwarantuje, że
+  // renderCurrent()+reducer+commit dla KAŻDEGO dispatchGated w pełni się
+  // kończy, zanim zacznie się następny.
+  let _dispatchGatedQueue = Promise.resolve();
+  function dispatchGated(action) {
+    const run = () => dispatchGatedNow(action);
+    const result = _dispatchGatedQueue.then(run, run);
+    _dispatchGatedQueue = result.catch(() => {});
+    return result;
   }
 
   // "Dogonienie" timerów zastanych już wygasłych przy wznowieniu (plan,
@@ -917,7 +943,17 @@ async function main() {
     }
     await store.commit();
   }
-  document.getElementById("btnStartOver")?.addEventListener("click", restartGame);
+  // Przez handle(), NIE bezpośrednio restartGame -- jedyny try/catch (linia
+  // ~887, alert() na błąd) chroni WYŁĄCZNIE wywołania idące przez handle()
+  // (np. action==="game.restart" z ekranu końca gry). Bezpośredni listener
+  // na restartGame nie miał żadnej ochrony: jeśli store.commit() rzuci
+  // (np. stale_write po wyczerpaniu retry, tuż po serii innych świeżych
+  // zapisów), to nieobsłużone odrzucenie Promise z asynchronicznego
+  // event listenera -- operator zostaje bez żadnego komunikatu, ciągle na
+  // starym ekranie, z zerowym śladem w UI, że coś się nie udało (znalezione
+  // przy diagnozie e2e: "Zacznij od nowa" → "Tak" nie wracał do D0, bez
+  // żadnego widocznego błędu).
+  document.getElementById("btnStartOver")?.addEventListener("click", () => handle("game.restart"));
 
   store.subscribe(renderCurrent);
   renderCurrent();
