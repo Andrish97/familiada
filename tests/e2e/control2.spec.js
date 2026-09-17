@@ -731,11 +731,19 @@ test("control2: \"Zacznij od nowa\" w trakcie gry wraca do D0", async ({ page, b
   const game = await makeGame(page, `E2E-CONTROL2-RESTART-${Date.now()}`);
   const contexts = [];
   try {
+    // "Dalej" wymaga WSZYSTKICH trzech urządzeń online (Wyświetlacz zawsze,
+    // Prowadzący/Przycisk bez opt-outu tutaj) -- bez pełnego sparowania
+    // zostaje trwale disabled, a goły .click() wisi do końca budżetu testu
+    // (150s), zamiast szybko failować z jasnym powodem.
     await openAnon(browser, contexts, `/display2?id=${game.id}&key=${game.share_key_display}`, "display", []);
+    await openAnon(browser, contexts, `/host2?id=${game.id}&key=${game.share_key_host}`, "host", []);
+    await openAnon(browser, contexts, `/buzzer2?id=${game.id}&key=${game.share_key_buzzer}`, "buzzer", []);
 
     await page.goto(`/control2?id=${game.id}`, { waitUntil: "domcontentloaded" });
     await expect(page.locator(".stepTitle")).toHaveText("Urządzenia", { timeout: 15000 });
     await expect(page.locator("#dotDisplay")).toHaveClass(/\bok\b/, { timeout: 15000 });
+    await expect(page.locator("#dotHost")).toHaveClass(/\bok\b/, { timeout: 15000 });
+    await expect(page.locator("#dotBuzzer")).toHaveClass(/\bok\b/, { timeout: 15000 });
     await page.getByRole("button", { name: "Dalej" }).click();
     await page.getByRole("button", { name: "Gotowe — przejdź do rozgrywki" }).click();
     await expect(page.locator(".c2-stepper")).toContainText("Rozpoczęcie gry", { timeout: 22000 });
@@ -1394,11 +1402,22 @@ test("control2: zmiana języka w Control propaguje się do Hosta — tytuł fazy
 // formularza musi się pojawić w window.__displayLog ZAGNIEŻDŻONEGO iframe'a
 // podglądu (display2/js/main.js's instrumentSceneApi(), dodane też do trybu
 // podglądu w tej samej naprawie) jako wywołanie api.small.long1(...).
-test("control2: modal ustawień gry — zmiana nazwy drużyny odświeża podgląd Wyświetlacza", async ({ page }, testInfo) => {
+test("control2: modal ustawień gry — zmiana nazwy drużyny odświeża podgląd Wyświetlacza", async ({ page, browser }, testInfo) => {
   await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
   const game = await makeGame(page, `E2E-CONTROL2-GSPREVIEW-${Date.now()}`);
+  const contexts = [];
   try {
+    // "Dalej" wymaga WSZYSTKICH trzech urządzeń online -- bez sparowania
+    // zostaje trwale disabled (patrz analogiczna naprawa w teście "Zacznij
+    // od nowa" wyżej).
+    await openAnon(browser, contexts, `/display2?id=${game.id}&key=${game.share_key_display}`, "display", []);
+    await openAnon(browser, contexts, `/host2?id=${game.id}&key=${game.share_key_host}`, "host", []);
+    await openAnon(browser, contexts, `/buzzer2?id=${game.id}&key=${game.share_key_buzzer}`, "buzzer", []);
+
     await page.goto(`/control2?id=${game.id}`, { waitUntil: "domcontentloaded" });
+    await expect(page.locator("#dotDisplay")).toHaveClass(/\bok\b/, { timeout: 15000 });
+    await expect(page.locator("#dotHost")).toHaveClass(/\bok\b/, { timeout: 15000 });
+    await expect(page.locator("#dotBuzzer")).toHaveClass(/\bok\b/, { timeout: 15000 });
     await page.getByRole("button", { name: "Dalej" }).click();
     await expect(page.locator(".stepTitle")).toHaveText("Podsumowanie", { timeout: 10000 });
 
@@ -1427,6 +1446,7 @@ test("control2: modal ustawień gry — zmiana nazwy drużyny odświeża podglą
       return log.some((e) => e.call === "api.small.long1" && e.args?.[0] === "Testowi Mistrzowie");
     }, { timeout: 10000 }).toBe(true);
   } finally {
+    for (const ctx of contexts) await ctx.close().catch(() => {});
     await deleteGame(page, game.id);
   }
 });
