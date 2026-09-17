@@ -10,12 +10,12 @@
 // autorytatywny wiersz już to wie), błąd sieci (przycisk wraca do ON,
 // można spróbować ponownie).
 
-import { initI18n, setUiLang } from "../../translation/translation.js?v=v2026-09-17T07315";
-import { startKeepAlive } from "../../js/core/keep-alive.js?v=v2026-09-17T07315";
-import { sb } from "../../js/core/supabase.js?v=v2026-09-17T07315";
-import { createSubscription } from "../../js/core/game-state-subscribe.js?v=v2026-09-17T07315";
-import { createButtonRenderer, STATE, deriveButtonState } from "./render.js?v=v2026-09-17T07315";
-import { ringDoorbell } from "../../js/core/game-state-doorbell.js?v=v2026-09-17T07315";
+import { initI18n, setUiLang } from "../../translation/translation.js?v=v2026-09-17T18574";
+import { startKeepAlive } from "../../js/core/keep-alive.js?v=v2026-09-17T18574";
+import { sb } from "../../js/core/supabase.js?v=v2026-09-17T18574";
+import { createSubscription } from "../../js/core/game-state-subscribe.js?v=v2026-09-17T18574";
+import { createButtonRenderer, STATE, deriveButtonState } from "./render.js?v=v2026-09-17T18574";
+import { ringDoorbell } from "../../js/core/game-state-doorbell.js?v=v2026-09-17T18574";
 
 // videoWakeLockFallback: patrz identyczny komentarz w host2/js/main.js —
 // Buzzer jest telefonem/tabletem kontestanta, dokładnie tym samym rodzajem
