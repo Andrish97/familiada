@@ -14,7 +14,7 @@ import { initI18n, setUiLang } from "../../translation/translation.js?v=v2026-09
 import { startKeepAlive } from "../../js/core/keep-alive.js?v=v2026-09-17T18574";
 import { sb } from "../../js/core/supabase.js?v=v2026-09-17T18574";
 import { createSubscription } from "../../js/core/game-state-subscribe.js?v=v2026-09-17T18574";
-import { createButtonRenderer, STATE, deriveButtonState } from "./render.js?v=v2026-09-17T18574";
+import { createButtonRenderer, STATE, deriveButtonState, isLockedRow } from "./render.js?v=v2026-09-17T18574";
 import { ringDoorbell } from "../../js/core/game-state-doorbell.js?v=v2026-09-17T18574";
 
 // videoWakeLockFallback: patrz identyczny komentarz w host2/js/main.js —
@@ -108,6 +108,22 @@ async function main() {
   const renderer = createButtonRenderer();
   let lastRow = null;
   let appliedLang = null;
+  let lockTimer = null;
+
+  // Migracja 264 -- game_state_set_lock (control2/js/store.js) NIE dzwoni
+  // dzwonkiem i NIE podbija rev (patrz komentarz tam) -- więc bez własnego
+  // zegarka Buzzer nigdy by się nie dowiedział, że blokada, którą sam
+  // widzi w row.locked_until, naturalnie minęła, dopóki nie przyjdzie
+  // KOLEJNY, niepowiązany zapis w grze. Re-render tą samą, już posiadaną
+  // treścią (lastRow) wystarczy -- deriveButtonState/isLockedRow przeliczą
+  // się na nowo względem aktualnego Date.now().
+  function scheduleUnlockRerender(row) {
+    clearTimeout(lockTimer);
+    lockTimer = null;
+    if (!isLockedRow(row)) return;
+    const msLeft = new Date(row.locked_until).getTime() - Date.now();
+    lockTimer = setTimeout(() => renderer.render(row), Math.max(0, msLeft) + 20);
+  }
 
   const subscription = createSubscription({
     gameId, deviceType: "buzzer", key,
@@ -120,12 +136,13 @@ async function main() {
       }
       lastRow = row;
       renderer.render(row);
+      scheduleUnlockRerender(row);
     },
     onError: (error) => console.warn("[buzzer2] game_state_get failed:", error),
   });
 
   async function press(team) {
-    if (!lastRow || deriveButtonState(lastRow) !== STATE.ON) return;
+    if (!lastRow || deriveButtonState(lastRow) !== STATE.ON || isLockedRow(lastRow)) return;
     const { data, error } = await sb().rpc("game_state_buzzer_press", {
       p_game_id: gameId, p_key: key, p_team: team,
     });

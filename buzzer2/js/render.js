@@ -119,8 +119,38 @@ export function createButtonRenderer() {
 
   function render(row) {
     applyColors(row.detail?.display?.colors);
-    show(deriveButtonState(row));
+    const state = deriveButtonState(row);
+    show(state);
+    // Migracja 264 -- blokada w bazie (game_state.locked_until, ustawiana
+    // przez Control PO każdym przejściu z dźwiękiem/animacją, np.
+    // "Rozpocznij rundę") nie jest częścią deriveButtonState() (ta liczy
+    // WYŁĄCZNIE z logiki pojedynku -- duel.enabled/firstTeam) -- bez tego
+    // przycisk pokazywał się jako klikalny (ON) już w momencie, gdy
+    // duel.enabled stało się true, czyli ZANIM animacja wjazdu planszy
+    // faktycznie dograła. Kontestant (albo test) klikający w tym oknie
+    // dostawał ciche odrzucenie z bazy (kod "locked") -- przycisk
+    // wyglądał na aktywny, ale nic się nie działo. Nie zmieniamy samego
+    // stanu (ON zostaje ON, nie OFF -- to nie jest "gra jeszcze się nie
+    // zaczęła", tylko "za wcześnie o ułamek sekundy"), tylko dokładamy
+    // disabled na czas blokady.
+    if (state === STATE.ON && isLockedRow(row)) {
+      if (btnA) btnA.disabled = true;
+      if (btnB) btnB.disabled = true;
+    }
   }
 
   return { render };
+}
+
+// Wystawione osobno -- buzzer2/js/main.js's press() sprawdza to samo PRZED
+// wystrzeleniem RPC (żeby nie czekać na sieciowe odrzucenie, skoro wynik
+// znany jest już lokalnie) i planuje ponowny render() dokładnie w chwili,
+// gdy blokada naturalnie wygasa (serwer nie dzwoni WCALE po
+// game_state_set_lock -- patrz komentarz w control2/js/store.js's
+// setLockNow -- więc bez własnego zegarka przycisk zostałby disabled aż do
+// KOLEJNEGO, niepowiązanego zapisu w grze).
+export function isLockedRow(row) {
+  const until = row?.locked_until;
+  if (!until) return false;
+  return new Date(until).getTime() > Date.now();
 }
