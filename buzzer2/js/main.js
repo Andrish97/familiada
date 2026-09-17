@@ -131,8 +131,14 @@ async function main() {
       // Język idzie za operatorem w Control — patrz display2/js/main.js.
       const lang = row.detail?.settings?.uiLang;
       if (lang && lang !== appliedLang) {
-        appliedLang = lang;
-        setUiLang(lang, { persist: true, updateUrl: true, apply: true }).catch(() => {});
+        // appliedLang ustawiane DOPIERO po sukcesie -- patrz identyczny
+        // komentarz w host2/js/main.js: appliedLang=lang PRZED zapisem
+        // wyniku setUiLang() + .catch(()=>{}) łykający błąd bez retry
+        // zostawiałby stronę trwale w starym języku po przejściowym błędzie
+        // (np. sieciowym) przy dynamicznym imporcie słownika.
+        setUiLang(lang, { persist: true, updateUrl: true, apply: true })
+          .then(() => { appliedLang = lang; })
+          .catch((e) => console.warn("[buzzer2] setUiLang nie powiodło się, spróbuję ponownie przy kolejnym wierszu:", e));
       }
       lastRow = row;
       renderer.render(row);

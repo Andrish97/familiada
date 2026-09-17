@@ -132,8 +132,18 @@ async function main() {
       // żywo: zmiana na "en" nie zmieniała od razu treści paperText1).
       const lang = row.detail?.settings?.uiLang;
       if (lang && lang !== appliedLang) {
-        appliedLang = lang;
-        await setUiLang(lang, { persist: true, updateUrl: true, apply: true }).catch(() => {});
+        // appliedLang ustawiane DOPIERO po sukcesie -- jeśli setUiLang()
+        // rzuci (np. przejściowy błąd sieci przy dynamicznym imporcie
+        // słownika), appliedLang zostaje niezmienione, więc kolejny wiersz
+        // z tym samym lang spróbuje ponownie zamiast utknąć na zawsze w
+        // starym języku (wcześniej appliedLang=lang szło PRZED await, a
+        // .catch(()=>{}) po cichu połykał błąd bez retry).
+        try {
+          await setUiLang(lang, { persist: true, updateUrl: true, apply: true });
+          appliedLang = lang;
+        } catch (e) {
+          console.warn("[host2] setUiLang nie powiodło się, spróbuję ponownie przy kolejnym wierszu:", e);
+        }
       }
       await hostTheme.apply(row);
       renderer.render(row);

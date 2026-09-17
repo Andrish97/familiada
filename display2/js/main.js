@@ -226,8 +226,14 @@ window.addEventListener("DOMContentLoaded", async () => {
         // pole w game_state, patrz shared/gameStateShape.js).
         const lang = row.detail?.settings?.uiLang;
         if (lang && lang !== appliedLang) {
-          appliedLang = lang;
-          setUiLang(lang, { persist: true, updateUrl: true, apply: true }).catch(() => {});
+          // appliedLang ustawiane DOPIERO po sukcesie -- patrz identyczny
+          // komentarz w host2/js/main.js i buzzer2/js/main.js: appliedLang=lang
+          // PRZED zapisem wyniku setUiLang() + .catch(()=>{}) łykający błąd
+          // bez retry zostawiałby stronę trwale w starym języku po
+          // przejściowym błędzie przy dynamicznym imporcie słownika.
+          setUiLang(lang, { persist: true, updateUrl: true, apply: true })
+            .then(() => { appliedLang = lang; })
+            .catch((e) => console.warn("[display2] setUiLang nie powiodło się, spróbuję ponownie przy kolejnym wierszu:", e));
         }
 
         // Dźwięk — patrz komentarz przy setCurrentGameId() wyżej. Reaplikowane
