@@ -679,12 +679,15 @@ test("control2: physicalBuzzer + noHostTablet — urządzenia pominięte, ręczn
 
     await page.getByLabel("Fizyczny przycisk").check();
     await page.getByLabel("Nie używaj tabletu prowadzącego").check();
-    // Zwijanie jak stare control.html (data-opted-out) — wiersz zostaje w
-    // DOM (nazwa/badge/checkbox widoczne), tylko kod/przyciski się chowają.
+    // Świadoma zmiana względem starego control.html (patrz control2.html's
+    // komentarz przy .c2-devicerows .device-row[data-opted-out] .device-row-2):
+    // wiersz zostaje w DOM I WIDOCZNY (nazwa/badge/checkbox), tylko kod/
+    // przyciski się WYSZARZAJĄ i przestają być klikalne -- NIE znikają
+    // (display:none), w odróżnieniu od jednokolumnowego control.html.
     await expect(page.locator('.device-row[data-device="buzzer"]')).toHaveAttribute("data-opted-out", "", { timeout: 10000 });
     await expect(page.locator('.device-row[data-device="host"]')).toHaveAttribute("data-opted-out", "", { timeout: 10000 });
-    await expect(page.locator('.device-row[data-device="buzzer"] .device-row-2')).toBeHidden();
-    await expect(page.locator('.device-row[data-device="host"] .device-row-2')).toBeHidden();
+    await expect(page.locator('.device-row[data-device="buzzer"] .device-row-2')).toHaveCSS("pointer-events", "none");
+    await expect(page.locator('.device-row[data-device="host"] .device-row-2')).toHaveCSS("pointer-events", "none");
 
     // Zgłoszone: przycisk nieaktywnego urządzenia w topbarze ma zniknąć
     // CAŁKOWICIE (nie tylko przygasnąć) — już na kroku Urządzeń, nie
@@ -749,7 +752,11 @@ test("control2: \"Zacznij od nowa\" w trakcie gry wraca do D0", async ({ page, b
     await expect(page.locator(".c2-stepper")).toContainText("Rozpoczęcie gry", { timeout: 22000 });
 
     await page.locator("#btnStartOver").click();
-    await page.getByRole("button", { name: "Tak" }).click();
+    // exact:true -- bez tego locator dopasowuje też przycisk "Kontakt"
+    // (Playwright domyślnie dopasowuje podciąg nazwy dostępnej, a "takt"
+    // w "Kontakt" zawiera "tak" jako fragment case-insensitive), co dawało
+    // "strict mode violation: 2 elements match".
+    await page.getByRole("button", { name: "Tak", exact: true }).click();
 
     await expect(page.locator(".stepTitle")).toHaveText("Urządzenia", { timeout: 10000 });
   } finally {
