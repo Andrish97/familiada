@@ -289,9 +289,20 @@ async function main() {
   async function dispatchGatedNow(action) {
     const prevRow = store.state.__row || null;
     committing = true;
-    renderCurrent();
     let nextRow = null;
     try {
+      // Naprawiona luka: ten renderCurrent() (i cała reszta funkcji) była
+      // POZA try/finally chroniącym `committing` -- rzucony tu wyjątek
+      // (np. błąd w konkretnej gałęzi render()) zostawiał `committing`
+      // trwale na true, bo finally niżej nigdy się nie wykonywał. Z
+      // kolejką dispatchGated() (patrz komentarz przy niej) to już nie
+      // "tylko" złamany render na tę jedną akcję -- jeśli to była OSTATNIA
+      // zakolejkowana akcja (np. ostatni SET_ENTRY_TEXT z serii szybkich
+      // .fill()), busy() zostawał zablokowany NA ZAWSZE, bo nic po niej już
+      // nie wywołało dispatchGated ponownie, żeby to odkręcić (znalezione
+      // przy diagnozie e2e: "Rozpocznij odliczanie" trwale disabled mimo
+      // poprawnie wypełnionych wszystkich pól).
+      renderCurrent();
       nextRow = await engine.dispatch(action);
     } finally {
       committing = false;
@@ -443,7 +454,16 @@ async function main() {
   function renderCurrent() {
     scheduleFinalTimerWatch();
     scheduleTimer3Watch();
-    ui.render(store.state, renderCtx());
+    // Zawinięte w try/catch -- dispatchGatedNow() woła renderCurrent()
+    // PRZED ustawieniem committing=false (patrz komentarz tam); rzucony tu
+    // wyjątek bez tego zostawiałby błąd całkowicie niewidoczny (połknięty
+    // przez kolejkę dispatchGated()), a operator z trwale zablokowanym UI
+    // bez żadnego śladu w konsoli, dlaczego.
+    try {
+      ui.render(store.state, renderCtx());
+    } catch (e) {
+      console.error("[control2] render() rzucił -- UI może zostać nieaktualne:", e);
+    }
     // Mute jest teraz częścią game_state (nie lokalny stan tej karty) —
     // musi się odświeżyć na KAŻDĄ zmianę stanu, nie tylko po kliknięciu tu,
     // żeby np. druga karta Control (blokada resource-lock zwolniona) albo
