@@ -920,10 +920,18 @@ async function main() {
   // renderGameEnd/renderFinalEnd, akcja "game.restart" w handle() niżej) —
   // dokładnie ta sama logika, dwa miejsca wywołania.
   async function restartGame() {
+    // TYMCZASOWA diagnostyka (do usunięcia po znalezieniu przyczyny) --
+    // e2e: "Zacznij od nowa" po kliknięciu "Tak" zostaje na starym ekranie,
+    // bez ŻADNEGO błędu w konsoli i bez żadnej kolejnej zmiany store.state
+    // (patrz [e2e-diag-state] -- ostatni wpis to jeszcze SPRZED kliknięcia
+    // #btnStartOver) -- czyli funkcja utyka na którymś await, nie rzuca.
+    // Loguje każdy krok, żeby następny przebieg CI pokazał dokładnie który.
+    console.log("[e2e-diag-state] restartGame: start, otwieram confirmModal");
     const ok = await confirmModal({
       title: "Zacznij od nowa",
       text: "To wróci do podłączania urządzeń i wyzeruje postęp gry (drużyny, pytania, wyniki). Parowanie urządzeń zostaje. Ustawienia zaawansowane zostają zachowane.",
     });
+    console.log(`[e2e-diag-state] restartGame: confirmModal rozstrzygnięty, ok=${ok}`);
     if (!ok) return;
     const keptAdvanced = {};
     for (const key of ADVANCED_SETTINGS_KEYS) keptAdvanced[key] = store.state.settings[key];
@@ -955,13 +963,17 @@ async function main() {
     store.state.topCard = "devices";
     // D3 znów pokaże podsumowanie games.settings (drużyny/finał/pytania) —
     // odśwież je z bazy, bo mogły się zmienić od czasu wejścia w Control.
+    console.log("[e2e-diag-state] restartGame: state zmutowany lokalnie, odświeżam games.settings");
     try {
       const { data: freshGame } = await sb().from("games").select("settings").eq("id", gameId).single();
       applyGameSettingsToState(freshGame?.settings, store.state);
+      console.log("[e2e-diag-state] restartGame: games.settings odświeżone");
     } catch (e) {
       console.warn("[control2] odświeżenie games.settings po 'Zacznij od nowa' nie powiodło się:", e);
     }
+    console.log("[e2e-diag-state] restartGame: wołam store.commit()");
     await store.commit();
+    console.log("[e2e-diag-state] restartGame: store.commit() zakończony");
   }
   // Przez handle(), NIE bezpośrednio restartGame -- jedyny try/catch (linia
   // ~887, alert() na błąd) chroni WYŁĄCZNIE wywołania idące przez handle()
