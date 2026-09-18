@@ -96,6 +96,7 @@ function applyGameSettingsToState(settings, state) {
 }
 
 import { createStore } from "./store.js?v=v2026-09-18T20544";
+import { LockedError } from "./persist.js?v=v2026-09-18T20544";
 import { createEngine } from "./engine.js?v=v2026-09-18T20544";
 import { createActionGate } from "./actionGate.js?v=v2026-09-18T20544";
 import { createDevices } from "./devices.js?v=v2026-09-18T20544";
@@ -252,7 +253,25 @@ async function main() {
     const nextLang = event?.detail?.lang;
     if (!nextLang || store.state.settings.uiLang === nextLang) return;
     store.state.settings.uiLang = nextLang;
-    await store.commit();
+    // Migracja 264: game_state_write odrzuca zapis (LockedError), dopóki
+    // trwa locked_until poprzedniej akcji (dźwięk/animacja) — zgłoszone e2e:
+    // zmiana języka tuż po akcji gry (np. "Rozpocznij rundę") potrafiła
+    // trafić w to okno. Ten listener nie miał żadnego catch, więc
+    // LockedError z store.commit() kończył jako nieobsłużony wyjątek —
+    // zmiana ginęła bez śladu, Host nigdy jej nie widział (deterministycznie,
+    // nie flaky — okno blokady jest przewidywalnie długie). busy() niżej to
+    // ten sam klencki odpowiednik locked_until (dispatchGatedNow ustawia go
+    // 1:1 z tym samym `ms`, które idzie do store.setLock) — odczekaj aż
+    // zniknie, a na resztkowy wyścig (setLock jeszcze w locie) spróbuj raz
+    // jeszcze po złapanym LockedError.
+    while (busy()) await new Promise((resolve) => setTimeout(resolve, 100));
+    try {
+      await store.commit();
+    } catch (e) {
+      if (!(e instanceof LockedError)) throw e;
+      await new Promise((resolve) => setTimeout(resolve, 300));
+      await store.commit();
+    }
   });
 
   const engine = createEngine({
