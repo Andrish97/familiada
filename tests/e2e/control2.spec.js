@@ -1289,6 +1289,21 @@ test("control2: dźwięk ze źródła Wyświetlacz — odblokowanie, głośnoś�
     // patrz js/pages/game-settings2.js's openSidebar()) — bez tego kliknięcia
     // .gs-sidebar-item istnieje w DOM, ale nie jest "visible" dla Playwrighta.
     await gsFrame.locator("#btnToggleSidebar").click();
+    // TYMCZASOWA diagnostyka (do usunięcia po znalezieniu przyczyny) --
+    // console.warn z wnętrza #gsFrame (game-settings2.js) nie docierał do
+    // instrumentPage() w poprzednich przebiegach mimo potwierdzonego
+    // wykonania kodu (inne diagnostyki w tym samym module SIĘ pokazywały) --
+    // .evaluate() loguje bezpośrednio do stdout procesu Playwright (Node),
+    // z pominięciem całego łańcucha page.on("console"), więc jest
+    // niezawodne niezależnie od przyczyny tamtego problemu.
+    const dbg = await gsFrame.locator("#gsSidebar").evaluate((el) => ({
+      sidebarClass: el.className,
+      display: getComputedStyle(el).display,
+      rect: el.getBoundingClientRect().toJSON(),
+      htmlClass: document.documentElement.className,
+      toggleClass: document.getElementById("btnToggleSidebar")?.className,
+    }));
+    console.log("[e2e-diag-gs-test]", JSON.stringify(dbg));
     await gsFrame.locator('.gs-sidebar-item[data-cat="sound"]').click();
     const transitionSlider = gsFrame.locator('input.sfx-vol[data-sfx-vol="round_transition"]');
     await expect(transitionSlider).toBeVisible({ timeout: 10000 });
