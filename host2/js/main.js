@@ -7,13 +7,13 @@
 // snap-to-grid z dzisiejszego host.js (kosmetyka do dostrojenia wizualnie
 // później, nie architektura).
 
-import { initI18n, setUiLang, t } from "../../translation/translation.js?v=v2026-09-18T20544";
-import { startKeepAlive } from "../../js/core/keep-alive.js?v=v2026-09-18T20544";
-import { sb } from "../../js/core/supabase.js?v=v2026-09-18T20544";
-import { createSubscription } from "../../js/core/game-state-subscribe.js?v=v2026-09-18T20544";
-import { createHostRenderer } from "./render.js?v=v2026-09-18T20544";
-import { createCoverLogoRenderer } from "./coverLogo.js?v=v2026-09-18T20544";
-import { createHostThemeApplier } from "./hostThemeManager.js?v=v2026-09-18T20544";
+import { initI18n, setUiLang, t } from "../../translation/translation.js?v=v2026-09-18T21012";
+import { startKeepAlive } from "../../js/core/keep-alive.js?v=v2026-09-18T21012";
+import { sb } from "../../js/core/supabase.js?v=v2026-09-18T21012";
+import { createSubscription } from "../../js/core/game-state-subscribe.js?v=v2026-09-18T21012";
+import { createHostRenderer } from "./render.js?v=v2026-09-18T21012";
+import { createCoverLogoRenderer } from "./coverLogo.js?v=v2026-09-18T21012";
+import { createHostThemeApplier } from "./hostThemeManager.js?v=v2026-09-18T21012";
 
 // videoWakeLockFallback: Host jest zwykle na osobnym tablecie/telefonie
 // prowadzącego (patrz plan) — dokładnie to urządzenie, które przeglądarka

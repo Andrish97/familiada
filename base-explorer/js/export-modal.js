@@ -1,9 +1,9 @@
 // /base-explorerjs/export-modal.js
 // Modal eksportu: open() zwraca Promise z wynikiem {ok, payload}
 
-import { t } from "../../translation/translation.js?v=v2026-09-18T20544";
-import { TYPES as GAME_TYPES, RULES } from "../../js/core/game-validate.js?v=v2026-09-18T20544";
-import { validateQuestionForType } from "../../js/core/base-export-validate.js?v=v2026-09-18T20544";
+import { t } from "../../translation/translation.js?v=v2026-09-18T21012";
+import { TYPES as GAME_TYPES, RULES } from "../../js/core/game-validate.js?v=v2026-09-18T21012";
+import { validateQuestionForType } from "../../js/core/base-export-validate.js?v=v2026-09-18T21012";
 
 // Kolejność = pozycje suwaka typu w UI (0/1/2, patrz typeIndex). GAME_TYPES
 // to obiekt nazwa->wartość, nie tablica, więc kolejność zostaje jawna tutaj
