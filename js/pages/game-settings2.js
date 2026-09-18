@@ -1620,6 +1620,14 @@ async function main() {
     function openSidebar()  {
       sidebarEl?.classList.add("gs-sidebar-open");
       backdropEl?.classList.add("gs-sidebar-open");
+      // TYMCZASOWA diagnostyka (do usunięcia po znalezieniu przyczyny) --
+      // e2e: ".gs-sidebar-item[data-cat=sound]" istnieje w DOM ale nigdy nie
+      // staje się "visible" dla Playwrighta po kliknięciu #btnToggleSidebar.
+      // console.warn, nie .log -- instrumentPage() (tests/e2e/helpers/
+      // login.js) łapie error/warning z CAŁEJ strony, w tym z iframe'a
+      // #gsFrame (Playwright's page.on("console") obejmuje wszystkie ramki).
+      const r = sidebarEl?.getBoundingClientRect();
+      console.warn(`[e2e-diag-gs] openSidebar: htmlClass="${document.documentElement.className}" sidebarClass="${sidebarEl?.className}" display=${sidebarEl ? getComputedStyle(sidebarEl).display : "?"} visibility=${sidebarEl ? getComputedStyle(sidebarEl).visibility : "?"} rect=${r ? `${r.width}x${r.height} @${r.left},${r.top}` : "?"}`);
     }
     function closeSidebar() {
       sidebarEl?.classList.remove("gs-sidebar-open");
