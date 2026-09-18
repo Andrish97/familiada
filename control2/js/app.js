@@ -6,20 +6,20 @@
 // engine.js) — ale i tak przechodzi przez assertTransition(), żeby tabela
 // stanów była mechanizmem wszędzie, nie tylko wewnątrz silnika reguł gry.
 
-import { guardDesktopOnly } from "../../js/core/device-guard.js?v=v2026-09-18T21012";
-import { guardResourceLock, guardResourceBusy } from "../../js/core/resource-lock.js?v=v2026-09-18T21012";
-import { initI18n, getUiLang, t } from "../../translation/translation.js?v=v2026-09-18T21012";
-import { requireAuth } from "../../js/core/auth.js?v=v2026-09-18T21012";
-import { setTopbarAccount } from "../../js/core/topbar-controller.js?v=v2026-09-18T21012";
-import { sb } from "../../js/core/supabase.js?v=v2026-09-18T21012";
-import { loadQuestions, loadAnswers } from "../../js/core/game-validate.js?v=v2026-09-18T21012";
-import { loadSfxManifest, initSfx, setCurrentGameId, unlockAudio, applySfxGameSettings, loadSfxFromCloud, playSfx, getSfxDuration } from "../../js/core/sfx.js?v=v2026-09-18T21012";
-import { listGameSounds } from "../../js/core/sfx-cloud.js?v=v2026-09-18T21012";
-import { assertTransition } from "../../shared/gameStateMachine.js?v=v2026-09-18T21012";
-import { confirmModal } from "../../js/core/modal.js?v=v2026-09-18T21012";
-import { DEFAULT_SETTINGS } from "../../shared/gameStateShape.js?v=v2026-09-18T21012";
-import { rt } from "../../js/core/realtime.js?v=v2026-09-18T21012";
-import { doorbellTopic } from "../../js/core/game-state-doorbell.js?v=v2026-09-18T21012";
+import { guardDesktopOnly } from "../../js/core/device-guard.js?v=v2026-09-18T21165";
+import { guardResourceLock, guardResourceBusy } from "../../js/core/resource-lock.js?v=v2026-09-18T21165";
+import { initI18n, getUiLang, t } from "../../translation/translation.js?v=v2026-09-18T21165";
+import { requireAuth } from "../../js/core/auth.js?v=v2026-09-18T21165";
+import { setTopbarAccount } from "../../js/core/topbar-controller.js?v=v2026-09-18T21165";
+import { sb } from "../../js/core/supabase.js?v=v2026-09-18T21165";
+import { loadQuestions, loadAnswers } from "../../js/core/game-validate.js?v=v2026-09-18T21165";
+import { loadSfxManifest, initSfx, setCurrentGameId, unlockAudio, applySfxGameSettings, loadSfxFromCloud, playSfx, getSfxDuration } from "../../js/core/sfx.js?v=v2026-09-18T21165";
+import { listGameSounds } from "../../js/core/sfx-cloud.js?v=v2026-09-18T21165";
+import { assertTransition } from "../../shared/gameStateMachine.js?v=v2026-09-18T21165";
+import { confirmModal } from "../../js/core/modal.js?v=v2026-09-18T21165";
+import { DEFAULT_SETTINGS } from "../../shared/gameStateShape.js?v=v2026-09-18T21165";
+import { rt } from "../../js/core/realtime.js?v=v2026-09-18T21165";
+import { doorbellTopic } from "../../js/core/game-state-doorbell.js?v=v2026-09-18T21165";
 
 function qrImgSrc(url) {
   const u = encodeURIComponent(String(url ?? ""));
@@ -95,15 +95,15 @@ function applyGameSettingsToState(settings, state) {
   }
 }
 
-import { createStore } from "./store.js?v=v2026-09-18T21012";
-import { LockedError } from "./persist.js?v=v2026-09-18T21012";
-import { createEngine } from "./engine.js?v=v2026-09-18T21012";
-import { createActionGate } from "./actionGate.js?v=v2026-09-18T21012";
-import { createDevices } from "./devices.js?v=v2026-09-18T21012";
-import { createPresence } from "./presence.js?v=v2026-09-18T21012";
-import { createSoundReactor } from "./soundReactor.js?v=v2026-09-18T21012";
-import { createUI } from "./ui.js?v=v2026-09-18T21012";
-import { createShareDevice } from "./shareDevice.js?v=v2026-09-18T21012";
+import { createStore } from "./store.js?v=v2026-09-18T21165";
+import { LockedError } from "./persist.js?v=v2026-09-18T21165";
+import { createEngine } from "./engine.js?v=v2026-09-18T21165";
+import { createActionGate } from "./actionGate.js?v=v2026-09-18T21165";
+import { createDevices } from "./devices.js?v=v2026-09-18T21165";
+import { createPresence } from "./presence.js?v=v2026-09-18T21165";
+import { createSoundReactor } from "./soundReactor.js?v=v2026-09-18T21165";
+import { createUI } from "./ui.js?v=v2026-09-18T21165";
+import { createShareDevice } from "./shareDevice.js?v=v2026-09-18T21165";
 
 guardDesktopOnly();
 
