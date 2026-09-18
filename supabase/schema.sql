@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict R5KAQYu11vc1iC050sobgAhmvxlYSWaCW9EkrhWZrBgtWjwPSxw7naUd6utXKki
+\restrict bpaS1O32LHfx0vER7PTjlR1TYG182leoxW9opOjUOSPORzeaCXdBMDKGzdEucgA
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -2591,6 +2591,48 @@ $$;
 --
 
 COMMENT ON FUNCTION "public"."game_state_set_lock"("p_game_id" "uuid", "p_expected_rev" bigint, "p_lock_ms" integer) IS 'Ustawia locked_until PO potwierdzeniu głównego zapisu (control2/js/app.js''s dispatchGated/advance liczą realny czas dźwięku z potwierdzonego sound_cue_key). Nie bumpuje rev poza tym, co robi zwykły update -- treść stanu się nie zmienia, tylko blokada.';
+
+
+--
+-- Name: game_state_set_ui_lang("uuid", "text"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."game_state_set_ui_lang"("p_game_id" "uuid", "p_ui_lang" "text") RETURNS "public"."game_state"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    AS $$
+declare
+  v_owner uuid;
+  v_row public.game_state;
+begin
+  if p_ui_lang not in ('pl', 'en', 'uk') then
+    raise exception 'invalid_lang';
+  end if;
+
+  select owner_id into v_owner from public.games where id = p_game_id;
+  if not found then raise exception 'game not found'; end if;
+  if auth.uid() is null or v_owner <> auth.uid() then
+    raise exception 'forbidden';
+  end if;
+
+  update public.game_state
+  set detail = jsonb_set(detail, '{settings,uiLang}', to_jsonb(p_ui_lang)),
+      rev = rev + 1,
+      updated_at = now()
+  where game_id = p_game_id
+  returning * into v_row;
+
+  if not found then raise exception 'game_state not found'; end if;
+
+  return v_row;
+end;
+$$;
+
+
+--
+-- Name: FUNCTION "game_state_set_ui_lang"("p_game_id" "uuid", "p_ui_lang" "text"); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION "public"."game_state_set_ui_lang"("p_game_id" "uuid", "p_ui_lang" "text") IS 'Zmienia WYŁĄCZNIE detail.settings.uiLang, przez jsonb_set (nie dotyka reszty detail) -- świadomie z pominięciem sprawdzania locked_until (migracja 264), bo język operatora jest metadaną niezależną od trwającego dźwięku/animacji akcji gry, nie treścią wymagającą serializacji.';
 
 
 --
@@ -15106,5 +15148,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict R5KAQYu11vc1iC050sobgAhmvxlYSWaCW9EkrhWZrBgtWjwPSxw7naUd6utXKki
+\unrestrict bpaS1O32LHfx0vER7PTjlR1TYG182leoxW9opOjUOSPORzeaCXdBMDKGzdEucgA
 
