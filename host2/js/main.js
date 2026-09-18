@@ -7,7 +7,7 @@
 // snap-to-grid z dzisiejszego host.js (kosmetyka do dostrojenia wizualnie
 // później, nie architektura).
 
-import { initI18n, setUiLang } from "../../translation/translation.js?v=v2026-09-18T20544";
+import { initI18n, setUiLang, t } from "../../translation/translation.js?v=v2026-09-18T20544";
 import { startKeepAlive } from "../../js/core/keep-alive.js?v=v2026-09-18T20544";
 import { sb } from "../../js/core/supabase.js?v=v2026-09-18T20544";
 import { createSubscription } from "../../js/core/game-state-subscribe.js?v=v2026-09-18T20544";
@@ -131,6 +131,14 @@ async function main() {
       // słownika i namalować tytuł jeszcze starym językiem (zauważone na
       // żywo: zmiana na "en" nie zmieniała od razu treści paperText1).
       const lang = row.detail?.settings?.uiLang;
+      // TYMCZASOWA diagnostyka (do usunięcia po znalezieniu przyczyny) --
+      // e2e: "zmiana języka w Control propaguje się do Hosta" -- #paperText1
+      // zostaje po polsku mimo zmiany na "en" w Control, deterministycznie
+      // (nie flaky). console.warn, nie .log -- tests/e2e/control2.spec.js's
+      // instrumentAnon() dla anon kontekstów (host/buzzer/display) łapie
+      // WYŁĄCZNIE error/warning, nie ma tam odpowiednika [e2e-diag-state]
+      // dla zwykłych console.log jak w instrumentPage() dla Control.
+      console.warn(`[e2e-diag-host] onRow: rev=${row.rev} lang=${lang} appliedLang=${appliedLang}`);
       if (lang && lang !== appliedLang) {
         // appliedLang ustawiane DOPIERO po sukcesie -- jeśli setUiLang()
         // rzuci (np. przejściowy błąd sieci przy dynamicznym imporcie
@@ -141,11 +149,13 @@ async function main() {
         try {
           await setUiLang(lang, { persist: true, updateUrl: true, apply: true });
           appliedLang = lang;
+          console.warn(`[e2e-diag-host] setUiLang OK, appliedLang=${appliedLang}`);
         } catch (e) {
           console.warn("[host2] setUiLang nie powiodło się, spróbuję ponownie przy kolejnym wierszu:", e);
         }
       }
       await hostTheme.apply(row);
+      console.warn(`[e2e-diag-host] przed render(): t(roundTitleDuelBuzzer)="${t("control.roundsHost.roundTitleDuelBuzzer", { round: 1 })}"`);
       renderer.render(row);
       coverLogo.apply(row);
     },
