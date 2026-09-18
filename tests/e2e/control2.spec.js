@@ -1050,8 +1050,17 @@ test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśni�
 test("control2: mnożnik rundy — runda 4. z domyślnym ×2 faktycznie przemnaża bank", async ({ page, browser }, testInfo) => {
   await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
   const roundQ = (n) => ({ ord: n, text: `Pytanie rundowe ${n}`, answers: [{ ord: 1, text: "Jedyna odpowiedź", fixed_points: 40 }] });
+  // 5. pytanie (nieużywane) tylko po to, żeby pula NIE wyczerpała się po
+  // rundzie 4 -- z dokładnie 4 pytaniami R9's gałąź ③ ("pula wyczerpana")
+  // przenosiła grę PROSTO do r_gameEnd zaraz po "Zakończ rundę", zanim
+  // asercja "Alfa: 200" zdążyła cokolwiek sprawdzić -- na tym ekranie nie
+  // ma już paska statusu z wynikiem drużyn wcale (inny render, patrz
+  // ui.js's renderEndScreen). Silnik liczył mnożnik CAŁKOWICIE poprawnie
+  // przez cały czas (potwierdzone diagnostyką [e2e-diag-state] na żywo:
+  // totals.A=200 dokładnie w momencie przejścia step -> r_gameEnd) -- to
+  // był test sprawdzający złą rzecz w złym momencie, nie bug aplikacji.
   const game = await makeGame(page, `E2E-CONTROL2-MULTIPLIER-${Date.now()}`, {
-    roundQuestions: [roundQ(1), roundQ(2), roundQ(3), roundQ(4)],
+    roundQuestions: [roundQ(1), roundQ(2), roundQ(3), roundQ(4), roundQ(5)],
   });
   const contexts = [];
   try {
