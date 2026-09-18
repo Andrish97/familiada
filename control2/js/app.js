@@ -373,23 +373,11 @@ async function main() {
   let externalRefreshInFlight = false;
   rt(doorbellTopic(gameId)).onBroadcast("rev", async (msg) => {
     const rev = msg?.payload?.rev;
-    // TYMCZASOWA diagnostyka (do usunięcia po znalezieniu przyczyny) --
-    // e2e: "mnożnik rundy" -- Alfa: 200 nigdy się nie pojawia po "Zakończ
-    // rundę" w rundzie 4. Silnik (engine.js) w izolacji liczy to poprawnie
-    // (potwierdzone node'owym repro), więc podejrzenie pada na TEN tor:
-    // hydrate() wywołany dzwonkiem po cudzym zapisie (Buzzer pisze
-    // BEZPOŚREDNIO, z pominięciem dispatchGated()'s kolejki) mógłby
-    // nadpisać state.rounds STARSZYM wierszem, jeśli dotrze PO lokalnej
-    // mutacji END_ROUND, ale przed/po jej własnym, już zakolejkowanym
-    // commit()'em -- ten tor nie jest w ogóle chroniony kolejką
-    // dispatchGated (osobny, niezależny listener).
-    console.log(`[e2e-diag-state] doorbell: rev=${rev} store.state.rev=${store.state.rev}`);
     if (typeof rev !== "number" || rev <= store.state.rev) return;
     if (externalRefreshInFlight) return;
     externalRefreshInFlight = true;
     try {
       const expiredNow = await store.hydrate();
-      console.log(`[e2e-diag-state] doorbell: hydrate() zakończony, store.state.rev=${store.state.rev} totals=${JSON.stringify(store.state.rounds?.totals)}`);
       await applyExpiredTimersOnResume(expiredNow);
     } finally {
       externalRefreshInFlight = false;
