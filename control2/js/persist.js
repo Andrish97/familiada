@@ -64,5 +64,19 @@ export function createPersist(gameId) {
     return data;
   }
 
-  return { write, setLock };
+  // Migracja 267 -- osobne, lekkie RPC: jsonb_set WYŁĄCZNIE na
+  // detail.settings.uiLang, celowo z pominięciem sprawdzania locked_until
+  // (język operatora jest metadaną niezależną od trwającego dźwięku/
+  // animacji akcji gry -- patrz komentarz w migracji). Nie przechodzi przez
+  // write() ani przez pełny snapshot `detail`.
+  async function setUiLang(lang) {
+    const { data, error } = await sb().rpc("game_state_set_ui_lang", {
+      p_game_id: gameId,
+      p_ui_lang: lang,
+    });
+    if (error) throwForRpcError(error);
+    return data;
+  }
+
+  return { write, setLock, setUiLang };
 }

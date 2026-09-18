@@ -240,5 +240,21 @@ export function createStore(gameId) {
     }
   }
 
-  return { state, subscribe, emit, hydrate, commit, setLock, applyRow };
+  // Migracja 267 — WYŁĄCZNIE detail.settings.uiLang, przez osobne, lekkie
+  // RPC (persist.setUiLang), celowo NIE przez _writeQueue/commit(): język
+  // operatora jest metadaną niezależną od reszty rozgrywki (zgłoszone: nie
+  // ma czekać w kolejce na koniec dźwięku/animacji trwającej akcji gry —
+  // w przeciwieństwie do commit()/setLock() ta funkcja świadomie omija
+  // zarówno kolejkę, jak i serwerowy locked_until, patrz komentarz w
+  // migracji i w persist.js).
+  async function setUiLang(lang) {
+    state.settings.uiLang = lang;
+    emit();
+    const row = await persist.setUiLang(lang);
+    applyRow(row);
+    emit();
+    ringDoorbell(gameId, row.rev);
+  }
+
+  return { state, subscribe, emit, hydrate, commit, setLock, setUiLang, applyRow };
 }

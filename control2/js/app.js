@@ -96,7 +96,6 @@ function applyGameSettingsToState(settings, state) {
 }
 
 import { createStore } from "./store.js?v=v2026-09-18T21165";
-import { LockedError } from "./persist.js?v=v2026-09-18T21165";
 import { createEngine } from "./engine.js?v=v2026-09-18T21165";
 import { createActionGate } from "./actionGate.js?v=v2026-09-18T21165";
 import { createDevices } from "./devices.js?v=v2026-09-18T21165";
@@ -246,32 +245,19 @@ async function main() {
   // patrz *2/js/main.js). Nieograniczone do fazy przedmeczowej — operator
   // może przełączyć język w dowolnym momencie rozgrywki.
   if (store.state.settings.uiLang !== getUiLang()) {
-    store.state.settings.uiLang = getUiLang();
-    await store.commit();
+    await store.setUiLang(getUiLang());
   }
   window.addEventListener("i18n:lang", async (event) => {
     const nextLang = event?.detail?.lang;
     if (!nextLang || store.state.settings.uiLang === nextLang) return;
-    store.state.settings.uiLang = nextLang;
-    // Migracja 264: game_state_write odrzuca zapis (LockedError), dopóki
-    // trwa locked_until poprzedniej akcji (dźwięk/animacja) — zgłoszone e2e:
-    // zmiana języka tuż po akcji gry (np. "Rozpocznij rundę") potrafiła
-    // trafić w to okno. Ten listener nie miał żadnego catch, więc
-    // LockedError z store.commit() kończył jako nieobsłużony wyjątek —
-    // zmiana ginęła bez śladu, Host nigdy jej nie widział (deterministycznie,
-    // nie flaky — okno blokady jest przewidywalnie długie). busy() niżej to
-    // ten sam klencki odpowiednik locked_until (dispatchGatedNow ustawia go
-    // 1:1 z tym samym `ms`, które idzie do store.setLock) — odczekaj aż
-    // zniknie, a na resztkowy wyścig (setLock jeszcze w locie) spróbuj raz
-    // jeszcze po złapanym LockedError.
-    while (busy()) await new Promise((resolve) => setTimeout(resolve, 100));
-    try {
-      await store.commit();
-    } catch (e) {
-      if (!(e instanceof LockedError)) throw e;
-      await new Promise((resolve) => setTimeout(resolve, 300));
-      await store.commit();
-    }
+    // Migracja 267: osobne, lekkie RPC (jsonb_set WYŁĄCZNIE na
+    // detail.settings.uiLang) — świadomie z pominięciem store.commit()/
+    // locked_until (migracja 264). Zgłoszone: język operatora jest metadaną
+    // niezależną od reszty rozgrywki, nie ma czekać w kolejce na koniec
+    // dźwięku/animacji trwającej akcji gry (wcześniejsza wersja tego
+    // listenera właśnie tak robiła i w 100% deterministyczny sposób gubiła
+    // zmianę, gdy trafiła w to okno — patrz historia commitów).
+    await store.setUiLang(nextLang);
   });
 
   const engine = createEngine({
