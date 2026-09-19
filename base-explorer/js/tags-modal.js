@@ -7,13 +7,15 @@
 //
 // UWAGA: ten plik nie zna nic o SEARCH/TAG view. To jest czysty modal.
 
-import { sb } from "../../js/core/supabase.js?v=v2026-09-19T22270";
-import { updateChecked, ROW_GONE } from "../../js/core/db-guard.js?v=v2026-09-19T22270";
-import { acquireResourceLock, acquireResourceLocks } from "../../js/core/resource-lock.js?v=v2026-09-19T22270";
-import { alertModal } from "../../js/core/modal.js?v=v2026-09-19T22270";
-import { enterModalSheet, exitModalSheet } from "../../js/core/modal-sheet.js?v=v2026-09-19T22270";
-import { t } from "../../translation/translation.js?v=v2026-09-19T22270";
-import { listQuestionTags, listAllQuestions } from "./repo.js?v=v2026-09-19T22270";
+import { sb } from "../../js/core/supabase.js?v=v2026-09-19T22273";
+import { updateChecked, ROW_GONE } from "../../js/core/db-guard.js?v=v2026-09-19T22273";
+import { acquireResourceLock, acquireResourceLocks } from "../../js/core/resource-lock.js?v=v2026-09-19T22273";
+import { alertModal } from "../../js/core/modal.js?v=v2026-09-19T22273";
+import { enterModalSheet, exitModalSheet } from "../../js/core/modal-sheet.js?v=v2026-09-19T22273";
+import { t } from "../../translation/translation.js?v=v2026-09-19T22273";
+import { listQuestionTags, listAllQuestions } from "./repo.js?v=v2026-09-19T22273";
+
+const btnBack = document.getElementById("btnBack");
 
 /* ================= Utils ================= */
 
@@ -720,7 +722,7 @@ export async function openTagsModal(state, opts = {}) {
 
   // OPEN
   E.overlay.style.display = "grid";
-  enterModalSheet(E.overlay);
+  enterModalSheet(E.overlay, { backBtn, onClose: () => close(false) });
   document.addEventListener("keydown", onKey);
 
   // X wszędzie zamyka modal

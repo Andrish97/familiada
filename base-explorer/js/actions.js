@@ -11,11 +11,11 @@ import {
   selectionToggle,
   rememberBrowseLocation,
   restoreBrowseLocation,
-} from "./state.js?v=v2026-09-19T22270";
+} from "./state.js?v=v2026-09-19T22273";
 
-import { importGame } from "../../js/pages/builder-import-export.js?v=v2026-09-19T22270";
+import { importGame } from "../../js/pages/builder-import-export.js?v=v2026-09-19T22273";
 
-import { renderAll, renderToolbar, renderList, renderTree, renderTags } from "./render.js?v=v2026-09-19T22270";
+import { renderAll, renderToolbar, renderList, renderTree, renderTags } from "./render.js?v=v2026-09-19T22273";
 
 import {
   listQuestionsByCategory,
@@ -23,18 +23,21 @@ import {
   listCategories,
   listQuestionTags,
   listCategoryTags
-} from "./repo.js?v=v2026-09-19T22270";
+} from "./repo.js?v=v2026-09-19T22273";
 
-import { showContextMenu, hideContextMenu } from "./context-menu.js?v=v2026-09-19T22270";
-import { openTagsModal } from "./tags-modal.js?v=v2026-09-19T22270";
-import { initExportModal } from "./export-modal.js?v=v2026-09-19T22270";
-import { initQuestionModal } from "./question-modal.js?v=v2026-09-19T22270";
-import { sb } from "../../js/core/supabase.js?v=v2026-09-19T22270";
-import { updateChecked, updateCheckedMany, ROW_GONE } from "../../js/core/db-guard.js?v=v2026-09-19T22270";
-import { acquireResourceLock, acquireResourceLocks } from "../../js/core/resource-lock.js?v=v2026-09-19T22270";
-import { alertModal, confirmModal } from "../../js/core/modal.js?v=v2026-09-19T22270";
-import { t } from "../../translation/translation.js?v=v2026-09-19T22270";
-import { addLongPress, addDoubleTap, isTouchContextMenuWindow } from "./mobile.js?v=v2026-09-19T22270";
+import { showContextMenu, hideContextMenu } from "./context-menu.js?v=v2026-09-19T22273";
+import { openTagsModal } from "./tags-modal.js?v=v2026-09-19T22273";
+import { initExportModal } from "./export-modal.js?v=v2026-09-19T22273";
+import { initQuestionModal } from "./question-modal.js?v=v2026-09-19T22273";
+import { sb } from "../../js/core/supabase.js?v=v2026-09-19T22273";
+import { updateChecked, updateCheckedMany, ROW_GONE } from "../../js/core/db-guard.js?v=v2026-09-19T22273";
+import { acquireResourceLock, acquireResourceLocks } from "../../js/core/resource-lock.js?v=v2026-09-19T22273";
+import { alertModal, confirmModal } from "../../js/core/modal.js?v=v2026-09-19T22273";
+import { t } from "../../translation/translation.js?v=v2026-09-19T22273";
+import { addLongPress, addDoubleTap, isTouchContextMenuWindow } from "./mobile.js?v=v2026-09-19T22273";
+import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../js/core/modal-sheet.js?v=v2026-09-19T22273";
+
+const btnBack = document.getElementById("btnBack");
 
 let exportModal = null;
 
@@ -1097,7 +1100,9 @@ function openRenameModal({ title, value = "", maxLen = 80 } = {}) {
     modal._wired = true;
 
     modal.addEventListener("click", (e) => {
-      // klik w tło zamyka
+      // klik w tło zamyka -- ale nie w trybie sheet (mobile), gdzie
+      // jedynym wyjściem ma być przycisk wstecz w topbarze.
+      if (modal.classList.contains("modal--sheet") && isSheetViewport()) return;
       if (e.target && e.target.matches?.("[data-close]")) {
         modal._resolver?.(null);
       }
@@ -1135,6 +1140,7 @@ function openRenameModal({ title, value = "", maxLen = 80 } = {}) {
   input.maxLength = Number(maxLen) || 80;
 
   modal.hidden = false;
+  enterModalSheet(modal, { backBtn, onClose: () => modal._resolver?.(null) });
 
   // focus + zaznacz tekst
   setTimeout(() => {
@@ -1147,6 +1153,7 @@ function openRenameModal({ title, value = "", maxLen = 80 } = {}) {
   return new Promise((resolve) => {
     modal._resolver = (result) => {
       modal.hidden = true;
+      exitModalSheet(modal);
       modal._resolver = null;
       resolve(result);
     };

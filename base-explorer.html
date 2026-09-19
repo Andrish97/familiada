@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
-  <meta name="app-version" content="v2026-09-19T22270"/>
+  <meta name="app-version" content="v2026-09-19T22273"/>
 
   <meta charset="utf-8" />
   <meta name="mobile-web-app-capable" content="yes"/>
@@ -15,11 +15,11 @@
   <title data-i18n="baseExplorer.title">Menadżer bazy pytań</title>
   
     <!-- wspólne style aplikacji (jak w builder/manual) -->
-  <link rel="stylesheet" href="css/base.css?v=v2026-09-19T22270" />
-  <link rel="stylesheet" href="css/builder.css?v=v2026-09-19T22270" />
-  <link rel="stylesheet" href="base-explorer/base-explorer.css?v=v2026-09-19T22270" />
+  <link rel="stylesheet" href="css/base.css?v=v2026-09-19T22273" />
+  <link rel="stylesheet" href="css/builder.css?v=v2026-09-19T22273" />
+  <link rel="stylesheet" href="base-explorer/base-explorer.css?v=v2026-09-19T22273" />
 
-  <link rel="icon" href="favicon.ico?v=v2026-09-19T22270"/>
+  <link rel="icon" href="favicon.ico?v=v2026-09-19T22273"/>
   <script>
     document.documentElement.classList.add('page-loading');
     try {
@@ -34,9 +34,9 @@
 
   <script src='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2' defer></script>
 
-  <script type="module" src="./base-explorer/js/page.js?v=v2026-09-19T22270"></script>
+  <script type="module" src="./base-explorer/js/page.js?v=v2026-09-19T22273"></script>
 
-  <script src="js/core/security-warning.js?v=v2026-09-19T22270" defer></script>
+  <script src="js/core/security-warning.js?v=v2026-09-19T22273" defer></script>
 </head>
 
 <body class="skel-body">
@@ -336,6 +336,31 @@
     </div>
   </div>
 
+  <!-- Rename modal (spójny z tagsOverlay: overlay + modal) -->
+  <div class="overlay modal--sheet" id="renameModal" hidden>
+    <div class="modal tags-modal rename-modal" role="dialog" aria-modal="true" aria-labelledby="renameModalTitle">
+
+      <div class="tagsHead">
+        <div class="mTitle" id="renameModalTitle" data-i18n="baseExplorer.rename.title">Zmień nazwę</div>
+        <button class="btn sm" id="renameModalClose" type="button" aria-label="Zamknij" data-i18n-aria-label="baseExplorer.common.close">✕</button>
+      </div>
+
+      <div class="mSub" id="renameModalHelp" data-i18n="baseExplorer.rename.help">Wpisz nową nazwę i zapisz.</div>
+
+      <div class="renameBody">
+        <input id="renameModalInput" class="inp renameInput" type="text" autocomplete="off" />
+      </div>
+
+      <div class="tagsFoot">
+        <div class="tagsFootSpacer"></div>
+        <button class="btn sm gold" id="renameModalSave" type="button" data-i18n="baseExplorer.common.save">Zapisz</button>
+      </div>
+
+      <div id="renameModalErr" class="importMsg" style="display:none;"></div>
+
+    </div>
+  </div>
+
   </main>
 
   <!-- KONTEKST MENU (prawy klik) -->
@@ -344,33 +369,6 @@
   <!-- MODALE (wstrzykiwane JS-em) -->
   <div id="modalRoot"></div>
 
-  
-  <!-- Rename modal (spójny z tagsOverlay: overlay + modal) -->
-  <div class="overlay" id="renameModal" hidden>
-    <div class="modal tags-modal rename-modal" role="dialog" aria-modal="true" aria-labelledby="renameModalTitle">
-  
-      <div class="tagsHead">
-        <div class="mTitle" id="renameModalTitle" data-i18n="baseExplorer.rename.title">Zmień nazwę</div>
-        <button class="btn sm" id="renameModalClose" type="button" aria-label="Zamknij" data-i18n-aria-label="baseExplorer.common.close">✕</button>
-      </div>
 
-      <div class="mSub" id="renameModalHelp" data-i18n="baseExplorer.rename.help">Wpisz nową nazwę i zapisz.</div>
-  
-      <div class="renameBody">
-        <input id="renameModalInput" class="inp renameInput" type="text" autocomplete="off" />
-      </div>
-  
-      <div class="tagsFoot">
-        <div class="tagsFootSpacer"></div>
-        <button class="btn sm gold" id="renameModalSave" type="button" data-i18n="baseExplorer.common.save">Zapisz</button>
-      </div>
-  
-      <div id="renameModalErr" class="importMsg" style="display:none;"></div>
-  
-    </div>
-  </div>
-
-
-  
 </body>
 </html>

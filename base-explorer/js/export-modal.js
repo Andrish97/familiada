@@ -1,10 +1,10 @@
 // /base-explorerjs/export-modal.js
 // Modal eksportu: open() zwraca Promise z wynikiem {ok, payload}
 
-import { t } from "../../translation/translation.js?v=v2026-09-19T22270";
-import { TYPES as GAME_TYPES, RULES } from "../../js/core/game-validate.js?v=v2026-09-19T22270";
-import { validateQuestionForType } from "../../js/core/base-export-validate.js?v=v2026-09-19T22270";
-import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../js/core/modal-sheet.js?v=v2026-09-19T22270";
+import { t } from "../../translation/translation.js?v=v2026-09-19T22273";
+import { TYPES as GAME_TYPES, RULES } from "../../js/core/game-validate.js?v=v2026-09-19T22273";
+import { validateQuestionForType } from "../../js/core/base-export-validate.js?v=v2026-09-19T22273";
+import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../js/core/modal-sheet.js?v=v2026-09-19T22273";
 
 // Kolejność = pozycje suwaka typu w UI (0/1/2, patrz typeIndex). GAME_TYPES
 // to obiekt nazwa->wartość, nie tablica, więc kolejność zostaje jawna tutaj
@@ -14,6 +14,7 @@ import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../js/core/
 const TYPES = [GAME_TYPES.POLL_TEXT, GAME_TYPES.POLL_POINTS, GAME_TYPES.PREPARED];
 
 const $ = (id) => document.getElementById(id);
+const btnBack = document.getElementById("btnBack");
 
 function show(el, on) {
   if (!el) return;
@@ -310,7 +311,7 @@ export function initExportModal({ state } = {}) {
     updateTypeUI();
 
     show(overlay, true);
-    enterModalSheet(overlay);
+    enterModalSheet(overlay, { backBtn, onClose: () => close({ ok: false }) });
     setTimeout(() => xName?.focus(), 0);
 
     return new Promise((resolve) => {

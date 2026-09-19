@@ -1,10 +1,11 @@
 // /base-explorerjs/question-modal.js
 // Modal pytania: open() zwraca Promise z wynikiem {ok,...}
 
-import { t } from "../../translation/translation.js?v=v2026-09-19T22270";
-import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../js/core/modal-sheet.js?v=v2026-09-19T22270";
+import { t } from "../../translation/translation.js?v=v2026-09-19T22273";
+import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../js/core/modal-sheet.js?v=v2026-09-19T22273";
 
 const $ = (id) => document.getElementById(id);
+const btnBack = document.getElementById("btnBack");
 
 function show(el, on) {
   if (!el) return;
@@ -165,7 +166,7 @@ export function initQuestionModal({ state } = {}) {
     renderAnswers();
     updateSumUI();
     show(overlay, true);
-    enterModalSheet(overlay);
+    enterModalSheet(overlay, { backBtn, onClose: () => close({ ok: false }) });
     setTimeout(() => qText?.focus(), 0);
 
     return new Promise((resolve) => {
