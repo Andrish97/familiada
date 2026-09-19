@@ -4,7 +4,7 @@
 // (topbar i stopka zostają widoczne) — patrz css/base.css, sekcja
 // "Modal sheet (mobile)".
 
-import { t } from "../../translation/translation.js?v=v2026-09-19T22270";
+import { t } from "../../translation/translation.js?v=v2026-09-19T22273";
 
 const SHEET_MQ = "(max-width:600px)";
 // .tagsHead – nagłówek modali base-explorer (tagi/eksport/pytanie), ta sama
