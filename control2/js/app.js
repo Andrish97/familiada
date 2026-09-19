@@ -609,11 +609,16 @@ async function main() {
     }
   }
   function requestGsModalClose() {
+    console.log("[e2e-diag] requestGsModalClose() wysyła gs:requestClose");
     gsFrameEl?.contentWindow?.postMessage({ type: "gs:requestClose" }, "*");
   }
   document.getElementById("btnOpenGsModal")?.addEventListener("click", openGsModal);
-  gsOverlayEl?.addEventListener("click", (ev) => { if (ev.target === gsOverlayEl) requestGsModalClose(); });
+  gsOverlayEl?.addEventListener("click", (ev) => {
+    console.log("[e2e-diag] klik na gsOverlayEl, ev.target===gsOverlayEl:", ev.target === gsOverlayEl, "ev.target:", ev.target?.id || ev.target?.tagName);
+    if (ev.target === gsOverlayEl) requestGsModalClose();
+  });
   window.addEventListener("message", (ev) => {
+    console.log("[e2e-diag] app.js message listener, data:", JSON.stringify(ev.data), "source match:", ev.source === gsFrameEl?.contentWindow);
     if (ev.data?.type === "gs:close" && ev.source === gsFrameEl?.contentWindow) onGsModalClose();
   });
 

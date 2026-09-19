@@ -170,8 +170,12 @@ if (_isModal) {
   // locków (tylko isDirty, confirmModal, t -- wszystkie dostępne od razu na
   // poziomie modułu), więc też wpięte tu, synchronicznie.
   async function tryClose() {
+    console.log("[e2e-diag] tryClose() wywołane, isDirty:", isDirty);
     if (isDirty) {
-      if (!await confirmModal({ text: t("gameSettings.unsavedConfirmModal") || "Masz niezapisane zmiany. Czy chcesz zamknąć ustawienia?" })) return;
+      if (!await confirmModal({ text: t("gameSettings.unsavedConfirmModal") || "Masz niezapisane zmiany. Czy chcesz zamknąć ustawienia?" })) {
+        console.log("[e2e-diag] tryClose() przerwane przez confirmModal (odmowa)");
+        return;
+      }
     }
     // Reset defaultValue na wszystkich inputach żeby przeglądarka nie pokazała
     // natywnego "Masz niezapisane zmiany" przy nawigacji iframe
@@ -179,10 +183,12 @@ if (_isModal) {
       if (el.type === "checkbox" || el.type === "radio") el.defaultChecked = el.checked;
       else el.defaultValue = el.value;
     });
+    console.log("[e2e-diag] tryClose() wysyła gs:close do window.parent");
     window.parent.postMessage({ type: "gs:close" }, "*");
   }
 
   window.addEventListener("message", (ev) => {
+    console.log("[e2e-diag] game-settings2 message listener, data:", JSON.stringify(ev.data));
     if (ev.data?.type === "gs:requestClose") tryClose();
   });
 
