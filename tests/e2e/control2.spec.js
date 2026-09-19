@@ -1284,6 +1284,21 @@ test("control2: dźwięk ze źródła Wyświetlacz — odblokowanie, głośnoś�
     await page.getByRole("button", { name: "Zmień ustawienia" }).click();
     await expect(page.locator("#gsOverlay")).not.toHaveClass(/hidden/, { timeout: 5000 });
     const gsFrame = page.frameLocator("#gsFrame");
+    // Poczekaj, aż async inicjalizacja modala (js/pages/game-settings2.js's
+    // główna funkcja init -- await requireAuth()/guardResourceLock()/
+    // guardResourceBusy(), realnie 0.5-1s RPC-ów) faktycznie się skończy,
+    // ZANIM zaczniemy klikać po sidebarze. #gsTeamA staje się widoczny
+    // dopiero jako efekt setActiveCat("teams") na samym końcu tego łańcucha
+    // -- to ten sam, już sprawdzony wzorzec co w teście "modal ustawień
+    // gry" niżej. Bez tego kliknięcie kategorii "sound" potrafiło trafić w
+    // to samo okno wyścigu co #btnToggleSidebar (naprawione w poprzednim
+    // commicie): sidebar?.addEventListener("click", ...setActiveCat...) w
+    // js/pages/game-settings2.js jest wpięty dopiero w tym łańcuchu, więc
+    // klik na ".gs-sidebar-item[data-cat=sound]" trafiający przed jego
+    // zakończeniem był no-opem -- renderSound() nigdy się nie wykonywał
+    // (diagnostyka .evaluate() potwierdziła: #gsContentInner zostawał z
+    // nietkniętym placeholderem "<!-- rendered by JS -->" z markupu).
+    await expect(gsFrame.locator("#gsTeamA")).toBeVisible({ timeout: 10000 });
     // W trybie modal (iframe z control2) sidebar startuje jako schowany
     // drawer (css/game-settings.css's .gs-modal-mode .gs-sidebar — domyślnie
     // display:none, otwierany dopiero po kliknięciu ☰ #btnToggleSidebar,
@@ -1291,19 +1306,6 @@ test("control2: dźwięk ze źródła Wyświetlacz — odblokowanie, głośnoś�
     // .gs-sidebar-item istnieje w DOM, ale nie jest "visible" dla Playwrighta.
     await gsFrame.locator("#btnToggleSidebar").click();
     await gsFrame.locator('.gs-sidebar-item[data-cat="sound"]').click();
-    // TYMCZASOWA diagnostyka (do usunięcia po znalezieniu przyczyny) --
-    // sidebar drawer fix (poprzedni commit) naprawił klik na kategorię,
-    // ale input.sfx-vol[data-sfx-vol="round_transition"] wciąż w ogóle nie
-    // istnieje w DOM po kliknięciu -- sprawdź, czy renderSound() w ogóle
-    // się wykonał (i.js/pages/game-settings2.js's renderCat()).
-    await gsFrame.locator("body").waitFor({ state: "attached" });
-    const dbg = await gsFrame.locator("#gsContentInner").evaluate((el) => ({
-      catTitle: el.querySelector(".gs-cat-title")?.textContent,
-      hasSfxTable: !!el.querySelector("#sfxTableGs"),
-      sfxRowCount: el.querySelectorAll(".sfx-row").length,
-      innerHTMLStart: el.innerHTML.slice(0, 300),
-    }));
-    console.log("[e2e-diag-sound-test]", JSON.stringify(dbg));
     const transitionSlider = gsFrame.locator('input.sfx-vol[data-sfx-vol="round_transition"]');
     await expect(transitionSlider).toBeVisible({ timeout: 10000 });
     // .fill() na <input type="range"> nie zawsze niezawodnie odpala "input"
