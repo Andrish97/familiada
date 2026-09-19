@@ -1316,7 +1316,16 @@ test("control2: dźwięk ze źródła Wyświetlacz — odblokowanie, głośnoś�
       el.value = "70";
       el.dispatchEvent(new Event("input", { bubbles: true }));
     });
-    await gsFrame.getByRole("button", { name: "Zapisz wszystko" }).click();
+    const btnSaveAll = gsFrame.getByRole("button", { name: "Zapisz wszystko" });
+    await btnSaveAll.click();
+    // saveAll() (js/pages/game-settings2.js) jest asynchroniczny (realny
+    // zapis do bazy) i czyści isDirty dopiero PO zakończeniu -- klik na tło
+    // modala (niżej) trafiający przed tym momentem widzi isDirty=true i
+    // tryClose() pokazuje confirmModal() "Masz niezapisane zmiany", którego
+    // nic tu nie obsługuje -- modal wisi w nieskończoność, #gsOverlay nigdy
+    // nie znika. btnSaveAll.disabled wraca na false dopiero w finally{} po
+    // saveAll(), więc to niezawodny, już istniejący sygnał zakończenia.
+    await expect(btnSaveAll).toBeEnabled({ timeout: 10000 });
     await page.locator("#gsOverlay").click({ position: { x: 5, y: 5 } });
     await page.locator("#gsOverlay").waitFor({ state: "hidden", timeout: 10000 });
 
