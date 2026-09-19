@@ -1153,6 +1153,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 
   updateBackButtonLabel();
+  // Znacznik dla contact-modal.js -- patrz js/pages/bases.js dla wyjaśnienia.
+  if (btnBack) btnBack.dataset.sheetBack = "1";
   btnBack?.addEventListener("click", () => {
     if (handleSheetBack()) return;
     location.href = getBackLink();

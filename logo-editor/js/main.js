@@ -1637,6 +1637,8 @@ async function boot(){
    armNavGuard();
 
   // topbar
+   // Znacznik dla contact-modal.js -- patrz js/pages/bases.js dla wyjaśnienia.
+   if (btnBack) btnBack.dataset.sheetBack = "1";
    btnBack?.addEventListener("click", async () => {
      if (handleSheetBack()) return;
      if (shouldBlockNav() && !(await confirmCloseIfDirty())) return;

@@ -9,23 +9,23 @@ let isSubmitting = false;
 // fullscreen z ensureMobileStyle().
 let usedSheetMode = false;
 
-// Znane id przycisków wstecz w topbarze poszczególnych stron (patrz
-// js/core/modal-sheet.js) -- ten plik jest importowany przez wiele stron
-// naraz i nie wie z góry, na której akurat się znalazł, więc bierze
-// pierwszy pasujący, który faktycznie jest w DOM.
-const BACK_BTN_IDS = ["btnBack", "btnBackSheet", "btnBackToBuilder", "btnGoBuilder", "btnBackBrowse"];
+// Ten plik jest importowany przez WSZYSTKIE strony (nie tylko te 7 objęte
+// sheet mode) i nie wie z góry, na której się znalazł. Szukanie po samych
+// id ("btnBack" itp.) było błędem -- te id są bardzo częste w całej
+// aplikacji (editor.html, account.html, control.html, poll-*.html...), a
+// tamte strony NIGDY nie dostały strażnika handleSheetBack() w swoim
+// handlerze. Skutek: kliknięcie takiego "przejętego" przycisku realnie
+// nawigowało z powrotem zamiast zamykać modal kontaktu.
+// Każda z 7 stron objętych sheet mode oznacza swój przycisk wstecz
+// atrybutem data-sheet-back="1" dokładnie w miejscu, gdzie dodaje
+// handleSheetBack() do jego handlera (patrz np. js/pages/bases.js) --
+// więc szukamy WYŁĄCZNIE takich, jawnie oznaczonych przycisków.
 function findPageBackBtn() {
-  // marketplace.html ma DWA przyciski wstecz (btnGoBuilder/btnBackBrowse),
+  const candidates = Array.from(document.querySelectorAll('[data-sheet-back="1"]'));
+  // marketplace.html ma DWA takie przyciski (btnGoBuilder/btnBackBrowse),
   // widoczny jest zawsze dokładnie jeden -- preferuj ten, który akurat nie
-  // jest ukryty, zanim weźmiesz pierwszy pasujący z listy.
-  let firstAny = null;
-  for (const id of BACK_BTN_IDS) {
-    const el = document.getElementById(id);
-    if (!el) continue;
-    if (!firstAny) firstAny = el;
-    if (!el.hidden && el.style.display !== "none") return el;
-  }
-  return firstAny;
+  // jest ukryty.
+  return candidates.find((el) => !el.hidden && el.style.display !== "none") || candidates[0] || null;
 }
 
 // Modal kontaktu buduje własny DOM niezależnie od .overlay/.modal ze
@@ -208,15 +208,24 @@ export async function openContactModal(opts = {}) {
     if (subjectField) subjectField.style.display = "";
   }
 
-  // Na telefonie: jeśli strona ma main.wrap/.explorer (rozbudowane modale
-  // sheet, patrz css/base.css "Modal sheet (mobile)"), modal kontaktu
-  // dołącza do tego samego mechanizmu -- wstawiony do main, przejmuje
-  // przycisk wstecz w topbarze -- zamiast własnego, samodzielnego
-  // fullscreena. Ustalane przy KAŻDYM otwarciu (nie raz w ensureModal),
-  // bo strona/main mogły się jeszcze nie wyrenderować przy pierwszym imporcie.
+  // Na telefonie: jeśli strona ma main.wrap/.explorer ORAZ jawnie
+  // oznaczony przycisk wstecz (data-sheet-back="1" -- patrz
+  // findPageBackBtn()), modal kontaktu dołącza do tego samego mechanizmu
+  // co pozostałe rozbudowane modale (css/base.css "Modal sheet (mobile)")
+  // -- wstawiony do main, przejmuje przycisk wstecz w topbarze -- zamiast
+  // własnego, samodzielnego fullscreena. Bez takiego przycisku NIE wolno
+  // wchodzić w ten tryb: main.wrap/.explorer to bardzo częsty, ogólny
+  // wzorzec layoutu używany też przez strony spoza sheet mode (editor.html,
+  // account.html, control.html, strony ankiet...), których przyciski
+  // wstecz nie sprawdzają handleSheetBack() -- kliknięcie takiego,
+  // "przejętego" na siłę przycisku realnie nawigowałoby z powrotem
+  // zamiast zamykać modal. Ustalane przy KAŻDYM otwarciu (nie raz w
+  // ensureModal), bo strona/main mogły się jeszcze nie wyrenderować przy
+  // pierwszym imporcie.
   const main = document.querySelector("main.wrap, main.explorer");
-  usedSheetMode = !!main;
-  if (main) {
+  const backBtn = findPageBackBtn();
+  usedSheetMode = !!main && !!backBtn;
+  if (usedSheetMode) {
     modalEl.classList.add("modal--sheet");
     const footer = main.querySelector(":scope > .footer");
     if (footer) main.insertBefore(modalEl, footer);
@@ -226,7 +235,7 @@ export async function openContactModal(opts = {}) {
   modalEl.style.display = "grid";
   document.body.style.overflow = "hidden";
   if (usedSheetMode) {
-    enterModalSheet(modalEl, { backBtn: findPageBackBtn(), onClose: closeContactModal });
+    enterModalSheet(modalEl, { backBtn, onClose: closeContactModal });
   }
   await prefillEmail();
   const emailInp = document.getElementById("cModalEmail");

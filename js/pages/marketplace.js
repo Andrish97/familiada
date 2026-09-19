@@ -633,6 +633,10 @@ function esc(str) {
    Wire events
 ========================================================= */
 function wireEvents() {
+  // Znaczniki dla contact-modal.js -- patrz js/pages/bases.js dla wyjaśnienia.
+  if (els.btnGoBuilder) els.btnGoBuilder.dataset.sheetBack = "1";
+  if (els.btnBackBrowse) els.btnBackBrowse.dataset.sheetBack = "1";
+
   // Nav
   els.btnGoBuilder?.addEventListener("click", () => {
     if (handleSheetBack()) return;

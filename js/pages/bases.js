@@ -1483,6 +1483,11 @@ document.addEventListener("DOMContentLoaded", () => {
     location.href = `${page}?ret=${encodeURIComponent(getCurrentRelativeUrl())}`;
   });
 
+  // Znacznik dla contact-modal.js (współdzielony przez wiele stron poza
+  // zakresem sheet mode) -- pozwala mu znaleźć WYŁĄCZNIE przyciski, których
+  // handler faktycznie respektuje handleSheetBack(), zamiast każdego
+  // #btnBack na jakiejkolwiek stronie w aplikacji.
+  if (btnBack) btnBack.dataset.sheetBack = "1";
   btnBack?.addEventListener("click", () => {
     if (handleSheetBack()) return;
     location.href = getBackLink();

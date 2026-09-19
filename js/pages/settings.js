@@ -24,6 +24,7 @@ import { v as cacheBust } from "../core/cache-bust.js?v=v2026-09-19T23152";
 // trybu sheet, zastępuje brand w topbarze gdy modal jest otwarty (patrz
 // analogiczne rozwiązanie w builder.js).
 const btnBackSheet = document.getElementById("btnBackSheet");
+if (btnBackSheet) btnBackSheet.dataset.sheetBack = "1";
 btnBackSheet?.addEventListener("click", () => { handleSheetBack(); });
 
 const API_BASE = "/_admin_api";
@@ -3135,7 +3136,7 @@ function renderMessageDetail(msg, attachments = [], threadMessages = []) {
       body: wrapper,
       okText: "",
       showCancel: false,
-      sheet: { backBtn: btnBackSheet },
+      sheet: { backBtn: document.getElementById("btnMailBackTopbar") || btnBackSheet },
       onReady: ({ closeBtn: builtinCloseBtn }) => { modalCloseBtn = builtinCloseBtn; },
     });
   });
@@ -3491,7 +3492,7 @@ function renderReportThread(report, messages, attsByMsg = {}) {
         body: wrapper,
         okText: "",
         showCancel: false,
-        sheet: { backBtn: btnBackSheet },
+        sheet: { backBtn: document.getElementById("btnMailBackTopbar") || btnBackSheet },
         onReady: ({ closeBtn: builtinCloseBtn }) => { modalCloseBtn = builtinCloseBtn; },
       });
     });
@@ -4587,7 +4588,7 @@ function showComposePreview(greetingSelect, farewellSelect, senderSelect) {
     body: wrapper,
     okText: "",
     showCancel: false,
-    sheet: { backBtn: btnBackSheet },
+    sheet: { backBtn: document.getElementById("btnMailBackTopbar") || btnBackSheet },
     onReady: ({ closeBtn: builtinCloseBtn }) => { modalCloseBtn = builtinCloseBtn; },
   });
 }
@@ -4641,7 +4642,13 @@ function mailViewBack() {
 }
 
 function initMobileMailNav() {
-  document.getElementById("btnMailBackTopbar")?.addEventListener("click", () => mailViewBack());
+  const btnMailBack = document.getElementById("btnMailBackTopbar");
+  // Znacznik dla contact-modal.js -- patrz js/pages/bases.js dla wyjaśnienia.
+  if (btnMailBack) btnMailBack.dataset.sheetBack = "1";
+  btnMailBack?.addEventListener("click", () => {
+    if (handleSheetBack()) return;
+    mailViewBack();
+  });
   document.getElementById("btnMailComposeTopbar")?.addEventListener("click", () => showCompose());
 
   // When clicking a folder on mobile, go to list view

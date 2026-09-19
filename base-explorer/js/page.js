@@ -45,6 +45,8 @@ btnManual?.addEventListener("click", () => {
   location.href = buildManualUrl();
 });
 
+// Znacznik dla contact-modal.js -- patrz js/pages/bases.js dla wyjaśnienia.
+if (btnBack) btnBack.dataset.sheetBack = "1";
 btnBack?.addEventListener("click", () => {
   if (handleSheetBack()) return;
   // powrót do listy baz (warstwa 1)

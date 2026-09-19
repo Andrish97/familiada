@@ -1395,6 +1395,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   // builder.html nie ma naturalnego przycisku wstecz na mobile (jest
   // stroną główną) — btnBackSheet istnieje wyłącznie na potrzeby trybu
   // sheet, zastępuje brand w topbarze gdy modal jest otwarty.
+  if (btnBackSheet) btnBackSheet.dataset.sheetBack = "1";
   btnBackSheet?.addEventListener("click", () => { handleSheetBack(); });
 
   // PREVIEW

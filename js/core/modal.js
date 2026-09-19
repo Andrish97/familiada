@@ -22,15 +22,19 @@ function buildModal({
   const overlay = document.createElement("div");
   overlay.className = "overlay";
   overlay.style.background = "rgba(0,0,0,.75)";
-
-  const modal = document.createElement("div");
-  modal.className = "modal uni-modal";
   // sheet: rozbudowana treść (np. szczegóły statystyki, podgląd
   // wiadomości) przekazana przez wywołującego — na telefonie zastępuje
   // treść strony zamiast być małym oknem, patrz js/core/modal-sheet.js.
   // Krótkie confirm/alert nigdy tego nie przekazują, więc ich wygląd
-  // się nie zmienia.
-  if (sheet) modal.classList.add("modal--sheet");
+  // się nie zmienia. WAŻNE: klasa idzie na .overlay (jak w statycznym
+  // HTML wszystkich innych modali), nie na .modal — reguła CSS "ukryj
+  // resztę main.wrap" wyklucza z ukrycia po klasie .modal--sheet na
+  // BEZPOŚREDNIM dziecku main.wrap (czyli .overlay), nie na jego
+  // wewnętrznym .modal.
+  if (sheet) overlay.classList.add("modal--sheet");
+
+  const modal = document.createElement("div");
+  modal.className = "modal uni-modal";
   modal.setAttribute("role", "dialog");
   modal.setAttribute("aria-modal", "true");
   modal.setAttribute("aria-labelledby", titleId);
