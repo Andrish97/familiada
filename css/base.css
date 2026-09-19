@@ -606,6 +606,69 @@ main{
     border-top: 1px solid rgba(255,255,255,.12)
 }
 
+/* ===== Modal sheet (mobile) =====
+   Rozbudowane modale (nie confirm/alert/prompt — te mają klasę .uni-modal
+   i zostają małe) dostają na telefonie znacznik .modal--sheet. W tym
+   trybie modal nie jest już fixed-overlayem na wierzchu strony, tylko
+   zastępuje treść strony w normalnym przepływie dokumentu (tuż nad
+   stopką), analogicznie do "mobile-editing" w editor.js/editor.css.
+   Wymaga, by dany .overlay.modal--sheet był w HTML dzieckiem
+   <main class="wrap">/.explorer, umieszczonym przed .footer. */
+@media (max-width: 600px) {
+    body.sheet-open main.wrap > *:not(.footer):not(.overlay),
+    body.sheet-open main.explorer > *:not(.footer):not(.overlay) {
+        display: none;
+    }
+
+    body.sheet-open main.wrap,
+    body.sheet-open main.explorer {
+        display: flex;
+        flex-direction: column;
+        min-height: calc(100dvh - var(--topbar-h));
+    }
+
+    /* tylko aktualnie otwarty modal (.sheet-active) wchodzi w treść strony;
+       pozostałe .modal--sheet na tej samej stronie zostają ukryte, nawet
+       gdy body.sheet-open jest ustawione przez inny modal */
+    body.sheet-open .overlay.modal--sheet:not(.sheet-active) {
+        display: none !important;
+    }
+
+    body.sheet-open .overlay.modal--sheet.sheet-active {
+        position: static;
+        inset: auto;
+        background: none;
+        padding: 0;
+        display: flex !important;
+        flex: 1;
+        min-height: 0;
+    }
+
+    .modal--sheet .modal {
+        width: 100%;
+        max-width: none;
+        height: auto;
+        min-height: 100%;
+        max-height: none;
+        border-radius: 0;
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .modal--sheet .uni-head,
+    .modal--sheet .mHead {
+        position: sticky;
+        top: 0;
+        background: var(--card);
+        z-index: 1;
+    }
+
+    body.sheet-open .footer .btn-contact-footer {
+        display: none;
+    }
+}
+
 /* ===== UI Select (custom dropdown) ===== */
 .ui-select {
     position: relative;

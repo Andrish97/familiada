@@ -6,6 +6,7 @@ const uk = {
   },
   common: {
     contactBtn: "Контакт",
+    modalBack: "← Назад",
     languageLabel: "Мова",
     backToLogin: "Повернутися до входу",
     goToPanel: "Перейти до панелі",

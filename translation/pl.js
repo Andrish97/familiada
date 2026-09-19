@@ -6,6 +6,7 @@ const pl = {
   },
   common: {
     contactBtn: "Kontakt",
+    modalBack: "← Wstecz",
     languageLabel: "Język",
     backToLogin: "Wróć do logowania",
     goToPanel: "Przejdź do panelu",

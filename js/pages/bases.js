@@ -11,6 +11,7 @@ import { isGuestUser, hideForGuest } from "../core/guest-mode.js?v=v2026-09-19T1
 import { initUiSelect } from "../core/ui-select.js?v=v2026-09-19T18005";
 import { getUiLang, initI18n, t, withLangParam } from "../../translation/translation.js?v=v2026-09-19T18005";
 import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-09-19T18005";
+import { enterModalSheet, exitModalSheet, isSheetViewport } from "../core/modal-sheet.js?v=v2026-09-19T18005";
 import "../core/contact-modal.js";
 initI18n({ withSwitcher: true }).then(() => {
   document.documentElement.classList.remove('page-loading');
@@ -815,10 +816,12 @@ async function openShareModal() {
   shareRoleSelect?.setValue("editor", { silent: true });
   await renderShareModal();
   show(shareOverlay, true);
+  enterModalSheet(shareOverlay);
 }
 
 function closeShareModal() {
   show(shareOverlay, false);
+  exitModalSheet(shareOverlay);
 
   // Odśwież status kafelków po zamknięciu modala (shareCount / udostępnione listy).
   // Fire-and-forget: UI wraca natychmiast, a odświeżenie dociągnie dane w tle.
@@ -1373,6 +1376,7 @@ function openNameModalCreate() {
   nameSub.textContent = t("bases.nameModal.subCreate");
   nameInp.value = "";
   show(nameOverlay, true);
+  enterModalSheet(nameOverlay);
   setTimeout(() => nameInp.focus(), 0);
 }
 
@@ -1383,11 +1387,13 @@ function openNameModalRename(base) {
   nameSub.textContent = t("bases.nameModal.subRename");
   nameInp.value = base?.name || "";
   show(nameOverlay, true);
+  enterModalSheet(nameOverlay);
   setTimeout(() => nameInp.select(), 0);
 }
 
 function closeNameModal() {
   show(nameOverlay, false);
+  exitModalSheet(nameOverlay);
 }
 
 async function nameOk() {
@@ -1597,6 +1603,9 @@ document.addEventListener("DOMContentLoaded", () => {
   [nameOverlay, importOverlay, shareOverlay].forEach((ov) => {
     ov?.addEventListener("click", (e) => {
       if (e.target !== ov) return;
+      // W trybie sheet (mobile) modal zastępuje treść strony — jedynym
+      // wyjściem ma być widoczny przycisk zamknięcia/anuluj, nie klik w tło.
+      if (ov.classList.contains("modal--sheet") && isSheetViewport()) return;
       if (ov === nameOverlay) closeNameModal();
       if (ov === importOverlay) closeImportModal();
       if (ov === shareOverlay) closeShareModal();
