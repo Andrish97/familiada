@@ -799,9 +799,14 @@ async function main() {
       if (action === "settings.toggleSoundMuted") {
         // Współdzielone (nie lokalne — patrz komentarz w soundReactor.js),
         // żeby wyciszenie działało niezależnie od tego, które urządzenie
-        // faktycznie gra.
-        store.state.settings.soundMuted = !store.state.settings.soundMuted;
-        await store.commit();
+        // faktycznie gra. Migracja 268/store.setSoundMuted() -- NIE
+        // store.commit() -- z tego samego powodu co setUiLang(): wyciszenie
+        // jest metadaną operatora, niezależną od locked_until trwającej
+        // akcji gry. Zgłoszone (e2e "dźwięk ze źródła Wyświetlacz"): klik
+        // #btnMute tuż po odsłonięciu odpowiedzi (locked_until z TEJ akcji
+        // jeszcze trwa) kończył się gołym window.alert("Błąd: locked") przez
+        // pełny commit()/game_state_write.
+        await store.setSoundMuted(!store.state.settings.soundMuted);
         return;
       }
       if (action === "settings.setSoundVolume") {

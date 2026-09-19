@@ -78,5 +78,19 @@ export function createPersist(gameId) {
     return data;
   }
 
-  return { write, setLock, setUiLang };
+  // Migracja 268 -- ten sam wzorzec co setUiLang() wyżej, dla
+  // detail.settings.soundMuted. Zgłoszone: klik #btnMute w środku rundy
+  // (locked_until z ostatniej akcji jeszcze trwa) kończył się gołym
+  // window.alert("Błąd: locked") -- wyciszenie jest metadaną operatora,
+  // niezależną od treści rozgrywki (patrz komentarz w migracji).
+  async function setSoundMuted(muted) {
+    const { data, error } = await sb().rpc("game_state_set_sound_muted", {
+      p_game_id: gameId,
+      p_muted: muted,
+    });
+    if (error) throwForRpcError(error);
+    return data;
+  }
+
+  return { write, setLock, setUiLang, setSoundMuted };
 }

@@ -256,5 +256,16 @@ export function createStore(gameId) {
     ringDoorbell(gameId, row.rev);
   }
 
-  return { state, subscribe, emit, hydrate, commit, setLock, setUiLang, applyRow };
+  // Migracja 268 -- ten sam wzorzec co setUiLang() wyżej, dla
+  // detail.settings.soundMuted (patrz komentarz w persist.js/migracji).
+  async function setSoundMuted(muted) {
+    state.settings.soundMuted = muted;
+    emit();
+    const row = await persist.setSoundMuted(muted);
+    applyRow(row);
+    emit();
+    ringDoorbell(gameId, row.rev);
+  }
+
+  return { state, subscribe, emit, hydrate, commit, setLock, setUiLang, setSoundMuted, applyRow };
 }
