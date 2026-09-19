@@ -41,6 +41,7 @@
   <header class="topbar topbar-layout-4 topbar-mobile-keep-brand">
     <div class="topbar-section topbar-section-1">
       <div class="brand">FAMILIADA</div>
+      <button class="btn topbar-sheet-back" id="btnBackSheet" type="button">Wstecz</button>
     </div>
     <div class="topbar-section topbar-section-2">
       <button class="btn" id="btnMarketplace">
@@ -253,46 +254,76 @@
       </div>
     </div>
 
+    <!-- Modal: import JSON -->
+    <div class="overlay modal--sheet" id="importOverlay" style="display:none;">
+      <div class="modal">
+        <div class="mHead">
+          <div class="mTitle" data-i18n="builder.import.title">Importuj</div>
+          <button class="btn sm" id="btnCancelImport" type="button" aria-label="Zamknij">✕</button>
+        </div>
+
+        <div class="importRow" style="margin-top:8px">
+          <input id="importFile" class="inp" type="file" accept=".famgame,.json,application/json">
+        </div>
+
+        <!-- Podgląd / błąd po wczytaniu pliku -->
+        <div id="importPreview" style="display:none;margin-top:10px;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.12);font-size:.88rem;display:grid;gap:4px"></div>
+        <div id="importErr" style="display:none;margin-top:8px;color:#f87171;font-size:.88rem"></div>
+
+        <!-- Pasek postępu (podczas importu) -->
+        <div id="importProg" style="display:none;margin-top:12px;gap:10px">
+          <div class="importRow" style="align-items:center">
+            <div id="importProgStep" style="font-weight:800;letter-spacing:.04em">—</div>
+            <div id="importProgCount" style="margin-left:auto;opacity:.8">0/0</div>
+          </div>
+          <div style="height:10px;border-radius:999px;background:rgba(255,255,255,.10);overflow:hidden">
+            <div id="importProgBar" style="height:100%;width:0%;background:rgba(255,255,255,.85)"></div>
+          </div>
+          <div class="importMsg" id="importProgMsg" style="min-height:18px"></div>
+        </div>
+
+        <div class="importRow" style="margin-top:12px">
+          <button class="btn sm gold" id="btnImportJson" type="button" disabled data-i18n="builder.import.confirm">Importuj</button>
+          <div class="importMsg" id="importMsg"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal: podgląd gry -->
+    <div class="overlay modal--sheet" id="previewOverlay" style="display:none;">
+      <div class="modal bld-preview-modal">
+        <div class="bld-preview-head">
+          <div class="mTitle" id="previewTitle">—</div>
+          <button class="btn sm" id="btnPreviewClose" type="button" aria-label="Zamknij">✕</button>
+        </div>
+        <div class="bld-preview-questions" id="previewQuestions"></div>
+      </div>
+    </div>
+
+    <!-- Modal: zmiana nazwy -->
+    <div class="overlay modal--sheet" id="nameOverlay" style="display:none;">
+      <div class="modal">
+        <div class="mTitle" id="nameTitle" data-i18n="builder.nameModal.title">Zmień nazwę</div>
+        <div class="mSub" id="nameSub" data-i18n="builder.nameModal.sub">Podaj nową nazwę gry.</div>
+
+        <div class="importRow">
+          <input id="nameInp" class="inp" type="text" maxlength="80" placeholder="Nazwa..." data-i18n-placeholder="builder.nameModal.placeholder"/>
+        </div>
+
+        <div class="importRow">
+          <button class="btn sm gold" id="btnNameOk" type="button" data-i18n="builder.common.save">Zapisz</button>
+          <button class="btn sm" id="btnNameCancel" type="button" data-i18n="builder.common.cancel">Anuluj</button>
+          <div class="importMsg" id="nameMsg"></div>
+        </div>
+      </div>
+    </div>
+
     <div class="footer">
       <div data-i18n="common.footer.left">© 2026 Familiada — system do gry na żywo</div>
       <button class="btn-contact-footer" type="button" data-contact-modal data-i18n="common.contactBtn">Kontakt</button>
     </div>
   </main>
 
-  <!-- Modal: import JSON -->
-  <div class="overlay" id="importOverlay" style="display:none;">
-    <div class="modal">
-      <div class="mHead">
-        <div class="mTitle" data-i18n="builder.import.title">Importuj</div>
-        <button class="btn sm" id="btnCancelImport" type="button" aria-label="Zamknij">✕</button>
-      </div>
-
-      <div class="importRow" style="margin-top:8px">
-        <input id="importFile" class="inp" type="file" accept=".famgame,.json,application/json">
-      </div>
-
-      <!-- Podgląd / błąd po wczytaniu pliku -->
-      <div id="importPreview" style="display:none;margin-top:10px;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.12);font-size:.88rem;display:grid;gap:4px"></div>
-      <div id="importErr" style="display:none;margin-top:8px;color:#f87171;font-size:.88rem"></div>
-
-      <!-- Pasek postępu (podczas importu) -->
-      <div id="importProg" style="display:none;margin-top:12px;gap:10px">
-        <div class="importRow" style="align-items:center">
-          <div id="importProgStep" style="font-weight:800;letter-spacing:.04em">—</div>
-          <div id="importProgCount" style="margin-left:auto;opacity:.8">0/0</div>
-        </div>
-        <div style="height:10px;border-radius:999px;background:rgba(255,255,255,.10);overflow:hidden">
-          <div id="importProgBar" style="height:100%;width:0%;background:rgba(255,255,255,.85)"></div>
-        </div>
-        <div class="importMsg" id="importProgMsg" style="min-height:18px"></div>
-      </div>
-
-      <div class="importRow" style="margin-top:12px">
-        <button class="btn sm gold" id="btnImportJson" type="button" disabled data-i18n="builder.import.confirm">Importuj</button>
-        <div class="importMsg" id="importMsg"></div>
-      </div>
-    </div>
-  </div>
   <!-- EXPORT DO PLIKU: PROGRES -->
   <div class="overlay" id="exportJsonOverlay" style="display:none;">
     <div class="modal" style="width:min(640px,94vw)">
@@ -310,35 +341,6 @@
         </div>
 
         <div class="importMsg" id="exportJsonMsg" style="min-height:18px"></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Modal: podgląd gry -->
-  <div class="overlay" id="previewOverlay" style="display:none;">
-    <div class="modal bld-preview-modal">
-      <div class="bld-preview-head">
-        <div class="mTitle" id="previewTitle">—</div>
-        <button class="btn sm" id="btnPreviewClose" type="button" aria-label="Zamknij">✕</button>
-      </div>
-      <div class="bld-preview-questions" id="previewQuestions"></div>
-    </div>
-  </div>
-
-  <!-- Modal: zmiana nazwy -->
-  <div class="overlay" id="nameOverlay" style="display:none;">
-    <div class="modal">
-      <div class="mTitle" id="nameTitle" data-i18n="builder.nameModal.title">Zmień nazwę</div>
-      <div class="mSub" id="nameSub" data-i18n="builder.nameModal.sub">Podaj nową nazwę gry.</div>
-
-      <div class="importRow">
-        <input id="nameInp" class="inp" type="text" maxlength="80" placeholder="Nazwa..." data-i18n-placeholder="builder.nameModal.placeholder"/>
-      </div>
-
-      <div class="importRow">
-        <button class="btn sm gold" id="btnNameOk" type="button" data-i18n="builder.common.save">Zapisz</button>
-        <button class="btn sm" id="btnNameCancel" type="button" data-i18n="builder.common.cancel">Anuluj</button>
-        <div class="importMsg" id="nameMsg"></div>
       </div>
     </div>
   </div>

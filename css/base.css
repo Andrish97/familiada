@@ -663,20 +663,55 @@ main{
         margin: 0;
         display: flex;
         flex-direction: column;
+        /* Modal ma wyglądać jak treść strony, nie jak karta na tle strony */
+        background: transparent;
+        border: 0;
+        box-shadow: none;
     }
 
     .modal--sheet .uni-head,
     .modal--sheet .mHead,
-    .modal--sheet .tagsHead {
+    .modal--sheet .tagsHead,
+    .modal--sheet .bld-preview-head {
         position: sticky;
         top: 0;
-        background: var(--card);
+        /* Tło strony, nie tło karty (var(--card)) — inaczej po zdjęciu
+           tła z .modal powyżej zostaje widoczna jaśniejsza belka pod
+           nagłówkiem. Sticky i tak wystarcza, żeby zasłaniać scrollującą
+           się treść pod spodem. */
+        background: var(--bg);
         z-index: 1;
+    }
+
+    /* Wyjściem z modala jest już przycisk w topbarze (patrz
+       js/core/modal-sheet.js), więc własny przycisk zamknięcia "✕" w
+       nagłówku modala jest w tym trybie zbędny. */
+    .modal--sheet .uni-head button[aria-label],
+    .modal--sheet .mHead button[aria-label],
+    .modal--sheet .tagsHead button[aria-label],
+    .modal--sheet .bld-preview-head button[aria-label] {
+        display: none;
     }
 
     body.sheet-open .footer .btn-contact-footer {
         display: none;
     }
+
+    /* Strony bez naturalnego przycisku wstecz w topbarze na mobile
+       (builder.html, settings.html) dostają dedykowany przycisk tylko na
+       potrzeby sheet mode — poza nim niewidoczny, w trybie sheet
+       zastępuje brand, dokładnie jak przycisk wstecz na innych stronach. */
+    body.sheet-open .topbar-mobile-keep-brand .topbar-section-1 .brand {
+        display: none;
+    }
+
+    body.sheet-open .topbar-sheet-back {
+        display: inline-flex;
+    }
+}
+
+.topbar-sheet-back {
+    display: none;
 }
 
 /* ===== UI Select (custom dropdown) ===== */

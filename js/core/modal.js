@@ -1,4 +1,5 @@
 import { t } from "../../translation/translation.js?v=v2026-09-19T22270";
+import { enterModalSheet, exitModalSheet, isSheetViewport } from "./modal-sheet.js?v=v2026-09-19T22270";
 let modalSeq = 0;
 
 function modalText(key, fallback) {
@@ -12,6 +13,7 @@ function buildModal({
   cancelText,
   showCancel = true,
   body = null,
+  sheet = null,
 } = {}) {
   modalSeq += 1;
   const titleId = `uniTitle${modalSeq}`;
@@ -23,6 +25,12 @@ function buildModal({
 
   const modal = document.createElement("div");
   modal.className = "modal uni-modal";
+  // sheet: rozbudowana treść (np. szczegóły statystyki, podgląd
+  // wiadomości) przekazana przez wywołującego — na telefonie zastępuje
+  // treść strony zamiast być małym oknem, patrz js/core/modal-sheet.js.
+  // Krótkie confirm/alert nigdy tego nie przekazują, więc ich wygląd
+  // się nie zmienia.
+  if (sheet) modal.classList.add("modal--sheet");
   modal.setAttribute("role", "dialog");
   modal.setAttribute("aria-modal", "true");
   modal.setAttribute("aria-labelledby", titleId);
@@ -100,6 +108,7 @@ function openModal({
   body = null,
   initialFocus = null,
   onReady = null,
+  sheet = null,
 } = {}) {
   return new Promise((resolve) => {
     const fallbackTitle = showCancel
@@ -119,6 +128,7 @@ function openModal({
       cancelText: cancelText ?? fallbackCancel,
       showCancel,
       body,
+      sheet,
     });
 
     try {
@@ -131,6 +141,7 @@ function openModal({
     const finish = (value) => {
       if (done) return;
       done = true;
+      if (sheet) exitModalSheet(overlay);
       overlay.remove();
       document.removeEventListener("keydown", onKeydown, true);
       try {
@@ -149,7 +160,11 @@ function openModal({
     };
 
     overlay.addEventListener("click", (e) => {
-      if (e.target === overlay) finish(false);
+      if (e.target !== overlay) return;
+      // W trybie sheet modal zastępuje treść strony — jedynym wyjściem
+      // ma być przycisk wstecz w topbarze, nie klik w tło.
+      if (sheet && isSheetViewport()) return;
+      finish(false);
     });
 
     okBtn.addEventListener("click", () => finish(true));
@@ -157,14 +172,28 @@ function openModal({
     closeBtn.addEventListener("click", () => finish(false));
 
     document.addEventListener("keydown", onKeydown, true);
-    document.body.appendChild(overlay);
+
+    // Modal w trybie sheet musi być dzieckiem <main class="wrap">/.explorer
+    // (przed .footer), żeby reguła CSS "ukryj resztę treści strony" go
+    // objęła i żeby na telefonie zastępował treść strony zamiast lądować
+    // za stopką (patrz css/base.css, sekcja "Modal sheet (mobile)").
+    const sheetParent = sheet && document.querySelector("main.wrap, main.explorer");
+    if (sheetParent) {
+      const footer = sheetParent.querySelector(":scope > .footer");
+      if (footer) sheetParent.insertBefore(overlay, footer);
+      else sheetParent.appendChild(overlay);
+    } else {
+      document.body.appendChild(overlay);
+    }
+
+    if (sheet) enterModalSheet(overlay, { backBtn: sheet.backBtn, onClose: () => finish(false) });
 
     const focusTarget = initialFocus || okBtn;
     setTimeout(() => focusTarget?.focus?.(), 0);
   });
 }
 
-export function confirmModal({ title, text, okText, cancelText, body = null, initialFocus = null, onReady } = {}) {
+export function confirmModal({ title, text, okText, cancelText, body = null, initialFocus = null, onReady, sheet = null } = {}) {
   return openModal({
     title: title ?? modalText("common.modal.confirmTitle", "Potwierdź"),
     text: text ?? modalText("common.modal.confirmText", "Na pewno?"),
@@ -174,16 +203,18 @@ export function confirmModal({ title, text, okText, cancelText, body = null, ini
     body,
     initialFocus,
     onReady,
+    sheet,
   });
 }
 
-export function alertModal({ title, text, okText, onReady } = {}) {
+export function alertModal({ title, text, okText, onReady, sheet = null } = {}) {
   return openModal({
     title: title ?? modalText("common.modal.alertTitle", "Informacja"),
     text: text ?? "—",
     okText: okText ?? modalText("common.modal.alertOk", "OK"),
     showCancel: false,
     onReady,
+    sheet,
   });
 }
 

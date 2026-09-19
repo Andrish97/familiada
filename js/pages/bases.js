@@ -11,7 +11,7 @@ import { isGuestUser, hideForGuest } from "../core/guest-mode.js?v=v2026-09-19T2
 import { initUiSelect } from "../core/ui-select.js?v=v2026-09-19T22270";
 import { getUiLang, initI18n, t, withLangParam } from "../../translation/translation.js?v=v2026-09-19T22270";
 import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-09-19T22270";
-import { enterModalSheet, exitModalSheet, isSheetViewport } from "../core/modal-sheet.js?v=v2026-09-19T22270";
+import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../core/modal-sheet.js?v=v2026-09-19T22270";
 import "../core/contact-modal.js";
 initI18n({ withSwitcher: true }).then(() => {
   document.documentElement.classList.remove('page-loading');
@@ -816,7 +816,7 @@ async function openShareModal() {
   shareRoleSelect?.setValue("editor", { silent: true });
   await renderShareModal();
   show(shareOverlay, true);
-  enterModalSheet(shareOverlay);
+  enterModalSheet(shareOverlay, { backBtn, onClose: closeShareModal });
 }
 
 function closeShareModal() {
@@ -1376,7 +1376,7 @@ function openNameModalCreate() {
   nameSub.textContent = t("bases.nameModal.subCreate");
   nameInp.value = "";
   show(nameOverlay, true);
-  enterModalSheet(nameOverlay);
+  enterModalSheet(nameOverlay, { backBtn, onClose: closeNameModal });
   setTimeout(() => nameInp.focus(), 0);
 }
 
@@ -1387,7 +1387,7 @@ function openNameModalRename(base) {
   nameSub.textContent = t("bases.nameModal.subRename");
   nameInp.value = base?.name || "";
   show(nameOverlay, true);
-  enterModalSheet(nameOverlay);
+  enterModalSheet(nameOverlay, { backBtn, onClose: closeNameModal });
   setTimeout(() => nameInp.select(), 0);
 }
 
@@ -1438,10 +1438,12 @@ function openImportModal() {
   setMsg(importMsg, "");
   showProgBlock(importProg, false);
   show(importOverlay, true);
+  enterModalSheet(importOverlay, { backBtn, onClose: closeImportModal });
 }
 
 function closeImportModal() {
   show(importOverlay, false);
+  exitModalSheet(importOverlay);
 }
 
 function readFileAsText(file) {
@@ -1482,6 +1484,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   btnBack?.addEventListener("click", () => {
+    if (handleSheetBack()) return;
     location.href = getBackLink();
   });
 

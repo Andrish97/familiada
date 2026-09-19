@@ -10,7 +10,7 @@ import { maybeShowGuestInfoModal } from "../core/guest-info-modal.js?v=v2026-09-
 import { maybeShowGuestMigrateReminder } from "../core/guest-migrate-reminder.js?v=v2026-09-19T22270";
 
 import { initPwa, isStandalone, isMobileDevice } from "../core/pwa.js?v=v2026-09-19T22270";
-import { enterModalSheet, exitModalSheet, isSheetViewport } from "../core/modal-sheet.js?v=v2026-09-19T22270";
+import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../core/modal-sheet.js?v=v2026-09-19T22270";
 
 // Zarejestruj listener PWA jak najwcześniej – beforeinstallprompt może odpalić przed requireAuth
 const pwaApi = initPwa();
@@ -119,6 +119,7 @@ const navMoreDropdown = document.getElementById("navMoreDropdown");
 const btnExport = document.getElementById("btnExport");
 const btnImport = document.getElementById("btnImport");
 const btnExportBase = document.getElementById("btnExportBase");
+const btnBackSheet = document.getElementById("btnBackSheet");
 
 // Modal eksportu do bazy
 const exportBaseOverlay = document.getElementById("exportBaseOverlay");
@@ -336,8 +337,12 @@ function openImportModal() {
   setImportMsg("");
   showProgBlock(importProg, false);
   show(importOverlay, true);
+  enterModalSheet(importOverlay, { backBtn: btnBackSheet, onClose: closeImportModal });
 }
-function closeImportModal() { show(importOverlay, false); }
+function closeImportModal() {
+  show(importOverlay, false);
+  exitModalSheet(importOverlay);
+}
 
 function setNameMsg(t) {
   if (!nameMsg) return;
@@ -353,6 +358,7 @@ function openRenameModal(game) {
   if (nameSub) nameSub.textContent = t("builder.nameModal.sub");
   if (nameInp) nameInp.value = game.name || "";
   show(nameOverlay, true);
+  enterModalSheet(nameOverlay, { backBtn: btnBackSheet, onClose: closeRenameModal });
   setTimeout(() => nameInp?.select(), 0);
 }
 
@@ -364,6 +370,7 @@ function openCreateModal(uiType) {
   if (nameSub) nameSub.textContent = t("builder.nameModal.subCreate");
   if (nameInp) nameInp.value = "";
   show(nameOverlay, true);
+  enterModalSheet(nameOverlay, { backBtn: btnBackSheet, onClose: closeRenameModal });
   setTimeout(() => nameInp?.focus(), 0);
 }
 
@@ -372,6 +379,7 @@ function closeRenameModal() {
   creatingUiType = null;
   nameMode = "rename";
   show(nameOverlay, false);
+  exitModalSheet(nameOverlay);
 }
 
 async function renameGame(gameId, newName) {
@@ -404,7 +412,7 @@ function setExportBaseMsg(t) {
 function openExportBaseModal() {
   setExportBaseMsg("");
   show(exportBaseOverlay, true);
-  enterModalSheet(exportBaseOverlay);
+  enterModalSheet(exportBaseOverlay, { backBtn: btnBackSheet, onClose: closeExportBaseModal });
 }
 
 function closeExportBaseModal() {
@@ -1384,14 +1392,26 @@ document.addEventListener("DOMContentLoaded", async () => {
     location.href = "marketplace";
   });
 
+  // builder.html nie ma naturalnego przycisku wstecz na mobile (jest
+  // stroną główną) — btnBackSheet istnieje wyłącznie na potrzeby trybu
+  // sheet, zastępuje brand w topbarze gdy modal jest otwarty.
+  btnBackSheet?.addEventListener("click", () => { handleSheetBack(); });
+
   // PREVIEW
   const previewOverlay = document.getElementById("previewOverlay");
   const previewTitle = document.getElementById("previewTitle");
   const previewQuestions = document.getElementById("previewQuestions");
-  const closePreview = () => { if (previewOverlay) previewOverlay.style.display = "none"; };
+  const closePreview = () => {
+    if (previewOverlay) previewOverlay.style.display = "none";
+    exitModalSheet(previewOverlay);
+  };
   document.getElementById("btnPreviewClose")?.addEventListener("click", closePreview);
   document.getElementById("btnPreviewCloseBottom")?.addEventListener("click", closePreview);
-  previewOverlay?.addEventListener("click", e => { if (e.target === previewOverlay) closePreview(); });
+  previewOverlay?.addEventListener("click", e => {
+    if (e.target !== previewOverlay) return;
+    if (previewOverlay.classList.contains("modal--sheet") && isSheetViewport()) return;
+    closePreview();
+  });
 
   btnPreview?.addEventListener("click", async () => {
     let gameName = "—";
@@ -1414,6 +1434,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (previewTitle) previewTitle.textContent = gameName;
     if (previewQuestions) previewQuestions.innerHTML = `<div class="bld-no-q">${t("builder.preview.loading") || "Ładowanie…"}</div>`;
     if (previewOverlay) previewOverlay.style.display = "";
+    enterModalSheet(previewOverlay, { backBtn: btnBackSheet, onClose: closePreview });
 
     // Pobierz pytania jeśli jeszcze nie mamy
     if (questions === null) {
@@ -1691,7 +1712,11 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // RENAME (modal)
   btnNameCancel?.addEventListener("click", closeRenameModal);
-  nameOverlay?.addEventListener("click", (ev) => { if (ev.target === nameOverlay) closeRenameModal(); });
+  nameOverlay?.addEventListener("click", (ev) => {
+    if (ev.target !== nameOverlay) return;
+    if (nameOverlay.classList.contains("modal--sheet") && isSheetViewport()) return;
+    closeRenameModal();
+  });
   btnNameOk?.addEventListener("click", async () => {
     if (btnNameOk?.disabled) return;
     const val = String(nameInp?.value || "").trim();
