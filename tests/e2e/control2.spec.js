@@ -1323,8 +1323,15 @@ test("control2: dźwięk ze źródła Wyświetlacz — odblokowanie, głośnoś�
     // modala (niżej) trafiający przed tym momentem widzi isDirty=true i
     // tryClose() pokazuje confirmModal() "Masz niezapisane zmiany", którego
     // nic tu nie obsługuje -- modal wisi w nieskończoność, #gsOverlay nigdy
-    // nie znika. btnSaveAll.disabled wraca na false dopiero w finally{} po
-    // saveAll(), więc to niezawodny, już istniejący sygnał zakończenia.
+    // nie znika. Root cause znaleziony diagnostyką console.warn() w
+    // tryClose(): btnSaveAll.disabled szedł na `true` DOPIERO tuż przed
+    // realnym zapisem, PO dwóch wcześniejszych, nieblokujących wizualnie
+    // zapytaniach sieciowych (loadQuestions()/getSfxCustomFiles()) -- więc
+    // to `await expect(...).toBeEnabled()` przechodziło natychmiast (bo
+    // przycisk nigdy nie zdążył się jeszcze wyłączyć), zanim zapis w ogóle
+    // się zaczął. Naprawione w saveAll(): `disabled=true` jest teraz
+    // pierwszą instrukcją funkcji, więc "enabled" na powrót jest już
+    // niezawodnym sygnałem zakończenia całego try/finally.
     await expect(btnSaveAll).toBeEnabled({ timeout: 10000 });
     await page.locator("#gsOverlay").click({ position: { x: 5, y: 5 } });
     await page.locator("#gsOverlay").waitFor({ state: "hidden", timeout: 10000 });

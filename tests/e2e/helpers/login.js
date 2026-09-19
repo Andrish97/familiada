@@ -65,19 +65,6 @@ function instrumentPage(page) {
     if (res.url().includes("/rpc/")) {
       console.log(`[e2e-diag] rpc ${res.status()}`, res.url());
     }
-    // TYMCZASOWA diagnostyka (do usunięcia po znalezieniu przyczyny) -- e2e:
-    // "dźwięk ze źródła Wyświetlacz" -- #gsOverlay nigdy nie znika po
-    // "Zapisz wszystko" + kliknięciu tła, mimo że #btnSaveAll wraca do stanu
-    // enabled (co dowodzi tylko, że try/catch/finally w saveAll()'s
-    // js/pages/game-settings2.js SIĘ ZAKOŃCZYŁ, nie że się UDAŁ -- finally{}
-    // odblokowuje przycisk zarówno przy sukcesie, jak i błędzie/ROW_GONE).
-    // updateChecked() (js/core/db-guard.js) robi zwykły PATCH /rest/v1/games,
-    // BEZ "/rpc/" w URL-u -- dotąd całkowicie niewidoczny w tym logu przy
-    // sukcesie (tylko HTTP>=400 był łapany). Loguj to zapytanie ZAWSZE.
-    if (res.url().includes("/rest/v1/games") && res.request().method() === "PATCH") {
-      res.text().then((body) => console.log(`[e2e-diag] PATCH games ${res.status()} ->`, body))
-        .catch((e) => console.log("[e2e-diag] PATCH games body read failed:", e.message));
-    }
     // game_state_write: 200 NIE dowodzi, że zwrócony wiersz faktycznie ma
     // oczekiwany step -- loguj TREŚĆ odpowiedzi (tylko pola stanu, nie całe
     // detail), żeby odróżnić "serwer zapisał coś innego niż wysłaliśmy" od
