@@ -1,13 +1,13 @@
 // js/pages/marketplace.js
 
-import { sb, buildSiteUrl } from "../core/supabase.js?v=v2026-09-19T18223";
-import { getUser } from "../core/auth.js?v=v2026-09-19T18223";
-import { isGuestUser } from "../core/guest-mode.js?v=v2026-09-19T18223";
-import { initI18n, t, getUiLang, withLangParam, applyTranslations } from "../../translation/translation.js?v=v2026-09-19T18223";
-import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-09-19T18223";
-import { exportGame } from "./builder-import-export.js?v=v2026-09-19T18223";
-import { initUiSelect } from "../core/ui-select.js?v=v2026-09-19T18223";
-import { confirmModal } from "../core/modal.js?v=v2026-09-19T18223";
+import { sb, buildSiteUrl } from "../core/supabase.js?v=v2026-09-19T18485";
+import { getUser } from "../core/auth.js?v=v2026-09-19T18485";
+import { isGuestUser } from "../core/guest-mode.js?v=v2026-09-19T18485";
+import { initI18n, t, getUiLang, withLangParam, applyTranslations } from "../../translation/translation.js?v=v2026-09-19T18485";
+import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-09-19T18485";
+import { exportGame } from "./builder-import-export.js?v=v2026-09-19T18485";
+import { initUiSelect } from "../core/ui-select.js?v=v2026-09-19T18485";
+import { confirmModal } from "../core/modal.js?v=v2026-09-19T18485";
 import "../core/contact-modal.js";
 
 /* =========================================================
