@@ -160,6 +160,37 @@ if (_isModal) {
   sidebarEl?.addEventListener("click", (e) => {
     if (e.target.closest(".gs-sidebar-item")) closeSidebar();
   });
+
+  // Przycisk zamknięcia (✕) -- IDENTYCZNY problem co #btnToggleSidebar
+  // wyżej: `.gs-modal-mode .gs-close-btn { display:inline-flex !important; }`
+  // (2 klasy) też wygrywa specyficznością nad `.hidden` (1 klasa), więc jest
+  // klikalny natychmiast, niezależnie od klasy "hidden" w markupie. Znalezione
+  // przy audycie po tym samym bugu ze sidebarem, nie osobnym zgłoszeniem --
+  // tryClose()/message listener nie zależą od żadnych danych z auth/game/
+  // locków (tylko isDirty, confirmModal, t -- wszystkie dostępne od razu na
+  // poziomie modułu), więc też wpięte tu, synchronicznie.
+  async function tryClose() {
+    if (isDirty) {
+      if (!await confirmModal({ text: t("gameSettings.unsavedConfirmModal") || "Masz niezapisane zmiany. Czy chcesz zamknąć ustawienia?" })) return;
+    }
+    // Reset defaultValue na wszystkich inputach żeby przeglądarka nie pokazała
+    // natywnego "Masz niezapisane zmiany" przy nawigacji iframe
+    document.querySelectorAll("input, textarea, select").forEach(el => {
+      if (el.type === "checkbox" || el.type === "radio") el.defaultChecked = el.checked;
+      else el.defaultValue = el.value;
+    });
+    window.parent.postMessage({ type: "gs:close" }, "*");
+  }
+
+  window.addEventListener("message", (ev) => {
+    if (ev.data?.type === "gs:requestClose") tryClose();
+  });
+
+  const btnGsModalClose = document.getElementById("btnGsModalClose");
+  if (btnGsModalClose) {
+    btnGsModalClose.classList.remove("hidden");
+    btnGsModalClose.addEventListener("click", tryClose);
+  }
 }
 
 // Color modal state — labels populated lazily from t()
@@ -1652,32 +1683,9 @@ async function main() {
     // Hide back button — modal backdrop closes it
     if (btnBack) btnBack.classList.add("hidden");
 
-    // Sidebar toggle (☰ button) -- wpięte synchronicznie na poziomie
-    // modułu, patrz komentarz przy _isModal na górze pliku.
-
-    // Handle close requests — confirm if unsaved changes
-    async function tryClose() {
-      if (isDirty) {
-        if (!await confirmModal({ text: t("gameSettings.unsavedConfirmModal") || "Masz niezapisane zmiany. Czy chcesz zamknąć ustawienia?" })) return;
-      }
-      // Reset defaultValue na wszystkich inputach żeby przeglądarka nie pokazała
-      // natywnego "Masz niezapisane zmiany" przy nawigacji iframe
-      document.querySelectorAll("input, textarea, select").forEach(el => {
-        if (el.type === "checkbox" || el.type === "radio") el.defaultChecked = el.checked;
-        else el.defaultValue = el.value;
-      });
-      window.parent.postMessage({ type: "gs:close" }, "*");
-    }
-
-    window.addEventListener("message", (ev) => {
-      if (ev.data?.type === "gs:requestClose") tryClose();
-    });
-
-    const btnGsModalClose = document.getElementById("btnGsModalClose");
-    if (btnGsModalClose) {
-      btnGsModalClose.classList.remove("hidden");
-      btnGsModalClose.addEventListener("click", tryClose);
-    }
+    // Sidebar toggle (☰ button) i przycisk zamknięcia (✕) -- wpięte
+    // synchronicznie na poziomie modułu, patrz komentarz przy _isModal na
+    // górze pliku.
   }
 
   localSettings = mergeSettings(game.settings);
