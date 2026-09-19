@@ -7,7 +7,7 @@ import { alertModal, confirmModal } from "../core/modal.js?v=v2026-09-19T22273";
 import { initUiSelect } from "../core/ui-select.js?v=v2026-09-19T22273";
 import { initI18n, t, getUiLang } from "../../translation/translation.js?v=v2026-09-19T22273";
 import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-09-19T22273";
-import { enterModalSheet, exitModalSheet, isSheetViewport } from "../core/modal-sheet.js?v=v2026-09-19T22273";
+import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../core/modal-sheet.js?v=v2026-09-19T22273";
 import "../core/contact-modal.js";
 
 initI18n({ withSwitcher: true }).then(() => {
@@ -676,7 +676,7 @@ async function openShareModal() {
 
     if (!activeSubs.length) shareList.innerHTML = `<div class="hub-empty">${MSG.emptyActiveSubscribers()}</div>`;
     shareOverlay.style.display = "grid";
-    enterModalSheet(shareOverlay);
+    enterModalSheet(shareOverlay, { backBtn: btnBack, onClose: () => { closeShareModal(); refreshData(); } });
   } catch {
     await alertModal({ text: t("pollsHubPolls.errors.loadSubscribers") });
   } finally {
@@ -960,7 +960,7 @@ async function openDetailsModal() {
     renderDetailsList(detailsCancelled, rows.filter((r) => r.status === "cancelled"));
     detailsAnon.textContent = String(selectedPoll?.anon_votes || 0);
     detailsOverlay.style.display = "grid";
-    enterModalSheet(detailsOverlay);
+    enterModalSheet(detailsOverlay, { backBtn: btnBack, onClose: () => { closeDetailsModal(); refreshData(); } });
   } catch {
     await alertModal({ text: MSG.loadDetailsFail() });
   }
@@ -1153,7 +1153,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 
   updateBackButtonLabel();
-  btnBack?.addEventListener("click", () => { location.href = getBackLink(); });
+  btnBack?.addEventListener("click", () => {
+    if (handleSheetBack()) return;
+    location.href = getBackLink();
+  });
   btnManual?.addEventListener("click", () => { location.href = buildManualUrl(); });
   btnGoAlt?.addEventListener("click", () => { location.href = `subscriptions?ret=${encodeURIComponent(getCurrentRelativeUrl())}`; });
 

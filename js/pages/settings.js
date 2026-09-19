@@ -15,9 +15,16 @@ Settings panel (admin)
 import { initI18n, t, getUiLang } from "../../translation/translation.js?v=v2026-09-19T22273";
 import { initUiSelect } from "../core/ui-select.js?v=v2026-09-19T22273";
 import { alertModal, confirmModal, promptModal } from "../core/modal.js?v=v2026-09-19T22273";
-import { enterModalSheet, exitModalSheet, isSheetViewport } from "../core/modal-sheet.js?v=v2026-09-19T22273";
+import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../core/modal-sheet.js?v=v2026-09-19T22273";
 import { sb } from "../core/supabase.js?v=v2026-09-19T22273";
 import { v as cacheBust } from "../core/cache-bust.js?v=v2026-09-19T22273";
+
+// settings.html nie ma naturalnego przycisku wstecz na mobile (panel admina
+// bez nawigacji "do tyłu") -- btnBackSheet istnieje wyłącznie na potrzeby
+// trybu sheet, zastępuje brand w topbarze gdy modal jest otwarty (patrz
+// analogiczne rozwiązanie w builder.js).
+const btnBackSheet = document.getElementById("btnBackSheet");
+btnBackSheet?.addEventListener("click", () => { handleSheetBack(); });
 
 const API_BASE = "/_admin_api";
 const TOOLS_MANIFEST = "/settings-tools/tools.json?v=v2026-09-19T22273";
@@ -1059,11 +1066,13 @@ async function openMaintenancePreview() {
 
   frame.srcdoc = previewHtml;
   overlay.style.display = "block";
+  enterModalSheet(overlay, { backBtn: btnBackSheet, onClose: closeMaintenancePreview });
 }
 
 function closeMaintenancePreview() {
   const overlay = document.getElementById("maintenancePreviewOverlay");
   if (overlay) overlay.style.display = "none";
+  exitModalSheet(overlay);
 }
 
 async function loadAdminStats({ silent = false } = {}) {
@@ -2317,11 +2326,13 @@ async function openMarketPreview(id) {
   if (deleteBtn)   deleteBtn.hidden   = false; // zawsze widoczny
 
   overlay.style.display = "";
+  enterModalSheet(overlay, { backBtn: btnBackSheet, onClose: closeMarketPreview });
 }
 
 function closeMarketPreview() {
   const overlay = document.getElementById("marketPreviewOverlay");
   if (overlay) overlay.style.display = "none";
+  exitModalSheet(overlay);
   marketPreviewId = null;
 }
 
@@ -2348,7 +2359,7 @@ function openRejectModal(id) {
   const note    = document.getElementById("marketRejectNote");
   if (overlay) overlay.style.display = "";
   if (note) note.value = "";
-  enterModalSheet(overlay);
+  enterModalSheet(overlay, { backBtn: btnBackSheet, onClose: closeRejectModal });
 }
 
 function closeRejectModal() {
@@ -2461,7 +2472,7 @@ async function openRatersModal(gameId, title) {
   if (titleEl) titleEl.textContent = title || "Oceniający";
   body.innerHTML = "Ładowanie…";
   overlay.style.display = "";
-  enterModalSheet(overlay);
+  enterModalSheet(overlay, { backBtn: btnBackSheet, onClose: () => { overlay.style.display = "none"; exitModalSheet(overlay); } });
   try {
     const res = await adminFetch(`/marketplace/game-raters?id=${encodeURIComponent(gameId)}`);
     if (!res.ok) throw new Error(await res.text());
@@ -3110,11 +3121,11 @@ function renderMessageDetail(msg, attachments = [], threadMessages = []) {
     closeBtn.style.cssText = "position:absolute;top:10px;right:10px;background:none;border:none;color:rgba(255,255,255,.5);font-size:20px;cursor:pointer;padding:5px;border-radius:4px;";
     closeBtn.onmouseover = () => closeBtn.style.color = "rgba(255,255,255,.9)";
     closeBtn.onmouseout = () => closeBtn.style.color = "rgba(255,255,255,.5)";
-    closeBtn.onclick = () => {
-      const modal = wrapper.closest(".overlay");
-      if (modal) modal.remove();
-    };
-    
+    // Zamyka przez wbudowany przycisk "✕" modala (nie usuwa .overlay ręcznie),
+    // żeby w trybie sheet finish()/exitModalSheet() zawsze się wykonały.
+    let modalCloseBtn = null;
+    closeBtn.onclick = () => modalCloseBtn?.click();
+
     wrapper.appendChild(closeBtn);
     wrapper.appendChild(frame);
 
@@ -3124,6 +3135,8 @@ function renderMessageDetail(msg, attachments = [], threadMessages = []) {
       body: wrapper,
       okText: "",
       showCancel: false,
+      sheet: { backBtn: btnBackSheet },
+      onReady: ({ closeBtn: builtinCloseBtn }) => { modalCloseBtn = builtinCloseBtn; },
     });
   });
 
@@ -3464,11 +3477,11 @@ function renderReportThread(report, messages, attsByMsg = {}) {
       closeBtn.style.cssText = "position:absolute;top:10px;right:10px;background:none;border:none;color:rgba(255,255,255,.5);font-size:20px;cursor:pointer;padding:5px;border-radius:4px;";
       closeBtn.onmouseover = () => closeBtn.style.color = "rgba(255,255,255,.9)";
       closeBtn.onmouseout = () => closeBtn.style.color = "rgba(255,255,255,.5)";
-      closeBtn.onclick = () => {
-        const modal = wrapper.closest(".overlay");
-        if (modal) modal.remove();
-      };
-      
+      // Zamyka przez wbudowany przycisk "✕" modala (nie usuwa .overlay ręcznie),
+      // żeby w trybie sheet finish()/exitModalSheet() zawsze się wykonały.
+      let modalCloseBtn = null;
+      closeBtn.onclick = () => modalCloseBtn?.click();
+
       wrapper.appendChild(closeBtn);
       wrapper.appendChild(frame);
 
@@ -3478,6 +3491,8 @@ function renderReportThread(report, messages, attsByMsg = {}) {
         body: wrapper,
         okText: "",
         showCancel: false,
+        sheet: { backBtn: btnBackSheet },
+        onReady: ({ closeBtn: builtinCloseBtn }) => { modalCloseBtn = builtinCloseBtn; },
       });
     });
 
@@ -3635,7 +3650,7 @@ function openAssignModal(messageId) {
   const quoteCheck = document.getElementById("assignQuoteCheck");
   if (quoteCheck) quoteCheck.checked = false;
   modal.hidden = false;
-  enterModalSheet(modal);
+  enterModalSheet(modal, { backBtn: btnBackSheet, onClose: closeAssignModal });
 }
 
 async function fallbackAssign(messageId) {
@@ -4558,20 +4573,22 @@ function showComposePreview(greetingSelect, farewellSelect, senderSelect) {
   closeBtn.style.cssText = "position:absolute;top:10px;right:10px;background:none;border:none;color:rgba(255,255,255,.5);font-size:20px;cursor:pointer;padding:5px;border-radius:4px;";
   closeBtn.onmouseover = () => closeBtn.style.color = "rgba(255,255,255,.9)";
   closeBtn.onmouseout = () => closeBtn.style.color = "rgba(255,255,255,.5)";
-  closeBtn.onclick = () => {
-    const modal = wrapper.closest(".overlay");
-    if (modal) modal.remove();
-  };
-  
+  // Zamyka przez wbudowany przycisk "✕" modala (nie usuwa .overlay ręcznie),
+  // żeby w trybie sheet finish()/exitModalSheet() zawsze się wykonały.
+  let modalCloseBtn = null;
+  closeBtn.onclick = () => modalCloseBtn?.click();
+
   wrapper.appendChild(closeBtn);
   wrapper.appendChild(frame);
-  
+
   void confirmModal({
     title: "Podgląd wiadomości",
     text: "",
     body: wrapper,
     okText: "",
     showCancel: false,
+    sheet: { backBtn: btnBackSheet },
+    onReady: ({ closeBtn: builtinCloseBtn }) => { modalCloseBtn = builtinCloseBtn; },
   });
 }
 
@@ -4796,7 +4813,9 @@ function wireMarketplaceEvents() {
     if (marketPreviewId) adminHardDelete(marketPreviewId);
   });
   document.getElementById("marketPreviewOverlay")?.addEventListener("click", (e) => {
-    if (e.target === e.currentTarget) closeMarketPreview();
+    if (e.target !== e.currentTarget) return;
+    if (isSheetViewport()) return; // sheet mode (mobile): tylko widoczny przycisk zamyka
+    closeMarketPreview();
   });
 
   // Modal reject
@@ -5609,6 +5628,7 @@ async function openStatsDetailModal(type) {
     text: "",
     okText: "Zamknij",
     body,
+    sheet: { backBtn: btnBackSheet },
     onReady: ({ okBtn, overlay }) => {
       if (okBtn?.parentElement) okBtn.parentElement.style.display = "none";
       // Ten modal bywa wyższy niż widoczny obszar na małych ekranach (mobile) —
@@ -6003,7 +6023,11 @@ function wireEvents() {
     closeMaintenancePreview();
   });
   document.getElementById("maintenancePreviewOverlay")?.addEventListener("click", (e) => {
-    if (e.target.id === "maintenancePreviewOverlay") closeMaintenancePreview();
+    if (e.target.id !== "maintenancePreviewOverlay") return;
+    // W trybie sheet (mobile) modal zastępuje treść strony — jedynym
+    // wyjściem ma być przycisk wstecz w topbarze, nie klik w tło.
+    if (e.currentTarget.classList.contains("modal--sheet") && isSheetViewport()) return;
+    closeMaintenancePreview();
   });
 
   ["returnAtYear","returnAtMonth","returnAtDay","returnAtHour","returnAtMinute","endAtYear","endAtMonth","endAtDay","endAtHour","endAtMinute"].forEach((id) => {

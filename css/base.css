@@ -672,7 +672,9 @@ main{
     .modal--sheet .uni-head,
     .modal--sheet .mHead,
     .modal--sheet .tagsHead,
-    .modal--sheet .bld-preview-head {
+    .modal--sheet .bld-preview-head,
+    .modal--sheet .mkt-detail-head,
+    .modal--sheet .previewModalTitle {
         position: sticky;
         top: 0;
         /* Tło strony, nie tło karty (var(--card)) — inaczej po zdjęciu
@@ -689,7 +691,9 @@ main{
     .modal--sheet .uni-head button[aria-label],
     .modal--sheet .mHead button[aria-label],
     .modal--sheet .tagsHead button[aria-label],
-    .modal--sheet .bld-preview-head button[aria-label] {
+    .modal--sheet .bld-preview-head button[aria-label],
+    .modal--sheet .mkt-detail-head button[aria-label],
+    .modal--sheet .previewModalTitle button[aria-label] {
         display: none;
     }
 

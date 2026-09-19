@@ -13,7 +13,7 @@ import { initTopbarAccountDropdown } from "../../js/core/topbar-controller.js?v=
 import { isMobileDevice } from "../../js/core/pwa.js?v=v2026-09-19T22273";
 import { v as cacheBust } from "../../js/core/cache-bust.js?v=v2026-09-19T22273";
 import { guardResourceLock, isResourceBusy, findBusyContext } from "../../js/core/resource-lock.js?v=v2026-09-19T22273";
-import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../js/core/modal-sheet.js?v=v2026-09-19T22273";
+import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../js/core/modal-sheet.js?v=v2026-09-19T22273";
 
 import { initTextEditor } from "./text.js?v=v2026-09-19T22273";
 import { initDrawEditor } from "./draw.js?v=v2026-09-19T22273";
@@ -802,8 +802,9 @@ function openPreviewFullscreen(payload){
   if (modal) {
     modal.classList.toggle("is-touch", isMobileDevice());
   }
-  
+
   show(previewOverlay, true);
+  enterModalSheet(previewOverlay, { backBtn, onClose: () => { show(previewOverlay, false); exitModalSheet(previewOverlay); } });
 }
 
 /* =========================================================
@@ -995,7 +996,7 @@ function openRenameModal(logo){
   renameSub.textContent = t("logoEditor.rename.sub");
   renameInput.value = logo?.name || "";
   show(renameOverlay, true);
-  enterModalSheet(renameOverlay);
+  enterModalSheet(renameOverlay, { backBtn, onClose: closeRenameModal });
   setTimeout(() => renameInput.select(), 0);
 }
 
@@ -1009,7 +1010,7 @@ function openCreateModal(type, mode){
   renameSub.textContent = t("logoEditor.create.nameModalSub");
   renameInput.value = "";
   show(renameOverlay, true);
-  enterModalSheet(renameOverlay);
+  enterModalSheet(renameOverlay, { backBtn, onClose: closeRenameModal });
   setTimeout(() => renameInput.focus(), 0);
 }
 
@@ -1020,6 +1021,11 @@ function closeRenameModal(){
   renameMode = "rename";
   show(renameOverlay, false);
   exitModalSheet(renameOverlay);
+}
+
+function closeCreateOverlay(){
+  show(createOverlay, false);
+  exitModalSheet(createOverlay);
 }
 
 async function renameOk(){
@@ -1145,7 +1151,7 @@ function renderList(){
      <div class="txt">${t("logoEditor.create.title")}</div>
      <div class="sub">${t("logoEditor.create.subtitle")}</div>
    `;
-    add.addEventListener("click", () => { show(createOverlay, true); enterModalSheet(createOverlay); });
+    add.addEventListener("click", () => { show(createOverlay, true); enterModalSheet(createOverlay, { backBtn, onClose: closeCreateOverlay }); });
     grid.appendChild(add);
   }
 
@@ -1632,6 +1638,7 @@ async function boot(){
 
   // topbar
    btnBack?.addEventListener("click", async () => {
+     if (handleSheetBack()) return;
      if (shouldBlockNav() && !(await confirmCloseIfDirty())) return;
      location.href = withLangParam("../builder");
    });
@@ -1680,11 +1687,16 @@ async function boot(){
      if (btnLogoImportConfirm) btnLogoImportConfirm.disabled = true;
    }
 
+   function closeLogoImportModal() {
+     show(logoImportOverlay, false);
+     exitModalSheet(logoImportOverlay);
+   }
+
    function openLogoImportModal() {
      logoImportReset();
      if (inpImportLogoFile) inpImportLogoFile.value = "";
      show(logoImportOverlay, true);
-     enterModalSheet(logoImportOverlay);
+     enterModalSheet(logoImportOverlay, { backBtn, onClose: closeLogoImportModal });
    }
 
    function closeLogoImportModal() {
@@ -1853,8 +1865,19 @@ async function boot(){
     openPreviewFullscreen(payload);
   });
 
-  btnPreviewClose?.addEventListener("click", () => show(previewOverlay, false));
-  previewOverlay?.addEventListener("click", (ev) => { if (ev.target === previewOverlay) show(previewOverlay, false); });
+  function closePreviewFullscreen() {
+    show(previewOverlay, false);
+    exitModalSheet(previewOverlay);
+  }
+
+  btnPreviewClose?.addEventListener("click", closePreviewFullscreen);
+  previewOverlay?.addEventListener("click", (ev) => {
+    if (ev.target !== previewOverlay) return;
+    // W trybie sheet (mobile) modal zastępuje treść strony — jedynym
+    // wyjściem ma być przycisk wstecz w topbarze, nie klik w tło.
+    if (previewOverlay.classList.contains("modal--sheet") && isSheetViewport()) return;
+    closePreviewFullscreen();
+  });
 
   // RENAME modal
   btnRenameCancel?.addEventListener("click", closeRenameModal);

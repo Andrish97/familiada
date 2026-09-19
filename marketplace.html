@@ -162,40 +162,40 @@
       </div>
     </div>
 
+    <!-- ======================================================
+         MODAL: PODGLĄD GRY
+    ====================================================== -->
+    <div class="overlay modal--sheet" id="gameDetailOverlay" style="display:none">
+      <div class="modal mkt-modal-detail">
+        <div class="mkt-detail-head">
+          <div>
+            <div class="mTitle" id="detailTitle">—</div>
+            <div class="mSub" id="detailMeta">—</div>
+          </div>
+          <button class="btn sm mkt-close-btn" id="btnDetailClose" type="button" aria-label="Zamknij">✕</button>
+        </div>
+
+        <p class="mkt-detail-desc" id="detailDesc"></p>
+
+        <div class="mkt-detail-rating" id="detailRating"></div>
+
+        <div class="mkt-detail-questions" id="detailQuestions"></div>
+
+        <div class="mkt-detail-raters" id="detailRaters" hidden></div>
+
+        <div class="mkt-detail-actions">
+          <button class="btn sm gold" id="btnAddLibrary" type="button" data-i18n="marketplace.btnAddToLibrary">Dodaj do moich gier</button>
+          <button class="btn sm" id="btnRemoveLibrary" type="button" data-i18n="marketplace.btnRemoveFromLibrary" hidden>Usuń z moich gier</button>
+          <span class="mkt-added-badge" id="addedBadge" hidden data-i18n="marketplace.addedBadge">Dodano ✅</span>
+        </div>
+      </div>
+    </div>
+
     <div class="footer" style="margin-top:auto">
       <div data-i18n="common.footer.left">© 2026 Familiada — system do gry na żywo</div>
       <button class="btn-contact-footer" type="button" data-contact-modal data-i18n="common.contactBtn">Kontakt</button>
     </div>
   </main>
-
-  <!-- ======================================================
-       MODAL: PODGLĄD GRY
-  ====================================================== -->
-  <div class="overlay" id="gameDetailOverlay" style="display:none">
-    <div class="modal mkt-modal-detail">
-      <div class="mkt-detail-head">
-        <div>
-          <div class="mTitle" id="detailTitle">—</div>
-          <div class="mSub" id="detailMeta">—</div>
-        </div>
-        <button class="btn sm mkt-close-btn" id="btnDetailClose" type="button" aria-label="Zamknij">✕</button>
-      </div>
-
-      <p class="mkt-detail-desc" id="detailDesc"></p>
-
-      <div class="mkt-detail-rating" id="detailRating"></div>
-
-      <div class="mkt-detail-questions" id="detailQuestions"></div>
-
-      <div class="mkt-detail-raters" id="detailRaters" hidden></div>
-
-      <div class="mkt-detail-actions">
-        <button class="btn sm gold" id="btnAddLibrary" type="button" data-i18n="marketplace.btnAddToLibrary">Dodaj do moich gier</button>
-        <button class="btn sm" id="btnRemoveLibrary" type="button" data-i18n="marketplace.btnRemoveFromLibrary" hidden>Usuń z moich gier</button>
-        <span class="mkt-added-badge" id="addedBadge" hidden data-i18n="marketplace.addedBadge">Dodano ✅</span>
-      </div>
-    </div>
-  </div>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 

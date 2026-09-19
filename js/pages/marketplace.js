@@ -8,7 +8,7 @@ import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-
 import { exportGame } from "./builder-import-export.js?v=v2026-09-19T22273";
 import { initUiSelect } from "../core/ui-select.js?v=v2026-09-19T22273";
 import { confirmModal } from "../core/modal.js?v=v2026-09-19T22273";
-import { enterModalSheet, exitModalSheet, isSheetViewport } from "../core/modal-sheet.js?v=v2026-09-19T22273";
+import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../core/modal-sheet.js?v=v2026-09-19T22273";
 import "../core/contact-modal.js";
 
 /* =========================================================
@@ -27,6 +27,15 @@ let searchTimer   = null;
 let detailGameId  = null;
 let submitLang    = "pl";
 let submitGameUiSelect = null;
+
+// Strona przełącza się między widokiem "browse" (przycisk wstecz:
+// btnGoBuilder) i "mine" (przycisk wstecz: btnBackBrowse) -- w danej
+// chwili widoczny jest dokładnie jeden z nich (patrz showView()), więc
+// modale sheet biorą jako backBtn ten, który akurat nie jest ukryty.
+function currentBackBtn() {
+  if (els.btnBackBrowse && !els.btnBackBrowse.hidden) return els.btnBackBrowse;
+  return els.btnGoBuilder;
+}
 
 /* =========================================================
    Elements
@@ -198,11 +207,13 @@ async function openDetail(id, { fromUrl = false } = {}) {
   if (els.btnRemoveLibrary) els.btnRemoveLibrary.hidden = true;
   if (els.addedBadge) els.addedBadge.hidden = true;
   if (els.gameDetailOverlay) els.gameDetailOverlay.style.display = "";
+  enterModalSheet(els.gameDetailOverlay, { backBtn: currentBackBtn(), onClose: closeDetail });
 
   const { data, error } = await sb().rpc("market_game_detail", { p_id: id }).single();
   if (error || !data) {
     console.error("[marketplace] openDetail error:", error);
     if (els.gameDetailOverlay) els.gameDetailOverlay.style.display = "none";
+    exitModalSheet(els.gameDetailOverlay);
     showToast(t("marketplace.errorLoad"), "error");
     return;
   }
@@ -284,6 +295,7 @@ function updateLibraryButtons(inLibrary, withdrawn = false) {
 
 function closeDetail() {
   if (els.gameDetailOverlay) els.gameDetailOverlay.style.display = "none";
+  exitModalSheet(els.gameDetailOverlay);
   detailGameId = null;
   // Przywróć URL → /marketplace
   if (location.pathname.startsWith("/marketplace/game/")) {
@@ -462,7 +474,7 @@ async function openSubmitModal() {
   });
 
   if (els.submitOverlay) els.submitOverlay.style.display = "";
-  enterModalSheet(els.submitOverlay);
+  enterModalSheet(els.submitOverlay, { backBtn: currentBackBtn(), onClose: closeSubmitModal });
 }
 
 function closeSubmitModal() {
@@ -623,6 +635,7 @@ function esc(str) {
 function wireEvents() {
   // Nav
   els.btnGoBuilder?.addEventListener("click", () => {
+    if (handleSheetBack()) return;
     window.location.href = withLangParam(!currentUser ? "/" : "builder");
   });
   els.btnManual?.addEventListener("click", () => {
@@ -637,7 +650,10 @@ function wireEvents() {
     showView("mine");
     await loadMySent();
   });
-  els.btnBackBrowse?.addEventListener("click", () => showView("browse"));
+  els.btnBackBrowse?.addEventListener("click", () => {
+    if (handleSheetBack()) return;
+    showView("browse");
+  });
 
   els.searchInput?.addEventListener("input", () => {
     clearTimeout(searchTimer);
@@ -652,7 +668,11 @@ function wireEvents() {
   // Detail modal
   els.btnDetailClose?.addEventListener("click", closeDetail);
   els.gameDetailOverlay?.addEventListener("click", e => {
-    if (e.target === e.currentTarget) closeDetail();
+    if (e.target !== e.currentTarget) return;
+    // W trybie sheet (mobile) modal zastępuje treść strony — jedynym
+    // wyjściem ma być przycisk wstecz w topbarze, nie klik w tło.
+    if (els.gameDetailOverlay.classList.contains("modal--sheet") && isSheetViewport()) return;
+    closeDetail();
   });
   els.btnAddLibrary?.addEventListener("click", addToLibrary);
   els.btnRemoveLibrary?.addEventListener("click", removeFromLibrary);

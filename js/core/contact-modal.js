@@ -1,13 +1,40 @@
 import { t, getUiLang } from "../../translation/translation.js?v=v2026-09-19T22273";
-import { isSheetViewport } from "./modal-sheet.js?v=v2026-09-19T22273";
+import { isSheetViewport, enterModalSheet, exitModalSheet } from "./modal-sheet.js?v=v2026-09-19T22273";
 
 let modalEl = null;
 let isSubmitting = false;
+// true gdy ostatnie otwarcie użyło wspólnego mechanizmu sheet (modal
+// wstawiony do main.wrap/.explorer) -- fałszywe na stronach spoza tej
+// funkcji (np. index.html/login.html), gdzie zostaje stary, samodzielny
+// fullscreen z ensureMobileStyle().
+let usedSheetMode = false;
+
+// Znane id przycisków wstecz w topbarze poszczególnych stron (patrz
+// js/core/modal-sheet.js) -- ten plik jest importowany przez wiele stron
+// naraz i nie wie z góry, na której akurat się znalazł, więc bierze
+// pierwszy pasujący, który faktycznie jest w DOM.
+const BACK_BTN_IDS = ["btnBack", "btnBackSheet", "btnBackToBuilder", "btnGoBuilder", "btnBackBrowse"];
+function findPageBackBtn() {
+  // marketplace.html ma DWA przyciski wstecz (btnGoBuilder/btnBackBrowse),
+  // widoczny jest zawsze dokładnie jeden -- preferuj ten, który akurat nie
+  // jest ukryty, zanim weźmiesz pierwszy pasujący z listy.
+  let firstAny = null;
+  for (const id of BACK_BTN_IDS) {
+    const el = document.getElementById(id);
+    if (!el) continue;
+    if (!firstAny) firstAny = el;
+    if (!el.hidden && el.style.display !== "none") return el;
+  }
+  return firstAny;
+}
 
 // Modal kontaktu buduje własny DOM niezależnie od .overlay/.modal ze
 // wspólnych stron (patrz modal-sheet.js / css/base.css "Modal sheet
-// (mobile)") — na telefonie dostaje analogiczny, samodzielny traktowanie:
-// pełny ekran, nagłówek przyklejony do góry, bez zamykania klikiem w tło.
+// (mobile)"). Na stronach z main.wrap/.explorer (patrz openContactModal)
+// dostaje pełne traktowanie sheet -- ten sam mechanizm co inne rozbudowane
+// modale. Na pozostałych stronach (bez main.wrap/.explorer, np.
+// index.html/login.html) zostaje przy starym, samodzielnym fullscreenie
+// poniżej.
 const MOBILE_STYLE_ID = "contactModalMobileStyle";
 function ensureMobileStyle() {
   if (document.getElementById(MOBILE_STYLE_ID)) return;
@@ -15,11 +42,11 @@ function ensureMobileStyle() {
   style.id = MOBILE_STYLE_ID;
   style.textContent = `
     @media (max-width: 600px) {
-      #contactModalOverlay.overlay {
+      #contactModalOverlay.overlay:not(.modal--sheet) {
         padding: 0;
         align-items: stretch;
       }
-      #contactModalOverlay .modal {
+      #contactModalOverlay.overlay:not(.modal--sheet) .modal {
         width: 100%;
         max-width: none;
         height: 100%;
@@ -27,7 +54,7 @@ function ensureMobileStyle() {
         border-radius: 0;
         margin: 0;
       }
-      #contactModalOverlay .mTitle {
+      #contactModalOverlay.overlay:not(.modal--sheet) .mTitle {
         position: sticky;
         top: 0;
         background: var(--card);
@@ -181,8 +208,26 @@ export async function openContactModal(opts = {}) {
     if (subjectField) subjectField.style.display = "";
   }
 
+  // Na telefonie: jeśli strona ma main.wrap/.explorer (rozbudowane modale
+  // sheet, patrz css/base.css "Modal sheet (mobile)"), modal kontaktu
+  // dołącza do tego samego mechanizmu -- wstawiony do main, przejmuje
+  // przycisk wstecz w topbarze -- zamiast własnego, samodzielnego
+  // fullscreena. Ustalane przy KAŻDYM otwarciu (nie raz w ensureModal),
+  // bo strona/main mogły się jeszcze nie wyrenderować przy pierwszym imporcie.
+  const main = document.querySelector("main.wrap, main.explorer");
+  usedSheetMode = !!main;
+  if (main) {
+    modalEl.classList.add("modal--sheet");
+    const footer = main.querySelector(":scope > .footer");
+    if (footer) main.insertBefore(modalEl, footer);
+    else main.appendChild(modalEl);
+  }
+
   modalEl.style.display = "grid";
   document.body.style.overflow = "hidden";
+  if (usedSheetMode) {
+    enterModalSheet(modalEl, { backBtn: findPageBackBtn(), onClose: closeContactModal });
+  }
   await prefillEmail();
   const emailInp = document.getElementById("cModalEmail");
   if (emailInp && !emailInp.value) emailInp.focus();
@@ -193,6 +238,7 @@ export function closeContactModal() {
   if (!modalEl) return;
   modalEl.style.display = "none";
   document.body.style.overflow = "";
+  exitModalSheet(modalEl);
 }
 
 async function submitContact() {
