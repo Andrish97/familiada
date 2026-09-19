@@ -3112,3 +3112,8 @@ test.describe("base-explorer: mobile.js (drawer, long-press, podwójny tap)", ()
     }
   });
 });
+
+
+// Mobile "sheet" modal testy (tagi/eksport/pytanie) zostały przeniesione
+// do tests/e2e/mobile-sheet-modals.spec.js -- tam są zebrane testy tego
+// mechanizmu dla wszystkich stron w jednym pliku.

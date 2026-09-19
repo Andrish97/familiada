@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
-  <meta name="app-version" content="v2026-09-19T19203"/>
+  <meta name="app-version" content="v2026-09-19T22270"/>
 
   <meta charset="UTF-8"/>
   <meta name="robots" content="noindex, nofollow"/>
@@ -14,12 +14,12 @@
   <link rel="preconnect" href="https://supabase.familiada.online">
   <title data-i18n="logoEditor.title">Familiada — edytor logo</title>
 
-  <link rel="icon" href="favicon.ico?v=v2026-09-19T19203"/>
-  <link rel="manifest" href="/manifest.json?v=v2026-09-19T19203"/>
+  <link rel="icon" href="favicon.ico?v=v2026-09-19T22270"/>
+  <link rel="manifest" href="/manifest.json?v=v2026-09-19T22270"/>
   <meta name="theme-color" content="#050914"/>
-  <link rel="stylesheet" href="css/base.css?v=v2026-09-19T19203"/>
-  <link rel="stylesheet" href="css/builder.css?v=v2026-09-19T19203"/>
-  <link rel="stylesheet" href="logo-editor/logo-editor.css?v=v2026-09-19T19203"/>
+  <link rel="stylesheet" href="css/base.css?v=v2026-09-19T22270"/>
+  <link rel="stylesheet" href="css/builder.css?v=v2026-09-19T22270"/>
+  <link rel="stylesheet" href="logo-editor/logo-editor.css?v=v2026-09-19T22270"/>
   <script>
     document.documentElement.classList.add('page-loading');
     try {
@@ -48,8 +48,8 @@
   <!-- Fabric.js (global: window.fabric) -->
   <script src="https://cdn.jsdelivr.net/npm/fabric@5.3.0/dist/fabric.min.js"></script>
 
-  <script type="module" src="./logo-editor/js/main.js?v=v2026-09-19T19203" defer></script>
-  <script src="js/core/security-warning.js?v=v2026-09-19T19203" defer></script>
+  <script type="module" src="./logo-editor/js/main.js?v=v2026-09-19T22270" defer></script>
+  <script src="js/core/security-warning.js?v=v2026-09-19T22270" defer></script>
 </head>
 
 <body class="builder-body logo-editor-body skel-body">
@@ -308,14 +308,8 @@
       </div><!-- /editorCard -->
     </section>
 
-    <div class="footer">
-      <div data-i18n="common.footer.left">© 2026 Familiada — system do gry na żywo</div>
-      <button class="btn-contact-footer" type="button" data-contact-modal data-i18n="common.contactBtn">Kontakt</button>
-    </div>
-  </main>
-
   <!-- Modal: wybór trybu (ZOSTAJE) -->
-  <div class="overlay" id="createOverlay" style="display:none;">
+  <div class="overlay modal--sheet" id="createOverlay" style="display:none;">
     <div class="modal">
       <div class="mHead">
         <div class="mTitle" data-i18n="logoEditor.create.title">Nowe logo</div>
@@ -346,7 +340,7 @@
   </div>
 
   <!-- Modal: zmiana nazwy logo -->
-  <div class="overlay" id="renameOverlay" style="display:none;">
+  <div class="overlay modal--sheet" id="renameOverlay" style="display:none;">
     <div class="modal">
       <div class="mTitle" id="renameTitle" data-i18n="logoEditor.rename.title">Zmień nazwę</div>
       <div class="mSub" id="renameSub" data-i18n="logoEditor.rename.sub">Wpisz nową nazwę i zapisz.</div>
@@ -363,22 +357,8 @@
     </div>
   </div>
 
-  <!-- Fullscreen preview (MODAL z X) -->
-  <div class="overlay" id="previewOverlay" style="display:none;">
-    <div class="modal previewModal">
-      <button class="btn sm previewCloseBtn" id="btnPreviewClose" type="button" aria-label="Zamknij">✕</button>
-      <div class="previewModalTitle">
-        <div class="mTitle" data-i18n="logoEditor.preview.title">Podgląd</div>
-        <div class="mSub" data-i18n="logoEditor.preview.subtitle">Tak będzie wyglądać logo na wyświetlaczu</div>
-      </div>
-      <div class="previewModalCanvas">
-        <canvas id="bigPreviewFull" width="1600" height="700"></canvas>
-      </div>
-    </div>
-  </div>
-
   <!-- Modal: import logo -->
-  <div class="overlay" id="logoImportOverlay" style="display:none;">
+  <div class="overlay modal--sheet" id="logoImportOverlay" style="display:none;">
     <div class="modal" style="width:min(640px,94vw)">
       <div class="mHead">
         <div class="mTitle" data-i18n="logoEditor.import.title">Import logo</div>
@@ -414,6 +394,29 @@
     </div>
   </div>
 
+    <div class="footer">
+      <div data-i18n="common.footer.left">© 2026 Familiada — system do gry na żywo</div>
+      <button class="btn-contact-footer" type="button" data-contact-modal data-i18n="common.contactBtn">Kontakt</button>
+    </div>
+  </main>
+
+
+
+  <!-- Fullscreen preview (MODAL z X) -->
+  <div class="overlay" id="previewOverlay" style="display:none;">
+    <div class="modal previewModal">
+      <button class="btn sm previewCloseBtn" id="btnPreviewClose" type="button" aria-label="Zamknij">✕</button>
+      <div class="previewModalTitle">
+        <div class="mTitle" data-i18n="logoEditor.preview.title">Podgląd</div>
+        <div class="mSub" data-i18n="logoEditor.preview.subtitle">Tak będzie wyglądać logo na wyświetlaczu</div>
+      </div>
+      <div class="previewModalCanvas">
+        <canvas id="bigPreviewFull" width="1600" height="700"></canvas>
+      </div>
+    </div>
+  </div>
+
+
   <!-- PROGRES: EXPORT LOGO -->
   <div class="overlay" id="logoExportOverlay" style="display:none;">
     <div class="modal" style="width:min(640px,94vw)">
@@ -447,7 +450,7 @@
       <iframe id="legalFrame" class="legalFrame" src="../manual?modal=control" title="Polityka prywatności"></iframe>
     </div>
   </div>
-  <script type="module" src="js/core/contact-modal.js?v=v2026-09-19T19203"></script>
-  <script type="module" src="js/core/topbar-controller.js?v=v2026-09-19T19203"></script>
+  <script type="module" src="js/core/contact-modal.js?v=v2026-09-19T22270"></script>
+  <script type="module" src="js/core/topbar-controller.js?v=v2026-09-19T22270"></script>
 </body>
 </html>

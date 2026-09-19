@@ -1,22 +1,23 @@
 // familiada/logo-editorjs/main.js
 // Glowna logika strony + lista kafelkow + routing do edytorow.
 
-import { addRenameGesture } from "../../js/core/rename-gesture.js?v=v2026-09-19T19203";
-import { loadFont5x7, buildLogoPreviewCanvas } from "../../js/core/logo-preview.js?v=v2026-09-19T19203";
+import { addRenameGesture } from "../../js/core/rename-gesture.js?v=v2026-09-19T22270";
+import { loadFont5x7, buildLogoPreviewCanvas } from "../../js/core/logo-preview.js?v=v2026-09-19T22270";
 
-import { sb } from "../../js/core/supabase.js?v=v2026-09-19T19203";
-import { requireAuth } from "../../js/core/auth.js?v=v2026-09-19T19203";
-import { isGuestUser } from "../../js/core/guest-mode.js?v=v2026-09-19T19203";
-import { alertModal, confirmModal } from "../../js/core/modal.js?v=v2026-09-19T19203";
-import { getUiLang, initI18n, t, withLangParam } from "../../translation/translation.js?v=v2026-09-19T19203";
-import { initTopbarAccountDropdown } from "../../js/core/topbar-controller.js?v=v2026-09-19T19203";
-import { isMobileDevice } from "../../js/core/pwa.js?v=v2026-09-19T19203";
-import { v as cacheBust } from "../../js/core/cache-bust.js?v=v2026-09-19T19203";
-import { guardResourceLock, isResourceBusy, findBusyContext } from "../../js/core/resource-lock.js?v=v2026-09-19T19203";
+import { sb } from "../../js/core/supabase.js?v=v2026-09-19T22270";
+import { requireAuth } from "../../js/core/auth.js?v=v2026-09-19T22270";
+import { isGuestUser } from "../../js/core/guest-mode.js?v=v2026-09-19T22270";
+import { alertModal, confirmModal } from "../../js/core/modal.js?v=v2026-09-19T22270";
+import { getUiLang, initI18n, t, withLangParam } from "../../translation/translation.js?v=v2026-09-19T22270";
+import { initTopbarAccountDropdown } from "../../js/core/topbar-controller.js?v=v2026-09-19T22270";
+import { isMobileDevice } from "../../js/core/pwa.js?v=v2026-09-19T22270";
+import { v as cacheBust } from "../../js/core/cache-bust.js?v=v2026-09-19T22270";
+import { guardResourceLock, isResourceBusy, findBusyContext } from "../../js/core/resource-lock.js?v=v2026-09-19T22270";
+import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../js/core/modal-sheet.js?v=v2026-09-19T22270";
 
-import { initTextEditor } from "./text.js?v=v2026-09-19T19203";
-import { initDrawEditor } from "./draw.js?v=v2026-09-19T19203";
-import { initImageEditor } from "./image.js?v=v2026-09-19T19203";
+import { initTextEditor } from "./text.js?v=v2026-09-19T22270";
+import { initDrawEditor } from "./draw.js?v=v2026-09-19T22270";
+import { initImageEditor } from "./image.js?v=v2026-09-19T22270";
 
 window.addEventListener("error", (e) => {
   console.error("window error", e.error || e.message);
@@ -35,9 +36,9 @@ const DOT_H = 70;  // 10*7
 
 // UWAGA: to sa sciezki wzgledne wobec logo-editor
 // (ustalone, nie zgadujemy)
-const FONT_3x10_URL = "display/font_3x10.json?v=v2026-09-19T19203";
-const FONT_5x7_URL  = "display/font_5x7.json?v=v2026-09-19T19203";
-const DEFAULT_LOGO_URL = "display/logo_familiada.json?v=v2026-09-19T19203";
+const FONT_3x10_URL = "display/font_3x10.json?v=v2026-09-19T22270";
+const FONT_5x7_URL  = "display/font_5x7.json?v=v2026-09-19T22270";
+const DEFAULT_LOGO_URL = "display/logo_familiada.json?v=v2026-09-19T22270";
 
 /* =========================================================
    DOM
@@ -994,6 +995,7 @@ function openRenameModal(logo){
   renameSub.textContent = t("logoEditor.rename.sub");
   renameInput.value = logo?.name || "";
   show(renameOverlay, true);
+  enterModalSheet(renameOverlay);
   setTimeout(() => renameInput.select(), 0);
 }
 
@@ -1007,6 +1009,7 @@ function openCreateModal(type, mode){
   renameSub.textContent = t("logoEditor.create.nameModalSub");
   renameInput.value = "";
   show(renameOverlay, true);
+  enterModalSheet(renameOverlay);
   setTimeout(() => renameInput.focus(), 0);
 }
 
@@ -1016,6 +1019,7 @@ function closeRenameModal(){
   createModeMode = null;
   renameMode = "rename";
   show(renameOverlay, false);
+  exitModalSheet(renameOverlay);
 }
 
 async function renameOk(){
@@ -1141,7 +1145,7 @@ function renderList(){
      <div class="txt">${t("logoEditor.create.title")}</div>
      <div class="sub">${t("logoEditor.create.subtitle")}</div>
    `;
-    add.addEventListener("click", () => show(createOverlay, true));
+    add.addEventListener("click", () => { show(createOverlay, true); enterModalSheet(createOverlay); });
     grid.appendChild(add);
   }
 
@@ -1622,7 +1626,7 @@ async function boot(){
    imageEditor = initImageEditor(editorCtx);
 
   // Updater - sprawdzanie nowej wersji (TYLKO RAZ)
-  import('../../js/core/updater.js?v=v2026-09-19T19203').then(m => m.initUpdater()).catch(() => {});
+  import('../../js/core/updater.js?v=v2026-09-19T22270').then(m => m.initUpdater()).catch(() => {});
 
    armNavGuard();
 
@@ -1680,10 +1684,12 @@ async function boot(){
      logoImportReset();
      if (inpImportLogoFile) inpImportLogoFile.value = "";
      show(logoImportOverlay, true);
+     enterModalSheet(logoImportOverlay);
    }
 
    function closeLogoImportModal() {
      show(logoImportOverlay, false);
+     exitModalSheet(logoImportOverlay);
    }
 
    inpImportLogoFile?.addEventListener("change", async () => {
@@ -1731,7 +1737,11 @@ async function boot(){
    });
 
    btnLogoImportCancel?.addEventListener("click", () => closeLogoImportModal());
-   logoImportOverlay?.addEventListener("mousedown", (e) => { if (e.target === logoImportOverlay) closeLogoImportModal(); });
+   logoImportOverlay?.addEventListener("mousedown", (e) => {
+     if (e.target !== logoImportOverlay) return;
+     if (logoImportOverlay.classList.contains("modal--sheet") && isSheetViewport()) return;
+     closeLogoImportModal();
+   });
 
    btnImport?.addEventListener("click", () => openLogoImportModal());
 
@@ -1804,19 +1814,29 @@ async function boot(){
   // modal wyboru trybu - otwiera modal z nazwą, nie tworzy od razu
   pickText?.addEventListener("click", () => {
     show(createOverlay, false);
+    exitModalSheet(createOverlay);
     openCreateModal(TYPE_GLYPH, "TEXT");
   });
   pickDraw?.addEventListener("click", () => {
     show(createOverlay, false);
+    exitModalSheet(createOverlay);
     openCreateModal(TYPE_PIX, "DRAW");
   });
   pickImage?.addEventListener("click", () => {
     show(createOverlay, false);
+    exitModalSheet(createOverlay);
     openCreateModal(TYPE_PIX, "IMAGE");
   });
 
-  btnPickCancel?.addEventListener("click", () => show(createOverlay, false));
-  createOverlay?.addEventListener("click", (ev) => { if (ev.target === createOverlay) show(createOverlay, false); });
+  btnPickCancel?.addEventListener("click", () => { show(createOverlay, false); exitModalSheet(createOverlay); });
+  createOverlay?.addEventListener("click", (ev) => {
+    if (ev.target !== createOverlay) return;
+    // W trybie sheet (mobile) modal zastępuje treść strony — jedynym
+    // wyjściem ma być widoczny przycisk zamknięcia, nie klik w tło.
+    if (createOverlay.classList.contains("modal--sheet") && isSheetViewport()) return;
+    show(createOverlay, false);
+    exitModalSheet(createOverlay);
+  });
 
   btnCreate?.addEventListener("click", handleCreate);
    
@@ -1838,7 +1858,11 @@ async function boot(){
 
   // RENAME modal
   btnRenameCancel?.addEventListener("click", closeRenameModal);
-  renameOverlay?.addEventListener("click", (ev) => { if (ev.target === renameOverlay) closeRenameModal(); });
+  renameOverlay?.addEventListener("click", (ev) => {
+    if (ev.target !== renameOverlay) return;
+    if (renameOverlay.classList.contains("modal--sheet") && isSheetViewport()) return;
+    closeRenameModal();
+  });
   btnRenameOk?.addEventListener("click", renameOk);
   renameInput?.addEventListener("keydown", (e) => {
     if (e.key === "Enter") {

@@ -1,23 +1,24 @@
-import { addRenameGesture } from "../core/rename-gesture.js?v=v2026-09-19T19203";
-import { sb } from "../core/supabase.js?v=v2026-09-19T19203";
-import { requireAuth } from "../core/auth.js?v=v2026-09-19T19203";
-import { alertModal, confirmModal } from "../core/modal.js?v=v2026-09-19T19203";
-import { hideForGuest, isGuestUser } from "../core/guest-mode.js?v=v2026-09-19T19203";
-import { initI18n, t, applyTranslations } from "../../translation/translation.js?v=v2026-09-19T19203";
-import { initRatingSystem } from "../core/rating-system.js?v=v2026-09-19T19203";
-import { initUiSelect } from "../core/ui-select.js?v=v2026-09-19T19203";
-import { maybeShowGuestInfoModal } from "../core/guest-info-modal.js?v=v2026-09-19T19203";
-import { maybeShowGuestMigrateReminder } from "../core/guest-migrate-reminder.js?v=v2026-09-19T19203";
+import { addRenameGesture } from "../core/rename-gesture.js?v=v2026-09-19T22270";
+import { sb } from "../core/supabase.js?v=v2026-09-19T22270";
+import { requireAuth } from "../core/auth.js?v=v2026-09-19T22270";
+import { alertModal, confirmModal } from "../core/modal.js?v=v2026-09-19T22270";
+import { hideForGuest, isGuestUser } from "../core/guest-mode.js?v=v2026-09-19T22270";
+import { initI18n, t, applyTranslations } from "../../translation/translation.js?v=v2026-09-19T22270";
+import { initRatingSystem } from "../core/rating-system.js?v=v2026-09-19T22270";
+import { initUiSelect } from "../core/ui-select.js?v=v2026-09-19T22270";
+import { maybeShowGuestInfoModal } from "../core/guest-info-modal.js?v=v2026-09-19T22270";
+import { maybeShowGuestMigrateReminder } from "../core/guest-migrate-reminder.js?v=v2026-09-19T22270";
 
-import { initPwa, isStandalone, isMobileDevice } from "../core/pwa.js?v=v2026-09-19T19203";
+import { initPwa, isStandalone, isMobileDevice } from "../core/pwa.js?v=v2026-09-19T22270";
+import { enterModalSheet, exitModalSheet, isSheetViewport } from "../core/modal-sheet.js?v=v2026-09-19T22270";
 
 // Zarejestruj listener PWA jak najwcześniej – beforeinstallprompt może odpalić przed requireAuth
 const pwaApi = initPwa();
 // Jeśli beforeinstallprompt już odpalił zanim dodaliśmy listener w IIFE, sprawdzimy po zalogowaniu
 
 
-import { exportGame, importGame, downloadJson } from "./builder-import-export.js?v=v2026-09-19T19203";
-import { setTopbarNavPriority, setTopbarAccount } from '../core/topbar-controller.js?v=v2026-09-19T19203';
+import { exportGame, importGame, downloadJson } from "./builder-import-export.js?v=v2026-09-19T22270";
+import { setTopbarNavPriority, setTopbarAccount } from '../core/topbar-controller.js?v=v2026-09-19T22270';
 
 import "../core/contact-modal.js";
 import {
@@ -28,9 +29,9 @@ import {
   validateGameReadyToPlay,
   validatePollEntry,
   validatePollReadyToOpen,
-} from "../core/game-validate.js?v=v2026-09-19T19203";
-import { deleteGameSoundsFolder } from "../core/sfx-cloud.js?v=v2026-09-19T19203";
-import { isResourceBusy } from "../core/resource-lock.js?v=v2026-09-19T19203";
+} from "../core/game-validate.js?v=v2026-09-19T22270";
+import { deleteGameSoundsFolder } from "../core/sfx-cloud.js?v=v2026-09-19T22270";
+import { isResourceBusy } from "../core/resource-lock.js?v=v2026-09-19T22270";
 
 const MSG = {
   exportBaseEmpty: () => t("builder.exportBase.empty"),
@@ -403,10 +404,12 @@ function setExportBaseMsg(t) {
 function openExportBaseModal() {
   setExportBaseMsg("");
   show(exportBaseOverlay, true);
+  enterModalSheet(exportBaseOverlay);
 }
 
 function closeExportBaseModal() {
   show(exportBaseOverlay, false);
+  exitModalSheet(exportBaseOverlay);
 }
 
 function escapeHtml(s) {
@@ -1675,6 +1678,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   exportBaseOverlay?.addEventListener("click", (e) => {
     if (e.target !== exportBaseOverlay) return;
+    // W trybie sheet (mobile) modal zastępuje treść strony — jedynym
+    // wyjściem ma być widoczny przycisk zamknięcia, nie klik w tło.
+    if (exportBaseOverlay.classList.contains("modal--sheet") && isSheetViewport()) return;
     closeExportBaseModal();
   });
 

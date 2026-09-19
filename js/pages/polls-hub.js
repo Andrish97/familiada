@@ -1,12 +1,13 @@
-import { sb, SUPABASE_URL } from "../core/supabase.js?v=v2026-09-19T19203";
-import { updateChecked } from "../core/db-guard.js?v=v2026-09-19T19203";
-import { requireAuth } from "../core/auth.js?v=v2026-09-19T19203";
-import { isGuestUser, showGuestBlockedOverlay } from "../core/guest-mode.js?v=v2026-09-19T19203";
-import { validatePollReadyToOpen } from "../core/game-validate.js?v=v2026-09-19T19203";
-import { alertModal, confirmModal } from "../core/modal.js?v=v2026-09-19T19203";
-import { initUiSelect } from "../core/ui-select.js?v=v2026-09-19T19203";
-import { initI18n, t, getUiLang } from "../../translation/translation.js?v=v2026-09-19T19203";
-import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-09-19T19203";
+import { sb, SUPABASE_URL } from "../core/supabase.js?v=v2026-09-19T22270";
+import { updateChecked } from "../core/db-guard.js?v=v2026-09-19T22270";
+import { requireAuth } from "../core/auth.js?v=v2026-09-19T22270";
+import { isGuestUser, showGuestBlockedOverlay } from "../core/guest-mode.js?v=v2026-09-19T22270";
+import { validatePollReadyToOpen } from "../core/game-validate.js?v=v2026-09-19T22270";
+import { alertModal, confirmModal } from "../core/modal.js?v=v2026-09-19T22270";
+import { initUiSelect } from "../core/ui-select.js?v=v2026-09-19T22270";
+import { initI18n, t, getUiLang } from "../../translation/translation.js?v=v2026-09-19T22270";
+import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-09-19T22270";
+import { enterModalSheet, exitModalSheet, isSheetViewport } from "../core/modal-sheet.js?v=v2026-09-19T22270";
 import "../core/contact-modal.js";
 
 initI18n({ withSwitcher: true }).then(() => {
@@ -675,6 +676,7 @@ async function openShareModal() {
 
     if (!activeSubs.length) shareList.innerHTML = `<div class="hub-empty">${MSG.emptyActiveSubscribers()}</div>`;
     shareOverlay.style.display = "grid";
+    enterModalSheet(shareOverlay);
   } catch {
     await alertModal({ text: t("pollsHubPolls.errors.loadSubscribers") });
   } finally {
@@ -682,7 +684,7 @@ async function openShareModal() {
   }
 }
 
-function closeShareModal() { shareOverlay.style.display = "none"; shareList.innerHTML = ""; }
+function closeShareModal() { shareOverlay.style.display = "none"; shareList.innerHTML = ""; exitModalSheet(shareOverlay); }
 
 async function buildMailItemsForTasksFallback({ gameId, ownerId, selectedSubIds }) {
   const { data: rows, error } = await sb()
@@ -958,12 +960,13 @@ async function openDetailsModal() {
     renderDetailsList(detailsCancelled, rows.filter((r) => r.status === "cancelled"));
     detailsAnon.textContent = String(selectedPoll?.anon_votes || 0);
     detailsOverlay.style.display = "grid";
+    enterModalSheet(detailsOverlay);
   } catch {
     await alertModal({ text: MSG.loadDetailsFail() });
   }
 }
 
-function closeDetailsModal() { detailsOverlay.style.display = "none"; }
+function closeDetailsModal() { detailsOverlay.style.display = "none"; exitModalSheet(detailsOverlay); }
 
 let autoRefreshTimer = null;
 function startAutoRefresh() {
@@ -1127,8 +1130,18 @@ document.addEventListener("DOMContentLoaded", async () => {
   btnShareClose?.addEventListener("click", () => { closeShareModal(); refreshData(); });
   btnDetailsClose?.addEventListener("click", () => { closeDetailsModal(); refreshData(); });
 
-  shareOverlay?.addEventListener("click", (e) => { if (e.target === shareOverlay) { closeShareModal(); refreshData(); } });
-  detailsOverlay?.addEventListener("click", (e) => { if (e.target === detailsOverlay) { closeDetailsModal(); refreshData(); } });
+  shareOverlay?.addEventListener("click", (e) => {
+    if (e.target !== shareOverlay) return;
+    if (isSheetViewport()) return; // sheet mode (mobile): tylko widoczny przycisk zamyka
+    closeShareModal();
+    refreshData();
+  });
+  detailsOverlay?.addEventListener("click", (e) => {
+    if (e.target !== detailsOverlay) return;
+    if (isSheetViewport()) return; // sheet mode (mobile): tylko widoczny przycisk zamyka
+    closeDetailsModal();
+    refreshData();
+  });
 
   // po zamknięciu dowolnego confirm/alert w aplikacji — odśwież listy
   document.addEventListener("uni-modal:closed", () => { refreshData(); });

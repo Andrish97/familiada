@@ -1,13 +1,14 @@
 // js/pages/marketplace.js
 
-import { sb, buildSiteUrl } from "../core/supabase.js?v=v2026-09-19T19203";
-import { getUser } from "../core/auth.js?v=v2026-09-19T19203";
-import { isGuestUser } from "../core/guest-mode.js?v=v2026-09-19T19203";
-import { initI18n, t, getUiLang, withLangParam, applyTranslations } from "../../translation/translation.js?v=v2026-09-19T19203";
-import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-09-19T19203";
-import { exportGame } from "./builder-import-export.js?v=v2026-09-19T19203";
-import { initUiSelect } from "../core/ui-select.js?v=v2026-09-19T19203";
-import { confirmModal } from "../core/modal.js?v=v2026-09-19T19203";
+import { sb, buildSiteUrl } from "../core/supabase.js?v=v2026-09-19T22270";
+import { getUser } from "../core/auth.js?v=v2026-09-19T22270";
+import { isGuestUser } from "../core/guest-mode.js?v=v2026-09-19T22270";
+import { initI18n, t, getUiLang, withLangParam, applyTranslations } from "../../translation/translation.js?v=v2026-09-19T22270";
+import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-09-19T22270";
+import { exportGame } from "./builder-import-export.js?v=v2026-09-19T22270";
+import { initUiSelect } from "../core/ui-select.js?v=v2026-09-19T22270";
+import { confirmModal } from "../core/modal.js?v=v2026-09-19T22270";
+import { enterModalSheet, exitModalSheet, isSheetViewport } from "../core/modal-sheet.js?v=v2026-09-19T22270";
 import "../core/contact-modal.js";
 
 /* =========================================================
@@ -461,10 +462,12 @@ async function openSubmitModal() {
   });
 
   if (els.submitOverlay) els.submitOverlay.style.display = "";
+  enterModalSheet(els.submitOverlay);
 }
 
 function closeSubmitModal() {
   if (els.submitOverlay) els.submitOverlay.style.display = "none";
+  exitModalSheet(els.submitOverlay);
 }
 
 function showSubmitError(msg) {
@@ -658,7 +661,11 @@ function wireEvents() {
   els.btnSubmitNew?.addEventListener("click", openSubmitModal);
   els.btnSubmitCancel?.addEventListener("click", closeSubmitModal);
   els.submitOverlay?.addEventListener("click", e => {
-    if (e.target === e.currentTarget) closeSubmitModal();
+    if (e.target !== e.currentTarget) return;
+    // W trybie sheet (mobile) modal zastępuje treść strony — jedynym
+    // wyjściem ma być widoczny przycisk zamknięcia/anuluj, nie klik w tło.
+    if (els.submitOverlay.classList.contains("modal--sheet") && isSheetViewport()) return;
+    closeSubmitModal();
   });
   els.btnSubmitConfirm?.addEventListener("click", submitGame);
 

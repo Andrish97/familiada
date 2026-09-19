@@ -336,3 +336,7 @@ test.describe("bases: ochrona bazy jako całości (delete_resource_checked + upd
     }
   });
 });
+
+// Mobile "sheet" modal testy (udostępnianie/nazwa + regresja .uni-modal)
+// zostały przeniesione do tests/e2e/mobile-sheet-modals.spec.js -- tam są
+// zebrane testy tego mechanizmu dla wszystkich stron w jednym pliku.
