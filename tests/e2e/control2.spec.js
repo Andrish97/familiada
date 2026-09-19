@@ -1290,6 +1290,19 @@ test("control2: dźwięk ze źródła Wyświetlacz — odblokowanie, głośnoś�
     // .gs-sidebar-item istnieje w DOM, ale nie jest "visible" dla Playwrighta.
     await gsFrame.locator("#btnToggleSidebar").click();
     await gsFrame.locator('.gs-sidebar-item[data-cat="sound"]').click();
+    // TYMCZASOWA diagnostyka (do usunięcia po znalezieniu przyczyny) --
+    // sidebar drawer fix (poprzedni commit) naprawił klik na kategorię,
+    // ale input.sfx-vol[data-sfx-vol="round_transition"] wciąż w ogóle nie
+    // istnieje w DOM po kliknięciu -- sprawdź, czy renderSound() w ogóle
+    // się wykonał (i.js/pages/game-settings2.js's renderCat()).
+    await gsFrame.locator("body").waitFor({ state: "attached" });
+    const dbg = await gsFrame.locator("#gsContentInner").evaluate((el) => ({
+      catTitle: el.querySelector(".gs-cat-title")?.textContent,
+      hasSfxTable: !!el.querySelector("#sfxTableGs"),
+      sfxRowCount: el.querySelectorAll(".sfx-row").length,
+      innerHTMLStart: el.innerHTML.slice(0, 300),
+    }));
+    console.log("[e2e-diag-sound-test]", JSON.stringify(dbg));
     const transitionSlider = gsFrame.locator('input.sfx-vol[data-sfx-vol="round_transition"]');
     await expect(transitionSlider).toBeVisible({ timeout: 10000 });
     // .fill() na <input type="range"> nie zawsze niezawodnie odpala "input"
