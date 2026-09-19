@@ -170,12 +170,8 @@ if (_isModal) {
   // locków (tylko isDirty, confirmModal, t -- wszystkie dostępne od razu na
   // poziomie modułu), więc też wpięte tu, synchronicznie.
   async function tryClose() {
-    console.warn("[e2e-diag] tryClose() wywołane, isDirty:", isDirty);
     if (isDirty) {
-      if (!await confirmModal({ text: t("gameSettings.unsavedConfirmModal") || "Masz niezapisane zmiany. Czy chcesz zamknąć ustawienia?" })) {
-        console.warn("[e2e-diag] tryClose() przerwane przez confirmModal (odmowa)");
-        return;
-      }
+      if (!await confirmModal({ text: t("gameSettings.unsavedConfirmModal") || "Masz niezapisane zmiany. Czy chcesz zamknąć ustawienia?" })) return;
     }
     // Reset defaultValue na wszystkich inputach żeby przeglądarka nie pokazała
     // natywnego "Masz niezapisane zmiany" przy nawigacji iframe
@@ -183,12 +179,10 @@ if (_isModal) {
       if (el.type === "checkbox" || el.type === "radio") el.defaultChecked = el.checked;
       else el.defaultValue = el.value;
     });
-    console.warn("[e2e-diag] tryClose() wysyła gs:close do window.parent");
     window.parent.postMessage({ type: "gs:close" }, "*");
   }
 
   window.addEventListener("message", (ev) => {
-    console.warn("[e2e-diag] game-settings2 message listener, data:", JSON.stringify(ev.data));
     if (ev.data?.type === "gs:requestClose") tryClose();
   });
 
@@ -240,59 +234,72 @@ function clearDirty() {
 }
 
 async function saveAll() {
-  // Warstwa 2 (świeżość referencji): allQuestions/final/rounds mogły
-  // wczytać się raz przy starcie i od tego czasu ktoś (np. w edytorze,
-  // inna karta) mógł usunąć któreś z wybranych pytań. Odśwież przed
-  // zapisem i wyczyść martwe odniesienia — inaczej settings zapisałoby
-  // wskazanie na już nieistniejące pytanie.
-  try {
-    const freshQuestions = await loadQuestions(gameId);
-    const freshIds = new Set(freshQuestions.map(q => q.id));
-    localSettings.questions.final = localSettings.questions.final.filter(q => freshIds.has(q.id));
-    localSettings.questions.rounds = localSettings.questions.rounds.filter(q => freshIds.has(q.id));
-    allQuestions = freshQuestions;
-  } catch (e) {
-    console.warn("[game-settings2] refresh questions before save failed:", e);
-  }
-
-  const hasFinal = localSettings.game.hasFinal === true;
-
-  // Finał wyłączony — wyczyść wybrane pytania finału (żeby martwa lista
-  // nie zostawała w bazie i nie wykluczała tych pytań z puli rund przy
-  // kolejnym wczytaniu ustawień ani w trakcie realnej rozgrywki) i
-  // zresetuj tryb wyboru na domyślny, żeby nie zostawało osierocone
-  // "Wybrane ręcznie" bez żadnych wybranych pytań.
-  if (!hasFinal) {
-    if (localSettings.questions.final.length > 0) localSettings.questions.final = [];
-    if (localSettings.game.finalQuestionsMode !== "random") localSettings.game.finalQuestionsMode = "random";
-  }
-
-  // Walidacja: finale w trybie "pick" wymaga dokładnie 5 pytań
-  if (hasFinal && localSettings.game.finalQuestionsMode === "pick") {
-    const count = localSettings.questions.final.length;
-    if (count < 5) {
-      alertModal({ text: t("gameSettings.saveErrorFinalNeed5", { count }) });
-      setActiveCat("finale");
-      return;
-    }
-  }
-
-  // Walidacja: nie można zapisać gdy wybrano "Własny" bez wgranego pliku
-  {
-    let cfCheck = new Map();
-    try { cfCheck = await getSfxCustomFiles(gameId); } catch {}
-    const missing = getSfxCategories().filter(cat =>
-      localSettings.sound.variants[cat.key] === VARIANT_CUSTOM && !cfCheck.get(cat.key)
-    );
-    if (missing.length > 0) {
-      const names = missing.map(cat => t("control.sfxDesc." + cat.key) || cat.key).join(", ");
-      alertModal({ text: (t("gameSettings.saveErrorCustomNoFile") || "Wgraj plik dla: {names}").replace("{names}", names) });
-      return;
-    }
-  }
-
+  // btnSaveAll.disabled=true jest TU, jako pierwsza instrukcja, celowo --
+  // poprzednio szło dopiero tuż przed zapisem, PO dwóch realnych zapytaniach
+  // sieciowych (loadQuestions()/getSfxCustomFiles() niżej), więc przycisk
+  // zostawał "enabled" przez cały ten wstępny odcinek. To był realny bug
+  // (e2e "dźwięk ze źródła Wyświetlacz", root cause znaleziony diagnostyką
+  // .evaluate()/console.warn w tryClose(): klik na tło modala tuż po
+  // "Zapisz wszystko" trafiał w to okno, `await expect(btnSaveAll).
+  // toBeEnabled()` w teście przechodził natychmiast -- bo przycisk nigdy
+  // nie zdążył się jeszcze wyłączyć -- więc isDirty było wciąż `true`,
+  // tryClose() pokazywał confirmModal(), a #gsOverlay nigdy nie znikał).
+  // Ten sam wyścig groził realnemu użytkownikowi: drugi klik "Zapisz" albo
+  // wyjście z modala w tym oknie nie miały żadnego wizualnego ostrzeżenia,
+  // że zapis już trwa.
   if (btnSaveAll) btnSaveAll.disabled = true;
   try {
+    // Warstwa 2 (świeżość referencji): allQuestions/final/rounds mogły
+    // wczytać się raz przy starcie i od tego czasu ktoś (np. w edytorze,
+    // inna karta) mógł usunąć któreś z wybranych pytań. Odśwież przed
+    // zapisem i wyczyść martwe odniesienia — inaczej settings zapisałoby
+    // wskazanie na już nieistniejące pytanie.
+    try {
+      const freshQuestions = await loadQuestions(gameId);
+      const freshIds = new Set(freshQuestions.map(q => q.id));
+      localSettings.questions.final = localSettings.questions.final.filter(q => freshIds.has(q.id));
+      localSettings.questions.rounds = localSettings.questions.rounds.filter(q => freshIds.has(q.id));
+      allQuestions = freshQuestions;
+    } catch (e) {
+      console.warn("[game-settings2] refresh questions before save failed:", e);
+    }
+
+    const hasFinal = localSettings.game.hasFinal === true;
+
+    // Finał wyłączony — wyczyść wybrane pytania finału (żeby martwa lista
+    // nie zostawała w bazie i nie wykluczała tych pytań z puli rund przy
+    // kolejnym wczytaniu ustawień ani w trakcie realnej rozgrywki) i
+    // zresetuj tryb wyboru na domyślny, żeby nie zostawało osierocone
+    // "Wybrane ręcznie" bez żadnych wybranych pytań.
+    if (!hasFinal) {
+      if (localSettings.questions.final.length > 0) localSettings.questions.final = [];
+      if (localSettings.game.finalQuestionsMode !== "random") localSettings.game.finalQuestionsMode = "random";
+    }
+
+    // Walidacja: finale w trybie "pick" wymaga dokładnie 5 pytań
+    if (hasFinal && localSettings.game.finalQuestionsMode === "pick") {
+      const count = localSettings.questions.final.length;
+      if (count < 5) {
+        alertModal({ text: t("gameSettings.saveErrorFinalNeed5", { count }) });
+        setActiveCat("finale");
+        return;
+      }
+    }
+
+    // Walidacja: nie można zapisać gdy wybrano "Własny" bez wgranego pliku
+    {
+      let cfCheck = new Map();
+      try { cfCheck = await getSfxCustomFiles(gameId); } catch {}
+      const missing = getSfxCategories().filter(cat =>
+        localSettings.sound.variants[cat.key] === VARIANT_CUSTOM && !cfCheck.get(cat.key)
+      );
+      if (missing.length > 0) {
+        const names = missing.map(cat => t("control.sfxDesc." + cat.key) || cat.key).join(", ");
+        alertModal({ text: (t("gameSettings.saveErrorCustomNoFile") || "Wgraj plik dla: {names}").replace("{names}", names) });
+        return;
+      }
+    }
+
     // Uzupełnij filenames w sound settings (do streszczenia w control-new)
     await _syncSoundFilenames();
 
