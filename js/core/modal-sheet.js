@@ -12,44 +12,65 @@
 import { t } from "../../translation/translation.js?v=v2026-09-19T23341";
 
 const SHEET_MQ = "(max-width:600px)";
+const sheetMql = window.matchMedia(SHEET_MQ);
 
 let activeClose = null;
 let activeBackBtn = null;
 let backBtnOrigText = null;
+let activeOverlay = null;
 
 export function isSheetViewport() {
-  return window.matchMedia(SHEET_MQ).matches;
+  return sheetMql.matches;
 }
+
+// Modal zostaje otwarty niezależnie od szerokości ekranu (np. tablet
+// obrócony w trakcie gdy modal już jest otwarty) — sam mechanizm sheet
+// (podmiana treści, przejęty przycisk) ma się włączać/wyłączać żywo wraz
+// z media query, zamiast zamrażać stan z chwili otwarcia. Bez tego:
+// otwarcie na wąskim ekranie i obrót do szerokiego zostawiał przycisk
+// wstecz z tekstem "← Wstecz" mimo że modal wrócił do zwykłego,
+// wyśrodkowanego okna z własnym "✕" — dwa niespójne sposoby zamknięcia
+// naraz ("przeskakiwanie między modalem a widokiem").
+function applyPresentation(matches) {
+  document.body.classList.toggle("sheet-open", matches);
+  activeOverlay?.classList.toggle("sheet-active", matches);
+
+  if (!activeBackBtn) return;
+  activeBackBtn.textContent = matches ? t("common.modalBack") : backBtnOrigText;
+}
+
+function onSheetMqChange(e) {
+  if (!activeClose) return; // żaden sheet modal aktualnie otwarty
+  applyPresentation(e.matches);
+}
+sheetMql.addEventListener?.("change", onSheetMqChange) ?? sheetMql.addListener?.(onSheetMqChange);
 
 // overlayEl: element .overlay (lub .market-preview-overlay) danego modala.
 // opts.backBtn: istniejący przycisk wstecz w topbarze strony — dostaje
-//   tekst "← Wstecz" na czas otwarcia modala.
+//   tekst "← Wstecz" na czas otwarcia modala (i z powrotem, żywo, jeśli
+//   ekran zmieni szerokość podczas gdy modal jest otwarty).
 // opts.onClose: funkcja zamykająca TEN modal — wywoływana przez
 //   handleSheetBack() gdy użytkownik kliknie przycisk wstecz w topbarze.
 export function enterModalSheet(overlayEl, { backBtn, onClose } = {}) {
   if (!isSheetViewport()) return;
 
-  document.body.classList.add("sheet-open");
-  overlayEl?.classList.add("sheet-active");
-
+  activeOverlay = overlayEl || null;
   activeClose = onClose || null;
 
   if (backBtn) {
     activeBackBtn = backBtn;
     backBtnOrigText = backBtn.textContent;
-    backBtn.textContent = t("common.modalBack");
   }
+
+  applyPresentation(true);
 }
 
 export function exitModalSheet(overlayEl) {
-  document.body.classList.remove("sheet-open");
-  overlayEl?.classList.remove("sheet-active");
+  applyPresentation(false);
 
-  if (activeBackBtn) {
-    activeBackBtn.textContent = backBtnOrigText;
-    activeBackBtn = null;
-    backBtnOrigText = null;
-  }
+  activeOverlay = null;
+  activeBackBtn = null;
+  backBtnOrigText = null;
   activeClose = null;
 }
 
