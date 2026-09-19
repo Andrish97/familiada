@@ -2,6 +2,7 @@
 // Modal pytania: open() zwraca Promise z wynikiem {ok,...}
 
 import { t } from "../../translation/translation.js?v=v2026-09-19T18005";
+import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../js/core/modal-sheet.js?v=v2026-09-19T18005";
 
 const $ = (id) => document.getElementById(id);
 
@@ -164,6 +165,7 @@ export function initQuestionModal({ state } = {}) {
     renderAnswers();
     updateSumUI();
     show(overlay, true);
+    enterModalSheet(overlay);
     setTimeout(() => qText?.focus(), 0);
 
     return new Promise((resolve) => {
@@ -173,6 +175,7 @@ export function initQuestionModal({ state } = {}) {
 
   function close(result = { ok: false }) {
     show(overlay, false);
+    exitModalSheet(overlay);
     setErr("");
 
     const r = resolveClose;
@@ -184,7 +187,11 @@ export function initQuestionModal({ state } = {}) {
 
   qClose?.addEventListener("click", () => close({ ok: false }));
   overlay.addEventListener("mousedown", (e) => {
-    if (e.target === overlay) close({ ok: false });
+    if (e.target !== overlay) return;
+    // W trybie sheet (mobile) modal zastępuje treść strony — jedynym
+    // wyjściem ma być widoczny przycisk zamknięcia, nie klik w tło.
+    if (overlay.classList.contains("modal--sheet") && isSheetViewport()) return;
+    close({ ok: false });
   });
 
   qAdd?.addEventListener("click", () => {

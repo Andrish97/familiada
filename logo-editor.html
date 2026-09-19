@@ -308,14 +308,8 @@
       </div><!-- /editorCard -->
     </section>
 
-    <div class="footer">
-      <div data-i18n="common.footer.left">© 2026 Familiada — system do gry na żywo</div>
-      <button class="btn-contact-footer" type="button" data-contact-modal data-i18n="common.contactBtn">Kontakt</button>
-    </div>
-  </main>
-
   <!-- Modal: wybór trybu (ZOSTAJE) -->
-  <div class="overlay" id="createOverlay" style="display:none;">
+  <div class="overlay modal--sheet" id="createOverlay" style="display:none;">
     <div class="modal">
       <div class="mHead">
         <div class="mTitle" data-i18n="logoEditor.create.title">Nowe logo</div>
@@ -346,7 +340,7 @@
   </div>
 
   <!-- Modal: zmiana nazwy logo -->
-  <div class="overlay" id="renameOverlay" style="display:none;">
+  <div class="overlay modal--sheet" id="renameOverlay" style="display:none;">
     <div class="modal">
       <div class="mTitle" id="renameTitle" data-i18n="logoEditor.rename.title">Zmień nazwę</div>
       <div class="mSub" id="renameSub" data-i18n="logoEditor.rename.sub">Wpisz nową nazwę i zapisz.</div>
@@ -363,22 +357,8 @@
     </div>
   </div>
 
-  <!-- Fullscreen preview (MODAL z X) -->
-  <div class="overlay" id="previewOverlay" style="display:none;">
-    <div class="modal previewModal">
-      <button class="btn sm previewCloseBtn" id="btnPreviewClose" type="button" aria-label="Zamknij">✕</button>
-      <div class="previewModalTitle">
-        <div class="mTitle" data-i18n="logoEditor.preview.title">Podgląd</div>
-        <div class="mSub" data-i18n="logoEditor.preview.subtitle">Tak będzie wyglądać logo na wyświetlaczu</div>
-      </div>
-      <div class="previewModalCanvas">
-        <canvas id="bigPreviewFull" width="1600" height="700"></canvas>
-      </div>
-    </div>
-  </div>
-
   <!-- Modal: import logo -->
-  <div class="overlay" id="logoImportOverlay" style="display:none;">
+  <div class="overlay modal--sheet" id="logoImportOverlay" style="display:none;">
     <div class="modal" style="width:min(640px,94vw)">
       <div class="mHead">
         <div class="mTitle" data-i18n="logoEditor.import.title">Import logo</div>
@@ -413,6 +393,29 @@
       </div>
     </div>
   </div>
+
+    <div class="footer">
+      <div data-i18n="common.footer.left">© 2026 Familiada — system do gry na żywo</div>
+      <button class="btn-contact-footer" type="button" data-contact-modal data-i18n="common.contactBtn">Kontakt</button>
+    </div>
+  </main>
+
+
+
+  <!-- Fullscreen preview (MODAL z X) -->
+  <div class="overlay" id="previewOverlay" style="display:none;">
+    <div class="modal previewModal">
+      <button class="btn sm previewCloseBtn" id="btnPreviewClose" type="button" aria-label="Zamknij">✕</button>
+      <div class="previewModalTitle">
+        <div class="mTitle" data-i18n="logoEditor.preview.title">Podgląd</div>
+        <div class="mSub" data-i18n="logoEditor.preview.subtitle">Tak będzie wyglądać logo na wyświetlaczu</div>
+      </div>
+      <div class="previewModalCanvas">
+        <canvas id="bigPreviewFull" width="1600" height="700"></canvas>
+      </div>
+    </div>
+  </div>
+
 
   <!-- PROGRES: EXPORT LOGO -->
   <div class="overlay" id="logoExportOverlay" style="display:none;">

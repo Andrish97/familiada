@@ -10,6 +10,7 @@ import { maybeShowGuestInfoModal } from "../core/guest-info-modal.js?v=v2026-09-
 import { maybeShowGuestMigrateReminder } from "../core/guest-migrate-reminder.js?v=v2026-09-19T18005";
 
 import { initPwa, isStandalone, isMobileDevice } from "../core/pwa.js?v=v2026-09-19T18005";
+import { enterModalSheet, exitModalSheet, isSheetViewport } from "../core/modal-sheet.js?v=v2026-09-19T18005";
 
 // Zarejestruj listener PWA jak najwcześniej – beforeinstallprompt może odpalić przed requireAuth
 const pwaApi = initPwa();
@@ -403,10 +404,12 @@ function setExportBaseMsg(t) {
 function openExportBaseModal() {
   setExportBaseMsg("");
   show(exportBaseOverlay, true);
+  enterModalSheet(exportBaseOverlay);
 }
 
 function closeExportBaseModal() {
   show(exportBaseOverlay, false);
+  exitModalSheet(exportBaseOverlay);
 }
 
 function escapeHtml(s) {
@@ -1675,6 +1678,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   exportBaseOverlay?.addEventListener("click", (e) => {
     if (e.target !== exportBaseOverlay) return;
+    // W trybie sheet (mobile) modal zastępuje treść strony — jedynym
+    // wyjściem ma być widoczny przycisk zamknięcia, nie klik w tło.
+    if (exportBaseOverlay.classList.contains("modal--sheet") && isSheetViewport()) return;
     closeExportBaseModal();
   });
 

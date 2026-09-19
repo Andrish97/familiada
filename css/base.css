@@ -613,10 +613,14 @@ main{
    zastępuje treść strony w normalnym przepływie dokumentu (tuż nad
    stopką), analogicznie do "mobile-editing" w editor.js/editor.css.
    Wymaga, by dany .overlay.modal--sheet był w HTML dzieckiem
-   <main class="wrap">/.explorer, umieszczonym przed .footer. */
+   <main class="wrap">/.explorer, umieszczonym przed .footer. Modal nie
+   musi mieć klasy .overlay — settings.html ma jeden modal (#assignReportModal)
+   na klasach .market-preview-overlay/.market-preview-card zamiast
+   .overlay/.modal, więc wykluczenie z reguły "ukryj resztę" opiera się na
+   samej klasie .modal--sheet, nie na .overlay. */
 @media (max-width: 600px) {
-    body.sheet-open main.wrap > *:not(.footer):not(.overlay),
-    body.sheet-open main.explorer > *:not(.footer):not(.overlay) {
+    body.sheet-open main.wrap > *:not(.footer):not(.modal--sheet),
+    body.sheet-open main.explorer > *:not(.footer):not(.modal--sheet) {
         display: none;
     }
 
@@ -629,12 +633,16 @@ main{
 
     /* tylko aktualnie otwarty modal (.sheet-active) wchodzi w treść strony;
        pozostałe .modal--sheet na tej samej stronie zostają ukryte, nawet
-       gdy body.sheet-open jest ustawione przez inny modal */
-    body.sheet-open .overlay.modal--sheet:not(.sheet-active) {
+       gdy body.sheet-open jest ustawione przez inny modal. Druga część
+       selektora (.market-preview-overlay) obsługuje #assignReportModal w
+       settings.html, który nie używa klas .overlay/.modal. */
+    body.sheet-open .overlay.modal--sheet:not(.sheet-active),
+    body.sheet-open .market-preview-overlay.modal--sheet:not(.sheet-active) {
         display: none !important;
     }
 
-    body.sheet-open .overlay.modal--sheet.sheet-active {
+    body.sheet-open .overlay.modal--sheet.sheet-active,
+    body.sheet-open .market-preview-overlay.modal--sheet.sheet-active {
         position: static;
         inset: auto;
         background: none;
@@ -644,7 +652,8 @@ main{
         min-height: 0;
     }
 
-    .modal--sheet .modal {
+    .modal--sheet .modal,
+    .modal--sheet .market-preview-card {
         width: 100%;
         max-width: none;
         height: auto;
@@ -657,7 +666,8 @@ main{
     }
 
     .modal--sheet .uni-head,
-    .modal--sheet .mHead {
+    .modal--sheet .mHead,
+    .modal--sheet .tagsHead {
         position: sticky;
         top: 0;
         background: var(--card);

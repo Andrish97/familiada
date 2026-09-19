@@ -13,6 +13,7 @@ import { initTopbarAccountDropdown } from "../../js/core/topbar-controller.js?v=
 import { isMobileDevice } from "../../js/core/pwa.js?v=v2026-09-19T18005";
 import { v as cacheBust } from "../../js/core/cache-bust.js?v=v2026-09-19T18005";
 import { guardResourceLock, isResourceBusy, findBusyContext } from "../../js/core/resource-lock.js?v=v2026-09-19T18005";
+import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../js/core/modal-sheet.js?v=v2026-09-19T18005";
 
 import { initTextEditor } from "./text.js?v=v2026-09-19T18005";
 import { initDrawEditor } from "./draw.js?v=v2026-09-19T18005";
@@ -994,6 +995,7 @@ function openRenameModal(logo){
   renameSub.textContent = t("logoEditor.rename.sub");
   renameInput.value = logo?.name || "";
   show(renameOverlay, true);
+  enterModalSheet(renameOverlay);
   setTimeout(() => renameInput.select(), 0);
 }
 
@@ -1007,6 +1009,7 @@ function openCreateModal(type, mode){
   renameSub.textContent = t("logoEditor.create.nameModalSub");
   renameInput.value = "";
   show(renameOverlay, true);
+  enterModalSheet(renameOverlay);
   setTimeout(() => renameInput.focus(), 0);
 }
 
@@ -1016,6 +1019,7 @@ function closeRenameModal(){
   createModeMode = null;
   renameMode = "rename";
   show(renameOverlay, false);
+  exitModalSheet(renameOverlay);
 }
 
 async function renameOk(){
@@ -1141,7 +1145,7 @@ function renderList(){
      <div class="txt">${t("logoEditor.create.title")}</div>
      <div class="sub">${t("logoEditor.create.subtitle")}</div>
    `;
-    add.addEventListener("click", () => show(createOverlay, true));
+    add.addEventListener("click", () => { show(createOverlay, true); enterModalSheet(createOverlay); });
     grid.appendChild(add);
   }
 
@@ -1680,10 +1684,12 @@ async function boot(){
      logoImportReset();
      if (inpImportLogoFile) inpImportLogoFile.value = "";
      show(logoImportOverlay, true);
+     enterModalSheet(logoImportOverlay);
    }
 
    function closeLogoImportModal() {
      show(logoImportOverlay, false);
+     exitModalSheet(logoImportOverlay);
    }
 
    inpImportLogoFile?.addEventListener("change", async () => {
@@ -1731,7 +1737,11 @@ async function boot(){
    });
 
    btnLogoImportCancel?.addEventListener("click", () => closeLogoImportModal());
-   logoImportOverlay?.addEventListener("mousedown", (e) => { if (e.target === logoImportOverlay) closeLogoImportModal(); });
+   logoImportOverlay?.addEventListener("mousedown", (e) => {
+     if (e.target !== logoImportOverlay) return;
+     if (logoImportOverlay.classList.contains("modal--sheet") && isSheetViewport()) return;
+     closeLogoImportModal();
+   });
 
    btnImport?.addEventListener("click", () => openLogoImportModal());
 
@@ -1804,19 +1814,29 @@ async function boot(){
   // modal wyboru trybu - otwiera modal z nazwą, nie tworzy od razu
   pickText?.addEventListener("click", () => {
     show(createOverlay, false);
+    exitModalSheet(createOverlay);
     openCreateModal(TYPE_GLYPH, "TEXT");
   });
   pickDraw?.addEventListener("click", () => {
     show(createOverlay, false);
+    exitModalSheet(createOverlay);
     openCreateModal(TYPE_PIX, "DRAW");
   });
   pickImage?.addEventListener("click", () => {
     show(createOverlay, false);
+    exitModalSheet(createOverlay);
     openCreateModal(TYPE_PIX, "IMAGE");
   });
 
-  btnPickCancel?.addEventListener("click", () => show(createOverlay, false));
-  createOverlay?.addEventListener("click", (ev) => { if (ev.target === createOverlay) show(createOverlay, false); });
+  btnPickCancel?.addEventListener("click", () => { show(createOverlay, false); exitModalSheet(createOverlay); });
+  createOverlay?.addEventListener("click", (ev) => {
+    if (ev.target !== createOverlay) return;
+    // W trybie sheet (mobile) modal zastępuje treść strony — jedynym
+    // wyjściem ma być widoczny przycisk zamknięcia, nie klik w tło.
+    if (createOverlay.classList.contains("modal--sheet") && isSheetViewport()) return;
+    show(createOverlay, false);
+    exitModalSheet(createOverlay);
+  });
 
   btnCreate?.addEventListener("click", handleCreate);
    
@@ -1838,7 +1858,11 @@ async function boot(){
 
   // RENAME modal
   btnRenameCancel?.addEventListener("click", closeRenameModal);
-  renameOverlay?.addEventListener("click", (ev) => { if (ev.target === renameOverlay) closeRenameModal(); });
+  renameOverlay?.addEventListener("click", (ev) => {
+    if (ev.target !== renameOverlay) return;
+    if (renameOverlay.classList.contains("modal--sheet") && isSheetViewport()) return;
+    closeRenameModal();
+  });
   btnRenameOk?.addEventListener("click", renameOk);
   renameInput?.addEventListener("keydown", (e) => {
     if (e.key === "Enter") {

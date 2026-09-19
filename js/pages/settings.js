@@ -15,6 +15,7 @@ Settings panel (admin)
 import { initI18n, t, getUiLang } from "../../translation/translation.js?v=v2026-09-19T18005";
 import { initUiSelect } from "../core/ui-select.js?v=v2026-09-19T18005";
 import { alertModal, confirmModal, promptModal } from "../core/modal.js?v=v2026-09-19T18005";
+import { enterModalSheet, exitModalSheet, isSheetViewport } from "../core/modal-sheet.js?v=v2026-09-19T18005";
 import { sb } from "../core/supabase.js?v=v2026-09-19T18005";
 import { v as cacheBust } from "../core/cache-bust.js?v=v2026-09-19T18005";
 
@@ -2347,11 +2348,13 @@ function openRejectModal(id) {
   const note    = document.getElementById("marketRejectNote");
   if (overlay) overlay.style.display = "";
   if (note) note.value = "";
+  enterModalSheet(overlay);
 }
 
 function closeRejectModal() {
   const overlay = document.getElementById("marketRejectOverlay");
   if (overlay) overlay.style.display = "none";
+  exitModalSheet(overlay);
 }
 
 async function confirmReject() {
@@ -2458,6 +2461,7 @@ async function openRatersModal(gameId, title) {
   if (titleEl) titleEl.textContent = title || "Oceniający";
   body.innerHTML = "Ładowanie…";
   overlay.style.display = "";
+  enterModalSheet(overlay);
   try {
     const res = await adminFetch(`/marketplace/game-raters?id=${encodeURIComponent(gameId)}`);
     if (!res.ok) throw new Error(await res.text());
@@ -3631,6 +3635,7 @@ function openAssignModal(messageId) {
   const quoteCheck = document.getElementById("assignQuoteCheck");
   if (quoteCheck) quoteCheck.checked = false;
   modal.hidden = false;
+  enterModalSheet(modal);
 }
 
 async function fallbackAssign(messageId) {
@@ -3697,6 +3702,7 @@ async function doCreateAndAssign(messageId, subject, withQuote = false) {
 function closeAssignModal() {
   const modal = document.getElementById("assignReportModal");
   if (modal) modal.hidden = true;
+  exitModalSheet(modal);
 }
 
 async function unassignReport(messageId) {
@@ -4698,7 +4704,9 @@ function wireReportsEvents() {
 
   document.getElementById("btnAssignCancel")?.addEventListener("click", closeAssignModal);
   document.getElementById("assignReportModal")?.addEventListener("click", (e) => {
-    if (e.target === e.currentTarget) closeAssignModal();
+    if (e.target !== e.currentTarget) return;
+    if (isSheetViewport()) return; // sheet mode (mobile): tylko widoczny przycisk zamyka
+    closeAssignModal();
   });
 }
 
@@ -4748,9 +4756,13 @@ function wireMarketplaceEvents() {
   document.getElementById("btnRatersClose")?.addEventListener("click", () => {
     const ov = document.getElementById("ratersOverlay");
     if (ov) ov.style.display = "none";
+    exitModalSheet(ov);
   });
   document.getElementById("ratersOverlay")?.addEventListener("click", e => {
-    if (e.target === e.currentTarget) e.currentTarget.style.display = "none";
+    if (e.target !== e.currentTarget) return;
+    if (isSheetViewport()) return; // sheet mode (mobile): tylko widoczny przycisk zamyka
+    e.currentTarget.style.display = "none";
+    exitModalSheet(e.currentTarget);
   });
 
   // Sync Storage
@@ -4791,7 +4803,9 @@ function wireMarketplaceEvents() {
   document.getElementById("btnMarketRejectCancel")?.addEventListener("click", closeRejectModal);
   document.getElementById("btnMarketRejectConfirm")?.addEventListener("click", confirmReject);
   document.getElementById("marketRejectOverlay")?.addEventListener("click", (e) => {
-    if (e.target === e.currentTarget) closeRejectModal();
+    if (e.target !== e.currentTarget) return;
+    if (isSheetViewport()) return; // sheet mode (mobile): tylko widoczny przycisk zamyka
+    closeRejectModal();
   });
 }
 

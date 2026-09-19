@@ -100,16 +100,9 @@
       </div>
     </section>
 
-  </main>
-
-  <!-- KONTEKST MENU (prawy klik) -->
-  <div id="contextMenu" class="context-menu" hidden></div>
-
-  <!-- MODALE (wstrzykiwane JS-em) -->
-  <div id="modalRoot"></div>
 
   <!-- Modal: tagi (3 warstwy) — styl jak bases (overlay/modal) -->
-  <div class="overlay" id="tagsOverlay" style="display:none;">
+  <div class="overlay modal--sheet" id="tagsOverlay" style="display:none;">
     <div class="modal tags-modal" role="dialog" aria-modal="true" aria-labelledby="tagsTitle">
   
       <!-- WARSTWA 1: przypisz -->
@@ -206,36 +199,11 @@
       
     </div>
   </div>
-  
-  <!-- Rename modal (spójny z tagsOverlay: overlay + modal) -->
-  <div class="overlay" id="renameModal" hidden>
-    <div class="modal tags-modal rename-modal" role="dialog" aria-modal="true" aria-labelledby="renameModalTitle">
-  
-      <div class="tagsHead">
-        <div class="mTitle" id="renameModalTitle" data-i18n="baseExplorer.rename.title">Zmień nazwę</div>
-        <button class="btn sm" id="renameModalClose" type="button" aria-label="Zamknij" data-i18n-aria-label="baseExplorer.common.close">✕</button>
-      </div>
-
-      <div class="mSub" id="renameModalHelp" data-i18n="baseExplorer.rename.help">Wpisz nową nazwę i zapisz.</div>
-  
-      <div class="renameBody">
-        <input id="renameModalInput" class="inp renameInput" type="text" autocomplete="off" />
-      </div>
-  
-      <div class="tagsFoot">
-        <div class="tagsFootSpacer"></div>
-        <button class="btn sm gold" id="renameModalSave" type="button" data-i18n="baseExplorer.common.save">Zapisz</button>
-      </div>
-  
-      <div id="renameModalErr" class="importMsg" style="display:none;"></div>
-  
-    </div>
-  </div>
 
     <!-- =======================================================
        [MODAL: EKSPORT] — overlay + modal (wzorzec jak TAGI)
        ======================================================= -->
-  <div class="overlay" id="exportOverlay" style="display:none;">
+  <div class="overlay modal--sheet" id="exportOverlay" style="display:none;">
     <div class="modal tags-modal export-modal" role="dialog" aria-modal="true" aria-labelledby="xTitle">
 
       <div class="tagsHead">
@@ -318,7 +286,7 @@
     <!-- =======================================================
        [MODAL: PYTANIE] — overlay + modal (wzorzec jak TAGI)
        ======================================================= -->
-  <div class="overlay" id="questionOverlay" style="display:none;">
+  <div class="overlay modal--sheet" id="questionOverlay" style="display:none;">
     <div class="modal tags-modal question-modal" role="dialog" aria-modal="true" aria-labelledby="qTitle">
 
       <div class="tagsHead">
@@ -367,6 +335,42 @@
 
     </div>
   </div>
+
+  </main>
+
+  <!-- KONTEKST MENU (prawy klik) -->
+  <div id="contextMenu" class="context-menu" hidden></div>
+
+  <!-- MODALE (wstrzykiwane JS-em) -->
+  <div id="modalRoot"></div>
+
+  
+  <!-- Rename modal (spójny z tagsOverlay: overlay + modal) -->
+  <div class="overlay" id="renameModal" hidden>
+    <div class="modal tags-modal rename-modal" role="dialog" aria-modal="true" aria-labelledby="renameModalTitle">
+  
+      <div class="tagsHead">
+        <div class="mTitle" id="renameModalTitle" data-i18n="baseExplorer.rename.title">Zmień nazwę</div>
+        <button class="btn sm" id="renameModalClose" type="button" aria-label="Zamknij" data-i18n-aria-label="baseExplorer.common.close">✕</button>
+      </div>
+
+      <div class="mSub" id="renameModalHelp" data-i18n="baseExplorer.rename.help">Wpisz nową nazwę i zapisz.</div>
+  
+      <div class="renameBody">
+        <input id="renameModalInput" class="inp renameInput" type="text" autocomplete="off" />
+      </div>
+  
+      <div class="tagsFoot">
+        <div class="tagsFootSpacer"></div>
+        <button class="btn sm gold" id="renameModalSave" type="button" data-i18n="baseExplorer.common.save">Zapisz</button>
+      </div>
+  
+      <div id="renameModalErr" class="importMsg" style="display:none;"></div>
+  
+    </div>
+  </div>
+
+
   
 </body>
 </html>

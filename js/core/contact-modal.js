@@ -1,7 +1,42 @@
 import { t, getUiLang } from "../../translation/translation.js?v=v2026-09-19T18005";
+import { isSheetViewport } from "./modal-sheet.js?v=v2026-09-19T18005";
 
 let modalEl = null;
 let isSubmitting = false;
+
+// Modal kontaktu buduje własny DOM niezależnie od .overlay/.modal ze
+// wspólnych stron (patrz modal-sheet.js / css/base.css "Modal sheet
+// (mobile)") — na telefonie dostaje analogiczny, samodzielny traktowanie:
+// pełny ekran, nagłówek przyklejony do góry, bez zamykania klikiem w tło.
+const MOBILE_STYLE_ID = "contactModalMobileStyle";
+function ensureMobileStyle() {
+  if (document.getElementById(MOBILE_STYLE_ID)) return;
+  const style = document.createElement("style");
+  style.id = MOBILE_STYLE_ID;
+  style.textContent = `
+    @media (max-width: 600px) {
+      #contactModalOverlay.overlay {
+        padding: 0;
+        align-items: stretch;
+      }
+      #contactModalOverlay .modal {
+        width: 100%;
+        max-width: none;
+        height: 100%;
+        max-height: none;
+        border-radius: 0;
+        margin: 0;
+      }
+      #contactModalOverlay .mTitle {
+        position: sticky;
+        top: 0;
+        background: var(--card);
+        z-index: 1;
+      }
+    }
+  `;
+  document.head.appendChild(style);
+}
 
 function buildModalHtml() {
   return `
@@ -70,6 +105,7 @@ function applyLabels() {
 
 function ensureModal() {
   if (modalEl) return;
+  ensureMobileStyle();
   modalEl = document.createElement("div");
   modalEl.id = "contactModalOverlay";
   modalEl.className = "overlay";
@@ -78,7 +114,13 @@ function ensureModal() {
   modalEl.innerHTML = buildModalHtml();
   document.body.appendChild(modalEl);
 
-  modalEl.addEventListener("click", (e) => { if (e.target === modalEl) closeContactModal(); });
+  modalEl.addEventListener("click", (e) => {
+    if (e.target !== modalEl) return;
+    // Na telefonie modal jest pełnoekranowy — jedynym wyjściem ma być
+    // widoczny przycisk zamknięcia, nie klik w tło.
+    if (isSheetViewport()) return;
+    closeContactModal();
+  });
   document.getElementById("cModalClose")?.addEventListener("click", closeContactModal);
   document.getElementById("cModalDone")?.addEventListener("click", closeContactModal);
   document.getElementById("cModalSubmit")?.addEventListener("click", submitContact);

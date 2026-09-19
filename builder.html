@@ -213,6 +213,46 @@
       </div>
     </section>
 
+    <!-- Modal: eksport do bazy pytań -->
+    <div class="overlay modal--sheet" id="exportBaseOverlay" style="display:none;">
+      <div class="modal">
+        <div class="mHead">
+          <div class="mTitle" data-i18n="builder.exportBase.title">Eksport do bazy</div>
+          <button class="btn sm" id="btnExportBaseCancel" type="button" aria-label="Zamknij">✕</button>
+        </div>
+        <div class="mSub">
+          <span data-i18n="builder.exportBase.subtitle">Wybierz bazę pytań. Zostanie utworzony folder w głównym katalogu o nazwie jak gra.</span>
+        </div>
+
+        <div class="ui-select" id="baseSelectWrap" style="margin-top:12px;width:100%;">
+          <button class="btn sm ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
+            <span class="ui-select-label">—</span>
+            <span class="ui-select-caret" aria-hidden="true">▾</span>
+          </button>
+          <div class="ui-select-menu" role="listbox"></div>
+        </div>
+
+        <!-- PROGRES: export do bazy (ukryty, pokazuje się tylko podczas exportu) -->
+        <div id="exportBaseProg" style="display:none;margin-top:12px;gap:10px">
+          <div class="importRow" style="align-items:center">
+            <div id="exportBaseProgStep" style="font-weight:800;letter-spacing:.04em">—</div>
+            <div id="exportBaseProgCount" style="margin-left:auto;opacity:.8">0/0</div>
+          </div>
+
+          <div style="height:10px;border-radius:999px;background:rgba(255,255,255,.10);overflow:hidden">
+            <div id="exportBaseProgBar" style="height:100%;width:0%;background:rgba(255,255,255,.85)"></div>
+          </div>
+
+          <div class="importMsg" id="exportBaseProgMsg" style="min-height:18px"></div>
+        </div>
+
+        <div class="importRow" style="margin-top:10px;">
+          <button class="btn sm gold" id="btnExportBaseDo" type="button" data-i18n="builder.exportBase.confirm">Eksportuj</button>
+          <div class="importMsg" id="exportBaseMsg"></div>
+        </div>
+      </div>
+    </div>
+
     <div class="footer">
       <div data-i18n="common.footer.left">© 2026 Familiada — system do gry na żywo</div>
       <button class="btn-contact-footer" type="button" data-contact-modal data-i18n="common.contactBtn">Kontakt</button>
@@ -253,46 +293,6 @@
       </div>
     </div>
   </div>
-  <!-- Modal: eksport do bazy pytań -->
-  <div class="overlay" id="exportBaseOverlay" style="display:none;">
-    <div class="modal">
-      <div class="mHead">
-        <div class="mTitle" data-i18n="builder.exportBase.title">Eksport do bazy</div>
-        <button class="btn sm" id="btnExportBaseCancel" type="button" aria-label="Zamknij">✕</button>
-      </div>
-      <div class="mSub">
-        <span data-i18n="builder.exportBase.subtitle">Wybierz bazę pytań. Zostanie utworzony folder w głównym katalogu o nazwie jak gra.</span>
-      </div>
-
-      <div class="ui-select" id="baseSelectWrap" style="margin-top:12px;width:100%;">
-        <button class="btn sm ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
-          <span class="ui-select-label">—</span>
-          <span class="ui-select-caret" aria-hidden="true">▾</span>
-        </button>
-        <div class="ui-select-menu" role="listbox"></div>
-      </div>
-
-      <!-- PROGRES: export do bazy (ukryty, pokazuje się tylko podczas exportu) -->
-      <div id="exportBaseProg" style="display:none;margin-top:12px;gap:10px">
-        <div class="importRow" style="align-items:center">
-          <div id="exportBaseProgStep" style="font-weight:800;letter-spacing:.04em">—</div>
-          <div id="exportBaseProgCount" style="margin-left:auto;opacity:.8">0/0</div>
-        </div>
-
-        <div style="height:10px;border-radius:999px;background:rgba(255,255,255,.10);overflow:hidden">
-          <div id="exportBaseProgBar" style="height:100%;width:0%;background:rgba(255,255,255,.85)"></div>
-        </div>
-
-        <div class="importMsg" id="exportBaseProgMsg" style="min-height:18px"></div>
-      </div>
-
-      <div class="importRow" style="margin-top:10px;">
-        <button class="btn sm gold" id="btnExportBaseDo" type="button" data-i18n="builder.exportBase.confirm">Eksportuj</button>
-        <div class="importMsg" id="exportBaseMsg"></div>
-      </div>
-    </div>
-  </div>
-
   <!-- EXPORT DO PLIKU: PROGRES -->
   <div class="overlay" id="exportJsonOverlay" style="display:none;">
     <div class="modal" style="width:min(640px,94vw)">

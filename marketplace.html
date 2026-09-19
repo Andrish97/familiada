@@ -101,6 +101,67 @@
       <div class="hint mkt-info" id="mySentInfo"></div>
     </section>
 
+    <!-- ======================================================
+         MODAL: DODAJ NOWĄ GRĘ DO MARKETPLACE
+    ====================================================== -->
+    <div class="overlay modal--sheet" id="submitOverlay" style="display:none">
+      <div class="modal">
+        <div class="mTitle" data-i18n="marketplace.submit.title">Dodaj grę do marketplace</div>
+
+        <div class="field" style="margin-top:12px">
+          <label class="field-label" data-i18n="marketplace.submit.pickGame">Wybierz grę</label>
+          <div class="ui-select" id="submitGameSelect" style="width:100%">
+            <button class="btn inp ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false" style="width:100%;justify-content:space-between">
+              <span class="ui-select-label" data-i18n="marketplace.submit.pickGamePlaceholder">— wybierz grę —</span>
+              <span class="ui-select-caret" aria-hidden="true">▾</span>
+            </button>
+            <div class="ui-select-menu" role="listbox"></div>
+          </div>
+          <span class="hint" id="submitNoEligible" hidden data-i18n="marketplace.submit.noEligible">Brak odpowiednich gier.</span>
+        </div>
+
+        <div class="field" style="margin-top:10px">
+          <label class="field-label" for="submitTitle" data-i18n="marketplace.submit.titleLabel">Tytuł</label>
+          <input class="inp" id="submitTitle" type="text" maxlength="120"
+            data-i18n-placeholder="marketplace.submit.titlePlaceholder"
+            placeholder="Tytuł widoczny w Grach Społeczności"/>
+        </div>
+
+        <div class="field" style="margin-top:10px">
+          <label class="field-label" for="submitDesc" data-i18n="marketplace.submit.descLabel">Opis</label>
+          <textarea class="inp" id="submitDesc" rows="3" maxlength="500" style="width:100%;box-sizing:border-box;resize:vertical"
+            data-i18n-placeholder="marketplace.submit.descPlaceholder"
+            placeholder="Krótki opis gry…"></textarea>
+        </div>
+
+        <div class="field" style="margin-top:10px">
+          <label class="field-label" data-i18n="marketplace.submit.langLabel">Język gry</label>
+          <div class="mkt-lang-picker" id="submitLangPicker">
+            <button class="btn sm active" data-lang="pl" type="button">🇵🇱 PL</button>
+            <button class="btn sm" data-lang="en" type="button">🇬🇧 EN</button>
+            <button class="btn sm" data-lang="uk" type="button">🇺🇦 UK</button>
+          </div>
+        </div>
+
+        <div class="mkt-submit-warn">
+          <p data-i18n="marketplace.submit.snapshotWarning">To jest snapshot. Po wysłaniu nie można edytować tej pozycji w Grach Społeczności.</p>
+          <p data-i18n="marketplace.submit.withdrawInfo">Wycofanie usuwa ją z katalogu, ale osoby które ją dodały nadal ją mają.</p>
+        </div>
+
+        <label class="mkt-checkbox-row" for="submitConfirm">
+          <input type="checkbox" id="submitConfirm"/>
+          <span data-i18n="marketplace.submit.checkboxConfirm">Rozumiem, że po wysłaniu snapshot jest nieedytowalny.</span>
+        </label>
+
+        <div class="hint mkt-submit-error" id="submitError" hidden></div>
+
+        <div class="modal-actions" style="margin-top:14px">
+          <button class="btn sm" id="btnSubmitCancel" type="button" data-i18n="marketplace.submit.btnCancel">Anuluj</button>
+          <button class="btn sm gold" id="btnSubmitConfirm" type="button" data-i18n="marketplace.submit.btnSubmit">Wyślij do marketplace</button>
+        </div>
+      </div>
+    </div>
+
     <div class="footer" style="margin-top:auto">
       <div data-i18n="common.footer.left">© 2026 Familiada — system do gry na żywo</div>
       <button class="btn-contact-footer" type="button" data-contact-modal data-i18n="common.contactBtn">Kontakt</button>
@@ -132,67 +193,6 @@
         <button class="btn sm gold" id="btnAddLibrary" type="button" data-i18n="marketplace.btnAddToLibrary">Dodaj do moich gier</button>
         <button class="btn sm" id="btnRemoveLibrary" type="button" data-i18n="marketplace.btnRemoveFromLibrary" hidden>Usuń z moich gier</button>
         <span class="mkt-added-badge" id="addedBadge" hidden data-i18n="marketplace.addedBadge">Dodano ✅</span>
-      </div>
-    </div>
-  </div>
-
-  <!-- ======================================================
-       MODAL: DODAJ NOWĄ GRĘ DO MARKETPLACE
-  ====================================================== -->
-  <div class="overlay" id="submitOverlay" style="display:none">
-    <div class="modal">
-      <div class="mTitle" data-i18n="marketplace.submit.title">Dodaj grę do marketplace</div>
-
-      <div class="field" style="margin-top:12px">
-        <label class="field-label" data-i18n="marketplace.submit.pickGame">Wybierz grę</label>
-        <div class="ui-select" id="submitGameSelect" style="width:100%">
-          <button class="btn inp ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false" style="width:100%;justify-content:space-between">
-            <span class="ui-select-label" data-i18n="marketplace.submit.pickGamePlaceholder">— wybierz grę —</span>
-            <span class="ui-select-caret" aria-hidden="true">▾</span>
-          </button>
-          <div class="ui-select-menu" role="listbox"></div>
-        </div>
-        <span class="hint" id="submitNoEligible" hidden data-i18n="marketplace.submit.noEligible">Brak odpowiednich gier.</span>
-      </div>
-
-      <div class="field" style="margin-top:10px">
-        <label class="field-label" for="submitTitle" data-i18n="marketplace.submit.titleLabel">Tytuł</label>
-        <input class="inp" id="submitTitle" type="text" maxlength="120"
-          data-i18n-placeholder="marketplace.submit.titlePlaceholder"
-          placeholder="Tytuł widoczny w Grach Społeczności"/>
-      </div>
-
-      <div class="field" style="margin-top:10px">
-        <label class="field-label" for="submitDesc" data-i18n="marketplace.submit.descLabel">Opis</label>
-        <textarea class="inp" id="submitDesc" rows="3" maxlength="500" style="width:100%;box-sizing:border-box;resize:vertical"
-          data-i18n-placeholder="marketplace.submit.descPlaceholder"
-          placeholder="Krótki opis gry…"></textarea>
-      </div>
-
-      <div class="field" style="margin-top:10px">
-        <label class="field-label" data-i18n="marketplace.submit.langLabel">Język gry</label>
-        <div class="mkt-lang-picker" id="submitLangPicker">
-          <button class="btn sm active" data-lang="pl" type="button">🇵🇱 PL</button>
-          <button class="btn sm" data-lang="en" type="button">🇬🇧 EN</button>
-          <button class="btn sm" data-lang="uk" type="button">🇺🇦 UK</button>
-        </div>
-      </div>
-
-      <div class="mkt-submit-warn">
-        <p data-i18n="marketplace.submit.snapshotWarning">To jest snapshot. Po wysłaniu nie można edytować tej pozycji w Grach Społeczności.</p>
-        <p data-i18n="marketplace.submit.withdrawInfo">Wycofanie usuwa ją z katalogu, ale osoby które ją dodały nadal ją mają.</p>
-      </div>
-
-      <label class="mkt-checkbox-row" for="submitConfirm">
-        <input type="checkbox" id="submitConfirm"/>
-        <span data-i18n="marketplace.submit.checkboxConfirm">Rozumiem, że po wysłaniu snapshot jest nieedytowalny.</span>
-      </label>
-
-      <div class="hint mkt-submit-error" id="submitError" hidden></div>
-
-      <div class="modal-actions" style="margin-top:14px">
-        <button class="btn sm" id="btnSubmitCancel" type="button" data-i18n="marketplace.submit.btnCancel">Anuluj</button>
-        <button class="btn sm gold" id="btnSubmitConfirm" type="button" data-i18n="marketplace.submit.btnSubmit">Wyślij do marketplace</button>
       </div>
     </div>
   </div>

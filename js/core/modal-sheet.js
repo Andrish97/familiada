@@ -7,7 +7,9 @@
 import { t } from "../../translation/translation.js?v=v2026-09-19T18005";
 
 const SHEET_MQ = "(max-width:600px)";
-const CLOSE_BTN_SELECTOR = ".mHead button[aria-label], .uni-head button[aria-label]";
+// .tagsHead – nagłówek modali base-explorer (tagi/eksport/pytanie), ta sama
+// rola co .mHead/.uni-head gdzie indziej.
+const CLOSE_BTN_SELECTOR = ".mHead button[aria-label], .uni-head button[aria-label], .tagsHead button[aria-label]";
 
 export function isSheetViewport() {
   return window.matchMedia(SHEET_MQ).matches;

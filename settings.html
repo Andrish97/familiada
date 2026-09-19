@@ -911,7 +911,7 @@
       </div>
 
       <!-- ASSIGN REPORT MODAL -->
-      <div class="market-preview-overlay" id="assignReportModal" hidden style="z-index:1100">
+      <div class="market-preview-overlay modal--sheet" id="assignReportModal" hidden style="z-index:1100">
         <div class="market-preview-card" style="max-width:480px;width:92vw">
           <div style="font-size:15px;font-weight:700;margin-bottom:14px">Przydziel zgłoszenie</div>
           <div style="font-size:12px;opacity:.5;margin-bottom:8px">Wybierz istniejące:</div>
@@ -928,6 +928,30 @@
           </div>
         </div>
       </div>
+
+    <!-- Modal: powód odrzucenia -->
+    <div class="overlay modal--sheet" id="marketRejectOverlay" style="display:none">
+      <div class="modal">
+        <div class="mTitle">Odrzuć zgłoszenie</div>
+        <div class="mSub">Podaj powód (opcjonalnie — trafi do autora).</div>
+        <textarea class="inp" id="marketRejectNote" rows="4" style="width:100%;box-sizing:border-box;margin-top:8px" placeholder="Powód odrzucenia…"></textarea>
+        <div class="modal-actions" style="margin-top:12px">
+          <button class="btn sm" id="btnMarketRejectCancel" type="button">Anuluj</button>
+          <button class="btn sm gold" id="btnMarketRejectConfirm" type="button">Odrzuć</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Raters modal -->
+    <div class="overlay modal--sheet" id="ratersOverlay" style="display:none">
+      <div class="modal" style="max-width:480px;width:94vw">
+        <div class="mHead" style="margin-bottom:16px">
+          <div class="mTitle" id="ratersTitle">Oceniający</div>
+          <button class="btn sm" id="btnRatersClose" type="button" aria-label="Zamknij">✕</button>
+        </div>
+        <div id="ratersBody" style="max-height:60vh;overflow-y:auto"></div>
+      </div>
+    </div>
 
   </main>
 
@@ -975,19 +999,6 @@
     </div>
   </div>
 
-  <!-- Modal: powód odrzucenia -->
-  <div class="overlay" id="marketRejectOverlay" style="display:none">
-    <div class="modal">
-      <div class="mTitle">Odrzuć zgłoszenie</div>
-      <div class="mSub">Podaj powód (opcjonalnie — trafi do autora).</div>
-      <textarea class="inp" id="marketRejectNote" rows="4" style="width:100%;box-sizing:border-box;margin-top:8px" placeholder="Powód odrzucenia…"></textarea>
-      <div class="modal-actions" style="margin-top:12px">
-        <button class="btn sm" id="btnMarketRejectCancel" type="button">Anuluj</button>
-        <button class="btn sm gold" id="btnMarketRejectConfirm" type="button">Odrzuć</button>
-      </div>
-    </div>
-  </div>
-
   <div class="dt-modal" id="dtModal" hidden>
     <div class="dt-card">
       <div class="dt-head">
@@ -1009,17 +1020,6 @@
         <button class="btn sm" id="dtCancel" type="button">Anuluj</button>
         <button class="btn sm gold" id="dtOk" type="button">OK</button>
       </div>
-    </div>
-  </div>
-
-  <!-- Raters modal -->
-  <div class="overlay" id="ratersOverlay" style="display:none">
-    <div class="modal" style="max-width:480px;width:94vw">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-        <div class="mTitle" id="ratersTitle">Oceniający</div>
-        <button class="btn sm" id="btnRatersClose" type="button">✕</button>
-      </div>
-      <div id="ratersBody" style="max-height:60vh;overflow-y:auto"></div>
     </div>
   </div>
 
