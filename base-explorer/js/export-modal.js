@@ -311,7 +311,7 @@ export function initExportModal({ state } = {}) {
     updateTypeUI();
 
     show(overlay, true);
-    enterModalSheet(overlay, { backBtn, onClose: () => close({ ok: false }) });
+    enterModalSheet(overlay, { backBtn: btnBack, onClose: () => close({ ok: false }) });
     setTimeout(() => xName?.focus(), 0);
 
     return new Promise((resolve) => {

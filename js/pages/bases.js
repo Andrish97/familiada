@@ -816,7 +816,7 @@ async function openShareModal() {
   shareRoleSelect?.setValue("editor", { silent: true });
   await renderShareModal();
   show(shareOverlay, true);
-  enterModalSheet(shareOverlay, { backBtn, onClose: closeShareModal });
+  enterModalSheet(shareOverlay, { backBtn: btnBack, onClose: closeShareModal });
 }
 
 function closeShareModal() {
@@ -1376,7 +1376,7 @@ function openNameModalCreate() {
   nameSub.textContent = t("bases.nameModal.subCreate");
   nameInp.value = "";
   show(nameOverlay, true);
-  enterModalSheet(nameOverlay, { backBtn, onClose: closeNameModal });
+  enterModalSheet(nameOverlay, { backBtn: btnBack, onClose: closeNameModal });
   setTimeout(() => nameInp.focus(), 0);
 }
 
@@ -1387,7 +1387,7 @@ function openNameModalRename(base) {
   nameSub.textContent = t("bases.nameModal.subRename");
   nameInp.value = base?.name || "";
   show(nameOverlay, true);
-  enterModalSheet(nameOverlay, { backBtn, onClose: closeNameModal });
+  enterModalSheet(nameOverlay, { backBtn: btnBack, onClose: closeNameModal });
   setTimeout(() => nameInp.select(), 0);
 }
 
@@ -1438,7 +1438,7 @@ function openImportModal() {
   setMsg(importMsg, "");
   showProgBlock(importProg, false);
   show(importOverlay, true);
-  enterModalSheet(importOverlay, { backBtn, onClose: closeImportModal });
+  enterModalSheet(importOverlay, { backBtn: btnBack, onClose: closeImportModal });
 }
 
 function closeImportModal() {

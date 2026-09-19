@@ -712,6 +712,30 @@ main{
     body.sheet-open .topbar-sheet-back {
         display: inline-flex;
     }
+
+    /* Wewnętrzne przewijane listy niektórych modali miały twardy limit
+       wysokości w vh dobrany pod MAŁE, wyśrodkowane okno na desktopie
+       (np. "nie więcej niż 55% wysokości ekranu") — w trybie sheet modal
+       zajmuje niemal cały ekran, więc taki sztywny limit zostawiał pod
+       listą pusty, nieużywany pasek zamiast pozwolić liście rosnąć.
+       flex:1 + min-height:0 pozwala liście wypełnić całą dostępną
+       przestrzeń modala zamiast zatrzymywać się w połowie. */
+    .modal--sheet .bld-preview-questions,
+    .modal--sheet .mkt-detail-questions,
+    .modal--sheet .market-preview-questions {
+        max-height: none;
+        flex: 1;
+        min-height: 0;
+    }
+
+    /* base-explorer.css ma własną, starszą regułę mobilną (@media
+       max-width:900px) na .tags-modal/.export-modal/.question-modal/
+       .rename-modal z width:...!important, węższą niż pełna szerokość —
+       !important bije naszą regułę width:100% mimo niższej specyficzności
+       tamtej reguły, więc trzeba przebić tym samym. */
+    .modal--sheet .tags-modal {
+        width: 100% !important;
+    }
 }
 
 .topbar-sheet-back {

@@ -804,7 +804,7 @@ function openPreviewFullscreen(payload){
   }
 
   show(previewOverlay, true);
-  enterModalSheet(previewOverlay, { backBtn, onClose: () => { show(previewOverlay, false); exitModalSheet(previewOverlay); } });
+  enterModalSheet(previewOverlay, { backBtn: btnBack, onClose: () => { show(previewOverlay, false); exitModalSheet(previewOverlay); } });
 }
 
 /* =========================================================
@@ -996,7 +996,7 @@ function openRenameModal(logo){
   renameSub.textContent = t("logoEditor.rename.sub");
   renameInput.value = logo?.name || "";
   show(renameOverlay, true);
-  enterModalSheet(renameOverlay, { backBtn, onClose: closeRenameModal });
+  enterModalSheet(renameOverlay, { backBtn: btnBack, onClose: closeRenameModal });
   setTimeout(() => renameInput.select(), 0);
 }
 
@@ -1010,7 +1010,7 @@ function openCreateModal(type, mode){
   renameSub.textContent = t("logoEditor.create.nameModalSub");
   renameInput.value = "";
   show(renameOverlay, true);
-  enterModalSheet(renameOverlay, { backBtn, onClose: closeRenameModal });
+  enterModalSheet(renameOverlay, { backBtn: btnBack, onClose: closeRenameModal });
   setTimeout(() => renameInput.focus(), 0);
 }
 
@@ -1151,7 +1151,7 @@ function renderList(){
      <div class="txt">${t("logoEditor.create.title")}</div>
      <div class="sub">${t("logoEditor.create.subtitle")}</div>
    `;
-    add.addEventListener("click", () => { show(createOverlay, true); enterModalSheet(createOverlay, { backBtn, onClose: closeCreateOverlay }); });
+    add.addEventListener("click", () => { show(createOverlay, true); enterModalSheet(createOverlay, { backBtn: btnBack, onClose: closeCreateOverlay }); });
     grid.appendChild(add);
   }
 
@@ -1696,7 +1696,7 @@ async function boot(){
      logoImportReset();
      if (inpImportLogoFile) inpImportLogoFile.value = "";
      show(logoImportOverlay, true);
-     enterModalSheet(logoImportOverlay, { backBtn, onClose: closeLogoImportModal });
+     enterModalSheet(logoImportOverlay, { backBtn: btnBack, onClose: closeLogoImportModal });
    }
 
    function closeLogoImportModal() {

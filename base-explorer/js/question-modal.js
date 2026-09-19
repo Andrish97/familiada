@@ -166,7 +166,7 @@ export function initQuestionModal({ state } = {}) {
     renderAnswers();
     updateSumUI();
     show(overlay, true);
-    enterModalSheet(overlay, { backBtn, onClose: () => close({ ok: false }) });
+    enterModalSheet(overlay, { backBtn: btnBack, onClose: () => close({ ok: false }) });
     setTimeout(() => qText?.focus(), 0);
 
     return new Promise((resolve) => {

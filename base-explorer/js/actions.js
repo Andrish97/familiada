@@ -1140,7 +1140,7 @@ function openRenameModal({ title, value = "", maxLen = 80 } = {}) {
   input.maxLength = Number(maxLen) || 80;
 
   modal.hidden = false;
-  enterModalSheet(modal, { backBtn, onClose: () => modal._resolver?.(null) });
+  enterModalSheet(modal, { backBtn: btnBack, onClose: () => modal._resolver?.(null) });
 
   // focus + zaznacz tekst
   setTimeout(() => {
