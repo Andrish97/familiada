@@ -120,14 +120,47 @@ let _displayReady = false;
 
 // Wykryj modal mode już na poziomie modułu (inline script w <head> dodaje klasę przed renderem)
 const _isModal = document.documentElement.classList.contains("gs-modal-mode");
-// TYMCZASOWA diagnostyka (do usunięcia po znalezieniu przyczyny) -- e2e:
-// "dźwięk ze źródła Wyświetlacz" -- poprzedni przebieg z diagnostyką W
-// openSidebar() nie pokazał ŻADNEGO [e2e-diag-gs] w logach, mimo że klik na
-// #btnToggleSidebar sam w sobie się powiódł (element widoczny/klikalny) --
-// ten log sprawdza NAJPIERW, czy console.warn z tego iframe'a (#gsFrame) w
-// ogóle dociera do instrumentPage() na stronie-rodzicu (Playwright's
-// page.on("console") powinno obejmować wszystkie ramki tej samej strony).
-console.warn(`[e2e-diag-gs] moduł załadowany, isModal=${_isModal}, href=${location.href}`);
+
+// Drawer sidebar (☰) w trybie modal -- czysto UI (żadna zależność od
+// auth/game/locków), więc wpięte SYNCHRONICZNIE tu, na poziomie modułu, a
+// NIE w głównej async funkcji init (po await requireAuth()/
+// guardResourceLock()/guardResourceBusy() -- realnie 0.5-1s RPC-ów).
+//
+// Root cause znaleziony przez e2e "dźwięk ze źródła Wyświetlacz"
+// (diagnostyka .evaluate() z testu, nie console.warn z przeglądarki --
+// ten nigdy nie pokazywał logu z WNĘTRZA click handlera, co był
+// właściwym tropem): #btnToggleSidebar staje się WIZUALNIE gotowy
+// natychmiast po wstrzyknięciu klasy .gs-modal-mode na <html> (inline
+// script w <head>, przed jakimkolwiek JS modułu) -- css/game-settings.css's
+// `.gs-modal-mode .gs-sidebar-toggle { display:inline-flex !important; }`
+// (2 klasy) ma WYŻSZĄ specyficzność niż `.hidden { display:none !important; }`
+// (1 klasa), więc przycisk jest klikalny NIEZALEŻNIE od tego, czy klasa
+// "hidden" w markupie została już usunięta przez JS. Ale listener kliku był
+// wpinany dopiero w głównej async funkcji, PO tych RPC-ach -- realny/testowy
+// klik trafiający w to okno (przycisk wygląda gotowy, ale jeszcze bez
+// żadnego handlera) był całkowitym no-opem: sidebar nigdy się nie otwierał,
+// bo klik, który miał to zrobić, już minął, zanim JS zdążył go obsłużyć.
+if (_isModal) {
+  const btnToggle  = document.getElementById("btnToggleSidebar");
+  const sidebarEl  = document.getElementById("gsSidebar");
+  const backdropEl = document.getElementById("gsSidebarBackdrop");
+  if (btnToggle) btnToggle.classList.remove("hidden");
+
+  const openSidebar = () => {
+    sidebarEl?.classList.add("gs-sidebar-open");
+    backdropEl?.classList.add("gs-sidebar-open");
+  };
+  const closeSidebar = () => {
+    sidebarEl?.classList.remove("gs-sidebar-open");
+    backdropEl?.classList.remove("gs-sidebar-open");
+  };
+  btnToggle?.addEventListener("click", openSidebar);
+  backdropEl?.addEventListener("click", closeSidebar);
+  // Zamknij drawer po wyborze kategorii
+  sidebarEl?.addEventListener("click", (e) => {
+    if (e.target.closest(".gs-sidebar-item")) closeSidebar();
+  });
+}
 
 // Color modal state — labels populated lazily from t()
 let colorModalTarget = null;
@@ -1619,38 +1652,8 @@ async function main() {
     // Hide back button — modal backdrop closes it
     if (btnBack) btnBack.classList.add("hidden");
 
-    // Sidebar toggle (☰ button)
-    const btnToggle   = document.getElementById("btnToggleSidebar");
-    const sidebarEl   = document.getElementById("gsSidebar");
-    const backdropEl  = document.getElementById("gsSidebarBackdrop");
-    if (btnToggle) btnToggle.classList.remove("hidden");
-    console.warn(`[e2e-diag-gs] po wejściu w blok isModal: btnToggle=${!!btnToggle} sidebarEl=${!!sidebarEl} backdropEl=${!!backdropEl} btnToggleClass="${btnToggle?.className}"`);
-
-    function openSidebar()  {
-      sidebarEl?.classList.add("gs-sidebar-open");
-      backdropEl?.classList.add("gs-sidebar-open");
-      // TYMCZASOWA diagnostyka (do usunięcia po znalezieniu przyczyny) --
-      // e2e: ".gs-sidebar-item[data-cat=sound]" istnieje w DOM ale nigdy nie
-      // staje się "visible" dla Playwrighta po kliknięciu #btnToggleSidebar.
-      // Poprzedni przebieg (log tylko WEWNĄTRZ openSidebar()) nie pokazał
-      // NIC -- ten log jest teraz TUŻ NA WEJŚCIU do handlera klika, żeby
-      // rozstrzygnąć, czy handler w ogóle się odpala.
-      const r = sidebarEl?.getBoundingClientRect();
-      console.warn(`[e2e-diag-gs] openSidebar: htmlClass="${document.documentElement.className}" sidebarClass="${sidebarEl?.className}" display=${sidebarEl ? getComputedStyle(sidebarEl).display : "?"} visibility=${sidebarEl ? getComputedStyle(sidebarEl).visibility : "?"} rect=${r ? `${r.width}x${r.height} @${r.left},${r.top}` : "?"}`);
-    }
-    function closeSidebar() {
-      sidebarEl?.classList.remove("gs-sidebar-open");
-      backdropEl?.classList.remove("gs-sidebar-open");
-    }
-    btnToggle?.addEventListener("click", () => {
-      console.warn("[e2e-diag-gs] click handler na #btnToggleSidebar odpalony");
-      openSidebar();
-    });
-    backdropEl?.addEventListener("click", closeSidebar);
-    // Zamknij drawer po wyborze kategorii
-    sidebarEl?.addEventListener("click", (e) => {
-      if (e.target.closest(".gs-sidebar-item")) closeSidebar();
-    });
+    // Sidebar toggle (☰ button) -- wpięte synchronicznie na poziomie
+    // modułu, patrz komentarz przy _isModal na górze pliku.
 
     // Handle close requests — confirm if unsaved changes
     async function tryClose() {
