@@ -10,6 +10,29 @@ const LOGIN_URL = "https://www.familiada.online/login";
 // odsłaniają bez prawdziwego hasła.
 const TEST_ACCOUNT_DOMAIN = "familiada.online";
 
+// Znany, nieszkodliwy szum widoczny w KAŻDYM przebiegu każdego testu --
+// zgłoszone: zalewa logi CI, utrudniając wyłowienie prawdziwego failu.
+// Odfiltrowane tu i w control2.spec.js's instrumentAnon() (ten sam wzorzec,
+// niezależna kopia -- oba pliki celowo nie dzielą stanu, patrz komentarz
+// przy loginAsPooledTestUser).
+//  - static.cloudflareinsights.com: analityka Cloudflare wstrzykiwana na
+//    KAŻDĄ stronę przez sam Cloudflare, blokowana przez CSP aplikacji
+//    (script-src nie zawiera tej domeny) -- to CSP działa poprawnie, nie
+//    błąd aplikacji.
+//  - "🎭 STOP! 🎭": własne, celowe ostrzeżenie anty-self-XSS aplikacji
+//    (js/core/security-warning.js), drukowane na KAŻDYM załadowaniu strony
+//    dla prawdziwych użytkowników -- nigdy nie jest sygnałem błędu.
+//  - /realtime/v1/api/broadcast: ringDoorbell() (js/core/game-state-
+//    doorbell.js) jest CELOWO fire-and-forget (.catch(()=>{})) -- przy
+//    zamknięciu kontekstu/nawigacji w trakcie testu taki w locie request
+//    dostaje net::ERR_ABORTED, co jest oczekiwane, nie błędem.
+function isKnownNoiseText(text) {
+  return text.includes("static.cloudflareinsights.com") || text.startsWith("🎭 STOP!");
+}
+function isKnownNoiseUrl(url) {
+  return url.includes("static.cloudflareinsights.com") || url.includes("/realtime/v1/api/broadcast");
+}
+
 // Trwała diagnostyka (nie tylko na czas jednego debugowania) — logowanie
 // bywa niedeterministycznie wolne/nieudane w CI (waitForURL timeout) bez
 // żadnego wcześniejszego sygnału dlaczego. Podpięte raz na page, żeby przy
@@ -18,7 +41,7 @@ const TEST_ACCOUNT_DOMAIN = "familiada.online";
 function instrumentPage(page) {
   page.on("pageerror", (err) => console.log("[e2e-diag] pageerror:", err.message));
   page.on("console", (msg) => {
-    if (msg.type() === "error" || msg.type() === "warning") {
+    if ((msg.type() === "error" || msg.type() === "warning") && !isKnownNoiseText(msg.text())) {
       console.log(`[e2e-diag] console:${msg.type()}`, msg.text());
     }
     // "[e2e-diag-state]" to TYMCZASOWA diagnostyka w control2/js/app.js
@@ -63,6 +86,7 @@ function instrumentPage(page) {
   // dostało odpowiedzi. To jest inna dziura niż "HTTP >=400": żądanie mogło
   // po prostu zniknąć bez śladu.
   page.on("requestfailed", (req) => {
+    if (isKnownNoiseUrl(req.url())) return;
     console.log("[e2e-diag] requestfailed", req.failure()?.errorText, req.url());
   });
   // control2/js/app.js's handleAction() łapie KAŻDY błąd akcji w try/catch
@@ -257,4 +281,6 @@ module.exports = {
   loginAsPooledTestUser,
   getTestAccountPool,
   testAccountUsername,
+  isKnownNoiseText,
+  isKnownNoiseUrl,
 };

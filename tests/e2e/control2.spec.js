@@ -49,7 +49,7 @@
 // narysował (SVG dot-matrix, nie tekst).
 
 const { test, expect } = require("@playwright/test");
-const { loginAsPooledTestUser } = require("./helpers/login");
+const { loginAsPooledTestUser, isKnownNoiseText, isKnownNoiseUrl } = require("./helpers/login");
 
 test.setTimeout(150_000);
 
@@ -291,7 +291,7 @@ const TWO_QUESTIONS = [
 // potwierdzenie. Etykieta z `label` odróżnia urządzenia w jednym logu.
 function instrumentAnon(p, label) {
   p.on("console", (msg) => {
-    if (msg.type() === "error" || msg.type() === "warning") {
+    if ((msg.type() === "error" || msg.type() === "warning") && !isKnownNoiseText(msg.text())) {
       console.log(`[e2e-diag:${label}] console:${msg.type()}`, msg.text());
     }
   });
@@ -305,6 +305,7 @@ function instrumentAnon(p, label) {
     }
   });
   p.on("requestfailed", (req) => {
+    if (isKnownNoiseUrl(req.url())) return;
     console.log(`[e2e-diag:${label}] requestfailed`, req.failure()?.errorText, req.url());
   });
 }
