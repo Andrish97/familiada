@@ -19,6 +19,7 @@ let activeBackBtn = null;
 let backBtnOrigText = null;
 let activeOverlay = null;
 let activeKeepBackBtnText = false;
+let savedScrollY = 0;
 
 export function isSheetViewport() {
   return sheetMql.matches;
@@ -67,6 +68,15 @@ sheetMql.addEventListener?.("change", onSheetMqChange) ?? sheetMql.addListener?.
 export function enterModalSheet(overlayEl, { backBtn, onClose, keepBackBtnText = false } = {}) {
   if (!isSheetViewport()) return;
 
+  // Wymuszone main.wrap{overflow:hidden;height:calc(100dvh - topbar-h)} w
+  // trybie sheet (css/base.css) nagle kurczy przewijalny obszar strony (np.
+  // marketplace.html/polls-hub.html mają scroll na całym body) — przeglądarka
+  // wtedy sama przycina window.scrollY do nowego, mniejszego zakresu, więc
+  // pozycja scrolla jest tracona NA ZAWSZE, jeszcze zanim modal się zamknie.
+  // Zapamiętujemy ją tutaj i przywracamy w exitModalSheet(), żeby strona po
+  // zamknięciu modala wróciła w to samo miejsce, a nie na sam początek.
+  savedScrollY = window.scrollY;
+
   activeOverlay = overlayEl || null;
   activeClose = onClose || null;
   activeKeepBackBtnText = keepBackBtnText;
@@ -87,6 +97,13 @@ export function exitModalSheet(overlayEl) {
   backBtnOrigText = null;
   activeClose = null;
   activeKeepBackBtnText = false;
+
+  // Poczekaj na przeliczenie layoutu (main.wrap wraca do swojej normalnej,
+  // przewijalnej wysokości) zanim przywrócimy scroll — w tej samej klatce
+  // co zdjęcie klasy sheet-open przeglądarka może jeszcze nie mieć
+  // odtworzonego pełnego, oryginalnego zakresu przewijania.
+  const y = savedScrollY;
+  requestAnimationFrame(() => window.scrollTo(0, y));
 }
 
 // Wywoływane na początku handlera kliknięcia przycisku wstecz w

@@ -703,6 +703,13 @@ main{
         box-shadow: none;
     }
 
+    /* Nagłówek modala w trybie sheet ma wyglądać jak nagłówek strony "Moje
+       gry" w builderze (.bar/.title — patrz css/builder.css): pogrubiony,
+       wersaliki, i JEDNA, świadoma linia-dzielnik pod spodem, zamiast
+       niekontrolowanego tła karty (var(--card), jaśniejsze niż tło strony)
+       przebijającego się spod .modal. !important na background/border, bo
+       ten sam problem specyficzności co gdzie indziej w tym pliku mógłby
+       tu wpuścić tło/obramowanie z reguł danej strony. */
     .modal--sheet.sheet-active .uni-head,
     .modal--sheet.sheet-active .mHead,
     .modal--sheet.sheet-active .tagsHead,
@@ -711,12 +718,21 @@ main{
     .modal--sheet.sheet-active .previewModalTitle {
         position: sticky;
         top: 0;
-        /* Tło strony, nie tło karty (var(--card)) — inaczej po zdjęciu
-           tła z .modal powyżej zostaje widoczna jaśniejsza belka pod
-           nagłówkiem. Sticky i tak wystarcza, żeby zasłaniać scrollującą
-           się treść pod spodem. */
-        background: var(--bg);
+        background: var(--bg) !important;
+        border-bottom: 1px solid var(--line2) !important;
+        padding-bottom: 14px;
+        margin-bottom: 12px !important;
         z-index: 1;
+    }
+
+    .modal--sheet.sheet-active .uni-head .mTitle,
+    .modal--sheet.sheet-active .mHead .mTitle,
+    .modal--sheet.sheet-active .tagsHead .mTitle,
+    .modal--sheet.sheet-active .bld-preview-head .mTitle,
+    .modal--sheet.sheet-active .mkt-detail-head .mTitle,
+    .modal--sheet.sheet-active .previewModalTitle .mTitle {
+        text-transform: uppercase;
+        letter-spacing: .1em;
     }
 
     /* Wyjściem z modala jest już przycisk w topbarze (patrz
