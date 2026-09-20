@@ -724,7 +724,14 @@ main{
         display: none;
     }
 
-    body.sheet-open .topbar-sheet-back {
+    /* Pokazujemy #btnBackSheet TYLKO gdy jest faktycznie aktywnym
+       przyciskiem wstecz danego modala (klasa .sheet-back-active,
+       nadawana przez js/core/modal-sheet.js) — nie za każdym razem, gdy
+       jakikolwiek modal jest otwarty. Bez tego: modal, który przejmuje
+       INNY, istniejący przycisk (np. podgląd maila w settings.html
+       przejmuje #btnMailBackTopbar), i tak pokazywałby #btnBackSheet
+       obok niego — dwa widoczne przyciski "wstecz" naraz. */
+    .topbar-sheet-back.sheet-back-active {
         display: inline-flex;
     }
 
