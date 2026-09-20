@@ -689,12 +689,12 @@ main{
         box-shadow: none;
     }
 
-    .modal--sheet .uni-head,
-    .modal--sheet .mHead,
-    .modal--sheet .tagsHead,
-    .modal--sheet .bld-preview-head,
-    .modal--sheet .mkt-detail-head,
-    .modal--sheet .previewModalTitle {
+    .modal--sheet.sheet-active .uni-head,
+    .modal--sheet.sheet-active .mHead,
+    .modal--sheet.sheet-active .tagsHead,
+    .modal--sheet.sheet-active .bld-preview-head,
+    .modal--sheet.sheet-active .mkt-detail-head,
+    .modal--sheet.sheet-active .previewModalTitle {
         position: sticky;
         top: 0;
         /* Tło strony, nie tło karty (var(--card)) — inaczej po zdjęciu
@@ -707,17 +707,22 @@ main{
 
     /* Wyjściem z modala jest już przycisk w topbarze (patrz
        js/core/modal-sheet.js), więc własny przycisk zamknięcia "✕" w
-       nagłówku modala jest w tym trybie zbędny. !important: niektóre
-       przyciski "✕" mają swój display ustawiony regułą na selektorze ID
-       (np. logo-editor.css: #previewOverlay .previewCloseBtn{display:grid}),
-       której specyficzność bije dowolną liczbę klas — bez !important "✕"
-       zostawałby widoczny obok przejętego przycisku wstecz w topbarze. */
-    .modal--sheet .uni-head button[aria-label],
-    .modal--sheet .mHead button[aria-label],
-    .modal--sheet .tagsHead button[aria-label],
-    .modal--sheet .bld-preview-head button[aria-label],
-    .modal--sheet .mkt-detail-head button[aria-label],
-    .modal--sheet .previewModalTitle button[aria-label] {
+       nagłówku modala jest w tym trybie zbędny. WAŻNE: selektor wymaga
+       .sheet-active (nie samego .modal--sheet) — niektóre modale (np.
+       ratersOverlay/maintenancePreviewOverlay w settings.html) mają w HTML
+       klasę .modal--sheet, ale nigdy nie przechodzą przez enterModalSheet()
+       (nie mają realnego przejęcia przycisku wstecz) — bez tego zawężenia
+       ich "✕" znikałby bez ŻADNEGO zastępczego sposobu zamknięcia.
+       !important: niektóre przyciski "✕" mają swój display ustawiony
+       regułą na selektorze ID (np. logo-editor.css:
+       #previewOverlay .previewCloseBtn{display:grid}), której
+       specyficzność bije dowolną liczbę klas. */
+    .modal--sheet.sheet-active .uni-head button[aria-label],
+    .modal--sheet.sheet-active .mHead button[aria-label],
+    .modal--sheet.sheet-active .tagsHead button[aria-label],
+    .modal--sheet.sheet-active .bld-preview-head button[aria-label],
+    .modal--sheet.sheet-active .mkt-detail-head button[aria-label],
+    .modal--sheet.sheet-active .previewModalTitle button[aria-label] {
         display: none !important;
     }
 
@@ -725,7 +730,7 @@ main{
        treści modala (poza standardowym nagłówkiem .uni-head/.mHead), więc
        reguła powyżej go nie obejmuje — bez tego zostawał widoczny mimo że
        wyjściem jest już przejęty przycisk wstecz w topbarze. */
-    .modal--sheet .mail-preview-x-close {
+    .modal--sheet.sheet-active .mail-preview-x-close {
         display: none !important;
     }
 
