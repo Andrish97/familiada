@@ -5,9 +5,9 @@
 // Overlay skopiowany ze sprawdzonego wzorca device-guard.js/guest-mode.js,
 // ale z treścią/przyciskami parametryzowanymi per wywołanie (patrz
 // docs/plan-testy-i-poprawki.md, sekcja "Warstwa 1").
-import { applyTranslations, t } from "../../translation/translation.js?v=v2026-09-20T07514";
-import { sb } from "./supabase.js?v=v2026-09-20T07514";
-import { rt } from "./realtime.js?v=v2026-09-20T07514";
+import { applyTranslations, t } from "../../translation/translation.js?v=v2026-09-20T08003";
+import { sb } from "./supabase.js?v=v2026-09-20T08003";
+import { rt } from "./realtime.js?v=v2026-09-20T08003";
 
 const TAB_ID_KEY = "familiada:tabId";
 const HEARTBEAT_MS = 8000; // znacznie poniżej TTL (25s) w acquire_edit_lock
