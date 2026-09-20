@@ -474,13 +474,19 @@ function initTopbarController() {
     if (section4.firstChild) section4.insertBefore(section4Placeholder, section4.firstChild);
     else section4.appendChild(section4Placeholder);
 
-    while (section2Placeholder.nextSibling) group2.appendChild(section2Placeholder.nextSibling);
-    while (section4Placeholder.nextSibling) group4.appendChild(section4Placeholder.nextSibling);
-
-    // Płaskie menu: overflow nav i account dropdown nieaktywne
+    // Płaskie menu: overflow nav i account dropdown nieaktywne. MUSI się
+    // wykonać PRZED przeniesieniem przycisków niżej — expandAll() liczy
+    // swoją listę przycisków przez section2.querySelectorAll(...), więc
+    // gdyby section2 było już puste (przyciski przeniesione do group2),
+    // nie miałoby czego odkryć i przyciski ukryte wcześniej przez desktopowy
+    // "More ▾" (recalc(), display:none) zostawałyby niewidoczne również w
+    // panelu mobilnym.
     _overflowState?.expandAll();
     _accountState?.expand();
     _mobileActive = true;
+
+    while (section2Placeholder.nextSibling) group2.appendChild(section2Placeholder.nextSibling);
+    while (section4Placeholder.nextSibling) group4.appendChild(section4Placeholder.nextSibling);
 
     sep = document.createElement('div');
     sep.className = 'topbar-mobile-sep';
