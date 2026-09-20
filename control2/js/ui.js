@@ -1121,6 +1121,16 @@ export function createUI({ root, emit }) {
       const row = f.runtime[key][i] || {};
       const question = f.questions?.[i];
       const inp = h("input", { type: "text", value: row.text || "", placeholder: t("control.finalUi.playerAnswer"), autocomplete: "off" });
+      // boardBusy() -- SET_ENTRY_TEXT idzie przez ten sam pełny zapis
+      // detail co każda inna akcja gry (store.js's commit()), więc podlega
+      // temu samemu serwerowemu locked_until (migracja 264) co przejście
+      // "Rozpocznij finał"/"Start rundy 2" (gate = final_theme/
+      // round_transition+reveal, kilka sekund). Bez tego pole wyglądało na
+      // od razu edytowalne -- klik/wpisanie w trakcie tego intro dostawało
+      // gołe "Błąd: locked" (zgłoszone przez e2e: pięć kolejnych SET_ENTRY_
+      // TEXT z pięciu .fill() zaraz po "Rozpocznij finał" odrzuconych
+      // 'locked', zanim serwerowa blokada z final_theme zdążyła wygasnąć).
+      if (boardBusy()) inp.disabled = true;
       on(inp, "input", () => emit("game.dispatch", { type: "SET_ENTRY_TEXT", round, idx: i, text: inp.value }));
       on(inp, "keydown", (e) => {
         if (e.key === "ArrowDown") {

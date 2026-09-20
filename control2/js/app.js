@@ -285,6 +285,19 @@ async function main() {
   let lockedUntil = 0;
   function busy() { return committing || Date.now() < lockedUntil; }
 
+  // `store.setLock(ms)` (wołane w obu miejscach, które ustawiają
+  // `lockedUntil` niżej) jest CELOWO niewyczekiwane (fire-and-forget, patrz
+  // komentarz przy dispatchGatedNow) -- serwerowe locked_until (migracja
+  // 264) liczy `now() + ms` dopiero gdy TO zapytanie faktycznie dotrze i
+  // wykona się w bazie, czyli realnie PÓŹNIEJ niż `Date.now()` użyte tu do
+  // klienckiego lockedUntil. Bez marginesu klient odblokowywał przycisk
+  // (i Playwright/szybki operator klikał go) dokładnie w tym oknie, w
+  // którym serwer JESZCZE nie zdążył ustawić własnej blokady z poprzedniej
+  // akcji -- server odrzucał zapis LockedError('locked'), operator widział
+  // goły alert. Zgłoszone (e2e "reset pojedynku..."): klik "Zakończ rundę"
+  // ~2s po potwierdzonym odsłonięciu kradzieży dostawał 'locked'.
+  const LOCK_NETWORK_SAFETY_MS = 400;
+
   // JEDYNE miejsce, które w ogóle woła engine.dispatch() — wywoływane zarówno
   // z operatorskich kliknięć (handle()'s "game.dispatch" niżej) jak i z
   // automatycznych, niezwiązanych z żadnym kliknięciem wygaśnięć zegarków
@@ -314,8 +327,8 @@ async function main() {
     }
     const ms = await actionGate.computeGateMs(action.type, prevRow, nextRow);
     if (ms > 0) {
-      lockedUntil = Date.now() + ms;
-      setTimeout(renderCurrent, ms + 20);
+      lockedUntil = Date.now() + ms + LOCK_NETWORK_SAFETY_MS;
+      setTimeout(renderCurrent, ms + LOCK_NETWORK_SAFETY_MS + 20);
       // Migracja 264 -- ta sama blokada, egzekwowana też w bazie (nie tylko
       // w tej karcie przeglądarki). Best-effort: nieudane ustawienie nie
       // cofa już potwierdzonego zapisu treści powyżej, patrz store.js's
@@ -673,8 +686,8 @@ async function main() {
     if (soundCueKey) {
       const ms = await actionGate.timing.dur(soundCueKey);
       if (ms > 0) {
-        lockedUntil = Date.now() + ms;
-        setTimeout(renderCurrent, ms + 20);
+        lockedUntil = Date.now() + ms + LOCK_NETWORK_SAFETY_MS;
+        setTimeout(renderCurrent, ms + LOCK_NETWORK_SAFETY_MS + 20);
         store.setLock(ms);
       }
     }

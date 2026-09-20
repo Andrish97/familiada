@@ -616,7 +616,18 @@ function createDisplayIframe() {
   window.addEventListener("message", (e) => {
     if (e.data?.type !== "familiada:preview-ready" || e.source !== _displayIframe?.contentWindow) return;
     _displayReady = true;
-    if (activeCat === "display") postPreviewRow();
+    // Podgląd ma być żywy niezależnie od aktywnej zakładki (operator zmienia
+    // nazwę drużyny na zakładce "Drużyny", bez przełączania na "Wygląd") --
+    // warunek `activeCat === "display"` tu był błędem: postPreviewRow()
+    // wcześniej (np. z handlera #gsTeamA input) cicho wychodził wczesnym
+    // returnem, dopóki _displayReady było false (patrz komentarz przy
+    // postPreviewRow()) -- ten input NIGDY nie był ponownie wysłany, jeśli
+    // akurat trafił przed odebraniem "familiada:preview-ready", więc zmiana
+    // ginęła bezpowrotnie zamiast dotrzeć z opóźnieniem. Zgłoszone (e2e
+    // "modal ustawień gry — zmiana nazwy drużyny odświeża podgląd
+    // Wyświetlacza"): #gsTeamA.fill() na zakładce "Drużyny" nigdy nie
+    // docierał do podglądu.
+    postPreviewRow();
   });
 
   holder.appendChild(_displayIframe);
