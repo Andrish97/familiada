@@ -982,6 +982,17 @@
       </div>
     </div>
 
+    <!-- Stopka MUSI być bezpośrednim dzieckiem main.wrap (nie poza <main>) —
+         cały mechanizm sheet mode (css/base.css, "Modal sheet (mobile)")
+         zakłada, że main.wrap ma wysokość ograniczoną do (100dvh - topbar-h)
+         i że .footer jest jego OSTATNIM dzieckiem, wykluczonym z reguły
+         "ukryj resztę". Gdy stopka była poza <main>, main.wrap i tak zajmował
+         całą dostępną wysokość (nie wiedząc, że musi zostawić miejsce na
+         stopkę pod sobą), więc stopka nakładała się na dolną część modala. -->
+    <footer class="footer wrap">
+      <span>Familiada — panel admina</span>
+      <span>Dostęp tylko dla uprawnionych.</span>
+    </footer>
   </main>
 
   <section class="tools-shell" id="toolsShell" hidden>
@@ -989,11 +1000,6 @@
       <iframe id="toolsFrame" title="Tools" loading="lazy"></iframe>
     </div>
   </section>
-
-  <footer class="footer wrap">
-    <span>Familiada — panel admina</span>
-    <span>Dostęp tylko dla uprawnionych.</span>
-  </footer>
 
   <div class="settings-auth" id="authScreen">
     <div class="auth-card" id="authCard">

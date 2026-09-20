@@ -656,10 +656,17 @@ main{
         display: none !important;
     }
 
+    /* !important na position/inset: css/settings.css ma globalną regułę
+       .overlay{position:fixed!important;top:60px!important;...;z-index:9999!important}
+       (dobraną pod małe, wyśrodkowane okno na desktopie) — bez !important
+       tutaj ta reguła by wygrywała mimo niższej specyficzności (sama też ma
+       !important), więc modal renderował się jako fixed na wierzchu strony,
+       poza normalnym układem flex main.wrap, a stopka (zwykły element flex)
+       lądowała POD nim zamiast pod modalem w przepływie dokumentu. */
     body.sheet-open .overlay.modal--sheet.sheet-active,
     body.sheet-open .market-preview-overlay.modal--sheet.sheet-active {
-        position: static;
-        inset: auto;
+        position: static !important;
+        inset: auto !important;
         background: none;
         padding: 0;
         display: flex !important;
@@ -669,16 +676,23 @@ main{
         overflow: hidden; /* scroll ma być w .modal, nie tutaj */
     }
 
+    /* !important na width/max-width/height/max-height: niektóre modale mają
+       te własności w inline style="" (np. #maintenancePreviewOverlay .modal
+       ma style="max-width:720px;width:94vw;max-height:90vh" — dobrane pod
+       małe, wyśrodkowane okno na desktopie) — inline style bije zwykłe
+       reguły w arkuszu niezależnie od ich specyficzności, więc bez
+       !important modal zostawał ucięty do 90vh zamiast wypełnić całą
+       dostępną wysokość, a stopka strony (.footer) było widać pod nim. */
     .modal--sheet .modal,
     .modal--sheet .market-preview-card {
-        width: 100%;
-        max-width: none;
-        height: auto;
+        width: 100% !important;
+        max-width: none !important;
+        height: auto !important;
         min-height: 0;
         flex: 1; /* wypełnia dokładnie tyle, ile zostawi .overlay (flex column) */
-        max-height: none;
+        max-height: none !important;
         border-radius: 0;
-        margin: 0;
+        margin: 0 !important; /* settings.css: .overlay .modal{margin-top:20px!important} */
         display: flex;
         flex-direction: column;
         overflow-y: auto; /* własny, samodzielny obszar przewijania */
@@ -723,14 +737,6 @@ main{
     .modal--sheet.sheet-active .bld-preview-head button[aria-label],
     .modal--sheet.sheet-active .mkt-detail-head button[aria-label],
     .modal--sheet.sheet-active .previewModalTitle button[aria-label] {
-        display: none !important;
-    }
-
-    /* Podgląd wiadomości (settings.js) dokłada WŁASNY, dodatkowy "✕" wewnątrz
-       treści modala (poza standardowym nagłówkiem .uni-head/.mHead), więc
-       reguła powyżej go nie obejmuje — bez tego zostawał widoczny mimo że
-       wyjściem jest już przejęty przycisk wstecz w topbarze. */
-    .modal--sheet.sheet-active .mail-preview-x-close {
         display: none !important;
     }
 

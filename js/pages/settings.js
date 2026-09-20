@@ -3115,20 +3115,8 @@ function renderMessageDetail(msg, attachments = [], threadMessages = []) {
     wrapper.className = "compose-preview-wrapper";
     wrapper.style.cssText = "background:#050914;border-radius:8px;padding:20px;position:relative;";
     
-    // Add close button (X) only - no OK/Cancel buttons
-    const closeBtn = document.createElement("button");
-    closeBtn.type = "button";
-    closeBtn.className = "mail-preview-x-close";
-    closeBtn.textContent = "✕";
-    closeBtn.style.cssText = "position:absolute;top:10px;right:10px;background:none;border:none;color:rgba(255,255,255,.5);font-size:20px;cursor:pointer;padding:5px;border-radius:4px;";
-    closeBtn.onmouseover = () => closeBtn.style.color = "rgba(255,255,255,.9)";
-    closeBtn.onmouseout = () => closeBtn.style.color = "rgba(255,255,255,.5)";
-    // Zamyka przez wbudowany przycisk "✕" modala (nie usuwa .overlay ręcznie),
-    // żeby w trybie sheet finish()/exitModalSheet() zawsze się wykonały.
-    let modalCloseBtn = null;
-    closeBtn.onclick = () => modalCloseBtn?.click();
-
-    wrapper.appendChild(closeBtn);
+    // Zamknięcie: przez standardowy, wbudowany "✕" w nagłówku modala
+    // (ten sam wygląd we wszystkich modalach) — bez własnego duplikatu.
     wrapper.appendChild(frame);
 
     void confirmModal({
@@ -3138,7 +3126,6 @@ function renderMessageDetail(msg, attachments = [], threadMessages = []) {
       okText: "",
       showCancel: false,
       sheet: { backBtn: document.getElementById("btnMailBackTopbar") || btnBackSheet, keepBackBtnText: true },
-      onReady: ({ closeBtn: builtinCloseBtn }) => { modalCloseBtn = builtinCloseBtn; },
     });
   });
 
@@ -3472,20 +3459,8 @@ function renderReportThread(report, messages, attsByMsg = {}) {
       wrapper.className = "compose-preview-wrapper";
       wrapper.style.cssText = "background:#050914;border-radius:8px;padding:20px;position:relative;";
       
-      // Add close button (X) only - no OK/Cancel buttons
-      const closeBtn = document.createElement("button");
-      closeBtn.type = "button";
-      closeBtn.className = "mail-preview-x-close";
-      closeBtn.textContent = "✕";
-      closeBtn.style.cssText = "position:absolute;top:10px;right:10px;background:none;border:none;color:rgba(255,255,255,.5);font-size:20px;cursor:pointer;padding:5px;border-radius:4px;";
-      closeBtn.onmouseover = () => closeBtn.style.color = "rgba(255,255,255,.9)";
-      closeBtn.onmouseout = () => closeBtn.style.color = "rgba(255,255,255,.5)";
-      // Zamyka przez wbudowany przycisk "✕" modala (nie usuwa .overlay ręcznie),
-      // żeby w trybie sheet finish()/exitModalSheet() zawsze się wykonały.
-      let modalCloseBtn = null;
-      closeBtn.onclick = () => modalCloseBtn?.click();
-
-      wrapper.appendChild(closeBtn);
+      // Zamknięcie: przez standardowy, wbudowany "✕" w nagłówku modala
+      // (ten sam wygląd we wszystkich modalach) — bez własnego duplikatu.
       wrapper.appendChild(frame);
 
       void confirmModal({
@@ -3495,7 +3470,6 @@ function renderReportThread(report, messages, attsByMsg = {}) {
         okText: "",
         showCancel: false,
         sheet: { backBtn: document.getElementById("btnMailBackTopbar") || btnBackSheet, keepBackBtnText: true },
-        onReady: ({ closeBtn: builtinCloseBtn }) => { modalCloseBtn = builtinCloseBtn; },
       });
     });
 
@@ -4569,20 +4543,8 @@ function showComposePreview(greetingSelect, farewellSelect, senderSelect) {
   wrapper.className = "compose-preview-wrapper";
   wrapper.style.cssText = "background:#050914;border-radius:8px;padding:20px;position:relative;";
   
-  // Add close button (X) only - no OK/Cancel buttons
-  const closeBtn = document.createElement("button");
-  closeBtn.type = "button";
-  closeBtn.className = "mail-preview-x-close";
-  closeBtn.textContent = "✕";
-  closeBtn.style.cssText = "position:absolute;top:10px;right:10px;background:none;border:none;color:rgba(255,255,255,.5);font-size:20px;cursor:pointer;padding:5px;border-radius:4px;";
-  closeBtn.onmouseover = () => closeBtn.style.color = "rgba(255,255,255,.9)";
-  closeBtn.onmouseout = () => closeBtn.style.color = "rgba(255,255,255,.5)";
-  // Zamyka przez wbudowany przycisk "✕" modala (nie usuwa .overlay ręcznie),
-  // żeby w trybie sheet finish()/exitModalSheet() zawsze się wykonały.
-  let modalCloseBtn = null;
-  closeBtn.onclick = () => modalCloseBtn?.click();
-
-  wrapper.appendChild(closeBtn);
+  // Zamknięcie: przez standardowy, wbudowany "✕" w nagłówku modala
+  // (ten sam wygląd we wszystkich modalach) — bez własnego duplikatu.
   wrapper.appendChild(frame);
 
   void confirmModal({
@@ -4592,7 +4554,6 @@ function showComposePreview(greetingSelect, farewellSelect, senderSelect) {
     okText: "",
     showCancel: false,
     sheet: { backBtn: document.getElementById("btnMailBackTopbar") || btnBackSheet, keepBackBtnText: true },
-    onReady: ({ closeBtn: builtinCloseBtn }) => { modalCloseBtn = builtinCloseBtn; },
   });
 }
 
