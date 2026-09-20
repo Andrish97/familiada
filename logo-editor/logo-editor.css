@@ -1020,32 +1020,15 @@
   align-items: center;
 }
 
-/* X przycisk w prawym górnym rogu (absolute) */
-#previewOverlay .previewCloseBtn{
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  width: 34px;
-  height: 34px;
-  min-width: 34px;
-  border-radius: 12px;
-  padding: 0;
-  display: grid;
-  place-items: center;
-  background: rgba(10,16,32,.72);
-  border: 1px solid rgba(255,255,255,.28);
-  cursor: pointer;
-  z-index: 10;
-}
-
-#previewOverlay .previewCloseBtn:hover{
-  background: rgba(10,16,32,.90);
-  border-color: rgba(255,255,255,.40);
-}
-
-/* tytuł pod przyciskiem X */
+/* Nagłówek: tytuł po lewej, standardowy "✕" po prawej — ten sam układ
+   co .mHead/.mkt-detail-head w innych modalach (spójny wygląd przycisku
+   zamknięcia we wszystkich modalach, patrz css/base.css .mHead). */
 #previewOverlay .previewModalTitle{
-  text-align: center;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
   margin-bottom: 12px;
 }
 
