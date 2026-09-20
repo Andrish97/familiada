@@ -624,11 +624,21 @@ main{
         display: none;
     }
 
+    /* height (nie min-height!) + overflow:hidden wymuszone tutaj,
+       NIEZALEŻNIE od tego, co dana strona robi z overflow/height poza
+       trybem sheet (np. builder.css daje body.builder-body/main.wrap
+       overflow:hidden bezwarunkowo, inne strony wcale go nie ograniczają)
+       — inaczej łańcuch niżej (.overlay -> .modal) nie dostaje
+       zdefiniowanej, ograniczonej wysokości, więc .modal's overflow:auto
+       nigdy nie tworzy realnego obszaru przewijania (element bez
+       ograniczonej wysokości rośnie zamiast się przewijać) i treść,
+       która nie mieści się na ekranie, jest ucięta i nieosiągalna. */
     body.sheet-open main.wrap,
     body.sheet-open main.explorer {
         display: flex;
         flex-direction: column;
-        min-height: calc(100dvh - var(--topbar-h));
+        height: calc(100dvh - var(--topbar-h));
+        overflow: hidden;
     }
 
     /* tylko aktualnie otwarty modal (.sheet-active) wchodzi w treść strony;
@@ -648,8 +658,10 @@ main{
         background: none;
         padding: 0;
         display: flex !important;
+        flex-direction: column; /* jawnie — .modal ma być jedynym, w pełni wysokim dzieckiem */
         flex: 1;
         min-height: 0;
+        overflow: hidden; /* scroll ma być w .modal, nie tutaj */
     }
 
     .modal--sheet .modal,
@@ -657,12 +669,15 @@ main{
         width: 100%;
         max-width: none;
         height: auto;
-        min-height: 100%;
+        min-height: 0;
+        flex: 1; /* wypełnia dokładnie tyle, ile zostawi .overlay (flex column) */
         max-height: none;
         border-radius: 0;
         margin: 0;
         display: flex;
         flex-direction: column;
+        overflow-y: auto; /* własny, samodzielny obszar przewijania */
+        -webkit-overflow-scrolling: touch;
         /* Modal ma wyglądać jak treść strony, nie jak karta na tle strony */
         background: transparent;
         border: 0;
