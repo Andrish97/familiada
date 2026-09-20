@@ -707,14 +707,18 @@ main{
 
     /* Wyjściem z modala jest już przycisk w topbarze (patrz
        js/core/modal-sheet.js), więc własny przycisk zamknięcia "✕" w
-       nagłówku modala jest w tym trybie zbędny. */
+       nagłówku modala jest w tym trybie zbędny. !important: niektóre
+       przyciski "✕" mają swój display ustawiony regułą na selektorze ID
+       (np. logo-editor.css: #previewOverlay .previewCloseBtn{display:grid}),
+       której specyficzność bije dowolną liczbę klas — bez !important "✕"
+       zostawałby widoczny obok przejętego przycisku wstecz w topbarze. */
     .modal--sheet .uni-head button[aria-label],
     .modal--sheet .mHead button[aria-label],
     .modal--sheet .tagsHead button[aria-label],
     .modal--sheet .bld-preview-head button[aria-label],
     .modal--sheet .mkt-detail-head button[aria-label],
     .modal--sheet .previewModalTitle button[aria-label] {
-        display: none;
+        display: none !important;
     }
 
     body.sheet-open .footer .btn-contact-footer {
