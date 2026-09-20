@@ -1,5 +1,5 @@
-import { t } from "../../translation/translation.js?v=v2026-09-20T16415";
-import { enterModalSheet, exitModalSheet, isSheetViewport } from "./modal-sheet.js?v=v2026-09-20T16415";
+import { t } from "../../translation/translation.js?v=v2026-09-20T16485";
+import { enterModalSheet, exitModalSheet, isSheetViewport } from "./modal-sheet.js?v=v2026-09-20T16485";
 let modalSeq = 0;
 
 function modalText(key, fallback) {
