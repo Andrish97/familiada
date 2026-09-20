@@ -794,17 +794,135 @@ function renderBits150x70ToBig(bits150, canvas){
   }
 }
 
+// Własny pinch-zoom/pan na canvasie podglądu, niezależny od powiększania
+// całej strony przeglądarki (patrz touch-action:none w logo-editor.css —
+// bez tego dwa palce na canvasie zoomowałyby cały layout, nie samą treść).
+function initPreviewPinchZoom(container, canvas) {
+  let scale = 1, tx = 0, ty = 0;
+  const MIN_SCALE = 1, MAX_SCALE = 6;
+  const pointers = new Map();
+  let pinchStartDist = 0;
+  let pinchStartScale = 1;
+  let pinchStartMid = { x: 0, y: 0 };
+  let panStart = null; // { x, y, tx, ty } dla pojedynczego palca gdy scale>1
+
+  const apply = () => {
+    canvas.style.transform = `translate(${tx}px, ${ty}px) scale(${scale})`;
+  };
+
+  const reset = () => {
+    scale = 1; tx = 0; ty = 0;
+    pointers.clear();
+    apply();
+  };
+
+  const clamp = () => {
+    // Nie pozwól odsunąć treści całkowicie poza widoczny obszar kontenera.
+    const cRect = container.getBoundingClientRect();
+    const w = canvas.offsetWidth * scale;
+    const h = canvas.offsetHeight * scale;
+    const minTx = Math.min(0, cRect.width - w);
+    const minTy = Math.min(0, cRect.height - h);
+    tx = Math.max(minTx, Math.min(0, tx));
+    ty = Math.max(minTy, Math.min(0, ty));
+  };
+
+  const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+  const mid = (a, b) => ({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 });
+
+  container.addEventListener("pointerdown", (e) => {
+    if (e.pointerType !== "touch") return;
+    container.setPointerCapture(e.pointerId);
+    pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+    if (pointers.size === 2) {
+      const [a, b] = [...pointers.values()];
+      pinchStartDist = dist(a, b) || 1;
+      pinchStartScale = scale;
+      pinchStartMid = mid(a, b);
+      panStart = null;
+    } else if (pointers.size === 1 && scale > 1) {
+      panStart = { x: e.clientX, y: e.clientY, tx, ty };
+    }
+  });
+
+  container.addEventListener("pointermove", (e) => {
+    if (!pointers.has(e.pointerId)) return;
+    pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+    if (pointers.size === 2) {
+      const [a, b] = [...pointers.values()];
+      const newDist = dist(a, b) || 1;
+      const newMid = mid(a, b);
+      const nextScale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, pinchStartScale * (newDist / pinchStartDist)));
+      // Trzymaj punkt pod palcami w miejscu podczas zoomowania.
+      const cRect = container.getBoundingClientRect();
+      const anchorX = pinchStartMid.x - cRect.left;
+      const anchorY = pinchStartMid.y - cRect.top;
+      tx = anchorX - ((anchorX - tx) / scale) * nextScale + (newMid.x - pinchStartMid.x);
+      ty = anchorY - ((anchorY - ty) / scale) * nextScale + (newMid.y - pinchStartMid.y);
+      scale = nextScale;
+      clamp();
+      apply();
+    } else if (pointers.size === 1 && panStart) {
+      tx = panStart.tx + (e.clientX - panStart.x);
+      ty = panStart.ty + (e.clientY - panStart.y);
+      clamp();
+      apply();
+    }
+  });
+
+  const endPointer = (e) => {
+    pointers.delete(e.pointerId);
+    if (pointers.size < 2) pinchStartDist = 0;
+    if (pointers.size === 0) panStart = null;
+    if (scale <= 1) reset();
+  };
+  container.addEventListener("pointerup", endPointer);
+  container.addEventListener("pointercancel", endPointer);
+
+  let lastTap = 0;
+  container.addEventListener("pointerup", (e) => {
+    if (e.pointerType !== "touch" || pointers.size > 0) return;
+    const now = Date.now();
+    if (now - lastTap < 300) {
+      // Podwójne stuknięcie: przełącz między 1x a 2.5x wyśrodkowanym na miejscu stuknięcia.
+      if (scale > 1) {
+        reset();
+      } else {
+        const cRect = container.getBoundingClientRect();
+        scale = 2.5;
+        tx = cRect.width / 2 - (e.clientX - cRect.left) * scale;
+        ty = cRect.height / 2 - (e.clientY - cRect.top) * scale;
+        clamp();
+        apply();
+      }
+    }
+    lastTap = now;
+  });
+
+  return { reset };
+}
+
+let _previewPinchZoom = null;
+
 function openPreviewFullscreen(payload){
   if (payload.kind === "GLYPH") renderRows30x10ToBig(payload.rows, bigPreviewFull);
   else renderBits150x70ToBig(payload.bits, bigPreviewFull);
-  
+
   const modal = previewOverlay.querySelector(".modal");
   if (modal) {
     modal.classList.toggle("is-touch", isMobileDevice());
   }
 
+  if (!_previewPinchZoom) {
+    const canvasContainer = previewOverlay.querySelector(".previewModalCanvas");
+    _previewPinchZoom = initPreviewPinchZoom(canvasContainer, bigPreviewFull);
+  }
+  _previewPinchZoom.reset();
+
   show(previewOverlay, true);
-  enterModalSheet(previewOverlay, { backBtn: btnBack, onClose: () => { show(previewOverlay, false); exitModalSheet(previewOverlay); } });
+  enterModalSheet(previewOverlay, { backBtn: btnBack, onClose: () => { show(previewOverlay, false); exitModalSheet(previewOverlay); _previewPinchZoom?.reset(); } });
 }
 
 /* =========================================================

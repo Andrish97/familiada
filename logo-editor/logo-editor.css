@@ -1085,12 +1085,25 @@
   flex-shrink: 0;
 }
 
+/* Na dotyku: własny pinch-zoom/pan (patrz main.js, initPreviewPinchZoom) na
+   samym canvasie, niezależny od powiększania całej strony przeglądarki.
+   touch-action:none — bez tego przeglądarka przechwytuje gest dwoma
+   palcami jako natywny zoom CAŁEJ strony (topbar/stopka też), zamiast
+   zostawić go naszemu JS-owi ograniczonemu do tego elementu. overflow
+   zmienione na hidden, bo panowanie robimy sami przez CSS transform —
+   natywny scroll kontenera i nasz transform liczyłyby się podwójnie. */
+#previewOverlay .modal.previewModal.is-touch .previewModalCanvas {
+  overflow: hidden;
+  touch-action: none;
+}
+
 #previewOverlay .modal.previewModal.is-touch .previewModalCanvas canvas {
   width: auto;
   max-width: none;
   max-height: none;
   height: auto;
-  /* Pozwalamy na natywne przybliżanie palcami jeśli kontener ma overflow:auto */
+  transform-origin: 0 0;
+  will-change: transform;
 }
 
 /* =========================================================

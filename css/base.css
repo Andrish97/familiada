@@ -619,9 +619,14 @@ main{
    .overlay/.modal, więc wykluczenie z reguły "ukryj resztę" opiera się na
    samej klasie .modal--sheet, nie na .overlay. */
 @media (max-width: 600px) {
+    /* !important: niektóre strony mają dla swoich sekcji reguły na
+       selektorze ID (np. logo-editor.css: #listShell{display:flex}) —
+       specyficzność ID bije dowolną liczbę klas, więc bez !important ta
+       reguła by przegrywała i dana sekcja zostawałaby widoczna obok
+       modala, ściskając go do resztki miejsca zamiast go zastąpić. */
     body.sheet-open main.wrap > *:not(.footer):not(.modal--sheet),
     body.sheet-open main.explorer > *:not(.footer):not(.modal--sheet) {
-        display: none;
+        display: none !important;
     }
 
     /* height (nie min-height!) + overflow:hidden wymuszone tutaj,
