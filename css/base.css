@@ -721,6 +721,14 @@ main{
         display: none !important;
     }
 
+    /* Podgląd wiadomości (settings.js) dokłada WŁASNY, dodatkowy "✕" wewnątrz
+       treści modala (poza standardowym nagłówkiem .uni-head/.mHead), więc
+       reguła powyżej go nie obejmuje — bez tego zostawał widoczny mimo że
+       wyjściem jest już przejęty przycisk wstecz w topbarze. */
+    .modal--sheet .mail-preview-x-close {
+        display: none !important;
+    }
+
     body.sheet-open .footer .btn-contact-footer {
         display: none;
     }

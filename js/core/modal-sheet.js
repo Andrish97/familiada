@@ -18,6 +18,7 @@ let activeClose = null;
 let activeBackBtn = null;
 let backBtnOrigText = null;
 let activeOverlay = null;
+let activeKeepBackBtnText = false;
 
 export function isSheetViewport() {
   return sheetMql.matches;
@@ -36,7 +37,12 @@ function applyPresentation(matches) {
   activeOverlay?.classList.toggle("sheet-active", matches);
 
   if (!activeBackBtn) return;
-  activeBackBtn.textContent = matches ? t("common.modalBack") : backBtnOrigText;
+  // Niektóre przyciski (np. #btnMailBackTopbar w podglądzie maila) to sama
+  // strzałka "←" — dla nich pomijamy dopisywanie "Wstecz", bo dublowałoby
+  // się z ich naturalnym, już oczywistym znaczeniem w kontekście wątku.
+  if (!activeKeepBackBtnText) {
+    activeBackBtn.textContent = matches ? t("common.modalBack") : backBtnOrigText;
+  }
   // Znacznik "to JEST aktywny przycisk wstecz teraz" — potrzebny bo np.
   // builder.html/settings.html mają dodatkowy, dedykowany #btnBackSheet
   // (klasa .topbar-sheet-back) pokazywany WYŁĄCZNIE gdy jest aktywny —
@@ -58,11 +64,12 @@ sheetMql.addEventListener?.("change", onSheetMqChange) ?? sheetMql.addListener?.
 //   ekran zmieni szerokość podczas gdy modal jest otwarty).
 // opts.onClose: funkcja zamykająca TEN modal — wywoływana przez
 //   handleSheetBack() gdy użytkownik kliknie przycisk wstecz w topbarze.
-export function enterModalSheet(overlayEl, { backBtn, onClose } = {}) {
+export function enterModalSheet(overlayEl, { backBtn, onClose, keepBackBtnText = false } = {}) {
   if (!isSheetViewport()) return;
 
   activeOverlay = overlayEl || null;
   activeClose = onClose || null;
+  activeKeepBackBtnText = keepBackBtnText;
 
   if (backBtn) {
     activeBackBtn = backBtn;
@@ -79,6 +86,7 @@ export function exitModalSheet(overlayEl) {
   activeBackBtn = null;
   backBtnOrigText = null;
   activeClose = null;
+  activeKeepBackBtnText = false;
 }
 
 // Wywoływane na początku handlera kliknięcia przycisku wstecz w

@@ -190,7 +190,7 @@ function openModal({
       document.body.appendChild(overlay);
     }
 
-    if (sheet) enterModalSheet(overlay, { backBtn: sheet.backBtn, onClose: () => finish(false) });
+    if (sheet) enterModalSheet(overlay, { backBtn: sheet.backBtn, onClose: () => finish(false), keepBackBtnText: sheet.keepBackBtnText });
 
     const focusTarget = initialFocus || okBtn;
     setTimeout(() => focusTarget?.focus?.(), 0);

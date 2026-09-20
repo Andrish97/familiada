@@ -3118,6 +3118,7 @@ function renderMessageDetail(msg, attachments = [], threadMessages = []) {
     // Add close button (X) only - no OK/Cancel buttons
     const closeBtn = document.createElement("button");
     closeBtn.type = "button";
+    closeBtn.className = "mail-preview-x-close";
     closeBtn.textContent = "✕";
     closeBtn.style.cssText = "position:absolute;top:10px;right:10px;background:none;border:none;color:rgba(255,255,255,.5);font-size:20px;cursor:pointer;padding:5px;border-radius:4px;";
     closeBtn.onmouseover = () => closeBtn.style.color = "rgba(255,255,255,.9)";
@@ -3136,7 +3137,7 @@ function renderMessageDetail(msg, attachments = [], threadMessages = []) {
       body: wrapper,
       okText: "",
       showCancel: false,
-      sheet: { backBtn: document.getElementById("btnMailBackTopbar") || btnBackSheet },
+      sheet: { backBtn: document.getElementById("btnMailBackTopbar") || btnBackSheet, keepBackBtnText: true },
       onReady: ({ closeBtn: builtinCloseBtn }) => { modalCloseBtn = builtinCloseBtn; },
     });
   });
@@ -3474,6 +3475,7 @@ function renderReportThread(report, messages, attsByMsg = {}) {
       // Add close button (X) only - no OK/Cancel buttons
       const closeBtn = document.createElement("button");
       closeBtn.type = "button";
+      closeBtn.className = "mail-preview-x-close";
       closeBtn.textContent = "✕";
       closeBtn.style.cssText = "position:absolute;top:10px;right:10px;background:none;border:none;color:rgba(255,255,255,.5);font-size:20px;cursor:pointer;padding:5px;border-radius:4px;";
       closeBtn.onmouseover = () => closeBtn.style.color = "rgba(255,255,255,.9)";
@@ -3492,7 +3494,7 @@ function renderReportThread(report, messages, attsByMsg = {}) {
         body: wrapper,
         okText: "",
         showCancel: false,
-        sheet: { backBtn: document.getElementById("btnMailBackTopbar") || btnBackSheet },
+        sheet: { backBtn: document.getElementById("btnMailBackTopbar") || btnBackSheet, keepBackBtnText: true },
         onReady: ({ closeBtn: builtinCloseBtn }) => { modalCloseBtn = builtinCloseBtn; },
       });
     });
@@ -4570,6 +4572,7 @@ function showComposePreview(greetingSelect, farewellSelect, senderSelect) {
   // Add close button (X) only - no OK/Cancel buttons
   const closeBtn = document.createElement("button");
   closeBtn.type = "button";
+  closeBtn.className = "mail-preview-x-close";
   closeBtn.textContent = "✕";
   closeBtn.style.cssText = "position:absolute;top:10px;right:10px;background:none;border:none;color:rgba(255,255,255,.5);font-size:20px;cursor:pointer;padding:5px;border-radius:4px;";
   closeBtn.onmouseover = () => closeBtn.style.color = "rgba(255,255,255,.9)";
@@ -4588,7 +4591,7 @@ function showComposePreview(greetingSelect, farewellSelect, senderSelect) {
     body: wrapper,
     okText: "",
     showCancel: false,
-    sheet: { backBtn: document.getElementById("btnMailBackTopbar") || btnBackSheet },
+    sheet: { backBtn: document.getElementById("btnMailBackTopbar") || btnBackSheet, keepBackBtnText: true },
     onReady: ({ closeBtn: builtinCloseBtn }) => { modalCloseBtn = builtinCloseBtn; },
   });
 }

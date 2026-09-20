@@ -1089,6 +1089,11 @@ function buildManualUrl() {
 
 function updateBackButtonLabel() {
   if (!btnBack) return;
+  // Auto-refresh (setInterval) woła to w tle nawet gdy jest otwarty modal
+  // sheet, który tymczasowo przejął ten przycisk jako "← Wstecz" — bez tej
+  // strażniczki po ~30s nadpisywalibyśmy z powrotem oryginalny tekst,
+  // mimo że modal wciąż jest otwarty (przycisk "sam się zmieniał").
+  if (document.body.classList.contains("sheet-open")) return;
   const retPath = getRetPathnameLower();
   btnBack.textContent = retPath.endsWith("/bases")
     ? t("pollsHubPolls.backToBases") || "← Bazy pytań"
