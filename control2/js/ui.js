@@ -16,10 +16,10 @@
 // setStealMsg/setRevealMsg/ROUNDS_MSG/FINAL_MSG, ale jako czysta funkcja
 // bieżącego game_state (shared/hints.js), nie ulotny stan ustawiany przy
 // każdym zdarzeniu — "wszystko idzie przez tabelę stanów".
-import { getRoundsHint, getFinalHint, getFinalEntryShortcuts, teamName } from "../../shared/hints.js?v=v2026-09-20T16583";
-import { t, getUiLang } from "../../translation/translation.js?v=v2026-09-20T16583";
-import { getSfxCategories, getSfxVariant, isSfxPlaying, playSfx, stopSfx, onSfxEnd, setSfxVolume } from "../../js/core/sfx.js?v=v2026-09-20T16583";
-import { buildDisplayPreviewRow } from "../../shared/previewRow.js?v=v2026-09-20T16583";
+import { getRoundsHint, getFinalHint, getFinalEntryShortcuts, teamName } from "../../shared/hints.js?v=v2026-09-21T00031";
+import { t, getUiLang } from "../../translation/translation.js?v=v2026-09-21T00031";
+import { getSfxCategories, getSfxVariant, isSfxPlaying, playSfx, stopSfx, onSfxEnd, setSfxVolume } from "../../js/core/sfx.js?v=v2026-09-21T00031";
+import { buildDisplayPreviewRow } from "../../shared/previewRow.js?v=v2026-09-21T00031";
 
 const $ = (id) => document.getElementById(id);
 const on = (el, ev, fn) => el && el.addEventListener(ev, fn);
@@ -1121,6 +1121,16 @@ export function createUI({ root, emit }) {
       const row = f.runtime[key][i] || {};
       const question = f.questions?.[i];
       const inp = h("input", { type: "text", value: row.text || "", placeholder: t("control.finalUi.playerAnswer"), autocomplete: "off" });
+      // boardBusy() -- SET_ENTRY_TEXT idzie przez ten sam pełny zapis
+      // detail co każda inna akcja gry (store.js's commit()), więc podlega
+      // temu samemu serwerowemu locked_until (migracja 264) co przejście
+      // "Rozpocznij finał"/"Start rundy 2" (gate = final_theme/
+      // round_transition+reveal, kilka sekund). Bez tego pole wyglądało na
+      // od razu edytowalne -- klik/wpisanie w trakcie tego intro dostawało
+      // gołe "Błąd: locked" (zgłoszone przez e2e: pięć kolejnych SET_ENTRY_
+      // TEXT z pięciu .fill() zaraz po "Rozpocznij finał" odrzuconych
+      // 'locked', zanim serwerowa blokada z final_theme zdążyła wygasnąć).
+      if (boardBusy()) inp.disabled = true;
       on(inp, "input", () => emit("game.dispatch", { type: "SET_ENTRY_TEXT", round, idx: i, text: inp.value }));
       on(inp, "keydown", (e) => {
         if (e.key === "ArrowDown") {
@@ -1159,10 +1169,19 @@ export function createUI({ root, emit }) {
       ];
       if (round === 2) {
         const repeat = row.repeat === true;
-        cells.push(h("button", {
+        // boardBusy() -- SAME gap i naprawa co pole input wyżej: SET_REPEAT
+        // to też pełny zapis detail, podlega temu samemu serwerowemu
+        // locked_until co przejście "Start rundy 2" (gate =
+        // syncedMs("round_transition","reveal"), kilka sekund). Zgłoszone
+        // (e2e "finał — obaj gracze"): klik "Powtórzenie" tuż po wejściu na
+        // ekran wpisywania gracza 2 dostawał 'locked' -- ta sama klasa bugu,
+        // inny przycisk na tym samym ekranie.
+        const repeatBtn = h("button", {
           class: `c2-btn-repeat ${repeat ? "on" : ""}`.trim(), type: "button",
-          onclick: () => emit("game.dispatch", { type: "SET_REPEAT", round: 2, idx: i, repeat: !repeat }),
-        }, [document.createTextNode(repeat ? t("control.finalUi.p2RepeatOn") : t("control.finalUi.p2RepeatOff"))]));
+          onclick: boardBusy() ? undefined : () => emit("game.dispatch", { type: "SET_REPEAT", round: 2, idx: i, repeat: !repeat }),
+        }, [document.createTextNode(repeat ? t("control.finalUi.p2RepeatOn") : t("control.finalUi.p2RepeatOff"))]);
+        if (boardBusy()) repeatBtn.disabled = true;
+        cells.push(repeatBtn);
       }
       rows.push(h("div", { class: `c2-entryrow ${round === 2 ? "p2" : "p1"}`, "data-i": String(i) }, cells));
     }

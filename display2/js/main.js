@@ -6,16 +6,16 @@
 // (device_ping) i walidacja klucza (display_auth) to te same, generyczne,
 // niezwiązane z komendami RPC co dziś — reużyte bez zmian.
 
-import { initFullscreenButton } from "../../display/js/fullscreen.js?v=v2026-09-20T16583";
-import { initI18n, setUiLang } from "../../translation/translation.js?v=v2026-09-20T16583";
-import { startKeepAlive } from "../../js/core/keep-alive.js?v=v2026-09-20T16583";
-import { sb } from "../../js/core/supabase.js?v=v2026-09-20T16583";
-import { createScene } from "./scene.js?v=v2026-09-20T16583";
-import { createQRController } from "./qr.js?v=v2026-09-20T16583";
-import { createSubscription } from "../../js/core/game-state-subscribe.js?v=v2026-09-20T16583";
-import { createRenderer } from "./render.js?v=v2026-09-20T16583";
-import { createDisplaySoundReactor } from "./soundReactor.js?v=v2026-09-20T16583";
-import { loadSfxManifest, initSfx, setCurrentGameId, applySfxGameSettings, unlockAudio, isAudioUnlocked, getSfxDuration } from "../../js/core/sfx.js?v=v2026-09-20T16583";
+import { initFullscreenButton } from "../../display/js/fullscreen.js?v=v2026-09-21T00031";
+import { initI18n, setUiLang } from "../../translation/translation.js?v=v2026-09-21T00031";
+import { startKeepAlive } from "../../js/core/keep-alive.js?v=v2026-09-21T00031";
+import { sb } from "../../js/core/supabase.js?v=v2026-09-21T00031";
+import { createScene } from "./scene.js?v=v2026-09-21T00031";
+import { createQRController } from "./qr.js?v=v2026-09-21T00031";
+import { createSubscription } from "../../js/core/game-state-subscribe.js?v=v2026-09-21T00031";
+import { createRenderer } from "./render.js?v=v2026-09-21T00031";
+import { createDisplaySoundReactor } from "./soundReactor.js?v=v2026-09-21T00031";
+import { loadSfxManifest, initSfx, setCurrentGameId, applySfxGameSettings, unlockAudio, isAudioUnlocked, getSfxDuration } from "../../js/core/sfx.js?v=v2026-09-21T00031";
 
 startKeepAlive();
 
@@ -122,6 +122,7 @@ async function bootPreview(params) {
   window.addEventListener("message", (e) => {
     if (e.data?.type !== "familiada:preview-row") return;
     const row = e.data.row;
+    console.warn("[e2e-diag] display2 odebrał familiada:preview-row, teamA:", row?.detail?.teams?.teamA);
     // logoPreview (wyłącznie w wierszu podglądu — nigdy w prawdziwym
     // game_state) to jeszcze NIEZAPISANY wybór logo w formularzu ustawień —
     // bindGame/reload czytają logo z bazy, więc nie zobaczyłyby tego wcale.

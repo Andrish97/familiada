@@ -3,27 +3,27 @@
 // 1 blokad, podgląd Wyświetlacza przez display2?preview=1 + shared/previewRow.js
 // itd.) — trzymana jako osobny plik, żeby modal Control v2 nie zależał od
 // tej samej strony, którą wciąż ładuje stary control.html przez /game-settings.
-import { requireAuth } from "../core/auth.js?v=v2026-09-20T16583";
-import { t, getUiLang } from "../../translation/translation.js?v=v2026-09-20T16583";
-import { setTopbarAccount } from "../core/topbar-controller.js?v=v2026-09-20T16583";
-import { sb } from "../core/supabase.js?v=v2026-09-20T16583";
-import { loadQuestions } from "../core/game-validate.js?v=v2026-09-20T16583";
-import { loadFont5x7, buildLogoPreviewCanvas } from "../core/logo-preview.js?v=v2026-09-20T16583";
-import { v as cacheBust } from "../core/cache-bust.js?v=v2026-09-20T16583";
-import { alertModal, confirmModal } from "../core/modal.js?v=v2026-09-20T16583";
-import { initUiSelect } from "../core/ui-select.js?v=v2026-09-20T16583";
-import { buildDisplayPreviewRow } from "../../shared/previewRow.js?v=v2026-09-20T16583";
+import { requireAuth } from "../core/auth.js?v=v2026-09-21T00031";
+import { t, getUiLang } from "../../translation/translation.js?v=v2026-09-21T00031";
+import { setTopbarAccount } from "../core/topbar-controller.js?v=v2026-09-21T00031";
+import { sb } from "../core/supabase.js?v=v2026-09-21T00031";
+import { loadQuestions } from "../core/game-validate.js?v=v2026-09-21T00031";
+import { loadFont5x7, buildLogoPreviewCanvas } from "../core/logo-preview.js?v=v2026-09-21T00031";
+import { v as cacheBust } from "../core/cache-bust.js?v=v2026-09-21T00031";
+import { alertModal, confirmModal } from "../core/modal.js?v=v2026-09-21T00031";
+import { initUiSelect } from "../core/ui-select.js?v=v2026-09-21T00031";
+import { buildDisplayPreviewRow } from "../../shared/previewRow.js?v=v2026-09-21T00031";
 import {
   loadSfxManifest, getSfxCategories,
   setSfxCustomBlob, clearSfxCustomFile, clearAllSfxCustomFiles, getSfxCustomFiles,
   playSfx, setSfxVolume,
-} from "../core/sfx.js?v=v2026-09-20T16583";
+} from "../core/sfx.js?v=v2026-09-21T00031";
 import {
   uploadGameSound, deleteGameSound, deleteAllGameSounds,
-} from "../core/sfx-cloud.js?v=v2026-09-20T16583";
-import { guardDesktopOnly } from "../core/device-guard.js?v=v2026-09-20T16583";
-import { guardResourceLock, guardResourceBusy } from "../core/resource-lock.js?v=v2026-09-20T16583";
-import { updateChecked, ROW_GONE } from "../core/db-guard.js?v=v2026-09-20T16583";
+} from "../core/sfx-cloud.js?v=v2026-09-21T00031";
+import { guardDesktopOnly } from "../core/device-guard.js?v=v2026-09-21T00031";
+import { guardResourceLock, guardResourceBusy } from "../core/resource-lock.js?v=v2026-09-21T00031";
+import { updateChecked, ROW_GONE } from "../core/db-guard.js?v=v2026-09-21T00031";
 
 guardDesktopOnly();
 
@@ -589,13 +589,15 @@ function resolveLogoPreview() {
 }
 
 function postPreviewRow() {
-  if (!_displayReady || !_displayIframe?.contentWindow) return;
+  if (!_displayReady || !_displayIframe?.contentWindow) {
+    console.warn("[e2e-diag] postPreviewRow() early-return, _displayReady:", _displayReady, "hasContentWindow:", !!_displayIframe?.contentWindow);
+    return;
+  }
   try {
-    _displayIframe.contentWindow.postMessage({
-      type: "familiada:preview-row",
-      row: buildDisplayPreviewRow({ teams: localSettings.teams, display: localSettings.display, logoPreview: resolveLogoPreview() }),
-    }, "*");
-  } catch {}
+    const row = buildDisplayPreviewRow({ teams: localSettings.teams, display: localSettings.display, logoPreview: resolveLogoPreview() });
+    console.warn("[e2e-diag] postPreviewRow() wysyła, teamA:", row.detail.teams.teamA);
+    _displayIframe.contentWindow.postMessage({ type: "familiada:preview-row", row }, "*");
+  } catch (e) { console.warn("[e2e-diag] postPreviewRow() postMessage rzucił:", e?.message); }
 }
 
 function createDisplayIframe() {
@@ -614,9 +616,22 @@ function createDisplayIframe() {
   // starcie sceny — sygnał gotowości zamiast pollowania obecności
   // window.handleCommand (który już nie istnieje, komend nie ma).
   window.addEventListener("message", (e) => {
-    if (e.data?.type !== "familiada:preview-ready" || e.source !== _displayIframe?.contentWindow) return;
+    if (e.data?.type !== "familiada:preview-ready") return;
+    console.warn("[e2e-diag] odebrano familiada:preview-ready, source match:", e.source === _displayIframe?.contentWindow);
+    if (e.source !== _displayIframe?.contentWindow) return;
     _displayReady = true;
-    if (activeCat === "display") postPreviewRow();
+    // Podgląd ma być żywy niezależnie od aktywnej zakładki (operator zmienia
+    // nazwę drużyny na zakładce "Drużyny", bez przełączania na "Wygląd") --
+    // warunek `activeCat === "display"` tu był błędem: postPreviewRow()
+    // wcześniej (np. z handlera #gsTeamA input) cicho wychodził wczesnym
+    // returnem, dopóki _displayReady było false (patrz komentarz przy
+    // postPreviewRow()) -- ten input NIGDY nie był ponownie wysłany, jeśli
+    // akurat trafił przed odebraniem "familiada:preview-ready", więc zmiana
+    // ginęła bezpowrotnie zamiast dotrzeć z opóźnieniem. Zgłoszone (e2e
+    // "modal ustawień gry — zmiana nazwy drużyny odświeża podgląd
+    // Wyświetlacza"): #gsTeamA.fill() na zakładce "Drużyny" nigdy nie
+    // docierał do podglądu.
+    postPreviewRow();
   });
 
   holder.appendChild(_displayIframe);
