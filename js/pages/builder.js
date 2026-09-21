@@ -32,6 +32,7 @@ import {
 } from "../core/game-validate.js?v=v2026-09-21T08065";
 import { deleteGameSoundsFolder } from "../core/sfx-cloud.js?v=v2026-09-21T08065";
 import { isResourceBusy } from "../core/resource-lock.js?v=v2026-09-21T08065";
+import { TRASH_ICON } from "../core/icons.js?v=v2026-09-21T08065";
 
 const MSG = {
   exportBaseEmpty: () => t("builder.exportBase.empty"),
@@ -850,7 +851,7 @@ function cardGame(g) {
   el.className = "card";
 
   el.innerHTML = `
-    <div class="x" title="${t("builder.card.delete")}">✕</div>
+    <div class="x" title="${t("builder.card.delete")}">${TRASH_ICON}</div>
     <div class="name"></div>
     <div class="meta"></div>
   `;
@@ -963,7 +964,7 @@ function cardMarket(g) {
   el.innerHTML = `
     <div class="name">${escapeHtml(g.title || "—")}</div>
     <div class="meta">${t("builder.market.typeLabel")} · ${(g.lang || "").toUpperCase()}</div>
-    <div class="x" title="${t("builder.market.removeFromLibrary")}">✕</div>
+    <div class="x" title="${t("builder.market.removeFromLibrary")}">${TRASH_ICON}</div>
   `;
   el.addEventListener("click", () => {
     selectedMarketId = g.market_game_id;

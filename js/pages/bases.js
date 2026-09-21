@@ -12,6 +12,7 @@ import { initUiSelect } from "../core/ui-select.js?v=v2026-09-21T08065";
 import { getUiLang, initI18n, t, withLangParam } from "../../translation/translation.js?v=v2026-09-21T08065";
 import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-09-21T08065";
 import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../core/modal-sheet.js?v=v2026-09-21T08065";
+import { TRASH_ICON } from "../core/icons.js?v=v2026-09-21T08065";
 import "../core/contact-modal.js";
 initI18n({ withSwitcher: true }).then(() => {
   document.documentElement.classList.remove('page-loading');
@@ -1234,7 +1235,7 @@ function render() {
     const deleteBtn = (canDeleteOwned || canLeaveShared)
       ? `<button class="x" type="button" title="${escapeHtml(
           canDeleteOwned ? t("bases.actions.remove") : t("bases.actions.leaveShared")
-        )}">✕</button>`
+        )}">${TRASH_ICON}</button>`
       : ``;
       
     const proposedBtns = b.proposed

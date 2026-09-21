@@ -14,6 +14,7 @@ import { isMobileDevice } from "../../js/core/pwa.js?v=v2026-09-21T08065";
 import { v as cacheBust } from "../../js/core/cache-bust.js?v=v2026-09-21T08065";
 import { guardResourceLock, isResourceBusy, findBusyContext } from "../../js/core/resource-lock.js?v=v2026-09-21T08065";
 import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../js/core/modal-sheet.js?v=v2026-09-21T08065";
+import { TRASH_ICON } from "../../js/core/icons.js?v=v2026-09-21T08065";
 
 import { initTextEditor } from "./text.js?v=v2026-09-21T08065";
 import { initDrawEditor } from "./draw.js?v=v2026-09-21T08065";
@@ -1326,7 +1327,7 @@ function renderList(){
           <div class="logoMeta">${esc(meta || "")}</div>
         </div>
         <div class="logoActions">
-          <div class="logoX ${canDelete ? "" : "is-disabled"}" title="${canDelete ? t("logoEditor.list.delete") : t("logoEditor.list.deleteDisabled")}">✕</div>
+          <div class="logoX ${canDelete ? "" : "is-disabled"}" title="${canDelete ? t("logoEditor.list.delete") : t("logoEditor.list.deleteDisabled")}">${TRASH_ICON}</div>
         </div>
       </div>
       <div class="logoPrev"></div>

@@ -122,18 +122,15 @@
 .tileBadge[data-kind="role"]{ border-color:rgba(255,234,166,.25); background:rgba(255,234,166,.10); }
 .tileBadge[data-kind="proposed"]{ border-color:rgba(255,170,210,.28); background:rgba(255,170,210,.10); }
 
-/* reset dla X (button) */
+/* reset domyślnego wyglądu <button> pod kaflem -- wygląd (obwódka/tło/kosz)
+   ustawiony wspólnie z builderem w builder.css */
 .builder-body .grid .card .x{
   appearance: none;
   -webkit-appearance: none;
-  border: 0;
-  background: transparent;
-  color: rgba(255,255,255,.85);
   padding: 0;
   line-height: 1;
   cursor: pointer;
 }
-.builder-body .grid .card .x:hover{ color:#fff; }
 
 /* =========================================================
    DESKTOP LAYOUT (default)
