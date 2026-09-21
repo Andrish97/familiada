@@ -24,12 +24,12 @@
 // matematyki animacji/fontów od zera nie dałoby żadnej korzyści, tylko
 // ryzyko niezgodności z tym, jak wygląda dziś (ustalone wprost).
 
-import { loadJson, buildGlyphMap, resolveGlyph } from "../../display/js/fonts.js?v=v2026-09-21T17315";
-import { createAnimator } from "../../display/js/anim.js?v=v2026-09-21T17315";
-import { createDisplays } from "../../display/js/displays.js?v=v2026-09-21T17315";
-import { createThemeManager } from "../../display/js/theme_manager.js?v=v2026-09-21T17315";
-import { sb } from "../../js/core/supabase.js?v=v2026-09-21T17315";
-import { t } from "../../translation/translation.js?v=v2026-09-21T17315";
+import { loadJson, buildGlyphMap, resolveGlyph } from "../../display/js/fonts.js?v=v2026-09-21T17360";
+import { createAnimator } from "../../display/js/anim.js?v=v2026-09-21T17360";
+import { createDisplays } from "../../display/js/displays.js?v=v2026-09-21T17360";
+import { createThemeManager } from "../../display/js/theme_manager.js?v=v2026-09-21T17360";
+import { sb } from "../../js/core/supabase.js?v=v2026-09-21T17360";
+import { t } from "../../translation/translation.js?v=v2026-09-21T17360";
 
 export async function createScene() {
   const $ = (id) => document.getElementById(id);
