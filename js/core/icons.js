@@ -81,7 +81,7 @@ export const STAR_ICON = `<svg viewBox="0 0 24 24" aria-hidden="true" focusable=
 // wypełnienia, do wierszy "X na 5 gwiazdek" (np. oceny w marketplace).
 export const STAR_EMPTY_ICON = `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14l-5-4.87 6.91-1.01L12 2z"/></svg>`;
 
-export const ENVELOPE_ICON = `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M3 6.5l9 6.5 9-6.5" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>`;
+export const ENVELOPE_ICON = `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M3 6.5l9 6.5 9-6.5"/></svg>`;
 
 export const PEOPLE_ICON = `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="8.5" cy="8" r="3"/><path d="M2 19c0-3.3 2.9-6 6.5-6S15 15.7 15 19v1H2v-1z"/><circle cx="17" cy="9" r="2.4"/><path d="M14 12.2c1-.5 2-.7 3-.7 3 0 5.5 2.2 5.5 5v.5H16v-.5c0-1.6-.5-3-1.9-4.1z" opacity=".7"/></svg>`;
 
@@ -101,3 +101,8 @@ export const GLOBE_ICON = `<svg viewBox="0 0 24 24" aria-hidden="true" focusable
 
 export const FULLSCREEN_ICON = `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 9V4h5v2H6v3H4zm16 0V4h-5v2h3v3h2zM4 15v5h5v-2H6v-3H4zm16 0v5h-5v-2h3v-3h2z"/></svg>`;
 export const FULLSCREEN_EXIT_ICON = `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M9 4H4v5h2V6h3V4zm6 0v2h3v3h2V4h-5zM6 15H4v5h5v-2H6v-3zm12 3h-3v2h5v-5h-2v3z"/></svg>`;
+
+export const CLIPBOARD_ICON = `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="9" y="2" width="6" height="4" rx="1"/><path fill-rule="evenodd" clip-rule="evenodd" d="M5 4h14v18H5V4zm2.5 6h9v1.6h-9V10zm0 4h9v1.6h-9V14z"/></svg>`;
+export const DOWNLOAD_ICON = `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>`;
+export const UPLOAD_ICON = `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 18v2h14v-2H5zm7-16L5 9h4v6h6V9h4l-7-7z"/></svg>`;
+export const NOTE_ICON = `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill-rule="evenodd" clip-rule="evenodd" d="M4 2h16v20H4V2zm3 5h10v1.6H7V7zm0 4h10v1.6H7V11zm0 4h6v1.6H7V15z"/></svg>`;

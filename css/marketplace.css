@@ -503,7 +503,8 @@ body.mkt-body > main.wrap {
 
 /* ===== Ratings ===== */
 .mkt-stars        { color: #f5c518; display: inline-flex; align-items: center; }
-.mkt-stars svg    { width: 13px; height: 13px; fill: currentColor; }
+.mkt-stars svg    { width: 13px; height: 13px; }
+.mkt-stars svg:not([fill]) { fill: currentColor; }
 .mkt-rating-avg   { font-weight: 600; }
 .mkt-rating-count { opacity: .55; font-size: .82em; }
 .mkt-no-rating    { opacity: .4; font-size: .82em; }
@@ -530,7 +531,8 @@ body.mkt-body > main.wrap {
 .mkt-rater-row     { display: flex; justify-content: space-between; align-items: center; padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,.05); font-size: .88em; }
 .mkt-rater-stars   { color: #f5c518; display: inline-flex; align-items: center; flex-shrink: 0; margin-left: 12px; }
 #btnGoBuilder .only-mobile svg { width: 16px; height: 16px; fill: currentColor; display: block; }
-.mkt-rater-stars svg { width: 13px; height: 13px; fill: currentColor; }
+.mkt-rater-stars svg { width: 13px; height: 13px; }
+.mkt-rater-stars svg:not([fill]) { fill: currentColor; }
 
 .mkt-sent-rating  { margin-left: 4px; }
 .mkt-sent-library { opacity: .7; }

@@ -269,10 +269,10 @@ body.skel-body .topbar.topbar-ready .topbar-section-4 {
 .btn-ico{
     width: 14px;
     height: 14px;
-    fill: currentColor;
     vertical-align: -2px;
     margin-right: 4px;
 }
+.btn-ico:not([fill]){ fill: currentColor; }
 
 .btn.gold {
     border-color: rgba(255,234,166,.35);
@@ -1553,9 +1553,9 @@ body{
 .star-btn svg {
     width: 40px;
     height: 40px;
-    fill: currentColor;
     display: block;
 }
+.star-btn svg:not([fill]) { fill: currentColor; }
 
 .star-btn:hover {
     transform: scale(1.15);

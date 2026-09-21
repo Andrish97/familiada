@@ -18,7 +18,7 @@ import { alertModal, confirmModal, promptModal } from "../core/modal.js?v=v2026-
 import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../core/modal-sheet.js?v=v2026-09-21T08065";
 import { sb } from "../core/supabase.js?v=v2026-09-21T08065";
 import { v as cacheBust } from "../core/cache-bust.js?v=v2026-09-21T08065";
-import { TRASH_ICON, STAR_ICON, STAR_EMPTY_ICON, SEARCH_ICON, SAVE_ICON, ENVELOPE_ICON } from "../core/icons.js?v=v2026-09-21T08065";
+import { TRASH_ICON, STAR_ICON, STAR_EMPTY_ICON, SEARCH_ICON, SAVE_ICON, ENVELOPE_ICON, NOTE_ICON, PENCIL_ICON } from "../core/icons.js?v=v2026-09-21T08065";
 
 // settings.html nie ma naturalnego przycisku wstecz na mobile (panel admina
 // bez nawigacji "do tyłu") -- btnBackSheet istnieje wyłącznie na potrzeby
@@ -2748,7 +2748,7 @@ function renderMailList(rows) {
     item.className = "mail-thread-item" + (!r.report_id && isInbound && !r.is_read ? " unread" : "") + (r.id === msgActiveId ? " active" : "");
     item.dataset.msgId = r.id;
     const dateStr = new Date(r.created_at).toLocaleDateString("pl-PL", { day:"2-digit", month:"2-digit" });
-    const sourceBadge = { email: "📧", form: "📝", compose: "✏" }[r.source] || "";
+    const sourceBadge = { email: ENVELOPE_ICON, form: NOTE_ICON, compose: PENCIL_ICON }[r.source] || "";
     const from = isInbound ? (r.from_email || "—") : (r.to_email || "—");
 
     // Ticket number badge for messages with tickets - displayed prominently
@@ -3381,8 +3381,8 @@ function renderReportThread(report, messages, attsByMsg = {}) {
     const metaEl = document.createElement("div");
     metaEl.className = "mail-msg-meta";
     const from = isOut ? `↗ ${msg.to_email || "—"}` : `↙ ${msg.from_email || "—"}`;
-    const sourceBadge = { email: "📧", form: "📝", compose: "✏" }[msg.source] || "";
-    metaEl.innerHTML = `<span>${escSetting(from)} · ${new Date(msg.created_at).toLocaleString("pl-PL")} ${escSetting(sourceBadge)}</span>`;
+    const sourceBadge = { email: ENVELOPE_ICON, form: NOTE_ICON, compose: PENCIL_ICON }[msg.source] || "";
+    metaEl.innerHTML = `<span>${escSetting(from)} · ${new Date(msg.created_at).toLocaleString("pl-PL")} ${sourceBadge}</span>`;
     el.appendChild(metaEl);
 
     const bodyEl = document.createElement("div");
