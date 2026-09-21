@@ -630,12 +630,12 @@
    DRAW: toolbar (#toolsDraw) — styl ikon jak w starym
 ========================================================= */
 #toolsDraw .tbtn{
-  height: 36px;
-  width: 36px;
+  height: 38px;
+  width: 38px;
   border-radius: 12px;
   border: 1px solid var(--bd-mid);
-  background: rgba(0,0,0,.18);
-  color: #fff;
+  background: rgba(255,255,255,.04);
+  color: rgba(255,255,255,.85);
 
   display: grid;
   place-items: center;
@@ -644,9 +644,9 @@
   user-select: none;
   padding: 0;
   font-size: 0; /* nie pokazuj “tekstu” */
-  transition: filter .12s ease, transform .05s ease, border-color .12s ease;
+  transition: background .12s ease, transform .05s ease, border-color .12s ease;
 }
-#toolsDraw .tbtn:hover{ filter: brightness(1.08); }
+#toolsDraw .tbtn:hover{ background: rgba(255,255,255,.07); }
 #toolsDraw .tbtn:active{ transform: translateY(1px); }
 
 #toolsDraw .tbtn.on{
@@ -655,10 +655,20 @@
   color: var(--gold);
 }
 
+/* Akcja niszcząca (np. wyczyść scenę) -- ten sam czerwonawy wariant
+   co .tbBtn.danger w Base Explorerze / .aDel w edytorze pytań */
+#toolsDraw .tbtn.danger{
+  border-color: rgba(255,120,120,.25);
+  background: rgba(255,120,120,.1);
+  color: rgba(255,200,200,.92);
+}
+#toolsDraw .tbtn.danger:hover{
+  background: rgba(255,120,120,.18);
+}
+
 #toolsDraw .tbtn:disabled{
   opacity: .45;
   cursor: default;
-  filter: none;
   transform: none;
 }
 
@@ -742,28 +752,41 @@
   display: block;
   min-width: 180px;
   max-width: 300px;
-  padding: 10px 14px;
+  padding: 8px 12px;
 
   border-radius: 10px;
-  border: 1px solid rgba(255,234,166,.3);
-  background: linear-gradient(135deg, rgba(15,23,42,.97), rgba(30,41,59,.97));
-  box-shadow: 0 8px 32px rgba(0,0,0,.55), 0 0 16px rgba(255,234,166,.06);
-  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,.14);
+  background: rgba(10,10,12,.96);
+  box-shadow: 0 14px 34px rgba(0,0,0,.55);
 
   font-size: 12px;
   line-height: 1.45;
   white-space: pre-line;
-  color: rgba(255,255,255,.9);
+  color: rgba(255,255,255,.92);
   font-weight: 500;
   text-align: center;
-  letter-spacing: .01em;
+  letter-spacing: .02em;
 
   visibility: hidden;
   opacity: 0;
   pointer-events: none;
   transform: translateY(4px);
-  transition: opacity .1s ease, transform .1s ease, visibility .1s ease;
+  transition: opacity .12s ease, transform .12s ease, visibility .12s ease;
   z-index: 100000;
+}
+
+/* strzałka -- ten sam trik co dymek .tbBtn[data-tip] w Base Explorerze */
+.draw-tip::after{
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -5px;
+  width: 10px;
+  height: 10px;
+  border-left: 1px solid rgba(255,255,255,.14);
+  border-bottom: 1px solid rgba(255,255,255,.14);
+  background: rgba(10,10,12,.96);
+  transform: translateX(-50%) rotate(45deg);
 }
 
 /* na dotyku: wyłącz */
