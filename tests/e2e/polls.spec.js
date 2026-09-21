@@ -32,7 +32,7 @@
 // dokładnie tak jak w game-deletion.spec.js dla samej gry.
 
 const { test, expect } = require("@playwright/test");
-const { loginAsTestUser } = require("./helpers/login");
+const { loginAsTestUser, instrumentPage } = require("./helpers/login");
 
 const QN_COUNT = 10; // RULES.QN_MIN
 const TOTAL_VOTERS = 100;
@@ -573,6 +573,7 @@ test("QR w ankietach: zmiana języka w polls.html dociera do już otwartego urz�
     // podłączony kodem), z wymuszonym startowym językiem "pl", żeby test
     // nie zależał od domyślnej lokalizacji środowiska CI.
     const qrPage = await qrContext.newPage();
+    instrumentPage(qrPage);
     await qrPage.goto(
       `https://www.familiada.online/poll-qr?id=${pollGame.gameId}&key=${key}&lang=pl`,
       { waitUntil: "domcontentloaded" }
