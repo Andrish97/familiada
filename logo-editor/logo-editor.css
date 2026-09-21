@@ -676,18 +676,7 @@
   width: 18px;
   height: 18px;
   display: block;
-
-  stroke: currentColor;
-  fill: none;
-  stroke-width: 2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  opacity: .92;
-}
-
-#toolsDraw .tbtn svg .fill{
   fill: currentColor;
-  stroke: none;
   opacity: .92;
 }
 
