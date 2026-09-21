@@ -122,7 +122,6 @@ async function bootPreview(params) {
   window.addEventListener("message", (e) => {
     if (e.data?.type !== "familiada:preview-row") return;
     const row = e.data.row;
-    console.warn("[e2e-diag] display2 odebrał familiada:preview-row, teamA:", row?.detail?.teams?.teamA);
     // logoPreview (wyłącznie w wierszu podglądu — nigdy w prawdziwym
     // game_state) to jeszcze NIEZAPISANY wybór logo w formularzu ustawień —
     // bindGame/reload czytają logo z bazy, więc nie zobaczyłyby tego wcale.

@@ -986,12 +986,22 @@ export function createUI({ root, emit }) {
       // reszta hero-ekranów ("Na wyświetlaczu pojawi się..." w r_intro/
       // f_start) — NIE zdradza samego wyniku (kto wygrał), bo to jest
       // moment odsłonięcia dla widzów, nie wcześniej w Control.
+      const introBody = [
+        h("div", { class: "c2-intro-title", text: t("control.roundsGameEndTitle") }),
+        h("div", { class: "c2-intro-hint", text: endRevealHint(state, isFinal) }),
+      ];
+      // Suma finału jeszcze NIE jest wtopiona w rounds.totals na tym
+      // ekranie (dzieje się dopiero w FINISH_FINAL) — bez tego operator nie
+      // miałby żadnego potwierdzenia wyniku finału przed kliknięciem
+      // "Zakończ grę".
+      if (isFinal) {
+        introBody.push(h("div", { class: "c2-statusbar" }, [
+          h("span", {}, [document.createTextNode(t("control.statusFinalSumLabel")), h("b", { text: String(state.final.runtime.sum) })]),
+        ]));
+      }
       gameplayShell({
         stepLabel: t("control.roundsGameEndTitle"),
-        body: [h("div", { class: "c2-intro" }, [
-          h("div", { class: "c2-intro-title", text: t("control.roundsGameEndTitle") }),
-          h("div", { class: "c2-intro-hint", text: endRevealHint(state, isFinal) }),
-        ])],
+        body: [h("div", { class: "c2-intro" }, introBody)],
         nav: [navButton(t("control.roundsGameEndBtn"), {
           disabled: boardBusy(),
           onclick: () => emit("game.dispatch", revealAction),
