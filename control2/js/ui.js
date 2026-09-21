@@ -16,10 +16,10 @@
 // setStealMsg/setRevealMsg/ROUNDS_MSG/FINAL_MSG, ale jako czysta funkcja
 // bieżącego game_state (shared/hints.js), nie ulotny stan ustawiany przy
 // każdym zdarzeniu — "wszystko idzie przez tabelę stanów".
-import { getRoundsHint, getFinalHint, getFinalEntryShortcuts, teamName } from "../../shared/hints.js?v=v2026-09-21T17140";
-import { t, getUiLang } from "../../translation/translation.js?v=v2026-09-21T17140";
-import { getSfxCategories, getSfxVariant, isSfxPlaying, playSfx, stopSfx, onSfxEnd, setSfxVolume } from "../../js/core/sfx.js?v=v2026-09-21T17140";
-import { buildDisplayPreviewRow } from "../../shared/previewRow.js?v=v2026-09-21T17140";
+import { getRoundsHint, getFinalHint, getFinalEntryShortcuts, teamName } from "../../shared/hints.js?v=v2026-09-21T17200";
+import { t, getUiLang } from "../../translation/translation.js?v=v2026-09-21T17200";
+import { getSfxCategories, getSfxVariant, isSfxPlaying, playSfx, stopSfx, onSfxEnd, setSfxVolume } from "../../js/core/sfx.js?v=v2026-09-21T17200";
+import { buildDisplayPreviewRow } from "../../shared/previewRow.js?v=v2026-09-21T17200";
 
 const $ = (id) => document.getElementById(id);
 const on = (el, ev, fn) => el && el.addEventListener(ev, fn);
@@ -986,12 +986,22 @@ export function createUI({ root, emit }) {
       // reszta hero-ekranów ("Na wyświetlaczu pojawi się..." w r_intro/
       // f_start) — NIE zdradza samego wyniku (kto wygrał), bo to jest
       // moment odsłonięcia dla widzów, nie wcześniej w Control.
+      const introBody = [
+        h("div", { class: "c2-intro-title", text: t("control.roundsGameEndTitle") }),
+        h("div", { class: "c2-intro-hint", text: endRevealHint(state, isFinal) }),
+      ];
+      // Suma finału jeszcze NIE jest wtopiona w rounds.totals na tym
+      // ekranie (dzieje się dopiero w FINISH_FINAL) — bez tego operator nie
+      // miałby żadnego potwierdzenia wyniku finału przed kliknięciem
+      // "Zakończ grę".
+      if (isFinal) {
+        introBody.push(h("div", { class: "c2-statusbar" }, [
+          h("span", {}, [document.createTextNode(t("control.statusFinalSumLabel")), h("b", { text: String(state.final.runtime.sum) })]),
+        ]));
+      }
       gameplayShell({
         stepLabel: t("control.roundsGameEndTitle"),
-        body: [h("div", { class: "c2-intro" }, [
-          h("div", { class: "c2-intro-title", text: t("control.roundsGameEndTitle") }),
-          h("div", { class: "c2-intro-hint", text: endRevealHint(state, isFinal) }),
-        ])],
+        body: [h("div", { class: "c2-intro" }, introBody)],
         nav: [navButton(t("control.roundsGameEndBtn"), {
           disabled: boardBusy(),
           onclick: () => emit("game.dispatch", revealAction),
