@@ -1113,7 +1113,14 @@ html.showA2HS .a2hs {
     left: 0;
     right: 0;
     bottom: 0;
-    z-index: 90;
+    /* Musi być wyżej niż JAKIKOLWIEK modal na dowolnej stronie — niektóre
+       strony mają własne, wysokie z-index na .overlay dla swoich potrzeb
+       (np. base-explorer.css: .overlay{z-index:1100} żeby modal wyszedł
+       nad drawerem tagów; settings.css: .overlay{z-index:9999!important}
+       dla zwykłego, wyśrodkowanego widoku desktopowego) — menu hamburgera
+       ma być zawsze na wierzchu, gdy jest otwarte, niezależnie od tego,
+       co jeszcze jest aktualnie widoczne pod spodem. */
+    z-index: 10050;
     background: rgba(0,0,0,.55);
     display: none;
     padding: 10px;
