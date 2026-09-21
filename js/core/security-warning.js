@@ -36,9 +36,9 @@
   
   const lang = getLang();
   const warnings = {
-    pl: "🎭 STOP! 🎭\n\nUżywanie tej konsoli może pozwolić atakującym na podszywanie się pod Ciebie i kradzież informacji (atak Self-XSS).\n\nJeśli ktoś powiedział Ci, żeby wkleić tutaj kod — NIE RÓB TEGO! To jak oddanie kluczy do domu nieznajomemu. 🏠🔑\n\nNie wklejaj kodu, którego nie rozumiesz. Twoje dane Ci podziękują! 🙏",
-    en: "🎭 STOP! 🎭\n\nUsing this console may allow attackers to impersonate you and steal your information (Self-XSS attack).\n\nIf someone told you to paste code here — DON'T DO IT! It's like giving your house keys to a stranger. 🏠🔑\n\nDo not enter or paste code you don't understand. Your data will thank you! 🙏",
-    uk: "🎭 СТОП! 🎭\n\nВикористання цієї консолі може дозволити зловмисникам видавати себе за тебе та красти твою інформацію (атака Self-XSS).\n\nЯкщо хтось сказав тобі вставити сюди код — НЕ РОБИ ЦЬОГО! Це як віддати ключі від дому незнайомцю. 🏠🔑\n\nНе вводь і не вставляй код, якого не розумієш. Твої дані подякують! 🙏"
+    pl: "OSTRZEŻENIE BEZPIECZEŃSTWA\n\nUżywanie tej konsoli może pozwolić atakującym na podszywanie się pod Ciebie i kradzież informacji (atak Self-XSS).\n\nJeśli ktoś poprosił Cię o wklejenie tutaj kodu — nie rób tego. To równoznaczne z przekazaniem dostępu do konta osobie trzeciej.\n\nNie wklejaj ani nie wpisuj kodu, którego nie rozumiesz.",
+    en: "SECURITY WARNING\n\nUsing this console may allow attackers to impersonate you and steal your information (Self-XSS attack).\n\nIf someone asked you to paste code here — do not do it. This is equivalent to handing over access to your account to a third party.\n\nDo not paste or enter code you don't understand.",
+    uk: "ПОПЕРЕДЖЕННЯ ПРО БЕЗПЕКУ\n\nВикористання цієї консолі може дозволити зловмисникам видавати себе за тебе та красти твою інформацію (атака Self-XSS).\n\nЯкщо хтось попросив тебе вставити сюди код — не роби цього. Це рівнозначно передачі доступу до твого акаунта третій особі.\n\nНе вставляй і не вводь код, якого не розумієш."
   };
   
   console.warn(warnings[lang] || warnings.pl);
