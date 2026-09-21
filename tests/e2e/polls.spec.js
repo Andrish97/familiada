@@ -530,3 +530,69 @@ test("ankieta tekstowa: literówki, korekta i scalanie odpowiedzi w panelu zamyk
     mark("merge-test: game deleted");
   }
 });
+
+// ===== 3. QR w ankietach — język dociera do już podłączonego urządzenia bez odświeżania =====
+//
+// Zgłoszone: poll-qr.html (ekran QR do głosowania, np. na telewizorze) był
+// jedynym "urządzeniem" w całym systemie, które o zmianie stanu (tu: język
+// operatora w polls.html) dowiadywało się WYŁĄCZNIE z żywej komendy
+// (BroadcastChannel same-browser + Supabase Realtime broadcast
+// POLL_QR_LANG) -- urządzenie, które akurat straciło łącze albo dołączyło
+// PO zmianie, zostawało trwale z nieaktualnym językiem aż do kolejnej
+// zmiany, bez żadnego sposobu odzyskania stanu. Migracja 269 dodaje
+// games.poll_qr_lang jako jedyne źródło prawdy -- polls.js je zapisuje
+// (set_poll_qr_lang), poll-qr.js samo się o nie dopytuje (pollLangOnce(),
+// co POLL_LANG_INTERVAL_MS=4000ms) przez ten sam get_poll_game, którego już
+// używa przy starcie -- dokładnie ten sam wzorzec "stan zamiast komend" co
+// Control v2's game_state.
+//
+// Test celowo podłącza urządzenie QR PRZED zmianą języka (nie po) --
+// gdyby poll-qr.js czytał stan tylko raz przy starcie, ten test by nie
+// złapał regresji do starego, komendowego zachowania: musi minąć
+// POLL_LANG_INTERVAL_MS, żeby zmiana faktycznie dotarła.
+test("QR w ankietach: zmiana języka w polls.html dociera do już otwartego urządzenia przez pollowanie stanu", async ({ page, context, browser }) => {
+  await loginAsTestUser(page, context);
+
+  const pollGame = await seedPollGame(page, "poll_text");
+  const qrContext = await browser.newContext();
+  try {
+    await page.goto(`https://www.familiada.online/polls?id=${pollGame.gameId}`, { waitUntil: "domcontentloaded" });
+    await page.waitForLoadState("networkidle");
+
+    const key = await page.evaluate(async (id) => {
+      const { data, error } = await window.__sbClient
+        .from("games")
+        .select("share_key_poll")
+        .eq("id", id)
+        .single();
+      if (error) throw new Error("select share_key_poll failed: " + error.message);
+      return data.share_key_poll;
+    }, pollGame.gameId);
+
+    // "Urządzenie" QR -- świeży, anonimowy kontekst (jak fizyczny telewizor
+    // podłączony kodem), z wymuszonym startowym językiem "pl", żeby test
+    // nie zależał od domyślnej lokalizacji środowiska CI.
+    const qrPage = await qrContext.newPage();
+    await qrPage.goto(
+      `https://www.familiada.online/poll-qr?id=${pollGame.gameId}&key=${key}&lang=pl`,
+      { waitUntil: "domcontentloaded" }
+    );
+    await expect(qrPage.locator(".qr-hint")).toHaveText("Zeskanuj QR, aby zagłosować", { timeout: 15000 });
+    await expect(qrPage.locator("html")).toHaveAttribute("lang", "pl");
+
+    // Operator zmienia język w polls.html -- broadcastLang() (js/pages/
+    // polls.js) teraz TYLKO zapisuje games.poll_qr_lang, nie czeka na
+    // żadnego odbiorcę.
+    await page.locator(".lang-btn").click();
+    await page.locator('.lang-option[data-lang="en"]').click();
+
+    // Odczekujemy z zapasem ponad POLL_LANG_INTERVAL_MS (4000ms w
+    // poll-qr.js), żeby złapać rzeczywiste, cykliczne pollowanie -- nie
+    // tylko jednorazowy odczyt przy starcie strony (ten już minął wyżej).
+    await expect(qrPage.locator(".qr-hint")).toHaveText("Scan the QR code to vote", { timeout: 10000 });
+    await expect(qrPage.locator("html")).toHaveAttribute("lang", "en");
+  } finally {
+    await qrContext.close();
+    await deleteGame(page, pollGame.gameId);
+  }
+});
