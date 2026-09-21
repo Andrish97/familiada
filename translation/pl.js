@@ -4795,7 +4795,7 @@ const pl = {
     countdownTitle: "TRWA PRZERWA TECHNICZNA",
     countdownText:
       "System jest chwilowo niedostępny.\nPowrót nastąpi:",
-    countdownDone: "Powrót już możliwy. 🎉",
+    countdownDone: "Powrót już możliwy.",
     refresh: "Odśwież",
     contact: "Kontakt",
     statusLabel: "Status:",

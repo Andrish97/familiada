@@ -4452,7 +4452,7 @@ const uk = {
     countdownTitle: "ТРИВАЄ ТЕХНІЧНА ПЕРЕРВА ⏳",
     countdownText:
       "Система тимчасово недоступна.\nПовернення відбудеться:",
-    countdownDone: "Повернення вже можливе. 🎉",
+    countdownDone: "Повернення вже можливе.",
     refresh: "Оновити",
     contact: "Контакт",
     statusLabel: "Статус:",

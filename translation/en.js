@@ -4466,7 +4466,7 @@ const en = {
     countdownTitle: "TECHNICAL MAINTENANCE IN PROGRESS ⏳",
     countdownText:
       "The system is temporarily unavailable.\nReturn will be:",
-    countdownDone: "Return is possible now. 🎉",
+    countdownDone: "Return is possible now.",
     refresh: "Refresh",
     contact: "Contact",
     statusLabel: "Status:",

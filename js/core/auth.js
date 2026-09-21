@@ -563,7 +563,7 @@ export async function resetPassword(loginOrEmail, redirectTo, language, resolved
   const { error } = await sb().auth.resetPasswordForEmail(email, options);
   if (error) throw new Error(niceAuthError(error));
 
-  return email; // ✅ ważne: login.js zapisze cooldown per konkretny email
+  return email; // ważne: login.js zapisze cooldown per konkretny email
 }
 
 export async function updateUserLanguage(language) {

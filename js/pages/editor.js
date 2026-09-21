@@ -320,7 +320,7 @@ function cfgFromGameType(type) {
 
 /* ================= Points UI (prepared) ================= */
 function sumPointsFromDom() {
-  const root = document.getElementById("aList"); // ✅ tu są aPts
+  const root = document.getElementById("aList"); // tu są aPts
   const inputs = root ? root.querySelectorAll("input.aPts") : [];
   let sum = 0;
   inputs.forEach((inp) => (sum += nonNegativeInt(inp.value, 0)));
@@ -345,7 +345,7 @@ function updateRemainBox(container) {
   const box = container?.querySelector(".remainBox");
   if (!box) return;
 
-  const sum = sumPointsFromDom(); // ✅ już nie z container
+  const sum = sumPointsFromDom(); // już nie z container
 
   box.classList.remove("ok", "over");
   if (sum > SUM_PREPARED) box.classList.add("over");

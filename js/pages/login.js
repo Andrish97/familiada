@@ -1183,14 +1183,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (mode === "register") {
       pass2.focus();
     } else {
-      btnPrimary.click(); // 🔴 jedyne miejsce wywołania
+      btnPrimary.click(); // jedyne miejsce wywołania
     }
   });
-  
+
   pass2.addEventListener("keydown", (e) => {
     if (e.key !== "Enter") return;
     e.preventDefault();
-    btnPrimary.click(); // 🔴 jedyne miejsce wywołania
+    btnPrimary.click(); // jedyne miejsce wywołania
   });
 
 });
