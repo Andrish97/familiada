@@ -13,6 +13,7 @@ import { sb } from "../../js/core/supabase.js?v=v2026-09-21T08065";
 import { createSubscription } from "../../js/core/game-state-subscribe.js?v=v2026-09-21T08065";
 import { createHostRenderer } from "./render.js?v=v2026-09-21T08065";
 import { createCoverLogoRenderer } from "./coverLogo.js?v=v2026-09-21T08065";
+import { FULLSCREEN_ICON, FULLSCREEN_EXIT_ICON } from "../../js/core/icons.js?v=v2026-09-21T08065";
 import { createHostThemeApplier } from "./hostThemeManager.js?v=v2026-09-21T08065";
 
 // videoWakeLockFallback: Host jest zwykle na osobnym tablecie/telefonie
@@ -79,7 +80,7 @@ function setupOrientationClass() {
 function setupFullscreenButton() {
   const btn = document.getElementById("btnFS");
   const ico = document.getElementById("fsIco");
-  function syncIcon() { if (ico) ico.textContent = document.fullscreenElement ? "⧉" : "▢"; }
+  function syncIcon() { if (ico) ico.innerHTML = document.fullscreenElement ? FULLSCREEN_EXIT_ICON : FULLSCREEN_ICON; }
   btn?.addEventListener("click", async () => {
     try {
       if (document.fullscreenElement) await document.exitFullscreen();

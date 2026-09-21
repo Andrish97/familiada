@@ -121,7 +121,10 @@ body {
     background: rgba(255,255,255,.06);
     color: #fff;
     font-weight: 900;
-    cursor: pointer
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .fsBtn:active {
@@ -132,6 +135,7 @@ body {
     font-size: 16px;
     letter-spacing: -2px
 }
+.fsBtn .ico svg { width: 20px; height: 20px; fill: currentColor; display: block; }
 
 .arena,.off {
     position: fixed;

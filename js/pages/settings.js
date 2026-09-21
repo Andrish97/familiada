@@ -5340,21 +5340,31 @@ function fmtSessionWinner(r) {
   return "—";
 }
 
-const SESSION_STATUS_LABELS = {
-  started: "🔵 Rozpoczęta",
-  playing: "🔵 W trakcie",
-  final: "🟢 Zakończona",
-  won: "🟢 Zakończona",
-  lost: "🟢 Zakończona",
-  abandoned: "⚪ Porzucona",
-  error: "🔴 Błąd",
-  legacy: "📁 Archiwalna",
+const SESSION_STATUS_META = {
+  started: { color: "#60a5fa", label: "Rozpoczęta" },
+  playing: { color: "#60a5fa", label: "W trakcie" },
+  final: { color: "#4ade80", label: "Zakończona" },
+  won: { color: "#4ade80", label: "Zakończona" },
+  lost: { color: "#4ade80", label: "Zakończona" },
+  abandoned: { color: "#cbd5e1", label: "Porzucona" },
+  error: { color: "#f87171", label: "Błąd" },
 };
 
+function statusDotEl(color, text) {
+  const wrap = document.createElement("span");
+  wrap.style.cssText = "display:inline-flex;align-items:center;gap:6px";
+  const dot = document.createElement("span");
+  dot.style.cssText = `display:inline-block;width:8px;height:8px;border-radius:50%;background:${color};flex-shrink:0`;
+  wrap.append(dot, document.createTextNode(text));
+  return wrap;
+}
+
 function fmtSessionStatus(r) {
-  const label = SESSION_STATUS_LABELS[r.effective_status] || r.effective_status || "—";
+  const meta = SESSION_STATUS_META[r.effective_status];
+  if (!meta) return r.effective_status === "legacy" ? "📁 Archiwalna" : (r.effective_status || "—");
   const errCount = Number(r.error_count) || 0;
-  return errCount > 0 ? `${label} ⚠️ ${errCount}` : label;
+  const text = errCount > 0 ? `${meta.label} ⚠️ ${errCount}` : meta.label;
+  return statusDotEl(meta.color, text);
 }
 
 const FINAL_STEP_LABELS = {

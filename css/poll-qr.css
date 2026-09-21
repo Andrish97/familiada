@@ -49,6 +49,7 @@ body.poll-qr-body {
     font-weight: 1000;
     z-index: 50;
 }
+.qr-fs-btn svg { width: 20px; height: 20px; fill: currentColor; }
 
 .qr-box {
     padding: 22px;

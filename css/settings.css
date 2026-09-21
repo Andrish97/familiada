@@ -1668,6 +1668,7 @@ body.tools-fullscreen .tools-frame-wrap iframe{
 .mail-folder:hover { background: rgba(255,255,255,.06); }
 .mail-folder.active { background: rgba(255,234,166,.12); color: #ffeaa6; }
 .mail-folder-icon { font-size: 14px; flex-shrink: 0; }
+.mail-folder-icon svg { width: 14px; height: 14px; fill: currentColor; display: block; }
 .mail-folder-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 .mail-list {

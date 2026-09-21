@@ -98,3 +98,6 @@ export const SPEAKER_ON_ICON = `<svg viewBox="0 0 24 24" aria-hidden="true" focu
 export const SPEAKER_OFF_ICON = `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><polygon points="4,9 8,9 13,5 13,19 8,15 4,15"/><path d="M16.5 9l5 5M21.5 9l-5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>`;
 
 export const GLOBE_ICON = `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="3.6" ry="9"/><line x1="3" y1="12" x2="21" y2="12"/></svg>`;
+
+export const FULLSCREEN_ICON = `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 9V4h5v2H6v3H4zm16 0V4h-5v2h3v3h2zM4 15v5h5v-2H6v-3H4zm16 0v5h-5v-2h3v-3h2z"/></svg>`;
+export const FULLSCREEN_EXIT_ICON = `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M9 4H4v5h2V6h3V4zm6 0v2h3v3h2V4h-5zM6 15H4v5h5v-2H6v-3zm12 3h-3v2h5v-5h-2v3z"/></svg>`;
