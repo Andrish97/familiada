@@ -7,7 +7,7 @@
 // - pan tylko gdy zoom > 1 i zawsze ograniczony (bez pokazywania "poza")
 // - nie można rysować / przesuwać obiektów poza granice świata
 // - gumka: tylko usuwanie obiektów "dotykiem" (bez ustawień)
-// - kolor obramowania = kolor domyślny narzędzia (⬛️/⬜️ na toolbarze)
+// - kolor obramowania = kolor domyślny narzędzia (ustawienia narzędzia)
 // - fill ma osobny wybór koloru w ustawieniach narzędzia (dla figur)
 // - kursor: overlay (PS-like): pędzel = kółko, gumka = kwadrat, figury = crosshair
 // - skróty: PS-like + (Space=Pan temp, Ctrl/Cmd=Select temp, Shift idealne kształty, strzałki przesuwają)
@@ -57,8 +57,8 @@ export function initDrawEditor(ctx) {
   const tClear    = document.getElementById("tClear");
   const tEye      = document.getElementById("tEye");
 
-  // Tło sceny — 🖼️
-  const tBg       = document.getElementById("tBg");     // 🖼️ (tło)
+  // Tło sceny
+  const tBg       = document.getElementById("tBg");
 
     // =========================================================
   // Ikony dynamiczne: FG (kolor narzędzia) i BG (tło sceny)
@@ -714,18 +714,14 @@ export function initDrawEditor(ctx) {
   // Kolor domyślny (stroke) — USUNIĘTO na rzecz individual tool settings
   // let fg = "WHITE"; 
 
-  function fgColor() { 
+  function fgColor() {
     // Pobierz kolor z ustawień aktualnego narzędzia
     const tKey = tool === TOOL.SHAPES ? TOOL.SHAPES : tool.toUpperCase();
     const ts = toolSettings[tKey] || {};
-    return (ts.fg || "WHITE") === "BLACK" ? "#000" : "#fff"; 
-  }
-  function fgLabel() { 
-    const c = fgColor();
-    return c === "#000" ? "⬛️" : "⬜️"; 
+    return (ts.fg || "WHITE") === "BLACK" ? "#000" : "#fff";
   }
 
-  // Tło sceny — 🖼️
+  // Tło sceny
   let bg = "BLACK"; // BLACK | WHITE
   function bgColor() { return bg === "WHITE" ? "#fff" : "#000"; }
 
