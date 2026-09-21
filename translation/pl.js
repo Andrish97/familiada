@@ -1188,7 +1188,7 @@ const pl = {
         do klasycznego menadżera plików na komputerze.
       </p>
   
-      <h3 class="m-h3">➕ Dodawanie nowej bazy</h3>
+      <h3 class="m-h3">Dodawanie nowej bazy</h3>
   
       <p class="m-p">
         W widoku „Bazy pytań” kliknij kafelek <span class="m-strong">Nowa baza</span>.
@@ -1199,7 +1199,7 @@ const pl = {
         Po zapisaniu nowa baza pojawi się na liście i od razu możesz ją przeglądać lub udostępniać.
       </p>
   
-      <h3 class="m-h3">🤝 Udostępnianie bazy</h3>
+      <h3 class="m-h3">Udostępnianie bazy</h3>
   
       <p class="m-p">
         Każdą bazę możesz udostępnić innym użytkownikom poprzez podanie ich adresu e-mail.
@@ -1215,7 +1215,7 @@ const pl = {
         Tylko właściciel bazy może zarządzać udostępnieniami.
       </p>
   
-      <h3 class="m-h3">📂 Przechodzenie do menadżera bazy</h3>
+      <h3 class="m-h3">Przechodzenie do menadżera bazy</h3>
   
       <p class="m-p">
         Aby wejść do zawartości bazy, zaznacz ją na liście i kliknij przycisk <span class="m-code">Przeglądaj</span>.
@@ -1256,7 +1256,7 @@ const pl = {
   
       <h2 class="m-h2">Tagi i kategorie</h2>
   
-      <h3 class="m-h3">🏷️ Tagi</h3>
+      <h3 class="m-h3"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M20.59 13.41L11 3.83A2 2 0 0 0 9.59 3H4a2 2 0 0 0-2 2v5.59A2 2 0 0 0 2.83 12l9.59 9.59a2 2 0 0 0 2.83 0l5.34-5.34a2 2 0 0 0 0-2.83zM6.5 8A1.5 1.5 0 1 1 8 6.5 1.5 1.5 0 0 1 6.5 8z"/></svg> Tagi</h3>
   
       <p class="m-p">
         Każde pytanie może mieć dowolną liczbę tagów.
@@ -1303,7 +1303,7 @@ const pl = {
         (oraz podfoldery) posiadają ten sam tag.
       </p>
   
-      <h3 class="m-h3">📌 Kategorie</h3>
+      <h3 class="m-h3">Kategorie</h3>
   
       <p class="m-p">
         Kategorie to specjalne oznaczenia systemowe określające,
@@ -1369,9 +1369,9 @@ const pl = {
         Po pomyślnym utworzeniu gry zostaniesz przekierowany do widoku <span class="m-strong">Moje gry</span>
       </p>
   
-      <h2 class="m-h2">⌨️ Skróty klawiszowe — Menadżer bazy</h2>
+      <h2 class="m-h2">Skróty klawiszowe — Menadżer bazy</h2>
   
-      <h3 class="m-h3">📁 Tworzenie</h3>
+      <h3 class="m-h3"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M10 4l2 2h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h6zm2 7h-2v2H8v2h2v2h2v-2h2v-2h-2v-2z"/></svg> Tworzenie</h3>
   
       <div class="m-table-wrap"><table class="m-table">
         <tbody><tr><th>Akcja</th><th>Windows / Linux</th><th>macOS</th></tr>
@@ -1379,7 +1379,7 @@ const pl = {
         <tr><td>Nowy folder</td><td>Ctrl + Shift + N</td><td>⌘ ⇧ N</td></tr>
       </tbody></table></div>
   
-      <h3 class="m-h3">✏️ Edycja</h3>
+      <h3 class="m-h3"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 17.25V21h3.75L19.81 7.94l-3.75-3.75L3 17.25zm2.92 2.83H5v-.92l10.06-10.06.92.92L5.92 20.08zM20.71 6.04a1 1 0 0 0 0-1.41l-1.34-1.34a1 1 0 0 0-1.41 0l-1.13 1.13 2.75 2.75 1.13-1.13z"/></svg> Edycja</h3>
   
       <div class="m-table-wrap"><table class="m-table">
         <tbody><tr><th>Akcja</th><th>Windows / Linux</th><th>macOS</th></tr>
@@ -1388,7 +1388,7 @@ const pl = {
         <tr><td>Usuń</td><td>Delete</td><td>Fn + ⌫</td></tr>
       </tbody></table></div>
   
-      <h3 class="m-h3">📋 Schowek</h3>
+      <h3 class="m-h3"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 2h13v2H6v11H4V2z"/><path fill-rule="evenodd" clip-rule="evenodd" d="M8 6h13v16H8V6zm2 2v12h9V8h-9z"/></svg> Schowek</h3>
   
       <div class="m-table-wrap"><table class="m-table">
         <tbody><tr><th>Akcja</th><th>Windows / Linux</th><th>macOS</th></tr>
@@ -1398,21 +1398,21 @@ const pl = {
         <tr><td>Duplikuj</td><td>Ctrl + D</td><td>⌘ D</td></tr>
       </tbody></table></div>
   
-      <h3 class="m-h3">🎮 Gra</h3>
+      <h3 class="m-h3"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M8 5v14l11-7L8 5z"/></svg> Gra</h3>
   
       <div class="m-table-wrap"><table class="m-table">
         <tbody><tr><th>Akcja</th><th>Windows / Linux</th><th>macOS</th></tr>
         <tr><td>Utwórz grę</td><td>Ctrl + G</td><td>⌘ G</td></tr>
       </tbody></table></div>
   
-      <h3 class="m-h3">🔄 Widok</h3>
+      <h3 class="m-h3"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-8 3.58-8 8s3.58 8 8 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg> Widok</h3>
   
       <div class="m-table-wrap"><table class="m-table">
         <tbody><tr><th>Akcja</th><th>Windows / Linux</th><th>macOS</th></tr>
         <tr><td>Odśwież widok</td><td>Ctrl + Alt + R</td><td>⌘ ⌥ R</td></tr>
       </tbody></table></div>
   
-      <h3 class="m-h3">📌 Nawigacja</h3>
+      <h3 class="m-h3">Nawigacja</h3>
   
       <div class="m-table-wrap"><table class="m-table">
         <tbody><tr><th>Akcja</th><th>Windows / Linux</th><th>macOS</th></tr>

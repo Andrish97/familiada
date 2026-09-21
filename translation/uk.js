@@ -1185,7 +1185,7 @@ const uk = {
         подібну до класичного файлового менеджера на комп’ютері.
       </p>
   
-      <h3 class="m-h3">➕ Додавання нової бази</h3>
+      <h3 class="m-h3">Додавання нової бази</h3>
   
       <p class="m-p">
         У вигляді «Бази запитань» натисни плитку <span class="m-strong">Нова база</span>.
@@ -1196,7 +1196,7 @@ const uk = {
         Після збереження нова база з’явиться у списку, і ти одразу можеш її переглядати або поширювати.
       </p>
   
-      <h3 class="m-h3">🤝 Спільний доступ до бази</h3>
+      <h3 class="m-h3">Спільний доступ до бази</h3>
   
       <p class="m-p">
         Ти можеш поділитися будь-якою базою з іншими користувачами, вказавши їхню адресу e-mail.
@@ -1212,7 +1212,7 @@ const uk = {
         Керувати спільним доступом може лише власник бази.
       </p>
   
-      <h3 class="m-h3">📂 Відкриття менеджера бази</h3>
+      <h3 class="m-h3">Відкриття менеджера бази</h3>
   
       <p class="m-p">
         Щоб увійти до бази, вибери її у списку та натисни кнопку <span class="m-code">Переглянути</span>.
@@ -1253,7 +1253,7 @@ const uk = {
   
       <h2 class="m-h2">Теги та категорії</h2>
   
-      <h3 class="m-h3">🏷️ Теги</h3>
+      <h3 class="m-h3"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M20.59 13.41L11 3.83A2 2 0 0 0 9.59 3H4a2 2 0 0 0-2 2v5.59A2 2 0 0 0 2.83 12l9.59 9.59a2 2 0 0 0 2.83 0l5.34-5.34a2 2 0 0 0 0-2.83zM6.5 8A1.5 1.5 0 1 1 8 6.5 1.5 1.5 0 0 1 6.5 8z"/></svg> Теги</h3>
   
       <p class="m-p">
         Кожне запитання може мати будь-яку кількість тегів.
@@ -1300,7 +1300,7 @@ const uk = {
         (та у підпапках) мають однаковий тег.
       </p>
   
-      <h3 class="m-h3">📌 Категорії</h3>
+      <h3 class="m-h3">Категорії</h3>
   
       <p class="m-p">
         Категорії — це спеціальні системні мітки, що вказують,
@@ -1366,9 +1366,9 @@ const uk = {
         Після успішного створення гри тебе буде перенаправлено до перегляду <span class="m-strong">Мої ігри</span>.
       </p>
   
-      <h2 class="m-h2">⌨️ Гарячі клавіші — менеджер бази</h2>
+      <h2 class="m-h2">Гарячі клавіші — менеджер бази</h2>
   
-      <h3 class="m-h3">📁 Створення</h3>
+      <h3 class="m-h3"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M10 4l2 2h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h6zm2 7h-2v2H8v2h2v2h2v-2h2v-2h-2v-2z"/></svg> Створення</h3>
   
       <div class="m-table-wrap"><table class="m-table">
         <tbody><tr><th>Дія</th><th>Windows / Linux</th><th>macOS</th></tr>
@@ -1376,7 +1376,7 @@ const uk = {
         <tr><td>Нова папка</td><td>Ctrl + Shift + N</td><td>⌘ ⇧ N</td></tr>
       </tbody></table></div>
 
-      <h3 class="m-h3">✏️ Редагування</h3>
+      <h3 class="m-h3"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 17.25V21h3.75L19.81 7.94l-3.75-3.75L3 17.25zm2.92 2.83H5v-.92l10.06-10.06.92.92L5.92 20.08zM20.71 6.04a1 1 0 0 0 0-1.41l-1.34-1.34a1 1 0 0 0-1.41 0l-1.13 1.13 2.75 2.75 1.13-1.13z"/></svg> Редагування</h3>
 
       <div class="m-table-wrap"><table class="m-table">
         <tbody><tr><th>Дія</th><th>Windows / Linux</th><th>macOS</th></tr>
@@ -1385,7 +1385,7 @@ const uk = {
         <tr><td>Видалити</td><td>Delete</td><td>Fn + ⌫</td></tr>
       </tbody></table></div>
 
-      <h3 class="m-h3">📋 Буфер обміну</h3>
+      <h3 class="m-h3"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 2h13v2H6v11H4V2z"/><path fill-rule="evenodd" clip-rule="evenodd" d="M8 6h13v16H8V6zm2 2v12h9V8h-9z"/></svg> Буфер обміну</h3>
 
       <div class="m-table-wrap"><table class="m-table">
         <tbody><tr><th>Дія</th><th>Windows / Linux</th><th>macOS</th></tr>
@@ -1395,21 +1395,21 @@ const uk = {
         <tr><td>Дублювати</td><td>Ctrl + D</td><td>⌘ D</td></tr>
       </tbody></table></div>
 
-      <h3 class="m-h3">🎮 Гра</h3>
+      <h3 class="m-h3"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M8 5v14l11-7L8 5z"/></svg> Гра</h3>
 
       <div class="m-table-wrap"><table class="m-table">
         <tbody><tr><th>Дія</th><th>Windows / Linux</th><th>macOS</th></tr>
         <tr><td>Створити гру</td><td>Ctrl + G</td><td>⌘ G</td></tr>
       </tbody></table></div>
 
-      <h3 class="m-h3">🔄 Перегляд</h3>
+      <h3 class="m-h3"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-8 3.58-8 8s3.58 8 8 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg> Перегляд</h3>
 
       <div class="m-table-wrap"><table class="m-table">
         <tbody><tr><th>Дія</th><th>Windows / Linux</th><th>macOS</th></tr>
         <tr><td>Оновити перегляд</td><td>Ctrl + Alt + R</td><td>⌘ ⌥ R</td></tr>
       </tbody></table></div>
 
-      <h3 class="m-h3">📌 Навігація</h3>
+      <h3 class="m-h3">Навігація</h3>
 
       <div class="m-table-wrap"><table class="m-table">
         <tbody><tr><th>Дія</th><th>Windows / Linux</th><th>macOS</th></tr>
