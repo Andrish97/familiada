@@ -806,19 +806,36 @@ function initPreviewPinchZoom(container, canvas) {
   let pinchStartMid = { x: 0, y: 0 };
   let panStart = null; // { x, y, tx, ty } dla pojedynczego palca gdy scale>1
 
+  // Kontener nie zmienia pozycji/rozmiaru W TRAKCIE gestu — liczymy jego
+  // getBoundingClientRect() RAZ, na początku gestu (pointerdown), zamiast
+  // przy każdym pointermove. getBoundingClientRect() wymusza synchroniczny
+  // reflow; wywoływane 2x na klatkę przy każdym z dziesiątek zdarzeń
+  // pointermove/sekundę dawało zauważalne lagi podczas pinch/pan.
+  let gestureRect = null;
+
+  // Aktualizacja transformu tylko raz na klatkę (requestAnimationFrame)
+  // zamiast bezpośrednio przy każdym evencie pointermove — kolejne szybkie
+  // eventy nadpisują tylko docelowe tx/ty/scale, a faktyczny zapis do DOM
+  // (i przemalowanie) dzieje się najwyżej raz na klatkę.
+  let rafId = null;
   const apply = () => {
-    canvas.style.transform = `translate(${tx}px, ${ty}px) scale(${scale})`;
+    if (rafId != null) return;
+    rafId = requestAnimationFrame(() => {
+      rafId = null;
+      canvas.style.transform = `translate(${tx}px, ${ty}px) scale(${scale})`;
+    });
   };
 
   const reset = () => {
     scale = 1; tx = 0; ty = 0;
     pointers.clear();
-    apply();
+    if (rafId != null) { cancelAnimationFrame(rafId); rafId = null; }
+    canvas.style.transform = `translate(0px, 0px) scale(1)`;
   };
 
   const clamp = () => {
     // Nie pozwól odsunąć treści całkowicie poza widoczny obszar kontenera.
-    const cRect = container.getBoundingClientRect();
+    const cRect = gestureRect || container.getBoundingClientRect();
     const w = canvas.offsetWidth * scale;
     const h = canvas.offsetHeight * scale;
     const minTx = Math.min(0, cRect.width - w);
@@ -834,6 +851,7 @@ function initPreviewPinchZoom(container, canvas) {
     if (e.pointerType !== "touch") return;
     container.setPointerCapture(e.pointerId);
     pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    gestureRect = container.getBoundingClientRect();
 
     if (pointers.size === 2) {
       const [a, b] = [...pointers.values()];
@@ -844,7 +862,7 @@ function initPreviewPinchZoom(container, canvas) {
     } else if (pointers.size === 1 && scale > 1) {
       panStart = { x: e.clientX, y: e.clientY, tx, ty };
     }
-  });
+  }, { passive: true });
 
   container.addEventListener("pointermove", (e) => {
     if (!pointers.has(e.pointerId)) return;
@@ -856,7 +874,7 @@ function initPreviewPinchZoom(container, canvas) {
       const newMid = mid(a, b);
       const nextScale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, pinchStartScale * (newDist / pinchStartDist)));
       // Trzymaj punkt pod palcami w miejscu podczas zoomowania.
-      const cRect = container.getBoundingClientRect();
+      const cRect = gestureRect || container.getBoundingClientRect();
       const anchorX = pinchStartMid.x - cRect.left;
       const anchorY = pinchStartMid.y - cRect.top;
       tx = anchorX - ((anchorX - tx) / scale) * nextScale + (newMid.x - pinchStartMid.x);
@@ -870,16 +888,16 @@ function initPreviewPinchZoom(container, canvas) {
       clamp();
       apply();
     }
-  });
+  }, { passive: true });
 
   const endPointer = (e) => {
     pointers.delete(e.pointerId);
     if (pointers.size < 2) pinchStartDist = 0;
-    if (pointers.size === 0) panStart = null;
+    if (pointers.size === 0) { panStart = null; gestureRect = null; }
     if (scale <= 1) reset();
   };
-  container.addEventListener("pointerup", endPointer);
-  container.addEventListener("pointercancel", endPointer);
+  container.addEventListener("pointerup", endPointer, { passive: true });
+  container.addEventListener("pointercancel", endPointer, { passive: true });
 
   let lastTap = 0;
   container.addEventListener("pointerup", (e) => {
@@ -899,7 +917,7 @@ function initPreviewPinchZoom(container, canvas) {
       }
     }
     lastTap = now;
-  });
+  }, { passive: true });
 
   return { reset };
 }

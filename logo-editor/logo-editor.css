@@ -1051,7 +1051,14 @@
   opacity: .75;
 }
 
-/* kontener canvasa - scrollable on mobile */
+/* kontener canvasa - scrollable on mobile.
+   Bez własnego tła (rgba(0,0,0,.25) dawało widoczny, ciemniejszy
+   prostokąt wokół "leżącego" (landscape) podglądu w wysokim, pionowym
+   kontenerze na telefonie — canvas dopasowany do szerokości zostawia
+   dużo pustego miejsca nad/pod sobą, a ta dodatkowa warstwa tła
+   wyglądała jak osobny, niepasujący element zamiast zwykłej,
+   niewidocznej przestrzeni). Tło modala (var(--bg) w trybie sheet,
+   var(--card) na desktopie) wystarcza. */
 #previewOverlay .previewModalCanvas{
   flex: 1;
   min-height: 0;
@@ -1061,7 +1068,6 @@
   width: 100%;
   overflow: auto;
   -webkit-overflow-scrolling: touch;
-  background: rgba(0,0,0,.25);
   border-radius: 12px;
 }
 
