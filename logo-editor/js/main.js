@@ -919,28 +919,57 @@ function initPreviewPinchZoom(container, canvas) {
     lastTap = now;
   }, { passive: true });
 
+  // Dodatkowe, jawne zablokowanie natywnych gestów przeglądarki — sam
+  // touch-action:none (CSS) + Pointer Events (powyżej) nie zawsze
+  // wystarczają na każdej przeglądarce, żeby faktycznie stłumić natywny
+  // pinch-zoom/scroll strony przy dwóch palcach; objawiało się to jako
+  // "zwiększanie zoomu zwiększa całą stronę" i toporne przewijanie przy
+  // powiększeniu (nasz JS i natywna obsługa przeglądarki walczyły o ten
+  // sam gest). {passive:false} + preventDefault() na natywnych zdarzeniach
+  // touch* to najbardziej uniwersalny, wspierany wszędzie sposób.
+  const stopNativeGesture = (e) => {
+    if (e.touches && e.touches.length >= 2) e.preventDefault();
+  };
+  container.addEventListener("touchstart", stopNativeGesture, { passive: false });
+  container.addEventListener("touchmove", stopNativeGesture, { passive: false });
+  // Safari: gesturestart/gesturechange to jego własny, dodatkowy mechanizm
+  // pinch-zoom, całkowicie niezależny od touch/pointer eventów.
+  container.addEventListener("gesturestart", (e) => e.preventDefault());
+  container.addEventListener("gesturechange", (e) => e.preventDefault());
+
   return { reset };
 }
 
 let _previewPinchZoom = null;
 
 // touch-action:none na kontenerze canvasa (logo-editor.css) nie wystarcza
-// niezawodnie na wszystkich przeglądarkach (zwłaszcza starszy iOS Safari
-// potrafi i tak obsłużyć dwa palce jako natywny zoom CAŁEJ strony,
-// niezależnie od touch-action) — na czas otwarcia podglądu dodatkowo
-// blokujemy powiększanie strony przez meta viewport, więc gest zawsze
-// trafia wyłącznie do naszego JS-owego zoomu canvasa.
+// niezawodnie na wszystkich przeglądarkach (zwłaszcza iOS Safari potrafi
+// i tak obsłużyć dwa palce jako natywny zoom CAŁEJ strony, niezależnie od
+// touch-action) — na czas otwarcia podglądu dodatkowo blokujemy
+// powiększanie strony przez meta viewport. WAŻNE: iOS Safari na wielu
+// wersjach IGNORUJE zmianę samego atrybutu content= na już wczytanej
+// stronie (viewport jest odczytywany raz, przy pierwszym parsowaniu) —
+// dlatego USUWAMY i wstawiamy NOWY element <meta>, żeby wymusić ponowne
+// odczytanie przez silnik przeglądarki.
 function lockPageZoomForPreview() {
   const meta = document.querySelector('meta[name="viewport"]');
-  if (!meta || meta.dataset.origViewport != null) return;
-  meta.dataset.origViewport = meta.getAttribute("content") || "";
-  meta.setAttribute("content", `${meta.dataset.origViewport}, maximum-scale=1, user-scalable=no`);
+  if (!meta || meta.dataset.locked === "1") return;
+  const orig = meta.getAttribute("content") || "";
+  meta.dataset.origViewport = orig;
+  const next = meta.cloneNode(true);
+  next.setAttribute("content", `${orig}, maximum-scale=1, user-scalable=no`);
+  next.dataset.locked = "1";
+  next.dataset.origViewport = orig;
+  meta.replaceWith(next);
 }
 function unlockPageZoomAfterPreview() {
   const meta = document.querySelector('meta[name="viewport"]');
   if (!meta || meta.dataset.origViewport == null) return;
-  meta.setAttribute("content", meta.dataset.origViewport);
-  delete meta.dataset.origViewport;
+  const next = meta.cloneNode(true);
+  next.setAttribute("content", meta.dataset.origViewport);
+  delete next.dataset.origViewport;
+  delete next.dataset.locked;
+  meta.replaceWith(next);
 }
 
 function openPreviewFullscreen(payload){
