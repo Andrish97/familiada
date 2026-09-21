@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict kF8ZP0D7aHjY9v7OYHQ0fwgdNDVwEXdTilPMFCg99hrLUh8o7XrRet6hz033nyX
+\restrict Q1xaurnJ36K4waOV1O4OEPvWcdsLNeqwG8ZbGYliDEtwmXySz9pqpDCfcFISfaK
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -3471,7 +3471,7 @@ begin
 
   if g.type = 'poll_points' then
     select jsonb_build_object(
-      'game', jsonb_build_object('id', g.id, 'name', g.name, 'type', g.type, 'status', g.status),
+      'game', jsonb_build_object('id', g.id, 'name', g.name, 'type', g.type, 'status', g.status, 'poll_qr_lang', g.poll_qr_lang),
       'questions', coalesce((
         select jsonb_agg(
           jsonb_build_object(
@@ -3493,7 +3493,7 @@ begin
   else
     -- poll_text: zwracamy same pytania (odpowiedzi są tekstowe i idą do poll_text_entries)
     select jsonb_build_object(
-      'game', jsonb_build_object('id', g.id, 'name', g.name, 'type', g.type, 'status', g.status),
+      'game', jsonb_build_object('id', g.id, 'name', g.name, 'type', g.type, 'status', g.status, 'poll_qr_lang', g.poll_qr_lang),
       'questions', coalesce((
         select jsonb_agg(
           jsonb_build_object('id', q.id, 'ord', q.ord, 'text', q.text)
@@ -10224,6 +10224,38 @@ $$;
 
 
 --
+-- Name: set_poll_qr_lang("uuid", "text"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."set_poll_qr_lang"("p_game_id" "uuid", "p_lang" "text") RETURNS "void"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    AS $$
+declare
+  v_owner uuid;
+begin
+  if p_lang not in ('pl', 'en', 'uk') then
+    raise exception 'invalid_lang';
+  end if;
+
+  select owner_id into v_owner from public.games where id = p_game_id;
+  if not found then raise exception 'not found'; end if;
+  if auth.uid() is null or v_owner <> auth.uid() then
+    raise exception 'forbidden';
+  end if;
+
+  update public.games set poll_qr_lang = p_lang where id = p_game_id;
+end;
+$$;
+
+
+--
+-- Name: FUNCTION "set_poll_qr_lang"("p_game_id" "uuid", "p_lang" "text"); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION "public"."set_poll_qr_lang"("p_game_id" "uuid", "p_lang" "text") IS 'Zapisuje games.poll_qr_lang -- jedyne źródło prawdy o języku QR-a w ankietach, odpytywane przez poll-qr.js zamiast dostarczane komendą/broadcastem.';
+
+
+--
 -- Name: set_report_status("uuid", "text"); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -11416,6 +11448,7 @@ CREATE TABLE "public"."games" (
     "is_demo" boolean DEFAULT false NOT NULL,
     "source_market_id" "uuid",
     "settings" "jsonb" DEFAULT '{}'::"jsonb" NOT NULL,
+    "poll_qr_lang" "text",
     CONSTRAINT "games_name_len" CHECK ((("char_length"("name") >= 1) AND ("char_length"("name") <= 80))),
     CONSTRAINT "games_poll_status_ok" CHECK (((("type" = ANY (ARRAY['prepared'::"public"."game_type", 'market'::"public"."game_type"])) AND ("status" = ANY (ARRAY['draft'::"public"."game_status", 'ready'::"public"."game_status"]))) OR (("type" <> ALL (ARRAY['prepared'::"public"."game_type", 'market'::"public"."game_type"])) AND ("status" = ANY (ARRAY['draft'::"public"."game_status", 'poll_open'::"public"."game_status", 'ready'::"public"."game_status"]))))),
     CONSTRAINT "games_status_check" CHECK (("status" = ANY (ARRAY['draft'::"public"."game_status", 'poll_open'::"public"."game_status", 'ready'::"public"."game_status"]))),
@@ -11428,6 +11461,13 @@ CREATE TABLE "public"."games" (
 --
 
 COMMENT ON COLUMN "public"."games"."settings" IS 'Per-game settings: teams, display, sound, questions';
+
+
+--
+-- Name: COLUMN "games"."poll_qr_lang"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN "public"."games"."poll_qr_lang" IS 'Ostatni język operatora w polls.html, do odczytu przez poll-qr.js (get_poll_game) -- NULL dopóki operator nigdy nie zmienił języka, wtedy poll-qr zostaje przy własnym, lokalnie wykrytym języku.';
 
 
 --
@@ -15186,5 +15226,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict kF8ZP0D7aHjY9v7OYHQ0fwgdNDVwEXdTilPMFCg99hrLUh8o7XrRet6hz033nyX
+\unrestrict Q1xaurnJ36K4waOV1O4OEPvWcdsLNeqwG8ZbGYliDEtwmXySz9pqpDCfcFISfaK
 
