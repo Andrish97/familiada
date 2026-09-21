@@ -143,9 +143,16 @@
   min-height: 151px; /* 135px canvas + 2×8px padding — rezerwuje miejsce przed załadowaniem canvas */
 }
 .logoPrev canvas{
+  /* object-fit:contain (nie width:100%;height:auto;max-height:135px) —
+     canvas ma stały bufor 520x240; height:auto liczony z width:100% na
+     szerszych kafelkach dawał wysokość > 135px, którą max-height:135px
+     przycinał BEZ odpowiadającego zmniejszenia szerokości — treść canvasa
+     rozciągała się do niedopasowanego pudełka. object-fit skaluje
+     proporcjonalnie (z pustymi marginesami, jeśli trzeba) niezależnie od
+     szerokości kontenera. */
   width: 100%;
-  height: auto;
-  max-height: 135px;
+  height: 135px;
+  object-fit: contain;
   image-rendering: pixelated;
 }
 

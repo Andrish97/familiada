@@ -906,6 +906,25 @@ function initPreviewPinchZoom(container, canvas) {
 
 let _previewPinchZoom = null;
 
+// touch-action:none na kontenerze canvasa (logo-editor.css) nie wystarcza
+// niezawodnie na wszystkich przeglądarkach (zwłaszcza starszy iOS Safari
+// potrafi i tak obsłużyć dwa palce jako natywny zoom CAŁEJ strony,
+// niezależnie od touch-action) — na czas otwarcia podglądu dodatkowo
+// blokujemy powiększanie strony przez meta viewport, więc gest zawsze
+// trafia wyłącznie do naszego JS-owego zoomu canvasa.
+function lockPageZoomForPreview() {
+  const meta = document.querySelector('meta[name="viewport"]');
+  if (!meta || meta.dataset.origViewport != null) return;
+  meta.dataset.origViewport = meta.getAttribute("content") || "";
+  meta.setAttribute("content", `${meta.dataset.origViewport}, maximum-scale=1, user-scalable=no`);
+}
+function unlockPageZoomAfterPreview() {
+  const meta = document.querySelector('meta[name="viewport"]');
+  if (!meta || meta.dataset.origViewport == null) return;
+  meta.setAttribute("content", meta.dataset.origViewport);
+  delete meta.dataset.origViewport;
+}
+
 function openPreviewFullscreen(payload){
   if (payload.kind === "GLYPH") renderRows30x10ToBig(payload.rows, bigPreviewFull);
   else renderBits150x70ToBig(payload.bits, bigPreviewFull);
@@ -920,9 +939,17 @@ function openPreviewFullscreen(payload){
     _previewPinchZoom = initPreviewPinchZoom(canvasContainer, bigPreviewFull);
   }
   _previewPinchZoom.reset();
+  lockPageZoomForPreview();
 
   show(previewOverlay, true);
-  enterModalSheet(previewOverlay, { backBtn: btnBack, onClose: () => { show(previewOverlay, false); exitModalSheet(previewOverlay); _previewPinchZoom?.reset(); } });
+  enterModalSheet(previewOverlay, { backBtn: btnBack, onClose: () => closePreviewFullscreen() });
+}
+
+function closePreviewFullscreen() {
+  show(previewOverlay, false);
+  exitModalSheet(previewOverlay);
+  unlockPageZoomAfterPreview();
+  _previewPinchZoom?.reset();
 }
 
 /* =========================================================
@@ -1984,11 +2011,6 @@ async function boot(){
     if (!payload) return;
     openPreviewFullscreen(payload);
   });
-
-  function closePreviewFullscreen() {
-    show(previewOverlay, false);
-    exitModalSheet(previewOverlay);
-  }
 
   btnPreviewClose?.addEventListener("click", closePreviewFullscreen);
   previewOverlay?.addEventListener("click", (ev) => {
