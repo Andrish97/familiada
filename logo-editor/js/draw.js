@@ -535,7 +535,16 @@ export function initDrawEditor(ctx) {
     hideTip();
     const tip = document.createElement("div");
     tip.className = "draw-tip";
-    tip.textContent = tipText;
+    // Strzałka MUSI być osobnym, wcześniejszym rodzeństwem dymku (nie jego
+    // pseudoelementem) -- inaczej dymek nigdy jej nie "zakrywa" od góry,
+    // patrz komentarz przy .draw-tip w logo-editor.css.
+    const arrow = document.createElement("div");
+    arrow.className = "draw-tip-arrow";
+    const bubble = document.createElement("div");
+    bubble.className = "draw-tip-bubble";
+    bubble.textContent = tipText;
+    tip.appendChild(arrow);
+    tip.appendChild(bubble);
     tip.style.visibility = "hidden";
     document.body.appendChild(tip);
     _tipEl = tip;

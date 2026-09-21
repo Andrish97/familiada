@@ -735,8 +735,36 @@
    Tooltipy (draw)
 ========================================================= */
 
+/* Kontener tylko do pozycjonowania/animacji -- wygląd (dymek) i strzałka
+   to dwa osobne rodzeństwa w środku, w tej kolejności (strzałka pierwsza),
+   żeby dymek się na niej "zamykał" tak jak w Base Explorerze
+   (.tbBtn[data-tip]::before + ::after na wspólnym rodzicu). Strzałka jako
+   pseudoelement TEGO SAMEGO diva co dymek zawsze rysuje się NAD jego tłem
+   -- stąd wcześniej wyglądała jak doklejona z wierzchu, nie "pod spodem". */
 .draw-tip{
   position: fixed;
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(4px);
+  transition: opacity .12s ease, transform .12s ease, visibility .12s ease;
+  z-index: 100000;
+}
+
+.draw-tip-arrow{
+  position: absolute;
+  left: 50%;
+  bottom: -3px;
+  width: 10px;
+  height: 10px;
+  border-left: 1px solid rgba(255,255,255,.14);
+  border-bottom: 1px solid rgba(255,255,255,.14);
+  background: rgba(10,10,12,.96);
+  transform: translateX(-50%) rotate(45deg);
+}
+
+.draw-tip-bubble{
+  position: relative;
   display: block;
   min-width: 180px;
   max-width: 300px;
@@ -754,27 +782,6 @@
   font-weight: 500;
   text-align: center;
   letter-spacing: .02em;
-
-  visibility: hidden;
-  opacity: 0;
-  pointer-events: none;
-  transform: translateY(4px);
-  transition: opacity .12s ease, transform .12s ease, visibility .12s ease;
-  z-index: 100000;
-}
-
-/* strzałka -- ten sam trik co dymek .tbBtn[data-tip] w Base Explorerze */
-.draw-tip::after{
-  content: "";
-  position: absolute;
-  left: 50%;
-  bottom: -5px;
-  width: 10px;
-  height: 10px;
-  border-left: 1px solid rgba(255,255,255,.14);
-  border-bottom: 1px solid rgba(255,255,255,.14);
-  background: rgba(10,10,12,.96);
-  transform: translateX(-50%) rotate(45deg);
 }
 
 /* na dotyku: wyłącz */
