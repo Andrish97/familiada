@@ -1169,10 +1169,19 @@ export function createUI({ root, emit }) {
       ];
       if (round === 2) {
         const repeat = row.repeat === true;
-        cells.push(h("button", {
+        // boardBusy() -- SAME gap i naprawa co pole input wyżej: SET_REPEAT
+        // to też pełny zapis detail, podlega temu samemu serwerowemu
+        // locked_until co przejście "Start rundy 2" (gate =
+        // syncedMs("round_transition","reveal"), kilka sekund). Zgłoszone
+        // (e2e "finał — obaj gracze"): klik "Powtórzenie" tuż po wejściu na
+        // ekran wpisywania gracza 2 dostawał 'locked' -- ta sama klasa bugu,
+        // inny przycisk na tym samym ekranie.
+        const repeatBtn = h("button", {
           class: `c2-btn-repeat ${repeat ? "on" : ""}`.trim(), type: "button",
-          onclick: () => emit("game.dispatch", { type: "SET_REPEAT", round: 2, idx: i, repeat: !repeat }),
-        }, [document.createTextNode(repeat ? t("control.finalUi.p2RepeatOn") : t("control.finalUi.p2RepeatOff"))]));
+          onclick: boardBusy() ? undefined : () => emit("game.dispatch", { type: "SET_REPEAT", round: 2, idx: i, repeat: !repeat }),
+        }, [document.createTextNode(repeat ? t("control.finalUi.p2RepeatOn") : t("control.finalUi.p2RepeatOff"))]);
+        if (boardBusy()) repeatBtn.disabled = true;
+        cells.push(repeatBtn);
       }
       rows.push(h("div", { class: `c2-entryrow ${round === 2 ? "p2" : "p1"}`, "data-i": String(i) }, cells));
     }
