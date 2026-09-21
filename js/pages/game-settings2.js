@@ -589,13 +589,15 @@ function resolveLogoPreview() {
 }
 
 function postPreviewRow() {
-  if (!_displayReady || !_displayIframe?.contentWindow) return;
+  if (!_displayReady || !_displayIframe?.contentWindow) {
+    console.warn("[e2e-diag] postPreviewRow() early-return, _displayReady:", _displayReady, "hasContentWindow:", !!_displayIframe?.contentWindow);
+    return;
+  }
   try {
-    _displayIframe.contentWindow.postMessage({
-      type: "familiada:preview-row",
-      row: buildDisplayPreviewRow({ teams: localSettings.teams, display: localSettings.display, logoPreview: resolveLogoPreview() }),
-    }, "*");
-  } catch {}
+    const row = buildDisplayPreviewRow({ teams: localSettings.teams, display: localSettings.display, logoPreview: resolveLogoPreview() });
+    console.warn("[e2e-diag] postPreviewRow() wysyła, teamA:", row.detail.teams.teamA);
+    _displayIframe.contentWindow.postMessage({ type: "familiada:preview-row", row }, "*");
+  } catch (e) { console.warn("[e2e-diag] postPreviewRow() postMessage rzucił:", e?.message); }
 }
 
 function createDisplayIframe() {
@@ -614,7 +616,9 @@ function createDisplayIframe() {
   // starcie sceny — sygnał gotowości zamiast pollowania obecności
   // window.handleCommand (który już nie istnieje, komend nie ma).
   window.addEventListener("message", (e) => {
-    if (e.data?.type !== "familiada:preview-ready" || e.source !== _displayIframe?.contentWindow) return;
+    if (e.data?.type !== "familiada:preview-ready") return;
+    console.warn("[e2e-diag] odebrano familiada:preview-ready, source match:", e.source === _displayIframe?.contentWindow);
+    if (e.source !== _displayIframe?.contentWindow) return;
     _displayReady = true;
     // Podgląd ma być żywy niezależnie od aktywnej zakładki (operator zmienia
     // nazwę drużyny na zakładce "Drużyny", bez przełączania na "Wygląd") --
