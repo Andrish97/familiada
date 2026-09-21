@@ -1486,8 +1486,20 @@ test("control2: modal ustawień gry — zmiana nazwy drużyny odświeża podglą
 
     // Zagnieżdżony iframe podglądu (display2/js/main.js's bootPreview()) —
     // dostępny wprost z page.frames() (ten sam origin, zwykła strona), nie
-    // przez frameLocator zagnieżdżony w innym frameLocator.
-    const previewFrame = () => page.frames().find((f) => f.url().includes("/display2") && f.url().includes("preview=1"));
+    // przez frameLocator zagnieżdżony w innym frameLocator. UWAGA: D3
+    // (control2/js/ui.js's renderSetupFinish) ma WŁASNY, NIEZALEŻNY
+    // podgląd-iframe (`/display2?id=...&key=...&preview=1`), zamontowany w
+    // Control jeszcze PRZED otwarciem tego modala -- samo filtrowanie po
+    // "/display2"+"preview=1" w page.frames() (płaska lista wszystkich
+    // ramek na stronie) łapało WTEDY ten D3-owy iframe zamiast modala,
+    // bo pasował do filtra i był w drzewie ramek wcześniej (zgłoszone:
+    // test wisiał na __displayLog, mimo że modal realnie wysyłał i
+    // odbierał poprawne wiadomości -- po prostu do INNEJ ramki). Naprawa:
+    // szukamy WYŁĄCZNIE wśród potomków samej ramki #gsFrame, więc D3-owy
+    // podgląd (sibling w drzewie, nie potomek modala) nigdy nie pasuje.
+    const gsFrameHandle = await page.$("#gsFrame");
+    const gsFrameObj = await gsFrameHandle.contentFrame();
+    const previewFrame = () => gsFrameObj.childFrames().find((f) => f.url().includes("/display2") && f.url().includes("preview=1"));
     await expect.poll(() => previewFrame()?.url(), { timeout: 10000 }).toBeTruthy();
     await expect.poll(async () => {
       try { return await previewFrame().evaluate(() => Array.isArray(window.__displayLog)); } catch { return false; }
