@@ -555,6 +555,20 @@ test("QR w ankietach: zmiana języka w polls.html dociera do już otwartego urz�
 
   const pollGame = await seedPollGame(page, "poll_text");
   const qrContext = await browser.newContext();
+  // "Urządzenie" QR -- świeży, anonimowy kontekst (jak fizyczny telewizor
+  // podłączony kodem). WAŻNE: nie da się wymusić startowego języka przez
+  // ?lang=pl w URL -- cloudflare/maintenance-worker/src/index.js's "Redirect
+  // ?lang=pl -> clean URL (pl is default, no param needed)" to 301 na CZYSTY
+  // URL bez tego parametru (edge-owy skrót, bo "pl" i tak jest domyślne) --
+  // bez własnego localStorage.uiLang kontekst spada wtedy na
+  // navigator.language (w CI: en-US), więc test widział "en" od samego
+  // startu, mimo jawnego ?lang=pl w nawigacji. Ten sam wzorzec co
+  // withE2EBypass() w helpers/login.js, tylko bez tokenu bypass (poll-qr,
+  // jak display2/host2/buzzer2 w control2.spec.js's openAnon(), nie go
+  // potrzebuje).
+  await qrContext.addInitScript(() => {
+    try { localStorage.setItem("uiLang", "pl"); } catch {}
+  });
   try {
     await page.goto(`https://www.familiada.online/polls?id=${pollGame.gameId}`, { waitUntil: "domcontentloaded" });
     await page.waitForLoadState("networkidle");
@@ -569,13 +583,10 @@ test("QR w ankietach: zmiana języka w polls.html dociera do już otwartego urz�
       return data.share_key_poll;
     }, pollGame.gameId);
 
-    // "Urządzenie" QR -- świeży, anonimowy kontekst (jak fizyczny telewizor
-    // podłączony kodem), z wymuszonym startowym językiem "pl", żeby test
-    // nie zależał od domyślnej lokalizacji środowiska CI.
     const qrPage = await qrContext.newPage();
     instrumentPage(qrPage);
     await qrPage.goto(
-      `https://www.familiada.online/poll-qr?id=${pollGame.gameId}&key=${key}&lang=pl`,
+      `https://www.familiada.online/poll-qr?id=${pollGame.gameId}&key=${key}`,
       { waitUntil: "domcontentloaded" }
     );
     await expect(qrPage.locator(".qr-hint")).toHaveText("Zeskanuj QR, aby zagłosować", { timeout: 15000 });
