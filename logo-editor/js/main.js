@@ -902,7 +902,20 @@ function initPreviewPinchZoom(container, canvas) {
   const endPointer = (e) => {
     pointers.delete(e.pointerId);
     if (pointers.size < 2) pinchStartDist = 0;
-    if (pointers.size === 0) { panStart = null; gestureRect = null; gestureCanvasW = null; gestureCanvasH = null; }
+    if (pointers.size === 1 && scale > 1) {
+      // Zejście z dwóch palców (pinch) do jednego — bardzo naturalny gest
+      // "uszczypnij, potem przeciągnij pozostałym palcem". Bez tego
+      // panStart zostawał null aż do CAŁKOWITEGO puszczenia i nowego
+      // dotknięcia — przewijanie milczało, mimo że palec wciąż był na
+      // ekranie i się poruszał (stąd "czasem działa, czasem nie": zależało
+      // wyłącznie od tego, czy user podniósł oba palce naraz, czy jeden po
+      // drugim). Inicjalizujemy panStart od razu na podstawie ostatniej
+      // znanej pozycji pozostałego palca.
+      const [remaining] = pointers.values();
+      panStart = { x: remaining.x, y: remaining.y, tx, ty };
+    } else if (pointers.size === 0) {
+      panStart = null; gestureRect = null; gestureCanvasW = null; gestureCanvasH = null;
+    }
     if (scale <= 1) reset();
   };
   container.addEventListener("pointerup", endPointer, { passive: true });
