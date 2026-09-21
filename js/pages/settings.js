@@ -18,6 +18,7 @@ import { alertModal, confirmModal, promptModal } from "../core/modal.js?v=v2026-
 import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../core/modal-sheet.js?v=v2026-09-21T08065";
 import { sb } from "../core/supabase.js?v=v2026-09-21T08065";
 import { v as cacheBust } from "../core/cache-bust.js?v=v2026-09-21T08065";
+import { TRASH_ICON } from "../core/icons.js?v=v2026-09-21T08065";
 
 // settings.html nie ma naturalnego przycisku wstecz na mobile (panel admina
 // bez nawigacji "do tyłu") -- btnBackSheet istnieje wyłącznie na potrzeby
@@ -4128,9 +4129,12 @@ function showCompose(defaults = {}) {
       removeBtn.style.border = "none";
       removeBtn.style.cursor = "pointer";
       removeBtn.style.color = "rgba(255,255,255,0.5)";
-      removeBtn.style.fontWeight = "900";
-      removeBtn.style.fontSize = "14px";
-      removeBtn.textContent = "✕";
+      removeBtn.style.display = "inline-flex";
+      removeBtn.style.alignItems = "center";
+      removeBtn.innerHTML = TRASH_ICON;
+      removeBtn.querySelector("svg").style.width = "13px";
+      removeBtn.querySelector("svg").style.height = "13px";
+      removeBtn.querySelector("svg").style.fill = "currentColor";
       removeBtn.addEventListener("mouseenter", () => removeBtn.style.color = "#fff");
       removeBtn.addEventListener("mouseleave", () => removeBtn.style.color = "rgba(255,255,255,0.5)");
       removeBtn.addEventListener("click", () => {

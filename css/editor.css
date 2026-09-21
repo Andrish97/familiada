@@ -177,6 +177,11 @@ body.editor-body .wrap {
     place-items: center;
     cursor: pointer
 }
+.qcard .x svg {
+    width: 15px;
+    height: 15px;
+    fill: currentColor
+}
 
 .empty {
     opacity: .8;
@@ -332,7 +337,15 @@ body.editor-body .wrap {
     background: rgba(255,120,120,.12);
     color: #fff;
     font-weight: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     cursor: pointer
+}
+.aDel svg {
+    width: 17px;
+    height: 17px;
+    fill: currentColor
 }
 
 .editor.no-points .ahead,.editor.no-points .arow {

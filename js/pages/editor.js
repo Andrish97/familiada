@@ -8,6 +8,7 @@ import { guardResourceLock } from "../core/resource-lock.js?v=v2026-09-21T08065"
 import { updateChecked, ROW_GONE } from "../core/db-guard.js?v=v2026-09-21T08065";
 import { initI18n, t, withLangParam } from "../../translation/translation.js?v=v2026-09-21T08065";
 import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-09-21T08065";
+import { TRASH_ICON } from "../core/icons.js?v=v2026-09-21T08065";
 import "../core/contact-modal.js";
 // initI18n + remove('page-loading') są w boot() — przed requireAuth, żeby body pojawiło się przed auth/danymi
 
@@ -698,7 +699,7 @@ async function boot() {
     const x = document.createElement("button");
     x.type = "button";
     x.className = "x";
-    x.textContent = "✕";
+    x.innerHTML = TRASH_ICON;
     x.title = MSG.deleteLabel();
     return x;
   }
@@ -914,12 +915,12 @@ async function boot() {
         row.innerHTML = `
           <input class="aText" type="text" maxlength="17" placeholder="${MSG.answerDefault(a.ord)}">
           <input class="aPts" type="number" step="1" inputmode="numeric">
-          <button class="aDel" type="button" title="${MSG.deleteLabel()}">✕</button>
+          <button class="aDel" type="button" title="${MSG.deleteLabel()}">${TRASH_ICON}</button>
         `;
       } else {
         row.innerHTML = `
           <input class="aText" type="text" maxlength="17" placeholder="${MSG.answerDefault(a.ord)}">
-          <button class="aDel" type="button" title="${MSG.deleteLabel()}">✕</button>
+          <button class="aDel" type="button" title="${MSG.deleteLabel()}">${TRASH_ICON}</button>
         `;
       }
 

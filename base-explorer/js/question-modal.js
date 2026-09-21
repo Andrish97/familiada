@@ -3,6 +3,7 @@
 
 import { t } from "../../translation/translation.js?v=v2026-09-21T08065";
 import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../js/core/modal-sheet.js?v=v2026-09-21T08065";
+import { TRASH_ICON } from "../../js/core/icons.js?v=v2026-09-21T08065";
 
 const $ = (id) => document.getElementById(id);
 const btnBack = document.getElementById("btnBack");
@@ -76,7 +77,7 @@ export function initQuestionModal({ state } = {}) {
         <input class="inp qAnsPts" type="number" min="0" max="100" step="1"
           inputmode="numeric" autocomplete="off"
           value="${a.fixed_points ?? ""}" placeholder="${t("baseExplorer.question.pointsPlaceholder")}"/>
-        <button class="qDel" type="button" title="${t("baseExplorer.common.delete")}">✕</button>
+        <button class="qDel" type="button" title="${t("baseExplorer.common.delete")}">${TRASH_ICON}</button>
       `;
 
       const inpText = row.querySelector(".qAnsText");
