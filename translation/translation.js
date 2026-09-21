@@ -84,7 +84,7 @@ export async function initI18n({ withSwitcher = true, apply = true } = {}) {
   await setUiLang(getUiLang(), { persist: true, updateUrl: true, apply });
 
   if (withSwitcher) {
-    // ✅ Jeśli initI18n jest wołane zanim DOM istnieje (np. top-level await),
+    // Jeśli initI18n jest wołane zanim DOM istnieje (np. top-level await),
     // to switcher nie ma gdzie się wstrzyknąć i potrafi wysypać całą stronę.
     if (typeof document !== "undefined" && document.readyState === "loading") {
       await new Promise((resolve) =>

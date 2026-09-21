@@ -704,7 +704,7 @@ async function buildMailItemsForTasksFallback({ gameId, ownerId, selectedSubIds 
     if (r.token && r.id) taskIdByToken.set(String(r.token), r.id);
   }
   const subById = new Map(((await sb().rpc("polls_hub_list_my_subscribers")).data || []).map((x) => [String(x.sub_id), x]));
-    // 🔧 jeśli sub ma user_id, a nie ma emaila — dociągnij z profiles
+    // jeśli sub ma user_id, a nie ma emaila — dociągnij z profiles
   const needProfileIds = [];
   for (const subId of selectedSubIds || []) {
     const sub = subById.get(String(subId));

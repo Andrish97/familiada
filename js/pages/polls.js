@@ -545,7 +545,7 @@ async function validateCanClose(g) {
     return { ok: false, reason: t("polls.validation.closeOnlyOpen") };
   }
 
-  // 🔒 Dodatkowy warunek: nie zamykamy jeśli są jeszcze aktywne taski (niewypełnione)
+  // Dodatkowy warunek: nie zamykamy jeśli są jeszcze aktywne taski (niewypełnione)
   // Y = (done + pending/opened), X = done. Close dopiero gdy X=Y.
   try {
     const { data: u } = await sb().auth.getUser();

@@ -485,7 +485,7 @@ export async function signUp(email, password, redirectTo, usernameInput, languag
   const username = validateUsername(usernameInput, { allowEmpty: true });
   const userData = username ? { username } : null;
 
-  // ✅ absolutny redirect + lang (bez withLangParam)
+  // absolutny redirect + lang (bez withLangParam)
   const emailRedirectTo = redirectTo || buildAuthRedirect("confirm", language);
 
   const options = { emailRedirectTo };

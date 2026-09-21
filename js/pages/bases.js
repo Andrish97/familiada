@@ -1693,7 +1693,7 @@ async function refreshAltBadge() {
     // przypadek: zalogowany na innym koncie niż adresat
     // -> jeśli zaproszenie nie jest dla auth.uid, to go nie zobaczymy w list_shared_bases_ext()
     // więc pokazujemy alert i prosimy o właściwe konto.
-    // 🔎 najpierw sprawdź token (czy nie cofnięty)
+    // najpierw sprawdź token (czy nie cofnięty)
     try {
       const { data: info, error } = await sb().rpc("base_share_token_info", { p_token: shareToken });
       if (!error && info) {

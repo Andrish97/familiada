@@ -225,10 +225,10 @@ function showExpired(head) {
 function matchesInviteTarget({ user, expectedUserId, expectedEmail }) {
   if (!user) return false;
 
-  // ✅ Soft allow: jeśli token przypisany do konta → tylko user_id decyduje
+  // Soft allow: jeśli token przypisany do konta → tylko user_id decyduje
   if (expectedUserId) return user.id === expectedUserId;
 
-  // ✅ Email-only: match po email
+  // Email-only: match po email
   const u = normalizeEmail(user.email);
   const e = normalizeEmail(expectedEmail);
   if (!u || !e) return false;
@@ -299,7 +299,7 @@ async function handleSubInvite(data, user) {
 
   if (user) {
     if (hasAccountInvite) {
-      // ✅ najpierw user_id, a jak go nie ma → email
+      // najpierw user_id, a jak go nie ma → email
       const okTarget = matchesInviteTarget({
         user,
         expectedUserId: data.subscriber_user_id,
