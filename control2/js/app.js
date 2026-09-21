@@ -935,7 +935,12 @@ async function main() {
   }
 
   const btnMute = document.getElementById("btnMute");
-  function syncMuteButton() { if (btnMute) btnMute.innerHTML = store.state.settings.soundMuted ? SPEAKER_OFF_ICON : SPEAKER_ON_ICON; }
+  function syncMuteButton() {
+    if (!btnMute) return;
+    const muted = store.state.settings.soundMuted;
+    btnMute.innerHTML = muted ? SPEAKER_OFF_ICON : SPEAKER_ON_ICON;
+    btnMute.dataset.muted = String(muted);
+  }
   syncMuteButton();
   btnMute?.addEventListener("click", () => { handle("settings.toggleSoundMuted"); });
 
