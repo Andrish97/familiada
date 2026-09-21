@@ -5,6 +5,7 @@ import { getUser } from "../core/auth.js?v=v2026-09-21T08065";
 import { isGuestUser } from "../core/guest-mode.js?v=v2026-09-21T08065";
 import { initI18n, t, getUiLang, withLangParam, applyTranslations } from "../../translation/translation.js?v=v2026-09-21T08065";
 import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-09-21T08065";
+import { HOME_ICON } from "../core/icons.js?v=v2026-09-21T08065";
 import { exportGame } from "./builder-import-export.js?v=v2026-09-21T08065";
 import { initUiSelect } from "../core/ui-select.js?v=v2026-09-21T08065";
 import { confirmModal } from "../core/modal.js?v=v2026-09-21T08065";
@@ -747,7 +748,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (els.btnGoBuilder) {
       els.btnGoBuilder.innerHTML =
         `<span class="only-desktop">${esc(t("marketplace.nav.backHome"))}</span>` +
-        `<span class="only-mobile">🏠</span>`;
+        `<span class="only-mobile">${HOME_ICON}</span>`;
     }
     if (els.btnManual)  els.btnManual.hidden = true;
   }
