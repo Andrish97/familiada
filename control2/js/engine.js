@@ -17,7 +17,7 @@
 //
 // Zero importów przeglądarkowych — testowalne w gołym Node.
 
-import { assertTransition } from "../../shared/gameStateMachine.js?v=v2026-09-20T17145";
+import { assertTransition } from "../../shared/gameStateMachine.js?v=v2026-09-21T00031";
 
 const STRIKE_LIMIT = 3;
 const TIMER_SECONDS = { P1: 15, P2: 20 };
