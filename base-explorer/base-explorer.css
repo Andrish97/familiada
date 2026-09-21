@@ -1197,7 +1197,7 @@ tr.row .tag-dot[data-tip]::before {
     transform: none
 }
 
-.tbIco {
+.tbBtn svg {
     width: 18px;
     height: 18px;
     fill: currentColor;

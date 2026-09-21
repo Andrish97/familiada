@@ -7,6 +7,7 @@ import { confirmModal } from "../core/modal.js?v=v2026-09-21T08065";
 import { isGuestUser, hideForGuest } from "../core/guest-mode.js?v=v2026-09-21T08065";
 import "../core/contact-modal.js";
 import { deleteGameSoundsFolder } from "../core/sfx-cloud.js?v=v2026-09-21T08065";
+import { STAR_ICON, STAR_EMPTY_ICON } from "../core/icons.js?v=v2026-09-21T08065";
 
 
 const status = document.getElementById("status");
@@ -544,7 +545,7 @@ async function loadUserRating(userId) {
     if (error) throw error;
 
     if (data) {
-      const starsStr = "★".repeat(data.stars) + "☆".repeat(5 - data.stars);
+      const starsStr = STAR_ICON.repeat(data.stars) + STAR_EMPTY_ICON.repeat(5 - data.stars);
       container.innerHTML = `
         <div class="rating-info">
           <div class="rating-stars">

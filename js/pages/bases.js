@@ -12,7 +12,7 @@ import { initUiSelect } from "../core/ui-select.js?v=v2026-09-21T08065";
 import { getUiLang, initI18n, t, withLangParam } from "../../translation/translation.js?v=v2026-09-21T08065";
 import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-09-21T08065";
 import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../core/modal-sheet.js?v=v2026-09-21T08065";
-import { TRASH_ICON } from "../core/icons.js?v=v2026-09-21T08065";
+import { TRASH_ICON, CHECK_ICON, PENCIL_ICON, EYE_ICON, PEOPLE_ICON, PERSON_ICON } from "../core/icons.js?v=v2026-09-21T08065";
 import "../core/contact-modal.js";
 initI18n({ withSwitcher: true }).then(() => {
   document.documentElement.classList.remove('page-loading');
@@ -1217,7 +1217,7 @@ function render() {
 
       const isEdit = b.sharedRole === "editor";
       badges.push({
-        text: isEdit ? "✎" : "👁",
+        icon: isEdit ? PENCIL_ICON : EYE_ICON,
         title: isEdit ? t("bases.badges.editAccess") : t("bases.badges.viewAccess"),
         kind: "role",
       });
@@ -1225,8 +1225,8 @@ function render() {
       const n = Number(b.shareCount || 0);
       badges.push(
         n > 0
-          ? { text: `👥 ${n}`, title: t("bases.badges.sharedOthers", { count: n }), kind: "mine" }
-          : { text: "👤", title: t("bases.badges.notShared"), kind: "mine" }
+          ? { icon: PEOPLE_ICON, text: String(n), title: t("bases.badges.sharedOthers", { count: n }), kind: "mine" }
+          : { icon: PERSON_ICON, title: t("bases.badges.notShared"), kind: "mine" }
       );
     }
 
@@ -1241,7 +1241,7 @@ function render() {
     const proposedBtns = b.proposed
       ? `
         <div class="tileMiniActions">
-          <button class="btn xsm gold" data-accept type="button" title="${escapeHtml(t("bases.proposed.accept"))}">✓</button>
+          <button class="btn xsm gold" data-accept type="button" title="${escapeHtml(t("bases.proposed.accept"))}">${CHECK_ICON}</button>
           <button class="btn xsm" data-decline type="button" title="${escapeHtml(t("bases.proposed.decline"))}">✕</button>
         </div>`
       : "";
@@ -1252,7 +1252,7 @@ function render() {
             (x) =>
               `<span class="tileBadge" data-kind="${escapeHtml(x.kind)}" title="${escapeHtml(
                 x.title || ""
-              )}">${escapeHtml(x.text || "")}</span>`
+              )}">${x.icon || ""}${escapeHtml(x.text || "")}</span>`
           )
           .join("")
       : "";

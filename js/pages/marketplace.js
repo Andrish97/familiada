@@ -10,6 +10,7 @@ import { initUiSelect } from "../core/ui-select.js?v=v2026-09-21T08065";
 import { confirmModal } from "../core/modal.js?v=v2026-09-21T08065";
 import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../core/modal-sheet.js?v=v2026-09-21T08065";
 import "../core/contact-modal.js";
+import { STAR_ICON, STAR_EMPTY_ICON } from "../core/icons.js?v=v2026-09-21T08065";
 
 /* =========================================================
    Constants
@@ -544,7 +545,7 @@ async function submitGame() {
 function starsDisplay(avg, count) {
   if (!count) return `<span class="mkt-no-rating">${esc(t("marketplace.rating.none"))}</span>`;
   const full = Math.round(+avg);
-  const stars = "★".repeat(full) + "☆".repeat(5 - full);
+  const stars = STAR_ICON.repeat(full) + STAR_EMPTY_ICON.repeat(5 - full);
   return `<span class="mkt-stars">${stars}</span> <span class="mkt-rating-avg">${(+avg).toFixed(1)}</span> <span class="mkt-rating-count">(${count})</span>`;
 }
 
@@ -563,7 +564,7 @@ function buildStarInput(gameId) {
     const btn = document.createElement("button");
     btn.type = "button";
     btn.className = "mkt-star-btn";
-    btn.textContent = "★";
+    btn.innerHTML = STAR_ICON;
     btn.dataset.stars = i;
     btn.addEventListener("mouseover", () => {
       row.querySelectorAll(".mkt-star-btn").forEach((b, j) => b.classList.toggle("hover", j < i));
@@ -613,7 +614,7 @@ async function loadRaters(gameId, container) {
     data.map(r =>
       `<div class="mkt-rater-row">
         <span class="mkt-rater-name">${esc(r.username || "?")}</span>
-        <span class="mkt-rater-stars">${"★".repeat(r.stars)}${"☆".repeat(5 - r.stars)}</span>
+        <span class="mkt-rater-stars">${STAR_ICON.repeat(r.stars)}${STAR_EMPTY_ICON.repeat(5 - r.stars)}</span>
       </div>`
     ).join("");
 }

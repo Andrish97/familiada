@@ -266,6 +266,14 @@ body.skel-body .topbar.topbar-ready .topbar-section-4 {
     transform: translateY(1px)
 }
 
+.btn-ico{
+    width: 14px;
+    height: 14px;
+    fill: currentColor;
+    vertical-align: -2px;
+    margin-right: 4px;
+}
+
 .btn.gold {
     border-color: rgba(255,234,166,.35);
     background: rgba(255,234,166,.1);
@@ -1004,6 +1012,13 @@ html.showA2HS .a2hs {
   touch-action: manipulation;
 }
 
+.topbar-menu-icon svg{
+  width: 18px;
+  height: 18px;
+  fill: currentColor;
+  display: block;
+}
+
 .lang-menu{
   position: fixed;              /* ✅ portal overlay */
   display: grid;
@@ -1528,12 +1543,18 @@ body{
 .star-btn {
     background: none;
     border: none;
-    font-size: 40px;
     color: rgba(255,255,255,0.15);
     cursor: pointer;
     transition: transform 0.1s, color 0.1s;
     padding: 0;
     line-height: 1;
+}
+
+.star-btn svg {
+    width: 40px;
+    height: 40px;
+    fill: currentColor;
+    display: block;
 }
 
 .star-btn:hover {
@@ -1542,7 +1563,7 @@ body{
 
 .star-btn.active {
     color: var(--gold);
-    text-shadow: 0 0 15px rgba(255, 234, 166, 0.4);
+    filter: drop-shadow(0 0 8px rgba(255, 234, 166, 0.4));
 }
 
 .rating-comment {

@@ -18,7 +18,7 @@ import { alertModal, confirmModal, promptModal } from "../core/modal.js?v=v2026-
 import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../core/modal-sheet.js?v=v2026-09-21T08065";
 import { sb } from "../core/supabase.js?v=v2026-09-21T08065";
 import { v as cacheBust } from "../core/cache-bust.js?v=v2026-09-21T08065";
-import { TRASH_ICON } from "../core/icons.js?v=v2026-09-21T08065";
+import { TRASH_ICON, STAR_ICON, STAR_EMPTY_ICON, SEARCH_ICON, SAVE_ICON, ENVELOPE_ICON } from "../core/icons.js?v=v2026-09-21T08065";
 
 // settings.html nie ma naturalnego przycisku wstecz na mobile (panel admina
 // bez nawigacji "do tyłu") -- btnBackSheet istnieje wyłącznie na potrzeby
@@ -1318,7 +1318,7 @@ async function loadRatings({ silent = false } = {}) {
       els.ratingsTableBody.innerHTML = rows.map(r => {
         const date = new Date(r.created_at).toLocaleString();
         const user = r.username || r.email || "Nieznany";
-        const stars = "★".repeat(r.stars) + "☆".repeat(5 - r.stars);
+        const stars = STAR_ICON.repeat(r.stars) + STAR_EMPTY_ICON.repeat(5 - r.stars);
         return `
           <tr>
             <td style="font-size:11px;opacity:.7">${date}</td>
@@ -2488,7 +2488,7 @@ async function openRatersModal(gameId, title) {
     </tr></thead><tbody>${rows.map(r =>
       `<tr>
         <td>${escSetting(r.username || "?")}</td>
-        <td>${"★".repeat(r.stars)}${"☆".repeat(5 - r.stars)} (${r.stars})</td>
+        <td>${STAR_ICON.repeat(r.stars)}${STAR_EMPTY_ICON.repeat(5 - r.stars)} (${r.stars})</td>
         <td>${new Date(r.rated_at).toLocaleString()}</td>
       </tr>`
     ).join("")}</tbody></table>`;
@@ -3743,7 +3743,7 @@ async function trashMessage(messageId) {
     showToast("Do kosza", "success");
     await loadMailFolder({ silent: true });
     const conv = document.getElementById("mailConv");
-    if (conv) conv.innerHTML = `<div class="mail-conv-placeholder"><div style="font-size:48px;margin-bottom:12px;opacity:.3">✉</div><div style="opacity:.4;font-size:13px">Wybierz wątek</div></div>`;
+    if (conv) conv.innerHTML = `<div class="mail-conv-placeholder"><div style="width:48px;height:48px;margin:0 auto 12px;opacity:.3">${ENVELOPE_ICON}</div><div style="opacity:.4;font-size:13px">Wybierz wątek</div></div>`;
     msgActiveId = null;
   } catch (err) {
     showToast(String(err?.message || err), "error");
@@ -3779,7 +3779,7 @@ async function deleteForever(messageId) {
     showToast("Usuń na zawsze", "success");
     await loadMailFolder({ silent: true });
     const conv = document.getElementById("mailConv");
-    if (conv) conv.innerHTML = `<div class="mail-conv-placeholder"><div style="font-size:48px;margin-bottom:12px;opacity:.3">✉</div><div style="opacity:.4;font-size:13px">Wybierz wątek</div></div>`;
+    if (conv) conv.innerHTML = `<div class="mail-conv-placeholder"><div style="width:48px;height:48px;margin:0 auto 12px;opacity:.3">${ENVELOPE_ICON}</div><div style="opacity:.4;font-size:13px">Wybierz wątek</div></div>`;
     msgActiveId = null;
   } catch (err) {
     showToast(String(err?.message || err), "error");
@@ -4298,7 +4298,7 @@ function closeCompose() {
   } else {
     const conv = document.getElementById("mailConv");
     if (!conv) return;
-    conv.innerHTML = `<div class="mail-conv-placeholder"><div style="font-size:48px;margin-bottom:12px;opacity:.3">✉</div><div style="opacity:.4;font-size:13px">Wybierz wątek</div></div>`;
+    conv.innerHTML = `<div class="mail-conv-placeholder"><div style="width:48px;height:48px;margin:0 auto 12px;opacity:.3">${ENVELOPE_ICON}</div><div style="opacity:.4;font-size:13px">Wybierz wątek</div></div>`;
     msgActiveId = null;
 
     // On mobile: switch back to list view
@@ -4658,7 +4658,7 @@ function wireReportsEvents() {
       msgActiveId = null;
       const conv = document.getElementById("mailConv");
       if (conv) {
-        conv.innerHTML = `<div class="mail-conv-placeholder"><div style="font-size:48px;margin-bottom:12px;opacity:.3">✉</div><div style="opacity:.4;font-size:13px">Wybierz wątek</div></div>`;
+        conv.innerHTML = `<div class="mail-conv-placeholder"><div style="width:48px;height:48px;margin:0 auto 12px;opacity:.3">${ENVELOPE_ICON}</div><div style="opacity:.4;font-size:13px">Wybierz wątek</div></div>`;
       }
       await loadMailFolder();
     });
