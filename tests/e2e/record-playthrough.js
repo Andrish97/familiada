@@ -846,6 +846,11 @@ async function scenarioFinalFull(pages) {
     await clickPaced(control.getByRole("button", { name: "Dalej" }));
   }
 
+  // renderEndScreen (control2/js/ui.js) pokazuje TU, na ekranie PRZED
+  // odsłonięciem ("Zakończ grę" jeszcze nieklikn.), pasek z sumą finału
+  // (state.final.runtime.sum) — widz ma zdążyć go przeczytać, zanim klik
+  // przejdzie dalej do właściwego ekranu końcowego.
+  await control.waitForTimeout(2000);
   await clickPaced(control.getByRole("button", { name: "Zakończ grę", exact: true }));
   await control.waitForTimeout(4000); // ekran końcowy widoczny chwilę na nagraniu
 }
@@ -889,6 +894,9 @@ async function scenarioFinalEarlyExit(pages) {
   // "Pokaż punkty" to ostatni kafel odsłaniania w tym scenariuszu.
   await armAndConfirmPaced(control.getByRole("button", { name: "Pokaż punkty" }));
 
+  // Patrz identyczny komentarz w scenariuszu 4 — pasek z sumą finału na
+  // ekranie przed odsłonięciem, widz ma zdążyć go zobaczyć.
+  await control.waitForTimeout(2000);
   await clickPaced(control.getByRole("button", { name: "Zakończ grę", exact: true }));
   await control.waitForTimeout(4000); // ekran końcowy widoczny chwilę na nagraniu
 }
