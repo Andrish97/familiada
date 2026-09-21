@@ -283,20 +283,47 @@ async function main() {
   //     sound_cue_key, nie zgadywany z wyprzedzeniem).
   let committing = false;
   let lockedUntil = 0;
-  function busy() { return committing || Date.now() < lockedUntil; }
+  // Patrz armLock() niżej -- prawdziwa (nie zgadywana z góry) blokada na
+  // czas round-tripu store.setLock(ms).
+  let lockConfirmPending = false;
+  function busy() { return committing || lockConfirmPending || Date.now() < lockedUntil; }
 
-  // `store.setLock(ms)` (wołane w obu miejscach, które ustawiają
-  // `lockedUntil` niżej) jest CELOWO niewyczekiwane (fire-and-forget, patrz
-  // komentarz przy dispatchGatedNow) -- serwerowe locked_until (migracja
-  // 264) liczy `now() + ms` dopiero gdy TO zapytanie faktycznie dotrze i
-  // wykona się w bazie, czyli realnie PÓŹNIEJ niż `Date.now()` użyte tu do
-  // klienckiego lockedUntil. Bez marginesu klient odblokowywał przycisk
-  // (i Playwright/szybki operator klikał go) dokładnie w tym oknie, w
-  // którym serwer JESZCZE nie zdążył ustawić własnej blokady z poprzedniej
-  // akcji -- server odrzucał zapis LockedError('locked'), operator widział
-  // goły alert. Zgłoszone (e2e "reset pojedynku..."): klik "Zakończ rundę"
-  // ~2s po potwierdzonym odsłonięciu kradzieży dostawał 'locked'.
-  const LOCK_NETWORK_SAFETY_MS = 400;
+  // Uzbraja klienckie `lockedUntil` na czas `ms` (potwierdzonego dźwięku/
+  // animacji) I dociąga je do realnego czasu, w którym serwer (migracja
+  // 264) faktycznie ustawi WŁASNY `locked_until` -- `store.setLock(ms)` to
+  // osobne wywołanie RPC, więc jego round-trip jest nieznany z góry.
+  // Poprzednia wersja liczyła `lockedUntil` OD RAZU (`Date.now()+ms`) plus
+  // sztywny margines 400ms na ten round-trip -- w CI zdarzało się, że sam
+  // round-trip setLock() trwał >1s (dużo więcej niż margines), więc klient
+  // odblokowywał przycisk, ZANIM serwer w ogóle zdążył ustawić swoją
+  // blokadę z TEJ akcji -- server odrzucał kolejny zapis LockedError('locked')
+  // (zgłoszone e2e: "reset pojedynku..." i, mimo marginesu, "próg w rundzie
+  // -> finał" — ADD_X w DUEL). Naprawa: zamiast zgadywać margines,
+  // blokujemy TWARDO (`lockConfirmPending`) aż store.setLock(ms) faktycznie
+  // wróci, i DOPIERO WTEDY liczymy `lockedUntil=Date.now()+ms` -- serwer
+  // ustawia swój `locked_until` W MOMENCIE przetworzenia zapytania, czyli
+  // zawsze WCZEŚNIEJ niż chwila odebrania TEJ odpowiedzi tutaj, więc to
+  // zawsze bezpieczne (nigdy za krótkie) górne ograniczenie, niezależnie od
+  // realnych warunków sieci.
+  function armLock(ms) {
+    if (ms <= 0) return;
+    lockedUntil = Math.max(lockedUntil, Date.now() + ms);
+    setTimeout(renderCurrent, ms + 20);
+    lockConfirmPending = true;
+    store.setLock(ms)
+      .then(() => {
+        const confirmed = Date.now() + ms;
+        if (confirmed > lockedUntil) {
+          lockedUntil = confirmed;
+          setTimeout(renderCurrent, ms + 20);
+        }
+      })
+      .catch(() => {})
+      .finally(() => {
+        lockConfirmPending = false;
+        renderCurrent();
+      });
+  }
 
   // JEDYNE miejsce, które w ogóle woła engine.dispatch() — wywoływane zarówno
   // z operatorskich kliknięć (handle()'s "game.dispatch" niżej) jak i z
@@ -326,15 +353,10 @@ async function main() {
       committing = false;
     }
     const ms = await actionGate.computeGateMs(action.type, prevRow, nextRow);
-    if (ms > 0) {
-      lockedUntil = Date.now() + ms + LOCK_NETWORK_SAFETY_MS;
-      setTimeout(renderCurrent, ms + LOCK_NETWORK_SAFETY_MS + 20);
-      // Migracja 264 -- ta sama blokada, egzekwowana też w bazie (nie tylko
-      // w tej karcie przeglądarki). Best-effort: nieudane ustawienie nie
-      // cofa już potwierdzonego zapisu treści powyżej, patrz store.js's
-      // setLockNow().
-      store.setLock(ms);
-    }
+    // Migracja 264 -- ta sama blokada, egzekwowana też w bazie (nie tylko w
+    // tej karcie przeglądarki). Best-effort: nieudane ustawienie nie cofa
+    // już potwierdzonego zapisu treści powyżej, patrz store.js's setLockNow().
+    armLock(ms);
     renderCurrent();
     return nextRow;
   }
@@ -685,11 +707,7 @@ async function main() {
     }
     if (soundCueKey) {
       const ms = await actionGate.timing.dur(soundCueKey);
-      if (ms > 0) {
-        lockedUntil = Date.now() + ms + LOCK_NETWORK_SAFETY_MS;
-        setTimeout(renderCurrent, ms + LOCK_NETWORK_SAFETY_MS + 20);
-        store.setLock(ms);
-      }
+      armLock(ms);
     }
     renderCurrent();
   }
