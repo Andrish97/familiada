@@ -12,6 +12,7 @@ import { loadFont5x7, buildLogoPreviewCanvas } from "../core/logo-preview.js?v=v
 import { v as cacheBust } from "../core/cache-bust.js?v=v2026-09-21T08065";
 import { alertModal, confirmModal } from "../core/modal.js?v=v2026-09-21T08065";
 import { initUiSelect } from "../core/ui-select.js?v=v2026-09-21T08065";
+import { WARNING_ICON } from "../core/icons.js?v=v2026-09-21T08065";
 import { buildDisplayPreviewRow } from "../../shared/previewRow.js?v=v2026-09-21T08065";
 import {
   loadSfxManifest, getSfxCategories,
@@ -1123,7 +1124,7 @@ function renderQuestions() {
             </label>
           </div>
           <div class="gs-hint">${t("gameSettings.questions.roundsModeHint")}</div>
-          ${hasFinal && finalRandom && !roundsRandom ? `<div class="gs-hint" style="margin-top:6px">⚠️ ${t("gameSettings.questions.finalRandomRoundsOrderedWarning") || "Finał losowy + rundy w ustalonej kolejności: finał wylosuje 5 pytań spoza Twojej listy rund, dopiero przy starcie gry w panelu prowadzącego — jeśli baza ma niewiele pytań, pula do losowania finału będzie odpowiednio mniejsza."}</div>` : ""}
+          ${hasFinal && finalRandom && !roundsRandom ? `<div class="gs-hint" style="margin-top:6px">${WARNING_ICON} ${t("gameSettings.questions.finalRandomRoundsOrderedWarning") || "Finał losowy + rundy w ustalonej kolejności: finał wylosuje 5 pytań spoza Twojej listy rund, dopiero przy starcie gry w panelu prowadzącego — jeśli baza ma niewiele pytań, pula do losowania finału będzie odpowiednio mniejsza."}</div>` : ""}
         </div>
       </div>
     </div>

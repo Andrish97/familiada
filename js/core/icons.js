@@ -106,3 +106,5 @@ export const CLIPBOARD_ICON = `<svg viewBox="0 0 24 24" aria-hidden="true" focus
 export const DOWNLOAD_ICON = `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>`;
 export const UPLOAD_ICON = `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 18v2h14v-2H5zm7-16L5 9h4v6h6V9h4l-7-7z"/></svg>`;
 export const NOTE_ICON = `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill-rule="evenodd" clip-rule="evenodd" d="M4 2h16v20H4V2zm3 5h10v1.6H7V7zm0 4h10v1.6H7V11zm0 4h6v1.6H7V15z"/></svg>`;
+export const CAMERA_ICON = `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill-rule="evenodd" clip-rule="evenodd" d="M9 3l-1.5 2H4a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-3.5L15 3H9zm3 14.5a4.5 4.5 0 1 0 0-9 4.5 4.5 0 0 0 0 9zm0-2a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z"/></svg>`;
+export const WARNING_ICON = `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill-rule="evenodd" clip-rule="evenodd" d="M12 2 1 21h22L12 2zm-1 7h2v6h-2V9zm0 8h2v2h-2v-2z"/></svg>`;

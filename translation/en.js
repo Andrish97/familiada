@@ -4579,7 +4579,7 @@ const en = {
     scan: {
       title: "Scan device QR code",
       hint: "Point the camera at the QR code shown in the control panel.",
-      btn: "📷 Scan QR",
+      btn: "Scan QR",
       cameraError: "Camera access denied.",
       noQr: "No QR code found in the photo.",
       noApi: "Use your system camera to scan the QR code.",

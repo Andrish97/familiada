@@ -18,7 +18,7 @@ import { alertModal, confirmModal, promptModal } from "../core/modal.js?v=v2026-
 import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../core/modal-sheet.js?v=v2026-09-21T08065";
 import { sb } from "../core/supabase.js?v=v2026-09-21T08065";
 import { v as cacheBust } from "../core/cache-bust.js?v=v2026-09-21T08065";
-import { TRASH_ICON, STAR_ICON, STAR_EMPTY_ICON, SEARCH_ICON, SAVE_ICON, ENVELOPE_ICON, NOTE_ICON, PENCIL_ICON } from "../core/icons.js?v=v2026-09-21T08065";
+import { TRASH_ICON, STAR_ICON, STAR_EMPTY_ICON, SEARCH_ICON, SAVE_ICON, ENVELOPE_ICON, NOTE_ICON, PENCIL_ICON, EYE_ICON } from "../core/icons.js?v=v2026-09-21T08065";
 
 // settings.html nie ma naturalnego przycisku wstecz na mobile (panel admina
 // bez nawigacji "do tyłu") -- btnBackSheet istnieje wyłącznie na potrzeby
@@ -3534,7 +3534,7 @@ function renderReportThread(report, messages, attsByMsg = {}) {
   replyButtonSection.style.cssText = "padding:20px;text-align:center;border-top:1px solid rgba(255,255,255,.1);margin-top:20px";
   replyButtonSection.innerHTML = `
     <button class="btn gold" id="btnReportReply" type="button" style="padding:10px 24px;font-size:13px">
-      ✏️ Odpowiedz
+      ${PENCIL_ICON} Odpowiedz
     </button>
   `;
   conv.appendChild(replyButtonSection);
@@ -3935,7 +3935,7 @@ function showCompose(defaults = {}) {
           <input type="hidden" id="composeToEmail" value="${escSetting(defaults.to || "")}">
 
           <div style="display:flex;justify-content:flex-end;gap:8px;align-items:center;padding-top:12px;margin-top:12px;border-top:1px solid rgba(255,255,255,.1)">
-            <button class="btn sm" id="btnComposePreview" type="button">👁 Podgląd</button>
+            <button class="btn sm" id="btnComposePreview" type="button">${EYE_ICON} Podgląd</button>
             <span class="field-hint" id="composeSendStatus"></span>
             <button class="btn sm gold" id="btnComposeSend" type="button">Wyślij</button>
           </div>
