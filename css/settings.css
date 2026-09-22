@@ -1525,6 +1525,26 @@ body.tools-fullscreen .tools-frame-wrap iframe{
 .status-bar.err { background: rgba(248,113,113,.08); border: 1px solid rgba(248,113,113,.2); color: var(--red); }
 .status-bar.info { background: rgba(96,165,250,.08); border: 1px solid rgba(96,165,250,.2); color: var(--blue); }
 
+.inline-icon,
+.status-with-icon svg,
+.toast-icon svg,
+#mcActionBtn svg,
+.mc-table td svg {
+  width: 1em;
+  height: 1em;
+  fill: currentColor;
+  vertical-align: -0.15em;
+}
+
+.status-with-icon,
+#mcActionBtn,
+#mcMarkUsedBtn,
+.toast-icon {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .toast.success{
   border-color: rgba(255,234,166,.55);
   color: #ffeaa6;

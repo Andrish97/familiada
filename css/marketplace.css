@@ -359,10 +359,21 @@ body.mkt-body > main.wrap {
 }
 
 .mkt-added-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   font-size: 13px;
   font-weight: 900;
   color: #7ef0a2;
   opacity: .9;
+}
+
+.mkt-added-badge svg,
+.mkt-badge-added svg {
+  width: 1em;
+  height: 1em;
+  fill: currentColor;
+  flex: 0 0 auto;
 }
 
 /* ===== Submit modal ===== */
