@@ -8,6 +8,19 @@ Stan gałęzi `claude/analyze-x-buttons-ui-2paaqm` po wdrożeniu zatwierdzonych 
 - `img/icons/` zawiera plikowe odpowiedniki przeznaczone głównie do podglądu. Przed tym audytem było ich 38; brakujące 20 plików zostało dodanych, więc katalog ponownie odpowiada centralnemu zestawowi.
 - Kod aplikacji nie odwołuje się obecnie do `img/icons/*.svg`. Pliki nie są jeszcze źródłem ikon w runtime.
 
+## Galeria istniejących ikon
+
+Pełny wizualny podgląd 58 ikon znajduje się w plikach:
+
+- [`icons-gallery.svg`](icons-gallery.svg) — wersja wektorowa,
+- [`icons-gallery.png`](icons-gallery.png) — wersja rastrowa do szybkiego podglądu.
+
+### Ikony wymagające ponownej oceny
+
+- `copy.svg` — obecny układ dwóch prostokątów jest ciężki i mało czytelny w małym rozmiarze; na galerii oznaczony pomarańczową ramką. Nie został przeprojektowany, ponieważ nowy wygląd wymaga zatwierdzenia.
+
+Przed dalszym przeprojektowaniem warto ocenić całą galerię i wskazać następne ikony, które wizualnie odstają. Zmiana pliku musi być równocześnie odzwierciedlona w odpowiadającej mu stałej w `js/core/icons.js`, dopóki aplikacja korzysta z obecnego mechanizmu runtime.
+
 ## Pozostałe SVG zapisane bezpośrednio w kodzie
 
 Poza `js/core/icons.js` pozostają 143 wystąpienia `<svg>` w 35 plikach:
