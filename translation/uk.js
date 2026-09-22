@@ -112,13 +112,11 @@ const uk = {
     logoPoolBusySettings: "Ти не можеш редагувати чи видалити логотип, поки змінюєш налаштування гри.",
   },
   guestInfo: {
-    title: "⚠️ Гостьовий акаунт",
+    title: "Гостьовий акаунт",
     subtitle: "Перед початком — кілька важливих зауважень:",
-    icon1: "🗂️",
     warning1: "Твої дані зберігаються <strong>лише в цьому браузері</strong>. Очищення історії (cookies) призведе до втрати доступу до акаунта.",
-    icon2: "⏳",
     warning2: "Акаунт буде <strong>видалено через 5 днів</strong> без активності.",
-    migrateTitle: "💾 Як зберегти свої дані?",
+    migrateTitle: "Як зберегти свої дані?",
     step1: "Натисни на своє ім'я користувача у верхньому правому куті",
     step2: "Обери <em>Увійти\u00A0/\u00A0Створити акаунт</em>",
     step3: "Введи email і пароль — тебе запитають про міграцію даних",
@@ -143,7 +141,7 @@ const uk = {
       title: "Безкоштовна Familiada Online. Справжнє телешоу на твоєму обладнанні.",
       lead: "Найкраща система для гри в Familiada: збери відповіді учасників через опитування, а потім проведи гру наживо. Ідеальна гра на весілля, день народження та корпоратив. Все в браузері.",
       ctaStart: "Почати створювати ігри та проводити гру наживо",
-      ctaMarketplace: "Переглянути Ігри Спільноти 🎮",
+      ctaMarketplace: "Переглянути Ігри Спільноти",
       note: "Гостьовий режим доступний — безкоштовна Familiada без реєстрації.",
     },
     about: {
@@ -525,7 +523,7 @@ const uk = {
     qrHostAlt: "QR Ведучий",
     qrBuzzerAlt: "QR Кнопки",
     sumLabel: "СУМА",
-    audioUnlockBtn: "🔊 Розблокувати звук",
+    audioUnlockBtn: "Розблокувати звук",
   },
   host: {
     title: "Familiada — ведучий",
@@ -869,7 +867,7 @@ const uk = {
   },
   manual: {
     title: "Familiada — підказки",
-    legal: "Політика конфіденційності 🔐",
+    legal: "Політика конфіденційності",
     backToGames: "← Мої ігри",
     backToBaseManager: "← Менеджер бази",
     backToLogos: "← Мої логотипи",
@@ -1437,7 +1435,7 @@ const uk = {
 
       <p class="m-p">
         До опитувань переходиш з верхньої панелі сторінки «Мої ігри»
-        кнопкою <span class="m-code">Опитування 📊</span>.
+        кнопкою <span class="m-code"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.15em" aria-hidden="true"><rect x="2" y="20" width="20" height="1.4" opacity="0.5"/><rect x="2" y="16" width="20" height="1" opacity="0.25"/><rect x="2" y="11" width="20" height="1" opacity="0.25"/><rect x="4" y="11" width="4" height="9" rx="1"/><rect x="10.5" y="15" width="4" height="5" rx="1"/><rect x="17" y="6" width="4" height="14" rx="1"/></svg> Опитування</span>.
       </p>
 
       <h3 class="m-h2">Сторінка опитувань</h3>
@@ -1452,7 +1450,7 @@ const uk = {
       </ul>
 
       <p class="m-p">
-        Золота крапка біля кнопки «Опитування 📊» показує кількість активних завдань.
+        Золота крапка біля кнопки «Опитування» показує кількість активних завдань.
       </p>
 
       <p class="m-p">
@@ -1656,7 +1654,7 @@ const uk = {
 
       <p class="m-p">
         Перехід — з верхньої панелі сторінки «Мої ігри»
-        кнопкою <span class="m-code">Підписки 📧</span>.
+        кнопкою <span class="m-code"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.15em" aria-hidden="true"><path d="M12 2a1.6 1.6 0 0 0-1.6 1.6v.6C7.7 4.9 6 7.2 6 10v5l-2 2v1h16v-1l-2-2v-5c0-2.8-1.7-5.1-4.4-5.8v-.6A1.6 1.6 0 0 0 12 2z"/><path d="M9.5 20a2.5 2.5 0 0 0 5 0h-5z"/></svg> Підписки</span>.
       </p>
 
       <h3 class="m-h2">Сторінка підписок</h3>
@@ -1667,7 +1665,7 @@ const uk = {
       </ul>
 
       <p class="m-p">
-        Золота крапка біля кнопки «Підписки 📧» показує кількість запрошень до прийняття.
+        Золота крапка біля кнопки «Підписки» показує кількість запрошень до прийняття.
       </p>
 
       <h3 class="m-h3">Мої підписники</h3>
@@ -2306,7 +2304,7 @@ const uk = {
         і перевірених модераторами. Ти можеш переглядати їх, додавати до своєї бібліотеки
         та запускати безпосередньо як розгавку — без необхідності створювати власні питання.
         До Ігор Спільноти переходиш з верхньої панелі сторінки «Мої ігри»
-        за допомогою кнопки <span class="m-code">Ігри Спільноти🎮</span>.
+        за допомогою кнопки <span class="m-code"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.15em" aria-hidden="true"><rect x="2" y="8" width="20" height="9" rx="4" fill="none" stroke="currentColor" stroke-width="1.6"/><rect x="6.2" y="11.2" width="4" height="1.6" rx="0.6"/><rect x="7.4" y="10" width="1.6" height="4" rx="0.6"/><circle cx="16" cy="11" r="1.3"/><circle cx="18.5" cy="13.5" r="1.3"/></svg> Ігри Спільноти</span>.
       </p>
 
       <h3 class="m-h2">Перегляд та бібліотека</h3>
@@ -2786,11 +2784,11 @@ const uk = {
   builder: {
     title: "Familiada — мої ігри",
     nav: {
-      pollsHubPolls: "Опитування 📊",
-      pollsHubSubs: "Підписки 📧",
-      bases: "Бази питань 🗃️",
+      pollsHubPolls: "Опитування",
+      pollsHubSubs: "Підписки",
+      bases: "Бази питань",
       logo: "Лого 🖥️",
-      marketplace: "Ігри Спільноти 🎮",
+      marketplace: "Ігри Спільноти",
       connectDevice: "Підключити пристрій 📱",
       account: "Обліковий запис",
     },
@@ -4642,7 +4640,7 @@ const uk = {
     stepAudio: "Звук",
     audioUnlockTitle: "Розблокувати звук",
     audioUnlockHint: "Натисни кнопку, щоб дозволити браузеру відтворювати звуки.",
-    audioUnlockBtn: "🔊 Розблокувати",
+    audioUnlockBtn: "Розблокувати",
     audioBlocked: "ЗАБЛОКОВАНО",
     audioStatusOk: "РОЗБЛОКОВАНО",
     stepTeamNames: "Назви команд",

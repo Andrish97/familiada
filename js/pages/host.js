@@ -2,6 +2,7 @@
 import { initI18n, setUiLang, t } from "../../translation/translation.js?v=v2026-09-21T08065";
 import { sb } from "../core/supabase.js?v=v2026-09-21T08065";
 import { startKeepAlive } from "../core/keep-alive.js?v=v2026-09-21T08065";
+import { FULLSCREEN_ICON, FULLSCREEN_EXIT_ICON } from "../core/icons.js?v=v2026-09-21T08065";
 startKeepAlive();
 
 /* ========= PARAMS ========= */
@@ -120,7 +121,7 @@ function setPseudoFS(on) {
 function setFullscreenIcon() {
   if (!fsIco) return;
   const isReal = !!document.fullscreenElement;
-  fsIco.textContent = isReal || pseudoFS ? "⧉" : "▢";
+  fsIco.innerHTML = isReal || pseudoFS ? FULLSCREEN_EXIT_ICON : FULLSCREEN_ICON;
 }
 
 async function toggleFullscreen() {

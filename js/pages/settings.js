@@ -18,7 +18,7 @@ import { alertModal, confirmModal, promptModal } from "../core/modal.js?v=v2026-
 import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../core/modal-sheet.js?v=v2026-09-21T08065";
 import { sb } from "../core/supabase.js?v=v2026-09-21T08065";
 import { v as cacheBust } from "../core/cache-bust.js?v=v2026-09-21T08065";
-import { TRASH_ICON, STAR_ICON, STAR_EMPTY_ICON, SEARCH_ICON, SAVE_ICON, ENVELOPE_ICON, NOTE_ICON, PENCIL_ICON, EYE_ICON } from "../core/icons.js?v=v2026-09-21T08065";
+import { TRASH_ICON, STAR_ICON, STAR_EMPTY_ICON, SEARCH_ICON, SAVE_ICON, ENVELOPE_ICON, NOTE_ICON, PENCIL_ICON, EYE_ICON, MEDAL_ICON, MEGAPHONE_ICON, WARNING_ICON } from "../core/icons.js?v=v2026-09-21T08065";
 
 // settings.html nie ma naturalnego przycisku wstecz na mobile (panel admina
 // bez nawigacji "do tyłu") -- btnBackSheet istnieje wyłącznie na potrzeby
@@ -2260,13 +2260,13 @@ async function loadMarketplace({ silent = false } = {}) {
     }
 
     const authorLabel = g.origin === "producer"
-      ? "♟ Producent"
-      : (g.author_username || "—");
+      ? `<span style="display:inline-flex;align-items:center;gap:4px"><span style="width:12px;height:12px;display:inline-block">${MEDAL_ICON}</span>Producent</span>`
+      : escSetting(g.author_username || "—");
 
     tr.innerHTML = `
       <td>${escSetting(g.title)}${note}</td>
       <td>${escSetting(g.lang.toUpperCase())}</td>
-      <td>${escSetting(authorLabel)}</td>
+      <td>${authorLabel}</td>
       <td>${date}</td>
       <td class="market-actions">${actions}</td>`;
     tbody.appendChild(tr);
@@ -2717,7 +2717,7 @@ function renderMailList(rows) {
       const dateStr = new Date(r.created_at).toLocaleDateString("pl-PL", { day:"2-digit", month:"2-digit" });
       const fromTo = isInbound
         ? `↙ ${escSetting(r.from_email || "—")}`
-        : `📢 ${escSetting(r.to_email || "Kampania")}`;
+        : `${MEGAPHONE_ICON} ${escSetting(r.to_email || "Kampania")}`;
 
       // Marketing badge for ALL marketing emails (already filtered by is_marketing flag)
       const marketingBadge = isMarketingEmail(r)
@@ -5363,8 +5363,14 @@ function fmtSessionStatus(r) {
   const meta = SESSION_STATUS_META[r.effective_status];
   if (!meta) return r.effective_status === "legacy" ? "📁 Archiwalna" : (r.effective_status || "—");
   const errCount = Number(r.error_count) || 0;
-  const text = errCount > 0 ? `${meta.label} ⚠️ ${errCount}` : meta.label;
-  return statusDotEl(meta.color, text);
+  const dotEl = statusDotEl(meta.color, meta.label);
+  if (errCount > 0) {
+    const warn = document.createElement("span");
+    warn.style.cssText = "display:inline-flex;align-items:center;gap:2px;color:#f87171;margin-left:4px";
+    warn.innerHTML = `${WARNING_ICON.replace("<svg ", '<svg style="width:12px;height:12px;fill:currentColor" ')}${errCount}`;
+    dotEl.appendChild(warn);
+  }
+  return dotEl;
 }
 
 const FINAL_STEP_LABELS = {

@@ -837,6 +837,13 @@ main{
     text-overflow: ellipsis;
     white-space: nowrap
 }
+.ui-select-label svg, .ui-select-item svg {
+    width: 13px;
+    height: 13px;
+    vertical-align: -2px;
+    margin-right: 2px;
+}
+.ui-select-label svg:not([fill]), .ui-select-item svg:not([fill]) { fill: currentColor; }
 
 .ui-select-caret {
     font-size: 12px;

@@ -118,13 +118,11 @@ const pl = {
     logoPoolBusySettings: "Nie możesz edytować ani usunąć logo, bo zmieniasz ustawienia rozgrywki.",
   },
   guestInfo: {
-    title: "⚠️ Konto gościa",
+    title: "Konto gościa",
     subtitle: "Zanim zaczniesz — kilka ważnych informacji:",
-    icon1: "🗂️",
     warning1: "Twoje dane są zapisane <strong>tylko w tej przeglądarce</strong>. Wyczyszczenie historii (cookies) spowoduje utratę dostępu do konta.",
-    icon2: "⏳",
     warning2: "Konto zostanie <strong>usunięte po 5 dniach</strong> od ostatniego logowania.",
-    migrateTitle: "💾 Jak zachować swoje dane?",
+    migrateTitle: "Jak zachować swoje dane?",
     step1: "Kliknij swoją nazwę użytkownika w prawym górnym rogu",
     step2: "Wybierz <em>Zaloguj\u00A0/\u00A0Załóż konto</em>",
     step3: "Podaj adres email i hasło — zostaniesz zapytany o migrację danych",
@@ -149,7 +147,7 @@ const pl = {
       title: "Darmowa Familiada Online. Prawdziwy teleturniej na Twoim sprzęcie.",
       lead: "Najlepszy system do gry w Familiadę: zbierz odpowiedzi od uczestników w ankiecie, a potem poprowadź grę na żywo. Idealna gra na wesele, urodziny i imprezę firmową. Wszystko w przeglądarce.",
       ctaStart: "Zacznij tworzyć gry i prowadzić rozgrywkę",
-      ctaMarketplace: "Przeglądaj Gry Społeczności 🎮",
+      ctaMarketplace: "Przeglądaj Gry Społeczności",
       note: "Dostępny tryb gościa — darmowa Familiada bez rejestracji.",
     },
     about: {
@@ -531,7 +529,7 @@ const pl = {
     qrHostAlt: "QR Prowadzący",
     qrBuzzerAlt: "QR Przyciski",
     sumLabel: "SUMA",
-    audioUnlockBtn: "🔊 Odblokuj dźwięk",
+    audioUnlockBtn: "Odblokuj dźwięk",
   },
   host: {
     title: "Familiada — prowadzący",
@@ -875,7 +873,7 @@ const pl = {
   },
   manual: {
     title: "Familiada — wskazówki",
-    legal: "Polityka prywatności 🔐",
+    legal: "Polityka prywatności",
     backToGames: "← Moje gry",
     backToBaseManager: "← Menadżer bazy",
     backToLogos: "← Moje logo",
@@ -1180,7 +1178,7 @@ const pl = {
       </p>
       <p class="m-p">
         Do baz pytań przechodzisz z górnego paska strony „Moje gry”
-        za pomocą przycisku <span class="m-code">Bazy pytań 🗃️</span>.
+        za pomocą przycisku <span class="m-code"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.15em" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.6"/><line x1="3" y1="12" x2="21" y2="12" stroke="currentColor" stroke-width="1.6"/><rect x="9" y="6.5" width="6" height="1.6" rx="0.8"/><rect x="9" y="15.5" width="6" height="1.6" rx="0.8"/></svg> Bazy pytań</span>.
       </p>
   
       <p class="m-p">
@@ -1440,7 +1438,7 @@ const pl = {
 
       <p class="m-p">
         Do ankiet przechodzisz z górnego paska na stronie „Moje gry”
-        przyciskiem <span class="m-code">Ankiety 📊</span>.
+        przyciskiem <span class="m-code"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.15em" aria-hidden="true"><rect x="2" y="20" width="20" height="1.4" opacity="0.5"/><rect x="2" y="16" width="20" height="1" opacity="0.25"/><rect x="2" y="11" width="20" height="1" opacity="0.25"/><rect x="4" y="11" width="4" height="9" rx="1"/><rect x="10.5" y="15" width="4" height="5" rx="1"/><rect x="17" y="6" width="4" height="14" rx="1"/></svg> Ankiety</span>.
       </p>
 
       <h3 class="m-h2">Strona ankiet</h3>
@@ -1455,7 +1453,7 @@ const pl = {
       </ul>
 
       <p class="m-p">
-        Złota kropka przy przycisku „Ankiety 📊” pokazuje liczbę aktywnych zadań do wykonania.
+        Złota kropka przy przycisku „Ankiety” pokazuje liczbę aktywnych zadań do wykonania.
       </p>
 
       <p class="m-p">
@@ -1667,7 +1665,7 @@ const pl = {
 
       <p class="m-p">
         Przechodzisz do niej z górnego paska na stronie „Moje gry”,
-        przyciskiem <span class="m-code">Subskrypcje 📧</span>.
+        przyciskiem <span class="m-code"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.15em" aria-hidden="true"><path d="M12 2a1.6 1.6 0 0 0-1.6 1.6v.6C7.7 4.9 6 7.2 6 10v5l-2 2v1h16v-1l-2-2v-5c0-2.8-1.7-5.1-4.4-5.8v-.6A1.6 1.6 0 0 0 12 2z"/><path d="M9.5 20a2.5 2.5 0 0 0 5 0h-5z"/></svg> Subskrypcje</span>.
       </p>
 
       <h3 class="m-h2">Strona subskrypcji</h3>
@@ -1678,7 +1676,7 @@ const pl = {
       </ul>
 
       <p class="m-p">
-        Złota kropka przy przycisku „Subskrypcje 📧” pokazuje liczbę zaproszeń do zaakceptowania.
+        Złota kropka przy przycisku „Subskrypcje” pokazuje liczbę zaproszeń do zaakceptowania.
       </p>
 
       <h3 class="m-h3">Moi subskrybenci</h3>
@@ -2322,7 +2320,7 @@ const pl = {
         i zweryfikowanych przez moderatorów. Możesz je przeglądać, dodawać do swojej biblioteki
         i uruchamiać bezpośrednio jako rozgrywkę — bez konieczności tworzenia własnych pytań.
         Do Gier Społeczności przechodzisz z górnego paska strony „Moje gry”
-        za pomocą przycisku <span class="m-code">Gry Społeczności🎮</span>.
+        za pomocą przycisku <span class="m-code"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.15em" aria-hidden="true"><rect x="2" y="8" width="20" height="9" rx="4" fill="none" stroke="currentColor" stroke-width="1.6"/><rect x="6.2" y="11.2" width="4" height="1.6" rx="0.6"/><rect x="7.4" y="10" width="1.6" height="4" rx="0.6"/><circle cx="16" cy="11" r="1.3"/><circle cx="18.5" cy="13.5" r="1.3"/></svg> Gry Społeczności</span>.
       </p>
 
       <h3 class="m-h2">Przeglądanie i biblioteka</h3>
@@ -2675,11 +2673,11 @@ const pl = {
   builder: {
     title: "Familiada — moje gry",
     nav: {
-      pollsHubPolls: "Ankiety 📊",
-      pollsHubSubs: "Subskrypcje 📧",
-      bases: "Bazy pytań 🗃️",
+      pollsHubPolls: "Ankiety",
+      pollsHubSubs: "Subskrypcje",
+      bases: "Bazy pytań",
       logo: "Logo 🖥️",
-      marketplace: "Gry Społeczności 🎮",
+      marketplace: "Gry Społeczności",
       connectDevice: "Podłącz urządzenie 📱",
       account: "Ustawienia konta",
     },
@@ -4375,7 +4373,7 @@ const pl = {
     stepAudio: "Dźwięk",
     audioUnlockTitle: "Odblokuj dźwięk",
     audioUnlockHint: "Kliknij raz przycisk, żeby przeglądarka zezwoliła na odtwarzanie dźwięków.",
-    audioUnlockBtn: "🔊 Odblokuj",
+    audioUnlockBtn: "Odblokuj",
     audioBlocked: "ZABLOKOWANE",
     audioStatusOk: "ODBLOKOWANE",
     stepTeamNames: "Nazwy drużyn",

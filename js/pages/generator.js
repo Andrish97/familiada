@@ -2,6 +2,7 @@
 import { sb as supabase } from "../core/supabase.js?v=v2026-09-21T08065";
 import { alertModal, confirmModal } from "../core/modal.js?v=v2026-09-21T08065";
 import { initUiSelect } from "../core/ui-select.js?v=v2026-09-21T08065";
+import { WARNING_ICON, GLOBE_ICON } from "../core/icons.js?v=v2026-09-21T08065";
 
 let games = [];
 let genLangSelect = null;
@@ -17,10 +18,16 @@ const $ = id => document.getElementById(id);
 const show = id => { const el = $(id); if(el) el.style.display = 'block'; };
 const hide = id => { const el = $(id); if(el) el.style.display = 'none'; };
 
-function showStatus(id, msg, type) {
+function showStatus(id, msg, type, icon) {
   const el = $(id);
   if(!el) return;
   el.textContent = msg;
+  if (icon) {
+    const ic = document.createElement("span");
+    ic.style.cssText = "display:inline-flex;vertical-align:-2px;margin-right:4px";
+    ic.innerHTML = icon.replace("<svg ", '<svg style="width:13px;height:13px;fill:currentColor" ');
+    el.prepend(ic);
+  }
   el.className = 'status-bar visible ' + (type || '');
 }
 
@@ -152,7 +159,7 @@ async function generateGames() {
       backoffMs = 400;
     } catch (e) {
       const msg = e?.message || String(e);
-      showStatus('gen-session-status', `⚠️ Błąd generowania (retry): ${msg}`, 'err');
+      showStatus('gen-session-status', `Błąd generowania (retry): ${msg}`, 'err', WARNING_ICON);
       await new Promise(r => setTimeout(r, backoffMs));
       backoffMs = Math.min(5000, Math.floor(backoffMs * 1.6));
     }
@@ -964,7 +971,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const lastLang = localStorage.getItem('gen_last_lang') || 'all';
   genLangSelect = initUiSelect($('gen-manage-lang'), {
     options: [
-      { value: 'all', label: '🌐 Wszystkie' },
+      { value: 'all', label: 'Wszystkie', icon: GLOBE_ICON },
       { value: 'pl', label: '🇵🇱 Polski' },
       { value: 'uk', label: '🇺🇦 Українська' },
       { value: 'en', label: '🇬🇧 English' },

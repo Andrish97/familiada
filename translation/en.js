@@ -112,13 +112,11 @@ const en = {
     logoPoolBusySettings: "You can't edit or delete a logo while changing game settings.",
   },
   guestInfo: {
-    title: "⚠️ Guest account",
+    title: "Guest account",
     subtitle: "Before you start — a few important notes:",
-    icon1: "🗂️",
     warning1: "Your data is stored <strong>in this browser only</strong>. Clearing your history (cookies) will result in losing access to your account.",
-    icon2: "⏳",
     warning2: "The account will be <strong>deleted after 5 days</strong> of inactivity.",
-    migrateTitle: "💾 How to keep your data?",
+    migrateTitle: "How to keep your data?",
     step1: "Click your username in the top right corner",
     step2: "Choose <em>Log\u00A0in\u00A0/\u00A0Create account</em>",
     step3: "Enter your email and password — you will be asked about data migration",
@@ -143,7 +141,7 @@ const en = {
       title: "Free Familiada Online. A real game show on your own equipment.",
       lead: "The best system for playing Familiada: collect answers from participants via a poll, then run the live game. Ideal game for weddings, birthdays and corporate parties. Everything in the browser.",
       ctaStart: "Start creating games and running the live show",
-      ctaMarketplace: "Browse Community Games 🎮",
+      ctaMarketplace: "Browse Community Games",
       note: "Guest mode available — free Familiada without registration.",
     },
     about: {
@@ -530,7 +528,7 @@ const en = {
     // pustą 4. kratkę z prawej zamiast wyśrodkować etykietę jak w pozostałych
     // językach. Zgłoszone: ma być przesunięte o jedną kratkę w prawo.
     sumLabel: " SUM",
-    audioUnlockBtn: "🔊 Unlock sound",
+    audioUnlockBtn: "Unlock sound",
   },
   host: {
     title: "Familiada — host",
@@ -872,7 +870,7 @@ const en = {
   },
   manual: {
     title: "Familiada — guide",
-    legal: "Privacy Policy 🔐",
+    legal: "Privacy Policy",
     backToGames: "← My games",
     backToBaseManager: "← Base manager",
     backToLogos: "← My logos",
@@ -1178,7 +1176,7 @@ const en = {
       </p>
       <p class="m-p">
         You access question bases from the top bar of the “My games” page
-        using the <span class="m-code">Question bases 🗃️</span> button.
+        using the <span class="m-code"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.15em" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.6"/><line x1="3" y1="12" x2="21" y2="12" stroke="currentColor" stroke-width="1.6"/><rect x="9" y="6.5" width="6" height="1.6" rx="0.8"/><rect x="9" y="15.5" width="6" height="1.6" rx="0.8"/></svg> Question bases</span> button.
       </p>
   
       <p class="m-p">
@@ -1438,7 +1436,7 @@ const en = {
 
       <p class="m-p">
         You open polls from the top bar on the “My games” page
-        using the <span class="m-code">Polls 📊</span> button.
+        using the <span class="m-code"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.15em" aria-hidden="true"><rect x="2" y="20" width="20" height="1.4" opacity="0.5"/><rect x="2" y="16" width="20" height="1" opacity="0.25"/><rect x="2" y="11" width="20" height="1" opacity="0.25"/><rect x="4" y="11" width="4" height="9" rx="1"/><rect x="10.5" y="15" width="4" height="5" rx="1"/><rect x="17" y="6" width="4" height="14" rx="1"/></svg> Polls</span> button.
       </p>
 
       <h3 class="m-h2">Polls page</h3>
@@ -1453,7 +1451,7 @@ const en = {
       </ul>
 
       <p class="m-p">
-        The gold dot next to the <span class="m-code">Polls 📊</span> button shows
+        The gold dot next to the <span class="m-code">Polls</span> button shows
         how many active tasks are waiting.
       </p>
 
@@ -1665,7 +1663,7 @@ const en = {
 
       <p class="m-p">
         You open it from the top bar on “My games”
-        with the <span class="m-code">Subscriptions 📧</span> button.
+        with the <span class="m-code"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.15em" aria-hidden="true"><path d="M12 2a1.6 1.6 0 0 0-1.6 1.6v.6C7.7 4.9 6 7.2 6 10v5l-2 2v1h16v-1l-2-2v-5c0-2.8-1.7-5.1-4.4-5.8v-.6A1.6 1.6 0 0 0 12 2z"/><path d="M9.5 20a2.5 2.5 0 0 0 5 0h-5z"/></svg> Subscriptions</span> button.
       </p>
 
       <h3 class="m-h2">Subscriptions page</h3>
@@ -1676,7 +1674,7 @@ const en = {
       </ul>
 
       <p class="m-p">
-        The gold dot near <span class="m-code">Subscriptions 📧</span> shows how many invitations are waiting to be accepted.
+        The gold dot near <span class="m-code">Subscriptions</span> shows how many invitations are waiting to be accepted.
       </p>
 
       <h3 class="m-h3">My subscribers</h3>
@@ -2319,7 +2317,7 @@ const en = {
         and verified by moderators. You can browse them, add them to your library
         and launch them directly as a game — without creating your own questions.
         You access Community Games from the top bar of the "My games" page
-        using the <span class="m-code">Community Games🎮</span> button.
+        using the <span class="m-code"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.15em" aria-hidden="true"><rect x="2" y="8" width="20" height="9" rx="4" fill="none" stroke="currentColor" stroke-width="1.6"/><rect x="6.2" y="11.2" width="4" height="1.6" rx="0.6"/><rect x="7.4" y="10" width="1.6" height="4" rx="0.6"/><circle cx="16" cy="11" r="1.3"/><circle cx="18.5" cy="13.5" r="1.3"/></svg> Community Games</span> button.
       </p>
 
       <h3 class="m-h2">Browsing and library</h3>
@@ -2801,11 +2799,11 @@ const en = {
   builder: {
     title: "Familiada — my games",
     nav: {
-      pollsHubPolls: "Polls 📊",
-      pollsHubSubs: "Subscriptions 📧",
-      bases: "Question bases 🗃️",
+      pollsHubPolls: "Polls",
+      pollsHubSubs: "Subscriptions",
+      bases: "Question bases",
       logo: "Logo 🖥️",
-      marketplace: "Community Games 🎮",
+      marketplace: "Community Games",
       connectDevice: "Connect device 📱",
       account: "Account settings",
     },
@@ -4656,7 +4654,7 @@ const en = {
     stepAudio: "Audio",
     audioUnlockTitle: "Unlock audio",
     audioUnlockHint: "Click the button to allow the browser to play sounds.",
-    audioUnlockBtn: "🔊 Unlock",
+    audioUnlockBtn: "Unlock",
     audioBlocked: "BLOCKED",
     audioStatusOk: "UNLOCKED",
     stepTeamNames: "Team Names",

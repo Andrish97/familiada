@@ -74,7 +74,7 @@
   <div class="helpOverlay hidden" id="helpOverlay">
     <div class="helpModal" role="dialog" aria-modal="true">
       <div class="helpModalToolbar">
-        <button class="btn btn-sm" id="btnLegal" type="button" data-i18n="manual.legal">🔐 Polityka prywatności</button>
+        <button class="btn btn-sm" id="btnLegal" type="button"><svg class="btn-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true"><path d="M12 2.5l7 2.8v6c0 5-3 8.3-7 10.7-4-2.4-7-5.7-7-10.7v-6l7-2.8z"/><path d="M9 12l2 2 4-4"/></svg> <span data-i18n="manual.legal">Polityka prywatności</span></button>
         <button class="btn sm" id="btnHelpClose" type="button" onclick="document.getElementById('helpOverlay').classList.add('hidden')">✕</button>
       </div>
       <iframe id="helpFrame" class="helpFrame" src="/manual?modal=control" title="Wskazówki"></iframe>
@@ -424,7 +424,7 @@
                     Kliknij raz przycisk, żeby przeglądarka zezwoliła na odtwarzanie dźwięków.
                   </div>
                   <div class="rowBtns">
-                    <button class="btn gold" id="btnUnlockAudio" type="button" data-i18n="control.audioUnlockBtn">🔊 Odblokuj</button>
+                    <button class="btn gold" id="btnUnlockAudio" type="button"><svg class="btn-ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><polygon points="4,9 8,9 13,5 13,19 8,15 4,15"/><path d="M16 8.5a5 5 0 0 1 0 7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M18.5 6a9 9 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg> <span data-i18n="control.audioUnlockBtn">Odblokuj</span></button>
                     <div class="badge bad" id="audioStatus" data-i18n="control.audioBlocked">ZABLOKOWANE</div>
                   </div>
                 </div>

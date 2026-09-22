@@ -101,7 +101,7 @@
                 <input class="dt-input" id="returnAtMonth" type="number" inputmode="numeric" placeholder="MM" min="1" max="12"/>
                 <span class="dt-dot">.</span>
                 <input class="dt-input" id="returnAtYear" type="number" inputmode="numeric" placeholder="YYYY" min="2024" max="2035"/>
-                <button class="btn sm dt-open" data-dt-open="returnAt" type="button">📅</button>
+                <button class="btn sm dt-open" data-dt-open="returnAt" type="button"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="3" y="4" width="18" height="17" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/><rect x="7" y="1.5" width="2" height="4" rx="1"/><rect x="15" y="1.5" width="2" height="4" rx="1"/><line x1="3" y1="9" x2="21" y2="9" stroke="currentColor" stroke-width="1.6"/><text x="12" y="18" text-anchor="middle" font-size="9" font-weight="700" font-family="sans-serif" fill="currentColor">17</text></svg></button>
               </div>
               <span class="field-hint">Minimum 10 minut od teraz.</span>
             </div>
@@ -120,7 +120,7 @@
                 <input class="dt-input" id="endAtMonth" type="number" inputmode="numeric" placeholder="MM" min="1" max="12"/>
                 <span class="dt-dot">.</span>
                 <input class="dt-input" id="endAtYear" type="number" inputmode="numeric" placeholder="YYYY" min="2024" max="2035"/>
-                <button class="btn sm dt-open" data-dt-open="endAt" type="button">📅</button>
+                <button class="btn sm dt-open" data-dt-open="endAt" type="button"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="3" y="4" width="18" height="17" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/><rect x="7" y="1.5" width="2" height="4" rx="1"/><rect x="15" y="1.5" width="2" height="4" rx="1"/><line x1="3" y1="9" x2="21" y2="9" stroke="currentColor" stroke-width="1.6"/><text x="12" y="18" text-anchor="middle" font-size="9" font-weight="700" font-family="sans-serif" fill="currentColor">17</text></svg></button>
               </div>
               <span class="field-hint">Minimum 10 minut od teraz.</span>
             </div>
@@ -538,12 +538,12 @@
             <button class="btn gold sm" id="btnMailCompose" type="button" style="width:100%;margin-bottom:18px"><svg class="btn-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zm18-11.5a1 1 0 0 0 0-1.41l-1.59-1.59a1 1 0 0 0-1.41 0l-1.13 1.13 3.75 3.75L21 5.75z"/></svg> <span>Napisz wiadomość</span></button>
             <nav class="mail-folders">
               <div class="mail-folder active" data-folder="inbox" id="mfInbox">
-                <span class="mail-folder-icon"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg></span>
+                <span class="mail-folder-icon"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M14 1H10v5H6l6 6 6-6h-4V1z"/><rect x="2" y="12" width="20" height="11" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M3 13.3l9 6.3 9-6.3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg></span>
                 <span class="mail-folder-name">Przychodzące</span>
                 <span class="mail-folder-badge" id="badgeInbox"></span>
               </div>
               <div class="mail-folder" data-folder="sent" id="mfSent">
-                <span class="mail-folder-icon"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 18v2h14v-2H5zm7-16L5 9h4v6h6V9h4l-7-7z"/></svg></span>
+                <span class="mail-folder-icon"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M10 12h4V7h4l-6-6-6 6h4v5z"/><rect x="2" y="12" width="20" height="11" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M3 13.3l9 6.3 9-6.3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg></span>
                 <span class="mail-folder-name">Wysłane</span>
               </div>
               <div class="mail-folder" data-folder="marketing" id="mfMarketing">
@@ -574,7 +574,7 @@
           <!-- Conversation / Compose pane -->
           <div class="mail-conv" id="mailConv">
             <div class="mail-conv-placeholder" id="mailConvPlaceholder">
-              <div style="font-size:48px;margin-bottom:12px;opacity:.3">✉</div>
+              <div style="width:48px;height:48px;margin:0 auto 12px;opacity:.3"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M3 6.5l9 6.5 9-6.5"/></svg></div>
               <div style="opacity:.4;font-size:13px">Wybierz wątek</div>
             </div>
           </div>

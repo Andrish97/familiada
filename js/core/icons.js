@@ -108,3 +108,50 @@ export const UPLOAD_ICON = `<svg viewBox="0 0 24 24" aria-hidden="true" focusabl
 export const NOTE_ICON = `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill-rule="evenodd" clip-rule="evenodd" d="M4 2h16v20H4V2zm3 5h10v1.6H7V7zm0 4h10v1.6H7V11zm0 4h6v1.6H7V15z"/></svg>`;
 export const CAMERA_ICON = `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill-rule="evenodd" clip-rule="evenodd" d="M9 3l-1.5 2H4a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-3.5L15 3H9zm3 14.5a4.5 4.5 0 1 0 0-9 4.5 4.5 0 0 0 0 9zm0-2a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z"/></svg>`;
 export const WARNING_ICON = `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill-rule="evenodd" clip-rule="evenodd" d="M12 2 1 21h22L12 2zm-1 7h2v6h-2V9zm0 8h2v2h-2v-2z"/></svg>`;
+
+// Tarcza z ptaszkiem -- link do polityki prywatności ("chronione", nie
+// "logowanie/hasło" jak sugerowałaby kłódka). Styl konturowy (jak
+// ENVELOPE_ICON/GLOBE_ICON) -- bez wypełnienia, więc żadna część nie zależy
+// od koloru tła miejsca użycia.
+export const SHIELD_ICON = `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"><path d="M12 2.5l7 2.8v6c0 5-3 8.3-7 10.7-4-2.4-7-5.7-7-10.7v-6l7-2.8z"/><path d="M9 12l2 2 4-4"/></svg>`;
+
+export const MEGAPHONE_ICON = `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M2 10.5v3a1 1 0 0 0 1 1h1.5l12.8 4.3c1 .3 2-.4 2-1.5V6.7c0-1.1-1-1.8-2-1.5L4.5 9.5H3a1 1 0 0 0-1 1z"/><rect x="4" y="17" width="2.2" height="4.5" rx="1"/></svg>`;
+
+// Medal zamiast pionka szachowego -- odznaka "certyfikowany producent" w
+// tabeli marketplace. Obrys (nie wypełnienie) dla obręczy i gwiazdki, żeby
+// nie potrzebować "dziury" zależnej od tła.
+export const MEDAL_ICON = `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M8 13l-3 8 4-1.5L12 21l3-1.5 4 1.5-3-8z"/><circle cx="12" cy="9" r="7" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M12 5.5l1.3 2.6 2.9.4-2.1 2 .5 2.9-2.6-1.4-2.6 1.4.5-2.9-2.1-2 2.9-.4z" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linejoin="round"/></svg>`;
+
+// Typ urządzenia "host" (prowadzący/moderator) -- osoba + mikrofon, bo to
+// człowiek prowadzący grę, nie sam mikrofon.
+export const HOST_ICON = `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="9" cy="6.5" r="3.5"/><path d="M2 20c0-3.6 3.1-6.3 7-6.3s7 2.7 7 6.3v1H2v-1z"/><rect x="15.5" y="2" width="4" height="7.5" rx="2"/><path d="M13.8 8a4.2 4.2 0 0 0 8.4 0" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><rect x="17" y="11.5" width="1.4" height="2.6"/></svg>`;
+
+// Typ urządzenia "buzzer" -- fizyczny przycisk kontestanta (kopuła na
+// podstawie), nie dzwonek (dzwonek jest już zajęty przez BELL_ICON =
+// powiadomienia/subskrypcje, inne znaczenie).
+export const BUZZER_ICON = `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 3a7 7 0 0 0-7 7v3h14v-3a7 7 0 0 0-7-7z"/><rect x="4" y="13" width="16" height="2.2" rx="1.1"/><rect x="10.5" y="16.2" width="3" height="5" rx="1"/></svg>`;
+
+// Dzwonek powiadomień/subskrypcji (nawigacja "Subskrypcje").
+export const BELL_ICON = `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 2a1.6 1.6 0 0 0-1.6 1.6v.6C7.7 4.9 6 7.2 6 10v5l-2 2v1h16v-1l-2-2v-5c0-2.8-1.7-5.1-4.4-5.8v-.6A1.6 1.6 0 0 0 12 2z"/><path d="M9.5 20a2.5 2.5 0 0 0 5 0h-5z"/></svg>`;
+
+// Wykres słupkowy "Ankiety" -- używany zarówno w nawigacji (przycisk
+// "Ankiety") jak i dla typu urządzenia "poll_qr" (ekran QR do głosowania w
+// ankiecie), bo oba nawiązują do tej samej funkcji ankiet.
+export const POLLS_ICON = `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="2" y="20" width="20" height="1.4" opacity="0.5"/><rect x="2" y="16" width="20" height="1" opacity="0.25"/><rect x="2" y="11" width="20" height="1" opacity="0.25"/><rect x="4" y="11" width="4" height="9" rx="1"/><rect x="10.5" y="15" width="4" height="5" rx="1"/><rect x="17" y="6" width="4" height="14" rx="1"/></svg>`;
+
+// Koperta + strzałka w dół -- folder "Przychodzące" (wiadomości email).
+export const IMPORT_ICON = `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M14 1H10v5H6l6 6 6-6h-4V1z"/><rect x="2" y="12" width="20" height="11" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M3 13.3l9 6.3 9-6.3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>`;
+
+// Koperta + strzałka w górę -- folder "Wysłane" (para do IMPORT_ICON).
+export const EXPORT_ICON = `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M10 12h4V7h4l-6-6-6 6h4v5z"/><rect x="2" y="12" width="20" height="11" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M3 13.3l9 6.3 9-6.3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>`;
+
+// Kalendarz z cyfrą "17" -- przyciski otwierające date-picker (data domyślna
+// w tych dwóch miejscach to zawsze ten sam dzień, więc cyfra jest stała, nie
+// dynamiczna).
+export const CALENDAR_ICON = `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="3" y="4" width="18" height="17" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/><rect x="7" y="1.5" width="2" height="4" rx="1"/><rect x="15" y="1.5" width="2" height="4" rx="1"/><line x1="3" y1="9" x2="21" y2="9" stroke="currentColor" stroke-width="1.6"/><text x="12" y="18" text-anchor="middle" font-size="9" font-weight="700" font-family="sans-serif" fill="currentColor">17</text></svg>`;
+
+// Szafka z dwiema szufladami -- nawigacja "Bazy pytań" (builder.html).
+export const DRAWER_ICON = `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="3" y="3" width="18" height="18" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.6"/><line x1="3" y1="12" x2="21" y2="12" stroke="currentColor" stroke-width="1.6"/><rect x="9" y="6.5" width="6" height="1.6" rx="0.8"/><rect x="9" y="15.5" width="6" height="1.6" rx="0.8"/></svg>`;
+
+// Kontroler do gier -- nawigacja "Gry Społeczności" / hero CTA.
+export const GAMEPAD_ICON = `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="2" y="8" width="20" height="9" rx="4" fill="none" stroke="currentColor" stroke-width="1.6"/><rect x="6.2" y="11.2" width="4" height="1.6" rx="0.6"/><rect x="7.4" y="10" width="1.6" height="4" rx="0.6"/><circle cx="16" cy="11" r="1.3"/><circle cx="18.5" cy="13.5" r="1.3"/></svg>`;

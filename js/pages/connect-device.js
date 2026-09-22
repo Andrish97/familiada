@@ -7,6 +7,7 @@ import { isMobileDevice } from "../core/pwa.js?v=v2026-09-21T08065";
 import { initI18n, t, getUiLang, withLangParam } from "../../translation/translation.js?v=v2026-09-21T08065";
 import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-09-21T08065";
 import { alertModal } from "../core/modal.js?v=v2026-09-21T08065";
+import { HOST_ICON, BUZZER_ICON, POLLS_ICON } from "../core/icons.js?v=v2026-09-21T08065";
 import "../core/contact-modal.js";
 
 const btnBack             = document.getElementById("btnBack");
@@ -43,9 +44,9 @@ function deviceTypeLabel(type) {
 }
 
 function deviceTypeEmoji(type) {
-  if (type === "host")    return "🎤";
-  if (type === "buzzer")  return "🔔";
-  if (type === "poll_qr") return "📊";
+  if (type === "host")    return HOST_ICON;
+  if (type === "buzzer")  return BUZZER_ICON;
+  if (type === "poll_qr") return POLLS_ICON;
   return "📺";
 }
 
@@ -71,7 +72,7 @@ function showDevicePreview(info) {
   const typeLabel = deviceTypeLabel(info.device_type);
   const emoji = deviceTypeEmoji(info.device_type);
   if (devicePreviewTitle) {
-    devicePreviewTitle.textContent = `${emoji} ${typeLabel}`;
+    devicePreviewTitle.innerHTML = `${emoji} ${escapeHtml(typeLabel)}`;
   }
   if (devicePreviewSub) {
     const gameName = info.game_name || "—";

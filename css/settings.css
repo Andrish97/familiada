@@ -301,6 +301,8 @@ body.settings-body > main.wrap{
 .dt-open{
   padding: 6px 10px;
 }
+.dt-open svg{ width: 15px; height: 15px; vertical-align: -3px; }
+.dt-open svg:not([fill]){ fill: currentColor; }
 
 .dt-modal{
   position: fixed;
