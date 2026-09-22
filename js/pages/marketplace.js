@@ -11,7 +11,7 @@ import { initUiSelect } from "../core/ui-select.js?v=v2026-09-21T08065";
 import { confirmModal } from "../core/modal.js?v=v2026-09-21T08065";
 import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../core/modal-sheet.js?v=v2026-09-21T08065";
 import "../core/contact-modal.js";
-import { STAR_ICON, STAR_EMPTY_ICON } from "../core/icons.js?v=v2026-09-21T08065";
+import { STAR_ICON, STAR_EMPTY_ICON, CHECK_ICON } from "../core/icons.js?v=v2026-09-21T08065";
 
 /* =========================================================
    Constants
@@ -167,7 +167,7 @@ function makeGameCard(g) {
   card.innerHTML = `
     <div class="mkt-card-top">
       <span class="mkt-lang-badge">${esc(g.lang.toUpperCase())}</span>
-      ${inLibrary ? `<span class="mkt-badge mkt-badge-added">${esc(t("marketplace.addedBadge"))}</span>` : ""}
+      ${inLibrary ? `<span class="mkt-badge mkt-badge-added">${CHECK_ICON}<span>${esc(t("marketplace.addedBadge"))}</span></span>` : ""}
     </div>
     <div class="mkt-card-title">${esc(g.title)}</div>
     <div class="mkt-card-author">${authorLabel}</div>
@@ -288,9 +288,9 @@ function updateLibraryButtons(inLibrary, withdrawn = false) {
   if (els.addedBadge) {
     els.addedBadge.hidden = !inLibrary;
     if (inLibrary && withdrawn) {
-      els.addedBadge.textContent = `${t("marketplace.addedBadge")} · ${t("marketplace.withdrawnBadge")}`;
+      els.addedBadge.innerHTML = `${CHECK_ICON}<span>${esc(t("marketplace.addedBadge"))} · ${esc(t("marketplace.withdrawnBadge"))}</span>`;
     } else if (inLibrary) {
-      els.addedBadge.textContent = t("marketplace.addedBadge");
+      els.addedBadge.innerHTML = `${CHECK_ICON}<span>${esc(t("marketplace.addedBadge"))}</span>`;
     }
   }
 }

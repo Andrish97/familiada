@@ -18,7 +18,7 @@ import { alertModal, confirmModal, promptModal } from "../core/modal.js?v=v2026-
 import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../core/modal-sheet.js?v=v2026-09-21T08065";
 import { sb } from "../core/supabase.js?v=v2026-09-21T08065";
 import { v as cacheBust } from "../core/cache-bust.js?v=v2026-09-21T08065";
-import { TRASH_ICON, STAR_ICON, STAR_EMPTY_ICON, SEARCH_ICON, SAVE_ICON, ENVELOPE_ICON, NOTE_ICON, PENCIL_ICON, EYE_ICON, MEDAL_ICON, MEGAPHONE_ICON, WARNING_ICON } from "../core/icons.js?v=v2026-09-21T08065";
+import { TRASH_ICON, STAR_ICON, STAR_EMPTY_ICON, SEARCH_ICON, SAVE_ICON, ENVELOPE_ICON, NOTE_ICON, PENCIL_ICON, EYE_ICON, MEDAL_ICON, MEGAPHONE_ICON, WARNING_ICON, CHECK_ICON, CANCEL_ICON, FOLDER_ICON } from "../core/icons.js?v=v2026-09-21T08065";
 
 // settings.html nie ma naturalnego przycisku wstecz na mobile (panel admina
 // bez nawigacji "do tyłu") -- btnBackSheet istnieje wyłącznie na potrzeby
@@ -292,9 +292,15 @@ function moveLangSwitcher(locked) {
   }
 }
 
-function showToast(message, kind = "success") {
+function showToast(message, kind = "success", icon = "") {
   if (!els.toast) return;
   els.toast.textContent = message;
+  if (icon) {
+    const iconEl = document.createElement("span");
+    iconEl.className = "toast-icon";
+    iconEl.innerHTML = icon;
+    els.toast.prepend(iconEl);
+  }
   els.toast.classList.remove("success", "error", "show");
   els.toast.classList.add(kind);
   void els.toast.offsetWidth;
@@ -1300,7 +1306,7 @@ async function loadRatings({ silent = false } = {}) {
     if (statsError) throw statsError;
     const stats = Array.isArray(statsData) ? statsData[0] : statsData;
     if (els.ratingsGlobalStats && stats) {
-      els.ratingsGlobalStats.innerHTML = `Średnia: ${stats.avg_stars}/5 ⭐ | Łącznie: ${stats.total_count}`;
+      els.ratingsGlobalStats.innerHTML = `Średnia: ${stats.avg_stars}/5 <span class="inline-icon">${STAR_ICON}</span> | Łącznie: ${stats.total_count}`;
     }
 
     // Load detailed ratings
@@ -2347,7 +2353,7 @@ async function approveMarketGame(id) {
     });
     const json = await res.json();
     if (!json.ok) throw new Error(json.error || "approve_failed");
-    showToast("Zatwierdzono ✓");
+    showToast("Zatwierdzono", "success", CHECK_ICON);
     closeMarketPreview();
     await loadMarketplace({ silent: true });
   } catch (err) {
@@ -5361,7 +5367,13 @@ function statusDotEl(color, text) {
 
 function fmtSessionStatus(r) {
   const meta = SESSION_STATUS_META[r.effective_status];
-  if (!meta) return r.effective_status === "legacy" ? "📁 Archiwalna" : (r.effective_status || "—");
+  if (!meta) {
+    if (r.effective_status !== "legacy") return r.effective_status || "—";
+    const archived = document.createElement("span");
+    archived.className = "status-with-icon";
+    archived.innerHTML = `${FOLDER_ICON}<span>Archiwalna</span>`;
+    return archived;
+  }
   const errCount = Number(r.error_count) || 0;
   const dotEl = statusDotEl(meta.color, meta.label);
   if (errCount > 0) {
@@ -6439,7 +6451,7 @@ function wireEvents() {
       const res = await fetch(`${MC_API}/api/search-runs?target_count=${count}`, {method:"POST", headers:{Authorization:`Bearer ${tk}`}});
       if (!res.ok) throw new Error("Failed");
       const data = await res.json();
-      actionBtn.textContent = "✅ Uruchomiono!";
+      actionBtn.innerHTML = `${CHECK_ICON}<span>Uruchomiono!</span>`;
       setTimeout(()=>{ mcState.status = "running"; mcUpdateButtons(); }, 1500);
       mcState.logRun = data.run_id;
       mcStartLogAutoRefresh();
@@ -6556,7 +6568,7 @@ function wireEvents() {
     }
     tbody.innerHTML = mcState.contacts.map((c, i) => {
       const usedClass = c.is_used ? 'mc-used' : '';
-      const usedText = c.is_used ? '✓' : '';
+      const usedText = c.is_used ? CHECK_ICON : '';
       const addedAt = c.added_at ? new Date(c.added_at).toLocaleString('pl-PL', {month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit'}) : '—';
       return `<tr class="${usedClass}" data-id="${c.id}">
         <td class="mc-cell mc-selectable" data-row="${i}" data-col="0">${mcEsc(c.title||'')}</td>
@@ -6793,13 +6805,13 @@ function wireEvents() {
     const btn = document.getElementById("mcMarkUsedBtn");
     if (!btn) return;
     const rows = new Set(mcState.selectedCells.map(c => c.row));
-    if (!rows.size) { btn.textContent = "✓ Użyte"; return; }
+    if (!rows.size) { btn.innerHTML = `${CHECK_ICON}<span>Użyte</span>`; return; }
     const selected = [...rows].map(i => mcState.contacts[i]).filter(Boolean);
-    if (!selected.length) { btn.textContent = "✓ Użyte"; return; }
+    if (!selected.length) { btn.innerHTML = `${CHECK_ICON}<span>Użyte</span>`; return; }
     const allUsed = selected.every(c => c.is_used);
     const allUnused = selected.every(c => !c.is_used);
-    if (allUsed) btn.textContent = "✗ Nieużyte";
-    else if (allUnused) btn.textContent = "✓ Użyte";
+    if (allUsed) btn.innerHTML = `${CANCEL_ICON}<span>Nieużyte</span>`;
+    else if (allUnused) btn.innerHTML = `${CHECK_ICON}<span>Użyte</span>`;
     else btn.textContent = "⇄ Użyte";
   }
 

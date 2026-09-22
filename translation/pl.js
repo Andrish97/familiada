@@ -3937,7 +3937,7 @@ const pl = {
         sampleText: "Przykład",
         defaultText: "Tekst",
         shortcutPrefix: "Skrót: ",
-        polygonDone: "✓ Zamknij",
+        polygonDone: "Zamknij",
         // Kształty
         shapes: {
           line: "Linia",
@@ -3971,7 +3971,7 @@ const pl = {
       },
     },
     image: {
-      pickImage: "Wybierz obraz 📁",
+      pickImage: "Wybierz obraz",
       brightness: "Jasność",
       contrast: "Kontrast",
       gamma: "Gamma",
@@ -4816,7 +4816,7 @@ const pl = {
     btnBackBrowse: "← Przeglądaj",
     btnAddToLibrary: "Dodaj do moich gier",
     btnRemoveFromLibrary: "Usuń z moich gier",
-    addedBadge: "Dodano ✅",
+    addedBadge: "Dodano",
     withdrawnBadge: "Wycofana",
     producerBadge: "Familiada",
     langLabel: "Język",

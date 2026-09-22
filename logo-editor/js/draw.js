@@ -19,7 +19,7 @@ import { v as cacheBust } from "../../js/core/cache-bust.js?v=v2026-09-21T08065"
 import {
   SELECT_ICON, PAN_ICON, ZOOM_IN_ICON, ZOOM_OUT_ICON, TEXT_ICON,
   BRUSH_ICON, ERASER_ICON, SHAPES_ICON, UNDO_ICON, REDO_ICON,
-  DUPLICATE_ICON, EYE_ICON, TRASH_ICON,
+  DUPLICATE_ICON, EYE_ICON, TRASH_ICON, CHECK_ICON,
 } from "../../js/core/icons.js?v=v2026-09-21T08065";
 
 export function initDrawEditor(ctx) {
@@ -218,7 +218,7 @@ export function initDrawEditor(ctx) {
       }
 
       if (isPoly && polyPoints.length > 0) {
-        html += `<div class="ctxGroup"><button class="ctxBtn on" id="cPolyDone">${T("polygonDone")}</button></div>`;
+        html += `<div class="ctxGroup"><button class="ctxBtn on" id="cPolyDone">${CHECK_ICON}<span>${T("polygonDone")}</span></button></div>`;
       }
 
       showSettings(html);

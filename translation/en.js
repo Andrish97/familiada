@@ -4062,7 +4062,7 @@ const en = {
         sampleText: "Sample",
         defaultText: "Text",
         shortcutPrefix: "Shortcut: ",
-        polygonDone: "✓ Close",
+        polygonDone: "Close",
         // Shapes
         shapes: {
           line: "Line",
@@ -4096,7 +4096,7 @@ const en = {
       },
     },
     image: {
-      pickImage: "Choose image 📁",
+      pickImage: "Choose image",
       brightness: "Brightness",
       contrast: "Contrast",
       gamma: "Gamma",
@@ -4487,7 +4487,7 @@ const en = {
     btnBackBrowse: "← Browse",
     btnAddToLibrary: "Add to my games",
     btnRemoveFromLibrary: "Remove from my games",
-    addedBadge: "Added ✅",
+    addedBadge: "Added",
     withdrawnBadge: "Withdrawn",
     producerBadge: "Familiada",
     langLabel: "Language",

@@ -4048,7 +4048,7 @@ const uk = {
         sampleText: "Зразок",
         defaultText: "Текст",
         shortcutPrefix: "Скор.: ",
-        polygonDone: "✓ Закрити",
+        polygonDone: "Закрити",
         // Форми
         shapes: {
           line: "Лінія",
@@ -4082,7 +4082,7 @@ const uk = {
       },
     },
     image: {
-      pickImage: "Вибрати зображення 📁",
+      pickImage: "Вибрати зображення",
       brightness: "Яскравість",
       contrast: "Контраст",
       gamma: "Гамма",
@@ -4473,7 +4473,7 @@ const uk = {
     btnBackBrowse: "← Перегляд",
     btnAddToLibrary: "Додати до моїх ігор",
     btnRemoveFromLibrary: "Видалити з моїх ігор",
-    addedBadge: "Додано ✅",
+    addedBadge: "Додано",
     withdrawnBadge: "Відкликано",
     producerBadge: "Familiada",
     langLabel: "Мова",
