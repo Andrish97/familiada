@@ -15,6 +15,10 @@
     {
       "title": "Theme Builder (edytor motywów)",
       "path": "/settings-tools/theme_builder.html"
+    },
+    {
+      "title": "Refaktor ikon i symboli — audyt tymczasowy",
+      "path": "/settings-tools/icon-refactor-audit.html"
     }
   ]
 }
