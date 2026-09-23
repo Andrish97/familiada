@@ -23,7 +23,7 @@
 //   - F14 (finishFinal): synced "round_transition"+"reveal", a PO całej
 //     tej parze dodatkowo "show_intro".
 
-import { deriveEvents } from "./deriveEvents.js?v=v2026-09-23T21015";
+import { deriveEvents } from "./deriveEvents.js?v=v2026-09-23T22291";
 
 export function createSoundCueEngine({ playSfx, getSfxDuration }) {
   async function durationOf(key) {

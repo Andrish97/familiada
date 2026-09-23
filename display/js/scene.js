@@ -1,10 +1,10 @@
 // scene.js
-import { loadJson, buildGlyphMap, resolveGlyph } from "./fonts.js?v=v2026-09-23T21015";
-import { createAnimator } from "./anim.js?v=v2026-09-23T21015";
-import { createDisplays } from "./displays.js?v=v2026-09-23T21015";
-import { createThemeManager } from "./theme_manager.js?v=v2026-09-23T21015";
-import { sb } from "../../js/core/supabase.js?v=v2026-09-23T21015";
-import { t } from "../../translation/translation.js?v=v2026-09-23T21015";
+import { loadJson, buildGlyphMap, resolveGlyph } from "./fonts.js?v=v2026-09-23T22291";
+import { createAnimator } from "./anim.js?v=v2026-09-23T22291";
+import { createDisplays } from "./displays.js?v=v2026-09-23T22291";
+import { createThemeManager } from "./theme_manager.js?v=v2026-09-23T22291";
+import { sb } from "../../js/core/supabase.js?v=v2026-09-23T22291";
+import { t } from "../../translation/translation.js?v=v2026-09-23T22291";
 
 export async function createScene() {
   const NS = "http://www.w3.org/2000/svg";
