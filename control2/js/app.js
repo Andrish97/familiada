@@ -6,20 +6,20 @@
 // engine.js) — ale i tak przechodzi przez assertTransition(), żeby tabela
 // stanów była mechanizmem wszędzie, nie tylko wewnątrz silnika reguł gry.
 
-import { guardDesktopOnly } from "../../js/core/device-guard.js?v=v2026-09-21T08065";
-import { guardResourceLock, guardResourceBusy } from "../../js/core/resource-lock.js?v=v2026-09-21T08065";
-import { initI18n, getUiLang, t } from "../../translation/translation.js?v=v2026-09-21T08065";
-import { requireAuth } from "../../js/core/auth.js?v=v2026-09-21T08065";
-import { setTopbarAccount } from "../../js/core/topbar-controller.js?v=v2026-09-21T08065";
-import { sb } from "../../js/core/supabase.js?v=v2026-09-21T08065";
-import { loadQuestions, loadAnswers } from "../../js/core/game-validate.js?v=v2026-09-21T08065";
-import { loadSfxManifest, initSfx, setCurrentGameId, unlockAudio, applySfxGameSettings, loadSfxFromCloud, playSfx, getSfxDuration } from "../../js/core/sfx.js?v=v2026-09-21T08065";
-import { listGameSounds } from "../../js/core/sfx-cloud.js?v=v2026-09-21T08065";
-import { assertTransition } from "../../shared/gameStateMachine.js?v=v2026-09-21T08065";
-import { confirmModal } from "../../js/core/modal.js?v=v2026-09-21T08065";
-import { DEFAULT_SETTINGS } from "../../shared/gameStateShape.js?v=v2026-09-21T08065";
-import { rt } from "../../js/core/realtime.js?v=v2026-09-21T08065";
-import { doorbellTopic } from "../../js/core/game-state-doorbell.js?v=v2026-09-21T08065";
+import { guardDesktopOnly } from "../../js/core/device-guard.js?v=v2026-09-21T22104";
+import { guardResourceLock, guardResourceBusy } from "../../js/core/resource-lock.js?v=v2026-09-21T22104";
+import { initI18n, getUiLang, t } from "../../translation/translation.js?v=v2026-09-21T22104";
+import { requireAuth } from "../../js/core/auth.js?v=v2026-09-21T22104";
+import { setTopbarAccount } from "../../js/core/topbar-controller.js?v=v2026-09-21T22104";
+import { sb } from "../../js/core/supabase.js?v=v2026-09-21T22104";
+import { loadQuestions, loadAnswers } from "../../js/core/game-validate.js?v=v2026-09-21T22104";
+import { loadSfxManifest, initSfx, setCurrentGameId, unlockAudio, applySfxGameSettings, loadSfxFromCloud, playSfx, getSfxDuration } from "../../js/core/sfx.js?v=v2026-09-21T22104";
+import { listGameSounds } from "../../js/core/sfx-cloud.js?v=v2026-09-21T22104";
+import { assertTransition } from "../../shared/gameStateMachine.js?v=v2026-09-21T22104";
+import { confirmModal } from "../../js/core/modal.js?v=v2026-09-21T22104";
+import { DEFAULT_SETTINGS } from "../../shared/gameStateShape.js?v=v2026-09-21T22104";
+import { rt } from "../../js/core/realtime.js?v=v2026-09-21T22104";
+import { doorbellTopic } from "../../js/core/game-state-doorbell.js?v=v2026-09-21T22104";
 
 function qrImgSrc(url) {
   const u = encodeURIComponent(String(url ?? ""));
@@ -95,15 +95,16 @@ function applyGameSettingsToState(settings, state) {
   }
 }
 
-import { createStore } from "./store.js?v=v2026-09-21T08065";
-import { createEngine } from "./engine.js?v=v2026-09-21T08065";
-import { createActionGate } from "./actionGate.js?v=v2026-09-21T08065";
-import { createDevices } from "./devices.js?v=v2026-09-21T08065";
-import { createPresence } from "./presence.js?v=v2026-09-21T08065";
-import { createSoundReactor } from "./soundReactor.js?v=v2026-09-21T08065";
-import { createUI } from "./ui.js?v=v2026-09-21T08065";
-import { createShareDevice } from "./shareDevice.js?v=v2026-09-21T08065";
-import { SPEAKER_ON_ICON, SPEAKER_OFF_ICON } from "../../js/core/icons.js?v=v2026-09-21T08065";
+import { createStore } from "./store.js?v=v2026-09-21T22104";
+import { createEngine } from "./engine.js?v=v2026-09-21T22104";
+import { createActionGate } from "./actionGate.js?v=v2026-09-21T22104";
+import { createDevices } from "./devices.js?v=v2026-09-21T22104";
+import { createPresence } from "./presence.js?v=v2026-09-21T22104";
+import { createSoundReactor } from "./soundReactor.js?v=v2026-09-21T22104";
+import { createUI } from "./ui.js?v=v2026-09-21T22104";
+import { createShareDevice } from "./shareDevice.js?v=v2026-09-21T22104";
+
+import { SPEAKER_ON_ICON, SPEAKER_OFF_ICON } from "../../js/core/icons.js?v=v2026-09-21T22104";
 
 guardDesktopOnly();
 
@@ -284,20 +285,47 @@ async function main() {
   //     sound_cue_key, nie zgadywany z wyprzedzeniem).
   let committing = false;
   let lockedUntil = 0;
-  function busy() { return committing || Date.now() < lockedUntil; }
+  // Patrz armLock() niżej -- prawdziwa (nie zgadywana z góry) blokada na
+  // czas round-tripu store.setLock(ms).
+  let lockConfirmPending = false;
+  function busy() { return committing || lockConfirmPending || Date.now() < lockedUntil; }
 
-  // `store.setLock(ms)` (wołane w obu miejscach, które ustawiają
-  // `lockedUntil` niżej) jest CELOWO niewyczekiwane (fire-and-forget, patrz
-  // komentarz przy dispatchGatedNow) -- serwerowe locked_until (migracja
-  // 264) liczy `now() + ms` dopiero gdy TO zapytanie faktycznie dotrze i
-  // wykona się w bazie, czyli realnie PÓŹNIEJ niż `Date.now()` użyte tu do
-  // klienckiego lockedUntil. Bez marginesu klient odblokowywał przycisk
-  // (i Playwright/szybki operator klikał go) dokładnie w tym oknie, w
-  // którym serwer JESZCZE nie zdążył ustawić własnej blokady z poprzedniej
-  // akcji -- server odrzucał zapis LockedError('locked'), operator widział
-  // goły alert. Zgłoszone (e2e "reset pojedynku..."): klik "Zakończ rundę"
-  // ~2s po potwierdzonym odsłonięciu kradzieży dostawał 'locked'.
-  const LOCK_NETWORK_SAFETY_MS = 400;
+  // Uzbraja klienckie `lockedUntil` na czas `ms` (potwierdzonego dźwięku/
+  // animacji) I dociąga je do realnego czasu, w którym serwer (migracja
+  // 264) faktycznie ustawi WŁASNY `locked_until` -- `store.setLock(ms)` to
+  // osobne wywołanie RPC, więc jego round-trip jest nieznany z góry.
+  // Poprzednia wersja liczyła `lockedUntil` OD RAZU (`Date.now()+ms`) plus
+  // sztywny margines 400ms na ten round-trip -- w CI zdarzało się, że sam
+  // round-trip setLock() trwał >1s (dużo więcej niż margines), więc klient
+  // odblokowywał przycisk, ZANIM serwer w ogóle zdążył ustawić swoją
+  // blokadę z TEJ akcji -- server odrzucał kolejny zapis LockedError('locked')
+  // (zgłoszone e2e: "reset pojedynku..." i, mimo marginesu, "próg w rundzie
+  // -> finał" — ADD_X w DUEL). Naprawa: zamiast zgadywać margines,
+  // blokujemy TWARDO (`lockConfirmPending`) aż store.setLock(ms) faktycznie
+  // wróci, i DOPIERO WTEDY liczymy `lockedUntil=Date.now()+ms` -- serwer
+  // ustawia swój `locked_until` W MOMENCIE przetworzenia zapytania, czyli
+  // zawsze WCZEŚNIEJ niż chwila odebrania TEJ odpowiedzi tutaj, więc to
+  // zawsze bezpieczne (nigdy za krótkie) górne ograniczenie, niezależnie od
+  // realnych warunków sieci.
+  function armLock(ms) {
+    if (ms <= 0) return;
+    lockedUntil = Math.max(lockedUntil, Date.now() + ms);
+    setTimeout(renderCurrent, ms + 20);
+    lockConfirmPending = true;
+    store.setLock(ms)
+      .then(() => {
+        const confirmed = Date.now() + ms;
+        if (confirmed > lockedUntil) {
+          lockedUntil = confirmed;
+          setTimeout(renderCurrent, ms + 20);
+        }
+      })
+      .catch(() => {})
+      .finally(() => {
+        lockConfirmPending = false;
+        renderCurrent();
+      });
+  }
 
   // JEDYNE miejsce, które w ogóle woła engine.dispatch() — wywoływane zarówno
   // z operatorskich kliknięć (handle()'s "game.dispatch" niżej) jak i z
@@ -327,15 +355,10 @@ async function main() {
       committing = false;
     }
     const ms = await actionGate.computeGateMs(action.type, prevRow, nextRow);
-    if (ms > 0) {
-      lockedUntil = Date.now() + ms + LOCK_NETWORK_SAFETY_MS;
-      setTimeout(renderCurrent, ms + LOCK_NETWORK_SAFETY_MS + 20);
-      // Migracja 264 -- ta sama blokada, egzekwowana też w bazie (nie tylko
-      // w tej karcie przeglądarki). Best-effort: nieudane ustawienie nie
-      // cofa już potwierdzonego zapisu treści powyżej, patrz store.js's
-      // setLockNow().
-      store.setLock(ms);
-    }
+    // Migracja 264 -- ta sama blokada, egzekwowana też w bazie (nie tylko w
+    // tej karcie przeglądarki). Best-effort: nieudane ustawienie nie cofa
+    // już potwierdzonego zapisu treści powyżej, patrz store.js's setLockNow().
+    armLock(ms);
     renderCurrent();
     return nextRow;
   }
@@ -686,11 +709,7 @@ async function main() {
     }
     if (soundCueKey) {
       const ms = await actionGate.timing.dur(soundCueKey);
-      if (ms > 0) {
-        lockedUntil = Date.now() + ms + LOCK_NETWORK_SAFETY_MS;
-        setTimeout(renderCurrent, ms + LOCK_NETWORK_SAFETY_MS + 20);
-        store.setLock(ms);
-      }
+      armLock(ms);
     }
     renderCurrent();
   }

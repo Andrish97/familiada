@@ -1,7 +1,8 @@
 // js/core/auth.js
-import { sb, buildSiteUrl } from "./supabase.js?v=v2026-09-21T08065";
-import { t, withLangParam } from "../../translation/translation.js?v=v2026-09-21T08065";
-import { EYE_ICON, EYE_OFF_ICON } from "./icons.js?v=v2026-09-21T08065";
+import { sb, buildSiteUrl } from "./supabase.js?v=v2026-09-21T22104";
+import { t, withLangParam } from "../../translation/translation.js?v=v2026-09-21T22104";
+
+import { EYE_ICON, EYE_OFF_ICON } from "./icons.js?v=v2026-09-21T22104";
 
 const GUEST_LOCAL_MARKER_KEY = "fam:guest:session_seen";
 const GUEST_DISCARD_RPC_MISSING_KEY = "fam:guest:discard_rpc_missing";
@@ -153,7 +154,6 @@ export function validatePassword(pwd) {
   }
   return v;
 }
-
 
 function passwordRulesAllHints() {
   return [
@@ -338,7 +338,6 @@ export async function signInGuest(captchaToken = null) {
   try { localStorage.setItem(GUEST_LOCAL_MARKER_KEY, "1"); } catch {}
   return user;
 }
-
 
 export function hasGuestLocalMarker() {
   try { return localStorage.getItem(GUEST_LOCAL_MARKER_KEY) === "1"; } catch { return false; }

@@ -1,8 +1,9 @@
 
-import { sb as supabase } from "../core/supabase.js?v=v2026-09-21T08065";
-import { alertModal, confirmModal } from "../core/modal.js?v=v2026-09-21T08065";
-import { initUiSelect } from "../core/ui-select.js?v=v2026-09-21T08065";
-import { WARNING_ICON, GLOBE_ICON, CHECK_ICON, CANCEL_ICON } from "../core/icons.js?v=v2026-09-21T08065";
+import { sb as supabase } from "../core/supabase.js?v=v2026-09-21T22104";
+import { alertModal, confirmModal } from "../core/modal.js?v=v2026-09-21T22104";
+import { initUiSelect } from "../core/ui-select.js?v=v2026-09-21T22104";
+
+import { WARNING_ICON, GLOBE_ICON, CHECK_ICON, CANCEL_ICON } from "../core/icons.js?v=v2026-09-21T22104";
 
 let games = [];
 let genLangSelect = null;
@@ -853,7 +854,6 @@ async function saveGameEditor() {
   }
 }
 
-
 function importGamesFromData(raw) {
   let items;
   try {
@@ -908,7 +908,6 @@ async function handleImport() {
   renderGeneratedList();
 }
 
-
 document.addEventListener('DOMContentLoaded', () => {
   $('gen-load-btn').addEventListener('click', loadGames);
   $('gen-enqueue-btn').addEventListener('click', generateGames);
@@ -940,7 +939,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const json = JSON.stringify(example, null, 2);
     const a = document.createElement('a');
     a.href = 'data:application/json;charset=utf-8,' + encodeURIComponent(json);
-    a.download = 'przykladowa-gra.json?v=v2026-09-21T08065';
+    a.download = 'przykladowa-gra.json?v=v2026-09-21T22104';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);

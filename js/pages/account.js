@@ -1,14 +1,14 @@
-import { sb } from "../core/supabase.js?v=v2026-09-21T08065";
-import { cooldownGet, cooldownReserve, cooldownRelease, cooldownEmailReserve } from "../core/cooldown.js?v=v2026-09-21T08065";
-import { requireAuth, updateUserLanguage, validatePassword, validateUsername, signOut, niceAuthError, initPasswordToggles, convertGuestToRegisteredEmailOnly } from "../core/auth.js?v=v2026-09-21T08065";
-import { getUserEmailNotificationsFlag, setUserEmailNotificationsFlag } from "../core/user-flags.js?v=v2026-09-21T08065";
-import { initI18n, t, getUiLang, withLangParam } from "../../translation/translation.js?v=v2026-09-21T08065";
-import { confirmModal } from "../core/modal.js?v=v2026-09-21T08065";
-import { isGuestUser, hideForGuest } from "../core/guest-mode.js?v=v2026-09-21T08065";
+import { sb } from "../core/supabase.js?v=v2026-09-21T22104";
+import { cooldownGet, cooldownReserve, cooldownRelease, cooldownEmailReserve } from "../core/cooldown.js?v=v2026-09-21T22104";
+import { requireAuth, updateUserLanguage, validatePassword, validateUsername, signOut, niceAuthError, initPasswordToggles, convertGuestToRegisteredEmailOnly } from "../core/auth.js?v=v2026-09-21T22104";
+import { getUserEmailNotificationsFlag, setUserEmailNotificationsFlag } from "../core/user-flags.js?v=v2026-09-21T22104";
+import { initI18n, t, getUiLang, withLangParam } from "../../translation/translation.js?v=v2026-09-21T22104";
+import { confirmModal } from "../core/modal.js?v=v2026-09-21T22104";
+import { isGuestUser, hideForGuest } from "../core/guest-mode.js?v=v2026-09-21T22104";
 import "../core/contact-modal.js";
-import { deleteGameSoundsFolder } from "../core/sfx-cloud.js?v=v2026-09-21T08065";
-import { STAR_ICON, STAR_EMPTY_ICON } from "../core/icons.js?v=v2026-09-21T08065";
+import { deleteGameSoundsFolder } from "../core/sfx-cloud.js?v=v2026-09-21T22104";
 
+import { STAR_ICON, STAR_EMPTY_ICON } from "../core/icons.js?v=v2026-09-21T22104";
 
 const status = document.getElementById("status");
 const err = document.getElementById("err");
@@ -119,7 +119,6 @@ async function initEmailNotificationsUi(user) {
     }
   });
 }
-
 
 backToGames?.addEventListener("click", () => {
   const target = backToGames.dataset.baseHref || "builder";
@@ -402,7 +401,6 @@ async function handleMigrateCancel() {
   }
 }
 
-
 // --- email change pending state ---
 let currentEmail = "";
 let pendingEmail = "";
@@ -457,7 +455,6 @@ function setEmailPendingUi(nextPendingEmail) {
   // cooldown may additionally disable resend (cancel is always allowed)
   tickCooldowns();
 }
-
 
 async function fetchEmailChangeStatus() {
   try {

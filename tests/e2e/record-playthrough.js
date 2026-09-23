@@ -377,7 +377,14 @@ async function hostPeekSwipe(hostPage) {
 // zgłoszone osobno: "nie idzie odsłonić następnej odpowiedzi jeśli
 // pierwsza się nie pojawiła jeszcze na ekranie") — 1200ms tutaj jest
 // nadwyżką NAD tamtą blokadą, nie próbą jej zastąpienia.
-const CLICK_PACE_MS = 1200;
+//
+// Podniesione do 2200ms — zgłoszone PONOWNIE po obejrzeniu realnego
+// (choć skróconego crashem) nagrania: "przebieg nagrywania dalej wygląda
+// nienaturalnie zbyt szybko", mimo poprzedniej podwyżki z 300ms. Skoro
+// jedna korekta już nie wystarczyła, ta ma być wyraźnie odczuwalna
+// (niemal dwukrotność), nie kolejny drobny krok, który znowu okaże się
+// za mały.
+const CLICK_PACE_MS = 2200;
 const WRITE_RPC_RE = /\/rpc\/(game_state_write|game_state_buzzer_press)(\?|$)/;
 
 function waitForWrite(page) {
@@ -408,7 +415,7 @@ async function clickPaced(locator, ms = CLICK_PACE_MS) {
 async function armAndConfirmPaced(locator, ms = CLICK_PACE_MS) {
   const page = locator.page();
   await locator.click();
-  await page.waitForTimeout(900); // widz ma zdążyć zobaczyć złotą obwódkę "uzbrojenia" przed potwierdzeniem
+  await page.waitForTimeout(1400); // widz ma zdążyć zobaczyć złotą obwódkę "uzbrojenia" przed potwierdzeniem (proporcjonalnie do CLICK_PACE_MS)
   await clickPaced(locator, ms);
 }
 
@@ -526,7 +533,20 @@ async function scenarioRoundsMechanics(pages) {
   await transitionSlider.evaluate((el) => { el.value = "70"; el.dispatchEvent(new Event("input", { bubbles: true })); });
   await control.waitForTimeout(1000); // niech nagranie złapie suwak i zaktualizowaną etykietę %
 
-  await clickPaced(control.getByRole("button", { name: "Zapisz wszystko" }));
+  // Real bug znaleziony przez failed nagranie (przebieg #12/#13): "Zapisz
+  // wszystko" (#btnSaveAll) jest zdefiniowany w game-settings2.html, więc
+  // renderuje się WEWNĄTRZ #gsFrame -- control.getByRole(...) (bez
+  // przenikania do iframe'ów w Playwright) nigdy go nie znajdował, więc
+  // locator.click() wisiał pełne 30s zanim rzucił TimeoutError. Poprawny
+  // zakres to gsFrame. Zwykły klik, nie clickPaced -- saveAll() zapisuje
+  // przez updateChecked("games",...), nie przez game_state_write/
+  // game_state_buzzer_press (WRITE_RPC_RE), więc clickPaced's waitForWrite
+  // i tak zawsze czekałby pełne 15s na coś, co nigdy nie nadejdzie;
+  // faktyczne potwierdzenie zapisu i tak przychodzi niżej (oczekiwanie na
+  // zniknięcie #gsOverlay -- to się nie stanie, dopóki saveAll() się nie
+  // zakończy).
+  await gsFrame.getByRole("button", { name: "Zapisz wszystko" }).click();
+  await control.waitForTimeout(CLICK_PACE_MS); // widz ma zdążyć zobaczyć zapis (przycisk disabled -> enabled)
   await control.locator("#gsOverlay").click({ position: { x: 5, y: 5 } });
   await control.locator("#gsOverlay").waitFor({ state: "hidden", timeout: 10_000 });
   await control.waitForTimeout(800);
@@ -846,6 +866,11 @@ async function scenarioFinalFull(pages) {
     await clickPaced(control.getByRole("button", { name: "Dalej" }));
   }
 
+  // renderEndScreen (control2/js/ui.js) pokazuje TU, na ekranie PRZED
+  // odsłonięciem ("Zakończ grę" jeszcze nieklikn.), pasek z sumą finału
+  // (state.final.runtime.sum) — widz ma zdążyć go przeczytać, zanim klik
+  // przejdzie dalej do właściwego ekranu końcowego.
+  await control.waitForTimeout(2000);
   await clickPaced(control.getByRole("button", { name: "Zakończ grę", exact: true }));
   await control.waitForTimeout(4000); // ekran końcowy widoczny chwilę na nagraniu
 }
@@ -889,6 +914,9 @@ async function scenarioFinalEarlyExit(pages) {
   // "Pokaż punkty" to ostatni kafel odsłaniania w tym scenariuszu.
   await armAndConfirmPaced(control.getByRole("button", { name: "Pokaż punkty" }));
 
+  // Patrz identyczny komentarz w scenariuszu 4 — pasek z sumą finału na
+  // ekranie przed odsłonięciem, widz ma zdążyć go zobaczyć.
+  await control.waitForTimeout(2000);
   await clickPaced(control.getByRole("button", { name: "Zakończ grę", exact: true }));
   await control.waitForTimeout(4000); // ekran końcowy widoczny chwilę na nagraniu
 }

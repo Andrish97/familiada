@@ -1,8 +1,9 @@
 // /familiada/js/pages/controlui.js
 
-import { t } from "../../translation/translation.js?v=v2026-09-21T08065";
-import { initUiSelect } from "../../js/core/ui-select.js?v=v2026-09-21T08065";
-import { SPEAKER_ON_ICON, SPEAKER_OFF_ICON } from "../../js/core/icons.js?v=v2026-09-21T08065";
+import { t } from "../../translation/translation.js?v=v2026-09-21T22104";
+import { initUiSelect } from "../../js/core/ui-select.js?v=v2026-09-21T22104";
+
+import { SPEAKER_ON_ICON, SPEAKER_OFF_ICON } from "../../js/core/icons.js?v=v2026-09-21T22104";
 
 // ================== KOMUNIKATY (UI) ==================
 const UI_MSG = {
@@ -334,7 +335,6 @@ export function createUI() {
     }
   }
 
-
   function getAdvancedForm() {
     const rm = $("roundMultipliers");
     const fm = $("finalMinPoints");
@@ -511,7 +511,6 @@ export function createUI() {
         });
       });
   }
-
 
   function setAnswersMode(mode) {
     const ids = ["roundAnswers", "roundStealAnswers", "roundRevealAnswers"];
@@ -739,7 +738,6 @@ export function createUI() {
     $("btnAddX")?.addEventListener("click", () => emit("rounds.addX"));
     $("btnGoEndRound")?.addEventListener("click", () => emit("rounds.goEnd"));
     $("btnShowGameEnd")?.addEventListener("click", () => emit("rounds.gameEndShow"));
-
 
     // final (kroki)
     $("btnFinalP1StartTimer")?.addEventListener("click", () => emit("final.p1.timerStart"));

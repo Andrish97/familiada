@@ -1,6 +1,6 @@
 // commands.js
-import { setUiLang } from "../../translation/translation.js?v=v2026-09-21T08065";
-import { sb } from "../../js/core/supabase.js?v=v2026-09-21T08065";
+import { setUiLang } from "../../translation/translation.js?v=v2026-09-21T22104";
+import { sb } from "../../js/core/supabase.js?v=v2026-09-21T22104";
 
 const tokenize = (raw) => {
   const tokens = [];
@@ -209,7 +209,6 @@ export const createCommandHandler = (app) => {
       saveSnapshot(raw);
       return;
     }
-
 
     // ------------------------------------------------------------------
     // 3) Wszystko inne → komendy SCENY, ale tylko w APP=GAME

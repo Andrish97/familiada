@@ -1075,7 +1075,14 @@
   opacity: .75;
 }
 
-/* kontener canvasa - scrollable on mobile */
+/* kontener canvasa - scrollable on mobile.
+   Bez własnego tła (rgba(0,0,0,.25) dawało widoczny, ciemniejszy
+   prostokąt wokół "leżącego" (landscape) podglądu w wysokim, pionowym
+   kontenerze na telefonie — canvas dopasowany do szerokości zostawia
+   dużo pustego miejsca nad/pod sobą, a ta dodatkowa warstwa tła
+   wyglądała jak osobny, niepasujący element zamiast zwykłej,
+   niewidocznej przestrzeni). Tło modala (var(--bg) w trybie sheet,
+   var(--card) na desktopie) wystarcza. */
 #previewOverlay .previewModalCanvas{
   flex: 1;
   min-height: 0;
@@ -1085,7 +1092,6 @@
   width: 100%;
   overflow: auto;
   -webkit-overflow-scrolling: touch;
-  background: rgba(0,0,0,.25);
   border-radius: 12px;
 }
 
@@ -1111,11 +1117,17 @@
   touch-action: none;
 }
 
+/* WAŻNE: canvas ma zostać dopasowany do kontenera (width:100%;height:auto;
+   max-height:100% — te same reguły co na desktopie) TAKŻE w is-touch —
+   scale(1) w naszym JS-owym pinch-zoomie (initPreviewPinchZoom) ma
+   oznaczać "dopasowany do ekranu", a nie naturalny rozmiar bufora
+   canvasa (1600x700). Wcześniej ta reguła nadpisywała to na
+   width:auto/height:auto (naturalny rozmiar), więc już na starcie,
+   zanim użytkownik cokolwiek uszczypnął, widoczny był tylko wąski,
+   mocno "przybliżony" wycinek loga (naturalna szerokość 1600px vs
+   kontener ~300-400px) — stąd wrażenie zepsutego zoomu i ciemnego tła
+   kontenera widocznego dookoła nieproporcjonalnie dopasowanej treści. */
 #previewOverlay .modal.previewModal.is-touch .previewModalCanvas canvas {
-  width: auto;
-  max-width: none;
-  max-height: none;
-  height: auto;
   transform-origin: 0 0;
   will-change: transform;
 }

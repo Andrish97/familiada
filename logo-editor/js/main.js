@@ -1,24 +1,25 @@
 // familiada/logo-editorjs/main.js
 // Glowna logika strony + lista kafelkow + routing do edytorow.
 
-import { addRenameGesture } from "../../js/core/rename-gesture.js?v=v2026-09-21T08065";
-import { loadFont5x7, buildLogoPreviewCanvas } from "../../js/core/logo-preview.js?v=v2026-09-21T08065";
+import { addRenameGesture } from "../../js/core/rename-gesture.js?v=v2026-09-21T22104";
+import { loadFont5x7, buildLogoPreviewCanvas } from "../../js/core/logo-preview.js?v=v2026-09-21T22104";
 
-import { sb } from "../../js/core/supabase.js?v=v2026-09-21T08065";
-import { requireAuth } from "../../js/core/auth.js?v=v2026-09-21T08065";
-import { isGuestUser } from "../../js/core/guest-mode.js?v=v2026-09-21T08065";
-import { alertModal, confirmModal } from "../../js/core/modal.js?v=v2026-09-21T08065";
-import { getUiLang, initI18n, t, withLangParam } from "../../translation/translation.js?v=v2026-09-21T08065";
-import { initTopbarAccountDropdown } from "../../js/core/topbar-controller.js?v=v2026-09-21T08065";
-import { isMobileDevice } from "../../js/core/pwa.js?v=v2026-09-21T08065";
-import { v as cacheBust } from "../../js/core/cache-bust.js?v=v2026-09-21T08065";
-import { guardResourceLock, isResourceBusy, findBusyContext } from "../../js/core/resource-lock.js?v=v2026-09-21T08065";
-import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../js/core/modal-sheet.js?v=v2026-09-21T08065";
-import { TRASH_ICON } from "../../js/core/icons.js?v=v2026-09-21T08065";
+import { sb } from "../../js/core/supabase.js?v=v2026-09-21T22104";
+import { requireAuth } from "../../js/core/auth.js?v=v2026-09-21T22104";
+import { isGuestUser } from "../../js/core/guest-mode.js?v=v2026-09-21T22104";
+import { alertModal, confirmModal } from "../../js/core/modal.js?v=v2026-09-21T22104";
+import { getUiLang, initI18n, t, withLangParam } from "../../translation/translation.js?v=v2026-09-21T22104";
+import { initTopbarAccountDropdown } from "../../js/core/topbar-controller.js?v=v2026-09-21T22104";
+import { isMobileDevice } from "../../js/core/pwa.js?v=v2026-09-21T22104";
+import { v as cacheBust } from "../../js/core/cache-bust.js?v=v2026-09-21T22104";
+import { guardResourceLock, isResourceBusy, findBusyContext } from "../../js/core/resource-lock.js?v=v2026-09-21T22104";
+import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../js/core/modal-sheet.js?v=v2026-09-21T22104";
 
-import { initTextEditor } from "./text.js?v=v2026-09-21T08065";
-import { initDrawEditor } from "./draw.js?v=v2026-09-21T08065";
-import { initImageEditor } from "./image.js?v=v2026-09-21T08065";
+import { TRASH_ICON } from "../../js/core/icons.js?v=v2026-09-21T22104";
+
+import { initTextEditor } from "./text.js?v=v2026-09-21T22104";
+import { initDrawEditor } from "./draw.js?v=v2026-09-21T22104";
+import { initImageEditor } from "./image.js?v=v2026-09-21T22104";
 
 window.addEventListener("error", (e) => {
   console.error("window error", e.error || e.message);
@@ -37,9 +38,9 @@ const DOT_H = 70;  // 10*7
 
 // UWAGA: to sa sciezki wzgledne wobec logo-editor
 // (ustalone, nie zgadujemy)
-const FONT_3x10_URL = "display/font_3x10.json?v=v2026-09-21T08065";
-const FONT_5x7_URL  = "display/font_5x7.json?v=v2026-09-21T08065";
-const DEFAULT_LOGO_URL = "display/logo_familiada.json?v=v2026-09-21T08065";
+const FONT_3x10_URL = "display/font_3x10.json?v=v2026-09-21T22104";
+const FONT_5x7_URL  = "display/font_5x7.json?v=v2026-09-21T22104";
+const DEFAULT_LOGO_URL = "display/logo_familiada.json?v=v2026-09-21T22104";
 
 /* =========================================================
    DOM
@@ -135,7 +136,6 @@ let selectedKey = null; // "default" albo uuid logo
 let defaultLogoRows = Array.from({ length: 10 }, () => " ".repeat(30));
 let suppressDirty = false;
 
-
 let editorMode = null; // TEXT | DRAW | IMAGE
 let editorDirty = false;
 
@@ -160,7 +160,6 @@ function logoBusyMessage(reason) {
   if (reason === "settings") return t("resourceLock.logoPoolBusySettings");
   return t("resourceLock.logoMessage");
 }
-
 
 /* =========================================================
    UI helpers
@@ -380,7 +379,6 @@ function shouldBlockNav(){
   return isEditing() && !!editorDirty;
 }
 
-
 function armNavGuard(){
   if (_navGuardArmed) return;
   _navGuardArmed = true;
@@ -445,7 +443,6 @@ function armHistoryTrap(){
     } catch {}
   });
 }
-
 
 /* =========================================================
    IMPORT / EXPORT (bez ID, bez usera)
@@ -635,7 +632,6 @@ async function importLogoFromFile(file){
   await createLogo(row);
 }
 
-
 /* =========================================================
    Fetch helpers
 ========================================================= */
@@ -807,21 +803,45 @@ function initPreviewPinchZoom(container, canvas) {
   let pinchStartMid = { x: 0, y: 0 };
   let panStart = null; // { x, y, tx, ty } dla pojedynczego palca gdy scale>1
 
+  // Kontener i canvas nie zmieniają swojego LAYOUTOWEGO rozmiaru/pozycji
+  // W TRAKCIE gestu (nasz zoom to tylko CSS transform, nie zmienia
+  // offsetWidth/offsetHeight) — liczymy getBoundingClientRect()/offsetWidth/
+  // offsetHeight RAZ, na początku gestu (pointerdown), zamiast przy każdym
+  // pointermove. Te odczyty wymuszają synchroniczny reflow; wywoływane przy
+  // każdym z dziesiątek zdarzeń pointermove/sekundę (clamp() czytało
+  // offsetWidth/offsetHeight OSOBNO od cRect, więc de facto 3 wymuszone
+  // reflow na klatkę) dawało wyraźnie toporne przewijanie/przybliżanie.
+  let gestureRect = null;
+  let gestureCanvasW = null;
+  let gestureCanvasH = null;
+
+  // Aktualizacja transformu tylko raz na klatkę (requestAnimationFrame)
+  // zamiast bezpośrednio przy każdym evencie pointermove — kolejne szybkie
+  // eventy nadpisują tylko docelowe tx/ty/scale, a faktyczny zapis do DOM
+  // (i przemalowanie) dzieje się najwyżej raz na klatkę.
+  let rafId = null;
   const apply = () => {
-    canvas.style.transform = `translate(${tx}px, ${ty}px) scale(${scale})`;
+    if (rafId != null) return;
+    rafId = requestAnimationFrame(() => {
+      rafId = null;
+      canvas.style.transform = `translate(${tx}px, ${ty}px) scale(${scale})`;
+    });
   };
 
   const reset = () => {
     scale = 1; tx = 0; ty = 0;
     pointers.clear();
-    apply();
+    if (rafId != null) { cancelAnimationFrame(rafId); rafId = null; }
+    canvas.style.transform = `translate(0px, 0px) scale(1)`;
   };
 
   const clamp = () => {
     // Nie pozwól odsunąć treści całkowicie poza widoczny obszar kontenera.
-    const cRect = container.getBoundingClientRect();
-    const w = canvas.offsetWidth * scale;
-    const h = canvas.offsetHeight * scale;
+    const cRect = gestureRect || container.getBoundingClientRect();
+    const cw = gestureCanvasW ?? canvas.offsetWidth;
+    const ch = gestureCanvasH ?? canvas.offsetHeight;
+    const w = cw * scale;
+    const h = ch * scale;
     const minTx = Math.min(0, cRect.width - w);
     const minTy = Math.min(0, cRect.height - h);
     tx = Math.max(minTx, Math.min(0, tx));
@@ -835,6 +855,9 @@ function initPreviewPinchZoom(container, canvas) {
     if (e.pointerType !== "touch") return;
     container.setPointerCapture(e.pointerId);
     pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    gestureRect = container.getBoundingClientRect();
+    gestureCanvasW = canvas.offsetWidth;
+    gestureCanvasH = canvas.offsetHeight;
 
     if (pointers.size === 2) {
       const [a, b] = [...pointers.values()];
@@ -845,7 +868,7 @@ function initPreviewPinchZoom(container, canvas) {
     } else if (pointers.size === 1 && scale > 1) {
       panStart = { x: e.clientX, y: e.clientY, tx, ty };
     }
-  });
+  }, { passive: true });
 
   container.addEventListener("pointermove", (e) => {
     if (!pointers.has(e.pointerId)) return;
@@ -857,7 +880,7 @@ function initPreviewPinchZoom(container, canvas) {
       const newMid = mid(a, b);
       const nextScale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, pinchStartScale * (newDist / pinchStartDist)));
       // Trzymaj punkt pod palcami w miejscu podczas zoomowania.
-      const cRect = container.getBoundingClientRect();
+      const cRect = gestureRect || container.getBoundingClientRect();
       const anchorX = pinchStartMid.x - cRect.left;
       const anchorY = pinchStartMid.y - cRect.top;
       tx = anchorX - ((anchorX - tx) / scale) * nextScale + (newMid.x - pinchStartMid.x);
@@ -871,16 +894,29 @@ function initPreviewPinchZoom(container, canvas) {
       clamp();
       apply();
     }
-  });
+  }, { passive: true });
 
   const endPointer = (e) => {
     pointers.delete(e.pointerId);
     if (pointers.size < 2) pinchStartDist = 0;
-    if (pointers.size === 0) panStart = null;
+    if (pointers.size === 1 && scale > 1) {
+      // Zejście z dwóch palców (pinch) do jednego — bardzo naturalny gest
+      // "uszczypnij, potem przeciągnij pozostałym palcem". Bez tego
+      // panStart zostawał null aż do CAŁKOWITEGO puszczenia i nowego
+      // dotknięcia — przewijanie milczało, mimo że palec wciąż był na
+      // ekranie i się poruszał (stąd "czasem działa, czasem nie": zależało
+      // wyłącznie od tego, czy user podniósł oba palce naraz, czy jeden po
+      // drugim). Inicjalizujemy panStart od razu na podstawie ostatniej
+      // znanej pozycji pozostałego palca.
+      const [remaining] = pointers.values();
+      panStart = { x: remaining.x, y: remaining.y, tx, ty };
+    } else if (pointers.size === 0) {
+      panStart = null; gestureRect = null; gestureCanvasW = null; gestureCanvasH = null;
+    }
     if (scale <= 1) reset();
   };
-  container.addEventListener("pointerup", endPointer);
-  container.addEventListener("pointercancel", endPointer);
+  container.addEventListener("pointerup", endPointer, { passive: true });
+  container.addEventListener("pointercancel", endPointer, { passive: true });
 
   let lastTap = 0;
   container.addEventListener("pointerup", (e) => {
@@ -900,7 +936,25 @@ function initPreviewPinchZoom(container, canvas) {
       }
     }
     lastTap = now;
-  });
+  }, { passive: true });
+
+  // Dodatkowe, jawne zablokowanie natywnych gestów przeglądarki — sam
+  // touch-action:none (CSS) + Pointer Events (powyżej) nie zawsze
+  // wystarczają na każdej przeglądarce, żeby faktycznie stłumić natywny
+  // pinch-zoom/scroll strony przy dwóch palcach; objawiało się to jako
+  // "zwiększanie zoomu zwiększa całą stronę" i toporne przewijanie przy
+  // powiększeniu (nasz JS i natywna obsługa przeglądarki walczyły o ten
+  // sam gest). {passive:false} + preventDefault() na natywnych zdarzeniach
+  // touch* to najbardziej uniwersalny, wspierany wszędzie sposób.
+  const stopNativeGesture = (e) => {
+    if (e.touches && e.touches.length >= 2) e.preventDefault();
+  };
+  container.addEventListener("touchstart", stopNativeGesture, { passive: false });
+  container.addEventListener("touchmove", stopNativeGesture, { passive: false });
+  // Safari: gesturestart/gesturechange to jego własny, dodatkowy mechanizm
+  // pinch-zoom, całkowicie niezależny od touch/pointer eventów.
+  container.addEventListener("gesturestart", (e) => e.preventDefault());
+  container.addEventListener("gesturechange", (e) => e.preventDefault());
 
   return { reset };
 }
@@ -908,22 +962,33 @@ function initPreviewPinchZoom(container, canvas) {
 let _previewPinchZoom = null;
 
 // touch-action:none na kontenerze canvasa (logo-editor.css) nie wystarcza
-// niezawodnie na wszystkich przeglądarkach (zwłaszcza starszy iOS Safari
-// potrafi i tak obsłużyć dwa palce jako natywny zoom CAŁEJ strony,
-// niezależnie od touch-action) — na czas otwarcia podglądu dodatkowo
-// blokujemy powiększanie strony przez meta viewport, więc gest zawsze
-// trafia wyłącznie do naszego JS-owego zoomu canvasa.
+// niezawodnie na wszystkich przeglądarkach (zwłaszcza iOS Safari potrafi
+// i tak obsłużyć dwa palce jako natywny zoom CAŁEJ strony, niezależnie od
+// touch-action) — na czas otwarcia podglądu dodatkowo blokujemy
+// powiększanie strony przez meta viewport. WAŻNE: iOS Safari na wielu
+// wersjach IGNORUJE zmianę samego atrybutu content= na już wczytanej
+// stronie (viewport jest odczytywany raz, przy pierwszym parsowaniu) —
+// dlatego USUWAMY i wstawiamy NOWY element <meta>, żeby wymusić ponowne
+// odczytanie przez silnik przeglądarki.
 function lockPageZoomForPreview() {
   const meta = document.querySelector('meta[name="viewport"]');
-  if (!meta || meta.dataset.origViewport != null) return;
-  meta.dataset.origViewport = meta.getAttribute("content") || "";
-  meta.setAttribute("content", `${meta.dataset.origViewport}, maximum-scale=1, user-scalable=no`);
+  if (!meta || meta.dataset.locked === "1") return;
+  const orig = meta.getAttribute("content") || "";
+  meta.dataset.origViewport = orig;
+  const next = meta.cloneNode(true);
+  next.setAttribute("content", `${orig}, maximum-scale=1, user-scalable=no`);
+  next.dataset.locked = "1";
+  next.dataset.origViewport = orig;
+  meta.replaceWith(next);
 }
 function unlockPageZoomAfterPreview() {
   const meta = document.querySelector('meta[name="viewport"]');
   if (!meta || meta.dataset.origViewport == null) return;
-  meta.setAttribute("content", meta.dataset.origViewport);
-  delete meta.dataset.origViewport;
+  const next = meta.cloneNode(true);
+  next.setAttribute("content", meta.dataset.origViewport);
+  delete next.dataset.origViewport;
+  delete next.dataset.locked;
+  meta.replaceWith(next);
 }
 
 function openPreviewFullscreen(payload){
@@ -1301,7 +1366,6 @@ function renderList(){
     grid.appendChild(add);
   }
 
-
   // helper: wybierz
   function select(key){
     selectedKey = key;
@@ -1456,7 +1520,6 @@ async function loadTinyMceFromSupabase(){
   return _tinymcePromise;
 }
 
-
 /* =========================================================
    EDYTORY (moduly)
 ========================================================= */
@@ -1599,7 +1662,6 @@ function openEditor(mode, logo = null){
   }
 }
 
-
 async function closeEditor(force = false){
   if (!force && !(await confirmCloseIfDirty())) return;
 
@@ -1674,7 +1736,6 @@ async function handleCreate(){
           logoName.value = unique;
         }
       }
-
 
     const patch = {
       user_id: currentUser.id,
@@ -1778,7 +1839,7 @@ async function boot(){
    imageEditor = initImageEditor(editorCtx);
 
   // Updater - sprawdzanie nowej wersji (TYLKO RAZ)
-  import('../../js/core/updater.js?v=v2026-09-21T08065').then(m => m.initUpdater()).catch(() => {});
+  import('../../js/core/updater.js?v=v2026-09-21T22104').then(m => m.initUpdater()).catch(() => {});
 
    armNavGuard();
 
@@ -1921,7 +1982,6 @@ async function boot(){
        void alertModal({ text: t("logoEditor.errors.exportFailedDetailed", { error: e?.message || e }) });
      }
    });
-
 
    btnEdit?.addEventListener("click", async () => {
      if (!selectedKey) return;

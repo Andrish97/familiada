@@ -1,24 +1,23 @@
-import { addRenameGesture } from "../core/rename-gesture.js?v=v2026-09-21T08065";
-import { sb } from "../core/supabase.js?v=v2026-09-21T08065";
-import { requireAuth } from "../core/auth.js?v=v2026-09-21T08065";
-import { alertModal, confirmModal } from "../core/modal.js?v=v2026-09-21T08065";
-import { hideForGuest, isGuestUser } from "../core/guest-mode.js?v=v2026-09-21T08065";
-import { initI18n, t, applyTranslations } from "../../translation/translation.js?v=v2026-09-21T08065";
-import { initRatingSystem } from "../core/rating-system.js?v=v2026-09-21T08065";
-import { initUiSelect } from "../core/ui-select.js?v=v2026-09-21T08065";
-import { maybeShowGuestInfoModal } from "../core/guest-info-modal.js?v=v2026-09-21T08065";
-import { maybeShowGuestMigrateReminder } from "../core/guest-migrate-reminder.js?v=v2026-09-21T08065";
+import { addRenameGesture } from "../core/rename-gesture.js?v=v2026-09-21T22104";
+import { sb } from "../core/supabase.js?v=v2026-09-21T22104";
+import { requireAuth } from "../core/auth.js?v=v2026-09-21T22104";
+import { alertModal, confirmModal } from "../core/modal.js?v=v2026-09-21T22104";
+import { hideForGuest, isGuestUser } from "../core/guest-mode.js?v=v2026-09-21T22104";
+import { initI18n, t, applyTranslations } from "../../translation/translation.js?v=v2026-09-21T22104";
+import { initRatingSystem } from "../core/rating-system.js?v=v2026-09-21T22104";
+import { initUiSelect } from "../core/ui-select.js?v=v2026-09-21T22104";
+import { maybeShowGuestInfoModal } from "../core/guest-info-modal.js?v=v2026-09-21T22104";
+import { maybeShowGuestMigrateReminder } from "../core/guest-migrate-reminder.js?v=v2026-09-21T22104";
 
-import { initPwa, isStandalone, isMobileDevice } from "../core/pwa.js?v=v2026-09-21T08065";
-import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../core/modal-sheet.js?v=v2026-09-21T08065";
+import { initPwa, isStandalone, isMobileDevice } from "../core/pwa.js?v=v2026-09-21T22104";
+import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../core/modal-sheet.js?v=v2026-09-21T22104";
 
 // Zarejestruj listener PWA jak najwcześniej – beforeinstallprompt może odpalić przed requireAuth
 const pwaApi = initPwa();
 // Jeśli beforeinstallprompt już odpalił zanim dodaliśmy listener w IIFE, sprawdzimy po zalogowaniu
 
-
-import { exportGame, importGame, downloadJson } from "./builder-import-export.js?v=v2026-09-21T08065";
-import { setTopbarNavPriority, setTopbarAccount } from '../core/topbar-controller.js?v=v2026-09-21T08065';
+import { exportGame, importGame, downloadJson } from "./builder-import-export.js?v=v2026-09-21T22104";
+import { setTopbarNavPriority, setTopbarAccount } from '../core/topbar-controller.js?v=v2026-09-21T22104';
 
 import "../core/contact-modal.js";
 import {
@@ -29,10 +28,11 @@ import {
   validateGameReadyToPlay,
   validatePollEntry,
   validatePollReadyToOpen,
-} from "../core/game-validate.js?v=v2026-09-21T08065";
-import { deleteGameSoundsFolder } from "../core/sfx-cloud.js?v=v2026-09-21T08065";
-import { isResourceBusy } from "../core/resource-lock.js?v=v2026-09-21T08065";
-import { TRASH_ICON } from "../core/icons.js?v=v2026-09-21T08065";
+} from "../core/game-validate.js?v=v2026-09-21T22104";
+import { deleteGameSoundsFolder } from "../core/sfx-cloud.js?v=v2026-09-21T22104";
+import { isResourceBusy } from "../core/resource-lock.js?v=v2026-09-21T22104";
+
+import { TRASH_ICON } from "../core/icons.js?v=v2026-09-21T22104";
 
 const MSG = {
   exportBaseEmpty: () => t("builder.exportBase.empty"),
@@ -290,7 +290,6 @@ async function maybeShowIosWebappPrompt() {
 
   if (skipNextTime) localStorage.setItem(IOS_PROMPT_LS_KEY, "1");
 }
-
 
 function setProgUi(stepEl, countEl, barEl, msgEl, { step, i, n, msg, isError } = {}) {
   if (stepEl && step != null) stepEl.textContent = String(step);
@@ -1023,7 +1022,6 @@ async function fetchActionState(gameId, revHint) {
     rev: String(data?.rev || "")
   };
 
-
   actionStateCache.set(gameId, { rev: res.rev, res });
   return res;
 }
@@ -1076,7 +1074,6 @@ async function updateActionState() {
     setButtonsState({ hasSel: true, canEdit: false, canPlay: false, canPoll: false, canExport: false });
   }
 }
-
 
 /* ================= Import/Export ================= */
 async function readFileAsText(file) {
@@ -1302,7 +1299,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
 
-
   let badgesRefreshInFlight = null;
   let badgesRefreshTimer = null;
   let lastBadgesRefreshAt = 0;
@@ -1352,7 +1348,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "visible") refreshBadges({ force: true });
   });
-
 
   // btnManual
   btnManual?.addEventListener("click", async () => {
@@ -1707,7 +1702,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     closeExportBaseModal();
   });
 
-
   // IMPORT (modal)
   btnImport?.addEventListener("click", openImportModal);
   btnCancelImport?.addEventListener("click", closeImportModal);
@@ -1837,7 +1831,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (importFile) importFile.disabled = false;
     }
   });
-
 
   // init — ?tab=market otwiera zakładkę Społeczność od razu
   const initTab = new URLSearchParams(location.search).get("tab");

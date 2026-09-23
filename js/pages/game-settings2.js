@@ -3,28 +3,29 @@
 // 1 blokad, podgląd Wyświetlacza przez display2?preview=1 + shared/previewRow.js
 // itd.) — trzymana jako osobny plik, żeby modal Control v2 nie zależał od
 // tej samej strony, którą wciąż ładuje stary control.html przez /game-settings.
-import { requireAuth } from "../core/auth.js?v=v2026-09-21T08065";
-import { t, getUiLang } from "../../translation/translation.js?v=v2026-09-21T08065";
-import { setTopbarAccount } from "../core/topbar-controller.js?v=v2026-09-21T08065";
-import { sb } from "../core/supabase.js?v=v2026-09-21T08065";
-import { loadQuestions } from "../core/game-validate.js?v=v2026-09-21T08065";
-import { loadFont5x7, buildLogoPreviewCanvas } from "../core/logo-preview.js?v=v2026-09-21T08065";
-import { v as cacheBust } from "../core/cache-bust.js?v=v2026-09-21T08065";
-import { alertModal, confirmModal } from "../core/modal.js?v=v2026-09-21T08065";
-import { initUiSelect } from "../core/ui-select.js?v=v2026-09-21T08065";
-import { WARNING_ICON, PLAYBACK_PLAY_ICON, PLAYBACK_STOP_ICON, GAMEPAD_ICON } from "../core/icons.js?v=v2026-09-21T08065";
-import { buildDisplayPreviewRow } from "../../shared/previewRow.js?v=v2026-09-21T08065";
+import { requireAuth } from "../core/auth.js?v=v2026-09-21T22104";
+import { t, getUiLang } from "../../translation/translation.js?v=v2026-09-21T22104";
+import { setTopbarAccount } from "../core/topbar-controller.js?v=v2026-09-21T22104";
+import { sb } from "../core/supabase.js?v=v2026-09-21T22104";
+import { loadQuestions } from "../core/game-validate.js?v=v2026-09-21T22104";
+import { loadFont5x7, buildLogoPreviewCanvas } from "../core/logo-preview.js?v=v2026-09-21T22104";
+import { v as cacheBust } from "../core/cache-bust.js?v=v2026-09-21T22104";
+import { alertModal, confirmModal } from "../core/modal.js?v=v2026-09-21T22104";
+import { initUiSelect } from "../core/ui-select.js?v=v2026-09-21T22104";
+import { buildDisplayPreviewRow } from "../../shared/previewRow.js?v=v2026-09-21T22104";
+
+import { WARNING_ICON, PLAYBACK_PLAY_ICON, PLAYBACK_STOP_ICON, GAMEPAD_ICON } from "../core/icons.js?v=v2026-09-21T22104";
 import {
   loadSfxManifest, getSfxCategories,
   setSfxCustomBlob, clearSfxCustomFile, clearAllSfxCustomFiles, getSfxCustomFiles,
   playSfx, setSfxVolume,
-} from "../core/sfx.js?v=v2026-09-21T08065";
+} from "../core/sfx.js?v=v2026-09-21T22104";
 import {
   uploadGameSound, deleteGameSound, deleteAllGameSounds,
-} from "../core/sfx-cloud.js?v=v2026-09-21T08065";
-import { guardDesktopOnly } from "../core/device-guard.js?v=v2026-09-21T08065";
-import { guardResourceLock, guardResourceBusy } from "../core/resource-lock.js?v=v2026-09-21T08065";
-import { updateChecked, ROW_GONE } from "../core/db-guard.js?v=v2026-09-21T08065";
+} from "../core/sfx-cloud.js?v=v2026-09-21T22104";
+import { guardDesktopOnly } from "../core/device-guard.js?v=v2026-09-21T22104";
+import { guardResourceLock, guardResourceBusy } from "../core/resource-lock.js?v=v2026-09-21T22104";
+import { updateChecked, ROW_GONE } from "../core/db-guard.js?v=v2026-09-21T22104";
 
 guardDesktopOnly();
 
@@ -590,15 +591,11 @@ function resolveLogoPreview() {
 }
 
 function postPreviewRow() {
-  if (!_displayReady || !_displayIframe?.contentWindow) {
-    console.warn("[e2e-diag] postPreviewRow() early-return, _displayReady:", _displayReady, "hasContentWindow:", !!_displayIframe?.contentWindow);
-    return;
-  }
+  if (!_displayReady || !_displayIframe?.contentWindow) return;
   try {
     const row = buildDisplayPreviewRow({ teams: localSettings.teams, display: localSettings.display, logoPreview: resolveLogoPreview() });
-    console.warn("[e2e-diag] postPreviewRow() wysyła, teamA:", row.detail.teams.teamA);
     _displayIframe.contentWindow.postMessage({ type: "familiada:preview-row", row }, "*");
-  } catch (e) { console.warn("[e2e-diag] postPreviewRow() postMessage rzucił:", e?.message); }
+  } catch {}
 }
 
 function createDisplayIframe() {
@@ -618,7 +615,6 @@ function createDisplayIframe() {
   // window.handleCommand (który już nie istnieje, komend nie ma).
   window.addEventListener("message", (e) => {
     if (e.data?.type !== "familiada:preview-ready") return;
-    console.warn("[e2e-diag] odebrano familiada:preview-ready, source match:", e.source === _displayIframe?.contentWindow);
     if (e.source !== _displayIframe?.contentWindow) return;
     _displayReady = true;
     // Podgląd ma być żywy niezależnie od aktywnej zakładki (operator zmienia

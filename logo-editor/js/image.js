@@ -1,9 +1,9 @@
 // familiada/logo-editorjs/image.js
 // Tryb: IMAGE -> duży obraz + kadr 26:11 -> przetwarzanie -> PIX 150x70
 
-import { alertModal } from "../../js/core/modal.js?v=v2026-09-21T08065";
-import { t } from "../../translation/translation.js?v=v2026-09-21T08065";
-import { sb } from "../../js/core/supabase.js?v=v2026-09-21T08065";
+import { alertModal } from "../../js/core/modal.js?v=v2026-09-21T22104";
+import { t } from "../../translation/translation.js?v=v2026-09-21T22104";
+import { sb } from "../../js/core/supabase.js?v=v2026-09-21T22104";
 
 export function initImageEditor(ctx) {
   const TYPE_PIX = ctx.TYPE_PIX || "PIX_150x70";
@@ -554,7 +554,6 @@ export function initImageEditor(ctx) {
     grid.classList.toggle("is-col", mode === "col");
   }
 
-
   // =========================================================
   // Drag/resize crop
   // =========================================================
@@ -791,7 +790,6 @@ export function initImageEditor(ctx) {
   closePanels();
   syncLabels();
   
-
 
   // =========================================================
   // API

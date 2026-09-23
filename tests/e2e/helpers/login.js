@@ -288,4 +288,5 @@ module.exports = {
   testAccountUsername,
   isKnownNoiseText,
   isKnownNoiseUrl,
+  instrumentPage,
 };

@@ -1,8 +1,10 @@
 import QRCode from "https://cdn.jsdelivr.net/npm/qrcode@1.5.3/+esm";
-import { sb } from "../core/supabase.js?v=v2026-09-21T08065";
-import { rt } from "../core/realtime.js?v=v2026-09-21T08065";
-import { initI18n, setUiLang, t, getUiLang } from "../../translation/translation.js?v=v2026-09-21T08065";
-import { FULLSCREEN_ICON, FULLSCREEN_EXIT_ICON } from "../core/icons.js?v=v2026-09-21T08065";
+import { sb } from "../core/supabase.js?v=v2026-09-21T22104";
+import { initI18n, setUiLang, t, getUiLang } from "../../translation/translation.js?v=v2026-09-21T22104";
+
+import { rt } from "../core/realtime.js?v=v2026-09-21T22104";
+
+import { FULLSCREEN_ICON, FULLSCREEN_EXIT_ICON } from "../core/icons.js?v=v2026-09-21T22104";
 
 // 1. Inicjalizacja i18n
 await initI18n({ withSwitcher: false });
@@ -104,10 +106,6 @@ btnFS?.addEventListener("click", async ()=>{
 
 document.addEventListener("fullscreenchange", updateFsIcon);
 
-// --- i18n sync (polls -> poll-qr) — BroadcastChannel (same-browser) ---
-const I18N_BC_NAME = "familiada:polls:qr-sync";
-const i18nBc = ("BroadcastChannel" in window) ? new BroadcastChannel(I18N_BC_NAME) : null;
-
 async function applyLangChange(lang) {
   await setUiLang(lang, { persist: false, updateUrl: true, apply: true });
   url = withLangInUrl(url, lang);
@@ -115,35 +113,34 @@ async function applyLangChange(lang) {
   render(url);
 }
 
-i18nBc?.addEventListener("message", async (ev) => {
-  const msg = ev?.data;
-  if (!msg || msg.type !== "polls:qr:i18n" || !msg.lang) return;
-  if (msg.scope !== myScope) return;
-  await applyLangChange(msg.lang);
-});
+// --- Język: pollowanie games.poll_qr_lang (migracja 269) zamiast komend ---
+// Wcześniej: BroadcastChannel (ta sama przeglądarka) + Supabase Realtime
+// broadcast POLL_QR_LANG (inne urządzenie), oba wymagające, żeby polls.js i
+// poll-qr.js były podłączone w TEJ SAMEJ chwili, gdy operator zmienia
+// język — urządzenie, które akurat straciło łącze/dołączyło PO tym
+// momencie, zostawało trwale z nieaktualnym językiem aż do kolejnej
+// zmiany. Naprawa: poll-qr samo się dopytuje o stan (ten sam get_poll_game,
+// którego już używa przy starcie) — jak Display v2, zamiast czekać na
+// komendę z zewnątrz.
+const myKey = myScope.split(":")[1] || "";
+const POLL_LANG_INTERVAL_MS = 4000;
 
-window.addEventListener("beforeunload", () => {
-  try { i18nBc?.close?.(); } catch {}
-});
+async function pollLangOnce() {
+  if (!myGameId || !myKey) return;
+  try {
+    const { data, error } = await sb().rpc("get_poll_game", { p_game_id: myGameId, p_key: myKey });
+    if (error || !data?.game) return;
+    const lang = data.game.poll_qr_lang;
+    if (lang && lang !== getUiLang()) await applyLangChange(lang);
+  } catch (e) {
+    console.warn("[poll-qr] lang poll failed", e);
+  }
+}
 
-// --- i18n sync — Supabase Realtime (cross-device, np. TV) ---
-if (myGameId) {
-  rt(`familiada-poll-qr:${myGameId}`).onBroadcast("POLL_QR_LANG", async (msg) => {
-    const { lang, scope } = msg?.payload ?? {};
-    if (!lang) return;
-    if (scope && scope !== myScope) return;
-    await applyLangChange(lang);
-  });
+if (myGameId && myKey) {
+  pollLangOnce();
+  setInterval(pollLangOnce, POLL_LANG_INTERVAL_MS);
 }
 
 updateFsIcon();
 render(url).finally(() => document.documentElement.classList.remove('page-loading'));
-
-// Powiadom polls, że urządzenie jest gotowe — polls odpowie POLL_QR_LANG z aktualnym językiem
-if (myGameId) {
-  const readyPayload = { scope: myScope };
-  try { i18nBc?.postMessage({ type: "polls:qr:ready", ...readyPayload }); } catch {}
-  rt(`familiada-poll-qr:${myGameId}`)
-    .sendBroadcast("POLL_QR_READY", readyPayload, { mode: "http" })
-    .catch((e) => console.warn("[poll-qr] ready broadcast failed", e));
-}

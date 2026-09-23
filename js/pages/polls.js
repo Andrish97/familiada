@@ -1,12 +1,11 @@
 // js/pages/polls.js
-import { sb } from "../core/supabase.js?v=v2026-09-21T08065";
-import { rt } from "../core/realtime.js?v=v2026-09-21T08065";
-import { requireAuth } from "../core/auth.js?v=v2026-09-21T08065";
-import { alertModal, confirmModal } from "../core/modal.js?v=v2026-09-21T08065";
+import { sb } from "../core/supabase.js?v=v2026-09-21T22104";
+import { requireAuth } from "../core/auth.js?v=v2026-09-21T22104";
+import { alertModal, confirmModal } from "../core/modal.js?v=v2026-09-21T22104";
 import QRCode from "https://cdn.jsdelivr.net/npm/qrcode@1.5.3/+esm";
-import { initI18n, t, withLangParam, getUiLang } from "../../translation/translation.js?v=v2026-09-21T08065";
-import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-09-21T08065";
-import { guardResourceLock } from "../core/resource-lock.js?v=v2026-09-21T08065";
+import { initI18n, t, withLangParam, getUiLang } from "../../translation/translation.js?v=v2026-09-21T22104";
+import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-09-21T22104";
+import { guardResourceLock } from "../core/resource-lock.js?v=v2026-09-21T22104";
 import "../core/contact-modal.js";
 
 // initI18n is called at the start of DOMContentLoaded (see below)
@@ -105,7 +104,6 @@ function redoAction() {
 
 const backTarget = withLangParam(ret || "builder");
 
-
 function getRetPathnameLower() {
   if (!ret) return "";
   try {
@@ -183,23 +181,20 @@ pollQrModalOpen?.addEventListener("click", () => {
   window.open(u.toString(), "_blank", "noopener,noreferrer");
 });
 
-// --- i18n sync (polls -> poll-qr) ---
-const I18N_BC_NAME = "familiada:polls:qr-sync";
-const i18nBc = ("BroadcastChannel" in window) ? new BroadcastChannel(I18N_BC_NAME) : null;
-
-function broadcastLang(lang) {
-  const scope = `${game?.id || ""}:${game?.share_key_poll || ""}`;
-  // BroadcastChannel — same-browser (ten sam komputer)
+// --- Język QR-a w ankietach (games.poll_qr_lang, migracja 269) ---
+// Wcześniej: broadcast (BroadcastChannel same-browser + Supabase Realtime
+// cross-device) — wymagał, żeby poll-qr.js było podłączone w TEJ SAMEJ
+// chwili, gdy operator zmienia język tutaj; urządzenie offline/dołączone
+// później zostawało trwale z nieaktualnym językiem. Zamiast tego po prostu
+// PERSYSTUJEMY język na games.poll_qr_lang -- poll-qr.js samo się o niego
+// dopytuje (pollowanie, patrz komentarz tam), więc nie ma już czego
+// "wysyłać": broadcastLang() tylko zapisuje, nigdy nie czeka na odbiorcę.
+async function broadcastLang(lang) {
+  if (!game?.id) return;
   try {
-    i18nBc?.postMessage({ type: "polls:qr:i18n", scope, lang });
+    await sb().rpc("set_poll_qr_lang", { p_game_id: game.id, p_lang: lang });
   } catch (e) {
-    console.warn("[polls] i18n bc broadcast failed", e);
-  }
-  // Supabase Realtime — cross-device (np. TV)
-  if (game?.id) {
-    rt(`familiada-poll-qr:${game.id}`)
-      .sendBroadcast("POLL_QR_LANG", { lang, scope }, { mode: "http" })
-      .catch((e) => console.warn("[polls] i18n rt broadcast failed", e));
+    console.warn("[polls] set_poll_qr_lang failed", e);
   }
 }
 
@@ -317,7 +312,6 @@ function setLinkRowVisible(visible) {
   // mini-QR
   if (!v) clearQr();
 }
-
 
 function clearQr() {
   if (qrBox) qrBox.innerHTML = "";
@@ -1459,23 +1453,4 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   await refresh();
-
-  // Gdy poll-qr zgłosi gotowość (POLL_QR_READY), odpowiedz aktualnym językiem
-  i18nBc?.addEventListener("message", (ev) => {
-    const d = ev?.data;
-    if (!d || d.type !== "polls:qr:ready" || !game) return;
-    const scope = `${game.id}:${game.share_key_poll}`;
-    if (d.scope && d.scope !== scope) return;
-    broadcastLang(getUiLang());
-  });
-  if (game?.id) {
-    rt(`familiada-poll-qr:${game.id}`).onBroadcast("POLL_QR_READY", (msg) => {
-      const { scope } = msg?.payload ?? {};
-      if (!game) return;
-      const myScope = `${game.id}:${game.share_key_poll}`;
-      if (scope && scope !== myScope) return;
-      broadcastLang(getUiLang());
-    });
-  }
-
 });
