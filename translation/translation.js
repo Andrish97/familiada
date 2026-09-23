@@ -1,7 +1,7 @@
 const LANG_LOADERS = {
-  pl: async () => (await import('./pl.js?v=v2026-09-23T08210')).default,
-  en: async () => (await import('./en.js?v=v2026-09-23T08210')).default,
-  uk: async () => (await import('./uk.js?v=v2026-09-23T08210')).default,
+  pl: async () => (await import('./pl.js?v=v2026-09-21T22104')).default,
+  en: async () => (await import('./en.js?v=v2026-09-21T22104')).default,
+  uk: async () => (await import('./uk.js?v=v2026-09-21T22104')).default,
 };
 
 const LANG_ORDER = ["pl", "en", "uk"];
@@ -84,7 +84,7 @@ export async function initI18n({ withSwitcher = true, apply = true } = {}) {
   await setUiLang(getUiLang(), { persist: true, updateUrl: true, apply });
 
   if (withSwitcher) {
-    // Jeśli initI18n jest wołane zanim DOM istnieje (np. top-level await),
+    // ✅ Jeśli initI18n jest wołane zanim DOM istnieje (np. top-level await),
     // to switcher nie ma gdzie się wstrzyknąć i potrafi wysypać całą stronę.
     if (typeof document !== "undefined" && document.readyState === "loading") {
       await new Promise((resolve) =>

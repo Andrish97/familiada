@@ -1,14 +1,13 @@
-import { sb } from "../core/supabase.js?v=v2026-09-23T08210";
-import { cooldownGet, cooldownReserve, cooldownRelease, cooldownEmailReserve } from "../core/cooldown.js?v=v2026-09-23T08210";
-import { requireAuth, updateUserLanguage, validatePassword, validateUsername, signOut, niceAuthError, initPasswordToggles, convertGuestToRegisteredEmailOnly } from "../core/auth.js?v=v2026-09-23T08210";
-import { getUserEmailNotificationsFlag, setUserEmailNotificationsFlag } from "../core/user-flags.js?v=v2026-09-23T08210";
-import { initI18n, t, getUiLang, withLangParam } from "../../translation/translation.js?v=v2026-09-23T08210";
-import { confirmModal } from "../core/modal.js?v=v2026-09-23T08210";
-import { isGuestUser, hideForGuest } from "../core/guest-mode.js?v=v2026-09-23T08210";
+import { sb } from "../core/supabase.js?v=v2026-09-21T22104";
+import { cooldownGet, cooldownReserve, cooldownRelease, cooldownEmailReserve } from "../core/cooldown.js?v=v2026-09-21T22104";
+import { requireAuth, updateUserLanguage, validatePassword, validateUsername, signOut, niceAuthError, initPasswordToggles, convertGuestToRegisteredEmailOnly } from "../core/auth.js?v=v2026-09-21T22104";
+import { getUserEmailNotificationsFlag, setUserEmailNotificationsFlag } from "../core/user-flags.js?v=v2026-09-21T22104";
+import { initI18n, t, getUiLang, withLangParam } from "../../translation/translation.js?v=v2026-09-21T22104";
+import { confirmModal } from "../core/modal.js?v=v2026-09-21T22104";
+import { isGuestUser, hideForGuest } from "../core/guest-mode.js?v=v2026-09-21T22104";
 import "../core/contact-modal.js";
-import { deleteGameSoundsFolder } from "../core/sfx-cloud.js?v=v2026-09-23T08210";
+import { deleteGameSoundsFolder } from "../core/sfx-cloud.js?v=v2026-09-21T22104";
 
-import { STAR_ICON, STAR_EMPTY_ICON } from "../core/icons.js?v=v2026-09-23T08210";
 
 const status = document.getElementById("status");
 const err = document.getElementById("err");
@@ -119,6 +118,7 @@ async function initEmailNotificationsUi(user) {
     }
   });
 }
+
 
 backToGames?.addEventListener("click", () => {
   const target = backToGames.dataset.baseHref || "builder";
@@ -401,6 +401,7 @@ async function handleMigrateCancel() {
   }
 }
 
+
 // --- email change pending state ---
 let currentEmail = "";
 let pendingEmail = "";
@@ -455,6 +456,7 @@ function setEmailPendingUi(nextPendingEmail) {
   // cooldown may additionally disable resend (cancel is always allowed)
   tickCooldowns();
 }
+
 
 async function fetchEmailChangeStatus() {
   try {
@@ -542,7 +544,7 @@ async function loadUserRating(userId) {
     if (error) throw error;
 
     if (data) {
-      const starsStr = STAR_ICON.repeat(data.stars) + STAR_EMPTY_ICON.repeat(5 - data.stars);
+      const starsStr = "★".repeat(data.stars) + "☆".repeat(5 - data.stars);
       container.innerHTML = `
         <div class="rating-info">
           <div class="rating-stars">

@@ -91,7 +91,6 @@
 .share-role-select:disabled{ opacity: .5; cursor: not-allowed; }
 
 .btn.xsm{ padding: 6px 10px; font-size: 12px; border-radius: 10px; }
-.btn.xsm svg{ width: 12px; height: 12px; fill: currentColor; display: block; }
 
 .card.proposed{
   border-color: rgba(255, 210, 80, .55);
@@ -118,21 +117,23 @@
   letter-spacing:.02em;
   opacity:.95;
 }
-.tileBadge svg{ width:13px; height:13px; fill:currentColor; flex-shrink:0; }
 
 .tileBadge[data-kind="from"]{ border-color:rgba(120,200,255,.25); background:rgba(120,200,255,.10); }
 .tileBadge[data-kind="role"]{ border-color:rgba(255,234,166,.25); background:rgba(255,234,166,.10); }
 .tileBadge[data-kind="proposed"]{ border-color:rgba(255,170,210,.28); background:rgba(255,170,210,.10); }
 
-/* reset domyślnego wyglądu <button> pod kaflem -- wygląd (obwódka/tło/kosz)
-   ustawiony wspólnie z builderem w builder.css */
+/* reset dla X (button) */
 .builder-body .grid .card .x{
   appearance: none;
   -webkit-appearance: none;
+  border: 0;
+  background: transparent;
+  color: rgba(255,255,255,.85);
   padding: 0;
   line-height: 1;
   cursor: pointer;
 }
+.builder-body .grid .card .x:hover{ color:#fff; }
 
 /* =========================================================
    DESKTOP LAYOUT (default)

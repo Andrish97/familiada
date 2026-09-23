@@ -1,7 +1,7 @@
 // js/core/device-guard.js
 // Uniwersalna blokada na telefon + i18n (deviceGuard.*) + "Wróć" (history/referrer)
 
-import { applyTranslations, t } from "../../translation/translation.js?v=v2026-09-23T08210";
+import { applyTranslations, t } from "../../translation/translation.js?v=v2026-09-21T22104";
 
 export function guardDesktopOnly({
   // techniczny breakpoint (nie pokazujemy w UI)
@@ -38,7 +38,7 @@ export function guardDesktopOnly({
       width: "100vw",
       height: "100vh",
     
-      // spójne z projektem + fallback
+      // ✅ spójne z projektem + fallback
       fontFamily: "system-ui,-apple-system,Segoe UI,sans-serif",
       background: "rgba(0,0,0,.78)",          // mniej „czarna plama”
       backdropFilter: "blur(10px)",

@@ -3,29 +3,27 @@
 // 1 blokad, podgląd Wyświetlacza przez display2?preview=1 + shared/previewRow.js
 // itd.) — trzymana jako osobny plik, żeby modal Control v2 nie zależał od
 // tej samej strony, którą wciąż ładuje stary control.html przez /game-settings.
-import { requireAuth } from "../core/auth.js?v=v2026-09-23T08210";
-import { t, getUiLang } from "../../translation/translation.js?v=v2026-09-23T08210";
-import { setTopbarAccount } from "../core/topbar-controller.js?v=v2026-09-23T08210";
-import { sb } from "../core/supabase.js?v=v2026-09-23T08210";
-import { loadQuestions } from "../core/game-validate.js?v=v2026-09-23T08210";
-import { loadFont5x7, buildLogoPreviewCanvas } from "../core/logo-preview.js?v=v2026-09-23T08210";
-import { v as cacheBust } from "../core/cache-bust.js?v=v2026-09-23T08210";
-import { alertModal, confirmModal } from "../core/modal.js?v=v2026-09-23T08210";
-import { initUiSelect } from "../core/ui-select.js?v=v2026-09-23T08210";
-import { buildDisplayPreviewRow } from "../../shared/previewRow.js?v=v2026-09-23T08210";
-
-import { WARNING_ICON, PLAYBACK_PLAY_ICON, PLAYBACK_STOP_ICON, GAMEPAD_ICON } from "../core/icons.js?v=v2026-09-23T08210";
+import { requireAuth } from "../core/auth.js?v=v2026-09-21T22104";
+import { t, getUiLang } from "../../translation/translation.js?v=v2026-09-21T22104";
+import { setTopbarAccount } from "../core/topbar-controller.js?v=v2026-09-21T22104";
+import { sb } from "../core/supabase.js?v=v2026-09-21T22104";
+import { loadQuestions } from "../core/game-validate.js?v=v2026-09-21T22104";
+import { loadFont5x7, buildLogoPreviewCanvas } from "../core/logo-preview.js?v=v2026-09-21T22104";
+import { v as cacheBust } from "../core/cache-bust.js?v=v2026-09-21T22104";
+import { alertModal, confirmModal } from "../core/modal.js?v=v2026-09-21T22104";
+import { initUiSelect } from "../core/ui-select.js?v=v2026-09-21T22104";
+import { buildDisplayPreviewRow } from "../../shared/previewRow.js?v=v2026-09-21T22104";
 import {
   loadSfxManifest, getSfxCategories,
   setSfxCustomBlob, clearSfxCustomFile, clearAllSfxCustomFiles, getSfxCustomFiles,
   playSfx, setSfxVolume,
-} from "../core/sfx.js?v=v2026-09-23T08210";
+} from "../core/sfx.js?v=v2026-09-21T22104";
 import {
   uploadGameSound, deleteGameSound, deleteAllGameSounds,
-} from "../core/sfx-cloud.js?v=v2026-09-23T08210";
-import { guardDesktopOnly } from "../core/device-guard.js?v=v2026-09-23T08210";
-import { guardResourceLock, guardResourceBusy } from "../core/resource-lock.js?v=v2026-09-23T08210";
-import { updateChecked, ROW_GONE } from "../core/db-guard.js?v=v2026-09-23T08210";
+} from "../core/sfx-cloud.js?v=v2026-09-21T22104";
+import { guardDesktopOnly } from "../core/device-guard.js?v=v2026-09-21T22104";
+import { guardResourceLock, guardResourceBusy } from "../core/resource-lock.js?v=v2026-09-21T22104";
+import { updateChecked, ROW_GONE } from "../core/db-guard.js?v=v2026-09-21T22104";
 
 guardDesktopOnly();
 
@@ -860,7 +858,7 @@ async function renderSound() {
         </button>
         <div class="ui-select-menu" role="listbox"></div>
       </div>
-      <button class="sfx-preview-btn" type="button" data-sfx-preview="${escAttr(key)}" title="Podgląd"${previewDisabled ? " disabled" : ""}>${PLAYBACK_PLAY_ICON}</button>
+      <button class="sfx-preview-btn" type="button" data-sfx-preview="${escAttr(key)}" title="Podgląd"${previewDisabled ? " disabled" : ""}><svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><polygon points="2,1 11,6 2,11" fill="currentColor"/></svg></button>
       <div class="sfx-vol-wrap">
         <input class="sfx-vol" type="range" min="0" max="100" step="1" value="${volPct}" data-sfx-vol="${escAttr(key)}"/>
         <span class="sfx-vol-label" id="sfxVol_${escAttr(key)}">${volPct}%</span>
@@ -910,7 +908,7 @@ async function renderSound() {
   function _stopPreview() {
     if (_previewAudio) { try { _previewAudio.pause(); _previewAudio.currentTime = 0; } catch {} }
     if (_previewUrl)   { URL.revokeObjectURL(_previewUrl); _previewUrl = null; }
-    if (_previewBtn)   { _previewBtn.innerHTML = PLAYBACK_PLAY_ICON; delete _previewBtn.dataset.playing; }
+    if (_previewBtn)   { _previewBtn.innerHTML = '<svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><polygon points="2,1 11,6 2,11" fill="currentColor"/></svg>'; delete _previewBtn.dataset.playing; }
     _previewAudio = null;
     _previewBtn   = null;
   }
@@ -943,7 +941,7 @@ async function renderSound() {
       _previewAudio = audio;
       _previewBtn   = btn;
       _previewUrl   = blobUrl;
-      btn.innerHTML = PLAYBACK_STOP_ICON;
+      btn.innerHTML = '<svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="1.5" y="1.5" width="9" height="9" fill="currentColor"/></svg>';
       btn.dataset.playing = "1";
     });
   });
@@ -1120,7 +1118,7 @@ function renderQuestions() {
             </label>
           </div>
           <div class="gs-hint">${t("gameSettings.questions.roundsModeHint")}</div>
-          ${hasFinal && finalRandom && !roundsRandom ? `<div class="gs-hint" style="margin-top:6px">${WARNING_ICON} ${t("gameSettings.questions.finalRandomRoundsOrderedWarning") || "Finał losowy + rundy w ustalonej kolejności: finał wylosuje 5 pytań spoza Twojej listy rund, dopiero przy starcie gry w panelu prowadzącego — jeśli baza ma niewiele pytań, pula do losowania finału będzie odpowiednio mniejsza."}</div>` : ""}
+          ${hasFinal && finalRandom && !roundsRandom ? `<div class="gs-hint" style="margin-top:6px">⚠️ ${t("gameSettings.questions.finalRandomRoundsOrderedWarning") || "Finał losowy + rundy w ustalonej kolejności: finał wylosuje 5 pytań spoza Twojej listy rund, dopiero przy starcie gry w panelu prowadzącego — jeśli baza ma niewiele pytań, pula do losowania finału będzie odpowiednio mniejsza."}</div>` : ""}
         </div>
       </div>
     </div>
@@ -1740,7 +1738,6 @@ async function main() {
 
   // Show "Graj" button if game has questions — only outside modal mode
   if (btnPlay && !isModal) {
-    btnPlay.innerHTML = `${GAMEPAD_ICON}<span>${t("gameSettings.play") || "Graj"}</span>`;
     if (allQuestions.length > 0) {
       btnPlay.classList.remove("hidden");
     }

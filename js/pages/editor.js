@@ -1,15 +1,13 @@
 // js/pages/editor.js
-import { sb } from "../core/supabase.js?v=v2026-09-23T08210";
-import { requireAuth } from "../core/auth.js?v=v2026-09-23T08210";
-import { alertModal, confirmModal } from "../core/modal.js?v=v2026-09-23T08210";
-import { parseQaText, clip as clipN } from "../core/text-import.js?v=v2026-09-23T08210";
-import { canEnterEdit, RULES as GV_RULES, TYPES } from "../core/game-validate.js?v=v2026-09-23T08210";
-import { guardResourceLock } from "../core/resource-lock.js?v=v2026-09-23T08210";
-import { updateChecked, ROW_GONE } from "../core/db-guard.js?v=v2026-09-23T08210";
-import { initI18n, t, withLangParam } from "../../translation/translation.js?v=v2026-09-23T08210";
-import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-09-23T08210";
-
-import { TRASH_ICON } from "../core/icons.js?v=v2026-09-23T08210";
+import { sb } from "../core/supabase.js?v=v2026-09-21T22104";
+import { requireAuth } from "../core/auth.js?v=v2026-09-21T22104";
+import { alertModal, confirmModal } from "../core/modal.js?v=v2026-09-21T22104";
+import { parseQaText, clip as clipN } from "../core/text-import.js?v=v2026-09-21T22104";
+import { canEnterEdit, RULES as GV_RULES, TYPES } from "../core/game-validate.js?v=v2026-09-21T22104";
+import { guardResourceLock } from "../core/resource-lock.js?v=v2026-09-21T22104";
+import { updateChecked, ROW_GONE } from "../core/db-guard.js?v=v2026-09-21T22104";
+import { initI18n, t, withLangParam } from "../../translation/translation.js?v=v2026-09-21T22104";
+import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-09-21T22104";
 import "../core/contact-modal.js";
 // initI18n + remove('page-loading') są w boot() — przed requireAuth, żeby body pojawiło się przed auth/danymi
 
@@ -321,7 +319,7 @@ function cfgFromGameType(type) {
 
 /* ================= Points UI (prepared) ================= */
 function sumPointsFromDom() {
-  const root = document.getElementById("aList"); // tu są aPts
+  const root = document.getElementById("aList"); // ✅ tu są aPts
   const inputs = root ? root.querySelectorAll("input.aPts") : [];
   let sum = 0;
   inputs.forEach((inp) => (sum += nonNegativeInt(inp.value, 0)));
@@ -346,7 +344,7 @@ function updateRemainBox(container) {
   const box = container?.querySelector(".remainBox");
   if (!box) return;
 
-  const sum = sumPointsFromDom(); // już nie z container
+  const sum = sumPointsFromDom(); // ✅ już nie z container
 
   box.classList.remove("ok", "over");
   if (sum > SUM_PREPARED) box.classList.add("over");
@@ -505,6 +503,7 @@ async function boot() {
   initTopbarAccountDropdown(user);
   document.querySelector('.topbar')?.classList.add('topbar-ready');
 
+
   const btnBack = $("btnBack");
   btnBack?.addEventListener("click", () => {
     if (document.body.classList.contains("mobile-editing")) {
@@ -513,6 +512,7 @@ async function boot() {
     }
     location.href = withLangParam("builder");
   });
+
 
   $("btnManual")?.addEventListener("click", () => {
     const url = new URL("manual", location.href);
@@ -652,6 +652,7 @@ async function boot() {
     renderEditor();
   }
 
+
   // KLUCZ: liczymy count + (prepared) sumę punktów -> do kafelków i kolorów
   async function refreshCounts(baseQuestions = null) {
     const qs = Array.isArray(baseQuestions) ? baseQuestions : await listQuestions(gameId);
@@ -697,7 +698,7 @@ async function boot() {
     const x = document.createElement("button");
     x.type = "button";
     x.className = "x";
-    x.innerHTML = TRASH_ICON;
+    x.textContent = "✕";
     x.title = MSG.deleteLabel();
     return x;
   }
@@ -913,12 +914,12 @@ async function boot() {
         row.innerHTML = `
           <input class="aText" type="text" maxlength="17" placeholder="${MSG.answerDefault(a.ord)}">
           <input class="aPts" type="number" step="1" inputmode="numeric">
-          <button class="aDel" type="button" title="${MSG.deleteLabel()}">${TRASH_ICON}</button>
+          <button class="aDel" type="button" title="${MSG.deleteLabel()}">✕</button>
         `;
       } else {
         row.innerHTML = `
           <input class="aText" type="text" maxlength="17" placeholder="${MSG.answerDefault(a.ord)}">
-          <button class="aDel" type="button" title="${MSG.deleteLabel()}">${TRASH_ICON}</button>
+          <button class="aDel" type="button" title="${MSG.deleteLabel()}">✕</button>
         `;
       }
 

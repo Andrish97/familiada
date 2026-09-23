@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
-  <meta name="app-version" content="v2026-09-23T08210"/>
+  <meta name="app-version" content="v2026-09-21T22104"/>
   <meta charset="UTF-8"/>
   <meta name="robots" content="noindex, nofollow"/>
   <meta name="mobile-web-app-capable" content="yes"/>
@@ -13,9 +13,9 @@
   <link rel="preconnect" href="https://supabase.familiada.online">
   <title data-i18n="gameSettings.title">Familiada — Ustawienia rozgrywki</title>
 
-  <link rel="icon" href="favicon.ico?v=v2026-09-23T08210"/>
-  <link rel="stylesheet" href="css/base.css?v=v2026-09-23T08210"/>
-  <link rel="stylesheet" href="css/game-settings.css?v=v2026-09-23T08210"/>
+  <link rel="icon" href="favicon.ico?v=v2026-09-21T22104"/>
+  <link rel="stylesheet" href="css/base.css?v=v2026-09-21T22104"/>
+  <link rel="stylesheet" href="css/game-settings.css?v=v2026-09-21T22104"/>
   <script>if(new URLSearchParams(location.search).get("modal")==="1")document.documentElement.classList.add("gs-modal-mode");</script>
   <script>if(matchMedia('(max-width:980px)').matches)document.documentElement.dataset.mobileGuard=''</script>
   <style>html[data-mobile-guard]{overflow:hidden;touch-action:none}html[data-mobile-guard] body{visibility:hidden}</style>
@@ -31,12 +31,12 @@
     } catch(_e) {}
   </script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-  <script src="js/core/security-warning.js?v=v2026-09-23T08210" defer></script>
+  <script src="js/core/security-warning.js?v=v2026-09-21T22104" defer></script>
   <script type="module">
-    import { initI18n } from "/translation/translation.js?v=v2026-09-23T08210";
+    import { initI18n } from "/translation/translation.js?v=v2026-09-21T22104";
     await initI18n({ withSwitcher: true });
     document.documentElement.classList.remove('page-loading');
-    import("/js/pages/game-settings.js?v=v2026-09-23T08210");
+    import("/js/pages/game-settings.js?v=v2026-09-21T22104");
   </script>
 </head>
 <body class="gs-body skel-body">
@@ -60,7 +60,7 @@
   <div class="helpOverlay hidden" id="helpOverlay">
     <div class="helpModal" role="dialog" aria-modal="true">
       <div class="helpModalToolbar">
-        <button class="btn btn-sm" id="btnLegal" type="button"><span class="btn-ico" data-shared-icon="shield" aria-hidden="true"></span><span data-i18n="manual.legal">Polityka prywatności</span></button>
+        <button class="btn btn-sm" id="btnLegal" type="button" data-i18n="manual.legal">🔐 Polityka prywatności</button>
         <button class="btn sm" id="btnHelpClose" type="button" onclick="document.getElementById('helpOverlay').classList.add('hidden')">✕</button>
       </div>
       <iframe id="helpFrame" class="helpFrame" src="" title="Wskazówki"></iframe>
@@ -79,12 +79,12 @@
 
   <div class="gs-layout">
     <div class="gs-actionbar" id="gsFooter">
-      <button class="btn gs-sidebar-toggle hidden" id="btnToggleSidebar" type="button"><span class="btn-ico" style="margin-right:0" data-shared-icon="hamburger" aria-hidden="true"></span></button>
+      <button class="btn gs-sidebar-toggle hidden" id="btnToggleSidebar" type="button">☰</button>
       <span class="gs-actionbar-msg hidden" id="gsFooterMsg" data-i18n="gameSettings.unsaved">Niezapisane zmiany</span>
       <div style="flex:1"></div>
       <button class="btn" id="btnResetAll" type="button" data-i18n="gameSettings.resetAll" data-skel-step>Przywróć domyślne</button>
       <button class="btn gold" id="btnSaveAll" type="button" data-i18n="gameSettings.saveAll" data-skel-step>Zapisz wszystko</button>
-      <button class="btn green hidden" id="btnPlay" type="button">Graj</button>
+      <button class="btn green hidden" id="btnPlay" type="button" data-i18n="gameSettings.play">▶ Graj</button>
       <button class="btn sm gs-close-btn hidden" id="btnGsModalClose" type="button">✕</button>
     </div>
 
@@ -149,6 +149,6 @@
   </div>
 </div>
 
-  <script type="module" src="js/core/contact-modal.js?v=v2026-09-23T08210"></script>
+  <script type="module" src="js/core/contact-modal.js?v=v2026-09-21T22104"></script>
 </body>
 </html>

@@ -7,12 +7,12 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title data-i18n="display.title">Familiada — Wyświetlacz (v2)</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-  <script type="module" src="./display2/js/main.js?v=v2026-09-23T08210"></script>
-  <link rel="stylesheet" href="./display/styles.css?v=v2026-09-23T08210" />
-  <link rel="icon" href="favicon.ico?v=v2026-09-23T08210" />
+  <script type="module" src="./display2/js/main.js?v=v2026-09-21T22104"></script>
+  <link rel="stylesheet" href="./display/styles.css?v=v2026-09-21T22104" />
+  <link rel="icon" href="favicon.ico?v=v2026-09-21T22104" />
 </head>
 <body>
-  <button id="fsBtn" class="fs-btn" type="button" title="Pełny ekran" data-i18n-title="common.fullscreen"></button>
+  <button id="fsBtn" class="fs-btn" type="button" title="Pełny ekran" data-i18n-title="common.fullscreen">▢</button>
 
   <!-- TRYB QR — host i buzzer NIEZALEŻNE, jeden LUB oba naraz (dokładnie
        jak dzisiejszy display.html — ta sama markup/CSS, reużyty
@@ -55,7 +55,7 @@
        w starym display.html, więc ta sama, współdzielona display/styles.css
        jest dla niego bezpieczna (selektor po ID, nic tam nie trafia). -->
   <div id="audioUnlockScreen" class="audio-unlock-screen hidden" aria-hidden="true">
-    <button id="btnAudioUnlock" class="audio-unlock-btn" type="button"><span id="audioUnlockIcon" aria-hidden="true" style="width:1em;height:1em;vertical-align:-0.15em;margin-right:6px"></span><span data-i18n="display.audioUnlockBtn">Odblokuj dźwięk</span></button>
+    <button id="btnAudioUnlock" class="audio-unlock-btn" type="button" data-i18n="display.audioUnlockBtn">🔊 Odblokuj dźwięk</button>
   </div>
 </body>
 </html>

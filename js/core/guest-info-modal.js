@@ -1,14 +1,8 @@
 // js/core/guest-info-modal.js
 // Jednorazowy modal informacyjny dla konta gościa.
 
-import { alertModal } from './modal.js?v=v2026-09-23T08210';
-import { t } from '../../translation/translation.js?v=v2026-09-23T08210';
-
-import { WARNING_ICON } from './icons.js?v=v2026-09-23T08210';
-
-function escapeHtml(s) {
-  return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-}
+import { alertModal } from './modal.js?v=v2026-09-21T22104';
+import { t } from '../../translation/translation.js?v=v2026-09-21T22104';
 
 const GUEST_INFO_SHOWN_PREFIX = 'fam:guest:info_shown:';
 
@@ -16,9 +10,21 @@ function buildGuestInfoBody() {
   const wrap = document.createElement('div');
   wrap.style.cssText = 'display:grid;gap:12px;font-size:.9rem;line-height:1.55;margin-top:6px';
 
-  ['guestInfo.warning1', 'guestInfo.warning2'].forEach((htmlKey) => {
+  [
+    { iconKey: 'guestInfo.icon1', htmlKey: 'guestInfo.warning1' },
+    { iconKey: 'guestInfo.icon2', htmlKey: 'guestInfo.warning2' },
+  ].forEach(({ iconKey, htmlKey }) => {
     const row = document.createElement('div');
-    row.innerHTML = t(htmlKey);
+    row.style.cssText = 'display:flex;gap:10px;align-items:flex-start';
+
+    const ic = document.createElement('span');
+    ic.textContent = t(iconKey);
+    ic.style.cssText = 'flex-shrink:0;font-size:1.15rem;margin-top:1px';
+
+    const txt = document.createElement('span');
+    txt.innerHTML = t(htmlKey);
+
+    row.append(ic, txt);
     wrap.appendChild(row);
   });
 
@@ -61,7 +67,7 @@ export async function maybeShowGuestInfoModal(user) {
   const body = buildGuestInfoBody();
 
   await alertModal({
-    title: `${WARNING_ICON} ${escapeHtml(t('guestInfo.title'))}`,
+    title: t('guestInfo.title'),
     text: t('guestInfo.subtitle'),
     okText: t('guestInfo.ok'),
     onReady: ({ overlay }) => {

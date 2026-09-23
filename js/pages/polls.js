@@ -1,11 +1,11 @@
 // js/pages/polls.js
-import { sb } from "../core/supabase.js?v=v2026-09-23T08210";
-import { requireAuth } from "../core/auth.js?v=v2026-09-23T08210";
-import { alertModal, confirmModal } from "../core/modal.js?v=v2026-09-23T08210";
+import { sb } from "../core/supabase.js?v=v2026-09-21T22104";
+import { requireAuth } from "../core/auth.js?v=v2026-09-21T22104";
+import { alertModal, confirmModal } from "../core/modal.js?v=v2026-09-21T22104";
 import QRCode from "https://cdn.jsdelivr.net/npm/qrcode@1.5.3/+esm";
-import { initI18n, t, withLangParam, getUiLang } from "../../translation/translation.js?v=v2026-09-23T08210";
-import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-09-23T08210";
-import { guardResourceLock } from "../core/resource-lock.js?v=v2026-09-23T08210";
+import { initI18n, t, withLangParam, getUiLang } from "../../translation/translation.js?v=v2026-09-21T22104";
+import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-09-21T22104";
+import { guardResourceLock } from "../core/resource-lock.js?v=v2026-09-21T22104";
 import "../core/contact-modal.js";
 
 // initI18n is called at the start of DOMContentLoaded (see below)
@@ -103,6 +103,7 @@ function redoAction() {
 }
 
 const backTarget = withLangParam(ret || "builder");
+
 
 function getRetPathnameLower() {
   if (!ret) return "";
@@ -312,6 +313,7 @@ function setLinkRowVisible(visible) {
   // mini-QR
   if (!v) clearQr();
 }
+
 
 function clearQr() {
   if (qrBox) qrBox.innerHTML = "";
@@ -539,7 +541,7 @@ async function validateCanClose(g) {
     return { ok: false, reason: t("polls.validation.closeOnlyOpen") };
   }
 
-  // Dodatkowy warunek: nie zamykamy jeśli są jeszcze aktywne taski (niewypełnione)
+  // 🔒 Dodatkowy warunek: nie zamykamy jeśli są jeszcze aktywne taski (niewypełnione)
   // Y = (done + pending/opened), X = done. Close dopiero gdy X=Y.
   try {
     const { data: u } = await sb().auth.getUser();

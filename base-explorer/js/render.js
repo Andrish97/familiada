@@ -1,14 +1,8 @@
 // base-explorerjs/render.js
 // Renderowanie UI eksploratora na podstawie state (bez DB, bez akcji).
 
-import { VIEW, META, META_ORDER } from "./state.js?v=v2026-09-23T08210";
-import { t } from "../../translation/translation.js?v=v2026-09-23T08210";
-
-import {
-  TRASH_ICON, FOLDER_PLUS_ICON, FILE_PLUS_ICON, EDIT_ICON, TAG_ICON,
-  PENCIL_ICON, COPY_ICON, CUT_ICON, PASTE_ICON, DUPLICATE_ICON, GAMEPAD_ICON,
-  REFRESH_ICON, FOLDER_ICON, HOME_ICON, HAMBURGER_ICON,
-} from "../../js/core/icons.js?v=v2026-09-23T08210";
+import { VIEW, META, META_ORDER } from "./state.js?v=v2026-09-21T22104";
+import { t } from "../../translation/translation.js?v=v2026-09-21T22104";
 
 /* ================= DOM ================= */
 const elBaseName = document.getElementById("baseName");
@@ -208,66 +202,66 @@ export function renderToolbar(state) {
 
       <div class="toolbar-btns-row">
         <button id="btnDrawerToggle" class="tbBtn mobile-only" type="button" aria-label="Otwórz panel" aria-expanded="false" aria-controls="explorerLeft">
-          ${HAMBURGER_ICON}
+          <svg class="tbIco" viewBox="0 0 18 18"><rect y="3" width="18" height="2" rx="1"/><rect y="8" width="18" height="2" rx="1"/><rect y="13" width="18" height="2" rx="1"/></svg>
         </button>
 
         <div class="tbSep mobile-only" aria-hidden="true"></div>
 
         <div class="tbGroup" role="group" aria-label="${t("baseExplorer.toolbar.groupCreate")}">
           <button class="tbBtn" type="button" data-act="newFolder" title="${t("baseExplorer.toolbar.newFolder")}">
-            ${FOLDER_PLUS_ICON}
+            ${svgFolderPlus()}
           </button>
           <button class="tbBtn" type="button" data-act="newQuestion" title="${t("baseExplorer.toolbar.newQuestion")}">
-            ${FILE_PLUS_ICON}
+            ${svgFilePlus()}
           </button>
         </div>
-
+        
         <div class="tbSep" aria-hidden="true"></div>
-
+        
         <div class="tbGroup" role="group" aria-label="${t("baseExplorer.toolbar.groupEdit")}">
           <button class="tbBtn" type="button" data-act="editQuestion" title="${t("baseExplorer.toolbar.editQuestion")}">
-            ${EDIT_ICON}
+            ${svgEdit()}
           </button>
           <button class="tbBtn" type="button" data-act="editTags" title="${t("baseExplorer.toolbar.editTags")}">
-            ${TAG_ICON}
+            ${svgTag()}
           </button>
           <button class="tbBtn" type="button" data-act="rename" title="${t("baseExplorer.toolbar.rename")}">
-            ${PENCIL_ICON}
+            ${svgPencil()}
           </button>
           <button class="tbBtn danger" type="button" data-act="delete" title="${t("baseExplorer.toolbar.delete")}">
-            ${TRASH_ICON}
+            ${svgTrash()}
           </button>
         </div>
-
+        
         <div class="tbSep" aria-hidden="true"></div>
-
+        
         <div class="tbGroup" role="group" aria-label="${t("baseExplorer.toolbar.groupClipboard")}">
           <button class="tbBtn" type="button" data-act="copy" title="${t("baseExplorer.toolbar.copy")}">
-            ${COPY_ICON}
+            ${svgCopy()}
           </button>
           <button class="tbBtn" type="button" data-act="cut" title="${t("baseExplorer.toolbar.cut")}">
-            ${CUT_ICON}
+            ${svgCut()}
           </button>
           <button class="tbBtn" type="button" data-act="paste" title="${t("baseExplorer.toolbar.paste")}">
-            ${PASTE_ICON}
+            ${svgPaste()}
           </button>
           <button class="tbBtn" type="button" data-act="duplicate" title="${t("baseExplorer.toolbar.duplicate")}">
-            ${DUPLICATE_ICON}
+            ${svgDuplicate()}
           </button>
         </div>
-
+        
         <div class="tbSep" aria-hidden="true"></div>
-
+        
         <div class="tbGroup" role="group" aria-label="${t("baseExplorer.toolbar.groupGame")}">
           <button class="tbBtn primary" type="button" data-act="createGame" title="${t("baseExplorer.toolbar.createGame")}">
-            ${GAMEPAD_ICON}
+            ${svgPlay()}
           </button>
         </div>
         
         <div class="tbSep" aria-hidden="true"></div>
         <div class="tbGroup" role="group" aria-label="${t("baseExplorer.toolbar.groupView")}">
           <button class="tbBtn" type="button" data-act="refreshView" title="${t("baseExplorer.toolbar.refreshView")}">
-            ${REFRESH_ICON}
+            ${svgRefresh()}
           </button>
         </div>
       </div>
@@ -942,8 +936,34 @@ export function renderList(state) {
   initColumnResizers();
 }
 
-/* small inline icons for tree/list rows -- kształt z js/core/icons.js,
-   ta funkcja tylko dokłada klasę list-ico używaną w tym pliku */
-function withClass(svg, cls){ return svg.replace("<svg ", `<svg class="${cls}" `); }
-function svgFolder(){ return withClass(FOLDER_ICON, "list-ico"); }
-function svgHome(){ return withClass(HOME_ICON, "list-ico"); }
+function svgBase(pathD){
+  return `
+  <svg class="tbIco" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+    <path d="${pathD}"></path>
+  </svg>`;
+}
+
+function svgFolderPlus(){ return svgBase("M10 4l2 2h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h6zm2 7h-2v2H8v2h2v2h2v-2h2v-2h-2v-2z"); }
+function svgFilePlus(){ return svgBase("M6 2h9l5 5v15a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zm8 1v5h5M12 11h-2v2H8v2h2v2h2v-2h2v-2h-2v-2z"); }
+function svgEdit(){ return svgBase("M3 17.25V21h3.75L19.81 7.94l-3.75-3.75L3 17.25zm2.92 2.83H5v-.92l10.06-10.06.92.92L5.92 20.08zM20.71 6.04a1 1 0 0 0 0-1.41l-1.34-1.34a1 1 0 0 0-1.41 0l-1.13 1.13 2.75 2.75 1.13-1.13z"); }
+function svgTag(){return svgBase("M20.59 13.41L11 3.83A2 2 0 0 0 9.59 3H4a2 2 0 0 0-2 2v5.59A2 2 0 0 0 2.83 12l9.59 9.59a2 2 0 0 0 2.83 0l5.34-5.34a2 2 0 0 0 0-2.83zM6.5 8A1.5 1.5 0 1 1 8 6.5 1.5 1.5 0 0 1 6.5 8z"); }
+function svgPencil(){ return svgBase("M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zm18-11.5a1 1 0 0 0 0-1.41l-1.59-1.59a1 1 0 0 0-1.41 0l-1.13 1.13 3.75 3.75L21 5.75z"); }
+function svgTrash(){ return svgBase("M6 7h12l-1 14H7L6 7zm3-3h6l1 2H8l1-2z"); }
+function svgCopy(){ return svgBase("M16 1H4a2 2 0 0 0-2 2v12h2V3h12V1zm4 4H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zm0 16H8V7h12v14z"); }
+function svgCut(){ return svgBase("M9.64 7.64L12 10l2.36-2.36a3 3 0 1 1 1.41 1.41L13.41 11l2.36 2.36a3 3 0 1 1-1.41 1.41L12 12.41l-2.36 2.36a3 3 0 1 1-1.41-1.41L10.59 11 8.23 8.64a3 3 0 1 1 1.41-1.41z"); }
+function svgPaste(){ return svgBase("M19 4h-3.18A3 3 0 0 0 13 2h-2a3 3 0 0 0-2.82 2H5a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2zm-8-1h2a1 1 0 0 1 1 1v1H10V4a1 1 0 0 1 1-1zm8 19H5V6h2v2h10V6h2v16z"); }
+function svgDuplicate(){ return svgBase("M7 7h12v14H7V7zm-2 2H3V3h14v2H5v4z"); }
+function svgPlay(){ return svgBase("M8 5v14l11-7L8 5z"); }
+// Poprzednia ścieżka mieszała dwa łuki o różnych promieniach/środkach
+// (A7.95.../a5 5.../A7 7...) dla strzałki i "kółka" -- nie składały się w
+// spójny pierścień, więc ikona wyglądała na wizualnie zepsutą. To
+// sprawdzony, jednościeżkowy glif Material Icons "refresh".
+function svgRefresh(){ return svgBase("M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-8 3.58-8 8s3.58 8 8 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"); }
+
+/* small inline icons for tree/list rows */
+function svgFolder(){
+  return `<svg class="list-ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M20 6h-8l-2-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2z"/></svg>`;
+}
+function svgHome(){
+  return `<svg class="list-ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>`;
+}

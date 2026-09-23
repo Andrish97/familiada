@@ -1,9 +1,7 @@
 // /familiada/js/pages/controlui.js
 
-import { t } from "../../translation/translation.js?v=v2026-09-23T08210";
-import { initUiSelect } from "../../js/core/ui-select.js?v=v2026-09-23T08210";
-
-import { SPEAKER_ON_ICON, SPEAKER_OFF_ICON } from "../../js/core/icons.js?v=v2026-09-23T08210";
+import { t } from "../../translation/translation.js?v=v2026-09-21T22104";
+import { initUiSelect } from "../../js/core/ui-select.js?v=v2026-09-21T22104";
 
 // ================== KOMUNIKATY (UI) ==================
 const UI_MSG = {
@@ -230,8 +228,6 @@ export function createUI() {
 
   function setAudioStatus(unlocked) {
     const el = $("audioStatus");
-    const icon = $("audioUnlockIcon");
-    if (icon) icon.innerHTML = unlocked ? SPEAKER_ON_ICON : SPEAKER_OFF_ICON;
     if (!el) return;
     el.classList.remove("ok","bad","mid");
     el.classList.add(unlocked ? "ok" : "bad");
@@ -334,6 +330,7 @@ export function createUI() {
       bb.style.setProperty("--track", `linear-gradient(to right, ${left}, ${right})`);
     }
   }
+
 
   function getAdvancedForm() {
     const rm = $("roundMultipliers");
@@ -511,6 +508,7 @@ export function createUI() {
         });
       });
   }
+
 
   function setAnswersMode(mode) {
     const ids = ["roundAnswers", "roundStealAnswers", "roundRevealAnswers"];
@@ -738,6 +736,7 @@ export function createUI() {
     $("btnAddX")?.addEventListener("click", () => emit("rounds.addX"));
     $("btnGoEndRound")?.addEventListener("click", () => emit("rounds.goEnd"));
     $("btnShowGameEnd")?.addEventListener("click", () => emit("rounds.gameEndShow"));
+
 
     // final (kroki)
     $("btnFinalP1StartTimer")?.addEventListener("click", () => emit("final.p1.timerStart"));

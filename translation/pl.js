@@ -118,11 +118,13 @@ const pl = {
     logoPoolBusySettings: "Nie możesz edytować ani usunąć logo, bo zmieniasz ustawienia rozgrywki.",
   },
   guestInfo: {
-    title: "Konto gościa",
+    title: "⚠️ Konto gościa",
     subtitle: "Zanim zaczniesz — kilka ważnych informacji:",
+    icon1: "🗂️",
     warning1: "Twoje dane są zapisane <strong>tylko w tej przeglądarce</strong>. Wyczyszczenie historii (cookies) spowoduje utratę dostępu do konta.",
+    icon2: "⏳",
     warning2: "Konto zostanie <strong>usunięte po 5 dniach</strong> od ostatniego logowania.",
-    migrateTitle: "Jak zachować swoje dane?",
+    migrateTitle: "💾 Jak zachować swoje dane?",
     step1: "Kliknij swoją nazwę użytkownika w prawym górnym rogu",
     step2: "Wybierz <em>Zaloguj\u00A0/\u00A0Załóż konto</em>",
     step3: "Podaj adres email i hasło — zostaniesz zapytany o migrację danych",
@@ -147,7 +149,7 @@ const pl = {
       title: "Darmowa Familiada Online. Prawdziwy teleturniej na Twoim sprzęcie.",
       lead: "Najlepszy system do gry w Familiadę: zbierz odpowiedzi od uczestników w ankiecie, a potem poprowadź grę na żywo. Idealna gra na wesele, urodziny i imprezę firmową. Wszystko w przeglądarce.",
       ctaStart: "Zacznij tworzyć gry i prowadzić rozgrywkę",
-      ctaMarketplace: "Przeglądaj Gry Społeczności",
+      ctaMarketplace: "Przeglądaj Gry Społeczności 🎮",
       note: "Dostępny tryb gościa — darmowa Familiada bez rejestracji.",
     },
     about: {
@@ -529,7 +531,7 @@ const pl = {
     qrHostAlt: "QR Prowadzący",
     qrBuzzerAlt: "QR Przyciski",
     sumLabel: "SUMA",
-    audioUnlockBtn: "Odblokuj dźwięk",
+    audioUnlockBtn: "🔊 Odblokuj dźwięk",
   },
   host: {
     title: "Familiada — prowadzący",
@@ -873,7 +875,7 @@ const pl = {
   },
   manual: {
     title: "Familiada — wskazówki",
-    legal: "Polityka prywatności",
+    legal: "Polityka prywatności 🔐",
     backToGames: "← Moje gry",
     backToBaseManager: "← Menadżer bazy",
     backToLogos: "← Moje logo",
@@ -1178,7 +1180,7 @@ const pl = {
       </p>
       <p class="m-p">
         Do baz pytań przechodzisz z górnego paska strony „Moje gry”
-        za pomocą przycisku <span class="m-code"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.15em" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.6"/><line x1="3" y1="12" x2="21" y2="12" stroke="currentColor" stroke-width="1.6"/><rect x="9" y="6.5" width="6" height="1.6" rx="0.8"/><rect x="9" y="15.5" width="6" height="1.6" rx="0.8"/></svg> Bazy pytań</span>.
+        za pomocą przycisku <span class="m-code">Bazy pytań 🗃️</span>.
       </p>
   
       <p class="m-p">
@@ -1186,7 +1188,7 @@ const pl = {
         do klasycznego menadżera plików na komputerze.
       </p>
   
-      <h3 class="m-h3">Dodawanie nowej bazy</h3>
+      <h3 class="m-h3">➕ Dodawanie nowej bazy</h3>
   
       <p class="m-p">
         W widoku „Bazy pytań” kliknij kafelek <span class="m-strong">Nowa baza</span>.
@@ -1197,7 +1199,7 @@ const pl = {
         Po zapisaniu nowa baza pojawi się na liście i od razu możesz ją przeglądać lub udostępniać.
       </p>
   
-      <h3 class="m-h3">Udostępnianie bazy</h3>
+      <h3 class="m-h3">🤝 Udostępnianie bazy</h3>
   
       <p class="m-p">
         Każdą bazę możesz udostępnić innym użytkownikom poprzez podanie ich adresu e-mail.
@@ -1213,7 +1215,7 @@ const pl = {
         Tylko właściciel bazy może zarządzać udostępnieniami.
       </p>
   
-      <h3 class="m-h3">Przechodzenie do menadżera bazy</h3>
+      <h3 class="m-h3">📂 Przechodzenie do menadżera bazy</h3>
   
       <p class="m-p">
         Aby wejść do zawartości bazy, zaznacz ją na liście i kliknij przycisk <span class="m-code">Przeglądaj</span>.
@@ -1254,7 +1256,7 @@ const pl = {
   
       <h2 class="m-h2">Tagi i kategorie</h2>
   
-      <h3 class="m-h3"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M20.59 13.41L11 3.83A2 2 0 0 0 9.59 3H4a2 2 0 0 0-2 2v5.59A2 2 0 0 0 2.83 12l9.59 9.59a2 2 0 0 0 2.83 0l5.34-5.34a2 2 0 0 0 0-2.83zM6.5 8A1.5 1.5 0 1 1 8 6.5 1.5 1.5 0 0 1 6.5 8z"/></svg> Tagi</h3>
+      <h3 class="m-h3">🏷️ Tagi</h3>
   
       <p class="m-p">
         Każde pytanie może mieć dowolną liczbę tagów.
@@ -1301,7 +1303,7 @@ const pl = {
         (oraz podfoldery) posiadają ten sam tag.
       </p>
   
-      <h3 class="m-h3">Kategorie</h3>
+      <h3 class="m-h3">📌 Kategorie</h3>
   
       <p class="m-p">
         Kategorie to specjalne oznaczenia systemowe określające,
@@ -1367,9 +1369,9 @@ const pl = {
         Po pomyślnym utworzeniu gry zostaniesz przekierowany do widoku <span class="m-strong">Moje gry</span>
       </p>
   
-      <h2 class="m-h2">Skróty klawiszowe — Menadżer bazy</h2>
+      <h2 class="m-h2">⌨️ Skróty klawiszowe — Menadżer bazy</h2>
   
-      <h3 class="m-h3"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M10 4l2 2h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h6zm2 7h-2v2H8v2h2v2h2v-2h2v-2h-2v-2z"/></svg> Tworzenie</h3>
+      <h3 class="m-h3">📁 Tworzenie</h3>
   
       <div class="m-table-wrap"><table class="m-table">
         <tbody><tr><th>Akcja</th><th>Windows / Linux</th><th>macOS</th></tr>
@@ -1377,7 +1379,7 @@ const pl = {
         <tr><td>Nowy folder</td><td>Ctrl + Shift + N</td><td>⌘ ⇧ N</td></tr>
       </tbody></table></div>
   
-      <h3 class="m-h3"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 17.25V21h3.75L19.81 7.94l-3.75-3.75L3 17.25zm2.92 2.83H5v-.92l10.06-10.06.92.92L5.92 20.08zM20.71 6.04a1 1 0 0 0 0-1.41l-1.34-1.34a1 1 0 0 0-1.41 0l-1.13 1.13 2.75 2.75 1.13-1.13z"/></svg> Edycja</h3>
+      <h3 class="m-h3">✏️ Edycja</h3>
   
       <div class="m-table-wrap"><table class="m-table">
         <tbody><tr><th>Akcja</th><th>Windows / Linux</th><th>macOS</th></tr>
@@ -1386,7 +1388,7 @@ const pl = {
         <tr><td>Usuń</td><td>Delete</td><td>Fn + ⌫</td></tr>
       </tbody></table></div>
   
-      <h3 class="m-h3"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 2h13v2H6v11H4V2z"/><path fill-rule="evenodd" clip-rule="evenodd" d="M8 6h13v16H8V6zm2 2v12h9V8h-9z"/></svg> Schowek</h3>
+      <h3 class="m-h3">📋 Schowek</h3>
   
       <div class="m-table-wrap"><table class="m-table">
         <tbody><tr><th>Akcja</th><th>Windows / Linux</th><th>macOS</th></tr>
@@ -1396,21 +1398,21 @@ const pl = {
         <tr><td>Duplikuj</td><td>Ctrl + D</td><td>⌘ D</td></tr>
       </tbody></table></div>
   
-      <h3 class="m-h3"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M8 5v14l11-7L8 5z"/></svg> Gra</h3>
+      <h3 class="m-h3">🎮 Gra</h3>
   
       <div class="m-table-wrap"><table class="m-table">
         <tbody><tr><th>Akcja</th><th>Windows / Linux</th><th>macOS</th></tr>
         <tr><td>Utwórz grę</td><td>Ctrl + G</td><td>⌘ G</td></tr>
       </tbody></table></div>
   
-      <h3 class="m-h3"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-8 3.58-8 8s3.58 8 8 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg> Widok</h3>
+      <h3 class="m-h3">🔄 Widok</h3>
   
       <div class="m-table-wrap"><table class="m-table">
         <tbody><tr><th>Akcja</th><th>Windows / Linux</th><th>macOS</th></tr>
         <tr><td>Odśwież widok</td><td>Ctrl + Alt + R</td><td>⌘ ⌥ R</td></tr>
       </tbody></table></div>
   
-      <h3 class="m-h3">Nawigacja</h3>
+      <h3 class="m-h3">📌 Nawigacja</h3>
   
       <div class="m-table-wrap"><table class="m-table">
         <tbody><tr><th>Akcja</th><th>Windows / Linux</th><th>macOS</th></tr>
@@ -1438,7 +1440,7 @@ const pl = {
 
       <p class="m-p">
         Do ankiet przechodzisz z górnego paska na stronie „Moje gry”
-        przyciskiem <span class="m-code"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.15em" aria-hidden="true"><rect x="2" y="20" width="20" height="1.4" opacity="0.5"/><rect x="2" y="16" width="20" height="1" opacity="0.25"/><rect x="2" y="11" width="20" height="1" opacity="0.25"/><rect x="4" y="11" width="4" height="9" rx="1"/><rect x="10.5" y="15" width="4" height="5" rx="1"/><rect x="17" y="6" width="4" height="14" rx="1"/></svg> Ankiety</span>.
+        przyciskiem <span class="m-code">Ankiety 📊</span>.
       </p>
 
       <h3 class="m-h2">Strona ankiet</h3>
@@ -1453,7 +1455,7 @@ const pl = {
       </ul>
 
       <p class="m-p">
-        Złota kropka przy przycisku „Ankiety” pokazuje liczbę aktywnych zadań do wykonania.
+        Złota kropka przy przycisku „Ankiety 📊” pokazuje liczbę aktywnych zadań do wykonania.
       </p>
 
       <p class="m-p">
@@ -1665,7 +1667,7 @@ const pl = {
 
       <p class="m-p">
         Przechodzisz do niej z górnego paska na stronie „Moje gry”,
-        przyciskiem <span class="m-code"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.15em" aria-hidden="true"><path d="M12 2a1.6 1.6 0 0 0-1.6 1.6v.6C7.7 4.9 6 7.2 6 10v5l-2 2v1h16v-1l-2-2v-5c0-2.8-1.7-5.1-4.4-5.8v-.6A1.6 1.6 0 0 0 12 2z"/><path d="M9.5 20a2.5 2.5 0 0 0 5 0h-5z"/></svg> Subskrypcje</span>.
+        przyciskiem <span class="m-code">Subskrypcje 📧</span>.
       </p>
 
       <h3 class="m-h2">Strona subskrypcji</h3>
@@ -1676,7 +1678,7 @@ const pl = {
       </ul>
 
       <p class="m-p">
-        Złota kropka przy przycisku „Subskrypcje” pokazuje liczbę zaproszeń do zaakceptowania.
+        Złota kropka przy przycisku „Subskrypcje 📧” pokazuje liczbę zaproszeń do zaakceptowania.
       </p>
 
       <h3 class="m-h3">Moi subskrybenci</h3>
@@ -2320,7 +2322,7 @@ const pl = {
         i zweryfikowanych przez moderatorów. Możesz je przeglądać, dodawać do swojej biblioteki
         i uruchamiać bezpośrednio jako rozgrywkę — bez konieczności tworzenia własnych pytań.
         Do Gier Społeczności przechodzisz z górnego paska strony „Moje gry”
-        za pomocą przycisku <span class="m-code"><span data-shared-icon="gamepad" aria-hidden="true"></span> Gry Społeczności</span>.
+        za pomocą przycisku <span class="m-code">Gry Społeczności🎮</span>.
       </p>
 
       <h3 class="m-h2">Przeglądanie i biblioteka</h3>
@@ -2673,11 +2675,11 @@ const pl = {
   builder: {
     title: "Familiada — moje gry",
     nav: {
-      pollsHubPolls: "Ankiety",
-      pollsHubSubs: "Subskrypcje",
-      bases: "Bazy pytań",
+      pollsHubPolls: "Ankiety 📊",
+      pollsHubSubs: "Subskrypcje 📧",
+      bases: "Bazy pytań 🗃️",
       logo: "Logo 🖥️",
-      marketplace: "Gry Społeczności",
+      marketplace: "Gry Społeczności 🎮",
       connectDevice: "Podłącz urządzenie 📱",
       account: "Ustawienia konta",
     },
@@ -3937,7 +3939,7 @@ const pl = {
         sampleText: "Przykład",
         defaultText: "Tekst",
         shortcutPrefix: "Skrót: ",
-        polygonDone: "Zamknij",
+        polygonDone: "✓ Zamknij",
         // Kształty
         shapes: {
           line: "Linia",
@@ -3949,10 +3951,10 @@ const pl = {
           pentagon: "Pięciokąt",
           hexagon: "Sześciokąt",
           star5: "Gwiazda 5",
-          arrow1: "Strzałka jednostronna konturowa",
-          arrow2: "Strzałka dwustronna konturowa",
-          arrow1Fill: "Strzałka jednostronna wypełniona",
-          arrow2Fill: "Strzałka dwustronna wypełniona",
+          arrow1: "Strzałka →",
+          arrow2: "Strzałka ↔",
+          arrow1Fill: "Strzałka ➤",
+          arrow2Fill: "Strzałka ⇔",
           heart: "Serce",
           polygon: "Wielokąt",
         },
@@ -3971,7 +3973,7 @@ const pl = {
       },
     },
     image: {
-      pickImage: "Wybierz obraz",
+      pickImage: "Wybierz obraz 📁",
       brightness: "Jasność",
       contrast: "Kontrast",
       gamma: "Gamma",
@@ -4373,7 +4375,7 @@ const pl = {
     stepAudio: "Dźwięk",
     audioUnlockTitle: "Odblokuj dźwięk",
     audioUnlockHint: "Kliknij raz przycisk, żeby przeglądarka zezwoliła na odtwarzanie dźwięków.",
-    audioUnlockBtn: "Odblokuj",
+    audioUnlockBtn: "🔊 Odblokuj",
     audioBlocked: "ZABLOKOWANE",
     audioStatusOk: "ODBLOKOWANE",
     stepTeamNames: "Nazwy drużyn",
@@ -4793,7 +4795,7 @@ const pl = {
     countdownTitle: "TRWA PRZERWA TECHNICZNA",
     countdownText:
       "System jest chwilowo niedostępny.\nPowrót nastąpi:",
-    countdownDone: "Powrót już możliwy.",
+    countdownDone: "Powrót już możliwy. 🎉",
     refresh: "Odśwież",
     contact: "Kontakt",
     statusLabel: "Status:",
@@ -4816,7 +4818,7 @@ const pl = {
     btnBackBrowse: "← Przeglądaj",
     btnAddToLibrary: "Dodaj do moich gier",
     btnRemoveFromLibrary: "Usuń z moich gier",
-    addedBadge: "Dodano",
+    addedBadge: "Dodano ✅",
     withdrawnBadge: "Wycofana",
     producerBadge: "Familiada",
     langLabel: "Język",
@@ -4906,7 +4908,7 @@ const pl = {
     scan: {
       title: "Zeskanuj kod QR urządzenia",
       hint: "Skieruj kamerę na kod QR wyświetlony w panelu sterowania.",
-      btn: "Skanuj QR",
+      btn: "📷 Skanuj QR",
       cameraError: "Brak dostępu do kamery.",
       noQr: "Nie znaleziono kodu QR na zdjęciu.",
       noApi: "Użyj aparatu systemowego do zeskanowania kodu QR.",
@@ -4952,7 +4954,7 @@ const pl = {
     back: "← Moje gry",
     saveAll: "Zapisz wszystko",
     resetAll: "Przywróć domyślne",
-    play: "Graj",
+    play: "▶ Graj",
     resetAllConfirm: "Przywrócić ustawienia domyślne? Niezapisane zmiany zostaną utracone.",
     resetSection: "Przywróć domyślne",
     resetSectionConfirm: "Przywrócić domyślne ustawienia tej sekcji?",

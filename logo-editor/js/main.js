@@ -1,25 +1,23 @@
 // familiada/logo-editorjs/main.js
 // Glowna logika strony + lista kafelkow + routing do edytorow.
 
-import { addRenameGesture } from "../../js/core/rename-gesture.js?v=v2026-09-23T08210";
-import { loadFont5x7, buildLogoPreviewCanvas } from "../../js/core/logo-preview.js?v=v2026-09-23T08210";
+import { addRenameGesture } from "../../js/core/rename-gesture.js?v=v2026-09-21T22104";
+import { loadFont5x7, buildLogoPreviewCanvas } from "../../js/core/logo-preview.js?v=v2026-09-21T22104";
 
-import { sb } from "../../js/core/supabase.js?v=v2026-09-23T08210";
-import { requireAuth } from "../../js/core/auth.js?v=v2026-09-23T08210";
-import { isGuestUser } from "../../js/core/guest-mode.js?v=v2026-09-23T08210";
-import { alertModal, confirmModal } from "../../js/core/modal.js?v=v2026-09-23T08210";
-import { getUiLang, initI18n, t, withLangParam } from "../../translation/translation.js?v=v2026-09-23T08210";
-import { initTopbarAccountDropdown } from "../../js/core/topbar-controller.js?v=v2026-09-23T08210";
-import { isMobileDevice } from "../../js/core/pwa.js?v=v2026-09-23T08210";
-import { v as cacheBust } from "../../js/core/cache-bust.js?v=v2026-09-23T08210";
-import { guardResourceLock, isResourceBusy, findBusyContext } from "../../js/core/resource-lock.js?v=v2026-09-23T08210";
-import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../js/core/modal-sheet.js?v=v2026-09-23T08210";
+import { sb } from "../../js/core/supabase.js?v=v2026-09-21T22104";
+import { requireAuth } from "../../js/core/auth.js?v=v2026-09-21T22104";
+import { isGuestUser } from "../../js/core/guest-mode.js?v=v2026-09-21T22104";
+import { alertModal, confirmModal } from "../../js/core/modal.js?v=v2026-09-21T22104";
+import { getUiLang, initI18n, t, withLangParam } from "../../translation/translation.js?v=v2026-09-21T22104";
+import { initTopbarAccountDropdown } from "../../js/core/topbar-controller.js?v=v2026-09-21T22104";
+import { isMobileDevice } from "../../js/core/pwa.js?v=v2026-09-21T22104";
+import { v as cacheBust } from "../../js/core/cache-bust.js?v=v2026-09-21T22104";
+import { guardResourceLock, isResourceBusy, findBusyContext } from "../../js/core/resource-lock.js?v=v2026-09-21T22104";
+import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../js/core/modal-sheet.js?v=v2026-09-21T22104";
 
-import { TRASH_ICON } from "../../js/core/icons.js?v=v2026-09-23T08210";
-
-import { initTextEditor } from "./text.js?v=v2026-09-23T08210";
-import { initDrawEditor } from "./draw.js?v=v2026-09-23T08210";
-import { initImageEditor } from "./image.js?v=v2026-09-23T08210";
+import { initTextEditor } from "./text.js?v=v2026-09-21T22104";
+import { initDrawEditor } from "./draw.js?v=v2026-09-21T22104";
+import { initImageEditor } from "./image.js?v=v2026-09-21T22104";
 
 window.addEventListener("error", (e) => {
   console.error("window error", e.error || e.message);
@@ -38,9 +36,9 @@ const DOT_H = 70;  // 10*7
 
 // UWAGA: to sa sciezki wzgledne wobec logo-editor
 // (ustalone, nie zgadujemy)
-const FONT_3x10_URL = "display/font_3x10.json?v=v2026-09-23T08210";
-const FONT_5x7_URL  = "display/font_5x7.json?v=v2026-09-23T08210";
-const DEFAULT_LOGO_URL = "display/logo_familiada.json?v=v2026-09-23T08210";
+const FONT_3x10_URL = "display/font_3x10.json?v=v2026-09-21T22104";
+const FONT_5x7_URL  = "display/font_5x7.json?v=v2026-09-21T22104";
+const DEFAULT_LOGO_URL = "display/logo_familiada.json?v=v2026-09-21T22104";
 
 /* =========================================================
    DOM
@@ -136,6 +134,7 @@ let selectedKey = null; // "default" albo uuid logo
 let defaultLogoRows = Array.from({ length: 10 }, () => " ".repeat(30));
 let suppressDirty = false;
 
+
 let editorMode = null; // TEXT | DRAW | IMAGE
 let editorDirty = false;
 
@@ -160,6 +159,7 @@ function logoBusyMessage(reason) {
   if (reason === "settings") return t("resourceLock.logoPoolBusySettings");
   return t("resourceLock.logoMessage");
 }
+
 
 /* =========================================================
    UI helpers
@@ -379,6 +379,7 @@ function shouldBlockNav(){
   return isEditing() && !!editorDirty;
 }
 
+
 function armNavGuard(){
   if (_navGuardArmed) return;
   _navGuardArmed = true;
@@ -443,6 +444,7 @@ function armHistoryTrap(){
     } catch {}
   });
 }
+
 
 /* =========================================================
    IMPORT / EXPORT (bez ID, bez usera)
@@ -631,6 +633,7 @@ async function importLogoFromFile(file){
 
   await createLogo(row);
 }
+
 
 /* =========================================================
    Fetch helpers
@@ -1366,6 +1369,7 @@ function renderList(){
     grid.appendChild(add);
   }
 
+
   // helper: wybierz
   function select(key){
     selectedKey = key;
@@ -1391,7 +1395,7 @@ function renderList(){
           <div class="logoMeta">${esc(meta || "")}</div>
         </div>
         <div class="logoActions">
-          <div class="logoX ${canDelete ? "" : "is-disabled"}" title="${canDelete ? t("logoEditor.list.delete") : t("logoEditor.list.deleteDisabled")}">${TRASH_ICON}</div>
+          <div class="logoX ${canDelete ? "" : "is-disabled"}" title="${canDelete ? t("logoEditor.list.delete") : t("logoEditor.list.deleteDisabled")}">✕</div>
         </div>
       </div>
       <div class="logoPrev"></div>
@@ -1519,6 +1523,7 @@ async function loadTinyMceFromSupabase(){
 
   return _tinymcePromise;
 }
+
 
 /* =========================================================
    EDYTORY (moduly)
@@ -1662,6 +1667,7 @@ function openEditor(mode, logo = null){
   }
 }
 
+
 async function closeEditor(force = false){
   if (!force && !(await confirmCloseIfDirty())) return;
 
@@ -1736,6 +1742,7 @@ async function handleCreate(){
           logoName.value = unique;
         }
       }
+
 
     const patch = {
       user_id: currentUser.id,
@@ -1839,7 +1846,7 @@ async function boot(){
    imageEditor = initImageEditor(editorCtx);
 
   // Updater - sprawdzanie nowej wersji (TYLKO RAZ)
-  import('../../js/core/updater.js?v=v2026-09-23T08210').then(m => m.initUpdater()).catch(() => {});
+  import('../../js/core/updater.js?v=v2026-09-21T22104').then(m => m.initUpdater()).catch(() => {});
 
    armNavGuard();
 
@@ -1982,6 +1989,7 @@ async function boot(){
        void alertModal({ text: t("logoEditor.errors.exportFailedDetailed", { error: e?.message || e }) });
      }
    });
+
 
    btnEdit?.addEventListener("click", async () => {
      if (!selectedKey) return;

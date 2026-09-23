@@ -1,19 +1,17 @@
 // js/pages/bases.js
 // Builder baz pytań (warstwa 1) – styl i ergonomia jak builder gier.
 
-import { addRenameGesture } from "../core/rename-gesture.js?v=v2026-09-23T08210";
+import { addRenameGesture } from "../core/rename-gesture.js?v=v2026-09-21T22104";
 
-import { sb, SUPABASE_URL } from "../core/supabase.js?v=v2026-09-23T08210";
-import { updateChecked, ROW_GONE } from "../core/db-guard.js?v=v2026-09-23T08210";
-import { requireAuth } from "../core/auth.js?v=v2026-09-23T08210";
-import { alertModal, confirmModal } from "../core/modal.js?v=v2026-09-23T08210";
-import { isGuestUser, hideForGuest } from "../core/guest-mode.js?v=v2026-09-23T08210";
-import { initUiSelect } from "../core/ui-select.js?v=v2026-09-23T08210";
-import { getUiLang, initI18n, t, withLangParam } from "../../translation/translation.js?v=v2026-09-23T08210";
-import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-09-23T08210";
-import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../core/modal-sheet.js?v=v2026-09-23T08210";
-
-import { TRASH_ICON, CHECK_ICON, PENCIL_ICON, EYE_ICON, PEOPLE_ICON, PERSON_ICON } from "../core/icons.js?v=v2026-09-23T08210";
+import { sb, SUPABASE_URL } from "../core/supabase.js?v=v2026-09-21T22104";
+import { updateChecked, ROW_GONE } from "../core/db-guard.js?v=v2026-09-21T22104";
+import { requireAuth } from "../core/auth.js?v=v2026-09-21T22104";
+import { alertModal, confirmModal } from "../core/modal.js?v=v2026-09-21T22104";
+import { isGuestUser, hideForGuest } from "../core/guest-mode.js?v=v2026-09-21T22104";
+import { initUiSelect } from "../core/ui-select.js?v=v2026-09-21T22104";
+import { getUiLang, initI18n, t, withLangParam } from "../../translation/translation.js?v=v2026-09-21T22104";
+import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-09-21T22104";
+import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../core/modal-sheet.js?v=v2026-09-21T22104";
 import "../core/contact-modal.js";
 initI18n({ withSwitcher: true }).then(() => {
   document.documentElement.classList.remove('page-loading');
@@ -811,6 +809,7 @@ async function sendBaseShareEmail({ to, link, baseName, ownerLabel }) {
   });
 }
 
+
 async function openShareModal() {
   setMsg(shareMsg, "");
   shareEmail.value = "";
@@ -1217,7 +1216,7 @@ function render() {
 
       const isEdit = b.sharedRole === "editor";
       badges.push({
-        icon: isEdit ? PENCIL_ICON : EYE_ICON,
+        text: isEdit ? "✎" : "👁",
         title: isEdit ? t("bases.badges.editAccess") : t("bases.badges.viewAccess"),
         kind: "role",
       });
@@ -1225,8 +1224,8 @@ function render() {
       const n = Number(b.shareCount || 0);
       badges.push(
         n > 0
-          ? { icon: PEOPLE_ICON, text: String(n), title: t("bases.badges.sharedOthers", { count: n }), kind: "mine" }
-          : { icon: PERSON_ICON, title: t("bases.badges.notShared"), kind: "mine" }
+          ? { text: `👥 ${n}`, title: t("bases.badges.sharedOthers", { count: n }), kind: "mine" }
+          : { text: "👤", title: t("bases.badges.notShared"), kind: "mine" }
       );
     }
 
@@ -1235,13 +1234,13 @@ function render() {
     const deleteBtn = (canDeleteOwned || canLeaveShared)
       ? `<button class="x" type="button" title="${escapeHtml(
           canDeleteOwned ? t("bases.actions.remove") : t("bases.actions.leaveShared")
-        )}">${TRASH_ICON}</button>`
+        )}">✕</button>`
       : ``;
       
     const proposedBtns = b.proposed
       ? `
         <div class="tileMiniActions">
-          <button class="btn xsm gold" data-accept type="button" title="${escapeHtml(t("bases.proposed.accept"))}">${CHECK_ICON}</button>
+          <button class="btn xsm gold" data-accept type="button" title="${escapeHtml(t("bases.proposed.accept"))}">✓</button>
           <button class="btn xsm" data-decline type="button" title="${escapeHtml(t("bases.proposed.decline"))}">✕</button>
         </div>`
       : "";
@@ -1252,7 +1251,7 @@ function render() {
             (x) =>
               `<span class="tileBadge" data-kind="${escapeHtml(x.kind)}" title="${escapeHtml(
                 x.title || ""
-              )}">${x.icon || ""}${escapeHtml(x.text || "")}</span>`
+              )}">${escapeHtml(x.text || "")}</span>`
           )
           .join("")
       : "";
@@ -1359,6 +1358,7 @@ function render() {
   setSharedBasesBadge(sharedBases.filter((b) => !!b.proposed).length);
 }
 
+
 function escapeHtml(s) {
   return String(s ?? "")
     .replace(/&/g, "&amp;")
@@ -1454,6 +1454,7 @@ function readFileAsText(file) {
     r.readAsText(file);
   });
 }
+
 
 function getRetParam() {
   return new URLSearchParams(location.search).get("ret");
@@ -1620,6 +1621,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 
+
 async function refreshAltBadge() {
   try {
     const { data, error } = await sb().rpc("polls_badge_get");
@@ -1690,7 +1692,7 @@ async function refreshAltBadge() {
     // przypadek: zalogowany na innym koncie niż adresat
     // -> jeśli zaproszenie nie jest dla auth.uid, to go nie zobaczymy w list_shared_bases_ext()
     // więc pokazujemy alert i prosimy o właściwe konto.
-    // najpierw sprawdź token (czy nie cofnięty)
+    // 🔎 najpierw sprawdź token (czy nie cofnięty)
     try {
       const { data: info, error } = await sb().rpc("base_share_token_info", { p_token: shareToken });
       if (!error && info) {

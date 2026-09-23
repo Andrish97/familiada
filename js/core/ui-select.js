@@ -1,7 +1,3 @@
-function escapeHtml(s) {
-  return String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
-}
-
 export function initUiSelect(root, { options = [], value = "", placeholder = "â€”", onChange, disabled = false } = {}) {
   if (!root) return null;
   const btn = root.querySelector(".ui-select-btn");
@@ -56,11 +52,7 @@ export function initUiSelect(root, { options = [], value = "", placeholder = "â€
   const setValue = (val, { silent = false } = {}) => {
     currentValue = String(val ?? "");
     const match = currentOptions.find((opt) => String(opt.value) === currentValue);
-    if (match?.icon) {
-      label.innerHTML = `${match.icon} ${escapeHtml(match.label)}`;
-    } else {
-      label.textContent = match ? match.label : placeholder;
-    }
+    label.textContent = match ? match.label : placeholder;
     for (const item of menu.querySelectorAll(".ui-select-item")) {
       const isSelected = item.dataset.value === currentValue;
       item.setAttribute("aria-selected", isSelected ? "true" : "false");
@@ -72,7 +64,6 @@ export function initUiSelect(root, { options = [], value = "", placeholder = "â€
     currentOptions = opts.map((opt) => ({
       value: String(opt.value ?? ""),
       label: String(opt.label ?? ""),
-      icon: typeof opt.icon === "string" ? opt.icon : "",
     }));
     menu.innerHTML = "";
     currentOptions.forEach((opt) => {
@@ -80,11 +71,7 @@ export function initUiSelect(root, { options = [], value = "", placeholder = "â€
       item.type = "button";
       item.className = "ui-select-item";
       item.dataset.value = opt.value;
-      if (opt.icon) {
-        item.innerHTML = `${opt.icon} ${escapeHtml(opt.label || placeholder)}`;
-      } else {
-        item.textContent = opt.label || placeholder;
-      }
+      item.textContent = opt.label || placeholder;
       item.setAttribute("role", "option");
       item.setAttribute("aria-selected", "false");
       menu.appendChild(item);

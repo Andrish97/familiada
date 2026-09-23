@@ -400,40 +400,21 @@ body.builder-body > main.wrap{
   min-height: 130px;
 }
 
-/* Kosz zamiast X: to usuwanie kafla (gry/pozycji), nie zamykanie okna --
-   styl dopasowany do .logoX w logo-editor (obwódka + tło), żeby przyciski
-   usuwania wyglądały tak samo we wszystkich siatkach kafli. */
 .builder-body .grid .card .x{
   position: absolute;
-  top: 10px;
+  top: 8px;
   right: 10px;
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 10px;
-  border: 1px solid rgba(255,255,255,.14);
-  background: rgba(0,0,0,.16);
-  color: #fff;
-  transition: background .12s, border-color .12s, opacity .12s;
+  font-size: 14px;
+  opacity: .7;
 }
-.builder-body .grid .card .x svg{
-  width: 16px;
-  height: 16px;
-  fill: currentColor;
-}
-.builder-body .grid .card .x:hover{
-  border-color: var(--gold);
-  background: rgba(0,0,0,.32);
-}
+.builder-body .grid .card .x:hover{ opacity: 1; }
 
 .builder-body .grid .card .name{
   font-weight: 900;
   font-size: 14px;
   letter-spacing: .06em;
   text-transform: uppercase;
-  padding-right: 30px;
+  padding-right: 22px;
   color: #fdfdfd;
   line-height: 1.3;
 

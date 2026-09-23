@@ -1,10 +1,8 @@
 // js/core/rating-system.js
-import { sb } from "./supabase.js?v=v2026-09-23T08210";
-import { getUser } from "./auth.js?v=v2026-09-23T08210";
-import { t } from "../../translation/translation.js?v=v2026-09-23T08210";
-import { alertModal } from "./modal.js?v=v2026-09-23T08210";
-
-import { STAR_ICON } from "./icons.js?v=v2026-09-23T08210";
+import { sb } from "./supabase.js?v=v2026-09-21T22104";
+import { getUser } from "./auth.js?v=v2026-09-21T22104";
+import { t } from "../../translation/translation.js?v=v2026-09-21T22104";
+import { alertModal } from "./modal.js?v=v2026-09-21T22104";
 
 const RATING_LS_KEY = "fam:app_rated";
 const RATING_DISMISSED_KEY = "fam:app_rating_dismissed_at";
@@ -66,11 +64,11 @@ function showRatingModal(userId) {
             <div class="mSub">${t("common.rating.modal.sub")}</div>
 
             <div class="stars-row" id="starsRow">
-                <button class="star-btn" data-value="1">${STAR_ICON}</button>
-                <button class="star-btn" data-value="2">${STAR_ICON}</button>
-                <button class="star-btn" data-value="3">${STAR_ICON}</button>
-                <button class="star-btn" data-value="4">${STAR_ICON}</button>
-                <button class="star-btn" data-value="5">${STAR_ICON}</button>
+                <button class="star-btn" data-value="1">★</button>
+                <button class="star-btn" data-value="2">★</button>
+                <button class="star-btn" data-value="3">★</button>
+                <button class="star-btn" data-value="4">★</button>
+                <button class="star-btn" data-value="5">★</button>
             </div>
 
             <textarea class="inp rating-comment" id="ratingComment" rows="3" placeholder="${t("common.rating.modal.commentPlaceholder")}"></textarea>

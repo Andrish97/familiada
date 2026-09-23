@@ -112,11 +112,13 @@ const en = {
     logoPoolBusySettings: "You can't edit or delete a logo while changing game settings.",
   },
   guestInfo: {
-    title: "Guest account",
+    title: "⚠️ Guest account",
     subtitle: "Before you start — a few important notes:",
+    icon1: "🗂️",
     warning1: "Your data is stored <strong>in this browser only</strong>. Clearing your history (cookies) will result in losing access to your account.",
+    icon2: "⏳",
     warning2: "The account will be <strong>deleted after 5 days</strong> of inactivity.",
-    migrateTitle: "How to keep your data?",
+    migrateTitle: "💾 How to keep your data?",
     step1: "Click your username in the top right corner",
     step2: "Choose <em>Log\u00A0in\u00A0/\u00A0Create account</em>",
     step3: "Enter your email and password — you will be asked about data migration",
@@ -141,7 +143,7 @@ const en = {
       title: "Free Familiada Online. A real game show on your own equipment.",
       lead: "The best system for playing Familiada: collect answers from participants via a poll, then run the live game. Ideal game for weddings, birthdays and corporate parties. Everything in the browser.",
       ctaStart: "Start creating games and running the live show",
-      ctaMarketplace: "Browse Community Games",
+      ctaMarketplace: "Browse Community Games 🎮",
       note: "Guest mode available — free Familiada without registration.",
     },
     about: {
@@ -528,7 +530,7 @@ const en = {
     // pustą 4. kratkę z prawej zamiast wyśrodkować etykietę jak w pozostałych
     // językach. Zgłoszone: ma być przesunięte o jedną kratkę w prawo.
     sumLabel: " SUM",
-    audioUnlockBtn: "Unlock sound",
+    audioUnlockBtn: "🔊 Unlock sound",
   },
   host: {
     title: "Familiada — host",
@@ -870,7 +872,7 @@ const en = {
   },
   manual: {
     title: "Familiada — guide",
-    legal: "Privacy Policy",
+    legal: "Privacy Policy 🔐",
     backToGames: "← My games",
     backToBaseManager: "← Base manager",
     backToLogos: "← My logos",
@@ -1176,7 +1178,7 @@ const en = {
       </p>
       <p class="m-p">
         You access question bases from the top bar of the “My games” page
-        using the <span class="m-code"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.15em" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.6"/><line x1="3" y1="12" x2="21" y2="12" stroke="currentColor" stroke-width="1.6"/><rect x="9" y="6.5" width="6" height="1.6" rx="0.8"/><rect x="9" y="15.5" width="6" height="1.6" rx="0.8"/></svg> Question bases</span> button.
+        using the <span class="m-code">Question bases 🗃️</span> button.
       </p>
   
       <p class="m-p">
@@ -1184,7 +1186,7 @@ const en = {
         to a classic file manager on a computer.
       </p>
   
-      <h3 class="m-h3">Adding a new base</h3>
+      <h3 class="m-h3">➕ Adding a new base</h3>
   
       <p class="m-p">
         In the “Question bases” view click the <span class="m-strong">New base</span> tile.
@@ -1195,7 +1197,7 @@ const en = {
         After saving, the new base appears in the list and you can immediately browse or share it.
       </p>
   
-      <h3 class="m-h3">Sharing a base</h3>
+      <h3 class="m-h3">🤝 Sharing a base</h3>
   
       <p class="m-p">
         You can share any base with other users by providing their email address.
@@ -1211,7 +1213,7 @@ const en = {
         Only the base owner can manage sharing.
       </p>
   
-      <h3 class="m-h3">Opening the base manager</h3>
+      <h3 class="m-h3">📂 Opening the base manager</h3>
   
       <p class="m-p">
         To enter a base, select it in the list and click the <span class="m-code">Browse</span> button.
@@ -1252,7 +1254,7 @@ const en = {
   
       <h2 class="m-h2">Tags and categories</h2>
   
-      <h3 class="m-h3"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M20.59 13.41L11 3.83A2 2 0 0 0 9.59 3H4a2 2 0 0 0-2 2v5.59A2 2 0 0 0 2.83 12l9.59 9.59a2 2 0 0 0 2.83 0l5.34-5.34a2 2 0 0 0 0-2.83zM6.5 8A1.5 1.5 0 1 1 8 6.5 1.5 1.5 0 0 1 6.5 8z"/></svg> Tags</h3>
+      <h3 class="m-h3">🏷️ Tags</h3>
   
       <p class="m-p">
         Each question can have any number of tags.
@@ -1299,7 +1301,7 @@ const en = {
         (and subfolders) have the same tag.
       </p>
   
-      <h3 class="m-h3">Categories</h3>
+      <h3 class="m-h3">📌 Categories</h3>
   
       <p class="m-p">
         Categories are special system labels that indicate
@@ -1365,9 +1367,9 @@ const en = {
         After successful game creation you will be redirected to the <span class="m-strong">My games</span> view.
       </p>
   
-      <h2 class="m-h2">Keyboard shortcuts — Base manager</h2>
+      <h2 class="m-h2">⌨️ Keyboard shortcuts — Base manager</h2>
   
-      <h3 class="m-h3"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M10 4l2 2h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h6zm2 7h-2v2H8v2h2v2h2v-2h2v-2h-2v-2z"/></svg> Create</h3>
+      <h3 class="m-h3">📁 Create</h3>
   
       <div class="m-table-wrap"><table class="m-table">
         <tbody><tr><th>Action</th><th>Windows / Linux</th><th>macOS</th></tr>
@@ -1375,7 +1377,7 @@ const en = {
         <tr><td>New folder</td><td>Ctrl + Shift + N</td><td>⌘ ⇧ N</td></tr>
       </tbody></table></div>
 
-      <h3 class="m-h3"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 17.25V21h3.75L19.81 7.94l-3.75-3.75L3 17.25zm2.92 2.83H5v-.92l10.06-10.06.92.92L5.92 20.08zM20.71 6.04a1 1 0 0 0 0-1.41l-1.34-1.34a1 1 0 0 0-1.41 0l-1.13 1.13 2.75 2.75 1.13-1.13z"/></svg> Edit</h3>
+      <h3 class="m-h3">✏️ Edit</h3>
 
       <div class="m-table-wrap"><table class="m-table">
         <tbody><tr><th>Action</th><th>Windows / Linux</th><th>macOS</th></tr>
@@ -1384,7 +1386,7 @@ const en = {
         <tr><td>Delete</td><td>Delete</td><td>Fn + ⌫</td></tr>
       </tbody></table></div>
 
-      <h3 class="m-h3"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 2h13v2H6v11H4V2z"/><path fill-rule="evenodd" clip-rule="evenodd" d="M8 6h13v16H8V6zm2 2v12h9V8h-9z"/></svg> Clipboard</h3>
+      <h3 class="m-h3">📋 Clipboard</h3>
 
       <div class="m-table-wrap"><table class="m-table">
         <tbody><tr><th>Action</th><th>Windows / Linux</th><th>macOS</th></tr>
@@ -1394,21 +1396,21 @@ const en = {
         <tr><td>Duplicate</td><td>Ctrl + D</td><td>⌘ D</td></tr>
       </tbody></table></div>
 
-      <h3 class="m-h3"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M8 5v14l11-7L8 5z"/></svg> Game</h3>
+      <h3 class="m-h3">🎮 Game</h3>
 
       <div class="m-table-wrap"><table class="m-table">
         <tbody><tr><th>Action</th><th>Windows / Linux</th><th>macOS</th></tr>
         <tr><td>Create game</td><td>Ctrl + G</td><td>⌘ G</td></tr>
       </tbody></table></div>
 
-      <h3 class="m-h3"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-8 3.58-8 8s3.58 8 8 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg> View</h3>
+      <h3 class="m-h3">🔄 View</h3>
 
       <div class="m-table-wrap"><table class="m-table">
         <tbody><tr><th>Action</th><th>Windows / Linux</th><th>macOS</th></tr>
         <tr><td>Refresh view</td><td>Ctrl + Alt + R</td><td>⌘ ⌥ R</td></tr>
       </tbody></table></div>
 
-      <h3 class="m-h3">Navigation</h3>
+      <h3 class="m-h3">📌 Navigation</h3>
 
       <div class="m-table-wrap"><table class="m-table">
         <tbody><tr><th>Action</th><th>Windows / Linux</th><th>macOS</th></tr>
@@ -1436,7 +1438,7 @@ const en = {
 
       <p class="m-p">
         You open polls from the top bar on the “My games” page
-        using the <span class="m-code"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.15em" aria-hidden="true"><rect x="2" y="20" width="20" height="1.4" opacity="0.5"/><rect x="2" y="16" width="20" height="1" opacity="0.25"/><rect x="2" y="11" width="20" height="1" opacity="0.25"/><rect x="4" y="11" width="4" height="9" rx="1"/><rect x="10.5" y="15" width="4" height="5" rx="1"/><rect x="17" y="6" width="4" height="14" rx="1"/></svg> Polls</span> button.
+        using the <span class="m-code">Polls 📊</span> button.
       </p>
 
       <h3 class="m-h2">Polls page</h3>
@@ -1451,7 +1453,7 @@ const en = {
       </ul>
 
       <p class="m-p">
-        The gold dot next to the <span class="m-code">Polls</span> button shows
+        The gold dot next to the <span class="m-code">Polls 📊</span> button shows
         how many active tasks are waiting.
       </p>
 
@@ -1663,7 +1665,7 @@ const en = {
 
       <p class="m-p">
         You open it from the top bar on “My games”
-        with the <span class="m-code"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.15em" aria-hidden="true"><path d="M12 2a1.6 1.6 0 0 0-1.6 1.6v.6C7.7 4.9 6 7.2 6 10v5l-2 2v1h16v-1l-2-2v-5c0-2.8-1.7-5.1-4.4-5.8v-.6A1.6 1.6 0 0 0 12 2z"/><path d="M9.5 20a2.5 2.5 0 0 0 5 0h-5z"/></svg> Subscriptions</span> button.
+        with the <span class="m-code">Subscriptions 📧</span> button.
       </p>
 
       <h3 class="m-h2">Subscriptions page</h3>
@@ -1674,7 +1676,7 @@ const en = {
       </ul>
 
       <p class="m-p">
-        The gold dot near <span class="m-code">Subscriptions</span> shows how many invitations are waiting to be accepted.
+        The gold dot near <span class="m-code">Subscriptions 📧</span> shows how many invitations are waiting to be accepted.
       </p>
 
       <h3 class="m-h3">My subscribers</h3>
@@ -2317,7 +2319,7 @@ const en = {
         and verified by moderators. You can browse them, add them to your library
         and launch them directly as a game — without creating your own questions.
         You access Community Games from the top bar of the "My games" page
-        using the <span class="m-code"><span data-shared-icon="gamepad" aria-hidden="true"></span> Community Games</span> button.
+        using the <span class="m-code">Community Games🎮</span> button.
       </p>
 
       <h3 class="m-h2">Browsing and library</h3>
@@ -2799,11 +2801,11 @@ const en = {
   builder: {
     title: "Familiada — my games",
     nav: {
-      pollsHubPolls: "Polls",
-      pollsHubSubs: "Subscriptions",
-      bases: "Question bases",
+      pollsHubPolls: "Polls 📊",
+      pollsHubSubs: "Subscriptions 📧",
+      bases: "Question bases 🗃️",
       logo: "Logo 🖥️",
-      marketplace: "Community Games",
+      marketplace: "Community Games 🎮",
       connectDevice: "Connect device 📱",
       account: "Account settings",
     },
@@ -4062,7 +4064,7 @@ const en = {
         sampleText: "Sample",
         defaultText: "Text",
         shortcutPrefix: "Shortcut: ",
-        polygonDone: "Close",
+        polygonDone: "✓ Close",
         // Shapes
         shapes: {
           line: "Line",
@@ -4074,10 +4076,10 @@ const en = {
           pentagon: "Pentagon",
           hexagon: "Hexagon",
           star5: "Star 5",
-          arrow1: "One-way outline arrow",
-          arrow2: "Two-way outline arrow",
-          arrow1Fill: "One-way filled arrow",
-          arrow2Fill: "Two-way filled arrow",
+          arrow1: "Arrow →",
+          arrow2: "Arrow ↔",
+          arrow1Fill: "Arrow ➤",
+          arrow2Fill: "Arrow ⇔",
           heart: "Heart",
           polygon: "Polygon",
         },
@@ -4096,7 +4098,7 @@ const en = {
       },
     },
     image: {
-      pickImage: "Choose image",
+      pickImage: "Choose image 📁",
       brightness: "Brightness",
       contrast: "Contrast",
       gamma: "Gamma",
@@ -4464,7 +4466,7 @@ const en = {
     countdownTitle: "TECHNICAL MAINTENANCE IN PROGRESS ⏳",
     countdownText:
       "The system is temporarily unavailable.\nReturn will be:",
-    countdownDone: "Return is possible now.",
+    countdownDone: "Return is possible now. 🎉",
     refresh: "Refresh",
     contact: "Contact",
     statusLabel: "Status:",
@@ -4487,7 +4489,7 @@ const en = {
     btnBackBrowse: "← Browse",
     btnAddToLibrary: "Add to my games",
     btnRemoveFromLibrary: "Remove from my games",
-    addedBadge: "Added",
+    addedBadge: "Added ✅",
     withdrawnBadge: "Withdrawn",
     producerBadge: "Familiada",
     langLabel: "Language",
@@ -4577,7 +4579,7 @@ const en = {
     scan: {
       title: "Scan device QR code",
       hint: "Point the camera at the QR code shown in the control panel.",
-      btn: "Scan QR",
+      btn: "📷 Scan QR",
       cameraError: "Camera access denied.",
       noQr: "No QR code found in the photo.",
       noApi: "Use your system camera to scan the QR code.",
@@ -4654,7 +4656,7 @@ const en = {
     stepAudio: "Audio",
     audioUnlockTitle: "Unlock audio",
     audioUnlockHint: "Click the button to allow the browser to play sounds.",
-    audioUnlockBtn: "Unlock",
+    audioUnlockBtn: "🔊 Unlock",
     audioBlocked: "BLOCKED",
     audioStatusOk: "UNLOCKED",
     stepTeamNames: "Team Names",
@@ -5069,7 +5071,7 @@ const en = {
     back: "← My games",
     saveAll: "Save all",
     resetAll: "Restore defaults",
-    play: "Play",
+    play: "▶ Play",
     resetAllConfirm: "Restore default settings? Unsaved changes will be lost.",
     resetSection: "Restore defaults",
     resetSectionConfirm: "Restore default settings for this section?",

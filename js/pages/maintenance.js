@@ -1,6 +1,6 @@
-import { initI18n, t } from "../../translation/translation.js?v=v2026-09-23T08210";
+import { initI18n, t } from "../../translation/translation.js?v=v2026-09-21T22104";
 
-const ENDPOINT = "/maintenance-state.json?v=v2026-09-23T08210";
+const ENDPOINT = "/maintenance-state.json?v=v2026-09-21T22104";
 const POLL_MS = 30000;
 
 const FALLBACKS = {
@@ -15,7 +15,7 @@ const FALLBACKS = {
   countdownTitle: "TRWA PRZERWA TECHNICZNA",
   countdownText:
     "System jest chwilowo niedostępny.\nPowrót nastąpi:",
-  countdownDone: "Powrót już możliwy.",
+  countdownDone: "Powrót już możliwy. 🎉",
 };
 
 const els = {

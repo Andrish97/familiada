@@ -6,18 +6,16 @@
 // (device_ping) i walidacja klucza (display_auth) to te same, generyczne,
 // niezwiązane z komendami RPC co dziś — reużyte bez zmian.
 
-import { initFullscreenButton } from "../../display/js/fullscreen.js?v=v2026-09-23T08210";
-import { initI18n, setUiLang } from "../../translation/translation.js?v=v2026-09-23T08210";
-import { startKeepAlive } from "../../js/core/keep-alive.js?v=v2026-09-23T08210";
-import { sb } from "../../js/core/supabase.js?v=v2026-09-23T08210";
-import { createScene } from "./scene.js?v=v2026-09-23T08210";
-import { createQRController } from "./qr.js?v=v2026-09-23T08210";
-import { createSubscription } from "../../js/core/game-state-subscribe.js?v=v2026-09-23T08210";
-import { createRenderer } from "./render.js?v=v2026-09-23T08210";
-import { createDisplaySoundReactor } from "./soundReactor.js?v=v2026-09-23T08210";
-import { loadSfxManifest, initSfx, setCurrentGameId, applySfxGameSettings, unlockAudio, isAudioUnlocked, getSfxDuration } from "../../js/core/sfx.js?v=v2026-09-23T08210";
-
-import { SPEAKER_ON_ICON, SPEAKER_OFF_ICON } from "../../js/core/icons.js?v=v2026-09-23T08210";
+import { initFullscreenButton } from "../../display/js/fullscreen.js?v=v2026-09-21T22104";
+import { initI18n, setUiLang } from "../../translation/translation.js?v=v2026-09-21T22104";
+import { startKeepAlive } from "../../js/core/keep-alive.js?v=v2026-09-21T22104";
+import { sb } from "../../js/core/supabase.js?v=v2026-09-21T22104";
+import { createScene } from "./scene.js?v=v2026-09-21T22104";
+import { createQRController } from "./qr.js?v=v2026-09-21T22104";
+import { createSubscription } from "../../js/core/game-state-subscribe.js?v=v2026-09-21T22104";
+import { createRenderer } from "./render.js?v=v2026-09-21T22104";
+import { createDisplaySoundReactor } from "./soundReactor.js?v=v2026-09-21T22104";
+import { loadSfxManifest, initSfx, setCurrentGameId, applySfxGameSettings, unlockAudio, isAudioUnlocked, getSfxDuration } from "../../js/core/sfx.js?v=v2026-09-21T22104";
 
 startKeepAlive();
 
@@ -175,8 +173,6 @@ window.addEventListener("DOMContentLoaded", async () => {
 
     const audioUnlockScreen = $("audioUnlockScreen");
     const btnAudioUnlock = $("btnAudioUnlock");
-    const audioUnlockIcon = $("audioUnlockIcon");
-    if (audioUnlockIcon) audioUnlockIcon.innerHTML = isAudioUnlocked() ? SPEAKER_ON_ICON : SPEAKER_OFF_ICON;
     function syncAudioUnlockScreen(row) {
       if (!audioUnlockScreen) return;
       const wantsDisplaySound = row.detail?.settings?.soundSource === "display";
@@ -184,7 +180,6 @@ window.addEventListener("DOMContentLoaded", async () => {
     }
     btnAudioUnlock?.addEventListener("click", () => {
       unlockAudio();
-      if (audioUnlockIcon) audioUnlockIcon.innerHTML = SPEAKER_ON_ICON;
       audioUnlockScreen?.classList.add("hidden");
     });
 

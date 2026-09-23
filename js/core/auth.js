@@ -1,8 +1,6 @@
 // js/core/auth.js
-import { sb, buildSiteUrl } from "./supabase.js?v=v2026-09-23T08210";
-import { t, withLangParam } from "../../translation/translation.js?v=v2026-09-23T08210";
-
-import { EYE_ICON, EYE_OFF_ICON } from "./icons.js?v=v2026-09-23T08210";
+import { sb, buildSiteUrl } from "./supabase.js?v=v2026-09-21T22104";
+import { t, withLangParam } from "../../translation/translation.js?v=v2026-09-21T22104";
 
 const GUEST_LOCAL_MARKER_KEY = "fam:guest:session_seen";
 const GUEST_DISCARD_RPC_MISSING_KEY = "fam:guest:discard_rpc_missing";
@@ -154,6 +152,7 @@ export function validatePassword(pwd) {
   }
   return v;
 }
+
 
 function passwordRulesAllHints() {
   return [
@@ -339,6 +338,7 @@ export async function signInGuest(captchaToken = null) {
   return user;
 }
 
+
 export function hasGuestLocalMarker() {
   try { return localStorage.getItem(GUEST_LOCAL_MARKER_KEY) === "1"; } catch { return false; }
 }
@@ -485,7 +485,7 @@ export async function signUp(email, password, redirectTo, usernameInput, languag
   const username = validateUsername(usernameInput, { allowEmpty: true });
   const userData = username ? { username } : null;
 
-  // absolutny redirect + lang (bez withLangParam)
+  // ✅ absolutny redirect + lang (bez withLangParam)
   const emailRedirectTo = redirectTo || buildAuthRedirect("confirm", language);
 
   const options = { emailRedirectTo };
@@ -563,7 +563,7 @@ export async function resetPassword(loginOrEmail, redirectTo, language, resolved
   const { error } = await sb().auth.resetPasswordForEmail(email, options);
   if (error) throw new Error(niceAuthError(error));
 
-  return email; // ważne: login.js zapisze cooldown per konkretny email
+  return email; // ✅ ważne: login.js zapisze cooldown per konkretny email
 }
 
 export async function updateUserLanguage(language) {
@@ -578,12 +578,15 @@ export async function updateUserLanguage(language) {
   }
 }
 
+const EYE_OPEN = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`;
+const EYE_CLOSED = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>`;
+
 export function resetPasswordToggles() {
   document.querySelectorAll(".pass-wrap input").forEach((input) => {
     input.type = "password";
   });
   document.querySelectorAll(".pass-toggle").forEach((btn) => {
-    btn.innerHTML = EYE_ICON;
+    btn.innerHTML = EYE_OPEN;
   });
 }
 
@@ -608,7 +611,7 @@ export function initPasswordToggles() {
       btn.type = "button";
       btn.className = "pass-toggle";
       btn.setAttribute("aria-label", "Pokaż/ukryj hasło");
-      btn.innerHTML = EYE_ICON;
+      btn.innerHTML = EYE_OPEN;
       wrap.appendChild(btn);
 
       btn.addEventListener("click", () => {
@@ -617,7 +620,7 @@ export function initPasswordToggles() {
         inputs.forEach((i) => { i.type = show ? "text" : "password"; });
         // Update all buttons in the group
         inputs.forEach((i) => {
-          i.parentElement.querySelector(".pass-toggle").innerHTML = show ? EYE_OFF_ICON : EYE_ICON;
+          i.parentElement.querySelector(".pass-toggle").innerHTML = show ? EYE_CLOSED : EYE_OPEN;
         });
       });
     });

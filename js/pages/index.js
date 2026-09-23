@@ -1,8 +1,8 @@
-import { getUser } from "../core/auth.js?v=v2026-09-23T08210";
-import { sb } from "../core/supabase.js?v=v2026-09-23T08210";
-import { initI18n, withLangParam, applyTranslations, getUiLang, t } from "../../translation/translation.js?v=v2026-09-23T08210";
-import { isGuestUser } from "../core/guest-mode.js?v=v2026-09-23T08210";
-import { initRatingSystem } from "../core/rating-system.js?v=v2026-09-23T08210";
+import { getUser } from "../core/auth.js?v=v2026-09-21T22104";
+import { sb } from "../core/supabase.js?v=v2026-09-21T22104";
+import { initI18n, withLangParam, applyTranslations, getUiLang, t } from "../../translation/translation.js?v=v2026-09-21T22104";
+import { isGuestUser } from "../core/guest-mode.js?v=v2026-09-21T22104";
+import { initRatingSystem } from "../core/rating-system.js?v=v2026-09-21T22104";
 
 async function redirectIfSession() {
   try {
@@ -321,6 +321,17 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   await loadRatingStats();
 
+  // Tab Title Animation (Accepted)
+  const originalTitle = document.title;
+  window.addEventListener("visibilitychange", () => {
+    if (document.hidden) {
+      const messages = ["Wracaj do gry! 🎮", "Suchar czeka... 🤣", "Pytanie: więcej niż jedno zwierzę? 🐑"];
+      document.title = messages[Math.floor(Math.random() * messages.length)];
+    } else {
+      document.title = originalTitle;
+    }
+  });
+
   // Persistent Teaser Logic (Accepted)
   const teaser = document.getElementById("quickPollTeaser");
   if (teaser) {
@@ -344,4 +355,12 @@ document.addEventListener("DOMContentLoaded", async () => {
       });
     }
   }
+
+  // Console Joke (Accepted)
+  const suchary = [
+    "Dlaczego matematyka jest smutna? Bo ma dużo problemów.",
+    "Co mówi ryba, gdy uderzy w ścianę? Dam!",
+    "Jak się nazywa ser, który nie jest twój? Nacho cheese.",
+    "Co robią policjanci w kinie? Śledzą akcję."
+  ];
 });

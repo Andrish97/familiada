@@ -1,10 +1,8 @@
 // js/pages/buzzer.js
-import { initI18n, setUiLang, t, applyTranslations } from "../../translation/translation.js?v=v2026-09-23T08210";
-import { sb } from "../core/supabase.js?v=v2026-09-23T08210";
-import { rt } from "../core/realtime.js?v=v2026-09-23T08210";
-import { startKeepAlive } from "../core/keep-alive.js?v=v2026-09-23T08210";
-
-import { FULLSCREEN_ICON, FULLSCREEN_EXIT_ICON } from "../core/icons.js?v=v2026-09-23T08210";
+import { initI18n, setUiLang, t, applyTranslations } from "../../translation/translation.js?v=v2026-09-21T22104";
+import { sb } from "../core/supabase.js?v=v2026-09-21T22104";
+import { rt } from "../core/realtime.js?v=v2026-09-21T22104";
+import { startKeepAlive } from "../core/keep-alive.js?v=v2026-09-21T22104";
 startKeepAlive();
 
 const qs = new URLSearchParams(location.search);
@@ -63,7 +61,7 @@ function isIOSSafari() {
 function setFullscreenIcon() {
   if (!fsIco) return;
   const isReal = !!document.fullscreenElement;
-  fsIco.innerHTML = (isReal || pseudoFS) ? FULLSCREEN_EXIT_ICON : FULLSCREEN_ICON;
+  fsIco.textContent = (isReal || pseudoFS) ? "⧉" : "▢";
 }
 
 function setPseudoFS(on) {
@@ -302,6 +300,7 @@ async function persistColorsOnly() {
     console.warn("[buzzer] persist colors failed", e);
   }
 }
+
 
 /* ========= REALTIME ========= */
 let ch = null;

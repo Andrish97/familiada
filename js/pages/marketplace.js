@@ -1,18 +1,15 @@
 // js/pages/marketplace.js
 
-import { sb, buildSiteUrl } from "../core/supabase.js?v=v2026-09-23T08210";
-import { getUser } from "../core/auth.js?v=v2026-09-23T08210";
-import { isGuestUser } from "../core/guest-mode.js?v=v2026-09-23T08210";
-import { initI18n, t, getUiLang, withLangParam, applyTranslations } from "../../translation/translation.js?v=v2026-09-23T08210";
-import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-09-23T08210";
-import { exportGame } from "./builder-import-export.js?v=v2026-09-23T08210";
-import { initUiSelect } from "../core/ui-select.js?v=v2026-09-23T08210";
-import { confirmModal } from "../core/modal.js?v=v2026-09-23T08210";
-import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../core/modal-sheet.js?v=v2026-09-23T08210";
-
-import { HOME_ICON } from "../core/icons.js?v=v2026-09-23T08210";
+import { sb, buildSiteUrl } from "../core/supabase.js?v=v2026-09-21T22104";
+import { getUser } from "../core/auth.js?v=v2026-09-21T22104";
+import { isGuestUser } from "../core/guest-mode.js?v=v2026-09-21T22104";
+import { initI18n, t, getUiLang, withLangParam, applyTranslations } from "../../translation/translation.js?v=v2026-09-21T22104";
+import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-09-21T22104";
+import { exportGame } from "./builder-import-export.js?v=v2026-09-21T22104";
+import { initUiSelect } from "../core/ui-select.js?v=v2026-09-21T22104";
+import { confirmModal } from "../core/modal.js?v=v2026-09-21T22104";
+import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../core/modal-sheet.js?v=v2026-09-21T22104";
 import "../core/contact-modal.js";
-import { STAR_ICON, STAR_EMPTY_ICON, CHECK_ICON } from "../core/icons.js?v=v2026-09-23T08210";
 
 /* =========================================================
    Constants
@@ -168,7 +165,7 @@ function makeGameCard(g) {
   card.innerHTML = `
     <div class="mkt-card-top">
       <span class="mkt-lang-badge">${esc(g.lang.toUpperCase())}</span>
-      ${inLibrary ? `<span class="mkt-badge mkt-badge-added">${CHECK_ICON}<span>${esc(t("marketplace.addedBadge"))}</span></span>` : ""}
+      ${inLibrary ? `<span class="mkt-badge mkt-badge-added">${esc(t("marketplace.addedBadge"))}</span>` : ""}
     </div>
     <div class="mkt-card-title">${esc(g.title)}</div>
     <div class="mkt-card-author">${authorLabel}</div>
@@ -289,9 +286,9 @@ function updateLibraryButtons(inLibrary, withdrawn = false) {
   if (els.addedBadge) {
     els.addedBadge.hidden = !inLibrary;
     if (inLibrary && withdrawn) {
-      els.addedBadge.innerHTML = `${CHECK_ICON}<span>${esc(t("marketplace.addedBadge"))} · ${esc(t("marketplace.withdrawnBadge"))}</span>`;
+      els.addedBadge.textContent = `${t("marketplace.addedBadge")} · ${t("marketplace.withdrawnBadge")}`;
     } else if (inLibrary) {
-      els.addedBadge.innerHTML = `${CHECK_ICON}<span>${esc(t("marketplace.addedBadge"))}</span>`;
+      els.addedBadge.textContent = t("marketplace.addedBadge");
     }
   }
 }
@@ -456,6 +453,7 @@ async function openSubmitModal() {
     return g.status === "ready";
   });
 
+
   const hasEligible = eligible.length > 0;
 
   if (submitGameUiSelect) {
@@ -502,6 +500,7 @@ async function submitGame() {
   if (!title)     return showSubmitError(t("marketplace.submit.errorMissingTitle"));
   if (!confirmed) return showSubmitError(t("marketplace.submit.errorCheckbox"));
 
+
   if (els.btnSubmitConfirm) els.btnSubmitConfirm.disabled = true;
 
   let payload;
@@ -545,7 +544,7 @@ async function submitGame() {
 function starsDisplay(avg, count) {
   if (!count) return `<span class="mkt-no-rating">${esc(t("marketplace.rating.none"))}</span>`;
   const full = Math.round(+avg);
-  const stars = STAR_ICON.repeat(full) + STAR_EMPTY_ICON.repeat(5 - full);
+  const stars = "★".repeat(full) + "☆".repeat(5 - full);
   return `<span class="mkt-stars">${stars}</span> <span class="mkt-rating-avg">${(+avg).toFixed(1)}</span> <span class="mkt-rating-count">(${count})</span>`;
 }
 
@@ -564,7 +563,7 @@ function buildStarInput(gameId) {
     const btn = document.createElement("button");
     btn.type = "button";
     btn.className = "mkt-star-btn";
-    btn.innerHTML = STAR_ICON;
+    btn.textContent = "★";
     btn.dataset.stars = i;
     btn.addEventListener("mouseover", () => {
       row.querySelectorAll(".mkt-star-btn").forEach((b, j) => b.classList.toggle("hover", j < i));
@@ -614,7 +613,7 @@ async function loadRaters(gameId, container) {
     data.map(r =>
       `<div class="mkt-rater-row">
         <span class="mkt-rater-name">${esc(r.username || "?")}</span>
-        <span class="mkt-rater-stars">${STAR_ICON.repeat(r.stars)}${STAR_EMPTY_ICON.repeat(5 - r.stars)}</span>
+        <span class="mkt-rater-stars">${"★".repeat(r.stars)}${"☆".repeat(5 - r.stars)}</span>
       </div>`
     ).join("");
 }
@@ -747,7 +746,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (els.btnGoBuilder) {
       els.btnGoBuilder.innerHTML =
         `<span class="only-desktop">${esc(t("marketplace.nav.backHome"))}</span>` +
-        `<span class="only-mobile">${HOME_ICON}</span>`;
+        `<span class="only-mobile">🏠</span>`;
     }
     if (els.btnManual)  els.btnManual.hidden = true;
   }
@@ -764,6 +763,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   wireEvents();
   applyTranslations();
+
 
   showView("browse");
   await loadBrowse({ reset: true });

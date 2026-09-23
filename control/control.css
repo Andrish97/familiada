@@ -2514,6 +2514,3 @@
   font-size: 12px;
   opacity: .7;
 }
-
-/* Tylko control2.html (btnMute nie istnieje w control.html) */
-#btnMute svg{ width: 14px; height: 14px; fill: currentColor; display: block; }

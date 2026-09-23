@@ -212,9 +212,7 @@ test.describe("bases: codzienna funkcjonalność (tworzenie/zmiana nazwy/usunię
 
       const tile = page2.locator("#sharedGrid .card", { hasText: name });
       await expect(tile).toBeVisible({ timeout: 15000 });
-      const roleBadge = tile.locator('.tileBadge[data-kind="role"]');
-      await expect(roleBadge).toHaveAttribute("title", "Masz dostęp z edycją");
-      await expect(roleBadge.locator("svg")).toBeVisible();
+      await expect(tile.locator('.tileBadge[data-kind="role"]')).toHaveText("✎");
     } finally {
       if (context2) await context2.close();
       await deleteBaseDirect(page, baseId);

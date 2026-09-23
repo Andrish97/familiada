@@ -1,13 +1,13 @@
-import { sb, SUPABASE_URL } from "../core/supabase.js?v=v2026-09-23T08210";
-import { updateChecked } from "../core/db-guard.js?v=v2026-09-23T08210";
-import { requireAuth } from "../core/auth.js?v=v2026-09-23T08210";
-import { isGuestUser, showGuestBlockedOverlay } from "../core/guest-mode.js?v=v2026-09-23T08210";
-import { validatePollReadyToOpen } from "../core/game-validate.js?v=v2026-09-23T08210";
-import { alertModal, confirmModal } from "../core/modal.js?v=v2026-09-23T08210";
-import { initUiSelect } from "../core/ui-select.js?v=v2026-09-23T08210";
-import { initI18n, t, getUiLang } from "../../translation/translation.js?v=v2026-09-23T08210";
-import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-09-23T08210";
-import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../core/modal-sheet.js?v=v2026-09-23T08210";
+import { sb, SUPABASE_URL } from "../core/supabase.js?v=v2026-09-21T22104";
+import { updateChecked } from "../core/db-guard.js?v=v2026-09-21T22104";
+import { requireAuth } from "../core/auth.js?v=v2026-09-21T22104";
+import { isGuestUser, showGuestBlockedOverlay } from "../core/guest-mode.js?v=v2026-09-21T22104";
+import { validatePollReadyToOpen } from "../core/game-validate.js?v=v2026-09-21T22104";
+import { alertModal, confirmModal } from "../core/modal.js?v=v2026-09-21T22104";
+import { initUiSelect } from "../core/ui-select.js?v=v2026-09-21T22104";
+import { initI18n, t, getUiLang } from "../../translation/translation.js?v=v2026-09-21T22104";
+import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-09-21T22104";
+import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../core/modal-sheet.js?v=v2026-09-21T22104";
 import "../core/contact-modal.js";
 
 initI18n({ withSwitcher: true }).then(() => {
@@ -22,6 +22,7 @@ function escapeHtml(s) {
 const qs = new URLSearchParams(location.search);
 const focusTaskToken = qs.get("t");
 let focusTaskHandled = false;
+
 
 function getRetParam() {
   return new URLSearchParams(location.search).get("ret");
@@ -190,6 +191,7 @@ function pollTypeLabel(type) {
 function parseDate(value) {
   return value ? new Date(value).getTime() : 0;
 }
+
 
 function getPollStateOrder(poll) {
   if (poll.poll_state === "draft") return 0;
@@ -702,7 +704,7 @@ async function buildMailItemsForTasksFallback({ gameId, ownerId, selectedSubIds 
     if (r.token && r.id) taskIdByToken.set(String(r.token), r.id);
   }
   const subById = new Map(((await sb().rpc("polls_hub_list_my_subscribers")).data || []).map((x) => [String(x.sub_id), x]));
-    // jeśli sub ma user_id, a nie ma emaila — dociągnij z profiles
+    // 🔧 jeśli sub ma user_id, a nie ma emaila — dociągnij z profiles
   const needProfileIds = [];
   for (const subId of selectedSubIds || []) {
     const sub = subById.get(String(subId));
@@ -1074,6 +1076,8 @@ async function refreshData() {
   }
 }
 
+
+
 function buildManualUrl() {
   const url = new URL("manual", location.href);
   url.searchParams.set("ret", getCurrentRelativeUrl());
@@ -1081,6 +1085,7 @@ function buildManualUrl() {
   url.hash = "polls";
   return url.toString();
 }
+
 
 function updateBackButtonLabel() {
   if (!btnBack) return;

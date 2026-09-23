@@ -1690,7 +1690,7 @@ test.describe("base-explorer: question-modal.js (edycja pytania)", () => {
     }
   });
 
-  test("usunięcie odpowiedzi przyciskiem usuwania persystuje po zapisie", async ({ page, context }) => {
+  test("usunięcie odpowiedzi przyciskiem ✕ persystuje po zapisie", async ({ page, context }) => {
     test.setTimeout(60_000);
     await loginAsTestUser(page, context, { username: testAccountUsername(1) });
     const baseId = await createBase(page, `E2E-QM-DELANS-${Date.now()}`);

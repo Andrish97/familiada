@@ -266,14 +266,6 @@ body.skel-body .topbar.topbar-ready .topbar-section-4 {
     transform: translateY(1px)
 }
 
-.btn-ico{
-    width: 14px;
-    height: 14px;
-    vertical-align: -2px;
-    margin-right: 4px;
-}
-.btn-ico:not([fill]){ fill: currentColor; }
-
 .btn.gold {
     border-color: rgba(255,234,166,.35);
     background: rgba(255,234,166,.1);
@@ -837,13 +829,6 @@ main{
     text-overflow: ellipsis;
     white-space: nowrap
 }
-.ui-select-label svg, .ui-select-item svg {
-    width: 13px;
-    height: 13px;
-    vertical-align: -2px;
-    margin-right: 2px;
-}
-.ui-select-label svg:not([fill]), .ui-select-item svg:not([fill]) { fill: currentColor; }
 
 .ui-select-caret {
     font-size: 12px;
@@ -1017,13 +1002,6 @@ html.showA2HS .a2hs {
   display: grid;
   place-items: center;
   touch-action: manipulation;
-}
-
-.topbar-menu-icon svg{
-  width: 18px;
-  height: 18px;
-  fill: currentColor;
-  display: block;
 }
 
 .lang-menu{
@@ -1557,6 +1535,7 @@ body{
 .star-btn {
     background: none;
     border: none;
+    font-size: 40px;
     color: rgba(255,255,255,0.15);
     cursor: pointer;
     transition: transform 0.1s, color 0.1s;
@@ -1564,20 +1543,13 @@ body{
     line-height: 1;
 }
 
-.star-btn svg {
-    width: 40px;
-    height: 40px;
-    display: block;
-}
-.star-btn svg:not([fill]) { fill: currentColor; }
-
 .star-btn:hover {
     transform: scale(1.15);
 }
 
 .star-btn.active {
     color: var(--gold);
-    filter: drop-shadow(0 0 8px rgba(255, 234, 166, 0.4));
+    text-shadow: 0 0 15px rgba(255, 234, 166, 0.4);
 }
 
 .rating-comment {

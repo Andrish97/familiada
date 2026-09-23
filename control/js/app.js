@@ -1,10 +1,8 @@
 // /familiada/js/pages/controlapp.js
-import { confirmModal } from "../../js/core/modal.js?v=v2026-09-23T08210";
-import { getUiLang, initI18n, t } from "../../translation/translation.js?v=v2026-09-23T08210";
-import { v as cacheBust } from "../../js/core/cache-bust.js?v=v2026-09-23T08210";
-import { guardDesktopOnly } from "../../js/core/device-guard.js?v=v2026-09-23T08210";
-
-import { PLAYBACK_PLAY_ICON, PLAYBACK_STOP_ICON } from "../../js/core/icons.js?v=v2026-09-23T08210";
+import { confirmModal } from "../../js/core/modal.js?v=v2026-09-21T22104";
+import { getUiLang, initI18n, t } from "../../translation/translation.js?v=v2026-09-21T22104";
+import { v as cacheBust } from "../../js/core/cache-bust.js?v=v2026-09-21T22104";
+import { guardDesktopOnly } from "../../js/core/device-guard.js?v=v2026-09-21T22104";
 
 guardDesktopOnly();
 
@@ -43,24 +41,24 @@ const APP_MSG = {
 };
 // ================= KONIEC KOMUNIKATÓW =================
 
-import { requireAuth, signOut } from "../../js/core/auth.js?v=v2026-09-23T08210";
-import { setTopbarAccount } from "../../js/core/topbar-controller.js?v=v2026-09-23T08210";
-import { isGuestUser } from "../../js/core/guest-mode.js?v=v2026-09-23T08210";
-import { sb } from "../../js/core/supabase.js?v=v2026-09-23T08210";
-import { rt } from "../../js/core/realtime.js?v=v2026-09-23T08210";
-import { validateGameReadyToPlay, loadGameBasic, loadQuestions, loadAnswers } from "../../js/core/game-validate.js?v=v2026-09-23T08210";
-import { unlockAudio, isAudioUnlocked, playSfx, setCurrentGameId, loadSfxManifest, initSfx, applySfxGameSettings, loadSfxFromCloud, getSfxCustomFiles, getSfxCategories, getSfxVariant, getSfxVolume, isSfxPlaying, stopSfx, onSfxEnd, setSessionSfxVolume } from "../../js/core/sfx.js?v=v2026-09-23T08210";
-import { listGameSounds } from "../../js/core/sfx-cloud.js?v=v2026-09-23T08210";
-import { createStore } from "./store.js?v=v2026-09-23T08210";
-import { createUI } from "./ui.js?v=v2026-09-23T08210";
-import { createDevices } from "./devices.js?v=v2026-09-23T08210";
-import { createPresence } from "./presence.js?v=v2026-09-23T08210";
-import { createDisplay } from "./display.js?v=v2026-09-23T08210";
-import { createRounds } from "./gameRounds.js?v=v2026-09-23T08210";
-import { createFinal } from "./gameFinal.js?v=v2026-09-23T08210";
-import { initShareDevice } from "./share-device.js?v=v2026-09-23T08210";
-import { loadFont5x7, buildLogoPreviewCanvas } from "../../js/core/logo-preview.js?v=v2026-09-23T08210";
-import { sessionStart, sessionEnd, sessionLogError } from "./sessionTracking.js?v=v2026-09-23T08210";
+import { requireAuth, signOut } from "../../js/core/auth.js?v=v2026-09-21T22104";
+import { setTopbarAccount } from "../../js/core/topbar-controller.js?v=v2026-09-21T22104";
+import { isGuestUser } from "../../js/core/guest-mode.js?v=v2026-09-21T22104";
+import { sb } from "../../js/core/supabase.js?v=v2026-09-21T22104";
+import { rt } from "../../js/core/realtime.js?v=v2026-09-21T22104";
+import { validateGameReadyToPlay, loadGameBasic, loadQuestions, loadAnswers } from "../../js/core/game-validate.js?v=v2026-09-21T22104";
+import { unlockAudio, isAudioUnlocked, playSfx, setCurrentGameId, loadSfxManifest, initSfx, applySfxGameSettings, loadSfxFromCloud, getSfxCustomFiles, getSfxCategories, getSfxVariant, getSfxVolume, isSfxPlaying, stopSfx, onSfxEnd, setSessionSfxVolume } from "../../js/core/sfx.js?v=v2026-09-21T22104";
+import { listGameSounds } from "../../js/core/sfx-cloud.js?v=v2026-09-21T22104";
+import { createStore } from "./store.js?v=v2026-09-21T22104";
+import { createUI } from "./ui.js?v=v2026-09-21T22104";
+import { createDevices } from "./devices.js?v=v2026-09-21T22104";
+import { createPresence } from "./presence.js?v=v2026-09-21T22104";
+import { createDisplay } from "./display.js?v=v2026-09-21T22104";
+import { createRounds } from "./gameRounds.js?v=v2026-09-21T22104";
+import { createFinal } from "./gameFinal.js?v=v2026-09-21T22104";
+import { initShareDevice } from "./share-device.js?v=v2026-09-21T22104";
+import { loadFont5x7, buildLogoPreviewCanvas } from "../../js/core/logo-preview.js?v=v2026-09-21T22104";
+import { sessionStart, sessionEnd, sessionLogError } from "./sessionTracking.js?v=v2026-09-21T22104";
 
 initI18n({ withSwitcher: true });
 
@@ -498,6 +496,7 @@ async function main() {
     window.open(url, "_blank");
   }
 
+
   // === OSTRZEŻENIE PRZY WYJŚCIU ZE STRONY ===
   // Gdy nawigujemy "świadomie" (przycisk Powrót / wylogowanie),
   // nie chcemy drugiego alertu z beforeunload.
@@ -574,6 +573,7 @@ async function sendZeroStatesToDevices() {
   try { await devices.sendBuzzerCmd("OFF"); } catch {}
   try { await devices.sendBuzzerCmd("COLOR_RESET"); } catch {}
 }
+
 
   window.addEventListener("beforeunload", (e) => {
     if (!shouldWarnBeforeUnload()) return;
@@ -652,6 +652,8 @@ async function sendZeroStatesToDevices() {
   const _summaryVolumes = new Map(); // zapamiętuje głośności zmienione w podsumowaniu
   // true gdy game.settings zawierały zapisane ustawienia (nie null)
   let _hasCustomSettings = game.settings != null && typeof game.settings === "object";
+
+
 
   const display = createDisplay({ devices, store });
   const rounds = createRounds({ ui, store, devices, display, loadQuestions, loadAnswers });
@@ -790,6 +792,7 @@ async function sendZeroStatesToDevices() {
     // Aktualizuj przyciski "QR na wyświetlaczu" dla hosta i buzzera
     updateQrOnDisplayButtons();
 
+
     ui.setEnabled("btnDevicesNext", requiredOnline);
 
     // krok 3: „Gotowe — przejdź dalej" po odblokowaniu audio
@@ -859,6 +862,8 @@ async function sendZeroStatesToDevices() {
     canEnter: (card) => store.canEnterCard(card),
     onNavigate: (card) => store.setActiveCard(card),
   });
+
+
 
   const helpOverlay = document.getElementById("helpOverlay");
   const helpFrame = document.getElementById("helpFrame");
@@ -1002,6 +1007,7 @@ async function sendZeroStatesToDevices() {
       await navigator.clipboard.writeText(code);
     } catch {}
   });
+
 
   // Wysyła właściwą komendę QR lub BLACK na podstawie qrHostOnDisplay + qrBuzzerOnDisplay + opt-out
   async function syncQrDisplay() {
@@ -1302,8 +1308,8 @@ async function sendZeroStatesToDevices() {
     if (soundListEl) {
       const cats = getSfxCategories();
       const lang = getUiLang() || "pl";
-      const SVG_PLAY = PLAYBACK_PLAY_ICON;
-      const SVG_STOP = PLAYBACK_STOP_ICON;
+      const SVG_PLAY = `<svg width="16" height="16" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><polygon points="2,1 11,6 2,11" fill="currentColor"/></svg>`;
+      const SVG_STOP = `<svg width="16" height="16" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="1.5" y="1.5" width="9" height="9" fill="currentColor"/></svg>`;
 
       const existing = new Map(); // key → row element (jeśli już wyrenderowany)
       for (const row of soundListEl.children) {
@@ -1454,6 +1460,7 @@ async function sendZeroStatesToDevices() {
       devices?.sendDisplayCmd(ev.data.cmd).catch(() => {});
     }
   });
+
 
     // ROUNDS
   ui.on("game.startIntro", async () => {

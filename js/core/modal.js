@@ -1,5 +1,5 @@
-import { t } from "../../translation/translation.js?v=v2026-09-23T08210";
-import { enterModalSheet, exitModalSheet, isSheetViewport } from "./modal-sheet.js?v=v2026-09-23T08210";
+import { t } from "../../translation/translation.js?v=v2026-09-21T22104";
+import { enterModalSheet, exitModalSheet, isSheetViewport } from "./modal-sheet.js?v=v2026-09-21T22104";
 let modalSeq = 0;
 
 function modalText(key, fallback) {
@@ -46,7 +46,7 @@ function buildModal({
   const titleEl = document.createElement("div");
   titleEl.className = "mTitle";
   titleEl.id = titleId;
-  titleEl.innerHTML = title;
+  titleEl.textContent = title;
 
   const closeBtn = document.createElement("button");
   closeBtn.className = "btn sm";
@@ -221,6 +221,7 @@ export function alertModal({ title, text, okText, onReady, sheet = null } = {}) 
     sheet,
   });
 }
+
 
 export function promptModal({
   title,
