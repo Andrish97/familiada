@@ -5122,7 +5122,7 @@ async function loadToolsManifest() {
     { value: "/settings-tools/editor_5x7.html", label: labelFromPath("/settings-tools/editor_5x7.html") },
     { value: "/settings-tools/exporterandeditor.html", label: labelFromPath("/settings-tools/exporterandeditor.html") },
     { value: "/settings-tools/kora-builder.html", label: labelFromPath("/settings-tools/kora-builder.html") },
-    { value: "/settings-tools/theme_builder.html", label: labelFromPath("/settings-tools/theme_builder.html") },\n    { value: "/settings-tools/icon-refactor-audit.html", label: "Refaktor ikon i symboli — audyt tymczasowy" },
+    { value: "/settings-tools/theme_builder.html", label: labelFromPath("/settings-tools/theme_builder.html") },
   ];
 }
 
