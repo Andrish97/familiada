@@ -342,9 +342,6 @@ async function ensureMetaMapsForUI(state) {
   state._allCategoryMetaMap = derived;
 }
 
-
-
-
 /**
  * Buduje:
  *  - state._folderDescQIds: Map(folderId -> Set(questionId)) (rekurencyjnie)
@@ -1954,7 +1951,6 @@ async function moveItemsTo(state, targetFolderIdOrNull, { mode = "move" } = {}) 
     await state._api?.refreshList?.();
     return;
   }
-
 
   // 3) MOVE — walidacje folderów
   if (cIds.length && targetFolderIdOrNull) {

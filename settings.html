@@ -34,7 +34,7 @@
       <!-- Mobile mail nav — replaces brand when in reports panel on mobile -->
       <div class="mail-nav-topbar" id="mailNavTopbar" style="display:none;gap:4px;align-items:center">
         <button class="btn sm" id="btnMailBackTopbar" type="button" style="display:none">←</button>
-        <button class="btn sm gold" id="btnMailComposeTopbar" type="button">✏</button>
+        <button class="btn sm gold" id="btnMailComposeTopbar" type="button"><span class="btn-ico" style="margin-right:0" data-shared-icon="pencil" aria-hidden="true"></span></button>
       </div>
       <div class="brand" id="settingsBrand">FAMILIADA</div>
       <button class="btn topbar-sheet-back" id="btnBackSheet" type="button">Wstecz</button>
@@ -101,7 +101,7 @@
                 <input class="dt-input" id="returnAtMonth" type="number" inputmode="numeric" placeholder="MM" min="1" max="12"/>
                 <span class="dt-dot">.</span>
                 <input class="dt-input" id="returnAtYear" type="number" inputmode="numeric" placeholder="YYYY" min="2024" max="2035"/>
-                <button class="btn sm dt-open" data-dt-open="returnAt" type="button">📅</button>
+                <button class="btn sm dt-open" data-dt-open="returnAt" type="button"><span data-shared-icon="calendar" aria-hidden="true"></span></button>
               </div>
               <span class="field-hint">Minimum 10 minut od teraz.</span>
             </div>
@@ -120,7 +120,7 @@
                 <input class="dt-input" id="endAtMonth" type="number" inputmode="numeric" placeholder="MM" min="1" max="12"/>
                 <span class="dt-dot">.</span>
                 <input class="dt-input" id="endAtYear" type="number" inputmode="numeric" placeholder="YYYY" min="2024" max="2035"/>
-                <button class="btn sm dt-open" data-dt-open="endAt" type="button">📅</button>
+                <button class="btn sm dt-open" data-dt-open="endAt" type="button"><span data-shared-icon="calendar" aria-hidden="true"></span></button>
               </div>
               <span class="field-hint">Minimum 10 minut od teraz.</span>
             </div>
@@ -160,7 +160,7 @@
           </div>
 
           <div class="field" style="margin-top:12px">
-            <button class="btn sm" id="btnMaintenancePreview" type="button">👁 Podgląd strony maintenance</button>
+            <button class="btn sm" id="btnMaintenancePreview" type="button"><span class="btn-ico" data-shared-icon="eye" aria-hidden="true"></span>Podgląd strony maintenance</button>
           </div>
         </div>
 
@@ -422,7 +422,7 @@
             <div class="panel-title">Gry Producenta</div>
             <div class="panel-sub">Generowanie i zarządzanie grami producenta</div>
           </div>
-          <div class="settings-card-title">🌐 Sesja</div>
+          <div class="settings-card-title">Sesja</div>
           <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap">
             <div class="field" style="flex:1;min-width:120px">
               <label class="field-label">Język</label>
@@ -441,16 +441,16 @@
           <div class="pending-bar" id="gen-pending-bar" style="display:none">
             <span style="font-size:12px;font-weight:700;color:var(--red);flex:1" id="gen-pending-count"></span>
             <button class="btn sm" id="gen-clear-pending-btn">Cofnij</button>
-            <button class="btn sm danger" id="gen-save-btn">💾 Zapisz zmiany</button>
+            <button class="btn sm danger" id="gen-save-btn"><span class="btn-ico" data-shared-icon="save" aria-hidden="true"></span>Zapisz zmiany</button>
           </div>
           <div class="status-bar" id="gen-session-status"></div>
         </div>
 
         <!-- Manage existing -->
         <div class="settings-card" id="gen-manage-card" style="display:none">
-          <div class="settings-card-title">📋 Gry w marketplace</div>
+          <div class="settings-card-title">Gry w marketplace</div>
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:4px">
-            <button class="btn sm btn-blue" id="gen-scan-btn" disabled>🔍 Skanuj</button>
+            <button class="btn sm btn-blue" id="gen-scan-btn" disabled><span class="btn-ico" data-shared-icon="search" aria-hidden="true"></span>Skanuj</button>
           </div>
           <div class="bulk-bar" id="gen-bulk-bar">
             <span class="bulk-count" id="gen-bulk-count">0 zaznaczonych</span>
@@ -467,7 +467,7 @@
 
         <!-- Import -->
         <div class="settings-card" id="gen-import-card" style="display:none">
-          <div class="settings-card-title">📥 Import gier z JSON</div>
+          <div class="settings-card-title">Import gier z JSON</div>
           <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
             <label class="btn sm" style="cursor:pointer">
               Wybierz pliki JSON
@@ -485,7 +485,7 @@
 
         <!-- Generate -->
         <div class="settings-card" id="gen-input-card" style="display:none">
-          <div class="settings-card-title">⚙️ Kolejka generowania gier</div>
+          <div class="settings-card-title">Kolejka generowania gier</div>
           <div style="margin-bottom:12px">
             <div class="field">
               <label class="field-label">Liczba gier</label>
@@ -511,7 +511,7 @@
         <!-- Generated results -->
         <div class="settings-card" id="gen-results-section" style="display:none;margin-top:16px">
           <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:4px">
-            <div class="settings-card-title" style="margin-bottom:0">📝 Wygenerowane gry</div>
+            <div class="settings-card-title" style="margin-bottom:0">Wygenerowane gry</div>
             <div style="display:flex;gap:8px;align-items:center">
               <span id="gen-results-counter" style="font-size:12px;color:var(--muted)"></span>
               <div class="progress-bar-bg" style="width:120px;margin:0"><div class="progress-bar-fill" id="gen-progress-fill"></div></div>
@@ -535,28 +535,28 @@
 
           <!-- Sidebar -->
           <div class="mail-sidebar">
-            <button class="btn gold sm" id="btnMailCompose" type="button" style="width:100%;margin-bottom:18px">✏ <span>Napisz wiadomość</span></button>
+            <button class="btn gold sm" id="btnMailCompose" type="button" style="width:100%;margin-bottom:18px"><span class="btn-ico" data-shared-icon="pencil" aria-hidden="true"></span><span>Napisz wiadomość</span></button>
             <nav class="mail-folders">
               <div class="mail-folder active" data-folder="inbox" id="mfInbox">
-                <span class="mail-folder-icon">📥</span>
+                <span class="mail-folder-icon" data-shared-icon="import" aria-hidden="true"></span>
                 <span class="mail-folder-name">Przychodzące</span>
                 <span class="mail-folder-badge" id="badgeInbox"></span>
               </div>
               <div class="mail-folder" data-folder="sent" id="mfSent">
-                <span class="mail-folder-icon">📤</span>
+                <span class="mail-folder-icon" data-shared-icon="export" aria-hidden="true"></span>
                 <span class="mail-folder-name">Wysłane</span>
               </div>
               <div class="mail-folder" data-folder="marketing" id="mfMarketing">
-                <span class="mail-folder-icon">📢</span>
+                <span class="mail-folder-icon" data-shared-icon="megaphone" aria-hidden="true"></span>
                 <span class="mail-folder-name">Marketing</span>
               </div>
               <div class="mail-folder" data-folder="reports" id="mfReports">
-                <span class="mail-folder-icon">🏷</span>
+                <span class="mail-folder-icon" data-shared-icon="tag" aria-hidden="true"></span>
                 <span class="mail-folder-name">Zgłoszenia</span>
                 <span class="mail-folder-badge" id="badgeReports"></span>
               </div>
               <div class="mail-folder" data-folder="trash" id="mfTrash">
-                <span class="mail-folder-icon">🗑</span>
+                <span class="mail-folder-icon"><svg viewBox="0 0 20 20" aria-hidden="true" focusable="false"><path fill-rule="evenodd" clip-rule="evenodd" d="M8.75 1A2.75 2.75 0 0 0 6 3.75v.443c-.795.077-1.584.176-2.365.298a.75.75 0 1 0 .23 1.482l.149-.022.841 10.518A2.75 2.75 0 0 0 7.596 19h4.807a2.75 2.75 0 0 0 2.742-2.53l.841-10.52.149.023a.75.75 0 0 0 .23-1.482A41.03 41.03 0 0 0 14 4.193V3.75A2.75 2.75 0 0 0 11.25 1h-2.5ZM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4ZM8.58 7.72a.75.75 0 0 0-1.5.06l.3 7.5a.75.75 0 1 0 1.5-.06l-.3-7.5Zm4.34.06a.75.75 0 1 0-1.5-.06l-.3 7.5a.75.75 0 1 0 1.5.06l.3-7.5Z"/></svg></span>
                 <span class="mail-folder-name">Kosz</span>
               </div>
             </nav>
@@ -574,7 +574,7 @@
           <!-- Conversation / Compose pane -->
           <div class="mail-conv" id="mailConv">
             <div class="mail-conv-placeholder" id="mailConvPlaceholder">
-              <div style="font-size:48px;margin-bottom:12px;opacity:.3">✉</div>
+              <div style="width:48px;height:48px;margin:0 auto 12px;opacity:.3" data-shared-icon="envelope" aria-hidden="true"></div>
               <div style="opacity:.4;font-size:13px">Wybierz wątek</div>
             </div>
           </div>
@@ -621,7 +621,7 @@
                 <tr>
                   <th>Tytuł</th>
                   <th>Język</th>
-                  <th>★</th>
+                  <th><span class="inline-icon" data-shared-icon="star" aria-label="Ocena"></span></th>
                   <th>Ocen</th>
                   <th>Dodań</th>
                   <th></th>
@@ -874,10 +874,10 @@
                   </button>
                   <div class="ui-select-menu" role="listbox"></div>
                 </div>
-                <a id="mcVisitUrlBtn" href="#" target="_blank" rel="noopener" class="btn sm" style="display:none">🌐 Odwiedź</a>
-                <button class="btn sm" id="mcCopyBtn" type="button" style="display:none">📋 Kopiuj</button>
-                <button class="btn sm" id="mcMarkUsedBtn" type="button">✓ Użyte</button>
-                <button class="btn sm danger" id="mcDeleteBtn" type="button">🗑 Usuń</button>
+                <a id="mcVisitUrlBtn" href="#" target="_blank" rel="noopener" class="btn sm" style="display:none"><span class="btn-ico" data-shared-icon="globe" aria-hidden="true"></span>Odwiedź</a>
+                <button class="btn sm" id="mcCopyBtn" type="button" style="display:none"><span class="btn-ico" data-shared-icon="clipboard" aria-hidden="true"></span>Kopiuj</button>
+                <button class="btn sm" id="mcMarkUsedBtn" type="button"><span class="btn-ico" data-shared-icon="check" aria-hidden="true"></span>Użyte</button>
+                <button class="btn sm danger" id="mcDeleteBtn" type="button"><svg class="btn-ico" viewBox="0 0 20 20" aria-hidden="true"><path fill-rule="evenodd" clip-rule="evenodd" d="M8.75 1A2.75 2.75 0 0 0 6 3.75v.443c-.795.077-1.584.176-2.365.298a.75.75 0 1 0 .23 1.482l.149-.022.841 10.518A2.75 2.75 0 0 0 7.596 19h4.807a2.75 2.75 0 0 0 2.742-2.53l.841-10.52.149.023a.75.75 0 0 0 .23-1.482A41.03 41.03 0 0 0 14 4.193V3.75A2.75 2.75 0 0 0 11.25 1h-2.5ZM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4ZM8.58 7.72a.75.75 0 0 0-1.5.06l.3 7.5a.75.75 0 1 0 1.5-.06l-.3-7.5Zm4.34.06a.75.75 0 1 0-1.5-.06l-.3 7.5a.75.75 0 1 0 1.5.06l.3-7.5Z"/></svg> Usuń</button>
                 <span id="mcSelectionInfo" style="font-size:12px;opacity:.5"></span>
               </div>
             </div>

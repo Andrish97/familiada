@@ -3,6 +3,8 @@ import { initI18n, setUiLang, t, applyTranslations } from "../../translation/tra
 import { sb } from "../core/supabase.js?v=v2026-09-21T22104";
 import { rt } from "../core/realtime.js?v=v2026-09-21T22104";
 import { startKeepAlive } from "../core/keep-alive.js?v=v2026-09-21T22104";
+
+import { FULLSCREEN_ICON, FULLSCREEN_EXIT_ICON } from "../core/icons.js?v=v2026-09-21T22104";
 startKeepAlive();
 
 const qs = new URLSearchParams(location.search);
@@ -61,7 +63,7 @@ function isIOSSafari() {
 function setFullscreenIcon() {
   if (!fsIco) return;
   const isReal = !!document.fullscreenElement;
-  fsIco.textContent = (isReal || pseudoFS) ? "⧉" : "▢";
+  fsIco.innerHTML = (isReal || pseudoFS) ? FULLSCREEN_EXIT_ICON : FULLSCREEN_ICON;
 }
 
 function setPseudoFS(on) {
@@ -300,7 +302,6 @@ async function persistColorsOnly() {
     console.warn("[buzzer] persist colors failed", e);
   }
 }
-
 
 /* ========= REALTIME ========= */
 let ch = null;

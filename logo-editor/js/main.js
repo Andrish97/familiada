@@ -15,6 +15,8 @@ import { v as cacheBust } from "../../js/core/cache-bust.js?v=v2026-09-21T22104"
 import { guardResourceLock, isResourceBusy, findBusyContext } from "../../js/core/resource-lock.js?v=v2026-09-21T22104";
 import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../js/core/modal-sheet.js?v=v2026-09-21T22104";
 
+import { TRASH_ICON } from "../../js/core/icons.js?v=v2026-09-21T22104";
+
 import { initTextEditor } from "./text.js?v=v2026-09-21T22104";
 import { initDrawEditor } from "./draw.js?v=v2026-09-21T22104";
 import { initImageEditor } from "./image.js?v=v2026-09-21T22104";
@@ -134,7 +136,6 @@ let selectedKey = null; // "default" albo uuid logo
 let defaultLogoRows = Array.from({ length: 10 }, () => " ".repeat(30));
 let suppressDirty = false;
 
-
 let editorMode = null; // TEXT | DRAW | IMAGE
 let editorDirty = false;
 
@@ -159,7 +160,6 @@ function logoBusyMessage(reason) {
   if (reason === "settings") return t("resourceLock.logoPoolBusySettings");
   return t("resourceLock.logoMessage");
 }
-
 
 /* =========================================================
    UI helpers
@@ -379,7 +379,6 @@ function shouldBlockNav(){
   return isEditing() && !!editorDirty;
 }
 
-
 function armNavGuard(){
   if (_navGuardArmed) return;
   _navGuardArmed = true;
@@ -444,7 +443,6 @@ function armHistoryTrap(){
     } catch {}
   });
 }
-
 
 /* =========================================================
    IMPORT / EXPORT (bez ID, bez usera)
@@ -633,7 +631,6 @@ async function importLogoFromFile(file){
 
   await createLogo(row);
 }
-
 
 /* =========================================================
    Fetch helpers
@@ -1369,7 +1366,6 @@ function renderList(){
     grid.appendChild(add);
   }
 
-
   // helper: wybierz
   function select(key){
     selectedKey = key;
@@ -1395,7 +1391,7 @@ function renderList(){
           <div class="logoMeta">${esc(meta || "")}</div>
         </div>
         <div class="logoActions">
-          <div class="logoX ${canDelete ? "" : "is-disabled"}" title="${canDelete ? t("logoEditor.list.delete") : t("logoEditor.list.deleteDisabled")}">✕</div>
+          <div class="logoX ${canDelete ? "" : "is-disabled"}" title="${canDelete ? t("logoEditor.list.delete") : t("logoEditor.list.deleteDisabled")}">${TRASH_ICON}</div>
         </div>
       </div>
       <div class="logoPrev"></div>
@@ -1523,7 +1519,6 @@ async function loadTinyMceFromSupabase(){
 
   return _tinymcePromise;
 }
-
 
 /* =========================================================
    EDYTORY (moduly)
@@ -1667,7 +1662,6 @@ function openEditor(mode, logo = null){
   }
 }
 
-
 async function closeEditor(force = false){
   if (!force && !(await confirmCloseIfDirty())) return;
 
@@ -1742,7 +1736,6 @@ async function handleCreate(){
           logoName.value = unique;
         }
       }
-
 
     const patch = {
       user_id: currentUser.id,
@@ -1989,7 +1982,6 @@ async function boot(){
        void alertModal({ text: t("logoEditor.errors.exportFailedDetailed", { error: e?.message || e }) });
      }
    });
-
 
    btnEdit?.addEventListener("click", async () => {
      if (!selectedKey) return;

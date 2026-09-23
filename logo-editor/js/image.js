@@ -554,7 +554,6 @@ export function initImageEditor(ctx) {
     grid.classList.toggle("is-col", mode === "col");
   }
 
-
   // =========================================================
   // Drag/resize crop
   // =========================================================
@@ -791,7 +790,6 @@ export function initImageEditor(ctx) {
   closePanels();
   syncLabels();
   
-
 
   // =========================================================
   // API

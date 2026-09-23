@@ -15,7 +15,6 @@ export function initTextEditor(ctx) {
 
   const TYPE_GLYPH = ctx.TYPE_GLYPH || "GLYPH_30x10";
 
-
   const CYRILLIC_UK = new Set([
     "А","Б","В","Г","Ґ","Д","Е","Є","Ж","З","И","І","Й","К","Л","М",
     "Н","О","П","Р","С","Т","У","Ф","Х","Ц","Ч","Ш","Щ","Ь","Ю","Я","Ї"
@@ -207,7 +206,6 @@ export function initTextEditor(ctx) {
     // opcjonalnie: zmiana etykiety przycisku
     updateCharsToggleLabel(open);
   });
-
 
   // API
   return {

@@ -1,6 +1,15 @@
 name: E2E Tests (Playwright)
 
 on:
+  push:
+    branches:
+      - "claude/analyze-x-buttons-ui-2paaqm"
+    paths:
+      - "js/core/icons.js"
+      - "tests/e2e/icon-system.spec.js"
+      - "tests/playwright.config.js"
+      - "tests/ICON_TESTING.md"
+      - ".github/workflows/e2e-tests.yml"
   workflow_dispatch:
     inputs:
       spec_filter:
@@ -71,8 +80,56 @@ env:
   TEST_WORKERS: "5"
 
 jobs:
+  icons-local:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: tests/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: tests
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+        working-directory: tests
+
+      - name: Start local static server
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/icon-http.log 2>&1 &
+          for attempt in {1..20}; do
+            curl --fail --silent http://127.0.0.1:4173/js/core/icons.js >/dev/null && exit 0
+            sleep 1
+          done
+          cat /tmp/icon-http.log
+          exit 1
+
+      - name: Test shared icon system and capture screenshots
+        env:
+          PLAYWRIGHT_BASE_URL: http://127.0.0.1:4173
+        run: npx playwright test e2e/icon-system.spec.js --workers=1
+        working-directory: tests
+
+      - name: Upload icon screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: icon-system-screenshots
+          path: tests/test-results/
+          if-no-files-found: warn
+          retention-days: 14
+
   e2e-grouped:
-    if: ${{ github.event.inputs.spec_filter == '' }}
+    if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.spec_filter == '' }}
     runs-on: ubuntu-latest
     timeout-minutes: 40
     strategy:
@@ -154,7 +211,7 @@ jobs:
           retention-days: 7
 
   e2e-custom-filter:
-    if: ${{ github.event.inputs.spec_filter != '' }}
+    if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.spec_filter != '' }}
     runs-on: ubuntu-latest
     timeout-minutes: 60
 

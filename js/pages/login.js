@@ -59,8 +59,6 @@ let captchaLoadPromise = null;
 const LOGIN_CAPTCHA_FAIL_THRESHOLD = 3;
 const loginFailuresByIdentity = new Map();
 
-
-
 function isSecurityRelevantLoginError(e) {
   const code = String(e?.errorCode || "").trim().toLowerCase();
   if (code === "invalid_login_credentials") return true;
@@ -85,7 +83,6 @@ function isCaptchaError(e) {
   if (msg.includes("captcha")) return true;
   return false;
 }
-
 
 function getLoginFailureKey(loginOrEmail) {
   return String(loginOrEmail || "").trim().toLowerCase();
@@ -335,7 +332,6 @@ async function getSilentCaptchaToken() {
   }
 }
 
-
 async function askCaptchaToken() {
   if (!captchaSiteKey) return null;
   if (_visibleCaptchaInFlight) return _visibleCaptchaInFlight;
@@ -427,7 +423,6 @@ async function askCaptchaToken() {
     _visibleCaptchaInFlight = null;
   }
 }
-
 
 let mode = "login"; // login | register
 
@@ -583,7 +578,6 @@ async function waitForUserSession({ maxMs = 2500, stepMs = 150 } = {}) {
   return null;
 }
 
-
 async function confirmDiscardGuestIfActive() {
   try {
     const current = await getUser();
@@ -684,7 +678,6 @@ async function handlePendingEmailResend(emailAddr, pendingIntent) {
   return true;
 }
 
-
 function openUsernameSetup() {
   if (loginCard) loginCard.hidden = true;
   if (setupCard) setupCard.hidden = false;
@@ -735,7 +728,6 @@ async function saveUsername() {
       .eq("id", userData.user.id)
       .select("id, username")
       .single();
-
 
     if (res.error) throw res.error;
 
@@ -1183,14 +1175,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (mode === "register") {
       pass2.focus();
     } else {
-      btnPrimary.click(); // 🔴 jedyne miejsce wywołania
+      btnPrimary.click(); // jedyne miejsce wywołania
     }
   });
-  
+
   pass2.addEventListener("keydown", (e) => {
     if (e.key !== "Enter") return;
     e.preventDefault();
-    btnPrimary.click(); // 🔴 jedyne miejsce wywołania
+    btnPrimary.click(); // jedyne miejsce wywołania
   });
 
 });

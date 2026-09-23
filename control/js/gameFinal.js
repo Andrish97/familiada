@@ -53,7 +53,6 @@ import { playSfx, getSfxDuration } from "../../js/core/sfx.js?v=v2026-09-21T2210
 import { t } from "../../translation/translation.js?v=v2026-09-21T22104";
 import { sessionEnd, sessionFinalStep } from "./sessionTracking.js?v=v2026-09-21T22104";
 
-
 function nInt(v, d = 0) {
   const x = Number.parseInt(String(v ?? ""), 10);
   return Number.isFinite(x) ? x : d;
@@ -235,7 +234,6 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
 
   // podpinamy raz na życie createFinal()
   document.addEventListener("keydown", handleFinalTimerHotkey, { capture: true });
-
 
   // ---------------- HELPERS: UI ----------------
   function setStep(step) {
@@ -817,7 +815,6 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     `;
     ui.setHtml("finalP1Inputs", html);
 
-
     document.querySelectorAll('#finalP1Inputs input[data-p="1"]').forEach((inp) => {
       inp.addEventListener("input", () => {
         const i = Number(inp.dataset.i);
@@ -1380,7 +1377,6 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
       hostUpdate();
     });
   }
-
 
   // ---------------- REVEAL ----------------
   async function revealAnswerOnly(roundNo, idx) {

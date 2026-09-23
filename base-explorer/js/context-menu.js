@@ -17,7 +17,6 @@ import { alertModal } from "../../js/core/modal.js?v=v2026-09-21T22104";
 import { t } from "../../translation/translation.js?v=v2026-09-21T22104";
 import { renderAll } from "./render.js?v=v2026-09-21T22104";
 
-
 const IS_MAC = navigator.platform.toLowerCase().includes("mac");
 function kbd(win, mac) {
   return IS_MAC ? mac : win;

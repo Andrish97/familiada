@@ -53,7 +53,6 @@ btnBack?.addEventListener("click", () => {
   location.href = withLangParam("../bases");
 });
 
-
 /* ================= Init ================= */
 (async function init() {
   const requireAuthP = requireAuth(withLangParam("../login")); // start równolegle z initI18n

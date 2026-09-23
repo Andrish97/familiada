@@ -74,7 +74,7 @@
   <div class="helpOverlay hidden" id="helpOverlay">
     <div class="helpModal" role="dialog" aria-modal="true">
       <div class="helpModalToolbar">
-        <button class="btn btn-sm" id="btnLegal" type="button" data-i18n="manual.legal">🔐 Polityka prywatności</button>
+        <button class="btn btn-sm" id="btnLegal" type="button"><span class="btn-ico" data-shared-icon="shield" aria-hidden="true"></span><span data-i18n="manual.legal">Polityka prywatności</span></button>
         <button class="btn sm" id="btnHelpClose" type="button" onclick="document.getElementById('helpOverlay').classList.add('hidden')">✕</button>
       </div>
       <iframe id="helpFrame" class="helpFrame" src="/manual?modal=control" title="Wskazówki"></iframe>
@@ -424,7 +424,7 @@
                     Kliknij raz przycisk, żeby przeglądarka zezwoliła na odtwarzanie dźwięków.
                   </div>
                   <div class="rowBtns">
-                    <button class="btn gold" id="btnUnlockAudio" type="button" data-i18n="control.audioUnlockBtn">🔊 Odblokuj</button>
+                    <button class="btn gold" id="btnUnlockAudio" type="button"><span class="btn-ico" id="audioUnlockIcon" aria-hidden="true"></span><span data-i18n="control.audioUnlockBtn">Odblokuj</span></button>
                     <div class="badge bad" id="audioStatus" data-i18n="control.audioBlocked">ZABLOKOWANE</div>
                   </div>
                 </div>

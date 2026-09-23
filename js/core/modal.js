@@ -46,7 +46,7 @@ function buildModal({
   const titleEl = document.createElement("div");
   titleEl.className = "mTitle";
   titleEl.id = titleId;
-  titleEl.textContent = title;
+  titleEl.innerHTML = title;
 
   const closeBtn = document.createElement("button");
   closeBtn.className = "btn sm";
@@ -221,7 +221,6 @@ export function alertModal({ title, text, okText, onReady, sheet = null } = {}) 
     sheet,
   });
 }
-
 
 export function promptModal({
   title,

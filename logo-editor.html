@@ -187,7 +187,7 @@
           <!-- IMAGE: toolbar tylko przyciski + folderek -->
           <div class="toolRow" id="toolsImage" style="display:none;">
             <input type="file" id="imgFile" accept="image/*" hidden />
-            <button class="btn sm" type="button" id="btnPickImage" data-i18n="logoEditor.image.pickImage">Wybierz obraz 📁</button>
+            <button class="btn sm" type="button" id="btnPickImage"><span class="btn-ico" data-shared-icon="folder" aria-hidden="true"></span><span data-i18n="logoEditor.image.pickImage">Wybierz obraz</span></button>
 
             <div class="toolSep"></div>
 
@@ -434,7 +434,7 @@
   <div class="helpOverlay hidden" id="helpOverlay">
     <div class="helpModal" role="dialog" aria-modal="true" aria-label="Wskazówki">
       <div class="helpModalToolbar">
-        <button class="btn btn-sm" id="btnLegal" type="button" data-i18n="manual.legal">🔐 Polityka prywatności</button>
+        <button class="btn btn-sm" id="btnLegal" type="button"><span class="btn-ico" data-shared-icon="shield" aria-hidden="true"></span><span data-i18n="manual.legal">Polityka prywatności</span></button>
         <button class="btn sm" id="btnHelpClose" type="button" aria-label="Zamknij" onclick="document.getElementById('helpOverlay').classList.add('hidden')">✕</button>
       </div>
       <iframe id="helpFrame" class="helpFrame" src="../manual?modal=control" title="Wskazówki"></iframe>

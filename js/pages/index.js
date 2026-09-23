@@ -321,17 +321,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   await loadRatingStats();
 
-  // Tab Title Animation (Accepted)
-  const originalTitle = document.title;
-  window.addEventListener("visibilitychange", () => {
-    if (document.hidden) {
-      const messages = ["Wracaj do gry! 🎮", "Suchar czeka... 🤣", "Pytanie: więcej niż jedno zwierzę? 🐑"];
-      document.title = messages[Math.floor(Math.random() * messages.length)];
-    } else {
-      document.title = originalTitle;
-    }
-  });
-
   // Persistent Teaser Logic (Accepted)
   const teaser = document.getElementById("quickPollTeaser");
   if (teaser) {
@@ -355,12 +344,4 @@ document.addEventListener("DOMContentLoaded", async () => {
       });
     }
   }
-
-  // Console Joke (Accepted)
-  const suchary = [
-    "Dlaczego matematyka jest smutna? Bo ma dużo problemów.",
-    "Co mówi ryba, gdy uderzy w ścianę? Dam!",
-    "Jak się nazywa ser, który nie jest twój? Nacho cheese.",
-    "Co robią policjanci w kinie? Śledzą akcję."
-  ];
 });

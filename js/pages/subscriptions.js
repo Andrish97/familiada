@@ -104,7 +104,6 @@ resendCooldownAlert: (untilTsMs) => cooldownTextFromUntil(untilTsMs),
   tokenMismatchCancel: () => t("pollsHubSubscriptions.modal.tokenMismatch.cancel"),
 };
 
-
 async function callSubscriptionAction(row, action) {
   if (!row?.sub_id) throw new Error("missing_subscription_id");
   const fn = action === "accept"
@@ -164,7 +163,6 @@ function cooldownTextFromUntil(untilTsMs) {
     ? "pollsHubSubscriptions.cooldownLeftDays"
     : "pollsHubSubscriptions.cooldownLeftHours", { n });
 }
-
 
 function mailLink(path, { withLang = false } = {}) {
   let u;
@@ -498,7 +496,6 @@ function syncToggles() {
   });
 }
 
-
 function isValidEmail(value) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value || "").trim());
 }
@@ -670,8 +667,6 @@ async function refreshData() {
   }
 }
 
-
-
 function buildManualUrl() {
   const url = new URL("manual", location.href);
   url.searchParams.set("ret", getCurrentRelativeUrl());
@@ -679,7 +674,6 @@ function buildManualUrl() {
   url.hash = "subscriptions";
   return url.toString();
 }
-
 
 function updateBackButtonLabel() {
   if (!btnBack) return;

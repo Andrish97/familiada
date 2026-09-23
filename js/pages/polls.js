@@ -104,7 +104,6 @@ function redoAction() {
 
 const backTarget = withLangParam(ret || "builder");
 
-
 function getRetPathnameLower() {
   if (!ret) return "";
   try {
@@ -313,7 +312,6 @@ function setLinkRowVisible(visible) {
   // mini-QR
   if (!v) clearQr();
 }
-
 
 function clearQr() {
   if (qrBox) qrBox.innerHTML = "";
@@ -541,7 +539,7 @@ async function validateCanClose(g) {
     return { ok: false, reason: t("polls.validation.closeOnlyOpen") };
   }
 
-  // 🔒 Dodatkowy warunek: nie zamykamy jeśli są jeszcze aktywne taski (niewypełnione)
+  // Dodatkowy warunek: nie zamykamy jeśli są jeszcze aktywne taski (niewypełnione)
   // Y = (done + pending/opened), X = done. Close dopiero gdy X=Y.
   try {
     const { data: u } = await sb().auth.getUser();

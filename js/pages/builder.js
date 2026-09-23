@@ -16,7 +16,6 @@ import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } fro
 const pwaApi = initPwa();
 // Jeśli beforeinstallprompt już odpalił zanim dodaliśmy listener w IIFE, sprawdzimy po zalogowaniu
 
-
 import { exportGame, importGame, downloadJson } from "./builder-import-export.js?v=v2026-09-21T22104";
 import { setTopbarNavPriority, setTopbarAccount } from '../core/topbar-controller.js?v=v2026-09-21T22104';
 
@@ -32,6 +31,8 @@ import {
 } from "../core/game-validate.js?v=v2026-09-21T22104";
 import { deleteGameSoundsFolder } from "../core/sfx-cloud.js?v=v2026-09-21T22104";
 import { isResourceBusy } from "../core/resource-lock.js?v=v2026-09-21T22104";
+
+import { TRASH_ICON } from "../core/icons.js?v=v2026-09-21T22104";
 
 const MSG = {
   exportBaseEmpty: () => t("builder.exportBase.empty"),
@@ -289,7 +290,6 @@ async function maybeShowIosWebappPrompt() {
 
   if (skipNextTime) localStorage.setItem(IOS_PROMPT_LS_KEY, "1");
 }
-
 
 function setProgUi(stepEl, countEl, barEl, msgEl, { step, i, n, msg, isError } = {}) {
   if (stepEl && step != null) stepEl.textContent = String(step);
@@ -850,7 +850,7 @@ function cardGame(g) {
   el.className = "card";
 
   el.innerHTML = `
-    <div class="x" title="${t("builder.card.delete")}">✕</div>
+    <div class="x" title="${t("builder.card.delete")}">${TRASH_ICON}</div>
     <div class="name"></div>
     <div class="meta"></div>
   `;
@@ -963,7 +963,7 @@ function cardMarket(g) {
   el.innerHTML = `
     <div class="name">${escapeHtml(g.title || "—")}</div>
     <div class="meta">${t("builder.market.typeLabel")} · ${(g.lang || "").toUpperCase()}</div>
-    <div class="x" title="${t("builder.market.removeFromLibrary")}">✕</div>
+    <div class="x" title="${t("builder.market.removeFromLibrary")}">${TRASH_ICON}</div>
   `;
   el.addEventListener("click", () => {
     selectedMarketId = g.market_game_id;
@@ -1022,7 +1022,6 @@ async function fetchActionState(gameId, revHint) {
     rev: String(data?.rev || "")
   };
 
-
   actionStateCache.set(gameId, { rev: res.rev, res });
   return res;
 }
@@ -1075,7 +1074,6 @@ async function updateActionState() {
     setButtonsState({ hasSel: true, canEdit: false, canPlay: false, canPoll: false, canExport: false });
   }
 }
-
 
 /* ================= Import/Export ================= */
 async function readFileAsText(file) {
@@ -1301,7 +1299,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
 
-
   let badgesRefreshInFlight = null;
   let badgesRefreshTimer = null;
   let lastBadgesRefreshAt = 0;
@@ -1351,7 +1348,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "visible") refreshBadges({ force: true });
   });
-
 
   // btnManual
   btnManual?.addEventListener("click", async () => {
@@ -1706,7 +1702,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     closeExportBaseModal();
   });
 
-
   // IMPORT (modal)
   btnImport?.addEventListener("click", openImportModal);
   btnCancelImport?.addEventListener("click", closeImportModal);
@@ -1836,7 +1831,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (importFile) importFile.disabled = false;
     }
   });
-
 
   // init — ?tab=market otwiera zakładkę Społeczność od razu
   const initTab = new URLSearchParams(location.search).get("tab");

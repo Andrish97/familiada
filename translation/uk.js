@@ -112,13 +112,11 @@ const uk = {
     logoPoolBusySettings: "Ти не можеш редагувати чи видалити логотип, поки змінюєш налаштування гри.",
   },
   guestInfo: {
-    title: "⚠️ Гостьовий акаунт",
+    title: "Гостьовий акаунт",
     subtitle: "Перед початком — кілька важливих зауважень:",
-    icon1: "🗂️",
     warning1: "Твої дані зберігаються <strong>лише в цьому браузері</strong>. Очищення історії (cookies) призведе до втрати доступу до акаунта.",
-    icon2: "⏳",
     warning2: "Акаунт буде <strong>видалено через 5 днів</strong> без активності.",
-    migrateTitle: "💾 Як зберегти свої дані?",
+    migrateTitle: "Як зберегти свої дані?",
     step1: "Натисни на своє ім'я користувача у верхньому правому куті",
     step2: "Обери <em>Увійти\u00A0/\u00A0Створити акаунт</em>",
     step3: "Введи email і пароль — тебе запитають про міграцію даних",
@@ -143,7 +141,7 @@ const uk = {
       title: "Безкоштовна Familiada Online. Справжнє телешоу на твоєму обладнанні.",
       lead: "Найкраща система для гри в Familiada: збери відповіді учасників через опитування, а потім проведи гру наживо. Ідеальна гра на весілля, день народження та корпоратив. Все в браузері.",
       ctaStart: "Почати створювати ігри та проводити гру наживо",
-      ctaMarketplace: "Переглянути Ігри Спільноти 🎮",
+      ctaMarketplace: "Переглянути Ігри Спільноти",
       note: "Гостьовий режим доступний — безкоштовна Familiada без реєстрації.",
     },
     about: {
@@ -525,7 +523,7 @@ const uk = {
     qrHostAlt: "QR Ведучий",
     qrBuzzerAlt: "QR Кнопки",
     sumLabel: "СУМА",
-    audioUnlockBtn: "🔊 Розблокувати звук",
+    audioUnlockBtn: "Розблокувати звук",
   },
   host: {
     title: "Familiada — ведучий",
@@ -869,7 +867,7 @@ const uk = {
   },
   manual: {
     title: "Familiada — підказки",
-    legal: "Політика конфіденційності 🔐",
+    legal: "Політика конфіденційності",
     backToGames: "← Мої ігри",
     backToBaseManager: "← Менеджер бази",
     backToLogos: "← Мої логотипи",
@@ -1185,7 +1183,7 @@ const uk = {
         подібну до класичного файлового менеджера на комп’ютері.
       </p>
   
-      <h3 class="m-h3">➕ Додавання нової бази</h3>
+      <h3 class="m-h3">Додавання нової бази</h3>
   
       <p class="m-p">
         У вигляді «Бази запитань» натисни плитку <span class="m-strong">Нова база</span>.
@@ -1196,7 +1194,7 @@ const uk = {
         Після збереження нова база з’явиться у списку, і ти одразу можеш її переглядати або поширювати.
       </p>
   
-      <h3 class="m-h3">🤝 Спільний доступ до бази</h3>
+      <h3 class="m-h3">Спільний доступ до бази</h3>
   
       <p class="m-p">
         Ти можеш поділитися будь-якою базою з іншими користувачами, вказавши їхню адресу e-mail.
@@ -1212,7 +1210,7 @@ const uk = {
         Керувати спільним доступом може лише власник бази.
       </p>
   
-      <h3 class="m-h3">📂 Відкриття менеджера бази</h3>
+      <h3 class="m-h3">Відкриття менеджера бази</h3>
   
       <p class="m-p">
         Щоб увійти до бази, вибери її у списку та натисни кнопку <span class="m-code">Переглянути</span>.
@@ -1253,7 +1251,7 @@ const uk = {
   
       <h2 class="m-h2">Теги та категорії</h2>
   
-      <h3 class="m-h3">🏷️ Теги</h3>
+      <h3 class="m-h3"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M20.59 13.41L11 3.83A2 2 0 0 0 9.59 3H4a2 2 0 0 0-2 2v5.59A2 2 0 0 0 2.83 12l9.59 9.59a2 2 0 0 0 2.83 0l5.34-5.34a2 2 0 0 0 0-2.83zM6.5 8A1.5 1.5 0 1 1 8 6.5 1.5 1.5 0 0 1 6.5 8z"/></svg> Теги</h3>
   
       <p class="m-p">
         Кожне запитання може мати будь-яку кількість тегів.
@@ -1300,7 +1298,7 @@ const uk = {
         (та у підпапках) мають однаковий тег.
       </p>
   
-      <h3 class="m-h3">📌 Категорії</h3>
+      <h3 class="m-h3">Категорії</h3>
   
       <p class="m-p">
         Категорії — це спеціальні системні мітки, що вказують,
@@ -1366,9 +1364,9 @@ const uk = {
         Після успішного створення гри тебе буде перенаправлено до перегляду <span class="m-strong">Мої ігри</span>.
       </p>
   
-      <h2 class="m-h2">⌨️ Гарячі клавіші — менеджер бази</h2>
+      <h2 class="m-h2">Гарячі клавіші — менеджер бази</h2>
   
-      <h3 class="m-h3">📁 Створення</h3>
+      <h3 class="m-h3"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M10 4l2 2h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h6zm2 7h-2v2H8v2h2v2h2v-2h2v-2h-2v-2z"/></svg> Створення</h3>
   
       <div class="m-table-wrap"><table class="m-table">
         <tbody><tr><th>Дія</th><th>Windows / Linux</th><th>macOS</th></tr>
@@ -1376,7 +1374,7 @@ const uk = {
         <tr><td>Нова папка</td><td>Ctrl + Shift + N</td><td>⌘ ⇧ N</td></tr>
       </tbody></table></div>
 
-      <h3 class="m-h3">✏️ Редагування</h3>
+      <h3 class="m-h3"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 17.25V21h3.75L19.81 7.94l-3.75-3.75L3 17.25zm2.92 2.83H5v-.92l10.06-10.06.92.92L5.92 20.08zM20.71 6.04a1 1 0 0 0 0-1.41l-1.34-1.34a1 1 0 0 0-1.41 0l-1.13 1.13 2.75 2.75 1.13-1.13z"/></svg> Редагування</h3>
 
       <div class="m-table-wrap"><table class="m-table">
         <tbody><tr><th>Дія</th><th>Windows / Linux</th><th>macOS</th></tr>
@@ -1385,7 +1383,7 @@ const uk = {
         <tr><td>Видалити</td><td>Delete</td><td>Fn + ⌫</td></tr>
       </tbody></table></div>
 
-      <h3 class="m-h3">📋 Буфер обміну</h3>
+      <h3 class="m-h3"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 2h13v2H6v11H4V2z"/><path fill-rule="evenodd" clip-rule="evenodd" d="M8 6h13v16H8V6zm2 2v12h9V8h-9z"/></svg> Буфер обміну</h3>
 
       <div class="m-table-wrap"><table class="m-table">
         <tbody><tr><th>Дія</th><th>Windows / Linux</th><th>macOS</th></tr>
@@ -1395,21 +1393,21 @@ const uk = {
         <tr><td>Дублювати</td><td>Ctrl + D</td><td>⌘ D</td></tr>
       </tbody></table></div>
 
-      <h3 class="m-h3">🎮 Гра</h3>
+      <h3 class="m-h3"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M8 5v14l11-7L8 5z"/></svg> Гра</h3>
 
       <div class="m-table-wrap"><table class="m-table">
         <tbody><tr><th>Дія</th><th>Windows / Linux</th><th>macOS</th></tr>
         <tr><td>Створити гру</td><td>Ctrl + G</td><td>⌘ G</td></tr>
       </tbody></table></div>
 
-      <h3 class="m-h3">🔄 Перегляд</h3>
+      <h3 class="m-h3"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-8 3.58-8 8s3.58 8 8 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg> Перегляд</h3>
 
       <div class="m-table-wrap"><table class="m-table">
         <tbody><tr><th>Дія</th><th>Windows / Linux</th><th>macOS</th></tr>
         <tr><td>Оновити перегляд</td><td>Ctrl + Alt + R</td><td>⌘ ⌥ R</td></tr>
       </tbody></table></div>
 
-      <h3 class="m-h3">📌 Навігація</h3>
+      <h3 class="m-h3">Навігація</h3>
 
       <div class="m-table-wrap"><table class="m-table">
         <tbody><tr><th>Дія</th><th>Windows / Linux</th><th>macOS</th></tr>
@@ -1437,7 +1435,7 @@ const uk = {
 
       <p class="m-p">
         До опитувань переходиш з верхньої панелі сторінки «Мої ігри»
-        кнопкою <span class="m-code">Опитування 📊</span>.
+        кнопкою <span class="m-code"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.15em" aria-hidden="true"><rect x="2" y="20" width="20" height="1.4" opacity="0.5"/><rect x="2" y="16" width="20" height="1" opacity="0.25"/><rect x="2" y="11" width="20" height="1" opacity="0.25"/><rect x="4" y="11" width="4" height="9" rx="1"/><rect x="10.5" y="15" width="4" height="5" rx="1"/><rect x="17" y="6" width="4" height="14" rx="1"/></svg> Опитування</span>.
       </p>
 
       <h3 class="m-h2">Сторінка опитувань</h3>
@@ -1452,7 +1450,7 @@ const uk = {
       </ul>
 
       <p class="m-p">
-        Золота крапка біля кнопки «Опитування 📊» показує кількість активних завдань.
+        Золота крапка біля кнопки «Опитування» показує кількість активних завдань.
       </p>
 
       <p class="m-p">
@@ -1656,7 +1654,7 @@ const uk = {
 
       <p class="m-p">
         Перехід — з верхньої панелі сторінки «Мої ігри»
-        кнопкою <span class="m-code">Підписки 📧</span>.
+        кнопкою <span class="m-code"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.15em" aria-hidden="true"><path d="M12 2a1.6 1.6 0 0 0-1.6 1.6v.6C7.7 4.9 6 7.2 6 10v5l-2 2v1h16v-1l-2-2v-5c0-2.8-1.7-5.1-4.4-5.8v-.6A1.6 1.6 0 0 0 12 2z"/><path d="M9.5 20a2.5 2.5 0 0 0 5 0h-5z"/></svg> Підписки</span>.
       </p>
 
       <h3 class="m-h2">Сторінка підписок</h3>
@@ -1667,7 +1665,7 @@ const uk = {
       </ul>
 
       <p class="m-p">
-        Золота крапка біля кнопки «Підписки 📧» показує кількість запрошень до прийняття.
+        Золота крапка біля кнопки «Підписки» показує кількість запрошень до прийняття.
       </p>
 
       <h3 class="m-h3">Мої підписники</h3>
@@ -2306,7 +2304,7 @@ const uk = {
         і перевірених модераторами. Ти можеш переглядати їх, додавати до своєї бібліотеки
         та запускати безпосередньо як розгавку — без необхідності створювати власні питання.
         До Ігор Спільноти переходиш з верхньої панелі сторінки «Мої ігри»
-        за допомогою кнопки <span class="m-code">Ігри Спільноти🎮</span>.
+        за допомогою кнопки <span class="m-code"><span data-shared-icon="gamepad" aria-hidden="true"></span> Ігри Спільноти</span>.
       </p>
 
       <h3 class="m-h2">Перегляд та бібліотека</h3>
@@ -2786,11 +2784,11 @@ const uk = {
   builder: {
     title: "Familiada — мої ігри",
     nav: {
-      pollsHubPolls: "Опитування 📊",
-      pollsHubSubs: "Підписки 📧",
-      bases: "Бази питань 🗃️",
+      pollsHubPolls: "Опитування",
+      pollsHubSubs: "Підписки",
+      bases: "Бази питань",
       logo: "Лого 🖥️",
-      marketplace: "Ігри Спільноти 🎮",
+      marketplace: "Ігри Спільноти",
       connectDevice: "Підключити пристрій 📱",
       account: "Обліковий запис",
     },
@@ -4050,7 +4048,7 @@ const uk = {
         sampleText: "Зразок",
         defaultText: "Текст",
         shortcutPrefix: "Скор.: ",
-        polygonDone: "✓ Закрити",
+        polygonDone: "Закрити",
         // Форми
         shapes: {
           line: "Лінія",
@@ -4062,10 +4060,10 @@ const uk = {
           pentagon: "П'ятикутник",
           hexagon: "Шестикутник",
           star5: "Зірка 5",
-          arrow1: "Стрілка →",
-          arrow2: "Стрілка ↔",
-          arrow1Fill: "Стрілка ➤",
-          arrow2Fill: "Стрілка ⇔",
+          arrow1: "Одностороння контурна стрілка",
+          arrow2: "Двостороння контурна стрілка",
+          arrow1Fill: "Одностороння заповнена стрілка",
+          arrow2Fill: "Двостороння заповнена стрілка",
           heart: "Серце",
           polygon: "Багатокутник",
         },
@@ -4084,7 +4082,7 @@ const uk = {
       },
     },
     image: {
-      pickImage: "Вибрати зображення 📁",
+      pickImage: "Вибрати зображення",
       brightness: "Яскравість",
       contrast: "Контраст",
       gamma: "Гамма",
@@ -4452,7 +4450,7 @@ const uk = {
     countdownTitle: "ТРИВАЄ ТЕХНІЧНА ПЕРЕРВА ⏳",
     countdownText:
       "Система тимчасово недоступна.\nПовернення відбудеться:",
-    countdownDone: "Повернення вже можливе. 🎉",
+    countdownDone: "Повернення вже можливе.",
     refresh: "Оновити",
     contact: "Контакт",
     statusLabel: "Статус:",
@@ -4475,7 +4473,7 @@ const uk = {
     btnBackBrowse: "← Перегляд",
     btnAddToLibrary: "Додати до моїх ігор",
     btnRemoveFromLibrary: "Видалити з моїх ігор",
-    addedBadge: "Додано ✅",
+    addedBadge: "Додано",
     withdrawnBadge: "Відкликано",
     producerBadge: "Familiada",
     langLabel: "Мова",
@@ -4565,7 +4563,7 @@ const uk = {
     scan: {
       title: "Відскануй QR-код пристрою",
       hint: "Наведи камеру на QR-код, що відображається на панелі керування.",
-      btn: "📷 Сканувати QR",
+      btn: "Сканувати QR",
       cameraError: "Немає доступу до камери.",
       noQr: "QR-код не знайдено на фото.",
       noApi: "Використай системну камеру для сканування QR-коду.",
@@ -4642,7 +4640,7 @@ const uk = {
     stepAudio: "Звук",
     audioUnlockTitle: "Розблокувати звук",
     audioUnlockHint: "Натисни кнопку, щоб дозволити браузеру відтворювати звуки.",
-    audioUnlockBtn: "🔊 Розблокувати",
+    audioUnlockBtn: "Розблокувати",
     audioBlocked: "ЗАБЛОКОВАНО",
     audioStatusOk: "РОЗБЛОКОВАНО",
     stepTeamNames: "Назви команд",
@@ -5059,7 +5057,7 @@ const uk = {
     back: "← Мої ігри",
     saveAll: "Зберегти все",
     resetAll: "Відновити типові",
-    play: "▶ Грати",
+    play: "Грати",
     resetAllConfirm: "Відновити типові налаштування? Незбережені зміни буде втрачено.",
     resetSection: "Відновити типові",
     resetSectionConfirm: "Відновити типові налаштування цього розділу?",

@@ -9,6 +9,8 @@ import { signOut } from './auth.js?v=v2026-09-21T22104';
 import { isGuestUser } from './guest-mode.js?v=v2026-09-21T22104';
 import { t, withLangParam } from '../../translation/translation.js?v=v2026-09-21T22104';
 
+import { HAMBURGER_ICON } from './icons.js?v=v2026-09-21T22104';
+
 // ── Narzędzie: pozycjonowanie fixed dropdown ──────────────────────────────────
 function repositionDropdown(anchorEl, dropdownEl) {
   if (!anchorEl || !dropdownEl) return;
@@ -507,7 +509,7 @@ function initTopbarController() {
     toggleBtn = document.createElement('button');
     toggleBtn.type = 'button';
     toggleBtn.className = 'btn topbar-menu-toggle';
-    toggleBtn.innerHTML = `<span class="topbar-menu-icon" aria-hidden="true">☰</span><span class="badge" aria-hidden="true"></span>`;
+    toggleBtn.innerHTML = `<span class="topbar-menu-icon" aria-hidden="true">${HAMBURGER_ICON}</span><span class="badge" aria-hidden="true"></span>`;
     toggleBadge = toggleBtn.querySelector('.badge');
     section3.append(toggleBtn);
 

@@ -17,6 +17,8 @@ import { createSubscription } from "../../js/core/game-state-subscribe.js?v=v202
 import { createButtonRenderer, STATE, deriveButtonState, isLockedRow } from "./render.js?v=v2026-09-21T22104";
 import { ringDoorbell } from "../../js/core/game-state-doorbell.js?v=v2026-09-21T22104";
 
+import { FULLSCREEN_ICON, FULLSCREEN_EXIT_ICON } from "../../js/core/icons.js?v=v2026-09-21T22104";
+
 // videoWakeLockFallback: patrz identyczny komentarz w host2/js/main.js —
 // Buzzer jest telefonem/tabletem kontestanta, dokładnie tym samym rodzajem
 // urządzenia, które przeglądarka usypia najchętniej.
@@ -63,7 +65,7 @@ function setupFullscreenButton() {
   const ico = document.getElementById("fsIco");
   let pseudoFS = false;
 
-  function syncIcon() { if (ico) ico.textContent = (document.fullscreenElement || pseudoFS) ? "⧉" : "▢"; }
+  function syncIcon() { if (ico) ico.innerHTML = (document.fullscreenElement || pseudoFS) ? FULLSCREEN_EXIT_ICON : FULLSCREEN_ICON; }
 
   function setPseudoFS(on) {
     pseudoFS = !!on;

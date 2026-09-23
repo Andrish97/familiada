@@ -104,6 +104,8 @@ import { createSoundReactor } from "./soundReactor.js?v=v2026-09-21T22104";
 import { createUI } from "./ui.js?v=v2026-09-21T22104";
 import { createShareDevice } from "./shareDevice.js?v=v2026-09-21T22104";
 
+import { SPEAKER_ON_ICON, SPEAKER_OFF_ICON } from "../../js/core/icons.js?v=v2026-09-21T22104";
+
 guardDesktopOnly();
 
 async function pickQuestionPool(state) {
@@ -952,7 +954,12 @@ async function main() {
   }
 
   const btnMute = document.getElementById("btnMute");
-  function syncMuteButton() { if (btnMute) btnMute.textContent = store.state.settings.soundMuted ? "🔇" : "🔊"; }
+  function syncMuteButton() {
+    if (!btnMute) return;
+    const muted = store.state.settings.soundMuted;
+    btnMute.innerHTML = muted ? SPEAKER_OFF_ICON : SPEAKER_ON_ICON;
+    btnMute.dataset.muted = String(muted);
+  }
   syncMuteButton();
   btnMute?.addEventListener("click", () => { handle("settings.toggleSoundMuted"); });
 

@@ -2,6 +2,8 @@
 import { initI18n, setUiLang, t } from "../../translation/translation.js?v=v2026-09-21T22104";
 import { sb } from "../core/supabase.js?v=v2026-09-21T22104";
 import { startKeepAlive } from "../core/keep-alive.js?v=v2026-09-21T22104";
+
+import { FULLSCREEN_ICON, FULLSCREEN_EXIT_ICON } from "../core/icons.js?v=v2026-09-21T22104";
 startKeepAlive();
 
 /* ========= PARAMS ========= */
@@ -120,7 +122,7 @@ function setPseudoFS(on) {
 function setFullscreenIcon() {
   if (!fsIco) return;
   const isReal = !!document.fullscreenElement;
-  fsIco.textContent = isReal || pseudoFS ? "⧉" : "▢";
+  fsIco.innerHTML = isReal || pseudoFS ? FULLSCREEN_EXIT_ICON : FULLSCREEN_ICON;
 }
 
 async function toggleFullscreen() {
@@ -166,7 +168,6 @@ function markIOS() {
   const isIOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
   document.documentElement.classList.toggle("ios", isIOS);
 }
-
 
 function updateOuterInsets() {
   const root = document.documentElement;

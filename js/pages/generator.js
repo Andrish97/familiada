@@ -3,6 +3,8 @@ import { sb as supabase } from "../core/supabase.js?v=v2026-09-21T22104";
 import { alertModal, confirmModal } from "../core/modal.js?v=v2026-09-21T22104";
 import { initUiSelect } from "../core/ui-select.js?v=v2026-09-21T22104";
 
+import { WARNING_ICON, GLOBE_ICON, CHECK_ICON, CANCEL_ICON } from "../core/icons.js?v=v2026-09-21T22104";
+
 let games = [];
 let genLangSelect = null;
 const uniquenessCache = new Map();
@@ -17,10 +19,16 @@ const $ = id => document.getElementById(id);
 const show = id => { const el = $(id); if(el) el.style.display = 'block'; };
 const hide = id => { const el = $(id); if(el) el.style.display = 'none'; };
 
-function showStatus(id, msg, type) {
+function showStatus(id, msg, type, icon) {
   const el = $(id);
   if(!el) return;
   el.textContent = msg;
+  if (icon) {
+    const ic = document.createElement("span");
+    ic.style.cssText = "display:inline-flex;vertical-align:-2px;margin-right:4px";
+    ic.innerHTML = icon.replace("<svg ", '<svg style="width:13px;height:13px;fill:currentColor" ');
+    el.prepend(ic);
+  }
   el.className = 'status-bar visible ' + (type || '');
 }
 
@@ -73,7 +81,7 @@ async function loadGames() {
     renderGameList();
     showStatus('gen-session-status', `Załadowano ${games.length} gier.`, 'ok');
   } catch (e) {
-    showStatus('gen-session-status', `✗ ${e.message}`, 'err');
+    showStatus('gen-session-status', e.message, 'err', CANCEL_ICON);
   } finally {
     setBusy(false);
   }
@@ -152,7 +160,7 @@ async function generateGames() {
       backoffMs = 400;
     } catch (e) {
       const msg = e?.message || String(e);
-      showStatus('gen-session-status', `⚠️ Błąd generowania (retry): ${msg}`, 'err');
+      showStatus('gen-session-status', `Błąd generowania (retry): ${msg}`, 'err', WARNING_ICON);
       await new Promise(r => setTimeout(r, backoffMs));
       backoffMs = Math.min(5000, Math.floor(backoffMs * 1.6));
     }
@@ -185,7 +193,7 @@ async function deleteGame(id) {
     selectedIds.delete(id);
     renderGameList();
   } catch (e) {
-    showStatus('gen-session-status', `✗ Błąd usuwania: ${e.message}`, 'err');
+    showStatus('gen-session-status', `Błąd usuwania: ${e.message}`, 'err', CANCEL_ICON);
   } finally {
     setBusy(false);
   }
@@ -839,13 +847,12 @@ async function saveGameEditor() {
         renderGameList();
       }
     }
-    showStatus('ge-status', '✓ Zapisano', 'ok');
+    showStatus('ge-status', 'Zapisano', 'ok', CHECK_ICON);
     setTimeout(closeGameEditor, 800);
   } catch (e) {
-    showStatus('ge-status', `✗ ${e.message}`, 'err');
+    showStatus('ge-status', e.message, 'err', CANCEL_ICON);
   }
 }
-
 
 function importGamesFromData(raw) {
   let items;
@@ -853,7 +860,7 @@ function importGamesFromData(raw) {
     const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
     items = Array.isArray(parsed) ? parsed : [parsed];
   } catch(e) {
-    showStatus('gen-import-status', '✗ Nieprawidłowy JSON', 'err');
+    showStatus('gen-import-status', 'Nieprawidłowy JSON', 'err', CANCEL_ICON);
     return 0;
   }
   let added = 0;
@@ -893,14 +900,13 @@ async function handleImport() {
     fileInput.value = '';
   }
   if (added === 0) {
-    showStatus('gen-import-status', '✗ Brak poprawnych gier', 'err');
+    showStatus('gen-import-status', 'Brak poprawnych gier', 'err', CANCEL_ICON);
     return;
   }
-  showStatus('gen-import-status', `✓ Zaimportowano ${added} gier`, 'ok');
+  showStatus('gen-import-status', `Zaimportowano ${added} gier`, 'ok', CHECK_ICON);
   show('gen-results-section');
   renderGeneratedList();
 }
-
 
 document.addEventListener('DOMContentLoaded', () => {
   $('gen-load-btn').addEventListener('click', loadGames);
@@ -964,7 +970,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const lastLang = localStorage.getItem('gen_last_lang') || 'all';
   genLangSelect = initUiSelect($('gen-manage-lang'), {
     options: [
-      { value: 'all', label: '🌐 Wszystkie' },
+      { value: 'all', label: 'Wszystkie', icon: GLOBE_ICON },
       { value: 'pl', label: '🇵🇱 Polski' },
       { value: 'uk', label: '🇺🇦 Українська' },
       { value: 'en', label: '🇬🇧 English' },

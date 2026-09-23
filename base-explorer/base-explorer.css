@@ -1197,7 +1197,7 @@ tr.row .tag-dot[data-tip]::before {
     transform: none
 }
 
-.tbIco {
+.tbBtn svg {
     width: 18px;
     height: 18px;
     fill: currentColor;
@@ -1488,7 +1488,15 @@ tr.row .tag-dot[data-tip]::before {
     background: rgba(255,120,120,.12);
     color: #fff;
     font-weight: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     cursor: pointer
+}
+.qDel svg {
+    width: 18px;
+    height: 18px;
+    fill: currentColor
 }
 
 .qDel:hover {

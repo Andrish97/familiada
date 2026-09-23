@@ -60,7 +60,7 @@
   <div class="helpOverlay hidden" id="helpOverlay">
     <div class="helpModal" role="dialog" aria-modal="true">
       <div class="helpModalToolbar">
-        <button class="btn btn-sm" id="btnLegal" type="button" data-i18n="manual.legal">🔐 Polityka prywatności</button>
+        <button class="btn btn-sm" id="btnLegal" type="button"><span class="btn-ico" data-shared-icon="shield" aria-hidden="true"></span><span data-i18n="manual.legal">Polityka prywatności</span></button>
         <button class="btn sm" id="btnHelpClose" type="button" onclick="document.getElementById('helpOverlay').classList.add('hidden')">✕</button>
       </div>
       <iframe id="helpFrame" class="helpFrame" src="" title="Wskazówki"></iframe>
@@ -79,12 +79,12 @@
 
   <div class="gs-layout">
     <div class="gs-actionbar" id="gsFooter">
-      <button class="btn gs-sidebar-toggle hidden" id="btnToggleSidebar" type="button">☰</button>
+      <button class="btn gs-sidebar-toggle hidden" id="btnToggleSidebar" type="button"><span class="btn-ico" style="margin-right:0" data-shared-icon="hamburger" aria-hidden="true"></span></button>
       <span class="gs-actionbar-msg hidden" id="gsFooterMsg" data-i18n="gameSettings.unsaved">Niezapisane zmiany</span>
       <div style="flex:1"></div>
       <button class="btn" id="btnResetAll" type="button" data-i18n="gameSettings.resetAll" data-skel-step>Przywróć domyślne</button>
       <button class="btn gold" id="btnSaveAll" type="button" data-i18n="gameSettings.saveAll" data-skel-step>Zapisz wszystko</button>
-      <button class="btn green hidden" id="btnPlay" type="button" data-i18n="gameSettings.play">▶ Graj</button>
+      <button class="btn green hidden" id="btnPlay" type="button">Graj</button>
       <button class="btn sm gs-close-btn hidden" id="btnGsModalClose" type="button">✕</button>
     </div>
 

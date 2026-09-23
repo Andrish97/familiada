@@ -16,7 +16,7 @@ module.exports = defineConfig({
   workers: 1,
   reporter: [["list"]],
   use: {
-    baseURL: "https://www.familiada.online",
+    baseURL: process.env.PLAYWRIGHT_BASE_URL || "https://www.familiada.online",
     screenshot: "only-on-failure",
     trace: "off", // celowo wyłączone — trace potrafi nagrać nagłówki żądań (patrz tests/README.md)
     // video to samo nagranie ekranu (bez sieci/nagłówków, w odróżnieniu od

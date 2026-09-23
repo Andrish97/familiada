@@ -215,3 +215,7 @@ main.account-wrap .bar > div {
   width: 20px;
   height: 20px;
 }
+
+.rating-stars .value{ display: inline-flex; align-items: center; }
+.rating-stars .value svg{ width: 15px; height: 15px; }
+.rating-stars .value svg:not([fill]) { fill: currentColor; }

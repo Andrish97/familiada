@@ -23,7 +23,6 @@ const qs = new URLSearchParams(location.search);
 const focusTaskToken = qs.get("t");
 let focusTaskHandled = false;
 
-
 function getRetParam() {
   return new URLSearchParams(location.search).get("ret");
 }
@@ -191,7 +190,6 @@ function pollTypeLabel(type) {
 function parseDate(value) {
   return value ? new Date(value).getTime() : 0;
 }
-
 
 function getPollStateOrder(poll) {
   if (poll.poll_state === "draft") return 0;
@@ -704,7 +702,7 @@ async function buildMailItemsForTasksFallback({ gameId, ownerId, selectedSubIds 
     if (r.token && r.id) taskIdByToken.set(String(r.token), r.id);
   }
   const subById = new Map(((await sb().rpc("polls_hub_list_my_subscribers")).data || []).map((x) => [String(x.sub_id), x]));
-    // 🔧 jeśli sub ma user_id, a nie ma emaila — dociągnij z profiles
+    // jeśli sub ma user_id, a nie ma emaila — dociągnij z profiles
   const needProfileIds = [];
   for (const subId of selectedSubIds || []) {
     const sub = subById.get(String(subId));
@@ -1076,8 +1074,6 @@ async function refreshData() {
   }
 }
 
-
-
 function buildManualUrl() {
   const url = new URL("manual", location.href);
   url.searchParams.set("ret", getCurrentRelativeUrl());
@@ -1085,7 +1081,6 @@ function buildManualUrl() {
   url.hash = "polls";
   return url.toString();
 }
-
 
 function updateBackButtonLabel() {
   if (!btnBack) return;

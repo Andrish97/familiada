@@ -19,15 +19,20 @@ const TEST_ACCOUNT_DOMAIN = "familiada.online";
 //    KAŻDĄ stronę przez sam Cloudflare, blokowana przez CSP aplikacji
 //    (script-src nie zawiera tej domeny) -- to CSP działa poprawnie, nie
 //    błąd aplikacji.
-//  - "🎭 STOP! 🎭": własne, celowe ostrzeżenie anty-self-XSS aplikacji
-//    (js/core/security-warning.js), drukowane na KAŻDYM załadowaniu strony
-//    dla prawdziwych użytkowników -- nigdy nie jest sygnałem błędu.
+//  - "OSTRZEŻENIE BEZPIECZEŃSTWA": własne, celowe ostrzeżenie anty-self-XSS
+//    aplikacji (js/core/security-warning.js), drukowane na KAŻDYM załadowaniu
+//    strony dla prawdziwych użytkowników -- nigdy nie jest sygnałem błędu.
 //  - /realtime/v1/api/broadcast: ringDoorbell() (js/core/game-state-
 //    doorbell.js) jest CELOWO fire-and-forget (.catch(()=>{})) -- przy
 //    zamknięciu kontekstu/nawigacji w trakcie testu taki w locie request
 //    dostaje net::ERR_ABORTED, co jest oczekiwane, nie błędem.
 function isKnownNoiseText(text) {
-  return text.includes("static.cloudflareinsights.com") || text.startsWith("🎭 STOP!");
+  return (
+    text.includes("static.cloudflareinsights.com") ||
+    text.startsWith("OSTRZEŻENIE BEZPIECZEŃSTWA") ||
+    text.startsWith("SECURITY WARNING") ||
+    text.startsWith("ПОПЕРЕДЖЕННЯ ПРО БЕЗПЕКУ")
+  );
 }
 function isKnownNoiseUrl(url) {
   return url.includes("static.cloudflareinsights.com") || url.includes("/realtime/v1/api/broadcast");

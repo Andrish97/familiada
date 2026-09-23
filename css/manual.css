@@ -133,6 +133,14 @@ html.modal-mode .wrap {
     opacity: .95
 }
 
+.m-h3 svg {
+    width: 13px;
+    height: 13px;
+    fill: currentColor;
+    vertical-align: -2px;
+    margin-right: 2px;
+}
+
 .m-ol,.m-ul {
     margin: 0 0 14px 18px;
     line-height: 1.6;

@@ -36,7 +36,6 @@ export async function setUserEmailNotificationsFlag(userId, value) {
   if (error) throw error;
 }
 
-
 // =======================================================
 // iOS webapp prompt dismissed flag (global per user)
 // ios_webapp_prompt_dismissed boolean not null default false

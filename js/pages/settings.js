@@ -19,6 +19,8 @@ import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } fro
 import { sb } from "../core/supabase.js?v=v2026-09-21T22104";
 import { v as cacheBust } from "../core/cache-bust.js?v=v2026-09-21T22104";
 
+import { TRASH_ICON, STAR_ICON, STAR_EMPTY_ICON, SEARCH_ICON, SAVE_ICON, ENVELOPE_ICON, NOTE_ICON, PENCIL_ICON, EYE_ICON, MEDAL_ICON, MEGAPHONE_ICON, WARNING_ICON, CHECK_ICON, CANCEL_ICON, FOLDER_ICON } from "../core/icons.js?v=v2026-09-21T22104";
+
 // settings.html nie ma naturalnego przycisku wstecz na mobile (panel admina
 // bez nawigacji "do tyłu") -- btnBackSheet istnieje wyłącznie na potrzeby
 // trybu sheet, zastępuje brand w topbarze gdy modal jest otwarty (patrz
@@ -291,9 +293,15 @@ function moveLangSwitcher(locked) {
   }
 }
 
-function showToast(message, kind = "success") {
+function showToast(message, kind = "success", icon = "") {
   if (!els.toast) return;
   els.toast.textContent = message;
+  if (icon) {
+    const iconEl = document.createElement("span");
+    iconEl.className = "toast-icon";
+    iconEl.innerHTML = icon;
+    els.toast.prepend(iconEl);
+  }
   els.toast.classList.remove("success", "error", "show");
   els.toast.classList.add(kind);
   void els.toast.offsetWidth;
@@ -1299,7 +1307,7 @@ async function loadRatings({ silent = false } = {}) {
     if (statsError) throw statsError;
     const stats = Array.isArray(statsData) ? statsData[0] : statsData;
     if (els.ratingsGlobalStats && stats) {
-      els.ratingsGlobalStats.innerHTML = `Średnia: ${stats.avg_stars}/5 ⭐ | Łącznie: ${stats.total_count}`;
+      els.ratingsGlobalStats.innerHTML = `Średnia: ${stats.avg_stars}/5 <span class="inline-icon">${STAR_ICON}</span> | Łącznie: ${stats.total_count}`;
     }
 
     // Load detailed ratings
@@ -1317,7 +1325,7 @@ async function loadRatings({ silent = false } = {}) {
       els.ratingsTableBody.innerHTML = rows.map(r => {
         const date = new Date(r.created_at).toLocaleString();
         const user = r.username || r.email || "Nieznany";
-        const stars = "★".repeat(r.stars) + "☆".repeat(5 - r.stars);
+        const stars = STAR_ICON.repeat(r.stars) + STAR_EMPTY_ICON.repeat(5 - r.stars);
         return `
           <tr>
             <td style="font-size:11px;opacity:.7">${date}</td>
@@ -2259,13 +2267,13 @@ async function loadMarketplace({ silent = false } = {}) {
     }
 
     const authorLabel = g.origin === "producer"
-      ? "♟ Producent"
-      : (g.author_username || "—");
+      ? `<span style="display:inline-flex;align-items:center;gap:4px"><span style="width:12px;height:12px;display:inline-block">${MEDAL_ICON}</span>Producent</span>`
+      : escSetting(g.author_username || "—");
 
     tr.innerHTML = `
       <td>${escSetting(g.title)}${note}</td>
       <td>${escSetting(g.lang.toUpperCase())}</td>
-      <td>${escSetting(authorLabel)}</td>
+      <td>${authorLabel}</td>
       <td>${date}</td>
       <td class="market-actions">${actions}</td>`;
     tbody.appendChild(tr);
@@ -2346,7 +2354,7 @@ async function approveMarketGame(id) {
     });
     const json = await res.json();
     if (!json.ok) throw new Error(json.error || "approve_failed");
-    showToast("Zatwierdzono ✓");
+    showToast("Zatwierdzono", "success", CHECK_ICON);
     closeMarketPreview();
     await loadMarketplace({ silent: true });
   } catch (err) {
@@ -2434,7 +2442,6 @@ async function adminHardDelete(id) {
   }
 }
 
-
 async function loadProducerRatings() {
   const tbody = document.getElementById("producerRatingsBody");
   const info  = document.getElementById("producerRatingsInfo");
@@ -2487,7 +2494,7 @@ async function openRatersModal(gameId, title) {
     </tr></thead><tbody>${rows.map(r =>
       `<tr>
         <td>${escSetting(r.username || "?")}</td>
-        <td>${"★".repeat(r.stars)}${"☆".repeat(5 - r.stars)} (${r.stars})</td>
+        <td>${STAR_ICON.repeat(r.stars)}${STAR_EMPTY_ICON.repeat(5 - r.stars)} (${r.stars})</td>
         <td>${new Date(r.rated_at).toLocaleString()}</td>
       </tr>`
     ).join("")}</tbody></table>`;
@@ -2716,7 +2723,7 @@ function renderMailList(rows) {
       const dateStr = new Date(r.created_at).toLocaleDateString("pl-PL", { day:"2-digit", month:"2-digit" });
       const fromTo = isInbound
         ? `↙ ${escSetting(r.from_email || "—")}`
-        : `📢 ${escSetting(r.to_email || "Kampania")}`;
+        : `${MEGAPHONE_ICON} ${escSetting(r.to_email || "Kampania")}`;
 
       // Marketing badge for ALL marketing emails (already filtered by is_marketing flag)
       const marketingBadge = isMarketingEmail(r)
@@ -2747,7 +2754,7 @@ function renderMailList(rows) {
     item.className = "mail-thread-item" + (!r.report_id && isInbound && !r.is_read ? " unread" : "") + (r.id === msgActiveId ? " active" : "");
     item.dataset.msgId = r.id;
     const dateStr = new Date(r.created_at).toLocaleDateString("pl-PL", { day:"2-digit", month:"2-digit" });
-    const sourceBadge = { email: "📧", form: "📝", compose: "✏" }[r.source] || "";
+    const sourceBadge = { email: ENVELOPE_ICON, form: NOTE_ICON, compose: PENCIL_ICON }[r.source] || "";
     const from = isInbound ? (r.from_email || "—") : (r.to_email || "—");
 
     // Ticket number badge for messages with tickets - displayed prominently
@@ -3380,8 +3387,8 @@ function renderReportThread(report, messages, attsByMsg = {}) {
     const metaEl = document.createElement("div");
     metaEl.className = "mail-msg-meta";
     const from = isOut ? `↗ ${msg.to_email || "—"}` : `↙ ${msg.from_email || "—"}`;
-    const sourceBadge = { email: "📧", form: "📝", compose: "✏" }[msg.source] || "";
-    metaEl.innerHTML = `<span>${escSetting(from)} · ${new Date(msg.created_at).toLocaleString("pl-PL")} ${escSetting(sourceBadge)}</span>`;
+    const sourceBadge = { email: ENVELOPE_ICON, form: NOTE_ICON, compose: PENCIL_ICON }[msg.source] || "";
+    metaEl.innerHTML = `<span>${escSetting(from)} · ${new Date(msg.created_at).toLocaleString("pl-PL")} ${sourceBadge}</span>`;
     el.appendChild(metaEl);
 
     const bodyEl = document.createElement("div");
@@ -3533,7 +3540,7 @@ function renderReportThread(report, messages, attsByMsg = {}) {
   replyButtonSection.style.cssText = "padding:20px;text-align:center;border-top:1px solid rgba(255,255,255,.1);margin-top:20px";
   replyButtonSection.innerHTML = `
     <button class="btn gold" id="btnReportReply" type="button" style="padding:10px 24px;font-size:13px">
-      ✏️ Odpowiedz
+      ${PENCIL_ICON} Odpowiedz
     </button>
   `;
   conv.appendChild(replyButtonSection);
@@ -3742,7 +3749,7 @@ async function trashMessage(messageId) {
     showToast("Do kosza", "success");
     await loadMailFolder({ silent: true });
     const conv = document.getElementById("mailConv");
-    if (conv) conv.innerHTML = `<div class="mail-conv-placeholder"><div style="font-size:48px;margin-bottom:12px;opacity:.3">✉</div><div style="opacity:.4;font-size:13px">Wybierz wątek</div></div>`;
+    if (conv) conv.innerHTML = `<div class="mail-conv-placeholder"><div style="width:48px;height:48px;margin:0 auto 12px;opacity:.3">${ENVELOPE_ICON}</div><div style="opacity:.4;font-size:13px">Wybierz wątek</div></div>`;
     msgActiveId = null;
   } catch (err) {
     showToast(String(err?.message || err), "error");
@@ -3778,7 +3785,7 @@ async function deleteForever(messageId) {
     showToast("Usuń na zawsze", "success");
     await loadMailFolder({ silent: true });
     const conv = document.getElementById("mailConv");
-    if (conv) conv.innerHTML = `<div class="mail-conv-placeholder"><div style="font-size:48px;margin-bottom:12px;opacity:.3">✉</div><div style="opacity:.4;font-size:13px">Wybierz wątek</div></div>`;
+    if (conv) conv.innerHTML = `<div class="mail-conv-placeholder"><div style="width:48px;height:48px;margin:0 auto 12px;opacity:.3">${ENVELOPE_ICON}</div><div style="opacity:.4;font-size:13px">Wybierz wątek</div></div>`;
     msgActiveId = null;
   } catch (err) {
     showToast(String(err?.message || err), "error");
@@ -3934,7 +3941,7 @@ function showCompose(defaults = {}) {
           <input type="hidden" id="composeToEmail" value="${escSetting(defaults.to || "")}">
 
           <div style="display:flex;justify-content:flex-end;gap:8px;align-items:center;padding-top:12px;margin-top:12px;border-top:1px solid rgba(255,255,255,.1)">
-            <button class="btn sm" id="btnComposePreview" type="button">👁 Podgląd</button>
+            <button class="btn sm" id="btnComposePreview" type="button">${EYE_ICON} Podgląd</button>
             <span class="field-hint" id="composeSendStatus"></span>
             <button class="btn sm gold" id="btnComposeSend" type="button">Wyślij</button>
           </div>
@@ -4128,9 +4135,12 @@ function showCompose(defaults = {}) {
       removeBtn.style.border = "none";
       removeBtn.style.cursor = "pointer";
       removeBtn.style.color = "rgba(255,255,255,0.5)";
-      removeBtn.style.fontWeight = "900";
-      removeBtn.style.fontSize = "14px";
-      removeBtn.textContent = "✕";
+      removeBtn.style.display = "inline-flex";
+      removeBtn.style.alignItems = "center";
+      removeBtn.innerHTML = TRASH_ICON;
+      removeBtn.querySelector("svg").style.width = "13px";
+      removeBtn.querySelector("svg").style.height = "13px";
+      removeBtn.querySelector("svg").style.fill = "currentColor";
       removeBtn.addEventListener("mouseenter", () => removeBtn.style.color = "#fff");
       removeBtn.addEventListener("mouseleave", () => removeBtn.style.color = "rgba(255,255,255,0.5)");
       removeBtn.addEventListener("click", () => {
@@ -4294,7 +4304,7 @@ function closeCompose() {
   } else {
     const conv = document.getElementById("mailConv");
     if (!conv) return;
-    conv.innerHTML = `<div class="mail-conv-placeholder"><div style="font-size:48px;margin-bottom:12px;opacity:.3">✉</div><div style="opacity:.4;font-size:13px">Wybierz wątek</div></div>`;
+    conv.innerHTML = `<div class="mail-conv-placeholder"><div style="width:48px;height:48px;margin:0 auto 12px;opacity:.3">${ENVELOPE_ICON}</div><div style="opacity:.4;font-size:13px">Wybierz wątek</div></div>`;
     msgActiveId = null;
 
     // On mobile: switch back to list view
@@ -4654,7 +4664,7 @@ function wireReportsEvents() {
       msgActiveId = null;
       const conv = document.getElementById("mailConv");
       if (conv) {
-        conv.innerHTML = `<div class="mail-conv-placeholder"><div style="font-size:48px;margin-bottom:12px;opacity:.3">✉</div><div style="opacity:.4;font-size:13px">Wybierz wątek</div></div>`;
+        conv.innerHTML = `<div class="mail-conv-placeholder"><div style="width:48px;height:48px;margin:0 auto 12px;opacity:.3">${ENVELOPE_ICON}</div><div style="opacity:.4;font-size:13px">Wybierz wątek</div></div>`;
       }
       await loadMailFolder();
     });
@@ -5336,21 +5346,43 @@ function fmtSessionWinner(r) {
   return "—";
 }
 
-const SESSION_STATUS_LABELS = {
-  started: "🔵 Rozpoczęta",
-  playing: "🔵 W trakcie",
-  final: "🟢 Zakończona",
-  won: "🟢 Zakończona",
-  lost: "🟢 Zakończona",
-  abandoned: "⚪ Porzucona",
-  error: "🔴 Błąd",
-  legacy: "📁 Archiwalna",
+const SESSION_STATUS_META = {
+  started: { color: "#60a5fa", label: "Rozpoczęta" },
+  playing: { color: "#60a5fa", label: "W trakcie" },
+  final: { color: "#4ade80", label: "Zakończona" },
+  won: { color: "#4ade80", label: "Zakończona" },
+  lost: { color: "#4ade80", label: "Zakończona" },
+  abandoned: { color: "#cbd5e1", label: "Porzucona" },
+  error: { color: "#f87171", label: "Błąd" },
 };
 
+function statusDotEl(color, text) {
+  const wrap = document.createElement("span");
+  wrap.style.cssText = "display:inline-flex;align-items:center;gap:6px";
+  const dot = document.createElement("span");
+  dot.style.cssText = `display:inline-block;width:8px;height:8px;border-radius:50%;background:${color};flex-shrink:0`;
+  wrap.append(dot, document.createTextNode(text));
+  return wrap;
+}
+
 function fmtSessionStatus(r) {
-  const label = SESSION_STATUS_LABELS[r.effective_status] || r.effective_status || "—";
+  const meta = SESSION_STATUS_META[r.effective_status];
+  if (!meta) {
+    if (r.effective_status !== "legacy") return r.effective_status || "—";
+    const archived = document.createElement("span");
+    archived.className = "status-with-icon";
+    archived.innerHTML = `${FOLDER_ICON}<span>Archiwalna</span>`;
+    return archived;
+  }
   const errCount = Number(r.error_count) || 0;
-  return errCount > 0 ? `${label} ⚠️ ${errCount}` : label;
+  const dotEl = statusDotEl(meta.color, meta.label);
+  if (errCount > 0) {
+    const warn = document.createElement("span");
+    warn.style.cssText = "display:inline-flex;align-items:center;gap:2px;color:#f87171;margin-left:4px";
+    warn.innerHTML = `${WARNING_ICON.replace("<svg ", '<svg style="width:12px;height:12px;fill:currentColor" ')}${errCount}`;
+    dotEl.appendChild(warn);
+  }
+  return dotEl;
 }
 
 const FINAL_STEP_LABELS = {
@@ -6277,7 +6309,6 @@ function wireEvents() {
   await initToolsSelect();
   wireEvents();
 
-
   // Initialize TinyMCE for marketing message area
   const initMktTinyMCE = () => {
     if (typeof tinymce === "undefined") { setTimeout(initMktTinyMCE, 200); return; }
@@ -6419,7 +6450,7 @@ function wireEvents() {
       const res = await fetch(`${MC_API}/api/search-runs?target_count=${count}`, {method:"POST", headers:{Authorization:`Bearer ${tk}`}});
       if (!res.ok) throw new Error("Failed");
       const data = await res.json();
-      actionBtn.textContent = "✅ Uruchomiono!";
+      actionBtn.innerHTML = `${CHECK_ICON}<span>Uruchomiono!</span>`;
       setTimeout(()=>{ mcState.status = "running"; mcUpdateButtons(); }, 1500);
       mcState.logRun = data.run_id;
       mcStartLogAutoRefresh();
@@ -6536,7 +6567,7 @@ function wireEvents() {
     }
     tbody.innerHTML = mcState.contacts.map((c, i) => {
       const usedClass = c.is_used ? 'mc-used' : '';
-      const usedText = c.is_used ? '✓' : '';
+      const usedText = c.is_used ? CHECK_ICON : '';
       const addedAt = c.added_at ? new Date(c.added_at).toLocaleString('pl-PL', {month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit'}) : '—';
       return `<tr class="${usedClass}" data-id="${c.id}">
         <td class="mc-cell mc-selectable" data-row="${i}" data-col="0">${mcEsc(c.title||'')}</td>
@@ -6773,13 +6804,13 @@ function wireEvents() {
     const btn = document.getElementById("mcMarkUsedBtn");
     if (!btn) return;
     const rows = new Set(mcState.selectedCells.map(c => c.row));
-    if (!rows.size) { btn.textContent = "✓ Użyte"; return; }
+    if (!rows.size) { btn.innerHTML = `${CHECK_ICON}<span>Użyte</span>`; return; }
     const selected = [...rows].map(i => mcState.contacts[i]).filter(Boolean);
-    if (!selected.length) { btn.textContent = "✓ Użyte"; return; }
+    if (!selected.length) { btn.innerHTML = `${CHECK_ICON}<span>Użyte</span>`; return; }
     const allUsed = selected.every(c => c.is_used);
     const allUnused = selected.every(c => !c.is_used);
-    if (allUsed) btn.textContent = "✗ Nieużyte";
-    else if (allUnused) btn.textContent = "✓ Użyte";
+    if (allUsed) btn.innerHTML = `${CANCEL_ICON}<span>Nieużyte</span>`;
+    else if (allUnused) btn.innerHTML = `${CHECK_ICON}<span>Użyte</span>`;
     else btn.textContent = "⇄ Użyte";
   }
 

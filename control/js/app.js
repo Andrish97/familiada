@@ -4,6 +4,8 @@ import { getUiLang, initI18n, t } from "../../translation/translation.js?v=v2026
 import { v as cacheBust } from "../../js/core/cache-bust.js?v=v2026-09-21T22104";
 import { guardDesktopOnly } from "../../js/core/device-guard.js?v=v2026-09-21T22104";
 
+import { PLAYBACK_PLAY_ICON, PLAYBACK_STOP_ICON } from "../../js/core/icons.js?v=v2026-09-21T22104";
+
 guardDesktopOnly();
 
 // ================== KOMUNIKATY ==================
@@ -496,7 +498,6 @@ async function main() {
     window.open(url, "_blank");
   }
 
-
   // === OSTRZEŻENIE PRZY WYJŚCIU ZE STRONY ===
   // Gdy nawigujemy "świadomie" (przycisk Powrót / wylogowanie),
   // nie chcemy drugiego alertu z beforeunload.
@@ -573,7 +574,6 @@ async function sendZeroStatesToDevices() {
   try { await devices.sendBuzzerCmd("OFF"); } catch {}
   try { await devices.sendBuzzerCmd("COLOR_RESET"); } catch {}
 }
-
 
   window.addEventListener("beforeunload", (e) => {
     if (!shouldWarnBeforeUnload()) return;
@@ -652,8 +652,6 @@ async function sendZeroStatesToDevices() {
   const _summaryVolumes = new Map(); // zapamiętuje głośności zmienione w podsumowaniu
   // true gdy game.settings zawierały zapisane ustawienia (nie null)
   let _hasCustomSettings = game.settings != null && typeof game.settings === "object";
-
-
 
   const display = createDisplay({ devices, store });
   const rounds = createRounds({ ui, store, devices, display, loadQuestions, loadAnswers });
@@ -792,7 +790,6 @@ async function sendZeroStatesToDevices() {
     // Aktualizuj przyciski "QR na wyświetlaczu" dla hosta i buzzera
     updateQrOnDisplayButtons();
 
-
     ui.setEnabled("btnDevicesNext", requiredOnline);
 
     // krok 3: „Gotowe — przejdź dalej" po odblokowaniu audio
@@ -862,8 +859,6 @@ async function sendZeroStatesToDevices() {
     canEnter: (card) => store.canEnterCard(card),
     onNavigate: (card) => store.setActiveCard(card),
   });
-
-
 
   const helpOverlay = document.getElementById("helpOverlay");
   const helpFrame = document.getElementById("helpFrame");
@@ -1007,7 +1002,6 @@ async function sendZeroStatesToDevices() {
       await navigator.clipboard.writeText(code);
     } catch {}
   });
-
 
   // Wysyła właściwą komendę QR lub BLACK na podstawie qrHostOnDisplay + qrBuzzerOnDisplay + opt-out
   async function syncQrDisplay() {
@@ -1308,8 +1302,8 @@ async function sendZeroStatesToDevices() {
     if (soundListEl) {
       const cats = getSfxCategories();
       const lang = getUiLang() || "pl";
-      const SVG_PLAY = `<svg width="16" height="16" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><polygon points="2,1 11,6 2,11" fill="currentColor"/></svg>`;
-      const SVG_STOP = `<svg width="16" height="16" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="1.5" y="1.5" width="9" height="9" fill="currentColor"/></svg>`;
+      const SVG_PLAY = PLAYBACK_PLAY_ICON;
+      const SVG_STOP = PLAYBACK_STOP_ICON;
 
       const existing = new Map(); // key → row element (jeśli już wyrenderowany)
       for (const row of soundListEl.children) {
@@ -1460,7 +1454,6 @@ async function sendZeroStatesToDevices() {
       devices?.sendDisplayCmd(ev.data.cmd).catch(() => {});
     }
   });
-
 
     // ROUNDS
   ui.on("game.startIntro", async () => {

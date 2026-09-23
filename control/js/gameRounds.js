@@ -2,7 +2,6 @@ import { playSfx, createSfxMixer, getSfxDuration } from "../../js/core/sfx.js?v=
 import { t } from "../../translation/translation.js?v=v2026-09-21T22104";
 import { sessionRoundCompleted, sessionEnd } from "./sessionTracking.js?v=v2026-09-21T22104";
 
-
 function nInt(v, d = 0) {
   const x = Number.parseInt(String(v ?? ""), 10);
   return Number.isFinite(x) ? x : d;
@@ -146,7 +145,6 @@ function hostUpdate() {
   }
 
   window.addEventListener("i18n:lang", refreshHostTranslations);
-
 
   function teamName(side) {
     const teams = store.state.teams || {};
@@ -1025,7 +1023,6 @@ function hostUpdate() {
     startTimer3Internal();
   }
 
-
   // === Odsłanianie odpowiedzi (pojedunek / gra / kradzież / reveal) ===
 
   async function revealAnswerByOrd(ord) {
@@ -1586,7 +1583,6 @@ function hostUpdate() {
       ui.setEnabled?.("btnShowGameEnd", true);
     }
   }
-
 
   // === BOOT / ODTWORZENIE STANU ===
 

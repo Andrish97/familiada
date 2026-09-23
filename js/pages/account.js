@@ -8,6 +8,7 @@ import { isGuestUser, hideForGuest } from "../core/guest-mode.js?v=v2026-09-21T2
 import "../core/contact-modal.js";
 import { deleteGameSoundsFolder } from "../core/sfx-cloud.js?v=v2026-09-21T22104";
 
+import { STAR_ICON, STAR_EMPTY_ICON } from "../core/icons.js?v=v2026-09-21T22104";
 
 const status = document.getElementById("status");
 const err = document.getElementById("err");
@@ -118,7 +119,6 @@ async function initEmailNotificationsUi(user) {
     }
   });
 }
-
 
 backToGames?.addEventListener("click", () => {
   const target = backToGames.dataset.baseHref || "builder";
@@ -401,7 +401,6 @@ async function handleMigrateCancel() {
   }
 }
 
-
 // --- email change pending state ---
 let currentEmail = "";
 let pendingEmail = "";
@@ -456,7 +455,6 @@ function setEmailPendingUi(nextPendingEmail) {
   // cooldown may additionally disable resend (cancel is always allowed)
   tickCooldowns();
 }
-
 
 async function fetchEmailChangeStatus() {
   try {
@@ -544,7 +542,7 @@ async function loadUserRating(userId) {
     if (error) throw error;
 
     if (data) {
-      const starsStr = "★".repeat(data.stars) + "☆".repeat(5 - data.stars);
+      const starsStr = STAR_ICON.repeat(data.stars) + STAR_EMPTY_ICON.repeat(5 - data.stars);
       container.innerHTML = `
         <div class="rating-info">
           <div class="rating-stars">

@@ -115,7 +115,6 @@ function createManagedChannel(topic) {
     return true;
   }
 
-
   function onBroadcast(event, handler) {
     ensureChannel();
     ch.on("broadcast", { event }, (msg) => handler(msg));

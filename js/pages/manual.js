@@ -6,6 +6,7 @@ import { confirmModal } from "../core/modal.js?v=v2026-09-21T22104";
 import { initI18n, setUiLang, t, withLangParam } from "../../translation/translation.js?v=v2026-09-21T22104";
 import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-09-21T22104";
 import "../core/contact-modal.js";
+import { hydrateSharedIcons } from "../core/icons.js?v=v2026-09-21T22104";
 
 function isModalMode() {
   const p = new URLSearchParams(location.search);
@@ -23,6 +24,7 @@ async function initManualI18n() {
   }
 
   await initI18n({ withSwitcher: !isModalMode() });
+  hydrateSharedIcons();
   document.documentElement.classList.remove('page-loading');
 }
 
@@ -117,7 +119,6 @@ function applyControlModalLayout() {
   }
 }
 
-
 function buildPrivacyUrl() {
   const url = new URL("privacy", location.href);
   url.searchParams.set("ret", decodeRet());
@@ -128,7 +129,6 @@ function buildPrivacyUrl() {
   url.searchParams.set("man", manualPath);
   return url.toString();
 }
-
 
 function resolveBackLabelKey() {
   const retPath = getRetPathnameLower();
@@ -161,7 +161,6 @@ function wireFallbackNav() {
 
 }
 
-
 async function wireAuthSoft() {
   const { requireAuth } = await import("../core/auth.js?v=v2026-09-21T22104");
   const user = await requireAuth("login");
@@ -172,7 +171,6 @@ async function wireAuthSoft() {
   byId("btnLegal")?.addEventListener("click", () => {
     location.href = buildPrivacyUrl();
   });
-
 
   byId("btnBack")?.addEventListener("click", () => {
     location.href = decodeRet();
@@ -191,7 +189,7 @@ wireAuthSoft().catch((err) => {
   console.warn("[manual] auth nieaktywny:", err);
 });
 
-
 window.addEventListener("i18n:lang", () => {
   updateBackButtonLabel();
+  hydrateSharedIcons();
 });

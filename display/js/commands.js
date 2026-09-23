@@ -210,7 +210,6 @@ export const createCommandHandler = (app) => {
       return;
     }
 
-
     // ------------------------------------------------------------------
     // 3) Wszystko inne → komendy SCENY, ale tylko w APP=GAME
     // ------------------------------------------------------------------
