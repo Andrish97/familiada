@@ -1,8 +1,8 @@
 // js/core/auth.js
-import { sb, buildSiteUrl } from "./supabase.js?v=v2026-09-21T22104";
-import { t, withLangParam } from "../../translation/translation.js?v=v2026-09-21T22104";
+import { sb, buildSiteUrl } from "./supabase.js?v=v2026-09-23T08210";
+import { t, withLangParam } from "../../translation/translation.js?v=v2026-09-23T08210";
 
-import { EYE_ICON, EYE_OFF_ICON } from "./icons.js?v=v2026-09-21T22104";
+import { EYE_ICON, EYE_OFF_ICON } from "./icons.js?v=v2026-09-23T08210";
 
 const GUEST_LOCAL_MARKER_KEY = "fam:guest:session_seen";
 const GUEST_DISCARD_RPC_MISSING_KEY = "fam:guest:discard_rpc_missing";

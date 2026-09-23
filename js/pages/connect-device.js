@@ -1,14 +1,14 @@
 // js/pages/connect-device.js
 
-import { sb } from "../core/supabase.js?v=v2026-09-21T22104";
-import { getUser } from "../core/auth.js?v=v2026-09-21T22104";
-import { isGuestUser } from "../core/guest-mode.js?v=v2026-09-21T22104";
-import { isMobileDevice } from "../core/pwa.js?v=v2026-09-21T22104";
-import { initI18n, t, getUiLang, withLangParam } from "../../translation/translation.js?v=v2026-09-21T22104";
-import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-09-21T22104";
-import { alertModal } from "../core/modal.js?v=v2026-09-21T22104";
+import { sb } from "../core/supabase.js?v=v2026-09-23T08210";
+import { getUser } from "../core/auth.js?v=v2026-09-23T08210";
+import { isGuestUser } from "../core/guest-mode.js?v=v2026-09-23T08210";
+import { isMobileDevice } from "../core/pwa.js?v=v2026-09-23T08210";
+import { initI18n, t, getUiLang, withLangParam } from "../../translation/translation.js?v=v2026-09-23T08210";
+import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-09-23T08210";
+import { alertModal } from "../core/modal.js?v=v2026-09-23T08210";
 
-import { HOST_ICON, BUZZER_ICON, POLLS_ICON } from "../core/icons.js?v=v2026-09-21T22104";
+import { HOST_ICON, BUZZER_ICON, POLLS_ICON } from "../core/icons.js?v=v2026-09-23T08210";
 import "../core/contact-modal.js";
 
 const btnBack             = document.getElementById("btnBack");

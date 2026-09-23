@@ -1,10 +1,10 @@
 // js/core/guest-info-modal.js
 // Jednorazowy modal informacyjny dla konta gościa.
 
-import { alertModal } from './modal.js?v=v2026-09-21T22104';
-import { t } from '../../translation/translation.js?v=v2026-09-21T22104';
+import { alertModal } from './modal.js?v=v2026-09-23T08210';
+import { t } from '../../translation/translation.js?v=v2026-09-23T08210';
 
-import { WARNING_ICON } from './icons.js?v=v2026-09-21T22104';
+import { WARNING_ICON } from './icons.js?v=v2026-09-23T08210';
 
 function escapeHtml(s) {
   return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');

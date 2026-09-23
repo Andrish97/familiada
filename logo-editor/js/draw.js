@@ -12,10 +12,10 @@
 // - kursor: overlay (PS-like): pędzel = kółko, gumka = kwadrat, figury = crosshair
 // - skróty: PS-like + (Space=Pan temp, Ctrl/Cmd=Select temp, Shift idealne kształty, strzałki przesuwają)
 
-import { confirmModal } from "../../js/core/modal.js?v=v2026-09-21T22104";
-import { initUiSelect } from "../../js/core/ui-select.js?v=v2026-09-21T22104";
-import { t } from "../../translation/translation.js?v=v2026-09-21T22104";
-import { v as cacheBust } from "../../js/core/cache-bust.js?v=v2026-09-21T22104";
+import { confirmModal } from "../../js/core/modal.js?v=v2026-09-23T08210";
+import { initUiSelect } from "../../js/core/ui-select.js?v=v2026-09-23T08210";
+import { t } from "../../translation/translation.js?v=v2026-09-23T08210";
+import { v as cacheBust } from "../../js/core/cache-bust.js?v=v2026-09-23T08210";
 
 import {
   SELECT_ICON, PAN_ICON, ZOOM_IN_ICON, ZOOM_OUT_ICON, TEXT_ICON,
@@ -28,7 +28,7 @@ import {
   SHAPE_ARROW_TWO_FILL_ICON, SHAPE_HEART_ICON, SHAPE_POLYGON_ICON,
   BACKGROUND_WHITE_ICON, BACKGROUND_BLACK_ICON,
   FOREGROUND_WHITE_ICON, FOREGROUND_BLACK_ICON,
-} from "../../js/core/icons.js?v=v2026-09-21T22104";
+} from "../../js/core/icons.js?v=v2026-09-23T08210";
 
 export function initDrawEditor(ctx) {
   const TYPE_PIX = "PIX_150x70";

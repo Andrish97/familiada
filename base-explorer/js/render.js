@@ -1,14 +1,14 @@
 // base-explorerjs/render.js
 // Renderowanie UI eksploratora na podstawie state (bez DB, bez akcji).
 
-import { VIEW, META, META_ORDER } from "./state.js?v=v2026-09-21T22104";
-import { t } from "../../translation/translation.js?v=v2026-09-21T22104";
+import { VIEW, META, META_ORDER } from "./state.js?v=v2026-09-23T08210";
+import { t } from "../../translation/translation.js?v=v2026-09-23T08210";
 
 import {
   TRASH_ICON, FOLDER_PLUS_ICON, FILE_PLUS_ICON, EDIT_ICON, TAG_ICON,
   PENCIL_ICON, COPY_ICON, CUT_ICON, PASTE_ICON, DUPLICATE_ICON, GAMEPAD_ICON,
   REFRESH_ICON, FOLDER_ICON, HOME_ICON, HAMBURGER_ICON,
-} from "../../js/core/icons.js?v=v2026-09-21T22104";
+} from "../../js/core/icons.js?v=v2026-09-23T08210";
 
 /* ================= DOM ================= */
 const elBaseName = document.getElementById("baseName");

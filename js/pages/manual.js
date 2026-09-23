@@ -2,11 +2,11 @@
 // Zakładki mają działać nawet jeśli auth się nie załaduje.
 // Najpierw UI, potem auth „miękko”.
 
-import { confirmModal } from "../core/modal.js?v=v2026-09-21T22104";
-import { initI18n, setUiLang, t, withLangParam } from "../../translation/translation.js?v=v2026-09-21T22104";
-import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-09-21T22104";
+import { confirmModal } from "../core/modal.js?v=v2026-09-23T08210";
+import { initI18n, setUiLang, t, withLangParam } from "../../translation/translation.js?v=v2026-09-23T08210";
+import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-09-23T08210";
 import "../core/contact-modal.js";
-import { hydrateSharedIcons } from "../core/icons.js?v=v2026-09-21T22104";
+import { hydrateSharedIcons } from "../core/icons.js?v=v2026-09-23T08210";
 
 function isModalMode() {
   const p = new URLSearchParams(location.search);
@@ -162,7 +162,7 @@ function wireFallbackNav() {
 }
 
 async function wireAuthSoft() {
-  const { requireAuth } = await import("../core/auth.js?v=v2026-09-21T22104");
+  const { requireAuth } = await import("../core/auth.js?v=v2026-09-23T08210");
   const user = await requireAuth("login");
 
   initTopbarAccountDropdown(user);

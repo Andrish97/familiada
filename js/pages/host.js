@@ -1,9 +1,9 @@
 // /familiada/js/pages/host.js
-import { initI18n, setUiLang, t } from "../../translation/translation.js?v=v2026-09-21T22104";
-import { sb } from "../core/supabase.js?v=v2026-09-21T22104";
-import { startKeepAlive } from "../core/keep-alive.js?v=v2026-09-21T22104";
+import { initI18n, setUiLang, t } from "../../translation/translation.js?v=v2026-09-23T08210";
+import { sb } from "../core/supabase.js?v=v2026-09-23T08210";
+import { startKeepAlive } from "../core/keep-alive.js?v=v2026-09-23T08210";
 
-import { FULLSCREEN_ICON, FULLSCREEN_EXIT_ICON } from "../core/icons.js?v=v2026-09-21T22104";
+import { FULLSCREEN_ICON, FULLSCREEN_EXIT_ICON } from "../core/icons.js?v=v2026-09-23T08210";
 startKeepAlive();
 
 /* ========= PARAMS ========= */

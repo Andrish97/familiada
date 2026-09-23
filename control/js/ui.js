@@ -1,9 +1,9 @@
 // /familiada/js/pages/controlui.js
 
-import { t } from "../../translation/translation.js?v=v2026-09-21T22104";
-import { initUiSelect } from "../../js/core/ui-select.js?v=v2026-09-21T22104";
+import { t } from "../../translation/translation.js?v=v2026-09-23T08210";
+import { initUiSelect } from "../../js/core/ui-select.js?v=v2026-09-23T08210";
 
-import { SPEAKER_ON_ICON, SPEAKER_OFF_ICON } from "../../js/core/icons.js?v=v2026-09-21T22104";
+import { SPEAKER_ON_ICON, SPEAKER_OFF_ICON } from "../../js/core/icons.js?v=v2026-09-23T08210";
 
 // ================== KOMUNIKATY (UI) ==================
 const UI_MSG = {
