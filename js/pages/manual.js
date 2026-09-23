@@ -6,6 +6,7 @@ import { confirmModal } from "../core/modal.js?v=v2026-09-21T08065";
 import { initI18n, setUiLang, t, withLangParam } from "../../translation/translation.js?v=v2026-09-21T08065";
 import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-09-21T08065";
 import "../core/contact-modal.js";
+import { hydrateSharedIcons } from "../core/icons.js?v=v2026-09-21T08065";
 
 function isModalMode() {
   const p = new URLSearchParams(location.search);
@@ -23,6 +24,7 @@ async function initManualI18n() {
   }
 
   await initI18n({ withSwitcher: !isModalMode() });
+  hydrateSharedIcons();
   document.documentElement.classList.remove('page-loading');
 }
 
@@ -194,4 +196,5 @@ wireAuthSoft().catch((err) => {
 
 window.addEventListener("i18n:lang", () => {
   updateBackButtonLabel();
+  hydrateSharedIcons();
 });

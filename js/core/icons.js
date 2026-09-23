@@ -60,6 +60,11 @@ export const PASTE_ICON = `<svg viewBox="0 0 24 24" aria-hidden="true" focusable
 
 export const PLAY_ICON = `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M8 5v14l11-7L8 5z"/></svg>`;
 
+// Sterowanie podglądem/odtwarzaniem audio. Celowo osobna para od ikon
+// głośnika: PLAYBACK_* steruje próbką, SPEAKER_* steruje wyciszeniem.
+export const PLAYBACK_PLAY_ICON = `<svg viewBox="0 0 12 12" aria-hidden="true" focusable="false"><polygon points="2,1 11,6 2,11"/></svg>`;
+export const PLAYBACK_STOP_ICON = `<svg viewBox="0 0 12 12" aria-hidden="true" focusable="false"><rect x="1.5" y="1.5" width="9" height="9"/></svg>`;
+
 // Poprzednia ścieżka mieszała dwa łuki o różnych promieniach/środkach
 // (A7.95.../a5 5.../A7 7...) dla strzałki i "kółka" -- nie składały się w
 // spójny pierścień, więc ikona wyglądała na wizualnie zepsutą. To
@@ -68,7 +73,7 @@ export const REFRESH_ICON = `<svg viewBox="0 0 24 24" aria-hidden="true" focusab
 
 export const FOLDER_ICON = `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M20 6h-8l-2-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2z"/></svg>`;
 
-export const HOME_ICON = `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>`;
+export const HOME_ICON = `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m3 10 9-7 9 7"/><path d="M5 9v11h14V9"/><path d="M9 20v-7h6v7"/></svg>`;
 
 // Zatwierdzone w przeglądzie emotek -> ikon (patrz tabela z komentarzami).
 export const CHECK_ICON = `<svg viewBox="0 0 20 20" aria-hidden="true" focusable="false"><path fill-rule="evenodd" clip-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z"/></svg>`;
@@ -129,7 +134,7 @@ export const HOST_ICON = `<svg viewBox="0 0 24 24" aria-hidden="true" focusable=
 // Typ urządzenia "buzzer" -- fizyczny przycisk kontestanta (kopuła na
 // podstawie), nie dzwonek (dzwonek jest już zajęty przez BELL_ICON =
 // powiadomienia/subskrypcje, inne znaczenie).
-export const BUZZER_ICON = `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 3a7 7 0 0 0-7 7v3h14v-3a7 7 0 0 0-7-7z"/><rect x="4" y="13" width="16" height="2.2" rx="1.1"/><rect x="10.5" y="16.2" width="3" height="5" rx="1"/></svg>`;
+export const BUZZER_ICON = `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 3.5a6.25 6.25 0 0 0-6.25 6.25v1.5h12.5v-1.5A6.25 6.25 0 0 0 12 3.5Z"/><rect x="4" y="15" width="16" height="3.2" rx=".7"/><rect x="8.25" y="12.1" width="1.8" height="2.9" rx=".7"/><rect x="13.95" y="12.1" width="1.8" height="2.9" rx=".7"/></svg>`;
 
 // Dzwonek powiadomień/subskrypcji (nawigacja "Subskrypcje").
 export const BELL_ICON = `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 2a1.6 1.6 0 0 0-1.6 1.6v.6C7.7 4.9 6 7.2 6 10v5l-2 2v1h16v-1l-2-2v-5c0-2.8-1.7-5.1-4.4-5.8v-.6A1.6 1.6 0 0 0 12 2z"/><path d="M9.5 20a2.5 2.5 0 0 0 5 0h-5z"/></svg>`;
@@ -148,10 +153,84 @@ export const EXPORT_ICON = `<svg viewBox="0 0 24 24" aria-hidden="true" focusabl
 // Kalendarz z cyfrą "17" -- przyciski otwierające date-picker (data domyślna
 // w tych dwóch miejscach to zawsze ten sam dzień, więc cyfra jest stała, nie
 // dynamiczna).
-export const CALENDAR_ICON = `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="3" y="4" width="18" height="17" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/><rect x="7" y="1.5" width="2" height="4" rx="1"/><rect x="15" y="1.5" width="2" height="4" rx="1"/><line x1="3" y1="9" x2="21" y2="9" stroke="currentColor" stroke-width="1.6"/><text x="12" y="18" text-anchor="middle" font-size="9" font-weight="700" font-family="sans-serif" fill="currentColor">17</text></svg>`;
+// Biała kartka z rzeczywistymi wycięciami: sprężynki, cienki podział
+// nagłówka i gruba, optycznie wycentrowana liczba 17 prześwitują tłem.
+export const CALENDAR_ICON = `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill-rule="evenodd" clip-rule="evenodd" d="M5 3h14a2 2 0 0 1 2 2v15a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Zm2 0h2v4H7V3Zm8 0h2v4h-2V3ZM3 8.15h18v.8H3v-.8Zm5.1 3.1h2.35V19H8.1v-5.35H6.85v-1.8l1.25-.6Zm4.05 0h5.55v1.85L14.55 19h-2.6l3.25-5.55h-3.05v-2.2Z"/></svg>`;
 
 // Szafka z dwiema szufladami -- nawigacja "Bazy pytań" (builder.html).
 export const DRAWER_ICON = `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="3" y="3" width="18" height="18" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.6"/><line x1="3" y1="12" x2="21" y2="12" stroke="currentColor" stroke-width="1.6"/><rect x="9" y="6.5" width="6" height="1.6" rx="0.8"/><rect x="9" y="15.5" width="6" height="1.6" rx="0.8"/></svg>`;
 
 // Kontroler do gier -- nawigacja "Gry Społeczności" / hero CTA.
-export const GAMEPAD_ICON = `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="2" y="8" width="20" height="9" rx="4" fill="none" stroke="currentColor" stroke-width="1.6"/><rect x="6.2" y="11.2" width="4" height="1.6" rx="0.6"/><rect x="7.4" y="10" width="1.6" height="4" rx="0.6"/><circle cx="16" cy="11" r="1.3"/><circle cx="18.5" cy="13.5" r="1.3"/></svg>`;
+export const GAMEPAD_ICON = `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6.7 5h10.6a4 4 0 0 1 3.9 3.1l1.4 6.1a3.9 3.9 0 0 1-6.6 3.6L14.2 16H9.8L8 17.8a3.9 3.9 0 0 1-6.6-3.6l1.4-6.1A4 4 0 0 1 6.7 5Z"/><path d="M7 9v5M4.5 11.5h5"/><circle cx="16.5" cy="10" r=".8" fill="currentColor" stroke="none"/><circle cx="19" cy="12.5" r=".8" fill="currentColor" stroke="none"/></svg>`;
+
+// Widoczność hasła/logowania — otwarte oko korzysta ze wspólnego kształtu,
+// zamknięte jest jego parą, zamiast prywatnych stałych w auth.js.
+export const EYE_OFF_ICON = `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>`;
+
+// Miniatury figur Logo Editora. Te same stałe zasilają selektor narzędzi
+// oraz mogą być użyte w instrukcji, dzięki czemu nie rozjeżdżają się wizualnie.
+export const SHAPE_LINE_ICON = `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="20" x2="20" y2="4"/></svg>`;
+export const SHAPE_RECT_ICON = `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="6" width="16" height="12" rx="1"/></svg>`;
+export const SHAPE_ROUND_RECT_ICON = `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="6" width="16" height="12" rx="4"/></svg>`;
+export const SHAPE_ELLIPSE_ICON = `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="12" rx="9" ry="6"/></svg>`;
+export const SHAPE_TRIANGLE_ICON = `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><polygon points="12,4 20,20 4,20"/></svg>`;
+export const SHAPE_DIAMOND_ICON = `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><polygon points="12,3 21,12 12,21 3,12"/></svg>`;
+export const SHAPE_PENTAGON_ICON = `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><polygon points="12,3 21,9 18,20 6,20 3,9"/></svg>`;
+export const SHAPE_HEXAGON_ICON = `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><polygon points="12,3 21,8 21,16 12,21 3,16 3,8"/></svg>`;
+export const SHAPE_STAR_ICON = `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><polygon points="12,2 15,9 22,9 16,14 18,22 12,17 6,22 8,14 2,9 9,9"/></svg>`;
+export const SHAPE_ARROW_ONE_ICON = `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 9.2Q3.5 8.4 4.3 8.4h8.9V5.8q0-1 0.8-.4l7 5.8q1 .8 0 1.6l-7 5.8q-.8.6-.8-.4v-2.6H4.3q-.8 0-.8-.8Z"/></svg>`;
+export const SHAPE_ARROW_TWO_ICON = `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2.2 12q0-.7.6-1.2l5.1-4.4q.9-.8.9.4v1.6h6.4V6.8q0-1.2.9-.4l5.1 4.4q.6.5.6 1.2t-.6 1.2l-5.1 4.4q-.9.8-.9-.4v-1.6H8.8v1.6q0 1.2-.9.4l-5.1-4.4q-.6-.5-.6-1.2Z"/></svg>`;
+export const SHAPE_ARROW_ONE_FILL_ICON = `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3.5 9.2Q3.5 8.4 4.3 8.4h8.9V5.8q0-1 0.8-.4l7 5.8q1 .8 0 1.6l-7 5.8q-.8.6-.8-.4v-2.6H4.3q-.8 0-.8-.8Z"/></svg>`;
+export const SHAPE_ARROW_TWO_FILL_ICON = `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M2.2 12q0-.7.6-1.2l5.1-4.4q.9-.8.9.4v1.6h6.4V6.8q0-1.2.9-.4l5.1 4.4q.6.5.6 1.2t-.6 1.2l-5.1 4.4q-.9.8-.9-.4v-1.6H8.8v1.6q0 1.2-.9.4l-5.1-4.4q-.6-.5-.6-1.2Z"/></svg>`;
+export const SHAPE_HEART_ICON = `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 21S4 15 4 8.5C4 5 7 3 12 7c5-4 8-2 8 1.5C20 15 12 21 12 21Z"/></svg>`;
+export const SHAPE_POLYGON_ICON = `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><polygon points="3,5 20,3 22,16 8,21"/></svg>`;
+export const BACKGROUND_WHITE_ICON = `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect class="fill" x="4" y="5" width="16" height="14" rx="2"/></svg>`;
+export const BACKGROUND_BLACK_ICON = `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="4.5" y="5.5" width="15" height="13" rx="2" stroke-width="1"/></svg>`;
+export const FOREGROUND_WHITE_ICON = `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle class="fill" cx="12" cy="12" r="7"/></svg>`;
+export const FOREGROUND_BLACK_ICON = `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="7" stroke-width="2"/></svg>`;
+
+export const SHARED_ICON_MAP = Object.freeze({
+  shield: SHIELD_ICON,
+  gamepad: GAMEPAD_ICON,
+  home: HOME_ICON,
+  download: DOWNLOAD_ICON,
+  fullscreen: FULLSCREEN_ICON,
+  folder: FOLDER_ICON,
+  hamburger: HAMBURGER_ICON,
+  speakerOn: SPEAKER_ON_ICON,
+  speakerOff: SPEAKER_OFF_ICON,
+  bell: BELL_ICON,
+  polls: POLLS_ICON,
+  calendar: CALENDAR_ICON,
+  drawer: DRAWER_ICON,
+  camera: CAMERA_ICON,
+  check: CHECK_ICON,
+  eye: EYE_ICON,
+  save: SAVE_ICON,
+  search: SEARCH_ICON,
+  pencil: PENCIL_ICON,
+  import: IMPORT_ICON,
+  export: EXPORT_ICON,
+  megaphone: MEGAPHONE_ICON,
+  tag: TAG_ICON,
+  trash: TRASH_ICON,
+  envelope: ENVELOPE_ICON,
+  star: STAR_ICON,
+  globe: GLOBE_ICON,
+  clipboard: CLIPBOARD_ICON,
+});
+
+export function hydrateSharedIcons(root = document) {
+  root.querySelectorAll?.("[data-shared-icon]").forEach((el) => {
+    const svg = SHARED_ICON_MAP[el.dataset.sharedIcon];
+    if (svg) el.innerHTML = svg;
+  });
+}
+
+if (typeof document !== "undefined") {
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", () => hydrateSharedIcons(), { once: true });
+  } else {
+    hydrateSharedIcons();
+  }
+}

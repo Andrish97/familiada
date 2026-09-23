@@ -20,6 +20,13 @@ import {
   SELECT_ICON, PAN_ICON, ZOOM_IN_ICON, ZOOM_OUT_ICON, TEXT_ICON,
   BRUSH_ICON, ERASER_ICON, SHAPES_ICON, UNDO_ICON, REDO_ICON,
   DUPLICATE_ICON, EYE_ICON, TRASH_ICON, CHECK_ICON,
+  SHAPE_LINE_ICON, SHAPE_RECT_ICON, SHAPE_ROUND_RECT_ICON,
+  SHAPE_ELLIPSE_ICON, SHAPE_TRIANGLE_ICON, SHAPE_DIAMOND_ICON,
+  SHAPE_PENTAGON_ICON, SHAPE_HEXAGON_ICON, SHAPE_STAR_ICON,
+  SHAPE_ARROW_ONE_ICON, SHAPE_ARROW_TWO_ICON, SHAPE_ARROW_ONE_FILL_ICON,
+  SHAPE_ARROW_TWO_FILL_ICON, SHAPE_HEART_ICON, SHAPE_POLYGON_ICON,
+  BACKGROUND_WHITE_ICON, BACKGROUND_BLACK_ICON,
+  FOREGROUND_WHITE_ICON, FOREGROUND_BLACK_ICON,
 } from "../../js/core/icons.js?v=v2026-09-21T08065";
 
 export function initDrawEditor(ctx) {
@@ -64,42 +71,9 @@ export function initDrawEditor(ctx) {
   // Ikony dynamiczne: FG (kolor narzędzia) i BG (tło sceny)
   // =========================================================
 
-  const ICON_BG = {
+  const ICON_BG = { WHITE: BACKGROUND_WHITE_ICON, BLACK: BACKGROUND_BLACK_ICON };
 
-    // BIAŁE TŁO — pełny prostokąt
-    WHITE: `
-      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-        <rect class="fill"
-              x="4" y="5" width="16" height="14" rx="2"></rect>
-      </svg>
-    `,
-  
-    // CZARNE TŁO — pusty prostokąt z cienkim obramowaniem
-    BLACK: `
-      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-        <rect x="4.5" y="5.5" width="15" height="13" rx="2"
-              stroke-width="1"></rect>
-      </svg>
-    `,
-  };
-
-  const ICON_FG = {
-  
-    // BIAŁE — puste kółko
-    WHITE: `
-      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-        <circle class="fill" cx="12" cy="12" r="7"></circle>
-      </svg>
-    `,
-  
-    // CZARNE — pełne kółko
-    BLACK: `
-      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-        <circle cx="12" cy="12" r="7"
-                stroke-width="2"></circle>
-      </svg>
-    `,
-  };
+  const ICON_FG = { WHITE: FOREGROUND_WHITE_ICON, BLACK: FOREGROUND_BLACK_ICON };
 
   function getColorLabel(color) {
     return color === "BLACK"
@@ -686,21 +660,21 @@ export function initDrawEditor(ctx) {
 
   // Lista dostępnych kształtów - label jako key tłumaczenia
   const SHAPES = [
-    { id: "line", label: "logoEditor.draw.ui.shapes.line", hasFill: false, icon: `<svg viewBox="0 0 24 24" style="width:20px;height:20px"><line x1="4" y1="20" x2="20" y2="4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>` },
-    { id: "rect", label: "logoEditor.draw.ui.shapes.rect", hasFill: true, icon: `<svg viewBox="0 0 24 24" style="width:20px;height:20px"><rect x="4" y="6" width="16" height="12" rx="1" fill="none" stroke="currentColor" stroke-width="2"/></svg>` },
-    { id: "roundRect", label: "logoEditor.draw.ui.shapes.roundRect", hasFill: true, icon: `<svg viewBox="0 0 24 24" style="width:20px;height:20px"><rect x="4" y="6" width="16" height="12" rx="4" fill="none" stroke="currentColor" stroke-width="2"/></svg>` },
-    { id: "ellipse", label: "logoEditor.draw.ui.shapes.ellipse", hasFill: true, icon: `<svg viewBox="0 0 24 24" style="width:20px;height:20px"><ellipse cx="12" cy="12" rx="9" ry="6" fill="none" stroke="currentColor" stroke-width="2"/></svg>` },
-    { id: "triangle", label: "logoEditor.draw.ui.shapes.triangle", hasFill: true, icon: `<svg viewBox="0 0 24 24" style="width:20px;height:20px"><polygon points="12,4 20,20 4,20" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>` },
-    { id: "diamond", label: "logoEditor.draw.ui.shapes.diamond", hasFill: true, icon: `<svg viewBox="0 0 24 24" style="width:20px;height:20px"><polygon points="12,3 21,12 12,21 3,12" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>` },
-    { id: "pentagon", label: "logoEditor.draw.ui.shapes.pentagon", hasFill: true, icon: `<svg viewBox="0 0 24 24" style="width:20px;height:20px"><polygon points="12,3 21,9 18,20 6,20 3,9" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>` },
-    { id: "hexagon", label: "logoEditor.draw.ui.shapes.hexagon", hasFill: true, icon: `<svg viewBox="0 0 24 24" style="width:20px;height:20px"><polygon points="12,3 21,8 21,16 12,21 3,16 3,8" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>` },
-    { id: "star5", label: "logoEditor.draw.ui.shapes.star5", hasFill: true, icon: `<svg viewBox="0 0 24 24" style="width:20px;height:20px"><polygon points="12,2 15,9 22,9 16,14 18,22 12,17 6,22 8,14 2,9 9,9" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>` },
-    { id: "arrow1", label: "logoEditor.draw.ui.shapes.arrow1", hasFill: false, icon: `<svg viewBox="0 0 24 24" style="width:20px;height:20px"><path d="M5 12h14M14 7l5 5-5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>` },
-    { id: "arrow2", label: "logoEditor.draw.ui.shapes.arrow2", hasFill: false, icon: `<svg viewBox="0 0 24 24" style="width:20px;height:20px"><path d="M5 12h14M14 7l5 5-5 5M10 7L5 12l5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>` },
-    { id: "arrow1Fill", label: "logoEditor.draw.ui.shapes.arrow1Fill", hasFill: true, icon: `<svg viewBox="0 0 24 24" style="width:20px;height:20px"><path d="M12 19L19 12L12 5V9H5V15H12V19Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>` },
-    { id: "arrow2Fill", label: "logoEditor.draw.ui.shapes.arrow2Fill", hasFill: true, icon: `<svg viewBox="0 0 24 24" style="width:20px;height:20px"><path d="M7 8H17V5L22 12L17 19V16H7V19L2 12L7 5V8Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>` },
-    { id: "heart", label: "logoEditor.draw.ui.shapes.heart", hasFill: true, icon: `<svg viewBox="0 0 24 24" style="width:20px;height:20px"><path d="M12 21C12 21 4 15 4 8.5 4 5 7 3 12 7c5-4 8-2 8 1.5 0 6.5-8 12.5-8 12.5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>` },
-    { id: "polygon", label: "logoEditor.draw.ui.shapes.polygon", hasFill: true, isPoly: true, icon: `<svg viewBox="0 0 24 24" style="width:20px;height:20px"><polygon points="3,5 20,3 22,16 8,21" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>` },
+    { id: "line", label: "logoEditor.draw.ui.shapes.line", hasFill: false, icon: SHAPE_LINE_ICON },
+    { id: "rect", label: "logoEditor.draw.ui.shapes.rect", hasFill: true, icon: SHAPE_RECT_ICON },
+    { id: "roundRect", label: "logoEditor.draw.ui.shapes.roundRect", hasFill: true, icon: SHAPE_ROUND_RECT_ICON },
+    { id: "ellipse", label: "logoEditor.draw.ui.shapes.ellipse", hasFill: true, icon: SHAPE_ELLIPSE_ICON },
+    { id: "triangle", label: "logoEditor.draw.ui.shapes.triangle", hasFill: true, icon: SHAPE_TRIANGLE_ICON },
+    { id: "diamond", label: "logoEditor.draw.ui.shapes.diamond", hasFill: true, icon: SHAPE_DIAMOND_ICON },
+    { id: "pentagon", label: "logoEditor.draw.ui.shapes.pentagon", hasFill: true, icon: SHAPE_PENTAGON_ICON },
+    { id: "hexagon", label: "logoEditor.draw.ui.shapes.hexagon", hasFill: true, icon: SHAPE_HEXAGON_ICON },
+    { id: "star5", label: "logoEditor.draw.ui.shapes.star5", hasFill: true, icon: SHAPE_STAR_ICON },
+    { id: "arrow1", label: "logoEditor.draw.ui.shapes.arrow1", hasFill: false, icon: SHAPE_ARROW_ONE_ICON },
+    { id: "arrow2", label: "logoEditor.draw.ui.shapes.arrow2", hasFill: false, icon: SHAPE_ARROW_TWO_ICON },
+    { id: "arrow1Fill", label: "logoEditor.draw.ui.shapes.arrow1Fill", hasFill: true, icon: SHAPE_ARROW_ONE_FILL_ICON },
+    { id: "arrow2Fill", label: "logoEditor.draw.ui.shapes.arrow2Fill", hasFill: true, icon: SHAPE_ARROW_TWO_FILL_ICON },
+    { id: "heart", label: "logoEditor.draw.ui.shapes.heart", hasFill: true, icon: SHAPE_HEART_ICON },
+    { id: "polygon", label: "logoEditor.draw.ui.shapes.polygon", hasFill: true, isPoly: true, icon: SHAPE_POLYGON_ICON },
   ];
 
   // Style linii
@@ -994,43 +968,28 @@ export function initDrawEditor(ctx) {
     const tf = (pts) => pts.map(([px, py]) => [x1 + px*c - py*s, y1 + px*s + py*c]);
     const fp = ([x, y]) => `${x.toFixed(2)},${y.toFixed(2)}`;
     
-    if (isFilled) {
-      const sh = Math.min(strokeW * 4 + L * 0.018, L * 0.3);
-      const hh = Math.min(sh * 2.2, L * 0.4);
-      let hl = Math.min(sh * 2.5, L * 0.35);
-      
-      if (dirCount === 2) {
-        if (hl * 2 > L * 0.7) hl = L * 0.35;
-        const pts = tf([
-          [hl, -hh], [0, 0], [hl, hh], [hl, sh],
-          [L-hl, sh], [L-hl, hh], [L, 0],
-          [L-hl, -hh], [L-hl, -sh], [hl, -sh]
-        ]);
-        return `M ${fp(pts[0])} ${pts.slice(1).map(p => `L ${fp(p)}`).join(' ')} Z`;
-      }
-      
+    // Wszystkie warianty korzystają z tej samej zamkniętej geometrii:
+    // prostokątny korpus + mniejszy grot, ze wspólnym obrysem.
+    // isFilled steruje wyłącznie wypełnieniem obiektu Fabric.
+    const sh = Math.min(Math.max(strokeW * 1.8, L * 0.055), L * 0.16);
+    const hh = Math.min(Math.max(sh * 2.05, strokeW * 3), L * 0.28);
+    let hl = Math.min(Math.max(hh * 0.95, strokeW * 4), L * 0.26);
+
+    if (dirCount === 2) {
+      if (hl * 2 > L * 0.62) hl = L * 0.31;
       const pts = tf([
-        [0, -sh], [L-hl, -sh], [L-hl, -hh], [L, 0], [L-hl, hh], [L-hl, sh], [0, sh]
+        [hl, -hh], [0, 0], [hl, hh], [hl, sh],
+        [L-hl, sh], [L-hl, hh], [L, 0],
+        [L-hl, -hh], [L-hl, -sh], [hl, -sh]
       ]);
       return `M ${fp(pts[0])} ${pts.slice(1).map(p => `L ${fp(p)}`).join(' ')} Z`;
     }
-    
-    // LINIA - otwarty kontur
-    let hl = strokeW * 5;
-    if (hl > L * 0.8) hl = L * 0.8;
-    const hh = strokeW * 2.5;
-    
-    if (dirCount === 2) {
-      if (hl > L * 0.38) hl = L * 0.38;
-      const shaft = tf([[0,0], [L,0]]);
-      const headE = tf([[L-hl, -hh], [L,0], [L-hl, hh]]);
-      const headS = tf([[hl, -hh], [0,0], [hl, hh]]);
-      return `M ${fp(shaft[0])} L ${fp(shaft[1])} M ${fp(headE[0])} L ${fp(headE[1])} L ${fp(headE[2])} M ${fp(headS[0])} L ${fp(headS[1])} L ${fp(headS[2])}`;
-    }
-    
-    const shaft = tf([[0,0], [L,0]]);
-    const head = tf([[L-hl, -hh], [L,0], [L-hl, hh]]);
-    return `M ${fp(shaft[0])} L ${fp(shaft[1])} M ${fp(head[0])} L ${fp(head[1])} L ${fp(head[2])}`;
+
+    const pts = tf([
+      [0, -sh], [L-hl, -sh], [L-hl, -hh],
+      [L, 0], [L-hl, hh], [L-hl, sh], [0, sh]
+    ]);
+    return `M ${fp(pts[0])} ${pts.slice(1).map(p => `L ${fp(p)}`).join(' ')} Z`;
   }
 
   function buildPolygonPath(cx,cy,r,sides) {
@@ -1898,8 +1857,8 @@ export function initDrawEditor(ctx) {
         strokeWidth: style.strokeWidth,
         strokeUniform: true, // strokeWidth niezależne od scale
         fill: fillVal,
-        strokeLineCap: style.strokeLineCap,
-        strokeLineJoin: style.strokeLineJoin,
+        strokeLineCap: currentShape.startsWith("arrow") ? "round" : style.strokeLineCap,
+        strokeLineJoin: currentShape.startsWith("arrow") ? "round" : style.strokeLineJoin,
         strokeDashArray: style.strokeDashArray,
         _canHaveFill: currentShape.startsWith("arrow"), // strzałki mogą mieć fill
         selectable: false,
@@ -1939,8 +1898,8 @@ export function initDrawEditor(ctx) {
         strokeWidth: style.strokeWidth,
         strokeUniform: true,
         fill: fillVal,
-        strokeLineCap: style.strokeLineCap,
-        strokeLineJoin: style.strokeLineJoin,
+        strokeLineCap: shape.startsWith("arrow") ? "round" : style.strokeLineCap,
+        strokeLineJoin: shape.startsWith("arrow") ? "round" : style.strokeLineJoin,
         strokeDashArray: style.strokeDashArray,
         _canHaveFill: shape?.hasFill || false,
         selectable: false,

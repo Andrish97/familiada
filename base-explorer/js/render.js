@@ -5,7 +5,7 @@ import { VIEW, META, META_ORDER } from "./state.js?v=v2026-09-21T08065";
 import { t } from "../../translation/translation.js?v=v2026-09-21T08065";
 import {
   TRASH_ICON, FOLDER_PLUS_ICON, FILE_PLUS_ICON, EDIT_ICON, TAG_ICON,
-  PENCIL_ICON, COPY_ICON, CUT_ICON, PASTE_ICON, DUPLICATE_ICON, PLAY_ICON,
+  PENCIL_ICON, COPY_ICON, CUT_ICON, PASTE_ICON, DUPLICATE_ICON, GAMEPAD_ICON,
   REFRESH_ICON, FOLDER_ICON, HOME_ICON, HAMBURGER_ICON,
 } from "../../js/core/icons.js?v=v2026-09-21T08065";
 
@@ -259,7 +259,7 @@ export function renderToolbar(state) {
 
         <div class="tbGroup" role="group" aria-label="${t("baseExplorer.toolbar.groupGame")}">
           <button class="tbBtn primary" type="button" data-act="createGame" title="${t("baseExplorer.toolbar.createGame")}">
-            ${PLAY_ICON}
+            ${GAMEPAD_ICON}
           </button>
         </div>
         

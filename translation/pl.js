@@ -2320,7 +2320,7 @@ const pl = {
         i zweryfikowanych przez moderatorów. Możesz je przeglądać, dodawać do swojej biblioteki
         i uruchamiać bezpośrednio jako rozgrywkę — bez konieczności tworzenia własnych pytań.
         Do Gier Społeczności przechodzisz z górnego paska strony „Moje gry”
-        za pomocą przycisku <span class="m-code"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.15em" aria-hidden="true"><rect x="2" y="8" width="20" height="9" rx="4" fill="none" stroke="currentColor" stroke-width="1.6"/><rect x="6.2" y="11.2" width="4" height="1.6" rx="0.6"/><rect x="7.4" y="10" width="1.6" height="4" rx="0.6"/><circle cx="16" cy="11" r="1.3"/><circle cx="18.5" cy="13.5" r="1.3"/></svg> Gry Społeczności</span>.
+        za pomocą przycisku <span class="m-code"><span data-shared-icon="gamepad" aria-hidden="true"></span> Gry Społeczności</span>.
       </p>
 
       <h3 class="m-h2">Przeglądanie i biblioteka</h3>
@@ -3949,10 +3949,10 @@ const pl = {
           pentagon: "Pięciokąt",
           hexagon: "Sześciokąt",
           star5: "Gwiazda 5",
-          arrow1: "Strzałka →",
-          arrow2: "Strzałka ↔",
-          arrow1Fill: "Strzałka ➤",
-          arrow2Fill: "Strzałka ⇔",
+          arrow1: "Strzałka jednostronna konturowa",
+          arrow2: "Strzałka dwustronna konturowa",
+          arrow1Fill: "Strzałka jednostronna wypełniona",
+          arrow2Fill: "Strzałka dwustronna wypełniona",
           heart: "Serce",
           polygon: "Wielokąt",
         },
@@ -4952,7 +4952,7 @@ const pl = {
     back: "← Moje gry",
     saveAll: "Zapisz wszystko",
     resetAll: "Przywróć domyślne",
-    play: "▶ Graj",
+    play: "Graj",
     resetAllConfirm: "Przywrócić ustawienia domyślne? Niezapisane zmiany zostaną utracone.",
     resetSection: "Przywróć domyślne",
     resetSectionConfirm: "Przywrócić domyślne ustawienia tej sekcji?",

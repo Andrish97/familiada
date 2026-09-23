@@ -145,6 +145,13 @@ body {
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px)
 }
+.audio-unlock-btn #audioUnlockIcon,
+.audio-unlock-btn #audioUnlockIcon svg {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  flex: 0 0 1em;
+}
 
 .audio-unlock-btn:hover {
     background: rgba(0,0,0,.4)

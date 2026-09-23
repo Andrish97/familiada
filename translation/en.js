@@ -2317,7 +2317,7 @@ const en = {
         and verified by moderators. You can browse them, add them to your library
         and launch them directly as a game — without creating your own questions.
         You access Community Games from the top bar of the "My games" page
-        using the <span class="m-code"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.15em" aria-hidden="true"><rect x="2" y="8" width="20" height="9" rx="4" fill="none" stroke="currentColor" stroke-width="1.6"/><rect x="6.2" y="11.2" width="4" height="1.6" rx="0.6"/><rect x="7.4" y="10" width="1.6" height="4" rx="0.6"/><circle cx="16" cy="11" r="1.3"/><circle cx="18.5" cy="13.5" r="1.3"/></svg> Community Games</span> button.
+        using the <span class="m-code"><span data-shared-icon="gamepad" aria-hidden="true"></span> Community Games</span> button.
       </p>
 
       <h3 class="m-h2">Browsing and library</h3>
@@ -4074,10 +4074,10 @@ const en = {
           pentagon: "Pentagon",
           hexagon: "Hexagon",
           star5: "Star 5",
-          arrow1: "Arrow →",
-          arrow2: "Arrow ↔",
-          arrow1Fill: "Arrow ➤",
-          arrow2Fill: "Arrow ⇔",
+          arrow1: "One-way outline arrow",
+          arrow2: "Two-way outline arrow",
+          arrow1Fill: "One-way filled arrow",
+          arrow2Fill: "Two-way filled arrow",
           heart: "Heart",
           polygon: "Polygon",
         },
@@ -5069,7 +5069,7 @@ const en = {
     back: "← My games",
     saveAll: "Save all",
     resetAll: "Restore defaults",
-    play: "▶ Play",
+    play: "Play",
     resetAllConfirm: "Restore default settings? Unsaved changes will be lost.",
     resetSection: "Restore defaults",
     resetSectionConfirm: "Restore default settings for this section?",

@@ -429,7 +429,7 @@
       </div>
     </div>
     <div class="topbar-section topbar-section-3">
-      <button class="btn" id="btnMute" type="button" title="Wycisz dźwięk"><svg class="btn-ico" style="margin-right:0" viewBox="0 0 24 24" aria-hidden="true"><polygon points="4,9 8,9 13,5 13,19 8,15 4,15"/><path d="M16 8.5a5 5 0 0 1 0 7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M18.5 6a9 9 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
+      <button class="btn" id="btnMute" type="button" title="Wycisz dźwięk"><span class="btn-ico" style="margin-right:0" data-shared-icon="speakerOn" aria-hidden="true"></span></button>
       <button class="btn" id="btnStartOver" type="button" title="Zacznij od nowa">↺</button>
       <button class="btn" id="btnManual" type="button">ℹ️</button>
     </div>
@@ -442,7 +442,7 @@
   <div class="helpOverlay hidden" id="helpOverlay">
     <div class="helpModal" role="dialog" aria-modal="true">
       <div class="helpModalToolbar">
-        <button class="btn btn-sm" id="btnLegal" type="button"><svg class="btn-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true"><path d="M12 2.5l7 2.8v6c0 5-3 8.3-7 10.7-4-2.4-7-5.7-7-10.7v-6l7-2.8z"/><path d="M9 12l2 2 4-4"/></svg> <span data-i18n="manual.legal">Polityka prywatności</span></button>
+        <button class="btn btn-sm" id="btnLegal" type="button"><span class="btn-ico" data-shared-icon="shield" aria-hidden="true"></span><span data-i18n="manual.legal">Polityka prywatności</span></button>
         <button class="btn sm" id="btnHelpClose" type="button" onclick="document.getElementById('helpOverlay').classList.add('hidden')">✕</button>
       </div>
       <iframe id="helpFrame" class="helpFrame" src="" title="Wskazówki"></iframe>

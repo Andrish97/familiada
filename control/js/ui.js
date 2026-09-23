@@ -2,6 +2,7 @@
 
 import { t } from "../../translation/translation.js?v=v2026-09-21T08065";
 import { initUiSelect } from "../../js/core/ui-select.js?v=v2026-09-21T08065";
+import { SPEAKER_ON_ICON, SPEAKER_OFF_ICON } from "../../js/core/icons.js?v=v2026-09-21T08065";
 
 // ================== KOMUNIKATY (UI) ==================
 const UI_MSG = {
@@ -228,6 +229,8 @@ export function createUI() {
 
   function setAudioStatus(unlocked) {
     const el = $("audioStatus");
+    const icon = $("audioUnlockIcon");
+    if (icon) icon.innerHTML = unlocked ? SPEAKER_ON_ICON : SPEAKER_OFF_ICON;
     if (!el) return;
     el.classList.remove("ok","bad","mid");
     el.classList.add(unlocked ? "ok" : "bad");

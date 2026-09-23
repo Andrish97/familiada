@@ -2304,7 +2304,7 @@ const uk = {
         і перевірених модераторами. Ти можеш переглядати їх, додавати до своєї бібліотеки
         та запускати безпосередньо як розгавку — без необхідності створювати власні питання.
         До Ігор Спільноти переходиш з верхньої панелі сторінки «Мої ігри»
-        за допомогою кнопки <span class="m-code"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.15em" aria-hidden="true"><rect x="2" y="8" width="20" height="9" rx="4" fill="none" stroke="currentColor" stroke-width="1.6"/><rect x="6.2" y="11.2" width="4" height="1.6" rx="0.6"/><rect x="7.4" y="10" width="1.6" height="4" rx="0.6"/><circle cx="16" cy="11" r="1.3"/><circle cx="18.5" cy="13.5" r="1.3"/></svg> Ігри Спільноти</span>.
+        за допомогою кнопки <span class="m-code"><span data-shared-icon="gamepad" aria-hidden="true"></span> Ігри Спільноти</span>.
       </p>
 
       <h3 class="m-h2">Перегляд та бібліотека</h3>
@@ -4060,10 +4060,10 @@ const uk = {
           pentagon: "П'ятикутник",
           hexagon: "Шестикутник",
           star5: "Зірка 5",
-          arrow1: "Стрілка →",
-          arrow2: "Стрілка ↔",
-          arrow1Fill: "Стрілка ➤",
-          arrow2Fill: "Стрілка ⇔",
+          arrow1: "Одностороння контурна стрілка",
+          arrow2: "Двостороння контурна стрілка",
+          arrow1Fill: "Одностороння заповнена стрілка",
+          arrow2Fill: "Двостороння заповнена стрілка",
           heart: "Серце",
           polygon: "Багатокутник",
         },
@@ -5057,7 +5057,7 @@ const uk = {
     back: "← Мої ігри",
     saveAll: "Зберегти все",
     resetAll: "Відновити типові",
-    play: "▶ Грати",
+    play: "Грати",
     resetAllConfirm: "Відновити типові налаштування? Незбережені зміни буде втрачено.",
     resetSection: "Відновити типові",
     resetSectionConfirm: "Відновити типові налаштування цього розділу?",

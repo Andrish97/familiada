@@ -16,6 +16,7 @@ import { createSubscription } from "../../js/core/game-state-subscribe.js?v=v202
 import { createRenderer } from "./render.js?v=v2026-09-21T08065";
 import { createDisplaySoundReactor } from "./soundReactor.js?v=v2026-09-21T08065";
 import { loadSfxManifest, initSfx, setCurrentGameId, applySfxGameSettings, unlockAudio, isAudioUnlocked, getSfxDuration } from "../../js/core/sfx.js?v=v2026-09-21T08065";
+import { SPEAKER_ON_ICON, SPEAKER_OFF_ICON } from "../../js/core/icons.js?v=v2026-09-21T08065";
 
 startKeepAlive();
 
@@ -174,6 +175,8 @@ window.addEventListener("DOMContentLoaded", async () => {
 
     const audioUnlockScreen = $("audioUnlockScreen");
     const btnAudioUnlock = $("btnAudioUnlock");
+    const audioUnlockIcon = $("audioUnlockIcon");
+    if (audioUnlockIcon) audioUnlockIcon.innerHTML = isAudioUnlocked() ? SPEAKER_ON_ICON : SPEAKER_OFF_ICON;
     function syncAudioUnlockScreen(row) {
       if (!audioUnlockScreen) return;
       const wantsDisplaySound = row.detail?.settings?.soundSource === "display";
@@ -181,6 +184,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     }
     btnAudioUnlock?.addEventListener("click", () => {
       unlockAudio();
+      if (audioUnlockIcon) audioUnlockIcon.innerHTML = SPEAKER_ON_ICON;
       audioUnlockScreen?.classList.add("hidden");
     });
 

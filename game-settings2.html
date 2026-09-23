@@ -60,7 +60,7 @@
   <div class="helpOverlay hidden" id="helpOverlay">
     <div class="helpModal" role="dialog" aria-modal="true">
       <div class="helpModalToolbar">
-        <button class="btn btn-sm" id="btnLegal" type="button"><svg class="btn-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true"><path d="M12 2.5l7 2.8v6c0 5-3 8.3-7 10.7-4-2.4-7-5.7-7-10.7v-6l7-2.8z"/><path d="M9 12l2 2 4-4"/></svg> <span data-i18n="manual.legal">Polityka prywatności</span></button>
+        <button class="btn btn-sm" id="btnLegal" type="button"><span class="btn-ico" data-shared-icon="shield" aria-hidden="true"></span><span data-i18n="manual.legal">Polityka prywatności</span></button>
         <button class="btn sm" id="btnHelpClose" type="button" onclick="document.getElementById('helpOverlay').classList.add('hidden')">✕</button>
       </div>
       <iframe id="helpFrame" class="helpFrame" src="" title="Wskazówki"></iframe>
@@ -79,12 +79,12 @@
 
   <div class="gs-layout">
     <div class="gs-actionbar" id="gsFooter">
-      <button class="btn gs-sidebar-toggle hidden" id="btnToggleSidebar" type="button"><svg class="btn-ico" style="margin-right:0" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="2.4" rx="1.2"/><rect x="3" y="10.8" width="18" height="2.4" rx="1.2"/><rect x="3" y="16.6" width="18" height="2.4" rx="1.2"/></svg></button>
+      <button class="btn gs-sidebar-toggle hidden" id="btnToggleSidebar" type="button"><span class="btn-ico" style="margin-right:0" data-shared-icon="hamburger" aria-hidden="true"></span></button>
       <span class="gs-actionbar-msg hidden" id="gsFooterMsg" data-i18n="gameSettings.unsaved">Niezapisane zmiany</span>
       <div style="flex:1"></div>
       <button class="btn" id="btnResetAll" type="button" data-i18n="gameSettings.resetAll" data-skel-step>Przywróć domyślne</button>
       <button class="btn gold" id="btnSaveAll" type="button" data-i18n="gameSettings.saveAll" data-skel-step>Zapisz wszystko</button>
-      <button class="btn green hidden" id="btnPlay" type="button" data-i18n="gameSettings.play">▶ Graj</button>
+      <button class="btn green hidden" id="btnPlay" type="button">Graj</button>
       <button class="btn sm gs-close-btn hidden" id="btnGsModalClose" type="button">✕</button>
     </div>
 
