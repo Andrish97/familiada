@@ -7,6 +7,9 @@ na potrzeby kontroli wyglądu.
 
 ## GitHub Actions
 
+Na gałęzi `claude/analyze-x-buttons-ui-2paaqm` test uruchamia się automatycznie
+po zmianach systemu ikon. Można go również uruchomić ręcznie:
+
 1. Otwórz **Actions → E2E Tests (Playwright) → Run workflow**.
 2. Wybierz gałąź, którą chcesz sprawdzić.
 3. Uruchom workflow. Job `icons-local` wykona się niezależnie od testów
