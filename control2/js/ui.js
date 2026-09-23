@@ -16,10 +16,10 @@
 // setStealMsg/setRevealMsg/ROUNDS_MSG/FINAL_MSG, ale jako czysta funkcja
 // bieżącego game_state (shared/hints.js), nie ulotny stan ustawiany przy
 // każdym zdarzeniu — "wszystko idzie przez tabelę stanów".
-import { getRoundsHint, getFinalHint, getFinalEntryShortcuts, teamName } from "../../shared/hints.js?v=v2026-09-23T17585";
-import { t, getUiLang } from "../../translation/translation.js?v=v2026-09-23T17585";
-import { getSfxCategories, getSfxVariant, isSfxPlaying, playSfx, stopSfx, onSfxEnd, setSfxVolume } from "../../js/core/sfx.js?v=v2026-09-23T17585";
-import { buildDisplayPreviewRow } from "../../shared/previewRow.js?v=v2026-09-23T17585";
+import { getRoundsHint, getFinalHint, getFinalEntryShortcuts, teamName } from "../../shared/hints.js?v=v2026-09-23T19413";
+import { t, getUiLang } from "../../translation/translation.js?v=v2026-09-23T19413";
+import { getSfxCategories, getSfxVariant, isSfxPlaying, playSfx, stopSfx, onSfxEnd, setSfxVolume } from "../../js/core/sfx.js?v=v2026-09-23T19413";
+import { buildDisplayPreviewRow } from "../../shared/previewRow.js?v=v2026-09-23T19413";
 
 const $ = (id) => document.getElementById(id);
 const on = (el, ev, fn) => el && el.addEventListener(ev, fn);
