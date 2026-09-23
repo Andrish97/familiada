@@ -1,6 +1,15 @@
 name: E2E Tests (Playwright)
 
 on:
+  push:
+    branches:
+      - "claude/analyze-x-buttons-ui-2paaqm"
+    paths:
+      - "js/core/icons.js"
+      - "tests/e2e/icon-system.spec.js"
+      - "tests/playwright.config.js"
+      - "tests/ICON_TESTING.md"
+      - ".github/workflows/e2e-tests.yml"
   workflow_dispatch:
     inputs:
       spec_filter:
@@ -120,7 +129,7 @@ jobs:
           retention-days: 14
 
   e2e-grouped:
-    if: ${{ github.event.inputs.spec_filter == '' }}
+    if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.spec_filter == '' }}
     runs-on: ubuntu-latest
     timeout-minutes: 40
     strategy:
@@ -202,7 +211,7 @@ jobs:
           retention-days: 7
 
   e2e-custom-filter:
-    if: ${{ github.event.inputs.spec_filter != '' }}
+    if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.spec_filter != '' }}
     runs-on: ubuntu-latest
     timeout-minutes: 60
 
