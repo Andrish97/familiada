@@ -103,6 +103,7 @@ import { createPresence } from "./presence.js?v=v2026-09-24T23154";
 import { createSoundReactor } from "./soundReactor.js?v=v2026-09-24T23154";
 import { createUI } from "./ui.js?v=v2026-09-24T23154";
 import { createShareDevice } from "./shareDevice.js?v=v2026-09-24T23154";
+import { icon } from "../../js/core/icons.js?v=v2026-09-24T23154";
 
 guardDesktopOnly();
 
@@ -952,7 +953,7 @@ async function main() {
   }
 
   const btnMute = document.getElementById("btnMute");
-  function syncMuteButton() { if (btnMute) btnMute.textContent = store.state.settings.soundMuted ? "🔇" : "🔊"; }
+  function syncMuteButton() { if (btnMute) btnMute.innerHTML = icon(store.state.settings.soundMuted ? "speaker-off" : "speaker-on"); }
   syncMuteButton();
   btnMute?.addEventListener("click", () => { handle("settings.toggleSoundMuted"); });
 

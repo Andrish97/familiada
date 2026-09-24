@@ -20,6 +20,7 @@ import { getRoundsHint, getFinalHint, getFinalEntryShortcuts, teamName } from ".
 import { t, getUiLang } from "../../translation/translation.js?v=v2026-09-24T23154";
 import { getSfxCategories, getSfxVariant, isSfxPlaying, playSfx, stopSfx, onSfxEnd, setSfxVolume } from "../../js/core/sfx.js?v=v2026-09-24T23154";
 import { buildDisplayPreviewRow } from "../../shared/previewRow.js?v=v2026-09-24T23154";
+import { icon, iconText } from "../../js/core/icons.js?v=v2026-09-24T23154";
 
 const $ = (id) => document.getElementById(id);
 const on = (el, ev, fn) => el && el.addEventListener(ev, fn);
@@ -313,8 +314,8 @@ export function createUI({ root, emit }) {
     const cats = getSfxCategories();
     if (!cats.length) return null;
     const lang = getUiLang() || "pl";
-    const SVG_PLAY = `<svg width="16" height="16" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><polygon points="2,1 11,6 2,11" fill="currentColor"/></svg>`;
-    const SVG_STOP = `<svg width="16" height="16" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="1.5" y="1.5" width="9" height="9" fill="currentColor"/></svg>`;
+    const SVG_PLAY = icon("play");
+    const SVG_STOP = icon("stop");
 
     const rows = cats.map((cat) => {
       const key = cat.key;
@@ -1189,7 +1190,8 @@ export function createUI({ root, emit }) {
         const repeatBtn = h("button", {
           class: `c2-btn-repeat ${repeat ? "on" : ""}`.trim(), type: "button",
           onclick: boardBusy() ? undefined : () => emit("game.dispatch", { type: "SET_REPEAT", round: 2, idx: i, repeat: !repeat }),
-        }, [document.createTextNode(repeat ? t("control.finalUi.p2RepeatOn") : t("control.finalUi.p2RepeatOff"))]);
+        }, []);
+        repeatBtn.innerHTML = repeat ? iconText("check", t("control.finalUi.p2RepeatOn")) : t("control.finalUi.p2RepeatOff");
         if (boardBusy()) repeatBtn.disabled = true;
         cells.push(repeatBtn);
       }

@@ -92,9 +92,12 @@
 
 .btn.xsm{ padding: 6px 10px; font-size: 12px; border-radius: 10px; }
 
+/* Baza, którą ktoś chce mi udostępnić: podbity kolorystycznie cały kafel
+   (złota ramka i delikatne złote tło) zamiast kropki przy etykiecie. */
 .card.proposed{
-  border-color: rgba(255, 210, 80, .55);
-  box-shadow: 0 0 0 1px rgba(255, 210, 80, .25) inset;
+  border-color: rgba(255, 210, 80, .75);
+  background: linear-gradient(180deg, rgba(255, 210, 80, .12), rgba(255, 210, 80, .05));
+  box-shadow: 0 0 0 1px rgba(255, 210, 80, .35) inset, 0 0 18px rgba(255, 210, 80, .12);
 }
 
 .card .meta{
@@ -120,7 +123,7 @@
 
 .tileBadge[data-kind="from"]{ border-color:rgba(120,200,255,.25); background:rgba(120,200,255,.10); }
 .tileBadge[data-kind="role"]{ border-color:rgba(255,234,166,.25); background:rgba(255,234,166,.10); }
-.tileBadge[data-kind="proposed"]{ border-color:rgba(255,170,210,.28); background:rgba(255,170,210,.10); }
+.tileBadge[data-kind="proposed"]{ border-color:rgba(255,210,80,.45); background:rgba(255,210,80,.14); color:#ffe08a; }
 
 /* reset dla X (button) */
 .games-body .grid .card .x{

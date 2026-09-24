@@ -61,7 +61,7 @@
     <div class="helpModal" role="dialog" aria-modal="true">
       <div class="helpModalToolbar">
         <button class="btn btn-sm" id="btnLegal" type="button" data-i18n="manual.legal" data-i18n-icon-after="shield">Polityka prywatności</button>
-        <button class="btn sm" id="btnHelpClose" type="button" onclick="document.getElementById('helpOverlay').classList.add('hidden')">✕</button>
+        <button class="btn sm" id="btnHelpClose" type="button" aria-label="Zamknij" data-i18n-aria-label="common.modal.closeLabel" onclick="document.getElementById('helpOverlay').classList.add('hidden')"><i class="ico" data-icon="close"></i></button>
       </div>
       <iframe id="helpFrame" class="helpFrame" src="" title="Wskazówki"></iframe>
     </div>
@@ -71,7 +71,7 @@
     <div class="legalModal" role="dialog" aria-modal="true">
       <div class="legalModalToolbar">
         <button class="btn btn-sm" id="btnBackToManual" type="button" data-i18n="privacy.backToManual" data-i18n-icon="arrow-left">Wskazówki</button>
-        <button class="btn sm" id="btnLegalClose" type="button" onclick="document.getElementById('legalOverlay').classList.add('hidden')">✕</button>
+        <button class="btn sm" id="btnLegalClose" type="button" aria-label="Zamknij" data-i18n-aria-label="common.modal.closeLabel" onclick="document.getElementById('legalOverlay').classList.add('hidden')"><i class="ico" data-icon="close"></i></button>
       </div>
       <iframe id="legalFrame" class="legalFrame" src="" title="Polityka prywatności"></iframe>
     </div>
@@ -79,13 +79,13 @@
 
   <div class="gs-layout">
     <div class="gs-actionbar" id="gsFooter">
-      <button class="btn gs-sidebar-toggle hidden" id="btnToggleSidebar" type="button">☰</button>
+      <button class="btn gs-sidebar-toggle hidden" id="btnToggleSidebar" type="button" aria-label="Menu"><i class="ico" data-icon="hamburger"></i></button>
       <span class="gs-actionbar-msg hidden" id="gsFooterMsg" data-i18n="gameSettings.unsaved">Niezapisane zmiany</span>
       <div style="flex:1"></div>
       <button class="btn" id="btnResetAll" type="button" data-i18n="gameSettings.resetAll" data-skel-step>Przywróć domyślne</button>
       <button class="btn gold" id="btnSaveAll" type="button" data-i18n="gameSettings.saveAll" data-skel-step>Zapisz wszystko</button>
-      <button class="btn green hidden" id="btnPlay" type="button" data-i18n="gameSettings.play">▶ Graj</button>
-      <button class="btn sm gs-close-btn hidden" id="btnGsModalClose" type="button">✕</button>
+      <button class="btn green hidden" id="btnPlay" type="button" data-i18n="gameSettings.play" data-i18n-icon="gamepad">Graj</button>
+      <button class="btn sm gs-close-btn hidden" id="btnGsModalClose" type="button" aria-label="Zamknij" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
     </div>
 
     <div class="gs-sidebar-backdrop" id="gsSidebarBackdrop"></div>
@@ -114,7 +114,7 @@
   <div class="colorModalBox">
     <div class="colorModalHead">
       <div class="colorModalTitle" id="gsColorModalTitle">Kolor</div>
-      <button class="btn xs" id="gsColorModalClose" type="button">✕</button>
+      <button class="btn xs" id="gsColorModalClose" type="button" aria-label="Zamknij" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
     </div>
     <div class="colorModalBody">
       <div class="colorTopRow">

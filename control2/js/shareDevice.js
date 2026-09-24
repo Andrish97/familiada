@@ -16,6 +16,7 @@
 
 import { sb, SUPABASE_URL } from "../../js/core/supabase.js?v=v2026-09-24T23154";
 import { t } from "../../translation/translation.js?v=v2026-09-24T23154";
+import { icon } from "../../js/core/icons.js?v=v2026-09-24T23154";
 
 const MAIL_FUNCTION_URL = `${SUPABASE_URL}/functions/v1/send-mail`;
 const SHARE_TTL_MS = 4 * 60 * 60 * 1000;
@@ -129,7 +130,7 @@ export function createShareDevice({ currentUser, game, onBadgesChanged }) {
           <div class="shareRow">
             <div class="shareEmail">${esc(label)}</div>
             <div class="shareRowActions">
-              <button class="btn xsm gold" id="btnRevokeDevice" type="button">✕</button>
+              <button class="btn xsm gold" id="btnRevokeDevice" type="button" aria-label="${esc(t("bases.share.remove"))}" title="${esc(t("bases.share.remove"))}">${icon("trash")}</button>
             </div>
           </div>`;
         document.getElementById("btnRevokeDevice")?.addEventListener("click", async () => {

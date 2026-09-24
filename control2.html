@@ -429,8 +429,8 @@
       </div>
     </div>
     <div class="topbar-section topbar-section-3">
-      <button class="btn" id="btnMute" type="button" title="Wycisz dźwięk">🔊</button>
-      <button class="btn" id="btnStartOver" type="button" title="Zacznij od nowa">↺</button>
+      <button class="btn" id="btnMute" type="button" title="Wycisz dźwięk" aria-label="Wycisz dźwięk"><i class="ico" data-icon="speaker-on"></i></button>
+      <button class="btn" id="btnStartOver" type="button" title="Zacznij od nowa" aria-label="Zacznij od nowa"><i class="ico" data-icon="refresh"></i></button>
       <button class="btn" id="btnManual" type="button" data-i18n-aria-label="common.manualLabel" data-i18n-title="common.manualLabel" aria-label="Wskazówki" title="Wskazówki"><i class="ico" data-icon="info"></i></button>
     </div>
     <div class="topbar-section topbar-section-4">
@@ -443,7 +443,7 @@
     <div class="helpModal" role="dialog" aria-modal="true">
       <div class="helpModalToolbar">
         <button class="btn btn-sm" id="btnLegal" type="button" data-i18n="manual.legal" data-i18n-icon-after="shield">Polityka prywatności</button>
-        <button class="btn sm" id="btnHelpClose" type="button" onclick="document.getElementById('helpOverlay').classList.add('hidden')">✕</button>
+        <button class="btn sm" id="btnHelpClose" type="button" aria-label="Zamknij" data-i18n-aria-label="common.modal.closeLabel" onclick="document.getElementById('helpOverlay').classList.add('hidden')"><i class="ico" data-icon="close"></i></button>
       </div>
       <iframe id="helpFrame" class="helpFrame" src="" title="Wskazówki"></iframe>
     </div>
@@ -453,7 +453,7 @@
     <div class="legalModal" role="dialog" aria-modal="true">
       <div class="legalModalToolbar">
         <button class="btn btn-sm" id="btnBackToManual" type="button" data-i18n="privacy.backToManual" data-i18n-icon="arrow-left">Wskazówki</button>
-        <button class="btn sm" id="btnLegalClose" type="button" onclick="document.getElementById('legalOverlay').classList.add('hidden')">✕</button>
+        <button class="btn sm" id="btnLegalClose" type="button" aria-label="Zamknij" data-i18n-aria-label="common.modal.closeLabel" onclick="document.getElementById('legalOverlay').classList.add('hidden')"><i class="ico" data-icon="close"></i></button>
       </div>
       <iframe id="legalFrame" class="legalFrame" src="" title="Polityka prywatności"></iframe>
     </div>
@@ -473,7 +473,7 @@
     <div class="qrModalBox">
       <div class="qrModalHead">
         <div class="qrModalTitle" id="qrModalTitle" data-i18n="control.qrModalTitle">Urządzenie</div>
-        <button class="btn xs" id="qrModalClose" type="button">✕</button>
+        <button class="btn xs" id="qrModalClose" type="button" aria-label="Zamknij" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
       </div>
 
       <div class="qrModalBody">
@@ -500,7 +500,7 @@
     <div class="modal shareModal">
       <div class="mHead">
         <div class="mTitle" id="shareDeviceTitle" data-i18n="control.shareDeviceModal.title">Udostępnij</div>
-        <button class="btn sm" id="btnShareDeviceClose" type="button" aria-label="Zamknij">✕</button>
+        <button class="btn sm" id="btnShareDeviceClose" type="button" aria-label="Zamknij" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
       </div>
       <div class="mSub" data-i18n="control.shareDeviceModal.subtitle">Wybierz subskrybenta lub wpisz e-mail.</div>
 

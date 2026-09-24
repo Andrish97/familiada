@@ -530,3 +530,8 @@ body.mkt-body > main.wrap {
 
 .mkt-sent-rating  { margin-left: 4px; }
 .mkt-sent-library { opacity: .7; }
+
+/* Ikony z silnika: flagi w wyborze języka i gwiazdki ocen */
+.mkt-lang-picker .btn .ico { width: 2em; height: 2em; vertical-align: middle; }
+.mkt-stars, .mkt-rater-stars { display: inline-flex; gap: 1px; vertical-align: middle; }
+.mkt-star-btn .ico { width: 1em; height: 1em; vertical-align: middle; }

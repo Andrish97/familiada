@@ -24,6 +24,7 @@ import {
 import { guardDesktopOnly } from "../core/device-guard.js?v=v2026-09-24T23154";
 import { guardResourceLock, guardResourceBusy } from "../core/resource-lock.js?v=v2026-09-24T23154";
 import { updateChecked, ROW_GONE } from "../core/db-guard.js?v=v2026-09-24T23154";
+import { icon, iconText } from "../core/icons.js?v=v2026-09-24T23154";
 
 guardDesktopOnly();
 
@@ -838,7 +839,7 @@ async function renderSound() {
     const fileTagHtml = custom
       ? `<div class="sfx-file-tag">
            <span class="sfx-file-name" title="${escAttr(custom.filename)}">${escText(custom.filename)}</span>
-           <button class="sfx-file-remove" type="button" data-sfx-clear="${escAttr(key)}" title="Usuń">✕</button>
+           <button class="sfx-file-remove" type="button" data-sfx-clear="${escAttr(key)}" title="Usuń" aria-label="Usuń">${icon("trash")}</button>
          </div>`
       : "";
 
@@ -858,7 +859,7 @@ async function renderSound() {
         </button>
         <div class="ui-select-menu" role="listbox"></div>
       </div>
-      <button class="sfx-preview-btn" type="button" data-sfx-preview="${escAttr(key)}" title="Podgląd"${previewDisabled ? " disabled" : ""}><svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><polygon points="2,1 11,6 2,11" fill="currentColor"/></svg></button>
+      <button class="sfx-preview-btn" type="button" data-sfx-preview="${escAttr(key)}" title="Podgląd"${previewDisabled ? " disabled" : ""}>${icon("play")}</button>
       <div class="sfx-vol-wrap">
         <input class="sfx-vol" type="range" min="0" max="100" step="1" value="${volPct}" data-sfx-vol="${escAttr(key)}"/>
         <span class="sfx-vol-label" id="sfxVol_${escAttr(key)}">${volPct}%</span>
@@ -908,7 +909,7 @@ async function renderSound() {
   function _stopPreview() {
     if (_previewAudio) { try { _previewAudio.pause(); _previewAudio.currentTime = 0; } catch {} }
     if (_previewUrl)   { URL.revokeObjectURL(_previewUrl); _previewUrl = null; }
-    if (_previewBtn)   { _previewBtn.innerHTML = '<svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><polygon points="2,1 11,6 2,11" fill="currentColor"/></svg>'; delete _previewBtn.dataset.playing; }
+    if (_previewBtn)   { _previewBtn.innerHTML = icon("play"); delete _previewBtn.dataset.playing; }
     _previewAudio = null;
     _previewBtn   = null;
   }
@@ -941,7 +942,7 @@ async function renderSound() {
       _previewAudio = audio;
       _previewBtn   = btn;
       _previewUrl   = blobUrl;
-      btn.innerHTML = '<svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="1.5" y="1.5" width="9" height="9" fill="currentColor"/></svg>';
+      btn.innerHTML = icon("stop");
       btn.dataset.playing = "1";
     });
   });
@@ -1118,7 +1119,7 @@ function renderQuestions() {
             </label>
           </div>
           <div class="gs-hint">${t("gameSettings.questions.roundsModeHint")}</div>
-          ${hasFinal && finalRandom && !roundsRandom ? `<div class="gs-hint" style="margin-top:6px">⚠️ ${t("gameSettings.questions.finalRandomRoundsOrderedWarning") || "Finał losowy + rundy w ustalonej kolejności: finał wylosuje 5 pytań spoza Twojej listy rund, dopiero przy starcie gry w panelu prowadzącego — jeśli baza ma niewiele pytań, pula do losowania finału będzie odpowiednio mniejsza."}</div>` : ""}
+          ${hasFinal && finalRandom && !roundsRandom ? `<div class="gs-hint" style="margin-top:6px">${icon("warning")} ${t("gameSettings.questions.finalRandomRoundsOrderedWarning") || "Finał losowy + rundy w ustalonej kolejności: finał wylosuje 5 pytań spoza Twojej listy rund, dopiero przy starcie gry w panelu prowadzącego — jeśli baza ma niewiele pytań, pula do losowania finału będzie odpowiednio mniejsza."}</div>` : ""}
         </div>
       </div>
     </div>
@@ -1328,12 +1329,12 @@ function renderRounds() {
       <div class="roundsOrderList" id="gsRoundsOrderList">
         ${questions.map((q, i) => `
           <div class="roundsOrderItem" draggable="true" data-qid="${escAttr(q.id)}">
-            <div class="roundsOrderHandle">⋮⋮</div>
+            <div class="roundsOrderHandle">${icon("grip")}</div>
             <div class="roundsOrderNum">${i + 1}</div>
             <div class="roundsOrderText">${escText(q.text)}</div>
             <div class="roundsOrderActions">
-              <button class="roundsOrderBtn" data-dir="up" title="${escAttr(t("gameSettings.rounds.up"))}" ${i === 0 ? "disabled" : ""}>↑</button>
-              <button class="roundsOrderBtn" data-dir="down" title="${escAttr(t("gameSettings.rounds.down"))}" ${i === questions.length - 1 ? "disabled" : ""}>↓</button>
+              <button class="roundsOrderBtn" data-dir="up" title="${escAttr(t("gameSettings.rounds.up"))}" ${i === 0 ? "disabled" : ""}>${icon("arrow-up")}</button>
+              <button class="roundsOrderBtn" data-dir="down" title="${escAttr(t("gameSettings.rounds.down"))}" ${i === questions.length - 1 ? "disabled" : ""}>${icon("arrow-down")}</button>
             </div>
           </div>
         `).join("")}

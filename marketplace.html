@@ -137,9 +137,9 @@
         <div class="field" style="margin-top:10px">
           <label class="field-label" data-i18n="marketplace.submit.langLabel">Język gry</label>
           <div class="mkt-lang-picker" id="submitLangPicker">
-            <button class="btn sm active" data-lang="pl" type="button">🇵🇱 PL</button>
-            <button class="btn sm" data-lang="en" type="button">🇬🇧 EN</button>
-            <button class="btn sm" data-lang="uk" type="button">🇺🇦 UK</button>
+            <button class="btn sm active" data-lang="pl" type="button" aria-label="Polski" title="Polski"><i class="ico" data-icon="flag-pl"></i></button>
+            <button class="btn sm" data-lang="en" type="button" aria-label="English" title="English"><i class="ico" data-icon="lang-en"></i></button>
+            <button class="btn sm" data-lang="uk" type="button" aria-label="Українська" title="Українська"><i class="ico" data-icon="flag-ua"></i></button>
           </div>
         </div>
 
@@ -172,7 +172,7 @@
             <div class="mTitle" id="detailTitle">—</div>
             <div class="mSub" id="detailMeta">—</div>
           </div>
-          <button class="btn sm mkt-close-btn" id="btnDetailClose" type="button" aria-label="Zamknij">✕</button>
+          <button class="btn sm mkt-close-btn" id="btnDetailClose" type="button" aria-label="Zamknij" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
         </div>
 
         <p class="mkt-detail-desc" id="detailDesc"></p>
@@ -186,7 +186,7 @@
         <div class="mkt-detail-actions">
           <button class="btn sm gold" id="btnAddLibrary" type="button" data-i18n="marketplace.btnAddToLibrary">Dodaj do moich gier</button>
           <button class="btn sm" id="btnRemoveLibrary" type="button" data-i18n="marketplace.btnRemoveFromLibrary" hidden>Usuń z moich gier</button>
-          <span class="mkt-added-badge" id="addedBadge" hidden data-i18n="marketplace.addedBadge">Dodano ✅</span>
+          <span class="mkt-added-badge" id="addedBadge" hidden data-i18n="marketplace.addedBadge" data-i18n-icon="check">W Twoich grach</span>
         </div>
       </div>
     </div>

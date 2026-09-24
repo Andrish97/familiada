@@ -1198,7 +1198,7 @@ test("control2: wyciszenie dźwięku — po Mute żaden klucz SFX się nie odtwa
 
     await expect(buzzerPage.getByRole("button", { name: "Przycisk A" })).toBeEnabled({ timeout: 10000 });
     await page.locator("#btnMute").click();
-    await expect(page.locator("#btnMute")).toHaveText("🔇");
+    await expect(page.locator("#btnMute .ico-speaker-off")).toHaveCount(1);
 
     await clearSfxLog(page);
     await buzzerPage.getByRole("button", { name: "Przycisk A" }).click();
@@ -1380,7 +1380,7 @@ test("control2: dźwięk ze źródła Wyświetlacz — odblokowanie, głośnoś�
 
     // ===== Mute na chwilę w tej samej rundzie — odpowiedź #2 podczas wyciszenia =====
     await page.locator("#btnMute").click();
-    await expect(page.locator("#btnMute")).toHaveText("🔇");
+    await expect(page.locator("#btnMute .ico-speaker-off")).toHaveCount(1);
     await clearSfxLog(displayPage);
     await revealAnswer(page, 2); // Odpowiedź B, 30 pkt
     await expect(page.getByText("Bank: 70")).toBeVisible({ timeout: 10000 });
@@ -1388,7 +1388,7 @@ test("control2: dźwięk ze źródła Wyświetlacz — odblokowanie, głośnoś�
 
     // ===== Un-mute — odpowiedź #3 znów słyszalna =====
     await page.locator("#btnMute").click();
-    await expect(page.locator("#btnMute")).toHaveText("🔊");
+    await expect(page.locator("#btnMute .ico-speaker-on")).toHaveCount(1);
     await clearSfxLog(displayPage);
     await revealAnswer(page, 3); // Odpowiedź C, 20 pkt -> wszystko odkryte
     await waitForSfxSequence(displayPage, ["answer_correct"], 10000);

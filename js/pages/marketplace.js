@@ -166,7 +166,7 @@ function makeGameCard(g) {
   card.innerHTML = `
     <div class="mkt-card-top">
       <span class="mkt-lang-badge">${esc(g.lang.toUpperCase())}</span>
-      ${inLibrary ? `<span class="mkt-badge mkt-badge-added">${esc(t("marketplace.addedBadge"))}</span>` : ""}
+      ${inLibrary ? `<span class="mkt-badge mkt-badge-added">${iconText("check", t("marketplace.addedBadge"))}</span>` : ""}
     </div>
     <div class="mkt-card-title">${esc(g.title)}</div>
     <div class="mkt-card-author">${authorLabel}</div>
@@ -287,9 +287,9 @@ function updateLibraryButtons(inLibrary, withdrawn = false) {
   if (els.addedBadge) {
     els.addedBadge.hidden = !inLibrary;
     if (inLibrary && withdrawn) {
-      els.addedBadge.textContent = `${t("marketplace.addedBadge")} · ${t("marketplace.withdrawnBadge")}`;
+      els.addedBadge.innerHTML = iconText("check", `${t("marketplace.addedBadge")} · ${t("marketplace.withdrawnBadge")}`);
     } else if (inLibrary) {
-      els.addedBadge.textContent = t("marketplace.addedBadge");
+      els.addedBadge.innerHTML = iconText("check", t("marketplace.addedBadge"));
     }
   }
 }
@@ -346,7 +346,7 @@ function refreshCardInLibrary(id, inLibrary) {
     const top = card.querySelector(".mkt-card-top");
     const span = document.createElement("span");
     span.className = "mkt-badge mkt-badge-added";
-    span.textContent = t("marketplace.addedBadge");
+    span.innerHTML = iconText("check", t("marketplace.addedBadge"));
     top?.appendChild(span);
   } else if (!inLibrary && badge) {
     badge.remove();
@@ -545,7 +545,7 @@ async function submitGame() {
 function starsDisplay(avg, count) {
   if (!count) return `<span class="mkt-no-rating">${esc(t("marketplace.rating.none"))}</span>`;
   const full = Math.round(+avg);
-  const stars = "★".repeat(full) + "☆".repeat(5 - full);
+  const stars = icon("star").repeat(full) + icon("star-empty").repeat(5 - full);
   return `<span class="mkt-stars">${stars}</span> <span class="mkt-rating-avg">${(+avg).toFixed(1)}</span> <span class="mkt-rating-count">(${count})</span>`;
 }
 
@@ -564,7 +564,8 @@ function buildStarInput(gameId) {
     const btn = document.createElement("button");
     btn.type = "button";
     btn.className = "mkt-star-btn";
-    btn.textContent = "★";
+    btn.innerHTML = icon("star");
+    btn.setAttribute("aria-label", `${i}/5`);
     btn.dataset.stars = i;
     btn.addEventListener("mouseover", () => {
       row.querySelectorAll(".mkt-star-btn").forEach((b, j) => b.classList.toggle("hover", j < i));
@@ -614,7 +615,7 @@ async function loadRaters(gameId, container) {
     data.map(r =>
       `<div class="mkt-rater-row">
         <span class="mkt-rater-name">${esc(r.username || "?")}</span>
-        <span class="mkt-rater-stars">${"★".repeat(r.stars)}${"☆".repeat(5 - r.stars)}</span>
+        <span class="mkt-rater-stars" role="img" aria-label="${r.stars}/5">${icon("star").repeat(r.stars)}${icon("star-empty").repeat(5 - r.stars)}</span>
       </div>`
     ).join("");
 }

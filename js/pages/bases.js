@@ -13,6 +13,7 @@ import { getUiLang, initI18n, t, withLangParam } from "../../translation/transla
 import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-09-24T23154";
 import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../core/modal-sheet.js?v=v2026-09-24T23154";
 import "../core/contact-modal.js?v=v2026-09-24T23154";
+import { icon, iconText } from "../core/icons.js?v=v2026-09-24T23154";
 initI18n({ withSwitcher: true }).then(() => {
   document.documentElement.classList.remove('page-loading');
 });
@@ -288,8 +289,11 @@ function showProgBlock(el, on) {
   el.style.display = on ? "grid" : "none";
 }
 
-function setProgUi(stepEl, countEl, barEl, msgEl, { step, i, n, msg } = {}) {
-  if (stepEl && step != null) stepEl.textContent = String(step);
+function setProgUi(stepEl, countEl, barEl, msgEl, { step, i, n, msg, isError } = {}) {
+  if (stepEl && step != null) {
+    if (isError) stepEl.innerHTML = iconText("error", String(step));
+    else stepEl.textContent = String(step);
+  }
   if (countEl) countEl.textContent = `${Number(i) || 0}/${Number(n) || 0}`;
 
   const nn = Number(n) || 0;
@@ -960,7 +964,7 @@ async function renderShareModal() {
             ${escapeHtml(label)}
           </div>
           <div class="shareRowActions">
-            <button class="btn xsm" data-cancel type="button" title="${escapeHtml(t("bases.shareModal.cancelPending"))}">✕</button>
+            <button class="btn xsm" data-cancel type="button" title="${escapeHtml(t("bases.shareModal.cancelPending"))}">${icon("trash")}</button>
           </div>
         `;
 
@@ -1009,7 +1013,7 @@ async function renderShareModal() {
               </button>
               <div class="ui-select-menu" role="listbox"></div>
             </div>
-            <button class="btn xsm" data-x type="button" title="${escapeHtml(t("bases.share.remove"))}">✕</button>
+            <button class="btn xsm" data-x type="button" title="${escapeHtml(t("bases.share.remove"))}">${icon("trash")}</button>
           </div>
         `;
 
@@ -1216,7 +1220,8 @@ function render() {
 
       const isEdit = b.sharedRole === "editor";
       badges.push({
-        text: isEdit ? "✎" : "👁",
+        icon: isEdit ? "edit-paper" : "eye",
+        text: "",
         title: isEdit ? t("bases.badges.editAccess") : t("bases.badges.viewAccess"),
         kind: "role",
       });
@@ -1224,8 +1229,8 @@ function render() {
       const n = Number(b.shareCount || 0);
       badges.push(
         n > 0
-          ? { text: `👥 ${n}`, title: t("bases.badges.sharedOthers", { count: n }), kind: "mine" }
-          : { text: "👤", title: t("bases.badges.notShared"), kind: "mine" }
+          ? { icon: "people", text: String(n), title: t("bases.badges.sharedOthers", { count: n }), kind: "mine" }
+          : { icon: "person", text: "", title: t("bases.badges.notShared"), kind: "mine" }
       );
     }
 
@@ -1234,14 +1239,14 @@ function render() {
     const deleteBtn = (canDeleteOwned || canLeaveShared)
       ? `<button class="x" type="button" title="${escapeHtml(
           canDeleteOwned ? t("bases.actions.remove") : t("bases.actions.leaveShared")
-        )}">✕</button>`
+        )}">${icon("trash")}</button>`
       : ``;
       
     const proposedBtns = b.proposed
       ? `
         <div class="tileMiniActions">
-          <button class="btn xsm gold" data-accept type="button" title="${escapeHtml(t("bases.proposed.accept"))}">✓</button>
-          <button class="btn xsm" data-decline type="button" title="${escapeHtml(t("bases.proposed.decline"))}">✕</button>
+          <button class="btn xsm gold" data-accept type="button" title="${escapeHtml(t("bases.proposed.accept"))}" aria-label="${escapeHtml(t("bases.proposed.accept"))}">${icon("check")}</button>
+          <button class="btn xsm" data-decline type="button" title="${escapeHtml(t("bases.proposed.decline"))}" aria-label="${escapeHtml(t("bases.proposed.decline"))}">${icon("cancel")}</button>
         </div>`
       : "";
 
@@ -1251,7 +1256,7 @@ function render() {
             (x) =>
               `<span class="tileBadge" data-kind="${escapeHtml(x.kind)}" title="${escapeHtml(
                 x.title || ""
-              )}">${escapeHtml(x.text || "")}</span>`
+              )}">${x.icon ? icon(x.icon) : ""}${escapeHtml(x.text || "")}</span>`
           )
           .join("")
       : "";
@@ -1329,7 +1334,7 @@ function render() {
   const tNew = document.createElement("div");
   tNew.className = "addCard";
   tNew.innerHTML = `
-    <div class="plus">＋</div>
+    <div class="plus">${icon("plus")}</div>
     <div class="name">${escapeHtml(t("bases.sections.newBase"))}</div>
   `;
   tNew.addEventListener("click", () => openNameModalCreate());
@@ -1529,7 +1534,7 @@ document.addEventListener("DOMContentLoaded", () => {
     } catch (e) {
       console.warn("[bases] export error:", e);
       setProgUi(exportJsonStep, exportJsonCount, exportJsonBar, exportJsonMsg, {
-        step: t("bases.export.errorStep"), i: 0, n: 1, msg: e?.message || t("bases.export.failed"),
+        step: t("bases.export.errorStep"), i: 0, n: 1, msg: e?.message || t("bases.export.failed"), isError: true,
       });
       setTimeout(() => show(exportJsonOverlay, false), 1200);
     } finally {
@@ -1583,7 +1588,7 @@ document.addEventListener("DOMContentLoaded", () => {
       console.warn("[bases] import error:", e);
       setMsg(importMsg, t("bases.import.failed"));
       setProgUi(importProgStep, importProgCount, importProgBar, importProgMsg, {
-        step: t("bases.import.errorStep"), i: 0, n: 1, msg: e?.message || t("bases.import.errorMsg"),
+        step: t("bases.import.errorStep"), i: 0, n: 1, msg: e?.message || t("bases.import.errorMsg"), isError: true,
       });
     } finally {
       showProgBlock(importProg, false);

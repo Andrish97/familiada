@@ -884,3 +884,7 @@
 .gs-modal-mode .gs-layout {
     position: relative;
 }
+
+/* Ikony z silnika (js/core/icons.js) */
+.sfx-preview-btn .ico { width: 12px; height: 12px; vertical-align: middle; }
+.roundsOrderHandle .ico, .roundsOrderBtn .ico { vertical-align: middle; }
