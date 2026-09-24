@@ -1,13 +1,14 @@
+import { icon } from "../../js/core/icons.js?v=v2026-09-24T23191";
 export const initFullscreenButton = () => {
   const fsBtn = document.getElementById("fsBtn");
   if (!fsBtn) return;
 
-  const ICON_ENTER = "▢";
-  const ICON_EXIT  = "⧉";
+  const ICON_ENTER = icon("fullscreen-enter");
+  const ICON_EXIT  = icon("fullscreen-exit");
 
   const sync = () => {
     const on = !!document.fullscreenElement;
-    fsBtn.textContent = on ? ICON_EXIT : ICON_ENTER;
+    fsBtn.innerHTML = on ? ICON_EXIT : ICON_ENTER;
     fsBtn.classList.toggle("on", on);
     fsBtn.title = on ? "Wyjście z pełnego ekranu" : "Pełny ekran";
   };

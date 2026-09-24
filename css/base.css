@@ -14,8 +14,9 @@
 
 /* Ikony ze wspólnego silnika (js/core/icons.js). Rozmiar zależy od tekstu
    obok (em), kolor z currentColor. Przycisk z samą ikoną powiększa ją przez
-   własną klasę albo font-size. */
-.ico {
+   własną klasę albo font-size. Tylko svg — stare strony mają własne
+   <span class="ico"> z emotką. */
+svg.ico {
     display: inline-block;
     width: 1.15em;
     height: 1.15em;

@@ -530,7 +530,7 @@ const pl = {
     qrHostAlt: "QR Prowadzący",
     qrBuzzerAlt: "QR Przyciski",
     sumLabel: "SUMA",
-    audioUnlockBtn: "🔊 Odblokuj dźwięk",
+    audioUnlockBtn: "Odblokuj dźwięk",
   },
   host: {
     title: "Familiada — prowadzący",
@@ -4795,7 +4795,7 @@ const pl = {
     countdownTitle: "Trwa przerwa techniczna",
     countdownText:
       "System jest chwilowo niedostępny.\nPowrót nastąpi:",
-    countdownDone: "Powrót już możliwy. 🎉",
+    countdownDone: "Serwis jest ponownie dostępny. Odśwież stronę.",
     refresh: "Odśwież",
     contact: "Kontakt",
     statusLabel: "Status:",

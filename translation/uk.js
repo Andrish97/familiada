@@ -524,7 +524,7 @@ const uk = {
     qrHostAlt: "QR Ведучий",
     qrBuzzerAlt: "QR Кнопки",
     sumLabel: "СУМА",
-    audioUnlockBtn: "🔊 Розблокувати звук",
+    audioUnlockBtn: "Розблокувати звук",
   },
   host: {
     title: "Familiada — ведучий",
@@ -4451,7 +4451,7 @@ const uk = {
     countdownTitle: "Триває технічна перерва",
     countdownText:
       "Система тимчасово недоступна.\nПовернення відбудеться:",
-    countdownDone: "Повернення вже можливе. 🎉",
+    countdownDone: "Сервіс знову доступний. Онови сторінку.",
     refresh: "Оновити",
     contact: "Контакт",
     statusLabel: "Статус:",

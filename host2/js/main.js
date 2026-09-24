@@ -14,6 +14,7 @@ import { createSubscription } from "../../js/core/game-state-subscribe.js?v=v202
 import { createHostRenderer } from "./render.js?v=v2026-09-24T23191";
 import { createCoverLogoRenderer } from "./coverLogo.js?v=v2026-09-24T23191";
 import { createHostThemeApplier } from "./hostThemeManager.js?v=v2026-09-24T23191";
+import { icon } from "../../js/core/icons.js?v=v2026-09-24T23191";
 
 // videoWakeLockFallback: Host jest zwykle na osobnym tablecie/telefonie
 // prowadzącego (patrz plan) — dokładnie to urządzenie, które przeglądarka
@@ -79,7 +80,7 @@ function setupOrientationClass() {
 function setupFullscreenButton() {
   const btn = document.getElementById("btnFS");
   const ico = document.getElementById("fsIco");
-  function syncIcon() { if (ico) ico.textContent = document.fullscreenElement ? "⧉" : "▢"; }
+  function syncIcon() { if (ico) ico.innerHTML = icon(document.fullscreenElement ? "fullscreen-exit" : "fullscreen-enter"); }
   btn?.addEventListener("click", async () => {
     try {
       if (document.fullscreenElement) await document.exitFullscreen();

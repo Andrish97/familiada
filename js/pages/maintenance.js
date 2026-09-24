@@ -4,18 +4,18 @@ const ENDPOINT = "/maintenance-state.json?v=v2026-09-24T23191";
 const POLL_MS = 30000;
 
 const FALLBACKS = {
-  messageTitle: "TRWA PRZERWA TECHNICZNA",
+  messageTitle: "Trwa przerwa techniczna",
   messageText:
     "System jest chwilowo niedostępny.\nZa jakiś czas wszystko wróci do normy i będzie można kontynuować pracę.",
   inactiveTitle: "Brak prac technicznych",
   inactiveText: "Aktualnie nie trwają żadne prace.",
-  returnAtTitle: "TRWA PRZERWA TECHNICZNA",
+  returnAtTitle: "Trwa przerwa techniczna",
   returnAtText:
     "System jest chwilowo niedostępny.\nPowrót nastąpi:",
-  countdownTitle: "TRWA PRZERWA TECHNICZNA",
+  countdownTitle: "Trwa przerwa techniczna",
   countdownText:
     "System jest chwilowo niedostępny.\nPowrót nastąpi:",
-  countdownDone: "Powrót już możliwy. 🎉",
+  countdownDone: "Serwis jest ponownie dostępny. Odśwież stronę.",
 };
 
 const els = {

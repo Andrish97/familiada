@@ -529,7 +529,7 @@ const en = {
     // pustą 4. kratkę z prawej zamiast wyśrodkować etykietę jak w pozostałych
     // językach. Zgłoszone: ma być przesunięte o jedną kratkę w prawo.
     sumLabel: " SUM",
-    audioUnlockBtn: "🔊 Unlock sound",
+    audioUnlockBtn: "Unlock sound",
   },
   host: {
     title: "Familiada — host",
@@ -4466,7 +4466,7 @@ const en = {
     countdownTitle: "Technical maintenance in progress",
     countdownText:
       "The system is temporarily unavailable.\nReturn will be:",
-    countdownDone: "Return is possible now. 🎉",
+    countdownDone: "The service is available again. Refresh the page.",
     refresh: "Refresh",
     contact: "Contact",
     statusLabel: "Status:",
