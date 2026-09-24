@@ -659,7 +659,7 @@ function renderDisplay() {
       <div class="ui-select" id="gsThemeSelect" style="margin-top:8px;width:100%">
         <button class="btn inp ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
           <span class="ui-select-label">—</span>
-          <span class="ui-select-caret" aria-hidden="true">▾</span>
+          <span class="ui-select-caret" aria-hidden="true"><i class="ico" data-icon="caret-down"></i></span>
         </button>
         <div class="ui-select-menu" role="listbox"></div>
       </div>
@@ -854,7 +854,7 @@ async function renderSound() {
       <div class="ui-select sfx-variant-select" data-sfx-variant="${escAttr(key)}" style="min-width:0">
         <button class="btn sm ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
           <span class="ui-select-label">—</span>
-          <span class="ui-select-caret" aria-hidden="true">▾</span>
+          <span class="ui-select-caret" aria-hidden="true"><i class="ico" data-icon="caret-down"></i></span>
         </button>
         <div class="ui-select-menu" role="listbox"></div>
       </div>

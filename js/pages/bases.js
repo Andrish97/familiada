@@ -1005,7 +1005,7 @@ async function renderShareModal() {
             <div class="ui-select share-role-select" data-user-id="${userId}">
               <button class="btn sm ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
                 <span class="ui-select-label">—</span>
-                <span class="ui-select-caret" aria-hidden="true">▾</span>
+                <span class="ui-select-caret" aria-hidden="true"><i class="ico" data-icon="caret-down"></i></span>
               </button>
               <div class="ui-select-menu" role="listbox"></div>
             </div>

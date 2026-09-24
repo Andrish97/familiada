@@ -76,6 +76,7 @@ export const ICONS = Object.freeze({
   restore: s('<path d="M3.5 12a8.5 8.5 0 1 0 2.5-6L3.5 8.5"/><path d="M3.5 3.5v5h5"/>'),
   undo: s('<path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/>'),
   redo: s('<path d="m15 14 5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/>'),
+  "arrow-right": s('<path d="M5 12h14M12.5 5.5 19 12l-6.5 6.5"/>'),
   "arrow-left": s('<path d="M19 12H5M11.5 18.5 5 12l6.5-6.5"/>'),
   reply: s('<path d="m9 17-5-5 5-5"/><path d="M20 18v-2a4 4 0 0 0-4-4H4"/>'),
   "caret-down": caret(0),

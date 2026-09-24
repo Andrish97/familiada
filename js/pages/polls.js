@@ -912,8 +912,8 @@ function renderTextCloseFromModel() {
         row.innerHTML = `
           <input class="tcTxtInp" type="text" />
           <div class="tcCnt"></div>
-          <button class="tcMergeBtn" type="button" title="${t("polls.textClose.mergeWith")}">⇄</button>
-          <button class="tcDel" type="button" title="${t("polls.textClose.remove")}">✕</button>
+          <button class="tcMergeBtn" type="button" title="${t("polls.textClose.mergeWith")}" aria-label="${t("polls.textClose.mergeWith")}">${icon("merge")}</button>
+          <button class="tcDel" type="button" title="${t("polls.textClose.remove")}" aria-label="${t("polls.textClose.remove")}">${icon("trash")}</button>
         `;
 
         const inp = row.querySelector(".tcTxtInp");

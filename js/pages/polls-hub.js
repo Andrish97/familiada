@@ -472,7 +472,7 @@ function renderTasks() {
       if (task.status === "pending") {
         const btn = document.createElement("button");
         btn.className = "btn xs danger";
-        btn.textContent = "X";
+        btn.innerHTML = icon("trash");
         btn.addEventListener("click", async (e) => {
           e.stopPropagation();
           const ok = await confirmModal({
@@ -893,7 +893,7 @@ function renderDetailsList(container, rows) {
   for (const row of rows) {
     const item = document.createElement("div");
     item.className = "hub-details-item";
-    item.innerHTML = `<span>${escapeHtml(row.subscriber_display_label || MSG.dash())}</span><button class="btn xs danger">X</button>`;
+    item.innerHTML = `<span>${escapeHtml(row.subscriber_display_label || MSG.dash())}</span><button class="btn xs danger">${icon("trash")}</button>`;
     const removeBtn = item.querySelector("button");
     if (!row.task_id) removeBtn?.setAttribute("disabled", "disabled");
     removeBtn?.addEventListener("click", async () => {

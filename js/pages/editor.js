@@ -468,14 +468,17 @@ function showTxtImportProgress(on) {
   if (ta) ta.disabled = dis;
 }
 
-function setTxtImportProgress({ step, i, n, msg, isError } = {}) {
+function setTxtImportProgress({ step, i, n, msg, isError, done } = {}) {
   const stepEl = document.getElementById("txtImportProgStep");
   const countEl = document.getElementById("txtImportProgCount");
   const barEl = document.getElementById("txtImportProgBar");
   const msgEl = document.getElementById("txtImportProgMsg");
   const closeEl = document.getElementById("txtImportProgClose");
 
-  if (stepEl && step != null) stepEl.textContent = String(step);
+  if (stepEl && step != null) {
+    if (isError || done) stepEl.innerHTML = iconText(isError ? "error" : "check", String(step));
+    else stepEl.textContent = String(step);
+  }
   if (countEl) countEl.textContent = `${i || 0}/${n || 0}`;
 
   const nn = Number(n) || 0;
@@ -699,7 +702,7 @@ async function boot() {
     const x = document.createElement("button");
     x.type = "button";
     x.className = "x";
-    x.textContent = "✕";
+    x.innerHTML = icon("trash");
     x.title = MSG.deleteLabel();
     return x;
   }
@@ -782,7 +785,7 @@ async function boot() {
     addQ.type = "button";
     addQ.className = "qcard addTile";
     addQ.innerHTML = `
-      <div class="plus">+</div>
+      <div class="plus">${icon("plus")}</div>
       <div>
         <div class="txt">${MSG.addQuestionLabel()}</div>
         <div class="sub">${meetsMin ? MSG.minQuestionsOk() : MSG.minQuestions(QN_MIN, qCount)}</div>
@@ -915,12 +918,12 @@ async function boot() {
         row.innerHTML = `
           <input class="aText" type="text" maxlength="17" placeholder="${MSG.answerDefault(a.ord)}">
           <input class="aPts" type="number" step="1" inputmode="numeric">
-          <button class="aDel" type="button" title="${MSG.deleteLabel()}">✕</button>
+          <button class="aDel" type="button" title="${MSG.deleteLabel()}">${icon("trash")}</button>
         `;
       } else {
         row.innerHTML = `
           <input class="aText" type="text" maxlength="17" placeholder="${MSG.answerDefault(a.ord)}">
-          <button class="aDel" type="button" title="${MSG.deleteLabel()}">✕</button>
+          <button class="aDel" type="button" title="${MSG.deleteLabel()}">${icon("trash")}</button>
         `;
       }
 
@@ -1228,6 +1231,7 @@ async function boot() {
   
       setTxtImportProgress({
         step: MSG.importOk(),
+        done: true,
         i: total,
         n: total,
         msg: MSG.importDone(),

@@ -84,7 +84,7 @@
         <button class="btn sm gold" id="btnPollAction" type="button" style="visibility:hidden"></button>
         <button class="btn sm" id="btnCancelTextCloseTop" type="button" style="display:none;" data-i18n="polls.actions.cancel">Anuluj</button>
         <button class="btn sm" id="btnRefreshResults" type="button" style="visibility:hidden">
-          <span data-i18n="polls.actions.refresh">⟳ Odśwież wyniki</span>
+          <span data-i18n="polls.actions.refresh" data-i18n-icon="refresh">Odśwież wyniki</span>
         </button>
       </div>
 
@@ -93,8 +93,8 @@
         <div class="name" style="display:flex; justify-content:space-between; align-items:center;">
           <span data-i18n="polls.textClose.title">Zamykanie — edycja odpowiedzi</span>
           <div class="tcHistoryTools">
-            <button class="btn sm" id="btnUndo" type="button" title="Cofnij" disabled>↩</button>
-            <button class="btn sm" id="btnRedo" type="button" title="Ponów" disabled>↪</button>
+            <button class="btn sm" id="btnUndo" type="button" title="Cofnij" aria-label="Cofnij" disabled><i class="ico" data-icon="undo"></i></button>
+            <button class="btn sm" id="btnRedo" type="button" title="Ponów" aria-label="Ponów" disabled><i class="ico" data-icon="redo"></i></button>
           </div>
         </div>
         <div class="meta" id="textCloseMeta">—</div>
@@ -133,7 +133,7 @@
     <div class="qrModalBox">
       <div class="qrModalHead">
         <div class="qrModalTitle" id="pollQrModalTitle" data-i18n="polls.qrModal.title">Wyświetlacz QR</div>
-        <button class="btn xs" id="pollQrModalClose" type="button">✕</button>
+        <button class="btn xs" id="pollQrModalClose" type="button" aria-label="Zamknij" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
       </div>
       <div class="qrModalSubtitle" data-i18n="polls.qrModal.subtitle">Kod do podłączenia wyświetlacza — nie do głosowania</div>
       <div class="qrModalBody">

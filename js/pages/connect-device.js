@@ -8,6 +8,7 @@ import { initI18n, t, getUiLang, withLangParam } from "../../translation/transla
 import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-09-24T23131";
 import { alertModal } from "../core/modal.js?v=v2026-09-24T23131";
 import "../core/contact-modal.js?v=v2026-09-24T23131";
+import { icon, iconText } from "../core/icons.js?v=v2026-09-24T23131";
 
 const btnBack             = document.getElementById("btnBack");
 const btnManual           = document.getElementById("btnManual");
@@ -42,11 +43,15 @@ function deviceTypeLabel(type) {
   return type;
 }
 
-function deviceTypeEmoji(type) {
-  if (type === "host")    return "🎤";
-  if (type === "buzzer")  return "🔔";
-  if (type === "poll_qr") return "📊";
-  return "📺";
+function deviceTypeIconName(type) {
+  if (type === "host")    return "host";
+  if (type === "buzzer")  return "buzzer";
+  if (type === "poll_qr") return "polls";
+  return "display";
+}
+
+function deviceTypeIcon(type) {
+  return icon(deviceTypeIconName(type));
 }
 
 const _isMobile = isMobileDevice();
@@ -69,9 +74,8 @@ let _previewDeviceInfo = null;
 function showDevicePreview(info) {
   _previewDeviceInfo = info;
   const typeLabel = deviceTypeLabel(info.device_type);
-  const emoji = deviceTypeEmoji(info.device_type);
   if (devicePreviewTitle) {
-    devicePreviewTitle.textContent = `${emoji} ${typeLabel}`;
+    devicePreviewTitle.innerHTML = iconText(deviceTypeIconName(info.device_type), typeLabel);
   }
   if (devicePreviewSub) {
     const gameName = info.game_name || "—";
@@ -170,7 +174,7 @@ async function renderSharedDevices() {
     const typeLabel  = deviceTypeLabel(item.device_type);
 
     row.innerHTML = `
-      <div class="connect-device-tile-icon">${deviceTypeEmoji(item.device_type)}</div>
+      <div class="connect-device-tile-icon">${deviceTypeIcon(item.device_type)}</div>
       <div class="connect-device-tile-body">
         <div class="connect-device-tile-name">${gameName}</div>
         <div class="connect-device-tile-meta">
@@ -179,7 +183,7 @@ async function renderSharedDevices() {
           <span class="connect-device-tile-meta-owner">${ownerLabel}</span>
         </div>
       </div>
-      <div class="connect-device-tile-arrow">→</div>
+      <div class="connect-device-tile-arrow">${icon("arrow-right")}</div>
     `;
 
     row.addEventListener("click", async () => {
@@ -223,7 +227,8 @@ function buildScanOverlay() {
   video.style.cssText = "position:fixed;inset:0;width:100%;height:100%;object-fit:cover;z-index:9999;background:#000;";
 
   const closeBtn = document.createElement("button");
-  closeBtn.textContent = "✕";
+  closeBtn.innerHTML = icon("close");
+  closeBtn.setAttribute("aria-label", t("common.modal.closeLabel"));
   closeBtn.style.cssText = "position:fixed;top:calc(16px + env(safe-area-inset-top, 0px));right:16px;z-index:10000;padding:10px 16px;border-radius:12px;border:none;background:rgba(0,0,0,.7);color:#fff;font-size:1.2rem;cursor:pointer;";
 
   return { video, closeBtn };

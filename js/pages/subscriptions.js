@@ -330,7 +330,7 @@ function renderSubscribers() {
       if (row.status !== "declined") {
         const removeBtn = document.createElement("button");
         removeBtn.className = "btn xs danger";
-        removeBtn.textContent = "X";
+        removeBtn.innerHTML = icon("trash");
         removeBtn.addEventListener("click", async (e) => {
           e.stopPropagation();
           const ok = await confirmModal({ title: MSG.removeTitle(), text: MSG.removeText(), okText: MSG.removeOk(), cancelText: MSG.removeCancel() });
@@ -348,7 +348,7 @@ function renderSubscribers() {
       if (row.status === "pending") {
         const resendBtn = document.createElement("button");
         resendBtn.className = "btn xs";
-        resendBtn.textContent = "↻";
+        resendBtn.innerHTML = icon("refresh");
         const until = cooldownUntil(row.email_sent_at);
         if (until && Date.now() < until) {
           resendBtn.classList.add("cooldown");
@@ -412,7 +412,7 @@ function renderInvites() {
       if (row.status !== "declined") {
         const reject = document.createElement("button");
         reject.className = "btn xs danger";
-        reject.textContent = "X";
+        reject.innerHTML = icon("cancel");
         reject.addEventListener("click", async (e) => {
           e.stopPropagation();
           const isPending = row.status === "pending";
@@ -436,7 +436,7 @@ function renderInvites() {
       if (row.status === "pending") {
         const accept = document.createElement("button");
         accept.className = "btn xs gold";
-        accept.textContent = "✓";
+        accept.innerHTML = icon("check");
         accept.addEventListener("click", async (e) => {
           e.stopPropagation();
           try {

@@ -97,6 +97,8 @@
 .connect-device-tile-arrow {
   font-size: 1.2rem;
   opacity: .4;
+  display: grid;
+  place-items: center;
 }
 
 .games-shell > .games-card {

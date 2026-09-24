@@ -54,7 +54,7 @@
       </div>
       <div class="actions">
         <!-- tylko na mobile/tablet – skanowanie QR -->
-        <button class="btn sm gold" id="btnScanQr" style="display:none;" type="button" data-i18n="connectDevice.scan.btn">📷 Skanuj QR</button>
+        <button class="btn sm gold" id="btnScanQr" style="display:none;" type="button" data-i18n="connectDevice.scan.btn" data-i18n-icon="camera">Skanuj QR</button>
       </div>
     </div>
 
@@ -87,7 +87,7 @@
     <div class="modal">
       <div class="mHead">
         <div class="mTitle" id="devicePreviewTitle">Urządzenie</div>
-        <button class="btn sm" id="btnDevicePreviewClose" type="button">✕</button>
+        <button class="btn sm" id="btnDevicePreviewClose" type="button" aria-label="Zamknij" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
       </div>
       <div class="mSub" id="devicePreviewSub"></div>
       <div class="importRow" style="margin-top:16px;">
