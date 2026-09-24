@@ -14,8 +14,8 @@
 // tego refreshBadges() zwraca zwykły obiekt {display,host,buzzer: bool},
 // który app.js dokłada do ctx.shareBadges na kolejny ui.render().
 
-import { sb, SUPABASE_URL } from "../../js/core/supabase.js?v=v2026-09-24T22443";
-import { t } from "../../translation/translation.js?v=v2026-09-24T22443";
+import { sb, SUPABASE_URL } from "../../js/core/supabase.js?v=v2026-09-24T23063";
+import { t } from "../../translation/translation.js?v=v2026-09-24T23063";
 
 const MAIL_FUNCTION_URL = `${SUPABASE_URL}/functions/v1/send-mail`;
 const SHARE_TTL_MS = 4 * 60 * 60 * 1000;
