@@ -449,7 +449,7 @@ const en = {
     statusMigrateCancelled: "Migration cancelled.",
     errCancelMigrationFailed: "Failed to cancel the migration.",
     title: "Familiada — account",
-    pageTitle: "Familiada — account settings",
+    pageTitle: "Familiada — my account",
     backToGames: "← My games",
     headerTitle: "Account settings",
     headerHint: "Manage your profile, email, and security.",
@@ -519,7 +519,7 @@ const en = {
     errDeleteFailed: "Failed to delete account.",
   },
   display: {
-    title: "Display like classic Familiada",
+    title: "Familiada — display",
     qrHost: "Host",
     qrBuzzer: "Buzzer",
     qrHostAlt: "QR Host",
@@ -737,7 +737,7 @@ const en = {
     },
   },
   polls: {
-    title: "Familiada — poll",
+    title: "Familiada — poll and results",
     backToGames: "← My games",
     backToHub: "← Polls hub",
     logout: "Log out",
@@ -2987,7 +2987,7 @@ const en = {
     gameFallback: "Untitled",
   },
   editor: {
-    title: "Familiada — editor",
+    title: "Familiada — game editor",
     backToGames: "← My games",
     backToQuestions: "← Back",
     logout: "Log out",
@@ -3116,7 +3116,7 @@ const en = {
     },
   },
   pollText: {
-    title: "Familiada — poll",
+    title: "Familiada — text poll",
     pollTitle: "Poll",
     loading: "Loading…",
     placeholder: "Enter an answer...",
@@ -3142,7 +3142,7 @@ const en = {
     openPollFail: "Unable to open poll: {error}",
   },
   pollPoints: {
-    title: "Familiada — poll",
+    title: "Familiada — points poll",
     pollTitle: "Poll",
     loading: "Loading…",
     thanks: "Thanks for participating!",
@@ -3164,7 +3164,7 @@ const en = {
     answerFallback: "ANS {ord}",
   },
   pollGo: {
-    title: "Familiada — invitation",
+    title: "Familiada — poll invitation",
     loadingTitle: "Loading invitation…",
     loadingText: "Please wait.",
     emailPlaceholder: "Enter email",
@@ -3226,7 +3226,7 @@ const en = {
     mailAccountSettingsLink: "Account settings",
   },
   pollQr: {
-    title: "Familiada — QR",
+    title: "Familiada — QR code poll",
     fullscreen: "Fullscreen",
     scan: "Scan the QR code to vote",
     missingUrl: "Missing URL",
@@ -3704,7 +3704,7 @@ const en = {
 
   pollsHubSubscriptions: {
     dash: "-",
-    title: "Familiada — polls hub",
+    title: "Familiada — subscriptions",
     backToGames: "← My games",
     logout: "Log out",
     header: {
@@ -4227,7 +4227,7 @@ const en = {
     },
   },
   baseExplorer: {
-    title: "Question base manager",
+    title: "Familiada — question base manager",
     headerTitle: "Question base manager",
     backToBases: "← My bases",
     logout: "Log out",
@@ -4456,6 +4456,7 @@ const en = {
   },
   maintenance: {
     title: "TECHNICAL MAINTENANCE IN PROGRESS ⏳",
+    pageTitle: "Familiada — technical maintenance",
     messageText:
       "The system is temporarily unavailable.\nEverything will be back to normal in a while and you will be able to continue working.",
     inactiveTitle: "No maintenance",
@@ -4475,6 +4476,7 @@ const en = {
   },
   marketplace: {
     title: "Community Games",
+    pageTitle: "Community Games — ready-made Familiada questions",
     subtitle: "Browse games created by the community and add them to your library.",
     loading: "Loading…",
     nav: {
@@ -4557,7 +4559,7 @@ const en = {
     },
   },
   notFound: {
-    title: "Page not found",
+    title: "Familiada — page not found",
     messageTitle: "Page not found",
     messageText:
       "This address does not exist or has been moved. Check the link.",
@@ -4568,7 +4570,7 @@ const en = {
     footerRight: "If this is a mistake, <a href=\"mailto:kontakt@familiada.online\">kontakt@familiada.online</a>",
   },
   connectDevice: {
-    title: "Familiada — Connect device",
+    title: "Familiada — connect a device",
     topbar: { back: "← My games" },
     header: {
       title: "Connect device",
@@ -4613,7 +4615,7 @@ const en = {
     },
   },
   control: {
-    title: "Familiada — Control Panel",
+    title: "Familiada — control panel",
     loading: "Loading panel…",
     backToGames: "← My games",
     logout: "Logout",
@@ -5067,7 +5069,7 @@ const en = {
     selfXssWarning: "Using this console may allow attackers to impersonate you and steal your information using an attack called Self-XSS. Do not enter or paste code that you do not understand.",
   },
   gameSettings: {
-    title: "Game Settings",
+    title: "Familiada — game settings",
     back: "← My games",
     saveAll: "Save all",
     resetAll: "Restore defaults",

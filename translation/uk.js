@@ -449,7 +449,7 @@ const uk = {
     statusMigrateCancelled: "Міграцію скасовано.",
     errCancelMigrationFailed: "Не вдалося скасувати міграцію.",
     title: "Familiada — акаунт",
-    pageTitle: "Familiada — налаштування акаунта",
+    pageTitle: "Familiada — мій акаунт",
     backToGames: "← Мої ігри",
     headerTitle: "Налаштування акаунта",
     headerHint: "Керуй профілем, e-mail та безпекою.",
@@ -519,7 +519,7 @@ const uk = {
     errDeleteFailed: "Не вдалося видалити акаунт.",
   },
   display: {
-    title: "Екран як у класичній «Familiada»",
+    title: "Familiada — екран",
     qrHost: "Ведучий",
     qrBuzzer: "Кнопки",
     qrHostAlt: "QR Ведучий",
@@ -732,7 +732,7 @@ const uk = {
     },
   },
   polls: {
-    title: "Familiada — опитування",
+    title: "Familiada — опитування та результати",
     backToGames: "← Мої ігри",
     backToHub: "← Центр опитувань",
     logout: "Вийти",
@@ -2971,7 +2971,7 @@ const uk = {
     gameFallback: "Без назви",
   },
   editor: {
-    title: "Familiada — редактор",
+    title: "Familiada — редактор гри",
     backToGames: "← Мої ігри",
     backToQuestions: "← Назад",
     logout: "Вийти",
@@ -3100,7 +3100,7 @@ const uk = {
     },
   },
   pollText: {
-    title: "Familiada — опитування",
+    title: "Familiada — текстове опитування",
     pollTitle: "Опитування",
     loading: "Завантажую…",
     placeholder: "Введи відповідь...",
@@ -3126,7 +3126,7 @@ const uk = {
     openPollFail: "Не вдалося відкрити опитування: {error}",
   },
   pollPoints: {
-    title: "Familiada — опитування",
+    title: "Familiada — опитування з балами",
     pollTitle: "Опитування",
     loading: "Завантажую…",
     thanks: "Дякуємо за участь!",
@@ -3148,7 +3148,7 @@ const uk = {
     answerFallback: "ВІДП {ord}",
   },
   pollGo: {
-    title: "Familiada — запрошення",
+    title: "Familiada — запрошення до опитування",
     loadingTitle: "Завантажую запрошення…",
     loadingText: "Будь ласка, зачекай.",
     emailPlaceholder: "Введи email",
@@ -3210,7 +3210,7 @@ const uk = {
     mailAccountSettingsLink: "Налаштування акаунту",
   },
   pollQr: {
-    title: "Familiada — QR",
+    title: "Familiada — опитування з QR-кодом",
     fullscreen: "На весь екран",
     scan: "Скануй QR, щоб проголосувати",
     missingUrl: "Немає URL",
@@ -3688,7 +3688,7 @@ const uk = {
 
   pollsHubSubscriptions: {
     dash: "-",
-    title: "Familiada — центр опитувань",
+    title: "Familiada — підписки",
     backToGames: "← Мої ігри",
     logout: "Вийти",
     header: {
@@ -4212,7 +4212,7 @@ const uk = {
     },
   },
   baseExplorer: {
-    title: "Менеджер бази питань",
+    title: "Familiada — менеджер бази питань",
     headerTitle: "Менеджер бази питань",
     backToBases: "← Мої бази",
     logout: "Вийти",
@@ -4441,6 +4441,7 @@ const uk = {
   },
   maintenance: {
     title: "ТРИВАЄ ТЕХНІЧНА ПЕРЕРВА ⏳",
+    pageTitle: "Familiada — технічна перерва",
     messageText:
       "Система тимчасово недоступна.\nЗа деякий час усе повернеться до норми, і ти зможеш продовжити роботу.",
     inactiveTitle: "Немає технічних робіт",
@@ -4460,6 +4461,7 @@ const uk = {
   },
   marketplace: {
     title: "Ігри Спільноти",
+    pageTitle: "Ігри Спільноти — готові питання для Familiada",
     subtitle: "Переглядай ігри від спільноти та додавай їх до своєї бібліотеки.",
     loading: "Завантаження…",
     nav: {
@@ -4542,7 +4544,7 @@ const uk = {
     },
   },
   notFound: {
-    title: "Сторінку не знайдено",
+    title: "Familiada — сторінку не знайдено",
     messageTitle: "Сторінку не знайдено",
     messageText:
       "Такої адреси не існує або її перенесено. Перевір посилання.",
@@ -4553,7 +4555,7 @@ const uk = {
     footerRight: "Якщо це помилка — <a href=\"mailto:kontakt@familiada.online\">kontakt@familiada.online</a>",
   },
   connectDevice: {
-    title: "Familiada — Підключити пристрій",
+    title: "Familiada — підключити пристрій",
     topbar: { back: "← Мої ігри" },
     header: {
       title: "Підключити пристрій",
@@ -4598,7 +4600,7 @@ const uk = {
     },
   },
   control: {
-    title: "Familiada — Панель керування",
+    title: "Familiada — панель керування",
     loading: "Завантаження панелі…",
     backToGames: "← Мої ігри",
     logout: "Вийти",
@@ -5054,7 +5056,7 @@ const uk = {
     selfXssWarning: "Використання цієї консолі може дозволити зловмисникам видавати себе за тебе та красти твою інформацію за допомогою атаки, яка називається Self-XSS. Не вводь і не вставляй код, якого не розумієш.",
   },
   gameSettings: {
-    title: "Налаштування гри",
+    title: "Familiada — налаштування гри",
     back: "← Мої ігри",
     saveAll: "Зберегти все",
     resetAll: "Відновити типові",

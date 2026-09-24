@@ -455,7 +455,7 @@ const pl = {
     statusMigrateCancelled: "Migracja anulowana.",
     errCancelMigrationFailed: "Nie udało się anulować migracji.",
     title: "Familiada — konto",
-    pageTitle: "Familiada — ustawienia konta",
+    pageTitle: "Familiada — moje konto",
     backToGames: "← Moje gry",
     headerTitle: "Ustawienia konta",
     headerHint: "Zarządzaj profilem, e-mailem i bezpieczeństwem.",
@@ -525,7 +525,7 @@ const pl = {
     errDeleteFailed: "Nie udało się usunąć konta.",
   },
   display: {
-    title: "Wyświetlacz jak w klasycznej „Familiada”",
+    title: "Familiada — wyświetlacz",
     qrHost: "Prowadzący",
     qrBuzzer: "Przyciski",
     qrHostAlt: "QR Prowadzący",
@@ -738,7 +738,7 @@ const pl = {
     },
   },
   polls: {
-    title: "Familiada — ankieta",
+    title: "Familiada — ankieta i wyniki",
     backToGames: "← Moje gry",
     backToHub: "← Centrum ankiet",
     logout: "Wyloguj",
@@ -2861,7 +2861,7 @@ const pl = {
     gameFallback: "Bez nazwy",
   },
   editor: {
-    title: "Familiada — edytor",
+    title: "Familiada — edytor gry",
     backToGames: "← Moje gry",
     backToQuestions: "← Wstecz",
     logout: "Wyloguj",
@@ -2990,7 +2990,7 @@ const pl = {
     },
   },
   pollText: {
-    title: "Familiada — ankieta",
+    title: "Familiada — ankieta tekstowa",
     pollTitle: "Ankieta",
     loading: "Ładuję…",
     placeholder: "Wpisz odpowiedź...",
@@ -3016,7 +3016,7 @@ const pl = {
     openPollFail: "Nie można otworzyć ankiety: {error}",
   },
   pollPoints: {
-    title: "Familiada — ankieta",
+    title: "Familiada — ankieta punktowa",
     pollTitle: "Ankieta",
     loading: "Ładuję…",
     thanks: "Dziękujemy za udział!",
@@ -3038,7 +3038,7 @@ const pl = {
     answerFallback: "ODP {ord}",
   },
   pollGo: {
-    title: "Familiada — zaproszenie",
+    title: "Familiada — zaproszenie do ankiety",
     loadingTitle: "Ładuję zaproszenie…",
     loadingText: "Proszę czekać.",
     emailPlaceholder: "Podaj e-mail",
@@ -3100,7 +3100,7 @@ const pl = {
     mailAccountSettingsLink: "Ustawienia konta",
   },
   pollQr: {
-    title: "Familiada — QR",
+    title: "Familiada — ankieta z kodem QR",
     fullscreen: "Pełny ekran",
     scan: "Zeskanuj QR, aby zagłosować",
     missingUrl: "Brak URL",
@@ -3578,7 +3578,7 @@ const pl = {
 
   pollsHubSubscriptions: {
     dash: "-",
-    title: "Familiada — centrum ankiet",
+    title: "Familiada — subskrypcje",
     backToGames: "← Moje gry",
     logout: "Wyloguj",
     header: {
@@ -4102,7 +4102,7 @@ const pl = {
     },
   },
   baseExplorer: {
-    title: "Menadżer bazy pytań",
+    title: "Familiada — menadżer bazy pytań",
     headerTitle: "Menadżer bazy pytań",
     backToBases: "← Moje bazy",
     logout: "Wyloguj",
@@ -4330,7 +4330,7 @@ const pl = {
     },
   },
   control: {
-    title: "Familiada — Panel sterowania",
+    title: "Familiada — panel sterowania",
     loading: "Ładowanie panelu…",
     backToGames: "← Moje gry",
     logout: "Wyloguj",
@@ -4785,6 +4785,7 @@ const pl = {
   },
   maintenance: {
     title: "TRWA PRZERWA TECHNICZNA ⏳",
+    pageTitle: "Familiada — przerwa techniczna",
     messageText:
       "System jest chwilowo niedostępny.\nZa jakiś czas wszystko wróci do normy i będzie można kontynuować pracę.",
     inactiveTitle: "Brak prac technicznych",
@@ -4804,6 +4805,7 @@ const pl = {
   },
   marketplace: {
     title: "Gry Społeczności",
+    pageTitle: "Gry Społeczności — gotowe pytania do Familiady",
     subtitle: "Przeglądaj gry stworzone przez społeczność i dodawaj je do swojej biblioteki.",
     loading: "Ładowanie…",
     nav: {
@@ -4886,7 +4888,7 @@ const pl = {
     },
   },
   notFound: {
-    title: "Strona nie istnieje",
+    title: "Familiada — strona nie istnieje",
     messageTitle: "Strona nie istnieje",
     messageText:
       "Tego adresu nie ma lub został przeniesiony. Sprawdź poprawność linku.",
@@ -4897,7 +4899,7 @@ const pl = {
     footerRight: "Jeśli to błąd — <a href=\"mailto:kontakt@familiada.online\">kontakt@familiada.online</a>",
   },
   connectDevice: {
-    title: "Familiada — Podłącz urządzenie",
+    title: "Familiada — podłącz urządzenie",
     topbar: { back: "← Moje gry" },
     header: {
       title: "Podłącz urządzenie",
@@ -4950,7 +4952,7 @@ const pl = {
     selfXssWarning: "Używanie tej konsoli może pozwolić atakującym na podszywanie się pod Ciebie i kradzież informacji przy użyciu ataku zwanego Self-XSS. Nie wprowadzaj ani nie wklejaj kodu, którego nie rozumiesz.",
   },
   gameSettings: {
-    title: "Ustawienia gry",
+    title: "Familiada — ustawienia gry",
     back: "← Moje gry",
     saveAll: "Zapisz wszystko",
     resetAll: "Przywróć domyślne",
