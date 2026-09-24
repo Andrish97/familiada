@@ -365,18 +365,17 @@ body.home-body {
 
 .faq-q::-webkit-details-marker { display: none; }
 
-.faq-q::after {
-  content: '+';
-  font-size: 20px;
+.faq-q .faq-caret {
+  width: 18px;
+  height: 18px;
   color: var(--gold);
   opacity: .5;
   flex-shrink: 0;
   transition: transform 200ms ease, opacity 200ms ease;
-  line-height: 1;
 }
 
-details[open] .faq-q::after {
-  transform: rotate(45deg);
+details[open] .faq-q .faq-caret {
+  transform: rotate(180deg);
   opacity: 1;
 }
 

@@ -143,7 +143,7 @@ const en = {
       title: "Free Familiada Online. A real game show on your own equipment.",
       lead: "The best system for playing Familiada: collect answers from participants via a poll, then run the live game. Ideal game for weddings, birthdays and corporate parties. Everything in the browser.",
       ctaStart: "Start creating games and running the live show",
-      ctaMarketplace: "Browse Community Games 🎮",
+      ctaMarketplace: "Browse Community Games",
       note: "Guest mode available — free Familiada without registration.",
     },
     about: {
@@ -4565,7 +4565,7 @@ const en = {
       "This address does not exist or has been moved. Check the link.",
     redirectHint: "You will be redirected to the home page shortly.",
     homeBtn: "Home",
-    marketplaceBtn: "Pick a ready-made game and start playing! 🎲",
+    marketplaceBtn: "Browse Community Games",
     footerLeft: "Familiada",
     footerRight: "If this is a mistake, <a href=\"mailto:kontakt@familiada.online\">kontakt@familiada.online</a>",
   },

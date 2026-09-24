@@ -149,7 +149,7 @@ const pl = {
       title: "Darmowa Familiada Online. Prawdziwy teleturniej na Twoim sprzęcie.",
       lead: "Najlepszy system do gry w Familiadę: zbierz odpowiedzi od uczestników w ankiecie, a potem poprowadź grę na żywo. Idealna gra na wesele, urodziny i imprezę firmową. Wszystko w przeglądarce.",
       ctaStart: "Zacznij tworzyć gry i prowadzić rozgrywkę",
-      ctaMarketplace: "Przeglądaj Gry Społeczności 🎮",
+      ctaMarketplace: "Przeglądaj Gry Społeczności",
       note: "Dostępny tryb gościa — darmowa Familiada bez rejestracji.",
     },
     about: {
@@ -4894,7 +4894,7 @@ const pl = {
       "Tego adresu nie ma lub został przeniesiony. Sprawdź poprawność linku.",
     redirectHint: "Za chwilę wrócisz na stronę główną.",
     homeBtn: "Strona główna",
-    marketplaceBtn: "Wylosuj gotową grę i zacznij zabawę! 🎲",
+    marketplaceBtn: "Przeglądaj Gry Społeczności",
     footerLeft: "Familiada",
     footerRight: "Jeśli to błąd — <a href=\"mailto:kontakt@familiada.online\">kontakt@familiada.online</a>",
   },

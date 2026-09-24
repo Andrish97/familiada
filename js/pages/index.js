@@ -3,6 +3,7 @@ import { sb } from "../core/supabase.js?v=v2026-09-24T23063";
 import { initI18n, withLangParam, applyTranslations, getUiLang, t } from "../../translation/translation.js?v=v2026-09-24T23063";
 import { isGuestUser } from "../core/guest-mode.js?v=v2026-09-24T23063";
 import { initRatingSystem } from "../core/rating-system.js?v=v2026-09-24T23063";
+import { icon, iconText } from "../core/icons.js?v=v2026-09-24T23063";
 
 async function redirectIfSession() {
   try {
@@ -39,11 +40,12 @@ async function loadRatingStats() {
 
     const fullStars = Math.floor(avg);
     const halfStar = avg % 1 >= 0.5;
-    const starsStr = "★".repeat(fullStars) + (halfStar ? "½" : "") + "☆".repeat(Math.max(0, 5 - fullStars - (halfStar ? 1 : 0)));
+    const emptyStars = Math.max(0, 5 - fullStars - (halfStar ? 1 : 0));
+    const starsStr = icon("star").repeat(fullStars) + (halfStar ? icon("star-half") : "") + icon("star-empty").repeat(emptyStars);
 
     wrap.innerHTML = `
       <div class="rating-badge-index">
-        <span class="stars">${starsStr}</span>
+        <span class="stars" role="img" aria-label="${avg}/5">${starsStr}</span>
         <span class="score">${avg}/5</span>
         <span class="count">(${count})</span>
       </div>
@@ -187,6 +189,14 @@ function initPipeline() {
   update();
 }
 
+/* ---------- FAQ: strzałka rozwijania (ta sama co w listach) ---------- */
+
+function initFaqCarets() {
+  document.querySelectorAll(".faq-q").forEach((q) => {
+    if (!q.querySelector(".faq-caret")) q.insertAdjacentHTML("beforeend", icon("caret-down", { className: "faq-caret" }));
+  });
+}
+
 /* ---------- image viewer ---------- */
 
 function initImageViewer() {
@@ -196,7 +206,7 @@ function initImageViewer() {
     <div class="imgv-panel" role="dialog" aria-modal="true">
       <div class="imgv-top">
         <div class="imgv-title" id="imgvTitle"></div>
-        <button class="imgv-close btn" type="button" id="imgvClose" aria-label="Close">✕</button>
+        <button class="imgv-close btn" type="button" id="imgvClose" aria-label="${t("common.modal.closeLabel")}">${icon("close")}</button>
       </div>
       <div class="imgv-stage" id="imgvStage"></div>
     </div>
@@ -318,19 +328,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   initPipeline();
   initImageViewer();
+  initFaqCarets();
 
   await loadRatingStats();
-
-  // Tab Title Animation (Accepted)
-  const originalTitle = document.title;
-  window.addEventListener("visibilitychange", () => {
-    if (document.hidden) {
-      const messages = ["Wracaj do gry! 🎮", "Suchar czeka... 🤣", "Pytanie: więcej niż jedno zwierzę? 🐑"];
-      document.title = messages[Math.floor(Math.random() * messages.length)];
-    } else {
-      document.title = originalTitle;
-    }
-  });
 
   // Persistent Teaser Logic (Accepted)
   const teaser = document.getElementById("quickPollTeaser");

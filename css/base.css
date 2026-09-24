@@ -1622,7 +1622,8 @@ body{
 
 .rating-badge-index .stars {
     color: var(--gold);
-    letter-spacing: 1px;
+    display: inline-flex;
+    gap: 1px;
 }
 
 .rating-badge-index .count {

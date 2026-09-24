@@ -21,3 +21,18 @@
 .brand-static{
   text-decoration: none;
 }
+
+.notfound-actions{
+  margin-top: 24px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+}
+
+.notfound-actions .btn{
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  text-decoration: none;
+}

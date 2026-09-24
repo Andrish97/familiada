@@ -125,6 +125,7 @@ export const ICONS = Object.freeze({
   // --- oceny --------------------------------------------------------------
   star: f(STAR_PATH),
   "star-empty": s(STAR_PATH),
+  "star-half": s(`<defs><clipPath id="fam-star-half-c"><rect width="12" height="24"/></clipPath></defs><g clip-path="url(#fam-star-half-c)" fill="currentColor">${STAR_PATH}</g>${STAR_PATH}`),
 
   // --- edytor logo --------------------------------------------------------
   cursor: s('<path d="M4.5 3.5 19 9.3a.5.5 0 0 1 0 .9l-6 2.1a1.5 1.5 0 0 0-.9.9l-2.1 6a.5.5 0 0 1-.9 0Z"/>'),
