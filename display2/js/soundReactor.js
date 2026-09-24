@@ -10,8 +10,8 @@
 // domyślne "control", ten reaktor po prostu nic nie robi (zero podwójnego
 // odtwarzania z dwóch urządzeń naraz).
 
-import { playSfx, getSfxDuration } from "../../js/core/sfx.js?v=v2026-09-24T08505";
-import { createSoundCueEngine } from "../../shared/soundCueEngine.js?v=v2026-09-24T08505";
+import { playSfx, getSfxDuration } from "../../js/core/sfx.js?v=v2026-09-24T08561";
+import { createSoundCueEngine } from "../../shared/soundCueEngine.js?v=v2026-09-24T08561";
 
 export function createDisplaySoundReactor() {
   const engine = createSoundCueEngine({ playSfx, getSfxDuration });
