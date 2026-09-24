@@ -472,7 +472,7 @@ function renderTasks() {
       if (task.status === "pending") {
         const btn = document.createElement("button");
         btn.className = "btn xs danger";
-        btn.innerHTML = icon("trash");
+        btn.innerHTML = icon("cancel");
         btn.addEventListener("click", async (e) => {
           e.stopPropagation();
           const ok = await confirmModal({

@@ -1013,7 +1013,7 @@ const en = {
       </ul>
     
       <p class="m-p">
-        You create a new game by clicking the tile with the “＋” symbol.
+        You create a new game by clicking the tile with the <i class="ico" data-icon="plus"></i> symbol.
         After creation the game appears on the list
         and can be opened in the editor.
       </p>
@@ -1177,7 +1177,7 @@ const en = {
       </p>
       <p class="m-p">
         You access question bases from the top bar of the “My games” page
-        using the <span class="m-code">Question bases 🗃️</span> button.
+        using the <span class="m-code">Question bases <i class="ico" data-icon="drawer"></i></span> button.
       </p>
   
       <p class="m-p">
@@ -1185,7 +1185,7 @@ const en = {
         to a classic file manager on a computer.
       </p>
   
-      <h3 class="m-h3">➕ Adding a new base</h3>
+      <h3 class="m-h3">Adding a new base</h3>
   
       <p class="m-p">
         In the “Question bases” view click the <span class="m-strong">New base</span> tile.
@@ -1196,7 +1196,7 @@ const en = {
         After saving, the new base appears in the list and you can immediately browse or share it.
       </p>
   
-      <h3 class="m-h3">🤝 Sharing a base</h3>
+      <h3 class="m-h3">Sharing a base</h3>
   
       <p class="m-p">
         You can share any base with other users by providing their email address.
@@ -1212,7 +1212,7 @@ const en = {
         Only the base owner can manage sharing.
       </p>
   
-      <h3 class="m-h3">📂 Opening the base manager</h3>
+      <h3 class="m-h3">Opening the base manager</h3>
   
       <p class="m-p">
         To enter a base, select it in the list and click the <span class="m-code">Browse</span> button.
@@ -1253,7 +1253,7 @@ const en = {
   
       <h2 class="m-h2">Tags and categories</h2>
   
-      <h3 class="m-h3">🏷️ Tags</h3>
+      <h3 class="m-h3">Tags</h3>
   
       <p class="m-p">
         Each question can have any number of tags.
@@ -1300,7 +1300,7 @@ const en = {
         (and subfolders) have the same tag.
       </p>
   
-      <h3 class="m-h3">📌 Categories</h3>
+      <h3 class="m-h3">Categories</h3>
   
       <p class="m-p">
         Categories are special system labels that indicate
@@ -1366,9 +1366,9 @@ const en = {
         After successful game creation you will be redirected to the <span class="m-strong">My games</span> view.
       </p>
   
-      <h2 class="m-h2">⌨️ Keyboard shortcuts — Base manager</h2>
+      <h2 class="m-h2">Keyboard shortcuts — Base manager</h2>
   
-      <h3 class="m-h3">📁 Create</h3>
+      <h3 class="m-h3">Create</h3>
   
       <div class="m-table-wrap"><table class="m-table">
         <tbody><tr><th>Action</th><th>Windows / Linux</th><th>macOS</th></tr>
@@ -1376,7 +1376,7 @@ const en = {
         <tr><td>New folder</td><td>Ctrl + Shift + N</td><td>⌘ ⇧ N</td></tr>
       </tbody></table></div>
 
-      <h3 class="m-h3">✏️ Edit</h3>
+      <h3 class="m-h3">Edit</h3>
 
       <div class="m-table-wrap"><table class="m-table">
         <tbody><tr><th>Action</th><th>Windows / Linux</th><th>macOS</th></tr>
@@ -1385,7 +1385,7 @@ const en = {
         <tr><td>Delete</td><td>Delete</td><td>Fn + ⌫</td></tr>
       </tbody></table></div>
 
-      <h3 class="m-h3">📋 Clipboard</h3>
+      <h3 class="m-h3">Clipboard</h3>
 
       <div class="m-table-wrap"><table class="m-table">
         <tbody><tr><th>Action</th><th>Windows / Linux</th><th>macOS</th></tr>
@@ -1395,21 +1395,21 @@ const en = {
         <tr><td>Duplicate</td><td>Ctrl + D</td><td>⌘ D</td></tr>
       </tbody></table></div>
 
-      <h3 class="m-h3">🎮 Game</h3>
+      <h3 class="m-h3">Game</h3>
 
       <div class="m-table-wrap"><table class="m-table">
         <tbody><tr><th>Action</th><th>Windows / Linux</th><th>macOS</th></tr>
         <tr><td>Create game</td><td>Ctrl + G</td><td>⌘ G</td></tr>
       </tbody></table></div>
 
-      <h3 class="m-h3">🔄 View</h3>
+      <h3 class="m-h3">View</h3>
 
       <div class="m-table-wrap"><table class="m-table">
         <tbody><tr><th>Action</th><th>Windows / Linux</th><th>macOS</th></tr>
         <tr><td>Refresh view</td><td>Ctrl + Alt + R</td><td>⌘ ⌥ R</td></tr>
       </tbody></table></div>
 
-      <h3 class="m-h3">📌 Navigation</h3>
+      <h3 class="m-h3">Navigation</h3>
 
       <div class="m-table-wrap"><table class="m-table">
         <tbody><tr><th>Action</th><th>Windows / Linux</th><th>macOS</th></tr>
@@ -1437,7 +1437,7 @@ const en = {
 
       <p class="m-p">
         You open polls from the top bar on the “My games” page
-        using the <span class="m-code">Polls 📊</span> button.
+        using the <span class="m-code">Polls <i class="ico" data-icon="polls"></i></span> button.
       </p>
 
       <h3 class="m-h2">Polls page</h3>
@@ -1452,7 +1452,7 @@ const en = {
       </ul>
 
       <p class="m-p">
-        The gold dot next to the <span class="m-code">Polls 📊</span> button shows
+        The gold dot next to the <span class="m-code">Polls <i class="ico" data-icon="polls"></i></span> button shows
         how many active tasks are waiting.
       </p>
 
@@ -1481,7 +1481,7 @@ const en = {
         Tasks are voting invitations. Colors:
         <span class="m-strong">green</span> — available,
         <span class="m-strong">blue</span> — completed.
-        Double-click opens voting, and the <span class="m-code">X</span> button rejects a task.
+        Double-click opens voting, and the <span class="m-code"><i class="ico" data-icon="cancel"></i></span> button rejects a task.
       </p>
 
       <h3 class="m-h2">Poll types</h3>
@@ -1664,7 +1664,7 @@ const en = {
 
       <p class="m-p">
         You open it from the top bar on “My games”
-        with the <span class="m-code">Subscriptions 📧</span> button.
+        with the <span class="m-code">Subscriptions <i class="ico" data-icon="bell"></i></span> button.
       </p>
 
       <h3 class="m-h2">Subscriptions page</h3>
@@ -1675,7 +1675,7 @@ const en = {
       </ul>
 
       <p class="m-p">
-        The gold dot near <span class="m-code">Subscriptions 📧</span> shows how many invitations are waiting to be accepted.
+        The gold dot near <span class="m-code">Subscriptions <i class="ico" data-icon="bell"></i></span> shows how many invitations are waiting to be accepted.
       </p>
 
       <h3 class="m-h3">My subscribers</h3>
@@ -1691,7 +1691,7 @@ const en = {
         <span class="m-strong">yellow</span> — pending,
         <span class="m-strong">green</span> — active,
         <span class="m-strong">red</span> — rejected/canceled.
-        Actions: <span class="m-code">X</span> removes subscriber, <span class="m-code">↻</span> resends invitation.
+        Actions: <span class="m-code"><i class="ico" data-icon="trash"></i></span> removes subscriber, <span class="m-code"><i class="ico" data-icon="refresh"></i></span> resends invitation.
       </p>
 
       <h3 class="m-h3">My subscriptions</h3>
@@ -1703,7 +1703,7 @@ const en = {
         Colors:
         <span class="m-strong">yellow</span> — pending,
         <span class="m-strong">green</span> — active.
-        Actions: <span class="m-code">✓</span> accept, <span class="m-code">X</span> reject/cancel.
+        Actions: <span class="m-code"><i class="ico" data-icon="check"></i></span> accept, <span class="m-code"><i class="ico" data-icon="cancel"></i></span> reject/cancel.
       </p>
 
       <p class="m-p">
@@ -1719,7 +1719,7 @@ const en = {
       logo: `<p class=”m-p”>
         The system lets you set your own logo that appears on the display
         (during the start or end of the game). You can access the logo creator from the top bar of the “My games” page
-        using the <span class=”m-code”>Logo 🖥️</span> button.
+        using the <span class=”m-code”>Logo <i class="ico" data-icon="display"></i></span> button.
       </p>
 
       <div class=”m-note”>
@@ -1731,7 +1731,7 @@ const en = {
       <h3 class=”m-h2”>Creating and editing a logo</h3>
 
       <p class=”m-p”>
-        You create a new logo by clicking the tile with the “＋” symbol. You can save the logo under your own name. After creating it, to start editing, select the tile and click the <span class=”m-code”>Edit</span> button. The editor for that logo type will open. You can save your work and always come back to edit.
+        You create a new logo by clicking the tile with the <i class="ico" data-icon="plus"></i> symbol. You can save the logo under your own name. After creating it, to start editing, select the tile and click the <span class=”m-code”>Edit</span> button. The editor for that logo type will open. You can save your work and always come back to edit.
       </p>
 
       <p class=”m-p”>
@@ -1790,7 +1790,7 @@ const en = {
       connect: `<p class="m-p">
         <span class="m-strong">Connect device</span> is the panel where you can quickly connect to a device needed for the game:
         <span class="m-strong">Display</span>, <span class="m-strong">Buzzer</span>, <span class="m-strong">Host</span>,
-        or <span class="m-strong">Poll QR Display 📊</span>.
+        or <span class="m-strong">Poll QR Display <i class="ico" data-icon="polls"></i></span>.
         Available without login — all you need is the 6-digit code from the operator panel.
       </p>
 
@@ -1804,7 +1804,7 @@ const en = {
       </p>
 
       <p class="m-p">
-        The <span class="m-strong">Poll QR Display 📊</span> code can be found in the
+        The <span class="m-strong">Poll QR Display <i class="ico" data-icon="polls"></i></span> code can be found in the
         <span class="m-code">Poll</span> tab — click <span class="m-code">QR on display</span>.
         Once connected, the TV or projector shows the voting QR code for participants.
       </p>
@@ -1813,7 +1813,7 @@ const en = {
         <b>How to use the code?</b><br/>
         1. The operator opens the control panel and sees the codes next to each device.<br/>
         2. Go to <span class="m-code">familiada.online</span> (or open the app).<br/>
-        3. Click the <span class="m-code">Connect device 📱</span> button.<br/>
+        3. Click the <span class="m-code">Connect device <i class="ico" data-icon="phone"></i></span> button.<br/>
         4. Enter the 6-digit code and press <span class="m-code">Connect</span>.
       </div>
 
@@ -1960,13 +1960,13 @@ const en = {
 
       <p class=”m-p”>
         Via the <span class=”m-strong”>”Share”</span> option — you can quickly send someone a link by email or share with your subscribers.
-        Shared devices will appear in their account (registered users only) in the <span class=”m-code”>Connect device 📱</span> panel.
+        Shared devices will appear in their account (registered users only) in the <span class=”m-code”>Connect device <i class="ico" data-icon="phone"></i></span> panel.
         Non-registered users will simply receive an email with the link.
       </p>
 
       <div class=”m-note”>
         <b>How to conveniently connect a device?</b><br/>
-        Easiest way: go to <span class=”m-code”>familiada.online</span>, click <span class=”m-code”>Connect device 📱</span>
+        Easiest way: go to <span class=”m-code”>familiada.online</span>, click <span class=”m-code”>Connect device <i class="ico" data-icon="phone"></i></span>
         in the top bar and enter the <span class=”m-strong”>6-digit code</span> shown next to the device in the operator panel.<br/><br/>
         Alternatively: on a mobile device you can scan the <span class=”m-strong”>QR code</span> visible in the panel.
         For the best experience we recommend installing the web app — go to <span class=”m-strong”>My games</span>
@@ -2318,7 +2318,7 @@ const en = {
         and verified by moderators. You can browse them, add them to your library
         and launch them directly as a game — without creating your own questions.
         You access Community Games from the top bar of the "My games" page
-        using the <span class="m-code">Community Games🎮</span> button.
+        using the <span class="m-code">Community Games <i class="ico" data-icon="gamepad"></i></span> button.
       </p>
 
       <h3 class="m-h2">Browsing and library</h3>
@@ -2480,10 +2480,10 @@ const en = {
         Each category has a volume slider (0–100%). Changes are saved and loaded automatically with each game session.
       </p>
 
-      <h3 class="m-h3">Play Button (▶)</h3>
+      <h3 class="m-h3">Play Button (<i class="ico" data-icon="play"></i>)</h3>
 
       <p class="m-p">
-        Next to each category there is a small play button. Click it to hear the selected sound at the set volume. Clicking again (■) stops playback.
+        Next to each category there is a small play button. Click it to hear the selected sound at the set volume. Clicking again (<i class="ico" data-icon="stop"></i>) stops playback.
       </p>
 
       <div class="m-note">
@@ -2604,13 +2604,13 @@ const en = {
 
       <p class="m-p">
         Via the <span class="m-strong">"Share"</span> option — you can quickly send someone a link by email or share with your subscribers.
-        Shared devices will appear in their account (registered users only) in the <span class="m-code">Connect device 📱</span> panel.
+        Shared devices will appear in their account (registered users only) in the <span class="m-code">Connect device <i class="ico" data-icon="phone"></i></span> panel.
         Non-registered users will simply receive an email with the link.
       </p>
 
       <div class="m-note">
         <b>How to conveniently connect a device?</b><br/>
-        Easiest way: go to <span class="m-code">familiada.online</span>, click <span class="m-code">Connect device 📱</span>
+        Easiest way: go to <span class="m-code">familiada.online</span>, click <span class="m-code">Connect device <i class="ico" data-icon="phone"></i></span>
         in the top bar and enter the <span class="m-strong">6-digit code</span> shown next to the device in the operator panel.<br/><br/>
         Alternatively: on a mobile device you can scan the <span class="m-strong">QR code</span> visible in the panel.
         For the best experience we recommend installing the web app — go to <span class="m-strong">My games</span>

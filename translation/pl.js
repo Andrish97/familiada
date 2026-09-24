@@ -1015,7 +1015,7 @@ const pl = {
       </ul>
     
       <p class="m-p">
-        Nową grę tworzysz klikając kafelek z symbolem „＋”.
+        Nową grę tworzysz klikając kafelek z symbolem <i class="ico" data-icon="plus"></i>.
         Po utworzeniu gra pojawia się na liście
         i może zostać otwarta w edytorze.
       </p>
@@ -1179,7 +1179,7 @@ const pl = {
       </p>
       <p class="m-p">
         Do baz pytań przechodzisz z górnego paska strony „Moje gry”
-        za pomocą przycisku <span class="m-code">Bazy pytań 🗃️</span>.
+        za pomocą przycisku <span class="m-code">Bazy pytań <i class="ico" data-icon="drawer"></i></span>.
       </p>
   
       <p class="m-p">
@@ -1187,7 +1187,7 @@ const pl = {
         do klasycznego menadżera plików na komputerze.
       </p>
   
-      <h3 class="m-h3">➕ Dodawanie nowej bazy</h3>
+      <h3 class="m-h3">Dodawanie nowej bazy</h3>
   
       <p class="m-p">
         W widoku „Bazy pytań” kliknij kafelek <span class="m-strong">Nowa baza</span>.
@@ -1198,7 +1198,7 @@ const pl = {
         Po zapisaniu nowa baza pojawi się na liście i od razu możesz ją przeglądać lub udostępniać.
       </p>
   
-      <h3 class="m-h3">🤝 Udostępnianie bazy</h3>
+      <h3 class="m-h3">Udostępnianie bazy</h3>
   
       <p class="m-p">
         Każdą bazę możesz udostępnić innym użytkownikom poprzez podanie ich adresu e-mail.
@@ -1214,7 +1214,7 @@ const pl = {
         Tylko właściciel bazy może zarządzać udostępnieniami.
       </p>
   
-      <h3 class="m-h3">📂 Przechodzenie do menadżera bazy</h3>
+      <h3 class="m-h3">Przechodzenie do menadżera bazy</h3>
   
       <p class="m-p">
         Aby wejść do zawartości bazy, zaznacz ją na liście i kliknij przycisk <span class="m-code">Przeglądaj</span>.
@@ -1255,7 +1255,7 @@ const pl = {
   
       <h2 class="m-h2">Tagi i kategorie</h2>
   
-      <h3 class="m-h3">🏷️ Tagi</h3>
+      <h3 class="m-h3">Tagi</h3>
   
       <p class="m-p">
         Każde pytanie może mieć dowolną liczbę tagów.
@@ -1302,7 +1302,7 @@ const pl = {
         (oraz podfoldery) posiadają ten sam tag.
       </p>
   
-      <h3 class="m-h3">📌 Kategorie</h3>
+      <h3 class="m-h3">Kategorie</h3>
   
       <p class="m-p">
         Kategorie to specjalne oznaczenia systemowe określające,
@@ -1368,9 +1368,9 @@ const pl = {
         Po pomyślnym utworzeniu gry zostaniesz przekierowany do widoku <span class="m-strong">Moje gry</span>
       </p>
   
-      <h2 class="m-h2">⌨️ Skróty klawiszowe — Menadżer bazy</h2>
+      <h2 class="m-h2">Skróty klawiszowe — Menadżer bazy</h2>
   
-      <h3 class="m-h3">📁 Tworzenie</h3>
+      <h3 class="m-h3">Tworzenie</h3>
   
       <div class="m-table-wrap"><table class="m-table">
         <tbody><tr><th>Akcja</th><th>Windows / Linux</th><th>macOS</th></tr>
@@ -1378,7 +1378,7 @@ const pl = {
         <tr><td>Nowy folder</td><td>Ctrl + Shift + N</td><td>⌘ ⇧ N</td></tr>
       </tbody></table></div>
   
-      <h3 class="m-h3">✏️ Edycja</h3>
+      <h3 class="m-h3">Edycja</h3>
   
       <div class="m-table-wrap"><table class="m-table">
         <tbody><tr><th>Akcja</th><th>Windows / Linux</th><th>macOS</th></tr>
@@ -1387,7 +1387,7 @@ const pl = {
         <tr><td>Usuń</td><td>Delete</td><td>Fn + ⌫</td></tr>
       </tbody></table></div>
   
-      <h3 class="m-h3">📋 Schowek</h3>
+      <h3 class="m-h3">Schowek</h3>
   
       <div class="m-table-wrap"><table class="m-table">
         <tbody><tr><th>Akcja</th><th>Windows / Linux</th><th>macOS</th></tr>
@@ -1397,21 +1397,21 @@ const pl = {
         <tr><td>Duplikuj</td><td>Ctrl + D</td><td>⌘ D</td></tr>
       </tbody></table></div>
   
-      <h3 class="m-h3">🎮 Gra</h3>
+      <h3 class="m-h3">Gra</h3>
   
       <div class="m-table-wrap"><table class="m-table">
         <tbody><tr><th>Akcja</th><th>Windows / Linux</th><th>macOS</th></tr>
         <tr><td>Utwórz grę</td><td>Ctrl + G</td><td>⌘ G</td></tr>
       </tbody></table></div>
   
-      <h3 class="m-h3">🔄 Widok</h3>
+      <h3 class="m-h3">Widok</h3>
   
       <div class="m-table-wrap"><table class="m-table">
         <tbody><tr><th>Akcja</th><th>Windows / Linux</th><th>macOS</th></tr>
         <tr><td>Odśwież widok</td><td>Ctrl + Alt + R</td><td>⌘ ⌥ R</td></tr>
       </tbody></table></div>
   
-      <h3 class="m-h3">📌 Nawigacja</h3>
+      <h3 class="m-h3">Nawigacja</h3>
   
       <div class="m-table-wrap"><table class="m-table">
         <tbody><tr><th>Akcja</th><th>Windows / Linux</th><th>macOS</th></tr>
@@ -1439,7 +1439,7 @@ const pl = {
 
       <p class="m-p">
         Do ankiet przechodzisz z górnego paska na stronie „Moje gry”
-        przyciskiem <span class="m-code">Ankiety 📊</span>.
+        przyciskiem <span class="m-code">Ankiety <i class="ico" data-icon="polls"></i></span>.
       </p>
 
       <h3 class="m-h2">Strona ankiet</h3>
@@ -1454,7 +1454,7 @@ const pl = {
       </ul>
 
       <p class="m-p">
-        Złota kropka przy przycisku „Ankiety 📊” pokazuje liczbę aktywnych zadań do wykonania.
+        Złota kropka przy przycisku „Ankiety <i class="ico" data-icon="polls"></i>” pokazuje liczbę aktywnych zadań do wykonania.
       </p>
 
       <p class="m-p">
@@ -1482,7 +1482,7 @@ const pl = {
         Zadania to zaproszenia do ankiety. Kolory:
         <span class="m-strong">zielony</span> — dostępne,
         <span class="m-strong">niebieski</span> — wykonane.
-        Dwuklik otwiera ankietę, a przycisk <span class="m-code">X</span> odrzuca zadanie.
+        Dwuklik otwiera ankietę, a przycisk <span class="m-code"><i class="ico" data-icon="cancel"></i></span> odrzuca zadanie.
       </p>
 
       <h3 class="m-h2">Rodzaje ankiet</h3>
@@ -1666,7 +1666,7 @@ const pl = {
 
       <p class="m-p">
         Przechodzisz do niej z górnego paska na stronie „Moje gry”,
-        przyciskiem <span class="m-code">Subskrypcje 📧</span>.
+        przyciskiem <span class="m-code">Subskrypcje <i class="ico" data-icon="bell"></i></span>.
       </p>
 
       <h3 class="m-h2">Strona subskrypcji</h3>
@@ -1677,7 +1677,7 @@ const pl = {
       </ul>
 
       <p class="m-p">
-        Złota kropka przy przycisku „Subskrypcje 📧” pokazuje liczbę zaproszeń do zaakceptowania.
+        Złota kropka przy przycisku „Subskrypcje <i class="ico" data-icon="bell"></i>” pokazuje liczbę zaproszeń do zaakceptowania.
       </p>
 
       <h3 class="m-h3">Moi subskrybenci</h3>
@@ -1693,7 +1693,7 @@ const pl = {
         <span class="m-strong">żółty</span> — oczekujące,
         <span class="m-strong">zielony</span> — aktywne,
         <span class="m-strong">czerwony</span> — odrzucone/anulowane.
-        Przyciski <span class="m-code">X</span> usuwa subskrybenta, a <span class="m-code">↻</span> ponawia zaproszenie.
+        Przyciski <span class="m-code"><i class="ico" data-icon="trash"></i></span> usuwa subskrybenta, a <span class="m-code"><i class="ico" data-icon="refresh"></i></span> ponawia zaproszenie.
       </p>
 
       <h3 class="m-h3">Moje subskrypcje</h3>
@@ -1705,7 +1705,7 @@ const pl = {
         Kolory:
         <span class="m-strong">żółty</span> — oczekujące,
         <span class="m-strong">zielony</span> — aktywne.
-        Przyciski: <span class="m-code">✓</span> akceptuje, <span class="m-code">X</span> odrzuca/anuluje.
+        Przyciski: <span class="m-code"><i class="ico" data-icon="check"></i></span> akceptuje, <span class="m-code"><i class="ico" data-icon="cancel"></i></span> odrzuca/anuluje.
       </p>
 
       <p class="m-p">
@@ -1721,7 +1721,7 @@ const pl = {
       logo: `<p class="m-p">
         System pozwala ustawić własne logo, które pojawia się na wyświetlaczu
         (podczas startu lub zakończenia gry). Do tworzenia logo przechodzisz z górnego paska strony „Moje gry"
-        za pomocą przycisku <span class="m-code">Logo 🖥️</span>.
+        za pomocą przycisku <span class="m-code">Logo <i class="ico" data-icon="display"></i></span>.
       </p>
 
       <div class="m-note">
@@ -1733,7 +1733,7 @@ const pl = {
       <h3 class="m-h2">Tworzenie i edycja logo</h3>
 
       <p class="m-p">
-        Nowe logo tworzysz klikając kafelek z symbolem „＋". Logo możesz zapisać pod własną nazwą. Po utworzeniu logo, żeby przystąpić do edycji, wybierz kafelek i kliknij przycisk <span class="m-code">Edytuj</span>. Otworzy się edytor, właściwy dla danego typu logo. Możesz zapisać pracę i zawsze wrócić do edycji.
+        Nowe logo tworzysz klikając kafelek z symbolem <i class="ico" data-icon="plus"></i>. Logo możesz zapisać pod własną nazwą. Po utworzeniu logo, żeby przystąpić do edycji, wybierz kafelek i kliknij przycisk <span class="m-code">Edytuj</span>. Otworzy się edytor, właściwy dla danego typu logo. Możesz zapisać pracę i zawsze wrócić do edycji.
       </p>
 
       <p class="m-p">
@@ -1792,7 +1792,7 @@ const pl = {
       connect: `<p class="m-p">
         <span class="m-strong">Podłącz urządzenie</span> to panel, gdzie możesz szybko połączyć się z urządzeniem niezbędnym do rozgrywki:
         <span class="m-strong">Wyświetlaczem</span>, <span class="m-strong">Przyciskiem</span>, <span class="m-strong">Prowadzącym</span>
-        lub <span class="m-strong">Wyświetlaczem QR ankiety 📊</span>.
+        lub <span class="m-strong">Wyświetlaczem QR ankiety <i class="ico" data-icon="polls"></i></span>.
         Dostępny bez logowania — wystarczy kod 6-cyfrowy z panelu operatora.
       </p>
 
@@ -1806,7 +1806,7 @@ const pl = {
       </p>
 
       <p class="m-p">
-        Kod <span class="m-strong">Wyświetlacza QR ankiety 📊</span> znajdziesz w zakładce
+        Kod <span class="m-strong">Wyświetlacza QR ankiety <i class="ico" data-icon="polls"></i></span> znajdziesz w zakładce
         <span class="m-code">Ankieta</span> — kliknij <span class="m-code">QR na wyświetlaczu</span>.
         Po podłączeniu TV lub rzutnik wyświetla kod QR do głosowania dla uczestników.
       </p>
@@ -1815,7 +1815,7 @@ const pl = {
         <b>Jak skorzystać z kodu?</b><br/>
         1. Operator otwiera panel sterowania i widzi kody przy urządzeniach.<br/>
         2. Wejdź na <span class="m-code">familiada.online</span> (lub otwórz aplikację).<br/>
-        3. Kliknij przycisk <span class="m-code">Podłącz urządzenie 📱</span>.<br/>
+        3. Kliknij przycisk <span class="m-code">Podłącz urządzenie <i class="ico" data-icon="phone"></i></span>.<br/>
         4. Wpisz 6-cyfrowy kod i naciśnij <span class="m-code">Podłącz</span>.
       </div>
 
@@ -1960,12 +1960,12 @@ const pl = {
       </p>
 
       <p class="m-p">
-        Poprzez opcję <span class="m-strong">„Udostępnij"</span> — możesz szybko wysłać komuś linka na maila lub udostępnić swoim subskrybentom. Udostępnione urządzenia będą widoczne na koncie (tylko dla zarejestrowanych) w panelu <span class="m-code">Podłącz urządzenie 📱</span>. Niezarejestrowani dostaną po prostu linka na maila.
+        Poprzez opcję <span class="m-strong">„Udostępnij"</span> — możesz szybko wysłać komuś linka na maila lub udostępnić swoim subskrybentom. Udostępnione urządzenia będą widoczne na koncie (tylko dla zarejestrowanych) w panelu <span class="m-code">Podłącz urządzenie <i class="ico" data-icon="phone"></i></span>. Niezarejestrowani dostaną po prostu linka na maila.
       </p>
 
       <div class="m-note">
         <b>Jak wygodnie podłączyć urządzenie?</b><br/>
-        Najprostszy sposób: wejdź na <span class="m-code">familiada.online</span>, kliknij <span class="m-code">Podłącz urządzenie 📱</span>
+        Najprostszy sposób: wejdź na <span class="m-code">familiada.online</span>, kliknij <span class="m-code">Podłącz urządzenie <i class="ico" data-icon="phone"></i></span>
         w górnym pasku i wprowadź <span class="m-strong">6-cyfrowy kod</span> widoczny przy urządzeniu w panelu operatora.<br/><br/>
         Alternatywnie: na urządzeniu mobilnym możesz zeskanować <span class="m-strong">kod QR</span> widoczny w panelu.
         Dla najlepszego użytkowania sugerowane jest zainstalowanie aplikacji webowej — na stronie <span class="m-strong">Moje gry</span>
@@ -2044,7 +2044,7 @@ const pl = {
       <ul class="m-ul">
         <li>Przy każdej kategorii dźwiękowej widzisz aktualny <span class="m-strong">wariant</span> (np. Klasyczny lub nazwę własnego pliku).</li>
         <li>Suwak <span class="m-strong">głośności</span> pozwala dostosować poziom każdego dźwięku.</li>
-        <li>Przycisk <span class="m-strong">▶</span> pozwala odsłuchać dźwięk przed rozgrywką.</li>
+        <li>Przycisk <span class="m-strong"><i class="ico" data-icon="play"></i></span> pozwala odsłuchać dźwięk przed rozgrywką.</li>
       </ul>
 
       <div class="m-note">
@@ -2321,7 +2321,7 @@ const pl = {
         i zweryfikowanych przez moderatorów. Możesz je przeglądać, dodawać do swojej biblioteki
         i uruchamiać bezpośrednio jako rozgrywkę — bez konieczności tworzenia własnych pytań.
         Do Gier Społeczności przechodzisz z górnego paska strony „Moje gry”
-        za pomocą przycisku <span class="m-code">Gry Społeczności🎮</span>.
+        za pomocą przycisku <span class="m-code">Gry Społeczności <i class="ico" data-icon="gamepad"></i></span>.
       </p>
 
       <h3 class="m-h2">Przeglądanie i biblioteka</h3>
@@ -2483,10 +2483,10 @@ const pl = {
         Przy każdej kategorii jest suwak głośności (0–100%). Zmiany są zapisywane i wczytywane automatycznie przy każdej rozgrywce.
       </p>
 
-      <h3 class="m-h3">Przycisk odtwarzania (▶)</h3>
+      <h3 class="m-h3">Przycisk odtwarzania (<i class="ico" data-icon="play"></i>)</h3>
 
       <p class="m-p">
-        Obok każdej kategorii jest mały przycisk odtwarzania. Kliknij go, żeby usłyszeć wybrany dźwięk z ustawioną głośnością. Ponowne kliknięcie (■) zatrzymuje odtwarzanie.
+        Obok każdej kategorii jest mały przycisk odtwarzania. Kliknij go, żeby usłyszeć wybrany dźwięk z ustawioną głośnością. Ponowne kliknięcie (<i class="ico" data-icon="stop"></i>) zatrzymuje odtwarzanie.
       </p>
 
       <div class="m-note">
