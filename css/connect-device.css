@@ -99,11 +99,11 @@
   opacity: .4;
 }
 
-.builder-shell > .builder-card {
+.games-shell > .games-card {
   flex: 0 0 auto;
 }
 
-.builder-shell > .builder-card + .builder-card {
+.games-shell > .games-card + .games-card {
   margin-top: 16px;
 }
 

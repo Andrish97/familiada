@@ -56,7 +56,7 @@ let _mobileActive = false;
 
 // ── Overflow nav (section-2) ──────────────────────────────────────────────────
 /**
- * Rejestruje overflow nav dla section-2 (używane tylko przez builder).
+ * Rejestruje overflow nav dla section-2 (używane tylko przez games).
  * Desktop: ResizeObserver → chowa mniej ważne przyciski do "Więcej ▾".
  * Mobile: kontroler wywołuje expandAll() → wszystkie przyciski widoczne płasko.
  *
@@ -201,7 +201,7 @@ export function setTopbarNavPriority({ moreEl, moreDropdownEl } = {}) {
  * @param {object}  [opts]
  * @param {string}  [opts.loginHref='login']
  * @param {string}  [opts.accountHref='account']
- * @param {boolean} [opts.withAccountSettings=false]  tylko builder
+ * @param {boolean} [opts.withAccountSettings=false]  tylko games
  * @param {boolean} [opts.showAuthEntry=true]  false → ukryj dla niezalogowanego
  * @param {function} [opts.onLogout]  callback przed wylogowaniem (może zwrócić Promise)
  * @returns {{ guestMode: boolean }}
@@ -282,7 +282,7 @@ export function setTopbarAccount(user, {
     const btnSettings = document.createElement('button');
     btnSettings.className = 'btn account-menu-item';
     btnSettings.type = 'button';
-    btnSettings.textContent = t('builder.nav.account') || 'Ustawienia konta';
+    btnSettings.textContent = t('games.nav.account') || 'Ustawienia konta';
     btnSettings.addEventListener('click', () => {
       menu.hidden = true;
       location.href = withLangParam(accountHref);
@@ -518,7 +518,7 @@ function initTopbarController() {
     section2.style.display = 'none';
     section4.style.display = 'none';
 
-    const backBtn = section1.querySelector('#btnBack,#btnBackToBuilder');
+    const backBtn = section1.querySelector('#btnBack,#btnBackToGames');
     if (backBtn) backBtn.classList.add('mobile-primary-back');
 
     badgeObserver = new MutationObserver(() => {

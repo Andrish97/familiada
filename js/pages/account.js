@@ -121,7 +121,7 @@ async function initEmailNotificationsUi(user) {
 
 
 backToGames?.addEventListener("click", () => {
-  const target = backToGames.dataset.baseHref || "builder";
+  const target = backToGames.dataset.baseHref || "games";
   location.href = withLangParam(target);
 });
 
@@ -631,7 +631,7 @@ async function wireDemoActions(user) {
       }
     }
 
-    location.href = "./builder";
+    location.href = "./games";
   });
 }
 

@@ -1128,7 +1128,7 @@ const pl = {
       <h3 class="m-h2">Import i eksport gier</h3>
     
       <p class="m-p">
-        Builder umożliwia eksport i import gier
+        Strona „Moje gry” umożliwia eksport i import gier
         w postaci plików oraz bezpośrednio do bazy pytań.
         Funkcja ta służy do przenoszenia gier i pytań
         pomiędzy kontami lub środowiskami.
@@ -2658,7 +2658,7 @@ const pl = {
       validMessage: "Wiadomość musi mieć od 5 do 5000 znaków.",
     },
   },
-  builderImportExport: {
+  gamesImportExport: {
     defaults: {
       gameName: "Gra",
       question: "Pytanie {ord}",
@@ -2672,7 +2672,7 @@ const pl = {
       invalidFormat: "Zły format pliku (brak game / questions).",
     },
   },
-  builder: {
+  games: {
     title: "Familiada — moje gry",
     nav: {
       pollsHubPolls: "Ankiety 📊",

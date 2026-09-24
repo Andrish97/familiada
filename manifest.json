@@ -2,7 +2,7 @@
   "name": "Familiada Online",
   "short_name": "Familiada",
   "description": "System do tworzenia i prowadzenia gry Familiada na żywo",
-  "start_url": "/builder",
+  "start_url": "/games",
   "scope": "/",
   "display": "standalone",
   "background_color": "#050914",
@@ -22,7 +22,7 @@
   ],
   "file_handlers": [
     {
-      "action": "/builder",
+      "action": "/games",
       "accept": {
         "application/json": [".famgame"]
       }

@@ -541,8 +541,8 @@ test("ustawienia gry: przycisk Wstecz z niezapisanymi zmianami pyta o potwierdze
     // Ponowna próba, tym razem potwierdzamy wyjście
     await page.locator("#btnBack").click();
     await page.locator(".uni-foot .btn.gold").click();
-    await expect(page).toHaveURL(/\/builder/, { timeout: 10000 });
-    // toHaveURL łapie tylko zmianę adresu — window.__sbClient na /builder
+    await expect(page).toHaveURL(/\/games/, { timeout: 10000 });
+    // toHaveURL łapie tylko zmianę adresu — window.__sbClient na /games
     // jeszcze się nie zdążył ustawić, a deleteGame() w finally z niego
     // korzysta. Bez tego czekania cleanup pada z "Cannot read properties
     // of undefined (reading 'from')" mimo że sam test już przeszedł.

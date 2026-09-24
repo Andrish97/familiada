@@ -102,7 +102,7 @@ function redoAction() {
   if (window._textCloseRerenderAll) window._textCloseRerenderAll();
 }
 
-const backTarget = withLangParam(ret || "builder");
+const backTarget = withLangParam(ret || "games");
 
 
 function getRetPathnameLower() {
@@ -257,17 +257,17 @@ function setMsg(text) {
 }
 
 function typeLabel(type) {
-  if (type === TYPES.POLL_TEXT) return t("builder.types.pollText");
-  if (type === TYPES.POLL_POINTS) return t("builder.types.pollPoints");
-  if (type === TYPES.PREPARED) return t("builder.types.prepared");
+  if (type === TYPES.POLL_TEXT) return t("games.types.pollText");
+  if (type === TYPES.POLL_POINTS) return t("games.types.pollPoints");
+  if (type === TYPES.PREPARED) return t("games.types.prepared");
   return String(type || "—").toUpperCase();
 }
 
 function statusLabel(st) {
   const s = st || STATUS.DRAFT;
-  if (s === STATUS.DRAFT) return t("builder.status.draft");
-  if (s === STATUS.POLL_OPEN) return t("builder.status.open");
-  if (s === STATUS.READY) return t("builder.status.closed");
+  if (s === STATUS.DRAFT) return t("games.status.draft");
+  if (s === STATUS.POLL_OPEN) return t("games.status.open");
+  if (s === STATUS.READY) return t("games.status.closed");
   return String(s).toUpperCase();
 }
 

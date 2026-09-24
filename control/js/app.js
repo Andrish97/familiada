@@ -970,7 +970,7 @@ async function sendZeroStatesToDevices() {
     await shareDevice.expireShares();
     await expireConnectCodes();
     suppressUnloadWarn = true;
-    location.href = "../builder";
+    location.href = "../games";
   });
   
   ui.on("top.manual", () => {
@@ -1562,6 +1562,6 @@ main().catch((e) => {
   if (el) el.textContent = e?.message || String(e);
   showGlobalError(e?.message || String(e));
   if (e?._notFound) {
-    setTimeout(() => { location.href = "builder?tab=market"; }, 3000);
+    setTimeout(() => { location.href = "games?tab=market"; }, 3000);
   }
 });

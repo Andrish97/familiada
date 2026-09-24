@@ -510,7 +510,7 @@ async function boot() {
       leaveQuestionEditor();
       return;
     }
-    location.href = withLangParam("builder");
+    location.href = withLangParam("games");
   });
 
 
@@ -528,7 +528,7 @@ async function boot() {
   const gameId = getIdFromQuery();
   if (!gameId) {
     void alertModal({ text: t("editor.alert.missingId") });
-    location.href = withLangParam("builder");
+    location.href = withLangParam("games");
     return;
   }
 
@@ -538,14 +538,14 @@ async function boot() {
   const editInfo = canEnterEdit(game);
   if (!editInfo?.ok) {
     void alertModal({ text: editInfo?.reason || MSG.cannotEdit() });
-    location.href = withLangParam("builder");
+    location.href = withLangParam("games");
     return;
   }
 
   if (editInfo.needsResetWarning) {
     const ok = await confirmModal({ text: MSG.resetPollConfirm() });
     if (!ok) {
-      location.href = withLangParam("builder");
+      location.href = withLangParam("games");
       return;
     }
     await resetPollForEditing(gameId);
@@ -561,7 +561,7 @@ async function boot() {
     resourceId: gameId,
     context: "editor",
     message: t("resourceLock.gameMessage"),
-    backHref: withLangParam("builder"),
+    backHref: withLangParam("games"),
   });
   if (!lock.ok) return;
 

@@ -69,7 +69,7 @@ function wireTabs() {
 }
 
 function normalizeRetTarget(rawRet) {
-  const fallback = withLangParam("builder");
+  const fallback = withLangParam("games");
   const trimmed = String(rawRet || "").trim();
   if (!trimmed) return fallback;
 
@@ -77,7 +77,7 @@ function normalizeRetTarget(rawRet) {
     const target = new URL(trimmed, location.origin + "/");
     if (target.origin !== location.origin) return fallback;
     const rel = `${target.pathname.replace(/^\/+/, "")}${target.search}${target.hash}`;
-    return withLangParam(rel || "builder");
+    return withLangParam(rel || "games");
   } catch {
     return fallback;
   }
@@ -92,7 +92,7 @@ function getRetPathnameLower() {
   try {
     return new URL(decodeRet(), location.href).pathname.toLowerCase();
   } catch {
-    return "/builder";
+    return "/games";
   }
 }
 

@@ -1356,7 +1356,7 @@ function logoToPreviewPayload(logo){
 function renderList(){
   grid.innerHTML = "";
 
-  // 0) PLUS (jak w builder)
+  // 0) PLUS (jak w games)
   {
     const add = document.createElement("div");
    add.className = "addCard hide-mobile";
@@ -1856,7 +1856,7 @@ async function boot(){
    btnBack?.addEventListener("click", async () => {
      if (handleSheetBack()) return;
      if (shouldBlockNav() && !(await confirmCloseIfDirty())) return;
-     location.href = withLangParam("../builder");
+     location.href = withLangParam("../games");
    });
 
    btnCloseEditor?.addEventListener("click", async () => {

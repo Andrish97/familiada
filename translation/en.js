@@ -1126,7 +1126,7 @@ const en = {
       <h3 class="m-h2">Importing and exporting games</h3>
     
       <p class="m-p">
-        Builder allows exporting and importing games
+        The “My games” page allows exporting and importing games
         as files or directly into a question base.
         This feature is used to move games and questions
         between accounts or environments.
@@ -2784,7 +2784,7 @@ const en = {
       validMessage: "Message must be between 5 and 5000 characters.",
     },
   },
-  builderImportExport: {
+  gamesImportExport: {
     defaults: {
       gameName: "Game",
       question: "Question {ord}",
@@ -2798,7 +2798,7 @@ const en = {
       invalidFormat: "Invalid file format (missing game / questions).",
     },
   },
-  builder: {
+  games: {
     title: "Familiada — my games",
     nav: {
       pollsHubPolls: "Polls 📊",

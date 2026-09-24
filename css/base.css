@@ -631,7 +631,7 @@ main{
 
     /* height (nie min-height!) + overflow:hidden wymuszone tutaj,
        NIEZALEŻNIE od tego, co dana strona robi z overflow/height poza
-       trybem sheet (np. builder.css daje body.builder-body/main.wrap
+       trybem sheet (np. games.css daje body.games-body/main.wrap
        overflow:hidden bezwarunkowo, inne strony wcale go nie ograniczają)
        — inaczej łańcuch niżej (.overlay -> .modal) nie dostaje
        zdefiniowanej, ograniczonej wysokości, więc .modal's overflow:auto
@@ -704,7 +704,7 @@ main{
     }
 
     /* Nagłówek modala w trybie sheet ma wyglądać jak nagłówek strony "Moje
-       gry" w builderze (.bar/.title — patrz css/builder.css): pogrubiony,
+       gry" w stronie gier (.bar/.title — patrz css/games.css): pogrubiony,
        wersaliki, i JEDNA, świadoma linia-dzielnik pod spodem, zamiast
        niekontrolowanego tła karty (var(--card), jaśniejsze niż tło strony)
        przebijającego się spod .modal. !important na background/border, bo
@@ -761,7 +761,7 @@ main{
     }
 
     /* Strony bez naturalnego przycisku wstecz w topbarze na mobile
-       (builder.html, settings.html) dostają dedykowany przycisk tylko na
+       (games.html, settings.html) dostają dedykowany przycisk tylko na
        potrzeby sheet mode — poza nim niewidoczny, w trybie sheet
        zastępuje brand, dokładnie jak przycisk wstecz na innych stronach. */
     body.sheet-open .topbar-mobile-keep-brand .topbar-section-1 .brand {
@@ -1400,7 +1400,7 @@ body{
 .pass-wrap .pass-toggle svg { width: 18px; height: 18px; pointer-events: none; }
 
 /* =========================================================
-   ACCOUNT DROPDOWN (duplikat z builder.css dla stron bez builder.css)
+   ACCOUNT DROPDOWN (duplikat z games.css dla stron bez games.css)
 ========================================================= */
 .account-wrap {
   position: relative;

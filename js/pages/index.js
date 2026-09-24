@@ -13,7 +13,7 @@ async function redirectIfSession() {
         location.replace(withLangParam("login?setup=username"));
         return true;
       }
-      location.replace(withLangParam("builder"));
+      location.replace(withLangParam("games"));
       return true;
     }
   } catch (e) {

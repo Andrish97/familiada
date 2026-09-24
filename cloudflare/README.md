@@ -26,7 +26,7 @@
 - `GET /maintenance-state.json` → `{ enabled:boolean, mode:"off|message|returnAt|countdown", returnAt:string|null }`
 
 ### Pretty URLs (bez .html)
-Root (np. `/builder`) obsługuje GitHub Pages – bez dodatkowych rewrite’ów.
+Root (np. `/games`) obsługuje GitHub Pages – bez dodatkowych rewrite’ów.
 Foldery mają teraz `index.html`, więc `/control`, `/display`, `/logo-editor`, `/base-explorer` działają natywnie.
 
 **Aktualne mapowania w workerze:**

@@ -1,6 +1,6 @@
 // js/core/pwa.js
 // Rejestracja Service Workera + prompt instalacji (Android/Chrome/Edge/desktop)
-// iOS Safari obsługuje własny prompt w builder.js (maybeShowIosWebappPrompt)
+// iOS Safari obsługuje własny prompt w games.js (maybeShowIosWebappPrompt)
 // Flaga zapamiętana w localStorage – per urządzenie/przeglądarka, nie synchronizuje się.
 
 const LS_KEY = "pwa:install_dismissed";

@@ -44,7 +44,7 @@ function getCurrentRelativeUrl() {
 
 const who = $("who");
 const btnLogout = $("btnLogout");
-const btnBack = $("btnBackToBuilder");
+const btnBack = $("btnBackToGames");
 const btnManual = $("btnManual");
 const btnGoAlt = $("btnGoAlt");
 const altBadgeEl = $("altBadge");
@@ -1102,14 +1102,14 @@ function updateBackButtonLabel() {
 
 function getBackLink() {
   const rawRet = getRetParam();
-  return rawRet || "builder";
+  return rawRet || "games";
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
   try {
   currentUser = await requireAuth("login");
   if (isGuestUser(currentUser)) {
-    showGuestBlockedOverlay({ backHref: "builder", loginHref: "login?force_auth=1", showLoginButton: true });
+    showGuestBlockedOverlay({ backHref: "games", loginHref: "login?force_auth=1", showLoginButton: true });
     document.documentElement.classList.remove('page-loading');
     return;
   }

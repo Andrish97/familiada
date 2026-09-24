@@ -71,8 +71,8 @@ test("restore_my_demo czyści osierocone pliki po edytowanym demo (logo i gra)",
   await page.locator("#demoRestoreBtn").click();
   await page.getByRole("button", { name: "Przywróć", exact: true }).click();
 
-  // account.js po sukcesie robi location.href = "./builder"
-  await page.waitForURL(/builder/, { timeout: 20000 });
+  // account.js po sukcesie robi location.href = "./games"
+  await page.waitForURL(/games/, { timeout: 20000 });
 
   // Kluczowa asercja: oba pliki (audio starej demo-gry, obrazek starego
   // demo-logo) mają zniknąć z bucketów, mimo że restore_my_demo sam w

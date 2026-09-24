@@ -49,7 +49,7 @@ const setupSubEl = setupCard?.querySelector(".setup-sub");
 const baseUrls = document.body?.dataset || {};
 const confirmUrl = baseUrls.confirmUrl || "confirm";
 const resetUrl = baseUrls.resetUrl || "reset";
-const builderUrl = baseUrls.builderUrl || "builder";
+const gamesUrl = baseUrls.gamesUrl || "games";
 const pollsUrl = baseUrls.pollsUrl;
 const subscriptionsUrl = baseUrls.subscriptionsUrl;
 const captchaProvider = String(baseUrls.captchaProvider || "hcaptcha").trim().toLowerCase();
@@ -744,7 +744,7 @@ async function saveUsername() {
     if (meta.error) throw meta.error;
 
     closeUsernameSetup();
-    location.href = withLangParam(builderUrl);
+    location.href = withLangParam(gamesUrl);
   } catch (e) {
     console.error("[saveUsername] FAIL", e);
     setUsernameErr(niceAuthError(e));
@@ -829,7 +829,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       } else if (nextTarget === "polls-hub" || nextTarget === "subscriptions") {
         location.href = buildNextUrl();
       } else {
-        location.href = withLangParam(builderUrl);
+        location.href = withLangParam(gamesUrl);
       }
       return;
     }
@@ -1012,7 +1012,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         } else if (nextTarget === "polls-hub" || nextTarget === "subscriptions") {
           location.href = buildNextUrl();
         } else {
-          location.href = withLangParam(builderUrl);
+          location.href = withLangParam(gamesUrl);
         }
       }
     } catch (e) {
@@ -1033,7 +1033,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     try {
       const current = await getUser();
       if (current && isGuestUser(current)) {
-        location.href = withLangParam(builderUrl);
+        location.href = withLangParam(gamesUrl);
         return;
       }
       let captchaToken = await getCaptchaTokenOrPrompt();
@@ -1049,7 +1049,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
       const guestUser = await waitForUserSession();
       if (!guestUser) throw new Error(t("auth.loginFailed"));
-      location.href = withLangParam(builderUrl);
+      location.href = withLangParam(gamesUrl);
     } catch (e) {
       console.error(e);
       setStatus(t("index.statusError"));

@@ -17,7 +17,7 @@ const pwaApi = initPwa();
 // Jeśli beforeinstallprompt już odpalił zanim dodaliśmy listener w IIFE, sprawdzimy po zalogowaniu
 
 
-import { exportGame, importGame, downloadJson } from "./builder-import-export.js?v=v2026-09-24T09215";
+import { exportGame, importGame, downloadJson } from "./games-import-export.js?v=v2026-09-24T09215";
 import { setTopbarNavPriority, setTopbarAccount } from '../core/topbar-controller.js?v=v2026-09-24T09215';
 
 import "../core/contact-modal.js";
@@ -34,62 +34,62 @@ import { deleteGameSoundsFolder } from "../core/sfx-cloud.js?v=v2026-09-24T09215
 import { isResourceBusy } from "../core/resource-lock.js?v=v2026-09-24T09215";
 
 const MSG = {
-  exportBaseEmpty: () => t("builder.exportBase.empty"),
-  exportBaseMetaOwned: () => t("builder.exportBase.metaOwned"),
-  exportBaseMetaShared: () => t("builder.exportBase.metaShared"),
-  exportBaseBaseFallback: () => t("builder.exportBase.baseFallback"),
-  gameFallback: () => t("builder.gameFallback"),
-  typePollText: () => t("builder.types.pollText"),
-  typePollPoints: () => t("builder.types.pollPoints"),
-  typePrepared: () => t("builder.types.prepared"),
-  typeMarket: () => t("builder.types.market"),
-  statusDraft: () => t("builder.status.draft"),
-  statusOpen: () => t("builder.status.open"),
-  statusClosed: () => t("builder.status.closed"),
-  newGamePollText: () => t("builder.newGame.pollText"),
-  newGamePollPoints: () => t("builder.newGame.pollPoints"),
-  newGamePrepared: () => t("builder.newGame.prepared"),
-  deleteTitle: () => t("builder.delete.title"),
-  deleteText: (name) => t("builder.delete.text", { name }),
-  deleteOk: () => t("builder.delete.ok"),
-  deleteCancel: () => t("builder.delete.cancel"),
-  alertDeleteFailed: () => t("builder.alert.deleteFailed"),
-  alertDeleteInUsePollOpen: () => t("builder.alert.deleteInUsePollOpen"),
-  alertDeleteInUseLocked: () => t("builder.alert.deleteInUseLocked"),
-  alertCreateFailed: () => t("builder.alert.createFailed"),
-  hintSelect: () => t("builder.hint.select"),
-  hintSelectPlus: () => t("builder.hint.selectPlus"),
-  alertResetPollFailed: () => t("builder.alert.resetPollFailed"),
-  alertCheckFailed: () => t("builder.alert.checkFailed"),
-  alertOpenPollFailed: () => t("builder.alert.openPollFailed"),
-  exportJsonSub: () => t("builder.exportFile.subtitle"),
-  exportStart: () => t("builder.exportFile.progress.start"),
-  exportFetch: () => t("builder.exportFile.progress.fetch"),
-  exportDone: () => t("builder.exportFile.progress.done"),
-  exportDownload: () => t("builder.exportFile.progress.download"),
-  exportErrorLabel: () => t("builder.exportFile.progress.errorLabel"),
-  exportFailed: () => t("builder.exportFile.progress.failed"),
-  exportBaseLoadFailed: () => t("builder.exportBase.loadFailed"),
-  exportBasePick: () => t("builder.exportBase.pickBase"),
-  exportBaseStart: () => t("builder.exportBase.progress.start"),
-  exportBaseStep: () => t("builder.exportBase.progress.step"),
-  exportBaseDone: () => t("builder.exportBase.progress.done"),
-  exportBaseSaved: () => t("builder.exportBase.progress.saved"),
-  exportBaseFailed: () => t("builder.exportBase.progress.failed"),
-  exportBaseErrorLabel: () => t("builder.exportBase.progress.errorLabel"),
-  importPickFile: () => t("builder.import.pickFile"),
-  importLoaded: () => t("builder.import.loaded"),
-  importLoadFailed: () => t("builder.import.loadFailed"),
-  importPasteJson: () => t("builder.import.pasteJson"),
-  importInvalidJson: () => t("builder.import.invalidJson"),
-  importStart: () => t("builder.import.progress.start"),
-  importSave: () => t("builder.import.progress.save"),
-  importDone: () => t("builder.import.progress.done"),
-  importErrorLabel: () => t("builder.import.progress.errorLabel"),
-  importFailed: () => t("builder.import.progress.failed"),
-  importDbFailed: () => t("builder.import.dbFailed"),
-  exportBaseFolderStep: () => t("builder.exportBase.progress.folder"),
-  exportBaseQuestionsStep: () => t("builder.exportBase.progress.questions"),
+  exportBaseEmpty: () => t("games.exportBase.empty"),
+  exportBaseMetaOwned: () => t("games.exportBase.metaOwned"),
+  exportBaseMetaShared: () => t("games.exportBase.metaShared"),
+  exportBaseBaseFallback: () => t("games.exportBase.baseFallback"),
+  gameFallback: () => t("games.gameFallback"),
+  typePollText: () => t("games.types.pollText"),
+  typePollPoints: () => t("games.types.pollPoints"),
+  typePrepared: () => t("games.types.prepared"),
+  typeMarket: () => t("games.types.market"),
+  statusDraft: () => t("games.status.draft"),
+  statusOpen: () => t("games.status.open"),
+  statusClosed: () => t("games.status.closed"),
+  newGamePollText: () => t("games.newGame.pollText"),
+  newGamePollPoints: () => t("games.newGame.pollPoints"),
+  newGamePrepared: () => t("games.newGame.prepared"),
+  deleteTitle: () => t("games.delete.title"),
+  deleteText: (name) => t("games.delete.text", { name }),
+  deleteOk: () => t("games.delete.ok"),
+  deleteCancel: () => t("games.delete.cancel"),
+  alertDeleteFailed: () => t("games.alert.deleteFailed"),
+  alertDeleteInUsePollOpen: () => t("games.alert.deleteInUsePollOpen"),
+  alertDeleteInUseLocked: () => t("games.alert.deleteInUseLocked"),
+  alertCreateFailed: () => t("games.alert.createFailed"),
+  hintSelect: () => t("games.hint.select"),
+  hintSelectPlus: () => t("games.hint.selectPlus"),
+  alertResetPollFailed: () => t("games.alert.resetPollFailed"),
+  alertCheckFailed: () => t("games.alert.checkFailed"),
+  alertOpenPollFailed: () => t("games.alert.openPollFailed"),
+  exportJsonSub: () => t("games.exportFile.subtitle"),
+  exportStart: () => t("games.exportFile.progress.start"),
+  exportFetch: () => t("games.exportFile.progress.fetch"),
+  exportDone: () => t("games.exportFile.progress.done"),
+  exportDownload: () => t("games.exportFile.progress.download"),
+  exportErrorLabel: () => t("games.exportFile.progress.errorLabel"),
+  exportFailed: () => t("games.exportFile.progress.failed"),
+  exportBaseLoadFailed: () => t("games.exportBase.loadFailed"),
+  exportBasePick: () => t("games.exportBase.pickBase"),
+  exportBaseStart: () => t("games.exportBase.progress.start"),
+  exportBaseStep: () => t("games.exportBase.progress.step"),
+  exportBaseDone: () => t("games.exportBase.progress.done"),
+  exportBaseSaved: () => t("games.exportBase.progress.saved"),
+  exportBaseFailed: () => t("games.exportBase.progress.failed"),
+  exportBaseErrorLabel: () => t("games.exportBase.progress.errorLabel"),
+  importPickFile: () => t("games.import.pickFile"),
+  importLoaded: () => t("games.import.loaded"),
+  importLoadFailed: () => t("games.import.loadFailed"),
+  importPasteJson: () => t("games.import.pasteJson"),
+  importInvalidJson: () => t("games.import.invalidJson"),
+  importStart: () => t("games.import.progress.start"),
+  importSave: () => t("games.import.progress.save"),
+  importDone: () => t("games.import.progress.done"),
+  importErrorLabel: () => t("games.import.progress.errorLabel"),
+  importFailed: () => t("games.import.progress.failed"),
+  importDbFailed: () => t("games.import.dbFailed"),
+  exportBaseFolderStep: () => t("games.exportBase.progress.folder"),
+  exportBaseQuestionsStep: () => t("games.exportBase.progress.questions"),
 };
 
 /* ================= DOM ================= */
@@ -197,7 +197,7 @@ let creatingUiType = null;
 // - nie odświeżaj gdy overlay/progress jest otwarty
 // =======================================================
 let autoRefreshTimer = null;
-let builderRefreshInFlight = null;
+let gamesRefreshInFlight = null;
 
 function anyOverlayOpen() {
   const ovs = [importOverlay, exportBaseOverlay, exportJsonOverlay, nameOverlay];
@@ -205,14 +205,14 @@ function anyOverlayOpen() {
 }
 
 async function refreshView() {
-  if (builderRefreshInFlight) return builderRefreshInFlight;
-  builderRefreshInFlight = (async () => {
+  if (gamesRefreshInFlight) return gamesRefreshInFlight;
+  gamesRefreshInFlight = (async () => {
     await refresh();
   })();
   try {
-    await builderRefreshInFlight;
+    await gamesRefreshInFlight;
   } finally {
-    builderRefreshInFlight = null;
+    gamesRefreshInFlight = null;
   }
 }
 
@@ -278,10 +278,10 @@ async function maybeShowIosWebappPrompt() {
 
   let skipNextTime = false;
   await confirmModal({
-    title: tSafe("builder.iosWebapp.title", fallback.title),
-    text: tSafe("builder.iosWebapp.text", fallback.text),
-    okText: tSafe("builder.iosWebapp.ok", fallback.ok),
-    cancelText: tSafe("builder.iosWebapp.never", fallback.never),
+    title: tSafe("games.iosWebapp.title", fallback.title),
+    text: tSafe("games.iosWebapp.text", fallback.text),
+    okText: tSafe("games.iosWebapp.ok", fallback.ok),
+    cancelText: tSafe("games.iosWebapp.never", fallback.never),
     onReady: ({ cancelBtn }) => {
       cancelBtn?.addEventListener("click", () => { skipNextTime = true; }, { once: true });
     },
@@ -354,8 +354,8 @@ function openRenameModal(game) {
   nameMode = "rename";
   renamingGameId = game.id;
   setNameMsg("");
-  if (nameTitle) nameTitle.textContent = t("builder.nameModal.title");
-  if (nameSub) nameSub.textContent = t("builder.nameModal.sub");
+  if (nameTitle) nameTitle.textContent = t("games.nameModal.title");
+  if (nameSub) nameSub.textContent = t("games.nameModal.sub");
   if (nameInp) nameInp.value = game.name || "";
   show(nameOverlay, true);
   enterModalSheet(nameOverlay, { backBtn: btnBackSheet, onClose: closeRenameModal });
@@ -366,8 +366,8 @@ function openCreateModal(uiType) {
   nameMode = "create";
   creatingUiType = uiType;
   setNameMsg("");
-  if (nameTitle) nameTitle.textContent = t("builder.nameModal.titleCreate");
-  if (nameSub) nameSub.textContent = t("builder.nameModal.subCreate");
+  if (nameTitle) nameTitle.textContent = t("games.nameModal.titleCreate");
+  if (nameSub) nameSub.textContent = t("games.nameModal.subCreate");
   if (nameInp) nameInp.value = "";
   show(nameOverlay, true);
   enterModalSheet(nameOverlay, { backBtn: btnBackSheet, onClose: closeRenameModal });
@@ -612,7 +612,7 @@ async function exportSelectedGameToBase(baseId, onProgress) {
           step: MSG.exportBaseQuestionsStep(),
           i: Math.min(i + part.length, nQ),
           n: nQ,
-          msg: t("builder.exportBase.progress.savedCount", { done: Math.min(i + part.length, nQ), total: nQ }),
+          msg: t("games.exportBase.progress.savedCount", { done: Math.min(i + part.length, nQ), total: nQ }),
         });
       }
     }
@@ -787,12 +787,12 @@ async function deleteGame(game) {
     p_resource_id: game.id,
   });
   if (error) {
-    console.error("[builder] delete error:", error);
+    console.error("[games] delete error:", error);
     void alertModal({ text: MSG.alertDeleteFailed() });
     return;
   }
   if (!result?.ok) {
-    console.warn("[builder] delete blocked:", result);
+    console.warn("[games] delete blocked:", result);
     void alertModal({
       text: result?.reason === "poll_open" ? MSG.alertDeleteInUsePollOpen() : MSG.alertDeleteInUseLocked(),
     });
@@ -803,7 +803,7 @@ async function deleteGame(game) {
     await deleteGameSoundsFolder(sb(), currentUser.id, game.id);
   } catch (e) {
     // Nie blokujemy usuwania gry, jeśli sprzątanie plików audio się nie powiedzie
-    console.warn("[builder] deleteGameSoundsFolder failed:", e);
+    console.warn("[games] deleteGameSoundsFolder failed:", e);
   }
 }
 
@@ -850,7 +850,7 @@ function cardGame(g) {
   el.className = "card";
 
   el.innerHTML = `
-    <div class="x" title="${t("builder.card.delete")}">✕</div>
+    <div class="x" title="${t("games.card.delete")}">✕</div>
     <div class="name"></div>
     <div class="meta"></div>
   `;
@@ -884,7 +884,7 @@ function cardAdd(uiType) {
   el.className = "addCard";
   el.innerHTML = `
     <div class="plus">＋</div>
-    <div class="txt">${t("builder.card.newGame")}</div>
+    <div class="txt">${t("games.card.newGame")}</div>
     <div class="sub">${typeLabel(uiType)}</div>
   `;
     el.addEventListener("click", () => {
@@ -934,8 +934,8 @@ function renderMarket() {
     el.style.cursor = "default";
     el.style.pointerEvents = "none";
     el.innerHTML = `
-      <div class="txt">${t("builder.market.empty")}</div>
-      <div class="sub">${t("builder.market.emptyHint")}</div>
+      <div class="txt">${t("games.market.empty")}</div>
+      <div class="sub">${t("games.market.emptyHint")}</div>
     `;
     grid.appendChild(el);
   }
@@ -954,7 +954,7 @@ function renderMarket() {
     canExport: false,
   });
 
-  setHint(t("builder.market.hint"));
+  setHint(t("games.market.hint"));
 }
 
 function cardMarket(g) {
@@ -962,8 +962,8 @@ function cardMarket(g) {
   el.className = "card";
   el.innerHTML = `
     <div class="name">${escapeHtml(g.title || "—")}</div>
-    <div class="meta">${t("builder.market.typeLabel")} · ${(g.lang || "").toUpperCase()}</div>
-    <div class="x" title="${t("builder.market.removeFromLibrary")}">✕</div>
+    <div class="meta">${t("games.market.typeLabel")} · ${(g.lang || "").toUpperCase()}</div>
+    <div class="x" title="${t("games.market.removeFromLibrary")}">✕</div>
   `;
   el.addEventListener("click", () => {
     selectedMarketId = g.market_game_id;
@@ -972,7 +972,7 @@ function cardMarket(g) {
   el.querySelector(".x").addEventListener("click", async (e) => {
     e.stopPropagation();
     const { error } = await sb().rpc("market_remove_from_library", { p_market_game_id: g.market_game_id });
-    if (error) { console.error("[builder] removeFromLibrary error:", error); return; }
+    if (error) { console.error("[games] removeFromLibrary error:", error); return; }
     if (selectedMarketId === g.market_game_id) selectedMarketId = null;
     marketGamesAll = marketGamesAll.filter(x => x.market_game_id !== g.market_game_id);
     renderMarket();
@@ -986,7 +986,7 @@ async function loadMarketGames() {
     if (error) throw error;
     marketGamesAll = data || [];
   } catch (e) {
-    console.error("[builder] loadMarketGames error:", e);
+    console.error("[games] loadMarketGames error:", e);
     marketGamesAll = [];
   }
 }
@@ -1071,7 +1071,7 @@ async function updateActionState() {
       canExport: !!st.canExport
     });
   } catch (e) {
-    console.error("[builder] game_action_state error:", e);
+    console.error("[games] game_action_state error:", e);
     setButtonsState({ hasSel: true, canEdit: false, canPlay: false, canPoll: false, canExport: false });
   }
 }
@@ -1106,7 +1106,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const requireAuthP = requireAuth("login"); // start równolegle z initI18n
   await initI18n({ withSwitcher: true });
 
-  // Blokuj autoInitTopbarAuthButton — builder wywołuje setTopbarAccount z withAccountSettings:true
+  // Blokuj autoInitTopbarAuthButton — games wywołuje setTopbarAccount z withAccountSettings:true
   const _btnLogoutEl = document.getElementById('btnLogout');
   if (_btnLogoutEl) _btnLogoutEl.dataset.topbarAuthReady = '1';
 
@@ -1157,10 +1157,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   async function showPwaPrompt() {
     if (isStandalone()) return;
     const ok = await confirmModal({
-      title: t("builder.pwaInstall.title") || "Zainstaluj aplikację",
-      text: t("builder.pwaInstall.text") || "Dodaj Familiadę do ekranu głównego, żeby mieć szybki dostęp.",
-      okText: t("builder.pwaInstall.ok") || "Zainstaluj",
-      cancelText: t("builder.pwaInstall.cancel") || "Nie pokazuj",
+      title: t("games.pwaInstall.title") || "Zainstaluj aplikację",
+      text: t("games.pwaInstall.text") || "Dodaj Familiadę do ekranu głównego, żeby mieć szybki dostęp.",
+      okText: t("games.pwaInstall.ok") || "Zainstaluj",
+      cancelText: t("games.pwaInstall.cancel") || "Nie pokazuj",
     });
     if (ok) await pwaApi.install();
     else pwaApi.dismiss();
@@ -1182,9 +1182,9 @@ document.addEventListener("DOMContentLoaded", async () => {
           ok: "OK",
         };
         await alertModal({
-          title: tSafe("builder.iosWebapp.title", fallback.title),
-          text: tSafe("builder.iosWebapp.text", fallback.text),
-          okText: tSafe("builder.iosWebapp.ok", fallback.ok),
+          title: tSafe("games.iosWebapp.title", fallback.title),
+          text: tSafe("games.iosWebapp.text", fallback.text),
+          okText: tSafe("games.iosWebapp.ok", fallback.ok),
         });
       } else {
         // Chrome/Edge: beforeinstallprompt jeszcze nie odpalił lub app już zainstalowana
@@ -1199,19 +1199,19 @@ document.addEventListener("DOMContentLoaded", async () => {
           ok: "OK",
         };
         await alertModal({
-          title: tSafe("builder.pwaInstall.title", fallback.title),
-          text: tSafe("builder.pwaInstall.manual", fallback.text),
-          okText: tSafe("builder.pwaInstall.ok", fallback.ok),
+          title: tSafe("games.pwaInstall.title", fallback.title),
+          text: tSafe("games.pwaInstall.manual", fallback.text),
+          okText: tSafe("games.pwaInstall.ok", fallback.ok),
         });
         return;
       }
       return;
     }
     const ok = await confirmModal({
-      title: t("builder.pwaInstall.title") || "Zainstaluj aplikację",
-      text: t("builder.pwaInstall.text") || "Dodaj Familiadę do ekranu głównego, żeby mieć szybki dostęp.",
-      okText: t("builder.pwaInstall.ok") || "Zainstaluj",
-      cancelText: t("builder.pwaInstall.cancelBtn") || "Anuluj",
+      title: t("games.pwaInstall.title") || "Zainstaluj aplikację",
+      text: t("games.pwaInstall.text") || "Dodaj Familiadę do ekranu głównego, żeby mieć szybki dostęp.",
+      okText: t("games.pwaInstall.ok") || "Zainstaluj",
+      cancelText: t("games.pwaInstall.cancelBtn") || "Anuluj",
     });
     if (ok) await pwaApi.install();
     // Klik Anuluj nie ustawia LS_KEY — celowo bez pwaApi.dismiss()
@@ -1367,15 +1367,15 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 
   btnBases?.addEventListener("click", async () => {
-    location.href = "bases?from=builder";
+    location.href = "bases?from=games";
   });
 
   btnPollsHub?.addEventListener("click", () => {
-    location.href = "polls-hub?from=builder";
+    location.href = "polls-hub?from=games";
   });
 
   btnSubscriptionsHub?.addEventListener("click", () => {
-    location.href = "subscriptions?from=builder";
+    location.href = "subscriptions?from=games";
   });
 
   tabPollText?.addEventListener("click", () => setActiveTab(TYPES.POLL_TEXT));
@@ -1392,7 +1392,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     location.href = "marketplace";
   });
 
-  // builder.html nie ma naturalnego przycisku wstecz na mobile (jest
+  // games.html nie ma naturalnego przycisku wstecz na mobile (jest
   // stroną główną) — btnBackSheet istnieje wyłącznie na potrzeby trybu
   // sheet, zastępuje brand w topbarze gdy modal jest otwarty.
   if (btnBackSheet) btnBackSheet.dataset.sheetBack = "1";
@@ -1433,7 +1433,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     // Pokaż modal natychmiast z nazwą i "Ładowanie…"
     if (previewTitle) previewTitle.textContent = gameName;
-    if (previewQuestions) previewQuestions.innerHTML = `<div class="bld-no-q">${t("builder.preview.loading") || "Ładowanie…"}</div>`;
+    if (previewQuestions) previewQuestions.innerHTML = `<div class="bld-no-q">${t("games.preview.loading") || "Ładowanie…"}</div>`;
     if (previewOverlay) previewOverlay.style.display = "";
     enterModalSheet(previewOverlay, { backBtn: btnBackSheet, onClose: closePreview });
 
@@ -1443,7 +1443,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         const exported = await exportGame(selectedId);
         questions = exported?.questions ?? [];
       } catch (e) {
-        console.error("[builder] preview export failed:", e);
+        console.error("[games] preview export failed:", e);
         questions = [];
       }
     }
@@ -1451,12 +1451,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     // Renderuj pytania
     if (!previewQuestions) return;
     if (!questions.length) {
-      previewQuestions.innerHTML = `<div class="bld-no-q">${t("builder.preview.noQuestions") || "Brak pytań."}</div>`;
+      previewQuestions.innerHTML = `<div class="bld-no-q">${t("games.preview.noQuestions") || "Brak pytań."}</div>`;
       return;
     }
 
     const esc = s => String(s ?? "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
-    const ptsLabel = t("builder.preview.pts") || "pkt";
+    const ptsLabel = t("games.preview.pts") || "pkt";
     previewQuestions.innerHTML = questions.map((q, i) => {
       const answers = (q.answers ?? []);
       const hasPoints = answers.some(a => a.fixed_points != null && a.fixed_points > 0);
@@ -1485,10 +1485,10 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     if (info.needsResetWarning) {
       const ok = await confirmModal({
-        title: t("builder.editAfterPoll.title"),
-        text: t("builder.editAfterPoll.text"),
-        okText: t("builder.editAfterPoll.ok"),
-        cancelText: t("builder.editAfterPoll.cancel"),
+        title: t("games.editAfterPoll.title"),
+        text: t("games.editAfterPoll.text"),
+        okText: t("games.editAfterPoll.ok"),
+        cancelText: t("games.editAfterPoll.cancel"),
       });
       if (!ok) return;
 
@@ -1497,7 +1497,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         if (!resetOk) return;
         await refresh();
       } catch (e) {
-        console.error("[builder] resetPollForEditing error:", e);
+        console.error("[games] resetPollForEditing error:", e);
         void alertModal({ text: MSG.alertResetPollFailed() });
         return;
       }
@@ -1521,7 +1521,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           const { error } = await sb().rpc("market_add_to_library", {
             p_market_game_id: selectedMarketId,
           });
-          if (error) { console.error("[builder] market_add_to_library:", error); return; }
+          if (error) { console.error("[games] market_add_to_library:", error); return; }
           await loadMarketGames();
           gameId = marketGamesAll.find(g => g.market_game_id === selectedMarketId)?.game_id;
         } finally {
@@ -1570,7 +1570,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
       }
 
-      location.href = `polls?id=${encodeURIComponent(selectedId)}&from=builder`;
+      location.href = `polls?id=${encodeURIComponent(selectedId)}&from=games`;
     } catch (e) {
       console.error(e);
       void alertModal({ text: MSG.alertOpenPollFailed() });
@@ -1595,7 +1595,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     // ankieta), eksport może złapać rozjechany stan (np. odpowiedź do
     // pytania, które w międzyczasie zniknęło). Eksport niczego nie
     // nadpisuje, ale sam wyeksportowany plik mógłby być niespójny, więc
-    // dostaje ten sam busy-check co reszta jednorazowych akcji buildera.
+    // dostaje ten sam busy-check co reszta jednorazowych akcji strony gier.
     if (await isResourceBusy("game", selectedId)) {
       void alertModal({ text: t("resourceLock.gameMessage") });
       return;
@@ -1738,8 +1738,8 @@ document.addEventListener("DOMContentLoaded", async () => {
       await refresh();
       closeRenameModal();
     } catch (e) {
-      console.error("[builder] name modal error:", e);
-      setNameMsg(t("builder.nameModal.failed"));
+      console.error("[games] name modal error:", e);
+      setNameMsg(t("games.nameModal.failed"));
     } finally {
       if (btnNameOk) btnNameOk.disabled = false;
     }
@@ -1785,9 +1785,9 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (importPreview) {
         importPreview.innerHTML = `
           <div style="display:flex;gap:16px;flex-wrap:wrap;padding-bottom:6px;border-bottom:1px solid rgba(255,255,255,.12)">
-            <span><span style="opacity:.6">${t("builder.import.preview.name")}</span> <strong>${escapeHtml(gameName)}</strong></span>
-            <span><span style="opacity:.6">${t("builder.import.preview.type")}</span> <strong>${escapeHtml(gameType)}</strong></span>
-            <span><span style="opacity:.6">${t("builder.import.preview.questions")}</span> <strong>${qs.length}</strong></span>
+            <span><span style="opacity:.6">${t("games.import.preview.name")}</span> <strong>${escapeHtml(gameName)}</strong></span>
+            <span><span style="opacity:.6">${t("games.import.preview.type")}</span> <strong>${escapeHtml(gameType)}</strong></span>
+            <span><span style="opacity:.6">${t("games.import.preview.questions")}</span> <strong>${qs.length}</strong></span>
           </div>
           <div style="max-height:220px;overflow-y:auto;margin-top:4px">${qRows}</div>`;
         importPreview.style.display = "grid";

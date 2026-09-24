@@ -227,8 +227,8 @@ strony. Zapisane tu, żeby nie trzeba było ich znowu wyłapywać po kolei:
   `TEST_WORKERS` po jednym i sprawdzaj wynik, zamiast zakładać, że więcej
   kont = można dać `--workers` na maksa.
 - **Selektor karty gry musi być zawężony do `#grid`.** Sam kontener karty
-  ma klasę `.card`, ale ma ją też otaczający panel `.card.builder-card`
-  w `builder.html` — goły `.card` łapie oba i Playwright rzuca strict
+  ma klasę `.card`, ale ma ją też otaczający panel `.card.games-card`
+  w `games.html` — goły `.card` łapie oba i Playwright rzuca strict
   mode violation.
 
 ## Co jest zablokowane dla gościa i dla niezalogowanego
@@ -239,7 +239,7 @@ logowania (`loginAsTestUser` czy `loginAsGuest`) pasuje do danej strony.
 **Niezalogowany (brak sesji w ogóle):** każda strona appki wywołuje
 `requireAuth()` (`js/core/auth.js`) jako pierwszy krok i bez sesji
 przekierowuje na `/login`, zanim cokolwiek się wyrenderuje. Dotyczy to
-`builder`, `editor` (gra), `logo-editor`, `game-settings`, `manual`,
+`games`, `editor` (gra), `logo-editor`, `game-settings`, `manual`,
 `polls-hub`, `polls`, `bases`/`base-explorer`, `account`, `subscriptions`
 i `control/*`. Publicznie, bez logowania, dostępne są tylko strona
 główna (`index.html`) i sam `/login`.
@@ -264,7 +264,7 @@ przycisk `account.deleteGuestModalOk` = "Usuń" — celowo inny tekst niż
 przycisk `#deleteAccount` na stronie, żeby oba nie miały identycznego
 tekstu widocznego jednocześnie, patrz `account-deletion.spec.js`).
 
-Reszta appki (`builder`, `editor`, `logo-editor`, `control/*`,
+Reszta appki (`games`, `editor`, `logo-editor`, `control/*`,
 `bases`/`base-explorer`, `manual`, `game-settings`) działa dla gościa
 normalnie — to nie jest blokada "gość = tryb tylko do odczytu", tylko
 konkretna lista stron związanych z tożsamością/płatnościami.

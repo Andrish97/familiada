@@ -18,7 +18,7 @@
   <link rel="manifest" href="/manifest.json?v=v2026-09-24T09215"/>
   <meta name="theme-color" content="#050914"/>
   <link rel="stylesheet" href="css/base.css?v=v2026-09-24T09215"/>
-  <link rel="stylesheet" href="css/builder.css?v=v2026-09-24T09215"/>
+  <link rel="stylesheet" href="css/games.css?v=v2026-09-24T09215"/>
   <link rel="stylesheet" href="logo-editor/logo-editor.css?v=v2026-09-24T09215"/>
   <script>
     document.documentElement.classList.add('page-loading');
@@ -52,8 +52,8 @@
   <script src="js/core/security-warning.js?v=v2026-09-24T09215" defer></script>
 </head>
 
-<body class="builder-body logo-editor-body skel-body">
-  <!-- TOPBAR (jak builder) -->
+<body class="games-body logo-editor-body skel-body">
+  <!-- TOPBAR (jak games) -->
   <header class="topbar topbar-layout-4">
     <div class="topbar-section topbar-section-1">
       <div class="brand" id="brandTitle">FAMILIADA</div>
@@ -89,14 +89,14 @@
       </div>
 
       <!-- JEDNA karta (bez tabs-card / wypustek) -->
-      <section class="builder-shell logoShell">
-        <div class="card builder-card logoCard">
+      <section class="games-shell logoShell">
+        <div class="card games-card logoCard">
           <div class="grid logoGridBig" id="grid"></div>
 
-          <!-- dół jak builder -->
-          <div class="builder-bottom">
-            <div class="builder-bottom-left"></div>
-            <div class="builder-bottom-right">
+          <!-- dół jak games -->
+          <div class="games-bottom">
+            <div class="games-bottom-left"></div>
+            <div class="games-bottom-right">
               <button class="btn sm" id="btnExport" type="button" disabled data-i18n="logoEditor.list.export">Export</button>
               <button class="btn sm" id="btnImport" type="button" data-i18n="logoEditor.list.import">Import</button>
             </div>
@@ -126,7 +126,7 @@
       </div>
 
       <!-- karta edytora (przyklejona, wewnątrz toolbar + content) -->
-      <div class="card builder-card editorCard">
+      <div class="card games-card editorCard">
         <!-- TOOLBAR (pełna szerokość w ramach karty) -->
         <div class="editorToolbar" id="editorToolbar">
 

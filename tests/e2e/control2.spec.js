@@ -553,7 +553,7 @@ test("control2: reset pojedynku, pass, kradzież wygrana/przegrana, odkrywanie r
     const finishBtn = page.getByRole("button", { name: "Wróć do moich gier" });
     await expect(finishBtn).toBeVisible({ timeout: 10000 });
     await finishBtn.click();
-    await expect(page).toHaveURL(/\/builder/, { timeout: 10000 });
+    await expect(page).toHaveURL(/\/games/, { timeout: 10000 });
     await page.waitForFunction(() => window.__sbClient, { timeout: 10000 }).catch(() => {});
 
     expect(errors, "żadne z urządzeń nie powinno rzucić błędu JS: " + errors.join(" | ")).toEqual([]);
@@ -649,7 +649,7 @@ test("control2: próg w rundzie -> finał, wczesne zakończenie po 4/5 pytaniach
     const finishBtn = page.getByRole("button", { name: "Wróć do moich gier" });
     await expect(finishBtn).toBeVisible({ timeout: 10000 });
     await finishBtn.click();
-    await expect(page).toHaveURL(/\/builder/, { timeout: 10000 });
+    await expect(page).toHaveURL(/\/games/, { timeout: 10000 });
     await page.waitForFunction(() => window.__sbClient, { timeout: 10000 }).catch(() => {});
 
     expect(errors, "żadne z urządzeń nie powinno rzucić błędu JS: " + errors.join(" | ")).toEqual([]);

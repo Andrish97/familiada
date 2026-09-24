@@ -1,5 +1,5 @@
 // tests/e2e/game-deletion.spec.js
-// Weryfikuje, że usunięcie gry przez UI (js/pages/builder.js, deleteGame())
+// Weryfikuje, że usunięcie gry przez UI (js/pages/games.js, deleteGame())
 // realnie czyści folder user-sounds/{userId}/{gameId}/ w Supabase Storage,
 // nie tylko wiersz w DB.
 
@@ -10,7 +10,7 @@ test("usunięcie gry przez UI czyści folder audio w buckecie user-sounds", asyn
   await loginAsTestUser(page, context);
 
   // Stwórz testową grę bezpośrednio przez API (nie testujemy tu kreatora gier,
-  // tylko usuwanie — dokładnie ten sam kształt co createGame() w builder.js)
+  // tylko usuwanie — dokładnie ten sam kształt co createGame() w games.js)
   const gameName = `E2E-TEST-DELETE-${Date.now()}`;
   const { userId, gameId } = await page.evaluate(async (name) => {
     const sb = window.__sbClient;
@@ -43,13 +43,13 @@ test("usunięcie gry przez UI czyści folder audio w buckecie user-sounds", asyn
   }, { userId, gameId });
   expect(before?.length, "plik testowy powinien być w buckecie przed usunięciem gry").toBeGreaterThan(0);
 
-  // Przejdź do buildera i odśwież listę gier, żeby nowa gra się pojawiła
-  await page.goto("https://www.familiada.online/builder", { waitUntil: "domcontentloaded" });
+  // Przejdź do strony gier i odśwież listę gier, żeby nowa gra się pojawiła
+  await page.goto("https://www.familiada.online/games", { waitUntil: "domcontentloaded" });
   await page.waitForTimeout(1500); // czas na załadowanie listy gier z DB
 
   // Znajdź kartę naszej testowej gry po nazwie i kliknij jej przycisk usuwania (".x")
   // Scoped do #grid — sama karta ma klasę "card", ale ma ją też otaczający ją
-  // panel (.card.builder-card w builder.html), więc bez zawężenia locator
+  // panel (.card.games-card w games.html), więc bez zawężenia locator
   // łapie oba elementy (strict mode violation).
   const card = page.locator("#grid .card", { has: page.locator(".name", { hasText: gameName }) });
   await expect(card).toBeVisible({ timeout: 10000 });

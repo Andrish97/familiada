@@ -57,7 +57,7 @@ async function createBase(page, name) {
   }, name);
 }
 
-// Eksport ('Utwórz grę') po sukcesie robi location.href do ../builder --
+// Eksport ('Utwórz grę') po sukcesie robi location.href do ../games --
 // jeśli cleanup trafia tuż po tej nawigacji, window.__sbClient może na
 // chwilę nie istnieć (stara strona już zniknęła, nowa jeszcze nie
 // odpaliła własnego init). Bez tego deleteGame/deleteBase w finally

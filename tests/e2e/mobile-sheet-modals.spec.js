@@ -6,7 +6,7 @@
 // (test.describe), żeby całość dało się odpalić jednym poleceniem:
 //   npx playwright test mobile-sheet-modals.spec.js
 //
-// Strony objęte tym plikiem: bases, base-explorer, builder, marketplace,
+// Strony objęte tym plikiem: bases, base-explorer, games, marketplace,
 // polls-hub, logo-editor, settings (patrz plan mobile sheet modals).
 // settings.html jest za Cloudflare Access -- jej sekcja sprawdza sam
 // kontrakt CSS/HTML przez bezpośrednią manipulację DOM, nie pełny
@@ -456,12 +456,12 @@ test.describe("base-explorer: mobile sheet modal (tagi/eksport/pytanie)", () => 
 });
 
 /* =====================================================================
-   3) builder.html -- modal eksportu gry do bazy pytań
+   3) games.html -- modal eksportu gry do bazy pytań
 ===================================================================== */
 
-const BUILDER_URL = "https://www.familiada.online/builder";
+const GAMES_URL = "https://www.familiada.online/games";
 
-test.describe("builder: mobile sheet modal (eksport do bazy pytań)", () => {
+test.describe("games: mobile sheet modal (eksport do bazy pytań)", () => {
   test.use({ viewport: MOBILE_VIEWPORT });
 
   test("modal eksportu do bazy na telefonie zastępuje treść strony (sheet)", async ({ page, context }) => {
@@ -477,7 +477,7 @@ test.describe("builder: mobile sheet modal (eksport do bazy pytań)", () => {
         await addQuestionDirect(page, gameId, i, `Pytanie testowe ${i}`);
       }
 
-      await page.goto(BUILDER_URL, { waitUntil: "domcontentloaded" });
+      await page.goto(GAMES_URL, { waitUntil: "domcontentloaded" });
       await page.waitForLoadState("networkidle");
 
       const tile = page.locator("#grid .card", { hasText: name });
@@ -573,14 +573,14 @@ test.describe("marketplace: mobile sheet modal (zgłoszenie gry)", () => {
     const overlay = page.locator("#gameDetailOverlay");
     await expect(overlay).toHaveCount(1);
 
-    const originalText = (await page.locator("#btnGoBuilder").textContent() || "").trim();
+    const originalText = (await page.locator("#btnGoGames").textContent() || "").trim();
 
     await page.evaluate(() => {
       const overlay = document.getElementById("gameDetailOverlay");
       overlay.style.display = "";
       document.body.classList.add("sheet-open");
       overlay.classList.add("sheet-active");
-      document.getElementById("btnGoBuilder").textContent = "← Wstecz";
+      document.getElementById("btnGoGames").textContent = "← Wstecz";
     });
 
     await expect(overlay).toBeVisible();
@@ -589,7 +589,7 @@ test.describe("marketplace: mobile sheet modal (zgłoszenie gry)", () => {
     expect(await overlay.evaluate(el => getComputedStyle(el.querySelector(".modal")).boxShadow)).toBe("none");
     await expect(page.locator("#viewBrowse")).toBeHidden();
     await expect(page.locator(".topbar")).toBeVisible();
-    await expect(page.locator("#btnGoBuilder")).toHaveText("← Wstecz");
+    await expect(page.locator("#btnGoGames")).toHaveText("← Wstecz");
 
     await page.evaluate(() => {
       const overlay = document.getElementById("gameDetailOverlay");

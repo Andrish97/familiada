@@ -62,7 +62,7 @@ test("usuwanie gry: zablokowane, gdy jej ankieta jest otwarta (poll_open)", asyn
   }, gameName);
 
   try {
-    await page.goto("https://www.familiada.online/builder", { waitUntil: "domcontentloaded" });
+    await page.goto("https://www.familiada.online/games", { waitUntil: "domcontentloaded" });
     await page.waitForLoadState("networkidle");
     // Domyślna aktywna zakładka to "Preparowana" — gra poll_text renderuje
     // się dopiero po przełączeniu na zakładkę Ankieta tekstowa.
@@ -73,7 +73,7 @@ test("usuwanie gry: zablokowane, gdy jej ankieta jest otwarta (poll_open)", asyn
     await card.locator(".x").click({ timeout: 10000 });
     await page.locator(".uni-foot .btn.gold").click({ timeout: 10000 }); // potwierdź "Usuń"
 
-    // builder.html ma własne statyczne modale (eksport do bazy/pliku,
+    // games.html ma własne statyczne modale (eksport do bazy/pliku,
     // zmiana nazwy), każdy z zawsze obecną w DOM klasą .mSub — jak w
     // logo-editorze, goły .mSub jest niejednoznaczny.
     await expect(page.locator(".uni-modal .mSub")).toContainText("otwarta", { timeout: 10000 });
@@ -106,7 +106,7 @@ test("usuwanie gry: zablokowane, gdy edytor jest otwarty w innej karcie", async 
     await editorPage.waitForLoadState("networkidle");
     await waitForLock(editorPage, "game", gameId);
 
-    await page.goto("https://www.familiada.online/builder", { waitUntil: "domcontentloaded" });
+    await page.goto("https://www.familiada.online/games", { waitUntil: "domcontentloaded" });
     await page.waitForLoadState("networkidle");
 
     const card = page.locator("#grid .card").filter({ hasText: gameName });
@@ -141,7 +141,7 @@ test("usuwanie gry: działa normalnie, gdy nic jej nie blokuje", async ({ page, 
 
   let deleted = false;
   try {
-    await page.goto("https://www.familiada.online/builder", { waitUntil: "domcontentloaded" });
+    await page.goto("https://www.familiada.online/games", { waitUntil: "domcontentloaded" });
     await page.waitForLoadState("networkidle");
 
     const card = page.locator("#grid .card").filter({ hasText: gameName });
@@ -472,13 +472,13 @@ test("edytor blokuje ankietę tej samej gry", async ({ page, context }) => {
   }
 });
 
-/* ================= builder.js — jednorazowe akcje sprawdzają busy zamiast overlayu ================= */
+/* ================= games.js — jednorazowe akcje sprawdzają busy zamiast overlayu ================= */
 // Model "busy/free" (plan-testy-i-poprawki.md): rename i reset-do-draftu w
-// builder.js nie otwierają własnej sesji, ale piszą do tych samych danych
+// games.js nie otwierają własnej sesji, ale piszą do tych samych danych
 // co editor.js/game-settings.js -- muszą sprawdzić aktywny lock 'game' i
 // pokazać alert modal zamiast zapisywać w ciemno.
 
-test("builder.js: zmiana nazwy gry zablokowana alert-modalem, gdy gra jest edytowana gdzie indziej", async ({ page, context }) => {
+test("games.js: zmiana nazwy gry zablokowana alert-modalem, gdy gra jest edytowana gdzie indziej", async ({ page, context }) => {
   test.setTimeout(60_000);
   await loginAsTestUser(page, context);
 
@@ -499,7 +499,7 @@ test("builder.js: zmiana nazwy gry zablokowana alert-modalem, gdy gra jest edyto
     await editorPage.waitForLoadState("networkidle");
     await waitForLock(editorPage, "game", gameId);
 
-    await page.goto("https://www.familiada.online/builder", { waitUntil: "domcontentloaded" });
+    await page.goto("https://www.familiada.online/games", { waitUntil: "domcontentloaded" });
     await page.waitForLoadState("networkidle");
 
     const card = page.locator("#grid .card").filter({ hasText: originalName });
@@ -525,7 +525,7 @@ test("builder.js: zmiana nazwy gry zablokowana alert-modalem, gdy gra jest edyto
   }
 });
 
-test("builder.js: reset gry do draftu po ankiecie zablokowany alert-modalem, gdy gra jest edytowana gdzie indziej", async ({ page, context }) => {
+test("games.js: reset gry do draftu po ankiecie zablokowany alert-modalem, gdy gra jest edytowana gdzie indziej", async ({ page, context }) => {
   test.setTimeout(60_000);
   await loginAsTestUser(page, context);
 
@@ -553,7 +553,7 @@ test("builder.js: reset gry do draftu po ankiecie zablokowany alert-modalem, gdy
     await settingsPage.waitForLoadState("networkidle");
     await waitForLock(settingsPage, "game", gameId);
 
-    await page.goto("https://www.familiada.online/builder", { waitUntil: "domcontentloaded" });
+    await page.goto("https://www.familiada.online/games", { waitUntil: "domcontentloaded" });
     await page.waitForLoadState("networkidle");
     // Domyślna aktywna zakładka to "Preparowana" -- gra poll_text renderuje
     // się dopiero po przejściu na jej własną zakładkę.
@@ -575,7 +575,7 @@ test("builder.js: reset gry do draftu po ankiecie zablokowany alert-modalem, gdy
     await expect(page.locator(".uni-modal .mSub")).toContainText("używana", { timeout: 5000 });
     await page.locator(".uni-foot .btn.gold").click();
 
-    await expect(page).toHaveURL(/\/builder/, { timeout: 5000 });
+    await expect(page).toHaveURL(/\/games/, { timeout: 5000 });
 
     const after = await page.evaluate(async ({ gameId, questionId }) => {
       const sb = window.__sbClient;
@@ -591,7 +591,7 @@ test("builder.js: reset gry do draftu po ankiecie zablokowany alert-modalem, gdy
   }
 });
 
-test("builder.js: eksport gry zablokowany alert-modalem, gdy gra jest edytowana gdzie indziej", async ({ page, context }) => {
+test("games.js: eksport gry zablokowany alert-modalem, gdy gra jest edytowana gdzie indziej", async ({ page, context }) => {
   test.setTimeout(60_000);
   await loginAsTestUser(page, context);
 
@@ -612,7 +612,7 @@ test("builder.js: eksport gry zablokowany alert-modalem, gdy gra jest edytowana 
     await editorPage.waitForLoadState("networkidle");
     await waitForLock(editorPage, "game", gameId);
 
-    await page.goto("https://www.familiada.online/builder", { waitUntil: "domcontentloaded" });
+    await page.goto("https://www.familiada.online/games", { waitUntil: "domcontentloaded" });
     await page.waitForLoadState("networkidle");
 
     const card = page.locator("#grid .card").filter({ hasText: gameName });

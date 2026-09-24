@@ -1601,7 +1601,7 @@ function showIngameGuard() {
       </div>
     `;
     document.documentElement.appendChild(overlay);
-    overlay.querySelector("#ingameGuardBack").addEventListener("click", () => { location.href = "/builder"; });
+    overlay.querySelector("#ingameGuardBack").addEventListener("click", () => { location.href = "/games"; });
     overlay.querySelector("#ingameGuardUnlock").addEventListener("click", async () => {
       // "Odblokuj ustawienia" — nie jest to wymuszenie: acquire_edit_lock
       // i tak sam zwolni blokadę po ~25s bez odnowienia (Control naprawdę
@@ -1673,7 +1673,7 @@ async function main() {
     resourceId: gameId,
     context: "settings",
     message: t("resourceLock.gameMessage"),
-    backHref: "/builder",
+    backHref: "/games",
   });
   if (!lock.ok) return;
 
@@ -1690,7 +1690,7 @@ async function main() {
       resourceType: "logo",
       resourceId: gameLogoId,
       message: t("resourceLock.logoMessage"),
-      backHref: "/builder",
+      backHref: "/games",
     });
     if (!logoLock.ok) return;
   }
@@ -1784,7 +1784,7 @@ async function main() {
   if (!isModal) {
     btnBack?.addEventListener("click", async () => {
       if (isDirty && !await confirmModal({ text: t("gameSettings.unsavedConfirm") || "Masz niezapisane zmiany. Czy na pewno chcesz wyjść?" })) return;
-      location.href = `/builder`;
+      location.href = `/games`;
     });
   }
 

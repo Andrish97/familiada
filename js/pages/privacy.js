@@ -15,17 +15,17 @@ function hasManualRef() {
   return new URLSearchParams(location.search).has("man");
 }
 
-function buildBuilderBackUrl() {
+function buildGamesBackUrl() {
   const p = new URLSearchParams(location.search);
   const lang = p.get("lang") || localStorage.getItem("uiLang") || "pl";
-  return `builder?lang=${encodeURIComponent(lang)}`;
+  return `games?lang=${encodeURIComponent(lang)}`;
 }
 
 function decodeManualBack() {
   const p = new URLSearchParams(location.search);
   const man = p.get("man");
 
-  if (!man) return buildBuilderBackUrl();
+  if (!man) return buildGamesBackUrl();
   if (man.includes("lang=")) return man;
 
   const lang = p.get("lang") || localStorage.getItem("uiLang") || "pl";

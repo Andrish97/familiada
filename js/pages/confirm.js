@@ -142,7 +142,7 @@ async function redirectAfterConfirm(user) {
     location.href = withLangParam("login?setup=username");
     return;
   }
-  location.href = withLangParam("builder");
+  location.href = withLangParam("games");
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -150,7 +150,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   await initI18n({ withSwitcher: true });
   document.documentElement.classList.remove('page-loading');
   setErr("");
-  if (go) go.href = withLangParam(go.dataset.baseHref || "builder");
+  if (go) go.href = withLangParam(go.dataset.baseHref || "games");
   if (back) back.href = withLangParam(back.dataset.baseHref || "login");
   const syncLanguage = () => updateUserLanguage(getUiLang());
   window.addEventListener("i18n:lang", syncLanguage);

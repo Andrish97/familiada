@@ -22,7 +22,7 @@ let usedSheetMode = false;
 // więc szukamy WYŁĄCZNIE takich, jawnie oznaczonych przycisków.
 function findPageBackBtn() {
   const candidates = Array.from(document.querySelectorAll('[data-sheet-back="1"]'));
-  // marketplace.html ma DWA takie przyciski (btnGoBuilder/btnBackBrowse),
+  // marketplace.html ma DWA takie przyciski (btnGoGames/btnBackBrowse),
   // widoczny jest zawsze dokładnie jeden -- preferuj ten, który akurat nie
   // jest ukryty.
   return candidates.find((el) => !el.hidden && el.style.display !== "none") || candidates[0] || null;

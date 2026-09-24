@@ -18,7 +18,7 @@
   <link rel="manifest" href="/manifest.json?v=v2026-09-24T09215"/>
   <meta name="theme-color" content="#050914"/>
   <link rel="stylesheet" href="css/base.css?v=v2026-09-24T09215"/>
-  <link rel="stylesheet" href="css/builder.css?v=v2026-09-24T09215"/>
+  <link rel="stylesheet" href="css/games.css?v=v2026-09-24T09215"/>
   <link rel="stylesheet" href="css/connect-device.css?v=v2026-09-24T09215"/>
 
   <script>document.documentElement.classList.add('page-loading')</script>
@@ -28,7 +28,7 @@
   <script type="module" src="js/core/topbar-controller.js?v=v2026-09-24T09215" defer></script>
 </head>
 
-<body class="builder-body skel-body">
+<body class="games-body skel-body">
   <header class="topbar topbar-layout-4">
     <div class="topbar-section topbar-section-1">
       <div class="brand">FAMILIADA</div>
@@ -58,9 +58,9 @@
       </div>
     </div>
 
-    <section class="builder-shell">
+    <section class="games-shell">
       <!-- Blok: Wprowadź kod -->
-      <div class="card builder-card" id="enterCodeCard">
+      <div class="card games-card" id="enterCodeCard">
         <div class="connect-device-card-header" data-i18n="connectDevice.enterCode.title">Wprowadź kod urządzenia</div>
         <div class="connect-device-enter-code-row">
           <input class="inp connect-device-code-input" id="connectCodeInput" type="text" inputmode="numeric" maxlength="6" placeholder="000000" autocomplete="off" spellcheck="false" data-i18n-placeholder="connectDevice.enterCode.placeholder"/>
@@ -70,7 +70,7 @@
       </div>
 
       <!-- Blok: Udostępnione dla mnie (tylko zalogowani) -->
-      <div class="card builder-card" id="sharedDevicesCard" style="display:none;">
+      <div class="card games-card" id="sharedDevicesCard" style="display:none;">
         <div class="connect-device-card-header" data-i18n="connectDevice.shared.title">Urządzenia udostępnione dla mnie</div>
         <div id="sharedDevicesList" class="grid"></div>
       </div>

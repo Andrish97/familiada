@@ -145,7 +145,7 @@ export function canEnterEdit(game) {
  * - poll_text/poll_points => zawsze (czyli w sensie „wolno wejść na stronę ankiety”)
  * - prepared => nigdy
  *
- * Aktywność przycisku w builderze:
+ * Aktywność przycisku w stronie gier:
  * - DRAFT: ok (uruchom) jeśli spełnia minimalne warunki
  * - POLL_OPEN: ok (wejdź, pokaż link)
  * - READY: ok (wejdź, pokaż "otwórz ponownie")

@@ -16,8 +16,8 @@
 
   <link rel="icon" href="favicon.ico?v=v2026-09-24T09215"/>
   <link rel="stylesheet" href="css/base.css?v=v2026-09-24T09215"/>
-  <!-- Reużywamy stylu buildera, żeby było spójnie -->
-  <link rel="stylesheet" href="css/builder.css?v=v2026-09-24T09215"/>
+  <!-- Reużywamy stylu strony gier, żeby było spójnie -->
+  <link rel="stylesheet" href="css/games.css?v=v2026-09-24T09215"/>
   <link rel="stylesheet" href="css/bases.css?v=v2026-09-24T09215"/>
 
   <script>
@@ -37,7 +37,7 @@
   <script src="js/core/security-warning.js?v=v2026-09-24T09215" defer></script>
 </head>
 
-<body class="builder-body skel-body" data-alt-page="subscriptions">
+<body class="games-body skel-body" data-alt-page="subscriptions">
   
   <header class="topbar topbar-layout-4">
     <div class="topbar-section topbar-section-1">
@@ -45,7 +45,7 @@
       <button class="btn" id="btnBack" type="button" data-i18n="bases.backToGames">← Moje gry</button>
     </div>
     <div class="topbar-section topbar-section-2">
-      <button class="btn" id="btnGoAlt" type="button"><span data-i18n="builder.nav.pollsHubSubs">Subskrypcje 📧</span> <span class="badge" id="altBadge" aria-hidden="true"></span></button>
+      <button class="btn" id="btnGoAlt" type="button"><span data-i18n="games.nav.pollsHubSubs">Subskrypcje 📧</span> <span class="badge" id="altBadge" aria-hidden="true"></span></button>
     </div>
     <div class="topbar-section topbar-section-3">
       <button class="btn" id="btnManual" type="button">ℹ️</button>
@@ -76,7 +76,7 @@
       </div>
     </div>
 
-    <section class="builder-shell">
+    <section class="games-shell">
 
       <!-- Mobile: 2 wypustki (1:1 jak polls-hub). Desktop: tabs-strip ukryty, w karcie widać oba gridy. -->
       <div class="tabs-card hub-tabs bases-tabs-card" id="basesTabsCard">
@@ -105,7 +105,7 @@
           </div>
         </div>
 
-        <div class="card builder-card bases-card">
+        <div class="card games-card bases-card">
           <div class="bases-layout">
             <div class="bases-section bases-section-mine" id="basesSectionMine" data-skel-step>
               <div class="bases-title" id="mineTitle">—</div>
@@ -118,9 +118,9 @@
             </div>
           </div>
 
-          <div class="builder-bottom">
-            <div class="builder-bottom-left"></div>
-            <div class="builder-bottom-right">
+          <div class="games-bottom">
+            <div class="games-bottom-left"></div>
+            <div class="games-bottom-right">
               <button class="btn sm" id="btnExport" type="button" disabled>
                 <span class="only-desktop" data-i18n="bases.actions.export">Eksport</span>
                 <span class="only-mobile" data-i18n="bases.actions.exportMobile">Exp</span>

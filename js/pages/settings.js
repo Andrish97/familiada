@@ -22,7 +22,7 @@ import { v as cacheBust } from "../core/cache-bust.js?v=v2026-09-24T09215";
 // settings.html nie ma naturalnego przycisku wstecz na mobile (panel admina
 // bez nawigacji "do tyłu") -- btnBackSheet istnieje wyłącznie na potrzeby
 // trybu sheet, zastępuje brand w topbarze gdy modal jest otwarty (patrz
-// analogiczne rozwiązanie w builder.js).
+// analogiczne rozwiązanie w games.js).
 const btnBackSheet = document.getElementById("btnBackSheet");
 if (btnBackSheet) btnBackSheet.dataset.sheetBack = "1";
 btnBackSheet?.addEventListener("click", () => { handleSheetBack(); });

@@ -5,7 +5,7 @@ import { getUser } from "../core/auth.js?v=v2026-09-24T09215";
 import { isGuestUser } from "../core/guest-mode.js?v=v2026-09-24T09215";
 import { initI18n, t, getUiLang, withLangParam, applyTranslations } from "../../translation/translation.js?v=v2026-09-24T09215";
 import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-09-24T09215";
-import { exportGame } from "./builder-import-export.js?v=v2026-09-24T09215";
+import { exportGame } from "./games-import-export.js?v=v2026-09-24T09215";
 import { initUiSelect } from "../core/ui-select.js?v=v2026-09-24T09215";
 import { confirmModal } from "../core/modal.js?v=v2026-09-24T09215";
 import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../core/modal-sheet.js?v=v2026-09-24T09215";
@@ -29,12 +29,12 @@ let submitLang    = "pl";
 let submitGameUiSelect = null;
 
 // Strona przełącza się między widokiem "browse" (przycisk wstecz:
-// btnGoBuilder) i "mine" (przycisk wstecz: btnBackBrowse) -- w danej
+// btnGoGames) i "mine" (przycisk wstecz: btnBackBrowse) -- w danej
 // chwili widoczny jest dokładnie jeden z nich (patrz showView()), więc
 // modale sheet biorą jako backBtn ten, który akurat nie jest ukryty.
 function currentBackBtn() {
   if (els.btnBackBrowse && !els.btnBackBrowse.hidden) return els.btnBackBrowse;
-  return els.btnGoBuilder;
+  return els.btnGoGames;
 }
 
 /* =========================================================
@@ -77,7 +77,7 @@ const els = {
   btnSubmitCancel:  document.getElementById("btnSubmitCancel"),
   btnSubmitConfirm: document.getElementById("btnSubmitConfirm"),
   // nav
-  btnGoBuilder:  document.getElementById("btnGoBuilder"),
+  btnGoGames:  document.getElementById("btnGoGames"),
   btnBackBrowse: document.getElementById("btnBackBrowse"),
   btnManual:     document.getElementById("btnManual"),
   toast:        document.getElementById("toast"),
@@ -101,7 +101,7 @@ function showToast(msg, type = "info") {
 function showView(name) {
   els.viewBrowse.hidden = name !== "browse";
   els.viewMine.hidden   = name !== "mine";
-  if (els.btnGoBuilder)  els.btnGoBuilder.hidden  = name !== "browse";
+  if (els.btnGoGames)  els.btnGoGames.hidden  = name !== "browse";
   if (els.btnBackBrowse) els.btnBackBrowse.hidden = name !== "mine";
 }
 
@@ -634,13 +634,13 @@ function esc(str) {
 ========================================================= */
 function wireEvents() {
   // Znaczniki dla contact-modal.js -- patrz js/pages/bases.js dla wyjaśnienia.
-  if (els.btnGoBuilder) els.btnGoBuilder.dataset.sheetBack = "1";
+  if (els.btnGoGames) els.btnGoGames.dataset.sheetBack = "1";
   if (els.btnBackBrowse) els.btnBackBrowse.dataset.sheetBack = "1";
 
   // Nav
-  els.btnGoBuilder?.addEventListener("click", () => {
+  els.btnGoGames?.addEventListener("click", () => {
     if (handleSheetBack()) return;
-    window.location.href = withLangParam(!currentUser ? "/" : "builder");
+    window.location.href = withLangParam(!currentUser ? "/" : "games");
   });
   els.btnManual?.addEventListener("click", () => {
     const url = new URL("manual", location.href);
@@ -743,8 +743,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   if (!currentUser) {
     // Anonim: zmień przycisk powrotu na "← Strona główna", ukryj zbędne przyciski
-    if (els.btnGoBuilder) {
-      els.btnGoBuilder.innerHTML =
+    if (els.btnGoGames) {
+      els.btnGoGames.innerHTML =
         `<span class="only-desktop">${esc(t("marketplace.nav.backHome"))}</span>` +
         `<span class="only-mobile">🏠</span>`;
     }

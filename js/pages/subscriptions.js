@@ -41,7 +41,7 @@ function getCurrentRelativeUrl() {
 
 const who = $("who");
 const btnLogout = $("btnLogout");
-const btnBack = $("btnBackToBuilder");
+const btnBack = $("btnBackToGames");
 const btnManual = $("btnManual");
 
 const tabA = $("tabSubscribersMobile");
@@ -691,14 +691,14 @@ function updateBackButtonLabel() {
 
 function getBackLink() {
   const rawRet = getRetParam();
-  return rawRet || "builder";
+  return rawRet || "games";
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
   const user = await requireAuth("login");
   if (isGuestUser(user)) {
     document.querySelector('.topbar')?.classList.add('topbar-ready');
-    showGuestBlockedOverlay({ backHref: "builder", loginHref: "login?force_auth=1", showLoginButton: true });
+    showGuestBlockedOverlay({ backHref: "games", loginHref: "login?force_auth=1", showLoginButton: true });
     return;
   }
   initTopbarAccountDropdown(user);

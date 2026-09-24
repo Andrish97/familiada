@@ -45,7 +45,7 @@ function applyPresentation(matches) {
     activeBackBtn.textContent = matches ? t("common.modalBack") : backBtnOrigText;
   }
   // Znacznik "to JEST aktywny przycisk wstecz teraz" — potrzebny bo np.
-  // builder.html/settings.html mają dodatkowy, dedykowany #btnBackSheet
+  // games.html/settings.html mają dodatkowy, dedykowany #btnBackSheet
   // (klasa .topbar-sheet-back) pokazywany WYŁĄCZNIE gdy jest aktywny —
   // inaczej pokazywałby się zawsze przy body.sheet-open, nawet gdy dany
   // modal (np. podgląd maila w settings) faktycznie przejął INNY,

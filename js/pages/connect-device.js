@@ -363,7 +363,7 @@ async function startQrScan() {
 
   btnBack?.addEventListener("click", () => {
     location.href = (isLoggedIn && !guestMode)
-      ? withLangParam("builder")
+      ? withLangParam("games")
       : withLangParam("index");
   });
 

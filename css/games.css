@@ -1,11 +1,11 @@
-/* css/builder.css */
+/* css/games.css */
 
 /* =========================================================
-   FIXED CARD LAYOUT (builder / bases / logo-editor list)
+   FIXED CARD LAYOUT (games / bases / logo-editor list)
    - body nie scrolluje
    - main + karta mają stałą wysokość viewport
    - scroll jest WYŁĄCZNIE wewnątrz .grid
-   - .builder-bottom zawsze widoczny
+   - .games-bottom zawsze widoczny
 ========================================================= */
 
 :root {
@@ -24,7 +24,7 @@
 }
 
 /* --- BODY / MAIN: viewport-locked + internal layout --- */
-body.builder-body{
+body.games-body{
   height: 100dvh;
   min-height: 100dvh;
   background: var(--bg);
@@ -36,7 +36,7 @@ body.builder-body{
 }
 
 /* main.wrap musi być flex-kolumną, żeby bar + shell weszły w viewport */
-body.builder-body > main.wrap{
+body.games-body > main.wrap{
   flex: 1 1 auto;
   min-height: 0;
   display: flex;
@@ -46,24 +46,24 @@ body.builder-body > main.wrap{
 
 /* Mobile landscape: allow full-page scroll and let cards stretch (prevents "trapped" UI) */
 @media (max-width: 980px) and (orientation: landscape){
-  body.builder-body{
+  body.games-body{
     height: auto;
     min-height: 100dvh;
     overflow: auto;
   }
 
-  body.builder-body > main.wrap{
+  body.games-body > main.wrap{
     overflow: visible;
   }
 
-  .builder-card,
-  .builder-shell,
+  .games-card,
+  .games-shell,
   .grid{
     max-height: none !important;
   }
 }
 
-/* W builder.css masz własną .wrap – przywracamy sensowny padding (żeby nie lepiło do krawędzi). */
+/* W games.css masz własną .wrap – przywracamy sensowny padding (żeby nie lepiło do krawędzi). */
 .wrap{
   margin: 0 auto;
   padding: 10px 18px 18px;
@@ -135,8 +135,8 @@ body.builder-body > main.wrap{
   border-bottom-left-radius: 0;
 }
 
-/* --- BUILDER SHELL: wypełnia resztę ekranu --- */
-.builder-shell{
+/* --- GAMES SHELL: wypełnia resztę ekranu --- */
+.games-shell{
   flex: 1 1 auto;
   min-height: 0;
   display: flex;
@@ -145,7 +145,7 @@ body.builder-body > main.wrap{
 }
 
 /* =========================================================
-   TABS CARD (builder)
+   TABS CARD (games)
 ========================================================= */
 .tabs-card{
   width: 100%;
@@ -331,10 +331,10 @@ body.builder-body > main.wrap{
 }
 
 /* =========================================================
-   BUILDER CARD: stała wysokość + grid scroll + bottom fixed
+   GAMES CARD: stała wysokość + grid scroll + bottom fixed
 ========================================================= */
-.card.builder-card,
-.builder-card.card{
+.card.games-card,
+.games-card.card{
   margin-top: 0;
   background: var(--surface);
   border: 1px solid var(--border-color);
@@ -354,19 +354,19 @@ body.builder-body > main.wrap{
 }
 
 /* Zaokrąglenia pod wypustki */
-.tabs-card:has(#tabPollText.active) .builder-card{
+.tabs-card:has(#tabPollText.active) .games-card{
   border-top-left-radius: 0;
   border-top-right-radius: var(--radius);
 }
-.tabs-card:has(#tabPollPoints.active) .builder-card{
+.tabs-card:has(#tabPollPoints.active) .games-card{
   border-top-left-radius: var(--radius);
   border-top-right-radius: var(--radius);
 }
-.tabs-card:has(#tabPrepared.active) .builder-card{
+.tabs-card:has(#tabPrepared.active) .games-card{
   border-top-left-radius: var(--radius);
   border-top-right-radius: var(--radius);
 }
-.tabs-card:has(#tabMarket.active) .builder-card{
+.tabs-card:has(#tabMarket.active) .games-card{
   border-top-left-radius: var(--radius);
   border-top-right-radius: 0;
 }
@@ -385,7 +385,7 @@ body.builder-body > main.wrap{
 }
 
 /* Kafelki w gridzie – bez zmian funkcjonalnych */
-.builder-body .grid .card{
+.games-body .grid .card{
   position: relative;
   background: #070b16;
   border-radius: 18px;
@@ -400,16 +400,16 @@ body.builder-body > main.wrap{
   min-height: 130px;
 }
 
-.builder-body .grid .card .x{
+.games-body .grid .card .x{
   position: absolute;
   top: 8px;
   right: 10px;
   font-size: 14px;
   opacity: .7;
 }
-.builder-body .grid .card .x:hover{ opacity: 1; }
+.games-body .grid .card .x:hover{ opacity: 1; }
 
-.builder-body .grid .card .name{
+.games-body .grid .card .name{
   font-weight: 900;
   font-size: 14px;
   letter-spacing: .06em;
@@ -424,7 +424,7 @@ body.builder-body > main.wrap{
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.builder-body .grid .card .meta{
+.games-body .grid .card .meta{
   margin-top: 6px;
   font-size: 11px;
   text-transform: uppercase;
@@ -433,15 +433,15 @@ body.builder-body > main.wrap{
 }
 
 .addCard:hover,
-.builder-body .grid .card:hover{
+.games-body .grid .card:hover{
   transform: translateY(-2px);
   box-shadow: 0 10px 24px rgba(0,0,0,.45);
 }
-.builder-body .grid .card:hover{
+.games-body .grid .card:hover{
   border-color: var(--gold);
   background: #0b1020;
 }
-.builder-body .grid .card.selected{
+.games-body .grid .card.selected{
   border-color: rgba(255,234,166,.9);
   background: rgba(255,234,166,.10);
   box-shadow:
@@ -485,7 +485,7 @@ body.builder-body > main.wrap{
 }
 
 /* Bottom zawsze widoczny: siedzi poza .grid i nie scrolluje */
-.builder-bottom{
+.games-bottom{
   flex: 0 0 auto;
   margin-top: 12px;               /* mniejszy odstęp, bo grid już scrolluje */
   padding-top: 10px;
@@ -497,7 +497,7 @@ body.builder-body > main.wrap{
   flex-wrap: nowrap;
 }
 
-.builder-bottom-right{
+.games-bottom-right{
   display: flex;
   gap: 8px;
 }

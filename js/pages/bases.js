@@ -1,5 +1,5 @@
 // js/pages/bases.js
-// Builder baz pytań (warstwa 1) – styl i ergonomia jak builder gier.
+// Lista baz pytań (warstwa 1) – styl i ergonomia jak strona gier (games).
 
 import { addRenameGesture } from "../core/rename-gesture.js?v=v2026-09-24T09215";
 
@@ -421,7 +421,7 @@ async function deleteBase(base) {
   // question_bases -- gołe .delete() skasowałoby też elementy, które ktoś
   // aktywnie edytuje w base-explorerze (Warstwa 1, edit_locks), bez
   // żadnego ostrzeżenia. delete_resource_checked sprawdza to atomowo po
-  // stronie serwera, tak samo jak dla gry/logo w builder.js.
+  // stronie serwera, tak samo jak dla gry/logo w games.js.
   const { data, error } = await sb().rpc("delete_resource_checked", {
     p_resource_type: "base",
     p_resource_id: base.id,
@@ -1462,7 +1462,7 @@ function getRetParam() {
 
 function getBackLink() {
   const rawRet = getRetParam();
-  return withLangParam(rawRet || "builder");
+  return withLangParam(rawRet || "games");
 }
 
 function getCurrentRelativeUrl() {

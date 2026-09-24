@@ -180,7 +180,7 @@ async function main() {
     resourceId: gameId,
     context: "control",
     message: t("resourceLock.gameMessage"),
-    backHref: "/builder",
+    backHref: "/games",
   });
   if (!lock.ok) return;
 
@@ -198,7 +198,7 @@ async function main() {
       resourceType: "logo",
       resourceId: gameLogoId,
       message: t("resourceLock.logoMessage"),
-      backHref: "/builder",
+      backHref: "/games",
     });
     if (!logoLock.ok) return;
   }
@@ -667,7 +667,7 @@ async function main() {
     // Fire-and-forget, jak dzisiejsze control/js/app.js — nie blokujemy
     // wyjścia na tym, przeglądarka i tak zaraz nawiguje dalej.
     shareDevice.expireShares().catch(() => {});
-    location.href = "/builder";
+    location.href = "/games";
   });
 
   // "Losowo" ma losować RAZ, od razu przy wejściu w Podsumowanie (D3), i
@@ -925,7 +925,7 @@ async function main() {
       if (action === "session.finish") {
         // Gra już zakończona (locks.gameEnded) — czysta nawigacja z powrotem
         // do listy gier, bez żadnego dalszego zapisu do game_state.
-        location.href = "/builder";
+        location.href = "/games";
         return;
       }
       if (action === "rounds.introNext") {

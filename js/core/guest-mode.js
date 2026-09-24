@@ -23,7 +23,7 @@ export function hideForGuest(user, elements = []) {
 }
 
 export function showGuestBlockedOverlay({
-  backHref = "builder",
+  backHref = "games",
   loginHref = "login?force_auth=1",
   showLoginButton = true,
 } = {}) {

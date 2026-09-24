@@ -1,4 +1,4 @@
-// js/pages/builder-import-export.js
+// js/pages/games-import-export.js
 import { sb } from "../core/supabase.js?v=v2026-09-24T09215";
 import { t } from "../../translation/translation.js?v=v2026-09-24T09215";
 
@@ -6,8 +6,8 @@ import { t } from "../../translation/translation.js?v=v2026-09-24T09215";
 	 Helpers (bezpieczne skracanie / typy)
 ========================================================= */
 const safeName = (s) =>
-	(String(s ?? t("builderImportExport.defaults.gameName")).trim() ||
-		t("builderImportExport.defaults.gameName")).slice(0, 80);
+	(String(s ?? t("gamesImportExport.defaults.gameName")).trim() ||
+		t("gamesImportExport.defaults.gameName")).slice(0, 80);
 
 const safeType = (k) => {
 	const v = String(k || "");
@@ -16,12 +16,12 @@ const safeType = (k) => {
 };
 
 const safeQText = (s, i) =>
-	(String(s ?? t("builderImportExport.defaults.question", { ord: i + 1 })).trim() ||
-		t("builderImportExport.defaults.question", { ord: i + 1 })).slice(0, 200);
+	(String(s ?? t("gamesImportExport.defaults.question", { ord: i + 1 })).trim() ||
+		t("gamesImportExport.defaults.question", { ord: i + 1 })).slice(0, 200);
 
 const safeAText = (s, j) =>
-	(String(s ?? t("builderImportExport.defaults.answer", { ord: j + 1 })).trim() ||
-		t("builderImportExport.defaults.answer", { ord: j + 1 })).slice(0, 17);
+	(String(s ?? t("gamesImportExport.defaults.answer", { ord: j + 1 })).trim() ||
+		t("gamesImportExport.defaults.answer", { ord: j + 1 })).slice(0, 17);
 
 const safePts = (v) => {
 	const x = Number(v);
@@ -66,13 +66,13 @@ export async function exportGame(gameId, onProgress) {
 	const qs = questions || [];
 
 	const out = {
-	  game: { name: game?.name ?? t("builderImportExport.defaults.gameName"), type: exportType },
+	  game: { name: game?.name ?? t("gamesImportExport.defaults.gameName"), type: exportType },
 	  questions: [],
 	};
 
 	const n = qs.length;
 	if (typeof onProgress === "function") {
-		onProgress({ step: t("builderImportExport.export.step"), i: 0, n, msg: "" });
+		onProgress({ step: t("gamesImportExport.export.step"), i: 0, n, msg: "" });
 	}
 
 	for (let idx = 0; idx < qs.length; idx++) {
@@ -103,7 +103,7 @@ export async function exportGame(gameId, onProgress) {
 
 		if (typeof onProgress === "function") {
 			onProgress({
-				step: t("builderImportExport.export.step"),
+				step: t("gamesImportExport.export.step"),
 				i: idx + 1,
 				n,
 				msg: q?.text ? String(q.text).slice(0, 60) : "",
@@ -120,7 +120,7 @@ export async function exportGame(gameId, onProgress) {
 
 export async function importGame(payload, ownerId, onProgress) {
 	if (!payload?.game || !Array.isArray(payload.questions)) {
-		throw new Error(t("builderImportExport.import.invalidFormat"));
+		throw new Error(t("gamesImportExport.import.invalidFormat"));
 	}
 
 	const type = safeType(payload.game.type);
@@ -144,7 +144,7 @@ export async function importGame(payload, ownerId, onProgress) {
 	const qs = payload.questions || [];
 	const n = qs.length;
 	if (typeof onProgress === "function") {
-		onProgress({ step: t("builderImportExport.import.step"), i: 0, n, msg: "" });
+		onProgress({ step: t("gamesImportExport.import.step"), i: 0, n, msg: "" });
 	}
 	for (let qi = 0; qi < qs.length; qi++) {
 		const srcQ = qs[qi] || {};
@@ -178,7 +178,7 @@ export async function importGame(payload, ownerId, onProgress) {
 		}
 		if (typeof onProgress === "function") {
 			onProgress({
-				step: t("builderImportExport.import.step"),
+				step: t("gamesImportExport.import.step"),
 				i: qi + 1,
 				n,
 				msg: qText ? String(qText).slice(0, 60) : "",

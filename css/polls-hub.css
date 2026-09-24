@@ -94,7 +94,7 @@ body.polls-hub-body .bar{
 
 .hub-tabs .tab-slot{
   min-width: 0;
-  /* 🔑 50/50: builder.css ustawia width: var(--tab-width) (domyślnie 220px) */
+  /* 🔑 50/50: games.css ustawia width: var(--tab-width) (domyślnie 220px) */
   width: auto !important;
   flex: 1 1 0;
   align-items: stretch;
@@ -721,7 +721,7 @@ body.polls-hub-body .bar{
 .hub-tabs-mobile:has(.tab-slot:first-child .tab-label.active) .tab-slot:first-child .tab-corner-left,
 .hub-tabs-mobile:has(.tab-slot:last-child .tab-label.active) .tab-slot:last-child .tab-corner-right{ display:none; }
 
-/* keep mobile protrusion corners on edge tabs too (like builder) */
+/* keep mobile protrusion corners on edge tabs too (like games) */
 .hub-tabs-mobile .tab-slot:first-child .tab-corner-left,
 .hub-tabs-mobile .tab-slot:last-child .tab-corner-right{
   display:block;
@@ -729,7 +729,7 @@ body.polls-hub-body .bar{
 
 
 /* =========================================================
-   Mobile landscape: przewijanie całej strony (jak w builderze)
+   Mobile landscape: przewijanie całej strony (jak w stronie gier)
    - brak "wewnętrznych" scrolli list
    - hub-card dopasowuje się do zawartości
 ========================================================= */

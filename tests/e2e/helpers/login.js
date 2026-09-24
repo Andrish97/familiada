@@ -156,7 +156,7 @@ async function dumpPageDiagnostics(page, gotoResponse) {
 
 /**
  * Loguje jako konto testowe (domyślnie test1@familiada.online, patrz
- * testAccountUsername), zostawia stronę na /builder. Przekaż
+ * testAccountUsername), zostawia stronę na /games. Przekaż
  * { username: testAccountUsername(2) } żeby zalogować INNE konto z puli
  * w scenariuszach z dwoma+ użytkownikami naraz -- wszystkie konta puli
  * mają to samo TEST_PASSWORD (nie ma osobnych haseł per konto).
@@ -199,7 +199,7 @@ async function loginAsTestUser(page, context, opts = {}) {
   await page.fill("#pass", password);
   await page.click("#btnPrimary");
   try {
-    await page.waitForURL(/builder/, { timeout: 20000 });
+    await page.waitForURL(/games/, { timeout: 20000 });
   } catch (e) {
     await dumpPageDiagnostics(page, res);
     throw e;
@@ -207,7 +207,7 @@ async function loginAsTestUser(page, context, opts = {}) {
   await clearE2EBypass(context); // token już niepotrzebny, sesja jest prawdziwa
 }
 
-/** Zakłada świeże konto gościa, zostawia stronę na /builder. Gość sam wygaśnie po 5 dniach. */
+/** Zakłada świeże konto gościa, zostawia stronę na /games. Gość sam wygaśnie po 5 dniach. */
 async function loginAsGuest(page, context) {
   instrumentPage(page);
   await withE2EBypass(context);
@@ -225,7 +225,7 @@ async function loginAsGuest(page, context) {
   // logowanie (auth signup + trigger seedujący dane demo + redirect) —
   // w CI bywa wolniejsze niż 20s, stąd dłuższy limit niż w loginAsTestUser.
   try {
-    await page.waitForURL(/builder/, { timeout: 40000 });
+    await page.waitForURL(/games/, { timeout: 40000 });
   } catch (e) {
     await dumpPageDiagnostics(page, res);
     throw e;

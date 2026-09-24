@@ -49,7 +49,7 @@
         var _u = _s && (_s.user || (_s.currentSession && _s.currentSession.user));
         var _exp = _s && (_s.expires_at || (_s.currentSession && _s.currentSession.expires_at));
         if (_u && !_u.is_anonymous && (!_exp || Date.now() / 1000 < _exp + 60)) {
-          location.replace('builder' + location.search); break;
+          location.replace('games' + location.search); break;
         }
       }
     } catch(_e) {}
@@ -124,7 +124,7 @@
       <div class="hero-cta">
         <a class="btn gold" href="login" id="ctaStart" data-i18n="home.hero.ctaStart" title="Rozpocznij tworzenie własnej Familiady">Zacznij tworzyć gry i prowadzić rozgrywkę</a>
         <a class="btn" href="marketplace" data-i18n="home.hero.ctaMarketplace" title="Przeglądaj gotowe zestawy pytań do Familiady">Przeglądaj Gry Społeczności 🎮</a>
-        <a class="btn" href="connect-device" data-i18n="builder.nav.connectDevice" title="Podłącz urządzenie do rozgrywki">Podłącz urządzenie 📱</a>
+        <a class="btn" href="connect-device" data-i18n="games.nav.connectDevice" title="Podłącz urządzenie do rozgrywki">Podłącz urządzenie 📱</a>
       </div>
       <div class="hero-note" data-i18n="home.hero.note">Dostępny tryb gościa — darmowa Familiada bez rejestracji.</div>
     </section>

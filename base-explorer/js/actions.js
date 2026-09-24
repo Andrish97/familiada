@@ -13,7 +13,7 @@ import {
   restoreBrowseLocation,
 } from "./state.js?v=v2026-09-24T09215";
 
-import { importGame } from "../../js/pages/builder-import-export.js?v=v2026-09-24T09215";
+import { importGame } from "../../js/pages/games-import-export.js?v=v2026-09-24T09215";
 
 import { renderAll, renderToolbar, renderList, renderTree, renderTags } from "./render.js?v=v2026-09-24T09215";
 
@@ -4617,8 +4617,8 @@ export function wireActions({ state }) {
 
       const gameId = res.result?.gameId;
 
-      // (opcjonalnie) nawigacja do buildera:
-      location.href = `../builder`;
+      // (opcjonalnie) nawigacja do strony gier:
+      location.href = `../games`;
 
       return true;
     } catch (e) {

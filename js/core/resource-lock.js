@@ -384,7 +384,7 @@ export async function acquireResourceLocks(resources, { context = null } = {}) {
 /**
  * Sprawdza, czy zasób ma teraz aktywną blokadę gdzie indziej — BEZ jej
  * zajmowania. Do jednorazowych akcji spoza "wyłącznego edytora" (np.
- * `builder.js`'s rename/reset), które nie otwierają własnej sesji, ale
+ * `games.js`'s rename/reset), które nie otwierają własnej sesji, ale
  * piszą do tych samych danych — patrz docs/plan-testy-i-poprawki.md,
  * sekcja "Model: zasób ma stan busy/free".
  */

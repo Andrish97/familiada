@@ -231,9 +231,9 @@
 }
 
 /* karta edytora —
-   .card.builder-card (specificity 0,2,0) ma overflow:hidden, więc
+   .card.games-card (specificity 0,2,0) ma overflow:hidden, więc
    musimy bić go selektorem o tej samej lub wyższej specyficzności */
-.card.builder-card.editorCard{
+.card.games-card.editorCard{
   flex: 1;
   min-height: 0;
   display:flex;
@@ -956,7 +956,7 @@
 .overlay{ z-index: 9999; pointer-events: auto; }
 
 /* =========================================================
-   MODAL: wybór trybu (jak w builder)
+   MODAL: wybór trybu (jak w games)
 ========================================================= */
 .mSection{ margin-top: 14px; }
 .mGrid{
@@ -999,7 +999,7 @@
 }
 
 /* =========================================================
-   FULL WIDTH MODAL (jak w builder)
+   FULL WIDTH MODAL (jak w games)
 ========================================================= */
 
 /* =========================================================
@@ -1110,11 +1110,11 @@
 
 /* =========================================================
    LIST VIEW: karta do krawędzi ekranu + scroll w logoGridBig
-   (spójnie jak builder)
+   (spójnie jak games)
 ========================================================= */
 
-/* main w logo-editor ma być flex-kolumną jak w builderze */
-body.builder-body.logo-editor-body > main.logoWrap{
+/* main w logo-editor ma być flex-kolumną jak w stronie gier */
+body.games-body.logo-editor-body > main.logoWrap{
   flex: 1 1 auto;
   min-height: 0;
   display: flex;
@@ -1141,7 +1141,7 @@ body.builder-body.logo-editor-body > main.logoWrap{
 }
 
 /* karta listy: nie rośnie poza viewport */
-.logoCard.card.builder-card{
+.logoCard.card.games-card{
   flex: 1 1 auto;
   min-height: 0;
 }

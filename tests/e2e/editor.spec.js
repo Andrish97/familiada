@@ -471,7 +471,7 @@ test("edytor: wejście na edytor gdy ankieta jest otwarta (poll_open) -> natychm
     }, { gameId, key: game.share_key_poll });
 
     await page.goto(`https://www.familiada.online/editor?id=${gameId}`, { waitUntil: "domcontentloaded" });
-    await page.waitForURL(/\/builder/, { timeout: 15000 });
+    await page.waitForURL(/\/games/, { timeout: 15000 });
   } finally {
     await deleteGame(page, gameId);
   }
@@ -490,7 +490,7 @@ test("edytor: wejście gdy ankieta jest 'ready' i Anuluj w confirmie -> nic się
     await page.goto(`https://www.familiada.online/editor?id=${gameId}`, { waitUntil: "domcontentloaded" });
     await expect(page.locator(".uni-modal")).toBeVisible({ timeout: 15000 });
     await page.locator(".uni-foot .btn:not(.gold)").click(); // Anuluj
-    await page.waitForURL(/\/builder/, { timeout: 15000 });
+    await page.waitForURL(/\/games/, { timeout: 15000 });
 
     const game = await getGameRow(page, gameId);
     expect(game.status, "Anuluj nie powinno zresetować statusu").toBe("ready");
@@ -637,7 +637,7 @@ test("edytor: dwie karty — otwarcie ankiety w karcie B nie blokuje dalszej edy
     // tej samej grze byłaby zablokowana overlayem, co psułoby sens tego
     // testu (sprawdza brak re-walidacji stanu w karcie A, nie blokadę) —
     // wystarczy dowolna zalogowana strona, żeby mieć klienta do wywołania RPC.
-    await pageB.goto("https://www.familiada.online/builder", { waitUntil: "domcontentloaded" });
+    await pageB.goto("https://www.familiada.online/games", { waitUntil: "domcontentloaded" });
     await pageB.waitForLoadState("networkidle");
     const game = await getGameRow(pageB, gameId);
     await pageB.evaluate(async ({ gameId, key }) => {
