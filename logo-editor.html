@@ -79,7 +79,7 @@
       <div class="bar">
         <div>
           <div class="title" data-i18n="logoEditor.list.title">Twoje logo</div>
-          <div class="hint" id="hint" data-i18n="logoEditor.list.hint">Kliknij kafelek, żeby go zaznaczyć. Podwójne kliknięcie zmienia nazwę.</div>
+          <div class="hint" id="hint" data-i18n="logoEditor.list.hint">Naciśnij kafelek, żeby go zaznaczyć. Podwójne naciśnięcie zmienia nazwę.</div>
         </div>
 
         <div class="actions">
@@ -200,8 +200,8 @@
 
             <div class="toolSep"></div>
 
-            <label class="chk"><input id="chkImgInvert" type="checkbox"/> <span data-i18n="logoEditor.image.invert">Invert</span></label>
-            <button class="btn sm" id="btnImgResetDefault" type="button" data-i18n="logoEditor.image.reset">Reset</button>
+            <label class="chk"><input id="chkImgInvert" type="checkbox"/> <span data-i18n="logoEditor.image.invert">Odwróć</span></label>
+            <button class="btn sm" id="btnImgResetDefault" type="button" data-i18n="logoEditor.image.reset">Przywróć</button>
           </div>
 
           <!-- IMAGE: pojedyncze rozwijane ustawienie (accordion) -->
@@ -326,7 +326,7 @@
 
           <button class="mTile" id="pickDraw" type="button">
             <div class="mTileTitle" data-i18n="logoEditor.create.drawTitle">Rysunek</div>
-            <div class="mTileSub" data-i18n="logoEditor.create.drawSubtitle">Można rysować dowolnie</div>
+            <div class="mTileSub" data-i18n="logoEditor.create.drawSubtitle">Można rysować dowolnie i dodawać tekst</div>
           </button>
 
           <button class="mTile" id="pickImage" type="button">
@@ -434,7 +434,7 @@
   <div class="helpOverlay hidden" id="helpOverlay">
     <div class="helpModal" role="dialog" aria-modal="true" aria-label="Wskazówki">
       <div class="helpModalToolbar">
-        <button class="btn btn-sm" id="btnLegal" type="button" data-i18n="manual.legal">🔐 Polityka prywatności</button>
+        <button class="btn btn-sm" id="btnLegal" type="button" data-i18n="manual.legal">Polityka prywatności 🔐</button>
         <button class="btn sm" id="btnHelpClose" type="button" aria-label="Zamknij" onclick="document.getElementById('helpOverlay').classList.add('hidden')">✕</button>
       </div>
       <iframe id="helpFrame" class="helpFrame" src="../manual?modal=control" title="Wskazówki"></iframe>
