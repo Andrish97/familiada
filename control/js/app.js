@@ -1,8 +1,8 @@
 // /familiada/js/pages/controlapp.js
-import { confirmModal } from "../../js/core/modal.js?v=v2026-09-24T23191";
-import { getUiLang, initI18n, t } from "../../translation/translation.js?v=v2026-09-24T23191";
-import { v as cacheBust } from "../../js/core/cache-bust.js?v=v2026-09-24T23191";
-import { guardDesktopOnly } from "../../js/core/device-guard.js?v=v2026-09-24T23191";
+import { confirmModal } from "../../js/core/modal.js?v=v2026-09-24T23210";
+import { getUiLang, initI18n, t } from "../../translation/translation.js?v=v2026-09-24T23210";
+import { v as cacheBust } from "../../js/core/cache-bust.js?v=v2026-09-24T23210";
+import { guardDesktopOnly } from "../../js/core/device-guard.js?v=v2026-09-24T23210";
 
 guardDesktopOnly();
 
@@ -41,24 +41,24 @@ const APP_MSG = {
 };
 // ================= KONIEC KOMUNIKATÓW =================
 
-import { requireAuth, signOut } from "../../js/core/auth.js?v=v2026-09-24T23191";
-import { setTopbarAccount } from "../../js/core/topbar-controller.js?v=v2026-09-24T23191";
-import { isGuestUser } from "../../js/core/guest-mode.js?v=v2026-09-24T23191";
-import { sb } from "../../js/core/supabase.js?v=v2026-09-24T23191";
-import { rt } from "../../js/core/realtime.js?v=v2026-09-24T23191";
-import { validateGameReadyToPlay, loadGameBasic, loadQuestions, loadAnswers } from "../../js/core/game-validate.js?v=v2026-09-24T23191";
-import { unlockAudio, isAudioUnlocked, playSfx, setCurrentGameId, loadSfxManifest, initSfx, applySfxGameSettings, loadSfxFromCloud, getSfxCustomFiles, getSfxCategories, getSfxVariant, getSfxVolume, isSfxPlaying, stopSfx, onSfxEnd, setSessionSfxVolume } from "../../js/core/sfx.js?v=v2026-09-24T23191";
-import { listGameSounds } from "../../js/core/sfx-cloud.js?v=v2026-09-24T23191";
-import { createStore } from "./store.js?v=v2026-09-24T23191";
-import { createUI } from "./ui.js?v=v2026-09-24T23191";
-import { createDevices } from "./devices.js?v=v2026-09-24T23191";
-import { createPresence } from "./presence.js?v=v2026-09-24T23191";
-import { createDisplay } from "./display.js?v=v2026-09-24T23191";
-import { createRounds } from "./gameRounds.js?v=v2026-09-24T23191";
-import { createFinal } from "./gameFinal.js?v=v2026-09-24T23191";
-import { initShareDevice } from "./share-device.js?v=v2026-09-24T23191";
-import { loadFont5x7, buildLogoPreviewCanvas } from "../../js/core/logo-preview.js?v=v2026-09-24T23191";
-import { sessionStart, sessionEnd, sessionLogError } from "./sessionTracking.js?v=v2026-09-24T23191";
+import { requireAuth, signOut } from "../../js/core/auth.js?v=v2026-09-24T23210";
+import { setTopbarAccount } from "../../js/core/topbar-controller.js?v=v2026-09-24T23210";
+import { isGuestUser } from "../../js/core/guest-mode.js?v=v2026-09-24T23210";
+import { sb } from "../../js/core/supabase.js?v=v2026-09-24T23210";
+import { rt } from "../../js/core/realtime.js?v=v2026-09-24T23210";
+import { validateGameReadyToPlay, loadGameBasic, loadQuestions, loadAnswers } from "../../js/core/game-validate.js?v=v2026-09-24T23210";
+import { unlockAudio, isAudioUnlocked, playSfx, setCurrentGameId, loadSfxManifest, initSfx, applySfxGameSettings, loadSfxFromCloud, getSfxCustomFiles, getSfxCategories, getSfxVariant, getSfxVolume, isSfxPlaying, stopSfx, onSfxEnd, setSessionSfxVolume } from "../../js/core/sfx.js?v=v2026-09-24T23210";
+import { listGameSounds } from "../../js/core/sfx-cloud.js?v=v2026-09-24T23210";
+import { createStore } from "./store.js?v=v2026-09-24T23210";
+import { createUI } from "./ui.js?v=v2026-09-24T23210";
+import { createDevices } from "./devices.js?v=v2026-09-24T23210";
+import { createPresence } from "./presence.js?v=v2026-09-24T23210";
+import { createDisplay } from "./display.js?v=v2026-09-24T23210";
+import { createRounds } from "./gameRounds.js?v=v2026-09-24T23210";
+import { createFinal } from "./gameFinal.js?v=v2026-09-24T23210";
+import { initShareDevice } from "./share-device.js?v=v2026-09-24T23210";
+import { loadFont5x7, buildLogoPreviewCanvas } from "../../js/core/logo-preview.js?v=v2026-09-24T23210";
+import { sessionStart, sessionEnd, sessionLogError } from "./sessionTracking.js?v=v2026-09-24T23210";
 
 initI18n({ withSwitcher: true });
 

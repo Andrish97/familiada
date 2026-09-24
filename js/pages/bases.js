@@ -1,19 +1,19 @@
 // js/pages/bases.js
 // Lista baz pytań (warstwa 1) – styl i ergonomia jak strona gier (games).
 
-import { addRenameGesture } from "../core/rename-gesture.js?v=v2026-09-24T23191";
+import { addRenameGesture } from "../core/rename-gesture.js?v=v2026-09-24T23210";
 
-import { sb, SUPABASE_URL } from "../core/supabase.js?v=v2026-09-24T23191";
-import { updateChecked, ROW_GONE } from "../core/db-guard.js?v=v2026-09-24T23191";
-import { requireAuth } from "../core/auth.js?v=v2026-09-24T23191";
-import { alertModal, confirmModal } from "../core/modal.js?v=v2026-09-24T23191";
-import { isGuestUser, hideForGuest } from "../core/guest-mode.js?v=v2026-09-24T23191";
-import { initUiSelect } from "../core/ui-select.js?v=v2026-09-24T23191";
-import { getUiLang, initI18n, t, withLangParam } from "../../translation/translation.js?v=v2026-09-24T23191";
-import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-09-24T23191";
-import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../core/modal-sheet.js?v=v2026-09-24T23191";
-import "../core/contact-modal.js?v=v2026-09-24T23191";
-import { icon, iconText } from "../core/icons.js?v=v2026-09-24T23191";
+import { sb, SUPABASE_URL } from "../core/supabase.js?v=v2026-09-24T23210";
+import { updateChecked, ROW_GONE } from "../core/db-guard.js?v=v2026-09-24T23210";
+import { requireAuth } from "../core/auth.js?v=v2026-09-24T23210";
+import { alertModal, confirmModal } from "../core/modal.js?v=v2026-09-24T23210";
+import { isGuestUser, hideForGuest } from "../core/guest-mode.js?v=v2026-09-24T23210";
+import { initUiSelect } from "../core/ui-select.js?v=v2026-09-24T23210";
+import { getUiLang, initI18n, t, withLangParam } from "../../translation/translation.js?v=v2026-09-24T23210";
+import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-09-24T23210";
+import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../core/modal-sheet.js?v=v2026-09-24T23210";
+import "../core/contact-modal.js?v=v2026-09-24T23210";
+import { icon, iconText } from "../core/icons.js?v=v2026-09-24T23210";
 initI18n({ withSwitcher: true }).then(() => {
   document.documentElement.classList.remove('page-loading');
 });
