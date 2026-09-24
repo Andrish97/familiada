@@ -1,7 +1,7 @@
 const LANG_LOADERS = {
-  pl: async () => (await import('./pl.js?v=v2026-09-24T09195')).default,
-  en: async () => (await import('./en.js?v=v2026-09-24T09195')).default,
-  uk: async () => (await import('./uk.js?v=v2026-09-24T09195')).default,
+  pl: async () => (await import('./pl.js?v=v2026-09-24T09215')).default,
+  en: async () => (await import('./en.js?v=v2026-09-24T09215')).default,
+  uk: async () => (await import('./uk.js?v=v2026-09-24T09215')).default,
 };
 
 const LANG_ORDER = ["pl", "en", "uk"];
