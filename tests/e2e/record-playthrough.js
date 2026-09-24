@@ -568,7 +568,7 @@ async function scenarioRoundsMechanics(pages) {
   });
   await control.waitForTimeout(1000); // niech nagranie złapie suwak i zaktualizowaną etykietę %
 
-  await clickPaced(control.getByRole("button", { name: "Gotowe — przejdź do rund" }));
+  await clickPaced(control.getByRole("button", { name: "Gotowe — przejdź do rozgrywki" }));
   await clickPaced(control.getByRole("button", { name: "Rozpocznij grę" }));
 
   // ===== RUNDA 1 =====
@@ -671,7 +671,7 @@ async function scenarioRoundsThreshold(pages, { expectFinal }) {
   const { control, buzzer } = pages;
 
   await clickPaced(control.getByRole("button", { name: "Dalej" }));
-  await clickPaced(control.getByRole("button", { name: "Gotowe — przejdź do rund" }));
+  await clickPaced(control.getByRole("button", { name: "Gotowe — przejdź do rozgrywki" }));
   await clickPaced(control.getByRole("button", { name: "Rozpocznij grę" }));
 
   // ===== RUNDA 1: pojedynek wygrany za pierwszym razem (bez pudła), potem
@@ -789,7 +789,7 @@ async function scenarioFinalFull(pages) {
   const { control, buzzer, host } = pages;
 
   await clickPaced(control.getByRole("button", { name: "Dalej" }));
-  await clickPaced(control.getByRole("button", { name: "Gotowe — przejdź do rund" }));
+  await clickPaced(control.getByRole("button", { name: "Gotowe — przejdź do rozgrywki" }));
   await clickPaced(control.getByRole("button", { name: "Rozpocznij grę" }));
 
   await playThreeNaturalRoundsToThreshold(pages);
@@ -889,7 +889,7 @@ async function scenarioFinalEarlyExit(pages) {
   const { control, buzzer, host } = pages;
 
   await clickPaced(control.getByRole("button", { name: "Dalej" }));
-  await clickPaced(control.getByRole("button", { name: "Gotowe — przejdź do rund" }));
+  await clickPaced(control.getByRole("button", { name: "Gotowe — przejdź do rozgrywki" }));
   await clickPaced(control.getByRole("button", { name: "Rozpocznij grę" }));
 
   await playThreeNaturalRoundsToThreshold(pages);
@@ -944,7 +944,7 @@ async function scenarioDeviceReconnect(pages, { contexts, browser }) {
   const { control } = pages;
 
   await clickPaced(control.getByRole("button", { name: "Dalej" }));
-  await clickPaced(control.getByRole("button", { name: "Gotowe — przejdź do rund" }));
+  await clickPaced(control.getByRole("button", { name: "Gotowe — przejdź do rozgrywki" }));
   await clickPaced(control.getByRole("button", { name: "Rozpocznij grę" }));
   await clickPaced(control.getByRole("button", { name: "Rozpocznij rundę" }));
 
@@ -1038,7 +1038,7 @@ async function scenarioLogoLock(pages, { setupPage, logoId, logoLockTabId }) {
   // Krótka runda — dowód, że po odzyskaniu Control działa normalnie, nie
   // tylko "odblokował się i stoi".
   await clickPaced(control.getByRole("button", { name: "Dalej" }));
-  await clickPaced(control.getByRole("button", { name: "Gotowe — przejdź do rund" }));
+  await clickPaced(control.getByRole("button", { name: "Gotowe — przejdź do rozgrywki" }));
   await clickPaced(control.getByRole("button", { name: "Rozpocznij grę" }));
   await clickPaced(control.getByRole("button", { name: "Rozpocznij rundę" }));
   await clickPaced(buzzer.getByRole("button", { name: "Przycisk A" }));
