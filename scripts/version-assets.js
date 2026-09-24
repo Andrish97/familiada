@@ -86,7 +86,13 @@ filesToProcess.forEach(filePath => {
 
   // 2. Dodawanie wersji tam, gdzie jej nie ma
   // Wzorce: ="path.ext", ='path.ext', : "path.ext", url("path.ext"), from "path.ext", import("path.ext")
-  const noVersionRegex = new RegExp(`((?:=|: |from |import\\s*\\(|url\\s*\\()\\s*['"])([^'"]+\\.(?:${ASSET_EXT}))(?=['"]|\\s*\\))`, 'g');
+  // oraz import "path.ext" (import samych efektów ubocznych, bez nazw) — bez
+  // tego import contact-modal.js na stronach zostawał bez ?v=, przeglądarka
+  // trzymała jego starą wersję, a ta ładowała translation.js/pl.js ze STARYM
+  // ?v= (drugi egzemplarz modułu tłumaczeń). Jego handler "pageshow" nakładał
+  // na całą stronę stary słownik — po zmianie nazwy strony „Moje gry” na
+  // /games widać było klucze tłumaczeń zamiast tekstów.
+  const noVersionRegex = new RegExp(`((?:=|: |from |import\\s*\\(|import\\s+|url\\s*\\()\\s*['"])([^'"]+\\.(?:${ASSET_EXT}))(?=['"]|\\s*\\))`, 'g');
   
   content = content.replace(noVersionRegex, (match, prefix, assetPath) => {
     // Jeśli ścieżka już ma wersję (co nie powinno się stać po kroku 1, ale na wszelki wypadek)
