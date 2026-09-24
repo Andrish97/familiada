@@ -56,7 +56,7 @@ let _mobileActive = false;
 
 // ── Overflow nav (section-2) ──────────────────────────────────────────────────
 /**
- * Rejestruje overflow nav dla section-2 (używane tylko przez games).
+ * Rejestruje overflow nav dla section-2 (używane tylko na stronie gier).
  * Desktop: ResizeObserver → chowa mniej ważne przyciski do "Więcej ▾".
  * Mobile: kontroler wywołuje expandAll() → wszystkie przyciski widoczne płasko.
  *
@@ -201,7 +201,7 @@ export function setTopbarNavPriority({ moreEl, moreDropdownEl } = {}) {
  * @param {object}  [opts]
  * @param {string}  [opts.loginHref='login']
  * @param {string}  [opts.accountHref='account']
- * @param {boolean} [opts.withAccountSettings=false]  tylko games
+ * @param {boolean} [opts.withAccountSettings=false]  tylko strona gier
  * @param {boolean} [opts.showAuthEntry=true]  false → ukryj dla niezalogowanego
  * @param {function} [opts.onLogout]  callback przed wylogowaniem (może zwrócić Promise)
  * @returns {{ guestMode: boolean }}
