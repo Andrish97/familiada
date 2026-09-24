@@ -8,6 +8,7 @@
 import { signOut } from './auth.js?v=v2026-09-24T22443';
 import { isGuestUser } from './guest-mode.js?v=v2026-09-24T22443';
 import { t, withLangParam } from '../../translation/translation.js?v=v2026-09-24T22443';
+import { icon } from './icons.js?v=v2026-09-24T22443';
 
 // ── Narzędzie: pozycjonowanie fixed dropdown ──────────────────────────────────
 function repositionDropdown(anchorEl, dropdownEl) {
@@ -263,7 +264,7 @@ export function setTopbarAccount(user, {
   whoSpan.textContent = username;
   const chevron = document.createElement('span');
   chevron.className = 'account-chevron';
-  chevron.textContent = '▾';
+  chevron.innerHTML = icon('caret-down');
   whoEl.append(whoSpan, chevron);
   whoEl.classList.add('account-btn', 'btn');
   if (!whoEl.matches('button')) {
@@ -448,7 +449,8 @@ function initTopbarController() {
     closeBtn = document.createElement('button');
     closeBtn.type = 'button';
     closeBtn.className = 'btn topbar-mobile-close';
-    closeBtn.textContent = '✕';
+    closeBtn.innerHTML = icon('close');
+    closeBtn.setAttribute('aria-label', t('common.modal.closeLabel'));
 
     mount = document.createElement('div');
     mount.className = 'topbar-mobile-mount';
@@ -507,7 +509,7 @@ function initTopbarController() {
     toggleBtn = document.createElement('button');
     toggleBtn.type = 'button';
     toggleBtn.className = 'btn topbar-menu-toggle';
-    toggleBtn.innerHTML = `<span class="topbar-menu-icon" aria-hidden="true">☰</span><span class="badge" aria-hidden="true"></span>`;
+    toggleBtn.innerHTML = `<span class="topbar-menu-icon" aria-hidden="true">${icon('hamburger')}</span><span class="badge" aria-hidden="true"></span>`;
     toggleBadge = toggleBtn.querySelector('.badge');
     section3.append(toggleBtn);
 

@@ -6,6 +6,7 @@ import { initUiSelect } from "../core/ui-select.js?v=v2026-09-24T22443";
 import { getUiLang, initI18n, t } from "../../translation/translation.js?v=v2026-09-24T22443";
 import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-09-24T22443";
 import "../core/contact-modal.js?v=v2026-09-24T22443";
+import { icon, iconText } from "../core/icons.js?v=v2026-09-24T22443";
 
 initI18n({ withSwitcher: true }).then(() => {
   document.documentElement.classList.remove('page-loading');
@@ -684,9 +685,9 @@ function buildManualUrl() {
 function updateBackButtonLabel() {
   if (!btnBack) return;
   const retPath = getRetPathnameLower();
-  if (retPath.endsWith("/bases")) btnBack.textContent = t("baseExplorer.backToBases");
-  else if (retPath.endsWith("/polls-hub")) btnBack.textContent = t("polls.backToHub");
-  else btnBack.textContent = t("pollsHubSubscriptions.backToGames");
+  if (retPath.endsWith("/bases")) btnBack.innerHTML = iconText("arrow-left", t("baseExplorer.backToBases"));
+  else if (retPath.endsWith("/polls-hub")) btnBack.innerHTML = iconText("arrow-left", t("polls.backToHub"));
+  else btnBack.innerHTML = iconText("arrow-left", t("pollsHubSubscriptions.backToGames"));
 }
 
 function getBackLink() {

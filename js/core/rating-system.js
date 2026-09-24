@@ -3,6 +3,7 @@ import { sb } from "./supabase.js?v=v2026-09-24T22443";
 import { getUser } from "./auth.js?v=v2026-09-24T22443";
 import { t } from "../../translation/translation.js?v=v2026-09-24T22443";
 import { alertModal } from "./modal.js?v=v2026-09-24T22443";
+import { icon } from "./icons.js?v=v2026-09-24T22443";
 
 const RATING_LS_KEY = "fam:app_rated";
 const RATING_DISMISSED_KEY = "fam:app_rating_dismissed_at";
@@ -64,11 +65,11 @@ function showRatingModal(userId) {
             <div class="mSub">${t("common.rating.modal.sub")}</div>
 
             <div class="stars-row" id="starsRow">
-                <button class="star-btn" data-value="1">★</button>
-                <button class="star-btn" data-value="2">★</button>
-                <button class="star-btn" data-value="3">★</button>
-                <button class="star-btn" data-value="4">★</button>
-                <button class="star-btn" data-value="5">★</button>
+                <button class="star-btn" data-value="1" aria-label="1/5">${icon("star")}</button>
+                <button class="star-btn" data-value="2" aria-label="2/5">${icon("star")}</button>
+                <button class="star-btn" data-value="3" aria-label="3/5">${icon("star")}</button>
+                <button class="star-btn" data-value="4" aria-label="4/5">${icon("star")}</button>
+                <button class="star-btn" data-value="5" aria-label="5/5">${icon("star")}</button>
             </div>
 
             <textarea class="inp rating-comment" id="ratingComment" rows="3" placeholder="${t("common.rating.modal.commentPlaceholder")}"></textarea>

@@ -47,7 +47,7 @@
   <header class="topbar topbar-layout-4">
     <div class="topbar-section topbar-section-1">
       <div class="brand">FAMILIADA</div>
-      <button class="btn" id="btnBack" type="button" data-i18n="control.backToGames">← Moje gry</button>
+      <button class="btn" id="btnBack" type="button" data-i18n="control.backToGames" data-i18n-icon="arrow-left">Moje gry</button>
     </div>
     <div class="topbar-section topbar-section-2">
       <div class="top-status" aria-label="Status urządzeń" data-i18n-aria-label="control.statusLabel">
@@ -74,7 +74,7 @@
   <div class="helpOverlay hidden" id="helpOverlay">
     <div class="helpModal" role="dialog" aria-modal="true">
       <div class="helpModalToolbar">
-        <button class="btn btn-sm" id="btnLegal" type="button" data-i18n="manual.legal">🔐 Polityka prywatności</button>
+        <button class="btn btn-sm" id="btnLegal" type="button" data-i18n="manual.legal" data-i18n-icon-after="shield">Polityka prywatności</button>
         <button class="btn sm" id="btnHelpClose" type="button" onclick="document.getElementById('helpOverlay').classList.add('hidden')">✕</button>
       </div>
       <iframe id="helpFrame" class="helpFrame" src="/manual?modal=control" title="Wskazówki"></iframe>
@@ -90,7 +90,7 @@
   <div class="legalOverlay hidden" id="legalOverlay">
     <div class="legalModal" role="dialog" aria-modal="true">
       <div class="legalModalToolbar">
-        <button class="btn btn-sm" id="btnBackToManual" type="button" data-i18n="privacy.backToManual">← Wskazówki</button>
+        <button class="btn btn-sm" id="btnBackToManual" type="button" data-i18n="privacy.backToManual" data-i18n-icon="arrow-left">Wskazówki</button>
         <button class="btn sm" id="btnLegalClose" type="button" onclick="document.getElementById('legalOverlay').classList.add('hidden')">✕</button>
       </div>
       <iframe id="legalFrame" class="legalFrame" src="/manual?modal=control" title="Polityka prywatności"></iframe>

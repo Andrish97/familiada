@@ -2,11 +2,11 @@ const pl = {
   meta: {
     lang: "pl",
     label: "Polski",
-    flag: "🇵🇱",
+    icon: "flag-pl",
   },
   common: {
     contactBtn: "Kontakt",
-    modalBack: "← Wstecz",
+    modalBack: "Wstecz",
     languageLabel: "Język",
     backToLogin: "Wróć do logowania",
     goToPanel: "Przejdź do panelu",
@@ -302,7 +302,7 @@ const pl = {
     passwordRules: "Hasło musi zawierać: {hints}.",
   },
   index: {
-    backHome: "← Strona startowa",
+    backHome: "Strona startowa",
     intro: "Aby tworzyć gry i prowadzić rozgrywkę na żywo — zaloguj się. Nie masz konta? Zarejestruj się poniżej.",
     title: "Familiada — logowanie",
     statusChecking: "Sprawdzam sesję…",
@@ -456,7 +456,7 @@ const pl = {
     errCancelMigrationFailed: "Nie udało się anulować migracji.",
     title: "Familiada — konto",
     pageTitle: "Familiada — moje konto",
-    backToGames: "← Moje gry",
+    backToGames: "Moje gry",
     headerTitle: "Ustawienia konta",
     headerHint: "Zarządzaj profilem, e-mailem i bezpieczeństwem.",
     statusLoading: "Ładuję profil…",
@@ -548,7 +548,7 @@ const pl = {
   },
   bases: {
     title: "Familiada — bazy pytań",
-    backToGames: "← Moje gry",
+    backToGames: "Moje gry",
     logout: "Wyloguj",
     headerTitle: "Twoje bazy pytań",
     headerHint: "Naciśnij kafelek, żeby go zaznaczyć. Podwójne naciśnięcie zmienia nazwę.",
@@ -739,8 +739,8 @@ const pl = {
   },
   polls: {
     title: "Familiada — ankieta i wyniki",
-    backToGames: "← Moje gry",
-    backToHub: "← Centrum ankiet",
+    backToGames: "Moje gry",
+    backToHub: "Centrum ankiet",
     logout: "Wyloguj",
     pageTitle: "Ankieta",
     linkPlaceholder: "Link pojawi się po uruchomieniu...",
@@ -875,15 +875,15 @@ const pl = {
   },
   manual: {
     title: "Familiada — wskazówki",
-    legal: "Polityka prywatności 🔐",
-    backToGames: "← Moje gry",
-    backToBaseManager: "← Menadżer bazy",
-    backToLogos: "← Moje logo",
-    backToEditor: "← Edytor pytań",
-    backToPoll: "← Ankieta",
-    backToSubscriptions: "← Subskrypcje",
-    backToAccount: "← Ustawienia konta",
-    backToMarketplace: "← Gry Społeczności",
+    legal: "Polityka prywatności",
+    backToGames: "Moje gry",
+    backToBaseManager: "Menadżer bazy",
+    backToLogos: "Moje logo",
+    backToEditor: "Edytor pytań",
+    backToPoll: "Ankieta",
+    backToSubscriptions: "Subskrypcje",
+    backToAccount: "Ustawienia konta",
+    backToMarketplace: "Gry Społeczności",
     logout: "Wyloguj",
     pageTitle: "Wskazówki dla użytkownika",
     tabs: {
@@ -2561,8 +2561,8 @@ const pl = {
   privacy: {
     title: "Familiada Online — polityka prywatności",
     pageTitle: "Familiada Online — Polityka Prywatności",
-    backToManual: "← Wskazówki",
-    backToHome: "← Strona główna",
+    backToManual: "Wskazówki",
+    backToHome: "Strona główna",
     logout: "Wyloguj",
     content: `
       <p class="m-p"><strong>Familiada Online</strong></p>
@@ -2676,11 +2676,11 @@ const pl = {
     title: "Familiada — moje gry",
     nav: {
       pollsHubPolls: "Ankiety 📊",
-      pollsHubSubs: "Subskrypcje 📧",
+      pollsHubSubs: "Subskrypcje",
       bases: "Bazy pytań 🗃️",
       logo: "Logo 🖥️",
       marketplace: "Gry Społeczności 🎮",
-      connectDevice: "Podłącz urządzenie 📱",
+      connectDevice: "Podłącz urządzenie",
       account: "Ustawienia konta",
     },
     header: {
@@ -2862,8 +2862,8 @@ const pl = {
   },
   editor: {
     title: "Familiada — edytor gry",
-    backToGames: "← Moje gry",
-    backToQuestions: "← Wstecz",
+    backToGames: "Moje gry",
+    backToQuestions: "Wstecz",
     logout: "Wyloguj",
     pageTitle: "Edytor",
     gameNamePlaceholder: "Nazwa gry",
@@ -3343,8 +3343,8 @@ const pl = {
   pollsHubPolls: {
     dash: "-",
     title: "Familiada — centrum ankiet",
-    backToGames: "← Moje gry",
-    backToBases: "← Bazy pytań",
+    backToGames: "Moje gry",
+    backToBases: "Bazy pytań",
     logout: "Wyloguj",
     header: {
       title: "Centrum ankiet",
@@ -3579,7 +3579,7 @@ const pl = {
   pollsHubSubscriptions: {
     dash: "-",
     title: "Familiada — subskrypcje",
-    backToGames: "← Moje gry",
+    backToGames: "Moje gry",
     logout: "Wyloguj",
     header: {
       title: "Centrum ankiet",
@@ -3814,7 +3814,7 @@ const pl = {
   logoEditor: {
     title: "Familiada — edytor logo",
     topbar: {
-      backToGames: "← Moje gry",
+      backToGames: "Moje gry",
       logout: "Wyloguj",
     },
     list: {
@@ -4104,7 +4104,7 @@ const pl = {
   baseExplorer: {
     title: "Familiada — menadżer bazy pytań",
     headerTitle: "Menadżer bazy pytań",
-    backToBases: "← Moje bazy",
+    backToBases: "Moje bazy",
     logout: "Wyloguj",
     common: {
       close: "Zamknij",
@@ -4332,7 +4332,7 @@ const pl = {
   control: {
     title: "Familiada — panel sterowania",
     loading: "Ładowanie panelu…",
-    backToGames: "← Moje gry",
+    backToGames: "Moje gry",
     logout: "Wyloguj",
     statusLabel: "Status urządzeń",
     optional: "(opcjonalnie)",
@@ -4784,16 +4784,16 @@ const pl = {
     unhandledStepDebug: "Nieobsłużony krok: {step}",
   },
   maintenance: {
-    title: "TRWA PRZERWA TECHNICZNA ⏳",
+    title: "Trwa przerwa techniczna",
     pageTitle: "Familiada — przerwa techniczna",
     messageText:
       "System jest chwilowo niedostępny.\nZa jakiś czas wszystko wróci do normy i będzie można kontynuować pracę.",
     inactiveTitle: "Brak prac technicznych",
     inactiveText: "Aktualnie nie trwają żadne prace.",
-    returnAtTitle: "TRWA PRZERWA TECHNICZNA ⏳",
+    returnAtTitle: "Trwa przerwa techniczna",
     returnAtText:
       "System jest chwilowo niedostępny.\nPowrót nastąpi:",
-    countdownTitle: "TRWA PRZERWA TECHNICZNA ⏳",
+    countdownTitle: "Trwa przerwa techniczna",
     countdownText:
       "System jest chwilowo niedostępny.\nPowrót nastąpi:",
     countdownDone: "Powrót już możliwy. 🎉",
@@ -4809,15 +4809,15 @@ const pl = {
     subtitle: "Przeglądaj gry stworzone przez społeczność i dodawaj je do swojej biblioteki.",
     loading: "Ładowanie…",
     nav: {
-      myGames: "← Moje gry",
+      myGames: "Moje gry",
       myGamesMobile: "← 🎮",
-      backHome: "← Strona główna",
+      backHome: "Strona główna",
       manual: "Wskazówki ℹ️",
       manualMobile: "ℹ️",
     },
     searchPlaceholder: "Szukaj gry…",
     btnMySent: "Moje wysłane",
-    btnBackBrowse: "← Przeglądaj",
+    btnBackBrowse: "Przeglądaj",
     btnAddToLibrary: "Dodaj do moich gier",
     btnRemoveFromLibrary: "Usuń z moich gier",
     addedBadge: "Dodano ✅",
@@ -4893,14 +4893,14 @@ const pl = {
     messageText:
       "Tego adresu nie ma lub został przeniesiony. Sprawdź poprawność linku.",
     redirectHint: "Za chwilę wrócisz na stronę główną.",
-    homeBtn: "← Strona główna",
+    homeBtn: "Strona główna",
     marketplaceBtn: "Wylosuj gotową grę i zacznij zabawę! 🎲",
     footerLeft: "Familiada",
     footerRight: "Jeśli to błąd — <a href=\"mailto:kontakt@familiada.online\">kontakt@familiada.online</a>",
   },
   connectDevice: {
     title: "Familiada — podłącz urządzenie",
-    topbar: { back: "← Moje gry" },
+    topbar: { back: "Moje gry" },
     header: {
       title: "Podłącz urządzenie",
       hint: "Zeskanuj kod QR lub otwórz link, żeby podłączyć urządzenie.",
@@ -4953,7 +4953,7 @@ const pl = {
   },
   gameSettings: {
     title: "Familiada — ustawienia gry",
-    back: "← Moje gry",
+    back: "Moje gry",
     saveAll: "Zapisz wszystko",
     resetAll: "Przywróć domyślne",
     play: "▶ Graj",

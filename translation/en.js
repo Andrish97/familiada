@@ -2,11 +2,11 @@ const en = {
   meta: {
     lang: "en",
     label: "English",
-    flag: "🇬🇧",
+    icon: "lang-en",
   },
   common: {
     contactBtn: "Contact",
-    modalBack: "← Back",
+    modalBack: "Back",
     languageLabel: "Language",
     backToLogin: "Back to login",
     goToPanel: "Go to panel",
@@ -296,7 +296,7 @@ const en = {
     passwordRules: "Password must include: {hints}.",
   },
   index: {
-    backHome: "← Home page",
+    backHome: "Home page",
     intro: "To create games and run a live show, log in. No account? Register below.",
     title: "Familiada — login",
     statusChecking: "Checking session…",
@@ -450,7 +450,7 @@ const en = {
     errCancelMigrationFailed: "Failed to cancel the migration.",
     title: "Familiada — account",
     pageTitle: "Familiada — my account",
-    backToGames: "← My games",
+    backToGames: "My games",
     headerTitle: "Account settings",
     headerHint: "Manage your profile, email, and security.",
     statusLoading: "Loading profile…",
@@ -547,7 +547,7 @@ const en = {
   },
   bases: {
     title: "Familiada — question bases",
-    backToGames: "← My games",
+    backToGames: "My games",
     logout: "Log out",
     headerTitle: "Your question bases",
     headerHint: "Press a tile to select it. Double-tap to rename.",
@@ -738,8 +738,8 @@ const en = {
   },
   polls: {
     title: "Familiada — poll and results",
-    backToGames: "← My games",
-    backToHub: "← Polls hub",
+    backToGames: "My games",
+    backToHub: "Polls hub",
     logout: "Log out",
     pageTitle: "Poll",
     linkPlaceholder: "Link will appear after opening...",
@@ -872,15 +872,15 @@ const en = {
   },
   manual: {
     title: "Familiada — guide",
-    legal: "Privacy Policy 🔐",
-    backToGames: "← My games",
-    backToBaseManager: "← Base manager",
-    backToLogos: "← My logos",
-    backToEditor: "← Question editor",
-    backToPoll: "← Poll",
-    backToSubscriptions: "← Subscriptions",
-    backToAccount: "← Account settings",
-    backToMarketplace: "← Community Games",
+    legal: "Privacy Policy",
+    backToGames: "My games",
+    backToBaseManager: "Base manager",
+    backToLogos: "My logos",
+    backToEditor: "Question editor",
+    backToPoll: "Poll",
+    backToSubscriptions: "Subscriptions",
+    backToAccount: "Account settings",
+    backToMarketplace: "Community Games",
     logout: "Log out",
     pageTitle: "User guide",
     tabs: {
@@ -2671,8 +2671,8 @@ const en = {
   privacy: {
     title: "Familiada Online — privacy policy",
     pageTitle: "Familiada Online — Privacy Policy",
-    backToManual: "← Guide",
-    backToHome: "← Home page",
+    backToManual: "Guide",
+    backToHome: "Home page",
     logout: "Log out",
     content: `
       <p class="m-p"><strong>Familiada Online</strong></p>
@@ -2802,11 +2802,11 @@ const en = {
     title: "Familiada — my games",
     nav: {
       pollsHubPolls: "Polls 📊",
-      pollsHubSubs: "Subscriptions 📧",
+      pollsHubSubs: "Subscriptions",
       bases: "Question bases 🗃️",
       logo: "Logo 🖥️",
       marketplace: "Community Games 🎮",
-      connectDevice: "Connect device 📱",
+      connectDevice: "Connect device",
       account: "Account settings",
     },
     header: {
@@ -2988,8 +2988,8 @@ const en = {
   },
   editor: {
     title: "Familiada — game editor",
-    backToGames: "← My games",
-    backToQuestions: "← Back",
+    backToGames: "My games",
+    backToQuestions: "Back",
     logout: "Log out",
     pageTitle: "Editor",
     gameNamePlaceholder: "Game name",
@@ -3469,8 +3469,8 @@ const en = {
   pollsHubPolls: {
     dash: "-",
     title: "Familiada — polls hub",
-    backToGames: "← My games",
-    backToBases: "← Question bases",
+    backToGames: "My games",
+    backToBases: "Question bases",
     logout: "Log out",
     header: {
       title: "Polls hub",
@@ -3705,7 +3705,7 @@ const en = {
   pollsHubSubscriptions: {
     dash: "-",
     title: "Familiada — subscriptions",
-    backToGames: "← My games",
+    backToGames: "My games",
     logout: "Log out",
     header: {
       title: "Polls hub",
@@ -3940,7 +3940,7 @@ const en = {
   logoEditor: {
     title: "Familiada — logo editor",
     topbar: {
-      backToGames: "← My games",
+      backToGames: "My games",
       logout: "Log out",
     },
     list: {
@@ -4229,7 +4229,7 @@ const en = {
   baseExplorer: {
     title: "Familiada — question base manager",
     headerTitle: "Question base manager",
-    backToBases: "← My bases",
+    backToBases: "My bases",
     logout: "Log out",
     common: {
       close: "Close",
@@ -4455,16 +4455,16 @@ const en = {
     },
   },
   maintenance: {
-    title: "TECHNICAL MAINTENANCE IN PROGRESS ⏳",
+    title: "Technical maintenance in progress",
     pageTitle: "Familiada — technical maintenance",
     messageText:
       "The system is temporarily unavailable.\nEverything will be back to normal in a while and you will be able to continue working.",
     inactiveTitle: "No maintenance",
     inactiveText: "There is no maintenance in progress.",
-    returnAtTitle: "TECHNICAL MAINTENANCE IN PROGRESS ⏳",
+    returnAtTitle: "Technical maintenance in progress",
     returnAtText:
       "The system is temporarily unavailable.\nReturn will be:",
-    countdownTitle: "TECHNICAL MAINTENANCE IN PROGRESS ⏳",
+    countdownTitle: "Technical maintenance in progress",
     countdownText:
       "The system is temporarily unavailable.\nReturn will be:",
     countdownDone: "Return is possible now. 🎉",
@@ -4480,15 +4480,15 @@ const en = {
     subtitle: "Browse games created by the community and add them to your library.",
     loading: "Loading…",
     nav: {
-      myGames: "← My games",
+      myGames: "My games",
       myGamesMobile: "← 🎮",
-      backHome: "← Home",
+      backHome: "Home",
       manual: "Help ℹ️",
       manualMobile: "ℹ️",
     },
     searchPlaceholder: "Search games…",
     btnMySent: "My submissions",
-    btnBackBrowse: "← Browse",
+    btnBackBrowse: "Browse",
     btnAddToLibrary: "Add to my games",
     btnRemoveFromLibrary: "Remove from my games",
     addedBadge: "Added ✅",
@@ -4564,14 +4564,14 @@ const en = {
     messageText:
       "This address does not exist or has been moved. Check the link.",
     redirectHint: "You will be redirected to the home page shortly.",
-    homeBtn: "← Home",
+    homeBtn: "Home",
     marketplaceBtn: "Pick a ready-made game and start playing! 🎲",
     footerLeft: "Familiada",
     footerRight: "If this is a mistake, <a href=\"mailto:kontakt@familiada.online\">kontakt@familiada.online</a>",
   },
   connectDevice: {
     title: "Familiada — connect a device",
-    topbar: { back: "← My games" },
+    topbar: { back: "My games" },
     header: {
       title: "Connect device",
       hint: "Scan QR code or open link to connect a device.",
@@ -4617,7 +4617,7 @@ const en = {
   control: {
     title: "Familiada — control panel",
     loading: "Loading panel…",
-    backToGames: "← My games",
+    backToGames: "My games",
     logout: "Logout",
     statusLabel: "Device status",
     optional: "(optional)",
@@ -5070,7 +5070,7 @@ const en = {
   },
   gameSettings: {
     title: "Familiada — game settings",
-    back: "← My games",
+    back: "My games",
     saveAll: "Save all",
     resetAll: "Restore defaults",
     play: "▶ Play",

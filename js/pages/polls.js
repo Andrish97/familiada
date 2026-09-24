@@ -7,6 +7,7 @@ import { initI18n, t, withLangParam, getUiLang } from "../../translation/transla
 import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-09-24T22443";
 import { guardResourceLock } from "../core/resource-lock.js?v=v2026-09-24T22443";
 import "../core/contact-modal.js?v=v2026-09-24T22443";
+import { icon, iconText } from "../core/icons.js?v=v2026-09-24T22443";
 
 // initI18n is called at the start of DOMContentLoaded (see below)
 
@@ -1176,7 +1177,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   document.querySelector('.topbar')?.classList.add('topbar-ready');
 
   if (btnBack) {
-    btnBack.textContent = getRetPathnameLower().endsWith("/polls-hub") ? t("polls.backToHub") : t("polls.backToGames");
+    btnBack.innerHTML = iconText("arrow-left", getRetPathnameLower().endsWith("/polls-hub") ? t("polls.backToHub") : t("polls.backToGames"));
   }
 
   btnManual?.addEventListener("click", () => {

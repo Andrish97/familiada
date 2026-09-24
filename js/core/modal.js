@@ -1,3 +1,4 @@
+import { icon } from "./icons.js?v=v2026-09-24T22443";
 import { t } from "../../translation/translation.js?v=v2026-09-24T22443";
 import { enterModalSheet, exitModalSheet, isSheetViewport } from "./modal-sheet.js?v=v2026-09-24T22443";
 let modalSeq = 0;
@@ -52,7 +53,7 @@ function buildModal({
   closeBtn.className = "btn sm";
   closeBtn.type = "button";
   closeBtn.setAttribute("aria-label", modalText("common.modal.closeLabel", "Zamknij"));
-  closeBtn.textContent = "✕";
+  closeBtn.innerHTML = icon("close");
 
   head.appendChild(titleEl);
   head.appendChild(closeBtn);

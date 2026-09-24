@@ -9,6 +9,7 @@ import { updateChecked, ROW_GONE } from "../core/db-guard.js?v=v2026-09-24T22443
 import { initI18n, t, withLangParam } from "../../translation/translation.js?v=v2026-09-24T22443";
 import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-09-24T22443";
 import "../core/contact-modal.js?v=v2026-09-24T22443";
+import { icon, iconText } from "../core/icons.js?v=v2026-09-24T22443";
 // initI18n + remove('page-loading') są w boot() — przed requireAuth, żeby body pojawiło się przed auth/danymi
 
 const MSG = {
@@ -635,7 +636,7 @@ async function boot() {
     const on = isMobileLayout() && !!activeQId;
     document.body.classList.toggle("mobile-editing", on);
     if (btnBack) {
-      btnBack.textContent = on ? t("editor.backToQuestions") : t("editor.backToGames");
+      btnBack.innerHTML = iconText("arrow-left", on ? t("editor.backToQuestions") : t("editor.backToGames"));
     }
   }
 

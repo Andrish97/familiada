@@ -10,6 +10,7 @@
 // jak editor.js/editor.css robi to swoim jedynym `btnBack`.
 
 import { t } from "../../translation/translation.js?v=v2026-09-24T22443";
+import { icon, iconText } from "./icons.js?v=v2026-09-24T22443";
 
 const SHEET_MQ = "(max-width:600px)";
 const sheetMql = window.matchMedia(SHEET_MQ);
@@ -42,7 +43,7 @@ function applyPresentation(matches) {
   // strzałka "←" — dla nich pomijamy dopisywanie "Wstecz", bo dublowałoby
   // się z ich naturalnym, już oczywistym znaczeniem w kontekście wątku.
   if (!activeKeepBackBtnText) {
-    activeBackBtn.textContent = matches ? t("common.modalBack") : backBtnOrigText;
+    activeBackBtn.innerHTML = matches ? iconText("arrow-left", t("common.modalBack")) : backBtnOrigText;
   }
   // Znacznik "to JEST aktywny przycisk wstecz teraz" — potrzebny bo np.
   // games.html/settings.html mają dodatkowy, dedykowany #btnBackSheet
@@ -83,7 +84,7 @@ export function enterModalSheet(overlayEl, { backBtn, onClose, keepBackBtnText =
 
   if (backBtn) {
     activeBackBtn = backBtn;
-    backBtnOrigText = backBtn.textContent;
+    backBtnOrigText = backBtn.innerHTML;
   }
 
   applyPresentation(true);

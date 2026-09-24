@@ -12,6 +12,18 @@
     box-sizing: border-box
 }
 
+/* Ikony ze wspólnego silnika (js/core/icons.js). Rozmiar zależy od tekstu
+   obok (em), kolor z currentColor. Przycisk z samą ikoną powiększa ją przez
+   własną klasę albo font-size. */
+.ico {
+    display: inline-block;
+    width: 1.15em;
+    height: 1.15em;
+    vertical-align: -0.2em;
+    flex-shrink: 0;
+    overflow: visible
+}
+
 html, body {
     margin: 0;
     padding: 0;
@@ -995,6 +1007,19 @@ html.showA2HS .a2hs {
     place-items: center;
 }
 
+.lang-btn .ico {
+    width: 2em;
+    height: 2em;
+    vertical-align: middle;
+}
+
+.lang-option .ico {
+    width: 1.6em;
+    height: 1.6em;
+    vertical-align: -.5em;
+    margin-right: 2px;
+}
+
 .topbar-menu-toggle {
   order: 999;
   min-width: 38px;
@@ -1547,9 +1572,15 @@ body{
     transform: scale(1.15);
 }
 
+.star-btn .ico {
+    width: 1em;
+    height: 1em;
+    vertical-align: middle;
+}
+
 .star-btn.active {
     color: var(--gold);
-    text-shadow: 0 0 15px rgba(255, 234, 166, 0.4);
+    filter: drop-shadow(0 0 8px rgba(255, 234, 166, 0.4));
 }
 
 .rating-comment {

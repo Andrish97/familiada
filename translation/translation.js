@@ -4,6 +4,8 @@ const LANG_LOADERS = {
   uk: async () => (await import('./uk.js?v=v2026-09-24T22443')).default,
 };
 
+import { icon, iconText } from "../js/core/icons.js?v=v2026-09-24T22443";
+
 const LANG_ORDER = ["pl", "en", "uk"];
 
 let currentLang = "pl";
@@ -130,9 +132,16 @@ export function applyTranslations(root = document) {
     year: getCurrentYear(),
   };
 
+  // data-i18n-icon="nazwa" (ikona przed tekstem) / data-i18n-icon-after
+  // (za tekstem): tłumaczenie nadpisuje całą treść elementu, więc ikonę ze
+  // wspólnego silnika dokładamy tu, po wstawieniu tekstu.
   root.querySelectorAll("[data-i18n]").forEach((el) => {
     const key = el.getAttribute("data-i18n");
-    if (key) el.textContent = t(key, defaultVars);
+    if (!key || el.tagName === "TITLE") return;
+    const before = el.getAttribute("data-i18n-icon");
+    const after = el.getAttribute("data-i18n-icon-after");
+    if (before || after) el.innerHTML = iconText(before || after, t(key, defaultVars), { after: !before });
+    else el.textContent = t(key, defaultVars);
   });
 
   root.querySelectorAll("[data-i18n-html]").forEach((el) => {
@@ -200,7 +209,7 @@ async function injectLanguageSwitcher() {
     opt.type = "button";
     opt.className = "lang-option";
     opt.dataset.lang = meta.lang;
-    opt.textContent = `${meta.flag} ${meta.label}`;
+    opt.innerHTML = iconText(meta.icon, meta.label);
     opt.addEventListener("click", async (e) => {
       e.stopPropagation();
       menu.hidden = true;
@@ -310,7 +319,7 @@ function updateSwitcherLabel() {
   if (!btn) return;
 
   const meta = translations?.meta || {};
-  btn.textContent = meta.flag;
+  btn.innerHTML = icon(meta.icon);
   btn.setAttribute("aria-label", t("common.languageLabel"));
 }
 

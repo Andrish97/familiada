@@ -8,6 +8,7 @@ import { initI18n, t, withLangParam } from "../../translation/translation.js?v=v
 import { getUser } from "../core/auth.js?v=v2026-09-24T22443";
 import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-09-24T22443";
 import "../core/contact-modal.js?v=v2026-09-24T22443";
+import { icon, iconText } from "../core/icons.js?v=v2026-09-24T22443";
 
 function byId(id) { return document.getElementById(id); }
 
@@ -50,18 +51,18 @@ function setBackButton({ loggedIn }) {
   if (!btn) return;
 
   if (hasManualRef()) {
-    btn.textContent = t("privacy.backToManual");
+    btn.innerHTML = iconText("arrow-left", t("privacy.backToManual"));
     btn.onclick = () => (location.href = decodeManualBack());
     return;
   }
 
   if (!loggedIn) {
-    btn.textContent = t("privacy.backToHome");
+    btn.innerHTML = iconText("arrow-left", t("privacy.backToHome"));
     btn.onclick = () => (location.href = withLangParam("/"));
     return;
   }
 
-  btn.textContent = t("manual.backToGames");
+  btn.innerHTML = iconText("arrow-left", t("manual.backToGames"));
   btn.onclick = () => (location.href = decodeManualBack());
 }
 

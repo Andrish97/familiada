@@ -10,6 +10,7 @@ import { initUiSelect } from "../core/ui-select.js?v=v2026-09-24T22443";
 import { confirmModal } from "../core/modal.js?v=v2026-09-24T22443";
 import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../core/modal-sheet.js?v=v2026-09-24T22443";
 import "../core/contact-modal.js?v=v2026-09-24T22443";
+import { icon, iconText } from "../core/icons.js?v=v2026-09-24T22443";
 
 /* =========================================================
    Constants
@@ -745,8 +746,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     // Anonim: zmień przycisk powrotu na "← Strona główna", ukryj zbędne przyciski
     if (els.btnGoGames) {
       els.btnGoGames.innerHTML =
-        `<span class="only-desktop">${esc(t("marketplace.nav.backHome"))}</span>` +
-        `<span class="only-mobile">🏠</span>`;
+        `<span class="only-desktop">${iconText("arrow-left", t("marketplace.nav.backHome"))}</span>` +
+        `<span class="only-mobile">${icon("home", { label: t("marketplace.nav.backHome") })}</span>`;
     }
     if (els.btnManual)  els.btnManual.hidden = true;
   }

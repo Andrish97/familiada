@@ -36,9 +36,9 @@
   
   const lang = getLang();
   const warnings = {
-    pl: "🎭 STOP! 🎭\n\nUżywanie tej konsoli może pozwolić atakującym na podszywanie się pod Ciebie i kradzież informacji (atak Self-XSS).\n\nJeśli ktoś powiedział Ci, żeby wkleić tutaj kod — NIE RÓB TEGO! To jak oddanie kluczy do domu nieznajomemu. 🏠🔑\n\nNie wklejaj kodu, którego nie rozumiesz. Twoje dane Ci podziękują! 🙏",
-    en: "🎭 STOP! 🎭\n\nUsing this console may allow attackers to impersonate you and steal your information (Self-XSS attack).\n\nIf someone told you to paste code here — DON'T DO IT! It's like giving your house keys to a stranger. 🏠🔑\n\nDo not enter or paste code you don't understand. Your data will thank you! 🙏",
-    uk: "🎭 СТОП! 🎭\n\nВикористання цієї консолі може дозволити зловмисникам видавати себе за тебе та красти твою інформацію (атака Self-XSS).\n\nЯкщо хтось сказав тобі вставити сюди код — НЕ РОБИ ЦЬОГО! Це як віддати ключі від дому незнайомцю. 🏠🔑\n\nНе вводь і не вставляй код, якого не розумієш. Твої дані подякують! 🙏"
+    pl: "Uwaga! Ta konsola jest przeznaczona dla programistów.\n\nWklejenie tu kodu na czyjąś prośbę może dać tej osobie dostęp do Twojego konta (atak Self-XSS).\n\nNie wklejaj kodu, którego nie rozumiesz.",
+    en: "Warning! This console is intended for developers.\n\nPasting code here at someone's request may give that person access to your account (Self-XSS attack).\n\nDo not paste code you don't understand.",
+    uk: "Увага! Ця консоль призначена для розробників.\n\nВставлення сюди коду на чиєсь прохання може надати цій особі доступ до твого облікового запису (атака Self-XSS).\n\nНе вставляй код, якого не розумієш."
   };
   
   console.warn(warnings[lang] || warnings.pl);
