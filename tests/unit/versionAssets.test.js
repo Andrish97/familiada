@@ -83,3 +83,41 @@ test("po wersjonowaniu całej aplikacji każdy lokalny .js/.css ma bieżące ?v=
     fs.rmSync(dir, { recursive: true, force: true });
   }
 });
+
+test("żadna strona nie ładuje tego samego modułu pod dwoma różnymi adresami", () => {
+  // Ten sam plik pod dwoma adresami (np. z ?v= i bez) = dwa egzemplarze
+  // modułu. connect-device.html miał contact-modal.js?v=… w <script>, a
+  // connect-device.js importował go jeszcze raz bez ?v=. Ten sam adres w
+  // <script> i w imporcie (np. topbar-controller.js z tym samym ?v=) jest OK.
+  const conflicts = [];
+  for (const html of fs.readdirSync(ROOT).filter((f) => f.endsWith(".html"))) {
+    const src = fs.readFileSync(path.join(ROOT, html), "utf8").replace(/<!--[\s\S]*?-->/g, "");
+    const urls = new Map(); // ścieżka -> Set(pełnych adresów)
+    const add = (p, full) => {
+      if (!urls.has(p)) urls.set(p, new Set());
+      urls.get(p).add(full);
+    };
+    const scripts = [...src.matchAll(/<script\b[^>]*\btype="module"[^>]*\bsrc="([^"]+)"/g)]
+      .map((m) => m[1])
+      .filter((u) => !/^(https?:)?\/\//.test(u));
+    for (const u of scripts) {
+      const [p, q = ""] = u.replace(/^\//, "").split("?");
+      add(path.posix.normalize(p), q);
+    }
+    for (const u of scripts) {
+      const s = path.posix.normalize(u.replace(/^\//, "").split("?")[0]);
+      const file = path.join(ROOT, s);
+      if (!fs.existsSync(file)) continue;
+      const js = fs.readFileSync(file, "utf8");
+      for (const m of js.matchAll(/\bimport\s+(?:[\w*{}\s,$]+?\s+from\s+)?["']([^"']+)["']/g)) {
+        if (!m[1].startsWith(".")) continue;
+        const [ref, q = ""] = m[1].split("?");
+        add(path.posix.normalize(path.posix.join(path.posix.dirname(s), ref)), q);
+      }
+    }
+    for (const [p, set] of urls) {
+      if (set.size > 1) conflicts.push(`${html}: ${p} jako ${[...set].map((q) => q ? "?" + q : "(bez ?v)").join(" i ")}`);
+    }
+  }
+  assert.deepEqual(conflicts, []);
+});
