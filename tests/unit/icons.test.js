@@ -64,3 +64,28 @@ test("każda nazwa ikony użyta w kodzie aplikacji istnieje w silniku", () => {
   }
   assert.deepEqual(missing, []);
 });
+
+test("moduł importujący icon nie przesłania go zmienną ani parametrem o tej samej nazwie", () => {
+  // Regresja: base-explorer/js/render.js miał parametr `icon = svgFolder()`
+  // w rowHtml — wywołanie icon("caret-…") w środku rzucało TypeError i drzewo
+  // folderów się nie renderowało.
+  const SKIP = new Set([".git", "node_modules", "tests", "docs", "supabase", "cloudflare", "services", "img", "audio"]);
+  const bad = [];
+  (function walk(dir) {
+    for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+      const p = path.join(dir, e.name);
+      if (e.isDirectory()) { if (!SKIP.has(e.name)) walk(p); continue; }
+      if (!e.name.endsWith(".js") || e.name === "icons.js") continue;
+      const src = fs.readFileSync(p, "utf8");
+      if (!/import \{[^}]*\bicon\b[^}]*\} from ["'][^"']*icons\.js/.test(src)) continue;
+      src.split("\n").forEach((line, i) => {
+        if (/^\s*import /.test(line) || /^\s*\/\//.test(line)) return;
+        const code = line.replace(/(["'`])(?:\\.|(?!\1).)*\1/g, "''");
+        if (/\b(?:const|let|var)\s+icon\b|[(,{]\s*icon\s*(?:=[^=>]|[,)}])|\bfunction\s+icon\b/.test(code)) {
+          bad.push(`${path.relative(ROOT, p)}:${i + 1}: ${line.trim().slice(0, 100)}`);
+        }
+      });
+    }
+  })(ROOT);
+  assert.deepEqual(bad, []);
+});

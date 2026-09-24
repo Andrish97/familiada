@@ -4323,9 +4323,9 @@ const uk = {
       progress: {
         creatingGame: "Створення гри…",
         exporting: "Експорт…",
-        done: "Готово ✅",
+        done: "Експорт завершено.",
         created: "Гру створено.",
-        error: "Помилка ❌",
+        error: "Не вдалося експортувати.",
         errorDetail: "Помилка: {error}",
         importingQuestions: "Імпорт питань…",
         importDone: "Імпорт завершено",

@@ -3,6 +3,7 @@
 
 import { VIEW, META, META_ORDER } from "./state.js?v=v2026-09-24T23225";
 import { t } from "../../translation/translation.js?v=v2026-09-24T23225";
+import { icon } from "../../js/core/icons.js?v=v2026-09-24T23225";
 
 /* ================= DOM ================= */
 const elBaseName = document.getElementById("baseName");
@@ -197,12 +198,12 @@ export function renderToolbar(state) {
       <div class="searchBox" id="searchBox">
         <div id="searchChips" class="searchChips"></div>
         <input id="searchText" class="searchText" placeholder="${t("baseExplorer.search.placeholder")}" />
-        <button id="searchClearBtn" class="btn ghost" type="button" title="${t("baseExplorer.search.clear")}">✕</button>
+        <button id="searchClearBtn" class="btn ghost" type="button" title="${t("baseExplorer.search.clear")}" aria-label="${t("baseExplorer.search.clear")}">${icon("close")}</button>
       </div>
 
       <div class="toolbar-btns-row">
         <button id="btnDrawerToggle" class="tbBtn mobile-only" type="button" aria-label="Otwórz panel" aria-expanded="false" aria-controls="explorerLeft">
-          <svg class="tbIco" viewBox="0 0 18 18"><rect y="3" width="18" height="2" rx="1"/><rect y="8" width="18" height="2" rx="1"/><rect y="13" width="18" height="2" rx="1"/></svg>
+          ${icon("hamburger", { className: "tbIco" })}
         </button>
 
         <div class="tbSep mobile-only" aria-hidden="true"></div>
@@ -438,7 +439,7 @@ export function renderTree(state) {
     return kids.length > 0;
   }
 
-  function rowHtml({ kind, id, depth, label, isOpen, canToggle, isActive, icon = svgFolder() }) {
+  function rowHtml({ kind, id, depth, label, isOpen, canToggle, isActive, icon: rowIcon = svgFolder() }) {
     // wcięcia: bardziej "Explorer", mniej pustego powietrza
     const BASE_PAD = 6;      // minimalny margines z lewej
     const INDENT = 10;       // skok na poziom
@@ -454,7 +455,7 @@ export function renderTree(state) {
       ? `<button type="button" class="tree-toggle" data-id="${esc(id)}"
             aria-label="${t("baseExplorer.tree.toggle")}"
             style="width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;border:0;background:transparent;cursor:pointer;opacity:.9;">
-           ${isOpen ? "▼" : "▶"}
+           ${icon(isOpen ? "caret-down" : "caret-right")}
          </button>`
       : `<span style="display:inline-block;width:18px;"></span>`;
 
@@ -469,7 +470,7 @@ export function renderTree(state) {
         <div class="col-main" style="padding-left:${pad}px; display:flex; align-items:center; gap:6px; ${activeStyle}">
           ${toggle}
           <div class="title-line">
-            <span class="title-text">${icon} ${esc(label || t("baseExplorer.defaults.folder"))}</span>
+            <span class="title-text">${rowIcon} ${esc(label || t("baseExplorer.defaults.folder"))}</span>
             ${kind === "cat" && id ? tagDotsHtml(state, id, "c") : ""}
             ${kind === "cat" && id ? metaDotsHtml(state, id, "c") : ""}
           </div>
@@ -853,6 +854,9 @@ export function renderList(state) {
   // ===== HEAD =====
   const dirFor = (k) => (k === sortKey ? sortDir : "asc");
 
+  const sortCaret = (key) => sortKey === key
+    ? icon(dirFor(key) === "asc" ? "caret-up" : "caret-down", { className: "sort-caret" })
+    : "";
   const head = `
     <colgroup>
       <col style="width:44px">
@@ -864,9 +868,9 @@ export function renderList(state) {
     <thead>
       <tr class="list-head">
         <th class="h-num">${t("baseExplorer.list.colNumber")}</th>
-        <th class="h-main ${sortKey === "name" ? "active" : ""}" data-sort-key="name" data-dir="${esc(dirFor("name"))}">${t("baseExplorer.list.colName")}</th>
-        <th class="h-type ${sortKey === "type" ? "active" : ""}" data-sort-key="type" data-dir="${esc(dirFor("type"))}">${t("baseExplorer.list.colType")}</th>
-        <th class="h-date ${sortKey === "date" ? "active" : ""}" data-sort-key="date" data-dir="${esc(dirFor("date"))}">${t("baseExplorer.list.colDate")}</th>
+        <th class="h-main ${sortKey === "name" ? "active" : ""}" data-sort-key="name" data-dir="${esc(dirFor("name"))}">${t("baseExplorer.list.colName")}${sortCaret("name")}</th>
+        <th class="h-type ${sortKey === "type" ? "active" : ""}" data-sort-key="type" data-dir="${esc(dirFor("type"))}">${t("baseExplorer.list.colType")}${sortCaret("type")}</th>
+        <th class="h-date ${sortKey === "date" ? "active" : ""}" data-sort-key="date" data-dir="${esc(dirFor("date"))}">${t("baseExplorer.list.colDate")}${sortCaret("date")}</th>
         <th class="h-meta">${t("baseExplorer.list.colInfo")}</th>
       </tr>
     </thead>
@@ -936,34 +940,23 @@ export function renderList(state) {
   initColumnResizers();
 }
 
-function svgBase(pathD){
-  return `
-  <svg class="tbIco" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-    <path d="${pathD}"></path>
-  </svg>`;
-}
-
-function svgFolderPlus(){ return svgBase("M10 4l2 2h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h6zm2 7h-2v2H8v2h2v2h2v-2h2v-2h-2v-2z"); }
-function svgFilePlus(){ return svgBase("M6 2h9l5 5v15a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zm8 1v5h5M12 11h-2v2H8v2h2v2h2v-2h2v-2h-2v-2z"); }
-function svgEdit(){ return svgBase("M3 17.25V21h3.75L19.81 7.94l-3.75-3.75L3 17.25zm2.92 2.83H5v-.92l10.06-10.06.92.92L5.92 20.08zM20.71 6.04a1 1 0 0 0 0-1.41l-1.34-1.34a1 1 0 0 0-1.41 0l-1.13 1.13 2.75 2.75 1.13-1.13z"); }
-function svgTag(){return svgBase("M20.59 13.41L11 3.83A2 2 0 0 0 9.59 3H4a2 2 0 0 0-2 2v5.59A2 2 0 0 0 2.83 12l9.59 9.59a2 2 0 0 0 2.83 0l5.34-5.34a2 2 0 0 0 0-2.83zM6.5 8A1.5 1.5 0 1 1 8 6.5 1.5 1.5 0 0 1 6.5 8z"); }
-function svgPencil(){ return svgBase("M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zm18-11.5a1 1 0 0 0 0-1.41l-1.59-1.59a1 1 0 0 0-1.41 0l-1.13 1.13 3.75 3.75L21 5.75z"); }
-function svgTrash(){ return svgBase("M6 7h12l-1 14H7L6 7zm3-3h6l1 2H8l1-2z"); }
-function svgCopy(){ return svgBase("M16 1H4a2 2 0 0 0-2 2v12h2V3h12V1zm4 4H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zm0 16H8V7h12v14z"); }
-function svgCut(){ return svgBase("M9.64 7.64L12 10l2.36-2.36a3 3 0 1 1 1.41 1.41L13.41 11l2.36 2.36a3 3 0 1 1-1.41 1.41L12 12.41l-2.36 2.36a3 3 0 1 1-1.41-1.41L10.59 11 8.23 8.64a3 3 0 1 1 1.41-1.41z"); }
-function svgPaste(){ return svgBase("M19 4h-3.18A3 3 0 0 0 13 2h-2a3 3 0 0 0-2.82 2H5a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2zm-8-1h2a1 1 0 0 1 1 1v1H10V4a1 1 0 0 1 1-1zm8 19H5V6h2v2h10V6h2v16z"); }
-function svgDuplicate(){ return svgBase("M7 7h12v14H7V7zm-2 2H3V3h14v2H5v4z"); }
-function svgPlay(){ return svgBase("M8 5v14l11-7L8 5z"); }
-// Poprzednia ścieżka mieszała dwa łuki o różnych promieniach/środkach
-// (A7.95.../a5 5.../A7 7...) dla strzałki i "kółka" -- nie składały się w
-// spójny pierścień, więc ikona wyglądała na wizualnie zepsutą. To
-// sprawdzony, jednościeżkowy glif Material Icons "refresh".
-function svgRefresh(){ return svgBase("M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-8 3.58-8 8s3.58 8 8 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"); }
+function svgFolderPlus(){ return icon("folder-plus", { className: "tbIco" }); }
+function svgFilePlus(){ return icon("file-plus", { className: "tbIco" }); }
+function svgEdit(){ return icon("edit-paper", { className: "tbIco" }); }
+function svgTag(){ return icon("tag", { className: "tbIco" }); }
+function svgPencil(){ return icon("pencil", { className: "tbIco" }); }
+function svgTrash(){ return icon("trash", { className: "tbIco" }); }
+function svgCopy(){ return icon("copy", { className: "tbIco" }); }
+function svgCut(){ return icon("cut", { className: "tbIco" }); }
+function svgPaste(){ return icon("paste", { className: "tbIco" }); }
+function svgDuplicate(){ return icon("duplicate", { className: "tbIco" }); }
+function svgPlay(){ return icon("gamepad", { className: "tbIco" }); }
+function svgRefresh(){ return icon("refresh", { className: "tbIco" }); }
 
 /* small inline icons for tree/list rows */
 function svgFolder(){
-  return `<svg class="list-ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M20 6h-8l-2-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2z"/></svg>`;
+  return icon("folder", { className: "list-ico" });
 }
 function svgHome(){
-  return `<svg class="list-ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>`;
+  return icon("home", { className: "list-ico" });
 }

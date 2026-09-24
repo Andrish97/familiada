@@ -5,6 +5,7 @@ import { t } from "../../translation/translation.js?v=v2026-09-24T23225";
 import { TYPES as GAME_TYPES, RULES } from "../../js/core/game-validate.js?v=v2026-09-24T23225";
 import { validateQuestionForType } from "../../js/core/base-export-validate.js?v=v2026-09-24T23225";
 import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../js/core/modal-sheet.js?v=v2026-09-24T23225";
+import { icon, iconText } from "../../js/core/icons.js?v=v2026-09-24T23225";
 
 // Kolejność = pozycje suwaka typu w UI (0/1/2, patrz typeIndex). GAME_TYPES
 // to obiekt nazwa->wartość, nie tablica, więc kolejność zostaje jawna tutaj
@@ -219,8 +220,11 @@ export function initExportModal({ state } = {}) {
     if (xProg) xProg.style.display = on ? "" : "none";
   }
 
-  function setProgress({ step, i, n, msg, isError } = {}) {
-    if (xProgStep && step != null) xProgStep.textContent = String(step);
+  function setProgress({ step, i, n, msg, isError, done } = {}) {
+    if (xProgStep && step != null) {
+      if (isError || done) xProgStep.innerHTML = iconText(isError ? "error" : "check", String(step));
+      else xProgStep.textContent = String(step);
+    }
     if (xProgCount) xProgCount.textContent = `${Number(i || 0)}/${Number(n || 0)}`;
 
     const nn = Number(n || 0);
@@ -381,6 +385,7 @@ export function initExportModal({ state } = {}) {
 
         setProgress({
           step: t("baseExplorer.export.progress.done"),
+          done: true,
           i: n || 1,
           n: n || 1,
           msg: t("baseExplorer.export.progress.created"),

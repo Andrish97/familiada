@@ -953,21 +953,14 @@ input,textarea {
     cursor: default;
 }
 
-/* sort arrow (::after on th) */
-.list-head .h-main::after,
-.list-head .h-type::after,
-.list-head .h-date::after {
-    content: "";
-    display: inline-block;
+/* strzałka sortowania — ikona z silnika dokładana w render.js */
+.list-head .sort-caret {
     width: 12px;
+    height: 12px;
     margin-left: 4px;
     opacity: .65;
-    visibility: hidden;
+    vertical-align: -1px;
 }
-
-.list-head .active::after { visibility: visible; }
-.list-head .active[data-dir=asc]::after  { content: "▲"; }
-.list-head .active[data-dir=desc]::after { content: "▼"; }
 
 .list-head .active {
     color: rgba(255,255,255,.8);
@@ -1200,7 +1193,6 @@ tr.row .tag-dot[data-tip]::before {
 .tbIco {
     width: 18px;
     height: 18px;
-    fill: currentColor;
     display: block
 }
 
@@ -1208,7 +1200,6 @@ tr.row .tag-dot[data-tip]::before {
 .list-ico {
     width: 15px;
     height: 15px;
-    fill: currentColor;
     display: inline-block;
     vertical-align: middle;
     flex-shrink: 0;

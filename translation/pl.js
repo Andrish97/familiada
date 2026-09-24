@@ -4213,9 +4213,9 @@ const pl = {
       progress: {
         creatingGame: "Tworzenie gry…",
         exporting: "Eksport…",
-        done: "Gotowe ✅",
+        done: "Eksport zakończony.",
         created: "Utworzono grę.",
-        error: "Błąd ❌",
+        error: "Eksport nie powiódł się.",
         errorDetail: "Błąd: {error}",
         importingQuestions: "Import pytań…",
         importDone: "Import zakończony",

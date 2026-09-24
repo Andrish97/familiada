@@ -4338,9 +4338,9 @@ const en = {
       progress: {
         creatingGame: "Creating game…",
         exporting: "Exporting…",
-        done: "Done ✅",
+        done: "Export completed.",
         created: "Game created.",
-        error: "Error ❌",
+        error: "Export failed.",
         errorDetail: "Error: {error}",
         importingQuestions: "Importing questions…",
         importDone: "Import complete",
