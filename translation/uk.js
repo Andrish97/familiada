@@ -595,7 +595,6 @@ const uk = {
     },
     shareModal: {
       title: "Поділитися базою",
-      subtitle: "Додавай користувачів за ім'ям або e-mail. Якщо не вийде, покажемо «Не вдалося».",
       placeholder: "Ім'я користувача або e-mail...",
       roleEditor: "Редагування",
       roleViewer: "Перегляд",

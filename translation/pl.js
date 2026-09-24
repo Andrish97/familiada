@@ -4792,7 +4792,7 @@ const pl = {
     returnAtTitle: "TRWA PRZERWA TECHNICZNA ⏳",
     returnAtText:
       "System jest chwilowo niedostępny.\nPowrót nastąpi:",
-    countdownTitle: "TRWA PRZERWA TECHNICZNA",
+    countdownTitle: "TRWA PRZERWA TECHNICZNA ⏳",
     countdownText:
       "System jest chwilowo niedostępny.\nPowrót nastąpi:",
     countdownDone: "Powrót już możliwy. 🎉",

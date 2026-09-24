@@ -80,14 +80,13 @@ Element ma `data-i18n` (tłumaczenie wstawiane przez `textContent`), a w środku
 | `control.html:383` | `control.shareDevice` | stara strona (ma wersję 2) — nie ruszamy |
 | `polls-hub.html:46` | `builder.nav.pollsHubSubs` | **poprawione** — `data-i18n` przeniesione na wewnętrzny `<span>`, licznik zostaje |
 
-## Pominięte (24)
+## Pominięte (18)
 
 | Plik:linia | Klucz | Gdzie | W HTML | PL | Powód |
 |---|---|---|---|---|---|
 | `buzzer.html:21` | `buzzer.title` | treść | Familiada — buzzer | Familiada — przycisk | stara strona (ma wersję 2) — nie ruszamy |
 | `buzzer.html:66` | `buzzer.btnA` | aria-label | Buzzer A | Przycisk A | stara strona (ma wersję 2) — nie ruszamy |
 | `buzzer.html:67` | `buzzer.btnB` | aria-label | Buzzer B | Przycisk B | stara strona (ma wersję 2) — nie ruszamy |
-| `buzzer2.html:8` | `buzzer.title` | treść | Familiada — Buzzer (v2) | Familiada — przycisk | <title> strony (SEO) — do decyzji |
 | `control.html:77` | `manual.legal` | treść | 🔐 Polityka prywatności | Polityka prywatności 🔐 | stara strona (ma wersję 2) — nie ruszamy |
 | `control.html:126` | `control.qrModalCodeHint` | treść | Wejdź na familiada.online → Podłącz urządzenie → wprowadź kod | familiada.online → Podłącz urządzenie → wprowadź kod | stara strona (ma wersję 2) — nie ruszamy |
 | `control.html:362` | `control.noHostTabletHint` | treść | Jeśli prowadzący nie używa osobnego tabletu/telefonu, zaznacz tę opcję. | Jeśli prowadzący nie używa osobnego tabletu/telefonu, zaznacz tę opcję. Podpięcie urządzenia prowadzącego nie będzie wymagane. | stara strona (ma wersję 2) — nie ruszamy |
@@ -101,13 +100,8 @@ Element ma `data-i18n` (tłumaczenie wstawiane przez `textContent`), a w środku
 | `control.html:968` | `bases.shareModal.sectionSubscribers` | treść | Moi subskrybenci | Subskrybenci | stara strona (ma wersję 2) — nie ruszamy |
 | `control.html:243` | `control.tabRounds` | title | Rozgrywka | Rundy | stara strona (ma wersję 2) — nie ruszamy |
 | `display.html:19` | `display.title` | treść | Wyświetlacz jak w klasycznej Familiadzie | Wyświetlacz jak w klasycznej „Familiada” | stara strona (ma wersję 2) — nie ruszamy |
-| `display2.html:8` | `display.title` | treść | Familiada — Wyświetlacz (v2) | Wyświetlacz jak w klasycznej „Familiada” | <title> strony (SEO) — do decyzji |
 | `game-settings.html:14` | `gameSettings.title` | treść | Familiada — Ustawienia rozgrywki | Ustawienia gry | stara strona (ma wersję 2) — nie ruszamy |
 | `game-settings.html:63` | `manual.legal` | treść | 🔐 Polityka prywatności | Polityka prywatności 🔐 | stara strona (ma wersję 2) — nie ruszamy |
-| `game-settings2.html:14` | `gameSettings.title` | treść | Familiada — Ustawienia rozgrywki | Ustawienia gry | <title> strony (SEO) — do decyzji |
-| `host2.html:8` | `host.title` | treść | Familiada — prowadzący (v2) | Familiada — prowadzący | <title> strony (SEO) — do decyzji |
-| `marketplace.html:14` | `marketplace.title` | treść | Pytania do Familiady — Gotowe Gry Społeczności | Gry Społeczności | <title> strony (SEO) — do decyzji |
-| `subscriptions.html:15` | `pollsHubSubscriptions.tabs.subscriptions` | treść | Familiada — subskrypcje | Subskrypcje | <title> strony (SEO) — do decyzji |
 
 ## Bez zmian — puste elementy (14)
 
@@ -129,3 +123,26 @@ Element w HTML jest celowo pusty, treść pochodzi tylko z tłumaczeń (np. dłu
 | `manual.html:99` | `manual.content.control` |
 | `manual.html:100` | `manual.content.connect` |
 | `manual.html:101` | `manual.content.gameSettings` |
+
+## Tytuły kart przeglądarki — poprawione (6)
+
+Tekst w `<title>` zamieniony na tłumaczenie PL (to i tak ono jest wyświetlane po wczytaniu strony).
+
+| Plik:linia | Klucz | Było w HTML | Jest (PL) |
+|---|---|---|---|
+| `buzzer2.html:8` | `buzzer.title` | Familiada — Buzzer (v2) | Familiada — przycisk |
+| `display2.html:8` | `display.title` | Familiada — Wyświetlacz (v2) | Wyświetlacz jak w klasycznej „Familiada” |
+| `game-settings2.html:14` | `gameSettings.title` | Familiada — Ustawienia rozgrywki | Ustawienia gry |
+| `host2.html:8` | `host.title` | Familiada — prowadzący (v2) | Familiada — prowadzący |
+| `marketplace.html:14` | `marketplace.title` | Pytania do Familiady — Gotowe Gry Społeczności | Gry Społeczności |
+| `subscriptions.html:15` | `pollsHubSubscriptions.tabs.subscriptions` | Familiada — subskrypcje | Subskrypcje |
+
+## Rozbieżności między językami — poprawione
+
+| Klucz | Problem | Poprawka |
+|---|---|---|
+| `maintenance.countdownTitle` | EN i UK miały ⏳, PL nie | dodane ⏳ w PL (ujednolicone z EN/UK i z pozostałymi tytułami przerwy) |
+| `marketplace.libraryCount` | tylko EN miał „×” („added {count}×”) | EN: „added {count}” — jak PL „{count} dodano” i UK „додано {count}” |
+| `bases.shareModal.subtitle` | klucz tylko w UK, brak w PL i EN, nigdzie nieużywany | usunięty z UK |
+
+Poza tym wszystkie klucze mają te same zmienne `{…}` we wszystkich trzech językach.
