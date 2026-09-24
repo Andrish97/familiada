@@ -1,7 +1,7 @@
 
-import { sb as supabase } from "../core/supabase.js?v=v2026-09-24T22420";
-import { alertModal, confirmModal } from "../core/modal.js?v=v2026-09-24T22420";
-import { initUiSelect } from "../core/ui-select.js?v=v2026-09-24T22420";
+import { sb as supabase } from "../core/supabase.js?v=v2026-09-24T22431";
+import { alertModal, confirmModal } from "../core/modal.js?v=v2026-09-24T22431";
+import { initUiSelect } from "../core/ui-select.js?v=v2026-09-24T22431";
 
 let games = [];
 let genLangSelect = null;
@@ -933,7 +933,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const json = JSON.stringify(example, null, 2);
     const a = document.createElement('a');
     a.href = 'data:application/json;charset=utf-8,' + encodeURIComponent(json);
-    a.download = 'przykladowa-gra.json?v=v2026-09-24T22420';
+    a.download = 'przykladowa-gra.json?v=v2026-09-24T22431';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
