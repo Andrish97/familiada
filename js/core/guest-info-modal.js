@@ -10,21 +10,9 @@ function buildGuestInfoBody() {
   const wrap = document.createElement('div');
   wrap.style.cssText = 'display:grid;gap:12px;font-size:.9rem;line-height:1.55;margin-top:6px';
 
-  [
-    { iconKey: 'guestInfo.icon1', htmlKey: 'guestInfo.warning1' },
-    { iconKey: 'guestInfo.icon2', htmlKey: 'guestInfo.warning2' },
-  ].forEach(({ iconKey, htmlKey }) => {
+  ['guestInfo.warning1', 'guestInfo.warning2'].forEach((htmlKey) => {
     const row = document.createElement('div');
-    row.style.cssText = 'display:flex;gap:10px;align-items:flex-start';
-
-    const ic = document.createElement('span');
-    ic.textContent = t(iconKey);
-    ic.style.cssText = 'flex-shrink:0;font-size:1.15rem;margin-top:1px';
-
-    const txt = document.createElement('span');
-    txt.innerHTML = t(htmlKey);
-
-    row.append(ic, txt);
+    row.innerHTML = t(htmlKey);
     wrap.appendChild(row);
   });
 

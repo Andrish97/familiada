@@ -7,6 +7,7 @@ import { confirmModal } from "../core/modal.js?v=v2026-09-24T23091";
 import { isGuestUser, hideForGuest } from "../core/guest-mode.js?v=v2026-09-24T23091";
 import "../core/contact-modal.js?v=v2026-09-24T23091";
 import { deleteGameSoundsFolder } from "../core/sfx-cloud.js?v=v2026-09-24T23091";
+import { icon, iconText } from "../core/icons.js?v=v2026-09-24T23091";
 
 
 const status = document.getElementById("status");
@@ -61,7 +62,7 @@ function buildManualUrl() {
 function setErr(m = "") { if (err) err.textContent = m; }
 let emailNotifTimer = null;
 
-function showEmailNotifSaved(msg = "") {
+function showEmailNotifSaved(msg = "", kind = "check") {
   if (!emailNotifSaved) return;
   if (emailNotifTimer) clearTimeout(emailNotifTimer);
   if (!msg) {
@@ -69,7 +70,7 @@ function showEmailNotifSaved(msg = "") {
     emailNotifSaved.textContent = "";
     return;
   }
-  emailNotifSaved.textContent = msg;
+  emailNotifSaved.innerHTML = iconText(kind, msg);
   emailNotifSaved.hidden = false;
   emailNotifTimer = setTimeout(() => {
     if (emailNotifSaved) emailNotifSaved.hidden = true;
@@ -112,7 +113,7 @@ async function initEmailNotificationsUi(user) {
     } catch (e) {
       console.error(e);
       emailNotificationsChk.checked = !next; // rollback
-      showEmailNotifSaved(t("account.emailNotifSaveFailed"));
+      showEmailNotifSaved(t("account.emailNotifSaveFailed"), "error");
     } finally {
       emailNotificationsChk.disabled = false;
     }
@@ -544,7 +545,7 @@ async function loadUserRating(userId) {
     if (error) throw error;
 
     if (data) {
-      const starsStr = "★".repeat(data.stars) + "☆".repeat(5 - data.stars);
+      const starsStr = icon("star").repeat(data.stars) + icon("star-empty").repeat(5 - data.stars);
       container.innerHTML = `
         <div class="rating-info">
           <div class="rating-stars">

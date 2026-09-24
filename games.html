@@ -45,12 +45,12 @@
     </div>
     <div class="topbar-section topbar-section-2">
       <button class="btn" id="btnMarketplace">
-        <span data-i18n="games.nav.marketplace">Gry Społeczności 🎮</span>
+        <span data-i18n="games.nav.marketplace" data-i18n-icon-after="gamepad">Gry Społeczności</span>
         <span class="badge" id="marketplaceBadge" aria-hidden="true"></span>
       </button>
 
       <button class="btn" id="btnLogoEditor">
-        <span data-i18n="games.nav.logo">Logo 🖥️</span>
+        <span data-i18n="games.nav.logo" data-i18n-icon-after="display">Logo</span>
       </button>
 
       <button class="btn" id="btnConnectDevice" data-nav-hidden="true" style="display:none;">
@@ -59,7 +59,7 @@
       </button>
 
       <button class="btn" id="btnPollsHub">
-        <span data-i18n="games.nav.pollsHubPolls">Ankiety 📊</span>
+        <span data-i18n="games.nav.pollsHubPolls" data-i18n-icon-after="polls">Ankiety</span>
         <span class="badge" id="pollsHubBadge" aria-hidden="true"></span>
       </button>
 
@@ -69,18 +69,18 @@
       </button>
 
       <button class="btn" id="btnBases">
-        <span data-i18n="games.nav.bases">Bazy pytań 🗃️</span>
+        <span data-i18n="games.nav.bases" data-i18n-icon-after="drawer">Bazy pytań</span>
         <span class="badge" id="basesBadge" aria-hidden="true"></span>
       </button>
 
       <div class="nav-more" id="navMore" style="display:none;">
-        <button class="btn" id="btnMore" type="button">Więcej ▾<span class="badge" id="moreBadge" aria-hidden="true"></span></button>
+        <button class="btn" id="btnMore" type="button">Więcej <i class="ico" data-icon="caret-down"></i><span class="badge" id="moreBadge" aria-hidden="true"></span></button>
         <div class="nav-more-dropdown" id="navMoreDropdown" hidden></div>
       </div>
     </div>
     <div class="topbar-section topbar-section-3">
-      <button class="btn icon-btn" id="btnInstall" type="button" style="display:none;" title="Zainstaluj aplikację"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>
-      <button class="btn icon-btn" id="btnManual" type="button">ℹ️</button>
+      <button class="btn icon-btn" id="btnInstall" type="button" style="display:none;" title="Zainstaluj aplikację" aria-label="Zainstaluj aplikację"><i class="ico" data-icon="download"></i></button>
+      <button class="btn icon-btn" id="btnManual" type="button" data-i18n-aria-label="common.manualLabel" data-i18n-title="common.manualLabel" aria-label="Wskazówki" title="Wskazówki"><i class="ico" data-icon="info"></i></button>
     </div>
     <div class="topbar-section topbar-section-4">
       <div class="who" id="whoStatic">—</div>
@@ -219,7 +219,7 @@
       <div class="modal">
         <div class="mHead">
           <div class="mTitle" data-i18n="games.exportBase.title">Eksport do bazy</div>
-          <button class="btn sm" id="btnExportBaseCancel" type="button" aria-label="Zamknij">✕</button>
+          <button class="btn sm" id="btnExportBaseCancel" type="button" aria-label="Zamknij" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
         </div>
         <div class="mSub">
           <span data-i18n="games.exportBase.subtitle">Wybierz bazę pytań. Zostanie utworzony folder w głównym katalogu o nazwie jak gra.</span>
@@ -228,7 +228,7 @@
         <div class="ui-select" id="baseSelectWrap" style="margin-top:12px;width:100%;">
           <button class="btn sm ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
             <span class="ui-select-label">—</span>
-            <span class="ui-select-caret" aria-hidden="true">▾</span>
+            <span class="ui-select-caret" aria-hidden="true"><i class="ico" data-icon="caret-down"></i></span>
           </button>
           <div class="ui-select-menu" role="listbox"></div>
         </div>
@@ -259,7 +259,7 @@
       <div class="modal">
         <div class="mHead">
           <div class="mTitle" data-i18n="games.import.title">Importuj</div>
-          <button class="btn sm" id="btnCancelImport" type="button" aria-label="Zamknij">✕</button>
+          <button class="btn sm" id="btnCancelImport" type="button" aria-label="Zamknij" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
         </div>
 
         <div class="importRow" style="margin-top:8px">
@@ -294,7 +294,7 @@
       <div class="modal bld-preview-modal">
         <div class="bld-preview-head">
           <div class="mTitle" id="previewTitle">—</div>
-          <button class="btn sm" id="btnPreviewClose" type="button" aria-label="Zamknij">✕</button>
+          <button class="btn sm" id="btnPreviewClose" type="button" aria-label="Zamknij" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
         </div>
         <div class="bld-preview-questions" id="previewQuestions"></div>
       </div>

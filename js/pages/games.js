@@ -32,6 +32,7 @@ import {
 } from "../core/game-validate.js?v=v2026-09-24T23091";
 import { deleteGameSoundsFolder } from "../core/sfx-cloud.js?v=v2026-09-24T23091";
 import { isResourceBusy } from "../core/resource-lock.js?v=v2026-09-24T23091";
+import { icon, iconText } from "../core/icons.js?v=v2026-09-24T23091";
 
 const MSG = {
   exportBaseEmpty: () => t("games.exportBase.empty"),
@@ -291,8 +292,11 @@ async function maybeShowIosWebappPrompt() {
 }
 
 
-function setProgUi(stepEl, countEl, barEl, msgEl, { step, i, n, msg, isError } = {}) {
-  if (stepEl && step != null) stepEl.textContent = String(step);
+function setProgUi(stepEl, countEl, barEl, msgEl, { step, i, n, msg, isError, done } = {}) {
+  if (stepEl && step != null) {
+    if (isError || done) stepEl.innerHTML = iconText(isError ? "error" : "check", String(step));
+    else stepEl.textContent = String(step);
+  }
   if (countEl) countEl.textContent = `${Number(i) || 0}/${Number(n) || 0}`;
 
   const nn = Number(n) || 0;
@@ -850,7 +854,7 @@ function cardGame(g) {
   el.className = "card";
 
   el.innerHTML = `
-    <div class="x" title="${t("games.card.delete")}">✕</div>
+    <div class="x" title="${t("games.card.delete")}">${icon("trash")}</div>
     <div class="name"></div>
     <div class="meta"></div>
   `;
@@ -883,7 +887,7 @@ function cardAdd(uiType) {
   const el = document.createElement("div");
   el.className = "addCard";
   el.innerHTML = `
-    <div class="plus">＋</div>
+    <div class="plus">${icon("plus")}</div>
     <div class="txt">${t("games.card.newGame")}</div>
     <div class="sub">${typeLabel(uiType)}</div>
   `;
@@ -963,7 +967,7 @@ function cardMarket(g) {
   el.innerHTML = `
     <div class="name">${escapeHtml(g.title || "—")}</div>
     <div class="meta">${t("games.market.typeLabel")} · ${(g.lang || "").toUpperCase()}</div>
-    <div class="x" title="${t("games.market.removeFromLibrary")}">✕</div>
+    <div class="x" title="${t("games.market.removeFromLibrary")}">${icon("trash")}</div>
   `;
   el.addEventListener("click", () => {
     selectedMarketId = g.market_game_id;
@@ -1674,6 +1678,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       setProgUi(exportBaseProgStep, exportBaseProgCount, exportBaseProgBar, exportBaseProgMsg, {
         step: MSG.exportBaseDone(),
+        done: true,
         i: 1,
         n: 1,
         msg: MSG.exportBaseSaved(),
@@ -1817,7 +1822,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         setProgUi(importProgStep, importProgCount, importProgBar, importProgMsg, { step: step || MSG.importSave(), i, n, msg, isError });
       });
       setProgUi(importProgStep, importProgCount, importProgBar, importProgMsg, {
-        step: MSG.importDone(), i: qCount, n: qCount, msg: MSG.importDone(),
+        step: MSG.importDone(), done: true, i: qCount, n: qCount, msg: MSG.importDone(),
       });
       selectedId = newId;
       try { const ng = await loadGameBasic(newId); if (ng?.type) setActiveTab(uiTypeFromRow(ng)); } catch {}

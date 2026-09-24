@@ -5,6 +5,7 @@
 // znika na stałe (dla tego konta gościa).
 
 import { t } from "../../translation/translation.js?v=v2026-09-24T23091";
+import { icon } from "./icons.js?v=v2026-09-24T23091";
 
 const LAST_SHOWN_PREFIX = "fam:guest:migrate_last_shown:";
 const DISMISSED_PREFIX = "fam:guest:migrate_dismissed:";
@@ -62,7 +63,7 @@ function buildBanner(uid) {
   const closeBtn = document.createElement("button");
   closeBtn.type = "button";
   closeBtn.setAttribute("aria-label", t("guestReminder.close"));
-  closeBtn.textContent = "✕";
+  closeBtn.innerHTML = icon("close");
   closeBtn.style.cssText = "background:none;border:none;color:inherit;opacity:.6;cursor:pointer;font-size:1rem;line-height:1;padding:0 2px";
   closeBtn.addEventListener("click", () => bar.remove()); // tylko na dziś — jutro wróci
 
