@@ -971,9 +971,12 @@ html.showA2HS .a2hs {
 
 .lang-btn {
     min-width: 38px;
-    min-height: 38px;
+    min-height: 37px;
     display: grid;
     place-items: center;
+    /* bez pionowego paddingu — flaga (2em) nie może rozpychać przycisku
+       ponad wysokość pozostałych przycisków topbara */
+    padding: 0 6px;
 }
 
 .lang-btn .ico {

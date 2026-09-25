@@ -173,6 +173,9 @@
        align-content:start na WEWNĘTRZNYM gridzie każdej karty (.device-row)
        trzyma jej treść przy górze, gdyby kiedyś któraś karta była wyższa od
        swojej naturalnej zawartości. */
+    /* Statusy urządzeń w topbarze — ta sama wysokość i zaokrąglenie co
+       przyciski topbara (.btn), zamiast niższych „pigułek” z control.css. */
+    .topbar .top-status .dotRow { padding:10px 12px; min-height:37px; box-sizing:border-box; border-radius:14px; font-size:13px; line-height:1; }
     .c2-devicerows { flex:1; min-width:0; min-height:0; display:grid; grid-template-columns:1fr; gap:8px; align-content:start; }
     .c2-devicerows .device-row { margin-bottom:0; align-content:start; }
     /* Zgłoszone: przyciski wyłączonego urządzenia (checkbox "Bez tabletu
