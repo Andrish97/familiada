@@ -1,15 +1,15 @@
-import { sb, SUPABASE_URL } from "../core/supabase.js?v=v2026-09-25T18564";
-import { updateChecked } from "../core/db-guard.js?v=v2026-09-25T18564";
-import { requireAuth } from "../core/auth.js?v=v2026-09-25T18564";
-import { isGuestUser, showGuestBlockedOverlay } from "../core/guest-mode.js?v=v2026-09-25T18564";
-import { validatePollReadyToOpen } from "../core/game-validate.js?v=v2026-09-25T18564";
-import { alertModal, confirmModal } from "../core/modal.js?v=v2026-09-25T18564";
-import { initUiSelect } from "../core/ui-select.js?v=v2026-09-25T18564";
-import { initI18n, t, getUiLang } from "../../translation/translation.js?v=v2026-09-25T18564";
-import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-09-25T18564";
-import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../core/modal-sheet.js?v=v2026-09-25T18564";
-import "../core/contact-modal.js?v=v2026-09-25T18564";
-import { icon, iconText } from "../core/icons.js?v=v2026-09-25T18564";
+import { sb, SUPABASE_URL } from "../core/supabase.js?v=v2026-09-25T18594";
+import { updateChecked } from "../core/db-guard.js?v=v2026-09-25T18594";
+import { requireAuth } from "../core/auth.js?v=v2026-09-25T18594";
+import { isGuestUser, showGuestBlockedOverlay } from "../core/guest-mode.js?v=v2026-09-25T18594";
+import { validatePollReadyToOpen } from "../core/game-validate.js?v=v2026-09-25T18594";
+import { alertModal, confirmModal } from "../core/modal.js?v=v2026-09-25T18594";
+import { initUiSelect } from "../core/ui-select.js?v=v2026-09-25T18594";
+import { initI18n, t, getUiLang } from "../../translation/translation.js?v=v2026-09-25T18594";
+import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-09-25T18594";
+import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../core/modal-sheet.js?v=v2026-09-25T18594";
+import "../core/contact-modal.js?v=v2026-09-25T18594";
+import { icon, iconText } from "../core/icons.js?v=v2026-09-25T18594";
 
 initI18n({ withSwitcher: true }).then(() => {
   document.documentElement.classList.remove('page-loading');

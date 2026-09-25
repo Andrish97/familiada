@@ -1,9 +1,9 @@
 // /base-explorerjs/question-modal.js
 // Modal pytania: open() zwraca Promise z wynikiem {ok,...}
 
-import { t } from "../../translation/translation.js?v=v2026-09-25T18564";
-import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../js/core/modal-sheet.js?v=v2026-09-25T18564";
-import { icon } from "../../js/core/icons.js?v=v2026-09-25T18564";
+import { t } from "../../translation/translation.js?v=v2026-09-25T18594";
+import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../js/core/modal-sheet.js?v=v2026-09-25T18594";
+import { icon } from "../../js/core/icons.js?v=v2026-09-25T18594";
 
 const $ = (id) => document.getElementById(id);
 const btnBack = document.getElementById("btnBack");
