@@ -384,7 +384,26 @@ async function hostPeekSwipe(hostPage) {
 // jedna korekta już nie wystarczyła, ta ma być wyraźnie odczuwalna
 // (niemal dwukrotność), nie kolejny drobny krok, który znowu okaże się
 // za mały.
-const CLICK_PACE_MS = 2200;
+//
+// Trzecia korekta, tym razem NIE jednym płaskim numerem — zgłoszone: "wiele
+// akcji jest dalej zbyt szybkich, ale np. na modalu ustawień wisi bardzo
+// długo". Jeden wspólny CLICK_PACE_MS dla WSZYSTKIEGO (bzyczenie, odsłonięcie
+// odpowiedzi I "Dalej" w kreatorze urządzeń I modal ustawień) był sprzeczny
+// sam ze sobą: podbicie go pomaga scenom rozgrywki (gdzie w prawdziwej grze
+// prowadzący GADA — trzeba dać mu czas), ale każdy krok czysto
+// administracyjny (kreator, modal ustawień, "Rozpocznij grę") dostawał TĘ
+// SAMĄ, coraz większą pauzę mimo że nic tam nie wymaga "czasu na
+// komentarz" — stąd modal, który robi 6-7 takich kroków z rzędu, realnie
+// wisiał kilkanaście sekund. Dwa osobne tempa:
+//   REVEAL_PACE_MS — domyślne dla clickPaced/armAndConfirmPaced/fillPaced:
+//     bzyczenie, "Zatwierdź: drużyna", odsłonięcie odpowiedzi/X/kradzież,
+//     koniec/start rundy, finał (odliczanie, mapowanie, "Zakończ grę") —
+//     momenty, które realny prowadzący komentuje na głos.
+//   ADMIN_PACE_MS — jawnie podane tam, gdzie NIC się nie ogłasza: kroki
+//     kreatora urządzeń ("Dalej", "Gotowe — przejdź do rozgrywki",
+//     "Rozpocznij grę"), otwarcie/zapis modala ustawień gry.
+const REVEAL_PACE_MS = 3400;
+const ADMIN_PACE_MS = 900;
 const WRITE_RPC_RE = /\/rpc\/(game_state_write|game_state_buzzer_press)(\?|$)/;
 
 function waitForWrite(page) {
@@ -397,7 +416,7 @@ function waitForWrite(page) {
     .catch(() => null);
 }
 
-async function clickPaced(locator, ms = CLICK_PACE_MS) {
+async function clickPaced(locator, ms = REVEAL_PACE_MS) {
   const page = locator.page();
   const responded = waitForWrite(page);
   await locator.click();
@@ -411,11 +430,13 @@ async function clickPaced(locator, ms = CLICK_PACE_MS) {
 // więc clickPaced's waitForWrite by na niej wisiał do timeoutu. Uzbrojenie
 // dostaje więc zwykły klik + krótką pauzę (żeby złota obwódka było widać w
 // nagraniu), a dopiero drugi klik na TYM SAMYM elemencie idzie przez
-// clickPaced jak każda inna akcja zapisująca stan.
-async function armAndConfirmPaced(locator, ms = CLICK_PACE_MS) {
+// clickPaced jak każda inna akcja zapisująca stan. Domyślnie zawsze
+// REVEAL_PACE_MS -- arm+confirm to z definicji moment rozgrywki (odpowiedź,
+// X, kradzież), nigdy krok administracyjny.
+async function armAndConfirmPaced(locator, ms = REVEAL_PACE_MS) {
   const page = locator.page();
   await locator.click();
-  await page.waitForTimeout(1400); // widz ma zdążyć zobaczyć złotą obwódkę "uzbrojenia" przed potwierdzeniem (proporcjonalnie do CLICK_PACE_MS)
+  await page.waitForTimeout(1800); // widz ma zdążyć zobaczyć złotą obwódkę "uzbrojenia" przed potwierdzeniem (proporcjonalnie do REVEAL_PACE_MS)
   await clickPaced(locator, ms);
 }
 
@@ -430,7 +451,7 @@ function answerTile(control, n) {
 // Jak clickPaced, ale dla .fill()/.check() — SET_ENTRY_TEXT/SET_REPEAT też
 // zapisują do game_state (ui.js's "input"/"change" listenery), więc podlegają
 // dokładnie temu samemu wyścigowi z p_expected_rev co kliknięcia.
-async function fillPaced(locator, text, ms = CLICK_PACE_MS) {
+async function fillPaced(locator, text, ms = REVEAL_PACE_MS) {
   const page = locator.page();
   const responded = waitForWrite(page);
   await locator.fill(text);
@@ -494,19 +515,24 @@ async function scenarioRoundsMechanics(pages) {
   await display.locator("#btnAudioUnlock").click();
   await control.waitForTimeout(500);
 
-  await clickPaced(control.getByRole("button", { name: "Dalej" }));
+  await clickPaced(control.getByRole("button", { name: "Dalej" }), ADMIN_PACE_MS);
 
   // Zgłoszone: "dodaj zmianę ustawień do... nagrywania" — pokaż na nagraniu,
   // że modal ustawień gry (naprawiony w tej sesji: podgląd Wyświetlacza był
   // martwy w trybie modalu) faktycznie działa. Zmiana nazwy drużyny w
   // formularzu, zapis, zamknięcie kliknięciem poza treścią modala (tak
   // zamyka się go naprawdę — control2/js/app.js's gsOverlayEl click handler).
-  await clickPaced(control.getByRole("button", { name: "Zmień ustawienia" }));
-  await control.waitForTimeout(1000); // niech nagranie złapie otwarcie modala
+  //
+  // Zgłoszone (po realnym nagraniu): "na modalu ustawień wisi bardzo długo"
+  // — cały ten blok to demo administracyjne (operator NIC nie ogłasza na
+  // głos tutaj), więc ADMIN_PACE_MS + odchudzone pauzy lokalne, nie
+  // REVEAL_PACE_MS na każdym kroku jak wcześniej.
+  await clickPaced(control.getByRole("button", { name: "Zmień ustawienia" }), ADMIN_PACE_MS);
+  await control.waitForTimeout(600); // niech nagranie złapie otwarcie modala
   const gsFrame = control.frameLocator("#gsFrame");
   const gsTeamAInput = gsFrame.locator("#gsTeamA");
   await gsTeamAInput.fill("Mistrzowie Quizu");
-  await control.waitForTimeout(1200); // niech nagranie złapie podgląd Wyświetlacza aktualizujący się na żywo
+  await control.waitForTimeout(800); // niech nagranie złapie podgląd Wyświetlacza aktualizujący się na żywo
 
   // Zgłoszone: "...i pokręć głośności" — doprecyzowane później: "suwaki w
   // ustawieniach a suwaki w podsumowaniu to różne rzeczy", oba mają być
@@ -522,16 +548,16 @@ async function scenarioRoundsMechanics(pages) {
   // nie jest "visible" (real bug znaleziony przez failed nagranie: locator.click
   // Timeout 30000ms, "element is not visible").
   await gsFrame.locator("#btnToggleSidebar").click();
-  await control.waitForTimeout(400); // niech nagranie złapie drawer się otwierający
+  await control.waitForTimeout(350); // niech nagranie złapie drawer się otwierający
   await gsFrame.locator('.gs-sidebar-item[data-cat="sound"]').click();
-  await control.waitForTimeout(600);
+  await control.waitForTimeout(400);
   const transitionSlider = gsFrame.locator('input.sfx-vol[data-sfx-vol="round_transition"]');
   await transitionSlider.waitFor({ state: "visible", timeout: 10_000 });
   // .fill() na range input nie zawsze niezawodnie odpala "input" (na czym
   // wisi handler zapisujący głośność) — ustawiamy value i wysyłamy zdarzenie
   // wprost.
   await transitionSlider.evaluate((el) => { el.value = "70"; el.dispatchEvent(new Event("input", { bubbles: true })); });
-  await control.waitForTimeout(1000); // niech nagranie złapie suwak i zaktualizowaną etykietę %
+  await control.waitForTimeout(600); // niech nagranie złapie suwak i zaktualizowaną etykietę %
 
   // Real bug znaleziony przez failed nagranie (przebieg #12/#13): "Zapisz
   // wszystko" (#btnSaveAll) jest zdefiniowany w game-settings2.html, więc
@@ -546,10 +572,10 @@ async function scenarioRoundsMechanics(pages) {
   // zniknięcie #gsOverlay -- to się nie stanie, dopóki saveAll() się nie
   // zakończy).
   await gsFrame.getByRole("button", { name: "Zapisz wszystko" }).click();
-  await control.waitForTimeout(CLICK_PACE_MS); // widz ma zdążyć zobaczyć zapis (przycisk disabled -> enabled)
+  await control.waitForTimeout(ADMIN_PACE_MS); // widz ma zdążyć zobaczyć zapis (przycisk disabled -> enabled)
   await control.locator("#gsOverlay").click({ position: { x: 5, y: 5 } });
   await control.locator("#gsOverlay").waitFor({ state: "hidden", timeout: 10_000 });
-  await control.waitForTimeout(800);
+  await control.waitForTimeout(500);
 
   // Drugi, NIEZALEŻNY mechanizm — suwak BEZPOŚREDNIO w sekcji "Dźwięk"
   // Podsumowania (control2/js/ui.js's soundSummarySection), bez modala —
@@ -566,10 +592,10 @@ async function scenarioRoundsMechanics(pages) {
     el.dispatchEvent(new Event("input", { bubbles: true }));
     el.dispatchEvent(new Event("change", { bubbles: true }));
   });
-  await control.waitForTimeout(1000); // niech nagranie złapie suwak i zaktualizowaną etykietę %
+  await control.waitForTimeout(600); // niech nagranie złapie suwak i zaktualizowaną etykietę %
 
-  await clickPaced(control.getByRole("button", { name: "Gotowe — przejdź do rozgrywki" }));
-  await clickPaced(control.getByRole("button", { name: "Rozpocznij grę" }));
+  await clickPaced(control.getByRole("button", { name: "Gotowe — przejdź do rozgrywki" }), ADMIN_PACE_MS);
+  await clickPaced(control.getByRole("button", { name: "Rozpocznij grę" }), ADMIN_PACE_MS);
 
   // ===== RUNDA 1 =====
   await clickPaced(control.getByRole("button", { name: "Rozpocznij rundę" }));
@@ -672,9 +698,9 @@ async function scenarioRoundsMechanics(pages) {
 async function scenarioRoundsThreshold(pages, { expectFinal }) {
   const { control, buzzer } = pages;
 
-  await clickPaced(control.getByRole("button", { name: "Dalej" }));
-  await clickPaced(control.getByRole("button", { name: "Gotowe — przejdź do rozgrywki" }));
-  await clickPaced(control.getByRole("button", { name: "Rozpocznij grę" }));
+  await clickPaced(control.getByRole("button", { name: "Dalej" }), ADMIN_PACE_MS);
+  await clickPaced(control.getByRole("button", { name: "Gotowe — przejdź do rozgrywki" }), ADMIN_PACE_MS);
+  await clickPaced(control.getByRole("button", { name: "Rozpocznij grę" }), ADMIN_PACE_MS);
 
   // ===== RUNDA 1: pojedynek wygrany za pierwszym razem (bez pudła), potem
   // wszystkie 6 odpowiedzi odsłonięte naturalnie w PLAY =====
@@ -790,9 +816,9 @@ async function playThreeNaturalRoundsToThreshold(pages) {
 async function scenarioFinalFull(pages) {
   const { control, buzzer, host } = pages;
 
-  await clickPaced(control.getByRole("button", { name: "Dalej" }));
-  await clickPaced(control.getByRole("button", { name: "Gotowe — przejdź do rozgrywki" }));
-  await clickPaced(control.getByRole("button", { name: "Rozpocznij grę" }));
+  await clickPaced(control.getByRole("button", { name: "Dalej" }), ADMIN_PACE_MS);
+  await clickPaced(control.getByRole("button", { name: "Gotowe — przejdź do rozgrywki" }), ADMIN_PACE_MS);
+  await clickPaced(control.getByRole("button", { name: "Rozpocznij grę" }), ADMIN_PACE_MS);
 
   await playThreeNaturalRoundsToThreshold(pages);
 
@@ -890,9 +916,9 @@ async function scenarioFinalFull(pages) {
 async function scenarioFinalEarlyExit(pages) {
   const { control, buzzer, host } = pages;
 
-  await clickPaced(control.getByRole("button", { name: "Dalej" }));
-  await clickPaced(control.getByRole("button", { name: "Gotowe — przejdź do rozgrywki" }));
-  await clickPaced(control.getByRole("button", { name: "Rozpocznij grę" }));
+  await clickPaced(control.getByRole("button", { name: "Dalej" }), ADMIN_PACE_MS);
+  await clickPaced(control.getByRole("button", { name: "Gotowe — przejdź do rozgrywki" }), ADMIN_PACE_MS);
+  await clickPaced(control.getByRole("button", { name: "Rozpocznij grę" }), ADMIN_PACE_MS);
 
   await playThreeNaturalRoundsToThreshold(pages);
 
@@ -945,9 +971,9 @@ async function scenarioFinalEarlyExit(pages) {
 async function scenarioDeviceReconnect(pages, { contexts, browser }) {
   const { control } = pages;
 
-  await clickPaced(control.getByRole("button", { name: "Dalej" }));
-  await clickPaced(control.getByRole("button", { name: "Gotowe — przejdź do rozgrywki" }));
-  await clickPaced(control.getByRole("button", { name: "Rozpocznij grę" }));
+  await clickPaced(control.getByRole("button", { name: "Dalej" }), ADMIN_PACE_MS);
+  await clickPaced(control.getByRole("button", { name: "Gotowe — przejdź do rozgrywki" }), ADMIN_PACE_MS);
+  await clickPaced(control.getByRole("button", { name: "Rozpocznij grę" }), ADMIN_PACE_MS);
   await clickPaced(control.getByRole("button", { name: "Rozpocznij rundę" }));
 
   await clickPaced(pages.buzzer.getByRole("button", { name: "Przycisk A" }));
@@ -1039,9 +1065,9 @@ async function scenarioLogoLock(pages, { setupPage, logoId, logoLockTabId }) {
 
   // Krótka runda — dowód, że po odzyskaniu Control działa normalnie, nie
   // tylko "odblokował się i stoi".
-  await clickPaced(control.getByRole("button", { name: "Dalej" }));
-  await clickPaced(control.getByRole("button", { name: "Gotowe — przejdź do rozgrywki" }));
-  await clickPaced(control.getByRole("button", { name: "Rozpocznij grę" }));
+  await clickPaced(control.getByRole("button", { name: "Dalej" }), ADMIN_PACE_MS);
+  await clickPaced(control.getByRole("button", { name: "Gotowe — przejdź do rozgrywki" }), ADMIN_PACE_MS);
+  await clickPaced(control.getByRole("button", { name: "Rozpocznij grę" }), ADMIN_PACE_MS);
   await clickPaced(control.getByRole("button", { name: "Rozpocznij rundę" }));
   await clickPaced(buzzer.getByRole("button", { name: "Przycisk A" }));
   await clickPaced(control.getByRole("button", { name: "Zatwierdź: Alfa" }));
