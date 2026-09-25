@@ -3,7 +3,7 @@ import { sb } from "../core/supabase.js?v=v2026-09-25T07334";
 import { initI18n, withLangParam, applyTranslations, getUiLang, t } from "../../translation/translation.js?v=v2026-09-25T07334";
 import { isGuestUser } from "../core/guest-mode.js?v=v2026-09-25T07334";
 import { initRatingSystem } from "../core/rating-system.js?v=v2026-09-25T07334";
-import { icon, iconText } from "../core/icons.js?v=v2026-09-25T07334";
+import { icon, iconText, starRating } from "../core/icons.js?v=v2026-09-25T07334";
 
 async function redirectIfSession() {
   try {
@@ -38,10 +38,7 @@ async function loadRatingStats() {
     const avg = Number(stats.avg_stars);
     const count = Number(stats.total_count);
 
-    const fullStars = Math.floor(avg);
-    const halfStar = avg % 1 >= 0.5;
-    const emptyStars = Math.max(0, 5 - fullStars - (halfStar ? 1 : 0));
-    const starsStr = icon("star").repeat(fullStars) + (halfStar ? icon("star-half") : "") + icon("star-empty").repeat(emptyStars);
+    const starsStr = starRating(avg);
 
     wrap.innerHTML = `
       <div class="rating-badge-index">

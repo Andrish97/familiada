@@ -96,7 +96,8 @@ export const ICONS = Object.freeze({
   envelope: s('<rect x="2.5" y="4.5" width="19" height="15" rx="2"/><path d="m3 6.5 9 6 9-6"/>'),
   "envelope-in": s(`${ENVELOPE_SMALL}<path d="M12 2v6.5M9 5.5l3 3 3-3"/>`),
   "envelope-out": s(`${ENVELOPE_SMALL}<path d="M12 8.5V2M9 5l3-3 3 3"/>`),
-  megaphone: s('<path d="m3 10.5 16-5v13l-16-5Z"/><path d="M8.5 15.2a3 3 0 0 0 5.8 1"/>'),
+  // kształt z audytu (uchwyt + tuba), przerysowany konturem jak reszta zestawu
+  megaphone: s('<rect x="2.8" y="7.5" width="4.7" height="9" rx="1.2"/><path d="M7.5 9.2 19.5 4.5v15l-12-4.7Z"/>'),
   bell: s('<path d="M6 8.5a6 6 0 0 1 12 0c0 6.5 2.5 8.5 2.5 8.5h-17S6 15 6 8.5"/><path d="M10.3 20.5a2 2 0 0 0 3.4 0"/>'),
 
   // --- nawigacja / miejsca ------------------------------------------------
@@ -170,6 +171,30 @@ export function icon(name, { className = "", label = "" } = {}) {
   const cls = `ico ico-${name}${className ? ` ${className}` : ""}`;
   const a11y = label ? `role="img" aria-label="${esc(label)}"` : 'aria-hidden="true"';
   return `<svg class="${cls}" viewBox="${def.vb}" width="1em" height="1em" ${def.attrs} ${a11y} focusable="false">${def.body}</svg>`;
+}
+
+/**
+ * Gwiazdki oceny wypełnione procentowo: 4.6 → 4 pełne, piąta w 60%.
+ * Częściowa gwiazdka = kontur + pełna gwiazdka w zagnieżdżonym <svg> o
+ * szerokości przyciętej do ułamka (zagnieżdżony svg obcina zawartość do
+ * swojego obszaru, więc nie trzeba clipPath z unikalnym id).
+ * @param {number} value średnia ocena
+ * @param {{ max?: number, label?: string }} [opts]
+ */
+export function starRating(value, { max = 5, label = "" } = {}) {
+  const v = Math.max(0, Math.min(max, Number(value) || 0));
+  const X0 = 2.7, X1 = 21.3; // poziomy zasięg rysunku gwiazdki w viewBox 0–24
+  const empty = ICONS["star-empty"], full = ICONS.star;
+  let out = "";
+  for (let i = 0; i < max; i++) {
+    const frac = Math.max(0, Math.min(1, v - i));
+    if (frac >= 0.99) { out += icon("star"); continue; }
+    if (frac <= 0.01) { out += icon("star-empty"); continue; }
+    const w = (X0 + frac * (X1 - X0)).toFixed(2);
+    out += `<svg class="ico ico-star-part" viewBox="0 0 24 24" width="1em" height="1em" ${empty.attrs} aria-hidden="true" focusable="false">${empty.body}<svg width="${w}" height="24" ${full.attrs}>${full.body}</svg></svg>`;
+  }
+  const a11y = label ? ` role="img" aria-label="${esc(label)}"` : "";
+  return `<span class="ico-stars"${a11y}>${out}</span>`;
 }
 
 /**

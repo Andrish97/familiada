@@ -10,7 +10,7 @@ import { initUiSelect } from "../core/ui-select.js?v=v2026-09-25T07334";
 import { confirmModal } from "../core/modal.js?v=v2026-09-25T07334";
 import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../core/modal-sheet.js?v=v2026-09-25T07334";
 import "../core/contact-modal.js?v=v2026-09-25T07334";
-import { icon, iconText } from "../core/icons.js?v=v2026-09-25T07334";
+import { icon, iconText, starRating } from "../core/icons.js?v=v2026-09-25T07334";
 
 /* =========================================================
    Constants
@@ -544,9 +544,7 @@ async function submitGame() {
 ========================================================= */
 function starsDisplay(avg, count) {
   if (!count) return `<span class="mkt-no-rating">${esc(t("marketplace.rating.none"))}</span>`;
-  const full = Math.round(+avg);
-  const stars = icon("star").repeat(full) + icon("star-empty").repeat(5 - full);
-  return `<span class="mkt-stars">${stars}</span> <span class="mkt-rating-avg">${(+avg).toFixed(1)}</span> <span class="mkt-rating-count">(${count})</span>`;
+  return `<span class="mkt-stars" role="img" aria-label="${(+avg).toFixed(1)}/5">${starRating(avg)}</span> <span class="mkt-rating-avg">${(+avg).toFixed(1)}</span> <span class="mkt-rating-count">(${count})</span>`;
 }
 
 function buildStarInput(gameId) {

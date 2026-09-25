@@ -125,18 +125,11 @@
 .tileBadge[data-kind="role"]{ border-color:rgba(255,234,166,.25); background:rgba(255,234,166,.10); }
 .tileBadge[data-kind="proposed"]{ border-color:rgba(255,210,80,.45); background:rgba(255,210,80,.14); color:#ffe08a; }
 
-/* reset dla X (button) */
+/* X jest tu <button> — wygląd (ramka jak w logo) z games.css */
 .games-body .grid .card .x{
   appearance: none;
   -webkit-appearance: none;
-  border: 0;
-  background: transparent;
-  color: rgba(255,255,255,.85);
-  padding: 0;
-  line-height: 1;
-  cursor: pointer;
 }
-.games-body .grid .card .x:hover{ color:#fff; }
 
 /* =========================================================
    DESKTOP LAYOUT (default)

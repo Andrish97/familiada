@@ -25,6 +25,13 @@ svg.ico {
     overflow: visible
 }
 
+/* Gwiazdki oceny ze starRating() — odstęp przejmuje z rodzica (.stars, .mkt-stars) */
+.ico-stars {
+    display: inline-flex;
+    align-items: center;
+    gap: inherit;
+}
+
 /* Małe przyciski z samą ikoną (akceptuj / odrzuć / usuń na kafelkach) —
    ikona większa, żeby nie ginęła w przycisku. */
 .btn.xs > svg.ico:only-child,
@@ -165,7 +172,10 @@ body.skel-body .topbar.topbar-ready .topbar-section-4 {
     display: inline-flex;
     align-items: center;
 
-    padding: 9px 12px;
+    /* ta sama wysokość co przyciski topbara z ikoną (37 px) */
+    padding: 10px 12px;
+    min-height: 37px;
+    box-sizing: border-box;
     border-radius: 14px;
 
     background: rgba(255,255,255,.06);
@@ -995,7 +1005,7 @@ html.showA2HS .a2hs {
 .topbar-menu-toggle {
   order: 999;
   min-width: 38px;
-  min-height: 38px;
+  min-height: 37px;
   display: grid;
   place-items: center;
   touch-action: manipulation;
