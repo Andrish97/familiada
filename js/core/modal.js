@@ -1,6 +1,6 @@
-import { icon } from "./icons.js?v=v2026-09-25T07290";
-import { t } from "../../translation/translation.js?v=v2026-09-25T07290";
-import { enterModalSheet, exitModalSheet, isSheetViewport } from "./modal-sheet.js?v=v2026-09-25T07290";
+import { icon } from "./icons.js?v=v2026-09-25T07303";
+import { t } from "../../translation/translation.js?v=v2026-09-25T07303";
+import { enterModalSheet, exitModalSheet, isSheetViewport } from "./modal-sheet.js?v=v2026-09-25T07303";
 let modalSeq = 0;
 
 function modalText(key, fallback) {
