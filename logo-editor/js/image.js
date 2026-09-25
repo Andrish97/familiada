@@ -78,6 +78,9 @@ export function initImageEditor(ctx) {
   // rozmiarze pola ramka traciła proporcje i obejmowała inny fragment
   // obrazu, a przy obrocie ekranu wracała na środek.
   let cropImg = null;
+  // Stary zapis kadru (względem pola) czekający, aż obraz będzie widoczny —
+  // do przeliczenia potrzebny jest prawdziwy prostokąt obrazu.
+  let pendingLegacyCrop = null;
   let drag = null; // { kind, sx, sy, startCrop }
   let deb = null;
 
@@ -267,7 +270,7 @@ export function initImageEditor(ctx) {
     if (resetCrop) {
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
-          if (imgObj) { cropImg = null; initCropToCenterBig(); }
+          if (imgObj) { cropImg = null; pendingLegacyCrop = null; initCropToCenterBig(); }
           else {
             crop = { x: 40, y: 40, w: 280, h: Math.round(280 / ASPECT) };
             applyCropToDom();
@@ -318,7 +321,7 @@ export function initImageEditor(ctx) {
 
     const minW = 60;
 
-    let w = Math.max(minW, next.w);
+    let w = Math.max(Math.min(minW, imgW), next.w);
     let h = Math.max(1, Math.round(w / ASPECT));
 
     // nie większe niż obraz
@@ -353,11 +356,24 @@ export function initImageEditor(ctx) {
     };
   }
 
+  function legacyCropToImg(saved, imgR, stageR){
+    const px = { x: saved.x * stageR.width, y: saved.y * stageR.height, w: saved.w * stageR.width };
+    return {
+      x: (px.x - (imgR.left - stageR.left)) / imgR.width,
+      y: (px.y - (imgR.top - stageR.top)) / imgR.height,
+      w: px.w / imgR.width,
+    };
+  }
+
   function applyCropImg(){
     const imgR = getImgRect();
     if (!imgR) return;
-    if (!cropImg) { initCropToCenterBig(); return; }
     const stageR = getStageRect();
+    if (!cropImg && pendingLegacyCrop) {
+      cropImg = legacyCropToImg(pendingLegacyCrop, imgR, stageR);
+      pendingLegacyCrop = null;
+    }
+    if (!cropImg) { initCropToCenterBig(); return; }
     const imgX = imgR.left - stageR.left;
     const imgY = imgR.top  - stageR.top;
     const w = cropImg.w * imgR.width;
@@ -368,7 +384,10 @@ export function initImageEditor(ctx) {
       h: w / ASPECT,
     });
     applyCropToDom();
-    syncCropImg();
+    // BEZ syncCropImg(): przycięcie do obrazu (np. w chwilowym, małym
+    // układzie podczas obrotu) ma wpływać tylko na to, co widać — nie na
+    // zapamiętany kadr. Inaczej każdy obrót mógł trwale zmniejszyć albo
+    // powiększyć ramkę. cropImg zmienia się tylko przy przeciąganiu ramki.
   }
 
   // Czeka, aż <img> podglądu ma już wyrenderowany obraz i układ strony się
@@ -382,22 +401,16 @@ export function initImageEditor(ctx) {
   // względem pola (x,w / szer. pola, y,h / wys. pola) — przeliczamy je
   // przez bieżący rozmiar pola, a proporcje ramki wymuszamy z szerokości.
   async function restoreCrop(saved){
-    await whenPreviewReady();
+    // Kadr ustawiamy OD RAZU (nie tylko gdy obraz jest już widoczny) —
+    // wcześniej, gdy panel pojawiał się chwilę po wczytaniu (wolniejsze
+    // urządzenie), zapisany kadr przepadał i ramka lądowała domyślnie:
+    // duża, na środku. applyCropImg() nałoży go, gdy obraz będzie widoczny
+    // (tu albo z ResizeObservera / resize).
     cropImg = null;
-    const imgR = getImgRect();
-    if (saved && imgR) {
-      if (saved.v === 2) {
-        cropImg = { x: +saved.x || 0, y: +saved.y || 0, w: +saved.w || 0.78 };
-      } else {
-        const stageR = getStageRect();
-        const px = { x: saved.x * stageR.width, y: saved.y * stageR.height, w: saved.w * stageR.width };
-        cropImg = {
-          x: (px.x - (imgR.left - stageR.left)) / imgR.width,
-          y: (px.y - (imgR.top - stageR.top)) / imgR.height,
-          w: px.w / imgR.width,
-        };
-      }
-    }
+    pendingLegacyCrop = null;
+    if (saved?.v === 2) cropImg = { x: +saved.x || 0, y: +saved.y || 0, w: +saved.w || 0.78 };
+    else if (saved) pendingLegacyCrop = saved;
+    await whenPreviewReady();
     applyCropImg();
     schedulePreview(60);
   }
@@ -596,6 +609,7 @@ export function initImageEditor(ctx) {
 
     // po wyrenderowaniu obrazu: nowy plik = kadr na środku
     cropImg = null;
+    pendingLegacyCrop = null;
     await whenPreviewReady();
     initCropToCenterBig();
     schedulePreview(10);
@@ -991,7 +1005,6 @@ export function initImageEditor(ctx) {
 
       // Kadr względem obrazu (v:2) — niezależny od rozmiaru pola i ekranu;
       // wysokość wynika z proporcji wyświetlacza (ASPECT).
-      if (imgObj) syncCropImg();
       const cropRel = cropImg ? { v: 2, x: cropImg.x, y: cropImg.y, w: cropImg.w } : null;
 
       const source = {
