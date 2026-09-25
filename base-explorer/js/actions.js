@@ -11,11 +11,11 @@ import {
   selectionToggle,
   rememberBrowseLocation,
   restoreBrowseLocation,
-} from "./state.js?v=v2026-09-25T07274";
+} from "./state.js?v=v2026-09-25T07290";
 
-import { importGame } from "../../js/pages/games-import-export.js?v=v2026-09-25T07274";
+import { importGame } from "../../js/pages/games-import-export.js?v=v2026-09-25T07290";
 
-import { renderAll, renderToolbar, renderList, renderTree, renderTags } from "./render.js?v=v2026-09-25T07274";
+import { renderAll, renderToolbar, renderList, renderTree, renderTags } from "./render.js?v=v2026-09-25T07290";
 
 import {
   listQuestionsByCategory,
@@ -23,19 +23,19 @@ import {
   listCategories,
   listQuestionTags,
   listCategoryTags
-} from "./repo.js?v=v2026-09-25T07274";
+} from "./repo.js?v=v2026-09-25T07290";
 
-import { showContextMenu, hideContextMenu } from "./context-menu.js?v=v2026-09-25T07274";
-import { openTagsModal } from "./tags-modal.js?v=v2026-09-25T07274";
-import { initExportModal } from "./export-modal.js?v=v2026-09-25T07274";
-import { initQuestionModal } from "./question-modal.js?v=v2026-09-25T07274";
-import { sb } from "../../js/core/supabase.js?v=v2026-09-25T07274";
-import { updateChecked, updateCheckedMany, ROW_GONE } from "../../js/core/db-guard.js?v=v2026-09-25T07274";
-import { acquireResourceLock, acquireResourceLocks } from "../../js/core/resource-lock.js?v=v2026-09-25T07274";
-import { alertModal, confirmModal } from "../../js/core/modal.js?v=v2026-09-25T07274";
-import { t } from "../../translation/translation.js?v=v2026-09-25T07274";
-import { addLongPress, addDoubleTap, isTouchContextMenuWindow } from "./mobile.js?v=v2026-09-25T07274";
-import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../js/core/modal-sheet.js?v=v2026-09-25T07274";
+import { showContextMenu, hideContextMenu } from "./context-menu.js?v=v2026-09-25T07290";
+import { openTagsModal } from "./tags-modal.js?v=v2026-09-25T07290";
+import { initExportModal } from "./export-modal.js?v=v2026-09-25T07290";
+import { initQuestionModal } from "./question-modal.js?v=v2026-09-25T07290";
+import { sb } from "../../js/core/supabase.js?v=v2026-09-25T07290";
+import { updateChecked, updateCheckedMany, ROW_GONE } from "../../js/core/db-guard.js?v=v2026-09-25T07290";
+import { acquireResourceLock, acquireResourceLocks } from "../../js/core/resource-lock.js?v=v2026-09-25T07290";
+import { alertModal, confirmModal } from "../../js/core/modal.js?v=v2026-09-25T07290";
+import { t } from "../../translation/translation.js?v=v2026-09-25T07290";
+import { addLongPress, addDoubleTap, isTouchContextMenuWindow } from "./mobile.js?v=v2026-09-25T07290";
+import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../js/core/modal-sheet.js?v=v2026-09-25T07290";
 
 const btnBack = document.getElementById("btnBack");
 

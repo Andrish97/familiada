@@ -1,15 +1,15 @@
 // js/pages/editor.js
-import { sb } from "../core/supabase.js?v=v2026-09-25T07274";
-import { requireAuth } from "../core/auth.js?v=v2026-09-25T07274";
-import { alertModal, confirmModal } from "../core/modal.js?v=v2026-09-25T07274";
-import { parseQaText, clip as clipN } from "../core/text-import.js?v=v2026-09-25T07274";
-import { canEnterEdit, RULES as GV_RULES, TYPES } from "../core/game-validate.js?v=v2026-09-25T07274";
-import { guardResourceLock } from "../core/resource-lock.js?v=v2026-09-25T07274";
-import { updateChecked, ROW_GONE } from "../core/db-guard.js?v=v2026-09-25T07274";
-import { initI18n, t, withLangParam } from "../../translation/translation.js?v=v2026-09-25T07274";
-import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-09-25T07274";
-import "../core/contact-modal.js?v=v2026-09-25T07274";
-import { icon, iconText } from "../core/icons.js?v=v2026-09-25T07274";
+import { sb } from "../core/supabase.js?v=v2026-09-25T07290";
+import { requireAuth } from "../core/auth.js?v=v2026-09-25T07290";
+import { alertModal, confirmModal } from "../core/modal.js?v=v2026-09-25T07290";
+import { parseQaText, clip as clipN } from "../core/text-import.js?v=v2026-09-25T07290";
+import { canEnterEdit, RULES as GV_RULES, TYPES } from "../core/game-validate.js?v=v2026-09-25T07290";
+import { guardResourceLock } from "../core/resource-lock.js?v=v2026-09-25T07290";
+import { updateChecked, ROW_GONE } from "../core/db-guard.js?v=v2026-09-25T07290";
+import { initI18n, t, withLangParam } from "../../translation/translation.js?v=v2026-09-25T07290";
+import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-09-25T07290";
+import "../core/contact-modal.js?v=v2026-09-25T07290";
+import { icon, iconText } from "../core/icons.js?v=v2026-09-25T07290";
 // initI18n + remove('page-loading') są w boot() — przed requireAuth, żeby body pojawiło się przed auth/danymi
 
 const MSG = {
