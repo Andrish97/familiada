@@ -25,6 +25,15 @@ svg.ico {
     overflow: visible
 }
 
+/* Małe przyciski z samą ikoną (akceptuj / odrzuć / usuń na kafelkach) —
+   ikona większa, żeby nie ginęła w przycisku. */
+.btn.xs > svg.ico:only-child,
+.btn.xsm > svg.ico:only-child {
+    width: 1.5em;
+    height: 1.5em;
+    vertical-align: -0.35em
+}
+
 html, body {
     margin: 0;
     padding: 0;

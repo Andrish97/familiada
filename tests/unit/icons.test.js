@@ -35,13 +35,13 @@ test("nieznana nazwa daje pusty string, etykieta jest escapowana", () => {
   assert.doesNotMatch(svg, /aria-hidden/);
 });
 
-test("ustalone rysunki: 1A (anuluj = pełne X, błąd = pełne „!”), telefon 2B, buzzer i host", () => {
-  assert.equal(ICONS.cancel.attrs, 'fill="currentColor"');
-  assert.equal(ICONS.error.attrs, 'fill="currentColor"');
+test("ustalone rysunki: anuluj ≠ błąd, info i „!” bez kółka, telefon z falami, buzzer i host", () => {
   assert.notEqual(ICONS.cancel.body, ICONS.error.body);
+  assert.doesNotMatch(ICONS.info.body, /r="[89]/, "info bez kółka");
+  assert.doesNotMatch(ICONS.error.body, /r="[89]/, "„!” bez kółka");
   assert.match(ICONS.phone.body, /M19\.7 7a7\.2 7\.2 0 0 1 0 10/, "telefon z falami sygnału");
-  assert.match(ICONS.buzzer.body, /M12 3\.5a6\.25 6\.25/);
-  assert.match(ICONS.host.body, /rect x="15\.5" y="2" width="4" height="7\.5"/);
+  assert.match(ICONS.host.body, /rect x="16\.8" y="3" width="4" height="7"/, "host z mikrofonem");
+  assert.match(ICONS.buzzer.body, /M5\.75 11\.25a6\.25 6\.25 0 0 1 12\.5 0Z/, "buzzer — przycisk z boku");
 });
 
 test("każda nazwa ikony użyta w kodzie aplikacji istnieje w silniku", () => {

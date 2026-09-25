@@ -16,6 +16,7 @@ import { confirmModal } from "../../js/core/modal.js?v=v2026-09-24T23262";
 import { initUiSelect } from "../../js/core/ui-select.js?v=v2026-09-24T23262";
 import { t } from "../../translation/translation.js?v=v2026-09-24T23262";
 import { v as cacheBust } from "../../js/core/cache-bust.js?v=v2026-09-24T23262";
+import { icon, iconText } from "../../js/core/icons.js?v=v2026-09-24T23262";
 
 export function initDrawEditor(ctx) {
   const TYPE_PIX = "PIX_150x70";
@@ -78,23 +79,6 @@ export function initDrawEditor(ctx) {
     `,
   };
 
-  const ICON_FG = {
-  
-    // BIAŁE — puste kółko
-    WHITE: `
-      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-        <circle class="fill" cx="12" cy="12" r="7"></circle>
-      </svg>
-    `,
-  
-    // CZARNE — pełne kółko
-    BLACK: `
-      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-        <circle cx="12" cy="12" r="7"
-                stroke-width="2"></circle>
-      </svg>
-    `,
-  };
 
   function getColorLabel(color) {
     return color === "BLACK"
@@ -198,7 +182,7 @@ export function initDrawEditor(ctx) {
         <div class="ctxGroup" style="position:relative;">
           <button class="ctxBtn" id="cShapeBtn" style="min-width:90px;max-width:150px;justify-content:space-between;display:flex;align-items:center;gap:4px;">
             <span style="display:flex;align-items:center;gap:4px;">${shape.icon}<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${t(shape.label)}</span></span>
-            <span style="opacity:.4;">▾</span>
+            <span style="opacity:.4;display:inline-flex;">${icon("caret-down")}</span>
           </button>
         </div>
         <div class="ctxGroup"><span class="ctxLabel">${T("strokeLabel")}</span><input id="cStrokeW" class="ctxInput" type="number" min="0" max="50" step="1" value="${ts.stroke}"/></div>
@@ -213,7 +197,7 @@ export function initDrawEditor(ctx) {
       }
 
       if (isPoly && polyPoints.length > 0) {
-        html += `<div class="ctxGroup"><button class="ctxBtn on" id="cPolyDone">${T("polygonDone")}</button></div>`;
+        html += `<div class="ctxGroup"><button class="ctxBtn on" id="cPolyDone">${iconText("check", T("polygonDone"))}</button></div>`;
       }
 
       showSettings(html);
@@ -247,15 +231,15 @@ export function initDrawEditor(ctx) {
       const ts = toolSettings[TOOL.TEXT];
       const fntLbl = DRAW_FONTS.find(f=>f.value===textFont)?.label || "Font";
       showSettings(`
-        <div class="ctxGroup"><button class="ctxBtn" id="cFont" style="min-width:90px;max-width:140px;justify-content:space-between;display:flex;"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${fntLbl}</span><span style="opacity:.4;">▾</span></button></div>
+        <div class="ctxGroup"><button class="ctxBtn" id="cFont" style="min-width:90px;max-width:140px;justify-content:space-between;display:flex;"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${fntLbl}</span><span style="opacity:.4;display:inline-flex;">${icon("caret-down")}</span></button></div>
         <div class="ctxGroup"><span class="ctxLabel">Roz.</span><input id="cSz" class="ctxInput" type="number" min="10" max="220" step="1" value="${textFontSize}"/></div>
         <div class="ctxGroup"><span class="ctxLabel">Linia</span><input id="cLH" class="ctxInput" type="number" min="0.6" max="3.0" step="0.05" value="${textLineHeight}"/></div>
         <div class="ctxGroup"><span class="ctxLabel">Odst.</span><input id="cSp" class="ctxInput" type="number" min="0" max="20" step="0.5" value="${textLetterSpacing}"/></div>
         <div class="ctxGroup"><button class="ctxBtn ${textBold?'on':''}" id="cB">B</button><button class="ctxBtn ${textItalic?'on':''}" id="cI">I</button><button class="ctxBtn ${textUnderline?'on':''}" id="cU">U</button></div>
         <div class="ctxGroup">
-          <button class="ctxBtn ${textAlign==='left'?'on':''}" id="cAlignL">⇤</button>
-          <button class="ctxBtn ${textAlign==='center'?'on':''}" id="cAlignC">⇆</button>
-          <button class="ctxBtn ${textAlign==='right'?'on':''}" id="cAlignR">⇥</button>
+          <button class="ctxBtn ${textAlign==='left'?'on':''}" id="cAlignL" aria-label="${t("logoEditor.draw.ui.alignLeft")}" title="${t("logoEditor.draw.ui.alignLeft")}">${icon("align-left")}</button>
+          <button class="ctxBtn ${textAlign==='center'?'on':''}" id="cAlignC" aria-label="${t("logoEditor.draw.ui.alignCenter")}" title="${t("logoEditor.draw.ui.alignCenter")}">${icon("align-center")}</button>
+          <button class="ctxBtn ${textAlign==='right'?'on':''}" id="cAlignR" aria-label="${t("logoEditor.draw.ui.alignRight")}" title="${t("logoEditor.draw.ui.alignRight")}">${icon("align-right")}</button>
         </div>
         <div class="ctxGroup"><span class="ctxLabel">Kolor</span>${ctxColorBtn(ts.fg)}</div>
       `);
@@ -303,15 +287,15 @@ export function initDrawEditor(ctx) {
     const T = (k) => t(`logoEditor.draw.ui.${k}`);
 
     showSettings(`
-      <div class="ctxGroup"><button class="ctxBtn" id="cTFont" style="min-width:90px;max-width:140px;justify-content:space-between;display:flex;"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${fontLabel}</span><span style="opacity:.4;">▾</span></button></div>
+      <div class="ctxGroup"><button class="ctxBtn" id="cTFont" style="min-width:90px;max-width:140px;justify-content:space-between;display:flex;"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${fontLabel}</span><span style="opacity:.4;display:inline-flex;">${icon("caret-down")}</span></button></div>
       <div class="ctxGroup"><span class="ctxLabel">${T("radiusLabel")}</span><input id="cTSize" class="ctxInput" type="number" min="10" max="220" step="1" value="${objSize}"/></div>
       <div class="ctxGroup"><span class="ctxLabel">${T("lineHeightLabel")}</span><input id="cTLH" class="ctxInput" type="number" min="0.6" max="3.0" step="0.05" value="${objLH}"/></div>
       <div class="ctxGroup"><span class="ctxLabel">${T("letterSpacingLabel")}</span><input id="cTSp" class="ctxInput" type="number" min="0" max="20" step="0.5" value="${objSpacing}"/></div>
       <div class="ctxGroup"><button class="ctxBtn ${objBold?'on':''}" id="cTB">${T("bold")}</button><button class="ctxBtn ${objItalic?'on':''}" id="cTI">${T("italic")}</button><button class="ctxBtn ${objUnderline?'on':''}" id="cTU">${T("underline")}</button></div>
       <div class="ctxGroup">
-        <button class="ctxBtn ${objAlign==='left'?'on':''}" id="cAlignL">⇤</button>
-        <button class="ctxBtn ${objAlign==='center'?'on':''}" id="cAlignC">⇆</button>
-        <button class="ctxBtn ${objAlign==='right'?'on':''}" id="cAlignR">⇥</button>
+        <button class="ctxBtn ${objAlign==='left'?'on':''}" id="cAlignL" aria-label="${t("logoEditor.draw.ui.alignLeft")}" title="${t("logoEditor.draw.ui.alignLeft")}">${icon("align-left")}</button>
+        <button class="ctxBtn ${objAlign==='center'?'on':''}" id="cAlignC" aria-label="${t("logoEditor.draw.ui.alignCenter")}" title="${t("logoEditor.draw.ui.alignCenter")}">${icon("align-center")}</button>
+        <button class="ctxBtn ${objAlign==='right'?'on':''}" id="cAlignR" aria-label="${t("logoEditor.draw.ui.alignRight")}" title="${t("logoEditor.draw.ui.alignRight")}">${icon("align-right")}</button>
       </div>
       <div class="ctxGroup"><span class="ctxLabel">${T("colorLabel")}</span>${ctxColorBtn(fabricToBW(objFill))}</div>
     `);
@@ -475,19 +459,19 @@ export function initDrawEditor(ctx) {
   }
 
   const ICONS = {
-    tSelect: `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 3l6 14 2-6 6-2L5 3z"></path></svg>`,
-    tPan: `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M8 12V7.2a1.2 1.2 0 0 1 2.4 0V12"></path><path d="M10.4 12V6.4a1.2 1.2 0 0 1 2.4 0V12"></path><path d="M12.8 12V7.8a1.2 1.2 0 0 1 2.4 0V12"></path><path d="M15.2 12V9.2a1.2 1.2 0 0 1 2.4 0V14.2"></path><path d="M8 12c0 6 2.6 8 6.6 8 3.1 0 5.4-2 5.4-5.1v-.7"></path></svg>`,
-    tZoomIn: `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="10" cy="10" r="6"></circle><path d="M21 21l-5.2-5.2"></path><path d="M10 7v6"></path><path d="M7 10h6"></path></svg>`,
-    tZoomOut: `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="10" cy="10" r="6"></circle><path d="M21 21l-5.2-5.2"></path><path d="M7 10h6"></path></svg>`,
-    tText: `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 6h14"></path><path d="M12 6v12"></path><path d="M8 18h8"></path></svg>`,
-    tBrush: `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 20l4-1 11-11-3-3L5 16l-1 4z"></path><path d="M14 6l3 3"></path></svg>`,
-    tEraser: `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M7 16l8.5-8.5a1.8 1.8 0 0 1 2.5 0l1 1a1.8 1.8 0 0 1 0 2.5L11 19H7l-2-2 2-1z"></path><path d="M11 19h10"></path><path d="M9.2 14.8l4 4"></path></svg>`,
-    tShapes: `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="4" y="4" width="6" height="6" rx="1" fill="currentColor"/><circle cx="17" cy="7" r="3" fill="currentColor"/><polygon points="12,15 17,21 7,21" fill="currentColor"/></svg>`,
-    tUndo: `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M9 7H5v4"></path><path d="M5 11c2-4 6-6 10-4 2 1 4 3 4 6"></path></svg>`,
-    tRedo: `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M15 7h4v4"></path><path d="M19 11c-2-4-6-6-10-4-2 1-4 3-4 6"></path></svg>`,
-    tClear: `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 7h12"></path><path d="M9 7V5h6v2"></path><path d="M8 7l1 14h6l1-14"></path></svg>`,
-    tDuplicate: `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="8" y="8" width="12" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="2"></rect><rect x="4" y="4" width="12" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="2"></rect></svg>`,
-    tEye: `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"></path><circle class="fill" cx="12" cy="12" r="2"></circle></svg>`,
+    tSelect: icon("cursor"),
+    tPan: icon("hand"),
+    tZoomIn: icon("zoom-in"),
+    tZoomOut: icon("zoom-out"),
+    tText: icon("text"),
+    tBrush: icon("brush"),
+    tEraser: icon("eraser"),
+    tShapes: icon("shapes"),
+    tUndo: icon("undo"),
+    tRedo: icon("redo"),
+    tClear: icon("trash"),
+    tDuplicate: icon("duplicate"),
+    tEye: icon("eye"),
   };
 
   // Wstrzyknij wszystkie ikonki
@@ -711,10 +695,6 @@ export function initDrawEditor(ctx) {
     const tKey = tool === TOOL.SHAPES ? TOOL.SHAPES : tool.toUpperCase();
     const ts = toolSettings[tKey] || {};
     return (ts.fg || "WHITE") === "BLACK" ? "#000" : "#fff"; 
-  }
-  function fgLabel() { 
-    const c = fgColor();
-    return c === "#000" ? "⬛️" : "⬜️"; 
   }
 
   // Tło sceny — 🖼️

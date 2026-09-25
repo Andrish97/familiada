@@ -7,8 +7,8 @@
 //     (silnik sam podmienia takie znaczniki na <svg> — także te dodane
 //     później przez JS, dzięki MutationObserver).
 //
-// Styl zestawu: ikony akcji to zaokrąglony kontur (stroke 1.8), ikony stanu
-// (check / error / cancel / warning / info) to pełne kształty. Kolor zawsze
+// Styl zestawu: zaokrąglony kontur (stroke 1.8); ptaszek grubszy, „!” i „i”
+// bez kółka (pełne), anuluj = X w kółku (kontur). Kolor zawsze
 // z currentColor, rozmiar domyślnie 1em (nadpisywany przez CSS .ico).
 //
 // Ikona wstawiona do elementu z data-i18n zniknie przy tłumaczeniu
@@ -41,11 +41,11 @@ export const ICONS = Object.freeze({
   close: s('<path d="M6 6l12 12M18 6 6 18"/>'),
   trash: s(`${TRASH_BODY}<path d="M10 10.5v6M14 10.5v6"/>`),
   "trash-forever": s(`${TRASH_BODY}<path d="m10 11 4 5M14 11l-4 5"/>`),
-  check: f('<path fill-rule="evenodd" clip-rule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm3.86-9.81a.75.75 0 0 0-1.22-.88l-3.48 4.79-1.88-1.88a.75.75 0 1 0-1.06 1.06l2.5 2.5a.75.75 0 0 0 1.14-.09l4-5.5Z"/>', "1 1 18 18"),
-  cancel: f('<path fill-rule="evenodd" clip-rule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16ZM8.28 7.22a.75.75 0 0 0-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 1 0 1.06 1.06L10 11.06l1.72 1.72a.75.75 0 1 0 1.06-1.06L11.06 10l1.72-1.72a.75.75 0 0 0-1.06-1.06L10 8.94 8.28 7.22Z"/>', "1 1 18 18"),
-  error: f('<path fill-rule="evenodd" clip-rule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Zm-8-5a.75.75 0 0 1 .75.75v4.5a.75.75 0 0 1-1.5 0v-4.5A.75.75 0 0 1 10 5Zm0 10a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"/>', "1 1 18 18"),
-  warning: f('<path fill-rule="evenodd" clip-rule="evenodd" d="M8.49 2.5c.67-1.17 2.35-1.17 3.02 0l6.28 10.87c.68 1.17-.17 2.63-1.51 2.63H3.72c-1.35 0-2.19-1.46-1.52-2.63L8.49 2.5ZM10 5a.75.75 0 0 1 .75.75v3.5a.75.75 0 0 1-1.5 0v-3.5A.75.75 0 0 1 10 5Zm0 9a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"/>', "1 1 18 18"),
-  info: f('<path fill-rule="evenodd" clip-rule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Zm-7-4a1 1 0 1 1-2 0 1 1 0 0 1 2 0ZM9 9a.75.75 0 0 0 0 1.5h.25a.25.25 0 0 1 .24.3l-.46 2.07A1.75 1.75 0 0 0 10.75 15H11a.75.75 0 0 0 0-1.5h-.25a.25.25 0 0 1-.24-.3l.46-2.07A1.75 1.75 0 0 0 9.25 9H9Z"/>', "1 1 18 18"),
+  check: { vb: "0 0 24 24", attrs: 'fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"', body: '<path d="M4.5 12.5 9.5 17.5 19.5 6.5"/>' },
+  cancel: s('<circle cx="12" cy="12" r="9.5"/><path d="m8.5 8.5 7 7M15.5 8.5l-7 7"/>'),
+  error: f('<rect x="10.3" y="2.5" width="3.4" height="12.5" rx="1.7"/><circle cx="12" cy="19.5" r="2"/>'),
+  warning: s('<path d="M10.3 3.9 2.4 17.6a2 2 0 0 0 1.7 3h15.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9.5v4M12 17h.01"/>'),
+  info: f('<circle cx="12" cy="4.5" r="2"/><rect x="10.3" y="9" width="3.4" height="12.5" rx="1.7"/>'),
 
   // --- edycja / schowek ---------------------------------------------------
   "edit-paper": s('<path d="M13 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-8"/><path d="M18.4 2.6a2.1 2.1 0 0 1 3 3l-9 9a2 2 0 0 1-.9.5l-2.9.8.8-2.9a2 2 0 0 1 .5-.9Z"/>'),
@@ -67,6 +67,9 @@ export const ICONS = Object.freeze({
   search: s(SEARCH_BODY),
   "zoom-in": s(`${SEARCH_BODY}<path d="M11 8v6M8 11h6"/>`),
   "zoom-out": s(`${SEARCH_BODY}<path d="M8 11h6"/>`),
+  "align-left": s('<path d="M4 6h16M4 10h10M4 14h16M4 18h10"/>'),
+  "align-center": s('<path d="M4 6h16M7 10h10M4 14h16M7 18h10"/>'),
+  "align-right": s('<path d="M4 6h16M10 10h10M4 14h16M10 18h10"/>'),
   merge: s('<path d="m8 6 4-4 4 4"/><path d="M12 2v10.3a4 4 0 0 1-1.2 2.9L4 22"/><path d="m20 22-5-5"/>'),
 
   // --- strzałki / przepływ ------------------------------------------------
@@ -113,9 +116,9 @@ export const ICONS = Object.freeze({
   // --- osoby / urządzenia -------------------------------------------------
   person: s('<circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 0 0-16 0"/>'),
   people: s('<circle cx="9" cy="7.5" r="3.8"/><path d="M2.5 21v-1.5a4 4 0 0 1 4-4h5a4 4 0 0 1 4 4V21"/><path d="M16 3.3a3.8 3.8 0 0 1 0 7.4M21.5 21v-1.5a4 4 0 0 0-3-3.9"/>'),
-  // Prowadzący i buzzer — rysunki zatwierdzone przez właściciela (pełne).
-  host: f('<circle cx="9" cy="6.5" r="3.5"/><path d="M2 20c0-3.6 3.1-6.3 7-6.3s7 2.7 7 6.3v1H2v-1z"/><rect x="15.5" y="2" width="4" height="7.5" rx="2"/><path d="M13.8 8a4.2 4.2 0 0 0 8.4 0" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><rect x="17" y="11.5" width="1.4" height="2.6"/>'),
-  buzzer: f('<path d="M12 3.5a6.25 6.25 0 0 0-6.25 6.25v1.5h12.5v-1.5A6.25 6.25 0 0 0 12 3.5Z"/><rect x="4" y="15" width="16" height="3.2" rx=".7"/><rect x="8.25" y="12.1" width="1.8" height="2.9" rx=".7"/><rect x="13.95" y="12.1" width="1.8" height="2.9" rx=".7"/>'),
+  // Prowadzący (ludzik jak w udostępnianiu + mikrofon) i buzzer (przycisk z boku).
+  host: s('<circle cx="9" cy="7.5" r="3.8"/><path d="M2.5 21a6.5 6.5 0 0 1 13 0"/><rect x="16.8" y="3" width="4" height="7" rx="2"/><path d="M15.3 8.8a3.5 3.5 0 0 0 7 0M18.8 12.3V15"/>'),
+  buzzer: s('<path d="M5.75 11.25a6.25 6.25 0 0 1 12.5 0Z"/><path d="M9.2 11.25V15M14.8 11.25V15"/><rect x="3.5" y="15" width="17" height="3.8" rx="1"/>'),
   display: s('<rect x="2.5" y="3.5" width="19" height="13" rx="1.8"/><path d="M9 20h6M12 16.5V20"/>'),
   phone: s('<rect x="3.5" y="3" width="10" height="18" rx="2.2"/><path d="M8 17.5h1"/><path d="M17 9.5a3.5 3.5 0 0 1 0 5"/><path d="M19.7 7a7.2 7.2 0 0 1 0 10"/>'),
 

@@ -18,6 +18,7 @@ import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } fro
 import { initTextEditor } from "./text.js?v=v2026-09-24T23262";
 import { initDrawEditor } from "./draw.js?v=v2026-09-24T23262";
 import { initImageEditor } from "./image.js?v=v2026-09-24T23262";
+import { icon } from "../../js/core/icons.js?v=v2026-09-24T23262";
 
 window.addEventListener("error", (e) => {
   console.error("window error", e.error || e.message);
@@ -1361,7 +1362,7 @@ function renderList(){
     const add = document.createElement("div");
    add.className = "addCard hide-mobile";
    add.innerHTML = `
-     <div class="plus">＋</div>
+     <div class="plus">${icon("plus")}</div>
      <div class="txt">${t("logoEditor.create.title")}</div>
      <div class="sub">${t("logoEditor.create.subtitle")}</div>
    `;
@@ -1395,7 +1396,7 @@ function renderList(){
           <div class="logoMeta">${esc(meta || "")}</div>
         </div>
         <div class="logoActions">
-          <div class="logoX ${canDelete ? "" : "is-disabled"}" title="${canDelete ? t("logoEditor.list.delete") : t("logoEditor.list.deleteDisabled")}">✕</div>
+          <div class="logoX ${canDelete ? "" : "is-disabled"}" title="${canDelete ? t("logoEditor.list.delete") : t("logoEditor.list.deleteDisabled")}">${icon("trash")}</div>
         </div>
       </div>
       <div class="logoPrev"></div>

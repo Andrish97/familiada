@@ -66,7 +66,7 @@
     <div class="topbar-section topbar-section-4">
       <span class="who" id="who"></span>
       <button class="btn" id="btnLogout" type="button" data-i18n="logoEditor.topbar.logout">Wyloguj</button>
-      <button class="btn" id="btnCloseEditor" type="button" style="display:none;" aria-label="Zamknij">✕</button>
+      <button class="btn" id="btnCloseEditor" type="button" style="display:none;" aria-label="Zamknij" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
     </div>
   </header>
 
@@ -187,7 +187,7 @@
           <!-- IMAGE: toolbar tylko przyciski + folderek -->
           <div class="toolRow" id="toolsImage" style="display:none;">
             <input type="file" id="imgFile" accept="image/*" hidden />
-            <button class="btn sm" type="button" id="btnPickImage" data-i18n="logoEditor.image.pickImage">Wybierz obraz 📁</button>
+            <button class="btn sm" type="button" id="btnPickImage" data-i18n="logoEditor.image.pickImage" data-i18n-icon-after="folder">Wybierz obraz</button>
 
             <div class="toolSep"></div>
 
@@ -264,7 +264,7 @@
               <div class="fontPickPanel" style="width:min(520px,calc(100vw - 16px));max-height:min(360px,calc(100vh - 24px));overflow:hidden;border-radius:14px;border:1px solid rgba(255,255,255,.16);background:rgba(10,10,14,.96);backdrop-filter:blur(12px);">
                 <div class="fontPickSearch" style="display:flex;gap:6px;padding:10px;border-bottom:1px solid rgba(255,255,255,.10);">
                   <input id="drawFontSearchInp" class="inp" type="text" placeholder="Szukaj fontu…" style="flex:1;height:30px;font-size:13px;">
-                  <button id="drawFontSearchClear" class="btn sm" type="button" style="min-width:30px;padding:0 8px;">✕</button>
+                  <button id="drawFontSearchClear" class="btn sm" type="button" style="min-width:30px;padding:0 8px;" aria-label="Wyczyść" data-i18n-aria-label="baseExplorer.search.clear"><i class="ico" data-icon="close"></i></button>
                 </div>
                 <div id="drawFontList" style="overflow-y:auto;max-height:280px;padding:4px 0;"></div>
                 <div id="drawFontEmpty" class="fontPickEmpty" hidden style="padding:16px;text-align:center;opacity:.6;font-size:13px;">Brak wyników</div>
@@ -313,7 +313,7 @@
     <div class="modal">
       <div class="mHead">
         <div class="mTitle" data-i18n="logoEditor.create.title">Nowe logo</div>
-        <button class="btn sm" id="btnPickCancel" type="button" aria-label="Zamknij">✕</button>
+        <button class="btn sm" id="btnPickCancel" type="button" aria-label="Zamknij" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
       </div>
       <div class="mSub" data-i18n="logoEditor.create.subtitle">Wybierz tryb tworzenia.</div>
 
@@ -362,7 +362,7 @@
     <div class="modal" style="width:min(640px,94vw)">
       <div class="mHead">
         <div class="mTitle" data-i18n="logoEditor.import.title">Import logo</div>
-        <button class="btn sm" id="btnLogoImportCancel" type="button" aria-label="Zamknij">✕</button>
+        <button class="btn sm" id="btnLogoImportCancel" type="button" aria-label="Zamknij" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
       </div>
 
       <div class="importRow" style="margin-top:8px">
@@ -402,7 +402,7 @@
             <div class="mTitle" data-i18n="logoEditor.preview.title">Podgląd</div>
             <div class="mSub" data-i18n="logoEditor.preview.subtitle">Tak będzie wyglądać logo na wyświetlaczu</div>
           </div>
-          <button class="btn sm" id="btnPreviewClose" type="button" aria-label="Zamknij">✕</button>
+          <button class="btn sm" id="btnPreviewClose" type="button" aria-label="Zamknij" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
         </div>
         <div class="previewModalCanvas">
           <canvas id="bigPreviewFull" width="1600" height="700"></canvas>
@@ -435,7 +435,7 @@
     <div class="helpModal" role="dialog" aria-modal="true" aria-label="Wskazówki">
       <div class="helpModalToolbar">
         <button class="btn btn-sm" id="btnLegal" type="button" data-i18n="manual.legal" data-i18n-icon-after="shield">Polityka prywatności</button>
-        <button class="btn sm" id="btnHelpClose" type="button" aria-label="Zamknij" onclick="document.getElementById('helpOverlay').classList.add('hidden')">✕</button>
+        <button class="btn sm" id="btnHelpClose" type="button" aria-label="Zamknij" onclick="document.getElementById('helpOverlay').classList.add('hidden')" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
       </div>
       <iframe id="helpFrame" class="helpFrame" src="../manual?modal=control" title="Wskazówki"></iframe>
     </div>
@@ -445,7 +445,7 @@
     <div class="legalModal" role="dialog" aria-modal="true">
       <div class="legalModalToolbar">
         <button class="btn btn-sm" id="btnBackToManual" type="button" data-i18n="privacy.backToManual" data-i18n-icon="arrow-left">Wskazówki</button>
-        <button class="btn sm" id="btnLegalClose" type="button" aria-label="Zamknij" onclick="document.getElementById('legalOverlay').classList.add('hidden')">✕</button>
+        <button class="btn sm" id="btnLegalClose" type="button" aria-label="Zamknij" onclick="document.getElementById('legalOverlay').classList.add('hidden')" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
       </div>
       <iframe id="legalFrame" class="legalFrame" src="../manual?modal=control" title="Polityka prywatności"></iframe>
     </div>
