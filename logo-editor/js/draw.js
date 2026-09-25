@@ -146,7 +146,7 @@ export function initDrawEditor(ctx) {
       showSettings(`
         <div class="ctxGroup"><span class="ctxLabel">${T("strokeLabel")}</span><input id="cStrokeW" class="ctxInput" type="number" min="1" max="50" step="1" value="${ts.stroke}"/></div>
         <div class="ctxGroup"><span class="ctxLabel">${T("styleLabel")}</span>
-          <select id="cLineStyle" class="ctxInput">${LINE_STYLES.map(s => `<option value="${s.id}" ${ts.lineStyle===s.id?"selected":""}>${LS(s.id)}</option>`).join('')}</select>
+          ${lineStyleSelectHtml("cLineStyle")}
         </div>
         <div class="ctxGroup"><span class="ctxLabel">${T("colorLabel")}</span>${ctxColorBtn(ts.fg)}</div>
       `);
@@ -154,9 +154,7 @@ export function initDrawEditor(ctx) {
         toolSettings[TOOL.BRUSH].stroke = clamp(+e.target.value||1,1,50);
         updateCursorVisual();
       });
-      document.getElementById("cLineStyle")?.addEventListener("change", e => {
-        toolSettings[TOOL.BRUSH].lineStyle = e.target.value;
-      });
+      mountLineStyleSelect("cLineStyle", ts.lineStyle, v => { toolSettings[TOOL.BRUSH].lineStyle = v; });
       const brushBtns = toolCtx?.querySelectorAll("[data-color-toggle]") || [];
       if (brushBtns[0]) brushBtns[0].addEventListener("click", () => {
         toolSettings[TOOL.BRUSH].fg = toolSettings[TOOL.BRUSH].fg === "BLACK" ? "WHITE" : "BLACK";
@@ -180,14 +178,14 @@ export function initDrawEditor(ctx) {
 
       let html = `
         <div class="ctxGroup" style="position:relative;">
-          <button class="ctxBtn" id="cShapeBtn" style="min-width:90px;max-width:150px;justify-content:space-between;display:flex;align-items:center;gap:4px;">
-            <span style="display:flex;align-items:center;gap:4px;">${shape.icon}<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${t(shape.label)}</span></span>
-            <span style="opacity:.4;display:inline-flex;">${icon("caret-down")}</span>
+          <button class="ctxBtn ctxSelectBtn ctxSelectBtn--shape" id="cShapeBtn" type="button" title="${t(shape.label)}">
+            <span class="ctxSelectIco">${shape.icon}</span><span class="ctxSelectLabel">${t(shape.label)}</span>
+            <span class="ctxSelectCaret">${icon("caret-down")}</span>
           </button>
         </div>
         <div class="ctxGroup"><span class="ctxLabel">${T("strokeLabel")}</span><input id="cStrokeW" class="ctxInput" type="number" min="0" max="50" step="1" value="${ts.stroke}"/></div>
         <div class="ctxGroup"><span class="ctxLabel">${T("styleLabel")}</span>
-          <select id="cLineStyle" class="ctxInput">${LINE_STYLES.map(s => `<option value="${s.id}" ${ts.lineStyle===s.id?"selected":""}>${LS(s.id)}</option>`).join('')}</select>
+          ${lineStyleSelectHtml("cLineStyle")}
         </div>
         <div class="ctxGroup"><span class="ctxLabel">${T("colorLabel")}</span>${ctxColorBtn(ts.fg)}</div>
       `;
@@ -206,9 +204,7 @@ export function initDrawEditor(ctx) {
       document.getElementById("cStrokeW")?.addEventListener("input", e => {
         toolSettings[TOOL.SHAPES].stroke = clamp(+e.target.value||1,0,50);
       });
-      document.getElementById("cLineStyle")?.addEventListener("change", e => {
-        toolSettings[TOOL.SHAPES].lineStyle = e.target.value;
-      });
+      mountLineStyleSelect("cLineStyle", ts.lineStyle, v => { toolSettings[TOOL.SHAPES].lineStyle = v; });
 
       const shapeBtns = toolCtx?.querySelectorAll("[data-color-toggle]") || [];
       if (shapeBtns[0]) shapeBtns[0].addEventListener("click", () => {
@@ -231,7 +227,7 @@ export function initDrawEditor(ctx) {
       const ts = toolSettings[TOOL.TEXT];
       const fntLbl = DRAW_FONTS.find(f=>f.value===textFont)?.label || "Font";
       showSettings(`
-        <div class="ctxGroup"><button class="ctxBtn" id="cFont" style="min-width:90px;max-width:140px;justify-content:space-between;display:flex;"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${fntLbl}</span><span style="opacity:.4;display:inline-flex;">${icon("caret-down")}</span></button></div>
+        <div class="ctxGroup"><button class="ctxBtn ctxSelectBtn" id="cFont" type="button" title="${fntLbl}"><span class="ctxSelectLabel">${fntLbl}</span><span class="ctxSelectCaret">${icon("caret-down")}</span></button></div>
         <div class="ctxGroup"><span class="ctxLabel">Roz.</span><input id="cSz" class="ctxInput" type="number" min="10" max="220" step="1" value="${textFontSize}"/></div>
         <div class="ctxGroup"><span class="ctxLabel">Linia</span><input id="cLH" class="ctxInput" type="number" min="0.6" max="3.0" step="0.05" value="${textLineHeight}"/></div>
         <div class="ctxGroup"><span class="ctxLabel">Odst.</span><input id="cSp" class="ctxInput" type="number" min="0" max="20" step="0.5" value="${textLetterSpacing}"/></div>
@@ -402,7 +398,7 @@ export function initDrawEditor(ctx) {
     let html = `
       <div class="ctxGroup"><span class="ctxLabel">${t("logoEditor.draw.ui.outlineLabel")}</span><input id="cObjStroke" class="ctxInput" type="number" min="0" max="50" step="1" value="${strokeW.mixed?'':strokeW.value}" placeholder="${strokeW.mixed?'—':''}"/></div>
       <div class="ctxGroup"><span class="ctxLabel">${t("logoEditor.draw.ui.styleLabel")}</span>
-        <select id="cObjLineStyle" class="ctxInput">${LINE_STYLES.map(s=>`<option value="${s.id}">${s.label()}</option>`).join('')}</select>
+        ${lineStyleSelectHtml("cObjLineStyle")}
       </div>
       <div class="ctxGroup">${ctxColorBtn(strokeCol.mixed?"MIXED":fabricToBW(strokeCol.value))}</div>
     `;
@@ -420,8 +416,8 @@ export function initDrawEditor(ctx) {
       fabricCanvas.renderAll();
       pushUndo();
     });
-    document.getElementById("cObjLineStyle")?.addEventListener("change", e => {
-      shapes.forEach(o => applyLineStyle(o, e.target.value, shapes[0]?.strokeWidth));
+    mountLineStyleSelect("cObjLineStyle", LINE_STYLES[0].id, v => {
+      shapes.forEach(o => applyLineStyle(o, v, shapes[0]?.strokeWidth));
       fabricCanvas.renderAll();
       pushUndo();
     });
@@ -665,12 +661,28 @@ export function initDrawEditor(ctx) {
     { id: "arrow1", label: "logoEditor.draw.ui.shapes.arrow1", hasFill: false, icon: `<svg viewBox="0 0 24 24" style="width:20px;height:20px"><path d="M5 12h14M14 7l5 5-5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>` },
     { id: "arrow2", label: "logoEditor.draw.ui.shapes.arrow2", hasFill: false, icon: `<svg viewBox="0 0 24 24" style="width:20px;height:20px"><path d="M5 12h14M14 7l5 5-5 5M10 7L5 12l5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>` },
     { id: "arrow1Fill", label: "logoEditor.draw.ui.shapes.arrow1Fill", hasFill: true, icon: `<svg viewBox="0 0 24 24" style="width:20px;height:20px"><path d="M12 19L19 12L12 5V9H5V15H12V19Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>` },
-    { id: "arrow2Fill", label: "logoEditor.draw.ui.shapes.arrow2Fill", hasFill: true, icon: `<svg viewBox="0 0 24 24" style="width:20px;height:20px"><path d="M7 8H17V5L22 12L17 19V16H7V19L2 12L7 5V8Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>` },
+    { id: "arrow2Fill", label: "logoEditor.draw.ui.shapes.arrow2Fill", hasFill: true, icon: `<svg viewBox="0 0 24 24" style="width:20px;height:20px"><path d="M2 12 8.5 5V9h7V5L22 12l-6.5 7v-4h-7v4Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>` },
     { id: "heart", label: "logoEditor.draw.ui.shapes.heart", hasFill: true, icon: `<svg viewBox="0 0 24 24" style="width:20px;height:20px"><path d="M12 21C12 21 4 15 4 8.5 4 5 7 3 12 7c5-4 8-2 8 1.5 0 6.5-8 12.5-8 12.5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>` },
     { id: "polygon", label: "logoEditor.draw.ui.shapes.polygon", hasFill: true, isPoly: true, icon: `<svg viewBox="0 0 24 24" style="width:20px;height:20px"><polygon points="3,5 20,3 22,16 8,21" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>` },
   ];
 
   // Style linii
+  // Styl linii: wspólny ui-select (zamiast natywnego <select>), w wersji
+  // kompaktowej dla paska ustawień. Pasek jest przerysowywany przy każdej
+  // zmianie narzędzia — poprzednia instancja zdejmuje swoje nasłuchy.
+  let lineStyleSel = null;
+  function lineStyleSelectHtml(id) {
+    return `<div class="ui-select ctxSelect" id="${id}"><button class="btn sm ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false"><span class="ui-select-label">—</span><span class="ui-select-caret" aria-hidden="true">${icon("caret-down")}</span></button><div class="ui-select-menu" role="listbox"></div></div>`;
+  }
+  function mountLineStyleSelect(id, value, onChange) {
+    lineStyleSel?.destroy();
+    lineStyleSel = initUiSelect(document.getElementById(id), {
+      options: LINE_STYLES.map(ls => ({ value: ls.id, label: ls.label() })),
+      value,
+      onChange,
+    });
+  }
+
   const LINE_STYLES = [
     { id: "solid", label: () => t("logoEditor.draw.ui.lineStyles.solid"), dash: null },
     { id: "dashed", label: () => t("logoEditor.draw.ui.lineStyles.dashed"), dash: (w) => [w * 2, w] },
@@ -868,9 +880,9 @@ export function initDrawEditor(ctx) {
     const btn = document.getElementById("cShapeBtn");
     if (!btn) return;
     const rect = btn.getBoundingClientRect();
-    let html = `<div class="shapePickerPop" id="shapePickerPop" style="position:fixed;z-index:1000;background:rgba(15,18,28,.98);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.16);border-radius:14px;padding:8px;box-shadow:0 16px 48px rgba(0,0,0,.6);display:grid;grid-template-columns:repeat(5,42px);gap:5px;top:${rect.bottom+6}px;left:${rect.left}px;opacity:0;transition:opacity .12s;">`;
+    let html = `<div class="shapePickerPop ctxPop" id="shapePickerPop" role="listbox" style="top:${rect.bottom+6}px;left:${rect.left}px;opacity:0;">`;
     SHAPES.forEach(s => {
-      html += `<button class="spi" data-shape="${s.id}" style="width:42px;height:42px;display:grid;place-items:center;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.13);border-radius:10px;color:rgba(255,255,255,.9);cursor:pointer;transition:all .1s;">${s.icon}</button>`;
+      html += `<button class="spi" type="button" role="option" data-shape="${s.id}" aria-selected="${s.id === currentShape}" aria-label="${t(s.label)}">${s.icon}</button>`;
     });
     html += `</div>`;
     document.body.insertAdjacentHTML("beforeend", html);

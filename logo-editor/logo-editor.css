@@ -441,10 +441,11 @@
   width: min(560px, calc(100vw - 16px));
   max-height: min(380px, calc(100vh - 24px));
   overflow: hidden;
-  border-radius: var(--radius-lg);
-  border: 1px solid rgba(255,255,255,.16);
-  background: rgba(10,10,14,.96);
-  box-shadow: var(--shadow-pop);
+  /* jak .ui-select-menu (kryjące tło) */
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: #050914;
+  box-shadow: 0 24px 60px rgba(0,0,0,.6);
   box-sizing: border-box;
 }
 
@@ -461,12 +462,13 @@
 
 /* scroll ma być na liście */
 #fontPickList{
-  padding: 8px;
+  padding: 6px;
   overflow: auto;
   max-height: min(320px, calc(100vh - 120px));
 }
 
 /* item */
+/* item — jak .ui-select-item */
 #fontPickList .fontPickItem{
   width: 100%;
   display: flex;
@@ -474,24 +476,21 @@
   justify-content: space-between;
   gap: 10px;
 
-  padding: 10px 12px;
-  margin-bottom: 8px;
+  padding: 8px 10px;
+  margin: 0;
 
-  border-radius: 14px;
-  border: 1px solid rgba(255,255,255,.10);
-  background: rgba(0,0,0,.14);
+  border-radius: 10px;
+  border: 0;
+  background: transparent;
   color: #fff;
+  font-weight: 900;
+  font-size: 12px;
+  letter-spacing: .03em;
   cursor: pointer;
   box-sizing: border-box;
 }
-#fontPickList .fontPickItem:hover{
-  border-color: rgba(255,255,255,.24);
-  background: rgba(0,0,0,.20);
-}
-#fontPickList .fontPickItem.on{
-  border-color: rgba(255,255,255,.34);
-  box-shadow: 0 0 0 2px rgba(255,255,255,.10) inset;
-}
+#fontPickList .fontPickItem:hover{ background: #141822; }
+#fontPickList .fontPickItem.on{ background: #232426; color: var(--gold, #ffeaa6); }
 
 #fontPickEmpty{ padding: 12px; opacity: .75; }
 
@@ -513,7 +512,7 @@
 #drawFontPickPop[hidden]{ display:none !important; }
 #drawFontPickPop #drawFontList{
   display:block;
-  padding:4px 0;
+  padding:6px;
   overflow-y:auto;
   max-height:280px;
 }
@@ -523,18 +522,21 @@
   align-items:center;
   justify-content:space-between;
   gap:10px;
-  padding:8px 12px;
-  border-radius:6px;
+  padding:8px 10px;
+  border-radius:10px;
   cursor:pointer;
   background:transparent;
   border:none;
-  color:inherit;
-  font-size:14px;
+  color:#fff;
+  font-weight:900;
+  font-size:12px;
+  letter-spacing:.03em;
   text-align:left;
   margin:0;
 }
-#drawFontPickPop .fontPickItem:hover{ background:rgba(255,255,255,.08); }
-#drawFontPickPop .fontPickItem.on{ background:rgba(255,255,255,.12); }
+/* jak .ui-select-item */
+#drawFontPickPop .fontPickItem:hover{ background:#141822; }
+#drawFontPickPop .fontPickItem.on{ background:#232426; color:var(--gold, #ffeaa6); }
 #drawFontPickPop .fontPickSwatch{ font-size:14px;opacity:.7;flex-shrink:0; }
 
 /* =========================================================
@@ -1244,4 +1246,73 @@ body.games-body.logo-editor-body > main.logoWrap{
   color: var(--gold);
   font-size: 12px;
   letter-spacing: .02em;
+}
+
+
+/* =========================================================
+   Wysuwane listy paska ustawień (kształty, fonty) — wygląd jak
+   .ui-select-menu / .ui-select-item z css/base.css. Tło kryjące i bez
+   backdrop-filter: półprzezroczyste tło z rozmyciem w Chrome na Androidzie
+   dawało przyciskom różne odcienie (jak jeden gradient na całej liście).
+========================================================= */
+.ctxPop{
+  background: #050914;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 6px;
+  box-shadow: 0 24px 60px rgba(0,0,0,.6);
+  color: #fff;
+}
+.shapePickerPop{
+  position: fixed;
+  z-index: 1000;
+  display: grid;
+  grid-template-columns: repeat(5, 42px);
+  gap: 4px;
+  transition: opacity .12s;
+}
+.shapePickerPop .spi{
+  position: relative;
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-radius: 10px;
+  color: #fff;
+  cursor: pointer;
+}
+.shapePickerPop .spi:hover{ background: #141822; }
+.shapePickerPop .spi[aria-selected="true"]{ background: #232426; color: var(--gold, #ffeaa6); }
+
+/* Przycisk otwierający listę (kształt, font): stała szerokość, nazwa
+   ucinana wielokropkiem — dłuższe nazwy nie wychodzą poza przycisk. */
+.ctxSelectBtn{
+  width: 150px;
+  justify-content: flex-start;
+  gap: 6px;
+  color: #fff;
+}
+.ctxSelectBtn--shape{ width: 190px; }
+.ctxSelectIco{ display: inline-flex; flex-shrink: 0; }
+.ctxSelectIco svg{ width: 18px; height: 18px; }
+.ctxSelectLabel{
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: left;
+}
+.ctxSelectCaret{ display: inline-flex; flex-shrink: 0; opacity: .7; }
+
+/* ui-select w pasku ustawień — wysokość jak pozostałe kontrolki (28 px) */
+.ctxGroup .ui-select.ctxSelect{ min-width: 96px; }
+.ctxGroup .ui-select.ctxSelect .ui-select-btn{
+  height: 28px;
+  padding: 0 8px;
+  font-size: 12px;
+  border-radius: 6px;
 }
