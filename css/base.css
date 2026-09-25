@@ -191,6 +191,24 @@ body.skel-body .topbar.topbar-ready .topbar-section-4 {
     white-space: nowrap;
 }
 
+/* Kontrolki topbara mają STAŁĄ wysokość. Wcześniej wysokość wynikała z
+   zawartości: przycisk z ikoną (svg 1.15em) wychodził wyższy niż sam tekst,
+   a o ile — zależało od przeglądarki (w Safari przycisk konta „who” był
+   wyraźnie niższy od sąsiednich). */
+.topbar .btn,
+.topbar .who,
+.topbar .dotRow {
+    height: 37px;
+    box-sizing: border-box;
+}
+/* <a class="btn"> nie centruje zawartości w pionie sam z siebie jak <button> */
+.topbar a.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .35em;
+}
+
 /* ===============================
    USER BUTTON (account)
    =============================== */
