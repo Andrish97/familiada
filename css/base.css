@@ -131,10 +131,11 @@ body.skel-body .topbar.topbar-ready .topbar-section-4 {
     flex-wrap: wrap;
 
     padding: max(12px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) 12px max(16px, env(safe-area-inset-left));
-    background: rgba(0,0,0,.35);
+    /* Kryjące tło: półprzezroczysty, rozmyty pasek przepuszczał treść strony
+       przewijaną pod spodem, więc każdy (też półprzezroczysty) przycisk miał
+       inny odcień — wyglądało to jak jeden gradient na wszystkich przyciskach. */
+    background: #03060d;
     border-bottom: 1px solid rgba(255,255,255,.12);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
 }
 
 /* Mobile landscape: topbar fixed, ale pomniejszony żeby nie zabierać za dużo miejsca */
@@ -1159,7 +1160,8 @@ html.showA2HS .a2hs {
   }
 
   .topbar-mobile-panel {
-    background: rgba(8,12,20,.96);
+    /* kryjące — przez przyciski menu nie może prześwitywać strona */
+    background: #080c14;
     border: 1px solid rgba(255,255,255,.16);
     border-radius: 14px;
     padding: 10px;
