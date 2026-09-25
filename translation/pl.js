@@ -2288,34 +2288,6 @@ const pl = {
         <span class="m-strong">logo</span>, <span class="m-strong">punkty</span> albo
         <span class="m-strong">kwotę wygranej</span>.
       </p>`,
-      demo: `<p class="m-p">
-        W tej zakładce możesz przywrócić przykładowe materiały startowe:
-        bazę pytań, loga oraz gotowe gry różnych kategorii i stanów.
-      </p>
-  
-      <p class="m-p">
-        Przydaje się to, gdy:
-      </p>
-  
-      <ul class="m-ul">
-        <li>chcesz szybko zobaczyć jak działa system</li>
-        <li>testujesz funkcje bez tworzenia własnych danych</li>
-        <li>przypadkiem usunąłeś przykładową zawartość</li>
-      </ul>
-  
-      <div class="m-warn">
-        Przywracanie demo nie usuwa Twoich danych – dodaje tylko przykładowe materiały.
-      </div>
-  
-      <div class="m-box">
-        <button class="btn" id="demoRestoreBtn">
-          ↺ Przywróć pliki demo
-        </button>
-
-        <p class="m-p m-muted m-block">
-          Po kliknięciu nastąpi przejście do widoku Moje gry i automatyczne wgranie demo.
-        </p>
-      </div>`,
       community: `<p class="m-p">
         Gry Społeczności to katalog gotowych gier stworzonych przez innych użytkowników
         i zweryfikowanych przez moderatorów. Możesz je przeglądać, dodawać do swojej biblioteki
@@ -3109,7 +3081,6 @@ const pl = {
   },
   pollsHub: {
     title: "Familiada — centrum ankiet",
-    backToGames: "← Moje gry",
     logout: "Wyloguj",
     header: {
       title: "Centrum ankiet",
@@ -4445,7 +4416,6 @@ const pl = {
     summaryFinalQuestions: "Pytania finału",
     summaryRoundsQuestions: "Pytania rund",
     summaryDefaultSettings: "Używasz domyślnych ustawień rozgrywki. Możesz je dostosować w Ustawieniach rozgrywki.",
-    summaryDefaultSettingsLink: "Otwórz ustawienia →",
     summarySettingsLink: "Zmień ustawienia",
     summaryDisplay: "Wygląd",
     summaryColors: "Kolory",
@@ -4812,10 +4782,7 @@ const pl = {
     loading: "Ładowanie…",
     nav: {
       myGames: "Moje gry",
-      myGamesMobile: "← 🎮",
       backHome: "Strona główna",
-      manual: "Wskazówki ℹ️",
-      manualMobile: "ℹ️",
     },
     searchPlaceholder: "Szukaj gry…",
     btnMySent: "Moje wysłane",
@@ -4838,7 +4805,6 @@ const pl = {
     rating: {
       none: "Brak ocen",
       rateThis: "Oceń tę grę:",
-      yourRating: "Twoja ocena: {stars} ★",
       saved: "Dziękujemy — Twoja ocena została zapisana.",
       ownGameError: "Nie możesz ocenić własnej gry.",
       ratersTitle: "Kto ocenił",

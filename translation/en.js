@@ -2285,34 +2285,6 @@ const en = {
         <span class="m-strong">logo</span>, <span class="m-strong">points</span> or
         <span class="m-strong">prize amount</span>.
       </p>`,
-      demo: `<p class="m-p">
-        In this tab you can restore sample starter materials:
-        a question base, logos, and ready games of different categories and states.
-      </p>
-  
-      <p class="m-p">
-        This is useful when:
-      </p>
-  
-      <ul class="m-ul">
-        <li>you want to quickly see how the system works</li>
-        <li>you are testing features without creating your own data</li>
-        <li>you accidentally removed the sample content</li>
-      </ul>
-  
-      <div class="m-warn">
-        Restoring demo does not remove your data — it only adds sample materials.
-      </div>
-  
-      <div class="m-box">
-        <button class="btn" id="demoRestoreBtn">
-          ↺ Restore demo files
-        </button>
-
-        <p class="m-p m-muted m-block">
-          After clicking you will be taken to the My games view and demo will be loaded automatically.
-        </p>
-      </div>`,
       community: `<p class="m-p">
         Community Games is a catalogue of ready-made games created by other users
         and verified by moderators. You can browse them, add them to your library
@@ -3235,7 +3207,6 @@ const en = {
   },
   pollsHub: {
     title: "Familiada — polls hub",
-    backToGames: "← My games",
     logout: "Log out",
     header: {
       title: "Polls hub",
@@ -4483,10 +4454,7 @@ const en = {
     loading: "Loading…",
     nav: {
       myGames: "My games",
-      myGamesMobile: "← 🎮",
       backHome: "Home",
-      manual: "Help ℹ️",
-      manualMobile: "ℹ️",
     },
     searchPlaceholder: "Search games…",
     btnMySent: "My submissions",
@@ -4509,7 +4477,6 @@ const en = {
     rating: {
       none: "No ratings yet",
       rateThis: "Rate this game:",
-      yourRating: "Your rating: {stars} ★",
       saved: "Thank you — your rating has been saved.",
       ownGameError: "You cannot rate your own game.",
       ratersTitle: "Who rated",
@@ -4728,7 +4695,6 @@ const en = {
     summaryFinalQuestions: "Final questions",
     summaryRoundsQuestions: "Round questions",
     summaryDefaultSettings: "You are using default game settings. You can customise them in Game Settings.",
-    summaryDefaultSettingsLink: "Open settings →",
     summarySettingsLink: "Change settings",
     summaryDisplay: "Appearance",
     summaryColors: "Colors",

@@ -198,47 +198,6 @@ body.skel-body .topbar.topbar-ready .topbar-section-4 {
   opacity: .95;
 }
 
-.user-btn .user-sub{
-  position: relative;
-  padding-left: 10px;
-  font-size: 13px;
-  font-weight: 800;
-  opacity: .65;
-}
-
-/* separator pionowy */
-.user-btn .user-sub::before{
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 0px;
-  bottom: 0px;
-  width: 1px;
-  background: rgba(255,255,255,.25);
-}
-
-/* ===== MOBILE ===== */
-@media (max-width: 980px){
-
-  /* usuń separator i tekst */
-  .user-btn .user-sub{
-    padding: 0;
-    font-size: 0;     /* ukrywa tekst */
-  }
-
-  .user-btn .user-sub::before{
-    display: none;
-  }
-
-  /* dodaj ołówek OBOK username */
-  .user-btn .user-sub::after{
-    content: "✏️";
-    font-size: 16px;
-    margin-left: 6px;
-  }
-}
-
-
 /* ===== Nav dual (separator jak w user-btn) ===== */
 .nav-dual-row{
   display: inline-flex;

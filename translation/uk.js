@@ -2271,34 +2271,6 @@ const uk = {
         <span class="m-strong">логотип</span>, <span class="m-strong">бали</span> або
         <span class="m-strong">сума призу</span>.
       </p>`,
-      demo: `<p class="m-p">
-        У цій вкладці можна відновити приклади стартових матеріалів:
-        базу запитань, логотипи та готові ігри різних категорій і станів.
-      </p>
-  
-      <p class="m-p">
-        Це корисно, якщо:
-      </p>
-  
-      <ul class="m-ul">
-        <li>хочеш швидко побачити, як працює система</li>
-        <li>тестуєш функції без створення власних даних</li>
-        <li>випадково видалили демонстраційний контент</li>
-      </ul>
-  
-      <div class="m-warn">
-        Відновлення демо не видаляє твоїх даних — лише додає приклади матеріалів.
-      </div>
-  
-      <div class="m-box">
-        <button class="btn" id="demoRestoreBtn">
-          ↺ Відновити демо-файли
-        </button>
-
-        <p class="m-p m-muted m-block">
-          Після натискання ти перейдеш до перегляду «Мої ігри», і демо буде завантажено автоматично.
-        </p>
-      </div>`,
       community: `<p class="m-p">
         Ігри Спільноти — це каталог готових ігор, створених іншими користувачами
         і перевірених модераторами. Ти можеш переглядати їх, додавати до своєї бібліотеки
@@ -3219,7 +3191,6 @@ const uk = {
   },
   pollsHub: {
     title: "Familiada — центр опитувань",
-    backToGames: "← Мої ігри",
     logout: "Вийти",
     header: {
       title: "Центр опитувань",
@@ -4468,10 +4439,7 @@ const uk = {
     loading: "Завантаження…",
     nav: {
       myGames: "Мої ігри",
-      myGamesMobile: "← 🎮",
       backHome: "Головна",
-      manual: "Підказки ℹ️",
-      manualMobile: "ℹ️",
     },
     searchPlaceholder: "Пошук гри…",
     btnMySent: "Мої надіслані",
@@ -4494,7 +4462,6 @@ const uk = {
     rating: {
       none: "Немає оцінок",
       rateThis: "Оціни цю гру:",
-      yourRating: "Твоя оцінка: {stars} ★",
       saved: "Дякуємо — твою оцінку збережено.",
       ownGameError: "Не можна оцінювати власну гру.",
       ratersTitle: "Хто оцінив",
@@ -4713,7 +4680,6 @@ const uk = {
     summaryFinalQuestions: "Питання фіналу",
     summaryRoundsQuestions: "Питання раундів",
     summaryDefaultSettings: "Ти використовуєш типові налаштування гри. Можеш їх змінити в Налаштуваннях гри.",
-    summaryDefaultSettingsLink: "Відкрити налаштування →",
     summarySettingsLink: "Змінити налаштування",
     summaryDisplay: "Вигляд",
     summaryColors: "Кольори",
