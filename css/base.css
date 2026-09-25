@@ -202,6 +202,13 @@ body.skel-body .topbar.topbar-ready .topbar-section-4 {
     height: 37px;
     box-sizing: border-box;
 }
+/* Kryjące tło zwykłych przycisków topbara (to samo co w menu hamburgera):
+   .06 bieli na tle paska #03060d. Wyjątki w :where(), żeby nie podbijać
+   specyficzności — warianty (.gold, .tab-btn.active, .btn-external…)
+   dalej wygrywają swoimi regułami. */
+.topbar .btn:where(:not(.gold, .danger, .green, .active, .main, .btn-external)) {
+    background: #12151c;
+}
 /* <a class="btn"> nie centruje zawartości w pionie sam z siebie jak <button> */
 .topbar a.btn {
     display: inline-flex;
@@ -1183,6 +1190,14 @@ html.showA2HS .a2hs {
     /* jeśli menu jest wyższe niż ekran → scroll */
     overflow: auto;
     -webkit-overflow-scrolling: touch;
+  }
+
+  /* Przyciski w menu: kryjący kolor zamiast rgba(255,255,255,.06).
+     Półprzezroczyste tło mieszało się z tym, co przeglądarka narysowała pod
+     spodem — w Chrome na Androidzie przyciski wychodziły coraz ciemniejsze
+     od góry do dołu, jak jeden gradient. Kolor = .06 bieli na tle panelu. */
+  .topbar-mobile-panel .btn:where(:not(.gold, .danger, .green, .active, .main)) {
+    background: #171b22;
   }
 
   .topbar-mobile-close {
