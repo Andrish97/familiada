@@ -470,14 +470,14 @@ input,textarea {
 .m-modal-backdrop {
     position: absolute;
     inset: 0;
-    background: rgba(0,0,0,.55)
+    background: var(--scrim)
 }
 
 .m-modal-card {
     position: relative;
     width: min(560px,calc(100vw - 24px));
     margin: 10vh auto 0;
-    background: rgba(20,20,24,.98);
+    background: #141418;
     border: 1px solid rgba(255,255,255,.12);
     border-radius: 14px;
     overflow: hidden;
@@ -535,7 +535,7 @@ input,textarea {
 }
 
 .colorModalBox {
-    background: rgba(5,5,10,.98);
+    background: #05050a;
     border-radius: 18px;
     border: 1px solid rgba(255,255,255,.16);
     box-shadow: 0 18px 60px rgba(0,0,0,.85);

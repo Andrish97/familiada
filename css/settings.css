@@ -306,7 +306,7 @@ body.settings-body > main.wrap{
 .dt-modal{
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,.6);
+  background: var(--scrim);
   display: grid;
   place-items: center;
   z-index: 120;
@@ -315,7 +315,7 @@ body.settings-body > main.wrap{
 .dt-card{
   --under: #0a0e1d; /* podłoże przycisków (css/base.css) */
   width: min(520px, 94vw);
-  background: rgba(10,14,30,.96);
+  background: #0a0e1d;
   border: 1px solid rgba(255,255,255,.16);
   border-radius: 18px;
   padding: 16px;
@@ -1569,7 +1569,7 @@ body.tools-fullscreen .tools-frame-wrap iframe{
   position: fixed;
   inset: 0;
   z-index: 1100;
-  background: rgba(0,0,0,.65);
+  background: var(--scrim);
   display: flex;
   align-items: center;
   justify-content: center;

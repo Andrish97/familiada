@@ -475,7 +475,7 @@ body.editor-body .wrap {
 .overlay {
     position: fixed;
     inset: 0;
-    background: rgba(2,6,23,.82);
+    background: var(--scrim);
     display: grid;
     place-items: center;
     z-index: 50

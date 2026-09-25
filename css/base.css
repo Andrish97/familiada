@@ -345,6 +345,9 @@ body.skel-body .topbar.topbar-ready .topbar-section-4 {
    (zmienna dziedziczy się w dół). Domyślnie podłoże = tło strony. */
 :root {
     --under: #050914;
+    /* Lekkie przyciemnienie WOKÓŁ okien modalnych / menu — jedno dla całej
+       aplikacji. Samo okno jest zawsze kryjące. */
+    --scrim: rgba(2,6,23,.5);
 }
 
 .btn {
@@ -603,7 +606,7 @@ main{
 .overlay {
     position: fixed;
     inset: 0;
-    background: rgba(2,6,23,.82);
+    background: var(--scrim);
     display: grid;
     place-items: center;
     z-index: 50
@@ -1078,7 +1081,7 @@ html.pseudoFS body::before {
     z-index: 200;
     display: none;
     place-items: center;
-    background: rgba(0,0,0,.55);
+    background: var(--scrim);
     padding: 18px
 }
 
@@ -1090,8 +1093,8 @@ html.showA2HS .a2hs {
     width: min(520px,92vw);
     border-radius: 18px;
     border: 1px solid rgba(255,255,255,.22);
-    background: rgba(0,0,0,.45);
-    backdrop-filter: blur(10px);
+    background: #0b0e1a; /* kryjące */
+    --under: #0b0e1a;
     padding: 16px 16px 14px;
     color: #fff
 }
@@ -1278,7 +1281,7 @@ html.showA2HS .a2hs {
        ma być zawsze na wierzchu, gdy jest otwarte, niezależnie od tego,
        co jeszcze jest aktualnie widoczne pod spodem. */
     z-index: 10050;
-    background: rgba(0,0,0,.55);
+    background: var(--scrim);
     display: none;
     padding: 10px;
     padding-left: max(10px, env(safe-area-inset-left));
