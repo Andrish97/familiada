@@ -591,7 +591,9 @@ async function scenarioRoundsMechanics(pages) {
   await control.waitForTimeout(1500);
 
   await clickPaced(buzzer.getByRole("button", { name: "Przycisk A" }));
-  await clickPaced(control.getByRole("button", { name: "Zatwierdź: Alfa" }));
+  // Drużyna A dostała w tym scenariuszu (wyżej, przez modal ustawień gry)
+  // nową nazwę "Mistrzowie Quizu" -- domyślne "Alfa" już tu nie istnieje.
+  await clickPaced(control.getByRole("button", { name: "Zatwierdź: Mistrzowie Quizu" }));
   await armAndConfirmPaced(control.getByRole("button", { name: "X", exact: true })); // A pudłuje -> kolej B
   // B pudłuje też -> RESET CYKLU: kolej wraca do A, BEZ nowego zgłoszenia
   // buzzera (firstTeam/secondTeam nie są czyszczone — nie ma ponownego buzera).
