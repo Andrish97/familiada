@@ -641,7 +641,7 @@ body.games-body > main.wrap{
   gap: 4px;
   padding: 8px;
   min-width: 180px;
-  background: var(--card, #111827);
+  background: #111827; /* kryjące (--card jest półprzezroczyste) */
   border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 14px;
   box-shadow: 0 12px 36px rgba(0, 0, 0, 0.7);
@@ -668,7 +668,7 @@ body.games-body > main.wrap{
 }
 
 .account-menu-item:hover {
-  background: rgba(255, 255, 255, 0.10);
+  background: #292f3d;
 }
 
 /* =========================================================
@@ -687,7 +687,7 @@ body.games-body > main.wrap{
   gap: 4px;
   padding: 8px;
   min-width: 180px;
-  background: var(--card, #111827);
+  background: #111827; /* kryjące (--card jest półprzezroczyste) */
   border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 14px;
   box-shadow: 0 12px 36px rgba(0, 0, 0, 0.7);
@@ -699,6 +699,7 @@ body.games-body > main.wrap{
 
 .nav-more-dropdown .btn {
   display: block;
+  background: #1f2634; /* = .06 bieli na #111827 — kryjące */
   width: 100%;
   text-align: left;
   padding: 10px 14px;
@@ -710,7 +711,7 @@ body.games-body > main.wrap{
 }
 
 .nav-more-dropdown .btn:hover {
-  background: rgba(255, 255, 255, 0.10);
+  background: #292f3d;
 }
 
 /* =========================================================

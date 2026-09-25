@@ -419,7 +419,7 @@ input,textarea {
     min-width: 220px;
     padding: 6px;
     border-radius: 12px;
-    background: rgba(20,20,20,.96);
+    background: #141414; /* kryjące — patrz uwaga przy .lang-menu w base.css */
     border: 1px solid rgba(255,255,255,.14);
     box-shadow: 0 12px 30px rgba(0,0,0,.45)
 }
@@ -443,7 +443,7 @@ input,textarea {
 }
 
 .cm-item:hover {
-    background: rgba(255,255,255,.08)
+    background: #272727
 }
 
 .cm-item.disabled {

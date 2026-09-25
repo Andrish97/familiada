@@ -1043,7 +1043,10 @@ html.showA2HS .a2hs {
   gap: 6px;
   padding: 6px;
   min-width: 170px;
-  background: rgba(5,9,20,.95);
+  /* kryjące tła menu i opcji: półprzezroczyste tła w Chrome na Androidzie
+     potrafią się nakładać przy kolejnych przerysowaniach (przyciski robią
+     się coraz jaśniejsze, każdy inaczej) */
+  background: #050914;
   border: 1px solid var(--line2);
   border-radius: 12px;
   z-index: 1000;                /* nad topbarem */
@@ -1055,7 +1058,7 @@ html.showA2HS .a2hs {
     padding: 6px 10px;
     border-radius: 10px;
     border: 1px solid var(--line2);
-    background: rgba(255,255,255,.06);
+    background: #141822; /* = .06 bieli na tle .lang-menu */
     color: #fff;
     text-align: left;
     cursor: pointer;
@@ -1484,7 +1487,7 @@ body{
   gap: 4px;
   padding: 8px;
   min-width: 180px;
-  background: var(--card, #111827);
+  background: #111827; /* kryjące (--card jest półprzezroczyste) */
   border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 14px;
   box-shadow: 0 12px 36px rgba(0, 0, 0, 0.7);
@@ -1512,7 +1515,7 @@ body{
 }
 
 .account-menu-item:hover {
-  background: rgba(255, 255, 255, 0.10);
+  background: #292f3d; /* = .10 bieli na #111827 */
 }
 
 .account-menu--inline {
