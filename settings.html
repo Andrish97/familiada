@@ -33,8 +33,8 @@
     <div class="topbar-section topbar-section-1">
       <!-- Mobile mail nav — replaces brand when in reports panel on mobile -->
       <div class="mail-nav-topbar" id="mailNavTopbar" style="display:none;gap:4px;align-items:center">
-        <button class="btn sm" id="btnMailBackTopbar" type="button" style="display:none">←</button>
-        <button class="btn sm gold" id="btnMailComposeTopbar" type="button">✏</button>
+        <button class="btn sm" id="btnMailBackTopbar" type="button" style="display:none" aria-label="Wstecz"><i class="ico" data-icon="arrow-left"></i></button>
+        <button class="btn sm gold" id="btnMailComposeTopbar" type="button" aria-label="Napisz wiadomość"><i class="ico" data-icon="edit-paper"></i></button>
       </div>
       <div class="brand" id="settingsBrand">FAMILIADA</div>
       <button class="btn topbar-sheet-back" id="btnBackSheet" type="button">Wstecz</button>
@@ -54,7 +54,7 @@
       <div class="ui-select hidden-on-mobile" id="toolsSelect">
         <button class="btn sm ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
           <span class="ui-select-label">Narzędzia</span>
-          <span class="ui-select-caret" aria-hidden="true">▾</span>
+          <span class="ui-select-caret" aria-hidden="true"><i class="ico" data-icon="caret-down"></i></span>
         </button>
         <div class="ui-select-menu" role="listbox"></div>
       </div>
@@ -101,7 +101,7 @@
                 <input class="dt-input" id="returnAtMonth" type="number" inputmode="numeric" placeholder="MM" min="1" max="12"/>
                 <span class="dt-dot">.</span>
                 <input class="dt-input" id="returnAtYear" type="number" inputmode="numeric" placeholder="YYYY" min="2024" max="2035"/>
-                <button class="btn sm dt-open" data-dt-open="returnAt" type="button">📅</button>
+                <button class="btn sm dt-open" data-dt-open="returnAt" type="button" aria-label="Kalendarz"><i class="ico" data-icon="calendar"></i></button>
               </div>
               <span class="field-hint">Minimum 10 minut od teraz.</span>
             </div>
@@ -120,7 +120,7 @@
                 <input class="dt-input" id="endAtMonth" type="number" inputmode="numeric" placeholder="MM" min="1" max="12"/>
                 <span class="dt-dot">.</span>
                 <input class="dt-input" id="endAtYear" type="number" inputmode="numeric" placeholder="YYYY" min="2024" max="2035"/>
-                <button class="btn sm dt-open" data-dt-open="endAt" type="button">📅</button>
+                <button class="btn sm dt-open" data-dt-open="endAt" type="button" aria-label="Kalendarz"><i class="ico" data-icon="calendar"></i></button>
               </div>
               <span class="field-hint">Minimum 10 minut od teraz.</span>
             </div>
@@ -160,7 +160,7 @@
           </div>
 
           <div class="field" style="margin-top:12px">
-            <button class="btn sm" id="btnMaintenancePreview" type="button">👁 Podgląd strony maintenance</button>
+            <button class="btn sm" id="btnMaintenancePreview" type="button"><i class="ico" data-icon="eye"></i> Podgląd strony maintenance</button>
           </div>
         </div>
 
@@ -231,7 +231,7 @@
                 <div class="ui-select mail-ui-select mail-cron-select" id="mailCronPresetSelect">
                   <button class="btn sm ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
                     <span class="ui-select-label">—</span>
-                    <span class="ui-select-caret" aria-hidden="true">▾</span>
+                    <span class="ui-select-caret" aria-hidden="true"><i class="ico" data-icon="caret-down"></i></span>
                   </button>
                   <div class="ui-select-menu" role="listbox"></div>
                 </div>
@@ -264,7 +264,7 @@
                 <div class="ui-select mail-ui-select" id="mailQueueStatusSelect">
                   <button class="btn sm ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
                     <span class="ui-select-label">—</span>
-                    <span class="ui-select-caret" aria-hidden="true">▾</span>
+                    <span class="ui-select-caret" aria-hidden="true"><i class="ico" data-icon="caret-down"></i></span>
                   </button>
                   <div class="ui-select-menu" role="listbox"></div>
                 </div>
@@ -316,21 +316,21 @@
                 <div class="ui-select mail-ui-select" id="mailLogFnSelect">
                   <button class="btn sm ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
                     <span class="ui-select-label">—</span>
-                    <span class="ui-select-caret" aria-hidden="true">▾</span>
+                    <span class="ui-select-caret" aria-hidden="true"><i class="ico" data-icon="caret-down"></i></span>
                   </button>
                   <div class="ui-select-menu" role="listbox"></div>
                 </div>
                 <div class="ui-select mail-ui-select" id="mailLogLevelSelect">
                   <button class="btn sm ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
                     <span class="ui-select-label">—</span>
-                    <span class="ui-select-caret" aria-hidden="true">▾</span>
+                    <span class="ui-select-caret" aria-hidden="true"><i class="ico" data-icon="caret-down"></i></span>
                   </button>
                   <div class="ui-select-menu" role="listbox"></div>
                 </div>
                 <div class="ui-select mail-ui-select" id="mailLogPerPage">
                   <button class="btn sm ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
                     <span class="ui-select-label">—</span>
-                    <span class="ui-select-caret" aria-hidden="true">▾</span>
+                    <span class="ui-select-caret" aria-hidden="true"><i class="ico" data-icon="caret-down"></i></span>
                   </button>
                   <div class="ui-select-menu" role="listbox"></div>
                 </div>
@@ -422,42 +422,41 @@
             <div class="panel-title">Gry Producenta</div>
             <div class="panel-sub">Generowanie i zarządzanie grami producenta</div>
           </div>
-          <div class="settings-card-title">🌐 Sesja</div>
+          <div class="settings-card-title">Sesja</div>
           <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap">
             <div class="field" style="flex:1;min-width:120px">
               <label class="field-label">Język</label>
               <div class="ui-select" id="gen-manage-lang" style="width:100%">
                 <button class="btn inp ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
                   <span class="ui-select-label">—</span>
-                  <span class="ui-select-caret" aria-hidden="true">▾</span>
+                  <span class="ui-select-caret" aria-hidden="true"><i class="ico" data-icon="caret-down"></i></span>
                 </button>
                 <div class="ui-select-menu" role="listbox"></div>
               </div>
             </div>
             <button class="btn sm" id="gen-load-btn">Wczytaj</button>
-            <button class="btn sm danger" id="gen-reset-btn" style="display:none">↺ Zrezygnuj</button>
             <span id="gen-groq-counter" style="display:none;font-size:11px;color:var(--muted);margin-left:4px"></span>
           </div>
           <div class="pending-bar" id="gen-pending-bar" style="display:none">
             <span style="font-size:12px;font-weight:700;color:var(--red);flex:1" id="gen-pending-count"></span>
             <button class="btn sm" id="gen-clear-pending-btn">Cofnij</button>
-            <button class="btn sm danger" id="gen-save-btn">💾 Zapisz zmiany</button>
+            <button class="btn sm danger" id="gen-save-btn"><i class="ico" data-icon="save"></i> Zapisz zmiany</button>
           </div>
           <div class="status-bar" id="gen-session-status"></div>
         </div>
 
         <!-- Manage existing -->
         <div class="settings-card" id="gen-manage-card" style="display:none">
-          <div class="settings-card-title">📋 Gry w marketplace</div>
+          <div class="settings-card-title">Gry w marketplace</div>
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:4px">
-            <button class="btn sm btn-blue" id="gen-scan-btn" disabled>🔍 Skanuj</button>
+            <button class="btn sm btn-blue" id="gen-scan-btn" disabled><i class="ico" data-icon="search"></i> Skanuj</button>
           </div>
           <div class="bulk-bar" id="gen-bulk-bar">
             <span class="bulk-count" id="gen-bulk-count">0 zaznaczonych</span>
             <button class="btn sm" id="gen-select-issues-btn">Zaznacz problemy</button>
             <button class="btn sm" id="gen-sel-all-btn">Zaznacz wszystkie</button>
             <button class="btn sm" id="gen-clear-sel-btn">Odznacz</button>
-            <button class="btn sm danger" id="gen-delete-sel-btn">✕ Usuń zaznaczone</button>
+            <button class="btn sm danger" id="gen-delete-sel-btn"><i class="ico" data-icon="trash"></i> Usuń zaznaczone</button>
           </div>
           <div id="gen-game-list" class="gen-game-list-container">
             <div style="color:var(--muted);font-size:12px;padding:10px 0;text-align:center">Wczytaj listę aby zobaczyć gry</div>
@@ -467,7 +466,7 @@
 
         <!-- Import -->
         <div class="settings-card" id="gen-import-card" style="display:none">
-          <div class="settings-card-title">📥 Import gier z JSON</div>
+          <div class="settings-card-title">Import gier z JSON</div>
           <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
             <label class="btn sm" style="cursor:pointer">
               Wybierz pliki JSON
@@ -485,7 +484,7 @@
 
         <!-- Generate -->
         <div class="settings-card" id="gen-input-card" style="display:none">
-          <div class="settings-card-title">⚙️ Kolejka generowania gier</div>
+          <div class="settings-card-title">Kolejka generowania gier</div>
           <div style="margin-bottom:12px">
             <div class="field">
               <label class="field-label">Liczba gier</label>
@@ -502,16 +501,16 @@
 
         <div style="display:flex;gap:8px;flex-wrap:wrap">
           <button class="btn gold" id="gen-enqueue-btn" style="display:none;flex:1">
-            <svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg>
+            <i class="ico" data-icon="play"></i>
             Dodaj do kolejki generowania
           </button>
-          <button class="btn sm danger" id="gen-cancel-btn" style="display:none">✕ Anuluj generowanie</button>
+          <button class="btn sm danger" id="gen-cancel-btn" style="display:none"><i class="ico" data-icon="cancel"></i> Anuluj generowanie</button>
         </div>
 
         <!-- Generated results -->
         <div class="settings-card" id="gen-results-section" style="display:none;margin-top:16px">
           <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:4px">
-            <div class="settings-card-title" style="margin-bottom:0">📝 Wygenerowane gry</div>
+            <div class="settings-card-title" style="margin-bottom:0">Wygenerowane gry</div>
             <div style="display:flex;gap:8px;align-items:center">
               <span id="gen-results-counter" style="font-size:12px;color:var(--muted)"></span>
               <div class="progress-bar-bg" style="width:120px;margin:0"><div class="progress-bar-fill" id="gen-progress-fill"></div></div>
@@ -520,7 +519,7 @@
           <div id="gen-results-list"></div>
           <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">
             <button class="btn btn-green" id="gen-push-approved-btn" style="flex:1;min-width:180px" disabled>
-              <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+              <i class="ico" data-icon="envelope-out"></i>
               Dodaj zatwierdzone do listy
             </button>
             <button class="btn sm" id="gen-approve-all-btn" style="font-size:13px;padding:10px 16px">Zatwierdź wszystkie</button>
@@ -535,28 +534,28 @@
 
           <!-- Sidebar -->
           <div class="mail-sidebar">
-            <button class="btn gold sm" id="btnMailCompose" type="button" style="width:100%;margin-bottom:18px">✏ <span>Napisz wiadomość</span></button>
+            <button class="btn gold sm" id="btnMailCompose" type="button" style="width:100%;margin-bottom:18px"><i class="ico" data-icon="edit-paper"></i> <span>Napisz wiadomość</span></button>
             <nav class="mail-folders">
               <div class="mail-folder active" data-folder="inbox" id="mfInbox">
-                <span class="mail-folder-icon">📥</span>
+                <span class="mail-folder-icon"><i class="ico" data-icon="envelope-in"></i></span>
                 <span class="mail-folder-name">Przychodzące</span>
                 <span class="mail-folder-badge" id="badgeInbox"></span>
               </div>
               <div class="mail-folder" data-folder="sent" id="mfSent">
-                <span class="mail-folder-icon">📤</span>
+                <span class="mail-folder-icon"><i class="ico" data-icon="envelope-out"></i></span>
                 <span class="mail-folder-name">Wysłane</span>
               </div>
               <div class="mail-folder" data-folder="marketing" id="mfMarketing">
-                <span class="mail-folder-icon">📢</span>
+                <span class="mail-folder-icon"><i class="ico" data-icon="megaphone"></i></span>
                 <span class="mail-folder-name">Marketing</span>
               </div>
               <div class="mail-folder" data-folder="reports" id="mfReports">
-                <span class="mail-folder-icon">🏷</span>
+                <span class="mail-folder-icon"><i class="ico" data-icon="tag"></i></span>
                 <span class="mail-folder-name">Zgłoszenia</span>
                 <span class="mail-folder-badge" id="badgeReports"></span>
               </div>
               <div class="mail-folder" data-folder="trash" id="mfTrash">
-                <span class="mail-folder-icon">🗑</span>
+                <span class="mail-folder-icon"><i class="ico" data-icon="trash"></i></span>
                 <span class="mail-folder-name">Kosz</span>
               </div>
             </nav>
@@ -566,7 +565,7 @@
           <div class="mail-list">
             <div class="mail-list-toolbar">
               <input class="inp mail-search" type="search" id="mailSearch" placeholder="Szukaj…" autocomplete="off">
-              <button class="btn sm" id="btnMailRefresh" type="button" title="Odśwież">↺</button>
+              <button class="btn sm" id="btnMailRefresh" type="button" title="Odśwież" aria-label="Odśwież"><i class="ico" data-icon="refresh"></i></button>
             </div>
             <div id="mailListBody"></div>
           </div>
@@ -574,7 +573,7 @@
           <!-- Conversation / Compose pane -->
           <div class="mail-conv" id="mailConv">
             <div class="mail-conv-placeholder" id="mailConvPlaceholder">
-              <div style="font-size:48px;margin-bottom:12px;opacity:.3">✉</div>
+              <div style="font-size:48px;margin-bottom:12px;opacity:.3"><i class="ico" data-icon="envelope"></i></div>
               <div style="opacity:.4;font-size:13px">Wybierz wątek</div>
             </div>
           </div>
@@ -621,7 +620,7 @@
                 <tr>
                   <th>Tytuł</th>
                   <th>Język</th>
-                  <th>★</th>
+                  <th aria-label="Ocena"><i class="ico" data-icon="star"></i></th>
                   <th>Ocen</th>
                   <th>Dodań</th>
                   <th></th>
@@ -830,9 +829,9 @@
             <div class="mc-field-inline">
               <label for="mcTargetCount">Ilość kontaktów:</label>
               <input class="inp" id="mcTargetCount" type="number" min="1" max="500" value="50" style="width:80px">
-              <button class="btn sm gold" id="mcActionBtn" type="button">▶ Uruchom</button>
-              <button class="btn sm danger" id="mcCancelBtn" type="button" style="display:none">✕ Anuluj</button>
-              <button class="btn sm" id="mcRefreshBtn" type="button">⟳ Odśwież</button>
+              <button class="btn sm gold" id="mcActionBtn" type="button"><i class="ico" data-icon="play"></i> Uruchom</button>
+              <button class="btn sm danger" id="mcCancelBtn" type="button" style="display:none"><i class="ico" data-icon="cancel"></i> Anuluj</button>
+              <button class="btn sm" id="mcRefreshBtn" type="button"><i class="ico" data-icon="refresh"></i> Odśwież</button>
             </div>
           </div>
 
@@ -865,19 +864,19 @@
               <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
                 <div style="position:relative;display:inline-flex;align-items:center">
                   <input class="inp" id="mcSearchInput" type="text" inputmode="search" enterkeyhint="search" autocomplete="off" placeholder="Szukaj…" style="min-width:160px;padding-right:26px">
-                  <button type="button" id="mcSearchClearBtn" aria-label="Wyczyść" style="display:none;position:absolute;right:6px;top:50%;transform:translateY(-50%);background:transparent;border:0;color:rgba(255,255,255,.55);font-size:16px;line-height:1;cursor:pointer;padding:4px">✕</button>
+                  <button type="button" id="mcSearchClearBtn" aria-label="Wyczyść" style="display:none;position:absolute;right:6px;top:50%;transform:translateY(-50%);background:transparent;border:0;color:rgba(255,255,255,.55);font-size:16px;line-height:1;cursor:pointer;padding:4px"><i class="ico" data-icon="close"></i></button>
                 </div>
                 <div class="ui-select" id="mcFilterUsed" style="min-width:120px">
                   <button class="btn sm ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
                     <span class="ui-select-label">—</span>
-                    <span class="ui-select-caret" aria-hidden="true">▾</span>
+                    <span class="ui-select-caret" aria-hidden="true"><i class="ico" data-icon="caret-down"></i></span>
                   </button>
                   <div class="ui-select-menu" role="listbox"></div>
                 </div>
-                <a id="mcVisitUrlBtn" href="#" target="_blank" rel="noopener" class="btn sm" style="display:none">🌐 Odwiedź</a>
-                <button class="btn sm" id="mcCopyBtn" type="button" style="display:none">📋 Kopiuj</button>
-                <button class="btn sm" id="mcMarkUsedBtn" type="button">✓ Użyte</button>
-                <button class="btn sm danger" id="mcDeleteBtn" type="button">🗑 Usuń</button>
+                <a id="mcVisitUrlBtn" href="#" target="_blank" rel="noopener" class="btn sm" style="display:none"><i class="ico" data-icon="globe"></i> Odwiedź</a>
+                <button class="btn sm" id="mcCopyBtn" type="button" style="display:none"><i class="ico" data-icon="copy"></i> Kopiuj</button>
+                <button class="btn sm" id="mcMarkUsedBtn" type="button"><i class="ico" data-icon="check"></i> Użyte</button>
+                <button class="btn sm danger" id="mcDeleteBtn" type="button"><i class="ico" data-icon="trash"></i> Usuń</button>
                 <span id="mcSelectionInfo" style="font-size:12px;opacity:.5"></span>
               </div>
             </div>
@@ -902,9 +901,9 @@
 
             <!-- Pagination -->
             <div style="display:flex;justify-content:center;align-items:center;gap:1rem;margin-top:1rem">
-              <button class="btn sm" id="mcPrevPage" type="button">← Poprzednia</button>
+              <button class="btn sm" id="mcPrevPage" type="button"><i class="ico" data-icon="arrow-left"></i> Poprzednia</button>
               <span id="mcPageInfo" style="font-size:12px;opacity:.6">Strona 1 / 1</span>
-              <button class="btn sm" id="mcNextPage" type="button">Następna →</button>
+              <button class="btn sm" id="mcNextPage" type="button">Następna <i class="ico" data-icon="arrow-right"></i></button>
             </div>
           </div>
 
@@ -948,7 +947,7 @@
       <div class="modal" style="max-width:480px;width:94vw">
         <div class="mHead" style="margin-bottom:16px">
           <div class="mTitle" id="ratersTitle">Oceniający</div>
-          <button class="btn sm" id="btnRatersClose" type="button" aria-label="Zamknij">✕</button>
+          <button class="btn sm" id="btnRatersClose" type="button" aria-label="Zamknij"><i class="ico" data-icon="close"></i></button>
         </div>
         <div id="ratersBody" style="max-height:60vh;overflow-y:auto"></div>
       </div>
@@ -976,7 +975,7 @@
       <div class="modal" style="max-width:720px;width:94vw;max-height:90vh;">
         <div class="mHead">
           <div class="mTitle">Podgląd</div>
-          <button class="btn sm" id="btnMaintenancePreviewClose" type="button" aria-label="Zamknij">✕</button>
+          <button class="btn sm" id="btnMaintenancePreviewClose" type="button" aria-label="Zamknij"><i class="ico" data-icon="close"></i></button>
         </div>
         <iframe id="maintenancePreviewFrame" style="width:100%;height:70vh;border:1px solid rgba(255,255,255,.1);border-radius:10px;background:#050914;margin-top:12px"></iframe>
       </div>
@@ -1021,9 +1020,9 @@
     <div class="dt-card">
       <div class="dt-head">
         <button class="btn sm" id="dtToday" type="button">Dziś</button>
-        <button class="btn sm" id="dtPrev" type="button">◀</button>
+        <button class="btn sm" id="dtPrev" type="button" aria-label="Poprzedni miesiąc"><i class="ico" data-icon="caret-left"></i></button>
         <div class="dt-title" id="dtTitle">—</div>
-        <button class="btn sm" id="dtNext" type="button">▶</button>
+        <button class="btn sm" id="dtNext" type="button" aria-label="Następny miesiąc"><i class="ico" data-icon="caret-right"></i></button>
       </div>
       <div class="dt-grid" id="dtGrid"></div>
       <div class="dt-time">

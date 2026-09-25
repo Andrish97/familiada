@@ -2,6 +2,7 @@
 import { sb as supabase } from "../core/supabase.js?v=v2026-09-25T07201";
 import { alertModal, confirmModal } from "../core/modal.js?v=v2026-09-25T07201";
 import { initUiSelect } from "../core/ui-select.js?v=v2026-09-25T07201";
+import { icon, iconText } from "../core/icons.js?v=v2026-09-25T07201";
 
 let games = [];
 let genLangSelect = null;
@@ -17,10 +18,11 @@ const $ = id => document.getElementById(id);
 const show = id => { const el = $(id); if(el) el.style.display = 'block'; };
 const hide = id => { const el = $(id); if(el) el.style.display = 'none'; };
 
-function showStatus(id, msg, type) {
+function showStatus(id, msg, type, iconName = "") {
   const el = $(id);
   if(!el) return;
-  el.textContent = msg;
+  if (iconName) el.innerHTML = iconText(iconName, msg);
+  else el.textContent = msg;
   el.className = 'status-bar visible ' + (type || '');
 }
 
@@ -73,7 +75,7 @@ async function loadGames() {
     renderGameList();
     showStatus('gen-session-status', `Załadowano ${games.length} gier.`, 'ok');
   } catch (e) {
-    showStatus('gen-session-status', `✗ ${e.message}`, 'err');
+    showStatus('gen-session-status', `${e.message}`, 'err', 'error');
   } finally {
     setBusy(false);
   }
@@ -152,7 +154,7 @@ async function generateGames() {
       backoffMs = 400;
     } catch (e) {
       const msg = e?.message || String(e);
-      showStatus('gen-session-status', `⚠️ Błąd generowania (retry): ${msg}`, 'err');
+      showStatus('gen-session-status', `Błąd generowania (retry): ${msg}`, 'err', 'warning');
       await new Promise(r => setTimeout(r, backoffMs));
       backoffMs = Math.min(5000, Math.floor(backoffMs * 1.6));
     }
@@ -185,7 +187,7 @@ async function deleteGame(id) {
     selectedIds.delete(id);
     renderGameList();
   } catch (e) {
-    showStatus('gen-session-status', `✗ Błąd usuwania: ${e.message}`, 'err');
+    showStatus('gen-session-status', `Błąd usuwania: ${e.message}`, 'err', 'error');
   } finally {
     setBusy(false);
   }
@@ -262,7 +264,7 @@ async function deleteSelected() {
     renderGameList();
     showStatus('gen-session-status', `Usunięto ${deletedCount}/${ids.length}.`, 'ok');
   } catch (e) {
-    showStatus('gen-session-status', `✗ Błąd po ${deletedCount}/${ids.length}: ${e.message}`, 'err');
+    showStatus('gen-session-status', `Błąd po ${deletedCount}/${ids.length}: ${e.message}`, 'err', 'error');
   } finally {
     setBusy(false);
   }
@@ -451,7 +453,7 @@ async function scanForDuplicates() {
     }
     showStatus('gen-session-status', `Skanowanie zakończone.`, 'ok');
   } catch (e) {
-    showStatus('gen-session-status', `✗ Błąd skanowania: ${e.message}`, 'err');
+    showStatus('gen-session-status', `Błąd skanowania: ${e.message}`, 'err', 'error');
   } finally {
     setBusy(false);
   }
@@ -466,7 +468,7 @@ async function checkUniqueness(id) {
     renderGameList();
     showStatus('gen-session-status', 'Gotowe.', 'ok');
   } catch (e) {
-    showStatus('gen-session-status', `✗ Błąd: ${e.message}`, 'err');
+    showStatus('gen-session-status', `Błąd: ${e.message}`, 'err', 'error');
   } finally {
     setBusy(false);
   }
@@ -507,7 +509,7 @@ function renderGameList() {
         <button class="btn sm" data-action="uniq" data-id="${game.id}">Unikalność</button>
         <button class="btn sm" data-action="edit" data-id="${game.id}">Edytuj</button>
         <button class="btn sm danger" data-id="${game.id}">Usuń</button>
-        <span class="game-chevron">▶</span>
+        <span class="game-chevron">${icon("caret-right")}</span>
       </div>
       <div class="game-preview">
         <div class="preview-desc">${game.description || ''}</div>
@@ -585,7 +587,7 @@ function renderGeneratedList() {
         <span class="game-title">${cand.title || '—'}</span>
         <span class="game-title" style="color:var(--muted);font-size:12px;flex:1;margin-left:10px">${dupLine} · ${w.summary}</span>
         <button class="btn sm danger" data-action="reject" data-id="${g.id}" ${g.generating ? 'disabled' : ''}>Odrzuć</button>
-        <span class="game-chevron">▶</span>
+        <span class="game-chevron">${icon("caret-right")}</span>
       </div>
       <div class="game-preview">
         <div class="preview-desc">${cand.description || ''}</div>
@@ -664,7 +666,7 @@ async function publishApproved() {
     showStatus('gen-session-status', `Opublikowano ${done}.`, 'ok');
     await loadGames();
   } catch (e) {
-    showStatus('gen-session-status', `✗ Błąd po ${done}/${items.length}: ${e.message}`, 'err');
+    showStatus('gen-session-status', `Błąd po ${done}/${items.length}: ${e.message}`, 'err', 'error');
   } finally {
     setBusy(false);
   }
@@ -839,10 +841,10 @@ async function saveGameEditor() {
         renderGameList();
       }
     }
-    showStatus('ge-status', '✓ Zapisano', 'ok');
+    showStatus('ge-status', 'Zapisano', 'ok', 'check');
     setTimeout(closeGameEditor, 800);
   } catch (e) {
-    showStatus('ge-status', `✗ ${e.message}`, 'err');
+    showStatus('ge-status', `${e.message}`, 'err', 'error');
   }
 }
 
@@ -853,7 +855,7 @@ function importGamesFromData(raw) {
     const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
     items = Array.isArray(parsed) ? parsed : [parsed];
   } catch(e) {
-    showStatus('gen-import-status', '✗ Nieprawidłowy JSON', 'err');
+    showStatus('gen-import-status', 'Nieprawidłowy JSON', 'err', 'error');
     return 0;
   }
   let added = 0;
@@ -893,10 +895,10 @@ async function handleImport() {
     fileInput.value = '';
   }
   if (added === 0) {
-    showStatus('gen-import-status', '✗ Brak poprawnych gier', 'err');
+    showStatus('gen-import-status', 'Brak poprawnych gier', 'err', 'error');
     return;
   }
-  showStatus('gen-import-status', `✓ Zaimportowano ${added} gier`, 'ok');
+  showStatus('gen-import-status', `Zaimportowano ${added} gier`, 'ok', 'check');
   show('gen-results-section');
   renderGeneratedList();
 }
@@ -964,10 +966,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const lastLang = localStorage.getItem('gen_last_lang') || 'all';
   genLangSelect = initUiSelect($('gen-manage-lang'), {
     options: [
-      { value: 'all', label: '🌐 Wszystkie' },
-      { value: 'pl', label: '🇵🇱 Polski' },
-      { value: 'uk', label: '🇺🇦 Українська' },
-      { value: 'en', label: '🇬🇧 English' },
+      { value: 'all', label: 'Wszystkie', icon: 'globe' },
+      { value: 'pl', label: 'Polski', icon: 'flag-pl' },
+      { value: 'uk', label: 'Українська', icon: 'flag-ua' },
+      { value: 'en', label: 'English', icon: 'lang-en' },
     ],
     value: lastLang,
     onChange: (val) => { localStorage.setItem('gen_last_lang', val); loadGames(); },

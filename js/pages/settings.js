@@ -18,6 +18,7 @@ import { alertModal, confirmModal, promptModal } from "../core/modal.js?v=v2026-
 import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../core/modal-sheet.js?v=v2026-09-25T07201";
 import { sb } from "../core/supabase.js?v=v2026-09-25T07201";
 import { v as cacheBust } from "../core/cache-bust.js?v=v2026-09-25T07201";
+import { icon, iconText } from "../core/icons.js?v=v2026-09-25T07201";
 
 // settings.html nie ma naturalnego przycisku wstecz na mobile (panel admina
 // bez nawigacji "do tyłu") -- btnBackSheet istnieje wyłącznie na potrzeby
@@ -1299,7 +1300,7 @@ async function loadRatings({ silent = false } = {}) {
     if (statsError) throw statsError;
     const stats = Array.isArray(statsData) ? statsData[0] : statsData;
     if (els.ratingsGlobalStats && stats) {
-      els.ratingsGlobalStats.innerHTML = `Średnia: ${stats.avg_stars}/5 ⭐ | Łącznie: ${stats.total_count}`;
+      els.ratingsGlobalStats.innerHTML = `Średnia: ${stats.avg_stars}/5 ${icon("star")} | Łącznie: ${stats.total_count}`;
     }
 
     // Load detailed ratings
@@ -1317,7 +1318,7 @@ async function loadRatings({ silent = false } = {}) {
       els.ratingsTableBody.innerHTML = rows.map(r => {
         const date = new Date(r.created_at).toLocaleString();
         const user = r.username || r.email || "Nieznany";
-        const stars = "★".repeat(r.stars) + "☆".repeat(5 - r.stars);
+        const stars = icon("star").repeat(r.stars) + icon("star-empty").repeat(5 - r.stars);
         return `
           <tr>
             <td style="font-size:11px;opacity:.7">${date}</td>
@@ -1450,10 +1451,15 @@ function cronPresetLabel(preset) {
   return CRON_PRESET_LABELS[preset.id] || `Every ${preset.minutes} min`;
 }
 
+function mailSourceIcon(source) {
+  const meta = { email: ["envelope", "E-mail"], form: ["file-doc", "Formularz kontaktowy"], compose: ["edit-paper", "Napisana w panelu"] }[source];
+  return meta ? icon(meta[0], { label: meta[1] }) : "";
+}
+
 const COMPOSE_LANG_META = {
-  pl: { flag: "🇵🇱", label: "Polski" },
-  en: { flag: "🇬🇧", label: "English" },
-  uk: { flag: "🇺🇦", label: "Українська" },
+  pl: { flag: "flag-pl", label: "Polski" },
+  en: { flag: "lang-en", label: "English" },
+  uk: { flag: "flag-ua", label: "Українська" },
 };
 const COMPOSE_LANGS = Object.keys(COMPOSE_LANG_META);
 
@@ -1877,7 +1883,7 @@ function renderProviderOrder() {
     const up = document.createElement("button");
     up.type = "button";
     up.className = "btn sm";
-    up.innerHTML = '<span style="font-size:14px">↑</span>';
+    up.innerHTML = icon("arrow-up", { label: "W górę" });
     up.disabled = idx === 0;
     up.addEventListener("click", () => {
       if (idx <= 0) return;
@@ -1888,7 +1894,7 @@ function renderProviderOrder() {
     const down = document.createElement("button");
     down.type = "button";
     down.className = "btn sm";
-    down.innerHTML = '<span style="font-size:14px">↓</span>';
+    down.innerHTML = icon("arrow-down", { label: "W dół" });
     down.disabled = idx >= mailProviderOrder.length - 1;
     down.addEventListener("click", () => {
       if (idx >= mailProviderOrder.length - 1) return;
@@ -1960,14 +1966,14 @@ function renderAiProviderOrder() {
     const up = document.createElement("button");
     up.type = "button";
     up.className = "btn sm";
-    up.textContent = "↑";
+    up.innerHTML = icon("arrow-up", { label: "W górę" });
     up.disabled = (idx === 0);
     up.addEventListener("click", () => moveAiProvider(idx, -1));
 
     const down = document.createElement("button");
     down.type = "button";
     down.className = "btn sm";
-    down.textContent = "↓";
+    down.innerHTML = icon("arrow-down", { label: "W dół" });
     down.disabled = (idx === aiProviders.length - 1);
     down.addEventListener("click", () => moveAiProvider(idx, 1));
 
@@ -2259,7 +2265,7 @@ async function loadMarketplace({ silent = false } = {}) {
     }
 
     const authorLabel = g.origin === "producer"
-      ? "♟ Producent"
+      ? "Producent"
       : (g.author_username || "—");
 
     tr.innerHTML = `
@@ -2346,7 +2352,7 @@ async function approveMarketGame(id) {
     });
     const json = await res.json();
     if (!json.ok) throw new Error(json.error || "approve_failed");
-    showToast("Zatwierdzono ✓");
+    showToast("Gra została zatwierdzona");
     closeMarketPreview();
     await loadMarketplace({ silent: true });
   } catch (err) {
@@ -2452,7 +2458,7 @@ async function loadProducerRatings() {
     tbody.innerHTML = rows.map(g => `<tr>
       <td>${escSetting(g.title)}</td>
       <td>${escSetting(g.lang.toUpperCase())}</td>
-      <td>${g.avg_rating > 0 ? (+(g.avg_rating)).toFixed(1) + " ★" : "—"}</td>
+      <td>${g.avg_rating > 0 ? (+(g.avg_rating)).toFixed(1) + " " + icon("star") : "—"}</td>
       <td>${g.rating_count}</td>
       <td>${g.library_count}</td>
       <td><button class="btn sm" data-raters-id="${escSetting(g.id)}" data-raters-title="${escSetting(g.title)}" type="button">Oceniający</button></td>
@@ -2487,7 +2493,7 @@ async function openRatersModal(gameId, title) {
     </tr></thead><tbody>${rows.map(r =>
       `<tr>
         <td>${escSetting(r.username || "?")}</td>
-        <td>${"★".repeat(r.stars)}${"☆".repeat(5 - r.stars)} (${r.stars})</td>
+        <td>${icon("star").repeat(r.stars)}${icon("star-empty").repeat(5 - r.stars)} (${r.stars})</td>
         <td>${new Date(r.rated_at).toLocaleString()}</td>
       </tr>`
     ).join("")}</tbody></table>`;
@@ -2715,8 +2721,8 @@ function renderMailList(rows) {
       item.dataset.msgId = r.id;
       const dateStr = new Date(r.created_at).toLocaleDateString("pl-PL", { day:"2-digit", month:"2-digit" });
       const fromTo = isInbound
-        ? `↙ ${escSetting(r.from_email || "—")}`
-        : `📢 ${escSetting(r.to_email || "Kampania")}`;
+        ? `${icon("envelope-in")} ${escSetting(r.from_email || "—")}`
+        : `${icon("megaphone")} ${escSetting(r.to_email || "Kampania")}`;
 
       // Marketing badge for ALL marketing emails (already filtered by is_marketing flag)
       const marketingBadge = isMarketingEmail(r)
@@ -2747,7 +2753,7 @@ function renderMailList(rows) {
     item.className = "mail-thread-item" + (!r.report_id && isInbound && !r.is_read ? " unread" : "") + (r.id === msgActiveId ? " active" : "");
     item.dataset.msgId = r.id;
     const dateStr = new Date(r.created_at).toLocaleDateString("pl-PL", { day:"2-digit", month:"2-digit" });
-    const sourceBadge = { email: "📧", form: "📝", compose: "✏" }[r.source] || "";
+    const sourceBadge = mailSourceIcon(r.source);
     const from = isInbound ? (r.from_email || "—") : (r.to_email || "—");
 
     // Ticket number badge for messages with tickets - displayed prominently
@@ -3143,15 +3149,15 @@ function renderMessageDetail(msg, attachments = [], threadMessages = []) {
 
       if (isExpired) {
         chip.style.cssText = "display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;border:1px solid rgba(255,255,255,.08);font-size:11px;color:rgba(255,255,255,.3);text-decoration:none;cursor:default;background:rgba(255,255,255,.02);";
-        chip.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>${escSetting(att.filename)} <span style="opacity:.5">— załącznik wygasł</span>`;
+        chip.innerHTML = `${icon("file-expired")}${escSetting(att.filename)} <span style="opacity:.5">— załącznik wygasł</span>`;
       } else {
         chip.style.cssText = "display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;border:1px solid rgba(255,255,255,.15);font-size:11px;color:rgba(255,255,255,.7);text-decoration:none;cursor:pointer;background:rgba(255,255,255,.04);";
-        const icon = isImage
-          ? `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>`
+        const attIcon = isImage
+          ? `${icon("image")}`
           : isPdf
-          ? `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>`
-          : `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>`;
-        chip.innerHTML = `${icon}${escSetting(att.filename)} <span style="opacity:.45">${escSetting(att.mime_type.split('/')[1] || '')}</span>`;
+          ? `${icon("file-doc")}`
+          : `${icon("paperclip")}`;
+        chip.innerHTML = `${attIcon}${escSetting(att.filename)} <span style="opacity:.45">${escSetting(att.mime_type.split('/')[1] || '')}</span>`;
         chip.addEventListener("click", async (e) => {
           e.preventDefault();
           try {
@@ -3213,7 +3219,7 @@ function renderMessageDetail(msg, attachments = [], threadMessages = []) {
     btnAssign.className = "msg-icon-btn msg-icon-btn--gold";
     btnAssign.type = "button";
     btnAssign.title = "Przydziel zgłoszenie";
-    btnAssign.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>`;
+    btnAssign.innerHTML = `${icon("tag")}`;
     btnAssign.addEventListener("click", () => assignReport(msg));
     leftGroup.appendChild(btnAssign);
   } else {
@@ -3221,7 +3227,7 @@ function renderMessageDetail(msg, attachments = [], threadMessages = []) {
     btnUnassign.className = "msg-icon-btn msg-icon-btn--tagged";
     btnUnassign.type = "button";
     btnUnassign.title = `${escSetting(msg.ticket_number || "")} — odepnij`;
-    btnUnassign.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>`;
+    btnUnassign.innerHTML = `${icon("tag")}`;
     btnUnassign.addEventListener("click", () => unassignReport(msg.id));
     leftGroup.appendChild(btnUnassign);
   }
@@ -3233,8 +3239,8 @@ function renderMessageDetail(msg, attachments = [], threadMessages = []) {
   btnMarketing.title = msg.is_marketing ? "Oznacz jako zwykłą wiadomość" : "Oznacz jako marketing";
   // Megaphone icon - rectangle handle (longer) + trapezoid horn (bigger)
   btnMarketing.innerHTML = msg.is_marketing
-    ? `<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><rect x="2" y="7" width="5" height="10" rx="1"/><path d="M7 9l12-5v16L7 15V9z"/></svg>`
-    : `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="5" height="10" rx="1"/><path d="M7 9l12-5v16L7 15V9z"/></svg>`;
+    ? `${icon("megaphone")}`
+    : `${icon("megaphone")}`;
   btnMarketing.addEventListener("click", () => toggleMarketing(msg.id, !msg.is_marketing));
   leftGroup.appendChild(btnMarketing);
 
@@ -3243,7 +3249,7 @@ function renderMessageDetail(msg, attachments = [], threadMessages = []) {
     btnReply.className = "msg-icon-btn";
     btnReply.type = "button";
     btnReply.title = "Odpowiedz";
-    btnReply.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 00-4-4H4"/></svg>`;
+    btnReply.innerHTML = `${icon("reply")}`;
     btnReply.addEventListener("click", () => showCompose({ to: msg.from_email, subject: `Re: ${stripMarketingPrefix(msg.subject || "")}`, report_id: msg.report_id, quote: msg.body, quoteFrom: msg.from_email, quoteDate: msg.created_at }));
     leftGroup.appendChild(btnReply);
   } else if (!isInbound && msg.to_email) {
@@ -3252,7 +3258,7 @@ function renderMessageDetail(msg, attachments = [], threadMessages = []) {
     btnReply.className = "msg-icon-btn";
     btnReply.type = "button";
     btnReply.title = "Napisz odpowiedź";
-    btnReply.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`;
+    btnReply.innerHTML = `${icon("edit-paper")}`;
     btnReply.addEventListener("click", () => showCompose({ to: msg.to_email, subject: `Re: ${stripMarketingPrefix(msg.subject || "")}`, report_id: msg.report_id, quote: msg.body, quoteFrom: msg.to_email, quoteDate: msg.created_at }));
     leftGroup.appendChild(btnReply);
   }
@@ -3268,7 +3274,7 @@ function renderMessageDetail(msg, attachments = [], threadMessages = []) {
     btnTrash.className = "msg-icon-btn msg-icon-btn--danger";
     btnTrash.type = "button";
     btnTrash.title = "Do kosza";
-    btnTrash.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>`;
+    btnTrash.innerHTML = `${icon("trash")}`;
     btnTrash.addEventListener("click", () => trashMessage(msg.id));
     rightGroup.appendChild(btnTrash);
   } else {
@@ -3276,7 +3282,7 @@ function renderMessageDetail(msg, attachments = [], threadMessages = []) {
     btnRestore.className = "msg-icon-btn";
     btnRestore.type = "button";
     btnRestore.title = "Przywróć";
-    btnRestore.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg>`;
+    btnRestore.innerHTML = `${icon("restore")}`;
     btnRestore.addEventListener("click", () => restoreMessage(msg.id));
     rightGroup.appendChild(btnRestore);
 
@@ -3284,7 +3290,7 @@ function renderMessageDetail(msg, attachments = [], threadMessages = []) {
     btnDelete.className = "msg-icon-btn msg-icon-btn--danger";
     btnDelete.type = "button";
     btnDelete.title = "Usuń na zawsze";
-    btnDelete.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
+    btnDelete.innerHTML = `${icon("trash-forever")}`;
     btnDelete.addEventListener("click", () => deleteForever(msg.id));
     rightGroup.appendChild(btnDelete);
   }
@@ -3379,9 +3385,9 @@ function renderReportThread(report, messages, attsByMsg = {}) {
     el.className = `mail-msg ${isOut ? "outbound" : "inbound"}`;
     const metaEl = document.createElement("div");
     metaEl.className = "mail-msg-meta";
-    const from = isOut ? `↗ ${msg.to_email || "—"}` : `↙ ${msg.from_email || "—"}`;
-    const sourceBadge = { email: "📧", form: "📝", compose: "✏" }[msg.source] || "";
-    metaEl.innerHTML = `<span>${escSetting(from)} · ${new Date(msg.created_at).toLocaleString("pl-PL")} ${escSetting(sourceBadge)}</span>`;
+    const from = isOut ? (msg.to_email || "—") : (msg.from_email || "—");
+    const sourceBadge = mailSourceIcon(msg.source);
+    metaEl.innerHTML = `<span>${icon(isOut ? "envelope-out" : "envelope-in")} ${escSetting(from)} · ${new Date(msg.created_at).toLocaleString("pl-PL")} ${sourceBadge}</span>`;
     el.appendChild(metaEl);
 
     const bodyEl = document.createElement("div");
@@ -3486,13 +3492,13 @@ function renderReportThread(report, messages, attsByMsg = {}) {
         const isPdf   = att.mime_type === "application/pdf";
         if (isExpired) {
           chip.style.cssText = "display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:20px;border:1px solid rgba(255,255,255,.08);font-size:11px;color:rgba(255,255,255,.3);text-decoration:none;cursor:default;background:rgba(255,255,255,.02);";
-          chip.innerHTML = `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>${escSetting(att.filename)} <span style="opacity:.5">— załącznik wygasł</span>`;
+          chip.innerHTML = `${icon("file-expired")}${escSetting(att.filename)} <span style="opacity:.5">— załącznik wygasł</span>`;
         } else {
           chip.style.cssText = "display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:20px;border:1px solid rgba(255,255,255,.15);font-size:11px;color:rgba(255,255,255,.7);text-decoration:none;cursor:pointer;background:rgba(255,255,255,.04);";
-          const icon = isImage
-            ? `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>`
-            : `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>`;
-          chip.innerHTML = `${icon}${escSetting(att.filename)} <span style="opacity:.45">${escSetting(att.mime_type.split("/")[1] || "")}</span>`;
+          const attIcon = isImage
+            ? `${icon("image")}`
+            : `${icon("paperclip")}`;
+          chip.innerHTML = `${attIcon}${escSetting(att.filename)} <span style="opacity:.45">${escSetting(att.mime_type.split("/")[1] || "")}</span>`;
           chip.addEventListener("click", async (e) => {
             e.preventDefault();
             try {
@@ -3533,7 +3539,7 @@ function renderReportThread(report, messages, attsByMsg = {}) {
   replyButtonSection.style.cssText = "padding:20px;text-align:center;border-top:1px solid rgba(255,255,255,.1);margin-top:20px";
   replyButtonSection.innerHTML = `
     <button class="btn gold" id="btnReportReply" type="button" style="padding:10px 24px;font-size:13px">
-      ✏️ Odpowiedz
+      ${icon("edit-paper")} Odpowiedz
     </button>
   `;
   conv.appendChild(replyButtonSection);
@@ -3742,7 +3748,7 @@ async function trashMessage(messageId) {
     showToast("Do kosza", "success");
     await loadMailFolder({ silent: true });
     const conv = document.getElementById("mailConv");
-    if (conv) conv.innerHTML = `<div class="mail-conv-placeholder"><div style="font-size:48px;margin-bottom:12px;opacity:.3">✉</div><div style="opacity:.4;font-size:13px">Wybierz wątek</div></div>`;
+    if (conv) conv.innerHTML = `<div class="mail-conv-placeholder"><div style="font-size:48px;margin-bottom:12px;opacity:.3">${icon("envelope")}</div><div style="opacity:.4;font-size:13px">Wybierz wątek</div></div>`;
     msgActiveId = null;
   } catch (err) {
     showToast(String(err?.message || err), "error");
@@ -3778,7 +3784,7 @@ async function deleteForever(messageId) {
     showToast("Usuń na zawsze", "success");
     await loadMailFolder({ silent: true });
     const conv = document.getElementById("mailConv");
-    if (conv) conv.innerHTML = `<div class="mail-conv-placeholder"><div style="font-size:48px;margin-bottom:12px;opacity:.3">✉</div><div style="opacity:.4;font-size:13px">Wybierz wątek</div></div>`;
+    if (conv) conv.innerHTML = `<div class="mail-conv-placeholder"><div style="font-size:48px;margin-bottom:12px;opacity:.3">${icon("envelope")}</div><div style="opacity:.4;font-size:13px">Wybierz wątek</div></div>`;
     msgActiveId = null;
   } catch (err) {
     showToast(String(err?.message || err), "error");
@@ -3842,7 +3848,7 @@ function showCompose(defaults = {}) {
       <div id="composePaneInner" class="mail-conv-header">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-shrink:0;padding:16px 16px 0 16px">
           <div style="font-size:14px;font-weight:700">Napisz wiadomość</div>
-          <button id="btnComposeClose" type="button" title="Zamknij" style="background:none;border:none;cursor:pointer;padding:4px;color:rgba(255,255,255,.4);line-height:1;font-size:18px;border-radius:4px" onmouseover="this.style.color='rgba(255,255,255,.8)'" onmouseout="this.style.color='rgba(255,255,255,.4)'">✕</button>
+          <button id="btnComposeClose" type="button" title="Zamknij" style="background:none;border:none;cursor:pointer;padding:4px;color:rgba(255,255,255,.4);line-height:1;font-size:18px;border-radius:4px" onmouseover="this.style.color='rgba(255,255,255,.8)'" onmouseout="this.style.color='rgba(255,255,255,.4)'" aria-label="Zamknij">${icon("close")}</button>
         </div>
 
         <div style="padding:0 16px">
@@ -3857,7 +3863,7 @@ function showCompose(defaults = {}) {
 
           <div style="display:flex;justify-content:flex-end;margin-bottom:6px">
             <div class="lang-switcher" id="composeLangSwitcher" style="position:relative">
-              <button type="button" class="btn lang-btn" id="composeLangBtn" aria-label="Zmień język treści powitania, pożegnania, nadawcy i szablonu" title="Zmień język treści powitania, pożegnania, nadawcy i szablonu">🇵🇱</button>
+              <button type="button" class="btn lang-btn" id="composeLangBtn" aria-label="Zmień język treści powitania, pożegnania, nadawcy i szablonu" title="Zmień język treści powitania, pożegnania, nadawcy i szablonu">${icon("flag-pl")}</button>
               <div class="lang-menu" id="composeLangMenu" hidden style="position:absolute;top:100%;right:0;left:auto;margin-top:6px"></div>
             </div>
           </div>
@@ -3867,7 +3873,7 @@ function showCompose(defaults = {}) {
               <div class="ui-select" id="composeGreetingSelect" style="width:100%">
                 <button class="btn sm ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
                   <span class="ui-select-label">Brak powitania</span>
-                  <span class="ui-select-caret" aria-hidden="true">▾</span>
+                  <span class="ui-select-caret" aria-hidden="true">${icon("caret-down")}</span>
                 </button>
                 <div class="ui-select-menu" role="listbox"></div>
               </div>
@@ -3878,7 +3884,7 @@ function showCompose(defaults = {}) {
               <div class="ui-select" id="composeFarewellSelect" style="width:100%">
                 <button class="btn sm ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
                   <span class="ui-select-label">Brak pożegnania</span>
-                  <span class="ui-select-caret" aria-hidden="true">▾</span>
+                  <span class="ui-select-caret" aria-hidden="true">${icon("caret-down")}</span>
                 </button>
                 <div class="ui-select-menu" role="listbox"></div>
               </div>
@@ -3889,7 +3895,7 @@ function showCompose(defaults = {}) {
               <div class="ui-select" id="composeSenderSelect" style="width:100%">
                 <button class="btn sm ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
                   <span class="ui-select-label">Brak nadawcy</span>
-                  <span class="ui-select-caret" aria-hidden="true">▾</span>
+                  <span class="ui-select-caret" aria-hidden="true">${icon("caret-down")}</span>
                 </button>
                 <div class="ui-select-menu" role="listbox"></div>
               </div>
@@ -3902,7 +3908,7 @@ function showCompose(defaults = {}) {
             <div class="ui-select" id="composeTemplateSelect" style="width:100%">
               <button class="btn sm ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
                 <span class="ui-select-label">—</span>
-                <span class="ui-select-caret" aria-hidden="true">▾</span>
+                <span class="ui-select-caret" aria-hidden="true">${icon("caret-down")}</span>
               </button>
               <div class="ui-select-menu" role="listbox"></div>
             </div>
@@ -3923,7 +3929,7 @@ function showCompose(defaults = {}) {
             <label class="field-label attachments-label" style="margin-bottom:8px;display:block">Załączniki <span style="opacity:.4;font-size:10px">(maks. 10 MB)</span></label>
             <input type="file" id="composeAttachmentInput" multiple style="display:none">
             <label for="composeAttachmentInput" style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:6px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.05);font-size:12px;color:rgba(255,255,255,.7);cursor:pointer;user-select:none">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>
+              ${icon("paperclip")}
               Wybierz pliki
             </label>
             <div id="composeAttachmentList" class="attachments-list" style="display:flex;flex-wrap:wrap;gap:5px;margin-top:8px"></div>
@@ -3934,7 +3940,7 @@ function showCompose(defaults = {}) {
           <input type="hidden" id="composeToEmail" value="${escSetting(defaults.to || "")}">
 
           <div style="display:flex;justify-content:flex-end;gap:8px;align-items:center;padding-top:12px;margin-top:12px;border-top:1px solid rgba(255,255,255,.1)">
-            <button class="btn sm" id="btnComposePreview" type="button">👁 Podgląd</button>
+            <button class="btn sm" id="btnComposePreview" type="button">${icon("eye")} Podgląd</button>
             <span class="field-hint" id="composeSendStatus"></span>
             <button class="btn sm gold" id="btnComposeSend" type="button">Wyślij</button>
           </div>
@@ -4130,7 +4136,7 @@ function showCompose(defaults = {}) {
       removeBtn.style.color = "rgba(255,255,255,0.5)";
       removeBtn.style.fontWeight = "900";
       removeBtn.style.fontSize = "14px";
-      removeBtn.textContent = "✕";
+      removeBtn.innerHTML = icon("close", { label: "Usuń" });
       removeBtn.addEventListener("mouseenter", () => removeBtn.style.color = "#fff");
       removeBtn.addEventListener("mouseleave", () => removeBtn.style.color = "rgba(255,255,255,0.5)");
       removeBtn.addEventListener("click", () => {
@@ -4238,7 +4244,7 @@ function showCompose(defaults = {}) {
       composeFarewellSelect?.setOptions(getFarewellOptions(composeLang));
       composeSenderSelect?.setOptions(getSenderOptions(composeLang));
       composeTemplateSelect?.setOptions(getComposeTemplateOptions(composeLang));
-      if (btnEl) btnEl.textContent = COMPOSE_LANG_META[composeLang].flag;
+      if (btnEl) btnEl.innerHTML = icon(COMPOSE_LANG_META[composeLang].flag);
     };
 
     if (menuEl) {
@@ -4248,7 +4254,7 @@ function showCompose(defaults = {}) {
         opt.type = "button";
         opt.className = "lang-option";
         opt.dataset.lang = lang;
-        opt.textContent = `${meta.flag} ${meta.label}`;
+        opt.innerHTML = iconText(meta.flag, meta.label);
         opt.addEventListener("click", (e) => {
           e.stopPropagation();
           menuEl.hidden = true;
@@ -4294,7 +4300,7 @@ function closeCompose() {
   } else {
     const conv = document.getElementById("mailConv");
     if (!conv) return;
-    conv.innerHTML = `<div class="mail-conv-placeholder"><div style="font-size:48px;margin-bottom:12px;opacity:.3">✉</div><div style="opacity:.4;font-size:13px">Wybierz wątek</div></div>`;
+    conv.innerHTML = `<div class="mail-conv-placeholder"><div style="font-size:48px;margin-bottom:12px;opacity:.3">${icon("envelope")}</div><div style="opacity:.4;font-size:13px">Wybierz wątek</div></div>`;
     msgActiveId = null;
 
     // On mobile: switch back to list view
@@ -4654,7 +4660,7 @@ function wireReportsEvents() {
       msgActiveId = null;
       const conv = document.getElementById("mailConv");
       if (conv) {
-        conv.innerHTML = `<div class="mail-conv-placeholder"><div style="font-size:48px;margin-bottom:12px;opacity:.3">✉</div><div style="opacity:.4;font-size:13px">Wybierz wątek</div></div>`;
+        conv.innerHTML = `<div class="mail-conv-placeholder"><div style="font-size:48px;margin-bottom:12px;opacity:.3">${icon("envelope")}</div><div style="opacity:.4;font-size:13px">Wybierz wątek</div></div>`;
       }
       await loadMailFolder();
     });
@@ -5337,20 +5343,33 @@ function fmtSessionWinner(r) {
 }
 
 const SESSION_STATUS_LABELS = {
-  started: "🔵 Rozpoczęta",
-  playing: "🔵 W trakcie",
-  final: "🟢 Zakończona",
-  won: "🟢 Zakończona",
-  lost: "🟢 Zakończona",
-  abandoned: "⚪ Porzucona",
-  error: "🔴 Błąd",
-  legacy: "📁 Archiwalna",
+  started: ["Rozpoczęta", "live"],
+  playing: ["W trakcie", "live"],
+  final: ["Zakończona", "done"],
+  won: ["Zakończona", "done"],
+  lost: ["Zakończona", "done"],
+  abandoned: ["Porzucona", "off"],
+  error: ["Błąd", "err"],
+  legacy: ["Archiwalna", "off"],
 };
 
 function fmtSessionStatus(r) {
-  const label = SESSION_STATUS_LABELS[r.effective_status] || r.effective_status || "—";
+  const [label, kind] = SESSION_STATUS_LABELS[r.effective_status] || [r.effective_status || "—", "off"];
   const errCount = Number(r.error_count) || 0;
-  return errCount > 0 ? `${label} ⚠️ ${errCount}` : label;
+  const wrap = document.createElement("span");
+  wrap.style.cssText = "display:inline-flex;gap:6px;align-items:center";
+  const badge = document.createElement("span");
+  badge.className = `session-status session-status--${kind}`;
+  badge.textContent = label;
+  wrap.appendChild(badge);
+  if (errCount > 0) {
+    const warn = document.createElement("span");
+    warn.className = "session-status-errors";
+    warn.title = `Błędy: ${errCount}`;
+    warn.innerHTML = iconText("warning", String(errCount));
+    wrap.appendChild(warn);
+  }
+  return wrap;
 }
 
 const FINAL_STEP_LABELS = {
@@ -6365,13 +6384,13 @@ function wireEvents() {
 
     switch (mcState.status) {
       case "running":
-        actionBtn.textContent = "⏸ Wstrzymaj";
+        actionBtn.innerHTML = iconText("pause", "Wstrzymaj");
         actionBtn.className = "btn sm warning";
         cancelBtn.style.display = "";
         targetInput.disabled = true;
         break;
       case "paused":
-        actionBtn.textContent = "▶ Wznów";
+        actionBtn.innerHTML = iconText("play", "Wznów");
         actionBtn.className = "btn sm gold";
         cancelBtn.style.display = "";
         targetInput.disabled = true;
@@ -6380,7 +6399,7 @@ function wireEvents() {
       case "completed":
       case "idle":
       default:
-        actionBtn.textContent = "▶ Uruchom";
+        actionBtn.innerHTML = iconText("play", "Uruchom");
         actionBtn.className = "btn sm gold";
         cancelBtn.style.display = "none";
         targetInput.disabled = false;
@@ -6419,7 +6438,7 @@ function wireEvents() {
       const res = await fetch(`${MC_API}/api/search-runs?target_count=${count}`, {method:"POST", headers:{Authorization:`Bearer ${tk}`}});
       if (!res.ok) throw new Error("Failed");
       const data = await res.json();
-      actionBtn.textContent = "✅ Uruchomiono!";
+      actionBtn.innerHTML = iconText("check", "Wyszukiwanie uruchomione");
       setTimeout(()=>{ mcState.status = "running"; mcUpdateButtons(); }, 1500);
       mcState.logRun = data.run_id;
       mcStartLogAutoRefresh();
@@ -6443,13 +6462,13 @@ function wireEvents() {
     try {
       const tk = await mcGetToken();
       if (mcState.status === "running") {
-        actionBtn.textContent = "⏸ Wstrzymywanie…";
+        actionBtn.innerHTML = iconText("pause", "Wstrzymywanie…");
         const res = await fetch(`${MC_API}/api/search-runs/${mcState.logRun}/pause`,{method:"POST", headers:{Authorization:`Bearer ${tk}`}});
         if (!res.ok) throw new Error("Nie udało się wstrzymać zlecenia");
         mcState.status = "paused";
         mcStopLogAutoRefresh();
       } else {
-        actionBtn.textContent = "▶ Wznawianie…";
+        actionBtn.innerHTML = iconText("play", "Wznawianie…");
         const res = await fetch(`${MC_API}/api/search-runs/${mcState.logRun}/resume`,{method:"POST", headers:{Authorization:`Bearer ${tk}`}});
         if (!res.ok) throw new Error("Nie udało się wznowić zlecenia");
         mcState.status = "running";
@@ -6504,14 +6523,14 @@ function wireEvents() {
   function mcUpdateSortHeaders() {
     document.querySelectorAll('.mc-sortable').forEach(th => {
       const col = th.dataset.col;
-      const arrow = col === mcState.sortCol ? (mcState.sortDir === 'asc' ? ' ▲' : ' ▼') : '';
+      const arrow = col === mcState.sortCol ? ' ' + icon(mcState.sortDir === 'asc' ? 'caret-up' : 'caret-down') : '';
       th.innerHTML = th.dataset.label + arrow;
     });
   }
 
   function mcInitSorting() {
     document.querySelectorAll('.mc-sortable').forEach(th => {
-      th.dataset.label = th.textContent.trim().replace(/[▲▼]/g, '');
+      th.dataset.label = th.textContent.trim();
       th.addEventListener('click', () => {
         const col = th.dataset.col;
         if (mcState.sortCol === col) {
@@ -6536,7 +6555,7 @@ function wireEvents() {
     }
     tbody.innerHTML = mcState.contacts.map((c, i) => {
       const usedClass = c.is_used ? 'mc-used' : '';
-      const usedText = c.is_used ? '✓' : '';
+      const usedText = c.is_used ? `${icon('check', { label: 'użyte' })}<span hidden>✓</span>` : '';
       const addedAt = c.added_at ? new Date(c.added_at).toLocaleString('pl-PL', {month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit'}) : '—';
       return `<tr class="${usedClass}" data-id="${c.id}">
         <td class="mc-cell mc-selectable" data-row="${i}" data-col="0">${mcEsc(c.title||'')}</td>
@@ -6773,14 +6792,13 @@ function wireEvents() {
     const btn = document.getElementById("mcMarkUsedBtn");
     if (!btn) return;
     const rows = new Set(mcState.selectedCells.map(c => c.row));
-    if (!rows.size) { btn.textContent = "✓ Użyte"; return; }
+    const setLabel = (used) => { btn.innerHTML = used ? iconText("check", "Użyte") : iconText("cancel", "Nieużyte"); };
+    if (!rows.size) { setLabel(true); return; }
     const selected = [...rows].map(i => mcState.contacts[i]).filter(Boolean);
-    if (!selected.length) { btn.textContent = "✓ Użyte"; return; }
-    const allUsed = selected.every(c => c.is_used);
-    const allUnused = selected.every(c => !c.is_used);
-    if (allUsed) btn.textContent = "✗ Nieużyte";
-    else if (allUnused) btn.textContent = "✓ Użyte";
-    else btn.textContent = "⇄ Użyte";
+    if (!selected.length) { setLabel(true); return; }
+    // mcMarkUsed: gdy wszystkie są użyte — zdejmuje oznaczenie, w pozostałych
+    // przypadkach (także mieszany wybór) oznacza wszystkie jako użyte.
+    setLabel(!selected.every(c => c.is_used));
   }
 
   async function mcMarkUsed() {
@@ -6986,9 +7004,9 @@ function wireEvents() {
     const btn = document.getElementById("mcCopyBtn");
     function flash(ok) {
       if (!btn) return;
-      const orig = btn.textContent;
-      btn.textContent = ok ? '✓' : '✗';
-      setTimeout(() => { btn.textContent = orig; }, 1200);
+      const orig = btn.innerHTML;
+      btn.innerHTML = ok ? iconText('check', 'Skopiowano') : iconText('error', 'Błąd');
+      setTimeout(() => { btn.innerHTML = orig; }, 1200);
     }
 
     if (navigator.clipboard?.writeText) {
