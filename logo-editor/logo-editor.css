@@ -898,6 +898,24 @@
 #paneImage .cropHandle.bl{ left:-8px; bottom:-8px; cursor:nesw-resize; }
 #paneImage .cropHandle.br{ right:-8px; bottom:-8px; cursor:nwse-resize; }
 
+/* Pole obrazu przejmuje gesty (przesuwanie/pinch ramki) — bez przewijania
+   i powiększania strony pod palcem. */
+#paneImage .imgStage{ touch-action: none; }
+
+/* Dotyk: większe uchwyty i niewidoczna strefa ~44px wokół nich */
+#paneImage .cropHandle::before{
+  content: "";
+  position: absolute;
+  inset: -14px;
+}
+@media (pointer: coarse){
+  #paneImage .cropHandle{ width: 22px; height: 22px; border-radius: 8px; }
+  #paneImage .cropHandle.tl{ left:-11px; top:-11px; }
+  #paneImage .cropHandle.tr{ right:-11px; top:-11px; }
+  #paneImage .cropHandle.bl{ left:-11px; bottom:-11px; }
+  #paneImage .cropHandle.br{ right:-11px; bottom:-11px; }
+}
+
 /* =========================================================
    IMAGE: roll-up slider popover (jeden panel na raz)
 ========================================================= */

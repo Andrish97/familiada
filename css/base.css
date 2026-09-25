@@ -1367,6 +1367,19 @@ html.showA2HS .a2hs {
   .topbar-layout-4 .topbar-section-2,
   .topbar-layout-4 .topbar-section-4{ display:none; }
 
+  /* body.topbar-no-menu (np. edytor logo w trybie edycji): bez hamburgera —
+     sekcja 4 zostaje w topbarze, w jednym wierszu z sekcją 3. */
+  body.topbar-no-menu .topbar-layout-4{
+    grid-template-columns:minmax(0,1fr) auto auto;
+    grid-template-areas:"s1 s3 s4";
+  }
+  body.topbar-no-menu .topbar-layout-4 .topbar-section-4{
+    display:flex;
+    grid-area:s4;
+    align-items:center;
+    gap:8px;
+  }
+
   .topbar-layout-4 .topbar-section-1{
     flex-wrap:nowrap;
     align-items:center;

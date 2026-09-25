@@ -1617,7 +1617,7 @@ function openEditor(mode, logo = null){
    showToolsForMode(mode);
 
   // ===== tryb edytora UI =====
-  document.body.classList.add("is-editor");
+  document.body.classList.add("is-editor", "topbar-no-menu"); // bez hamburgera w edycji
   if (listShell) show(listShell, false);
   show(editorShell, true);
 
@@ -1688,7 +1688,7 @@ async function closeEditor(force = false){
 
   clearDirty();
 
-  document.body.classList.remove("is-editor");
+  document.body.classList.remove("is-editor", "topbar-no-menu");
   if (btnBack) btnBack.style.display = "";
   if (btnCloseEditor) btnCloseEditor.style.display = "none";
   document.getElementById("who")?.style.removeProperty("display");

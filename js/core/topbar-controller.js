@@ -565,12 +565,26 @@ function initTopbarController() {
     _overflowState?.collapseAll();
   };
 
+  // Strona może na czas wyłączyć menu hamburgera klasą „topbar-no-menu” na
+  // <body> (np. edytor logo w trybie edycji: w topbarze zostaje tylko X
+  // i wskazówki, bez menu). Zmiana klasy od razu montuje/zdejmuje menu.
+  const menuSuppressed = () => document.body.classList.contains('topbar-no-menu');
+
   const syncMode = () => {
-    if (mobileMq.matches) mountMobile();
+    if (mobileMq.matches && !menuSuppressed()) mountMobile();
     else unmountMobile();
   };
 
   syncMode();
+
+  let lastSuppressed = menuSuppressed();
+  new MutationObserver(() => {
+    const now = menuSuppressed();
+    if (now === lastSuppressed) return;
+    lastSuppressed = now;
+    if (now) close();
+    syncMode();
+  }).observe(document.body, { attributes: true, attributeFilter: ['class'] });
 
   if (typeof mobileMq.addEventListener === 'function') {
     mobileMq.addEventListener('change', syncMode);

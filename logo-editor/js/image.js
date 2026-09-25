@@ -640,31 +640,69 @@ export function initImageEditor(ctx) {
   // =========================================================
   // Drag/resize crop
   // =========================================================
+  // Gesty ramki (mysz i dotyk):
+  // - przeciąganie ramki albo obrazu poza nią jednym palcem = przesuwanie,
+  // - narożnik = skalowanie; liczy się ruch w poziomie I w pionie (dotąd
+  //   tylko poziomy — przeciąganie narożnika palcem w górę/dół nic nie
+  //   dawało),
+  // - dwa palce w dowolnym miejscu obrazu = pinch (skalowanie wokół środka
+  //   ramki) + przesuwanie środkiem palców.
+  const touches = new Map(); // pointerId -> {x,y}
+  let pinch = null;          // { dist, mid, startCrop }
+
+  const pDist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+  const pMid = (a, b) => ({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 });
+
+  function startPinch(){
+    const [a, b] = [...touches.values()];
+    pinch = { dist: pDist(a, b) || 1, mid: pMid(a, b), startCrop: { ...crop } };
+    drag = null;
+  }
+
   function onPointerDown(ev){
     if (ctx.getMode?.() !== "IMAGE") return;
     if (!imgObj) return;
+    if (ev.pointerType === "mouse" && ev.button !== 0) return;
+
+    touches.set(ev.pointerId, { x: ev.clientX, y: ev.clientY });
+    imgStage?.setPointerCapture?.(ev.pointerId);
+    ev.preventDefault();
+
+    if (touches.size >= 2) { startPinch(); return; }
 
     const handle = ev.target?.closest?.(".cropHandle")?.dataset?.h || null;
-    const kind = handle || "move";
-
     drag = {
-      kind,
+      kind: handle || "move",
       sx: ev.clientX,
       sy: ev.clientY,
       startCrop: { ...crop },
     };
-
-    cropFrame?.setPointerCapture?.(ev.pointerId);
-    ev.preventDefault();
   }
 
   function onPointerMove(ev){
-    if (!drag) return;
+    if (!touches.has(ev.pointerId)) return;
     if (!imgObj) return;
+    touches.set(ev.pointerId, { x: ev.clientX, y: ev.clientY });
 
+    if (pinch && touches.size >= 2) {
+      const [a, b] = [...touches.values()];
+      const k = (pDist(a, b) || 1) / pinch.dist;
+      const m = pMid(a, b);
+      const s = pinch.startCrop;
+      const w = s.w * k;
+      const h = w / ASPECT;
+      const cx = s.x + s.w / 2 + (m.x - pinch.mid.x);
+      const cy = s.y + s.h / 2 + (m.y - pinch.mid.y);
+      crop = clampCropToImg({ x: cx - w / 2, y: cy - h / 2, w, h });
+      applyCropToDom();
+      syncCropImg();
+      schedulePreview(30);
+      return;
+    }
+
+    if (!drag) return;
     const dx = ev.clientX - drag.sx;
     const dy = ev.clientY - drag.sy;
-
     const s = drag.startCrop;
 
     if (drag.kind === "move"){
@@ -675,21 +713,19 @@ export function initImageEditor(ctx) {
       return;
     }
 
-    let newW = s.w;
+    // narożnik: zmiana szerokości z ruchu poziomego albo pionowego
+    // (przeliczonego przez proporcje) — wygrywa większy
+    const sx = drag.kind.includes("r") ? 1 : -1;
+    const sy = drag.kind.includes("b") ? 1 : -1;
+    const byX = sx * dx;
+    const byY = sy * dy * ASPECT;
+    const delta = Math.abs(byX) >= Math.abs(byY) ? byX : byY;
 
-    if (drag.kind === "br" || drag.kind === "tr") newW = s.w + dx;
-    if (drag.kind === "bl" || drag.kind === "tl") newW = s.w - dx;
-
-    newW = Math.max(60, newW);
-    let newH = Math.round(newW / ASPECT);
-
-    let newX = s.x;
-    let newY = s.y;
-
-    if (drag.kind === "tl"){ newX = s.x + (s.w - newW); newY = s.y + (s.h - newH); }
-    if (drag.kind === "tr"){ newX = s.x;               newY = s.y + (s.h - newH); }
-    if (drag.kind === "bl"){ newX = s.x + (s.w - newW); newY = s.y; }
-    if (drag.kind === "br"){ newX = s.x;               newY = s.y; }
+    const newW = Math.max(60, s.w + delta);
+    const newH = newW / ASPECT;
+    // przeciwległy narożnik stoi w miejscu
+    const newX = sx > 0 ? s.x : s.x + (s.w - newW);
+    const newY = sy > 0 ? s.y : s.y + (s.h - newH);
 
     crop = clampCropToImg({ x: newX, y: newY, w: newW, h: newH });
     applyCropToDom();
@@ -697,10 +733,20 @@ export function initImageEditor(ctx) {
     schedulePreview(30);
   }
 
-  function onPointerUp(){
-    if (!drag) return;
-    drag = null;
-    schedulePreview(10);
+  function onPointerUp(ev){
+    if (!touches.has(ev.pointerId)) return;
+    touches.delete(ev.pointerId);
+    if (pinch) {
+      pinch = null;
+      // z dwóch palców na jeden: dalej przesuwanie pozostałym, bez skoku
+      if (touches.size === 1) {
+        const [rest] = touches.values();
+        drag = { kind: "move", sx: rest.x, sy: rest.y, startCrop: { ...crop } };
+      }
+    } else if (touches.size === 0) {
+      drag = null;
+    }
+    if (touches.size === 0) schedulePreview(10);
   }
 
   // =========================================================
@@ -730,8 +776,8 @@ export function initImageEditor(ctx) {
       }
     });
 
-    // drag/resize ramki
-    cropFrame?.addEventListener("pointerdown", onPointerDown);
+    // drag/resize/pinch ramki — na całym polu obrazu (ramka jest w nim)
+    imgStage?.addEventListener("pointerdown", onPointerDown);
     window.addEventListener("pointermove", onPointerMove);
     window.addEventListener("pointerup", onPointerUp);
     window.addEventListener("pointercancel", onPointerUp);
