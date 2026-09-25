@@ -71,6 +71,13 @@ export function initImageEditor(ctx) {
 
   // crop w px w układzie "stage"
   let crop = { x: 40, y: 40, w: 280, h: Math.round(280 / ASPECT) };
+  // Kadr względem WYŚWIETLONEGO OBRAZU (ułamki 0–1: x, y, w; wysokość
+  // wynika z ASPECT). To jest źródło prawdy — piksele w `crop` wylicza się
+  // z niego dla bieżącego układu. Wcześniej kadr trzymano/zapisywano
+  // względem całego pola (osobno szer./wys.), więc po wczytaniu przy innym
+  // rozmiarze pola ramka traciła proporcje i obejmowała inny fragment
+  // obrazu, a przy obrocie ekranu wracała na środek.
+  let cropImg = null;
   let drag = null; // { kind, sx, sy, startCrop }
   let deb = null;
 
@@ -260,7 +267,7 @@ export function initImageEditor(ctx) {
     if (resetCrop) {
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
-          if (imgObj) initCropToCenterBig();
+          if (imgObj) { cropImg = null; initCropToCenterBig(); }
           else {
             crop = { x: 40, y: 40, w: 280, h: Math.round(280 / ASPECT) };
             applyCropToDom();
@@ -333,6 +340,68 @@ export function initImageEditor(ctx) {
     cropFrame.style.height = `${Math.round(crop.h)}px`;
   }
 
+  function syncCropImg(){
+    const imgR = getImgRect();
+    if (!imgR) return;
+    const stageR = getStageRect();
+    const imgX = imgR.left - stageR.left;
+    const imgY = imgR.top  - stageR.top;
+    cropImg = {
+      x: (crop.x - imgX) / imgR.width,
+      y: (crop.y - imgY) / imgR.height,
+      w: crop.w / imgR.width,
+    };
+  }
+
+  function applyCropImg(){
+    const imgR = getImgRect();
+    if (!imgR) return;
+    if (!cropImg) { initCropToCenterBig(); return; }
+    const stageR = getStageRect();
+    const imgX = imgR.left - stageR.left;
+    const imgY = imgR.top  - stageR.top;
+    const w = cropImg.w * imgR.width;
+    crop = clampCropToImg({
+      x: imgX + cropImg.x * imgR.width,
+      y: imgY + cropImg.y * imgR.height,
+      w,
+      h: w / ASPECT,
+    });
+    applyCropToDom();
+    syncCropImg();
+  }
+
+  // Czeka, aż <img> podglądu ma już wyrenderowany obraz i układ strony się
+  // ustalił — dopiero wtedy getImgRect() zwraca prawdziwy prostokąt obrazu.
+  async function whenPreviewReady(){
+    try { await imgPreview?.decode?.(); } catch {}
+    await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+  }
+
+  // Odtwarza zapisany kadr. v:2 = względem obrazu; starsze zapisy były
+  // względem pola (x,w / szer. pola, y,h / wys. pola) — przeliczamy je
+  // przez bieżący rozmiar pola, a proporcje ramki wymuszamy z szerokości.
+  async function restoreCrop(saved){
+    await whenPreviewReady();
+    cropImg = null;
+    const imgR = getImgRect();
+    if (saved && imgR) {
+      if (saved.v === 2) {
+        cropImg = { x: +saved.x || 0, y: +saved.y || 0, w: +saved.w || 0.78 };
+      } else {
+        const stageR = getStageRect();
+        const px = { x: saved.x * stageR.width, y: saved.y * stageR.height, w: saved.w * stageR.width };
+        cropImg = {
+          x: (px.x - (imgR.left - stageR.left)) / imgR.width,
+          y: (px.y - (imgR.top - stageR.top)) / imgR.height,
+          w: px.w / imgR.width,
+        };
+      }
+    }
+    applyCropImg();
+    schedulePreview(60);
+  }
+
   function initCropToCenterBig(){
     const imgR = getImgRect();
     const stageR = getStageRect();
@@ -356,6 +425,7 @@ export function initImageEditor(ctx) {
 
     crop = clampCropToImg({ x, y, w, h });
     applyCropToDom();
+    syncCropImg();
   }
 
   // =========================================================
@@ -524,13 +594,11 @@ export function initImageEditor(ctx) {
     // object-fit zależnie od “Cały obraz”
     applyContainMode();
 
-    // po layout (imgPreview musi mieć już rozmiar)
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        initCropToCenterBig();
-        schedulePreview(10);
-      });
-    });
+    // po wyrenderowaniu obrazu: nowy plik = kadr na środku
+    cropImg = null;
+    await whenPreviewReady();
+    initCropToCenterBig();
+    schedulePreview(10);
   }
 
   function applyBestImageLayout(){
@@ -588,6 +656,7 @@ export function initImageEditor(ctx) {
     if (drag.kind === "move"){
       crop = clampCropToImg({ x: s.x + dx, y: s.y + dy, w: s.w, h: s.h });
       applyCropToDom();
+      syncCropImg();
       schedulePreview(30);
       return;
     }
@@ -610,6 +679,7 @@ export function initImageEditor(ctx) {
 
     crop = clampCropToImg({ x: newX, y: newY, w: newW, h: newH });
     applyCropToDom();
+    syncCropImg();
     schedulePreview(30);
   }
 
@@ -689,10 +759,23 @@ export function initImageEditor(ctx) {
       deb = setTimeout(() => {
         if (ctx.getMode?.() !== "IMAGE") return;
         if (!imgObj) return;
-        initCropToCenterBig();
+        applyCropImg(); // zachowaj kadr (wcześniej: reset na środek)
         schedulePreview(10);
       }, 80);
     });
+    // Zmiana układu bez zmiany okna (np. przełączenie siatki) też przelicza
+    // piksele ramki z kadru względem obrazu.
+    if (imgStage && "ResizeObserver" in window) {
+      let roDeb = null;
+      new ResizeObserver(() => {
+        clearTimeout(roDeb);
+        roDeb = setTimeout(() => {
+          if (ctx.getMode?.() !== "IMAGE" || !imgObj || drag) return;
+          applyCropImg();
+          schedulePreview(10);
+        }, 60);
+      }).observe(imgStage);
+    }
   }
 
   bindOnce();
@@ -809,21 +892,7 @@ export function initImageEditor(ctx) {
         if (cropFrame) cropFrame.style.display = "block";
       }
       applyBestImageLayout();
-      initCropToCenterBig();
-      // Przywróć crop z relative (0-1) → piksele
-      if (cropRel) {
-        const stageW = imgStage?.clientWidth || 360;
-        const stageH = imgStage?.clientHeight || Math.round(360 / ASPECT);
-        crop = {
-          x: cropRel.x * stageW,
-          y: cropRel.y * stageH,
-          w: cropRel.w * stageW,
-          h: cropRel.h * stageH,
-        };
-        applyCropToDom();
-      }
-      applyCropToDom();
-      schedulePreview(150);
+      void restoreCrop(cropRel);
     };
     img.onerror = () => {
       const img2 = new Image();
@@ -835,6 +904,7 @@ export function initImageEditor(ctx) {
           if (cropFrame) cropFrame.style.display = "block";
         }
         applyBestImageLayout();
+        void restoreCrop(cropRel);
       };
       img2.src = url;
     };
@@ -851,20 +921,7 @@ export function initImageEditor(ctx) {
         if (cropFrame) cropFrame.style.display = "block";
       }
       applyBestImageLayout();
-      initCropToCenterBig();
-      // Przywróć crop z relative (0-1) → piksele
-      if (cropRel) {
-        const stageW = imgStage?.clientWidth || 360;
-        const stageH = imgStage?.clientHeight || Math.round(360 / ASPECT);
-        crop = {
-          x: cropRel.x * stageW,
-          y: cropRel.y * stageH,
-          w: cropRel.w * stageW,
-          h: cropRel.h * stageH,
-        };
-        applyCropToDom();
-      }
-      schedulePreview(150);
+      void restoreCrop(cropRel);
     };
     img.onerror = (e) => {
       console.error("[image.loadImageFromData] Failed:", e);
@@ -932,21 +989,15 @@ export function initImageEditor(ctx) {
       
       const { bright, contrast, gamma, ditherAmt, black, white, invert } = readSettings();
 
-      // Zapisz crop jako wartości względne (0-1) - niezależne od rozmiaru sceny
-      const stageEl = imgStage;
-      const stageW = stageEl?.clientWidth || 360;
-      const stageH = stageEl?.clientHeight || Math.round(360 / ASPECT);
-      const cropRel = {
-        x: crop.x / stageW,
-        y: crop.y / stageH,
-        w: crop.w / stageW,
-        h: crop.h / stageH,
-      };
+      // Kadr względem obrazu (v:2) — niezależny od rozmiaru pola i ekranu;
+      // wysokość wynika z proporcji wyświetlacza (ASPECT).
+      if (imgObj) syncCropImg();
+      const cropRel = cropImg ? { v: 2, x: cropImg.x, y: cropImg.y, w: cropImg.w } : null;
 
       const source = {
         mode: "IMAGE",
         bright, contrast, gamma, ditherAmt, black, white, invert,
-        crop: cropRel, // zapisz jako relative (0-1)
+        crop: cropRel,
         imageUrl: (imgObj && !imgFileObj) ? imgPreview.src : null,
         // Zachowaj imageData jeśli już jest (demo/import) - fallback
         imageData: imgObj?.src?.startsWith("data:") ? imgObj.src : null
