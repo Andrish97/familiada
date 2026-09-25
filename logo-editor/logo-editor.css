@@ -397,7 +397,7 @@
   flex-shrink: 0;
   white-space: nowrap;
 }
-.ctxChk input{ accent-color: var(--accent, #4fc3f7); margin: 0; }
+.ctxChk input{ margin: 0; }
 
 /* =========================================================
    FONT PICKER (FIXED popover)

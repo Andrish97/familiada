@@ -25,6 +25,70 @@ svg.ico {
     overflow: visible
 }
 
+/* ===== CHECKBOX — jeden wzorzec w całym systemie =====
+   Zamiast natywnego wyglądu (różnego w każdej przeglądarce): kwadrat
+   z ramką, po zaznaczeniu złote wypełnienie i ciemny ptaszek (ten sam
+   rysunek co ikona „check”). :where() = zerowa specyficzność — strony,
+   które chowają checkbox pod własny przełącznik (np. .toggle-item),
+   nadpisują to bez !important. Tło kryjące (patrz .topbar). */
+:where(input[type="checkbox"]) {
+    -webkit-appearance: none;
+    appearance: none;
+    box-sizing: border-box;
+    width: 18px;
+    height: 18px;
+    margin: 0 .25em 0 0;
+    flex-shrink: 0;
+    display: inline-grid;
+    place-content: center;
+    vertical-align: -0.25em;
+    border-radius: 5px;
+    border: 1.5px solid rgba(255,255,255,.38);
+    background: #141822;
+    cursor: pointer;
+    transition: background-color .12s, border-color .12s;
+}
+:where(input[type="checkbox"])::after {
+    content: "";
+    width: 12px;
+    height: 12px;
+    background: #050914;
+    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='3.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4.5 12.5 9.5 17.5 19.5 6.5'/%3E%3C/svg%3E") center / contain no-repeat;
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='3.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4.5 12.5 9.5 17.5 19.5 6.5'/%3E%3C/svg%3E") center / contain no-repeat;
+    transform: scale(0);
+    transition: transform .12s;
+}
+:where(input[type="checkbox"]):hover {
+    border-color: rgba(255,234,166,.75);
+}
+:where(input[type="checkbox"]):checked {
+    background: var(--gold, #ffeaa6);
+    border-color: var(--gold, #ffeaa6);
+}
+:where(input[type="checkbox"]):checked::after {
+    transform: scale(1);
+}
+:where(input[type="checkbox"]):indeterminate {
+    background: var(--gold, #ffeaa6);
+    border-color: var(--gold, #ffeaa6);
+}
+:where(input[type="checkbox"]):indeterminate::after {
+    width: 10px;
+    height: 2.5px;
+    border-radius: 2px;
+    -webkit-mask: none;
+    mask: none;
+    transform: scale(1);
+}
+:where(input[type="checkbox"]):focus-visible {
+    outline: 2px solid rgba(255,234,166,.7);
+    outline-offset: 2px;
+}
+:where(input[type="checkbox"]):disabled {
+    opacity: .4;
+    cursor: not-allowed;
+}
+
 /* Gwiazdki oceny ze starRating() — odstęp przejmuje z rodzica (.stars, .mkt-stars) */
 .ico-stars {
     display: inline-flex;

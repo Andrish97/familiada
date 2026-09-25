@@ -410,12 +410,7 @@ body.mkt-body > main.wrap {
 }
 
 .mkt-checkbox-row input[type=checkbox] {
-  margin-top: 2px;
-  flex-shrink: 0;
-  accent-color: var(--gold);
-  width: 15px;
-  height: 15px;
-  cursor: pointer;
+  margin-top: 1px;
 }
 
 .mkt-submit-error {

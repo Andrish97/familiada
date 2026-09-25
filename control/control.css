@@ -2188,12 +2188,7 @@
   user-select: none;
 }
 .device-opt-check input[type="checkbox"] {
-  accent-color: #ffeaa6;
-  cursor: pointer;
-  margin-top: 2px;
-  flex-shrink: 0;
-  width: 14px;
-  height: 14px;
+  margin-top: 1px;
 }
 .device-opt-check-text {
   display: flex;
