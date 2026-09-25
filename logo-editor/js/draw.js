@@ -1778,7 +1778,16 @@ export function initDrawEditor(ctx) {
     syncToolButtons();
   }
 
+  // Fabric na ekranie dotykowym przekazuje w opt.e TouchEvent — on nie ma
+  // clientX/clientY (są w touches[0]). Bez tego na tablecie punkt startu
+  // kształtu wychodził NaN i nie dało się narysować żadnego kształtu.
+  function ptr(ev) {
+    const tp = ev?.touches?.[0] || ev?.changedTouches?.[0];
+    return tp ? { clientX: tp.clientX, clientY: tp.clientY, shiftKey: !!ev.shiftKey } : ev;
+  }
+
   function getWorldPointFromMouse(ev) {
+    ev = ptr(ev);
     const f = requireFabric();
     const rect = (fabricCanvas?.upperCanvasEl || drawCanvasEl).getBoundingClientRect();
     const canvasPt = new f.Point(ev.clientX - rect.left, ev.clientY - rect.top);
@@ -2508,7 +2517,7 @@ export function initDrawEditor(ctx) {
     // Mouse handlers
     fabricCanvas.on("mouse:down", (opt) => {
       pointerDown = true;
-      const ev = opt.e;
+      const ev = ptr(opt.e);
 
       // aktualizacja overlay kursora
       // w mouse:down
@@ -2576,7 +2585,7 @@ export function initDrawEditor(ctx) {
 
       if (tool === TOOL.TEXT) {
         const pointer = fabricCanvas.getPointer(opt.e);
-        const target = opt.target || fabricCanvas.findTarget(ev);
+        const target = opt.target || fabricCanvas.findTarget(opt.e);
         if (target && isTextObj(target)) {
           // Select existing text for editing
           fabricCanvas.setActiveObject(target);
@@ -2630,7 +2639,7 @@ export function initDrawEditor(ctx) {
     });
 
     fabricCanvas.on("mouse:move", (opt) => {
-      const ev = opt.e;
+      const ev = ptr(opt.e);
       lastPointer = { x: ev.clientX, y: ev.clientY };
       
       if (tool === TOOL.BRUSH || tool === TOOL.ERASER) {
