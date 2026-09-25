@@ -121,3 +121,21 @@ test("żadna strona nie ładuje tego samego modułu pod dwoma różnymi adresami
   }
   assert.deepEqual(conflicts, []);
 });
+
+test("atrybut accept pliku nie dostaje ?v= (i traci wpisany przez pomyłkę)", () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "va-acc-"));
+  try {
+    fs.writeFileSync(path.join(dir, "a.html"), [
+      '<input type="file" accept=".json">',
+      '<input type="file" accept=".otf,.ttf?v=vOLD1">',
+      '<script src="x.js"></script>',
+    ].join("\n"));
+    runVersioner(dir);
+    const out = fs.readFileSync(path.join(dir, "a.html"), "utf8");
+    assert.match(out, /accept="\.json">/);
+    assert.match(out, /accept="\.otf,\.ttf">/);
+    assert.match(out, new RegExp(`src="x\\.js\\?v=${VERSION}"`));
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});

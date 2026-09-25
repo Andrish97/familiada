@@ -88,6 +88,8 @@
       flex: 0 0 auto;
     }
 
+    svg.ico{ width:1.15em; height:1.15em; vertical-align:-0.2em; flex-shrink:0; }
+
     .pill{
       font-size:12px; color:#cfd6ff;
       border:1px solid var(--btnb);
@@ -553,7 +555,7 @@
       <div class="row">
         <span class="pill">Alt+klik na planszy = pipeta</span>
         <span class="pill">Ctrl/Alt + kółko = zoom planszy</span>
-        <span class="pill">★ = ulubione</span>
+        <span class="pill"><i class="ico" data-icon="star"></i> = ulubione</span>
       </div>
       <div class="hint">Paleta ma własny scroll. Gumka to tryb (nie gubi pędzla).</div>
     </div>
@@ -578,9 +580,9 @@
       </div>
 
       <div class="row">
-        <button id="zoomOut" class="btn">−</button>
+        <button id="zoomOut" class="btn" aria-label="Pomniejsz"><i class="ico" data-icon="zoom-out"></i></button>
         <button id="zoomReset" class="btn">100%</button>
-        <button id="zoomIn" class="btn">+</button>
+        <button id="zoomIn" class="btn" aria-label="Powiększ"><i class="ico" data-icon="zoom-in"></i></button>
       </div>
     </div>
 
@@ -825,7 +827,7 @@ function makePalItem(ch){
   const star = document.createElement("button");
   star.type = "button";
   star.className = "star" + (favorites.has(ch) ? " on" : "");
-  star.textContent = favorites.has(ch) ? "★" : "☆";
+  star.innerHTML = `<i class="ico" data-icon="${favorites.has(ch) ? "star" : "star-empty"}"></i>`;
   star.title = favorites.has(ch) ? "Usuń z ulubionych" : "Dodaj do ulubionych";
   star.addEventListener("click", (ev)=>{
     ev.stopPropagation();
@@ -860,7 +862,7 @@ function renderPalettes(){
 
   const favList = Array.from(favorites).filter(ch => glyphMap.has(ch)).sort(unicodeSort);
   if (favList.length === 0){
-    favPaletteEl.innerHTML = `<div class="hint">Brak ulubionych. Kliknij ☆.</div>`;
+    favPaletteEl.innerHTML = `<div class="hint">Brak ulubionych. Kliknij <i class="ico" data-icon="star-empty"></i>.</div>`;
   } else {
     for (const ch of favList) favPaletteEl.appendChild(makePalItem(ch));
   }
@@ -1273,5 +1275,6 @@ function init(){
 init();
 </script>
 <script src="/js/pages/tools-guard.js?v=v2026-09-25T07274" defer></script>
+<script type="module" src="/js/core/icons.js?v=v2026-09-25T07274"></script>
 </body>
 </html>

@@ -84,6 +84,11 @@ filesToProcess.forEach(filePath => {
   const existingVersionRegex = new RegExp(`(\\.[a-zA-Z0-9]+)\\?v=[a-zA-Z0-9T:-]+`, 'g');
   content = content.replace(existingVersionRegex, `$1?v=${version}`);
 
+  // Atrybut accept (<input type="file" accept=".json">) to filtr rozszerzeń,
+  // nie adres pliku — ?v= psuł filtr okna wyboru plików. Czyścimy też stare
+  // wpisy, które wcześniej dostały ?v= przez pomyłkę.
+  content = content.replace(/(\baccept=["'][^"']*?)\?v=[a-zA-Z0-9T:-]+/g, '$1');
+
   // 2. Dodawanie wersji tam, gdzie jej nie ma
   // Wzorce: ="path.ext", ='path.ext', : "path.ext", url("path.ext"), from "path.ext", import("path.ext")
   // oraz import "path.ext" (import samych efektów ubocznych, bez nazw) — bez
@@ -92,7 +97,7 @@ filesToProcess.forEach(filePath => {
   // ?v= (drugi egzemplarz modułu tłumaczeń). Jego handler "pageshow" nakładał
   // na całą stronę stary słownik — po zmianie nazwy strony „Moje gry” na
   // /games widać było klucze tłumaczeń zamiast tekstów.
-  const noVersionRegex = new RegExp(`((?:=|: |from |import\\s*\\(|import\\s+|url\\s*\\()\\s*['"])([^'"]+\\.(?:${ASSET_EXT}))(?=['"]|\\s*\\))`, 'g');
+  const noVersionRegex = new RegExp(`((?:(?<!\\baccept)=|: |from |import\\s*\\(|import\\s+|url\\s*\\()\\s*['"])([^'"]+\\.(?:${ASSET_EXT}))(?=['"]|\\s*\\))`, 'g');
   
   content = content.replace(noVersionRegex, (match, prefix, assetPath) => {
     // Jeśli ścieżka już ma wersję (co nie powinno się stać po kroku 1, ale na wszelki wypadek)
