@@ -586,10 +586,16 @@
   align-items:center;
   justify-content:center;
   padding: 10px;
+  /* pole rysowania dopasowuje się do MNIEJSZEGO z wymiarów (jak obraz
+     „zmieść w ramce”) — przy niskim oknie (tablet/telefon w poziomie,
+     powiększona strona) samo width:100% dawało wyższe pole niż okno
+     i dół sceny był ucinany */
+  container-type: size;
 }
 .drawStageRatio{
-  width: 100%;
+  width: min(100cqw, 100cqh * 26 / 11);
   aspect-ratio: 26 / 11;
+  flex: 0 0 auto;
   border-radius: 16px;
   overflow: hidden;
   background: #0b0b0b;
