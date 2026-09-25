@@ -1340,3 +1340,32 @@ body.games-body.logo-editor-body > main.logoWrap{
   font-size: 12px;
   border-radius: 6px;
 }
+
+/* Tryb edycji: w miejscu marki „FAMILIADA” jest tytuł edytora („Nowe logo —
+   Obraz”). To nagłówek, nie marka — biały, bez wersalików i szerokich
+   odstępów marki — i ma być widoczny także na wąskim ekranie (tam CSS
+   topbara chowa markę). Wysoka specyficzność (id) celowo wygrywa z tymi
+   regułami. */
+.logo-editor-body.is-editor .topbar .topbar-section-1 #brandTitle{
+  display: flex;
+  align-items: baseline;
+  gap: .35em;                 /* flex zjadał spację po „—” */
+  min-width: 0;
+  color: #fff;
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: .01em;
+  text-transform: none;
+  white-space: nowrap;
+  overflow: hidden;
+}
+.logo-editor-body.is-editor #brandTitle .bMain{
+  flex-shrink: 0;
+}
+.logo-editor-body.is-editor #brandTitle .bMode{
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: rgba(255,255,255,.62);
+  font-weight: 700;
+}
