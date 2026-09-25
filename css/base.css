@@ -216,6 +216,7 @@ body.skel-body .topbar.topbar-ready .topbar-section-4 {
        przewijaną pod spodem, więc każdy (też półprzezroczysty) przycisk miał
        inny odcień — wyglądało to jak jeden gradient na wszystkich przyciskach. */
     background: #03060d;
+    --under: #03060d;
     border-bottom: 1px solid rgba(255,255,255,.12);
 }
 
@@ -283,13 +284,6 @@ body.skel-body .topbar.topbar-ready .topbar-section-4 {
     height: 37px;
     box-sizing: border-box;
 }
-/* Kryjące tło zwykłych przycisków topbara (to samo co w menu hamburgera):
-   .06 bieli na tle paska #03060d. Wyjątki w :where(), żeby nie podbijać
-   specyficzności — warianty (.gold, .tab-btn.active, .btn-external…)
-   dalej wygrywają swoimi regułami. */
-.topbar .btn:where(:not(.gold, .danger, .green, .active, .main, .btn-external)) {
-    background: #12151c;
-}
 /* <a class="btn"> nie centruje zawartości w pionie sam z siebie jak <button> */
 .topbar a.btn {
     display: inline-flex;
@@ -341,11 +335,24 @@ body.skel-body .topbar.topbar-ready .topbar-section-4 {
 }
 
 
+/* ===== KRYJĄCE TŁA PRZYCISKÓW =====
+   W Chrome na Androidzie półprzezroczyste tło (np. rgba(255,255,255,.06))
+   potrafiło nakładać się samo na siebie przy kolejnych przerysowaniach —
+   przyciski robiły się jaśniejsze, każdy inaczej (potwierdzone na tablecie).
+   Dlatego tło .btn jest KRYJĄCE: odcień (--btn-tint, jak dotąd rgba)
+   nałożony na kolor podłoża (--under). Wariant ustawia tylko --btn-tint;
+   powierzchnia, na której stoją przyciski, ustawia --under na swój kolor
+   (zmienna dziedziczy się w dół). Domyślnie podłoże = tło strony. */
+:root {
+    --under: #050914;
+}
+
 .btn {
+    --btn-tint: rgba(255,255,255,.06);
     padding: 10px 12px;
     border-radius: 14px;
     border: 1px solid var(--line2);
-    background: rgba(255,255,255,.06);
+    background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under);
     color: #fff;
     cursor: pointer;
     font-weight: 900;
@@ -365,8 +372,8 @@ body.skel-body .topbar.topbar-ready .topbar-section-4 {
 }
 
 .btn.gold {
+    --btn-tint: rgba(255,234,166,.1);
     border-color: rgba(255,234,166,.35);
-    background: rgba(255,234,166,.1);
     color: var(--gold)
 }
 
@@ -380,13 +387,13 @@ a.btn.gold {
 }
 
 .btn.danger {
-    border-color: rgba(255,120,120,.35);
-    background: rgba(255,120,120,.12)
+    --btn-tint: rgba(255,120,120,.12);
+    border-color: rgba(255,120,120,.35)
 }
 
 .btn.green {
+    --btn-tint: rgba(80,200,100,.15);
     border-color: rgba(80,200,100,.4);
-    background: rgba(80,200,100,.15);
     color: #5dc870;
 }
 
@@ -466,11 +473,30 @@ main{
     display: none;
 }
 
+/* Wyłączony: przygaszone kryjące kolory zamiast opacity (półprzezroczysty
+   cały przycisk miał ten sam problem nakładania się przy przerysowaniu). */
 .btn:disabled {
-    opacity: .45;
+    --btn-tint: rgba(255,255,255,.025);
+    color: #6c7080;
+    border-color: #1c2130;
     cursor: not-allowed;
-    filter: saturate(.6);
+    filter: none;
     transform: none
+}
+.btn.gold:disabled {
+    --btn-tint: rgba(255,234,166,.04);
+    color: #77705a;
+    border-color: #3a3629;
+}
+.btn.danger:disabled {
+    --btn-tint: rgba(255,120,120,.05);
+    color: #7a5a62;
+    border-color: #3a2630;
+}
+.btn.green:disabled {
+    --btn-tint: rgba(80,200,100,.06);
+    color: #4d6e58;
+    border-color: #213a2c;
 }
 
 .btn.sm {
@@ -587,7 +613,9 @@ main{
     width: min(860px,94vw);
     border-radius: 22px;
     border: 1px solid var(--line);
-    background: var(--card);
+    /* kryjące (= --card na zaciemnionym tle nakładki) */
+    background: #121524;
+    --under: #121524;
     box-shadow: 0 30px 90px rgba(0,0,0,.85);
     padding: 18px;
     max-height: 92vh;
@@ -797,6 +825,7 @@ main{
         -webkit-overflow-scrolling: touch;
         /* Modal ma wyglądać jak treść strony, nie jak karta na tle strony */
         background: transparent;
+        --under: #050914; /* arkusz leży na tle strony */
         border: 0;
         box-shadow: none;
     }
@@ -1264,6 +1293,7 @@ html.showA2HS .a2hs {
   .topbar-mobile-panel {
     /* kryjące — przez przyciski menu nie może prześwitywać strona */
     background: #080c14;
+    --under: #080c14;
     border: 1px solid rgba(255,255,255,.16);
     border-radius: 14px;
     padding: 10px;
@@ -1285,14 +1315,6 @@ html.showA2HS .a2hs {
     /* jeśli menu jest wyższe niż ekran → scroll */
     overflow: auto;
     -webkit-overflow-scrolling: touch;
-  }
-
-  /* Przyciski w menu: kryjący kolor zamiast rgba(255,255,255,.06).
-     Półprzezroczyste tło mieszało się z tym, co przeglądarka narysowała pod
-     spodem — w Chrome na Androidzie przyciski wychodziły coraz ciemniejsze
-     od góry do dołu, jak jeden gradient. Kolor = .06 bieli na tle panelu. */
-  .topbar-mobile-panel .btn:where(:not(.gold, .danger, .green, .active, .main)) {
-    background: #171b22;
   }
 
   .topbar-mobile-close {
@@ -1593,6 +1615,7 @@ body{
   padding: 8px;
   min-width: 180px;
   background: #111827; /* kryjące (--card jest półprzezroczyste) */
+  --under: #111827;
   border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 14px;
   box-shadow: 0 12px 36px rgba(0, 0, 0, 0.7);

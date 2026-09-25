@@ -21,6 +21,7 @@
 }
 
 .maintenance-card {
+  --under: #070b17; /* podłoże dla kryjących teł przycisków (css/base.css) */
   width: min(880px, 100%);
   background: var(--maint-card);
   border: 1px solid var(--line2);

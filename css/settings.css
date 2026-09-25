@@ -32,6 +32,7 @@ body.settings-body > main.wrap{
 }
 
 .auth-card{
+  --under: #141822; /* podłoże przycisków (css/base.css) */
   width: min(520px, 92vw);
   padding: 18px;
   border-radius: 22px;
@@ -312,6 +313,7 @@ body.settings-body > main.wrap{
 }
 
 .dt-card{
+  --under: #0a0e1d; /* podłoże przycisków (css/base.css) */
   width: min(520px, 94vw);
   background: rgba(10,14,30,.96);
   border: 1px solid rgba(255,255,255,.16);
@@ -576,20 +578,20 @@ body.settings-body:has(.topbar) {
 
 .btn-external{
   border-color: rgba(120,200,255,.35);
-  background: rgba(80,130,200,.12);
+  --btn-tint: rgba(80,130,200,.12); /* kryjące tło: css/base.css */
   color: #cfe7ff;
   text-align: center;
 }
 
 .tab-btn.active{
   border-color: rgba(255,234,166,.55);
-  background: rgba(255,234,166,.18);
+  --btn-tint: rgba(255,234,166,.18); /* kryjące tło: css/base.css */
   color: #ffeaa6;
 }
 
 .ui-select.active .ui-select-btn{
   border-color: rgba(255,234,166,.55);
-  background: rgba(255,234,166,.18);
+  --btn-tint: rgba(255,234,166,.18); /* kryjące tło: css/base.css */
   color: #ffeaa6;
 }
 
@@ -690,6 +692,7 @@ body.tools-fullscreen .tools-frame-wrap iframe{
 }
 
 .settings-card{
+  --under: #0f131d; /* podłoże dla kryjących teł przycisków (css/base.css) */
   border: 1px solid rgba(255,255,255,.12);
   border-radius: 14px;
   background: rgba(255,255,255,.04);
@@ -1170,6 +1173,7 @@ body.tools-fullscreen .tools-frame-wrap iframe{
 }
 
 .stats-inner-card{
+  --under: #161a24; /* podłoże przycisków (css/base.css) */
   padding: 16px;
   border: 1px solid rgba(255,255,255,.12);
   border-radius: 14px;
@@ -1572,6 +1576,7 @@ body.tools-fullscreen .tools-frame-wrap iframe{
   padding: 16px;
 }
 .market-preview-card {
+  --under: #0d1229; /* podłoże przycisków (css/base.css) */
   background: #0d1229;
   border: 1px solid rgba(255,255,255,.14);
   border-radius: 16px;
@@ -1594,6 +1599,7 @@ body.tools-fullscreen .tools-frame-wrap iframe{
 }
 
 .mail-sidebar {
+  --under: #0d101b; /* podłoże przycisków (css/base.css) */
   background: rgba(255,255,255,.03);
   border-right: 1px solid rgba(255,255,255,.1);
   padding: 14px 10px;
@@ -2160,7 +2166,7 @@ body.tools-fullscreen .tools-frame-wrap iframe{
 }
 
 .logs-page-nav .btn.sm.is-active {
-  background: rgba(255,218,126,.25);
+  --btn-tint: rgba(255,218,126,.25); /* kryjące tło: css/base.css */
   border-color: rgba(255,218,126,.55);
   color: #ffda7e;
   font-weight: 700;
@@ -2177,6 +2183,7 @@ body.tools-fullscreen .tools-frame-wrap iframe{
    ═══════════════════════════════════════════════════════════ */
 
 .mc-controls {
+  --under: #161a24; /* podłoże przycisków (css/base.css) */
   display: flex;
   gap: 1rem;
   align-items: center;

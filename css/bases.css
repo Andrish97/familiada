@@ -52,6 +52,7 @@
 .share-submit-btn{ width: 100%; }
 
 .shareSection{
+  --under: #202331; /* podłoże przycisków (css/base.css) */
   margin-top: 16px;
   padding: 10px;
   border-radius: 14px;

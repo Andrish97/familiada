@@ -18,6 +18,7 @@ body.home-body {
   border-radius: 22px;
   border: 1px solid var(--line2);
   background: var(--card);
+  --under: #141822; /* = --card na tle strony; podłoże przycisków (css/base.css) */
   box-shadow: 0 18px 46px rgba(0,0,0,.55);
   display: grid;
   justify-items: center;

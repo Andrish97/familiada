@@ -58,6 +58,7 @@ body.editor-body .wrap {
     border-radius: 20px;
     border: 1px solid var(--line);
     background: var(--card);
+    --under: #141822; /* = --card na tle strony; podłoże przycisków (css/base.css) */
     box-shadow: 0 24px 60px rgba(0,0,0,.45);
     padding: 14px;
     min-height: 0;
@@ -69,6 +70,7 @@ body.editor-body .wrap {
 }
 
 .left {
+  --under: #141822; /* podłoże dla kryjących teł przycisków (css/base.css) */
     width: 360px;
     min-width: 360px
 }
@@ -484,6 +486,7 @@ body.editor-body .wrap {
     border-radius: 22px;
     border: 1px solid var(--line);
     background: var(--card);
+    --under: #141822; /* = --card na tle strony; podłoże przycisków (css/base.css) */
     box-shadow: 0 30px 90px rgba(0,0,0,.75);
     padding: 18px;
     max-height: 92vh;

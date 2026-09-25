@@ -1786,6 +1786,8 @@ function renderProviderOrder() {
     const row = document.createElement("div");
     row.className = "provider-order-row";
     row.style.background = p.is_active ? "" : "rgba(255,0,0,0.05)";
+    // podłoże kryjących przycisków (css/base.css) = kolor wiersza
+    row.style.setProperty("--under", p.is_active ? "#0f131d" : "#1b121c");
 
     const activeCheck = document.createElement("input");
     activeCheck.type = "checkbox";
@@ -1794,6 +1796,7 @@ function renderProviderOrder() {
     activeCheck.addEventListener("change", (e) => {
       p.is_active = e.target.checked;
       row.style.background = p.is_active ? "" : "rgba(255,0,0,0.05)";
+      row.style.setProperty("--under", p.is_active ? "#0f131d" : "#1b121c");
     });
 
     const rank = document.createElement("div");

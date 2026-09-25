@@ -335,6 +335,7 @@ body.games-body > main.wrap{
 ========================================================= */
 .card.games-card,
 .games-card.card{
+  --under: var(--surface); /* podłoże dla kryjących teł przycisków (css/base.css) */
   margin-top: 0;
   background: var(--surface);
   border: 1px solid var(--border-color);
@@ -536,7 +537,8 @@ body.games-body > main.wrap{
   width: min(860px, 94vw);
   border-radius: 22px;
   border: 1px solid var(--line);
-  background: var(--card);
+  background: #121524; /* kryjące — jak .modal w base.css */
+  --under: #121524;
   box-shadow: 0 30px 90px rgba(0,0,0,.85);
   padding: 18px;
   max-height: 92vh;
@@ -642,6 +644,7 @@ body.games-body > main.wrap{
   padding: 8px;
   min-width: 180px;
   background: #111827; /* kryjące (--card jest półprzezroczyste) */
+  --under: #111827;
   border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 14px;
   box-shadow: 0 12px 36px rgba(0, 0, 0, 0.7);
@@ -688,6 +691,7 @@ body.games-body > main.wrap{
   padding: 8px;
   min-width: 180px;
   background: #111827; /* kryjące (--card jest półprzezroczyste) */
+  --under: #111827;
   border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 14px;
   box-shadow: 0 12px 36px rgba(0, 0, 0, 0.7);
@@ -699,7 +703,6 @@ body.games-body > main.wrap{
 
 .nav-more-dropdown .btn {
   display: block;
-  background: #1f2634; /* = .06 bieli na #111827 — kryjące */
   width: 100%;
   text-align: left;
   padding: 10px 14px;

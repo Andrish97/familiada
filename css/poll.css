@@ -15,6 +15,7 @@ body.pollpub-body .card {
     border-radius: 22px;
     border: 1px solid var(--line);
     background: var(--card);
+    --under: #141822; /* = --card na tle strony; podłoże przycisków (css/base.css) */
     padding: 18px;
     box-shadow: 0 24px 60px rgba(0,0,0,.45)
 }

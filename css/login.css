@@ -42,6 +42,7 @@ html:has(.login-body) {
 
 .login-card {
     background: rgba(255,255,255,.06);
+    --under: #141822; /* podłoże przycisków (css/base.css) */
     border: 1px solid rgba(255,255,255,.14);
     border-radius: 22px;
     padding: 18px;
@@ -115,7 +116,8 @@ input:focus {
     padding: 12px;
     border-radius: 14px;
     border: 1px solid rgba(255,255,255,.18);
-    background: rgba(255,255,255,.06);
+    --btn-tint: rgba(255,255,255,.06);
+    background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, #050914); /* kryjące: css/base.css */
     color: #fff;
     cursor: pointer;
     font-weight: 900;
@@ -125,7 +127,7 @@ input:focus {
 
 .btn.main {
     border-color: rgba(255,220,120,.35);
-    background: rgba(255,220,120,.18);
+    --btn-tint: rgba(255,220,120,.18); /* kryjące tło: css/base.css */
 }
 
 .btn:hover { filter: brightness(1.08); }
@@ -168,6 +170,7 @@ input:focus {
 
 .setup-card {
     background: rgba(8,12,28,.6);
+    --under: #070b19;
     border: 1px solid rgba(255,234,166,.25);
     box-shadow: 0 30px 80px rgba(0,0,0,.6);
 }

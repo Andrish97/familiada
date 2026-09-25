@@ -50,6 +50,7 @@ html:has(.landing-body) {
 
 .landing-card {
     background: var(--card);
+    --under: #141822; /* = --card na tle strony; podłoże przycisków (css/base.css) */
     border: 1px solid var(--stroke);
     border-radius: 22px;
     box-shadow: 0 18px 50px rgba(0,0,0,.45);
@@ -128,7 +129,8 @@ html:has(.landing-body) {
     padding: 12px;
     border-radius: 16px;
     border: 1px solid rgba(255,255,255,.18);
-    background: rgba(255,255,255,.06);
+    --btn-tint: rgba(255,255,255,.06);
+    background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, #050914); /* kryjące: css/base.css */
     color: var(--txt);
     cursor: pointer;
     font-weight: 1000;
@@ -145,7 +147,7 @@ html:has(.landing-body) {
 
 .btn.main {
     border-color: rgba(255,234,166,.35);
-    background: rgba(255,234,166,.18);
+    --btn-tint: rgba(255,234,166,.18); /* kryjące tło: css/base.css */
 }
 
 /* ── misc ── */

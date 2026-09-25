@@ -83,6 +83,7 @@
 
 /* ===== PASEK AKCJI (Zapisz / Przywróć) ===== */
 .gs-actionbar {
+  --under: #14171d; /* podłoże dla kryjących teł przycisków (css/base.css) */
   grid-column: 1 / -1;
   grid-row: 1;
   display: flex;
@@ -214,6 +215,7 @@
 
 .gs-section {
   background: var(--card);
+  --under: #141822; /* = --card na tle strony; podłoże przycisków (css/base.css) */
   border-radius: 14px;
   padding: 18px 20px;
   margin-bottom: 14px;

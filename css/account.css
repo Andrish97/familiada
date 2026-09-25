@@ -42,6 +42,7 @@ main.account-wrap .bar > div {
 }
 
 .account-panel {
+  --under: #04070f; /* podłoże dla kryjących teł przycisków (css/base.css) */
   display: grid;
   gap: 10px;
   padding: 16px;
@@ -67,6 +68,7 @@ main.account-wrap .bar > div {
 }
 
 .account-panel.danger {
+  --under: #19121c;
   border-color: rgba(255,120,120,.35);
   background: rgba(255,120,120,.08);
 }

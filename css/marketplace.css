@@ -89,6 +89,7 @@ body.mkt-body > main.wrap {
   border-radius: 18px;
   border: 1px solid var(--line);
   background: var(--card);
+  --under: #141822; /* = --card na tle strony; podłoże przycisków (css/base.css) */
   cursor: pointer;
   transition: border-color .15s, background .15s;
   user-select: none;
@@ -204,6 +205,7 @@ body.mkt-body > main.wrap {
   border-radius: 16px;
   border: 1px solid var(--line);
   background: var(--card);
+  --under: #141822; /* = --card na tle strony; podłoże przycisków (css/base.css) */
   margin-bottom: 10px;
 }
 
@@ -375,7 +377,7 @@ body.mkt-body > main.wrap {
 
 .mkt-lang-picker .btn.active {
   border-color: rgba(255,234,166,.5);
-  background: rgba(255,234,166,.12);
+  --btn-tint: rgba(255,234,166,.12); /* kryjące tło: css/base.css */
   color: var(--gold);
 }
 

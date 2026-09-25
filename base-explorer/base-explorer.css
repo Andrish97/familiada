@@ -268,6 +268,7 @@ input,textarea {
 }
 
 .searchBox {
+  --under: #131723; /* podłoże dla kryjących teł przycisków (css/base.css) */
     width: 300px;
     display: flex;
     align-items: center;
