@@ -1,12 +1,12 @@
-import { sb, SUPABASE_URL } from "../core/supabase.js?v=v2026-09-25T19565";
-import { requireAuth } from "../core/auth.js?v=v2026-09-25T19565";
-import { isGuestUser, showGuestBlockedOverlay } from "../core/guest-mode.js?v=v2026-09-25T19565";
-import { alertModal, confirmModal } from "../core/modal.js?v=v2026-09-25T19565";
-import { initUiSelect } from "../core/ui-select.js?v=v2026-09-25T19565";
-import { getUiLang, initI18n, t } from "../../translation/translation.js?v=v2026-09-25T19565";
-import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-09-25T19565";
-import "../core/contact-modal.js?v=v2026-09-25T19565";
-import { icon, iconText } from "../core/icons.js?v=v2026-09-25T19565";
+import { sb, SUPABASE_URL } from "../core/supabase.js?v=v2026-09-25T20010";
+import { requireAuth } from "../core/auth.js?v=v2026-09-25T20010";
+import { isGuestUser, showGuestBlockedOverlay } from "../core/guest-mode.js?v=v2026-09-25T20010";
+import { alertModal, confirmModal } from "../core/modal.js?v=v2026-09-25T20010";
+import { initUiSelect } from "../core/ui-select.js?v=v2026-09-25T20010";
+import { getUiLang, initI18n, t } from "../../translation/translation.js?v=v2026-09-25T20010";
+import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-09-25T20010";
+import "../core/contact-modal.js?v=v2026-09-25T20010";
+import { icon, iconText } from "../core/icons.js?v=v2026-09-25T20010";
 
 initI18n({ withSwitcher: true }).then(() => {
   document.documentElement.classList.remove('page-loading');
