@@ -799,97 +799,103 @@ function renderBits150x70ToBig(bits150, canvas){
 // całej strony przeglądarki (patrz touch-action:none w logo-editor.css —
 // bez tego dwa palce na canvasie zoomowałyby cały layout, nie samą treść).
 function initPreviewPinchZoom(container, canvas) {
+  // Model: canvas ma transform-origin 0 0, a jego NIEPRZEKSZTAŁCONY
+  // lewy-górny róg leży w kontenerze w punkcie (offX, offY) — kontener
+  // centruje canvas (flex), więc zwykle to NIE jest (0,0). Punkt treści p
+  // (w pikselach canvasa przy scale=1) jest na ekranie w:
+  //   container.left + offX + tx + p * scale
+  // Wcześniej offX/offY były pomijane, a pinch dodawał przesunięcie palców
+  // do już przesuniętego tx przy KAŻDYM ruchu (błąd się kumulował) — stąd
+  // skakanie obrazu przy przybliżaniu i ograniczaniu przesuwania.
   let scale = 1, tx = 0, ty = 0;
   const MIN_SCALE = 1, MAX_SCALE = 6;
   const pointers = new Map();
-  let pinchStartDist = 0;
-  let pinchStartScale = 1;
-  let pinchStartMid = { x: 0, y: 0 };
+  let pinch = null;    // { p: {x,y}, startScale, startDist } — punkt treści pod palcami
   let panStart = null; // { x, y, tx, ty } dla pojedynczego palca gdy scale>1
 
-  // Kontener i canvas nie zmieniają swojego LAYOUTOWEGO rozmiaru/pozycji
-  // W TRAKCIE gestu (nasz zoom to tylko CSS transform, nie zmienia
-  // offsetWidth/offsetHeight) — liczymy getBoundingClientRect()/offsetWidth/
-  // offsetHeight RAZ, na początku gestu (pointerdown), zamiast przy każdym
-  // pointermove. Te odczyty wymuszają synchroniczny reflow; wywoływane przy
-  // każdym z dziesiątek zdarzeń pointermove/sekundę (clamp() czytało
-  // offsetWidth/offsetHeight OSOBNO od cRect, więc de facto 3 wymuszone
-  // reflow na klatkę) dawało wyraźnie toporne przewijanie/przybliżanie.
-  let gestureRect = null;
-  let gestureCanvasW = null;
-  let gestureCanvasH = null;
+  // Geometria liczona RAZ na początku gestu: nasz zoom to tylko CSS
+  // transform (nie zmienia layoutu), a odczyty getBoundingClientRect()/
+  // offsetWidth przy każdym pointermove wymuszały reflow i lagi.
+  let geo = null; // { left, top, w, h, offX, offY, cw, ch }
+  const measure = () => {
+    const cRect = container.getBoundingClientRect();
+    const kRect = canvas.getBoundingClientRect();
+    geo = {
+      left: cRect.left, top: cRect.top, w: cRect.width, h: cRect.height,
+      // kRect uwzględnia bieżący transform: left = container.left + offX + tx
+      offX: kRect.left - cRect.left - tx,
+      offY: kRect.top - cRect.top - ty,
+      cw: canvas.offsetWidth, ch: canvas.offsetHeight,
+    };
+  };
 
-  // Aktualizacja transformu tylko raz na klatkę (requestAnimationFrame)
-  // zamiast bezpośrednio przy każdym evencie pointermove — kolejne szybkie
-  // eventy nadpisują tylko docelowe tx/ty/scale, a faktyczny zapis do DOM
-  // (i przemalowanie) dzieje się najwyżej raz na klatkę.
+  // Zapis transformu najwyżej raz na klatkę.
   let rafId = null;
   const apply = () => {
     if (rafId != null) return;
     rafId = requestAnimationFrame(() => {
       rafId = null;
-      canvas.style.transform = `translate(${tx}px, ${ty}px) scale(${scale})`;
+      canvas.style.transform = `translate3d(${tx}px, ${ty}px, 0) scale(${scale})`;
     });
   };
 
   const reset = () => {
     scale = 1; tx = 0; ty = 0;
     pointers.clear();
+    pinch = null; panStart = null; geo = null;
     if (rafId != null) { cancelAnimationFrame(rafId); rafId = null; }
-    canvas.style.transform = `translate(0px, 0px) scale(1)`;
+    canvas.style.transform = "";
   };
 
+  // Treść większa od kontenera — nie odsuwaj jej krawędzi do środka;
+  // mniejsza — trzymaj ją wyśrodkowaną.
+  const clampAxis = (t, off, size, box) => {
+    const s = size * scale;
+    if (s <= box) return (box - s) / 2 - off;
+    return Math.max(box - off - s, Math.min(-off, t));
+  };
   const clamp = () => {
-    // Nie pozwól odsunąć treści całkowicie poza widoczny obszar kontenera.
-    const cRect = gestureRect || container.getBoundingClientRect();
-    const cw = gestureCanvasW ?? canvas.offsetWidth;
-    const ch = gestureCanvasH ?? canvas.offsetHeight;
-    const w = cw * scale;
-    const h = ch * scale;
-    const minTx = Math.min(0, cRect.width - w);
-    const minTy = Math.min(0, cRect.height - h);
-    tx = Math.max(minTx, Math.min(0, tx));
-    ty = Math.max(minTy, Math.min(0, ty));
+    if (!geo) measure();
+    tx = clampAxis(tx, geo.offX, geo.cw, geo.w);
+    ty = clampAxis(ty, geo.offY, geo.ch, geo.h);
   };
 
+  const local = (pt) => ({ x: pt.x - geo.left - geo.offX, y: pt.y - geo.top - geo.offY });
   const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
   const mid = (a, b) => ({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 });
+
+  const startPinch = () => {
+    const [a, b] = [...pointers.values()];
+    const m = local(mid(a, b));
+    pinch = {
+      p: { x: (m.x - tx) / scale, y: (m.y - ty) / scale },
+      startScale: scale,
+      startDist: dist(a, b) || 1,
+    };
+    panStart = null;
+  };
+  const startPan = (pt) => { panStart = { x: pt.x, y: pt.y, tx, ty }; };
 
   container.addEventListener("pointerdown", (e) => {
     if (e.pointerType !== "touch") return;
     container.setPointerCapture(e.pointerId);
     pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
-    gestureRect = container.getBoundingClientRect();
-    gestureCanvasW = canvas.offsetWidth;
-    gestureCanvasH = canvas.offsetHeight;
-
-    if (pointers.size === 2) {
-      const [a, b] = [...pointers.values()];
-      pinchStartDist = dist(a, b) || 1;
-      pinchStartScale = scale;
-      pinchStartMid = mid(a, b);
-      panStart = null;
-    } else if (pointers.size === 1 && scale > 1) {
-      panStart = { x: e.clientX, y: e.clientY, tx, ty };
-    }
+    measure();
+    if (pointers.size === 2) startPinch();
+    else if (pointers.size === 1 && scale > 1) startPan({ x: e.clientX, y: e.clientY });
   }, { passive: true });
 
   container.addEventListener("pointermove", (e) => {
     if (!pointers.has(e.pointerId)) return;
     pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
 
-    if (pointers.size === 2) {
+    if (pointers.size === 2 && pinch) {
       const [a, b] = [...pointers.values()];
-      const newDist = dist(a, b) || 1;
-      const newMid = mid(a, b);
-      const nextScale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, pinchStartScale * (newDist / pinchStartDist)));
-      // Trzymaj punkt pod palcami w miejscu podczas zoomowania.
-      const cRect = gestureRect || container.getBoundingClientRect();
-      const anchorX = pinchStartMid.x - cRect.left;
-      const anchorY = pinchStartMid.y - cRect.top;
-      tx = anchorX - ((anchorX - tx) / scale) * nextScale + (newMid.x - pinchStartMid.x);
-      ty = anchorY - ((anchorY - ty) / scale) * nextScale + (newMid.y - pinchStartMid.y);
-      scale = nextScale;
+      scale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, pinch.startScale * ((dist(a, b) || 1) / pinch.startDist)));
+      // Ten sam punkt treści zostaje pod środkiem palców.
+      const m = local(mid(a, b));
+      tx = m.x - pinch.p.x * scale;
+      ty = m.y - pinch.p.y * scale;
       clamp();
       apply();
     } else if (pointers.size === 1 && panStart) {
@@ -902,22 +908,16 @@ function initPreviewPinchZoom(container, canvas) {
 
   const endPointer = (e) => {
     pointers.delete(e.pointerId);
-    if (pointers.size < 2) pinchStartDist = 0;
+    pinch = null;
     if (pointers.size === 1 && scale > 1) {
-      // Zejście z dwóch palców (pinch) do jednego — bardzo naturalny gest
-      // "uszczypnij, potem przeciągnij pozostałym palcem". Bez tego
-      // panStart zostawał null aż do CAŁKOWITEGO puszczenia i nowego
-      // dotknięcia — przewijanie milczało, mimo że palec wciąż był na
-      // ekranie i się poruszał (stąd "czasem działa, czasem nie": zależało
-      // wyłącznie od tego, czy user podniósł oba palce naraz, czy jeden po
-      // drugim). Inicjalizujemy panStart od razu na podstawie ostatniej
-      // znanej pozycji pozostałego palca.
+      // Z dwóch palców na jeden: przesuwanie pozostałym palcem od razu,
+      // od jego bieżącej pozycji (bez skoku).
       const [remaining] = pointers.values();
-      panStart = { x: remaining.x, y: remaining.y, tx, ty };
+      startPan(remaining);
     } else if (pointers.size === 0) {
-      panStart = null; gestureRect = null; gestureCanvasW = null; gestureCanvasH = null;
+      panStart = null;
     }
-    if (scale <= 1) reset();
+    if (scale <= 1 && pointers.size === 0) reset();
   };
   container.addEventListener("pointerup", endPointer, { passive: true });
   container.addEventListener("pointercancel", endPointer, { passive: true });
@@ -927,36 +927,31 @@ function initPreviewPinchZoom(container, canvas) {
     if (e.pointerType !== "touch" || pointers.size > 0) return;
     const now = Date.now();
     if (now - lastTap < 300) {
-      // Podwójne stuknięcie: przełącz między 1x a 2.5x wyśrodkowanym na miejscu stuknięcia.
+      // Podwójne stuknięcie: 1x <-> 2.5x, stuknięty punkt na środek.
       if (scale > 1) {
         reset();
       } else {
-        const cRect = container.getBoundingClientRect();
+        measure();
+        const pt = local({ x: e.clientX, y: e.clientY });
+        const p = { x: (pt.x - tx) / scale, y: (pt.y - ty) / scale };
         scale = 2.5;
-        tx = cRect.width / 2 - (e.clientX - cRect.left) * scale;
-        ty = cRect.height / 2 - (e.clientY - cRect.top) * scale;
+        tx = geo.w / 2 - geo.offX - p.x * scale;
+        ty = geo.h / 2 - geo.offY - p.y * scale;
         clamp();
         apply();
       }
+      lastTap = 0;
+      return;
     }
     lastTap = now;
   }, { passive: true });
 
-  // Dodatkowe, jawne zablokowanie natywnych gestów przeglądarki — sam
-  // touch-action:none (CSS) + Pointer Events (powyżej) nie zawsze
-  // wystarczają na każdej przeglądarce, żeby faktycznie stłumić natywny
-  // pinch-zoom/scroll strony przy dwóch palcach; objawiało się to jako
-  // "zwiększanie zoomu zwiększa całą stronę" i toporne przewijanie przy
-  // powiększeniu (nasz JS i natywna obsługa przeglądarki walczyły o ten
-  // sam gest). {passive:false} + preventDefault() na natywnych zdarzeniach
-  // touch* to najbardziej uniwersalny, wspierany wszędzie sposób.
-  const stopNativeGesture = (e) => {
-    if (e.touches && e.touches.length >= 2) e.preventDefault();
-  };
-  container.addEventListener("touchstart", stopNativeGesture, { passive: false });
+  // Jawne zablokowanie natywnych gestów (pinch strony, scroll) — sam
+  // touch-action:none nie zawsze wystarcza.
+  const stopNativeGesture = (e) => { if (e.cancelable) e.preventDefault(); };
+  container.addEventListener("touchstart", (e) => { if (e.touches && e.touches.length >= 2) stopNativeGesture(e); }, { passive: false });
   container.addEventListener("touchmove", stopNativeGesture, { passive: false });
-  // Safari: gesturestart/gesturechange to jego własny, dodatkowy mechanizm
-  // pinch-zoom, całkowicie niezależny od touch/pointer eventów.
+  // Safari: własny mechanizm pinch-zoom niezależny od touch/pointer.
   container.addEventListener("gesturestart", (e) => e.preventDefault());
   container.addEventListener("gesturechange", (e) => e.preventDefault());
 
@@ -1001,7 +996,12 @@ function openPreviewFullscreen(payload){
 
   const modal = previewOverlay.querySelector(".modal");
   if (modal) {
-    modal.classList.toggle("is-touch", isMobileDevice());
+    // Chrome na tabletach z Androidem domyślnie przedstawia się jako
+    // przeglądarka desktopowa (UA bez „Android”) — sam isMobileDevice()
+    // nie włączał wtedy trybu dotykowego, a bez niego (transform-origin,
+    // touch-action:none, overflow:hidden) przybliżanie skakało i lagowało.
+    const touch = isMobileDevice() || navigator.maxTouchPoints > 0 || window.matchMedia?.("(pointer: coarse)").matches;
+    modal.classList.toggle("is-touch", !!touch);
   }
 
   if (!_previewPinchZoom) {
