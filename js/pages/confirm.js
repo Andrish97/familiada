@@ -1,10 +1,10 @@
-import { sb } from "../core/supabase.js?v=v2026-09-25T19475";
-import { niceAuthError } from "../core/auth.js?v=v2026-09-25T19475";
-import { updateUserLanguage, discardCurrentGuestAccount } from "../core/auth.js?v=v2026-09-25T19475";
-import { initI18n, t, getUiLang, withLangParam } from "../../translation/translation.js?v=v2026-09-25T19475";
-import { confirmModal } from "../core/modal.js?v=v2026-09-25T19475";
-import { isGuestUser } from "../core/guest-mode.js?v=v2026-09-25T19475";
-import "../core/contact-modal.js?v=v2026-09-25T19475";
+import { sb } from "../core/supabase.js?v=v2026-09-25T19565";
+import { niceAuthError } from "../core/auth.js?v=v2026-09-25T19565";
+import { updateUserLanguage, discardCurrentGuestAccount } from "../core/auth.js?v=v2026-09-25T19565";
+import { initI18n, t, getUiLang, withLangParam } from "../../translation/translation.js?v=v2026-09-25T19565";
+import { confirmModal } from "../core/modal.js?v=v2026-09-25T19565";
+import { isGuestUser } from "../core/guest-mode.js?v=v2026-09-25T19565";
+import "../core/contact-modal.js?v=v2026-09-25T19565";
 
 const status = document.getElementById("status");
 const err = document.getElementById("err");
