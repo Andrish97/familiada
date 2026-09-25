@@ -1623,9 +1623,11 @@ function openEditor(mode, logo = null){
 
   if (btnBack) btnBack.style.display = "none";
   if (btnCloseEditor) btnCloseEditor.style.display = "";
-  document.getElementById("who")?.style.setProperty("display", "none");
-  document.getElementById("btnLogout")?.style.setProperty("display", "none");
-  document.getElementById("topbarAccountMenu")?.style.setProperty("display", "none");
+  // #who / #btnLogout / menu konta chowa w edycji CSS (.is-editor
+  // .topbar-section-4 > :not(#btnCloseEditor)). Nie ruszamy ich stylu
+  // inline — o jego wartości decyduje topbar (zalogowany: „Wyloguj” jest
+  // w menu konta, a sam przycisk schowany); zdejmowanie go po zamknięciu
+  // edycji pokazywało drugi „Wyloguj” obok menu.
 
   // ===== label trybu =====
   const modeLabel = getModeLabel(mode);
@@ -1691,9 +1693,6 @@ async function closeEditor(force = false){
   document.body.classList.remove("is-editor", "topbar-no-menu");
   if (btnBack) btnBack.style.display = "";
   if (btnCloseEditor) btnCloseEditor.style.display = "none";
-  document.getElementById("who")?.style.removeProperty("display");
-  document.getElementById("btnLogout")?.style.removeProperty("display");
-  document.getElementById("topbarAccountMenu")?.style.removeProperty("display");
   brandTitle.textContent = "FAMILIADA";
 }
 

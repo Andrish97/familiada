@@ -2761,6 +2761,92 @@ export function initDrawEditor(ctx) {
       }
     });
 
+    // Pinch dwoma palcami = zoom planszy (jak przyciski +/-) + przesuwanie.
+    // Działa przy każdym narzędziu. Zdarzenia dotyku z dwoma palcami są
+    // zatrzymywane w fazie capture na kontenerze Fabrica (nie dochodzą do
+    // pędzla/kształtów), a to, co pierwszy palec zdążył zacząć rysować,
+    // jest anulowane. Ostatnie touchend przepuszczamy, żeby Fabric zamknął
+    // swój stan — pusty kształt/kreska z anulowanego gestu jest usuwana.
+    {
+      const wrap = fabricCanvas.wrapperEl || drawCanvasEl.parentElement;
+      let pz = null;          // { dist, zoom, world } — stan gestu
+      let pzActive = false;   // od drugiego palca do podniesienia wszystkich
+      let discardNextPath = false;
+      const tpt = (tch) => ({ x: tch.clientX, y: tch.clientY });
+      const tdist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y) || 1;
+      const tmid = (a, b) => ({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 });
+
+      const cancelStroke = () => {
+        if (drawingObj) {
+          fabricCanvas.remove(drawingObj);
+          drawingObj = null;
+          drawingStart = null;
+        }
+        if (fabricCanvas.isDrawingMode) discardNextPath = true;
+        pointerDown = false;
+        fabricCanvas.requestRenderAll();
+      };
+
+      const beginPinch = (e) => {
+        const f = requireFabric();
+        const a = tpt(e.touches[0]), b = tpt(e.touches[1]);
+        const rect = fabricCanvas.upperCanvasEl.getBoundingClientRect();
+        const m = tmid(a, b);
+        const inv = f.util.invertTransform(fabricCanvas.viewportTransform);
+        pz = {
+          dist: tdist(a, b),
+          zoom: fabricCanvas.getZoom(),
+          world: f.util.transformPoint(new f.Point(m.x - rect.left, m.y - rect.top), inv),
+        };
+      };
+
+      wrap.addEventListener("touchstart", (e) => {
+        if (e.touches.length < 2) return;
+        e.preventDefault();
+        e.stopPropagation();
+        if (!pzActive) { pzActive = true; cancelStroke(); }
+        beginPinch(e);
+      }, { capture: true, passive: false });
+
+      wrap.addEventListener("touchmove", (e) => {
+        if (!pzActive) return;
+        e.preventDefault();
+        e.stopPropagation();
+        if (!pz || e.touches.length < 2) return;
+        const a = tpt(e.touches[0]), b = tpt(e.touches[1]);
+        const rect = fabricCanvas.upperCanvasEl.getBoundingClientRect();
+        const m = tmid(a, b);
+        const z = clamp(pz.zoom * (tdist(a, b) / pz.dist), MIN_ZOOM, MAX_ZOOM);
+        // ten sam punkt planszy zostaje pod środkiem palców
+        fabricCanvas.setViewportTransform([z, 0, 0, z, (m.x - rect.left) - pz.world.x * z, (m.y - rect.top) - pz.world.y * z]);
+        if (z <= MIN_ZOOM + 1e-6) fabricCanvas.setViewportTransform([1, 0, 0, 1, 0, 0]);
+        else clampViewport();
+        fabricCanvas.requestRenderAll();
+        updateZoomButtons();
+        updateCursorVisual();
+      }, { capture: true, passive: false });
+
+      const endPinch = (e) => {
+        if (!pzActive) return;
+        if (e.touches.length >= 2) { beginPinch(e); e.stopPropagation(); return; }
+        pz = null;
+        if (e.touches.length === 0) {
+          pzActive = false;         // ostatnie touchend dochodzi do Fabrica
+          schedulePreview(60);
+        } else {
+          e.stopPropagation();      // został jeden palec — nic nie rysuje
+        }
+      };
+      wrap.addEventListener("touchend", endPinch, { capture: true });
+      wrap.addEventListener("touchcancel", endPinch, { capture: true });
+
+      fabricCanvas.on("path:created", (ev) => {
+        if (!discardNextPath) return;
+        discardNextPath = false;
+        if (ev?.path) fabricCanvas.remove(ev.path);
+      });
+    }
+
     // Wheel zoom (tylko select/pan) + min zoom = 1
     drawCanvasEl.addEventListener("wheel", (ev) => {
       if (ctx.getMode?.() !== "DRAW") return;
