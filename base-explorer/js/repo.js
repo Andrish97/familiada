@@ -1,7 +1,7 @@
 // base-explorerjs/repo.js
 // Repozytorium danych (Supabase) dla menadżera bazy pytań.
 
-import { sb } from "../../js/core/supabase.js?v=v2026-09-25T18594";
+import { sb } from "../../js/core/supabase.js?v=v2026-09-25T19014";
 
 /**
  * Pobiera metadane bazy.
