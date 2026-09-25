@@ -14,11 +14,11 @@
 // wstrzyknięcie zależności (ten sam wzorzec co dzisiejsze createRounds/
 // createFinal), więc dają się testować w gołym Node z atrapą store.
 
-import { sb } from "../../js/core/supabase.js?v=v2026-09-25T18481";
-import { ringDoorbell } from "../../js/core/game-state-doorbell.js?v=v2026-09-25T18481";
-import { createPersist, StaleWriteError } from "./persist.js?v=v2026-09-25T18481";
-import { makeDefaultState, DEFAULT_SETTINGS, PERSISTED_KEYS } from "../../shared/gameStateShape.js?v=v2026-09-25T18481";
-import { expiredTimerOnHydrate } from "./timerResume.js?v=v2026-09-25T18481";
+import { sb } from "../../js/core/supabase.js?v=v2026-09-25T18524";
+import { ringDoorbell } from "../../js/core/game-state-doorbell.js?v=v2026-09-25T18524";
+import { createPersist, StaleWriteError } from "./persist.js?v=v2026-09-25T18524";
+import { makeDefaultState, DEFAULT_SETTINGS, PERSISTED_KEYS } from "../../shared/gameStateShape.js?v=v2026-09-25T18524";
+import { expiredTimerOnHydrate } from "./timerResume.js?v=v2026-09-25T18524";
 
 // Kanał broadcastowy "dzwonek" (plan, sekcja 1 — decyzja końcowa: anon nie
 // ma bezpośredniego dostępu do odczytu game_state wcale, więc postgres_changes
