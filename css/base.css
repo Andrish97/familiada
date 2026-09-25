@@ -829,7 +829,8 @@ main{
 .ui-select {
     position: relative;
     display: inline-block;
-    min-width: 160px
+    min-width: 160px;
+    max-width: 100%
 }
 
 .ui-select-btn {
@@ -841,13 +842,20 @@ main{
     cursor: pointer
 }
 
+/* Zbyt długa nazwa kończy się wielokropkiem (min-width:0 — bez tego
+   element flex nie zwęża się poniżej szerokości tekstu i wychodzi poza
+   przycisk). Pełna nazwa jest w title (ui-select.js). */
 .ui-select-label {
+    flex: 1 1 auto;
+    min-width: 0;
+    text-align: left;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap
 }
 
 .ui-select-caret {
+    flex-shrink: 0;
     font-size: 12px;
     opacity: .7
 }
@@ -883,7 +891,10 @@ main{
     font-weight: 900;
     font-size: 12px;
     letter-spacing: .03em;
-    cursor: pointer
+    cursor: pointer;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis
 }
 
 .ui-select-item:hover {

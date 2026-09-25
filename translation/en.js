@@ -4052,7 +4052,7 @@ const en = {
           arrow1: "Arrow",
           arrow2: "Double arrow",
           arrow1Fill: "Filled arrow",
-          arrow2Fill: "Filled double arrow",
+          arrow2Fill: "Double filled",
           heart: "Heart",
           polygon: "Polygon",
         },

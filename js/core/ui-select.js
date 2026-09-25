@@ -56,6 +56,8 @@ export function initUiSelect(root, { options = [], value = "", placeholder = "�
     const match = currentOptions.find((opt) => String(opt.value) === currentValue);
     if (match?.icon) label.innerHTML = iconText(match.icon, match.label);
     else label.textContent = match ? match.label : placeholder;
+    // pełna nazwa w dymku — na przycisku może być ucięta wielokropkiem
+    if (match?.label) btn.title = match.label; else btn.removeAttribute("title");
     for (const item of menu.querySelectorAll(".ui-select-item")) {
       const isSelected = item.dataset.value === currentValue;
       item.setAttribute("aria-selected", isSelected ? "true" : "false");
@@ -78,6 +80,7 @@ export function initUiSelect(root, { options = [], value = "", placeholder = "�
       if (opt.icon) item.innerHTML = iconText(opt.icon, opt.label);
       else item.textContent = opt.label || placeholder;
       item.setAttribute("role", "option");
+      if (opt.label) item.title = opt.label;
       item.setAttribute("aria-selected", "false");
       menu.appendChild(item);
     });
