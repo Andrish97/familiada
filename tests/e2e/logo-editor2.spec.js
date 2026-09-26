@@ -13,7 +13,7 @@ const { test, expect } = require("@playwright/test");
 const { startLocalSite, loginToLocalSite } = require("./helpers/local-site");
 const { testAccountUsername } = require("./helpers/login");
 
-const USERNAME = testAccountUsername(5);
+const USERNAME = testAccountUsername(1);
 const LE2_PREFIX = "E2E-LE2-";
 
 test.use({
