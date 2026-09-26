@@ -1,9 +1,12 @@
 // familiada/logo-editor2/js/draw.js
 // Tryb DRAW: rysunek wektorowy (Fabric.js 5, globalne window.fabric) -> PIX 150x70.
 //
-// Świat sceny ma STAŁY rozmiar WORLD_W x WORLD_H (draw/raster.js), niezależny
-// od ekranu -- obiekty zapisują się we współrzędnych świata, a dopasowanie do
-// rozmiaru okna robi wyłącznie viewportTransform (skala bazowa). Zoom
+// Świat sceny ma rozmiar ZAPISANY RAZEM Z LOGO (source.world) -- niezależny
+// od ekranu: obiekty są we współrzędnych świata, a dopasowanie do okna robi
+// wyłącznie viewportTransform (skala bazowa). Nowe logo: WORLD_W x WORLD_H
+// (draw/raster.js). Stare zapisy (sprzed source.world) zachowują rozmiar
+// sceny, na której je narysowano (zdradza go zapisany clipPath) -- dzięki
+// temu raster wychodzi bit w bit taki sam jak w starym edytorze. Zoom
 // użytkownika to mnożnik skali bazowej: 1 = cała scena, max 12; przesuwanie
 // widoku tylko przy zoomie > 1 i nigdy poza scenę.
 //
@@ -85,6 +88,8 @@ export function initDrawEditor(ctx) {
   // Stan
   // =========================================================
   let canvas = null;           // fabric.Canvas (tworzony przy pierwszym open())
+  let worldW = WORLD_W;        // rozmiar świata otwartego logo (patrz nagłówek)
+  let worldH = WORLD_H;
   let baseTool = TOOL.SELECT;  // wybrane narzędzie
   let tool = TOOL.SELECT;      // bieżące (Spacja = chwilowo Ręka, Ctrl/Cmd = chwilowo Wskaźnik)
   let holdSpace = false;
@@ -117,16 +122,16 @@ export function initDrawEditor(ctx) {
   // =========================================================
   // Widok: skala bazowa (świat -> ekran) i zoom użytkownika
   // =========================================================
-  const baseScale = () => canvas.getWidth() / WORLD_W;
+  const baseScale = () => canvas.getWidth() / worldW;
   const userZoom = () => canvas.getZoom() / baseScale();
 
   function stageSize() {
     const rect = stageHost?.getBoundingClientRect?.() || { width: 800, height: 400 };
     let w = Math.max(320, Math.floor(rect.width));
-    let h = Math.floor((w * WORLD_H) / WORLD_W);
+    let h = Math.floor((w * worldH) / worldW);
     if (rect.height > 0 && h > rect.height) {
       h = Math.max(180, Math.floor(rect.height));
-      w = Math.floor((h * WORLD_W) / WORLD_H);
+      w = Math.floor((h * worldW) / worldH);
     }
     return { w, h };
   }
@@ -134,8 +139,8 @@ export function initDrawEditor(ctx) {
   function clampViewport() {
     const z = canvas.getZoom();
     const v = canvas.viewportTransform.slice();
-    v[4] = clamp(v[4], canvas.getWidth() - WORLD_W * z, 0);
-    v[5] = clamp(v[5], canvas.getHeight() - WORLD_H * z, 0);
+    v[4] = clamp(v[4], canvas.getWidth() - worldW * z, 0);
+    v[5] = clamp(v[5], canvas.getHeight() - worldH * z, 0);
     canvas.setViewportTransform(v);
   }
 
@@ -173,7 +178,7 @@ export function initDrawEditor(ctx) {
     const p = ev?.touches?.[0] || ev?.changedTouches?.[0] || ev;
     const rect = canvas.upperCanvasEl.getBoundingClientRect();
     const wp = f.util.transformPoint(new f.Point(p.clientX - rect.left, p.clientY - rect.top), f.util.invertTransform(canvas.viewportTransform));
-    return { x: clamp(wp.x, 0, WORLD_W), y: clamp(wp.y, 0, WORLD_H) };
+    return { x: clamp(wp.x, 0, worldW), y: clamp(wp.y, 0, worldH) };
   }
 
   /** Nie pozwala wyjechać obiektem poza scenę. */
@@ -182,9 +187,9 @@ export function initDrawEditor(ctx) {
     const r = obj.getBoundingRect(true, true); // we współrzędnych świata
     let dx = 0, dy = 0;
     if (r.left < 0) dx = -r.left;
-    else if (r.left + r.width > WORLD_W) dx = WORLD_W - (r.left + r.width);
+    else if (r.left + r.width > worldW) dx = worldW - (r.left + r.width);
     if (r.top < 0) dy = -r.top;
-    else if (r.top + r.height > WORLD_H) dy = WORLD_H - (r.top + r.height);
+    else if (r.top + r.height > worldH) dy = worldH - (r.top + r.height);
     if (dx || dy) {
       obj.left += dx;
       obj.top += dy;
@@ -272,7 +277,7 @@ export function initDrawEditor(ctx) {
     clearTimeout(previewTimer);
     const seq = ++previewSeq;
     previewTimer = setTimeout(async () => {
-      const b = await sceneToBits(fabric(), snapshot());
+      const b = await sceneToBits(fabric(), snapshot(), worldW, worldH);
       if (seq !== previewSeq) return;
       bits = b;
       ctx.onPreview?.({ kind: "PIX", bits });
@@ -295,7 +300,7 @@ export function initDrawEditor(ctx) {
   }
 
   function updateClipPath() {
-    canvas.clipPath = new (fabric().Rect)({ left: 0, top: 0, width: WORLD_W, height: WORLD_H, absolutePositioned: true });
+    canvas.clipPath = new (fabric().Rect)({ left: 0, top: 0, width: worldW, height: worldH, absolutePositioned: true });
   }
 
   // =========================================================
@@ -1377,20 +1382,11 @@ export function initDrawEditor(ctx) {
   // =========================================================
   // Wczytywanie zapisu (z migracją starego formatu)
   // =========================================================
-  // Stare zapisy (przed stałym światem) miały współrzędne w pikselach ekranu,
-  // na którym je narysowano -- rozmiar tamtej sceny zdradza zapisany clipPath.
-  function legacyWorldWidth(fabricData) {
-    const w = Number(fabricData?.clipPath?.width);
-    return Number.isFinite(w) && w > 1 ? w : null;
-  }
-
-  function scaleSceneObjects(s) {
-    canvas.getObjects().forEach((o) => {
-      o.set({ left: o.left * s, top: o.top * s, scaleX: (o.scaleX || 1) * s, scaleY: (o.scaleY || 1) * s });
-      // strokeUniform: grubość nie skaluje się z obiektem -- przeliczamy ją osobno
-      if (o.strokeUniform) o.set({ strokeWidth: (o.strokeWidth || 0) * s });
-      o.setCoords();
-    });
+  /** Rozmiar świata zapisu: source.world, a w starych zapisach -- zapisany clipPath sceny. */
+  function savedWorld(source) {
+    const w = Number(source?.world?.w ?? source?.fabricData?.clipPath?.width);
+    const h = Number(source?.world?.h ?? source?.fabricData?.clipPath?.height);
+    return w > 1 && h > 1 ? { w, h } : { w: WORLD_W, h: WORLD_H };
   }
 
   /**
@@ -1403,11 +1399,11 @@ export function initDrawEditor(ctx) {
     const bitsIn = unpackBits(b64);
     if (!bitsIn.some(Boolean)) return null;
     const el = document.createElement("canvas");
-    el.width = WORLD_W;
-    el.height = WORLD_H;
+    el.width = worldW;
+    el.height = worldH;
     const g = el.getContext("2d");
     g.fillStyle = "#ffffff";
-    const cell = WORLD_W / 208; // 5 -- jeden „piksel” rastra 208x88
+    const cell = worldW / 208; // jeden „piksel” rastra 208x88 (5 w nowym świecie)
     for (let y = 0; y < DOT_H; y++) {
       for (let x = 0; x < DOT_W; x++) {
         if (!bitsIn[y * DOT_W + x]) continue;
@@ -1421,8 +1417,9 @@ export function initDrawEditor(ctx) {
 
   async function loadSource(payload) {
     const source = payload?.source || {};
-    const data = source.fabricData;
-    if (!data) {
+    ({ w: worldW, h: worldH } = source.fabricData ? savedWorld(source) : { w: WORLD_W, h: WORLD_H });
+    resizeStage();
+    if (!source.fabricData) {
       canvas.clear();
       canvas.backgroundColor = hex(bg);
       updateClipPath();
@@ -1430,9 +1427,7 @@ export function initDrawEditor(ctx) {
       if (layer) canvas.add(layer);
       return;
     }
-    await loadScene(data);
-    const oldW = source.world?.w || legacyWorldWidth(data);
-    if (oldW && Math.abs(oldW - WORLD_W) > 0.5) scaleSceneObjects(WORLD_W / oldW);
+    await loadScene(source.fabricData);
   }
 
   // =========================================================
@@ -1485,7 +1480,7 @@ export function initDrawEditor(ctx) {
       clearPolyDraft();
 
       const fabricData = snapshot();
-      bits = await sceneToBits(fabric(), fabricData);
+      bits = await sceneToBits(fabric(), fabricData, worldW, worldH);
       ctx.onPreview?.({ kind: "PIX", bits });
       return {
         ok: true,
@@ -1495,7 +1490,7 @@ export function initDrawEditor(ctx) {
           h: DOT_H,
           format: PIX_FORMAT,
           bits_b64: packBits(bits),
-          source: { mode: "DRAW", fabricData, world: { w: WORLD_W, h: WORLD_H }, bg, toolSettings: settings },
+          source: { mode: "DRAW", fabricData, world: { w: worldW, h: worldH }, bg, toolSettings: settings },
         },
       };
     },

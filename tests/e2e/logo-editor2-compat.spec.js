@@ -34,8 +34,20 @@ test.afterEach(async ({ page }) => { await L.cleanup(page); });
 async function oldCreate(page, mode, name) {
   await page.goto(`${site.origin}/logo-editor`, { waitUntil: "domcontentloaded" });
   await expect(page.locator("#grid .addCard")).toBeVisible({ timeout: 20000 });
+  await page.waitForLoadState("networkidle");
   await page.locator("#grid .addCard").click();
+  await expect(page.locator("#createOverlay")).toBeVisible();
   await page.locator(`#pick${mode}`).click();
+  try {
+    await expect(page.locator("#renameOverlay")).toBeVisible({ timeout: 5000 });
+  } catch (e) {
+    console.log("[compat-diag] stan po wyborze trybu:", JSON.stringify(await page.evaluate(() => ({
+      overlays: [...document.querySelectorAll(".overlay")].map((o) => `${o.id || o.className}:${getComputedStyle(o).display}`),
+      uniModal: document.querySelector(".uni-modal .mSub")?.textContent || null,
+      body: document.body.className,
+    }))));
+    throw e;
+  }
   await page.fill("#renameInput", name);
   await page.locator("#btnRenameOk").click();
   // stary edytor od razu wstawia pusty wiersz i NIE otwiera edycji

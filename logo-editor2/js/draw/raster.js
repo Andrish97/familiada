@@ -1,5 +1,5 @@
 // familiada/logo-editor2/js/draw/raster.js
-// Scena rysunku (świat WORLD_W x WORLD_H) -> bity 150x70.
+// Scena rysunku (świat worldW x worldH) -> bity 150x70.
 //
 // Wyświetlacz ma 30x10 kafli po 5x7 kropek z przerwami między kaflami.
 // Rysunek renderujemy najpierw do 208x88 „pikseli” -- to 30 kafli po 7
@@ -10,19 +10,27 @@
 
 import { DOT_W, DOT_H } from "../render.js?v=v2026-09-26T05304";
 
-export const WORLD_W = 1040; // 26:11, jak cały wyświetlacz
+// Świat nowych rysunków: 26:11, jak cały wyświetlacz. Stare rysunki mają
+// swój rozmiar (patrz draw.js) -- dlatego raster przyjmuje go w parametrze.
+export const WORLD_W = 1040;
 export const WORLD_H = 440;
 
 const RAST_W = 208;
 const RAST_H = 88;
 
-/** Renderuje JSON sceny (canvas.toJSON) do canvasa 208x88. */
-async function renderToRaster(fabric, json) {
+/**
+ * Renderuje JSON sceny (canvas.toJSON) do canvasa 208x88. Jedna skala dla
+ * obu osi (jak w starym edytorze) -- przy świecie 26:11 wypełnia raster
+ * dokładnie. enableRetinaScaling: false, bo inaczej na ekranach HiDPI canvas
+ * miałby 2x więcej pikseli, a odczyt 208x88 łapał tylko lewą górną ćwiartkę.
+ */
+async function renderToRaster(fabric, json, worldW, worldH) {
   const el = fabric.util.createCanvasElement();
   el.width = RAST_W;
   el.height = RAST_H;
   const sc = new fabric.StaticCanvas(el, { renderOnAddRemove: false, enableRetinaScaling: false });
-  sc.setViewportTransform([RAST_W / WORLD_W, 0, 0, RAST_H / WORLD_H, 0, 0]);
+  const s = Math.min(RAST_W / worldW, RAST_H / worldH);
+  sc.setViewportTransform([s, 0, 0, s, 0, 0]);
   await new Promise((resolve) => sc.loadFromJSON(json, resolve));
   sc.renderAll();
   const data = el.getContext("2d").getImageData(0, 0, RAST_W, RAST_H).data;
@@ -49,6 +57,6 @@ function rasterToBits(data) {
   return out;
 }
 
-export async function sceneToBits(fabric, json) {
-  return rasterToBits(await renderToRaster(fabric, json));
+export async function sceneToBits(fabric, json, worldW = WORLD_W, worldH = WORLD_H) {
+  return rasterToBits(await renderToRaster(fabric, json, worldW, worldH));
 }
