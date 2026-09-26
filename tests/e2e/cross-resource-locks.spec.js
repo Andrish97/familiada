@@ -230,7 +230,7 @@ test("usuwanie logo: zablokowane, gdy używająca go gra ma teraz otwarte ustawi
 });
 
 test("usuwanie logo: działa normalnie, gdy nic go nie blokuje", async ({ page, context }) => {
-  test.setTimeout(40_000);
+  test.setTimeout(70_000);
   await loginAsTestUser(page, context);
 
   const logoName = `E2E-XLOCK-LOGOFREE-${Date.now()}`;
@@ -243,6 +243,16 @@ test("usuwanie logo: działa normalnie, gdy nic go nie blokuje", async ({ page, 
     if (error) throw new Error(error.message);
     return data.id;
   }, logoName);
+
+  // Poprzedni test zamyka kartę ustawień gry, ale jej blokada („settings”)
+  // znika z bazy dopiero chwilę później -- a otwarte ustawienia KTÓREJKOLWIEK
+  // gry blokują usuwanie WSZYSTKICH logo użytkownika („logo in use”). Bez
+  // czekania test był niestabilny (pierwsza próba padała, powtórka
+  // przechodziła). Czekamy, aż na koncie nie ma żadnej blokady gry.
+  await expect.poll(() => page.evaluate(async () => {
+    const { data } = await window.__sbClient.from("edit_locks").select("resource_id").eq("resource_type", "game");
+    return (data || []).length;
+  }), { timeout: 30000, intervals: [500, 1000, 2000] }).toBe(0);
 
   let deleted = false;
   try {
