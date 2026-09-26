@@ -6,20 +6,20 @@
 // engine.js) — ale i tak przechodzi przez assertTransition(), żeby tabela
 // stanów była mechanizmem wszędzie, nie tylko wewnątrz silnika reguł gry.
 
-import { guardDesktopOnly } from "../../js/core/device-guard.js?v=v2026-09-26T05160";
-import { guardResourceLock, guardResourceBusy } from "../../js/core/resource-lock.js?v=v2026-09-26T05160";
-import { initI18n, getUiLang, t } from "../../translation/translation.js?v=v2026-09-26T05160";
-import { requireAuth } from "../../js/core/auth.js?v=v2026-09-26T05160";
-import { setTopbarAccount } from "../../js/core/topbar-controller.js?v=v2026-09-26T05160";
-import { sb } from "../../js/core/supabase.js?v=v2026-09-26T05160";
-import { loadQuestions, loadAnswers } from "../../js/core/game-validate.js?v=v2026-09-26T05160";
-import { loadSfxManifest, initSfx, setCurrentGameId, unlockAudio, applySfxGameSettings, loadSfxFromCloud, playSfx, getSfxDuration } from "../../js/core/sfx.js?v=v2026-09-26T05160";
-import { listGameSounds } from "../../js/core/sfx-cloud.js?v=v2026-09-26T05160";
-import { assertTransition } from "../../shared/gameStateMachine.js?v=v2026-09-26T05160";
-import { confirmModal } from "../../js/core/modal.js?v=v2026-09-26T05160";
-import { DEFAULT_SETTINGS } from "../../shared/gameStateShape.js?v=v2026-09-26T05160";
-import { rt } from "../../js/core/realtime.js?v=v2026-09-26T05160";
-import { doorbellTopic } from "../../js/core/game-state-doorbell.js?v=v2026-09-26T05160";
+import { guardDesktopOnly } from "../../js/core/device-guard.js?v=v2026-09-26T05304";
+import { guardResourceLock, guardResourceBusy } from "../../js/core/resource-lock.js?v=v2026-09-26T05304";
+import { initI18n, getUiLang, t } from "../../translation/translation.js?v=v2026-09-26T05304";
+import { requireAuth } from "../../js/core/auth.js?v=v2026-09-26T05304";
+import { setTopbarAccount } from "../../js/core/topbar-controller.js?v=v2026-09-26T05304";
+import { sb } from "../../js/core/supabase.js?v=v2026-09-26T05304";
+import { loadQuestions, loadAnswers } from "../../js/core/game-validate.js?v=v2026-09-26T05304";
+import { loadSfxManifest, initSfx, setCurrentGameId, unlockAudio, applySfxGameSettings, loadSfxFromCloud, playSfx, getSfxDuration } from "../../js/core/sfx.js?v=v2026-09-26T05304";
+import { listGameSounds } from "../../js/core/sfx-cloud.js?v=v2026-09-26T05304";
+import { assertTransition } from "../../shared/gameStateMachine.js?v=v2026-09-26T05304";
+import { confirmModal } from "../../js/core/modal.js?v=v2026-09-26T05304";
+import { DEFAULT_SETTINGS } from "../../shared/gameStateShape.js?v=v2026-09-26T05304";
+import { rt } from "../../js/core/realtime.js?v=v2026-09-26T05304";
+import { doorbellTopic } from "../../js/core/game-state-doorbell.js?v=v2026-09-26T05304";
 
 function qrImgSrc(url) {
   const u = encodeURIComponent(String(url ?? ""));
@@ -95,15 +95,15 @@ function applyGameSettingsToState(settings, state) {
   }
 }
 
-import { createStore } from "./store.js?v=v2026-09-26T05160";
-import { createEngine } from "./engine.js?v=v2026-09-26T05160";
-import { createActionGate } from "./actionGate.js?v=v2026-09-26T05160";
-import { createDevices } from "./devices.js?v=v2026-09-26T05160";
-import { createPresence } from "./presence.js?v=v2026-09-26T05160";
-import { createSoundReactor } from "./soundReactor.js?v=v2026-09-26T05160";
-import { createUI } from "./ui.js?v=v2026-09-26T05160";
-import { createShareDevice } from "./shareDevice.js?v=v2026-09-26T05160";
-import { icon } from "../../js/core/icons.js?v=v2026-09-26T05160";
+import { createStore } from "./store.js?v=v2026-09-26T05304";
+import { createEngine } from "./engine.js?v=v2026-09-26T05304";
+import { createActionGate } from "./actionGate.js?v=v2026-09-26T05304";
+import { createDevices } from "./devices.js?v=v2026-09-26T05304";
+import { createPresence } from "./presence.js?v=v2026-09-26T05304";
+import { createSoundReactor } from "./soundReactor.js?v=v2026-09-26T05304";
+import { createUI } from "./ui.js?v=v2026-09-26T05304";
+import { createShareDevice } from "./shareDevice.js?v=v2026-09-26T05304";
+import { icon } from "../../js/core/icons.js?v=v2026-09-26T05304";
 
 guardDesktopOnly();
 
@@ -112,11 +112,24 @@ async function pickQuestionPool(state) {
   const finalPicked = new Set((state.final.picked || []).map(String));
   let pool = finalPicked.size ? all.filter((q) => !finalPicked.has(String(q.id))) : all.slice();
 
+  // Realny bug znaleziony przez failed nagranie (przebieg z 2026-09-26,
+  // diagnostyka dumpFailureDiagnostics(): przycisk R8 pokazywał "Przejdź do
+  // następnej rundy" zamiast oczekiwanego "Przejdź do zakończenia gry" po
+  // rundzie, która miała być OSTATNIĄ wg wybranej ręcznie puli 2 pytań).
+  // Plan (tabela A, R1) i komentarz w control2/js/engine.js's
+  // previewRoundEndDestination() są tu jednoznaczne: "pick" = KOLEJNOŚĆ Z
+  // roundsPicked, nie "roundsPicked, a potem reszta jako dolewka". Ta
+  // funkcja doklejała [...ordered, ...WSZYSTKO_INNE] -- więc pula w trybie
+  // "pick" nigdy realnie się nie wyczerpywała po wybranych pytaniach, tylko
+  // ciągnęła dalej z reszty bazy pytań gry, co silnik (engine.js's
+  // previewRoundEndDestination -- `!state.rounds._questionPool.length`)
+  // błędnie odczytywał jako "jest jeszcze kolejna runda". Pula w trybie
+  // "pick" ma kończyć się DOKŁADNIE na wybranych pytaniach -- wyczerpanie
+  // jest tu prawidłowym, oczekiwanym skutkiem (R9③ w planie), nie
+  // przypadkiem do "naprawienia" przez dolewanie czegokolwiek więcej.
   if (state.settings.roundsQuestionsMode === "pick" && state.settings.roundsPicked?.length) {
     const byId = new Map(pool.map((q) => [String(q.id), q]));
-    const ordered = state.settings.roundsPicked.map((p) => byId.get(String(p.id))).filter(Boolean);
-    const orderedIds = new Set(ordered.map((q) => String(q.id)));
-    return [...ordered, ...pool.filter((q) => !orderedIds.has(String(q.id)))];
+    return state.settings.roundsPicked.map((p) => byId.get(String(p.id))).filter(Boolean);
   }
 
   for (let i = pool.length - 1; i > 0; i--) {
