@@ -1218,6 +1218,37 @@ async function dumpFailureDiagnostics(controlPage, scenarioFile) {
     }));
     return { stepper, tileCount: tiles.length, tiles, allButtons };
   }).catch((e) => ({ evalError: e.message }));
+  // Zgłoszone/znalezione po przebiegu #19: przycisk R8 pokazał "Przejdź do
+  // zakończenia gry" zamiast "Przejdź do finału" mimo hasFinal=true i progu
+  // trafionego -- statyczna analiza control2/js/engine.js's canEnterFinal()
+  // (final.confirmed/final.picked.length===5) niczego nie wykazała, a
+  // dokładnie ten sam warunek ma już zielony test jednostkowy
+  // (tests/unit/settings.branching.test.js) z ręcznie ustawionym stanem.
+  // Żeby nie zgadywać dalej -- zrzut PRAWDZIWEGO stanu z bazy (Control jest
+  // "authenticated", ten sam __sbClient co restoreDemoGame() używa, czyta
+  // games.settings BEZPOŚREDNIO -- bez przechodzenia przez UI) obok tego,
+  // co faktycznie wylądowało w game_state.detail po hydrate()/commit().
+  const dbDump = await controlPage.evaluate(async () => {
+    try {
+      const sb = window.__sbClient;
+      const gameId = new URLSearchParams(location.search).get("id");
+      if (!sb || !gameId) return { dbError: "brak __sbClient lub ?id=" };
+      const [{ data: g, error: gErr }, { data: gs, error: gsErr }] = await Promise.all([
+        sb.from("games").select("settings").eq("id", gameId).single(),
+        sb.from("game_state").select("detail, step, top_card").eq("game_id", gameId).single(),
+      ]);
+      return {
+        gamesSettingsGame: g?.settings?.game ?? null,
+        gamesSettingsQuestionsFinalLen: Array.isArray(g?.settings?.questions?.final) ? g.settings.questions.final.length : null,
+        gamesError: gErr?.message ?? null,
+        gameStateStep: gs?.step ?? null,
+        gameStateFinal: gs?.detail?.final ? { confirmed: gs.detail.final.confirmed, pickedLen: gs.detail.final.picked?.length } : null,
+        gameStateSettings: gs?.detail?.settings ? { hasFinal: gs.detail.settings.hasFinal, finalQuestionsMode: gs.detail.settings.finalQuestionsMode, finalMinPoints: gs.detail.settings.finalMinPoints } : null,
+        gameStateError: gsErr?.message ?? null,
+      };
+    } catch (e) { return { dbError: e.message }; }
+  }).catch((e) => ({ dbEvalError: e.message }));
+  dump.dbDump = dbDump;
   fs.writeFileSync(`${base}.json`, JSON.stringify(dump, null, 2));
   console.log(`[record] diagnostyka ${scenarioFile}:`, JSON.stringify(dump));
 }
