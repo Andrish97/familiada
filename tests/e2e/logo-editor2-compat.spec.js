@@ -123,7 +123,8 @@ test("zgodność: RYSUNEK ze starego edytora (pędzel, kształty, tekst, wielok�
   const diff = L.bitDiff(before.bits_b64, after.bits_b64);
   console.log(`[compat-draw] stary świat ${before.source.fabricData.clipPath.width}x${before.source.fabricData.clipPath.height}, kropek ${L.litCount(before.bits_b64)}, różnych po zapisie w nowym: ${diff}`);
   expect(diff).toBeLessThanOrEqual(Math.ceil(L.litCount(before.bits_b64) * 0.01));
-  expect(after.source.world).toEqual({ w: 1040, h: 440 });
+  // stary rysunek zachowuje świat, na którym go narysowano (dlatego bit w bit)
+  expect(after.source.world).toEqual({ w: before.source.fabricData.clipPath.width, h: before.source.fabricData.clipPath.height });
 });
 
 test("zgodność: OBRAZ ze starego edytora -> nowy wczytuje obraz z tym samym kadrem", async ({ page }) => {
@@ -176,6 +177,23 @@ test("logo demo: każde da się otworzyć w nowym edytorze, a zapis bez zmian ni
     const after = await L.readLogo(page, id);
     if (d.type === "GLYPH_30x10") {
       expect(after.payload.layers[0].rows).toEqual(d.payload.layers[0].rows.map((r) => String(r).padEnd(30).slice(0, 30)));
+    } else if (d.payload.source?.fabricData) {
+      // Rysunek: odniesieniem jest to, co z TEJ SAMEJ sceny zrobi dziś stary
+      // edytor (zapisane kropki mogły powstać np. na ekranie Retina, patrz 5b).
+      const oldId = await L.insertLogo(page, { name: L.uniq("demo-old"), type: d.type, payload: d.payload });
+      await page.goto(`${site.origin}/logo-editor`, { waitUntil: "domcontentloaded" });
+      await page.waitForLoadState("networkidle");
+      await page.locator(`.logoTile[data-key="${oldId}"]`).click();
+      await page.locator("#btnEdit").click();
+      await page.waitForTimeout(1500);
+      await page.locator("#btnCreate").click();
+      await expect(page.locator("#mMsg")).toHaveText(/Zapisano/, { timeout: 20000 });
+      const oldBits = (await L.readLogo(page, oldId)).payload.bits_b64;
+      const vsOld = L.bitDiff(oldBits, after.payload.bits_b64);
+      console.log(`[demo] ${d.name}: zapisane vs stary edytor dziś: ${L.bitDiff(d.payload.bits_b64, oldBits)}, stary vs nowy: ${vsOld}, świat ${JSON.stringify(after.payload.source.world)}`);
+      expect(vsOld).toBe(0);
+      await L.openList(page, site);
+      continue;
     } else {
       const diff = L.bitDiff(d.payload.bits_b64, after.payload.bits_b64);
       console.log(`[demo] ${d.name}: różnych kropek po zapisie: ${diff}`);
