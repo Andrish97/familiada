@@ -1,0 +1,254 @@
+// familiada/logo-editor2/js/text.js
+// Tryb: TEXT (font_3x10) -> zapis GLYPH_30x10
+// Stała 1 kolumna przerwy miedzy glifami.
+
+import { t, getUiLang } from "../../translation/translation.js?v=v2026-09-26T05304";
+
+export function initTextEditor(ctx) {
+  const paneText = document.getElementById("paneText");
+  const textValue = document.getElementById("textValue");
+  const textWarn = document.getElementById("textWarn");
+  const textMeasure = document.getElementById("textMeasure");
+  const btnCharsToggle = document.getElementById("btnCharsToggle");
+  const charsInline = document.getElementById("charsInline");
+  const charsList = document.getElementById("charsList");
+
+  const TYPE_GLYPH = ctx.TYPE_GLYPH || "GLYPH_30x10";
+
+
+  const CYRILLIC_UK = new Set([
+    "А","Б","В","Г","Ґ","Д","Е","Є","Ж","З","И","І","Й","К","Л","М",
+    "Н","О","П","Р","С","Т","У","Ф","Х","Ц","Ч","Ш","Щ","Ь","Ю","Я","Ї"
+  ]);
+
+  const isCyrillicUk = (ch) => CYRILLIC_UK.has(ch);
+
+  const getFont = () => {
+    const FONT_3x10 = ctx.getFont3x10?.() || {};
+    if (getUiLang() === "uk") return FONT_3x10;
+    // filtruj cyrylicę gdy nie uk
+    return Object.fromEntries(Object.entries(FONT_3x10).filter(([k]) => !isCyrillicUk(k)));
+  };
+
+  const show = (el, on) => { if (!el) return; el.style.display = on ? "" : "none"; };
+
+  let lastCompiled = null;
+
+  function isLitChar(ch) {
+    return ch !== " " && ch !== "\u00A0";
+  }
+
+  function measureGlyphTight3x10(rows10) {
+    const W = 3;
+    let left = W;
+    let right = -1;
+
+    for (let x = 0; x < W; x++) {
+      let any = false;
+      for (let y = 0; y < 10; y++) {
+        const ch = (rows10[y] || "")[x] ?? " ";
+        if (isLitChar(ch)) { any = true; break; }
+      }
+      if (any) {
+        if (x < left) left = x;
+        if (x > right) right = x;
+      }
+    }
+
+    if (right < left) return { left: 0, w: 0 };
+    return suggestedWidthFix(left, right);
+
+    function suggestedWidthFix(l, r){
+      return { left: l, w: r - l + 1 };
+    }
+  }
+
+  function normalizeInputText(raw) {
+    return String(raw ?? "");
+  }
+
+  function compileTextToRows30x10(raw) {
+    const FONT_3x10 = ctx.getFont3x10?.() || null;
+    const text = normalizeInputText(raw);
+
+    const rows = Array.from({ length: 10 }, () => Array.from({ length: 30 }, () => " "));
+    const invalid = [];
+    const chars = Array.from(text);
+
+    /** @type {Array<{space:true} | {rows10:string[], w:number}>} */
+    const glyphs = [];
+
+    for (const ch0 of chars) {
+      if (ch0 === "\n" || ch0 === "\r" || ch0 === "\t") { invalid.push(ch0); continue; }
+      if (ch0 === " ") { glyphs.push({ space: true }); continue; }
+
+      const glyph = FONT_3x10?.[ch0] ?? FONT_3x10?.[ch0.toUpperCase()] ?? null;
+      if (!glyph) { invalid.push(ch0); continue; }
+
+      const gRows = Array.from({ length: 10 }, (_, i) => String(glyph[i] ?? "").padEnd(3, " ").slice(0, 3));
+      const { left, w } = measureGlyphTight3x10(gRows);
+      const cropped = Array.from({ length: 10 }, (_, i) => gRows[i].slice(left, left + w));
+      glyphs.push({ rows10: cropped, w });
+    }
+
+    let usedW = 0;
+    let prevWasGlyph = false;
+    for (const g of glyphs) {
+      if (g.space) { usedW += 1; prevWasGlyph = false; continue; }
+      if (prevWasGlyph) usedW += 1; // stała przerwa 1
+      usedW += g.w;
+      prevWasGlyph = true;
+    }
+
+    const fit = usedW <= 30;
+    const startX = fit ? Math.floor((30 - usedW) / 2) : 0;
+
+    let cursor = startX;
+    prevWasGlyph = false;
+
+    for (const g of glyphs) {
+      if (g.space) { cursor += 1; prevWasGlyph = false; continue; }
+      if (prevWasGlyph) cursor += 1;
+
+      for (let y = 0; y < 10; y++) {
+        const line = g.rows10[y] || "";
+        for (let x = 0; x < g.w; x++) {
+          const outX = cursor + x;
+          if (outX < 0 || outX >= 30) continue;
+          const c = line[x] ?? " ";
+          if (c !== " ") rows[y][outX] = c;
+        }
+      }
+
+      cursor += g.w;
+      prevWasGlyph = true;
+    }
+
+    return {
+      rows: rows.map(r => r.join("")),
+      usedW,
+      fit,
+      invalid: Array.from(new Set(invalid)),
+    };
+  }
+
+  function renderAllowedCharsList() {
+    const FONT_3x10 = getFont();
+    if (!charsList) return;
+    const keys = Object.keys(FONT_3x10 || {});
+    charsList.textContent = "␠" + keys.join("\u2009");
+  }
+
+  function updateCharsToggleLabel(isOpen) {
+    if (!btnCharsToggle) return;
+    btnCharsToggle.textContent = isOpen
+      ? t("logoEditor.text.allowedCharsHide")
+      : t("logoEditor.text.allowedChars");
+  }
+
+  function updateWarnings(compiled) {
+    if (!textWarn || !textMeasure) return;
+
+    const parts = [];
+    if (compiled.invalid.length) {
+      const chars = compiled.invalid.map(x => (x === " " ? "␠" : x)).join(" ");
+      parts.push(t("logoEditor.text.invalidChars", { chars }));
+    }
+    if (!compiled.fit) {
+      parts.push(t("logoEditor.text.tooWide", { width: compiled.usedW }));
+    }
+
+    if (parts.length) {
+      textWarn.textContent = parts.join("\n");
+      show(textWarn, true);
+    } else {
+      show(textWarn, false);
+    }
+
+    textMeasure.textContent = t("logoEditor.text.widthStatus", {
+      width: compiled.usedW,
+      status: compiled.fit ? t("logoEditor.text.fits") : t("logoEditor.text.notFits")
+    });
+  }
+
+  function recompile() {
+    ctx.setEditorMsg?.("");
+    const compiled = compileTextToRows30x10(textValue?.value || "");
+    lastCompiled = compiled;
+    updateWarnings(compiled);
+    ctx.onPreview?.({ kind: "GLYPH", rows: compiled.rows });
+  }
+
+  // EVENTS
+  textValue?.addEventListener("input", () => {
+    if (ctx.getMode?.() !== "TEXT") return;
+    ctx.markDirty?.();
+    recompile();
+  });
+
+  function isHidden(el){
+    if (!el) return true;
+    return getComputedStyle(el).display === "none";
+  }
+
+  window.addEventListener("i18n:lang", () => {
+    renderAllowedCharsList();
+    updateCharsToggleLabel(!isHidden(charsInline));
+    if (lastCompiled) updateWarnings(lastCompiled);
+  });
+  
+  btnCharsToggle?.addEventListener("click", () => {
+    // toggle ma sterować wrapperem, bo HTML ukrywa #charsInline (rodzic listy)
+    const open = isHidden(charsInline);
+  
+    show(charsInline, open);
+    show(charsList, open);
+  
+    // opcjonalnie: zmiana etykiety przycisku
+    updateCharsToggleLabel(open);
+  });
+
+
+  // API
+  return {
+    open(payload = null) {
+      show(paneText, true);
+      const source = payload?.source || {};
+      // Przywróć tekst z source.text (z exportu/importu)
+      if (textValue) textValue.value = source.text || "";
+      
+      if (textMeasure) textMeasure.textContent = "—";
+      show(textWarn, false);
+      renderAllowedCharsList();
+      show(charsInline, false);
+      show(charsList, false);
+      updateCharsToggleLabel(false);
+
+      lastCompiled = null;
+      ctx.clearDirty?.();
+      recompile();
+    },
+
+    close() {
+      show(paneText, false);
+    },
+
+    getCreatePayload() {
+      const compiled = lastCompiled || compileTextToRows30x10(textValue?.value || "");
+      lastCompiled = compiled;
+      updateWarnings(compiled);
+
+      if (compiled.invalid.length) return { ok: false, msg: t("logoEditor.text.fixInvalidChars") };
+      if (!compiled.fit) return { ok: false, msg: t("logoEditor.text.fixTooWide") };
+
+      return {
+        ok: true,
+        type: TYPE_GLYPH,
+        payload: { 
+          layers: [{ color: "main", rows: compiled.rows }],
+          source: { mode: "TEXT", text: textValue?.value || "" }
+        },
+      };
+    },
+  };
+}
