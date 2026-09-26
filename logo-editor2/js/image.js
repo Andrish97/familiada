@@ -263,7 +263,12 @@ export function initImageEditor(ctx) {
     if (!imgObj) { rot90 = nextRot90; return; }
     const seq = ++rotSeq;
     rotating = true;
-    try { await rotateNow(seq, nextRot90, nextStraighten, keepCrop); } finally { if (seq === rotSeq) rotating = false; }
+    if (imgStage) imgStage.dataset.rotating = "1"; // ramka chwilowo ukryta (też sygnał dla testów)
+    try {
+      await rotateNow(seq, nextRot90, nextStraighten, keepCrop);
+    } finally {
+      if (seq === rotSeq) { rotating = false; delete imgStage?.dataset.rotating; }
+    }
   }
 
   async function rotateNow(seq, nextRot90, nextStraighten, keepCrop) {

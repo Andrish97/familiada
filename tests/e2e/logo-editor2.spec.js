@@ -5,13 +5,14 @@
 // a nie z www.familiada.online -- testują kod z gałęzi, na prawdziwym
 // backendzie (baza, RPC, blokady, Storage), bez wdrażania na produkcję.
 //
-// Konto test1@ (test5@/test9@ zwracały z Supabase "Database error querying
-// schema"); logowanie raz na plik (captureSession). Nie odpalać równolegle
-// z grupą "konto-glowne". Każdy test sprząta swoje logo i pliki (prefiks).
+// Konto test2@ -- NIE test1@: na test1@ działa nagrywanie rozgrywki
+// (e2e-record.yml, Control v2), a trwająca gra blokuje edycję logo
+// („prowadzisz rozgrywkę”). test5@/test9@ zwracały z Supabase "Database error
+// querying schema". Numer konta: LOGO_E2E_ACCOUNT (domyślnie 2). Logowanie
+// raz na plik (captureSession). Każdy test sprząta swoje logo i pliki (prefiks).
 //
 // Sprawdzamy WYNIK w bazie (payload, bity, które widzi wyświetlacz), nie
 // tylko to, co widać na stronie. Odnośniki P0-x/P1-x -> docs/audyt-logo-editor.md.
-// Zgodność ze starymi danymi: logo-editor2-compat.spec.js.
 
 const path = require("path");
 const fs = require("fs");
@@ -29,7 +30,7 @@ let site;
 let session;
 test.beforeAll(async ({ browser }) => {
   site = await startLocalSite();
-  session = await captureSession(browser, testAccountUsername(1));
+  session = await captureSession(browser, testAccountUsername(Number(process.env.LOGO_E2E_ACCOUNT) || 2));
 });
 test.afterAll(async () => { await site?.close(); });
 test.beforeEach(async ({ context }) => { await useSession(context, site.origin, session); });
@@ -378,6 +379,9 @@ test.describe("tryb Rysunek", () => {
     await L.createNew(page, "Draw", name);
     const b = await L.stage(page);
     await pickShape(page, "arrow1");
+    // 16: pozioma linia cieńsza może wpaść w przerwę między rzędami kafli i zniknąć z wyświetlacza
+    await page.fill("#cStrokeW", "16");
+    await page.locator("#cStrokeW").press("Enter");
     const y = b.y + b.height / 2;
     // Shift: lekko skośne przeciągnięcie daje idealnie poziomą strzałkę
     await page.mouse.move(b.x + b.width * 0.1, y);
@@ -413,7 +417,8 @@ test.describe("tryb Rysunek", () => {
     expect(box1.x0).toBe(box0.x0);
     expect(box1.x1).toBeGreaterThan(box0.x1 + 20);
     // grot tej samej wielkości: wysokość zapalonego obszaru bez zmian
-    expect(box1.y1 - box1.y0).toBe(box0.y1 - box0.y0);
+    // (±1 kropka: grot przesunięty w poziomie może inaczej trafić w siatkę kropek)
+    expect(Math.abs((box1.y1 - box1.y0) - (box0.y1 - box0.y0))).toBeLessThanOrEqual(1);
 
     // jedno Cofnij = powrót do poprzedniej długości
     await page.keyboard.press("Control+z");
@@ -759,16 +764,22 @@ test.describe("tryb Obraz", () => {
       const x = corner ? f.x + f.width - 2 : f.x + f.width / 2, y = corner ? f.y + f.height - 2 : f.y + f.height / 2;
       await L.drag(page, x, y, x + dx, y + dy);
     };
+    // koniec przebudowy obrazu po obrocie (w trakcie ramka jest ukryta)
+    const settled = async () => {
+      await expect(page.locator("#imgStage")).not.toHaveAttribute("data-rotating", "1", { timeout: 10000 });
+      await expect(page.locator("#cropFrame")).toBeVisible();
+    };
     const straighten = async (v) => {
       await page.locator('.imgSetBtn[data-panel="straighten"]').click();
       await page.locator("#rngImgStraighten").fill(String(v));
       await expect(page.locator('.imgSetBtn[data-panel="straighten"] .imgSetBtnVal')).toHaveText(`${v > 0 ? "+" : ""}${v}°`);
-      await page.waitForTimeout(700);
+      await page.waitForTimeout(200); // opóźnienie suwaka
+      await settled();
     };
 
     await dragFrame(-600, -600); // ramka w rogu obrazu
     await page.locator("#btnImgRotR").click();
-    await page.waitForTimeout(700);
+    await settled();
     expect(await margin(90)).toBeGreaterThanOrEqual(-0.5);
     await straighten(20);
     expect(await margin(110)).toBeGreaterThanOrEqual(-0.5);
@@ -785,6 +796,7 @@ test.describe("tryb Obraz", () => {
     await L.editLogo(page, site, row.id);
     await expect(page.locator("#cropFrame")).toBeVisible({ timeout: 10000 });
     await page.waitForTimeout(800);
+    await settled();
     await expect(page.locator("#rngImgStraighten")).toHaveValue("20");
     expect(await margin(110)).toBeGreaterThanOrEqual(-0.5);
     // zapis bez zmian po ponownym otwarciu: dokładnie te same kropki
@@ -798,10 +810,10 @@ test.describe("tryb Obraz", () => {
     // obrót w lewo i z powrotem: ramka 26:11 na pionowym obrazie musi się
     // zmniejszyć/przesunąć, więc to nie jest tożsamość -- ważne, że zostaje na obrazie
     await page.locator("#btnImgRotL").click();
-    await page.waitForTimeout(700);
+    await settled();
     expect(await margin(20)).toBeGreaterThanOrEqual(-0.5);
     await page.locator("#btnImgRotR").click();
-    await page.waitForTimeout(700);
+    await settled();
     expect(await margin(110)).toBeGreaterThanOrEqual(-0.5);
     expect(await L.save(page)).toMatch(/Zapisano/);
     expect((await L.readLogo(page, row.id)).payload.source.rotate).toBe(90);
