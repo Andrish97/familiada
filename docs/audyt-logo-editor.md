@@ -281,7 +281,7 @@ niezależnie od edytora. Poniżej: co się dzieje przy EDYCJI starego logo.
 | Rodzaj logo | Nowy edytor | Sprawdzone |
 |---|---|---|
 | Tekst z zapisanym napisem | otwiera, identyczne wiersze po zapisie | test: logo ze starego edytora -> nowy |
-| Tekst bez napisu (świeży seed demo, stare, importy) | napis odtwarzany z wierszy; gdy się nie da -- odmowa zamiast wyczyszczenia | demo „MOJE LOGO” (seed) -> „MOJELOGO”, wiersze identyczne; 3000/3000 losowych napisów |
+| Tekst bez napisu (świeży seed demo, stare, importy) | napis odtwarzany z wierszy; gdy się nie da -- odmowa zamiast wyczyszczenia | seed demo: napis odczytany, wiersze identyczne; 3000/3000 losowych napisów |
 | Rysunek z `fabricData` | zachowuje rozmiar sceny, na której go narysowano (z `clipPath`) -> **bit w bit** jak stary edytor | test: pędzel+kształty+tekst ze starego edytora -> 0 różnic |
 | Rysunek bez sceny (seed demo „Rysunek”, PIX bez `source`) | kropki jako warstwa obrazu na scenie, można rysować dalej | 0 różnic po zapisie bez zmian |
 | Obraz ze Storage / demo (`/logo-editor/assets/demo-image.png`) | wczytuje obraz i kadr (także stary format kadru) | test: obraz ze starego edytora -> 0 różnic |
