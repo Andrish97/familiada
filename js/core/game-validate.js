@@ -1,5 +1,6 @@
 // js/core/game-validate.js
 import { sb } from "./supabase.js?v=v2026-09-26T16124";
+import { t } from "../../translation/translation.js?v=v2026-09-26T16124";
 
 /**
  * Typy gier:
@@ -119,14 +120,14 @@ export async function validatePointsPollClosable(/*gameId*/) {
  * 2) prepared: zawsze ok
  */
 export function canEnterEdit(game) {
-  if (!game) return { ok: false, reason: "Brak gry." };
+  if (!game) return { ok: false, reason: t("gameValidate.noGame") };
 
   if (game.type === TYPES.PREPARED) {
     return { ok: true, reason: "", needsResetWarning: false };
   }
 
   if (game.status === STATUS.POLL_OPEN) {
-    return { ok: false, reason: "Ankieta jest otwarta — edycja zablokowana.", needsResetWarning: false };
+    return { ok: false, reason: t("gameValidate.pollOpenNoEdit"), needsResetWarning: false };
   }
 
   if (game.status === STATUS.READY) {
@@ -154,7 +155,7 @@ export async function validatePollEntry(gameId) {
   const game = await loadGameBasic(gameId);
 
   if (game.type === TYPES.PREPARED) {
-    return { ok: false, reason: "Preparowana nie ma ankiety." };
+    return { ok: false, reason: t("gameValidate.preparedNoPoll") };
   }
 
   // wejście do polls dozwolone w każdym stanie (dla tych dwóch typów)
@@ -174,16 +175,16 @@ export async function validatePollReadyToOpen(gameId) {
   const game = await loadGameBasic(gameId);
 
   if (game.type === TYPES.PREPARED) {
-    return { ok: false, reason: "Preparowana nie ma ankiety." };
+    return { ok: false, reason: t("gameValidate.preparedNoPoll") };
   }
   if (game.status === STATUS.POLL_OPEN) {
-    return { ok: false, reason: "Ankieta już jest otwarta." };
+    return { ok: false, reason: t("gameValidate.pollAlreadyOpen") };
   }
 
   const { qs, ansByQ } = await getQA(gameId);
 
   if (qs.length < RULES.QN_MIN) {
-    return { ok: false, reason: `Musi być co najmniej ${RULES.QN_MIN} pytań (masz: ${qs.length}).` };
+    return { ok: false, reason: t("gameValidate.minQuestions", { min: RULES.QN_MIN, n: qs.length }) };
   }
 
   if (game.type === TYPES.POLL_POINTS) {
@@ -192,7 +193,7 @@ export async function validatePollReadyToOpen(gameId) {
       if (!clampAnswersCountOk(ans.length)) {
         return {
           ok: false,
-          reason: `Pytanie #${q.ord}: musi mieć ${RULES.AN_MIN}–${RULES.AN_MAX} odpowiedzi (masz: ${ans.length}).`,
+          reason: t("gameValidate.answersRange", { ord: q.ord, min: RULES.AN_MIN, max: RULES.AN_MAX, n: ans.length }),
         };
       }
     }
@@ -218,7 +219,7 @@ export async function validateGameReadyToPlay(gameId) {
   // poll_*: tylko po zamknięciu
   if (game.type === TYPES.POLL_TEXT || game.type === TYPES.POLL_POINTS) {
     if (game.status !== STATUS.READY) {
-      return { ok: false, reason: "Gra dostępna dopiero po zamknięciu ankiety." };
+      return { ok: false, reason: t("gameValidate.playAfterPoll") };
     }
     return { ok: true, reason: "" };
   }
@@ -227,7 +228,7 @@ export async function validateGameReadyToPlay(gameId) {
   const { qs, ansByQ } = await getQA(gameId);
 
   if (qs.length < RULES.QN_MIN) {
-    return { ok: false, reason: `Musi być co najmniej ${RULES.QN_MIN} pytań (masz: ${qs.length}).` };
+    return { ok: false, reason: t("gameValidate.minQuestions", { min: RULES.QN_MIN, n: qs.length }) };
   }
 
   for (const q of qs) {
@@ -235,23 +236,23 @@ export async function validateGameReadyToPlay(gameId) {
     if (!clampAnswersCountOk(ans.length)) {
       return {
         ok: false,
-        reason: `Pytanie #${q.ord}: musi mieć ${RULES.AN_MIN}–${RULES.AN_MAX} odpowiedzi (masz: ${ans.length}).`,
+        reason: t("gameValidate.answersRange", { ord: q.ord, min: RULES.AN_MIN, max: RULES.AN_MAX, n: ans.length }),
       };
     }
 
     const pts = ans.map(a => n(a.fixed_points));
     if (pts.some(p => p < 0)) {
-      return { ok: false, reason: `Pytanie #${q.ord}: punkty nie mogą być ujemne.` };
+      return { ok: false, reason: t("gameValidate.negativePoints", { ord: q.ord }) };
     }
     if (pts.some(p => p > 100)) {
-      return { ok: false, reason: `Pytanie #${q.ord}: odpowiedź nie może mieć > 100 pkt.` };
+      return { ok: false, reason: t("gameValidate.answerOver100", { ord: q.ord }) };
     }
 
     const sum = pts.reduce((s, x) => s + x, 0);
     if (sum > RULES.SUM_PREPARED) {
       return {
         ok: false,
-        reason: `Pytanie #${q.ord}: suma punktów nie może przekroczyć ${RULES.SUM_PREPARED} (jest: ${sum}).`,
+        reason: t("gameValidate.sumTooBig", { ord: q.ord, max: RULES.SUM_PREPARED, sum }),
       };
     }
   }

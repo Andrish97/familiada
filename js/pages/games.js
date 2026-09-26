@@ -814,30 +814,11 @@ async function resetPollForEditing(gameId) {
     return false;
   }
 
-  const { error: gErr } = await sb()
-    .from("games")
-    // poll_opened_at/closed_at jak w resetPollForEditing() edytora -- po
-    // resecie stąd edytor widzi już draft i sam ich nie wyczyści.
-    .update({ status: STATUS.DRAFT, poll_opened_at: null, poll_closed_at: null })
-    .eq("id", gameId);
-  if (gErr) throw gErr;
-
-  const { data: qs, error: qErr } = await sb()
-    .from("questions")
-    .select("id")
-    .eq("game_id", gameId);
-
-  if (qErr) throw qErr;
-
-  const qIds = (qs || []).map(x => x.id);
-  if (!qIds.length) return true;
-
-  const { error: aErr } = await sb()
-    .from("answers")
-    .update({ fixed_points: 0 })
-    .in("question_id", qIds);
-
-  if (aErr) throw aErr;
+  // Jedno RPC = jedna transakcja (migracja 272): wcześniej status i punkty
+  // szły osobnymi zapisami i błąd pomiędzy zostawiał szkic z punktami.
+  const { data, error } = await sb().rpc("game_reset_poll_for_edit", { p_game_id: gameId });
+  if (error) throw error;
+  if (!data?.ok) throw new Error(data?.error || "reset_failed");
   return true;
 }
 

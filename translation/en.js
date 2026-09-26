@@ -2764,6 +2764,18 @@ const en = {
       validMessage: "Message must be between 5 and 5000 characters.",
     },
   },
+  gameValidate: {
+    noGame: "Game not found.",
+    pollOpenNoEdit: "The poll is open — editing is locked.",
+    preparedNoPoll: "A prepared game has no poll.",
+    pollAlreadyOpen: "The poll is already open.",
+    minQuestions: "The game needs at least {min} questions (you have {n}).",
+    answersRange: "Question #{ord}: needs {min}–{max} answers (it has {n}).",
+    playAfterPoll: "The game will be playable once the poll is closed.",
+    negativePoints: "Question #{ord}: points cannot be negative.",
+    answerOver100: "Question #{ord}: an answer cannot have more than 100 points.",
+    sumTooBig: "Question #{ord}: points cannot add up to more than {max} (currently {sum}).",
+  },
   gamesImportExport: {
     defaults: {
       gameName: "Game",

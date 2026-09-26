@@ -2,7 +2,7 @@
 
 Strony powstawały „w czacie tekstowym GPT” — są nieczytelne i często
 zbugowane. Audytujemy je po kolei, jedna strona na raz. Zrobione:
-**logo-editor**, **bases** (2026-09-26). Następna: **games**.
+**logo-editor**, **bases**, **games** (2026-09-26). Następna: do ustalenia.
 
 ## Kroki
 
@@ -55,6 +55,19 @@ zbugowane. Audytujemy je po kolei, jedna strona na raz. Zrobione:
   odwrotnie); import nieatomowy bez sprzątania po błędzie.
 - Style z innej strony (np. `polls-hub.css`), które nie są ładowane.
 
-## Games — sugestie użytkownika na start
+- RPC zwracające mniej, niż zakłada kod (games: `market_my_library` bez
+  `payload` → podgląd zawsze „Brak pytań”).
+- Regex `\w` w nazwach plików — to tylko ASCII, gubi polskie/ukraińskie litery.
+- Spóźnione odpowiedzi async (szybkie klikanie A → B) nadpisujące stan B.
+- Treść składana w JS nie tłumaczy się po zmianie języka — potrzebny
+  listener `i18n:lang` z ponownym `render()`.
+- Kilka zależnych zapisów z przeglądarki (reset, import) → jedno RPC albo
+  sprzątanie po błędzie.
 
-- (uzupełniane przez użytkownika)
+## Games — zrobione (2026-09-26)
+
+Testy: `tests/e2e/games.spec.js`. Migracja 272: `game_reset_poll_for_edit`
+(atomowy reset ankiety, wspólny dla games.js i editor.js) oraz zamiana
+osieroconych kopii gier ze Społeczności (`type='market'`,
+`source_market_id` NULL) na grę preparowaną. Komunikaty
+`js/core/game-validate.js` przetłumaczone (`gameValidate.*`).

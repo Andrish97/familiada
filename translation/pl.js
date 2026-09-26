@@ -2638,6 +2638,18 @@ const pl = {
       validMessage: "Wiadomość musi mieć od 5 do 5000 znaków.",
     },
   },
+  gameValidate: {
+    noGame: "Brak gry.",
+    pollOpenNoEdit: "Ankieta jest otwarta — edycja zablokowana.",
+    preparedNoPoll: "Gra preparowana nie ma ankiety.",
+    pollAlreadyOpen: "Ankieta jest już otwarta.",
+    minQuestions: "Gra musi mieć co najmniej {min} pytań (masz: {n}).",
+    answersRange: "Pytanie #{ord}: musi mieć {min}–{max} odpowiedzi (masz: {n}).",
+    playAfterPoll: "Gra będzie dostępna dopiero po zamknięciu ankiety.",
+    negativePoints: "Pytanie #{ord}: punkty nie mogą być ujemne.",
+    answerOver100: "Pytanie #{ord}: odpowiedź nie może mieć więcej niż 100 pkt.",
+    sumTooBig: "Pytanie #{ord}: suma punktów nie może przekroczyć {max} (jest: {sum}).",
+  },
   gamesImportExport: {
     defaults: {
       gameName: "Gra",

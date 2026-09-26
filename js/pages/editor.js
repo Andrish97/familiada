@@ -229,20 +229,10 @@ async function deleteAnswer(aId) {
 }
 
 async function resetPollForEditing(gameId) {
-  const { error: gErr } = await sb()
-    .from("games")
-    .update({ status: "draft", poll_opened_at: null, poll_closed_at: null })
-    .eq("id", gameId);
-  if (gErr) throw gErr;
-
-  const { data: qs, error: qErr } = await sb().from("questions").select("id").eq("game_id", gameId);
-  if (qErr) throw qErr;
-
-  const qIds = (qs || []).map((x) => x.id);
-  if (!qIds.length) return;
-
-  const { error: aErr } = await sb().from("answers").update({ fixed_points: 0 }).in("question_id", qIds);
-  if (aErr) throw aErr;
+  // Jedno RPC = jedna transakcja (migracja 272, wspólne z games.js).
+  const { data, error } = await sb().rpc("game_reset_poll_for_edit", { p_game_id: gameId });
+  if (error) throw error;
+  if (!data?.ok) throw new Error(data?.error || "reset_failed");
 }
 
 /* ================= Renumber / wipe ================= */

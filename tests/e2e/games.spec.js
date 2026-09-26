@@ -433,3 +433,58 @@ test.describe("games: audyt -- Społeczność", () => {
     }
   });
 });
+
+/* ================= 5) Reset ankiety przed edycją (migracja 272) ================= */
+
+// Wymaga RPC game_reset_poll_for_edit z migracji 272 -- na branchu przed
+// wdrożeniem pomijany przez --grep-invert "migracja 272".
+test.describe("games: audyt -- migracja 272", () => {
+
+  test("edycja zamkniętej ankiety resetuje ją jednym RPC (status, daty, punkty)", async ({ page, context }) => {
+    test.setTimeout(120_000);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    const name = `E2E-GM-RESET-${Date.now()}`;
+    try {
+      const gameId = await page.evaluate(async (name) => {
+        const sb = window.__sbClient;
+        const { data: u } = await sb.auth.getUser();
+        const { data: g, error } = await sb.from("games")
+          .insert({ name, owner_id: u.user.id, type: "poll_points", status: "draft" })
+          .select("id").single();
+        if (error) throw new Error(error.message);
+        const { data: qs, error: qErr } = await sb.from("questions")
+          .insert(Array.from({ length: 10 }, (_, i) => ({ game_id: g.id, ord: i + 1, text: `P${i + 1}?` })))
+          .select("id");
+        if (qErr) throw new Error(qErr.message);
+        const { error: aErr } = await sb.from("answers").insert(qs.flatMap((q) =>
+          [40, 35, 25].map((p, j) => ({ question_id: q.id, ord: j + 1, text: `O${j + 1}`, fixed_points: p }))));
+        if (aErr) throw new Error(aErr.message);
+        const { error: sErr } = await sb.from("games")
+          .update({ status: "ready", poll_opened_at: new Date().toISOString(), poll_closed_at: new Date().toISOString() })
+          .eq("id", g.id);
+        if (sErr) throw new Error(sErr.message);
+        return g.id;
+      }, name);
+
+      await openGames(page);
+      await page.locator("#tabPollPoints").click();
+      await tileByName(page, name).click();
+      await expect(page.locator("#btnEdit")).toBeEnabled({ timeout: 10000 });
+      await page.locator("#btnEdit").click();
+      await expect(page.locator(".uni-modal .mSub")).toBeVisible({ timeout: 5000 });
+      await page.locator(".uni-modal .uni-foot .btn.gold").click();
+      await page.waitForURL(/\/editor/, { timeout: 20000 });
+
+      const st = await page.evaluate(async (id) => {
+        const sb = window.__sbClient;
+        const { data: g } = await sb.from("games").select("status,poll_opened_at,poll_closed_at").eq("id", id).single();
+        const { data: qs } = await sb.from("questions").select("id").eq("game_id", id);
+        const { data: as } = await sb.from("answers").select("fixed_points").in("question_id", qs.map((q) => q.id));
+        return { ...g, pts: as.reduce((s, a) => s + a.fixed_points, 0), answers: as.length };
+      }, gameId);
+      expect(st).toEqual({ status: "draft", poll_opened_at: null, poll_closed_at: null, pts: 0, answers: 30 });
+    } finally {
+      await deleteGamesByName(page, name);
+    }
+  });
+});
