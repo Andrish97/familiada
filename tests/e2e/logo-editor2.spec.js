@@ -778,24 +778,26 @@ test.describe("zgodność ze starymi danymi", () => {
   }
 
   /**
-   * Zapis kopii logo STARYM edytorem przy scenie o rozmiarze `world` (stary
-   * edytor bierze rozmiar sceny z okna -- dobieramy szerokość okna).
+   * Zapis kopii logo STARYM edytorem przy scenie o rozmiarze `world`. Stary
+   * edytor bierze rozmiar sceny z rozmiaru ramki (#drawStageHost), więc
+   * ustawiamy ją na sztywno. Dwa warianty, bo stary świat mógł powstać z
+   * szerokości ramki (h = floor(w / proporcja)) albo z jej wysokości.
    */
   async function oldEditorResave(page, logo, world) {
     const id = await L.insertLogo(page, { name: L.uniq("old-resave"), type: logo.type, payload: logo.payload });
-    let width = 1440;
-    for (let attempt = 0; attempt < 4; attempt++) {
-      await page.setViewportSize({ width, height: 900 });
+    await page.setViewportSize({ width: 1600, height: 1000 });
+    let got = null;
+    for (const [bw, bh] of [[world.w, world.h + 40], [world.w + 8, world.h]]) {
       await page.goto(`${site.origin}/logo-editor`, { waitUntil: "domcontentloaded" });
       await page.waitForLoadState("networkidle");
+      await page.addStyleTag({ content: `#drawStageHost{width:${bw}px!important;height:${bh}px!important;aspect-ratio:auto!important;max-width:none!important}` });
       await page.locator(`.logoTile[data-key="${id}"]`).click();
       await page.locator("#btnEdit").click();
       await page.waitForTimeout(1200);
-      const w = await page.evaluate(() => window.__drawFabric?.getWidth?.() || 0);
-      if (w === world.w) break;
-      width += world.w - w;
+      got = await page.evaluate(() => [window.__drawFabric?.getWidth?.() || 0, window.__drawFabric?.getHeight?.() || 0]);
+      if (got[0] === world.w && got[1] === world.h) break;
+      console.log(`[demo] stary edytor: ramka ${bw}x${bh} -> scena ${got.join("x")}`);
     }
-    const got = await page.evaluate(() => [window.__drawFabric.getWidth(), window.__drawFabric.getHeight()]);
     expect(got, "stary edytor ze sceną tego samego rozmiaru").toEqual([world.w, world.h]);
     await oldSave(page);
     return (await L.readLogo(page, id)).payload.bits_b64;
