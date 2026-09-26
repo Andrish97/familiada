@@ -315,7 +315,9 @@ input,textarea {
     padding: 5px 10px;
     border-radius: 999px;
     border: 1px solid rgba(255,255,255,.14);
-    background: rgba(255,255,255,.06);
+    --btn-tint: rgba(255,255,255,.06);
+  background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, #050914); /* kryjące: css/base.css */
+
     user-select: none;
     white-space: nowrap
 }
@@ -1134,6 +1136,7 @@ tr.row .tag-dot[data-tip]::before {
 }
 
 .toolbar {
+  --under: #090d1a; /* podłoże kryjących przycisków (css/base.css) */
     gap: 10px;
     padding: 10px 12px;
     flex-shrink: 0;
@@ -1160,14 +1163,17 @@ tr.row .tag-dot[data-tip]::before {
     justify-content: center;
     border-radius: 12px;
     border: 1px solid rgba(255,255,255,.14);
-    background: rgba(255,255,255,.04);
+    --btn-tint: rgba(255,255,255,.04);
+  background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, #050914); /* kryjące: css/base.css */
+
     color: rgba(255,255,255,.85);
     cursor: pointer;
     user-select: none
 }
 
 .tbBtn:hover {
-    background: rgba(255,255,255,.07)
+    --btn-tint: rgba(255,255,255,.07);
+  background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, #050914); /* kryjące: css/base.css */
 }
 
 .tbBtn:active {
@@ -1175,12 +1181,16 @@ tr.row .tag-dot[data-tip]::before {
 }
 
 .tbBtn.primary {
-    background: rgba(120,160,255,.16);
+    --btn-tint: rgba(120,160,255,.16);
+  background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, #050914); /* kryjące: css/base.css */
+
     border-color: rgba(120,160,255,.35)
 }
 
 .tbBtn.danger {
-    background: rgba(255,120,120,.1);
+    --btn-tint: rgba(255,120,120,.1);
+  background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, #050914); /* kryjące: css/base.css */
+
     border-color: rgba(255,120,120,.25);
     color: rgba(255,200,200,.92)
 }
@@ -1477,14 +1487,17 @@ tr.row .tag-dot[data-tip]::before {
     height: 44px;
     border-radius: 12px;
     border: 1px solid rgba(255,120,120,.35);
-    background: rgba(255,120,120,.12);
+    --btn-tint: rgba(255,120,120,.12);
+  background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, #050914); /* kryjące: css/base.css */
+
     color: #fff;
     font-weight: 1000;
     cursor: pointer
 }
 
 .qDel:hover {
-    background: rgba(255,120,120,.18)
+    --btn-tint: rgba(255,120,120,.18);
+  background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, #050914); /* kryjące: css/base.css */
 }
 
 .qBar {
@@ -1556,7 +1569,9 @@ tr.row .tag-dot[data-tip]::before {
 
 /* Hover – miękki glow + podbicie tła */
 .tbBtn:hover{
-  background: rgba(255,255,255,.10);
+  --btn-tint: rgba(255,255,255,.10);
+  background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, #050914); /* kryjące: css/base.css */
+
   border-color: rgba(120,160,255,.45);
   box-shadow:
     0 0 0 1px rgba(120,160,255,.18) inset,
@@ -1572,7 +1587,9 @@ tr.row .tag-dot[data-tip]::before {
 }
 
 .tbBtn.primary:hover{
-  background: rgba(120,160,255,.28);
+  --btn-tint: rgba(120,160,255,.28);
+  background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, #050914); /* kryjące: css/base.css */
+
   border-color: rgba(120,160,255,.75);
   box-shadow:
     0 0 0 1px rgba(120,160,255,.35) inset,

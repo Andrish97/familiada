@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
-  <meta name="app-version" content="v2026-09-26T14341"/>
+  <meta name="app-version" content="v2026-09-26T19541"/>
 
   <meta charset="UTF-8"/>
   <meta name="robots" content="noindex, nofollow"/>
@@ -14,11 +14,11 @@
   <link rel="preconnect" href="https://supabase.familiada.online">
   <title data-i18n="bases.title">Familiada — bazy pytań</title>
 
-  <link rel="icon" href="favicon.ico?v=v2026-09-26T14341"/>
-  <link rel="stylesheet" href="css/base.css?v=v2026-09-26T14341"/>
+  <link rel="icon" href="favicon.ico?v=v2026-09-26T19541"/>
+  <link rel="stylesheet" href="css/base.css?v=v2026-09-26T19541"/>
   <!-- Reużywamy stylu strony gier, żeby było spójnie -->
-  <link rel="stylesheet" href="css/games.css?v=v2026-09-26T14341"/>
-  <link rel="stylesheet" href="css/bases.css?v=v2026-09-26T14341"/>
+  <link rel="stylesheet" href="css/games.css?v=v2026-09-26T19541"/>
+  <link rel="stylesheet" href="css/bases.css?v=v2026-09-26T19541"/>
 
   <script>
     document.documentElement.classList.add('page-loading');
@@ -32,9 +32,9 @@
     } catch(_e) {}
   </script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-  <script type="module" src="js/pages/bases.js?v=v2026-09-26T14341" defer></script>
-  <script type="module" src="js/core/topbar-controller.js?v=v2026-09-26T14341" defer></script>
-  <script src="js/core/security-warning.js?v=v2026-09-26T14341" defer></script>
+  <script type="module" src="js/pages/bases.js?v=v2026-09-26T19541" defer></script>
+  <script type="module" src="js/core/topbar-controller.js?v=v2026-09-26T19541" defer></script>
+  <script src="js/core/security-warning.js?v=v2026-09-26T19541" defer></script>
 </head>
 
 <body class="games-body skel-body" data-alt-page="subscriptions">
@@ -78,11 +78,11 @@
 
     <section class="games-shell">
 
-      <!-- Mobile: 2 wypustki (1:1 jak polls-hub). Desktop: tabs-strip ukryty, w karcie widać oba gridy. -->
+      <!-- 2 wypustki (Moje / Udostępnione) jak w games; widoczna tylko aktywna sekcja. -->
       <div class="tabs-card hub-tabs bases-tabs-card" id="basesTabsCard">
-        <div class="tabs-strip" id="basesTabsMobile" aria-label="Bases tabs">
-          <div class="tab-slot slot-mobile-mine">
-            <button class="tab-label" id="tabBasesMineMobile" type="button">
+        <div class="tabs-strip" id="basesTabs" role="tablist">
+          <div class="tab-slot slot-mine active">
+            <button class="tab-label" id="tabBasesMine" type="button" role="tab" aria-controls="basesSectionMine">
               <span data-i18n="bases.sections.mine">Moje bazy</span>
             </button>
             <div class="tab-wrapper" aria-hidden="true">
@@ -92,8 +92,8 @@
             </div>
           </div>
 
-          <div class="tab-slot slot-mobile-shared">
-            <button class="tab-label" id="tabBasesSharedMobile" type="button">
+          <div class="tab-slot slot-shared">
+            <button class="tab-label" id="tabBasesShared" type="button" role="tab" aria-controls="basesSectionShared">
               <span data-i18n="bases.sections.shared">Udostępnione</span>
               <span class="hub-tab-badge is-empty" id="basesSharedBadge" aria-hidden="true"></span>
             </button>
@@ -107,13 +107,11 @@
 
         <div class="card games-card bases-card">
           <div class="bases-layout">
-            <div class="bases-section bases-section-mine" id="basesSectionMine" data-skel-step>
-              <div class="bases-title" id="mineTitle">—</div>
+            <div class="bases-section bases-section-mine active" id="basesSectionMine" role="tabpanel" data-skel-step>
               <div class="grid bases-grid-mine" id="mineGrid"></div>
             </div>
 
-            <div class="bases-section bases-section-shared" id="basesSectionShared" data-skel-step>
-              <div class="bases-title bases-title-shared" id="sharedTitle">—</div>
+            <div class="bases-section bases-section-shared" id="basesSectionShared" role="tabpanel" data-skel-step>
               <div class="grid bases-grid-shared" id="sharedGrid"></div>
             </div>
           </div>

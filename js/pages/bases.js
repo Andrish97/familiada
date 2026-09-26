@@ -1,19 +1,19 @@
 // js/pages/bases.js
 // Lista baz pytań (warstwa 1) – styl i ergonomia jak strona gier (games).
 
-import { addRenameGesture } from "../core/rename-gesture.js?v=v2026-09-26T14341";
+import { addRenameGesture } from "../core/rename-gesture.js?v=v2026-09-26T19541";
 
-import { sb, SUPABASE_URL } from "../core/supabase.js?v=v2026-09-26T14341";
-import { updateChecked, ROW_GONE } from "../core/db-guard.js?v=v2026-09-26T14341";
-import { requireAuth } from "../core/auth.js?v=v2026-09-26T14341";
-import { alertModal, confirmModal } from "../core/modal.js?v=v2026-09-26T14341";
-import { isGuestUser, hideForGuest } from "../core/guest-mode.js?v=v2026-09-26T14341";
-import { initUiSelect } from "../core/ui-select.js?v=v2026-09-26T14341";
-import { getUiLang, initI18n, t, withLangParam } from "../../translation/translation.js?v=v2026-09-26T14341";
-import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-09-26T14341";
-import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../core/modal-sheet.js?v=v2026-09-26T14341";
-import "../core/contact-modal.js?v=v2026-09-26T14341";
-import { icon, iconText } from "../core/icons.js?v=v2026-09-26T14341";
+import { sb, SUPABASE_URL } from "../core/supabase.js?v=v2026-09-26T19541";
+import { updateChecked, ROW_GONE } from "../core/db-guard.js?v=v2026-09-26T19541";
+import { requireAuth } from "../core/auth.js?v=v2026-09-26T19541";
+import { alertModal, confirmModal } from "../core/modal.js?v=v2026-09-26T19541";
+import { isGuestUser, hideForGuest } from "../core/guest-mode.js?v=v2026-09-26T19541";
+import { initUiSelect } from "../core/ui-select.js?v=v2026-09-26T19541";
+import { getUiLang, initI18n, t, withLangParam } from "../../translation/translation.js?v=v2026-09-26T19541";
+import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-09-26T19541";
+import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../core/modal-sheet.js?v=v2026-09-26T19541";
+import "../core/contact-modal.js?v=v2026-09-26T19541";
+import { icon, iconText } from "../core/icons.js?v=v2026-09-26T19541";
 initI18n({ withSwitcher: true }).then(() => {
   document.documentElement.classList.remove('page-loading');
 });
@@ -21,13 +21,10 @@ initI18n({ withSwitcher: true }).then(() => {
 /* ================= DOM ================= */
 const mineGrid = document.getElementById("mineGrid");
 const sharedGrid = document.getElementById("sharedGrid");
-const mineTitle = document.getElementById("mineTitle");
-const sharedTitle = document.getElementById("sharedTitle");
 
-// mobile tabs (mine/shared)
-const basesTabsMobile = document.getElementById("basesTabsMobile");
-const tabBasesMineMobile = document.getElementById("tabBasesMineMobile");
-const tabBasesSharedMobile = document.getElementById("tabBasesSharedMobile");
+// wypustki (mine/shared)
+const tabBasesMine = document.getElementById("tabBasesMine");
+const tabBasesShared = document.getElementById("tabBasesShared");
 const basesSectionMine = document.getElementById("basesSectionMine");
 const basesSectionShared = document.getElementById("basesSectionShared");
 const basesSharedBadge = document.getElementById("basesSharedBadge");
@@ -112,19 +109,30 @@ let basesRefreshInFlight = null;
 
 function anyOverlayOpen() {
   const ovs = [nameOverlay, importOverlay, shareOverlay, exportJsonOverlay];
-  return ovs.some((ov) => ov && (ov.style.display === "grid" || ov.style.display === "block" || ov.style.display === ""));
+  if (ovs.some((ov) => ov && ov.style.display !== "none")) return true;
+  // confirmModal/alertModal (js/core/modal.js) -- np. potwierdzenie usunięcia
+  return !!document.querySelector(".uni-modal");
 }
 
-async function refreshView() {
+// Jedno miejsce "pobierz dane + przerysuj". Błąd sieci nie może zostawić
+// nieobsłużonego odrzucenia (auto-refresh) -- zwracamy false, a wołający
+// decyduje, czy pokazać komunikat.
+async function refreshView({ withBadge = false } = {}) {
   if (basesRefreshInFlight) return basesRefreshInFlight;
   basesRefreshInFlight = (async () => {
-    await refreshBases();
-    await refreshAltBadge();
-    render();
-    setButtonsState();
+    try {
+      await refreshBases();
+      if (withBadge) await refreshAltBadge();
+      render();
+      setButtonsState();
+      return true;
+    } catch (e) {
+      console.warn("[bases] refresh failed:", e);
+      return false;
+    }
   })();
   try {
-    await basesRefreshInFlight;
+    return await basesRefreshInFlight;
   } finally {
     basesRefreshInFlight = null;
   }
@@ -135,7 +143,7 @@ function startAutoRefresh() {
   autoRefreshTimer = setInterval(() => {
     if (document.hidden) return;
     if (anyOverlayOpen()) return;
-    void refreshView();
+    void refreshView({ withBadge: true });
   }, 20000);
 }
 
@@ -153,6 +161,7 @@ const shareModalCache = new Map();
 
 // modal nazwy – tryb
 let nameMode = "create"; // 'create' | 'rename'
+let renameBaseId = null; // która baza jest przemianowywana (niezależnie od zaznaczenia)
 
 /* ================= UI helpers ================= */
 function show(el, on) {
@@ -271,17 +280,19 @@ function selectedBase() {
 
 function setButtonsState() {
   const b = selectedBase();
-  const hasSel = !!b;
+  // Zaproszenie (proposed) to jeszcze nie dostęp -- RLS i tak nie pozwoli
+  // przeglądać ani eksportować bazy przed akceptacją.
+  const hasAccess = !!b && !b.proposed;
   const owner = b ? isOwner(b) : false;
 
   // Przeglądanie: każdy z dostępem
-  if (btnBrowse) btnBrowse.disabled = !hasSel;
+  if (btnBrowse) btnBrowse.disabled = !hasAccess;
 
   // Udostępnianie: tylko owner
-  if (btnShare) btnShare.disabled = !hasSel || !owner;
+  if (btnShare) btnShare.disabled = !hasAccess || !owner;
 
   // Eksport: każdy z dostępem
-  if (btnExport) btnExport.disabled = !hasSel;
+  if (btnExport) btnExport.disabled = !hasAccess;
 }
 
 function showProgBlock(el, on) {
@@ -309,11 +320,11 @@ async function listOwnedBases() {
   const { data, error } = await sb()
     .from("question_bases")
     .select("id,name,owner_id,created_at,updated_at")
+    .eq("owner_id", currentUser.id)
     .order("updated_at", { ascending: false });
 
   if (error) throw error;
-  // RLS i tak ograniczy do tych, do których masz dostęp, ale owner_id pozwoli nam odfiltrować.
-  return (data || []).filter((b) => b.owner_id === currentUser.id);
+  return data || [];
 }
 
 async function listSharedBases() {
@@ -458,17 +469,49 @@ async function leaveSharedBase(base) {
 }
 
 /* ================= Export / Import ================= */
+// Długie listy id w .in() lecą w URL-u (GET) -- dzielimy je, żeby duża baza
+// nie kończyła się 414 URI Too Long.
+const IN_CHUNK = 150;
+// Wstawianie wsadowe -- jedno zapytanie na paczkę zamiast jednego na wiersz.
+const INSERT_CHUNK = 200;
+
+function chunks(arr, size) {
+  const out = [];
+  for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
+  return out;
+}
+
+async function selectIn(table, cols, column, ids) {
+  const rows = [];
+  for (const part of chunks(ids, IN_CHUNK)) {
+    const { data, error } = await sb().from(table).select(cols).in(column, part);
+    if (error) throw error;
+    rows.push(...(data || []));
+  }
+  return rows;
+}
+
+async function insertAll(table, rows, onChunk) {
+  for (const part of chunks(rows, INSERT_CHUNK)) {
+    const { error } = await sb().from(table).insert(part, { defaultToNull: false });
+    if (error) throw error;
+    onChunk?.(part.length);
+  }
+}
+
+const EXPORT_STEPS = 6;
+
 async function exportBase(baseId, onProgress) {
-  const prog = (step, i, n, msg) => {
-    if (typeof onProgress === "function") onProgress({ step, i, n, msg });
+  const prog = (step, i, msg = "") => {
+    if (typeof onProgress === "function") onProgress({ step, i, n: EXPORT_STEPS, msg });
   };
   const { data: baseRow, error: bErr } = await sb()
     .from("question_bases")
-    .select("id,name,owner_id,created_at,updated_at")
+    .select("id,name")
     .eq("id", baseId)
     .single();
   if (bErr) throw bErr;
-  prog(t("bases.export.steps.base"), 1, 5, "");
+  prog(t("bases.export.steps.base"), 1);
 
   const { data: cats, error: cErr } = await sb()
     .from("qb_categories")
@@ -476,7 +519,7 @@ async function exportBase(baseId, onProgress) {
     .eq("base_id", baseId)
     .order("ord", { ascending: true });
   if (cErr) throw cErr;
-  prog(t("bases.export.steps.folders"), 2, 5, "");
+  prog(t("bases.export.steps.folders"), 2, t("bases.export.count", { count: (cats || []).length }));
 
   const { data: qs, error: qErr } = await sb()
     .from("qb_questions")
@@ -484,44 +527,24 @@ async function exportBase(baseId, onProgress) {
     .eq("base_id", baseId)
     .order("ord", { ascending: true });
   if (qErr) throw qErr;
-  prog(
-    t("bases.export.steps.questions"),
-    3,
-    5,
-    t("bases.export.count", { count: (qs || []).length })
-  );
-  
+  prog(t("bases.export.steps.questions"), 3, t("bases.export.count", { count: (qs || []).length }));
+
   const { data: tags, error: tErr } = await sb()
     .from("qb_tags")
     .select("id,name,color,ord")
     .eq("base_id", baseId)
     .order("ord", { ascending: true });
   if (tErr) throw tErr;
-  prog(
-    t("bases.export.steps.questions"),
-    3,
-    5,
-    t("bases.export.count", { count: (qs || []).length })
-  );
-  
-  // powiązania tagów (po pytaniach z tej bazy)
-  const qIds = (qs || []).map((q) => q.id);
-  let qtags = [];
-  if (qIds.length) {
-    const { data: qt, error: qtErr } = await sb()
-      .from("qb_question_tags")
-      .select("question_id,tag_id")
-      .in("question_id", qIds);
-    if (qtErr) throw qtErr;
-    qtags = qt || [];
-  }
-  prog(
-    t("bases.export.steps.questionTags"),
-    5,
-    5,
-    t("bases.export.count", { count: (qtags || []).length })
-  );
-  
+  prog(t("bases.export.steps.tags"), 4, t("bases.export.count", { count: (tags || []).length }));
+
+  const qtags = await selectIn("qb_question_tags", "question_id,tag_id", "question_id", (qs || []).map((q) => q.id));
+  prog(t("bases.export.steps.questionTags"), 5, t("bases.export.count", { count: qtags.length }));
+
+  // Tagi folderów -- import zawsze je obsługiwał, ale eksport ich nie
+  // zapisywał, więc eksport → import po cichu je gubił.
+  const ctags = await selectIn("qb_category_tags", "category_id,tag_id", "category_id", (cats || []).map((c) => c.id));
+  prog(t("bases.export.steps.categoryTags"), 6, t("bases.export.count", { count: ctags.length }));
+
   return {
     base: { name: baseRow?.name ?? t("bases.defaults.baseLabel") },
     categories: cats || [],
@@ -533,18 +556,19 @@ async function exportBase(baseId, onProgress) {
       payload: q.payload || {},
     })),
     question_tags: qtags,
+    category_tags: ctags,
   };
 }
 
 function isValidImportPayload(p) {
-  return !!p && typeof p === "object" && p.base && Array.isArray(p.questions);
+  return !!p && typeof p === "object" && !!p.base && typeof p.base === "object" && Array.isArray(p.questions);
 }
 
 async function importBase(payload, onProgress) {
   const prog = (step, i, n, msg) => {
     if (typeof onProgress === "function") onProgress({ step, i, n, msg });
   };
-  
+
   if (!isValidImportPayload(payload)) {
     throw new Error(t("bases.import.invalidFormat"));
   }
@@ -553,125 +577,113 @@ async function importBase(payload, onProgress) {
   const base = await createBase(baseName);
   prog(t("bases.import.steps.createBase"), 1, 5, "");
 
+  try {
+    await importBaseContent(base.id, payload, prog);
+  } catch (e) {
+    // Import nie jest atomowy -- bez sprzątania po błędzie zostawałaby
+    // na liście pusta/niepełna baza. Usunięcie bazy kasuje (CASCADE)
+    // wszystko, co zdążyło się wstawić.
+    const { error: delErr } = await sb().from("question_bases").delete().eq("id", base.id);
+    if (delErr) console.warn("[bases] import cleanup failed:", delErr);
+    throw e;
+  }
+  return base.id;
+}
+
+async function importBaseContent(baseId, payload, prog) {
+  // Nowe id nadajemy po stronie klienta -- dzięki temu wszystko można wstawić
+  // wsadowo, a mapowanie stare → nowe id (rodzic folderu, folder pytania,
+  // powiązania tagów) jest znane z góry.
+  const newId = () => crypto.randomUUID();
   const oldToNewCat = new Map();
   const oldToNewTag = new Map();
   const oldToNewQ = new Map();
 
-  // 1) Kategorie – w kolejności topologicznej (rooty → dzieci)
+  // 1) Kategorie – poziomami (rooty → dzieci), żeby rodzic zawsze istniał
   prog(t("bases.import.steps.categories"), 2, 5, "");
-  const cats = Array.isArray(payload.categories) ? payload.categories : [];
-  const byParent = new Map();
-  for (const c of cats) {
-    const key = c.parent_id || "__root__";
-    if (!byParent.has(key)) byParent.set(key, []);
-    byParent.get(key).push(c);
+  const cats = (Array.isArray(payload.categories) ? payload.categories : []).filter((c) => c && c.id != null);
+  for (const c of cats) oldToNewCat.set(c.id, newId());
+  const catIds = new Set(cats.map((c) => c.id));
+  const depthOf = new Map();
+  const depth = (c, seen = new Set()) => {
+    if (depthOf.has(c.id)) return depthOf.get(c.id);
+    // rodzic spoza pliku albo cykl -> traktuj jak root
+    const parent = catIds.has(c.parent_id) && !seen.has(c.parent_id) ? cats.find((x) => x.id === c.parent_id) : null;
+    seen.add(c.id);
+    const d = parent ? depth(parent, seen) + 1 : 0;
+    depthOf.set(c.id, d);
+    return d;
+  };
+  const levels = [];
+  for (const c of cats) (levels[depth(c)] ||= []).push(c);
+  for (const level of levels.filter(Boolean)) {
+    await insertAll("qb_categories", level.map((c) => ({
+      id: oldToNewCat.get(c.id),
+      base_id: baseId,
+      parent_id: depthOf.get(c.id) > 0 ? oldToNewCat.get(c.parent_id) : null,
+      name: String(c.name || t("bases.defaults.category")).slice(0, 80),
+      ord: Number(c.ord) || 0,
+    })));
   }
-  // sortuj po ord, żeby zachować porządek
-  for (const arr of byParent.values()) {
-    arr.sort((a, b) => (Number(a.ord) || 0) - (Number(b.ord) || 0));
-  }
-
-  async function insertCatSubtree(parentOldId, parentNewId) {
-    const key = parentOldId || "__root__";
-    const kids = byParent.get(key) || [];
-    for (const c of kids) {
-      const { data, error } = await sb()
-        .from("qb_categories")
-        .insert({
-          base_id: base.id,
-          parent_id: parentNewId,
-          name: String(c.name || t("bases.defaults.category")).slice(0, 80),
-          ord: Number(c.ord) || 0,
-        }, { defaultToNull: false })
-        .select("id")
-        .single();
-      if (error) throw error;
-
-      oldToNewCat.set(c.id, data.id);
-      await insertCatSubtree(c.id, data.id);
-    }
-  }
-  await insertCatSubtree(null, null);
 
   // 2) Tagi
   prog(t("bases.import.steps.tags"), 3, 5, "");
-  const tags = Array.isArray(payload.tags) ? payload.tags : [];
-  for (const tag of tags) {
-    const { data, error } = await sb()
-      .from("qb_tags")
-      .insert({
-        base_id: base.id,
-        name: String(tag.name || t("bases.defaults.tag")).slice(0, 40),
-        color: String(tag.color || "gray").slice(0, 24),
-        ord: Number(tag.ord) || 0,
-      }, { defaultToNull: false })
-      .select("id")
-      .single();
-    if (error) throw error;
-    oldToNewTag.set(tag.id, data.id);
-  }
+  const tags = (Array.isArray(payload.tags) ? payload.tags : []).filter((x) => x && x.id != null);
+  for (const tag of tags) oldToNewTag.set(tag.id, newId());
+  await insertAll("qb_tags", tags.map((tag) => ({
+    id: oldToNewTag.get(tag.id),
+    base_id: baseId,
+    name: String(tag.name || t("bases.defaults.tag")).slice(0, 40),
+    color: String(tag.color || "gray").slice(0, 24),
+    ord: Number(tag.ord) || 0,
+  })));
 
   // 3) Pytania
-  const qs = Array.isArray(payload.questions) ? payload.questions : [];
-  prog(t("bases.import.steps.questions"), 0, qs.length || 0, "");
-  for (let qi = 0; qi < qs.length; qi++) {
-    const q = qs[qi];
-    const newCatId = q.category_id ? (oldToNewCat.get(q.category_id) || null) : null;
-  
-    const { data, error } = await sb()
-      .from("qb_questions")
-      .insert({
-        base_id: base.id,
-        category_id: newCatId,
-        ord: Number(q.ord) || 0,
-        payload: q.payload || {},
-        updated_by: currentUser.id,
-      }, { defaultToNull: false })
-      .select("id")
-      .single();
-  
-    if (error) throw error;
-    oldToNewQ.set(q.id, data.id);
-  
-    prog(
-      t("bases.import.steps.questions"),
-      qi + 1,
-      qs.length || 0,
-      String(q?.payload?.text || "").slice(0, 60)
-    );
-  }
+  const qs = (Array.isArray(payload.questions) ? payload.questions : []).filter((q) => q && typeof q === "object");
+  let done = 0;
+  prog(t("bases.import.steps.questions"), 0, qs.length, "");
+  const qRows = qs.map((q) => {
+    const id = newId();
+    if (q.id != null) oldToNewQ.set(q.id, id);
+    return {
+      id,
+      base_id: baseId,
+      category_id: q.category_id != null ? (oldToNewCat.get(q.category_id) || null) : null,
+      ord: Number(q.ord) || 0,
+      payload: q.payload && typeof q.payload === "object" ? q.payload : {},
+      updated_by: currentUser.id,
+    };
+  });
+  await insertAll("qb_questions", qRows, (n) => {
+    done += n;
+    prog(t("bases.import.steps.questions"), done, qs.length, "");
+  });
 
-  // 4) Powiązania tagów
+  // 4) Powiązania tagów pytań
   prog(t("bases.import.steps.questionTags"), 4, 5, "");
-  const qtags = Array.isArray(payload.question_tags) ? payload.question_tags : [];
-  const rows = [];
-  for (const r of qtags) {
-    const nq = oldToNewQ.get(r.question_id);
-    const nt = oldToNewTag.get(r.tag_id);
-    if (!nq || !nt) continue;
-    rows.push({ question_id: nq, tag_id: nt });
+  const qtRows = [];
+  const qtSeen = new Set();
+  for (const r of Array.isArray(payload.question_tags) ? payload.question_tags : []) {
+    const nq = oldToNewQ.get(r?.question_id);
+    const nt = oldToNewTag.get(r?.tag_id);
+    if (!nq || !nt || qtSeen.has(nq + nt)) continue;
+    qtSeen.add(nq + nt);
+    qtRows.push({ question_id: nq, tag_id: nt });
   }
-  if (rows.length) {
-    const { error } = await sb().from("qb_question_tags").insert(rows);
-    if (error) throw error;
-  }
+  await insertAll("qb_question_tags", qtRows);
 
   // 5) Powiązania tagów kategorii (folderów)
   prog(t("bases.import.steps.categoryTags"), 5, 5, "");
-  const ctags = Array.isArray(payload.category_tags) ? payload.category_tags : [];
-  const crows = [];
-  for (const r of ctags) {
-    const nc = oldToNewCat.get(r.category_id);
-    const nt = oldToNewTag.get(r.tag_id);
-    if (!nc || !nt) continue;
-    crows.push({ category_id: nc, tag_id: nt });
+  const ctRows = [];
+  const ctSeen = new Set();
+  for (const r of Array.isArray(payload.category_tags) ? payload.category_tags : []) {
+    const nc = oldToNewCat.get(r?.category_id);
+    const nt = oldToNewTag.get(r?.tag_id);
+    if (!nc || !nt || ctSeen.has(nc + nt)) continue;
+    ctSeen.add(nc + nt);
+    ctRows.push({ category_id: nc, tag_id: nt });
   }
-  if (crows.length) {
-    const { error } = await sb().from("qb_category_tags").insert(crows);
-    if (error) throw error;
-  }
-
-  return base.id;
+  await insertAll("qb_category_tags", ctRows);
 }
 
 /* ================= Share modal ================= */
@@ -829,16 +841,7 @@ function closeShareModal() {
 
   // Odśwież status kafelków po zamknięciu modala (shareCount / udostępnione listy).
   // Fire-and-forget: UI wraca natychmiast, a odświeżenie dociągnie dane w tle.
-  (async () => {
-    try {
-      await refreshBases();
-  await refreshAltBadge();
-      render();
-      setButtonsState();
-    } catch (e) {
-      console.warn("[bases] refresh after share close failed:", e);
-    }
-  })();
+  void refreshView({ withBadge: true });
 }
 
 function invalidateShareModalCache(baseId) {
@@ -960,7 +963,7 @@ async function renderShareModal() {
         const row = document.createElement("div");
         row.className = "shareRow";
         row.innerHTML = `
-          <div class="shareEmail" title="${String(title).replace(/\"/g, "&quot;")}">
+          <div class="shareEmail" title="${escapeHtml(title)}">
             ${escapeHtml(label)}
           </div>
           <div class="shareRowActions">
@@ -1002,11 +1005,11 @@ async function renderShareModal() {
         const row = document.createElement("div");
         row.className = "shareRow";
         row.innerHTML = `
-          <div class="shareEmail" title="${String(title).replace(/\"/g, "&quot;")}">
+          <div class="shareEmail" title="${escapeHtml(title)}">
             ${escapeHtml(label)}
           </div>
           <div class="shareRowActions">
-            <div class="ui-select share-role-select" data-user-id="${userId}">
+            <div class="ui-select share-role-select" data-user-id="${escapeHtml(userId)}">
               <button class="btn sm ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
                 <span class="ui-select-label">—</span>
                 <span class="ui-select-caret" aria-hidden="true"><i class="ico" data-icon="caret-down"></i></span>
@@ -1039,15 +1042,10 @@ async function renderShareModal() {
 
             roleSelectInst?.setDisabled(false);
             const rowRes = Array.isArray(data) ? data[0] : data;
-            if (error || !rowRes?.ok) {
-              setMsg(shareMsg, t("bases.share.failed") || "Nie udało się zmienić roli");
-              invalidateShareModalCache(b.id);
-              await renderShareModal();
-              return;
-            }
-            setMsg(shareMsg, t("bases.share.roleChanged") || "Zmieniono rolę");
+            const ok = !error && !!rowRes?.ok;
             invalidateShareModalCache(b.id);
-            await renderShareModal();
+            await renderShareModal(); // czyści komunikat -- ustawiamy go dopiero potem
+            setMsg(shareMsg, ok ? t("bases.share.roleChanged") : t("bases.share.failed"));
           },
         });
 
@@ -1075,7 +1073,22 @@ async function renderShareModal() {
   }
 }
 
+// Enter w polu + klik "Dodaj" (albo dwa kliki) nie mogą wysłać dwóch zaproszeń/maili.
+let shareAddInFlight = false;
+
 async function shareAdd() {
+  if (shareAddInFlight) return;
+  shareAddInFlight = true;
+  if (btnShareAdd) btnShareAdd.disabled = true;
+  try {
+    await shareAddInner();
+  } finally {
+    shareAddInFlight = false;
+    if (btnShareAdd) btnShareAdd.disabled = false;
+  }
+}
+
+async function shareAddInner() {
   const b = selectedBase();
   if (!b || !isOwner(b)) return;
 
@@ -1142,6 +1155,7 @@ async function shareAdd() {
   }
   
   // jeśli mail_to/link są obecne – wysyłamy maila
+  let mailFailed = false;
   if (row?.mail_to && row?.mail_link) {
     try {
       await sendBaseShareEmail({
@@ -1152,26 +1166,39 @@ async function shareAdd() {
       });
     } catch (e) {
       console.warn("[bases] email send failed:", e);
-      // UX: invite istnieje, ale mail mógł nie wyjść
-      setMsg(shareMsg, t("bases.share.emailFailed"));
+      mailFailed = true;
     }
   }
-  
-  shareEmail.value = "";
-  setMsg(shareMsg, t("bases.share.success"));
+
   invalidateShareModalCache(b.id);
+  // renderShareModal() czyści formularz i komunikat -- komunikat ustawiamy PO nim,
+  // inaczej "mail nie wyszedł" (zaproszenie istnieje) znikałby bez śladu.
   await renderShareModal();
+  setMsg(shareMsg, mailFailed ? t("bases.share.emailFailed") : t("bases.share.success"));
 }
 
-/* ================= Mobile tabs (mine/shared) ================= */
-function setActiveBasesMobileTab(tab) {
+/* ================= Wypustki (mine/shared) ================= */
+const TAB_STORAGE_KEY = "basesMobileTab";
+let activeTab = "mine";
+
+function setActiveTab(tab, { remember = true } = {}) {
   if (guestMode) tab = "mine";
-  const mineOn = tab !== "shared";
+  activeTab = tab === "shared" ? "shared" : "mine";
+  const mineOn = activeTab === "mine";
   basesSectionMine?.classList.toggle("active", mineOn);
   basesSectionShared?.classList.toggle("active", !mineOn);
-  tabBasesMineMobile?.closest(".tab-slot")?.classList.toggle("active", mineOn);
-  tabBasesSharedMobile?.closest(".tab-slot")?.classList.toggle("active", !mineOn);
+  for (const [btn, on] of [[tabBasesMine, mineOn], [tabBasesShared, !mineOn]]) {
+    btn?.closest(".tab-slot")?.classList.toggle("active", on);
+    btn?.setAttribute("aria-selected", on ? "true" : "false");
+  }
   setHint(mineOn ? t("bases.headerHint") : t("bases.headerHintShared"));
+  if (remember) {
+    try { sessionStorage.setItem(TAB_STORAGE_KEY, activeTab); } catch {}
+  }
+}
+
+function storedTab() {
+  try { return sessionStorage.getItem(TAB_STORAGE_KEY) === "shared" ? "shared" : "mine"; } catch { return "mine"; }
 }
 
 function setSharedBasesBadge(n) {
@@ -1185,16 +1212,13 @@ function setSharedBasesBadge(n) {
 function render() {
   if (!mineGrid || !sharedGrid) return;
 
-  // nagłówki są stałe (poza scrollami)
-  if (mineTitle) mineTitle.textContent = t("bases.sections.mine");
-  if (sharedTitle) sharedTitle.textContent = t("bases.sections.shared");
-
   mineGrid.innerHTML = "";
   sharedGrid.innerHTML = "";
 
   const renderTile = (b, hostEl) => {
     const tile = document.createElement("div");
     tile.className = "card";
+    tile.dataset.baseId = b.id;
     if (b.id === selectedId) tile.classList.add("selected");
     if (b.proposed) tile.classList.add("proposed");
     const badges = [];
@@ -1207,7 +1231,10 @@ function render() {
       });
     }
     
-    if (b.sharedRole) {
+    // Udostępniona (albo dopiero proponowana) -- ta sama informacja "od kogo"
+    // i z jakim dostępem; dla zaproszenia rola pochodzi z proposed_role.
+    const shareRole = b.sharedRole || (b.proposed ? b.proposedRole : null);
+    if (shareRole) {
       const ownerUn = String(b.ownerUsername || "").trim();
       const ownerMail = String(b.ownerEmail || "").trim();
       const fromLabel = ownerUn || ownerMail || "—";
@@ -1218,7 +1245,7 @@ function render() {
         kind: "from",
       });
 
-      const isEdit = b.sharedRole === "editor";
+      const isEdit = shareRole === "editor";
       badges.push({
         icon: isEdit ? "edit-paper" : "eye",
         text: "",
@@ -1271,36 +1298,28 @@ function render() {
       `;
     
     if (b.proposed) {
-      tile.querySelector("[data-accept]")?.addEventListener("click", async (e) => {
+      const respond = (rpcName) => async (e) => {
         e.stopPropagation();
-        const { data: ok, error } = await sb().rpc("base_share_accept", { p_task_id: b.taskId });
+        const btns = tile.querySelectorAll("[data-accept],[data-decline]");
+        if ([...btns].some((x) => x.disabled)) return;
+        btns.forEach((x) => { x.disabled = true; });
+        const { data: ok, error } = await sb().rpc(rpcName, { p_task_id: b.taskId });
         if (error || ok !== true) {
+          btns.forEach((x) => { x.disabled = false; });
           await alertModal({ text: t("bases.proposed.failed") });
-          return;
         }
-        await refreshBases();
-        render();
-        setButtonsState();
-      });
-    
-      tile.querySelector("[data-decline]")?.addEventListener("click", async (e) => {
-        e.stopPropagation();
-        const { data: ok, error } = await sb().rpc("base_share_decline", { p_task_id: b.taskId });
-        if (error || ok !== true) {
-          await alertModal({ text: t("bases.proposed.failed") });
-          return;
-        }
-        await refreshBases();
-        render();
-        setButtonsState();
-      });
+        await refreshView();
+      };
+      tile.querySelector("[data-accept]")?.addEventListener("click", respond("base_share_accept"));
+      tile.querySelector("[data-decline]")?.addEventListener("click", respond("base_share_decline"));
     }
 
-    tile.addEventListener("click", (e) => {
-      if (e.target?.classList?.contains("x")) return;
-      selectedId = selectedId === b.id ? null : b.id;
-      setButtonsState();
-      render();
+    // Zaznaczenie NIE przebudowuje kafelków (tylko przełącza klasę) -- inaczej
+    // drugi tap podwójnego tapnięcia trafia w nowy element i zmiana nazwy
+    // na dotyku nigdy się nie uruchamia (rename-gesture.js liczy tapnięcia
+    // per element).
+    tile.addEventListener("click", () => {
+      selectBase(selectedId === b.id ? null : b.id);
     });
 
     const x = tile.querySelector(".x");
@@ -1312,18 +1331,14 @@ function render() {
         } else {
           await leaveSharedBase(b);
         }
-        await refreshBases();
-        render();
-        setButtonsState();
+        await refreshView();
       });
     }
 
     addRenameGesture(tile, (e) => {
       if (!isOwner(b)) return;
-      if (e.target?.classList?.contains("x")) return;
-      selectedId = b.id;
-      setButtonsState();
-      render();
+      if (e.target?.closest?.(".x")) return;
+      selectBase(b.id);
       openNameModalRename(b);
     });
 
@@ -1364,6 +1379,14 @@ function render() {
 }
 
 
+function selectBase(id) {
+  selectedId = id;
+  for (const el of document.querySelectorAll(".bases-section .card[data-base-id]")) {
+    el.classList.toggle("selected", el.dataset.baseId === selectedId);
+  }
+  setButtonsState();
+}
+
 function escapeHtml(s) {
   return String(s ?? "")
     .replace(/&/g, "&amp;")
@@ -1387,6 +1410,7 @@ function openNameModalCreate() {
 
 function openNameModalRename(base) {
   nameMode = "rename";
+  renameBaseId = base?.id || null;
   setMsg(nameMsg, "");
   nameTitle.textContent = t("bases.nameModal.titleRename");
   nameSub.textContent = t("bases.nameModal.subRename");
@@ -1410,16 +1434,15 @@ async function nameOk() {
     if (nameMode === "create") {
       const b = await createBase(val);
       selectedId = b.id;
+      setActiveTab("mine");
     } else {
-      const b = selectedBase();
+      const b = ownedBases.find((x) => x.id === renameBaseId);
       if (b && isOwner(b)) {
         await renameBase(b.id, val);
       }
     }
-    await refreshBases();
-    render();
-    setButtonsState();
     closeNameModal();
+    await refreshView();
   } catch (e) {
     console.warn("[bases] name ok error:", e);
     setMsg(nameMsg, e?.code === ROW_GONE ? t("resourceLock.goneMessage") : t("bases.nameModal.failed"));
@@ -1536,7 +1559,7 @@ document.addEventListener("DOMContentLoaded", () => {
       setProgUi(exportJsonStep, exportJsonCount, exportJsonBar, exportJsonMsg, {
         step: t("bases.export.errorStep"), i: 0, n: 1, msg: e?.message || t("bases.export.failed"), isError: true,
       });
-      setTimeout(() => show(exportJsonOverlay, false), 1200);
+      setTimeout(() => show(exportJsonOverlay, false), 3000);
     } finally {
       if (btnExport) btnExport.disabled = false;
     }
@@ -1580,10 +1603,9 @@ document.addEventListener("DOMContentLoaded", () => {
         });
       });
       selectedId = newId;
-      await refreshBases();
-      render();
-      setButtonsState();
+      setActiveTab("mine");
       closeImportModal();
+      await refreshView();
     } catch (e) {
       console.warn("[bases] import error:", e);
       setMsg(importMsg, t("bases.import.failed"));
@@ -1640,31 +1662,82 @@ async function refreshAltBadge() {
 }
 
 /* ================= Init ================= */
+function removeShareParam() {
+  try {
+    const u = new URL(location.href);
+    u.searchParams.delete("share");
+    history.replaceState(history.state, "", u.toString());
+  } catch {}
+}
+
+// Wejście z maila: ?share=<token>. Sama decyzja (przyjmij/odrzuć) jest na
+// kafelku zaproszenia -- tu tylko wyjaśniamy, dlaczego kafelka może nie być.
+async function handleShareLink(token) {
+  let info = null;
+  try {
+    const { data, error } = await sb().rpc("base_share_token_info", { p_token: token });
+    if (error) throw error;
+    // RPC zwraca TABLE -> supabase-js daje tablicę
+    info = Array.isArray(data) ? (data[0] || null) : (data || null);
+  } catch (e) {
+    console.warn("[bases] token info failed:", e);
+    return; // nie wiemy nic pewnego -- lepiej nie straszyć komunikatem
+  }
+
+  if (!info) {
+    // zadania starsze niż 5 dni są kasowane (base_share_tasks_cleanup)
+    await alertModal({ text: t("bases.proposed.expired") });
+  } else if (info.recipient_user_id && info.recipient_user_id !== currentUser?.id) {
+    await alertModal({ text: t("bases.proposed.mismatch") });
+    return; // zostaw ?share= -- po przelogowaniu na właściwe konto link dalej działa
+  } else if (info.status === "cancelled") {
+    await alertModal({ text: t("bases.proposed.cancelled") });
+  } else if (info.status === "pending" || info.status === "opened") {
+    setActiveTab("shared");
+    const invite = sharedBases.find((b) => b.proposed && b.id === info.base_id);
+    if (invite) selectBase(invite.id);
+  } else {
+    // done / declined
+    await alertModal({ text: t("bases.proposed.handled") });
+    if (info.status === "done" && sharedBases.some((b) => b.id === info.base_id)) {
+      setActiveTab("shared");
+      selectBase(info.base_id);
+    }
+  }
+  removeShareParam();
+}
+
+// PWA: otwarcie pliku .fambase z systemu (manifest.json -> file_handlers).
+function initFileLaunch() {
+  if (!("launchQueue" in window)) return;
+  window.launchQueue.setConsumer(async (launchParams) => {
+    if (!launchParams.files?.length) return;
+    const file = await launchParams.files[0].getFile();
+    openImportModal();
+    const dt = new DataTransfer();
+    dt.items.add(file);
+    if (importFile) {
+      importFile.files = dt.files;
+      importFile.dispatchEvent(new Event("change"));
+    }
+  });
+}
+
 (async function init() {
   currentUser = await requireAuth("login");
+  if (!currentUser) return;
   guestMode = isGuestUser(currentUser);
   if (guestMode) {
     document.body.classList.add("bases-guest");
     hideForGuest(currentUser, [btnGoAlt, btnShare, basesSectionShared]);
-    tabBasesSharedMobile?.closest(".tab-slot")?.remove();
-    sessionStorage.setItem("basesMobileTab", "mine");
+    tabBasesShared?.closest(".tab-slot")?.remove();
   }
   initTopbarAccountDropdown(currentUser);
   document.querySelector('.topbar')?.classList.add('topbar-ready');
 
-  // mobile tabs
-  if (basesTabsMobile) {
-    const stored = sessionStorage.getItem("basesMobileTab") || "mine";
-    setActiveBasesMobileTab(stored === "shared" ? "shared" : "mine");
-    tabBasesMineMobile?.addEventListener("click", () => {
-      sessionStorage.setItem("basesMobileTab", "mine");
-      setActiveBasesMobileTab("mine");
-    });
-    tabBasesSharedMobile?.addEventListener("click", () => {
-      sessionStorage.setItem("basesMobileTab", "shared");
-      setActiveBasesMobileTab("shared");
-    });
-  }
+  setActiveTab(storedTab(), { remember: false });
+  tabBasesMine?.addEventListener("click", () => setActiveTab("mine"));
+  tabBasesShared?.addEventListener("click", () => setActiveTab("shared"));
 
   initShareRoleSelect();
   initShareRecipientTypeSelect();
@@ -1673,13 +1746,16 @@ async function refreshAltBadge() {
     initShareRoleSelect();
     initShareRecipientTypeSelect();
     initShareSubscriberSelect();
+    setActiveTab(activeTab, { remember: false }); // podpowiedź w nowym języku
     render();
     setButtonsState();
   });
-    
-  await refreshBases();
-  render();
+
+  initFileLaunch();
+
+  const loaded = await refreshView({ withBadge: !guestMode });
   document.querySelectorAll('[data-skel-step]').forEach(el => el.classList.add('skel-step-ready'));
+  if (!loaded) setHint(t("bases.loadFailed"));
 
   // auto refresh jak w polls-hub
   document.addEventListener("visibilitychange", () => {
@@ -1688,57 +1764,6 @@ async function refreshAltBadge() {
   });
   startAutoRefresh();
 
-  // Jeśli weszliśmy z maila: ?share=<token>
-  // UX: tylko ustawia "opened_at" po stronie DB nie jest potrzebne,
-  // bo decyzja accept/decline jest w UI. Tu robimy mismatch-check:
-  const params = new URLSearchParams(location.search);
-  const shareToken = params.get("share");
-  if (!guestMode && shareToken) {
-    // przypadek: zalogowany na innym koncie niż adresat
-    // -> jeśli zaproszenie nie jest dla auth.uid, to go nie zobaczymy w list_shared_bases_ext()
-    // więc pokazujemy alert i prosimy o właściwe konto.
-    // 🔎 najpierw sprawdź token (czy nie cofnięty)
-    try {
-      const { data: info, error } = await sb().rpc("base_share_token_info", { p_token: shareToken });
-      if (!error && info) {
-        const status = info.status;
-        const recId = info.recipient_user_id;
-        if (status === "cancelled") {
-          await alertModal({ text: t("bases.proposed.cancelled") });
-          // usuń ?share= z URL
-          try {
-            const u = new URL(location.href);
-            u.searchParams.delete("share");
-            history.replaceState({}, "", u.toString());
-          } catch {}
-        } else if (recId && currentUser?.id && recId !== currentUser.id) {
-          await alertModal({ text: t("bases.proposed.mismatch") });
-        }
-      }
-    } catch (e) {
-      console.warn("[bases] token info failed:", e);
-    }
-
-    if ("launchQueue" in window) {
-    window.launchQueue.setConsumer(async (launchParams) => {
-      if (!launchParams.files?.length) return;
-      const file = await launchParams.files[0].getFile();
-      const dt = new DataTransfer();
-      dt.items.add(file);
-      if (importFile) {
-        importFile.files = dt.files;
-        importFile.dispatchEvent(new Event("change"));
-      }
-      openImportModal();
-    });
-  }
-
-  // dotychczasowy mismatch-check po list_shared_bases_ext (zostaje jako fallback)
-    await refreshBases();
-    const hasInvite = sharedBases.some((b) => b.proposed && String(b.taskId || ""));
-    if (!hasInvite) {
-      await alertModal({ text: t("bases.proposed.mismatch") });
-    }
-  }
-  setButtonsState();
+  const shareToken = new URLSearchParams(location.search).get("share");
+  if (!guestMode && shareToken && loaded) await handleShareLink(shareToken);
 })();

@@ -91,6 +91,7 @@ body.editor-body .wrap {
 }
 
 .listShell {
+  --under: #1b1f29; /* podłoże kryjących przycisków (css/base.css) */
     margin-top: 10px;
     border-radius: 18px;
     border: 1px solid var(--line);
@@ -124,7 +125,9 @@ body.editor-body .wrap {
     position: relative;
     border-radius: 18px;
     border: 1px solid var(--line);
-    background: rgba(255,255,255,.05);
+    --btn-tint: rgba(255,255,255,.05);
+  background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, #050914); /* kryjące: css/base.css */
+
     padding: 12px;
     padding-right: 56px;
     cursor: pointer;
@@ -137,7 +140,8 @@ body.editor-body .wrap {
 
 .qcard.active {
     border-color: rgba(255,234,166,.35);
-    background: rgba(255,234,166,.08)
+    --btn-tint: rgba(255,234,166,.08);
+  background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, #050914); /* kryjące: css/base.css */
 }
 
 .qord {
@@ -172,7 +176,9 @@ body.editor-body .wrap {
     height: 30px;
     border-radius: 10px;
     border: 1px solid var(--line2);
-    background: rgba(255,255,255,.08);
+    --btn-tint: rgba(255,255,255,.08);
+  background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, #050914); /* kryjące: css/base.css */
+
     color: rgba(255,255,255,.9);
     font-weight: 1000;
     display: grid;
@@ -379,7 +385,9 @@ body.editor-body .wrap {
 .addTile {
     border-radius: 18px;
     border: 1px dashed rgba(255,255,255,.2);
-    background: rgba(255,255,255,.04);
+    --btn-tint: rgba(255,255,255,.04);
+  background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, #050914); /* kryjące: css/base.css */
+
     padding: 12px;
     align-items: center;
     cursor: pointer;
@@ -404,7 +412,9 @@ body.editor-body .wrap {
     height: 34px;
     border-radius: 14px;
     border: 1px solid rgba(255,234,166,.28);
-    background: rgba(255,234,166,.1);
+    --btn-tint: rgba(255,234,166,.1);
+  background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, #050914); /* kryjące: css/base.css */
+
     color: var(--gold);
     display: grid;
     place-items: center
@@ -452,23 +462,29 @@ body.editor-body .wrap {
 
 .qcard:not(.addTile).good {
     border-color: rgba(120,255,120,.45);
-    background: rgba(120,255,120,.1)
+    --btn-tint: rgba(120,255,120,.1);
+  background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, #050914); /* kryjące: css/base.css */
 }
 
 .qcard:not(.addTile).bad {
     border-color: rgba(255,120,120,.45);
-    background: rgba(255,120,120,.1)
+    --btn-tint: rgba(255,120,120,.1);
+  background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, #050914); /* kryjące: css/base.css */
 }
 
 .qcard.active.good {
     border-color: rgba(120,255,120,.55);
-    background: rgba(120,255,120,.14);
+    --btn-tint: rgba(120,255,120,.14);
+  background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, #050914); /* kryjące: css/base.css */
+
     box-shadow: 0 24px 60px rgba(0,0,0,.45),0 0 0 2px rgba(120,255,120,.14)
 }
 
 .qcard.active.bad {
     border-color: rgba(255,120,120,.55);
-    background: rgba(255,120,120,.14);
+    --btn-tint: rgba(255,120,120,.14);
+  background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, #050914); /* kryjące: css/base.css */
+
     box-shadow: 0 24px 60px rgba(0,0,0,.45),0 0 0 2px rgba(255,120,120,.14)
 }
 

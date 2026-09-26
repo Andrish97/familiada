@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict RdoczUk0qTwKCWgEZ1FCc0wEFboU5tmCF3ZZCerjLJNyOlvwF6XsbpH1XYpSNIB
+\restrict 7pdH58tF9cSGj1aBnFQ8rfgIEcuNs5ECdkqzAddAlTsZdcBU6t5EtE8k1jcrnLN
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -1032,29 +1032,6 @@ CREATE FUNCTION "public"."base_share_token_info"("p_token" "text") RETURNS TABLE
   from public.base_share_tasks t
   left join public.profiles op on op.id = t.owner_id
   where t.token::text = p_token
-  limit 1;
-$$;
-
-
---
--- Name: base_share_token_info("uuid"); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION "public"."base_share_token_info"("p_token" "uuid") RETURNS TABLE("status" "text", "base_id" "uuid", "recipient_user_id" "uuid", "recipient_email" "text", "owner_id" "uuid", "owner_email" "text", "owner_username" "text")
-    LANGUAGE "sql" SECURITY DEFINER
-    SET "search_path" TO 'public'
-    AS $$
-  select
-    t.status,
-    t.base_id,
-    t.recipient_user_id,
-    t.recipient_email,
-    t.owner_id,
-    op.email as owner_email,
-    op.username as owner_username
-  from public.base_share_tasks t
-  left join public.profiles op on op.id = t.owner_id
-  where t.token = p_token
   limit 1;
 $$;
 
@@ -15226,5 +15203,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict RdoczUk0qTwKCWgEZ1FCc0wEFboU5tmCF3ZZCerjLJNyOlvwF6XsbpH1XYpSNIB
+\unrestrict 7pdH58tF9cSGj1aBnFQ8rfgIEcuNs5ECdkqzAddAlTsZdcBU6t5EtE8k1jcrnLN
 
