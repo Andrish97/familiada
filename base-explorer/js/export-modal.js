@@ -1,11 +1,11 @@
 // /base-explorerjs/export-modal.js
 // Modal eksportu: open() zwraca Promise z wynikiem {ok, payload}
 
-import { t } from "../../translation/translation.js?v=v2026-09-26T16124";
-import { TYPES as GAME_TYPES, RULES } from "../../js/core/game-validate.js?v=v2026-09-26T16124";
-import { validateQuestionForType } from "../../js/core/base-export-validate.js?v=v2026-09-26T16124";
-import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../js/core/modal-sheet.js?v=v2026-09-26T16124";
-import { icon, iconText } from "../../js/core/icons.js?v=v2026-09-26T16124";
+import { t } from "../../translation/translation.js?v=v2026-09-26T19541";
+import { TYPES as GAME_TYPES, RULES } from "../../js/core/game-validate.js?v=v2026-09-26T19541";
+import { validateQuestionForType } from "../../js/core/base-export-validate.js?v=v2026-09-26T19541";
+import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../js/core/modal-sheet.js?v=v2026-09-26T19541";
+import { icon, iconText } from "../../js/core/icons.js?v=v2026-09-26T19541";
 
 // Kolejność = pozycje suwaka typu w UI (0/1/2, patrz typeIndex). GAME_TYPES
 // to obiekt nazwa->wartość, nie tablica, więc kolejność zostaje jawna tutaj
