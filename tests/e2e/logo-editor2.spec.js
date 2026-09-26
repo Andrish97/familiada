@@ -923,6 +923,29 @@ test.describe("zgodność ze starymi danymi", () => {
         await page.setViewportSize({ width: 1440, height: 900 });
         await L.openList(page, site);
         continue;
+      } else if (d.payload.source?.mode === "IMAGE") {
+        // Obraz: kadr demo (migracja 270) był DOPASOWANY do zapisanych kropek
+        // z dokładnością do 4 cyfr, a dithering rozlewa każde przesunięcie
+        // kadru o ułamek piksela na cały obraz -- zapisane kropki nie są więc
+        // wzorcem. Wzorcem jest stary edytor na tym samym obrazie i kadrze.
+        // (Stary edytor ładuje adres www.familiada.online wprost -- w runnerze
+        // to cross-origin, więc podajemy mu ten sam plik z lokalnego serwera.)
+        const src = d.payload.source;
+        const localUrl = String(src.imageUrl || "").replace(/^https?:\/\/(www\.)?familiada\.online(?=\/logo-editor\/assets\/)/i, site.origin);
+        const oldId = await L.insertLogo(page, { name: L.uniq("old-resave"), type: d.type, payload: { ...d.payload, source: { ...src, imageUrl: localUrl } } });
+        await page.goto(`${site.origin}/logo-editor`, { waitUntil: "domcontentloaded" });
+        await page.waitForLoadState("networkidle");
+        await page.locator(`.logoTile[data-key="${oldId}"]`).click();
+        await page.locator("#btnEdit").click();
+        await page.waitForTimeout(3000);
+        await oldSave(page);
+        const oldBits = (await L.readLogo(page, oldId)).payload.bits_b64;
+        const vsOld = L.bitDiff(oldBits, after.payload.bits_b64);
+        console.log(`[demo] ${d.name}: vs zapisane: ${L.bitDiff(d.payload.bits_b64, after.payload.bits_b64)}, stary edytor vs zapisane: ${L.bitDiff(d.payload.bits_b64, oldBits)}, vs stary edytor: ${vsOld}`);
+        expect(after.payload.source.imageUrl, "adres obrazu demo bez zmian").toBe(src.imageUrl);
+        expect(vsOld).toBe(0);
+        await L.openList(page, site);
+        continue;
       } else {
         const diff = L.bitDiff(d.payload.bits_b64, after.payload.bits_b64);
         console.log(`[demo] ${d.name}: różnych kropek po zapisie: ${diff}`);
