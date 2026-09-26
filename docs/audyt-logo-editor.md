@@ -299,6 +299,19 @@ podczas testów i poprawione:
   980 px szerokości, więc iPad w pionie (768–834 px) nie edytuje -- tylko w
   poziomie.
 
+### Obraz: obrót i prostowanie
+
+Przyciski obrotu co 90° i suwak „Prostowanie” ±30°. Obraz jest obracany raz
+na płótnie roboczym (maks. 2560 px boku), a kadr, podgląd i kropki liczą się
+z niego. Ramka jest ograniczona do prawdziwego obszaru obrazu, bez pustych
+rogów po obrocie: w układzie oryginału ramka to obrócony prostokąt, więc
+mieści się dokładnie wtedy, gdy mieści się jej obrys. Zapis: `source.rotate`
+(0/90/180/270), `source.straighten` (stopnie), kadr względem obrazu PO
+obrocie. **Logo bez tych pól (wszystkie dotychczasowe) = kąt 0 = oryginał**,
+liczone dokładnie jak wcześniej. Logo obrócone i otwarte w STARYM edytorze
+(tylko póki oba działają naraz) pokaże kadr bez obrotu. Chmurki suwaków mają
+wygląd `.ui-select-menu` / `.ctxPop` (kryjące tło `#050914`, `var(--line)`).
+
 ### Zgodność z danymi, które już są w bazie
 
 Format zapisu, który czyta wyświetlacz (`bits_b64` / `layers[0].rows`), się
@@ -356,6 +369,8 @@ używane już tylko przez stary kod: `list.deleteDisabled`, `status.updated`,
 ### Testy (`tests/e2e/logo-editor2.spec.js`)
 
 Odpalane przez „E2E Tests (Playwright)” z `spec_filter: e2e/logo-editor2.spec.js`
+(równolegle, 5 workerów; każdy na własnym koncie test2/3/4/6/7 -- NIE test1,
+na którym działa nagrywanie rozgrywki i blokuje edycję; ok. 2,5 min)
 na gałęzi. `helpers/local-site.js` serwuje kod z checkoutu lokalnie w runnerze
 i przenosi sesję konta test1@ z produkcji -- testy sprawdzają kod gałęzi na
 prawdziwym backendzie (baza, RPC, blokady, Storage) bez wdrażania. Każdy test
