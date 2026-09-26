@@ -251,11 +251,7 @@ edytora nie da się „cofnąć” do poprzedniej strony, tylko do listy.
 ## Stan: `logo-editor2` (kopia z poprawkami)
 
 Strona `logo-editor2.html` + `logo-editor2/` -- nic do niej nie linkuje, stary
-`logo-editor` działa bez zmian. Wspólne pliki zmienione tylko addytywnie:
-nowe klucze w `translation/*.js` (plus usunięte zdublowane „T” z podpowiedzi
-narzędzia Tekst).
-
-Kod (~6860 -> ~3830 linii):
+`logo-editor` działa bez zmian (poza tłumaczeniami, patrz niżej).
 
 | Moduł | Rola |
 |---|---|
@@ -264,26 +260,80 @@ Kod (~6860 -> ~3830 linii):
 | `transfer.js` | eksport/import `.famlogo` |
 | `render.js` | format bitów PIX i podgląd „kropek” (jedna kopia zamiast trzech) |
 | `preview-zoom.js` | pinch-zoom pełnoekranowego podglądu (przeniesiony bez zmian) |
-| `text.js` | tryb Tekst (wynik kompilacji identyczny ze starym -- sprawdzone na 209 napisach) |
+| `text.js` | tryb Tekst + odtwarzanie napisu z wierszy (`decompileRows`) |
 | `image.js` | tryb Obraz |
 | `draw.js` + `draw/shapes.js`, `draw/raster.js` | tryb Rysunek |
 
-Załatwione: wszystkie punkty P0 (1–5, 5b) i P1 (6–17), z P2: 18, 19, 21–25.
-Zmiany zachowania wynikające z poprawek:
-- nowe logo powstaje w bazie przy pierwszym „Zapisz” (wcześniej od razu pusty wiersz),
-- „Wstecz” w przeglądarce w edytorze zamyka edytor (z pytaniem o zmiany),
-- pasek szerokości/ostrzeżeń w trybie Tekst widoczny od razu (wcześniej schowany pod „Dozwolone znaki”),
-- rysunki zapisują się w stałym świecie 1040×440 (stare przeliczane przy otwarciu po `clipPath`),
-  historia Cofnij/Ponów nie jest już zapisywana w bazie,
-- skróty: V, H, B, E, S, T, L/R/O/P (kształty), U (następny kształt), F (wypełnienie), [ ] (grubość),
-- obraz: tylko JPG/PNG/GIF/WEBP do 5 MB; podmieniony plik jest usuwany ze Storage po zapisie.
+Załatwione: P0 1–5 i 5b, P1 6–17, z P2: 18, 19, 21–25. Dodatkowo znalezione
+podczas testów i poprawione:
+- **kafelki z długą nazwą bez spacji nachodziły na siebie** (i zasłaniały
+  przyciski usuwania sąsiadów) -- błąd CSS, jest też w starym edytorze,
+- po wpisaniu wartości w ustawieniach rysunku skróty klawiszowe nie działały
+  (fokus zostawał w polu),
+- przy otwarciu Obrazu przez chwilę widać było obraz i ramkę poprzedniego logo.
 
-Testy: `tests/e2e/logo-editor2.spec.js` (17 scenariuszy, konto test1@) --
-odpalane przez „E2E Tests (Playwright)” z `spec_filter: e2e/logo-editor2.spec.js`
+### Zgodność z danymi, które już są w bazie
+
+Format zapisu, który czyta wyświetlacz (`bits_b64` / `layers[0].rows`), się
+nie zmienia -- **na wyświetlaczu wszystkie logo wyglądają tak samo jak dziś**,
+niezależnie od edytora. Poniżej: co się dzieje przy EDYCJI starego logo.
+
+| Rodzaj logo | Nowy edytor | Sprawdzone |
+|---|---|---|
+| Tekst z zapisanym napisem | otwiera, identyczne wiersze po zapisie | test: logo ze starego edytora -> nowy |
+| Tekst bez napisu (świeży seed demo, stare, importy) | napis odtwarzany z wierszy; gdy się nie da -- odmowa zamiast wyczyszczenia | demo „MOJE LOGO” (seed) -> „MOJELOGO”, wiersze identyczne; 3000/3000 losowych napisów |
+| Rysunek z `fabricData` | zachowuje rozmiar sceny, na której go narysowano (z `clipPath`) -> **bit w bit** jak stary edytor | test: pędzel+kształty+tekst ze starego edytora -> 0 różnic |
+| Rysunek bez sceny (seed demo „Rysunek”, PIX bez `source`) | kropki jako warstwa obrazu na scenie, można rysować dalej | 0 różnic po zapisie bez zmian |
+| Obraz ze Storage / demo (`/logo-editor/assets/demo-image.png`) | wczytuje obraz i kadr (także stary format kadru) | test: obraz ze starego edytora -> 0 różnic |
+| Obraz, którego nie ma (np. zapisany adres `blob:` z błędu P0-1) | komunikat, zapis zablokowany, kropki nietknięte | test |
+
+Uwaga: rysunki zapisane starym edytorem na ekranie Retina mają zapisane
+„złe” kropki (ćwiartka sceny, błąd 5b). Nowy edytor pokaże je poprawnie i
+**pierwszy zapis zmieni to, co widać na wyświetlaczu** -- na właściwe.
+
+**Wdrożenie musi zachować plik `logo-editor/assets/demo-image.png`** -- kopie
+demo „Obraz” u wszystkich użytkowników mają ten adres na sztywno (migracje 219, 270).
+
+### Tłumaczenia (pl/en/uk)
+
+Przerobione od razu (wpływa też na stary edytor -- na lepsze):
+- jedna sekcja `status` i `draw.errors` zamiast zdublowanych,
+- usunięte 41 kluczy nieużywanych przez żaden edytor,
+- teksty dla użytkownika zamiast technicznych (import, czcionki, storage),
+  pełne słowa zamiast skrótów („Wypeł.”, „Roz.”, „Zaokr. Prost.”),
+  podpowiedzi zgodne z działaniem (podgląd, gumka), style linii słownie,
+  „Eksport” po polsku, w uk konsekwentnie „ти” i „логотипу”, bez polskiej
+  odmiany „Familiady”.
+
+**Przy wdrożeniu (usunięciu starego edytora) do skasowania** -- klucze
+używane już tylko przez stary kod: `list.deleteDisabled`, `status.updated`,
+`status.fixingName`, `status.created`, `draw.tools.*`, `errors.createFailed`,
+`errors.createFailedDetailed`, `errors.invalidType`, `errors.cannotEditOldLogo`,
+`confirm.backUnsaved`, `confirm.logoutUnsaved`.
+
+### Testy (`tests/e2e/logo-editor2.spec.js`)
+
+Odpalane przez „E2E Tests (Playwright)” z `spec_filter: e2e/logo-editor2.spec.js`
 na gałęzi. `helpers/local-site.js` serwuje kod z checkoutu lokalnie w runnerze
-i przenosi sesję z produkcji, więc test sprawdza kod gałęzi na prawdziwym
-backendzie bez wdrażania.
+i przenosi sesję konta test1@ z produkcji -- testy sprawdzają kod gałęzi na
+prawdziwym backendzie (baza, RPC, blokady, Storage) bez wdrażania. Każdy test
+sprawdza **wynik w bazie** (payload, bity dla wyświetlacza), nie tylko ekran.
 
-Przeniesienie na produkcję: podmienić `logo-editor/` i `logo-editor.html`
-zawartością kopii (ścieżki `logo-editor2/` -> `logo-editor/`) i przepiąć spec
-na `/logo-editor`.
+Grupy: lista (nazwy, kolizje nazw, usuwanie, podgląd, nowe logo i „Wstecz”),
+import/eksport (w obie strony dla rysunku i obrazu, zły plik), Tekst (zapis,
+znaki, szerokość, odtwarzanie napisu), Rysunek (świat, stare rysunki, logo
+bez sceny, skróty, 14 kształtów, wielokąt, gumka, zoom, cofanie/ponawianie,
+cofanie zmian tekstu, tło, strzałki/Delete, duplikowanie, Retina), Obraz
+(Storage i sprzątanie, niedostępny obraz, suwaki/odwrócenie/kadr, walidacja
+pliku), blokady (druga karta, zajęta pula), zgodność ze starym edytorem i
+demo, języki en/uk (brak surowych kluczy), telefon.
+
+Czego testy NIE pokrywają: gestów dotykowych (pinch na scenie i w podglądzie,
+kadr dwoma palcami) -- tylko Chromium na desktopie; przeglądarek innych niż
+Chromium; wydajności przy bardzo dużych rysunkach; PWA „otwórz plik .famlogo”.
+
+### Przeniesienie na produkcję
+
+Podmienić `logo-editor/` i `logo-editor.html` zawartością kopii (ścieżki
+`logo-editor2/` -> `logo-editor/`, **z zachowaniem `assets/demo-image.png`**),
+przepiąć spec na `/logo-editor`, usunąć klucze tłumaczeń z listy wyżej.
