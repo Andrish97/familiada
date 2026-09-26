@@ -514,6 +514,21 @@ test.describe("tryb Rysunek", () => {
     expect(await L.isDirty(page)).toBe(true);
   });
 
+  test("zakresy: grubość poniżej widocznej (5) i nieczytelnie mała czcionka (50) są podnoszone", async ({ page }) => {
+    await open(page);
+    await L.createNew(page, "Draw", L.uniq("ranges"));
+    await page.keyboard.press("b");
+    await page.fill("#cStrokeW", "2");
+    await page.locator("#cStrokeW").press("Enter");
+    await expect(page.locator("#cStrokeW")).toHaveValue("5");
+    await expect(page.locator("#cStrokeW")).toHaveAttribute("max", "100");
+    await page.keyboard.press("t");
+    await page.fill("#cSz", "20");
+    await page.locator("#cSz").press("Enter");
+    await expect(page.locator("#cSz")).toHaveValue("50");
+    await expect(page.locator("#cSz")).toHaveAttribute("max", "600");
+  });
+
   test("P1-8: zmiana rozmiaru tekstu cofa się jednym Cofnij", async ({ page }) => {
     await open(page);
     const name = L.uniq("textundo");

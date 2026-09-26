@@ -275,6 +275,30 @@ podczas testów i poprawione:
   nowy (pusty) napis -- Fabric odznacza obiekt przed zdarzeniem kliknięcia.
   Jest też w starym edytorze. Teraz taki klik kończy edycję (i usuwa pusty napis).
 
+### Rysunek: strzałki, zakresy, dotyk (po uwagach)
+
+- **Linia i strzałki** pamiętają końce (`_line` w obiekcie sceny). Zaznaczone
+  mają dwa uchwyty na końcach zamiast ramki skalowania -- przeciągnięcie końca
+  zmienia długość i kierunek, grot zostaje grotem (w starym edytorze
+  skalowanie rozciągało go razem z całością). Shift przy rysowaniu i przy
+  przeciąganiu końca = kąt co 15° (wcześniej tylko skos 45°). Grot ma
+  minimalną wielkość czytelną na kropkach, grubość pełnej strzałki nie zależy
+  od długości, zmiana grubości przelicza grot. Linie ze starego edytora nie
+  mają `_line` i zachowują się jak dotąd.
+- **Zakresy pól** dobrane pomiarem na wyświetlaczu: linia 1–3 nie zapala
+  żadnej kropki, 4–5 zależnie od położenia; napis 10–40 ma 0–3 kropki
+  wysokości, ~60 = 7 kropek (czytelna litera), 220 to tylko 1/3 wysokości.
+  Teraz: grubość i gumka 5–100 (było 1–50), obrys zaznaczonego 0–100, czcionka
+  50–600 (było 10–220). Zapisane ustawienia narzędzi spoza zakresu są
+  podnoszone przy wczytaniu; istniejące obiekty zostają, jakie są.
+- **Dotyk** sprawdzony na emulowanym tablecie (prawdziwe zdarzenia touch
+  przez CDP): pędzel, kształty, zaznaczanie stuknięciem, końce strzałki
+  palcem, pinch-zoom bez przypadkowej kreski, tekst, kadr obrazu jednym palcem
+  i pinchem -- dwa testy e2e. To nie zastępuje próby na prawdziwym iPadzie
+  (Safari, klawiatura ekranowa przy tekście). Edycja jest wyłączona poniżej
+  980 px szerokości, więc iPad w pionie (768–834 px) nie edytuje -- tylko w
+  poziomie.
+
 ### Zgodność z danymi, które już są w bazie
 
 Format zapisu, który czyta wyświetlacz (`bits_b64` / `layers[0].rows`), się
@@ -327,7 +351,7 @@ Przerobione od razu (wpływa też na stary edytor -- na lepsze):
 używane już tylko przez stary kod: `list.deleteDisabled`, `status.updated`,
 `status.fixingName`, `status.created`, `draw.tools.*`, `errors.createFailed`,
 `errors.createFailedDetailed`, `errors.invalidType`, `errors.cannotEditOldLogo`,
-`confirm.backUnsaved`, `confirm.logoutUnsaved`.
+`confirm.backUnsaved`, `confirm.logoutUnsaved`, `draw.ui.radiusLabel` (w nowym „Rozmiar” czcionki to `sizeLabel`).
 
 ### Testy (`tests/e2e/logo-editor2.spec.js`)
 

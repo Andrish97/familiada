@@ -48,6 +48,17 @@ const DEFAULT_TOOL_SETTINGS = {
   ERASER: { size: 10 },
 };
 
+// Zakresy pól liczbowych, dobrane pomiarem na wyświetlaczu (świat 1040
+// jednostek szerokości, kropka ~5 jednostek): linia cieńsza niż 4 w ogóle
+// nie zapala kropek, 4–5 zapala je zależnie od położenia; napis mniejszy niż
+// ~50 ma 1–5 kropek wysokości (nieczytelny), a 600 to prawie cała wysokość.
+const RANGE = {
+  stroke: [5, 100],
+  eraser: [5, 100],
+  outline: [0, 100], // obrys zaznaczonego kształtu: 0 = bez obrysu (samo wypełnienie)
+  fontSize: [50, 600],
+};
+
 const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
 const hex = (bw) => (bw === "BLACK" ? "#000000" : "#ffffff");
 const isTextObj = (o) => !!o && (o.type === "i-text" || o.type === "textbox" || o.type === "text");
@@ -65,6 +76,12 @@ function dashFor(lineStyle, width) {
 function mergeSettings(saved) {
   const out = {};
   for (const [k, def] of Object.entries(DEFAULT_TOOL_SETTINGS)) out[k] = { ...def, ...(saved?.[k] || {}) };
+  // ustawienia zapisane przed zmianą zakresów (np. grubość 2) -- do nowego zakresu
+  const fit = (v, [a, b], d) => clamp(Number(v) || d, a, b);
+  out.BRUSH.stroke = fit(out.BRUSH.stroke, RANGE.stroke, DEFAULT_TOOL_SETTINGS.BRUSH.stroke);
+  out.SHAPES.stroke = fit(out.SHAPES.stroke, RANGE.stroke, DEFAULT_TOOL_SETTINGS.SHAPES.stroke);
+  out.ERASER.size = fit(out.ERASER.size, RANGE.eraser, DEFAULT_TOOL_SETTINGS.ERASER.size);
+  out.TEXT.size = fit(out.TEXT.size, RANGE.fontSize, DEFAULT_TOOL_SETTINGS.TEXT.size);
   return out;
 }
 
@@ -756,7 +773,7 @@ export function initDrawEditor(ctx) {
   function bindNumber(id, min, max, fallback, apply) {
     const read = (e) => clamp(Number(e.target.value) || fallback, min, max);
     on(id, "input", (e) => apply(read(e), false));
-    on(id, "change", (e) => apply(read(e), true));
+    on(id, "change", (e) => { const v = read(e); e.target.value = v; apply(v, true); });
     // Enter zatwierdza i oddaje klawiaturę skrótom sceny (Ctrl+Z, V, B…)
     on(id, "keydown", (e) => { if (e.key === "Enter") e.target.blur(); });
   }
@@ -779,18 +796,18 @@ export function initDrawEditor(ctx) {
   function renderBrushSettings() {
     const s = settings.BRUSH;
     toolCtx.innerHTML =
-      group(label(T("strokeLabel")) + numInput("cStrokeW", 1, 50, 1, s.stroke)) +
+      group(label(T("strokeLabel")) + numInput("cStrokeW", ...RANGE.stroke, 1, s.stroke)) +
       group(label(T("styleLabel")) + lineStyleHtml("cLineStyle")) +
       group(label(T("colorLabel")) + colorBtn(s.fg, 'id="cFg"'));
-    bindNumber("cStrokeW", 1, 50, 6, (v) => { s.stroke = v; applyBrushStyle(); updateCursor(); });
+    bindNumber("cStrokeW", ...RANGE.stroke, 6, (v) => { s.stroke = v; applyBrushStyle(); updateCursor(); });
     mountLineStyle("cLineStyle", s.lineStyle, (v) => { s.lineStyle = v; applyBrushStyle(); });
     on("cFg", "click", () => { s.fg = s.fg === "BLACK" ? "WHITE" : "BLACK"; applyBrushStyle(); renderSettings(); });
   }
 
   function renderEraserSettings() {
     const s = settings.ERASER;
-    toolCtx.innerHTML = group(label(T("sizeLabel")) + numInput("cEraser", 1, 50, 1, s.size));
-    bindNumber("cEraser", 1, 50, 10, (v) => { s.size = v; updateCursor(); });
+    toolCtx.innerHTML = group(label(T("sizeLabel")) + numInput("cEraser", ...RANGE.eraser, 1, s.size));
+    bindNumber("cEraser", ...RANGE.eraser, 10, (v) => { s.size = v; updateCursor(); });
   }
 
   function renderShapeToolSettings() {
@@ -799,7 +816,7 @@ export function initDrawEditor(ctx) {
     let html =
       `<div class="ctxGroup" style="position:relative;"><button class="ctxBtn ctxSelectBtn ctxSelectBtn--shape" id="cShapeBtn" type="button" title="${t(shape.label)}">` +
       `<span class="ctxSelectIco">${shape.icon}</span><span class="ctxSelectLabel">${t(shape.label)}</span><span class="ctxSelectCaret">${icon("caret-down")}</span></button></div>` +
-      group(label(T("strokeLabel")) + numInput("cStrokeW", 1, 50, 1, s.stroke)) +
+      group(label(T("strokeLabel")) + numInput("cStrokeW", ...RANGE.stroke, 1, s.stroke)) +
       group(label(T("styleLabel")) + lineStyleHtml("cLineStyle")) +
       group(label(T("colorLabel")) + colorBtn(s.fg, 'id="cFg"'));
     if (shape.hasFill) {
@@ -811,7 +828,7 @@ export function initDrawEditor(ctx) {
     toolCtx.innerHTML = html;
 
     on("cShapeBtn", "click", (e) => { e.stopPropagation(); toggleShapePicker(); });
-    bindNumber("cStrokeW", 1, 50, 6, (v) => { s.stroke = v; });
+    bindNumber("cStrokeW", ...RANGE.stroke, 6, (v) => { s.stroke = v; });
     mountLineStyle("cLineStyle", s.lineStyle, (v) => { s.lineStyle = v; });
     on("cFg", "click", () => { s.fg = s.fg === "BLACK" ? "WHITE" : "BLACK"; renderSettings(); });
     on("cFill", "change", (e) => { s.fill = e.target.checked; });
@@ -826,7 +843,7 @@ export function initDrawEditor(ctx) {
       bold: s.bold, italic: s.italic, underline: s.underline, align: s.align, color: s.fg,
     });
     on("cFont", "click", () => openFontPicker(s.font, (v) => { s.font = v; renderSettings(); }));
-    bindNumber("cSz", 10, 220, 80, (v) => { s.size = v; });
+    bindNumber("cSz", ...RANGE.fontSize, 80, (v) => { s.size = v; });
     bindNumber("cLH", 0.6, 3, 1, (v) => { s.lineHeight = v; });
     bindNumber("cSp", 0, 20, 0, (v) => { s.spacing = v; });
     for (const [id, key] of [["cB", "bold"], ["cI", "italic"], ["cU", "underline"]]) {
@@ -842,7 +859,7 @@ export function initDrawEditor(ctx) {
     const fontLabel = DRAW_FONTS.find((f) => f.value === v.font)?.label || T("fontFallback");
     return (
       group(`<button class="ctxBtn ctxSelectBtn" id="cFont" type="button" title="${fontLabel}"><span class="ctxSelectLabel">${fontLabel}</span><span class="ctxSelectCaret">${icon("caret-down")}</span></button>`) +
-      group(label(T("radiusLabel")) + numInput("cSz", 10, 220, 1, v.size)) +
+      group(label(T("sizeLabel")) + numInput("cSz", ...RANGE.fontSize, 1, v.size)) +
       group(label(T("lineHeightLabel")) + numInput("cLH", 0.6, 3, 0.05, v.lineHeight)) +
       group(label(T("letterSpacingLabel")) + numInput("cSp", 0, 20, 0.5, v.spacing)) +
       group(toggleBtn("cB", v.bold, T("bold")) + toggleBtn("cI", v.italic, T("italic")) + toggleBtn("cU", v.underline, T("underline"))) +
@@ -871,7 +888,7 @@ export function initDrawEditor(ctx) {
       if (final) { keepInWorld(obj); commit(); canvas.requestRenderAll(); } else touch();
     };
     on("cFont", "click", () => openFontPicker(obj.fontFamily, (v) => { setObj({ fontFamily: v }); renderSettings(); }));
-    bindNumber("cSz", 10, 220, 40, (v, final) => setObj({ fontSize: v }, final));
+    bindNumber("cSz", ...RANGE.fontSize, 80, (v, final) => setObj({ fontSize: v }, final));
     bindNumber("cLH", 0.6, 3, 1, (v, final) => setObj({ lineHeight: v }, final));
     bindNumber("cSp", 0, 20, 0, (v, final) => setObj({ charSpacing: v * 50 }, final));
     on("cB", "click", () => { setObj({ fontWeight: bold ? "normal" : "bold" }); renderSettings(); });
@@ -894,7 +911,7 @@ export function initDrawEditor(ctx) {
     const firstFill = shapes.find((o) => o.fill && o.fill !== "transparent")?.fill;
 
     let html =
-      group(label(T("outlineLabel")) + `<input id="cObjStroke" class="ctxInput" type="number" min="0" max="50" step="1" value="${widths.size === 1 ? [...widths][0] : ""}" placeholder="—"/>`) +
+      group(label(T("outlineLabel")) + `<input id="cObjStroke" class="ctxInput" type="number" min="${RANGE.outline[0]}" max="${RANGE.outline[1]}" step="1" value="${widths.size === 1 ? [...widths][0] : ""}" placeholder="—"/>`) +
       group(label(T("styleLabel")) + lineStyleHtml("cObjLineStyle")) +
       group(colorBtn(strokeColors.size === 1 ? [...strokeColors][0] : "WHITE", 'id="cObjStrokeColor"'));
     if (canFill) {
@@ -907,7 +924,7 @@ export function initDrawEditor(ctx) {
       if (final) { commit(); canvas.requestRenderAll(); } else touch();
     };
     const styleOf = (o) => LINE_STYLES.find((ls) => JSON.stringify(ls.dash?.(o.strokeWidth) || null) === JSON.stringify(o.strokeDashArray || null))?.id || "solid";
-    bindNumber("cObjStroke", 0, 50, 0, (v, final) => apply((o) => {
+    bindNumber("cObjStroke", ...RANGE.outline, 0, (v, final) => apply((o) => {
       // strzałka: grot zależy od grubości -- przebudowa między tymi samymi końcami
       const ends = isLineObj(o) && !o.group ? lineEnds(o) : null;
       o.set({ strokeDashArray: dashFor(styleOf(o), v), strokeWidth: v });
