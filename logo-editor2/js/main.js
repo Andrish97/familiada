@@ -31,9 +31,14 @@ import { initImageEditor } from "./image.js?v=v2026-09-26T05304";
 
 const FONT_3x10_URL = "display/font_3x10.json?v=v2026-09-26T05304";
 const FONT_5x7_URL = "display/font_5x7.json?v=v2026-09-26T05304";
-// Edycja wymaga miejsca na pasek narzędzi i scenę -- na wąskich ekranach
-// dostępna jest tylko lista (podgląd, import/eksport, nazwa, usuwanie).
-const NARROW_QUERY = "(max-width:980px)";
+// Edycja wymaga miejsca na pasek narzędzi i scenę -- na telefonie dostępna
+// jest tylko lista (podgląd, import/eksport, nazwa, usuwanie). Telefon =
+// krótszy bok EKRANU poniżej 700 px: ta miara nie zmienia się przy obrocie,
+// więc tablet edytuje w poziomie i w pionie (także gdy obróci się w trakcie
+// edycji), a telefon nie zaczyna edycji w żadnej orientacji. (Wcześniej:
+// szerokość okna < 980 px -- tablet w pionie nie mógł zacząć edycji, ale po
+// obrocie w trakcie edytował dalej.)
+const PHONE_MAX_SHORT_SIDE = 700;
 
 /* =========================================================
    DOM
@@ -122,7 +127,8 @@ function show(node, on) {
 
 const setMsg = (text) => { if (el.msg) el.msg.textContent = text || ""; };
 const setEditorMsg = (text) => { if (el.editorMsg) el.editorMsg.textContent = text || ""; };
-const isNarrow = () => window.matchMedia(NARROW_QUERY).matches;
+const isPhone = () => Math.min(window.screen?.width || 0, window.screen?.height || 0) < PHONE_MAX_SHORT_SIDE;
+document.documentElement.classList.toggle("le-phone", isPhone());
 const defaultName = () => t("logoEditor.defaults.logoName");
 
 function esc(s) {
@@ -268,7 +274,7 @@ function renderList() {
   el.grid.innerHTML = "";
 
   const add = document.createElement("div");
-  add.className = "addCard hide-mobile";
+  add.className = "addCard le-edit-only";
   add.innerHTML = `
     <div class="plus">${icon("plus")}</div>
     <div class="txt">${esc(t("logoEditor.create.title"))}</div>
@@ -405,7 +411,7 @@ function cannotEditReason(logo, mode) {
 
 async function editSelected() {
   if (!selectedId) return;
-  if (isNarrow()) {
+  if (isPhone()) {
     void alertModal({ text: t("logoEditor.errors.noMobileEdit") });
     return;
   }
@@ -428,7 +434,7 @@ async function editSelected() {
 
 /** logo == null => nowe logo o nazwie newName (w bazie powstanie przy pierwszym zapisie). */
 async function openEditor(mode, logo, newName = "") {
-  if (isNarrow()) {
+  if (isPhone()) {
     void alertModal({ text: t("logoEditor.errors.noMobileEdit") });
     return;
   }

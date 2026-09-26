@@ -1228,8 +1228,49 @@ test.describe("tablet (dotyk)", () => {
   });
 });
 
+/* Tablet w pionie: edycja dostępna od początku, a obrót ekranu w trakcie
+   (pion -> poziom -> pion) nie gubi rysunku. Telefon rozpoznajemy po krótszym
+   boku EKRANU, więc obrót niczego nie przełącza. */
+test.describe("tablet w pionie i obrót ekranu", () => {
+  const PORTRAIT = { width: 820, height: 1180 };
+  test.use({ viewport: PORTRAIT, screen: PORTRAIT, isMobile: true, hasTouch: true });
+
+  test("edycja zaczęta w pionie, obrót w trakcie: pasek ustawień bez ucięć, oba obiekty w zapisie", async ({ page }) => {
+    const errors = L.collectPageErrors(page);
+    await open(page);
+    await expect(page.locator("#grid .addCard")).toBeVisible();
+    const name = L.uniq("portrait");
+    await L.createNew(page, "Draw", name);
+    const drawRect = async () => {
+      const b = await L.stage(page);
+      await page.keyboard.press("r");
+      await L.drag(page, b.x + 40, b.y + 30, b.x + b.width / 2, b.y + b.height / 2);
+    };
+    await drawRect();
+    // pasek ustawień zawija się zamiast ucinać ostatnie pola
+    const bar = await page.evaluate(() => {
+      const c = document.getElementById("toolCtxSettings").getBoundingClientRect();
+      const right = Math.max(...[...document.querySelectorAll("#toolCtxSettings > *")].map((k) => k.getBoundingClientRect().right));
+      return { container: c.right, content: right };
+    });
+    expect(bar.content).toBeLessThanOrEqual(bar.container + 1);
+
+    await page.setViewportSize({ width: PORTRAIT.height, height: PORTRAIT.width }); // obrót do poziomu
+    await page.waitForTimeout(500);
+    await drawRect();
+    await page.setViewportSize(PORTRAIT);                                            // i z powrotem
+    await page.waitForTimeout(500);
+    await expect(page.locator("#editorShell")).toHaveAttribute("data-mode", "DRAW");
+    expect(await L.save(page)).toMatch(/Zapisano/);
+    const row = await L.readLogoByName(page, name);
+    expect(row.payload.source.fabricData.objects).toHaveLength(2);
+    expect(row.payload.source.world).toEqual({ w: 1040, h: 440 }); // świat nie zależy od orientacji
+    expect(errors).toEqual([]);
+  });
+});
+
 test.describe("telefon", () => {
-  test.use({ viewport: { width: 390, height: 800 }, isMobile: true, hasTouch: true });
+  test.use({ viewport: { width: 390, height: 800 }, screen: { width: 390, height: 800 }, isMobile: true, hasTouch: true });
 
   test("lista i podgląd działają; tworzenie i edycja są ukryte", async ({ page }) => {
     await open(page);
@@ -1240,5 +1281,17 @@ test.describe("telefon", () => {
     await page.locator(`.logoTile[data-key="${id}"]`).tap();
     await page.locator("#btnPreview").tap();
     await expect(page.locator("#previewOverlay")).toBeVisible();
+  });
+});
+
+test.describe("telefon w poziomie", () => {
+  const LAND = { width: 844, height: 390 };
+  test.use({ viewport: LAND, screen: LAND, isMobile: true, hasTouch: true });
+
+  test("tworzenie i edycja dalej ukryte (krótszy bok ekranu < 700 px)", async ({ page }) => {
+    await open(page);
+    await expect(page.locator("#grid")).toBeVisible();
+    await expect(page.locator("#grid .addCard")).toBeHidden();
+    await expect(page.locator("#btnEdit")).toBeHidden();
   });
 });

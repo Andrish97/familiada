@@ -4137,7 +4137,7 @@ const en = {
       createFailedDetailed: "Couldn't create.\n\n{error}",
       invalidType: "Unknown logo type.",
       cannotEditOldLogo: "This logo cannot be edited.",
-      noMobileEdit: "Editing a logo needs a bigger screen — open it on a computer or a tablet in landscape.",
+      noMobileEdit: "Editing a logo needs a bigger screen — open it on a computer or a tablet.",
       noSourceText: "The text of this logo can't be read back, so editing would clear it. Create a new text logo.",
       loadFailed: "Couldn't load the logo.\n\n{error}",
       createFailed: "Failed to create logo.",

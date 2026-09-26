@@ -4011,7 +4011,7 @@ const pl = {
       createFailedDetailed: "Nie udało się utworzyć.\n\n{error}",
       invalidType: "Nieznany typ logo.",
       cannotEditOldLogo: "To logo nie może być edytowane.",
-      noMobileEdit: "Edycja logo wymaga większego ekranu — otwórz ją na komputerze albo tablecie w poziomie.",
+      noMobileEdit: "Edycja logo wymaga większego ekranu — otwórz ją na komputerze albo tablecie.",
       noSourceText: "Nie da się odczytać napisu z tego logo, więc edycja by go wyczyściła. Utwórz nowe logo tekstowe.",
       loadFailed: "Nie udało się wczytać logo.\n\n{error}",
       createFailed: "Nie udało się utworzyć logo.",

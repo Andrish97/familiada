@@ -113,11 +113,9 @@
   font-size: 14px;
 }
 
-/* Edycja niedostępna na mobile */
-@media (max-width: 900px) {
-  #btnEdit { display: none !important; }
-
-}
+/* Edycja niedostępna na telefonie (klasa z main.js: krótszy bok ekranu < 700 px) */
+.le-phone #btnEdit,
+.le-phone .le-edit-only{ display: none !important; }
 .logoX:hover{
   border-color: var(--gold);
   background: rgba(0,0,0,.32);
@@ -275,9 +273,9 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  flex-wrap: nowrap;
-  overflow-x: auto;
-  overflow-y: visible;
+  /* zawija się na węższym ekranie (np. tablet w pionie) zamiast ucinać ostatnie pola */
+  flex-wrap: wrap;
+  row-gap: 6px;
   min-height: 34px;
   scrollbar-width: thin;
   scrollbar-color: rgba(255,255,255,.15) transparent;
