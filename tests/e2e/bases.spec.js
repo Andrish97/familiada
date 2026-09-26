@@ -488,7 +488,8 @@ test.describe("bases: audyt -- zaproszenia i link z maila", () => {
       await tile.locator("[data-accept]").click();
       const accepted = page2.locator("#sharedGrid .card", { hasText: name });
       await expect(accepted).not.toHaveClass(/proposed/, { timeout: 10000 });
-      await accepted.locator(".name").click();
+      // zaznaczenie przetrwało akceptację -- teraz to już dostęp, więc Przeglądaj działa
+      await expect(accepted).toHaveClass(/selected/);
       await expect(page2.locator("#btnBrowse")).toBeEnabled();
     } finally {
       if (ctx2) await ctx2.close();
