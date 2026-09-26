@@ -308,7 +308,7 @@ export function initImageEditor(ctx) {
     if (!imgPreview) return;
     imgPreview.style.display = "block";
     if (src) imgPreview.src = src; else imgPreview.removeAttribute("src");
-    show(cropFrame, !!src);
+    show(cropFrame, false); // ramka pojawia się, gdy obraz jest gotowy (showImage)
   }
 
   // crossOrigin=anonymous jest konieczne: bez CORS canvas jest „skażony”
@@ -343,6 +343,7 @@ export function initImageEditor(ctx) {
       await whenPreviewReady();
       if (seq !== loadSeq) return;
       imageStatus = "ready";
+      show(cropFrame, true);
       applyCropImg();
       schedulePreview(10);
     } catch (e) {
