@@ -140,8 +140,22 @@ export async function importGame(payload, ownerId, onProgress) {
 		.select("id")
 		.single();
 	if (gErr) throw gErr;
-	
-	const qs = payload.questions || [];
+
+	// Import nie jest jedną transakcją: gdy coś padnie w połowie, usuwamy
+	// utworzoną grę (kaskada zabiera pytania/odpowiedzi) -- wcześniej na liście
+	// zostawała niepełna gra, a ponowny import robił drugą o tej samej nazwie.
+	try {
+		await importQuestions(game.id, payload.questions || [], onProgress);
+	} catch (e) {
+		const { error: delErr } = await sb().from("games").delete().eq("id", game.id);
+		if (delErr) console.warn("[import] cleanup failed:", delErr);
+		throw e;
+	}
+
+	return game.id;
+}
+
+async function importQuestions(gameId, qs, onProgress) {
 	const n = qs.length;
 	if (typeof onProgress === "function") {
 		onProgress({ step: t("gamesImportExport.import.step"), i: 0, n, msg: "" });
@@ -154,7 +168,7 @@ export async function importGame(payload, ownerId, onProgress) {
 			.from("questions")
 			.insert(
 				{
-					game_id: game.id,
+					game_id: gameId,
 					ord: qi + 1,
 					text: qText,
 				},
@@ -164,7 +178,9 @@ export async function importGame(payload, ownerId, onProgress) {
 			.single();
 		if (qInsErr) throw qInsErr;
 
-		const srcA = Array.isArray(srcQ.answers) ? srcQ.answers : [];
+		// answers_ord_range: w bazie najwyżej 6 odpowiedzi na pytanie -- siódma
+		// wywracała cały import (ręcznie poprawiony plik, inny generator)
+		const srcA = (Array.isArray(srcQ.answers) ? srcQ.answers : []).slice(0, 6);
 		const rows = srcA.map((a, ai) => ({
 			question_id: qRow.id,
 			ord: ai + 1,
@@ -185,8 +201,6 @@ export async function importGame(payload, ownerId, onProgress) {
 			});
 		}
 	}
-
-	return game.id;
 }
 
 /* =========================================================
@@ -202,5 +216,6 @@ export function downloadJson(filename, obj) {
 	document.body.appendChild(a);
 	a.click();
 	a.remove();
-	URL.revokeObjectURL(url);
+	// natychmiastowy revoke potrafi w Firefox/Safari przerwać pobieranie
+	setTimeout(() => URL.revokeObjectURL(url), 1000);
 }

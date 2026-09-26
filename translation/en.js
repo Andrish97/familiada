@@ -2788,6 +2788,7 @@ const en = {
       marketplace: "Community Games",
       connectDevice: "Connect device",
       account: "Account settings",
+      more: "More",
     },
     header: {
       title: "Your games",
@@ -2907,6 +2908,7 @@ const en = {
       subCreate: "Enter a game name.",
       placeholder: "Name...",
       failed: "Rename failed.",
+      empty: "Enter a name.",
     },
     common: {
       save: "Save",
@@ -2946,6 +2948,7 @@ const en = {
       resetPollFailed: "Failed to reset poll status.",
       checkFailed: "Failed to check game status.",
       openPollFailed: "Failed to open poll.",
+      loadFailed: "Failed to load your games. Check your connection and refresh the page.",
     },
     hint: {
       select: "Select a game to enable actions. Double-tap to rename.",
@@ -2963,6 +2966,10 @@ const en = {
       hint: "Select a game to enable actions.",
       typeLabel: "Community",
       removeFromLibrary: "Remove from library",
+      removeTitle: "Remove from library?",
+      removeText: "“{name}” will be removed from your library together with its settings. You can add it again from the Community later.",
+      removeOk: "Remove",
+      removeFailed: "Failed to remove the game from your library.",
     },
     gameFallback: "Untitled",
   },

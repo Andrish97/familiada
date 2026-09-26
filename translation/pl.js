@@ -2662,6 +2662,7 @@ const pl = {
       marketplace: "Gry Społeczności",
       connectDevice: "Podłącz urządzenie",
       account: "Ustawienia konta",
+      more: "Więcej",
     },
     header: {
       title: "Twoje gry",
@@ -2781,6 +2782,7 @@ const pl = {
       subCreate: "Podaj nazwę gry.",
       placeholder: "Nazwa...",
       failed: "Nie udało się zmienić nazwy.",
+      empty: "Podaj nazwę.",
     },
     common: {
       save: "Zapisz",
@@ -2820,6 +2822,7 @@ const pl = {
       resetPollFailed: "Nie udało się zresetować statusu ankiety.",
       checkFailed: "Nie udało się sprawdzić statusu gry.",
       openPollFailed: "Nie udało się otworzyć ankiety.",
+      loadFailed: "Nie udało się wczytać listy gier. Sprawdź połączenie i odśwież stronę.",
     },
     hint: {
       select: "Zaznacz grę, aby włączyć akcje. Podwójne naciśnięcie zmienia nazwę.",
@@ -2837,6 +2840,10 @@ const pl = {
       hint: "Zaznacz grę, aby włączyć akcje.",
       typeLabel: "Ze Społeczności",
       removeFromLibrary: "Usuń z biblioteki",
+      removeTitle: "Usunąć z biblioteki?",
+      removeText: "Gra „{name}” zniknie z Twojej biblioteki razem z jej ustawieniami. Możesz ją później dodać ponownie ze Społeczności.",
+      removeOk: "Usuń",
+      removeFailed: "Nie udało się usunąć gry z biblioteki.",
     },
     gameFallback: "Bez nazwy",
   },

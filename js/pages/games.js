@@ -208,7 +208,13 @@ function anyOverlayOpen() {
 async function refreshView() {
   if (gamesRefreshInFlight) return gamesRefreshInFlight;
   gamesRefreshInFlight = (async () => {
-    await refresh();
+    try {
+      await refresh();
+    } catch (e) {
+      // Chwilowy brak sieci przy auto-odświeżaniu: zostaje ostatnia lista,
+      // zamiast nieobsłużonego odrzucenia co 20 s.
+      console.warn("[games] refresh failed:", e);
+    }
   })();
   try {
     await gamesRefreshInFlight;
@@ -483,18 +489,21 @@ function renderBaseSelect(bases) {
   }
 
   if (!bases || !bases.length) {
-    // Brak baz - pokaż komunikat
+    // Brak baz - pokaż komunikat (przycisk wyłączony: inaczej klik zamieniał
+    // "nie masz baz" na mylące "wybierz bazę")
     baseSelectWrap.style.display = "none";
+    if (btnExportBaseDo) btnExportBaseDo.disabled = true;
     setExportBaseMsg(MSG.exportBaseEmpty());
     return;
   }
 
   baseSelectWrap.style.display = "";
+  if (btnExportBaseDo) btnExportBaseDo.disabled = false;
 
   // Przygotuj opcje
   const options = bases.map(b => ({
     value: b.id,
-    label: b.name || MSG.gameFallback(),
+    label: b.name || MSG.exportBaseBaseFallback(),
   }));
 
   // Inicjalizuj ui-select
@@ -583,11 +592,28 @@ async function exportSelectedGameToBase(baseId, onProgress) {
     .single();
   if (eCat) throw eCat;
 
+  try {
+    await insertExportedQuestions(baseId, folder.id, obj, onProgress);
+  } catch (e) {
+    // Bez tego błąd w połowie zostawiał w bazie folder z częścią pytań (albo
+    // pusty), a ponowna próba tworzyła obok "Nazwa (2)". qb_questions ma
+    // category_id ON DELETE SET NULL, więc pytania trzeba usunąć jawnie.
+    try {
+      await sb().from("qb_questions").delete().eq("category_id", folder.id);
+      await sb().from("qb_categories").delete().eq("id", folder.id);
+    } catch (cleanupErr) {
+      console.warn("[games] export-to-base cleanup failed:", cleanupErr);
+    }
+    throw e;
+  }
+}
+
+async function insertExportedQuestions(baseId, folderId, obj, onProgress) {
   // 3) Zapisz pytania do tego folderu
   const qs = Array.isArray(obj?.questions) ? obj.questions : [];
   const rows = qs.map((q, i) => ({
     base_id: baseId,
-    category_id: folder.id,
+    category_id: folderId,
     ord: i + 1,
     payload: {
       text: q?.text || "",
@@ -625,7 +651,9 @@ async function exportSelectedGameToBase(baseId, onProgress) {
 
 function safeDownloadName(name) {
   const base = String(name || "familiada")
-    .replace(/[^\w\d\- ]+/g, "")
+    // \p{L}, nie \w -- \w to tylko ASCII: "Łódź" dawało "d", a nazwa
+    // po ukraińsku kończyła jako "familiada.famgame".
+    .replace(/[^\p{L}\p{N}\- ]+/gu, "")
     .trim()
     .slice(0, 40) || "familiada";
   return `${base}.famgame`;
@@ -714,60 +742,22 @@ function defaultNameForUiType(uiType) {
   return MSG.newGamePrepared();
 }
 
-/**
- * Tworzenie gry:
- * - najpierw próbujemy wstawić type = uiType (pod nową bazę)
- * - jeśli DB ma check fixed/poll (23514), robimy fallback:
- *    prepared -> fixed, polls -> poll
- */
 async function createGame(uiType, name) {
-  const gameName = name || defaultNameForUiType(uiType);
-
-  // 1) próbuj nowy schemat (type = poll_text/poll_points/prepared)
-  let ins = await sb()
+  const { data, error } = await sb()
     .from("games")
-    .insert({
-      name: gameName,
-      owner_id: currentUser.id,
-      type: uiType,
-      status: STATUS.DRAFT,
+    .insert(
+      {
+        name: name || defaultNameForUiType(uiType),
+        owner_id: currentUser.id,
+        type: uiType,
+        status: STATUS.DRAFT,
       },
       { defaultToNull: false }
     )
     .select("id,name,type,status")
     .single();
-
-  if (ins.error) {
-    const code = ins.error?.code;
-    const msg = String(ins.error?.message || "");
-    const isTypeCheck =
-      code === "23514" ||
-      msg.includes("games_type_check") ||
-      msg.includes("violates check constraint");
-
-    if (!isTypeCheck) throw ins.error;
-
-    // 2) fallback pod starą bazę (type = fixed/poll)
-    const dbType = (uiType === TYPES.PREPARED) ? "fixed" : "poll";
-
-    ins = await sb()
-      .from("games")
-      .insert({
-        name: gameName,
-        owner_id: currentUser.id,
-        type: dbType,
-        status: STATUS.DRAFT,
-      },
-      { defaultToNull: false }
-    )
-      .select("id,name,type,status")
-      .single();
-
-    if (ins.error) throw ins.error;
-  }
-
-  const game = ins.data;
-  return game;
+  if (error) throw error;
+  return data;
 }
 
 async function deleteGame(game) {
@@ -796,6 +786,9 @@ async function deleteGame(game) {
     return;
   }
   if (!result?.ok) {
+    // Usunięta w międzyczasie (np. w innej karcie) -- nie ma czego blokować,
+    // wystarczy odświeżyć listę (wcześniej komunikat "gra jest w użyciu").
+    if (result?.error === "not_found_or_forbidden") return;
     console.warn("[games] delete blocked:", result);
     void alertModal({
       text: result?.reason === "poll_open" ? MSG.alertDeleteInUsePollOpen() : MSG.alertDeleteInUseLocked(),
@@ -823,7 +816,9 @@ async function resetPollForEditing(gameId) {
 
   const { error: gErr } = await sb()
     .from("games")
-    .update({ status: STATUS.DRAFT })
+    // poll_opened_at/closed_at jak w resetPollForEditing() edytora -- po
+    // resecie stąd edytor widzi już draft i sam ich nie wyczyści.
+    .update({ status: STATUS.DRAFT, poll_opened_at: null, poll_closed_at: null })
     .eq("id", gameId);
   if (gErr) throw gErr;
 
@@ -852,6 +847,7 @@ function cardGame(g) {
 
   const el = document.createElement("div");
   el.className = "card";
+  el.dataset.gameId = g.id;
 
   el.innerHTML = `
     <div class="x" title="${t("games.card.delete")}">${icon("trash")}</div>
@@ -862,11 +858,7 @@ function cardGame(g) {
   el.querySelector(".name").textContent = g.name || t("control.dash");
   el.querySelector(".meta").textContent = `${typeLabel(uiType)} • ${statusLabel(g.status)}`;
 
-  el.addEventListener("click", async () => {
-    selectedId = g.id;
-    render();
-    await updateActionState();
-  });
+  el.addEventListener("click", () => selectGame(g.id));
 
   addRenameGesture(el, () => {
     openRenameModal(g);
@@ -881,7 +873,24 @@ function cardGame(g) {
   return el;
 }
 
-let isCreatingGame = false;
+// Zaznaczenie = przełączenie klasy, NIE render(): pełna przebudowa kafelków
+// po pierwszym tapnięciu sprawiała, że drugie trafiało w nowy element i
+// podwójne tapnięcie (zmiana nazwy, rename-gesture.js) na dotyku nie działało.
+function selectGame(id) {
+  selectedId = id;
+  grid?.querySelectorAll(".card[data-game-id]").forEach((el) => {
+    el.classList.toggle("selected", el.dataset.gameId === id);
+  });
+  void updateActionState();
+}
+
+function selectMarketGame(marketId) {
+  selectedMarketId = marketId;
+  grid?.querySelectorAll(".card[data-market-id]").forEach((el) => {
+    el.classList.toggle("selected", el.dataset.marketId === marketId);
+  });
+  setMarketButtonsState();
+}
 
 function cardAdd(uiType) {
   const el = document.createElement("div");
@@ -950,6 +959,11 @@ function renderMarket() {
     grid.appendChild(el);
   }
 
+  setMarketButtonsState();
+  setHint(t("games.market.hint"));
+}
+
+function setMarketButtonsState() {
   setButtonsState({
     hasSel: !!selectedMarketId,
     canEdit: false,
@@ -957,31 +971,65 @@ function renderMarket() {
     canPoll: false,
     canExport: false,
   });
-
-  setHint(t("games.market.hint"));
 }
 
 function cardMarket(g) {
   const el = document.createElement("div");
   el.className = "card";
+  el.dataset.marketId = g.market_game_id;
   el.innerHTML = `
     <div class="name">${escapeHtml(g.title || "—")}</div>
     <div class="meta">${t("games.market.typeLabel")} · ${(g.lang || "").toUpperCase()}</div>
     <div class="x" title="${t("games.market.removeFromLibrary")}">${icon("trash")}</div>
   `;
-  el.addEventListener("click", () => {
-    selectedMarketId = g.market_game_id;
-    renderMarket();
-  });
+  el.addEventListener("click", () => selectMarketGame(g.market_game_id));
   el.querySelector(".x").addEventListener("click", async (e) => {
     e.stopPropagation();
-    const { error } = await sb().rpc("market_remove_from_library", { p_market_game_id: g.market_game_id });
-    if (error) { console.error("[games] removeFromLibrary error:", error); return; }
-    if (selectedMarketId === g.market_game_id) selectedMarketId = null;
-    marketGamesAll = marketGamesAll.filter(x => x.market_game_id !== g.market_game_id);
-    renderMarket();
+    await removeFromLibrary(g);
   });
   return el;
+}
+
+// Usunięcie z biblioteki kasuje też lokalną kopię gry (z jej ustawieniami),
+// więc -- jak przy zwykłej grze -- najpierw potwierdzenie. Wcześniej jedno
+// kliknięcie w kosz usuwało grę od razu, a błąd znikał w konsoli.
+async function removeFromLibrary(g) {
+  const ok = await confirmModal({
+    title: t("games.market.removeTitle"),
+    text: t("games.market.removeText", { name: g.title || "—" }),
+    okText: t("games.market.removeOk"),
+    cancelText: MSG.deleteCancel(),
+  });
+  if (!ok) return;
+
+  try {
+    // Kopia może być właśnie otwarta w Control/ustawieniach (zasób "game"),
+    // a RPC usuwa ją bez pytania -- patrz "Model: zasób ma stan busy/free".
+    if (g.game_id && await isResourceBusy("game", g.game_id)) {
+      void alertModal({ text: t("resourceLock.gameMessage") });
+      return;
+    }
+    const { data, error } = await sb().rpc("market_remove_from_library", { p_market_game_id: g.market_game_id });
+    if (error) throw error;
+    const row = Array.isArray(data) ? data[0] : data;
+    if (row && row.ok === false) throw new Error(row.err || "remove_failed");
+  } catch (e) {
+    console.error("[games] removeFromLibrary error:", e);
+    void alertModal({ text: t("games.market.removeFailed") });
+    return;
+  }
+
+  if (g.game_id) {
+    try {
+      await deleteGameSoundsFolder(sb(), currentUser.id, g.game_id);
+    } catch (e) {
+      console.warn("[games] deleteGameSoundsFolder failed:", e);
+    }
+  }
+
+  if (selectedMarketId === g.market_game_id) selectedMarketId = null;
+  marketGamesAll = marketGamesAll.filter(x => x.market_game_id !== g.market_game_id);
+  if (activeTab === TYPES.MARKET) renderMarket();
 }
 
 async function loadMarketGames() {
@@ -1062,6 +1110,9 @@ async function updateActionState() {
   // 2) Jedno RPC (szybkie)
   try {
     const st = await fetchActionState(sel.id, revHint);
+    // Szybkie klikanie A -> B: odpowiedź dla A mogła przyjść po B i
+    // ustawić przyciski według złej gry.
+    if (selectedId !== sel.id || activeTab === TYPES.MARKET) return;
 
     // canEdit zostaje wg Twojej logiki JS (bo masz dokładniejsze komunikaty / warningi)
     const edit = canEnterEdit(normalizeGameForValidate(sel));
@@ -1076,6 +1127,7 @@ async function updateActionState() {
     });
   } catch (e) {
     console.error("[games] game_action_state error:", e);
+    if (selectedId !== sel.id || activeTab === TYPES.MARKET) return;
     setButtonsState({ hasSel: true, canEdit: false, canPlay: false, canPoll: false, canExport: false });
   }
 }
@@ -1406,7 +1458,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   const previewOverlay = document.getElementById("previewOverlay");
   const previewTitle = document.getElementById("previewTitle");
   const previewQuestions = document.getElementById("previewQuestions");
+  // Numer bieżącego podglądu: odpowiedź dla gry A, która przyszła po
+  // zamknięciu i otwarciu podglądu B, nie może nadpisać pytań B.
+  let previewSeq = 0;
   const closePreview = () => {
+    previewSeq++;
     if (previewOverlay) previewOverlay.style.display = "none";
     exitModalSheet(previewOverlay);
   };
@@ -1420,20 +1476,22 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   btnPreview?.addEventListener("click", async () => {
     let gameName = "—";
-    let questions = null; // null = loading, [] = brak
+    let marketId = null;
+    const gameId = selectedId;
 
     // Ustal nazwę i źródło danych
     if (activeTab === TYPES.MARKET && selectedMarketId) {
       const mg = marketGamesAll.find(g => g.market_game_id === selectedMarketId);
       if (!mg) return;
-      gameName = mg.title || mg.payload?.game?.name || "—";
-      questions = mg.payload?.questions ?? [];
-    } else if (selectedId) {
-      const g = gamesAll.find(x => x.id === selectedId);
+      gameName = mg.title || "—";
+      marketId = mg.market_game_id;
+    } else if (gameId) {
+      const g = gamesAll.find(x => x.id === gameId);
       gameName = g?.name || "—";
     } else {
       return;
     }
+    const seq = ++previewSeq;
 
     // Pokaż modal natychmiast z nazwą i "Ładowanie…"
     if (previewTitle) previewTitle.textContent = gameName;
@@ -1441,19 +1499,25 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (previewOverlay) previewOverlay.style.display = "";
     enterModalSheet(previewOverlay, { backBtn: btnBackSheet, onClose: closePreview });
 
-    // Pobierz pytania jeśli jeszcze nie mamy
-    if (questions === null) {
-      try {
-        const exported = await exportGame(selectedId);
+    let questions = [];
+    try {
+      if (marketId) {
+        // market_my_library nie zwraca treści gry (payload) -- wcześniej
+        // podgląd gry ze Społeczności zawsze pokazywał "Brak pytań".
+        const { data, error } = await sb().rpc("market_game_detail", { p_id: marketId });
+        if (error) throw error;
+        const row = Array.isArray(data) ? data[0] : data;
+        questions = Array.isArray(row?.payload?.questions) ? row.payload.questions : [];
+      } else {
+        const exported = await exportGame(gameId);
         questions = exported?.questions ?? [];
-      } catch (e) {
-        console.error("[games] preview export failed:", e);
-        questions = [];
       }
+    } catch (e) {
+      console.error("[games] preview load failed:", e);
     }
 
     // Renderuj pytania
-    if (!previewQuestions) return;
+    if (seq !== previewSeq || !previewQuestions) return;
     if (!questions.length) {
       previewQuestions.innerHTML = `<div class="bld-no-q">${t("games.preview.noQuestions") || "Brak pytań."}</div>`;
       return;
@@ -1525,7 +1589,11 @@ document.addEventListener("DOMContentLoaded", async () => {
           const { error } = await sb().rpc("market_add_to_library", {
             p_market_game_id: selectedMarketId,
           });
-          if (error) { console.error("[games] market_add_to_library:", error); return; }
+          if (error) {
+            console.error("[games] market_add_to_library:", error);
+            void alertModal({ text: MSG.alertCheckFailed() });
+            return;
+          }
           await loadMarketGames();
           gameId = marketGamesAll.find(g => g.market_game_id === selectedMarketId)?.game_id;
         } finally {
@@ -1632,6 +1700,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     try {
       setExportBaseMsg("");
+      if (btnExportBaseDo) btnExportBaseDo.disabled = true;
       openExportBaseModal();
 
       const bases = await listExportableBases();
@@ -1726,7 +1795,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   btnNameOk?.addEventListener("click", async () => {
     if (btnNameOk?.disabled) return;
     const val = String(nameInp?.value || "").trim();
-    if (!val) return;
+    if (!val) {
+      setNameMsg(t("games.nameModal.empty"));
+      nameInp?.focus();
+      return;
+    }
 
     if (btnNameOk) btnNameOk.disabled = true;
     setNameMsg("");
@@ -1744,7 +1817,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       closeRenameModal();
     } catch (e) {
       console.error("[games] name modal error:", e);
-      setNameMsg(t("games.nameModal.failed"));
+      setNameMsg(nameMode === "create" ? MSG.alertCreateFailed() : t("games.nameModal.failed"));
     } finally {
       if (btnNameOk) btnNameOk.disabled = false;
     }
@@ -1765,7 +1838,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     const f = importFile?.files?.[0];
     if (!f) return;
     try {
-      const obj = JSON.parse(await readFileAsText(f));
+      let obj;
+      try {
+        obj = JSON.parse(await readFileAsText(f));
+      } catch (e) {
+        // SyntaxError ma komunikat silnika ("Unexpected token…") po angielsku
+        if (e instanceof SyntaxError) throw new Error(MSG.importInvalidJson());
+        throw e;
+      }
       if (!obj?.game || !Array.isArray(obj?.questions)) throw new Error(MSG.importInvalidJson());
       importParsed = obj;
       const gameName = obj.game.name || "—";
@@ -1847,7 +1927,22 @@ document.addEventListener("DOMContentLoaded", async () => {
   const initTab = new URLSearchParams(location.search).get("tab");
   setActiveTab(initTab === "market" ? TYPES.MARKET : TYPES.PREPARED);
 
-  await refresh();
+  try {
+    await refresh();
+  } catch (e) {
+    // Bez tego nieudane pierwsze ładowanie zostawiało samą kartę "+" bez
+    // słowa wyjaśnienia (jakby użytkownik nie miał żadnych gier).
+    console.error("[games] initial load failed:", e);
+    setHint(t("games.alert.loadFailed"));
+  }
+
+  // Treść kafelków (typ, status, "Nowa gra", podpowiedź) jest składana w JS,
+  // więc applyTranslations() jej nie obejmuje -- po zmianie języka rysujemy
+  // ją od nowa (bez tego zostawała w starym języku do auto-odświeżenia).
+  window.addEventListener("i18n:lang", () => {
+    render();
+    void updateActionState();
+  });
 
   // File Handlers API – otwórz modal importu gdy plik został przekazany przez system
   if ("launchQueue" in window) {
