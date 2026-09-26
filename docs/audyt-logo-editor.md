@@ -245,3 +245,45 @@ edytora nie da się „cofnąć” do poprzedniej strony, tylko do listy.
 5. **P2 / format danych** (stały świat DRAW, bez `editHistory` w bazie, lżejsza
    lista) — wymaga migracji odczytu starych zapisów, więc na końcu.
 6. Po weryfikacji na kopii — przeniesienie na `logo-editor.html`.
+
+---
+
+## Stan: `logo-editor2` (kopia z poprawkami)
+
+Strona `logo-editor2.html` + `logo-editor2/` -- nic do niej nie linkuje, stary
+`logo-editor` działa bez zmian. Wspólne pliki zmienione tylko addytywnie:
+nowe klucze w `translation/*.js` (plus usunięte zdublowane „T” z podpowiedzi
+narzędzia Tekst).
+
+Kod (~6860 -> ~3830 linii):
+
+| Moduł | Rola |
+|---|---|
+| `main.js` | lista, modale, otwieranie edytorów, zapis, historia przeglądarki |
+| `db.js` | `user_logos` (lekka lista bez ciężkiego payloadu) + pliki w Storage |
+| `transfer.js` | eksport/import `.famlogo` |
+| `render.js` | format bitów PIX i podgląd „kropek” (jedna kopia zamiast trzech) |
+| `preview-zoom.js` | pinch-zoom pełnoekranowego podglądu (przeniesiony bez zmian) |
+| `text.js` | tryb Tekst (wynik kompilacji identyczny ze starym -- sprawdzone na 209 napisach) |
+| `image.js` | tryb Obraz |
+| `draw.js` + `draw/shapes.js`, `draw/raster.js` | tryb Rysunek |
+
+Załatwione: wszystkie punkty P0 (1–5, 5b) i P1 (6–17), z P2: 18, 19, 21–25.
+Zmiany zachowania wynikające z poprawek:
+- nowe logo powstaje w bazie przy pierwszym „Zapisz” (wcześniej od razu pusty wiersz),
+- „Wstecz” w przeglądarce w edytorze zamyka edytor (z pytaniem o zmiany),
+- pasek szerokości/ostrzeżeń w trybie Tekst widoczny od razu (wcześniej schowany pod „Dozwolone znaki”),
+- rysunki zapisują się w stałym świecie 1040×440 (stare przeliczane przy otwarciu po `clipPath`),
+  historia Cofnij/Ponów nie jest już zapisywana w bazie,
+- skróty: V, H, B, E, S, T, L/R/O/P (kształty), U (następny kształt), F (wypełnienie), [ ] (grubość),
+- obraz: tylko JPG/PNG/GIF/WEBP do 5 MB; podmieniony plik jest usuwany ze Storage po zapisie.
+
+Testy: `tests/e2e/logo-editor2.spec.js` (18 scenariuszy, konto test1@) --
+odpalane przez „E2E Tests (Playwright)” z `spec_filter: e2e/logo-editor2.spec.js`
+na gałęzi. `helpers/local-site.js` serwuje kod z checkoutu lokalnie w runnerze
+i przenosi sesję z produkcji, więc test sprawdza kod gałęzi na prawdziwym
+backendzie bez wdrażania.
+
+Przeniesienie na produkcję: podmienić `logo-editor/` i `logo-editor.html`
+zawartością kopii (ścieżki `logo-editor2/` -> `logo-editor/`) i przepiąć spec
+na `/logo-editor`.
