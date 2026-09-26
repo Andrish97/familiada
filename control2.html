@@ -403,7 +403,31 @@
        wiersz w tej samej skali co reszta siatki wpisywania (zgłoszone). */
     .c2-timer-row { width:100%; font-size:1.02rem; }
 
-    #c2DisplayPreview { width:100%; aspect-ratio:16/9; background:#000; border-radius:10px; overflow:hidden; position:relative; border:1px solid var(--line2); }
+    /* Zgłoszone: podgląd ma być liczony od WYSOKOŚCI prześwitu (widocznego
+       bez scrollowania obszaru .c2-scroll-area przy aktualnym rozmiarze
+       okna), nie od szerokości karty jak dotąd (width:100%) — na szerokim
+       oknie 16:9 liczone od pełnej szerokości karty robiło się bardzo
+       wysokie i wypychało resztę Podsumowania (drużyny/dźwięk/finał) poza
+       widoczny obszar. .c2-scroll-area (patrz wyżej) jest już dziś
+       dokładnie tym "prześwitem" -- związane flexem z 100dvh-var(--topbar-h)
+       przez cały łańcuch .wrap.wide->.shell->...->#app. Podgląd dostaje
+       WIĘC height policzone z TEJ SAMEJ wysokości (nie z arbitralnego vh),
+       jako ułamek (nie całość — reszta sekcji Podsumowania musi zostać
+       widoczna w tym samym obszarze) — width:fit-content pozwala aspect-ratio
+       wyliczyć szerokość Z tej wysokości, zamiast odwrotnie; max-width:100%
+       to tylko zabezpieczenie na wąskie okno (telefon), gdzie wyliczona w
+       ten sposób szerokość przekroczyłaby szerokość karty. */
+    #c2DisplayPreview {
+      height: min(calc((100dvh - var(--topbar-h, 70px)) * 0.4), 420px);
+      width: fit-content;
+      max-width: 100%;
+      aspect-ratio: 16/9;
+      background: #000;
+      border-radius: 10px;
+      overflow: hidden;
+      position: relative;
+      border: 1px solid var(--line2);
+    }
     #c2DisplayPreview iframe { width:100%; height:100%; border:0; display:block; }
   </style>
 </head>
