@@ -429,12 +429,12 @@
   </div>
 
   <div class="helpOverlay hidden" id="helpOverlay">
-    <div class="helpModal" role="dialog" aria-modal="true" aria-label="Wskazówki">
+    <div class="helpModal" role="dialog" aria-modal="true" aria-label="Wskazówki" data-i18n-aria-label="common.manualLabel">
       <div class="helpModalToolbar">
         <button class="btn btn-sm" id="btnLegal" type="button" data-i18n="manual.legal" data-i18n-icon-after="shield">Polityka prywatności</button>
         <button class="btn sm" id="btnHelpClose" type="button" aria-label="Zamknij" onclick="document.getElementById('helpOverlay').classList.add('hidden')" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
       </div>
-      <iframe id="helpFrame" class="helpFrame" src="../manual?modal=control" title="Wskazówki"></iframe>
+      <iframe id="helpFrame" class="helpFrame" src="../manual?modal=control" title="Wskazówki" data-i18n-title="common.manualLabel"></iframe>
     </div>
   </div>
 
@@ -444,7 +444,7 @@
         <button class="btn btn-sm" id="btnBackToManual" type="button" data-i18n="privacy.backToManual" data-i18n-icon="arrow-left">Wskazówki</button>
         <button class="btn sm" id="btnLegalClose" type="button" aria-label="Zamknij" onclick="document.getElementById('legalOverlay').classList.add('hidden')" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
       </div>
-      <iframe id="legalFrame" class="legalFrame" src="../manual?modal=control" title="Polityka prywatności"></iframe>
+      <iframe id="legalFrame" class="legalFrame" src="../manual?modal=control" title="Polityka prywatności" data-i18n-title="manual.legal"></iframe>
     </div>
   </div>
   <script type="module" src="js/core/contact-modal.js?v=v2026-09-26T05304"></script>
