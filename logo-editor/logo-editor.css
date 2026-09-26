@@ -24,7 +24,6 @@
   --lamp-glow: rgba(255,235,59,.7);
 }
 
-
 /* =========================================================
    TOPBAR CLOSE BUTTON (match lang-switcher size)
 ========================================================= */
@@ -51,6 +50,12 @@
   align-items: stretch;
 }
 .logoGridBig .addCard{ min-height: 230px; }
+/* Kafelek nie może być szerszy niż kolumna: bez tego długa nazwa bez spacji
+   (min-width:auto elementu siatki) rozpychała kafelek na sąsiednie i
+   zasłaniała ich przyciski usuwania; nazwa i tak kończy się wielokropkiem. */
+.logoGridBig > *{ min-width: 0; }
+.logoTile > *{ min-width: 0; }
+.logoTileTop > :first-child{ flex: 1 1 auto; min-width: 0; }
 
 .logoTile{
   position: relative;
@@ -108,11 +113,9 @@
   font-size: 14px;
 }
 
-/* Edycja niedostępna na mobile */
-@media (max-width: 900px) {
-  #btnEdit { display: none !important; }
-  .logoTileAdd { display: none !important; }
-}
+/* Edycja niedostępna na telefonie (klasa z main.js: krótszy bok ekranu < 700 px) */
+.le-phone #btnEdit,
+.le-phone .le-edit-only{ display: none !important; }
 .logoX:hover{
   border-color: var(--gold);
   background: rgba(0,0,0,.32);
@@ -154,30 +157,6 @@
   height: 135px;
   object-fit: contain;
   image-rendering: pixelated;
-}
-
-.logoLamp{
-  position:absolute;
-  left: 12px;
-  bottom: 12px;
-  width: 10px;
-  height: 10px;
-  border-radius: 999px;
-  background: var(--lamp-active);
-  box-shadow: 0 0 14px var(--lamp-glow);
-  opacity: 0;
-  transform: scale(.85);
-  transition: opacity .12s ease, transform .12s ease;
-}
-.logoTile.is-active .logoLamp{ opacity: 1; transform: scale(1); }
-
-
-.topbar-layout-5{
-  grid-template-columns:max-content minmax(0,1fr) max-content max-content max-content;
-}
-
-.topbar-layout-5 .topbar-section-5{
-  justify-content:flex-start;
 }
 
 /* =========================================================
@@ -294,9 +273,9 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  flex-wrap: nowrap;
-  overflow-x: auto;
-  overflow-y: visible;
+  /* zawija się na węższym ekranie (np. tablet w pionie) zamiast ucinać ostatnie pola */
+  flex-wrap: wrap;
+  row-gap: 6px;
   min-height: 34px;
   scrollbar-width: thin;
   scrollbar-color: rgba(255,255,255,.15) transparent;
@@ -404,23 +383,6 @@
 ========================================================= */
 #fontPick{ position: relative; display:inline-flex; align-items:center; gap:8px; }
 
-#fontPickBtn{
-  display: inline-flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  min-width: 260px;
-  max-width: 420px;
-  height: 30px;
-  padding: 0 10px;
-  border-radius: var(--radius-sm);
-}
-#fontPickText{
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
 /* Popover: FIXED, pozycję ustawia JS */
 #fontPickPop[hidden]{ display:none !important; }
 
@@ -457,40 +419,11 @@
   border-bottom: 1px solid rgba(255,255,255,.10);
   background: rgba(0,0,0,.10);
 }
-#fontPickSearchInp{ flex: 1; min-width: 180px; height: 30px; }
-#fontPickSearchClear{ height: 30px; min-width: 34px; border-radius: 12px; }
 
 /* scroll ma być na liście */
-#fontPickList{
-  padding: 6px;
-  overflow: auto;
-  max-height: min(320px, calc(100vh - 120px));
-}
 
 /* item */
 /* item — jak .ui-select-item */
-#fontPickList .fontPickItem{
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-
-  padding: 8px 10px;
-  margin: 0;
-
-  border-radius: 10px;
-  border: 0;
-  background: transparent;
-  color: #fff;
-  font-weight: 900;
-  font-size: 12px;
-  letter-spacing: .03em;
-  cursor: pointer;
-  box-sizing: border-box;
-}
-#fontPickList .fontPickItem:hover{ background: #141822; }
-#fontPickList .fontPickItem.on{ background: #232426; color: var(--gold, #ffeaa6); }
 
 #fontPickEmpty{ padding: 12px; opacity: .75; }
 
@@ -564,13 +497,6 @@
 /* =========================================================
    PIX PREVIEW WARNING
 ========================================================= */
-.pixWarn{
-  margin-bottom: 10px;
-  padding: 10px 12px;
-  border-radius: var(--radius-md);
-  border: 1px solid rgba(255,180,80,.25);
-  background: rgba(255,180,80,.08);
-}
 
 /* =========================================================
    DRAW STAGE
@@ -699,17 +625,9 @@
 #drawStageHost.cur-none    canvas,
 #drawStageHost.cur-none    #drawStage{ cursor: none !important; }
 
-
 #toolsDraw{
   flex-wrap: wrap !important;
 }
-
-#toolsDraw .toolGroup{
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-}
-
 
 /* =========================================================
    DRAW toolbar (w editorToolbar) — toolGrid + separatory
@@ -773,8 +691,6 @@
 @media (hover: none) {
   .draw-tip{ display:none; }
 }
-
-
 
 /* =========================================================
    IMAGE
@@ -935,13 +851,17 @@
   display: none;       /* pokazujemy tylko aktywny */
 }
 
+/* wygląd jak .ui-select-menu (css/base.css) i .ctxPop: kryjące tło, bez
+   półprzezroczystości -- tak jak pozostałe wysuwane listy w systemie */
 #imgPanels .imgPanel.is-open{
   display: block;
   width: min(420px, calc(100vw - 16px));
-  border-radius: 18px;
-  border: 1px solid rgba(255,255,255,.16);
-  background: rgba(10,10,14,.96);
-  box-shadow: 0 24px 80px rgba(0,0,0,.55);
+  box-sizing: border-box;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: #050914;
+  box-shadow: 0 24px 60px rgba(0,0,0,.6);
+  color: #fff;
   padding: 12px;
 }
 
@@ -957,6 +877,9 @@
   gap: 10px;
   margin-bottom: 10px;
 }
+
+#toolsImage .imgRotBtn{ min-width: 32px; padding: 0 8px; }
+#toolsImage .imgRotBtn .ico{ width: 18px; height: 18px; }
 
 #imgPanels .rng.v{
   width: 100%;
@@ -974,7 +897,6 @@
   grid-template-columns: 1fr;
   grid-template-rows: auto auto;
 }
-
 
 /* =========================================================
    OVERLAYS
@@ -1187,8 +1109,6 @@ body.games-body.logo-editor-body > main.logoWrap{
   flex: 0 0 auto;
 }
 
-
-
 .logo-editor-body.is-editor #btnBack{
   display:none;
 }
@@ -1228,33 +1148,6 @@ body.games-body.logo-editor-body > main.logoWrap{
 }
 @keyframes shapeFadeIn{ from{opacity:0;transform:translateY(-6px)} to{opacity:1;transform:translateY(0)} }
 
-.shapeGrid{
-  display:grid;
-  grid-template-columns:repeat(5, 44px);
-  gap:6px;
-}
-.shapeItem{
-  width:44px;height:44px;
-  display:grid;place-items:center;
-  background:rgba(255,255,255,.06);
-  border:1px solid rgba(255,255,255,.12);
-  border-radius:10px;
-  color:rgba(255,255,255,.88);
-  cursor:pointer;
-  transition:background .1s,border-color .1s;
-  padding:0;
-}
-.shapeItem svg{ width:24px; height:24px; }
-.shapeItem:hover{
-  background:rgba(255,255,255,.14);
-  border-color:rgba(255,234,166,.55);
-}
-.shapeItem.active{
-  background:rgba(255,234,166,.18);
-  border-color:rgba(255,234,166,.75);
-  color:#ffeaa6;
-}
-
 /* =========================================================
    IMAGE: wartości na przyciskach suwaków
 ========================================================= */
@@ -1271,7 +1164,6 @@ body.games-body.logo-editor-body > main.logoWrap{
   font-size: 12px;
   letter-spacing: .02em;
 }
-
 
 /* =========================================================
    Wysuwane listy paska ustawień (kształty, fonty) — wygląd jak

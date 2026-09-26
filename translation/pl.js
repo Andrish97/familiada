@@ -3799,17 +3799,13 @@ const pl = {
       export: "Eksport",
       import: "Import",
       delete: "Usuń",
-      deleteDisabled: "Nie można usunąć",
     },
     status: {
       saving: "Zapisuję…",
       saved: "Zapisano.",
-      updated: "Zaktualizowano zapis.",
-      fixingName: "Poprawiam nazwę i zapisuję ponownie…",
       deleting: "Usuwam…",
       deleted: "Usunięto.",
       imported: "Zaimportowano logo.",
-      created: "Utworzono nowe logo.",
     },
     editor: {
       nameLabel: "Nazwa",
@@ -3863,17 +3859,6 @@ const pl = {
       errors: {
         missingFabric: "Nie udało się wczytać edytora rysunku. Odśwież stronę.",
       },
-      tools: {
-        brush: "Pędzel",
-        eraser: "Gumka",
-        line: "Linia",
-        rect: "Prostokąt",
-        ellipse: "Elipsa",
-        poly: "Wielokąt",
-        pan: "Ręka",
-        select: "Wskaźnik",
-        text: "Tekst",
-      },
       confirmClear: "Usunąć wszystko ze sceny?",
       ui: {
         strokeLabel: "Grubość",
@@ -3884,7 +3869,6 @@ const pl = {
         sizeLabel: "Rozmiar",
         fillCheckbox: "Wypełnienie",
         outlineLabel: "Obrys",
-        radiusLabel: "Rozmiar",
         lineHeightLabel: "Interlinia",
         letterSpacingLabel: "Odstęp liter",
         bold: "B",
@@ -4012,13 +3996,9 @@ const pl = {
       missingBits: "Plik logo jest uszkodzony — brak obrazu.",
       unknownImportFormat: "Nieznany format pliku. Wybierz plik logo wyeksportowany z Familiady (.famlogo).",
       deleteFailed: "Nie udało się usunąć.\n\n{error}",
-      createFailedDetailed: "Nie udało się utworzyć.\n\n{error}",
-      invalidType: "Nieznany typ logo.",
-      cannotEditOldLogo: "To logo nie może być edytowane.",
       noMobileEdit: "Edycja logo wymaga większego ekranu — otwórz ją na komputerze albo tablecie.",
       noSourceText: "Nie da się odczytać napisu z tego logo, więc edycja by go wyczyściła. Utwórz nowe logo tekstowe.",
       loadFailed: "Nie udało się wczytać logo.\n\n{error}",
-      createFailed: "Nie udało się utworzyć logo.",
     },
     defaults: {
       logoName: "Moje logo",
@@ -4027,9 +4007,7 @@ const pl = {
     },
     confirm: {
       closeUnsaved: "Masz niezapisane zmiany. Zamknąć bez zapisywania?",
-      backUnsaved: "Masz niezapisane zmiany. Cofnąć i je utracić?",
       deleteLogo: "Usunąć logo „{name}”?",
-      logoutUnsaved: "Masz niezapisane zmiany. Wylogować i je utracić?",
     },
   },
   baseExplorer: {

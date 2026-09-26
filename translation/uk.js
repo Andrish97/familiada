@@ -3909,17 +3909,13 @@ const uk = {
       export: "Експорт",
       import: "Імпорт",
       delete: "Видалити",
-      deleteDisabled: "Не можна видалити",
     },
     status: {
       saving: "Зберігаю…",
       saved: "Збережено.",
-      updated: "Оновлено.",
-      fixingName: "Виправляю назву і зберігаю знову…",
       deleting: "Видаляю…",
       deleted: "Видалено.",
       imported: "Логотип імпортовано.",
-      created: "Нове лого створено.",
     },
     editor: {
       nameLabel: "Назва",
@@ -3973,17 +3969,6 @@ const uk = {
       errors: {
         missingFabric: "Не вдалося завантажити редактор малюнка. Онови сторінку.",
       },
-      tools: {
-        brush: "Пензель",
-        eraser: "Гумка",
-        line: "Лінія",
-        rect: "Прямокутник",
-        ellipse: "Еліпс",
-        poly: "Багатокутник",
-        pan: "Рука",
-        select: "Вказівник",
-        text: "Текст",
-      },
       confirmClear: "Прибрати все зі сцени?",
       ui: {
         strokeLabel: "Товщина",
@@ -3994,7 +3979,6 @@ const uk = {
         sizeLabel: "Розмір",
         fillCheckbox: "Заливка",
         outlineLabel: "Обведення",
-        radiusLabel: "Розмір",
         lineHeightLabel: "Інтерліньяж",
         letterSpacingLabel: "Інтервал",
         bold: "Ж",
@@ -4122,13 +4106,9 @@ const uk = {
       missingBits: "Файл логотипу пошкоджено — бракує зображення.",
       unknownImportFormat: "Невідомий формат файлу. Вибери файл логотипу, експортований з Familiada (.famlogo).",
       deleteFailed: "Не вдалося видалити.\n\n{error}",
-      createFailedDetailed: "Не вдалося створити.\n\n{error}",
-      invalidType: "Невідомий тип логотипу.",
-      cannotEditOldLogo: "Це лого не може бути відредаговане.",
       noMobileEdit: "Редагування логотипу потребує більшого екрана — відкрий його на комп’ютері або планшеті.",
       noSourceText: "Напис цього логотипу неможливо прочитати, тож редагування його очистить. Створи новий текстовий логотип.",
       loadFailed: "Не вдалося завантажити логотип.\n\n{error}",
-      createFailed: "Не вдалося створити логотип.",
     },
     defaults: {
       logoName: "Мій логотип",
@@ -4137,9 +4117,7 @@ const uk = {
     },
     confirm: {
       closeUnsaved: "Є незбережені зміни. Закрити без збереження?",
-      backUnsaved: "Є незбережені зміни. Повернутися назад і втратити їх?",
       deleteLogo: "Видалити логотип «{name}»?",
-      logoutUnsaved: "Є незбережені зміни. Вийти й втратити їх?",
     },
   },
   baseExplorer: {

@@ -1,4 +1,4 @@
-// familiada/logo-editor2/js/preview-zoom.js
+// familiada/logo-editor/js/preview-zoom.js
 // Pełnoekranowy podgląd: własny pinch-zoom/pan na canvasie i blokada
 // powiększania całej strony na czas otwarcia podglądu.
 

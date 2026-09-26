@@ -191,6 +191,12 @@
 
             <div class="toolSep"></div>
 
+            <button class="btn sm imgRotBtn" type="button" id="btnImgRotL" title="Obróć w lewo o 90°" aria-label="Obróć w lewo o 90°" data-i18n-title="logoEditor.image.rotateLeft" data-i18n-aria-label="logoEditor.image.rotateLeft"><i class="ico" data-icon="rotate-left" aria-hidden="true"></i></button>
+            <button class="btn sm imgRotBtn" type="button" id="btnImgRotR" title="Obróć w prawo o 90°" aria-label="Obróć w prawo o 90°" data-i18n-title="logoEditor.image.rotateRight" data-i18n-aria-label="logoEditor.image.rotateRight"><i class="ico" data-icon="rotate-right" aria-hidden="true"></i></button>
+            <button class="btn sm imgSetBtn" type="button" data-panel="straighten"><span class="imgSetBtnLabel" data-i18n="logoEditor.image.straightenLabel">Prostowanie:</span> <span class="imgSetBtnVal">0°</span></button>
+
+            <div class="toolSep"></div>
+
             <button class="btn sm imgSetBtn" type="button" data-panel="bright"><span class="imgSetBtnLabel" data-i18n="logoEditor.image.brightnessLabel">Jasność:</span> <span class="imgSetBtnVal">0</span></button>
             <button class="btn sm imgSetBtn" type="button" data-panel="contrast"><span class="imgSetBtnLabel" data-i18n="logoEditor.image.contrastLabel">Kontrast:</span> <span class="imgSetBtnVal">0</span></button>
             <button class="btn sm imgSetBtn" type="button" data-panel="gamma"><span class="imgSetBtnLabel" data-i18n="logoEditor.image.gammaLabel">Gamma:</span> <span class="imgSetBtnVal">1.00</span></button>
@@ -206,6 +212,11 @@
 
           <!-- IMAGE: pojedyncze rozwijane ustawienie (accordion) -->
           <div class="imgPanels" id="imgPanels" style="display:none;">
+            <div class="imgPanel" data-panel="straighten">
+              <div class="imgPanelTitle"><span data-i18n="logoEditor.image.straighten">Prostowanie</span> <span class="imgPanelVal" id="valImgStraighten">0°</span></div>
+              <input class="rng v" id="rngImgStraighten" type="range" min="-30" max="30" step="0.5" value="0"/>
+            </div>
+
             <div class="imgPanel" data-panel="bright">
               <div class="imgPanelTitle"><span data-i18n="logoEditor.image.brightness">Jasność</span> <span class="imgPanelVal" id="valImgBright">0</span></div>
               <input class="rng v" id="rngImgBright" type="range" min="-100" max="100" value="0"/>
@@ -263,11 +274,11 @@
             <div id="drawFontPickPop" class="fontPickPop" hidden style="position:fixed;z-index:99999;display:block;">
               <div class="fontPickPanel ctxPop" style="width:min(520px,calc(100vw - 16px));max-height:min(360px,calc(100vh - 24px));overflow:hidden;padding:0;">
                 <div class="fontPickSearch" style="display:flex;gap:6px;padding:10px;border-bottom:1px solid rgba(255,255,255,.10);">
-                  <input id="drawFontSearchInp" class="inp" type="text" placeholder="Szukaj fontu…" style="flex:1;height:30px;font-size:13px;">
+                  <input id="drawFontSearchInp" class="inp" type="text" placeholder="Szukaj fontu…" data-i18n-placeholder="logoEditor.draw.ui.fontSearchPlaceholder" style="flex:1;height:30px;font-size:13px;">
                   <button id="drawFontSearchClear" class="btn sm" type="button" style="min-width:30px;padding:0 8px;" aria-label="Wyczyść" data-i18n-aria-label="baseExplorer.search.clear"><i class="ico" data-icon="close"></i></button>
                 </div>
                 <div id="drawFontList" style="overflow-y:auto;max-height:280px;padding:6px;"></div>
-                <div id="drawFontEmpty" class="fontPickEmpty" hidden style="padding:16px;text-align:center;opacity:.6;font-size:13px;">Brak wyników</div>
+                <div id="drawFontEmpty" class="fontPickEmpty" hidden style="padding:16px;text-align:center;opacity:.6;font-size:13px;" data-i18n="logoEditor.draw.ui.fontNoResults">Brak wyników</div>
               </div>
             </div>
           </div>
@@ -300,9 +311,6 @@
 
             </div>
           </div>
-
-          <!-- IMAGE: (musi istnieć, bo image.js używa) -->
-          <div id="imgStageHost" style="display:none;"></div>
 
         </div><!-- /editorContent -->
       </div><!-- /editorCard -->
@@ -432,12 +440,12 @@
   </div>
 
   <div class="helpOverlay hidden" id="helpOverlay">
-    <div class="helpModal" role="dialog" aria-modal="true" aria-label="Wskazówki">
+    <div class="helpModal" role="dialog" aria-modal="true" aria-label="Wskazówki" data-i18n-aria-label="common.manualLabel">
       <div class="helpModalToolbar">
         <button class="btn btn-sm" id="btnLegal" type="button" data-i18n="manual.legal" data-i18n-icon-after="shield">Polityka prywatności</button>
         <button class="btn sm" id="btnHelpClose" type="button" aria-label="Zamknij" onclick="document.getElementById('helpOverlay').classList.add('hidden')" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
       </div>
-      <iframe id="helpFrame" class="helpFrame" src="../manual?modal=control" title="Wskazówki"></iframe>
+      <iframe id="helpFrame" class="helpFrame" src="../manual?modal=control" title="Wskazówki" data-i18n-title="common.manualLabel"></iframe>
     </div>
   </div>
 
@@ -447,7 +455,7 @@
         <button class="btn btn-sm" id="btnBackToManual" type="button" data-i18n="privacy.backToManual" data-i18n-icon="arrow-left">Wskazówki</button>
         <button class="btn sm" id="btnLegalClose" type="button" aria-label="Zamknij" onclick="document.getElementById('legalOverlay').classList.add('hidden')" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
       </div>
-      <iframe id="legalFrame" class="legalFrame" src="../manual?modal=control" title="Polityka prywatności"></iframe>
+      <iframe id="legalFrame" class="legalFrame" src="../manual?modal=control" title="Polityka prywatności" data-i18n-title="manual.legal"></iframe>
     </div>
   </div>
   <script type="module" src="js/core/contact-modal.js?v=v2026-09-26T05304"></script>

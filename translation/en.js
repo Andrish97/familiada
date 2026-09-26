@@ -3925,17 +3925,13 @@ const en = {
       export: "Export",
       import: "Import",
       delete: "Delete",
-      deleteDisabled: "Can't delete",
     },
     status: {
       saving: "Saving…",
       saved: "Saved.",
-      updated: "Updated.",
-      fixingName: "Fixing the name and saving again…",
       deleting: "Deleting…",
       deleted: "Deleted.",
       imported: "Logo imported.",
-      created: "New logo created.",
     },
     editor: {
       nameLabel: "Name",
@@ -3989,17 +3985,6 @@ const en = {
       errors: {
         missingFabric: "The drawing editor failed to load. Refresh the page.",
       },
-      tools: {
-        brush: "Brush",
-        eraser: "Eraser",
-        line: "Line",
-        rect: "Rectangle",
-        ellipse: "Ellipse",
-        poly: "Polygon",
-        pan: "Hand",
-        select: "Pointer",
-        text: "Text",
-      },
       confirmClear: "Remove everything from the canvas?",
       ui: {
         strokeLabel: "Width",
@@ -4010,7 +3995,6 @@ const en = {
         sizeLabel: "Size",
         fillCheckbox: "Fill",
         outlineLabel: "Outline",
-        radiusLabel: "Size",
         lineHeightLabel: "Line height",
         letterSpacingLabel: "Letter spacing",
         bold: "B",
@@ -4138,13 +4122,9 @@ const en = {
       missingBits: "The logo file is damaged — the image is missing.",
       unknownImportFormat: "Unknown file format. Choose a logo file exported from Familiada (.famlogo).",
       deleteFailed: "Couldn't delete.\n\n{error}",
-      createFailedDetailed: "Couldn't create.\n\n{error}",
-      invalidType: "Unknown logo type.",
-      cannotEditOldLogo: "This logo cannot be edited.",
       noMobileEdit: "Editing a logo needs a bigger screen — open it on a computer or a tablet.",
       noSourceText: "The text of this logo can't be read back, so editing would clear it. Create a new text logo.",
       loadFailed: "Couldn't load the logo.\n\n{error}",
-      createFailed: "Failed to create logo.",
     },
     defaults: {
       logoName: "My logo",
@@ -4153,9 +4133,7 @@ const en = {
     },
     confirm: {
       closeUnsaved: "You have unsaved changes. Close without saving?",
-      backUnsaved: "You have unsaved changes. Go back and lose them?",
       deleteLogo: "Delete the logo “{name}”?",
-      logoutUnsaved: "You have unsaved changes. Log out and lose them?",
     },
   },
   baseExplorer: {

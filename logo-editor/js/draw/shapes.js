@@ -1,4 +1,4 @@
-// familiada/logo-editor2/js/draw/shapes.js
+// familiada/logo-editor/js/draw/shapes.js
 // Kształty narzędzia „Kształty”: lista (ikony, czy mogą mieć wypełnienie)
 // i geometria ścieżek SVG w prostokącie (x1,y1)-(x2,y2).
 

@@ -1,4 +1,4 @@
-// familiada/logo-editor2/js/render.js
+// familiada/logo-editor/js/render.js
 // Wspólne dla wszystkich trybów: format bitów PIX 150x70 i podgląd
 // „jak na wyświetlaczu” (30x10 kafli po 5x7 kropek). Zamiana GLYPH ->
 // kropki: js/core/logo-preview.js (ta sama co na wyświetlaczu).

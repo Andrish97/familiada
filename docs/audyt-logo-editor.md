@@ -248,7 +248,7 @@ edytora nie da się „cofnąć” do poprzedniej strony, tylko do listy.
 
 ---
 
-## Stan: `logo-editor2` (kopia z poprawkami)
+## Nowy edytor (powstał jako kopia `logo-editor2`, wdrożony pod `/logo-editor`)
 
 Strona `logo-editor2.html` + `logo-editor2/` -- nic do niej nie linkuje, stary
 `logo-editor` działa bez zmian (poza tłumaczeniami, patrz niżej).
@@ -369,9 +369,9 @@ używane już tylko przez stary kod: `list.deleteDisabled`, `status.updated`,
 `errors.createFailedDetailed`, `errors.invalidType`, `errors.cannotEditOldLogo`,
 `confirm.backUnsaved`, `confirm.logoutUnsaved`, `draw.ui.radiusLabel` (w nowym „Rozmiar” czcionki to `sizeLabel`).
 
-### Testy (`tests/e2e/logo-editor2.spec.js`)
+### Testy (`tests/e2e/logo-editor.spec.js`)
 
-Odpalane przez „E2E Tests (Playwright)” z `spec_filter: e2e/logo-editor2.spec.js`
+Odpalane przez „E2E Tests (Playwright)” z `spec_filter: e2e/logo-editor.spec.js`
 (równolegle, 5 workerów; każdy na własnym koncie test2/3/4/6/7 -- NIE test1,
 na którym działa nagrywanie rozgrywki i blokuje edycję; ok. 2,5 min)
 na gałęzi. `helpers/local-site.js` serwuje kod z checkoutu lokalnie w runnerze
@@ -392,8 +392,23 @@ Czego testy NIE pokrywają: gestów dotykowych (pinch na scenie i w podglądzie,
 kadr dwoma palcami) -- tylko Chromium na desktopie; przeglądarek innych niż
 Chromium; wydajności przy bardzo dużych rysunkach; PWA „otwórz plik .famlogo”.
 
-### Przeniesienie na produkcję
+### Wdrożenie (zrobione)
 
-Podmienić `logo-editor/` i `logo-editor.html` zawartością kopii (ścieżki
-`logo-editor2/` -> `logo-editor/`, **z zachowaniem `assets/demo-image.png`**),
-przepiąć spec na `/logo-editor`, usunąć klucze tłumaczeń z listy wyżej.
+- `logo-editor2/` -> `logo-editor/`, `logo-editor2.html` -> `logo-editor.html`;
+  stary kod usunięty, **`logo-editor/assets/demo-image.png` bez zmian** (adres
+  w kopiach demo u wszystkich użytkowników).
+- Usunięte klucze tłumaczeń używane tylko przez stary edytor (lista wyżej +
+  `draw.ui.radiusLabel`); pl/en/uk mają identyczny zestaw kluczy `logoEditor`.
+- Testy: `tests/e2e/logo-editor.spec.js` + `helpers/logo-editor.js`. Testy,
+  które sterowały STARYM edytorem (tworzenie logo w starym i porównanie w
+  nowym), usunięte -- swoje zrobiły przed wdrożeniem (0 różnic, przebiegi
+  #185–#190). Test demo sprawdza teraz: otwarcie, zachowanie źródła (świat
+  rysunku, adres i kadr obrazu) i 0 różnic przy kolejnym zapisie.
+- Testy edytora NIE są w grupowym pełnym przebiegu: tam Control v2 gra
+  równolegle na kontach test1–test5, a trwająca gra blokuje edycję logo.
+  Odpalać osobno (`spec_filter`), najlepiej gdy nie trwa pełny przebieg.
+- Wspólna blokada urządzeń (`js/core/device-guard.js`): telefon po krótszym
+  boku ekranu (< 700 px) -- Control, Control v2, ustawienia gry: telefon
+  „przełącz się na komputer albo tablet”, tablet w pionie „obróć tablet”
+  (znika sam po obrocie), wąskie okno komputera „poszerz okno”; edytor logo
+  używa tej samej reguły (na telefonie tylko lista).

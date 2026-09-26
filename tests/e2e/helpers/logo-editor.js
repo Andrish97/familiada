@@ -1,10 +1,10 @@
-// tests/e2e/helpers/logo-editor2.js
-// Wspólne kroki testów edytora logo 2 (logo-editor2*.spec.js).
+// tests/e2e/helpers/logo-editor.js
+// Wspólne kroki testów edytora logo (logo-editor.spec.js).
 
 const { expect } = require("@playwright/test");
 const { isKnownNoiseText } = require("./login");
 
-const PREFIX = "E2E-LE2-";
+const PREFIX = "E2E-LE2-"; // prefiks z czasu kopii logo-editor2 -- zostawiony, żeby sprzątanie łapało stare resztki
 const uniq = (label) => `${PREFIX}${label}-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
 
 /** Błędy JS strony i błędy konsoli pochodzące z plików edytora. */
@@ -12,12 +12,12 @@ function collectPageErrors(page) {
   const errors = [];
   page.on("pageerror", (e) => errors.push(e.message));
   page.on("console", (m) => {
-    if (m.type() === "error" && /logo-editor2/.test(m.location()?.url || "") && !isKnownNoiseText(m.text())) errors.push(m.text());
+    if (m.type() === "error" && /\/logo-editor\//.test(m.location()?.url || "") && !isKnownNoiseText(m.text())) errors.push(m.text());
   });
   return errors;
 }
 
-async function openList(page, site, path = "/logo-editor2") {
+async function openList(page, site, path = "/logo-editor") {
   await page.goto(`${site.origin}${path}`, { waitUntil: "domcontentloaded" });
   await expect(page.locator("#grid .addCard")).toBeAttached({ timeout: 20000 });
   await page.waitForFunction(() => !!window.__sbClient, null, { timeout: 20000 });

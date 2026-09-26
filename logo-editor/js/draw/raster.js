@@ -1,4 +1,4 @@
-// familiada/logo-editor2/js/draw/raster.js
+// familiada/logo-editor/js/draw/raster.js
 // Scena rysunku (świat worldW x worldH) -> bity 150x70.
 //
 // Wyświetlacz ma 30x10 kafli po 5x7 kropek z przerwami między kaflami.
