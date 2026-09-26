@@ -5,11 +5,13 @@
 // a nie z www.familiada.online -- testują kod z gałęzi, na prawdziwym
 // backendzie (baza, RPC, blokady, Storage), bez wdrażania na produkcję.
 //
-// Konto test2@ -- NIE test1@: na test1@ działa nagrywanie rozgrywki
-// (e2e-record.yml, Control v2), a trwająca gra blokuje edycję logo
-// („prowadzisz rozgrywkę”). test5@/test9@ zwracały z Supabase "Database error
-// querying schema". Numer konta: LOGO_E2E_ACCOUNT (domyślnie 2). Logowanie
-// raz na plik (captureSession). Każdy test sprząta swoje logo i pliki (prefiks).
+// Testy idą równolegle; każdy worker ma WŁASNE konto (po parallelIndex), więc
+// blokady, lista i sprzątanie jednego testu nie wpływają na inne. Pula:
+// LOGO_E2E_ACCOUNTS (domyślnie 2,3,4,6,7) -- bez test1@ (na nim działa
+// nagrywanie rozgrywki e2e-record.yml, a trwająca gra blokuje edycję logo:
+// „prowadzisz rozgrywkę”) i bez test5@/test9@ (Supabase: "Database error
+// querying schema"). Logowanie raz na workera (captureSession). Każdy test
+// sprząta swoje logo i pliki (prefiks).
 //
 // Sprawdzamy WYNIK w bazie (payload, bity, które widzi wyświetlacz), nie
 // tylko to, co widać na stronie. Odnośniki P0-x/P1-x -> docs/audyt-logo-editor.md.
@@ -25,12 +27,16 @@ const DEMO_IMAGE = path.resolve(__dirname, "../../logo-editor/assets/demo-image.
 const OTHER_IMAGE = path.resolve(__dirname, "../../img/icon.png");
 
 test.use({ viewport: { width: 1440, height: 900 }, serviceWorkers: "block" });
+test.describe.configure({ mode: "parallel" });
+
+const ACCOUNTS = String(process.env.LOGO_E2E_ACCOUNTS || "2,3,4,6,7").split(",").map(Number).filter(Boolean);
 
 let site;
 let session;
-test.beforeAll(async ({ browser }) => {
+test.beforeAll(async ({ browser }, testInfo) => {
   site = await startLocalSite();
-  session = await captureSession(browser, testAccountUsername(Number(process.env.LOGO_E2E_ACCOUNT) || 2));
+  const account = ACCOUNTS[testInfo.parallelIndex % ACCOUNTS.length];
+  session = await captureSession(browser, testAccountUsername(account));
 });
 test.afterAll(async () => { await site?.close(); });
 test.beforeEach(async ({ context }) => { await useSession(context, site.origin, session); });
