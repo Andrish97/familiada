@@ -567,12 +567,31 @@ async function scenarioRoundsMechanics(pages) {
   // zakres to gsFrame. Zwykły klik, nie clickPaced -- saveAll() zapisuje
   // przez updateChecked("games",...), nie przez game_state_write/
   // game_state_buzzer_press (WRITE_RPC_RE), więc clickPaced's waitForWrite
-  // i tak zawsze czekałby pełne 15s na coś, co nigdy nie nadejdzie;
-  // faktyczne potwierdzenie zapisu i tak przychodzi niżej (oczekiwanie na
-  // zniknięcie #gsOverlay -- to się nie stanie, dopóki saveAll() się nie
-  // zakończy).
-  await gsFrame.getByRole("button", { name: "Zapisz wszystko" }).click();
-  await control.waitForTimeout(ADMIN_PACE_MS); // widz ma zdążyć zobaczyć zapis (przycisk disabled -> enabled)
+  // i tak zawsze czekałby pełne 15s na coś, co nigdy nie nadejdzie.
+  //
+  // DRUGI real bug znaleziony przez failed nagranie (przebieg z 2026-09-25,
+  // zrzut ekranu FAILURE.png): zamiast czekać na REALNE potwierdzenie
+  // zapisu, kod czekał tu na stały ADMIN_PACE_MS (900ms, obniżone w tej
+  // sesji z 2200ms) i OD RAZU klikał w tło, żeby zamknąć modal. Jeśli
+  // prawdziwy zapis (saveAll(), sieć) trwał dłużej niż ten stały czas --
+  // co w CI się zdarza -- klik w tło trafiał, gdy js/pages/game-settings2.js's
+  // isDirty było WCIĄŻ true, więc tryClose() pokazywał
+  // confirmModal("Masz niezapisane zmiany...", dokładnie to, co widać na
+  // zrzucie), którego nic tu nie obsługiwało -- #gsOverlay nigdy nie
+  // znikał, oczekiwanie niżej wisiało pełne 10s, a scenariusz padał kilka
+  // kroków później na "Gotowe — przejdź do rozgrywki" (modal wciąż
+  // otwarty). To DOKŁADNIE ten sam wyścig, co już raz opisany i naprawiony
+  // w control2.spec.js (patrz tam identyczny komentarz) -- ten plik
+  // powtórzył błąd stałego czasu zamiast Playwrightowego auto-czekania.
+  // Naprawa (ten sam wzorzec co control2.spec.js): czekamy na REALNE
+  // potwierdzenie -- przycisk wraca na "enabled" dopiero PO zakończeniu
+  // saveAll() (js/pages/game-settings2.js's disabled=true jest pierwszą
+  // instrukcją funkcji, więc "enabled" z powrotem jest niezawodnym
+  // sygnałem) -- zamiast zgadywać, ile trwa zapis.
+  const btnSaveAll = gsFrame.getByRole("button", { name: "Zapisz wszystko" });
+  await btnSaveAll.click();
+  await expect(btnSaveAll).toBeEnabled({ timeout: 10_000 });
+  await control.waitForTimeout(ADMIN_PACE_MS); // widz ma zdążyć zobaczyć potwierdzony zapis
   await control.locator("#gsOverlay").click({ position: { x: 5, y: 5 } });
   await control.locator("#gsOverlay").waitFor({ state: "hidden", timeout: 10_000 });
   await control.waitForTimeout(500);
