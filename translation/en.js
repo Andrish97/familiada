@@ -89,8 +89,12 @@ const en = {
     },
   },
   deviceGuard: {
-    title: "Not available on mobile",
-    message: "This page works only on a desktop computer.",
+    title: "Not available on a phone",
+    message: "This page needs a bigger screen. Switch to a computer or a tablet.",
+    rotateTitle: "Rotate your tablet",
+    rotateMessage: "This page works in landscape. Rotate your tablet — the page will appear on its own.",
+    narrowTitle: "Window too narrow",
+    narrowMessage: "Make the browser window wider to use this page.",
     back: "Go back",
   },
   guestGuard: {

@@ -16,6 +16,7 @@ import { alertModal, confirmModal } from "../../js/core/modal.js?v=v2026-09-26T0
 import { getUiLang, initI18n, t, withLangParam } from "../../translation/translation.js?v=v2026-09-26T05304";
 import { initTopbarAccountDropdown } from "../../js/core/topbar-controller.js?v=v2026-09-26T05304";
 import { isMobileDevice } from "../../js/core/pwa.js?v=v2026-09-26T05304";
+import { isPhoneScreen } from "../../js/core/device-guard.js?v=v2026-09-26T05304";
 import { v as cacheBust } from "../../js/core/cache-bust.js?v=v2026-09-26T05304";
 import { guardResourceLock, acquireResourceLock, isResourceBusy, findBusyContext } from "../../js/core/resource-lock.js?v=v2026-09-26T05304";
 import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../js/core/modal-sheet.js?v=v2026-09-26T05304";
@@ -32,13 +33,10 @@ import { initImageEditor } from "./image.js?v=v2026-09-26T05304";
 const FONT_3x10_URL = "display/font_3x10.json?v=v2026-09-26T05304";
 const FONT_5x7_URL = "display/font_5x7.json?v=v2026-09-26T05304";
 // Edycja wymaga miejsca na pasek narzędzi i scenę -- na telefonie dostępna
-// jest tylko lista (podgląd, import/eksport, nazwa, usuwanie). Telefon =
-// krótszy bok EKRANU poniżej 700 px: ta miara nie zmienia się przy obrocie,
-// więc tablet edytuje w poziomie i w pionie (także gdy obróci się w trakcie
-// edycji), a telefon nie zaczyna edycji w żadnej orientacji. (Wcześniej:
-// szerokość okna < 980 px -- tablet w pionie nie mógł zacząć edycji, ale po
-// obrocie w trakcie edytował dalej.)
-const PHONE_MAX_SHORT_SIDE = 700;
+// jest tylko lista (podgląd, import/eksport, nazwa, usuwanie). Telefon wg
+// wspólnej reguły isPhoneScreen() (js/core/device-guard.js): krótszy bok
+// ekranu, więc tablet edytuje w poziomie i w pionie (także po obrocie
+// w trakcie), a telefon w żadnej orientacji.
 
 /* =========================================================
    DOM
@@ -127,7 +125,7 @@ function show(node, on) {
 
 const setMsg = (text) => { if (el.msg) el.msg.textContent = text || ""; };
 const setEditorMsg = (text) => { if (el.editorMsg) el.editorMsg.textContent = text || ""; };
-const isPhone = () => Math.min(window.screen?.width || 0, window.screen?.height || 0) < PHONE_MAX_SHORT_SIDE;
+const isPhone = isPhoneScreen;
 document.documentElement.classList.toggle("le-phone", isPhone());
 const defaultName = () => t("logoEditor.defaults.logoName");
 

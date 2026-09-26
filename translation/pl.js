@@ -90,7 +90,11 @@ const pl = {
   },
   deviceGuard: {
     title: "Niedostępne na telefonie",
-    message: "Ta strona działa tylko na komputerze.",
+    message: "Ta strona potrzebuje większego ekranu. Przełącz się na komputer albo tablet.",
+    rotateTitle: "Obróć tablet",
+    rotateMessage: "Ta strona działa w poziomie. Obróć tablet — strona pojawi się sama.",
+    narrowTitle: "Za wąskie okno",
+    narrowMessage: "Poszerz okno przeglądarki, żeby korzystać z tej strony.",
     back: "Wróć",
   },
   guestGuard: {
