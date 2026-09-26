@@ -63,7 +63,7 @@ const el = {
   editorMsg: $("mMsg"),
   bigPreview: $("bigPreview"),
   panes: { TEXT: $("paneText"), DRAW: $("paneDraw"), IMAGE: $("paneImage") },
-  tools: { TEXT: [$("toolsText")], DRAW: [$("toolsDraw")], IMAGE: [$("toolsImage"), $("imgPanels")] },
+  tools: { TEXT: [$("toolsText"), $("charsInline")], DRAW: [$("toolsDraw")], IMAGE: [$("toolsImage"), $("imgPanels")] },
 
   createOverlay: $("createOverlay"),
   renameOverlay: $("renameOverlay"),
