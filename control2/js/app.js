@@ -112,11 +112,24 @@ async function pickQuestionPool(state) {
   const finalPicked = new Set((state.final.picked || []).map(String));
   let pool = finalPicked.size ? all.filter((q) => !finalPicked.has(String(q.id))) : all.slice();
 
+  // Realny bug znaleziony przez failed nagranie (przebieg z 2026-09-26,
+  // diagnostyka dumpFailureDiagnostics(): przycisk R8 pokazywał "Przejdź do
+  // następnej rundy" zamiast oczekiwanego "Przejdź do zakończenia gry" po
+  // rundzie, która miała być OSTATNIĄ wg wybranej ręcznie puli 2 pytań).
+  // Plan (tabela A, R1) i komentarz w control2/js/engine.js's
+  // previewRoundEndDestination() są tu jednoznaczne: "pick" = KOLEJNOŚĆ Z
+  // roundsPicked, nie "roundsPicked, a potem reszta jako dolewka". Ta
+  // funkcja doklejała [...ordered, ...WSZYSTKO_INNE] -- więc pula w trybie
+  // "pick" nigdy realnie się nie wyczerpywała po wybranych pytaniach, tylko
+  // ciągnęła dalej z reszty bazy pytań gry, co silnik (engine.js's
+  // previewRoundEndDestination -- `!state.rounds._questionPool.length`)
+  // błędnie odczytywał jako "jest jeszcze kolejna runda". Pula w trybie
+  // "pick" ma kończyć się DOKŁADNIE na wybranych pytaniach -- wyczerpanie
+  // jest tu prawidłowym, oczekiwanym skutkiem (R9③ w planie), nie
+  // przypadkiem do "naprawienia" przez dolewanie czegokolwiek więcej.
   if (state.settings.roundsQuestionsMode === "pick" && state.settings.roundsPicked?.length) {
     const byId = new Map(pool.map((q) => [String(q.id), q]));
-    const ordered = state.settings.roundsPicked.map((p) => byId.get(String(p.id))).filter(Boolean);
-    const orderedIds = new Set(ordered.map((q) => String(q.id)));
-    return [...ordered, ...pool.filter((q) => !orderedIds.has(String(q.id)))];
+    return state.settings.roundsPicked.map((p) => byId.get(String(p.id))).filter(Boolean);
   }
 
   for (let i = pool.length - 1; i > 0; i--) {
