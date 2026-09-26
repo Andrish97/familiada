@@ -270,7 +270,10 @@ podczas testów i poprawione:
   przyciski usuwania sąsiadów) -- błąd CSS, jest też w starym edytorze,
 - po wpisaniu wartości w ustawieniach rysunku skróty klawiszowe nie działały
   (fokus zostawał w polu),
-- przy otwarciu Obrazu przez chwilę widać było obraz i ramkę poprzedniego logo.
+- przy otwarciu Obrazu przez chwilę widać było obraz i ramkę poprzedniego logo,
+- narzędzie Tekst: klik w puste miejsce, żeby skończyć edycję napisu, tworzył
+  nowy (pusty) napis -- Fabric odznacza obiekt przed zdarzeniem kliknięcia.
+  Jest też w starym edytorze. Teraz taki klik kończy edycję (i usuwa pusty napis).
 
 ### Zgodność z danymi, które już są w bazie
 
