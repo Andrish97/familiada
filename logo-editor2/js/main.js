@@ -21,11 +21,11 @@ import { guardResourceLock, acquireResourceLock, isResourceBusy, findBusyContext
 import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../js/core/modal-sheet.js?v=v2026-09-26T05304";
 import { icon } from "../../js/core/icons.js?v=v2026-09-26T05304";
 
-import { TYPE_GLYPH, emptyRows, normalizeRows, unpackBits, renderPreview, logoToPreview } from "./render.js?v=v2026-09-26T05304";
+import { TYPE_GLYPH, emptyRows, normalizeRows, renderPreview, logoToPreview } from "./render.js?v=v2026-09-26T05304";
 import { listLogos, fetchLogo, createLogo, updateLogo, deleteLogo, isUniqueViolation } from "./db.js?v=v2026-09-26T05304";
 import { buildExport, downloadJson, parseImport, safeFileName } from "./transfer.js?v=v2026-09-26T05304";
 import { initPreviewPinchZoom, lockPageZoomForPreview, unlockPageZoomAfterPreview } from "./preview-zoom.js?v=v2026-09-26T05304";
-import { initTextEditor } from "./text.js?v=v2026-09-26T05304";
+import { initTextEditor, decompileRows } from "./text.js?v=v2026-09-26T05304";
 import { initDrawEditor } from "./draw.js?v=v2026-09-26T05304";
 import { initImageEditor } from "./image.js?v=v2026-09-26T05304";
 
@@ -383,17 +383,24 @@ function updateEditorHeader() {
 function markDirty() { editorDirty = true; }
 function clearDirty() { editorDirty = false; }
 
-/** Czy zapis w tym edytorze zastąpiłby treść, której edytor nie umie odtworzyć. */
+/**
+ * Tryb edycji zapisanego logo. GLYPH to zawsze Tekst; PIX -- Obraz, jeśli ma
+ * obraz źródłowy, w pozostałych przypadkach Rysunek (także stare logo i demo
+ * bez source: ich kropki trafiają na scenę jako warstwa obrazu).
+ */
+function editModeFor(logo) {
+  if (logo.type === TYPE_GLYPH) return "TEXT";
+  const src = logo.payload?.source || {};
+  if (src.mode === "IMAGE" || src.imageUrl || src.imageData) return "IMAGE";
+  return "DRAW";
+}
+
+/** Powód odmowy edycji albo null. Jedyny przypadek: napis, którego nie da się odtworzyć. */
 function cannotEditReason(logo, mode) {
-  const src = logo.payload?.source;
-  if (!src) return t("logoEditor.errors.cannotEditOldLogo");
-  if (mode === "TEXT" && typeof src.text !== "string" && normalizeRows(logo.payload?.layers?.[0]?.rows).join("").trim()) {
-    return t("logoEditor.errors.noSourceText");
-  }
-  if (mode === "DRAW" && !src.fabricData && unpackBits(logo.payload?.bits_b64).some(Boolean)) {
-    return t("logoEditor.errors.noSourceDrawing");
-  }
-  return null;
+  if (mode !== "TEXT" || typeof logo.payload?.source?.text === "string") return null;
+  const rows = logo.payload?.layers?.[0]?.rows;
+  if (!normalizeRows(rows).join("").trim()) return null;
+  return decompileRows(rows, FONT_3x10) == null ? t("logoEditor.errors.noSourceText") : null;
 }
 
 async function editSelected() {
@@ -410,7 +417,7 @@ async function editSelected() {
     void alertModal({ text: t("logoEditor.errors.loadFailed", { error: e?.message || e }) });
     return;
   }
-  const mode = logo.payload?.source?.mode || (logo.type === TYPE_GLYPH ? "TEXT" : "DRAW");
+  const mode = editModeFor(logo);
   const reason = cannotEditReason(logo, mode);
   if (reason) {
     void alertModal({ text: reason });

@@ -16,7 +16,7 @@ import { initUiSelect } from "../../js/core/ui-select.js?v=v2026-09-26T05304";
 import { t } from "../../translation/translation.js?v=v2026-09-26T05304";
 import { v as cacheBust } from "../../js/core/cache-bust.js?v=v2026-09-26T05304";
 import { icon, iconText } from "../../js/core/icons.js?v=v2026-09-26T05304";
-import { DOT_W, DOT_H, TYPE_PIX, PIX_FORMAT, packBits } from "./render.js?v=v2026-09-26T05304";
+import { DOT_W, DOT_H, TYPE_PIX, PIX_FORMAT, packBits, unpackBits } from "./render.js?v=v2026-09-26T05304";
 import { WORLD_W, WORLD_H, sceneToBits } from "./draw/raster.js?v=v2026-09-26T05304";
 import { SHAPES, shapeById, buildShapePath, buildArrowPath } from "./draw/shapes.js?v=v2026-09-26T05304";
 
@@ -28,7 +28,7 @@ const HISTORY_LIMIT = 200;
 const EXTRA_PROPS = [
   "strokeUniform", "strokeDashArray", "strokeLineCap", "strokeLineJoin",
   "fontFamily", "fontSize", "fontWeight", "fontStyle", "underline", "textAlign", "lineHeight", "charSpacing",
-  "_canHaveFill",
+  "_canHaveFill", "imageSmoothing",
 ];
 
 const LINE_STYLES = [
@@ -1393,12 +1393,41 @@ export function initDrawEditor(ctx) {
     });
   }
 
-  async function loadSource(source) {
+  /**
+   * Logo bez sceny wektorowej (demo „Rysunek”, stare zapisy, importy) --
+   * zapisane kropki jako obraz na scenie. Każda kropka to blok 5x5 w świecie
+   * dokładnie w miejscu, z którego raster (draw/raster.js) ją odczyta, więc
+   * zapis bez zmian daje te same kropki, a na obrazie można dalej rysować.
+   */
+  function bitsLayer(b64) {
+    const bitsIn = unpackBits(b64);
+    if (!bitsIn.some(Boolean)) return null;
+    const el = document.createElement("canvas");
+    el.width = WORLD_W;
+    el.height = WORLD_H;
+    const g = el.getContext("2d");
+    g.fillStyle = "#ffffff";
+    const cell = WORLD_W / 208; // 5 -- jeden „piksel” rastra 208x88
+    for (let y = 0; y < DOT_H; y++) {
+      for (let x = 0; x < DOT_W; x++) {
+        if (!bitsIn[y * DOT_W + x]) continue;
+        const rx = Math.floor(x / 5) * 7 + (x % 5);
+        const ry = Math.floor(y / 7) * 9 + (y % 7);
+        g.fillRect(rx * cell, ry * cell, cell, cell);
+      }
+    }
+    return new (fabric().Image)(el, { left: 0, top: 0, imageSmoothing: false, objectCaching: false });
+  }
+
+  async function loadSource(payload) {
+    const source = payload?.source || {};
     const data = source.fabricData;
     if (!data) {
       canvas.clear();
       canvas.backgroundColor = hex(bg);
       updateClipPath();
+      const layer = bitsLayer(payload?.bits_b64);
+      if (layer) canvas.add(layer);
       return;
     }
     await loadScene(data);
@@ -1426,7 +1455,7 @@ export function initDrawEditor(ctx) {
       closeFontPicker();
 
       resizeStage();
-      await loadSource(source);
+      await loadSource(payload);
       canvas.backgroundColor = hex(bg);
       syncBgIcon();
       applyToolBehavior();

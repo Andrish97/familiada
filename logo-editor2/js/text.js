@@ -63,6 +63,63 @@ export function compileText(text, font) {
   return { rows: grid.map((r) => r.join("")), usedW, fit, invalid: [...invalid] };
 }
 
+/**
+ * Odwrotność compileText(): odtwarza napis z samych wierszy GLYPH (dla logo
+ * bez zapisanego source.text -- demo, stare zapisy, importy). Zwraca napis
+ * tylko wtedy, gdy jego ponowna kompilacja daje DOKŁADNIE te same wiersze;
+ * inaczej null (edytor nie otworzy się, żeby nie zniszczyć logo).
+ *
+ * Uwaga: pojedyncza spacja między literami daje ten sam odstęp co jej brak,
+ * więc odtworzony napis może różnić się spacjami -- ale nie wyglądem.
+ */
+export function decompileRows(rows, font) {
+  const grid = Array.from({ length: TILES_Y }, (_, i) => String(rows?.[i] ?? "").padEnd(TILES_X, " ").slice(0, TILES_X));
+  const colEmpty = (x) => grid.every((r) => r[x] === " ");
+  let first = 0;
+  while (first < TILES_X && colEmpty(first)) first++;
+  if (first === TILES_X) return "";
+
+  // kandydaci: litery przed cyframi i resztą (ten sam wygląd -> czytelniejszy napis)
+  const rank = (k) => (/^[A-ZĄĆĘŁŃÓŚŹŻ]$/.test(k) ? 0 : /^[А-ЯҐЄІЇ]$/.test(k) ? 1 : /^[0-9]$/.test(k) ? 2 : 3);
+  const glyphs = Object.keys(font || {})
+    .filter((k) => k !== " ")
+    .sort((a, b) => rank(a) - rank(b))
+    .map((ch) => ({ ch, ...cropGlyph(Array.from({ length: TILES_Y }, (_, i) => String(font[ch][i] ?? "").padEnd(GLYPH_W, " ").slice(0, GLYPH_W))) }))
+    .filter((g) => g.w > 0);
+
+  const memo = new Map();
+  const solve = (pos) => {
+    if (memo.has(pos)) return memo.get(pos);
+    let out = null;
+    for (const g of glyphs) {
+      if (pos + g.w > TILES_X) continue;
+      if (!grid.every((r, y) => r.slice(pos, pos + g.w) === g.rows[y].padEnd(g.w, " "))) continue;
+      let next = pos + g.w;
+      let gap = 0;
+      while (next < TILES_X && colEmpty(next)) { next++; gap++; }
+      if (next === TILES_X) { out = g.ch; break; }
+      if (gap === 0) continue; // między glifami zawsze jest przerwa
+      const rest = solve(next);
+      // spacja ZASTĘPUJE odstęp między glifami: k spacji = k kolumn, 0 spacji = 1 kolumna
+      if (rest != null) { out = g.ch + (gap > 1 ? " ".repeat(gap) : "") + rest; break; }
+    }
+    memo.set(pos, out);
+    return out;
+  };
+
+  const core = solve(first);
+  if (core == null) return null;
+  const same = (text) => compileText(text, font).rows.every((r, i) => r === grid[i]);
+  // Wyśrodkowanie zależy od spacji na brzegach -- szukamy ich liczby.
+  for (let lead = 0; lead <= TILES_X; lead++) {
+    for (let trail = 0; trail <= TILES_X - lead; trail++) {
+      const text = " ".repeat(lead) + core + " ".repeat(trail);
+      if (same(text)) return text;
+    }
+  }
+  return null;
+}
+
 export function initTextEditor(ctx) {
   const $ = (id) => document.getElementById(id);
   const paneText = $("paneText");
@@ -134,7 +191,9 @@ export function initTextEditor(ctx) {
   return {
     open(payload = null) {
       show(paneText, true);
-      if (textValue) textValue.value = String(payload?.source?.text ?? "");
+      const saved = payload?.source?.text;
+      const text = typeof saved === "string" ? saved : decompileRows(payload?.layers?.[0]?.rows, font());
+      if (textValue) textValue.value = text ?? "";
       renderAllowedChars();
       // Pasek z pomiarem szerokości zawsze widoczny; lista znaków na żądanie.
       show(charsInline, true);
