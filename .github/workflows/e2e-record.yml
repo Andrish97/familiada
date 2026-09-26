@@ -13,7 +13,16 @@ on:
 jobs:
   record:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    # Podniesione z 25 -- przebieg #21 dotarł do samego końca "Run recorded
+    # playthroughs" (24.5 min) i został ANULOWANY przez ten limit, nie przez
+    # żaden błąd w skrypcie/aplikacji (job's conclusion="cancelled", nie
+    # "failure" -- potwierdzone w logach GH Actions). Bezpośrednia
+    # konsekwencja tempa REVEAL_PACE_MS/ADMIN_PACE_MS podniesionego w tej
+    # sesji na wyraźną prośbę ("daj prowadzącemu pogadać") -- 7 scenariuszy z
+    # naturalniejszym tempem realnie potrzebuje więcej czasu niż stary,
+    # szybszy skrypt. 60 z zapasem (poprzedni przebieg zdążył tylko do
+    # ok. połowy scenariuszy w 24.5 min).
+    timeout-minutes: 60
 
     steps:
       - name: Checkout
