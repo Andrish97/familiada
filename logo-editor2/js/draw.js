@@ -672,6 +672,8 @@ export function initDrawEditor(ctx) {
     const read = (e) => clamp(Number(e.target.value) || fallback, min, max);
     on(id, "input", (e) => apply(read(e), false));
     on(id, "change", (e) => apply(read(e), true));
+    // Enter zatwierdza i oddaje klawiaturę skrótom sceny (Ctrl+Z, V, B…)
+    on(id, "keydown", (e) => { if (e.key === "Enter") e.target.blur(); });
   }
 
   function renderSettings() {
@@ -1166,6 +1168,12 @@ export function initDrawEditor(ctx) {
     ensureCursorOverlay();
 
     const upper = canvas.upperCanvasEl;
+    // Fabric blokuje domyślną obsługę kliknięcia, więc fokus zostawał w polu
+    // ustawień i skróty (Ctrl+Z, V, …) trafiały do niego zamiast do sceny.
+    upper.addEventListener("pointerdown", () => {
+      const el = document.activeElement;
+      if (el && el !== document.body && toolCtx?.contains(el)) el.blur();
+    }, { passive: true });
     upper.addEventListener("pointermove", (ev) => {
       lastPointer = { x: ev.clientX, y: ev.clientY };
       placeCursorDot(ev.clientX, ev.clientY);

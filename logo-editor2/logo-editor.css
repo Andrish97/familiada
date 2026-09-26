@@ -50,6 +50,12 @@
   align-items: stretch;
 }
 .logoGridBig .addCard{ min-height: 230px; }
+/* Kafelek nie może być szerszy niż kolumna: bez tego długa nazwa bez spacji
+   (min-width:auto elementu siatki) rozpychała kafelek na sąsiednie i
+   zasłaniała ich przyciski usuwania; nazwa i tak kończy się wielokropkiem. */
+.logoGridBig > *{ min-width: 0; }
+.logoTile > *{ min-width: 0; }
+.logoTileTop > :first-child{ flex: 1 1 auto; min-width: 0; }
 
 .logoTile{
   position: relative;

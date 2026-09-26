@@ -244,7 +244,7 @@ function makeTile(logo) {
   tile.innerHTML = `
     <div class="logoTileTop">
       <div style="min-width:0">
-        <div class="logoName">${esc(name)}</div>
+        <div class="logoName" title="${esc(name)}">${esc(name)}</div>
         <div class="logoMeta">${esc(fmtDate(logo.updated_at))}</div>
       </div>
       <div class="logoActions">

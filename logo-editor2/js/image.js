@@ -618,6 +618,7 @@ export function initImageEditor(ctx) {
       openedImageUrl = imageUrl;
       imgObj = null;
       loadSeq++;
+      setStageImage(null); // bez obrazu i ramki poprzedniego logo, zanim wczyta się nowy
 
       // Do czasu przeliczenia z obrazu pokazujemy to, co jest zapisane.
       bits = payload?.bits_b64 ? unpackBits(payload.bits_b64) : new Uint8Array(DOT_W * DOT_H);
