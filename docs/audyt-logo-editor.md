@@ -295,9 +295,12 @@ podczas testów i poprawione:
   przez CDP): pędzel, kształty, zaznaczanie stuknięciem, końce strzałki
   palcem, pinch-zoom bez przypadkowej kreski, tekst, kadr obrazu jednym palcem
   i pinchem -- dwa testy e2e. To nie zastępuje próby na prawdziwym iPadzie
-  (Safari, klawiatura ekranowa przy tekście). Edycja jest wyłączona poniżej
-  980 px szerokości, więc iPad w pionie (768–834 px) nie edytuje -- tylko w
-  poziomie.
+  (Safari, klawiatura ekranowa przy tekście). Telefon rozpoznawany po krótszym
+  boku ekranu (< 700 px) -- nie zmienia się przy obrocie, więc tablet
+  edytuje w pionie i w poziomie (też po obrocie w trakcie), a telefon w
+  żadnej orientacji. Wcześniej: szerokość okna < 980 px -- tablet w pionie
+  nie mógł zacząć edycji, ale po obrocie w trakcie edytował dalej. Pasek
+  ustawień rysunku zawija się zamiast ucinać ostatnie pola.
 
 ### Obraz: obrót i prostowanie
 
