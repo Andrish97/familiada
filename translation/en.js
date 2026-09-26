@@ -3928,10 +3928,6 @@ const en = {
     },
     status: {
       saving: "Saving…",
-      saved: "Saved.",
-      deleting: "Deleting…",
-      deleted: "Deleted.",
-      imported: "Logo imported.",
     },
     editor: {
       nameLabel: "Name",
@@ -4113,7 +4109,6 @@ const en = {
     errors: {
       saveFailed: "Couldn't save.",
       saveFailedDetailed: "Couldn't save.\n\n{error}",
-      saveError: "Save error.",
       importFailedDetailed: "Couldn't import.\n\n{error}",
       exportFailedDetailed: "Couldn't export.\n\n{error}",
       fontsLoad: "Couldn't load the display fonts. Refresh the page.",

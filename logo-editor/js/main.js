@@ -54,7 +54,6 @@ const el = {
 
   listShell: $("listShell"),
   grid: $("grid"),
-  msg: $("msg"),
   btnEdit: $("btnEdit"),
   btnPreview: $("btnPreview"),
   btnExport: $("btnExport"),
@@ -63,7 +62,6 @@ const el = {
   editorShell: $("editorShell"),
   logoName: $("logoName"),
   btnSave: $("btnCreate"),
-  editorMsg: $("mMsg"),
   bigPreview: $("bigPreview"),
   panes: { TEXT: $("paneText"), DRAW: $("paneDraw"), IMAGE: $("paneImage") },
   tools: { TEXT: [$("toolsText"), $("charsInline")], DRAW: [$("toolsDraw")], IMAGE: [$("toolsImage"), $("imgPanels")] },
@@ -123,8 +121,9 @@ function show(node, on) {
   node.style.display = on ? "" : "none";
 }
 
-const setMsg = (text) => { if (el.msg) el.msg.textContent = text || ""; };
-const setEditorMsg = (text) => { if (el.editorMsg) el.editorMsg.textContent = text || ""; };
+// Bez stałych napisów statusu („Usunięto.”, „Zapisano.”): wynik widać na
+// liście i na przycisku Zapisz (nieaktywny = wszystko zapisane), a błędy
+// i komunikaty, na które trzeba zareagować, idą w okienko.
 const isPhone = isPhoneScreen;
 document.documentElement.classList.toggle("le-phone", isPhone());
 const defaultName = () => t("logoEditor.defaults.logoName");
@@ -302,14 +301,11 @@ function renderList() {
 
 async function removeLogo(logo, name) {
   if (!(await confirmModal({ text: t("logoEditor.confirm.deleteLogo", { name }) }))) return;
-  setMsg(t("logoEditor.status.deleting"));
   try {
     await deleteLogo(logo.id);
     await refresh();
-    setMsg(t("logoEditor.status.deleted"));
   } catch (e) {
     console.error(e);
-    setMsg("");
     void alertModal({
       text: e?.code === "RESOURCE_IN_USE" ? busyMessage(e.reason) : t("logoEditor.errors.deleteFailed", { error: e?.message || e }),
     });
@@ -384,8 +380,20 @@ function updateEditorHeader() {
   el.brandTitle.innerHTML = `<span class="bMain">${esc(prefix)}</span><span class="bMode">${esc(modeLabel(editorMode))}</span>`;
 }
 
-function markDirty() { editorDirty = true; }
-function clearDirty() { editorDirty = false; }
+function markDirty() { editorDirty = true; syncSaveButton(); }
+function clearDirty() { editorDirty = false; syncSaveButton(); }
+
+/**
+ * Zapisz: aktywny, gdy jest co zapisać (nowe logo jeszcze nie w bazie albo
+ * niezapisane zmiany); w trakcie zapisu „Zapisuję…”. Zastępuje napis
+ * „Zapisano.” obok przycisku.
+ */
+function syncSaveButton() {
+  if (!el.btnSave) return;
+  el.btnSave.disabled = saving || (!!editingId && !editorDirty);
+  el.btnSave.textContent = t(saving ? "logoEditor.status.saving" : "logoEditor.editor.save");
+  el.btnSave.setAttribute("aria-busy", saving ? "true" : "false");
+}
 
 /**
  * Tryb edycji zapisanego logo. GLYPH to zawsze Tekst; PIX -- Obraz, jeśli ma
@@ -471,7 +479,7 @@ async function openEditor(mode, logo, newName = "") {
   updateEditorHeader();
 
   el.logoName.value = logo ? logo.name || "" : newName;
-  setEditorMsg("");
+  syncSaveButton();
   onEditorPreview(logo ? logoToPreview(logo) : { kind: "GLYPH", rows: emptyRows() });
 
   editors[mode].open(logo?.payload || null);
@@ -538,13 +546,12 @@ window.addEventListener("beforeunload", (e) => {
 async function saveEditor() {
   if (!editorMode || saving) return;
   saving = true;
-  el.btnSave.disabled = true;
-  setEditorMsg(t("logoEditor.status.saving"));
+  syncSaveButton();
 
   try {
     const res = await editors[editorMode].getCreatePayload();
     if (!res?.ok) {
-      setEditorMsg(res?.msg || t("logoEditor.errors.saveFailed"));
+      void alertModal({ text: res?.msg || t("logoEditor.errors.saveFailed") });
       return;
     }
     const payload = res.payload;
@@ -577,16 +584,14 @@ async function saveEditor() {
     updateEditorHeader();
     await refresh();
     selectTile(editingId);
-    setEditorMsg(t("logoEditor.status.saved"));
   } catch (e) {
     console.error(e);
-    setEditorMsg(t("logoEditor.errors.saveError"));
     void alertModal({
       text: e?.code === "RESOURCE_IN_USE" ? busyMessage(e.reason) : t("logoEditor.errors.saveFailedDetailed", { error: e?.message || e }),
     });
   } finally {
     saving = false;
-    el.btnSave.disabled = false;
+    syncSaveButton();
   }
 }
 
@@ -640,7 +645,6 @@ async function confirmImport() {
     await refresh();
     selectTile(id);
     closeOverlay(el.importOverlay);
-    setMsg(t("logoEditor.status.imported"));
   } catch (e) {
     console.error(e);
     el.importErr.textContent = t("logoEditor.errors.importFailedDetailed", { error: e?.message || e });
@@ -808,7 +812,6 @@ async function boot() {
     getMode: () => editorMode,
     markDirty,
     clearDirty,
-    setEditorMsg,
     onPreview: onEditorPreview,
     getFont3x10: () => FONT_3x10,
   };

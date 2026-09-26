@@ -170,7 +170,6 @@ export function initTextEditor(ctx) {
 
   textValue?.addEventListener("input", () => {
     if (ctx.getMode?.() !== "TEXT") return;
-    ctx.setEditorMsg?.("");
     ctx.markDirty?.();
     recompile();
   });

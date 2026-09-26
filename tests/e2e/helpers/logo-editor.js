@@ -76,10 +76,26 @@ async function editLogo(page, site, id) {
   await page.locator("#btnEdit").click();
 }
 
+/**
+ * Zapis. Edytor nie pokazuje napisu „Zapisano.” -- stan widać na przycisku
+ * (aria-busy w trakcie, nieaktywny, gdy nie ma czego zapisywać), a błędy idą
+ * w okienko. Zwraca "Zapisano." albo treść okienka błędu (i je zamyka).
+ * Testy często zapisują logo BEZ zmian (czy kropki zostają te same) -- przy
+ * nieaktywnym przycisku zdarzenie „input” w polu nazwy robi z tego zmianę
+ * (sama nazwa się nie zmienia).
+ */
 async function save(page) {
-  await page.locator("#btnCreate").click();
-  await expect(page.locator("#mMsg")).not.toHaveText(/Zapisuję|^$/, { timeout: 20000 });
-  return page.locator("#mMsg").textContent();
+  const btn = page.locator("#btnCreate");
+  if (await btn.isDisabled()) await page.locator("#logoName").dispatchEvent("input");
+  await btn.click();
+  await expect(btn).not.toHaveAttribute("aria-busy", "true", { timeout: 20000 });
+  const modal = page.locator(".uni-modal");
+  if (await modal.waitFor({ state: "visible", timeout: 500 }).then(() => true).catch(() => false)) {
+    const text = await modal.locator(".mSub").textContent();
+    await modal.locator(".uni-foot .btn.gold").click();
+    return text;
+  }
+  return "Zapisano.";
 }
 
 /** Zamyka edytor; gdy pyta o niezapisane zmiany -- odpowiada „Nie” (edytor zostaje) i zwraca true. */

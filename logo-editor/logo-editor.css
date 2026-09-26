@@ -199,15 +199,6 @@
 .etlName{ flex: 1; min-width: 0; }
 
 .editorLineRight{ display:flex; gap: 10px; align-items:center; }
-.editorLineMsg{
-  margin-left: auto;
-  opacity: .85;
-  font-size: 12px;
-  white-space: nowrap;
-  overflow:hidden;
-  text-overflow: ellipsis;
-  max-width: 32%;
-}
 
 /* karta edytora —
    .card.games-card (specificity 0,2,0) ma overflow:hidden, więc
@@ -1102,11 +1093,6 @@ body.games-body.logo-editor-body > main.logoWrap{
   -webkit-overflow-scrolling: touch;
   scrollbar-gutter: stable both-edges; /* rezerwuje miejsce symetrycznie po obu stronach — brak zmiany szerokości kolumn i brak asymetrii */
   padding-right: 2px;
-}
-
-/* stopka pod kartą nie może wypychać wysokości */
-#listShell .foot{
-  flex: 0 0 auto;
 }
 
 .logo-editor-body.is-editor #btnBack{

@@ -3912,10 +3912,6 @@ const uk = {
     },
     status: {
       saving: "Зберігаю…",
-      saved: "Збережено.",
-      deleting: "Видаляю…",
-      deleted: "Видалено.",
-      imported: "Логотип імпортовано.",
     },
     editor: {
       nameLabel: "Назва",
@@ -4097,7 +4093,6 @@ const uk = {
     errors: {
       saveFailed: "Не вдалося зберегти.",
       saveFailedDetailed: "Не вдалося зберегти.\n\n{error}",
-      saveError: "Помилка збереження.",
       importFailedDetailed: "Не вдалося імпортувати.\n\n{error}",
       exportFailedDetailed: "Не вдалося експортувати.\n\n{error}",
       fontsLoad: "Не вдалося завантажити шрифти дисплея. Онови сторінку.",

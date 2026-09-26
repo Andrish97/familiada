@@ -3802,10 +3802,6 @@ const pl = {
     },
     status: {
       saving: "Zapisuję…",
-      saved: "Zapisano.",
-      deleting: "Usuwam…",
-      deleted: "Usunięto.",
-      imported: "Zaimportowano logo.",
     },
     editor: {
       nameLabel: "Nazwa",
@@ -3987,7 +3983,6 @@ const pl = {
     errors: {
       saveFailed: "Nie udało się zapisać.",
       saveFailedDetailed: "Nie udało się zapisać.\n\n{error}",
-      saveError: "Błąd zapisu.",
       importFailedDetailed: "Nie udało się zaimportować.\n\n{error}",
       exportFailedDetailed: "Nie udało się wyeksportować.\n\n{error}",
       fontsLoad: "Nie udało się wczytać czcionek wyświetlacza. Odśwież stronę.",
