@@ -1129,14 +1129,42 @@ const SCENARIOS = [
   },
   {
     file: "04-final-pelny.mp4",
-    makeGame: (setupPage) => restoreDemoGame(setupPage, { pickOrds: FINAL_SETUP_ROUND_ORDS, finalAnswerPts: 15 }),
+    // finalMinPoints:280 -- patrz komentarz przy playThreeNaturalRoundsToThreshold
+    // (Runda 3): domyślny próg 300 jest z TĄ rundą matematycznie
+    // nieosiągalny. Rundy 1-2 (pełne odsłonięcie) dają RAZEM dokładnie 200,
+    // a Runda 3 kończy "Zakończ rundę" z odsłoniętymi tylko 3/6 odpowiedzi
+    // (ord1+2+3 -- w demo ord6/7/8 sumuje się to na 41+26+17=84 pkt), reszta
+    // (ord4-6, 16 pkt) dochodzi dopiero w R8 "dosłanianie", które z
+    // definicji NIE dolicza się do banku/totals (control2/js/engine.js's
+    // REVEAL_LEFT, czysto pokazowe -- patrz plan i komentarz tam). Suma
+    // realnie WCHODZĄCA do totals w momencie "Zakończ rundę" to więc zawsze
+    // 200+84=284, NIGDY 300 -- próg 300 przy tym wzorcu (częściowe
+    // odsłonięcie + dosłanianie) jest structuralnie nieosiągalny, niezależnie
+    // od tego, które 3 pytania demo się wybierze. 280 (>200, żeby Rundy 1-2
+    // same z siebie NIE kończyły gry przedwcześnie; ≤284, żeby Runda 3
+    // faktycznie trafiła próg w momencie "Zakończ rundę", zanim jeszcze
+    // dosłanianie się zacznie) -- naprawdę zweryfikowane przez diagnostykę
+    // bazy danych z failed przebiegu (dbDump: totals faktycznie ==284 w tym
+    // momencie), nie zgadywane.
+    makeGame: (setupPage) => restoreDemoGame(setupPage, {
+      pickOrds: FINAL_SETUP_ROUND_ORDS,
+      finalAnswerPts: 15,
+      settings: { game: { advanced: { finalMinPoints: 280 } } },
+    }),
     run: scenarioFinalFull,
   },
   {
     // finalAnswerPts=250 > finalTarget domyślne (200) -> pierwsza trafiona
-    // odpowiedź gracza 1 sama kończy finał wcześniej.
+    // odpowiedź gracza 1 sama kończy finał wcześniej. finalMinPoints:280 --
+    // identyczny powód i wyliczenie co w scenariuszu 4 wyżej (ten sam
+    // FINAL_SETUP_ROUND_ORDS, ta sama współdzielona
+    // playThreeNaturalRoundsToThreshold, ta sama matematyka 200+84=284).
     file: "05-final-wczesne-zakonczenie.mp4",
-    makeGame: (setupPage) => restoreDemoGame(setupPage, { pickOrds: FINAL_SETUP_ROUND_ORDS, finalAnswerPts: 250 }),
+    makeGame: (setupPage) => restoreDemoGame(setupPage, {
+      pickOrds: FINAL_SETUP_ROUND_ORDS,
+      finalAnswerPts: 250,
+      settings: { game: { advanced: { finalMinPoints: 280 } } },
+    }),
     run: scenarioFinalEarlyExit,
   },
   {
