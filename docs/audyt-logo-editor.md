@@ -278,7 +278,7 @@ Zmiany zachowania wynikające z poprawek:
 - skróty: V, H, B, E, S, T, L/R/O/P (kształty), U (następny kształt), F (wypełnienie), [ ] (grubość),
 - obraz: tylko JPG/PNG/GIF/WEBP do 5 MB; podmieniony plik jest usuwany ze Storage po zapisie.
 
-Testy: `tests/e2e/logo-editor2.spec.js` (18 scenariuszy, konto test1@) --
+Testy: `tests/e2e/logo-editor2.spec.js` (17 scenariuszy, konto test1@) --
 odpalane przez „E2E Tests (Playwright)” z `spec_filter: e2e/logo-editor2.spec.js`
 na gałęzi. `helpers/local-site.js` serwuje kod z checkoutu lokalnie w runnerze
 i przenosi sesję z produkcji, więc test sprawdza kod gałęzi na prawdziwym
