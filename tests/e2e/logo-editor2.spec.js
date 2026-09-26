@@ -23,7 +23,6 @@ const DEMO_IMAGE = path.resolve(__dirname, "../../logo-editor/assets/demo-image.
 const OTHER_IMAGE = path.resolve(__dirname, "../../img/icon.png");
 
 test.use({ viewport: { width: 1440, height: 900 }, serviceWorkers: "block" });
-test.describe.configure({ mode: "serial" });
 
 let site;
 test.beforeAll(async () => { site = await startLocalSite(); });
@@ -121,7 +120,10 @@ async function drag(page, x0, y0, x1, y1) {
   await page.mouse.up();
 }
 
-/** Zamknięcie edytora pyta o niezapisane zmiany? (odpowiada „Nie”, edytor zostaje) */
+/**
+ * Zamknięcie edytora pyta o niezapisane zmiany? Jeśli pyta -- odpowiada „Nie”
+ * i edytor zostaje otwarty; jeśli nie pyta -- edytor jest już zamknięty.
+ */
 async function isDirty(page) {
   await page.locator("#btnCloseEditor").click();
   const modal = page.locator(".uni-modal");
@@ -253,7 +255,10 @@ test("P0-3: rysunek -- zapis bez editHistory, w stałym świecie; po otwarciu w 
   await editLogo(page, row.id);
   await expect(page.locator("#paneDraw")).toBeVisible();
   await page.waitForTimeout(800);
-  expect(await isDirty(page)).toBe(false);
+  expect(await isDirty(page)).toBe(false); // bez zmian -> edytor się zamknął bez pytania
+  await editLogo(page, row.id);
+  await expect(page.locator("#paneDraw")).toBeVisible();
+  await page.waitForTimeout(800);
   expect(await save(page)).toMatch(/Zapisano/);
   expect((await readLogo(page, row.id)).payload.bits_b64).toBe(row.payload.bits_b64);
   expect(errors).toEqual([]);
