@@ -171,7 +171,22 @@ export function icon(name, { className = "", label = "" } = {}) {
   }
   const cls = `ico ico-${name}${className ? ` ${className}` : ""}`;
   const a11y = label ? `role="img" aria-label="${esc(label)}"` : 'aria-hidden="true"';
-  return `<svg class="${cls}" viewBox="${def.vb}" width="1em" height="1em" ${def.attrs} ${a11y} focusable="false">${def.body}</svg>`;
+  return `<svg class="${cls}" viewBox="${def.vb}" width="1em" height="1em" ${def.attrs} ${a11y} focusable="false">${uniqueIds(def.body)}</svg>`;
+}
+
+// Ikony z <mask>/<clipPath> (flagi, pół gwiazdki) odwołują się do id. Ten
+// sam id w kilku kopiach ikony na stronie jest błędem: przeglądarka bierze
+// PIERWSZY element o tym id — jeśli leży w ukrytym poddrzewie (np. w
+// zamkniętym menu języków przed przyciskiem), maska nie działa i flaga
+// traci wycięty napis „PL”/„UA” (tak było na stronie logowania). Każde
+// wstawienie ikony dostaje więc własne id.
+let idSeq = 0;
+function uniqueIds(body) {
+  if (!body.includes(' id="')) return body;
+  const n = ++idSeq;
+  return body
+    .replace(/ id="([^"]+)"/g, (_, id) => ` id="${id}-${n}"`)
+    .replace(/url\(#([^)]+)\)/g, (_, id) => `url(#${id}-${n})`);
 }
 
 /**

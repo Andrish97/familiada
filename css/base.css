@@ -1129,7 +1129,8 @@ html.showA2HS .a2hs {
     z-index: 999;
 }
 
-.lang-btn {
+.lang-btn,
+.btn.lang-btn { /* .btn.lang-btn: wygrywa z .btn stron logowania (padding 12px) */
     min-width: 38px;
     min-height: 37px;
     display: grid;
