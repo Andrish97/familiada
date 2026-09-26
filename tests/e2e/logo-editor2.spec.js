@@ -5,15 +5,15 @@
 // (helpers/local-site.js), a nie z www.familiada.online -- dzięki temu
 // testują kod z gałęzi, na prawdziwym backendzie, bez wdrażania na produkcję.
 //
-// Konto: test9@ -- osobne od kont używanych równolegle przez inne grupy
-// (test1/test2 i pula control2), żeby blokady logo/gier nie kolidowały.
+// Konto: test5@ (test9@ zwraca z Supabase "Database error querying schema")
+// -- nie odpalać równolegle z control2.spec.js (pula test1..test5).
 // Każdy test sprząta swoje logo (prefiks nazwy LE2_PREFIX).
 
 const { test, expect } = require("@playwright/test");
 const { startLocalSite, loginToLocalSite } = require("./helpers/local-site");
 const { testAccountUsername } = require("./helpers/login");
 
-const USERNAME = testAccountUsername(9);
+const USERNAME = testAccountUsername(5);
 const LE2_PREFIX = "E2E-LE2-";
 
 test.use({
