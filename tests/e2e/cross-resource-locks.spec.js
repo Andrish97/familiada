@@ -10,7 +10,16 @@
 //    overlay i nie odpytuje dalej (nigdy się nie "zwolni").
 
 const { test, expect } = require("@playwright/test");
-const { loginAsTestUser } = require("./helpers/login");
+const { loginAsTestUser: loginAs, testAccountUsername } = require("./helpers/login");
+
+// Konta powyżej 5 (domyślnie test6/7/8/10): test1–test5 zajmuje Control v2
+// (control2.spec.js w pełnym przebiegu, nagrywanie rozgrywki na test1),
+// a trwająca tam gra blokuje edycję gier i logo tego konta, więc blokady
+// testowane tutaj myliłyby się z cudzymi. test9 nie loguje się (Supabase:
+// "Database error querying schema"). Worker -> konto po parallelIndex.
+const LOCK_ACCOUNTS = String(process.env.LOCK_E2E_ACCOUNTS || "6,7,8,10").split(",").map(Number).filter(Boolean);
+const loginAsTestUser = (page, context) =>
+  loginAs(page, context, { username: testAccountUsername(LOCK_ACCOUNTS[test.info().parallelIndex % LOCK_ACCOUNTS.length]) });
 
 async function waitForLock(page, resourceType, resourceId, timeoutMs = 10000) {
   const start = Date.now();
