@@ -647,7 +647,9 @@ const pl = {
         base: "Eksport: baza…",
         folders: "Eksport: foldery…",
         questions: "Eksport: pytania…",
+        tags: "Eksport: tagi…",
         questionTags: "Eksport: tagi pytań…",
+        categoryTags: "Eksport: tagi folderów…",
         download: "Pobieranie…",
       },
       count: "Liczba: {count}",
@@ -710,12 +712,15 @@ const pl = {
       proposed: "Proponowana",
       proposedTitle: "Udostępnienie oczekuje na Twoją decyzję",
     },
+    loadFailed: "Nie udało się wczytać baz. Odśwież stronę.",
     proposed: {
       accept: "Przyjmij",
       decline: "Odrzuć",
       failed: "Nie udało się wykonać akcji.",
       mismatch: "To udostępnienie dotyczy innego użytkownika. Sprawdź, czy jesteś zalogowany na konto powiązane z mailem, na który przyszła wiadomość.",
-      cancelled: "Zaproszenie zostało cofnięte."
+      cancelled: "Zaproszenie zostało cofnięte.",
+      expired: "To zaproszenie wygasło albo już nie istnieje.",
+      handled: "To zaproszenie zostało już przyjęte lub odrzucone.",
     },
     sections: {
       mine: "Moje bazy",
