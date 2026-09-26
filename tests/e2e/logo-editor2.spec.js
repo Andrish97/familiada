@@ -20,7 +20,7 @@ const { testAccountUsername, isKnownNoiseText } = require("./helpers/login");
 const USERNAME = testAccountUsername(1);
 const LE2_PREFIX = "E2E-LE2-";
 const DEMO_IMAGE = path.resolve(__dirname, "../../logo-editor/assets/demo-image.png");
-const OTHER_IMAGE = path.resolve(__dirname, "../../img/logo.png");
+const OTHER_IMAGE = path.resolve(__dirname, "../../img/icon.png");
 
 test.use({ viewport: { width: 1440, height: 900 }, serviceWorkers: "block" });
 test.describe.configure({ mode: "serial" });
