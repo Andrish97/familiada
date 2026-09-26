@@ -853,13 +853,17 @@
   display: none;       /* pokazujemy tylko aktywny */
 }
 
+/* wygląd jak .ui-select-menu (css/base.css) i .ctxPop: kryjące tło, bez
+   półprzezroczystości -- tak jak pozostałe wysuwane listy w systemie */
 #imgPanels .imgPanel.is-open{
   display: block;
   width: min(420px, calc(100vw - 16px));
-  border-radius: 18px;
-  border: 1px solid rgba(255,255,255,.16);
-  background: rgba(10,10,14,.96);
-  box-shadow: 0 24px 80px rgba(0,0,0,.55);
+  box-sizing: border-box;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: #050914;
+  box-shadow: 0 24px 60px rgba(0,0,0,.6);
+  color: #fff;
   padding: 12px;
 }
 
@@ -875,6 +879,9 @@
   gap: 10px;
   margin-bottom: 10px;
 }
+
+#toolsImage .imgRotBtn{ min-width: 32px; padding: 0 8px; }
+#toolsImage .imgRotBtn .ico{ width: 18px; height: 18px; }
 
 #imgPanels .rng.v{
   width: 100%;

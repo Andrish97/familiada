@@ -77,6 +77,8 @@ export const ICONS = Object.freeze({
   upload: s(`${TRAY}<path d="m17 8-5-5-5 5M12 3v12"/>`),
   refresh: s('<path d="M20.5 12a8.5 8.5 0 1 1-2.5-6l2.5 2.5"/><path d="M20.5 3.5v5h-5"/>'),
   restore: s('<path d="M3.5 12a8.5 8.5 0 1 0 2.5-6L3.5 8.5"/><path d="M3.5 3.5v5h5"/>'),
+  "rotate-left": s('<rect x="10.5" y="10.5" width="10" height="10" rx="1.8"/><path d="M15.5 6.5H10a5.5 5.5 0 0 0-5.5 5.5v2"/><path d="m2 11.5 2.5 2.5 2.5-2.5"/>'),
+  "rotate-right": s('<rect x="3.5" y="10.5" width="10" height="10" rx="1.8"/><path d="M8.5 6.5H14a5.5 5.5 0 0 1 5.5 5.5v2"/><path d="m22 11.5-2.5 2.5-2.5-2.5"/>'),
   undo: s('<path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/>'),
   redo: s('<path d="m15 14 5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/>'),
   "arrow-up": s('<path d="M12 19V5M5.5 11.5 12 5l6.5 6.5"/>'),

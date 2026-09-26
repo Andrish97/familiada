@@ -730,6 +730,84 @@ test.describe("tryb Obraz", () => {
     expect(L.bitDiff((await L.readLogoByName(page, name)).payload.bits_b64, moved.bits_b64)).toBeLessThanOrEqual(30);
   });
 
+  test("obrót 90° i prostowanie: ramka zostaje na obrazie, zapis i ponowne otwarcie dają te same kropki", async ({ page }) => {
+    const errors = L.collectPageErrors(page);
+    await open(page);
+    const name = L.uniq("rotate");
+    await L.createNew(page, "Image", name);
+    await page.setInputFiles("#imgFile", DEMO_IMAGE);
+    await expect(page.locator("#cropFrame")).toBeVisible({ timeout: 10000 });
+
+    // Najmniejszy zapas (px) między rogami ramki a krawędzią obrazu obróconego
+    // o `deg` (demo-image.png ma 1536x1024); ujemny = ramka wystaje na puste rogi.
+    const margin = (deg) => page.evaluate((deg) => {
+      const img = document.getElementById("imgPreview").getBoundingClientRect();
+      const cr = document.getElementById("cropFrame").getBoundingClientRect();
+      const a = deg * Math.PI / 180, c = Math.abs(Math.cos(a)), s = Math.abs(Math.sin(a));
+      const f = img.width / (1536 * c + 1024 * s);
+      const hw = 1536 * f / 2, hh = 1024 * f / 2, cx = img.left + img.width / 2, cy = img.top + img.height / 2;
+      let worst = Infinity;
+      for (const [x, y] of [[cr.left, cr.top], [cr.right, cr.top], [cr.left, cr.bottom], [cr.right, cr.bottom]]) {
+        const dx = x - cx, dy = y - cy;
+        const qx = dx * Math.cos(-a) - dy * Math.sin(-a), qy = dx * Math.sin(-a) + dy * Math.cos(-a);
+        worst = Math.min(worst, hw - Math.abs(qx), hh - Math.abs(qy));
+      }
+      return worst;
+    }, deg);
+    const dragFrame = async (dx, dy, corner = false) => {
+      const f = await page.locator("#cropFrame").boundingBox();
+      const x = corner ? f.x + f.width - 2 : f.x + f.width / 2, y = corner ? f.y + f.height - 2 : f.y + f.height / 2;
+      await L.drag(page, x, y, x + dx, y + dy);
+    };
+    const straighten = async (v) => {
+      await page.locator('.imgSetBtn[data-panel="straighten"]').click();
+      await page.locator("#rngImgStraighten").fill(String(v));
+      await expect(page.locator('.imgSetBtn[data-panel="straighten"] .imgSetBtnVal')).toHaveText(`${v > 0 ? "+" : ""}${v}°`);
+      await page.waitForTimeout(700);
+    };
+
+    await dragFrame(-600, -600); // ramka w rogu obrazu
+    await page.locator("#btnImgRotR").click();
+    await page.waitForTimeout(700);
+    expect(await margin(90)).toBeGreaterThanOrEqual(-0.5);
+    await straighten(20);
+    expect(await margin(110)).toBeGreaterThanOrEqual(-0.5);
+    await dragFrame(900, 900);          // próba wyciągnięcia poza obraz
+    expect(await margin(110)).toBeGreaterThanOrEqual(-0.5);
+    await dragFrame(800, 800, true);    // próba powiększenia ponad obraz
+    expect(await margin(110)).toBeGreaterThanOrEqual(-0.5);
+
+    expect(await L.save(page)).toMatch(/Zapisano/);
+    const row = await L.readLogoByName(page, name);
+    expect(row.payload.source).toMatchObject({ rotate: 90, straighten: 20 });
+    expect(L.litCount(row.payload.bits_b64)).toBeGreaterThan(100);
+
+    await L.editLogo(page, site, row.id);
+    await expect(page.locator("#cropFrame")).toBeVisible({ timeout: 10000 });
+    await page.waitForTimeout(800);
+    await expect(page.locator("#rngImgStraighten")).toHaveValue("20");
+    expect(await margin(110)).toBeGreaterThanOrEqual(-0.5);
+    // zapis bez zmian po ponownym otwarciu: dokładnie te same kropki
+    await page.locator("#chkImgInvert").click();
+    await page.locator("#chkImgInvert").click();
+    expect(await L.save(page)).toMatch(/Zapisano/);
+    const again = await L.readLogo(page, row.id);
+    expect(again.payload.source).toMatchObject({ rotate: 90, straighten: 20 });
+    expect(L.bitDiff(row.payload.bits_b64, again.payload.bits_b64)).toBe(0);
+
+    // obrót w lewo i z powrotem: ramka 26:11 na pionowym obrazie musi się
+    // zmniejszyć/przesunąć, więc to nie jest tożsamość -- ważne, że zostaje na obrazie
+    await page.locator("#btnImgRotL").click();
+    await page.waitForTimeout(700);
+    expect(await margin(20)).toBeGreaterThanOrEqual(-0.5);
+    await page.locator("#btnImgRotR").click();
+    await page.waitForTimeout(700);
+    expect(await margin(110)).toBeGreaterThanOrEqual(-0.5);
+    expect(await L.save(page)).toMatch(/Zapisano/);
+    expect((await L.readLogo(page, row.id)).payload.source.rotate).toBe(90);
+    expect(errors).toEqual([]);
+  });
+
   test("walidacja pliku: zły typ i za duży plik odrzucone przed wysłaniem", async ({ page }) => {
     await open(page);
     await L.createNew(page, "Image", L.uniq("badfile"));

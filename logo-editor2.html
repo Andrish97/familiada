@@ -191,6 +191,12 @@
 
             <div class="toolSep"></div>
 
+            <button class="btn sm imgRotBtn" type="button" id="btnImgRotL" title="Obróć w lewo o 90°" aria-label="Obróć w lewo o 90°" data-i18n-title="logoEditor.image.rotateLeft" data-i18n-aria-label="logoEditor.image.rotateLeft"><i class="ico" data-icon="rotate-left" aria-hidden="true"></i></button>
+            <button class="btn sm imgRotBtn" type="button" id="btnImgRotR" title="Obróć w prawo o 90°" aria-label="Obróć w prawo o 90°" data-i18n-title="logoEditor.image.rotateRight" data-i18n-aria-label="logoEditor.image.rotateRight"><i class="ico" data-icon="rotate-right" aria-hidden="true"></i></button>
+            <button class="btn sm imgSetBtn" type="button" data-panel="straighten"><span class="imgSetBtnLabel" data-i18n="logoEditor.image.straightenLabel">Prostowanie:</span> <span class="imgSetBtnVal">0°</span></button>
+
+            <div class="toolSep"></div>
+
             <button class="btn sm imgSetBtn" type="button" data-panel="bright"><span class="imgSetBtnLabel" data-i18n="logoEditor.image.brightnessLabel">Jasność:</span> <span class="imgSetBtnVal">0</span></button>
             <button class="btn sm imgSetBtn" type="button" data-panel="contrast"><span class="imgSetBtnLabel" data-i18n="logoEditor.image.contrastLabel">Kontrast:</span> <span class="imgSetBtnVal">0</span></button>
             <button class="btn sm imgSetBtn" type="button" data-panel="gamma"><span class="imgSetBtnLabel" data-i18n="logoEditor.image.gammaLabel">Gamma:</span> <span class="imgSetBtnVal">1.00</span></button>
@@ -206,6 +212,11 @@
 
           <!-- IMAGE: pojedyncze rozwijane ustawienie (accordion) -->
           <div class="imgPanels" id="imgPanels" style="display:none;">
+            <div class="imgPanel" data-panel="straighten">
+              <div class="imgPanelTitle"><span data-i18n="logoEditor.image.straighten">Prostowanie</span> <span class="imgPanelVal" id="valImgStraighten">0°</span></div>
+              <input class="rng v" id="rngImgStraighten" type="range" min="-30" max="30" step="0.5" value="0"/>
+            </div>
+
             <div class="imgPanel" data-panel="bright">
               <div class="imgPanelTitle"><span data-i18n="logoEditor.image.brightness">Jasność</span> <span class="imgPanelVal" id="valImgBright">0</span></div>
               <input class="rng v" id="rngImgBright" type="range" min="-100" max="100" value="0"/>
