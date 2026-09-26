@@ -1212,6 +1212,11 @@ export function initDrawEditor(ctx) {
       canvas.on(ev, () => renderSettings());
     }
 
+    // Fabric zdejmuje zaznaczenie przy kliknięciu w puste pole ZANIM wywoła
+    // "mouse:down" -- stąd zapamiętanie, co było aktywne przed kliknięciem.
+    let activeBeforeDown = null;
+    canvas.on("mouse:down:before", () => { activeBeforeDown = canvas.getActiveObject(); });
+
     canvas.on("mouse:down", (opt) => {
       pointerDown = true;
       const e = opt.e?.touches?.[0] || opt.e;
@@ -1238,8 +1243,16 @@ export function initDrawEditor(ctx) {
           renderSettings();
           return;
         }
-        // klik w puste pole przy edytowanym tekście = tylko zakończ edycję
-        if (isTextObj(canvas.getActiveObject())) { finishTextEditing(); renderSettings(); return; }
+        // klik w puste pole przy zaznaczonym/edytowanym tekście = tylko zakończ
+        // edycję (Fabric już go odznaczył); nowy napis dopiero następnym klikiem
+        if (isTextObj(activeBeforeDown)) {
+          if (activeBeforeDown.isEditing) activeBeforeDown.exitEditing();
+          canvas.discardActiveObject();
+          if (!activeBeforeDown.text?.trim()) canvas.remove(activeBeforeDown);
+          commit();
+          renderSettings();
+          return;
+        }
         addText(screenToWorld(opt.e));
         renderSettings();
       }

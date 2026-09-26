@@ -777,6 +777,30 @@ test.describe("zgodność ze starymi danymi", () => {
     await page.locator(`#shapePickerPop .spi[data-shape="${shape}"]`).click();
   }
 
+  /**
+   * Zapis kopii logo STARYM edytorem przy scenie o rozmiarze `world` (stary
+   * edytor bierze rozmiar sceny z okna -- dobieramy szerokość okna).
+   */
+  async function oldEditorResave(page, logo, world) {
+    const id = await L.insertLogo(page, { name: L.uniq("old-resave"), type: logo.type, payload: logo.payload });
+    let width = 1440;
+    for (let attempt = 0; attempt < 4; attempt++) {
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto(`${site.origin}/logo-editor`, { waitUntil: "domcontentloaded" });
+      await page.waitForLoadState("networkidle");
+      await page.locator(`.logoTile[data-key="${id}"]`).click();
+      await page.locator("#btnEdit").click();
+      await page.waitForTimeout(1200);
+      const w = await page.evaluate(() => window.__drawFabric?.getWidth?.() || 0);
+      if (w === world.w) break;
+      width += world.w - w;
+    }
+    const got = await page.evaluate(() => [window.__drawFabric.getWidth(), window.__drawFabric.getHeight()]);
+    expect(got, "stary edytor ze sceną tego samego rozmiaru").toEqual([world.w, world.h]);
+    await oldSave(page);
+    return (await L.readLogo(page, id)).payload.bits_b64;
+  }
+
   /** Otwiera logo w nowym edytorze i zapisuje bez zmian; zwraca payload po zapisie. */
   async function resaveInNew(page, id) {
     await L.editLogo(page, site, id);
@@ -883,9 +907,23 @@ test.describe("zgodność ze starymi danymi", () => {
       const after = await L.readLogo(page, id);
       if (d.type === "GLYPH_30x10") {
         expect(after.payload.layers[0].rows).toEqual(d.payload.layers[0].rows.map((r) => String(r).padEnd(30).slice(0, 30)));
+      } else if (d.payload.source?.fabricData) {
+        // Rysunek: zapisane kropki powstały w przeglądarce autora (czcionki
+        // systemowe napisów renderują się różnie w różnych systemach), więc
+        // odniesieniem jest STARY edytor w tej samej przeglądarce i na scenie
+        // tego samego rozmiaru (dobieramy szerokość okna).
+        const world = after.payload.source.world;
+        const oldBits = await oldEditorResave(page, d, world);
+        const vsOld = L.bitDiff(oldBits, after.payload.bits_b64);
+        const types = d.payload.source.fabricData.objects.map((o) => o.type).join(",");
+        console.log(`[demo] ${d.name}: świat ${JSON.stringify(world)}, obiekty [${types}], vs zapisane: ${L.bitDiff(d.payload.bits_b64, after.payload.bits_b64)}, vs stary edytor: ${vsOld}`);
+        expect(vsOld).toBe(0);
+        await page.setViewportSize({ width: 1440, height: 900 });
+        await L.openList(page, site);
+        continue;
       } else {
         const diff = L.bitDiff(d.payload.bits_b64, after.payload.bits_b64);
-        console.log(`[demo] ${d.name}: różnych kropek po zapisie: ${diff}, świat ${JSON.stringify(after.payload.source.world || null)}`);
+        console.log(`[demo] ${d.name}: różnych kropek po zapisie: ${diff}`);
         expect(diff).toBeLessThanOrEqual(Math.ceil(10500 * 0.01));
       }
       await page.locator("#btnCloseEditor").click();
