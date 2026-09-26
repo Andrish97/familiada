@@ -1026,6 +1026,97 @@ for (const lang of ["en", "uk"]) {
   });
 }
 
+/* Tablet: prawdziwe zdarzenia dotyku (CDP Input.dispatchTouchEvent), bo
+   page.mouse daje zdarzenia myszy, a Fabric i kadr obrazu mają osobne ścieżki
+   dla palców (pinch, pierwszy palec pinchu nie może zostawić kreski). */
+test.describe("tablet (dotyk)", () => {
+  test.use({ viewport: { width: 1180, height: 820 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2 });
+
+  async function touchApi(page) {
+    const cdp = await page.context().newCDPSession(page);
+    const T = (type, pts) => cdp.send("Input.dispatchTouchEvent", { type, touchPoints: pts.map(([x, y], id) => ({ x, y, id })) });
+    const drag = async (x0, y0, x1, y1, steps = 10) => {
+      await T("touchStart", [[x0, y0]]);
+      for (let i = 1; i <= steps; i++) await T("touchMove", [[x0 + (x1 - x0) * i / steps, y0 + (y1 - y0) * i / steps]]);
+      await T("touchEnd", []);
+      await page.waitForTimeout(150);
+    };
+    /** Dwa palce od środka (cx, cy): odległość d0 -> d1 w poziomie. */
+    const pinch = async (cx, cy, d0, d1, steps = 10) => {
+      await T("touchStart", [[cx - d0 / 2, cy]]);
+      await T("touchStart", [[cx - d0 / 2, cy], [cx + d0 / 2, cy]]);
+      for (let i = 1; i <= steps; i++) {
+        const d = d0 + (d1 - d0) * i / steps;
+        await T("touchMove", [[cx - d / 2, cy], [cx + d / 2, cy]]);
+      }
+      await T("touchEnd", []);
+      await page.waitForTimeout(300);
+    };
+    return { drag, pinch };
+  }
+  const objects = (page) => page.evaluate(() => window.__drawFabric.getObjects().map((o) => o.type + (o._line ? `:${o._line.kind}` : "")));
+
+  test("Rysunek palcem: pędzel, strzałka, koniec strzałki, pinch bez kreski", async ({ page }) => {
+    const errors = L.collectPageErrors(page);
+    await open(page);
+    const name = L.uniq("touch-draw");
+    await L.createNew(page, "Draw", name);
+    const t = await touchApi(page);
+    const b = await L.stage(page);
+
+    await page.locator("#tBrush").tap();
+    await t.drag(b.x + 50, b.y + 50, b.x + 250, b.y + 120);
+    expect(await objects(page)).toEqual(["path"]);
+
+    await page.locator("#tShapes").tap();
+    await page.locator("#cShapeBtn").tap();
+    await page.locator('#shapePickerPop .spi[data-shape="arrow1"]').tap();
+    const y = b.y + b.height * 0.6;
+    await t.drag(b.x + b.width * 0.2, y, b.x + b.width * 0.5, y);
+    expect(await objects(page)).toEqual(["path", "path:arrow1"]);
+
+    await page.locator("#tSelect").tap();
+    await page.touchscreen.tap(b.x + b.width * 0.35, y);
+    const p2 = await page.evaluate(() => window.__drawFabric.getActiveObject()?.oCoords?.p2 || null);
+    expect(p2, "stuknięcie zaznacza strzałkę").not.toBeNull();
+    const x2 = () => page.evaluate(() => window.__drawFabric.getObjects()[1]._line.x2);
+    const before = await x2();
+    await t.drag(b.x + p2.x, b.y + p2.y, b.x + b.width * 0.85, b.y + p2.y);
+    expect(await x2()).toBeGreaterThan(before + 100);
+
+    // pinch przy aktywnym pędzlu: powiększa, nie rysuje
+    await page.locator("#tBrush").tap();
+    await t.pinch(b.x + b.width / 2, b.y + b.height / 2, 80, 320);
+    expect(await page.evaluate(() => window.__drawFabric.getZoom())).toBeGreaterThan(1.2);
+    expect(await objects(page)).toHaveLength(2);
+
+    expect(await L.save(page)).toMatch(/Zapisano/);
+    const row = await L.readLogoByName(page, name);
+    expect(row.payload.source.fabricData.objects).toHaveLength(2);
+    expect(errors).toEqual([]);
+  });
+
+  test("Obraz palcem: kadr przesuwa się jednym palcem i zmniejsza pinchem", async ({ page }) => {
+    const errors = L.collectPageErrors(page);
+    await open(page);
+    await L.createNew(page, "Image", L.uniq("touch-img"));
+    await page.setInputFiles("#imgFile", DEMO_IMAGE);
+    await expect(page.locator("#cropFrame")).toBeVisible({ timeout: 10000 });
+    const t = await touchApi(page);
+    const frame = () => page.locator("#cropFrame").boundingBox();
+    const f0 = await frame();
+    await t.drag(f0.x + f0.width / 2, f0.y + f0.height / 2, f0.x + f0.width / 2 - 40, f0.y + f0.height / 2 - 30);
+    const f1 = await frame();
+    expect(f1.x).toBeLessThan(f0.x - 20);
+    expect(Math.round(f1.width)).toBe(Math.round(f0.width));
+    await t.pinch(f1.x + f1.width / 2, f1.y + f1.height / 2, 60, 20);
+    const f2 = await frame();
+    expect(f2.width).toBeLessThan(f1.width * 0.6);
+    expect(f2.width / f2.height).toBeCloseTo(26 / 11, 1);
+    expect(errors).toEqual([]);
+  });
+});
+
 test.describe("telefon", () => {
   test.use({ viewport: { width: 390, height: 800 }, isMobile: true, hasTouch: true });
 

@@ -485,7 +485,7 @@ export function initDrawEditor(ctx) {
 
   function linePath(kind, p1, p2, sw) {
     if (kind === "line") return `M ${p1.x} ${p1.y} L ${p2.x} ${p2.y}`;
-    return buildArrowPath(p1.x, p1.y, p2.x, p2.y, kind.startsWith("arrow2") ? 2 : 1, sw, kind.endsWith("Fill"));
+    return buildArrowPath(p1.x, p1.y, p2.x, p2.y, kind.startsWith("arrow2") ? 2 : 1, sw, kind.endsWith("Fill"), worldW / 30);
   }
 
   function snapEnd(anchor, p) {

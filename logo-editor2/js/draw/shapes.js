@@ -58,52 +58,50 @@ export function buildShapePath(shapeId, x1, y1, x2, y2, strokeWidth) {
   }
 }
 
-export function buildArrowPath(x1, y1, x2, y2, dirCount, strokeW, isFilled) {
+/**
+ * Strzałka od (x1,y1) do (x2,y2). `unit` = szerokość jednego kafla
+ * wyświetlacza w jednostkach sceny: grot ma co najmniej tyle, żeby dało się
+ * go rozpoznać na kropkach, a grubość pełnej strzałki nie zależy od długości
+ * (wcześniej rosła z długością, a grot cienkiej strzałki miał 1–2 kropki).
+ */
+export function buildArrowPath(x1, y1, x2, y2, dirCount, strokeW, isFilled, unit = 1040 / 30) {
   const dx = x2 - x1, dy = y2 - y1;
   const L = Math.hypot(dx, dy) || 1;
   const ang = Math.atan2(dy, dx);
   const c = Math.cos(ang), s = Math.sin(ang);
-  
+  const sw = strokeW || 0;
+
   const tf = (pts) => pts.map(([px, py]) => [x1 + px*c - py*s, y1 + px*s + py*c]);
   const fp = ([x, y]) => `${x.toFixed(2)},${y.toFixed(2)}`;
-  
+  const poly = (pts) => { const p = tf(pts); return `M ${fp(p[0])} ${p.slice(1).map((q) => `L ${fp(q)}`).join(" ")} Z`; };
+  // grot nie może zająć więcej niż część długości (przy krótkiej strzałce maleje)
+  const maxHead = L * (dirCount === 2 ? 0.38 : 0.6);
+
   if (isFilled) {
-    const sh = Math.min(strokeW * 4 + L * 0.018, L * 0.3);
-    const hh = Math.min(sh * 2.2, L * 0.4);
-    let hl = Math.min(sh * 2.5, L * 0.35);
-    
+    const sh = unit * 0.55 + sw * 1.5;            // połowa grubości trzonu
+    const hl = Math.min(sh * 2.2, maxHead);       // długość grotu
+    const hh = Math.max(sh * 2, sh + sw * 2);     // połowa szerokości grotu
     if (dirCount === 2) {
-      if (hl * 2 > L * 0.7) hl = L * 0.35;
-      const pts = tf([
+      return poly([
         [hl, -hh], [0, 0], [hl, hh], [hl, sh],
-        [L-hl, sh], [L-hl, hh], [L, 0],
-        [L-hl, -hh], [L-hl, -sh], [hl, -sh]
+        [L - hl, sh], [L - hl, hh], [L, 0],
+        [L - hl, -hh], [L - hl, -sh], [hl, -sh],
       ]);
-      return `M ${fp(pts[0])} ${pts.slice(1).map(p => `L ${fp(p)}`).join(' ')} Z`;
     }
-    
-    const pts = tf([
-      [0, -sh], [L-hl, -sh], [L-hl, -hh], [L, 0], [L-hl, hh], [L-hl, sh], [0, sh]
-    ]);
-    return `M ${fp(pts[0])} ${pts.slice(1).map(p => `L ${fp(p)}`).join(' ')} Z`;
+    return poly([[0, -sh], [L - hl, -sh], [L - hl, -hh], [L, 0], [L - hl, hh], [L - hl, sh], [0, sh]]);
   }
-  
-  // LINIA - otwarty kontur
-  let hl = strokeW * 5;
-  if (hl > L * 0.8) hl = L * 0.8;
-  const hh = strokeW * 2.5;
-  
+
+  // linia: otwarty kontur
+  const hl = Math.min(Math.max(sw * 5, unit * 0.9), maxHead);
+  const hh = hl * 0.5;
+  const shaft = tf([[0, 0], [L, 0]]);
+  const headE = tf([[L - hl, -hh], [L, 0], [L - hl, hh]]);
+  let d = `M ${fp(shaft[0])} L ${fp(shaft[1])} M ${fp(headE[0])} L ${fp(headE[1])} L ${fp(headE[2])}`;
   if (dirCount === 2) {
-    if (hl > L * 0.38) hl = L * 0.38;
-    const shaft = tf([[0,0], [L,0]]);
-    const headE = tf([[L-hl, -hh], [L,0], [L-hl, hh]]);
-    const headS = tf([[hl, -hh], [0,0], [hl, hh]]);
-    return `M ${fp(shaft[0])} L ${fp(shaft[1])} M ${fp(headE[0])} L ${fp(headE[1])} L ${fp(headE[2])} M ${fp(headS[0])} L ${fp(headS[1])} L ${fp(headS[2])}`;
+    const headS = tf([[hl, -hh], [0, 0], [hl, hh]]);
+    d += ` M ${fp(headS[0])} L ${fp(headS[1])} L ${fp(headS[2])}`;
   }
-  
-  const shaft = tf([[0,0], [L,0]]);
-  const head = tf([[L-hl, -hh], [L,0], [L-hl, hh]]);
-  return `M ${fp(shaft[0])} L ${fp(shaft[1])} M ${fp(head[0])} L ${fp(head[1])} L ${fp(head[2])}`;
+  return d;
 }
 
 function buildPolygonPath(cx,cy,r,sides) {
