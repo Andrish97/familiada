@@ -1,232 +1,147 @@
 // familiada/logo-editor2/js/text.js
-// Tryb: TEXT (font_3x10) -> zapis GLYPH_30x10
-// Stała 1 kolumna przerwy miedzy glifami.
+// Tryb TEXT: napis fontem 3x10 -> GLYPH_30x10 (30 kolumn x 10 wierszy znaków
+// fontu 5x7). Glify przycięte do szerokości, stała 1 kolumna przerwy,
+// napis wyśrodkowany.
 
 import { t, getUiLang } from "../../translation/translation.js?v=v2026-09-26T05304";
+import { TILES_X, TILES_Y, TYPE_GLYPH } from "./render.js?v=v2026-09-26T05304";
+
+const GLYPH_W = 3;
+
+// Cyrylica jest w foncie, ale na liście „dozwolonych znaków” pokazujemy ją
+// tylko w interfejsie ukraińskim (kompilacja przyjmuje ją zawsze, żeby logo
+// zrobione po ukraińsku dało się edytować w innym języku).
+const CYRILLIC_UK = new Set("АБВГҐДЕЄЖЗИІЙКЛМНОПРСТУФХЦЧШЩЬЮЯЇ");
+
+const isLit = (ch) => ch !== " " && ch !== " ";
+
+/** Przycina glif 3x10 do zapalonych kolumn. */
+function cropGlyph(rows) {
+  let left = GLYPH_W, right = -1;
+  for (let x = 0; x < GLYPH_W; x++) {
+    if (rows.some((r) => isLit(r[x] ?? " "))) { left = Math.min(left, x); right = x; }
+  }
+  if (right < left) return { rows: rows.map(() => ""), w: 0 };
+  return { rows: rows.map((r) => r.slice(left, right + 1)), w: right - left + 1 };
+}
+
+/** Kompiluje napis. Zwraca { rows[10], usedW, fit, invalid[] }. */
+export function compileText(text, font) {
+  const glyphs = [];
+  const invalid = new Set();
+  for (const ch of Array.from(String(text ?? ""))) {
+    if (ch === " ") { glyphs.push(null); continue; }
+    const g = font?.[ch] ?? font?.[ch.toUpperCase()];
+    if (!g || /[\n\r\t]/.test(ch)) { invalid.add(ch); continue; }
+    glyphs.push(cropGlyph(Array.from({ length: TILES_Y }, (_, i) => String(g[i] ?? "").padEnd(GLYPH_W, " ").slice(0, GLYPH_W))));
+  }
+
+  // szerokość: spacja = 1 kolumna, między dwoma glifami 1 kolumna przerwy
+  const layout = [];
+  let x = 0, prevGlyph = false;
+  for (const g of glyphs) {
+    if (!g) { x += 1; prevGlyph = false; continue; }
+    if (prevGlyph) x += 1;
+    layout.push({ g, x });
+    x += g.w;
+    prevGlyph = true;
+  }
+  const usedW = x;
+  const fit = usedW <= TILES_X;
+  const offset = fit ? Math.floor((TILES_X - usedW) / 2) : 0;
+
+  const grid = Array.from({ length: TILES_Y }, () => Array(TILES_X).fill(" "));
+  for (const { g, x: gx } of layout) {
+    for (let y = 0; y < TILES_Y; y++) {
+      for (let cx = 0; cx < g.w; cx++) {
+        const outX = offset + gx + cx;
+        const c = g.rows[y][cx] ?? " ";
+        if (outX < TILES_X && c !== " ") grid[y][outX] = c;
+      }
+    }
+  }
+  return { rows: grid.map((r) => r.join("")), usedW, fit, invalid: [...invalid] };
+}
 
 export function initTextEditor(ctx) {
-  const paneText = document.getElementById("paneText");
-  const textValue = document.getElementById("textValue");
-  const textWarn = document.getElementById("textWarn");
-  const textMeasure = document.getElementById("textMeasure");
-  const btnCharsToggle = document.getElementById("btnCharsToggle");
-  const charsInline = document.getElementById("charsInline");
-  const charsList = document.getElementById("charsList");
+  const $ = (id) => document.getElementById(id);
+  const paneText = $("paneText");
+  const textValue = $("textValue");
+  const textWarn = $("textWarn");
+  const textMeasure = $("textMeasure");
+  const btnCharsToggle = $("btnCharsToggle");
+  const charsInline = $("charsInline");
+  const charsList = $("charsList");
 
-  const TYPE_GLYPH = ctx.TYPE_GLYPH || "GLYPH_30x10";
-
-
-  const CYRILLIC_UK = new Set([
-    "А","Б","В","Г","Ґ","Д","Е","Є","Ж","З","И","І","Й","К","Л","М",
-    "Н","О","П","Р","С","Т","У","Ф","Х","Ц","Ч","Ш","Щ","Ь","Ю","Я","Ї"
-  ]);
-
-  const isCyrillicUk = (ch) => CYRILLIC_UK.has(ch);
-
-  const getFont = () => {
-    const FONT_3x10 = ctx.getFont3x10?.() || {};
-    if (getUiLang() === "uk") return FONT_3x10;
-    // filtruj cyrylicę gdy nie uk
-    return Object.fromEntries(Object.entries(FONT_3x10).filter(([k]) => !isCyrillicUk(k)));
-  };
-
-  const show = (el, on) => { if (!el) return; el.style.display = on ? "" : "none"; };
+  const show = (el, on) => { if (el) el.style.display = on ? "" : "none"; };
+  const isShown = (el) => !!el && getComputedStyle(el).display !== "none";
+  const font = () => ctx.getFont3x10?.() || {};
 
   let lastCompiled = null;
 
-  function isLitChar(ch) {
-    return ch !== " " && ch !== "\u00A0";
-  }
-
-  function measureGlyphTight3x10(rows10) {
-    const W = 3;
-    let left = W;
-    let right = -1;
-
-    for (let x = 0; x < W; x++) {
-      let any = false;
-      for (let y = 0; y < 10; y++) {
-        const ch = (rows10[y] || "")[x] ?? " ";
-        if (isLitChar(ch)) { any = true; break; }
-      }
-      if (any) {
-        if (x < left) left = x;
-        if (x > right) right = x;
-      }
-    }
-
-    if (right < left) return { left: 0, w: 0 };
-    return suggestedWidthFix(left, right);
-
-    function suggestedWidthFix(l, r){
-      return { left: l, w: r - l + 1 };
-    }
-  }
-
-  function normalizeInputText(raw) {
-    return String(raw ?? "");
-  }
-
-  function compileTextToRows30x10(raw) {
-    const FONT_3x10 = ctx.getFont3x10?.() || null;
-    const text = normalizeInputText(raw);
-
-    const rows = Array.from({ length: 10 }, () => Array.from({ length: 30 }, () => " "));
-    const invalid = [];
-    const chars = Array.from(text);
-
-    /** @type {Array<{space:true} | {rows10:string[], w:number}>} */
-    const glyphs = [];
-
-    for (const ch0 of chars) {
-      if (ch0 === "\n" || ch0 === "\r" || ch0 === "\t") { invalid.push(ch0); continue; }
-      if (ch0 === " ") { glyphs.push({ space: true }); continue; }
-
-      const glyph = FONT_3x10?.[ch0] ?? FONT_3x10?.[ch0.toUpperCase()] ?? null;
-      if (!glyph) { invalid.push(ch0); continue; }
-
-      const gRows = Array.from({ length: 10 }, (_, i) => String(glyph[i] ?? "").padEnd(3, " ").slice(0, 3));
-      const { left, w } = measureGlyphTight3x10(gRows);
-      const cropped = Array.from({ length: 10 }, (_, i) => gRows[i].slice(left, left + w));
-      glyphs.push({ rows10: cropped, w });
-    }
-
-    let usedW = 0;
-    let prevWasGlyph = false;
-    for (const g of glyphs) {
-      if (g.space) { usedW += 1; prevWasGlyph = false; continue; }
-      if (prevWasGlyph) usedW += 1; // stała przerwa 1
-      usedW += g.w;
-      prevWasGlyph = true;
-    }
-
-    const fit = usedW <= 30;
-    const startX = fit ? Math.floor((30 - usedW) / 2) : 0;
-
-    let cursor = startX;
-    prevWasGlyph = false;
-
-    for (const g of glyphs) {
-      if (g.space) { cursor += 1; prevWasGlyph = false; continue; }
-      if (prevWasGlyph) cursor += 1;
-
-      for (let y = 0; y < 10; y++) {
-        const line = g.rows10[y] || "";
-        for (let x = 0; x < g.w; x++) {
-          const outX = cursor + x;
-          if (outX < 0 || outX >= 30) continue;
-          const c = line[x] ?? " ";
-          if (c !== " ") rows[y][outX] = c;
-        }
-      }
-
-      cursor += g.w;
-      prevWasGlyph = true;
-    }
-
-    return {
-      rows: rows.map(r => r.join("")),
-      usedW,
-      fit,
-      invalid: Array.from(new Set(invalid)),
-    };
-  }
-
-  function renderAllowedCharsList() {
-    const FONT_3x10 = getFont();
+  function renderAllowedChars() {
     if (!charsList) return;
-    const keys = Object.keys(FONT_3x10 || {});
-    charsList.textContent = "␠" + keys.join("\u2009");
+    const keys = Object.keys(font()).filter((k) => getUiLang() === "uk" || !CYRILLIC_UK.has(k));
+    charsList.textContent = "␠" + keys.join(" ");
   }
 
-  function updateCharsToggleLabel(isOpen) {
-    if (!btnCharsToggle) return;
-    btnCharsToggle.textContent = isOpen
-      ? t("logoEditor.text.allowedCharsHide")
-      : t("logoEditor.text.allowedChars");
+  function updateCharsToggleLabel() {
+    if (btnCharsToggle) {
+      btnCharsToggle.textContent = isShown(charsList) ? t("logoEditor.text.allowedCharsHide") : t("logoEditor.text.allowedChars");
+    }
   }
 
-  function updateWarnings(compiled) {
-    if (!textWarn || !textMeasure) return;
-
+  function updateWarnings(c) {
     const parts = [];
-    if (compiled.invalid.length) {
-      const chars = compiled.invalid.map(x => (x === " " ? "␠" : x)).join(" ");
-      parts.push(t("logoEditor.text.invalidChars", { chars }));
+    if (c.invalid.length) parts.push(t("logoEditor.text.invalidChars", { chars: c.invalid.join(" ") }));
+    if (!c.fit) parts.push(t("logoEditor.text.tooWide", { width: c.usedW }));
+    if (textWarn) textWarn.textContent = parts.join("\n");
+    show(textWarn, parts.length > 0);
+    if (textMeasure) {
+      textMeasure.textContent = t("logoEditor.text.widthStatus", {
+        width: c.usedW,
+        status: c.fit ? t("logoEditor.text.fits") : t("logoEditor.text.notFits"),
+      });
     }
-    if (!compiled.fit) {
-      parts.push(t("logoEditor.text.tooWide", { width: compiled.usedW }));
-    }
-
-    if (parts.length) {
-      textWarn.textContent = parts.join("\n");
-      show(textWarn, true);
-    } else {
-      show(textWarn, false);
-    }
-
-    textMeasure.textContent = t("logoEditor.text.widthStatus", {
-      width: compiled.usedW,
-      status: compiled.fit ? t("logoEditor.text.fits") : t("logoEditor.text.notFits")
-    });
   }
 
   function recompile() {
-    ctx.setEditorMsg?.("");
-    const compiled = compileTextToRows30x10(textValue?.value || "");
-    lastCompiled = compiled;
-    updateWarnings(compiled);
-    ctx.onPreview?.({ kind: "GLYPH", rows: compiled.rows });
+    lastCompiled = compileText(textValue?.value || "", font());
+    updateWarnings(lastCompiled);
+    ctx.onPreview?.({ kind: "GLYPH", rows: lastCompiled.rows });
   }
 
-  // EVENTS
   textValue?.addEventListener("input", () => {
     if (ctx.getMode?.() !== "TEXT") return;
+    ctx.setEditorMsg?.("");
     ctx.markDirty?.();
     recompile();
   });
 
-  function isHidden(el){
-    if (!el) return true;
-    return getComputedStyle(el).display === "none";
-  }
+  btnCharsToggle?.addEventListener("click", () => {
+    const open = !isShown(charsList);
+    show(charsInline, true);
+    show(charsList, open);
+    updateCharsToggleLabel();
+  });
 
   window.addEventListener("i18n:lang", () => {
-    renderAllowedCharsList();
-    updateCharsToggleLabel(!isHidden(charsInline));
+    renderAllowedChars();
+    updateCharsToggleLabel();
     if (lastCompiled) updateWarnings(lastCompiled);
   });
-  
-  btnCharsToggle?.addEventListener("click", () => {
-    // toggle ma sterować wrapperem, bo HTML ukrywa #charsInline (rodzic listy)
-    const open = isHidden(charsInline);
-  
-    show(charsInline, open);
-    show(charsList, open);
-  
-    // opcjonalnie: zmiana etykiety przycisku
-    updateCharsToggleLabel(open);
-  });
 
-
-  // API
   return {
     open(payload = null) {
       show(paneText, true);
-      const source = payload?.source || {};
-      // Przywróć tekst z source.text (z exportu/importu)
-      if (textValue) textValue.value = source.text || "";
-      
-      if (textMeasure) textMeasure.textContent = "—";
-      show(textWarn, false);
-      renderAllowedCharsList();
-      show(charsInline, false);
+      if (textValue) textValue.value = String(payload?.source?.text ?? "");
+      renderAllowedChars();
+      // Pasek z pomiarem szerokości zawsze widoczny; lista znaków na żądanie.
+      show(charsInline, true);
       show(charsList, false);
-      updateCharsToggleLabel(false);
-
-      lastCompiled = null;
-      ctx.clearDirty?.();
+      updateCharsToggleLabel();
       recompile();
+      ctx.clearDirty?.();
     },
 
     close() {
@@ -234,19 +149,15 @@ export function initTextEditor(ctx) {
     },
 
     getCreatePayload() {
-      const compiled = lastCompiled || compileTextToRows30x10(textValue?.value || "");
-      lastCompiled = compiled;
-      updateWarnings(compiled);
-
-      if (compiled.invalid.length) return { ok: false, msg: t("logoEditor.text.fixInvalidChars") };
-      if (!compiled.fit) return { ok: false, msg: t("logoEditor.text.fixTooWide") };
-
+      recompile();
+      if (lastCompiled.invalid.length) return { ok: false, msg: t("logoEditor.text.fixInvalidChars") };
+      if (!lastCompiled.fit) return { ok: false, msg: t("logoEditor.text.fixTooWide") };
       return {
         ok: true,
         type: TYPE_GLYPH,
-        payload: { 
-          layers: [{ color: "main", rows: compiled.rows }],
-          source: { mode: "TEXT", text: textValue?.value || "" }
+        payload: {
+          layers: [{ color: "main", rows: lastCompiled.rows }],
+          source: { mode: "TEXT", text: textValue?.value || "" },
         },
       };
     },

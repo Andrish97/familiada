@@ -1,371 +1,192 @@
 // familiada/logo-editor2/js/image.js
-// Tryb: IMAGE -> duży obraz + kadr 26:11 -> przetwarzanie -> PIX 150x70
+// Tryb IMAGE: obraz użytkownika + kadr 26:11 + korekty (jasność, kontrast,
+// gamma, poziomy, dither) -> PIX 150x70.
+//
+// Źródło obrazu w zapisie (payload.source):
+//   imageUrl  – publiczny URL w Storage (bucket user-logos), normalny przypadek
+//   imageData – data: URI (demo / import pliku .famlogo z osadzonym obrazem)
+// Nowy plik z dysku trafia do Storage dopiero przy zapisie.
 
 import { alertModal } from "../../js/core/modal.js?v=v2026-09-26T05304";
 import { t } from "../../translation/translation.js?v=v2026-09-26T05304";
 import { sb } from "../../js/core/supabase.js?v=v2026-09-26T05304";
+import { DOT_W, DOT_H, TYPE_PIX, PIX_FORMAT, packBits, unpackBits, renderBitsToCanvas } from "./render.js?v=v2026-09-26T05304";
+
+const ASPECT = 26 / 11;
+const BUCKET = "user-logos";
+// Muszą się zgadzać z ustawieniami bucketu (migracja 178), inaczej upload
+// kończy się niezrozumiałym błędem Storage. SVG celowo pominięte: bucket
+// jest publiczny, a SVG otwarte bezpośrednio może wykonać skrypt.
+const MAX_FILE_BYTES = 5 * 1024 * 1024;
+const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp"];
+
+const DEFAULTS = {
+  invert: true,
+  bright: 0,
+  contrast: 0,
+  gamma: 1.0,
+  ditherAmt: 0.8,
+  black: 0,
+  white: 100,
+};
+
+const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
+const num = (v, fallback) => (Number.isFinite(Number(v)) ? Number(v) : fallback);
+const show = (el, on) => { if (el) el.style.display = on ? "" : "none"; };
+
+/** Ścieżka pliku w buckecie z publicznego URL albo null, gdy to nie plik tego usera. */
+export function storagePathFromUrl(url, userId) {
+  const s = String(url || "");
+  const marker = `/${BUCKET}/`;
+  const i = s.indexOf(marker);
+  if (i < 0 || !userId) return null;
+  const path = s.slice(i + marker.length).split("?")[0];
+  return path.startsWith(`${userId}/`) ? path : null;
+}
 
 export function initImageEditor(ctx) {
-  const TYPE_PIX = ctx.TYPE_PIX || "PIX_150x70";
-
   // =========================================================
-  // DOM (ID muszą pasować do HTML)
+  // DOM
   // =========================================================
-  const paneImage = document.getElementById("paneImage");
+  const $ = (id) => document.getElementById(id);
+  const paneImage = $("paneImage");
+  const imgFile = $("imgFile");
+  const imgStage = $("imgStage");
+  const imgPreview = $("imgPreview");
+  const cropFrame = $("cropFrame");
+  const imgBigPreview = $("imgBigPreview");
+  const chkInvert = $("chkImgInvert");
+  const btnImgResetDefault = $("btnImgResetDefault");
 
-  const imgFile = document.getElementById("imgFile");         // input type=file (obok nazwy)
-  const imgStage = document.getElementById("imgStage");       // lewa karta: kontener obrazu
-  const imgPreview = document.getElementById("imgPreview");   // <img>
-  const cropFrame = document.getElementById("cropFrame");     // ramka 26:11 + uchwyty
-
-  const imgBigPreview = document.getElementById("imgBigPreview"); // prawa karta: dot matrix
-
-  const chkInvert = document.getElementById("chkImgInvert");
-
-  const rngBright = document.getElementById("rngImgBright");
-  const rngContrast = document.getElementById("rngImgContrast");
-  const rngGamma = document.getElementById("rngImgGamma");
-  const rngDitherAmt = document.getElementById("rngImgDitherAmt");
-  const rngBlack = document.getElementById("rngImgBlack");
-  const rngWhite = document.getElementById("rngImgWhite");
-
-  const valBright = document.getElementById("valImgBright");
-  const valContrast = document.getElementById("valImgContrast");
-  const valGamma = document.getElementById("valImgGamma");
-  const valDitherAmt = document.getElementById("valImgDitherAmt");
-  const valBlack = document.getElementById("valImgBlack");
-  const valWhite = document.getElementById("valImgWhite");
-
-  const btnImgResetDefault = document.getElementById("btnImgResetDefault");
-
-  // =========================================================
-  // Const / helpers
-  // =========================================================
-  const DOT_W = ctx.DOT_W; // 150
-  const DOT_H = ctx.DOT_H; // 70
-  const ASPECT = 26 / 11;
-
-  const show = (el, on) => { if (!el) return; el.style.display = on ? "" : "none"; };
-  const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
-
-  const DEFAULTS = {
-    invert: true,
-    contain: true,
-    bright: 0,
-    contrast: 0,
-    gamma: 1.0,
-    ditherAmt: 0.80,
-    black: 0,
-    white: 100,
+  // suwak -> [input, etykieta w panelu, formatowanie]
+  const fmtSigned = (n) => { const x = Math.round(num(n, 0)); return x > 0 ? `+${x}` : `${x}`; };
+  const fmtInt = (n) => String(Math.round(num(n, 0)));
+  const fmt2 = (n) => num(n, 0).toFixed(2);
+  const SLIDERS = {
+    bright:    { input: $("rngImgBright"),    label: $("valImgBright"),    fmt: fmtSigned },
+    contrast:  { input: $("rngImgContrast"),  label: $("valImgContrast"),  fmt: fmtSigned },
+    gamma:     { input: $("rngImgGamma"),     label: $("valImgGamma"),     fmt: fmt2 },
+    black:     { input: $("rngImgBlack"),     label: $("valImgBlack"),     fmt: fmtInt },
+    white:     { input: $("rngImgWhite"),     label: $("valImgWhite"),     fmt: fmtInt },
+    ditherAmt: { input: $("rngImgDitherAmt"), label: $("valImgDitherAmt"), fmt: fmt2, panel: "dither" },
   };
 
   // =========================================================
-  // State
+  // Stan
   // =========================================================
-  let initialized = false;
-
-  let imgObj = null;     // Image() z naturalWidth/naturalHeight
-  let imgUrl = null;     // objectURL
-  let imgFileObj = null; // File object from input
+  let imgObj = null;            // załadowany <img> (gotowy do rysowania na canvasie)
+  let imageStatus = "none";     // none | loading | ready | error
+  let loadSeq = 0;              // unieważnia spóźnione wczytania po ponownym open()
+  let objectUrl = null;         // blob: dla pliku z dysku (tylko do podglądu)
+  let pendingFile = null;       // plik z dysku, jeszcze nie w Storage
+  let imageUrl = null;          // publiczny URL w Storage (to trafia do zapisu)
+  let imageData = null;         // data: URI (demo/import), gdy brak imageUrl
+  let openedImageUrl = null;    // imageUrl w chwili otwarcia -- do sprzątnięcia po podmianie
   let bits = new Uint8Array(DOT_W * DOT_H);
 
-  // crop w px w układzie "stage"
+  // Kadr: w pikselach pola (`crop`) i -- źródło prawdy -- względem
+  // WYŚWIETLONEGO obrazu (`cropImg`, ułamki 0–1: x, y, w; wysokość z ASPECT).
   let crop = { x: 40, y: 40, w: 280, h: Math.round(280 / ASPECT) };
-  // Kadr względem WYŚWIETLONEGO OBRAZU (ułamki 0–1: x, y, w; wysokość
-  // wynika z ASPECT). To jest źródło prawdy — piksele w `crop` wylicza się
-  // z niego dla bieżącego układu. Wcześniej kadr trzymano/zapisywano
-  // względem całego pola (osobno szer./wys.), więc po wczytaniu przy innym
-  // rozmiarze pola ramka traciła proporcje i obejmowała inny fragment
-  // obrazu, a przy obrocie ekranu wracała na środek.
   let cropImg = null;
-  // Stary zapis kadru (względem pola) czekający, aż obraz będzie widoczny —
-  // do przeliczenia potrzebny jest prawdziwy prostokąt obrazu.
+  // Stary zapis kadru (względem pola) czeka na prawdziwy prostokąt obrazu.
   let pendingLegacyCrop = null;
-  let drag = null; // { kind, sx, sy, startCrop }
   let deb = null;
 
   // =========================================================
-  // Podgląd "jak na wyświetlaczu" – identyczny render jak w main.js
-  // (minimalna wersja: PIX 150x70 -> dot matrix 30x10 tiles)
+  // Ustawienia
   // =========================================================
-  const TILES_X = 30;
-  const TILES_Y = 10;
-
-  const BIG_COLORS = {
-    bg: "#1f1f23",
-    cell: "#000000",
-    dotOff: "#1f1f23",
-    dotOn: "#d7ff3d",
-  };
-
-  function calcBigLayout(canvas){
-    const cw = canvas.width;
-    const ch = canvas.height;
-
-    for (let d = 16; d >= 2; d--){
-      const gap = Math.max(1, Math.round(d / 4));
-      const tileGap = 2 * d;
-      const tileW = 5 * d + 6 * gap;
-      const tileH = 7 * d + 8 * gap;
-      const panelW = TILES_X * tileW + (TILES_X - 1) * tileGap;
-      const panelH = TILES_Y * tileH + (TILES_Y - 1) * tileGap;
-
-      if (panelW <= cw - 20 && panelH <= ch - 20){
-        return { d, gap, tileGap, tileW, tileH, panelW, panelH };
-      }
-    }
-
-    const d = 2, gap = 1, tileGap = 4;
-    const tileW = 5 * d + 6 * gap;
-    const tileH = 7 * d + 8 * gap;
-    return {
-      d, gap, tileGap, tileW, tileH,
-      panelW: TILES_X * tileW + (TILES_X - 1) * tileGap,
-      panelH: TILES_Y * tileH + (TILES_Y - 1) * tileGap,
-    };
-  }
-
-  function clearBigCanvas(canvas){
-    const g = canvas.getContext("2d", { willReadFrequently: true });
-    g.clearRect(0, 0, canvas.width, canvas.height);
-    g.fillStyle = BIG_COLORS.bg;
-    g.fillRect(0, 0, canvas.width, canvas.height);
-  }
-
-  function drawDot(g, cx, cy, r, on){
-    g.beginPath();
-    g.arc(cx, cy, r, 0, Math.PI * 2);
-    g.fillStyle = on ? BIG_COLORS.dotOn : BIG_COLORS.dotOff;
-    g.fill();
-  }
-
-  function renderBits150x70ToBig(bits150, canvas){
-    if (!canvas) return;
-    const g = canvas.getContext("2d", { willReadFrequently: true });
-    const L = calcBigLayout(canvas);
-    clearBigCanvas(canvas);
-
-    const x0 = Math.floor((canvas.width - L.panelW) / 2);
-    const y0 = Math.floor((canvas.height - L.panelH) / 2);
-    const r = L.d / 2;
-    const step = L.d + L.gap;
-
-    for (let ty = 0; ty < TILES_Y; ty++){
-      for (let tx = 0; tx < TILES_X; tx++){
-        const tileX = x0 + tx * (L.tileW + L.tileGap);
-        const tileY = y0 + ty * (L.tileH + L.tileGap);
-
-        g.fillStyle = BIG_COLORS.cell;
-        g.fillRect(tileX, tileY, L.tileW, L.tileH);
-
-        for (let py = 0; py < 7; py++){
-          for (let px = 0; px < 5; px++){
-            const x = tx * 5 + px;
-            const y = ty * 7 + py;
-            const on = !!bits150[y * DOT_W + x];
-            const cx = tileX + L.gap + r + px * step;
-            const cy = tileY + L.gap + r + py * step;
-            drawDot(g, cx, cy, r, on);
-          }
-        }
-      }
+  function syncLabels() {
+    const toolbar = $("toolsImage");
+    for (const [key, s] of Object.entries(SLIDERS)) {
+      const txt = s.fmt(s.input?.value);
+      if (s.label) s.label.textContent = txt;
+      const btnVal = toolbar?.querySelector(`[data-panel='${s.panel || key}'] .imgSetBtnVal`);
+      if (btnVal) btnVal.textContent = txt;
     }
   }
 
-  // =========================================================
-  // UI values
-  // =========================================================
-  function syncLabels(){
-    // Aktualizacja textContent NIE przesuwa layoutu (brak reflow)
-    // Czytamy bezpośrednio z inputów, żeby było natychmiast
-    const bright = rngBright?.value ?? 0;
-    const contrast = rngContrast?.value ?? 0;
-    const gamma = rngGamma?.value ?? 1;
-    const black = rngBlack?.value ?? 0;
-    const white = rngWhite?.value ?? 100;
-    const ditherAmt = rngDitherAmt?.value ?? 0.8;
-
-    const sBright = fmtSignedInt(bright);
-    const sContrast = fmtSignedInt(contrast);
-    const sGamma = fmtGamma(gamma);
-    const sBlack = String(Math.round(Number(black) || 0));
-    const sWhite = String(Math.round(Number(white) || 0));
-    const sDither = fmtDither(ditherAmt);
-
-    // 1) Małe etykiety w panelach (valImgBright itp.)
-    if (valBright) valBright.textContent = sBright;
-    if (valContrast) valContrast.textContent = sContrast;
-    if (valGamma) valGamma.textContent = sGamma;
-    if (valDitherAmt) valDitherAmt.textContent = sDither;
-    if (valBlack) valBlack.textContent = sBlack;
-    if (valWhite) valWhite.textContent = sWhite;
-
-    // 2) Szukaj span-ów z wartościami w #toolsImage (toolbar)
-    const toolbar = document.getElementById("toolsImage");
-    if (!toolbar) return;
-
-    const btnValBright = toolbar.querySelector("[data-panel='bright'] .imgSetBtnVal");
-    const btnValContrast = toolbar.querySelector("[data-panel='contrast'] .imgSetBtnVal");
-    const btnValGamma = toolbar.querySelector("[data-panel='gamma'] .imgSetBtnVal");
-    const btnValBlack = toolbar.querySelector("[data-panel='black'] .imgSetBtnVal");
-    const btnValWhite = toolbar.querySelector("[data-panel='white'] .imgSetBtnVal");
-    const btnValDither = toolbar.querySelector("[data-panel='dither'] .imgSetBtnVal");
-
-    if (btnValBright) btnValBright.textContent = sBright;
-    if (btnValContrast) btnValContrast.textContent = sContrast;
-    if (btnValGamma) btnValGamma.textContent = sGamma;
-    if (btnValBlack) btnValBlack.textContent = sBlack;
-    if (btnValWhite) btnValWhite.textContent = sWhite;
-    if (btnValDither) btnValDither.textContent = sDither;
+  function readSettings() {
+    const out = { invert: !!chkInvert?.checked };
+    for (const [key, s] of Object.entries(SLIDERS)) out[key] = num(s.input?.value, DEFAULTS[key]);
+    return out;
   }
 
-  window.addEventListener("i18n:lang", () => {
+  function writeSettings(src) {
+    if (chkInvert) chkInvert.checked = src.invert ?? DEFAULTS.invert;
+    for (const [key, s] of Object.entries(SLIDERS)) {
+      if (s.input) s.input.value = String(num(src[key], DEFAULTS[key]));
+    }
     syncLabels();
-  });
-
-  function readSettings(){
-    return {
-      bright: Number(rngBright?.value ?? 0),
-      contrast: Number(rngContrast?.value ?? 0),
-      gamma: Number(rngGamma?.value ?? 1.0),
-      ditherAmt: Number(rngDitherAmt?.value ?? 0.8),
-      black: Number(rngBlack?.value ?? 0),
-      white: Number(rngWhite?.value ?? 100),
-      invert: !!chkInvert?.checked,
-    };
   }
 
-  function fmtSignedInt(n){
-    const x = Math.round(Number(n) || 0);
-    return (x > 0 ? `+${x}` : `${x}`);
-  }
-  
-  function fmtGamma(n){
-    const x = Number(n || 1);
-    return x.toFixed(2);
-  }
-  
-  function fmtDither(n){
-    const x = Number(n || 0);
-    return x.toFixed(2);
-  }
-
-  function resetToDefaults({ resetCrop = true } = {}) {
-    // checkboxy
-    if (chkInvert) chkInvert.checked = !!DEFAULTS.invert;
-
-    // suwaki (jako stringi, bo input.value jest stringiem)
-    if (rngBright) rngBright.value = String(DEFAULTS.bright);
-    if (rngContrast) rngContrast.value = String(DEFAULTS.contrast);
-    if (rngGamma) rngGamma.value = DEFAULTS.gamma.toFixed(2);
-    if (rngDitherAmt) rngDitherAmt.value = DEFAULTS.ditherAmt.toFixed(2);
-    if (rngBlack) rngBlack.value = String(DEFAULTS.black);
-    if (rngWhite) rngWhite.value = String(DEFAULTS.white);
-
-    syncLabels();
-    applyContainMode();
-
-    // Kadr: domyślnie też wraca do „dużego centralnego”
-    // UWAGA: to zależy od layoutu (object-fit), więc robimy to po layout/reflow.
-    if (resetCrop) {
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          if (imgObj) { cropImg = null; pendingLegacyCrop = null; initCropToCenterBig(); }
-          else {
-            crop = { x: 40, y: 40, w: 280, h: Math.round(280 / ASPECT) };
-            applyCropToDom();
-          }
-          schedulePreview(10);
-        });
-      });
-    } else {
+  function resetToDefaults() {
+    writeSettings(DEFAULTS);
+    // Kadr wraca do „dużego, centralnego” -- zależy od układu, więc po reflow.
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      if (imgObj) { cropImg = null; pendingLegacyCrop = null; initCropToCenterBig(); }
       schedulePreview(10);
-    }
-
+    }));
     ctx.markDirty?.();
   }
 
   // =========================================================
-  // Obraz: contain vs cover (ty chcesz contain = cały widoczny)
+  // Kadr: ograniczony do WIDOCZNEGO obrazu (object-fit: contain zostawia pasy)
   // =========================================================
-  function applyContainMode(){
-    if (!imgPreview) return;
-    imgPreview.style.objectFit = "contain";     // cały obraz widoczny
-    imgPreview.style.objectPosition = "center";
+  function getStageRect() {
+    return imgStage?.getBoundingClientRect() || { left: 0, top: 0, width: 1, height: 1 };
   }
 
-  // =========================================================
-  // Crop: ograniczamy ramkę do *widocznego obrazu*, nie do całej karty
-  // (bo object-fit: contain zostawia “pasy”)
-  // =========================================================
-  function getStageRect(){
-    return imgStage?.getBoundingClientRect() || { left:0, top:0, width:1, height:1 };
-  }
-
-  function getImgRect(){
+  function getImgRect() {
     const r = imgPreview?.getBoundingClientRect();
-    if (!r || r.width <= 1 || r.height <= 1) return null;
-    return r;
+    return r && r.width > 1 && r.height > 1 ? r : null;
   }
 
-  function clampCropToImg(next){
+  function imgOffset(imgR, stageR) {
+    return { x: imgR.left - stageR.left, y: imgR.top - stageR.top };
+  }
+
+  function clampCropToImg(next) {
     const imgR = getImgRect();
-    const stageR = getStageRect();
     if (!imgR) return next;
+    const o = imgOffset(imgR, getStageRect());
 
-    // obraz w układzie stage
-    const imgX = imgR.left - stageR.left;
-    const imgY = imgR.top  - stageR.top;
-    const imgW = imgR.width;
-    const imgH = imgR.height;
-
-    const minW = 60;
-
-    let w = Math.max(Math.min(minW, imgW), next.w);
+    let w = Math.max(Math.min(60, imgR.width), next.w);
     let h = Math.max(1, Math.round(w / ASPECT));
+    if (w > imgR.width) { w = imgR.width; h = Math.round(w / ASPECT); }
+    if (h > imgR.height) { h = imgR.height; w = Math.round(h * ASPECT); }
 
-    // nie większe niż obraz
-    if (w > imgW){ w = imgW; h = Math.round(w / ASPECT); }
-    if (h > imgH){ h = imgH; w = Math.round(h * ASPECT); }
-
-    let x = clamp(next.x, imgX, imgX + imgW - w);
-    let y = clamp(next.y, imgY, imgY + imgH - h);
-
-    return { x, y, w, h };
+    return {
+      x: clamp(next.x, o.x, o.x + imgR.width - w),
+      y: clamp(next.y, o.y, o.y + imgR.height - h),
+      w, h,
+    };
   }
 
-  function applyCropToDom(){
+  function applyCropToDom() {
     if (!cropFrame) return;
-    // NIE clampCropToImg tutaj - clamp tylko przy drag/resize
     cropFrame.style.left = `${Math.round(crop.x)}px`;
-    cropFrame.style.top  = `${Math.round(crop.y)}px`;
-    cropFrame.style.width  = `${Math.round(crop.w)}px`;
+    cropFrame.style.top = `${Math.round(crop.y)}px`;
+    cropFrame.style.width = `${Math.round(crop.w)}px`;
     cropFrame.style.height = `${Math.round(crop.h)}px`;
   }
 
-  function syncCropImg(){
+  function syncCropImg() {
     const imgR = getImgRect();
     if (!imgR) return;
-    const stageR = getStageRect();
-    const imgX = imgR.left - stageR.left;
-    const imgY = imgR.top  - stageR.top;
-    cropImg = {
-      x: (crop.x - imgX) / imgR.width,
-      y: (crop.y - imgY) / imgR.height,
-      w: crop.w / imgR.width,
-    };
+    const o = imgOffset(imgR, getStageRect());
+    cropImg = { x: (crop.x - o.x) / imgR.width, y: (crop.y - o.y) / imgR.height, w: crop.w / imgR.width };
   }
 
-  function legacyCropToImg(saved, imgR, stageR){
+  function legacyCropToImg(saved, imgR, stageR) {
     const px = { x: saved.x * stageR.width, y: saved.y * stageR.height, w: saved.w * stageR.width };
-    return {
-      x: (px.x - (imgR.left - stageR.left)) / imgR.width,
-      y: (px.y - (imgR.top - stageR.top)) / imgR.height,
-      w: px.w / imgR.width,
-    };
+    const o = imgOffset(imgR, stageR);
+    return { x: (px.x - o.x) / imgR.width, y: (px.y - o.y) / imgR.height, w: px.w / imgR.width };
   }
 
-  function applyCropImg(){
+  // Przelicza zapamiętany kadr (cropImg) na piksele dla bieżącego układu.
+  // Nie woła syncCropImg(): przycięcie do obrazu w chwilowym, małym układzie
+  // (np. w trakcie obrotu ekranu) nie może trwale zmienić zapamiętanego kadru.
+  function applyCropImg() {
     const imgR = getImgRect();
     if (!imgR) return;
     const stageR = getStageRect();
@@ -374,366 +195,268 @@ export function initImageEditor(ctx) {
       pendingLegacyCrop = null;
     }
     if (!cropImg) { initCropToCenterBig(); return; }
-    const imgX = imgR.left - stageR.left;
-    const imgY = imgR.top  - stageR.top;
+    const o = imgOffset(imgR, stageR);
     const w = cropImg.w * imgR.width;
-    crop = clampCropToImg({
-      x: imgX + cropImg.x * imgR.width,
-      y: imgY + cropImg.y * imgR.height,
-      w,
-      h: w / ASPECT,
-    });
+    crop = clampCropToImg({ x: o.x + cropImg.x * imgR.width, y: o.y + cropImg.y * imgR.height, w, h: w / ASPECT });
     applyCropToDom();
-    // BEZ syncCropImg(): przycięcie do obrazu (np. w chwilowym, małym
-    // układzie podczas obrotu) ma wpływać tylko na to, co widać — nie na
-    // zapamiętany kadr. Inaczej każdy obrót mógł trwale zmniejszyć albo
-    // powiększyć ramkę. cropImg zmienia się tylko przy przeciąganiu ramki.
   }
 
-  // Czeka, aż <img> podglądu ma już wyrenderowany obraz i układ strony się
-  // ustalił — dopiero wtedy getImgRect() zwraca prawdziwy prostokąt obrazu.
-  async function whenPreviewReady(){
-    try { await imgPreview?.decode?.(); } catch {}
-    await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
-  }
-
-  // Odtwarza zapisany kadr. v:2 = względem obrazu; starsze zapisy były
-  // względem pola (x,w / szer. pola, y,h / wys. pola) — przeliczamy je
-  // przez bieżący rozmiar pola, a proporcje ramki wymuszamy z szerokości.
-  async function restoreCrop(saved){
-    // Kadr ustawiamy OD RAZU (nie tylko gdy obraz jest już widoczny) —
-    // wcześniej, gdy panel pojawiał się chwilę po wczytaniu (wolniejsze
-    // urządzenie), zapisany kadr przepadał i ramka lądowała domyślnie:
-    // duża, na środku. applyCropImg() nałoży go, gdy obraz będzie widoczny
-    // (tu albo z ResizeObservera / resize).
-    cropImg = null;
-    pendingLegacyCrop = null;
-    if (saved?.v === 2) cropImg = { x: +saved.x || 0, y: +saved.y || 0, w: +saved.w || 0.78 };
-    else if (saved) pendingLegacyCrop = saved;
-    await whenPreviewReady();
-    applyCropImg();
-    schedulePreview(60);
-  }
-
-  function initCropToCenterBig(){
+  function initCropToCenterBig() {
     const imgR = getImgRect();
-    const stageR = getStageRect();
     if (!imgR) return;
-
-    const imgX = imgR.left - stageR.left;
-    const imgY = imgR.top  - stageR.top;
-    const imgW = imgR.width;
-    const imgH = imgR.height;
-
-    // duża ramka startowa
-    let w = imgW * 0.78;
+    const o = imgOffset(imgR, getStageRect());
+    let w = imgR.width * 0.78;
     let h = w / ASPECT;
-    if (h > imgH * 0.9){
-      h = imgH * 0.9;
-      w = h * ASPECT;
-    }
-
-    const x = imgX + (imgW - w) / 2;
-    const y = imgY + (imgH - h) / 2;
-
-    crop = clampCropToImg({ x, y, w, h });
+    if (h > imgR.height * 0.9) { h = imgR.height * 0.9; w = h * ASPECT; }
+    crop = clampCropToImg({ x: o.x + (imgR.width - w) / 2, y: o.y + (imgR.height - h) / 2, w, h });
     applyCropToDom();
     syncCropImg();
   }
 
-  // =========================================================
-  // Przetwarzanie: grayscale -> “pseudo b/w” (dithering)
-  // =========================================================
-  function lum(r,g,b){ return 0.2126*r + 0.7152*g + 0.0722*b; }
+  // Czeka, aż <img> podglądu ma wyrenderowany obraz i układ się ustalił.
+  async function whenPreviewReady() {
+    try { await imgPreview?.decode?.(); } catch {}
+    await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+  }
 
-  function applyBCGamma(v, bright, contrast, gamma){
-    // bright: -100..100
-    // contrast: -100..100
-    // gamma: 0.4..2.6
-    let x = v + bright;
+  // =========================================================
+  // Przetwarzanie: skala szarości -> korekty -> Floyd–Steinberg
+  // =========================================================
+  const lum = (r, g, b) => 0.2126 * r + 0.7152 * g + 0.0722 * b;
 
+  function applyBCGamma(v, bright, contrast, gamma) {
     const c = clamp(contrast, -100, 100);
     const factor = (259 * (c + 255)) / (255 * (259 - c));
-    x = factor * (x - 128) + 128;
-
-    x = clamp(x, 0, 255);
-
-    const g = clamp(gamma, 0.05, 10);
-    x = 255 * Math.pow(x / 255, 1 / g);
-
+    let x = clamp(factor * (v + bright - 128) + 128, 0, 255);
+    x = 255 * Math.pow(x / 255, 1 / clamp(gamma, 0.05, 10));
     return clamp(x, 0, 255);
   }
 
-  function applyLevels01(v, black01, white01){
-    // black/white 0..100
-    const b = clamp(black01, 0, 100) * 2.55;
-    const w = clamp(white01, 0, 100) * 2.55;
+  function applyLevels(v, black, white) {
+    const b = clamp(black, 0, 100) * 2.55;
+    const w = clamp(white, 0, 100) * 2.55;
     if (w <= b + 1) return v;
-    const x = (v - b) * (255 / (w - b));
-    return clamp(x, 0, 255);
+    return clamp((v - b) * (255 / (w - b)), 0, 255);
   }
 
-  function compileBits150(){
-    if (!imgObj) return new Uint8Array(DOT_W * DOT_H);
-
-    // crop w naturalnych koordynatach
-    const stageR = getStageRect();
+  function compileBits() {
+    const empty = new Uint8Array(DOT_W * DOT_H);
     const imgR = getImgRect();
-    if (!imgR) return new Uint8Array(DOT_W * DOT_H);
+    if (!imgObj || !imgR) return empty;
 
-    const imgX = imgR.left - stageR.left;
-    const imgY = imgR.top  - stageR.top;
-
-    // crop w układzie obrazu (px widoczne)
-    const cx = crop.x - imgX;
-    const cy = crop.y - imgY;
-
+    const o = imgOffset(imgR, getStageRect());
     const sx = imgObj.naturalWidth / imgR.width;
     const sy = imgObj.naturalHeight / imgR.height;
-
-    const nx = clamp(cx * sx, 0, imgObj.naturalWidth - 1);
-    const ny = clamp(cy * sy, 0, imgObj.naturalHeight - 1);
+    const nx = clamp((crop.x - o.x) * sx, 0, imgObj.naturalWidth - 1);
+    const ny = clamp((crop.y - o.y) * sy, 0, imgObj.naturalHeight - 1);
     const nw = clamp(crop.w * sx, 1, imgObj.naturalWidth - nx);
     const nh = clamp(crop.h * sy, 1, imgObj.naturalHeight - ny);
 
-    const { bright, contrast, gamma, ditherAmt, black, white, invert } = readSettings();
-
-    // zrzut do 150x70
+    const s = readSettings();
     const tmp = document.createElement("canvas");
     tmp.width = DOT_W;
     tmp.height = DOT_H;
     const g = tmp.getContext("2d", { willReadFrequently: true });
-
-    g.clearRect(0, 0, DOT_W, DOT_H);
     g.imageSmoothingEnabled = true;
     g.drawImage(imgObj, nx, ny, nw, nh, 0, 0, DOT_W, DOT_H);
-
-    const imgData = g.getImageData(0, 0, DOT_W, DOT_H);
-    const data = imgData.data;
-
-    // Floyd–Steinberg (siła = ditherAmt)
-    const strength = clamp(ditherAmt, 0, 1.5); // 0..1.5
-    const s = clamp(strength / 1.0, 0, 1);
+    const data = g.getImageData(0, 0, DOT_W, DOT_H).data;
 
     const buf = new Float32Array(DOT_W * DOT_H);
-    for (let i=0;i<buf.length;i++){
-      const r = data[i*4+0];
-      const gg = data[i*4+1];
-      const b = data[i*4+2];
-
-      let v = lum(r, gg, b);
-      v = applyBCGamma(v, bright, contrast, gamma);
-      v = applyLevels01(v, black, white);
-      buf[i] = v;
+    for (let i = 0; i < buf.length; i++) {
+      const v = lum(data[i * 4], data[i * 4 + 1], data[i * 4 + 2]);
+      buf[i] = applyLevels(applyBCGamma(v, s.bright, s.contrast, s.gamma), s.black, s.white);
     }
 
+    const strength = clamp(s.ditherAmt, 0, 1);
     const out = new Uint8Array(DOT_W * DOT_H);
-    const threshold = 128;
-
-    for (let y=0;y<DOT_H;y++){
-      for (let x=0;x<DOT_W;x++){
-        const i = y*DOT_W + x;
-        const oldv = buf[i];
-        const newv = oldv >= threshold ? 255 : 0;
-
-        // "jasne = włączone" -> invert domyślnie true
-        let bit = (newv === 255) ? 1 : 0;
-        if (invert) bit = bit ? 0 : 1;
-        out[i] = bit;
-
-        const err = (oldv - newv) * s;
-
-        if (x+1 < DOT_W) buf[i+1] += err * (7/16);
-        if (y+1 < DOT_H){
-          if (x>0) buf[i+DOT_W-1] += err * (3/16);
-          buf[i+DOT_W] += err * (5/16);
-          if (x+1 < DOT_W) buf[i+DOT_W+1] += err * (1/16);
+    for (let y = 0; y < DOT_H; y++) {
+      for (let x = 0; x < DOT_W; x++) {
+        const i = y * DOT_W + x;
+        const bright = buf[i] >= 128;
+        // „jasne = zapalone”; invert (domyślnie włączony) odwraca
+        out[i] = (bright ? 1 : 0) ^ (s.invert ? 1 : 0);
+        const err = (buf[i] - (bright ? 255 : 0)) * strength;
+        if (x + 1 < DOT_W) buf[i + 1] += err * (7 / 16);
+        if (y + 1 < DOT_H) {
+          if (x > 0) buf[i + DOT_W - 1] += err * (3 / 16);
+          buf[i + DOT_W] += err * (5 / 16);
+          if (x + 1 < DOT_W) buf[i + DOT_W + 1] += err * (1 / 16);
         }
       }
     }
-
     return out;
   }
 
-  function pushPreviewNow(){
-    bits = compileBits150();
-    renderBits150x70ToBig(bits, imgBigPreview);
+  function pushPreviewNow() {
+    bits = compileBits();
+    renderBitsToCanvas(bits, imgBigPreview);
     ctx.onPreview?.({ kind: "PIX", bits });
   }
 
-  function schedulePreview(ms=40){
+  function schedulePreview(ms = 40) {
     clearTimeout(deb);
     deb = setTimeout(() => {
-      if (ctx.getMode?.() !== "IMAGE") return;
-      if (!imgObj) return;
+      if (ctx.getMode?.() !== "IMAGE" || imageStatus !== "ready") return;
       pushPreviewNow();
     }, ms);
   }
 
   // =========================================================
-  // Load image (najważniejsze: ustawiamy imgPreview.src na 100%)
+  // Wczytywanie obrazu
   // =========================================================
-  async function loadImageFile(file){
-    if (!file) return;
-
-    if (imgUrl){
-      try{ URL.revokeObjectURL(imgUrl); } catch {}
-      imgUrl = null;
-    }
-
-    imgFileObj = file;
-    imgUrl = URL.createObjectURL(file);
-
-    const img = new Image();
-    img.crossOrigin = "anonymous";
-
-    await new Promise((resolve, reject) => {
-      img.onload = resolve;
-      img.onerror = () => reject(new Error(t("logoEditor.image.loadError")));
-      img.src = imgUrl;
-    });
-
-    imgObj = img;
-
-    applyBestImageLayout();
-
-    // pokaż w UI
-    if (imgPreview){
-      imgPreview.style.display = "block";
-      imgPreview.src = imgUrl;
-      if (cropFrame) cropFrame.style.display = "block";
-    }
-
-    // object-fit zależnie od “Cały obraz”
-    applyContainMode();
-
-    // po wyrenderowaniu obrazu: nowy plik = kadr na środku
-    cropImg = null;
-    pendingLegacyCrop = null;
-    await whenPreviewReady();
-    initCropToCenterBig();
-    schedulePreview(10);
+  function setStageImage(src) {
+    if (!imgPreview) return;
+    imgPreview.style.display = "block";
+    if (src) imgPreview.src = src; else imgPreview.removeAttribute("src");
+    show(cropFrame, !!src);
   }
 
-  function applyBestImageLayout(){
+  // crossOrigin=anonymous jest konieczne: bez CORS canvas jest „skażony”
+  // i getImageData() rzuca wyjątek -- podgląd i zapis by nie działały.
+  function loadImg(src) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.onload = () => resolve(img);
+      img.onerror = () => reject(new Error(t("logoEditor.image.loadError")));
+      img.src = src;
+    });
+  }
+
+  /** Wczytuje src do edytora. cropRel: zapisany kadr albo null (= nowy, na środku). */
+  async function showImage(src, cropRel) {
+    const seq = ++loadSeq;
+    imageStatus = "loading";
+    imgObj = null;
+    try {
+      const img = await loadImg(src);
+      if (seq !== loadSeq) return;
+      imgObj = img;
+      setStageImage(src);
+      applyBestImageLayout();
+
+      cropImg = null;
+      pendingLegacyCrop = null;
+      if (cropRel?.v === 2) cropImg = { x: num(cropRel.x, 0), y: num(cropRel.y, 0), w: num(cropRel.w, 0.78) };
+      else if (cropRel) pendingLegacyCrop = cropRel;
+
+      await whenPreviewReady();
+      if (seq !== loadSeq) return;
+      imageStatus = "ready";
+      applyCropImg();
+      schedulePreview(10);
+    } catch (e) {
+      if (seq !== loadSeq) return;
+      imageStatus = "error";
+      setStageImage(null);
+      console.error("[logo-editor/image] load failed:", src.slice(0, 80), e);
+      void alertModal({ text: t("logoEditor.image.errors.loadFailed") });
+    }
+  }
+
+  async function pickFile(file) {
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      void alertModal({ text: t("logoEditor.image.errors.badType") });
+      return;
+    }
+    if (file.size > MAX_FILE_BYTES) {
+      void alertModal({ text: t("logoEditor.image.errors.tooLarge", { max: MAX_FILE_BYTES / 1024 / 1024 }) });
+      return;
+    }
+    if (objectUrl) URL.revokeObjectURL(objectUrl);
+    objectUrl = URL.createObjectURL(file);
+    pendingFile = file;
+    ctx.markDirty?.();
+    await showImage(objectUrl, null);
+  }
+
+  function applyBestImageLayout() {
     const grid = paneImage?.querySelector?.(".imgTopGrid");
     if (!grid) return;
-
-    // domyślnie: responsywne zachowanie też ma znaczenie
-    const vw = window.innerWidth;
-
-    let mode = "row"; // Domyślnie: lewo-prawo
-
-    if (vw < 1120){
-      mode = "col"; // Tylko na małych ekranach
-    } else if (imgObj){
-      const r = imgObj.naturalHeight / Math.max(1, imgObj.naturalWidth);
-      // "Bardzo pionowy" obraz → stack (tylko ekstremalne przypadki)
-      if (r > 2.0) mode = "col"; // Zwiększono próg z 1.35 na 2.0
-    }
-
+    // Obok siebie, chyba że ekran jest wąski albo obraz skrajnie pionowy.
+    const veryTall = imgObj && imgObj.naturalHeight / Math.max(1, imgObj.naturalWidth) > 2.0;
+    const mode = window.innerWidth < 1120 || veryTall ? "col" : "row";
     grid.classList.toggle("is-row", mode === "row");
     grid.classList.toggle("is-col", mode === "col");
   }
 
-
   // =========================================================
-  // Drag/resize crop
+  // Gesty kadru (mysz i dotyk):
+  // - przeciąganie ramki albo obrazu = przesuwanie,
+  // - narożnik = skalowanie (ruch w poziomie LUB pionie, wygrywa większy),
+  // - dwa palce = pinch wokół środka ramki + przesuwanie środkiem palców.
   // =========================================================
-  // Gesty ramki (mysz i dotyk):
-  // - przeciąganie ramki albo obrazu poza nią jednym palcem = przesuwanie,
-  // - narożnik = skalowanie; liczy się ruch w poziomie I w pionie (dotąd
-  //   tylko poziomy — przeciąganie narożnika palcem w górę/dół nic nie
-  //   dawało),
-  // - dwa palce w dowolnym miejscu obrazu = pinch (skalowanie wokół środka
-  //   ramki) + przesuwanie środkiem palców.
-  const touches = new Map(); // pointerId -> {x,y}
-  let pinch = null;          // { dist, mid, startCrop }
-
+  const touches = new Map();
+  let drag = null;  // { kind, sx, sy, startCrop }
+  let pinch = null; // { dist, mid, startCrop }
   const pDist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
   const pMid = (a, b) => ({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 });
 
-  function startPinch(){
-    const [a, b] = [...touches.values()];
-    pinch = { dist: pDist(a, b) || 1, mid: pMid(a, b), startCrop: { ...crop } };
-    drag = null;
+  function setCrop(next) {
+    crop = clampCropToImg(next);
+    applyCropToDom();
+    syncCropImg();
+    ctx.markDirty?.();
+    schedulePreview(30);
   }
 
-  function onPointerDown(ev){
-    if (ctx.getMode?.() !== "IMAGE") return;
-    if (!imgObj) return;
+  function onPointerDown(ev) {
+    if (ctx.getMode?.() !== "IMAGE" || imageStatus !== "ready") return;
     if (ev.pointerType === "mouse" && ev.button !== 0) return;
-
     touches.set(ev.pointerId, { x: ev.clientX, y: ev.clientY });
     imgStage?.setPointerCapture?.(ev.pointerId);
     ev.preventDefault();
 
-    if (touches.size >= 2) { startPinch(); return; }
-
+    if (touches.size >= 2) {
+      const [a, b] = [...touches.values()];
+      pinch = { dist: pDist(a, b) || 1, mid: pMid(a, b), startCrop: { ...crop } };
+      drag = null;
+      return;
+    }
     const handle = ev.target?.closest?.(".cropHandle")?.dataset?.h || null;
-    drag = {
-      kind: handle || "move",
-      sx: ev.clientX,
-      sy: ev.clientY,
-      startCrop: { ...crop },
-    };
+    drag = { kind: handle || "move", sx: ev.clientX, sy: ev.clientY, startCrop: { ...crop } };
   }
 
-  function onPointerMove(ev){
+  function onPointerMove(ev) {
     if (!touches.has(ev.pointerId)) return;
-    if (!imgObj) return;
     touches.set(ev.pointerId, { x: ev.clientX, y: ev.clientY });
 
     if (pinch && touches.size >= 2) {
       const [a, b] = [...touches.values()];
-      const k = (pDist(a, b) || 1) / pinch.dist;
       const m = pMid(a, b);
       const s = pinch.startCrop;
-      const w = s.w * k;
+      const w = s.w * ((pDist(a, b) || 1) / pinch.dist);
       const h = w / ASPECT;
       const cx = s.x + s.w / 2 + (m.x - pinch.mid.x);
       const cy = s.y + s.h / 2 + (m.y - pinch.mid.y);
-      crop = clampCropToImg({ x: cx - w / 2, y: cy - h / 2, w, h });
-      applyCropToDom();
-      syncCropImg();
-      schedulePreview(30);
+      setCrop({ x: cx - w / 2, y: cy - h / 2, w, h });
       return;
     }
-
     if (!drag) return;
+
     const dx = ev.clientX - drag.sx;
     const dy = ev.clientY - drag.sy;
     const s = drag.startCrop;
-
-    if (drag.kind === "move"){
-      crop = clampCropToImg({ x: s.x + dx, y: s.y + dy, w: s.w, h: s.h });
-      applyCropToDom();
-      syncCropImg();
-      schedulePreview(30);
+    if (drag.kind === "move") {
+      setCrop({ x: s.x + dx, y: s.y + dy, w: s.w, h: s.h });
       return;
     }
-
-    // narożnik: zmiana szerokości z ruchu poziomego albo pionowego
-    // (przeliczonego przez proporcje) — wygrywa większy
-    const sx = drag.kind.includes("r") ? 1 : -1;
-    const sy = drag.kind.includes("b") ? 1 : -1;
-    const byX = sx * dx;
-    const byY = sy * dy * ASPECT;
-    const delta = Math.abs(byX) >= Math.abs(byY) ? byX : byY;
-
-    const newW = Math.max(60, s.w + delta);
+    const dirX = drag.kind.includes("r") ? 1 : -1;
+    const dirY = drag.kind.includes("b") ? 1 : -1;
+    const byX = dirX * dx;
+    const byY = dirY * dy * ASPECT;
+    const newW = Math.max(60, s.w + (Math.abs(byX) >= Math.abs(byY) ? byX : byY));
     const newH = newW / ASPECT;
     // przeciwległy narożnik stoi w miejscu
-    const newX = sx > 0 ? s.x : s.x + (s.w - newW);
-    const newY = sy > 0 ? s.y : s.y + (s.h - newH);
-
-    crop = clampCropToImg({ x: newX, y: newY, w: newW, h: newH });
-    applyCropToDom();
-    syncCropImg();
-    schedulePreview(30);
+    setCrop({
+      x: dirX > 0 ? s.x : s.x + (s.w - newW),
+      y: dirY > 0 ? s.y : s.y + (s.h - newH),
+      w: newW,
+      h: newH,
+    });
   }
 
-  function onPointerUp(ev){
+  function onPointerUp(ev) {
     if (!touches.has(ev.pointerId)) return;
     touches.delete(ev.pointerId);
     if (pinch) {
@@ -746,408 +469,219 @@ export function initImageEditor(ctx) {
     } else if (touches.size === 0) {
       drag = null;
     }
-    if (touches.size === 0) schedulePreview(10);
   }
 
   // =========================================================
-  // Bind once
+  // Popover suwaków: jeden panel naraz, pod przyciskiem
   // =========================================================
-  function bindOnce(){
-    if (initialized) return;
-    initialized = true;
-
-    // przycisk "Wybierz obraz" -> otwiera dialog pliku
-    document.getElementById("btnPickImage")?.addEventListener("click", () => {
-      imgFile?.click();
-    });
-
-    // input file
-    imgFile?.addEventListener("change", async () => {
-      if (ctx.getMode?.() !== "IMAGE") return;
-      const f = imgFile.files?.[0];
-      if (!f) return;
-
-      ctx.markDirty?.();
-      try{
-        await loadImageFile(f);
-      } catch (e){
-        console.error(e);
-        void alertModal({ text: e?.message || String(e) });
-      }
-    });
-
-    // drag/resize/pinch ramki — na całym polu obrazu (ramka jest w nim)
-    imgStage?.addEventListener("pointerdown", onPointerDown);
-    window.addEventListener("pointermove", onPointerMove);
-    window.addEventListener("pointerup", onPointerUp);
-    window.addEventListener("pointercancel", onPointerUp);
-
-    // klik podglądu -> fullscreen
-    imgBigPreview?.addEventListener("click", () => {
-      window.dispatchEvent(new CustomEvent("logoeditor:openPreview", {
-        detail: { kind: "PIX", bits }
-      }));
-    });
-
-    const onAnyChange = () => {
-      if (ctx.getMode?.() !== "IMAGE") return;
-      syncLabels();
-      if (!imgObj) return;
-      ctx.markDirty?.();
-      schedulePreview(40);
-    };
-
-    chkInvert?.addEventListener("change", onAnyChange);
-
-    rngBright?.addEventListener("input", onAnyChange);
-    rngContrast?.addEventListener("input", onAnyChange);
-    rngGamma?.addEventListener("input", onAnyChange);
-    rngDitherAmt?.addEventListener("input", onAnyChange);
-    rngBlack?.addEventListener("input", onAnyChange);
-    rngWhite?.addEventListener("input", onAnyChange);
-
-    btnImgResetDefault?.addEventListener("click", () => {
-      if (ctx.getMode?.() !== "IMAGE") return;
-
-      // Reset ustawień + (domyślnie) kadr do centrum
-      resetToDefaults({ resetCrop: true });
-    });
-
-    window.addEventListener("resize", () => {
-      applyBestImageLayout();
-      clearTimeout(deb);
-      deb = setTimeout(() => {
-        if (ctx.getMode?.() !== "IMAGE") return;
-        if (!imgObj) return;
-        applyCropImg(); // zachowaj kadr (wcześniej: reset na środek)
-        schedulePreview(10);
-      }, 80);
-    });
-    // Zmiana układu bez zmiany okna (np. przełączenie siatki) też przelicza
-    // piksele ramki z kadru względem obrazu.
-    if (imgStage && "ResizeObserver" in window) {
-      let roDeb = null;
-      new ResizeObserver(() => {
-        clearTimeout(roDeb);
-        roDeb = setTimeout(() => {
-          if (ctx.getMode?.() !== "IMAGE" || !imgObj || drag) return;
-          applyCropImg();
-          schedulePreview(10);
-        }, 60);
-      }).observe(imgStage);
-    }
-  }
-
-  bindOnce();
-
-  // =========================================================
-  // Roll-up popover: jeden suwak na raz, pozycjonowany pod przyciskiem
-  // =========================================================
-  const panelsWrap = document.getElementById("imgPanels");
-  const btns = Array.from(document.querySelectorAll(".imgSetBtn"));
+  const panelsWrap = $("imgPanels");
+  const panelBtns = Array.from(document.querySelectorAll(".imgSetBtn"));
   const panels = Array.from(document.querySelectorAll("#imgPanels .imgPanel"));
-  
   let openPanel = null;
-  
-  function closePanels(){
+
+  function closePanels() {
     openPanel = null;
-    if (panelsWrap){
-      panelsWrap.classList.remove("is-open");
-      panelsWrap.style.left = "0px";
-      panelsWrap.style.top = "0px";
-    }
-    for (const b of btns) b.classList.remove("on");
+    panelsWrap?.classList.remove("is-open");
+    for (const b of panelBtns) b.classList.remove("on");
     for (const p of panels) p.classList.remove("is-open");
   }
-  
-  function openPanelAt(panelName, anchorEl){
-    if (!panelsWrap || !anchorEl) return;
-  
-    openPanel = panelName;
 
-    for (const b of btns){
-      b.classList.toggle("on", b.getAttribute("data-panel") === panelName);
-    }
-  
-    for (const p of panels){
-      p.classList.toggle("is-open", p.dataset.panel === panelName);
-    }
-  
+  function openPanelAt(name, anchor) {
+    if (!panelsWrap) return;
+    openPanel = name;
+    for (const b of panelBtns) b.classList.toggle("on", b.dataset.panel === name);
+    for (const p of panels) p.classList.toggle("is-open", p.dataset.panel === name);
     panelsWrap.classList.add("is-open");
-  
-    // Pozycjonowanie (fixed): pod przyciskiem, z clamp do okna
-    const r = anchorEl.getBoundingClientRect();
-    const pad = 8;
-  
-    // chwilowo ustaw, żeby złapać rozmiar
-    panelsWrap.style.left = `${Math.round(r.left)}px`;
-    panelsWrap.style.top  = `${Math.round(r.bottom + 8)}px`;
-  
+
+    const r = anchor.getBoundingClientRect();
+    const place = (w, h) => {
+      const pad = 8;
+      panelsWrap.style.left = `${Math.round(clamp(r.left, pad, window.innerWidth - w - pad))}px`;
+      panelsWrap.style.top = `${Math.round(clamp(r.bottom + 8, pad, window.innerHeight - h - pad))}px`;
+    };
+    place(0, 0);
     requestAnimationFrame(() => {
       const active = panelsWrap.querySelector(".imgPanel.is-open");
-      if (!active) return;
-  
-      const w = active.offsetWidth || 320;
-      const h = active.offsetHeight || 120;
-  
-      let left = r.left;
-      let top = r.bottom + 8;
-  
-      left = Math.max(pad, Math.min(left, window.innerWidth - w - pad));
-      top  = Math.max(pad, Math.min(top,  window.innerHeight - h - pad));
-  
-      panelsWrap.style.left = `${Math.round(left)}px`;
-      panelsWrap.style.top  = `${Math.round(top)}px`;
+      if (active) place(active.offsetWidth || 320, active.offsetHeight || 120);
     });
   }
-  
-  for (const b of btns){
+
+  // =========================================================
+  // Zdarzenia (raz, przy starcie strony)
+  // =========================================================
+  $("btnPickImage")?.addEventListener("click", () => imgFile?.click());
+
+  imgFile?.addEventListener("change", async () => {
+    const f = imgFile.files?.[0];
+    imgFile.value = ""; // ten sam plik wybrany drugi raz też ma zadziałać
+    if (ctx.getMode?.() !== "IMAGE" || !f) return;
+    await pickFile(f);
+  });
+
+  imgStage?.addEventListener("pointerdown", onPointerDown);
+  window.addEventListener("pointermove", onPointerMove);
+  window.addEventListener("pointerup", onPointerUp);
+  window.addEventListener("pointercancel", onPointerUp);
+
+  imgBigPreview?.addEventListener("click", () => {
+    window.dispatchEvent(new CustomEvent("logoeditor:openPreview", { detail: { kind: "PIX", bits } }));
+  });
+
+  const onSettingChange = () => {
+    if (ctx.getMode?.() !== "IMAGE") return;
+    syncLabels();
+    if (!imgObj) return;
+    ctx.markDirty?.();
+    schedulePreview(40);
+  };
+  chkInvert?.addEventListener("change", onSettingChange);
+  for (const s of Object.values(SLIDERS)) s.input?.addEventListener("input", onSettingChange);
+
+  btnImgResetDefault?.addEventListener("click", () => {
+    if (ctx.getMode?.() === "IMAGE") resetToDefaults();
+  });
+
+  for (const b of panelBtns) {
     b.addEventListener("click", (e) => {
-      const panel = b.getAttribute("data-panel");
-      if (!panel) return;
-  
-      if (openPanel === panel){
-        closePanels();
-      } else {
-        openPanelAt(panel, b);
-      }
-  
       e.stopPropagation();
+      if (openPanel === b.dataset.panel) closePanels();
+      else openPanelAt(b.dataset.panel, b);
     });
   }
-  
-  // klik poza popover zamyka
   window.addEventListener("pointerdown", (e) => {
-    if (!openPanel) return;
-    const t = e.target;
-    if (t.closest?.("#imgPanels")) return;
-    if (t.closest?.(".imgSetBtn")) return;
+    if (!openPanel || e.target.closest?.("#imgPanels, .imgSetBtn")) return;
     closePanels();
   });
-  
-  // ESC zamyka
-  window.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") closePanels();
-  });
-  
-  // start zamknięte
+  window.addEventListener("keydown", (e) => { if (e.key === "Escape") closePanels(); });
+  window.addEventListener("i18n:lang", syncLabels);
+
+  // Zmiana rozmiaru okna albo samego pola: przelicz piksele ramki z kadru.
+  let layoutDeb = null;
+  const relayout = () => {
+    clearTimeout(layoutDeb);
+    layoutDeb = setTimeout(() => {
+      if (ctx.getMode?.() !== "IMAGE" || imageStatus !== "ready" || drag || pinch) return;
+      applyCropImg();
+      schedulePreview(10);
+    }, 60);
+  };
+  window.addEventListener("resize", () => { applyBestImageLayout(); relayout(); });
+  if (imgStage && "ResizeObserver" in window) new ResizeObserver(relayout).observe(imgStage);
+
   closePanels();
   syncLabels();
-  
 
+  // =========================================================
+  // Upload do Storage (przy zapisie)
+  // =========================================================
+  async function uploadPendingFile() {
+    const user = (await sb().auth.getUser())?.data?.user;
+    if (!user) throw new Error(t("logoEditor.image.errors.notLogged"));
+    const ext = { "image/jpeg": "jpg", "image/png": "png", "image/gif": "gif", "image/webp": "webp" }[pendingFile.type] || "png";
+    const path = `${user.id}/${Date.now()}.${ext}`;
+    const { error } = await sb().storage.from(BUCKET).upload(path, pendingFile, {
+      cacheControl: "3600",
+      upsert: false,
+      contentType: pendingFile.type,
+    });
+    if (error) throw error;
+    return sb().storage.from(BUCKET).getPublicUrl(path).data.publicUrl;
+  }
+
+  async function removeStorageFile(url) {
+    try {
+      const user = (await sb().auth.getUser())?.data?.user;
+      const path = storagePathFromUrl(url, user?.id);
+      if (path) await sb().storage.from(BUCKET).remove([path]);
+    } catch (e) {
+      console.warn("[logo-editor/image] could not remove old file:", e);
+    }
+  }
 
   // =========================================================
   // API
   // =========================================================
-  // Image loading helpers
-  // =========================================================
-  function loadImageFromUrl(url, cropRel = null) {
-    const img = new Image();
-    img.crossOrigin = "anonymous";
-    img.onload = () => {
-      imgObj = img;
-      if (imgPreview) {
-        imgPreview.style.display = "block";
-        imgPreview.src = url;
-        if (cropFrame) cropFrame.style.display = "block";
-      }
-      applyBestImageLayout();
-      void restoreCrop(cropRel);
-    };
-    img.onerror = () => {
-      const img2 = new Image();
-      img2.onload = () => {
-        imgObj = img2;
-        if (imgPreview) {
-          imgPreview.style.display = "block";
-          imgPreview.src = url;
-          if (cropFrame) cropFrame.style.display = "block";
-        }
-        applyBestImageLayout();
-        void restoreCrop(cropRel);
-      };
-      img2.src = url;
-    };
-    img.src = url;
-  }
-
-  function loadImageFromData(dataUri, cropRel = null) {
-    const img = new Image();
-    img.onload = () => {
-      imgObj = img;
-      if (imgPreview) {
-        imgPreview.style.display = "block";
-        imgPreview.src = dataUri;
-        if (cropFrame) cropFrame.style.display = "block";
-      }
-      applyBestImageLayout();
-      void restoreCrop(cropRel);
-    };
-    img.onerror = (e) => {
-      console.error("[image.loadImageFromData] Failed:", e);
-    };
-    img.src = dataUri;
-  }
-
-  // =========================================================
   return {
-    async open(payload = null){
+    open(payload = null) {
       show(paneImage, true);
       applyBestImageLayout();
+      closePanels();
 
       const source = payload?.source || {};
-      
-      // Reset / restore
-      if (chkInvert) chkInvert.checked = source.invert ?? DEFAULTS.invert;
-      if (rngBright) rngBright.value = String(source.bright ?? DEFAULTS.bright);
-      if (rngContrast) rngContrast.value = String(source.contrast ?? DEFAULTS.contrast);
-      if (rngGamma) rngGamma.value = (source.gamma ?? DEFAULTS.gamma).toFixed(2);
-      if (rngDitherAmt) rngDitherAmt.value = (source.ditherAmt ?? DEFAULTS.ditherAmt).toFixed(2);
-      if (rngBlack) rngBlack.value = String(source.black ?? DEFAULTS.black);
-      if (rngWhite) rngWhite.value = String(source.white ?? DEFAULTS.white);
+      writeSettings({ ...DEFAULTS, ...source });
 
-      syncLabels();
-      applyContainMode();
-
+      if (objectUrl) { URL.revokeObjectURL(objectUrl); objectUrl = null; }
+      pendingFile = null;
+      imageUrl = /^https?:/i.test(source.imageUrl || "") ? source.imageUrl : null;
+      imageData = /^data:image\//i.test(source.imageData || "") ? source.imageData : null;
+      openedImageUrl = imageUrl;
       imgObj = null;
-      imgFileObj = null;
-      if (imgUrl) { try { URL.revokeObjectURL(imgUrl); } catch(e) {} imgUrl = null; }
+      loadSeq++;
 
-      if (source.imageUrl) {
-        // load from storage/URL
-        loadImageFromUrl(source.imageUrl, source.crop || null);
-      } else if (source.imageData) {
-        // load from base64 (demo / import)
-        loadImageFromData(source.imageData, source.crop || null);
-      } else {
-        if (cropFrame) cropFrame.style.display = "none";
-        if (imgPreview){
-          imgPreview.removeAttribute("src");
-          imgPreview.style.display = "block";
-        }
-        crop = { x: 40, y: 40, w: 280, h: Math.round(280 / ASPECT) };
-        applyCropToDom();
-      }
-
-      // preview reset
-      bits = new Uint8Array(DOT_W * DOT_H);
-      renderBits150x70ToBig(bits, imgBigPreview);
+      // Do czasu przeliczenia z obrazu pokazujemy to, co jest zapisane.
+      bits = payload?.bits_b64 ? unpackBits(payload.bits_b64) : new Uint8Array(DOT_W * DOT_H);
+      renderBitsToCanvas(bits, imgBigPreview);
       ctx.onPreview?.({ kind: "PIX", bits });
 
+      const src = imageUrl || imageData;
+      if (src) {
+        void showImage(src, source.crop || null);
+      } else {
+        imageStatus = "none";
+        setStageImage(null);
+      }
       ctx.clearDirty?.();
     },
 
-    close(){
+    close() {
       show(paneImage, false);
-      if (imgUrl) { try { URL.revokeObjectURL(imgUrl); } catch(e) {} imgUrl = null; }
+      closePanels();
+      loadSeq++;
+      if (objectUrl) { URL.revokeObjectURL(objectUrl); objectUrl = null; }
     },
 
-    async getCreatePayload(){
-      if (imgObj){
-        bits = compileBits150();
-      }
-      
-      const { bright, contrast, gamma, ditherAmt, black, white, invert } = readSettings();
+    async getCreatePayload() {
+      if (imageStatus === "loading") return { ok: false, msg: t("logoEditor.image.errors.stillLoading") };
+      if (imageStatus === "error") return { ok: false, msg: t("logoEditor.image.errors.loadFailed") };
+      if (imageStatus === "none") return { ok: false, msg: t("logoEditor.image.errors.noImage") };
 
-      // Kadr względem obrazu (v:2) — niezależny od rozmiaru pola i ekranu;
-      // wysokość wynika z proporcji wyświetlacza (ASPECT).
-      const cropRel = cropImg ? { v: 2, x: cropImg.x, y: cropImg.y, w: cropImg.w } : null;
+      bits = compileBits();
 
-      const source = {
-        mode: "IMAGE",
-        bright, contrast, gamma, ditherAmt, black, white, invert,
-        crop: cropRel,
-        imageUrl: (imgObj && !imgFileObj) ? imgPreview.src : null,
-        // Zachowaj imageData jeśli już jest (demo/import) - fallback
-        imageData: imgObj?.src?.startsWith("data:") ? imgObj.src : null
-      };
-
-      // Jeśli mamy nowy plik -> wrzuć go do storage
-      if (imgFileObj) {
+      if (pendingFile) {
         try {
-          const user = (await sb().auth.getUser())?.data?.user;
-          if (!user) throw new Error(t("logoEditor.image.errors.notLogged"));
-
-          const ext = imgFileObj.name.split(".").pop() || "png";
-          const timestamp = String(Date.now());
-          const safeName = `${timestamp}.${ext}`;
-          const path = `${user.id}/${safeName}`;
-
-          const { data, error } = await sb().storage.from("user-logos").upload(path, imgFileObj, {
-            cacheControl: '3600',
-            upsert: false,
-            contentType: imgFileObj.type || 'image/jpeg'
-          });
-
-          if (error) {
-            console.error("[image.getCreatePayload] Upload error:", error);
-             // Jeśli bucket nie istnieje, spróbuj stworzyć (może zadziała jeśli user ma uprawnienia)
-             if (error.message?.includes("bucket not found")) {
-               await sb().storage.createBucket("user-logos", { public: true });
-               const retry = await sb().storage.from("user-logos").upload(path, imgFileObj, {
-                 cacheControl: '3600',
-                 upsert: false,
-                 contentType: imgFileObj.type || 'image/jpeg'
-               });
-               if (retry.error) {
-                 console.error("[image.getCreatePayload] Retry upload error:", retry.error);
-                 throw retry.error;
-               }
-               source.imageUrl = sb().storage.from("user-logos").getPublicUrl(path).data.publicUrl;
-             } else {
-               throw error;
-             }
-          } else {
-            // Sprawdźmy, czy plik na pewno istnieje po uploadzie
-            const { data: listData, error: listError } = await sb()
-              .storage
-              .from("user-logos")
-              .list(user.id, { limit: 10 });
-
-            if (listError) {
-              console.error("[image.getCreatePayload] List error after upload:", listError);
-            } else {
-              // Sprawdźmy, czy nasz plik jest na liście
-              const fileName = path.split("/")[1];
-              const found = listData?.find(f => f.name === fileName);
-              if (!found) {
-                console.error("[image.getCreatePayload] ERROR: File not found in storage after upload!");
-                console.error("[image.getCreatePayload] Expected file:", fileName);
-                console.error("[image.getCreatePayload] Available files:", listData);
-              }
-            }
-
-            source.imageUrl = sb().storage.from("user-logos").getPublicUrl(path).data.publicUrl;
-
-            // Sprawdźmy, czy URL jest dostępny
-            try {
-              const testResponse = await fetch(source.imageUrl, { method: 'HEAD' });
-              if (!testResponse.ok) {
-                console.error("[image.getCreatePayload] URL is not accessible! Status:", testResponse.status);
-              }
-            } catch (e) {
-              console.error("[image.getCreatePayload] URL test failed:", e);
-            }
-          }
-          imgFileObj = null; // wrzucone
+          imageUrl = await uploadPendingFile();
+          imageData = null;
+          pendingFile = null;
         } catch (e) {
-          console.error("Storage upload failed:", e);
-          return { ok: false, msg: t("logoEditor.image.errors.storageFailed", { error: e.message || e }) };
+          console.error("[logo-editor/image] upload failed:", e);
+          return { ok: false, msg: t("logoEditor.image.errors.storageFailed", { error: e?.message || e }) };
         }
       }
 
+      const s = readSettings();
       return {
         ok: true,
         type: TYPE_PIX,
         payload: {
           w: DOT_W,
           h: DOT_H,
-          format: "BITPACK_MSB_FIRST_ROW_MAJOR",
-          bits_b64: ctx.packBitsRowMajorMSB(bits, DOT_W, DOT_H),
-          source
+          format: PIX_FORMAT,
+          bits_b64: packBits(bits),
+          source: {
+            mode: "IMAGE",
+            ...s,
+            crop: cropImg ? { v: 2, x: cropImg.x, y: cropImg.y, w: cropImg.w } : null,
+            imageUrl,
+            imageData: imageUrl ? null : imageData,
+          },
         },
       };
     },
+
+    /** Po udanym zapisie: sprzątnij plik, który ten zapis zastąpił. */
+    async onSaved() {
+      if (openedImageUrl && openedImageUrl !== imageUrl) await removeStorageFile(openedImageUrl);
+      openedImageUrl = imageUrl;
+    },
   };
 }
-

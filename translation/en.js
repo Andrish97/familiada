@@ -3939,6 +3939,7 @@ const en = {
       namePlaceholder: "e.g. My logo",
       save: "Save",
       newLogoPrefix: "New logo — ",
+      editLogoPrefix: "Edit logo — ",
     },
     modes: {
       text: "Text",
@@ -3969,7 +3970,7 @@ const en = {
       tooltips: {
         select: "Pointer\nSelect and move objects",
         pan: "Hand\nPan the view",
-        text: "Text\nClick on scene to add text\nT",
+        text: "Text\nClick on scene to add text",
         zoomIn: "Zoom in",
         zoomOut: "Zoom out",
         color: "Color\nChange tool color",
@@ -4034,6 +4035,10 @@ const en = {
         sampleText: "Sample",
         defaultText: "Text",
         shortcutPrefix: "Shortcut: ",
+        holdKey: "{key} (hold)",
+        spaceKey: "Space",
+        fontSearchPlaceholder: "Search fonts…",
+        fontNoResults: "No results",
         polygonDone: "Close",
         alignLeft: "Align left",
         alignCenter: "Align center",
@@ -4093,6 +4098,11 @@ const en = {
       errors: {
         notLogged: "You must be logged in to save an image.",
         storageFailed: "Storage save error: {error}",
+        stillLoading: "The image is still loading — try again in a moment.",
+        loadFailed: "Could not load this logo's image. Pick the image again — saving is disabled until then so the logo is not overwritten with a blank one.",
+        tooLarge: "The file is too large (max {max} MB).",
+        badType: "Unsupported format. Choose a JPG, PNG, GIF or WEBP file.",
+        noImage: "Pick an image first.",
       },
     },
     create: {
@@ -4185,6 +4195,9 @@ const en = {
       invalidType: "Unknown logo type.",
       cannotEditOldLogo: "This logo cannot be edited.",
       noMobileEdit: "Logo editing is not available on mobile devices.",
+      noSourceText: "This logo has no saved text (e.g. it comes from an old file), so editing would clear it. Create a new text logo.",
+      noSourceDrawing: "This logo has no saved drawing (e.g. it comes from an old file), so editing would clear it. Create a new logo.",
+      loadFailed: "Could not load the logo.\n\n{error}",
       createFailed: "Failed to create logo.",
     },
     defaults: {

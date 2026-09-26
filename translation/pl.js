@@ -3814,6 +3814,7 @@ const pl = {
       namePlaceholder: "Np. Moje logo",
       save: "Zapisz",
       newLogoPrefix: "Nowe logo — ",
+      editLogoPrefix: "Edycja logo — ",
     },
     modes: {
       text: "Tekst",
@@ -3844,7 +3845,7 @@ const pl = {
       tooltips: {
         select: "Wskaźnik\nZaznacz i przesuwaj obiekty",
         pan: "Ręka\nPrzesuwanie widoku",
-        text: "Tekst\nKliknij na scenę aby dodać tekst\nT",
+        text: "Tekst\nKliknij na scenę aby dodać tekst",
         zoomIn: "Powiększ",
         zoomOut: "Pomniejsz",
         color: "Kolor\nZmień kolor narzędzia",
@@ -3909,6 +3910,10 @@ const pl = {
         sampleText: "Przykład",
         defaultText: "Tekst",
         shortcutPrefix: "Skrót: ",
+        holdKey: "{key} (przytrzymaj)",
+        spaceKey: "Spacja",
+        fontSearchPlaceholder: "Szukaj fontu…",
+        fontNoResults: "Brak wyników",
         polygonDone: "Zamknij",
         alignLeft: "Wyrównaj do lewej",
         alignCenter: "Wyśrodkuj",
@@ -3968,6 +3973,11 @@ const pl = {
       errors: {
         notLogged: "Musisz być zalogowany, żeby zapisać obraz.",
         storageFailed: "Błąd zapisu w storage: {error}",
+        stillLoading: "Obraz jeszcze się wczytuje — spróbuj za chwilę.",
+        loadFailed: "Nie udało się wczytać obrazu tego logo. Wybierz obraz ponownie — do tego czasu zapis jest wyłączony, żeby nie nadpisać logo pustym.",
+        tooLarge: "Plik jest za duży (maks. {max} MB).",
+        badType: "Nieobsługiwany format. Wybierz plik JPG, PNG, GIF albo WEBP.",
+        noImage: "Najpierw wybierz obraz.",
       },
     },
     create: {
@@ -4060,6 +4070,9 @@ const pl = {
       invalidType: "Nieznany typ logo.",
       cannotEditOldLogo: "To logo nie może być edytowane.",
       noMobileEdit: "Edycja logo nie jest dostępna na urządzeniach mobilnych.",
+      noSourceText: "To logo nie ma zapisanego tekstu (np. pochodzi ze starego pliku), więc edycja by je wyczyściła. Utwórz nowe logo tekstowe.",
+      noSourceDrawing: "To logo nie ma zapisanego rysunku (np. pochodzi ze starego pliku), więc edycja by je wyczyściła. Utwórz nowe logo.",
+      loadFailed: "Nie udało się wczytać logo.\n\n{error}",
       createFailed: "Nie udało się utworzyć logo.",
     },
     defaults: {
