@@ -58,6 +58,7 @@
 .logoTileTop > :first-child{ flex: 1 1 auto; min-width: 0; }
 
 .logoTile{
+  --under: #0f1522; /* podłoże kryjących przycisków (css/base.css) */
   position: relative;
   border-radius: var(--radius-lg);
   border: 1px solid var(--bd-mid);
@@ -104,7 +105,9 @@
   justify-content:center;
   border-radius: 10px;
   border: 1px solid var(--bd-mid);
-  background: rgba(0,0,0,.16);
+  --btn-tint: rgba(0,0,0,.16);
+  background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, #050914); /* kryjące: css/base.css */
+
   cursor:pointer;
   user-select:none;
   transition: background .12s, border-color .12s, opacity .12s;
@@ -118,7 +121,9 @@
 .le-phone .le-edit-only{ display: none !important; }
 .logoX:hover{
   border-color: var(--gold);
-  background: rgba(0,0,0,.32);
+  --btn-tint: rgba(0,0,0,.32);
+  background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, #050914); /* kryjące: css/base.css */
+
 }
 .logoX.is-disabled{ opacity:.35; pointer-events:none; }
 .logoName{
@@ -321,14 +326,18 @@
   padding: 2px 6px;
   font-size: 12px;
   font-weight: 700;
-  background: rgba(255,255,255,.08);
+  --btn-tint: rgba(255,255,255,.08);
+  background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, #050914); /* kryjące: css/base.css */
+
   border: 1px solid rgba(255,255,255,.15);
   border-radius: 6px;
   color: #fff;
   text-align: center;
 }
 .ctxInput::placeholder{ color: rgba(255,255,255,.3); }
-.ctxInput:focus{ outline: none; border-color: rgba(255,255,255,.35); background: rgba(255,255,255,.12); }
+.ctxInput:focus{ outline: none; border-color: rgba(255,255,255,.35); --btn-tint: rgba(255,255,255,.12);
+  background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, #050914); /* kryjące: css/base.css */
+ }
 
 /* Przyciski (jak tbtn) */
 .ctxBtn{
@@ -337,7 +346,9 @@
   padding: 0 8px;
   font-size: 12px;
   font-weight: 700;
-  background: rgba(255,255,255,.08);
+  --btn-tint: rgba(255,255,255,.08);
+  background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, #050914); /* kryjące: css/base.css */
+
   border: 1px solid rgba(255,255,255,.15);
   border-radius: 6px;
   color: rgba(255,255,255,.75);
@@ -346,8 +357,12 @@
   align-items: center;
   justify-content: center;
 }
-.ctxBtn:hover{ background: rgba(255,255,255,.14); color: #fff; }
-.ctxBtn.on{ background: rgba(255,255,255,.18); color: #4fc3f7; border-color: rgba(79,195,247,.35); }
+.ctxBtn:hover{ --btn-tint: rgba(255,255,255,.14);
+  background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, #050914); /* kryjące: css/base.css */
+ color: #fff; }
+.ctxBtn.on{ --btn-tint: rgba(255,255,255,.18);
+  background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, #050914); /* kryjące: css/base.css */
+ color: #4fc3f7; border-color: rgba(79,195,247,.35); }
 
 /* Przycisk koloru - CAŁY wypełniony, prostokątny */
 .ctxColorBtn{
@@ -563,7 +578,9 @@
   width: 36px;
   border-radius: 12px;
   border: 1px solid var(--bd-mid);
-  background: rgba(0,0,0,.18);
+  --btn-tint: rgba(0,0,0,.18);
+  background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, #050914); /* kryjące: css/base.css */
+
   color: #fff;
 
   display: grid;
@@ -580,7 +597,9 @@
 
 #toolsDraw .tbtn.on{
   border-color: rgba(255,234,166,.55);
-  background: rgba(255,234,166,.12);
+  --btn-tint: rgba(255,234,166,.12);
+  background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, #050914); /* kryjące: css/base.css */
+
   color: var(--gold);
 }
 
@@ -918,7 +937,9 @@
 .mTile{
   appearance: none;
   border: 1px solid rgba(255,255,255,.14);
-  background: rgba(0,0,0,.18);
+  --btn-tint: rgba(0,0,0,.18);
+  background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, #050914); /* kryjące: css/base.css */
+
   border-radius: 18px;
   padding: 14px;
   text-align: left;
@@ -929,7 +950,9 @@
 .mTile:hover{
   transform: translateY(-1px);
   border-color: rgba(255,234,166,.55);
-  background: rgba(0,0,0,.24);
+  --btn-tint: rgba(0,0,0,.24);
+  background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, #050914); /* kryjące: css/base.css */
+
   box-shadow: 0 12px 28px rgba(0,0,0,.40);
 }
 .mTileTitle{

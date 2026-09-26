@@ -387,6 +387,7 @@ body.games-body > main.wrap{
 
 /* Kafelki w gridzie – bez zmian funkcjonalnych */
 .games-body .grid .card{
+  --under: #070b16; /* podłoże kryjących przycisków (css/base.css) */
   position: relative;
   background: #070b16;
   border-radius: 18px;
@@ -414,7 +415,9 @@ body.games-body > main.wrap{
   box-sizing: border-box;
   border-radius: 10px;
   border: 1px solid rgba(255,255,255,.14);
-  background: rgba(0,0,0,.16);
+  --btn-tint: rgba(0,0,0,.16);
+  background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, #050914); /* kryjące: css/base.css */
+
   color: #fff;
   padding: 0;
   font-size: 14px;
@@ -425,7 +428,9 @@ body.games-body > main.wrap{
 }
 .games-body .grid .card .x:hover{
   border-color: var(--gold);
-  background: rgba(0,0,0,.32);
+  --btn-tint: rgba(0,0,0,.32);
+  background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, #050914); /* kryjące: css/base.css */
+
 }
 
 .games-body .grid .card .name{
