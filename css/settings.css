@@ -1013,8 +1013,7 @@ body.tools-fullscreen .tools-frame-wrap iframe{
     display: flex;
     flex-direction: column;
     background: rgba(8,12,28,.96);
-    transition: transform .2s ease;
-    will-change: transform;
+    transition: transform .2s ease; /* bez will-change — patrz .topbar w base.css */
   }
 
   /* Sidebar — hidden by default, shown when mail-view=folders */
