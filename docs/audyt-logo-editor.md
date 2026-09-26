@@ -287,8 +287,23 @@ niezależnie od edytora. Poniżej: co się dzieje przy EDYCJI starego logo.
 | Tekst bez napisu (świeży seed demo, stare, importy) | napis odtwarzany z wierszy; gdy się nie da -- odmowa zamiast wyczyszczenia | seed demo: napis odczytany, wiersze identyczne; 3000/3000 losowych napisów |
 | Rysunek z `fabricData` | zachowuje rozmiar sceny, na której go narysowano (z `clipPath`) -> **bit w bit** jak stary edytor | test: pędzel+kształty+tekst ze starego edytora -> 0 różnic |
 | Rysunek bez sceny (seed demo „Rysunek”, PIX bez `source`) | kropki jako warstwa obrazu na scenie, można rysować dalej | 0 różnic po zapisie bez zmian |
-| Obraz ze Storage / demo (`/logo-editor/assets/demo-image.png`) | wczytuje obraz i kadr (także stary format kadru) | test: obraz ze starego edytora -> 0 różnic |
+| Obraz ze Storage | wczytuje obraz i kadr (także stary format kadru) | test: obraz ze starego edytora -> 0 różnic |
+| Demo „Obraz” (`https://www.familiada.online/logo-editor/assets/demo-image.png`) | plik z assetów strony ładowany z bieżącej domeny (adres zapisany bez zmian); gdy adres nie działa, a logo ma osadzoną kopię -- z kopii | test na kopii demo z konta: 0 różnic względem starego edytora |
 | Obraz, którego nie ma (np. zapisany adres `blob:` z błędu P0-1) | komunikat, zapis zablokowany, kropki nietknięte | test |
+
+**Logo demo** (test na kopiach demo z konta testowego, oryginały nietknięte):
+Tekst -- identyczne wiersze; Rysunek i Obraz -- zapis w nowym edytorze daje
+**dokładnie to samo co zapis w starym** (0 różnic). Ale OBA edytory po
+zapisie bez zmian dają inne kropki niż te w seedzie (Rysunek 353, Obraz 751
+z 10500): kropki demo powstały poza tą przeglądarką (inne czcionki systemowe
+napisu; kadr obrazu w migracji 270 był dopasowywany do kropek z dokładnością
+4 cyfr, a dithering rozlewa każde przesunięcie na cały obraz). To nie jest
+regresja nowego edytora -- dziś dzieje się to samo. Dopóki użytkownik nie
+zapisze demo, wyświetlacz pokazuje kropki z seedu.
+
+Obraz demo pod `familiada.online` (bez www, a taka domena jest w CNAME)
+był ładowany cross-origin z `www.` i zależał od nagłówków CORS -- w starym
+edytorze nadal tak jest; w nowym ładuje się z bieżącej domeny.
 
 Uwaga: rysunki zapisane starym edytorem na ekranie Retina mają zapisane
 „złe” kropki (ćwiartka sceny, błąd 5b). Nowy edytor pokaże je poprawnie i
