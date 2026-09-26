@@ -1183,7 +1183,21 @@ async function dumpFailureDiagnostics(controlPage, scenarioFile) {
       visible: el.offsetParent !== null,
       classes: el.className,
     }));
-    return { stepper, tileCount: tiles.length, tiles };
+    // Znalezione po przebiegu #16: ten dump patrzył WYŁĄCZNIE na
+    // .c2-tilegrid, a przycisk, na którym padał timeout ("Przejdź do
+    // zakończenia gry"), mieszka w .c2-statusbar -- więc dotąd byliśmy
+    // ślepi na jego realny stan (disabled?/w ogóle wyrenderowany?) przy
+    // każdym failu. Zamiast zgadywać kolejny kontener (.c2-statusbar,
+    // .stepFoot, .c2-gameplay-nav...), zrzucamy WSZYSTKIE <button> na
+    // stronie -- ich jest niewiele, a to jedyny sposób, żeby następny fail
+    // dał realny dowód zamiast kolejnej niekompletnej diagnostyki.
+    const allButtons = [...document.querySelectorAll("button")].map((el) => ({
+      text: el.textContent.trim(),
+      disabled: el.disabled,
+      visible: el.offsetParent !== null,
+      classes: el.className,
+    }));
+    return { stepper, tileCount: tiles.length, tiles, allButtons };
   }).catch((e) => ({ evalError: e.message }));
   fs.writeFileSync(`${base}.json`, JSON.stringify(dump, null, 2));
   console.log(`[record] diagnostyka ${scenarioFile}:`, JSON.stringify(dump));
