@@ -74,6 +74,16 @@ fontu, B/I/U, wyrównania nie woła `ctx.markDirty()` ani `schedulePreview()`.
 Skutek: podgląd nie odświeża się, a zamknięcie edytora **nie pyta** o
 niezapisane zmiany → zmiany przepadają.
 
+
+### 5b. DRAW: na ekranach Retina/HiDPI zapisuje się ćwiartka rysunku **[pewne, potwierdzone]**
+`draw.js:2112` (`renderWorldTo208x88CanvasStable`). Pomocniczy `fabric.StaticCanvas`
+ma domyślnie `enableRetinaScaling`, więc przy `devicePixelRatio = 2` (każdy Mac,
+większość laptopów i tabletów) jego canvas ma 416×176 zamiast 208×88, a kod
+odczytuje `getImageData(0, 0, 208, 88)` -- czyli lewą górną ćwiartkę sceny
+powiększoną 2×. Potwierdzone na starym edytorze: prostokąt w prawej dolnej
+części sceny daje 2380 zapalonych kropek przy DPR 1 i **0** przy DPR 2.
+**Poprawka:** `enableRetinaScaling: false` przy StaticCanvas (jedna linia).
+
 ---
 
 ## P1 — błędy funkcjonalne

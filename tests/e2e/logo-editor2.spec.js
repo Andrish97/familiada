@@ -378,7 +378,7 @@ test("DRAW: tekst na scenie zapisuje się z treścią", async ({ page, context }
 test.describe("ekran Retina (deviceScaleFactor 2)", () => {
   test.use({ deviceScaleFactor: 2 });
 
-  test("P0-6: raster rysunku nie zależy od gęstości ekranu", async ({ page, context }) => {
+  test("P0-5b: raster rysunku nie zależy od gęstości ekranu", async ({ page, context }) => {
     await openList(page, context);
     const fabricData = { version: "5.3.0", objects: [rect(780, 330, 260, 110)], background: "#000" };
     const id = await insertLogo(page, { name: uniq("retina"), type: "PIX_150x70", payload: { ...emptyPix, source: { mode: "DRAW", fabricData, world: { w: 1040, h: 440 } } } });
