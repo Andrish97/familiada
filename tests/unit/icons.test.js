@@ -89,3 +89,14 @@ test("moduł importujący icon nie przesłania go zmienną ani parametrem o tej 
   })(ROOT);
   assert.deepEqual(bad, []);
 });
+
+test("ikony z maską/clipPath mają unikalne id przy każdym wstawieniu", () => {
+  // Regresja: ten sam id maski flagi w ukrytym menu języków i w przycisku —
+  // przeglądarka brała maskę z ukrytego menu i flaga traciła napis „PL”.
+  for (const name of ["flag-pl", "flag-ua", "star-half"]) {
+    const a = icon(name), b = icon(name);
+    const idA = a.match(/ id="([^"]+)"/)[1], idB = b.match(/ id="([^"]+)"/)[1];
+    assert.notEqual(idA, idB, name);
+    assert.ok(a.includes(`url(#${idA})`), `${name}: odwołanie url(#…) wskazuje na własne id`);
+  }
+});

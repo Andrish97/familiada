@@ -1129,7 +1129,8 @@ html.showA2HS .a2hs {
     z-index: 999;
 }
 
-.lang-btn {
+.lang-btn,
+.btn.lang-btn { /* .btn.lang-btn: wygrywa z .btn stron logowania (padding 12px) */
     min-width: 38px;
     min-height: 37px;
     display: grid;
@@ -1241,7 +1242,11 @@ html.showA2HS .a2hs {
 @media (max-width: 980px){
   .topbar{
     transition: transform .22s ease, opacity .22s ease;
-    will-change: transform;
+    /* BEZ will-change: transform — stała warstwa jest rasteryzowana raz,
+       w jednej skali, i przy powiększeniu strony / innej skali ekranu
+       przeglądarka tylko ją rozciąga: wektorowe ikony i tekst w topbarze
+       wychodziły pikselowe. Na czas animacji chowania warstwę i tak
+       tworzy sama przeglądarka. */
   }
   .topbar.is-hidden-mobile{
     transform: translateY(-110%);
