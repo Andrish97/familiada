@@ -878,7 +878,12 @@ async function scenarioFinalFull(pages) {
 
   await clickPaced(control.getByRole("button", { name: "Dalej" }));
   for (let i = 0; i < 5; i++) {
-    if (P1_PLAN[i] === true) await clickPaced(control.getByRole("button", { name: "Odp. finałowa (15)" }));
+    // armAndConfirmPaced, nie clickPaced -- ten kafel wyboru dopasowania
+    // idzie przez armableTile (zaznacz -> potwierdź), zwykły pojedynczy
+    // klik by go tylko zaznaczył, zostawiając efektywne dopasowanie na
+    // domyślnym AUTO-fallbacku (MISS) -- patrz identyczny, real bug
+    // znaleziony i opisany w scenariuszu 5 niżej.
+    if (P1_PLAN[i] === true) await armAndConfirmPaced(control.getByRole("button", { name: "Odp. finałowa (15)" }));
     // "Pokaż odpowiedź"/"Pokaż punkty" — kafle odsłaniania, zaznacz ->
     // potwierdź jak odpowiedzi w Rundach (nazwa stała, druga linijka to
     // żywy podgląd).
@@ -907,7 +912,7 @@ async function scenarioFinalFull(pages) {
   await clickPaced(control.getByRole("button", { name: "Dalej" })); // tym razem NIE czekamy na naturalne wygaśnięcie
 
   for (let i = 0; i < 5; i++) {
-    if (P2_PLAN[i] === true) await clickPaced(control.getByRole("button", { name: "Odp. finałowa (15)" }));
+    if (P2_PLAN[i] === true) await armAndConfirmPaced(control.getByRole("button", { name: "Odp. finałowa (15)" }));
     await armAndConfirmPaced(control.getByRole("button", { name: "Pokaż odpowiedź" }));
     await armAndConfirmPaced(control.getByRole("button", { name: "Pokaż punkty" }));
     await clickPaced(control.getByRole("button", { name: "Dalej" }));
@@ -954,7 +959,18 @@ async function scenarioFinalEarlyExit(pages) {
   await typePaced(p1Inputs.nth(0), "Odp. finałowa");
   await clickPaced(control.getByRole("button", { name: "Dalej" }));
 
-  await clickPaced(control.getByRole("button", { name: "Odp. finałowa (250)" }));
+  // Real bug znaleziony przez failed nagranie (przebieg #22, diagnostyka):
+  // kafle wyboru dopasowania w finale (control2/js/ui.js's renderFinalMapping,
+  // optionTiles) idą przez armableTile -- zaznacz -> potwierdź, DOKŁADNIE
+  // jak odpowiedzi/X w Rundach (patrz komentarz tam: "z podwójnym
+  // kliknięciem jako skrótem"). Zwykły clickPaced (pojedynczy klik) tylko
+  // ZAZNACZAŁ ten kafel, nigdy nie potwierdzał -- efektywne dopasowanie
+  // zostawało więc na domyślnym AUTO-fallbacku ("Nie ma na liście", MISS,
+  // potwierdzone diagnostyką: ta opcja pokazywała się jako aktywna/danger,
+  // a "Odp. finałowa (250)" jako zwykły, niezaznaczony kafel) -- runtime.sum
+  // nigdy nie osiągał finalTarget, więc silnik nigdy nie skakał do f_end i
+  // "Zakończ grę" nigdy się nie pojawiało.
+  await armAndConfirmPaced(control.getByRole("button", { name: "Odp. finałowa (250)" }));
   await armAndConfirmPaced(control.getByRole("button", { name: "Pokaż odpowiedź" }));
   // 250 >= finalTarget (200) -> REVEAL_POINTS w engine.js skacze prosto do
   // f_end, pomijając NEXT_QUESTION/pytania 2-5 gracza 1 i CAŁEGO gracza 2 —
