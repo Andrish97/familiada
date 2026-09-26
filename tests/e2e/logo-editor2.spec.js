@@ -371,6 +371,56 @@ test.describe("tryb Rysunek", () => {
     expect(errors).toEqual([]);
   });
 
+  test("strzałka: przeciągnięcie końca zmienia długość i kierunek, grot się nie rozciąga; Shift = poziomo", async ({ page }) => {
+    const errors = L.collectPageErrors(page);
+    await open(page);
+    const name = L.uniq("arrow");
+    await L.createNew(page, "Draw", name);
+    const b = await L.stage(page);
+    await pickShape(page, "arrow1");
+    const y = b.y + b.height / 2;
+    // Shift: lekko skośne przeciągnięcie daje idealnie poziomą strzałkę
+    await page.mouse.move(b.x + b.width * 0.1, y);
+    await page.mouse.down();
+    await page.keyboard.down("Shift");
+    await page.mouse.move(b.x + b.width * 0.4, y + 6, { steps: 8 });
+    await page.keyboard.up("Shift");
+    await page.mouse.up();
+    const line0 = await page.evaluate(() => window.__drawFabric.getObjects()[0]._line);
+    expect(line0.kind).toBe("arrow1");
+    expect(Math.abs(line0.y2 - line0.y1)).toBeLessThan(0.01);
+    expect(await L.save(page)).toMatch(/Zapisano/);
+    const box0 = L.litBox((await L.readLogoByName(page, name)).payload.bits_b64);
+
+    // zaznaczenie ramką i przeciągnięcie uchwytu końca (grot) dalej w prawo
+    await page.keyboard.press("v");
+    await L.drag(page, b.x + 4, b.y + 4, b.x + b.width * 0.6, b.y + b.height - 4);
+    const h = await page.evaluate(() => {
+      const o = window.__drawFabric.getActiveObject();
+      return o && { ctrls: Object.keys(o.controls), p2: o.oCoords.p2 };
+    });
+    expect(h?.ctrls).toEqual(["p1", "p2"]);
+    await L.drag(page, b.x + h.p2.x, b.y + h.p2.y, b.x + b.width * 0.9, b.y + h.p2.y);
+    const o1 = await page.evaluate(() => { const o = window.__drawFabric.getObjects()[0]; return { line: o._line, sx: o.scaleX, sy: o.scaleY, n: window.__drawFabric.getObjects().length }; });
+    expect(o1.n).toBe(1);
+    expect([o1.sx, o1.sy]).toEqual([1, 1]);
+    expect(o1.line.x1).toBeCloseTo(line0.x1, 3);
+    expect(o1.line.x2).toBeGreaterThan(line0.x2 + 200);
+    expect(await L.save(page)).toMatch(/Zapisano/);
+    const row = await L.readLogoByName(page, name);
+    expect(row.payload.source.fabricData.objects[0]._line.x2).toBeCloseTo(o1.line.x2, 3);
+    const box1 = L.litBox(row.payload.bits_b64);
+    expect(box1.x0).toBe(box0.x0);
+    expect(box1.x1).toBeGreaterThan(box0.x1 + 20);
+    // grot tej samej wielkości: wysokość zapalonego obszaru bez zmian
+    expect(box1.y1 - box1.y0).toBe(box0.y1 - box0.y0);
+
+    // jedno Cofnij = powrót do poprzedniej długości
+    await page.keyboard.press("Control+z");
+    await expect.poll(() => page.evaluate(() => window.__drawFabric.getObjects()[0]._line.x2)).toBeCloseTo(line0.x2, 3);
+    expect(errors).toEqual([]);
+  });
+
   test("wielokąt: kliknięcia + Enter; Backspace cofa punkt; Esc porzuca", async ({ page }) => {
     await open(page);
     const name = L.uniq("poly");

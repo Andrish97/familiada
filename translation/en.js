@@ -3975,6 +3975,7 @@ const en = {
         brush: "Brush\nFreehand drawing",
         eraser: "Eraser\nRemoves the objects it touches",
         shapes: "Shapes\nPick a shape and drag on the canvas",
+        shapesLines: "Shift: square / circle; lines and arrows snap to 15°.\nDrag the ends of a selected line or arrow to change it.",
         undo: "Undo",
         redo: "Redo",
         duplicate: "Duplicate\nCopy the selected objects",

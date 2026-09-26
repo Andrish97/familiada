@@ -3849,6 +3849,7 @@ const pl = {
         brush: "Pędzel\nRysowanie odręczne",
         eraser: "Gumka\nUsuwa obiekty, których dotknie",
         shapes: "Kształty\nWybierz kształt i przeciągnij na scenie",
+        shapesLines: "Shift: kwadrat / koło; linia i strzałka co 15°.\nKońce zaznaczonej linii lub strzałki można przeciągać.",
         undo: "Cofnij",
         redo: "Ponów",
         duplicate: "Duplikuj\nKopia zaznaczonych obiektów",

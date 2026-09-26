@@ -31,7 +31,7 @@ const HISTORY_LIMIT = 200;
 const EXTRA_PROPS = [
   "strokeUniform", "strokeDashArray", "strokeLineCap", "strokeLineJoin",
   "fontFamily", "fontSize", "fontWeight", "fontStyle", "underline", "textAlign", "lineHeight", "charSpacing",
-  "_canHaveFill", "imageSmoothing",
+  "_canHaveFill", "imageSmoothing", "_line",
 ];
 
 const LINE_STYLES = [
@@ -440,9 +440,11 @@ export function initDrawEditor(ctx) {
   /** Obiekt kształtu w prostokącie świata (x,y,w,h); linie/strzałki: od (x1,y1) do (x2,y2). */
   function makeShape(start, end, shift) {
     const f = fabric();
+    const linear = currentShape === "line" || currentShape.startsWith("arrow");
+    if (linear && shift) end = snapEnd(start, end);
     let w = end.x - start.x;
     let h = end.y - start.y;
-    if (shift) {
+    if (shift && !linear) {
       const m = Math.max(Math.abs(w), Math.abs(h));
       w = Math.sign(w || 1) * m;
       h = Math.sign(h || 1) * m;
@@ -461,17 +463,100 @@ export function initDrawEditor(ctx) {
     if (currentShape === "ellipse") {
       return new f.Ellipse({ left, top, rx: aw / 2, ry: ah / 2, ...common });
     }
-    let path;
-    if (currentShape === "line" || currentShape.startsWith("arrow")) {
+    if (linear) {
       // kierunek ma znaczenie: rysujemy od punktu startu do końca
-      const x2 = start.x + w, y2 = start.y + h;
-      path = currentShape === "line"
-        ? `M ${start.x} ${start.y} L ${x2} ${y2}`
-        : buildArrowPath(start.x, start.y, x2, y2, currentShape.startsWith("arrow2") ? 2 : 1, settings.SHAPES.stroke, currentShape.endsWith("Fill"));
-    } else {
-      path = buildShapePath(currentShape, left, top, left + aw, top + ah, settings.SHAPES.stroke);
+      const p2 = { x: start.x + w, y: start.y + h };
+      const _line = { kind: currentShape, x1: start.x, y1: start.y, x2: p2.x, y2: p2.y };
+      return new f.Path(linePath(currentShape, start, p2, settings.SHAPES.stroke), { ...common, _line });
     }
-    return new f.Path(path, common);
+    return new f.Path(buildShapePath(currentShape, left, top, left + aw, top + ah, settings.SHAPES.stroke), common);
+  }
+
+  // =========================================================
+  // Linie i strzałki: końce do przeciągania
+  // =========================================================
+  // Linia/strzałka pamięta swoje końce (_line: {kind, x1, y1, x2, y2} we
+  // współrzędnych jej ścieżki). Zaznaczona pojedynczo ma zamiast ramki
+  // skalowania dwa uchwyty na końcach: przeciągnięcie końca buduje ścieżkę od
+  // nowa, więc zmienia się długość i kierunek, a grot zostaje grotem (przy
+  // skalowaniu ramką rozciągał się razem z całością). Shift = kąt co 15°.
+  // Linie ze starego edytora nie mają _line -- zostają zwykłymi ścieżkami.
+  const isLineObj = (o) => o?.type === "path" && !!o._line;
+
+  function linePath(kind, p1, p2, sw) {
+    if (kind === "line") return `M ${p1.x} ${p1.y} L ${p2.x} ${p2.y}`;
+    return buildArrowPath(p1.x, p1.y, p2.x, p2.y, kind.startsWith("arrow2") ? 2 : 1, sw, kind.endsWith("Fill"));
+  }
+
+  function snapEnd(anchor, p) {
+    const dx = p.x - anchor.x, dy = p.y - anchor.y;
+    const step = Math.PI / 12;
+    const a = Math.round(Math.atan2(dy, dx) / step) * step;
+    const len = Math.hypot(dx, dy);
+    return { x: clamp(anchor.x + Math.cos(a) * len, 0, worldW), y: clamp(anchor.y + Math.sin(a) * len, 0, worldH) };
+  }
+
+  /** Końce linii we współrzędnych świata (po przesunięciu, obrocie, skali grupy…). */
+  function lineEnds(o) {
+    const f = fabric();
+    const m = o.calcTransformMatrix();
+    const pt = (x, y) => f.util.transformPoint(new f.Point(x - o.pathOffset.x, y - o.pathOffset.y), m);
+    return [pt(o._line.x1, o._line.y1), pt(o._line.x2, o._line.y2)];
+  }
+
+  /** Buduje ścieżkę linii od nowa między p1 i p2 (świat), z bieżącą grubością. */
+  function rebuildLine(o, p1, p2) {
+    const f = fabric();
+    const tmp = new f.Path(linePath(o._line.kind, p1, p2, o.strokeWidth), { strokeWidth: o.strokeWidth, strokeUniform: o.strokeUniform });
+    o.set({
+      path: tmp.path, width: tmp.width, height: tmp.height, pathOffset: tmp.pathOffset,
+      angle: 0, scaleX: 1, scaleY: 1, flipX: false, flipY: false, skewX: 0, skewY: 0,
+      // zawsze nowy obiekt: snapshoty historii trzymają referencję do starego
+      _line: { kind: o._line.kind, x1: p1.x, y1: p1.y, x2: p2.x, y2: p2.y },
+      dirty: true,
+    });
+    o.setPositionByOrigin(tmp.getCenterPoint(), "center", "center");
+    o.setCoords();
+  }
+
+  function lineEndControl(which) {
+    const f = fabric();
+    return new f.Control({
+      actionName: "lineEnd",
+      cursorStyle: "crosshair",
+      sizeX: 16,
+      sizeY: 16,
+      touchSizeX: 32,
+      touchSizeY: 32,
+      render: f.controlsUtils.renderCircleControl,
+      positionHandler: (dim, finalMatrix, o) => {
+        const p = lineEnds(o)[which];
+        return f.util.transformPoint(p, o.canvas?.viewportTransform || [1, 0, 0, 1, 0, 0]);
+      },
+      // x, y: wskaźnik we współrzędnych sceny
+      actionHandler: (e, transform, x, y) => {
+        const o = transform.target;
+        const ends = lineEnds(o);
+        const anchor = ends[1 - which];
+        let p = { x: clamp(x, 0, worldW), y: clamp(y, 0, worldH) };
+        if (e.shiftKey) p = snapEnd(anchor, p);
+        if (Math.hypot(p.x - anchor.x, p.y - anchor.y) < 1) return false;
+        ends[which] = p;
+        rebuildLine(o, ends[0], ends[1]);
+        touch();
+        return true;
+      },
+    });
+  }
+
+  function decorateLine(o) {
+    if (!isLineObj(o)) return;
+    o.controls = { p1: lineEndControl(0), p2: lineEndControl(1) };
+    o.hasBorders = false;
+    // pełne kółka -- przezroczyste giną na białej linii
+    o.transparentCorners = false;
+    o.cornerColor = "#ffffff";
+    o.cornerStrokeColor = "#2f6bff";
   }
 
   function startShape(ev) {
@@ -823,7 +908,10 @@ export function initDrawEditor(ctx) {
     };
     const styleOf = (o) => LINE_STYLES.find((ls) => JSON.stringify(ls.dash?.(o.strokeWidth) || null) === JSON.stringify(o.strokeDashArray || null))?.id || "solid";
     bindNumber("cObjStroke", 0, 50, 0, (v, final) => apply((o) => {
+      // strzałka: grot zależy od grubości -- przebudowa między tymi samymi końcami
+      const ends = isLineObj(o) && !o.group ? lineEnds(o) : null;
       o.set({ strokeDashArray: dashFor(styleOf(o), v), strokeWidth: v });
+      if (ends) rebuildLine(o, ends[0], ends[1]);
     }, final));
     const styles = new Set(shapes.map(styleOf));
     mountLineStyle("cObjLineStyle", styles.size === 1 ? [...styles][0] : "solid", (v) => apply((o) => o.set({ strokeDashArray: dashFor(v, o.strokeWidth) })));
@@ -967,7 +1055,7 @@ export function initDrawEditor(ctx) {
       bg: TT("background"),
       brush: withKey(TT("brush"), "B"),
       eraser: withKey(TT("eraser"), "E"),
-      shapes: withKey(TT("shapes"), "S · U"),
+      shapes: withKey(`${TT("shapes")}\n${TT("shapesLines")}`, "S · U"),
       text: withKey(TT("text"), "T"),
       undo: withKey(TT("undo"), `${MOD}+Z`),
       redo: withKey(TT("redo"), isMac ? "⌘⇧Z" : "Ctrl+Y"),
@@ -1166,6 +1254,7 @@ export function initDrawEditor(ctx) {
     });
     updateClipPath();
     ensureCursorOverlay();
+    window.__drawFabric = canvas; // podgląd sceny w testach e2e (jak w starym edytorze)
 
     const upper = canvas.upperCanvasEl;
     // Fabric blokuje domyślną obsługę kliknięcia, więc fokus zostawał w polu
@@ -1192,6 +1281,8 @@ export function initDrawEditor(ctx) {
       e.path.set({ strokeUniform: true, selectable: false, evented: true });
       commit();
     });
+    // Linie/strzałki (też z historii, duplikatu, wczytanego logo) dostają uchwyty końców.
+    canvas.on("object:added", (e) => decorateLine(e?.target));
     canvas.on("object:modified", (e) => {
       if (e?.target) keepInWorld(e.target);
       commit();
