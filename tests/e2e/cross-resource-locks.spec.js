@@ -244,16 +244,6 @@ test("usuwanie logo: działa normalnie, gdy nic go nie blokuje", async ({ page, 
     return data.id;
   }, logoName);
 
-  // Poprzedni test zamyka kartę ustawień gry, ale jej blokada („settings”)
-  // znika z bazy dopiero chwilę później -- a otwarte ustawienia KTÓREJKOLWIEK
-  // gry blokują usuwanie WSZYSTKICH logo użytkownika („logo in use”). Bez
-  // czekania test był niestabilny (pierwsza próba padała, powtórka
-  // przechodziła). Czekamy, aż na koncie nie ma żadnej blokady gry.
-  await expect.poll(() => page.evaluate(async () => {
-    const { data } = await window.__sbClient.from("edit_locks").select("resource_id").eq("resource_type", "game");
-    return (data || []).length;
-  }), { timeout: 30000, intervals: [500, 1000, 2000] }).toBe(0);
-
   let deleted = false;
   try {
     await page.goto("https://www.familiada.online/logo-editor", { waitUntil: "domcontentloaded" });
@@ -270,23 +260,35 @@ test("usuwanie logo: działa normalnie, gdy nic go nie blokuje", async ({ page, 
     // w faktycznie zasłaniający element, nie w nasz .logoX). Wywołanie
     // .click() bezpośrednio przez DOM omija symulację myszy w ogóle —
     // gwarantowanie odpala handler na dokładnie tym elemencie.
-    await tile.locator(".logoX").evaluate((el) => el.click());
-    await expect(page.locator(".uni-foot .btn.gold")).toBeVisible({ timeout: 10000 });
-
-    // Run #68: kafelek czasem zostawał w DOM przez pełne 10s mimo że klik
-    // potwierdzenia "przeszedł" -- deleteLogo() woła delete_resource_checked
-    // i DOPIERO PO jej odpowiedzi refresh()/renderList() usuwa kafelek;
-    // czekanie tylko na DOM (bez sygnału sieciowego) mogło zacząć odliczanie
-    // zanim żądanie w ogóle wystartowało pod obciążeniem CI. Czekanie na
-    // samą odpowiedź RPC eliminuje tę niepewność, tak jak przy analogicznym
-    // problemie w game-settings.spec.js (saveAndWait / waitForResponse).
-    await Promise.all([
-      page.waitForResponse(
-        (res) => res.url().includes("/rest/v1/rpc/delete_resource_checked") && res.request().method() === "POST",
-        { timeout: 10000 }
-      ),
-      page.locator(".uni-foot .btn.gold").click({ timeout: 10000 }),
-    ]);
+    // Poprzedni test zamyka kartę ustawień gry; jej blokada („settings”)
+    // bywa żywa po stronie serwera jeszcze do 25 s (TTL heartbeatu -- żądanie
+    // zwolnienia z pagehide przy page.close() nie zawsze zdąży wyjść), a
+    // otwarte ustawienia KTÓREJKOLWIEK gry blokują usuwanie WSZYSTKICH logo.
+    // Z przeglądarki tej blokady nie widać (RLS: gra już usunięta), więc
+    // zamiast odpytywać: jeśli usunięcie trafi na „w użyciu”, zamykamy
+    // komunikat i ponawiamy po chwili (do ~35 s).
+    const deadline = Date.now() + 35_000;
+    for (;;) {
+      await tile.locator(".logoX").evaluate((el) => el.click());
+      await expect(page.locator(".uni-foot .btn.gold")).toBeVisible({ timeout: 10000 });
+      // Run #68: czekamy na samą odpowiedź RPC, nie tylko na DOM (pod
+      // obciążeniem CI żądanie potrafiło wystartować z opóźnieniem).
+      await Promise.all([
+        page.waitForResponse(
+          (res) => res.url().includes("/rest/v1/rpc/delete_resource_checked") && res.request().method() === "POST",
+          { timeout: 10000 }
+        ),
+        page.locator(".uni-foot .btn.gold").click({ timeout: 10000 }),
+      ]);
+      // tylko komunikat o blokadzie (nie znikający jeszcze modal potwierdzenia)
+      const busyMsg = page.locator(".uni-modal .mSub", { hasText: /Nie możesz edytować ani usunąć logo|edytowane w innej karcie/ });
+      const busy = await busyMsg.waitFor({ state: "visible", timeout: 2000 }).then(() => true).catch(() => false);
+      if (!busy) break;
+      console.log("[xlock] usuwanie logo trafiło na blokadę z poprzedniego testu -- ponawiam:", await busyMsg.textContent());
+      await page.locator(".uni-modal .uni-foot .btn.gold").click();
+      if (Date.now() > deadline) throw new Error("logo nadal zablokowane po 35 s -- blokada nie wygasa");
+      await page.waitForTimeout(5000);
+    }
 
     await expect(tile).toHaveCount(0, { timeout: 10000 });
     deleted = true;
