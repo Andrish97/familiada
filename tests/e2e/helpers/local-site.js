@@ -78,6 +78,47 @@ async function startLocalSite() {
 }
 
 /**
+ * Loguje RAZ (osobny kontekst) i zwraca klucze sesji Supabase (sb-*) --
+ * do przekazania do useSession() w każdym teście pliku, zamiast logowania
+ * przez formularz przed każdym testem.
+ */
+async function captureSession(browser, username) {
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  try {
+    await loginAsTestUser(page, context, username ? { username } : {});
+    const entries = await page.evaluate(() => {
+      const out = {};
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && k.startsWith("sb-")) out[k] = localStorage.getItem(k);
+      }
+      return out;
+    });
+    if (!Object.keys(entries).length) throw new Error("Po zalogowaniu brak sesji sb-* w localStorage");
+    return entries;
+  } finally {
+    await context.close();
+  }
+}
+
+/** Wstrzykuje zapisaną sesję na lokalny origin (przed pierwszym skryptem strony). */
+async function useSession(context, origin, entries, { lang = "pl" } = {}) {
+  await context.addInitScript(({ origin, entries, lang }) => {
+    if (location.origin !== origin) return;
+    try {
+      for (const [k, v] of Object.entries(entries)) {
+        if (localStorage.getItem(k) == null) localStorage.setItem(k, v);
+      }
+      localStorage.setItem("fam:app_rating_suppressed", "true");
+      if (localStorage.getItem("uiLang") == null) localStorage.setItem("uiLang", lang);
+    } catch {
+      // ignore
+    }
+  }, { origin, entries, lang });
+}
+
+/**
  * Loguje konto testowe na produkcji i przenosi sesję na lokalny origin.
  * Po powrocie `page` jest na `${origin}${startPath}`.
  */
@@ -112,4 +153,4 @@ async function loginToLocalSite(page, context, origin, { username, startPath = "
   await page.goto(`${origin}${startPath}`, { waitUntil: "domcontentloaded" });
 }
 
-module.exports = { startLocalSite, loginToLocalSite, instrumentPage, REPO_ROOT };
+module.exports = { startLocalSite, loginToLocalSite, captureSession, useSession, instrumentPage, REPO_ROOT };
