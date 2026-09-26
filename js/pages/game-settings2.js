@@ -171,6 +171,19 @@ if (_isModal) {
   // locków (tylko isDirty, confirmModal, t -- wszystkie dostępne od razu na
   // poziomie modułu), więc też wpięte tu, synchronicznie.
   async function tryClose() {
+    // Zgłoszone: modal ma NIE zamykać się (ani pytać o niezapisane zmiany)
+    // w trakcie trwania zapisu -- saveAll() czyści isDirty dopiero PO
+    // zakończeniu (patrz komentarz tam), więc próba zamknięcia tuż po
+    // kliknięciu "Zapisz wszystko", zanim realny zapis sieciowy się
+    // skończy, widziała jeszcze isDirty=true i pokazywała mylący dialog
+    // "Masz niezapisane zmiany..." -- mimo że operator WŁAŚNIE kazał
+    // zapisać (potwierdzone realnym zrzutem ekranu z nagrania e2e).
+    // btnSaveAll.disabled jest już dziś niezawodnym sygnałem "trwa zapis"
+    // (ustawiane jako pierwsza instrukcja saveAll(), patrz tam) -- podczas
+    // gdy jest true, próba zamknięcia jest po prostu ignorowana (bez
+    // dialogu, bez zamykania); operator może spróbować ponownie po
+    // zakończeniu zapisu i zobaczy już poprawny stan.
+    if (btnSaveAll?.disabled) return;
     if (isDirty) {
       if (!await confirmModal({ text: t("gameSettings.unsavedConfirmModal") || "Masz niezapisane zmiany. Czy chcesz zamknąć ustawienia?" })) return;
     }
