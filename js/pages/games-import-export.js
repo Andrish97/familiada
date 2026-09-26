@@ -1,6 +1,6 @@
 // js/pages/games-import-export.js
-import { sb } from "../core/supabase.js?v=v2026-09-26T14341";
-import { t } from "../../translation/translation.js?v=v2026-09-26T14341";
+import { sb } from "../core/supabase.js?v=v2026-09-26T16052";
+import { t } from "../../translation/translation.js?v=v2026-09-26T16052";
 
 /* =========================================================
 	 Helpers (bezpieczne skracanie / typy)
