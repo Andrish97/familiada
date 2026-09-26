@@ -987,8 +987,10 @@
          i że .footer jest jego OSTATNIM dzieckiem, wykluczonym z reguły
          "ukryj resztę". Gdy stopka była poza <main>, main.wrap i tak zajmował
          całą dostępną wysokość (nie wiedząc, że musi zostawić miejsce na
-         stopkę pod sobą), więc stopka nakładała się na dolną część modala. -->
-    <footer class="footer wrap">
+         stopkę pod sobą), więc stopka nakładała się na dolną część modala.
+         Bez klasy .wrap: jej „margin: 0 auto” zerował margin-top: auto
+         stopki (css/base.css) i stopka nie trzymała się dołu ekranu. -->
+    <footer class="footer">
       <span>Familiada — panel admina</span>
       <span>Dostęp tylko dla uprawnionych.</span>
     </footer>
