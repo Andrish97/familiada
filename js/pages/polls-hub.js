@@ -685,7 +685,7 @@ async function openShareModal() {
   }
 }
 
-function closeShareModal() { shareOverlay.style.display = "none"; shareList.innerHTML = ""; exitModalSheet(shareOverlay); }
+function closeShareModal() { shareOverlay.style.display = "none"; shareList.innerHTML = ""; shareMsg.textContent = ""; exitModalSheet(shareOverlay); }
 
 async function buildMailItemsForTasksFallback({ gameId, ownerId, selectedSubIds }) {
   const { data: rows, error } = await sb()
