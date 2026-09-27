@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 7pdH58tF9cSGj1aBnFQ8rfgIEcuNs5ECdkqzAddAlTsZdcBU6t5EtE8k1jcrnLN
+\restrict kd2h0JOFqzf1I2D56rLW9WrRo5THSb1dZtrRBflhPf0ychtPnNtX4mPbtqrwnt0
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -415,6 +415,36 @@ begin
   end if;
 
   return query select true, null::text;
+end;
+$$;
+
+
+--
+-- Name: answers_rules_state_stmt(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."answers_rules_state_stmt"() RETURNS "trigger"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+declare
+  v_ids uuid[];
+begin
+  if tg_op = 'INSERT' then
+    select array_agg(distinct q.game_id) into v_ids
+    from new_rows r join public.questions q on q.id = r.question_id;
+  elsif tg_op = 'DELETE' then
+    select array_agg(distinct q.game_id) into v_ids
+    from old_rows r join public.questions q on q.id = r.question_id;
+  else
+    select array_agg(distinct q.game_id) into v_ids
+    from (select question_id from new_rows union select question_id from old_rows) r
+    join public.questions q on q.id = r.question_id;
+  end if;
+  if v_ids is not null then
+    perform public.games_rules_state_refresh(v_ids);
+  end if;
+  return null;
 end;
 $$;
 
@@ -2308,6 +2338,288 @@ $$;
 
 
 --
+-- Name: game_poll_close_check("uuid"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."game_poll_close_check"("p_game_id" "uuid") RETURNS "jsonb"
+    LANGUAGE "plpgsql" STABLE SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+declare
+  c_ok constant jsonb := '{"ok": true}'::jsonb;
+  g record;
+  r record;
+  v_poll_close jsonb;
+  v_strong int;
+  v_distinct int;
+begin
+  select id, owner_id, type::text as type, status::text as status
+    into g
+  from public.games
+  where id = p_game_id;
+
+  if not found then
+    return jsonb_build_object('ok', false, 'code', 'noGame');
+  end if;
+
+  if g.type not in ('poll_text', 'poll_points') then
+    v_poll_close := jsonb_build_object('ok', false, 'code', 'preparedNoPoll');
+  elsif g.status <> 'poll_open' then
+    v_poll_close := jsonb_build_object('ok', false, 'code', 'closeOnlyOpen');
+  elsif exists (
+    select 1 from public.poll_tasks t
+    where t.owner_id = g.owner_id and t.game_id = p_game_id
+      and t.done_at is null and t.declined_at is null and t.cancelled_at is null
+  ) then
+    -- ktoś z zaproszonych jeszcze nie zagłosował
+    v_poll_close := jsonb_build_object('ok', false, 'code', 'closeWaitForTasks');
+  else
+    v_poll_close := c_ok;
+    for r in
+      select q.id, q.ord,
+             (select ps.id from public.poll_sessions ps
+               where ps.game_id = p_game_id and ps.question_id = q.id
+               order by ps.created_at desc limit 1) as sid
+      from public.questions q
+      where q.game_id = p_game_id
+      order by q.ord
+    loop
+      if r.sid is null then
+        v_poll_close := jsonb_build_object('ok', false, 'code', 'noSession',
+          'params', jsonb_build_object('ord', r.ord));
+        exit;
+      end if;
+
+      if g.type = 'poll_points' then
+        -- Głosy przeliczone na 100 pkt metodą największych reszt (jak przy
+        -- zamykaniu); w pytaniu muszą być ≥ 3 odpowiedzi z ≥ 3 pkt.
+        with c as (
+          select v.answer_id, count(*)::int as cnt, coalesce(max(a.ord), 99) as aord
+          from public.poll_votes v
+          left join public.answers a on a.id = v.answer_id
+          where v.poll_session_id = r.sid and v.question_id = r.id and v.answer_id is not null
+          group by v.answer_id
+        ),
+        raw as (
+          select c.aord,
+                 100.0 * c.cnt / sum(c.cnt) over () as rp,
+                 floor(100.0 * c.cnt / sum(c.cnt) over ())::int as fl
+          from c
+        ),
+        d as (
+          select raw.fl,
+                 100 - sum(raw.fl) over () as diff,
+                 row_number() over (order by raw.rp - raw.fl desc, raw.aord) as rn
+          from raw
+        )
+        select count(*)::int into v_strong
+        from d
+        where d.fl + (case when d.rn <= d.diff then 1 else 0 end) >= 3;
+
+        if coalesce(v_strong, 0) < 3 then
+          v_poll_close := jsonb_build_object('ok', false, 'code', 'closeMinPoints',
+            'params', jsonb_build_object('ord', r.ord));
+          exit;
+        end if;
+      else
+        select count(distinct nullif(btrim(e.answer_norm), ''))::int into v_distinct
+        from public.poll_text_entries e
+        where e.poll_session_id = r.sid and e.question_id = r.id;
+
+        if coalesce(v_distinct, 0) < 3 then
+          v_poll_close := jsonb_build_object('ok', false, 'code', 'closeMinText',
+            'params', jsonb_build_object('ord', r.ord));
+          exit;
+        end if;
+      end if;
+    end loop;
+  end if;
+
+  return v_poll_close;
+end;
+$$;
+
+
+--
+-- Name: game_reset_poll_for_edit("uuid"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."game_reset_poll_for_edit"("p_game_id" "uuid") RETURNS "jsonb"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+declare
+  v_uid uuid := auth.uid();
+  v_game record;
+begin
+  if v_uid is null then
+    return jsonb_build_object('ok', false, 'error', 'not_authenticated');
+  end if;
+
+  select id, type, status into v_game
+  from public.games
+  where id = p_game_id and owner_id = v_uid
+  for update;
+
+  if not found then
+    return jsonb_build_object('ok', false, 'error', 'not_found_or_forbidden');
+  end if;
+
+  -- otwartej ankiety nie resetujemy spod ręki głosujących
+  if v_game.status = 'poll_open' then
+    return jsonb_build_object('ok', false, 'error', 'poll_open');
+  end if;
+
+  if v_game.type not in ('poll_text', 'poll_points') then
+    return jsonb_build_object('ok', true, 'changed', false);
+  end if;
+
+  update public.games
+     set status = 'draft', poll_opened_at = null, poll_closed_at = null
+   where id = p_game_id;
+
+  update public.answers a
+     set fixed_points = 0
+    from public.questions q
+   where q.id = a.question_id
+     and q.game_id = p_game_id;
+
+  return jsonb_build_object('ok', true, 'changed', true);
+end;
+$$;
+
+
+--
+-- Name: game_rules_compute("uuid", "text", "text"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."game_rules_compute"("p_game_id" "uuid", "p_type" "text", "p_status" "text") RETURNS "jsonb"
+    LANGUAGE "plpgsql" STABLE SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+declare
+  c_qmin constant int := 10;
+  c_amin constant int := 3;
+  c_amax constant int := 6;
+  c_sum  constant int := 100;
+  c_ok   constant jsonb := '{"ok": true}'::jsonb;
+
+  g record;
+  r record;
+  v_qn int;
+  v_minq jsonb;       -- za mało pytań
+  v_struct jsonb;     -- pierwsze pytanie ze złą liczbą odpowiedzi
+  v_points jsonb;     -- pierwsze pytanie złe dla gry preparowanej
+  v_content_poll jsonb;
+  v_edit jsonb;
+  v_play jsonb;
+  v_poll_entry jsonb;
+  v_poll_open jsonb;
+  v_export jsonb;
+  v_is_poll boolean;
+begin
+  select p_type as type, p_status as status into g;
+
+  v_is_poll := g.type in ('poll_text', 'poll_points');
+
+  /* ---------- treść: pytania i odpowiedzi ---------- */
+  select count(*)::int into v_qn from public.questions where game_id = p_game_id;
+
+  if v_qn < c_qmin then
+    v_minq := jsonb_build_object('ok', false, 'code', 'minQuestions',
+      'params', jsonb_build_object('min', c_qmin, 'n', v_qn));
+  end if;
+
+  for r in
+    select q.ord,
+           count(a.id)::int as cnt,
+           coalesce(min(a.fixed_points), 0)::int as minp,
+           coalesce(max(a.fixed_points), 0)::int as maxp,
+           coalesce(sum(a.fixed_points), 0)::int as sump
+    from public.questions q
+    left join public.answers a on a.question_id = q.id
+    where q.game_id = p_game_id
+    group by q.id, q.ord
+    order by q.ord
+  loop
+    if v_struct is null and (r.cnt < c_amin or r.cnt > c_amax) then
+      v_struct := jsonb_build_object('ok', false, 'code', 'answersRange',
+        'params', jsonb_build_object('ord', r.ord, 'min', c_amin, 'max', c_amax, 'n', r.cnt));
+    end if;
+
+    if v_points is null then
+      v_points := case
+        when r.cnt < c_amin or r.cnt > c_amax then v_struct
+        when r.minp < 0 then jsonb_build_object('ok', false, 'code', 'negativePoints',
+          'params', jsonb_build_object('ord', r.ord))
+        when r.maxp > 100 then jsonb_build_object('ok', false, 'code', 'answerOver100',
+          'params', jsonb_build_object('ord', r.ord))
+        when r.sump > c_sum then jsonb_build_object('ok', false, 'code', 'sumTooBig',
+          'params', jsonb_build_object('ord', r.ord, 'max', c_sum, 'sum', r.sump))
+        else null
+      end;
+    end if;
+
+    exit when v_struct is not null and v_points is not null;
+  end loop;
+
+  -- czy treść wystarcza do uruchomienia ankiety
+  v_content_poll := case
+    when not v_is_poll then jsonb_build_object('ok', false, 'code', 'preparedNoPoll')
+    when v_minq is not null then v_minq
+    when g.type = 'poll_points' and v_struct is not null then v_struct
+    else c_ok
+  end;
+
+  /* ---------- edit ---------- */
+  v_edit := case
+    when g.type = 'prepared' then jsonb_build_object('ok', true, 'needs_reset', false)
+    when g.type = 'market' then jsonb_build_object('ok', false, 'code', 'marketNoEdit')
+    when g.status = 'poll_open' then jsonb_build_object('ok', false, 'code', 'pollOpenNoEdit')
+    when g.status = 'ready' then jsonb_build_object('ok', true, 'needs_reset', true)
+    else jsonb_build_object('ok', true, 'needs_reset', false)
+  end;
+
+  /* ---------- play ---------- */
+  v_play := case
+    when v_is_poll and g.status <> 'ready' then jsonb_build_object('ok', false, 'code', 'playAfterPoll')
+    when v_is_poll then c_ok
+    when g.type in ('prepared', 'market') then coalesce(v_minq, v_points, c_ok)
+    else jsonb_build_object('ok', false, 'code', 'unknownType')
+  end;
+
+  /* ---------- ankieta ---------- */
+  v_poll_entry := case
+    when not v_is_poll then jsonb_build_object('ok', false, 'code', 'preparedNoPoll')
+    when g.status in ('poll_open', 'ready') then c_ok
+    else v_content_poll
+  end;
+
+  v_poll_open := case
+    when not v_is_poll then jsonb_build_object('ok', false, 'code', 'preparedNoPoll')
+    when g.status = 'poll_open' then jsonb_build_object('ok', false, 'code', 'pollAlreadyOpen')
+    else v_content_poll
+  end;
+
+  /* ---------- eksport ---------- */
+  v_export := case
+    when g.status = 'poll_open' then jsonb_build_object('ok', false, 'code', 'pollOpenNoExport')
+    else c_ok
+  end;
+
+  return jsonb_build_object(
+    'rules', jsonb_build_object('qn_min', c_qmin, 'an_min', c_amin, 'an_max', c_amax, 'sum_max', c_sum),
+    'edit', v_edit,
+    'play', v_play,
+    'poll_entry', v_poll_entry,
+    'poll_open', v_poll_open,
+    'export', v_export
+  );
+end;
+$$;
+
+
+--
 -- Name: game_session_end("uuid", "text", "text", "text", integer, integer, integer, integer, integer); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -2880,6 +3192,41 @@ $$;
 
 
 --
+-- Name: game_validate("uuid"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."game_validate"("p_game_id" "uuid") RETURNS "jsonb"
+    LANGUAGE "plpgsql" STABLE SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+declare
+  v_uid uuid := auth.uid();
+  g record;
+begin
+  if v_uid is null then
+    return jsonb_build_object('ok', false, 'error', 'not_authenticated');
+  end if;
+
+  select id, type::text as type, status::text as status, updated_at
+    into g
+  from public.games
+  where id = p_game_id and owner_id = v_uid;
+
+  if not found then
+    return jsonb_build_object('ok', false, 'error', 'not_found');
+  end if;
+
+  return public.game_rules_compute(g.id, g.type, g.status)
+    || jsonb_build_object(
+         'ok', true,
+         'game', jsonb_build_object('id', g.id, 'type', g.type, 'status', g.status, 'rev', g.updated_at),
+         'poll_close', public.game_poll_close_check(g.id)
+       );
+end;
+$$;
+
+
+--
 -- Name: games_fill_share_keys(); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -2892,6 +3239,53 @@ begin
   new.share_key_display := coalesce(new.share_key_display, public.gen_share_key(18));
   new.share_key_host    := coalesce(new.share_key_host,    public.gen_share_key(18));
   new.share_key_buzzer  := coalesce(new.share_key_buzzer,  public.gen_share_key(18));
+  return new;
+end;
+$$;
+
+
+--
+-- Name: games_market_orphan_to_prepared(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."games_market_orphan_to_prepared"() RETURNS "trigger"
+    LANGUAGE "plpgsql"
+    SET "search_path" TO 'public'
+    AS $$
+begin
+  if new.type = 'market' and new.source_market_id is null and old.source_market_id is not null then
+    new.type := 'prepared';
+  end if;
+  return new;
+end;
+$$;
+
+
+--
+-- Name: games_rules_state_refresh("uuid"[]); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."games_rules_state_refresh"("p_game_ids" "uuid"[]) RETURNS "void"
+    LANGUAGE "sql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+  -- wartość liczy trg_games_rules_state (BEFORE UPDATE OF rules_state)
+  update public.games g
+     set rules_state = null
+   where g.id = any(p_game_ids);
+$$;
+
+
+--
+-- Name: games_rules_state_row(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."games_rules_state_row"() RETURNS "trigger"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+begin
+  new.rules_state := public.game_rules_compute(new.id, new.type::text, new.status::text);
   return new;
 end;
 $$;
@@ -4003,6 +4397,79 @@ BEGIN
       SELECT lower(e) FROM unnest(p_emails) AS e
     );
 END;
+$$;
+
+
+--
+-- Name: guard_game_content(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."guard_game_content"() RETURNS "trigger"
+    LANGUAGE "plpgsql"
+    SET "search_path" TO 'public'
+    AS $$
+declare
+  v_game_id uuid;
+  v_type text;
+  v_status text;
+begin
+  -- tylko zapisy prosto z przeglądarki; SECURITY DEFINER i kaskady -> owner
+  if current_user not in ('authenticated', 'anon') then
+    return coalesce(new, old);
+  end if;
+
+  if tg_table_name = 'questions' then
+    v_game_id := case when tg_op = 'DELETE' then old.game_id else new.game_id end;
+  else
+    select q.game_id into v_game_id
+    from public.questions q
+    where q.id = case when tg_op = 'DELETE' then old.question_id else new.question_id end;
+  end if;
+
+  select g.type::text, g.status::text into v_type, v_status
+  from public.games g
+  where g.id = v_game_id;
+
+  if not found then
+    return coalesce(new, old);
+  end if;
+
+  if v_type = 'market' then
+    raise exception 'game_content_locked:market' using errcode = 'P0001';
+  end if;
+
+  if v_type in ('poll_text', 'poll_points') and v_status = 'poll_open' then
+    raise exception 'game_content_locked:poll_open' using errcode = 'P0001';
+  end if;
+
+  return coalesce(new, old);
+end;
+$$;
+
+
+--
+-- Name: guard_game_poll_close(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."guard_game_poll_close"() RETURNS "trigger"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+declare
+  v_chk jsonb;
+begin
+  if old.status = 'poll_open' and new.status = 'ready'
+     and new.type in ('poll_text', 'poll_points') then
+    v_chk := public.game_poll_close_check(new.id);
+    if not coalesce((v_chk->>'ok')::boolean, false) then
+      -- kod + numer pytania, żeby strona mogła pokazać pełny komunikat
+      raise exception 'poll_close_blocked:%:%', coalesce(v_chk->>'code', 'unknownType'),
+        coalesce(v_chk->'params'->>'ord', '')
+        using errcode = 'P0001';
+    end if;
+  end if;
+  return new;
+end;
 $$;
 
 
@@ -9719,6 +10186,33 @@ $$;
 
 
 --
+-- Name: questions_rules_state_stmt(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."questions_rules_state_stmt"() RETURNS "trigger"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+declare
+  v_ids uuid[];
+begin
+  if tg_op = 'INSERT' then
+    select array_agg(distinct game_id) into v_ids from new_rows;
+  elsif tg_op = 'DELETE' then
+    select array_agg(distinct game_id) into v_ids from old_rows;
+  else
+    select array_agg(distinct game_id) into v_ids
+    from (select game_id from new_rows union select game_id from old_rows) x;
+  end if;
+  if v_ids is not null then
+    perform public.games_rules_state_refresh(v_ids);
+  end if;
+  return null;
+end;
+$$;
+
+
+--
 -- Name: release_edit_lock("text", "uuid", "text"); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -11426,6 +11920,7 @@ CREATE TABLE "public"."games" (
     "source_market_id" "uuid",
     "settings" "jsonb" DEFAULT '{}'::"jsonb" NOT NULL,
     "poll_qr_lang" "text",
+    "rules_state" "jsonb",
     CONSTRAINT "games_name_len" CHECK ((("char_length"("name") >= 1) AND ("char_length"("name") <= 80))),
     CONSTRAINT "games_poll_status_ok" CHECK (((("type" = ANY (ARRAY['prepared'::"public"."game_type", 'market'::"public"."game_type"])) AND ("status" = ANY (ARRAY['draft'::"public"."game_status", 'ready'::"public"."game_status"]))) OR (("type" <> ALL (ARRAY['prepared'::"public"."game_type", 'market'::"public"."game_type"])) AND ("status" = ANY (ARRAY['draft'::"public"."game_status", 'poll_open'::"public"."game_status", 'ready'::"public"."game_status"]))))),
     CONSTRAINT "games_status_check" CHECK (("status" = ANY (ARRAY['draft'::"public"."game_status", 'poll_open'::"public"."game_status", 'ready'::"public"."game_status"]))),
@@ -13324,6 +13819,27 @@ CREATE TRIGGER "touch_game_from_questions" AFTER INSERT OR DELETE OR UPDATE ON "
 
 
 --
+-- Name: answers trg_answers_rules_state_del; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "trg_answers_rules_state_del" AFTER DELETE ON "public"."answers" REFERENCING OLD TABLE AS "old_rows" FOR EACH STATEMENT EXECUTE FUNCTION "public"."answers_rules_state_stmt"();
+
+
+--
+-- Name: answers trg_answers_rules_state_ins; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "trg_answers_rules_state_ins" AFTER INSERT ON "public"."answers" REFERENCING NEW TABLE AS "new_rows" FOR EACH STATEMENT EXECUTE FUNCTION "public"."answers_rules_state_stmt"();
+
+
+--
+-- Name: answers trg_answers_rules_state_upd; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "trg_answers_rules_state_upd" AFTER UPDATE ON "public"."answers" REFERENCING OLD TABLE AS "old_rows" NEW TABLE AS "new_rows" FOR EACH STATEMENT EXECUTE FUNCTION "public"."answers_rules_state_stmt"();
+
+
+--
 -- Name: games trg_assert_game_answers_minmax; Type: TRIGGER; Schema: public; Owner: -
 --
 
@@ -13345,10 +13861,45 @@ CREATE TRIGGER "trg_games_fill_share_keys" BEFORE INSERT ON "public"."games" FOR
 
 
 --
+-- Name: games trg_games_market_orphan_to_prepared; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "trg_games_market_orphan_to_prepared" BEFORE UPDATE OF "source_market_id" ON "public"."games" FOR EACH ROW EXECUTE FUNCTION "public"."games_market_orphan_to_prepared"();
+
+
+--
+-- Name: games trg_games_rules_state; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "trg_games_rules_state" BEFORE INSERT OR UPDATE OF "type", "status", "rules_state" ON "public"."games" FOR EACH ROW EXECUTE FUNCTION "public"."games_rules_state_row"();
+
+
+--
 -- Name: games trg_games_touch; Type: TRIGGER; Schema: public; Owner: -
 --
 
 CREATE TRIGGER "trg_games_touch" BEFORE UPDATE ON "public"."games" FOR EACH ROW EXECUTE FUNCTION "public"."touch_updated_at"();
+
+
+--
+-- Name: answers trg_guard_game_content; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "trg_guard_game_content" BEFORE INSERT OR DELETE OR UPDATE ON "public"."answers" FOR EACH ROW EXECUTE FUNCTION "public"."guard_game_content"();
+
+
+--
+-- Name: questions trg_guard_game_content; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "trg_guard_game_content" BEFORE INSERT OR DELETE OR UPDATE ON "public"."questions" FOR EACH ROW EXECUTE FUNCTION "public"."guard_game_content"();
+
+
+--
+-- Name: games trg_guard_game_poll_close; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "trg_guard_game_poll_close" BEFORE UPDATE OF "status" ON "public"."games" FOR EACH ROW EXECUTE FUNCTION "public"."guard_game_poll_close"();
 
 
 --
@@ -13405,6 +13956,27 @@ CREATE TRIGGER "trg_qb_categories_set_updated_at" BEFORE UPDATE ON "public"."qb_
 --
 
 CREATE TRIGGER "trg_qb_questions_set_updated_at" BEFORE UPDATE ON "public"."qb_questions" FOR EACH ROW EXECUTE FUNCTION "public"."set_updated_at"();
+
+
+--
+-- Name: questions trg_questions_rules_state_del; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "trg_questions_rules_state_del" AFTER DELETE ON "public"."questions" REFERENCING OLD TABLE AS "old_rows" FOR EACH STATEMENT EXECUTE FUNCTION "public"."questions_rules_state_stmt"();
+
+
+--
+-- Name: questions trg_questions_rules_state_ins; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "trg_questions_rules_state_ins" AFTER INSERT ON "public"."questions" REFERENCING NEW TABLE AS "new_rows" FOR EACH STATEMENT EXECUTE FUNCTION "public"."questions_rules_state_stmt"();
+
+
+--
+-- Name: questions trg_questions_rules_state_upd; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "trg_questions_rules_state_upd" AFTER UPDATE ON "public"."questions" REFERENCING OLD TABLE AS "old_rows" NEW TABLE AS "new_rows" FOR EACH STATEMENT EXECUTE FUNCTION "public"."questions_rules_state_stmt"();
 
 
 --
@@ -15203,5 +15775,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 7pdH58tF9cSGj1aBnFQ8rfgIEcuNs5ECdkqzAddAlTsZdcBU6t5EtE8k1jcrnLN
+\unrestrict kd2h0JOFqzf1I2D56rLW9WrRo5THSb1dZtrRBflhPf0ychtPnNtX4mPbtqrwnt0
 
