@@ -4276,7 +4276,7 @@ const uk = {
       sumTitle: "Сума балів (макс 100)",
       sumLabel: "СУМА",
       answerPlaceholder: "Відповідь…",
-      pointsPlaceholder: "(необов'язково)",
+      pointsPlaceholder: "—",
       errors: {
         maxAnswers: "Максимум 6 відповідей.",
         pointsRange: "Бали мають бути в межах 0–100 (якщо задані).",

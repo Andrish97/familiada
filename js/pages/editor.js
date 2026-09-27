@@ -545,22 +545,34 @@ async function boot() {
     selectQuestion(null);
   }
 
-  const addQuestion = once("addQuestion", async () => {
+  // Blokada podwójnego kliknięcia obejmuje tylko zapis -- kolejne "Dodaj
+  // pytanie" zaraz po pojawieniu się kafelka ma działać, nawet gdy
+  // odpowiedzi nowego pytania jeszcze się wczytują.
+  const insertQuestion = once("addQuestion", async () => {
     try {
       const ord = questions.reduce((m, q) => Math.max(m, Number(q.ord) || 0), 0) + 1;
       const q = await createQuestion(gameId, ord);
       questions.push(q);
       renderQuestions();
-      await selectQuestion(q.id);
-      // domyślna treść zaznaczona -- od razu można pisać własną
-      qText?.focus();
-      qText?.select();
-      setMsg(MSG.questionAdded());
+      return q;
     } catch (e) {
       console.error(e);
       setMsg(ruleBlocked(e) || MSG.addQuestionError());
+      return null;
     }
   });
+
+  async function addQuestion() {
+    const q = await insertQuestion();
+    if (!q) return;
+    setMsg(MSG.questionAdded());
+    await selectQuestion(q.id);
+    // domyślna treść zaznaczona -- od razu można pisać własną
+    if (activeQId === q.id) {
+      qText?.focus();
+      qText?.select();
+    }
+  }
 
   const deleteQuestion = once("deleteQuestion", async (qId) => {
     const ok = await confirmModal({ text: MSG.deleteQuestionConfirm() });

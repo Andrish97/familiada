@@ -1422,8 +1422,10 @@ tr.row .tag-dot[data-tip]::before {
     gap: 10px
 }
 
+/* 6 odpowiedzi + kafelek bez przewijania na zwykłym ekranie; na niskim
+   przewija się sama lista, "Zapisz" zostaje widoczne */
 .qAnswersBlock .qf-listShell {
-    max-height: 340px
+    max-height: min(540px, 48vh)
 }
 
 /* Tooltipy kropek: gdy hover na kropce, podnieś wiersz ponad sticky header */

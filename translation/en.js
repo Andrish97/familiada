@@ -4292,7 +4292,7 @@ const en = {
       sumTitle: "Points sum (max 100)",
       sumLabel: "SUM",
       answerPlaceholder: "Answer…",
-      pointsPlaceholder: "(optional)",
+      pointsPlaceholder: "—",
       errors: {
         maxAnswers: "Max 6 answers.",
         pointsRange: "Points must be between 0–100 (if set).",

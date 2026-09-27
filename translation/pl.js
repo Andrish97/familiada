@@ -4166,7 +4166,7 @@ const pl = {
       sumTitle: "Suma punktów (max 100)",
       sumLabel: "SUMA",
       answerPlaceholder: "Odpowiedź…",
-      pointsPlaceholder: "(opcjonalnie)",
+      pointsPlaceholder: "—",
       errors: {
         maxAnswers: "Max 6 odpowiedzi.",
         pointsRange: "Punkty muszą być w zakresie 0–100 (jeśli wpisane).",
