@@ -69,5 +69,12 @@ zbugowane. Audytujemy je po kolei, jedna strona na raz. Zrobione:
 Testy: `tests/e2e/games.spec.js`. Migracja 272: `game_reset_poll_for_edit`
 (atomowy reset ankiety, wspólny dla games.js i editor.js) oraz zamiana
 osieroconych kopii gier ze Społeczności (`type='market'`,
-`source_market_id` NULL) na grę preparowaną. Komunikaty
-`js/core/game-validate.js` przetłumaczone (`gameValidate.*`).
+`source_market_id` NULL) na grę preparowaną.
+
+Migracja 273: `game_validate(p_game_id)` — jedyne miejsce z regułami „czy
+wolno edytować / grać / wejść w ankietę / otworzyć / zamknąć ankietę /
+eksportować”. Zwraca dla każdej akcji `{ok, code, params}`, strona tłumaczy
+`gameValidate.<code>`. Używają go games, editor, polls, polls-hub i control
+(`validateGame()` w `js/core/game-validate.js`); lokalne kopie reguł w
+polls.js i stare funkcje JS usunięte. `game_action_state` zostaje w bazie
+tylko dla starych wersji strony z cache.

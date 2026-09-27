@@ -5,6 +5,7 @@ const en = {
     icon: "lang-en",
   },
   common: {
+    genericError: "Something went wrong.",
     manualLabel: "Help",
     contactBtn: "Contact",
     modalBack: "Back",
@@ -796,22 +797,6 @@ const en = {
       pollPoints:
         "Mode: points. Start: ≥ {min} questions and each question has {minAns}–{maxAns} answers. Close: each question needs at least 3 answers with ≥ 3 points after normalization to 100.",
       prepared: "Prepared game has no poll.",
-    },
-    validation: {
-      openOnlyDraft: "You can start a poll only from DRAFT.",
-      noGame: "No game selected.",
-      preparedNoPoll: "Prepared game has no poll.",
-      minQuestions: "To start: number of questions must be ≥ {min} (you have {count}).",
-      pointsRange: "In POINTS mode each question must have {min}–{max} answers.",
-      reopenOnlyClosed: "Reopen is possible only when the poll is CLOSED.",
-      closeOnlyOpen: "You can close the poll only when it's OPEN.",
-      closeWaitForTasks: "You can't close yet — someone still hasn't voted (X≠Y).",
-      noActiveSession: "No active voting session.",
-      noActiveSessionGeneric: "No active session.",
-      closeMinPoints:
-        "To close: each question must have at least 3 answers with ≥ 3 points after normalization.",
-      closeMinTextAnswers: "To close: each question must have ≥ 3 distinct answers.",
-      unknownType: "Unknown game type.",
     },
     copy: {
       success: "Poll link copied.",
@@ -2775,6 +2760,14 @@ const en = {
     negativePoints: "Question #{ord}: points cannot be negative.",
     answerOver100: "Question #{ord}: an answer cannot have more than 100 points.",
     sumTooBig: "Question #{ord}: points cannot add up to more than {max} (currently {sum}).",
+    closeOnlyOpen: "You can close the poll only while it is open.",
+    closeWaitForTasks: "You can't close yet — someone you invited hasn't voted.",
+    noSession: "Question #{ord}: no poll session — start the poll again.",
+    closeMinPoints: "Question #{ord}: to close, at least 3 answers need ≥ 3 points after counting the votes.",
+    closeMinText: "Question #{ord}: to close, at least 3 different answers are needed.",
+    unknownType: "Unknown game type.",
+    marketNoEdit: "Community games can't be edited.",
+    pollOpenNoExport: "A game with an open poll can't be exported.",
   },
   gamesImportExport: {
     defaults: {

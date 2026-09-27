@@ -2,7 +2,7 @@ import { sb, SUPABASE_URL } from "../core/supabase.js?v=v2026-09-26T16124";
 import { updateChecked } from "../core/db-guard.js?v=v2026-09-26T16124";
 import { requireAuth } from "../core/auth.js?v=v2026-09-26T16124";
 import { isGuestUser, showGuestBlockedOverlay } from "../core/guest-mode.js?v=v2026-09-26T16124";
-import { validatePollReadyToOpen } from "../core/game-validate.js?v=v2026-09-26T16124";
+import { validateGame } from "../core/game-validate.js?v=v2026-09-26T16124";
 import { alertModal, confirmModal } from "../core/modal.js?v=v2026-09-26T16124";
 import { initUiSelect } from "../core/ui-select.js?v=v2026-09-26T16124";
 import { initI18n, t, getUiLang } from "../../translation/translation.js?v=v2026-09-26T16124";
@@ -1037,7 +1037,7 @@ async function refreshData() {
         .filter((p) => p.poll_state === "draft")
         .map(async (poll) => {
           try {
-            const ready = await validatePollReadyToOpen(poll.game_id);
+            const ready = (await validateGame(poll.game_id)).poll_open;
             pollReadyMap.set(poll.game_id, !!ready?.ok);
           } catch {
             pollReadyMap.set(poll.game_id, false);

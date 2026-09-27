@@ -615,7 +615,7 @@ test("edytor: Warstwa 2 — zapis pytania usuniętego z pominięciem blokady ko�
 });
 
 /* ================= Q: dwie karty — otwarcie ankiety w B nie blokuje edycji w A ================= */
-// canEnterEdit() sprawdzany jest RAZ w boot() — żadna kolejna akcja (blur na
+// Uprawnienie do edycji (game_validate().edit) sprawdzane jest RAZ w boot() — żadna kolejna akcja (blur na
 // polu) nie re-waliduje aktualnego game.status. Otwarcie ankiety w drugiej
 // karcie (czyli realnie: przez inną osobę/urządzenie) NIE blokuje dalszej
 // edycji pytań w karcie, która była otwarta wcześniej jako draft.

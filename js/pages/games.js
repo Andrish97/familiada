@@ -25,10 +25,7 @@ import {
   TYPES,
   STATUS,
   loadGameBasic,
-  canEnterEdit,
-  validateGameReadyToPlay,
-  validatePollEntry,
-  validatePollReadyToOpen,
+  validateGame,
 } from "../core/game-validate.js?v=v2026-09-26T16124";
 import { deleteGameSoundsFolder } from "../core/sfx-cloud.js?v=v2026-09-26T16124";
 import { isResourceBusy } from "../core/resource-lock.js?v=v2026-09-26T16124";
@@ -242,7 +239,7 @@ function stopAutoRefresh() {
 let activeTab = TYPES.PREPARED;
 
 const actionStateCache = new Map();
-// gameId -> { rev: string, res: { canEdit, canPlay, canPoll, canExport, needsResetWarning } }
+// gameId -> { rev: string, res: wynik validateGame() }
 
 /* ================= UI helpers ================= */
 function show(el, on) {
@@ -1026,90 +1023,61 @@ async function loadMarketGames() {
 
 /* ================= Button logic ================= */
 
-function normalizeGameForValidate(g) {
-  if (!g) return g;
-  const type = uiTypeFromRow(g); // mapuje fixed->prepared, poll->poll_text/poll_points
-  return { ...g, type };
-}
-
-async function fetchActionState(gameId, revHint) {
-  // Cache hit tylko gdy znamy rev i się zgadza
+// Stan przycisków = game_validate z bazy (jedno RPC, reguły tylko tam).
+// Cache po rev (games.updated_at, dotykane też przez zmiany pytań/odpowiedzi).
+async function fetchValidation(gameId, revHint) {
   if (revHint) {
     const c = actionStateCache.get(gameId);
     if (c && String(c.rev) === String(revHint)) return c.res;
   }
-
-  const { data, error } = await sb()
-    .rpc("game_action_state", { p_game_id: gameId })
-    .single();
-
-  if (error) throw error;
-  const res = {
-    canEdit: true, // finalnie i tak liczysz canEnterEdit() w UI, ale tu trzymamy "stan przycisku"
-    needsResetWarning: !!data?.needs_reset_warning,
-    canPlay: !!data?.can_play,
-    canPoll: !!data?.can_poll,
-    canExport: !!data?.can_export,
-    reasonPlay: data?.reason_play || "",
-    reasonPoll: data?.reason_poll || "",
-    rev: String(data?.rev || "")
-  };
-
-
-  actionStateCache.set(gameId, { rev: res.rev, res });
+  const res = await validateGame(gameId);
+  actionStateCache.set(gameId, { rev: String(res.game?.rev || ""), res });
   return res;
+}
+
+// Wyłączony przycisk mówi w podpowiedzi, czego brakuje (tekst z bazy).
+function setButtonReasons(v) {
+  const pairs = [[btnEdit, v?.edit], [btnPlay, v?.play], [btnPoll, v?.poll_entry], [btnExport, v?.export], [btnExportBase, v?.export]];
+  for (const [btn, a] of pairs) {
+    if (!btn) continue;
+    if (a && !a.ok && a.reason) btn.title = a.reason;
+    else btn.removeAttribute("title");
+  }
 }
 
 async function updateActionState() {
   // market tab: buttons controlled by renderMarket directly
-  if (activeTab === TYPES.MARKET) return;
+  if (activeTab === TYPES.MARKET) {
+    setButtonReasons(null);
+    return;
+  }
 
   const sel = gamesAll.find(g => g.id === selectedId) || null;
   if (!sel) {
     setButtonsState({ hasSel: false, canEdit: false, canPlay: false, canPoll: false, canExport: false });
+    setButtonReasons(null);
     return;
   }
 
-  // 1) Spróbuj z cache natychmiast (jeśli rev się zgadza)
-  const revHint = sel.updated_at ? String(sel.updated_at) : "";
-  const cached = actionStateCache.get(sel.id);
-  if (cached && revHint && String(cached.rev) === revHint) {
-
-    const edit = canEnterEdit(normalizeGameForValidate(sel));
-    const canEdit = !!edit.ok;
-
-    setButtonsState({
-      hasSel: true,
-      canEdit,
-      canPlay: !!cached.res.canPlay,
-      canPoll: !!cached.res.canPoll,
-      canExport: !!cached.res.canExport
-    });
-    return;
-  }
-
-  // 2) Jedno RPC (szybkie)
   try {
-    const st = await fetchActionState(sel.id, revHint);
+    const v = await fetchValidation(sel.id, sel.updated_at ? String(sel.updated_at) : "");
     // Szybkie klikanie A -> B: odpowiedź dla A mogła przyjść po B i
     // ustawić przyciski według złej gry.
     if (selectedId !== sel.id || activeTab === TYPES.MARKET) return;
 
-    // canEdit zostaje wg Twojej logiki JS (bo masz dokładniejsze komunikaty / warningi)
-    const edit = canEnterEdit(normalizeGameForValidate(sel));
-    const canEdit = !!edit.ok;
-
     setButtonsState({
       hasSel: true,
-      canEdit,
-      canPlay: !!st.canPlay,
-      canPoll: !!st.canPoll,
-      canExport: !!st.canExport
+      canEdit: v.edit.ok,
+      canPlay: v.play.ok,
+      canPoll: v.poll_entry.ok,
+      canExport: v.export.ok,
     });
+    setButtonReasons(v);
   } catch (e) {
-    console.error("[games] game_action_state error:", e);
+    console.error("[games] game_validate error:", e);
     if (selectedId !== sel.id || activeTab === TYPES.MARKET) return;
     setButtonsState({ hasSel: true, canEdit: false, canPlay: false, canPoll: false, canExport: false });
+    setButtonReasons(null);
   }
 }
 
@@ -1526,13 +1494,20 @@ document.addEventListener("DOMContentLoaded", async () => {
     const g = gamesAll.find(x => x.id === selectedId);
     if (!g) return;
 
-    const info = canEnterEdit(normalizeGameForValidate(g));
+    let info;
+    try {
+      info = (await validateGame(g.id)).edit;
+    } catch (e) {
+      console.error("[games] game_validate error:", e);
+      void alertModal({ text: MSG.alertCheckFailed() });
+      return;
+    }
     if (!info.ok) {
       void alertModal({ text: info.reason });
       return;
     }
 
-    if (info.needsResetWarning) {
+    if (info.needsReset) {
       const ok = await confirmModal({
         title: t("games.editAfterPoll.title"),
         text: t("games.editAfterPoll.text"),
@@ -1590,7 +1565,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (!selectedId) return;
 
     try {
-      const chk = await validateGameReadyToPlay(selectedId);
+      const chk = (await validateGame(selectedId)).play;
       if (!chk.ok) {
         void alertModal({ text: chk.reason });
         return;
@@ -1607,20 +1582,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (!selectedId) return;
 
     try {
-      const g = await loadGameBasic(selectedId);
-
-      const entry = await validatePollEntry(selectedId);
+      // szkic: treść musi wystarczać do uruchomienia; otwarta/zamknięta: wejście zawsze
+      const entry = (await validateGame(selectedId)).poll_entry;
       if (!entry.ok) {
         void alertModal({ text: entry.reason });
         return;
-      }
-
-      if (g.status !== STATUS.POLL_OPEN && g.status !== STATUS.READY) {
-        const chk = await validatePollReadyToOpen(selectedId);
-        if (!chk.ok) {
-          void alertModal({ text: chk.reason });
-          return;
-        }
       }
 
       location.href = `polls?id=${encodeURIComponent(selectedId)}&from=games`;
@@ -1921,6 +1887,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   // więc applyTranslations() jej nie obejmuje -- po zmianie języka rysujemy
   // ją od nowa (bez tego zostawała w starym języku do auto-odświeżenia).
   window.addEventListener("i18n:lang", () => {
+    actionStateCache.clear(); // podpowiedzi przycisków są już przetłumaczone
     render();
     void updateActionState();
   });

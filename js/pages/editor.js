@@ -3,7 +3,7 @@ import { sb } from "../core/supabase.js?v=v2026-09-26T16124";
 import { requireAuth } from "../core/auth.js?v=v2026-09-26T16124";
 import { alertModal, confirmModal } from "../core/modal.js?v=v2026-09-26T16124";
 import { parseQaText, clip as clipN } from "../core/text-import.js?v=v2026-09-26T16124";
-import { canEnterEdit, RULES as GV_RULES, TYPES } from "../core/game-validate.js?v=v2026-09-26T16124";
+import { validateGame, RULES as GV_RULES, TYPES } from "../core/game-validate.js?v=v2026-09-26T16124";
 import { guardResourceLock } from "../core/resource-lock.js?v=v2026-09-26T16124";
 import { updateChecked, ROW_GONE } from "../core/db-guard.js?v=v2026-09-26T16124";
 import { initI18n, t, withLangParam } from "../../translation/translation.js?v=v2026-09-26T16124";
@@ -529,14 +529,20 @@ async function boot() {
   let game = await loadGame(gameId);
   let cfg = cfgFromGameType(game.type);
 
-  const editInfo = canEnterEdit(game);
+  // czy wolno edytować (i czy trzeba zresetować zamkniętą ankietę) -- baza
+  let editInfo = null;
+  try {
+    editInfo = (await validateGame(gameId)).edit;
+  } catch (e) {
+    console.error("[editor] game_validate error:", e);
+  }
   if (!editInfo?.ok) {
     void alertModal({ text: editInfo?.reason || MSG.cannotEdit() });
     location.href = withLangParam("games");
     return;
   }
 
-  if (editInfo.needsResetWarning) {
+  if (editInfo.needsReset) {
     const ok = await confirmModal({ text: MSG.resetPollConfirm() });
     if (!ok) {
       location.href = withLangParam("games");

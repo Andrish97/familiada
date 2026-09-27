@@ -488,3 +488,69 @@ test.describe("games: audyt -- migracja 272", () => {
     }
   });
 });
+
+/* ================= 6) Walidacja gry w bazie (migracja 273: game_validate) ================= */
+
+test.describe("games: audyt -- game_validate", () => {
+
+  test("kody game_validate dla typowych stanów gry", async ({ page, context }) => {
+    test.setTimeout(90_000);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    const stamp = Date.now();
+    const names = [`E2E-GM-GV1-${stamp}`, `E2E-GM-GV2-${stamp}`, `E2E-GM-GV3-${stamp}`];
+    try {
+      const res = await page.evaluate(async (names) => {
+        const sb = window.__sbClient;
+        const { data: u } = await sb.auth.getUser();
+        const mk = async (name, type, qn, pts) => {
+          const { data: g, error } = await sb.from("games").insert({ name, owner_id: u.user.id, type, status: "draft" }).select("id").single();
+          if (error) throw new Error(error.message);
+          const { data: qs } = await sb.from("questions").insert(Array.from({ length: qn }, (_, i) => ({ game_id: g.id, ord: i + 1, text: `P${i + 1}?` }))).select("id");
+          const rows = qs.flatMap((q) => pts.map((p, j) => ({ question_id: q.id, ord: j + 1, text: `O${j + 1}`, fixed_points: p })));
+          if (rows.length) await sb.from("answers").insert(rows);
+          return g.id;
+        };
+        const v = async (id) => (await sb.rpc("game_validate", { p_game_id: id })).data;
+        const sum = await v(await mk(names[0], "prepared", 10, [50, 40, 20]));
+        const pp = await v(await mk(names[1], "poll_points", 10, [0, 0]));
+        const ptId = await mk(names[2], "poll_text", 10, []);
+        await sb.from("games").update({ status: "poll_open" }).eq("id", ptId);
+        const pt = await v(ptId);
+        const missing = await v("00000000-0000-0000-0000-000000000000");
+        return { sum, pp, pt, missing };
+      }, names);
+
+      expect(res.sum.play).toEqual({ ok: false, code: "sumTooBig", params: { ord: 1, max: 100, sum: 110 } });
+      expect(res.sum.edit).toMatchObject({ ok: true, needs_reset: false });
+      expect(res.pp.poll_open).toMatchObject({ ok: false, code: "answersRange", params: { ord: 1, n: 2 } });
+      expect(res.pp.play).toMatchObject({ ok: false, code: "playAfterPoll" });
+      expect(res.pt.edit).toMatchObject({ ok: false, code: "pollOpenNoEdit" });
+      expect(res.pt.poll_close).toMatchObject({ ok: false, code: "noSession", params: { ord: 1 } });
+      expect(res.pt.export).toMatchObject({ ok: false });
+      expect(res.missing).toMatchObject({ ok: false, error: "not_found" });
+    } finally {
+      for (const n of names) await deleteGamesByName(page, n);
+    }
+  });
+
+  test("wyłączony 'Graj' podpowiada powód z bazy, w wybranym języku", async ({ page, context }) => {
+    test.setTimeout(90_000);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    const name = `E2E-GM-GVUI-${Date.now()}`;
+    try {
+      await seedPreparedGame(page, name, { questions: 9 });
+      await openGames(page, "?lang=pl");
+      await tileByName(page, name).click();
+      await expect(page.locator("#btnPreview")).toBeEnabled();
+      await expect(page.locator("#btnPlay")).toBeDisabled();
+      await expect(page.locator("#btnPlay")).toHaveAttribute("title", /10.*9/, { timeout: 10000 });
+      await expect(page.locator("#btnPlay")).toHaveAttribute("title", /pytań/);
+
+      await page.locator(".lang-btn").click();
+      await page.locator('.lang-option[data-lang="en"]').click();
+      await expect(page.locator("#btnPlay")).toHaveAttribute("title", /questions/, { timeout: 10000 });
+    } finally {
+      await deleteGamesByName(page, name);
+    }
+  });
+});
