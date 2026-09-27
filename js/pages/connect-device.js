@@ -372,7 +372,14 @@ async function startQrScan() {
       : withLangParam("index");
   });
 
-  btnManual?.addEventListener("click", () => { location.href = buildManualUrl(); });
+  if (isLoggedIn && !guestMode) {
+    if (btnBack) btnBack.textContent = t("connectDevice.topbar.back") || "Moje gry";
+    if (btnManual) btnManual.style.display = "";
+    btnManual?.addEventListener("click", () => { location.href = buildManualUrl(); });
+  } else {
+    if (btnBack) btnBack.textContent = t("common.backToHome") || "Strona główna";
+    if (btnManual) btnManual.style.display = "none";
+  }
 
   if (pageHint) pageHint.textContent = _isMobile
     ? (t("connectDevice.header.hintMobile") || "Podłącz się jako prowadzący lub buzzer, albo zeskanuj QR z panelu sterowania.")
