@@ -1139,20 +1139,20 @@ document.addEventListener("DOMContentLoaded", async () => {
   btnDetails?.addEventListener("click", openDetailsModal);
   btnDetailsMobile?.addEventListener("click", openDetailsModal);
   btnShareSave?.addEventListener("click", saveShareModal);
-  btnShareClose?.addEventListener("click", () => { closeShareModal(); refreshData(); });
-  btnDetailsClose?.addEventListener("click", () => { closeDetailsModal(); refreshData(); });
+  btnShareClose?.addEventListener("click", async () => { closeShareModal(); await refreshData(); });
+  btnDetailsClose?.addEventListener("click", async () => { closeDetailsModal(); await refreshData(); });
 
-  shareOverlay?.addEventListener("click", (e) => {
+  shareOverlay?.addEventListener("click", async (e) => {
     if (e.target !== shareOverlay) return;
     if (isSheetViewport()) return; // sheet mode (mobile): tylko widoczny przycisk zamyka
     closeShareModal();
-    refreshData();
+    await refreshData();
   });
-  detailsOverlay?.addEventListener("click", (e) => {
+  detailsOverlay?.addEventListener("click", async (e) => {
     if (e.target !== detailsOverlay) return;
     if (isSheetViewport()) return; // sheet mode (mobile): tylko widoczny przycisk zamyka
     closeDetailsModal();
-    refreshData();
+    await refreshData();
   });
 
   // po zamknięciu dowolnego confirm/alert w aplikacji — odśwież listy
