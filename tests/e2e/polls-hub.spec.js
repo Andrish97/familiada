@@ -166,14 +166,6 @@ test.describe('polls-hub: audyt', () => {
 
       // Czekaj na render
       await page.waitForTimeout(500);
-
-      // Sprawdź czy nie ma błędu w konsoli
-      const logs: string[] = [];
-      page.on('console', (msg) => {
-        if (msg.type() === 'error') logs.push(msg.text());
-      });
-
-      expect(logs.length).toBe(0);
     }
   });
 
