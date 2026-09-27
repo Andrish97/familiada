@@ -7,10 +7,10 @@
 //   imageData – data: URI (demo / import pliku .famlogo z osadzonym obrazem)
 // Nowy plik z dysku trafia do Storage dopiero przy zapisie.
 
-import { alertModal } from "../../js/core/modal.js?v=v2026-09-27T04544";
-import { t } from "../../translation/translation.js?v=v2026-09-27T04544";
-import { sb } from "../../js/core/supabase.js?v=v2026-09-27T04544";
-import { DOT_W, DOT_H, TYPE_PIX, PIX_FORMAT, packBits, unpackBits, renderBitsToCanvas } from "./render.js?v=v2026-09-27T04544";
+import { alertModal } from "../../js/core/modal.js?v=v2026-09-27T16105";
+import { t } from "../../translation/translation.js?v=v2026-09-27T16105";
+import { sb } from "../../js/core/supabase.js?v=v2026-09-27T16105";
+import { DOT_W, DOT_H, TYPE_PIX, PIX_FORMAT, packBits, unpackBits, renderBitsToCanvas } from "./render.js?v=v2026-09-27T16105";
 
 const ASPECT = 26 / 11;
 const BUCKET = "user-logos";
