@@ -5,6 +5,7 @@ const en = {
     icon: "lang-en",
   },
   common: {
+    genericError: "Something went wrong.",
     manualLabel: "Help",
     contactBtn: "Contact",
     modalBack: "Back",
@@ -796,22 +797,6 @@ const en = {
       pollPoints:
         "Mode: points. Start: ≥ {min} questions and each question has {minAns}–{maxAns} answers. Close: each question needs at least 3 answers with ≥ 3 points after normalization to 100.",
       prepared: "Prepared game has no poll.",
-    },
-    validation: {
-      openOnlyDraft: "You can start a poll only from DRAFT.",
-      noGame: "No game selected.",
-      preparedNoPoll: "Prepared game has no poll.",
-      minQuestions: "To start: number of questions must be ≥ {min} (you have {count}).",
-      pointsRange: "In POINTS mode each question must have {min}–{max} answers.",
-      reopenOnlyClosed: "Reopen is possible only when the poll is CLOSED.",
-      closeOnlyOpen: "You can close the poll only when it's OPEN.",
-      closeWaitForTasks: "You can't close yet — someone still hasn't voted (X≠Y).",
-      noActiveSession: "No active voting session.",
-      noActiveSessionGeneric: "No active session.",
-      closeMinPoints:
-        "To close: each question must have at least 3 answers with ≥ 3 points after normalization.",
-      closeMinTextAnswers: "To close: each question must have ≥ 3 distinct answers.",
-      unknownType: "Unknown game type.",
     },
     copy: {
       success: "Poll link copied.",
@@ -2764,6 +2749,27 @@ const en = {
       validMessage: "Message must be between 5 and 5000 characters.",
     },
   },
+  gameValidate: {
+    lockedTitle: "Editing locked",
+    noGame: "Game not found.",
+    pollOpenNoEdit: "The poll is open — editing is locked.",
+    preparedNoPoll: "A prepared game has no poll.",
+    pollAlreadyOpen: "The poll is already open.",
+    minQuestions: "The game needs at least {min} questions (you have {n}).",
+    answersRange: "Question #{ord}: needs {min}–{max} answers (it has {n}).",
+    playAfterPoll: "The game will be playable once the poll is closed.",
+    negativePoints: "Question #{ord}: points cannot be negative.",
+    answerOver100: "Question #{ord}: an answer cannot have more than 100 points.",
+    sumTooBig: "Question #{ord}: points cannot add up to more than {max} (currently {sum}).",
+    closeOnlyOpen: "You can close the poll only while it is open.",
+    closeWaitForTasks: "You can't close yet — someone you invited hasn't voted.",
+    noSession: "Question #{ord}: no poll session — start the poll again.",
+    closeMinPoints: "Question #{ord}: to close, at least 3 answers need ≥ 3 points after counting the votes.",
+    closeMinText: "Question #{ord}: to close, at least 3 different answers are needed.",
+    unknownType: "Unknown game type.",
+    marketNoEdit: "Community games can't be edited.",
+    pollOpenNoExport: "A game with an open poll can't be exported.",
+  },
   gamesImportExport: {
     defaults: {
       gameName: "Game",
@@ -2788,6 +2794,7 @@ const en = {
       marketplace: "Community Games",
       connectDevice: "Connect device",
       account: "Account settings",
+      more: "More",
     },
     header: {
       title: "Your games",
@@ -2907,6 +2914,7 @@ const en = {
       subCreate: "Enter a game name.",
       placeholder: "Name...",
       failed: "Rename failed.",
+      empty: "Enter a name.",
     },
     common: {
       save: "Save",
@@ -2946,6 +2954,7 @@ const en = {
       resetPollFailed: "Failed to reset poll status.",
       checkFailed: "Failed to check game status.",
       openPollFailed: "Failed to open poll.",
+      loadFailed: "Failed to load your games. Check your connection and refresh the page.",
     },
     hint: {
       select: "Select a game to enable actions. Double-tap to rename.",
@@ -2963,6 +2972,10 @@ const en = {
       hint: "Select a game to enable actions.",
       typeLabel: "Community",
       removeFromLibrary: "Remove from library",
+      removeTitle: "Remove from library?",
+      removeText: "“{name}” will be removed from your library together with its settings. You can add it again from the Community later.",
+      removeOk: "Remove",
+      removeFailed: "Failed to remove the game from your library.",
     },
     gameFallback: "Untitled",
   },

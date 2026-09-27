@@ -2,7 +2,7 @@
 
 Strony powstawały „w czacie tekstowym GPT” — są nieczytelne i często
 zbugowane. Audytujemy je po kolei, jedna strona na raz. Zrobione:
-**logo-editor**, **bases** (2026-09-26). Następna: **games**.
+**logo-editor**, **bases**, **games** (2026-09-26). Następna: do ustalenia.
 
 ## Kroki
 
@@ -55,6 +55,51 @@ zbugowane. Audytujemy je po kolei, jedna strona na raz. Zrobione:
   odwrotnie); import nieatomowy bez sprzątania po błędzie.
 - Style z innej strony (np. `polls-hub.css`), które nie są ładowane.
 
-## Games — sugestie użytkownika na start
+- RPC zwracające mniej, niż zakłada kod (games: `market_my_library` bez
+  `payload` → podgląd zawsze „Brak pytań”).
+- Regex `\w` w nazwach plików — to tylko ASCII, gubi polskie/ukraińskie litery.
+- Spóźnione odpowiedzi async (szybkie klikanie A → B) nadpisujące stan B.
+- Treść składana w JS nie tłumaczy się po zmianie języka — potrzebny
+  listener `i18n:lang` z ponownym `render()`.
+- Kilka zależnych zapisów z przeglądarki (reset, import) → jedno RPC albo
+  sprzątanie po błędzie.
 
-- (uzupełniane przez użytkownika)
+## Games — zrobione (2026-09-26)
+
+Testy: `tests/e2e/games.spec.js`. Migracja 272: `game_reset_poll_for_edit`
+(atomowy reset ankiety, wspólny dla games.js i editor.js) oraz zamiana
+osieroconych kopii gier ze Społeczności (`type='market'`,
+`source_market_id` NULL) na grę preparowaną.
+
+Migracja 273: `game_validate(p_game_id)` — jedyne miejsce z regułami „czy
+wolno edytować / grać / wejść w ankietę / otworzyć / zamknąć ankietę /
+eksportować”. Zwraca dla każdej akcji `{ok, code, params}`, strona tłumaczy
+`gameValidate.<code>`. Używają go games, editor, polls, polls-hub i control
+(`validateGame()` w `js/core/game-validate.js`); lokalne kopie reguł w
+polls.js i stare funkcje JS usunięte. `game_action_state` zostaje w bazie
+tylko dla starych wersji strony z cache.
+
+Migracja 274 — Warstwa 2 (jak przy blokadach użycia): baza sama odrzuca
+zapis łamiący reguły, nawet gdy strona go przepuści. Zapis pytań/odpowiedzi
+wprost z przeglądarki przy otwartej ankiecie lub w kopii ze Społeczności →
+`game_content_locked:<powód>`; zmiana statusu poll_open → ready bez
+spełnionych warunków (`game_poll_close_check`, te same co
+`game_validate().poll_close`) → `poll_close_blocked:<kod>:<nr pytania>`.
+Funkcje SECURITY DEFINER (zamykanie, reset, biblioteka) przechodzą.
+`gameRuleErrorMessage(e)` tłumaczy te błędy (edytor, ankiety). Bez
+Warstwy 2 zostają: „graj” (control nie zapisuje nic jednorazowego przy
+starcie — stan gry to wiele zapisów `game_state_write`) i ręczne ustawianie
+statusu z pominięciem ankiety (testy tak przygotowują dane).
+
+Migracja 275 — `games.rules_state`: zapisany wynik `game_rules_compute`
+(to samo co `game_validate` bez zamknięcia ankiety, które zależy od głosów).
+Aktualizują go triggery: BEFORE INSERT/UPDATE OF type, status, rules_state
+na `games` (stan dla nowego statusu; ręczny zapis klienta nadpisany) oraz
+AFTER … FOR EACH STATEMENT z tabelami przejść na `questions`/`answers`
+(jedno przeliczenie na grę na polecenie — import 60 odpowiedzi = 1).
+Przeliczenie istniejących gier z wyłączonym `trg_games_touch` (bez zmiany
+`updated_at`). Lista gier bierze stan razem z grami: przyciski bez
+dodatkowych zapytań, kafelek pokazuje, co blokuje następny krok
+(`tileBlocker`), hub ankiet czyta `rules_state` zamiast pytać o każdą grę.
+Edytor przy odrzuconym zapisie (274) pokazuje ten sam overlay co blokada
+zasobu (`showBlockingOverlay` z resource-lock.js, bez wpisu w edit_locks).

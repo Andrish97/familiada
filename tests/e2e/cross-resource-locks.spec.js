@@ -565,7 +565,7 @@ test("games.js: reset gry do draftu po ankiecie zablokowany alert-modalem, gdy g
     await expect(page.locator("#btnEdit")).toBeEnabled({ timeout: 10000 });
     await page.locator("#btnEdit").click();
 
-    // canEnterEdit() zwraca needsResetWarning dla poll_text/ready -- najpierw
+    // game_validate().edit ma needs_reset dla poll_text/ready -- najpierw
     // confirmModal "na pewno zresetować", dopiero potem (po OK) trafiamy w
     // sprawdzenie busy wewnątrz resetPollForEditing().
     await expect(page.locator(".uni-modal .mSub")).toBeVisible({ timeout: 10000 });

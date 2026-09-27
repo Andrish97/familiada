@@ -614,12 +614,13 @@ test("edytor: Warstwa 2 — zapis pytania usuniętego z pominięciem blokady ko�
   }
 });
 
-/* ================= Q: dwie karty — otwarcie ankiety w B nie blokuje edycji w A ================= */
-// canEnterEdit() sprawdzany jest RAZ w boot() — żadna kolejna akcja (blur na
-// polu) nie re-waliduje aktualnego game.status. Otwarcie ankiety w drugiej
-// karcie (czyli realnie: przez inną osobę/urządzenie) NIE blokuje dalszej
-// edycji pytań w karcie, która była otwarta wcześniej jako draft.
-test("edytor: dwie karty — otwarcie ankiety w karcie B nie blokuje dalszej edycji w karcie A", async ({ page, context }) => {
+/* ================= Q: dwie karty — otwarcie ankiety w B blokuje zapis w A (Warstwa 2) ================= */
+// Uprawnienie do edycji (game_validate().edit, Warstwa 1) sprawdzane jest RAZ
+// w boot() — edytor otwarty wcześniej jako szkic nie wie, że ankietę właśnie
+// otwarto w innej karcie/urządzeniu. Dawniej zapisywał dalej (luka "Warstwa 2
+// zero" z docs/plan-testy-i-poprawki.md); od migracji 274 baza sama odrzuca
+// zapis treści gry z otwartą ankietą, a edytor pokazuje overlay z powodem.
+test("edytor: dwie karty — otwarcie ankiety w karcie B blokuje zapis w karcie A (baza odrzuca)", async ({ page, context }) => {
   test.setTimeout(60_000);
   await loginAsTestUser(page, context);
 
@@ -647,17 +648,18 @@ test("edytor: dwie karty — otwarcie ankiety w karcie B nie blokuje dalszej edy
     const gameAfter = await getGameRow(pageB, gameId);
     expect(gameAfter.status, "sanity: ankieta faktycznie otwarta w tle").toBe("poll_open");
 
-    // Karta A dalej "myśli", że jest draft — edytuje bez żadnego ostrzeżenia
-    // (tekst musi mieścić się w limicie 17 znaków pola odpowiedzi — inaczej
-    // sam zostanie ucięty przez app, co nie ma nic wspólnego z tym, co ten
-    // test sprawdza).
+    // Karta A dalej "myśli", że jest draft — próbuje zapisać (tekst mieści
+    // się w limicie 17 znaków pola odpowiedzi).
+    const before = (await getAnswersRows(pageA, firstQId))[0].text;
     await expect(aRow(pageA, 0).locator(".aText")).toBeVisible({ timeout: 10000 });
     await aRow(pageA, 0).locator(".aText").fill("Zmieniona w A!");
     await aRow(pageA, 0).locator(".aText").blur();
-    await expect(pageA.locator("#msg")).toHaveText("Zapisano.", { timeout: 10000 });
+    // ten sam pełnoekranowy overlay co blokada zasobu, z powodem z bazy
+    await expect(pageA.locator("#resourceLockGuard")).toBeVisible({ timeout: 10000 });
+    await expect(pageA.locator("#resourceLockGuardMsg")).toContainText("Ankieta jest otwarta");
 
     const answers = await getAnswersRows(pageA, firstQId);
-    expect(answers[0].text, "edycja w A powinna się realnie zapisać mimo otwartej w B ankiety — brak re-walidacji stanu per-akcja").toBe("Zmieniona w A!");
+    expect(answers[0].text, "baza musi odrzucić zapis treści gry z otwartą ankietą").toBe(before);
 
     await pageB.close();
   } finally {

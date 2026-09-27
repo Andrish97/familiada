@@ -342,7 +342,9 @@ audycie/poprawce każdej strony, zaczynając od edytora.
      -tylko-frontowych opartych o stan trwały (znaleziona jedna:
      `canEnterEdit()`/`poll_open` w edytorze — Warstwa 1 istnieje,
      Warstwa 2 **zero**, RLS na `questions`/`answers` sprawdza wyłącznie
-     `owner_id`) — to osobny problem od powyższego (stan zapisany w
+     `owner_id`) — ✅ zamknięte migracjami 273 (`game_validate`, Warstwa 1)
+     i 274 (`trg_guard_game_content`, `trg_guard_game_poll_close`,
+     Warstwa 2), patrz docs/audyt-stron.md — to osobny problem od powyższego (stan zapisany w
      bazie, nie "żywa karta"), ale tej samej kategorii "usztywnienia" i
      wypłynie przy audycie każdej kolejnej strony, nie tylko edytora.
 

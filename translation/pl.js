@@ -5,6 +5,7 @@ const pl = {
     icon: "flag-pl",
   },
   common: {
+    genericError: "Wystąpił błąd.",
     manualLabel: "Wskazówki",
     contactBtn: "Kontakt",
     modalBack: "Wstecz",
@@ -798,22 +799,6 @@ const pl = {
       pollPoints:
         "Tryb: punktacja. Start: ≥ {min} pytań i każde pytanie ma {minAns}–{maxAns} odpowiedzi. Zamknięcie: w każdym pytaniu co najmniej 3 odpowiedzi muszą mieć ≥ 3 pkt po przeliczeniu do 100.",
       prepared: "Gra preparowana nie ma ankiety.",
-    },
-    validation: {
-      openOnlyDraft: "Ankietę można uruchomić tylko ze stanu SZKIC.",
-      noGame: "Brak gry.",
-      preparedNoPoll: "Gra preparowana nie ma ankiety.",
-      minQuestions: "Żeby uruchomić: liczba pytań musi być ≥ {min} (masz {count}).",
-      pointsRange: "W trybie PUNKTACJA każde pytanie musi mieć {min}–{max} odpowiedzi.",
-      reopenOnlyClosed: "Ponowne uruchomienie możliwe tylko gdy ankieta jest ZAMKNIĘTA.",
-      closeOnlyOpen: "Ankietę można zamknąć tylko gdy jest OTWARTA.",
-      closeWaitForTasks: "Nie można jeszcze zamknąć — ktoś jeszcze nie zagłosował (X≠Y).",
-      noActiveSession: "Brak aktywnej sesji ankiety.",
-      noActiveSessionGeneric: "Brak aktywnej sesji.",
-      closeMinPoints:
-        "Aby zamknąć: w każdym pytaniu co najmniej 3 odpowiedzi muszą mieć ≥ 3 punkty po przeliczeniu.",
-      closeMinTextAnswers: "Aby zamknąć: w każdym pytaniu muszą być ≥ 3 różne odpowiedzi.",
-      unknownType: "Nieznany typ gry.",
     },
     copy: {
       success: "Skopiowano link ankiety.",
@@ -2638,6 +2623,27 @@ const pl = {
       validMessage: "Wiadomość musi mieć od 5 do 5000 znaków.",
     },
   },
+  gameValidate: {
+    lockedTitle: "Edycja zablokowana",
+    noGame: "Brak gry.",
+    pollOpenNoEdit: "Ankieta jest otwarta — edycja zablokowana.",
+    preparedNoPoll: "Gra preparowana nie ma ankiety.",
+    pollAlreadyOpen: "Ankieta jest już otwarta.",
+    minQuestions: "Gra musi mieć co najmniej {min} pytań (masz: {n}).",
+    answersRange: "Pytanie #{ord}: musi mieć {min}–{max} odpowiedzi (masz: {n}).",
+    playAfterPoll: "Gra będzie dostępna dopiero po zamknięciu ankiety.",
+    negativePoints: "Pytanie #{ord}: punkty nie mogą być ujemne.",
+    answerOver100: "Pytanie #{ord}: odpowiedź nie może mieć więcej niż 100 pkt.",
+    sumTooBig: "Pytanie #{ord}: suma punktów nie może przekroczyć {max} (jest: {sum}).",
+    closeOnlyOpen: "Ankietę można zamknąć tylko wtedy, gdy jest otwarta.",
+    closeWaitForTasks: "Nie można jeszcze zamknąć — ktoś z zaproszonych jeszcze nie zagłosował.",
+    noSession: "Pytanie #{ord}: brak sesji ankiety — uruchom ankietę ponownie.",
+    closeMinPoints: "Pytanie #{ord}: aby zamknąć, co najmniej 3 odpowiedzi muszą mieć ≥ 3 punkty po przeliczeniu głosów.",
+    closeMinText: "Pytanie #{ord}: aby zamknąć, potrzeba co najmniej 3 różnych odpowiedzi.",
+    unknownType: "Nieznany typ gry.",
+    marketNoEdit: "Gry ze Społeczności nie można edytować.",
+    pollOpenNoExport: "Nie można eksportować gry z otwartą ankietą.",
+  },
   gamesImportExport: {
     defaults: {
       gameName: "Gra",
@@ -2662,6 +2668,7 @@ const pl = {
       marketplace: "Gry Społeczności",
       connectDevice: "Podłącz urządzenie",
       account: "Ustawienia konta",
+      more: "Więcej",
     },
     header: {
       title: "Twoje gry",
@@ -2781,6 +2788,7 @@ const pl = {
       subCreate: "Podaj nazwę gry.",
       placeholder: "Nazwa...",
       failed: "Nie udało się zmienić nazwy.",
+      empty: "Podaj nazwę.",
     },
     common: {
       save: "Zapisz",
@@ -2820,6 +2828,7 @@ const pl = {
       resetPollFailed: "Nie udało się zresetować statusu ankiety.",
       checkFailed: "Nie udało się sprawdzić statusu gry.",
       openPollFailed: "Nie udało się otworzyć ankiety.",
+      loadFailed: "Nie udało się wczytać listy gier. Sprawdź połączenie i odśwież stronę.",
     },
     hint: {
       select: "Zaznacz grę, aby włączyć akcje. Podwójne naciśnięcie zmienia nazwę.",
@@ -2837,6 +2846,10 @@ const pl = {
       hint: "Zaznacz grę, aby włączyć akcje.",
       typeLabel: "Ze Społeczności",
       removeFromLibrary: "Usuń z biblioteki",
+      removeTitle: "Usunąć z biblioteki?",
+      removeText: "Gra „{name}” zniknie z Twojej biblioteki razem z jej ustawieniami. Możesz ją później dodać ponownie ze Społeczności.",
+      removeOk: "Usuń",
+      removeFailed: "Nie udało się usunąć gry z biblioteki.",
     },
     gameFallback: "Bez nazwy",
   },

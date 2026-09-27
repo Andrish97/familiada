@@ -2,7 +2,7 @@ import { sb, SUPABASE_URL } from "../core/supabase.js?v=v2026-09-26T19541";
 import { updateChecked } from "../core/db-guard.js?v=v2026-09-26T19541";
 import { requireAuth } from "../core/auth.js?v=v2026-09-26T19541";
 import { isGuestUser, showGuestBlockedOverlay } from "../core/guest-mode.js?v=v2026-09-26T19541";
-import { validatePollReadyToOpen } from "../core/game-validate.js?v=v2026-09-26T19541";
+import { validateGame, rulesFromState } from "../core/game-validate.js?v=v2026-09-26T19541";
 import { alertModal, confirmModal } from "../core/modal.js?v=v2026-09-26T19541";
 import { initUiSelect } from "../core/ui-select.js?v=v2026-09-26T19541";
 import { initI18n, t, getUiLang } from "../../translation/translation.js?v=v2026-09-26T19541";
@@ -1026,9 +1026,15 @@ async function refreshData() {
 
     const ids = polls.map((p) => p.game_id).filter(Boolean);
     pollClosedAt = new Map();
+    // stan reguł zapisany w games.rules_state (migracja 275) przychodzi tym
+    // samym zapytaniem -- wcześniej osobne sprawdzenie dla każdej ankiety
+    const rulesByGame = new Map();
     if (ids.length) {
-      const { data } = await sb().from("games").select("id,poll_closed_at").in("id", ids);
-      for (const row of data || []) pollClosedAt.set(row.id, row.poll_closed_at);
+      const { data } = await sb().from("games").select("id,poll_closed_at,rules_state").in("id", ids);
+      for (const row of data || []) {
+        pollClosedAt.set(row.id, row.poll_closed_at);
+        rulesByGame.set(row.id, rulesFromState(row.rules_state));
+      }
     }
 
     pollReadyMap = new Map();
@@ -1037,8 +1043,8 @@ async function refreshData() {
         .filter((p) => p.poll_state === "draft")
         .map(async (poll) => {
           try {
-            const ready = await validatePollReadyToOpen(poll.game_id);
-            pollReadyMap.set(poll.game_id, !!ready?.ok);
+            const rules = rulesByGame.get(poll.game_id) || await validateGame(poll.game_id);
+            pollReadyMap.set(poll.game_id, !!rules?.poll_open?.ok);
           } catch {
             pollReadyMap.set(poll.game_id, false);
           }

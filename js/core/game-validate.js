@@ -1,5 +1,6 @@
 // js/core/game-validate.js
 import { sb } from "./supabase.js?v=v2026-09-26T19541";
+import { t } from "../../translation/translation.js?v=v2026-09-26T19541";
 
 /**
  * Typy gier:
@@ -20,17 +21,14 @@ export const STATUS = {
   READY: "ready", // po zamknięciu ankiety / gotowe do gry
 };
 
+// Te same liczby co w game_validate (baza) -- tu tylko do podpowiedzi w UI
+// (licznik odpowiedzi w edytorze itp.); o dozwoleniu akcji decyduje baza.
 export const RULES = {
   QN_MIN: 10,
   AN_MIN: 3,
   AN_MAX: 6,
   SUM_PREPARED: 100,
 };
-
-function n(v) {
-  const x = Number(v);
-  return Number.isFinite(x) ? x : 0;
-}
 
 export async function loadGameBasic(gameId) {
   const { data, error } = await sb()
@@ -62,199 +60,68 @@ export async function loadAnswers(questionId) {
   return data || [];
 }
 
-/* ====== checks pomocnicze ====== */
+/* ====== walidacja: tylko w bazie ====== */
 
-async function getQA(gameId) {
-  const qs = await loadQuestions(gameId);
-  if (!qs.length) return { qs, ansByQ: new Map() };
-  const qIds = qs.map(q => q.id);
-  const { data: allAnswers, error } = await sb()
-    .from("answers")
-    .select("id,ord,text,fixed_points,question_id")
-    .in("question_id", qIds)
-    .order("ord", { ascending: true });
+// Reguły (czy wolno edytować / grać / otworzyć lub zamknąć ankietę) liczy
+// RPC game_validate (migracja 273) -- jedno źródło prawdy dla games, editor,
+// polls, polls-hub i control. Tu tylko tłumaczymy kod błędu na tekst.
+// Każda akcja: { ok, reason } (+ needsReset dla edit).
+const ACTIONS = ["edit", "play", "poll_entry", "poll_open", "poll_close", "export"];
+
+function actionResult(raw) {
+  const ok = !!raw?.ok;
+  return {
+    ok,
+    reason: ok ? "" : t(`gameValidate.${raw?.code || "unknownType"}`, raw?.params || {}),
+    code: raw?.code || "",
+    needsReset: !!raw?.needs_reset,
+  };
+}
+
+/**
+ * Stan gry i wszystkich akcji jednym zapytaniem.
+ * Zwraca { game: {id,type,status,rev}, rules, edit, play, poll_entry,
+ * poll_open, poll_close, export }. Gra niedostępna -> każda akcja z
+ * reason gameValidate.noGame.
+ */
+export async function validateGame(gameId) {
+  const { data, error } = await sb().rpc("game_validate", { p_game_id: gameId });
   if (error) throw error;
-  const ansByQ = new Map(qs.map(q => [q.id, []]));
-  for (const a of (allAnswers || [])) ansByQ.get(a.question_id)?.push(a);
-  return { qs, ansByQ };
-}
 
-function clampAnswersCountOk(cnt) {
-  return cnt >= RULES.AN_MIN && cnt <= RULES.AN_MAX;
-}
-
-/**
- * Dla typowej ankiety (tekstowego):
- * - Warunek zamknięcia: w każdym pytaniu >= 3 różne odpowiedzi zebrane
- * UWAGA: to zależy od tabel z głosami. Tutaj zostawiamy hook.
- * Na start możesz zwracać {ok:true} jeśli jeszcze nie masz wyników tekstowych w DB.
- */
-export async function validateTextPollClosable(/*gameId*/) {
-  // TODO: implementacja gdy podepniesz tabelę z odpowiedziami tekstowymi
-  // Wtedy sprawdzasz: per pytanie liczba unikalnych odpowiedzi >= 3
-  return { ok: true, reason: "" };
+  const out = { game: data?.game || null, rules: data?.rules || null };
+  for (const k of ACTIONS) {
+    out[k] = data?.ok ? actionResult(data[k]) : actionResult({ ok: false, code: "noGame" });
+  }
+  return out;
 }
 
 /**
- * Dla punktacji (poll_points):
- * - Warunek zamknięcia: w każdym pytaniu co najmniej 2 odpowiedzi mają punkty != 0
- * To też zależy od modelu ankiety. Jeśli w trakcie ankiety zapisujesz punkty do answers.fixed_points
- * (albo do osobnej tabeli i potem agregujesz), to tu sprawdzamy agregat.
- *
- * Na start: jeśli jeszcze nie masz zapisów, też zwracamy ok, żeby UI nie blokować na etapie CSS.
+ * Zapisany stan z kolumny games.rules_state (migracja 275) -- ten sam kształt
+ * co validateGame(), bez poll_close (zależy od głosów, tylko na żądanie).
+ * null, gdy kolumny jeszcze nie ma / pusta -- wtedy wołający pyta validateGame().
  */
-export async function validatePointsPollClosable(/*gameId*/) {
-  // TODO: implementacja gdy podepniesz model głosów punktowych
-  return { ok: true, reason: "" };
-}
-
-/* ====== WALIDACJE AKCJI ====== */
-
-/**
- * EDYCJA:
- * 1) poll_text / poll_points:
- *    - draft => ok
- *    - ready => ok, ale wymaga alertu (reset wyników + draft)
- *    - poll_open => blokada
- * 2) prepared: zawsze ok
- */
-export function canEnterEdit(game) {
-  if (!game) return { ok: false, reason: "Brak gry." };
-
-  if (game.type === TYPES.PREPARED) {
-    return { ok: true, reason: "", needsResetWarning: false };
+export function rulesFromState(state) {
+  if (!state || typeof state !== "object") return null;
+  const out = { rules: state.rules || null };
+  for (const k of ACTIONS) {
+    if (k === "poll_close") continue;
+    out[k] = actionResult(state[k]);
   }
-
-  if (game.status === STATUS.POLL_OPEN) {
-    return { ok: false, reason: "Ankieta jest otwarta — edycja zablokowana.", needsResetWarning: false };
-  }
-
-  if (game.status === STATUS.READY) {
-    return {
-      ok: true,
-      reason: "",
-      needsResetWarning: true, // pokaż alert: usuniemy dane ankietowe i wracamy do szkicu
-    };
-  }
-
-  return { ok: true, reason: "", needsResetWarning: false };
+  return out;
 }
 
 /**
- * ANKIETA:
- * - poll_text/poll_points => zawsze (czyli w sensie „wolno wejść na stronę ankiety”)
- * - prepared => nigdy
- *
- * Aktywność przycisku w stronie gier:
- * - DRAFT: ok (uruchom) jeśli spełnia minimalne warunki
- * - POLL_OPEN: ok (wejdź, pokaż link)
- * - READY: ok (wejdź, pokaż "otwórz ponownie")
+ * Warstwa 2 (migracja 274): baza sama odrzuca zapis łamiący reguły --
+ * 'game_content_locked:<powód>' (treść gry przy otwartej ankiecie / kopii ze
+ * Społeczności) albo 'poll_close_blocked:<kod>' (zamknięcie ankiety bez
+ * spełnionych warunków). Zwraca przetłumaczony komunikat albo "" dla innych
+ * błędów.
  */
-export async function validatePollEntry(gameId) {
-  const game = await loadGameBasic(gameId);
-
-  if (game.type === TYPES.PREPARED) {
-    return { ok: false, reason: "Preparowana nie ma ankiety." };
-  }
-
-  // wejście do polls dozwolone w każdym stanie (dla tych dwóch typów)
-  return { ok: true, reason: "" };
-}
-
-/**
- * Czy wolno URUCHOMIĆ ankietę (stan draft -> poll_open)?
- *
- * poll_text:
- * - zawsze, ale aktywacja przycisku "Uruchom" dopiero gdy pytań >=10
- *
- * poll_points:
- * - pytań >=10 i każde pytanie ma 3..6 odpowiedzi
- */
-export async function validatePollReadyToOpen(gameId) {
-  const game = await loadGameBasic(gameId);
-
-  if (game.type === TYPES.PREPARED) {
-    return { ok: false, reason: "Preparowana nie ma ankiety." };
-  }
-  if (game.status === STATUS.POLL_OPEN) {
-    return { ok: false, reason: "Ankieta już jest otwarta." };
-  }
-
-  const { qs, ansByQ } = await getQA(gameId);
-
-  if (qs.length < RULES.QN_MIN) {
-    return { ok: false, reason: `Musi być co najmniej ${RULES.QN_MIN} pytań (masz: ${qs.length}).` };
-  }
-
-  if (game.type === TYPES.POLL_POINTS) {
-    for (const q of qs) {
-      const ans = ansByQ.get(q.id) || [];
-      if (!clampAnswersCountOk(ans.length)) {
-        return {
-          ok: false,
-          reason: `Pytanie #${q.ord}: musi mieć ${RULES.AN_MIN}–${RULES.AN_MAX} odpowiedzi (masz: ${ans.length}).`,
-        };
-      }
-    }
-  }
-
-  // poll_text: tylko warunek ilości pytań
-  return { ok: true, reason: "" };
-}
-
-/**
- * GRA / PLAY:
- * poll_text/poll_points:
- * - ankieta musi być ZAMKNIĘTA (status ready) => wtedy "wszystko OK"
- *
- * prepared:
- * - >=10 pytań
- * - w każdym pytaniu 3..6 odpowiedzi
- * - suma punktów w pytaniu <= 100
- */
-export async function validateGameReadyToPlay(gameId) {
-  const game = await loadGameBasic(gameId);
-
-  // poll_*: tylko po zamknięciu
-  if (game.type === TYPES.POLL_TEXT || game.type === TYPES.POLL_POINTS) {
-    if (game.status !== STATUS.READY) {
-      return { ok: false, reason: "Gra dostępna dopiero po zamknięciu ankiety." };
-    }
-    return { ok: true, reason: "" };
-  }
-
-  // prepared / market:
-  const { qs, ansByQ } = await getQA(gameId);
-
-  if (qs.length < RULES.QN_MIN) {
-    return { ok: false, reason: `Musi być co najmniej ${RULES.QN_MIN} pytań (masz: ${qs.length}).` };
-  }
-
-  for (const q of qs) {
-    const ans = ansByQ.get(q.id) || [];
-    if (!clampAnswersCountOk(ans.length)) {
-      return {
-        ok: false,
-        reason: `Pytanie #${q.ord}: musi mieć ${RULES.AN_MIN}–${RULES.AN_MAX} odpowiedzi (masz: ${ans.length}).`,
-      };
-    }
-
-    const pts = ans.map(a => n(a.fixed_points));
-    if (pts.some(p => p < 0)) {
-      return { ok: false, reason: `Pytanie #${q.ord}: punkty nie mogą być ujemne.` };
-    }
-    if (pts.some(p => p > 100)) {
-      return { ok: false, reason: `Pytanie #${q.ord}: odpowiedź nie może mieć > 100 pkt.` };
-    }
-
-    const sum = pts.reduce((s, x) => s + x, 0);
-    if (sum > RULES.SUM_PREPARED) {
-      return {
-        ok: false,
-        reason: `Pytanie #${q.ord}: suma punktów nie może przekroczyć ${RULES.SUM_PREPARED} (jest: ${sum}).`,
-      };
-    }
-  }
-
-  return { ok: true, reason: "" };
+export function gameRuleErrorMessage(err) {
+  const m = String(err?.message || "");
+  if (m.includes("game_content_locked:poll_open")) return t("gameValidate.pollOpenNoEdit");
+  if (m.includes("game_content_locked:market")) return t("gameValidate.marketNoEdit");
+  const close = m.match(/poll_close_blocked:(\w+):(\d*)/);
+  if (close) return t(`gameValidate.${close[1]}`, { ord: close[2] || "?" });
+  return "";
 }

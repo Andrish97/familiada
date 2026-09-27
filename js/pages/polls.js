@@ -6,6 +6,7 @@ import QRCode from "https://cdn.jsdelivr.net/npm/qrcode@1.5.3/+esm";
 import { initI18n, t, withLangParam, getUiLang } from "../../translation/translation.js?v=v2026-09-26T19541";
 import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-09-26T19541";
 import { guardResourceLock } from "../core/resource-lock.js?v=v2026-09-26T19541";
+import { validateGame, gameRuleErrorMessage, RULES } from "../core/game-validate.js?v=v2026-09-26T19541";
 import "../core/contact-modal.js?v=v2026-09-26T19541";
 import { icon, iconText } from "../core/icons.js?v=v2026-09-26T19541";
 
@@ -241,11 +242,6 @@ const STATUS = {
   POLL_OPEN: "poll_open",
   READY: "ready",
 };
-const RULES = {
-  QN_MIN: 10,
-  AN_MIN: 3,
-  AN_MAX: 6,
-};
 
 function escapeHtml(s) {
   return String(s ?? "").replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;");
@@ -437,66 +433,20 @@ async function getLastSessionIdsByQuestion(questionIds) {
   return map;
 }
 
-async function countQuestions() {
-  const { count, error } = await sb()
-    .from("questions")
-    .select("id", { count: "exact", head: true })
-    .eq("game_id", gameId);
-  if (error) throw error;
-  return Number(count) || 0;
-}
-
-async function countAnswersForQuestion(qid) {
-  const { count, error } = await sb()
-    .from("answers")
-    .select("id", { count: "exact", head: true })
-    .eq("question_id", qid);
-  if (error) throw error;
-  return Number(count) || 0;
-}
-
 /* =======================
    Walidacje
 ======================= */
 
+// Warunki otwarcia / ponownego otwarcia / zamknięcia liczy baza
+// (game_validate, migracja 273) -- wcześniej tu była osobna kopia reguł,
+// z kilkoma zapytaniami na każde pytanie przy każdym odświeżeniu.
 async function validateCanOpen(g) {
-  if (!g) return { ok: false, reason: t("polls.validation.noGame") };
-
-  // jak w starej logice: otwieramy tylko z draft
-  if ((g.status || STATUS.DRAFT) !== STATUS.DRAFT) {
-    return { ok: false, reason: t("polls.validation.openOnlyDraft") };
-  }
-
-  if (g.type === TYPES.PREPARED) {
-    return { ok: false, reason: t("polls.validation.preparedNoPoll") };
-  }
-
-  const qn = await countQuestions();
-  if (qn < RULES.QN_MIN) {
-    return { ok: false, reason: t("polls.validation.minQuestions", { min: RULES.QN_MIN, count: qn }) };
-  }
-
-  if (g.type === TYPES.POLL_POINTS) {
-    const qsList = await listQuestionsBasic();
-    for (const q of qsList) {
-      const an = await countAnswersForQuestion(q.id);
-      if (an < RULES.AN_MIN || an > RULES.AN_MAX) {
-        return {
-          ok: false,
-          reason: t("polls.validation.pointsRange", { min: RULES.AN_MIN, max: RULES.AN_MAX }),
-        };
-      }
-    }
-  }
-
-  return { ok: true, reason: "" };
+  if (!g) return { ok: false, reason: t("gameValidate.noGame") };
+  return (await validateGame(g.id)).poll_open;
 }
 
 async function validateCanReopen(g) {
-  if ((g.status || STATUS.DRAFT) !== STATUS.READY) {
-    return { ok: false, reason: t("polls.validation.reopenOnlyClosed") };
-  }
-  return await validateCanOpen({ ...g, status: STATUS.DRAFT });
+  return await validateCanOpen(g);
 }
 
 function normalizeCountsTo100(items) {
@@ -538,83 +488,8 @@ function normalizeCountsTo100(items) {
 }
 
 async function validateCanClose(g) {
-  if ((g.status || STATUS.DRAFT) !== STATUS.POLL_OPEN) {
-    return { ok: false, reason: t("polls.validation.closeOnlyOpen") };
-  }
-
-  // 🔒 Dodatkowy warunek: nie zamykamy jeśli są jeszcze aktywne taski (niewypełnione)
-  // Y = (done + pending/opened), X = done. Close dopiero gdy X=Y.
-  try {
-    const { data: u } = await sb().auth.getUser();
-    const uid = u?.user?.id;
-    if (uid) {
-      const { count, error } = await sb()
-        .from("poll_tasks")
-        .select("id", { count: "exact", head: true })
-        .eq("owner_id", uid)
-        .eq("game_id", g.id)
-        .is("done_at", null)
-        .is("declined_at", null)
-        .is("cancelled_at", null);
-      if (error) throw error;
-      if ((count || 0) > 0) return { ok: false, reason: t("polls.validation.closeWaitForTasks") };
-    }
-  } catch {
-    // jeśli nie udało się sprawdzić, nie blokuj UI — i tak DB powinna to zablokować
-  }
-
-  const qsList = await listQuestionsBasic();
-
-  if (g.type === TYPES.POLL_POINTS) {
-    for (const q of qsList) {
-      const sid = await getLastSessionIdForQuestion(q.id);
-      if (!sid) return { ok: false, reason: t("polls.validation.noActiveSession") };
-
-      const { data, error } = await sb()
-        .from("poll_votes")
-        .select("answer_id")
-        .eq("poll_session_id", sid)
-        .eq("question_id", q.id);
-      if (error) throw error;
-
-      const counts = new Map();
-      for (const row of data || []) {
-        if (!row.answer_id) continue;
-        counts.set(row.answer_id, (counts.get(row.answer_id) || 0) + 1);
-      }
-
-      const items = [...counts.entries()].map(([id, count]) => ({ id, count }));
-      const normalized = normalizeCountsTo100(items);
-      const strong = normalized.filter((x) => x.points >= 3);
-
-      if (strong.length < 3) {
-        return { ok: false, reason: t("polls.validation.closeMinPoints") };
-      }
-    }
-    return { ok: true, reason: "" };
-  }
-
-  if (g.type === TYPES.POLL_TEXT) {
-    for (const q of qsList) {
-      const sid = await getLastSessionIdForQuestion(q.id);
-      if (!sid) return { ok: false, reason: t("polls.validation.noActiveSessionGeneric") };
-
-      const { data, error } = await sb()
-        .from("poll_text_entries")
-        .select("answer_norm")
-        .eq("poll_session_id", sid)
-        .eq("question_id", q.id);
-      if (error) throw error;
-
-      const uniq = new Set((data || []).map((x) => (x.answer_norm || "").trim()).filter(Boolean));
-      if (uniq.size < 3) {
-        return { ok: false, reason: t("polls.validation.closeMinTextAnswers") };
-      }
-    }
-    return { ok: true, reason: "" };
-  }
-
-  return { ok: false, reason: t("polls.validation.unknownType") };
+  if (!g) return { ok: false, reason: t("gameValidate.noGame") };
+  return (await validateGame(g.id)).poll_close;
 }
 
 /* =======================
@@ -1308,7 +1183,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           await refresh();
         } catch (e) {
           console.error("[polls] close points error:", e);
-          await alertModal({ text: `${t("polls.errors.close")}\n\n${e?.message || e}` });
+          await alertModal({ text: `${t("polls.errors.close")}\n\n${gameRuleErrorMessage(e) || e?.message || e}` });
         }
         return;
       }
@@ -1432,7 +1307,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       await refresh();
     } catch (e) {
       console.error("[polls] close text error:", e);
-      await alertModal({ text: `${t("polls.errors.close")}\n\n${e?.message || e}` });
+      await alertModal({ text: `${t("polls.errors.close")}\n\n${gameRuleErrorMessage(e) || e?.message || e}` });
     } finally {
       btnFinishTextClose.disabled = false;
       btnCancelTextClose.disabled = false;

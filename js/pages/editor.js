@@ -3,8 +3,8 @@ import { sb } from "../core/supabase.js?v=v2026-09-26T19541";
 import { requireAuth } from "../core/auth.js?v=v2026-09-26T19541";
 import { alertModal, confirmModal } from "../core/modal.js?v=v2026-09-26T19541";
 import { parseQaText, clip as clipN } from "../core/text-import.js?v=v2026-09-26T19541";
-import { canEnterEdit, RULES as GV_RULES, TYPES } from "../core/game-validate.js?v=v2026-09-26T19541";
-import { guardResourceLock } from "../core/resource-lock.js?v=v2026-09-26T19541";
+import { validateGame, gameRuleErrorMessage, RULES as GV_RULES, TYPES } from "../core/game-validate.js?v=v2026-09-26T19541";
+import { guardResourceLock, showBlockingOverlay } from "../core/resource-lock.js?v=v2026-09-26T19541";
 import { updateChecked, ROW_GONE } from "../core/db-guard.js?v=v2026-09-26T19541";
 import { initI18n, t, withLangParam } from "../../translation/translation.js?v=v2026-09-26T19541";
 import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-09-26T19541";
@@ -92,6 +92,18 @@ const $ = (id) => document.getElementById(id);
 function setMsg(msg) {
   const el = $("msg");
   if (el) el.textContent = msg || "";
+}
+
+// Baza odrzuciła zapis, bo zmieniły się reguły gry (np. ankietę właśnie
+// otwarto w innej karcie -- migracja 274). Dalsze pisanie i tak by się nie
+// zapisało, więc zamiast samego komunikatu ten sam overlay co przy blokadzie
+// zasobu, z powrotem do listy gier. Zwraca komunikat (albo "").
+function ruleBlocked(e) {
+  const msg = gameRuleErrorMessage(e);
+  if (msg) {
+    showBlockingOverlay({ title: t("gameValidate.lockedTitle"), message: msg, backHref: withLangParam("games") });
+  }
+  return msg;
 }
 
 function openOverlay(id, on) {
@@ -229,20 +241,10 @@ async function deleteAnswer(aId) {
 }
 
 async function resetPollForEditing(gameId) {
-  const { error: gErr } = await sb()
-    .from("games")
-    .update({ status: "draft", poll_opened_at: null, poll_closed_at: null })
-    .eq("id", gameId);
-  if (gErr) throw gErr;
-
-  const { data: qs, error: qErr } = await sb().from("questions").select("id").eq("game_id", gameId);
-  if (qErr) throw qErr;
-
-  const qIds = (qs || []).map((x) => x.id);
-  if (!qIds.length) return;
-
-  const { error: aErr } = await sb().from("answers").update({ fixed_points: 0 }).in("question_id", qIds);
-  if (aErr) throw aErr;
+  // Jedno RPC = jedna transakcja (migracja 272, wspólne z games.js).
+  const { data, error } = await sb().rpc("game_reset_poll_for_edit", { p_game_id: gameId });
+  if (error) throw error;
+  if (!data?.ok) throw new Error(data?.error || "reset_failed");
 }
 
 /* ================= Renumber / wipe ================= */
@@ -539,14 +541,20 @@ async function boot() {
   let game = await loadGame(gameId);
   let cfg = cfgFromGameType(game.type);
 
-  const editInfo = canEnterEdit(game);
+  // czy wolno edytować (i czy trzeba zresetować zamkniętą ankietę) -- baza
+  let editInfo = null;
+  try {
+    editInfo = (await validateGame(gameId)).edit;
+  } catch (e) {
+    console.error("[editor] game_validate error:", e);
+  }
   if (!editInfo?.ok) {
     void alertModal({ text: editInfo?.reason || MSG.cannotEdit() });
     location.href = withLangParam("games");
     return;
   }
 
-  if (editInfo.needsResetWarning) {
+  if (editInfo.needsReset) {
     const ok = await confirmModal({ text: MSG.resetPollConfirm() });
     if (!ok) {
       location.href = withLangParam("games");
@@ -725,9 +733,9 @@ async function boot() {
       console.error(e);
       const msg = String(e?.message || "");
       if (e?.code === "23514" || msg.includes("violates check constraint")) {
-        setMsg(MSG.addQuestionLimit());
+        setMsg(ruleBlocked(e) || MSG.addQuestionLimit());
       } else {
-        setMsg(MSG.addQuestionError());
+        setMsg(ruleBlocked(e) || MSG.addQuestionError());
       }
     }
   }
@@ -752,7 +760,7 @@ async function boot() {
       setMsg(MSG.deleteQuestionDone());
     } catch (e) {
       console.error(e);
-      setMsg(MSG.deleteQuestionError());
+      setMsg(ruleBlocked(e) || MSG.deleteQuestionError());
     }
   }
 
@@ -857,7 +865,7 @@ async function boot() {
       setMsg(MSG.addedAnswer());
     } catch (e) {
       console.error(e);
-      setMsg(MSG.addAnswerError());
+      setMsg(ruleBlocked(e) || MSG.addAnswerError());
     }
   }
 
@@ -874,7 +882,7 @@ async function boot() {
       setMsg(MSG.removedAnswer());
     } catch (e) {
       console.error(e);
-      setMsg(MSG.deleteAnswerError());
+      setMsg(ruleBlocked(e) || MSG.deleteAnswerError());
     }
   }
 
@@ -950,7 +958,7 @@ async function boot() {
             setMsg(MSG.rowGone());
             return;
           }
-          setMsg(MSG.saveError());
+          setMsg(ruleBlocked(e) || MSG.saveError());
         }
       };
       const saveTextDebounced = debounce(saveTextNow, 350);
@@ -992,9 +1000,9 @@ async function boot() {
           }
           const msg = String(e?.message || "");
           if (e?.code === "23514" || msg.includes("violates check constraint")) {
-            setMsg(MSG.pointsRejected());
+            setMsg(ruleBlocked(e) || MSG.pointsRejected());
           } else {
-            setMsg(MSG.pointsSaveError());
+            setMsg(ruleBlocked(e) || MSG.pointsSaveError());
           }
         }
       };
@@ -1056,7 +1064,7 @@ async function boot() {
         setMsg(MSG.rowGone());
         return;
       }
-      setMsg(MSG.saveError());
+      setMsg(ruleBlocked(e) || MSG.saveError());
     }
   };
   const saveQuestionDebounced = debounce(saveQuestionNow, 350);
@@ -1252,7 +1260,7 @@ async function boot() {
         step: MSG.importErrorStep(),
         i: 0,
         n: 0,
-        msg: MSG.importError(e?.message || String(e)),
+        msg: ruleBlocked(e) || MSG.importError(e?.message || String(e)),
         isError: true,
       });
   

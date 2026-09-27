@@ -46,7 +46,7 @@ import { setTopbarAccount } from "../../js/core/topbar-controller.js?v=v2026-09-
 import { isGuestUser } from "../../js/core/guest-mode.js?v=v2026-09-26T19541";
 import { sb } from "../../js/core/supabase.js?v=v2026-09-26T19541";
 import { rt } from "../../js/core/realtime.js?v=v2026-09-26T19541";
-import { validateGameReadyToPlay, loadGameBasic, loadQuestions, loadAnswers } from "../../js/core/game-validate.js?v=v2026-09-26T19541";
+import { validateGame, loadGameBasic, loadQuestions, loadAnswers } from "../../js/core/game-validate.js?v=v2026-09-26T19541";
 import { unlockAudio, isAudioUnlocked, playSfx, setCurrentGameId, loadSfxManifest, initSfx, applySfxGameSettings, loadSfxFromCloud, getSfxCustomFiles, getSfxCategories, getSfxVariant, getSfxVolume, isSfxPlaying, stopSfx, onSfxEnd, setSessionSfxVolume } from "../../js/core/sfx.js?v=v2026-09-26T19541";
 import { listGameSounds } from "../../js/core/sfx-cloud.js?v=v2026-09-26T19541";
 import { createStore } from "./store.js?v=v2026-09-26T19541";
@@ -163,7 +163,8 @@ async function loadGameOrThrow() {
     throw e;
   }
 
-  const v = await validateGameReadyToPlay(gameId);
+  // reguły "czy można grać" liczy baza (game_validate)
+  const v = (await validateGame(gameId)).play;
   if (!v.ok) throw new Error(APP_MSG.GAME_NOT_READY(v.reason));
 
   const { data, error } = await sb()
