@@ -67,9 +67,7 @@ function setBackButton({ loggedIn }) {
 }
 
 function setAuthUi(user) {
-  if (!isControlModal()) {
-    initTopbarAccountDropdown(user, { showAuthEntry: false });
-  }
+  initTopbarAccountDropdown(user, { showAuthEntry: false });
   setBackButton({ loggedIn: !!user });
 }
 

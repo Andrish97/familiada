@@ -221,6 +221,7 @@
   min-height: 0;
   overflow: auto;
   -webkit-overflow-scrolling: touch;
+  grid-auto-rows: 1fr;
 }
 
 @media (max-width: 980px){
