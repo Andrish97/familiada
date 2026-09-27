@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict kd2h0JOFqzf1I2D56rLW9WrRo5THSb1dZtrRBflhPf0ychtPnNtX4mPbtqrwnt0
+\restrict Ud92YJPOl5YVfbGyP9FLqkbOaPirSg77OaLa6KsLz5RA8i8EBXOMMeghgVxJa77
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -2338,6 +2338,71 @@ $$;
 
 
 --
+-- Name: game_import_content("uuid", "text", "jsonb"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."game_import_content"("p_game_id" "uuid", "p_name" "text", "p_questions" "jsonb") RETURNS "jsonb"
+    LANGUAGE "plpgsql"
+    SET "search_path" TO 'public'
+    AS $$
+declare
+  v_type text;
+  v_count int;
+begin
+  if jsonb_typeof(p_questions) is distinct from 'array' then
+    return jsonb_build_object('ok', false, 'error', 'invalid_payload');
+  end if;
+
+  -- RLS: cudza / nieistniejąca gra -> brak wiersza
+  select g.type::text into v_type
+  from public.games g
+  where g.id = p_game_id
+  for update;
+
+  if not found then
+    return jsonb_build_object('ok', false, 'error', 'not_found');
+  end if;
+
+  if nullif(btrim(coalesce(p_name, '')), '') is not null then
+    update public.games
+       set name = left(btrim(p_name), 80)
+     where id = p_game_id;
+  end if;
+
+  -- odpowiedzi idą kaskadą (answers_question_id_fkey ON DELETE CASCADE)
+  delete from public.questions where game_id = p_game_id;
+
+  insert into public.questions (game_id, ord, text)
+  select p_game_id, s.ord, left(btrim(coalesce(s.item->>'text', '')), 200)
+  from jsonb_array_elements(p_questions) with ordinality as s(item, ord);
+
+  get diagnostics v_count = row_count;
+
+  -- typowa ankieta: same pytania
+  if v_type <> 'poll_text' then
+    insert into public.answers (question_id, ord, text, fixed_points)
+    select q.id,
+           a.ord,
+           left(btrim(coalesce(a.item->>'text', '')), 17),
+           case
+             when v_type = 'prepared' and jsonb_typeof(a.item->'points') = 'number'
+               then least(100, greatest(0, floor((a.item->>'points')::numeric)))::int
+             else 0
+           end
+    from jsonb_array_elements(p_questions) with ordinality as s(item, ord)
+    join public.questions q on q.game_id = p_game_id and q.ord = s.ord
+    cross join lateral jsonb_array_elements(
+      case when jsonb_typeof(s.item->'answers') = 'array' then s.item->'answers' else '[]'::jsonb end
+    ) with ordinality as a(item, ord)
+    where a.ord <= 6;  -- answers_ord_range
+  end if;
+
+  return jsonb_build_object('ok', true, 'questions', v_count);
+end;
+$$;
+
+
+--
 -- Name: game_poll_close_check("uuid"); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -2436,6 +2501,55 @@ begin
   end if;
 
   return v_poll_close;
+end;
+$$;
+
+
+--
+-- Name: game_question_delete("uuid"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."game_question_delete"("p_question_id" "uuid") RETURNS "jsonb"
+    LANGUAGE "plpgsql"
+    SET "search_path" TO 'public'
+    AS $$
+declare
+  v_game_id uuid;
+begin
+  delete from public.questions
+   where id = p_question_id
+  returning game_id into v_game_id;
+
+  -- usunięte gdzie indziej albo cudze (RLS) -- strona traktuje jak ROW_GONE
+  if v_game_id is null then
+    return jsonb_build_object('ok', false, 'error', 'not_found');
+  end if;
+
+  perform public.game_questions_renumber(v_game_id);
+  return jsonb_build_object('ok', true);
+end;
+$$;
+
+
+--
+-- Name: game_questions_renumber("uuid"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."game_questions_renumber"("p_game_id" "uuid") RETURNS "jsonb"
+    LANGUAGE "plpgsql"
+    SET "search_path" TO 'public'
+    AS $$
+begin
+  update public.questions q
+     set ord = r.rn
+    from (
+      select id, row_number() over (order by ord, id)::int as rn
+      from public.questions
+      where game_id = p_game_id
+    ) r
+   where q.id = r.id
+     and q.ord <> r.rn;
+  return jsonb_build_object('ok', true);
 end;
 $$;
 
@@ -15775,5 +15889,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict kd2h0JOFqzf1I2D56rLW9WrRo5THSb1dZtrRBflhPf0ychtPnNtX4mPbtqrwnt0
+\unrestrict Ud92YJPOl5YVfbGyP9FLqkbOaPirSg77OaLa6KsLz5RA8i8EBXOMMeghgVxJa77
 
