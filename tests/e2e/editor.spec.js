@@ -619,7 +619,7 @@ test("edytor: Warstwa 2 — zapis pytania usuniętego z pominięciem blokady ko�
 // w boot() — edytor otwarty wcześniej jako szkic nie wie, że ankietę właśnie
 // otwarto w innej karcie/urządzeniu. Dawniej zapisywał dalej (luka "Warstwa 2
 // zero" z docs/plan-testy-i-poprawki.md); od migracji 274 baza sama odrzuca
-// zapis treści gry z otwartą ankietą, a edytor pokazuje powód.
+// zapis treści gry z otwartą ankietą, a edytor pokazuje overlay z powodem.
 test("edytor: dwie karty — otwarcie ankiety w karcie B blokuje zapis w karcie A (baza odrzuca)", async ({ page, context }) => {
   test.setTimeout(60_000);
   await loginAsTestUser(page, context);
@@ -654,7 +654,9 @@ test("edytor: dwie karty — otwarcie ankiety w karcie B blokuje zapis w karcie 
     await expect(aRow(pageA, 0).locator(".aText")).toBeVisible({ timeout: 10000 });
     await aRow(pageA, 0).locator(".aText").fill("Zmieniona w A!");
     await aRow(pageA, 0).locator(".aText").blur();
-    await expect(pageA.locator("#msg")).toContainText("Ankieta jest otwarta", { timeout: 10000 });
+    // ten sam pełnoekranowy overlay co blokada zasobu, z powodem z bazy
+    await expect(pageA.locator("#resourceLockGuard")).toBeVisible({ timeout: 10000 });
+    await expect(pageA.locator("#resourceLockGuardMsg")).toContainText("Ankieta jest otwarta");
 
     const answers = await getAnswersRows(pageA, firstQId);
     expect(answers[0].text, "baza musi odrzucić zapis treści gry z otwartą ankietą").toBe(before);

@@ -451,6 +451,20 @@ body.games-body > main.wrap{
   color: rgba(236,239,244,.9);
 }
 
+/* Czego brakuje do następnego kroku (games.rules_state z bazy) */
+.games-body .grid .card .rules{
+  margin-top: 4px;
+  font-size: 11px;
+  line-height: 1.3;
+  color: #f5c46b;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.games-body .grid .card .rules:empty{ display: none; }
+.games-body .grid .card.not-ready:not(.selected) .name{ color: rgba(253,253,253,.72); }
+
 .addCard:hover,
 .games-body .grid .card:hover{
   transform: translateY(-2px);

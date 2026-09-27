@@ -90,3 +90,16 @@ Funkcje SECURITY DEFINER (zamykanie, reset, biblioteka) przechodzą.
 Warstwy 2 zostają: „graj” (control nie zapisuje nic jednorazowego przy
 starcie — stan gry to wiele zapisów `game_state_write`) i ręczne ustawianie
 statusu z pominięciem ankiety (testy tak przygotowują dane).
+
+Migracja 275 — `games.rules_state`: zapisany wynik `game_rules_compute`
+(to samo co `game_validate` bez zamknięcia ankiety, które zależy od głosów).
+Aktualizują go triggery: BEFORE INSERT/UPDATE OF type, status, rules_state
+na `games` (stan dla nowego statusu; ręczny zapis klienta nadpisany) oraz
+AFTER … FOR EACH STATEMENT z tabelami przejść na `questions`/`answers`
+(jedno przeliczenie na grę na polecenie — import 60 odpowiedzi = 1).
+Przeliczenie istniejących gier z wyłączonym `trg_games_touch` (bez zmiany
+`updated_at`). Lista gier bierze stan razem z grami: przyciski bez
+dodatkowych zapytań, kafelek pokazuje, co blokuje następny krok
+(`tileBlocker`), hub ankiet czyta `rules_state` zamiast pytać o każdą grę.
+Edytor przy odrzuconym zapisie (274) pokazuje ten sam overlay co blokada
+zasobu (`showBlockingOverlay` z resource-lock.js, bez wpisu w edit_locks).

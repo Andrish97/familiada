@@ -127,7 +127,11 @@ $$;
 
 revoke all on function public.game_poll_close_check(uuid) from public, anon, authenticated;
 
-create or replace function public.game_validate(p_game_id uuid)
+-- Stan reguł z samej treści gry (bez zamknięcia ankiety, które zależy od
+-- głosów). Typ i status podaje wołający -- trigger BEFORE UPDATE na games
+-- (migracja 275) liczy stan dla NOWEGO statusu, zanim trafi do tabeli.
+-- Wewnętrzna: bez sprawdzania właściciela, niedostępna dla klientów.
+create or replace function public.game_rules_compute(p_game_id uuid, p_type text, p_status text)
 returns jsonb
 language plpgsql
 stable
@@ -141,7 +145,6 @@ declare
   c_sum  constant int := 100;
   c_ok   constant jsonb := '{"ok": true}'::jsonb;
 
-  v_uid uuid := auth.uid();
   g record;
   r record;
   v_qn int;
@@ -153,22 +156,10 @@ declare
   v_play jsonb;
   v_poll_entry jsonb;
   v_poll_open jsonb;
-  v_poll_close jsonb;
   v_export jsonb;
   v_is_poll boolean;
 begin
-  if v_uid is null then
-    return jsonb_build_object('ok', false, 'error', 'not_authenticated');
-  end if;
-
-  select id, type::text as type, status::text as status, updated_at
-    into g
-  from public.games
-  where id = p_game_id and owner_id = v_uid;
-
-  if not found then
-    return jsonb_build_object('ok', false, 'error', 'not_found');
-  end if;
+  select p_type as type, p_status as status into g;
 
   v_is_poll := g.type in ('poll_text', 'poll_points');
 
@@ -251,8 +242,6 @@ begin
     else v_content_poll
   end;
 
-  v_poll_close := public.game_poll_close_check(p_game_id);
-
   /* ---------- eksport ---------- */
   v_export := case
     when g.status = 'poll_open' then jsonb_build_object('ok', false, 'code', 'pollOpenNoExport')
@@ -260,16 +249,48 @@ begin
   end;
 
   return jsonb_build_object(
-    'ok', true,
-    'game', jsonb_build_object('id', g.id, 'type', g.type, 'status', g.status, 'rev', g.updated_at),
     'rules', jsonb_build_object('qn_min', c_qmin, 'an_min', c_amin, 'an_max', c_amax, 'sum_max', c_sum),
     'edit', v_edit,
     'play', v_play,
     'poll_entry', v_poll_entry,
     'poll_open', v_poll_open,
-    'poll_close', v_poll_close,
     'export', v_export
   );
+end;
+$$;
+
+revoke all on function public.game_rules_compute(uuid, text, text) from public, anon, authenticated;
+
+create or replace function public.game_validate(p_game_id uuid)
+returns jsonb
+language plpgsql
+stable
+security definer
+set search_path to 'public'
+as $$
+declare
+  v_uid uuid := auth.uid();
+  g record;
+begin
+  if v_uid is null then
+    return jsonb_build_object('ok', false, 'error', 'not_authenticated');
+  end if;
+
+  select id, type::text as type, status::text as status, updated_at
+    into g
+  from public.games
+  where id = p_game_id and owner_id = v_uid;
+
+  if not found then
+    return jsonb_build_object('ok', false, 'error', 'not_found');
+  end if;
+
+  return public.game_rules_compute(g.id, g.type, g.status)
+    || jsonb_build_object(
+         'ok', true,
+         'game', jsonb_build_object('id', g.id, 'type', g.type, 'status', g.status, 'rev', g.updated_at),
+         'poll_close', public.game_poll_close_check(g.id)
+       );
 end;
 $$;
 

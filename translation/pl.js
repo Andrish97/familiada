@@ -2624,6 +2624,7 @@ const pl = {
     },
   },
   gameValidate: {
+    lockedTitle: "Edycja zablokowana",
     noGame: "Brak gry.",
     pollOpenNoEdit: "Ankieta jest otwarta — edycja zablokowana.",
     preparedNoPoll: "Gra preparowana nie ma ankiety.",

@@ -26,6 +26,7 @@ import {
   STATUS,
   loadGameBasic,
   validateGame,
+  rulesFromState,
 } from "../core/game-validate.js?v=v2026-09-26T16124";
 import { deleteGameSoundsFolder } from "../core/sfx-cloud.js?v=v2026-09-26T16124";
 import { isResourceBusy } from "../core/resource-lock.js?v=v2026-09-26T16124";
@@ -238,8 +239,6 @@ function stopAutoRefresh() {
 // DOMYŚLNIE: PREPAROWANA
 let activeTab = TYPES.PREPARED;
 
-const actionStateCache = new Map();
-// gameId -> { rev: string, res: wynik validateGame() }
 
 /* ================= UI helpers ================= */
 function show(el, on) {
@@ -725,7 +724,7 @@ function setActiveTab(type) {
 async function listGames() {
   const { data, error } = await sb()
     .from("games")
-    .select("id,name,created_at,updated_at,type,status")
+    .select("id,name,created_at,updated_at,type,status,rules_state")
     .is("source_market_id", null)
     .order("created_at", { ascending: false });
 
@@ -820,6 +819,18 @@ async function resetPollForEditing(gameId) {
 }
 
 /* ================= Render ================= */
+// Co blokuje NASTĘPNY krok gry -- widać bez zaznaczania kafelka:
+// preparowana -> czy da się grać; ankieta w szkicu -> czy da się ją
+// uruchomić. Otwarta/zamknięta ankieta: status w linii meta wystarcza.
+function tileBlocker(g) {
+  const v = rulesFromState(g?.rules_state);
+  if (!v) return "";
+  const uiType = uiTypeFromRow(g);
+  if (uiType === TYPES.PREPARED) return v.play.ok ? "" : v.play.reason;
+  if (g.status === STATUS.DRAFT) return v.poll_open.ok ? "" : v.poll_open.reason;
+  return "";
+}
+
 function cardGame(g) {
   const uiType = uiTypeFromRow(g);
 
@@ -831,10 +842,15 @@ function cardGame(g) {
     <div class="x" title="${t("games.card.delete")}">${icon("trash")}</div>
     <div class="name"></div>
     <div class="meta"></div>
+    <div class="rules"></div>
   `;
 
   el.querySelector(".name").textContent = g.name || t("control.dash");
   el.querySelector(".meta").textContent = `${typeLabel(uiType)} • ${statusLabel(g.status)}`;
+
+  const blocker = tileBlocker(g);
+  el.querySelector(".rules").textContent = blocker;
+  el.classList.toggle("not-ready", !!blocker);
 
   el.addEventListener("click", () => selectGame(g.id));
 
@@ -1023,16 +1039,10 @@ async function loadMarketGames() {
 
 /* ================= Button logic ================= */
 
-// Stan przycisków = game_validate z bazy (jedno RPC, reguły tylko tam).
-// Cache po rev (games.updated_at, dotykane też przez zmiany pytań/odpowiedzi).
-async function fetchValidation(gameId, revHint) {
-  if (revHint) {
-    const c = actionStateCache.get(gameId);
-    if (c && String(c.rev) === String(revHint)) return c.res;
-  }
-  const res = await validateGame(gameId);
-  actionStateCache.set(gameId, { rev: String(res.game?.rev || ""), res });
-  return res;
+// Stan przycisków: zapisany games.rules_state (przyszedł z listą, zero
+// dodatkowych zapytań); gdy go brak (stara baza) -- game_validate.
+async function selectionRules(g) {
+  return rulesFromState(g?.rules_state) || await validateGame(g.id);
 }
 
 // Wyłączony przycisk mówi w podpowiedzi, czego brakuje (tekst z bazy).
@@ -1060,7 +1070,7 @@ async function updateActionState() {
   }
 
   try {
-    const v = await fetchValidation(sel.id, sel.updated_at ? String(sel.updated_at) : "");
+    const v = await selectionRules(sel);
     // Szybkie klikanie A -> B: odpowiedź dla A mogła przyjść po B i
     // ustawić przyciski według złej gry.
     if (selectedId !== sel.id || activeTab === TYPES.MARKET) return;
@@ -1887,7 +1897,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   // więc applyTranslations() jej nie obejmuje -- po zmianie języka rysujemy
   // ją od nowa (bez tego zostawała w starym języku do auto-odświeżenia).
   window.addEventListener("i18n:lang", () => {
-    actionStateCache.clear(); // podpowiedzi przycisków są już przetłumaczone
     render();
     void updateActionState();
   });

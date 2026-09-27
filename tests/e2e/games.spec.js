@@ -602,3 +602,57 @@ test.describe("games: audyt -- Warstwa 2 reguł gry", () => {
     }
   });
 });
+
+/* ================= 8) Zapisany stan reguł: games.rules_state (migracja 275) ================= */
+
+test.describe("games: audyt -- rules_state", () => {
+
+  test("kafelek pokazuje, czego brakuje; stan w tabeli nadąża za zmianami treści", async ({ page, context }) => {
+    test.setTimeout(90_000);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    const stamp = Date.now();
+    const bad = `E2E-GM-RS-BAD-${stamp}`;
+    const good = `E2E-GM-RS-OK-${stamp}`;
+    try {
+      const badId = await seedPreparedGame(page, bad, { questions: 9 });
+      await seedPreparedGame(page, good);
+
+      await openGames(page, "?lang=pl");
+      const badTile = tileByName(page, bad);
+      await expect(badTile.locator(".rules")).toContainText(/10.*9/, { timeout: 15000 });
+      await expect(badTile).toHaveClass(/not-ready/);
+      await expect(tileByName(page, good).locator(".rules")).toBeEmpty();
+      await expect(tileByName(page, good)).not.toHaveClass(/not-ready/);
+
+      // stan w tabeli po zmianie treści (10. pytanie + 3 odpowiedzi jednym insertem)
+      const st = await page.evaluate(async (id) => {
+        const sb = window.__sbClient;
+        const read = async () => (await sb.from("games").select("rules_state").eq("id", id).single()).data.rules_state;
+        const before = await read();
+        const { data: q, error } = await sb.from("questions").insert({ game_id: id, ord: 10, text: "P10?" }).select("id").single();
+        if (error) throw new Error(error.message);
+        const afterQuestion = await read();
+        await sb.from("answers").insert([50, 30, 20].map((p, j) => ({ question_id: q.id, ord: j + 1, text: `O${j + 1}`, fixed_points: p })));
+        const afterAnswers = await read();
+        await sb.from("games").update({ rules_state: { play: { ok: false, code: "hack" } } }).eq("id", id);
+        const afterClientWrite = await read();
+        const validated = (await sb.rpc("game_validate", { p_game_id: id })).data;
+        return { before, afterQuestion, afterAnswers, afterClientWrite, validated };
+      }, badId);
+
+      expect(st.before.play).toMatchObject({ ok: false, code: "minQuestions", params: { n: 9 } });
+      expect(st.afterQuestion.play).toMatchObject({ ok: false, code: "answersRange", params: { ord: 10, n: 0 } });
+      expect(st.afterAnswers.play).toEqual({ ok: true });
+      expect(st.afterClientWrite.play, "klient nie może wpisać własnego stanu").toEqual({ ok: true });
+      for (const k of ["edit", "play", "poll_entry", "poll_open", "export"]) {
+        expect(st.validated[k], `game_validate.${k} = zapisany stan`).toEqual(st.afterAnswers[k]);
+      }
+
+      await page.reload({ waitUntil: "domcontentloaded" });
+      await expect(badTile).not.toHaveClass(/not-ready/, { timeout: 15000 });
+    } finally {
+      await deleteGamesByName(page, bad);
+      await deleteGamesByName(page, good);
+    }
+  });
+});

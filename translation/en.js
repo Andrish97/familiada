@@ -2750,6 +2750,7 @@ const en = {
     },
   },
   gameValidate: {
+    lockedTitle: "Editing locked",
     noGame: "Game not found.",
     pollOpenNoEdit: "The poll is open — editing is locked.",
     preparedNoPoll: "A prepared game has no poll.",

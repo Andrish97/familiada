@@ -139,6 +139,16 @@ function showOverlay({ title, message, backHref }) {
 }
 
 /**
+ * Ten sam pełnoekranowy overlay dla innych twardych blokad niż "ktoś to
+ * edytuje" -- np. baza odrzuciła zapis, bo ankieta gry właśnie się otworzyła
+ * (reguły gry, migracja 274). Jeden wygląd dla "tego nie możesz teraz
+ * edytować", bez wpisu w edit_locks.
+ */
+export function showBlockingOverlay({ title, message, backHref }) {
+  showOverlay({ title, message, backHref });
+}
+
+/**
  * Blokada wejścia w edycję zasobu — wołać PO auth, PRZED wyrenderowaniem
  * edytowalnej treści.
  *

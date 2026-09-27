@@ -4,7 +4,7 @@ import { requireAuth } from "../core/auth.js?v=v2026-09-26T16124";
 import { alertModal, confirmModal } from "../core/modal.js?v=v2026-09-26T16124";
 import { parseQaText, clip as clipN } from "../core/text-import.js?v=v2026-09-26T16124";
 import { validateGame, gameRuleErrorMessage, RULES as GV_RULES, TYPES } from "../core/game-validate.js?v=v2026-09-26T16124";
-import { guardResourceLock } from "../core/resource-lock.js?v=v2026-09-26T16124";
+import { guardResourceLock, showBlockingOverlay } from "../core/resource-lock.js?v=v2026-09-26T16124";
 import { updateChecked, ROW_GONE } from "../core/db-guard.js?v=v2026-09-26T16124";
 import { initI18n, t, withLangParam } from "../../translation/translation.js?v=v2026-09-26T16124";
 import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-09-26T16124";
@@ -92,6 +92,18 @@ const $ = (id) => document.getElementById(id);
 function setMsg(msg) {
   const el = $("msg");
   if (el) el.textContent = msg || "";
+}
+
+// Baza odrzuciła zapis, bo zmieniły się reguły gry (np. ankietę właśnie
+// otwarto w innej karcie -- migracja 274). Dalsze pisanie i tak by się nie
+// zapisało, więc zamiast samego komunikatu ten sam overlay co przy blokadzie
+// zasobu, z powrotem do listy gier. Zwraca komunikat (albo "").
+function ruleBlocked(e) {
+  const msg = gameRuleErrorMessage(e);
+  if (msg) {
+    showBlockingOverlay({ title: t("gameValidate.lockedTitle"), message: msg, backHref: withLangParam("games") });
+  }
+  return msg;
 }
 
 function openOverlay(id, on) {
@@ -721,9 +733,9 @@ async function boot() {
       console.error(e);
       const msg = String(e?.message || "");
       if (e?.code === "23514" || msg.includes("violates check constraint")) {
-        setMsg(gameRuleErrorMessage(e) || MSG.addQuestionLimit());
+        setMsg(ruleBlocked(e) || MSG.addQuestionLimit());
       } else {
-        setMsg(gameRuleErrorMessage(e) || MSG.addQuestionError());
+        setMsg(ruleBlocked(e) || MSG.addQuestionError());
       }
     }
   }
@@ -748,7 +760,7 @@ async function boot() {
       setMsg(MSG.deleteQuestionDone());
     } catch (e) {
       console.error(e);
-      setMsg(gameRuleErrorMessage(e) || MSG.deleteQuestionError());
+      setMsg(ruleBlocked(e) || MSG.deleteQuestionError());
     }
   }
 
@@ -853,7 +865,7 @@ async function boot() {
       setMsg(MSG.addedAnswer());
     } catch (e) {
       console.error(e);
-      setMsg(gameRuleErrorMessage(e) || MSG.addAnswerError());
+      setMsg(ruleBlocked(e) || MSG.addAnswerError());
     }
   }
 
@@ -870,7 +882,7 @@ async function boot() {
       setMsg(MSG.removedAnswer());
     } catch (e) {
       console.error(e);
-      setMsg(gameRuleErrorMessage(e) || MSG.deleteAnswerError());
+      setMsg(ruleBlocked(e) || MSG.deleteAnswerError());
     }
   }
 
@@ -946,7 +958,7 @@ async function boot() {
             setMsg(MSG.rowGone());
             return;
           }
-          setMsg(gameRuleErrorMessage(e) || MSG.saveError());
+          setMsg(ruleBlocked(e) || MSG.saveError());
         }
       };
       const saveTextDebounced = debounce(saveTextNow, 350);
@@ -988,9 +1000,9 @@ async function boot() {
           }
           const msg = String(e?.message || "");
           if (e?.code === "23514" || msg.includes("violates check constraint")) {
-            setMsg(gameRuleErrorMessage(e) || MSG.pointsRejected());
+            setMsg(ruleBlocked(e) || MSG.pointsRejected());
           } else {
-            setMsg(gameRuleErrorMessage(e) || MSG.pointsSaveError());
+            setMsg(ruleBlocked(e) || MSG.pointsSaveError());
           }
         }
       };
@@ -1052,7 +1064,7 @@ async function boot() {
         setMsg(MSG.rowGone());
         return;
       }
-      setMsg(gameRuleErrorMessage(e) || MSG.saveError());
+      setMsg(ruleBlocked(e) || MSG.saveError());
     }
   };
   const saveQuestionDebounced = debounce(saveQuestionNow, 350);
@@ -1248,7 +1260,7 @@ async function boot() {
         step: MSG.importErrorStep(),
         i: 0,
         n: 0,
-        msg: gameRuleErrorMessage(e) || MSG.importError(e?.message || String(e)),
+        msg: ruleBlocked(e) || MSG.importError(e?.message || String(e)),
         isError: true,
       });
   

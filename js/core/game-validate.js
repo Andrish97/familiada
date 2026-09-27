@@ -96,6 +96,21 @@ export async function validateGame(gameId) {
 }
 
 /**
+ * Zapisany stan z kolumny games.rules_state (migracja 275) -- ten sam kształt
+ * co validateGame(), bez poll_close (zależy od głosów, tylko na żądanie).
+ * null, gdy kolumny jeszcze nie ma / pusta -- wtedy wołający pyta validateGame().
+ */
+export function rulesFromState(state) {
+  if (!state || typeof state !== "object") return null;
+  const out = { rules: state.rules || null };
+  for (const k of ACTIONS) {
+    if (k === "poll_close") continue;
+    out[k] = actionResult(state[k]);
+  }
+  return out;
+}
+
+/**
  * Warstwa 2 (migracja 274): baza sama odrzuca zapis łamiący reguły --
  * 'game_content_locked:<powód>' (treść gry przy otwartej ankiecie / kopii ze
  * Społeczności) albo 'poll_close_blocked:<kod>' (zamknięcie ankiety bez
