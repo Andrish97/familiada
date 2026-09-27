@@ -2373,7 +2373,7 @@ test.describe("base-explorer: współdzielenie i uprawnienia (dwóch różnych u
     }
   });
 
-  test("usunięcie pytania przez jednego usera, gdy drugi ma je otwarte do edycji -- zapis kończy się cicho, pytanie nie wraca", async ({ page, context, browser }) => {
+  test("usunięcie pytania przez jednego usera, gdy drugi ma je otwarte do edycji -- zapis pokazuje komunikat w modalu, pytanie nie wraca", async ({ page, context, browser }) => {
     test.setTimeout(60_000);
     await loginAsTestUser(page, context, { username: testAccountUsername(1) });
 
@@ -2403,13 +2403,14 @@ test.describe("base-explorer: współdzielenie i uprawnienia (dwóch różnych u
         if (error) throw new Error(error.message);
       }, qid);
 
-      // Pierwszy user kończy edycję i zapisuje -- UPDATE trafia w 0 wierszy,
-      // bez błędu (Postgres/PostgREST nie traktuje "nic nie pasowało" jak wyjątek)
+      // Pierwszy user kończy edycję i zapisuje -- UPDATE trafia w 0 wierszy
+      // (updateChecked -> ROW_GONE). Od audytu edytora (wspólny formularz)
+      // zapis idzie z otwartym modalem: komunikat w modalu, treść zostaje.
       await page.locator("#qText").fill("Ta zmiana nie ma już czego dotyczyć");
       await page.locator("#qSave").click();
-      await expect(page.locator("#questionOverlay")).toBeHidden({ timeout: 10000 });
-      // brak alertModal z błędem -- zapis "powiódł się" po cichu
-      await expect(page.locator(".uni-modal")).toHaveCount(0);
+      await expect(page.locator("#qErr")).toHaveText(/w międzyczasie usunięte/i, { timeout: 10000 });
+      await expect(page.locator("#questionOverlay")).toBeVisible();
+      await expect(page.locator("#qText")).toHaveValue("Ta zmiana nie ma już czego dotyczyć");
 
       const fresh = await getQuestionRow(page, qid);
       expect(fresh, "UPDATE na usuniętym wierszu nie może go wskrzesić").toBeNull();
@@ -2778,7 +2779,10 @@ test.describe("base-explorer: Warstwa 2 (updateChecked, ROW_GONE)", () => {
       }, qid);
 
       await page.locator("#qSave").click();
-      await expect(page.locator(".uni-modal .mSub")).toHaveText(/w międzyczasie usunięte/i, { timeout: 5000 });
+      // komunikat w samym modalu (zapis z otwartym modalem), treść zostaje
+      await expect(page.locator("#qErr")).toHaveText(/w międzyczasie usunięte/i, { timeout: 5000 });
+      await expect(page.locator("#questionOverlay")).toBeVisible();
+      await expect(page.locator("#qText")).toHaveValue("Nowa treść");
     } finally {
       await deleteBase(page, baseId);
     }
