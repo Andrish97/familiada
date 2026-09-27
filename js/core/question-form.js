@@ -75,7 +75,10 @@ export function wirePointsInput(el, onInput) {
   el.autocomplete = "off";
   el.maxLength = 3;
   el.addEventListener("input", () => {
-    const digits = el.value.replace(/\D/g, "").slice(0, 3);
+    // wklejone "-50" to 0 (jak w parsePoints/imporcie), a nie "50" --
+    // samo wycięcie znaków niebędących cyframi odwracałoby znak
+    const negative = /^\s*-/.test(el.value);
+    const digits = negative ? "0" : el.value.replace(/\D/g, "").slice(0, 3);
     const val = digits === "" ? null : Math.min(LIMITS.PTS_MAX, Number(digits));
     const shown = val === null ? "" : String(val);
     if (el.value !== shown) el.value = shown;

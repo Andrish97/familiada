@@ -1710,7 +1710,7 @@ test.describe("base-explorer: question-modal.js (edycja pytania)", () => {
       await expect(page.locator("#questionOverlay")).toBeVisible({ timeout: 5000 });
       await expect(page.locator("#qAnswers .qf-row:not(.qf-add)")).toHaveCount(3);
 
-      await page.locator("#qAnswers .qf-row:not(.qf-add)").nth(1).locator(".qDel").click(); // usuń A2
+      await page.locator("#qAnswers .qf-row:not(.qf-add)").nth(1).locator(".qf-del").click(); // usuń A2
       await expect(page.locator("#qAnswers .qf-row:not(.qf-add)")).toHaveCount(2);
 
       // questionModal.close() (chowa #questionOverlay) jest SYNCHRONICZNY na klik
@@ -1858,6 +1858,9 @@ test.describe("base-explorer: question-modal.js (edycja pytania)", () => {
       await page.locator("#qAdd").click();
 
       await page.locator("#qClose").click();
+      // przy zmianach modal pyta o porzucenie (wspólny formularz z edytorem)
+      await expect(page.locator(".uni-modal .mSub")).toHaveText("Porzucić niezapisane zmiany w pytaniu?", { timeout: 5000 });
+      await page.locator(".uni-foot .btn.gold").click();
       await expect(page.locator("#questionOverlay")).toBeHidden({ timeout: 5000 });
 
       const fresh = await getQuestionRow(page, qid);

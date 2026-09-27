@@ -917,7 +917,7 @@ test.describe("editor: audyt -- pisanie i zapisy", () => {
     }
   });
 
-  test("pole punktów: same cyfry, najwyżej 100, puste zapisuje się jako 0", async ({ page, context }) => {
+  test("pole punktów: same cyfry, najwyżej 100, minus i puste dają 0", async ({ page, context }) => {
     test.setTimeout(60_000);
     await loginAsTestUser(page, context);
     const gameId = await createGame(page, { type: "prepared" });
@@ -930,7 +930,7 @@ test.describe("editor: audyt -- pisanie i zapisy", () => {
       await pts.fill("250");
       await expect(pts).toHaveValue("100");
       await pts.fill("-7");
-      await expect(pts).toHaveValue("7");
+      await expect(pts).toHaveValue("0");
       await pts.fill("abc");
       await expect(pts).toHaveValue("");
       await pts.blur();
