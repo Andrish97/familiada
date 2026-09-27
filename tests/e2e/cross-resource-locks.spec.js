@@ -10,7 +10,7 @@
 //    overlay i nie odpytuje dalej (nigdy się nie "zwolni").
 
 const { test, expect } = require("@playwright/test");
-const { loginAsTestUser } = require("./helpers/login");
+const { loginAsTestUser, testAccountUsername } = require("./helpers/login");
 
 async function waitForLock(page, resourceType, resourceId, timeoutMs = 10000) {
   const start = Date.now();
@@ -222,7 +222,14 @@ test("usuwanie logo: zablokowane, gdy używająca go gra ma teraz otwarte ustawi
 
 test("usuwanie logo: działa normalnie, gdy nic go nie blokuje", async ({ page, context }) => {
   test.setTimeout(40_000);
-  await loginAsTestUser(page, context);
+  // Osobne konto: otwarte ustawienia KTÓREJKOLWIEK gry blokują usuwanie
+  // wszystkich logo właściciela (Warstwa B, migracja 256). Na wspólnym test1
+  // równoległy test "zablokowane, gdy ... otwarte ustawienia" (albo edytor
+  // ustawień w innym pliku) zostawiał blokadę 'settings' do 25 s -- ten test
+  // dostawał wtedy prawdziwe "zmieniasz ustawienia rozgrywki" (niestabilny
+  // fail, CI 2026-09-27). test9 nie używa nikt inny (pula control2 to
+  // test1..test<liczba workerów>).
+  await loginAsTestUser(page, context, { username: testAccountUsername(9) });
 
   const logoName = `E2E-XLOCK-LOGOFREE-${Date.now()}`;
   const logoId = await page.evaluate(async (logoName) => {
