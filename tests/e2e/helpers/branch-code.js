@@ -1,7 +1,7 @@
 // tests/e2e/helpers/branch-code.js
 // "Kopia" strony do testów bez wdrażania: prawdziwa produkcja (konta testowe,
 // prawdziwa baza, Worker, Turnstile-bypass), ale wybrane strony oraz CAŁY
-// kod front-endu (js/, css/, translation/, shared/) serwowane z plików tego
+// kod front-endu (js/, css/, translation/, shared/, base-explorer/) serwowane z plików tego
 // repo -- czyli z brancha, na którym odpalono workflow. Dzięki temu poprawki
 // można sprawdzić na prawdziwym backendzie ZANIM trafią na main/produkcję.
 //
@@ -15,7 +15,8 @@ const path = require("path");
 
 const REPO_ROOT = path.resolve(__dirname, "..", "..", "..");
 const PROD_ORIGIN = "https://www.familiada.online";
-const CODE_DIRS = ["js/", "css/", "translation/", "shared/"];
+// base-explorer/ -- JS i CSS bazy pytań leżą obok strony, nie w js/ i css/
+const CODE_DIRS = ["js/", "css/", "translation/", "shared/", "base-explorer/"];
 
 const MIME = {
   ".html": "text/html; charset=utf-8",

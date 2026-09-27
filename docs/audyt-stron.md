@@ -2,7 +2,7 @@
 
 Strony powstawały „w czacie tekstowym GPT” — są nieczytelne i często
 zbugowane. Audytujemy je po kolei, jedna strona na raz. Zrobione:
-**logo-editor**, **bases**, **games** (2026-09-26). Następna: do ustalenia.
+**logo-editor**, **bases**, **games** (2026-09-26), **editor** (2026-09-27). Następna: do ustalenia.
 
 ## Kroki
 
@@ -103,3 +103,32 @@ dodatkowych zapytań, kafelek pokazuje, co blokuje następny krok
 (`tileBlocker`), hub ankiet czyta `rules_state` zamiast pytać o każdą grę.
 Edytor przy odrzuconym zapisie (274) pokazuje ten sam overlay co blokada
 zasobu (`showBlockingOverlay` z resource-lock.js, bez wpisu w edit_locks).
+
+## Editor — zrobione (2026-09-27)
+
+Testy: `tests/e2e/editor.spec.js` (cały plik na kodzie z brancha, sekcje
+„editor: audyt”). Migracja 276 (SECURITY INVOKER, więc RLS i Warstwa 2 z
+274 obowiązują): `game_import_content` (import TXT = jedna transakcja,
+wcześniej ~80 zapytań po skasowaniu starej treści), `game_question_delete`
++ `game_questions_renumber` (usunięcie i przenumerowanie razem).
+
+Wspólny formularz pytania z modalem w base-explorer:
+`js/core/question-form.js` (limity 200/17, pole punktów 0–100 same cyfry,
+pasek SUMA, `questionProblems()`, `buildAnswerRow()` /
+`buildAddAnswerTile()`) + `css/question-form.css` (wygląd z edytora). Oba
+miejsca budują te same wiersze; różnice tylko z natury miejsca: edytor
+zapisuje każde pole od razu (pusty tekst -> domyślny), modal ma „Zapisz”
+(pusty tekst blokuje zapis), w bazie pytań punkty są opcjonalne i 0–6
+odpowiedzi. `branch-code.js` serwuje też `base-explorer/`.
+
+Nowe typowe błędy (dopisane z tej strony):
+- Autozapis wpisujący znormalizowaną wartość (`trim`) z powrotem do pola
+  w trakcie pisania — zjada spację przy każdej pauzie, przestawia kursor.
+- Zapis async czytający „aktywny” element w chwili ZAKOŃCZENIA zamiast
+  z chwili wywołania — tekst ląduje w innym rekordzie po przełączeniu.
+- Przycisk w HTML bez podpiętego listenera („Wczytaj plik”).
+- `location.href` od razu po `alertModal()` bez `await` — komunikat znika.
+- Nawigacja przerywająca zapis w toku — przycisk wyjścia ma poczekać.
+- Blokada podwójnego kliknięcia trzymana dłużej niż sam zapis — następne
+  prawdziwe kliknięcie przepada.
+

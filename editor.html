@@ -16,6 +16,7 @@
 
   <link rel="icon" href="favicon.ico?v=v2026-09-27T04544"/>
   <link rel="stylesheet" href="css/base.css?v=v2026-09-27T04544"/>
+  <link rel="stylesheet" href="css/question-form.css?v=v2026-09-27T04544"/>
   <link rel="stylesheet" href="css/editor.css?v=v2026-09-27T04544"/>
 
   <script>
@@ -91,21 +92,21 @@
           </div>
 
           <div class="block">
-            <div class="lbl" data-i18n="editor.questionLabel">Treść pytania</div>
-            <textarea id="qText" class="ta" spellcheck="false"></textarea>
+            <div class="qf-label" data-i18n="editor.questionLabel">Treść pytania</div>
+            <textarea id="qText" class="qf-qtext" spellcheck="false"></textarea>
           </div>
 
           <div class="answersBlock">
             <div id="pointsRemainTop" class="answersTop"></div>
 
-            <div class="ahead" id="aHead">
+            <div class="qf-head" id="aHead">
               <div data-i18n="editor.answerLabel">Odpowiedź</div>
-              <div class="ptsCol" data-i18n="editor.pointsLabel">Pkt</div>
+              <div class="c-pts" data-i18n="editor.pointsLabel">Pkt</div>
               <div></div>
             </div>
 
-            <div class="alistShell">
-              <div id="aList" class="alist"></div>
+            <div class="qf-listShell">
+              <div id="aList" class="qf-list"></div>
             </div>
 
             <div class="hint" id="hintBottom"></div>

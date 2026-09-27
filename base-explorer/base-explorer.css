@@ -1416,118 +1416,16 @@ tr.row .tag-dot[data-tip]::before {
     gap: 12px
 }
 
-.qBlock .lbl2 {
-    margin-bottom: 6px
-}
-
-.qText {
-    width: 100%;
-    min-height: 92px;
-    resize: vertical;
-    box-sizing: border-box;
-    font-weight: 800;
-    line-height: 1.35
-}
-
-.qAnswersHead {
+/* lista odpowiedzi: css/question-form.css (wspólna z edytorem gry) */
+.qAnswersBlock {
     display: grid;
-    grid-template-columns: minmax(0,1fr) 120px 44px;
-    gap: 10px;
-    padding: 0 4px;
-    opacity: .75;
-    font-size: 11px;
-    letter-spacing: .08em;
-    text-transform: uppercase;
-    user-select: none
+    gap: 10px
 }
 
-.qAnswersHead .c2 {
-    text-align: center
-}
-
-.qAnswers,.qRow {
-    display: grid;
-    border: 1px solid rgba(255,255,255,.12)
-}
-
-.qAnswers {
-    margin-top: 8px;
-    border-radius: 12px;
-    padding: 8px;
-    max-height: 320px;
-    overflow: auto;
-    gap: 8px
-}
-
-.qRow {
-    grid-template-columns: minmax(0,1fr) 120px 44px;
-    gap: 10px;
-    align-items: center;
-    padding: 10px;
-    border-radius: 10px;
-    background: rgba(255,255,255,.04)
-}
-
-.qRow:hover {
-    background: rgba(255,255,255,.06)
-}
-
-.qAnsPts,.qAnsText {
-    width: 100%;
-    box-sizing: border-box;
-    font-weight: 900
-}
-
-.qAnsPts {
-    text-align: center
-}
-
-.qDel {
-    width: 44px;
-    height: 44px;
-    border-radius: 12px;
-    border: 1px solid rgba(255,120,120,.35);
-    --btn-tint: rgba(255,120,120,.12);
-  background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, #050914); /* kryjące: css/base.css */
-
-    color: #fff;
-    font-weight: 1000;
-    cursor: pointer
-}
-
-.qDel:hover {
-    --btn-tint: rgba(255,120,120,.18);
-  background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, #050914); /* kryjące: css/base.css */
-}
-
-.qBar {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-top: 10px;
-    flex-wrap: wrap
-}
-
-.qSum {
-    margin-left: auto;
-    display: inline-flex;
-    align-items: baseline;
-    gap: 8px;
-    padding: 8px 12px;
-    border-radius: 999px;
-    border: 1px solid rgba(255,234,166,.28);
-    background: rgba(255,234,166,.1);
-    color: rgba(255,234,166,.95);
-    font-weight: 1000;
-    letter-spacing: .08em;
-    text-transform: uppercase;
-    user-select: none
-}
-
-.qSum.over {
-    border-color: rgba(255,120,120,.4);
-    background: rgba(255,120,120,.1);
-    color: rgba(255,180,180,.95)
+/* 6 odpowiedzi + kafelek bez przewijania na zwykłym ekranie; na niskim
+   przewija się sama lista, "Zapisz" zostaje widoczne */
+.qAnswersBlock .qf-listShell {
+    max-height: min(540px, 48vh)
 }
 
 /* Tooltipy kropek: gdy hover na kropce, podnieś wiersz ponad sticky header */
@@ -1887,9 +1785,4 @@ tr.row .tag-dot[data-tip]::before {
     grid-template-columns: 1fr;
   }
 
-  /* Odpowiedzi w pytaniu — mniejsza siatka */
-  .qAnswersHead,
-  .qRow {
-    grid-template-columns: minmax(0,1fr) 80px 40px;
-  }
 }

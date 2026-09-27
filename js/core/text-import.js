@@ -7,8 +7,10 @@
  *  1 Odpowiedź /punkty (punkty opcjonalne)
  *
  * Zwraca:
- *  { ok, error, name, items }
+ *  { ok, code, params, name, items }
  *  gdzie items = [{ qText, answers:[{text, points|null}] }]
+ *  code (przy ok=false) tłumaczy strona: "answerBeforeQuestion" {line},
+ *  "noQuestions" -- wcześniej był tu gotowy polski tekst, niezależnie od języka.
  */
 export function parseQaText(raw) {
   const text = String(raw ?? "").replace(/\r\n?/g, "\n");
@@ -51,7 +53,8 @@ export function parseQaText(raw) {
     if (!cur) {
       return {
         ok: false,
-        error: `Błąd układu: odpowiedź przed pierwszym pytaniem (linia ${li + 1}).`,
+        code: "answerBeforeQuestion",
+        params: { line: li + 1 },
         name,
         items: [],
       };
@@ -87,10 +90,10 @@ export function parseQaText(raw) {
   pushCur();
 
   if (!items.length) {
-    return { ok: false, error: "Brak pytań. Pamiętaj o liniach zaczynających się od #.", name, items: [] };
+    return { ok: false, code: "noQuestions", params: {}, name, items: [] };
   }
 
-  return { ok: true, error: "", name, items };
+  return { ok: true, code: "", params: {}, name, items };
 }
 
 /** Pomocnicze: wycina do max znaków (np. odpowiedź 17) */
