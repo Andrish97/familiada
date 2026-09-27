@@ -554,3 +554,51 @@ test.describe("games: audyt -- game_validate", () => {
     }
   });
 });
+
+/* ================= 7) Warstwa 2: baza odrzuca zapis łamiący reguły (migracja 274) ================= */
+
+test.describe("games: audyt -- Warstwa 2 reguł gry", () => {
+
+  test("treść gry z otwartą ankietą i zamknięcie bez głosów są odrzucane przez bazę", async ({ page, context }) => {
+    test.setTimeout(90_000);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    const name = `E2E-GM-W2-${Date.now()}`;
+    try {
+      const res = await page.evaluate(async (name) => {
+        const sb = window.__sbClient;
+        const { data: u } = await sb.auth.getUser();
+        const { data: g, error } = await sb.from("games").insert({ name, owner_id: u.user.id, type: "poll_points", status: "draft" }).select("id").single();
+        if (error) throw new Error(error.message);
+        const { data: qs } = await sb.from("questions").insert(Array.from({ length: 10 }, (_, i) => ({ game_id: g.id, ord: i + 1, text: `P${i + 1}?` }))).select("id");
+        await sb.from("answers").insert(qs.flatMap((q) => [1, 2, 3].map((j) => ({ question_id: q.id, ord: j, text: `O${j}`, fixed_points: 0 }))));
+
+        const draftEdit = await sb.from("questions").update({ text: "Szkic OK?" }).eq("id", qs[0].id);
+        const open = await sb.from("games").update({ status: "poll_open" }).eq("id", g.id);
+        const openEdit = await sb.from("questions").update({ text: "Zmiana w trakcie?" }).eq("id", qs[0].id);
+        const openAdd = await sb.from("answers").insert({ question_id: qs[0].id, ord: 4, text: "Nowa", fixed_points: 0 });
+        const close = await sb.from("games").update({ status: "ready" }).eq("id", g.id);
+        const { data: after } = await sb.from("games").select("status").eq("id", g.id).single();
+        const { data: q0 } = await sb.from("questions").select("text").eq("id", qs[0].id).single();
+        return {
+          draftEdit: draftEdit.error?.message || "ok",
+          open: open.error?.message || "ok",
+          openEdit: openEdit.error?.message || "ok",
+          openAdd: openAdd.error?.message || "ok",
+          close: close.error?.message || "ok",
+          status: after.status,
+          text: q0.text,
+        };
+      }, name);
+
+      expect(res.draftEdit).toBe("ok");
+      expect(res.open).toBe("ok");
+      expect(res.openEdit).toContain("game_content_locked:poll_open");
+      expect(res.openAdd).toContain("game_content_locked:poll_open");
+      expect(res.close).toContain("poll_close_blocked:noSession");
+      expect(res.status).toBe("poll_open");
+      expect(res.text).toBe("Szkic OK?");
+    } finally {
+      await deleteGamesByName(page, name);
+    }
+  });
+});

@@ -78,3 +78,15 @@ eksportować”. Zwraca dla każdej akcji `{ok, code, params}`, strona tłumaczy
 (`validateGame()` w `js/core/game-validate.js`); lokalne kopie reguł w
 polls.js i stare funkcje JS usunięte. `game_action_state` zostaje w bazie
 tylko dla starych wersji strony z cache.
+
+Migracja 274 — Warstwa 2 (jak przy blokadach użycia): baza sama odrzuca
+zapis łamiący reguły, nawet gdy strona go przepuści. Zapis pytań/odpowiedzi
+wprost z przeglądarki przy otwartej ankiecie lub w kopii ze Społeczności →
+`game_content_locked:<powód>`; zmiana statusu poll_open → ready bez
+spełnionych warunków (`game_poll_close_check`, te same co
+`game_validate().poll_close`) → `poll_close_blocked:<kod>:<nr pytania>`.
+Funkcje SECURITY DEFINER (zamykanie, reset, biblioteka) przechodzą.
+`gameRuleErrorMessage(e)` tłumaczy te błędy (edytor, ankiety). Bez
+Warstwy 2 zostają: „graj” (control nie zapisuje nic jednorazowego przy
+starcie — stan gry to wiele zapisów `game_state_write`) i ręczne ustawianie
+statusu z pominięciem ankiety (testy tak przygotowują dane).

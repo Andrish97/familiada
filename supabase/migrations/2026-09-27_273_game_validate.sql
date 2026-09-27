@@ -21,6 +21,112 @@
 -- game_action_state zostaje (stare wersje strony z cache), nowy kod go nie
 -- używa.
 
+-- Warunki zamknięcia ankiety -- wspólne dla game_validate (Warstwa 1: stan
+-- przycisku) i strażnika w migracji 274 (Warstwa 2: sam UPDATE statusu).
+-- Wewnętrzna: bez sprawdzania właściciela, niedostępna dla klientów.
+create or replace function public.game_poll_close_check(p_game_id uuid)
+returns jsonb
+language plpgsql
+stable
+security definer
+set search_path to 'public'
+as $$
+declare
+  c_ok constant jsonb := '{"ok": true}'::jsonb;
+  g record;
+  r record;
+  v_poll_close jsonb;
+  v_strong int;
+  v_distinct int;
+begin
+  select id, owner_id, type::text as type, status::text as status
+    into g
+  from public.games
+  where id = p_game_id;
+
+  if not found then
+    return jsonb_build_object('ok', false, 'code', 'noGame');
+  end if;
+
+  if g.type not in ('poll_text', 'poll_points') then
+    v_poll_close := jsonb_build_object('ok', false, 'code', 'preparedNoPoll');
+  elsif g.status <> 'poll_open' then
+    v_poll_close := jsonb_build_object('ok', false, 'code', 'closeOnlyOpen');
+  elsif exists (
+    select 1 from public.poll_tasks t
+    where t.owner_id = g.owner_id and t.game_id = p_game_id
+      and t.done_at is null and t.declined_at is null and t.cancelled_at is null
+  ) then
+    -- ktoś z zaproszonych jeszcze nie zagłosował
+    v_poll_close := jsonb_build_object('ok', false, 'code', 'closeWaitForTasks');
+  else
+    v_poll_close := c_ok;
+    for r in
+      select q.id, q.ord,
+             (select ps.id from public.poll_sessions ps
+               where ps.game_id = p_game_id and ps.question_id = q.id
+               order by ps.created_at desc limit 1) as sid
+      from public.questions q
+      where q.game_id = p_game_id
+      order by q.ord
+    loop
+      if r.sid is null then
+        v_poll_close := jsonb_build_object('ok', false, 'code', 'noSession',
+          'params', jsonb_build_object('ord', r.ord));
+        exit;
+      end if;
+
+      if g.type = 'poll_points' then
+        -- Głosy przeliczone na 100 pkt metodą największych reszt (jak przy
+        -- zamykaniu); w pytaniu muszą być ≥ 3 odpowiedzi z ≥ 3 pkt.
+        with c as (
+          select v.answer_id, count(*)::int as cnt, coalesce(max(a.ord), 99) as aord
+          from public.poll_votes v
+          left join public.answers a on a.id = v.answer_id
+          where v.poll_session_id = r.sid and v.question_id = r.id and v.answer_id is not null
+          group by v.answer_id
+        ),
+        raw as (
+          select c.aord,
+                 100.0 * c.cnt / sum(c.cnt) over () as rp,
+                 floor(100.0 * c.cnt / sum(c.cnt) over ())::int as fl
+          from c
+        ),
+        d as (
+          select raw.fl,
+                 100 - sum(raw.fl) over () as diff,
+                 row_number() over (order by raw.rp - raw.fl desc, raw.aord) as rn
+          from raw
+        )
+        select count(*)::int into v_strong
+        from d
+        where d.fl + (case when d.rn <= d.diff then 1 else 0 end) >= 3;
+
+        if coalesce(v_strong, 0) < 3 then
+          v_poll_close := jsonb_build_object('ok', false, 'code', 'closeMinPoints',
+            'params', jsonb_build_object('ord', r.ord));
+          exit;
+        end if;
+      else
+        select count(distinct nullif(btrim(e.answer_norm), ''))::int into v_distinct
+        from public.poll_text_entries e
+        where e.poll_session_id = r.sid and e.question_id = r.id;
+
+        if coalesce(v_distinct, 0) < 3 then
+          v_poll_close := jsonb_build_object('ok', false, 'code', 'closeMinText',
+            'params', jsonb_build_object('ord', r.ord));
+          exit;
+        end if;
+      end if;
+    end loop;
+  end if;
+
+  return v_poll_close;
+end;
+$$;
+
+revoke all on function public.game_poll_close_check(uuid) from public, anon, authenticated;
+
 create or replace function public.game_validate(p_game_id uuid)
 returns jsonb
 language plpgsql
@@ -49,8 +155,6 @@ declare
   v_poll_open jsonb;
   v_poll_close jsonb;
   v_export jsonb;
-  v_strong int;
-  v_distinct int;
   v_is_poll boolean;
 begin
   if v_uid is null then
@@ -147,78 +251,7 @@ begin
     else v_content_poll
   end;
 
-  if not v_is_poll then
-    v_poll_close := jsonb_build_object('ok', false, 'code', 'preparedNoPoll');
-  elsif g.status <> 'poll_open' then
-    v_poll_close := jsonb_build_object('ok', false, 'code', 'closeOnlyOpen');
-  elsif exists (
-    select 1 from public.poll_tasks t
-    where t.owner_id = v_uid and t.game_id = p_game_id
-      and t.done_at is null and t.declined_at is null and t.cancelled_at is null
-  ) then
-    -- ktoś z zaproszonych jeszcze nie zagłosował
-    v_poll_close := jsonb_build_object('ok', false, 'code', 'closeWaitForTasks');
-  else
-    v_poll_close := c_ok;
-    for r in
-      select q.id, q.ord,
-             (select ps.id from public.poll_sessions ps
-               where ps.game_id = p_game_id and ps.question_id = q.id
-               order by ps.created_at desc limit 1) as sid
-      from public.questions q
-      where q.game_id = p_game_id
-      order by q.ord
-    loop
-      if r.sid is null then
-        v_poll_close := jsonb_build_object('ok', false, 'code', 'noSession',
-          'params', jsonb_build_object('ord', r.ord));
-        exit;
-      end if;
-
-      if g.type = 'poll_points' then
-        -- Głosy przeliczone na 100 pkt metodą największych reszt (jak przy
-        -- zamykaniu); w pytaniu muszą być ≥ 3 odpowiedzi z ≥ 3 pkt.
-        with c as (
-          select v.answer_id, count(*)::int as cnt, coalesce(max(a.ord), 99) as aord
-          from public.poll_votes v
-          left join public.answers a on a.id = v.answer_id
-          where v.poll_session_id = r.sid and v.question_id = r.id and v.answer_id is not null
-          group by v.answer_id
-        ),
-        raw as (
-          select c.aord,
-                 100.0 * c.cnt / sum(c.cnt) over () as rp,
-                 floor(100.0 * c.cnt / sum(c.cnt) over ())::int as fl
-          from c
-        ),
-        d as (
-          select raw.fl,
-                 100 - sum(raw.fl) over () as diff,
-                 row_number() over (order by raw.rp - raw.fl desc, raw.aord) as rn
-          from raw
-        )
-        select count(*)::int into v_strong
-        from d
-        where d.fl + (case when d.rn <= d.diff then 1 else 0 end) >= 3;
-
-        if coalesce(v_strong, 0) < 3 then
-          v_poll_close := jsonb_build_object('ok', false, 'code', 'closeMinPoints',
-            'params', jsonb_build_object('ord', r.ord));
-          exit;
-        end if;
-      else
-        select count(distinct nullif(btrim(e.answer_norm), ''))::int into v_distinct
-        from public.poll_text_entries e
-        where e.poll_session_id = r.sid and e.question_id = r.id;
-
-        if coalesce(v_distinct, 0) < 3 then
-          v_poll_close := jsonb_build_object('ok', false, 'code', 'closeMinText',
-            'params', jsonb_build_object('ord', r.ord));
-          exit;
-        end if;
-      end if;
-    end loop;
-  end if;
+  v_poll_close := public.game_poll_close_check(p_game_id);
 
   /* ---------- eksport ---------- */
   v_export := case

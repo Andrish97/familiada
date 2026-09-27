@@ -3,7 +3,7 @@ import { sb } from "../core/supabase.js?v=v2026-09-26T16124";
 import { requireAuth } from "../core/auth.js?v=v2026-09-26T16124";
 import { alertModal, confirmModal } from "../core/modal.js?v=v2026-09-26T16124";
 import { parseQaText, clip as clipN } from "../core/text-import.js?v=v2026-09-26T16124";
-import { validateGame, RULES as GV_RULES, TYPES } from "../core/game-validate.js?v=v2026-09-26T16124";
+import { validateGame, gameRuleErrorMessage, RULES as GV_RULES, TYPES } from "../core/game-validate.js?v=v2026-09-26T16124";
 import { guardResourceLock } from "../core/resource-lock.js?v=v2026-09-26T16124";
 import { updateChecked, ROW_GONE } from "../core/db-guard.js?v=v2026-09-26T16124";
 import { initI18n, t, withLangParam } from "../../translation/translation.js?v=v2026-09-26T16124";
@@ -721,9 +721,9 @@ async function boot() {
       console.error(e);
       const msg = String(e?.message || "");
       if (e?.code === "23514" || msg.includes("violates check constraint")) {
-        setMsg(MSG.addQuestionLimit());
+        setMsg(gameRuleErrorMessage(e) || MSG.addQuestionLimit());
       } else {
-        setMsg(MSG.addQuestionError());
+        setMsg(gameRuleErrorMessage(e) || MSG.addQuestionError());
       }
     }
   }
@@ -748,7 +748,7 @@ async function boot() {
       setMsg(MSG.deleteQuestionDone());
     } catch (e) {
       console.error(e);
-      setMsg(MSG.deleteQuestionError());
+      setMsg(gameRuleErrorMessage(e) || MSG.deleteQuestionError());
     }
   }
 
@@ -853,7 +853,7 @@ async function boot() {
       setMsg(MSG.addedAnswer());
     } catch (e) {
       console.error(e);
-      setMsg(MSG.addAnswerError());
+      setMsg(gameRuleErrorMessage(e) || MSG.addAnswerError());
     }
   }
 
@@ -870,7 +870,7 @@ async function boot() {
       setMsg(MSG.removedAnswer());
     } catch (e) {
       console.error(e);
-      setMsg(MSG.deleteAnswerError());
+      setMsg(gameRuleErrorMessage(e) || MSG.deleteAnswerError());
     }
   }
 
@@ -946,7 +946,7 @@ async function boot() {
             setMsg(MSG.rowGone());
             return;
           }
-          setMsg(MSG.saveError());
+          setMsg(gameRuleErrorMessage(e) || MSG.saveError());
         }
       };
       const saveTextDebounced = debounce(saveTextNow, 350);
@@ -988,9 +988,9 @@ async function boot() {
           }
           const msg = String(e?.message || "");
           if (e?.code === "23514" || msg.includes("violates check constraint")) {
-            setMsg(MSG.pointsRejected());
+            setMsg(gameRuleErrorMessage(e) || MSG.pointsRejected());
           } else {
-            setMsg(MSG.pointsSaveError());
+            setMsg(gameRuleErrorMessage(e) || MSG.pointsSaveError());
           }
         }
       };
@@ -1052,7 +1052,7 @@ async function boot() {
         setMsg(MSG.rowGone());
         return;
       }
-      setMsg(MSG.saveError());
+      setMsg(gameRuleErrorMessage(e) || MSG.saveError());
     }
   };
   const saveQuestionDebounced = debounce(saveQuestionNow, 350);
@@ -1248,7 +1248,7 @@ async function boot() {
         step: MSG.importErrorStep(),
         i: 0,
         n: 0,
-        msg: MSG.importError(e?.message || String(e)),
+        msg: gameRuleErrorMessage(e) || MSG.importError(e?.message || String(e)),
         isError: true,
       });
   

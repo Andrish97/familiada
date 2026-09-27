@@ -6,7 +6,7 @@ import QRCode from "https://cdn.jsdelivr.net/npm/qrcode@1.5.3/+esm";
 import { initI18n, t, withLangParam, getUiLang } from "../../translation/translation.js?v=v2026-09-26T16124";
 import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-09-26T16124";
 import { guardResourceLock } from "../core/resource-lock.js?v=v2026-09-26T16124";
-import { validateGame, RULES } from "../core/game-validate.js?v=v2026-09-26T16124";
+import { validateGame, gameRuleErrorMessage, RULES } from "../core/game-validate.js?v=v2026-09-26T16124";
 import "../core/contact-modal.js?v=v2026-09-26T16124";
 import { icon, iconText } from "../core/icons.js?v=v2026-09-26T16124";
 
@@ -1183,7 +1183,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           await refresh();
         } catch (e) {
           console.error("[polls] close points error:", e);
-          await alertModal({ text: `${t("polls.errors.close")}\n\n${e?.message || e}` });
+          await alertModal({ text: `${t("polls.errors.close")}\n\n${gameRuleErrorMessage(e) || e?.message || e}` });
         }
         return;
       }
@@ -1307,7 +1307,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       await refresh();
     } catch (e) {
       console.error("[polls] close text error:", e);
-      await alertModal({ text: `${t("polls.errors.close")}\n\n${e?.message || e}` });
+      await alertModal({ text: `${t("polls.errors.close")}\n\n${gameRuleErrorMessage(e) || e?.message || e}` });
     } finally {
       btnFinishTextClose.disabled = false;
       btnCancelTextClose.disabled = false;

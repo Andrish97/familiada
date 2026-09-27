@@ -94,3 +94,19 @@ export async function validateGame(gameId) {
   }
   return out;
 }
+
+/**
+ * Warstwa 2 (migracja 274): baza sama odrzuca zapis łamiący reguły --
+ * 'game_content_locked:<powód>' (treść gry przy otwartej ankiecie / kopii ze
+ * Społeczności) albo 'poll_close_blocked:<kod>' (zamknięcie ankiety bez
+ * spełnionych warunków). Zwraca przetłumaczony komunikat albo "" dla innych
+ * błędów.
+ */
+export function gameRuleErrorMessage(err) {
+  const m = String(err?.message || "");
+  if (m.includes("game_content_locked:poll_open")) return t("gameValidate.pollOpenNoEdit");
+  if (m.includes("game_content_locked:market")) return t("gameValidate.marketNoEdit");
+  const close = m.match(/poll_close_blocked:(\w+):(\d*)/);
+  if (close) return t(`gameValidate.${close[1]}`, { ord: close[2] || "?" });
+  return "";
+}
