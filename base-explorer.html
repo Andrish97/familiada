@@ -17,6 +17,7 @@
     <!-- wspólne style aplikacji (jak w games/manual) -->
   <link rel="stylesheet" href="css/base.css?v=v2026-09-27T04544" />
   <link rel="stylesheet" href="css/games.css?v=v2026-09-27T04544" />
+  <link rel="stylesheet" href="css/question-form.css?v=v2026-09-27T04544" />
   <link rel="stylesheet" href="base-explorer/base-explorer.css?v=v2026-09-27T04544" />
 
   <link rel="icon" href="favicon.ico?v=v2026-09-27T04544"/>
@@ -291,7 +292,7 @@
 
       <div class="tagsHead">
         <div class="mTitle" id="qTitle" data-i18n="baseExplorer.question.title">Pytanie</div>
-        <button class="btn sm" id="qClose" type="button" aria-label="Zamknij" data-i18n-aria-label="baseExplorer.common.close" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
+        <button class="btn sm" id="qClose" type="button" aria-label="Zamknij" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
       </div>
 
       <div class="mSub" data-i18n="baseExplorer.question.subtitle">
@@ -299,28 +300,25 @@
         Jeśli wpisane: 0–100, suma ≤ 100.
       </div>
 
+      <!-- Ten sam układ i style co pytanie w edytorze gry (css/question-form.css);
+           wiersze odpowiedzi i kafelek "+ Dodaj odpowiedź" buduje question-modal.js -->
       <div class="qBody">
         <div class="qBlock">
-          <div class="lbl2" data-i18n="baseExplorer.question.textLabel">Treść pytania</div>
-          <textarea id="qText" class="inp qText" maxlength="200" spellcheck="false" placeholder="Wpisz treść pytania…" data-i18n-placeholder="baseExplorer.question.textPlaceholder"></textarea>
+          <div class="qf-label" data-i18n="baseExplorer.question.textLabel">Treść pytania</div>
+          <textarea id="qText" class="qf-qtext" maxlength="200" spellcheck="false" placeholder="Wpisz treść pytania…" data-i18n-placeholder="baseExplorer.question.textPlaceholder"></textarea>
         </div>
 
-        <div class="qBlock">
-          <div class="qAnswersHead">
+        <div class="qBlock qAnswersBlock">
+          <div class="qf-sum" id="qSumPill" title="Suma punktów (max 100)" data-i18n-title="baseExplorer.question.sumTitle"></div>
+
+          <div class="qf-head">
             <div data-i18n="baseExplorer.question.answerHeader">Odpowiedź</div>
-            <div class="c2" data-i18n="baseExplorer.question.pointsHeader">Punkty</div>
+            <div class="c-pts" data-i18n="baseExplorer.question.pointsHeader">Punkty</div>
             <div></div>
           </div>
 
-          <div id="qAnswers" class="qAnswers"></div>
-
-          <div class="qBar">
-            <button class="btn sm" id="qAdd" type="button" data-i18n="baseExplorer.question.addAnswer">+ Odpowiedź</button>
-
-            <div class="qSum" id="qSumPill" title="Suma punktów (max 100)" data-i18n-title="baseExplorer.question.sumTitle">
-              <span data-i18n="baseExplorer.question.sumLabel">SUMA</span>
-              <b id="qSumVal">0/100</b>
-            </div>
+          <div class="qf-listShell">
+            <div id="qAnswers" class="qf-list"></div>
           </div>
         </div>
       </div>

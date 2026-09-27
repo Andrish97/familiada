@@ -4430,38 +4430,26 @@ export function wireActions({ state }) {
         payload: (row.payload && typeof row.payload === "object") ? row.payload : { text: "", answers: [] },
       };
 
-      let res = null;
-      if (typeof questionModal === "function") {
-        res = await questionModal(input);
-      } else if (questionModal?.open) {
-        res = await questionModal.open(input);
-      } else if (questionModal?.show) {
-        res = await questionModal.show(input);
-      } else {
-        console.warn("Question modal has no open/show function. Check initQuestionModal() return value.");
-        return false;
-      }
-
-      if (!res || !res.ok) return false;
-
-      if (!lease.ok) {
-        void alertModal({
-          text: lease.reason === "gone"
+      // Zapis odbywa się z otwartym modalem (save): przy błędzie komunikat
+      // pokazuje się w modalu, a wpisana treść zostaje.
+      const save = async (payload) => {
+        if (!lease.ok) {
+          const e = new Error("lease lost");
+          e.userMessage = lease.reason === "gone"
             ? t("resourceLock.goneMessage")
-            : t("resourceLock.forbiddenMessage"),
-        });
-        return false;
-      }
-
-      try {
-        await updateChecked("qb_questions", { id: qid }, { payload: res.payload });
-      } catch (e) {
-        if (e?.code === ROW_GONE) {
-          void alertModal({ text: t("resourceLock.goneMessage") });
-          return false;
+            : t("resourceLock.forbiddenMessage");
+          throw e;
         }
-        throw e;
-      }
+        try {
+          await updateChecked("qb_questions", { id: qid }, { payload });
+        } catch (e) {
+          if (e?.code === ROW_GONE) e.userMessage = t("resourceLock.goneMessage");
+          throw e;
+        }
+      };
+
+      const res = await questionModal.open(input, { save });
+      if (!res?.ok) return false;
 
       await refreshList(state);
       return true;

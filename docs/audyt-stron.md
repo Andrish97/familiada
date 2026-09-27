@@ -2,7 +2,7 @@
 
 Strony powstawały „w czacie tekstowym GPT” — są nieczytelne i często
 zbugowane. Audytujemy je po kolei, jedna strona na raz. Zrobione:
-**logo-editor**, **bases**, **games** (2026-09-26). Następna: do ustalenia.
+**logo-editor**, **bases**, **games** (2026-09-26). Następna: **editor** (+ ujednolicenie z modalem pytania w base-explorer).
 
 ## Kroki
 

@@ -202,3 +202,14 @@ jobs:
           name: e2e-failure-screenshots
           path: tests/test-results/
           retention-days: 7
+
+      # Zrzuty robione celowo przez testy (testInfo.outputPath("shot-*.png"),
+      # np. podgląd nowego wyglądu w editor.spec.js) -- też przy sukcesie.
+      - name: Upload test screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-shots
+          path: tests/test-results/**/shot-*.png
+          if-no-files-found: ignore
+          retention-days: 7
