@@ -620,6 +620,7 @@ async function refreshData() {
     await refreshTopBadges();
 
     if (focusInviteToken && !focusInviteHandled) {
+      focusInviteHandled = true;
       const match = invites.find((x) => String(x.token) === String(focusInviteToken));
       if (match) {
         if (match.status === "pending") {
@@ -627,14 +628,7 @@ async function refreshData() {
           if (ok) {
             await callSubscriptionAction(match, "accept");
             await refreshData();
-          } else {
-            subTokenPrompted = true;
           }
-        } else {
-          focusInviteHandled = true;
-          const url = new URL(location.href);
-          url.searchParams.delete("s");
-          history.replaceState(null, "", url.toString());
         }
       } else if (!subTokenPrompted) {
         subTokenPrompted = true;
@@ -652,7 +646,6 @@ async function refreshData() {
           location.href = url.toString();
         }
       }
-      focusInviteHandled = true;
       const url = new URL(location.href);
       if (url.searchParams.get("s") === focusInviteToken) {
         url.searchParams.delete("s");
@@ -728,7 +721,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   btnBack?.addEventListener("click", () => { location.href = getBackLink(); });
   btnManual?.addEventListener("click", () => { location.href = buildManualUrl(); });
 
-  window.addEventListener("i18n:lang", () => {
+  const onI18nLangChange = () => {
     renderSelect(sortAD, "subscribers");
     renderSelect(sortAM, "subscribers");
     renderSelect(sortBD, "subscriptions");
@@ -736,17 +729,20 @@ document.addEventListener("DOMContentLoaded", async () => {
     updateBackButtonLabel();
     renderSubscribers();
     renderInvites();
-  });
+  };
+  window.addEventListener("i18n:lang", onI18nLangChange);
+
+  const onModalClosed = () => { refreshData(); };
+  document.addEventListener("uni-modal:closed", onModalClosed);
+
+  const onVisibilityChange = () => {
+    if (document.hidden) stopAutoRefresh();
+    else { startAutoRefresh(); refreshData(); }
+  };
+  document.addEventListener("visibilitychange", onVisibilityChange);
 
   await refreshData();
   document.querySelectorAll('[data-skel-step]').forEach(el => el.classList.add('skel-step-ready'));
 
-  // po zamknięciu dowolnego confirm/alert w aplikacji — odśwież listy
-  document.addEventListener("uni-modal:closed", () => { refreshData(); });
-
   startAutoRefresh();
-  document.addEventListener("visibilitychange", () => {
-    if (document.hidden) stopAutoRefresh();
-    else { startAutoRefresh(); refreshData(); }
-  });
 });
