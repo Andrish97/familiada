@@ -302,8 +302,8 @@ test.describe("poll-qr.js audyt", () => {
 
       // Teraz zmień poll_qr_lang na angielski przez polls.js
       const pollsPage = await context.newPage();
-      const context3 = await instrumentPage(pollsPage);
-      await loginAsTestUser(pollsPage, context3, { username: testAccountUsername(7) });
+      instrumentPage(pollsPage);
+      await loginAsTestUser(pollsPage, context, { username: testAccountUsername(7) });
 
       const pollsUrl = new URL("polls.html", "https://www.familiada.online/");
       pollsUrl.searchParams.set("id", game.gameId);
