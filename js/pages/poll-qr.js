@@ -33,20 +33,37 @@ function withLangInUrl(u, lang){
 }
 
 const qr = document.getElementById("qr");
+let renderAbortController = null;
 
 async function render(u){
-  if (!qr) return;
+  if (!qr) {
+    console.error("[poll-qr] missing #qr element");
+    return;
+  }
+
+  // Anuluj poprzedni render, jeśli wciąż w toku
+  if (renderAbortController) renderAbortController.abort();
+  renderAbortController = new AbortController();
+  const signal = renderAbortController.signal;
+
   qr.innerHTML = "";
   if(!u){ qr.textContent = t("pollQr.missingUrl"); return; }
 
   try{
+    const timeoutId = setTimeout(() => renderAbortController?.abort(), 8000);
     const dataUrl = await QRCode.toDataURL(u, { width: 840, margin: 1 });
+    clearTimeout(timeoutId);
+
+    if (signal.aborted) return;
+
     const img = document.createElement("img");
     img.src = dataUrl;
+    qr.innerHTML = "";
     qr.appendChild(img);
   }catch(e){
+    if (signal.aborted) return;
     console.error("[poll-qr] QR error:", e);
-    qr.textContent = t("pollQr.qrFailed");
+    qr.textContent = e.name === "AbortError" ? t("pollQr.qrFailed") : t("pollQr.qrFailed");
   }
 }
 
@@ -67,9 +84,19 @@ if (!url && paramId && paramKey) {
       p_game_id: paramId,
       p_key:     paramKey,
     });
-    if (error || !data?.game) throw new Error(error?.message || "not_found");
+    if (error) {
+      if (error.code === "PGRST116") {
+        throw new Error("invalid_key");
+      }
+      throw new Error(error.message || "not_found");
+    }
+    if (!data?.game) throw new Error("not_found");
 
     const game = data.game;
+    if (!["poll_open", "ready"].includes(game.status)) {
+      throw new Error("invalid_status");
+    }
+
     const base = game.type === "poll_points" ? "poll-points" : "poll-text";
     const voteUrl = new URL(base, location.href);
     voteUrl.searchParams.set("id", game.id);
@@ -80,7 +107,12 @@ if (!url && paramId && paramKey) {
     myGameId = paramId;
   } catch(e) {
     console.error("[poll-qr] device init error:", e);
-    if (qr) qr.textContent = t("pollQr.missingUrlOrKey");
+    const errorMsg = {
+      "invalid_key": "pollQr.invalidKey",
+      "invalid_status": "pollQr.invalidStatus",
+      "not_found": "pollQr.missingUrlOrKey"
+    }[e.message] || "pollQr.missingUrlOrKey";
+    if (qr) qr.textContent = t(errorMsg);
   }
 }
 
@@ -107,7 +139,8 @@ async function applyLangChange(lang) {
   await setUiLang(lang, { persist: false, updateUrl: true, apply: true });
   url = withLangInUrl(url, lang);
   myScope = getScopeFromVoteUrl(url);
-  render(url);
+  // render() anuluje poprzedni render automatycznie
+  await render(url);
 }
 
 // --- Język: pollowanie games.poll_qr_lang (migracja 269) zamiast komend ---
@@ -121,6 +154,7 @@ async function applyLangChange(lang) {
 // komendę z zewnątrz.
 const myKey = myScope.split(":")[1] || "";
 const POLL_LANG_INTERVAL_MS = 4000;
+let pollLangInterval = null;
 
 async function pollLangOnce() {
   if (!myGameId || !myKey) return;
@@ -136,8 +170,13 @@ async function pollLangOnce() {
 
 if (myGameId && myKey) {
   pollLangOnce();
-  setInterval(pollLangOnce, POLL_LANG_INTERVAL_MS);
+  pollLangInterval = setInterval(pollLangOnce, POLL_LANG_INTERVAL_MS);
 }
+
+// Oczyść interval przy unload
+window.addEventListener("beforeunload", () => {
+  if (pollLangInterval) clearInterval(pollLangInterval);
+});
 
 updateFsIcon();
 render(url).finally(() => document.documentElement.classList.remove('page-loading'));

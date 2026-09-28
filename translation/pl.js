@@ -3104,6 +3104,8 @@ const pl = {
     qrFailed: "Nie udało się wygenerować QR",
     loadingGame: "Ładowanie gry…",
     missingUrlOrKey: "Brak URL lub nieprawidłowy klucz.",
+    invalidKey: "Nieprawidłowy klucz ankiety",
+    invalidStatus: "Ankieta nie jest dostępna do głosowania",
   },
   pollsHub: {
     title: "Familiada — centrum ankiet",

@@ -3230,6 +3230,8 @@ const en = {
     qrFailed: "Failed to generate QR",
     loadingGame: "Loading game…",
     missingUrlOrKey: "Missing URL or invalid key.",
+    invalidKey: "Invalid poll key",
+    invalidStatus: "Poll is not available for voting",
   },
   pollsHub: {
     title: "Familiada — polls hub",

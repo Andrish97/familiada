@@ -3214,6 +3214,8 @@ const uk = {
     qrFailed: "Не вдалося згенерувати QR",
     loadingGame: "Завантаження гри…",
     missingUrlOrKey: "Немає URL або невірний ключ.",
+    invalidKey: "Невірний ключ опитування",
+    invalidStatus: "Опитування недоступне для голосування",
   },
   pollsHub: {
     title: "Familiada — центр опитувань",
