@@ -78,10 +78,10 @@ test.describe("poll-voting (poll-points.js i poll-text.js) audyt", () => {
 
   test("poll-points: głosowanie w ankiecie punktowej", async ({ context }) => {
     const page = await context.newPage();
-    const context2 = await instrumentPage(page);
+    instrumentPage(page);
 
     try {
-      await loginAsTestUser(page, context2, { username: testAccountUsername(11) });
+      await loginAsTestUser(page, context, { username: testAccountUsername(11) });
       const game = await createPollGame(page, "poll_points");
 
       const url = new URL("poll-points.html", "https://www.familiada.online/");
@@ -131,10 +131,10 @@ test.describe("poll-voting (poll-points.js i poll-text.js) audyt", () => {
 
   test("poll-text: głosowanie w ankiecie tekstowej", async ({ context }) => {
     const page = await context.newPage();
-    const context2 = await instrumentPage(page);
+    instrumentPage(page);
 
     try {
-      await loginAsTestUser(page, context2, { username: testAccountUsername(12) });
+      await loginAsTestUser(page, context, { username: testAccountUsername(12) });
       const game = await createPollGame(page, "poll_text");
 
 
@@ -185,10 +185,10 @@ test.describe("poll-voting (poll-points.js i poll-text.js) audyt", () => {
 
   test("poll-text: komunikat 'już zagłosowałeś' przy powtórnym wejściu", async ({ context }) => {
     const page = await context.newPage();
-    const context2 = await instrumentPage(page);
+    instrumentPage(page);
 
     try {
-      await loginAsTestUser(page, context2, { username: testAccountUsername(13) });
+      await loginAsTestUser(page, context, { username: testAccountUsername(13) });
       const game = await createPollGame(page, "poll_text");
 
 
@@ -221,7 +221,7 @@ test.describe("poll-voting (poll-points.js i poll-text.js) audyt", () => {
 
   test("poll-points: obsługuje brakujące parametry", async ({ context }) => {
     const page = await context.newPage();
-    const context2 = await instrumentPage(page);
+    instrumentPage(page);
 
     try {
 
@@ -245,10 +245,10 @@ test.describe("poll-voting (poll-points.js i poll-text.js) audyt", () => {
 
   test("poll-text: limit 17 znaków w polu tekstowym", async ({ context }) => {
     const page = await context.newPage();
-    const context2 = await instrumentPage(page);
+    instrumentPage(page);
 
     try {
-      await loginAsTestUser(page, context2, { username: testAccountUsername(14) });
+      await loginAsTestUser(page, context, { username: testAccountUsername(14) });
       const game = await createPollGame(page, "poll_text");
 
 
@@ -280,7 +280,7 @@ test.describe("poll-voting (poll-points.js i poll-text.js) audyt", () => {
 
   test("poll-points: obsługuje error wysyłki z recovery", async ({ context }) => {
     const page = await context.newPage();
-    const context2 = await instrumentPage(page);
+    instrumentPage(page);
 
     try {
       // TODO: Test error scenario — wymaga mock'owania błędu RPC

@@ -79,10 +79,10 @@ test.describe("poll-qr.js audyt", () => {
 
   test("wyświetla QR z przekazanego URL", async ({ context }) => {
     const page = await context.newPage();
-    const context2 = await instrumentPage(page);
+    instrumentPage(page);
 
     try {
-      await loginAsTestUser(page, context2, { username: testAccountUsername(1) });
+      await loginAsTestUser(page, context, { username: testAccountUsername(1) });
       const game = await createPollGame(page);
 
       const voteUrl = new URL("poll-points.html", "https://www.familiada.online/");
@@ -112,10 +112,10 @@ test.describe("poll-qr.js audyt", () => {
 
   test("device mode: generuje QR z ?id=&key=", async ({ context }) => {
     const page = await context.newPage();
-    const context2 = await instrumentPage(page);
+    instrumentPage(page);
 
     try {
-      await loginAsTestUser(page, context2, { username: testAccountUsername(2) });
+      await loginAsTestUser(page, context, { username: testAccountUsername(2) });
       const game = await createPollGame(page);
 
 
@@ -141,10 +141,10 @@ test.describe("poll-qr.js audyt", () => {
 
   test("obsługuje błąd: zły klucz w device mode", async ({ context }) => {
     const page = await context.newPage();
-    const context2 = await instrumentPage(page);
+    instrumentPage(page);
 
     try {
-      await loginAsTestUser(page, context2, { username: testAccountUsername(3) });
+      await loginAsTestUser(page, context, { username: testAccountUsername(3) });
       const game = await createPollGame(page);
 
 
@@ -172,10 +172,10 @@ test.describe("poll-qr.js audyt", () => {
 
   test("obsługuje błąd: ankieta nie w stanie poll_open", async ({ context }) => {
     const page = await context.newPage();
-    const context2 = await instrumentPage(page);
+    instrumentPage(page);
 
     try {
-      await loginAsTestUser(page, context2, { username: testAccountUsername(4) });
+      await loginAsTestUser(page, context, { username: testAccountUsername(4) });
       const game = await createPollGame(page);
 
       // Zamknij ankietę
@@ -205,10 +205,10 @@ test.describe("poll-qr.js audyt", () => {
 
   test("przycisk fullscreen przełącza tryb pełnoekranowy", async ({ context }) => {
     const page = await context.newPage();
-    const context2 = await instrumentPage(page);
+    instrumentPage(page);
 
     try {
-      await loginAsTestUser(page, context2, { username: testAccountUsername(5) });
+      await loginAsTestUser(page, context, { username: testAccountUsername(5) });
       const game = await createPollGame(page);
 
       const voteUrl = new URL("poll-points.html", "https://www.familiada.online/");
@@ -241,10 +241,10 @@ test.describe("poll-qr.js audyt", () => {
 
   test("obsługuje timeout QRCode.toDataURL (8 sekund)", async ({ context }) => {
     const page = await context.newPage();
-    const context2 = await instrumentPage(page);
+    instrumentPage(page);
 
     try {
-      await loginAsTestUser(page, context2, { username: testAccountUsername(6) });
+      await loginAsTestUser(page, context, { username: testAccountUsername(6) });
 
 
       // Podaj bardzo długi URL, żeby sprawdzić timeout
@@ -276,10 +276,10 @@ test.describe("poll-qr.js audyt", () => {
 
   test("zmiana języka zmienia tekst i QR", async ({ context }) => {
     const page = await context.newPage();
-    const context2 = await instrumentPage(page);
+    instrumentPage(page);
 
     try {
-      await loginAsTestUser(page, context2, { username: testAccountUsername(7) });
+      await loginAsTestUser(page, context, { username: testAccountUsername(7) });
       const game = await createPollGame(page);
 
       const voteUrl = new URL("poll-points.html", "https://www.familiada.online/");

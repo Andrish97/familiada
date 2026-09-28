@@ -107,10 +107,10 @@ test.describe("poll-go.js audyt", () => {
 
   test("task invite: zalogowany user bez account invite → głos", async ({ context }) => {
     const page = await context.newPage();
-    const context2 = await instrumentPage(page);
+    instrumentPage(page);
 
     try {
-      await loginAsTestUser(page, context2, { username: testAccountUsername(21) });
+      await loginAsTestUser(page, context, { username: testAccountUsername(21) });
       const { gameId, taskToken, pollType } = await createTaskToken(page, "poll_points");
 
 
@@ -143,7 +143,7 @@ test.describe("poll-go.js audyt", () => {
 
   test("task invite: niezalogowany user → redirect do login", async ({ context }) => {
     const page = await context.newPage();
-    const context2 = await instrumentPage(page);
+    instrumentPage(page);
 
     try {
       // Nie logujemy się
@@ -172,10 +172,10 @@ test.describe("poll-go.js audyt", () => {
 
   test("subscription invite: zalogowany user → accept/decline", async ({ context }) => {
     const page = await context.newPage();
-    const context2 = await instrumentPage(page);
+    instrumentPage(page);
 
     try {
-      await loginAsTestUser(page, context2, { username: testAccountUsername(22) });
+      await loginAsTestUser(page, context, { username: testAccountUsername(22) });
       const { subToken } = await createSubToken(page);
 
 
@@ -209,7 +209,7 @@ test.describe("poll-go.js audyt", () => {
 
   test("subscription invite: niezalogowany + email → subscribe", async ({ context }) => {
     const page = await context.newPage();
-    const context2 = await instrumentPage(page);
+    instrumentPage(page);
 
     try {
       // Nie logujemy się
@@ -244,10 +244,10 @@ test.describe("poll-go.js audyt", () => {
 
   test("task invite: expired token → error message", async ({ context }) => {
     const page = await context.newPage();
-    const context2 = await instrumentPage(page);
+    instrumentPage(page);
 
     try {
-      await loginAsTestUser(page, context2, { username: testAccountUsername(23) });
+      await loginAsTestUser(page, context, { username: testAccountUsername(23) });
       const { gameId, taskToken } = await createTaskToken(page, "poll_points");
 
       // Ustaw task na "declined" (expired)
@@ -278,7 +278,7 @@ test.describe("poll-go.js audyt", () => {
 
   test("missing token (?t= brak) → error message", async ({ context }) => {
     const page = await context.newPage();
-    const context2 = await instrumentPage(page);
+    instrumentPage(page);
 
     try {
 
@@ -298,7 +298,7 @@ test.describe("poll-go.js audyt", () => {
 
   test("invalid token → error message", async ({ context }) => {
     const page = await context.newPage();
-    const context2 = await instrumentPage(page);
+    instrumentPage(page);
 
     try {
 
