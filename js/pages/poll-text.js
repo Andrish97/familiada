@@ -178,7 +178,7 @@ async function submitBatch(items) {
       p_voter_token: voter,
       p_items: chunk,
     });
-    const { error } = await withTimeout(req, 25000, MSG.loadTimeout?.() || "Timeout");
+    const { error } = await withTimeout(req, 30000, MSG.loadTimeout());
     if (error) throw error;
   };
 
@@ -355,7 +355,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
     if (hasDone()) {
       showClosed(true);
-      setSub(MSG.alreadyVoted());
+      setSub("");
+      setClosedMsg(MSG.alreadyVoted());
       redirectToRoot();
       return;
     }

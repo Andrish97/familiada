@@ -148,7 +148,7 @@ async function submitBatch(items) {
       p_voter_token: voter,
       p_items: chunk,
     });
-    const { error } = await withTimeout(req, 25000, MSG.loadTimeout());
+    const { error } = await withTimeout(req, 30000, MSG.loadTimeout());
     if (error) throw error;
   };
 
@@ -275,7 +275,8 @@ function render() {
         console.error("[poll-points] submit_batch error:", e);
         setSub(MSG.error(e?.message || e));
         submitting = false;
-        // pozwól spróbować jeszcze raz (użytkownik kliknie back/refresh - ale alert go ostrzeże)
+        // odbloknij UI
+        if (alist) [...alist.querySelectorAll("button")].forEach(x => (x.disabled = false));
       });
 
     return;
