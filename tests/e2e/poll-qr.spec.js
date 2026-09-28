@@ -13,10 +13,7 @@
 // - sprawdzenie statusu gry w device mode
 
 const { test, expect } = require("@playwright/test");
-const { loginAsTestUser, instrumentPage } = require("./helpers/login");
-const { serveBranchCode } = require("./helpers/branch-code");
-
-const testAccountUsername = (n) => `e2e-test${n}@familiada.online`;
+const { loginAsTestUser, instrumentPage, testAccountUsername } = require("./helpers/login");
 
 async function createPollGame(page) {
   return await page.evaluate(async () => {
