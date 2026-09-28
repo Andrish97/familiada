@@ -76,10 +76,7 @@ async function deleteGame(page, gameId) {
 test.describe("poll-voting (poll-points.js i poll-text.js) audyt", () => {
   test.use({ serviceWorkers: "block" });
 
-  test("poll-points: głosowanie w ankiecie punktowej", async ({ context }) => {
-    const page = await context.newPage();
-    instrumentPage(page);
-
+  test("poll-points: głosowanie w ankiecie punktowej", async ({ page, context }) => {
     try {
       await loginAsTestUser(page, context, { username: testAccountUsername(1) });
       const game = await createPollGame(page, "poll_points");
@@ -129,10 +126,7 @@ test.describe("poll-voting (poll-points.js i poll-text.js) audyt", () => {
     }
   });
 
-  test("poll-text: głosowanie w ankiecie tekstowej", async ({ context }) => {
-    const page = await context.newPage();
-    instrumentPage(page);
-
+  test("poll-text: głosowanie w ankiecie tekstowej", async ({ page, context }) => {
     try {
       await loginAsTestUser(page, context, { username: testAccountUsername(2) });
       const game = await createPollGame(page, "poll_text");
@@ -183,10 +177,7 @@ test.describe("poll-voting (poll-points.js i poll-text.js) audyt", () => {
     }
   });
 
-  test("poll-text: komunikat 'już zagłosowałeś' przy powtórnym wejściu", async ({ context }) => {
-    const page = await context.newPage();
-    instrumentPage(page);
-
+  test("poll-text: komunikat 'już zagłosowałeś' przy powtórnym wejściu", async ({ page, context }) => {
     try {
       await loginAsTestUser(page, context, { username: testAccountUsername(3) });
       const game = await createPollGame(page, "poll_text");
@@ -243,10 +234,7 @@ test.describe("poll-voting (poll-points.js i poll-text.js) audyt", () => {
     }
   });
 
-  test("poll-text: limit 17 znaków w polu tekstowym", async ({ context }) => {
-    const page = await context.newPage();
-    instrumentPage(page);
-
+  test("poll-text: limit 17 znaków w polu tekstowym", async ({ page, context }) => {
     try {
       await loginAsTestUser(page, context, { username: testAccountUsername(4) });
       const game = await createPollGame(page, "poll_text");

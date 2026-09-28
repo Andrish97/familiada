@@ -77,9 +77,7 @@ async function deleteGame(page, gameId) {
 test.describe("poll-qr.js audyt", () => {
   test.use({ serviceWorkers: "block" });
 
-  test("wyświetla QR z przekazanego URL", async ({ context }) => {
-    const page = await context.newPage();
-    instrumentPage(page);
+  test("wyświetla QR z przekazanego URL", async ({ page, context }) => {
 
     try {
       await loginAsTestUser(page, context, { username: testAccountUsername(1) });
@@ -110,9 +108,7 @@ test.describe("poll-qr.js audyt", () => {
     }
   });
 
-  test("device mode: generuje QR z ?id=&key=", async ({ context }) => {
-    const page = await context.newPage();
-    instrumentPage(page);
+  test("device mode: generuje QR z ?id=&key=", async ({ page, context }) => {
 
     try {
       await loginAsTestUser(page, context, { username: testAccountUsername(2) });
@@ -139,9 +135,7 @@ test.describe("poll-qr.js audyt", () => {
     }
   });
 
-  test("obsługuje błąd: zły klucz w device mode", async ({ context }) => {
-    const page = await context.newPage();
-    instrumentPage(page);
+  test("obsługuje błąd: zły klucz w device mode", async ({ page, context }) => {
 
     try {
       await loginAsTestUser(page, context, { username: testAccountUsername(3) });
@@ -170,9 +164,7 @@ test.describe("poll-qr.js audyt", () => {
     }
   });
 
-  test("obsługuje błąd: ankieta nie w stanie poll_open", async ({ context }) => {
-    const page = await context.newPage();
-    instrumentPage(page);
+  test("obsługuje błąd: ankieta nie w stanie poll_open", async ({ page, context }) => {
 
     try {
       await loginAsTestUser(page, context, { username: testAccountUsername(4) });
@@ -203,9 +195,7 @@ test.describe("poll-qr.js audyt", () => {
     }
   });
 
-  test("przycisk fullscreen przełącza tryb pełnoekranowy", async ({ context }) => {
-    const page = await context.newPage();
-    instrumentPage(page);
+  test("przycisk fullscreen przełącza tryb pełnoekranowy", async ({ page, context }) => {
 
     try {
       await loginAsTestUser(page, context, { username: testAccountUsername(5) });
@@ -239,9 +229,7 @@ test.describe("poll-qr.js audyt", () => {
     }
   });
 
-  test("obsługuje timeout QRCode.toDataURL (8 sekund)", async ({ context }) => {
-    const page = await context.newPage();
-    instrumentPage(page);
+  test("obsługuje timeout QRCode.toDataURL (8 sekund)", async ({ page, context }) => {
 
     try {
       await loginAsTestUser(page, context, { username: testAccountUsername(6) });
@@ -274,9 +262,7 @@ test.describe("poll-qr.js audyt", () => {
     }
   });
 
-  test("zmiana języka zmienia tekst i QR", async ({ context }) => {
-    const page = await context.newPage();
-    instrumentPage(page);
+  test("zmiana języka zmienia tekst i QR", async ({ page, context }) => {
 
     try {
       await loginAsTestUser(page, context, { username: testAccountUsername(7) });

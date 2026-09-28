@@ -105,9 +105,7 @@ async function deleteGame(page, gameId) {
 test.describe("poll-go.js audyt", () => {
   test.use({ serviceWorkers: "block" });
 
-  test("task invite: zalogowany user bez account invite → głos", async ({ context }) => {
-    const page = await context.newPage();
-    instrumentPage(page);
+  test("task invite: zalogowany user bez account invite → głos", async ({ page, context }) => {
 
     try {
       await loginAsTestUser(page, context, { username: testAccountUsername(5) });
@@ -141,9 +139,7 @@ test.describe("poll-go.js audyt", () => {
     }
   });
 
-  test("task invite: niezalogowany user → redirect do login", async ({ context }) => {
-    const page = await context.newPage();
-    instrumentPage(page);
+  test("task invite: niezalogowany user → redirect do login", async ({ page, context }) => {
 
     try {
       // Nie logujemy się
@@ -170,9 +166,7 @@ test.describe("poll-go.js audyt", () => {
     }
   });
 
-  test("subscription invite: zalogowany user → accept/decline", async ({ context }) => {
-    const page = await context.newPage();
-    instrumentPage(page);
+  test("subscription invite: zalogowany user → accept/decline", async ({ page, context }) => {
 
     try {
       await loginAsTestUser(page, context, { username: testAccountUsername(6) });
@@ -207,9 +201,7 @@ test.describe("poll-go.js audyt", () => {
     }
   });
 
-  test("subscription invite: niezalogowany + email → subscribe", async ({ context }) => {
-    const page = await context.newPage();
-    instrumentPage(page);
+  test("subscription invite: niezalogowany + email → subscribe", async ({ page, context }) => {
 
     try {
       // Nie logujemy się
@@ -242,9 +234,7 @@ test.describe("poll-go.js audyt", () => {
     }
   });
 
-  test("task invite: expired token → error message", async ({ context }) => {
-    const page = await context.newPage();
-    instrumentPage(page);
+  test("task invite: expired token → error message", async ({ page, context }) => {
 
     try {
       await loginAsTestUser(page, context, { username: testAccountUsername(7) });
@@ -276,9 +266,7 @@ test.describe("poll-go.js audyt", () => {
     }
   });
 
-  test("missing token (?t= brak) → error message", async ({ context }) => {
-    const page = await context.newPage();
-    instrumentPage(page);
+  test("missing token (?t= brak) → error message", async ({ page, context }) => {
 
     try {
 
@@ -296,9 +284,7 @@ test.describe("poll-go.js audyt", () => {
     }
   });
 
-  test("invalid token → error message", async ({ context }) => {
-    const page = await context.newPage();
-    instrumentPage(page);
+  test("invalid token → error message", async ({ page, context }) => {
 
     try {
 
