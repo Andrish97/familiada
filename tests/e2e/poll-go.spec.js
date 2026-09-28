@@ -110,7 +110,7 @@ test.describe("poll-go.js audyt", () => {
     instrumentPage(page);
 
     try {
-      await loginAsTestUser(page, context, { username: testAccountUsername(21) });
+      await loginAsTestUser(page, context, { username: testAccountUsername(5) });
       const { gameId, taskToken, pollType } = await createTaskToken(page, "poll_points");
 
 
@@ -175,7 +175,7 @@ test.describe("poll-go.js audyt", () => {
     instrumentPage(page);
 
     try {
-      await loginAsTestUser(page, context, { username: testAccountUsername(22) });
+      await loginAsTestUser(page, context, { username: testAccountUsername(6) });
       const { subToken } = await createSubToken(page);
 
 
@@ -247,7 +247,7 @@ test.describe("poll-go.js audyt", () => {
     instrumentPage(page);
 
     try {
-      await loginAsTestUser(page, context, { username: testAccountUsername(23) });
+      await loginAsTestUser(page, context, { username: testAccountUsername(7) });
       const { gameId, taskToken } = await createTaskToken(page, "poll_points");
 
       // Ustaw task na "declined" (expired)

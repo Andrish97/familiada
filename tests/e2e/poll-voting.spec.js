@@ -81,7 +81,7 @@ test.describe("poll-voting (poll-points.js i poll-text.js) audyt", () => {
     instrumentPage(page);
 
     try {
-      await loginAsTestUser(page, context, { username: testAccountUsername(11) });
+      await loginAsTestUser(page, context, { username: testAccountUsername(1) });
       const game = await createPollGame(page, "poll_points");
 
       const url = new URL("poll-points.html", "https://www.familiada.online/");
@@ -134,7 +134,7 @@ test.describe("poll-voting (poll-points.js i poll-text.js) audyt", () => {
     instrumentPage(page);
 
     try {
-      await loginAsTestUser(page, context, { username: testAccountUsername(12) });
+      await loginAsTestUser(page, context, { username: testAccountUsername(2) });
       const game = await createPollGame(page, "poll_text");
 
 
@@ -188,7 +188,7 @@ test.describe("poll-voting (poll-points.js i poll-text.js) audyt", () => {
     instrumentPage(page);
 
     try {
-      await loginAsTestUser(page, context, { username: testAccountUsername(13) });
+      await loginAsTestUser(page, context, { username: testAccountUsername(3) });
       const game = await createPollGame(page, "poll_text");
 
 
@@ -248,7 +248,7 @@ test.describe("poll-voting (poll-points.js i poll-text.js) audyt", () => {
     instrumentPage(page);
 
     try {
-      await loginAsTestUser(page, context, { username: testAccountUsername(14) });
+      await loginAsTestUser(page, context, { username: testAccountUsername(4) });
       const game = await createPollGame(page, "poll_text");
 
 
