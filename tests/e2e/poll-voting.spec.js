@@ -84,8 +84,6 @@ test.describe("poll-voting (poll-points.js i poll-text.js) audyt", () => {
       await loginAsTestUser(page, context2, { username: testAccountUsername(11) });
       const game = await createPollGame(page, "poll_points");
 
-      await serveBranchCode(context2, { pages: ["poll-points"] });
-
       const url = new URL("poll-points.html", "https://www.familiada.online/");
       url.searchParams.set("id", game.gameId);
       url.searchParams.set("key", game.shareKey);
@@ -139,7 +137,6 @@ test.describe("poll-voting (poll-points.js i poll-text.js) audyt", () => {
       await loginAsTestUser(page, context2, { username: testAccountUsername(12) });
       const game = await createPollGame(page, "poll_text");
 
-      await serveBranchCode(context2, { pages: ["poll-text"] });
 
       const url = new URL("poll-text.html", "https://www.familiada.online/");
       url.searchParams.set("id", game.gameId);
@@ -194,7 +191,6 @@ test.describe("poll-voting (poll-points.js i poll-text.js) audyt", () => {
       await loginAsTestUser(page, context2, { username: testAccountUsername(13) });
       const game = await createPollGame(page, "poll_text");
 
-      await serveBranchCode(context2, { pages: ["poll-text"] });
 
       // Ustaw localStorage na "już głosował"
       await page.evaluate(
@@ -228,7 +224,6 @@ test.describe("poll-voting (poll-points.js i poll-text.js) audyt", () => {
     const context2 = await instrumentPage(page);
 
     try {
-      await serveBranchCode(context2, { pages: ["poll-points"] });
 
       // Brak ?id i ?key
       await page.goto("https://www.familiada.online/poll-points.html", {
@@ -256,7 +251,6 @@ test.describe("poll-voting (poll-points.js i poll-text.js) audyt", () => {
       await loginAsTestUser(page, context2, { username: testAccountUsername(14) });
       const game = await createPollGame(page, "poll_text");
 
-      await serveBranchCode(context2, { pages: ["poll-text"] });
 
       const url = new URL("poll-text.html", "https://www.familiada.online/");
       url.searchParams.set("id", game.gameId);

@@ -113,7 +113,6 @@ test.describe("poll-go.js audyt", () => {
       await loginAsTestUser(page, context2, { username: testAccountUsername(21) });
       const { gameId, taskToken, pollType } = await createTaskToken(page, "poll_points");
 
-      await serveBranchCode(context2, { pages: ["poll-go", "poll-points"] });
 
       const url = new URL("poll-go.html", "https://www.familiada.online/");
       url.searchParams.set("t", taskToken);
@@ -150,7 +149,6 @@ test.describe("poll-go.js audyt", () => {
       // Nie logujemy się
       const { gameId, taskToken } = await createTaskToken(page, "poll_points");
 
-      await serveBranchCode(context2, { pages: ["poll-go"] });
 
       const url = new URL("poll-go.html", "https://www.familiada.online/");
       url.searchParams.set("t", taskToken);
@@ -180,7 +178,6 @@ test.describe("poll-go.js audyt", () => {
       await loginAsTestUser(page, context2, { username: testAccountUsername(22) });
       const { subToken } = await createSubToken(page);
 
-      await serveBranchCode(context2, { pages: ["poll-go"] });
 
       const url = new URL("poll-go.html", "https://www.familiada.online/");
       url.searchParams.set("s", subToken);
@@ -218,7 +215,6 @@ test.describe("poll-go.js audyt", () => {
       // Nie logujemy się
       const { subToken } = await createSubToken(page);
 
-      await serveBranchCode(context2, { pages: ["poll-go"] });
 
       const url = new URL("poll-go.html", "https://www.familiada.online/");
       url.searchParams.set("s", subToken);
@@ -263,7 +259,6 @@ test.describe("poll-go.js audyt", () => {
           .eq("token", token);
       }, taskToken);
 
-      await serveBranchCode(context2, { pages: ["poll-go"] });
 
       const url = new URL("poll-go.html", "https://www.familiada.online/");
       url.searchParams.set("t", taskToken);
@@ -286,7 +281,6 @@ test.describe("poll-go.js audyt", () => {
     const context2 = await instrumentPage(page);
 
     try {
-      await serveBranchCode(context2, { pages: ["poll-go"] });
 
       // Brak ?t= i ?s=
       await page.goto("https://www.familiada.online/poll-go.html", {
@@ -307,7 +301,6 @@ test.describe("poll-go.js audyt", () => {
     const context2 = await instrumentPage(page);
 
     try {
-      await serveBranchCode(context2, { pages: ["poll-go"] });
 
       const url = new URL("poll-go.html", "https://www.familiada.online/");
       url.searchParams.set("t", "invalid-fake-token-12345");

@@ -89,7 +89,6 @@ test.describe("poll-qr.js audyt", () => {
       voteUrl.searchParams.set("id", game.gameId);
       voteUrl.searchParams.set("key", game.shareKey);
 
-      await serveBranchCode(context2, { pages: ["poll-qr"] });
 
       const qrPageUrl = new URL("poll-qr.html", "https://www.familiada.online/");
       qrPageUrl.searchParams.set("url", voteUrl.toString());
@@ -119,7 +118,6 @@ test.describe("poll-qr.js audyt", () => {
       await loginAsTestUser(page, context2, { username: testAccountUsername(2) });
       const game = await createPollGame(page);
 
-      await serveBranchCode(context2, { pages: ["poll-qr"] });
 
       const pollQrUrl = new URL("poll-qr.html", "https://www.familiada.online/");
       pollQrUrl.searchParams.set("id", game.gameId);
@@ -149,7 +147,6 @@ test.describe("poll-qr.js audyt", () => {
       await loginAsTestUser(page, context2, { username: testAccountUsername(3) });
       const game = await createPollGame(page);
 
-      await serveBranchCode(context2, { pages: ["poll-qr"] });
 
       const pollQrUrl = new URL("poll-qr.html", "https://www.familiada.online/");
       pollQrUrl.searchParams.set("id", game.gameId);
@@ -187,7 +184,6 @@ test.describe("poll-qr.js audyt", () => {
         await sb.from("games").update({ status: "ready" }).eq("id", gid);
       }, game.gameId);
 
-      await serveBranchCode(context2, { pages: ["poll-qr"] });
 
       const pollQrUrl = new URL("poll-qr.html", "https://www.familiada.online/");
       pollQrUrl.searchParams.set("id", game.gameId);
@@ -219,7 +215,6 @@ test.describe("poll-qr.js audyt", () => {
       voteUrl.searchParams.set("id", game.gameId);
       voteUrl.searchParams.set("key", game.shareKey);
 
-      await serveBranchCode(context2, { pages: ["poll-qr"] });
 
       const qrPageUrl = new URL("poll-qr.html", "https://www.familiada.online/");
       qrPageUrl.searchParams.set("url", voteUrl.toString());
@@ -251,7 +246,6 @@ test.describe("poll-qr.js audyt", () => {
     try {
       await loginAsTestUser(page, context2, { username: testAccountUsername(6) });
 
-      await serveBranchCode(context2, { pages: ["poll-qr"] });
 
       // Podaj bardzo długi URL, żeby sprawdzić timeout
       const longUrl = "https://www.familiada.online/poll-points.html?id=test-id-very-very-long-" + "x".repeat(2000);
@@ -293,7 +287,6 @@ test.describe("poll-qr.js audyt", () => {
       voteUrl.searchParams.set("key", game.shareKey);
       voteUrl.searchParams.set("lang", "pl");
 
-      await serveBranchCode(context2, { pages: ["poll-qr", "polls"] });
 
       const qrPageUrl = new URL("poll-qr.html", "https://www.familiada.online/");
       qrPageUrl.searchParams.set("url", voteUrl.toString());
@@ -312,7 +305,6 @@ test.describe("poll-qr.js audyt", () => {
       const context3 = await instrumentPage(pollsPage);
       await loginAsTestUser(pollsPage, context3, { username: testAccountUsername(7) });
 
-      await serveBranchCode(context3, { pages: ["polls"] });
       const pollsUrl = new URL("polls.html", "https://www.familiada.online/");
       pollsUrl.searchParams.set("id", game.gameId);
       pollsUrl.searchParams.set("key", game.shareKey);
