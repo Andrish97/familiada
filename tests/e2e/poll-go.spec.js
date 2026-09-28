@@ -11,14 +11,15 @@
 const { test, expect } = require("@playwright/test");
 const { loginAsTestUser, instrumentPage, testAccountUsername } = require("./helpers/login");
 
-async function createTaskToken(page, pollType = "poll_points") {
-  return await page.evaluate(async (type) => {
+async function createTaskToken(page, pollType = "poll_points", opts = {}) {
+  const { recipientUserId = null } = opts;
+  return await page.evaluate(async ({ type, recipientUserId }) => {
     const sb = window.__sbClient;
     const { data: userData } = await sb.auth.getUser();
     const userId = userData.user.id;
 
     // Utwórz grę
-    const { data: game } = await sb
+    const { data: game, error: gameErr } = await sb
       .from("games")
       .insert({
         name: `E2E-TASK-${Date.now()}`,
@@ -28,14 +29,16 @@ async function createTaskToken(page, pollType = "poll_points") {
       })
       .select("id, share_key_poll")
       .single();
+    if (gameErr) throw new Error("insert games failed: " + gameErr.message);
 
     // Dodaj 10 pytań
     for (let ord = 1; ord <= 10; ord++) {
-      const { data: q } = await sb
+      const { data: q, error: qErr } = await sb
         .from("questions")
         .insert({ game_id: game.id, ord, text: `Q${ord}` })
         .select("id")
         .single();
+      if (qErr) throw new Error("insert questions failed: " + qErr.message);
 
       if (type === "poll_points") {
         for (let a = 1; a <= 4; a++) {
@@ -48,24 +51,32 @@ async function createTaskToken(page, pollType = "poll_points") {
       }
     }
 
-    // Utwórz task (zaproszenie)
-    const { data: task } = await sb
+    // Utwórz task (zaproszenie) — poll_tasks wymaga poll_type (nie "type")
+    // i share_key_poll (kopiowany z games.share_key_poll, NOT NULL).
+    // Constraint poll_tasks_one_recipient_chk: dokładnie jedno z
+    // recipient_user_id/recipient_email (XOR) — account invite vs email-only.
+    const { data: task, error: taskErr } = await sb
       .from("poll_tasks")
       .insert({
         owner_id: userId,
         game_id: game.id,
-        recipient_email: "invited@example.com",
+        poll_type: type,
+        share_key_poll: game.share_key_poll,
+        ...(recipientUserId
+          ? { recipient_user_id: recipientUserId }
+          : { recipient_email: "invited@example.com" }),
         status: "pending",
       })
       .select("token")
       .single();
+    if (taskErr) throw new Error("insert poll_tasks failed: " + taskErr.message);
 
     return {
       gameId: game.id,
       taskToken: task.token,
       pollType: type,
     };
-  }, pollType);
+  }, { type: pollType, recipientUserId });
 }
 
 async function createSubToken(page) {
@@ -74,9 +85,9 @@ async function createSubToken(page) {
     const { data: userData } = await sb.auth.getUser();
     const userId = userData.user.id;
 
-    // Utwórz subscription invite
-    const { data: sub } = await sb
-      .from("subscriptions")
+    // Utwórz subscription invite — tabela to poll_subscriptions, nie subscriptions
+    const { data: sub, error } = await sb
+      .from("poll_subscriptions")
       .insert({
         owner_id: userId,
         subscriber_email: "subscriber@example.com",
@@ -84,6 +95,7 @@ async function createSubToken(page) {
       })
       .select("token")
       .single();
+    if (error) throw new Error("insert poll_subscriptions failed: " + error.message);
 
     return {
       subToken: sub.token,
@@ -115,12 +127,12 @@ test.describe("poll-go.js audyt", () => {
       await page.goto(url.toString(), { waitUntil: "domcontentloaded" });
       await page.waitForLoadState("networkidle");
 
-      // Powinno pokazać status "Zaproszenie do ankiety"
+      // Powinno pokazać status "Zaproszenie do ankiety" (taskHeading)
       const title = page.locator(".poll-go-title");
-      await expect(title).toContainText("Pytanie|Question|Запитання", { timeout: 10000 });
+      await expect(title).toContainText(/Zaproszenie|invitation|Запрошення/, { timeout: 10000 });
 
-      // Powinno być przycisk "Zagłosuj"
-      const voteBtn = page.locator("button:has-text('Zagłosuj')");
+      // Powinno być przycisk "Głosuj" (voteLabel)
+      const voteBtn = page.locator("button:has-text('Głosuj')");
       await expect(voteBtn).toBeVisible({ timeout: 5000 });
 
       // Kliknij "Zagłosuj" — powinno przejść do poll-points
@@ -136,12 +148,25 @@ test.describe("poll-go.js audyt", () => {
     }
   });
 
-  test("task invite: niezalogowany user → redirect do login", async ({ page, context }) => {
-
+  test("task invite: niezalogowany user → redirect do login", async ({ page, browser }) => {
+    // Task musi mieć recipient_user_id (account invite) — tylko wtedy
+    // niezalogowany widz dostaje prompt logowania (handleTaskInvite Case 4
+    // w js/pages/poll-go.js); recipient_email-only jest Case 5, wolny głos
+    // bez logowania. Setup w IZOLOWANYM kontekście, żeby zalogowanie ownera
+    // nie zaraziło cookies głównego `page` (współdzielone w jednym context).
+    const setupContext = await browser.newContext();
+    const setupPage = await setupContext.newPage();
+    let gameId;
     try {
-      // Nie logujemy się
-      const { gameId, taskToken } = await createTaskToken(page, "poll_points");
-
+      await loginAsTestUser(setupPage, setupContext, { username: testAccountUsername(5) });
+      const recipientUserId = await setupPage.evaluate(async () => {
+        const sb = window.__sbClient;
+        const { data } = await sb.auth.getUser();
+        return data.user.id;
+      });
+      const created = await createTaskToken(setupPage, "poll_points", { recipientUserId });
+      gameId = created.gameId;
+      const taskToken = created.taskToken;
 
       const url = new URL("poll-go.html", "https://www.familiada.online/");
       url.searchParams.set("t", taskToken);
@@ -149,17 +174,16 @@ test.describe("poll-go.js audyt", () => {
       await page.goto(url.toString(), { waitUntil: "domcontentloaded" });
       await page.waitForLoadState("networkidle");
 
-      // Powinno pokazać "Zaloguj się aby głosować"
+      // Powinno pokazać "musisz się zalogować" (loginToVote)
       const message = page.locator(".poll-go-sub");
-      await expect(message).toContainText("Zaloguj|Login|Увійти", { timeout: 10000 });
+      await expect(message).toContainText(/zalogować|Log in|Увійди/, { timeout: 10000 });
 
       // Powinno być przycisk "Zaloguj się"
       const loginBtn = page.locator("button:has-text('Zaloguj')");
       await expect(loginBtn).toBeVisible();
-
-      await deleteGame(page, gameId);
     } finally {
-      await page.close();
+      if (gameId) await deleteGame(setupPage, gameId);
+      await setupContext.close();
     }
   });
 
@@ -176,12 +200,12 @@ test.describe("poll-go.js audyt", () => {
       await page.goto(url.toString(), { waitUntil: "domcontentloaded" });
       await page.waitForLoadState("networkidle");
 
-      // Powinno pokazać status "Zaproszenie do subskrypcji"
+      // Powinno pokazać status "Zaproszenie do subskrypcji" (subHeading)
       const title = page.locator(".poll-go-title");
-      await expect(title).toContainText("Zaproszeni|Subscription|Підписка", { timeout: 10000 });
+      await expect(title).toContainText(/Zaproszenie|Subscription|Запрошення/, { timeout: 10000 });
 
-      // Powinno być przycisk "Zaakceptuj" i "Odrzuć"
-      const acceptBtn = page.locator("button:has-text('Zaakceptuj')");
+      // Powinno być przycisk "Akceptuj" i "Odrzuć" (acceptLabel/declineLabel)
+      const acceptBtn = page.locator("button:has-text('Akceptuj')");
       const declineBtn = page.locator("button:has-text('Odrzuć')");
 
       await expect(acceptBtn).toBeVisible();
@@ -191,19 +215,25 @@ test.describe("poll-go.js audyt", () => {
       await declineBtn.click();
       await page.waitForLoadState("networkidle");
 
-      // Powinno pokazać "Zaproszenie odrzucone"
-      await expect(title).toContainText("Odrzucone|Declined|Відхилено", { timeout: 5000 });
+      // Powinno pokazać "Odrzucono" (declined heading)
+      await expect(title).toContainText(/Odrzucono|Declined|Відхилено/, { timeout: 5000 });
     } finally {
       await page.close();
     }
   });
 
-  test("subscription invite: niezalogowany + email → subscribe", async ({ page, context }) => {
-
+  test("subscription invite: niezalogowany + email → accept/decline", async ({ page, browser }) => {
+    // Setup w izolowanym kontekście (insert wymaga zalogowanego ownera; nie
+    // chcemy zarazić cookies głównego `page`, które ma zostać niezalogowane).
+    // Dla subscriber_email-only + status pending, handleSubInvite (Case 4 w
+    // js/pages/poll-go.js) pokazuje od razu przyciski Zaakceptuj/Odrzuć dla
+    // ZNANEGO emaila zaproszenia — email input (#emailInput) jest tylko dla
+    // scenariusza !isActive (status inny niż "pending"), którego to nie testuje.
+    const setupContext = await browser.newContext();
+    const setupPage = await setupContext.newPage();
     try {
-      // Nie logujemy się
-      const { subToken } = await createSubToken(page);
-
+      await loginAsTestUser(setupPage, setupContext, { username: testAccountUsername(6) });
+      const { subToken } = await createSubToken(setupPage);
 
       const url = new URL("poll-go.html", "https://www.familiada.online/");
       url.searchParams.set("s", subToken);
@@ -211,23 +241,21 @@ test.describe("poll-go.js audyt", () => {
       await page.goto(url.toString(), { waitUntil: "domcontentloaded" });
       await page.waitForLoadState("networkidle");
 
-      // Powinno pokazać prompt "Podaj e-mail"
-      const emailInput = page.locator("#emailInput");
-      await expect(emailInput).toBeVisible({ timeout: 10000 });
+      // Powinny być przyciski "Akceptuj" i "Odrzuć" dla znanego subscriber_email
+      const acceptBtn = page.locator("button:has-text('Akceptuj')");
+      const declineBtn = page.locator("button:has-text('Odrzuć')");
+      await expect(acceptBtn).toBeVisible({ timeout: 10000 });
+      await expect(declineBtn).toBeVisible();
 
-      // Wpisz email
-      await emailInput.fill("newsubscriber@example.com");
-
-      // Kliknij "Subskrybuj"
-      const subscribeBtn = page.locator("button:has-text('Subskrybuj')");
-      await subscribeBtn.click();
+      // Kliknij "Akceptuj"
+      await acceptBtn.click();
       await page.waitForLoadState("networkidle");
 
-      // Powinno pokazać "Subskrypcja aktywna"
-      const message = page.locator(".poll-go-sub");
-      await expect(message).toContainText("Aktywna|Active|Активна", { timeout: 5000 });
+      // Powinno pokazać "Subskrypcja aktywna" (subscriptionActive)
+      const title = page.locator(".poll-go-title");
+      await expect(title).toContainText(/aktywna|active|активна/, { timeout: 5000 });
     } finally {
-      await page.close();
+      await setupContext.close();
     }
   });
 
@@ -255,7 +283,7 @@ test.describe("poll-go.js audyt", () => {
 
       // Powinno pokazać "Zaproszenie już wykorzystane"
       const message = page.locator(".poll-go-sub");
-      await expect(message).toContainText("wykorzystane|used|використано", { timeout: 10000 });
+      await expect(message).toContainText(/wykorzystane|used|використано/, { timeout: 10000 });
 
       await deleteGame(page, gameId);
     } finally {
@@ -275,7 +303,7 @@ test.describe("poll-go.js audyt", () => {
 
       // Powinno pokazać "Brak linku"
       const title = page.locator(".poll-go-title");
-      await expect(title).toContainText("Brak|Missing|Немає", { timeout: 10000 });
+      await expect(title).toContainText(/Brak|Missing|Немає/, { timeout: 10000 });
     } finally {
       await page.close();
     }
@@ -291,9 +319,9 @@ test.describe("poll-go.js audyt", () => {
       await page.goto(url.toString(), { waitUntil: "domcontentloaded" });
       await page.waitForLoadState("networkidle");
 
-      // Powinno pokazać "Nieprawidłowy link"
+      // Powinno pokazać "Link nieważny" (invalidLinkTitle)
       const title = page.locator(".poll-go-title");
-      await expect(title).toContainText("Nieprawidłowy|Invalid|Неправильний", {
+      await expect(title).toContainText(/nieważny|Invalid|Недійсне/, {
         timeout: 10000,
       });
     } finally {

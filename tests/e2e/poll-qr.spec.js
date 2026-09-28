@@ -167,10 +167,11 @@ test.describe("poll-qr.js audyt", () => {
       await loginAsTestUser(page, context, { username: testAccountUsername(4) });
       const game = await createPollGame(page);
 
-      // Zamknij ankietę
+      // Cofnij do draft — jedyny status game_status enum, który poll-qr.js
+      // odrzuca (dozwolone: poll_open, ready — patrz js/pages/poll-qr.js)
       await page.evaluate(async (gid) => {
         const sb = window.__sbClient;
-        await sb.from("games").update({ status: "ready" }).eq("id", gid);
+        await sb.from("games").update({ status: "draft" }).eq("id", gid);
       }, game.gameId);
 
 
@@ -283,10 +284,11 @@ test.describe("poll-qr.js audyt", () => {
       const hint1 = await page.locator(".qr-hint").textContent();
       expect(hint1).toContain("Zeskanuj");
 
-      // Teraz zmień poll_qr_lang na angielski przez polls.js
+      // Teraz zmień poll_qr_lang na angielski przez polls.js — bez ponownego
+      // logowania: pollsPage współdzieli `context` (i jego cookies) z `page`,
+      // które już zalogowało test7 wyżej, więc sesja jest już aktywna.
       const pollsPage = await context.newPage();
       instrumentPage(pollsPage);
-      await loginAsTestUser(pollsPage, context, { username: testAccountUsername(7) });
 
       const pollsUrl = new URL("polls.html", "https://www.familiada.online/");
       pollsUrl.searchParams.set("id", game.gameId);

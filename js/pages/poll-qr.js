@@ -77,6 +77,7 @@ let myScope = getScopeFromVoteUrl(url);
 let myGameId = myScope.split(":")[0] || "";
 
 // --- Tryb device: ?id=&key= (podłączenie przez 6-cyfrowy kod) ---
+let deviceInitFailed = false;
 if (!url && paramId && paramKey) {
   if (qr) qr.textContent = t("pollQr.loadingGame");
   try {
@@ -113,6 +114,7 @@ if (!url && paramId && paramKey) {
       "not_found": "pollQr.missingUrlOrKey"
     }[e.message] || "pollQr.missingUrlOrKey";
     if (qr) qr.textContent = t(errorMsg);
+    deviceInitFailed = true;
   }
 }
 
@@ -179,4 +181,8 @@ window.addEventListener("beforeunload", () => {
 });
 
 updateFsIcon();
-render(url).finally(() => document.documentElement.classList.remove('page-loading'));
+if (!deviceInitFailed) {
+  render(url).finally(() => document.documentElement.classList.remove('page-loading'));
+} else {
+  document.documentElement.classList.remove('page-loading');
+}

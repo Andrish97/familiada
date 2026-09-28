@@ -108,7 +108,7 @@ test.describe("poll-voting (poll-points.js i poll-text.js) audyt", () => {
       }
 
       // Po ostatnim pytaniu powinno przejść do wysyłki i podziękowania
-      await expect(page.locator(".sub")).toContainText("Dziękuję|Thanks|Дякую", { timeout: 10000 });
+      await expect(page.locator(".sub")).toContainText(/Dziękujemy|Thanks|Дякуємо/, { timeout: 10000 });
 
       // Sprawdź że localStorage ma mark "już zagłosowałeś"
       const isDone = await page.evaluate(
@@ -159,7 +159,7 @@ test.describe("poll-voting (poll-points.js i poll-text.js) audyt", () => {
       }
 
       // Po ostatnim pytaniu powinno być podziękowanie
-      await expect(page.locator(".sub")).toContainText("Dziękuję|Thanks|Дякую", { timeout: 10000 });
+      await expect(page.locator(".sub")).toContainText(/Dziękujemy|Thanks|Дякуємо/, { timeout: 10000 });
 
       // Sprawdź localStorage
       const isDone = await page.evaluate(
@@ -195,7 +195,7 @@ test.describe("poll-voting (poll-points.js i poll-text.js) audyt", () => {
 
       // Powinno pokazać komunikat "Już zagłosowałeś" zamiast pytań
       const closed = page.locator(".closed");
-      await expect(closed).toContainText("Już zagłosujesz|Already voted|Уже проголосував", { timeout: 10000 });
+      await expect(closed).toContainText(/wziąłeś udział|already participated|вже брали участь/, { timeout: 10000 });
 
       // Formularz powinien być ukryty
       const qbox = page.locator(".qbox");
@@ -221,7 +221,7 @@ test.describe("poll-voting (poll-points.js i poll-text.js) audyt", () => {
 
       // Powinno pokazać komunikat o błędzie
       const sub = page.locator(".sub");
-      await expect(sub).toContainText("Brak|Missing", { timeout: 10000 });
+      await expect(sub).toContainText(/Brak|Missing/, { timeout: 10000 });
 
       // Formularz powinien być ukryty
       const qbox = page.locator(".qbox");
