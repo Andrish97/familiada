@@ -180,6 +180,10 @@ async function hydrateInviteIdentity(data) {
 }
 
 function openVote(type) {
+  if (!goToken) {
+    console.error("[poll-go] goToken missing in openVote");
+    return;
+  }
   const page = type === "poll_points" ? "poll-points" : "poll-text";
   location.href = `${page}?t=${encodeURIComponent(goToken)}`;
 }
@@ -242,6 +246,7 @@ async function acceptSubDirect(email) {
     if (!data?.ok) throw new Error(data?.error || MSG.acceptFailed());
     setView({ head: MSG.subscriptionActive(), text: MSG.inviteAccepted() });
     clearActions();
+    showEmailInput(false);
   } catch (e) {
     console.error(e);
     setView({ head: MSG.error(), text: MSG.inviteAcceptFailed() });
@@ -457,11 +462,13 @@ async function handleUnsubOwner() {
         if (err || !res?.ok) throw new Error(err?.message || res?.error || "fail");
         setView({ head: MSG.declined(), text: MSG.unsubOwnerDone(res.owner_label || ownerLabel) });
         clearActions();
-      } catch {
+      } catch (e) {
+        console.error("[poll-go] unsubscribe owner failed:", e);
         setView({ head: MSG.error(), text: MSG.unsubOwnerFailed() });
       }
     });
-  } catch {
+  } catch (e) {
+    console.error("[poll-go] unsub owner init failed:", e);
     setView({ head: MSG.error(), text: MSG.openInviteFailed() });
   }
 }
@@ -487,11 +494,13 @@ async function handleUnsubGlobal() {
         if (err || !res?.ok) throw new Error(err?.message || res?.error || "fail");
         setView({ head: MSG.unsubGlobalHeading(), text: MSG.unsubGlobalDone() });
         clearActions();
-      } catch {
+      } catch (e) {
+        console.error("[poll-go] unsub global failed:", e);
         setView({ head: MSG.error(), text: MSG.unsubGlobalFailed() });
       }
     });
-  } catch {
+  } catch (e) {
+    console.error("[poll-go] unsub global init failed:", e);
     setView({ head: MSG.error(), text: MSG.openInviteFailed() });
   }
 }
