@@ -838,7 +838,7 @@ const pl = {
     },
     errors: {
       open: "Nie udało się uruchomić ankiety.",
-      close: "Nie udało się zamknąć ankietęu.",
+      close: "Nie udało się zamknąć ankietę.",
       reopen: "Nie udało się otworzyć ponownie.",
       loadAnswers: "Nie udało się wczytać odpowiedzi.",
     },

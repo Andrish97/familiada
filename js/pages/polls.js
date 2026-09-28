@@ -794,49 +794,22 @@ function renderTextCloseFromModel() {
         const inp = row.querySelector(".tcTxtInp");
         inp.value = it.text;
 
-        inp.addEventListener("input", () => {
-          // edycja tekstu nie wymaga saveSnapshot przy każdym klawiszu, 
-          // ale zrobimy to by historia była dokładna.
-          // Aby nie spamować stosu, zapisujemy tylko przy pierwszym klawiszu w serii lub po stracie focusu.
-          // Dla uproszczenia: saveSnapshot przed każdą ZMIANĄ niszczącą, 
-          // a dla tekstu - przy blur lub gdy faktycznie się zmienił.
-        });
-        
         inp.addEventListener("focus", () => {
-          inp._lastVal = inp.value;
-        });
-        inp.addEventListener("blur", () => {
-          if (inp.value !== inp._lastVal) {
-            // Tutaj jest problem: model już ma nową wartość z 'input'.
-            // Cofnijmy się: zapisujmy snapshot przy focusie lub użyjmy prostszego podejścia.
-          }
-        });
-        
-        // Prostsz podejście: każda zmiana to snapshot, ale dla inputa damy mały debounce lub save przy zmianie
-        inp.addEventListener("change", () => {
-          // 'change' odpala się po stracie focusu jeśli zaszła zmiana
-          // Ale musimy mieć stan sprzed zmiany.
+          inp._oldValue = inp.value;
         });
 
-        // NAJPROSTSZE I NAJSKUTECZNIEJSZE:
-        // Wszystkie niszczące akcje (del, merge) mają saveSnapshot().
-        // Dla edycji tekstu zrobimy saveSnapshot() przy 'focus'.
-        inp.addEventListener("focus", () => {
-          inp._baseValue = inp.value;
-        });
         inp.addEventListener("input", () => {
           it.text = inp.value;
           validateTextCloseModel();
         });
-        inp.addEventListener("change", () => {
-          if (inp.value !== inp._baseValue) {
-            const currentVal = inp.value;
-            inp.value = inp._baseValue; // przywróć na chwilę
-            it.text = inp._baseValue;
-            saveSnapshot(); // zapisz stary stan
-            inp.value = currentVal; // daj nowy
-            it.text = currentVal;
-            updateHistoryButtons();
+
+        inp.addEventListener("blur", () => {
+          if (inp.value !== inp._oldValue) {
+            // Przywróć stary stan, zapisz snapshot, potem przywróć nowy
+            const newValue = inp.value;
+            it.text = inp._oldValue;
+            saveSnapshot();
+            it.text = newValue;
           }
         });
 
@@ -1266,6 +1239,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     btnFinishTextClose.disabled = true;
     btnCancelTextClose.disabled = true;
+    if (btnCancelTextCloseTop) btnCancelTextCloseTop.disabled = true;
 
     try {
       const payloadItems = [];
@@ -1311,6 +1285,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     } finally {
       btnFinishTextClose.disabled = false;
       btnCancelTextClose.disabled = false;
+      if (btnCancelTextCloseTop) btnCancelTextCloseTop.disabled = false;
     }
   });
 

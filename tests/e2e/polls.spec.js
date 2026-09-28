@@ -608,3 +608,134 @@ test("QR w ankietach: zmiana języka w polls.html dociera do już otwartego urz�
     await deleteGame(page, pollGame.gameId);
   }
 });
+
+// ===== 4. AUDYT (2026-09-28) — Undo/redo w panelu zamykania, blokady przycisków =====
+
+test("ankieta tekstowa: undo/redo dla edycji tekstu w panelu zamykania", async ({ page, context }) => {
+  test.setTimeout(180_000);
+
+  await loginAsTestUser(page, context);
+
+  mark("undo-test: start seed");
+  const game = await seedPollGame(page, "poll_text");
+  try {
+    mark("undo-test: seeded, opening poll");
+    const { key: gameKey } = await openPoll(page, game.gameId);
+    mark("undo-test: poll opened, bulk voting");
+
+    // Głosowanie: 3 unikalne odpowiedzi + reszta z puli
+    const voterPlans = Array.from({ length: TOTAL_VOTERS }, (_, i) => ({
+      token: `e2e-undo-${Date.now()}-${i}`,
+      items: textItemsForVoter(game.questions, (ord) => {
+        if (ord !== 1) return TEXT_POOL[i % TEXT_POOL.length];
+        if (i === 0) return "Pizza";
+        if (i === 1) return "Kotek";
+        if (i === 2) return "Rower";
+        return TEXT_POOL[i % TEXT_POOL.length];
+      }),
+    }));
+    await bulkVote(page, "poll_text_submit_batch", game.gameId, gameKey, voterPlans);
+    mark("undo-test: voting done");
+
+    await page.goto(`https://www.familiada.online/polls?id=${game.gameId}`, { waitUntil: "domcontentloaded" });
+    await page.waitForLoadState("networkidle");
+    await expect(page.locator("#btnPollAction")).toHaveText("Zamknąć ankietę", { timeout: 60000 });
+    mark("undo-test: opening close panel");
+    await page.locator("#btnPollAction").click();
+
+    const firstQuestion = page.locator("#textCloseList .tcQ").first();
+    const items = firstQuestion.locator(".tcList .tcItem");
+    const initialRowCount = 4; // Pizza, Kotek, Rower, + 1 z puli TAIL_POOL
+    await expect(items).toHaveCount(initialRowCount, { timeout: 60000 });
+    mark("undo-test: panel loaded, testing undo/redo");
+
+    // Znajdź "pizza" i zmień tekst
+    async function findItemByText(text) {
+      for (const item of await items.all()) {
+        if ((await item.locator(".tcTxtInp").inputValue()) === text) return item;
+      }
+      return null;
+    }
+
+    const pizzaItem = await findItemByText("pizza");
+    expect(pizzaItem).not.toBeNull();
+
+    // Zmień tekst: pizza → pepperoni
+    await pizzaItem.locator(".tcTxtInp").click();
+    await pizzaItem.locator(".tcTxtInp").fill("pepperoni");
+    await pizzaItem.locator(".tcTxtInp").blur();
+    mark("undo-test: text edited pizza→pepperoni");
+
+    // Undo (Ctrl+Z)
+    await page.keyboard.press("Control+Z");
+    mark("undo-test: undo pressed");
+
+    const pizzaAfterUndo = await findItemByText("pizza");
+    expect(pizzaAfterUndo, "undo powinno przywrócić 'pizza'").not.toBeNull();
+    mark("undo-test: undo confirmed");
+
+    // Redo (Ctrl+Y)
+    await page.keyboard.press("Control+Y");
+    mark("undo-test: redo pressed");
+
+    const pepperoniAfterRedo = await findItemByText("pepperoni");
+    expect(pepperoniAfterRedo, "redo powinno przywrócić 'pepperoni'").not.toBeNull();
+    mark("undo-test: redo confirmed");
+  } finally {
+    await deleteGame(page, game.gameId);
+    mark("undo-test: game deleted");
+  }
+});
+
+test("ankieta tekstowa: blokada przycisków Cancel przy zapisywaniu", async ({ page, context }) => {
+  test.setTimeout(180_000);
+
+  await loginAsTestUser(page, context);
+
+  mark("cancel-test: start seed");
+  const game = await seedPollGame(page, "poll_text");
+  try {
+    mark("cancel-test: seeded, opening poll");
+    const { key: gameKey } = await openPoll(page, game.gameId);
+
+    const voterPlans = Array.from({ length: 20 }, (_, i) => ({
+      token: `e2e-cancel-${Date.now()}-${i}`,
+      items: textItemsForVoter(game.questions, () => TEXT_POOL[i % TEXT_POOL.length]),
+    }));
+    await bulkVote(page, "poll_text_submit_batch", game.gameId, gameKey, voterPlans);
+    mark("cancel-test: voting done");
+
+    await page.goto(`https://www.familiada.online/polls?id=${game.gameId}`, { waitUntil: "domcontentloaded" });
+    await page.waitForLoadState("networkidle");
+    await expect(page.locator("#btnPollAction")).toHaveText("Zamknąć ankietę", { timeout: 60000 });
+    await page.locator("#btnPollAction").click();
+
+    await expect(page.locator("#btnFinishTextClose")).toBeEnabled({ timeout: 60000 });
+    mark("cancel-test: close panel ready");
+
+    const finishBtn = page.locator("#btnFinishTextClose");
+    const cancelTopBtn = page.locator("#btnCancelTextCloseTop");
+    const cancelBtn = page.locator("#btnCancelTextClose");
+
+    expect(await finishBtn.evaluate(el => el.disabled)).toBe(false);
+    expect(await cancelTopBtn.evaluate(el => el.disabled)).toBe(false);
+    expect(await cancelBtn.evaluate(el => el.disabled)).toBe(false);
+
+    await finishBtn.click();
+    await page.waitForTimeout(100);
+
+    expect(await finishBtn.evaluate(el => el.disabled)).toBe(true);
+    expect(await cancelTopBtn.evaluate(el => el.disabled)).toBe(true);
+    expect(await cancelBtn.evaluate(el => el.disabled)).toBe(true);
+    mark("cancel-test: all buttons disabled during save");
+
+    await expect(page.locator(".uni-foot .btn.gold")).toBeVisible({ timeout: 10000 });
+    await page.locator(".uni-foot .btn.gold").click();
+
+    await expect.poll(() => getGameStatus(page, game.gameId), { timeout: 60000 }).toBe("ready");
+    mark("cancel-test: poll closed successfully");
+  } finally {
+    await deleteGame(page, game.gameId);
+    mark("cancel-test: game deleted");
+  }
+});
