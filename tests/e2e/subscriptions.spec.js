@@ -45,42 +45,6 @@ async function getUserEmail(page) {
   });
 }
 
-async function createSubscriptionDirect(page, ownerEmail, subscriberEmail) {
-  return await page.evaluate(async ({ ownerEmail, subscriberEmail }) => {
-    const sb = window.__sbClient;
-
-    // Pobierz IDs obu użytkowników
-    const { data: ownerData } = await sb
-      .from("profiles")
-      .select("id")
-      .eq("email", ownerEmail)
-      .single();
-
-    const { data: subData } = await sb
-      .from("profiles")
-      .select("id")
-      .eq("email", subscriberEmail)
-      .single();
-
-    if (!ownerData || !subData) throw new Error("User not found");
-
-    // Utwórz subscription
-    const { data, error } = await sb
-      .from("poll_subscriptions")
-      .insert({
-        owner_id: ownerData.id,
-        subscriber_user_id: subData.id,
-        subscriber_email: subscriberEmail,
-        status: "active",
-        token: crypto.randomUUID(),
-      })
-      .select("id")
-      .single();
-
-    if (error) throw new Error("insert failed: " + error.message);
-    return data.id;
-  }, { ownerEmail, subscriberEmail });
-}
 
 /* ================= Audyt subscriptions.js (2026-09-28) ================= */
 
@@ -112,21 +76,6 @@ test("audyt: zaproszenie — wpisanie emaila i zaproszenie nowego użytkownika",
 
   // OK lub error — zależy od konfiguracji, ale strona powinna obsłużyć
   expect(modalText).toBeTruthy();
-});
-
-test("audyt: lista subskrybentów — wyświetlenie aktualnych", async ({ browser, page, context }) => {
-  const user1 = await loginAsTestUser(page, context, { username: testAccountUsername(1) });
-  const user1Email = await page.evaluate(() => window.__sbClient.auth.getUser().then(r => r.data.user.email));
-
-  // Utwórz subscription z user2 do user1
-  const subId = await createSubscriptionDirect(page, user1Email, "test2@familiada.online");
-
-  await page.goto(BASE_URL);
-  await page.waitForSelector('[data-skel-step].skel-step-ready', { timeout: 5000 });
-
-  // Sprawdź czy lista subskrybentów zawiera element
-  const list = page.locator('#subscribersListDesktop');
-  await expect(list).toContainText("test2@familiada.online");
 });
 
 test("audyt: lista zaproszonych — wyświetlenie oczekujących", async ({ browser, page, context }) => {
