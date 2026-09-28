@@ -1,13 +1,13 @@
-import { sb } from "../core/supabase.js?v=v2026-09-27T16470";
-import { cooldownGet, cooldownReserve, cooldownRelease, cooldownEmailReserve } from "../core/cooldown.js?v=v2026-09-27T16470";
-import { requireAuth, updateUserLanguage, validatePassword, validateUsername, signOut, niceAuthError, initPasswordToggles, convertGuestToRegisteredEmailOnly } from "../core/auth.js?v=v2026-09-27T16470";
-import { getUserEmailNotificationsFlag, setUserEmailNotificationsFlag } from "../core/user-flags.js?v=v2026-09-27T16470";
-import { initI18n, t, getUiLang, withLangParam } from "../../translation/translation.js?v=v2026-09-27T16470";
-import { confirmModal } from "../core/modal.js?v=v2026-09-27T16470";
-import { isGuestUser, hideForGuest } from "../core/guest-mode.js?v=v2026-09-27T16470";
-import "../core/contact-modal.js?v=v2026-09-27T16470";
-import { deleteGameSoundsFolder } from "../core/sfx-cloud.js?v=v2026-09-27T16470";
-import { icon, iconText } from "../core/icons.js?v=v2026-09-27T16470";
+import { sb } from "../core/supabase.js?v=v2026-09-28T06112";
+import { cooldownGet, cooldownReserve, cooldownRelease, cooldownEmailReserve } from "../core/cooldown.js?v=v2026-09-28T06112";
+import { requireAuth, updateUserLanguage, validatePassword, validateUsername, signOut, niceAuthError, initPasswordToggles, convertGuestToRegisteredEmailOnly } from "../core/auth.js?v=v2026-09-28T06112";
+import { getUserEmailNotificationsFlag, setUserEmailNotificationsFlag } from "../core/user-flags.js?v=v2026-09-28T06112";
+import { initI18n, t, getUiLang, withLangParam } from "../../translation/translation.js?v=v2026-09-28T06112";
+import { confirmModal } from "../core/modal.js?v=v2026-09-28T06112";
+import { isGuestUser, hideForGuest } from "../core/guest-mode.js?v=v2026-09-28T06112";
+import "../core/contact-modal.js?v=v2026-09-28T06112";
+import { deleteGameSoundsFolder } from "../core/sfx-cloud.js?v=v2026-09-28T06112";
+import { icon, iconText } from "../core/icons.js?v=v2026-09-28T06112";
 
 
 const status = document.getElementById("status");
