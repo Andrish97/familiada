@@ -5,7 +5,8 @@ zbugowane. Audytujemy je po kolei, jedna strona na raz. Zrobione:
 **logo-editor**, **bases**, **games** (2026-09-26), **editor** (2026-09-27),
 **polls / polls-hub / poll-qr / poll-points / poll-text / poll-go**
 (2026-09-29), **login / reset / confirm / account** (2026-09-29),
-**privacy / manual** (2026-09-29). Następna: do ustalenia.
+**privacy / manual** (2026-09-29), **404 / maintenance** (2026-09-29).
+Następna: do ustalenia.
 
 ## Kroki
 
@@ -332,3 +333,42 @@ Zweryfikowano parytet kluczy: `manual` 38/38/38 i `privacy` 22/22/22 dla
 PL/EN/UK. Testy jednostkowe repo: 158/158. Scoped E2E jest uruchamiany na
 branchu i ponownie na `main` po wdrożeniu; linki do przebiegów znajdują się
 w raporcie końcowym/Actions.
+
+## 404 / maintenance — zrobione (2026-09-29)
+
+Testy: `tests/e2e/maintenance-404.spec.js` (6 scenariuszy, kod obu stron z
+brancha przez `serveBranchCode`; prawdziwy produkcyjny Worker dla kontraktu
+404, deterministyczne odpowiedzi `maintenance-state.json` dla wszystkich
+trybów maintenance). Sprawdzają status i cache 404, zasoby pod głębokim URL,
+PL/EN/UK, treść standardową i własną, fallback brakującego tłumaczenia,
+countdown z wieloma znacznikami `#timer` oraz wyłączenie maintenance.
+
+Realne błędy w aplikacji:
+- **maintenance pod zagnieżdżonym adresem było bez stylów i logiki** — Worker
+  zwraca tę samą stronę dla dowolnej żądanej ścieżki, a HTML używał względnych
+  `css/...` i `js/...`; przeglądarka dla `/foo/bar` żądała nieistniejących
+  `/foo/css/...` i `/foo/js/...`. Zasoby są teraz absolutne. Analogicznie
+  poprawiono względny adres `security-warning.js` na stronie 404.
+- **pusta karta dla niepełnego komentarza administratora** — jeden istniejący
+  wariant językowy wyłączał treść standardową, ale wejście w języku bez
+  komentarza renderowało pustkę. Dodany fallback do istniejącego wariantu;
+  bez żadnego komentarza wraca treść standardowa.
+- **countdown** podmieniał tylko pierwszy `#timer`, a ukraińskie „sekунда”
+  zawierało łacińskie litery. Wszystkie znaczniki są podmieniane i tekst UK
+  poprawiono.
+- **awaria i18n zostawiała szkielet** — inicjalizacja obu stron nie miała
+  bezpiecznego zakończenia. `try/catch/finally` zawsze odsłania treść; 404
+  zachowuje też język przy automatycznym powrocie na stronę główną.
+- **CSP 404** — Worker ustawia restrykcyjne CSP i `nosniff`, ale zewnętrzna
+  reguła nagłówków strefy Cloudflare zastępuje CSP i usuwa `nosniff` już po
+  wykonaniu Workera. Potwierdziły to dwa powtarzalne przebiegi produkcyjne,
+  więc nie był to timeout ani błąd UI. Dokument 404 ma teraz własne,
+  restrykcyjne CSP w `meta`; przeglądarka egzekwuje je razem z globalnym CSP.
+  Zmiana samej reguły strefy pozostaje poza kodem tego repozytorium.
+
+Parytet tłumaczeń: `maintenance` 15/15/15 i `notFound` 8/8/8 dla PL/EN/UK;
+testy jednostkowe repo: 158/158. Scoped E2E na branchu: 6/6, przebieg
+https://github.com/Andrish97/familiada/actions/runs/36636718992. Pierwsze dwa
+przebiegi diagnostyczne miały 5/6 i ujawniły opisane nadpisanie nagłówków
+przez warstwę Cloudflare (36636255093, 36636567175), zamiast maskować je
+retry. Wynik na `main` po wdrożeniu jest dopisywany w raporcie końcowym.
