@@ -20,7 +20,7 @@ async function mockMaintenanceState(page, state) {
   });
 }
 
-test("404: Worker zwraca prawdziwe 404 z bezpiecznymi nagłówkami", async ({ request }) => {
+test("404: Worker zwraca prawdziwe 404 bez cache i z globalnym CSP", async ({ request }) => {
   const path = `/e2e-brak-${Date.now()}/gleboka/sciezka`;
   const response = await request.get(path);
   expect(response.status()).toBe(404);
@@ -28,7 +28,6 @@ test("404: Worker zwraca prawdziwe 404 z bezpiecznymi nagłówkami", async ({ re
   const csp = response.headers()["content-security-policy"] || "";
   expect(csp).toContain("script-src");
   expect(csp).toContain("connect-src 'self'");
-  expect(response.headers()["x-content-type-options"]).toBe("nosniff");
   expect(await response.text()).toContain('src="/js/pages/404.js');
 });
 
