@@ -482,25 +482,18 @@ async function fetchEmailChangeStatus() {
 
 async function refreshAuthEmailState() {
   try {
-    // 1) Preferred: edge function (service role) – sees pending email across GoTrue versions
-    const st = await fetchEmailChangeStatus();
-    if (st) {
-      currentEmail = st.email || currentEmail;
-      const p = st.pending_email || "";
-      setEmailPendingUi(p);
-      return;
-    }
-
-    // 2) Fallback: client-side user object
+    // getUser() reads GoTrue's current user record. The access token returned by
+    // getSession() can still contain old metadata after updateUser(email, data),
+    // even after a page reload; treating it as authoritative hid the pending UI.
     const { data, error } = await sb().auth.getUser();
     if (error) throw error;
     const u = data?.user;
     if (!u) return;
     currentEmail = u.email || currentEmail;
-    const p = extractPendingEmail(u);
-    setEmailPendingUi(p);
+    setEmailPendingUi(extractPendingEmail(u));
   } catch (e) {
     console.warn("refreshAuthEmailState failed:", e);
+    // A temporary GoTrue failure must not erase the currently displayed state.
   }
 }
 
@@ -943,7 +936,6 @@ async function handleDeleteAccount() {
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
-  const loadProfileP = loadProfile(); // start równolegle z initI18n
   await initI18n({ withSwitcher: true });
   document.documentElement.classList.remove('page-loading');
   initPasswordToggles();
@@ -954,7 +946,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   bindCooldown({ key: CD.password, labelEl: passwordCooldownEl, disableEls: [pass1, pass2, savePass] });
   startCooldownTicker();
 
-  await loadProfileP.finally(() => {
+  await loadProfile().finally(() => {
     document.querySelector('.topbar')?.classList.add('topbar-ready');
     document.querySelectorAll('[data-skel-step]').forEach(el => el.classList.add('skel-step-ready'));
   });
