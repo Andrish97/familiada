@@ -1,10 +1,15 @@
-import { initI18n } from "../../translation/translation.js?v=v2026-09-29T21462";
+import { initI18n, withLangParam } from "../../translation/translation.js?v=v2026-09-29T21462";
 
 (async () => {
-  await initI18n({ withSwitcher: true, apply: true });
-  document.documentElement.classList.remove('page-loading');
-  document.querySelector('.topbar')?.classList.add('topbar-ready');
+  try {
+    await initI18n({ withSwitcher: true, apply: true });
+  } catch (err) {
+    console.error("[404] i18n nieaktywny:", err);
+  } finally {
+    document.documentElement.classList.remove('page-loading');
+    document.querySelector('.topbar')?.classList.add('topbar-ready');
+  }
   setTimeout(() => {
-    window.location.href = "https://familiada.online/";
+    window.location.href = withLangParam("/");
   }, 5000);
 })();
