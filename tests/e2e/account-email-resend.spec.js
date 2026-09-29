@@ -19,12 +19,24 @@
 // Cooldown "account:email" zwalniany bezpośrednio przez tę samą RPC
 // (cooldown_release), której używa sam account.js przy rollbacku błędu —
 // symuluje to "minęła godzina", bez czekania w czasie rzeczywistym.
+//
+// /account i cały front-end (js/, css/, translation/) serwowane z plików
+// TEGO repo (helpers/branch-code.js), backend prawdziwy -- workflow odpalony
+// na branchu testuje poprawkę przed wdrożeniem.
 
 const { test, expect } = require("@playwright/test");
 const { loginAsTestUser } = require("./helpers/login");
+const { serveBranchCode } = require("./helpers/branch-code");
 
 const ACCOUNT_URL = "https://www.familiada.online/account";
 const CD_EMAIL_KEY = "account:email";
+
+// service worker obsłużyłby żądania z własnego cache z pominięciem page.route
+test.use({ serviceWorkers: "block" });
+
+test.beforeEach(async ({ context }) => {
+  await serveBranchCode(context, { pages: ["account"] });
+});
 
 async function releaseEmailCooldown(page) {
   await page.evaluate(async (key) => {

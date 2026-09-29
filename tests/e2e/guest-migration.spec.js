@@ -33,13 +33,29 @@
 // Email do migracji celowo na domenie .invalid (RFC 2606 — zarezerwowana,
 // nigdy nie rozwiąże się do prawdziwej skrzynki) — testujemy zachowanie UI
 // po stronie klienta, nie dostarczalność maila.
+//
+// /account i cały front-end (js/, css/, translation/) serwowane z plików
+// TEGO repo (helpers/branch-code.js), backend prawdziwy -- workflow odpalony
+// na branchu testuje poprawki przed wdrożeniem. /login celowo NIE jest na
+// liście `pages` (Worker podmienia tam sitekey Turnstile dla tokenu e2e --
+// patrz tests/README.md), ale to nie przeszkadza: js/pages/login.js i
+// js/core/auth.js i tak lądują w CODE_DIRS, więc serwują się z brancha
+// niezależnie od tego, że samo login.html idzie z produkcji.
 
 const { test, expect } = require("@playwright/test");
 const { loginAsGuest } = require("./helpers/login");
 const { generateE2EToken } = require("./helpers/e2e-token");
+const { serveBranchCode } = require("./helpers/branch-code");
 
 const TEST_PASSWORD = "E2eTest123!";
 const LOGIN_URL = "https://www.familiada.online/login";
+
+// service worker obsłużyłby żądania z własnego cache z pominięciem page.route
+test.use({ serviceWorkers: "block" });
+
+test.beforeEach(async ({ context }) => {
+  await serveBranchCode(context, { pages: ["account"] });
+});
 
 // Druga wizyta na /login w tym samym teście potrzebuje WŁASNEGO, świeżego
 // tokenu bypass -- ten zużyty przez loginAsGuest() jest jednorazowy (nonce)
