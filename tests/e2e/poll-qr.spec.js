@@ -297,12 +297,23 @@ test.describe("poll-qr.js audyt", () => {
       await pollsPage.goto(pollsUrl.toString(), { waitUntil: "domcontentloaded" });
       await pollsPage.waitForLoadState("networkidle");
 
-      // Zmień język w polls (to ustawia poll_qr_lang w bazie)
-      await pollsPage.evaluate(async () => {
+      // Zmień język w polls (to ustawia poll_qr_lang w bazie) — wywołujemy
+      // to samo RPC, którego woła broadcastLang() w polls.js po zmianie
+      // języka. Uwaga: builder z .rpc() to "thenable", nie prawdziwy
+      // Promise — nie ma na nim .catch(), stąd try/catch zamiast
+      // łańcuchowania .catch() (co rzucało "sb.rpc(...).catch is not a
+      // function"). Wcześniej też p_game_id było puste (""), więc RPC
+      // zawsze failował z "not found" i język w bazie nigdy się nie
+      // zmieniał — test niczego nie sprawdzał.
+      await pollsPage.evaluate(async (gameId) => {
         const sb = window.__sbClient;
-        // Symuluj zmianę języka
-        await sb.rpc("set_poll_qr_lang", { p_game_id: "", p_lang: "en" }).catch(() => {});
-      });
+        try {
+          const { error } = await sb.rpc("set_poll_qr_lang", { p_game_id: gameId, p_lang: "en" });
+          if (error) throw error;
+        } catch (e) {
+          console.warn("[test] set_poll_qr_lang failed", e);
+        }
+      }, game.gameId);
 
       await pollsPage.close();
 

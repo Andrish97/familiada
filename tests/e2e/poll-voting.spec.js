@@ -56,8 +56,17 @@ async function createPollGame(page, type) {
       // poll_text nie potrzebuje answers (są tekstowe)
     }
 
-    // Zmień status na poll_open
-    await sb.from("games").update({ status: "poll_open" }).eq("id", game.id);
+    // Otwórz ankietę przez prawdziwe RPC (nie surowy update statusu) --
+    // poll_open() oprócz status='poll_open' zakłada też wiersze
+    // poll_sessions (jeden per pytanie, is_open=true) -- bez tego
+    // poll_points_vote_batch/poll_text_submit_batch rzuca "No open
+    // session" (patrz supabase/schema.sql, poll_points_vote), bo szuka
+    // otwartej sesji dla pytania, której surowy update nigdy nie tworzy.
+    const { error: openErr } = await sb.rpc("poll_open", {
+      p_game_id: game.id,
+      p_key: game.share_key_poll,
+    });
+    if (openErr) throw new Error("poll_open failed: " + openErr.message);
 
     return { gameId: game.id, shareKey: game.share_key_poll };
   }, type);

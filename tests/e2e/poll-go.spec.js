@@ -173,6 +173,15 @@ test.describe("poll-go.js audyt", () => {
       const url = new URL("poll-go.html", "https://www.familiada.online/");
       url.searchParams.set("t", taskToken);
 
+      // `page` nigdy się nie loguje (test sprawdza właśnie widok dla
+      // niezalogowanego) -- withE2EBypass() w loginAsTestUser normalnie
+      // ustawia localStorage.uiLang=pl, ale tu ten kod nigdy nie leci, więc
+      // strona spada na navigator.language (w CI: en-US) i renderuje się
+      // po angielsku -- patrz identyczny komentarz w polls.spec.js.
+      await page.context().addInitScript(() => {
+        try { localStorage.setItem("uiLang", "pl"); } catch {}
+      });
+
       await page.goto(url.toString(), { waitUntil: "domcontentloaded" });
       await page.waitForLoadState("networkidle");
 
@@ -239,6 +248,13 @@ test.describe("poll-go.js audyt", () => {
 
       const url = new URL("poll-go.html", "https://www.familiada.online/");
       url.searchParams.set("s", subToken);
+
+      // `page` nigdy się nie loguje (test ma zostać niezalogowany) -- bez
+      // tego strona spada na navigator.language (w CI: en-US) i przyciski
+      // renderują się po angielsku, patrz identyczny komentarz wyżej.
+      await page.context().addInitScript(() => {
+        try { localStorage.setItem("uiLang", "pl"); } catch {}
+      });
 
       await page.goto(url.toString(), { waitUntil: "domcontentloaded" });
       await page.waitForLoadState("networkidle");
@@ -315,8 +331,13 @@ test.describe("poll-go.js audyt", () => {
 
     try {
 
+      // p_token w poll_go_resolve jest kolumny typu uuid — string, który nie
+      // parsuje się jako UUID, wywala błąd rzutowania w Postgresie (RPC
+      // error) zamiast dojść do gałęzi "nie znaleziono" (ok:false), co
+      // zamiast "Link nieważny" pokazuje ogólny MSG.error()/"Błąd". Dlatego
+      // tu poprawny format UUID, którego po prostu nie ma w bazie.
       const url = new URL("poll-go.html", "https://www.familiada.online/");
-      url.searchParams.set("t", "invalid-fake-token-12345");
+      url.searchParams.set("t", "00000000-0000-0000-0000-000000000000");
 
       await page.goto(url.toString(), { waitUntil: "domcontentloaded" });
       await page.waitForLoadState("networkidle");

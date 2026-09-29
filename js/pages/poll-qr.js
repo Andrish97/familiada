@@ -86,7 +86,13 @@ if (!url && paramId && paramKey) {
       p_key:     paramKey,
     });
     if (error) {
-      if (error.code === "PGRST116") {
+      // get_poll_game (supabase/schema.sql) rzuca zwykłe RAISE EXCEPTION
+      // ('forbidden' dla złego klucza, 'not found' dla nieistniejącej gry)
+      // — to NIE jest PGRST116 (ten kod dotyczy tylko braku wierszy przy
+      // .single() na zapytaniach do tabel, nigdy wyjątków z funkcji RPC),
+      // więc ten warunek nigdy nie był prawdziwy i zły klucz zawsze
+      // pokazywał ogólny komunikat "Brak URL" zamiast "Nieprawidłowy klucz".
+      if (error.message === "forbidden") {
         throw new Error("invalid_key");
       }
       throw new Error(error.message || "not_found");
