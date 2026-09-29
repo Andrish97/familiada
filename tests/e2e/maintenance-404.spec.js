@@ -25,7 +25,9 @@ test("404: Worker zwraca prawdziwe 404 z bezpiecznymi nagłówkami", async ({ re
   const response = await request.get(path);
   expect(response.status()).toBe(404);
   expect(response.headers()["cache-control"]).toBe("no-store");
-  expect(response.headers()["content-security-policy"] || "").toContain("default-src 'self'");
+  const csp = response.headers()["content-security-policy"] || "";
+  expect(csp).toContain("script-src");
+  expect(csp).toContain("connect-src 'self'");
   expect(response.headers()["x-content-type-options"]).toBe("nosniff");
   expect(await response.text()).toContain('src="/js/pages/404.js');
 });
@@ -44,6 +46,10 @@ test("404: PL/EN/UK, akcje i zasoby mają poprawne adresy", async ({ page }) => 
     await expect(page.locator('.notfound-actions a[href="/"]')).toBeVisible();
     await expect(page.locator('.notfound-actions a[href="/marketplace"]')).toBeVisible();
     await expect(page.locator('script[src^="/js/core/security-warning.js"]')).toHaveCount(1);
+    await expect(page.locator('meta[http-equiv="Content-Security-Policy"]')).toHaveAttribute(
+      "content",
+      /default-src 'self'/
+    );
   }
 });
 
