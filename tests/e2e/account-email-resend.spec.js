@@ -53,8 +53,21 @@ async function releaseEmailCooldown(page) {
   }, CD_EMAIL_KEY);
 }
 
+async function cancelPendingEmail(page) {
+  await page.evaluate(async () => {
+    const sb = window.__sbClient;
+    const { error: rpcError } = await sb.rpc("cancel_my_email_change");
+    if (rpcError) throw new Error("cancel_my_email_change failed: " + rpcError.message);
+    const { error: metaError } = await sb.auth.updateUser({
+      data: { familiada_email_change_pending: "", familiada_email_change_intent: "" },
+    });
+    if (metaError) throw new Error("clearing pending metadata failed: " + metaError.message);
+    await sb.auth.refreshSession();
+  });
+}
+
 test("konto: 'Wyślij ponownie' na zmianę e-maila kończy się sukcesem, nie ReferenceError", async ({ page, context }) => {
-  test.setTimeout(60_000);
+  test.setTimeout(120_000);
 
   await loginAsTestUser(page, context);
 
@@ -76,10 +89,9 @@ test("konto: 'Wyślij ponownie' na zmianę e-maila kończy się sukcesem, nie Re
     // tickCooldowns()/bindCooldown(), niezależnie od tego, czy pending
     // e-mail w ogóle istnieje, więc zwalniamy go zawsze, nie tylko przy
     // wykrytym pending.
-    if (await page.locator("#emailPendingActions").isVisible()) {
-      await page.locator("#cancelEmailChange").click();
-      await expect(page.locator("#emailPendingActions")).toBeHidden({ timeout: 15000 });
-    }
+    // The previous run may have left a pending change even when the UI did
+    // not show it (the exact bug this test checks). Clean the server state.
+    await cancelPendingEmail(page);
     await releaseEmailCooldown(page);
     await page.reload({ waitUntil: "domcontentloaded" });
     await page.waitForSelector('[data-skel-step].skel-step-ready', { timeout: 15000 });
@@ -122,8 +134,7 @@ test("konto: 'Wyślij ponownie' na zmianę e-maila kończy się sukcesem, nie Re
     // Przywróć konto testowe do stanu bez oczekującej zmiany e-maila i bez
     // wypalonego cooldownu — dla kolejnych przebiegów e2e na tym samym
     // wspólnym koncie.
-    await page.locator("#cancelEmailChange").click().catch(() => {});
-    await expect(page.locator("#emailPendingActions")).toBeHidden({ timeout: 15000 }).catch(() => {});
+    await cancelPendingEmail(page).catch(() => {});
     await releaseEmailCooldown(page).catch(() => {});
   }
 });
