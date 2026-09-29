@@ -89,6 +89,19 @@ test("konto: 'Wyślij ponownie' na zmianę e-maila kończy się sukcesem, nie Re
     await page.fill("#email", migrateEmail);
     await page.locator("#saveEmail").click();
 
+    // handleEmailSave() czyta stan pending zaraz po sukcesie przez
+    // fetchEmailChangeStatus(), które dekoduje user_metadata WPROST z JWT
+    // bieżącej sesji -- tuż po auth.updateUser() ten token bywa jeszcze
+    // nieświeży, więc #emailPendingActions czasem zostaje "hidden" mimo że
+    // zmiana faktycznie poszła (potwierdzone: finally niżej i tak skutecznie
+    // anuluje pending, którego test "nie widział"). Zamiast ścigać się z tą
+    // wewnętrzną, klientową rasą, poczekaj aż akcja się zakończy (status) i
+    // odśwież stronę na czysto -- świeży load i tak sam wywoła
+    // refreshAuthEmailState().
+    await expect(page.locator("#status")).toContainText("Wysłano linki potwierdzające", { timeout: 20000 });
+    await page.reload({ waitUntil: "domcontentloaded" });
+    await page.waitForSelector('[data-skel-step].skel-step-ready', { timeout: 15000 });
+
     await expect(page.locator("#emailPendingActions")).toBeVisible({ timeout: 15000 });
     await expect(page.locator("#resendEmailChange")).toBeVisible();
 
