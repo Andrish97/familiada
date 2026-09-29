@@ -41,7 +41,14 @@ test.beforeEach(async ({ context }) => {
 async function releaseEmailCooldown(page) {
   await page.evaluate(async (key) => {
     const sb = window.__sbClient;
-    const { error } = await sb.rpc("cooldown_release", { p_action_key: key, p_max_age_seconds: 300 });
+    // cooldown_release ma własną osłonę: zwalnia tylko, jeśli rezerwacja
+    // była odświeżana w ciągu p_max_age_seconds -- rezerwacja z
+    // przerwanego wcześniejszego przebiegu (test.setTimeout ubija test
+    // zanim jego finally zdąży zwolnić) może być stara jak cały 1h
+    // cooldown, więc dajemy tu margines dłuższy niż jego pełny czas
+    // (RESET_COOLDOWN/GUEST_UPGRADE/account:email -- wszystkie to 1h),
+    // żeby release faktycznie coś zmieniał, a nie cicho no-opował.
+    const { error } = await sb.rpc("cooldown_release", { p_action_key: key, p_max_age_seconds: 7200 });
     if (error) throw new Error("cooldown_release failed: " + error.message);
   }, CD_EMAIL_KEY);
 }
