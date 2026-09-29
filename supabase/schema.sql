@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 1kt9CsM3eaoJmagUM4gYFTHx5ixX2DfoKybyaEsctr08BhR0NfVI28oyZZblxzA
+\restrict K2CPLdPnrs63OQUBxhqXBQO8KMBIdNgvWCKc7J6mw2HgXyizkMgKWdNkciIkhU1
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -547,28 +547,28 @@ BEGIN
     SELECT 1 FROM information_schema.columns
     WHERE table_schema = 'auth' AND table_name = 'users' AND column_name = 'new_email'
   ) INTO has_col;
-  IF has_col THEN sets := array_append(sets, 'new_email = null'); END IF;
+  IF has_col THEN sets := array_append(sets, 'new_email = '''''); END IF;
 
   -- email_change (current GoTrue)
   SELECT EXISTS (
     SELECT 1 FROM information_schema.columns
     WHERE table_schema = 'auth' AND table_name = 'users' AND column_name = 'email_change'
   ) INTO has_col;
-  IF has_col THEN sets := array_append(sets, 'email_change = null'); END IF;
+  IF has_col THEN sets := array_append(sets, 'email_change = '''''); END IF;
 
   -- email_change_token_current
   SELECT EXISTS (
     SELECT 1 FROM information_schema.columns
     WHERE table_schema = 'auth' AND table_name = 'users' AND column_name = 'email_change_token_current'
   ) INTO has_col;
-  IF has_col THEN sets := array_append(sets, 'email_change_token_current = null'); END IF;
+  IF has_col THEN sets := array_append(sets, 'email_change_token_current = '''''); END IF;
 
   -- email_change_token_new
   SELECT EXISTS (
     SELECT 1 FROM information_schema.columns
     WHERE table_schema = 'auth' AND table_name = 'users' AND column_name = 'email_change_token_new'
   ) INTO has_col;
-  IF has_col THEN sets := array_append(sets, 'email_change_token_new = null'); END IF;
+  IF has_col THEN sets := array_append(sets, 'email_change_token_new = '''''); END IF;
 
   -- email_change_sent_at
   SELECT EXISTS (
@@ -15897,5 +15897,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 1kt9CsM3eaoJmagUM4gYFTHx5ixX2DfoKybyaEsctr08BhR0NfVI28oyZZblxzA
+\unrestrict K2CPLdPnrs63OQUBxhqXBQO8KMBIdNgvWCKc7J6mw2HgXyizkMgKWdNkciIkhU1
 
