@@ -865,6 +865,7 @@ const en = {
   },
   manual: {
     title: "Familiada — guide",
+    tabsLabel: "User guide tabs",
     legal: "Privacy Policy",
     backToGames: "My games",
     backToBaseManager: "Base manager",
@@ -2635,6 +2636,7 @@ const en = {
   },
   privacy: {
     title: "Familiada Online — privacy policy",
+    description: "Familiada Online privacy policy: personal data processing, cookies, and how to contact the administrator.",
     pageTitle: "Familiada Online — Privacy Policy",
     backToManual: "Guide",
     backToHome: "Home page",

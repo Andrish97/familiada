@@ -24,7 +24,6 @@ async function initManualI18n() {
   }
 
   await initI18n({ withSwitcher: !isModalMode() });
-  document.documentElement.classList.remove('page-loading');
 }
 
 function qsa(sel) { return Array.from(document.querySelectorAll(sel)); }
@@ -45,28 +44,56 @@ const pages = Object.fromEntries(
   qsa(".tab-panel[data-tab]").map((el) => [el.dataset.tab, el])
 );
 
-function setActive(name) {
+function setActive(name, { updateHash = true } = {}) {
   if (!pages[name]) name = "general";
 
-  getTabs().forEach(t => t.classList.toggle("active", t.dataset.tab === name));
-  Object.entries(pages).forEach(([key, el]) => {
-    el?.classList.toggle("active", key === name);
+  getTabs().forEach((tab) => {
+    const active = tab.dataset.tab === name;
+    tab.classList.toggle("active", active);
+    tab.setAttribute("aria-selected", String(active));
+    tab.tabIndex = active ? 0 : -1;
   });
-  location.hash = name;
+  Object.entries(pages).forEach(([key, el]) => {
+    const active = key === name;
+    el?.classList.toggle("active", active);
+    if (el) el.hidden = !active;
+  });
+  if (updateHash && location.hash !== `#${name}`) location.hash = name;
   updateMobileTabSubtitle(name);
 }
 
 function wireTabs() {
-  getTabs().forEach(tab => {
+  const tabs = getTabs();
+  tabs.forEach((tab, index) => {
+    tab.setAttribute("role", "tab");
+    tab.setAttribute("aria-controls", `tab-${tab.dataset.tab}`);
     tab.addEventListener("click", () => setActive(tab.dataset.tab));
+    tab.addEventListener("keydown", (event) => {
+      if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+      event.preventDefault();
+      let next = index;
+      if (event.key === "ArrowLeft") next = (index - 1 + tabs.length) % tabs.length;
+      if (event.key === "ArrowRight") next = (index + 1) % tabs.length;
+      if (event.key === "Home") next = 0;
+      if (event.key === "End") next = tabs.length - 1;
+      tabs[next]?.focus();
+      setActive(tabs[next]?.dataset.tab);
+    });
   });
+
+  Object.values(pages).forEach((panel) => panel.setAttribute("role", "tabpanel"));
 
   const hashInitial = (location.hash || "").replace("#", "");
   const p = new URLSearchParams(location.search);
   const paramInitial = p.get("tab") || "";
   const initial = hashInitial || paramInitial;
-  if (initial && pages[initial]) setActive(initial);
-  else setActive("general");
+  if (initial && pages[initial]) setActive(initial, { updateHash: false });
+  else setActive("general", { updateHash: false });
+
+  window.addEventListener("hashchange", () => {
+    const name = location.hash.replace(/^#/, "");
+    setActive(pages[name] ? name : "general", { updateHash: false });
+  });
 }
 
 function normalizeRetTarget(rawRet) {
@@ -164,33 +191,41 @@ function wireFallbackNav() {
 
 
 async function wireAuthSoft() {
-  const { requireAuth } = await import("../core/auth.js?v=v2026-09-29T21243");
-  const user = await requireAuth("login");
+  const auth = await import("../core/auth.js?v=v2026-09-29T21243");
+  // Pełna strona jest częścią panelu użytkownika i wymaga sesji. Wersja
+  // modalna jest osadzanym dokumentem pomocy — nie może zamienić iframe'u
+  // w ekran logowania, gdy auth jest chwilowo niedostępny lub nie istnieje.
+  const user = isModalMode()
+    ? await auth.getUser().catch(() => null)
+    : await auth.requireAuth("login");
+
+  if (!user && !isModalMode()) return;
 
   initTopbarAccountDropdown(user);
   document.querySelector('.topbar')?.classList.add('topbar-ready');
-
-  byId("btnLegal")?.addEventListener("click", () => {
-    location.href = buildPrivacyUrl();
-  });
-
-
-  byId("btnBack")?.addEventListener("click", () => {
-    location.href = decodeRet();
-  });
-
 }
 
 /* ================= Init ================= */
-initManualI18n();
-applyControlModalLayout();
-wireTabs();
-updateBackButtonLabel();
-wireFallbackNav();
+async function init() {
+  try {
+    await initManualI18n();
+  } catch (err) {
+    console.error("[manual] i18n nieaktywny:", err);
+  } finally {
+    document.documentElement.classList.remove('page-loading');
+  }
 
-wireAuthSoft().catch((err) => {
-  console.warn("[manual] auth nieaktywny:", err);
-});
+  applyControlModalLayout();
+  wireTabs();
+  updateBackButtonLabel();
+  wireFallbackNav();
+
+  wireAuthSoft().catch((err) => {
+    console.warn("[manual] auth nieaktywny:", err);
+  });
+}
+
+void init();
 
 
 window.addEventListener("i18n:lang", () => {

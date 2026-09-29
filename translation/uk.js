@@ -861,6 +861,7 @@ const uk = {
   },
   manual: {
     title: "Familiada — підказки",
+    tabsLabel: "Вкладки підказок",
     legal: "Політика конфіденційності",
     backToGames: "Мої ігри",
     backToBaseManager: "Менеджер бази",
@@ -2618,6 +2619,7 @@ const uk = {
   },
   privacy: {
     title: "Familiada Online — політика конфіденційності",
+    description: "Політика конфіденційності Familiada Online: обробка персональних даних, файли cookie та зв’язок з адміністратором.",
     pageTitle: "Familiada Online — Політика конфіденційності",
     backToManual: "Підказки",
     backToHome: "Головна сторінка",

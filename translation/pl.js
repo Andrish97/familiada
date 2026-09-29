@@ -868,6 +868,7 @@ const pl = {
   },
   manual: {
     title: "Familiada — wskazówki",
+    tabsLabel: "Zakładki wskazówek",
     legal: "Polityka prywatności",
     backToGames: "Moje gry",
     backToBaseManager: "Menadżer bazy",
@@ -954,7 +955,7 @@ const pl = {
       </p>
 
       <p class="m-p">
-        Wskarówki zostały podzielone na kolejne zakładki.
+        Wskazówki zostały podzielone na kolejne zakładki.
         Każda z nich opisuje inny etap pracy z systemem:
         od przygotowania gry,
         przez ankiety,
@@ -2525,6 +2526,7 @@ const pl = {
   },
   privacy: {
     title: "Familiada Online — polityka prywatności",
+    description: "Polityka prywatności serwisu Familiada Online: zasady przetwarzania danych osobowych, pliki cookies i kontakt z administratorem.",
     pageTitle: "Familiada Online — Polityka Prywatności",
     backToManual: "Wskazówki",
     backToHome: "Strona główna",
