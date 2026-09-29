@@ -798,9 +798,9 @@ async function handleEmailResend() {
     if (error) throw error;
 
     setStatus(t("account.statusEmailResent"));
-    
+
     // Optymistyczna aktualizacja UI, aby przycisk Anuluj pojawił się natychmiast
-    setEmailPendingUi(normalizedMail);
+    setEmailPendingUi(pendingEmail);
     
     await refreshAuthEmailState();
     await loadCooldownsFromServer();

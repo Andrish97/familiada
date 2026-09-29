@@ -352,40 +352,6 @@ export function guestAuthEntryUrl() {
   return withLangParam("login?force_auth=1");
 }
 
-export async function convertGuestToRegistered(email, password, language, captchaToken = null) {
-  const mail = String(email || "").trim().toLowerCase();
-  if (!mail || !mail.includes("@")) throw new Error(t("index.errInvalidEmail"));
-
-  // Guest upgrade flow: attach email + password to the same anonymous account
-  // and trigger email confirmation via updateUser(attributes, options).
-  const payload = {
-    email: mail,
-    password,
-    data: {
-      is_guest: false,
-      familiada_email_change_pending: mail,
-      familiada_email_change_intent: "guest_migrate",
-    },
-  };
-  if (language) payload.data.language = language;
-
-  const confirmUrl = new URL(buildAuthRedirect("confirm", language));
-  confirmUrl.searchParams.set("to", mail);
-
-  const options = { emailRedirectTo: confirmUrl.toString() };
-  if (captchaToken) options.captchaToken = captchaToken;
-
-  const { data, error } = await sb().auth.updateUser(payload, options);
-  if (error) throw new Error(niceAuthError(error));
-
-  const { error: convErr } = await sb().rpc("guest_convert_account", { p_email: mail });
-  if (convErr) throw new Error(niceAuthError(convErr));
-
-  const user = data?.user || null;
-  if (user?.email_confirmed_at) clearGuestLocalMarker();
-  return user;
-}
-
 /**
  * Guest upgrade flow (migrate data): attach only email, require password/username
  * separately via guest_stage_migration() (caller's job). Nothing in profiles/

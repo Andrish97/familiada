@@ -3,7 +3,8 @@
 Strony powstawały „w czacie tekstowym GPT” — są nieczytelne i często
 zbugowane. Audytujemy je po kolei, jedna strona na raz. Zrobione:
 **logo-editor**, **bases**, **games** (2026-09-26), **editor** (2026-09-27),
-**poll-qr / poll-points / poll-text / poll-go** (2026-09-29). Następna: do ustalenia.
+**poll-qr / poll-points / poll-text / poll-go** (2026-09-29),
+**login / reset / confirm / account** (2026-09-29). Następna: do ustalenia.
 
 ## Kroki
 
@@ -207,4 +208,80 @@ setup wołający surowy update statusu miejsce RPC `poll_open()` (brak
 kont), `toContainText` ze stringiem zamiast regexem, twardy polski tekst na
 niezalogowanej stronie bez ustawienia `uiLang`, nieprawidłowy format UUID
 w teście „token nie istnieje”, `.catch()` na thenable z `sb.rpc()`.
+
+## Login / reset / confirm / account — zrobione (2026-09-29)
+
+Testy: `tests/e2e/guest-migration.spec.js` (dwa testy — migracja przez
+`/account` i przez `/login`), `tests/e2e/account-email-resend.spec.js`.
+Zestaw poszedł bezpośrednio na produkcję/`main` (jak poll-qr/poll-go) —
+strona logowania i tak zawsze idzie z produkcji (krok 6 metody), a testy
+account.js dotykają tego samego backendu co login.js w tym samym audycie,
+więc poszły tą samą drogą dla spójności.
+
+Realne błędy w aplikacji:
+- **login.js**: rejestracja z aktywną sesją gościa (podanie e-maila +
+  hasła) wołała `convertGuestToRegistered()`, która flipowała
+  `profiles.is_guest = false` przez RPC `guest_convert_account`
+  NATYCHMIAST po submicie — zanim e-mail został w ogóle potwierdzony.
+  Dokładnie ten sam bug migracja 249 (2026-08-27) naprawiła dla
+  `/account`, ale jej własny komentarz mówił wprost: „UWAGA: login.js
+  celowo NIE jest tu zmieniane (...) To osobna, świadomie nienaprawiana w
+  tym kroku ścieżka” — czyli świadomie odłożony dług, nie przeoczenie.
+  Skutek: porzucona/niepotwierdzona rejestracja przez `/login` trwale
+  zerowała `is_guest` i `guest_expires_at` → konto nie do sprzątnięcia
+  przez `guest_cleanup_expired` (wymaga `is_guest=true`) i nie do
+  zalogowania (e-mail nigdy niepotwierdzony) — martwe na zawsze. Naprawione
+  przełączeniem `login.js` na tę samą, odroczoną architekturę co
+  `/account`: `guest_stage_migration()` (hasło zahaszowane w
+  `guest_migration_staging`) + `convertGuestToRegisteredEmailOnly()`,
+  faktyczny flip dopiero w `guest_finalize_migration()` po potwierdzeniu
+  (`confirm.js`). Stara, buggy `convertGuestToRegistered()` usunięta z
+  `js/core/auth.js` (bez wywołań po tej zmianie).
+- **account.js**: `handleEmailResend()` (przycisk „Wyślij ponownie” przy
+  oczekującej zmianie e-maila) wołał `setEmailPendingUi(normalizedMail)` —
+  `normalizedMail` to zmienna lokalna z zupełnie innej funkcji
+  (`handleEmailSave`), więc w `handleEmailResend` była niezadeklarowana.
+  Na żywo: `sb().auth.resend()` kończył się sukcesem (mail realnie
+  wychodził), a zaraz potem `ReferenceError` wpadał w `catch` — użytkownik
+  widział błąd mimo wysłanego maila, a cooldown antyspamowy
+  (`account:email`) był bezwarunkowo zwalniany w tej samej gałęzi catch,
+  czyli ochrona przed spamowaniem cudzej/własnej skrzynki była martwa dla
+  tego przycisku. Naprawione podstawieniem właściwej zmiennej modułowej
+  (`pendingEmail`).
+- **[głębszy, wspólny dla login.js i account.js] user_metadata.is_guest
+  nigdy nieczyszczone po migracji** — `enrichUser()` w `js/core/auth.js`
+  liczy `is_guest` jako OR: `profiles.is_guest` LUB
+  `user_metadata.is_guest`. Migracja 249 przestała flipować DB-ową flagę
+  przedwcześnie, ale nikt nigdzie nie czyścił metadanych JWT
+  (`raw_user_meta_data.is_guest`, ustawianych raz przy `signInGuest()`) —
+  więc każde konto, które kiedykolwiek było gościem, wygląda na gościa
+  NA ZAWSZE nawet po pełnej, potwierdzonej konwersji: `guest-info-modal.js`
+  i `guest-migrate-reminder.js` nękają pełnoprawnego usera bez końca,
+  `rating-system.js` blokuje mu oceny na stałe. Naprawione migracją 277
+  (`guest_finalize_migration()` czyści też `raw_user_meta_data.is_guest`
+  bezpośrednio w `auth.users` — funkcja już jest `SECURITY DEFINER` i tak
+  dotyka tej tabeli dla hasła; ta sama poprawka defensywnie w
+  `guest_convert_account()` na wypadek klienta z cache starej wersji
+  strony) + jednorazowy backfill dla kont już zmigrowanych.
+- **[drobne, naprawione]** brak blokady podwójnego wysłania: formularz
+  ustawienia nazwy użytkownika na `/login` (`#usernameForm`) sprawdzał
+  `isBusy`, ale nigdy nie ustawiał go na `true` — `saveUsername()` nie
+  wołało `setBusy()` w ogóle, więc drugi Enter/klik w trakcie zapisu szedł
+  współbieżnie. To samo dla `reset.js` — przycisk „Zapisz hasło” w ogóle
+  nie miał blokady (jedyny taki przycisk w całym zestawie tych stron).
+  Oba naprawione lokalnym flagowaniem + `disabled`.
+- **[drobne, naprawione]** wyścig przy zapisie nazwy użytkownika: sprawdzenie
+  dostępności (`ensureUsernameAvailable`) i sam `UPDATE` nie są atomowe —
+  przy realnym wyścigu dwóch userów o tę samą nazwę łapał to dopiero unique
+  index (`profiles_username_ci_uq`), pokazując surowy błąd Postgresa
+  zamiast tłumaczonego `index.errUsernameTaken`. Naprawione mapowaniem kodu
+  `23505` na ten sam komunikat.
+
+Sprawdzone i bez błędów: klucze i18n (wszystkie użyte w
+login/reset/confirm/account.js + .html istnieją w pl/en/uk), `uiLang`
+init przed `t()` (już poprawnie `await initI18n()` na starcie wszystkich
+czterech), matchowanie błędów RPC (`error.message`, nie `.code`, tam gdzie
+to RAISE EXCEPTION), cooldowny (`cooldown_reserve`/`cooldown_email_reserve`
+atomowe przez `FOR UPDATE` — double-submit na przyciskach z cooldownem nie
+jest realną luką, w przeciwieństwie do formularzy bez cooldownu wyżej).
 

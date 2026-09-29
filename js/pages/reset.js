@@ -135,7 +135,10 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   document.documentElement.classList.remove('page-loading');
 
+  let saveBusy = false;
+
   save.addEventListener("click", async () => {
+    if (saveBusy) return;
     setErr("");
 
     const a = p1.value;
@@ -148,6 +151,8 @@ document.addEventListener("DOMContentLoaded", async () => {
       return setErr(niceAuthError(e));
     }
 
+    saveBusy = true;
+    save.disabled = true;
     try{
       setStatus(t("reset.statusSaving"));
       const { error } = await sb().auth.updateUser({ password: a });
@@ -165,6 +170,9 @@ document.addEventListener("DOMContentLoaded", async () => {
       console.error(e);
       setStatus(t("reset.saveFailed"));
       setErr(niceAuthError(e));
+    } finally {
+      saveBusy = false;
+      save.disabled = false;
     }
   });
 
