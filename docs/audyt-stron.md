@@ -213,10 +213,9 @@ w teście „token nie istnieje”, `.catch()` na thenable z `sb.rpc()`.
 
 Testy: `tests/e2e/guest-migration.spec.js` (dwa testy — migracja przez
 `/account` i przez `/login`), `tests/e2e/account-email-resend.spec.js`.
-Zestaw poszedł bezpośrednio na produkcję/`main` (jak poll-qr/poll-go) —
-strona logowania i tak zawsze idzie z produkcji (krok 6 metody), a testy
-account.js dotykają tego samego backendu co login.js w tym samym audycie,
-więc poszły tą samą drogą dla spójności.
+Oba specy używają kodu front-endu z brancha przez `serveBranchCode()` i
+prawdziwego produkcyjnego backendu. Po przejściu na branchu zostały
+powtórzone na `main` po wdrożeniu (wyniki poniżej).
 
 Realne błędy w aplikacji:
 - **login.js**: rejestracja z aktywną sesją gościa (podanie e-maila +
@@ -248,6 +247,14 @@ Realne błędy w aplikacji:
   czyli ochrona przed spamowaniem cudzej/własnej skrzynki była martwa dla
   tego przycisku. Naprawione podstawieniem właściwej zmiennej modułowej
   (`pendingEmail`).
+- **account.js — komunikat sukcesu nadpisywany stanem ogólnym**: po
+  poprawnym `auth.resend()` UI na moment pokazywało „Wysłano ponownie”, ale
+  `refreshAuthEmailState()` → `setEmailPendingUi()` natychmiast zastępowało
+  go tekstem „Zmiana e-maila jest w toku”. GoTrue, pending e-mail i JWT/UI
+  były poprawne; błąd dotyczył kolejności renderowania statusu aplikacji,
+  nie testu ani backendu. Ten sam problem dotyczył komunikatu po pierwszym
+  zapisie e-maila. Naprawione ustawianiem jednoznacznego statusu sukcesu po
+  odświeżeniu stanu auth i cooldownów.
 - **[głębszy, wspólny dla login.js i account.js] user_metadata.is_guest
   nigdy nieczyszczone po migracji** — `enrichUser()` w `js/core/auth.js`
   liczy `is_guest` jako OR: `profiles.is_guest` LUB
@@ -285,3 +292,8 @@ to RAISE EXCEPTION), cooldowny (`cooldown_reserve`/`cooldown_email_reserve`
 atomowe przez `FOR UPDATE` — double-submit na przyciskach z cooldownem nie
 jest realną luką, w przeciwieństwie do formularzy bez cooldownu wyżej).
 
+Weryfikacja końcowa (2026-09-29): wszystkie 217 kluczy użytych przez te
+cztery strony istnieje w PL/EN/UK; testy jednostkowe 158/158. Scoped E2E na
+branchu: `account-email-resend` 1/1 i `guest-migration` 2/2. Scoped E2E na
+`main` po wdrożeniu: `account-email-resend` 1/1 i `guest-migration` 2/2.
+Linki do konkretnych przebiegów są w raporcie końcowym audytu/Actions.
