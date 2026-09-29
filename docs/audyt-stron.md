@@ -5,8 +5,8 @@ zbugowane. Audytujemy je po kolei, jedna strona na raz. Zrobione:
 **logo-editor**, **bases**, **games** (2026-09-26), **editor** (2026-09-27),
 **polls / polls-hub / poll-qr / poll-points / poll-text / poll-go**
 (2026-09-29), **login / reset / confirm / account** (2026-09-29),
-**privacy / manual** (2026-09-29), **404 / maintenance** (2026-09-29).
-Następna: do ustalenia.
+**privacy / manual** (2026-09-29), **404 / maintenance** (2026-09-29),
+**subscriptions** (2026-09-30). Następna: do ustalenia.
 
 ## Kroki
 
@@ -372,3 +372,53 @@ https://github.com/Andrish97/familiada/actions/runs/36636718992. Pierwsze dwa
 przebiegi diagnostyczne miały 5/6 i ujawniły opisane nadpisanie nagłówków
 przez warstwę Cloudflare (36636255093, 36636567175), zamiast maskować je
 retry. Wynik na `main` po wdrożeniu jest dopisywany w raporcie końcowym.
+
+## Subscriptions — zrobione (2026-09-30)
+
+Testy: `tests/e2e/subscriptions.spec.js` (5 scenariuszy, kod strony z brancha
+przez `serveBranchCode`, prawdziwy produkcyjny backend i konta test7–test9).
+Stary test z audytu 28 września nie był dowodem działania: uznawał zarówno
+sukces, jak i błąd, warunkowo pomijał najważniejsze akcje i nie sprzątał
+relacji/cooldownów. Został zastąpiony pełnym cyklem zaproszenie → akceptacja
+→ anulowanie oraz osobnymi testami tokenu innego konta, walidacji formularza,
+bezpiecznego powrotu i mobilnego PL/EN/UK.
+
+Realne błędy w aplikacji:
+- **token przypisany do innego konta kończył się `ReferenceError`** — gałąź
+  potwierdzenia wołała `signOut()`, ale funkcja nie była importowana. Modal
+  nie mógł wykonać wybranej przez użytkownika akcji. Import naprawiony i
+  scenariusz sprawdzony na trzech prawdziwych kontach.
+- **otwarte przekierowanie przez `ret`** — parametr był przypisywany wprost
+  do `location.href`. Teraz przechodzi przez `URL`, musi mieć ten sam origin,
+  a niepoprawna/zewnętrzna wartość wraca bezpiecznie do `/games`.
+- **błędy RPC były traktowane jak sukces** — pobranie list i badge'y oraz
+  usunięcie subskrybenta ignorowały `error` albo `data.ok=false`, przez co UI
+  renderowało pustą listę lub odświeżało się jak po udanej akcji. Wszystkie
+  te odpowiedzi są teraz jawnie sprawdzane.
+- **pętla modali po awarii pobierania** — zamknięcie dowolnego modala
+  bezwarunkowo uruchamiało `refreshData()`. Błąd pobrania otwierał alert,
+  którego zamknięcie ponawiało błędne pobranie i ten sam alert bez końca.
+  Zbędny globalny listener usunięto; udane akcje odświeżają dane wprost.
+- **formularz zaproszenia był wielokrotnie wysyłalny i kasował błędną
+  wartość** — Enter/klik podczas operacji uruchamiał następne RPC, a wrapper
+  czyścił input niezależnie od wyniku. Dodano wspólną blokadę obu wersji
+  formularza; pole jest czyszczone tylko po zapisaniu zaproszenia.
+- **błąd wysyłki e-maila miał błędny komunikat** — po zapisaniu rekordu i
+  nieudanym `send-mail` tekst błędu mógł zostać zmapowany na „Niepoprawny
+  e-mail” albo ogólne „Nie udało się zaprosić”. UI rozróżnia teraz zapisane
+  zaproszenie od niedostarczonej wiadomości, również przy ponowieniu.
+- **wyścig i18n i dostępność** — logika strony mogła użyć `t()` przed
+  zakończeniem `initI18n`. Start czeka teraz na i18n, awaria nie zostawia
+  szkieletu. Ikonowe akcje mają tłumaczone nazwy dostępne, a mobilne zakładki
+  role/`aria-selected`, powiązane panele i obsługę strzałek/Home/End.
+
+Migracja 279 dodaje `e2e_poll_subscriptions_cleanup(uuid)`: usuwa relację i
+pięciodniowy cooldown wyłącznie między dwoma kontami pasującymi do
+`testN@familiada.online`; zwykły użytkownik nie może jej użyć. Dzięki temu
+retry i ponowienie testu na `main` zaczynają oraz kończą z czystym stanem.
+
+Weryfikacja branch: migracja 279 `APPLY/OK`, parytet sekcji tłumaczeń
+`pollsHubSubscriptions` 178/178/178 dla PL/EN/UK, testy jednostkowe 158/158,
+scoped E2E 5/5:
+https://github.com/Andrish97/familiada/actions/runs/36638601261. Wynik na
+`main` po wdrożeniu znajduje się w raporcie końcowym/Actions.
