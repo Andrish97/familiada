@@ -3,8 +3,9 @@
 Strony powstawały „w czacie tekstowym GPT” — są nieczytelne i często
 zbugowane. Audytujemy je po kolei, jedna strona na raz. Zrobione:
 **logo-editor**, **bases**, **games** (2026-09-26), **editor** (2026-09-27),
-**poll-qr / poll-points / poll-text / poll-go** (2026-09-29),
-**login / reset / confirm / account** (2026-09-29). Następna: do ustalenia.
+**polls / polls-hub / poll-qr / poll-points / poll-text / poll-go**
+(2026-09-29), **login / reset / confirm / account** (2026-09-29),
+**privacy / manual** (2026-09-29). Następna: do ustalenia.
 
 ## Kroki
 
@@ -297,3 +298,37 @@ cztery strony istnieje w PL/EN/UK; testy jednostkowe 158/158. Scoped E2E na
 branchu: `account-email-resend` 1/1 i `guest-migration` 2/2. Scoped E2E na
 `main` po wdrożeniu: `account-email-resend` 1/1 i `guest-migration` 2/2.
 Linki do konkretnych przebiegów są w raporcie końcowym audytu/Actions.
+
+## Privacy / manual — zrobione (2026-09-29)
+
+Testy: `tests/e2e/privacy-manual.spec.js` (5 scenariuszy, kod z brancha
+przez `serveBranchCode`, publiczne strony i prawdziwy produkcyjny routing).
+Sprawdzają PL/EN/UK, treść i opis SEO privacy, bezpieczny powrót do manuala,
+tryb modalny bez sesji, klawiaturę, semantykę zakładek oraz Back/Forward.
+
+Realne błędy w aplikacji:
+- **privacy.js — otwarte przekierowanie przez `man`**: parametr powrotu był
+  przypisywany wprost do `location.href`. Spreparowany link mógł wysłać
+  użytkownika poza Familiadę albo użyć aktywnego schematu URL. Teraz adres
+  jest parsowany przez `URL` i akceptowany wyłącznie dla tego samego origin;
+  w pozostałych przypadkach wraca do bezpiecznego `games`.
+- **manual.js — historia zakładek tylko zmieniała URL**: kliknięcia zapisywały
+  hash, ale Back/Forward nie aktualizowało aktywnego przycisku ani panelu.
+  Dodany listener `hashchange`, wspólna aktywacja panelu i test obu kierunków.
+- **manual.js — modal bez sesji trafiał do logowania**: inline HTML celowo
+  nie wymuszał auth dla iframe, lecz późniejsze `requireAuth()` ponownie
+  przekierowywało. Pełna strona nadal wymaga konta; modal używa miękkiego
+  `getUser()` i działa również bez sesji.
+- **manual.js — wyścig i18n i podwójne listenery nawigacji**: inicjalizacja
+  tłumaczeń była puszczona bez `await`, a te same przyciski podpinano przed
+  i po auth. Start jest teraz jednym awaitowanym przepływem, a nawigacja
+  jest wiązana raz.
+- **Dostępność/i18n**: stałe polskie `aria-label="Zakładki"`, brak ról
+  `tab`/`tabpanel`, `aria-selected` i obsługi strzałek/Home/End; privacy miało
+  polski opis meta także w EN/UK. Dodane kompletne PL/EN/UK oraz semantyka
+  i klawiatura zakładek. Poprawiona też literówka „Wskarówki”.
+
+Zweryfikowano parytet kluczy: `manual` 38/38/38 i `privacy` 22/22/22 dla
+PL/EN/UK. Testy jednostkowe repo: 158/158. Scoped E2E jest uruchamiany na
+branchu i ponownie na `main` po wdrożeniu; linki do przebiegów znajdują się
+w raporcie końcowym/Actions.
