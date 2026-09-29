@@ -62,13 +62,21 @@ test("konto: 'Wyślij ponownie' na zmianę e-maila kończy się sukcesem, nie Re
     await page.waitForSelector('[data-skel-step].skel-step-ready', { timeout: 15000 });
 
     // Samoleczenie: gdyby poprzedni przebieg na tym wspólnym koncie nie
-    // posprzątał po sobie (np. przerwany w trakcie), zacznij od czystego
-    // stanu zamiast zakładać, że #saveEmail w ogóle jest widoczny.
+    // posprzątał po sobie (np. własny test.setTimeout ubił test w trakcie,
+    // zanim finally zdążyło dokończyć swoje await-y), zacznij od czystego
+    // stanu. Dwa NIEZALEŻNE gubione stany: pending e-mail (lockEl) ORAZ
+    // sam cooldown "account:email" -- ten drugi też blokuje #email przez
+    // tickCooldowns()/bindCooldown(), niezależnie od tego, czy pending
+    // e-mail w ogóle istnieje, więc zwalniamy go zawsze, nie tylko przy
+    // wykrytym pending.
     if (await page.locator("#emailPendingActions").isVisible()) {
       await page.locator("#cancelEmailChange").click();
       await expect(page.locator("#emailPendingActions")).toBeHidden({ timeout: 15000 });
-      await releaseEmailCooldown(page);
     }
+    await releaseEmailCooldown(page);
+    await page.reload({ waitUntil: "domcontentloaded" });
+    await page.waitForSelector('[data-skel-step].skel-step-ready', { timeout: 15000 });
+    await expect(page.locator("#email")).toBeEnabled({ timeout: 15000 });
 
     const migrateEmail = `e2e-resend-${Date.now()}@example.invalid`;
     await page.fill("#email", migrateEmail);
