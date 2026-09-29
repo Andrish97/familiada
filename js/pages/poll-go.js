@@ -4,7 +4,7 @@ import { getUser } from "../core/auth.js?v=v2026-09-28T22354";
 import { initI18n, t } from "../../translation/translation.js?v=v2026-09-28T22354";
 import { alertModal } from "../core/modal.js?v=v2026-09-28T22354";
 
-initI18n({ withSwitcher: true }).then(() => {
+const i18nReady = initI18n({ withSwitcher: true }).then(() => {
   document.documentElement.classList.remove('page-loading');
   document.querySelector('.topbar')?.classList.add('topbar-ready');
 });
@@ -556,6 +556,10 @@ async function handleUnsubGlobal() {
 }
 
 async function init() {
+  // initI18n() robi dynamic import(pl.js/en.js/uk.js) — bez tego czekania
+  // t()/MSG.X() poniżej mogą wykonać się zanim translations się załaduje,
+  // zwracając surowy klucz zamiast tłumaczenia (patrz t() w translation.js).
+  await i18nReady;
   if (isUnsubOwner) {
     await handleUnsubOwner();
     return;

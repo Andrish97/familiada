@@ -3,7 +3,7 @@ import { sb } from "../core/supabase.js?v=v2026-09-28T22354";
 import { getUser } from "../core/auth.js?v=v2026-09-28T22354";
 import { initI18n, t, getUiLang } from "../../translation/translation.js?v=v2026-09-28T22354";
 
-initI18n({ withSwitcher: true }).then(() => {
+const i18nReady = initI18n({ withSwitcher: true }).then(() => {
   document.documentElement.classList.remove('page-loading');
 });
 
@@ -327,6 +327,14 @@ window.addEventListener("i18n:lang", () => {
 
 document.addEventListener("DOMContentLoaded", async () => {
   try {
+    // initI18n() robi dynamic import(pl.js/en.js/uk.js) — bez tego czekania
+    // t()/MSG.X() poniżej mogą wykonać się zanim translations się załaduje,
+    // co dla elementów bez data-i18n (np. #closed) zwraca surowy klucz
+    // (np. "pollText.alreadyVoted") zamiast tłumaczenia (patrz t() w
+    // translation.js: value==null -> return key), a dla elementów z
+    // data-i18n applyTranslations() później i tak nadpisze wcześniej
+    // ustawiony programowo tekst błędu z powrotem na "Ładuję…".
+    await i18nReady;
     if (taskToken) {
       await resolveTaskToken();
     }

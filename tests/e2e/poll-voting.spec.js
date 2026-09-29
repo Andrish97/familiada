@@ -13,7 +13,7 @@
 // - niejasne optional chaining w poll-text
 
 const { test, expect } = require("@playwright/test");
-const { loginAsTestUser, instrumentPage, testAccountUsername } = require("./helpers/login");
+const { loginAsPooledTestUser, instrumentPage } = require("./helpers/login");
 
 async function createPollGame(page, type) {
   return await page.evaluate(async (pollType) => {
@@ -73,9 +73,9 @@ async function deleteGame(page, gameId) {
 test.describe("poll-voting (poll-points.js i poll-text.js) audyt", () => {
   test.use({ serviceWorkers: "block" });
 
-  test("poll-points: głosowanie w ankiecie punktowej", async ({ page, context }) => {
+  test("poll-points: głosowanie w ankiecie punktowej", async ({ page, context }, testInfo) => {
     try {
-      await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+      await loginAsPooledTestUser(page, context, testInfo.parallelIndex);
       const game = await createPollGame(page, "poll_points");
 
       const url = new URL("poll-points.html", "https://www.familiada.online/");
@@ -123,9 +123,9 @@ test.describe("poll-voting (poll-points.js i poll-text.js) audyt", () => {
     }
   });
 
-  test("poll-text: głosowanie w ankiecie tekstowej", async ({ page, context }) => {
+  test("poll-text: głosowanie w ankiecie tekstowej", async ({ page, context }, testInfo) => {
     try {
-      await loginAsTestUser(page, context, { username: testAccountUsername(2) });
+      await loginAsPooledTestUser(page, context, testInfo.parallelIndex);
       const game = await createPollGame(page, "poll_text");
 
 
@@ -174,9 +174,9 @@ test.describe("poll-voting (poll-points.js i poll-text.js) audyt", () => {
     }
   });
 
-  test("poll-text: komunikat 'już zagłosowałeś' przy powtórnym wejściu", async ({ page, context }) => {
+  test("poll-text: komunikat 'już zagłosowałeś' przy powtórnym wejściu", async ({ page, context }, testInfo) => {
     try {
-      await loginAsTestUser(page, context, { username: testAccountUsername(3) });
+      await loginAsPooledTestUser(page, context, testInfo.parallelIndex);
       const game = await createPollGame(page, "poll_text");
 
 
@@ -231,9 +231,9 @@ test.describe("poll-voting (poll-points.js i poll-text.js) audyt", () => {
     }
   });
 
-  test("poll-text: limit 17 znaków w polu tekstowym", async ({ page, context }) => {
+  test("poll-text: limit 17 znaków w polu tekstowym", async ({ page, context }, testInfo) => {
     try {
-      await loginAsTestUser(page, context, { username: testAccountUsername(4) });
+      await loginAsPooledTestUser(page, context, testInfo.parallelIndex);
       const game = await createPollGame(page, "poll_text");
 
 

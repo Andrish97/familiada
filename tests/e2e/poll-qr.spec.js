@@ -13,7 +13,7 @@
 // - sprawdzenie statusu gry w device mode
 
 const { test, expect } = require("@playwright/test");
-const { loginAsTestUser, instrumentPage, testAccountUsername } = require("./helpers/login");
+const { loginAsPooledTestUser, instrumentPage } = require("./helpers/login");
 
 async function createPollGame(page) {
   return await page.evaluate(async () => {
@@ -74,10 +74,10 @@ async function deleteGame(page, gameId) {
 test.describe("poll-qr.js audyt", () => {
   test.use({ serviceWorkers: "block" });
 
-  test("wyświetla QR z przekazanego URL", async ({ page, context }) => {
+  test("wyświetla QR z przekazanego URL", async ({ page, context }, testInfo) => {
 
     try {
-      await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+      await loginAsPooledTestUser(page, context, testInfo.parallelIndex);
       const game = await createPollGame(page);
 
       const voteUrl = new URL("poll-points.html", "https://www.familiada.online/");
@@ -105,10 +105,10 @@ test.describe("poll-qr.js audyt", () => {
     }
   });
 
-  test("device mode: generuje QR z ?id=&key=", async ({ page, context }) => {
+  test("device mode: generuje QR z ?id=&key=", async ({ page, context }, testInfo) => {
 
     try {
-      await loginAsTestUser(page, context, { username: testAccountUsername(2) });
+      await loginAsPooledTestUser(page, context, testInfo.parallelIndex);
       const game = await createPollGame(page);
 
 
@@ -132,10 +132,10 @@ test.describe("poll-qr.js audyt", () => {
     }
   });
 
-  test("obsługuje błąd: zły klucz w device mode", async ({ page, context }) => {
+  test("obsługuje błąd: zły klucz w device mode", async ({ page, context }, testInfo) => {
 
     try {
-      await loginAsTestUser(page, context, { username: testAccountUsername(3) });
+      await loginAsPooledTestUser(page, context, testInfo.parallelIndex);
       const game = await createPollGame(page);
 
 
@@ -161,10 +161,10 @@ test.describe("poll-qr.js audyt", () => {
     }
   });
 
-  test("obsługuje błąd: ankieta nie w stanie poll_open", async ({ page, context }) => {
+  test("obsługuje błąd: ankieta nie w stanie poll_open", async ({ page, context }, testInfo) => {
 
     try {
-      await loginAsTestUser(page, context, { username: testAccountUsername(4) });
+      await loginAsPooledTestUser(page, context, testInfo.parallelIndex);
       const game = await createPollGame(page);
 
       // Cofnij do draft — jedyny status game_status enum, który poll-qr.js
@@ -193,10 +193,10 @@ test.describe("poll-qr.js audyt", () => {
     }
   });
 
-  test("przycisk fullscreen przełącza tryb pełnoekranowy", async ({ page, context }) => {
+  test("przycisk fullscreen przełącza tryb pełnoekranowy", async ({ page, context }, testInfo) => {
 
     try {
-      await loginAsTestUser(page, context, { username: testAccountUsername(5) });
+      await loginAsPooledTestUser(page, context, testInfo.parallelIndex);
       const game = await createPollGame(page);
 
       const voteUrl = new URL("poll-points.html", "https://www.familiada.online/");
@@ -227,10 +227,10 @@ test.describe("poll-qr.js audyt", () => {
     }
   });
 
-  test("obsługuje timeout QRCode.toDataURL (8 sekund)", async ({ page, context }) => {
+  test("obsługuje timeout QRCode.toDataURL (8 sekund)", async ({ page, context }, testInfo) => {
 
     try {
-      await loginAsTestUser(page, context, { username: testAccountUsername(6) });
+      await loginAsPooledTestUser(page, context, testInfo.parallelIndex);
 
 
       // Podaj bardzo długi URL, żeby sprawdzić timeout
@@ -260,10 +260,10 @@ test.describe("poll-qr.js audyt", () => {
     }
   });
 
-  test("zmiana języka zmienia tekst i QR", async ({ page, context }) => {
+  test("zmiana języka zmienia tekst i QR", async ({ page, context }, testInfo) => {
 
     try {
-      await loginAsTestUser(page, context, { username: testAccountUsername(7) });
+      await loginAsPooledTestUser(page, context, testInfo.parallelIndex);
       const game = await createPollGame(page);
 
       const voteUrl = new URL("poll-points.html", "https://www.familiada.online/");

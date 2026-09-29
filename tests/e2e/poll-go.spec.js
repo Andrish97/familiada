@@ -9,7 +9,7 @@
 // Audyt: strona kompleksowa, obsługuje 4 główne ścieżki + edge case'i
 
 const { test, expect } = require("@playwright/test");
-const { loginAsTestUser, instrumentPage, testAccountUsername } = require("./helpers/login");
+const { loginAsPooledTestUser } = require("./helpers/login");
 
 async function createTaskToken(page, pollType = "poll_points", opts = {}) {
   const { recipientUserId = null } = opts;
@@ -18,14 +18,15 @@ async function createTaskToken(page, pollType = "poll_points", opts = {}) {
     const { data: userData } = await sb.auth.getUser();
     const userId = userData.user.id;
 
-    // Utwórz grę
+    // Utwórz grę jako draft — trigger game_content_locked:poll_open
+    // zabrania insertu do questions/answers gdy games.status='poll_open'
     const { data: game, error: gameErr } = await sb
       .from("games")
       .insert({
         name: `E2E-TASK-${Date.now()}`,
         owner_id: userId,
         type,
-        status: "poll_open",
+        status: "draft",
       })
       .select("id, share_key_poll")
       .single();
@@ -50,6 +51,10 @@ async function createTaskToken(page, pollType = "poll_points", opts = {}) {
         }
       }
     }
+
+    // Teraz otwórz ankietę
+    const { error: openErr } = await sb.from("games").update({ status: "poll_open" }).eq("id", game.id);
+    if (openErr) throw new Error("update games poll_open failed: " + openErr.message);
 
     // Utwórz task (zaproszenie) — poll_tasks wymaga poll_type (nie "type")
     // i share_key_poll (kopiowany z games.share_key_poll, NOT NULL).
@@ -85,20 +90,17 @@ async function createSubToken(page) {
     const { data: userData } = await sb.auth.getUser();
     const userId = userData.user.id;
 
-    // Utwórz subscription invite — tabela to poll_subscriptions, nie subscriptions
-    const { data: sub, error } = await sb
-      .from("poll_subscriptions")
-      .insert({
-        owner_id: userId,
-        subscriber_email: "subscriber@example.com",
-        status: "pending",
-      })
-      .select("token")
-      .single();
-    if (error) throw new Error("insert poll_subscriptions failed: " + error.message);
+    // poll_subscriptions ma RLS bez INSERT policy dla klientów — jedyna
+    // droga stworzenia zaproszenia to RPC polls_hub_subscription_invite,
+    // tak samo jak robi to prawdziwy UI (polls-hub.js).
+    const { data, error } = await sb.rpc("polls_hub_subscription_invite", {
+      p_recipient: `e2e-subscriber-${Date.now()}@example.com`,
+    });
+    if (error) throw new Error("polls_hub_subscription_invite failed: " + error.message);
+    if (!data?.ok) throw new Error("polls_hub_subscription_invite returned not ok: " + JSON.stringify(data));
 
     return {
-      subToken: sub.token,
+      subToken: data.token,
       ownerId: userId,
     };
   });
@@ -114,10 +116,10 @@ async function deleteGame(page, gameId) {
 test.describe("poll-go.js audyt", () => {
   test.use({ serviceWorkers: "block" });
 
-  test("task invite: zalogowany user bez account invite → głos", async ({ page, context }) => {
+  test("task invite: zalogowany user bez account invite → głos", async ({ page, context }, testInfo) => {
 
     try {
-      await loginAsTestUser(page, context, { username: testAccountUsername(5) });
+      await loginAsPooledTestUser(page, context, testInfo.parallelIndex);
       const { gameId, taskToken, pollType } = await createTaskToken(page, "poll_points");
 
 
@@ -148,7 +150,7 @@ test.describe("poll-go.js audyt", () => {
     }
   });
 
-  test("task invite: niezalogowany user → redirect do login", async ({ page, browser }) => {
+  test("task invite: niezalogowany user → redirect do login", async ({ page, browser }, testInfo) => {
     // Task musi mieć recipient_user_id (account invite) — tylko wtedy
     // niezalogowany widz dostaje prompt logowania (handleTaskInvite Case 4
     // w js/pages/poll-go.js); recipient_email-only jest Case 5, wolny głos
@@ -158,7 +160,7 @@ test.describe("poll-go.js audyt", () => {
     const setupPage = await setupContext.newPage();
     let gameId;
     try {
-      await loginAsTestUser(setupPage, setupContext, { username: testAccountUsername(5) });
+      await loginAsPooledTestUser(setupPage, setupContext, testInfo.parallelIndex);
       const recipientUserId = await setupPage.evaluate(async () => {
         const sb = window.__sbClient;
         const { data } = await sb.auth.getUser();
@@ -187,10 +189,10 @@ test.describe("poll-go.js audyt", () => {
     }
   });
 
-  test("subscription invite: zalogowany user → accept/decline", async ({ page, context }) => {
+  test("subscription invite: zalogowany user → accept/decline", async ({ page, context }, testInfo) => {
 
     try {
-      await loginAsTestUser(page, context, { username: testAccountUsername(6) });
+      await loginAsPooledTestUser(page, context, testInfo.parallelIndex);
       const { subToken } = await createSubToken(page);
 
 
@@ -222,7 +224,7 @@ test.describe("poll-go.js audyt", () => {
     }
   });
 
-  test("subscription invite: niezalogowany + email → accept/decline", async ({ page, browser }) => {
+  test("subscription invite: niezalogowany + email → accept/decline", async ({ page, browser }, testInfo) => {
     // Setup w izolowanym kontekście (insert wymaga zalogowanego ownera; nie
     // chcemy zarazić cookies głównego `page`, które ma zostać niezalogowane).
     // Dla subscriber_email-only + status pending, handleSubInvite (Case 4 w
@@ -232,7 +234,7 @@ test.describe("poll-go.js audyt", () => {
     const setupContext = await browser.newContext();
     const setupPage = await setupContext.newPage();
     try {
-      await loginAsTestUser(setupPage, setupContext, { username: testAccountUsername(6) });
+      await loginAsPooledTestUser(setupPage, setupContext, testInfo.parallelIndex);
       const { subToken } = await createSubToken(setupPage);
 
       const url = new URL("poll-go.html", "https://www.familiada.online/");
@@ -259,10 +261,10 @@ test.describe("poll-go.js audyt", () => {
     }
   });
 
-  test("task invite: expired token → error message", async ({ page, context }) => {
+  test("task invite: expired token → error message", async ({ page, context }, testInfo) => {
 
     try {
-      await loginAsTestUser(page, context, { username: testAccountUsername(7) });
+      await loginAsPooledTestUser(page, context, testInfo.parallelIndex);
       const { gameId, taskToken } = await createTaskToken(page, "poll_points");
 
       // Ustaw task na "declined" (expired)
