@@ -53,7 +53,22 @@ test("konto: 'Wyślij ponownie' na zmianę e-maila kończy się sukcesem, nie Re
 
   try {
     await page.goto(ACCOUNT_URL, { waitUntil: "domcontentloaded" });
-    await page.waitForLoadState("networkidle");
+    // account.js przypina listenery (#saveEmail itd.) dopiero PO całym
+    // async łańcuchu loadProfile() -- "networkidle" potrafi wybrzmieć w
+    // przerwie MIĘDZY kolejnymi await-owanymi requestami tego łańcucha,
+    // więc klik może wylądować zanim listener w ogóle istnieje (ten sam
+    // wzorzec race co #btnGuest/#btnPrimary w helpers/login.js). Ten sam,
+    // już sprawdzony sygnał końca ładowania co w subscriptions.spec.js.
+    await page.waitForSelector('[data-skel-step].skel-step-ready', { timeout: 15000 });
+
+    // Samoleczenie: gdyby poprzedni przebieg na tym wspólnym koncie nie
+    // posprzątał po sobie (np. przerwany w trakcie), zacznij od czystego
+    // stanu zamiast zakładać, że #saveEmail w ogóle jest widoczny.
+    if (await page.locator("#emailPendingActions").isVisible()) {
+      await page.locator("#cancelEmailChange").click();
+      await expect(page.locator("#emailPendingActions")).toBeHidden({ timeout: 15000 });
+      await releaseEmailCooldown(page);
+    }
 
     const migrateEmail = `e2e-resend-${Date.now()}@example.invalid`;
     await page.fill("#email", migrateEmail);
@@ -66,7 +81,7 @@ test("konto: 'Wyślij ponownie' na zmianę e-maila kończy się sukcesem, nie Re
     // account.js woła sam przy rollbacku błędu (patrz komentarz na górze).
     await releaseEmailCooldown(page);
     await page.reload({ waitUntil: "domcontentloaded" });
-    await page.waitForLoadState("networkidle");
+    await page.waitForSelector('[data-skel-step].skel-step-ready', { timeout: 15000 });
 
     await expect(page.locator("#resendEmailChange")).toBeEnabled({ timeout: 15000 });
     await page.locator("#resendEmailChange").click();
