@@ -750,9 +750,11 @@ async function handleEmailSave() {
     // Record pending intent so auth-email-status reflects current state
     await sb().rpc("initiate_email_change_intent", { p_new_email: normalizedMail });
 
-    setStatus(t("account.statusEmailSaved"));
     await refreshAuthEmailState();
     await loadCooldownsFromServer();
+    // Odświeżenie pending UI ustawia ogólny status „zmiana w toku”. Po
+    // zakończonej operacji ważniejszy jest jednoznaczny komunikat sukcesu.
+    setStatus(t("account.statusEmailSaved"));
   } catch (e) {
     console.error(e);
     if (reserved) {
@@ -790,13 +792,14 @@ async function handleEmailResend() {
     });
     if (error) throw error;
 
-    setStatus(t("account.statusEmailResent"));
-
     // Optymistyczna aktualizacja UI, aby przycisk Anuluj pojawił się natychmiast
     setEmailPendingUi(pendingEmail);
-    
+
     await refreshAuthEmailState();
     await loadCooldownsFromServer();
+    // setEmailPendingUi() poprawnie zachowuje pending e-mail, ale jego ogólny
+    // status nie może zasłaniać informacji, że ponowne wysłanie się udało.
+    setStatus(t("account.statusEmailResent"));
   } catch (e) {
     console.error(e);
     if (reserved) {
