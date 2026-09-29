@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict Ud92YJPOl5YVfbGyP9FLqkbOaPirSg77OaLa6KsLz5RA8i8EBXOMMeghgVxJa77
+\restrict 1kt9CsM3eaoJmagUM4gYFTHx5ixX2DfoKybyaEsctr08BhR0NfVI28oyZZblxzA
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -4752,6 +4752,10 @@ begin
          email = v_email
    where id = v_uid;
 
+  update auth.users
+  set raw_user_meta_data = coalesce(raw_user_meta_data, '{}'::jsonb) || jsonb_build_object('is_guest', false)
+  where id = v_uid;
+
   return jsonb_build_object('ok', true);
 end;
 $$;
@@ -4856,6 +4860,10 @@ begin
   if v_pending_password_hash is not null then
     update auth.users set encrypted_password = v_pending_password_hash where id = v_uid;
   end if;
+
+  update auth.users
+  set raw_user_meta_data = coalesce(raw_user_meta_data, '{}'::jsonb) || jsonb_build_object('is_guest', false)
+  where id = v_uid;
 
   delete from public.guest_migration_staging where user_id = v_uid;
 
@@ -15889,5 +15897,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict Ud92YJPOl5YVfbGyP9FLqkbOaPirSg77OaLa6KsLz5RA8i8EBXOMMeghgVxJa77
+\unrestrict 1kt9CsM3eaoJmagUM4gYFTHx5ixX2DfoKybyaEsctr08BhR0NfVI28oyZZblxzA
 
