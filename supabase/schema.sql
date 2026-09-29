@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 2EX3EWaxlwddjVZMhHVfxFkoyU7L46SeWvNdzCjrwcdRNTfClpn3LpFFWmzWLn2
+\restrict SGcsDMe8xjoNlJalZcJDR1WWNa20DRQHDktgJMvZdnsPhjZDa5uxHxUQ9oqhXdq
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -1953,6 +1953,39 @@ begin
 
   return v_logo;
 end $$;
+
+
+--
+-- Name: e2e_poll_subscriptions_cleanup("uuid"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."e2e_poll_subscriptions_cleanup"("p_other_user_id" "uuid") RETURNS "jsonb"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $_$
+declare
+  v_uid uuid := auth.uid();
+  v_caller_email text;
+  v_other_email text;
+  v_deleted integer := 0;
+begin
+  select lower(email) into v_caller_email from auth.users where id = v_uid;
+  select lower(email) into v_other_email from auth.users where id = p_other_user_id;
+
+  if v_uid is null
+     or v_caller_email !~ '^test[0-9]+@familiada[.]online$'
+     or v_other_email !~ '^test[0-9]+@familiada[.]online$' then
+    return jsonb_build_object('ok', false, 'error', 'test accounts required');
+  end if;
+
+  delete from public.poll_subscriptions
+  where (owner_id = v_uid and subscriber_user_id = p_other_user_id)
+     or (owner_id = p_other_user_id and subscriber_user_id = v_uid);
+  get diagnostics v_deleted = row_count;
+
+  return jsonb_build_object('ok', true, 'deleted', v_deleted);
+end;
+$_$;
 
 
 --
@@ -15897,5 +15930,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 2EX3EWaxlwddjVZMhHVfxFkoyU7L46SeWvNdzCjrwcdRNTfClpn3LpFFWmzWLn2
+\unrestrict SGcsDMe8xjoNlJalZcJDR1WWNa20DRQHDktgJMvZdnsPhjZDa5uxHxUQ9oqhXdq
 
