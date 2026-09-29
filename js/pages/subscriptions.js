@@ -1,5 +1,5 @@
 import { sb, SUPABASE_URL } from "../core/supabase.js?v=v2026-09-29T22015";
-import { requireAuth } from "../core/auth.js?v=v2026-09-29T22015";
+import { requireAuth, signOut } from "../core/auth.js?v=v2026-09-29T22015";
 import { isGuestUser, showGuestBlockedOverlay } from "../core/guest-mode.js?v=v2026-09-29T22015";
 import { alertModal, confirmModal } from "../core/modal.js?v=v2026-09-29T22015";
 import { initUiSelect } from "../core/ui-select.js?v=v2026-09-29T22015";
@@ -8,7 +8,9 @@ import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-
 import "../core/contact-modal.js?v=v2026-09-29T22015";
 import { icon, iconText } from "../core/icons.js?v=v2026-09-29T22015";
 
-initI18n({ withSwitcher: true }).then(() => {
+const i18nReady = initI18n({ withSwitcher: true }).catch((err) => {
+  console.error("[subscriptions] i18n nieaktywny:", err);
+}).finally(() => {
   document.documentElement.classList.remove('page-loading');
 });
 
@@ -26,11 +28,23 @@ function getRetParam() {
   return new URLSearchParams(location.search).get("ret");
 }
 
-function getRetPathnameLower() {
+function getSafeRetUrl() {
   const raw = getRetParam();
-  if (!raw) return "";
+  if (!raw) return null;
   try {
-    return new URL(raw, location.origin + "/").pathname.toLowerCase();
+    const url = new URL(raw, location.origin + "/");
+    if (url.origin !== location.origin) return null;
+    return `${url.pathname}${url.search}${url.hash}`;
+  } catch {
+    return null;
+  }
+}
+
+function getRetPathnameLower() {
+  const safe = getSafeRetUrl();
+  if (!safe) return "";
+  try {
+    return new URL(safe, location.origin).pathname.toLowerCase();
   } catch {
     return "";
   }
@@ -82,6 +96,8 @@ const MSG = {
   inviteFail: () => t("pollsHubSubscriptions.errors.invite"),
   inviteSaved: () => t("pollsHubSubscriptions.statusMsg.inviteSaved"),
   resendFail: () => t("pollsHubSubscriptions.errors.resend"),
+  inviteMailFailed: () => t("pollsHubSubscriptions.errors.inviteMailFailed"),
+  resendMailFailed: () => t("pollsHubSubscriptions.errors.resendMailFailed"),
   removeFail: () => t("pollsHubSubscriptions.errors.removeSubscriber"),
   acceptFail: () => t("pollsHubSubscriptions.errors.acceptSubscription"),
   updateFail: () => t("pollsHubSubscriptions.errors.updateSubscription"),
@@ -116,6 +132,14 @@ async function callSubscriptionAction(row, action) {
   const { data, error } = await sb().rpc(fn, { p_id: row.sub_id });
   const ok = data?.ok === undefined ? true : !!data?.ok;
   if (error || !ok) throw error || new Error(String(data?.error || "subscription_action_failed"));
+}
+
+async function callOkRpc(name, args) {
+  const { data, error } = await sb().rpc(name, args);
+  if (error || data?.ok === false) {
+    throw error || new Error(String(data?.error || `${name}_failed`));
+  }
+  return data;
 }
 
 let subscribers = [];
@@ -330,16 +354,22 @@ function renderSubscribers() {
       if (row.status !== "declined") {
         const removeBtn = document.createElement("button");
         removeBtn.className = "btn xs danger";
+        removeBtn.type = "button";
+        removeBtn.setAttribute("aria-label", t("pollsHubSubscriptions.actions.remove"));
+        removeBtn.title = t("pollsHubSubscriptions.actions.remove");
         removeBtn.innerHTML = icon("trash");
         removeBtn.addEventListener("click", async (e) => {
           e.stopPropagation();
           const ok = await confirmModal({ title: MSG.removeTitle(), text: MSG.removeText(), okText: MSG.removeOk(), cancelText: MSG.removeCancel() });
           if (!ok) return;
           try {
-            await sb().rpc("polls_hub_subscriber_remove", { p_id: row.sub_id });
+            removeBtn.disabled = true;
+            await callOkRpc("polls_hub_subscriber_remove", { p_id: row.sub_id });
             await refreshData();
           } catch {
             await alertModal({ text: MSG.removeFail() });
+          } finally {
+            removeBtn.disabled = false;
           }
         });
         actions?.appendChild(removeBtn);
@@ -348,6 +378,9 @@ function renderSubscribers() {
       if (row.status === "pending") {
         const resendBtn = document.createElement("button");
         resendBtn.className = "btn xs";
+        resendBtn.type = "button";
+        resendBtn.setAttribute("aria-label", t("pollsHubSubscriptions.actions.resend"));
+        resendBtn.title = t("pollsHubSubscriptions.actions.resend");
         resendBtn.innerHTML = icon("refresh");
         const until = cooldownUntil(row.email_sent_at);
         if (until && Date.now() < until) {
@@ -361,6 +394,7 @@ function renderSubscribers() {
               await alertModal({ text: MSG.resendCooldownAlert(until) });
               return;
             }
+            resendBtn.disabled = true;
             const { data, error } = await sb().rpc("polls_hub_subscriber_resend", { p_id: row.sub_id });
             if (error) throw error;
             if (data?.ok === false) {
@@ -373,11 +407,19 @@ function renderSubscribers() {
             }
             if (data?.to && data?.link) {
               const ownerLabel = who?.querySelector('.account-who')?.textContent || "Familiada";
-              await sendSubscriptionEmail({ to: data.to, link: data.link, ownerLabel, unsubToken: data.unsub_token || null, isRegistered: !!data.registered });
+              try {
+                await sendSubscriptionEmail({ to: data.to, link: data.link, ownerLabel, unsubToken: data.unsub_token || null, isRegistered: !!data.registered });
+              } catch {
+                await alertModal({ text: MSG.resendMailFailed() });
+                await refreshData();
+                return;
+              }
             }
             await refreshData();
           } catch {
             await alertModal({ text: MSG.resendFail() });
+          } finally {
+            resendBtn.disabled = false;
           }
         });
         actions?.appendChild(resendBtn);
@@ -412,6 +454,9 @@ function renderInvites() {
       if (row.status !== "declined") {
         const reject = document.createElement("button");
         reject.className = "btn xs danger";
+        reject.type = "button";
+        reject.setAttribute("aria-label", t(`pollsHubSubscriptions.actions.${row.status === "pending" ? "decline" : "cancel"}`));
+        reject.title = t(`pollsHubSubscriptions.actions.${row.status === "pending" ? "decline" : "cancel"}`);
         reject.innerHTML = icon("cancel");
         reject.addEventListener("click", async (e) => {
           e.stopPropagation();
@@ -424,10 +469,13 @@ function renderInvites() {
           });
           if (!ok) return;
           try {
+            reject.disabled = true;
             await callSubscriptionAction(row, isPending ? "reject" : "cancel");
             await refreshData();
           } catch {
             await alertModal({ text: MSG.updateFail() });
+          } finally {
+            reject.disabled = false;
           }
         });
         actions?.appendChild(reject);
@@ -436,14 +484,20 @@ function renderInvites() {
       if (row.status === "pending") {
         const accept = document.createElement("button");
         accept.className = "btn xs gold";
+        accept.type = "button";
+        accept.setAttribute("aria-label", t("pollsHubSubscriptions.actions.accept"));
+        accept.title = t("pollsHubSubscriptions.actions.accept");
         accept.innerHTML = icon("check");
         accept.addEventListener("click", async (e) => {
           e.stopPropagation();
           try {
+            accept.disabled = true;
             await callSubscriptionAction(row, "accept");
             await refreshData();
           } catch {
             await alertModal({ text: MSG.acceptFail() });
+          } finally {
+            accept.disabled = false;
           }
         });
         actions?.appendChild(accept);
@@ -459,8 +513,12 @@ function renderInvites() {
 function setActiveMobileTab(tab) {
   tabA?.classList.toggle("active", tab === "a");
   tabB?.classList.toggle("active", tab === "b");
+  tabA?.setAttribute("aria-selected", String(tab === "a"));
+  tabB?.setAttribute("aria-selected", String(tab === "b"));
   panelA?.classList.toggle("active", tab === "a");
   panelB?.classList.toggle("active", tab === "b");
+  if (panelA) panelA.hidden = tab !== "a";
+  if (panelB) panelB.hidden = tab !== "b";
 }
 
 function renderSelect(el, kind) {
@@ -531,9 +589,13 @@ function registerToggleHandlers() {
   });
 }
 
+let inviteInFlight = false;
 async function invite(value) {
   const v = String(value || "").trim();
-  if (!v) return;
+  if (!v || inviteInFlight) return false;
+  inviteInFlight = true;
+  btnInviteDesktop.disabled = true;
+  btnInviteMobile.disabled = true;
   try {
     setProgress({ show: true, step: t("pollsHubSubscriptions.progress.invite"), i: 0, n: 2 });
     const recipient = await resolveInviteRecipient(v);
@@ -549,15 +611,24 @@ async function invite(value) {
     }
 
     if (!data?.already && data?.id) {
-      const { data: resendData } = await sb().rpc("polls_hub_subscriber_resend", { p_id: data.id });
+      const { data: resendData, error: resendError } = await sb().rpc("polls_hub_subscriber_resend", { p_id: data.id });
+      if (resendError || resendData?.ok === false) {
+        throw resendError || new Error(String(resendData?.error || "resend_failed"));
+      }
       if (resendData?.to && resendData?.link) {
-        await sendSubscriptionEmail({
-          to: resendData.to,
-          link: resendData.link,
-          ownerLabel: who?.querySelector('.account-who')?.textContent || "Familiada",
-          unsubToken: resendData.unsub_token || null,
-          isRegistered: !!resendData.registered,
-        });
+        try {
+          await sendSubscriptionEmail({
+            to: resendData.to,
+            link: resendData.link,
+            ownerLabel: who?.querySelector('.account-who')?.textContent || "Familiada",
+            unsubToken: resendData.unsub_token || null,
+            isRegistered: !!resendData.registered,
+          });
+        } catch {
+          await alertModal({ text: MSG.inviteMailFailed() });
+          await refreshData();
+          return true;
+        }
       }
       const url = new URL(location.href);
       url.searchParams.delete("s");
@@ -565,14 +636,20 @@ async function invite(value) {
     }
 
     await refreshData();
+    await alertModal({ text: MSG.inviteSaved() });
+    return true;
   } catch (e) {
     const m = String(e?.message || "").toLowerCase();
     if (m.includes("invalid_email")) await alertModal({ text: MSG.invalidEmail() });
     else if (m.includes("unknown_user") || m.includes("unknown")) await alertModal({ text: MSG.unknownUser() });
     else if (m.includes("email")) await alertModal({ text: MSG.invalidEmail() });
     else await alertModal({ text: MSG.inviteFail() });
+    return false;
   } finally {
     setProgress({ show: false });
+    inviteInFlight = false;
+    btnInviteDesktop.disabled = false;
+    btnInviteMobile.disabled = false;
   }
 }
 
@@ -593,7 +670,8 @@ function stopAutoRefresh() {
 }
 
 async function refreshTopBadges() {
-  const { data } = await sb().rpc("polls_badge_get");
+  const { data, error } = await sb().rpc("polls_badge_get");
+  if (error) throw error;
   const row = Array.isArray(data) ? data[0] : data;
   const pendingInvites = Number(row?.subs_pending || 0);
   setBadge("tasks", 0);
@@ -611,6 +689,7 @@ async function refreshData() {
       sb().rpc("polls_hub_list_my_subscribers"),
       sb().rpc("polls_hub_list_my_subscriptions"),
     ]);
+    if (a.error || b.error) throw a.error || b.error;
     subscribers = a.data || [];
     invites = b.data || [];
 
@@ -684,11 +763,11 @@ function updateBackButtonLabel() {
 }
 
 function getBackLink() {
-  const rawRet = getRetParam();
-  return rawRet || "games";
+  return getSafeRetUrl() || "games";
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
+  await i18nReady;
   const user = await requireAuth("login");
   if (isGuestUser(user)) {
     document.querySelector('.topbar')?.classList.add('topbar-ready');
@@ -707,10 +786,20 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   tabA?.addEventListener("click", () => setActiveMobileTab("a"));
   tabB?.addEventListener("click", () => setActiveMobileTab("b"));
+  [tabA, tabB].forEach((tab, index, tabs) => tab?.addEventListener("keydown", (event) => {
+    let next = null;
+    if (event.key === "ArrowRight" || event.key === "ArrowLeft") next = tabs[index === 0 ? 1 : 0];
+    else if (event.key === "Home") next = tabs[0];
+    else if (event.key === "End") next = tabs[1];
+    if (!next) return;
+    event.preventDefault();
+    setActiveMobileTab(next === tabA ? "a" : "b");
+    next.focus();
+  }));
   setActiveMobileTab("a");
 
-  const doInviteDesktop = async () => { await invite(inviteInputDesktop?.value); if (inviteInputDesktop) inviteInputDesktop.value = ""; };
-  const doInviteMobile = async () => { await invite(inviteInputMobile?.value); if (inviteInputMobile) inviteInputMobile.value = ""; };
+  const doInviteDesktop = async () => { if (await invite(inviteInputDesktop?.value)) inviteInputDesktop.value = ""; };
+  const doInviteMobile = async () => { if (await invite(inviteInputMobile?.value)) inviteInputMobile.value = ""; };
 
   btnInviteDesktop?.addEventListener("click", doInviteDesktop);
   btnInviteMobile?.addEventListener("click", doInviteMobile);
@@ -731,9 +820,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     renderInvites();
   };
   window.addEventListener("i18n:lang", onI18nLangChange);
-
-  const onModalClosed = () => { refreshData(); };
-  document.addEventListener("uni-modal:closed", onModalClosed);
 
   const onVisibilityChange = () => {
     if (document.hidden) stopAutoRefresh();
