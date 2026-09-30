@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict oiAsx92eyaoJywblIbsFHU6faWP8Ig6RGaaeHZ8vneNcEwuSC4cYM5bCrJtf5Gm
+\restrict C8yCD57HUuIzFApGAvArPKOTSAvpsBJXtlhTabemXl6R22aQZWZu4qhQCDszjhk
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -12090,6 +12090,30 @@ CREATE TABLE "public"."device_state" (
 
 
 --
+-- Name: e2e_emails; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE "public"."e2e_emails" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "recipient" "text" NOT NULL,
+    "from_email" "text",
+    "subject" "text" DEFAULT ''::"text" NOT NULL,
+    "body" "text" DEFAULT ''::"text" NOT NULL,
+    "body_html" "text",
+    "received_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    "expires_at" timestamp with time zone DEFAULT ("now"() + '24:00:00'::interval) NOT NULL,
+    CONSTRAINT "e2e_emails_recipient_check" CHECK (("recipient" ~ '^test([1-9]|1[0-3])@familiada\.online$'::"text"))
+);
+
+
+--
+-- Name: TABLE "e2e_emails"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TABLE "public"."e2e_emails" IS 'Krotkozyjaca skrzynka testow E2E; brak dostepu anon/authenticated, TTL 24h.';
+
+
+--
 -- Name: edit_locks; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -13026,6 +13050,14 @@ ALTER TABLE ONLY "public"."device_state"
 
 
 --
+-- Name: e2e_emails e2e_emails_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."e2e_emails"
+    ADD CONSTRAINT "e2e_emails_pkey" PRIMARY KEY ("id");
+
+
+--
 -- Name: edit_locks edit_locks_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -13545,6 +13577,20 @@ CREATE INDEX "base_share_tasks_token_idx" ON "public"."base_share_tasks" USING "
 --
 
 CREATE INDEX "crm_report_id_idx" ON "public"."contact_report_messages" USING "btree" ("report_id", "created_at");
+
+
+--
+-- Name: e2e_emails_expires_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX "e2e_emails_expires_idx" ON "public"."e2e_emails" USING "btree" ("expires_at");
+
+
+--
+-- Name: e2e_emails_recipient_received_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX "e2e_emails_recipient_received_idx" ON "public"."e2e_emails" USING "btree" ("recipient", "received_at" DESC);
 
 
 --
@@ -15098,6 +15144,12 @@ CREATE POLICY "device_state_owner_read" ON "public"."device_state" FOR SELECT TO
 
 
 --
+-- Name: e2e_emails; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE "public"."e2e_emails" ENABLE ROW LEVEL SECURITY;
+
+--
 -- Name: edit_locks; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
@@ -16157,5 +16209,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict oiAsx92eyaoJywblIbsFHU6faWP8Ig6RGaaeHZ8vneNcEwuSC4cYM5bCrJtf5Gm
+\unrestrict C8yCD57HUuIzFApGAvArPKOTSAvpsBJXtlhTabemXl6R22aQZWZu4qhQCDszjhk
 
