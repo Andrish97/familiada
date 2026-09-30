@@ -1,6 +1,7 @@
 const { test, expect } = require("@playwright/test");
 const { loginAsTestUser, testAccountUsername } = require("./helpers/login");
 const { serveBranchCode } = require("./helpers/branch-code");
+const { clearMailbox, waitForEmail, extractHttpLinks } = require("./helpers/mailbox");
 
 const BASE_URL = "https://www.familiada.online/subscriptions";
 
@@ -86,6 +87,38 @@ test("pełny przepływ: zaproszenie, akceptacja i anulowanie z czystym stanem", 
     await expect(owner.page.locator("#subscribersListDesktop")).not.toContainText(/test8/i);
   } finally {
     await cleanupPair(owner.page, subscriberId).catch(() => {});
+    await owner.context.close();
+    await subscriber.context.close();
+  }
+});
+
+test("@mailbox subskrypcje: zaproszenie z UI dochodzi na prawdziwą skrzynkę", async ({ browser }) => {
+  test.setTimeout(120_000);
+  const owner = await newUser(browser, 7);
+  const subscriber = await newUser(browser, 8);
+  const subscriberId = await userId(subscriber.page);
+  const recipient = testAccountUsername(8);
+  const after = new Date(Date.now() - 2_000).toISOString();
+
+  try {
+    await cleanupPair(owner.page, subscriberId);
+    await clearMailbox(recipient);
+    await openSubscriptions(owner.page);
+    await inviteRegistered(owner.page, recipient);
+
+    const email = await waitForEmail({ recipient, after, subject: /subskrypc|subscription/i });
+    expect(`${email.body || ""}\n${email.body_html || ""}`).toMatch(/test7|Familiada/i);
+    const invitation = extractHttpLinks(email).find((link) => {
+      const url = new URL(link);
+      return /\/poll-go(?:\.html)?$/.test(url.pathname) && url.searchParams.has("s");
+    });
+    expect(invitation, "mail musi zawierać link zaproszenia ?s=").toBeTruthy();
+
+    await subscriber.page.goto(invitation, { waitUntil: "domcontentloaded" });
+    await expect(subscriber.page.locator(".poll-go-title")).toContainText(/Zaproszenie|Subscription/i);
+  } finally {
+    await cleanupPair(owner.page, subscriberId).catch(() => {});
+    await clearMailbox(recipient).catch(() => {});
     await owner.context.close();
     await subscriber.context.close();
   }
