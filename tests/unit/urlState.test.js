@@ -66,3 +66,13 @@ test("Polls Hub obsługuje aktualną odpowiedź kolejki send-mail", () => {
   assert.match(source, /queued !== items\.length/);
   assert.match(source, /results: items\.map\(\(item\) => \(\{ to: item\.to, ok: true, queued: true \}\)\)/);
 });
+
+test("cleanup E2E usuwa limity mailowe wyłącznie pomiędzy kontami testowymi", () => {
+  const sql = read("supabase/migrations/2026-09-30_285_e2e_mail_cooldown_cleanup.sql");
+  assert.match(sql, /test\(\[1-9\]\|1\[0-3\]\)@familiada/);
+  assert.match(sql, /delete from public\.poll_tasks/);
+  assert.match(sql, /delete from public\.poll_subscriptions/);
+  assert.match(sql, /delete from public\.email_cooldowns/);
+  assert.match(sql, /md5\(v_caller_email\).*md5\(v_other_email\)/s);
+  assert.match(sql, /revoke all on function public\.e2e_poll_subscriptions_cleanup/);
+});
