@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 7aggfI3o0bdQXZYFGkUEmADUFbX5M9a9zayEoGtIyLLTXpWg3mfCVKuoHUMCkwt
+\restrict DFi06gC0pdnD9wkdZfBoQ3BpHhnpVxDyuVtwh1XdAePfBJEyX4sixj1aZnOPcRz
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -1953,6 +1953,56 @@ begin
 
   return v_logo;
 end $$;
+
+
+--
+-- Name: e2e_marketplace_cleanup("text"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."e2e_marketplace_cleanup"("p_prefix" "text" DEFAULT 'E2E-MKT-'::"text") RETURNS "jsonb"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $_$
+declare
+  v_uid uuid := auth.uid();
+  v_email text;
+  v_games int := 0;
+  v_market int := 0;
+  v_ratings int := 0;
+begin
+  select lower(email) into v_email from auth.users where id = v_uid;
+  if v_uid is null
+     or v_email !~ '^test[0-9]+@familiada[.]online$'
+     or p_prefix not like 'E2E-MKT-%' then
+    return jsonb_build_object('ok', false, 'error', 'test account and E2E-MKT- prefix required');
+  end if;
+
+  delete from public.market_game_ratings where user_id = v_uid;
+  get diagnostics v_ratings = row_count;
+
+  delete from public.games g
+  where g.owner_id = v_uid
+    and (
+      g.name like p_prefix || '%'
+      or exists (
+        select 1 from public.market_games mg
+        where mg.id = g.source_market_id and mg.title like p_prefix || '%'
+      )
+    );
+  get diagnostics v_games = row_count;
+
+  delete from public.market_games
+  where author_user_id = v_uid and title like p_prefix || '%';
+  get diagnostics v_market = row_count;
+
+  return jsonb_build_object(
+    'ok', true,
+    'games_deleted', v_games,
+    'market_games_deleted', v_market,
+    'ratings_deleted', v_ratings
+  );
+end;
+$_$;
 
 
 --
@@ -6427,17 +6477,23 @@ CREATE FUNCTION "public"."market_game_raters"("p_market_game_id" "uuid") RETURNS
     LANGUAGE "plpgsql" STABLE SECURITY DEFINER
     SET "search_path" TO 'public'
     AS $$
-BEGIN
-  IF auth.uid() IS NOT NULL AND NOT EXISTS (
-    SELECT 1 FROM public.market_games WHERE id = p_market_game_id AND author_user_id = auth.uid()
-  ) THEN RETURN; END IF;
-  RETURN QUERY
-    SELECT COALESCE(pr.username, '?')::text, r.stars, r.created_at AS rated_at
-    FROM public.market_game_ratings r
-    LEFT JOIN public.profiles pr ON pr.id = r.user_id
-    WHERE r.market_game_id = p_market_game_id
-    ORDER BY r.created_at DESC;
-END;
+begin
+  if auth.uid() is null or not exists (
+    select 1
+    from public.market_games
+    where id = p_market_game_id
+      and author_user_id = auth.uid()
+  ) then
+    return;
+  end if;
+
+  return query
+    select coalesce(pr.username, '?')::text, r.stars, r.created_at
+    from public.market_game_ratings r
+    left join public.profiles pr on pr.id = r.user_id
+    where r.market_game_id = p_market_game_id
+    order by r.created_at desc;
+end;
 $$;
 
 
@@ -6539,21 +6595,25 @@ CREATE FUNCTION "public"."market_rate_game"("p_market_game_id" "uuid", "p_stars"
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public'
     AS $$
-DECLARE v_uid uuid := auth.uid();
-BEGIN
-  IF v_uid IS NULL THEN RETURN QUERY SELECT false, 'not_authenticated'; RETURN; END IF;
-  IF p_stars < 1 OR p_stars > 5 THEN RETURN QUERY SELECT false, 'invalid_stars'; RETURN; END IF;
-  IF NOT EXISTS (SELECT 1 FROM public.market_games WHERE id = p_market_game_id AND status = 'published') THEN
-    RETURN QUERY SELECT false, 'game_not_found'; RETURN;
-  END IF;
-  IF EXISTS (SELECT 1 FROM public.market_games WHERE id = p_market_game_id AND author_user_id = v_uid) THEN
-    RETURN QUERY SELECT false, 'cannot_rate_own_game'; RETURN;
-  END IF;
-  INSERT INTO public.market_game_ratings (market_game_id, user_id, stars)
-  VALUES (p_market_game_id, v_uid, p_stars)
-  ON CONFLICT (market_game_id, user_id) DO UPDATE SET stars = EXCLUDED.stars;
-  RETURN QUERY SELECT true, ''::text;
-END;
+declare v_uid uuid := auth.uid();
+begin
+  if v_uid is null then return query select false, 'not_authenticated'; return; end if;
+  if p_stars < 1 or p_stars > 5 then return query select false, 'invalid_stars'; return; end if;
+  if not exists (select 1 from public.market_games where id = p_market_game_id and status = 'published') then
+    return query select false, 'game_not_found'; return;
+  end if;
+  if exists (select 1 from public.market_games where id = p_market_game_id and author_user_id = v_uid) then
+    return query select false, 'cannot_rate_own_game'; return;
+  end if;
+
+  insert into public.market_game_ratings (market_game_id, user_id, stars)
+  values (p_market_game_id, v_uid, p_stars)
+  on conflict (market_game_id, user_id) do update
+    set stars = excluded.stars,
+        created_at = now();
+
+  return query select true, ''::text;
+end;
 $$;
 
 
@@ -6597,90 +6657,100 @@ CREATE FUNCTION "public"."market_submit_game"("p_game_id" "uuid", "p_title" "tex
     SET "search_path" TO 'public'
     AS $$
 declare
-    v_uid        uuid := auth.uid();
-    v_game       public.games;
-    v_can_play   boolean;
-    v_new        uuid;
-    v_ntfy_topic text;
+  v_uid uuid := auth.uid();
+  v_game public.games%rowtype;
+  v_can_play boolean;
+  v_payload jsonb;
+  v_new uuid;
+  v_ntfy_topic text;
 begin
-    -- musi być zalogowany
-    if v_uid is null then
-        return query select false, 'not_authenticated', null::uuid;
-        return;
+  if v_uid is null then return query select false, 'not_authenticated', null::uuid; return; end if;
+
+  perform pg_advisory_xact_lock(hashtextextended(p_game_id::text, 0));
+
+  select * into v_game
+  from public.games
+  where id = p_game_id
+    and owner_id = v_uid
+    and source_market_id is null
+    and is_demo = false;
+
+  if not found then return query select false, 'game_not_found', null::uuid; return; end if;
+
+  if exists (
+    select 1 from public.market_games
+    where author_user_id = v_uid
+      and source_game_id = p_game_id
+      and status in ('pending', 'published')
+  ) then
+    return query select false, 'already_submitted', null::uuid; return;
+  end if;
+
+  select can_play into v_can_play from public.game_action_state(p_game_id);
+  if not coalesce(v_can_play, false) then
+    return query select false, 'game_not_playable', null::uuid; return;
+  end if;
+
+  if p_lang not in ('pl', 'en', 'uk') then return query select false, 'invalid_lang', null::uuid; return; end if;
+  if char_length(btrim(coalesce(p_title, ''))) not between 1 and 120 then
+    return query select false, 'invalid_title', null::uuid; return;
+  end if;
+  if char_length(btrim(coalesce(p_description, ''))) > 500 then
+    return query select false, 'invalid_description', null::uuid; return;
+  end if;
+
+  select jsonb_build_object(
+    'game', jsonb_build_object(
+      'name', v_game.name,
+      'type', case
+        when v_game.status = 'ready' and v_game.type in ('poll_text', 'poll_points') then 'prepared'
+        else v_game.type::text
+      end
+    ),
+    'questions', coalesce(jsonb_agg(
+      jsonb_build_object(
+        'text', q.text,
+        'answers', coalesce((
+          select jsonb_agg(
+            jsonb_build_object('text', a.text, 'fixed_points', a.fixed_points)
+            order by a.ord
+          )
+          from public.answers a where a.question_id = q.id
+        ), '[]'::jsonb)
+      ) order by q.ord
+    ), '[]'::jsonb)
+  ) into v_payload
+  from public.questions q
+  where q.game_id = p_game_id;
+
+  if jsonb_array_length(v_payload -> 'questions') < 10 then
+    return query select false, 'too_few_questions', null::uuid; return;
+  end if;
+
+  insert into public.market_games
+    (author_user_id, source_game_id, title, description, lang, status, payload)
+  values
+    (v_uid, p_game_id, btrim(p_title), btrim(coalesce(p_description, '')), p_lang, 'pending', v_payload)
+  returning id into v_new;
+
+  begin
+    select value into v_ntfy_topic from public.app_config where key = 'ntfy_topic';
+    if v_ntfy_topic is not null and v_ntfy_topic <> '' then
+      perform net.http_post(
+        url := 'https://ntfy.sh/' || v_ntfy_topic,
+        body := jsonb_build_object(
+          'title', 'Nowe zgłoszenie (' || p_lang || ')',
+          'message', btrim(p_title),
+          'priority', 3
+        ),
+        headers := '{"Content-Type": "application/json"}'::jsonb
+      );
     end if;
+  exception when others then
+    null;
+  end;
 
-    -- gra musi istnieć, być własnością usera i NIE być grą z marketplace
-    select * into v_game
-      from public.games
-     where id = p_game_id
-       and owner_id = v_uid
-       and source_market_id is null;
-
-    if v_game.id is null then
-        return query select false, 'game_not_found', null::uuid;
-        return;
-    end if;
-
-    -- gra musi być grywalna (sprawdza min. 10 pytań, zakresy punktów itd.)
-    select can_play into v_can_play from public.game_action_state(p_game_id);
-    if not coalesce(v_can_play, false) then
-        return query select false, 'game_not_playable', null::uuid;
-        return;
-    end if;
-
-    -- walidacja lang
-    if p_lang not in ('pl', 'en', 'uk') then
-        return query select false, 'invalid_lang', null::uuid;
-        return;
-    end if;
-
-    -- walidacja tytułu
-    if char_length(btrim(p_title)) < 1 or char_length(btrim(p_title)) > 120 then
-        return query select false, 'invalid_title', null::uuid;
-        return;
-    end if;
-
-    -- walidacja payload
-    if p_payload -> 'game' is null or p_payload -> 'questions' is null then
-        return query select false, 'invalid_payload', null::uuid;
-        return;
-    end if;
-
-    -- payload musi mieć co najmniej 10 pytań
-    if jsonb_array_length(p_payload -> 'questions') < 10 then
-        return query select false, 'too_few_questions', null::uuid;
-        return;
-    end if;
-
-    insert into public.market_games
-        (author_user_id, source_game_id, title, description, lang, status, payload)
-    values
-        (v_uid, p_game_id, btrim(p_title), btrim(coalesce(p_description, '')), p_lang, 'pending', p_payload)
-    returning id into v_new;
-
-    -- Powiadomienie ntfy.sh (pg_net) — cicho pomijane jeśli nie skonfigurowano
-    begin
-        select value into v_ntfy_topic
-          from public.app_config
-         where key = 'ntfy_topic';
-
-        if v_ntfy_topic is not null and v_ntfy_topic <> '' then
-            perform net.http_post(
-                url     := 'https://ntfy.sh/' || v_ntfy_topic,
-                body    := jsonb_build_object(
-                    'title',    'Nowe zgłoszenie (' || p_lang || ')',
-                    'message',  btrim(p_title),
-                    'priority', 3
-                ),
-                headers := '{"Content-Type": "application/json"}'::jsonb
-            );
-        end if;
-    exception when others then
-        -- pg_net niedostępny lub błąd sieci — ignoruj
-        null;
-    end;
-
-    return query select true, null::text, v_new;
+  return query select true, null::text, v_new;
 end;
 $$;
 
@@ -15266,7 +15336,9 @@ CREATE POLICY "mgr_insert" ON "public"."market_game_ratings" FOR INSERT WITH CHE
 -- Name: market_game_ratings mgr_select; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY "mgr_select" ON "public"."market_game_ratings" FOR SELECT USING (true);
+CREATE POLICY "mgr_select" ON "public"."market_game_ratings" FOR SELECT TO "authenticated" USING ((("user_id" = "auth"."uid"()) OR (EXISTS ( SELECT 1
+   FROM "public"."market_games" "mg"
+  WHERE (("mg"."id" = "market_game_ratings"."market_game_id") AND ("mg"."author_user_id" = "auth"."uid"()))))));
 
 
 --
@@ -15930,5 +16002,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 7aggfI3o0bdQXZYFGkUEmADUFbX5M9a9zayEoGtIyLLTXpWg3mfCVKuoHUMCkwt
+\unrestrict DFi06gC0pdnD9wkdZfBoQ3BpHhnpVxDyuVtwh1XdAePfBJEyX4sixj1aZnOPcRz
 
