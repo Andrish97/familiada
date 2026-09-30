@@ -510,7 +510,18 @@ function renderInvites() {
   render(listBM);
 }
 
-function setActiveMobileTab(tab) {
+function mobileTabFromUrl() {
+  return new URLSearchParams(location.search).get("tab") === "subscriptions" ? "b" : "a";
+}
+
+function setActiveMobileTab(tab, { updateUrl = true } = {}) {
+  tab = tab === "b" ? "b" : "a";
+  if (updateUrl) {
+    const url = new URL(location.href);
+    if (tab === "a") url.searchParams.delete("tab");
+    else url.searchParams.set("tab", "subscriptions");
+    if (url.href !== location.href) history.pushState(history.state, "", url);
+  }
   tabA?.classList.toggle("active", tab === "a");
   tabB?.classList.toggle("active", tab === "b");
   tabA?.setAttribute("aria-selected", String(tab === "a"));
@@ -796,7 +807,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     setActiveMobileTab(next === tabA ? "a" : "b");
     next.focus();
   }));
-  setActiveMobileTab("a");
+  setActiveMobileTab(mobileTabFromUrl(), { updateUrl: false });
+  window.addEventListener("popstate", () => {
+    setActiveMobileTab(mobileTabFromUrl(), { updateUrl: false });
+  });
 
   const doInviteDesktop = async () => { if (await invite(inviteInputDesktop?.value)) inviteInputDesktop.value = ""; };
   const doInviteMobile = async () => { if (await invite(inviteInputMobile?.value)) inviteInputMobile.value = ""; };

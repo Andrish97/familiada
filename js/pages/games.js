@@ -699,8 +699,23 @@ function setButtonsState({ hasSel, canEdit, canPlay, canPoll, canExport }) {
   if (btnExportBase) btnExportBase.disabled = !hasSel || !canExport;
 }
 /* ================= Tabs ================= */
-function setActiveTab(type) {
+const GAME_TABS = new Set([TYPES.POLL_TEXT, TYPES.POLL_POINTS, TYPES.PREPARED, TYPES.MARKET]);
+
+function gameTabFromUrl() {
+  const tab = new URLSearchParams(location.search).get("tab");
+  return GAME_TABS.has(tab) ? tab : TYPES.PREPARED;
+}
+
+function setActiveTab(type, { updateUrl = true } = {}) {
+  type = GAME_TABS.has(type) ? type : TYPES.PREPARED;
   activeTab = type;
+
+  if (updateUrl) {
+    const url = new URL(location.href);
+    if (type === TYPES.PREPARED) url.searchParams.delete("tab");
+    else url.searchParams.set("tab", type);
+    if (url.href !== location.href) history.pushState(history.state, "", url);
+  }
 
   tabPollText?.classList.toggle("active", type === TYPES.POLL_TEXT);
   tabPollPoints?.classList.toggle("active", type === TYPES.POLL_POINTS);
@@ -1880,9 +1895,15 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 
 
-  // init — ?tab=market otwiera zakładkę Społeczność od razu
-  const initTab = new URLSearchParams(location.search).get("tab");
-  setActiveTab(initTab === "market" ? TYPES.MARKET : TYPES.PREPARED);
+  // Stan zakładki jest częścią adresu, dzięki czemu link można odświeżyć
+  // i udostępnić bez utraty kontekstu.
+  setActiveTab(gameTabFromUrl(), { updateUrl: false });
+
+  window.addEventListener("popstate", async () => {
+    const tab = gameTabFromUrl();
+    if (tab === TYPES.MARKET && activeTab !== TYPES.MARKET) await loadMarketGames();
+    setActiveTab(tab, { updateUrl: false });
+  });
 
   try {
     await refresh();

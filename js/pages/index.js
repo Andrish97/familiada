@@ -141,6 +141,8 @@ function initPipeline() {
   // Kliknięcie scrolluje do sekcji
   nodes.forEach((node, i) => {
     node.addEventListener("click", () => {
+      const id = sections[i]?.id;
+      if (id && location.hash !== `#${id}`) history.pushState(history.state, "", `#${id}`);
       sections[i]?.scrollIntoView({ behavior: "smooth", block: "start" });
     });
   });
@@ -176,11 +178,16 @@ function initPipeline() {
       }
     }
 
-    // Stany przycisków
+    // Stany przycisków i adres bieżącej sekcji. replaceState nie zaśmieca
+    // historii podczas zwykłego przewijania.
     nodes.forEach((node, i) => {
       node.classList.toggle("is-filled", i <= activeIdx);
       node.classList.toggle("is-active", i === activeIdx);
     });
+    const activeId = sections[activeIdx]?.id;
+    if (activeId && location.hash !== `#${activeId}`) {
+      history.replaceState(history.state, "", `#${activeId}`);
+    }
 
     // Stany linii
     // linia[i] łączy węzeł i z węzłem i+1

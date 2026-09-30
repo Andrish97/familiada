@@ -536,7 +536,18 @@ async function openPoll(poll) {
   location.href = `polls?id=${encodeURIComponent(poll.game_id)}&ret=${encodeURIComponent(getCurrentRelativeUrl())}`;
 }
 
-function setActiveMobileTab(tab) {
+function mobileTabFromUrl() {
+  return new URLSearchParams(location.search).get("tab") === "tasks" ? "tasks" : "polls";
+}
+
+function setActiveMobileTab(tab, { updateUrl = true } = {}) {
+  tab = tab === "tasks" ? "tasks" : "polls";
+  if (updateUrl) {
+    const url = new URL(location.href);
+    if (tab === "polls") url.searchParams.delete("tab");
+    else url.searchParams.set("tab", tab);
+    if (url.href !== location.href) history.pushState(history.state, "", url);
+  }
   tabPollsMobile?.classList.toggle("active", tab === "polls");
   tabTasksMobile?.classList.toggle("active", tab === "tasks");
   panelPollsMobile?.classList.toggle("active", tab === "polls");
@@ -1132,7 +1143,10 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   tabPollsMobile?.addEventListener("click", () => setActiveMobileTab("polls"));
   tabTasksMobile?.addEventListener("click", () => setActiveMobileTab("tasks"));
-  setActiveMobileTab("polls");
+  setActiveMobileTab(mobileTabFromUrl(), { updateUrl: false });
+  window.addEventListener("popstate", () => {
+    setActiveMobileTab(mobileTabFromUrl(), { updateUrl: false });
+  });
 
   btnShare?.addEventListener("click", openShareModal);
   btnShareMobile?.addEventListener("click", openShareModal);

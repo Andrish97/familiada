@@ -1181,9 +1181,21 @@ async function shareAddInner() {
 const TAB_STORAGE_KEY = "basesMobileTab";
 let activeTab = "mine";
 
-function setActiveTab(tab, { remember = true } = {}) {
+function tabFromUrl() {
+  const tab = new URLSearchParams(location.search).get("tab");
+  if (tab === "mine" || tab === "shared") return tab;
+  return storedTab();
+}
+
+function setActiveTab(tab, { remember = true, updateUrl = true } = {}) {
   if (guestMode) tab = "mine";
   activeTab = tab === "shared" ? "shared" : "mine";
+  if (updateUrl) {
+    const url = new URL(location.href);
+    if (activeTab === "mine") url.searchParams.delete("tab");
+    else url.searchParams.set("tab", activeTab);
+    if (url.href !== location.href) history.pushState(history.state, "", url);
+  }
   const mineOn = activeTab === "mine";
   basesSectionMine?.classList.toggle("active", mineOn);
   basesSectionShared?.classList.toggle("active", !mineOn);
@@ -1735,9 +1747,12 @@ function initFileLaunch() {
   initTopbarAccountDropdown(currentUser);
   document.querySelector('.topbar')?.classList.add('topbar-ready');
 
-  setActiveTab(storedTab(), { remember: false });
+  setActiveTab(tabFromUrl(), { remember: false, updateUrl: false });
   tabBasesMine?.addEventListener("click", () => setActiveTab("mine"));
   tabBasesShared?.addEventListener("click", () => setActiveTab("shared"));
+  window.addEventListener("popstate", () => {
+    setActiveTab(tabFromUrl(), { remember: false, updateUrl: false });
+  });
 
   initShareRoleSelect();
   initShareRecipientTypeSelect();

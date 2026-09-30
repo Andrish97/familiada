@@ -5,7 +5,7 @@ import { requireAuth } from "../../js/core/auth.js?v=v2026-09-30T10375";
 import { alertModal } from "../../js/core/modal.js?v=v2026-09-30T10375";
 import { getUiLang, initI18n, t, withLangParam } from "../../translation/translation.js?v=v2026-09-30T10375";
 import { initTopbarAccountDropdown } from "../../js/core/topbar-controller.js?v=v2026-09-30T10375";
-import { createState, setRole } from "./state.js?v=v2026-09-30T10375";
+import { VIEW, createState, setRole } from "./state.js?v=v2026-09-30T10375";
 import { renderAll } from "./render.js?v=v2026-09-30T10375";
 import {
   getBaseMeta,
@@ -97,6 +97,12 @@ btnBack?.addEventListener("click", () => {
     state.tags = tags;
     state.questions = qs;
 
+    const initialFolderId = new URLSearchParams(location.search).get("folder");
+    if (initialFolderId && cats.some((cat) => cat.id === initialFolderId)) {
+      state.view = VIEW.FOLDER;
+      state.folderId = initialFolderId;
+    }
+
     renderAll(state);
 
     // ===== mobile =====
@@ -105,6 +111,21 @@ btnBack?.addEventListener("click", () => {
 
     // ===== akcje UI (klik folder, search, selekcja) =====
     const api = wireActions({ state });
+    state._syncFolderUrl = true;
+
+    window.addEventListener("popstate", async () => {
+      const folderId = new URLSearchParams(location.search).get("folder");
+      state._syncFolderUrl = false;
+      if (folderId && state.categories.some((cat) => cat.id === folderId)) {
+        state.view = VIEW.FOLDER;
+        state.folderId = folderId;
+      } else {
+        state.view = VIEW.ALL;
+        state.folderId = null;
+      }
+      state._syncFolderUrl = true;
+      await api.refreshList();
+    });
 
     window.addEventListener("i18n:lang", async () => {
       await api.refreshList();

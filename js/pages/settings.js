@@ -5198,9 +5198,27 @@ function closeTools() {
   setActiveTab(previousTabBeforeTools || "maintenance");
 }
 
-function setActiveTab(tab) {
+const SETTINGS_TABS = new Set([
+  "maintenance", "mail", "marketplace", "ratings", "stats", "generator",
+  "reports", "marketing", "marketingContacts",
+]);
+
+function settingsTabFromUrl() {
+  const tab = new URLSearchParams(location.search).get("tab");
+  return SETTINGS_TABS.has(tab) ? tab : "maintenance";
+}
+
+function setActiveTab(tab, { updateUrl = true } = {}) {
+  if (tab !== "tools" && !SETTINGS_TABS.has(tab)) tab = "maintenance";
   activeTab = tab;
   window.activeTab = tab;
+
+  if (updateUrl && tab !== "tools") {
+    const url = new URL(location.href);
+    if (tab === "maintenance") url.searchParams.delete("tab");
+    else url.searchParams.set("tab", tab);
+    if (url.href !== location.href) history.pushState(history.state, "", url);
+  }
   
   const btn = document.getElementById("btnTabMaintenance");
   const btnMail = document.getElementById("btnTabMail");
@@ -5259,6 +5277,24 @@ function setActiveTab(tab) {
 function labelFromPath(pathname) {
   const raw = pathname.split("/").pop() || pathname;
   return raw.replace(/\.html$/i, "");
+}
+
+function activateSettingsTabFromUrl() {
+  const tab = settingsTabFromUrl();
+  const buttons = {
+    maintenance: els.btnTabMaintenance,
+    mail: els.btnTabMail,
+    marketplace: els.btnTabMarketplace,
+    ratings: els.btnTabRatings,
+    stats: els.btnTabStats,
+    generator: els.btnTabGenerator,
+    reports: els.btnTabReports,
+    marketing: els.btnTabMarketing,
+    marketingContacts: els.btnTabMarketingContacts,
+  };
+  const button = buttons[tab];
+  if (button) button.click();
+  else setActiveTab(tab, { updateUrl: false });
 }
 
 function syncTopbarHeight() {
@@ -6322,7 +6358,7 @@ function wireEvents() {
 
   applyDateOrderByLang();
   applyModalLabels();
-  setActiveTab("maintenance");
+  setActiveTab(settingsTabFromUrl(), { updateUrl: false });
   initMailSelects();
   syncMailSelectLabels();
   renderCronPresetOptions();
@@ -6338,6 +6374,7 @@ function wireEvents() {
   startCountdownTimer();
   await initToolsSelect();
   wireEvents();
+  window.addEventListener("popstate", activateSettingsTabFromUrl);
 
 
   // Initialize TinyMCE for marketing message area
@@ -7097,6 +7134,7 @@ function wireEvents() {
   const ok = await checkMe();
   if (ok) {
     showPanel();
+    activateSettingsTabFromUrl();
     await loadState();
     if (!pollTimer) pollTimer = setInterval(() => loadState({ silent: true }), POLL_MS);
   } else {

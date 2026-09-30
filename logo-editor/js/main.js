@@ -22,7 +22,7 @@ import { guardResourceLock, acquireResourceLock, isResourceBusy, findBusyContext
 import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../js/core/modal-sheet.js?v=v2026-09-30T10375";
 import { icon } from "../../js/core/icons.js?v=v2026-09-30T10375";
 
-import { TYPE_GLYPH, emptyRows, normalizeRows, renderPreview, logoToPreview } from "./render.js?v=v2026-09-30T10375";
+import { TYPE_GLYPH, TYPE_PIX, emptyRows, normalizeRows, renderPreview, logoToPreview } from "./render.js?v=v2026-09-30T10375";
 import { listLogos, fetchLogo, createLogo, updateLogo, deleteLogo, isUniqueViolation } from "./db.js?v=v2026-09-30T10375";
 import { buildExport, downloadJson, parseImport, safeFileName } from "./transfer.js?v=v2026-09-30T10375";
 import { initPreviewPinchZoom, lockPageZoomForPreview, unlockPageZoomAfterPreview } from "./preview-zoom.js?v=v2026-09-30T10375";
@@ -54,11 +54,13 @@ const el = {
 
   listShell: $("listShell"),
   grid: $("grid"),
+  hint: $("hint"),
   msg: $("msg"),
   btnEdit: $("btnEdit"),
   btnPreview: $("btnPreview"),
   btnExport: $("btnExport"),
   btnImport: $("btnImport"),
+  tabs: { TEXT: $("tabLogoText"), DRAW: $("tabLogoDraw"), IMAGE: $("tabLogoImage") },
 
   editorShell: $("editorShell"),
   logoName: $("logoName"),
@@ -68,7 +70,6 @@ const el = {
   panes: { TEXT: $("paneText"), DRAW: $("paneDraw"), IMAGE: $("paneImage") },
   tools: { TEXT: [$("toolsText"), $("charsInline")], DRAW: [$("toolsDraw")], IMAGE: [$("toolsImage"), $("imgPanels")] },
 
-  createOverlay: $("createOverlay"),
   renameOverlay: $("renameOverlay"),
   renameTitle: $("renameTitle"),
   renameSub: $("renameSub"),
@@ -100,6 +101,7 @@ const el = {
 let currentUser = null;
 let logos = [];          // lekka lista (bez fabricData/obrazów) -- patrz db.listLogos
 let selectedId = null;
+let activeListMode = "TEXT";
 
 let FONT_3x10 = null;    // znak -> [10 wierszy]
 let GLYPH_5x7 = null;    // Map znak -> [7 intów]
@@ -162,6 +164,43 @@ function busyMessage(reason) {
 
 function modeLabel(mode) {
   return t(`logoEditor.modes.${String(mode || "image").toLowerCase()}`);
+}
+
+const LIST_MODES = new Set(["TEXT", "DRAW", "IMAGE"]);
+
+function listModeFromUrl() {
+  const mode = String(new URLSearchParams(location.search).get("tab") || "text").toUpperCase();
+  return LIST_MODES.has(mode) ? mode : "TEXT";
+}
+
+function listModeForLogo(logo) {
+  if (logo?.type === TYPE_GLYPH) return "TEXT";
+  if (logo?.type === TYPE_PIX && logo?.payload?.source?.mode === "IMAGE") return "IMAGE";
+  return "DRAW";
+}
+
+function setActiveListMode(mode, { updateUrl = true } = {}) {
+  activeListMode = LIST_MODES.has(mode) ? mode : "TEXT";
+  const hintKeys = {
+    TEXT: "logoEditor.create.textSubtitle",
+    DRAW: "logoEditor.create.drawSubtitle",
+    IMAGE: "logoEditor.create.imageSubtitle",
+  };
+  if (el.hint) el.hint.textContent = t(hintKeys[activeListMode]);
+  for (const [key, tab] of Object.entries(el.tabs)) {
+    const active = key === activeListMode;
+    tab?.classList.toggle("active", active);
+    tab?.setAttribute("aria-selected", String(active));
+  }
+  const selected = logos.find((logo) => logo.id === selectedId);
+  if (selected && listModeForLogo(selected) !== activeListMode) selectedId = null;
+  if (updateUrl) {
+    const url = new URL(location.href);
+    if (activeListMode === "TEXT") url.searchParams.delete("tab");
+    else url.searchParams.set("tab", activeListMode.toLowerCase());
+    if (url.href !== location.href) history.pushState(history.state, "", url);
+  }
+  renderList();
 }
 
 /* =========================================================
@@ -277,13 +316,13 @@ function renderList() {
     <div class="plus">${icon("plus")}</div>
     <div class="txt">${esc(t("logoEditor.create.title"))}</div>
     <div class="sub">${esc(t("logoEditor.create.subtitle"))}</div>`;
-  add.addEventListener("click", () => openOverlay(el.createOverlay, () => closeOverlay(el.createOverlay)));
+  add.addEventListener("click", () => openNameModal({ kind: "create", mode: activeListMode }));
   el.grid.appendChild(add);
 
   // Najpierw same kafelki, miniatury po kolei w wolnych chwilach -- przy
   // wielu logo nie blokujemy pierwszego wyrenderowania listy.
   const queue = [];
-  for (const logo of logos) {
+  for (const logo of logos.filter((item) => listModeForLogo(item) === activeListMode)) {
     const tile = makeTile(logo);
     el.grid.appendChild(tile);
     queue.push({ wrap: tile.querySelector(".logoPrev"), logo });
@@ -637,6 +676,7 @@ async function confirmImport() {
   show(el.importProg, true);
   try {
     const id = await createLogo({ user_id: currentUser.id, ...importParsed, name: makeUniqueName(importParsed.name) });
+    setActiveListMode(listModeForLogo(importParsed));
     await refresh();
     selectTile(id);
     closeOverlay(el.importOverlay);
@@ -733,16 +773,10 @@ function bindUi() {
   el.btnExport.addEventListener("click", () => void exportSelected());
   el.btnImport.addEventListener("click", openImportModal);
 
-  // nowe logo: tryb -> nazwa -> edytor
-  const pick = (mode) => () => {
-    closeOverlay(el.createOverlay);
-    openNameModal({ kind: "create", mode });
-  };
-  $("pickText").addEventListener("click", pick("TEXT"));
-  $("pickDraw").addEventListener("click", pick("DRAW"));
-  $("pickImage").addEventListener("click", pick("IMAGE"));
-  $("btnPickCancel").addEventListener("click", () => closeOverlay(el.createOverlay));
-  closeOnBackdrop(el.createOverlay, () => closeOverlay(el.createOverlay));
+  for (const [mode, tab] of Object.entries(el.tabs)) {
+    tab?.addEventListener("click", () => setActiveListMode(mode));
+  }
+  window.addEventListener("popstate", () => setActiveListMode(listModeFromUrl(), { updateUrl: false }));
 
   // modal nazwy
   el.btnRenameOk.addEventListener("click", () => void confirmNameModal());
@@ -773,7 +807,7 @@ function bindUi() {
 
   window.addEventListener("i18n:lang", () => {
     updateEditorHeader();
-    renderList();
+    setActiveListMode(activeListMode, { updateUrl: false });
   });
 
   // Plik .famlogo otwarty z systemu (PWA file handler).
@@ -821,6 +855,7 @@ async function boot() {
   import("../../js/core/updater.js?v=v2026-09-30T10375").then((m) => m.initUpdater()).catch(() => {});
 
   bindUi();
+  setActiveListMode(listModeFromUrl(), { updateUrl: false });
   await refresh();
 }
 
