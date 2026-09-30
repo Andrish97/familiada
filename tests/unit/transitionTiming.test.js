@@ -28,6 +28,37 @@ test("dur(): nieznany/zerowy czas => bezpieczny fallback 2000ms, nie 0", async (
   assert.equal(await t.dur("show_intro"), 2000);
 });
 
+// Real bug znaleziony w CI (3 testy zawiesiły się na pełny timeout, przycisk
+// trwale disabled): js/core/sfx.js's getSfxDuration() potrafi zwrócić
+// Infinity dla <audio>.duration (znane zachowanie Chromium dla MP3 bez
+// poprawnego nagłówka Xing/VBR) — bez sufitu propagowało się to przez
+// syncedMs()/sequentialMs() aż do control2/js/actionGate.js's armLock(),
+// blokując operatora NA ZAWSZE (lockedUntil = Date.now() + Infinity).
+test("dur(): Infinity (znany bug Chromium z metadanymi MP3) => bezpieczny fallback, NIE Infinity", async () => {
+  const t = makeTiming({ round_transition: Infinity });
+  const ms = await t.dur("round_transition");
+  assert.ok(Number.isFinite(ms), "dur() nigdy nie zwraca Infinity/NaN");
+  assert.equal(ms, 2000);
+});
+
+test("dur(): NaN => bezpieczny fallback, nie NaN", async () => {
+  const t = makeTiming({ round_transition: NaN });
+  const ms = await t.dur("round_transition");
+  assert.ok(Number.isFinite(ms), "dur() nigdy nie zwraca Infinity/NaN");
+  assert.equal(ms, 2000);
+});
+
+test("dur(): absurdalnie długi czas (np. błędne metadane) => przycięty do sufitu 30s", async () => {
+  const t = makeTiming({ round_transition: 9999 });
+  assert.equal(await t.dur("round_transition"), 30_000);
+});
+
+test("syncedMs(): Infinity w jednym z dwóch kluczy nie zaraża wyniku", async () => {
+  const t = makeTiming({ round_transition: Infinity, reveal: 1.2 });
+  const ms = await t.syncedMs("round_transition", "reveal");
+  assert.ok(Number.isFinite(ms), "syncedMs() nigdy nie zwraca Infinity");
+});
+
 test("syncedMs(): dłuższy z dwóch wygrywa", async () => {
   const t = makeTiming({ round_transition: 0.3, reveal: 1.2 });
   assert.equal(await t.syncedMs("round_transition", "reveal"), 1200);

@@ -618,6 +618,10 @@ test("control2: próg w rundzie -> finał, wczesne zakończenie po 4/5 pytaniach
     await expect(p1Inputs).toHaveCount(5, { timeout: 10000 });
     for (let i = 0; i < 5; i++) await p1Inputs.nth(i).fill("Odp. finałowa");
     await page.getByRole("button", { name: "Rozpocznij odliczanie (15s)" }).click();
+    // "Dalej" zablokowany, dopóki zegarek aktywnie odlicza (zgłoszone: "nie
+    // czeka na koniec timera i przechodzi dalej") — zatrzymujemy legalnie,
+    // przez sam kafel zegarka (wszystkie pola już wypełnione).
+    await page.getByRole("button", { name: "Zatrzymaj" }).click();
     await page.getByRole("button", { name: "Dalej" }).click();
 
     for (let i = 0; i < 4; i++) {
@@ -1018,9 +1022,17 @@ test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśni�
     const p2Inputs = page.locator("#app input[type=text]");
     for (let i = 1; i < 5; i++) await p2Inputs.nth(i).fill("Odp. finałowa");
     await page.getByRole("button", { name: "Rozpocznij odliczanie (20s)" }).click();
-    // Tym razem NIE czekamy na naturalne wygaśnięcie — klikamy "Dalej" od
-    // razu (jak w teście 4), sprawdzając DRUGĄ naprawę z dzisiejszego audytu:
-    // START_MAPPING musi wyzerować timer, inaczej zostałby "running" na zawsze.
+    // Zgłoszone: "po drugiej rundzie finału nawet nie czeka na koniec
+    // timera i przechodzi dalej" — "Dalej" jest teraz zablokowany, dopóki
+    // zegarek TEJ rundy aktywnie odlicza (control2/js/ui.js's
+    // renderFinalEntry) — nie da się już przerwać go tym przyciskiem.
+    // Zatrzymujemy więc legalnie, przez sam kafel zegarka (wszystkie pola
+    // gracza 2 już wypełnione/oznaczone powtórzeniem, więc wczesne
+    // zatrzymanie jest dozwolone — finalTimerRow), zamiast czekać pełne 20s.
+    // START_MAPPING (engine.js) nadal bezwarunkowo zeruje stan zegarka przy
+    // wejściu w mapowanie — to sprawdzenie zostaje, tylko dochodzi się tam
+    // teraz legalną ścieżką, nie przypadkowym przerwaniem w trakcie.
+    await page.getByRole("button", { name: "Zatrzymaj" }).click();
     await page.getByRole("button", { name: "Dalej" }).click();
 
     // ===== F8/F9: mapowanie gracza 2 — pytanie #1 to SKIP (powtórzenie), reszta MATCH =====
