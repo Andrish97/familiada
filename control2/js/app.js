@@ -525,13 +525,24 @@ async function main() {
     syncMuteButton();
   }
 
-  // Samo renderCurrent() maluje cyfry timera3 tylko RAZ, w momencie zmiany
-  // stanu (START_TIMER3) — bez czegoś, co odświeża widok co sekundę, kafel
+  // Samo renderCurrent() maluje cyfry timera3/finału tylko RAZ, w momencie
+  // zmiany stanu — bez czegoś, co odświeża widok co ułamek sekundy, kafel
   // pokazywałby tę samą liczbę aż do wygaśnięcia. Odświeżamy tylko wtedy,
   // gdy faktycznie coś odlicza — reszta czasu bez zbędnej pracy.
+  //
+  // ui.tickTimers(), NIE pełny ui.render()/renderCurrent(): zgłoszone
+  // wprost — "licznik i przyciski cały czas migają" oraz "wpisywanie nie ma
+  // blokować licznika". Pełny render() tutaj przebudowywałby CAŁY ekran 4x/s
+  // (root.innerHTML="" + od nowa), co niszczyło fokus/kursor w polach
+  // wpisywania finału (renderFinalEntry tworzy świeże <input> przy każdym
+  // renderze) i restartowało CSS-animacje wszystkich innych, niezwiązanych
+  // przycisków na ekranie — stąd wrażenie ciągłego migania całego panelu, nie
+  // tylko samych cyfr. tickTimers() podmienia WYŁĄCZNIE treść cyfr (patrz
+  // ui.js), więc reszta DOM (w tym fokus operatora w polu tekstowym) zostaje
+  // nietknięta przez cały czas trwania odliczania.
   setInterval(() => {
     if (store.state.rounds?.timer3?.running || store.state.final?.runtime?.timer?.running) {
-      ui.render(store.state, renderCtx());
+      ui.tickTimers(store.state);
     }
   }, 250);
 

@@ -469,7 +469,12 @@ test("control2: reset pojedynku, pass, kradzież wygrana/przegrana, odkrywanie r
     await buzzerPage.getByRole("button", { name: "Przycisk A" }).click();
     await expect(page.getByRole("button", { name: "Zatwierdź: Alfa" })).toBeEnabled({ timeout: 10000 });
     await clickConfirmed(page.getByRole("button", { name: "Zatwierdź: Alfa" }));
+    // Zgłoszone: "X nie odtwarza żadnego dźwięku" — regresja wprost na
+    // ADD_X (engine.js zawsze zwraca soundCueKey "answer_wrong" dla X,
+    // niezależnie od fazy DUEL/PLAY/STEAL, patrz komentarz tam).
+    await clearSfxLog(page);
     await clickX(page); // A pudłuje -> kolej B
+    await waitForSfxSequence(page, ["answer_wrong"], 10000);
     // B pudłuje też -> RESET CYKLU: kolej wraca do A, BEZ nowego zgłoszenia
     // buzzera (firstTeam/secondTeam nie są czyszczone — "nie ma czegoś
     // takiego jak ponowny buzer").

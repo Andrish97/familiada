@@ -869,12 +869,20 @@ export function createUI({ root, emit }) {
         h("span", { "aria-hidden": "true" }, [document.createTextNode(String(secLeft))]),
         h("div", { class: "c2-tile-sub", text: t("control.finalTimerStopShort") }),
       ]) : t("control.roundsStartTimer3");
-      tiles.push(tile(content, {
+      const timer3Tile = tile(content, {
         row: 6, col: HALF(1),
         cls: running ? "c2-tile-timer" : "c2-tile-timer startable",
         disabled: revealLocked(),
         onclick: () => emit("game.dispatch", { type: running ? "CANCEL_TIMER3" : "START_TIMER3" }),
-      }));
+      });
+      // data-timer-role: pozwala tickTimers() (niżej) znaleźć TEN konkretny
+      // element i podmienić tylko treść cyfr co 250ms — zgłoszone: "licznik
+      // i przyciski cały czas migają" — poprzednio KAŻDY tik odliczania
+      // wołał pełny render() (root.innerHTML="" + odbudowa całego drzewa),
+      // co niszczyło m.in. fokus pól tekstowych wpisywania w finale i
+      // restartowało animacje/hover wszystkich, niezwiązanych przycisków.
+      if (running) timer3Tile.dataset.timerRole = "timer3";
+      tiles.push(timer3Tile);
     }
 
     const roundsGrid = tileGrid(tiles);
@@ -1016,9 +1024,22 @@ export function createUI({ root, emit }) {
         h("div", { class: "c2-intro-title", text: t("control.roundsGameEndTitle") }),
         h("div", { class: "c2-intro-hint", text: gameEndSummary(state) }),
       ])],
+      // Zgłoszone: "po zakończeniu gry od razu wychodzi, nie czeka na
+      // koniec dźwięku — ten dźwięk ma też blokować akcje" — GAME_END_SHOW/
+      // FINISH_FINAL grają "show_intro"/"final_end" (control2/js/actionGate.js),
+      // a boardBusy() już poprawnie odzwierciedla ich czas trwania — tym
+      // dwóm przyciskom brakowało tylko podpięcia pod tę samą blokadę, którą
+      // ma każde inne duże przejście planszy (navButton wyżej).
       nav: [
-        h("button", { class: "c2-btn c2-intro-btn", type: "button", onclick: () => emit("game.restart") }, [document.createTextNode(t("control.restartGame"))]),
-        h("button", { class: "c2-btn primary c2-intro-btn", type: "button", onclick: () => emit("session.finish") }, [document.createTextNode(t("control.returnToMyGames"))]),
+        navButton(t("control.restartGame"), {
+          cls: "c2-btn c2-intro-btn",
+          disabled: boardBusy(),
+          onclick: () => emit("game.restart"),
+        }),
+        navButton(t("control.returnToMyGames"), {
+          disabled: boardBusy(),
+          onclick: () => emit("session.finish"),
+        }),
       ],
     });
   }
@@ -1096,12 +1117,19 @@ export function createUI({ root, emit }) {
         h("span", { "aria-hidden": "true" }, [document.createTextNode(`${secLeft}s`)]),
         h("div", { class: "c2-tile-sub", text: t("control.finalTimerStopShort") }),
       ]);
-      return h("button", {
+      const btn = h("button", {
         class: `c2-tile c2-timer-row c2-tile-timer ${filled && !revealLocked() ? "startable" : ""}`.trim(),
         type: "button",
         disabled: filled && !revealLocked() ? undefined : "",
         onclick: filled && !revealLocked() ? () => emit("final.toggleTimer", { round }) : undefined,
       }, [content]);
+      // data-timer-role: patrz komentarz przy timer3Tile w renderRounds —
+      // ten sam mechanizm, tickTimers() aktualizuje TYLKO te cyfry co 250ms,
+      // bez przebudowy reszty ekranu (a więc bez gubienia fokusu pól
+      // wpisywania obok — zgłoszone: "wpisywanie nie ma blokować licznika",
+      // co wymaga, żeby licznik w ogóle PRZESTAŁ niszczyć input co tik).
+      btn.dataset.timerRole = "final";
+      return btn;
     }
     if (used) {
       return h("button", { class: "c2-tile c2-timer-row c2-tile-timer", type: "button", disabled: "" }, [document.createTextNode(t("control.finalTimerUsed"))]);
@@ -1540,6 +1568,23 @@ export function createUI({ root, emit }) {
     // działa dla wszystkich ekranów jednym miejscem, bez dotykania każdego
     // renderXxx() osobno.
     const scrollBefore = root.querySelector(".c2-scroll-area")?.scrollTop ?? 0;
+    // Zgłoszone: "wpisywanie nie ma blokować licznika" — dopóki timer
+    // gracza (finał) leci, SET_ENTRY_TEXT (każde naciśnięcie klawisza w
+    // polu odpowiedzi) i tak przechodzi przez pełny dispatchGated()/
+    // render() (tickTimers() z control2/js/app.js NIE dotyczy tej ścieżki —
+    // to osobny, lżejszy tik tylko dla samych cyfr). Pełny render() tworzy
+    // świeży <input> (renderFinalEntry) — bez zapisania/przywrócenia fokusu
+    // operator traciłby kursor w polu po KAŻDYM wciśniętym znaku. Dotyczy
+    // wyłącznie pól w .c2-entryrow[data-i] (finał-wpisywanie) — jedyne
+    // miejsce w tej appce, gdzie operator w ogóle pisze tekst w trakcie
+    // renderów wywołanych z zewnątrz (presence, timer, inne urządzenie).
+    const focused = document.activeElement;
+    const focusedRow = focused && root.contains(focused) ? focused.closest("[data-i]") : null;
+    const savedFocus = focusedRow ? {
+      dataI: focusedRow.getAttribute("data-i"),
+      selStart: focused.selectionStart,
+      selEnd: focused.selectionEnd,
+    } : null;
     updateTopbarDots(state, ctx.presenceFlags);
     const s = state.step;
     if (s === "devices_display") renderDevicesStep(state, ctx);
@@ -1560,7 +1605,40 @@ export function createUI({ root, emit }) {
     }
     const scrollArea = root.querySelector(".c2-scroll-area");
     if (scrollArea) scrollArea.scrollTop = scrollBefore;
+    if (savedFocus) {
+      const row = root.querySelector(`[data-i="${savedFocus.dataI}"]`);
+      const input = row && row.querySelector("input");
+      if (input) {
+        input.focus();
+        try { input.setSelectionRange(savedFocus.selStart, savedFocus.selEnd); } catch {}
+      }
+    }
   }
 
-  return { render };
+  // Aktualizacja SAMYCH cyfr odliczania (timer3 w Rundach / zegarek gracza
+  // w Finale), BEZ wołania render() — zgłoszone: "licznik i przyciski cały
+  // czas migają" + "wpisywanie nie ma blokować licznika". control2/js/app.js
+  // woła to co 250ms, dopóki którykolwiek zegarek leci — pełny render() w
+  // tym samym rytmie niszczyłby fokus/pozycję kursora w polach wpisywania
+  // finału (renderFinalEntry buduje świeże <input> przy KAŻDYM renderze) i
+  // restartowałby CSS-animacje/hover WSZYSTKICH innych, niezwiązanych
+  // przycisków na ekranie (stąd wrażenie ciągłego migania, nie tylko samych
+  // cyfr). Elementy z odpowiednim data-timer-role muszą już istnieć w DOM
+  // (ostatni pełny render() je tam umieścił, dopóki dany zegarek leci) —
+  // gdy go nie ma (np. operator akurat zmienił ekran), po prostu nic nie
+  // robimy, kolejny pełny render() i tak nadejdzie z prawdziwą zmianą stanu.
+  function tickTimers(state) {
+    const timer3 = state.rounds?.timer3;
+    if (timer3?.running) {
+      const el = root.querySelector('[data-timer-role="timer3"] [aria-hidden="true"]');
+      if (el) el.textContent = String(Math.max(0, Math.ceil((timer3.endsAt - Date.now()) / 1000)));
+    }
+    const finalTimer = state.final?.runtime?.timer;
+    if (finalTimer?.running) {
+      const el = root.querySelector('[data-timer-role="final"] [aria-hidden="true"]');
+      if (el) el.textContent = `${Math.max(0, Math.ceil((finalTimer.endsAt - Date.now()) / 1000))}s`;
+    }
+  }
+
+  return { render, tickTimers };
 }

@@ -16,44 +16,61 @@
 // to więc dokładnie tyle, ile realnie trwa to, co Display w tym samym
 // momencie maluje.
 //
-// Pięć miejsc nakłada DWA dźwięki na jedną zmianę (shared/
+// Zgloszone na zywo: "dzwiek konca rundy gra i przed i po odslanianiu, a
+// przycisk >rozpocznij runde< moze przerwac odtwarzanie" i "dzwiek konca
+// rundy i dzwiek rozpoczecia finalu sie nakladaja, przyciski nie sa
+// blokowane poprawnie" -- poprzednia wersja blokowala TYLKO "reveal",
+// zostawiajac "round_transition" (ktory gra PO nim, sekwencyjnie) grac
+// nad juz odblokowanym, klikalnym ekranem: operator mogl zdazyc kliknac
+// kolejna duza akcje (Rozpocznij runde/Rozpocznij final), ktora wywoluje
+// TEN SAM cache'owany <audio> dla "round_transition" (js/core/sfx.js's
+// playSfx()) i restartuje go w polowie -- slyszalne jako uciecie. Poprawka:
+// blokada END_ROUND obejmuje CALA sekwencje reveal+round_transition (suma
+// sekwencyjna, nie tylko pierwszy czlon) -- nic juz nie moze wystartowac,
+// zanim oba dzwieki sie nie skoncza. NEXT_AFTER_REVEAL nie gra juz
+// zadnego dzwieku wcale (patrz engine.js) -- nie ma go w SPECIAL, domyslna
+// sciezka (sound_cue_seq sie nie zmienia) poprawnie daje 0.
+//
+// Pozostale miejsca nakladajace DWA dzwieki na jedna zmiane (shared/
 // soundCueEngine.js, sprawdzone 1:1 w kodzie):
 //   - START_ROUND, NEXT_QUESTION->f_p2_start i START_P2_ROUND
 //     (F7->F8, "Start rundy 2"): "round_transition"+"reveal" ZSYNCHRONIZOWANE
-//     na koniec — blokujący czas to max(obu). Zgłoszone wprost dla F7->F8:
-//     "dźwięk przejścia rundy plus odsłonięcie" — to DOSŁOWNIE przejście do
-//     kolejnej rundy finału, ta sama kombinacja co pozostałe dwa.
-//   - END_ROUND/NEXT_AFTER_REVEAL: "reveal" najpierw (blokujący), POTEM
-//     "round_transition" (już nad nowym, interaktywnym ekranem —
-//     nieblokujący).
-//   - START_FINAL: "final_theme" najpierw (blokujący), POTEM "reveal"
-//     (nieblokujący, gra nad ekranem wpisywania).
-//   - FINISH_FINAL: synced("round_transition","reveal"), a PO CAŁEJ tej
-//     parze dodatkowo "show_intro" — jedyne miejsce, gdzie kolejny człon
-//     TEŻ się liczy do blokady (to już ekran końcowy, nic po nim).
-// Każda inna akcja: gate to czas trwania tego, co faktycznie zagrało w TYM
-// konkretnym zapisie (wykryte przez zmianę sound_cue_seq).
+//     na koniec -- blokujacy czas to max(obu). Zgloszone wprost dla F7->F8:
+//     "dzwiek przejscia rundy plus odslonięcie" -- to DOSLOWNIE przejscie do
+//     kolejnej rundy finalu, ta sama kombinacja co pozostale dwa.
+//   - START_FINAL: "final_theme" najpierw, POTEM "reveal" -- oba teraz
+//     policzone RAZEM (suma sekwencyjna), z tego samego powodu co
+//     END_ROUND wyzej (zgloszone: nakladanie sie na START_ROUND kolejnej
+//     akcji).
+//   - FINISH_FINAL: synced("round_transition","reveal"), a PO CALEJ tej
+//     parze dodatkowo "show_intro" -- jedyne miejsce, gdzie kolejny czlon
+//     TEZ sie liczy do blokady (to juz ekran koncowy, nic po nim).
+// Kazda inna akcja: gate to czas trwania tego, co faktycznie zagralo w TYM
+// konkretnym zapisie (wykryte przez zmiane sound_cue_seq).
 
 import { createTransitionTiming } from "../../shared/transitionTiming.js?v=v2026-09-26T16124";
 
 export function createActionGate({ getSfxDuration }) {
   const timing = createTransitionTiming({ getSfxDuration });
 
-  // R6-R7/R8-R9: blokujący czas to WYŁĄCZNIE "reveal" — "round_transition"
-  // gra POTEM, już nad nowym, interaktywnym ekranem (patrz nagłówek pliku).
-  // Ta sama liczba steruje animacją Displaya dla tej samej akcji (patrz
-  // display2/js/render.js's STEP_CHANGE do r_gameEnd/f_start) — nie ma
-  // więc potrzeby rozróżniać docelowy krok tutaj, w odróżnieniu od
-  // wcześniejszej wersji, która dorzucała osobno dobrane "ile trwa
-  // animacja" per-cel.
+  // R6-R7: blokujący czas to CAŁA sekwencja "reveal" -> "round_transition"
+  // (suma obu, nie tylko pierwszy człon — patrz nagłówek pliku). NEXT_AFTER_
+  // REVEAL (R8->R9) nie gra już żadnego dźwięku (engine.js) — celowo BRAK w
+  // tej tabeli, spada do domyślnej ścieżki (sound_cue_seq się nie zmienia
+  // -> 0). START_FINAL analogicznie: "final_theme" -> "reveal" liczone
+  // razem, z tego samego powodu (operator mógłby zdążyć kliknąć dalej,
+  // zanim "reveal" nad ekranem wpisywania się skończy, i przerwać go kolejną
+  // akcją współdzielącą ten sam klucz).
+  async function sequentialMs(keyA, keyB) {
+    return (await timing.dur(keyA)) + (await timing.dur(keyB));
+  }
   const SPECIAL = {
     START_ROUND: () => timing.syncedMs("round_transition", "reveal"),
     NEXT_QUESTION: async (prevRow, nextRow) =>
       nextRow?.step === "f_p2_start" ? timing.syncedMs("round_transition", "reveal") : 0,
     START_P2_ROUND: () => timing.syncedMs("round_transition", "reveal"),
-    END_ROUND: () => timing.dur("reveal"),
-    NEXT_AFTER_REVEAL: () => timing.dur("reveal"),
-    START_FINAL: () => timing.dur("final_theme"),
+    END_ROUND: () => sequentialMs("reveal", "round_transition"),
+    START_FINAL: () => sequentialMs("final_theme", "reveal"),
     FINISH_FINAL: async () => (await timing.syncedMs("round_transition", "reveal")) + (await timing.dur("show_intro")),
   };
 
