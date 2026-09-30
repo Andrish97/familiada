@@ -147,6 +147,10 @@ const els = {
   statPlayedPeriods: document.getElementById("statPlayedPeriods"),
   statPlayedOutcomes: document.getElementById("statPlayedOutcomes"),
   statPlayedIssues: document.getElementById("statPlayedIssues"),
+  statPollGamesTotal: document.getElementById("statPollGamesTotal"),
+  statPollGamesTypes: document.getElementById("statPollGamesTypes"),
+  statPollResponses: document.getElementById("statPollResponses"),
+  statPollSharing: document.getElementById("statPollSharing"),
   statBasesTotal: document.getElementById("statBasesTotal"),
   statBasesGrowth: document.getElementById("statBasesGrowth"),
   statLogosTotal: document.getElementById("statLogosTotal"),
@@ -1097,7 +1101,17 @@ async function loadAdminStats({ silent = false } = {}) {
     if (els.statPlayedTotal) els.statPlayedTotal.textContent = data.gameplay.played_30d;
     if (els.statPlayedPeriods) els.statPlayedPeriods.textContent = `Dziś: ${data.gameplay.played_today} | 7 dni: ${data.gameplay.played_7d} | 30 dni: ${data.gameplay.played_30d}`;
     if (els.statPlayedOutcomes) els.statPlayedOutcomes.textContent = `Zakończone: ${data.gameplay.finished_30d} | Porzucone: ${data.gameplay.abandoned_30d} | W trakcie: ${data.gameplay.in_progress}`;
-    if (els.statPlayedIssues) els.statPlayedIssues.textContent = `Z błędami: ${data.gameplay.errors_30d} | Sesje ankiet 7d: ${data.polls.sessions_7d} | Archiwalne: ${data.gameplay.legacy_total}`;
+    if (els.statPlayedIssues) els.statPlayedIssues.textContent = `Z błędami: ${data.gameplay.errors_30d} | Archiwalne: ${data.gameplay.legacy_total}`;
+
+    const pollRes = await apiFetch(`${API_BASE}/stats/polls`, { method: "GET" });
+    if (!pollRes.ok) throw new Error(`Ankiety: HTTP ${pollRes.status}`);
+    const pollData = await pollRes.json();
+    if (!pollData.ok) throw new Error(pollData.error || "Nie udało się załadować statystyk ankiet");
+    const polls = pollData.stats;
+    if (els.statPollGamesTotal) els.statPollGamesTotal.textContent = polls.games.total;
+    if (els.statPollGamesTypes) els.statPollGamesTypes.textContent = `Tekstowe: ${polls.games.text} | Punktowe: ${polls.games.points} | Otwarte: ${polls.games.open}`;
+    if (els.statPollResponses) els.statPollResponses.textContent = `Odpowiedzi: ${polls.responses.total} | 7 dni: ${polls.responses.last_7d} | Tokeny głosujących: ${polls.responses.voters}`;
+    if (els.statPollSharing) els.statPollSharing.textContent = `Udostępnione: ${polls.sharing.polls} ankiet | Zaproszenia: ${polls.sharing.completed_tasks}/${polls.sharing.tasks} | Subskrybenci: ${polls.sharing.active_subscribers} (+${polls.sharing.pending_subscribers} oczek.)`;
 
     if (els.statBasesTotal) els.statBasesTotal.textContent = data.bases.total;
     if (els.statBasesGrowth) els.statBasesGrowth.textContent = `Dziś: ${data.bases.new_today} | 7 dni: ${data.bases.new_7d} | 30 dni: ${data.bases.new_30d}`;
@@ -5304,6 +5318,21 @@ const STAT_DETAIL_CONFIG = {
       fmtSessionStatus(r),
     ],
   },
+  polls: {
+    title: "Ankiety",
+    cols: ["Nazwa", "Typ", "Status", "Właściciel", "Odpowiedzi", "Tokeny", "Zaproszenia", "Wypełnione", "Utworzono"],
+    row: r => [
+      r.name || "—",
+      r.type === "poll_text" ? "Tekstowa" : r.type === "poll_points" ? "Punktowa" : (r.type || "—"),
+      r.status || "—",
+      r.owner || "—",
+      Number(r.responses || 0),
+      Number(r.voters || 0),
+      Number(r.shared_tasks || 0),
+      Number(r.completed_tasks || 0),
+      fmtDate(r.created_at),
+    ],
+  },
   bases: {
     title: "Bazy pytań",
     cols: ["Nazwa", "Właściciel", "Data"],
@@ -5654,7 +5683,10 @@ async function openStatsDetailModal(type) {
   }
 
   try {
-    const res = await apiFetch(`${API_BASE}/stats/detail?type=${encodeURIComponent(type)}&limit=500`, { method: "GET" });
+    const endpoint = type === "polls"
+      ? `${API_BASE}/stats/polls/detail?limit=500`
+      : `${API_BASE}/stats/detail?type=${encodeURIComponent(type)}&limit=500`;
+    const res = await apiFetch(endpoint, { method: "GET" });
     if (!res.ok) {
       const errBody = await res.text().catch(() => "");
       console.error("[stats/detail] HTTP", res.status, errBody);

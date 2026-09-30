@@ -428,6 +428,21 @@ async function handleAdminApi(request, env) {
     return json({ ok: true, rows: Array.isArray(res.data) ? res.data : [] });
   }
 
+  if (url.pathname === "/_admin_api/stats/polls") {
+    if (request.method !== "GET") return new Response("Method Not Allowed", { status: 405 });
+    const res = await supabaseRpc(env, "get_admin_poll_stats", {});
+    if (!res.ok) return json({ ok: false, error: "poll_stats_failed", details: summarizeSupabaseError(res) }, res.status || 500);
+    return json({ ok: true, stats: res.data || {} });
+  }
+
+  if (url.pathname === "/_admin_api/stats/polls/detail") {
+    if (request.method !== "GET") return new Response("Method Not Allowed", { status: 405 });
+    const limit = clampInt(url.searchParams.get("limit"), 1, 500, 200);
+    const res = await supabaseRpc(env, "get_admin_poll_details", { p_limit: limit });
+    if (!res.ok) return json({ ok: false, error: "poll_stats_detail_failed", details: summarizeSupabaseError(res) }, res.status || 500);
+    return json({ ok: true, rows: Array.isArray(res.data) ? res.data : [] });
+  }
+
   if (url.pathname.startsWith("/_admin_api/marketplace/")) {
     return handleAdminMarketplaceApi(request, env, url);
   }
