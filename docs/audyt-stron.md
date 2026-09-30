@@ -422,3 +422,66 @@ Weryfikacja branch: migracja 279 `APPLY/OK`, parytet sekcji tłumaczeń
 scoped E2E 5/5:
 https://github.com/Andrish97/familiada/actions/runs/36638601261. Wynik na
 `main` po wdrożeniu znajduje się w raporcie końcowym/Actions.
+
+## Marketplace / Gry Społeczności — zrobione (2026-09-30)
+
+Testy: `tests/e2e/marketplace.spec.js` (7 scenariuszy, kod strony z brancha
+przez `serveBranchCode`, zablokowany service worker, prawdziwy produkcyjny
+backend i konta testowe). Obejmują anonimowego użytkownika, konto i gościa,
+listę/wyszukiwanie/filtr/sortowanie, wolną oraz błędną odpowiedź backendu,
+deep-link i historię, klawiaturę, PL/EN, atomowe dodanie i powtórny klik,
+kopię pytań, aktualizację oceny, wysłanie gry oraz prywatność oceniających.
+Każdy zapisany stan jest usuwany w `finally`; retry nie dziedziczy danych.
+
+Realne błędy w aplikacji i backendzie:
+- **dowolny klient mógł wykonywać RPC administratora** — funkcje
+  `market_admin_delete/review/upsert/...` były `SECURITY DEFINER` i miały
+  domyślne `EXECUTE` dla PUBLIC. Anonim lub zwykłe konto mogło zatwierdzić,
+  zmienić albo trwale usunąć cudzą grę. Dostęp odebrano PUBLIC/anon/auth i
+  pozostawiono wyłącznie `service_role`, którego używa maintenance-worker.
+- **oceniający byli publiczni** — polityka `mgr_select USING (true)`
+  ujawniała `user_id`, ocenę i czas każdemu, a `market_game_raters` przez
+  odwrócony warunek zwracało listę także anonimowi. RLS dopuszcza teraz
+  własną ocenę i autora gry; RPC zwraca listę wyłącznie autorowi.
+- **snapshot był kontrolowany przez przeglądarkę** — `market_submit_game`
+  ufało dowolnemu `p_payload`, więc treść nie musiała odpowiadać wskazanej
+  grze. RPC składa snapshot z tabel `games/questions/answers` w transakcji,
+  odrzuca demo oraz za długi opis.
+- **podwójne wysłanie tworzyło dwa zgłoszenia** — brak blokady backendowej
+  pozwalał równoległym kliknięciom/retry wstawić wiele aktywnych snapshotów.
+  Blokada transakcyjna po `game_id` i kontrola pending/published zwraca teraz
+  `already_submitted`. Dodanie do biblioteki potwierdzono jako atomowe i
+  idempotentne dzięki jednej funkcji oraz unikalności `(owner_id,
+  source_market_id)`.
+- **oceny nie dało się aktualizować w UI** — po pierwszej ocenie kontrolka
+  znikała, mimo że RPC używa `ON CONFLICT DO UPDATE`; kafelek miał też zły
+  selektor odświeżania. Gwiazdki pokazują bieżący wybór i pozwalają go
+  zmienić, a data oceny odzwierciedla ostatnią aktualizację.
+- **historia podglądu tworzyła pętle** — zamknięcie dopisywało kolejny wpis
+  przez `pushState`, a `popstate` ponownie dopisywał detail URL. Po sekwencji
+  otwórz/zamknij/otwórz Wstecz mógł zostawić modal otwarty. Zamknięcie używa
+  `replaceState`, wejście z URL nie dubluje historii, parametry `lang`, `q`,
+  `filter` i `sort` są zachowywane, a slug/UUID walidowane.
+- **stare odpowiedzi i18n/wyszukiwania nadpisywały aktualny stan** — brak
+  identyfikatora requestu pozwalał wolniejszemu wyszukiwaniu wygrać z
+  nowszym. Dynamiczne szczegóły/lista nie renderowały się ponownie po zmianie
+  języka, punkty miały polskie `pkt` na stałe. Dodano ochronę kolejności i
+  pełne klucze PL/EN/UK.
+- **powrót anonimowego był mylący** — kod ustawiał „Strona główna”, po czym
+  `applyTranslations()` przywracało „Moje gry” ze starego `data-i18n`.
+  Klucz i cel są teraz spójne. W całym polskim UI ujednolicono też jedyne
+  „Strona startowa” do używanego wszędzie terminu „Strona główna”.
+- **brak rzeczywistego filtrowania/sortowania i podstaw klawiatury** — dodano
+  język oraz pięć porządków, trwałe parametry URL, loading/empty/error,
+  semantyczne przyciski kart z focusem, role/nazwy modali i etykiety pól.
+
+Migracja 280 naprawia RLS/RPC, źródło snapshotu, duplikaty i dodaje
+`e2e_marketplace_cleanup(text)` ograniczone do własnych rekordów kont
+`testN@familiada.online` i prefiksu `E2E-MKT-`. Migracja na branchu:
+https://github.com/Andrish97/familiada/actions/runs/36691353176 (`APPLY/OK`).
+
+Weryfikacja branch: testy jednostkowe 161/161; scoped E2E 7/7:
+https://github.com/Andrish97/familiada/actions/runs/36692596832. Dwa wcześniejsze
+przebiegi diagnostyczne ujawniły rzeczywiste nadpisanie etykiety powrotu i
+błąd historii; osobno poprawiono błędny krok testu próbujący klikać kontrolkę
+pod modalem. Wynik na finalnym `main` znajduje się w raporcie końcowym/Actions.
