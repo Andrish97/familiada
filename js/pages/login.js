@@ -18,14 +18,14 @@ import {
   clearGuestLocalMarker,
   initPasswordToggles,
   resetPasswordToggles,
-} from "../core/auth.js?v=v2026-09-30T21130";
-import { isGuestUser } from "../core/guest-mode.js?v=v2026-09-30T21130";
-import { alertModal, confirmModal } from "../core/modal.js?v=v2026-09-30T21130";
+} from "../core/auth.js?v=v2026-09-30T21413";
+import { isGuestUser } from "../core/guest-mode.js?v=v2026-09-30T21413";
+import { alertModal, confirmModal } from "../core/modal.js?v=v2026-09-30T21413";
 
-import { sb } from "../core/supabase.js?v=v2026-09-30T21130";
-import { cooldownEmailGet, cooldownEmailReserve } from "../core/cooldown.js?v=v2026-09-30T21130";
-import { initI18n, t, getUiLang, withLangParam, applyTranslations } from "../../translation/translation.js?v=v2026-09-30T21130";
-import "../core/contact-modal.js?v=v2026-09-30T21130";
+import { sb } from "../core/supabase.js?v=v2026-09-30T21413";
+import { cooldownEmailGet, cooldownEmailReserve } from "../core/cooldown.js?v=v2026-09-30T21413";
+import { initI18n, t, getUiLang, withLangParam, applyTranslations } from "../../translation/translation.js?v=v2026-09-30T21413";
+import "../core/contact-modal.js?v=v2026-09-30T21413";
 
 const $ = (s) => document.querySelector(s);
 const email = $("#email");
