@@ -649,7 +649,14 @@ async function main() {
   // zostaje BLACK przez cały etap ustawień, sekcja 3a pkt 5 planu).
   const gsOverlayEl = document.getElementById("gsOverlay");
   const gsFrameEl = document.getElementById("gsFrame");
+  const gsSpinnerEl = document.getElementById("gsSpinner");
   function openGsModal() {
+    // Spinner widoczny OD RAZU (zgłoszone: "po otwarciu modala ustawień
+    // długo nic nie robi") — iframe sam wczyta moduł i przejdzie przez
+    // requireAuth()+RPC blokad, zanim cokolwiek narysuje; bez tego operator
+    // patrzył na pusty prostokąt przez cały ten czas. Chowany dopiero na
+    // "gs:ready" niżej.
+    gsSpinnerEl?.classList.remove("hidden");
     if (gsFrameEl) gsFrameEl.src = `/game-settings2?id=${encodeURIComponent(gameId)}&modal=1`;
     gsOverlayEl?.classList.remove("hidden");
   }
@@ -675,6 +682,7 @@ async function main() {
   gsOverlayEl?.addEventListener("click", (ev) => { if (ev.target === gsOverlayEl) requestGsModalClose(); });
   window.addEventListener("message", (ev) => {
     if (ev.data?.type === "gs:close" && ev.source === gsFrameEl?.contentWindow) onGsModalClose();
+    if (ev.data?.type === "gs:ready" && ev.source === gsFrameEl?.contentWindow) gsSpinnerEl?.classList.add("hidden");
   });
 
   document.getElementById("btnBack")?.addEventListener("click", async () => {
