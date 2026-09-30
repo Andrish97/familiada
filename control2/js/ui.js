@@ -1243,9 +1243,22 @@ export function createUI({ root, emit }) {
       ]),
     ];
 
+    // Zgłoszone: "po drugiej rundzie finału nawet nie czeka na koniec
+    // timera i przechodzi dalej" — "Dalej" nie był w ogóle powiązany ze
+    // stanem zegarka: klikalny przez CAŁY czas trwania 15s/20s odliczania,
+    // więc operator mógł przejść do mapowania w dowolnym momencie,
+    // przerywając jeszcze trwający, naturalny czas gracza (a wraz z nim —
+    // dźwięk "time_over", który miał ten czas zamykać). START_MAPPING
+    // (engine.js) i tak bezwarunkowo zatrzymuje zegarek przy wejściu —
+    // to musi być ŚWIADOME domknięcie (naturalne wygaśnięcie ALBO ręczne
+    // wczesne zatrzymanie przez sam kafel zegarka, które już wymaga
+    // wypełnienia wszystkich pól — patrz finalTimerRow), nie przypadkowe
+    // domknięcie przez inny przycisk na tym samym ekranie.
+    const timerPhase = round === 1 ? "P1" : "P2";
+    const timerRunningNow = f.runtime.timer.running && f.runtime.timer.phase === timerPhase;
     const nav = [navButton(t("common.next"), {
       cls: "c2-btn primary",
-      disabled: boardBusy(),
+      disabled: boardBusy() || timerRunningNow,
       onclick: () => emit("game.dispatch", { type: "START_MAPPING", round }),
     })];
     gameplayShell({ stepLabel: t("control.finalEntryStepLabel", { round }), body, nav });

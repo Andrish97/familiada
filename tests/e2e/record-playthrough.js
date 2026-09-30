@@ -909,7 +909,14 @@ async function scenarioFinalFull(pages) {
     // false: nic nie wpisujemy -> AUTO+SKIP
   }
   await clickPaced(control.getByRole("button", { name: "Rozpocznij odliczanie (20s)" }));
-  await clickPaced(control.getByRole("button", { name: "Dalej" })); // tym razem NIE czekamy na naturalne wygaśnięcie
+  // Zgłoszone: "po drugiej rundzie finału nawet nie czeka na koniec
+  // timera" — "Dalej" jest teraz zablokowany, dopóki zegarek tej rundy
+  // aktywnie odlicza (control2/js/ui.js's renderFinalEntry), więc TEN test
+  // musi poczekać na naturalne wygaśnięcie (21s) dokładnie jak gracz 1
+  // wyżej — wcześniejszy komentarz "tym razem NIE czekamy" opisywał stan
+  // sprzed tej naprawy.
+  await control.waitForTimeout(21_000);
+  await clickPaced(control.getByRole("button", { name: "Dalej" }));
 
   for (let i = 0; i < 5; i++) {
     if (P2_PLAN[i] === true) await armAndConfirmPaced(control.getByRole("button", { name: "Odp. finałowa (15)" }));
