@@ -28,6 +28,10 @@ function localFileFor(pathname, pages) {
   const rel = decodeURIComponent(pathname).replace(/^\/+/, "");
   const page = rel.replace(/\.html$/, "");
   if (pages.includes(page)) return path.join(REPO_ROOT, `${page}.html`);
+  // Trasy typu /marketplace/game/<slug> są obsługiwane przez tę samą stronę
+  // SPA. Bez tego deep-link w teście brał HTML produkcyjny zamiast z brancha.
+  const routedPage = pages.find((name) => rel.startsWith(`${name}/`));
+  if (routedPage) return path.join(REPO_ROOT, `${routedPage}.html`);
   if (!CODE_DIRS.some((d) => rel.startsWith(d))) return null;
   const abs = path.join(REPO_ROOT, rel);
   if (!abs.startsWith(REPO_ROOT + path.sep)) return null;

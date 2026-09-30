@@ -1,6 +1,6 @@
 // js/pages/marketplace.js
 
-import { sb, buildSiteUrl } from "../core/supabase.js?v=v2026-09-29T22193";
+import { sb } from "../core/supabase.js?v=v2026-09-29T22193";
 import { getUser } from "../core/auth.js?v=v2026-09-29T22193";
 import { isGuestUser } from "../core/guest-mode.js?v=v2026-09-29T22193";
 import { initI18n, t, getUiLang, withLangParam, applyTranslations } from "../../translation/translation.js?v=v2026-09-29T22193";
@@ -24,10 +24,19 @@ let currentUser   = null;
 let isGuest       = false;
 let currentOffset = 0;
 let currentSearch = "";
+let currentLangFilter = "all";
+let currentSort = "recommended";
 let searchTimer   = null;
 let detailGameId  = null;
+let detailGame    = null;
 let submitLang    = "pl";
 let submitGameUiSelect = null;
+let browseRequest = 0;
+let detailRequest = 0;
+let browseLoading = false;
+let browseRows = [];
+let currentView = "browse";
+let lastDetailTrigger = null;
 
 // Strona przełącza się między widokiem "browse" (przycisk wstecz:
 // btnGoGames) i "mine" (przycisk wstecz: btnBackBrowse) -- w danej
@@ -49,6 +58,8 @@ const els = {
   browseGrid:  document.getElementById("browseGrid"),
   browseInfo:  document.getElementById("browseInfo"),
   searchInput: document.getElementById("searchInput"),
+  langFilter: document.getElementById("langFilter"),
+  sortSelect: document.getElementById("sortSelect"),
   loadMoreWrap:document.getElementById("loadMoreWrap"),
   btnLoadMore: document.getElementById("btnLoadMore"),
   btnMySent:   document.getElementById("btnMySent"),
@@ -62,6 +73,8 @@ const els = {
   detailMeta:   document.getElementById("detailMeta"),
   detailDesc:   document.getElementById("detailDesc"),
   detailQuestions: document.getElementById("detailQuestions"),
+  detailRating: document.getElementById("detailRating"),
+  detailRaters: document.getElementById("detailRaters"),
   btnDetailClose:  document.getElementById("btnDetailClose"),
   btnAddLibrary:   document.getElementById("btnAddLibrary"),
   btnRemoveLibrary:document.getElementById("btnRemoveLibrary"),
@@ -100,6 +113,7 @@ function showToast(msg, type = "info") {
    Views
 ========================================================= */
 function showView(name) {
+  currentView = name;
   els.viewBrowse.hidden = name !== "browse";
   els.viewMine.hidden   = name !== "mine";
   if (els.btnGoGames)  els.btnGoGames.hidden  = name !== "browse";
@@ -111,20 +125,38 @@ function showView(name) {
 ========================================================= */
 async function loadBrowse({ reset = false } = {}) {
 
+  if (browseLoading && !reset) return;
+
+  if (!reset) {
+    const nextRows = browseRows.slice(currentOffset, currentOffset + PAGE_SIZE);
+    nextRows.forEach(g => els.browseGrid?.appendChild(makeGameCard(g)));
+    currentOffset += nextRows.length;
+    if (els.loadMoreWrap) els.loadMoreWrap.hidden = currentOffset >= browseRows.length;
+    return;
+  }
+
+  const requestId = ++browseRequest;
+  browseLoading = true;
+  if (els.btnLoadMore) els.btnLoadMore.disabled = true;
+
   if (reset) {
     currentOffset = 0;
     if (els.browseGrid) els.browseGrid.innerHTML = "";
   }
 
-  if (els.browseInfo) els.browseInfo.textContent = "";
+  if (els.browseInfo) els.browseInfo.textContent = t("marketplace.loading");
 
   const lang = getUiLang();
   const { data, error } = await sb().rpc("market_browse", {
     p_lang:   lang,
     p_search: currentSearch.trim(),
-    p_limit:  PAGE_SIZE,
-    p_offset: currentOffset,
+    p_limit:  100,
+    p_offset: 0,
   });
+
+  if (requestId !== browseRequest) return;
+  browseLoading = false;
+  if (els.btnLoadMore) els.btnLoadMore.disabled = false;
 
   if (error) {
     console.error("[marketplace] loadBrowse error:", error);
@@ -132,7 +164,10 @@ async function loadBrowse({ reset = false } = {}) {
     return;
   }
 
-  const rows = Array.isArray(data) ? data : [];
+  let rows = Array.isArray(data) ? data : [];
+  if (currentLangFilter !== "all") rows = rows.filter(g => g.lang === currentLangFilter);
+  rows.sort((a, b) => compareBrowseRows(a, b, currentSort, lang));
+  browseRows = rows;
 
   if (reset && rows.length === 0) {
     if (els.browseGrid) els.browseGrid.innerHTML =
@@ -141,18 +176,30 @@ async function loadBrowse({ reset = false } = {}) {
     return;
   }
 
-  rows.forEach(g => {
+  rows.slice(0, PAGE_SIZE).forEach(g => {
     const card = makeGameCard(g);
     els.browseGrid?.appendChild(card);
   });
 
-  currentOffset += rows.length;
-  if (els.loadMoreWrap) els.loadMoreWrap.hidden = rows.length < PAGE_SIZE;
+  currentOffset = Math.min(PAGE_SIZE, rows.length);
+  if (els.loadMoreWrap) els.loadMoreWrap.hidden = currentOffset >= rows.length;
   if (els.browseInfo) els.browseInfo.textContent = "";
 }
 
+function compareBrowseRows(a, b, sort, uiLang) {
+  if (sort === "title") return String(a.title).localeCompare(String(b.title), uiLang);
+  if (sort === "newest") return new Date(b.created_at) - new Date(a.created_at);
+  if (sort === "popular") return (b.library_count || 0) - (a.library_count || 0) || new Date(b.created_at) - new Date(a.created_at);
+  if (sort === "rating") return (b.avg_rating || 0) - (a.avg_rating || 0) || (b.rating_count || 0) - (a.rating_count || 0);
+  return Number(b.lang === uiLang) - Number(a.lang === uiLang)
+    || ((b.rating_count || 0) >= 3 ? (b.avg_rating || 0) : 0) - ((a.rating_count || 0) >= 3 ? (a.avg_rating || 0) : 0)
+    || (b.library_count || 0) - (a.library_count || 0)
+    || new Date(b.created_at) - new Date(a.created_at);
+}
+
 function makeGameCard(g) {
-  const card = document.createElement("div");
+  const card = document.createElement("button");
+  card.type = "button";
   const isProducer = g.origin === "producer" || !g.author_username || g.author_username === "";
   card.className = "mkt-card" + (isProducer ? " mkt-card-producer" : "");
   card.dataset.id = g.id;
@@ -173,10 +220,10 @@ function makeGameCard(g) {
     <div class="mkt-card-desc">${esc(g.description)}</div>
     <div class="mkt-card-footer">
       <span class="mkt-count">${esc(t("marketplace.libraryCount").replace("{count}", g.library_count ?? 0))}</span>
-      ${starsDisplay(g.avg_rating, g.rating_count)}
+      <span class="mkt-card-rating">${starsDisplay(g.avg_rating, g.rating_count)}</span>
     </div>`;
 
-  card.addEventListener("click", () => openDetail(g.id));
+  card.addEventListener("click", () => openDetail(g.id, { trigger: card }));
   return card;
 }
 
@@ -184,26 +231,32 @@ function makeGameCard(g) {
    Detail modal
 ========================================================= */
 async function openDetailBySlug(slug) {
+  if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(String(slug || ""))) {
+    showToast(t("marketplace.detail.notFound"), "error");
+    return;
+  }
   const { data, error } = await sb().rpc("market_game_by_slug", { p_slug: slug }).single();
   if (error || !data) {
     console.error("[marketplace] openDetailBySlug error:", error, slug);
+    showToast(t("marketplace.detail.notFound"), "error");
     return;
   }
-  await openDetail(data.id, { fromUrl: true });
+  await openDetail(data.id, { updateUrl: false });
 }
 
-async function openDetail(id, { fromUrl = false } = {}) {
+async function openDetail(id, { updateUrl = true, trigger = null } = {}) {
+  const requestId = ++detailRequest;
   detailGameId = id;
+  detailGame = null;
+  lastDetailTrigger = trigger || document.activeElement;
 
   // Show modal immediately with loading state
   if (els.detailTitle) els.detailTitle.textContent = "…";
   if (els.detailMeta) els.detailMeta.textContent = "";
   if (els.detailDesc) els.detailDesc.textContent = "";
   if (els.detailQuestions) els.detailQuestions.innerHTML = `<p class="mkt-no-q">${esc(t("marketplace.loading") || "Ładowanie…")}</p>`;
-  const detailRating = document.getElementById("detailRating");
-  if (detailRating) detailRating.innerHTML = "";
-  const detailRaters = document.getElementById("detailRaters");
-  if (detailRaters) { detailRaters.hidden = true; detailRaters.innerHTML = ""; }
+  if (els.detailRating) els.detailRating.innerHTML = "";
+  if (els.detailRaters) { els.detailRaters.hidden = true; els.detailRaters.innerHTML = ""; }
   if (els.btnAddLibrary) els.btnAddLibrary.hidden = true;
   if (els.btnRemoveLibrary) els.btnRemoveLibrary.hidden = true;
   if (els.addedBadge) els.addedBadge.hidden = true;
@@ -211,15 +264,27 @@ async function openDetail(id, { fromUrl = false } = {}) {
   enterModalSheet(els.gameDetailOverlay, { backBtn: currentBackBtn(), onClose: closeDetail });
 
   const { data, error } = await sb().rpc("market_game_detail", { p_id: id }).single();
+  if (requestId !== detailRequest) return;
   if (error || !data) {
     console.error("[marketplace] openDetail error:", error);
     if (els.gameDetailOverlay) els.gameDetailOverlay.style.display = "none";
     exitModalSheet(els.gameDetailOverlay);
+    detailGameId = null;
     showToast(t("marketplace.errorLoad"), "error");
     return;
   }
 
   const g = data;
+  detailGame = g;
+  renderDetail(g);
+
+  if (updateUrl) setDetailUrl(g.slug || id);
+  els.btnDetailClose?.focus();
+}
+
+function renderDetail(g) {
+  const detailRating = els.detailRating;
+  const detailRaters = els.detailRaters;
   if (els.detailTitle) els.detailTitle.textContent = g.title;
   if (els.detailMeta) {
     const isProducer = g.origin === "producer" || !g.author_username;
@@ -239,7 +304,7 @@ async function openDetail(id, { fromUrl = false } = {}) {
     } else {
       els.detailQuestions.innerHTML = qs.map((q, i) => {
         const answers = (q.answers ?? []).map(a =>
-          `<li>${esc(a.text)} <span class="mkt-pts">(${a.fixed_points ?? 0} pkt)</span></li>`
+          `<li>${esc(a.text)} <span class="mkt-pts">(${esc(t("marketplace.detail.points", { count: a.fixed_points ?? 0 }))})</span></li>`
         ).join("");
         return `<div class="mkt-q-block">
           <div class="mkt-q-text">${i + 1}. ${esc(q.text)}</div>
@@ -258,13 +323,13 @@ async function openDetail(id, { fromUrl = false } = {}) {
     detailRating.appendChild(summary);
 
     const canRate = !!currentUser && !isGuest && g.status === "published";
-    if (canRate && !g.user_stars) {
-      detailRating.appendChild(buildStarInput(id));
+    if (canRate) {
+      detailRating.appendChild(buildStarInput(g.id, g.user_stars));
     }
   }
 
   // Raters list (only visible if current user is the author — RPC returns empty otherwise)
-  if (detailRaters && currentUser) loadRaters(id, detailRaters);
+  if (detailRaters && currentUser) loadRaters(g.id, detailRaters);
 
   // Przyciski biblioteki
   const inLibrary = !!g.in_library;
@@ -272,10 +337,17 @@ async function openDetail(id, { fromUrl = false } = {}) {
   updateLibraryButtons(inLibrary, withdrawn);
 
   if (els.gameDetailOverlay) els.gameDetailOverlay.style.display = "";
+}
 
-  // Aktualizuj URL → /marketplace/game/[slug] (lub UUID jako fallback przed migracją)
-  const urlSegment = g.slug || id;
-  history.pushState({ gameId: id, slug: g.slug || null }, "", `/marketplace/game/${urlSegment}`);
+function marketplaceUrl(pathname = "/marketplace") {
+  const url = new URL(location.href);
+  url.pathname = pathname;
+  url.searchParams.delete("game");
+  return `${url.pathname}${url.search}${url.hash}`;
+}
+
+function setDetailUrl(segment) {
+  history.pushState({ gameId: detailGameId }, "", marketplaceUrl(`/marketplace/game/${encodeURIComponent(segment)}`));
 }
 
 function updateLibraryButtons(inLibrary, withdrawn = false) {
@@ -294,14 +366,18 @@ function updateLibraryButtons(inLibrary, withdrawn = false) {
   }
 }
 
-function closeDetail() {
+function closeDetail({ updateUrl = true } = {}) {
+  detailRequest++;
   if (els.gameDetailOverlay) els.gameDetailOverlay.style.display = "none";
   exitModalSheet(els.gameDetailOverlay);
   detailGameId = null;
+  detailGame = null;
   // Przywróć URL → /marketplace
-  if (location.pathname.startsWith("/marketplace/game/")) {
-    history.pushState(null, "", "/marketplace");
+  if (updateUrl && location.pathname.startsWith("/marketplace/game/")) {
+    history.pushState(null, "", marketplaceUrl());
   }
+  lastDetailTrigger?.focus?.();
+  lastDetailTrigger = null;
 }
 
 /* =========================================================
@@ -314,12 +390,13 @@ async function addToLibrary() {
   const { data, error } = await sb().rpc("market_add_to_library", { p_market_game_id: detailGameId });
   if (els.btnAddLibrary) els.btnAddLibrary.disabled = false;
 
-  if (error) { console.error("[marketplace] addToLibrary error:", error); showToast(t("marketplace.errorLoad"), "error"); return; }
+  if (error) { console.error("[marketplace] addToLibrary error:", error); showToast(rpcErrorMessage(error), "error"); return; }
   const res = Array.isArray(data) ? data[0] : data;
-  if (!res?.ok) { showToast(res?.err || "error", "error"); return; }
+  if (!res?.ok) { showToast(marketErrorMessage(res?.err), "error"); return; }
 
   showToast(t("marketplace.addedBadge"), "success");
-  updateLibraryButtons(true);
+  updateLibraryButtons(true, detailGame?.status === "withdrawn");
+  if (detailGame) detailGame.in_library = true;
   refreshCardInLibrary(detailGameId, true);
 }
 
@@ -330,11 +407,12 @@ async function removeFromLibrary() {
   const { data, error } = await sb().rpc("market_remove_from_library", { p_market_game_id: detailGameId });
   if (els.btnRemoveLibrary) els.btnRemoveLibrary.disabled = false;
 
-  if (error) { console.error("[marketplace] removeFromLibrary error:", error); showToast(t("marketplace.errorLoad"), "error"); return; }
+  if (error) { console.error("[marketplace] removeFromLibrary error:", error); showToast(rpcErrorMessage(error), "error"); return; }
   const res = Array.isArray(data) ? data[0] : data;
-  if (!res?.ok) { showToast(res?.err || "error", "error"); return; }
+  if (!res?.ok) { showToast(marketErrorMessage(res?.err), "error"); return; }
 
   updateLibraryButtons(false);
+  if (detailGame) detailGame.in_library = false;
   refreshCardInLibrary(detailGameId, false);
 }
 
@@ -359,6 +437,7 @@ function refreshCardInLibrary(id, inLibrary) {
 async function loadMySent() {
   if (!els.mySentList) return;
   els.mySentList.innerHTML = "";
+  if (els.mySentInfo) els.mySentInfo.textContent = t("marketplace.loading");
 
   const { data, error } = await sb().rpc("market_my_submissions");
   if (error) {
@@ -368,6 +447,7 @@ async function loadMySent() {
   }
 
   const rows = Array.isArray(data) ? data : [];
+  if (els.mySentInfo) els.mySentInfo.textContent = "";
   if (!rows.length) {
     els.mySentList.innerHTML = `<p class="mkt-empty">${esc(t("marketplace.mySent.empty"))}</p>`;
     return;
@@ -426,9 +506,9 @@ async function withdrawGame(id) {
   if (!ok) return;
 
   const { data, error } = await sb().rpc("market_withdraw", { p_market_game_id: id });
-  if (error) { console.error("[marketplace] withdrawGame error:", error); showToast(t("marketplace.errorLoad"), "error"); return; }
+  if (error) { console.error("[marketplace] withdrawGame error:", error); showToast(rpcErrorMessage(error), "error"); return; }
   const res = Array.isArray(data) ? data[0] : data;
-  if (!res?.ok) { showToast(res?.err || "error", "error"); return; }
+  if (!res?.ok) { showToast(marketErrorMessage(res?.err), "error"); return; }
 
   showToast(t("marketplace.mySent.withdrawn"), "success");
   await loadMySent();
@@ -439,7 +519,7 @@ async function withdrawGame(id) {
 ========================================================= */
 async function openSubmitModal() {
   // Załaduj kwalifikujące się gry (własne, nie z marketplace, min 10 pytań)
-  const { data: games } = await sb()
+  const { data: games, error } = await sb()
     .from("games")
     .select("id,name,type,status,questions(count)")
     .eq("owner_id", currentUser.id)
@@ -447,6 +527,12 @@ async function openSubmitModal() {
     .eq("is_demo", false)
     .neq("type", "market")
     .order("updated_at", { ascending: false });
+
+  if (error) {
+    console.error("[marketplace] eligible games error:", error);
+    showToast(t("marketplace.submit.errorLoadEligible"), "error");
+    return;
+  }
 
   const eligible = (games || []).filter(g => {
     const qCount = g.questions?.[0]?.count ?? 0;
@@ -524,12 +610,13 @@ async function submitGame() {
 
   if (els.btnSubmitConfirm) els.btnSubmitConfirm.disabled = false;
 
-  if (error) { console.error("[marketplace] submitGame rpc error:", error); showSubmitError(error.message); return; }
+  if (error) { console.error("[marketplace] submitGame rpc error:", error); showSubmitError(rpcErrorMessage(error)); return; }
   const res = Array.isArray(data) ? data[0] : data;
   if (!res?.ok) {
     const errCode = res?.err || "submit_failed";
-    const errMsg = t(`marketplace.submit.err.${errCode}`) || errCode;
-    showSubmitError(errMsg);
+    const errKey = `marketplace.submit.err.${errCode}`;
+    const errMsg = t(errKey);
+    showSubmitError(errMsg === errKey ? t("marketplace.submit.err.submit_failed") : errMsg);
     return;
   }
 
@@ -547,7 +634,7 @@ function starsDisplay(avg, count) {
   return `<span class="mkt-stars" role="img" aria-label="${(+avg).toFixed(1)}/5">${starRating(avg)}</span> <span class="mkt-rating-avg">${(+avg).toFixed(1)}</span> <span class="mkt-rating-count">(${count})</span>`;
 }
 
-function buildStarInput(gameId) {
+function buildStarInput(gameId, selectedStars = 0) {
   const wrap = document.createElement("div");
   wrap.className = "mkt-rate-wrap";
 
@@ -565,6 +652,8 @@ function buildStarInput(gameId) {
     btn.innerHTML = icon("star");
     btn.setAttribute("aria-label", `${i}/5`);
     btn.dataset.stars = i;
+    btn.classList.toggle("selected", i <= Number(selectedStars || 0));
+    btn.setAttribute("aria-pressed", i === Number(selectedStars || 0) ? "true" : "false");
     btn.addEventListener("mouseover", () => {
       row.querySelectorAll(".mkt-star-btn").forEach((b, j) => b.classList.toggle("hover", j < i));
     });
@@ -583,24 +672,25 @@ async function submitRating(gameId, stars, wrap, row) {
   const { data, error } = await sb().rpc("market_rate_game", { p_market_game_id: gameId, p_stars: stars });
   row.querySelectorAll(".mkt-star-btn").forEach(b => { b.disabled = false; });
 
-  if (error) { showToast(t("marketplace.errorLoad"), "error"); return; }
+  if (error) { showToast(rpcErrorMessage(error), "error"); return; }
   const res = Array.isArray(data) ? data[0] : data;
   if (!res?.ok) {
-    if (res?.err === "cannot_rate_own_game") showToast(t("marketplace.rating.ownGameError"), "error");
-    else showToast(res?.err || "error", "error");
+    showToast(marketErrorMessage(res?.err), "error");
     return;
   }
   showToast(t("marketplace.rating.saved"), "success");
   // Refresh summary counts in detail header
   const { data: fresh } = await sb().rpc("market_game_detail", { p_id: gameId }).single();
   const detailRatingEl = wrap.closest(".mkt-detail-rating");
-  wrap.remove();
   if (fresh) {
+    detailGame = fresh;
     const summary = detailRatingEl?.querySelector(".mkt-rating-summary");
     if (summary) summary.innerHTML = starsDisplay(fresh.avg_rating, fresh.rating_count);
+    wrap.replaceWith(buildStarInput(gameId, fresh.user_stars));
     // Refresh card on browse grid
-    const card = els.browseGrid?.querySelector(`[data-id="${gameId}"] .mkt-rating-summary`);
-    if (card) card.innerHTML = starsDisplay(fresh.avg_rating, fresh.rating_count);
+    const card = els.browseGrid?.querySelector(`[data-id="${CSS.escape(gameId)}"]`);
+    const oldRating = card?.querySelector(".mkt-card-rating");
+    if (oldRating) oldRating.innerHTML = starsDisplay(fresh.avg_rating, fresh.rating_count);
   }
 }
 
@@ -627,6 +717,23 @@ function esc(str) {
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
+}
+
+function marketErrorMessage(code) {
+  const key = `marketplace.errors.${String(code || "unknown")}`;
+  const translated = t(key);
+  return translated === key ? t("marketplace.errors.unknown") : translated;
+}
+
+// Wyjątki plpgsql (`RAISE EXCEPTION`) trafiają do Supabase w `message`, nie
+// w `code`. Najpierw mapujemy znany tekst backendu, dopiero potem fallback.
+function rpcErrorMessage(error) {
+  const message = String(error?.message || "");
+  const known = [
+    "not_authenticated", "game_not_available", "game_not_found",
+    "invalid_stars", "cannot_rate_own_game", "not_found_or_not_published",
+  ].find(code => message.includes(code));
+  return marketErrorMessage(known || "unknown");
 }
 
 /* =========================================================
@@ -663,11 +770,22 @@ function wireEvents() {
     clearTimeout(searchTimer);
     searchTimer = setTimeout(async () => {
       currentSearch = els.searchInput.value;
+      syncBrowseParams();
       await loadBrowse({ reset: true });
     }, 350);
   });
 
   els.btnLoadMore?.addEventListener("click", () => loadBrowse());
+  els.langFilter?.addEventListener("change", async () => {
+    currentLangFilter = els.langFilter.value;
+    syncBrowseParams();
+    await loadBrowse({ reset: true });
+  });
+  els.sortSelect?.addEventListener("change", async () => {
+    currentSort = els.sortSelect.value;
+    syncBrowseParams();
+    await loadBrowse({ reset: true });
+  });
 
   // Detail modal
   els.btnDetailClose?.addEventListener("click", closeDetail);
@@ -717,13 +835,35 @@ function wireEvents() {
     if (location.pathname.startsWith("/marketplace/game/")) {
       const param = location.pathname.split("/")[3];
       if (param) {
-        if (UUID_RE_NAV.test(param)) openDetail(param);
-        else openDetailBySlug(param);
+        if (UUID_RE_NAV.test(param)) openDetail(param, { updateUrl: false });
+        else openDetailBySlug(decodeURIComponent(param));
       }
     } else {
-      closeDetail();
+      closeDetail({ updateUrl: false });
+      restoreBrowseParams();
+      loadBrowse({ reset: true });
     }
   });
+}
+
+function syncBrowseParams() {
+  const url = new URL(location.href);
+  if (currentSearch) url.searchParams.set("q", currentSearch); else url.searchParams.delete("q");
+  if (currentLangFilter !== "all") url.searchParams.set("filter", currentLangFilter); else url.searchParams.delete("filter");
+  if (currentSort !== "recommended") url.searchParams.set("sort", currentSort); else url.searchParams.delete("sort");
+  history.replaceState(history.state, "", `${url.pathname}${url.search}${url.hash}`);
+}
+
+function restoreBrowseParams() {
+  const params = new URLSearchParams(location.search);
+  const filter = params.get("filter");
+  const sort = params.get("sort");
+  currentSearch = params.get("q") || "";
+  currentLangFilter = ["pl", "en", "uk"].includes(filter) ? filter : "all";
+  currentSort = ["recommended", "rating", "popular", "newest", "title"].includes(sort) ? sort : "recommended";
+  if (els.searchInput) els.searchInput.value = currentSearch;
+  if (els.langFilter) els.langFilter.value = currentLangFilter;
+  if (els.sortSelect) els.sortSelect.value = currentSort;
 }
 
 /* =========================================================
@@ -742,7 +882,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   document.querySelector('.topbar')?.classList.add('topbar-ready');
 
   if (!currentUser) {
-    // Anonim: zmień przycisk powrotu na "← Strona główna", ukryj zbędne przyciski
+    // Anonim wraca na Stronę główną; zalogowany użytkownik do „Moich gier”.
     if (els.btnGoGames) {
       els.btnGoGames.innerHTML =
         `<span class="only-desktop">${iconText("arrow-left", t("marketplace.nav.backHome"))}</span>` +
@@ -763,6 +903,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   wireEvents();
   applyTranslations();
+  restoreBrowseParams();
 
 
   showView("browse");
@@ -775,11 +916,15 @@ document.addEventListener("DOMContentLoaded", async () => {
     const param = pathParts[3];
     const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     if (UUID_RE.test(param)) {
-      await openDetail(param);
+      await openDetail(param, { updateUrl: false });
     } else {
       await openDetailBySlug(param);
     }
   }
 
-  window.addEventListener("i18n:lang", () => loadBrowse({ reset: true }));
+  window.addEventListener("i18n:lang", async () => {
+    if (detailGame) renderDetail(detailGame);
+    if (currentView === "mine") await loadMySent();
+    await loadBrowse({ reset: true });
+  });
 });

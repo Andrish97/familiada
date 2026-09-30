@@ -55,12 +55,26 @@ body.mkt-body > main.wrap {
 /* ===== Search bar ===== */
 .mkt-search-bar {
   margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .mkt-search-input {
   width: 100%;
   max-width: 480px;
   border-radius: 14px;
+}
+
+.mkt-control-label {
+  font-size: 12px;
+  font-weight: 800;
+  opacity: .7;
+}
+
+.mkt-filter {
+  min-width: 150px;
 }
 
 /* ===== Browse grid ===== */
@@ -93,6 +107,14 @@ body.mkt-body > main.wrap {
   cursor: pointer;
   transition: border-color .15s, background .15s;
   user-select: none;
+  color: inherit;
+  text-align: left;
+  font: inherit;
+}
+
+.mkt-card:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
 }
 
 .mkt-card:hover {
@@ -481,6 +503,12 @@ body.mkt-body > main.wrap {
 
 /* ===== Mobile ===== */
 @media (max-width: 600px) {
+  .mkt-search-input,
+  .mkt-filter {
+    max-width: none;
+    width: 100%;
+  }
+
   .mkt-grid {
     grid-template-columns: 1fr;
   }
