@@ -377,7 +377,10 @@ async function startQrScan() {
     if (btnManual) btnManual.style.display = "";
     btnManual?.addEventListener("click", () => { location.href = buildManualUrl(); });
   } else {
-    if (btnBack) btnBack.textContent = t("common.backToHome") || "Strona główna";
+    if (btnBack) {
+      btnBack.dataset.i18n = "index.backHome";
+      btnBack.textContent = t("index.backHome") || "Strona główna";
+    }
     if (btnManual) btnManual.style.display = "none";
   }
 

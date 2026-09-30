@@ -51,6 +51,16 @@ test("polski interfejs używa nazwy Strona główna", () => {
   assert.equal(pl.marketplace.nav.backHome, "Strona główna");
 });
 
+test("podłącz urządzenie: powrót anonima używa istniejącego klucza Strona główna", () => {
+  const js = read("js/pages/connect-device.js");
+  assert.doesNotMatch(js, /common\.backToHome/);
+  assert.match(js, /btnBack\.dataset\.i18n = "index\.backHome"/);
+  for (const dictionary of [pl, en, uk]) {
+    assert.equal(typeof dictionary.index.backHome, "string");
+    assert.notEqual(dictionary.index.backHome, "index.backHome");
+  }
+});
+
 test("FAQ opisuje aktualny tryb gościa i Gry Społeczności tak samo w PL/EN/UK", () => {
   for (const dictionary of [pl, en, uk]) {
     assert.match(dictionary.home.faq.q5.a, /serwer|server|сервер/i);
