@@ -1,9 +1,9 @@
-import { sb } from "../core/supabase.js?v=v2026-09-30T14045";
-import { updateUserLanguage, validatePassword, niceAuthError, getPasswordRulesText, discardCurrentGuestAccount, initPasswordToggles } from "../core/auth.js?v=v2026-09-30T14045";
-import { initI18n, t, getUiLang, withLangParam } from "../../translation/translation.js?v=v2026-09-30T14045";
-import { confirmModal } from "../core/modal.js?v=v2026-09-30T14045";
-import { isGuestUser } from "../core/guest-mode.js?v=v2026-09-30T14045";
-import "../core/contact-modal.js?v=v2026-09-30T14045";
+import { sb } from "../core/supabase.js?v=v2026-09-30T19170";
+import { updateUserLanguage, validatePassword, niceAuthError, getPasswordRulesText, discardCurrentGuestAccount, initPasswordToggles } from "../core/auth.js?v=v2026-09-30T19170";
+import { initI18n, t, getUiLang, withLangParam } from "../../translation/translation.js?v=v2026-09-30T19170";
+import { confirmModal } from "../core/modal.js?v=v2026-09-30T19170";
+import { isGuestUser } from "../core/guest-mode.js?v=v2026-09-30T19170";
+import "../core/contact-modal.js?v=v2026-09-30T19170";
 
 const status = document.getElementById("status");
 const err = document.getElementById("err");
