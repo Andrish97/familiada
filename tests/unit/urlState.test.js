@@ -60,3 +60,9 @@ test("logo ma trzy zakładki, dynamiczny hint i geometrię wypustek", () => {
   assert.match(css, /tabLogoImage\.active[\s\S]*border-top-right-radius: 0/);
 });
 
+test("Polls Hub obsługuje aktualną odpowiedź kolejki send-mail", () => {
+  const source = read("js/pages/polls-hub.js");
+  assert.match(source, /Number\(payload\.queued\)/);
+  assert.match(source, /queued !== items\.length/);
+  assert.match(source, /results: items\.map\(\(item\) => \(\{ to: item\.to, ok: true, queued: true \}\)\)/);
+});

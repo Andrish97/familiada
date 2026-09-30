@@ -339,7 +339,20 @@ async function sendMailBatch(items) {
     throw new Error(payload?.error || t("pollsHubPolls.errors.mailSend"));
   }
 
-  return payload; // { ok:true, results:[{to, ok, error?}] }
+  // send-mail jest kolejką: aktualny kontrakt zwraca { ok:true, queued:N },
+  // a starsza wersja endpointu zwracała wyniki per adres. Polls Hub nadal
+  // oczekiwał wyłącznie starego `results`, więc poprawnie zakolejkowane
+  // maile wyglądały jak zero wysłanych i taski nie dostawały email_sent_at.
+  if (Array.isArray(payload.results)) return payload;
+
+  const queued = Number(payload.queued);
+  if (!Number.isInteger(queued) || queued !== items.length) {
+    throw new Error(payload?.error || t("pollsHubPolls.errors.mailSend"));
+  }
+  return {
+    ...payload,
+    results: items.map((item) => ({ to: item.to, ok: true, queued: true })),
+  };
 }
 
 function isPollArchived(poll) {
