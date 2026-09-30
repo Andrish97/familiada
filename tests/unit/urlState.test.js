@@ -76,3 +76,11 @@ test("cleanup E2E usuwa limity mailowe wyłącznie pomiędzy kontami testowymi",
   assert.match(sql, /md5\(v_caller_email\).*md5\(v_other_email\)/s);
   assert.match(sql, /revoke all on function public\.e2e_poll_subscriptions_cleanup/);
 });
+
+test("oznaczenie maila ankiety obejmuje adres i zarejestrowane konto", () => {
+  const sql = read("supabase/migrations/2026-09-30_286_mark_registered_poll_tasks_emailed.sql");
+  assert.match(sql, /recipient_email is not null or recipient_user_id is not null/);
+  assert.match(sql, /owner_id = v_uid/);
+  assert.match(sql, /email_sent_at = now\(\)/);
+  assert.match(sql, /email_send_count = email_send_count \+ 1/);
+});
