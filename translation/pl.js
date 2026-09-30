@@ -144,6 +144,7 @@ const pl = {
     home: {
     title: "Familiada Online — system do prowadzenia gry na żywo",
     nav: {
+      label: "Nawigacja sekcji",
       about: "O systemie",
       features: "Funkcje",
       forwhom: "Dla kogo",
@@ -153,9 +154,13 @@ const pl = {
       title: "Darmowa Familiada Online. Prawdziwy teleturniej na Twoim sprzęcie.",
       lead: "Najlepszy system do gry w Familiadę: zbierz odpowiedzi od uczestników w ankiecie, a potem poprowadź grę na żywo. Idealna gra na wesele, urodziny i imprezę firmową. Wszystko w przeglądarce.",
       ctaStart: "Zacznij tworzyć gry i prowadzić rozgrywkę",
+      ctaStartTitle: "Rozpocznij tworzenie własnej Familiady",
       ctaMarketplace: "Przeglądaj Gry Społeczności",
+      ctaMarketplaceTitle: "Przeglądaj gotowe zestawy pytań do Familiady",
+      ctaConnectTitle: "Podłącz urządzenie do rozgrywki",
       note: "Dostępny tryb gościa — darmowa Familiada bez rejestracji.",
     },
+    imageViewer: { open: "Powiększ obraz: {title}" },
     about: {
       title: "Familiada Online — darmowy generator pytań i gra na żywo",
       p1: "Nasz system pozwala zorganizować własną grę w stylu Familiada od początku do końca. To idealne rozwiązanie jako atrakcja na wesele, urodziny czy integrację. Generator pytań pozwala na tworzenie własnych baz lub korzystanie z gotowych zestawów.",

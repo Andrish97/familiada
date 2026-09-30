@@ -10,6 +10,7 @@ const LANG_ORDER = ["pl", "en", "uk"];
 
 let currentLang = "pl";
 let translations = null;
+let languageRequestId = 0;
 
 let switcherEl = null; // container w topbarze
 let menuEl = null;     // portal w body
@@ -56,10 +57,15 @@ export async function setUiLang(
   lang,
   { persist = true, updateUrl = true, apply = true } = {}
 ) {
+  const requestId = ++languageRequestId;
   const next = normalizeLang(lang);
   const loader = LANG_LOADERS[next] || LANG_LOADERS.pl;
 
-  translations = await loader();
+  const loaded = await loader();
+  // Przy szybkim PL -> EN -> UK wolniejszy, starszy import nie może
+  // nadpisać języka wybranego później.
+  if (requestId !== languageRequestId) return false;
+  translations = loaded;
   currentLang = translations?.meta?.lang || next;
 
   if (persist) safeSetLocalStorage("uiLang", currentLang);
@@ -80,6 +86,7 @@ export async function setUiLang(
   updateSwitcherLabel();
 
   window.dispatchEvent(new CustomEvent("i18n:lang", { detail: { lang: currentLang } }));
+  return true;
 }
 
 export async function initI18n({ withSwitcher = true, apply = true } = {}) {
@@ -330,13 +337,13 @@ function updateSwitcherLabel() {
 // -----------------------------------------------------------------------------
 
 if (typeof window !== "undefined") {
-  window.addEventListener("pageshow", () => {
+  window.addEventListener("pageshow", async () => {
     try {
       // setUiLang robi:
       // - load właściwego słownika
       // - applyTranslations()
       // - synchronizację URL / localStorage
-      setUiLang(getUiLang(), {
+      await setUiLang(getUiLang(), {
         persist: true,
         updateUrl: true,
         apply: true,

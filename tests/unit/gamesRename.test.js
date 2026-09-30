@@ -167,7 +167,9 @@ test("powroty do listy gier prowadzą na games (login, confirm, konto, manifest)
   assert.match(read("js/pages/login.js"), /baseUrls\.gamesUrl \|\| "games"/);
   assert.match(read("confirm.html"), /data-base-href="games"/);
   assert.match(read("account.html"), /data-base-href="games"/);
-  assert.match(read("index.html"), /location\.replace\('games' \+ location\.search\)/);
+  assert.doesNotMatch(read("index.html"), /sb-.*auth-token/);
+  assert.match(read("js/pages/index.js"), /await getUser\(\)/);
+  assert.match(read("js/pages/index.js"), /location\.replace\(withLangParam\("games"\)\)/);
   assert.match(read("marketplace.html"), /id="btnGoGames"/);
   assert.match(read("polls-hub.html"), /id="btnBackToGames"/);
   assert.match(read("subscriptions.html"), /id="btnBackToGames"/);

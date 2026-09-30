@@ -2,8 +2,7 @@ import { getUser } from "../core/auth.js?v=v2026-09-30T10150";
 import { sb } from "../core/supabase.js?v=v2026-09-30T10150";
 import { initI18n, withLangParam, applyTranslations, getUiLang, t } from "../../translation/translation.js?v=v2026-09-30T10150";
 import { isGuestUser } from "../core/guest-mode.js?v=v2026-09-30T10150";
-import { initRatingSystem } from "../core/rating-system.js?v=v2026-09-30T10150";
-import { icon, iconText, starRating } from "../core/icons.js?v=v2026-09-30T10150";
+import { icon, starRating } from "../core/icons.js?v=v2026-09-30T10150";
 
 async function redirectIfSession() {
   try {
@@ -37,6 +36,7 @@ async function loadRatingStats() {
 
     const avg = Number(stats.avg_stars);
     const count = Number(stats.total_count);
+    if (!Number.isFinite(avg) || !Number.isSafeInteger(count) || avg < 0 || avg > 5 || count < 1) return;
 
     const starsStr = starRating(avg);
 
@@ -50,6 +50,17 @@ async function loadRatingStats() {
   } catch (e) {
     console.warn("[index] loadRatingStats failed:", e);
   }
+}
+
+function updateInternalLinks() {
+  document.querySelectorAll("main a[href]").forEach((link) => {
+    if (!link.dataset.baseHref) link.dataset.baseHref = link.getAttribute("href") || "";
+    const baseHref = link.dataset.baseHref;
+    if (!baseHref || baseHref.startsWith("#")) return;
+    const url = new URL(baseHref, location.href);
+    if (url.origin !== location.origin) return;
+    link.href = withLangParam(url.toString());
+  });
 }
 
 /* ---------- images (lang) ---------- */
@@ -200,10 +211,10 @@ function initImageViewer() {
   const overlay = document.createElement("div");
   overlay.className = "imgv-overlay";
   overlay.innerHTML = `
-    <div class="imgv-panel" role="dialog" aria-modal="true">
+    <div class="imgv-panel" role="dialog" aria-modal="true" aria-labelledby="imgvTitle">
       <div class="imgv-top">
         <div class="imgv-title" id="imgvTitle"></div>
-        <button class="imgv-close btn" type="button" id="imgvClose" aria-label="${t("common.modal.closeLabel")}">${icon("close")}</button>
+        <button class="imgv-close btn" type="button" id="imgvClose" aria-label="${t("common.modal.closeLabel")}" data-i18n-aria-label="common.modal.closeLabel">${icon("close")}</button>
       </div>
       <div class="imgv-stage" id="imgvStage"></div>
     </div>
@@ -215,6 +226,7 @@ function initImageViewer() {
   const titleEl = overlay.querySelector("#imgvTitle");
 
   let currentImg = null;
+  let previousFocus = null;
   let scale = 1, tx = 0, ty = 0;
   let startDist = 0, startScale = 1;
   let pointers = new Map();
@@ -225,6 +237,8 @@ function initImageViewer() {
   const resetZoom = () => { scale = 1; tx = 0; ty = 0; setTransform(); };
 
   const open = (src, title) => {
+    if (overlay.classList.contains("is-open")) return;
+    previousFocus = document.activeElement;
     stage.innerHTML = "";
     titleEl.textContent = title || "";
     const isMobile = window.matchMedia("(max-width: 980px)").matches;
@@ -241,25 +255,55 @@ function initImageViewer() {
       stage.appendChild(img); currentImg = img;
     }
     overlay.classList.add("is-open");
+    overlay.setAttribute("aria-hidden", "false");
     document.body.classList.add("topbar-mobile-lock");
+    closeBtn.focus();
   };
 
   const close = () => {
     overlay.classList.remove("is-open");
+    overlay.setAttribute("aria-hidden", "true");
     document.body.classList.remove("topbar-mobile-lock");
     stage.innerHTML = ""; currentImg = null;
     pointers.clear(); startDist = 0; lastPan = null;
+    previousFocus?.focus?.();
+    previousFocus = null;
   };
 
   closeBtn.addEventListener("click", close);
   overlay.addEventListener("click", (e) => { if (e.target === overlay) close(); });
-  window.addEventListener("keydown", (e) => { if (e.key === "Escape" && overlay.classList.contains("is-open")) close(); });
+  window.addEventListener("keydown", (e) => {
+    if (!overlay.classList.contains("is-open")) return;
+    if (e.key === "Escape") { e.preventDefault(); close(); return; }
+    if (e.key === "Tab") {
+      // W tym prostym dialogu jedynym elementem interaktywnym jest zamknięcie.
+      e.preventDefault();
+      closeBtn.focus();
+    }
+  });
 
-  document.addEventListener("click", (e) => {
-    const shot = e.target.closest(".tile-shot");
+  const openShot = (shot) => {
     if (!shot) return;
     const img = shot.querySelector(".shot-img");
     if (img) open(img.currentSrc || img.src, img.getAttribute("alt") || "");
+  };
+
+  document.querySelectorAll(".tile-shot").forEach((shot) => {
+    const img = shot.querySelector(".shot-img");
+    shot.tabIndex = 0;
+    shot.setAttribute("role", "button");
+    shot.setAttribute("aria-label", t("home.imageViewer.open", { title: img?.alt || "" }));
+  });
+
+  document.addEventListener("click", (e) => {
+    openShot(e.target.closest(".tile-shot"));
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== "Enter" && e.key !== " ") return;
+    const shot = e.target.closest(".tile-shot");
+    if (!shot) return;
+    e.preventDefault();
+    openShot(shot);
   });
 
   function bindMobileZoom(root) {
@@ -307,57 +351,35 @@ function initImageViewer() {
 /* ---------- boot ---------- */
 
 document.addEventListener("DOMContentLoaded", async () => {
-  const redirected = await redirectIfSession();
-  if (redirected) return;
-
-  await initI18n({ withSwitcher: true });
-  document.documentElement.classList.remove('page-loading');
+  try {
+    await initI18n({ withSwitcher: true });
+  } catch (e) {
+    console.error("[index] i18n init failed:", e);
+  } finally {
+    // Awaria sesji lub tłumaczeń nie może zostawić pustej strony.
+    document.documentElement.classList.remove('page-loading');
+  }
   document.querySelector('.topbar')?.classList.add('topbar-ready');
-  initRatingSystem();
   applyTranslations();
-
-  const cta = document.getElementById("ctaStart");
-  if (cta) cta.href = withLangParam("login");
+  updateInternalLinks();
 
   const lang = getUiLang();
   switchLandingImages(lang);
-  window.addEventListener("i18n:lang", (e) => switchLandingImages(e.detail.lang));
+  window.addEventListener("i18n:lang", (e) => {
+    switchLandingImages(e.detail.lang);
+    updateInternalLinks();
+    document.querySelectorAll(".tile-shot").forEach((shot) => {
+      const title = shot.querySelector(".shot-img")?.alt || "";
+      shot.setAttribute("aria-label", t("home.imageViewer.open", { title }));
+    });
+  });
 
   initPipeline();
   initImageViewer();
   initFaqCarets();
 
-  await loadRatingStats();
-
-  // Persistent Teaser Logic (Accepted)
-  const teaser = document.getElementById("quickPollTeaser");
-  if (teaser) {
-    if (localStorage.getItem("fam:teaser_clicked")) {
-      teaser.style.display = "none";
-    } else {
-      teaser.querySelectorAll(".teaser-btn").forEach(btn => {
-        btn.addEventListener("click", function() {
-          const pts = this.dataset.pts;
-          const txt = this.innerText;
-          this.innerHTML = `${txt} (${pts} pkt!)`;
-          this.style.background = "var(--gold)";
-          this.style.color = "#000";
-          localStorage.setItem("fam:teaser_clicked", "1");
-          setTimeout(() => {
-            teaser.style.opacity = "0";
-            teaser.style.transition = "opacity 0.5s ease";
-            setTimeout(() => teaser.style.display = "none", 500);
-          }, 2000);
-        });
-      });
-    }
-  }
-
-  // Console Joke (Accepted)
-  const suchary = [
-    "Dlaczego matematyka jest smutna? Bo ma dużo problemów.",
-    "Co mówi ryba, gdy uderzy w ścianę? Dam!",
-    "Jak się nazywa ser, który nie jest twój? Nacho cheese.",
-    "Co robią policjanci w kinie? Śledzą akcję."
-  ];
+  // Te zapytania są niekrytyczne: landing pozostaje gotowy także przy wolnym
+  // lub niedostępnym backendzie, a każde odrzucenie jest jawnie obsłużone.
+  void loadRatingStats();
+  void redirectIfSession();
 });

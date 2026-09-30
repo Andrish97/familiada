@@ -282,6 +282,11 @@ body.home-body {
   width: 100%;
 }
 
+.tile-shot:focus-visible {
+  outline: 3px solid var(--gold);
+  outline-offset: 3px;
+}
+
 .shot-img {
   width: 100%;
   height: auto;

@@ -138,6 +138,7 @@ const en = {
   home: {
     title: "Familiada Online — live game hosting system",
     nav: {
+      label: "Section navigation",
       about: "About",
       features: "Features",
       forwhom: "Who it's for",
@@ -147,9 +148,13 @@ const en = {
       title: "Free Familiada Online. A real game show on your own equipment.",
       lead: "The best system for playing Familiada: collect answers from participants via a poll, then run the live game. Ideal game for weddings, birthdays and corporate parties. Everything in the browser.",
       ctaStart: "Start creating games and running the live show",
+      ctaStartTitle: "Start creating your own Familiada game",
       ctaMarketplace: "Browse Community Games",
+      ctaMarketplaceTitle: "Browse ready-made Familiada question sets",
+      ctaConnectTitle: "Connect a device to a game",
       note: "Guest mode available — free Familiada without registration.",
     },
+    imageViewer: { open: "Enlarge image: {title}" },
     about: {
       title: "Familiada Online — free question generator and live game",
       p1: "Our system allows you to organize your own Familiada-style game from start to finish. It's an ideal solution as an attraction for weddings, birthdays or team building. The question generator allows you to create your own bases or use ready-made sets.",
