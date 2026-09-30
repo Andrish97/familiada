@@ -884,9 +884,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (!currentUser) {
     // Anonim wraca na Stronę główną; zalogowany użytkownik do „Moich gier”.
     if (els.btnGoGames) {
-      els.btnGoGames.innerHTML =
-        `<span class="only-desktop">${iconText("arrow-left", t("marketplace.nav.backHome"))}</span>` +
-        `<span class="only-mobile">${icon("home", { label: t("marketplace.nav.backHome") })}</span>`;
+      // applyTranslations() jest wołane niżej, więc zmieniamy również klucz;
+      // inaczej dynamiczny napis zostałby zaraz nadpisany przez „Moje gry”.
+      els.btnGoGames.dataset.i18n = "marketplace.nav.backHome";
+      els.btnGoGames.dataset.i18nIcon = "arrow-left";
     }
     if (els.btnManual)  els.btnManual.hidden = true;
   }
