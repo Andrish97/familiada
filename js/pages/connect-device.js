@@ -1,14 +1,14 @@
 // js/pages/connect-device.js
 
-import { sb } from "../core/supabase.js?v=v2026-09-30T10312";
-import { getUser } from "../core/auth.js?v=v2026-09-30T10312";
-import { isGuestUser } from "../core/guest-mode.js?v=v2026-09-30T10312";
-import { isMobileDevice } from "../core/pwa.js?v=v2026-09-30T10312";
-import { initI18n, t, getUiLang, withLangParam } from "../../translation/translation.js?v=v2026-09-30T10312";
-import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-09-30T10312";
-import { alertModal } from "../core/modal.js?v=v2026-09-30T10312";
-import "../core/contact-modal.js?v=v2026-09-30T10312";
-import { icon, iconText } from "../core/icons.js?v=v2026-09-30T10312";
+import { sb } from "../core/supabase.js?v=v2026-09-30T10375";
+import { getUser } from "../core/auth.js?v=v2026-09-30T10375";
+import { isGuestUser } from "../core/guest-mode.js?v=v2026-09-30T10375";
+import { isMobileDevice } from "../core/pwa.js?v=v2026-09-30T10375";
+import { initI18n, t, getUiLang, withLangParam } from "../../translation/translation.js?v=v2026-09-30T10375";
+import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-09-30T10375";
+import { alertModal } from "../core/modal.js?v=v2026-09-30T10375";
+import "../core/contact-modal.js?v=v2026-09-30T10375";
+import { icon, iconText } from "../core/icons.js?v=v2026-09-30T10375";
 
 const btnBack             = document.getElementById("btnBack");
 const btnManual           = document.getElementById("btnManual");
