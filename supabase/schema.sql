@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict C8yCD57HUuIzFApGAvArPKOTSAvpsBJXtlhTabemXl6R22aQZWZu4qhQCDszjhk
+\restrict SKBpSKwiRSAKJa70ctfX6n1YFcwgKbfHviML4OmdwwygpZp9NoX6bzeNtU69so0
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -2017,23 +2017,39 @@ declare
   v_uid uuid := auth.uid();
   v_caller_email text;
   v_other_email text;
-  v_deleted integer := 0;
+  v_subscriptions_deleted integer := 0;
+  v_tasks_deleted integer := 0;
+  v_cooldowns_deleted integer := 0;
 begin
   select lower(email) into v_caller_email from auth.users where id = v_uid;
   select lower(email) into v_other_email from auth.users where id = p_other_user_id;
 
   if v_uid is null
-     or v_caller_email !~ '^test[0-9]+@familiada[.]online$'
-     or v_other_email !~ '^test[0-9]+@familiada[.]online$' then
+     or v_caller_email !~ '^test([1-9]|1[0-3])@familiada[.]online$'
+     or v_other_email !~ '^test([1-9]|1[0-3])@familiada[.]online$' then
     return jsonb_build_object('ok', false, 'error', 'test accounts required');
   end if;
+
+  delete from public.poll_tasks
+  where (owner_id = v_uid and recipient_user_id = p_other_user_id)
+     or (owner_id = p_other_user_id and recipient_user_id = v_uid);
+  get diagnostics v_tasks_deleted = row_count;
 
   delete from public.poll_subscriptions
   where (owner_id = v_uid and subscriber_user_id = p_other_user_id)
      or (owner_id = p_other_user_id and subscriber_user_id = v_uid);
-  get diagnostics v_deleted = row_count;
+  get diagnostics v_subscriptions_deleted = row_count;
 
-  return jsonb_build_object('ok', true, 'deleted', v_deleted);
+  delete from public.email_cooldowns
+  where email_hash in (md5(v_caller_email), md5(v_other_email));
+  get diagnostics v_cooldowns_deleted = row_count;
+
+  return jsonb_build_object(
+    'ok', true,
+    'subscriptions_deleted', v_subscriptions_deleted,
+    'tasks_deleted', v_tasks_deleted,
+    'cooldowns_deleted', v_cooldowns_deleted
+  );
 end;
 $_$;
 
@@ -10473,8 +10489,9 @@ CREATE FUNCTION "public"."polls_hub_tasks_mark_emailed"("p_task_ids" "uuid"[]) R
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public', 'pg_temp'
     AS $$
-declare v_uid uuid := auth.uid();
-declare v_n int := 0;
+declare
+  v_uid uuid := auth.uid();
+  v_n integer := 0;
 begin
   if v_uid is null then
     return jsonb_build_object('ok', false, 'error', 'auth required');
@@ -10485,10 +10502,9 @@ begin
       email_send_count = email_send_count + 1
   where owner_id = v_uid
     and id = any(coalesce(p_task_ids, array[]::uuid[]))
-    and recipient_email is not null;
+    and (recipient_email is not null or recipient_user_id is not null);
 
   get diagnostics v_n = row_count;
-
   return jsonb_build_object('ok', true, 'updated', v_n);
 end;
 $$;
@@ -16209,5 +16225,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict C8yCD57HUuIzFApGAvArPKOTSAvpsBJXtlhTabemXl6R22aQZWZu4qhQCDszjhk
+\unrestrict SKBpSKwiRSAKJa70ctfX6n1YFcwgKbfHviML4OmdwwygpZp9NoX6bzeNtU69so0
 
