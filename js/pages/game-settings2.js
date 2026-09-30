@@ -1651,6 +1651,11 @@ async function main() {
   const { data: game, error: gameErr } = gameResult;
   if (gameErr || !game) {
     if (content) content.innerHTML = `<p style="color:red;padding:20px">${escText(t("gameSettings.loadError"))}${escText(gameErr?.message || t("gameSettings.unknownError"))}</p>`;
+    // "gs:ready": patrz komentarz przy wywołaniu na końcu main() — KAŻDY
+    // wczesny return (łącznie z tym, błędem ładowania gry) musi też zdjąć
+    // spinner Control2 nad iframe'em, inaczej overlay/komunikat błędu
+    // zostaje na zawsze przykryty przez spinner rodzica.
+    if (_isModal) window.parent.postMessage({ type: "gs:ready" }, "*");
     return;
   }
 
@@ -1689,7 +1694,10 @@ async function main() {
     message: t("resourceLock.gameMessage"),
     backHref: "/games",
   });
-  if (!lock.ok) return;
+  if (!lock.ok) {
+    if (_isModal) window.parent.postMessage({ type: "gs:ready" }, "*");
+    return;
+  }
 
   // "Logo ↔ ustawienia gry" (docs/plan-testy-i-poprawki.md, sekcja
   // "Krzyżowe blokady między zasobami") — ta strona nie EDYTUJE logo, tylko
@@ -1706,7 +1714,10 @@ async function main() {
       message: t("resourceLock.logoMessage"),
       backHref: "/games",
     });
-    if (!logoLock.ok) return;
+    if (!logoLock.ok) {
+      if (_isModal) window.parent.postMessage({ type: "gs:ready" }, "*");
+      return;
+    }
   }
 
   lastSavedSettingsRaw = game.settings ?? {};
@@ -1859,6 +1870,14 @@ async function main() {
 
   setActiveCat("teams");
   document.querySelectorAll('[data-skel-step]').forEach(el => el.classList.add('skel-step-ready'));
+  // Zgłoszone: "po otwarciu modala ustawień długo nic nie robi" — Control
+  // (control2/js/app.js's openGsModal) pokazuje spinner NAD tym iframe'em od
+  // razu przy otwarciu, bo do TEGO momentu #gsContentInner jest celowo
+  // niewidoczne (data-skel-step). To jedyny niezawodny sygnał "naprawdę
+  // gotowe" — load iframe'a sam w sobie tego nie gwarantuje (HTML potrafi się
+  // załadować, zanim requireAuth()/guardResourceLock()/guardResourceBusy()
+  // niżej w main() w ogóle ruszą).
+  if (_isModal) window.parent.postMessage({ type: "gs:ready" }, "*");
 
   window.addEventListener("i18n:lang", () => {
     resolveThemeLabels();
@@ -1869,4 +1888,8 @@ async function main() {
 main().catch(err => {
   console.error("[game-settings2]", err);
   if (content) content.innerHTML = `<p style="color:red;padding:20px">${escText(t("gameSettings.errorPrefix"))}${escText(String(err?.message || err))}</p>`;
+  // Nieoczekiwany wyjątek też musi zdjąć spinner Control2 (patrz komentarz
+  // przy pozostałych "gs:ready" w main()) — inaczej błąd zostaje na zawsze
+  // ukryty pod spinnerem rodzica.
+  if (_isModal) window.parent.postMessage({ type: "gs:ready" }, "*");
 });
