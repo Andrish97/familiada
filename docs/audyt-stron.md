@@ -542,3 +542,5 @@ scenariusze pełnej i fałszywej sesji rozdzielono.
 Wyniki na branchu `audyt-index`: jednostkowe 166/166; ograniczony E2E fail
 #36698569570 (6/7, izolacja testu), fail #36699453202 (7/8, ujawnione
 testowanie `/` z produkcji), green #36700622309 (8/8 na kodzie brancha).
+Po przeniesieniu brancha na aktualny `main` ponowny ograniczony przebieg
+#36701637090 również zakończył się wynikiem 8/8.
