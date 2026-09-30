@@ -103,8 +103,30 @@ for (const [type, target] of [['poll_text', 'poll-text'], ['poll_points', 'poll-
 
       await recipientPage.goto(invitation, { waitUntil: 'domcontentloaded' });
       await expect(recipientPage.locator('.poll-go-title')).toContainText(/Zaproszenie|invitation/i);
-      await recipientPage.getByRole('button', { name: /Głosuj|Vote/i }).click();
-      await recipientPage.waitForURL(new RegExp(`/${target}(?:\\?|$)`));
+
+      // Zadanie przypisane do istniejącego konta nie pokazuje tutaj
+      // bezpośredniego przycisku „Głosuj”. Najpierw prowadzi do Centrum
+      // Ankiet, które rozpoznaje token z `?t=` i prosi o potwierdzenie
+      // otwarcia zadania. Wariant email-only nadal może głosować od razu.
+      const voteButton = recipientPage.getByRole('button', { name: /Głosuj|Vote/i });
+      const hubButton = recipientPage.getByRole('button', { name: /Centrum Ankiet|Polls hub/i });
+      const directVote = await voteButton.isVisible().catch(() => false);
+
+      if (directVote) {
+        await Promise.all([
+          recipientPage.waitForURL(new RegExp(`/${target}(?:\\?|$)`)),
+          voteButton.click(),
+        ]);
+      } else {
+        await expect(hubButton).toBeVisible();
+        await hubButton.click();
+        await expect(recipientPage).toHaveURL(/\/polls-hub(?:\?|$)/);
+        await expect(recipientPage.locator('.uni-modal .mSub')).toBeVisible({ timeout: 20_000 });
+        await Promise.all([
+          recipientPage.waitForURL(new RegExp(`/${target}(?:\\?|$)`)),
+          recipientPage.locator('.uni-modal .uni-foot .btn.gold').click(),
+        ]);
+      }
     } finally {
       if (gameId) await deleteGame(ownerPage, gameId).catch(() => {});
       const recipientId = await userId(recipientPage).catch(() => null);
