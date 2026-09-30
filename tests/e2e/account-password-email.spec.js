@@ -33,8 +33,13 @@ test("konto test11: reset hasla przez prawdziwy e-mail i przywrocenie stanu", as
     await expect(page.locator("#status")).toContainText("Wysłano", { timeout: 30_000 });
 
     const email = await waitForEmail({ recipient: PASSWORD_EMAIL, after, subject: /has|reset|odzysk/i });
-    const resetLink = extractHttpLinks(email).find((link) => /\/reset(?:[?#]|$)/.test(link));
-    expect(resetLink, "mail resetu powinien zawierac link /reset").toBeTruthy();
+    // Supabase moze wyslac albo bezposredni /reset?token_hash=..., albo
+    // najpierw swoj /auth/v1/verify?...&redirect_to=/reset. Oba warianty
+    // sa prawidlowym linkiem akcji i koncza na ekranie resetu.
+    const resetLink = extractHttpLinks(email).find((link) =>
+      /\/reset(?:[?#]|$)|\/auth\/v1\/verify|token_hash=|type=recovery/i.test(link)
+    );
+    expect(resetLink, "mail resetu powinien zawierac link odzyskiwania").toBeTruthy();
 
     await page.goto(resetLink, { waitUntil: "domcontentloaded" });
     await expect(page.locator("#form")).toBeVisible({ timeout: 30_000 });
