@@ -1022,15 +1022,16 @@ async function scenarioRoundMultiplier(pages) {
   await control.waitForTimeout(2500);
 }
 
-// Najniżej/najwyżej punktowana PRAWDZIWA odpowiedź danego pytania finałowego
-// (game.finalQuestions[i], patrz restoreDemoGame) + etykieta kafla
-// dopasowania — dokładnie ten sam format co control2/js/ui.js's
-// matchOptions ("<tekst> (<punkty>)").
-function lowestAnswer(q) {
-  return [...q.answers].sort((a, b) => a.fixed_points - b.fixed_points)[0];
-}
-function highestAnswer(q) {
-  return [...q.answers].sort((a, b) => b.fixed_points - a.fixed_points)[0];
+// n-ta w kolejności (1=najwyżej punktowana, 6=najniżej) PRAWDZIWA odpowiedź
+// danego pytania finałowego (game.finalQuestions[i], patrz restoreDemoGame)
+// + etykieta kafla dopasowania — dokładnie ten sam format co
+// control2/js/ui.js's matchOptions ("<tekst> (<punkty>)"). Zgłoszone
+// wprost: "trafienie to nie zawsze najwyższej punktowana odpowiedź" —
+// scenariusz 4 dopasowuje różne miejsca w rankingu (nie zawsze to samo),
+// dokładnie jak w realnej grze, gdzie gracz może trafić w dowolną z 6
+// odpowiedzi na planszy.
+function answerByRank(q, rank) {
+  return [...q.answers].sort((a, b) => b.fixed_points - a.fixed_points)[rank - 1];
 }
 function matchButtonLabel(a) {
   return `${a.text} (${a.fixed_points})`;
@@ -1040,11 +1041,12 @@ function matchButtonLabel(a) {
 // zegarka gracza 1, powtórzenie u gracza 2, odsłonięcie odpowiedzi gracza 1
 // na Display I Host przy starcie tury gracza 2. Ten sam przebieg co
 // control2.spec.js's test "finał — obaj gracze, wszystkie 10 pytań...".
-// Prawdziwe pytania demo (game.finalQuestions, z restoreDemoGame) — przy
-// każdym MATCH dopasowujemy celowo NAJNIŻEJ punktowaną odpowiedź, żeby suma
-// finału (4 trafienia łącznie) została daleko pod finalTarget (domyślne
-// 200) i scenariusz przeszedł przez WSZYSTKIE 10 pytań bez wczesnego
-// wyjścia (to pokazuje scenariusz 5 osobno). =====
+// Prawdziwe pytania demo (game.finalQuestions, z restoreDemoGame) — każdy
+// z czterech MATCH-ów trafia w INNE miejsce rankingu odpowiedzi (2., 3., 4.
+// i 5. miejsce — patrz MATCH_RANKS niżej), nie mechanicznie zawsze to samo,
+// a suma mimo to zostaje daleko pod finalTarget (domyślne 200), więc
+// scenariusz przechodzi przez WSZYSTKIE 10 pytań bez wczesnego wyjścia (to
+// pokazuje scenariusz 5 osobno). =====
 
 async function scenarioFinalFull(pages, { game }) {
   const { control, buzzer, host } = pages;
@@ -1077,14 +1079,19 @@ async function scenarioFinalFull(pages, { game }) {
   // Gracz 2: idx 0 to powtórzenie (osobna gałąź, obsłużona niżej) — reszta
   // 2× MATCH, 2× SKIP.
   const P2_PLAN = [null, true, false, true, false];
+  // Które miejsce w rankingu odpowiedzi (1=najwyżej, 6=najniżej punktowana)
+  // trafia każdy MATCH — celowo różne za każdym razem (2., 3., 4., 5.
+  // miejsce), nie zawsze ta sama pozycja.
+  const P1_MATCH_RANK = [3, null, null, 4, null];
+  const P2_MATCH_RANK = [null, 2, null, 5, null];
 
   // Gracz 1: wpisz zaplanowane odpowiedzi (przy MATCH: dosłownie tekst
-  // prawdziwej, najniżej punktowanej odpowiedzi tego pytania — symuluje
+  // prawdziwej odpowiedzi, którą realnie dopasujemy — symuluje
   // gracza, który faktycznie ją powiedział), uruchom zegarek, poczekaj na
   // NATURALNE wygaśnięcie (15s).
   const p1Inputs = control.locator("#app input[type=text]");
   for (let i = 0; i < 5; i++) {
-    if (P1_PLAN[i] === true) await typePaced(p1Inputs.nth(i), lowestAnswer(fq[i]).text);
+    if (P1_PLAN[i] === true) await typePaced(p1Inputs.nth(i), answerByRank(fq[i], P1_MATCH_RANK[i]).text);
     else if (P1_PLAN[i] === "miss") await typePaced(p1Inputs.nth(i), "Zła odpowiedź");
     // false: nic nie wpisujemy -> AUTO+SKIP, widoczne od razu jako domyślne
     // zaznaczenie na kaflu "Brak odpowiedzi" (control2/js/ui.js's
@@ -1100,7 +1107,7 @@ async function scenarioFinalFull(pages, { game }) {
     // klik by go tylko zaznaczył, zostawiając efektywne dopasowanie na
     // domyślnym AUTO-fallbacku (MISS) -- patrz identyczny, real bug
     // znaleziony i opisany w scenariuszu 5 niżej.
-    if (P1_PLAN[i] === true) await armAndConfirmPaced(control.getByRole("button", { name: matchButtonLabel(lowestAnswer(fq[i])) }));
+    if (P1_PLAN[i] === true) await armAndConfirmPaced(control.getByRole("button", { name: matchButtonLabel(answerByRank(fq[i], P1_MATCH_RANK[i])) }));
     // "Pokaż odpowiedź"/"Pokaż punkty" — kafle odsłaniania, zaznacz ->
     // potwierdź jak odpowiedzi w Rundach (nazwa stała, druga linijka to
     // żywy podgląd).
@@ -1123,7 +1130,7 @@ async function scenarioFinalFull(pages, { game }) {
   await clickPaced(control.getByRole("button", { name: "Powtórzenie" }).first());
   const p2Inputs = control.locator("#app input[type=text]");
   for (let i = 1; i < 5; i++) {
-    if (P2_PLAN[i] === true) await typePaced(p2Inputs.nth(i), lowestAnswer(fq[i]).text);
+    if (P2_PLAN[i] === true) await typePaced(p2Inputs.nth(i), answerByRank(fq[i], P2_MATCH_RANK[i]).text);
     // false: nic nie wpisujemy -> AUTO+SKIP
   }
   await clickPaced(control.getByRole("button", { name: "Rozpocznij odliczanie (20s)" }));
@@ -1137,7 +1144,7 @@ async function scenarioFinalFull(pages, { game }) {
   await clickPaced(control.getByRole("button", { name: "Dalej" }));
 
   for (let i = 0; i < 5; i++) {
-    if (P2_PLAN[i] === true) await armAndConfirmPaced(control.getByRole("button", { name: matchButtonLabel(lowestAnswer(fq[i])) }));
+    if (P2_PLAN[i] === true) await armAndConfirmPaced(control.getByRole("button", { name: matchButtonLabel(answerByRank(fq[i], P2_MATCH_RANK[i])) }));
     await armAndConfirmPaced(control.getByRole("button", { name: "Pokaż odpowiedź" }));
     await armAndConfirmPaced(control.getByRole("button", { name: "Pokaż punkty" }));
     await clickPaced(control.getByRole("button", { name: "Dalej" }));
@@ -1167,7 +1174,7 @@ async function scenarioFinalFull(pages, { game }) {
 async function scenarioFinalEarlyExit(pages, { game }) {
   const { control, buzzer, host } = pages;
   const q0 = game.finalQuestions[0];
-  const top = highestAnswer(q0);
+  const top = answerByRank(q0, 1);
 
   await clickPaced(control.getByRole("button", { name: "Dalej" }), ADMIN_PACE_MS);
   await clickPaced(control.getByRole("button", { name: "Gotowe — przejdź do rozgrywki" }), ADMIN_PACE_MS);
@@ -1482,11 +1489,11 @@ const SCENARIOS = [
     makeGame: (setupPage) => restoreDemoGame(setupPage, {
       pickOrds: FINAL_SETUP_ROUND_ORDS,
       // Prawdziwe pytania demo (nie sztuczne "Pytanie finałowe N") — inny
-      // ord niż FINAL_SETUP_ROUND_ORDS. scenarioFinalFull dopasowuje
-      // celowo NAJNIŻEJ punktowaną odpowiedź przy każdym MATCH (patrz
-      // lowestAnswer() tam), żeby suma finału (4 trafienia) została daleko
-      // pod finalTarget (domyślne 200) — real content, bez ryzyka
-      // przedwczesnego skoku do f_end.
+      // ord niż FINAL_SETUP_ROUND_ORDS. scenarioFinalFull dopasowuje przy
+      // każdym MATCH INNE miejsce w rankingu odpowiedzi (patrz
+      // P1_MATCH_RANK/P2_MATCH_RANK i answerByRank() tam) — nie zawsze to
+      // samo — a suma mimo to zostaje daleko pod finalTarget (domyślne
+      // 200) — real content, bez ryzyka przedwczesnego skoku do f_end.
       finalPickOrds: [9, 10, 11, 12, 13],
       settings: { game: { advanced: { finalMinPoints: 280 } } },
     }),
