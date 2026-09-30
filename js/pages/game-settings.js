@@ -1,24 +1,24 @@
 // js/pages/game-settings.js
-import { requireAuth } from "../core/auth.js?v=v2026-09-30T10253";
-import { t, getUiLang } from "../../translation/translation.js?v=v2026-09-30T10253";
-import { setTopbarAccount } from "../core/topbar-controller.js?v=v2026-09-30T10253";
-import { sb } from "../core/supabase.js?v=v2026-09-30T10253";
-import { loadQuestions } from "../core/game-validate.js?v=v2026-09-30T10253";
-import { loadFont5x7, buildLogoPreviewCanvas } from "../core/logo-preview.js?v=v2026-09-30T10253";
-import { v as cacheBust } from "../core/cache-bust.js?v=v2026-09-30T10253";
-import { alertModal, confirmModal } from "../core/modal.js?v=v2026-09-30T10253";
-import { initUiSelect } from "../core/ui-select.js?v=v2026-09-30T10253";
+import { requireAuth } from "../core/auth.js?v=v2026-09-30T10312";
+import { t, getUiLang } from "../../translation/translation.js?v=v2026-09-30T10312";
+import { setTopbarAccount } from "../core/topbar-controller.js?v=v2026-09-30T10312";
+import { sb } from "../core/supabase.js?v=v2026-09-30T10312";
+import { loadQuestions } from "../core/game-validate.js?v=v2026-09-30T10312";
+import { loadFont5x7, buildLogoPreviewCanvas } from "../core/logo-preview.js?v=v2026-09-30T10312";
+import { v as cacheBust } from "../core/cache-bust.js?v=v2026-09-30T10312";
+import { alertModal, confirmModal } from "../core/modal.js?v=v2026-09-30T10312";
+import { initUiSelect } from "../core/ui-select.js?v=v2026-09-30T10312";
 import {
   loadSfxManifest, getSfxCategories,
   setSfxCustomBlob, clearSfxCustomFile, clearAllSfxCustomFiles, getSfxCustomFiles,
   playSfx, setSfxVolume,
-} from "../core/sfx.js?v=v2026-09-30T10253";
+} from "../core/sfx.js?v=v2026-09-30T10312";
 import {
   uploadGameSound, deleteGameSound, deleteAllGameSounds,
-} from "../core/sfx-cloud.js?v=v2026-09-30T10253";
-import { guardDesktopOnly } from "../core/device-guard.js?v=v2026-09-30T10253";
-import { guardResourceLock } from "../core/resource-lock.js?v=v2026-09-30T10253";
-import { updateChecked, ROW_GONE } from "../core/db-guard.js?v=v2026-09-30T10253";
+} from "../core/sfx-cloud.js?v=v2026-09-30T10312";
+import { guardDesktopOnly } from "../core/device-guard.js?v=v2026-09-30T10312";
+import { guardResourceLock } from "../core/resource-lock.js?v=v2026-09-30T10312";
+import { updateChecked, ROW_GONE } from "../core/db-guard.js?v=v2026-09-30T10312";
 
 guardDesktopOnly();
 
