@@ -1,12 +1,12 @@
-import { sb, SUPABASE_URL } from "../core/supabase.js?v=v2026-09-30T10150";
-import { requireAuth, signOut } from "../core/auth.js?v=v2026-09-30T10150";
-import { isGuestUser, showGuestBlockedOverlay } from "../core/guest-mode.js?v=v2026-09-30T10150";
-import { alertModal, confirmModal } from "../core/modal.js?v=v2026-09-30T10150";
-import { initUiSelect } from "../core/ui-select.js?v=v2026-09-30T10150";
-import { getUiLang, initI18n, t } from "../../translation/translation.js?v=v2026-09-30T10150";
-import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-09-30T10150";
-import "../core/contact-modal.js?v=v2026-09-30T10150";
-import { icon, iconText } from "../core/icons.js?v=v2026-09-30T10150";
+import { sb, SUPABASE_URL } from "../core/supabase.js?v=v2026-09-30T10253";
+import { requireAuth, signOut } from "../core/auth.js?v=v2026-09-30T10253";
+import { isGuestUser, showGuestBlockedOverlay } from "../core/guest-mode.js?v=v2026-09-30T10253";
+import { alertModal, confirmModal } from "../core/modal.js?v=v2026-09-30T10253";
+import { initUiSelect } from "../core/ui-select.js?v=v2026-09-30T10253";
+import { getUiLang, initI18n, t } from "../../translation/translation.js?v=v2026-09-30T10253";
+import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-09-30T10253";
+import "../core/contact-modal.js?v=v2026-09-30T10253";
+import { icon, iconText } from "../core/icons.js?v=v2026-09-30T10253";
 
 const i18nReady = initI18n({ withSwitcher: true }).catch((err) => {
   console.error("[subscriptions] i18n nieaktywny:", err);
