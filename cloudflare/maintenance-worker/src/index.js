@@ -3259,6 +3259,13 @@ async function restoreE2EAccount(request, env) {
   }
 
   const user = matches[0];
+  // Admin updateUser nie zawsze zeruje pola secure email change w auth.users.
+  // Uzywamy tej samej funkcji, ktora zasila przycisk "Anuluj zmiane" w UI,
+  // zanim ustawimy bazowy adres i metadane konta testowego.
+  const clearEmailChangeRes = await supabaseRpc(env, "auth_clear_email_change", { p_user_id: user.id });
+  if (!clearEmailChangeRes.ok) {
+    return json({ ok: false, error: "email_change_cleanup_failed" }, clearEmailChangeRes.status || 500);
+  }
   const currentMeta = user.user_metadata && typeof user.user_metadata === "object" ? user.user_metadata : {};
   const userMeta = {
     ...currentMeta,
