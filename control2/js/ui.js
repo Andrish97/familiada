@@ -1486,19 +1486,22 @@ export function createUI({ root, emit }) {
     // control/js/gameFinal.js's updateSumUI() — operator widział sumę na
     // żywo przez cały mapping; w pierwszym przebiegu control2 to zniknęło
     // całkowicie (Display dostaje FSUMA przez api.final.setSumaFor, ale
-    // sam operator — nic). Ten sam wzorzec statusbara co w Rundach.
+    // sam operator — nic). Ten sam wzorzec statusbara co w Rundach —
+    // zgłoszone: "suma finału jak inne włączniki ma być niżej, nie na
+    // górze" — w Rundach pasek statusu (Bank/Gra) idzie PO siatce, nie
+    // przed nią (patrz renderRounds wyżej); ten ekran miał go odwrotnie.
     const finalStatusBar = h("div", { class: "c2-statusbar" }, [
       h("span", {}, [document.createTextNode(t("control.statusFinalSumLabel")), h("b", { text: String(f.runtime.sum) })]),
     ]);
 
     const body = [
       h("div", { class: "c2-question", text: question?.text || t("control.finalUi.questionLabel", { n: idx + 1 }) }),
-      finalStatusBar,
       h("div", { class: "c2-roundlayout" }, [
         h("div", { class: "c2-roundlayout-main" }, [mappingGrid]),
         h("div", { class: "c2-roundlayout-divider" }),
         h("div", { class: "c2-roundlayout-side" }, [hintBlock(getFinalHint(state))]),
       ]),
+      finalStatusBar,
     ];
 
     // NEXT_QUESTION's `idx` to 1-bazowy numer PYTANIA, z którego schodzimy
