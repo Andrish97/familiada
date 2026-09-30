@@ -9,7 +9,10 @@ export default {
   },
 
   async scheduled(event, env, ctx) {
-    ctx.waitUntil(cleanupExpiredAttachments(env));
+    ctx.waitUntil(Promise.all([
+      cleanupExpiredAttachments(env),
+      cleanupExpiredE2EEmails(env),
+    ]));
   },
 
   async fetch(request, env, ctx) {
@@ -19,6 +22,15 @@ export default {
     const ORIGIN_BASE = "https://familiada.online";
     const ORIGIN_HOST = "familiada.online";
     const ORIGIN_RESOLVE = "andrish97.github.io";
+
+    // Prywatne API testow produkcyjnych. Obslugiwane przed redirectem apex
+    // i maintenance gate, ale zawsze wymaga krotkozyjacego tokenu HMAC.
+    if (
+      (host === "www.familiada.online" || host === "familiada.online") &&
+      url.pathname.startsWith("/_e2e_api/")
+    ) {
+      return handleE2EApi(request, env, url);
+    }
     
     // PUBLIC STATE ENDPOINT (works on every host/subdomain, ignore ?v= cache-busting)
     if (url.pathname === "/maintenance-state.json") {
@@ -2024,6 +2036,19 @@ async function cleanupExpiredAttachments(env) {
   }
 }
 
+async function cleanupExpiredE2EEmails(env) {
+  try {
+    const before = encodeURIComponent(new Date().toISOString());
+    const res = await supabaseRequest(env, `/rest/v1/e2e_emails?expires_at=lt.${before}`, {
+      method: "DELETE",
+      headers: { Prefer: "return=minimal" },
+    });
+    if (!res.ok) console.error("[cron] e2e email cleanup failed:", summarizeSupabaseError(res));
+  } catch (err) {
+    console.error("[cron] cleanupExpiredE2EEmails failed:", err);
+  }
+}
+
 // Kasuje pliki załączników ze Storage (bucket message-attachments) dla
 // podanej listy {storage_path}. Używane PRZED faktycznym usunięciem
 // wiadomości (delete_message / cleanup_trash), żeby pliki nie zostały
@@ -2078,6 +2103,7 @@ function decodeMimeWords(str) {
 
 async function handleInboundEmail(message, env) {
   const from    = message.from || "";
+  const recipient = normalizeE2ERecipient(message.to);
   const subject = decodeMimeWords(message.headers.get("subject") || "");
 
   // Parse body from raw MIME stream
@@ -2098,6 +2124,29 @@ async function handleInboundEmail(message, env) {
   }
   body = body.slice(0, 5000).trim();
   if (bodyHtml) bodyHtml = bodyHtml.slice(0, 200000);
+
+  // Dokladne reguly Cloudflare kieruja test1..test13 tutaj. Te wiadomosci
+  // sa test fixtures: nie trafiaja do skrzynki admina, Telegrama ani na
+  // prywatny forwarding. Pozostale maile zachowuja dotychczasowy przebieg.
+  if (recipient) {
+    const saved = await supabaseRequest(env, "/rest/v1/e2e_emails", {
+      method: "POST",
+      headers: { Prefer: "return=representation" },
+      body: {
+        recipient,
+        from_email: from || null,
+        subject: subject.slice(0, 500),
+        body: body.slice(0, 5000).trim(),
+        body_html: bodyHtml,
+      },
+    });
+    if (!saved.ok) {
+      console.error("[e2e-email] save failed:", summarizeSupabaseError(saved));
+      throw new Error("e2e_email_save_failed");
+    }
+    console.log("[e2e-email] saved for", recipient);
+    return;
+  }
 
   // Forward copy to iCloud (best-effort)
   const forwardTo = env.FORWARD_EMAIL || "";
@@ -3073,6 +3122,12 @@ function fetchFromOrigin(request, url, originBase, originHost, resolveOverride) 
 const TURNSTILE_TEST_SITEKEY = "1x00000000000000000000AA"; // oficjalny, zawsze-przechodzący testowy sitekey Cloudflare
 const E2E_TOKEN_MAX_AGE_MS = 5 * 60 * 1000; // 5 minut
 const E2E_NONCE_TTL_SECONDS = 10 * 60; // 10 minut w KV, żeby pokryć zegar-skew
+const E2E_EMAIL_RE = /^test([1-9]|1[0-3])@familiada\.online$/;
+
+function normalizeE2ERecipient(value) {
+  const recipient = String(value || "").trim().toLowerCase();
+  return E2E_EMAIL_RE.test(recipient) ? recipient : null;
+}
 
 function hexToBytes(hex) {
   const bytes = new Uint8Array(hex.length / 2);
@@ -3126,6 +3181,132 @@ async function verifyE2EToken(token, secret) {
   if (age < 0 || age > E2E_TOKEN_MAX_AGE_MS) return null;
 
   return payload;
+}
+
+async function authorizeE2EApi(request, env) {
+  const secret = String(env.E2E_BYPASS_SECRET || "");
+  if (!secret) return false;
+  const token = request.headers.get("X-E2E-Token");
+  return !!(await verifyE2EToken(token, secret));
+}
+
+async function handleE2EApi(request, env, url) {
+  if (!(await authorizeE2EApi(request, env))) {
+    return json({ ok: false, error: "unauthorized" }, 401);
+  }
+
+  if (url.pathname === "/_e2e_api/emails" && request.method === "GET") {
+    const recipient = normalizeE2ERecipient(url.searchParams.get("recipient"));
+    const afterRaw = String(url.searchParams.get("after") || "");
+    const afterMs = Date.parse(afterRaw);
+    if (!recipient || !Number.isFinite(afterMs)) {
+      return json({ ok: false, error: "invalid_query" }, 400);
+    }
+    // Test nie powinien moc wylistowac calej historii skrzynki po wycieku
+    // pojedynczego tokenu. Maksymalne okno odpowiada TTL tabeli.
+    if (afterMs < Date.now() - 25 * 60 * 60 * 1000 || afterMs > Date.now() + 60_000) {
+      return json({ ok: false, error: "invalid_after" }, 400);
+    }
+
+    const path = "/rest/v1/e2e_emails" +
+      `?select=id,recipient,from_email,subject,body,body_html,received_at` +
+      `&recipient=eq.${encodeURIComponent(recipient)}` +
+      `&received_at=gte.${encodeURIComponent(new Date(afterMs).toISOString())}` +
+      `&order=received_at.asc&limit=20`;
+    const res = await supabaseRequest(env, path);
+    if (!res.ok) return json({ ok: false, error: "mailbox_read_failed" }, res.status || 500);
+    return json({ ok: true, emails: Array.isArray(res.data) ? res.data : [] });
+  }
+
+  if (url.pathname === "/_e2e_api/emails" && request.method === "DELETE") {
+    const recipient = normalizeE2ERecipient(url.searchParams.get("recipient"));
+    if (!recipient) return json({ ok: false, error: "invalid_recipient" }, 400);
+    const res = await supabaseRequest(
+      env,
+      `/rest/v1/e2e_emails?recipient=eq.${encodeURIComponent(recipient)}`,
+      { method: "DELETE", headers: { Prefer: "return=minimal" } }
+    );
+    if (!res.ok) return json({ ok: false, error: "mailbox_clear_failed" }, res.status || 500);
+    return json({ ok: true });
+  }
+
+  if (url.pathname === "/_e2e_api/accounts/restore" && request.method === "POST") {
+    return restoreE2EAccount(request, env);
+  }
+
+  return json({ ok: false, error: "not_found" }, 404);
+}
+
+async function restoreE2EAccount(request, env) {
+  const body = await readJson(request);
+  const account = String(body?.account || "").toLowerCase();
+  const password = String(body?.password || "");
+  const config = account === "test11"
+    ? { targetEmail: "test11@familiada.online", candidates: ["test11@familiada.online"], username: null }
+    : account === "test12"
+      ? { targetEmail: "test12@familiada.online", candidates: ["test12@familiada.online", "test13@familiada.online"], username: "test12" }
+      : null;
+  if (!config || password.length < 8 || password.length > 200) {
+    return json({ ok: false, error: "invalid_restore_request" }, 400);
+  }
+
+  const usersRes = await supabaseRequest(env, "/auth/v1/admin/users?page=1&per_page=1000");
+  if (!usersRes.ok) return json({ ok: false, error: "users_read_failed" }, usersRes.status || 500);
+  const users = Array.isArray(usersRes.data?.users) ? usersRes.data.users : [];
+  const matches = users.filter((user) => config.candidates.includes(String(user?.email || "").toLowerCase()));
+  if (matches.length !== 1) {
+    return json({ ok: false, error: "test_account_not_unique", matches: matches.length }, 409);
+  }
+
+  const user = matches[0];
+  const currentMeta = user.user_metadata && typeof user.user_metadata === "object" ? user.user_metadata : {};
+  const userMeta = {
+    ...currentMeta,
+    familiada_email_change_pending: "",
+    familiada_email_change_intent: "",
+  };
+  if (config.username) userMeta.username = config.username;
+
+  const updateRes = await supabaseRequest(env, `/auth/v1/admin/users/${encodeURIComponent(user.id)}`, {
+    method: "PUT",
+    body: {
+      email: config.targetEmail,
+      password,
+      email_confirm: true,
+      user_metadata: userMeta,
+    },
+  });
+  if (!updateRes.ok) return json({ ok: false, error: "auth_restore_failed" }, updateRes.status || 500);
+
+  const profilePatch = { email: config.targetEmail };
+  if (config.username) profilePatch.username = config.username;
+  const profileRes = await supabaseRequest(env, `/rest/v1/profiles?id=eq.${encodeURIComponent(user.id)}`, {
+    method: "PATCH",
+    headers: { Prefer: "return=minimal" },
+    body: profilePatch,
+  });
+  if (!profileRes.ok) return json({ ok: false, error: "profile_restore_failed" }, profileRes.status || 500);
+
+  const cooldownRes = await supabaseRequest(env, `/rest/v1/user_cooldowns?user_id=eq.${encodeURIComponent(user.id)}`, {
+    method: "DELETE",
+    headers: { Prefer: "return=minimal" },
+  });
+  if (!cooldownRes.ok) return json({ ok: false, error: "cooldown_cleanup_failed" }, cooldownRes.status || 500);
+
+  // Reset hasla jest uruchamiany przed zalogowaniem, dlatego jego cooldown
+  // jest hashowany po adresie w osobnej tabeli email_cooldowns.
+  if (account === "test11") {
+    const emailCooldownRes = await supabaseRpc(env, "cooldown_email_release", {
+      p_email: config.targetEmail,
+      p_action_key: "auth:reset_password",
+      p_max_age_seconds: 172800,
+    });
+    if (!emailCooldownRes.ok) {
+      return json({ ok: false, error: "email_cooldown_cleanup_failed" }, emailCooldownRes.status || 500);
+    }
+  }
+
+  return json({ ok: true, account, user_id: user.id, email: config.targetEmail });
 }
 
 async function handleE2ELoginBypass(request, env, url, originBase, originHost, resolveOverride) {

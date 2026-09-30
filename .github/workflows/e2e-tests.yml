@@ -92,6 +92,8 @@ jobs:
             files: >-
               e2e/account-deletion.spec.js e2e/guest-migration.spec.js
               e2e/static-assets-routing.spec.js e2e/games-rename.spec.js
+          - name: konto-email
+            files: e2e/account-password-email.spec.js
           - name: control2
             files: e2e/control2.spec.js
 
