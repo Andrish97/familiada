@@ -374,7 +374,9 @@ function closeDetail({ updateUrl = true } = {}) {
   detailGame = null;
   // Przywróć URL → /marketplace
   if (updateUrl && location.pathname.startsWith("/marketplace/game/")) {
-    history.pushState(null, "", marketplaceUrl());
+    // Zamknięcie nie może dopisywać kolejnego wpisu: sekwencja
+    // otwórz → zamknij → otwórz → Wstecz wracałaby do starego detail URL.
+    history.replaceState(null, "", marketplaceUrl());
   }
   lastDetailTrigger?.focus?.();
   lastDetailTrigger = null;
