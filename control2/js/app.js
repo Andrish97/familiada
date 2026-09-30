@@ -6,20 +6,20 @@
 // engine.js) — ale i tak przechodzi przez assertTransition(), żeby tabela
 // stanów była mechanizmem wszędzie, nie tylko wewnątrz silnika reguł gry.
 
-import { guardDesktopOnly } from "../../js/core/device-guard.js?v=v2026-09-30T14045";
-import { guardResourceLock, guardResourceBusy } from "../../js/core/resource-lock.js?v=v2026-09-30T14045";
-import { initI18n, getUiLang, t } from "../../translation/translation.js?v=v2026-09-30T14045";
-import { requireAuth } from "../../js/core/auth.js?v=v2026-09-30T14045";
-import { setTopbarAccount } from "../../js/core/topbar-controller.js?v=v2026-09-30T14045";
-import { sb } from "../../js/core/supabase.js?v=v2026-09-30T14045";
-import { loadQuestions, loadAnswers } from "../../js/core/game-validate.js?v=v2026-09-30T14045";
-import { loadSfxManifest, initSfx, setCurrentGameId, unlockAudio, applySfxGameSettings, loadSfxFromCloud, playSfx, getSfxDuration } from "../../js/core/sfx.js?v=v2026-09-30T14045";
-import { listGameSounds } from "../../js/core/sfx-cloud.js?v=v2026-09-30T14045";
-import { assertTransition } from "../../shared/gameStateMachine.js?v=v2026-09-30T14045";
-import { confirmModal } from "../../js/core/modal.js?v=v2026-09-30T14045";
-import { DEFAULT_SETTINGS } from "../../shared/gameStateShape.js?v=v2026-09-30T14045";
-import { rt } from "../../js/core/realtime.js?v=v2026-09-30T14045";
-import { doorbellTopic } from "../../js/core/game-state-doorbell.js?v=v2026-09-30T14045";
+import { guardDesktopOnly } from "../../js/core/device-guard.js?v=v2026-09-30T19215";
+import { guardResourceLock, guardResourceBusy } from "../../js/core/resource-lock.js?v=v2026-09-30T19215";
+import { initI18n, getUiLang, t } from "../../translation/translation.js?v=v2026-09-30T19215";
+import { requireAuth } from "../../js/core/auth.js?v=v2026-09-30T19215";
+import { setTopbarAccount } from "../../js/core/topbar-controller.js?v=v2026-09-30T19215";
+import { sb } from "../../js/core/supabase.js?v=v2026-09-30T19215";
+import { loadQuestions, loadAnswers } from "../../js/core/game-validate.js?v=v2026-09-30T19215";
+import { loadSfxManifest, initSfx, setCurrentGameId, unlockAudio, applySfxGameSettings, loadSfxFromCloud, playSfx, getSfxDuration } from "../../js/core/sfx.js?v=v2026-09-30T19215";
+import { listGameSounds } from "../../js/core/sfx-cloud.js?v=v2026-09-30T19215";
+import { assertTransition } from "../../shared/gameStateMachine.js?v=v2026-09-30T19215";
+import { confirmModal } from "../../js/core/modal.js?v=v2026-09-30T19215";
+import { DEFAULT_SETTINGS } from "../../shared/gameStateShape.js?v=v2026-09-30T19215";
+import { rt } from "../../js/core/realtime.js?v=v2026-09-30T19215";
+import { doorbellTopic } from "../../js/core/game-state-doorbell.js?v=v2026-09-30T19215";
 
 function qrImgSrc(url) {
   const u = encodeURIComponent(String(url ?? ""));
@@ -95,15 +95,15 @@ function applyGameSettingsToState(settings, state) {
   }
 }
 
-import { createStore } from "./store.js?v=v2026-09-30T14045";
-import { createEngine } from "./engine.js?v=v2026-09-30T14045";
-import { createActionGate } from "./actionGate.js?v=v2026-09-30T14045";
-import { createDevices } from "./devices.js?v=v2026-09-30T14045";
-import { createPresence } from "./presence.js?v=v2026-09-30T14045";
-import { createSoundReactor } from "./soundReactor.js?v=v2026-09-30T14045";
-import { createUI } from "./ui.js?v=v2026-09-30T14045";
-import { createShareDevice } from "./shareDevice.js?v=v2026-09-30T14045";
-import { icon } from "../../js/core/icons.js?v=v2026-09-30T14045";
+import { createStore } from "./store.js?v=v2026-09-30T19215";
+import { createEngine } from "./engine.js?v=v2026-09-30T19215";
+import { createActionGate } from "./actionGate.js?v=v2026-09-30T19215";
+import { createDevices } from "./devices.js?v=v2026-09-30T19215";
+import { createPresence } from "./presence.js?v=v2026-09-30T19215";
+import { createSoundReactor } from "./soundReactor.js?v=v2026-09-30T19215";
+import { createUI } from "./ui.js?v=v2026-09-30T19215";
+import { createShareDevice } from "./shareDevice.js?v=v2026-09-30T19215";
+import { icon } from "../../js/core/icons.js?v=v2026-09-30T19215";
 
 guardDesktopOnly();
 
@@ -525,13 +525,24 @@ async function main() {
     syncMuteButton();
   }
 
-  // Samo renderCurrent() maluje cyfry timera3 tylko RAZ, w momencie zmiany
-  // stanu (START_TIMER3) — bez czegoś, co odświeża widok co sekundę, kafel
+  // Samo renderCurrent() maluje cyfry timera3/finału tylko RAZ, w momencie
+  // zmiany stanu — bez czegoś, co odświeża widok co ułamek sekundy, kafel
   // pokazywałby tę samą liczbę aż do wygaśnięcia. Odświeżamy tylko wtedy,
   // gdy faktycznie coś odlicza — reszta czasu bez zbędnej pracy.
+  //
+  // ui.tickTimers(), NIE pełny ui.render()/renderCurrent(): zgłoszone
+  // wprost — "licznik i przyciski cały czas migają" oraz "wpisywanie nie ma
+  // blokować licznika". Pełny render() tutaj przebudowywałby CAŁY ekran 4x/s
+  // (root.innerHTML="" + od nowa), co niszczyło fokus/kursor w polach
+  // wpisywania finału (renderFinalEntry tworzy świeże <input> przy każdym
+  // renderze) i restartowało CSS-animacje wszystkich innych, niezwiązanych
+  // przycisków na ekranie — stąd wrażenie ciągłego migania całego panelu, nie
+  // tylko samych cyfr. tickTimers() podmienia WYŁĄCZNIE treść cyfr (patrz
+  // ui.js), więc reszta DOM (w tym fokus operatora w polu tekstowym) zostaje
+  // nietknięta przez cały czas trwania odliczania.
   setInterval(() => {
     if (store.state.rounds?.timer3?.running || store.state.final?.runtime?.timer?.running) {
-      ui.render(store.state, renderCtx());
+      ui.tickTimers(store.state);
     }
   }, 250);
 
@@ -638,7 +649,14 @@ async function main() {
   // zostaje BLACK przez cały etap ustawień, sekcja 3a pkt 5 planu).
   const gsOverlayEl = document.getElementById("gsOverlay");
   const gsFrameEl = document.getElementById("gsFrame");
+  const gsSpinnerEl = document.getElementById("gsSpinner");
   function openGsModal() {
+    // Spinner widoczny OD RAZU (zgłoszone: "po otwarciu modala ustawień
+    // długo nic nie robi") — iframe sam wczyta moduł i przejdzie przez
+    // requireAuth()+RPC blokad, zanim cokolwiek narysuje; bez tego operator
+    // patrzył na pusty prostokąt przez cały ten czas. Chowany dopiero na
+    // "gs:ready" niżej.
+    gsSpinnerEl?.classList.remove("hidden");
     if (gsFrameEl) gsFrameEl.src = `/game-settings2?id=${encodeURIComponent(gameId)}&modal=1`;
     gsOverlayEl?.classList.remove("hidden");
   }
@@ -664,6 +682,7 @@ async function main() {
   gsOverlayEl?.addEventListener("click", (ev) => { if (ev.target === gsOverlayEl) requestGsModalClose(); });
   window.addEventListener("message", (ev) => {
     if (ev.data?.type === "gs:close" && ev.source === gsFrameEl?.contentWindow) onGsModalClose();
+    if (ev.data?.type === "gs:ready" && ev.source === gsFrameEl?.contentWindow) gsSpinnerEl?.classList.add("hidden");
   });
 
   document.getElementById("btnBack")?.addEventListener("click", async () => {

@@ -110,32 +110,44 @@ test("NEXT_QUESTION NIE do f_p2_start (zwykłe pytanie w bloku): 0, nawet jeśli
   assert.equal(ms, 0);
 });
 
-test("END_ROUND: gate to WYŁĄCZNIE czas 'reveal', nie suma reveal+round_transition — niezależnie od docelowego kroku", async () => {
+// Zgłoszone na żywo: "dźwięk końca rundy gra i przed i po odsłanianiu, a
+// przycisk >rozpocznij rundę< może przerwać odtwarzanie" i "dźwięk końca
+// rundy i dźwięk rozpoczęcia finału się nakładają" — END_ROUND blokuje
+// teraz CAŁĄ sekwencję reveal+round_transition (suma), nie tylko pierwszy
+// człon, żeby żadna kolejna akcja (Rozpocznij rundę/Rozpocznij finał) nie
+// mogła wystartować i przerwać jeszcze grającego round_transition.
+test("END_ROUND: gate to SUMA reveal+round_transition — żadna kolejna akcja nie przerwie jeszcze grającego round_transition", async () => {
   const gate = makeGate({ reveal: 0.9, round_transition: 5 });
   const next = row({ step: "r_roundStart", sound_cue_key: "round_transition", sound_cue_seq: 1 });
   const ms = await gate.computeGateMs("END_ROUND", row(), next);
-  assert.equal(ms, 900, "round_transition gra POTEM, nad już interaktywnym ekranem — nie ma czekać na nie");
+  assert.equal(ms, 900 + 5000);
 });
 
-test("END_ROUND -> f_start: ta sama formuła (dur('reveal')) — display2/js/render.js dzieli DOKŁADNIE tę liczbę na animOut+animIn", async () => {
+test("END_ROUND -> f_start: ta sama formuła (suma reveal+round_transition), niezależnie od docelowego kroku", async () => {
   const gate = makeGate({ reveal: 0.9, round_transition: 5 });
   const next = row({ step: "f_start", sound_cue_key: "round_transition", sound_cue_seq: 1 });
   const ms = await gate.computeGateMs("END_ROUND", row(), next);
-  assert.equal(ms, 900);
+  assert.equal(ms, 900 + 5000);
 });
 
-test("NEXT_AFTER_REVEAL: ta sama formuła co END_ROUND", async () => {
+// NEXT_AFTER_REVEAL nie gra już żadnego dźwięku (engine.js) — zgłoszone:
+// "dźwięk przejścia rundy gra i przed i po odsłanianiu" — round_transition
+// już zagrało RAZ w END_ROUND, zanim weszliśmy w R8; R8 samo (REVEAL_LEFT)
+// gra tylko "answer_correct" per klik, więc tu nie ma już SPECIAL wpisu —
+// domyślna ścieżka (sound_cue_seq się nie zmienia) poprawnie daje 0.
+test("NEXT_AFTER_REVEAL: nie gra już round_transition (usunięty duplikat) — domyślna ścieżka, sound_cue_seq bez zmian => 0", async () => {
   const gate = makeGate({ reveal: 0.4 });
+  const prev = row({ sound_cue_key: "round_transition", sound_cue_seq: 1 });
   const next = row({ sound_cue_key: "round_transition", sound_cue_seq: 1 });
-  const ms = await gate.computeGateMs("NEXT_AFTER_REVEAL", row(), next);
-  assert.equal(ms, 400);
+  const ms = await gate.computeGateMs("NEXT_AFTER_REVEAL", prev, next);
+  assert.equal(ms, 0);
 });
 
-test("START_FINAL: gate to WYŁĄCZNIE czas 'final_theme', nie final_theme+reveal", async () => {
+test("START_FINAL: gate to SUMA final_theme+reveal — żadna kolejna akcja nie przerwie jeszcze grającego reveal", async () => {
   const gate = makeGate({ final_theme: 1.6, reveal: 9 });
   const next = row({ sound_cue_key: "final_theme", sound_cue_seq: 1 });
   const ms = await gate.computeGateMs("START_FINAL", row(), next);
-  assert.equal(ms, 1600);
+  assert.equal(ms, 1600 + 9000);
 });
 
 test("FINISH_FINAL: synced(round_transition,reveal) + sequential show_intro W CAŁOŚCI", async () => {

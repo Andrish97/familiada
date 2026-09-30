@@ -12,9 +12,9 @@
   <link rel="preconnect" href="https://supabase.familiada.online">
   <title data-i18n="control.title">Familiada — panel sterowania</title>
 
-  <link rel="icon" href="/favicon.ico?v=v2026-09-30T14045"/>
-  <link rel="stylesheet" href="/css/base.css?v=v2026-09-30T14045"/>
-  <link rel="stylesheet" href="/control/control.css?v=v2026-09-30T14045"/>
+  <link rel="icon" href="/favicon.ico?v=v2026-09-30T19215"/>
+  <link rel="stylesheet" href="/css/base.css?v=v2026-09-30T19215"/>
+  <link rel="stylesheet" href="/control/control.css?v=v2026-09-30T19215"/>
   <script>
     document.documentElement.classList.add('page-loading');
     try {
@@ -31,12 +31,12 @@
   <style>html[data-mobile-guard]{overflow:hidden;touch-action:none}html[data-mobile-guard] body{visibility:hidden}</style>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-  <script src="js/core/security-warning.js?v=v2026-09-30T14045" defer></script>
+  <script src="js/core/security-warning.js?v=v2026-09-30T19215" defer></script>
   <script type="module">
-    import { initI18n } from "/translation/translation.js?v=v2026-09-30T14045";
+    import { initI18n } from "/translation/translation.js?v=v2026-09-30T19215";
     await initI18n({ withSwitcher: true });
     document.documentElement.classList.remove('page-loading');
-    import("/control2/js/app.js?v=v2026-09-30T14045");
+    import("/control2/js/app.js?v=v2026-09-30T19215");
   </script>
 
   <style>
@@ -261,6 +261,28 @@
        nie dzieje" — cursor:wait dokłada to samo na poziomie kursora myszy. */
     @keyframes c2-btn-busy-pulse { 0%, 100% { opacity:.55 } 50% { opacity:1 } }
     .c2-btn-busy:disabled { animation:c2-btn-busy-pulse 1.1s ease-in-out infinite; cursor:wait; }
+
+    /* Zgłoszone: "po otwarciu modala ustawień długo nic nie robi" — modal
+       otwiera pusty iframe (game-settings2.html), który sam dopiero
+       ładuje moduł JS i przechodzi przez requireAuth()+kilka RPC blokad
+       zasobów, zanim cokolwiek narysuje (#gsContentInner ma
+       data-skel-step — celowo niewidoczne do tego momentu). Bez żadnej
+       wskazówki operator widział ciemny, pusty prostokąt i nie wiedział,
+       czy modal w ogóle zadziałał. Spinner nad iframe'em, widoczny od
+       razu przy otwarciu, chowany dopiero gdy iframe faktycznie odeśle
+       "gs:ready" (game-settings2.js, tuż po odsłonięciu skeletonu) — ten
+       sam komunikat co wyżej: "trwa coś", nie "nic się nie dzieje". */
+    @keyframes gsSpinner-spin { to { transform:rotate(360deg) } }
+    .gsSpinner {
+      position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+      background:var(--surface, #111827); z-index:1; transition:opacity .2s ease;
+    }
+    .gsSpinner.hidden { opacity:0; pointer-events:none; }
+    .gsSpinner::after {
+      content:""; width:40px; height:40px; border-radius:50%;
+      border:3px solid rgba(255,234,166,.25); border-top-color:var(--gold);
+      animation:gsSpinner-spin .8s linear infinite;
+    }
 
     /* ---- Siatka 3x5 (jednostka = 1/3 wiersza, "1,5" = pół wiersza) —
        współdzielona przez Rundy-odsłanianie i Finał-odsłanianie. Wewnętrznie
@@ -492,6 +514,7 @@
   <div class="gsOverlay hidden" id="gsOverlay">
     <div class="gsModal" role="dialog" aria-modal="true">
       <iframe id="gsFrame" class="gsFrame" src="" title="Ustawienia rozgrywki"></iframe>
+      <div class="gsSpinner" id="gsSpinner" aria-hidden="true"></div>
     </div>
   </div>
 
@@ -568,6 +591,6 @@
       <button class="btn-contact-footer" type="button" data-contact-modal data-i18n="common.contactBtn">Kontakt</button>
     </div>
   </main>
-  <script type="module" src="js/core/contact-modal.js?v=v2026-09-30T14045"></script>
+  <script type="module" src="js/core/contact-modal.js?v=v2026-09-30T19215"></script>
 </body>
 </html>

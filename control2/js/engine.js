@@ -17,7 +17,7 @@
 //
 // Zero importów przeglądarkowych — testowalne w gołym Node.
 
-import { assertTransition } from "../../shared/gameStateMachine.js?v=v2026-09-30T14045";
+import { assertTransition } from "../../shared/gameStateMachine.js?v=v2026-09-30T19215";
 
 const STRIKE_LIMIT = 3;
 const TIMER_SECONDS = { P1: 15, P2: 20 };
@@ -454,11 +454,18 @@ const REDUCERS = {
 
   // ---- R8->R9: operator potwierdza koniec rundy PO ręcznym odsłonięciu
   // wszystkich pozostałych odpowiedzi (patrz komentarz w REVEAL_LEFT) ----
+  // BEZ soundCueKey: zgłoszone wprost — "dźwięk przejścia rundy gra i przed
+  // i po odsłanianiu" — round_transition+reveal już zagrało RAZ w
+  // END_ROUND (dokładnie w momencie, gdy punkty z banku trafiają do wyniku,
+  // patrz plan sekcja 2a "R6-R7"), zanim jeszcze weszliśmy w R8. Odkrywanie
+  // reszty (R8) jest czysto pokazowe (REVEAL_LEFT gra "answer_correct" per
+  // klik) — koniec R8 NIE ma własnego dźwięku "końca rundy"; kolejny
+  // round_transition zagra dopiero przy START_ROUND następnej rundy.
   async NEXT_AFTER_REVEAL(state) {
     const r = state.rounds;
     if (state.phase !== "REVEAL") return null;
     if (r.revealed.length < r.answers.length) return null;
-    return { ...finalizeRound(state), soundCueKey: "round_transition" };
+    return finalizeRound(state);
   },
 
   // ---- R10: ekran końca gry bez finału ----
