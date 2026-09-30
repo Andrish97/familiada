@@ -211,7 +211,7 @@ async function main() {
     const logoLock = await guardResourceBusy({
       resourceType: "logo",
       resourceId: gameLogoId,
-      message: t("resourceLock.logoMessage"),
+      message: t("resourceLock.logoInUseMessage"),
       backHref: "/games",
     });
     if (!logoLock.ok) return;
