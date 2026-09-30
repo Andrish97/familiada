@@ -536,7 +536,9 @@ main{
 .inp {
     padding: 10px 12px;
     border: 1px solid var(--line2);
-    background: rgba(255,255,255,.06);
+    --btn-tint: rgba(255,255,255,.06);
+  background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, #050914); /* kryjące: css/base.css */
+
     color: #fff;
     font-weight: 900;
     outline: 0;

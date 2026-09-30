@@ -118,12 +118,22 @@ export function setViewAll(state) {
   state.view = VIEW.ALL;
   state.folderId = null;
   state.tagIds = [];
+  syncFolderUrl(state);
 }
 
 export function setViewFolder(state, folderId) {
   state.view = VIEW.FOLDER;
   state.folderId = folderId || null;
   state.tagIds = [];
+  syncFolderUrl(state);
+}
+
+function syncFolderUrl(state) {
+  if (!state?._syncFolderUrl || typeof location === "undefined") return;
+  const url = new URL(location.href);
+  if (state.view === VIEW.FOLDER && state.folderId) url.searchParams.set("folder", state.folderId);
+  else url.searchParams.delete("folder");
+  if (url.href !== location.href) history.pushState(history.state, "", url);
 }
 
 export function setViewTags(state, tagIds) {
@@ -156,11 +166,13 @@ export function restoreBrowseLocation(state) {
   if (b?.view === VIEW.FOLDER && b.folderId) {
     state.view = VIEW.FOLDER;
     state.folderId = b.folderId;
+    syncFolderUrl(state);
     return;
   }
 
   state.view = VIEW.ALL;
   state.folderId = null;
+  syncFolderUrl(state);
 }
 
 /* ===== Selekcja ===== */

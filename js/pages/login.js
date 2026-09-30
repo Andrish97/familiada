@@ -5,7 +5,7 @@ import {
   signInGuest,
   getEmailStatus,
   sendSignupConfirmation,
-  convertGuestToRegistered,
+  convertGuestToRegisteredEmailOnly,
   discardCurrentGuestAccount,
   resetPassword,
   resolveLoginToEmail,
@@ -18,14 +18,14 @@ import {
   clearGuestLocalMarker,
   initPasswordToggles,
   resetPasswordToggles,
-} from "../core/auth.js?v=v2026-09-26T16124";
-import { isGuestUser } from "../core/guest-mode.js?v=v2026-09-26T16124";
-import { alertModal, confirmModal } from "../core/modal.js?v=v2026-09-26T16124";
+} from "../core/auth.js?v=v2026-09-30T14045";
+import { isGuestUser } from "../core/guest-mode.js?v=v2026-09-30T14045";
+import { alertModal, confirmModal } from "../core/modal.js?v=v2026-09-30T14045";
 
-import { sb } from "../core/supabase.js?v=v2026-09-26T16124";
-import { cooldownEmailGet, cooldownEmailReserve } from "../core/cooldown.js?v=v2026-09-26T16124";
-import { initI18n, t, getUiLang, withLangParam, applyTranslations } from "../../translation/translation.js?v=v2026-09-26T16124";
-import "../core/contact-modal.js?v=v2026-09-26T16124";
+import { sb } from "../core/supabase.js?v=v2026-09-30T14045";
+import { cooldownEmailGet, cooldownEmailReserve } from "../core/cooldown.js?v=v2026-09-30T14045";
+import { initI18n, t, getUiLang, withLangParam, applyTranslations } from "../../translation/translation.js?v=v2026-09-30T14045";
+import "../core/contact-modal.js?v=v2026-09-30T14045";
 
 const $ = (s) => document.querySelector(s);
 const email = $("#email");
@@ -736,8 +736,14 @@ async function saveUsername() {
       .select("id, username")
       .single();
 
-
-    if (res.error) throw res.error;
+    // Sprawdzenie w ensureUsernameAvailable() nie jest atomowe z tym update'em —
+    // przy realnym wyścigu o tę samą nazwę łapie to dopiero unique index
+    // (profiles_username_ci_uq), więc zamiast surowego błędu Postgresa pokaż
+    // ten sam komunikat co przy zwykłej kolizji.
+    if (res.error) {
+      if (res.error.code === "23505") throw new Error(t("index.errUsernameTaken"));
+      throw res.error;
+    }
 
     const meta = await sb().auth.updateUser({ data: { username } });
 
@@ -802,7 +808,12 @@ document.addEventListener("DOMContentLoaded", async () => {
   usernameForm?.addEventListener("submit", async (e) => {
     e.preventDefault();
     if (isBusy) return;
-    await saveUsername();
+    setBusy(true);
+    try {
+      await saveUsername();
+    } finally {
+      setBusy(false);
+    }
   });
 
   const u = await getUser();
@@ -924,14 +935,29 @@ document.addEventListener("DOMContentLoaded", async () => {
               return setErr(niceAuthError(e));
             }
 
+            // Hasło NIE trafia do auth.users teraz — leży zahaszowane w
+            // guest_migration_staging aż do potwierdzenia maila
+            // (guest_finalize_migration() w confirm.js). Inaczej is_guest
+            // flipuje na false natychmiast (guest_convert_account), zanim user
+            // w ogóle kliknął link — porzucona konwersja zostaje wtedy na
+            // zawsze jako martwe konto: nie gość (czyszczenie po TTL pomija
+            // is_guest=false), nie zarejestrowany (mail nigdy niepotwierdzony).
+            // Ten sam bug był już raz naprawiony dla /account, patrz komentarz
+            // przy convertGuestToRegisteredEmailOnly w auth.js.
+            const { data: stageData, error: stageErr } = await sb().rpc("guest_stage_migration", {
+              p_password: pwd,
+            });
+            if (stageErr) throw stageErr;
+            if (!stageData?.ok) throw new Error(stageData?.error || t("index.statusError"));
+
             let captchaToken = await getCaptchaTokenOrPrompt();
             setStatus(t("index.statusRegistering"));
             try {
-              await convertGuestToRegistered(mail, pwd, getUiLang(), captchaToken);
+              await convertGuestToRegisteredEmailOnly(mail, getUiLang(), captchaToken);
             } catch (e) {
               if (isCaptchaError(e)) {
                 captchaToken = await getCaptchaTokenOrPrompt();
-                await convertGuestToRegistered(mail, pwd, getUiLang(), captchaToken);
+                await convertGuestToRegisteredEmailOnly(mail, getUiLang(), captchaToken);
               } else {
                 throw e;
               }

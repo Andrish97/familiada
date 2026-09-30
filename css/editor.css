@@ -91,6 +91,7 @@ body.editor-body .wrap {
 }
 
 .listShell {
+  --under: #1b1f29; /* podłoże kryjących przycisków (css/base.css) */
     margin-top: 10px;
     border-radius: 18px;
     border: 1px solid var(--line);
@@ -124,7 +125,9 @@ body.editor-body .wrap {
     position: relative;
     border-radius: 18px;
     border: 1px solid var(--line);
-    background: rgba(255,255,255,.05);
+    --btn-tint: rgba(255,255,255,.05);
+  background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, #050914); /* kryjące: css/base.css */
+
     padding: 12px;
     padding-right: 56px;
     cursor: pointer;
@@ -137,7 +140,8 @@ body.editor-body .wrap {
 
 .qcard.active {
     border-color: rgba(255,234,166,.35);
-    background: rgba(255,234,166,.08)
+    --btn-tint: rgba(255,234,166,.08);
+  background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, #050914); /* kryjące: css/base.css */
 }
 
 .qord {
@@ -172,7 +176,9 @@ body.editor-body .wrap {
     height: 30px;
     border-radius: 10px;
     border: 1px solid var(--line2);
-    background: rgba(255,255,255,.08);
+    --btn-tint: rgba(255,255,255,.08);
+  background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, #050914); /* kryjące: css/base.css */
+
     color: rgba(255,255,255,.9);
     font-weight: 1000;
     display: grid;
@@ -231,31 +237,6 @@ body.editor-body .wrap {
     margin-bottom: 12px
 }
 
-.lbl {
-    opacity: .8;
-    font-size: 12px;
-    letter-spacing: .12em;
-    text-transform: uppercase;
-    margin-bottom: 8px
-}
-
-.ta {
-    width: 100%;
-    min-height: 90px;
-    padding: 10px 12px;
-    border-radius: 16px;
-    border: 1px solid var(--line2);
-    background: rgba(0,0,0,.25);
-    color: #fff;
-    outline: 0;
-    resize: vertical;
-    font-weight: 700
-}
-
-.aPts:focus,.aText:focus,.ta:focus {
-    border-color: rgba(255,234,166,.35)
-}
-
 .answersBlock {
     margin-top: 10px;
     display: grid;
@@ -269,130 +250,25 @@ body.editor-body .wrap {
     min-height: 0;
 }
 
-.alistShell {
-    border-radius: 18px;
-    border: 1px solid var(--line);
-    background: rgba(255,255,255,.03);
-    padding: 8px;
-    min-height: 0;
-    flex: 1;
-    overflow: auto;
-}
-
-.ahead {
-    grid-template-columns: minmax(0,1fr) 110px 40px;
-    font-size: 11px;
-    opacity: .75;
-    letter-spacing: .12em;
-    text-transform: uppercase;
-    padding: 0 6px
-}
-
-.ahead,.alist,.arow {
-    display: grid;
-    gap: 10px
-}
-
-.alist {
-    margin-top: 0;
-    padding: 0;
-    grid-template-columns: 1fr;
-}
-
-.arow {
-    grid-template-columns: minmax(0,1fr) 110px 40px;
-    align-items: center;
-    border-radius: 18px;
-    border: 1px solid var(--line);
-    background: var(--card2);
-    padding: 10px;
-    min-height: 60px
-}
-
-
-.aPts,.aText {
-    width: 100%;
-    min-width: 0;
-    padding: 10px 12px;
-    border-radius: 14px;
-    border: 1px solid var(--line2);
-    background: rgba(255,255,255,.06);
-    color: #fff;
-    outline: 0;
-    font-weight: 900
-}
-
-.aPts {
-    text-align: center
-}
-
-.aDel {
-    width: 40px;
-    height: 40px;
-    border-radius: 14px;
-    border: 1px solid rgba(255,120,120,.35);
-    background: rgba(255,120,120,.12);
-    color: #fff;
-    font-weight: 1000;
-    cursor: pointer
-}
-
-.editor.no-points .ahead,.editor.no-points .arow {
-    grid-template-columns: minmax(0,1fr) 40px
-}
-
-.editor.no-points .aPts {
-    display: none
-}
-
 .editor.only-questions .answersBlock {
     display: none!important
 }
 
-.addTile,.remainBox {
+.addTile {
     display: flex;
     gap: 10px
-}
-
-.remainBox {
-    align-items: baseline;
-    padding: 10px 12px;
-    border-radius: 999px;
-    border: 1px solid rgba(255,234,166,.28);
-    background: rgba(255,234,166,.1);
-    color: var(--gold);
-    font-weight: 1000;
-    letter-spacing: .12em;
-    text-transform: uppercase
-}
-
-.remainBox.ok {
-    border-color: rgba(120,255,120,.35);
-    background: rgba(120,255,120,.1)
-}
-
-.remainBox.over {
-    border-color: rgba(255,120,120,.4);
-    background: rgba(255,120,120,.1)
 }
 
 .addTile {
     border-radius: 18px;
     border: 1px dashed rgba(255,255,255,.2);
-    background: rgba(255,255,255,.04);
+    --btn-tint: rgba(255,255,255,.04);
+  background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, #050914); /* kryjące: css/base.css */
+
     padding: 12px;
     align-items: center;
     cursor: pointer;
     min-height: 60px
-}
-
-.arow.addTile {
-    min-height: 60px;
-    color: #fff;
-}
-
-.arow.addTile > * {
-    color: inherit;
 }
 
 .addTile:hover {
@@ -404,7 +280,9 @@ body.editor-body .wrap {
     height: 34px;
     border-radius: 14px;
     border: 1px solid rgba(255,234,166,.28);
-    background: rgba(255,234,166,.1);
+    --btn-tint: rgba(255,234,166,.1);
+  background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, #050914); /* kryjące: css/base.css */
+
     color: var(--gold);
     display: grid;
     place-items: center
@@ -445,30 +323,31 @@ body.editor-body .wrap {
     opacity: 1;
 }
 
-.arow.addTile:disabled,
-.arow.addTile[aria-disabled="true"] {
-    color: rgba(255,255,255,.92);
-}
-
 .qcard:not(.addTile).good {
     border-color: rgba(120,255,120,.45);
-    background: rgba(120,255,120,.1)
+    --btn-tint: rgba(120,255,120,.1);
+  background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, #050914); /* kryjące: css/base.css */
 }
 
 .qcard:not(.addTile).bad {
     border-color: rgba(255,120,120,.45);
-    background: rgba(255,120,120,.1)
+    --btn-tint: rgba(255,120,120,.1);
+  background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, #050914); /* kryjące: css/base.css */
 }
 
 .qcard.active.good {
     border-color: rgba(120,255,120,.55);
-    background: rgba(120,255,120,.14);
+    --btn-tint: rgba(120,255,120,.14);
+  background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, #050914); /* kryjące: css/base.css */
+
     box-shadow: 0 24px 60px rgba(0,0,0,.45),0 0 0 2px rgba(120,255,120,.14)
 }
 
 .qcard.active.bad {
     border-color: rgba(255,120,120,.55);
-    background: rgba(255,120,120,.14);
+    --btn-tint: rgba(255,120,120,.14);
+  background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, #050914); /* kryjące: css/base.css */
+
     box-shadow: 0 24px 60px rgba(0,0,0,.45),0 0 0 2px rgba(255,120,120,.14)
 }
 
@@ -592,32 +471,6 @@ body.editor-body .wrap {
         border-radius: 12px
     }
 
-    .ahead,.arow {
-        grid-template-columns: minmax(0,1fr) 72px 36px;
-        gap: 8px;
-        padding: 0 4px
-    }
-
-    .arow {
-        padding: 8px;
-        border-radius: 16px;
-        min-height: 72px
-    }
-
-    .aPts,.aText {
-        padding: 8px 10px;
-        border-radius: 12px
-    }
-
-    .aDel {
-        width: 36px;
-        height: 36px;
-        border-radius: 12px
-    }
-
-    .editor.no-points .ahead,.editor.no-points .arow {
-        grid-template-columns: minmax(0,1fr) 36px
-    }
 }
 
 @media (max-width:1100px) {
@@ -674,7 +527,7 @@ body.editor-body .wrap {
     }
 
     body.editor-body .listShell,
-    body.editor-body .alistShell {
+    body.editor-body .qf-listShell {
         overflow: auto;
     }
 
@@ -712,7 +565,7 @@ body.editor-body .wrap {
     }
 
     body.editor-body .listShell,
-    body.editor-body .alistShell {
+    body.editor-body .qf-listShell {
         overflow: visible;
         flex: 0 0 auto;
     }

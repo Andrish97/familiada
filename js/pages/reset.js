@@ -1,9 +1,9 @@
-import { sb } from "../core/supabase.js?v=v2026-09-26T16124";
-import { updateUserLanguage, validatePassword, niceAuthError, getPasswordRulesText, discardCurrentGuestAccount, initPasswordToggles } from "../core/auth.js?v=v2026-09-26T16124";
-import { initI18n, t, getUiLang, withLangParam } from "../../translation/translation.js?v=v2026-09-26T16124";
-import { confirmModal } from "../core/modal.js?v=v2026-09-26T16124";
-import { isGuestUser } from "../core/guest-mode.js?v=v2026-09-26T16124";
-import "../core/contact-modal.js?v=v2026-09-26T16124";
+import { sb } from "../core/supabase.js?v=v2026-09-30T14045";
+import { updateUserLanguage, validatePassword, niceAuthError, getPasswordRulesText, discardCurrentGuestAccount, initPasswordToggles } from "../core/auth.js?v=v2026-09-30T14045";
+import { initI18n, t, getUiLang, withLangParam } from "../../translation/translation.js?v=v2026-09-30T14045";
+import { confirmModal } from "../core/modal.js?v=v2026-09-30T14045";
+import { isGuestUser } from "../core/guest-mode.js?v=v2026-09-30T14045";
+import "../core/contact-modal.js?v=v2026-09-30T14045";
 
 const status = document.getElementById("status");
 const err = document.getElementById("err");
@@ -135,7 +135,10 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   document.documentElement.classList.remove('page-loading');
 
+  let saveBusy = false;
+
   save.addEventListener("click", async () => {
+    if (saveBusy) return;
     setErr("");
 
     const a = p1.value;
@@ -148,6 +151,8 @@ document.addEventListener("DOMContentLoaded", async () => {
       return setErr(niceAuthError(e));
     }
 
+    saveBusy = true;
+    save.disabled = true;
     try{
       setStatus(t("reset.statusSaving"));
       const { error } = await sb().auth.updateUser({ password: a });
@@ -165,6 +170,9 @@ document.addEventListener("DOMContentLoaded", async () => {
       console.error(e);
       setStatus(t("reset.saveFailed"));
       setErr(niceAuthError(e));
+    } finally {
+      saveBusy = false;
+      save.disabled = false;
     }
   });
 

@@ -13,8 +13,22 @@
 // — kreator sam w sobie jest przedmiotem testu, więc seedujemy tylko to, co
 // potrzebne do konkretnego scenariusza.
 
+//
+// Od audytu strony (docs/audyt-stron.md) strona /editor i cały front-end są
+// serwowane z plików TEGO repo (helpers/branch-code.js), a backend jest
+// prawdziwy -- workflow odpalony na branchu testuje poprawki przed
+// wdrożeniem. Regresje z audytu: sekcja "editor: audyt" na końcu pliku.
+
 const { test, expect } = require("@playwright/test");
-const { loginAsTestUser } = require("./helpers/login");
+const { loginAsTestUser, testAccountUsername } = require("./helpers/login");
+const { serveBranchCode } = require("./helpers/branch-code");
+
+// service worker obsłużyłby żądania z własnego cache z pominięciem page.route
+test.use({ serviceWorkers: "block" });
+
+test.beforeEach(async ({ context }) => {
+  await serveBranchCode(context, { pages: ["editor", "base-explorer"] });
+});
 
 /* ================= Seed / DB helpers (bezpośrednio przez window.__sbClient) ================= */
 
@@ -103,7 +117,15 @@ async function openEditor(page, gameId) {
 }
 
 const qCard = (page, i) => page.locator("#qList .qcard:not(.addTile)").nth(i);
-const aRow = (page, i) => page.locator("#aList .arow:not(.addTile)").nth(i);
+const aRow = (page, i) => page.locator("#aList .qf-row:not(.qf-add)").nth(i);
+const aRows = (page) => page.locator("#aList .qf-row:not(.qf-add)");
+
+// Import to jedno RPC (migracja 276): po sukcesie modal się zamyka, a w
+// stopce jest komunikat.
+async function expectImportDone(page) {
+  await expect(page.locator("#txtImportOverlay")).toBeHidden({ timeout: 20000 });
+  await expect(page.locator("#msg")).toHaveText("Import zakończony.");
+}
 
 // trg_assert_game_answers_minmax (schema.sql) blokuje UPDATE games.status na
 // poll_open/ready dla poll_text/poll_points, jeśli gra ma <10 pytań albo (dla
@@ -173,7 +195,7 @@ test("edytor: import tekstowy zawsze zastępuje (wipeuje) istniejącą zawartoś
     await page.locator("#txtTa").fill("#Nowe pytanie\n1 Nowa odpowiedź /10");
     await page.locator("#btnTxtImport").click();
     await page.locator(".uni-foot .btn.gold").click(); // potwierdzenie importu
-    await expect(page.locator("#txtMsg")).toHaveText("Zaimportowano (zastąpiono zawartość).", { timeout: 20000 });
+    await expectImportDone(page);
 
     const questions = await getQuestionsRows(page, gameId);
     expect(questions, "po imporcie powinno zostać dokładnie jedno (nowe) pytanie").toHaveLength(1);
@@ -228,7 +250,7 @@ test("edytor: import okalecza odpowiedź zaczynającą się od cyfry (myli ją z
     await page.locator("#txtTa").fill("#Test\n5 sztuk\nCoś tam");
     await page.locator("#btnTxtImport").click();
     await page.locator(".uni-foot .btn.gold").click();
-    await expect(page.locator("#txtMsg")).toHaveText("Zaimportowano (zastąpiono zawartość).", { timeout: 20000 });
+    await expectImportDone(page);
 
     const questions = await getQuestionsRows(page, gameId);
     const answers = await getAnswersRows(page, questions[0].id);
@@ -252,7 +274,7 @@ test("edytor: import dwuznacznie tnie tekst na ostatnim '/', nawet gdy to częś
     await page.locator("#txtTa").fill("#Test\nFormuła 1/2");
     await page.locator("#btnTxtImport").click();
     await page.locator(".uni-foot .btn.gold").click();
-    await expect(page.locator("#txtMsg")).toHaveText("Zaimportowano (zastąpiono zawartość).", { timeout: 20000 });
+    await expectImportDone(page);
 
     const questions = await getQuestionsRows(page, gameId);
     const answers = await getAnswersRows(page, questions[0].id);
@@ -275,7 +297,7 @@ test("edytor: import przycina ujemne punkty do 0 i zaokrągla w dół dziesiętn
     await page.locator("#txtTa").fill("#Test\nOdp A /-5\nOdp B /3.7");
     await page.locator("#btnTxtImport").click();
     await page.locator(".uni-foot .btn.gold").click();
-    await expect(page.locator("#txtMsg")).toHaveText("Zaimportowano (zastąpiono zawartość).", { timeout: 20000 });
+    await expectImportDone(page);
 
     const questions = await getQuestionsRows(page, gameId);
     const answers = await getAnswersRows(page, questions[0].id);
@@ -300,7 +322,7 @@ test("edytor: import po cichu ucina odpowiedzi powyżej limitu 6 na pytanie", as
     await page.locator("#txtTa").fill(lines);
     await page.locator("#btnTxtImport").click();
     await page.locator(".uni-foot .btn.gold").click();
-    await expect(page.locator("#txtMsg")).toHaveText("Zaimportowano (zastąpiono zawartość).", { timeout: 20000 });
+    await expectImportDone(page);
 
     const questions = await getQuestionsRows(page, gameId);
     const answers = await getAnswersRows(page, questions[0].id);
@@ -322,7 +344,7 @@ test("edytor: import ignoruje punkty z tekstu dla typu poll_points (zawsze zapis
     await page.locator("#txtTa").fill("#Test\nOdp /50");
     await page.locator("#btnTxtImport").click();
     await page.locator(".uni-foot .btn.gold").click();
-    await expect(page.locator("#txtMsg")).toHaveText("Zaimportowano (zastąpiono zawartość).", { timeout: 20000 });
+    await expectImportDone(page);
 
     const questions = await getQuestionsRows(page, gameId);
     const answers = await getAnswersRows(page, questions[0].id);
@@ -346,16 +368,16 @@ test("edytor: suma punktów >100 dla 'prepared' to tylko wizualne ostrzeżenie, 
     await openEditor(page, gameId);
     await expect(aRow(page, 0)).toBeVisible({ timeout: 15000 });
 
-    await aRow(page, 0).locator(".aPts").fill("80");
-    await aRow(page, 0).locator(".aPts").blur();
+    await aRow(page, 0).locator(".qf-pts").fill("80");
+    await aRow(page, 0).locator(".qf-pts").blur();
     await expect(page.locator("#msg")).toHaveText("Zapisano.", { timeout: 10000 });
 
-    await aRow(page, 1).locator(".aPts").fill("50");
-    await aRow(page, 1).locator(".aPts").blur();
+    await aRow(page, 1).locator(".qf-pts").fill("50");
+    await aRow(page, 1).locator(".qf-pts").blur();
     await expect(page.locator("#msg")).toHaveText("Zapisano.", { timeout: 10000 });
 
-    await expect(page.locator(".remainBox")).toHaveClass(/over/, { timeout: 5000 });
-    await expect(page.locator(".remainBox b")).toHaveText("130/100");
+    await expect(page.locator(".qf-sum")).toHaveClass(/over/, { timeout: 5000 });
+    await expect(page.locator(".qf-sum b")).toHaveText("130/100");
 
     const answers = await getAnswersRows(page, qId);
     const sum = answers.reduce((s, a) => s + a.fixed_points, 0);
@@ -379,15 +401,15 @@ test("edytor: nowa odpowiedź zajmuje zwolniony numer (ord) po usunięciu ze śr
     await addAnswerApi(page, qId, 4, "A4", 0);
 
     await openEditor(page, gameId);
-    await expect(page.locator("#aList .arow:not(.addTile)")).toHaveCount(4, { timeout: 15000 });
+    await expect(page.locator("#aList .qf-row:not(.qf-add)")).toHaveCount(4, { timeout: 15000 });
 
     // usuń odpowiedź o ord=2 ("A2")
-    await aRow(page, 1).locator(".aDel").click();
+    await aRow(page, 1).locator(".qf-del").click();
     await page.locator(".uni-foot .btn.gold").click();
-    await expect(page.locator("#aList .arow:not(.addTile)")).toHaveCount(3, { timeout: 10000 });
+    await expect(page.locator("#aList .qf-row:not(.qf-add)")).toHaveCount(3, { timeout: 10000 });
 
-    await page.locator("#aList .arow.addTile").click();
-    await expect(page.locator("#aList .arow:not(.addTile)")).toHaveCount(4, { timeout: 10000 });
+    await page.locator("#aList .qf-add").click();
+    await expect(page.locator("#aList .qf-row:not(.qf-add)")).toHaveCount(4, { timeout: 10000 });
 
     const answers = await getAnswersRows(page, qId);
     const newOne = answers.find((a) => a.id !== a2Id && a.id !== toDelete && !["A1", "A3", "A4"].includes(a.text));
@@ -415,7 +437,7 @@ test("edytor: usunięcie pytania ze środka przenumerowuje resztę, aktywne pyta
 
     await qCard(page, 2).click(); // Q3
     await expect(page.locator("#qText")).toHaveValue("Q3", { timeout: 10000 });
-    await expect(aRow(page, 0).locator(".aText")).toHaveValue("A3text");
+    await expect(aRow(page, 0).locator(".qf-text")).toHaveValue("A3text");
 
     await qCard(page, 1).locator(".x").click(); // usuń Q2 (środek)
     await page.locator(".uni-foot .btn.gold").click();
@@ -423,7 +445,7 @@ test("edytor: usunięcie pytania ze środka przenumerowuje resztę, aktywne pyta
 
     // Q3 dalej aktywne, treść/odpowiedzi bez zmian mimo zmiany numeru porządkowego
     await expect(page.locator("#qText")).toHaveValue("Q3");
-    await expect(aRow(page, 0).locator(".aText")).toHaveValue("A3text");
+    await expect(aRow(page, 0).locator(".qf-text")).toHaveValue("A3text");
 
     const questions = await getQuestionsRows(page, gameId);
     const q3 = questions.find((q) => q.id === q3Id);
@@ -471,6 +493,11 @@ test("edytor: wejście na edytor gdy ankieta jest otwarta (poll_open) -> natychm
     }, { gameId, key: game.share_key_poll });
 
     await page.goto(`https://www.familiada.online/editor?id=${gameId}`, { waitUntil: "domcontentloaded" });
+    // powód z game_validate zostaje na ekranie do kliknięcia OK (audyt:
+    // wcześniej przekierowanie szło od razu i komunikat znikał nieprzeczytany)
+    await expect(page.locator(".uni-modal .mSub")).toContainText(/ankiet/i, { timeout: 15000 });
+    await expect(page).toHaveURL(/\/editor/);
+    await page.locator(".uni-foot .btn.gold").click();
     await page.waitForURL(/\/games/, { timeout: 15000 });
   } finally {
     await deleteGame(page, gameId);
@@ -614,12 +641,13 @@ test("edytor: Warstwa 2 — zapis pytania usuniętego z pominięciem blokady ko�
   }
 });
 
-/* ================= Q: dwie karty — otwarcie ankiety w B nie blokuje edycji w A ================= */
-// canEnterEdit() sprawdzany jest RAZ w boot() — żadna kolejna akcja (blur na
-// polu) nie re-waliduje aktualnego game.status. Otwarcie ankiety w drugiej
-// karcie (czyli realnie: przez inną osobę/urządzenie) NIE blokuje dalszej
-// edycji pytań w karcie, która była otwarta wcześniej jako draft.
-test("edytor: dwie karty — otwarcie ankiety w karcie B nie blokuje dalszej edycji w karcie A", async ({ page, context }) => {
+/* ================= Q: dwie karty — otwarcie ankiety w B blokuje zapis w A (Warstwa 2) ================= */
+// Uprawnienie do edycji (game_validate().edit, Warstwa 1) sprawdzane jest RAZ
+// w boot() — edytor otwarty wcześniej jako szkic nie wie, że ankietę właśnie
+// otwarto w innej karcie/urządzeniu. Dawniej zapisywał dalej (luka "Warstwa 2
+// zero" z docs/plan-testy-i-poprawki.md); od migracji 274 baza sama odrzuca
+// zapis treści gry z otwartą ankietą, a edytor pokazuje overlay z powodem.
+test("edytor: dwie karty — otwarcie ankiety w karcie B blokuje zapis w karcie A (baza odrzuca)", async ({ page, context }) => {
   test.setTimeout(60_000);
   await loginAsTestUser(page, context);
 
@@ -647,17 +675,18 @@ test("edytor: dwie karty — otwarcie ankiety w karcie B nie blokuje dalszej edy
     const gameAfter = await getGameRow(pageB, gameId);
     expect(gameAfter.status, "sanity: ankieta faktycznie otwarta w tle").toBe("poll_open");
 
-    // Karta A dalej "myśli", że jest draft — edytuje bez żadnego ostrzeżenia
-    // (tekst musi mieścić się w limicie 17 znaków pola odpowiedzi — inaczej
-    // sam zostanie ucięty przez app, co nie ma nic wspólnego z tym, co ten
-    // test sprawdza).
-    await expect(aRow(pageA, 0).locator(".aText")).toBeVisible({ timeout: 10000 });
-    await aRow(pageA, 0).locator(".aText").fill("Zmieniona w A!");
-    await aRow(pageA, 0).locator(".aText").blur();
-    await expect(pageA.locator("#msg")).toHaveText("Zapisano.", { timeout: 10000 });
+    // Karta A dalej "myśli", że jest draft — próbuje zapisać (tekst mieści
+    // się w limicie 17 znaków pola odpowiedzi).
+    const before = (await getAnswersRows(pageA, firstQId))[0].text;
+    await expect(aRow(pageA, 0).locator(".qf-text")).toBeVisible({ timeout: 10000 });
+    await aRow(pageA, 0).locator(".qf-text").fill("Zmieniona w A!");
+    await aRow(pageA, 0).locator(".qf-text").blur();
+    // ten sam pełnoekranowy overlay co blokada zasobu, z powodem z bazy
+    await expect(pageA.locator("#resourceLockGuard")).toBeVisible({ timeout: 10000 });
+    await expect(pageA.locator("#resourceLockGuardMsg")).toContainText("Ankieta jest otwarta");
 
     const answers = await getAnswersRows(pageA, firstQId);
-    expect(answers[0].text, "edycja w A powinna się realnie zapisać mimo otwartej w B ankiety — brak re-walidacji stanu per-akcja").toBe("Zmieniona w A!");
+    expect(answers[0].text, "baza musi odrzucić zapis treści gry z otwartą ankietą").toBe(before);
 
     await pageB.close();
   } finally {
@@ -681,7 +710,7 @@ test("edytor: import do gry typu poll_text nie tworzy żadnych odpowiedzi (allow
     await page.locator("#txtTa").fill("#Test\n1 Odpowiedź A\n2 Odpowiedź B");
     await page.locator("#btnTxtImport").click();
     await page.locator(".uni-foot .btn.gold").click();
-    await expect(page.locator("#txtMsg")).toHaveText("Zaimportowano (zastąpiono zawartość).", { timeout: 20000 });
+    await expectImportDone(page);
 
     const questions = await getQuestionsRows(page, gameId);
     expect(questions).toHaveLength(1);
@@ -731,5 +760,595 @@ test("edytor: nazwa gry dłuższa niż 80 znaków zostaje ucięta do 80", async 
     expect(game.name).toBe("X".repeat(80));
   } finally {
     await deleteGame(page, gameId);
+  }
+});
+
+/* =====================================================================
+   editor: audyt (docs/audyt-stron.md) -- regresje poprawionych błędów
+   ===================================================================== */
+
+async function newUserContext(browser, username, contextOptions = {}) {
+  const ctx = await browser.newContext({ serviceWorkers: "block", ...contextOptions });
+  await serveBranchCode(ctx, { pages: ["editor", "base-explorer"] });
+  const pg = await ctx.newPage();
+  await loginAsTestUser(pg, ctx, { username });
+  return { ctx, page: pg };
+}
+
+// Spowalnia wybrane żądania do Supabase (prawdziwy backend, tylko opóźnienie),
+// żeby wyścigi "zapis w toku + kolejna akcja" były powtarzalne.
+async function delayRequests(page, { path, method, ms, match = () => true }) {
+  await page.route(`**/rest/v1/${path}*`, async (route) => {
+    const req = route.request();
+    if (req.method() === method && match(req.url())) await new Promise((r) => setTimeout(r, ms));
+    await route.fallback();
+  });
+}
+
+const isPatch = (path) => (res) => res.url().includes(`/rest/v1/${path}`) && res.request().method() === "PATCH";
+
+async function seedPrepared(page, gameId, questions) {
+  const ids = [];
+  for (let i = 0; i < questions.length; i++) {
+    const [text, answers = []] = questions[i];
+    const qId = await addQuestionApi(page, gameId, i + 1, text);
+    const aIds = [];
+    for (let j = 0; j < answers.length; j++) {
+      aIds.push(await addAnswerApi(page, qId, j + 1, answers[j][0], answers[j][1] ?? 0));
+    }
+    ids.push({ qId, aIds });
+  }
+  return ids;
+}
+
+test.describe("editor: audyt -- pisanie i zapisy", () => {
+
+  test("pauza po spacji w treści pytania nie zjada spacji (autozapis nie nadpisuje pola)", async ({ page, context }) => {
+    test.setTimeout(60_000);
+    await loginAsTestUser(page, context);
+    const gameId = await createGame(page, { type: "prepared" });
+    try {
+      const [{ qId }] = await seedPrepared(page, gameId, [["Start"]]);
+      await openEditor(page, gameId);
+      const qText = page.locator("#qText");
+      await expect(qText).toHaveValue("Start", { timeout: 15000 });
+
+      await qText.click();
+      await page.keyboard.press("Control+A");
+      const saved = page.waitForResponse(isPatch("questions"));
+      await page.keyboard.type("Ala ");
+      await saved; // autozapis po pauzie -- wcześniej wpisywał "Ala" (trim) z powrotem do pola
+      await page.waitForTimeout(300);
+      await page.keyboard.type("ma kota");
+      await expect(qText).toHaveValue("Ala ma kota");
+
+      await qText.blur();
+      await expect(page.locator("#msg")).toHaveText("Zapisano.", { timeout: 10000 });
+      const qs = await getQuestionsRows(page, gameId);
+      expect(qs.find((q) => q.id === qId).text).toBe("Ala ma kota");
+    } finally {
+      await deleteGame(page, gameId);
+    }
+  });
+
+  test("przełączenie pytania w trakcie zapisu nie przenosi tekstu do następnego pytania", async ({ page, context }) => {
+    test.setTimeout(60_000);
+    await loginAsTestUser(page, context);
+    const gameId = await createGame(page, { type: "poll_text" });
+    try {
+      const [{ qId: q1 }, { qId: q2 }] = await seedPrepared(page, gameId, [["Q1"], ["Q2"]]);
+      await openEditor(page, gameId);
+      const qText = page.locator("#qText");
+      await expect(qText).toHaveValue("Q1", { timeout: 15000 });
+
+      await delayRequests(page, { path: "questions", method: "PATCH", ms: 1500 });
+      await qText.fill("Nowy tekst Q1");
+      await qCard(page, 1).click(); // blur -> wolny zapis Q1 w tle
+      await expect(qText).toHaveValue("Q2");
+      await page.waitForTimeout(2500); // zapis Q1 już wrócił
+      await expect(qText, "spóźniony zapis Q1 nie może wpisać swojego tekstu do pola Q2").toHaveValue("Q2");
+
+      // wejście i wyjście z pola nie może zapisać tekstu Q1 do Q2
+      await qText.click();
+      await qText.blur();
+      await page.waitForTimeout(2500);
+
+      const qs = await getQuestionsRows(page, gameId);
+      expect(qs.find((q) => q.id === q1).text).toBe("Nowy tekst Q1");
+      expect(qs.find((q) => q.id === q2).text).toBe("Q2");
+    } finally {
+      await deleteGame(page, gameId);
+    }
+  });
+
+  test("zapis punktów nie przebudowuje listy: kursor zostaje w następnym polu, wpisany tekst się zapisuje", async ({ page, context }) => {
+    test.setTimeout(60_000);
+    await loginAsTestUser(page, context);
+    const gameId = await createGame(page, { type: "prepared" });
+    try {
+      const [{ aIds }] = await seedPrepared(page, gameId, [["Pytanie", [["A1"], ["A2"], ["A3"]]]]);
+      await openEditor(page, gameId);
+      await expect(aRows(page)).toHaveCount(3, { timeout: 15000 });
+      await aRow(page, 1).evaluate((el) => { el.dataset.e2eMark = "1"; });
+
+      await aRow(page, 0).locator(".qf-pts").fill("40");
+      const next = aRow(page, 1).locator(".qf-text");
+      await next.click(); // blur punktów -> zapis
+      await page.keyboard.press("End");
+      await page.keyboard.type("BC");
+      await page.waitForTimeout(1500); // zapis punktów + autozapis tekstu
+
+      await expect(next).toBeFocused();
+      await expect(next).toHaveValue("A2BC");
+      await expect(page.locator('#aList [data-e2e-mark="1"]'), "ten sam element wiersza (bez render())").toHaveCount(1);
+      await expect(page.locator("#pointsRemainTop .qf-sum b")).toHaveText("40/100");
+      await expect(qCard(page, 0).locator(".qmeta")).toContainText("40/100");
+
+      await next.blur();
+      await expect(page.locator("#msg")).toHaveText("Zapisano.", { timeout: 10000 });
+      const rows = await getAnswersRows(page, (await getQuestionsRows(page, gameId))[0].id);
+      expect(rows.find((a) => a.id === aIds[0]).fixed_points).toBe(40);
+      expect(rows.find((a) => a.id === aIds[1]).text).toBe("A2BC");
+    } finally {
+      await deleteGame(page, gameId);
+    }
+  });
+
+  test("klik w kosz innej odpowiedzi zaraz po wpisaniu punktów działa za pierwszym razem", async ({ page, context }) => {
+    test.setTimeout(60_000);
+    await loginAsTestUser(page, context);
+    const gameId = await createGame(page, { type: "prepared" });
+    try {
+      const [{ qId, aIds }] = await seedPrepared(page, gameId, [["Pytanie", [["A1"], ["A2"], ["A3"]]]]);
+      await openEditor(page, gameId);
+      await expect(aRows(page)).toHaveCount(3, { timeout: 15000 });
+
+      await aRow(page, 0).locator(".qf-pts").fill("30");
+      await aRow(page, 2).locator(".qf-del").click();
+      await expect(page.locator(".uni-modal"), "potwierdzenie usunięcia po pierwszym kliknięciu").toBeVisible({ timeout: 5000 });
+      await page.locator(".uni-foot .btn.gold").click();
+      await expect(aRows(page)).toHaveCount(2, { timeout: 10000 });
+
+      const rows = await getAnswersRows(page, qId);
+      expect(rows.map((a) => a.id)).toEqual([aIds[0], aIds[1]]);
+      expect(rows[0].fixed_points).toBe(30);
+    } finally {
+      await deleteGame(page, gameId);
+    }
+  });
+
+  test("pole punktów: same cyfry, najwyżej 100, minus i puste dają 0", async ({ page, context }) => {
+    test.setTimeout(60_000);
+    await loginAsTestUser(page, context);
+    const gameId = await createGame(page, { type: "prepared" });
+    try {
+      const [{ qId, aIds }] = await seedPrepared(page, gameId, [["Pytanie", [["A1", 5], ["A2"], ["A3"]]]]);
+      await openEditor(page, gameId);
+      const pts = aRow(page, 0).locator(".qf-pts");
+      await expect(pts).toHaveValue("5", { timeout: 15000 });
+
+      await pts.fill("250");
+      await expect(pts).toHaveValue("100");
+      await pts.fill("-7");
+      await expect(pts).toHaveValue("0");
+      await pts.fill("abc");
+      await expect(pts).toHaveValue("");
+      await pts.blur();
+      await expect(pts).toHaveValue("0");
+      await expect(page.locator("#msg")).toHaveText("Zapisano.", { timeout: 10000 });
+
+      const rows = await getAnswersRows(page, qId);
+      expect(rows.find((a) => a.id === aIds[0]).fixed_points).toBe(0);
+    } finally {
+      await deleteGame(page, gameId);
+    }
+  });
+
+  test("podwójny klik w 'Dodaj odpowiedź' i 'Dodaj pytanie' dodaje jedno, nie dwa", async ({ page, context }) => {
+    test.setTimeout(60_000);
+    await loginAsTestUser(page, context);
+    const gameId = await createGame(page, { type: "prepared" });
+    try {
+      const [{ qId }] = await seedPrepared(page, gameId, [["Pytanie"]]);
+      await openEditor(page, gameId);
+      await expect(page.locator("#aList .qf-add")).toBeVisible({ timeout: 15000 });
+
+      await page.locator("#aList .qf-add").dblclick();
+      await page.waitForTimeout(2000);
+      await expect(aRows(page)).toHaveCount(1);
+      expect(await getAnswersRows(page, qId)).toHaveLength(1);
+
+      await page.locator("#qList .addTile").dblclick();
+      await page.waitForTimeout(2000);
+      await expect(page.locator("#qList .qcard:not(.addTile)")).toHaveCount(2);
+      expect(await getQuestionsRows(page, gameId)).toHaveLength(2);
+    } finally {
+      await deleteGame(page, gameId);
+    }
+  });
+
+  test("'Moje gry' zaraz po wpisaniu czeka na zapis zamiast go przerwać", async ({ page, context }) => {
+    test.setTimeout(60_000);
+    await loginAsTestUser(page, context);
+    const gameId = await createGame(page, { type: "prepared" });
+    try {
+      const [{ qId }] = await seedPrepared(page, gameId, [["Stary tekst"]]);
+      await openEditor(page, gameId);
+      await expect(page.locator("#qText")).toHaveValue("Stary tekst", { timeout: 15000 });
+
+      await delayRequests(page, { path: "questions", method: "PATCH", ms: 1500 });
+      await page.locator("#qText").fill("Tekst przed wyjściem");
+      await page.locator("#btnBack").click();
+      await page.waitForURL(/\/games/, { timeout: 15000 });
+
+      const qs = await getQuestionsRows(page, gameId);
+      expect(qs.find((q) => q.id === qId).text).toBe("Tekst przed wyjściem");
+    } finally {
+      await deleteGame(page, gameId);
+    }
+  });
+
+  test("szybkie klikanie pytań A -> B: spóźnione odpowiedzi A nie nadpisują B", async ({ page, context }) => {
+    test.setTimeout(60_000);
+    await loginAsTestUser(page, context);
+    const gameId = await createGame(page, { type: "prepared" });
+    try {
+      const [{ qId: q1 }] = await seedPrepared(page, gameId, [["Q1", [["Q1-A"]]], ["Q2", [["Q2-A"]]], ["Q3", [["Q3-A"]]]]);
+      await openEditor(page, gameId);
+      await expect(aRow(page, 0).locator(".qf-text")).toHaveValue("Q1-A", { timeout: 15000 });
+
+      await qCard(page, 2).click();
+      await expect(aRow(page, 0).locator(".qf-text")).toHaveValue("Q3-A", { timeout: 10000 });
+
+      // odpowiedzi Q1 przychodzą z opóźnieniem
+      await delayRequests(page, { path: "answers", method: "GET", ms: 2000, match: (u) => u.includes(q1) });
+      await qCard(page, 0).click();
+      await qCard(page, 1).click();
+      await expect(aRow(page, 0).locator(".qf-text")).toHaveValue("Q2-A", { timeout: 10000 });
+      await page.waitForTimeout(2500);
+      await expect(page.locator("#qText")).toHaveValue("Q2");
+      await expect(aRows(page)).toHaveCount(1);
+      await expect(aRow(page, 0).locator(".qf-text")).toHaveValue("Q2-A");
+    } finally {
+      await deleteGame(page, gameId);
+    }
+  });
+});
+
+test.describe("editor: audyt -- import i wejście na stronę", () => {
+
+  test("'Wczytaj plik' / wybór pliku wczytuje treść do pola i import działa", async ({ page, context }) => {
+    test.setTimeout(60_000);
+    await loginAsTestUser(page, context);
+    const gameId = await createGame(page, { type: "prepared" });
+    try {
+      await openEditor(page, gameId);
+      await page.locator("#btnImportTxt").click();
+      await page.locator("#txtFile").setInputFiles({
+        name: "pytania.txt",
+        mimeType: "text/plain",
+        buffer: Buffer.from("#Pytanie z pliku\nSłoń /30\nŻyrafa /20\nLew /10\n", "utf8"),
+      });
+      await expect(page.locator("#txtTa")).toHaveValue(/#Pytanie z pliku/, { timeout: 5000 });
+      await page.locator("#btnTxtImport").click();
+      await page.locator(".uni-foot .btn.gold").click();
+      await expectImportDone(page);
+
+      const qs = await getQuestionsRows(page, gameId);
+      expect(qs.map((q) => q.text)).toEqual(["Pytanie z pliku"]);
+      const as = await getAnswersRows(page, qs[0].id);
+      expect(as.map((a) => [a.text, a.fixed_points])).toEqual([["Słoń", 30], ["Żyrafa", 20], ["Lew", 10]]);
+    } finally {
+      await deleteGame(page, gameId);
+    }
+  });
+
+  test("import jest jedną transakcją: błąd w połowie nie rusza starej zawartości (game_import_content)", async ({ page, context }) => {
+    test.setTimeout(60_000);
+    await loginAsTestUser(page, context);
+    const gameId = await createGame(page, { type: "prepared" });
+    try {
+      await seedPrepared(page, gameId, [["Stare 1", [["S1"]]], ["Stare 2", [["S2"]]]]);
+      await openEditor(page, gameId);
+
+      // druga odpowiedź drugiego pytania pusta -> CHECK answers_text_len
+      const err = await page.evaluate(async (id) => {
+        const { error } = await window.__sbClient.rpc("game_import_content", {
+          p_game_id: id,
+          p_name: "Nie zmieniaj nazwy",
+          p_questions: [
+            { text: "Nowe 1", answers: [{ text: "N1", points: 10 }] },
+            { text: "Nowe 2", answers: [{ text: "N2", points: 10 }, { text: "", points: 5 }] },
+          ],
+        });
+        return error?.message || null;
+      }, gameId);
+      expect(err, "baza musi odrzucić import").toBeTruthy();
+
+      const qs = await getQuestionsRows(page, gameId);
+      expect(qs.map((q) => q.text)).toEqual(["Stare 1", "Stare 2"]);
+      expect((await getAnswersRows(page, qs[0].id)).map((a) => a.text)).toEqual(["S1"]);
+      expect((await getGameRow(page, gameId)).name).not.toBe("Nie zmieniaj nazwy");
+    } finally {
+      await deleteGame(page, gameId);
+    }
+  });
+
+  test("import przy otwartej ankiecie odrzuca baza (Warstwa 2 działa też dla RPC importu)", async ({ page, context }) => {
+    test.setTimeout(60_000);
+    await loginAsTestUser(page, context);
+    const gameId = await createGame(page, { type: "poll_points" });
+    try {
+      await seedPollPointsFull(page, gameId);
+      await openEditor(page, gameId);
+      const game = await getGameRow(page, gameId);
+      const err = await page.evaluate(async ({ id, key }) => {
+        const sb = window.__sbClient;
+        const open = await sb.rpc("poll_open", { p_game_id: id, p_key: key });
+        if (open.error) throw new Error(open.error.message);
+        const { error } = await sb.rpc("game_import_content", {
+          p_game_id: id, p_name: null, p_questions: [{ text: "X", answers: [] }],
+        });
+        return error?.message || null;
+      }, { id: gameId, key: game.share_key_poll });
+      expect(err).toContain("game_content_locked:poll_open");
+      expect(await getQuestionsRows(page, gameId)).toHaveLength(10);
+    } finally {
+      await deleteGame(page, gameId);
+    }
+  });
+
+  test("nieistniejąca gra: komunikat zostaje do kliknięcia OK, potem powrót do listy gier", async ({ page, context }) => {
+    test.setTimeout(60_000);
+    await loginAsTestUser(page, context);
+    await page.goto("https://www.familiada.online/editor?id=00000000-0000-4000-8000-000000000000", { waitUntil: "domcontentloaded" });
+    await expect(page.locator(".uni-modal .mSub")).toHaveText("Ta gra nie istnieje albo nie masz do niej dostępu.", { timeout: 15000 });
+    await expect(page).toHaveURL(/\/editor/);
+    await page.locator(".uni-foot .btn.gold").click();
+    await page.waitForURL(/\/games/, { timeout: 15000 });
+  });
+
+  test("usunięcie pytania: jedno RPC usuwa i przenumerowuje (bez dziur w numeracji)", async ({ page, context }) => {
+    test.setTimeout(60_000);
+    await loginAsTestUser(page, context);
+    const gameId = await createGame(page, { type: "prepared" });
+    try {
+      await seedPrepared(page, gameId, [["Q1"], ["Q2"], ["Q3"], ["Q4"]]);
+      await openEditor(page, gameId);
+      await expect(page.locator("#qList .qcard:not(.addTile)")).toHaveCount(4, { timeout: 15000 });
+
+      const rpc = page.waitForResponse((r) => r.url().includes("/rpc/game_question_delete"));
+      await qCard(page, 1).locator(".x").click();
+      await page.locator(".uni-foot .btn.gold").click();
+      expect((await rpc).status()).toBe(200);
+      await expect(page.locator("#qList .qcard:not(.addTile)")).toHaveCount(3, { timeout: 10000 });
+      await expect(qCard(page, 2).locator(".qord")).toHaveText("Pytanie 3");
+
+      const qs = await getQuestionsRows(page, gameId);
+      expect(qs.map((q) => [q.ord, q.text])).toEqual([[1, "Q1"], [2, "Q3"], [3, "Q4"]]);
+    } finally {
+      await deleteGame(page, gameId);
+    }
+  });
+});
+
+/* ================= Modal pytania w bazie pytań: wspólny formularz ================= */
+
+const BASE_URL = "https://www.familiada.online/base-explorer";
+
+async function createBase(page, name) {
+  return await page.evaluate(async (name) => {
+    const sb = window.__sbClient;
+    const { data: u } = await sb.auth.getUser();
+    const { data, error } = await sb.from("question_bases").insert({ name, owner_id: u.user.id }).select("id").single();
+    if (error) throw new Error("insert question_bases: " + error.message);
+    return data.id;
+  }, name);
+}
+
+async function createBaseQuestion(page, baseId, payload) {
+  return await page.evaluate(async ({ baseId, payload }) => {
+    const { data, error } = await window.__sbClient.from("qb_questions")
+      .insert({ base_id: baseId, ord: 1, payload }).select("id").single();
+    if (error) throw new Error("insert qb_questions: " + error.message);
+    return data.id;
+  }, { baseId, payload });
+}
+
+async function getBaseQuestion(page, id) {
+  return await page.evaluate(async (id) => {
+    const { data, error } = await window.__sbClient.from("qb_questions").select("payload").eq("id", id).maybeSingle();
+    if (error) throw new Error(error.message);
+    return data?.payload || null;
+  }, id);
+}
+
+async function deleteBase(page, baseId) {
+  await page.evaluate(async (id) => {
+    await window.__sbClient.from("question_bases").delete().eq("id", id);
+  }, baseId);
+}
+
+async function openQuestionModal(page, baseId, qid) {
+  await page.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+  await page.waitForLoadState("networkidle");
+  const row = page.locator(`#list .row[data-kind="q"][data-id="${qid}"]`);
+  await expect(row).toBeVisible({ timeout: 15000 });
+  await row.click();
+  await expect(page.locator('#toolbar button[data-act="editQuestion"]')).toBeEnabled({ timeout: 5000 });
+  await page.keyboard.press("Control+e");
+  await expect(page.locator("#questionOverlay")).toBeVisible({ timeout: 5000 });
+}
+
+const mRows = (page) => page.locator("#qAnswers .qf-row:not(.qf-add)");
+
+test.describe("editor: audyt -- modal pytania w bazie (ten sam formularz co edytor)", () => {
+
+  test("ten sam układ co edytor: kafelek '+ Dodaj odpowiedź n/6', pasek SUMA, wiersze qf-row", async ({ page, context }) => {
+    test.setTimeout(60_000);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    const baseId = await createBase(page, `E2E-QF-LAYOUT-${Date.now()}`);
+    try {
+      const qid = await createBaseQuestion(page, baseId, { text: "Pytanie", answers: [{ text: "A", fixed_points: 30 }, { text: "B", fixed_points: 20 }] });
+      await openQuestionModal(page, baseId, qid);
+
+      await expect(page.locator("#qAnswers .qf-add")).toHaveText(/Dodaj odpowiedź\s*2\/6/);
+      await expect(mRows(page)).toHaveCount(2);
+      await expect(mRows(page).first().locator(".qf-text")).toHaveValue("A");
+      await expect(mRows(page).first().locator(".qf-pts")).toHaveValue("30");
+      await expect(page.locator("#qSumPill b")).toHaveText("50/100");
+      await expect(page.locator("#qText")).toHaveClass(/qf-qtext/);
+    } finally {
+      await deleteBase(page, baseId);
+    }
+  });
+
+  test("usunięcie ze środka i dodanie nowej: numery odpowiedzi po kolei (bez duplikatu)", async ({ page, context }) => {
+    test.setTimeout(60_000);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    const baseId = await createBase(page, `E2E-QF-ORD-${Date.now()}`);
+    try {
+      const qid = await createBaseQuestion(page, baseId, {
+        text: "Pytanie", answers: [{ ord: 1, text: "A1" }, { ord: 2, text: "A2" }, { ord: 3, text: "A3" }],
+      });
+      await openQuestionModal(page, baseId, qid);
+      await mRows(page).nth(1).locator(".qf-del").click();
+      await page.locator("#qAdd").click();
+      await mRows(page).nth(2).locator(".qf-text").fill("A4");
+      await Promise.all([page.waitForResponse(isPatch("qb_questions")), page.locator("#qSave").click()]);
+      await expect(page.locator("#questionOverlay")).toBeHidden({ timeout: 10000 });
+
+      const payload = await getBaseQuestion(page, qid);
+      expect(payload.answers.map((a) => [a.ord, a.text])).toEqual([[1, "A1"], [2, "A3"], [3, "A4"]]);
+    } finally {
+      await deleteBase(page, baseId);
+    }
+  });
+
+  test("pusta odpowiedź blokuje zapis z komunikatem (wcześniej zapisywała się pusta)", async ({ page, context }) => {
+    test.setTimeout(60_000);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    const baseId = await createBase(page, `E2E-QF-EMPTY-${Date.now()}`);
+    try {
+      const qid = await createBaseQuestion(page, baseId, { text: "Pytanie", answers: [] });
+      await openQuestionModal(page, baseId, qid);
+      await page.locator("#qAdd").click();
+      await page.locator("#qSave").click();
+      await expect(page.locator("#qErr")).toHaveText("Odpowiedź 1 nie może być pusta.");
+      await expect(page.locator("#questionOverlay")).toBeVisible();
+      expect((await getBaseQuestion(page, qid)).answers).toHaveLength(0);
+    } finally {
+      await deleteBase(page, baseId);
+    }
+  });
+
+  test("nieudany zapis zostawia modal otwarty z wpisaną treścią", async ({ page, context }) => {
+    test.setTimeout(60_000);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    const baseId = await createBase(page, `E2E-QF-FAIL-${Date.now()}`);
+    try {
+      const qid = await createBaseQuestion(page, baseId, { text: "Stara treść", answers: [] });
+      await openQuestionModal(page, baseId, qid);
+      await page.route("**/rest/v1/qb_questions*", (route) =>
+        route.request().method() === "PATCH" ? route.abort() : route.fallback());
+      await page.locator("#qText").fill("Nowa treść");
+      await page.locator("#qSave").click();
+      await expect(page.locator("#qErr")).toHaveText("Nie udało się zapisać pytania. Spróbuj ponownie.", { timeout: 10000 });
+      await expect(page.locator("#questionOverlay")).toBeVisible();
+      await expect(page.locator("#qText")).toHaveValue("Nowa treść");
+      expect((await getBaseQuestion(page, qid)).text).toBe("Stara treść");
+    } finally {
+      await page.unroute("**/rest/v1/qb_questions*");
+      await deleteBase(page, baseId);
+    }
+  });
+
+  test("zamknięcie ze zmianami pyta o porzucenie; bez zmian zamyka od razu", async ({ page, context }) => {
+    test.setTimeout(60_000);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    const baseId = await createBase(page, `E2E-QF-DIRTY-${Date.now()}`);
+    try {
+      const qid = await createBaseQuestion(page, baseId, { text: "Treść", answers: [] });
+      await openQuestionModal(page, baseId, qid);
+      await page.locator("#qClose").click();
+      await expect(page.locator("#questionOverlay")).toBeHidden({ timeout: 5000 });
+      await expect(page.locator(".uni-modal")).toHaveCount(0);
+
+      await page.locator(`#list .row[data-kind="q"][data-id="${qid}"]`).click();
+      await page.keyboard.press("Control+e");
+      await expect(page.locator("#questionOverlay")).toBeVisible({ timeout: 5000 });
+      await page.locator("#qText").fill("Zmieniona");
+      await page.locator("#qClose").click();
+      await expect(page.locator(".uni-modal .mSub")).toHaveText("Porzucić niezapisane zmiany w pytaniu?");
+      await page.locator(".uni-foot .btn:not(.gold)").click(); // Edytuj
+      await expect(page.locator("#questionOverlay")).toBeVisible();
+      await expect(page.locator("#qText")).toHaveValue("Zmieniona");
+
+      await page.locator("#qClose").click();
+      await page.locator(".uni-foot .btn.gold").click(); // Porzuć
+      await expect(page.locator("#questionOverlay")).toBeHidden({ timeout: 5000 });
+      expect((await getBaseQuestion(page, qid)).text).toBe("Treść");
+    } finally {
+      await deleteBase(page, baseId);
+    }
+  });
+
+  test("pole punktów jak w edytorze: 250 -> 100; przy 6 odpowiedziach kafelek dodawania wyłączony", async ({ page, context }) => {
+    test.setTimeout(60_000);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    const baseId = await createBase(page, `E2E-QF-PTS-${Date.now()}`);
+    try {
+      const qid = await createBaseQuestion(page, baseId, {
+        text: "Pytanie", answers: Array.from({ length: 5 }, (_, i) => ({ text: `A${i + 1}` })),
+      });
+      await openQuestionModal(page, baseId, qid);
+      await page.locator("#qAdd").click();
+      await expect(page.locator("#qAdd")).toBeDisabled();
+      await expect(page.locator("#qAdd")).toContainText("6/6");
+
+      const pts = mRows(page).nth(5).locator(".qf-pts");
+      await pts.fill("250");
+      await expect(pts).toHaveValue("100");
+      await expect(page.locator("#qSumPill b")).toHaveText("100/100");
+    } finally {
+      await deleteBase(page, baseId);
+    }
+  });
+});
+
+/* ================= Zrzuty ekranu nowego wyglądu (artefakt e2e-shots) ================= */
+
+test.describe("editor: audyt -- zrzuty ekranu", () => {
+  for (const [label, opts] of [
+    ["desktop", { viewport: { width: 1280, height: 860 } }],
+    ["mobile", { viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true }],
+  ]) {
+    test(`zrzut: edytor i modal pytania (${label})`, async ({ browser }, testInfo) => {
+      test.setTimeout(90_000);
+      const { ctx, page } = await newUserContext(browser, testAccountUsername(1), opts);
+      const gameId = await createGame(page, { type: "prepared", name: `E2E-SHOT-${Date.now()}` });
+      const baseId = await createBase(page, `E2E-SHOT-${Date.now()}`);
+      try {
+        await seedPrepared(page, gameId, [
+          ["Co zabierasz na plażę?", [["Ręcznik", 35], ["Parasol", 25], ["Krem", 20], ["Książkę", 10]]],
+          ["Najpopularniejsze zwierzę domowe?", [["Pies", 50], ["Kot", 40], ["Rybki", 20]]],
+        ]);
+        await openEditor(page, gameId);
+        if (label === "mobile") await qCard(page, 0).click();
+        await expect(aRows(page)).toHaveCount(4, { timeout: 15000 });
+        await page.screenshot({ path: testInfo.outputPath(`shot-editor-${label}.png`) });
+
+        const qid = await createBaseQuestion(page, baseId, {
+          text: "Co zabierasz na plażę?",
+          answers: [{ text: "Ręcznik", fixed_points: 35 }, { text: "Parasol", fixed_points: 25 }, { text: "Krem", fixed_points: 20 }, { text: "Książkę" }],
+        });
+        await openQuestionModal(page, baseId, qid);
+        await page.screenshot({ path: testInfo.outputPath(`shot-modal-${label}.png`) });
+      } finally {
+        await deleteGame(page, gameId);
+        await deleteBase(page, baseId);
+        await ctx.close();
+      }
+    });
   }
 });

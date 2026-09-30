@@ -11,11 +11,11 @@ import {
   selectionToggle,
   rememberBrowseLocation,
   restoreBrowseLocation,
-} from "./state.js?v=v2026-09-26T16124";
+} from "./state.js?v=v2026-09-30T14045";
 
-import { importGame } from "../../js/pages/games-import-export.js?v=v2026-09-26T16124";
+import { importGame } from "../../js/pages/games-import-export.js?v=v2026-09-30T14045";
 
-import { renderAll, renderToolbar, renderList, renderTree, renderTags } from "./render.js?v=v2026-09-26T16124";
+import { renderAll, renderToolbar, renderList, renderTree, renderTags } from "./render.js?v=v2026-09-30T14045";
 
 import {
   listQuestionsByCategory,
@@ -23,19 +23,19 @@ import {
   listCategories,
   listQuestionTags,
   listCategoryTags
-} from "./repo.js?v=v2026-09-26T16124";
+} from "./repo.js?v=v2026-09-30T14045";
 
-import { showContextMenu, hideContextMenu } from "./context-menu.js?v=v2026-09-26T16124";
-import { openTagsModal } from "./tags-modal.js?v=v2026-09-26T16124";
-import { initExportModal } from "./export-modal.js?v=v2026-09-26T16124";
-import { initQuestionModal } from "./question-modal.js?v=v2026-09-26T16124";
-import { sb } from "../../js/core/supabase.js?v=v2026-09-26T16124";
-import { updateChecked, updateCheckedMany, ROW_GONE } from "../../js/core/db-guard.js?v=v2026-09-26T16124";
-import { acquireResourceLock, acquireResourceLocks } from "../../js/core/resource-lock.js?v=v2026-09-26T16124";
-import { alertModal, confirmModal } from "../../js/core/modal.js?v=v2026-09-26T16124";
-import { t } from "../../translation/translation.js?v=v2026-09-26T16124";
-import { addLongPress, addDoubleTap, isTouchContextMenuWindow } from "./mobile.js?v=v2026-09-26T16124";
-import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../js/core/modal-sheet.js?v=v2026-09-26T16124";
+import { showContextMenu, hideContextMenu } from "./context-menu.js?v=v2026-09-30T14045";
+import { openTagsModal } from "./tags-modal.js?v=v2026-09-30T14045";
+import { initExportModal } from "./export-modal.js?v=v2026-09-30T14045";
+import { initQuestionModal } from "./question-modal.js?v=v2026-09-30T14045";
+import { sb } from "../../js/core/supabase.js?v=v2026-09-30T14045";
+import { updateChecked, updateCheckedMany, ROW_GONE } from "../../js/core/db-guard.js?v=v2026-09-30T14045";
+import { acquireResourceLock, acquireResourceLocks } from "../../js/core/resource-lock.js?v=v2026-09-30T14045";
+import { alertModal, confirmModal } from "../../js/core/modal.js?v=v2026-09-30T14045";
+import { t } from "../../translation/translation.js?v=v2026-09-30T14045";
+import { addLongPress, addDoubleTap, isTouchContextMenuWindow } from "./mobile.js?v=v2026-09-30T14045";
+import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../js/core/modal-sheet.js?v=v2026-09-30T14045";
 
 const btnBack = document.getElementById("btnBack");
 
@@ -4430,38 +4430,26 @@ export function wireActions({ state }) {
         payload: (row.payload && typeof row.payload === "object") ? row.payload : { text: "", answers: [] },
       };
 
-      let res = null;
-      if (typeof questionModal === "function") {
-        res = await questionModal(input);
-      } else if (questionModal?.open) {
-        res = await questionModal.open(input);
-      } else if (questionModal?.show) {
-        res = await questionModal.show(input);
-      } else {
-        console.warn("Question modal has no open/show function. Check initQuestionModal() return value.");
-        return false;
-      }
-
-      if (!res || !res.ok) return false;
-
-      if (!lease.ok) {
-        void alertModal({
-          text: lease.reason === "gone"
+      // Zapis odbywa się z otwartym modalem (save): przy błędzie komunikat
+      // pokazuje się w modalu, a wpisana treść zostaje.
+      const save = async (payload) => {
+        if (!lease.ok) {
+          const e = new Error("lease lost");
+          e.userMessage = lease.reason === "gone"
             ? t("resourceLock.goneMessage")
-            : t("resourceLock.forbiddenMessage"),
-        });
-        return false;
-      }
-
-      try {
-        await updateChecked("qb_questions", { id: qid }, { payload: res.payload });
-      } catch (e) {
-        if (e?.code === ROW_GONE) {
-          void alertModal({ text: t("resourceLock.goneMessage") });
-          return false;
+            : t("resourceLock.forbiddenMessage");
+          throw e;
         }
-        throw e;
-      }
+        try {
+          await updateChecked("qb_questions", { id: qid }, { payload });
+        } catch (e) {
+          if (e?.code === ROW_GONE) e.userMessage = t("resourceLock.goneMessage");
+          throw e;
+        }
+      };
+
+      const res = await questionModal.open(input, { save });
+      if (!res?.ok) return false;
 
       await refreshList(state);
       return true;

@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
-  <meta name="app-version" content="v2026-09-26T16124"/>
+  <meta name="app-version" content="v2026-09-30T14045"/>
 
   <meta charset="UTF-8"/>
   <meta name="robots" content="noindex, nofollow"/>
@@ -14,9 +14,10 @@
   <link rel="preconnect" href="https://supabase.familiada.online">
   <title data-i18n="editor.title">Familiada — edytor gry</title>
 
-  <link rel="icon" href="favicon.ico?v=v2026-09-26T16124"/>
-  <link rel="stylesheet" href="css/base.css?v=v2026-09-26T16124"/>
-  <link rel="stylesheet" href="css/editor.css?v=v2026-09-26T16124"/>
+  <link rel="icon" href="favicon.ico?v=v2026-09-30T14045"/>
+  <link rel="stylesheet" href="css/base.css?v=v2026-09-30T14045"/>
+  <link rel="stylesheet" href="css/question-form.css?v=v2026-09-30T14045"/>
+  <link rel="stylesheet" href="css/editor.css?v=v2026-09-30T14045"/>
 
   <script>
     document.documentElement.classList.add('page-loading');
@@ -30,9 +31,9 @@
     } catch(_e) {}
   </script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-  <script src="js/core/security-warning.js?v=v2026-09-26T16124" defer></script>
-  <script type="module" src="js/pages/editor.js?v=v2026-09-26T16124" defer></script>
-  <script type="module" src="js/core/topbar-controller.js?v=v2026-09-26T16124" defer></script>
+  <script src="js/core/security-warning.js?v=v2026-09-30T14045" defer></script>
+  <script type="module" src="js/pages/editor.js?v=v2026-09-30T14045" defer></script>
+  <script type="module" src="js/core/topbar-controller.js?v=v2026-09-30T14045" defer></script>
 </head>
 
 <body class="editor-body editor skel-body">
@@ -91,21 +92,21 @@
           </div>
 
           <div class="block">
-            <div class="lbl" data-i18n="editor.questionLabel">Treść pytania</div>
-            <textarea id="qText" class="ta" spellcheck="false"></textarea>
+            <div class="qf-label" data-i18n="editor.questionLabel">Treść pytania</div>
+            <textarea id="qText" class="qf-qtext" spellcheck="false"></textarea>
           </div>
 
           <div class="answersBlock">
             <div id="pointsRemainTop" class="answersTop"></div>
 
-            <div class="ahead" id="aHead">
+            <div class="qf-head" id="aHead">
               <div data-i18n="editor.answerLabel">Odpowiedź</div>
-              <div class="ptsCol" data-i18n="editor.pointsLabel">Pkt</div>
+              <div class="c-pts" data-i18n="editor.pointsLabel">Pkt</div>
               <div></div>
             </div>
 
-            <div class="alistShell">
-              <div id="aList" class="alist"></div>
+            <div class="qf-listShell">
+              <div id="aList" class="qf-list"></div>
             </div>
 
             <div class="hint" id="hintBottom"></div>

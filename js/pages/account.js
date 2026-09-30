@@ -1,13 +1,13 @@
-import { sb } from "../core/supabase.js?v=v2026-09-26T16124";
-import { cooldownGet, cooldownReserve, cooldownRelease, cooldownEmailReserve } from "../core/cooldown.js?v=v2026-09-26T16124";
-import { requireAuth, updateUserLanguage, validatePassword, validateUsername, signOut, niceAuthError, initPasswordToggles, convertGuestToRegisteredEmailOnly } from "../core/auth.js?v=v2026-09-26T16124";
-import { getUserEmailNotificationsFlag, setUserEmailNotificationsFlag } from "../core/user-flags.js?v=v2026-09-26T16124";
-import { initI18n, t, getUiLang, withLangParam } from "../../translation/translation.js?v=v2026-09-26T16124";
-import { confirmModal } from "../core/modal.js?v=v2026-09-26T16124";
-import { isGuestUser, hideForGuest } from "../core/guest-mode.js?v=v2026-09-26T16124";
-import "../core/contact-modal.js?v=v2026-09-26T16124";
-import { deleteGameSoundsFolder } from "../core/sfx-cloud.js?v=v2026-09-26T16124";
-import { icon, iconText } from "../core/icons.js?v=v2026-09-26T16124";
+import { sb } from "../core/supabase.js?v=v2026-09-30T14045";
+import { cooldownGet, cooldownReserve, cooldownRelease, cooldownEmailReserve } from "../core/cooldown.js?v=v2026-09-30T14045";
+import { requireAuth, updateUserLanguage, validatePassword, validateUsername, signOut, niceAuthError, initPasswordToggles, convertGuestToRegisteredEmailOnly } from "../core/auth.js?v=v2026-09-30T14045";
+import { getUserEmailNotificationsFlag, setUserEmailNotificationsFlag } from "../core/user-flags.js?v=v2026-09-30T14045";
+import { initI18n, t, getUiLang, withLangParam } from "../../translation/translation.js?v=v2026-09-30T14045";
+import { confirmModal } from "../core/modal.js?v=v2026-09-30T14045";
+import { isGuestUser, hideForGuest } from "../core/guest-mode.js?v=v2026-09-30T14045";
+import "../core/contact-modal.js?v=v2026-09-30T14045";
+import { deleteGameSoundsFolder } from "../core/sfx-cloud.js?v=v2026-09-30T14045";
+import { icon, iconText } from "../core/icons.js?v=v2026-09-30T14045";
 
 
 const status = document.getElementById("status");
@@ -482,25 +482,18 @@ async function fetchEmailChangeStatus() {
 
 async function refreshAuthEmailState() {
   try {
-    // 1) Preferred: edge function (service role) – sees pending email across GoTrue versions
-    const st = await fetchEmailChangeStatus();
-    if (st) {
-      currentEmail = st.email || currentEmail;
-      const p = st.pending_email || "";
-      setEmailPendingUi(p);
-      return;
-    }
-
-    // 2) Fallback: client-side user object
+    // getUser() reads GoTrue's current user record. The access token returned by
+    // getSession() can still contain old metadata after updateUser(email, data),
+    // even after a page reload; treating it as authoritative hid the pending UI.
     const { data, error } = await sb().auth.getUser();
     if (error) throw error;
     const u = data?.user;
     if (!u) return;
     currentEmail = u.email || currentEmail;
-    const p = extractPendingEmail(u);
-    setEmailPendingUi(p);
+    setEmailPendingUi(extractPendingEmail(u));
   } catch (e) {
     console.warn("refreshAuthEmailState failed:", e);
+    // A temporary GoTrue failure must not erase the currently displayed state.
   }
 }
 
@@ -757,9 +750,11 @@ async function handleEmailSave() {
     // Record pending intent so auth-email-status reflects current state
     await sb().rpc("initiate_email_change_intent", { p_new_email: normalizedMail });
 
-    setStatus(t("account.statusEmailSaved"));
     await refreshAuthEmailState();
     await loadCooldownsFromServer();
+    // Odświeżenie pending UI ustawia ogólny status „zmiana w toku”. Po
+    // zakończonej operacji ważniejszy jest jednoznaczny komunikat sukcesu.
+    setStatus(t("account.statusEmailSaved"));
   } catch (e) {
     console.error(e);
     if (reserved) {
@@ -797,13 +792,14 @@ async function handleEmailResend() {
     });
     if (error) throw error;
 
-    setStatus(t("account.statusEmailResent"));
-    
     // Optymistyczna aktualizacja UI, aby przycisk Anuluj pojawił się natychmiast
-    setEmailPendingUi(normalizedMail);
-    
+    setEmailPendingUi(pendingEmail);
+
     await refreshAuthEmailState();
     await loadCooldownsFromServer();
+    // setEmailPendingUi() poprawnie zachowuje pending e-mail, ale jego ogólny
+    // status nie może zasłaniać informacji, że ponowne wysłanie się udało.
+    setStatus(t("account.statusEmailResent"));
   } catch (e) {
     console.error(e);
     if (reserved) {
@@ -943,7 +939,6 @@ async function handleDeleteAccount() {
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
-  const loadProfileP = loadProfile(); // start równolegle z initI18n
   await initI18n({ withSwitcher: true });
   document.documentElement.classList.remove('page-loading');
   initPasswordToggles();
@@ -954,7 +949,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   bindCooldown({ key: CD.password, labelEl: passwordCooldownEl, disableEls: [pass1, pass2, savePass] });
   startCooldownTicker();
 
-  await loadProfileP.finally(() => {
+  await loadProfile().finally(() => {
     document.querySelector('.topbar')?.classList.add('topbar-ready');
     document.querySelectorAll('[data-skel-step]').forEach(el => el.classList.add('skel-step-ready'));
   });

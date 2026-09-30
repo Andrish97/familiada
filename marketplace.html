@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
-  <meta name="app-version" content="v2026-09-26T16124"/>
+  <meta name="app-version" content="v2026-09-30T14045"/>
 
   <meta charset="UTF-8"/>
   <meta name="mobile-web-app-capable" content="yes"/>
@@ -26,15 +26,15 @@
   <meta property="og:image" content="https://www.familiada.online/img/og/og-image.webp"/>
 
   <base href="/"/>
-  <link rel="icon" href="favicon.ico?v=v2026-09-26T16124"/>
-  <link rel="stylesheet" href="css/base.css?v=v2026-09-26T16124"/>
-  <link rel="stylesheet" href="css/marketplace.css?v=v2026-09-26T16124"/>
+  <link rel="icon" href="favicon.ico?v=v2026-09-30T14045"/>
+  <link rel="stylesheet" href="css/base.css?v=v2026-09-30T14045"/>
+  <link rel="stylesheet" href="css/marketplace.css?v=v2026-09-30T14045"/>
 
   <script>document.documentElement.classList.add('page-loading')</script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-  <script src="js/core/security-warning.js?v=v2026-09-26T16124" defer></script>
-  <script type="module" src="js/pages/marketplace.js?v=v2026-09-26T16124" defer></script>
-  <script type="module" src="js/core/topbar-controller.js?v=v2026-09-26T16124" defer></script>
+  <script src="js/core/security-warning.js?v=v2026-09-30T14045" defer></script>
+  <script type="module" src="js/pages/marketplace.js?v=v2026-09-30T14045" defer></script>
+  <script type="module" src="js/core/topbar-controller.js?v=v2026-09-30T14045" defer></script>
 </head>
 <body class="mkt-body skel-body">
 
@@ -71,10 +71,27 @@
       </div>
 
       <div class="mkt-search-bar">
+        <label class="sr-only" for="searchInput" data-i18n="marketplace.searchLabel">Szukaj gier</label>
         <input class="inp mkt-search-input" id="searchInput" type="search"
           data-i18n-placeholder="marketplace.searchPlaceholder"
           placeholder="Szukaj gry…"
           autocomplete="off"/>
+        <label class="mkt-control-label" id="langFilterLabel" data-i18n="marketplace.filterLabel">Język</label>
+        <div class="ui-select mkt-filter" id="langFilter">
+          <button class="btn inp ui-select-btn mkt-filter-btn" type="button" aria-labelledby="langFilterLabel langFilterValue" aria-haspopup="listbox" aria-expanded="false">
+            <span class="ui-select-label" id="langFilterValue">Wszystkie</span>
+            <span class="ui-select-caret" aria-hidden="true"><i class="ico" data-icon="caret-down"></i></span>
+          </button>
+          <div class="ui-select-menu" role="listbox"></div>
+        </div>
+        <label class="mkt-control-label" id="sortSelectLabel" data-i18n="marketplace.sortLabel">Sortowanie</label>
+        <div class="ui-select mkt-filter" id="sortSelect">
+          <button class="btn inp ui-select-btn mkt-filter-btn" type="button" aria-labelledby="sortSelectLabel sortSelectValue" aria-haspopup="listbox" aria-expanded="false">
+            <span class="ui-select-label" id="sortSelectValue">Polecane</span>
+            <span class="ui-select-caret" aria-hidden="true"><i class="ico" data-icon="caret-down"></i></span>
+          </button>
+          <div class="ui-select-menu" role="listbox"></div>
+        </div>
       </div>
 
       <div class="mkt-grid" id="browseGrid" data-skel-step></div>
@@ -104,14 +121,14 @@
     <!-- ======================================================
          MODAL: DODAJ NOWĄ GRĘ DO MARKETPLACE
     ====================================================== -->
-    <div class="overlay modal--sheet" id="submitOverlay" style="display:none">
+    <div class="overlay modal--sheet" id="submitOverlay" style="display:none" role="dialog" aria-modal="true" aria-labelledby="submitModalTitle">
       <div class="modal">
-        <div class="mTitle" data-i18n="marketplace.submit.title">Dodaj grę do Gier Społeczności</div>
+        <div class="mTitle" id="submitModalTitle" data-i18n="marketplace.submit.title">Dodaj grę do Gier Społeczności</div>
 
         <div class="field" style="margin-top:12px">
-          <label class="field-label" data-i18n="marketplace.submit.pickGame">Wybierz grę</label>
+          <label class="field-label" id="submitGameLabel" data-i18n="marketplace.submit.pickGame">Wybierz grę</label>
           <div class="ui-select" id="submitGameSelect" style="width:100%">
-            <button class="btn inp ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false" style="width:100%;justify-content:space-between">
+            <button class="btn inp ui-select-btn" type="button" aria-labelledby="submitGameLabel" aria-haspopup="listbox" aria-expanded="false" style="width:100%;justify-content:space-between">
               <span class="ui-select-label" data-i18n="marketplace.submit.pickGamePlaceholder">— wybierz grę —</span>
               <span class="ui-select-caret" aria-hidden="true"><i class="ico" data-icon="caret-down"></i></span>
             </button>
@@ -165,7 +182,7 @@
     <!-- ======================================================
          MODAL: PODGLĄD GRY
     ====================================================== -->
-    <div class="overlay modal--sheet" id="gameDetailOverlay" style="display:none">
+    <div class="overlay modal--sheet" id="gameDetailOverlay" style="display:none" role="dialog" aria-modal="true" aria-labelledby="detailTitle">
       <div class="modal mkt-modal-detail">
         <div class="mkt-detail-head">
           <div>

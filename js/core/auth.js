@@ -1,7 +1,7 @@
 // js/core/auth.js
-import { icon } from "./icons.js?v=v2026-09-26T16124";
-import { sb, buildSiteUrl } from "./supabase.js?v=v2026-09-26T16124";
-import { t, withLangParam } from "../../translation/translation.js?v=v2026-09-26T16124";
+import { icon } from "./icons.js?v=v2026-09-30T14045";
+import { sb, buildSiteUrl } from "./supabase.js?v=v2026-09-30T14045";
+import { t, withLangParam } from "../../translation/translation.js?v=v2026-09-30T14045";
 
 const GUEST_LOCAL_MARKER_KEY = "fam:guest:session_seen";
 const GUEST_DISCARD_RPC_MISSING_KEY = "fam:guest:discard_rpc_missing";
@@ -350,40 +350,6 @@ export function clearGuestLocalMarker() {
 
 export function guestAuthEntryUrl() {
   return withLangParam("login?force_auth=1");
-}
-
-export async function convertGuestToRegistered(email, password, language, captchaToken = null) {
-  const mail = String(email || "").trim().toLowerCase();
-  if (!mail || !mail.includes("@")) throw new Error(t("index.errInvalidEmail"));
-
-  // Guest upgrade flow: attach email + password to the same anonymous account
-  // and trigger email confirmation via updateUser(attributes, options).
-  const payload = {
-    email: mail,
-    password,
-    data: {
-      is_guest: false,
-      familiada_email_change_pending: mail,
-      familiada_email_change_intent: "guest_migrate",
-    },
-  };
-  if (language) payload.data.language = language;
-
-  const confirmUrl = new URL(buildAuthRedirect("confirm", language));
-  confirmUrl.searchParams.set("to", mail);
-
-  const options = { emailRedirectTo: confirmUrl.toString() };
-  if (captchaToken) options.captchaToken = captchaToken;
-
-  const { data, error } = await sb().auth.updateUser(payload, options);
-  if (error) throw new Error(niceAuthError(error));
-
-  const { error: convErr } = await sb().rpc("guest_convert_account", { p_email: mail });
-  if (convErr) throw new Error(niceAuthError(convErr));
-
-  const user = data?.user || null;
-  if (user?.email_confirmed_at) clearGuestLocalMarker();
-  return user;
 }
 
 /**

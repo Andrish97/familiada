@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
-  <meta name="app-version" content="v2026-09-26T16124"/>
+  <meta name="app-version" content="v2026-09-30T14045"/>
 
   <meta charset="UTF-8"/>
   <meta name="robots" content="noindex, nofollow"/>
@@ -15,18 +15,18 @@
   
   <title>Familiada — pulpit admina</title>
 
-  <link rel="icon" href="favicon.ico?v=v2026-09-26T16124"/>
-  <link rel="stylesheet" href="css/base.css?v=v2026-09-26T16124"/>
-  <link rel="stylesheet" href="css/games.css?v=v2026-09-26T16124"/>
-  <link rel="stylesheet" href="css/settings.css?v=v2026-09-26T16124"/>
+  <link rel="icon" href="favicon.ico?v=v2026-09-30T14045"/>
+  <link rel="stylesheet" href="css/base.css?v=v2026-09-30T14045"/>
+  <link rel="stylesheet" href="css/games.css?v=v2026-09-30T14045"/>
+  <link rel="stylesheet" href="css/settings.css?v=v2026-09-30T14045"/>
 
   <script>document.documentElement.classList.add('page-loading')</script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/tinymce@7/tinymce.min.js"></script>
-  <script src="js/core/security-warning.js?v=v2026-09-26T16124" defer></script>
-  <script type="module" src="js/core/topbar-controller.js?v=v2026-09-26T16124" defer></script>
-  <script type="module" src="js/pages/settings.js?v=v2026-09-26T16124" defer></script>
-  <script type="module" src="js/pages/generator.js?v=v2026-09-26T16124" defer></script>
+  <script src="js/core/security-warning.js?v=v2026-09-30T14045" defer></script>
+  <script type="module" src="js/core/topbar-controller.js?v=v2026-09-30T14045" defer></script>
+  <script type="module" src="js/pages/settings.js?v=v2026-09-30T14045" defer></script>
+  <script type="module" src="js/pages/generator.js?v=v2026-09-30T14045" defer></script>
 </head>
 <body class="games-body settings-body settings-locked no-footer-line skel-body">
   <header class="topbar topbar-layout-4 topbar-mobile-keep-brand">
@@ -667,11 +667,27 @@
             </div>
 
             <div class="stat-box" data-detail="gameplay">
-              <div class="stat-label">Rozgrywki &amp; Ankiety</div>
+              <div class="stat-label">Rozgrywki</div>
               <div class="stat-value" id="statPlayedTotal">0</div>
               <div class="stat-sub" id="statPlayedPeriods">Dziś: 0 | 7 dni: 0 | 30 dni: 0</div>
               <div class="stat-sub" id="statPlayedOutcomes">Zakończone: 0 | Porzucone: 0 | W trakcie: 0</div>
-              <div class="stat-sub dim" id="statPlayedIssues">Z błędami: 0 | Sesje ankiet 7d: 0 | Archiwalne: 0</div>
+              <div class="stat-sub dim" id="statPlayedIssues">Z błędami: 0 | Archiwalne: 0</div>
+            </div>
+
+            <div class="stat-box" data-detail="polls">
+              <div class="stat-label">Ankiety</div>
+              <div class="stat-value" id="statPollGamesTotal">0</div>
+              <div class="stat-sub" id="statPollGamesTypes">Tekstowe: 0 | Punktowe: 0</div>
+              <div class="stat-sub" id="statPollActive">Aktywne z głosami: 0 | Aktywne: 0</div>
+              <div class="stat-sub" id="statPollResponses">Odpowiedzi: 0 | 7 dni: 0 | Tokeny głosujących: 0</div>
+              <div class="stat-sub dim" id="statPollSharing">Udostępnione ankiety: 0 | Wypełnione zaproszenia: 0</div>
+            </div>
+
+            <div class="stat-box stat-box-static">
+              <div class="stat-label">Subskrypcje</div>
+              <div class="stat-value" id="statSubscriptionsTotal">0</div>
+              <div class="stat-sub" id="statSubscriptionsSummary">Aktywne: 0 | Oczekujące: 0</div>
+              <div class="stat-sub dim" id="statSubscriptionsOther">Odrzucone: 0 | Anulowane: 0</div>
             </div>
 
             <div class="stat-box" data-detail="bases">
@@ -988,7 +1004,7 @@
          "ukryj resztę". Gdy stopka była poza <main>, main.wrap i tak zajmował
          całą dostępną wysokość (nie wiedząc, że musi zostawić miejsce na
          stopkę pod sobą), więc stopka nakładała się na dolną część modala. -->
-    <footer class="footer wrap">
+    <footer class="footer">
       <span>Familiada — panel admina</span>
       <span>Dostęp tylko dla uprawnionych.</span>
     </footer>

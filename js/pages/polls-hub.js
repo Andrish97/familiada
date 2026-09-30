@@ -1,15 +1,15 @@
-import { sb, SUPABASE_URL } from "../core/supabase.js?v=v2026-09-26T16124";
-import { updateChecked } from "../core/db-guard.js?v=v2026-09-26T16124";
-import { requireAuth } from "../core/auth.js?v=v2026-09-26T16124";
-import { isGuestUser, showGuestBlockedOverlay } from "../core/guest-mode.js?v=v2026-09-26T16124";
-import { validatePollReadyToOpen } from "../core/game-validate.js?v=v2026-09-26T16124";
-import { alertModal, confirmModal } from "../core/modal.js?v=v2026-09-26T16124";
-import { initUiSelect } from "../core/ui-select.js?v=v2026-09-26T16124";
-import { initI18n, t, getUiLang } from "../../translation/translation.js?v=v2026-09-26T16124";
-import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-09-26T16124";
-import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../core/modal-sheet.js?v=v2026-09-26T16124";
-import "../core/contact-modal.js?v=v2026-09-26T16124";
-import { icon, iconText } from "../core/icons.js?v=v2026-09-26T16124";
+import { sb, SUPABASE_URL } from "../core/supabase.js?v=v2026-09-30T14045";
+import { updateChecked } from "../core/db-guard.js?v=v2026-09-30T14045";
+import { requireAuth } from "../core/auth.js?v=v2026-09-30T14045";
+import { isGuestUser, showGuestBlockedOverlay } from "../core/guest-mode.js?v=v2026-09-30T14045";
+import { validateGame, rulesFromState } from "../core/game-validate.js?v=v2026-09-30T14045";
+import { alertModal, confirmModal } from "../core/modal.js?v=v2026-09-30T14045";
+import { initUiSelect } from "../core/ui-select.js?v=v2026-09-30T14045";
+import { initI18n, t, getUiLang } from "../../translation/translation.js?v=v2026-09-30T14045";
+import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-09-30T14045";
+import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../core/modal-sheet.js?v=v2026-09-30T14045";
+import "../core/contact-modal.js?v=v2026-09-30T14045";
+import { icon, iconText } from "../core/icons.js?v=v2026-09-30T14045";
 
 initI18n({ withSwitcher: true }).then(() => {
   document.documentElement.classList.remove('page-loading');
@@ -536,7 +536,18 @@ async function openPoll(poll) {
   location.href = `polls?id=${encodeURIComponent(poll.game_id)}&ret=${encodeURIComponent(getCurrentRelativeUrl())}`;
 }
 
-function setActiveMobileTab(tab) {
+function mobileTabFromUrl() {
+  return new URLSearchParams(location.search).get("tab") === "tasks" ? "tasks" : "polls";
+}
+
+function setActiveMobileTab(tab, { updateUrl = true } = {}) {
+  tab = tab === "tasks" ? "tasks" : "polls";
+  if (updateUrl) {
+    const url = new URL(location.href);
+    if (tab === "polls") url.searchParams.delete("tab");
+    else url.searchParams.set("tab", tab);
+    if (url.href !== location.href) history.pushState(history.state, "", url);
+  }
   tabPollsMobile?.classList.toggle("active", tab === "polls");
   tabTasksMobile?.classList.toggle("active", tab === "tasks");
   panelPollsMobile?.classList.toggle("active", tab === "polls");
@@ -685,7 +696,7 @@ async function openShareModal() {
   }
 }
 
-function closeShareModal() { shareOverlay.style.display = "none"; shareList.innerHTML = ""; exitModalSheet(shareOverlay); }
+function closeShareModal() { shareOverlay.style.display = "none"; shareList.innerHTML = ""; shareMsg.textContent = ""; exitModalSheet(shareOverlay); }
 
 async function buildMailItemsForTasksFallback({ gameId, ownerId, selectedSubIds }) {
   const { data: rows, error } = await sb()
@@ -1026,9 +1037,15 @@ async function refreshData() {
 
     const ids = polls.map((p) => p.game_id).filter(Boolean);
     pollClosedAt = new Map();
+    // stan reguł zapisany w games.rules_state (migracja 275) przychodzi tym
+    // samym zapytaniem -- wcześniej osobne sprawdzenie dla każdej ankiety
+    const rulesByGame = new Map();
     if (ids.length) {
-      const { data } = await sb().from("games").select("id,poll_closed_at").in("id", ids);
-      for (const row of data || []) pollClosedAt.set(row.id, row.poll_closed_at);
+      const { data } = await sb().from("games").select("id,poll_closed_at,rules_state").in("id", ids);
+      for (const row of data || []) {
+        pollClosedAt.set(row.id, row.poll_closed_at);
+        rulesByGame.set(row.id, rulesFromState(row.rules_state));
+      }
     }
 
     pollReadyMap = new Map();
@@ -1037,8 +1054,8 @@ async function refreshData() {
         .filter((p) => p.poll_state === "draft")
         .map(async (poll) => {
           try {
-            const ready = await validatePollReadyToOpen(poll.game_id);
-            pollReadyMap.set(poll.game_id, !!ready?.ok);
+            const rules = rulesByGame.get(poll.game_id) || await validateGame(poll.game_id);
+            pollReadyMap.set(poll.game_id, !!rules?.poll_open?.ok);
           } catch {
             pollReadyMap.set(poll.game_id, false);
           }
@@ -1126,27 +1143,30 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   tabPollsMobile?.addEventListener("click", () => setActiveMobileTab("polls"));
   tabTasksMobile?.addEventListener("click", () => setActiveMobileTab("tasks"));
-  setActiveMobileTab("polls");
+  setActiveMobileTab(mobileTabFromUrl(), { updateUrl: false });
+  window.addEventListener("popstate", () => {
+    setActiveMobileTab(mobileTabFromUrl(), { updateUrl: false });
+  });
 
   btnShare?.addEventListener("click", openShareModal);
   btnShareMobile?.addEventListener("click", openShareModal);
   btnDetails?.addEventListener("click", openDetailsModal);
   btnDetailsMobile?.addEventListener("click", openDetailsModal);
   btnShareSave?.addEventListener("click", saveShareModal);
-  btnShareClose?.addEventListener("click", () => { closeShareModal(); refreshData(); });
-  btnDetailsClose?.addEventListener("click", () => { closeDetailsModal(); refreshData(); });
+  btnShareClose?.addEventListener("click", async () => { closeShareModal(); await refreshData(); });
+  btnDetailsClose?.addEventListener("click", async () => { closeDetailsModal(); await refreshData(); });
 
-  shareOverlay?.addEventListener("click", (e) => {
+  shareOverlay?.addEventListener("click", async (e) => {
     if (e.target !== shareOverlay) return;
     if (isSheetViewport()) return; // sheet mode (mobile): tylko widoczny przycisk zamyka
     closeShareModal();
-    refreshData();
+    await refreshData();
   });
-  detailsOverlay?.addEventListener("click", (e) => {
+  detailsOverlay?.addEventListener("click", async (e) => {
     if (e.target !== detailsOverlay) return;
     if (isSheetViewport()) return; // sheet mode (mobile): tylko widoczny przycisk zamyka
     closeDetailsModal();
-    refreshData();
+    await refreshData();
   });
 
   // po zamknięciu dowolnego confirm/alert w aplikacji — odśwież listy

@@ -1,0 +1,2434 @@
+<!DOCTYPE html><html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><!-- frame-runtime --><!-- /frame-runtime --><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>
+@charset "utf-8";
+
+:root { color-scheme: light; box-sizing: border-box; padding-top: env(safe-area-inset-top,0px); padding-bottom: env(safe-area-inset-bottom,0px); }
+
+html { scroll-padding-top: env(safe-area-inset-top,0px); }
+
+body { margin: 0px; padding: 0px; font: 14px -apple-system, BlinkMacSystemFont, sans-serif; background: rgb(250, 249, 245); color: rgb(20, 20, 19); }
+
+img { max-width: 100%; }
+
+[hidden]:not([hidden="until-found" i]) { display: none !important; }
+@charset "utf-8";
+
+:root { --bg: #0b0f1a; --surface: #111a2c; --surface-2: #0e1526; --border: rgba(255,255,255,.10); --border-strong: rgba(255,255,255,.18); --text: #e8ecf5; --muted: #93a0bf; --gold: #ffeaa6; --done: #6ee7a8; --done-bg: rgba(110,231,168,.12); --removed: #67e8f9; --removed-bg: rgba(103,232,249,.12); --proposal: #7dd3fc; --proposal-bg: rgba(125,211,252,.12); --stays: #ffeaa6; --stays-bg: rgba(255,234,166,.12); --na: #fca5a5; --na-bg: rgba(252,165,165,.10); --icon-box-bg: #182034; }
+
+* { box-sizing: border-box; }
+
+body { margin: 0px; background: var(--bg); color: var(--text); font-family: "Source Sans 3", system-ui, sans-serif; padding-inline: 20px; padding-block: 28px 60px; }
+
+h1 { font-family: Sora, system-ui, sans-serif; font-size: 22px; font-weight: 700; letter-spacing: 0.01em; margin: 0px 0px 4px; text-wrap: balance; }
+
+.sub { color: var(--muted); font-size: 14px; margin: 0px 0px 20px; max-width: 72ch; line-height: 1.5; }
+
+.legend { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+
+.pill { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; letter-spacing: 0.01em; border: 1px solid transparent; }
+
+.pill.done { color: var(--done); background: var(--done-bg); border-color: rgba(110, 231, 168, 0.3); }
+
+.pill.removed { color: var(--removed); background: var(--removed-bg); border-color: rgba(103, 232, 249, 0.3); }
+
+.pill.proposal { color: var(--proposal); background: var(--proposal-bg); border-color: rgba(125, 211, 252, 0.3); }
+
+.pill.stays { color: var(--stays); background: var(--stays-bg); border-color: rgba(255, 234, 166, 0.3); }
+
+.pill.na { color: var(--na); background: var(--na-bg); border-color: rgba(252, 165, 165, 0.3); }
+
+.tablewrap { border: 1px solid var(--border); border-radius: 14px; overflow: auto; background: var(--surface); max-width: 100%; }
+
+table { border-collapse: collapse; width: 100%; min-width: 1200px; }
+
+thead th { position: sticky; top: 0px; background: var(--surface-2); text-align: left; font-family: Sora, system-ui, sans-serif; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); padding: 12px 14px; border-bottom: 1px solid var(--border-strong); z-index: 1; }
+
+tbody tr { border-bottom: 1px solid var(--border); }
+
+tbody tr:last-child { border-bottom-width: medium; border-bottom-style: none; border-bottom-color: currentcolor; }
+
+tbody tr:hover { background: rgba(255, 255, 255, 0.02); }
+
+td { padding: 12px 14px; vertical-align: top; font-size: 13px; line-height: 1.5; }
+
+.col-jest { width: 60px; text-align: center; }
+
+.col-svg { width: 140px; }
+
+.col-status { width: 90px; }
+
+.col-why { width: 220px; }
+
+.col-use { width: 320px; }
+
+.col-comment { width: 240px; }
+
+.emoji-big { font-size: 26px; line-height: 1; }
+
+.svgs { display: flex; gap: 6px; flex-wrap: wrap; }
+
+.icon-box { width: 30px; height: 30px; min-width: 30px; border-radius: 8px; border: 1px solid var(--border-strong); background: var(--icon-box-bg); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+
+.icon-box svg { width: 16px; height: 16px; }
+
+.icon-box svg:not([fill]) { fill: var(--text); }
+
+.icon-box.outline svg { stroke: var(--text); }
+
+.dash { color: var(--muted); font-size: 13px; }
+
+.where { font-family: "IBM Plex Mono", monospace; font-size: 11px; color: var(--muted); }
+
+.quote { color: var(--text); font-style: italic; }
+
+.use-text { color: var(--text); }
+
+.why-text { color: var(--muted); font-size: 12.5px; }
+
+textarea.comment { width: 100%; min-height: 50px; resize: vertical; background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: inherit; font-size: 12.5px; padding: 8px 10px; line-height: 1.4; }
+
+textarea.comment:focus { outline: none; border-color: var(--gold); }
+
+.save-state { font-size: 10.5px; color: var(--muted); margin-top: 4px; height: 12px; }
+
+.save-state.saved { color: var(--done); }
+
+.tag { display: inline-block; font-size: 10px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; padding: 2px 7px; border-radius: 6px; }
+
+.tag.done { color: var(--done); background: var(--done-bg); }
+
+.tag.removed { color: var(--removed); background: var(--removed-bg); }
+
+.tag.proposal { color: var(--proposal); background: var(--proposal-bg); }
+
+.tag.stays { color: var(--stays); background: var(--stays-bg); }
+
+.tag.na { color: var(--na); background: var(--na-bg); }
+
+.foot { margin-top: 16px; color: var(--muted); font-size: 12px; }
+
+.pagehead td { padding: 20px 14px 8px; font-family: Sora, system-ui, sans-serif; font-size: 13px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--gold); border-top: 2px solid var(--border-strong); }
+
+@media (max-width: 700px) {
+  h1 { font-size: 19px; }
+  .tablewrap { border-radius: 10px; }
+}
+</style></head><body>
+<title>Emotki → SVG (audyt v2)</title>
+<meta name="description" content="Pełny audyt emotek strona-po-stronie: co było, propozycja SVG, status, wytłumaczenie statusu, zastosowanie, komentarz.">
+<link rel="preconnect" href="https://fonts.googleapis.com/">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&amp;family=IBM+Plex+Mono:wght@400;500&amp;family=Source+Sans+3:wght@400;500;600&amp;display=swap">
+
+
+<h1>Emotki → SVG -- pełny audyt strona-po-stronie</h1>
+<p class="sub">Wersja 2: każdy wiersz to jedno pojedyncze wystąpienie (nie koncepcja ikony), pogrupowane nagłówkami realnych stron projektu. Kolumny: <b>Jest</b> (sam znak), <b>Propozycja SVG</b> (może być kilka), <b>Status</b>, <b>Wytłumaczenie statusu</b>, <b>Zastosowanie w systemie</b> (dokładne miejsce + cytat tekstu jeśli emoji było jego częścią), <b>Komentarz</b>. Status "usunięte" jest oddzielony od "wdrożone" -- to dwie różne rzeczy. Wpisz komentarz w ostatniej kolumnie, zapisuje się automatycznie.</p>
+
+<div class="legend">
+  <span class="pill done">wdrożone</span>
+  <span class="pill removed">usunięte</span>
+  <span class="pill proposal">propozycja</span>
+  <span class="pill stays">zostaje</span>
+  <span class="pill na">nie da się / poza zakresem</span>
+</div>
+
+<div class="tablewrap">
+  <table>
+    <thead>
+      <tr>
+        <th class="col-jest">Jest</th>
+        <th class="col-svg">Propozycja SVG</th>
+        <th class="col-status">Status</th>
+        <th class="col-why">Wytłumaczenie statusu</th>
+        <th class="col-use">Zastosowanie w systemie (przed zmianami)</th>
+        <th class="col-comment">Komentarz</th>
+      </tr>
+    </thead>
+    <tbody id="rows"><tr class="pagehead"><td colspan="6">Strona główna (index.html)</td></tr><tr>
+    <td class="col-jest"><span class="emoji-big">🎮</span></td>
+    <td class="col-svg"><div class="svgs"><div class="icon-box"><svg viewBox="0 0 24 24"><rect x="2" y="8" width="20" height="9" rx="4" fill="none" stroke="currentColor" stroke-width="1.6"></rect><rect x="6.2" y="11.2" width="4" height="1.6" rx="0.6"></rect><rect x="7.4" y="10" width="1.6" height="4" rx="0.6"></rect><circle cx="16" cy="11" r="1.3"></circle><circle cx="18.5" cy="13.5" r="1.3"></circle></svg></div></div></td>
+    <td class="col-status"><span class="tag done">wdrożone</span></td>
+    <td class="col-why"><span class="why-text">Wdrożone -- bezpieczne miejsce (link), zmiana zaakceptowana.</span></td>
+    <td class="col-use"><span class="use-text">CTA na stronie głównej, index.html:126. Pełny tekst przed zmianą (klucz home.hero.ctaMarketplace): "Przeglądaj Gry Społeczności 🎮".</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="idx-cta-gamepad" placeholder="Twój komentarz…">Zatwierdzone</textarea>
+      <div class="save-state" data-id="idx-cta-gamepad"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">📱</span></td>
+    <td class="col-svg"><div class="svgs"><div class="icon-box"><svg viewBox="0 0 24 24"><rect x="7" y="1" width="10" height="22" rx="2.5"></rect><rect x="10" y="3" width="4" height="1.3" rx="0.65" fill="var(--icon-box-bg)"></rect><rect x="9" y="19.3" width="6" height="1.3" rx="0.65" fill="var(--icon-box-bg)"></rect></svg></div></div></td>
+    <td class="col-status"><span class="tag proposal">propozycja</span></td>
+    <td class="col-why"><span class="why-text">Ikona telefonu czeka na Twoją ocenę wyglądu (zbyt subtelna w małym rozmiarze) -- ten sam klucz co 4 inne miejsca (Builder, manual x2).</span></td>
+    <td class="col-use"><span class="use-text">Link nawigacyjny index.html:127. Pełny tekst (klucz builder.nav.connectDevice): "Podłącz urządzenie 📱".</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="idx-nav-phone" placeholder="Twój komentarz…">Trzeba przerysowac ikonę, bo jest brzydka</textarea>
+      <div class="save-state" data-id="idx-nav-phone"></div>
+    </td>
+  </tr><tr class="pagehead"><td colspan="6">Moje konto (account.html + account.js)</td></tr><tr>
+    <td class="col-jest"><span class="emoji-big">★ / ☆</span></td>
+    <td class="col-svg"><div class="svgs"><div class="icon-box"><svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14l-5-4.87 6.91-1.01L12 2z"></path></svg></div><div class="icon-box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14l-5-4.87 6.91-1.01L12 2z"></path></svg></div></div></td>
+    <td class="col-status"><span class="tag done">wdrożone</span></td>
+    <td class="col-why"><span class="why-text">Wdrożone -- widget gwiazdkowy (pełna/pusta to ta sama ikona, wypełniona/pusta).</span></td>
+    <td class="col-use"><span class="use-text">Wyświetlanie oceny wystawionej przez użytkownika, account.js:548. Cytat mechanizmu: `STAR_ICON.repeat(stars) + STAR_EMPTY_ICON.repeat(5-stars)`.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="acc-star" placeholder="Twój komentarz…">Zatwierdzone</textarea>
+      <div class="save-state" data-id="acc-star"></div>
+    </td>
+  </tr><tr class="pagehead"><td colspan="6">Menu / Moje gry (builder.html)</td></tr><tr>
+    <td class="col-jest"><span class="emoji-big">🎮</span></td>
+    <td class="col-svg"><div class="svgs"><div class="icon-box"><svg viewBox="0 0 24 24"><rect x="2" y="8" width="20" height="9" rx="4" fill="none" stroke="currentColor" stroke-width="1.6"></rect><rect x="6.2" y="11.2" width="4" height="1.6" rx="0.6"></rect><rect x="7.4" y="10" width="1.6" height="4" rx="0.6"></rect><circle cx="16" cy="11" r="1.3"></circle><circle cx="18.5" cy="13.5" r="1.3"></circle></svg></div></div></td>
+    <td class="col-status"><span class="tag done">wdrożone</span></td>
+    <td class="col-why"><span class="why-text">Wdrożone.</span></td>
+    <td class="col-use"><span class="use-text">Przycisk nawigacji builder.html:48. Pełny tekst (builder.nav.marketplace): "Gry Społeczności 🎮".</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="bld-nav-gamepad" placeholder="Twój komentarz…">Zatwierdzone</textarea>
+      <div class="save-state" data-id="bld-nav-gamepad"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">🖥️</span></td>
+    <td class="col-svg"><div class="svgs"><div class="icon-box"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="12" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.6"></rect><rect x="10.5" y="15" width="3" height="3"></rect><rect x="7" y="18" width="10" height="1.6" rx="0.8"></rect></svg></div></div></td>
+    <td class="col-status"><span class="tag proposal">propozycja</span></td>
+    <td class="col-why"><span class="why-text">Czeka razem z manual.content.logo -- ta sama ikona w obu miejscach naraz.</span></td>
+    <td class="col-use"><span class="use-text">Przycisk nawigacji builder.html:53. Pełny tekst (builder.nav.logo): "Logo 🖥️".</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="bld-nav-logo" placeholder="Twój komentarz…">Zatwierdzone</textarea>
+      <div class="save-state" data-id="bld-nav-logo"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">📱</span></td>
+    <td class="col-svg"><div class="svgs"><div class="icon-box"><svg viewBox="0 0 24 24"><rect x="7" y="1" width="10" height="22" rx="2.5"></rect><rect x="10" y="3" width="4" height="1.3" rx="0.65" fill="var(--icon-box-bg)"></rect><rect x="9" y="19.3" width="6" height="1.3" rx="0.65" fill="var(--icon-box-bg)"></rect></svg></div></div></td>
+    <td class="col-status"><span class="tag proposal">propozycja</span></td>
+    <td class="col-why"><span class="why-text">Jak wyżej (index.html) -- 5 miejsc naraz, jedna decyzja.</span></td>
+    <td class="col-use"><span class="use-text">Przycisk nawigacji builder.html:57. Pełny tekst (builder.nav.connectDevice): "Podłącz urządzenie 📱".</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="bld-nav-phone" placeholder="Twój komentarz…">Jak wyżej, brzydka ikona</textarea>
+      <div class="save-state" data-id="bld-nav-phone"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">📊</span></td>
+    <td class="col-svg"><div class="svgs"><div class="icon-box"><svg viewBox="0 0 24 24"><rect x="2" y="20" width="20" height="1.4" opacity="0.5"></rect><rect x="2" y="16" width="20" height="1" opacity="0.25"></rect><rect x="2" y="11" width="20" height="1" opacity="0.25"></rect><rect x="4" y="11" width="4" height="9" rx="1"></rect><rect x="10.5" y="15" width="4" height="5" rx="1"></rect><rect x="17" y="6" width="4" height="14" rx="1"></rect></svg></div></div></td>
+    <td class="col-status"><span class="tag done">wdrożone</span></td>
+    <td class="col-why"><span class="why-text">Wdrożone wg Twojego opisu słupków.</span></td>
+    <td class="col-use"><span class="use-text">Przycisk nawigacji builder.html:62. Pełny tekst (builder.nav.pollsHubPolls): "Ankiety 📊".</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="bld-nav-polls" placeholder="Twój komentarz…">Zatwierdzone</textarea>
+      <div class="save-state" data-id="bld-nav-polls"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">📧</span></td>
+    <td class="col-svg"><div class="svgs"><div class="icon-box"><svg viewBox="0 0 24 24"><path d="M12 2a1.6 1.6 0 0 0-1.6 1.6v.6C7.7 4.9 6 7.2 6 10v5l-2 2v1h16v-1l-2-2v-5c0-2.8-1.7-5.1-4.4-5.8v-.6A1.6 1.6 0 0 0 12 2z"></path><path d="M9.5 20a2.5 2.5 0 0 0 5 0h-5z"></path></svg></div></div></td>
+    <td class="col-status"><span class="tag done">wdrożone</span></td>
+    <td class="col-why"><span class="why-text">Wdrożone -- dzwonek zamiast koperty (Twoja decyzja: pasuje do subskrypcji).</span></td>
+    <td class="col-use"><span class="use-text">Przycisk nawigacji builder.html:67. Pełny tekst (builder.nav.pollsHubSubs): "Subskrypcje 📧".</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="bld-nav-subs" placeholder="Twój komentarz…">Zatwierdzone</textarea>
+      <div class="save-state" data-id="bld-nav-subs"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">🗃️</span></td>
+    <td class="col-svg"><div class="svgs"><div class="icon-box"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.6"></rect><line x1="3" y1="12" x2="21" y2="12" stroke="currentColor" stroke-width="1.6"></line><rect x="9" y="6.5" width="6" height="1.6" rx="0.8"></rect><rect x="9" y="15.5" width="6" height="1.6" rx="0.8"></rect></svg></div></div></td>
+    <td class="col-status"><span class="tag done">wdrożone</span></td>
+    <td class="col-why"><span class="why-text">Wdrożone -- zaakceptowałeś wygląd ("pasuje").</span></td>
+    <td class="col-use"><span class="use-text">Przycisk nawigacji builder.html:72. Pełny tekst (builder.nav.bases): "Bazy pytań 🗃️".</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="bld-nav-bases" placeholder="Twój komentarz…">Zatwierdzone</textarea>
+      <div class="save-state" data-id="bld-nav-bases"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">▾</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag na">nie da się</span></td>
+    <td class="col-why"><span class="why-text">Symbol typograficzny (strzałka rozwijania), nie kolorowa emotka -- poza zakresem tego porządkowania.</span></td>
+    <td class="col-use"><span class="use-text">Przycisk "Więcej ▾" (rozwijane podmenu nawigacji), builder.html:77.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="bld-more-caret" placeholder="Twój komentarz…">Spoko</textarea>
+      <div class="save-state" data-id="bld-more-caret"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">ℹ️</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag stays">zostaje</span></td>
+    <td class="col-why"><span class="why-text">Uniwersalny, czytelny symbol informacji -- ten sam wzorzec w 15 plikach (patrz sekcja "Wzorce wspólne").</span></td>
+    <td class="col-use"><span class="use-text">Przycisk pomocy/manuala w topbarze, builder.html:83.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="bld-help" placeholder="Twój komentarz…">Nie bardzo, chcę jednak ikonę</textarea>
+      <div class="save-state" data-id="bld-help"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">✕</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag stays">zostaje</span></td>
+    <td class="col-why"><span class="why-text">Uniwersalny wzorzec zamykania (patrz "Wzorce wspólne").</span></td>
+    <td class="col-use"><span class="use-text">Anuluj eksport bazy, builder.html:222.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="bld-x-export" placeholder="Twój komentarz…">Spoko</textarea>
+      <div class="save-state" data-id="bld-x-export"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">✕</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag stays">zostaje</span></td>
+    <td class="col-why"><span class="why-text">Uniwersalny wzorzec zamykania.</span></td>
+    <td class="col-use"><span class="use-text">Anuluj import, builder.html:262.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="bld-x-import" placeholder="Twój komentarz…">Spoko</textarea>
+      <div class="save-state" data-id="bld-x-import"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">✕</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag stays">zostaje</span></td>
+    <td class="col-why"><span class="why-text">Uniwersalny wzorzec zamykania.</span></td>
+    <td class="col-use"><span class="use-text">Zamknij podgląd, builder.html:297.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="bld-x-preview" placeholder="Twój komentarz…">Spoko</textarea>
+      <div class="save-state" data-id="bld-x-preview"></div>
+    </td>
+  </tr><tr class="pagehead"><td colspan="6">Bazy pytań (bases.html + bases.js)</td></tr><tr>
+    <td class="col-jest"><span class="emoji-big">📧</span></td>
+    <td class="col-svg"><div class="svgs"><div class="icon-box"><svg viewBox="0 0 24 24"><path d="M12 2a1.6 1.6 0 0 0-1.6 1.6v.6C7.7 4.9 6 7.2 6 10v5l-2 2v1h16v-1l-2-2v-5c0-2.8-1.7-5.1-4.4-5.8v-.6A1.6 1.6 0 0 0 12 2z"></path><path d="M9.5 20a2.5 2.5 0 0 0 5 0h-5z"></path></svg></div></div></td>
+    <td class="col-status"><span class="tag done">wdrożone</span></td>
+    <td class="col-why"><span class="why-text">Wdrożone -- ten sam dzwonek co w Builderze. Przy okazji naprawiony bug: data-i18n był na całym <button> (kasował plakietkę z licznikiem przy zmianie języka), przeniesiony na wewnętrzny <span>.</span></button></span></td>
+    <td class="col-use"><span class="use-text">Alternatywny przycisk nawigacji "Subskrypcje", bases.html:48. Pełny tekst: "Subskrypcje 📧 <span class="\&quot;badge\&quot;">…</span>".</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="bases-nav-subs" placeholder="Twój komentarz…">Zatwierdzone</textarea>
+      <div class="save-state" data-id="bases-nav-subs"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">ℹ️</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag stays">zostaje</span></td>
+    <td class="col-why"><span class="why-text">Wzorzec wspólny.</span></td>
+    <td class="col-use"><span class="use-text">Przycisk pomocy, bases.html:51.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="bases-help" placeholder="Twój komentarz…">Jak wyżej, chcę ikonę</textarea>
+      <div class="save-state" data-id="bases-help"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">✕</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag stays">zostaje</span></td>
+    <td class="col-why"><span class="why-text">Wzorzec wspólny.</span></td>
+    <td class="col-use"><span class="use-text">Zamknij modal udostępniania, bases.html:163.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="bases-x-share" placeholder="Twój komentarz…">Spoko</textarea>
+      <div class="save-state" data-id="bases-x-share"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">✕</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag stays">zostaje</span></td>
+    <td class="col-why"><span class="why-text">Wzorzec wspólny.</span></td>
+    <td class="col-use"><span class="use-text">Anuluj import, bases.html:243.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="bases-x-import" placeholder="Twój komentarz…">Spoko</textarea>
+      <div class="save-state" data-id="bases-x-import"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">🟡</span></td>
+    <td class="col-svg"><div class="svgs"><div class="icon-box"><svg viewBox="0 0 24 24"><path fill-rule="evenodd" clip-rule="evenodd" d="M12 2 1 21h22L12 2zm-1 7h2v6h-2V9zm0 8h2v2h-2v-2z"></path></svg></div></div></td>
+    <td class="col-status"><span class="tag proposal">propozycja</span></td>
+    <td class="col-why"><span class="why-text">Jedno miejsce, osadzone w tłumaczeniu -- wymaga sprawdzenia czy bases.js renderuje to przez innerHTML czy textContent, zanim zaproponuję finalną ikonę (kropka statusu czy pełna ikona).</span></td>
+    <td class="col-use"><span class="use-text">Odznaka przy propozycji zmiany pytania od innego użytkownika (współdzielona baza), bases.js. Pełny tekst (bases.badges.proposed): "🟡 Proponowana".</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="bases-badge-proposed" placeholder="Twój komentarz…">Kropka żeby wyróżnić proponowane, zobacz czy jest jakieś inne wyroznienie.najlwpiwj</textarea>
+      <div class="save-state" data-id="bases-badge-proposed"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">✏</span></td>
+    <td class="col-svg"><div class="svgs"><div class="icon-box"><svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L19.81 7.94l-3.75-3.75L3 17.25zm2.92 2.83H5v-.92l10.06-10.06.92.92L5.92 20.08zM20.71 6.04a1 1 0 0 0 0-1.41l-1.34-1.34a1 1 0 0 0-1.41 0l-1.13 1.13 2.75 2.75 1.13-1.13z"></path></svg></div></div></td>
+    <td class="col-status"><span class="tag done">wdrożone</span></td>
+    <td class="col-why"><span class="why-text">Wdrożone dawniej -- gotowa ikona w silniku.</span></td>
+    <td class="col-use"><span class="use-text">Odznaka dostępu "edycja" na kafelku udostępnionej bazy, bases.js.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="bases-badge-edit" placeholder="Twój komentarz…">Zatwierdzone</textarea>
+      <div class="save-state" data-id="bases-badge-edit"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">👁</span></td>
+    <td class="col-svg"><div class="svgs"><div class="icon-box"><svg viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5C21.27 7.61 17 4.5 12 4.5zm0 12.5c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"></path></svg></div></div></td>
+    <td class="col-status"><span class="tag done">wdrożone</span></td>
+    <td class="col-why"><span class="why-text">Wdrożone dawniej.</span></td>
+    <td class="col-use"><span class="use-text">Odznaka dostępu "podgląd" na kafelku udostępnionej bazy, bases.js.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="bases-badge-view" placeholder="Twój komentarz…">Zatwierdzone</textarea>
+      <div class="save-state" data-id="bases-badge-view"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">👥</span></td>
+    <td class="col-svg"><div class="svgs"><div class="icon-box"><svg viewBox="0 0 24 24"><circle cx="8.5" cy="8" r="3"></circle><path d="M2 19c0-3.3 2.9-6 6.5-6S15 15.7 15 19v1H2v-1z"></path><circle cx="17" cy="9" r="2.4"></circle><path d="M14 12.2c1-.5 2-.7 3-.7 3 0 5.5 2.2 5.5 5v.5H16v-.5c0-1.6-.5-3-1.9-4.1z" opacity=".7"></path></svg></div></div></td>
+    <td class="col-status"><span class="tag done">wdrożone</span></td>
+    <td class="col-why"><span class="why-text">Wdrożone dawniej.</span></td>
+    <td class="col-use"><span class="use-text">Liczba osób ze współdzielonym dostępem, bases.js:1228.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="bases-shared-count" placeholder="Twój komentarz…">Zatwierdzone</textarea>
+      <div class="save-state" data-id="bases-shared-count"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">👤</span></td>
+    <td class="col-svg"><div class="svgs"><div class="icon-box"><svg viewBox="0 0 24 24"><circle cx="12" cy="7.5" r="4"></circle><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7v1H4v-1z"></path></svg></div></div></td>
+    <td class="col-status"><span class="tag done">wdrożone</span></td>
+    <td class="col-why"><span class="why-text">Wdrożone dawniej.</span></td>
+    <td class="col-use"><span class="use-text">Oznaczenie "brak współdzielenia (tylko ja)", bases.js:1229.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="bases-shared-alone" placeholder="Twój komentarz…">Zatwierdzone</textarea>
+      <div class="save-state" data-id="bases-shared-alone"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">✓</span></td>
+    <td class="col-svg"><div class="svgs"><div class="icon-box"><svg viewBox="0 0 20 20"><path fill-rule="evenodd" clip-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z"></path></svg></div></div></td>
+    <td class="col-status"><span class="tag done">wdrożone</span></td>
+    <td class="col-why"><span class="why-text">Wdrożone dawniej.</span></td>
+    <td class="col-use"><span class="use-text">Przycisk akceptacji propozycji zmiany w bazie, bases.js:1244.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="bases-accept-proposal" placeholder="Twój komentarz…">Zatwierdzone</textarea>
+      <div class="save-state" data-id="bases-accept-proposal"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">✕</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag stays">zostaje</span></td>
+    <td class="col-why"><span class="why-text">Wzorzec wspólny.</span></td>
+    <td class="col-use"><span class="use-text">Anuluj oczekujące zaproszenie do współdzielenia, bases.js:964.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="bases-x-cancel-invite" placeholder="Twój komentarz…">Spoko</textarea>
+      <div class="save-state" data-id="bases-x-cancel-invite"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">✕</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag stays">zostaje</span></td>
+    <td class="col-why"><span class="why-text">Wzorzec wspólny.</span></td>
+    <td class="col-use"><span class="use-text">Usuń współdzielenie, bases.js:1013.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="bases-x-remove-share" placeholder="Twój komentarz…">Spoko</textarea>
+      <div class="save-state" data-id="bases-x-remove-share"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">✕</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag stays">zostaje</span></td>
+    <td class="col-why"><span class="why-text">Wzorzec wspólny.</span></td>
+    <td class="col-use"><span class="use-text">Odrzuć proponowaną zmianę, bases.js:1245.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="bases-x-decline" placeholder="Twój komentarz…">Spoko</textarea>
+      <div class="save-state" data-id="bases-x-decline"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">▾</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag na">nie da się</span></td>
+    <td class="col-why"><span class="why-text">Symbol typograficzny.</span></td>
+    <td class="col-use"><span class="use-text">Rozwijana lista, bases.js:1009.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="bases-caret" placeholder="Twój komentarz…">Spoko</textarea>
+      <div class="save-state" data-id="bases-caret"></div>
+    </td>
+  </tr><tr class="pagehead"><td colspan="6">Base Explorer (base-explorer.html, toolbar współdzielony z bases.js)</td></tr><tr>
+    <td class="col-jest"><span class="emoji-big">✏ / ✎</span></td>
+    <td class="col-svg"><div class="svgs"><div class="icon-box"><svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L19.81 7.94l-3.75-3.75L3 17.25zm2.92 2.83H5v-.92l10.06-10.06.92.92L5.92 20.08zM20.71 6.04a1 1 0 0 0 0-1.41l-1.34-1.34a1 1 0 0 0-1.41 0l-1.13 1.13 2.75 2.75 1.13-1.13z"></path></svg></div></div></td>
+    <td class="col-status"><span class="tag done">wdrożone</span></td>
+    <td class="col-why"><span class="why-text">Wdrożone -- gotowa ikona.</span></td>
+    <td class="col-use"><span class="use-text">Toolbar edycji pytania.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="be-edit" placeholder="Twój komentarz…">Zatwierdzone</textarea>
+      <div class="save-state" data-id="be-edit"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">📁 / 📂 / 🗂</span></td>
+    <td class="col-svg"><div class="svgs"><div class="icon-box"><svg viewBox="0 0 24 24"><path d="M20 6h-8l-2-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2z"></path></svg></div></div></td>
+    <td class="col-status"><span class="tag done">wdrożone</span></td>
+    <td class="col-why"><span class="why-text">Wdrożone.</span></td>
+    <td class="col-use"><span class="use-text">Folder/archiwum/kategorie, toolbar + drzewo/lista.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="be-folder" placeholder="Twój komentarz…">Zatwierdzone</textarea>
+      <div class="save-state" data-id="be-folder"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">🏷</span></td>
+    <td class="col-svg"><div class="svgs"><div class="icon-box"><svg viewBox="0 0 24 24"><path d="M20.59 13.41L11 3.83A2 2 0 0 0 9.59 3H4a2 2 0 0 0-2 2v5.59A2 2 0 0 0 2.83 12l9.59 9.59a2 2 0 0 0 2.83 0l5.34-5.34a2 2 0 0 0 0-2.83zM6.5 8A1.5 1.5 0 1 1 8 6.5 1.5 1.5 0 0 1 6.5 8z"></path></svg></div></div></td>
+    <td class="col-status"><span class="tag done">wdrożone</span></td>
+    <td class="col-why"><span class="why-text">Wdrożone.</span></td>
+    <td class="col-use"><span class="use-text">Tagi/etykiety, toolbar.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="be-tag" placeholder="Twój komentarz…">Zatwierdzone</textarea>
+      <div class="save-state" data-id="be-tag"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">🔄</span></td>
+    <td class="col-svg"><div class="svgs"><div class="icon-box"><svg viewBox="0 0 24 24"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-8 3.58-8 8s3.58 8 8 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"></path></svg></div></div></td>
+    <td class="col-status"><span class="tag done">wdrożone</span></td>
+    <td class="col-why"><span class="why-text">Wdrożone.</span></td>
+    <td class="col-use"><span class="use-text">Odśwież, toolbar.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="be-refresh" placeholder="Twój komentarz…">Zatwierdzone</textarea>
+      <div class="save-state" data-id="be-refresh"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">👁</span></td>
+    <td class="col-svg"><div class="svgs"><div class="icon-box"><svg viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5C21.27 7.61 17 4.5 12 4.5zm0 12.5c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"></path></svg></div></div></td>
+    <td class="col-status"><span class="tag done">wdrożone</span></td>
+    <td class="col-why"><span class="why-text">Wdrożone.</span></td>
+    <td class="col-use"><span class="use-text">Podgląd pytania, draw.js.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="be-eye" placeholder="Twój komentarz…">Zatwierdzone</textarea>
+      <div class="save-state" data-id="be-eye"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">☰</span></td>
+    <td class="col-svg"><div class="svgs"><div class="icon-box"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="2.4" rx="1.2"></rect><rect x="3" y="10.8" width="18" height="2.4" rx="1.2"></rect><rect x="3" y="16.6" width="18" height="2.4" rx="1.2"></rect></svg></div></div></td>
+    <td class="col-status"><span class="tag done">wdrożone</span></td>
+    <td class="col-why"><span class="why-text">Wdrożone.</span></td>
+    <td class="col-use"><span class="use-text">Otwórz panel boczny na mobile (btnDrawerToggle), base-explorer/js/render.js.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="be-hamburger" placeholder="Twój komentarz…">Zatwierdzone</textarea>
+      <div class="save-state" data-id="be-hamburger"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">ℹ️</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag stays">zostaje</span></td>
+    <td class="col-why"><span class="why-text">Wzorzec wspólny.</span></td>
+    <td class="col-use"><span class="use-text">Przycisk pomocy, base-explorer.html:59.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="be-help" placeholder="Twój komentarz…">Jak wyżej, chcę ikonę</textarea>
+      <div class="save-state" data-id="be-help"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">✕</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag stays">zostaje</span></td>
+    <td class="col-why"><span class="why-text">Wzorzec wspólny.</span></td>
+    <td class="col-use"><span class="use-text">Zamknij panel tagów L1, base-explorer.html:112.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="be-x-1" placeholder="Twój komentarz…">Spoko</textarea>
+      <div class="save-state" data-id="be-x-1"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">✕</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag stays">zostaje</span></td>
+    <td class="col-why"><span class="why-text">Wzorzec wspólny.</span></td>
+    <td class="col-use"><span class="use-text">Zamknij panel tagów L2, base-explorer.html:132.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="be-x-2" placeholder="Twój komentarz…">Spoko</textarea>
+      <div class="save-state" data-id="be-x-2"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">✕</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag stays">zostaje</span></td>
+    <td class="col-why"><span class="why-text">Wzorzec wspólny.</span></td>
+    <td class="col-use"><span class="use-text">Zamknij panel tagów L3, base-explorer.html:158.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="be-x-3" placeholder="Twój komentarz…">Spoko</textarea>
+      <div class="save-state" data-id="be-x-3"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">✕</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag stays">zostaje</span></td>
+    <td class="col-why"><span class="why-text">Wzorzec wspólny.</span></td>
+    <td class="col-use"><span class="use-text">Zamknięcie ogólne, base-explorer.html:211.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="be-x-4" placeholder="Twój komentarz…">Spoko</textarea>
+      <div class="save-state" data-id="be-x-4"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">✕</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag stays">zostaje</span></td>
+    <td class="col-why"><span class="why-text">Wzorzec wspólny.</span></td>
+    <td class="col-use"><span class="use-text">Zamknij podgląd pytania, base-explorer.html:294.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="be-x-5" placeholder="Twój komentarz…">Spoko</textarea>
+      <div class="save-state" data-id="be-x-5"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">✕</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag stays">zostaje</span></td>
+    <td class="col-why"><span class="why-text">Wzorzec wspólny.</span></td>
+    <td class="col-use"><span class="use-text">Zamknij modal zmiany nazwy, base-explorer.html:345.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="be-x-6" placeholder="Twój komentarz…">Spoko</textarea>
+      <div class="save-state" data-id="be-x-6"></div>
+    </td>
+  </tr><tr class="pagehead"><td colspan="6">Ankiety -- hub (polls-hub.html)</td></tr><tr>
+    <td class="col-jest"><span class="emoji-big">📧</span></td>
+    <td class="col-svg"><div class="svgs"><div class="icon-box"><svg viewBox="0 0 24 24"><path d="M12 2a1.6 1.6 0 0 0-1.6 1.6v.6C7.7 4.9 6 7.2 6 10v5l-2 2v1h16v-1l-2-2v-5c0-2.8-1.7-5.1-4.4-5.8v-.6A1.6 1.6 0 0 0 12 2z"></path><path d="M9.5 20a2.5 2.5 0 0 0 5 0h-5z"></path></svg></div></div></td>
+    <td class="col-status"><span class="tag done">wdrożone</span></td>
+    <td class="col-why"><span class="why-text">Wdrożone, ten sam fix co bases.html.</span></td>
+    <td class="col-use"><span class="use-text">Alternatywny przycisk "Subskrypcje", polls-hub.html:46.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="ph-nav-subs" placeholder="Twój komentarz…">Zatwierdzone</textarea>
+      <div class="save-state" data-id="ph-nav-subs"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">ℹ️</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag stays">zostaje</span></td>
+    <td class="col-why"><span class="why-text">Wzorzec wspólny.</span></td>
+    <td class="col-use"><span class="use-text">Przycisk pomocy, polls-hub.html:49.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="ph-help" placeholder="Twój komentarz…">Jak wyżej, chcę ikonę</textarea>
+      <div class="save-state" data-id="ph-help"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">▾</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag na">nie da się</span></td>
+    <td class="col-why"><span class="why-text">Symbol typograficzny.</span></td>
+    <td class="col-use"><span class="use-text">Rozwijana lista, polls-hub.html:76.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="ph-caret-1" placeholder="Twój komentarz…">Spoko</textarea>
+      <div class="save-state" data-id="ph-caret-1"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">▾</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag na">nie da się</span></td>
+    <td class="col-why"><span class="why-text">Symbol typograficzny.</span></td>
+    <td class="col-use"><span class="use-text">Rozwijana lista, polls-hub.html:91.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="ph-caret-2" placeholder="Twój komentarz…">Spoko</textarea>
+      <div class="save-state" data-id="ph-caret-2"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">▾</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag na">nie da się</span></td>
+    <td class="col-why"><span class="why-text">Symbol typograficzny.</span></td>
+    <td class="col-use"><span class="use-text">Rozwijana lista, polls-hub.html:110.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="ph-caret-3" placeholder="Twój komentarz…">Spoko</textarea>
+      <div class="save-state" data-id="ph-caret-3"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">▾</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag na">nie da się</span></td>
+    <td class="col-why"><span class="why-text">Symbol typograficzny.</span></td>
+    <td class="col-use"><span class="use-text">Rozwijana lista, polls-hub.html:114.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="ph-caret-4" placeholder="Twój komentarz…">Spoko</textarea>
+      <div class="save-state" data-id="ph-caret-4"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">✕</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag stays">zostaje</span></td>
+    <td class="col-why"><span class="why-text">Wzorzec wspólny.</span></td>
+    <td class="col-use"><span class="use-text">Zamknij modal udostępniania, polls-hub.html:121.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="ph-x-1" placeholder="Twój komentarz…">Spoko</textarea>
+      <div class="save-state" data-id="ph-x-1"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">✕</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag stays">zostaje</span></td>
+    <td class="col-why"><span class="why-text">Wzorzec wspólny.</span></td>
+    <td class="col-use"><span class="use-text">Zamknij szczegóły, polls-hub.html:122.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="ph-x-2" placeholder="Twój komentarz…">Spoko</textarea>
+      <div class="save-state" data-id="ph-x-2"></div>
+    </td>
+  </tr><tr class="pagehead"><td colspan="6">Ankieta -- widok (polls.html + polls.js)</td></tr><tr>
+    <td class="col-jest"><span class="emoji-big">ℹ️</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag stays">zostaje</span></td>
+    <td class="col-why"><span class="why-text">Wzorzec wspólny.</span></td>
+    <td class="col-use"><span class="use-text">Przycisk pomocy, polls.html:46.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="poll-help" placeholder="Twój komentarz…">Jak wyżej, chcę ikonę</textarea>
+      <div class="save-state" data-id="poll-help"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">⟳</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag na">nie da się</span></td>
+    <td class="col-why"><span class="why-text">Symbol typograficzny, nie emotka.</span></td>
+    <td class="col-use"><span class="use-text">Odśwież wyniki, polls.html:87.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="poll-refresh-html" placeholder="Twój komentarz…">Zmien na ikonę odswiezania jak wszędzie</textarea>
+      <div class="save-state" data-id="poll-refresh-html"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">↩</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag na">nie da się</span></td>
+    <td class="col-why"><span class="why-text">Symbol typograficzny.</span></td>
+    <td class="col-use"><span class="use-text">Cofnij akcję, polls.html:96.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="poll-undo" placeholder="Twój komentarz…">Zmień na ikonę</textarea>
+      <div class="save-state" data-id="poll-undo"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">↪</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag na">nie da się</span></td>
+    <td class="col-why"><span class="why-text">Symbol typograficzny.</span></td>
+    <td class="col-use"><span class="use-text">Ponów akcję, polls.html:97.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="poll-redo" placeholder="Twój komentarz…">Zmień na ikonę</textarea>
+      <div class="save-state" data-id="poll-redo"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">✕</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag stays">zostaje</span></td>
+    <td class="col-why"><span class="why-text">Wzorzec wspólny.</span></td>
+    <td class="col-use"><span class="use-text">Zamknij modal kodu QR, polls.html:136.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="poll-x-qr" placeholder="Twój komentarz…">Spoko</textarea>
+      <div class="save-state" data-id="poll-x-qr"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">→ (x2)</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag na">nie da się</span></td>
+    <td class="col-why"><span class="why-text">Strzałki opisowe w zdaniu instrukcji, nie ikony przycisków.</span></td>
+    <td class="col-use"><span class="use-text">Tekst pomocniczy przy kodzie QR, polls.html:147: "familiada.online → Podłącz urządzenie → wprowadź kod".</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="poll-prose-arrows" placeholder="Twój komentarz…">Spoko</textarea>
+      <div class="save-state" data-id="poll-prose-arrows"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">⇄</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag na">nie da się</span></td>
+    <td class="col-why"><span class="why-text">Funkcjonalna ikona strzałek, nie kolorowa emotka.</span></td>
+    <td class="col-use"><span class="use-text">Scal dwie odpowiedzi (tryb dotykowy), polls.js:918.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="poll-merge" placeholder="Twój komentarz…">Zmień na ikonę</textarea>
+      <div class="save-state" data-id="poll-merge"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">✕</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag stays">zostaje</span></td>
+    <td class="col-why"><span class="why-text">Wzorzec wspólny.</span></td>
+    <td class="col-use"><span class="use-text">Usuń odpowiedź, polls.js:919.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="poll-x-answer" placeholder="Twój komentarz…">Spoko</textarea>
+      <div class="save-state" data-id="poll-x-answer"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">⟳</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag na">nie da się</span></td>
+    <td class="col-why"><span class="why-text">Symbol typograficzny.</span></td>
+    <td class="col-use"><span class="use-text">Odśwież, polls.js:54.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="poll-refresh-1" placeholder="Twój komentarz…">Zmien na ikonę odswiezania jak wszędzie</textarea>
+      <div class="save-state" data-id="poll-refresh-1"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">⟳</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag na">nie da się</span></td>
+    <td class="col-why"><span class="why-text">Symbol typograficzny.</span></td>
+    <td class="col-use"><span class="use-text">Odśwież, polls.js:630.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="poll-refresh-2" placeholder="Twój komentarz…">Zmien na ikonę odswiezania jak wszędzie</textarea>
+      <div class="save-state" data-id="poll-refresh-2"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">⟳</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag na">nie da się</span></td>
+    <td class="col-why"><span class="why-text">Symbol typograficzny.</span></td>
+    <td class="col-use"><span class="use-text">Odśwież, polls.js:1243.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="poll-refresh-3" placeholder="Twój komentarz…">Zmien na ikonę odswiezania jak wszędzie</textarea>
+      <div class="save-state" data-id="poll-refresh-3"></div>
+    </td>
+  </tr><tr class="pagehead"><td colspan="6">Subskrypcje (subscriptions.html + subscriptions.js)</td></tr><tr>
+    <td class="col-jest"><span class="emoji-big">ℹ️</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag stays">zostaje</span></td>
+    <td class="col-why"><span class="why-text">Wzorzec wspólny.</span></td>
+    <td class="col-use"><span class="use-text">Przycisk pomocy, subscriptions.html:47.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="subs-help" placeholder="Twój komentarz…">Jak wyżej, chcę ikonę</textarea>
+      <div class="save-state" data-id="subs-help"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">▾</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag na">nie da się</span></td>
+    <td class="col-why"><span class="why-text">Symbol typograficzny.</span></td>
+    <td class="col-use"><span class="use-text">Rozwijana lista, subscriptions.html:68.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="subs-caret-1" placeholder="Twój komentarz…">Spoko</textarea>
+      <div class="save-state" data-id="subs-caret-1"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">▾</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag na">nie da się</span></td>
+    <td class="col-why"><span class="why-text">Symbol typograficzny.</span></td>
+    <td class="col-use"><span class="use-text">Rozwijana lista, subscriptions.html:73.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="subs-caret-2" placeholder="Twój komentarz…">Spoko</textarea>
+      <div class="save-state" data-id="subs-caret-2"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">▾</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag na">nie da się</span></td>
+    <td class="col-why"><span class="why-text">Symbol typograficzny.</span></td>
+    <td class="col-use"><span class="use-text">Rozwijana lista, subscriptions.html:89.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="subs-caret-3" placeholder="Twój komentarz…">Spoko</textarea>
+      <div class="save-state" data-id="subs-caret-3"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">▾</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag na">nie da się</span></td>
+    <td class="col-why"><span class="why-text">Symbol typograficzny.</span></td>
+    <td class="col-use"><span class="use-text">Rozwijana lista, subscriptions.html:94.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="subs-caret-4" placeholder="Twój komentarz…">Spoko</textarea>
+      <div class="save-state" data-id="subs-caret-4"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">✓</span></td>
+    <td class="col-svg"><div class="svgs"><div class="icon-box"><svg viewBox="0 0 20 20"><path fill-rule="evenodd" clip-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z"></path></svg></div></div></td>
+    <td class="col-status"><span class="tag proposal">propozycja</span></td>
+    <td class="col-why"><span class="why-text">Kandydat na tę samą ikonę co reszta rodziny check/cancel -- jedna wspólna decyzja z resztą (patrz Panel admina, Generator).</span></td>
+    <td class="col-use"><span class="use-text">Zaakceptuj zaproszenie, subscriptions.js:438 -- przycisk dostaje textContent "✓".</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="subs-accept" placeholder="Twój komentarz…">Zatwierdzone</textarea>
+      <div class="save-state" data-id="subs-accept"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">↻</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag na">nie da się</span></td>
+    <td class="col-why"><span class="why-text">Symbol typograficzny.</span></td>
+    <td class="col-use"><span class="use-text">Ponów zaproszenie, subscriptions.js:350.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="subs-resend" placeholder="Twój komentarz…">Zmień na ikonę odświeżania jak wszędzie</textarea>
+      <div class="save-state" data-id="subs-resend"></div>
+    </td>
+  </tr><tr class="pagehead"><td colspan="6">Podłącz urządzenie (connect-device.html + connect-device.js)</td></tr><tr>
+    <td class="col-jest"><span class="emoji-big">ℹ️</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag stays">zostaje</span></td>
+    <td class="col-why"><span class="why-text">Wzorzec wspólny.</span></td>
+    <td class="col-use"><span class="use-text">Przycisk pomocy, connect-device.html:39.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="cd-help" placeholder="Twój komentarz…">Jak wyżej, chcę ikonę</textarea>
+      <div class="save-state" data-id="cd-help"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">📷</span></td>
+    <td class="col-svg"><div class="svgs"><div class="icon-box"><svg viewBox="0 0 24 24"><path fill-rule="evenodd" clip-rule="evenodd" d="M9 3l-1.5 2H4a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-3.5L15 3H9zm3 14.5a4.5 4.5 0 1 0 0-9 4.5 4.5 0 0 0 0 9zm0-2a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z"></path></svg></div></div></td>
+    <td class="col-status"><span class="tag done">wdrożone</span></td>
+    <td class="col-why"><span class="why-text">Wdrożone -- nowy CAMERA_ICON z prawdziwą dziurą na soczewkę (evenodd).</span></td>
+    <td class="col-use"><span class="use-text">Przycisk "Skanuj QR" (btnScanQr), connect-device.html:57. Pełny tekst: "📷 Skanuj QR".</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="cd-scan-qr" placeholder="Twój komentarz…">Zatwierdzone</textarea>
+      <div class="save-state" data-id="cd-scan-qr"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">✕</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag stays">zostaje</span></td>
+    <td class="col-why"><span class="why-text">Wzorzec wspólny.</span></td>
+    <td class="col-use"><span class="use-text">Zamknij podgląd urządzenia, connect-device.html:90.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="cd-x-preview" placeholder="Twój komentarz…">Spoko</textarea>
+      <div class="save-state" data-id="cd-x-preview"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">🎤</span></td>
+    <td class="col-svg"><div class="svgs"><div class="icon-box"><svg viewBox="0 0 24 24"><circle cx="9" cy="6.5" r="3.5"></circle><path d="M2 20c0-3.6 3.1-6.3 7-6.3s7 2.7 7 6.3v1H2v-1z"></path><rect x="15.5" y="2" width="4" height="7.5" rx="2"></rect><path d="M13.8 8a4.2 4.2 0 0 0 8.4 0" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"></path><rect x="17" y="11.5" width="1.4" height="2.6"></rect></svg></div></div></td>
+    <td class="col-status"><span class="tag done">wdrożone</span></td>
+    <td class="col-why"><span class="why-text">Wdrożone zgodnie z Twoim komentarzem ("Host to prowadzący, ludzik z mikrofonem, nie sam mikrofon") -- osoba + mikrofon.</span></td>
+    <td class="col-use"><span class="use-text">Ikona typu urządzenia "host" w kafelku i podglądzie, connect-device.js (funkcja deviceTypeEmoji).</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="cd-type-host" placeholder="Twój komentarz…">Zatwierdzone</textarea>
+      <div class="save-state" data-id="cd-type-host"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">🔔</span></td>
+    <td class="col-svg"><div class="svgs"><div class="icon-box"><svg viewBox="0 0 24 24"><path d="M12 3a7 7 0 0 0-7 7v3h14v-3a7 7 0 0 0-7-7z"></path><rect x="4" y="13" width="16" height="2.2" rx="1.1"></rect><rect x="10.5" y="16.2" width="3" height="5" rx="1"></rect></svg></div></div></td>
+    <td class="col-status"><span class="tag done">wdrożone</span></td>
+    <td class="col-why"><span class="why-text">Wdrożone zgodnie z Twoim komentarzem ("tu pasuje dzwonek, ale do buzzera nie -- to elektroniczny przycisk") -- przycisk-kopuła zamiast dzwonka.</span></td>
+    <td class="col-use"><span class="use-text">Ikona typu urządzenia "buzzer", connect-device.js.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="cd-type-buzzer" placeholder="Twój komentarz…">Brzydka ikona trzeba zmienić</textarea>
+      <div class="save-state" data-id="cd-type-buzzer"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">📊</span></td>
+    <td class="col-svg"><div class="svgs"><div class="icon-box"><svg viewBox="0 0 24 24"><rect x="2" y="20" width="20" height="1.4" opacity="0.5"></rect><rect x="2" y="16" width="20" height="1" opacity="0.25"></rect><rect x="2" y="11" width="20" height="1" opacity="0.25"></rect><rect x="4" y="11" width="4" height="9" rx="1"></rect><rect x="10.5" y="15" width="4" height="5" rx="1"></rect><rect x="17" y="6" width="4" height="14" rx="1"></rect></svg></div></div></td>
+    <td class="col-status"><span class="tag done">wdrożone</span></td>
+    <td class="col-why"><span class="why-text">Wdrożone zgodnie z Twoim komentarzem ("zostaw jak w ankietach") -- ten sam wykres co Ankiety, nie kod QR (moja wcześniejsza propozycja wycofana).</span></td>
+    <td class="col-use"><span class="use-text">Ikona typu urządzenia "poll_qr" (ekran QR do głosowania), connect-device.js.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="cd-type-pollqr" placeholder="Twój komentarz…">Spoko</textarea>
+      <div class="save-state" data-id="cd-type-pollqr"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">📺</span></td>
+    <td class="col-svg"><div class="svgs"><div class="icon-box"><svg viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="13" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.6"></rect><rect x="8" y="19.5" width="2" height="2.5" rx="0.5"></rect><rect x="14" y="19.5" width="2" height="2.5" rx="0.5"></rect></svg></div></div></td>
+    <td class="col-status"><span class="tag proposal">propozycja</span></td>
+    <td class="col-why"><span class="why-text">Jedyny z czterech typów jeszcze nie wdrożony -- czeka na Twoją akceptację wyglądu.</span></td>
+    <td class="col-use"><span class="use-text">Ikona typu urządzenia "display" (domyślna wartość), connect-device.js.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="cd-type-display" placeholder="Twój komentarz…">Może być, ale ma być spójną z pozostała częścią systemu gdzie jest display</textarea>
+      <div class="save-state" data-id="cd-type-display"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">✕</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag stays">zostaje</span></td>
+    <td class="col-why"><span class="why-text">Wzorzec wspólny.</span></td>
+    <td class="col-use"><span class="use-text">Zamknij podgląd, connect-device.js:226.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="cd-x-close" placeholder="Twój komentarz…">Spoko</textarea>
+      <div class="save-state" data-id="cd-x-close"></div>
+    </td>
+  </tr><tr class="pagehead"><td colspan="6">Podręcznik (manual.html + treść manual.content.* w pl/en/uk)</td></tr><tr>
+    <td class="col-jest"><span class="emoji-big">🔐</span></td>
+    <td class="col-svg"><div class="svgs"><div class="icon-box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"><path d="M12 2.5l7 2.8v6c0 5-3 8.3-7 10.7-4-2.4-7-5.7-7-10.7v-6l7-2.8z"></path><path d="M9 12l2 2 4-4"></path></svg></div></div></td>
+    <td class="col-status"><span class="tag done">wdrożone</span></td>
+    <td class="col-why"><span class="why-text">Wdrożone -- tarcza z ptaszkiem, bo to link do polityki prywatności, nie 'bezpieczeństwo/logowanie'.</span></td>
+    <td class="col-use"><span class="use-text">Własny przycisk podręcznika, manual.html:64. Pełny tekst (manual.legal): "Polityka prywatności 🔐".</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="man-legal" placeholder="Twój komentarz…">Zatwierdzone</textarea>
+      <div class="save-state" data-id="man-legal"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">🗃️</span></td>
+    <td class="col-svg"><div class="svgs"><div class="icon-box"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.6"></rect><line x1="3" y1="12" x2="21" y2="12" stroke="currentColor" stroke-width="1.6"></line><rect x="9" y="6.5" width="6" height="1.6" rx="0.8"></rect><rect x="9" y="15.5" width="6" height="1.6" rx="0.8"></rect></svg></div></div></td>
+    <td class="col-status"><span class="tag done">wdrożone</span></td>
+    <td class="col-why"><span class="why-text">Wdrożone -- ikona wstawiona inline w tekst (bezpieczne miejsce, innerHTML).</span></td>
+    <td class="col-use"><span class="use-text">Odniesienie do przycisku "Bazy pytań" w tekście manuala, manual.content.bases. Cytat: "…za pomocą przycisku Bazy pytań 🗃️."</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="man-bases-ref" placeholder="Twój komentarz…">Zatwierdzone</textarea>
+      <div class="save-state" data-id="man-bases-ref"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">📊</span></td>
+    <td class="col-svg"><div class="svgs"><div class="icon-box"><svg viewBox="0 0 24 24"><rect x="2" y="20" width="20" height="1.4" opacity="0.5"></rect><rect x="2" y="16" width="20" height="1" opacity="0.25"></rect><rect x="2" y="11" width="20" height="1" opacity="0.25"></rect><rect x="4" y="11" width="4" height="9" rx="1"></rect><rect x="10.5" y="15" width="4" height="5" rx="1"></rect><rect x="17" y="6" width="4" height="14" rx="1"></rect></svg></div></div></td>
+    <td class="col-status"><span class="tag done">wdrożone</span></td>
+    <td class="col-why"><span class="why-text">Wdrożone.</span></td>
+    <td class="col-use"><span class="use-text">Odniesienie do przycisku "Ankiety", manual.content.polls (pierwsza wzmianka). Cytat: "…przyciskiem Ankiety 📊."</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="man-polls-ref1" placeholder="Twój komentarz…">Zatwierdzone</textarea>
+      <div class="save-state" data-id="man-polls-ref1"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">📊</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag removed">usunięte</span></td>
+    <td class="col-why"><span class="why-text">Usunięte bez zamiany -- w zdaniu opisującym złotą kropkę statusu sama nazwa przycisku wystarcza.</span></td>
+    <td class="col-use"><span class="use-text">Druga wzmianka o "Ankiety" (opis złotej kropki), manual.content.polls. Cytat przed zmianą: "Złota kropka przy przycisku „Ankiety 📊” pokazuje…"</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="man-polls-ref2" placeholder="Twój komentarz…">Spoko</textarea>
+      <div class="save-state" data-id="man-polls-ref2"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">📧</span></td>
+    <td class="col-svg"><div class="svgs"><div class="icon-box"><svg viewBox="0 0 24 24"><path d="M12 2a1.6 1.6 0 0 0-1.6 1.6v.6C7.7 4.9 6 7.2 6 10v5l-2 2v1h16v-1l-2-2v-5c0-2.8-1.7-5.1-4.4-5.8v-.6A1.6 1.6 0 0 0 12 2z"></path><path d="M9.5 20a2.5 2.5 0 0 0 5 0h-5z"></path></svg></div></div></td>
+    <td class="col-status"><span class="tag done">wdrożone</span></td>
+    <td class="col-why"><span class="why-text">Wdrożone.</span></td>
+    <td class="col-use"><span class="use-text">Odniesienie do przycisku "Subskrypcje", manual.content.subscriptions. Cytat: "…przyciskiem Subskrypcje 📧."</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="man-subs-ref1" placeholder="Twój komentarz…">Zatwierdzone</textarea>
+      <div class="save-state" data-id="man-subs-ref1"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">📧</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag removed">usunięte</span></td>
+    <td class="col-why"><span class="why-text">Usunięte bez zamiany, jak wyżej.</span></td>
+    <td class="col-use"><span class="use-text">Druga wzmianka o "Subskrypcje", manual.content.subscriptions. Cytat przed zmianą: "Złota kropka przy przycisku „Subskrypcje 📧” pokazuje…"</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="man-subs-ref2" placeholder="Twój komentarz…">Spoko</textarea>
+      <div class="save-state" data-id="man-subs-ref2"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">🖥️</span></td>
+    <td class="col-svg"><div class="svgs"><div class="icon-box"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="12" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.6"></rect><rect x="10.5" y="15" width="3" height="3"></rect><rect x="7" y="18" width="10" height="1.6" rx="0.8"></rect></svg></div></div></td>
+    <td class="col-status"><span class="tag proposal">propozycja</span></td>
+    <td class="col-why"><span class="why-text">Ten sam los co builder.html:53 -- czeka razem.</span></td>
+    <td class="col-use"><span class="use-text">Odniesienie do przycisku "Logo", manual.content.logo. Cytat: "…za pomocą przycisku Logo 🖥️."</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="man-logo-ref" placeholder="Twój komentarz…">Zatwierdzone</textarea>
+      <div class="save-state" data-id="man-logo-ref"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">📱</span></td>
+    <td class="col-svg"><div class="svgs"><div class="icon-box"><svg viewBox="0 0 24 24"><rect x="7" y="1" width="10" height="22" rx="2.5"></rect><rect x="10" y="3" width="4" height="1.3" rx="0.65" fill="var(--icon-box-bg)"></rect><rect x="9" y="19.3" width="6" height="1.3" rx="0.65" fill="var(--icon-box-bg)"></rect></svg></div></div></td>
+    <td class="col-status"><span class="tag proposal">propozycja</span></td>
+    <td class="col-why"><span class="why-text">Ten sam los co pozostałe 4 miejsca z telefonem.</span></td>
+    <td class="col-use"><span class="use-text">Odniesienie do przycisku "Podłącz urządzenie", manual.content.connect (pierwsza wzmianka).</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="man-connect-ref1" placeholder="Twój komentarz…">Brzydka ikonka, jeśli pierwsza wzmianka zostaw ikone, następne bez</textarea>
+      <div class="save-state" data-id="man-connect-ref1"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">📱</span></td>
+    <td class="col-svg"><div class="svgs"><div class="icon-box"><svg viewBox="0 0 24 24"><rect x="7" y="1" width="10" height="22" rx="2.5"></rect><rect x="10" y="3" width="4" height="1.3" rx="0.65" fill="var(--icon-box-bg)"></rect><rect x="9" y="19.3" width="6" height="1.3" rx="0.65" fill="var(--icon-box-bg)"></rect></svg></div></div></td>
+    <td class="col-status"><span class="tag proposal">propozycja</span></td>
+    <td class="col-why"><span class="why-text">j.w.</span></td>
+    <td class="col-use"><span class="use-text">Odniesienie do przycisku "Podłącz urządzenie", manual.content.connect (druga wzmianka).</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="man-connect-ref2" placeholder="Twój komentarz…">Jak wyżej</textarea>
+      <div class="save-state" data-id="man-connect-ref2"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">📱</span></td>
+    <td class="col-svg"><div class="svgs"><div class="icon-box"><svg viewBox="0 0 24 24"><rect x="7" y="1" width="10" height="22" rx="2.5"></rect><rect x="10" y="3" width="4" height="1.3" rx="0.65" fill="var(--icon-box-bg)"></rect><rect x="9" y="19.3" width="6" height="1.3" rx="0.65" fill="var(--icon-box-bg)"></rect></svg></div></div></td>
+    <td class="col-status"><span class="tag proposal">propozycja</span></td>
+    <td class="col-why"><span class="why-text">j.w.</span></td>
+    <td class="col-use"><span class="use-text">Odniesienie do przycisku "Podłącz urządzenie" w kontekście strony Control, manual.content.control (pierwsza wzmianka).</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="man-control-ref1" placeholder="Twój komentarz…">Jak wyżej</textarea>
+      <div class="save-state" data-id="man-control-ref1"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">📱</span></td>
+    <td class="col-svg"><div class="svgs"><div class="icon-box"><svg viewBox="0 0 24 24"><rect x="7" y="1" width="10" height="22" rx="2.5"></rect><rect x="10" y="3" width="4" height="1.3" rx="0.65" fill="var(--icon-box-bg)"></rect><rect x="9" y="19.3" width="6" height="1.3" rx="0.65" fill="var(--icon-box-bg)"></rect></svg></div></div></td>
+    <td class="col-status"><span class="tag proposal">propozycja</span></td>
+    <td class="col-why"><span class="why-text">j.w.</span></td>
+    <td class="col-use"><span class="use-text">Odniesienie do przycisku "Podłącz urządzenie", manual.content.control (druga wzmianka).</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="man-control-ref2" placeholder="Twój komentarz…">Jak wyżej</textarea>
+      <div class="save-state" data-id="man-control-ref2"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">🎮</span></td>
+    <td class="col-svg"><div class="svgs"><div class="icon-box"><svg viewBox="0 0 24 24"><rect x="2" y="8" width="20" height="9" rx="4" fill="none" stroke="currentColor" stroke-width="1.6"></rect><rect x="6.2" y="11.2" width="4" height="1.6" rx="0.6"></rect><rect x="7.4" y="10" width="1.6" height="4" rx="0.6"></rect><circle cx="16" cy="11" r="1.3"></circle><circle cx="18.5" cy="13.5" r="1.3"></circle></svg></div></div></td>
+    <td class="col-status"><span class="tag done">wdrożone</span></td>
+    <td class="col-why"><span class="why-text">Wdrożone.</span></td>
+    <td class="col-use"><span class="use-text">Odniesienie do przycisku "Gry Społeczności", manual.content.community. Cytat: "…za pomocą przycisku Gry Społeczności🎮."</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="man-community-ref" placeholder="Twój komentarz…">Zatwierdzone</textarea>
+      <div class="save-state" data-id="man-community-ref"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">🤝</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag removed">usunięte</span></td>
+    <td class="col-why"><span class="why-text">Zbadane na Twoją prośbę: ta emotka już NIGDZIE nie istnieje w repo (0 wystąpień) -- musiała zostać usunięta w jakiejś wcześniejszej rundzie porządków, ten wiersz po prostu nie był zaktualizowany. Nic do zrobienia.</span></td>
+    <td class="col-use"><span class="use-text">Nagłówek sekcji "Udostępnianie bazy", manual.content.bases -- obecnie czysty tekst bez emoji.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="man-handshake" placeholder="Twój komentarz…">Spoko</textarea>
+      <div class="save-state" data-id="man-handshake"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">⌘ ⇧ N</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag na">nie da się</span></td>
+    <td class="col-why"><span class="why-text">Symbole fizycznych klawiszy klawiatury, nie ikony UI -- standard zapisu skrótów.</span></td>
+    <td class="col-use"><span class="use-text">Tabela skrótów klawiszowych, wiersz "Nowe pytanie" (Cmd+Shift+N), manual.content.edit.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="man-shortcut-1" placeholder="Twój komentarz…">Zatwierdzone</textarea>
+      <div class="save-state" data-id="man-shortcut-1"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">⏎</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag na">nie da się</span></td>
+    <td class="col-why"><span class="why-text">Jak wyżej.</span></td>
+    <td class="col-use"><span class="use-text">Tabela skrótów, "Zatwierdź" (Enter), manual.content.edit.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="man-shortcut-2" placeholder="Twój komentarz…">Zatwierdzone</textarea>
+      <div class="save-state" data-id="man-shortcut-2"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">⌫</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag na">nie da się</span></td>
+    <td class="col-why"><span class="why-text">Jak wyżej.</span></td>
+    <td class="col-use"><span class="use-text">Tabela skrótów, "Usuń znak" (Backspace), manual.content.edit.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="man-shortcut-3" placeholder="Twój komentarz…">Zatwierdzone</textarea>
+      <div class="save-state" data-id="man-shortcut-3"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">▶</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag na">nie da się</span></td>
+    <td class="col-why"><span class="why-text">Symbol typograficzny w opisie, nie osobna ikona do zamiany.</span></td>
+    <td class="col-use"><span class="use-text">Opis przycisku odsłuchu dźwięku, manual.content.gameSettings.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="man-play-1" placeholder="Twój komentarz…">Zatwierdzone</textarea>
+      <div class="save-state" data-id="man-play-1"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">▶</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag na">nie da się</span></td>
+    <td class="col-why"><span class="why-text">j.w.</span></td>
+    <td class="col-use"><span class="use-text">Nagłówek "Przycisk odtwarzania (▶)", manual.content.gameSettings.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="man-play-2" placeholder="Twój komentarz…">Zatwierdzone</textarea>
+      <div class="save-state" data-id="man-play-2"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">■</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag na">nie da się</span></td>
+    <td class="col-why"><span class="why-text">Symbol typograficzny.</span></td>
+    <td class="col-use"><span class="use-text">Opis zatrzymania odtwarzania, manual.content.gameSettings.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="man-stop" placeholder="Twój komentarz…">Zatwierdzone</textarea>
+      <div class="save-state" data-id="man-stop"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">↻</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag na">nie da się</span></td>
+    <td class="col-why"><span class="why-text">Symbol typograficzny.</span></td>
+    <td class="col-use"><span class="use-text">Opis przycisku ponowienia zaproszenia, manual.content.subscriptions.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="man-resend-ref" placeholder="Twój komentarz…">Zmień na ikonę jak wszędzie</textarea>
+      <div class="save-state" data-id="man-resend-ref"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">✓ / X</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag na">nie da się</span></td>
+    <td class="col-why"><span class="why-text">Zwykłe znaki tekstowe w zdaniu opisowym.</span></td>
+    <td class="col-use"><span class="use-text">Opis przycisków akceptuj/odrzuć, manual.content.subscriptions.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="man-accept-reject-ref" placeholder="Twój komentarz…">Zmień na ikony jak przyski</textarea>
+      <div class="save-state" data-id="man-accept-reject-ref"></div>
+    </td>
+  </tr><tr class="pagehead"><td colspan="6">Ustawienia gry (game-settings.html + game-settings2.html -- dwa identyczne pliki -- i ich JS)</td></tr><tr>
+    <td class="col-jest"><span class="emoji-big">ℹ️</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag stays">zostaje</span></td>
+    <td class="col-why"><span class="why-text">Wzorzec wspólny, x2 (identyczne pliki).</span></td>
+    <td class="col-use"><span class="use-text">Przycisk pomocy, game-settings.html:52 / game-settings2.html:52.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="gs-help" placeholder="Twój komentarz…">Jak wyżej, chcę ikonę</textarea>
+      <div class="save-state" data-id="gs-help"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">🔐</span></td>
+    <td class="col-svg"><div class="svgs"><div class="icon-box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"><path d="M12 2.5l7 2.8v6c0 5-3 8.3-7 10.7-4-2.4-7-5.7-7-10.7v-6l7-2.8z"></path><path d="M9 12l2 2 4-4"></path></svg></div></div></td>
+    <td class="col-status"><span class="tag done">wdrożone</span></td>
+    <td class="col-why"><span class="why-text">Wdrożone w obu plikach.</span></td>
+    <td class="col-use"><span class="use-text">"Polityka prywatności", game-settings.html:63 / game-settings2.html:63.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="gs-legal" placeholder="Twój komentarz…">Zatwierdzone</textarea>
+      <div class="save-state" data-id="gs-legal"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">✕</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag stays">zostaje</span></td>
+    <td class="col-why"><span class="why-text">Wzorzec wspólny, 4 miejsca w każdym pliku = 8 razem.</span></td>
+    <td class="col-use"><span class="use-text">Zamknięcia: pomoc / polityka / modal ustawień / color-picker -- game-settings.html:64,74,88,117 i game-settings2.html (te same).</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="gs-x-all" placeholder="Twój komentarz…">Spoko</textarea>
+      <div class="save-state" data-id="gs-x-all"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">▶</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag na">nie da się</span></td>
+    <td class="col-why"><span class="why-text">Symbol typograficzny.</span></td>
+    <td class="col-use"><span class="use-text">Odtwórz podgląd dźwięku, game-settings.html:87 / game-settings2.html:87.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="gs-play" placeholder="Twój komentarz…">Spoko</textarea>
+      <div class="save-state" data-id="gs-play"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">⚠️</span></td>
+    <td class="col-svg"><div class="svgs"><div class="icon-box"><svg viewBox="0 0 24 24"><path fill-rule="evenodd" clip-rule="evenodd" d="M12 2 1 21h22L12 2zm-1 7h2v6h-2V9zm0 8h2v2h-2v-2z"></path></svg></div></div></td>
+    <td class="col-status"><span class="tag done">wdrożone</span></td>
+    <td class="col-why"><span class="why-text">Wdrożone -- jedyne z ówczesnych 6 miejsc renderowane przez innerHTML, teraz wdrożone też w pozostałych (patrz Panel admina, Generator, Konto gościa).</span></td>
+    <td class="col-use"><span class="use-text">Ostrzeżenie o finale losowym, game-settings.js:1109 / game-settings2.js:1126.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="gs-warning" placeholder="Twój komentarz…">Spoko</textarea>
+      <div class="save-state" data-id="gs-warning"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">✕</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag stays">zostaje</span></td>
+    <td class="col-why"><span class="why-text">Wzorzec wspólny.</span></td>
+    <td class="col-use"><span class="use-text">Usuń własny plik dźwiękowy, game-settings.js:830 / game-settings2.js:847.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="gs-x-sound" placeholder="Twój komentarz…">Spoko</textarea>
+      <div class="save-state" data-id="gs-x-sound"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">↑ / ↓</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag na">nie da się</span></td>
+    <td class="col-why"><span class="why-text">Symbole typograficzne.</span></td>
+    <td class="col-use"><span class="use-text">Przesuń rundę w górę/w dół, kilka miejsc w game-settings.js/2.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="gs-reorder" placeholder="Twój komentarz…">Zmień na ładne ikonki</textarea>
+      <div class="save-state" data-id="gs-reorder"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">▾</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag na">nie da się</span></td>
+    <td class="col-why"><span class="why-text">Symbol typograficzny.</span></td>
+    <td class="col-use"><span class="use-text">Rozwijane listy, kilka miejsc w game-settings.js/2.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="gs-caret" placeholder="Twój komentarz…">Spoko</textarea>
+      <div class="save-state" data-id="gs-caret"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">☰</span></td>
+    <td class="col-svg"><div class="svgs"><div class="icon-box"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="2.4" rx="1.2"></rect><rect x="3" y="10.8" width="18" height="2.4" rx="1.2"></rect><rect x="3" y="16.6" width="18" height="2.4" rx="1.2"></rect></svg></div></div></td>
+    <td class="col-status"><span class="tag done">wdrożone</span></td>
+    <td class="col-why"><span class="why-text">Wdrożone -- gotowa ikona z silnika (HAMBURGER_ICON).</span></td>
+    <td class="col-use"><span class="use-text">Otwórz menu/panel boczny, game-settings.html + game-settings2.html.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="gs-hamburger" placeholder="Twój komentarz…">Zatwierdzone</textarea>
+      <div class="save-state" data-id="gs-hamburger"></div>
+    </td>
+  </tr><tr class="pagehead"><td colspan="6">Panel admina (settings.html + settings.js) -- największa strona</td></tr><tr>
+    <td class="col-jest"><span class="emoji-big">📅</span></td>
+    <td class="col-svg"><div class="svgs"><div class="icon-box"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"></rect><rect x="7" y="1.5" width="2" height="4" rx="1"></rect><rect x="15" y="1.5" width="2" height="4" rx="1"></rect><line x1="3" y1="9" x2="21" y2="9" stroke="currentColor" stroke-width="1.6"></line><text x="12" y="18" text-anchor="middle" font-size="9" font-weight="700" font-family="sans-serif" fill="currentColor">17</text></svg></div></div></td>
+    <td class="col-status"><span class="tag done">wdrożone</span></td>
+    <td class="col-why"><span class="why-text">Wdrożone -- kalendarz z cyfrą 17 (przycisk stały, nie dynamiczna data).</span></td>
+    <td class="col-use"><span class="use-text">Otwórz date-picker "od", settings.html:104.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="set-cal-1" placeholder="Twój komentarz…">Zbyt dokładną ikonka, 17 miało być przezroczystością</textarea>
+      <div class="save-state" data-id="set-cal-1"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">📅</span></td>
+    <td class="col-svg"><div class="svgs"><div class="icon-box"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"></rect><rect x="7" y="1.5" width="2" height="4" rx="1"></rect><rect x="15" y="1.5" width="2" height="4" rx="1"></rect><line x1="3" y1="9" x2="21" y2="9" stroke="currentColor" stroke-width="1.6"></line><text x="12" y="18" text-anchor="middle" font-size="9" font-weight="700" font-family="sans-serif" fill="currentColor">17</text></svg></div></div></td>
+    <td class="col-status"><span class="tag done">wdrożone</span></td>
+    <td class="col-why"><span class="why-text">Wdrożone.</span></td>
+    <td class="col-use"><span class="use-text">Otwórz date-picker "do", settings.html:123.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="set-cal-2" placeholder="Twój komentarz…">Jak wyżej</textarea>
+      <div class="save-state" data-id="set-cal-2"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">👁</span></td>
+    <td class="col-svg"><div class="svgs"><div class="icon-box"><svg viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5C21.27 7.61 17 4.5 12 4.5zm0 12.5c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"></path></svg></div></div></td>
+    <td class="col-status"><span class="tag done">wdrożone</span></td>
+    <td class="col-why"><span class="why-text">Wdrożone.</span></td>
+    <td class="col-use"><span class="use-text">Podgląd strony maintenance, settings.html:163.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="set-eye" placeholder="Twój komentarz…">Zatwierdzone</textarea>
+      <div class="save-state" data-id="set-eye"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">✏</span></td>
+    <td class="col-svg"><div class="svgs"><div class="icon-box"><svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L19.81 7.94l-3.75-3.75L3 17.25zm2.92 2.83H5v-.92l10.06-10.06.92.92L5.92 20.08zM20.71 6.04a1 1 0 0 0 0-1.41l-1.34-1.34a1 1 0 0 0-1.41 0l-1.13 1.13 2.75 2.75 1.13-1.13z"></path></svg></div></div></td>
+    <td class="col-status"><span class="tag done">wdrożone</span></td>
+    <td class="col-why"><span class="why-text">Wdrożone.</span></td>
+    <td class="col-use"><span class="use-text">Otwórz kompozytor maila (przycisk w topbarze), settings.html:37.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="set-pencil-1" placeholder="Twój komentarz…">Zatwierdzone</textarea>
+      <div class="save-state" data-id="set-pencil-1"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">✏</span></td>
+    <td class="col-svg"><div class="svgs"><div class="icon-box"><svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L19.81 7.94l-3.75-3.75L3 17.25zm2.92 2.83H5v-.92l10.06-10.06.92.92L5.92 20.08zM20.71 6.04a1 1 0 0 0 0-1.41l-1.34-1.34a1 1 0 0 0-1.41 0l-1.13 1.13 2.75 2.75 1.13-1.13z"></path></svg></div></div></td>
+    <td class="col-status"><span class="tag done">wdrożone</span></td>
+    <td class="col-why"><span class="why-text">Wdrożone.</span></td>
+    <td class="col-use"><span class="use-text">"Napisz wiadomość", settings.html:538.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="set-pencil-2" placeholder="Twój komentarz…">Zatwierdzone</textarea>
+      <div class="save-state" data-id="set-pencil-2"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">🔍</span></td>
+    <td class="col-svg"><div class="svgs"><div class="icon-box"><svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"></path></svg></div></div></td>
+    <td class="col-status"><span class="tag done">wdrożone</span></td>
+    <td class="col-why"><span class="why-text">Wdrożone (wcześniejsza runda).</span></td>
+    <td class="col-use"><span class="use-text">Szukaj/skanuj, settings.html:453.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="set-search" placeholder="Twój komentarz…">Zatwierdzone</textarea>
+      <div class="save-state" data-id="set-search"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">📥</span></td>
+    <td class="col-svg"><div class="svgs"><div class="icon-box"><svg viewBox="0 0 24 24"><path d="M14 1H10v5H6l6 6 6-6h-4V1z"></path><rect x="2" y="12" width="20" height="11" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"></rect><path d="M3 13.3l9 6.3 9-6.3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"></path></svg></div></div></td>
+    <td class="col-status"><span class="tag done">wdrożone</span></td>
+    <td class="col-why"><span class="why-text">Wdrożone -- przebudowane na koperta+strzałka w dół zgodnie z Twoją uwagą.</span></td>
+    <td class="col-use"><span class="use-text">Ikona folderu poczty "Przychodzące", settings.html:541.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="set-folder-inbox" placeholder="Twój komentarz…">Zatwierdzone</textarea>
+      <div class="save-state" data-id="set-folder-inbox"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">📤</span></td>
+    <td class="col-svg"><div class="svgs"><div class="icon-box"><svg viewBox="0 0 24 24"><path d="M10 12h4V7h4l-6-6-6 6h4v5z"></path><rect x="2" y="12" width="20" height="11" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"></rect><path d="M3 13.3l9 6.3 9-6.3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"></path></svg></div></div></td>
+    <td class="col-status"><span class="tag done">wdrożone</span></td>
+    <td class="col-why"><span class="why-text">Wdrożone -- koperta+strzałka w górę, para do powyższej.</span></td>
+    <td class="col-use"><span class="use-text">Ikona folderu poczty "Wysłane", settings.html:546.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="set-folder-sent" placeholder="Twój komentarz…">Zatwierdzone</textarea>
+      <div class="save-state" data-id="set-folder-sent"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">📢</span></td>
+    <td class="col-svg"><div class="svgs"><div class="icon-box"><svg viewBox="0 0 24 24"><path d="M2 10.5v3a1 1 0 0 0 1 1h1.5l12.8 4.3c1 .3 2-.4 2-1.5V6.7c0-1.1-1-1.8-2-1.5L4.5 9.5H3a1 1 0 0 0-1 1z"></path><rect x="4" y="17" width="2.2" height="4.5" rx="1"></rect></svg></div></div></td>
+    <td class="col-status"><span class="tag done">wdrożone</span></td>
+    <td class="col-why"><span class="why-text">WDROŻONE DOPIERO TERAZ -- to był realny, przeoczony wcześniej wpis mimo poprzednich rund "kompletnego" audytu.</span></td>
+    <td class="col-use"><span class="use-text">Ikona folderu poczty "Marketing", settings.html:550.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="set-folder-marketing" placeholder="Twój komentarz…">Zatwierdzone</textarea>
+      <div class="save-state" data-id="set-folder-marketing"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">🏷</span></td>
+    <td class="col-svg"><div class="svgs"><div class="icon-box"><svg viewBox="0 0 24 24"><path d="M20.59 13.41L11 3.83A2 2 0 0 0 9.59 3H4a2 2 0 0 0-2 2v5.59A2 2 0 0 0 2.83 12l9.59 9.59a2 2 0 0 0 2.83 0l5.34-5.34a2 2 0 0 0 0-2.83zM6.5 8A1.5 1.5 0 1 1 8 6.5 1.5 1.5 0 0 1 6.5 8z"></path></svg></div></div></td>
+    <td class="col-status"><span class="tag done">wdrożone</span></td>
+    <td class="col-why"><span class="why-text">WDROŻONE DOPIERO TERAZ -- też przeoczone wcześniej.</span></td>
+    <td class="col-use"><span class="use-text">Ikona folderu poczty "Zgłoszenia", settings.html:554.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="set-folder-reports" placeholder="Twój komentarz…">Zatwierdzone</textarea>
+      <div class="save-state" data-id="set-folder-reports"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">🗑</span></td>
+    <td class="col-svg"><div class="svgs"><div class="icon-box"><svg viewBox="0 0 20 20"><path fill-rule="evenodd" clip-rule="evenodd" d="M8.75 1A2.75 2.75 0 0 0 6 3.75v.443c-.795.077-1.584.176-2.365.298a.75.75 0 1 0 .23 1.482l.149-.022.841 10.518A2.75 2.75 0 0 0 7.596 19h4.807a2.75 2.75 0 0 0 2.742-2.53l.841-10.52.149.023a.75.75 0 0 0 .23-1.482A41.03 41.03 0 0 0 14 4.193V3.75A2.75 2.75 0 0 0 11.25 1h-2.5ZM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4ZM8.58 7.72a.75.75 0 0 0-1.5.06l.3 7.5a.75.75 0 1 0 1.5-.06l-.3-7.5Zm4.34.06a.75.75 0 1 0-1.5-.06l-.3 7.5a.75.75 0 1 0 1.5.06l.3-7.5Z"></path></svg></div></div></td>
+    <td class="col-status"><span class="tag done">wdrożone</span></td>
+    <td class="col-why"><span class="why-text">Wdrożone (wcześniejsza runda).</span></td>
+    <td class="col-use"><span class="use-text">Ikona folderu poczty "Kosz", settings.html:559.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="set-folder-trash" placeholder="Twój komentarz…">Zatwierdzone</textarea>
+      <div class="save-state" data-id="set-folder-trash"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">🗑</span></td>
+    <td class="col-svg"><div class="svgs"><div class="icon-box"><svg viewBox="0 0 20 20"><path fill-rule="evenodd" clip-rule="evenodd" d="M8.75 1A2.75 2.75 0 0 0 6 3.75v.443c-.795.077-1.584.176-2.365.298a.75.75 0 1 0 .23 1.482l.149-.022.841 10.518A2.75 2.75 0 0 0 7.596 19h4.807a2.75 2.75 0 0 0 2.742-2.53l.841-10.52.149.023a.75.75 0 0 0 .23-1.482A41.03 41.03 0 0 0 14 4.193V3.75A2.75 2.75 0 0 0 11.25 1h-2.5ZM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4ZM8.58 7.72a.75.75 0 0 0-1.5.06l.3 7.5a.75.75 0 1 0 1.5-.06l-.3-7.5Zm4.34.06a.75.75 0 1 0-1.5-.06l-.3 7.5a.75.75 0 1 0 1.5.06l.3-7.5Z"></path></svg></div></div></td>
+    <td class="col-status"><span class="tag done">wdrożone</span></td>
+    <td class="col-why"><span class="why-text">Wdrożone (wcześniejsza runda) -- osobne miejsce niż folder Kosz wyżej.</span></td>
+    <td class="col-use"><span class="use-text">Przycisk usuwania kontaktu (mcDeleteBtn), settings.html:880.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="set-delete-contact" placeholder="Twój komentarz…">Zatwierdzone</textarea>
+      <div class="save-state" data-id="set-delete-contact"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">📋</span></td>
+    <td class="col-svg"><div class="svgs"><div class="icon-box"><svg viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="4" rx="1"></rect><path fill-rule="evenodd" clip-rule="evenodd" d="M5 4h14v18H5V4zm2.5 6h9v1.6h-9V10zm0 4h9v1.6h-9V14z"></path></svg></div></div></td>
+    <td class="col-status"><span class="tag done">wdrożone</span></td>
+    <td class="col-why"><span class="why-text">Wdrożone (wcześniejsza runda).</span></td>
+    <td class="col-use"><span class="use-text">Przycisk kopiowania (mcCopyBtn), settings.html:878.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="set-copy-btn" placeholder="Twój komentarz…">Ma być jak inne przyciski kopiowania</textarea>
+      <div class="save-state" data-id="set-copy-btn"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">💾</span></td>
+    <td class="col-svg"><div class="svgs"><div class="icon-box"><svg viewBox="0 0 24 24"><path d="M17 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"></path></svg></div></div></td>
+    <td class="col-status"><span class="tag done">wdrożone</span></td>
+    <td class="col-why"><span class="why-text">Wdrożone (wcześniejsza runda).</span></td>
+    <td class="col-use"><span class="use-text">"Zapisz zmiany" (gen-save-btn), settings.html:444.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="set-save-btn" placeholder="Twój komentarz…">Zatwierdzone</textarea>
+      <div class="save-state" data-id="set-save-btn"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">★ / ☆</span></td>
+    <td class="col-svg"><div class="svgs"><div class="icon-box"><svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14l-5-4.87 6.91-1.01L12 2z"></path></svg></div><div class="icon-box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14l-5-4.87 6.91-1.01L12 2z"></path></svg></div></div></td>
+    <td class="col-status"><span class="tag done">wdrożone</span></td>
+    <td class="col-why"><span class="why-text">Wdrożone -- ten sam widget co w Moim koncie/Marketplace. Bonus-bug znaleziony przy renderowaniu w przeglądarce (nie tylko czytaniu kodu): pusta gwiazdka pokazywała się jako WYPEŁNIONA -- CSS kontenerów miało fill:currentColor, które nadpisywało własny atrybut fill="none" ikony. Naprawione (svg:not([fill])).</span></td>
+    <td class="col-use"><span class="use-text">Lista ocen w panelu admina, settings.js:1321,2491.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="set-star-widget" placeholder="Twój komentarz…">Zatwierdzone</textarea>
+      <div class="save-state" data-id="set-star-widget"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">✉</span></td>
+    <td class="col-svg"><div class="svgs"><div class="icon-box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"></rect><path d="M3 6.5l9 6.5 9-6.5"></path></svg></div></div></td>
+    <td class="col-status"><span class="tag done">wdrożone</span></td>
+    <td class="col-why"><span class="why-text">Wdrożone -- ten sam SVG co JS-owy placeholder w settings.js, dla spójności.</span></td>
+    <td class="col-use"><span class="use-text">Placeholder pustej konwersacji (gdy nie wybrano wątku), settings.html:577.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="set-empty-conv" placeholder="Twój komentarz…">Zatwierdzone</textarea>
+      <div class="save-state" data-id="set-empty-conv"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">★</span></td>
+    <td class="col-svg"><div class="svgs"><div class="icon-box"><svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14l-5-4.87 6.91-1.01L12 2z"></path></svg></div></div></td>
+    <td class="col-status"><span class="tag proposal">propozycja</span></td>
+    <td class="col-why"><span class="why-text">Do sprawdzenia razem z resztą gwiazdek w settings.js -- prawdopodobnie bezpieczne miejsce (nagłówek tabeli).</span></td>
+    <td class="col-use"><span class="use-text">Nagłówek kolumny "Ocena" w tabeli ocen, settings.html:624.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="set-star-header" placeholder="Twój komentarz…">Możesz wdrożyć</textarea>
+      <div class="save-state" data-id="set-star-header"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">✕</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag stays">zostaje</span></td>
+    <td class="col-why"><span class="why-text">Wzorzec wspólny.</span></td>
+    <td class="col-use"><span class="use-text">"Usuń zaznaczone", settings.html:460.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="set-x-1" placeholder="Twój komentarz…">Spoko</textarea>
+      <div class="save-state" data-id="set-x-1"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">✕</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag stays">zostaje</span></td>
+    <td class="col-why"><span class="why-text">Wzorzec wspólny.</span></td>
+    <td class="col-use"><span class="use-text">"Anuluj generowanie", settings.html:508.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="set-x-2" placeholder="Twój komentarz…">Spoko</textarea>
+      <div class="save-state" data-id="set-x-2"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">✕</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag stays">zostaje</span></td>
+    <td class="col-why"><span class="why-text">Wzorzec wspólny.</span></td>
+    <td class="col-use"><span class="use-text">"Anuluj", settings.html:834.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="set-x-3" placeholder="Twój komentarz…">Spoko</textarea>
+      <div class="save-state" data-id="set-x-3"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">✕</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag stays">zostaje</span></td>
+    <td class="col-why"><span class="why-text">Wzorzec wspólny.</span></td>
+    <td class="col-use"><span class="use-text">Wyczyść wyszukiwanie, settings.html:868.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="set-x-4" placeholder="Twój komentarz…">Spoko</textarea>
+      <div class="save-state" data-id="set-x-4"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">✓</span></td>
+    <td class="col-svg"><div class="svgs"><div class="icon-box"><svg viewBox="0 0 20 20"><path fill-rule="evenodd" clip-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z"></path></svg></div></div></td>
+    <td class="col-status"><span class="tag proposal">propozycja</span></td>
+    <td class="col-why"><span class="why-text">Część rodziny check/cancel -- razem z settings.js:6553 i okolicami (jeden mechanizm przełącznika).</span></td>
+    <td class="col-use"><span class="use-text">Przełącznik "Użyte" kontaktu (lead-finder), settings.html:879.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="set-used-toggle" placeholder="Twój komentarz…">Wdróż</textarea>
+      <div class="save-state" data-id="set-used-toggle"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">✕</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag stays">zostaje</span></td>
+    <td class="col-why"><span class="why-text">Wzorzec wspólny.</span></td>
+    <td class="col-use"><span class="use-text">Zamknij modal ratersów, settings.html:951.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="set-x-5" placeholder="Twój komentarz…">Spoko</textarea>
+      <div class="save-state" data-id="set-x-5"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">✕</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag stays">zostaje</span></td>
+    <td class="col-why"><span class="why-text">Wzorzec wspólny.</span></td>
+    <td class="col-use"><span class="use-text">Zamknij podgląd maintenance, settings.html:979.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="set-x-6" placeholder="Twój komentarz…">Spoko</textarea>
+      <div class="save-state" data-id="set-x-6"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">↺</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag na">nie da się</span></td>
+    <td class="col-why"><span class="why-text">Symbol typograficzny.</span></td>
+    <td class="col-use"><span class="use-text">"Zrezygnuj" (generator), settings.html:438.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="set-reset" placeholder="Twój komentarz…">Zmien na ikonę jak wszędzie</textarea>
+      <div class="save-state" data-id="set-reset"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">↺</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag na">nie da się</span></td>
+    <td class="col-why"><span class="why-text">Symbol typograficzny.</span></td>
+    <td class="col-use"><span class="use-text">Odśwież maile, settings.html:569.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="set-refresh-mail" placeholder="Twój komentarz…">Zmień na ikonę jak wszędzie</textarea>
+      <div class="save-state" data-id="set-refresh-mail"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">▶</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag na">nie da się</span></td>
+    <td class="col-why"><span class="why-text">Symbol typograficzny.</span></td>
+    <td class="col-use"><span class="use-text">"Uruchom" (lead-finder), settings.html:833.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="set-run" placeholder="Twój komentarz…">Spoko</textarea>
+      <div class="save-state" data-id="set-run"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">✕</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag stays">zostaje</span></td>
+    <td class="col-why"><span class="why-text">Wzorzec wspólny.</span></td>
+    <td class="col-use"><span class="use-text">"Anuluj" (lead-finder), settings.html:833.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="set-x-7" placeholder="Twój komentarz…">Spoko</textarea>
+      <div class="save-state" data-id="set-x-7"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">⟳</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag na">nie da się</span></td>
+    <td class="col-why"><span class="why-text">Symbol typograficzny.</span></td>
+    <td class="col-use"><span class="use-text">"Odśwież" (lead-finder), settings.html:835.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="set-refresh-lf" placeholder="Twój komentarz…">Zmień na ikonę jak wszędzie</textarea>
+      <div class="save-state" data-id="set-refresh-lf"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">← / →</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag na">nie da się</span></td>
+    <td class="col-why"><span class="why-text">Symbole typograficzne w tekście przycisku.</span></td>
+    <td class="col-use"><span class="use-text">Paginacja "Poprzednia"/"Następna", settings.html:905/907.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="set-pagination-1" placeholder="Twój komentarz…">Zmień na ikony</textarea>
+      <div class="save-state" data-id="set-pagination-1"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">◀ / ▶</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag na">nie da się</span></td>
+    <td class="col-why"><span class="why-text">Symbole typograficzne.</span></td>
+    <td class="col-use"><span class="use-text">Druga paginacja/karuzela, settings.html:1024/1026.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="set-pagination-2" placeholder="Twój komentarz…">Spoko</textarea>
+      <div class="save-state" data-id="set-pagination-2"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">▾</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag na">nie da się</span></td>
+    <td class="col-why"><span class="why-text">Symbol typograficzny, 8 wystąpień.</span></td>
+    <td class="col-use"><span class="use-text">Rozwijane listy, settings.html:57,234,267,319,326,333,432,873.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="set-carets" placeholder="Twój komentarz…">Spoko</textarea>
+      <div class="save-state" data-id="set-carets"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">⭐</span></td>
+    <td class="col-svg"><div class="svgs"><div class="icon-box"><svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14l-5-4.87 6.91-1.01L12 2z"></path></svg></div></div></td>
+    <td class="col-status"><span class="tag proposal">propozycja</span></td>
+    <td class="col-why"><span class="why-text">Kandydat na gotową ikonę STAR_ICON -- do wdrożenia po potwierdzeniu.</span></td>
+    <td class="col-use"><span class="use-text">Podsumowanie ocen, settings.js:1303. Cytat: "Średnia: X/5 ⭐".</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="set-avg-rating" placeholder="Twój komentarz…">Wdróż</textarea>
+      <div class="save-state" data-id="set-avg-rating"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">★</span></td>
+    <td class="col-svg"><div class="svgs"><div class="icon-box"><svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14l-5-4.87 6.91-1.01L12 2z"></path></svg></div></div></td>
+    <td class="col-status"><span class="tag proposal">propozycja</span></td>
+    <td class="col-why"><span class="why-text">Ten sam STAR_ICON, inne miejsce.</span></td>
+    <td class="col-use"><span class="use-text">Wyświetlanie oceny gry w tabeli, settings.js:2456.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="set-game-rating" placeholder="Twój komentarz…">Wdróż</textarea>
+      <div class="save-state" data-id="set-game-rating"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">✓</span></td>
+    <td class="col-svg"><div class="svgs"><div class="icon-box"><svg viewBox="0 0 20 20"><path fill-rule="evenodd" clip-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z"></path></svg></div></div></td>
+    <td class="col-status"><span class="tag proposal">propozycja</span></td>
+    <td class="col-why"><span class="why-text">Rodzina check/cancel.</span></td>
+    <td class="col-use"><span class="use-text">Toast "Zatwierdzono", settings.js:2350.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="set-toast-approved" placeholder="Twój komentarz…">Wdróż</textarea>
+      <div class="save-state" data-id="set-toast-approved"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">✅</span></td>
+    <td class="col-svg"><div class="svgs"><div class="icon-box"><svg viewBox="0 0 20 20"><path fill-rule="evenodd" clip-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z"></path></svg></div></div></td>
+    <td class="col-status"><span class="tag proposal">propozycja</span></td>
+    <td class="col-why"><span class="why-text">Rodzina check/cancel.</span></td>
+    <td class="col-use"><span class="use-text">"Uruchomiono!" (lead-finder), settings.js:6436.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="set-toast-started" placeholder="Twój komentarz…">Wdróż</textarea>
+      <div class="save-state" data-id="set-toast-started"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">✓ / ✗</span></td>
+    <td class="col-svg"><div class="svgs"><div class="icon-box"><svg viewBox="0 0 20 20"><path fill-rule="evenodd" clip-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z"></path></svg></div><div class="icon-box"><svg viewBox="0 0 20 20"><path fill-rule="evenodd" clip-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z"></path></svg></div></div></td>
+    <td class="col-status"><span class="tag proposal">propozycja</span></td>
+    <td class="col-why"><span class="why-text">Rodzina check/cancel -- jeden mechanizm rozsiany po 5 liniach.</span></td>
+    <td class="col-use"><span class="use-text">Przełącznik "Użyte" kontaktu w bazie leadów, settings.js:6553,6790,6792,6796,7004.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="set-used-mechanism" placeholder="Twój komentarz…">Wdróż</textarea>
+      <div class="save-state" data-id="set-used-mechanism"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">⇄</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag na">nie da się</span></td>
+    <td class="col-why"><span class="why-text">Symbol strzałek, nie emotka.</span></td>
+    <td class="col-use"><span class="use-text">Stan pośredni tego samego przełącznika "w trakcie zmiany", settings.js:6797.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="set-used-transition" placeholder="Twój komentarz…">Zmień na ikonę</textarea>
+      <div class="save-state" data-id="set-used-transition"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">↑ / ↓</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag na">nie da się</span></td>
+    <td class="col-why"><span class="why-text">Symbole typograficzne, 4 miejsca.</span></td>
+    <td class="col-use"><span class="use-text">Sortowanie tabel, settings.js:1881,1892,1964,1971.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="set-sort-arrows" placeholder="Twój komentarz…">Zmień na ikony</textarea>
+      <div class="save-state" data-id="set-sort-arrows"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">↙ / ↗</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag na">nie da się</span></td>
+    <td class="col-why"><span class="why-text">Symbole typograficzne.</span></td>
+    <td class="col-use"><span class="use-text">Kierunek wiadomości (przychodząca/wychodząca), settings.js:2719,3383.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="set-mail-direction" placeholder="Twój komentarz…">Zmień na ikony z koperta jak w mailach</textarea>
+      <div class="save-state" data-id="set-mail-direction"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">▾</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag na">nie da się</span></td>
+    <td class="col-why"><span class="why-text">4 miejsca.</span></td>
+    <td class="col-use"><span class="use-text">Rozwijane listy, settings.js:3871,3882,3893,3906.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="set-carets-js" placeholder="Twój komentarz…">Spoko</textarea>
+      <div class="save-state" data-id="set-carets-js"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">▶</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag na">nie da się</span></td>
+    <td class="col-why"><span class="why-text">3 miejsca.</span></td>
+    <td class="col-use"><span class="use-text">Przyciski odtwarzania, settings.js:6388,6397,6466.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="set-play-js" placeholder="Twój komentarz…">Spoko</textarea>
+      <div class="save-state" data-id="set-play-js"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">▲ / ▼</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag na">nie da się</span></td>
+    <td class="col-why"><span class="why-text">Symbole typograficzne, osobny mechanizm niż ↑/↓ wyżej.</span></td>
+    <td class="col-use"><span class="use-text">Sortowanie kolumn tabeli, settings.js:6521,6528.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="set-sort-triangles" placeholder="Twój komentarz…">Spoko</textarea>
+      <div class="save-state" data-id="set-sort-triangles"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">♟</span></td>
+    <td class="col-svg"><div class="svgs"><div class="icon-box"><svg viewBox="0 0 24 24"><path d="M8 13l-3 8 4-1.5L12 21l3-1.5 4 1.5-3-8z"></path><circle cx="12" cy="9" r="7" fill="none" stroke="currentColor" stroke-width="1.6"></circle><path d="M12 5.5l1.3 2.6 2.9.4-2.1 2 .5 2.9-2.6-1.4-2.6 1.4.5-2.9-2.1-2 2.9-.4z" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linejoin="round"></path></svg></div></div></td>
+    <td class="col-status"><span class="tag done">wdrożone</span></td>
+    <td class="col-why"><span class="why-text">Wdrożone -- medal zamiast pionka szachowego. Przy okazji naprawiony bug: kod przepuszczał całą etykietę (razem z emoji) przez escSetting() do innerHTML, co zamieniłoby SVG na widoczny tekst.</span></td>
+    <td class="col-use"><span class="use-text">Odznaka roli "Producent" w tabeli marketplace, settings.js:2263.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="set-producer-badge" placeholder="Twój komentarz…">Spoko</textarea>
+      <div class="save-state" data-id="set-producer-badge"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">📢</span></td>
+    <td class="col-svg"><div class="svgs"><div class="icon-box"><svg viewBox="0 0 24 24"><path d="M2 10.5v3a1 1 0 0 0 1 1h1.5l12.8 4.3c1 .3 2-.4 2-1.5V6.7c0-1.1-1-1.8-2-1.5L4.5 9.5H3a1 1 0 0 0-1 1z"></path><rect x="4" y="17" width="2.2" height="4.5" rx="1"></rect></svg></div></div></td>
+    <td class="col-status"><span class="tag done">wdrożone</span></td>
+    <td class="col-why"><span class="why-text">Wdrożone -- inne wystąpienie megafonu niż folder Marketing wyżej (to jest wewnątrz listy maili, nie ikona folderu).</span></td>
+    <td class="col-use"><span class="use-text">Etykieta nadawcy kampanii w liście maili, settings.js:2720. Cytat przed zmianą: "📢 ${email}".</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="set-campaign-label" placeholder="Twój komentarz…">Spoko</textarea>
+      <div class="save-state" data-id="set-campaign-label"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">✕</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag stays">zostaje</span></td>
+    <td class="col-why"><span class="why-text">Wzorzec wspólny.</span></td>
+    <td class="col-use"><span class="use-text">Zamknij kompozytor maila, settings.js:3846.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="set-x-compose" placeholder="Twój komentarz…">Spoko</textarea>
+      <div class="save-state" data-id="set-x-compose"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">📁</span></td>
+    <td class="col-svg"><div class="svgs"><div class="icon-box"><svg viewBox="0 0 24 24"><path d="M20 6h-8l-2-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2z"></path></svg></div></div></td>
+    <td class="col-status"><span class="tag proposal">propozycja</span></td>
+    <td class="col-why"><span class="why-text">Do sprawdzenia -- czy to bezpieczne miejsce (prawdopodobnie kropka statusu jak dotRed/dotGreen, nie osobna ikona folderu).</span></td>
+    <td class="col-use"><span class="use-text">Status sesji gry "Archiwalna", settings.js:5364.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="set-archived-status" placeholder="Twój komentarz…">Wdróż</textarea>
+      <div class="save-state" data-id="set-archived-status"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">⚠️</span></td>
+    <td class="col-svg"><div class="svgs"><div class="icon-box"><svg viewBox="0 0 24 24"><path fill-rule="evenodd" clip-rule="evenodd" d="M12 2 1 21h22L12 2zm-1 7h2v6h-2V9zm0 8h2v2h-2v-2z"></path></svg></div></div></td>
+    <td class="col-status"><span class="tag done">wdrożone</span></td>
+    <td class="col-why"><span class="why-text">Wdrożone w tej rundzie -- osobny węzeł DOM na ikonę, reszta wiadomości nadal bezpiecznie przez textContent.</span></td>
+    <td class="col-use"><span class="use-text">Ostrzeżenie przy liczniku błędów sesji, settings.js:5366.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="set-error-warning" placeholder="Twój komentarz…">Spoko</textarea>
+      <div class="save-state" data-id="set-error-warning"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">🔴</span></td>
+    <td class="col-svg"><div class="svgs"><div class="icon-box" style="background:transparent;border-color:transparent"><div style="width:16px;height:16px;border-radius:50%;background:#f87171"></div></div></div></td>
+    <td class="col-status"><span class="tag done">wdrożone</span></td>
+    <td class="col-why"><span class="why-text">Wdrożone dawniej -- kolorowa kropka CSS, nie SVG.</span></td>
+    <td class="col-use"><span class="use-text">Status sesji: błąd, settings.js:5350.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="set-dot-red" placeholder="Twój komentarz…">Spoko</textarea>
+      <div class="save-state" data-id="set-dot-red"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">🟢</span></td>
+    <td class="col-svg"><div class="svgs"><div class="icon-box" style="background:transparent;border-color:transparent"><div style="width:16px;height:16px;border-radius:50%;background:#4ade80"></div></div></div></td>
+    <td class="col-status"><span class="tag done">wdrożone</span></td>
+    <td class="col-why"><span class="why-text">Wdrożone dawniej.</span></td>
+    <td class="col-use"><span class="use-text">Status sesji: zakończona, settings.js:5346-5348.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="set-dot-green" placeholder="Twój komentarz…">Spoko</textarea>
+      <div class="save-state" data-id="set-dot-green"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">🔵</span></td>
+    <td class="col-svg"><div class="svgs"><div class="icon-box" style="background:transparent;border-color:transparent"><div style="width:16px;height:16px;border-radius:50%;background:#60a5fa"></div></div></div></td>
+    <td class="col-status"><span class="tag done">wdrożone</span></td>
+    <td class="col-why"><span class="why-text">Wdrożone dawniej.</span></td>
+    <td class="col-use"><span class="use-text">Status sesji: rozpoczęta, settings.js:5344-5345.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="set-dot-blue" placeholder="Twój komentarz…">Spoko</textarea>
+      <div class="save-state" data-id="set-dot-blue"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">⚪</span></td>
+    <td class="col-svg"><div class="svgs"><div class="icon-box" style="background:transparent;border-color:transparent"><div style="width:16px;height:16px;border-radius:50%;background:#cbd5e1"></div></div></div></td>
+    <td class="col-status"><span class="tag done">wdrożone</span></td>
+    <td class="col-why"><span class="why-text">Wdrożone dawniej.</span></td>
+    <td class="col-use"><span class="use-text">Status sesji: porzucona, settings.js:5349.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="set-dot-white" placeholder="Twój komentarz…">Spoko</textarea>
+      <div class="save-state" data-id="set-dot-white"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">⚙</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag removed">usunięte</span></td>
+    <td class="col-why"><span class="why-text">To był nagłówek karty panelu admina, usunięty całkowicie bez zamiany na ikonę przy porządkach z nagłówkami.</span></td>
+    <td class="col-use"><span class="use-text">Nagłówek karty "Kolejność generowania gier", dawniej settings.html:488.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="set-gear-header" placeholder="Twój komentarz…">Spoko</textarea>
+      <div class="save-state" data-id="set-gear-header"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">🌐</span></td>
+    <td class="col-svg"><div class="svgs"><div class="icon-box"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.6"><circle cx="12" cy="12" r="9"></circle><ellipse cx="12" cy="12" rx="3.6" ry="9"></ellipse><line x1="3" y1="12" x2="21" y2="12"></line></svg></div></div></td>
+    <td class="col-status"><span class="tag done">wdrożone</span></td>
+    <td class="col-why"><span class="why-text">Wdrożone (mcVisitUrlBtn) -- bezpieczne, samodzielne miejsce.</span></td>
+    <td class="col-use"><span class="use-text">Link "Odwiedź stronę", settings.html:877.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="set-globe-visit" placeholder="Twój komentarz…">Spoko</textarea>
+      <div class="save-state" data-id="set-globe-visit"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">🌐</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag removed">usunięte</span></td>
+    <td class="col-why"><span class="why-text">To był nagłówek karty, usunięty całkowicie przy porządkach.</span></td>
+    <td class="col-use"><span class="use-text">Dawny nagłówek karty, settings.html:425.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="set-globe-header" placeholder="Twój komentarz…">Spoko</textarea>
+      <div class="save-state" data-id="set-globe-header"></div>
+    </td>
+  </tr><tr class="pagehead"><td colspan="6">Generator gier (generator.js -- silnik za settings.html)</td></tr><tr>
+    <td class="col-jest"><span class="emoji-big">✗</span></td>
+    <td class="col-svg"><div class="svgs"><div class="icon-box"><svg viewBox="0 0 20 20"><path fill-rule="evenodd" clip-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z"></path></svg></div></div></td>
+    <td class="col-status"><span class="tag proposal">propozycja</span></td>
+    <td class="col-why"><span class="why-text">Część rodziny check/cancel -- Twoje przypuszczenie: część z tych rzadkich błędów technicznych można usunąć bez zamiany na ikonę, bo to panel admina, nie UI gracza.</span></td>
+    <td class="col-use"><span class="use-text">7 komunikatów błędów sieciowych/API, generator.js:76,188,265,454,469,667,845.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="gen-errors" placeholder="Twój komentarz…">Wdróż</textarea>
+      <div class="save-state" data-id="gen-errors"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">⚠️</span></td>
+    <td class="col-svg"><div class="svgs"><div class="icon-box"><svg viewBox="0 0 24 24"><path fill-rule="evenodd" clip-rule="evenodd" d="M12 2 1 21h22L12 2zm-1 7h2v6h-2V9zm0 8h2v2h-2v-2z"></path></svg></div></div></td>
+    <td class="col-status"><span class="tag done">wdrożone</span></td>
+    <td class="col-why"><span class="why-text">Wdrożone w tej rundzie -- osobny parametr ikony w showStatus(), tekst komunikatu zostaje bezpiecznym textContent.</span></td>
+    <td class="col-use"><span class="use-text">Ostrzeżenie o ponawianej próbie generowania, generator.js:155. Cytat przed zmianą: "⚠️ Błąd generowania (retry): …".</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="gen-retry-warning" placeholder="Twój komentarz…">Spoko</textarea>
+      <div class="save-state" data-id="gen-retry-warning"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">✓</span></td>
+    <td class="col-svg"><div class="svgs"><div class="icon-box"><svg viewBox="0 0 20 20"><path fill-rule="evenodd" clip-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z"></path></svg></div></div></td>
+    <td class="col-status"><span class="tag proposal">propozycja</span></td>
+    <td class="col-why"><span class="why-text">Rodzina check/cancel.</span></td>
+    <td class="col-use"><span class="use-text">"Zapisano", generator.js:842.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="gen-saved" placeholder="Twój komentarz…">Spoko</textarea>
+      <div class="save-state" data-id="gen-saved"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">✗</span></td>
+    <td class="col-svg"><div class="svgs"><div class="icon-box"><svg viewBox="0 0 20 20"><path fill-rule="evenodd" clip-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z"></path></svg></div></div></td>
+    <td class="col-status"><span class="tag proposal">propozycja</span></td>
+    <td class="col-why"><span class="why-text">Rodzina check/cancel.</span></td>
+    <td class="col-use"><span class="use-text">"Nieprawidłowy JSON", generator.js:856.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="gen-bad-json" placeholder="Twój komentarz…">Wdróż</textarea>
+      <div class="save-state" data-id="gen-bad-json"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">✗</span></td>
+    <td class="col-svg"><div class="svgs"><div class="icon-box"><svg viewBox="0 0 20 20"><path fill-rule="evenodd" clip-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z"></path></svg></div></div></td>
+    <td class="col-status"><span class="tag proposal">propozycja</span></td>
+    <td class="col-why"><span class="why-text">Rodzina check/cancel.</span></td>
+    <td class="col-use"><span class="use-text">"Brak poprawnych gier", generator.js:896.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="gen-no-games" placeholder="Twój komentarz…">Wdróż</textarea>
+      <div class="save-state" data-id="gen-no-games"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">✓</span></td>
+    <td class="col-svg"><div class="svgs"><div class="icon-box"><svg viewBox="0 0 20 20"><path fill-rule="evenodd" clip-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z"></path></svg></div></div></td>
+    <td class="col-status"><span class="tag proposal">propozycja</span></td>
+    <td class="col-why"><span class="why-text">Rodzina check/cancel.</span></td>
+    <td class="col-use"><span class="use-text">"Zaimportowano X gier", generator.js:899.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="gen-imported" placeholder="Twój komentarz…">Wdróż</textarea>
+      <div class="save-state" data-id="gen-imported"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">🌐</span></td>
+    <td class="col-svg"><div class="svgs"><div class="icon-box"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.6"><circle cx="12" cy="12" r="9"></circle><ellipse cx="12" cy="12" rx="3.6" ry="9"></ellipse><line x1="3" y1="12" x2="21" y2="12"></line></svg></div></div></td>
+    <td class="col-status"><span class="tag done">wdrożone</span></td>
+    <td class="col-why"><span class="why-text">Wdrożone -- odblokowane przez dodanie bezpiecznego wsparcia ikon w ui-select.js (osobne pole icon, etykieta nadal przez textContent/escapowanie).</span></td>
+    <td class="col-use"><span class="use-text">Opcja "Wszystkie" w liście języków, generator.js:967. Cytat przed zmianą: "🌐 Wszystkie".</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="gen-lang-all" placeholder="Twój komentarz…">Spoko</textarea>
+      <div class="save-state" data-id="gen-lang-all"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">▶</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag na">nie da się</span></td>
+    <td class="col-why"><span class="why-text">2 miejsca, symbole typograficzne.</span></td>
+    <td class="col-use"><span class="use-text">Przyciski odtwarzania, generator.js:510,588.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="gen-play" placeholder="Twój komentarz…">Spoko</textarea>
+      <div class="save-state" data-id="gen-play"></div>
+    </td>
+  </tr><tr class="pagehead"><td colspan="6">Kontroler -- Control (control.html + control2.html + control2/js/app.js) -- "nie ruszamy Control, wkrótce usuwany"</td></tr><tr>
+    <td class="col-jest"><span class="emoji-big">ℹ️</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag stays">zostaje</span></td>
+    <td class="col-why"><span class="why-text">Wzorzec wspólny.</span></td>
+    <td class="col-use"><span class="use-text">Przycisk pomocy, control.html:66.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="ctrl-help" placeholder="Twój komentarz…">Jak wyżej, chcę ikonę</textarea>
+      <div class="save-state" data-id="ctrl-help"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">🔐</span></td>
+    <td class="col-svg"><div class="svgs"><div class="icon-box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"><path d="M12 2.5l7 2.8v6c0 5-3 8.3-7 10.7-4-2.4-7-5.7-7-10.7v-6l7-2.8z"></path><path d="M9 12l2 2 4-4"></path></svg></div></div></td>
+    <td class="col-status"><span class="tag done">wdrożone</span></td>
+    <td class="col-why"><span class="why-text">Wdrożone -- wyjątek od "nie ruszamy Control", bo to uniwersalny wzorzec wdrażany wszędzie naraz.</span></td>
+    <td class="col-use"><span class="use-text">"Polityka prywatności", control.html:77.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="ctrl-legal" placeholder="Twój komentarz…">Spoko</textarea>
+      <div class="save-state" data-id="ctrl-legal"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">✕</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag stays">zostaje</span></td>
+    <td class="col-why"><span class="why-text">Wzorzec wspólny, 5 miejsc.</span></td>
+    <td class="col-use"><span class="use-text">Różne zamknięcia paneli/modali, control.html:78,94,110,136,946.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="ctrl-x-all" placeholder="Twój komentarz…">Spoko</textarea>
+      <div class="save-state" data-id="ctrl-x-all"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">→ (x2)</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag na">nie da się</span></td>
+    <td class="col-why"><span class="why-text">Strzałki opisowe w zdaniu.</span></td>
+    <td class="col-use"><span class="use-text">Instrukcja łączenia przez QR, control.html:126: "familiada.online → Podłącz urządzenie → wprowadź kod".</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="ctrl-prose" placeholder="Twój komentarz…">Spoko</textarea>
+      <div class="save-state" data-id="ctrl-prose"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">🔌</span></td>
+    <td class="col-svg"><div class="svgs"><div class="icon-box"><svg viewBox="0 0 24 24"><rect x="7" y="8" width="10" height="8" rx="2"></rect><rect x="9" y="3" width="2" height="6"></rect><rect x="13" y="3" width="2" height="6"></rect><rect x="10.8" y="16" width="2.4" height="5" rx="1.2"></rect></svg></div></div></td>
+    <td class="col-status"><span class="tag na">nie da się</span></td>
+    <td class="col-why"><span class="why-text">Twoja wcześniejsza decyzja: nie ruszamy Control.</span></td>
+    <td class="col-use"><span class="use-text">Ikona zakładki "Urządzenia" (x2, desktop+mobile), control.html:202,208.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="ctrl-tab-devices" placeholder="Twój komentarz…">Spoko</textarea>
+      <div class="save-state" data-id="ctrl-tab-devices"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">📝</span></td>
+    <td class="col-svg"><div class="svgs"><div class="icon-box"><svg viewBox="0 0 24 24"><path fill-rule="evenodd" clip-rule="evenodd" d="M4 2h16v20H4V2zm3 5h10v1.6H7V7zm0 4h10v1.6H7V11zm0 4h6v1.6H7V15z"></path></svg></div></div></td>
+    <td class="col-status"><span class="tag na">nie da się</span></td>
+    <td class="col-why"><span class="why-text">Nie ruszamy Control.</span></td>
+    <td class="col-use"><span class="use-text">Ikona zakładki "Pytania" (x2), control.html:227,233.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="ctrl-tab-questions" placeholder="Twój komentarz…">Spoko</textarea>
+      <div class="save-state" data-id="ctrl-tab-questions"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">🎮</span></td>
+    <td class="col-svg"><div class="svgs"><div class="icon-box"><svg viewBox="0 0 24 24"><rect x="2" y="8" width="20" height="9" rx="4" fill="none" stroke="currentColor" stroke-width="1.6"></rect><rect x="6.2" y="11.2" width="4" height="1.6" rx="0.6"></rect><rect x="7.4" y="10" width="1.6" height="4" rx="0.6"></rect><circle cx="16" cy="11" r="1.3"></circle><circle cx="18.5" cy="13.5" r="1.3"></circle></svg></div></div></td>
+    <td class="col-status"><span class="tag na">nie da się</span></td>
+    <td class="col-why"><span class="why-text">Nie ruszamy Control (mimo że gamepad gdzie indziej już wdrożony -- tu celowo pominięte).</span></td>
+    <td class="col-use"><span class="use-text">Ikona zakładki "Rundy" (x2), control.html:252,258.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="ctrl-tab-rounds" placeholder="Twój komentarz…">Spoko</textarea>
+      <div class="save-state" data-id="ctrl-tab-rounds"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">🏁</span></td>
+    <td class="col-svg"><div class="svgs"><div class="icon-box"><svg viewBox="0 0 24 24"><path d="M6 3h1.5v18H6z"></path><path d="M7.5 4l4.2 1.8L7.5 7.6V4z"></path><polygon points="7.5,4.5 19,4.5 15.5,8.5 19,12.5 7.5,12.5"></polygon></svg></div></div></td>
+    <td class="col-status"><span class="tag na">nie da się</span></td>
+    <td class="col-why"><span class="why-text">Nie ruszamy Control.</span></td>
+    <td class="col-use"><span class="use-text">Ikona zakładki "Finał" (x2), control.html:277,283.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="ctrl-tab-final" placeholder="Twój komentarz…">Spoko</textarea>
+      <div class="save-state" data-id="ctrl-tab-final"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">🔊</span></td>
+    <td class="col-svg"><div class="svgs"><div class="icon-box"><svg viewBox="0 0 24 24"><polygon points="4,9 8,9 13,5 13,19 8,15 4,15"></polygon><path d="M16 8.5a5 5 0 0 1 0 7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path><path d="M18.5 6a9 9 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path></svg></div></div></td>
+    <td class="col-status"><span class="tag done">wdrożone</span></td>
+    <td class="col-why"><span class="why-text">Wdrożone w tej rundzie zgodnie z Twoim "wdróż wszędzie" -- wyjątek od "nie ruszamy Control", bo to inny typ zmiany niż zakładki wyżej.</span></td>
+    <td class="col-use"><span class="use-text">"Odblokuj" dźwięk (autoplay-gate), control.html:427.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="ctrl-unlock-audio" placeholder="Twój komentarz…">Spoko</textarea>
+      <div class="save-state" data-id="ctrl-unlock-audio"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">↺</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag na">nie da się</span></td>
+    <td class="col-why"><span class="why-text">Symbol typograficzny.</span></td>
+    <td class="col-use"><span class="use-text">Restart rozgrywki, control.html:433.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="ctrl-restart" placeholder="Twój komentarz…">Zmien na ikonę</textarea>
+      <div class="save-state" data-id="ctrl-restart"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">ℹ️</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag stays">zostaje</span></td>
+    <td class="col-why"><span class="why-text">Wzorzec wspólny.</span></td>
+    <td class="col-use"><span class="use-text">Przycisk pomocy, control2.html:434.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="ctrl2-help" placeholder="Twój komentarz…">Jak wyżej, chcę ikonę</textarea>
+      <div class="save-state" data-id="ctrl2-help"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">🔐</span></td>
+    <td class="col-svg"><div class="svgs"><div class="icon-box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"><path d="M12 2.5l7 2.8v6c0 5-3 8.3-7 10.7-4-2.4-7-5.7-7-10.7v-6l7-2.8z"></path><path d="M9 12l2 2 4-4"></path></svg></div></div></td>
+    <td class="col-status"><span class="tag done">wdrożone</span></td>
+    <td class="col-why"><span class="why-text">Wdrożone.</span></td>
+    <td class="col-use"><span class="use-text">"Polityka prywatności", control2.html:445.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="ctrl2-legal" placeholder="Twój komentarz…">Spoko</textarea>
+      <div class="save-state" data-id="ctrl2-legal"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">✕</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag stays">zostaje</span></td>
+    <td class="col-why"><span class="why-text">Wzorzec wspólny, 4 miejsca.</span></td>
+    <td class="col-use"><span class="use-text">Zamknięcia, control2.html:446,456,476,503.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="ctrl2-x-all" placeholder="Twój komentarz…">Spoko</textarea>
+      <div class="save-state" data-id="ctrl2-x-all"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">→ (x2)</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag na">nie da się</span></td>
+    <td class="col-why"><span class="why-text">Strzałki opisowe.</span></td>
+    <td class="col-use"><span class="use-text">Instrukcja QR, control2.html:492.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="ctrl2-prose" placeholder="Twój komentarz…">Spoko</textarea>
+      <div class="save-state" data-id="ctrl2-prose"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">🔇</span></td>
+    <td class="col-svg"><div class="svgs"><div class="icon-box"><svg viewBox="0 0 24 24"><polygon points="4,9 8,9 13,5 13,19 8,15 4,15"></polygon><path d="M16.5 9l5 5M21.5 9l-5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path></svg></div></div></td>
+    <td class="col-status"><span class="tag done">wdrożone</span></td>
+    <td class="col-why"><span class="why-text">Wdrożone (wcześniejsza runda).</span></td>
+    <td class="col-use"><span class="use-text">Stan wyciszenia, control2/js/app.js:937.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="ctrl2-muted" placeholder="Twój komentarz…">Spoko</textarea>
+      <div class="save-state" data-id="ctrl2-muted"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">🔊</span></td>
+    <td class="col-svg"><div class="svgs"><div class="icon-box"><svg viewBox="0 0 24 24"><polygon points="4,9 8,9 13,5 13,19 8,15 4,15"></polygon><path d="M16 8.5a5 5 0 0 1 0 7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path><path d="M18.5 6a9 9 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path></svg></div></div></td>
+    <td class="col-status"><span class="tag done">wdrożone</span></td>
+    <td class="col-why"><span class="why-text">Wdrożone (wcześniejsza runda).</span></td>
+    <td class="col-use"><span class="use-text">Stan dźwięku włączonego, control2/js/app.js.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="ctrl2-unmuted" placeholder="Twój komentarz…">Spoko</textarea>
+      <div class="save-state" data-id="ctrl2-unmuted"></div>
+    </td>
+  </tr><tr class="pagehead"><td colspan="6">Edytor logo (logo-editor.html + logo-editor/js)</td></tr><tr>
+    <td class="col-jest"><span class="emoji-big">ℹ️</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag stays">zostaje</span></td>
+    <td class="col-why"><span class="why-text">Wzorzec wspólny.</span></td>
+    <td class="col-use"><span class="use-text">Przycisk pomocy, logo-editor.html:64.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="le-help" placeholder="Twój komentarz…">Jak wyżej, chcę ikonę</textarea>
+      <div class="save-state" data-id="le-help"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">✕</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag stays">zostaje</span></td>
+    <td class="col-why"><span class="why-text">Wzorzec wspólny.</span></td>
+    <td class="col-use"><span class="use-text">Zamknij edytor, logo-editor.html:69.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="le-x-close" placeholder="Twój komentarz…">Spoko</textarea>
+      <div class="save-state" data-id="le-x-close"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">📁</span></td>
+    <td class="col-svg"><div class="svgs"><div class="icon-box"><svg viewBox="0 0 24 24"><path d="M20 6h-8l-2-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2z"></path></svg></div></div></td>
+    <td class="col-status"><span class="tag proposal">propozycja</span></td>
+    <td class="col-why"><span class="why-text">Kandydat na gotową ikonę FOLDER_ICON -- do wdrożenia po potwierdzeniu.</span></td>
+    <td class="col-use"><span class="use-text">"Wybierz obraz" (import do logo), logo-editor.html:190.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="le-pick-image" placeholder="Twój komentarz…">Wdróż</textarea>
+      <div class="save-state" data-id="le-pick-image"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">✕</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag stays">zostaje</span></td>
+    <td class="col-why"><span class="why-text">Wzorzec wspólny, 4 miejsca.</span></td>
+    <td class="col-use"><span class="use-text">Różne zamknięcia paneli, logo-editor.html:267,316,365,405.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="le-x-panels" placeholder="Twój komentarz…">Spoko</textarea>
+      <div class="save-state" data-id="le-x-panels"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">🔐</span></td>
+    <td class="col-svg"><div class="svgs"><div class="icon-box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"><path d="M12 2.5l7 2.8v6c0 5-3 8.3-7 10.7-4-2.4-7-5.7-7-10.7v-6l7-2.8z"></path><path d="M9 12l2 2 4-4"></path></svg></div></div></td>
+    <td class="col-status"><span class="tag done">wdrożone</span></td>
+    <td class="col-why"><span class="why-text">Wdrożone.</span></td>
+    <td class="col-use"><span class="use-text">"Polityka prywatności", logo-editor.html:437.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="le-legal" placeholder="Twój komentarz…">Spoko</textarea>
+      <div class="save-state" data-id="le-legal"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">✕</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag stays">zostaje</span></td>
+    <td class="col-why"><span class="why-text">Wzorzec wspólny, 2 miejsca.</span></td>
+    <td class="col-use"><span class="use-text">Zamknięcia, logo-editor.html:438,448.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="le-x-overlays" placeholder="Twój komentarz…">Spoko</textarea>
+      <div class="save-state" data-id="le-x-overlays"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">→</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag na">nie da się</span></td>
+    <td class="col-why"><span class="why-text">Opis narzędzia, nie ikona przycisku.</span></td>
+    <td class="col-use"><span class="use-text">Nazwa narzędzia rysowania "Strzałka →", logoEditor.draw.ui.shapes.arrow1.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="le-tool-1" placeholder="Twój komentarz…">Lepiej tam daj ikone</textarea>
+      <div class="save-state" data-id="le-tool-1"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">↔</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag na">nie da się</span></td>
+    <td class="col-why"><span class="why-text">Opis narzędzia.</span></td>
+    <td class="col-use"><span class="use-text">Nazwa narzędzia "Strzałka ↔", logoEditor.draw.ui.shapes.arrow2.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="le-tool-2" placeholder="Twój komentarz…">Lepiej tam daj ikonę</textarea>
+      <div class="save-state" data-id="le-tool-2"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">➤</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag na">nie da się</span></td>
+    <td class="col-why"><span class="why-text">Sprawdzone dokładnie -- to fałszywy alarm z wcześniejszego audytu, opis narzędzia (nazwa kształtu do narysowania), nie ikona UI.</span></td>
+    <td class="col-use"><span class="use-text">Nazwa narzędzia "Strzałka ➤" (wypełniona), logoEditor.draw.ui.shapes.arrow1Fill.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="le-tool-3" placeholder="Twój komentarz…">Lepiej tam daj ikonę</textarea>
+      <div class="save-state" data-id="le-tool-3"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">⇔</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag na">nie da się</span></td>
+    <td class="col-why"><span class="why-text">Opis narzędzia.</span></td>
+    <td class="col-use"><span class="use-text">Nazwa narzędzia "Strzałka ⇔", logoEditor.draw.ui.shapes.arrow2Fill.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="le-tool-4" placeholder="Twój komentarz…">Lepiej tam daj ikonę</textarea>
+      <div class="save-state" data-id="le-tool-4"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">✓</span></td>
+    <td class="col-svg"><div class="svgs"><div class="icon-box"><svg viewBox="0 0 20 20"><path fill-rule="evenodd" clip-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z"></path></svg></div></div></td>
+    <td class="col-status"><span class="tag proposal">propozycja</span></td>
+    <td class="col-why"><span class="why-text">Rodzina check/cancel.</span></td>
+    <td class="col-use"><span class="use-text">"Zamknij" (zakończenie rysowania wieloboku), logoEditor.draw.ui.polygonDone.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="le-polygon-done" placeholder="Twój komentarz…">Wdróż</textarea>
+      <div class="save-state" data-id="le-polygon-done"></div>
+    </td>
+  </tr><tr class="pagehead"><td colspan="6">Marketplace / Gry Społeczności (marketplace.html + marketplace.js)</td></tr><tr>
+    <td class="col-jest"><span class="emoji-big">ℹ️</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag stays">zostaje</span></td>
+    <td class="col-why"><span class="why-text">Wzorzec wspólny.</span></td>
+    <td class="col-use"><span class="use-text">Przycisk pomocy, marketplace.html:51.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="mkt-help" placeholder="Twój komentarz…">Jak wyżej, chcę ikonę</textarea>
+      <div class="save-state" data-id="mkt-help"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">▾</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag na">nie da się</span></td>
+    <td class="col-why"><span class="why-text">Symbol typograficzny.</span></td>
+    <td class="col-use"><span class="use-text">Rozwijana lista, marketplace.html:116.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="mkt-caret" placeholder="Twój komentarz…">Spoko</textarea>
+      <div class="save-state" data-id="mkt-caret"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">✕</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag stays">zostaje</span></td>
+    <td class="col-why"><span class="why-text">Wzorzec wspólny.</span></td>
+    <td class="col-use"><span class="use-text">Zamknij szczegóły gry, marketplace.html:175.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="mkt-x-details" placeholder="Twój komentarz…">Spoko</textarea>
+      <div class="save-state" data-id="mkt-x-details"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">✅</span></td>
+    <td class="col-svg"><div class="svgs"><div class="icon-box"><svg viewBox="0 0 20 20"><path fill-rule="evenodd" clip-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z"></path></svg></div></div></td>
+    <td class="col-status"><span class="tag proposal">propozycja</span></td>
+    <td class="col-why"><span class="why-text">Rodzina check/cancel.</span></td>
+    <td class="col-use"><span class="use-text">Odznaka "Dodano" (gra dodana do biblioteki), marketplace.html:189.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="mkt-added-badge" placeholder="Twój komentarz…">Wdróż</textarea>
+      <div class="save-state" data-id="mkt-added-badge"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">🏠</span></td>
+    <td class="col-svg"><div class="svgs"><div class="icon-box"><svg viewBox="0 0 24 24"><path d="M12 3 2 12h3v8h5v-6h4v6h5v-8h3z"></path></svg></div></div></td>
+    <td class="col-status"><span class="tag done">wdrożone</span></td>
+    <td class="col-why"><span class="why-text">Wdrożone (wcześniejsza runda) -- jedyna pozycja z "sprawdź zastosowanie", która po weryfikacji okazała się czystym, bezpiecznym miejscem.</span></td>
+    <td class="col-use"><span class="use-text">Przycisk powrotu na stronę główną (mobile, użytkownik anonimowy), marketplace.js:749.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="mkt-home" placeholder="Twój komentarz…">Spoko</textarea>
+      <div class="save-state" data-id="mkt-home"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">★ / ☆</span></td>
+    <td class="col-svg"><div class="svgs"><div class="icon-box"><svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14l-5-4.87 6.91-1.01L12 2z"></path></svg></div><div class="icon-box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14l-5-4.87 6.91-1.01L12 2z"></path></svg></div></div></td>
+    <td class="col-status"><span class="tag done">wdrożone</span></td>
+    <td class="col-why"><span class="why-text">Wdrożone -- ten sam widget co w Moim koncie.</span></td>
+    <td class="col-use"><span class="use-text">Ocena gry na kaflu/w podglądzie, marketplace.js:549,568.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="mkt-star-1" placeholder="Twój komentarz…">Spoko</textarea>
+      <div class="save-state" data-id="mkt-star-1"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">★ / ☆</span></td>
+    <td class="col-svg"><div class="svgs"><div class="icon-box"><svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14l-5-4.87 6.91-1.01L12 2z"></path></svg></div><div class="icon-box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14l-5-4.87 6.91-1.01L12 2z"></path></svg></div></div></td>
+    <td class="col-status"><span class="tag done">wdrożone</span></td>
+    <td class="col-why"><span class="why-text">Wdrożone.</span></td>
+    <td class="col-use"><span class="use-text">Lista ocen wystawionych przez innych użytkowników, marketplace.js:618.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="mkt-star-2" placeholder="Twój komentarz…">Spoko</textarea>
+      <div class="save-state" data-id="mkt-star-2"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">★ / ☆ (1-5, klikalne)</span></td>
+    <td class="col-svg"><div class="svgs"><div class="icon-box"><svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14l-5-4.87 6.91-1.01L12 2z"></path></svg></div></div></td>
+    <td class="col-status"><span class="tag done">wdrożone</span></td>
+    <td class="col-why"><span class="why-text">Wdrożone -- współdzielony komponent js/core/rating-system.js (przyciski oceny 1-5 gwiazdek), używany w przepływie wystawiania oceny gry.</span></td>
+    <td class="col-use"><span class="use-text">Widget wystawiania oceny (5 klikalnych przycisków), rating-system.js:68-72.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="mkt-rating-widget" placeholder="Twój komentarz…">Spoko</textarea>
+      <div class="save-state" data-id="mkt-rating-widget"></div>
+    </td>
+  </tr><tr class="pagehead"><td colspan="6">Strona 404 (404.html)</td></tr><tr>
+    <td class="col-jest"><span class="emoji-big">🎲</span></td>
+    <td class="col-svg"><div class="svgs"><div class="icon-box"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4" fill="none" stroke="currentColor" stroke-width="1.6"></rect><circle cx="8" cy="8" r="1.6"></circle><circle cx="16" cy="8" r="1.6"></circle><circle cx="12" cy="12" r="1.6"></circle><circle cx="8" cy="16" r="1.6"></circle><circle cx="16" cy="16" r="1.6"></circle></svg></div></div></td>
+    <td class="col-status"><span class="tag proposal">propozycja</span></td>
+    <td class="col-why"><span class="why-text">Ikona gotowa (kostka z uproszczonymi oczkami), ale wdrożenie czeka na restrukturyzację przycisku (osadzone w tłumaczeniu jako część jednego stringu) -- ten sam wzorzec ikona+span co inne linki.</span></td>
+    <td class="col-use"><span class="use-text">CTA "Wylosuj gotową grę", 404.html:39. Cytat (notFound.marketplaceBtn): "Wylosuj gotową grę i zacznij zabawę! 🎲".</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="404-cta" placeholder="Twój komentarz…">Ten komunikat jest dziecinny, trzeba zmienić</textarea>
+      <div class="save-state" data-id="404-cta"></div>
+    </td>
+  </tr><tr class="pagehead"><td colspan="6">Buzzer (buzzer.html + buzzer.js)</td></tr><tr>
+    <td class="col-jest"><span class="emoji-big">▢</span></td>
+    <td class="col-svg"><div class="svgs"><div class="icon-box"><svg viewBox="0 0 24 24"><path d="M4 9V4h5v2H6v3H4zm16 0h-2V6h-3V4h5v5zM6 15v3h3v2H4v-5h2zm12 3v-3h2v5h-5v-2h3z"></path></svg></div></div></td>
+    <td class="col-status"><span class="tag done">wdrożone</span></td>
+    <td class="col-why"><span class="why-text">Wdrożone -- SVG zamiast znaku, stan początkowy przed uruchomieniem JS.</span></td>
+    <td class="col-use"><span class="use-text">Ikona startowa przycisku pełnego ekranu, buzzer.html.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="buzz-fs-initial" placeholder="Twój komentarz…">Czym się różnią?</textarea>
+      <div class="save-state" data-id="buzz-fs-initial"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">⧉ / ▢</span></td>
+    <td class="col-svg"><div class="svgs"><div class="icon-box"><svg viewBox="0 0 24 24"><path d="M4 9V4h5v2H6v3H4zm16 0h-2V6h-3V4h5v5zM6 15v3h3v2H4v-5h2zm12 3v-3h2v5h-5v-2h3z"></path></svg></div><div class="icon-box"><svg viewBox="0 0 24 24"><path d="M9 4H4v5h2V6h3V4zm6 0v2h3v3h2V4h-5zM6 15H4v5h5v-2H6v-3zm12 3h-3v2h5v-5h-2v3z"></path></svg></div></div></td>
+    <td class="col-status"><span class="tag done">wdrożone</span></td>
+    <td class="col-why"><span class="why-text">NAPRAWIONE w tej rundzie -- to był realny, przeoczony wcześniej brak (mimo błędnej notatki "gotowe wszędzie" z poprzedniej rundy). Dwa stany: włącz/wyłącz pełny ekran.</span></td>
+    <td class="col-use"><span class="use-text">Funkcja setFullscreenIcon() -- przełącznik trybu pełnoekranowego, buzzer.js:64.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="buzz-fs-toggle" placeholder="Twój komentarz…">Czym się różnią?</textarea>
+      <div class="save-state" data-id="buzz-fs-toggle"></div>
+    </td>
+  </tr><tr class="pagehead"><td colspan="6">Host (host.html + host.js)</td></tr><tr>
+    <td class="col-jest"><span class="emoji-big">▢</span></td>
+    <td class="col-svg"><div class="svgs"><div class="icon-box"><svg viewBox="0 0 24 24"><path d="M4 9V4h5v2H6v3H4zm16 0h-2V6h-3V4h5v5zM6 15v3h3v2H4v-5h2zm12 3v-3h2v5h-5v-2h3z"></path></svg></div></div></td>
+    <td class="col-status"><span class="tag done">wdrożone</span></td>
+    <td class="col-why"><span class="why-text">Wdrożone.</span></td>
+    <td class="col-use"><span class="use-text">Ikona startowa przycisku pełnego ekranu, host.html.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="host-fs-initial" placeholder="Twój komentarz…">Jak wyżej</textarea>
+      <div class="save-state" data-id="host-fs-initial"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">⧉ / ▢</span></td>
+    <td class="col-svg"><div class="svgs"><div class="icon-box"><svg viewBox="0 0 24 24"><path d="M4 9V4h5v2H6v3H4zm16 0h-2V6h-3V4h5v5zM6 15v3h3v2H4v-5h2zm12 3v-3h2v5h-5v-2h3z"></path></svg></div><div class="icon-box"><svg viewBox="0 0 24 24"><path d="M9 4H4v5h2V6h3V4zm6 0v2h3v3h2V4h-5zM6 15H4v5h5v-2H6v-3zm12 3h-3v2h5v-5h-2v3z"></path></svg></div></div></td>
+    <td class="col-status"><span class="tag done">wdrożone</span></td>
+    <td class="col-why"><span class="why-text">NAPRAWIONE w tej rundzie, jak w buzzer.js.</span></td>
+    <td class="col-use"><span class="use-text">Funkcja setFullscreenIcon(), host.js:123.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="host-fs-toggle" placeholder="Twój komentarz…">Jak wyżej</textarea>
+      <div class="save-state" data-id="host-fs-toggle"></div>
+    </td>
+  </tr><tr class="pagehead"><td colspan="6">Wyświetlacz (display.html + display2.html)</td></tr><tr>
+    <td class="col-jest"><span class="emoji-big">🔊</span></td>
+    <td class="col-svg"><div class="svgs"><div class="icon-box"><svg viewBox="0 0 24 24"><polygon points="4,9 8,9 13,5 13,19 8,15 4,15"></polygon><path d="M16 8.5a5 5 0 0 1 0 7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path><path d="M18.5 6a9 9 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path></svg></div></div></td>
+    <td class="col-status"><span class="tag done">wdrożone</span></td>
+    <td class="col-why"><span class="why-text">Wdrożone w tej rundzie.</span></td>
+    <td class="col-use"><span class="use-text">"Odblokuj dźwięk" (autoplay-gate), display2.html:58.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="disp2-unlock" placeholder="Twój komentarz…">Spoko</textarea>
+      <div class="save-state" data-id="disp2-unlock"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">⛶ / ⧉ / ▢</span></td>
+    <td class="col-svg"><div class="svgs"><div class="icon-box"><svg viewBox="0 0 24 24"><path d="M4 9V4h5v2H6v3H4zm16 0h-2V6h-3V4h5v5zM6 15v3h3v2H4v-5h2zm12 3v-3h2v5h-5v-2h3z"></path></svg></div><div class="icon-box"><svg viewBox="0 0 24 24"><path d="M9 4H4v5h2V6h3V4zm6 0v2h3v3h2V4h-5zM6 15H4v5h5v-2H6v-3zm12 3h-3v2h5v-5h-2v3z"></path></svg></div></div></td>
+    <td class="col-status"><span class="tag done">wdrożone</span></td>
+    <td class="col-why"><span class="why-text">Już poprawnie wdrożone wcześniej -- w przeciwieństwie do buzzer.js/host.js (które miały bug naprawiony w tej rundzie), ten moduł zawsze poprawnie używał FULLSCREEN_ICON/FULLSCREEN_EXIT_ICON.</span></td>
+    <td class="col-use"><span class="use-text">Przełącznik pełnego ekranu, wspólny moduł display/js/fullscreen.js (używany przez display.html i display2.html).</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="disp-fullscreen" placeholder="Twój komentarz…">Jak wyżej</textarea>
+      <div class="save-state" data-id="disp-fullscreen"></div>
+    </td>
+  </tr><tr class="pagehead"><td colspan="6">Ankieta -- ekran QR (poll-qr.html + poll-qr.js)</td></tr><tr>
+    <td class="col-jest"><span class="emoji-big">⛶ / ⧉ / ▢</span></td>
+    <td class="col-svg"><div class="svgs"><div class="icon-box"><svg viewBox="0 0 24 24"><path d="M4 9V4h5v2H6v3H4zm16 0h-2V6h-3V4h5v5zM6 15v3h3v2H4v-5h2zm12 3v-3h2v5h-5v-2h3z"></path></svg></div><div class="icon-box"><svg viewBox="0 0 24 24"><path d="M9 4H4v5h2V6h3V4zm6 0v2h3v3h2V4h-5zM6 15H4v5h5v-2H6v-3zm12 3h-3v2h5v-5h-2v3z"></path></svg></div></div></td>
+    <td class="col-status"><span class="tag done">wdrożone</span></td>
+    <td class="col-why"><span class="why-text">Już poprawnie wdrożone wcześniej.</span></td>
+    <td class="col-use"><span class="use-text">Przełącznik pełnego ekranu, poll-qr.js (updateFsIcon).</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="pollqr-fullscreen" placeholder="Twój komentarz…">Jak wyżej</textarea>
+      <div class="save-state" data-id="pollqr-fullscreen"></div>
+    </td>
+  </tr><tr class="pagehead"><td colspan="6">Buzzer2 (buzzer2.html + buzzer2/js)</td></tr><tr>
+    <td class="col-jest"><span class="emoji-big">⛶ / ⧉ / ▢</span></td>
+    <td class="col-svg"><div class="svgs"><div class="icon-box"><svg viewBox="0 0 24 24"><path d="M4 9V4h5v2H6v3H4zm16 0h-2V6h-3V4h5v5zM6 15v3h3v2H4v-5h2zm12 3v-3h2v5h-5v-2h3z"></path></svg></div><div class="icon-box"><svg viewBox="0 0 24 24"><path d="M9 4H4v5h2V6h3V4zm6 0v2h3v3h2V4h-5zM6 15H4v5h5v-2H6v-3zm12 3h-3v2h5v-5h-2v3z"></path></svg></div></div></td>
+    <td class="col-status"><span class="tag done">wdrożone</span></td>
+    <td class="col-why"><span class="why-text">Już poprawnie wdrożone wcześniej.</span></td>
+    <td class="col-use"><span class="use-text">Przełącznik pełnego ekranu, buzzer2/js/main.js.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="buzzer2-fullscreen" placeholder="Twój komentarz…">Jak wyżej</textarea>
+      <div class="save-state" data-id="buzzer2-fullscreen"></div>
+    </td>
+  </tr><tr class="pagehead"><td colspan="6">Host2 (host2.html + host2/js)</td></tr><tr>
+    <td class="col-jest"><span class="emoji-big">⛶ / ⧉ / ▢</span></td>
+    <td class="col-svg"><div class="svgs"><div class="icon-box"><svg viewBox="0 0 24 24"><path d="M4 9V4h5v2H6v3H4zm16 0h-2V6h-3V4h5v5zM6 15v3h3v2H4v-5h2zm12 3v-3h2v5h-5v-2h3z"></path></svg></div><div class="icon-box"><svg viewBox="0 0 24 24"><path d="M9 4H4v5h2V6h3V4zm6 0v2h3v3h2V4h-5zM6 15H4v5h5v-2H6v-3zm12 3h-3v2h5v-5h-2v3z"></path></svg></div></div></td>
+    <td class="col-status"><span class="tag done">wdrożone</span></td>
+    <td class="col-why"><span class="why-text">Już poprawnie wdrożone wcześniej.</span></td>
+    <td class="col-use"><span class="use-text">Przełącznik pełnego ekranu, host2/js/main.js.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="host2-fullscreen" placeholder="Twój komentarz…">Jak wyżej</textarea>
+      <div class="save-state" data-id="host2-fullscreen"></div>
+    </td>
+  </tr><tr class="pagehead"><td colspan="6">Modal "Konto gościa" (js/core/guest-info-modal.js -- jednorazowy, po zalogowaniu jako gość)</td></tr><tr>
+    <td class="col-jest"><span class="emoji-big">⚠️</span></td>
+    <td class="col-svg"><div class="svgs"><div class="icon-box"><svg viewBox="0 0 24 24"><path fill-rule="evenodd" clip-rule="evenodd" d="M12 2 1 21h22L12 2zm-1 7h2v6h-2V9zm0 8h2v2h-2v-2z"></path></svg></div></div></td>
+    <td class="col-status"><span class="tag done">wdrożone</span></td>
+    <td class="col-why"><span class="why-text">Wdrożone -- modal.js zmieniony z textContent na innerHTML (bezpieczne, sprawdziłem wszystkie wywołania buildModal w repo -- zawsze zaufany string).</span></td>
+    <td class="col-use"><span class="use-text">Tytuł modala, guestInfo.title. Cytat przed zmianą: "⚠️ Konto gościa".</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="guest-title" placeholder="Twój komentarz…">Spoko</textarea>
+      <div class="save-state" data-id="guest-title"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">🗂️</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag removed">usunięte</span></td>
+    <td class="col-why"><span class="why-text">Usunięte zgodnie z Twoją zgodą ("z tych komentarzy można usunąć emotki") -- cały pusty <span> na ikonę też usunięty z kodu.</span></span></td>
+    <td class="col-use"><span class="use-text">Ikona przy ostrzeżeniu "dane tylko w tej przeglądarce", guestInfo.icon1.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="guest-icon1" placeholder="Twój komentarz…">Spoko</textarea>
+      <div class="save-state" data-id="guest-icon1"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">⏳</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag removed">usunięte</span></td>
+    <td class="col-why"><span class="why-text">Usunięte zgodnie z Twoją zgodą ("można usunąć emoji").</span></td>
+    <td class="col-use"><span class="use-text">Ikona przy ostrzeżeniu "konto usunięte po 5 dniach", guestInfo.icon2.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="guest-icon2" placeholder="Twój komentarz…">Spoko</textarea>
+      <div class="save-state" data-id="guest-icon2"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">💾</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag removed">usunięte</span></td>
+    <td class="col-why"><span class="why-text">Usunięte zgodnie z Twoją zgodą ("napisałem wyżej", czyli tak samo jak icon1).</span></td>
+    <td class="col-use"><span class="use-text">Nagłówek sekcji, guestInfo.migrateTitle. Cytat przed zmianą: "💾 Jak zachować swoje dane?".</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="guest-migrate-title" placeholder="Twój komentarz…">Spoko</textarea>
+      <div class="save-state" data-id="guest-migrate-title"></div>
+    </td>
+  </tr><tr class="pagehead"><td colspan="6">Konsola przeglądarki (js/core/security-warning.js)</td></tr><tr>
+    <td class="col-jest"><span class="emoji-big">🔑 🎭 🙏</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag removed">usunięte</span></td>
+    <td class="col-why"><span class="why-text">Wdrożone (usunięcie) wcześniej -- treść przepisana na rzeczową, bez emotek i teatralnego tonu (pl/en/uk).</span></td>
+    <td class="col-use"><span class="use-text">Baner ostrzegawczy w konsoli deweloperskiej (przed wklejaniem obcego kodu).</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="security-banner" placeholder="Twój komentarz…">Spoko</textarea>
+      <div class="save-state" data-id="security-banner"></div>
+    </td>
+  </tr><tr class="pagehead"><td colspan="6">Tytuł karty przeglądarki (js/pages/index.js)</td></tr><tr>
+    <td class="col-jest"><span class="emoji-big">🎮 🤣 🐑</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag removed">usunięte</span></td>
+    <td class="col-why"><span class="why-text">Wdrożone (usunięcie) wcześniej -- cała animacja tytułu z żartami usunięta.</span></td>
+    <td class="col-use"><span class="use-text">Animacja document.title, index.js:328.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="title-animation" placeholder="Twój komentarz…">Spoko</textarea>
+      <div class="save-state" data-id="title-animation"></div>
+    </td>
+  </tr><tr class="pagehead"><td colspan="6">Strona konserwacji (maintenance.html + maintenance.js)</td></tr><tr>
+    <td class="col-jest"><span class="emoji-big">🎉</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag removed">usunięte</span></td>
+    <td class="col-why"><span class="why-text">Usunięte wcześniej przy porządkach z 'suchary/emotki'. Sprawdzone dokładnie w tej rundzie na Twoją prośbę: 🎉 już NIGDZIE nie występuje w repo poza tym, co było wcześniej usunięte -- wiersz w pełni zamknięty.</span></td>
+    <td class="col-use"><span class="use-text">Dawny tekst świętowania/sukcesu, maintenance.js:18.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="maint-confetti" placeholder="Twój komentarz…">Spoko</textarea>
+      <div class="save-state" data-id="maint-confetti"></div>
+    </td>
+  </tr><tr class="pagehead"><td colspan="6">Wzorce wspólne (występują tak samo na wielu/wszystkich stronach)</td></tr><tr>
+    <td class="col-jest"><span class="emoji-big">ℹ️</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag stays">zostaje</span></td>
+    <td class="col-why"><span class="why-text">Uniwersalny, czytelny symbol informacji. Nie zgłaszałeś tego jako problem -- jeśli chcesz spójności z resztą przycisków (SVG), mogę zamienić na ikonę "i" w kółku.</span></td>
+    <td class="col-use"><span class="use-text">Przycisk "Pomoc/Manual" w topbarze -- identyczny wzorzec w 15 plikach: editor.html, connect-device.html, game-settings.html, game-settings2.html, account.html, base-explorer.html, bases.html, builder.html, control.html, control2.html, logo-editor.html, marketplace.html, polls-hub.html, polls.html, subscriptions.html.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="xc-help" placeholder="Twój komentarz…">Jak wyżej, chcę ikonę</textarea>
+      <div class="save-state" data-id="xc-help"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">✕</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag stays">zostaje</span></td>
+    <td class="col-why"><span class="why-text">Zwykły znak "X" (nie kolorowa emotka) -- już czarno-biały i spójny wszędzie. Zamiana na SVG to największa pojedyncza zmiana w całym audycie (ponad 25 miejsc) -- czekam na decyzję.</span></td>
+    <td class="col-use"><span class="use-text">Uniwersalny przycisk zamknięcia modala/panelu -- ~25+ miejsc wypisanych już przy poszczególnych stronach wyżej, plus js/core/modal.js, modal-sheet.js, topbar-controller.js, guest-migrate-reminder.js.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="xc-close" placeholder="Twój komentarz…">Spoko</textarea>
+      <div class="save-state" data-id="xc-close"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">▾ ▶ ■ ◀ ▲ ▼ ⟳ ↑ ↓ ↙ ↗ ⇄ ↔ ↩ ↪ ↺ ↻</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag na">nie da się</span></td>
+    <td class="col-why"><span class="why-text">To nie są kolorowe emotki -- to neutralne, już czarno-białe symbole typograficzne, standardowo używane jako ikony UI od dekad. Uznaję to za POZA ZAKRESEM tego porządkowania.</span></td>
+    <td class="col-use"><span class="use-text">Dziesiątki miejsc wypisanych już przy poszczególnych stronach wyżej (rozwijanie list, odtwarzanie/zatrzymanie, odświeżanie, sortowanie, cofnij/ponów, restart).</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="xc-typo" placeholder="Twój komentarz…">Część z tego napisałem żeby zmienić ma ikony, oznaczają narzędzi mają być rzeczywistym svg</textarea>
+      <div class="save-state" data-id="xc-typo"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">🇵🇱 🇬🇧 🇺🇦</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag stays">zostaje</span></td>
+    <td class="col-why"><span class="why-text">Twoja wcześniejsza decyzja: zostają.</span></td>
+    <td class="col-use"><span class="use-text">Przełącznik języka w topbarze na każdej stronie, translation/translation.js (meta.flag).</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="xc-flags" placeholder="Twój komentarz…">Spoko</textarea>
+      <div class="save-state" data-id="xc-flags"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">☰</span></td>
+    <td class="col-svg"><div class="svgs"><div class="icon-box"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="2.4" rx="1.2"></rect><rect x="3" y="10.8" width="18" height="2.4" rx="1.2"></rect><rect x="3" y="16.6" width="18" height="2.4" rx="1.2"></rect></svg></div></div></td>
+    <td class="col-status"><span class="tag done">wdrożone</span></td>
+    <td class="col-why"><span class="why-text">Wdrożone -- gotowa ikona z silnika, używana też jako otwieranie rozwijanego menu konta w topbarze na WSZYSTKICH stronach (nie tylko Ustawienia gry / Base Explorer, wypisane osobno wyżej).</span></td>
+    <td class="col-use"><span class="use-text">Menu konta w topbarze, js/core/topbar-controller.js -- komponent współdzielony przez każdą stronę z topbarem.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="xc-hamburger" placeholder="Twój komentarz…">Spoko</textarea>
+      <div class="save-state" data-id="xc-hamburger"></div>
+    </td>
+  </tr><tr>
+    <td class="col-jest"><span class="emoji-big">➕</span></td>
+    <td class="col-svg"><span class="dash">—</span></td>
+    <td class="col-status"><span class="tag stays">zostaje</span></td>
+    <td class="col-why"><span class="why-text">SPRAWDZONE DOKŁADNIE na Twoją prośbę: po pełnym audycie repo nie znalazłem żadnego "➕" jako osobnej ikony UI w kodzie ani w tłumaczeniach. Wcześniejszy zapis "translation/*.js:1189-1191" wskazywał na coś, co już nie istnieje pod tym adresem -- prawdopodobnie usunięte przy wcześniejszych porządkach albo błędnie zanotowane pierwotnie. Zamykam ten wpis -- jeśli wskażesz konkretne miejsce w apce, gdzie nadal widzisz ➕, sprawdzę dokładnie.</span></td>
+    <td class="col-use"><span class="use-text">Nie namierzono realnego miejsca w obecnym kodzie.</span></td>
+    <td class="col-comment">
+      <textarea class="comment" data-id="xc-plus-closed" placeholder="Twój komentarz…">Spoko</textarea>
+      <div class="save-state" data-id="xc-plus-closed"></div>
+    </td>
+  </tr></tbody>
+  </table>
+</div>
+
+<p class="foot" id="dbStatus">Komentarze zapisują się automatycznie.</p>
+
+
+
+
+<script>
+(() => {
+  const prefix = 'emoji-svg-audit-v2:';
+  document.querySelectorAll('textarea.comment').forEach((field) => {
+    const key = prefix + field.dataset.id;
+    const saved = localStorage.getItem(key);
+    if (saved !== null) field.value = saved;
+    else localStorage.setItem(key, field.value);
+    field.addEventListener('input', () => {
+      localStorage.setItem(key, field.value);
+      const state = document.querySelector(`.save-state[data-id="${field.dataset.id}"]`);
+      if (state) {
+        state.textContent = 'zapisano';
+        clearTimeout(state._timer);
+        state._timer = setTimeout(() => state.textContent = '', 1000);
+      }
+    });
+  });
+})();
+</script>
+</body></html>

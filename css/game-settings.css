@@ -51,7 +51,9 @@
 
 .gs-sidebar-item:hover {
   opacity: .85;
-  background: rgba(255,255,255,.05);
+  --btn-tint: rgba(255,255,255,.05);
+  background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, #050914); /* kryjące: css/base.css */
+
 }
 
 .gs-sidebar-sub {
@@ -69,7 +71,9 @@
 .gs-sidebar-item.active {
   border-left: 3px solid var(--gold);
   border-radius: 0 10px 10px 0;
-  background: rgba(255,234,166,.08);
+  --btn-tint: rgba(255,234,166,.08);
+  background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, #050914); /* kryjące: css/base.css */
+
   color: var(--gold);
   opacity: 1;
 }

@@ -1,9 +1,9 @@
 // js/pages/poll-points.js
-import { sb } from "../core/supabase.js?v=v2026-09-26T16124";
-import { getUser } from "../core/auth.js?v=v2026-09-26T16124";
-import { initI18n, t, getUiLang } from "../../translation/translation.js?v=v2026-09-26T16124";
+import { sb } from "../core/supabase.js?v=v2026-09-30T14045";
+import { getUser } from "../core/auth.js?v=v2026-09-30T14045";
+import { initI18n, t, getUiLang } from "../../translation/translation.js?v=v2026-09-30T14045";
 
-initI18n({ withSwitcher: true }).then(() => {
+const i18nReady = initI18n({ withSwitcher: true }).then(() => {
   document.documentElement.classList.remove('page-loading');
 });
 
@@ -148,7 +148,7 @@ async function submitBatch(items) {
       p_voter_token: voter,
       p_items: chunk,
     });
-    const { error } = await withTimeout(req, 25000, MSG.loadTimeout());
+    const { error } = await withTimeout(req, 30000, MSG.loadTimeout());
     if (error) throw error;
   };
 
@@ -275,7 +275,8 @@ function render() {
         console.error("[poll-points] submit_batch error:", e);
         setSub(MSG.error(e?.message || e));
         submitting = false;
-        // pozwól spróbować jeszcze raz (użytkownik kliknie back/refresh - ale alert go ostrzeże)
+        // odbloknij UI
+        if (alist) [...alist.querySelectorAll("button")].forEach(x => (x.disabled = false));
       });
 
     return;
@@ -326,6 +327,14 @@ window.addEventListener("i18n:lang", () => {
 
 document.addEventListener("DOMContentLoaded", async () => {
   try {
+    // initI18n() robi dynamic import(pl.js/en.js/uk.js) — bez tego czekania
+    // t()/MSG.X() poniżej mogą wykonać się zanim translations się załaduje,
+    // co dla elementów bez data-i18n (np. #closed) zwraca surowy klucz
+    // (np. "pollText.alreadyVoted") zamiast tłumaczenia (patrz t() w
+    // translation.js: value==null -> return key), a dla elementów z
+    // data-i18n applyTranslations() później i tak nadpisze wcześniej
+    // ustawiony programowo tekst błędu z powrotem na "Ładuję…".
+    await i18nReady;
     if (taskToken) {
       await resolveTaskToken();
     }

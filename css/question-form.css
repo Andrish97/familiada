@@ -1,0 +1,220 @@
+/* css/question-form.css
+   Lista odpowiedzi pytania -- wspólna dla edytora gry (editor.html) i modalu
+   pytania w bazie pytań (base-explorer.html). Wygląd z edytora; wiersze
+   buduje buildAnswerRow()/buildAddAnswerTile() z js/core/question-form.js,
+   więc oba miejsca mają ten sam układ, a nie tylko podobne style.
+   Bez punktów (typowa ankieta / punktacja): klasa .no-points na dowolnym
+   przodku. */
+
+.qf-label {
+    opacity: .8;
+    font-size: 12px;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    margin-bottom: 8px
+}
+
+.qf-qtext {
+    width: 100%;
+    min-height: 90px;
+    padding: 10px 12px;
+    border-radius: 16px;
+    border: 1px solid var(--line2);
+    background: rgba(0,0,0,.25);
+    color: #fff;
+    outline: 0;
+    resize: vertical;
+    font: inherit;
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 1.35
+}
+
+.qf-qtext:focus {
+    border-color: rgba(255,234,166,.45)
+}
+
+.qf-head,.qf-list,.qf-row {
+    display: grid;
+    gap: 10px
+}
+
+.qf-head,.qf-row {
+    grid-template-columns: minmax(0,1fr) 110px 40px
+}
+
+.qf-head {
+    font-size: 11px;
+    opacity: .75;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    padding: 0 6px
+}
+
+.qf-head .c-pts {
+    text-align: center
+}
+
+.qf-listShell {
+    --under: #1b1f29; /* podłoże kryjących przycisków (css/base.css) */
+    border-radius: 18px;
+    border: 1px solid var(--line);
+    background: rgba(255,255,255,.03);
+    padding: 8px;
+    min-height: 0;
+    overflow: auto
+}
+
+.qf-list {
+    grid-template-columns: 1fr
+}
+
+.qf-row {
+    align-items: center;
+    border-radius: 18px;
+    border: 1px solid var(--line);
+    background: var(--card2);
+    padding: 10px;
+    min-height: 60px
+}
+
+.qf-text,.qf-pts {
+    width: 100%;
+    min-width: 0;
+    padding: 10px 12px;
+    border-radius: 14px;
+    border: 1px solid var(--line2);
+    background: rgba(255,255,255,.06);
+    color: #fff;
+    outline: 0;
+    font: inherit;
+    font-size: 16px; /* mniej -> iOS powiększa stronę przy focusie */
+    font-weight: 900
+}
+
+.qf-text:focus,.qf-pts:focus {
+    border-color: rgba(255,234,166,.45)
+}
+
+.qf-pts {
+    text-align: center
+}
+
+.qf-del {
+    width: 40px;
+    height: 40px;
+    display: grid;
+    place-items: center;
+    padding: 0;
+    border-radius: 14px;
+    border: 1px solid rgba(255,120,120,.35);
+    --btn-tint: rgba(255,120,120,.12);
+    background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, #050914); /* kryjące: css/base.css */
+    color: #fff;
+    cursor: pointer
+}
+
+.qf-del:hover {
+    --btn-tint: rgba(255,120,120,.18)
+}
+
+.no-points .qf-head,.no-points .qf-row {
+    grid-template-columns: minmax(0,1fr) 40px
+}
+
+.no-points .qf-pts,.no-points .qf-head .c-pts {
+    display: none
+}
+
+/* "+ Dodaj odpowiedź 3/6" -- pierwszy wiersz listy */
+.qf-row.qf-add {
+    display: flex;
+    gap: 10px;
+    border-style: dashed;
+    border-color: rgba(255,255,255,.2);
+    --btn-tint: rgba(255,255,255,.04);
+    background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, #050914); /* kryjące: css/base.css */
+    color: #fff;
+    font: inherit;
+    text-align: left;
+    cursor: pointer
+}
+
+.qf-add:hover {
+    filter: brightness(1.08)
+}
+
+.qf-add .qf-addLbl {
+    font-weight: 1000
+}
+
+.qf-add .qf-addCnt {
+    margin-left: auto;
+    font-weight: 900;
+    opacity: .8
+}
+
+.qf-add:disabled {
+    cursor: not-allowed;
+    filter: none;
+    color: rgba(255,255,255,.92);
+    border-color: rgba(255,255,255,.32)
+}
+
+/* "SUMA 60/100" -- czerwone powyżej puli */
+.qf-sum {
+    display: flex;
+    gap: 10px;
+    align-items: baseline;
+    justify-content: space-between;
+    padding: 10px 12px;
+    border-radius: 999px;
+    border: 1px solid rgba(255,234,166,.28);
+    background: rgba(255,234,166,.1);
+    color: var(--gold);
+    font-weight: 1000;
+    letter-spacing: .12em;
+    text-transform: uppercase
+}
+
+.qf-sum.over {
+    border-color: rgba(255,120,120,.4);
+    background: rgba(255,120,120,.1);
+    color: rgba(255,180,180,.95)
+}
+
+.no-points .qf-sum {
+    display: none
+}
+
+@media (max-width: 600px) {
+    .qf-head,.qf-row {
+        grid-template-columns: minmax(0,1fr) 72px 36px;
+        gap: 8px
+    }
+
+    .qf-head {
+        padding: 0 4px
+    }
+
+    .qf-row {
+        padding: 8px;
+        border-radius: 16px;
+        min-height: 60px
+    }
+
+    .qf-text,.qf-pts {
+        padding: 8px 10px;
+        border-radius: 12px
+    }
+
+    .qf-del {
+        width: 36px;
+        height: 36px;
+        border-radius: 12px
+    }
+
+    .no-points .qf-head,.no-points .qf-row {
+        grid-template-columns: minmax(0,1fr) 36px
+    }
+}

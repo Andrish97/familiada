@@ -62,8 +62,10 @@ async function readLogoByName(page, name) {
 }
 
 async function createNew(page, mode, name) {
+  const tab = { Text: "#tabLogoText", Draw: "#tabLogoDraw", Image: "#tabLogoImage" }[mode];
+  if (!tab) throw new Error(`Unknown logo mode: ${mode}`);
+  await page.locator(tab).click();
   await page.locator("#grid .addCard").click();
-  await page.locator(`#pick${mode}`).click();
   await page.fill("#renameInput", name);
   await page.locator("#btnRenameOk").click();
   await expect(page.locator("#editorShell")).toHaveAttribute("data-mode", mode.toUpperCase(), { timeout: 10000 });
@@ -71,7 +73,10 @@ async function createNew(page, mode, name) {
 }
 
 async function editLogo(page, site, id) {
-  await openList(page, site);
+  const row = await readLogo(page, id);
+  const sourceMode = String(row?.payload?.source?.mode || "").toUpperCase();
+  const tab = row?.type === "GLYPH_30x10" ? "text" : sourceMode === "IMAGE" ? "image" : "draw";
+  await openList(page, site, `/logo-editor${tab === "text" ? "" : `?tab=${tab}`}`);
   await page.locator(`.logoTile[data-key="${id}"]`).click();
   await page.locator("#btnEdit").click();
 }

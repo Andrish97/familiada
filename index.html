@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
-  <meta name="app-version" content="v2026-09-26T16124"/>
+  <meta name="app-version" content="v2026-09-30T14045"/>
 
   <meta charset="UTF-8"/>
   <meta name="mobile-web-app-capable" content="yes"/>
@@ -31,33 +31,19 @@
   <link rel="alternate" hreflang="x-default" href="https://www.familiada.online/" />
   
   <!-- Performance Preloads -->
-  <link rel="preload" as="image" href="img/pl/landing-games.webp?v=v2026-09-26T16124">
-  <link rel="preload" as="style" href="css/base.css?v=v2026-09-26T16124">
+  <link rel="preload" as="image" href="img/pl/landing-games.webp?v=v2026-09-30T14045">
+  <link rel="preload" as="style" href="css/base.css?v=v2026-09-30T14045">
   
-  <link rel="icon" href="favicon.ico?v=v2026-09-26T16124"/>
-  <link rel="manifest" href="/manifest.json?v=v2026-09-26T16124"/>
+  <link rel="icon" href="favicon.ico?v=v2026-09-30T14045"/>
+  <link rel="manifest" href="/manifest.json?v=v2026-09-30T14045"/>
   <meta name="theme-color" content="#050914"/>
-  <link rel="stylesheet" href="css/base.css?v=v2026-09-26T16124"/>
-  <link rel="stylesheet" href="css/index.css?v=v2026-09-26T16124"/>
-  <script>
-    document.documentElement.classList.add('page-loading');
-    try {
-      for (var _i = 0; _i < localStorage.length; _i++) {
-        var _k = localStorage.key(_i);
-        if (!_k || !_k.startsWith('sb-') || !_k.endsWith('-auth-token')) continue;
-        var _s = JSON.parse(localStorage.getItem(_k));
-        var _u = _s && (_s.user || (_s.currentSession && _s.currentSession.user));
-        var _exp = _s && (_s.expires_at || (_s.currentSession && _s.currentSession.expires_at));
-        if (_u && !_u.is_anonymous && (!_exp || Date.now() / 1000 < _exp + 60)) {
-          location.replace('games' + location.search); break;
-        }
-      }
-    } catch(_e) {}
-  </script>
+  <link rel="stylesheet" href="css/base.css?v=v2026-09-30T14045"/>
+  <link rel="stylesheet" href="css/index.css?v=v2026-09-30T14045"/>
+  <script>document.documentElement.classList.add('page-loading');</script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-  <script src="js/core/security-warning.js?v=v2026-09-26T16124" defer></script>
-  <script type="module" src="js/pages/index.js?v=v2026-09-26T16124" defer></script>
-  <script type="module" src="js/core/topbar-controller.js?v=v2026-09-26T16124" defer></script>
+  <script src="js/core/security-warning.js?v=v2026-09-30T14045" defer></script>
+  <script type="module" src="js/pages/index.js?v=v2026-09-30T14045" defer></script>
+  <script type="module" src="js/core/topbar-controller.js?v=v2026-09-30T14045" defer></script>
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -93,7 +79,7 @@
   </header>
 
   <!-- PIPELINE NAV — top ustawiany przez JS żeby śledzić topbar -->
-  <nav class="pipeline-wrap" id="pipeline" aria-label="Nawigacja sekcji">
+  <nav class="pipeline-wrap" id="pipeline" aria-label="Nawigacja sekcji" data-i18n-aria-label="home.nav.label">
     <div class="pipeline">
       <button class="pipeline-node" data-target="section-about" type="button">
         <div class="pipeline-node-dot"></div>
@@ -122,9 +108,9 @@
       <h1 data-i18n="home.hero.title">Darmowa Familiada Online. Prawdziwy teleturniej na Twoim sprzęcie.</h1>
       <p class="hero-lead" data-i18n="home.hero.lead">Najlepszy system do gry w Familiadę: zbierz odpowiedzi od uczestników w ankiecie, a potem poprowadź grę na żywo. Idealna gra na wesele, urodziny i imprezę firmową. Wszystko w przeglądarce.</p>
       <div class="hero-cta">
-        <a class="btn gold" href="login" id="ctaStart" data-i18n="home.hero.ctaStart" title="Rozpocznij tworzenie własnej Familiady">Zacznij tworzyć gry i prowadzić rozgrywkę</a>
-        <a class="btn" href="marketplace" data-i18n="home.hero.ctaMarketplace" data-i18n-icon-after="gamepad" title="Przeglądaj gotowe zestawy pytań do Familiady">Przeglądaj Gry Społeczności</a>
-        <a class="btn" href="connect-device" data-i18n="games.nav.connectDevice" data-i18n-icon-after="phone" title="Podłącz urządzenie do rozgrywki">Podłącz urządzenie</a>
+        <a class="btn gold" href="login" id="ctaStart" data-i18n="home.hero.ctaStart" data-i18n-title="home.hero.ctaStartTitle" title="Rozpocznij tworzenie własnej Familiady">Zacznij tworzyć gry i prowadzić rozgrywkę</a>
+        <a class="btn" href="marketplace" data-i18n="home.hero.ctaMarketplace" data-i18n-icon-after="gamepad" data-i18n-title="home.hero.ctaMarketplaceTitle" title="Przeglądaj gotowe zestawy pytań do Familiady">Przeglądaj Gry Społeczności</a>
+        <a class="btn" href="connect-device" data-i18n="games.nav.connectDevice" data-i18n-icon-after="phone" data-i18n-title="home.hero.ctaConnectTitle" title="Podłącz urządzenie do rozgrywki">Podłącz urządzenie</a>
       </div>
       <div class="hero-note" data-i18n="home.hero.note">Dostępny tryb gościa — darmowa Familiada bez rejestracji.</div>
     </section>
@@ -151,7 +137,7 @@
       <div class="tiles">
 
         <article class="tile">
-          <div class="tile-shot"><img class="shot-img" src="img/pl/landing-games.webp?v=v2026-09-26T16124" data-file="landing-games.webp?v=v2026-09-26T16124" alt="Tworzenie nowej gry Familiada online - wybór trybu ankiety lub gry preparowanej" data-i18n-alt="home.tiles.t1.alt"></div>
+          <div class="tile-shot"><img class="shot-img" src="img/pl/landing-games.webp?v=v2026-09-30T14045" data-file="landing-games.webp?v=v2026-09-30T14045" alt="Tworzenie nowej gry Familiada online - wybór trybu ankiety lub gry preparowanej" data-i18n-alt="home.tiles.t1.alt"></div>
           <div class="tile-text">
             <h3 data-i18n="home.tiles.t1.t">Własny generator pytań i tryby gry</h3>
             <p data-i18n="home.tiles.t1.d">Wybierz jak chcesz zbierać odpowiedzi. Typowa ankieta i Punktacja zbierają wyniki od prawdziwych ludzi, a gra preparowana pozwala na szybkie wpisanie własnych pytań i punktów.</p>
@@ -159,7 +145,7 @@
         </article>
 
         <article class="tile reverse">
-          <div class="tile-shot"><img class="shot-img" src="img/pl/landing-editor.webp?v=v2026-09-26T16124" data-file="landing-editor.webp?v=v2026-09-26T16124" alt="Edytor pytań do Familiady - konfiguracja punktów i odpowiedzi" data-i18n-alt="home.tiles.t2.alt"></div>
+          <div class="tile-shot"><img class="shot-img" src="img/pl/landing-editor.webp?v=v2026-09-30T14045" data-file="landing-editor.webp?v=v2026-09-30T14045" alt="Edytor pytań do Familiady - konfiguracja punktów i odpowiedzi" data-i18n-alt="home.tiles.t2.alt"></div>
           <div class="tile-text">
             <h3 data-i18n="home.tiles.t2.t">Intuicyjna edycja pytań</h3>
             <p data-i18n="home.tiles.t2.d">Dodawaj pytania, ustalaj liczbę odpowiedzi i konfiguruj strukturę gry. System zadba o to, by Twoja gra wyglądała profesjonalnie na każdym ekranie.</p>
@@ -167,7 +153,7 @@
         </article>
 
         <article class="tile">
-          <div class="tile-shot"><img class="shot-img" src="img/pl/landing-friends.webp?v=v2026-09-26T16124" data-file="landing-friends.webp?v=v2026-09-26T16124" alt="Współpraca przy tworzeniu gry - dodawanie znajomych i udostępnianie ankiet" data-i18n-alt="home.tiles.t3.alt"></div>
+          <div class="tile-shot"><img class="shot-img" src="img/pl/landing-friends.webp?v=v2026-09-30T14045" data-file="landing-friends.webp?v=v2026-09-30T14045" alt="Współpraca przy tworzeniu gry - dodawanie znajomych i udostępnianie ankiet" data-i18n-alt="home.tiles.t3.alt"></div>
           <div class="tile-text">
             <h3 data-i18n="home.tiles.t3.t">Znajomi i wspólne bazy pytań</h3>
             <p data-i18n="home.tiles.t3.d">Dodawaj znajomych, aby wspólnie pracować nad ankietami i bazami pytań. Idealne przy organizacji dużych wydarzeń firmowych czy wesel.</p>
@@ -175,7 +161,7 @@
         </article>
 
         <article class="tile reverse">
-          <div class="tile-shot"><img class="shot-img" src="img/pl/landing-polls.webp?v=v2026-09-26T16124" data-file="landing-polls.webp?v=v2026-09-26T16124" alt="Ankieta online z kodem QR - zbieranie odpowiedzi od gości" data-i18n-alt="home.tiles.t4.alt"></div>
+          <div class="tile-shot"><img class="shot-img" src="img/pl/landing-polls.webp?v=v2026-09-30T14045" data-file="landing-polls.webp?v=v2026-09-30T14045" alt="Ankieta online z kodem QR - zbieranie odpowiedzi od gości" data-i18n-alt="home.tiles.t4.alt"></div>
           <div class="tile-text">
             <h3 data-i18n="home.tiles.t4.t">Ankieta online i zbieranie głosów</h3>
             <p data-i18n="home.tiles.t4.d">Pokaż kod QR gościom — mogą brać udział w ankiecie ze swoich telefonów bez instalacji aplikacji. Wyniki spływają na żywo, a system automatycznie normalizuje punkty do 100.</p>
@@ -183,7 +169,7 @@
         </article>
 
         <article class="tile">
-          <div class="tile-shot"><img class="shot-img" src="img/pl/landing-polls-hub.webp?v=v2026-09-26T16124" data-file="landing-polls-hub.webp?v=v2026-09-26T16124" alt="Centrum ankiet: zarządzanie ankietami, podgląd postępu, udostępnianie linkiem lub QR." data-i18n-alt="home.tiles.t5.alt"></div>
+          <div class="tile-shot"><img class="shot-img" src="img/pl/landing-polls-hub.webp?v=v2026-09-30T14045" data-file="landing-polls-hub.webp?v=v2026-09-30T14045" alt="Centrum ankiet: zarządzanie ankietami, podgląd postępu, udostępnianie linkiem lub QR." data-i18n-alt="home.tiles.t5.alt"></div>
           <div class="tile-text">
             <h3 data-i18n="home.tiles.t5.t">Centrum ankiet</h3>
             <p data-i18n="home.tiles.t5.d">W jednym miejscu uruchamiasz i zamykasz ankiety, śledzisz postęp i udostępniasz ankiety znajomym. Wszystko gotowe zanim wejdziesz na salę.</p>
@@ -191,7 +177,7 @@
         </article>
 
         <article class="tile reverse">
-          <div class="tile-shot"><img class="shot-img" src="img/pl/landing-control.webp?v=v2026-09-26T16124" data-file="landing-control.webp?v=v2026-09-26T16124" alt="Panel sterowania operatora: otwieranie rund, odkrywanie odpowiedzi, punkty i błędy X." data-i18n-alt="home.tiles.t6.alt"></div>
+          <div class="tile-shot"><img class="shot-img" src="img/pl/landing-control.webp?v=v2026-09-30T14045" data-file="landing-control.webp?v=v2026-09-30T14045" alt="Panel sterowania operatora: otwieranie rund, odkrywanie odpowiedzi, punkty i błędy X." data-i18n-alt="home.tiles.t6.alt"></div>
           <div class="tile-text">
             <h3 data-i18n="home.tiles.t6.t">Panel sterowania (operator) — gra na żywo</h3>
             <p data-i18n="home.tiles.t6.d">Operator otwiera rundy, odkrywa odpowiedzi, przyznaje punkty i zatwierdza błędy (X). Panel prowadzi przez kolejne etapy — nawet pierwszy raz nie zgubisz się w trakcie gry.</p>
@@ -199,7 +185,7 @@
         </article>
 
         <article class="tile">
-          <div class="tile-shot"><img class="shot-img" src="img/pl/landing-display.webp?v=v2026-09-26T16124" data-file="landing-display.webp?v=v2026-09-26T16124" alt="Tablica dla widzów: pytanie, zakryte odpowiedzi odsłaniające się jedna po drugiej, bank punktów i błędy X." data-i18n-alt="home.tiles.t7.alt"></div>
+          <div class="tile-shot"><img class="shot-img" src="img/pl/landing-display.webp?v=v2026-09-30T14045" data-file="landing-display.webp?v=v2026-09-30T14045" alt="Tablica dla widzów: pytanie, zakryte odpowiedzi odsłaniające się jedna po drugiej, bank punktów i błędy X." data-i18n-alt="home.tiles.t7.alt"></div>
           <div class="tile-text">
             <h3 data-i18n="home.tiles.t7.t">Tablica dla widzów (TV / rzutnik)</h3>
             <p data-i18n="home.tiles.t7.d">To co widzą wszyscy na sali — pytanie, zakryte odpowiedzi które odsłaniają się jedna po drugiej, bank punktów i błędy X. Podłącz do telewizora lub rzutnika i masz prawdziwy teleturniej.</p>
@@ -207,7 +193,7 @@
         </article>
 
         <article class="tile reverse">
-          <div class="tile-shot"><img class="shot-img" src="img/pl/landing-host.webp?v=v2026-09-26T16124" data-file="landing-host.webp?v=v2026-09-26T16124" alt="Widok prowadzącego: treść pytania i podgląd odpowiedzi na tablecie lub telefonie." data-i18n-alt="home.tiles.t8.alt"></div>
+          <div class="tile-shot"><img class="shot-img" src="img/pl/landing-host.webp?v=v2026-09-30T14045" data-file="landing-host.webp?v=v2026-09-30T14045" alt="Widok prowadzącego: treść pytania i podgląd odpowiedzi na tablecie lub telefonie." data-i18n-alt="home.tiles.t8.alt"></div>
           <div class="tile-text">
             <h3 data-i18n="home.tiles.t8.t">Widok prowadzącego (tablet / telefon)</h3>
             <p data-i18n="home.tiles.t8.d">Prowadzący ma osobny ekran z treścią pytań i podglądem odpowiedzi — bez ryzyka przypadkowego kliknięcia w sterowanie grą.</p>
@@ -215,7 +201,7 @@
         </article>
 
         <article class="tile">
-          <div class="tile-shot"><img class="shot-img" src="img/pl/landing-buzzer.webp?v=v2026-09-26T16124" data-file="landing-buzzer.webp?v=v2026-09-26T16124" alt="Buzzer do pojedynku: osobne urządzenie sygnalizujące kto nacisnął pierwszy." data-i18n-alt="home.tiles.t9.alt"></div>
+          <div class="tile-shot"><img class="shot-img" src="img/pl/landing-buzzer.webp?v=v2026-09-30T14045" data-file="landing-buzzer.webp?v=v2026-09-30T14045" alt="Buzzer do pojedynku: osobne urządzenie sygnalizujące kto nacisnął pierwszy." data-i18n-alt="home.tiles.t9.alt"></div>
           <div class="tile-text">
             <h3 data-i18n="home.tiles.t9.t">Przycisk do pojedynku (osobne urządzenie)</h3>
             <p data-i18n="home.tiles.t9.d">Osobny „przycisk" daje sygnał kto nacisnął pierwszy w pojedynku. Żadnych sporów — ekran pokazuje zwycięzcę, gra toczy się dalej.</p>
@@ -223,7 +209,7 @@
         </article>
 
         <article class="tile reverse">
-          <div class="tile-shot"><img class="shot-img" src="img/pl/landing-bases.webp?v=v2026-09-26T16124" data-file="landing-bases.webp?v=v2026-09-26T16124" alt="Bazy pytań: wspólna biblioteka z folderami i tagami, udostępniana znajomym." data-i18n-alt="home.tiles.t10.alt"></div>
+          <div class="tile-shot"><img class="shot-img" src="img/pl/landing-bases.webp?v=v2026-09-30T14045" data-file="landing-bases.webp?v=v2026-09-30T14045" alt="Bazy pytań: wspólna biblioteka z folderami i tagami, udostępniana znajomym." data-i18n-alt="home.tiles.t10.alt"></div>
           <div class="tile-text">
             <h3 data-i18n="home.tiles.t10.t">Bazy pytań i współpraca</h3>
             <p data-i18n="home.tiles.t10.d">Baza to wspólna biblioteka pytań do wielokrotnego użytku. Organizujesz ją w foldery i tagi, udostępniasz znajomym — i nie musisz za każdym razem zaczynać od zera.</p>
@@ -231,7 +217,7 @@
         </article>
 
         <article class="tile">
-          <div class="tile-shot"><img class="shot-img" src="img/pl/landing-base-manager.webp?v=v2026-09-26T16124" data-file="landing-base-manager.webp?v=v2026-09-26T16124" alt="Menadżer pytań: foldery, kopiowanie, przenoszenie i wyszukiwanie jak w eksploratorze plików." data-i18n-alt="home.tiles.t11.alt"></div>
+          <div class="tile-shot"><img class="shot-img" src="img/pl/landing-base-manager.webp?v=v2026-09-30T14045" data-file="landing-base-manager.webp?v=v2026-09-30T14045" alt="Menadżer pytań: foldery, kopiowanie, przenoszenie i wyszukiwanie jak w eksploratorze plików." data-i18n-alt="home.tiles.t11.alt"></div>
           <div class="tile-text">
             <h3 data-i18n="home.tiles.t11.t">Menadżer pytań jak eksplorator plików</h3>
             <p data-i18n="home.tiles.t11.d">Zarządzasz pytaniami jak w Finder/Explorer: foldery, przenoszenie, kopiowanie, szybka selekcja i wyszukiwanie po nazwie oraz tagach.</p>
@@ -239,7 +225,7 @@
         </article>
 
         <article class="tile reverse">
-          <div class="tile-shot"><img class="shot-img" src="img/pl/landing-logo.webp?v=v2026-09-26T16124" data-file="landing-logo.webp?v=v2026-09-26T16124" alt="Edytor logo: tworzenie własnego logo wyświetlanego na tablicy podczas gry." data-i18n-alt="home.tiles.t12.alt"></div>
+          <div class="tile-shot"><img class="shot-img" src="img/pl/landing-logo.webp?v=v2026-09-30T14045" data-file="landing-logo.webp?v=v2026-09-30T14045" alt="Edytor logo: tworzenie własnego logo wyświetlanego na tablicy podczas gry." data-i18n-alt="home.tiles.t12.alt"></div>
           <div class="tile-text">
             <h3 data-i18n="home.tiles.t12.t">Własne logo na wyświetlaczu</h3>
             <p data-i18n="home.tiles.t12.d">Stwórz własne logo wyświetlane podczas rozgrywki — na ekranie startowym lub zakończenia. Napisy, proste grafiki lub importowany obraz.</p>
@@ -297,12 +283,12 @@
       <details class="faq-item"><summary class="faq-q" data-i18n="home.faq.q1.q">Czy Familiada Online jest bezpłatna?</summary><p class="faq-a" data-i18n="home.faq.q1.a">Tak, w pełni bezpłatna. Możesz tworzyć gry, zbierać ankiety i prowadzić rozgrywkę bez żadnych opłat.</p></details>
       <details class="faq-item"><summary class="faq-q" data-i18n="home.faq.q2.q">Czy trzeba instalować aplikację?</summary><p class="faq-a" data-i18n="home.faq.q2.a">Nie. System działa w przeglądarce na każdym urządzeniu — komputerze, tablecie i telefonie. Żadnej instalacji, żadnej konfiguracji.</p></details>
       <details class="faq-item"><summary class="faq-q" data-i18n="home.faq.q3.q">W jakich językach działa system?</summary><p class="faq-a" data-i18n="home.faq.q3.a">Interfejs jest dostępny po polsku, angielsku i ukraińsku. Język zmienia się automatycznie na podstawie ustawień przeglądarki lub ręcznego wyboru.</p></details>
-      <details class="faq-item"><summary class="faq-q" data-i18n="home.faq.q4.q">Czy trzeba zakładać konto?</summary><p class="faq-a" data-i18n="home.faq.q4.a">Nie. Tryb gościa daje pełną funkcjonalność rozgrywki — możesz tworzyć gry, zbierać ankiety i prowadzić grę na żywo. Jedyne czego nie możesz bez konta to dodawać znajomych i udostępniać im materiały. Konto wymaga tylko adresu e-mail, bez logowania przez Google.</p></details>
-      <details class="faq-item"><summary class="faq-q" data-i18n="home.faq.q5.q">Co dokładnie znaczy tryb gościa?</summary><p class="faq-a" data-i18n="home.faq.q5.a">Pełna funkcjonalność rozgrywki bez zakładania konta. Dane zapisywane są w przeglądarce — jeśli wyczyścisz historię lub zmienisz urządzenie, przepadną. Uwaga: nieaktywne konto gościa może zostać usunięte po 5 dniach.</p></details>
-      <details class="faq-item"><summary class="faq-q" data-i18n="home.faq.q6.q">Czy historia gier jest zapisywana?</summary><p class="faq-a" data-i18n="home.faq.q6.a">W trybie gościa historia istnieje dopóki dane są w przeglądarce. Po zalogowaniu na konto gry są synchronizowane i dostępne z każdego urządzenia — możesz do nich wrócić, powtórzyć grę lub edytować pytania.</p></details>
+      <details class="faq-item"><summary class="faq-q" data-i18n="home.faq.q4.q">Czy trzeba zakładać konto?</summary><p class="faq-a" data-i18n="home.faq.q4.a">Nie. W trybie gościa możesz tworzyć gry, zbierać odpowiedzi i prowadzić rozgrywkę. Udostępnianie baz, subskrypcje i funkcje społecznościowe wymagają pełnego konta. Rejestracja odbywa się przez e-mail i hasło — bez logowania przez Google.</p></details>
+      <details class="faq-item"><summary class="faq-q" data-i18n="home.faq.q5.q">Co dokładnie znaczy tryb gościa?</summary><p class="faq-a" data-i18n="home.faq.q5.a">To tymczasowe konto tworzone bez podawania e-maila. Gry i pozostałe dane są zapisywane na serwerze, ale dostęp do konta jest powiązany z sesją w tej przeglądarce. Po wyczyszczeniu danych przeglądarki lub zmianie urządzenia nie odzyskasz tego dostępu. Nieaktywne konto gościa może zostać usunięte po 5 dniach.</p></details>
+      <details class="faq-item"><summary class="faq-q" data-i18n="home.faq.q6.q">Czy historia gier jest zapisywana?</summary><p class="faq-a" data-i18n="home.faq.q6.a">Tak. Gry gościa są zapisywane na serwerze, lecz dostęp do nich zależy od sesji tej przeglądarki i konto może wygasnąć po 5 dniach bez aktywności. Pełne konto pozwala logować się i korzystać ze swoich gier na różnych urządzeniach.</p></details>
       <h3 class="faq-category-title" data-i18n="home.faq.cat2">Przygotowanie i ankieta</h3>
       <details class="faq-item"><summary class="faq-q" data-i18n="home.faq.q7.q">Ile czasu zajmuje przygotowanie gry?</summary><p class="faq-a" data-i18n="home.faq.q7.a">W grze preparowanej — wpisujesz pytania i odpowiedzi, gotowe w kilkanaście minut. W grze ankietowej dochodzi etap zbierania głosów, który trwa tyle ile zdecydujesz — godzinę, dzień, tydzień. Samo prowadzenie rozgrywki na żywo to zwykle od 20 minut wzwyż.</p></details>
-      <details class="faq-item"><summary class="faq-q" data-i18n="home.faq.q8.q">Czy mogę użyć własnych pytań?</summary><p class="faq-a" data-i18n="home.faq.q8.a">Tak — wszystkie pytania tworzysz sam w edytorze. Możesz je organizować w bazy z folderami i tagami, udostępniać znajomym i używać wielokrotnie. Nie ma gotowych zestawów do pobrania.</p></details>
+      <details class="faq-item"><summary class="faq-q" data-i18n="home.faq.q8.q">Czy mogę użyć własnych pytań?</summary><p class="faq-a" data-i18n="home.faq.q8.a">Tak. Możesz tworzyć pytania w edytorze, organizować je w bazach z folderami i tagami oraz używać wielokrotnie. Możesz też dodać gotową grę z katalogu Gry Społeczności do swojej biblioteki.</p></details>
       <details class="faq-item"><summary class="faq-q" data-i18n="home.faq.q9.q">Czy jest limit pytań lub gier?</summary><p class="faq-a" data-i18n="home.faq.q9.a">Nie ma limitu gier ani pytań. Jedna przygotowana gra może być używana wielokrotnie — jeśli masz kilka gotowych, możesz rozgrywać je jedną po drugiej bez ograniczeń.</p></details>
       <details class="faq-item"><summary class="faq-q" data-i18n="home.faq.q10.q">Ile odpowiedzi może być na tablicy?</summary><p class="faq-a" data-i18n="home.faq.q10.a">W grze preparowanej od 3 do 6 — wybierasz sam przy tworzeniu. W grze ankietowej zależy to od ankietowanych — system bierze najpopularniejsze odpowiedzi po normalizacji do 100 punktów.</p></details>
       <details class="faq-item"><summary class="faq-q" data-i18n="home.faq.q11.q">Czy można edytować pytania po zebraniu ankiety?</summary><p class="faq-a" data-i18n="home.faq.q11.a">Możliwości edycji są ograniczone — głosy są przypisane do konkretnych pytań i odpowiedzi. Jeśli potrzebujesz pełnej edycji, możesz wyeksportować wyniki ankiety i wgrać je jako grę preparowaną — wtedy możesz swobodnie modyfikować odpowiedzi i punkty.</p></details>
@@ -334,7 +320,6 @@
     </div>
 
   </main>
-  <script type="module" src="js/core/contact-modal.js?v=v2026-09-26T16124"></script>
+  <script type="module" src="js/core/contact-modal.js?v=v2026-09-30T14045"></script>
 </body>
 </html>
-

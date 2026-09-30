@@ -4,11 +4,11 @@
 // - jeśli user zalogowany -> pokazuj username + Wyloguj
 // - jeśli niezalogowany -> ukryj username + Wyloguj, a Wstecz wraca do /
 
-import { initI18n, t, withLangParam } from "../../translation/translation.js?v=v2026-09-26T16124";
-import { getUser } from "../core/auth.js?v=v2026-09-26T16124";
-import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-09-26T16124";
-import "../core/contact-modal.js?v=v2026-09-26T16124";
-import { icon, iconText } from "../core/icons.js?v=v2026-09-26T16124";
+import { initI18n, t, withLangParam } from "../../translation/translation.js?v=v2026-09-30T14045";
+import { getUser } from "../core/auth.js?v=v2026-09-30T14045";
+import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-09-30T14045";
+import "../core/contact-modal.js?v=v2026-09-30T14045";
+import { icon, iconText } from "../core/icons.js?v=v2026-09-30T14045";
 
 function byId(id) { return document.getElementById(id); }
 
@@ -22,16 +22,28 @@ function buildGamesBackUrl() {
   return `games?lang=${encodeURIComponent(lang)}`;
 }
 
+function normalizeManualBack(raw) {
+  const fallback = buildGamesBackUrl();
+  const trimmed = String(raw || "").trim();
+  if (!trimmed) return fallback;
+
+  try {
+    const target = new URL(trimmed, location.origin + "/");
+    // `man` pochodzi z query stringa. Akceptujemy wyłącznie adres w tym
+    // samym serwisie, żeby przycisk powrotu nie był otwartym przekierowaniem
+    // (ani nawigacją do javascript:/data:).
+    if (target.origin !== location.origin) return fallback;
+    const lang = new URLSearchParams(location.search).get("lang") || localStorage.getItem("uiLang") || "pl";
+    if (!target.searchParams.has("lang")) target.searchParams.set("lang", lang);
+    return `${target.pathname}${target.search}${target.hash}`;
+  } catch {
+    return fallback;
+  }
+}
+
 function decodeManualBack() {
   const p = new URLSearchParams(location.search);
-  const man = p.get("man");
-
-  if (!man) return buildGamesBackUrl();
-  if (man.includes("lang=")) return man;
-
-  const lang = p.get("lang") || localStorage.getItem("uiLang") || "pl";
-  const sep = man.includes("?") ? "&" : "?";
-  return `${man}${sep}lang=${encodeURIComponent(lang)}`;
+  return normalizeManualBack(p.get("man"));
 }
 
 function isControlModal() {
@@ -67,9 +79,7 @@ function setBackButton({ loggedIn }) {
 }
 
 function setAuthUi(user) {
-  if (!isControlModal()) {
-    initTopbarAccountDropdown(user, { showAuthEntry: false });
-  }
+  initTopbarAccountDropdown(user, { showAuthEntry: false });
   setBackButton({ loggedIn: !!user });
 }
 
@@ -86,8 +96,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   const user = await getUserP;
   setAuthUi(user);
 
-  window.addEventListener("i18n:lang", async () => {
-    const u = await getUser();
-    setAuthUi(u);
+  window.addEventListener("i18n:lang", () => {
+    // Zmiana języka nie zmienia sesji. Ponowne pytanie auth mogło zawieść
+    // chwilowo i zostawić przycisk z etykietą w poprzednim języku.
+    setAuthUi(user);
   });
 });

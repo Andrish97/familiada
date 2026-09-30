@@ -1,14 +1,14 @@
 // js/pages/connect-device.js
 
-import { sb } from "../core/supabase.js?v=v2026-09-26T16124";
-import { getUser } from "../core/auth.js?v=v2026-09-26T16124";
-import { isGuestUser } from "../core/guest-mode.js?v=v2026-09-26T16124";
-import { isMobileDevice } from "../core/pwa.js?v=v2026-09-26T16124";
-import { initI18n, t, getUiLang, withLangParam } from "../../translation/translation.js?v=v2026-09-26T16124";
-import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-09-26T16124";
-import { alertModal } from "../core/modal.js?v=v2026-09-26T16124";
-import "../core/contact-modal.js?v=v2026-09-26T16124";
-import { icon, iconText } from "../core/icons.js?v=v2026-09-26T16124";
+import { sb } from "../core/supabase.js?v=v2026-09-30T14045";
+import { getUser } from "../core/auth.js?v=v2026-09-30T14045";
+import { isGuestUser } from "../core/guest-mode.js?v=v2026-09-30T14045";
+import { isMobileDevice } from "../core/pwa.js?v=v2026-09-30T14045";
+import { initI18n, t, getUiLang, withLangParam } from "../../translation/translation.js?v=v2026-09-30T14045";
+import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-09-30T14045";
+import { alertModal } from "../core/modal.js?v=v2026-09-30T14045";
+import "../core/contact-modal.js?v=v2026-09-30T14045";
+import { icon, iconText } from "../core/icons.js?v=v2026-09-30T14045";
 
 const btnBack             = document.getElementById("btnBack");
 const btnManual           = document.getElementById("btnManual");
@@ -372,7 +372,17 @@ async function startQrScan() {
       : withLangParam("index");
   });
 
-  btnManual?.addEventListener("click", () => { location.href = buildManualUrl(); });
+  if (isLoggedIn && !guestMode) {
+    if (btnBack) btnBack.textContent = t("connectDevice.topbar.back") || "Moje gry";
+    if (btnManual) btnManual.style.display = "";
+    btnManual?.addEventListener("click", () => { location.href = buildManualUrl(); });
+  } else {
+    if (btnBack) {
+      btnBack.dataset.i18n = "index.backHome";
+      btnBack.textContent = t("index.backHome") || "Strona główna";
+    }
+    if (btnManual) btnManual.style.display = "none";
+  }
 
   if (pageHint) pageHint.textContent = _isMobile
     ? (t("connectDevice.header.hintMobile") || "Podłącz się jako prowadzący lub buzzer, albo zeskanuj QR z panelu sterowania.")

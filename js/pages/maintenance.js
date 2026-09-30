@@ -1,6 +1,6 @@
-import { initI18n, t } from "../../translation/translation.js?v=v2026-09-26T16124";
+import { initI18n, t } from "../../translation/translation.js?v=v2026-09-30T14045";
 
-const ENDPOINT = "/maintenance-state.json?v=v2026-09-26T16124";
+const ENDPOINT = "/maintenance-state.json?v=v2026-09-30T14045";
 const POLL_MS = 30000;
 
 const FALLBACKS = {
@@ -123,7 +123,7 @@ function formatCountdownUk(totalSeconds) {
   if (days > 0) return `${days} ${pluralUk(days, "день", "дні", "днів")}`;
   if (hours > 0) return `${hours} ${pluralUk(hours, "година", "години", "годин")}`;
   if (mins > 0) return `${mins} ${pluralUk(mins, "хвилина", "хвилини", "хвилин")}`;
-  return `${totalSeconds} ${pluralUk(totalSeconds, "секуnda", "секунди", "секунд")}`;
+  return `${totalSeconds} ${pluralUk(totalSeconds, "секунда", "секунди", "секунд")}`;
 }
 
 function formatReturnAt(date) {
@@ -268,9 +268,12 @@ function renderState(state) {
   const userLang = (document.documentElement.lang || "pl").toLowerCase();
   let customComment = "";
   if (state?.customComments) {
-    if (userLang.startsWith("pl")) customComment = state.customComments.pl || "";
-    else if (userLang.startsWith("uk")) customComment = state.customComments.uk || "";
-    else customComment = state.customComments.en || "";
+    const comments = state.customComments;
+    // Panel administracyjny pozwala uzupełnić tylko część języków. Pusta
+    // karta jest gorsza od jawnego fallbacku do istniejącego komentarza.
+    if (userLang.startsWith("pl")) customComment = comments.pl || comments.en || comments.uk || "";
+    else if (userLang.startsWith("uk")) customComment = comments.uk || comments.pl || comments.en || "";
+    else customComment = comments.en || comments.pl || comments.uk || "";
   }
 
   if (enabled === false || mode === "off") {
@@ -284,7 +287,7 @@ function renderState(state) {
   const titleText = tr("maintenance.title", FALLBACKS.messageTitle);
   setText(els.title, titleText);
 
-  if (useStandard) {
+  if (useStandard || !customComment) {
     if (els.standardContent) els.standardContent.hidden = false;
     if (els.customContent) els.customContent.hidden = true;
     
@@ -330,9 +333,7 @@ function renderState(state) {
       els.customContent.hidden = false;
       
       let html = esc(customComment).replace(/\n/g, "<br>");
-      if (html.includes("#timer")) {
-        html = html.replace("#timer", '<span class="countdown-inline">—</span>');
-      }
+      html = html.replace(/#timer/g, '<span class="countdown-inline">—</span>');
       els.customContent.innerHTML = `<div class="custom-maintenance-content">${html}</div>`;
       
       if (customComment.includes("#timer")) {
@@ -364,9 +365,14 @@ async function refresh() {
 }
 
 (async () => {
-  await initI18n({ withSwitcher: true, apply: true });
-  document.documentElement.classList.remove('page-loading');
-  document.querySelector('.topbar')?.classList.add('topbar-ready');
+  try {
+    await initI18n({ withSwitcher: true, apply: true });
+  } catch (err) {
+    console.error("[maintenance] i18n nieaktywny:", err);
+  } finally {
+    document.documentElement.classList.remove('page-loading');
+    document.querySelector('.topbar')?.classList.add('topbar-ready');
+  }
   await refresh();
   window.addEventListener("i18n:lang", () => {
     if (lastState) {

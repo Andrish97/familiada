@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
-  <meta name="app-version" content="v2026-09-26T16124"/>
+  <meta name="app-version" content="v2026-09-30T14045"/>
 
   <meta charset="UTF-8"/>
   <meta name="robots" content="noindex, nofollow"/>
@@ -14,12 +14,12 @@
   <link rel="preconnect" href="https://supabase.familiada.online">
   <title data-i18n="logoEditor.title">Familiada — edytor logo</title>
 
-  <link rel="icon" href="favicon.ico?v=v2026-09-26T16124"/>
-  <link rel="manifest" href="/manifest.json?v=v2026-09-26T16124"/>
+  <link rel="icon" href="favicon.ico?v=v2026-09-30T14045"/>
+  <link rel="manifest" href="/manifest.json?v=v2026-09-30T14045"/>
   <meta name="theme-color" content="#050914"/>
-  <link rel="stylesheet" href="css/base.css?v=v2026-09-26T16124"/>
-  <link rel="stylesheet" href="css/games.css?v=v2026-09-26T16124"/>
-  <link rel="stylesheet" href="logo-editor/logo-editor.css?v=v2026-09-26T16124"/>
+  <link rel="stylesheet" href="css/base.css?v=v2026-09-30T14045"/>
+  <link rel="stylesheet" href="css/games.css?v=v2026-09-30T14045"/>
+  <link rel="stylesheet" href="logo-editor/logo-editor.css?v=v2026-09-30T14045"/>
   <script>
     document.documentElement.classList.add('page-loading');
     try {
@@ -48,8 +48,8 @@
   <!-- Fabric.js (global: window.fabric) -->
   <script src="https://cdn.jsdelivr.net/npm/fabric@5.3.0/dist/fabric.min.js"></script>
 
-  <script type="module" src="./logo-editor/js/main.js?v=v2026-09-26T16124" defer></script>
-  <script src="js/core/security-warning.js?v=v2026-09-26T16124" defer></script>
+  <script type="module" src="./logo-editor/js/main.js?v=v2026-09-30T14045" defer></script>
+  <script src="js/core/security-warning.js?v=v2026-09-30T14045" defer></script>
 </head>
 
 <body class="games-body logo-editor-body skel-body">
@@ -88,8 +88,21 @@
         </div>
       </div>
 
-      <!-- JEDNA karta (bez tabs-card / wypustek) -->
-      <section class="games-shell logoShell">
+      <section class="games-shell logoShell tabs-card logo-tabs-card">
+        <div class="tabs-strip" role="tablist" aria-label="Typ logo">
+          <div class="tab-slot slot-logo-text">
+            <button class="tab-label active" id="tabLogoText" type="button" role="tab" data-i18n="logoEditor.modes.text">Tekst</button>
+            <div class="tab-wrapper"><div class="tab-active" data-i18n="logoEditor.modes.text">Tekst</div><div class="tab-corner tab-corner-left"></div><div class="tab-corner tab-corner-right"></div></div>
+          </div>
+          <div class="tab-slot slot-logo-draw">
+            <button class="tab-label" id="tabLogoDraw" type="button" role="tab" data-i18n="logoEditor.modes.draw">Rysunek</button>
+            <div class="tab-wrapper"><div class="tab-active" data-i18n="logoEditor.modes.draw">Rysunek</div><div class="tab-corner tab-corner-left"></div><div class="tab-corner tab-corner-right"></div></div>
+          </div>
+          <div class="tab-slot slot-logo-image">
+            <button class="tab-label" id="tabLogoImage" type="button" role="tab" data-i18n="logoEditor.modes.image">Obraz</button>
+            <div class="tab-wrapper"><div class="tab-active" data-i18n="logoEditor.modes.image">Obraz</div><div class="tab-corner tab-corner-left"></div><div class="tab-corner tab-corner-right"></div></div>
+          </div>
+        </div>
         <div class="card games-card logoCard">
           <div class="grid logoGridBig" id="grid"></div>
 
@@ -316,37 +329,6 @@
       </div><!-- /editorCard -->
     </section>
 
-  <!-- Modal: wybór trybu (ZOSTAJE) -->
-  <div class="overlay modal--sheet" id="createOverlay" style="display:none;">
-    <div class="modal">
-      <div class="mHead">
-        <div class="mTitle" data-i18n="logoEditor.create.title">Nowe logo</div>
-        <button class="btn sm" id="btnPickCancel" type="button" aria-label="Zamknij" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
-      </div>
-      <div class="mSub" data-i18n="logoEditor.create.subtitle">Wybierz tryb tworzenia.</div>
-
-      <div class="mSection" id="modePick">
-        <div class="mGrid">
-          <button class="mTile" id="pickText" type="button">
-            <div class="mTileTitle" data-i18n="logoEditor.create.textTitle">Tekst</div>
-            <div class="mTileSub" data-i18n="logoEditor.create.textSubtitle">Font jak w klasycznym logo Familiady</div>
-          </button>
-
-          <button class="mTile" id="pickDraw" type="button">
-            <div class="mTileTitle" data-i18n="logoEditor.create.drawTitle">Rysunek</div>
-            <div class="mTileSub" data-i18n="logoEditor.create.drawSubtitle">Można rysować dowolnie i dodawać tekst</div>
-          </button>
-
-          <button class="mTile" id="pickImage" type="button">
-            <div class="mTileTitle" data-i18n="logoEditor.create.imageTitle">Obraz</div>
-            <div class="mTileSub" data-i18n="logoEditor.create.imageSubtitle">Import obrazów użytkownika</div>
-          </button>
-        </div>
-      </div>
-
-    </div>
-  </div>
-
   <!-- Modal: zmiana nazwy logo -->
   <div class="overlay modal--sheet" id="renameOverlay" style="display:none;">
     <div class="modal">
@@ -458,7 +440,7 @@
       <iframe id="legalFrame" class="legalFrame" src="../manual?modal=control" title="Polityka prywatności" data-i18n-title="manual.legal"></iframe>
     </div>
   </div>
-  <script type="module" src="js/core/contact-modal.js?v=v2026-09-26T16124"></script>
-  <script type="module" src="js/core/topbar-controller.js?v=v2026-09-26T16124"></script>
+  <script type="module" src="js/core/contact-modal.js?v=v2026-09-30T14045"></script>
+  <script type="module" src="js/core/topbar-controller.js?v=v2026-09-30T14045"></script>
 </body>
 </html>

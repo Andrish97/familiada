@@ -1,19 +1,19 @@
 // js/pages/bases.js
 // Lista baz pytań (warstwa 1) – styl i ergonomia jak strona gier (games).
 
-import { addRenameGesture } from "../core/rename-gesture.js?v=v2026-09-26T16124";
+import { addRenameGesture } from "../core/rename-gesture.js?v=v2026-09-30T14045";
 
-import { sb, SUPABASE_URL } from "../core/supabase.js?v=v2026-09-26T16124";
-import { updateChecked, ROW_GONE } from "../core/db-guard.js?v=v2026-09-26T16124";
-import { requireAuth } from "../core/auth.js?v=v2026-09-26T16124";
-import { alertModal, confirmModal } from "../core/modal.js?v=v2026-09-26T16124";
-import { isGuestUser, hideForGuest } from "../core/guest-mode.js?v=v2026-09-26T16124";
-import { initUiSelect } from "../core/ui-select.js?v=v2026-09-26T16124";
-import { getUiLang, initI18n, t, withLangParam } from "../../translation/translation.js?v=v2026-09-26T16124";
-import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-09-26T16124";
-import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../core/modal-sheet.js?v=v2026-09-26T16124";
-import "../core/contact-modal.js?v=v2026-09-26T16124";
-import { icon, iconText } from "../core/icons.js?v=v2026-09-26T16124";
+import { sb, SUPABASE_URL } from "../core/supabase.js?v=v2026-09-30T14045";
+import { updateChecked, ROW_GONE } from "../core/db-guard.js?v=v2026-09-30T14045";
+import { requireAuth } from "../core/auth.js?v=v2026-09-30T14045";
+import { alertModal, confirmModal } from "../core/modal.js?v=v2026-09-30T14045";
+import { isGuestUser, hideForGuest } from "../core/guest-mode.js?v=v2026-09-30T14045";
+import { initUiSelect } from "../core/ui-select.js?v=v2026-09-30T14045";
+import { getUiLang, initI18n, t, withLangParam } from "../../translation/translation.js?v=v2026-09-30T14045";
+import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-09-30T14045";
+import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../core/modal-sheet.js?v=v2026-09-30T14045";
+import "../core/contact-modal.js?v=v2026-09-30T14045";
+import { icon, iconText } from "../core/icons.js?v=v2026-09-30T14045";
 initI18n({ withSwitcher: true }).then(() => {
   document.documentElement.classList.remove('page-loading');
 });
@@ -1181,9 +1181,21 @@ async function shareAddInner() {
 const TAB_STORAGE_KEY = "basesMobileTab";
 let activeTab = "mine";
 
-function setActiveTab(tab, { remember = true } = {}) {
+function tabFromUrl() {
+  const tab = new URLSearchParams(location.search).get("tab");
+  if (tab === "mine" || tab === "shared") return tab;
+  return storedTab();
+}
+
+function setActiveTab(tab, { remember = true, updateUrl = true } = {}) {
   if (guestMode) tab = "mine";
   activeTab = tab === "shared" ? "shared" : "mine";
+  if (updateUrl) {
+    const url = new URL(location.href);
+    if (activeTab === "mine") url.searchParams.delete("tab");
+    else url.searchParams.set("tab", activeTab);
+    if (url.href !== location.href) history.pushState(history.state, "", url);
+  }
   const mineOn = activeTab === "mine";
   basesSectionMine?.classList.toggle("active", mineOn);
   basesSectionShared?.classList.toggle("active", !mineOn);
@@ -1735,9 +1747,12 @@ function initFileLaunch() {
   initTopbarAccountDropdown(currentUser);
   document.querySelector('.topbar')?.classList.add('topbar-ready');
 
-  setActiveTab(storedTab(), { remember: false });
+  setActiveTab(tabFromUrl(), { remember: false, updateUrl: false });
   tabBasesMine?.addEventListener("click", () => setActiveTab("mine"));
   tabBasesShared?.addEventListener("click", () => setActiveTab("shared"));
+  window.addEventListener("popstate", () => {
+    setActiveTab(tabFromUrl(), { remember: false, updateUrl: false });
+  });
 
   initShareRoleSelect();
   initShareRecipientTypeSelect();

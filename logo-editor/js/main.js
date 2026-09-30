@@ -9,29 +9,29 @@
 //   preview-zoom.js – pinch-zoom pełnoekranowego podglądu
 //   text.js / draw.js / image.js – edytory trybów (wspólne API: open/close/getCreatePayload)
 
-import { addRenameGesture } from "../../js/core/rename-gesture.js?v=v2026-09-26T16124";
-import { loadFont5x7, buildLogoPreviewCanvas } from "../../js/core/logo-preview.js?v=v2026-09-26T16124";
-import { requireAuth } from "../../js/core/auth.js?v=v2026-09-26T16124";
-import { alertModal, confirmModal } from "../../js/core/modal.js?v=v2026-09-26T16124";
-import { getUiLang, initI18n, t, withLangParam } from "../../translation/translation.js?v=v2026-09-26T16124";
-import { initTopbarAccountDropdown } from "../../js/core/topbar-controller.js?v=v2026-09-26T16124";
-import { isMobileDevice } from "../../js/core/pwa.js?v=v2026-09-26T16124";
-import { isPhoneScreen } from "../../js/core/device-guard.js?v=v2026-09-26T16124";
-import { v as cacheBust } from "../../js/core/cache-bust.js?v=v2026-09-26T16124";
-import { guardResourceLock, acquireResourceLock, isResourceBusy, findBusyContext } from "../../js/core/resource-lock.js?v=v2026-09-26T16124";
-import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../js/core/modal-sheet.js?v=v2026-09-26T16124";
-import { icon } from "../../js/core/icons.js?v=v2026-09-26T16124";
+import { addRenameGesture } from "../../js/core/rename-gesture.js?v=v2026-09-30T14045";
+import { loadFont5x7, buildLogoPreviewCanvas } from "../../js/core/logo-preview.js?v=v2026-09-30T14045";
+import { requireAuth } from "../../js/core/auth.js?v=v2026-09-30T14045";
+import { alertModal, confirmModal } from "../../js/core/modal.js?v=v2026-09-30T14045";
+import { getUiLang, initI18n, t, withLangParam } from "../../translation/translation.js?v=v2026-09-30T14045";
+import { initTopbarAccountDropdown } from "../../js/core/topbar-controller.js?v=v2026-09-30T14045";
+import { isMobileDevice } from "../../js/core/pwa.js?v=v2026-09-30T14045";
+import { isPhoneScreen } from "../../js/core/device-guard.js?v=v2026-09-30T14045";
+import { v as cacheBust } from "../../js/core/cache-bust.js?v=v2026-09-30T14045";
+import { guardResourceLock, acquireResourceLock, isResourceBusy, findBusyContext } from "../../js/core/resource-lock.js?v=v2026-09-30T14045";
+import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../js/core/modal-sheet.js?v=v2026-09-30T14045";
+import { icon } from "../../js/core/icons.js?v=v2026-09-30T14045";
 
-import { TYPE_GLYPH, emptyRows, normalizeRows, renderPreview, logoToPreview } from "./render.js?v=v2026-09-26T16124";
-import { listLogos, fetchLogo, createLogo, updateLogo, deleteLogo, isUniqueViolation } from "./db.js?v=v2026-09-26T16124";
-import { buildExport, downloadJson, parseImport, safeFileName } from "./transfer.js?v=v2026-09-26T16124";
-import { initPreviewPinchZoom, lockPageZoomForPreview, unlockPageZoomAfterPreview } from "./preview-zoom.js?v=v2026-09-26T16124";
-import { initTextEditor, decompileRows } from "./text.js?v=v2026-09-26T16124";
-import { initDrawEditor } from "./draw.js?v=v2026-09-26T16124";
-import { initImageEditor } from "./image.js?v=v2026-09-26T16124";
+import { TYPE_GLYPH, TYPE_PIX, emptyRows, normalizeRows, renderPreview, logoToPreview } from "./render.js?v=v2026-09-30T14045";
+import { listLogos, fetchLogo, createLogo, updateLogo, deleteLogo, isUniqueViolation } from "./db.js?v=v2026-09-30T14045";
+import { buildExport, downloadJson, parseImport, safeFileName } from "./transfer.js?v=v2026-09-30T14045";
+import { initPreviewPinchZoom, lockPageZoomForPreview, unlockPageZoomAfterPreview } from "./preview-zoom.js?v=v2026-09-30T14045";
+import { initTextEditor, decompileRows } from "./text.js?v=v2026-09-30T14045";
+import { initDrawEditor } from "./draw.js?v=v2026-09-30T14045";
+import { initImageEditor } from "./image.js?v=v2026-09-30T14045";
 
-const FONT_3x10_URL = "display/font_3x10.json?v=v2026-09-26T16124";
-const FONT_5x7_URL = "display/font_5x7.json?v=v2026-09-26T16124";
+const FONT_3x10_URL = "display/font_3x10.json?v=v2026-09-30T14045";
+const FONT_5x7_URL = "display/font_5x7.json?v=v2026-09-30T14045";
 // Edycja wymaga miejsca na pasek narzędzi i scenę -- na telefonie dostępna
 // jest tylko lista (podgląd, import/eksport, nazwa, usuwanie). Telefon wg
 // wspólnej reguły isPhoneScreen() (js/core/device-guard.js): krótszy bok
@@ -54,11 +54,13 @@ const el = {
 
   listShell: $("listShell"),
   grid: $("grid"),
+  hint: $("hint"),
   msg: $("msg"),
   btnEdit: $("btnEdit"),
   btnPreview: $("btnPreview"),
   btnExport: $("btnExport"),
   btnImport: $("btnImport"),
+  tabs: { TEXT: $("tabLogoText"), DRAW: $("tabLogoDraw"), IMAGE: $("tabLogoImage") },
 
   editorShell: $("editorShell"),
   logoName: $("logoName"),
@@ -68,7 +70,6 @@ const el = {
   panes: { TEXT: $("paneText"), DRAW: $("paneDraw"), IMAGE: $("paneImage") },
   tools: { TEXT: [$("toolsText"), $("charsInline")], DRAW: [$("toolsDraw")], IMAGE: [$("toolsImage"), $("imgPanels")] },
 
-  createOverlay: $("createOverlay"),
   renameOverlay: $("renameOverlay"),
   renameTitle: $("renameTitle"),
   renameSub: $("renameSub"),
@@ -100,6 +101,7 @@ const el = {
 let currentUser = null;
 let logos = [];          // lekka lista (bez fabricData/obrazów) -- patrz db.listLogos
 let selectedId = null;
+let activeListMode = "TEXT";
 
 let FONT_3x10 = null;    // znak -> [10 wierszy]
 let GLYPH_5x7 = null;    // Map znak -> [7 intów]
@@ -162,6 +164,43 @@ function busyMessage(reason) {
 
 function modeLabel(mode) {
   return t(`logoEditor.modes.${String(mode || "image").toLowerCase()}`);
+}
+
+const LIST_MODES = new Set(["TEXT", "DRAW", "IMAGE"]);
+
+function listModeFromUrl() {
+  const mode = String(new URLSearchParams(location.search).get("tab") || "text").toUpperCase();
+  return LIST_MODES.has(mode) ? mode : "TEXT";
+}
+
+function listModeForLogo(logo) {
+  if (logo?.type === TYPE_GLYPH) return "TEXT";
+  if (logo?.type === TYPE_PIX && logo?.payload?.source?.mode === "IMAGE") return "IMAGE";
+  return "DRAW";
+}
+
+function setActiveListMode(mode, { updateUrl = true } = {}) {
+  activeListMode = LIST_MODES.has(mode) ? mode : "TEXT";
+  const hintKeys = {
+    TEXT: "logoEditor.create.textSubtitle",
+    DRAW: "logoEditor.create.drawSubtitle",
+    IMAGE: "logoEditor.create.imageSubtitle",
+  };
+  if (el.hint) el.hint.textContent = t(hintKeys[activeListMode]);
+  for (const [key, tab] of Object.entries(el.tabs)) {
+    const active = key === activeListMode;
+    tab?.classList.toggle("active", active);
+    tab?.setAttribute("aria-selected", String(active));
+  }
+  const selected = logos.find((logo) => logo.id === selectedId);
+  if (selected && listModeForLogo(selected) !== activeListMode) selectedId = null;
+  if (updateUrl) {
+    const url = new URL(location.href);
+    if (activeListMode === "TEXT") url.searchParams.delete("tab");
+    else url.searchParams.set("tab", activeListMode.toLowerCase());
+    if (url.href !== location.href) history.pushState(history.state, "", url);
+  }
+  renderList();
 }
 
 /* =========================================================
@@ -277,13 +316,13 @@ function renderList() {
     <div class="plus">${icon("plus")}</div>
     <div class="txt">${esc(t("logoEditor.create.title"))}</div>
     <div class="sub">${esc(t("logoEditor.create.subtitle"))}</div>`;
-  add.addEventListener("click", () => openOverlay(el.createOverlay, () => closeOverlay(el.createOverlay)));
+  add.addEventListener("click", () => openNameModal({ kind: "create", mode: activeListMode }));
   el.grid.appendChild(add);
 
   // Najpierw same kafelki, miniatury po kolei w wolnych chwilach -- przy
   // wielu logo nie blokujemy pierwszego wyrenderowania listy.
   const queue = [];
-  for (const logo of logos) {
+  for (const logo of logos.filter((item) => listModeForLogo(item) === activeListMode)) {
     const tile = makeTile(logo);
     el.grid.appendChild(tile);
     queue.push({ wrap: tile.querySelector(".logoPrev"), logo });
@@ -637,6 +676,7 @@ async function confirmImport() {
   show(el.importProg, true);
   try {
     const id = await createLogo({ user_id: currentUser.id, ...importParsed, name: makeUniqueName(importParsed.name) });
+    setActiveListMode(listModeForLogo(importParsed));
     await refresh();
     selectTile(id);
     closeOverlay(el.importOverlay);
@@ -733,16 +773,10 @@ function bindUi() {
   el.btnExport.addEventListener("click", () => void exportSelected());
   el.btnImport.addEventListener("click", openImportModal);
 
-  // nowe logo: tryb -> nazwa -> edytor
-  const pick = (mode) => () => {
-    closeOverlay(el.createOverlay);
-    openNameModal({ kind: "create", mode });
-  };
-  $("pickText").addEventListener("click", pick("TEXT"));
-  $("pickDraw").addEventListener("click", pick("DRAW"));
-  $("pickImage").addEventListener("click", pick("IMAGE"));
-  $("btnPickCancel").addEventListener("click", () => closeOverlay(el.createOverlay));
-  closeOnBackdrop(el.createOverlay, () => closeOverlay(el.createOverlay));
+  for (const [mode, tab] of Object.entries(el.tabs)) {
+    tab?.addEventListener("click", () => setActiveListMode(mode));
+  }
+  window.addEventListener("popstate", () => setActiveListMode(listModeFromUrl(), { updateUrl: false }));
 
   // modal nazwy
   el.btnRenameOk.addEventListener("click", () => void confirmNameModal());
@@ -773,7 +807,7 @@ function bindUi() {
 
   window.addEventListener("i18n:lang", () => {
     updateEditorHeader();
-    renderList();
+    setActiveListMode(activeListMode, { updateUrl: false });
   });
 
   // Plik .famlogo otwarty z systemu (PWA file handler).
@@ -818,9 +852,10 @@ async function boot() {
     IMAGE: initImageEditor(ctx),
   };
 
-  import("../../js/core/updater.js?v=v2026-09-26T16124").then((m) => m.initUpdater()).catch(() => {});
+  import("../../js/core/updater.js?v=v2026-09-30T14045").then((m) => m.initUpdater()).catch(() => {});
 
   bindUi();
+  setActiveListMode(listModeFromUrl(), { updateUrl: false });
   await refresh();
 }
 

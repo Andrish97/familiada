@@ -835,9 +835,9 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
       await expect(page.locator("#questionOverlay")).toBeVisible({ timeout: 5000 });
       await page.locator("#qAdd").click();
 
-      const rowEl = page.locator("#qAnswers .qRow").first();
-      await rowEl.locator(".qAnsText").fill("Odpowiedź A");
-      await rowEl.locator(".qAnsPts").fill("42");
+      const rowEl = page.locator("#qAnswers .qf-row:not(.qf-add)").first();
+      await rowEl.locator(".qf-text").fill("Odpowiedź A");
+      await rowEl.locator(".qf-pts").fill("42");
 
       // questionModal.close() (chowa #questionOverlay) jest SYNCHRONICZNY na klik
       // Zapisz -- prawdziwy UPDATE do qb_questions leci asynchronicznie już PO
@@ -882,13 +882,12 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
       await pressToolbarShortcut(page, "editQuestion", "Control+e");
 
       await expect(page.locator("#questionOverlay")).toBeVisible({ timeout: 5000 });
-      await expect(page.locator("#qAnswers .qRow")).toHaveCount(6, { timeout: 5000 });
+      await expect(page.locator("#qAnswers .qf-row:not(.qf-add)")).toHaveCount(6, { timeout: 5000 });
 
-      await page.locator("#qAdd").click();
-
-      await expect(page.locator("#qAnswers .qRow")).toHaveCount(6);
-      await expect(page.locator("#qErr")).toBeVisible({ timeout: 5000 });
-      await expect(page.locator("#qErr")).toContainText("Max 6", { timeout: 5000 });
+      // ten sam kafelek co w edytorze gry: przy limicie wyłączony, z licznikiem
+      await expect(page.locator("#qAdd")).toBeDisabled();
+      await expect(page.locator("#qAdd")).toContainText("6/6");
+      await expect(page.locator("#qAnswers .qf-row:not(.qf-add)")).toHaveCount(6);
     } finally {
       await deleteBase(page, baseId);
     }
@@ -916,11 +915,11 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
 
       for (let i = 0; i < 3; i++) {
         await page.locator("#qAdd").click();
-        const r = page.locator("#qAnswers .qRow").nth(i);
-        await r.locator(".qAnsText").fill(`A${i + 1}`);
-        await r.locator(".qAnsPts").fill("50");
+        const r = page.locator("#qAnswers .qf-row:not(.qf-add)").nth(i);
+        await r.locator(".qf-text").fill(`A${i + 1}`);
+        await r.locator(".qf-pts").fill("50");
       }
-      await expect(page.locator("#qSumVal")).toHaveText("150/100", { timeout: 5000 });
+      await expect(page.locator("#qSumPill b")).toHaveText("150/100", { timeout: 5000 });
 
       await page.locator("#qSave").click();
 
@@ -1668,9 +1667,9 @@ test.describe("base-explorer: question-modal.js (edycja pytania)", () => {
       await pressToolbarShortcut(page, "editQuestion", "Control+e");
       await expect(page.locator("#questionOverlay")).toBeVisible({ timeout: 5000 });
 
-      const r = page.locator("#qAnswers .qRow").first();
-      await r.locator(".qAnsText").fill("Nowa");
-      await r.locator(".qAnsPts").fill("77");
+      const r = page.locator("#qAnswers .qf-row:not(.qf-add)").first();
+      await r.locator(".qf-text").fill("Nowa");
+      await r.locator(".qf-pts").fill("77");
       // questionModal.close() (chowa #questionOverlay) jest SYNCHRONICZNY na klik
       // Zapisz -- prawdziwy UPDATE do qb_questions leci asynchronicznie już PO
       // zamknięciu (w openQuestionModal, nie w samym modalu), więc trzeba poczekać
@@ -1709,10 +1708,10 @@ test.describe("base-explorer: question-modal.js (edycja pytania)", () => {
       await row.click();
       await pressToolbarShortcut(page, "editQuestion", "Control+e");
       await expect(page.locator("#questionOverlay")).toBeVisible({ timeout: 5000 });
-      await expect(page.locator("#qAnswers .qRow")).toHaveCount(3);
+      await expect(page.locator("#qAnswers .qf-row:not(.qf-add)")).toHaveCount(3);
 
-      await page.locator("#qAnswers .qRow").nth(1).locator(".qDel").click(); // usuń A2
-      await expect(page.locator("#qAnswers .qRow")).toHaveCount(2);
+      await page.locator("#qAnswers .qf-row:not(.qf-add)").nth(1).locator(".qf-del").click(); // usuń A2
+      await expect(page.locator("#qAnswers .qf-row:not(.qf-add)")).toHaveCount(2);
 
       // questionModal.close() (chowa #questionOverlay) jest SYNCHRONICZNY na klik
       // Zapisz -- prawdziwy UPDATE do qb_questions leci asynchronicznie już PO
@@ -1750,7 +1749,7 @@ test.describe("base-explorer: question-modal.js (edycja pytania)", () => {
       await expect(page.locator("#questionOverlay")).toBeVisible({ timeout: 5000 });
 
       await page.locator("#qAdd").click();
-      const input = page.locator("#qAnswers .qRow").first().locator(".qAnsText");
+      const input = page.locator("#qAnswers .qf-row:not(.qf-add)").first().locator(".qf-text");
       await input.fill("To jest zdecydowanie za długi tekst odpowiedzi");
       await expect(input).toHaveValue("To jest zdecydowa", { timeout: 5000 }); // pierwsze 17 znaków
 
@@ -1824,7 +1823,7 @@ test.describe("base-explorer: question-modal.js (edycja pytania)", () => {
       await expect(page.locator("#questionOverlay")).toBeVisible({ timeout: 5000 });
 
       await page.locator("#qAdd").click();
-      const pts = page.locator("#qAnswers .qRow").first().locator(".qAnsPts");
+      const pts = page.locator("#qAnswers .qf-row:not(.qf-add)").first().locator(".qf-pts");
 
       await pts.fill("999");
       await expect(pts).toHaveValue("100", { timeout: 5000 });
@@ -1859,6 +1858,9 @@ test.describe("base-explorer: question-modal.js (edycja pytania)", () => {
       await page.locator("#qAdd").click();
 
       await page.locator("#qClose").click();
+      // przy zmianach modal pyta o porzucenie (wspólny formularz z edytorem)
+      await expect(page.locator(".uni-modal .mSub")).toHaveText("Porzucić niezapisane zmiany w pytaniu?", { timeout: 5000 });
+      await page.locator(".uni-foot .btn.gold").click();
       await expect(page.locator("#questionOverlay")).toBeHidden({ timeout: 5000 });
 
       const fresh = await getQuestionRow(page, qid);
@@ -2374,7 +2376,7 @@ test.describe("base-explorer: współdzielenie i uprawnienia (dwóch różnych u
     }
   });
 
-  test("usunięcie pytania przez jednego usera, gdy drugi ma je otwarte do edycji -- zapis kończy się cicho, pytanie nie wraca", async ({ page, context, browser }) => {
+  test("usunięcie pytania przez jednego usera, gdy drugi ma je otwarte do edycji -- zapis pokazuje komunikat w modalu, pytanie nie wraca", async ({ page, context, browser }) => {
     test.setTimeout(60_000);
     await loginAsTestUser(page, context, { username: testAccountUsername(1) });
 
@@ -2404,13 +2406,14 @@ test.describe("base-explorer: współdzielenie i uprawnienia (dwóch różnych u
         if (error) throw new Error(error.message);
       }, qid);
 
-      // Pierwszy user kończy edycję i zapisuje -- UPDATE trafia w 0 wierszy,
-      // bez błędu (Postgres/PostgREST nie traktuje "nic nie pasowało" jak wyjątek)
+      // Pierwszy user kończy edycję i zapisuje -- UPDATE trafia w 0 wierszy
+      // (updateChecked -> ROW_GONE). Od audytu edytora (wspólny formularz)
+      // zapis idzie z otwartym modalem: komunikat w modalu, treść zostaje.
       await page.locator("#qText").fill("Ta zmiana nie ma już czego dotyczyć");
       await page.locator("#qSave").click();
-      await expect(page.locator("#questionOverlay")).toBeHidden({ timeout: 10000 });
-      // brak alertModal z błędem -- zapis "powiódł się" po cichu
-      await expect(page.locator(".uni-modal")).toHaveCount(0);
+      await expect(page.locator("#qErr")).toHaveText(/w międzyczasie usunięte/i, { timeout: 10000 });
+      await expect(page.locator("#questionOverlay")).toBeVisible();
+      await expect(page.locator("#qText")).toHaveValue("Ta zmiana nie ma już czego dotyczyć");
 
       const fresh = await getQuestionRow(page, qid);
       expect(fresh, "UPDATE na usuniętym wierszu nie może go wskrzesić").toBeNull();
@@ -2779,7 +2782,10 @@ test.describe("base-explorer: Warstwa 2 (updateChecked, ROW_GONE)", () => {
       }, qid);
 
       await page.locator("#qSave").click();
-      await expect(page.locator(".uni-modal .mSub")).toHaveText(/w międzyczasie usunięte/i, { timeout: 5000 });
+      // komunikat w samym modalu (zapis z otwartym modalem), treść zostaje
+      await expect(page.locator("#qErr")).toHaveText(/w międzyczasie usunięte/i, { timeout: 5000 });
+      await expect(page.locator("#questionOverlay")).toBeVisible();
+      await expect(page.locator("#qText")).toHaveValue("Nowa treść");
     } finally {
       await deleteBase(page, baseId);
     }

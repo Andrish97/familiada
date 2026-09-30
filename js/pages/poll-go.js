@@ -1,10 +1,10 @@
 // js/pages/poll-go.js
-import { sb } from "../core/supabase.js?v=v2026-09-26T16124";
-import { getUser } from "../core/auth.js?v=v2026-09-26T16124";
-import { initI18n, t } from "../../translation/translation.js?v=v2026-09-26T16124";
-import { alertModal } from "../core/modal.js?v=v2026-09-26T16124";
+import { sb } from "../core/supabase.js?v=v2026-09-30T14045";
+import { getUser } from "../core/auth.js?v=v2026-09-30T14045";
+import { initI18n, t } from "../../translation/translation.js?v=v2026-09-30T14045";
+import { alertModal } from "../core/modal.js?v=v2026-09-30T14045";
 
-initI18n({ withSwitcher: true }).then(() => {
+const i18nReady = initI18n({ withSwitcher: true }).then(() => {
   document.documentElement.classList.remove('page-loading');
   document.querySelector('.topbar')?.classList.add('topbar-ready');
 });
@@ -130,9 +130,20 @@ function normalizeEmail(value) {
 }
 
 async function resolveToken() {
-  const { data, error } = await sb().rpc("poll_go_resolve", { p_token: goToken });
-  if (error) throw error;
-  return data;
+  const req = sb().rpc("poll_go_resolve", { p_token: goToken });
+  const timeoutMs = 15000;
+  let timer = null;
+  const timeout = new Promise((_, rej) => {
+    timer = setTimeout(() => rej(new Error("Timeout resolving invitation")), timeoutMs);
+  });
+
+  try {
+    const { data, error } = await Promise.race([req, timeout]);
+    if (error) throw error;
+    return data;
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
 }
 
 async function resolveProfileByEmail(email) {
@@ -161,7 +172,14 @@ async function hydrateInviteIdentity(data) {
     if (match?.id) {
       return {
         ...data,
-        subscriber_label: data.subscriber_label || match.username || match.email,
+        subscriber_label: data.subscriber_label || match.username || match.email || data.subscriber_email,
+      };
+    }
+    // Jeśli nie znaleźliśmy profilu, ale mamy email, użyj email jako label
+    if (!data.subscriber_label) {
+      return {
+        ...data,
+        subscriber_label: data.subscriber_email,
       };
     }
   }
@@ -171,7 +189,14 @@ async function hydrateInviteIdentity(data) {
     if (match?.id) {
       return {
         ...data,
-        recipient_label: data.recipient_label || match.username || match.email,
+        recipient_label: data.recipient_label || match.username || match.email || data.recipient_email,
+      };
+    }
+    // Jeśli nie znaleźliśmy profilu, ale mamy email, użyj email jako label
+    if (!data.recipient_label) {
+      return {
+        ...data,
+        recipient_label: data.recipient_email,
       };
     }
   }
@@ -180,6 +205,10 @@ async function hydrateInviteIdentity(data) {
 }
 
 function openVote(type) {
+  if (!goToken) {
+    console.error("[poll-go] goToken missing in openVote");
+    return;
+  }
   const page = type === "poll_points" ? "poll-points" : "poll-text";
   location.href = `${page}?t=${encodeURIComponent(goToken)}`;
 }
@@ -242,6 +271,7 @@ async function acceptSubDirect(email) {
     if (!data?.ok) throw new Error(data?.error || MSG.acceptFailed());
     setView({ head: MSG.subscriptionActive(), text: MSG.inviteAccepted() });
     clearActions();
+    showEmailInput(false);
   } catch (e) {
     console.error(e);
     setView({ head: MSG.error(), text: MSG.inviteAcceptFailed() });
@@ -290,6 +320,36 @@ async function declineSub() {
   }
 }
 
+// Helper: sub invite ze zalogowanym userem i account invite (user_id)
+function showSubInviteAccountMatch(head, expectedEmail) {
+  setView({
+    head,
+    text: MSG.acceptInHub(),
+    hintText: expectedEmail ? `${MSG.invitationRecipient()}: ${expectedEmail}` : "",
+  });
+  clearActions();
+  addAction(MSG.hubLabel(), "gold", redirectToHub);
+  showEmailInput(false);
+}
+
+// Helper: sub invite ze zalogowanym userem bez account invite
+function showSubInviteLoggedIn(head, userEmail, expectedEmail) {
+  setView({ head, text: MSG.subscriptionInviteActive() });
+  clearActions();
+  showEmailInput(false);
+  addAction(MSG.acceptLabel(), "gold", async () => acceptSubDirect(userEmail || expectedEmail));
+  addAction(MSG.declineLabel(), "danger", async () => declineSub());
+}
+
+// Helper: sub invite niezalogowany bez account invite
+function showSubInviteAnonEmail(head, subscriberEmail) {
+  setView({ head, text: MSG.subscriptionInviteActive() });
+  clearActions();
+  showEmailInput(false);
+  addAction(MSG.acceptLabel(), "gold", async () => acceptSubDirect(subscriberEmail));
+  addAction(MSG.declineLabel(), "danger", async () => declineSub());
+}
+
 async function handleSubInvite(data, user) {
   const head = buildSubHeading(data);
   const expectedEmail = normalizeEmail(data.subscriber_email);
@@ -297,65 +357,41 @@ async function handleSubInvite(data, user) {
   const hasAccountInvite = Boolean(data.subscriber_user_id);
   const userEmail = normalizeEmail(user?.email);
 
-  if (user) {
-    if (hasAccountInvite) {
-      // ✅ najpierw user_id, a jak go nie ma → email
-      const okTarget = matchesInviteTarget({
-        user,
-        expectedUserId: data.subscriber_user_id,
-        expectedEmail: data.subscriber_email,
-      });
-  
-      if (!okTarget) {
-        showMismatch(head, data.subscriber_email);
-        return;
-      }
-  
-      if (!isActive) {
-        showExpired(head);
-        return;
-      }
-  
-      setView({
-        head,
-        text: MSG.acceptInHub(),
-        hintText: expectedEmail ? `${MSG.invitationRecipient()}: ${expectedEmail}` : "",
-      });
-      clearActions();
-      addAction(MSG.hubLabel(), "gold", redirectToHub);
-      showEmailInput(false);
+  // Case 1: Zalogowany user + account invite
+  if (user && hasAccountInvite) {
+    const okTarget = matchesInviteTarget({
+      user,
+      expectedUserId: data.subscriber_user_id,
+      expectedEmail: data.subscriber_email,
+    });
+    if (!okTarget) {
+      showMismatch(head, data.subscriber_email);
       return;
     }
+    if (!isActive) {
+      showExpired(head);
+      return;
+    }
+    showSubInviteAccountMatch(head, expectedEmail);
+    return;
   }
 
+  // Case 2: Zalogowany user + email invite (bez account)
   if (user && !hasAccountInvite) {
     if (!isActive) {
       showExpired(head);
       return;
     }
-
-    setView({ head, text: MSG.subscriptionInviteActive() });
-    clearActions();
-    showEmailInput(false);
-    addAction(MSG.acceptLabel(), "gold", async () => acceptSubDirect(userEmail || expectedEmail));
-    addAction(MSG.declineLabel(), "danger", async () => declineSub());
+    showSubInviteLoggedIn(head, userEmail, expectedEmail);
     return;
   }
 
-  if (!isActive) {
-    if (hasAccountInvite) {
+  // Case 3: Niezalogowany + account invite (wymagaj logowania)
+  if (!user && hasAccountInvite) {
+    if (!isActive) {
       showExpired(head);
       return;
     }
-
-    setView({ head, text: MSG.subscribePrompt() });
-    showEmailInput(true);
-    clearActions();
-    addAction(MSG.subscribeLabel(), "gold", async () => subscribeByEmail());
-    return;
-  }
-
-  if (hasAccountInvite) {
     setView({ head, text: MSG.loginToAccept() });
     clearActions();
     addAction(MSG.loginLabel(), "gold", redirectToLogin);
@@ -363,11 +399,46 @@ async function handleSubInvite(data, user) {
     return;
   }
 
-  setView({ head, text: MSG.subscriptionInviteActive() });
+  // Case 4: Niezalogowany + email invite (bez account)
+  if (!isActive) {
+    setView({ head, text: MSG.subscribePrompt() });
+    showEmailInput(true);
+    clearActions();
+    addAction(MSG.subscribeLabel(), "gold", async () => subscribeByEmail());
+    return;
+  }
+
+  showSubInviteAnonEmail(head, data.subscriber_email);
+}
+
+// Helper: task invite ze zalogowanym userem i account invite
+function showTaskInviteAccountMatch(head, expectedEmail) {
+  setView({
+    head,
+    text: MSG.acceptInHub(),
+    hintText: expectedEmail ? `${MSG.invitationRecipient()}: ${expectedEmail}` : "",
+  });
+  clearActions();
+  addAction(MSG.hubLabel(), "gold", redirectToHub);
+  showEmailInput(false);
+}
+
+// Helper: task invite ze zalogowanym userem bez account invite
+function showTaskInviteLoggedIn(head, pollType) {
+  setView({ head, text: MSG.taskInviteActive() });
   clearActions();
   showEmailInput(false);
-  addAction(MSG.acceptLabel(), "gold", async () => acceptSubDirect(data.subscriber_email));
-  addAction(MSG.declineLabel(), "danger", async () => declineSub());
+  addAction(MSG.voteLabel(), "gold", () => openVote(pollType));
+  addAction(MSG.declineLabel(), "danger", async () => declineTask());
+}
+
+// Helper: task invite niezalogowany bez account invite
+function showTaskInviteAnon(head, pollType) {
+  setView({ head, text: MSG.taskInviteActive() });
+  clearActions();
+  showEmailInput(false);
+  addAction(MSG.voteLabel(), "gold", () => openVote(pollType));
+  addAction(MSG.declineLabel(), "danger", async () => declineTask());
 }
 
 async function handleTaskInvite(data, user) {
@@ -376,55 +447,42 @@ async function handleTaskInvite(data, user) {
   const isActive = ["pending", "opened"].includes(data.status);
   const hasAccountInvite = Boolean(data.recipient_user_id);
 
-  if (user) {
-    if (hasAccountInvite) {
-      const okTarget = matchesInviteTarget({
-        user,
-        expectedUserId: data.recipient_user_id,
-        expectedEmail: data.recipient_email,
-      });
-  
-      if (!okTarget) {
-        showMismatch(head, data.recipient_email);
-        return;
-      }
-  
-      if (!isActive) {
-        showExpired(head);
-        return;
-      }
-  
-      setView({
-        head,
-        text: MSG.acceptInHub(),
-        hintText: expectedEmail ? `${MSG.invitationRecipient()}: ${expectedEmail}` : "",
-      });
-      clearActions();
-      addAction(MSG.hubLabel(), "gold", redirectToHub);
-      showEmailInput(false);
+  // Case 1: Zalogowany user + account invite
+  if (user && hasAccountInvite) {
+    const okTarget = matchesInviteTarget({
+      user,
+      expectedUserId: data.recipient_user_id,
+      expectedEmail: data.recipient_email,
+    });
+    if (!okTarget) {
+      showMismatch(head, data.recipient_email);
       return;
     }
+    if (!isActive) {
+      showExpired(head);
+      return;
+    }
+    showTaskInviteAccountMatch(head, expectedEmail);
+    return;
   }
 
+  // Case 2: Zalogowany user + email invite (bez account)
   if (user && !hasAccountInvite) {
     if (!isActive) {
       showExpired(head);
       return;
     }
-
-    setView({ head, text: MSG.taskInviteActive() });
-    clearActions();
-    showEmailInput(false);
-    addAction(MSG.voteLabel(), "gold", () => openVote(data.poll_type));
-    addAction(MSG.declineLabel(), "danger", async () => declineTask());
+    showTaskInviteLoggedIn(head, data.poll_type);
     return;
   }
 
+  // Case 3: Niezalogowany — najpierw sprawdzić czy active
   if (!isActive) {
     showExpired(head);
     return;
   }
 
+  // Case 4: Niezalogowany + account invite (wymagaj logowania)
   if (hasAccountInvite) {
     setView({ head, text: MSG.loginToVote() });
     clearActions();
@@ -433,11 +491,8 @@ async function handleTaskInvite(data, user) {
     return;
   }
 
-  setView({ head, text: MSG.taskInviteActive() });
-  clearActions();
-  showEmailInput(false);
-  addAction(MSG.voteLabel(), "gold", () => openVote(data.poll_type));
-  addAction(MSG.declineLabel(), "danger", async () => declineTask());
+  // Case 5: Niezalogowany + email invite
+  showTaskInviteAnon(head, data.poll_type);
 }
 
 async function handleUnsubOwner() {
@@ -457,11 +512,13 @@ async function handleUnsubOwner() {
         if (err || !res?.ok) throw new Error(err?.message || res?.error || "fail");
         setView({ head: MSG.declined(), text: MSG.unsubOwnerDone(res.owner_label || ownerLabel) });
         clearActions();
-      } catch {
+      } catch (e) {
+        console.error("[poll-go] unsubscribe owner failed:", e);
         setView({ head: MSG.error(), text: MSG.unsubOwnerFailed() });
       }
     });
-  } catch {
+  } catch (e) {
+    console.error("[poll-go] unsub owner init failed:", e);
     setView({ head: MSG.error(), text: MSG.openInviteFailed() });
   }
 }
@@ -487,16 +544,22 @@ async function handleUnsubGlobal() {
         if (err || !res?.ok) throw new Error(err?.message || res?.error || "fail");
         setView({ head: MSG.unsubGlobalHeading(), text: MSG.unsubGlobalDone() });
         clearActions();
-      } catch {
+      } catch (e) {
+        console.error("[poll-go] unsub global failed:", e);
         setView({ head: MSG.error(), text: MSG.unsubGlobalFailed() });
       }
     });
-  } catch {
+  } catch (e) {
+    console.error("[poll-go] unsub global init failed:", e);
     setView({ head: MSG.error(), text: MSG.openInviteFailed() });
   }
 }
 
 async function init() {
+  // initI18n() robi dynamic import(pl.js/en.js/uk.js) — bez tego czekania
+  // t()/MSG.X() poniżej mogą wykonać się zanim translations się załaduje,
+  // zwracając surowy klucz zamiast tłumaczenia (patrz t() w translation.js).
+  await i18nReady;
   if (isUnsubOwner) {
     await handleUnsubOwner();
     return;

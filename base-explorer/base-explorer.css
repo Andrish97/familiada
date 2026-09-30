@@ -315,7 +315,9 @@ input,textarea {
     padding: 5px 10px;
     border-radius: 999px;
     border: 1px solid rgba(255,255,255,.14);
-    background: rgba(255,255,255,.06);
+    --btn-tint: rgba(255,255,255,.06);
+  background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, #050914); /* kryjące: css/base.css */
+
     user-select: none;
     white-space: nowrap
 }
@@ -1134,6 +1136,7 @@ tr.row .tag-dot[data-tip]::before {
 }
 
 .toolbar {
+  --under: #090d1a; /* podłoże kryjących przycisków (css/base.css) */
     gap: 10px;
     padding: 10px 12px;
     flex-shrink: 0;
@@ -1160,14 +1163,17 @@ tr.row .tag-dot[data-tip]::before {
     justify-content: center;
     border-radius: 12px;
     border: 1px solid rgba(255,255,255,.14);
-    background: rgba(255,255,255,.04);
+    --btn-tint: rgba(255,255,255,.04);
+  background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, #050914); /* kryjące: css/base.css */
+
     color: rgba(255,255,255,.85);
     cursor: pointer;
     user-select: none
 }
 
 .tbBtn:hover {
-    background: rgba(255,255,255,.07)
+    --btn-tint: rgba(255,255,255,.07);
+  background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, #050914); /* kryjące: css/base.css */
 }
 
 .tbBtn:active {
@@ -1175,12 +1181,16 @@ tr.row .tag-dot[data-tip]::before {
 }
 
 .tbBtn.primary {
-    background: rgba(120,160,255,.16);
+    --btn-tint: rgba(120,160,255,.16);
+  background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, #050914); /* kryjące: css/base.css */
+
     border-color: rgba(120,160,255,.35)
 }
 
 .tbBtn.danger {
-    background: rgba(255,120,120,.1);
+    --btn-tint: rgba(255,120,120,.1);
+  background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, #050914); /* kryjące: css/base.css */
+
     border-color: rgba(255,120,120,.25);
     color: rgba(255,200,200,.92)
 }
@@ -1406,115 +1416,16 @@ tr.row .tag-dot[data-tip]::before {
     gap: 12px
 }
 
-.qBlock .lbl2 {
-    margin-bottom: 6px
-}
-
-.qText {
-    width: 100%;
-    min-height: 92px;
-    resize: vertical;
-    box-sizing: border-box;
-    font-weight: 800;
-    line-height: 1.35
-}
-
-.qAnswersHead {
+/* lista odpowiedzi: css/question-form.css (wspólna z edytorem gry) */
+.qAnswersBlock {
     display: grid;
-    grid-template-columns: minmax(0,1fr) 120px 44px;
-    gap: 10px;
-    padding: 0 4px;
-    opacity: .75;
-    font-size: 11px;
-    letter-spacing: .08em;
-    text-transform: uppercase;
-    user-select: none
+    gap: 10px
 }
 
-.qAnswersHead .c2 {
-    text-align: center
-}
-
-.qAnswers,.qRow {
-    display: grid;
-    border: 1px solid rgba(255,255,255,.12)
-}
-
-.qAnswers {
-    margin-top: 8px;
-    border-radius: 12px;
-    padding: 8px;
-    max-height: 320px;
-    overflow: auto;
-    gap: 8px
-}
-
-.qRow {
-    grid-template-columns: minmax(0,1fr) 120px 44px;
-    gap: 10px;
-    align-items: center;
-    padding: 10px;
-    border-radius: 10px;
-    background: rgba(255,255,255,.04)
-}
-
-.qRow:hover {
-    background: rgba(255,255,255,.06)
-}
-
-.qAnsPts,.qAnsText {
-    width: 100%;
-    box-sizing: border-box;
-    font-weight: 900
-}
-
-.qAnsPts {
-    text-align: center
-}
-
-.qDel {
-    width: 44px;
-    height: 44px;
-    border-radius: 12px;
-    border: 1px solid rgba(255,120,120,.35);
-    background: rgba(255,120,120,.12);
-    color: #fff;
-    font-weight: 1000;
-    cursor: pointer
-}
-
-.qDel:hover {
-    background: rgba(255,120,120,.18)
-}
-
-.qBar {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-top: 10px;
-    flex-wrap: wrap
-}
-
-.qSum {
-    margin-left: auto;
-    display: inline-flex;
-    align-items: baseline;
-    gap: 8px;
-    padding: 8px 12px;
-    border-radius: 999px;
-    border: 1px solid rgba(255,234,166,.28);
-    background: rgba(255,234,166,.1);
-    color: rgba(255,234,166,.95);
-    font-weight: 1000;
-    letter-spacing: .08em;
-    text-transform: uppercase;
-    user-select: none
-}
-
-.qSum.over {
-    border-color: rgba(255,120,120,.4);
-    background: rgba(255,120,120,.1);
-    color: rgba(255,180,180,.95)
+/* 6 odpowiedzi + kafelek bez przewijania na zwykłym ekranie; na niskim
+   przewija się sama lista, "Zapisz" zostaje widoczne */
+.qAnswersBlock .qf-listShell {
+    max-height: min(540px, 48vh)
 }
 
 /* Tooltipy kropek: gdy hover na kropce, podnieś wiersz ponad sticky header */
@@ -1556,7 +1467,9 @@ tr.row .tag-dot[data-tip]::before {
 
 /* Hover – miękki glow + podbicie tła */
 .tbBtn:hover{
-  background: rgba(255,255,255,.10);
+  --btn-tint: rgba(255,255,255,.10);
+  background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, #050914); /* kryjące: css/base.css */
+
   border-color: rgba(120,160,255,.45);
   box-shadow:
     0 0 0 1px rgba(120,160,255,.18) inset,
@@ -1572,7 +1485,9 @@ tr.row .tag-dot[data-tip]::before {
 }
 
 .tbBtn.primary:hover{
-  background: rgba(120,160,255,.28);
+  --btn-tint: rgba(120,160,255,.28);
+  background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, #050914); /* kryjące: css/base.css */
+
   border-color: rgba(120,160,255,.75);
   box-shadow:
     0 0 0 1px rgba(120,160,255,.35) inset,
@@ -1870,9 +1785,4 @@ tr.row .tag-dot[data-tip]::before {
     grid-template-columns: 1fr;
   }
 
-  /* Odpowiedzi w pytaniu — mniejsza siatka */
-  .qAnswersHead,
-  .qRow {
-    grid-template-columns: minmax(0,1fr) 80px 40px;
-  }
 }

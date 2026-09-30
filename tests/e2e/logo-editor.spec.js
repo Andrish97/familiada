@@ -54,6 +54,27 @@ async function pickShape(page, shape) {
 /* ======================= LISTA, NAZWY, IMPORT, EKSPORT ======================= */
 
 test.describe("lista", () => {
+  test("zakładki typów synchronizują URL, hint i skrajne wypustki", async ({ page }) => {
+    await open(page);
+    await expect(page.locator("#tabLogoText")).toHaveClass(/active/);
+    await expect(page.locator("#hint")).toContainText(/klasycznym logo/i);
+    await expect(page.locator(".slot-logo-text .tab-corner-left")).toBeHidden();
+
+    await page.locator("#tabLogoDraw").click();
+    await expect(page).toHaveURL(/tab=draw/);
+    await expect(page.locator("#hint")).toContainText(/rysować/i);
+    await expect(page.locator(".slot-logo-draw .tab-corner-left")).toBeVisible();
+    await expect(page.locator(".slot-logo-draw .tab-corner-right")).toBeVisible();
+
+    await page.locator("#tabLogoImage").click();
+    await expect(page).toHaveURL(/tab=image/);
+    await expect(page.locator("#hint")).toContainText(/obraz/i);
+    await expect(page.locator(".slot-logo-image .tab-corner-right")).toBeHidden();
+
+    await page.goBack();
+    await expect(page.locator("#tabLogoDraw")).toHaveClass(/active/);
+  });
+
   test("logo z bazy widoczne na liście z miniaturą", async ({ page }) => {
     await open(page);
     const id = await L.insertLogo(page, { name: L.uniq("smoke"), type: "GLYPH_30x10", payload: L.textPayload() });
@@ -139,7 +160,10 @@ test.describe("lista", () => {
 
 test.describe("import / eksport", () => {
   async function exportFile(page, id) {
-    await open(page);
+    const row = await L.readLogo(page, id);
+    const sourceMode = String(row?.payload?.source?.mode || "").toUpperCase();
+    const tab = row?.type === "GLYPH_30x10" ? "" : sourceMode === "IMAGE" ? "?tab=image" : "?tab=draw";
+    await L.openList(page, site, `/logo-editor${tab}`);
     await page.locator(`.logoTile[data-key="${id}"]`).click();
     const [dl] = await Promise.all([page.waitForEvent("download"), page.locator("#btnExport").click()]);
     return { name: dl.suggestedFilename(), path: await dl.path() };

@@ -85,12 +85,15 @@ jobs:
               e2e/cross-resource-locks.spec.js
               e2e/editor.spec.js e2e/game-settings.spec.js
               e2e/game-state-realtime-spike.spec.js e2e/polls.spec.js
+              e2e/poll-qr.spec.js e2e/poll-voting.spec.js e2e/poll-go.spec.js
           - name: konto-drugie
             files: e2e/base-explorer.spec.js e2e/bases.spec.js
           - name: goscie-i-statyka
             files: >-
               e2e/account-deletion.spec.js e2e/guest-migration.spec.js
               e2e/static-assets-routing.spec.js e2e/games-rename.spec.js
+          - name: konto-email
+            files: e2e/account-password-email.spec.js
           - name: control2
             files: e2e/control2.spec.js
 
@@ -201,4 +204,15 @@ jobs:
         with:
           name: e2e-failure-screenshots
           path: tests/test-results/
+          retention-days: 7
+
+      # Zrzuty robione celowo przez testy (testInfo.outputPath("shot-*.png"),
+      # np. podgląd nowego wyglądu w editor.spec.js) -- też przy sukcesie.
+      - name: Upload test screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-shots
+          path: tests/test-results/**/shot-*.png
+          if-no-files-found: ignore
           retention-days: 7

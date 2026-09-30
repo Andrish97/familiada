@@ -25,6 +25,7 @@ const fs = require("fs");
 const { test, expect } = require("@playwright/test");
 const { loginAsTestUser, testAccountUsername } = require("./helpers/login");
 const { serveBranchCode } = require("./helpers/branch-code");
+const { clearMailbox, waitForEmail, extractHttpLinks } = require("./helpers/mailbox");
 
 const BASE_URL = "https://www.familiada.online/bases";
 
@@ -121,6 +122,40 @@ async function acquireLockDirect(page, resourceType, resourceId, context = "e2e-
   }, { resourceType, resourceId, tabId, context });
   return { ...data, tabId };
 }
+
+test("@mailbox bazy: udostępnienie z UI wysyła działający link", async ({ page, context }) => {
+  test.setTimeout(120_000);
+  const recipient = testAccountUsername(10);
+  const name = `E2E-MAIL-BASE-${Date.now()}`;
+  let baseId;
+
+  try {
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    baseId = await createBaseDirect(page, name);
+    await clearMailbox(recipient);
+    const after = new Date(Date.now() - 2_000).toISOString();
+
+    await page.goto(BASE_URL, { waitUntil: "domcontentloaded" });
+    await page.waitForLoadState("networkidle");
+    await page.locator("#mineGrid .card", { hasText: name }).click();
+    await page.locator("#btnShare").click();
+    await expect(page.locator("#shareOverlay")).toBeVisible();
+    await page.locator("#shareEmail").fill(recipient);
+    await page.locator("#btnShareAdd").click();
+    await expect(page.locator("#shareMsg")).toContainText(/udostępn|wysłan|dodano/i, { timeout: 20_000 });
+
+    const email = await waitForEmail({ recipient, after, subject: new RegExp(name, "i") });
+    expect(`${email.body || ""}\n${email.body_html || ""}`).toContain(name);
+    const invitation = extractHttpLinks(email).find((link) => {
+      const url = new URL(link);
+      return /\/bases(?:\.html)?$/.test(url.pathname) && url.searchParams.has("share");
+    });
+    expect(invitation, "mail musi zawierać link /bases?share=").toBeTruthy();
+  } finally {
+    if (baseId) await deleteBaseDirect(page, baseId).catch(() => {});
+    await clearMailbox(recipient).catch(() => {});
+  }
+});
 
 /* ================= 1) Codzienna funkcjonalność ================= */
 

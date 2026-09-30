@@ -1,22 +1,22 @@
 // base-explorerjs/page.js
 // Init strony menadżera bazy (warstwa 2)
 
-import { requireAuth } from "../../js/core/auth.js?v=v2026-09-26T16124";
-import { alertModal } from "../../js/core/modal.js?v=v2026-09-26T16124";
-import { getUiLang, initI18n, t, withLangParam } from "../../translation/translation.js?v=v2026-09-26T16124";
-import { initTopbarAccountDropdown } from "../../js/core/topbar-controller.js?v=v2026-09-26T16124";
-import { createState, setRole } from "./state.js?v=v2026-09-26T16124";
-import { renderAll } from "./render.js?v=v2026-09-26T16124";
+import { requireAuth } from "../../js/core/auth.js?v=v2026-09-30T14045";
+import { alertModal } from "../../js/core/modal.js?v=v2026-09-30T14045";
+import { getUiLang, initI18n, t, withLangParam } from "../../translation/translation.js?v=v2026-09-30T14045";
+import { initTopbarAccountDropdown } from "../../js/core/topbar-controller.js?v=v2026-09-30T14045";
+import { VIEW, createState, setRole } from "./state.js?v=v2026-09-30T14045";
+import { renderAll } from "./render.js?v=v2026-09-30T14045";
 import {
   getBaseMeta,
   getBaseRole,
   listCategories,
   listTags,
   listAllQuestions,
-} from "./repo.js?v=v2026-09-26T16124";
-import { wireActions } from "./actions.js?v=v2026-09-26T16124";
-import { initDrawer, disableDragOnTouch } from "./mobile.js?v=v2026-09-26T16124";
-import { handleSheetBack } from "../../js/core/modal-sheet.js?v=v2026-09-26T16124";
+} from "./repo.js?v=v2026-09-30T14045";
+import { wireActions } from "./actions.js?v=v2026-09-30T14045";
+import { initDrawer, disableDragOnTouch } from "./mobile.js?v=v2026-09-30T14045";
+import { handleSheetBack } from "../../js/core/modal-sheet.js?v=v2026-09-30T14045";
 
 /* ================= DOM ================= */
 const btnBack = document.getElementById("btnBack");
@@ -97,6 +97,12 @@ btnBack?.addEventListener("click", () => {
     state.tags = tags;
     state.questions = qs;
 
+    const initialFolderId = new URLSearchParams(location.search).get("folder");
+    if (initialFolderId && cats.some((cat) => cat.id === initialFolderId)) {
+      state.view = VIEW.FOLDER;
+      state.folderId = initialFolderId;
+    }
+
     renderAll(state);
 
     // ===== mobile =====
@@ -105,6 +111,21 @@ btnBack?.addEventListener("click", () => {
 
     // ===== akcje UI (klik folder, search, selekcja) =====
     const api = wireActions({ state });
+    state._syncFolderUrl = true;
+
+    window.addEventListener("popstate", async () => {
+      const folderId = new URLSearchParams(location.search).get("folder");
+      state._syncFolderUrl = false;
+      if (folderId && state.categories.some((cat) => cat.id === folderId)) {
+        state.view = VIEW.FOLDER;
+        state.folderId = folderId;
+      } else {
+        state.view = VIEW.ALL;
+        state.folderId = null;
+      }
+      state._syncFolderUrl = true;
+      await api.refreshList();
+    });
 
     window.addEventListener("i18n:lang", async () => {
       await api.refreshList();
