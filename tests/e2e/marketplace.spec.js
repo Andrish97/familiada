@@ -87,9 +87,10 @@ test("anonim: lista, wyszukiwanie, filtr, sortowanie, URL, klawiatura i i18n", a
   await page.keyboard.press("Enter");
   await expect(page.locator("#gameDetailOverlay")).toBeVisible();
   await expect(page).toHaveURL(/\/marketplace\/game\//);
-
+  await page.keyboard.press("Escape");
   await page.locator(".lang-btn").click();
   await page.locator('.lang-option[data-lang="en"]').click();
+  await page.locator("#browseGrid .mkt-card").first().click();
   await expect(page.locator("#btnAddLibrary")).toHaveText("Add to my games");
   await expect(page.locator("#detailQuestions .mkt-pts").first()).toContainText("pts");
   await page.keyboard.press("Escape");
