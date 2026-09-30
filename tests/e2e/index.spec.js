@@ -179,12 +179,13 @@ test("gość pozostaje na stronie głównej i jest w całości sprzątany", asyn
   }
 });
 
-test("zalogowany użytkownik trafia do biblioteki gier, a fałszywa sesja nie daje dostępu", async ({ page, context }) => {
+test("zalogowany użytkownik trafia do biblioteki gier", async ({ page, context }) => {
   await loginAsTestUser(page, context, { username: testAccountUsername(1) });
   await page.goto(INDEX_URL, { waitUntil: "domcontentloaded" });
   await expect(page).toHaveURL(/\/games(?:\?|$)/, { timeout: 20_000 });
-  await page.evaluate(() => window.__sbClient.auth.signOut());
+});
 
+test("fałszywa lub nieprawidłowa sesja nie daje dostępu", async ({ page, context }) => {
   await context.addInitScript(() => {
     localStorage.setItem("sb-api-auth-token", JSON.stringify({
       access_token: "invalid", refresh_token: "invalid", expires_at: 4_102_444_800,

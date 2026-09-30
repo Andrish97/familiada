@@ -63,6 +63,28 @@ function updateInternalLinks() {
   });
 }
 
+function updateStructuredFaq() {
+  const schema = [...document.querySelectorAll('script[type="application/ld+json"]')]
+    .find((node) => {
+      try { return JSON.parse(node.textContent)?.["@type"] === "FAQPage"; }
+      catch { return false; }
+    });
+  if (!schema) return;
+  const mainEntity = [...document.querySelectorAll(".faq-item")].map((item) => ({
+    "@type": "Question",
+    name: item.querySelector(".faq-q")?.textContent?.trim() || "",
+    acceptedAnswer: {
+      "@type": "Answer",
+      text: item.querySelector(".faq-a")?.textContent?.trim() || "",
+    },
+  })).filter((item) => item.name && item.acceptedAnswer.text);
+  schema.textContent = JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity,
+  });
+}
+
 /* ---------- images (lang) ---------- */
 
 function buildLangImgUrl(lang, file) {
@@ -362,12 +384,14 @@ document.addEventListener("DOMContentLoaded", async () => {
   document.querySelector('.topbar')?.classList.add('topbar-ready');
   applyTranslations();
   updateInternalLinks();
+  updateStructuredFaq();
 
   const lang = getUiLang();
   switchLandingImages(lang);
   window.addEventListener("i18n:lang", (e) => {
     switchLandingImages(e.detail.lang);
     updateInternalLinks();
+    updateStructuredFaq();
     document.querySelectorAll(".tile-shot").forEach((shot) => {
       const title = shot.querySelector(".shot-img")?.alt || "";
       shot.setAttribute("aria-label", t("home.imageViewer.open", { title }));

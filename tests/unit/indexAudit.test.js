@@ -44,3 +44,12 @@ test("polski interfejs używa nazwy Strona główna", () => {
   assert.equal(pl.privacy.backToHome, "Strona główna");
   assert.equal(pl.marketplace.nav.backHome, "Strona główna");
 });
+
+test("FAQ opisuje aktualny tryb gościa i Gry Społeczności tak samo w PL/EN/UK", () => {
+  for (const dictionary of [pl, en, uk]) {
+    assert.match(dictionary.home.faq.q5.a, /serwer|server|сервер/i);
+    assert.match(dictionary.home.faq.q8.a, /Społeczności|Community|Спільноти/i);
+  }
+  assert.doesNotMatch(pl.home.faq.q4.a, /pełną funkcjonalność/i);
+  assert.match(pl.home.faq.q4.a, /e-mail i hasło/);
+});
