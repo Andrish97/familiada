@@ -1119,6 +1119,14 @@ body.tools-fullscreen .tools-frame-wrap iframe{
   background: rgba(255,255,255,.07);
 }
 
+.stat-box.stat-box-static{
+  cursor: default;
+}
+
+.stat-box.stat-box-static:hover{
+  background: rgba(255,255,255,.03);
+}
+
 .stat-label{
   font-size: 11px;
   opacity: .7;

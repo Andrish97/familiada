@@ -149,8 +149,12 @@ const els = {
   statPlayedIssues: document.getElementById("statPlayedIssues"),
   statPollGamesTotal: document.getElementById("statPollGamesTotal"),
   statPollGamesTypes: document.getElementById("statPollGamesTypes"),
+  statPollActive: document.getElementById("statPollActive"),
   statPollResponses: document.getElementById("statPollResponses"),
   statPollSharing: document.getElementById("statPollSharing"),
+  statSubscriptionsTotal: document.getElementById("statSubscriptionsTotal"),
+  statSubscriptionsSummary: document.getElementById("statSubscriptionsSummary"),
+  statSubscriptionsOther: document.getElementById("statSubscriptionsOther"),
   statBasesTotal: document.getElementById("statBasesTotal"),
   statBasesGrowth: document.getElementById("statBasesGrowth"),
   statLogosTotal: document.getElementById("statLogosTotal"),
@@ -1109,9 +1113,13 @@ async function loadAdminStats({ silent = false } = {}) {
     if (!pollData.ok) throw new Error(pollData.error || "Nie udało się załadować statystyk ankiet");
     const polls = pollData.stats;
     if (els.statPollGamesTotal) els.statPollGamesTotal.textContent = polls.games.total;
-    if (els.statPollGamesTypes) els.statPollGamesTypes.textContent = `Tekstowe: ${polls.games.text} | Punktowe: ${polls.games.points} | Otwarte: ${polls.games.open}`;
+    if (els.statPollGamesTypes) els.statPollGamesTypes.textContent = `Tekstowe: ${polls.games.text} | Punktowe: ${polls.games.points}`;
+    if (els.statPollActive) els.statPollActive.textContent = `Aktywne z głosami: ${polls.games.active_with_votes} | Aktywne: ${polls.games.active}`;
     if (els.statPollResponses) els.statPollResponses.textContent = `Odpowiedzi: ${polls.responses.total} | 7 dni: ${polls.responses.last_7d} | Tokeny głosujących: ${polls.responses.voters}`;
-    if (els.statPollSharing) els.statPollSharing.textContent = `Udostępnione: ${polls.sharing.polls} ankiet | Zaproszenia: ${polls.sharing.completed_tasks}/${polls.sharing.tasks} | Subskrybenci: ${polls.sharing.active_subscribers} (+${polls.sharing.pending_subscribers} oczek.)`;
+    if (els.statPollSharing) els.statPollSharing.textContent = `Udostępnione ankiety: ${polls.sharing.polls} | Wypełnione zaproszenia: ${polls.sharing.completed_tasks}/${polls.sharing.tasks}`;
+    if (els.statSubscriptionsTotal) els.statSubscriptionsTotal.textContent = polls.subscriptions.total;
+    if (els.statSubscriptionsSummary) els.statSubscriptionsSummary.textContent = `Aktywne: ${polls.subscriptions.active} | Oczekujące: ${polls.subscriptions.pending}`;
+    if (els.statSubscriptionsOther) els.statSubscriptionsOther.textContent = `Odrzucone: ${polls.subscriptions.declined} | Anulowane: ${polls.subscriptions.cancelled}`;
 
     if (els.statBasesTotal) els.statBasesTotal.textContent = data.bases.total;
     if (els.statBasesGrowth) els.statBasesGrowth.textContent = `Dziś: ${data.bases.new_today} | 7 dni: ${data.bases.new_7d} | 30 dni: ${data.bases.new_30d}`;
