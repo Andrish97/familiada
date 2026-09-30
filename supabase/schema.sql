@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 3UZRIxkWNcYkNfzNXx1a8cIy195A0rtvqaWcdxX6M1Co373GNj2GkuReXRmsqke
+\restrict oiAsx92eyaoJywblIbsFHU6faWP8Ig6RGaaeHZ8vneNcEwuSC4cYM5bCrJtf5Gm
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -3678,6 +3678,8 @@ BEGIN
     FROM eligible_games g
     LEFT JOIN answer_counts a ON a.game_id = g.id
     LEFT JOIN task_counts t ON t.game_id = g.id
+    WHERE COALESCE(a.responses, 0) > 0
+       OR COALESCE(t.shared_tasks, 0) > 0
     ORDER BY g.created_at DESC
     LIMIT GREATEST(1, LEAST(COALESCE(p_limit, 200), 500))
   ) AS row_data;
@@ -16155,5 +16157,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 3UZRIxkWNcYkNfzNXx1a8cIy195A0rtvqaWcdxX6M1Co373GNj2GkuReXRmsqke
+\unrestrict oiAsx92eyaoJywblIbsFHU6faWP8Ig6RGaaeHZ8vneNcEwuSC4cYM5bCrJtf5Gm
 
