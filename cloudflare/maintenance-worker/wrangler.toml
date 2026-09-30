@@ -14,7 +14,7 @@ SUPABASE_URL = "https://api.familiada.online"
 
 [observability]
 [observability.logs]
-enabled = false
+enabled = true
 invocation_logs = true
 
 [observability.traces]
