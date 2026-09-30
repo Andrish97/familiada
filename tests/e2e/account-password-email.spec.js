@@ -12,6 +12,7 @@ test.describe.configure({ mode: "serial" });
 
 async function openLoginWithCaptchaBypass(page, context) {
   const secret = process.env.E2E_BYPASS_SECRET;
+  await context.addInitScript(() => localStorage.setItem("uiLang", "pl"));
   await context.setExtraHTTPHeaders({ "X-E2E-Token": generateE2EToken(secret) });
   await page.goto(LOGIN_URL, { waitUntil: "networkidle" });
   await context.setExtraHTTPHeaders({});
