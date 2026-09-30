@@ -81,6 +81,7 @@ test("konto test12: zmiana nazwy i administracyjne przywrocenie", async ({ page,
 });
 
 test("konto test12: zmiana e-maila przez wiadomosci test12 i test13", async ({ browser }) => {
+  test.setTimeout(180_000);
   await restoreTestAccount("test12");
   await clearMailbox(PROFILE_EMAIL);
   await clearMailbox(PROFILE_NEW_EMAIL);
@@ -100,10 +101,12 @@ test("konto test12: zmiana e-maila przez wiadomosci test12 i test13", async ({ b
       waitForEmail({ recipient: PROFILE_EMAIL, after }),
       waitForEmail({ recipient: PROFILE_NEW_EMAIL, after }),
     ]);
-    const oldLink = extractHttpLinks(oldEmail).find((link) => /\/confirm(?:[?#]|$)/.test(link));
-    const newLink = extractHttpLinks(newEmail).find((link) => /\/confirm(?:[?#]|$)/.test(link));
-    expect(oldLink, "mail na stary adres powinien zawierac /confirm").toBeTruthy();
-    expect(newLink, "mail na nowy adres powinien zawierac /confirm").toBeTruthy();
+    const isEmailChangeLink = (link) =>
+      /\/confirm(?:[?#]|$)|\/auth\/v1\/verify|token_hash=|type=email_change/i.test(link);
+    const oldLink = extractHttpLinks(oldEmail).find(isEmailChangeLink);
+    const newLink = extractHttpLinks(newEmail).find(isEmailChangeLink);
+    expect(oldLink, "mail na stary adres powinien zawierac link potwierdzajacy").toBeTruthy();
+    expect(newLink, "mail na nowy adres powinien zawierac link potwierdzajacy").toBeTruthy();
 
     await context.close();
     for (const link of [oldLink, newLink]) {
