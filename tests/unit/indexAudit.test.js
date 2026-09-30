@@ -36,6 +36,12 @@ test("index: sesję weryfikuje backend, a nie niezaufany localStorage", () => {
   assert.match(js, /location\.replace\(withLangParam\("games"\)\)/);
 });
 
+test("serveBranchCode mapuje główną trasę / na index.html z brancha", () => {
+  const helper = read("tests/e2e/helpers/branch-code.js");
+  assert.match(helper, /!rel && pages\.includes\("index"\)/);
+  assert.match(helper, /path\.join\(REPO_ROOT, "index\.html"\)/);
+});
+
 test("polski interfejs używa nazwy Strona główna", () => {
   const files = ["index.html", "login.html", "404.html", "translation/pl.js"]
     .map(read).join("\n");

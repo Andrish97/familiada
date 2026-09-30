@@ -26,6 +26,9 @@ const MIME = {
 
 function localFileFor(pathname, pages) {
   const rel = decodeURIComponent(pathname).replace(/^\/+/, "");
+  // Strona główna jest serwowana pod "/", a nie "/index". Bez tego
+  // pages:["index"] cicho testowało produkcyjny HTML zamiast pliku z brancha.
+  if (!rel && pages.includes("index")) return path.join(REPO_ROOT, "index.html");
   const page = rel.replace(/\.html$/, "");
   if (pages.includes(page)) return path.join(REPO_ROOT, `${page}.html`);
   // Trasy typu /marketplace/game/<slug> są obsługiwane przez tę samą stronę
