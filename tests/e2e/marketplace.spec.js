@@ -76,13 +76,20 @@ test("anonim: lista, wyszukiwanie, filtr, sortowanie, URL, klawiatura i i18n", a
   await expect(page.locator("#browseGrid .mkt-card-title").first()).toContainText(title);
 
   const lang = (await page.locator("#browseGrid .mkt-lang-badge").first().innerText()).toLowerCase();
-  await page.locator("#langFilter").selectOption(lang);
+  const langFilter = page.locator("#langFilter");
+  await expect(langFilter).toHaveClass(/ui-select/);
+  await langFilter.locator(".ui-select-btn").click();
+  await langFilter.locator(`.ui-select-item[data-value="${lang}"]`).click();
   await expect(page.locator("#browseGrid .mkt-lang-badge").first()).toHaveText(lang.toUpperCase());
-  await page.locator("#sortSelect").selectOption("title");
+  const sortSelect = page.locator("#sortSelect");
+  await expect(sortSelect).toHaveClass(/ui-select/);
+  await sortSelect.locator(".ui-select-btn").click();
+  await sortSelect.locator('.ui-select-item[data-value="title"]').click();
   await expect(page).toHaveURL(/sort=title/);
 
   await page.locator("#searchInput").fill("");
-  await page.locator("#langFilter").selectOption("all");
+  await langFilter.locator(".ui-select-btn").click();
+  await langFilter.locator('.ui-select-item[data-value="all"]').click();
   await page.locator("#browseGrid .mkt-card").first().focus();
   await page.keyboard.press("Enter");
   await expect(page.locator("#gameDetailOverlay")).toBeVisible();
@@ -90,6 +97,7 @@ test("anonim: lista, wyszukiwanie, filtr, sortowanie, URL, klawiatura i i18n", a
   await page.keyboard.press("Escape");
   await page.locator(".lang-btn").click();
   await page.locator('.lang-option[data-lang="en"]').click();
+  await expect(page.locator("#sortSelect .ui-select-label")).toHaveText("Title A–Z");
   await page.locator("#browseGrid .mkt-card").first().click();
   await expect(page.locator("#btnAddLibrary")).toHaveText("Add to my games");
   await expect(page.locator("#detailQuestions .mkt-pts").first()).toContainText("pts");

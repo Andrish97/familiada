@@ -31,6 +31,8 @@ let detailGameId  = null;
 let detailGame    = null;
 let submitLang    = "pl";
 let submitGameUiSelect = null;
+let langFilterUiSelect = null;
+let sortUiSelect = null;
 let browseRequest = 0;
 let detailRequest = 0;
 let browseLoading = false;
@@ -118,6 +120,54 @@ function showView(name) {
   els.viewMine.hidden   = name !== "mine";
   if (els.btnGoGames)  els.btnGoGames.hidden  = name !== "browse";
   if (els.btnBackBrowse) els.btnBackBrowse.hidden = name !== "mine";
+}
+
+function langFilterOptions() {
+  return [
+    { value: "all", label: t("marketplace.filterAll") },
+    { value: "pl", label: "Polski" },
+    { value: "en", label: "English" },
+    { value: "uk", label: "Українська" },
+  ];
+}
+
+function sortOptions() {
+  return [
+    { value: "recommended", label: t("marketplace.sortRecommended") },
+    { value: "rating", label: t("marketplace.sortRating") },
+    { value: "popular", label: t("marketplace.sortPopular") },
+    { value: "newest", label: t("marketplace.sortNewest") },
+    { value: "title", label: t("marketplace.sortTitle") },
+  ];
+}
+
+function refreshBrowseSelectLabels() {
+  langFilterUiSelect?.setOptions(langFilterOptions());
+  sortUiSelect?.setOptions(sortOptions());
+}
+
+function initBrowseUiSelects() {
+  langFilterUiSelect = initUiSelect(els.langFilter, {
+    options: langFilterOptions(),
+    value: currentLangFilter,
+    onChange: async (value) => {
+      if (value === currentLangFilter) return;
+      currentLangFilter = value;
+      syncBrowseParams();
+      await loadBrowse({ reset: true });
+    },
+  });
+
+  sortUiSelect = initUiSelect(els.sortSelect, {
+    options: sortOptions(),
+    value: currentSort,
+    onChange: async (value) => {
+      if (value === currentSort) return;
+      currentSort = value;
+      syncBrowseParams();
+      await loadBrowse({ reset: true });
+    },
+  });
 }
 
 /* =========================================================
@@ -778,17 +828,6 @@ function wireEvents() {
   });
 
   els.btnLoadMore?.addEventListener("click", () => loadBrowse());
-  els.langFilter?.addEventListener("change", async () => {
-    currentLangFilter = els.langFilter.value;
-    syncBrowseParams();
-    await loadBrowse({ reset: true });
-  });
-  els.sortSelect?.addEventListener("change", async () => {
-    currentSort = els.sortSelect.value;
-    syncBrowseParams();
-    await loadBrowse({ reset: true });
-  });
-
   // Detail modal
   els.btnDetailClose?.addEventListener("click", closeDetail);
   els.gameDetailOverlay?.addEventListener("click", e => {
@@ -864,8 +903,8 @@ function restoreBrowseParams() {
   currentLangFilter = ["pl", "en", "uk"].includes(filter) ? filter : "all";
   currentSort = ["recommended", "rating", "popular", "newest", "title"].includes(sort) ? sort : "recommended";
   if (els.searchInput) els.searchInput.value = currentSearch;
-  if (els.langFilter) els.langFilter.value = currentLangFilter;
-  if (els.sortSelect) els.sortSelect.value = currentSort;
+  langFilterUiSelect?.setValue(currentLangFilter, { silent: true });
+  sortUiSelect?.setValue(currentSort, { silent: true });
 }
 
 /* =========================================================
@@ -875,6 +914,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   const getUserP = getUser().catch(() => null); // start równolegle z initI18n
   await initI18n({ withSwitcher: true });
   document.documentElement.classList.remove('page-loading');
+  initBrowseUiSelects();
+  window.addEventListener("i18n:lang", refreshBrowseSelectLabels);
 
   currentUser = await getUserP;
   isGuest = !currentUser || isGuestUser(currentUser);

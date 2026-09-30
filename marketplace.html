@@ -76,21 +76,22 @@
           data-i18n-placeholder="marketplace.searchPlaceholder"
           placeholder="Szukaj gry…"
           autocomplete="off"/>
-        <label class="mkt-control-label" for="langFilter" data-i18n="marketplace.filterLabel">Język</label>
-        <select class="inp mkt-filter" id="langFilter">
-          <option value="all" data-i18n="marketplace.filterAll">Wszystkie</option>
-          <option value="pl">Polski</option>
-          <option value="en">English</option>
-          <option value="uk">Українська</option>
-        </select>
-        <label class="mkt-control-label" for="sortSelect" data-i18n="marketplace.sortLabel">Sortowanie</label>
-        <select class="inp mkt-filter" id="sortSelect">
-          <option value="recommended" data-i18n="marketplace.sortRecommended">Polecane</option>
-          <option value="rating" data-i18n="marketplace.sortRating">Najlepiej oceniane</option>
-          <option value="popular" data-i18n="marketplace.sortPopular">Najczęściej dodawane</option>
-          <option value="newest" data-i18n="marketplace.sortNewest">Najnowsze</option>
-          <option value="title" data-i18n="marketplace.sortTitle">Tytuł A–Z</option>
-        </select>
+        <label class="mkt-control-label" id="langFilterLabel" data-i18n="marketplace.filterLabel">Język</label>
+        <div class="ui-select mkt-filter" id="langFilter">
+          <button class="btn inp ui-select-btn mkt-filter-btn" type="button" aria-labelledby="langFilterLabel langFilterValue" aria-haspopup="listbox" aria-expanded="false">
+            <span class="ui-select-label" id="langFilterValue">Wszystkie</span>
+            <span class="ui-select-caret" aria-hidden="true"><i class="ico" data-icon="caret-down"></i></span>
+          </button>
+          <div class="ui-select-menu" role="listbox"></div>
+        </div>
+        <label class="mkt-control-label" id="sortSelectLabel" data-i18n="marketplace.sortLabel">Sortowanie</label>
+        <div class="ui-select mkt-filter" id="sortSelect">
+          <button class="btn inp ui-select-btn mkt-filter-btn" type="button" aria-labelledby="sortSelectLabel sortSelectValue" aria-haspopup="listbox" aria-expanded="false">
+            <span class="ui-select-label" id="sortSelectValue">Polecane</span>
+            <span class="ui-select-caret" aria-hidden="true"><i class="ico" data-icon="caret-down"></i></span>
+          </button>
+          <div class="ui-select-menu" role="listbox"></div>
+        </div>
       </div>
 
       <div class="mkt-grid" id="browseGrid" data-skel-step></div>
