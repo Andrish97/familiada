@@ -1,16 +1,16 @@
 // js/pages/marketplace.js
 
-import { sb } from "../core/supabase.js?v=v2026-09-30T10375";
-import { getUser } from "../core/auth.js?v=v2026-09-30T10375";
-import { isGuestUser } from "../core/guest-mode.js?v=v2026-09-30T10375";
-import { initI18n, t, getUiLang, withLangParam, applyTranslations } from "../../translation/translation.js?v=v2026-09-30T10375";
-import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-09-30T10375";
-import { exportGame } from "./games-import-export.js?v=v2026-09-30T10375";
-import { initUiSelect } from "../core/ui-select.js?v=v2026-09-30T10375";
-import { confirmModal } from "../core/modal.js?v=v2026-09-30T10375";
-import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../core/modal-sheet.js?v=v2026-09-30T10375";
-import "../core/contact-modal.js?v=v2026-09-30T10375";
-import { icon, iconText, starRating } from "../core/icons.js?v=v2026-09-30T10375";
+import { sb } from "../core/supabase.js?v=v2026-09-30T14045";
+import { getUser } from "../core/auth.js?v=v2026-09-30T14045";
+import { isGuestUser } from "../core/guest-mode.js?v=v2026-09-30T14045";
+import { initI18n, t, getUiLang, withLangParam, applyTranslations } from "../../translation/translation.js?v=v2026-09-30T14045";
+import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-09-30T14045";
+import { exportGame } from "./games-import-export.js?v=v2026-09-30T14045";
+import { initUiSelect } from "../core/ui-select.js?v=v2026-09-30T14045";
+import { confirmModal } from "../core/modal.js?v=v2026-09-30T14045";
+import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../core/modal-sheet.js?v=v2026-09-30T14045";
+import "../core/contact-modal.js?v=v2026-09-30T14045";
+import { icon, iconText, starRating } from "../core/icons.js?v=v2026-09-30T14045";
 
 /* =========================================================
    Constants
