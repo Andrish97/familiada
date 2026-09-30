@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict ezSn3FAqWGVEhetNpVENYUhWjFAJrpisooNL4yH3RIkuJAG2H3dzGtTmqggnasY
+\restrict 3UZRIxkWNcYkNfzNXx1a8cIy195A0rtvqaWcdxX6M1Co373GNj2GkuReXRmsqke
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -3729,8 +3729,11 @@ BEGIN
     GROUP BY t.game_id
   ),
   subs AS (
-    SELECT count(*) FILTER (WHERE s.status = 'active') AS active,
-           count(*) FILTER (WHERE s.status = 'pending') AS pending
+    SELECT count(*) AS total,
+           count(*) FILTER (WHERE s.status = 'active') AS active,
+           count(*) FILTER (WHERE s.status = 'pending') AS pending,
+           count(*) FILTER (WHERE s.status = 'declined') AS declined,
+           count(*) FILTER (WHERE s.status = 'cancelled') AS cancelled
     FROM public.poll_subscriptions s
     WHERE NOT (s.owner_id = ANY(excluded_ids))
   )
@@ -3739,23 +3742,35 @@ BEGIN
       'total', (SELECT count(*) FROM eligible_games),
       'text', (SELECT count(*) FROM eligible_games WHERE type = 'poll_text'),
       'points', (SELECT count(*) FROM eligible_games WHERE type = 'poll_points'),
-      'open', (SELECT count(*) FROM eligible_games WHERE status = 'poll_open')
+      'open', (SELECT count(*) FROM eligible_games WHERE status = 'poll_open'),
+      'active', (SELECT count(*) FROM eligible_games WHERE status = 'poll_open'),
+      'active_with_votes', (
+        SELECT count(*) FROM eligible_games g
+        WHERE g.status = 'poll_open'
+          AND EXISTS (
+            SELECT 1
+            FROM answer_rows a
+            JOIN public.poll_sessions s ON s.id = a.poll_session_id
+            WHERE a.game_id = g.id AND s.game_id = g.id AND s.is_open
+          )
+      )
     ),
     'responses', jsonb_build_object(
       'total', (SELECT count(*) FROM answer_rows),
       'last_7d', (SELECT count(*) FROM answer_rows WHERE created_at >= now() - interval '7 days'),
       'voters', (SELECT count(*) FROM voters)
     ),
-    'sessions', jsonb_build_object(
-      'total', (SELECT count(*) FROM public.poll_sessions s JOIN eligible_games g ON g.id = s.game_id),
-      'open', (SELECT count(*) FROM public.poll_sessions s JOIN eligible_games g ON g.id = s.game_id WHERE s.is_open)
-    ),
     'sharing', jsonb_build_object(
       'polls', (SELECT count(DISTINCT game_id) FROM task_rollup),
       'tasks', COALESCE((SELECT sum(tasks) FROM task_rollup), 0),
-      'completed_tasks', COALESCE((SELECT sum(completed) FROM task_rollup), 0),
-      'active_subscribers', (SELECT active FROM subs),
-      'pending_subscribers', (SELECT pending FROM subs)
+      'completed_tasks', COALESCE((SELECT sum(completed) FROM task_rollup), 0)
+    ),
+    'subscriptions', jsonb_build_object(
+      'total', (SELECT total FROM subs),
+      'active', (SELECT active FROM subs),
+      'pending', (SELECT pending FROM subs),
+      'declined', (SELECT declined FROM subs),
+      'cancelled', (SELECT cancelled FROM subs)
     )
   ) INTO result;
 
@@ -16140,5 +16155,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict ezSn3FAqWGVEhetNpVENYUhWjFAJrpisooNL4yH3RIkuJAG2H3dzGtTmqggnasY
+\unrestrict 3UZRIxkWNcYkNfzNXx1a8cIy195A0rtvqaWcdxX6M1Co373GNj2GkuReXRmsqke
 
