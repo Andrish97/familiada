@@ -65,7 +65,7 @@ for (const [type, target] of [['poll_text', 'poll-text'], ['poll_points', 'poll-
     const recipientContext = await browser.newContext({ serviceWorkers: 'block' });
     const ownerPage = await ownerContext.newPage();
     const recipientPage = await recipientContext.newPage();
-    const recipient = testAccountUsername(6);
+    const recipient = testAccountUsername(9);
     let gameId;
 
     try {
@@ -83,12 +83,12 @@ for (const [type, target] of [['poll_text', 'poll-text'], ['poll_points', 'poll-
       await expect(ownerPage.locator('#pollsListDesktop .hub-item', { hasText: name })).toBeVisible({ timeout: 20_000 });
       await ownerPage.locator('#pollsListDesktop .hub-item', { hasText: name }).click();
       await ownerPage.locator('#btnShare').click();
-      const recipientRow = ownerPage.locator('#shareList .hub-share-item', { hasText: /test6/i });
+      const recipientRow = ownerPage.locator('#shareList .hub-share-item', { hasText: /test9/i });
       await expect(recipientRow).toBeVisible();
       await recipientRow.locator('input[type="checkbox"]').check();
       await ownerPage.locator('#btnShareSave').click();
 
-      const email = await waitForEmail({ recipient, after, subject: new RegExp(name, 'i') });
+      const email = await waitForEmail({ recipient, after, subject: /Zaproszenie do ankiety|Voting invitation/i });
       expect(`${email.body || ''}\n${email.body_html || ''}`).toContain(name);
       const invitation = extractHttpLinks(email).find((link) => {
         const url = new URL(link);
