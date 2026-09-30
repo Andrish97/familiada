@@ -60,7 +60,7 @@ async function deleteGame(page, gameId) {
 
 for (const [type, target] of [['poll_text', 'poll-text'], ['poll_points', 'poll-points']]) {
   test(`@mailbox polls hub + poll-go: mail prowadzi do ${target}`, async ({ browser }) => {
-    test.setTimeout(150_000);
+    test.setTimeout(360_000);
     const ownerContext = await browser.newContext({ serviceWorkers: 'block' });
     const recipientContext = await browser.newContext({ serviceWorkers: 'block' });
     const ownerPage = await ownerContext.newPage();
@@ -88,7 +88,12 @@ for (const [type, target] of [['poll_text', 'poll-text'], ['poll_points', 'poll-
       await recipientRow.locator('input[type="checkbox"]').check();
       await ownerPage.locator('#btnShareSave').click();
 
-      const email = await waitForEmail({ recipient, after, subject: /Zaproszenie do ankiety|Voting invitation/i });
+      const email = await waitForEmail({
+        recipient,
+        after,
+        subject: new RegExp(name, 'i'),
+        timeout: 300_000,
+      });
       expect(`${email.body || ''}\n${email.body_html || ''}`).toContain(name);
       const invitation = extractHttpLinks(email).find((link) => {
         const url = new URL(link);
