@@ -485,3 +485,60 @@ https://github.com/Andrish97/familiada/actions/runs/36692596832. Dwa wcześniejs
 przebiegi diagnostyczne ujawniły rzeczywiste nadpisanie etykiety powrotu i
 błąd historii; osobno poprawiono błędny krok testu próbujący klikać kontrolkę
 pod modalem. Wynik na finalnym `main` znajduje się w raporcie końcowym/Actions.
+
+## Index / Strona główna — zrobione (2026-09-30)
+
+Testy: `tests/e2e/index.spec.js` (8 scenariuszy, zablokowany service worker,
+`serveBranchCode(context, { pages: ["index"] })`, prawdziwy backend i konta).
+Zakres obejmuje anonima, gościa, pełne konto, nieprawidłową sesję, kontrakt
+`get_app_rating_stats()`, wolne odpowiedzi, główne odnośniki, historię,
+PL/EN/UK, mobilny viewport, klawiaturę i focus. Gość utworzony przez test jest
+zawsze usuwany przez `guest_discard_current()` w `finally`.
+
+Realne błędy aplikacji i treści:
+
+- Inline-script w `<head>` ufał obiektowi przypominającemu sesję w
+  `localStorage` i przekierowywał do `/games` bez `auth.getUser()`. Wygasły,
+  uszkodzony lub ręcznie zapisany token był traktowany jak zalogowanie, a
+  sprawdzenie profilu i nazwy użytkownika pomijane. Teraz decyzję podejmuje
+  wyłącznie zweryfikowany użytkownik z `getUser()`.
+- Landing pozostawał ukryty klasą `page-loading` aż do zakończenia kontroli
+  sesji. Wolny/niedostępny Auth oznaczał pustą stronę. I18n oraz interfejs
+  uruchamiają się teraz niezależnie, a niekrytyczna sesja i statystyki w tle.
+- Tylko pierwszy CTA zachowywał język. Linki do Gier Społeczności, podłączania
+  urządzenia, polityki prywatności i link w treści gubiły `lang`. Wszystkie
+  lokalne linki aktualizują się po każdej zmianie języka.
+- `setUiLang()` pozwalało wolniejszemu, starszemu importowi słownika nadpisać
+  nowszy wybór przy szybkim PL → EN → UK; `pageshow` tworzył nieobsłużoną
+  obietnicę. Dodano identyfikator żądania i prawidłowe `await`/`catch`.
+- Dwanaście podglądów obrazów działało tylko myszą. Dodano role, etykiety,
+  Enter/Spację, widoczny focus, fokus w dialogu, Escape i powrót fokusu.
+  Wielokrotne kliknięcie nie otwiera dialogu ponownie.
+- Dynamiczne tytuły CTA i etykieta nawigacji sekcji były na stałe po polsku.
+  Dodano równoważne klucze PL/EN/UK. Usunięto martwy, wyłącznie polski kod
+  teasera i żartów konsolowych, dla którego nie było elementów w HTML.
+- FAQ błędnie twierdziło, że dane gościa są przechowywane w przeglądarce, że
+  gość ma pełną funkcjonalność, konto wymaga tylko e-maila oraz że nie ma
+  gotowych zestawów. Faktycznie gość ma tymczasowe konto i dane w backendzie,
+  lecz dostęp zależy od lokalnej sesji; udostępnianie baz, subskrypcje i
+  funkcje społecznościowe są wyłączone; rejestracja używa e-maila i hasła;
+  Gry Społeczności pozwalają dodać gotową grę do biblioteki. Poprawiono
+  PL/EN/UK oraz synchronizację JSON-LD z wyrenderowanym FAQ. Zgodnie z decyzją
+  właściciela nie zmieniano tez ani zrzutów dotyczących produkcyjnego starego
+  Control.
+
+Backend: `get_app_rating_stats()` jest SQL `STABLE`, zwraca
+`TABLE(avg_stars numeric, total_count bigint)`, czyli w supabase-js tablicę
+jednego wiersza. SELECT na `app_ratings` jest publiczny przez RLS; RPC działa
+dla anonima, gościa i pełnego konta. UI odrzuca brak wiersza oraz częściowe,
+nienumeryczne lub poza-zakresowe dane. Audyt nie wymagał migracji.
+
+Błąd infrastruktury testowej: `serveBranchCode(... pages:["index"])` nie
+mapował trasy `/` na `index.html`, więc dwa pierwsze przebiegi cicho testowały
+produkcyjny HTML. Dodano mapowanie `/` → branchowy `index.html` i regresję
+jednostkową. Pierwszy fail zawierał też wyścig w teście po wylogowaniu;
+scenariusze pełnej i fałszywej sesji rozdzielono.
+
+Wyniki na branchu `audyt-index`: jednostkowe 166/166; ograniczony E2E fail
+#36698569570 (6/7, izolacja testu), fail #36699453202 (7/8, ujawnione
+testowanie `/` z produkcji), green #36700622309 (8/8 na kodzie brancha).
