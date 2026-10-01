@@ -46,6 +46,11 @@
 //   17. Zerwanie i ponowne podłączenie — wszystkie trzy urządzenia tracą
 //       połączenie naraz w środku rundy, operator odzyskuje je po kolei
 //       przez modal kropki statusu, gra działa dalej na świeżych kartach.
+//   18. Timery (3s decyzja w rundach / 15s-20s gracza w finale) wracają do
+//       stanu SPRZED swojego startu, nie do stanu "po", gdy Control zastaje
+//       je już wygasłe przy wznowieniu (zamknięcie/przeładowanie w trakcie
+//       odliczania) — bez naliczenia X / bez trwałego zużycia jednorazowej
+//       szansy gracza.
 //
 // Każdy test tworzy i kasuje własną grę testową — niezależne od siebie,
 // można je uruchamiać pojedynczo (--grep) przy diagnozowaniu awarii.
@@ -1873,6 +1878,130 @@ test("control2: zerwanie połączenia wszystkich trzech urządzeń naraz i ponow
     await expect(page.getByText("Bank: 40")).toBeVisible({ timeout: 10000 });
 
     expect(errors, "żadne z urządzeń (stare ani świeżo podłączone) nie powinno rzucić błędu JS: " + errors.join(" | ")).toEqual([]);
+  } finally {
+    for (const ctx of contexts) await ctx.close().catch(() => {});
+    await deleteGame(page, game.id);
+  }
+});
+
+// ===== 18. Timery wracają do stanu SPRZED startu, gdy Control zastaje je
+// już wygasłe przy wznowieniu =====
+//
+// Zgłoszone wprost: "rozłącz w trakcie timerów, albo zamknij Control w
+// trakcie timerów -- czy one wrócą do stanu przed, a nie po, bo tak
+// powinny". control2/js/engine.js's CANCEL_TIMER3/CANCEL_TIMER (patrz ich
+// komentarze) implementują dokładnie to -- a page.reload() PO upłynięciu
+// endsAt jest najprostszą, deterministyczną symulacją "Control było
+// zamknięte/rozłączone, gdy czas minął" (ten sam mechanizm co test #2,
+// tylko z wyczekaniem na realne wygaśnięcie zegarka przed przeładowaniem,
+// zamiast od razu).
+
+test("control2: zegarek 3s w rundach wraca do stanu SPRZED startu (bez naliczenia X), gdy Control zamknięte podczas odliczania", async ({ page, browser }, testInfo) => {
+  await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
+  const game = await makeGame(page, `E2E-CONTROL2-TIMER3REVERT-${Date.now()}`, { roundQuestions: [TWO_QUESTIONS[0]] });
+  const contexts = [];
+  try {
+    const buzzerPage = await openAnon(browser, contexts, `/buzzer2?id=${game.id}&key=${game.share_key_buzzer}`, "buzzer", []);
+    await openAnon(browser, contexts, `/display2?id=${game.id}&key=${game.share_key_display}`, "display", []);
+    await openAnon(browser, contexts, `/host2?id=${game.id}&key=${game.share_key_host}`, "host", []);
+    await page.goto(`/control2?id=${game.id}`, { waitUntil: "domcontentloaded" });
+    await expect(page.locator(".stepTitle")).toHaveText("Urządzenia", { timeout: 15000 });
+    await expect(page.locator("#dotDisplay")).toHaveClass(/\bok\b/, { timeout: 15000 });
+    await expect(page.locator("#dotHost")).toHaveClass(/\bok\b/, { timeout: 15000 });
+    await page.getByRole("button", { name: "Dalej" }).click();
+    await page.getByRole("button", { name: "Gotowe — przejdź do rozgrywki" }).click();
+    await page.getByRole("button", { name: "Rozpocznij grę" }).click();
+    await page.getByRole("button", { name: "Rozpocznij rundę" }).click();
+
+    await expect(buzzerPage.getByRole("button", { name: "Przycisk A" })).toBeEnabled({ timeout: 10000 });
+    await buzzerPage.getByRole("button", { name: "Przycisk A" }).click();
+    await expect(page.getByRole("button", { name: "Zatwierdź: Alfa" })).toBeEnabled({ timeout: 10000 });
+    await armAndConfirm(page.getByRole("button", { name: "Zatwierdź: Alfa" }));
+    await revealAnswer(page, 1); // A trafia -> przejmuje kontrolę (PLAY), 0 X na koncie
+
+    await expect(xTile(page)).toBeVisible({ timeout: 10000 });
+    await expect(xTile(page)).toContainText("0 / 3");
+
+    // Start zegarka to zwykłe, pojedyncze kliknięcie -- tylko jego ręczne
+    // ZATRZYMANIE na żywo jest zaznacz->potwierdź (timer3Tile w ui.js).
+    await clickConfirmed(page.getByRole("button", { name: "Rozpocznij odliczanie 3s" }));
+    await expect(page.locator('[data-timer-role="timer3"]')).toBeVisible({ timeout: 10000 });
+
+    // Czekamy, aż endsAt FAKTYCZNIE minie, dopiero potem przeładowujemy --
+    // to jest właśnie "Control zamknięte w trakcie odliczania", nie
+    // przerwanie go w połowie.
+    await page.waitForTimeout(3600);
+    await page.reload({ waitUntil: "domcontentloaded" });
+
+    // CANCEL_TIMER3 (nie EXPIRE_TIMER3): zegarek znika, ale licznik X
+    // zostaje DOKŁADNIE tam, gdzie był PRZED jego startem -- "0 / 3", nigdy
+    // naliczone pudło za czas, kiedy nikt nie patrzył.
+    await expect(xTile(page)).toBeVisible({ timeout: 15000 });
+    await expect(xTile(page)).toContainText("0 / 3");
+    await expect(page.locator('[data-timer-role="timer3"]')).toHaveCount(0);
+
+    // Dowód, że to nie tylko wygląd po jednym renderze -- zegarek da się
+    // uruchomić ponownie, nie został zablokowany w pośrednim stanie.
+    await expect(page.getByRole("button", { name: "Rozpocznij odliczanie 3s" })).toBeVisible({ timeout: 10000 });
+  } finally {
+    for (const ctx of contexts) await ctx.close().catch(() => {});
+    await deleteGame(page, game.id);
+  }
+});
+
+test("control2: zegarek gracza w finale (15s) wraca do stanu SPRZED startu (usedP1 cofnięte), gdy Control zamknięte podczas odliczania", async ({ page, browser }, testInfo) => {
+  await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
+  const game = await makeGame(page, `E2E-CONTROL2-FINALTIMERREVERT-${Date.now()}`, {
+    roundQuestions: [{ ord: 1, text: "Pytanie testowe (runda)", answers: [{ ord: 1, text: "Odp. warta 300", fixed_points: 300 }] }],
+    finalAnswerPts: 50,
+  });
+  const contexts = [];
+  try {
+    const buzzerPage = await openAnon(browser, contexts, `/buzzer2?id=${game.id}&key=${game.share_key_buzzer}`, "buzzer", []);
+    await openAnon(browser, contexts, `/display2?id=${game.id}&key=${game.share_key_display}`, "display", []);
+    await openAnon(browser, contexts, `/host2?id=${game.id}&key=${game.share_key_host}`, "host", []);
+    await page.goto(`/control2?id=${game.id}`, { waitUntil: "domcontentloaded" });
+    await expect(page.locator(".stepTitle")).toHaveText("Urządzenia", { timeout: 15000 });
+    await page.getByRole("button", { name: "Dalej" }).click();
+    await expect(page.locator(".stepTitle")).toHaveText("Podsumowanie", { timeout: 10000 });
+    await page.getByRole("button", { name: "Gotowe — przejdź do rozgrywki" }).click();
+    await page.getByRole("button", { name: "Rozpocznij grę" }).click();
+    await page.getByRole("button", { name: "Rozpocznij rundę" }).click();
+
+    await expect(buzzerPage.getByRole("button", { name: "Przycisk A" })).toBeEnabled({ timeout: 10000 });
+    await buzzerPage.getByRole("button", { name: "Przycisk A" }).click();
+    await expect(page.getByRole("button", { name: "Zatwierdź: Alfa" })).toBeEnabled({ timeout: 10000 });
+    await armAndConfirm(page.getByRole("button", { name: "Zatwierdź: Alfa" }));
+    await revealAnswer(page, 1); // jedyna odpowiedź, 300 pkt -> próg trafiony
+    await clickX(page);
+    await clickX(page);
+    await clickX(page);
+    await page.getByRole("button", { name: "Zakończ rundę" }).click();
+
+    await expect(page.locator(".c2-stepper")).toContainText("Finał", { timeout: 22000 });
+    await page.getByRole("button", { name: "Rozpocznij finał" }).click();
+    await expect(page.locator(".c2-stepper")).toContainText("Finał — gracz 1, wpisywanie", { timeout: 22000 });
+
+    const p1Inputs = page.locator("#app input[type=text]");
+    await expect(p1Inputs).toHaveCount(5, { timeout: 10000 });
+    for (let i = 0; i < 5; i++) await p1Inputs.nth(i).fill("Odp. finałowa");
+
+    await armAndConfirm(page.getByRole("button", { name: "Rozpocznij odliczanie (15s)" }));
+    await expect(page.locator('[data-timer-role="final"]')).toBeVisible({ timeout: 10000 });
+
+    // Czekamy aż 15s FAKTYCZNIE miną, dopiero potem przeładowujemy --
+    // "Control zamknięte w trakcie odliczania", nie przerwanie na żywo.
+    await page.waitForTimeout(15500);
+    await page.reload({ waitUntil: "domcontentloaded" });
+
+    // CANCEL_TIMER (nie EXPIRE_TIMER): zegarek zniknął, ale usedP1 wraca do
+    // false -- "Rozpocznij odliczanie (15s)" da się kliknąć PONOWNIE,
+    // zamiast trwale zablokowanego "Czas wykorzystany" (co by oznaczało, że
+    // EXPIRE_TIMER jednak się odpalił, zużywając jednorazową szansę gracza
+    // za czas, kiedy nikt nie patrzył).
+    await expect(page.locator('[data-timer-role="final"]')).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "Czas wykorzystany" })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "Rozpocznij odliczanie (15s)" })).toBeVisible({ timeout: 15000 });
   } finally {
     for (const ctx of contexts) await ctx.close().catch(() => {});
     await deleteGame(page, game.id);
