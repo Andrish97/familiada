@@ -27,14 +27,22 @@
 //   10. Mnożnik rundy — runda 4. z ×2 faktycznie przemnaża bank.
 //   11. Wyścig dwóch przycisków Buzzera naciśniętych w tej samej chwili —
 //       tylko jeden zaakceptowany, oba urządzenia się zgadzają.
+//   11b. Ponów naciśnięcie (RETRY_DUEL) — odrzuca błędne zgłoszenie,
+//       Buzzer otwiera się na nowo.
 //   12. Wyciszenie dźwięku — po kliknięciu Mute żaden klucz SFX się nie
 //       odtwarza mimo normalnie grającej akcji.
+//   12b. Dźwięk ze źródła Wyświetlacz — odblokowanie, głośność z ustawień,
+//       chwilowe mute w rundzie.
 //   13. Zmiana języka propaguje się do Hosta, w tym samą TREŚĆ tytułu fazy
 //       (nie tylko chrome strony) — regresja na dzisiejszą naprawę i18n.
 //   14. Modal ustawień gry (js/pages/game-settings2.js) — zmiana nazwy
 //       drużyny faktycznie odświeża zagnieżdżony podgląd Wyświetlacza
 //       (/display2?preview=1) — regresja na naprawę martwego podglądu w
 //       trybie modalu.
+//   15. Blokada logo — Control czeka, aż logo-editor.js zwolni logo
+//       referencowane przez grę, wznawia się sam po zwolnieniu.
+//   16. Udostępnianie urządzenia przez e-mail — realny mail + link, który
+//       faktycznie łączy (@mailbox, osobny od zwykłego szybkiego cyklu).
 //
 // Każdy test tworzy i kasuje własną grę testową — niezależne od siebie,
 // można je uruchamiać pojedynczo (--grep) przy diagnozowaniu awarii.
@@ -49,7 +57,8 @@
 // narysował (SVG dot-matrix, nie tekst).
 
 const { test, expect } = require("@playwright/test");
-const { loginAsPooledTestUser, isKnownNoiseText, isKnownNoiseUrl } = require("./helpers/login");
+const { loginAsPooledTestUser, loginAsTestUser, testAccountUsername, isKnownNoiseText, isKnownNoiseUrl } = require("./helpers/login");
+const { clearMailbox, waitForEmail, extractHttpLinks } = require("./helpers/mailbox");
 
 test.setTimeout(150_000);
 
@@ -1687,5 +1696,62 @@ test("control2: zablokowany, gdy logo gry jest edytowane w logo-editorze — i w
     await releaseLogoLock(page, logoId, lockTabId);
     await page.evaluate(async (id) => { await window.__sbClient.from("games").delete().eq("id", id); }, gameId);
     await page.evaluate(async (id) => { await window.__sbClient.from("user_logos").delete().eq("id", id); }, logoId);
+  }
+});
+
+// ===== 16. Udostępnianie urządzenia przez e-mail =====
+//
+// Jedyne dotychczasowe pokrycie tej funkcji (control2/js/shareDevice.js)
+// żyło WYŁĄCZNIE w tests/e2e/record-playthrough.js (scenariusz 8) — realne
+// asercje, ale uruchamiane tylko ręcznie, w ramach wolnego workflow
+// produkującego wideo (e2e-record.yml), nigdy w zwykłym, szybkim cyklu
+// (e2e-tests.yml). Ten test to ten sam przebieg, bez nagrywania: operator
+// (test1) udostępnia urządzenie Prowadzącego drugiemu, PRAWDZIWEMU kontu
+// (test10 — przeciwny koniec puli testX niż loginAsPooledTestUser używa
+// gdzie indziej, żeby nigdy nie kolidować z operatorem niezależnie od tego,
+// który worker to odpala), czeka na realny e-mail (ten sam
+// tests/e2e/helpers/mailbox.js co bases.spec.js's "@mailbox" testy) i
+// dowodzi, że link z maila faktycznie łączy -- NOWY, niezalogowany kontekst
+// przeglądarki otwiera go i dostaje działającą stronę Prowadzącego, bez
+// żadnego logowania (sam share_key_host w URL-u wystarcza).
+test("@mailbox control2: udostępnianie urządzenia (Prowadzący) przez e-mail -- link z maila faktycznie łączy", async ({ page, context, browser }, testInfo) => {
+  test.setTimeout(120_000);
+  const recipient = testAccountUsername(10);
+  await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+  const game = await makeGame(page, `E2E-CONTROL2-SHAREMAIL-${Date.now()}`);
+  const contexts = [];
+  try {
+    await clearMailbox(recipient);
+    const after = new Date(Date.now() - 2_000).toISOString();
+
+    await page.goto(`/control2?id=${game.id}`, { waitUntil: "domcontentloaded" });
+    await expect(page.locator(".stepTitle")).toHaveText("Urządzenia", { timeout: 15000 });
+
+    await page.locator('[data-device="host"]').getByRole("button", { name: "Udostępnij" }).click();
+    await expect(page.locator("#shareDeviceOverlay")).toBeVisible({ timeout: 10000 });
+    await page.locator("#shareDeviceEmail").fill(recipient);
+    await page.getByRole("button", { name: "Dodaj" }).click();
+    // Potwierdzenie zapisu w UI (RPC share_device) -- niezależne od tego,
+    // czy/kiedy realny e-mail dotrze.
+    await expect(page.locator("#shareDeviceCurrentContent")).toContainText(recipient, { timeout: 15000 });
+
+    const email = await waitForEmail({ recipient, after, subject: /Udostępniono urządzenie/, timeout: 60_000 });
+    const links = extractHttpLinks(email).filter((u) => u.includes("/host2"));
+    expect(links.length, "mail musi zawierać działający link do /host2").toBeGreaterThan(0);
+
+    await page.locator("#btnShareDeviceClose").click();
+
+    // Odbiorca klika link z maila -- zupełnie NOWY, niezalogowany kontekst
+    // (nie ten sam user/sesja co operator) -- dowód, że share_key_host w
+    // URL-u wystarcza, bez żadnego logowania.
+    const recipientContext = await browser.newContext();
+    contexts.push(recipientContext);
+    const recipientPage = await recipientContext.newPage();
+    await recipientPage.goto(links[0], { waitUntil: "domcontentloaded" });
+    await expect(recipientPage.locator("#app")).toBeAttached({ timeout: 15000 });
+  } finally {
+    for (const ctx of contexts) await ctx.close().catch(() => {});
+    await clearMailbox(recipient).catch(() => {});
+    await deleteGame(page, game.id);
   }
 });
