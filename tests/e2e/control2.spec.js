@@ -43,6 +43,9 @@
 //       referencowane przez grę, wznawia się sam po zwolnieniu.
 //   16. Udostępnianie urządzenia przez e-mail — realny mail + link, który
 //       faktycznie łączy (@mailbox, osobny od zwykłego szybkiego cyklu).
+//   17. Zerwanie i ponowne podłączenie — wszystkie trzy urządzenia tracą
+//       połączenie naraz w środku rundy, operator odzyskuje je po kolei
+//       przez modal kropki statusu, gra działa dalej na świeżych kartach.
 //
 // Każdy test tworzy i kasuje własną grę testową — niezależne od siebie,
 // można je uruchamiać pojedynczo (--grep) przy diagnozowaniu awarii.
@@ -1752,6 +1755,122 @@ test("@mailbox control2: udostępnianie urządzenia (Prowadzący) przez e-mail -
   } finally {
     for (const ctx of contexts) await ctx.close().catch(() => {});
     await clearMailbox(recipient).catch(() => {});
+    await deleteGame(page, game.id);
+  }
+});
+
+// ===== 17. Zerwanie i ponowne podłączenie urządzeń =====
+//
+// Jedyne dotychczasowe pokrycie tego scenariusza (zamknięcie WSZYSTKICH
+// trzech urządzeń naraz w środku rundy, ponowne podłączenie przez modal
+// kropki statusu w topbarze) żyło wyłącznie w tests/e2e/record-playthrough.js
+// (scenariusz 6) -- znowu: realne, ale tylko w ramach wolnego workflow
+// nagrywania wideo, zero pokrycia w szybkim cyklu. To jest dokładnie ten
+// scenariusz, po który cała przebudowa Control na wspólną tabelę stanu
+// (game_state) powstała -- dowód, że stan gry przeżywa rozłączenie każdego
+// urządzenia niezależnie od Control, bez żadnej ręcznej resynchronizacji
+// poza ponownym wejściem na URL urządzenia.
+
+// Modal kropki statusu (control2/js/app.js's showQrModal) koduje URL
+// urządzenia jako obrazek qrserver.com's `data=` query param dla Hosta/
+// Buzzera, a dla Wyświetlacza jako bezpośredni link "Otwórz" (#qrModalOpen).
+async function readDeviceUrlFromModal(control, kind) {
+  if (kind === "display") return control.locator("#qrModalOpen").getAttribute("href");
+  const src = await control.locator("#qrModalImg").getAttribute("src");
+  return decodeURIComponent(new URL(src).searchParams.get("data") || "");
+}
+
+// Pełny cykl "operator odzyskuje rozłączone urządzenie": klik na kropkę
+// statusu w topbarze (klikalna PRZEZ CAŁĄ GRĘ, nie tylko na kroku
+// Urządzeń), odczyt linku z modala, otwarcie go w ZUPEŁNIE NOWYM kontekście
+// przeglądarki (świeży localStorage/deviceId -- wierniejsza symulacja
+// realnego ponownego podłączenia niż zwykły reload tej samej, wciąż
+// istniejącej karty), zamknięcie modala, czekanie na zieloną kropkę.
+async function reconnectViaModal(browser, control, kind, contexts, errors) {
+  const rowId = `#dot${kind[0].toUpperCase()}${kind.slice(1)}Row`;
+  await control.locator(rowId).click();
+  const url = await readDeviceUrlFromModal(control, kind);
+  if (!url) throw new Error(`modal (${kind}) nie pokazał żadnego URL-a do ponownego podłączenia`);
+  const ctx = await browser.newContext();
+  contexts.push(ctx);
+  const p = await ctx.newPage();
+  trackErrors(p, kind, errors);
+  instrumentAnon(p, kind);
+  await p.goto(url, { waitUntil: "domcontentloaded" });
+  await control.locator("#qrModalClose").click();
+  await expect(control.locator(`#dot${kind[0].toUpperCase()}${kind.slice(1)}`)).toHaveClass(/\bok\b/, { timeout: 15000 });
+  return p;
+}
+
+test("control2: zerwanie połączenia wszystkich trzech urządzeń naraz i ponowne podłączenie przez modal", async ({ page, browser }, testInfo) => {
+  await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
+  const game = await makeGame(page, `E2E-CONTROL2-RECONNECT-${Date.now()}`, { roundQuestions: TWO_QUESTIONS });
+  const contexts = [];
+  const errors = [];
+  try {
+    trackErrors(page, "control", errors);
+    let displayPage = await openAnon(browser, contexts, `/display2?id=${game.id}&key=${game.share_key_display}`, "display", errors);
+    const hostPage = await openAnon(browser, contexts, `/host2?id=${game.id}&key=${game.share_key_host}`, "host", errors);
+    let buzzerPage = await openAnon(browser, contexts, `/buzzer2?id=${game.id}&key=${game.share_key_buzzer}`, "buzzer", errors);
+
+    await page.goto(`/control2?id=${game.id}`, { waitUntil: "domcontentloaded" });
+    await expect(page.locator(".stepTitle")).toHaveText("Urządzenia", { timeout: 15000 });
+    await expect(page.locator("#dotDisplay")).toHaveClass(/\bok\b/, { timeout: 15000 });
+    await expect(page.locator("#dotHost")).toHaveClass(/\bok\b/, { timeout: 15000 });
+    await expect(page.locator("#dotBuzzer")).toHaveClass(/\bok\b/, { timeout: 15000 });
+
+    await page.getByRole("button", { name: "Dalej" }).click();
+    await page.getByRole("button", { name: "Gotowe — przejdź do rozgrywki" }).click();
+    await page.getByRole("button", { name: "Rozpocznij grę" }).click();
+    await page.getByRole("button", { name: "Rozpocznij rundę" }).click();
+
+    await expect(buzzerPage.getByRole("button", { name: "Przycisk A" })).toBeEnabled({ timeout: 10000 });
+    await buzzerPage.getByRole("button", { name: "Przycisk A" }).click();
+    await expect(page.getByRole("button", { name: "Zatwierdź: Alfa" })).toBeEnabled({ timeout: 10000 });
+    await armAndConfirm(page.getByRole("button", { name: "Zatwierdź: Alfa" }));
+    await clearDisplayLog(displayPage);
+    await revealAnswer(page, 1); // odp. #1 (top) -> wygrywa pojedynek, reszta rundy zostaje NIEODSŁONIĘTA
+
+    // ===== Zerwanie wszystkich trzech naraz =====
+    const toClose = contexts.splice(0, contexts.length); // zdejmij z listy sprzątanej w finally -- zamykamy je TU, świadomie
+    await Promise.all(toClose.map((ctx) => ctx.close()));
+    await expect(page.locator("#dotDisplay")).toHaveClass(/\bbad\b/, { timeout: 15000 });
+    await expect(page.locator("#dotHost")).toHaveClass(/\bbad\b/, { timeout: 15000 });
+    await expect(page.locator("#dotBuzzer")).toHaveClass(/\bbad\b/, { timeout: 15000 });
+
+    // ===== Ponowne podłączenie po kolei, przez modal =====
+    displayPage = await reconnectViaModal(browser, page, "display", contexts, errors);
+    await reconnectViaModal(browser, page, "host", contexts, errors);
+    buzzerPage = await reconnectViaModal(browser, page, "buzzer", contexts, errors);
+
+    // Świeżo podłączony Display musi pokazać PRAWDZIWY, aktualny obraz gry
+    // (odkrytą odpowiedź #1) -- nie pusty/czarny ekran. Dowód realnego
+    // wznowienia stanu, nie tylko zielonej kropki w topbarze.
+    const setAllCalls = await getDisplayCalls(displayPage, "api.rounds.setAll");
+    expect(setAllCalls.length, "Display po ponownym podłączeniu musi przynajmniej raz namalować planszę rund").toBeGreaterThan(0);
+    expect(setAllCalls.at(-1).args[0].rows[0]).toMatchObject({ text: "Odpowiedź A", pts: "40" });
+
+    // ===== Dokończenie rundy 1 na świeżo podłączonych urządzeniach =====
+    await revealAnswer(page, 2);
+    await revealAnswer(page, 3);
+    await page.getByRole("button", { name: "Zakończ rundę" }).click();
+    await expect(page.getByText("Alfa: 90")).toBeVisible({ timeout: 10000 });
+
+    // ===== Runda 2, w CAŁOŚCI na ponownie podłączonym Buzzerze -- dowód, że
+    // nowe urządzenie nie tylko świeci na zielono (presence), ale faktycznie
+    // bierze udział w rozgrywce (realny zapis przez game_state_buzzer_press).
+    await expect(page.locator(".c2-stepper")).toContainText("Runda 2", { timeout: 22000 });
+    await page.getByRole("button", { name: "Rozpocznij rundę" }).click();
+    await expect(buzzerPage.getByRole("button", { name: "Przycisk B" })).toBeEnabled({ timeout: 10000 });
+    await buzzerPage.getByRole("button", { name: "Przycisk B" }).click();
+    await expect(page.getByRole("button", { name: "Zatwierdź: Beta" })).toBeEnabled({ timeout: 10000 });
+    await armAndConfirm(page.getByRole("button", { name: "Zatwierdź: Beta" }));
+    await revealAnswer(page, 1);
+    await expect(page.getByText("Bank: 40")).toBeVisible({ timeout: 10000 });
+
+    expect(errors, "żadne z urządzeń (stare ani świeżo podłączone) nie powinno rzucić błędu JS: " + errors.join(" | ")).toEqual([]);
+  } finally {
+    for (const ctx of contexts) await ctx.close().catch(() => {});
     await deleteGame(page, game.id);
   }
 });
