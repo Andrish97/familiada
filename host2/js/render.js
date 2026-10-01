@@ -21,7 +21,7 @@
 // to wcześniej na sztywno po polsku, więc zmiana języka w Control (patrz
 // shared/gameStateShape.js's settings.uiLang) nie miała żadnego wpływu na
 // treść, którą prowadzący faktycznie czyta.
-import { t } from "../../translation/translation.js?v=v2026-09-30T21413";
+import { t } from "../../translation/translation.js?v=v2026-10-01T07182";
 
 const $ = (id) => document.getElementById(id);
 const rh = (key, vars) => t(`control.roundsHost.${key}`, vars);
