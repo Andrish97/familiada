@@ -1,14 +1,14 @@
 // js/pages/polls.js
-import { sb } from "../core/supabase.js?v=v2026-10-01T19054";
-import { requireAuth } from "../core/auth.js?v=v2026-10-01T19054";
-import { alertModal, confirmModal } from "../core/modal.js?v=v2026-10-01T19054";
+import { sb } from "../core/supabase.js?v=v2026-10-01T19425";
+import { requireAuth } from "../core/auth.js?v=v2026-10-01T19425";
+import { alertModal, confirmModal } from "../core/modal.js?v=v2026-10-01T19425";
 import QRCode from "https://cdn.jsdelivr.net/npm/qrcode@1.5.3/+esm";
-import { initI18n, t, withLangParam, getUiLang } from "../../translation/translation.js?v=v2026-10-01T19054";
-import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-10-01T19054";
-import { guardResourceLock } from "../core/resource-lock.js?v=v2026-10-01T19054";
-import { validateGame, gameRuleErrorMessage, RULES } from "../core/game-validate.js?v=v2026-10-01T19054";
-import "../core/contact-modal.js?v=v2026-10-01T19054";
-import { icon, iconText } from "../core/icons.js?v=v2026-10-01T19054";
+import { initI18n, t, withLangParam, getUiLang } from "../../translation/translation.js?v=v2026-10-01T19425";
+import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-10-01T19425";
+import { guardResourceLock } from "../core/resource-lock.js?v=v2026-10-01T19425";
+import { validateGame, gameRuleErrorMessage, RULES } from "../core/game-validate.js?v=v2026-10-01T19425";
+import "../core/contact-modal.js?v=v2026-10-01T19425";
+import { icon, iconText } from "../core/icons.js?v=v2026-10-01T19425";
 
 // initI18n is called at the start of DOMContentLoaded (see below)
 
