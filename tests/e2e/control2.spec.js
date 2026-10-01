@@ -1735,8 +1735,12 @@ test("@mailbox control2: udostępnianie urządzenia (Prowadzący) przez e-mail -
     await page.locator("#shareDeviceEmail").fill(recipient);
     await page.getByRole("button", { name: "Dodaj" }).click();
     // Potwierdzenie zapisu w UI (RPC share_device) -- niezależne od tego,
-    // czy/kiedy realny e-mail dotrze.
-    await expect(page.locator("#shareDeviceCurrentContent")).toContainText(recipient, { timeout: 15000 });
+    // czy/kiedy realny e-mail dotrze. shareDevice.js's `current.recipient_
+    // username || current.recipient_email` -- skoro test10 ma ustawiony
+    // username, modal pokazuje SAMĄ nazwę użytkownika ("test10"), nie pełny
+    // e-mail -- real finding z pierwszego przebiegu CI, nie zgadywane.
+    const recipientUsername = recipient.split("@")[0];
+    await expect(page.locator("#shareDeviceCurrentContent")).toContainText(recipientUsername, { timeout: 15000 });
 
     const email = await waitForEmail({ recipient, after, subject: /Udostępniono urządzenie/, timeout: 60_000 });
     const links = extractHttpLinks(email).filter((u) => u.includes("/host2"));
