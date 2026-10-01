@@ -105,6 +105,33 @@ test("timer P1: START_TIMER ustawia endsAt +15s, EXPIRE_TIMER zatrzymuje i gra t
   assert.equal(store.state.step, "f_p1_entry", "brak auto-przejścia do mapowania — operator klika ręcznie");
 });
 
+test("timer P1: CANCEL_TIMER (zastany wygasły przy wznowieniu Control) cofa zegarek CAŁKOWICIE, łącznie z usedP1 -- w odróżnieniu od EXPIRE_TIMER", async () => {
+  let t = 1_000_000;
+  const { store, dispatch } = makeEngine({}, () => t);
+  await dispatch({ type: "START_FINAL" });
+  await dispatch({ type: "START_TIMER", phase: "P1" });
+  t += 20_000; // operator "nieobecny" -- rozłączony/zamknięty Control, czas mija bez niczyjej decyzji
+
+  await dispatch({ type: "CANCEL_TIMER" });
+  assert.equal(store.state.final.runtime.timer.running, false);
+  assert.equal(store.state.final.runtime.timer.endsAt, 0);
+  assert.equal(store.state.final.runtime.timer.usedP1, false, "cofnięcie, nie zużycie: gracz dostaje nienaruszoną szansę po powrocie operatora");
+  assert.notEqual(store.commits.at(-1).soundCueKey, "time_over", "brak dźwięku -- to cofnięcie, nie 'koniec czasu'");
+
+  const result = await dispatch({ type: "START_TIMER", phase: "P1" });
+  assert.notEqual(result, null, "usedP1 cofnięte -- da się wystartować ponownie, w odróżnieniu od EXPIRE_TIMER");
+  assert.equal(store.state.final.runtime.timer.running, true);
+});
+
+test("timer: CANCEL_TIMER jest no-opem, gdy nic nie odlicza", async () => {
+  const { store, dispatch } = makeEngine();
+  await dispatch({ type: "START_FINAL" });
+  const revBefore = store.state.rev;
+  const result = await dispatch({ type: "CANCEL_TIMER" });
+  assert.equal(result, null);
+  assert.equal(store.state.rev, revBefore);
+});
+
 test("timer P2: 20s zamiast 15s", async () => {
   let t = 500_000;
   const { store, dispatch } = makeEngine({}, () => t);

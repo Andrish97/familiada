@@ -566,8 +566,12 @@ const REDUCERS = {
     return sameStep(state);
   },
 
-  // Wywoływane zarówno na żywo, jak i przy "dogonieniu" timera, który
-  // wygasł podczas nieobecności Control (store.hydrate(), plan sekcja 4).
+  // Wywoływane TYLKO na żywo — operator ma otwartą kartę Control i
+  // obserwuje, jak czas realnie upływa (scheduleFinalTimerWatch w app.js)
+  // — "koniec czasu" to coś, co faktycznie się wydarzyło na jego oczach,
+  // więc usedP1/usedP2 zostaje zużyte (zgodne z regułą "jednorazowa
+  // szansa"). Dla zastanego już wygasłego zegarka PRZY WZNOWIENIU (nikt
+  // nie patrzył) patrz CANCEL_TIMER niżej — inny reducer, inne zachowanie.
   async EXPIRE_TIMER(state) {
     const t = state.final.runtime.timer;
     if (!t.running) return null;
@@ -575,6 +579,33 @@ const REDUCERS = {
     return { ...sameStep(state), soundCueKey: "time_over" };
     // Brak auto-przejścia do mapowania — operator klika "dalej" ręcznie
     // (START_MAPPING/NEXT_QUESTION), dokładnie jak w oryginale.
+  },
+
+  // Odpowiednik CANCEL_TIMER3 dla zegarka finału — patrz jego komentarz
+  // wyżej. Zgłoszone: "Najlepiej rozłącz w trakcie timerów, albo zamknij
+  // Control w trakcie timerów — czy one wrócą do stanu przed, a nie po, bo
+  // tak powinny". Wcześniej final.runtime.timer zastany już wygasły PRZY
+  // WZNOWIENIU szedł NAPRZÓD (EXPIRE_TIMER, "koniec czasu", usedP1/usedP2
+  // zostaje zużyte na zawsze) — ale operator, który w tej chwili miał
+  // rozłączone/zamknięte urządzenie, nie mógł tego ani zaobserwować, ani
+  // obsłużyć, dokładnie tak samo jak przy timer3. Zużycie jednorazowej
+  // szansy gracza za czas, kiedy nikt nie patrzył, byłoby tak samo
+  // niesprawiedliwe jak naliczenie X za timer3 w tej samej sytuacji — ten
+  // reducer więc w pełni cofa stan do sprzed startu zegarka, ŁĄCZNIE z
+  // jednorazową flagą used{Phase}, żeby gracz po powrocie operatora dostał
+  // dokładnie taką samą, nienaruszoną szansę, jaką miał przed zniknięciem
+  // Control. Używane WYŁĄCZNIE przy "dogonieniu" zastanego wygasłego
+  // zegarka (control2/js/app.js's applyExpiredTimersOnResume) — świadome,
+  // ręczne zatrzymanie NA ŻYWO (toggleFinalTimer) i naturalne wygaśnięcie
+  // na żywo (scheduleFinalTimerWatch) zostają przy EXPIRE_TIMER, bo to
+  // odrębny przypadek: "zdążyłem to zobaczyć", nie "zniknąłem i nie wiem co
+  // się stało".
+  async CANCEL_TIMER(state) {
+    const t = state.final.runtime.timer;
+    if (!t.running) return null;
+    const usedKey = t.phase === "P1" ? "usedP1" : "usedP2";
+    state.final.runtime.timer = { ...t, running: false, phase: null, endsAt: 0, [usedKey]: false };
+    return sameStep(state);
   },
 
   // ---- F2-F6/F9-F13: rozstrzygnięcie dopasowania + dwuetapowe odsłonięcie ----
