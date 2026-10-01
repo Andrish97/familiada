@@ -637,49 +637,62 @@ export function createUI({ root, emit }) {
   // kontrolę"). Nieaktywny kafel korzysta z tego samego :disabled co reszta
   // siatki (wyszarzony, nieklikalny placeholder) — nic tu nie jest osobnym,
   // bespoke komponentem.
+  // Zgłoszone: oba tryby (physicalBuzzer/normalny Buzzer) mają identyczny
+  // układ ekranu — rząd 1: dwie drużyny (w trybie physicalBuzzer klikalne,
+  // operator nimi WSKAZUJE kto nacisnął; w trybie normalnym to czysty
+  // wskaźnik duel.lastPressed, nieklikalny — zaznaczenia dokonuje realny
+  // Buzzer, nie kliknięcie na tym ekranie); rząd 2: JEDEN wspólny przycisk
+  // "Zatwierdź: <wskazana drużyna>", zaznacz → potwierdź (ACCEPT_BUZZ to
+  // konsekwentna akcja, przyznaje kontrolę); rząd 3: "Ponów naciśnięcie"
+  // (RETRY_DUEL, pojedynczy klik — bezpieczne, odwracalne otwarcie Buzzera
+  // na nowo) WYŁĄCZNIE w trybie normalnym, gdy jest co odrzucić — w trybie
+  // physicalBuzzer operator po prostu klika drugą drużynę, bez osobnego
+  // "cofnij".
   function renderDuelAccept(state) {
     const r = state.rounds;
     const tiles = [];
+    const isPhysical = state.settings.physicalBuzzer === true;
+    const selectedTeam = isPhysical ? pendingPhysicalTeam : r.duel.lastPressed;
 
-    if (state.settings.physicalBuzzer === true) {
-      // Brak Buzzera na ekranie — operator sam wskazuje, kto pierwszy
-      // nacisnął fizyczny przycisk. Zaznacz → potwierdź, żeby nie zaliczyć
-      // przypadkowego kliknięcia (plan: "physicalSelectTeam→potwierdź").
-      // boardBusy(): ten sam floor co control/js/gameRounds.js's
-      // enableBuzzerDuel(), które stary kod wołał DOPIERO po `await`
-      // dźwięku/animacji startu rundy — ten ekran nie ma być klikalny,
-      // zanim ta sekwencja (dziś: control2/js/app.js's dispatchGated() po
-      // "Rozpocznij rundę") się nie skończy.
-      if (!pendingPhysicalTeam) {
-        tiles.push(tile(teamName(state, "A"), { row: 1, col: HALF(0), disabled: boardBusy(), onclick: () => { pendingPhysicalTeam = "A"; emit("ui.rerender"); } }));
-        tiles.push(tile(teamName(state, "B"), { row: 1, col: HALF(1), disabled: boardBusy(), onclick: () => { pendingPhysicalTeam = "B"; emit("ui.rerender"); } }));
-      } else {
-        tiles.push(tile(t("control.physicalConfirmTeam", { name: teamName(state, pendingPhysicalTeam) }), {
-          row: 1, col: HALF(0), cls: "c2-tile-primary", disabled: boardBusy(),
-          onclick: () => { const team = pendingPhysicalTeam; pendingPhysicalTeam = null; emit("game.dispatch", { type: "ACCEPT_BUZZ", team }); },
-        }));
-        tiles.push(tile(t("common.cancel"), { row: 1, col: HALF(1), onclick: () => { pendingPhysicalTeam = null; emit("ui.rerender"); } }));
-      }
-    } else {
-      // Tryb normalny (Buzzer): obie drużyny widoczne od razu, ale tylko
-      // ta, która faktycznie nacisnęła (duel.lastPressed), jest klikalna —
-      // druga zostaje wyszarzonym, nieklikalnym placeholderem, dokładnie jak
-      // stary control.html's btnBuzzAcceptA/B. "Ponów naciśnięcie" (nowe
-      // RETRY_DUEL) pojawia się dopiero, gdy jest co odrzucić.
-      const lastPressed = r.duel.lastPressed;
-      tiles.push(tile(t("control.roundsBuzzAcceptTeam", { name: teamName(state, "A") }), {
-        row: 1, col: HALF(0), cls: lastPressed === "A" ? "c2-tile-primary" : "",
-        disabled: lastPressed !== "A" || boardBusy(),
-        onclick: () => emit("game.dispatch", { type: "ACCEPT_BUZZ", team: "A" }),
+    // boardBusy(): ten sam floor co control/js/gameRounds.js's
+    // enableBuzzerDuel(), które stary kod wołał DOPIERO po `await`
+    // dźwięku/animacji startu rundy — ten ekran nie ma być klikalny,
+    // zanim ta sekwencja (dziś: control2/js/app.js's dispatchGated() po
+    // "Rozpocznij rundę") się nie skończy.
+    tiles.push(tile(teamName(state, "A"), {
+      row: 1, col: HALF(0), cls: selectedTeam === "A" ? "c2-tile-primary" : "",
+      disabled: isPhysical ? boardBusy() : true,
+      onclick: isPhysical && !boardBusy() ? () => { pendingPhysicalTeam = "A"; emit("ui.rerender"); } : undefined,
+    }));
+    tiles.push(tile(teamName(state, "B"), {
+      row: 1, col: HALF(1), cls: selectedTeam === "B" ? "c2-tile-primary" : "",
+      disabled: isPhysical ? boardBusy() : true,
+      onclick: isPhysical && !boardBusy() ? () => { pendingPhysicalTeam = "B"; emit("ui.rerender"); } : undefined,
+    }));
+
+    if (selectedTeam) {
+      const acceptArmKey = "acceptBuzz";
+      const acceptClickable = !boardBusy();
+      const acceptArmed = acceptClickable && armedKey === acceptArmKey;
+      tiles.push(tile(t("control.roundsBuzzAcceptTeam", { name: teamName(state, selectedTeam) }), {
+        row: 2, col: "1 / 7", cls: acceptArmed ? "c2-tile-armed" : "",
+        disabled: !acceptClickable,
+        onclick: acceptClickable ? (e) => {
+          if (armedKey === acceptArmKey || (e && e.detail >= 2)) {
+            armedKey = null;
+            const team = selectedTeam;
+            if (isPhysical) pendingPhysicalTeam = null;
+            emit("game.dispatch", { type: "ACCEPT_BUZZ", team });
+          } else {
+            armedKey = acceptArmKey;
+            emit("ui.rerender");
+          }
+        } : undefined,
       }));
-      tiles.push(tile(t("control.roundsBuzzAcceptTeam", { name: teamName(state, "B") }), {
-        row: 1, col: HALF(1), cls: lastPressed === "B" ? "c2-tile-primary" : "",
-        disabled: lastPressed !== "B" || boardBusy(),
-        onclick: () => emit("game.dispatch", { type: "ACCEPT_BUZZ", team: "B" }),
-      }));
-      if (lastPressed) {
-        tiles.push(tile(t("control.roundsBuzzRetry"), { row: 2, col: "1 / 7", disabled: boardBusy(), onclick: () => emit("game.dispatch", { type: "RETRY_DUEL" }) }));
-      }
+    }
+
+    if (!isPhysical && r.duel.lastPressed) {
+      tiles.push(tile(t("control.roundsBuzzRetry"), { row: 3, col: "1 / 7", disabled: boardBusy(), onclick: () => emit("game.dispatch", { type: "RETRY_DUEL" }) }));
     }
 
     const body = [h("div", { class: "c2-roundlayout" }, [
