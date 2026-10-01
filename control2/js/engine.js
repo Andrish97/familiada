@@ -534,14 +534,22 @@ const REDUCERS = {
 
   async SET_REPEAT(state, action) {
     if (action.round !== 2) return null;
-    const row = state.final.runtime.map2[action.idx];
-    row.mode = "MANUAL";
-    row.kind = "SKIP";
-    row.matchId = null;
-    row.outText = "";
-    row.pts = 0;
     const prevEntry = state.final.runtime.p2[action.idx] || {};
     state.final.runtime.p2[action.idx] = { ...prevEntry, repeat: !!action.repeat };
+    // Zgłoszone: zdjęcie flagi ma TYLKO zdjąć flagę -- jeśli operator
+    // zaznaczył "powtórzenie" przez pomyłkę (lub zmienił zdanie, a na
+    // zegarku gracza 2 jest jeszcze czas), odznaczenie ma zostawić pytanie
+    // w stanie sprzed oznaczenia, żeby dało się wrócić do wpisanej
+    // odpowiedzi -- nie trwale wymuszać SKIP niezależnie od kierunku.
+    // Wymuszenie SKIP (i dźwięk niżej) dotyczy więc wyłącznie włączenia.
+    if (action.repeat) {
+      const row = state.final.runtime.map2[action.idx];
+      row.mode = "MANUAL";
+      row.kind = "SKIP";
+      row.matchId = null;
+      row.outText = "";
+      row.pts = 0;
+    }
     return { ...sameStep(state), soundCueKey: action.repeat ? "answer_repeat" : undefined };
   },
 

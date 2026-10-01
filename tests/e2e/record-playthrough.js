@@ -1103,7 +1103,9 @@ async function scenarioFinalFull(pages, { game }) {
   // bez przebudowy reszty ekranu -- więc pisanie w trakcie odliczania nie
   // gubi fokusu pola. Scenariusz ma to NAPRAWDĘ pokazać: zegarek startuje
   // NAJPIERW, wpisywanie leci W TRAKCIE, nie przed.
-  await clickPaced(control.getByRole("button", { name: "Rozpocznij odliczanie (15s)" }));
+  // armAndConfirmPaced, nie clickPaced -- start/stop zegarka gracza idzie
+  // teraz przez zaznacz->potwierdź (nieodwracalna, ryzykowna akcja).
+  await armAndConfirmPaced(control.getByRole("button", { name: "Rozpocznij odliczanie (15s)" }));
   const p1Inputs = control.locator("#app input[type=text]");
   for (let i = 0; i < 5; i++) {
     if (P1_PLAN[i] === true) await typePaced(p1Inputs.nth(i), answerByRank(fq[i], P1_MATCH_RANK[i]).text);
@@ -1145,8 +1147,10 @@ async function scenarioFinalFull(pages, { game }) {
   // "wpisywanie w finale ma być podczas odliczania, nie przed"), dopiero
   // POTEM powtórzenie (pytanie #1) i reszta wg P2_PLAN (dosłowny tekst
   // prawdziwej, najniżej punktowanej odpowiedzi przy MATCH).
-  await clickPaced(control.getByRole("button", { name: "Rozpocznij odliczanie (20s)" }));
-  await clickPaced(control.getByRole("button", { name: "Powtórzenie" }).first());
+  await armAndConfirmPaced(control.getByRole("button", { name: "Rozpocznij odliczanie (20s)" }));
+  // Włączenie "Powtórzenie" też zaznacz->potwierdź (konsekwentne: dźwięk +
+  // wymuszony SKIP w mapowaniu) -- zdjęcie flagi zostaje jednoklikowe.
+  await armAndConfirmPaced(control.getByRole("button", { name: "Powtórzenie" }).first());
   const p2Inputs = control.locator("#app input[type=text]");
   for (let i = 1; i < 5; i++) {
     if (P2_PLAN[i] === true) await typePaced(p2Inputs.nth(i), answerByRank(fq[i], P2_MATCH_RANK[i]).text);
