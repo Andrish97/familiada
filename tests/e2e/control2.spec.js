@@ -1202,6 +1202,58 @@ test("control2: wyścig — oba przyciski Buzzera naciśnięte w tej samej chwil
   }
 });
 
+// ===== 11b. Ponów naciśnięcie (RETRY_DUEL) =====
+
+test("control2: Ponów naciśnięcie — odrzuca błędne zgłoszenie, Buzzer otwiera się na nowo", async ({ page, browser }, testInfo) => {
+  await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
+  const game = await makeGame(page, `E2E-CONTROL2-RETRYDUEL-${Date.now()}`, { roundQuestions: [TWO_QUESTIONS[0]] });
+  const contexts = [];
+  try {
+    const buzzerPage = await openAnon(browser, contexts, `/buzzer2?id=${game.id}&key=${game.share_key_buzzer}`, "buzzer", []);
+    await openAnon(browser, contexts, `/display2?id=${game.id}&key=${game.share_key_display}`, "display", []);
+    await openAnon(browser, contexts, `/host2?id=${game.id}&key=${game.share_key_host}`, "host", []);
+    await page.goto(`/control2?id=${game.id}`, { waitUntil: "domcontentloaded" });
+    await expect(page.locator(".stepTitle")).toHaveText("Urządzenia", { timeout: 15000 });
+    await expect(page.locator("#dotDisplay")).toHaveClass(/\bok\b/, { timeout: 15000 });
+    await expect(page.locator("#dotHost")).toHaveClass(/\bok\b/, { timeout: 15000 });
+    await page.getByRole("button", { name: "Dalej" }).click();
+    await page.getByRole("button", { name: "Gotowe — przejdź do rozgrywki" }).click();
+    await page.getByRole("button", { name: "Rozpocznij grę" }).click();
+    await page.getByRole("button", { name: "Rozpocznij rundę" }).click();
+
+    // A naciska pierwszy -- Control pokazuje wspólny kafel "Zatwierdź: Alfa"
+    // RAZEM z "Ponów naciśnięcie" pod nim (renderDuelAccept, tryb normalny
+    // Buzzera) -- operator może albo przyjąć zgłoszenie, albo uznać je za
+    // błędne/przypadkowe i otworzyć Buzzer na nowo.
+    await expect(buzzerPage.getByRole("button", { name: "Przycisk A" })).toBeEnabled({ timeout: 10000 });
+    await buzzerPage.getByRole("button", { name: "Przycisk A" }).click();
+    await expect(page.getByRole("button", { name: "Zatwierdź: Alfa" })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole("button", { name: "Ponów naciśnięcie" })).toBeVisible();
+
+    // "Ponów naciśnięcie" to bezpieczna, odwracalna akcja (RETRY_DUEL) --
+    // celowo jednoklikowa, w odróżnieniu od "Zatwierdź" (zaznacz->potwierdź).
+    await clickConfirmed(page.getByRole("button", { name: "Ponów naciśnięcie" }));
+
+    // RETRY_DUEL czyści duel.lastPressed -- oba kafle (Zatwierdź/Ponów)
+    // znikają, drużyny wracają do czystego, nieklikalnego stanu wskaźnika.
+    await expect(page.getByRole("button", { name: "Zatwierdź: Alfa" })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "Ponów naciśnięcie" })).toHaveCount(0);
+
+    // Teraz zgłasza się B -- przyjmujemy normalnie, dowód że Buzzer
+    // naprawdę wrócił do nasłuchu po "Ponów naciśnięcie", nie tylko
+    // wizualnie na ekranie Control.
+    await buzzerPage.getByRole("button", { name: "Przycisk B" }).click();
+    await expect(page.getByRole("button", { name: "Zatwierdź: Beta" })).toBeVisible({ timeout: 10000 });
+    await armAndConfirm(page.getByRole("button", { name: "Zatwierdź: Beta" }));
+
+    await revealAnswer(page, 1); // B trafia -> przejmuje kontrolę
+    await expect(page.getByText("Bank: 40")).toBeVisible({ timeout: 10000 });
+  } finally {
+    for (const ctx of contexts) await ctx.close().catch(() => {});
+    await deleteGame(page, game.id);
+  }
+});
+
 // ===== 12. Wyciszenie dźwięku =====
 
 test("control2: wyciszenie dźwięku — po Mute żaden klucz SFX się nie odtwarza", async ({ page, browser }, testInfo) => {
