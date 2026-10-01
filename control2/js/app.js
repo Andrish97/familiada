@@ -324,6 +324,11 @@ async function main() {
     lockedUntil = Math.max(lockedUntil, Date.now() + ms);
     setTimeout(renderCurrent, ms + 20);
     lockConfirmPending = true;
+    // TYMCZASOWA diagnostyka (do usunięcia po znalezieniu przyczyny
+    // "Zatrzymaj"/"X" trwale disabled w control2.spec.js) -- czy
+    // store.setLock(ms) w ogóle się rozstrzyga, i kiedy dokładnie.
+    const _armT0 = Date.now();
+    console.log(`[e2e-diag-state] t=${_armT0} armLock START ms=${ms} lockedUntil=${lockedUntil}`);
     store.setLock(ms)
       .then(() => {
         const confirmed = Date.now() + ms;
@@ -335,6 +340,7 @@ async function main() {
       .catch(() => {})
       .finally(() => {
         lockConfirmPending = false;
+        console.log(`[e2e-diag-state] t=${Date.now()} armLock SETTLED afterMs=${Date.now() - _armT0}`);
         renderCurrent();
       });
   }
@@ -349,6 +355,9 @@ async function main() {
     const prevRow = store.state.__row || null;
     committing = true;
     let nextRow = null;
+    // TYMCZASOWA diagnostyka -- patrz komentarz przy armLock().
+    const _dgT0 = Date.now();
+    console.log(`[e2e-diag-state] t=${_dgT0} dispatchGatedNow START type=${action.type}`);
     try {
       // Naprawiona luka: ten renderCurrent() (i cała reszta funkcji) była
       // POZA try/finally chroniącym `committing` -- rzucony tu wyjątek
@@ -366,12 +375,15 @@ async function main() {
     } finally {
       committing = false;
     }
+    console.log(`[e2e-diag-state] t=${Date.now()} dispatchGatedNow AFTER-ENGINE type=${action.type} afterMs=${Date.now() - _dgT0} nextRowRev=${nextRow?.rev}`);
     const ms = await actionGate.computeGateMs(action.type, prevRow, nextRow);
+    console.log(`[e2e-diag-state] t=${Date.now()} dispatchGatedNow gateMs type=${action.type} ms=${ms}`);
     // Migracja 264 -- ta sama blokada, egzekwowana też w bazie (nie tylko w
     // tej karcie przeglądarki). Best-effort: nieudane ustawienie nie cofa
     // już potwierdzonego zapisu treści powyżej, patrz store.js's setLockNow().
     armLock(ms);
     renderCurrent();
+    console.log(`[e2e-diag-state] t=${Date.now()} dispatchGatedNow END type=${action.type} totalMs=${Date.now() - _dgT0}`);
     return nextRow;
   }
 
