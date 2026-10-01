@@ -89,6 +89,45 @@ export function createRenderer({ scene, qr, getSfxDuration }) {
     api.small.rightDigits(String(totals.B ?? 0));
   }
 
+  // 3s zegarek decyzji w rundach (shared/deriveEvents.js's TIMER3_STARTED/
+  // TIMER3_STOPPED) -- zgłoszone: "timer ma być odnotowany w bazie i jeśli
+  // się nie skończył to i display i host mają o tym wiedzieć jednoznacznie".
+  // Ten sam wzorzec co startTimerTick() dla zegarka finału wyżej (podmiana
+  // cyfr LEFT/RIGHT na odliczanie, powrót do prawdziwych wyników po
+  // wygaśnięciu/zatrzymaniu) -- bez tego widzowie nie mieli ŻADNEGO
+  // sygnału, że trwa 3s decyzja (ani na żywo, ani po reconnect w trakcie
+  // niej), mimo że sam zegarek od zawsze żyje w detail.rounds.timer3.
+  let timer3Handle = null;
+  function stopTimer3Tick() {
+    if (timer3Handle) { clearInterval(timer3Handle); timer3Handle = null; }
+  }
+  function activeRoundsTeam(row) {
+    if (row.control_team === "A") return "A";
+    if (row.control_team === "B") return "B";
+    // W DUEL control_team jest jeszcze null (patrz applyIndicator() wyżej) --
+    // to, kto PRÓBUJE teraz, żyje w duel.currentTeam.
+    if (row.phase === "DUEL") {
+      const cur = row.detail?.rounds?.duel?.currentTeam;
+      if (cur === "A" || cur === "B") return cur;
+    }
+    return null;
+  }
+  function startTimer3Tick(row) {
+    stopTimer3Tick();
+    const timer3 = row.detail?.rounds?.timer3;
+    if (!timer3?.running) return;
+    const team = activeRoundsTeam(row);
+    if (!team) return; // brak jednoznacznej strony (nie powinno się zdarzyć -- timer3 zawsze ma aktywną drużynę) -- paintTotals() już pokazuje prawdziwe wyniki
+    const tick = () => {
+      const remaining = Math.max(0, Math.ceil((timer3.endsAt - Date.now()) / 1000));
+      if (remaining <= 0) { stopTimer3Tick(); paintTotals(row); return; }
+      const digits = String(remaining).padStart(2, "0");
+      if (team === "A") api.small.leftDigits(digits); else api.small.rightDigits(digits);
+    };
+    tick();
+    timer3Handle = setInterval(tick, 250);
+  }
+
   // control/js/gameFinal.js's startFinal()/startP2Round(): tuż po wejściu
   // w f_p1_entry/f_p2_entry (zanim operator w ogóle kliknie "start timera")
   // strona zwycięskiej drużyny dostaje "15"/"20" jako zapowiedź — TIMER_STARTED
@@ -173,6 +212,7 @@ export function createRenderer({ scene, qr, getSfxDuration }) {
     api.small.topDigits(pad3(r.bankPts));
     paintTotals(row);
     applyIndicator(row);
+    startTimer3Tick(row);
   }
 
   // control/js/display.js's PLACE.finalText/finalPts — tak samo jak w
@@ -270,6 +310,7 @@ export function createRenderer({ scene, qr, getSfxDuration }) {
   // ============================================================
   async function renderSnapshot(row) {
     stopTimerTick();
+    stopTimer3Tick();
     if (row.detail?.display?.colors) {
       const c = row.detail.display.colors;
       if (c.A) api.color.set("A", c.A);
@@ -527,6 +568,13 @@ export function createRenderer({ scene, qr, getSfxDuration }) {
           break;
         case "TIMER_STOPPED":
           stopTimerTick();
+          paintTotals(nextRow);
+          break;
+        case "TIMER3_STARTED":
+          startTimer3Tick(nextRow);
+          break;
+        case "TIMER3_STOPPED":
+          stopTimer3Tick();
           paintTotals(nextRow);
           break;
         case "DISPLAY_MODE_CHANGED":

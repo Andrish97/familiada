@@ -1902,7 +1902,7 @@ test("control2: zegarek 3s w rundach wraca do stanu SPRZED startu (bez naliczeni
   const contexts = [];
   try {
     const buzzerPage = await openAnon(browser, contexts, `/buzzer2?id=${game.id}&key=${game.share_key_buzzer}`, "buzzer", []);
-    await openAnon(browser, contexts, `/display2?id=${game.id}&key=${game.share_key_display}`, "display", []);
+    const displayPage = await openAnon(browser, contexts, `/display2?id=${game.id}&key=${game.share_key_display}`, "display", []);
     await openAnon(browser, contexts, `/host2?id=${game.id}&key=${game.share_key_host}`, "host", []);
     await page.goto(`/control2?id=${game.id}`, { waitUntil: "domcontentloaded" });
     await expect(page.locator(".stepTitle")).toHaveText("Urządzenia", { timeout: 15000 });
@@ -1924,8 +1924,19 @@ test("control2: zegarek 3s w rundach wraca do stanu SPRZED startu (bez naliczeni
 
     // Start zegarka to zwykłe, pojedyncze kliknięcie -- tylko jego ręczne
     // ZATRZYMANIE na żywo jest zaznacz->potwierdź (timer3Tile w ui.js).
+    await clearDisplayLog(displayPage);
     await clickConfirmed(page.getByRole("button", { name: "Rozpocznij odliczanie 3s" }));
     await expect(page.locator('[data-timer-role="timer3"]')).toBeVisible({ timeout: 10000 });
+
+    // Zgłoszone: Display (nie tylko Control) musi jednoznacznie pokazywać,
+    // że 3s zegarek trwa -- display2/js/render.js's startTimer3Tick()
+    // podmienia LEFT (drużyna A ma kontrolę) na odliczanie w dół,
+    // DWUCYFROWE ("03"/"02"/"01", padStart), odróżnialne od zwykłego
+    // wyniku drużyny (paintTotals() pisze BEZ wiodącego zera -- "0").
+    await page.waitForTimeout(700);
+    const duringCalls = await getDisplayCalls(displayPage, "api.small.leftDigits");
+    expect(duringCalls.length, "Display musi dostać przynajmniej jedno odliczenie LEFT w trakcie timera3").toBeGreaterThan(0);
+    expect(duringCalls.at(-1).args[0]).toMatch(/^0[123]$/);
 
     // Czekamy, aż endsAt FAKTYCZNIE minie, dopiero potem przeładowujemy --
     // to jest właśnie "Control zamknięte w trakcie odliczania", nie
@@ -1939,6 +1950,11 @@ test("control2: zegarek 3s w rundach wraca do stanu SPRZED startu (bez naliczeni
     await expect(xTile(page)).toBeVisible({ timeout: 15000 });
     await expect(xTile(page)).toContainText("0 / 3");
     await expect(page.locator('[data-timer-role="timer3"]')).toHaveCount(0);
+
+    // Display też wraca do prawdziwego wyniku (TIMER3_STOPPED -> paintTotals,
+    // "0" bez wiodącego zera) -- dowód, że to nie tylko Control wie o cofnięciu.
+    const afterCalls = await getDisplayCalls(displayPage, "api.small.leftDigits");
+    expect(afterCalls.at(-1).args[0]).toBe("0");
 
     // Dowód, że to nie tylko wygląd po jednym renderze -- zegarek da się
     // uruchomić ponownie, nie został zablokowany w pośrednim stanie.
