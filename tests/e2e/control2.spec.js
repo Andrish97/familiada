@@ -1023,7 +1023,9 @@ test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśni�
     // ===== F7: gracz 2 — pytanie #1 oznaczone jako "powtórzenie" =====
     await expect(page.locator(".c2-stepper")).toContainText("Finał — gracz 2, wpisywanie", { timeout: 22000 });
     await clearSfxLog(page);
-    await armAndConfirm(page.getByRole("button", { name: "Powtórzenie" }).first());
+    // "Powtórzenie" to zwykły, jednoklikowy toggle (ui.js), NIE armableTile
+    // jak reszta kafli finału — klikamy raz, nie dwa.
+    await clickConfirmed(page.getByRole("button", { name: "Powtórzenie" }).first());
     await expect.poll(() => getSfxKeys(page), { timeout: 5000 }).toEqual(expect.arrayContaining(["answer_repeat"]));
 
     const p2Inputs = page.locator("#app input[type=text]");
