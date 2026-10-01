@@ -907,7 +907,14 @@ test("control2: QR na wyświetlaczu — host i buzzer niezależne, każdy z osob
 // lokalny "peek" operatora), więc Host zostaje zasłonięty przez cały finał.
 
 test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśnięcie timera, powtórzenie, odsłonięcie P1 na Display przy starcie P2", async ({ page, browser }, testInfo) => {
-  test.setTimeout(180_000); // + realne 15s oczekiwania na naturalne wygaśnięcie timera gracza 1
+  // 180s okazało się za ciasne w CI: 15s realnego oczekiwania na timer
+  // gracza 1 + 10 pytań mapowania, z których KAŻDE ma teraz poprawnie
+  // wymuszaną blokadę na długość dźwięku "Pokaż odpowiedź"/"Pokaż punkty"
+  // (actionGate.js, migracja 264) -- test realnie docierał do pytania 8/10
+  // dokładnie w 180000ms, bez żadnego faktycznego zawieszenia (potwierdzone
+  // diagnostyką [e2e-diag-state]: każdy commit/lock w całym przebiegu
+  // rozstrzygał się w <1s). Zapas, nie naprawa buga.
+  test.setTimeout(240_000);
   await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
   const game = await makeGame(page, `E2E-CONTROL2-FINALFULL-${Date.now()}`, {
     roundQuestions: [{ ord: 1, text: "Pytanie testowe (runda)", answers: [{ ord: 1, text: "Odp. warta 300", fixed_points: 300 }] }],
