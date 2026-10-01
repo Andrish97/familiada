@@ -419,8 +419,9 @@ const WRITE_RPC_RE = /\/rpc\/(game_state_write|game_state_buzzer_press)(\?|$)/;
 function waitForWrite(page) {
   // Zarejestruj oczekiwanie PRZED akcją, żeby nie przegapić odpowiedzi,
   // która wróci bardzo szybko. Nie każda akcja w tym scenariuszu wywołuje
-  // zapis (np. czysto lokalne "Anuluj") — stąd .catch(() => null) zamiast
-  // wywalać cały scenariusz na braku pasującej odpowiedzi.
+  // zapis (np. czysto lokalne zaznaczenie drużyny w physicalBuzzer, przed
+  // potwierdzeniem) — stąd .catch(() => null) zamiast wywalać cały
+  // scenariusz na braku pasującej odpowiedzi.
   return page
     .waitForResponse((resp) => WRITE_RPC_RE.test(resp.url()), { timeout: 15000 })
     .catch(() => null);
@@ -697,9 +698,9 @@ async function scenarioRoundsMechanics(pages, { contexts }) {
   //
   // Zgłoszone (po realnym nagraniu): "z tym żeby coś tam dostrzec był
   // wcześniej problem bo wszystko szło za szybko" -- dłuższe, jawne pauzy
-  // (2s) w obu kluczowych momentach: zaraz po wyścigu (widać, który kafel
-  // "Zatwierdź: ..." się obudził) i zaraz po potwierdzeniu (widać
-  // zaświecony/przygaszony przycisk na Buzzerze).
+  // (2s) w obu kluczowych momentach: zaraz po wyścigu (widać, który jedyny
+  // wspólny kafel "Zatwierdź: ..." się pojawił) i zaraz po potwierdzeniu
+  // (widać zaświecony/przygaszony przycisk na Buzzerze).
   console.log("[record] wyścig buzzerów w rundzie 1 — oba przyciski naciśnięte naraz");
   await expect(buzzer.getByRole("button", { name: "Przycisk A" })).toBeEnabled({ timeout: 10000 });
   await buzzer.evaluate(() => {
@@ -708,11 +709,11 @@ async function scenarioRoundsMechanics(pages, { contexts }) {
   });
   const acceptMistrzowie = control.getByRole("button", { name: "Zatwierdź: Mistrzowie Quizu" });
   const acceptBeta = control.getByRole("button", { name: "Zatwierdź: Beta" });
-  await expect.poll(async () => (await acceptMistrzowie.isEnabled()) || (await acceptBeta.isEnabled()), { timeout: 10000 }).toBe(true);
-  const raceWinner = (await acceptMistrzowie.isEnabled()) ? "A" : "B";
+  await expect.poll(async () => (await acceptMistrzowie.count()) + (await acceptBeta.count()), { timeout: 10000 }).toBeGreaterThan(0);
+  const raceWinner = (await acceptMistrzowie.count()) > 0 ? "A" : "B";
   const raceWinnerBtn = raceWinner === "A" ? acceptMistrzowie : acceptBeta;
-  await control.waitForTimeout(2000); // widz ma zdążyć zobaczyć, który kafel się obudził (dowód wyścigu)
-  await clickPaced(raceWinnerBtn);
+  await control.waitForTimeout(2000); // widz ma zdążyć zobaczyć, który kafel się pojawił (dowód wyścigu)
+  await armAndConfirmPaced(raceWinnerBtn);
   await buzzer.waitForSelector(`#btn${raceWinner}.lit`, { timeout: 10000 });
   await buzzer.waitForTimeout(2000); // widz ma zdążyć zobaczyć zaświecony/przygaszony przycisk na Buzzerze
 
@@ -752,7 +753,7 @@ async function scenarioRoundsMechanics(pages, { contexts }) {
   // ===== RUNDA 2 =====
   await clickPaced(control.getByRole("button", { name: "Rozpocznij rundę" }));
   await clickPaced(buzzer.getByRole("button", { name: "Przycisk B" }));
-  await clickPaced(control.getByRole("button", { name: "Zatwierdź: Beta" }));
+  await armAndConfirmPaced(control.getByRole("button", { name: "Zatwierdź: Beta" }));
   await armAndConfirmPaced(answerTile(control, 1)); // B trafia -> kontrola B, allowPass
   await armAndConfirmPaced(control.getByRole("button", { name: "Oddaj kontrolę" })); // dawny "Pass" -> kontrola A
   await armAndConfirmPaced(answerTile(control, 2)); // A trafia
@@ -812,17 +813,16 @@ async function scenarioPhysicalBuzzerNoHost(pages) {
   await clickPaced(control.getByRole("button", { name: "Rozpocznij grę" }), ADMIN_PACE_MS);
   await clickPaced(control.getByRole("button", { name: "Rozpocznij rundę" }));
 
-  // Bez Buzzera na ekranie: zaznacz -> anuluj -> zaznacz -> potwierdź, kto
-  // pierwszy nacisnął fizyczny przycisk (operator widzi to na żywo, nie
-  // urządzenie). Pierwsze kliknięcia to czysto lokalne "zaznaczenie" (zero
-  // zapisu do game_state) -- zwykły klik + krótka pauza, nie clickPaced.
+  // Bez Buzzera na ekranie: zaznacz -> zmień zdanie (klik drugiej drużyny,
+  // ekran identyczny jak w trybie normalnym -- oba kafle drużyn po prostu
+  // klikalne) -> zaznacz->potwierdź wspólny kafel "Zatwierdź: <drużyna>".
+  // Pierwsze kliknięcia to czysto lokalne zaznaczenie (zero zapisu do
+  // game_state) -- zwykły klik + krótka pauza, nie clickPaced.
   await control.getByRole("button", { name: "Alfa", exact: true }).click();
-  await control.waitForTimeout(1200); // widz ma zdążyć zobaczyć "Potwierdź: Alfa" + "Anuluj"
-  await control.getByRole("button", { name: "Anuluj" }).click();
-  await control.waitForTimeout(600);
+  await control.waitForTimeout(1200); // widz ma zdążyć zobaczyć "Zatwierdź: Alfa"
   await control.getByRole("button", { name: "Beta", exact: true }).click();
   await control.waitForTimeout(1200);
-  await clickPaced(control.getByRole("button", { name: "Potwierdź: Beta" }));
+  await armAndConfirmPaced(control.getByRole("button", { name: "Zatwierdź: Beta" }));
 
   await armAndConfirmPaced(answerTile(control, 1)); // Beta trafia -> przejmuje kontrolę
   await control.waitForTimeout(2500); // zostaw wynik (Bank) widoczny chwilę na nagraniu
@@ -855,7 +855,7 @@ async function scenarioRoundsThreshold(pages, { expectFinal, showReload = false 
   // wszystkie 6 odpowiedzi odsłonięte naturalnie w PLAY =====
   await clickPaced(control.getByRole("button", { name: "Rozpocznij rundę" }));
   await clickPaced(buzzer.getByRole("button", { name: "Przycisk A" }));
-  await clickPaced(control.getByRole("button", { name: "Zatwierdź: Alfa" }));
+  await armAndConfirmPaced(control.getByRole("button", { name: "Zatwierdź: Alfa" }));
   await armAndConfirmPaced(answerTile(control, 1)); // A trafia topową odpowiedź od razu -> wygrywa pojedynek
   await armAndConfirmPaced(answerTile(control, 2)); // odp. #2
   await armAndConfirmPaced(answerTile(control, 3)); // odp. #3
@@ -869,7 +869,7 @@ async function scenarioRoundsThreshold(pages, { expectFinal, showReload = false 
   // odpowiedzią nie-topową, potem reszta (w tym top) odsłonięta w PLAY =====
   await clickPaced(control.getByRole("button", { name: "Rozpocznij rundę" }));
   await clickPaced(buzzer.getByRole("button", { name: "Przycisk B" }));
-  await clickPaced(control.getByRole("button", { name: "Zatwierdź: Beta" }));
+  await armAndConfirmPaced(control.getByRole("button", { name: "Zatwierdź: Beta" }));
   await armAndConfirmPaced(control.getByRole("button", { name: "X", exact: true })); // B pudłuje -> kolej na drugą próbę (A), NIE reset
   await armAndConfirmPaced(answerTile(control, 2)); // A trafia odpowiedź NIE-topową -> WYGRYWA, bo B miał 0 pkt
 
@@ -903,7 +903,7 @@ async function scenarioRoundsThreshold(pages, { expectFinal, showReload = false 
   // dobicie do domyślnego progu (300) =====
   await clickPaced(control.getByRole("button", { name: "Rozpocznij rundę" }));
   await clickPaced(buzzer.getByRole("button", { name: "Przycisk A" }));
-  await clickPaced(control.getByRole("button", { name: "Zatwierdź: Alfa" }));
+  await armAndConfirmPaced(control.getByRole("button", { name: "Zatwierdź: Alfa" }));
   await armAndConfirmPaced(answerTile(control, 1)); // odp. #1 (top)
   await armAndConfirmPaced(answerTile(control, 2)); // odp. #2
   await armAndConfirmPaced(answerTile(control, 3)); // odp. #3
@@ -939,7 +939,7 @@ async function playThreeNaturalRoundsToThreshold(pages) {
   for (let round = 1; round <= 2; round++) {
     await clickPaced(control.getByRole("button", { name: "Rozpocznij rundę" }));
     await clickPaced(buzzer.getByRole("button", { name: "Przycisk A" }));
-    await clickPaced(control.getByRole("button", { name: "Zatwierdź: Alfa" }));
+    await armAndConfirmPaced(control.getByRole("button", { name: "Zatwierdź: Alfa" }));
     await armAndConfirmPaced(answerTile(control, 1)); // odp. #1 (top) -> wygrywa pojedynek
     await armAndConfirmPaced(answerTile(control, 2)); // odp. #2
     await armAndConfirmPaced(answerTile(control, 3)); // odp. #3
@@ -962,7 +962,7 @@ async function playThreeNaturalRoundsToThreshold(pages) {
   // (100 pkt na rundę × 3) zostaje nienaruszona. =====
   await clickPaced(control.getByRole("button", { name: "Rozpocznij rundę" }));
   await clickPaced(buzzer.getByRole("button", { name: "Przycisk B" }));
-  await clickPaced(control.getByRole("button", { name: "Zatwierdź: Beta" }));
+  await armAndConfirmPaced(control.getByRole("button", { name: "Zatwierdź: Beta" }));
   await armAndConfirmPaced(answerTile(control, 1)); // B trafia top -> wygrywa pojedynek, kontrola B
   await armAndConfirmPaced(answerTile(control, 2)); // odp. #2
   await armAndConfirmPaced(control.getByRole("button", { name: "X", exact: true }));
@@ -997,7 +997,7 @@ async function scenarioRoundMultiplier(pages) {
   const playFullRound = async () => {
     await clickPaced(control.getByRole("button", { name: "Rozpocznij rundę" }));
     await clickPaced(buzzer.getByRole("button", { name: "Przycisk A" }));
-    await clickPaced(control.getByRole("button", { name: "Zatwierdź: Alfa" }));
+    await armAndConfirmPaced(control.getByRole("button", { name: "Zatwierdź: Alfa" }));
     await armAndConfirmPaced(answerTile(control, 1));
     await armAndConfirmPaced(answerTile(control, 2));
     await armAndConfirmPaced(answerTile(control, 3));
@@ -1279,7 +1279,7 @@ async function scenarioDeviceReconnect(pages, { contexts, browser }) {
   await clickPaced(control.getByRole("button", { name: "Rozpocznij rundę" }));
 
   await clickPaced(pages.buzzer.getByRole("button", { name: "Przycisk A" }));
-  await clickPaced(control.getByRole("button", { name: "Zatwierdź: Alfa" }));
+  await armAndConfirmPaced(control.getByRole("button", { name: "Zatwierdź: Alfa" }));
   await armAndConfirmPaced(answerTile(control, 1)); // odp. #1 (top) -> wygrywa pojedynek, reszta rundy zostaje NIEODSŁONIĘTA
 
   // ===== Zerwanie połączenia WSZYSTKICH trzech urządzeń naraz =====
@@ -1319,7 +1319,7 @@ async function scenarioDeviceReconnect(pages, { contexts, browser }) {
   // presence, prawdziwy udział w grze. =====
   await clickPaced(control.getByRole("button", { name: "Rozpocznij rundę" }));
   await clickPaced(pages.buzzer.getByRole("button", { name: "Przycisk B" }));
-  await clickPaced(control.getByRole("button", { name: "Zatwierdź: Beta" }));
+  await armAndConfirmPaced(control.getByRole("button", { name: "Zatwierdź: Beta" }));
   await armAndConfirmPaced(answerTile(control, 1)); // odp. #1 (top)
   await armAndConfirmPaced(answerTile(control, 2));
   await armAndConfirmPaced(answerTile(control, 3));
@@ -1453,7 +1453,7 @@ async function scenarioLogoLock(pages, { setupPage, logoId, logoLockTabId }) {
   await clickPaced(control.getByRole("button", { name: "Rozpocznij grę" }), ADMIN_PACE_MS);
   await clickPaced(control.getByRole("button", { name: "Rozpocznij rundę" }));
   await clickPaced(buzzer.getByRole("button", { name: "Przycisk A" }));
-  await clickPaced(control.getByRole("button", { name: "Zatwierdź: Alfa" }));
+  await armAndConfirmPaced(control.getByRole("button", { name: "Zatwierdź: Alfa" }));
   await armAndConfirmPaced(answerTile(control, 1)); // odp. #1 (top)
   await armAndConfirmPaced(answerTile(control, 2)); // odp. #2
   await armAndConfirmPaced(answerTile(control, 3)); // odp. #3
