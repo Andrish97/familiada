@@ -3,22 +3,22 @@
 // Każde pole zapisuje się samo (tekst: po pauzie w pisaniu i przy wyjściu z
 // pola, punkty: przy wyjściu z pola). Limity i obsługa pól są wspólne z
 // modalem pytania w bazie pytań (js/core/question-form.js).
-import { sb } from "../core/supabase.js?v=v2026-10-01T18354";
-import { requireAuth } from "../core/auth.js?v=v2026-10-01T18354";
-import { alertModal, confirmModal } from "../core/modal.js?v=v2026-10-01T18354";
-import { parseQaText } from "../core/text-import.js?v=v2026-10-01T18354";
-import { validateGame, gameRuleErrorMessage, RULES as GV_RULES, TYPES } from "../core/game-validate.js?v=v2026-10-01T18354";
+import { sb } from "../core/supabase.js?v=v2026-10-01T18485";
+import { requireAuth } from "../core/auth.js?v=v2026-10-01T18485";
+import { alertModal, confirmModal } from "../core/modal.js?v=v2026-10-01T18485";
+import { parseQaText } from "../core/text-import.js?v=v2026-10-01T18485";
+import { validateGame, gameRuleErrorMessage, RULES as GV_RULES, TYPES } from "../core/game-validate.js?v=v2026-10-01T18485";
 import {
   LIMITS, normQuestionText, normAnswerText, parsePoints,
   wireTextLimit, wirePointsInput, sumPoints, renderSumPill, questionProblems,
   buildAnswerRow, buildAddAnswerTile,
-} from "../core/question-form.js?v=v2026-10-01T18354";
-import { guardResourceLock, showBlockingOverlay } from "../core/resource-lock.js?v=v2026-10-01T18354";
-import { updateChecked, ROW_GONE } from "../core/db-guard.js?v=v2026-10-01T18354";
-import { initI18n, t, withLangParam } from "../../translation/translation.js?v=v2026-10-01T18354";
-import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-10-01T18354";
-import "../core/contact-modal.js?v=v2026-10-01T18354";
-import { icon, iconText } from "../core/icons.js?v=v2026-10-01T18354";
+} from "../core/question-form.js?v=v2026-10-01T18485";
+import { guardResourceLock, showBlockingOverlay } from "../core/resource-lock.js?v=v2026-10-01T18485";
+import { updateChecked, ROW_GONE } from "../core/db-guard.js?v=v2026-10-01T18485";
+import { initI18n, t, withLangParam } from "../../translation/translation.js?v=v2026-10-01T18485";
+import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-10-01T18485";
+import "../core/contact-modal.js?v=v2026-10-01T18485";
+import { icon, iconText } from "../core/icons.js?v=v2026-10-01T18485";
 // initI18n + remove('page-loading') są w boot() — przed requireAuth, żeby body pojawiło się przed auth/danymi
 
 const MSG = {
