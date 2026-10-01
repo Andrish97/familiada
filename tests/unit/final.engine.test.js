@@ -68,6 +68,20 @@ test("SET_ENTRY_TEXT/SET_REPEAT: zapisują tekst gracza i flagę powtórzenia (t
   assert.equal(store.commits.at(-1).soundCueKey, "answer_repeat");
 });
 
+test("SET_REPEAT: zdjęcie flagi (repeat:false) NIE rusza mapowania -- da się wrócić do wpisanej odpowiedzi", async () => {
+  const { store, dispatch } = makeEngine();
+  await dispatch({ type: "START_FINAL" });
+  await dispatch({ type: "SET_ENTRY_TEXT", round: 2, idx: 0, text: "Mleko" });
+  await dispatch({ type: "SET_REPEAT", round: 2, idx: 0, repeat: true });
+  assert.equal(store.state.final.runtime.map2[0].kind, "SKIP");
+
+  await dispatch({ type: "SET_REPEAT", round: 2, idx: 0, repeat: false });
+  assert.equal(store.state.final.runtime.p2[0].repeat, false, "flaga zdjęta");
+  assert.equal(store.state.final.runtime.p2[0].text, "Mleko", "wpisana odpowiedź zostaje");
+  assert.equal(store.state.final.runtime.map2[0].kind, "SKIP", "mapowanie NIE jest cofane automatycznie -- SKIP sprzed zdjęcia flagi zostaje, dopóki operator ręcznie nie przemapuje na ekranie dopasowania");
+  assert.equal(store.commits.at(-1).soundCueKey, null, "zdjęcie flagi nie gra dźwięku");
+});
+
 test("SET_REPEAT: nie dotyczy rundy 1 (no-op)", async () => {
   const { store, dispatch } = makeEngine();
   await dispatch({ type: "START_FINAL" });

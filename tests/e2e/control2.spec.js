@@ -617,11 +617,14 @@ test("control2: próg w rundzie -> finał, wczesne zakończenie po 4/5 pytaniach
     const p1Inputs = page.locator("#app input[type=text]");
     await expect(p1Inputs).toHaveCount(5, { timeout: 10000 });
     for (let i = 0; i < 5; i++) await p1Inputs.nth(i).fill("Odp. finałowa");
-    await page.getByRole("button", { name: "Rozpocznij odliczanie (15s)" }).click();
+    // Start/stop zegarka gracza to teraz zaznacz->potwierdź (nieodwracalne/
+    // ryzykowne kliknięcie, ui.js's finalTimerRow) — armAndConfirm jak
+    // reszta kosztownych kafli finału.
+    await armAndConfirm(page.getByRole("button", { name: "Rozpocznij odliczanie (15s)" }));
     // "Dalej" zablokowany, dopóki zegarek aktywnie odlicza (zgłoszone: "nie
     // czeka na koniec timera i przechodzi dalej") — zatrzymujemy legalnie,
     // przez sam kafel zegarka (wszystkie pola już wypełnione).
-    await page.getByRole("button", { name: "Zatrzymaj" }).click();
+    await armAndConfirm(page.getByRole("button", { name: "Zatrzymaj" }));
     await page.getByRole("button", { name: "Dalej" }).click();
 
     for (let i = 0; i < 4; i++) {
@@ -970,7 +973,8 @@ test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśni�
     for (let i = 0; i < 5; i++) await p1Inputs.nth(i).fill(`Odp. finałowa`);
 
     await clearSfxLog(page);
-    await page.getByRole("button", { name: "Rozpocznij odliczanie (15s)" }).click();
+    // Start zegarka to zaznacz->potwierdź (nieodwracalne — usedP1 jednorazowe).
+    await armAndConfirm(page.getByRole("button", { name: "Rozpocznij odliczanie (15s)" }));
     // Bez klikania niczego: dograny dziś zegarek w control2/js/app.js sam
     // dispatch'uje EXPIRE_TIMER po 15s. Zegarek jest jednorazowy (usedP1) —
     // kafel wraca WIDOCZNY (jak w starym Control), ale pokazuje "Czas
@@ -1023,14 +1027,17 @@ test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśni�
     // ===== F7: gracz 2 — pytanie #1 oznaczone jako "powtórzenie" =====
     await expect(page.locator(".c2-stepper")).toContainText("Finał — gracz 2, wpisywanie", { timeout: 22000 });
     await clearSfxLog(page);
-    // "Powtórzenie" to zwykły, jednoklikowy toggle (ui.js), NIE armableTile
-    // jak reszta kafli finału — klikamy raz, nie dwa.
-    await clickConfirmed(page.getByRole("button", { name: "Powtórzenie" }).first());
+    // "Powtórzenie" WŁĄCZANE jest teraz zaznacz->potwierdź (konsekwentne:
+    // dźwięk + wymuszony SKIP w mapowaniu, ui.js) -- jak reszta kosztownych
+    // kafli finału. Wyłączenie zostaje jednoklikowe (bezpieczne, bez efektu
+    // ubocznego), ale tu włączamy, więc armAndConfirm.
+    await armAndConfirm(page.getByRole("button", { name: "Powtórzenie" }).first());
     await expect.poll(() => getSfxKeys(page), { timeout: 5000 }).toEqual(expect.arrayContaining(["answer_repeat"]));
 
     const p2Inputs = page.locator("#app input[type=text]");
     for (let i = 1; i < 5; i++) await p2Inputs.nth(i).fill("Odp. finałowa");
-    await page.getByRole("button", { name: "Rozpocznij odliczanie (20s)" }).click();
+    // Start/stop zegarka to zaznacz->potwierdź (patrz wyżej).
+    await armAndConfirm(page.getByRole("button", { name: "Rozpocznij odliczanie (20s)" }));
     // Zgłoszone: "po drugiej rundzie finału nawet nie czeka na koniec
     // timera i przechodzi dalej" — "Dalej" jest teraz zablokowany, dopóki
     // zegarek TEJ rundy aktywnie odlicza (control2/js/ui.js's
@@ -1041,7 +1048,7 @@ test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśni�
     // START_MAPPING (engine.js) nadal bezwarunkowo zeruje stan zegarka przy
     // wejściu w mapowanie — to sprawdzenie zostaje, tylko dochodzi się tam
     // teraz legalną ścieżką, nie przypadkowym przerwaniem w trakcie.
-    await page.getByRole("button", { name: "Zatrzymaj" }).click();
+    await armAndConfirm(page.getByRole("button", { name: "Zatrzymaj" }));
     await page.getByRole("button", { name: "Dalej" }).click();
 
     // ===== F8/F9: mapowanie gracza 2 — pytanie #1 to SKIP (powtórzenie), reszta MATCH =====

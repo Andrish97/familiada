@@ -1101,12 +1101,22 @@ export function createUI({ root, emit }) {
     const phase = round === 1 ? "P1" : "P2";
     const running = timer.running && timer.phase === phase;
     const used = round === 1 ? timer.usedP1 : timer.usedP2;
+    // Zgłoszone: start odliczania to nieodwracalna akcja (usedP1/usedP2 --
+    // jednorazowa szansa na rundę, patrz engine.js's START_TIMER), a
+    // zatrzymanie też niesie realne ryzyko przypadkowego kliknięcia --
+    // zaznacz->potwierdź jak reszta kosztownych kafli finału, zamiast
+    // natychmiastowego toggle. Skrót klawiszowy (Ctrl/Cmd+Shift, app.js)
+    // zostaje jednoklikowy -- to złożony, mało przypadkowy gest, w
+    // odróżnieniu od pojedynczego kliknięcia myszą.
+    const armKey = `timer:${round}`;
 
     if (running) {
       const secLeft = Math.max(0, Math.ceil((timer.endsAt - Date.now()) / 1000));
       const filled = round === 1
         ? f.runtime.p1.every((x) => String(x?.text || "").trim().length > 0)
         : f.runtime.p2.every((x) => (x?.repeat ? true : String(x?.text || "").trim().length > 0));
+      const clickable = filled && !revealLocked();
+      const armed = clickable && armedKey === armKey;
       // Dokładnie jak stare control/js/gameFinal.js's setTimerBtnLabel: gdy
       // odliczanie trwa, przycisk ZAWSZE pokazuje etykietę "Zatrzymaj" (nie
       // tylko gdy da się kliknąć) — tylko klikalność zależy od allFilled.
@@ -1118,10 +1128,18 @@ export function createUI({ root, emit }) {
         h("div", { class: "c2-tile-sub", text: t("control.finalTimerStopShort") }),
       ]);
       const btn = h("button", {
-        class: `c2-tile c2-timer-row c2-tile-timer ${filled && !revealLocked() ? "startable" : ""}`.trim(),
+        class: `c2-tile c2-timer-row c2-tile-timer ${clickable ? "startable" : ""} ${armed ? "c2-tile-armed" : ""}`.trim(),
         type: "button",
-        disabled: filled && !revealLocked() ? undefined : "",
-        onclick: filled && !revealLocked() ? () => emit("final.toggleTimer", { round }) : undefined,
+        disabled: clickable ? undefined : "",
+        onclick: clickable ? (e) => {
+          if (armedKey === armKey || (e && e.detail >= 2)) {
+            armedKey = null;
+            emit("final.toggleTimer", { round });
+          } else {
+            armedKey = armKey;
+            emit("ui.rerender");
+          }
+        } : undefined,
       }, [content]);
       // data-timer-role: patrz komentarz przy timer3Tile w renderRounds —
       // ten sam mechanizm, tickTimers() aktualizuje TYLKO te cyfry co 250ms,
@@ -1134,11 +1152,21 @@ export function createUI({ root, emit }) {
     if (used) {
       return h("button", { class: "c2-tile c2-timer-row c2-tile-timer", type: "button", disabled: "" }, [document.createTextNode(t("control.finalTimerUsed"))]);
     }
+    const clickable = !revealLocked();
+    const armed = clickable && armedKey === armKey;
     return h("button", {
-      class: "c2-tile c2-timer-row c2-tile-timer startable",
+      class: `c2-tile c2-timer-row c2-tile-timer startable ${armed ? "c2-tile-armed" : ""}`.trim(),
       type: "button",
-      disabled: revealLocked() ? "" : undefined,
-      onclick: revealLocked() ? undefined : () => emit("final.toggleTimer", { round }),
+      disabled: clickable ? undefined : "",
+      onclick: clickable ? (e) => {
+        if (armedKey === armKey || (e && e.detail >= 2)) {
+          armedKey = null;
+          emit("final.toggleTimer", { round });
+        } else {
+          armedKey = armKey;
+          emit("ui.rerender");
+        }
+      } : undefined,
     }, [document.createTextNode(round === 1 ? t("control.finalUi.timerStart15") : t("control.finalUi.timerStart20"))]);
   }
 
@@ -1216,14 +1244,33 @@ export function createUI({ root, emit }) {
         // ekran wpisywania gracza 2 dostawał 'locked' -- ta sama klasa bugu,
         // inny przycisk na tym samym ekranie.
         //
-        // Celowo NIE armableTile (zaznacz->potwierdź), w odróżnieniu od
-        // reszty finału: to zwykła, ODWRACALNA flaga (klik znów = cofnij),
-        // nie jednorazowe, kosztowne odsłonięcie/zatwierdzenie wyniku --
-        // ten sam, natychmiastowy toggle co skrót Shift+Enter (niżej),
-        // żeby obie metody (mysz/klawiatura) zachowywały się tak samo.
+        // Zgłoszone: WŁĄCZENIE "powtórzenia" jest konsekwentne (gra dźwięk
+        // answer_repeat i wymusza SKIP w mapowaniu, engine.js's SET_REPEAT)
+        // -- zaznacz->potwierdź jak reszta kosztownych kafli finału, żeby
+        // przypadkowy pojedynczy klik nie wywołał tego na żywo. WYŁĄCZENIE
+        // jest celowo pojedynczym klikiem: SET_REPEAT z repeat:false TYLKO
+        // zdejmuje flagę (żadnego dźwięku, żadnej zmiany mapowania) --
+        // bezpieczne, odwracalne cofnięcie nie powinno wymagać potwierdzenia.
+        // Skrót Shift+Enter (niżej) zostaje jednoklikowy w obie strony --
+        // złożony gest, mało przypadkowy, w odróżnieniu od kliknięcia myszą.
+        const repeatArmKey = `repeat:${i}`;
+        const repeatArmed = !boardBusy() && !repeat && armedKey === repeatArmKey;
         const repeatBtn = h("button", {
-          class: `c2-btn-repeat ${repeat ? "on" : ""}`.trim(), type: "button",
-          onclick: boardBusy() ? undefined : () => emit("game.dispatch", { type: "SET_REPEAT", round: 2, idx: i, repeat: !repeat }),
+          class: `c2-btn-repeat ${repeat ? "on" : ""} ${repeatArmed ? "c2-tile-armed" : ""}`.trim(), type: "button",
+          onclick: boardBusy() ? undefined : (e) => {
+            if (repeat) {
+              armedKey = null;
+              emit("game.dispatch", { type: "SET_REPEAT", round: 2, idx: i, repeat: false });
+              return;
+            }
+            if (armedKey === repeatArmKey || (e && e.detail >= 2)) {
+              armedKey = null;
+              emit("game.dispatch", { type: "SET_REPEAT", round: 2, idx: i, repeat: true });
+            } else {
+              armedKey = repeatArmKey;
+              emit("ui.rerender");
+            }
+          },
         }, []);
         repeatBtn.innerHTML = repeat ? iconText("check", t("control.finalUi.p2RepeatOn")) : t("control.finalUi.p2RepeatOff");
         if (boardBusy()) repeatBtn.disabled = true;
