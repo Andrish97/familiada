@@ -1215,9 +1215,32 @@ export function createUI({ root, emit }) {
         // (e2e "finał — obaj gracze"): klik "Powtórzenie" tuż po wejściu na
         // ekran wpisywania gracza 2 dostawał 'locked' -- ta sama klasa bugu,
         // inny przycisk na tym samym ekranie.
+        //
+        // Naprawiony realny bug (znaleziony diagnostyką CI): to był JEDYNY
+        // konsekwentny przycisk w całym finale BEZ wzorca zaznacz->potwierdź
+        // (armableTile wyżej) -- zwykły, natychmiastowy toggle. control2.
+        // spec.js's armAndConfirm() (używany tu, jak przy każdym innym
+        // kafelku finału) klika dwa razy -- przy zwykłym togglu to po
+        // prostu włącza i zaraz wyłącza "powtórzenie" z powrotem (net
+        // no-op), zostawiając p2[i] bez tekstu i bez repeat=true. Skutek:
+        // allFilledP2() nigdy nie widziało tego pytania jako wypełnionego,
+        // więc kafel zegarka gracza 2 (finalTimerRow) zostawał TRWALE
+        // disabled (test utknął 37x retry na "element is not enabled").
+        // Naprawa: ten sam zaznacz->potwierdź co reszta kafli finału,
+        // zamiast jednoklikowego togglu.
+        const repeatArmKey = `repeat:${i}`;
+        const repeatArmed = !boardBusy() && armedKey === repeatArmKey;
         const repeatBtn = h("button", {
-          class: `c2-btn-repeat ${repeat ? "on" : ""}`.trim(), type: "button",
-          onclick: boardBusy() ? undefined : () => emit("game.dispatch", { type: "SET_REPEAT", round: 2, idx: i, repeat: !repeat }),
+          class: `c2-btn-repeat ${repeat ? "on" : ""} ${repeatArmed ? "c2-tile-armed" : ""}`.trim(), type: "button",
+          onclick: boardBusy() ? undefined : (e) => {
+            if (armedKey === repeatArmKey || (e && e.detail >= 2)) {
+              armedKey = null;
+              emit("game.dispatch", { type: "SET_REPEAT", round: 2, idx: i, repeat: !repeat });
+            } else {
+              armedKey = repeatArmKey;
+              emit("ui.rerender");
+            }
+          },
         }, []);
         repeatBtn.innerHTML = repeat ? iconText("check", t("control.finalUi.p2RepeatOn")) : t("control.finalUi.p2RepeatOff");
         if (boardBusy()) repeatBtn.disabled = true;
