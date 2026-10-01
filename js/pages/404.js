@@ -1,4 +1,4 @@
-import { initI18n, withLangParam } from "../../translation/translation.js?v=v2026-10-01T07182";
+import { initI18n, withLangParam } from "../../translation/translation.js?v=v2026-10-01T17435";
 
 (async () => {
   try {
