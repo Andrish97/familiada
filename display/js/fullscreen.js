@@ -1,4 +1,4 @@
-import { icon } from "../../js/core/icons.js?v=v2026-10-01T17435";
+import { icon } from "../../js/core/icons.js?v=v2026-10-01T18181";
 export const initFullscreenButton = () => {
   const fsBtn = document.getElementById("fsBtn");
   if (!fsBtn) return;
