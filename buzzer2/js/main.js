@@ -10,13 +10,13 @@
 // autorytatywny wiersz już to wie), błąd sieci (przycisk wraca do ON,
 // można spróbować ponownie).
 
-import { initI18n, setUiLang } from "../../translation/translation.js?v=v2026-10-01T19425";
-import { startKeepAlive } from "../../js/core/keep-alive.js?v=v2026-10-01T19425";
-import { sb } from "../../js/core/supabase.js?v=v2026-10-01T19425";
-import { createSubscription } from "../../js/core/game-state-subscribe.js?v=v2026-10-01T19425";
-import { createButtonRenderer, STATE, deriveButtonState, isLockedRow } from "./render.js?v=v2026-10-01T19425";
-import { ringDoorbell } from "../../js/core/game-state-doorbell.js?v=v2026-10-01T19425";
-import { icon } from "../../js/core/icons.js?v=v2026-10-01T19425";
+import { initI18n, setUiLang } from "../../translation/translation.js?v=v2026-10-01T22165";
+import { startKeepAlive } from "../../js/core/keep-alive.js?v=v2026-10-01T22165";
+import { sb } from "../../js/core/supabase.js?v=v2026-10-01T22165";
+import { createSubscription } from "../../js/core/game-state-subscribe.js?v=v2026-10-01T22165";
+import { createButtonRenderer, STATE, deriveButtonState, isLockedRow } from "./render.js?v=v2026-10-01T22165";
+import { ringDoorbell } from "../../js/core/game-state-doorbell.js?v=v2026-10-01T22165";
+import { icon } from "../../js/core/icons.js?v=v2026-10-01T22165";
 
 // videoWakeLockFallback: patrz identyczny komentarz w host2/js/main.js —
 // Buzzer jest telefonem/tabletem kontestanta, dokładnie tym samym rodzajem

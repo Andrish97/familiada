@@ -2,11 +2,11 @@
 // Zakładki mają działać nawet jeśli auth się nie załaduje.
 // Najpierw UI, potem auth „miękko”.
 
-import { confirmModal } from "../core/modal.js?v=v2026-10-01T19425";
-import { initI18n, setUiLang, t, withLangParam } from "../../translation/translation.js?v=v2026-10-01T19425";
-import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-10-01T19425";
-import "../core/contact-modal.js?v=v2026-10-01T19425";
-import { icon, iconText } from "../core/icons.js?v=v2026-10-01T19425";
+import { confirmModal } from "../core/modal.js?v=v2026-10-01T22165";
+import { initI18n, setUiLang, t, withLangParam } from "../../translation/translation.js?v=v2026-10-01T22165";
+import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-10-01T22165";
+import "../core/contact-modal.js?v=v2026-10-01T22165";
+import { icon, iconText } from "../core/icons.js?v=v2026-10-01T22165";
 
 function isModalMode() {
   const p = new URLSearchParams(location.search);
@@ -191,7 +191,7 @@ function wireFallbackNav() {
 
 
 async function wireAuthSoft() {
-  const auth = await import("../core/auth.js?v=v2026-10-01T19425");
+  const auth = await import("../core/auth.js?v=v2026-10-01T22165");
   // Pełna strona jest częścią panelu użytkownika i wymaga sesji. Wersja
   // modalna jest osadzanym dokumentem pomocy — nie może zamienić iframe'u
   // w ekran logowania, gdy auth jest chwilowo niedostępny lub nie istnieje.
