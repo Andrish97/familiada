@@ -14,8 +14,8 @@
 //             (znika sam po obrocie),
 //   narrow -- komputer z za wąskim oknem: „poszerz okno”.
 
-import { applyTranslations, t } from "../../translation/translation.js?v=v2026-10-01T18485";
-import { icon } from "./icons.js?v=v2026-10-01T18485";
+import { applyTranslations, t } from "../../translation/translation.js?v=v2026-10-01T19054";
+import { icon } from "./icons.js?v=v2026-10-01T19054";
 
 export const PHONE_MAX_SHORT_SIDE = 700;
 export const MIN_WORK_WIDTH = 980;
