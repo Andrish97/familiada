@@ -753,6 +753,16 @@ async function scenarioRoundsMechanics(pages, { contexts }) {
   // ===== RUNDA 2 =====
   await clickPaced(control.getByRole("button", { name: "Rozpocznij rundę" }));
   await clickPaced(buzzer.getByRole("button", { name: "Przycisk B" }));
+  // Zgłoszone: pokaż "Ponów naciśnięcie" jako zwykłą alternatywę
+  // przyjęcia -- operator czasem uznaje pierwsze zgłoszenie za
+  // przypadkowe i otwiera Buzzer na nowo, zamiast od razu klikać
+  // "Zatwierdź". Dłuższa pauza, żeby widz zdążył zobaczyć oba kafle
+  // (Zatwierdź + Ponów naciśnięcie) razem, zanim operator wybierze "Ponów".
+  await expect(control.getByRole("button", { name: "Zatwierdź: Beta" })).toBeVisible({ timeout: 10000 });
+  await control.waitForTimeout(1500);
+  await clickPaced(control.getByRole("button", { name: "Ponów naciśnięcie" }));
+  await control.waitForTimeout(800);
+  await clickPaced(buzzer.getByRole("button", { name: "Przycisk B" }));
   await armAndConfirmPaced(control.getByRole("button", { name: "Zatwierdź: Beta" }));
   await armAndConfirmPaced(answerTile(control, 1)); // B trafia -> kontrola B, allowPass
   await armAndConfirmPaced(control.getByRole("button", { name: "Oddaj kontrolę" })); // dawny "Pass" -> kontrola A
