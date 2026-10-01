@@ -499,18 +499,27 @@ export function createRenderer({ scene, qr, getSfxDuration }) {
             if (stealTeam) api.rounds.setX(`4${stealTeam}`, true);
           }
           break;
+        // Zgłoszony realny bug (#16/#17): shared/deriveEvents.js's
+        // diffFinalMapReveals() emituje ev.round jako STRING "map1"/"map2"
+        // (dokładnie ten klucz w detail.final.runtime, potwierdzone testem
+        // jednostkowym tests/unit/deriveEvents.test.js) — ten kod porównywał
+        // to z LICZBĄ 1, co jest zawsze fałszywe dla OBU wartości. Skutek:
+        // każde odsłonięcie odpowiedzi/punktów gracza 1 (map1) czytało dane
+        // z map2 (najczęściej jeszcze null → wywalało się po cichu/psuło
+        // resztę renderDiff) i zawsze pisało na PRAWĄ stronę planszy — stąd
+        // brak treści gracza 1, zawsze zera, i pomylone strony.
         case "FINAL_ANSWER_REVEALED": {
-          const row = nextRow.detail.final.runtime[ev.round === 1 ? "map1" : "map2"][ev.idx];
-          if (ev.round === 1) api.final.setLeft(ev.idx + 1, row.outText, { animIn: { ...ANSWER_ANIM, ms: answerAnimMs } });
+          const row = nextRow.detail.final.runtime[ev.round][ev.idx];
+          if (ev.round === "map1") api.final.setLeft(ev.idx + 1, row.outText, { animIn: { ...ANSWER_ANIM, ms: answerAnimMs } });
           else api.final.setRight(ev.idx + 1, row.outText, { animIn: { ...ANSWER_ANIM, ms: answerAnimMs } });
           break;
         }
         case "FINAL_POINTS_REVEALED": {
           const f = nextRow.detail.final;
-          const row = f.runtime[ev.round === 1 ? "map1" : "map2"][ev.idx];
-          if (ev.round === 1) api.final.setA(ev.idx + 1, String(row.pts), { animIn: { ...ANSWER_ANIM, ms: answerAnimMs } });
+          const row = f.runtime[ev.round][ev.idx];
+          if (ev.round === "map1") api.final.setA(ev.idx + 1, String(row.pts), { animIn: { ...ANSWER_ANIM, ms: answerAnimMs } });
           else api.final.setB(ev.idx + 1, String(row.pts), { animIn: { ...ANSWER_ANIM, ms: answerAnimMs } });
-          api.final.setSumaFor(ev.round === 1 ? "A" : "B", String(f.runtime.sum), { animIn: { ...ANSWER_ANIM, ms: answerAnimMs } });
+          api.final.setSumaFor(ev.round === "map1" ? "A" : "B", String(f.runtime.sum), { animIn: { ...ANSWER_ANIM, ms: answerAnimMs } });
           break;
         }
         case "TIMER_STARTED":

@@ -1039,14 +1039,22 @@ function matchButtonLabel(a) {
 
 // ===== Scenariusz 4: finał pełny — oba bloki, naturalne wygaśnięcie
 // zegarka gracza 1, powtórzenie u gracza 2, odsłonięcie odpowiedzi gracza 1
-// na Display I Host przy starcie tury gracza 2. Ten sam przebieg co
-// control2.spec.js's test "finał — obaj gracze, wszystkie 10 pytań...".
-// Prawdziwe pytania demo (game.finalQuestions, z restoreDemoGame) — każdy
-// z czterech MATCH-ów trafia w INNE miejsce rankingu odpowiedzi (2., 3., 4.
-// i 5. miejsce — patrz MATCH_RANKS niżej), nie mechanicznie zawsze to samo,
-// a suma mimo to zostaje daleko pod finalTarget (domyślne 200), więc
-// scenariusz przechodzi przez WSZYSTKIE 10 pytań bez wczesnego wyjścia (to
-// pokazuje scenariusz 5 osobno). =====
+// na Display I Host przy starcie tury gracza 2, WSZYSTKIE cztery wyniki
+// mapowania (MATCH/MISS/SKIP/Powtórzenie) — i, zgłoszone wprost, drużyna
+// FAKTYCZNIE WYGRYWA finał na końcu (w odróżnieniu od scenariusza 5, gdzie
+// próg jest trafiony natychmiast, na samym początku). Ten sam przebieg co
+// control2.spec.js's test "finał — obaj gracze, wszystkie 10 pytań...",
+// tyle że TU liczby są dobrane tak, żeby ostatnie trafienie (gracz 2,
+// pytanie #4) przekroczyło finalTarget (patrz P1_MATCH_RANK/P2_MATCH_RANK
+// i finalTarget:100 w makeGame). Każdy z czterech MATCH-ów trafia w INNE
+// miejsce rankingu odpowiedzi (2. i 3. u gracza 1, 2. i 1. u gracza 2) —
+// nie mechanicznie zawsze to samo, i nie zawsze najwyższe. Realna suma w
+// kolejności odsłonięć: 28 (P1#1) -> 46 (P1#4, +18) -> 70 (P2#2, +24) -> 105
+// (P2#4, +35) — ostatnie trafienie przekracza próg (100), więc silnik
+// (REVEAL_POINTS w engine.js) skacze PROSTO do f_end zaraz po nim: pytanie
+// #5 gracza 2 (SKIP) nigdy nie zostaje odsłonięte — SKIP jest i tak już
+// pokazany trzykrotnie wcześniej w tym scenariuszu (P1#2, P1#5, P2#3), więc
+// nic realnie nie ginie z demonstrowanej różnorodności. =====
 
 async function scenarioFinalFull(pages, { game }) {
   const { control, buzzer, host } = pages;
@@ -1080,15 +1088,22 @@ async function scenarioFinalFull(pages, { game }) {
   // 2× MATCH, 2× SKIP.
   const P2_PLAN = [null, true, false, true, false];
   // Które miejsce w rankingu odpowiedzi (1=najwyżej, 6=najniżej punktowana)
-  // trafia każdy MATCH — celowo różne za każdym razem (2., 3., 4., 5.
-  // miejsce), nie zawsze ta sama pozycja.
-  const P1_MATCH_RANK = [3, null, null, 4, null];
-  const P2_MATCH_RANK = [null, 2, null, 5, null];
+  // trafia każdy MATCH — celowo różne za każdym razem, nie zawsze ta sama
+  // pozycja. Dokładna suma (28+18+24+35=105) jest policzona tak, żeby
+  // ostatnie trafienie (P2, idx3) przekroczyło finalTarget:100 (makeGame) —
+  // patrz pełne wyliczenie w komentarzu nad funkcją.
+  const P1_MATCH_RANK = [2, null, null, 3, null];
+  const P2_MATCH_RANK = [null, 2, null, 1, null];
 
-  // Gracz 1: wpisz zaplanowane odpowiedzi (przy MATCH: dosłownie tekst
-  // prawdziwej odpowiedzi, którą realnie dopasujemy — symuluje
-  // gracza, który faktycznie ją powiedział), uruchom zegarek, poczekaj na
-  // NATURALNE wygaśnięcie (15s).
+  // Zgłoszone wprost: "wpisywanie w finale ma być podczas odliczania, nie
+  // przed" -- kod (control2/js/ui.js's finalTimerRow/renderFinalEntry) już
+  // na to pozwala: pole wpisywania blokuje WYŁĄCZNIE boardBusy() (krótka
+  // serwerowa blokada zaraz po przejściu ekranu), nie stan zegarka, a
+  // tickTimers() (naprawione przy #13) aktualizuje TYLKO cyfry co 250ms,
+  // bez przebudowy reszty ekranu -- więc pisanie w trakcie odliczania nie
+  // gubi fokusu pola. Scenariusz ma to NAPRAWDĘ pokazać: zegarek startuje
+  // NAJPIERW, wpisywanie leci W TRAKCIE, nie przed.
+  await clickPaced(control.getByRole("button", { name: "Rozpocznij odliczanie (15s)" }));
   const p1Inputs = control.locator("#app input[type=text]");
   for (let i = 0; i < 5; i++) {
     if (P1_PLAN[i] === true) await typePaced(p1Inputs.nth(i), answerByRank(fq[i], P1_MATCH_RANK[i]).text);
@@ -1097,8 +1112,9 @@ async function scenarioFinalFull(pages, { game }) {
     // zaznaczenie na kaflu "Brak odpowiedzi" (control2/js/ui.js's
     // effectiveMappingResolution), potwierdzane przez "Pokazana" niżej.
   }
-  await clickPaced(control.getByRole("button", { name: "Rozpocznij odliczanie (15s)" }));
-  await control.waitForTimeout(16_000);
+  // Wpisywanie powyżej już zjadło kilka sekund PO starcie zegarka -- reszta
+  // to tylko dociągnięcie do naturalnego wygaśnięcia (15s), z zapasem.
+  await control.waitForTimeout(12_000);
 
   await clickPaced(control.getByRole("button", { name: "Dalej" }));
   for (let i = 0; i < 5; i++) {
@@ -1125,28 +1141,38 @@ async function scenarioFinalFull(pages, { game }) {
   await hostPeekSwipe(host);
   await host.waitForTimeout(1500);
 
-  // Gracz 2: pytanie #1 = powtórzenie, reszta wg P2_PLAN (znowu dosłowny
-  // tekst prawdziwej, najniżej punktowanej odpowiedzi przy MATCH).
+  // Gracz 2: zegarek NAJPIERW (ta sama poprawka co u gracza 1 wyżej —
+  // "wpisywanie w finale ma być podczas odliczania, nie przed"), dopiero
+  // POTEM powtórzenie (pytanie #1) i reszta wg P2_PLAN (dosłowny tekst
+  // prawdziwej, najniżej punktowanej odpowiedzi przy MATCH).
+  await clickPaced(control.getByRole("button", { name: "Rozpocznij odliczanie (20s)" }));
   await clickPaced(control.getByRole("button", { name: "Powtórzenie" }).first());
   const p2Inputs = control.locator("#app input[type=text]");
   for (let i = 1; i < 5; i++) {
     if (P2_PLAN[i] === true) await typePaced(p2Inputs.nth(i), answerByRank(fq[i], P2_MATCH_RANK[i]).text);
     // false: nic nie wpisujemy -> AUTO+SKIP
   }
-  await clickPaced(control.getByRole("button", { name: "Rozpocznij odliczanie (20s)" }));
   // Zgłoszone: "po drugiej rundzie finału nawet nie czeka na koniec
   // timera" — "Dalej" jest teraz zablokowany, dopóki zegarek tej rundy
   // aktywnie odlicza (control2/js/ui.js's renderFinalEntry), więc TEN test
-  // musi poczekać na naturalne wygaśnięcie (21s) dokładnie jak gracz 1
+  // musi poczekać na naturalne wygaśnięcie (20s) dokładnie jak gracz 1
   // wyżej — wcześniejszy komentarz "tym razem NIE czekamy" opisywał stan
-  // sprzed tej naprawy.
-  await control.waitForTimeout(21_000);
+  // sprzed tej naprawy. Wpisywanie powyżej już zjadło kilka sekund PO
+  // starcie zegarka -- reszta to tylko dociągnięcie z zapasem.
+  await control.waitForTimeout(16_000);
   await clickPaced(control.getByRole("button", { name: "Dalej" }));
 
   for (let i = 0; i < 5; i++) {
     if (P2_PLAN[i] === true) await armAndConfirmPaced(control.getByRole("button", { name: matchButtonLabel(answerByRank(fq[i], P2_MATCH_RANK[i])) }));
     await armAndConfirmPaced(control.getByRole("button", { name: "Pokaż odpowiedź" }));
     await armAndConfirmPaced(control.getByRole("button", { name: "Pokaż punkty" }));
+    // Suma po TYM trafieniu (idx3: 70+35=105) przekracza finalTarget:100
+    // (makeGame) -> REVEAL_POINTS w engine.js skacze PROSTO do f_end, silnik
+    // NIE czeka na kolejne "Dalej" -- ekran mapowania po prostu już nie
+    // istnieje, klik w "Dalej" nie miałby czego trafić. Pytanie #5 gracza 2
+    // (SKIP) nigdy nie zostaje odsłonięte -- drużyna wygrywa finał w tym
+    // właśnie momencie.
+    if (i === 3) break;
     await clickPaced(control.getByRole("button", { name: "Dalej" }));
   }
 
@@ -1491,11 +1517,13 @@ const SCENARIOS = [
       // Prawdziwe pytania demo (nie sztuczne "Pytanie finałowe N") — inny
       // ord niż FINAL_SETUP_ROUND_ORDS. scenarioFinalFull dopasowuje przy
       // każdym MATCH INNE miejsce w rankingu odpowiedzi (patrz
-      // P1_MATCH_RANK/P2_MATCH_RANK i answerByRank() tam) — nie zawsze to
-      // samo — a suma mimo to zostaje daleko pod finalTarget (domyślne
-      // 200) — real content, bez ryzyka przedwczesnego skoku do f_end.
+      // P1_MATCH_RANK/P2_MATCH_RANK i answerByRank() tam), a finalTarget
+      // obniżony do 100 (domyślne 200) tak, żeby suma realnych trafień
+      // (28+18+24+35=105) przekroczyła go dopiero na ostatnim trafieniu
+      // gracza 2 — zgłoszone wprost: drużyna ma FAKTYCZNIE WYGRAĆ finał w
+      // tym scenariuszu, nie tylko bezpiecznie zostać pod progiem.
       finalPickOrds: [9, 10, 11, 12, 13],
-      settings: { game: { advanced: { finalMinPoints: 280 } } },
+      settings: { game: { advanced: { finalMinPoints: 280, finalTarget: 100 } } },
     }),
     run: scenarioFinalFull,
   },
