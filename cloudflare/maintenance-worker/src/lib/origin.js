@@ -1,0 +1,160 @@
+// src/lib/origin.js -- proxying to the GitHub Pages origin, maintenance/404
+// pages, and host/path classification.
+import { withHeaders } from "./http.js";
+
+export async function serveMaintenance(request, originBase, originHost, resolveOverride) {
+  const maintUrl = new URL("/maintenance", originBase);
+  const res = await fetchWithOrigin(maintUrl.toString(), request, originHost, resolveOverride);
+
+  return new Response(res.body, {
+    status: 503,
+    headers: {
+      "Content-Type": "text/html; charset=utf-8",
+      "Cache-Control": "no-store",
+      "Retry-After": "300"
+    }
+  });
+}
+
+export async function serveNotFoundPage(request, originBase, originHost, resolveOverride) {
+  const notFoundUrl = new URL("/404.html", originBase);
+  const res = await fetchWithOrigin(notFoundUrl.toString(), request, originHost, resolveOverride);
+
+  const base = new Response(res.body, {
+    status: 404,
+    headers: {
+      "Content-Type": "text/html; charset=utf-8",
+      "Cache-Control": "no-store"
+    }
+  });
+
+  return withHeaders(base, {
+    "Content-Security-Policy":
+      "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'",
+    "X-Content-Type-Options": "nosniff"
+  });
+}
+
+export const KNOWN_HOSTS = [
+  "familiada.online",
+  "www.familiada.online",
+  "settings.familiada.online",
+  "panel.familiada.online",
+  "supabase.familiada.online",
+  "api.familiada.online",
+];
+
+const BLOCKED_PATHS = [
+  {
+    hosts: ["familiada.online", "www.familiada.online"],
+    paths: ["/settings", "/settings/", "/settings.html", "/tools", "/tools/", "/settings-tools", "/settings-tools/"],
+  },
+];
+
+export function isKnownHost(host) {
+  return KNOWN_HOSTS.includes(host);
+}
+
+export function isBlockedPath(host, pathname) {
+  for (const rule of BLOCKED_PATHS) {
+    if (!rule.hosts.includes(host)) continue;
+    if (rule.paths.includes(pathname)) return true;
+    if (pathname.startsWith("/tools/")) return true;
+    if (pathname.startsWith("/settings-tools/")) return true;
+  }
+  return false;
+}
+
+export function fetchFromOrigin(request, url, originBase, originHost, resolveOverride) {
+  const target = new URL(url.pathname + url.search, originBase);
+  return fetchWithOrigin(target.toString(), request, originHost, resolveOverride);
+}
+
+export async function fetchWith404(request, originBase, originHost, resolveOverride) {
+  const url = new URL(request.url);
+  const res = await fetchFromOrigin(request, url, originBase, originHost, resolveOverride);
+  if (res.status !== 404) {
+    // HTML bez no-store = cache w przeglądarce → stale wersje
+    const ct = res.headers.get("Content-Type") || "";
+    if (ct.includes("text/html")) {
+      return new Response(res.body, {
+        status: res.status,
+        headers: {
+          "Content-Type": ct,
+          "Cache-Control": "no-store",
+          "X-GitHub-Request-Id": res.headers.get("X-GitHub-Request-Id") || ""
+        }
+      });
+    }
+    return res;
+  }
+
+  const accept = request.headers.get("Accept") || "";
+  if (accept.includes("text/html")) {
+    return serveNotFoundPage(request, originBase, originHost, resolveOverride);
+  }
+
+  return res;
+}
+
+export async function fetchWithOrigin(url, request, originHost, resolveOverride, opts = {}) {
+  const headers = new Headers(request.headers);
+  if (originHost) headers.set("Host", originHost);
+
+  const method = request.method || "GET";
+  const init = {
+    method,
+    headers,
+    redirect: "manual",
+    cf: resolveOverride ? { resolveOverride } : undefined,
+  };
+
+  if (method !== "GET" && method !== "HEAD") {
+    init.body = request.body;
+  }
+
+  const res = await fetch(url, init);
+
+  const ct = res.headers.get("Content-Type") || "";
+  const accept = headers.get("Accept") || "";
+
+  // Wywołane wyłącznie przez serveStaticAsset(): odwrotność reszty tej
+  // funkcji, która celowo wymusza no-store na WSZYSTKICH innych odpowiedziach
+  // (łącznie z tymi samymi rozszerzeniami niżej) - HTML z bramki maintenance,
+  // odpowiedzi SSR itd. muszą zostać świeże. Tylko ta jedna ścieżka wie, że
+  // serwuje coś, co faktycznie wolno cache'ować.
+  if (opts.staticAsset && res.status === 200) {
+    return new Response(res.body, {
+      status: res.status,
+      headers: { "Content-Type": ct, "Cache-Control": opts.cacheControl || "public, max-age=600" }
+    });
+  }
+
+  if (ct.includes("text/html") || accept.includes("text/html")) {
+    return new Response(res.body, {
+      status: res.status,
+      headers: {
+        "Content-Type": ct,
+        "Cache-Control": "no-store"
+      }
+    });
+  }
+
+  const pathname = new URL(url).pathname;
+  if (
+    ct.includes("application/javascript") ||
+    ct.includes("text/css") ||
+    ct.includes("application/json") ||
+    pathname.match(/\.(js|css|json|woff2?|ttf|otf|webp|avif|ico|png|jpg|jpeg|gif|svg)$/i)
+  ) {
+    return new Response(res.body, {
+      status: res.status,
+      headers: {
+        "Content-Type": ct,
+        "Cache-Control": "no-store"
+      }
+    });
+  }
+
+  return res;
+}
