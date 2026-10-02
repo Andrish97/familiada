@@ -5201,7 +5201,6 @@ const en = {
     replySubject: "Re: [{ticket}] {subject}",
     replyQuoteLabel: "Your report [{ticket}]:",
     composeSubject: "Message from Familiada",
-    messageMoved: "Your message has been moved to ticket {ticket}.",
   },
   marketplaceSsr: {
     listTitle: "Familiada Marketplace",

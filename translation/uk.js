@@ -5187,7 +5187,6 @@ const uk = {
     replySubject: "Re: [{ticket}] {subject}",
     replyQuoteLabel: "Ваше звернення [{ticket}]:",
     composeSubject: "Повідомлення від Familiada",
-    messageMoved: "Ваше повідомлення перенесено до звернення {ticket}.",
   },
   marketplaceSsr: {
     listTitle: "Familiada Маркетплейс",

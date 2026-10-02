@@ -36,11 +36,8 @@ function placeholders(s) {
 // ── klucze ──────────────────────────────────────────────────────────────────
 
 test("worker: każdy klucz contactEmail użyty w kodzie istnieje w PL/EN/UK", () => {
-  const keys = usedTrKeys([
-    `${WORKER}/lib/email/contact-email.js`,
-    `${WORKER}/lib/admin/admin-reports-api.js`,
-  ]);
-  assert.ok(keys.length >= 8, `za mało kluczy: ${keys}`);
+  const keys = usedTrKeys([`${WORKER}/lib/email/contact-email.js`]);
+  assert.ok(keys.length >= 7, `za mało kluczy: ${keys}`);
   for (const lang of LANGS) {
     const missing = keys.filter((k) => typeof DICTS[lang].contactEmail?.[k] !== "string" || !DICTS[lang].contactEmail[k]);
     assert.deepEqual(missing, [], lang);

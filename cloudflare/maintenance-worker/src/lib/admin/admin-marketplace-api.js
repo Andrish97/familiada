@@ -2,7 +2,6 @@
 import { json, readJsonOr400 } from "../core/http.js";
 import { readJson } from "./admin-auth.js";
 import { supabaseRpc, summarizeSupabaseError, normalizeRpcValue } from "../core/supabase.js";
-import { getTelegramConfig, sendTelegram } from "../notifications/telegram.js";
 
 export async function handleAdminMarketplaceApi(request, env, url) {
   // GET /_admin_api/marketplace/list?status=pending|published|rejected|withdrawn
@@ -126,50 +125,6 @@ export async function handleAdminMarketplaceApi(request, env, url) {
       }, 422);
     }
     return json({ ok: true });
-  }
-
-  // POST /_admin_api/marketplace/import-bulk
-  // Importuje wiele gier naraz z JSON { games: [{title, description, lang, payload}] }
-  if (url.pathname === "/_admin_api/marketplace/import-bulk") {
-    if (request.method !== "POST") return new Response("Method Not Allowed", { status: 405 });
-    const body = await readJsonOr400(request);
-    if (body instanceof Response) return body;
-    const games = body?.games;
-    if (!Array.isArray(games) || games.length === 0) return json({ ok: false, error: "missing_games" }, 400);
-
-    const results = [];
-    for (let i = 0; i < games.length; i++) {
-      const g = games[i];
-      if (!g.title || !g.lang || !g.payload) {
-        results.push({ index: i, ok: false, error: "missing_fields" });
-        continue;
-      }
-      const upsert = await supabaseRpc(env, "market_admin_upsert", {
-        p_title:       String(g.title),
-        p_description: String(g.description || ""),
-        p_lang:        String(g.lang),
-        p_payload:     g.payload,
-      });
-      if (!upsert.ok) {
-        results.push({ index: i, title: g.title, ok: false, error: summarizeSupabaseError(upsert) });
-        continue;
-      }
-      const row = normalizeRpcValue(upsert.data);
-      results.push({ index: i, title: g.title, ok: row?.ok ?? true, id: row?.market_id, existing: row?.existing });
-    }
-
-    const failed = results.filter(r => !r.ok);
-    return json({ ok: failed.length === 0, total: games.length, imported: results.filter(r => r.ok).length, failed: failed.length, results });
-  }
-
-  // POST /_admin_api/marketplace/notify-test — wyślij testowe powiadomienie
-  if (url.pathname === "/_admin_api/marketplace/notify-test") {
-    if (request.method !== "POST") return new Response("Method Not Allowed", { status: 405 });
-
-    const tg = getTelegramConfig(env);
-    if (!tg) return json({ ok: false, error: "telegram_not_configured" }, 422);
-
-    return sendTelegram(tg, "Test — Familiada admin\nPowiadomienia push działają poprawnie ✅");
   }
 
   return new Response("Not Found", { status: 404 });

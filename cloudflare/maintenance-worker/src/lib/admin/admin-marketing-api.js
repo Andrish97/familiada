@@ -1,19 +1,10 @@
-// src/lib/admin-marketing-api.js -- /_admin_api/marketing/* (preview + bulk send).
+// src/lib/admin-marketing-api.js -- /_admin_api/marketing/* (bulk send).
 import { json } from "../core/http.js";
 import { readJson } from "./admin-auth.js";
-import { supabaseRequest } from "../core/supabase.js";
-import { buildMarketingEmail } from "../email/marketing-email.js";
+import { supabaseRequest, summarizeSupabaseError } from "../core/supabase.js";
 import { htmlToPlainTextPreview } from "../email/html-to-text.js";
 
 export async function handleAdminMarketingApi(request, env, url) {
-  // POST /_admin_api/marketing/preview { template_id, custom_subject, custom_body }
-  if (url.pathname === "/_admin_api/marketing/preview" && request.method === "POST") {
-    const body = await readJson(request);
-    const { template_id, custom_subject, custom_body } = body || {};
-    const { html } = buildMarketingEmail(template_id || "custom", { customBody: custom_body, customSubject: custom_subject });
-    return json({ ok: true, html });
-  }
-
   // POST /_admin_api/marketing/send { emails, subject, template_id, custom_body }
   if (url.pathname === "/_admin_api/marketing/send" && request.method === "POST") {
     const body = await readJson(request);

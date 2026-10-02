@@ -5088,7 +5088,6 @@ const pl = {
     replySubject: "Re: [{ticket}] {subject}",
     replyQuoteLabel: "Twoje zgłoszenie [{ticket}]:",
     composeSubject: "Wiadomość od Familiada",
-    messageMoved: "Twoja wiadomość została przeniesiona do zgłoszenia {ticket}.",
   },
   marketplaceSsr: {
     listTitle: "Familiada Marketplace",
