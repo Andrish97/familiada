@@ -16,11 +16,11 @@
 // setStealMsg/setRevealMsg/ROUNDS_MSG/FINAL_MSG, ale jako czysta funkcja
 // bieżącego game_state (shared/hints.js), nie ulotny stan ustawiany przy
 // każdym zdarzeniu — "wszystko idzie przez tabelę stanów".
-import { getRoundsHint, getFinalHint, getFinalEntryShortcuts, teamName } from "../../shared/hints.js?v=v2026-09-30T19530";
-import { t, getUiLang } from "../../translation/translation.js?v=v2026-09-30T19530";
-import { getSfxCategories, getSfxVariant, isSfxPlaying, playSfx, stopSfx, onSfxEnd, setSfxVolume } from "../../js/core/sfx.js?v=v2026-09-30T19530";
-import { buildDisplayPreviewRow } from "../../shared/previewRow.js?v=v2026-09-30T19530";
-import { icon, iconText } from "../../js/core/icons.js?v=v2026-09-30T19530";
+import { getRoundsHint, getFinalHint, getFinalEntryShortcuts, teamName } from "../../shared/hints.js?v=v2026-10-01T22165";
+import { t, getUiLang } from "../../translation/translation.js?v=v2026-10-01T22165";
+import { getSfxCategories, getSfxVariant, isSfxPlaying, playSfx, stopSfx, onSfxEnd, setSfxVolume } from "../../js/core/sfx.js?v=v2026-10-01T22165";
+import { buildDisplayPreviewRow } from "../../shared/previewRow.js?v=v2026-10-01T22165";
+import { icon, iconText } from "../../js/core/icons.js?v=v2026-10-01T22165";
 
 const $ = (id) => document.getElementById(id);
 const on = (el, ev, fn) => el && el.addEventListener(ev, fn);
@@ -637,49 +637,62 @@ export function createUI({ root, emit }) {
   // kontrolę"). Nieaktywny kafel korzysta z tego samego :disabled co reszta
   // siatki (wyszarzony, nieklikalny placeholder) — nic tu nie jest osobnym,
   // bespoke komponentem.
+  // Zgłoszone: oba tryby (physicalBuzzer/normalny Buzzer) mają identyczny
+  // układ ekranu — rząd 1: dwie drużyny (w trybie physicalBuzzer klikalne,
+  // operator nimi WSKAZUJE kto nacisnął; w trybie normalnym to czysty
+  // wskaźnik duel.lastPressed, nieklikalny — zaznaczenia dokonuje realny
+  // Buzzer, nie kliknięcie na tym ekranie); rząd 2: JEDEN wspólny przycisk
+  // "Zatwierdź: <wskazana drużyna>", zaznacz → potwierdź (ACCEPT_BUZZ to
+  // konsekwentna akcja, przyznaje kontrolę); rząd 3: "Ponów naciśnięcie"
+  // (RETRY_DUEL, pojedynczy klik — bezpieczne, odwracalne otwarcie Buzzera
+  // na nowo) WYŁĄCZNIE w trybie normalnym, gdy jest co odrzucić — w trybie
+  // physicalBuzzer operator po prostu klika drugą drużynę, bez osobnego
+  // "cofnij".
   function renderDuelAccept(state) {
     const r = state.rounds;
     const tiles = [];
+    const isPhysical = state.settings.physicalBuzzer === true;
+    const selectedTeam = isPhysical ? pendingPhysicalTeam : r.duel.lastPressed;
 
-    if (state.settings.physicalBuzzer === true) {
-      // Brak Buzzera na ekranie — operator sam wskazuje, kto pierwszy
-      // nacisnął fizyczny przycisk. Zaznacz → potwierdź, żeby nie zaliczyć
-      // przypadkowego kliknięcia (plan: "physicalSelectTeam→potwierdź").
-      // boardBusy(): ten sam floor co control/js/gameRounds.js's
-      // enableBuzzerDuel(), które stary kod wołał DOPIERO po `await`
-      // dźwięku/animacji startu rundy — ten ekran nie ma być klikalny,
-      // zanim ta sekwencja (dziś: control2/js/app.js's dispatchGated() po
-      // "Rozpocznij rundę") się nie skończy.
-      if (!pendingPhysicalTeam) {
-        tiles.push(tile(teamName(state, "A"), { row: 1, col: HALF(0), disabled: boardBusy(), onclick: () => { pendingPhysicalTeam = "A"; emit("ui.rerender"); } }));
-        tiles.push(tile(teamName(state, "B"), { row: 1, col: HALF(1), disabled: boardBusy(), onclick: () => { pendingPhysicalTeam = "B"; emit("ui.rerender"); } }));
-      } else {
-        tiles.push(tile(t("control.physicalConfirmTeam", { name: teamName(state, pendingPhysicalTeam) }), {
-          row: 1, col: HALF(0), cls: "c2-tile-primary", disabled: boardBusy(),
-          onclick: () => { const team = pendingPhysicalTeam; pendingPhysicalTeam = null; emit("game.dispatch", { type: "ACCEPT_BUZZ", team }); },
-        }));
-        tiles.push(tile(t("common.cancel"), { row: 1, col: HALF(1), onclick: () => { pendingPhysicalTeam = null; emit("ui.rerender"); } }));
-      }
-    } else {
-      // Tryb normalny (Buzzer): obie drużyny widoczne od razu, ale tylko
-      // ta, która faktycznie nacisnęła (duel.lastPressed), jest klikalna —
-      // druga zostaje wyszarzonym, nieklikalnym placeholderem, dokładnie jak
-      // stary control.html's btnBuzzAcceptA/B. "Ponów naciśnięcie" (nowe
-      // RETRY_DUEL) pojawia się dopiero, gdy jest co odrzucić.
-      const lastPressed = r.duel.lastPressed;
-      tiles.push(tile(t("control.roundsBuzzAcceptTeam", { name: teamName(state, "A") }), {
-        row: 1, col: HALF(0), cls: lastPressed === "A" ? "c2-tile-primary" : "",
-        disabled: lastPressed !== "A" || boardBusy(),
-        onclick: () => emit("game.dispatch", { type: "ACCEPT_BUZZ", team: "A" }),
+    // boardBusy(): ten sam floor co control/js/gameRounds.js's
+    // enableBuzzerDuel(), które stary kod wołał DOPIERO po `await`
+    // dźwięku/animacji startu rundy — ten ekran nie ma być klikalny,
+    // zanim ta sekwencja (dziś: control2/js/app.js's dispatchGated() po
+    // "Rozpocznij rundę") się nie skończy.
+    tiles.push(tile(teamName(state, "A"), {
+      row: 1, col: HALF(0), cls: selectedTeam === "A" ? "c2-tile-primary" : "",
+      disabled: isPhysical ? boardBusy() : true,
+      onclick: isPhysical && !boardBusy() ? () => { pendingPhysicalTeam = "A"; emit("ui.rerender"); } : undefined,
+    }));
+    tiles.push(tile(teamName(state, "B"), {
+      row: 1, col: HALF(1), cls: selectedTeam === "B" ? "c2-tile-primary" : "",
+      disabled: isPhysical ? boardBusy() : true,
+      onclick: isPhysical && !boardBusy() ? () => { pendingPhysicalTeam = "B"; emit("ui.rerender"); } : undefined,
+    }));
+
+    if (selectedTeam) {
+      const acceptArmKey = "acceptBuzz";
+      const acceptClickable = !boardBusy();
+      const acceptArmed = acceptClickable && armedKey === acceptArmKey;
+      tiles.push(tile(t("control.roundsBuzzAcceptTeam", { name: teamName(state, selectedTeam) }), {
+        row: 2, col: "1 / 7", cls: acceptArmed ? "c2-tile-armed" : "",
+        disabled: !acceptClickable,
+        onclick: acceptClickable ? (e) => {
+          if (armedKey === acceptArmKey || (e && e.detail >= 2)) {
+            armedKey = null;
+            const team = selectedTeam;
+            if (isPhysical) pendingPhysicalTeam = null;
+            emit("game.dispatch", { type: "ACCEPT_BUZZ", team });
+          } else {
+            armedKey = acceptArmKey;
+            emit("ui.rerender");
+          }
+        } : undefined,
       }));
-      tiles.push(tile(t("control.roundsBuzzAcceptTeam", { name: teamName(state, "B") }), {
-        row: 1, col: HALF(1), cls: lastPressed === "B" ? "c2-tile-primary" : "",
-        disabled: lastPressed !== "B" || boardBusy(),
-        onclick: () => emit("game.dispatch", { type: "ACCEPT_BUZZ", team: "B" }),
-      }));
-      if (lastPressed) {
-        tiles.push(tile(t("control.roundsBuzzRetry"), { row: 2, col: "1 / 7", disabled: boardBusy(), onclick: () => emit("game.dispatch", { type: "RETRY_DUEL" }) }));
-      }
+    }
+
+    if (!isPhysical && r.duel.lastPressed) {
+      tiles.push(tile(t("control.roundsBuzzRetry"), { row: 3, col: "1 / 7", disabled: boardBusy(), onclick: () => emit("game.dispatch", { type: "RETRY_DUEL" }) }));
     }
 
     const body = [h("div", { class: "c2-roundlayout" }, [
@@ -1101,12 +1114,22 @@ export function createUI({ root, emit }) {
     const phase = round === 1 ? "P1" : "P2";
     const running = timer.running && timer.phase === phase;
     const used = round === 1 ? timer.usedP1 : timer.usedP2;
+    // Zgłoszone: start odliczania to nieodwracalna akcja (usedP1/usedP2 --
+    // jednorazowa szansa na rundę, patrz engine.js's START_TIMER), a
+    // zatrzymanie też niesie realne ryzyko przypadkowego kliknięcia --
+    // zaznacz->potwierdź jak reszta kosztownych kafli finału, zamiast
+    // natychmiastowego toggle. Skrót klawiszowy (Ctrl/Cmd+Shift, app.js)
+    // zostaje jednoklikowy -- to złożony, mało przypadkowy gest, w
+    // odróżnieniu od pojedynczego kliknięcia myszą.
+    const armKey = `timer:${round}`;
 
     if (running) {
       const secLeft = Math.max(0, Math.ceil((timer.endsAt - Date.now()) / 1000));
       const filled = round === 1
         ? f.runtime.p1.every((x) => String(x?.text || "").trim().length > 0)
         : f.runtime.p2.every((x) => (x?.repeat ? true : String(x?.text || "").trim().length > 0));
+      const clickable = filled && !revealLocked();
+      const armed = clickable && armedKey === armKey;
       // Dokładnie jak stare control/js/gameFinal.js's setTimerBtnLabel: gdy
       // odliczanie trwa, przycisk ZAWSZE pokazuje etykietę "Zatrzymaj" (nie
       // tylko gdy da się kliknąć) — tylko klikalność zależy od allFilled.
@@ -1118,10 +1141,18 @@ export function createUI({ root, emit }) {
         h("div", { class: "c2-tile-sub", text: t("control.finalTimerStopShort") }),
       ]);
       const btn = h("button", {
-        class: `c2-tile c2-timer-row c2-tile-timer ${filled && !revealLocked() ? "startable" : ""}`.trim(),
+        class: `c2-tile c2-timer-row c2-tile-timer ${clickable ? "startable" : ""} ${armed ? "c2-tile-armed" : ""}`.trim(),
         type: "button",
-        disabled: filled && !revealLocked() ? undefined : "",
-        onclick: filled && !revealLocked() ? () => emit("final.toggleTimer", { round }) : undefined,
+        disabled: clickable ? undefined : "",
+        onclick: clickable ? (e) => {
+          if (armedKey === armKey || (e && e.detail >= 2)) {
+            armedKey = null;
+            emit("final.toggleTimer", { round });
+          } else {
+            armedKey = armKey;
+            emit("ui.rerender");
+          }
+        } : undefined,
       }, [content]);
       // data-timer-role: patrz komentarz przy timer3Tile w renderRounds —
       // ten sam mechanizm, tickTimers() aktualizuje TYLKO te cyfry co 250ms,
@@ -1134,11 +1165,21 @@ export function createUI({ root, emit }) {
     if (used) {
       return h("button", { class: "c2-tile c2-timer-row c2-tile-timer", type: "button", disabled: "" }, [document.createTextNode(t("control.finalTimerUsed"))]);
     }
+    const clickable = !revealLocked();
+    const armed = clickable && armedKey === armKey;
     return h("button", {
-      class: "c2-tile c2-timer-row c2-tile-timer startable",
+      class: `c2-tile c2-timer-row c2-tile-timer startable ${armed ? "c2-tile-armed" : ""}`.trim(),
       type: "button",
-      disabled: revealLocked() ? "" : undefined,
-      onclick: revealLocked() ? undefined : () => emit("final.toggleTimer", { round }),
+      disabled: clickable ? undefined : "",
+      onclick: clickable ? (e) => {
+        if (armedKey === armKey || (e && e.detail >= 2)) {
+          armedKey = null;
+          emit("final.toggleTimer", { round });
+        } else {
+          armedKey = armKey;
+          emit("ui.rerender");
+        }
+      } : undefined,
     }, [document.createTextNode(round === 1 ? t("control.finalUi.timerStart15") : t("control.finalUi.timerStart20"))]);
   }
 
@@ -1215,9 +1256,34 @@ export function createUI({ root, emit }) {
         // (e2e "finał — obaj gracze"): klik "Powtórzenie" tuż po wejściu na
         // ekran wpisywania gracza 2 dostawał 'locked' -- ta sama klasa bugu,
         // inny przycisk na tym samym ekranie.
+        //
+        // Zgłoszone: WŁĄCZENIE "powtórzenia" jest konsekwentne (gra dźwięk
+        // answer_repeat i wymusza SKIP w mapowaniu, engine.js's SET_REPEAT)
+        // -- zaznacz->potwierdź jak reszta kosztownych kafli finału, żeby
+        // przypadkowy pojedynczy klik nie wywołał tego na żywo. WYŁĄCZENIE
+        // jest celowo pojedynczym klikiem: SET_REPEAT z repeat:false TYLKO
+        // zdejmuje flagę (żadnego dźwięku, żadnej zmiany mapowania) --
+        // bezpieczne, odwracalne cofnięcie nie powinno wymagać potwierdzenia.
+        // Skrót Shift+Enter (niżej) zostaje jednoklikowy w obie strony --
+        // złożony gest, mało przypadkowy, w odróżnieniu od kliknięcia myszą.
+        const repeatArmKey = `repeat:${i}`;
+        const repeatArmed = !boardBusy() && !repeat && armedKey === repeatArmKey;
         const repeatBtn = h("button", {
-          class: `c2-btn-repeat ${repeat ? "on" : ""}`.trim(), type: "button",
-          onclick: boardBusy() ? undefined : () => emit("game.dispatch", { type: "SET_REPEAT", round: 2, idx: i, repeat: !repeat }),
+          class: `c2-btn-repeat ${repeat ? "on" : ""} ${repeatArmed ? "c2-tile-armed" : ""}`.trim(), type: "button",
+          onclick: boardBusy() ? undefined : (e) => {
+            if (repeat) {
+              armedKey = null;
+              emit("game.dispatch", { type: "SET_REPEAT", round: 2, idx: i, repeat: false });
+              return;
+            }
+            if (armedKey === repeatArmKey || (e && e.detail >= 2)) {
+              armedKey = null;
+              emit("game.dispatch", { type: "SET_REPEAT", round: 2, idx: i, repeat: true });
+            } else {
+              armedKey = repeatArmKey;
+              emit("ui.rerender");
+            }
+          },
         }, []);
         repeatBtn.innerHTML = repeat ? iconText("check", t("control.finalUi.p2RepeatOn")) : t("control.finalUi.p2RepeatOff");
         if (boardBusy()) repeatBtn.disabled = true;
@@ -1243,9 +1309,22 @@ export function createUI({ root, emit }) {
       ]),
     ];
 
+    // Zgłoszone: "po drugiej rundzie finału nawet nie czeka na koniec
+    // timera i przechodzi dalej" — "Dalej" nie był w ogóle powiązany ze
+    // stanem zegarka: klikalny przez CAŁY czas trwania 15s/20s odliczania,
+    // więc operator mógł przejść do mapowania w dowolnym momencie,
+    // przerywając jeszcze trwający, naturalny czas gracza (a wraz z nim —
+    // dźwięk "time_over", który miał ten czas zamykać). START_MAPPING
+    // (engine.js) i tak bezwarunkowo zatrzymuje zegarek przy wejściu —
+    // to musi być ŚWIADOME domknięcie (naturalne wygaśnięcie ALBO ręczne
+    // wczesne zatrzymanie przez sam kafel zegarka, które już wymaga
+    // wypełnienia wszystkich pól — patrz finalTimerRow), nie przypadkowe
+    // domknięcie przez inny przycisk na tym samym ekranie.
+    const timerPhase = round === 1 ? "P1" : "P2";
+    const timerRunningNow = f.runtime.timer.running && f.runtime.timer.phase === timerPhase;
     const nav = [navButton(t("common.next"), {
       cls: "c2-btn primary",
-      disabled: boardBusy(),
+      disabled: boardBusy() || timerRunningNow,
       onclick: () => emit("game.dispatch", { type: "START_MAPPING", round }),
     })];
     gameplayShell({ stepLabel: t("control.finalEntryStepLabel", { round }), body, nav });

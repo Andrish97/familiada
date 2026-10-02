@@ -27,14 +27,30 @@
 //   10. Mnożnik rundy — runda 4. z ×2 faktycznie przemnaża bank.
 //   11. Wyścig dwóch przycisków Buzzera naciśniętych w tej samej chwili —
 //       tylko jeden zaakceptowany, oba urządzenia się zgadzają.
+//   11b. Ponów naciśnięcie (RETRY_DUEL) — odrzuca błędne zgłoszenie,
+//       Buzzer otwiera się na nowo.
 //   12. Wyciszenie dźwięku — po kliknięciu Mute żaden klucz SFX się nie
 //       odtwarza mimo normalnie grającej akcji.
+//   12b. Dźwięk ze źródła Wyświetlacz — odblokowanie, głośność z ustawień,
+//       chwilowe mute w rundzie.
 //   13. Zmiana języka propaguje się do Hosta, w tym samą TREŚĆ tytułu fazy
 //       (nie tylko chrome strony) — regresja na dzisiejszą naprawę i18n.
 //   14. Modal ustawień gry (js/pages/game-settings2.js) — zmiana nazwy
 //       drużyny faktycznie odświeża zagnieżdżony podgląd Wyświetlacza
 //       (/display2?preview=1) — regresja na naprawę martwego podglądu w
 //       trybie modalu.
+//   15. Blokada logo — Control czeka, aż logo-editor.js zwolni logo
+//       referencowane przez grę, wznawia się sam po zwolnieniu.
+//   16. Udostępnianie urządzenia przez e-mail — realny mail + link, który
+//       faktycznie łączy (@mailbox, osobny od zwykłego szybkiego cyklu).
+//   17. Zerwanie i ponowne podłączenie — wszystkie trzy urządzenia tracą
+//       połączenie naraz w środku rundy, operator odzyskuje je po kolei
+//       przez modal kropki statusu, gra działa dalej na świeżych kartach.
+//   18. Timery (3s decyzja w rundach / 15s-20s gracza w finale) wracają do
+//       stanu SPRZED swojego startu, nie do stanu "po", gdy Control zastaje
+//       je już wygasłe przy wznowieniu (zamknięcie/przeładowanie w trakcie
+//       odliczania) — bez naliczenia X / bez trwałego zużycia jednorazowej
+//       szansy gracza.
 //
 // Każdy test tworzy i kasuje własną grę testową — niezależne od siebie,
 // można je uruchamiać pojedynczo (--grep) przy diagnozowaniu awarii.
@@ -49,7 +65,8 @@
 // narysował (SVG dot-matrix, nie tekst).
 
 const { test, expect } = require("@playwright/test");
-const { loginAsPooledTestUser, isKnownNoiseText, isKnownNoiseUrl } = require("./helpers/login");
+const { loginAsPooledTestUser, loginAsTestUser, testAccountUsername, isKnownNoiseText, isKnownNoiseUrl } = require("./helpers/login");
+const { clearMailbox, waitForEmail, extractHttpLinks } = require("./helpers/mailbox");
 
 test.setTimeout(150_000);
 
@@ -149,9 +166,8 @@ async function armAndConfirm(locator) {
 
 // Ten sam problem (klik wraca zanim zapis faktycznie dotarł do serwera)
 // dotyczy KAŻDEGO klikniecia prowadzącego wprost do zapisu do game_state,
-// nie tylko dwuklikowego armAndConfirm — np. "Zatwierdź: X" (przyjęcie
-// zgłoszenia z Buzzera) to pojedynczy klik bez żadnej asercji po drodze do
-// następnej akcji, więc ten sam wyścig.
+// nie tylko dwuklikowego armAndConfirm — np. zmiana języka UI to pojedynczy
+// klik bez żadnej asercji po drodze do następnej akcji, więc ten sam wyścig.
 async function clickConfirmed(locator) {
   const page = locator.page();
   const responded = page.waitForResponse((resp) => WRITE_RPC_RE.test(resp.url()), { timeout: 15000 }).catch(() => null);
@@ -404,7 +420,7 @@ test("control2: pełna runda przez 4 urządzenia + wznowienie Control po przeła
     await expect(buzzerPage.getByRole("button", { name: "Przycisk A" })).toBeEnabled({ timeout: 10000 });
     await buzzerPage.getByRole("button", { name: "Przycisk A" }).click();
     await expect(page.getByRole("button", { name: "Zatwierdź: Alfa" })).toBeEnabled({ timeout: 10000 });
-    await clickConfirmed(page.getByRole("button", { name: "Zatwierdź: Alfa" }));
+    await armAndConfirm(page.getByRole("button", { name: "Zatwierdź: Alfa" }));
 
     // Odpowiedź #1 ma najwyższe punkty (40) — trafienie wygrywa pojedynek.
     await dumpControlState(page, "przed-reveal-1");
@@ -468,7 +484,7 @@ test("control2: reset pojedynku, pass, kradzież wygrana/przegrana, odkrywanie r
     await expect(buzzerPage.getByRole("button", { name: "Przycisk A" })).toBeEnabled({ timeout: 10000 });
     await buzzerPage.getByRole("button", { name: "Przycisk A" }).click();
     await expect(page.getByRole("button", { name: "Zatwierdź: Alfa" })).toBeEnabled({ timeout: 10000 });
-    await clickConfirmed(page.getByRole("button", { name: "Zatwierdź: Alfa" }));
+    await armAndConfirm(page.getByRole("button", { name: "Zatwierdź: Alfa" }));
     // Zgłoszone: "X nie odtwarza żadnego dźwięku" — regresja wprost na
     // ADD_X (engine.js zawsze zwraca soundCueKey "answer_wrong" dla X,
     // niezależnie od fazy DUEL/PLAY/STEAL, patrz komentarz tam).
@@ -525,7 +541,7 @@ test("control2: reset pojedynku, pass, kradzież wygrana/przegrana, odkrywanie r
     await expect(buzzerPage.getByRole("button", { name: "Przycisk B" })).toBeEnabled({ timeout: 10000 });
     await buzzerPage.getByRole("button", { name: "Przycisk B" }).click();
     await expect(page.getByRole("button", { name: "Zatwierdź: Beta" })).toBeEnabled({ timeout: 10000 });
-    await clickConfirmed(page.getByRole("button", { name: "Zatwierdź: Beta" }));
+    await armAndConfirm(page.getByRole("button", { name: "Zatwierdź: Beta" }));
 
     await revealAnswer(page, 1); // B trafia (40 pkt) -> kontrola B, allowPass
     await armAndConfirm(page.getByRole("button", { name: "Oddaj kontrolę" })); // dawny "Pass" -> kontrola A
@@ -595,7 +611,7 @@ test("control2: próg w rundzie -> finał, wczesne zakończenie po 4/5 pytaniach
     await expect(buzzerPage.getByRole("button", { name: "Przycisk A" })).toBeEnabled({ timeout: 10000 });
     await buzzerPage.getByRole("button", { name: "Przycisk A" }).click();
     await expect(page.getByRole("button", { name: "Zatwierdź: Alfa" })).toBeEnabled({ timeout: 10000 });
-    await clickConfirmed(page.getByRole("button", { name: "Zatwierdź: Alfa" }));
+    await armAndConfirm(page.getByRole("button", { name: "Zatwierdź: Alfa" }));
     await revealAnswer(page, 1); // jedyna odpowiedź, 300 pkt -> bank 300
 
     // Jedna odpowiedź: revealed==answers od razu, ale canEndRound ustawia
@@ -617,7 +633,14 @@ test("control2: próg w rundzie -> finał, wczesne zakończenie po 4/5 pytaniach
     const p1Inputs = page.locator("#app input[type=text]");
     await expect(p1Inputs).toHaveCount(5, { timeout: 10000 });
     for (let i = 0; i < 5; i++) await p1Inputs.nth(i).fill("Odp. finałowa");
-    await page.getByRole("button", { name: "Rozpocznij odliczanie (15s)" }).click();
+    // Start/stop zegarka gracza to teraz zaznacz->potwierdź (nieodwracalne/
+    // ryzykowne kliknięcie, ui.js's finalTimerRow) — armAndConfirm jak
+    // reszta kosztownych kafli finału.
+    await armAndConfirm(page.getByRole("button", { name: "Rozpocznij odliczanie (15s)" }));
+    // "Dalej" zablokowany, dopóki zegarek aktywnie odlicza (zgłoszone: "nie
+    // czeka na koniec timera i przechodzi dalej") — zatrzymujemy legalnie,
+    // przez sam kafel zegarka (wszystkie pola już wypełnione).
+    await armAndConfirm(page.getByRole("button", { name: "Zatrzymaj" }));
     await page.getByRole("button", { name: "Dalej" }).click();
 
     for (let i = 0; i < 4; i++) {
@@ -721,16 +744,17 @@ test("control2: physicalBuzzer + noHostTablet — urządzenia pominięte, ręczn
     await expect(page.locator("#dotHostRow")).toHaveClass(/\bhidden\b/);
     await expect(page.locator("#dotBuzzerRow")).toHaveClass(/\bhidden\b/);
 
-    // Bez Buzzera na ekranie: zaznacz -> anuluj -> zaznacz -> potwierdź.
-    // Przyciski pokazują realną nazwę drużyny (Alfa/Beta), nie kod "A"/"B".
+    // Bez Buzzera na ekranie: zaznacz -> zmień zdanie (klik drugiej drużyny,
+    // bez osobnego "Anuluj") -> zaznacz->potwierdź (ten sam wspólny kafel
+    // "Zatwierdź: <drużyna>" co w trybie normalnym -- ekrany identyczne,
+    // tu tylko oba kafle drużyn są klikalne). Przyciski pokazują realną
+    // nazwę drużyny (Alfa/Beta), nie kod "A"/"B".
     await expect(page.getByRole("button", { name: "Alfa" })).toBeVisible({ timeout: 10000 });
     await page.getByRole("button", { name: "Alfa" }).click();
-    await expect(page.getByRole("button", { name: "Potwierdź: Alfa" })).toBeVisible();
-    await page.getByRole("button", { name: "Anuluj" }).click();
-    await expect(page.getByRole("button", { name: "Alfa" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Zatwierdź: Alfa" })).toBeVisible();
     await page.getByRole("button", { name: "Beta" }).click();
-    await expect(page.getByRole("button", { name: "Potwierdź: Beta" })).toBeVisible();
-    await clickConfirmed(page.getByRole("button", { name: "Potwierdź: Beta" }));
+    await expect(page.getByRole("button", { name: "Zatwierdź: Beta" })).toBeVisible();
+    await armAndConfirm(page.getByRole("button", { name: "Zatwierdź: Beta" }));
 
     await revealAnswer(page, 1); // B trafia -> przejmuje kontrolę
     await expect(page.getByText("Bank: 40")).toBeVisible({ timeout: 10000 });
@@ -903,7 +927,14 @@ test("control2: QR na wyświetlaczu — host i buzzer niezależne, każdy z osob
 // lokalny "peek" operatora), więc Host zostaje zasłonięty przez cały finał.
 
 test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśnięcie timera, powtórzenie, odsłonięcie P1 na Display przy starcie P2", async ({ page, browser }, testInfo) => {
-  test.setTimeout(180_000); // + realne 15s oczekiwania na naturalne wygaśnięcie timera gracza 1
+  // 180s okazało się za ciasne w CI: 15s realnego oczekiwania na timer
+  // gracza 1 + 10 pytań mapowania, z których KAŻDE ma teraz poprawnie
+  // wymuszaną blokadę na długość dźwięku "Pokaż odpowiedź"/"Pokaż punkty"
+  // (actionGate.js, migracja 264) -- test realnie docierał do pytania 8/10
+  // dokładnie w 180000ms, bez żadnego faktycznego zawieszenia (potwierdzone
+  // diagnostyką [e2e-diag-state]: każdy commit/lock w całym przebiegu
+  // rozstrzygał się w <1s). Zapas, nie naprawa buga.
+  test.setTimeout(240_000);
   await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
   const game = await makeGame(page, `E2E-CONTROL2-FINALFULL-${Date.now()}`, {
     roundQuestions: [{ ord: 1, text: "Pytanie testowe (runda)", answers: [{ ord: 1, text: "Odp. warta 300", fixed_points: 300 }] }],
@@ -929,7 +960,7 @@ test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśni�
     await expect(buzzerPage.getByRole("button", { name: "Przycisk A" })).toBeEnabled({ timeout: 10000 });
     await buzzerPage.getByRole("button", { name: "Przycisk A" }).click();
     await expect(page.getByRole("button", { name: "Zatwierdź: Alfa" })).toBeEnabled({ timeout: 10000 });
-    await clickConfirmed(page.getByRole("button", { name: "Zatwierdź: Alfa" }));
+    await armAndConfirm(page.getByRole("button", { name: "Zatwierdź: Alfa" }));
     await revealAnswer(page, 1);
     await clickX(page);
     await clickX(page);
@@ -959,7 +990,8 @@ test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśni�
     for (let i = 0; i < 5; i++) await p1Inputs.nth(i).fill(`Odp. finałowa`);
 
     await clearSfxLog(page);
-    await page.getByRole("button", { name: "Rozpocznij odliczanie (15s)" }).click();
+    // Start zegarka to zaznacz->potwierdź (nieodwracalne — usedP1 jednorazowe).
+    await armAndConfirm(page.getByRole("button", { name: "Rozpocznij odliczanie (15s)" }));
     // Bez klikania niczego: dograny dziś zegarek w control2/js/app.js sam
     // dispatch'uje EXPIRE_TIMER po 15s. Zegarek jest jednorazowy (usedP1) —
     // kafel wraca WIDOCZNY (jak w starym Control), ale pokazuje "Czas
@@ -1012,15 +1044,28 @@ test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśni�
     // ===== F7: gracz 2 — pytanie #1 oznaczone jako "powtórzenie" =====
     await expect(page.locator(".c2-stepper")).toContainText("Finał — gracz 2, wpisywanie", { timeout: 22000 });
     await clearSfxLog(page);
+    // "Powtórzenie" WŁĄCZANE jest teraz zaznacz->potwierdź (konsekwentne:
+    // dźwięk + wymuszony SKIP w mapowaniu, ui.js) -- jak reszta kosztownych
+    // kafli finału. Wyłączenie zostaje jednoklikowe (bezpieczne, bez efektu
+    // ubocznego), ale tu włączamy, więc armAndConfirm.
     await armAndConfirm(page.getByRole("button", { name: "Powtórzenie" }).first());
     await expect.poll(() => getSfxKeys(page), { timeout: 5000 }).toEqual(expect.arrayContaining(["answer_repeat"]));
 
     const p2Inputs = page.locator("#app input[type=text]");
     for (let i = 1; i < 5; i++) await p2Inputs.nth(i).fill("Odp. finałowa");
-    await page.getByRole("button", { name: "Rozpocznij odliczanie (20s)" }).click();
-    // Tym razem NIE czekamy na naturalne wygaśnięcie — klikamy "Dalej" od
-    // razu (jak w teście 4), sprawdzając DRUGĄ naprawę z dzisiejszego audytu:
-    // START_MAPPING musi wyzerować timer, inaczej zostałby "running" na zawsze.
+    // Start/stop zegarka to zaznacz->potwierdź (patrz wyżej).
+    await armAndConfirm(page.getByRole("button", { name: "Rozpocznij odliczanie (20s)" }));
+    // Zgłoszone: "po drugiej rundzie finału nawet nie czeka na koniec
+    // timera i przechodzi dalej" — "Dalej" jest teraz zablokowany, dopóki
+    // zegarek TEJ rundy aktywnie odlicza (control2/js/ui.js's
+    // renderFinalEntry) — nie da się już przerwać go tym przyciskiem.
+    // Zatrzymujemy więc legalnie, przez sam kafel zegarka (wszystkie pola
+    // gracza 2 już wypełnione/oznaczone powtórzeniem, więc wczesne
+    // zatrzymanie jest dozwolone — finalTimerRow), zamiast czekać pełne 20s.
+    // START_MAPPING (engine.js) nadal bezwarunkowo zeruje stan zegarka przy
+    // wejściu w mapowanie — to sprawdzenie zostaje, tylko dochodzi się tam
+    // teraz legalną ścieżką, nie przypadkowym przerwaniem w trakcie.
+    await armAndConfirm(page.getByRole("button", { name: "Zatrzymaj" }));
     await page.getByRole("button", { name: "Dalej" }).click();
 
     // ===== F8/F9: mapowanie gracza 2 — pytanie #1 to SKIP (powtórzenie), reszta MATCH =====
@@ -1088,7 +1133,7 @@ test("control2: mnożnik rundy — runda 4. z domyślnym ×2 faktycznie przemna�
       await expect(buzzerPage.getByRole("button", { name: "Przycisk A" })).toBeEnabled({ timeout: 10000 });
       await buzzerPage.getByRole("button", { name: "Przycisk A" }).click();
       await expect(page.getByRole("button", { name: "Zatwierdź: Alfa" })).toBeEnabled({ timeout: 10000 });
-      await clickConfirmed(page.getByRole("button", { name: "Zatwierdź: Alfa" }));
+      await armAndConfirm(page.getByRole("button", { name: "Zatwierdź: Alfa" }));
       await revealAnswer(page, 1);
       await clickX(page);
       await clickX(page);
@@ -1103,7 +1148,7 @@ test("control2: mnożnik rundy — runda 4. z domyślnym ×2 faktycznie przemna�
     await expect(buzzerPage.getByRole("button", { name: "Przycisk A" })).toBeEnabled({ timeout: 10000 });
     await buzzerPage.getByRole("button", { name: "Przycisk A" }).click();
     await expect(page.getByRole("button", { name: "Zatwierdź: Alfa" })).toBeEnabled({ timeout: 10000 });
-    await clickConfirmed(page.getByRole("button", { name: "Zatwierdź: Alfa" }));
+    await armAndConfirm(page.getByRole("button", { name: "Zatwierdź: Alfa" }));
     await revealAnswer(page, 1);
     await expect(page.getByText("Bank: 40")).toBeVisible({ timeout: 10000 });
     await clickX(page);
@@ -1146,14 +1191,14 @@ test("control2: wyścig — oba przyciski Buzzera naciśnięte w tej samej chwil
       document.getElementById("btnB")?.click();
     });
 
-    // renderDuelAccept() pokazuje oba kafle "Zatwierdź: <drużyna>" od razu,
-    // ale tylko TEN, kto naprawdę wygrał wyścig, budzi się (enabled) — drugi
-    // zostaje wyszarzonym placeholderem. Trzeba odtworzyć literę drużyny z
-    // nazwy, żeby wskazać właściwy #btnA/#btnB na stronie Buzzera.
+    // renderDuelAccept() pokazuje TERAZ jeden wspólny kafel "Zatwierdź:
+    // <drużyna>", z nazwą tego, kto naprawdę wygrał wyścig (duel.lastPressed)
+    // — tylko ten jeden kafel w ogóle istnieje w DOM. Trzeba odtworzyć literę
+    // drużyny z nazwy, żeby wskazać właściwy #btnA/#btnB na stronie Buzzera.
     const acceptAlfa = page.getByRole("button", { name: "Zatwierdź: Alfa" });
     const acceptBeta = page.getByRole("button", { name: "Zatwierdź: Beta" });
-    await expect.poll(async () => (await acceptAlfa.isEnabled()) || (await acceptBeta.isEnabled()), { timeout: 10000 }).toBe(true);
-    const winner = (await acceptAlfa.isEnabled()) ? "A" : "B";
+    await expect.poll(async () => (await acceptAlfa.count()) + (await acceptBeta.count()), { timeout: 10000 }).toBeGreaterThan(0);
+    const winner = (await acceptAlfa.count()) > 0 ? "A" : "B";
     const loser = winner === "A" ? "B" : "A";
     const winnerName = winner === "A" ? "Alfa" : "Beta";
 
@@ -1162,12 +1207,64 @@ test("control2: wyścig — oba przyciski Buzzera naciśnięte w tej samej chwil
     // klika "Zatwierdź: X"). Bez tego kliknięcia Buzzer zostaje w STATE.ON
     // (oba przyciski "dim") na zawsze — trzeba faktycznie przyjąć zgłoszenie,
     // zanim sprawdzimy, który przycisk się zaświecił.
-    await clickConfirmed(page.getByRole("button", { name: `Zatwierdź: ${winnerName}` }));
+    await armAndConfirm(page.getByRole("button", { name: `Zatwierdź: ${winnerName}` }));
 
     // Buzzer i Control muszą się zgadzać co do tego, KTO wygrał wyścig.
     await expect(buzzerPage.locator(`#btn${winner}`)).toHaveClass(/lit/, { timeout: 10000 });
     await expect(buzzerPage.locator(`#btn${loser}`)).toHaveClass(/dim/, { timeout: 10000 });
     await expect(buzzerPage.locator(`#btn${winner}`)).not.toHaveClass(/dim/);
+  } finally {
+    for (const ctx of contexts) await ctx.close().catch(() => {});
+    await deleteGame(page, game.id);
+  }
+});
+
+// ===== 11b. Ponów naciśnięcie (RETRY_DUEL) =====
+
+test("control2: Ponów naciśnięcie — odrzuca błędne zgłoszenie, Buzzer otwiera się na nowo", async ({ page, browser }, testInfo) => {
+  await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
+  const game = await makeGame(page, `E2E-CONTROL2-RETRYDUEL-${Date.now()}`, { roundQuestions: [TWO_QUESTIONS[0]] });
+  const contexts = [];
+  try {
+    const buzzerPage = await openAnon(browser, contexts, `/buzzer2?id=${game.id}&key=${game.share_key_buzzer}`, "buzzer", []);
+    await openAnon(browser, contexts, `/display2?id=${game.id}&key=${game.share_key_display}`, "display", []);
+    await openAnon(browser, contexts, `/host2?id=${game.id}&key=${game.share_key_host}`, "host", []);
+    await page.goto(`/control2?id=${game.id}`, { waitUntil: "domcontentloaded" });
+    await expect(page.locator(".stepTitle")).toHaveText("Urządzenia", { timeout: 15000 });
+    await expect(page.locator("#dotDisplay")).toHaveClass(/\bok\b/, { timeout: 15000 });
+    await expect(page.locator("#dotHost")).toHaveClass(/\bok\b/, { timeout: 15000 });
+    await page.getByRole("button", { name: "Dalej" }).click();
+    await page.getByRole("button", { name: "Gotowe — przejdź do rozgrywki" }).click();
+    await page.getByRole("button", { name: "Rozpocznij grę" }).click();
+    await page.getByRole("button", { name: "Rozpocznij rundę" }).click();
+
+    // A naciska pierwszy -- Control pokazuje wspólny kafel "Zatwierdź: Alfa"
+    // RAZEM z "Ponów naciśnięcie" pod nim (renderDuelAccept, tryb normalny
+    // Buzzera) -- operator może albo przyjąć zgłoszenie, albo uznać je za
+    // błędne/przypadkowe i otworzyć Buzzer na nowo.
+    await expect(buzzerPage.getByRole("button", { name: "Przycisk A" })).toBeEnabled({ timeout: 10000 });
+    await buzzerPage.getByRole("button", { name: "Przycisk A" }).click();
+    await expect(page.getByRole("button", { name: "Zatwierdź: Alfa" })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole("button", { name: "Ponów naciśnięcie" })).toBeVisible();
+
+    // "Ponów naciśnięcie" to bezpieczna, odwracalna akcja (RETRY_DUEL) --
+    // celowo jednoklikowa, w odróżnieniu od "Zatwierdź" (zaznacz->potwierdź).
+    await clickConfirmed(page.getByRole("button", { name: "Ponów naciśnięcie" }));
+
+    // RETRY_DUEL czyści duel.lastPressed -- oba kafle (Zatwierdź/Ponów)
+    // znikają, drużyny wracają do czystego, nieklikalnego stanu wskaźnika.
+    await expect(page.getByRole("button", { name: "Zatwierdź: Alfa" })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "Ponów naciśnięcie" })).toHaveCount(0);
+
+    // Teraz zgłasza się B -- przyjmujemy normalnie, dowód że Buzzer
+    // naprawdę wrócił do nasłuchu po "Ponów naciśnięcie", nie tylko
+    // wizualnie na ekranie Control.
+    await buzzerPage.getByRole("button", { name: "Przycisk B" }).click();
+    await expect(page.getByRole("button", { name: "Zatwierdź: Beta" })).toBeVisible({ timeout: 10000 });
+    await armAndConfirm(page.getByRole("button", { name: "Zatwierdź: Beta" }));
+
+    await revealAnswer(page, 1); // B trafia -> przejmuje kontrolę
+    await expect(page.getByText("Bank: 40")).toBeVisible({ timeout: 10000 });
   } finally {
     for (const ctx of contexts) await ctx.close().catch(() => {});
     await deleteGame(page, game.id);
@@ -1208,7 +1305,7 @@ test("control2: wyciszenie dźwięku — po Mute żaden klucz SFX się nie odtwa
     await clearSfxLog(page);
     await buzzerPage.getByRole("button", { name: "Przycisk A" }).click();
     await expect(page.getByRole("button", { name: "Zatwierdź: Alfa" })).toBeEnabled({ timeout: 10000 });
-    await clickConfirmed(page.getByRole("button", { name: "Zatwierdź: Alfa" }));
+    await armAndConfirm(page.getByRole("button", { name: "Zatwierdź: Alfa" }));
     await revealAnswer(page, 1); // normalnie: buzzer_press + answer_correct
     await expect(page.getByText("Bank: 40")).toBeVisible({ timeout: 10000 });
 
@@ -1378,7 +1475,7 @@ test("control2: dźwięk ze źródła Wyświetlacz — odblokowanie, głośnoś�
     await expect(buzzerPage.getByRole("button", { name: "Przycisk A" })).toBeEnabled({ timeout: 10000 });
     await buzzerPage.getByRole("button", { name: "Przycisk A" }).click();
     await expect(page.getByRole("button", { name: "Zatwierdź: Alfa" })).toBeEnabled({ timeout: 10000 });
-    await clickConfirmed(page.getByRole("button", { name: "Zatwierdź: Alfa" }));
+    await armAndConfirm(page.getByRole("button", { name: "Zatwierdź: Alfa" }));
     await clearSfxLog(displayPage);
     await revealAnswer(page, 1); // Odpowiedź A, 40 pkt -> wygrywa pojedynek
     await waitForSfxSequence(displayPage, ["answer_correct"], 10000);
@@ -1607,5 +1704,322 @@ test("control2: zablokowany, gdy logo gry jest edytowane w logo-editorze — i w
     await releaseLogoLock(page, logoId, lockTabId);
     await page.evaluate(async (id) => { await window.__sbClient.from("games").delete().eq("id", id); }, gameId);
     await page.evaluate(async (id) => { await window.__sbClient.from("user_logos").delete().eq("id", id); }, logoId);
+  }
+});
+
+// ===== 16. Udostępnianie urządzenia przez e-mail =====
+//
+// Jedyne dotychczasowe pokrycie tej funkcji (control2/js/shareDevice.js)
+// żyło WYŁĄCZNIE w tests/e2e/record-playthrough.js (scenariusz 8) — realne
+// asercje, ale uruchamiane tylko ręcznie, w ramach wolnego workflow
+// produkującego wideo (e2e-record.yml), nigdy w zwykłym, szybkim cyklu
+// (e2e-tests.yml). Ten test to ten sam przebieg, bez nagrywania: operator
+// (test1) udostępnia urządzenie Prowadzącego drugiemu, PRAWDZIWEMU kontu
+// (test10 — przeciwny koniec puli testX niż loginAsPooledTestUser używa
+// gdzie indziej, żeby nigdy nie kolidować z operatorem niezależnie od tego,
+// który worker to odpala), czeka na realny e-mail (ten sam
+// tests/e2e/helpers/mailbox.js co bases.spec.js's "@mailbox" testy) i
+// dowodzi, że link z maila faktycznie łączy -- NOWY, niezalogowany kontekst
+// przeglądarki otwiera go i dostaje działającą stronę Prowadzącego, bez
+// żadnego logowania (sam share_key_host w URL-u wystarcza).
+test("@mailbox control2: udostępnianie urządzenia (Prowadzący) przez e-mail -- link z maila faktycznie łączy", async ({ page, context, browser }, testInfo) => {
+  test.setTimeout(120_000);
+  const recipient = testAccountUsername(10);
+  await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+  const game = await makeGame(page, `E2E-CONTROL2-SHAREMAIL-${Date.now()}`);
+  const contexts = [];
+  try {
+    await clearMailbox(recipient);
+    const after = new Date(Date.now() - 2_000).toISOString();
+
+    await page.goto(`/control2?id=${game.id}`, { waitUntil: "domcontentloaded" });
+    await expect(page.locator(".stepTitle")).toHaveText("Urządzenia", { timeout: 15000 });
+
+    await page.locator('[data-device="host"]').getByRole("button", { name: "Udostępnij" }).click();
+    await expect(page.locator("#shareDeviceOverlay")).toBeVisible({ timeout: 10000 });
+    await page.locator("#shareDeviceEmail").fill(recipient);
+    await page.getByRole("button", { name: "Dodaj" }).click();
+    // Potwierdzenie zapisu w UI (RPC share_device) -- niezależne od tego,
+    // czy/kiedy realny e-mail dotrze. shareDevice.js's `current.recipient_
+    // username || current.recipient_email` -- skoro test10 ma ustawiony
+    // username, modal pokazuje SAMĄ nazwę użytkownika ("test10"), nie pełny
+    // e-mail -- real finding z pierwszego przebiegu CI, nie zgadywane.
+    const recipientUsername = recipient.split("@")[0];
+    await expect(page.locator("#shareDeviceCurrentContent")).toContainText(recipientUsername, { timeout: 15000 });
+
+    const email = await waitForEmail({ recipient, after, subject: /Udostępniono urządzenie/, timeout: 60_000 });
+    const links = extractHttpLinks(email).filter((u) => u.includes("/host2"));
+    expect(links.length, "mail musi zawierać działający link do /host2").toBeGreaterThan(0);
+
+    await page.locator("#btnShareDeviceClose").click();
+
+    // Odbiorca klika link z maila -- zupełnie NOWY, niezalogowany kontekst
+    // (nie ten sam user/sesja co operator) -- dowód, że share_key_host w
+    // URL-u wystarcza, bez żadnego logowania.
+    const recipientContext = await browser.newContext();
+    contexts.push(recipientContext);
+    const recipientPage = await recipientContext.newPage();
+    await recipientPage.goto(links[0], { waitUntil: "domcontentloaded" });
+    await expect(recipientPage.locator("#app")).toBeAttached({ timeout: 15000 });
+  } finally {
+    for (const ctx of contexts) await ctx.close().catch(() => {});
+    await clearMailbox(recipient).catch(() => {});
+    await deleteGame(page, game.id);
+  }
+});
+
+// ===== 17. Zerwanie i ponowne podłączenie urządzeń =====
+//
+// Jedyne dotychczasowe pokrycie tego scenariusza (zamknięcie WSZYSTKICH
+// trzech urządzeń naraz w środku rundy, ponowne podłączenie przez modal
+// kropki statusu w topbarze) żyło wyłącznie w tests/e2e/record-playthrough.js
+// (scenariusz 6) -- znowu: realne, ale tylko w ramach wolnego workflow
+// nagrywania wideo, zero pokrycia w szybkim cyklu. To jest dokładnie ten
+// scenariusz, po który cała przebudowa Control na wspólną tabelę stanu
+// (game_state) powstała -- dowód, że stan gry przeżywa rozłączenie każdego
+// urządzenia niezależnie od Control, bez żadnej ręcznej resynchronizacji
+// poza ponownym wejściem na URL urządzenia.
+
+// Modal kropki statusu (control2/js/app.js's showQrModal) koduje URL
+// urządzenia jako obrazek qrserver.com's `data=` query param dla Hosta/
+// Buzzera, a dla Wyświetlacza jako bezpośredni link "Otwórz" (#qrModalOpen).
+async function readDeviceUrlFromModal(control, kind) {
+  if (kind === "display") return control.locator("#qrModalOpen").getAttribute("href");
+  const src = await control.locator("#qrModalImg").getAttribute("src");
+  return decodeURIComponent(new URL(src).searchParams.get("data") || "");
+}
+
+// Pełny cykl "operator odzyskuje rozłączone urządzenie": klik na kropkę
+// statusu w topbarze (klikalna PRZEZ CAŁĄ GRĘ, nie tylko na kroku
+// Urządzeń), odczyt linku z modala, otwarcie go w ZUPEŁNIE NOWYM kontekście
+// przeglądarki (świeży localStorage/deviceId -- wierniejsza symulacja
+// realnego ponownego podłączenia niż zwykły reload tej samej, wciąż
+// istniejącej karty), zamknięcie modala, czekanie na zieloną kropkę.
+async function reconnectViaModal(browser, control, kind, contexts, errors) {
+  const rowId = `#dot${kind[0].toUpperCase()}${kind.slice(1)}Row`;
+  await control.locator(rowId).click();
+  const url = await readDeviceUrlFromModal(control, kind);
+  if (!url) throw new Error(`modal (${kind}) nie pokazał żadnego URL-a do ponownego podłączenia`);
+  const ctx = await browser.newContext();
+  contexts.push(ctx);
+  const p = await ctx.newPage();
+  trackErrors(p, kind, errors);
+  instrumentAnon(p, kind);
+  await p.goto(url, { waitUntil: "domcontentloaded" });
+  await control.locator("#qrModalClose").click();
+  await expect(control.locator(`#dot${kind[0].toUpperCase()}${kind.slice(1)}`)).toHaveClass(/\bok\b/, { timeout: 15000 });
+  return p;
+}
+
+test("control2: zerwanie połączenia wszystkich trzech urządzeń naraz i ponowne podłączenie przez modal", async ({ page, browser }, testInfo) => {
+  await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
+  const game = await makeGame(page, `E2E-CONTROL2-RECONNECT-${Date.now()}`, { roundQuestions: TWO_QUESTIONS });
+  const contexts = [];
+  const errors = [];
+  try {
+    trackErrors(page, "control", errors);
+    let displayPage = await openAnon(browser, contexts, `/display2?id=${game.id}&key=${game.share_key_display}`, "display", errors);
+    const hostPage = await openAnon(browser, contexts, `/host2?id=${game.id}&key=${game.share_key_host}`, "host", errors);
+    let buzzerPage = await openAnon(browser, contexts, `/buzzer2?id=${game.id}&key=${game.share_key_buzzer}`, "buzzer", errors);
+
+    await page.goto(`/control2?id=${game.id}`, { waitUntil: "domcontentloaded" });
+    await expect(page.locator(".stepTitle")).toHaveText("Urządzenia", { timeout: 15000 });
+    await expect(page.locator("#dotDisplay")).toHaveClass(/\bok\b/, { timeout: 15000 });
+    await expect(page.locator("#dotHost")).toHaveClass(/\bok\b/, { timeout: 15000 });
+    await expect(page.locator("#dotBuzzer")).toHaveClass(/\bok\b/, { timeout: 15000 });
+
+    await page.getByRole("button", { name: "Dalej" }).click();
+    await page.getByRole("button", { name: "Gotowe — przejdź do rozgrywki" }).click();
+    await page.getByRole("button", { name: "Rozpocznij grę" }).click();
+    await page.getByRole("button", { name: "Rozpocznij rundę" }).click();
+
+    await expect(buzzerPage.getByRole("button", { name: "Przycisk A" })).toBeEnabled({ timeout: 10000 });
+    await buzzerPage.getByRole("button", { name: "Przycisk A" }).click();
+    await expect(page.getByRole("button", { name: "Zatwierdź: Alfa" })).toBeEnabled({ timeout: 10000 });
+    await armAndConfirm(page.getByRole("button", { name: "Zatwierdź: Alfa" }));
+    await clearDisplayLog(displayPage);
+    await revealAnswer(page, 1); // odp. #1 (top) -> wygrywa pojedynek, reszta rundy zostaje NIEODSŁONIĘTA
+
+    // ===== Zerwanie wszystkich trzech naraz =====
+    const toClose = contexts.splice(0, contexts.length); // zdejmij z listy sprzątanej w finally -- zamykamy je TU, świadomie
+    await Promise.all(toClose.map((ctx) => ctx.close()));
+    await expect(page.locator("#dotDisplay")).toHaveClass(/\bbad\b/, { timeout: 15000 });
+    await expect(page.locator("#dotHost")).toHaveClass(/\bbad\b/, { timeout: 15000 });
+    await expect(page.locator("#dotBuzzer")).toHaveClass(/\bbad\b/, { timeout: 15000 });
+
+    // ===== Ponowne podłączenie po kolei, przez modal =====
+    displayPage = await reconnectViaModal(browser, page, "display", contexts, errors);
+    await reconnectViaModal(browser, page, "host", contexts, errors);
+    buzzerPage = await reconnectViaModal(browser, page, "buzzer", contexts, errors);
+
+    // Świeżo podłączony Display musi pokazać PRAWDZIWY, aktualny obraz gry
+    // (odkrytą odpowiedź #1) -- nie pusty/czarny ekran. Dowód realnego
+    // wznowienia stanu, nie tylko zielonej kropki w topbarze.
+    const setAllCalls = await getDisplayCalls(displayPage, "api.rounds.setAll");
+    expect(setAllCalls.length, "Display po ponownym podłączeniu musi przynajmniej raz namalować planszę rund").toBeGreaterThan(0);
+    expect(setAllCalls.at(-1).args[0].rows[0]).toMatchObject({ text: "Odpowiedź A", pts: "40" });
+
+    // ===== Dokończenie rundy 1 na świeżo podłączonych urządzeniach =====
+    await revealAnswer(page, 2);
+    await revealAnswer(page, 3);
+    await page.getByRole("button", { name: "Zakończ rundę" }).click();
+    await expect(page.getByText("Alfa: 90")).toBeVisible({ timeout: 10000 });
+
+    // ===== Runda 2, w CAŁOŚCI na ponownie podłączonym Buzzerze -- dowód, że
+    // nowe urządzenie nie tylko świeci na zielono (presence), ale faktycznie
+    // bierze udział w rozgrywce (realny zapis przez game_state_buzzer_press).
+    await expect(page.locator(".c2-stepper")).toContainText("Runda 2", { timeout: 22000 });
+    await page.getByRole("button", { name: "Rozpocznij rundę" }).click();
+    await expect(buzzerPage.getByRole("button", { name: "Przycisk B" })).toBeEnabled({ timeout: 10000 });
+    await buzzerPage.getByRole("button", { name: "Przycisk B" }).click();
+    await expect(page.getByRole("button", { name: "Zatwierdź: Beta" })).toBeEnabled({ timeout: 10000 });
+    await armAndConfirm(page.getByRole("button", { name: "Zatwierdź: Beta" }));
+    await revealAnswer(page, 1);
+    await expect(page.getByText("Bank: 40")).toBeVisible({ timeout: 10000 });
+
+    expect(errors, "żadne z urządzeń (stare ani świeżo podłączone) nie powinno rzucić błędu JS: " + errors.join(" | ")).toEqual([]);
+  } finally {
+    for (const ctx of contexts) await ctx.close().catch(() => {});
+    await deleteGame(page, game.id);
+  }
+});
+
+// ===== 18. Timery wracają do stanu SPRZED startu, gdy Control zastaje je
+// już wygasłe przy wznowieniu =====
+//
+// Zgłoszone wprost: "rozłącz w trakcie timerów, albo zamknij Control w
+// trakcie timerów -- czy one wrócą do stanu przed, a nie po, bo tak
+// powinny". control2/js/engine.js's CANCEL_TIMER3/CANCEL_TIMER (patrz ich
+// komentarze) implementują dokładnie to -- a page.reload() PO upłynięciu
+// endsAt jest najprostszą, deterministyczną symulacją "Control było
+// zamknięte/rozłączone, gdy czas minął" (ten sam mechanizm co test #2,
+// tylko z wyczekaniem na realne wygaśnięcie zegarka przed przeładowaniem,
+// zamiast od razu).
+
+test("control2: zegarek 3s w rundach wraca do stanu SPRZED startu (bez naliczenia X), gdy Control zamknięte podczas odliczania", async ({ page, browser }, testInfo) => {
+  await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
+  const game = await makeGame(page, `E2E-CONTROL2-TIMER3REVERT-${Date.now()}`, { roundQuestions: [TWO_QUESTIONS[0]] });
+  const contexts = [];
+  try {
+    const buzzerPage = await openAnon(browser, contexts, `/buzzer2?id=${game.id}&key=${game.share_key_buzzer}`, "buzzer", []);
+    const displayPage = await openAnon(browser, contexts, `/display2?id=${game.id}&key=${game.share_key_display}`, "display", []);
+    await openAnon(browser, contexts, `/host2?id=${game.id}&key=${game.share_key_host}`, "host", []);
+    await page.goto(`/control2?id=${game.id}`, { waitUntil: "domcontentloaded" });
+    await expect(page.locator(".stepTitle")).toHaveText("Urządzenia", { timeout: 15000 });
+    await expect(page.locator("#dotDisplay")).toHaveClass(/\bok\b/, { timeout: 15000 });
+    await expect(page.locator("#dotHost")).toHaveClass(/\bok\b/, { timeout: 15000 });
+    await page.getByRole("button", { name: "Dalej" }).click();
+    await page.getByRole("button", { name: "Gotowe — przejdź do rozgrywki" }).click();
+    await page.getByRole("button", { name: "Rozpocznij grę" }).click();
+    await page.getByRole("button", { name: "Rozpocznij rundę" }).click();
+
+    await expect(buzzerPage.getByRole("button", { name: "Przycisk A" })).toBeEnabled({ timeout: 10000 });
+    await buzzerPage.getByRole("button", { name: "Przycisk A" }).click();
+    await expect(page.getByRole("button", { name: "Zatwierdź: Alfa" })).toBeEnabled({ timeout: 10000 });
+    await armAndConfirm(page.getByRole("button", { name: "Zatwierdź: Alfa" }));
+    await revealAnswer(page, 1); // A trafia -> przejmuje kontrolę (PLAY), 0 X na koncie
+
+    await expect(xTile(page)).toBeVisible({ timeout: 10000 });
+    await expect(xTile(page)).toContainText("0 / 3");
+
+    // Start zegarka to zwykłe, pojedyncze kliknięcie -- tylko jego ręczne
+    // ZATRZYMANIE na żywo jest zaznacz->potwierdź (timer3Tile w ui.js).
+    await clearDisplayLog(displayPage);
+    await clickConfirmed(page.getByRole("button", { name: "Rozpocznij odliczanie 3s" }));
+    await expect(page.locator('[data-timer-role="timer3"]')).toBeVisible({ timeout: 10000 });
+
+    // Zgłoszone: Display (nie tylko Control) musi jednoznacznie pokazywać,
+    // że 3s zegarek trwa -- display2/js/render.js's startTimer3Tick()
+    // podmienia LEFT (drużyna A ma kontrolę) na odliczanie w dół,
+    // DWUCYFROWE ("03"/"02"/"01", padStart), odróżnialne od zwykłego
+    // wyniku drużyny (paintTotals() pisze BEZ wiodącego zera -- "0").
+    await page.waitForTimeout(700);
+    const duringCalls = await getDisplayCalls(displayPage, "api.small.leftDigits");
+    expect(duringCalls.length, "Display musi dostać przynajmniej jedno odliczenie LEFT w trakcie timera3").toBeGreaterThan(0);
+    expect(duringCalls.at(-1).args[0]).toMatch(/^0[123]$/);
+
+    // Czekamy, aż endsAt FAKTYCZNIE minie, dopiero potem przeładowujemy --
+    // to jest właśnie "Control zamknięte w trakcie odliczania", nie
+    // przerwanie go w połowie.
+    await page.waitForTimeout(3600);
+    await page.reload({ waitUntil: "domcontentloaded" });
+
+    // CANCEL_TIMER3 (nie EXPIRE_TIMER3): zegarek znika, ale licznik X
+    // zostaje DOKŁADNIE tam, gdzie był PRZED jego startem -- "0 / 3", nigdy
+    // naliczone pudło za czas, kiedy nikt nie patrzył.
+    await expect(xTile(page)).toBeVisible({ timeout: 15000 });
+    await expect(xTile(page)).toContainText("0 / 3");
+    await expect(page.locator('[data-timer-role="timer3"]')).toHaveCount(0);
+
+    // Display też wraca do prawdziwego wyniku (TIMER3_STOPPED -> paintTotals,
+    // "0" bez wiodącego zera) -- dowód, że to nie tylko Control wie o cofnięciu.
+    const afterCalls = await getDisplayCalls(displayPage, "api.small.leftDigits");
+    expect(afterCalls.at(-1).args[0]).toBe("0");
+
+    // Dowód, że to nie tylko wygląd po jednym renderze -- zegarek da się
+    // uruchomić ponownie, nie został zablokowany w pośrednim stanie.
+    await expect(page.getByRole("button", { name: "Rozpocznij odliczanie 3s" })).toBeVisible({ timeout: 10000 });
+  } finally {
+    for (const ctx of contexts) await ctx.close().catch(() => {});
+    await deleteGame(page, game.id);
+  }
+});
+
+test("control2: zegarek gracza w finale (15s) wraca do stanu SPRZED startu (usedP1 cofnięte), gdy Control zamknięte podczas odliczania", async ({ page, browser }, testInfo) => {
+  await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
+  const game = await makeGame(page, `E2E-CONTROL2-FINALTIMERREVERT-${Date.now()}`, {
+    roundQuestions: [{ ord: 1, text: "Pytanie testowe (runda)", answers: [{ ord: 1, text: "Odp. warta 300", fixed_points: 300 }] }],
+    finalAnswerPts: 50,
+  });
+  const contexts = [];
+  try {
+    const buzzerPage = await openAnon(browser, contexts, `/buzzer2?id=${game.id}&key=${game.share_key_buzzer}`, "buzzer", []);
+    await openAnon(browser, contexts, `/display2?id=${game.id}&key=${game.share_key_display}`, "display", []);
+    await openAnon(browser, contexts, `/host2?id=${game.id}&key=${game.share_key_host}`, "host", []);
+    await page.goto(`/control2?id=${game.id}`, { waitUntil: "domcontentloaded" });
+    await expect(page.locator(".stepTitle")).toHaveText("Urządzenia", { timeout: 15000 });
+    await page.getByRole("button", { name: "Dalej" }).click();
+    await expect(page.locator(".stepTitle")).toHaveText("Podsumowanie", { timeout: 10000 });
+    await page.getByRole("button", { name: "Gotowe — przejdź do rozgrywki" }).click();
+    await page.getByRole("button", { name: "Rozpocznij grę" }).click();
+    await page.getByRole("button", { name: "Rozpocznij rundę" }).click();
+
+    await expect(buzzerPage.getByRole("button", { name: "Przycisk A" })).toBeEnabled({ timeout: 10000 });
+    await buzzerPage.getByRole("button", { name: "Przycisk A" }).click();
+    await expect(page.getByRole("button", { name: "Zatwierdź: Alfa" })).toBeEnabled({ timeout: 10000 });
+    await armAndConfirm(page.getByRole("button", { name: "Zatwierdź: Alfa" }));
+    await revealAnswer(page, 1); // jedyna odpowiedź, 300 pkt -> próg trafiony
+    await clickX(page);
+    await clickX(page);
+    await clickX(page);
+    await page.getByRole("button", { name: "Zakończ rundę" }).click();
+
+    await expect(page.locator(".c2-stepper")).toContainText("Finał", { timeout: 22000 });
+    await page.getByRole("button", { name: "Rozpocznij finał" }).click();
+    await expect(page.locator(".c2-stepper")).toContainText("Finał — gracz 1, wpisywanie", { timeout: 22000 });
+
+    const p1Inputs = page.locator("#app input[type=text]");
+    await expect(p1Inputs).toHaveCount(5, { timeout: 10000 });
+    for (let i = 0; i < 5; i++) await p1Inputs.nth(i).fill("Odp. finałowa");
+
+    await armAndConfirm(page.getByRole("button", { name: "Rozpocznij odliczanie (15s)" }));
+    await expect(page.locator('[data-timer-role="final"]')).toBeVisible({ timeout: 10000 });
+
+    // Czekamy aż 15s FAKTYCZNIE miną, dopiero potem przeładowujemy --
+    // "Control zamknięte w trakcie odliczania", nie przerwanie na żywo.
+    await page.waitForTimeout(15500);
+    await page.reload({ waitUntil: "domcontentloaded" });
+
+    // CANCEL_TIMER (nie EXPIRE_TIMER): zegarek zniknął, ale usedP1 wraca do
+    // false -- "Rozpocznij odliczanie (15s)" da się kliknąć PONOWNIE,
+    // zamiast trwale zablokowanego "Czas wykorzystany" (co by oznaczało, że
+    // EXPIRE_TIMER jednak się odpalił, zużywając jednorazową szansę gracza
+    // za czas, kiedy nikt nie patrzył).
+    await expect(page.locator('[data-timer-role="final"]')).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "Czas wykorzystany" })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "Rozpocznij odliczanie (15s)" })).toBeVisible({ timeout: 15000 });
+  } finally {
+    for (const ctx of contexts) await ctx.close().catch(() => {});
+    await deleteGame(page, game.id);
   }
 });

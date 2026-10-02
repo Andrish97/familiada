@@ -23,13 +23,25 @@
 // zgłoszone: "Animacja logo ma się zacząć wtedy, kiedy gra reveal".
 
 const FALLBACK_S = 2; // metadane audio (jeszcze) niedostępne — bezpieczny domysł
+// Twardy sufit na czas trwania pojedynczego dźwięku — js/pages/game-settings.js's
+// manifest (audio/sounds.json) sam ogranicza każdą kategorię do limitSec ≤30s,
+// więc żaden PRAWDZIWY dźwięk nigdy tego nie przekroczy. Zabezpieczenie przed
+// znanym zachowaniem przeglądarek (Chromium): <audio>.duration bywa Infinity
+// dla plików MP3 bez poprawnego nagłówka Xing/VBR, dopóki metadane nie
+// doczytają się w pełni — bez tego sufitu Infinity propagowałoby się przez
+// syncedMs()/sequentialMs() do control2/js/actionGate.js's armLock(), gdzie
+// `lockedUntil = Date.now() + Infinity` blokuje operatora NA ZAWSZE (real bug
+// znaleziony w CI: trzy testy zawiesiły się z przyciskiem trwale disabled
+// przez cały timeout testu, 150s, bez żadnej zmiany stanu).
+const MAX_DUR_MS = 30_000;
 
 export function createTransitionTiming({ getSfxDuration }) {
   async function dur(key) {
     if (!key) return 0;
     try {
       const d = await getSfxDuration(key);
-      return d > 0 ? d * 1000 : FALLBACK_S * 1000;
+      if (!Number.isFinite(d) || d <= 0) return FALLBACK_S * 1000;
+      return Math.min(d * 1000, MAX_DUR_MS);
     } catch {
       return FALLBACK_S * 1000;
     }

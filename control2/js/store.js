@@ -14,11 +14,11 @@
 // wstrzyknięcie zależności (ten sam wzorzec co dzisiejsze createRounds/
 // createFinal), więc dają się testować w gołym Node z atrapą store.
 
-import { sb } from "../../js/core/supabase.js?v=v2026-09-30T19530";
-import { ringDoorbell } from "../../js/core/game-state-doorbell.js?v=v2026-09-30T19530";
-import { createPersist, StaleWriteError } from "./persist.js?v=v2026-09-30T19530";
-import { makeDefaultState, DEFAULT_SETTINGS, PERSISTED_KEYS } from "../../shared/gameStateShape.js?v=v2026-09-30T19530";
-import { expiredTimerOnHydrate } from "./timerResume.js?v=v2026-09-30T19530";
+import { sb } from "../../js/core/supabase.js?v=v2026-10-01T22165";
+import { ringDoorbell } from "../../js/core/game-state-doorbell.js?v=v2026-10-01T22165";
+import { createPersist, StaleWriteError } from "./persist.js?v=v2026-10-01T22165";
+import { makeDefaultState, DEFAULT_SETTINGS, PERSISTED_KEYS } from "../../shared/gameStateShape.js?v=v2026-10-01T22165";
+import { expiredTimerOnHydrate } from "./timerResume.js?v=v2026-10-01T22165";
 
 // Kanał broadcastowy "dzwonek" (plan, sekcja 1 — decyzja końcowa: anon nie
 // ma bezpośredniego dostępu do odczytu game_state wcale, więc postgres_changes
@@ -181,8 +181,17 @@ export function createStore(gameId) {
     state.soundCueSeq = optimisticSeq;
     emit();
 
+    // TYMCZASOWA diagnostyka (do usunięcia po znalezieniu przyczyny
+    // "Zatrzymaj"/"X" trwale disabled w control2.spec.js) -- czy
+    // persist.write() w ogóle się rozstrzyga, i w jakim czasie, w ramach
+    // _writeQueue (ta sama kolejka co setLock() niżej -- jeśli COKOLWIEK
+    // tu zawiśnie, wszystko za nim w kolejce, włącznie z setLock(), nigdy
+    // nie dostanie swojej kolejki).
     async function attempt() {
+      const _t0 = Date.now();
+      console.log(`[e2e-diag-state] t=${_t0} commitNow.attempt START step=${payload.step} expectedRev=${state.rev}`);
       const row = await persist.write({ ...payload, expectedRev: state.rev });
+      console.log(`[e2e-diag-state] t=${Date.now()} commitNow.attempt WRITE-OK afterMs=${Date.now() - _t0} newRev=${row.rev}`);
       applyRow(row);
       emit();
       ringDoorbell(gameId, row.rev);
@@ -192,6 +201,7 @@ export function createStore(gameId) {
     try {
       return await attempt();
     } catch (e) {
+      console.log(`[e2e-diag-state] t=${Date.now()} commitNow.attempt THREW: ${e?.constructor?.name} ${e?.message}`);
       if (!(e instanceof StaleWriteError)) throw e;
       // Warstwa 2 (docs/plan-testy-i-poprawki.md) zrobiła dokładnie to, co
       // powinna — ktoś inny zdążył podbić rev pierwszy, zanim nasz zapis
@@ -214,6 +224,11 @@ export function createStore(gameId) {
   // control2/js/app.js). Przez tę samą kolejkę co commit() — żeby nigdy
   // nie wyścigał się z kolejnym, prawdziwym zapisem treści.
   function setLock(ms) {
+    // TYMCZASOWA diagnostyka -- patrz komentarz przy commitNow.attempt().
+    // Loguje MOMENT WEJŚCIA DO KOLEJKI (przed .then), żeby było widać, czy
+    // setLock() w ogóle zdąża dostać swoją kolej w _writeQueue, czy czeka
+    // za czymś, co nigdy się nie rozstrzyga.
+    console.log(`[e2e-diag-state] t=${Date.now()} setLock ENQUEUE ms=${ms}`);
     const run = () => setLockNow(ms);
     const result = _writeQueue.then(run, run);
     _writeQueue = result.catch(() => {});
@@ -221,6 +236,8 @@ export function createStore(gameId) {
   }
 
   async function setLockNow(ms) {
+    const _t0 = Date.now();
+    console.log(`[e2e-diag-state] t=${_t0} setLockNow START ms=${ms} expectedRev=${state.rev}`);
     try {
       // p_lock_ms jest w bazie typu integer -- realny czas dźwięku (z
       // metadanych pliku mp3, control2/js/actionGate.js's timing.dur())
@@ -228,9 +245,11 @@ export function createStore(gameId) {
       // odrzuca (22P02 invalid input syntax for type integer). Zaokrąglenie
       // o ~1ms nie ma znaczenia dla samej blokady.
       const row = await persist.setLock({ expectedRev: state.rev, lockMs: Math.round(ms) });
+      console.log(`[e2e-diag-state] t=${Date.now()} setLockNow OK afterMs=${Date.now() - _t0} newRev=${row.rev}`);
       applyRow(row);
       emit();
     } catch (e) {
+      console.log(`[e2e-diag-state] t=${Date.now()} setLockNow CATCH afterMs=${Date.now() - _t0}: ${e?.constructor?.name} ${e?.message}`);
       // Najlepszy wysiłek — treść stanu jest już poprawnie zapisana przez
       // wcześniejszy commit(), tylko serwerowa blokada się nie ustawiła
       // (np. rev już nieaktualny, bo coś innego zdążyło napisać pierwsze).

@@ -105,6 +105,23 @@ export function deriveEvents(prevRow, nextRow) {
     events.push({ kind: "TIMER_STOPPED" });
   }
 
+  // 3s zegarek decyzji w rundach -- analogicznie do TIMER_STARTED/STOPPED
+  // wyżej, ale osobny typ zdarzenia (osobne źródło w detail.rounds.timer3,
+  // nie detail.final.runtime.timer). Zgłoszone: "timer ma być odnotowany w
+  // bazie i jeśli się nie skończył to i display i host mają o tym wiedzieć
+  // jednoznacznie" -- bez tego zdarzenia Display (display2/js/render.js) nie
+  // miał żadnego sposobu odróżnić "trwa 3s odliczanie" od zwykłego stanu
+  // PLAY/DUEL/STEAL, więc reconnect/live update w trakcie tego zegarka nie
+  // pokazywał nic widzom.
+  const prevTimer3Running = get(prevRow.detail, ["rounds", "timer3", "running"]) || false;
+  const nextTimer3Running = get(nextRow.detail, ["rounds", "timer3", "running"]) || false;
+  if (!prevTimer3Running && nextTimer3Running) {
+    events.push({ kind: "TIMER3_STARTED", endsAt: get(nextRow.detail, ["rounds", "timer3", "endsAt"]) });
+  }
+  if (prevTimer3Running && !nextTimer3Running) {
+    events.push({ kind: "TIMER3_STOPPED" });
+  }
+
   const prevDisplayMode = get(prevRow.detail, ["display", "mode"]);
   const nextDisplayMode = get(nextRow.detail, ["display", "mode"]);
   const prevQr = get(prevRow.detail, ["display", "qr"]);

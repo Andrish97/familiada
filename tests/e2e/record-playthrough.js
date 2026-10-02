@@ -32,6 +32,7 @@ const { spawn } = require("node:child_process");
 const fs = require("node:fs");
 const path = require("node:path");
 const { loginAsTestUser } = require("./helpers/login");
+const { waitForEmail, extractHttpLinks } = require("./helpers/mailbox");
 
 const BASE_URL = "https://www.familiada.online";
 const DISPLAY_NUM = process.env.DISPLAY || ":99";
@@ -62,10 +63,8 @@ const QUAD_W = SCREEN_W / 2, QUAD_H = SCREEN_H / 2;
 // operator), ale startuje jako status="draft" bez żadnych ustawień
 // (settings) — dociągamy je do stanu "gotowa do grania" tym samym patchem
 // co dawny makeGame().
-async function restoreDemoGame(setupPage, { pickOrds = [], settings = {}, finalAnswerPts = null } = {}) {
-  return setupPage.evaluate(async ({ pickOrds, settings, finalAnswerPts }) => {
-    const clip17 = (s) => String(s ?? "").trim().slice(0, 17);
-    const clip200 = (s) => String(s ?? "").trim().slice(0, 200);
+async function restoreDemoGame(setupPage, { pickOrds = [], settings = {}, finalPickOrds = [] } = {}) {
+  return setupPage.evaluate(async ({ pickOrds, settings, finalPickOrds }) => {
     const sb = window.__sbClient;
 
     const { error: rErr } = await sb.rpc("restore_my_demo", { p_lang: "pl" });
@@ -80,37 +79,37 @@ async function restoreDemoGame(setupPage, { pickOrds = [], settings = {}, finalA
     if (gErr) throw new Error("select demo game failed: " + gErr.message);
 
     const { data: questions, error: qErr } = await sb
-      .from("questions").select("id, ord").eq("game_id", g.id).order("ord");
+      .from("questions").select("id, ord, text").eq("game_id", g.id).order("ord");
     if (qErr) throw new Error("select demo questions failed: " + qErr.message);
     const { data: answers, error: aErr } = await sb
-      .from("answers").select("id, question_id, ord")
+      .from("answers").select("id, question_id, ord, text, fixed_points")
       .in("question_id", questions.map((q) => q.id));
     if (aErr) throw new Error("select demo answers failed: " + aErr.message);
     const byQ = new Map(questions.map((q) => [q.id, { ...q, answers: [] }]));
     for (const a of answers) byQ.get(a.question_id)?.answers.push(a);
+    const byOrd = (ord) => byQ.get(questions.find((q) => q.ord === ord)?.id);
 
     // Zgłoszone wprost: "nie zmieniaj progu punktów... rozgrywka ma być
     // naturalna" — treść demo NIE jest tu w żaden sposób modyfikowana
     // (wszystkie 6 odpowiedzi, realne punkty sumujące się do 100), a próg
     // (finalMinPoints) zostaje domyślny (300, shared/gameStateShape.js), o
     // ile scenariusz go jawnie nie nadpisze.
-    const picked = pickOrds.map((ord) => byQ.get(questions.find((q) => q.ord === ord)?.id));
+    const picked = pickOrds.map(byOrd);
     for (const q of picked) {
       if (!q) throw new Error("nie znaleziono pytania demo o żądanym ord");
     }
 
-    let finalPicked = [];
-    if (finalAnswerPts) {
-      for (let i = 1; i <= 5; i++) {
-        const { data: fq, error: fqErr } = await sb
-          .from("questions").insert({ game_id: g.id, ord: 100 + i, text: clip200(`Pytanie finałowe ${i}`) }).select("id").single();
-        if (fqErr) throw new Error("insert final question failed: " + fqErr.message);
-        const { error: faErr } = await sb.from("answers").insert([
-          { question_id: fq.id, ord: 1, text: clip17("Odp. finałowa"), fixed_points: finalAnswerPts },
-        ]);
-        if (faErr) throw new Error("insert final answer failed: " + faErr.message);
-        finalPicked.push({ id: fq.id });
-      }
+    // Zgłoszone: "czy finał już jest prawdziwy?" — finał BYŁ dotąd budowany
+    // z pięciu sztucznie wstawionych pytań ("Pytanie finałowe N") z jedną
+    // wymyśloną odpowiedzią każde, bo demo (migracja 040) ma tylko jedną,
+    // wspólną pulę "rundową" (16 pytań, 6 realnych odpowiedzi każde) — bez
+    // osobnej puli finałowej. Naprawione: finał TERAZ bierze te same,
+    // prawdziwe pytania demo (inny ord niż w rundach tego scenariusza) —
+    // zero insertów, zero sztucznej treści — dokładnie tym samym
+    // mechanizmem co picked/rounds wyżej.
+    const finalPicked = finalPickOrds.map(byOrd);
+    for (const q of finalPicked) {
+      if (!q) throw new Error("nie znaleziono pytania finałowego demo o żądanym ord");
     }
 
     const { error: upErr } = await sb.from("games").update({
@@ -119,18 +118,22 @@ async function restoreDemoGame(setupPage, { pickOrds = [], settings = {}, finalA
         teams: { teamA: "Alfa", teamB: "Beta" },
         display: settings.display || {},
         game: {
-          hasFinal: !!finalAnswerPts,
+          hasFinal: finalPickOrds.length > 0,
           roundsQuestionsMode: "pick",
-          ...(finalAnswerPts ? { finalQuestionsMode: "pick" } : {}),
+          ...(finalPickOrds.length ? { finalQuestionsMode: "pick" } : {}),
           ...(settings.game || {}),
         },
-        questions: { rounds: picked.map((q) => ({ id: q.id })), final: finalPicked },
+        questions: { rounds: picked.map((q) => ({ id: q.id })), final: finalPicked.map((q) => ({ id: q.id })) },
       },
     }).eq("id", g.id);
     if (upErr) throw new Error("update demo settings failed: " + upErr.message);
 
-    return g;
-  }, { pickOrds, settings, finalAnswerPts });
+    // finalQuestions: zwrócone TREŚCI (nie tylko id) pytań finałowych, żeby
+    // scenariusz mógł zbudować selektory kafli dopasowania (każda realna
+    // odpowiedź = osobny przycisk "<tekst> (<punkty>)" w renderFinalMapping,
+    // control2/js/ui.js's matchOptions) bez ponownego odpytywania bazy.
+    return { ...g, finalQuestions: finalPicked };
+  }, { pickOrds, settings, finalPickOrds });
 }
 
 async function deleteGame(page, gameId) {
@@ -212,6 +215,13 @@ const QUADRANTS = {
   host: { left: 0, top: QUAD_H, width: QUAD_W, height: QUAD_H },
   buzzer: { left: QUAD_W, top: QUAD_H, width: QUAD_W, height: QUAD_H },
 };
+
+// Okno "odbiorcy" e-maila (scenariusz 8, udostępnianie przez e-mail) —
+// mniejsze, wyśrodkowane na wierzchu siatki 2x2, żeby nagranie wyraźnie
+// pokazało "ktoś inny otworzył link z maila", zamiast podmieniać w miejscu
+// już widoczne okno Hosta/Buzzera (co wyglądałoby na ekranie identycznie
+// jak zwykłe odświeżenie, gubiąc sens demonstracji).
+const RECIPIENT_QUAD = { left: (SCREEN_W - 900) / 2, top: (SCREEN_H - 700) / 2, width: 900, height: 700 };
 
 async function positionWindow(context, page, bounds) {
   const session = await context.newCDPSession(page);
@@ -409,8 +419,9 @@ const WRITE_RPC_RE = /\/rpc\/(game_state_write|game_state_buzzer_press)(\?|$)/;
 function waitForWrite(page) {
   // Zarejestruj oczekiwanie PRZED akcją, żeby nie przegapić odpowiedzi,
   // która wróci bardzo szybko. Nie każda akcja w tym scenariuszu wywołuje
-  // zapis (np. czysto lokalne "Anuluj") — stąd .catch(() => null) zamiast
-  // wywalać cały scenariusz na braku pasującej odpowiedzi.
+  // zapis (np. czysto lokalne zaznaczenie drużyny w physicalBuzzer, przed
+  // potwierdzeniem) — stąd .catch(() => null) zamiast wywalać cały
+  // scenariusz na braku pasującej odpowiedzi.
   return page
     .waitForResponse((resp) => WRITE_RPC_RE.test(resp.url()), { timeout: 15000 })
     .catch(() => null);
@@ -495,8 +506,44 @@ async function typePaced(locator, text, msPerChar = 90) {
 // bez finału. Ten sam przebieg co control2.spec.js's test "reset
 // pojedynku, pass, kradzież wygrana/przegrana, odkrywanie reszty...". =====
 
-async function scenarioRoundsMechanics(pages) {
+async function scenarioRoundsMechanics(pages, { contexts }) {
   const { control, buzzer, display } = pages;
+
+  // ===== Druga karta Control na tę samą grę — zablokowana (resource-lock,
+  // kontekst "control") — control2.spec.js's test "druga karta Control...
+  // jest zablokowana". Ta sama sesja/konto (ten sam kontekst przeglądarki,
+  // więc te same ciasteczka), ale osobna karta -> osobny tab_id
+  // (sessionStorage NIE jest dzielony między kartami), więc guardResourceLock
+  // widzi kolizję i pokazuje pełnoekranowy #resourceLockGuard. Pozycjonowana
+  // NAD siatką 2x2 (jak "odbiorca" w scenariuszu 8), żeby było wyraźnie
+  // widać, że to DRUGIE, osobne okno, nie ta sama karta Control.
+  console.log("[record] otwieram drugą kartę Control na tę samą grę (dowód blokady zasobu)");
+  const secondControlTab = await contexts.control.newPage();
+  await positionWindow(contexts.control, secondControlTab, RECIPIENT_QUAD);
+  await secondControlTab.goto(control.url(), { waitUntil: "domcontentloaded" });
+  await secondControlTab.waitForSelector("#resourceLockGuard", { state: "visible", timeout: 15000 });
+  await secondControlTab.waitForTimeout(2500); // widz ma zdążyć przeczytać komunikat blokady na drugiej karcie
+  await secondControlTab.close();
+  await control.waitForTimeout(500);
+
+  // ===== QR na wyświetlaczu — Prowadzący i Przycisk, niezależnie i oba
+  // naraz — control2.spec.js's test "QR na wyświetlaczu — host i buzzer
+  // niezależne...". Operator pokazuje widzowi/grającym kod QR danego
+  // urządzenia na Wyświetlaczu, żeby zeskanowali telefonem zamiast
+  // przepisywać link/kod ręcznie. clickPaced -- oba przełączniki zapisują
+  // detail.display.qr.{host,buzzer} przez zwykły game_state_write.
+  console.log("[record] QR na wyświetlaczu — Prowadzący i Przycisk, pojedynczo i oba naraz");
+  const qrToggle = (kind, wantOn) => control.locator(`.device-row[data-device="${kind}"] button`, { hasText: wantOn ? "QR na wyświetlaczu" : "Schowaj QR" });
+  await clickPaced(qrToggle("host", true), ADMIN_PACE_MS);
+  await display.waitForSelector("#qrHostCard:not(.hidden)", { timeout: 10000 });
+  await display.waitForTimeout(1500); // widz ma zdążyć zobaczyć sam kod Prowadzącego
+  await clickPaced(qrToggle("buzzer", true), ADMIN_PACE_MS);
+  await display.waitForSelector("#qrBuzzerCard:not(.hidden)", { timeout: 10000 });
+  await display.waitForTimeout(1500); // widz ma zdążyć zobaczyć oba kody naraz
+  await clickPaced(qrToggle("host", false), ADMIN_PACE_MS);
+  await clickPaced(qrToggle("buzzer", false), ADMIN_PACE_MS);
+  await display.waitForSelector("#qrScreen.hidden", { timeout: 10000 });
+  await control.waitForTimeout(500);
 
   // Zgłoszone: "dodaj testy... jeden test niech używa dźwięku z display" —
   // przełącznik "Dźwięk" jest widoczny WYŁĄCZNIE na kroku Urządzeń (stąd na
@@ -635,15 +682,47 @@ async function scenarioRoundsMechanics(pages) {
   await control.locator('.lang-option[data-lang="pl"]').click();
   await control.waitForTimeout(1500);
 
-  await clickPaced(buzzer.getByRole("button", { name: "Przycisk A" }));
-  // Drużyna A dostała w tym scenariuszu (wyżej, przez modal ustawień gry)
-  // nową nazwę "Mistrzowie Quizu" -- domyślne "Alfa" już tu nie istnieje.
-  await clickPaced(control.getByRole("button", { name: "Zatwierdź: Mistrzowie Quizu" }));
-  await armAndConfirmPaced(control.getByRole("button", { name: "X", exact: true })); // A pudłuje -> kolej B
-  // B pudłuje też -> RESET CYKLU: kolej wraca do A, BEZ nowego zgłoszenia
-  // buzzera (firstTeam/secondTeam nie są czyszczone — nie ma ponownego buzera).
+  // Zgłoszone: wyścig buzzerów wpleciony w pojedynek rundy 1 (zamiast
+  // osobnego, krótkiego klipu) — control2.spec.js's test "wyścig — oba
+  // przyciski Buzzera naciśnięte w tej samej chwili, tylko jeden
+  // zaakceptowany". Oba kliknięcia wystrzelone w TYM SAMYM ticku JS
+  // (page.evaluate), nie dwa kolejne Playwrightowe .click() -- dowód, że o
+  // zwycięzcy decyduje pojedynczy, atomowy zapis w bazie
+  // (game_state_buzzer_press, warunkowy UPDATE), nie klient. Zwycięzca jest
+  // NIEDETERMINISTYCZNY -- ale dalszy przebieg pojedynku (X/X/reveal
+  // poniżej) jest team-agnostic (generyczne etykiety "X"/kafle odpowiedzi,
+  // nie nazwy drużyn), więc działa identycznie niezależnie od tego, kto
+  // wygrał. Drużyna A dostała w tym scenariuszu (wyżej, przez modal
+  // ustawień gry) nową nazwę "Mistrzowie Quizu" -- domyślne "Alfa" już tu
+  // nie istnieje.
+  //
+  // Zgłoszone (po realnym nagraniu): "z tym żeby coś tam dostrzec był
+  // wcześniej problem bo wszystko szło za szybko" -- dłuższe, jawne pauzy
+  // (2s) w obu kluczowych momentach: zaraz po wyścigu (widać, który jedyny
+  // wspólny kafel "Zatwierdź: ..." się pojawił) i zaraz po potwierdzeniu
+  // (widać zaświecony/przygaszony przycisk na Buzzerze).
+  console.log("[record] wyścig buzzerów w rundzie 1 — oba przyciski naciśnięte naraz");
+  await expect(buzzer.getByRole("button", { name: "Przycisk A" })).toBeEnabled({ timeout: 10000 });
+  await buzzer.evaluate(() => {
+    document.getElementById("btnA")?.click();
+    document.getElementById("btnB")?.click();
+  });
+  const acceptMistrzowie = control.getByRole("button", { name: "Zatwierdź: Mistrzowie Quizu" });
+  const acceptBeta = control.getByRole("button", { name: "Zatwierdź: Beta" });
+  await expect.poll(async () => (await acceptMistrzowie.count()) + (await acceptBeta.count()), { timeout: 10000 }).toBeGreaterThan(0);
+  const raceWinner = (await acceptMistrzowie.count()) > 0 ? "A" : "B";
+  const raceWinnerBtn = raceWinner === "A" ? acceptMistrzowie : acceptBeta;
+  await control.waitForTimeout(2000); // widz ma zdążyć zobaczyć, który kafel się pojawił (dowód wyścigu)
+  await armAndConfirmPaced(raceWinnerBtn);
+  await buzzer.waitForSelector(`#btn${raceWinner}.lit`, { timeout: 10000 });
+  await buzzer.waitForTimeout(2000); // widz ma zdążyć zobaczyć zaświecony/przygaszony przycisk na Buzzerze
+
+  await armAndConfirmPaced(control.getByRole("button", { name: "X", exact: true })); // pudło -> kolej drugiej drużyny
+  // Druga drużyna też pudłuje -> RESET CYKLU: kolej wraca do zwycięzcy
+  // wyścigu, BEZ nowego zgłoszenia buzzera (firstTeam/secondTeam nie są
+  // czyszczone — nie ma ponownego buzera).
   await armAndConfirmPaced(control.getByRole("button", { name: "X", exact: true }));
-  await armAndConfirmPaced(answerTile(control, 1)); // A trafia -> wygrywa pojedynek, bez nowego zgłoszenia
+  await armAndConfirmPaced(answerTile(control, 1)); // zwycięzca wyścigu trafia -> wygrywa pojedynek, bez nowego zgłoszenia
 
   // Zgłoszone: "...tez sprawdź mute na chwilę w jednej z rund" — wyciszenie
   // (#btnMute w topbarze Control, współdzielone przez game_state — patrz
@@ -674,7 +753,17 @@ async function scenarioRoundsMechanics(pages) {
   // ===== RUNDA 2 =====
   await clickPaced(control.getByRole("button", { name: "Rozpocznij rundę" }));
   await clickPaced(buzzer.getByRole("button", { name: "Przycisk B" }));
-  await clickPaced(control.getByRole("button", { name: "Zatwierdź: Beta" }));
+  // Zgłoszone: pokaż "Ponów naciśnięcie" jako zwykłą alternatywę
+  // przyjęcia -- operator czasem uznaje pierwsze zgłoszenie za
+  // przypadkowe i otwiera Buzzer na nowo, zamiast od razu klikać
+  // "Zatwierdź". Dłuższa pauza, żeby widz zdążył zobaczyć oba kafle
+  // (Zatwierdź + Ponów naciśnięcie) razem, zanim operator wybierze "Ponów".
+  await expect(control.getByRole("button", { name: "Zatwierdź: Beta" })).toBeVisible({ timeout: 10000 });
+  await control.waitForTimeout(1500);
+  await clickPaced(control.getByRole("button", { name: "Ponów naciśnięcie" }));
+  await control.waitForTimeout(800);
+  await clickPaced(buzzer.getByRole("button", { name: "Przycisk B" }));
+  await armAndConfirmPaced(control.getByRole("button", { name: "Zatwierdź: Beta" }));
   await armAndConfirmPaced(answerTile(control, 1)); // B trafia -> kontrola B, allowPass
   await armAndConfirmPaced(control.getByRole("button", { name: "Oddaj kontrolę" })); // dawny "Pass" -> kontrola A
   await armAndConfirmPaced(answerTile(control, 2)); // A trafia
@@ -696,6 +785,57 @@ async function scenarioRoundsMechanics(pages) {
   // ===== Koniec gry bez finału =====
   await clickPaced(control.getByRole("button", { name: "Zakończ grę" }));
   await control.waitForTimeout(4000); // zostaw ekran końcowy widoczny chwilę na nagraniu
+
+  // ===== "Zacznij od nowa" — control2.spec.js's test "\"Zacznij od nowa\"
+  // w trakcie gry wraca do D0". Topbar -> modal potwierdzenia -> "Tak"
+  // (exact:true, bo dopasowanie podciągiem złapałoby też "Kontakt") ->
+  // powrót do kroku "Urządzenia".
+  console.log("[record] \"Zacznij od nowa\" (dowód powrotu do kroku Urządzenia)");
+  // Zwykły klik (nie clickPaced) -- samo otwarcie modala potwierdzenia nie
+  // wywołuje żadnego zapisu do game_state, więc waitForWrite wisiałby tu
+  // pełne, zmarnowane 15s (patrz komentarz przy waitForWrite/clickPaced).
+  await control.locator("#btnStartOver").click();
+  await control.waitForTimeout(500); // niech nagranie złapie modal potwierdzenia
+  await clickPaced(control.getByRole("button", { name: "Tak", exact: true }), ADMIN_PACE_MS);
+  await expect(control.locator(".stepTitle")).toHaveText("Urządzenia", { timeout: 10000 });
+  await control.waitForTimeout(1500); // widz ma zdążyć zobaczyć powrót do kroku Urządzenia
+}
+
+// ===== Scenariusz 9: physicalBuzzer + noHostTablet — control2.spec.js's
+// test "physicalBuzzer + noHostTablet — urządzenia pominięte, ręczny wybór
+// drużyny". Wyświetlacz zawsze wymagany (bez opt-outu w ogóle) — nadal
+// otwieramy wszystkie 4 okna (openTiledDevices w main()), Host/Buzzer po
+// prostu zostają "opted-out" (wyszarzone, nieklikalne) i nieużywane przez
+// resztę scenariusza. Krótki, czysto pokazowy scenariusz (jedna odpowiedź) —
+// sedno to sam mechanizm ręcznego wyboru drużyny, nie pełna runda. =====
+
+async function scenarioPhysicalBuzzerNoHost(pages) {
+  const { control } = pages;
+
+  console.log("[record] physicalBuzzer + noHostTablet (ręczny wybór drużyny, bez Prowadzącego/Przycisku)");
+  await control.getByLabel("Fizyczny przycisk").check();
+  await control.waitForTimeout(400); // niech nagranie złapie wiersz Przycisku wyszarzający się
+  await control.getByLabel("Nie używaj tabletu prowadzącego").check();
+  await control.waitForTimeout(1000); // niech nagranie złapie wiersz Prowadzącego wyszarzający się + kropki w topbarze znikające
+
+  await clickPaced(control.getByRole("button", { name: "Dalej" }), ADMIN_PACE_MS);
+  await clickPaced(control.getByRole("button", { name: "Gotowe — przejdź do rozgrywki" }), ADMIN_PACE_MS);
+  await clickPaced(control.getByRole("button", { name: "Rozpocznij grę" }), ADMIN_PACE_MS);
+  await clickPaced(control.getByRole("button", { name: "Rozpocznij rundę" }));
+
+  // Bez Buzzera na ekranie: zaznacz -> zmień zdanie (klik drugiej drużyny,
+  // ekran identyczny jak w trybie normalnym -- oba kafle drużyn po prostu
+  // klikalne) -> zaznacz->potwierdź wspólny kafel "Zatwierdź: <drużyna>".
+  // Pierwsze kliknięcia to czysto lokalne zaznaczenie (zero zapisu do
+  // game_state) -- zwykły klik + krótka pauza, nie clickPaced.
+  await control.getByRole("button", { name: "Alfa", exact: true }).click();
+  await control.waitForTimeout(1200); // widz ma zdążyć zobaczyć "Zatwierdź: Alfa"
+  await control.getByRole("button", { name: "Beta", exact: true }).click();
+  await control.waitForTimeout(1200);
+  await armAndConfirmPaced(control.getByRole("button", { name: "Zatwierdź: Beta" }));
+
+  await armAndConfirmPaced(answerTile(control, 1)); // Beta trafia -> przejmuje kontrolę
+  await control.waitForTimeout(2500); // zostaw wynik (Bank) widoczny chwilę na nagraniu
 }
 
 // ===== Scenariusz 2/3: progresja przez 3 rundy aż do NATURALNEGO
@@ -714,7 +854,7 @@ async function scenarioRoundsMechanics(pages) {
 // w finał (próg + hasFinal=true) albo prosto na ekran końca gry (próg +
 // hasFinal=false) — sama progresja rund jest identyczna w obu wariantach. =====
 
-async function scenarioRoundsThreshold(pages, { expectFinal }) {
+async function scenarioRoundsThreshold(pages, { expectFinal, showReload = false }) {
   const { control, buzzer } = pages;
 
   await clickPaced(control.getByRole("button", { name: "Dalej" }), ADMIN_PACE_MS);
@@ -725,7 +865,7 @@ async function scenarioRoundsThreshold(pages, { expectFinal }) {
   // wszystkie 6 odpowiedzi odsłonięte naturalnie w PLAY =====
   await clickPaced(control.getByRole("button", { name: "Rozpocznij rundę" }));
   await clickPaced(buzzer.getByRole("button", { name: "Przycisk A" }));
-  await clickPaced(control.getByRole("button", { name: "Zatwierdź: Alfa" }));
+  await armAndConfirmPaced(control.getByRole("button", { name: "Zatwierdź: Alfa" }));
   await armAndConfirmPaced(answerTile(control, 1)); // A trafia topową odpowiedź od razu -> wygrywa pojedynek
   await armAndConfirmPaced(answerTile(control, 2)); // odp. #2
   await armAndConfirmPaced(answerTile(control, 3)); // odp. #3
@@ -739,9 +879,28 @@ async function scenarioRoundsThreshold(pages, { expectFinal }) {
   // odpowiedzią nie-topową, potem reszta (w tym top) odsłonięta w PLAY =====
   await clickPaced(control.getByRole("button", { name: "Rozpocznij rundę" }));
   await clickPaced(buzzer.getByRole("button", { name: "Przycisk B" }));
-  await clickPaced(control.getByRole("button", { name: "Zatwierdź: Beta" }));
+  await armAndConfirmPaced(control.getByRole("button", { name: "Zatwierdź: Beta" }));
   await armAndConfirmPaced(control.getByRole("button", { name: "X", exact: true })); // B pudłuje -> kolej na drugą próbę (A), NIE reset
   await armAndConfirmPaced(answerTile(control, 2)); // A trafia odpowiedź NIE-topową -> WYGRYWA, bo B miał 0 pkt
+
+  if (showReload) {
+    // ===== KLUCZOWY MOMENT: przeładowanie Control W ŚRODKU rundy 2 —
+    // dokładnie ten scenariusz, po który cała przebudowa game_state
+    // (wspólna tabela stanu zamiast ulotnych komend w pamięci przeglądarki
+    // operatora) powstała (plan, sekcja 7 "Weryfikacja", punkt 4). Stan
+    // (runda, wynik, kto ma kontrolę, które odpowiedzi już odsłonięte)
+    // musi wrócić DOKŁADNIE taki, jaki był, bez żadnej ręcznej interwencji
+    // — to samo, co już sprawdza control2.spec.js's test "pełna runda +
+    // wznowienie Control po przeładowaniu", tu widoczne na nagraniu.
+    console.log("[record] przeładowuję Control w środku rundy 2 (dowód wznowienia stanu)");
+    await control.reload({ waitUntil: "domcontentloaded" });
+    await expect(control.locator(".c2-stepper")).toContainText("Runda 2", { timeout: 22000 });
+    // Odpowiedź #2 (odsłonięta PRZED przeładowaniem) musi wrócić zielona —
+    // dowód, że to prawdziwe wznowienie stanu, nie tylko pusty ekran "Runda 2".
+    await expect(answerTile(control, 2)).toHaveClass(/c2-tile-revealed/, { timeout: 10000 });
+    await control.waitForTimeout(2500); // widz ma zdążyć zobaczyć, że Control wznowił się dokładnie w tym samym miejscu
+  }
+
   await armAndConfirmPaced(answerTile(control, 1)); // odp. #1 (top, dosłaniane normalnie)
   await armAndConfirmPaced(answerTile(control, 3)); // odp. #3
   await armAndConfirmPaced(answerTile(control, 4)); // odp. #4
@@ -754,7 +913,7 @@ async function scenarioRoundsThreshold(pages, { expectFinal }) {
   // dobicie do domyślnego progu (300) =====
   await clickPaced(control.getByRole("button", { name: "Rozpocznij rundę" }));
   await clickPaced(buzzer.getByRole("button", { name: "Przycisk A" }));
-  await clickPaced(control.getByRole("button", { name: "Zatwierdź: Alfa" }));
+  await armAndConfirmPaced(control.getByRole("button", { name: "Zatwierdź: Alfa" }));
   await armAndConfirmPaced(answerTile(control, 1)); // odp. #1 (top)
   await armAndConfirmPaced(answerTile(control, 2)); // odp. #2
   await armAndConfirmPaced(answerTile(control, 3)); // odp. #3
@@ -790,7 +949,7 @@ async function playThreeNaturalRoundsToThreshold(pages) {
   for (let round = 1; round <= 2; round++) {
     await clickPaced(control.getByRole("button", { name: "Rozpocznij rundę" }));
     await clickPaced(buzzer.getByRole("button", { name: "Przycisk A" }));
-    await clickPaced(control.getByRole("button", { name: "Zatwierdź: Alfa" }));
+    await armAndConfirmPaced(control.getByRole("button", { name: "Zatwierdź: Alfa" }));
     await armAndConfirmPaced(answerTile(control, 1)); // odp. #1 (top) -> wygrywa pojedynek
     await armAndConfirmPaced(answerTile(control, 2)); // odp. #2
     await armAndConfirmPaced(answerTile(control, 3)); // odp. #3
@@ -813,7 +972,7 @@ async function playThreeNaturalRoundsToThreshold(pages) {
   // (100 pkt na rundę × 3) zostaje nienaruszona. =====
   await clickPaced(control.getByRole("button", { name: "Rozpocznij rundę" }));
   await clickPaced(buzzer.getByRole("button", { name: "Przycisk B" }));
-  await clickPaced(control.getByRole("button", { name: "Zatwierdź: Beta" }));
+  await armAndConfirmPaced(control.getByRole("button", { name: "Zatwierdź: Beta" }));
   await armAndConfirmPaced(answerTile(control, 1)); // B trafia top -> wygrywa pojedynek, kontrola B
   await armAndConfirmPaced(answerTile(control, 2)); // odp. #2
   await armAndConfirmPaced(control.getByRole("button", { name: "X", exact: true }));
@@ -827,13 +986,89 @@ async function playThreeNaturalRoundsToThreshold(pages) {
   await clickPaced(control.getByRole("button", { name: "Przejdź do finału" }));
 }
 
+// ===== Scenariusz 11: mnożnik rundy — runda 4. z domyślnym ×2 faktycznie
+// przemnaża bank. control2.spec.js's test "mnożnik rundy — runda 4. z
+// domyślnym ×2 faktycznie przemnaża bank" (DEFAULT_SETTINGS.roundMultipliers
+// = [1,1,1,2,3], shared/gameStateShape.js). finalMinPoints podniesiony
+// celowo wysoko (999) w makeGame tego scenariusza -- próg domyślny (300)
+// zostałby trafiony dokładnie po rundzie 3, zanim runda 4 (ta, która
+// faktycznie ma mnożnik ×2) w ogóle by się zaczęła. Czysty pokaz mnożnika,
+// nie progresja do finału/końca gry -- zatrzymuje się zaraz po rundzie 4,
+// bez kończenia gry. Cztery różne pytania demo, każde pełne 100 pkt (bank
+// w całości odsłonięty, jak w rundach 1-2 wyżej). =====
+
+async function scenarioRoundMultiplier(pages) {
+  const { control, buzzer } = pages;
+
+  await clickPaced(control.getByRole("button", { name: "Dalej" }), ADMIN_PACE_MS);
+  await clickPaced(control.getByRole("button", { name: "Gotowe — przejdź do rozgrywki" }), ADMIN_PACE_MS);
+  await clickPaced(control.getByRole("button", { name: "Rozpocznij grę" }), ADMIN_PACE_MS);
+
+  const playFullRound = async () => {
+    await clickPaced(control.getByRole("button", { name: "Rozpocznij rundę" }));
+    await clickPaced(buzzer.getByRole("button", { name: "Przycisk A" }));
+    await armAndConfirmPaced(control.getByRole("button", { name: "Zatwierdź: Alfa" }));
+    await armAndConfirmPaced(answerTile(control, 1));
+    await armAndConfirmPaced(answerTile(control, 2));
+    await armAndConfirmPaced(answerTile(control, 3));
+    await armAndConfirmPaced(answerTile(control, 4));
+    await armAndConfirmPaced(answerTile(control, 5));
+    await armAndConfirmPaced(answerTile(control, 6));
+  };
+
+  console.log("[record] mnożnik rundy — rundy 1-3 (×1)");
+  for (let round = 1; round <= 3; round++) {
+    await playFullRound();
+    await clickPaced(control.getByRole("button", { name: "Zakończ rundę" }));
+    await control.waitForTimeout(1500);
+  }
+  await expect(control.getByText("Alfa: 300")).toBeVisible({ timeout: 10000 });
+
+  console.log("[record] mnożnik rundy — runda 4 (×2, dowód przemnożenia banku)");
+  await playFullRound();
+  await control.waitForTimeout(800); // widz ma zdążyć zobaczyć pełny bank 100 przed "Zakończ rundę"
+  await clickPaced(control.getByRole("button", { name: "Zakończ rundę" }));
+  await expect(control.getByText("Alfa: 500")).toBeVisible({ timeout: 10000 }); // 300 + 100x2, nie 400
+  await control.waitForTimeout(2500);
+}
+
+// n-ta w kolejności (1=najwyżej punktowana, 6=najniżej) PRAWDZIWA odpowiedź
+// danego pytania finałowego (game.finalQuestions[i], patrz restoreDemoGame)
+// + etykieta kafla dopasowania — dokładnie ten sam format co
+// control2/js/ui.js's matchOptions ("<tekst> (<punkty>)"). Zgłoszone
+// wprost: "trafienie to nie zawsze najwyższej punktowana odpowiedź" —
+// scenariusz 4 dopasowuje różne miejsca w rankingu (nie zawsze to samo),
+// dokładnie jak w realnej grze, gdzie gracz może trafić w dowolną z 6
+// odpowiedzi na planszy.
+function answerByRank(q, rank) {
+  return [...q.answers].sort((a, b) => b.fixed_points - a.fixed_points)[rank - 1];
+}
+function matchButtonLabel(a) {
+  return `${a.text} (${a.fixed_points})`;
+}
+
 // ===== Scenariusz 4: finał pełny — oba bloki, naturalne wygaśnięcie
 // zegarka gracza 1, powtórzenie u gracza 2, odsłonięcie odpowiedzi gracza 1
-// na Display I Host przy starcie tury gracza 2. Ten sam przebieg co
-// control2.spec.js's test "finał — obaj gracze, wszystkie 10 pytań...". =====
+// na Display I Host przy starcie tury gracza 2, WSZYSTKIE cztery wyniki
+// mapowania (MATCH/MISS/SKIP/Powtórzenie) — i, zgłoszone wprost, drużyna
+// FAKTYCZNIE WYGRYWA finał na końcu (w odróżnieniu od scenariusza 5, gdzie
+// próg jest trafiony natychmiast, na samym początku). Ten sam przebieg co
+// control2.spec.js's test "finał — obaj gracze, wszystkie 10 pytań...",
+// tyle że TU liczby są dobrane tak, żeby ostatnie trafienie (gracz 2,
+// pytanie #4) przekroczyło finalTarget (patrz P1_MATCH_RANK/P2_MATCH_RANK
+// i finalTarget:100 w makeGame). Każdy z czterech MATCH-ów trafia w INNE
+// miejsce rankingu odpowiedzi (2. i 3. u gracza 1, 2. i 1. u gracza 2) —
+// nie mechanicznie zawsze to samo, i nie zawsze najwyższe. Realna suma w
+// kolejności odsłonięć: 28 (P1#1) -> 46 (P1#4, +18) -> 70 (P2#2, +24) -> 105
+// (P2#4, +35) — ostatnie trafienie przekracza próg (100), więc silnik
+// (REVEAL_POINTS w engine.js) skacze PROSTO do f_end zaraz po nim: pytanie
+// #5 gracza 2 (SKIP) nigdy nie zostaje odsłonięte — SKIP jest i tak już
+// pokazany trzykrotnie wcześniej w tym scenariuszu (P1#2, P1#5, P2#3), więc
+// nic realnie nie ginie z demonstrowanej różnorodności. =====
 
-async function scenarioFinalFull(pages) {
+async function scenarioFinalFull(pages, { game }) {
   const { control, buzzer, host } = pages;
+  const fq = game.finalQuestions;
 
   await clickPaced(control.getByRole("button", { name: "Dalej" }), ADMIN_PACE_MS);
   await clickPaced(control.getByRole("button", { name: "Gotowe — przejdź do rozgrywki" }), ADMIN_PACE_MS);
@@ -862,19 +1097,36 @@ async function scenarioFinalFull(pages) {
   // Gracz 2: idx 0 to powtórzenie (osobna gałąź, obsłużona niżej) — reszta
   // 2× MATCH, 2× SKIP.
   const P2_PLAN = [null, true, false, true, false];
+  // Które miejsce w rankingu odpowiedzi (1=najwyżej, 6=najniżej punktowana)
+  // trafia każdy MATCH — celowo różne za każdym razem, nie zawsze ta sama
+  // pozycja. Dokładna suma (28+18+24+35=105) jest policzona tak, żeby
+  // ostatnie trafienie (P2, idx3) przekroczyło finalTarget:100 (makeGame) —
+  // patrz pełne wyliczenie w komentarzu nad funkcją.
+  const P1_MATCH_RANK = [2, null, null, 3, null];
+  const P2_MATCH_RANK = [null, 2, null, 1, null];
 
-  // Gracz 1: wpisz zaplanowane odpowiedzi, uruchom zegarek, poczekaj na
-  // NATURALNE wygaśnięcie (15s).
+  // Zgłoszone wprost: "wpisywanie w finale ma być podczas odliczania, nie
+  // przed" -- kod (control2/js/ui.js's finalTimerRow/renderFinalEntry) już
+  // na to pozwala: pole wpisywania blokuje WYŁĄCZNIE boardBusy() (krótka
+  // serwerowa blokada zaraz po przejściu ekranu), nie stan zegarka, a
+  // tickTimers() (naprawione przy #13) aktualizuje TYLKO cyfry co 250ms,
+  // bez przebudowy reszty ekranu -- więc pisanie w trakcie odliczania nie
+  // gubi fokusu pola. Scenariusz ma to NAPRAWDĘ pokazać: zegarek startuje
+  // NAJPIERW, wpisywanie leci W TRAKCIE, nie przed.
+  // armAndConfirmPaced, nie clickPaced -- start/stop zegarka gracza idzie
+  // teraz przez zaznacz->potwierdź (nieodwracalna, ryzykowna akcja).
+  await armAndConfirmPaced(control.getByRole("button", { name: "Rozpocznij odliczanie (15s)" }));
   const p1Inputs = control.locator("#app input[type=text]");
   for (let i = 0; i < 5; i++) {
-    if (P1_PLAN[i] === true) await typePaced(p1Inputs.nth(i), "Odp. finałowa");
+    if (P1_PLAN[i] === true) await typePaced(p1Inputs.nth(i), answerByRank(fq[i], P1_MATCH_RANK[i]).text);
     else if (P1_PLAN[i] === "miss") await typePaced(p1Inputs.nth(i), "Zła odpowiedź");
     // false: nic nie wpisujemy -> AUTO+SKIP, widoczne od razu jako domyślne
     // zaznaczenie na kaflu "Brak odpowiedzi" (control2/js/ui.js's
     // effectiveMappingResolution), potwierdzane przez "Pokazana" niżej.
   }
-  await clickPaced(control.getByRole("button", { name: "Rozpocznij odliczanie (15s)" }));
-  await control.waitForTimeout(16_000);
+  // Wpisywanie powyżej już zjadło kilka sekund PO starcie zegarka -- reszta
+  // to tylko dociągnięcie do naturalnego wygaśnięcia (15s), z zapasem.
+  await control.waitForTimeout(12_000);
 
   await clickPaced(control.getByRole("button", { name: "Dalej" }));
   for (let i = 0; i < 5; i++) {
@@ -883,7 +1135,7 @@ async function scenarioFinalFull(pages) {
     // klik by go tylko zaznaczył, zostawiając efektywne dopasowanie na
     // domyślnym AUTO-fallbacku (MISS) -- patrz identyczny, real bug
     // znaleziony i opisany w scenariuszu 5 niżej.
-    if (P1_PLAN[i] === true) await armAndConfirmPaced(control.getByRole("button", { name: "Odp. finałowa (15)" }));
+    if (P1_PLAN[i] === true) await armAndConfirmPaced(control.getByRole("button", { name: matchButtonLabel(answerByRank(fq[i], P1_MATCH_RANK[i])) }));
     // "Pokaż odpowiedź"/"Pokaż punkty" — kafle odsłaniania, zaznacz ->
     // potwierdź jak odpowiedzi w Rundach (nazwa stała, druga linijka to
     // żywy podgląd).
@@ -901,20 +1153,40 @@ async function scenarioFinalFull(pages) {
   await hostPeekSwipe(host);
   await host.waitForTimeout(1500);
 
-  // Gracz 2: pytanie #1 = powtórzenie, reszta wg P2_PLAN.
-  await clickPaced(control.getByRole("button", { name: "Powtórzenie" }).first());
+  // Gracz 2: zegarek NAJPIERW (ta sama poprawka co u gracza 1 wyżej —
+  // "wpisywanie w finale ma być podczas odliczania, nie przed"), dopiero
+  // POTEM powtórzenie (pytanie #1) i reszta wg P2_PLAN (dosłowny tekst
+  // prawdziwej, najniżej punktowanej odpowiedzi przy MATCH).
+  await armAndConfirmPaced(control.getByRole("button", { name: "Rozpocznij odliczanie (20s)" }));
+  // Włączenie "Powtórzenie" też zaznacz->potwierdź (konsekwentne: dźwięk +
+  // wymuszony SKIP w mapowaniu) -- zdjęcie flagi zostaje jednoklikowe.
+  await armAndConfirmPaced(control.getByRole("button", { name: "Powtórzenie" }).first());
   const p2Inputs = control.locator("#app input[type=text]");
   for (let i = 1; i < 5; i++) {
-    if (P2_PLAN[i] === true) await typePaced(p2Inputs.nth(i), "Odp. finałowa");
+    if (P2_PLAN[i] === true) await typePaced(p2Inputs.nth(i), answerByRank(fq[i], P2_MATCH_RANK[i]).text);
     // false: nic nie wpisujemy -> AUTO+SKIP
   }
-  await clickPaced(control.getByRole("button", { name: "Rozpocznij odliczanie (20s)" }));
-  await clickPaced(control.getByRole("button", { name: "Dalej" })); // tym razem NIE czekamy na naturalne wygaśnięcie
+  // Zgłoszone: "po drugiej rundzie finału nawet nie czeka na koniec
+  // timera" — "Dalej" jest teraz zablokowany, dopóki zegarek tej rundy
+  // aktywnie odlicza (control2/js/ui.js's renderFinalEntry), więc TEN test
+  // musi poczekać na naturalne wygaśnięcie (20s) dokładnie jak gracz 1
+  // wyżej — wcześniejszy komentarz "tym razem NIE czekamy" opisywał stan
+  // sprzed tej naprawy. Wpisywanie powyżej już zjadło kilka sekund PO
+  // starcie zegarka -- reszta to tylko dociągnięcie z zapasem.
+  await control.waitForTimeout(16_000);
+  await clickPaced(control.getByRole("button", { name: "Dalej" }));
 
   for (let i = 0; i < 5; i++) {
-    if (P2_PLAN[i] === true) await armAndConfirmPaced(control.getByRole("button", { name: "Odp. finałowa (15)" }));
+    if (P2_PLAN[i] === true) await armAndConfirmPaced(control.getByRole("button", { name: matchButtonLabel(answerByRank(fq[i], P2_MATCH_RANK[i])) }));
     await armAndConfirmPaced(control.getByRole("button", { name: "Pokaż odpowiedź" }));
     await armAndConfirmPaced(control.getByRole("button", { name: "Pokaż punkty" }));
+    // Suma po TYM trafieniu (idx3: 70+35=105) przekracza finalTarget:100
+    // (makeGame) -> REVEAL_POINTS w engine.js skacze PROSTO do f_end, silnik
+    // NIE czeka na kolejne "Dalej" -- ekran mapowania po prostu już nie
+    // istnieje, klik w "Dalej" nie miałby czego trafić. Pytanie #5 gracza 2
+    // (SKIP) nigdy nie zostaje odsłonięte -- drużyna wygrywa finał w tym
+    // właśnie momencie.
+    if (i === 3) break;
     await clickPaced(control.getByRole("button", { name: "Dalej" }));
   }
 
@@ -928,17 +1200,21 @@ async function scenarioFinalFull(pages) {
 }
 
 // ===== Scenariusz 5: finał z WCZESNYM zakończeniem — pierwsza odpowiedź
-// gracza 1 sama przekracza próg finału (finalTarget, domyślnie 200; tu
-// odpowiedź warta 250), więc silnik przeskakuje prosto do f_end
-// (REVEAL_POINTS w engine.js), pomijając resztę pytań gracza 1 I CAŁEGO
-// gracza 2. Ta gałąź nie była w ogóle ćwiczona wcześniej — dotychczasowy
-// "final pełny" celowo dobiera niskie wartości punktowe, żeby NIGDY nie
-// trafić progu przed końcem. Wymaga wpisania tylko JEDNEJ odpowiedzi —
-// dokładnie to, o co chodziło w uwadze "nie musimy wpisywać wszystkich
-// odpowiedzi". =====
+// gracza 1 sama przekracza próg finału (finalTarget, tu celowo obniżony do
+// 30 w makeGame — patrz komentarz przy SCENARIOS), więc silnik przeskakuje
+// prosto do f_end (REVEAL_POINTS w engine.js), pomijając resztę pytań
+// gracza 1 I CAŁEGO gracza 2. Ta gałąź nie była w ogóle ćwiczona wcześniej —
+// dotychczasowy "final pełny" celowo dobiera niskie wartości punktowe, żeby
+// NIGDY nie trafić progu przed końcem. Wymaga wpisania tylko JEDNEJ
+// odpowiedzi — dokładnie to, o co chodziło w uwadze "nie musimy wpisywać
+// wszystkich odpowiedzi". Prawdziwe pytanie demo (game.finalQuestions[0]) —
+// dopasowujemy jego NAJWYŻEJ punktowaną odpowiedź, żeby sama przekroczyła
+// obniżony próg. =====
 
-async function scenarioFinalEarlyExit(pages) {
+async function scenarioFinalEarlyExit(pages, { game }) {
   const { control, buzzer, host } = pages;
+  const q0 = game.finalQuestions[0];
+  const top = answerByRank(q0, 1);
 
   await clickPaced(control.getByRole("button", { name: "Dalej" }), ADMIN_PACE_MS);
   await clickPaced(control.getByRole("button", { name: "Gotowe — przejdź do rozgrywki" }), ADMIN_PACE_MS);
@@ -956,7 +1232,7 @@ async function scenarioFinalEarlyExit(pages) {
   // nigdy do nich nie dojdziemy. Zegarek pomijamy całkowicie (opcjonalny —
   // "Dalej" działa niezależnie od tego, czy w ogóle był uruchomiony).
   const p1Inputs = control.locator("#app input[type=text]");
-  await typePaced(p1Inputs.nth(0), "Odp. finałowa");
+  await typePaced(p1Inputs.nth(0), top.text);
   await clickPaced(control.getByRole("button", { name: "Dalej" }));
 
   // Real bug znaleziony przez failed nagranie (przebieg #22, diagnostyka):
@@ -967,14 +1243,15 @@ async function scenarioFinalEarlyExit(pages) {
   // ZAZNACZAŁ ten kafel, nigdy nie potwierdzał -- efektywne dopasowanie
   // zostawało więc na domyślnym AUTO-fallbacku ("Nie ma na liście", MISS,
   // potwierdzone diagnostyką: ta opcja pokazywała się jako aktywna/danger,
-  // a "Odp. finałowa (250)" jako zwykły, niezaznaczony kafel) -- runtime.sum
-  // nigdy nie osiągał finalTarget, więc silnik nigdy nie skakał do f_end i
-  // "Zakończ grę" nigdy się nie pojawiało.
-  await armAndConfirmPaced(control.getByRole("button", { name: "Odp. finałowa (250)" }));
+  // a kafel realnej odpowiedzi jako zwykły, niezaznaczony kafel) --
+  // runtime.sum nigdy nie osiągał finalTarget, więc silnik nigdy nie skakał
+  // do f_end i "Zakończ grę" nigdy się nie pojawiało.
+  await armAndConfirmPaced(control.getByRole("button", { name: matchButtonLabel(top) }));
   await armAndConfirmPaced(control.getByRole("button", { name: "Pokaż odpowiedź" }));
-  // 250 >= finalTarget (200) -> REVEAL_POINTS w engine.js skacze prosto do
-  // f_end, pomijając NEXT_QUESTION/pytania 2-5 gracza 1 i CAŁEGO gracza 2 —
-  // "Pokaż punkty" to ostatni kafel odsłaniania w tym scenariuszu.
+  // top.fixed_points >= finalTarget (30, obniżony w makeGame) -> REVEAL_POINTS
+  // w engine.js skacze prosto do f_end, pomijając NEXT_QUESTION/pytania 2-5
+  // gracza 1 i CAŁEGO gracza 2 — "Pokaż punkty" to ostatni kafel
+  // odsłaniania w tym scenariuszu.
   await armAndConfirmPaced(control.getByRole("button", { name: "Pokaż punkty" }));
 
   // Patrz identyczny komentarz w scenariuszu 4 — pasek z sumą finału na
@@ -1012,7 +1289,7 @@ async function scenarioDeviceReconnect(pages, { contexts, browser }) {
   await clickPaced(control.getByRole("button", { name: "Rozpocznij rundę" }));
 
   await clickPaced(pages.buzzer.getByRole("button", { name: "Przycisk A" }));
-  await clickPaced(control.getByRole("button", { name: "Zatwierdź: Alfa" }));
+  await armAndConfirmPaced(control.getByRole("button", { name: "Zatwierdź: Alfa" }));
   await armAndConfirmPaced(answerTile(control, 1)); // odp. #1 (top) -> wygrywa pojedynek, reszta rundy zostaje NIEODSŁONIĘTA
 
   // ===== Zerwanie połączenia WSZYSTKICH trzech urządzeń naraz =====
@@ -1052,7 +1329,7 @@ async function scenarioDeviceReconnect(pages, { contexts, browser }) {
   // presence, prawdziwy udział w grze. =====
   await clickPaced(control.getByRole("button", { name: "Rozpocznij rundę" }));
   await clickPaced(pages.buzzer.getByRole("button", { name: "Przycisk B" }));
-  await clickPaced(control.getByRole("button", { name: "Zatwierdź: Beta" }));
+  await armAndConfirmPaced(control.getByRole("button", { name: "Zatwierdź: Beta" }));
   await armAndConfirmPaced(answerTile(control, 1)); // odp. #1 (top)
   await armAndConfirmPaced(answerTile(control, 2));
   await armAndConfirmPaced(answerTile(control, 3));
@@ -1078,6 +1355,87 @@ async function scenarioDeviceReconnect(pages, { contexts, browser }) {
 // samym miejscu (ćwiartka "control"), w które chwilę później wejdzie
 // normalne parowanie urządzeń — ten sam kwadrat na ekranie, dwa kolejne
 // etapy tej samej gry testowej. =====
+
+// ===== Scenariusz 8: udostępnianie urządzenia przez e-mail =====
+// Zgłoszone: "chcę też dodać test podłączania urządzenia przez 'podłącz
+// urządzenie' używając maila — już mamy system ze skrzynką testową".
+// control2/js/shareDevice.js's "Udostępnij": operator wpisuje e-mail
+// ISTNIEJĄCEGO konta (resolveToUserId tam szuka w profiles -- dowolny
+// adres spoza puli testX skończyłby się "Nie znaleziono użytkownika", bez
+// wysłania czegokolwiek), RPC share_device zapisuje udostępnienie, a
+// js/core/send-mail (Edge Function) wysyła PRAWDZIWY e-mail z linkiem
+// /host2?id=&key=<share_key_host> -- DOKŁADNIE tym samym mechanizmem co
+// QR/kod, tylko dostarczonym pocztą zamiast zeskanowania. test2@familiada.online
+// to drugie konto z tej samej puli testX co test1 (login.js) -- gwarantowane
+// istniejące na produkcji (e2e-tests.yml's TEST_ACCOUNT_COUNT=10), więc
+// resolveToUserId zawsze je znajdzie.
+async function scenarioShareDeviceEmail(pages, { browser }) {
+  const { control } = pages;
+  const RECIPIENT_EMAIL = "test2@familiada.online";
+
+  // Krok Urządzeń jest już widoczny (openTiledDevices) -- "Udostępnij" dla
+  // Prowadzącego (wiersz host), dokładnie jak operator kliknąłby na żywo.
+  await expect(control.locator(".stepTitle")).toHaveText("Urządzenia", { timeout: 15000 });
+  await control.locator('[data-device="host"]').getByRole("button", { name: "Udostępnij" }).click();
+  await control.waitForSelector("#shareDeviceOverlay", { state: "visible", timeout: 10_000 });
+  await control.waitForTimeout(800); // widz ma zdążyć zobaczyć otwarty modal
+
+  // NIE typePaced(): to pole nie jest częścią game_state (czysty, lokalny
+  // formularz w shareDevice.js) -- żadne naciśnięcie klawisza nie wywołuje
+  // RPC zapisu, więc typePaced's waitForWrite() (15s timeout NA ZNAK)
+  // czekałoby daremnie na coś, co nigdy nie nadejdzie. pressSequentially()
+  // daje tę samą widoczną na nagraniu animację pisania, bez tego założenia.
+  const emailInput = control.locator("#shareDeviceEmail");
+  await emailInput.pressSequentially(RECIPIENT_EMAIL, { delay: 60 });
+  await control.waitForTimeout(400);
+
+  // Moment TUŻ PRZED wysyłką -- granica dla waitForEmail() niżej, żeby nie
+  // złapać przypadkiem starszego maila z poprzedniego przebiegu na ten sam
+  // adres odbiorcy (dwa przebiegi równoległe/kolejne na tym samym koncie).
+  const sentAfter = new Date().toISOString();
+  await control.getByRole("button", { name: "Dodaj" }).click();
+
+  // Modal pokazuje "Aktualnie udostępnione dla: test2@familiada.online" —
+  // to jest POTWIERDZENIE zapisu RPC (share_device), widoczne na nagraniu
+  // natychmiast; realny e-mail leci asynchronicznie, osobno (fetch do
+  // Edge Function, bez czekania w UI).
+  await expect(control.locator("#shareDeviceCurrentContent")).toContainText(RECIPIENT_EMAIL, { timeout: 15_000 });
+  await control.waitForTimeout(2000); // widz ma zdążyć przeczytać potwierdzenie
+
+  console.log(`[record] czekam na e-mail udostępnienia do ${RECIPIENT_EMAIL}`);
+  const email = await waitForEmail({
+    recipient: RECIPIENT_EMAIL,
+    after: sentAfter,
+    subject: /Udostępniono urządzenie/,
+    timeout: 60_000,
+  });
+  const links = extractHttpLinks(email).filter((u) => u.includes("/host2"));
+  if (!links.length) throw new Error("[record] e-mail udostępnienia nie zawierał linku do /host2");
+  const shareLink = links[0];
+  console.log("[record] link z maila:", shareLink);
+
+  await control.locator("#btnShareDeviceClose").click();
+  await control.waitForTimeout(500);
+
+  // ===== "Odbiorca" klika link z maila — nowe, osobne okno (nie ten sam
+  // kontekst co reszta urządzeń), wyśrodkowane NAD siatką 2x2, żeby było
+  // widać, że to NOWA, oddzielna przeglądarka, nie odświeżenie istniejącego
+  // Hosta. =====
+  const recipientContext = await browser.newContext({ baseURL: BASE_URL, viewport: null });
+  const recipientPage = await recipientContext.newPage();
+  await positionWindow(recipientContext, recipientPage, RECIPIENT_QUAD);
+  await recipientPage.goto(shareLink, { waitUntil: "domcontentloaded" });
+
+  // Dowód, że link faktycznie działa: strona /host2 z kluczem z maila
+  // ładuje się normalnie (ten sam widok co Host w głównej siatce), bez
+  // żadnego logowania -- share_key_host w URL-u wystarcza, dokładnie jak
+  // dla kodu/QR.
+  await recipientPage.waitForSelector("#app", { state: "attached", timeout: 15_000 });
+  await recipientPage.waitForTimeout(2500); // widz ma zdążyć zobaczyć, że to realnie działający Host
+
+  await recipientContext.close();
+  await control.waitForTimeout(500);
+}
 
 async function scenarioLogoLock(pages, { setupPage, logoId, logoLockTabId }) {
   const { control, buzzer } = pages;
@@ -1105,7 +1463,7 @@ async function scenarioLogoLock(pages, { setupPage, logoId, logoLockTabId }) {
   await clickPaced(control.getByRole("button", { name: "Rozpocznij grę" }), ADMIN_PACE_MS);
   await clickPaced(control.getByRole("button", { name: "Rozpocznij rundę" }));
   await clickPaced(buzzer.getByRole("button", { name: "Przycisk A" }));
-  await clickPaced(control.getByRole("button", { name: "Zatwierdź: Alfa" }));
+  await armAndConfirmPaced(control.getByRole("button", { name: "Zatwierdź: Alfa" }));
   await armAndConfirmPaced(answerTile(control, 1)); // odp. #1 (top)
   await armAndConfirmPaced(answerTile(control, 2)); // odp. #2
   await armAndConfirmPaced(answerTile(control, 3)); // odp. #3
@@ -1134,14 +1492,20 @@ const SCENARIOS = [
     makeGame: (setupPage) => restoreDemoGame(setupPage, {
       pickOrds: PROGRESSION_ROUND_ORDS,
       settings: { game: { hasFinal: true } },
-      finalAnswerPts: 15, // treść finału nieużywana (scenariusz zatrzymuje się na f_p1_entry) — wymagana tylko, żeby canEnterFinal() przepuściło
+      // Treść finału nieużywana (scenariusz zatrzymuje się na f_p1_entry) —
+      // wymagana tylko, żeby canEnterFinal() przepuściło. Mimo to realne
+      // pytania demo (inny ord niż PROGRESSION_ROUND_ORDS), nie sztuczne.
+      finalPickOrds: [6, 7, 8, 9, 10],
     }),
     run: (pages) => scenarioRoundsThreshold(pages, { expectFinal: true }),
   },
   {
     file: "03-rundy-progresja-bez-finalu.mp4",
     makeGame: (setupPage) => restoreDemoGame(setupPage, { pickOrds: PROGRESSION_ROUND_ORDS }),
-    run: (pages) => scenarioRoundsThreshold(pages, { expectFinal: false }),
+    // showReload: TYLKO tu (nie w scenariuszu 02) -- sam dowód wznowienia
+    // stanu jest niezależny od hasFinal, pokazanie go raz wystarcza, bez
+    // dublowania czasu nagrania w dwóch prawie identycznych scenariuszach.
+    run: (pages) => scenarioRoundsThreshold(pages, { expectFinal: false, showReload: true }),
   },
   {
     file: "04-final-pelny.mp4",
@@ -1164,22 +1528,36 @@ const SCENARIOS = [
     // momencie), nie zgadywane.
     makeGame: (setupPage) => restoreDemoGame(setupPage, {
       pickOrds: FINAL_SETUP_ROUND_ORDS,
-      finalAnswerPts: 15,
-      settings: { game: { advanced: { finalMinPoints: 280 } } },
+      // Prawdziwe pytania demo (nie sztuczne "Pytanie finałowe N") — inny
+      // ord niż FINAL_SETUP_ROUND_ORDS. scenarioFinalFull dopasowuje przy
+      // każdym MATCH INNE miejsce w rankingu odpowiedzi (patrz
+      // P1_MATCH_RANK/P2_MATCH_RANK i answerByRank() tam), a finalTarget
+      // obniżony do 100 (domyślne 200) tak, żeby suma realnych trafień
+      // (28+18+24+35=105) przekroczyła go dopiero na ostatnim trafieniu
+      // gracza 2 — zgłoszone wprost: drużyna ma FAKTYCZNIE WYGRAĆ finał w
+      // tym scenariuszu, nie tylko bezpiecznie zostać pod progiem.
+      finalPickOrds: [9, 10, 11, 12, 13],
+      settings: { game: { advanced: { finalMinPoints: 280, finalTarget: 100 } } },
     }),
     run: scenarioFinalFull,
   },
   {
-    // finalAnswerPts=250 > finalTarget domyślne (200) -> pierwsza trafiona
-    // odpowiedź gracza 1 sama kończy finał wcześniej. finalMinPoints:280 --
-    // identyczny powód i wyliczenie co w scenariuszu 4 wyżej (ten sam
-    // FINAL_SETUP_ROUND_ORDS, ta sama współdzielona
-    // playThreeNaturalRoundsToThreshold, ta sama matematyka 200+84=284).
+    // Ten sam finalPickOrds co scenariusz 4 -- tu liczy się tylko PIERWSZE
+    // pytanie (ord9, "Podaj miejsce, gdzie nie wypada mówić głośno"),
+    // reszta nigdy nie zostaje odsłonięta. scenarioFinalEarlyExit
+    // dopasowuje NAJWYŻEJ punktowaną odpowiedź tego pytania (36,
+    // "biblioteka") -- finalTarget obniżony do 30 (patrz advanced niżej),
+    // żeby ta pojedyncza, prawdziwa odpowiedź sama przekroczyła próg,
+    // dokładnie jak wcześniej robiła to sztuczna odpowiedź za 250 pkt przy
+    // domyślnym progu 200. finalMinPoints:280 -- identyczny powód i
+    // wyliczenie co w scenariuszu 4 wyżej (ten sam FINAL_SETUP_ROUND_ORDS,
+    // ta sama współdzielona playThreeNaturalRoundsToThreshold, ta sama
+    // matematyka 200+84=284).
     file: "05-final-wczesne-zakonczenie.mp4",
     makeGame: (setupPage) => restoreDemoGame(setupPage, {
       pickOrds: FINAL_SETUP_ROUND_ORDS,
-      finalAnswerPts: 250,
-      settings: { game: { advanced: { finalMinPoints: 280 } } },
+      finalPickOrds: [9, 10, 11, 12, 13],
+      settings: { game: { advanced: { finalMinPoints: 280, finalTarget: 30 } } },
     }),
     run: scenarioFinalEarlyExit,
   },
@@ -1187,6 +1565,27 @@ const SCENARIOS = [
     file: "06-zerwanie-i-ponowne-podlaczenie.mp4",
     makeGame: (setupPage) => restoreDemoGame(setupPage, { pickOrds: RECONNECT_ROUND_ORDS }),
     run: scenarioDeviceReconnect,
+  },
+  {
+    // Krótki scenariusz, celowo BEZ rozgrywki — sedno to sam krok Urządzeń
+    // (openTiledDevices zatrzymuje się tam, zanim scenariusz kliknie
+    // cokolwiek), więc pickOrds nieistotne (żadna runda się tu nie toczy).
+    file: "08-udostepnianie-urzadzenia-mailem.mp4",
+    makeGame: (setupPage) => restoreDemoGame(setupPage, {}),
+    run: scenarioShareDeviceEmail,
+  },
+  {
+    file: "09-fizyczny-przycisk-bez-prowadzacego.mp4",
+    makeGame: (setupPage) => restoreDemoGame(setupPage, { pickOrds: [12] }),
+    run: scenarioPhysicalBuzzerNoHost,
+  },
+  {
+    file: "10-mnoznik-rundy.mp4",
+    makeGame: (setupPage) => restoreDemoGame(setupPage, {
+      pickOrds: [13, 14, 15, 16],
+      settings: { game: { advanced: { finalMinPoints: 999 } } },
+    }),
+    run: scenarioRoundMultiplier,
   },
 ];
 
@@ -1321,11 +1720,13 @@ async function main() {
       const { contexts, pages } = await openTiledDevices(browser, game);
       const rec = startRecording(path.join(OUT_DIR, scenario.file));
       try {
-        // { contexts, browser } — tylko scenariusz 6 (scenarioDeviceReconnect)
-        // z tego korzysta (zamyka/otwiera kontensty urządzeń w locie); reszta
+        // { contexts, browser, game } — contexts/browser: tylko scenariusz 6
+        // (scenarioDeviceReconnect) z tego korzysta (zamyka/otwiera konteksty
+        // urządzeń w locie); game: scenariusze finałowe (4/5) czytają stąd
+        // game.finalQuestions (prawdziwa treść z restoreDemoGame). Reszta
         // scenariuszy deklaruje run(pages) i ten drugi argument po prostu
         // ignoruje.
-        await scenario.run(pages, { contexts, browser });
+        await scenario.run(pages, { contexts, browser, game });
       } catch (err) {
         console.error(`[record] scenariusz ${scenario.file} rzucił błąd:`, err);
         await dumpFailureDiagnostics(pages.control, scenario.file).catch((diagErr) => {

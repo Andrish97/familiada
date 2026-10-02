@@ -23,9 +23,9 @@
 // opóźnienia między krokami tej samej zmiany) wymagają dostrojenia
 // wizualnego względem prawdziwego wyglądu — nie zgadywane tu na ślepo.
 
-import { deriveEvents } from "../../shared/deriveEvents.js?v=v2026-09-30T19530";
-import { resolveRoundsEndScreen, resolveFinalEndScreen } from "../../shared/endScreen.js?v=v2026-09-30T19530";
-import { createTransitionTiming } from "../../shared/transitionTiming.js?v=v2026-09-30T19530";
+import { deriveEvents } from "../../shared/deriveEvents.js?v=v2026-10-01T22165";
+import { resolveRoundsEndScreen, resolveFinalEndScreen } from "../../shared/endScreen.js?v=v2026-10-01T22165";
+import { createTransitionTiming } from "../../shared/transitionTiming.js?v=v2026-10-01T22165";
 import {
   ROUND_INTRO_ANIM,
   ROUND_OUT_ANIM,
@@ -34,7 +34,7 @@ import {
   FINAL_OUT_ANIM,
   LOGO_IN_ANIM,
   LOGO_OUT_ANIM,
-} from "../../shared/displayAnim.js?v=v2026-09-30T19530";
+} from "../../shared/displayAnim.js?v=v2026-10-01T22165";
 
 function pad3(n) { return String(Math.max(0, Number(n) || 0)).padStart(3, " "); }
 
@@ -87,6 +87,45 @@ export function createRenderer({ scene, qr, getSfxDuration }) {
     const totals = row.detail?.rounds?.totals || { A: 0, B: 0 };
     api.small.leftDigits(String(totals.A ?? 0));
     api.small.rightDigits(String(totals.B ?? 0));
+  }
+
+  // 3s zegarek decyzji w rundach (shared/deriveEvents.js's TIMER3_STARTED/
+  // TIMER3_STOPPED) -- zgłoszone: "timer ma być odnotowany w bazie i jeśli
+  // się nie skończył to i display i host mają o tym wiedzieć jednoznacznie".
+  // Ten sam wzorzec co startTimerTick() dla zegarka finału wyżej (podmiana
+  // cyfr LEFT/RIGHT na odliczanie, powrót do prawdziwych wyników po
+  // wygaśnięciu/zatrzymaniu) -- bez tego widzowie nie mieli ŻADNEGO
+  // sygnału, że trwa 3s decyzja (ani na żywo, ani po reconnect w trakcie
+  // niej), mimo że sam zegarek od zawsze żyje w detail.rounds.timer3.
+  let timer3Handle = null;
+  function stopTimer3Tick() {
+    if (timer3Handle) { clearInterval(timer3Handle); timer3Handle = null; }
+  }
+  function activeRoundsTeam(row) {
+    if (row.control_team === "A") return "A";
+    if (row.control_team === "B") return "B";
+    // W DUEL control_team jest jeszcze null (patrz applyIndicator() wyżej) --
+    // to, kto PRÓBUJE teraz, żyje w duel.currentTeam.
+    if (row.phase === "DUEL") {
+      const cur = row.detail?.rounds?.duel?.currentTeam;
+      if (cur === "A" || cur === "B") return cur;
+    }
+    return null;
+  }
+  function startTimer3Tick(row) {
+    stopTimer3Tick();
+    const timer3 = row.detail?.rounds?.timer3;
+    if (!timer3?.running) return;
+    const team = activeRoundsTeam(row);
+    if (!team) return; // brak jednoznacznej strony (nie powinno się zdarzyć -- timer3 zawsze ma aktywną drużynę) -- paintTotals() już pokazuje prawdziwe wyniki
+    const tick = () => {
+      const remaining = Math.max(0, Math.ceil((timer3.endsAt - Date.now()) / 1000));
+      if (remaining <= 0) { stopTimer3Tick(); paintTotals(row); return; }
+      const digits = String(remaining).padStart(2, "0");
+      if (team === "A") api.small.leftDigits(digits); else api.small.rightDigits(digits);
+    };
+    tick();
+    timer3Handle = setInterval(tick, 250);
   }
 
   // control/js/gameFinal.js's startFinal()/startP2Round(): tuż po wejściu
@@ -173,6 +212,7 @@ export function createRenderer({ scene, qr, getSfxDuration }) {
     api.small.topDigits(pad3(r.bankPts));
     paintTotals(row);
     applyIndicator(row);
+    startTimer3Tick(row);
   }
 
   // control/js/display.js's PLACE.finalText/finalPts — tak samo jak w
@@ -270,6 +310,7 @@ export function createRenderer({ scene, qr, getSfxDuration }) {
   // ============================================================
   async function renderSnapshot(row) {
     stopTimerTick();
+    stopTimer3Tick();
     if (row.detail?.display?.colors) {
       const c = row.detail.display.colors;
       if (c.A) api.color.set("A", c.A);
@@ -499,18 +540,27 @@ export function createRenderer({ scene, qr, getSfxDuration }) {
             if (stealTeam) api.rounds.setX(`4${stealTeam}`, true);
           }
           break;
+        // Zgłoszony realny bug (#16/#17): shared/deriveEvents.js's
+        // diffFinalMapReveals() emituje ev.round jako STRING "map1"/"map2"
+        // (dokładnie ten klucz w detail.final.runtime, potwierdzone testem
+        // jednostkowym tests/unit/deriveEvents.test.js) — ten kod porównywał
+        // to z LICZBĄ 1, co jest zawsze fałszywe dla OBU wartości. Skutek:
+        // każde odsłonięcie odpowiedzi/punktów gracza 1 (map1) czytało dane
+        // z map2 (najczęściej jeszcze null → wywalało się po cichu/psuło
+        // resztę renderDiff) i zawsze pisało na PRAWĄ stronę planszy — stąd
+        // brak treści gracza 1, zawsze zera, i pomylone strony.
         case "FINAL_ANSWER_REVEALED": {
-          const row = nextRow.detail.final.runtime[ev.round === 1 ? "map1" : "map2"][ev.idx];
-          if (ev.round === 1) api.final.setLeft(ev.idx + 1, row.outText, { animIn: { ...ANSWER_ANIM, ms: answerAnimMs } });
+          const row = nextRow.detail.final.runtime[ev.round][ev.idx];
+          if (ev.round === "map1") api.final.setLeft(ev.idx + 1, row.outText, { animIn: { ...ANSWER_ANIM, ms: answerAnimMs } });
           else api.final.setRight(ev.idx + 1, row.outText, { animIn: { ...ANSWER_ANIM, ms: answerAnimMs } });
           break;
         }
         case "FINAL_POINTS_REVEALED": {
           const f = nextRow.detail.final;
-          const row = f.runtime[ev.round === 1 ? "map1" : "map2"][ev.idx];
-          if (ev.round === 1) api.final.setA(ev.idx + 1, String(row.pts), { animIn: { ...ANSWER_ANIM, ms: answerAnimMs } });
+          const row = f.runtime[ev.round][ev.idx];
+          if (ev.round === "map1") api.final.setA(ev.idx + 1, String(row.pts), { animIn: { ...ANSWER_ANIM, ms: answerAnimMs } });
           else api.final.setB(ev.idx + 1, String(row.pts), { animIn: { ...ANSWER_ANIM, ms: answerAnimMs } });
-          api.final.setSumaFor(ev.round === 1 ? "A" : "B", String(f.runtime.sum), { animIn: { ...ANSWER_ANIM, ms: answerAnimMs } });
+          api.final.setSumaFor(ev.round === "map1" ? "A" : "B", String(f.runtime.sum), { animIn: { ...ANSWER_ANIM, ms: answerAnimMs } });
           break;
         }
         case "TIMER_STARTED":
@@ -518,6 +568,13 @@ export function createRenderer({ scene, qr, getSfxDuration }) {
           break;
         case "TIMER_STOPPED":
           stopTimerTick();
+          paintTotals(nextRow);
+          break;
+        case "TIMER3_STARTED":
+          startTimer3Tick(nextRow);
+          break;
+        case "TIMER3_STOPPED":
+          stopTimer3Tick();
           paintTotals(nextRow);
           break;
         case "DISPLAY_MODE_CHANGED":

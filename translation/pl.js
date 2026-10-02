@@ -116,6 +116,12 @@ const pl = {
     // rozróżnia tylko TYP zasobu, nie która konkretnie strona trzyma blokadę.
     gameMessage: "Ta gra jest właśnie używana w innej karcie lub przez inne urządzenie.",
     logoMessage: "To logo jest właśnie edytowane w innej karcie lub przez inne urządzenie.",
+    // Zgłoszone: w Control/ustawieniach gry operator NIE wie, które
+    // konkretnie logo jest zablokowane (gra może korzystać z dowolnego
+    // logo z puli) — w odróżnieniu od logoMessage (edytor logo, gdzie
+    // zawsze chodzi o jedno, wprost otwarte logo), ten komunikat celowo
+    // NIE sugeruje jednego, konkretnego logo.
+    logoInUseMessage: "Logo tej gry jest właśnie edytowane w innej karcie lub przez inne urządzenie.",
     baseItemMessage: "Ten element bazy jest właśnie edytowany w innej karcie lub przez innego użytkownika.",
     // Cała pula logo użytkownika jest blokowana, gdy Control lub
     // game-settings.js mają aktywną którąkolwiek jego grę — niezależnie od

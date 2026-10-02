@@ -98,6 +98,17 @@ test("start i stop timera generują TIMER_STARTED/TIMER_STOPPED", () => {
   assert.ok(stopEvents.some((e) => e.kind === "TIMER_STOPPED"));
 });
 
+test("start i stop timera3 (3s decyzja w rundach) generują TIMER3_STARTED/TIMER3_STOPPED, niezależnie od timera finału", () => {
+  const idle = row({ detail: { rounds: { timer3: { running: false } }, final: { runtime: { timer: { running: false } } } } });
+  const running = row({ detail: { rounds: { timer3: { running: true, endsAt: 456 } }, final: { runtime: { timer: { running: false } } } } });
+  const startEvents = deriveEvents(idle, running);
+  assert.ok(startEvents.some((e) => e.kind === "TIMER3_STARTED" && e.endsAt === 456));
+  assert.ok(!startEvents.some((e) => e.kind === "TIMER_STARTED"), "timer3 nie myli się z timerem finału");
+
+  const stopEvents = deriveEvents(running, idle);
+  assert.ok(stopEvents.some((e) => e.kind === "TIMER3_STOPPED"));
+});
+
 test("zmiana sound_cue_seq generuje SOUND_CUE z aktualnym kluczem (nawet gdy klucz się powtarza)", () => {
   const prev = row({ sound_cue_key: "answer_correct", sound_cue_seq: 3 });
   const next = row({ sound_cue_key: "answer_correct", sound_cue_seq: 4 });

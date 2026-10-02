@@ -6,21 +6,24 @@
 // tego pliku.
 //
 // Wykrywa timery zastane JUŻ wygasłe w chwili wznowienia Control (karta
-// była zamknięta/przeładowana, gdy endsAt minęło) — zanim cokolwiek się
-// wyrenderuje operatorowi (plan, sekcja 4). Dwa timery, DWIE różne reakcje
-// wywołującego (patrz control2/js/app.js's applyExpiredTimersOnResume), bo
-// mają różne konsekwencje:
-//  - final.runtime.timer (15s/20s gracza): brak realnej konsekwencji poza
-//    dźwiękiem/zatrzymaniem odliczania (operator i tak dokańcza wpisywanie
-//    ręcznie) — plan, sekcja "Weryfikacja" pkt 5 wprost wymaga, żeby
-//    "logika wygaśnięcia zastosowała się natychmiast" — więc idzie
-//    NAPRZÓD (EXPIRE_TIMER), normalnie.
-//  - rounds.timer3 (3s auto-rozstrzygnięcie X): ma REALNĄ konsekwencję
-//    (nalicza pudło drużynie, ADD_X) — naliczanie go za czas, kiedy nikt
-//    nie patrzył, byłoby niesprawiedliwe. Zgłoszone wprost: "chodzi o to,
-//    żeby wrócić o krok, a nie pójść dalej w takich sytuacjach" — więc
-//    idzie WSTECZ (CANCEL_TIMER3, kasuje timer bez naliczania X), inaczej
-//    niż to samo wygaśnięcie na żywo (EXPIRE_TIMER3).
+// była zamknięta/przeładowana, lub urządzenia rozłączone, gdy endsAt
+// minęło) — zanim cokolwiek się wyrenderuje operatorowi (plan, sekcja 4).
+// Dwa timery, ale TA SAMA reakcja wywołującego (patrz control2/js/app.js's
+// applyExpiredTimersOnResume): oba idą WSTECZ, do stanu sprzed ich startu,
+// bez naliczania żadnej konsekwencji za czas, w którym nikt nie patrzył.
+// Zgłoszone wprost: "rozłącz/zamknij Control w trakcie timerów — czy one
+// wrócą do stanu przed, a nie po, bo tak powinny".
+//  - rounds.timer3 (3s auto-rozstrzygnięcie X): REALNA konsekwencja
+//    (nalicza pudło drużynie, ADD_X) — CANCEL_TIMER3 kasuje timer bez
+//    naliczania X, inaczej niż to samo wygaśnięcie na żywo (EXPIRE_TIMER3).
+//  - final.runtime.timer (15s/20s gracza): też ma realną konsekwencję —
+//    usedP1/usedP2 to jednorazowa, nieodwracalna szansa, zużywana już w
+//    momencie STARTU zegarka (nie dopiero przy jego wygaśnięciu) — więc
+//    CANCEL_TIMER cofa też tę flagę, żeby gracz po powrocie operatora
+//    dostał dokładnie taką samą, nienaruszoną szansę, jaką miał przed
+//    zniknięciem Control — inaczej niż to samo wygaśnięcie NA ŻYWO
+//    (EXPIRE_TIMER, operator obecny i obserwujący, patrz jego komentarz w
+//    engine.js).
 export function expiredTimerOnHydrate(s) {
   const t = s.final?.runtime?.timer;
   const t3 = s.rounds?.timer3;
