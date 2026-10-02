@@ -5,6 +5,7 @@ import { clampInt } from "../core/utils.js";
 import { supabaseRpc, supabaseRequest, summarizeSupabaseError, normalizeRpcValue, extractScalarNumber, getSupabaseConfig } from "../core/supabase.js";
 import { deleteAttachmentStorageFiles } from "../core/cleanup.js";
 import { downloadFromStorage } from "../core/storage.js";
+import { htmlToPlainTextPreview } from "../email/html-to-text.js";
 
 export async function handleAdminMessagesApi(request, env, url) {
 
@@ -115,17 +116,7 @@ export async function handleAdminMessagesApi(request, env, url) {
     // Use body_html from client if provided (TinyMCE HTML), otherwise use plain text
     const emailHtml = body_html || String(msgBody);
 
-    // Generate plain text from HTML for Apple Mail preview
-    // IMPORTANT: Strip <style> blocks FIRST before removing HTML tags
-    const emailText = emailHtml
-      .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')  // Remove <style> blocks FIRST
-      .replace(/<[^>]*>/g, ' ')                           // Remove all HTML tags
-      .replace(/:[^;]+;/g, ' ')                           // Remove CSS properties
-      .replace(/&nbsp;/g, ' ')                            // Replace &nbsp;
-      .replace(/&amp;/g, '&')                             // Replace &amp;
-      .replace(/\s+/g, ' ')                              // Collapse whitespace
-      .trim()
-      .slice(0, 500);                                     // Limit length for preview
+    const emailText = htmlToPlainTextPreview(emailHtml);
 
     // Insert into mail_queue first
     const queueRes = await supabaseRequest(env, "/rest/v1/mail_queue", {

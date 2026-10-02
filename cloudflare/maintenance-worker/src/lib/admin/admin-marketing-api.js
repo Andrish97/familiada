@@ -3,6 +3,7 @@ import { json } from "../core/http.js";
 import { readJson } from "./admin-auth.js";
 import { supabaseRequest } from "../core/supabase.js";
 import { buildMarketingEmail } from "../email/marketing-email.js";
+import { htmlToPlainTextPreview } from "../email/html-to-text.js";
 
 export async function handleAdminMarketingApi(request, env, url) {
   // POST /_admin_api/marketing/preview { template_id, custom_subject, custom_body }
@@ -28,21 +29,7 @@ export async function handleAdminMarketingApi(request, env, url) {
     // custom_body is already full HTML from client (templates in JS)
     const emailHtml = custom_body || "";
 
-    // Generate plain text from HTML for Apple Mail preview
-    // IMPORTANT: Strip <style> blocks FIRST before removing HTML tags
-    const emailText = emailHtml
-      .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')  // Remove <style> blocks FIRST
-      .replace(/<[^>]*>/g, ' ')                           // Remove all HTML tags
-      .replace(/:[^;]+;/g, ' ')                           // Remove CSS properties like :root{...}
-      .replace(/&nbsp;/g, ' ')                            // Replace &nbsp;
-      .replace(/&amp;/g, '&')                             // Replace &amp;
-      .replace(/&lt;/g, '<')                              // Replace &lt;
-      .replace(/&gt;/g, '>')                              // Replace &gt;
-      .replace(/&quot;/g, '"')                            // Replace &quot;
-      .replace(/&#39;/g, "'")                             // Replace &#39;
-      .replace(/\s+/g, ' ')                              // Collapse whitespace
-      .trim()
-      .slice(0, 500);                                     // Limit length for preview
+    const emailText = htmlToPlainTextPreview(emailHtml);
 
     // Insert into mail_queue (batch insert for all recipients)
     const queueRows = validEmails.map(email => ({

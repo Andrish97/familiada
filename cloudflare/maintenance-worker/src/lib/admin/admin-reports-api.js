@@ -3,6 +3,7 @@ import { json } from "../core/http.js";
 import { clampInt } from "../core/utils.js";
 import { supabaseRequest, supabaseRpc, summarizeSupabaseError, normalizeRpcValue, extractScalarNumber } from "../core/supabase.js";
 import { buildContactEmail } from "../email/contact-email.js";
+import { htmlToPlainTextPreview } from "../email/html-to-text.js";
 
 export async function handleAdminReportsApi(request, env, url) {
 
@@ -88,14 +89,7 @@ export async function handleAdminReportsApi(request, env, url) {
         originalMessage: reportRow.message,
       });
       
-      // Generate plain text from HTML for Apple Mail preview
-      const emailText = html
-        .replace(/<[^>]*>/g, ' ')
-        .replace(/&nbsp;/g, ' ')
-        .replace(/&amp;/g, '&')
-        .replace(/\s+/g, ' ')
-        .trim()
-        .slice(0, 500);
+      const emailText = htmlToPlainTextPreview(html);
 
       await supabaseRequest(env, "/rest/v1/mail_queue", {
         method: "POST",
@@ -172,14 +166,7 @@ export async function handleAdminReportsApi(request, env, url) {
         reply_as: reply_as || null,
       });
       
-      // Generate plain text from HTML for Apple Mail preview
-      const emailText = html
-        .replace(/<[^>]*>/g, ' ')
-        .replace(/&nbsp;/g, ' ')
-        .replace(/&amp;/g, '&')
-        .replace(/\s+/g, ' ')
-        .trim()
-        .slice(0, 500);
+      const emailText = htmlToPlainTextPreview(html);
 
       await supabaseRequest(env, "/rest/v1/mail_queue", {
         method: "POST",

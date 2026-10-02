@@ -4,6 +4,7 @@ import { supabaseRpc, supabaseRequest, normalizeRpcValue, summarizeSupabaseError
 import { uploadToStorage } from "../core/storage.js";
 import { buildContactEmail } from "./contact-email.js";
 import { getTelegramConfig, sendTelegram } from "../notifications/telegram.js";
+import { htmlToPlainTextPreview } from "./html-to-text.js";
 
 export async function handleContactSubmit(request, env) {
   let body;
@@ -67,17 +68,7 @@ export async function handleContactSubmit(request, env) {
       message: String(message || "").trim(),
     });
     
-    // Generate plain text from HTML for Apple Mail preview
-    // IMPORTANT: Strip <style> blocks FIRST before removing HTML tags
-    const emailText = html
-      .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')  // Remove <style> blocks FIRST
-      .replace(/<[^>]*>/g, ' ')                           // Remove all HTML tags
-      .replace(/:[^;]+;/g, ' ')                           // Remove CSS properties
-      .replace(/&nbsp;/g, ' ')                            // Replace &nbsp;
-      .replace(/&amp;/g, '&')                             // Replace &amp;
-      .replace(/\s+/g, ' ')                              // Collapse whitespace
-      .trim()
-      .slice(0, 500);                                     // Limit length for preview
+    const emailText = htmlToPlainTextPreview(html);
 
     await supabaseRequest(env, "/rest/v1/mail_queue", {
       method: "POST",
