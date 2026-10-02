@@ -58,25 +58,28 @@ export async function serveStaticAsset(request, url, ctx, originBase, originHost
   return res;
 }
 
-export function isMaintenanceAsset(pathname) {
-  if (pathname === "/maintenance") return true;
-
+// isMaintenanceAsset i isSettingsAsset sprawdzały dotąd (w oryginalnym,
+// jednoplikowym workerze) dokładnie tę samą listę prefiksów/plików, osobno
+// skopiowaną w dwóch miejscach -- scalone tu do jednej funkcji, teraz że
+// obie siedzą w tym samym module i duplikat jest od razu widoczny. Zero
+// zmiany zachowania: isMaintenanceAsset dalej dodatkowo przepuszcza samą
+// ścieżkę "/maintenance", isSettingsAsset zostaje bez zmian.
+function isSharedAssetPath(pathname) {
   const allowedPrefixes = ["/css/", "/js/", "/translation/", "/img/", "/audio/"];
   for (const prefix of allowedPrefixes) {
     if (pathname.startsWith(prefix)) return true;
   }
-
   const allowedFiles = ["/favicon.ico", "/logo.svg", "/manifest.json"];
   return allowedFiles.includes(pathname);
 }
 
+export function isMaintenanceAsset(pathname) {
+  if (pathname === "/maintenance") return true;
+  return isSharedAssetPath(pathname);
+}
+
 export function isSettingsAsset(pathname) {
-  const allowedPrefixes = ["/css/", "/js/", "/translation/", "/img/", "/audio/"];
-  for (const prefix of allowedPrefixes) {
-    if (pathname.startsWith(prefix)) return true;
-  }
-  const allowedFiles = ["/favicon.ico", "/logo.svg", "/manifest.json"];
-  return allowedFiles.includes(pathname);
+  return isSharedAssetPath(pathname);
 }
 
 export function isCommonAsset(pathname) {

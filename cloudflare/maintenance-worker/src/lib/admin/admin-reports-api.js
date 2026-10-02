@@ -237,3 +237,4 @@ export async function handleAdminReportsApi(request, env, url) {
   }
 
   return new Response("Not Found", { status: 404 });
+}

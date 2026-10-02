@@ -1,11 +1,10 @@
 // src/lib/marketing-email.js -- marketing email templates (pure).
+import { escEmailText as esc, nl2br } from "./html-escape.js";
 
 export const IMG_BASE = "https://familiada.online/img/pl";
 
 export function buildMarketingEmail(templateId, opts = {}) {
   const { customBody, customSubject } = opts;
-  const esc = (s) => String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-  const nl2br = (s) => esc(s).replace(/\n/g, "<br>");
 
   // ── shared shell ──────────────────────────────────────────────────────────
   const shell = (bodyContent) => `<!DOCTYPE html>
