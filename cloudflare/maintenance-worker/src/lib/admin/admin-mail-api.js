@@ -299,23 +299,3 @@ export async function loadMailCronStatus(env) {
   }
   return { ok: true, data: normalizeRpcValue(res.data) || {} };
 }
-
-export function parseProviderOrderInput(raw) {
-  const source = Array.isArray(raw)
-    ? raw
-    : String(raw || "")
-        .split(",")
-        .map((v) => v.trim().toLowerCase())
-        .filter(Boolean);
-
-  const uniq = [];
-  for (const provider of source) {
-    if (!MAIL_PROVIDERS.includes(provider)) continue;
-    if (uniq.includes(provider)) continue;
-    uniq.push(provider);
-  }
-  for (const provider of MAIL_PROVIDERS) {
-    if (!uniq.includes(provider)) uniq.push(provider);
-  }
-  return uniq;
-}

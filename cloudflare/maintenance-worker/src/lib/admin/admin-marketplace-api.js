@@ -4,8 +4,6 @@ import { readJson } from "./admin-auth.js";
 import { supabaseRpc, summarizeSupabaseError, normalizeRpcValue } from "../core/supabase.js";
 import { getTelegramConfig, sendTelegram } from "../notifications/telegram.js";
 
-export const GH_RAW_BASE = "https://raw.githubusercontent.com/Andrish97/familiada/main/marketplace";
-
 export async function handleAdminMarketplaceApi(request, env, url) {
   // GET /_admin_api/marketplace/list?status=pending|published|rejected|withdrawn
   if (url.pathname === "/_admin_api/marketplace/list") {
