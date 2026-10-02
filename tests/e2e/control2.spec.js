@@ -1853,9 +1853,17 @@ test("control2: zerwanie połączenia wszystkich trzech urządzeń naraz i ponow
     // ===== Zerwanie wszystkich trzech naraz =====
     const toClose = contexts.splice(0, contexts.length); // zdejmij z listy sprzątanej w finally -- zamykamy je TU, świadomie
     await Promise.all(toClose.map((ctx) => ctx.close()));
-    await expect(page.locator("#dotDisplay")).toHaveClass(/\bbad\b/, { timeout: 15000 });
-    await expect(page.locator("#dotHost")).toHaveClass(/\bbad\b/, { timeout: 15000 });
-    await expect(page.locator("#dotBuzzer")).toHaveClass(/\bbad\b/, { timeout: 15000 });
+    // Ten sam wzorzec co naprawiony timeout maila (patrz test #16 wyżej):
+    // margines MUSI przekraczać realne worst-case opóźnienie, nie być mu
+    // dokładnie równy. control2/js/presence.js: ONLINE_MS=15_000 (ostatni
+    // ping musi być starszy niż 15s, żeby isOnline() zwróciło false) + do
+    // POLL_MS=1_500 na kolejny tick, który to w ogóle przeliczy i odświeży
+    // #dotX -- worst-case to ~16.5s, nie 15s. 15000ms (dokładnie na granicy)
+    // bywał za ciasny pod obciążeniem runnera CI (real finding: ten test
+    // padał powtarzalnie w CI, nie losowo).
+    await expect(page.locator("#dotDisplay")).toHaveClass(/\bbad\b/, { timeout: 20000 });
+    await expect(page.locator("#dotHost")).toHaveClass(/\bbad\b/, { timeout: 20000 });
+    await expect(page.locator("#dotBuzzer")).toHaveClass(/\bbad\b/, { timeout: 20000 });
 
     // ===== Ponowne podłączenie po kolei, przez modal =====
     displayPage = await reconnectViaModal(browser, page, "display", contexts, errors);
