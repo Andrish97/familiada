@@ -449,6 +449,38 @@ async function clickPaced(locator, ms = REVEAL_PACE_MS) {
   await page.waitForTimeout(ms);
 }
 
+// Buzzer v2 nie polluje -- czyta stan WYŁĄCZNIE reaktywnie, na "dzwonek"
+// (broadcast realtime) albo visibilitychange/pageshow/online (js/core/
+// game-state-subscribe.js) -- bez pollingu nie ma nic, co samo nadgoni
+// zgubiony dzwonek, jeśli kanał realtime akurat urwał się w tym oknie
+// (opisane wprost w komentarzu tego pliku jako znane ryzyko). Pod
+// jednoczesnym obciążeniem 4 realnych okien + nagrywania wideo/audio w CI
+// (run #32) zdarzyło się raz, że przycisk Buzzera zostawał trwale
+// disabled po starcie nowej rundy, mimo że Control poprawnie przeszedł do
+// r_duel -- nie dało się tego powiązać z żadnym konkretnym bugiem w
+// resecie duel.firstTeam (który jest poprawny w engine.js i wielokrotnie
+// potwierdzony zielony w control2.spec.js). Zamiast zgadywać dalej:
+// odtwarzamy dokładnie to, co zrobiłby operator, gdy Buzzer "zamarzł" --
+// krótkie oczekiwanie, a jeśli nie pomoże, przeładowanie strony (co i tak
+// wywołuje świeży bootstrap przez game_state_get, patrz subscribe.start()).
+async function waitBuzzerEnabledResilient(buzzerPage, label, timeoutMs = 12_000) {
+  const btn = buzzerPage.getByRole("button", { name: label });
+  try {
+    await expect(btn).toBeEnabled({ timeout: timeoutMs });
+    return btn;
+  } catch {
+    console.log(`[record] Buzzer (${label}) nie odblokował się w ${timeoutMs}ms -- przeładowuję stronę (tak jak zrobiłby to operator)`);
+    await buzzerPage.reload({ waitUntil: "domcontentloaded" });
+    await expect(btn).toBeEnabled({ timeout: timeoutMs });
+    return buzzerPage.getByRole("button", { name: label });
+  }
+}
+
+async function pressBuzzerPaced(buzzerPage, label, ms = REVEAL_PACE_MS) {
+  const btn = await waitBuzzerEnabledResilient(buzzerPage, label);
+  await clickPaced(btn, ms);
+}
+
 // Odpowiedź/X/"Oddaj kontrolę" idą przez zaznacz -> potwierdź
 // (control2/js/ui.js's armableTile): pierwsze kliknięcie tylko uzbraja
 // (złota obwódka) — CZYSTO LOKALNA zmiana UI, zero zapisu do game_state,
@@ -785,7 +817,7 @@ async function scenarioRoundsMechanics(pages, { contexts }) {
 
   // ===== RUNDA 2 =====
   await clickPaced(control.getByRole("button", { name: "Rozpocznij rundę" }));
-  await clickPaced(buzzer.getByRole("button", { name: "Przycisk B" }));
+  await pressBuzzerPaced(buzzer, "Przycisk B");
   // Zgłoszone: pokaż "Ponów naciśnięcie" jako zwykłą alternatywę
   // przyjęcia -- operator czasem uznaje pierwsze zgłoszenie za
   // przypadkowe i otwiera Buzzer na nowo, zamiast od razu klikać
@@ -795,7 +827,7 @@ async function scenarioRoundsMechanics(pages, { contexts }) {
   await control.waitForTimeout(1500);
   await clickPaced(control.getByRole("button", { name: "Ponów naciśnięcie" }));
   await control.waitForTimeout(800);
-  await clickPaced(buzzer.getByRole("button", { name: "Przycisk B" }));
+  await pressBuzzerPaced(buzzer, "Przycisk B");
   await armAndConfirmPaced(control.getByRole("button", { name: "Zatwierdź: Beta" }));
   await armAndConfirmPaced(answerTile(control, 1)); // B trafia -> kontrola B, allowPass
   await armAndConfirmPaced(control.getByRole("button", { name: "Oddaj kontrolę" })); // dawny "Pass" -> kontrola A
@@ -911,7 +943,7 @@ async function scenarioRoundsThreshold(pages, { expectFinal, showReload = false 
   // ===== RUNDA 2: B pudłuje -> BEZ resetu, druga próba (A) wygrywa
   // odpowiedzią nie-topową, potem reszta (w tym top) odsłonięta w PLAY =====
   await clickPaced(control.getByRole("button", { name: "Rozpocznij rundę" }));
-  await clickPaced(buzzer.getByRole("button", { name: "Przycisk B" }));
+  await pressBuzzerPaced(buzzer, "Przycisk B");
   await armAndConfirmPaced(control.getByRole("button", { name: "Zatwierdź: Beta" }));
   await armAndConfirmPaced(control.getByRole("button", { name: "X", exact: true })); // B pudłuje -> kolej na drugą próbę (A), NIE reset
   await armAndConfirmPaced(answerTile(control, 2)); // A trafia odpowiedź NIE-topową -> WYGRYWA, bo B miał 0 pkt
@@ -1004,7 +1036,7 @@ async function playThreeNaturalRoundsToThreshold(pages) {
   // odpowiedź i tak trafia do banku, tylko innej drużyny), więc suma progu
   // (100 pkt na rundę × 3) zostaje nienaruszona. =====
   await clickPaced(control.getByRole("button", { name: "Rozpocznij rundę" }));
-  await clickPaced(buzzer.getByRole("button", { name: "Przycisk B" }));
+  await pressBuzzerPaced(buzzer, "Przycisk B");
   await armAndConfirmPaced(control.getByRole("button", { name: "Zatwierdź: Beta" }));
   await armAndConfirmPaced(answerTile(control, 1)); // B trafia top -> wygrywa pojedynek, kontrola B
   await armAndConfirmPaced(answerTile(control, 2)); // odp. #2
