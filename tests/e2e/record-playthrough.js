@@ -1515,8 +1515,11 @@ async function scenarioShareDeviceEmail(pages, { browser }) {
   // Dowód, że link faktycznie działa: strona /host2 z kluczem z maila
   // ładuje się normalnie (ten sam widok co Host w głównej siatce), bez
   // żadnego logowania -- share_key_host w URL-u wystarcza, dokładnie jak
-  // dla kodu/QR.
-  await recipientPage.waitForSelector("#app", { state: "attached", timeout: 15_000 });
+  // dla kodu/QR. host2.html NIE MA elementu "#app" (selektor skopiowany
+  // przez pomyłkę z control2.html's konwencji) -- jego prawdziwy, statyczny
+  // root to #paper (main.paperSplit), dokładnie ta sama, już raz znaleziona
+  // i naprawiona pomyłka co w control2.spec.js's @mailbox teście.
+  await recipientPage.waitForSelector("#paper", { state: "attached", timeout: 15_000 });
   await recipientPage.waitForTimeout(2500); // widz ma zdążyć zobaczyć, że to realnie działający Host
 
   await recipientContext.close();
