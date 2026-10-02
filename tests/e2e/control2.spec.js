@@ -706,7 +706,14 @@ test("control2: physicalBuzzer + noHostTablet — urządzenia pominięte, ręczn
     await expect(page.locator(".stepTitle")).toHaveText("Urządzenia", { timeout: 15000 });
     await expect(page.locator("#dotDisplay")).toHaveClass(/\bok\b/, { timeout: 15000 });
 
-    await page.getByLabel("Fizyczny przycisk").check();
+    // "Fizyczny przycisk" -> "Przycisk fizyczny" (ujednolicenie słownictwa,
+    // translation/pl.js) -- REALNA przyczyna znalezionej w CI awarii: nie
+    // obciążenie runnera (sygnatura "element is not stable"), tylko
+    // locator.check() nigdy nie znajdujący ŻADNEGO elementu (pusty call log,
+    // bez prób retry na konkretnym węźle) przez cały test.setTimeout, co
+    // dokładnie pasuje do "selector nigdy się nie zgadza", nie "niestabilny
+    // DOM".
+    await page.getByLabel("Przycisk fizyczny").check();
     await page.getByLabel("Nie używaj tabletu prowadzącego").check();
     // Świadoma zmiana względem starego control.html (patrz control2.html's
     // komentarz przy .c2-devicerows .device-row[data-opted-out] .device-row-2):
@@ -1723,13 +1730,36 @@ test("control2: zablokowany, gdy logo gry jest edytowane w logo-editorze — i w
 // przeglądarki otwiera go i dostaje działającą stronę Prowadzącego, bez
 // żadnego logowania (sam share_key_host w URL-u wystarcza).
 test("@mailbox control2: udostępnianie urządzenia (Prowadzący) przez e-mail -- link z maila faktycznie łączy", async ({ page, context, browser }, testInfo) => {
-  test.setTimeout(120_000);
   const recipient = testAccountUsername(10);
   await loginAsTestUser(page, context, { username: testAccountUsername(1) });
   const game = await makeGame(page, `E2E-CONTROL2-SHAREMAIL-${Date.now()}`);
   const contexts = [];
   try {
     await clearMailbox(recipient);
+
+    // Zgłoszone: maile mają cooldown/suppression, żeby nie spamować -- przy
+    // wielokrotnym testowaniu na TYM SAMYM koncie trzeba to ręcznie zdjąć w
+    // bazie przed testem. docs/email-system-description.md: mail-worker
+    // POMIJA wysyłkę CICHO (bez błędu), gdy user_flags.email_notifications
+    // odbiorcy jest false -- wygląda identycznie jak zwykły timeout, tylko
+    // mail nigdy się nie zjawi. test10 jest tu odbiorcą w WIELU przebiegach
+    // tego testu (każdy dzień CI) -- zamiast liczyć na to, że nikt nigdy
+    // nie zgasił tej flagi (np. inny test klikający link wypisujący),
+    // wymuszamy ją z powrotem na true PRZED udostępnieniem: logujemy się
+    // NA KONTO ODBIORCY w osobnym, efemerycznym kontekście (user_flags ma
+    // RLS tylko na własny wiersz -- auth.uid()=user_id) i nadpisujemy.
+    const recipientSetupContext = await browser.newContext();
+    const recipientSetupPage = await recipientSetupContext.newPage();
+    try {
+      await loginAsTestUser(recipientSetupPage, recipientSetupContext, { username: recipient });
+      await recipientSetupPage.evaluate(async () => {
+        const sb = window.__sbClient;
+        const { data: userData } = await sb.auth.getUser();
+        await sb.from("user_flags").upsert({ user_id: userData.user.id, email_notifications: true }, { onConflict: "user_id" });
+      });
+    } finally {
+      await recipientSetupContext.close().catch(() => {});
+    }
     const after = new Date(Date.now() - 2_000).toISOString();
 
     await page.goto(`/control2?id=${game.id}`, { waitUntil: "domcontentloaded" });

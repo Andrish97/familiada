@@ -813,7 +813,7 @@ async function scenarioPhysicalBuzzerNoHost(pages) {
   const { control } = pages;
 
   console.log("[record] physicalBuzzer + noHostTablet (ręczny wybór drużyny, bez Prowadzącego/Przycisku)");
-  await control.getByLabel("Fizyczny przycisk").check();
+  await control.getByLabel("Przycisk fizyczny").check(); // "Fizyczny przycisk" -> "Przycisk fizyczny", ujednolicenie słownictwa
   await control.waitForTimeout(400); // niech nagranie złapie wiersz Przycisku wyszarzający się
   await control.getByLabel("Nie używaj tabletu prowadzącego").check();
   await control.waitForTimeout(1000); // niech nagranie złapie wiersz Prowadzącego wyszarzający się + kropki w topbarze znikające
