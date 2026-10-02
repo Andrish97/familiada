@@ -5179,5 +5179,26 @@ const uk = {
       footer: "Автоматичне повідомлення — будь ласка, не відповідайте.",
     },
   },
+  contactEmail: {
+    greeting: "Вітаємо,",
+    closing: "З повагою,\nКоманда Familiada",
+    confirmationSubject: "Підтвердження звернення [{ticket}]",
+    confirmationBody: "Дякуємо за звернення. Ваше звернення прийнято.\n\nНомер звернення: {ticket}\nТема: {subject}",
+    replySubject: "Re: [{ticket}] {subject}",
+    replyQuoteLabel: "Ваше звернення [{ticket}]:",
+    composeSubject: "Повідомлення від Familiada",
+    messageMoved: "Ваше повідомлення перенесено до звернення {ticket}.",
+  },
+  marketplaceSsr: {
+    listTitle: "Familiada Маркетплейс",
+    listDesc: "Переглядайте та завантажуйте безкоштовні ігри Familiada від спільноти.",
+    back: "← Назад до Маркетплейсу",
+    questions: "Питання",
+    topAnswers: "Топ відповіді",
+    by: "від",
+    originProducer: "Виробник",
+    originCommunity: "Спільнота",
+    play: "Грати",
+  },
 };
 export default uk;

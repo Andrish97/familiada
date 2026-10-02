@@ -3,6 +3,7 @@ import { json, readJsonOr400 } from "../core/http.js";
 import { clampInt, normalizeLang } from "../core/utils.js";
 import { supabaseRequest, supabaseRpc, summarizeSupabaseError, normalizeRpcValue, extractScalarNumber } from "../core/supabase.js";
 import { buildContactEmail } from "../email/contact-email.js";
+import { formatText, getTranslationSection } from "../core/translations.js";
 import { htmlToPlainTextPreview } from "../email/html-to-text.js";
 
 export async function handleAdminReportsApi(request, env, url) {
@@ -79,7 +80,7 @@ export async function handleAdminReportsApi(request, env, url) {
 
     // Send reply email
     try {
-      const { subject: replySubject, html } = buildContactEmail({
+      const { subject: replySubject, html } = await buildContactEmail({
         type: "reply",
         lang: safeLang,
         ticket: reportRow.ticket_number,
@@ -157,7 +158,7 @@ export async function handleAdminReportsApi(request, env, url) {
     const safeLang = normalizeLang(lang);
 
     try {
-      const { subject: mailSubject, html } = buildContactEmail({
+      const { subject: mailSubject, html } = await buildContactEmail({
         type: "compose",
         lang: safeLang,
         ticket: null,
@@ -206,9 +207,10 @@ export async function handleAdminReportsApi(request, env, url) {
 
     try {
       if (row.old_email && row.new_email && row.old_email !== row.new_email) {
-        const { subject: s1, html: h1 } = buildContactEmail({
+        const tr = await getTranslationSection("pl", "contactEmail");
+        const { subject: s1, html: h1 } = await buildContactEmail({
           type: "reply", lang: "pl", ticket: row.old_ticket, subject: "",
-          replyMessage: `Twoja wiadomość została przeniesiona do zgłoszenia ${row.new_ticket}.`,
+          replyMessage: formatText(tr.messageMoved, { ticket: row.new_ticket }),
           originalMessage: null,
         });
         await supabaseRequest(env, "/rest/v1/mail_queue", {

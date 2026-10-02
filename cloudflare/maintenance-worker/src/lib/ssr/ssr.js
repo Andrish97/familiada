@@ -2,6 +2,7 @@
 import { getSupabaseConfig, supabaseRpc } from "../core/supabase.js";
 import { escapeHtml } from "../core/utils.js";
 import { serveNotFoundPage } from "../origin/origin.js";
+import { getTranslationSection } from "../core/translations.js";
 
 export const BOT_UA_PATTERNS = [
   "googlebot", "google-inspectiontool", "mediapartners-google", "googleweblight",
@@ -39,12 +40,16 @@ export async function serveMarketplaceSsr(request, env, url) {
   }
 
   const lang = url.searchParams.get("lang") || "pl";
-  const title = lang === "en" ? "Familiada Marketplace" : lang === "uk" ? "Familiada Маркетплейс" : "Familiada Marketplace";
-  const desc  = lang === "en"
-    ? "Browse and download free Familiada games created by the community."
-    : lang === "uk"
-    ? "Переглядайте та завантажуйте безкоштовні ігри Familiada від спільноти."
-    : "Przeglądaj i pobieraj darmowe gry Familiada stworzone przez społeczność.";
+  let tr;
+  try {
+    tr = await getTranslationSection(lang, "marketplaceSsr");
+  } catch (err) {
+    console.error("[worker] marketplace SSR translations:", err);
+    // Przy błędzie serwuj normalnie
+    return fetch(request);
+  }
+  const title = tr.listTitle;
+  const desc  = tr.listDesc;
 
   const gamesHtml = games.map(g => `
     <article class="mg-card">
@@ -142,12 +147,22 @@ export async function serveGameDetailSsr(request, env, url, originBase, originHo
   }
 
   const lang = game.lang || "pl";
+  let tr;
+  try {
+    tr = await getTranslationSection(lang, "marketplaceSsr");
+  } catch (err) {
+    console.error("[worker] game detail SSR translations:", err);
+    return new Response("Service temporarily unavailable", {
+      status: 503,
+      headers: { "Retry-After": "60", "Cache-Control": "no-store" },
+    });
+  }
   const pageTitle = `${game.title} – Familiada`;
-  const backLabel = lang === "en" ? "← Back to Marketplace" : lang === "uk" ? "← Назад до Маркетплейсу" : "← Wróć do Marketplace";
-  const questionsLabel = lang === "en" ? "Questions" : lang === "uk" ? "Питання" : "Pytania";
-  const answersLabel = lang === "en" ? "Top answers" : lang === "uk" ? "Топ відповіді" : "Najczęstsze odpowiedzi";
-  const byLabel = lang === "en" ? "by" : lang === "uk" ? "від" : "autor";
-  const originLabel = game.origin === "producer" ? (lang === "en" ? "Producer" : lang === "uk" ? "Виробник" : "Producent") : (lang === "en" ? "Community" : lang === "uk" ? "Спільнota" : "Społeczność");
+  const backLabel = tr.back;
+  const questionsLabel = tr.questions;
+  const answersLabel = tr.topAnswers;
+  const byLabel = tr.by;
+  const originLabel = game.origin === "producer" ? tr.originProducer : tr.originCommunity;
   const canonicalUrl = `https://www.familiada.online/marketplace/game/${escapeHtml(game.slug)}`;
 
   const questions = game.payload?.questions || [];
@@ -178,13 +193,13 @@ export async function serveGameDetailSsr(request, env, url, originBase, originHo
     return `
     <section class="question">
       <h3>${i + 1}. ${escapeHtml(q.text)}</h3>
-      <p class="answers-label">${answersLabel}:</p>
+      <p class="answers-label">${escapeHtml(answersLabel)}:</p>
       <ol>${answersHtml}</ol>
     </section>`;
   }).join("\n");
 
   const authorLine = game.author_username
-    ? `${byLabel}: <strong>${escapeHtml(game.author_username)}</strong>`
+    ? `${escapeHtml(byLabel)}: <strong>${escapeHtml(game.author_username)}</strong>`
     : "Familiada";
 
   const html = `<!DOCTYPE html>
@@ -216,15 +231,15 @@ export async function serveGameDetailSsr(request, env, url, originBase, originHo
   </style>
 </head>
 <body>
-  <a class="back" href="/marketplace">${backLabel}</a>
+  <a class="back" href="/marketplace">${escapeHtml(backLabel)}</a>
   <h1>${escapeHtml(game.title)}</h1>
   <p class="meta">
     <span class="badge">${escapeHtml(lang.toUpperCase())}</span>
     <span class="badge">${escapeHtml(originLabel)}</span>
-    ${authorLine} · ${escapeHtml(String(questions.length))} ${questionsLabel.toLowerCase()}
+    ${authorLine} · ${escapeHtml(String(questions.length))} ${escapeHtml(questionsLabel.toLowerCase())}
   </p>
   ${game.description ? `<p>${escapeHtml(game.description)}</p>` : ""}
-  <a class="play-btn" href="/marketplace?game=${escapeHtml(game.id)}">${lang === "en" ? "Play this game" : lang === "uk" ? "Грати" : "Graj w tę grę"}</a>
+  <a class="play-btn" href="/marketplace?game=${escapeHtml(game.id)}">${escapeHtml(tr.play)}</a>
   <hr style="margin:24px 0;border:none;border-top:1px solid #eee"/>
   ${questionsHtml}
 </body>

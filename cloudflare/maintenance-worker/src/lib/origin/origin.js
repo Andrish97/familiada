@@ -2,6 +2,11 @@
 // pages, and host/path classification.
 import { withHeaders } from "../core/http.js";
 
+// Fetch from apex origin but resolve directly to GitHub Pages to avoid recursion.
+export const ORIGIN_BASE = "https://familiada.online";
+export const ORIGIN_HOST = "familiada.online";
+export const ORIGIN_RESOLVE = "andrish97.github.io";
+
 export async function serveMaintenance(request, originBase, originHost, resolveOverride) {
   const maintUrl = new URL("/maintenance", originBase);
   const res = await fetchWithOrigin(maintUrl.toString(), request, originHost, resolveOverride);

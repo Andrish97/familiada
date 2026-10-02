@@ -13,6 +13,9 @@ import { getState } from "./lib/core/state.js";
 import { json, withHeaders } from "./lib/core/http.js";
 import { handleAdminApi } from "./lib/admin/admin-api.js";
 import {
+  ORIGIN_BASE,
+  ORIGIN_HOST,
+  ORIGIN_RESOLVE,
   fetchFromOrigin,
   fetchWith404,
   isKnownHost,
@@ -51,10 +54,6 @@ export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
     const host = url.host.toLowerCase();
-    // Fetch from apex origin but resolve directly to GitHub Pages to avoid recursion.
-    const ORIGIN_BASE = "https://familiada.online";
-    const ORIGIN_HOST = "familiada.online";
-    const ORIGIN_RESOLVE = "andrish97.github.io";
 
     // Prywatne API testow produkcyjnych. Obslugiwane przed redirectem apex
     // i maintenance gate, ale zawsze wymaga krotkozyjacego tokenu HMAC.

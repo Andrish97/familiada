@@ -61,7 +61,7 @@ export async function handleContactSubmit(request, env) {
 
   // Send confirmation email
   try {
-    const { subject: confirmSubject, html } = buildContactEmail({
+    const { subject: confirmSubject, html } = await buildContactEmail({
       type: "confirmation",
       lang: safeLang,
       ticket,

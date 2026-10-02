@@ -1,63 +1,30 @@
-// src/lib/contact-email.js -- contact form email templates (pure).
+// src/lib/contact-email.js -- contact form email templates (teksty z tłumaczeń strony).
 import { escEmailText as esc, nl2br } from "./html-escape.js";
 import { normalizeLang } from "../core/utils.js";
+import { formatText, getTranslationSection } from "../core/translations.js";
 
-export function buildContactEmail(opts) {
+export async function buildContactEmail(opts) {
   const { type, lang = "pl", ticket, subject, message, originalMessage, replyMessage } = opts;
 
-  const copy = {
-    pl: {
-      greeting: "Witaj,",
-      closing: "Pozdrawiamy,\nZespół Familiada",
-      confirmation: {
-        body: `Dziękujemy za kontakt. Twoje zgłoszenie zostało przyjęte.\n\nNumer zgłoszenia: ${ticket || ""}\nTemat: ${subject || ""}`,
-        quote: message || "",
-        mailSubject: `Potwierdzenie zgłoszenia [${ticket || ""}]`,
-      },
-      reply: {
-        quoteLabel: `Twoje zgłoszenie [${ticket || ""}]:`,
-        mailSubject: `Re: [${ticket || ""}] ${subject || ""}`,
-      },
-      compose: {
-        mailSubject: subject || "Wiadomość od Familiada",
-      },
+  // Teksty: sekcja contactEmail w translation/{pl,en,uk}.js (pobierana z originu).
+  const tr = await getTranslationSection(normalizeLang(lang), "contactEmail");
+  const vars = { ticket: ticket || "", subject: subject || "" };
+  const c = {
+    greeting: tr.greeting,
+    closing: tr.closing,
+    confirmation: {
+      body: formatText(tr.confirmationBody, vars),
+      quote: message || "",
+      mailSubject: formatText(tr.confirmationSubject, vars),
     },
-    en: {
-      greeting: "Hello,",
-      closing: "Best regards,\nFamiliada Team",
-      confirmation: {
-        body: `Thank you for reaching out. Your report has been received.\n\nTicket number: ${ticket || ""}\nSubject: ${subject || ""}`,
-        quote: message || "",
-        mailSubject: `Report confirmation [${ticket || ""}]`,
-      },
-      reply: {
-        quoteLabel: `Your report [${ticket || ""}]:`,
-        mailSubject: `Re: [${ticket || ""}] ${subject || ""}`,
-      },
-      compose: {
-        mailSubject: subject || "Message from Familiada",
-      },
+    reply: {
+      quoteLabel: formatText(tr.replyQuoteLabel, vars),
+      mailSubject: formatText(tr.replySubject, vars),
     },
-    uk: {
-      greeting: "Вітаємо,",
-      closing: "З повагою,\nКоманда Familiada",
-      confirmation: {
-        body: `Дякуємо за звернення. Ваше звернення прийнято.\n\nНомер звернення: ${ticket || ""}\nТема: ${subject || ""}`,
-        quote: message || "",
-        mailSubject: `Підтвердження звернення [${ticket || ""}]`,
-      },
-      reply: {
-        quoteLabel: `Ваше звернення [${ticket || ""}]:`,
-        mailSubject: `Re: [${ticket || ""}] ${subject || ""}`,
-      },
-      compose: {
-        mailSubject: subject || "Повідомлення від Familiada",
-      },
+    compose: {
+      mailSubject: subject || tr.composeSubject,
     },
   };
-
-  const safeLang = normalizeLang(lang);
-  const c = copy[safeLang];
 
   let mailSubject = "";
   let contentHtml = "";

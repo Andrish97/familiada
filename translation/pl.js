@@ -5080,6 +5080,27 @@ const pl = {
       footer: "Wiadomość automatyczna — prosimy nie odpowiadać.",
     },
   },
+  contactEmail: {
+    greeting: "Witaj,",
+    closing: "Pozdrawiamy,\nZespół Familiada",
+    confirmationSubject: "Potwierdzenie zgłoszenia [{ticket}]",
+    confirmationBody: "Dziękujemy za kontakt. Twoje zgłoszenie zostało przyjęte.\n\nNumer zgłoszenia: {ticket}\nTemat: {subject}",
+    replySubject: "Re: [{ticket}] {subject}",
+    replyQuoteLabel: "Twoje zgłoszenie [{ticket}]:",
+    composeSubject: "Wiadomość od Familiada",
+    messageMoved: "Twoja wiadomość została przeniesiona do zgłoszenia {ticket}.",
+  },
+  marketplaceSsr: {
+    listTitle: "Familiada Marketplace",
+    listDesc: "Przeglądaj i pobieraj darmowe gry Familiada stworzone przez społeczność.",
+    back: "← Wróć do Marketplace",
+    questions: "Pytania",
+    topAnswers: "Najczęstsze odpowiedzi",
+    by: "autor",
+    originProducer: "Producent",
+    originCommunity: "Społeczność",
+    play: "Graj w tę grę",
+  },
 };
 
 export default pl;

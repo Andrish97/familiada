@@ -5193,5 +5193,26 @@ const en = {
       footer: "This is an automated message — please do not reply.",
     },
   },
+  contactEmail: {
+    greeting: "Hello,",
+    closing: "Best regards,\nFamiliada Team",
+    confirmationSubject: "Report confirmation [{ticket}]",
+    confirmationBody: "Thank you for reaching out. Your report has been received.\n\nTicket number: {ticket}\nSubject: {subject}",
+    replySubject: "Re: [{ticket}] {subject}",
+    replyQuoteLabel: "Your report [{ticket}]:",
+    composeSubject: "Message from Familiada",
+    messageMoved: "Your message has been moved to ticket {ticket}.",
+  },
+  marketplaceSsr: {
+    listTitle: "Familiada Marketplace",
+    listDesc: "Browse and download free Familiada games created by the community.",
+    back: "← Back to Marketplace",
+    questions: "Questions",
+    topAnswers: "Top answers",
+    by: "by",
+    originProducer: "Producer",
+    originCommunity: "Community",
+    play: "Play this game",
+  },
 };
 export default en;
