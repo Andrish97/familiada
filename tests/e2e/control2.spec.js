@@ -1799,15 +1799,32 @@ test("@mailbox control2: udostępnianie urządzenia (Prowadzący) przez e-mail -
     const recipientContext = await browser.newContext();
     contexts.push(recipientContext);
     const recipientPage = await recipientContext.newPage();
+    // DIAGNOSTYKA TYMCZASOWA, runda 2 -- #app nie zdążył nawet przy 20000ms
+    // (run #296), mimo że openAnon() gdzie indziej w tym pliku (identyczny
+    // wzorzec: nowy browser.newContext()+goto(waitUntil:"domcontentloaded"))
+    // łączy się z host2/display2/buzzer2 w 10-15s bez problemu -- jeśli to
+    // było "tylko" obciążenie CI, taka różnica nie powinna być aż tak
+    // uparta. Łapiemy błędy JS i realny status/czas RPC game_state_get na
+    // TEJ konkretnej stronie, żeby rozstrzygnąć: strona się wysypuje, czy
+    // tylko RPC jest wyjątkowo wolne akurat tutaj.
+    const recipientErrors = [];
+    recipientPage.on("pageerror", (err) => recipientErrors.push(`pageerror: ${err.message}`));
+    recipientPage.on("console", (msg) => { if (msg.type() === "error") recipientErrors.push(`console.error: ${msg.text()}`); });
+    const _rpT0 = Date.now();
+    recipientPage.on("response", (res) => {
+      if (res.url().includes("/rpc/game_state_get") || res.url().includes("/rpc/device_ping")) {
+        console.log(`[e2e-diag:recipient] t=${Date.now() - _rpT0}ms ${res.url().split("/rpc/")[1]} status=${res.status()}`);
+      }
+    });
+    recipientPage.on("requestfailed", (req) => console.log(`[e2e-diag:recipient] REQUEST FAILED ${req.url()}: ${req.failure()?.errorText}`));
     await recipientPage.goto(links[0], { waitUntil: "domcontentloaded" });
-    // DIAGNOSTYKA (run #295, grep @mailbox) potwierdziła: mail_queue działa
-    // poprawnie (send-mail zwraca {"ok":true,"queued":1} za każdym razem,
-    // waitForEmail() zawsze dostawał realny mail) -- jedyna realna awaria to
-    // #app, który #host2.html buduje DOPIERO w JS (brak w statycznym
-    // markupie -- cały łańcuch modułów ES + inicjalizacja klienta Supabase +
-    // RPC) nie zdążając w 15000ms pod obciążeniem CI. Podniesione z zapasem,
-    // ten sam wzorzec co inne naprawione dziś marginesy w tym pliku.
-    await expect(recipientPage.locator("#app")).toBeAttached({ timeout: 20000 });
+    console.log(`[e2e-diag:recipient] navigated to ${links[0]}`);
+    try {
+      await expect(recipientPage.locator("#app")).toBeAttached({ timeout: 20000 });
+    } catch (e) {
+      console.log(`[e2e-diag:recipient] errors captured: ${JSON.stringify(recipientErrors)}`);
+      throw e;
+    }
   } finally {
     for (const ctx of contexts) await ctx.close().catch(() => {});
     await clearMailbox(recipient).catch(() => {});
