@@ -1799,32 +1799,17 @@ test("@mailbox control2: udostępnianie urządzenia (Prowadzący) przez e-mail -
     const recipientContext = await browser.newContext();
     contexts.push(recipientContext);
     const recipientPage = await recipientContext.newPage();
-    // DIAGNOSTYKA TYMCZASOWA, runda 2 -- #app nie zdążył nawet przy 20000ms
-    // (run #296), mimo że openAnon() gdzie indziej w tym pliku (identyczny
-    // wzorzec: nowy browser.newContext()+goto(waitUntil:"domcontentloaded"))
-    // łączy się z host2/display2/buzzer2 w 10-15s bez problemu -- jeśli to
-    // było "tylko" obciążenie CI, taka różnica nie powinna być aż tak
-    // uparta. Łapiemy błędy JS i realny status/czas RPC game_state_get na
-    // TEJ konkretnej stronie, żeby rozstrzygnąć: strona się wysypuje, czy
-    // tylko RPC jest wyjątkowo wolne akurat tutaj.
-    const recipientErrors = [];
-    recipientPage.on("pageerror", (err) => recipientErrors.push(`pageerror: ${err.message}`));
-    recipientPage.on("console", (msg) => { if (msg.type() === "error") recipientErrors.push(`console.error: ${msg.text()}`); });
-    const _rpT0 = Date.now();
-    recipientPage.on("response", (res) => {
-      if (res.url().includes("/rpc/game_state_get") || res.url().includes("/rpc/device_ping")) {
-        console.log(`[e2e-diag:recipient] t=${Date.now() - _rpT0}ms ${res.url().split("/rpc/")[1]} status=${res.status()}`);
-      }
-    });
-    recipientPage.on("requestfailed", (req) => console.log(`[e2e-diag:recipient] REQUEST FAILED ${req.url()}: ${req.failure()?.errorText}`));
     await recipientPage.goto(links[0], { waitUntil: "domcontentloaded" });
-    console.log(`[e2e-diag:recipient] navigated to ${links[0]}`);
-    try {
-      await expect(recipientPage.locator("#app")).toBeAttached({ timeout: 20000 });
-    } catch (e) {
-      console.log(`[e2e-diag:recipient] errors captured: ${JSON.stringify(recipientErrors)}`);
-      throw e;
-    }
+    // ZNALEZIONA REALNA PRZYCZYNA (diagnostyka, run #297): host2.html NIE MA
+    // w ogóle elementu "#app" -- to selektor skopiowany przez pomyłkę z
+    // control2.html's konwencji (tam root #app istnieje). host2.html's
+    // prawdziwy, statyczny root to #paper (main.paperSplit), z #paperText1/
+    // #paperText2 w środku -- diagnostyka potwierdziła, że strona faktycznie
+    // działa poprawnie (game_state_get 200 w ~1s, device_ping tyka dalej w
+    // nieskończoność), więc "#app" po prostu NIGDY nie mógł się znaleźć,
+    // niezależnie od timeoutu -- stąd każdy dotychczasowy przebieg tego
+    // testu musiał paść.
+    await expect(recipientPage.locator("#paper")).toBeVisible({ timeout: 15000 });
   } finally {
     for (const ctx of contexts) await ctx.close().catch(() => {});
     await clearMailbox(recipient).catch(() => {});
