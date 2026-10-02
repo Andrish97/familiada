@@ -1,36 +1,36 @@
-import { addRenameGesture } from "../core/rename-gesture.js?v=v2026-10-01T22165";
-import { sb } from "../core/supabase.js?v=v2026-10-01T22165";
-import { requireAuth } from "../core/auth.js?v=v2026-10-01T22165";
-import { alertModal, confirmModal } from "../core/modal.js?v=v2026-10-01T22165";
-import { hideForGuest, isGuestUser } from "../core/guest-mode.js?v=v2026-10-01T22165";
-import { initI18n, t, applyTranslations } from "../../translation/translation.js?v=v2026-10-01T22165";
-import { initRatingSystem } from "../core/rating-system.js?v=v2026-10-01T22165";
-import { initUiSelect } from "../core/ui-select.js?v=v2026-10-01T22165";
-import { maybeShowGuestInfoModal } from "../core/guest-info-modal.js?v=v2026-10-01T22165";
-import { maybeShowGuestMigrateReminder } from "../core/guest-migrate-reminder.js?v=v2026-10-01T22165";
+import { addRenameGesture } from "../core/rename-gesture.js?v=v2026-10-02T00070";
+import { sb } from "../core/supabase.js?v=v2026-10-02T00070";
+import { requireAuth } from "../core/auth.js?v=v2026-10-02T00070";
+import { alertModal, confirmModal } from "../core/modal.js?v=v2026-10-02T00070";
+import { hideForGuest, isGuestUser } from "../core/guest-mode.js?v=v2026-10-02T00070";
+import { initI18n, t, applyTranslations } from "../../translation/translation.js?v=v2026-10-02T00070";
+import { initRatingSystem } from "../core/rating-system.js?v=v2026-10-02T00070";
+import { initUiSelect } from "../core/ui-select.js?v=v2026-10-02T00070";
+import { maybeShowGuestInfoModal } from "../core/guest-info-modal.js?v=v2026-10-02T00070";
+import { maybeShowGuestMigrateReminder } from "../core/guest-migrate-reminder.js?v=v2026-10-02T00070";
 
-import { initPwa, isStandalone, isMobileDevice } from "../core/pwa.js?v=v2026-10-01T22165";
-import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../core/modal-sheet.js?v=v2026-10-01T22165";
+import { initPwa, isStandalone, isMobileDevice } from "../core/pwa.js?v=v2026-10-02T00070";
+import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../core/modal-sheet.js?v=v2026-10-02T00070";
 
 // Zarejestruj listener PWA jak najwcześniej – beforeinstallprompt może odpalić przed requireAuth
 const pwaApi = initPwa();
 // Jeśli beforeinstallprompt już odpalił zanim dodaliśmy listener w IIFE, sprawdzimy po zalogowaniu
 
 
-import { exportGame, importGame, downloadJson } from "./games-import-export.js?v=v2026-10-01T22165";
-import { setTopbarNavPriority, setTopbarAccount } from '../core/topbar-controller.js?v=v2026-10-01T22165';
+import { exportGame, importGame, downloadJson } from "./games-import-export.js?v=v2026-10-02T00070";
+import { setTopbarNavPriority, setTopbarAccount } from '../core/topbar-controller.js?v=v2026-10-02T00070';
 
-import "../core/contact-modal.js?v=v2026-10-01T22165";
+import "../core/contact-modal.js?v=v2026-10-02T00070";
 import {
   TYPES,
   STATUS,
   loadGameBasic,
   validateGame,
   rulesFromState,
-} from "../core/game-validate.js?v=v2026-10-01T22165";
-import { deleteGameSoundsFolder } from "../core/sfx-cloud.js?v=v2026-10-01T22165";
-import { isResourceBusy } from "../core/resource-lock.js?v=v2026-10-01T22165";
-import { icon, iconText } from "../core/icons.js?v=v2026-10-01T22165";
+} from "../core/game-validate.js?v=v2026-10-02T00070";
+import { deleteGameSoundsFolder } from "../core/sfx-cloud.js?v=v2026-10-02T00070";
+import { isResourceBusy } from "../core/resource-lock.js?v=v2026-10-02T00070";
+import { icon, iconText } from "../core/icons.js?v=v2026-10-02T00070";
 
 const MSG = {
   exportBaseEmpty: () => t("games.exportBase.empty"),
