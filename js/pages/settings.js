@@ -3020,7 +3020,7 @@ function renderMessageDetail(msg, attachments = [], threadMessages = []) {
 
   const isInbound = msg.direction === "inbound";
   const sourceLabelMap = {
-    email:   "Email",
+    email:   "E-mail",
     form:    "Formularz",
     compose: "Wiadomość",
   };
@@ -5315,7 +5315,7 @@ function esc(str) {
 const STAT_DETAIL_CONFIG = {
   users: {
     title: "Użytkownicy",
-    cols: ["Username", "Email", "Język", "Gość?", "Rejestracja"],
+    cols: ["Nazwa użytkownika", "E-mail", "Język", "Gość?", "Rejestracja"],
     row: r => [r.username || "—", r.email || "—", r.language || "—", r.is_guest ? "tak" : "nie", fmtDate(r.created_at)],
   },
   games: {

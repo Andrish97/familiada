@@ -100,7 +100,7 @@ const pl = {
   },
   guestGuard: {
     title: "Niedostępne w koncie gościa",
-    message: "Ta sekcja jest dostępna tylko dla zarejestrowanych użytkowników. Zaloguj się lub załóż konto, aby korzystać z udostępniania, subskrypcji i panelu ankiet.",
+    message: "Ta sekcja jest dostępna tylko dla zarejestrowanych użytkowników. Zaloguj się lub załóż konto, aby korzystać z udostępniania, subskrypcji i Centrum ankiet.",
     back: "Wróć do moich gier",
     login: "Zaloguj / Załóż konto",
   },
@@ -131,8 +131,8 @@ const pl = {
     migrateTitle: "Jak zachować swoje dane",
     step1: "Kliknij swoją nazwę użytkownika w prawym górnym rogu",
     step2: "Wybierz <em>Zaloguj\u00A0/\u00A0Załóż konto</em>",
-    step3: "Podaj adres email i hasło — zostaniesz zapytany o migrację danych",
-    step4: "Po potwierdzeniu adresu email wszystkie Twoje dane zostaną automatycznie przeniesione",
+    step3: "Podaj adres e-mail i hasło — zostaniesz zapytany o migrację danych",
+    step4: "Po potwierdzeniu adresu e-mail wszystkie Twoje dane zostaną automatycznie przeniesione",
     ok: "Rozumiem",
   },
   guestReminder: {
@@ -165,7 +165,7 @@ const pl = {
       title: "Familiada Online — darmowy generator pytań i gra na żywo",
       p1: "Nasz system pozwala zorganizować własną grę w stylu Familiada od początku do końca. To idealne rozwiązanie jako atrakcja na wesele, urodziny czy integrację. Generator pytań pozwala na tworzenie własnych baz lub korzystanie z gotowych zestawów.",
       p2: "Odpowiedzi uczestników zbierane są przez ankietę online — każdy bierze udział w ankiecie przez link lub kod QR ze swojego telefonu. Wyniki są automatycznie normalizowane do 100 punktów, dokładnie jak w prawdziwym teleturnieju.",
-      p3Start: "Do prowadzenia gry wystarczą urządzenia które już masz — rzutnik lub telewizor jako tablica wyników, tablet dla prowadzącego, telefon jako buzzer do pojedynku. Możesz także skorzystać z",
+      p3Start: "Do prowadzenia gry wystarczą urządzenia, które już masz — rzutnik lub telewizor jako Wyświetlacz, tablet dla prowadzącego i telefon jako Przycisk do pojedynku. Możesz także skorzystać z",
       p3Link: "gotowych pytań do Familiady",
       p3End: "stworzonych przez naszą społeczność.",
     },
@@ -174,7 +174,7 @@ const pl = {
       t1: {
         alt: "Tworzenie nowej gry Familiada online - wybór trybu ankiety lub gry preparowanej",
         t: "Własny generator pytań i tryby gry",
-        d: "Wybierz jak chcesz zbierać odpowiedzi. Typowa ankieta i Punktacja zbierają wyniki od prawdziwych ludzi, a gra preparowana pozwala na szybkie wpisanie własnych pytań i punktów.",
+        d: "Wybierz, jak chcesz zbierać odpowiedzi. Ankieta tekstowa i Punktacja zbierają wyniki od prawdziwych ludzi, a gra preparowana pozwala szybko wpisać własne pytania i punkty.",
       },
       t2: {
         alt: "Edytor pytań do Familiady - konfiguracja punktów i odpowiedzi",
@@ -182,9 +182,9 @@ const pl = {
         d: "Dodawaj pytania, ustalaj liczbę odpowiedzi i konfiguruj strukturę gry. System zadba o to, by Twoja gra wyglądała profesjonalnie na każdym ekranie.",
       },
       t3: {
-        alt: "Współpraca przy tworzeniu gry - dodawanie znajomych i udostępnianie ankiet",
-        t: "Znajomi i wspólne bazy pytań",
-        d: "Dodawaj znajomych, aby wspólnie pracować nad ankietami i bazami pytań. Idealne przy organizacji dużych wydarzeń firmowych czy wesel.",
+        alt: "Współpraca przy tworzeniu gry — subskrypcje i udostępnianie ankiet",
+        t: "Subskrypcje i wspólne bazy pytań",
+        d: "Korzystaj z subskrypcji, aby wspólnie pracować nad ankietami i bazami pytań. Idealne przy organizacji dużych wydarzeń firmowych czy wesel.",
       },
       t4: {
         alt: "Ankieta online z kodem QR - zbieranie odpowiedzi od gości",
@@ -194,7 +194,7 @@ const pl = {
       t5: {
         alt: "Centrum ankiet: zarządzanie ankietami, podgląd postępu, udostępnianie linkiem lub QR.",
         t: "Centrum ankiet",
-        d: "W jednym miejscu uruchamiasz i zamykasz ankiety, śledzisz postęp i udostępniasz ankiety znajomym. Wszystko gotowe zanim wejdziesz na salę.",
+        d: "W jednym miejscu uruchamiasz i zamykasz ankiety, śledzisz postęp i udostępniasz ankiety subskrybentom. Wszystko gotowe zanim wejdziesz na salę.",
       },
       t6: {
         alt: "Panel sterowania operatora: otwieranie rund, odkrywanie odpowiedzi, punkty i błędy X.",
@@ -212,18 +212,18 @@ const pl = {
         d: "Prowadzący ma osobny ekran z treścią pytań i podglądem odpowiedzi — bez ryzyka przypadkowego kliknięcia w sterowanie grą.",
       },
       t9: {
-        alt: "Buzzer do pojedynku: osobne urządzenie sygnalizujące kto nacisnął pierwszy.",
+        alt: "Przycisk do pojedynku: osobne urządzenie sygnalizujące, kto nacisnął pierwszy.",
         t: "Przycisk do pojedynku (osobne urządzenie)",
         d: "Osobny „przycisk\" daje sygnał kto nacisnął pierwszy w pojedynku. Żadnych sporów — ekran pokazuje zwycięzcę, gra toczy się dalej.",
       },
       t10: {
-        alt: "Bazy pytań: wspólna biblioteka z folderami i tagami, udostępniana znajomym.",
+        alt: "Bazy pytań: wspólna biblioteka z folderami i tagami, udostępniana subskrybentom.",
         t: "Bazy pytań i współpraca",
-        d: "Baza to wspólna biblioteka pytań do wielokrotnego użytku. Organizujesz ją w foldery i tagi, udostępniasz znajomym — i nie musisz za każdym razem zaczynać od zera.",
+        d: "Baza to wspólna biblioteka pytań do wielokrotnego użytku. Organizujesz ją w foldery i tagi, udostępniasz subskrybentom — i nie musisz za każdym razem zaczynać od zera.",
       },
       t11: {
-        alt: "Menadżer pytań: foldery, kopiowanie, przenoszenie i wyszukiwanie jak w eksploratorze plików.",
-        t: "Menadżer pytań jak eksplorator plików",
+        alt: "Menedżer pytań: foldery, kopiowanie, przenoszenie i wyszukiwanie jak w eksploratorze plików.",
+        t: "Menedżer pytań jak eksplorator plików",
         d: "Zarządzasz pytaniami jak w Finder/Explorer: foldery, przenoszenie, kopiowanie, szybka selekcja i wyszukiwanie po nazwie oraz tagach.",
       },
       t12: {
@@ -252,29 +252,29 @@ const pl = {
       q1:  { q: "Czy Familiada Online jest bezpłatna?", a: "Tak, w pełni bezpłatna. Możesz tworzyć gry, zbierać ankiety i prowadzić rozgrywkę bez żadnych opłat." },
       q2:  { q: "Czy trzeba instalować aplikację?", a: "Nie. System działa w przeglądarce na każdym urządzeniu — komputerze, tablecie i telefonie. Żadnej instalacji, żadnej konfiguracji." },
       q3:  { q: "W jakich językach działa system?", a: "Interfejs jest dostępny po polsku, angielsku i ukraińsku. Język zmienia się automatycznie na podstawie ustawień przeglądarki lub ręcznego wyboru." },
-      q4:  { q: "Czy trzeba zakładać konto?", a: "Nie. W trybie gościa możesz tworzyć gry, zbierać odpowiedzi i prowadzić rozgrywkę. Udostępnianie baz, subskrypcje i funkcje społecznościowe wymagają pełnego konta. Rejestracja odbywa się przez e-mail i hasło — bez logowania przez Google." },
+      q4:  { q: "Czy trzeba zakładać konto?", a: "Nie. W trybie gościa możesz tworzyć gry, zbierać odpowiedzi i prowadzić rozgrywkę. Udostępnianie baz, subskrypcje i funkcje społecznościowe wymagają konta zarejestrowanego. Rejestracja odbywa się przez e-mail i hasło — bez logowania przez Google." },
       q5:  { q: "Co dokładnie znaczy tryb gościa?", a: "To tymczasowe konto tworzone bez podawania e-maila. Gry i pozostałe dane są zapisywane na serwerze, ale dostęp do konta jest powiązany z sesją w tej przeglądarce. Po wyczyszczeniu danych przeglądarki lub zmianie urządzenia nie odzyskasz tego dostępu. Nieaktywne konto gościa może zostać usunięte po 5 dniach." },
-      q6:  { q: "Czy historia gier jest zapisywana?", a: "Tak. Gry gościa są zapisywane na serwerze, lecz dostęp do nich zależy od sesji tej przeglądarki i konto może wygasnąć po 5 dniach bez aktywności. Pełne konto pozwala logować się i korzystać ze swoich gier na różnych urządzeniach." },
+      q6:  { q: "Czy historia gier jest zapisywana?", a: "Tak. Gry gościa są zapisywane na serwerze, lecz dostęp do nich zależy od sesji tej przeglądarki i konto może wygasnąć po 5 dniach bez aktywności. Konto zarejestrowane pozwala logować się i korzystać ze swoich gier na różnych urządzeniach." },
       q7:  { q: "Ile czasu zajmuje przygotowanie gry?", a: "W grze preparowanej — wpisujesz pytania i odpowiedzi, gotowe w kilkanaście minut. W grze ankietowej dochodzi etap zbierania głosów, który trwa tyle ile zdecydujesz — godzinę, dzień, tydzień. Samo prowadzenie rozgrywki na żywo to zwykle od 20 minut wzwyż." },
       q8:  { q: "Czy mogę użyć własnych pytań?", a: "Tak. Możesz tworzyć pytania w edytorze, organizować je w bazach z folderami i tagami oraz używać wielokrotnie. Możesz też dodać gotową grę z katalogu Gry Społeczności do swojej biblioteki." },
-      q9:  { q: "Czy jest limit pytań lub gier?", a: "Nie ma limitu gier ani pytań. Jedna przygotowana gra może być używana wielokrotnie — jeśli masz kilka gotowych, możesz rozgrywać je jedną po drugiej bez ograniczeń." },
+      q9:  { q: "Czy jest limit pytań lub gier?", a: "Nie ma limitu gier ani pytań. Jedna gra preparowana może być używana wielokrotnie — jeśli masz kilka gotowych, możesz rozgrywać je jedną po drugiej bez ograniczeń." },
       q10: { q: "Ile odpowiedzi może być na tablicy?", a: "W grze preparowanej od 3 do 6 — wybierasz sam przy tworzeniu. W grze ankietowej zależy to od ankietowanych — system bierze najpopularniejsze odpowiedzi po normalizacji do 100 punktów." },
       q11: { q: "Czy można edytować pytania po zebraniu ankiety?", a: "Możliwości edycji są ograniczone — głosy są przypisane do konkretnych pytań i odpowiedzi. Jeśli potrzebujesz pełnej edycji, możesz wyeksportować wyniki ankiety i wgrać je jako grę preparowaną — wtedy możesz swobodnie modyfikować odpowiedzi i punkty." },
       q12: { q: "Ile osób może odpowiadać w ankiecie?", a: "Nie ma limitu — przez link lub kod QR mogą głosować dziesiątki lub setki osób jednocześnie." },
       q13: { q: "Czy uczestnicy mogą widzieć wyniki ankiety przed grą?", a: "Nie powinni — to kluczowe dla zabawy. Uczestnicy rozgrywki zgadują odpowiedzi ankietowanych, więc jeśli znają wyniki z góry, gra traci sens. Zadbaj żeby ankietowani i gracze to były różne grupy ludzi." },
       q14: { q: "Jak dokładnie działa normalizacja do 100 punktów?", a: "Po zebraniu głosów system przelicza każdą odpowiedź proporcjonalnie tak, żeby suma wynosiła 100. Jeśli 40% ankietowanych odpowiedziało 'pies' — na tablicy pojawia się 40 punktów. Mniej popularne odpowiedzi dostają mniej. Dokładnie jak w telewizji." },
-      q15: { q: "Czy dane z ankiety można zobaczyć przed grą?", a: "Tak. W panelu ankiet widzisz wyniki na bieżąco — które odpowiedzi zbierają najwięcej wyników i jaki jest postęp zbierania. Ty decydujesz kiedy zamknąć ankietę i przejść do gry." },
-      q16: { q: "Ile urządzeń potrzebuję?", a: "Obowiązkowe są dwa: komputer z panelem operatora i tablica wyników (TV lub rzutnik). Widok prowadzącego na tablecie lub telefonie to wygodne ułatwienie, ale nie jest konieczny — grą można prowadzić bezpośrednio z panelu operatora. Buzzer do pojedynku jest opcjonalny: zamiast niego można użyć fizycznego przycisku, a o naciśnięciu decyduje operator." },
-      q17: { q: "Czy urządzenia muszą być w tej samej sieci?", a: "Nie. Łączą się przez internet i mogą być w różnych sieciach — wygodniejsze niż rozwiązania oparte na Bluetooth czy lokalnym WiFi." },
+      q15: { q: "Czy dane z ankiety można zobaczyć przed grą?", a: "Tak. Na stronie ankiety widzisz wyniki na bieżąco — które odpowiedzi zdobywają najwięcej głosów i jaki jest postęp zbierania. Ty decydujesz, kiedy zamknąć ankietę i przejść do gry." },
+      q16: { q: "Ile urządzeń potrzebuję?", a: "Obowiązkowe są dwa: komputer z Panelem sterowania i Wyświetlacz (TV lub rzutnik). Widok prowadzącego na tablecie lub telefonie to wygodne ułatwienie, ale nie jest konieczny — rozgrywkę można prowadzić bezpośrednio z Panelu sterowania. Przycisk do pojedynku jest opcjonalny: zamiast niego można użyć przycisku fizycznego, a o pierwszeństwie decyduje operator." },
+      q17: { q: "Czy urządzenia muszą być w tej samej sieci?", a: "Nie. Łączą się przez internet i mogą być w różnych sieciach — wygodniejsze niż rozwiązania oparte na Bluetooth czy lokalnym Wi‑Fi." },
       q18: { q: "Ile osób powinno być w drużynie?", a: "Gra zakłada dwie drużyny. Optymalna liczba to 3–6 osób w każdej — najlepiej równa po obu stronach. Poniżej 3 jest smutno, powyżej 6 niekomfortowo. Technicznie możliwe są nawet jednoosobowe drużyny." },
       q19: { q: "Ile trwa rozgrywka na żywo?", a: "Zależy od prowadzącego, liczby pytań i tempa gry. Minimalna rozgrywka to około 20 minut — możesz dowolnie regulować czas wybierając liczbę pytań i próg punktowy. Nie ma sztywnych ram czasowych." },
-      q20: { q: "Czy można zagrać kilka gier pod rząd?", a: "Tak, bez ograniczeń. Jedna przygotowana gra może być używana wielokrotnie, a jeśli masz przygotowanych kilka, możesz je rozgrywać jedną po drugiej." },
-      q21: { q: "Czy można przerwać grę i wrócić do niej później?", a: "Nie. Jeśli zamkniesz panel operatora, rozgrywkę trzeba zacząć od nowa. Planuj z góry że gra odbywa się w jednym ciągłym bloku." },
+      q20: { q: "Czy można zagrać kilka gier pod rząd?", a: "Tak, bez ograniczeń. Jedna gra preparowana może być używana wielokrotnie, a jeśli masz kilka gotowych, możesz je rozgrywać jedną po drugiej." },
+      q21: { q: "Czy można przerwać grę i wrócić do niej później?", a: "Nie. Jeśli zamkniesz Panel sterowania, rozgrywkę trzeba zacząć od nowa. Zaplanuj ją tak, aby odbyła się w jednym ciągłym bloku." },
       q22: { q: "Jak działają błędy X?", a: "Dokładnie jak w oryginalnej Familiadzie. Grająca drużyna może popełnić łącznie do 3 błędów — czyli odpowiedzi których nie ma na tablicy. Przy trzecim błędzie drużyna przeciwna ma szansę na przejęcie banku punktów jedną odpowiedzią." },
       q23: { q: "Jak wygląda finał?", a: "Klasyczny finał jak w telewizji. Zwycięska drużyna wybiera dwóch uczestników — jeden wychodzi, drugi szybko odpowiada na 5 pytań. Potem wraca pierwszy uczestnik, nie znając poprzednich odpowiedzi. Porównujemy wyniki z ankietą. Cel to 200 punktów łącznie — lub próg ustawiony przez operatora." },
-      q24: { q: "Czy operator musi znać pytania z góry?", a: "Nie musi — pytania i odpowiedzi są widoczne w panelu operatora podczas rozgrywki. W praktyce operatorem najczęściej zostaje osoba która grę przygotowała. System intuicyjnie prowadzi przez kolejne etapy, więc trudno się zgubić nawet przy pierwszym razie." },
+      q24: { q: "Czy operator musi znać pytania z góry?", a: "Nie musi — pytania i odpowiedzi są widoczne w Panelu sterowania podczas rozgrywki. W praktyce operatorem najczęściej zostaje osoba, która przygotowała grę. System intuicyjnie prowadzi przez kolejne etapy, więc trudno się zgubić nawet za pierwszym razem." },
       q25: { q: "Czy operator może jednocześnie być prowadzącym?", a: "Technicznie tak — oba widoki działają na osobnych urządzeniach. Jednak system jest zaprojektowany z myślą o rozdzieleniu tych ról: operator skupia się na sterowaniu, prowadzący na publiczności i graczach. Łączenie ról jest możliwe, ale wpłynie na jakość prowadzenia gry." },
-      q26: { q: "Co się dzieje gdy internet przestanie działać w trakcie gry?", a: "System wymaga stałego połączenia z internetem. Przy chwilowej utracie połączenia widoki mogą przestać się aktualizować. Zalecamy stabilne WiFi lub LTE dla wszystkich urządzeń biorących udział w rozgrywce." },
+      q26: { q: "Co się dzieje gdy internet przestanie działać w trakcie gry?", a: "System wymaga stałego połączenia z internetem. Przy chwilowej utracie połączenia widoki mogą przestać się aktualizować. Zalecamy stabilne Wi‑Fi lub LTE dla wszystkich urządzeń biorących udział w rozgrywce." },
       q27: { q: "Czy można dostosować wygląd tablicy wyników?", a: "Możesz dostosować kolory drużyn i kolor tła tablicy dla każdej rozgrywki. Możesz też dodać własne logo. Pełna personalizacja układu nie jest dostępna — tablica ma stały styl wzorowany na oryginalnej Familiadzie." },
       q28: { q: "Czy mogę prowadzić grę zdalnie?", a: "Technicznie tak — każdy widok działa przez przeglądarkę. Ale sens jest ograniczony, bo Familiada to przede wszystkim teleturniej z atmosferą na żywo — operator, prowadzący i uczestnicy powinni być razem. Jeśli decydujesz się na grę zdalną, potrzebujesz dodatkowej wideorozmowy — to już we własnym zakresie." },
     },
@@ -361,7 +361,7 @@ const pl = {
     guestExpired: "Sesja gościa wygasła po okresie braku aktywności. Wejdź ponownie jako gość.",
     guestDeletedByInactivity: "Twoje konto gościa zostało usunięte z powodu braku aktywności. Możesz utworzyć nowe konto gościa lub zarejestrować się.",
     guestMigrateTitle: "Przenieść konto gościa?",
-    guestMigrateText: "Wykryto aktywne konto gościa. Czy chcesz przenieść obecne dane i zamienić to konto na pełne konto z e-mailem i hasłem?\n\nJeśli dane gościa są ważne, możesz je wcześniej wyeksportować.",
+    guestMigrateText: "Wykryto aktywne konto gościa. Czy chcesz przenieść obecne dane i zamienić je w konto zarejestrowane z e-mailem i hasłem?\n\nJeśli dane gościa są ważne, możesz je wcześniej wyeksportować.",
     guestMigrateConfirmEmail: "Wysłano wiadomość potwierdzającą e-mail. Po potwierdzeniu zaloguj się ponownie i dokończ ustawienie nazwy użytkownika.",
     guestMigrateConfirmEmailNoPassword: "Wysłano e-mail potwierdzający. Po potwierdzeniu ustawisz hasło i dokończysz rejestrację.",
     guestMigrateOk: "Tak, przenieś dane",
@@ -369,10 +369,10 @@ const pl = {
     errResendCooldown: "Możesz wysłać ponownie za {time}.",
     errResendCooldownGeneric: "Możesz wysłać ponownie później.",
     pendingEmailTitle: "Rejestracja w toku",
-    pendingEmailText: "Rejestracja lub migracja jest już w toku dla adresu {email}.\n\nPonowna wysyłka jest możliwa raz na 1h. Wysłać mail ponownie?",
+    pendingEmailText: "Rejestracja lub migracja jest już w toku dla adresu {email}.\n\nPonowna wysyłka jest możliwa raz na 1h. Wysłać wiadomość e-mail ponownie?",
     pendingEmailOk: "Wyślij ponownie",
     pendingEmailCancel: "Anuluj",
-    pendingEmailResent: "Wysłano mail potwierdzający. Sprawdź skrzynkę (i folder spam).",
+    pendingEmailResent: "Wysłano wiadomość potwierdzającą e-mail. Sprawdź skrzynkę (i folder spam).",
     emailAlreadyRegistered: "Konto już istnieje. Przełączam na logowanie.",
     captchaTitle: "Potwierdź, że jesteś człowiekiem",
     captchaText: "Aby kontynuować, wykonaj weryfikację CAPTCHA.",
@@ -447,7 +447,7 @@ const pl = {
   },
   account: {
     migrateTitle: "Zapisz swoje dane",
-    migrateHint: "Podaj e-mail i hasło (opcjonalnie też nazwę użytkownika), aby zamienić konto gościa na pełne konto — Twoje gry, bazy pytań i pliki zostaną zachowane.",
+    migrateHint: "Podaj e-mail i hasło (opcjonalnie także nazwę użytkownika), aby zamienić konto gościa w konto zarejestrowane — Twoje gry, bazy pytań i pliki zostaną zachowane.",
     migrateUsernamePlaceholder: "Nazwa użytkownika (opcjonalnie)",
     migrateEmailPlaceholder: "Twój e-mail",
     migratePasswordPlaceholder: "Hasło",
@@ -457,9 +457,9 @@ const pl = {
     migrateResend: "Wyślij ponownie",
     migrateCancel: "Anuluj",
     statusMigrating: "Wysyłam link potwierdzający…",
-    statusMigrateSent: "Wysłano! Sprawdź maila, aby dokończyć migrację.",
+    statusMigrateSent: "Wysłano! Sprawdź wiadomość e-mail, aby dokończyć migrację.",
     statusMigrateResending: "Wysyłam ponownie…",
-    statusMigrateResent: "Wysłano ponownie. Sprawdź maila.",
+    statusMigrateResent: "Wysłano ponownie. Sprawdź wiadomość e-mail.",
     statusMigrateCancelling: "Anuluję migrację…",
     statusMigrateCancelled: "Migracja anulowana.",
     errCancelMigrationFailed: "Nie udało się anulować migracji.",
@@ -478,7 +478,7 @@ const pl = {
     emailPlaceholder: "Nowy e-mail",
     emailSave: "Zmień e-mail",
     emailPostHint: "Zmiana e-maila wymaga potwierdzenia linków w skrzynkach. Do tego czasu możesz logować się dotychczasowym adresem. Jeśli nie widzisz wiadomości, sprawdź spam.",
-    emailNoAccessHint: "Nie masz dostępu do obecnego e-maila? Wyeksportuj ważne dane (gry, bazy, loga), usuń konto, załóż nowe na poprawnym adresie i zaimportuj z powrotem.",
+    emailNoAccessHint: "Nie masz dostępu do obecnego e-maila? Wyeksportuj ważne dane (gry, bazy i logo), usuń konto, załóż nowe na poprawnym adresie i zaimportuj dane ponownie.",
     emailPendingTitle: "Zmiana e-maila w toku",
     emailPendingText: "Nowy e-mail: {email}. Dokończ zmianę klikając link w wiadomościach (na starym i nowym adresie).",
     emailResend: "Wyślij ponownie",
@@ -506,7 +506,7 @@ const pl = {
     emailNotifSaveFailed: "Nie udało się zapisać ustawień powiadomień. Spróbuj ponownie.",
     demo: {
       title: "Materiały Demo",
-      hint: "Przywróć przykładowe materiały startowe: bazy pytań, loga i gotowe gry różnych kategorii.",
+      hint: "Przywróć przykładowe materiały startowe: bazy pytań, logo i gotowe gry różnych kategorii.",
       btn: "Przywróć pliki demo",
       btnHint: "Po kliknięciu nastąpi przejście do widoku Moje gry i automatyczne wgranie demo.",
     },
@@ -550,7 +550,7 @@ const pl = {
     swipeCoverLeft: "Przesuń w lewo, żeby zasłonić",
   },
   buzzer: {
-    title: "Familiada — przycisk",
+    title: "Familiada — Przycisk do pojedynku",
     btnA: "Przycisk A",
     btnB: "Przycisk B",
     rotateHint: "Obróć urządzenie do poziomu",
@@ -617,7 +617,7 @@ const pl = {
       close: "Zamknij",
       cooldown: "Nie można dodać ponownie tego użytkownika przez 24h (anty-spam).",
       alreadyPending: "Zaproszenie już oczekuje na akceptację.",
-      emailFailed: "Zaproszenie utworzone, ale nie udało się wysłać maila.",
+      emailFailed: "Zaproszenie utworzone, ale nie udało się wysłać wiadomości e-mail.",
       sectionSubscribers: "Subskrybenci",
       sectionPending: "Oczekujące",
       sectionPendingSub: "Po 5 dniach bez akceptacji zapytanie znika.",
@@ -630,11 +630,11 @@ const pl = {
       roleChanged: "Zmieniono rolę",
       shareSection: "Udostępnij",
       shareModeLabel: "Tryb:",
-      recipientEmail: "Wpisz adres email / nazwę",
+      recipientEmail: "Wpisz adres e-mail lub nazwę użytkownika",
       recipientSubscriber: "Wybierz subskrybenta",
       selectSubscriber: "Wybierz subskrybenta...",
       noSubscribers: "Brak subskrybentów",
-      enterEmail: "Wpisz adres email lub nazwę użytkownika",
+      enterEmail: "Wpisz adres e-mail lub nazwę użytkownika",
     },
     delete: {
       title: "Usuń bazę",
@@ -707,8 +707,8 @@ const pl = {
       removeCancel: "Anuluj",
       cooldown: "Nie można dodać ponownie tego użytkownika przez 24h (anty-spam).",
       alreadyPending: "Zaproszenie już oczekuje na akceptację.",
-      emailFailed: "Zaproszenie utworzone, ale nie udało się wysłać maila.",
-      enterEmail: "Wpisz adres email lub nazwę użytkownika",
+      emailFailed: "Zaproszenie utworzone, ale nie udało się wysłać wiadomości e-mail.",
+      enterEmail: "Wpisz adres e-mail lub nazwę użytkownika",
       selectSubscriber: "Wybierz subskrybenta",
       roleChanged: "Zmieniono rolę",
       userNotFound: "Nie znaleziono użytkownika.",
@@ -727,7 +727,7 @@ const pl = {
       accept: "Przyjmij",
       decline: "Odrzuć",
       failed: "Nie udało się wykonać akcji.",
-      mismatch: "To udostępnienie dotyczy innego użytkownika. Sprawdź, czy jesteś zalogowany na konto powiązane z mailem, na który przyszła wiadomość.",
+      mismatch: "To udostępnienie dotyczy innego użytkownika. Sprawdź, czy jesteś zalogowany na konto powiązane z adresem e-mail, na który przyszła wiadomość.",
       cancelled: "Zaproszenie zostało cofnięte.",
       expired: "To zaproszenie wygasło albo już nie istnieje.",
       handled: "To zaproszenie zostało już przyjęte lub odrzucone.",
@@ -740,8 +740,8 @@ const pl = {
       sharedEmptyHint: "Poproś kogoś o udostępnienie lub skorzystaj z własnych baz.",
     },
     mail: {
-      noSession: "Brak sesji do wysyłki maila.",
-      failed: "Nie udało się wysłać maila.",
+      noSession: "Brak sesji do wysyłki wiadomości e-mail.",
+      failed: "Nie udało się wysłać wiadomości e-mail.",
       title: "Nowe udostępnienie bazy",
       subtitle: "Udostępnienie bazy pytań",
       footer: "Jeśli to nie Ty — zignoruj tę wiadomość.",
@@ -800,7 +800,7 @@ const pl = {
     },
     meta: {
       pollText:
-        "Tryb: typowa ankieta. Start: ≥ {min} pytań. Zamknięcie: w każdym pytaniu ≥ 3 różne odpowiedzi.",
+        "Tryb: ankieta tekstowa. Uruchomienie: ≥ {min} pytań. Zamknięcie: w każdym pytaniu ≥ 3 różne odpowiedzi.",
       pollPoints:
         "Tryb: punktacja. Start: ≥ {min} pytań i każde pytanie ma {minAns}–{maxAns} odpowiedzi. Zamknięcie: w każdym pytaniu co najmniej 3 odpowiedzi muszą mieć ≥ 3 pkt po przeliczeniu do 100.",
       prepared: "Gra preparowana nie ma ankiety.",
@@ -843,7 +843,7 @@ const pl = {
     },
     errors: {
       open: "Nie udało się uruchomić ankiety.",
-      close: "Nie udało się zamknąć ankietę.",
+      close: "Nie udało się zamknąć ankiety.",
       reopen: "Nie udało się otworzyć ponownie.",
       loadAnswers: "Nie udało się wczytać odpowiedzi.",
     },
@@ -851,7 +851,7 @@ const pl = {
       title: "Zamykanie — edycja odpowiedzi",
       loading: "Ładuję odpowiedzi z ostatniej sesji…",
       instructions:
-        "Przeciągnij odpowiedź na inną, aby je połączyć (sumuje ilość). Możesz usuwać. Na końcu bierzemy TOP 6 i normalizujemy do 100.",
+        "Przeciągnij odpowiedź na inną, aby je połączyć (liczby głosów zostaną zsumowane). Możesz usuwać odpowiedzi. Na końcu wybieramy sześć najpopularniejszych i normalizujemy wyniki do 100 punktów.",
       hint: "Przeciągnij, żeby połączyć • edytuj literówki • final max 17 znaków",
       mergeTitle: "Scal identyczne",
       mergeLabel: "Scal identyczne",
@@ -876,7 +876,7 @@ const pl = {
     tabsLabel: "Zakładki wskazówek",
     legal: "Polityka prywatności",
     backToGames: "Moje gry",
-    backToBaseManager: "Menadżer bazy",
+    backToBaseManager: "Menedżer bazy",
     backToLogos: "Moje logo",
     backToEditor: "Edytor pytań",
     backToPoll: "Ankieta",
@@ -998,12 +998,12 @@ const pl = {
     
       <ul class="m-ul">
         <li>
-          <span class="m-strong">Typowa ankieta</span> —
+          <span class="m-strong">Ankieta tekstowa</span> —
           odpowiedzi są wpisywane przez ankietowanych,
           a punkty wynikają z liczby wskazań.
         </li>
         <li>
-          <span class="m-strong">Punktacja odpowiedzi</span> —
+          <span class="m-strong">Punktacja</span> —
           ankietowani wybierają spośród przygotowanych odpowiedzi,
           a system zlicza wyniki.
         </li>
@@ -1011,7 +1011,7 @@ const pl = {
           <span class="m-strong">Preparowana</span> —
           odpowiedzi i punkty są ustalane ręcznie,
           bez udziału ankiety.
-        </li><li><span class="m-strong">Gry społeczności</span>&nbsp;— odpowiedzi i punkty są pobrane z biblioteki Gier Społeczności, bez udziału ankiety.</li>
+        </li><li><span class="m-strong">Gry Społeczności</span>&nbsp;— odpowiedzi i punkty są pobrane z biblioteki Gier Społeczności, bez udziału ankiety.</li>
       </ul>
     
       <p class="m-p">
@@ -1184,7 +1184,7 @@ const pl = {
   
       <p class="m-p">
         Jedna baza może zawierać setki lub tysiące pytań uporządkowanych w strukturze podobnej
-        do klasycznego menadżera plików na komputerze.
+        do klasycznego menedżera plików na komputerze.
       </p>
   
       <h3 class="m-h3">Dodawanie nowej bazy</h3>
@@ -1214,25 +1214,25 @@ const pl = {
         Tylko właściciel bazy może zarządzać udostępnieniami.
       </p>
   
-      <h3 class="m-h3">Przechodzenie do menadżera bazy</h3>
+      <h3 class="m-h3">Przechodzenie do menedżera bazy</h3>
   
       <p class="m-p">
         Aby wejść do zawartości bazy, zaznacz ją na liście i kliknij przycisk <span class="m-code">Przeglądaj</span>.
       </p>
   
       <p class="m-p">
-        Otworzy się Base Explorer — zaawansowany menadżer pytań działający jak klasyczny eksplorator plików.
+        Otworzy się Menedżer bazy pytań działający jak klasyczny eksplorator plików.
       </p>
   
-      <h2 class="m-h2">Base Explorer — menadżer pytań</h2>
+      <h2 class="m-h2">Menedżer bazy pytań</h2>
   
       <p class="m-p">
-        Base Explorer pozwala zarządzać pytaniami w sposób znany z systemowych menadżerów plików:
+        Menedżer bazy pytań pozwala zarządzać pytaniami w sposób znany z systemowych menedżerów plików:
         foldery, przenoszenie metodą „przeciągnij i upuść”, kopiowanie, wycinanie i szybka selekcja.
       </p>
   
       <p class="m-p">
-        Każdy „plik” w tym menadżerze jest pojedynczym pytaniem.
+        Każdy „plik” w tym menedżerze jest pojedynczym pytaniem.
         Foldery służą do grupowania pytań tematycznie lub logicznie.
       </p>
   
@@ -1249,7 +1249,7 @@ const pl = {
       </ul>
   
       <p class="m-note">
-        Interfejs i skróty klawiszowe działają podobnie jak w klasycznych menadżerach plików
+        Interfejs i skróty klawiszowe działają podobnie jak w klasycznych menedżerach plików
         (Explorer, Finder, Total Commander).
       </p>
   
@@ -1351,7 +1351,7 @@ const pl = {
       <h2 class="m-h2">Tworzenie gry z pytań</h2>
   
       <p class="m-p">
-        W Menadżerze bazy możesz zaznaczyć dowolne pytania oraz foldery (wraz z podfolderami),
+        W Menedżerze bazy możesz zaznaczyć dowolne pytania oraz foldery (wraz z podfolderami),
         a następnie utworzyć z nich nową grę.
       </p>
   
@@ -1368,7 +1368,7 @@ const pl = {
         Po pomyślnym utworzeniu gry zostaniesz przekierowany do widoku <span class="m-strong">Moje gry</span>
       </p>
   
-      <h2 class="m-h2">Skróty klawiszowe — Menadżer bazy</h2>
+      <h2 class="m-h2">Skróty klawiszowe — Menedżer bazy</h2>
   
       <h3 class="m-h3">Tworzenie</h3>
   
@@ -1493,7 +1493,7 @@ const pl = {
     
       <ul class="m-ul">
         <li>
-          <span class="m-strong">Typowa ankieta (tekstowy)</span> —
+          <span class="m-strong">Ankieta tekstowa</span> —
           ankietowani wpisują własne odpowiedzi tekstowe.
         </li>
         <li>
@@ -1577,7 +1577,7 @@ const pl = {
       <p class="m-p">
         Zamknięcie ankiety jest osobnym,
         świadomym etapem pracy.
-        System nie pozwala zamknąć ankietęu,
+        System nie pozwala zamknąć ankiety,
         jeśli zebrane dane nie spełniają
         minimalnych warunków jakości.
       </p>
@@ -1791,9 +1791,9 @@ const pl = {
       </div>`,
       connect: `<p class="m-p">
         <span class="m-strong">Podłącz urządzenie</span> to panel, gdzie możesz szybko połączyć się z urządzeniem niezbędnym do rozgrywki:
-        <span class="m-strong">Wyświetlaczem</span>, <span class="m-strong">Przyciskiem</span>, <span class="m-strong">Prowadzącym</span>
+        <span class="m-strong">Wyświetlaczem</span>, <span class="m-strong">Przyciskiem do pojedynku</span>, <span class="m-strong">Prowadzącym</span>
         lub <span class="m-strong">Wyświetlaczem QR ankiety <i class="ico" data-icon="polls"></i></span>.
-        Dostępny bez logowania — wystarczy kod 6-cyfrowy z panelu operatora.
+        Dostępny bez logowania — wystarczy 6-cyfrowy kod z Panelu sterowania.
       </p>
 
       <h3 class="m-h2">Wprowadź kod urządzenia</h3>
@@ -1837,7 +1837,7 @@ const pl = {
       <p class="m-p">
         Opcja dostępna tylko na urządzeniach mobilnych w aplikacji webowej.
         Pozwala szybko połączyć się z urządzeniem używając kamery.
-        Po prostu zeskanuj kod QR wyświetlony przez panel operatora na wyświetlaczu lub w samym panelu.
+        Po prostu zeskanuj kod QR pokazany przez Panel sterowania na Wyświetlaczu lub bezpośrednio w panelu.
       </p>
 
       <div class="m-note">
@@ -1918,8 +1918,8 @@ const pl = {
         W górnym pasku panelu widzisz trzy statusy:
         <span class="m-strong">Wyświetlacz</span>,
         <span class="m-strong">Prowadzący</span>,
-        <span class="m-strong">Przycisk</span>.
-        Operator rozpoczyna od tego, żeby wszystkie były online (prowadzący jest opcjonalny, możesz prowadzić rozgrywkę z panelu operatora, jeśli brakuje osób).
+        <span class="m-strong">Przycisk do pojedynku</span>.
+        Operator zaczyna od podłączenia wymaganych urządzeń. Prowadzący jest opcjonalny — rozgrywkę można prowadzić bezpośrednio z Panelu sterowania.
       </p>
 
       <h3 class="m-h3">Krok 1: Wyświetlacz</h3>
@@ -1960,13 +1960,13 @@ const pl = {
       </p>
 
       <p class="m-p">
-        Poprzez opcję <span class="m-strong">„Udostępnij"</span> — możesz szybko wysłać komuś linka na maila lub udostępnić swoim subskrybentom. Udostępnione urządzenia będą widoczne na koncie (tylko dla zarejestrowanych) w panelu <span class="m-code">Podłącz urządzenie <i class="ico" data-icon="phone"></i></span>. Niezarejestrowani dostaną po prostu linka na maila.
+        Poprzez opcję <span class="m-strong">„Udostępnij"</span> — możesz szybko wysłać komuś link w wiadomości e-mail lub udostępnić go swoim subskrybentom. Udostępnione urządzenia będą widoczne na koncie (tylko dla zarejestrowanych) w panelu <span class="m-code">Podłącz urządzenie <i class="ico" data-icon="phone"></i></span>. Osoby niezarejestrowane otrzymają link w wiadomości e-mail.
       </p>
 
       <div class="m-note">
         <b>Jak wygodnie podłączyć urządzenie?</b><br/>
         Najprostszy sposób: wejdź na <span class="m-code">familiada.online</span>, kliknij <span class="m-code">Podłącz urządzenie <i class="ico" data-icon="phone"></i></span>
-        w górnym pasku i wprowadź <span class="m-strong">6-cyfrowy kod</span> widoczny przy urządzeniu w panelu operatora.<br/><br/>
+        w górnym pasku i wprowadź <span class="m-strong">6-cyfrowy kod</span> widoczny przy urządzeniu w Panelu sterowania.<br/><br/>
         Alternatywnie: na urządzeniu mobilnym możesz zeskanować <span class="m-strong">kod QR</span> widoczny w panelu.
         Dla najlepszego użytkowania sugerowane jest zainstalowanie aplikacji webowej — na stronie <span class="m-strong">Moje gry</span>
         kliknij przycisk pobierania, aby uzyskać wskazówki.
@@ -1983,10 +1983,10 @@ const pl = {
         Operator może samodzielnie prowadzić rozgrywkę z panelu sterowania.
       </p>
 
-      <h3 class="m-h3">Fizyczny przycisk (buzzer)</h3>
+      <h3 class="m-h3">Przycisk fizyczny</h3>
 
       <p class="m-p">
-        Jeśli zamiast wirtualnego przycisku w przeglądarce używasz fizycznego buzzera
+        Jeśli zamiast Przycisku do pojedynku w przeglądarce używasz przycisku fizycznego,
         (np. sprzętowego przycisku podłączonego inną ścieżką), zaznacz opcję
         <span class="m-strong">„Fizyczny przycisk"</span> przy urządzeniu Przycisk.
         Po zaznaczeniu: podpięcie urządzenia przycisku nie jest wymagane,
@@ -2314,7 +2314,7 @@ const pl = {
       <h3 class="m-h2">Uruchamianie gry ze Społeczności</h3>
 
       <p class="m-p">
-        W <b>Moich Grach</b> przejdź do zakładki <span class="m-strong">Gry Społeczności</span>,
+        Na stronie <b>Moje gry</b> przejdź do zakładki <span class="m-strong">Gry Społeczności</span>,
         zaznacz wybraną grę i kliknij <span class="m-strong">Graj</span>. Po chwili otworzy się panel sterowania i możesz prowadzić rozgrywkę.</p>
 
       <div class="m-warn">
@@ -2334,12 +2334,12 @@ const pl = {
         <li>Każde pytanie musi mieć od 3 do 6 odpowiedzi</li>
         <li>Suma punktów w jednym pytaniu nie może przekraczać 100</li>
         <li>Żadna odpowiedź nie może mieć więcej niż 100 pkt ani wartości ujemnej</li>
-        <li>Ankieta zamknięta (status <span class="m-strong">Gotowy</span>) też może być wysłany</li>
+        <li>Zamknięta ankieta (status <span class="m-strong">Gotowa</span>) również może zostać wysłana</li>
       </ul>
 
       <div class="m-warn">
         <b>Uwaga:</b><br>
-        Wysłana gra to snapshot — niezmienialny zapis stanu gry w momencie wysłania.
+        Wysłana gra to niezmienny zapis jej stanu z chwili wysłania.
         Późniejsze zmiany w oryginalnej grze nie wpłyną na wersję w katalogu.
       </div>
 
@@ -2581,13 +2581,13 @@ const pl = {
       <h2 class="m-h2">5. Podmioty przetwarzające</h2>
       <p class="m-p">Serwis korzysta z infrastruktury:</p>
       <ul class="m-ul">
-        <li>GitHub Pages (hosting front-end)</li>
+        <li>GitHub Pages (hosting interfejsu)</li>
         <li>Cloudflare (DNS i zabezpieczenia)</li>
-        <li>Supabase (backend i baza danych) – selfhost na Oracle Cloud</li>
+        <li>Supabase (serwer aplikacji i baza danych) – serwer własny w Oracle Cloud</li>
         <li>Zeptomail (główny dostawca e-mail)</li>
-        <li>Brevo (fallback e-mail)</li>
-        <li>Mailgun (fallback e-mail)</li>
-        <li>SendPulse (fallback e-mail)</li>
+        <li>Brevo (zapasowy dostawca poczty)</li>
+        <li>Mailgun (zapasowy dostawca poczty)</li>
+        <li>SendPulse (zapasowy dostawca poczty)</li>
         <li>Groq (analiza powtarzalności gier społeczności – AI)</li>
         <li>DeepSeek (analiza powtarzalności gier społeczności – AI)</li>
       </ul>
@@ -2721,7 +2721,7 @@ const pl = {
       pts: "pkt",
     },
     tabs: {
-      pollText: "Typowa ankieta",
+      pollText: "Ankieta tekstowa",
       pollTextMobile: "Ankieta",
       pollPoints: "Punktacja",
       pollPointsMobile: "Punkty",
@@ -2826,7 +2826,7 @@ const pl = {
       pollText: "ANKIETA",
       pollPoints: "PUNKTACJA",
       prepared: "PREPAROWANA",
-      market: "MARKETPLACE",
+      market: "GRY SPOŁECZNOŚCI",
     },
     status: {
       draft: "SZKIC",
@@ -2921,13 +2921,13 @@ const pl = {
       answersCount: "{count}/{max} odpowiedzi",
     },
     type: {
-      pollText: "TYPOWA ANKIETA",
+      pollText: "ANKIETA TEKSTOWA",
       pollPoints: "PUNKTACJA",
       prepared: "PREPAROWANA",
     },
     config: {
       pollText: {
-        title: "Typowa ankieta",
+        title: "Ankieta tekstowa",
         hintTop: "Minimum {min} pytań.",
         hintBottom: "Odpowiedzi i punkty nie są wymagane.",
       },
@@ -3016,7 +3016,7 @@ const pl = {
     beforeUnloadWarn: "Udzielone odpowiedzi nie zostaną uznane.",
     missingParams: "Brak parametru id lub key.",
     alreadyVoted: "Już wziąłeś udział w ankiecie.",
-    wrongType: "To nie jest typowa ankieta.",
+    wrongType: "To nie jest ankieta tekstowa.",
     openPollFail: "Nie można otworzyć ankiety: {error}",
   },
   pollPoints: {
@@ -3068,9 +3068,9 @@ const pl = {
     subscribeFailed: "Nie udało się dodać subskrypcji.",
     subscribeAdded: "Subskrypcja została dodana.",
     subscriptionInviteActive: "Zaproszenie do subskrypcji jest aktywne.",
-    subscribePrompt: "Jeśli chcesz zasubskrybować podaj adres email.",
-    acceptInHub: "Żeby zaakceptować przejdź do Centrum Ankiet.",
-    hubLabel: "Centrum Ankiet",
+    subscribePrompt: "Jeśli chcesz zaakceptować subskrypcję, podaj adres e-mail.",
+    acceptInHub: "Żeby zaakceptować, przejdź do Centrum ankiet.",
+    hubLabel: "Centrum ankiet",
     acceptLabel: "Akceptuj",
     declineLabel: "Odrzuć",
     subscribeLabel: "Subskrybuj",
@@ -3152,7 +3152,7 @@ const pl = {
       accept: "Akceptuj",
     },
     invite: {
-      placeholder: "Email lub nazwa użytkownika",
+      placeholder: "E-mail lub nazwa użytkownika",
       button: "Zaproś",
     },
     share: {
@@ -3189,8 +3189,8 @@ const pl = {
     ok: "OK",
     errorLabel: "Błąd",
     pollType: {
-      text: "Typowa ankieta",
-      points: "Punktacja odpowiedzi",
+      text: "Ankieta tekstowa",
+      points: "Punktacja",
     },
     pollState: {
       open: "Otwarta",
@@ -3208,8 +3208,8 @@ const pl = {
       tasksDone: "Najwięcej oddanych zadań",
       available: "Tylko dostępne",
       done: "Tylko wykonane",
-      nameEmailAsc: "Nazwa/Email A–Z",
-      nameEmailDesc: "Nazwa/Email Z–A",
+      nameEmailAsc: "Nazwa/e-mail A–Z",
+      nameEmailDesc: "Nazwa/e-mail Z–A",
       status: "Status",
     },
     status: {
@@ -3257,15 +3257,15 @@ const pl = {
     shareStatusMissing: "Brak",
     shareHintMissing: "Brak",
     errors: {
-      mailSend: "Nie udało się wysłać maila.",
-      mailSession: "Brak aktywnej sesji do wysyłki maila.",
+      mailSend: "Nie udało się wysłać wiadomości e-mail.",
+      mailSession: "Brak aktywnej sesji do wysyłki wiadomości e-mail.",
       declineTask: "Nie udało się odrzucić zadania.",
       invalidEmail: "Niepoprawny e-mail.",
       unknownUser: "Nie znam takiej nazwy użytkownika.",
       invite: "Nie udało się zaprosić.",
       resend: "Nie udało się ponowić zaproszenia.",
-      inviteMailFailed: "Zaproszenie zapisane, ale wysyłka maila nie powiodła się.",
-      resendMailFailed: "Ponowienie zapisane, ale wysyłka maila nie powiodła się.",
+      inviteMailFailed: "Zaproszenie zapisane, ale wysyłka wiadomości e-mail nie powiodła się.",
+      resendMailFailed: "Ponowienie zapisane, ale wysyłka wiadomości e-mail nie powiodła się.",
       removeSubscriber: "Nie udało się usunąć subskrybenta.",
       acceptSubscription: "Nie udało się zaakceptować zaproszenia.",
       updateSubscription: "Nie udało się zaktualizować subskrypcji.",
@@ -3277,7 +3277,7 @@ const pl = {
     },
     statusMsg: {
       inviteSaved: "Zaproszenie zapisane.",
-      mailSending: "Wysyłam mail…",
+      mailSending: "Wysyłam wiadomość e-mail…",
       mailSent: "Mail wysłany.",
       mailFailed: "Mail nie został wysłany.",
       shareNoChanges: "Brak zmian do zapisania.",
@@ -3386,7 +3386,7 @@ const pl = {
       accept: "Akceptuj",
     },
     invite: {
-      placeholder: "Email lub nazwa użytkownika",
+      placeholder: "E-mail lub nazwa użytkownika",
       button: "Zaproś",
     },
     share: {
@@ -3423,8 +3423,8 @@ const pl = {
     ok: "OK",
     errorLabel: "Błąd",
     pollType: {
-      text: "Typowa ankieta",
-      points: "Punktacja odpowiedzi",
+      text: "Ankieta tekstowa",
+      points: "Punktacja",
     },
     pollState: {
       open: "Otwarta",
@@ -3442,8 +3442,8 @@ const pl = {
       tasksDone: "Najwięcej oddanych zadań",
       available: "Tylko dostępne",
       done: "Tylko wykonane",
-      nameEmailAsc: "Nazwa/Email A–Z",
-      nameEmailDesc: "Nazwa/Email Z–A",
+      nameEmailAsc: "Nazwa/e-mail A–Z",
+      nameEmailDesc: "Nazwa/e-mail Z–A",
       status: "Status",
     },
     status: {
@@ -3491,15 +3491,15 @@ const pl = {
     shareStatusMissing: "Brak",
     shareHintMissing: "Brak",
     errors: {
-      mailSend: "Nie udało się wysłać maila.",
-      mailSession: "Brak aktywnej sesji do wysyłki maila.",
+      mailSend: "Nie udało się wysłać wiadomości e-mail.",
+      mailSession: "Brak aktywnej sesji do wysyłki wiadomości e-mail.",
       declineTask: "Nie udało się odrzucić zadania.",
       invalidEmail: "Niepoprawny e-mail.",
       unknownUser: "Nie znam takiej nazwy użytkownika.",
       invite: "Nie udało się zaprosić.",
       resend: "Nie udało się ponowić zaproszenia.",
-      inviteMailFailed: "Zaproszenie zapisane, ale wysyłka maila nie powiodła się.",
-      resendMailFailed: "Ponowienie zapisane, ale wysyłka maila nie powiodła się.",
+      inviteMailFailed: "Zaproszenie zapisane, ale wysyłka wiadomości e-mail nie powiodła się.",
+      resendMailFailed: "Ponowienie zapisane, ale wysyłka wiadomości e-mail nie powiodła się.",
       removeSubscriber: "Nie udało się usunąć subskrybenta.",
       acceptSubscription: "Nie udało się zaakceptować zaproszenia.",
       updateSubscription: "Nie udało się zaktualizować subskrypcji.",
@@ -3511,7 +3511,7 @@ const pl = {
     },
     statusMsg: {
       inviteSaved: "Zaproszenie zapisane.",
-      mailSending: "Wysyłam mail…",
+      mailSending: "Wysyłam wiadomość e-mail…",
       mailSent: "Mail wysłany.",
       mailFailed: "Mail nie został wysłany.",
       shareNoChanges: "Brak zmian do zapisania.",
@@ -3621,7 +3621,7 @@ const pl = {
       accept: "Akceptuj",
     },
     invite: {
-      placeholder: "Email lub nazwa użytkownika",
+      placeholder: "E-mail lub nazwa użytkownika",
       button: "Zaproś",
     },
     share: {
@@ -3658,8 +3658,8 @@ const pl = {
     ok: "OK",
     errorLabel: "Błąd",
     pollType: {
-      text: "Typowa ankieta",
-      points: "Punktacja odpowiedzi",
+      text: "Ankieta tekstowa",
+      points: "Punktacja",
     },
     pollState: {
       open: "Otwarta",
@@ -3677,8 +3677,8 @@ const pl = {
       tasksDone: "Najwięcej oddanych zadań",
       available: "Tylko dostępne",
       done: "Tylko wykonane",
-      nameEmailAsc: "Nazwa/Email A–Z",
-      nameEmailDesc: "Nazwa/Email Z–A",
+      nameEmailAsc: "Nazwa/e-mail A–Z",
+      nameEmailDesc: "Nazwa/e-mail Z–A",
       status: "Status",
     },
     status: {
@@ -3725,15 +3725,15 @@ const pl = {
     shareStatusMissing: "Brak",
     shareHintMissing: "Brak",
     errors: {
-      mailSend: "Nie udało się wysłać maila.",
-      mailSession: "Brak aktywnej sesji do wysyłki maila.",
+      mailSend: "Nie udało się wysłać wiadomości e-mail.",
+      mailSession: "Brak aktywnej sesji do wysyłki wiadomości e-mail.",
       declineTask: "Nie udało się odrzucić zadania.",
       invalidEmail: "Niepoprawny e-mail.",
       unknownUser: "Nie znam takiej nazwy użytkownika.",
       invite: "Nie udało się zaprosić.",
       resend: "Nie udało się ponowić zaproszenia.",
-      inviteMailFailed: "Zaproszenie zapisane, ale wysyłka maila nie powiodła się.",
-      resendMailFailed: "Ponowienie zapisane, ale wysyłka maila nie powiodła się.",
+      inviteMailFailed: "Zaproszenie zapisane, ale wysyłka wiadomości e-mail nie powiodła się.",
+      resendMailFailed: "Ponowienie zapisane, ale wysyłka wiadomości e-mail nie powiodła się.",
       removeSubscriber: "Nie udało się usunąć subskrybenta.",
       acceptSubscription: "Nie udało się zaakceptować zaproszenia.",
       updateSubscription: "Nie udało się zaktualizować subskrypcji.",
@@ -3745,7 +3745,7 @@ const pl = {
     },
     statusMsg: {
       inviteSaved: "Zaproszenie zapisane.",
-      mailSending: "Wysyłam mail…",
+      mailSending: "Wysyłam wiadomość e-mail…",
       mailSent: "Mail wysłany.",
       mailFailed: "Mail nie został wysłany.",
       shareNoChanges: "Brak zmian do zapisania.",
@@ -4042,8 +4042,8 @@ const pl = {
     },
   },
   baseExplorer: {
-    title: "Familiada — menadżer bazy pytań",
-    headerTitle: "Menadżer bazy pytań",
+    title: "Familiada — menedżer bazy pytań",
+    headerTitle: "Menedżer bazy pytań",
     backToBases: "Moje bazy",
     logout: "Wyloguj",
     common: {
@@ -4132,7 +4132,7 @@ const pl = {
       gameNameLabel: "Nazwa gry",
       questionsLabel: "Pytania",
       typeTitle: "Typ gry",
-      typePollText: "Typowa ankieta",
+      typePollText: "Ankieta tekstowa",
       typePollPoints: "Punktacja",
       typePrepared: "Preparowana",
       selectedTitle: "Zaznaczone (min 10)",
@@ -4278,7 +4278,7 @@ const pl = {
     optional: "(opcjonalnie)",
     deviceDisplay: "Wyświetlacz",
     deviceHost: "Prowadzący",
-    deviceBuzzer: "Przycisk",
+    deviceBuzzer: "Przycisk do pojedynku",
     lastSeen: "Ostatnio widziano:",
     deviceSeenNone: "brak",
     deviceSeenSeconds: "{seconds}s temu",
@@ -4307,11 +4307,11 @@ const pl = {
     shareDevice: "Udostępnij",
     qrDisplayAlt: "QR do wyświetlacza",
     qrHostAlt: "QR prowadzącego",
-    qrBuzzerAlt: "QR przycisku",
+    qrBuzzerAlt: "QR Przycisku do pojedynku",
     qrOnDisplay: "QR na wyświetlaczu",
     qrHide: "Schowaj QR",
     hostLinkAria: "Link do prowadzącego",
-    buzzerLinkAria: "Link do przycisku",
+    buzzerLinkAria: "Link do Przycisku do pojedynku",
     stepAudio: "Dźwięk",
     audioUnlockTitle: "Odblokuj dźwięk",
     audioUnlockHint: "Kliknij raz przycisk, żeby przeglądarka zezwoliła na odtwarzanie dźwięków.",
@@ -4415,14 +4415,14 @@ const pl = {
     roundsStartBtn: "Rozpocznij rundę",
     roundsDuelTitle: "Zatwierdź przycisk",
     roundsDuelName: "Pojedynek przyciskiem",
-    roundsDuelHint: "Przycisk jest aktywny. Gdy któraś drużyna naciśnie — wybierz, czy zatwierdzasz, albo powtórz naciśniecie.",
+    roundsDuelHint: "Przycisk jest aktywny. Gdy któraś drużyna naciśnie — wybierz, czy zatwierdzasz, albo powtórz naciśnięcie.",
     roundsBuzzAcceptA: "Zatwierdź drużynę A",
     roundsBuzzAcceptB: "Zatwierdź drużynę B",
     roundsBuzzRetry: "Ponów naciśnięcie",
     roundsBuzzConfirm: "Zatwierdź",
     roundsDuelHintPhysical: "Obserwuj kto nacisnął przycisk jako pierwszy. Kliknij drużynę, a następnie kliknij Zatwierdź.",
-    physicalBuzzer: "Fizyczny przycisk",
-    physicalBuzzerHint: "Jeśli posiadasz fizyczny przycisk typu buzzer użyj tej opcji. Operator decyduje o tym kto nacisnął pierwszy na podstawie obserwacji.",
+    physicalBuzzer: "Przycisk fizyczny",
+    physicalBuzzerHint: "Jeśli używasz przycisku fizycznego, wybierz tę opcję. Operator na podstawie obserwacji decyduje, kto nacisnął pierwszy.",
     noHostTablet: "Nie używaj tabletu prowadzącego",
     noHostTabletHint: "Jeśli prowadzący nie używa osobnego tabletu/telefonu, zaznacz tę opcję. Podpięcie urządzenia prowadzącego nie będzie wymagane.",
     soundSection: "Dźwięk",
@@ -4432,7 +4432,7 @@ const pl = {
     soundSourceDisplayHint: "Po przełączeniu na Wyświetlaczu pojawi się przycisk odblokowania dźwięku — kliknij go, żeby odblokować odtwarzanie.",
     roundsPlayTitle: "Runda",
     roundsPlayName: "Rozgrywka",
-    roundsPlayHint: "Wciskaj odpowiedź jesli poprawna, lub X (pudło), można również uruchonić odicznie 3s (czas=X). Po zakończeniu pojedynku, można oddać pytanie przeciwnej drużynie. We właściwej rozgrywce po trzech X uruchomi się kradzież (szansa przeciwnej drużyny).",
+    roundsPlayHint: "Wciskaj odpowiedź jeśli poprawna, lub X (pudło), można również uruchomić odliczanie 3s (czas=X). Po zakończeniu pojedynku, można oddać pytanie przeciwnej drużynie. We właściwej rozgrywce po trzech X uruchomi się kradzież (szansa przeciwnej drużyny).",
     roundsPassQuestion: "Oddaj pytanie",
     roundsAnswers: "Odpowiedzi",
     roundsAddX: "X (pudło)",
@@ -4451,10 +4451,10 @@ const pl = {
     finalStartBtn: "Rozpocznij finał",
     finalP1EntryTitle: "Runda 1 — wpisywanie",
     finalP1EntryName: "Odpowiedzi gracza 1 (15s)",
-    finalP1EntryHint: "Operator wpisuje odpowiedzi gracza. Możesz użyć Enter, żeby przejść do następnego pytania, lub strzałki góra/dół, żeby szybko przelączać się między pytaniami. Odliczanie rusza po wciśnięciu przycisku. Timer mozna uruchomić przyciskiem lub skrótem Shift + Ctrl (Cmd na Macu), można też zatrzymać jesli wszytko zostało wpisane, przyciskiem lub tym samym skrótem.",
+    finalP1EntryHint: "Operator wpisuje odpowiedzi gracza. Możesz użyć Enter, żeby przejść do następnego pytania, lub strzałki góra/dół, żeby szybko przełączać się między pytaniami. Odliczanie rusza po wciśnięciu przycisku. Timer można uruchomić przyciskiem lub skrótem Shift + Ctrl (Cmd na Macu), można też zatrzymać jeśli wszystko zostało wpisane, przyciskiem lub tym samym skrótem.",
     finalStartTimer15: "Rozpocznij odliczanie (15s)",
     finalP1MapQ1Title: "Runda 1 — mapowanie (P1)",
-    finalMapHint: "Wybierz odpowiedź z listy, jesli pasuje, jesli nie to odpowiedź gracza za 0 pkt. Jeśli nic nie było wpisane to brak odpowiedzi. Możesz odsłonić odpowiedź i punkty.",
+    finalMapHint: "Wybierz odpowiedź z listy, jeśli pasuje, jeśli nie to odpowiedź gracza za 0 pkt. Jeśli nic nie było wpisane to brak odpowiedzi. Możesz odsłonić odpowiedź i punkty.",
     finalP1MapQ2Title: "Runda 1 — mapowanie (P2)",
     finalP1MapQ3Title: "Runda 1 — mapowanie (P3)",
     finalP1MapQ4Title: "Runda 1 — mapowanie (P4)",
@@ -4466,7 +4466,7 @@ const pl = {
     finalRepeatSound: "Dźwiek powtórzenia",
     finalP2EntryTitle: "Runda 2 — wpisywanie",
     finalP2EntryName: "Odpowiedzi gracza 2 (20s)",
-    finalP2EntryHint: "Operator wpisuje odpowiedzi gracza. Możesz użyć Enter, żeby przejść do następnego pytania, lub strzałki góra/dół, żeby szybko przelączać się między pytaniami. Enter + Shift zaznacza powtórzenie. Odliczanie rusza po wciśnięciu przycisku. Możesz widzieć odpowiedź gracza 1. Powtórzenie to tylko dźwięk + status dla prowadzącego. Timer mozna uruchomić przyciskiem lub skrótem Shift + Ctrl (Cmd na Macu), można też zatrzymać jesli wszytko zostało wpisane, przyciskiem lub tym samym skrótem.",
+    finalP2EntryHint: "Operator wpisuje odpowiedzi gracza. Możesz użyć Enter, żeby przejść do następnego pytania, lub strzałki góra/dół, żeby szybko przełączać się między pytaniami. Enter + Shift zaznacza powtórzenie. Odliczanie rusza po wciśnięciu przycisku. Możesz widzieć odpowiedź gracza 1. Powtórzenie to tylko dźwięk + status dla prowadzącego. Timer można uruchomić przyciskiem lub skrótem Shift + Ctrl (Cmd na Macu), można też zatrzymać jeśli wszystko zostało wpisane, przyciskiem lub tym samym skrótem.",
     finalStartTimer20: "Rozpocznij odliczanie (20s)",
     finalP2MapQ1Title: "Runda 2 — mapowanie (P1)",
     finalP2MapQ2Title: "Runda 2 — mapowanie (P2)",
@@ -4475,7 +4475,7 @@ const pl = {
     finalP2MapQ5Title: "Runda 2 — mapowanie (P5)",
     finalEndTitle: "Zakończ finał",
     finalEndName: "Koniec",
-    finalEndHint: "To koniec finału. Na wyświetlaczu pokażemy logo programu, punkty zwycięskiej drużyny lub kwotę wygranej (w zależności co wybrałeś w ustawiniach). Po zakończeniu możesz wrócić do Moje gry.",
+    finalEndHint: "To koniec finału. Na wyświetlaczu pokażemy logo programu, punkty zwycięskiej drużyny lub kwotę wygranej (w zależności co wybrałeś w ustawieniach). Po zakończeniu możesz wrócić do strony „Moje gry”.",
     finalEndBtn: "Zakończ finał",
     noId: "Brak ID gry.",
     gameNotReady: "Gra niegotowa: {reason}",
@@ -4506,7 +4506,7 @@ const pl = {
       show_intro: "Muzyka intro programu",
       round_transition: "Przejście między rundami",
       final_theme: "Muzyka finału",
-      buzzer_press: "Naciśnięcie buzzera",
+      buzzer_press: "Naciśnięcie Przycisku do pojedynku",
       answer_correct: "Poprawna odpowiedź",
       answer_wrong: "Błędna odpowiedź (X)",
       answer_repeat: "Powtórzenie odpowiedzi w finale",
@@ -4533,7 +4533,7 @@ const pl = {
       noneShared: "Nie udostępniono.",
       noSubs: "Brak subskrybentów.",
       typeHost: "Prowadzący",
-      typeBuzzer: "Buzzer",
+      typeBuzzer: "Przycisk do pojedynku",
       typeDisplay: "Wyświetlacz",
       openDevice: "Otwórz: {type}",
       mailSubject: "Udostępniono urządzenie: {type}",
@@ -4820,9 +4820,9 @@ const pl = {
       descLabel: "Opis",
       descPlaceholder: "Krótki opis gry (temat, poziom trudności, dla kogo…)",
       langLabel: "Język gry",
-      snapshotWarning: "To jest snapshot. Po wysłaniu nie można edytować tej pozycji w Grach Społeczności.",
+      snapshotWarning: "To jest niezmienny zapis gry. Po wysłaniu nie można edytować tej pozycji w Grach Społeczności.",
       withdrawInfo: "Wycofanie usuwa ją z katalogu, ale osoby, które ją dodały, nadal ją mają.",
-      checkboxConfirm: "Rozumiem, że po wysłaniu snapshot jest nieedytowalny.",
+      checkboxConfirm: "Rozumiem, że po wysłaniu zapis gry jest nieedytowalny.",
       btnSubmit: "Wyślij do Gier Społeczności",
       btnCancel: "Anuluj",
       noEligible: "Brak odpowiednich gier.",
@@ -4862,7 +4862,7 @@ const pl = {
     header: {
       title: "Podłącz urządzenie",
       hint: "Zeskanuj kod QR lub otwórz link, żeby podłączyć urządzenie.",
-      hintMobile: "Podłącz się jako prowadzący lub buzzer, albo zeskanuj QR z panelu sterowania.",
+      hintMobile: "Podłącz się jako prowadzący lub Przycisk do pojedynku albo zeskanuj kod QR z Panelu sterowania.",
       hintDesktop: "Podłącz się jako wyświetlacz lub zeskanuj QR z panelu sterowania.",
     },
     scan: {
@@ -4885,7 +4885,7 @@ const pl = {
     },
     deviceType: {
       host: "Prowadzący",
-      buzzer: "Buzzer",
+      buzzer: "Przycisk do pojedynku",
       display: "Wyświetlacz",
       pollQr: "Wyświetlacz QR",
     },

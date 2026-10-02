@@ -188,7 +188,7 @@ function shareRoleOptions() {
 
 function shareRecipientTypeOptions() {
   return [
-    { value: "email", label: t("bases.shareModal.recipientEmail") || "Wpisz adres email / nazwę" },
+    { value: "email", label: t("bases.shareModal.recipientEmail") || "Wpisz adres e-mail lub nazwę użytkownika" },
     { value: "subscriber", label: t("bases.shareModal.recipientSubscriber") || "Wybierz subskrybenta" },
   ];
 }
@@ -1100,7 +1100,7 @@ async function shareAddInner() {
   if (recipientType === "email") {
     const raw = String(shareEmail.value || "").trim();
     if (!raw) {
-      setMsg(shareMsg, t("bases.share.enterEmail") || "Wpisz adres email lub nazwę użytkownika");
+      setMsg(shareMsg, t("bases.share.enterEmail") || "Wpisz adres e-mail lub nazwę użytkownika");
       return;
     }
     targetEmail = await resolveLoginToEmail(raw);

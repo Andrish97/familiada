@@ -37,7 +37,7 @@ function escapeHtml(s) {
 
 function deviceTypeLabel(type) {
   if (type === "host")     return t("connectDevice.deviceType.host")    || "Prowadzący";
-  if (type === "buzzer")   return t("connectDevice.deviceType.buzzer")  || "Buzzer";
+  if (type === "buzzer")   return t("connectDevice.deviceType.buzzer")  || "Przycisk do pojedynku";
   if (type === "display")  return t("connectDevice.deviceType.display") || "Wyświetlacz";
   if (type === "poll_qr")  return t("connectDevice.deviceType.pollQr")  || "Wyświetlacz QR";
   return type;
@@ -385,7 +385,7 @@ async function startQrScan() {
   }
 
   if (pageHint) pageHint.textContent = _isMobile
-    ? (t("connectDevice.header.hintMobile") || "Podłącz się jako prowadzący lub buzzer, albo zeskanuj QR z panelu sterowania.")
+    ? (t("connectDevice.header.hintMobile") || "Podłącz się jako prowadzący lub Przycisk do pojedynku albo zeskanuj kod QR z Panelu sterowania.")
     : (t("connectDevice.header.hintDesktop") || "Podłącz się jako wyświetlacz lub zeskanuj QR z panelu sterowania.");
 
   if (_isMobile && btnScanQr) {

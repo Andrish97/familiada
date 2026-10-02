@@ -12,7 +12,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
   <link rel="preconnect" href="https://cdn.jsdelivr.net">
   <link rel="preconnect" href="https://supabase.familiada.online">
-  <title data-i18n="control.title">Familiada — Panel sterowania</title>
+  <title data-i18n="control.title">Familiada — panel sterowania</title>
 
   <link rel="icon" href="/favicon.ico?v=v2026-09-30T19530"/>
   <link rel="stylesheet" href="/css/base.css?v=v2026-09-30T19530"/>
@@ -58,7 +58,7 @@
           <span class="dot mid" id="dotHost"></span><span class="lbl" data-i18n="control.deviceHost">Prowadzący</span>
         </div>
         <div class="dotRow" title="Przycisk" id="dotBuzzerRow" data-i18n-title="control.deviceBuzzer">
-          <span class="dot mid" id="dotBuzzer"></span><span class="lbl" data-i18n="control.deviceBuzzer">Przycisk</span>
+          <span class="dot mid" id="dotBuzzer"></span><span class="lbl" data-i18n="control.deviceBuzzer">Przycisk do pojedynku</span>
         </div>
       </div>
     </div>
@@ -123,7 +123,7 @@
           <button class="btn gold" id="qrModalCopy" type="button" data-i18n="common.copy">Kopiuj</button>
           <a class="btn hidden" id="qrModalOpen" target="_blank" rel="noopener" data-i18n="common.open">Otwórz</a>
         </div>
-        <div class="qrModalCodeHint" data-i18n="control.qrModalCodeHint">Wejdź na familiada.online → Podłącz urządzenie → wprowadź kod</div>
+        <div class="qrModalCodeHint" data-i18n="control.qrModalCodeHint">familiada.online → Podłącz urządzenie → wprowadź kod</div>
       </div>
     </div>
   </div>
@@ -359,7 +359,7 @@
                           <input type="checkbox" id="chkNoHostTablet"/>
                           <div class="device-opt-check-text">
                             <span class="device-opt-check-label" data-i18n="control.noHostTablet">Nie używaj tabletu prowadzącego</span>
-                            <span class="device-opt-check-hint" data-i18n="control.noHostTabletHint">Jeśli prowadzący nie używa osobnego tabletu/telefonu, zaznacz tę opcję.</span>
+                            <span class="device-opt-check-hint" data-i18n="control.noHostTabletHint">Jeśli prowadzący nie używa osobnego tabletu/telefonu, zaznacz tę opcję. Podpięcie urządzenia prowadzącego nie będzie wymagane.</span>
                           </div>
                         </label>
                       </div>
@@ -369,7 +369,7 @@
                     <div class="device-row" data-device="buzzer">
                       <!-- Rząd 1: nazwa, badge status -->
                       <div class="device-row-1">
-                        <div class="device-name" data-i18n="control.deviceBuzzer">Przycisk</div>
+                        <div class="device-name" data-i18n="control.deviceBuzzer">Przycisk do pojedynku</div>
                         <div class="badge mid" id="pillBuzzer">—</div>
                       </div>
                       <!-- Rząd 2: kod + przyciski -->
@@ -390,14 +390,14 @@
                         <label class="device-opt-check">
                           <input type="checkbox" id="chkPhysicalBuzzer"/>
                           <div class="device-opt-check-text">
-                            <span class="device-opt-check-label" data-i18n="control.physicalBuzzer">Fizyczny przycisk</span>
-                            <span class="device-opt-check-hint" data-i18n="control.physicalBuzzerHint">Jeśli posiadasz fizyczny przycisk buzzer, zaznacz tę opcję.</span>
+                            <span class="device-opt-check-label" data-i18n="control.physicalBuzzer">Przycisk fizyczny</span>
+                            <span class="device-opt-check-hint" data-i18n="control.physicalBuzzerHint">Jeśli używasz przycisku fizycznego, wybierz tę opcję. Operator na podstawie obserwacji decyduje, kto nacisnął pierwszy.</span>
                           </div>
                         </label>
                       </div>
                     </div>
 
-                    <div class="device-code-hint" data-i18n="control.deviceCodeHint">Wejdź na familiada.online, kliknij „Podłącz urządzenie" i wprowadź kod urządzenia.</div>
+                    <div class="device-code-hint" data-i18n="control.deviceCodeHint">Wejdź na familiada.online, kliknij "Podłącz urządzenie" i wprowadź kod urządzenia.</div>
 
                   </div>
 
@@ -503,7 +503,7 @@
                   </div>
 
                   <div class="hint" data-i18n="control.setupFinishHint">
-                    Po kliknięciu „Gotowe" przejdziesz do panelu rund.
+                    Po kliknięciu "Gotowe" przejdziesz do panelu rund.
                   </div>
                 </div>
 
@@ -511,7 +511,7 @@
                   <div class="stepFootButtons">
                     <button class="btn" id="btnSetupFinishBack" type="button" data-i18n="common.back">Wstecz</button>
                     <button class="btn sm" id="btnOpenGsModal" type="button" data-i18n="control.summarySettingsLink">Zmień ustawienia</button>
-                    <button class="btn gold" id="btnSetupFinish2" type="button" data-i18n="control.devicesFinish">Gotowe — przejdź do rund</button>
+                    <button class="btn gold" id="btnSetupFinish2" type="button" data-i18n="control.devicesFinish">Gotowe — przejdź dalej</button>
                   </div>
                   <div class="msg msg-pill" id="msgSetupFinish"></div>
                 </div>
@@ -568,7 +568,7 @@
                   <div class="name" data-i18n="control.roundsDuelName">Pojedynek przyciskiem</div>
                   <div class="hint hint-compact" data-i18n="control.roundsDuelHint">
                     Przycisk jest aktywny. Gdy któraś drużyna naciśnie — wybierz, czy zatwierdzasz,
-                    albo powtórz naciśniecie.
+                    albo powtórz naciśnięcie.
                   </div>
 
                   <ul class="hList">
@@ -599,7 +599,7 @@
                   <div class="name" data-i18n="control.roundsPlayName">Rozgrywka</div>
                   <div class="qText" id="roundQuestion">—</div>
                     <div class="hint" data-i18n="control.roundsPlayHint">
-                      Wciskaj odpowiedź jesli poprawna, lub X (pudło), można również uruchonić odicznie 3s (czas=X).
+                      Wciskaj odpowiedź jeśli poprawna, lub X (pudło), można również uruchomić odliczanie 3s (czas=X).
                       Po zakończeniu pojedynku, można oddać pytanie przeciwnej drużynie.
                       We właściwej rozgrywce po trzech X uruchomi się kradzież (szansa przeciwnej drużyny).
                     </div>
@@ -691,9 +691,9 @@
                   <div class="name" data-i18n="control.finalP1EntryName">Odpowiedzi gracza 1 (15s)</div>
                   <div class="hint" data-i18n="control.finalP1EntryHint">
                     Operator wpisuje odpowiedzi gracza. Możesz użyć Enter, żeby przejść do następnego pytania,
-                    lub strzałki góra/dół, żeby szybko przelączać się między pytaniami. Odliczanie rusza po wciśnięciu przycisku.
-                    Timer mozna uruchomić przyciskiem lub skrótem Shift + Ctrl (Cmd na Macu),
-                    można też zatrzymać jesli wszytko zostało wpisane, przyciskiem lub tym samym skrótem.
+                    lub strzałki góra/dół, żeby szybko przełączać się między pytaniami. Odliczanie rusza po wciśnięciu przycisku.
+                    Timer można uruchomić przyciskiem lub skrótem Shift + Ctrl (Cmd na Macu),
+                    można też zatrzymać jeśli wszystko zostało wpisane, przyciskiem lub tym samym skrótem.
                   </div>
 
                   <div class="rowBtns" style="margin-top:10px;">
@@ -716,7 +716,7 @@
               <div class="stepTitle" data-i18n="control.finalP1MapQ1Title">Runda 1 — mapowanie (P1)</div>
               <div class="card">
               <div class="hint" data-i18n="control.finalMapHint">
-                Wybierz odpowiedź z listy, jesli pasuje, jesli nie to odpowiedź gracza za 0 pkt.
+                Wybierz odpowiedź z listy, jeśli pasuje, jeśli nie to odpowiedź gracza za 0 pkt.
                 Jeśli nic nie było wpisane to brak odpowiedzi. Możesz odsłonić odpowiedź i punkty.
               </div>
                 <div class="cardBody"><div id="finalP1MapQ1"></div></div>
@@ -731,7 +731,7 @@
               <div class="stepTitle" data-i18n="control.finalP1MapQ2Title">Runda 1 — mapowanie (P2)</div>
               <div class="card">
               <div class="hint" data-i18n="control.finalMapHint">
-                Wybierz odpowiedź z listy, jesli pasuje, jesli nie to odpowiedź gracza za 0 pkt.
+                Wybierz odpowiedź z listy, jeśli pasuje, jeśli nie to odpowiedź gracza za 0 pkt.
                 Jeśli nic nie było wpisane to brak odpowiedzi. Możesz odsłonić odpowiedź i punkty.
               </div>
                 <div class="cardBody"><div id="finalP1MapQ2"></div></div>
@@ -746,7 +746,7 @@
               <div class="stepTitle" data-i18n="control.finalP1MapQ3Title">Runda 1 — mapowanie (P3)</div>
               <div class="card">
               <div class="hint" data-i18n="control.finalMapHint">
-                Wybierz odpowiedź z listy, jesli pasuje, jesli nie to odpowiedź gracza za 0 pkt.
+                Wybierz odpowiedź z listy, jeśli pasuje, jeśli nie to odpowiedź gracza za 0 pkt.
                 Jeśli nic nie było wpisane to brak odpowiedzi. Możesz odsłonić odpowiedź i punkty.
               </div>
                 <div class="cardBody"><div id="finalP1MapQ3"></div></div>
@@ -761,7 +761,7 @@
               <div class="stepTitle" data-i18n="control.finalP1MapQ4Title">Runda 1 — mapowanie (P4)</div>
               <div class="card">
               <div class="hint" data-i18n="control.finalMapHint">
-                Wybierz odpowiedź z listy, jesli pasuje, jesli nie to odpowiedź gracza za 0 pkt.
+                Wybierz odpowiedź z listy, jeśli pasuje, jeśli nie to odpowiedź gracza za 0 pkt.
                 Jeśli nic nie było wpisane to brak odpowiedzi. Możesz odsłonić odpowiedź i punkty.
               </div>
                 <div class="cardBody"><div id="finalP1MapQ4"></div></div>
@@ -776,7 +776,7 @@
               <div class="stepTitle" data-i18n="control.finalP1MapQ5Title">Runda 1 — mapowanie (P5)</div>
               <div class="card">
                 <div class="hint" data-i18n="control.finalMapHint">
-                Wybierz odpowiedź z listy, jesli pasuje, jesli nie to odpowiedź gracza za 0 pkt.
+                Wybierz odpowiedź z listy, jeśli pasuje, jeśli nie to odpowiedź gracza za 0 pkt.
                 Jeśli nic nie było wpisane to brak odpowiedzi. Możesz odsłonić odpowiedź i punkty.
               </div>
                 <div class="cardBody"><div id="finalP1MapQ5"></div></div>
@@ -811,10 +811,10 @@
                   <div class="name" data-i18n="control.finalP2EntryName">Odpowiedzi gracza 2 (20s)</div>
                   <div class="hint" data-i18n="control.finalP2EntryHint">
                     Operator wpisuje odpowiedzi gracza. Możesz użyć Enter, żeby przejść do następnego pytania,
-                    lub strzałki góra/dół, żeby szybko przelączać się między pytaniami. Enter + Shift zaznacza powtórzenie.
+                    lub strzałki góra/dół, żeby szybko przełączać się między pytaniami. Enter + Shift zaznacza powtórzenie.
                     Odliczanie rusza po wciśnięciu przycisku. Możesz widzieć odpowiedź gracza 1.
-                    Powtórzenie to tylko dźwięk + status dla prowadzącego. Timer mozna uruchomić przyciskiem
-                    lub skrótem Shift + Ctrl (Cmd na Macu), można też zatrzymać jesli wszytko zostało wpisane,
+                    Powtórzenie to tylko dźwięk + status dla prowadzącego. Timer można uruchomić przyciskiem
+                    lub skrótem Shift + Ctrl (Cmd na Macu), można też zatrzymać jeśli wszystko zostało wpisane,
                     przyciskiem lub tym samym skrótem.
                   </div>
 
@@ -836,7 +836,7 @@
               <div class="stepTitle" data-i18n="control.finalP2MapQ1Title">Runda 2 — mapowanie (P1)</div>
               <div class="card">
                 <div class="hint" data-i18n="control.finalMapHint">
-                Wybierz odpowiedź z listy, jesli pasuje, jesli nie to odpowiedź gracza za 0 pkt.
+                Wybierz odpowiedź z listy, jeśli pasuje, jeśli nie to odpowiedź gracza za 0 pkt.
                 Jeśli nic nie było wpisane to brak odpowiedzi. Możesz odsłonić odpowiedź i punkty.
               </div>
                 <div class="cardBody"><div id="finalP2MapQ1"></div></div>
@@ -851,7 +851,7 @@
               <div class="stepTitle" data-i18n="control.finalP2MapQ2Title">Runda 2 — mapowanie (P2)</div>
               <div class="card">
                 <div class="hint" data-i18n="control.finalMapHint">
-                Wybierz odpowiedź z listy, jesli pasuje, jesli nie to odpowiedź gracza za 0 pkt.
+                Wybierz odpowiedź z listy, jeśli pasuje, jeśli nie to odpowiedź gracza za 0 pkt.
                 Jeśli nic nie było wpisane to brak odpowiedzi. Możesz odsłonić odpowiedź i punkty.
               </div>
                 <div class="cardBody"><div id="finalP2MapQ2"></div></div>
@@ -866,7 +866,7 @@
               <div class="stepTitle" data-i18n="control.finalP2MapQ3Title">Runda 2 — mapowanie (P3)</div>
               <div class="card">
                 <div class="hint" data-i18n="control.finalMapHint">
-                Wybierz odpowiedź z listy, jesli pasuje, jesli nie to odpowiedź gracza za 0 pkt.
+                Wybierz odpowiedź z listy, jeśli pasuje, jeśli nie to odpowiedź gracza za 0 pkt.
                 Jeśli nic nie było wpisane to brak odpowiedzi. Możesz odsłonić odpowiedź i punkty.
               </div>
                 <div class="cardBody"><div id="finalP2MapQ3"></div></div>
@@ -881,7 +881,7 @@
               <div class="stepTitle" data-i18n="control.finalP2MapQ4Title">Runda 2 — mapowanie (P4)</div>
               <div class="card">
                 <div class="hint" data-i18n="control.finalMapHint">
-                Wybierz odpowiedź z listy, jesli pasuje, jesli nie to odpowiedź gracza za 0 pkt.
+                Wybierz odpowiedź z listy, jeśli pasuje, jeśli nie to odpowiedź gracza za 0 pkt.
                 Jeśli nic nie było wpisane to brak odpowiedzi. Możesz odsłonić odpowiedź i punkty.
               </div>
                 <div class="cardBody"><div id="finalP2MapQ4"></div></div>
@@ -896,7 +896,7 @@
               <div class="stepTitle" data-i18n="control.finalP2MapQ5Title">Runda 2 — mapowanie (P5)</div>
               <div class="card">
                 <div class="hint" data-i18n="control.finalMapHint">
-                Wybierz odpowiedź z listy, jesli pasuje, jesli nie to odpowiedź gracza za 0 pkt.
+                Wybierz odpowiedź z listy, jeśli pasuje, jeśli nie to odpowiedź gracza za 0 pkt.
                 Jeśli nic nie było wpisane to brak odpowiedzi. Możesz odsłonić odpowiedź i punkty.
               </div>
                 <div class="cardBody"><div id="finalP2MapQ5"></div></div>
@@ -913,8 +913,9 @@
                 <div class="cardBody">
                   <div class="name" data-i18n="control.finalEndName">Koniec</div>
                     <div class="hint" data-i18n="control.finalEndHint">
-                      To konic finału. Na wyświetlaczu pokażemy logo programu,
-                      punkty zwycięskiej drużyny lub kwotę wygranej (w zależności co wybrałeś w ustawiniach).
+                      To koniec finału. Na wyświetlaczu pokażemy logo programu,
+                      punkty zwycięskiej drużyny lub kwotę wygranej (w zależności co wybrałeś w ustawieniach).
+                      Po zakończeniu możesz wrócić do strony „Moje gry”.
                     </div>
                   <div class="hint" id="finalEndHint">—</div>
                 </div>
@@ -942,10 +943,10 @@
   <div class="overlay" id="shareDeviceOverlay" style="display:none;">
     <div class="modal shareModal">
       <div class="mHead">
-        <div class="mTitle" id="shareDeviceTitle" data-i18n="control.shareDeviceModal.title">Udostępnij urządzenie</div>
+        <div class="mTitle" id="shareDeviceTitle" data-i18n="control.shareDeviceModal.title">Udostępnij</div>
         <button class="btn sm" id="btnShareDeviceClose" type="button" aria-label="Zamknij">✕</button>
       </div>
-      <div class="mSub" data-i18n="control.shareDeviceModal.subtitle">Wybierz subskrybenta lub wpisz e-mail / nazwę użytkownika.</div>
+      <div class="mSub" data-i18n="control.shareDeviceModal.subtitle">Wybierz subskrybenta lub wpisz e-mail.</div>
 
       <!-- Kogo aktualnie udostępniono -->
       <div id="shareDeviceCurrentWrap" class="shareCurrent" style="display:none;">
@@ -965,7 +966,7 @@
       </div>
 
       <div class="shareSection">
-        <div class="shareSectionTitle" data-i18n="bases.shareModal.sectionSubscribers">Moi subskrybenci</div>
+        <div class="shareSectionTitle" data-i18n="bases.shareModal.sectionSubscribers">Subskrybenci</div>
         <div class="shareList" id="shareDeviceSubsList"></div>
       </div>
 

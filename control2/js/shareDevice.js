@@ -27,7 +27,7 @@ function esc(s) {
 
 function deviceTypeLabel(type) {
   if (type === "host") return t("control.shareDeviceModal.typeHost") || "Prowadzący";
-  if (type === "buzzer") return t("control.shareDeviceModal.typeBuzzer") || "Buzzer";
+  if (type === "buzzer") return t("control.shareDeviceModal.typeBuzzer") || "Przycisk do pojedynku";
   if (type === "display") return t("control.shareDeviceModal.typeDisplay") || "Wyświetlacz";
   return type;
 }

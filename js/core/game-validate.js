@@ -4,8 +4,8 @@ import { t } from "../../translation/translation.js?v=v2026-09-30T19530";
 
 /**
  * Typy gier:
- * - poll_text    => Typowa ankieta
- * - poll_points  => Punktacja odpowiedzi (ankieta na odpowiedź)
+ * - poll_text    => Ankieta tekstowa
+ * - poll_points  => Punktacja
  * - prepared     => Preparowana (manualne punkty, suma=100)
  */
 export const TYPES = {
