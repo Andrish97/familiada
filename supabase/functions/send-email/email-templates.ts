@@ -1,7 +1,13 @@
+// Teksty maili żyją w ogólnych tłumaczeniach strony (translation/{pl,en,uk}.js,
+// sekcja `authEmail`). Funkcja pobiera je ze strony w trakcie działania —
+// bez kopii w repo/deployu. Gdy strona leży, a w pamięci nie ma jeszcze
+// żadnej wersji, wysyłka kończy się błędem (linki w mailu i tak prowadzą na stronę).
+
 export type EmailLang = "pl" | "en" | "uk";
 export type EmailType = "signup" | "guest_migrate" | "recovery" | "email_change";
 
-type CopyBlock = {
+export type CopyBlock = {
+  subject: string;
   subtitle: string;
   title: string;
   desc: string;
@@ -12,134 +18,95 @@ type CopyBlock = {
   footer: string;
 };
 
-type CopyMap = Record<EmailType, Record<EmailLang, CopyBlock>>;
+const TYPE_KEYS: Record<EmailType, string> = {
+  signup: "signup",
+  guest_migrate: "guestMigrate",
+  recovery: "recovery",
+  email_change: "emailChange",
+};
 
-const globalAny = globalThis as unknown as { __familiada_email_copy?: CopyMap };
-export var EMAIL_COPY: CopyMap = globalAny.__familiada_email_copy || (globalAny.__familiada_email_copy = {
-  signup: {
-    pl: {
-      subtitle: "Potwierdzenie konta",
-      title: "Aktywuj konto",
-      desc: "Kliknij przycisk poniżej, aby potwierdzić adres e-mail i dokończyć rejestrację.",
-      btn: "POTWIERDŹ KONTO",
-      ignore: "Jeśli to nie Ty, zignoruj tę wiadomość.",
-      copyHint: "Link nie działa? Skopiuj i wklej do przeglądarki:",
-      linkLabel: "Link nie działa?",
-      footer: "Wiadomość automatyczna — prosimy nie odpowiadać.",
-    },
-    en: {
-      subtitle: "Account confirmation",
-      title: "Activate your account",
-      desc: "Click the button below to confirm your email address and complete registration.",
-      btn: "CONFIRM ACCOUNT",
-      ignore: "If this wasn’t you, you can safely ignore this email.",
-      copyHint: "Link not working? Copy and paste it into your browser:",
-      linkLabel: "Link not working?",
-      footer: "This is an automated message — please do not reply.",
-    },
-    uk: {
-      subtitle: "Підтвердження облікового запису",
-      title: "Активуйте обліковий запис",
-      desc: "Натисніть кнопку нижче, щоб підтвердити електронну пошту та завершити реєстрацію.",
-      btn: "ПІДТВЕРДИТИ ОБЛІКОВИЙ ЗАПИС",
-      ignore: "Якщо це не ви, просто проігноруйте цей лист.",
-      copyHint: "Посилання не працює? Скопіюйте та вставте в браузер:",
-      linkLabel: "Посилання не працює?",
-      footer: "Автоматичне повідомлення — будь ласка, не відповідайте.",
-    },
-  },
-  guest_migrate: {
-    pl: {
-      subtitle: "Migracja konta",
-      title: "Potwierdź migrację",
-      desc: "Kliknij przycisk poniżej, aby potwierdzić adres e-mail i przenieść konto gościa.",
-      btn: "POTWIERDŹ MIGRACJĘ",
-      ignore: "Jeśli to nie Ty, zignoruj tę wiadomość.",
-      copyHint: "Link nie działa? Skopiuj i wklej do przeglądarki:",
-      linkLabel: "Link nie działa?",
-      footer: "Wiadomość automatyczna — prosimy nie odpowiadać.",
-    },
-    en: {
-      subtitle: "Account migration",
-      title: "Confirm migration",
-      desc: "Click the button below to confirm your email and migrate the guest account.",
-      btn: "CONFIRM MIGRATION",
-      ignore: "If this wasn’t you, you can safely ignore this email.",
-      copyHint: "Link not working? Copy and paste it into your browser:",
-      linkLabel: "Link not working?",
-      footer: "This is an automated message — please do not reply.",
-    },
-    uk: {
-      subtitle: "Міграція акаунта",
-      title: "Підтвердіть міграцію",
-      desc: "Натисніть кнопку нижче, щоб підтвердити e-mail і перенести гостьовий акаунт.",
-      btn: "ПІДТВЕРДИТИ МІГРАЦІЮ",
-      ignore: "Якщо це не ви, просто проігноруйте цей лист.",
-      copyHint: "Посилання не працює? Скопіюйте та вставте в браузер:",
-      linkLabel: "Посилання не працює?",
-      footer: "Автоматичне повідомлення — будь ласка, не відповідайте.",
-    },
-  },
-  recovery: {
-    pl: {
-      subtitle: "Reset hasła",
-      title: "Ustaw nowe hasło",
-      desc: "Otrzymaliśmy prośbę o zmianę hasła. Kliknij przycisk poniżej, aby ustawić nowe.",
-      btn: "USTAW NOWE HASŁO",
-      ignore: "Jeśli to nie Ty — zignoruj tę wiadomość. Hasło nie zmieni się, dopóki nie użyjesz linku.",
-      copyHint: "Link nie działa? Skopiuj i wklej do przeglądarki:",
-      footer: "Wiadomość automatyczna — prosimy nie odpowiadać.",
-    },
-    en: {
-      subtitle: "Password reset",
-      title: "Set a new password",
-      desc: "We received a request to reset your password. Click the button below to set a new one.",
-      btn: "SET NEW PASSWORD",
-      ignore: "If this wasn’t you, you can safely ignore this email. Your password won’t change unless you use the link.",
-      copyHint: "Link not working? Copy and paste it into your browser:",
-      footer: "This is an automated message — please do not reply.",
-    },
-    uk: {
-      subtitle: "Скидання пароля",
-      title: "Встановіть новий пароль",
-      desc: "Ми отримали запит на зміну пароля. Натисніть кнопку нижче, щоб встановити новий пароль.",
-      btn: "ВСТАНОВИТИ НОВИЙ ПАРОЛЬ",
-      ignore: "Якщо це були не ви — просто проігноруйте цей лист. Пароль не зміниться, доки ви не використаєте посилання.",
-      copyHint: "Посилання не працює? Скопіюйте та вставте в браузер:",
-      footer: "Автоматичне повідомлення — будь ласка, не відповідайте.",
-    },
-  },
-  email_change: {
-    pl: {
-      subtitle: "Zmiana e-mail",
-      title: "Potwierdź nowy adres",
-      desc: "Kliknij poniżej, aby potwierdzić nowy adres e-mail przypisany do Twojego konta.",
-      btn: "Potwierdź nowy e-mail",
-      ignore: "Jeśli to nie Ty zmieniałeś(aś) adres — zignoruj i zabezpiecz konto.",
-      copyHint: "Link nie działa? Skopiuj i wklej do przeglądarki:",
-      footer: "Wiadomość automatyczna — prosimy nie odpowiadać.",
-    },
-    en: {
-      subtitle: "Email change",
-      title: "Confirm your new email",
-      desc: "Click below to confirm the new email address associated with your account.",
-      btn: "Confirm new email",
-      ignore: "If you didn’t request this change, ignore this email and secure your account.",
-      copyHint: "Link not working? Copy and paste it into your browser:",
-      footer: "This is an automated message — please do not reply.",
-    },
-    uk: {
-      subtitle: "Зміна e-mail",
-      title: "Підтвердіть нову адресу",
-      desc: "Натисніть нижче, щоб підтвердити нову електронну адресу, прив’язану до вашого облікового запису.",
-      btn: "Підтвердити нову адресу",
-      ignore: "Якщо це були не ви — проігноруйте лист і захистіть обліковий запис.",
-      copyHint: "Посилання не працює? Скопіюйте та вставте в браузер:",
-      footer: "Автоматичне повідомлення — будь ласка, не відповідайте.",
-    },
-  },
-});
+const REQUIRED_FIELDS: (keyof CopyBlock)[] = [
+  "subject", "subtitle", "title", "desc", "btn", "ignore", "copyHint", "footer",
+];
 
-export function getEmailCopy(type: EmailType, lang: EmailLang): CopyBlock {
-  return EMAIL_COPY[type][lang];
+const CACHE_TTL_MS = 10 * 60 * 1000;
+const FETCH_TIMEOUT_MS = 5000;
+
+// Stały, zaufany origin — NIE redirect_to z payloadu, bo pobrany plik jest wykonywany.
+function translationsOrigin(): string {
+  const raw = String(Deno.env.get("TRANSLATIONS_ORIGIN") || Deno.env.get("SITE_URL") || "").trim();
+  if (raw) {
+    try {
+      return new URL(raw).origin;
+    } catch {
+      console.warn("[send-email] invalid TRANSLATIONS_ORIGIN/SITE_URL (ignored)");
+    }
+  }
+  return "https://www.familiada.online";
+}
+
+type CacheEntry = { dict: Record<string, unknown>; at: number };
+const globalAny = globalThis as unknown as { __familiada_email_dict?: Map<EmailLang, CacheEntry> };
+const cache: Map<EmailLang, CacheEntry> =
+  globalAny.__familiada_email_dict || (globalAny.__familiada_email_dict = new Map());
+
+// translation/<lang>.js to `const xx = { ... }; export default xx;` bez importów.
+function evalTranslationModule(code: string): Record<string, unknown> {
+  const body = code.replace(/export\s+default\s+([A-Za-z_$][\w$]*)\s*;?/, "return $1;");
+  if (body === code) throw new Error("translation module has no `export default`");
+  const dict = new Function(body)();
+  if (!dict || typeof dict !== "object") throw new Error("translation module did not return an object");
+  return dict as Record<string, unknown>;
+}
+
+async function fetchDict(lang: EmailLang): Promise<Record<string, unknown>> {
+  const url = `${translationsOrigin()}/translation/${lang}.js?t=${Date.now()}`;
+  const res = await fetch(url, {
+    headers: { accept: "text/javascript, application/javascript, */*" },
+    signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status} for ${url}`);
+  const dict = evalTranslationModule(await res.text());
+  // Stara wersja strony (np. tuż po deployu) — nie cache'ujemy jej.
+  if (!dict.authEmail || typeof dict.authEmail !== "object") {
+    throw new Error(`no authEmail section in ${url}`);
+  }
+  return dict;
+}
+
+async function loadDict(lang: EmailLang): Promise<Record<string, unknown>> {
+  const hit = cache.get(lang);
+  if (hit && Date.now() - hit.at < CACHE_TTL_MS) return hit.dict;
+  try {
+    const dict = await fetchDict(lang);
+    cache.set(lang, { dict, at: Date.now() });
+    return dict;
+  } catch (err) {
+    if (hit) {
+      console.warn("[send-email] translation fetch failed, using stale cache", { lang, err: String(err) });
+      return hit.dict;
+    }
+    throw new Error(`Cannot load email translations (${lang}): ${String(err)}`);
+  }
+}
+
+function pickBlock(dict: Record<string, unknown>, type: EmailType): CopyBlock | null {
+  const section = (dict.authEmail as Record<string, unknown> | undefined)?.[TYPE_KEYS[type]];
+  if (!section || typeof section !== "object") return null;
+  const block = section as Record<string, unknown>;
+  for (const f of REQUIRED_FIELDS) {
+    if (typeof block[f] !== "string" || !block[f]) return null;
+  }
+  return block as unknown as CopyBlock;
+}
+
+export async function getEmailCopy(type: EmailType, lang: EmailLang): Promise<CopyBlock> {
+  const block = pickBlock(await loadDict(lang), type);
+  if (block) return block;
+  if (lang !== "pl") {
+    console.warn("[send-email] missing authEmail copy, falling back to pl", { type, lang });
+    const plBlock = pickBlock(await loadDict("pl"), type);
+    if (plBlock) return plBlock;
+  }
+  throw new Error(`Missing authEmail.${TYPE_KEYS[type]} in translations (${lang})`);
 }

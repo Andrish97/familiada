@@ -1,7 +1,7 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { Webhook } from "https://esm.sh/standardwebhooks@1.0.0";
 import { encodeBase64 } from "https://deno.land/std@0.224.0/encoding/base64.ts";
-import { getEmailCopy, type EmailLang } from "./email-templates.ts";
+import { getEmailCopy, type CopyBlock, type EmailLang, type EmailType } from "./email-templates.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") || "";
@@ -604,8 +604,8 @@ serve(async (req) => {
       const tokenHash = payload.email_data.token_hash || "";
       const tokenHashNew = payload.email_data.token_hash_new || "";
 
-      const emailTemplate = isGuestMigrate ? "guest_migrate" : "email_change";
-      const subject = subjectFor(emailTemplate, lang);
+      const emailTemplate: EmailType = isGuestMigrate ? "guest_migrate" : "email_change";
+      const copy = await getEmailCopy(emailTemplate, lang);
 
       const thCurrent = tokenHash;
       const thNew = tokenHashNew || tokenHash;
@@ -616,17 +616,13 @@ serve(async (req) => {
         `${baseOrigin}/confirm.html?token_hash=${encodeURIComponent(thNew)}&type=email_change&lang=${lang}`;
 
       if (currentEmail && thCurrent) {
-        const htmlCurrent = emailTemplate === "guest_migrate"
-          ? renderSignupMigrate(lang, linkCurrent)
-          : renderEmailChange(lang, linkCurrent);
-        await sendEmail(currentEmail, subject, htmlCurrent, { requestId, actorUserId });
+        const htmlCurrent = renderEmail(copy, linkCurrent, emailTemplate === "email_change");
+        await sendEmail(currentEmail, copy.subject, htmlCurrent, { requestId, actorUserId });
       }
 
       if (targetEmail && thNew && targetEmailNormalized !== currentEmailNormalized) {
-        const htmlTarget = emailTemplate === "guest_migrate"
-          ? renderSignupMigrate(lang, linkTarget)
-          : renderEmailChange(lang, linkTarget);
-        await sendEmail(targetEmail, subject, htmlTarget, { requestId, actorUserId });
+        const htmlTarget = renderEmail(copy, linkTarget, emailTemplate === "email_change");
+        await sendEmail(targetEmail, copy.subject, htmlTarget, { requestId, actorUserId });
       }
 
       await writeLog({
@@ -641,8 +637,10 @@ serve(async (req) => {
 
 
     const actionLink = buildActionLink(payload, lang, baseOrigin);
-    const subject = subjectFor(type, lang);
-    const html = renderHtml(type, lang, actionLink);
+    const template = templateFor(type);
+    const copy = await getEmailCopy(template, lang);
+    const subject = copy.subject;
+    const html = renderEmail(copy, actionLink, template === "email_change");
 
     const to =
       type === "email_change_new"
@@ -711,52 +709,11 @@ function buildActionLink(payload: HookPayload, lang: EmailLang, baseOrigin: stri
   return mk("confirm.html", tokenHash, type);
 }
 
-function subjectFor(type: string, lang: EmailLang): string {
-  const normalized =
-    type === "email_change_current" || type === "email_change_new" || type === "email_change"
-      ? "email_change"
-      : type;
-
-  const map: Record<string, Record<"pl" | "en" | "uk", string>> = {
-    signup: {
-      pl: "FAMILIADA — Potwierdzenie konta",
-      en: "FAMILIADA — Confirm your account",
-      uk: "FAMILIADA — Підтвердження облікового zapisu",
-    },
-    guest_migrate: {
-      pl: "FAMILIADA — Potwierdź migrację",
-      en: "FAMILIADA — Confirm migration",
-      uk: "FAMILIADA — Підтвердіть міграцію",
-    },
-    recovery: {
-      pl: "FAMILIADA — Reset hasła",
-      en: "FAMILIADA — Password reset",
-      uk: "FAMILIADA — Скидання пароля",
-    },
-    email_change: {
-      pl: "FAMILIADA — Zmiana e-mail",
-      en: "FAMILIADA — Email change",
-      uk: "FAMILIADA — Зміна e-mail",
-    },
-  };
-
-  return map[normalized]?.[lang] || "FAMILIADA";
-}
-
-function renderHtml(type: string, lang: EmailLang, actionLink: string): string {
-  if (type === "signup") {
-    return renderSignup(lang, actionLink);
-  }
-  if (type === "guest_migrate") {
-    return renderSignupMigrate(lang, actionLink);
-  }
-  if (type === "recovery") {
-    return renderRecovery(lang, actionLink);
-  }
-  if (type === "email_change" || type === "email_change_current" || type === "email_change_new") {
-    return renderEmailChange(lang, actionLink);
-  }
-  return renderSignup(lang, actionLink);
+function templateFor(type: string): EmailType {
+  if (type === "guest_migrate") return "guest_migrate";
+  if (type === "recovery") return "recovery";
+  if (type === "email_change" || type === "email_change_current" || type === "email_change_new") return "email_change";
+  return "signup";
 }
 
 function wrapEmailDoc(innerHtml: string): string {
@@ -776,12 +733,19 @@ ${innerHtml}
 }
 
 
-function renderSignup(lang: EmailLang, link: string): string {
-  const t = getEmailCopy("signup", lang);
+
+// Jeden szablon dla wszystkich typów; mail zmiany e-maila ma lekko inny styl
+// (font, brak blur w nagłówku, przycisk wersalikami) — zachowane jak wcześniej.
+function renderEmail(t: CopyBlock, link: string, emailChangeStyle = false): string {
+  const font = emailChangeStyle
+    ? "system-ui,-apple-system,Segoe UI,Roboto,Arial"
+    : "system-ui,-apple-system,Segoe UI,sans-serif";
+  const headerBlur = emailChangeStyle ? "" : "backdrop-filter:blur(10px);";
+  const btnCase = emailChangeStyle ? "text-transform:uppercase;" : "";
   return wrapEmailDoc(`
 <div style="margin:0;padding:0;background:#050914;">
-  <div style="max-width:560px;margin:0 auto;padding:26px 16px;font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:#ffffff;">
-    <div style="padding:14px 14px;background:#0b1020;background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.12);border-radius:18px;backdrop-filter:blur(10px);">
+  <div style="max-width:560px;margin:0 auto;padding:26px 16px;font-family:${font};color:#ffffff;">
+    <div style="padding:14px 14px;background:#0b1020;background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.12);border-radius:18px;${headerBlur}">
       <div style="font-weight:1000;letter-spacing:.18em;text-transform:uppercase;color:#ffeaa6;">FAMILIADA</div>
       <div style="margin-top:6px;font-size:12px;opacity:.85;letter-spacing:.08em;text-transform:uppercase;">${t.subtitle}</div>
     </div>
@@ -789,92 +753,11 @@ function renderSignup(lang: EmailLang, link: string): string {
       <div style="font-weight:1000;font-size:18px;letter-spacing:.06em;color:#ffeaa6;margin:0 0 10px;">${t.title}</div>
       <div style="font-size:14px;opacity:.9;line-height:1.45;margin:0 0 14px;">${t.desc}</div>
       <div style="margin:16px 0;">
-        <a href="${link}" style="display:block;text-align:center;padding:12px 14px;border-radius:14px;border:1px solid rgba(255,234,166,.35);background:rgba(255,234,166,.10);color:#ffeaa6;text-decoration:none;font-weight:1000;letter-spacing:.06em;">${t.btn}</a>
+        <a href="${link}" style="display:block;text-align:center;padding:12px 14px;border-radius:14px;border:1px solid rgba(255,234,166,.35);background:rgba(255,234,166,.10);color:#ffeaa6;text-decoration:none;font-weight:1000;letter-spacing:.06em;${btnCase}">${t.btn}</a>
       </div>
       <div style="margin-top:14px;font-size:12px;opacity:.75;line-height:1.4;">${t.ignore}</div>
       <div style="margin-top:10px;font-size:12px;opacity:.75;line-height:1.4;">
         ${t.linkLabel ?? t.copyHint}
-        <div style="margin-top:6px;padding:10px 12px;border-radius:16px;border:1px solid rgba(255,255,255,.18);background:#0a0f1e;background:rgba(0,0,0,.18);word-break:break-all;">${link}</div>
-      </div>
-    </div>
-    <div style="margin-top:14px;font-size:12px;opacity:.7;text-align:center;">${t.footer}</div>
-  </div>
-</div>
-`);
-}
-
-function renderSignupMigrate(lang: EmailLang, link: string): string {
-  const t = getEmailCopy("guest_migrate", lang);
-  return wrapEmailDoc(`
-<div style="margin:0;padding:0;background:#050914;">
-  <div style="max-width:560px;margin:0 auto;padding:26px 16px;font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:#ffffff;">
-    <div style="padding:14px 14px;background:#0b1020;background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.12);border-radius:18px;backdrop-filter:blur(10px);">
-      <div style="font-weight:1000;letter-spacing:.18em;text-transform:uppercase;color:#ffeaa6;">FAMILIADA</div>
-      <div style="margin-top:6px;font-size:12px;opacity:.85;letter-spacing:.08em;text-transform:uppercase;">${t.subtitle}</div>
-    </div>
-    <div style="margin-top:14px;padding:18px;border-radius:20px;border:1px solid rgba(255,255,255,.14);background:#111827;background:rgba(255,255,255,.06);box-shadow:0 24px 60px rgba(0,0,0,.45);">
-      <div style="font-weight:1000;font-size:18px;letter-spacing:.06em;color:#ffeaa6;margin:0 0 10px;">${t.title}</div>
-      <div style="font-size:14px;opacity:.9;line-height:1.45;margin:0 0 14px;">${t.desc}</div>
-      <div style="margin:16px 0;">
-        <a href="${link}" style="display:block;text-align:center;padding:12px 14px;border-radius:14px;border:1px solid rgba(255,234,166,.35);background:rgba(255,234,166,.10);color:#ffeaa6;text-decoration:none;font-weight:1000;letter-spacing:.06em;">${t.btn}</a>
-      </div>
-      <div style="margin-top:14px;font-size:12px;opacity:.75;line-height:1.4;">${t.ignore}</div>
-      <div style="margin-top:10px;font-size:12px;opacity:.75;line-height:1.4;">
-        ${t.linkLabel ?? t.copyHint}
-        <div style="margin-top:6px;padding:10px 12px;border-radius:16px;border:1px solid rgba(255,255,255,.18);background:#0a0f1e;background:rgba(0,0,0,.18);word-break:break-all;">${link}</div>
-      </div>
-    </div>
-    <div style="margin-top:14px;font-size:12px;opacity:.7;text-align:center;">${t.footer}</div>
-  </div>
-</div>
-`);
-}
-
-function renderEmailChange(lang: EmailLang, link: string): string {
-  const t = getEmailCopy("email_change", lang);
-  return wrapEmailDoc(`
-<div style="margin:0;padding:0;background:#050914;">
-  <div style="max-width:560px;margin:0 auto;padding:26px 16px;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;color:#ffffff;">
-    <div style="padding:14px 14px;background:#0b1020;background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.12);border-radius:18px;">
-      <div style="font-weight:1000;letter-spacing:.18em;text-transform:uppercase;color:#ffeaa6;">FAMILIADA</div>
-      <div style="margin-top:6px;font-size:12px;opacity:.85;letter-spacing:.08em;text-transform:uppercase;">${t.subtitle}</div>
-    </div>
-    <div style="margin-top:14px;padding:18px;border-radius:20px;border:1px solid rgba(255,255,255,.14);background:#111827;background:rgba(255,255,255,.06);box-shadow:0 24px 60px rgba(0,0,0,.45);">
-      <div style="font-weight:1000;font-size:18px;letter-spacing:.06em;color:#ffeaa6;margin:0 0 10px;">${t.title}</div>
-      <div style="font-size:14px;opacity:.9;line-height:1.45;margin:0 0 14px;">${t.desc}</div>
-      <div style="margin:16px 0;">
-        <a href="${link}" style="display:block;text-align:center;padding:12px 14px;border-radius:14px;border:1px solid rgba(255,234,166,.35);background:rgba(255,234,166,.10);color:#ffeaa6;text-decoration:none;font-weight:1000;letter-spacing:.06em;text-transform:uppercase;">${t.btn}</a>
-      </div>
-      <div style="margin-top:14px;font-size:12px;opacity:.75;line-height:1.4;">${t.ignore}</div>
-      <div style="margin-top:10px;font-size:12px;opacity:.75;line-height:1.4;">
-        ${t.copyHint}
-        <div style="margin-top:6px;padding:10px 12px;border-radius:16px;border:1px solid rgba(255,255,255,.18);background:#0a0f1e;background:rgba(0,0,0,.18);word-break:break-all;">${link}</div>
-      </div>
-    </div>
-    <div style="margin-top:14px;font-size:12px;opacity:.7;text-align:center;">${t.footer}</div>
-  </div>
-</div>
-`);
-}
-
-function renderRecovery(lang: EmailLang, link: string): string {
-  const t = getEmailCopy("recovery", lang);
-  return wrapEmailDoc(`
-<div style="margin:0;padding:0;background:#050914;">
-  <div style="max-width:560px;margin:0 auto;padding:26px 16px;font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:#ffffff;">
-    <div style="padding:14px 14px;background:#0b1020;background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.12);border-radius:18px;backdrop-filter:blur(10px);">
-      <div style="font-weight:1000;letter-spacing:.18em;text-transform:uppercase;color:#ffeaa6;">FAMILIADA</div>
-      <div style="margin-top:6px;font-size:12px;opacity:.85;letter-spacing:.08em;text-transform:uppercase;">${t.subtitle}</div>
-    </div>
-    <div style="margin-top:14px;padding:18px;border-radius:20px;border:1px solid rgba(255,255,255,.14);background:#111827;background:rgba(255,255,255,.06);box-shadow:0 24px 60px rgba(0,0,0,.45);">
-      <div style="font-weight:1000;font-size:18px;letter-spacing:.06em;color:#ffeaa6;margin:0 0 10px;">${t.title}</div>
-      <div style="font-size:14px;opacity:.9;line-height:1.45;margin:0 0 14px;">${t.desc}</div>
-      <div style="margin:16px 0;">
-        <a href="${link}" style="display:block;text-align:center;padding:12px 14px;border-radius:14px;border:1px solid rgba(255,234,166,.35);background:rgba(255,234,166,.10);color:#ffeaa6;text-decoration:none;font-weight:1000;letter-spacing:.06em;">${t.btn}</a>
-      </div>
-      <div style="margin-top:14px;font-size:12px;opacity:.75;line-height:1.4;">${t.ignore}</div>
-      <div style="margin-top:10px;font-size:12px;opacity:.75;line-height:1.4;">
-        ${t.copyHint}
         <div style="margin-top:6px;padding:10px 12px;border-radius:16px;border:1px solid rgba(255,255,255,.18);background:#0a0f1e;background:rgba(0,0,0,.18);word-break:break-all;">${link}</div>
       </div>
     </div>
