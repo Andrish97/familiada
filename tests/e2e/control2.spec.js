@@ -1890,11 +1890,20 @@ test("control2: zerwanie połączenia wszystkich trzech urządzeń naraz i ponow
 // Zgłoszone wprost: "rozłącz w trakcie timerów, albo zamknij Control w
 // trakcie timerów -- czy one wrócą do stanu przed, a nie po, bo tak
 // powinny". control2/js/engine.js's CANCEL_TIMER3/CANCEL_TIMER (patrz ich
-// komentarze) implementują dokładnie to -- a page.reload() PO upłynięciu
-// endsAt jest najprostszą, deterministyczną symulacją "Control było
-// zamknięte/rozłączone, gdy czas minął" (ten sam mechanizm co test #2,
-// tylko z wyczekaniem na realne wygaśnięcie zegarka przed przeładowaniem,
-// zamiast od razu).
+// komentarze) implementują dokładnie to.
+//
+// WAŻNE, znalezione przy pierwszym przebiegu tych testów w CI: zwykłe
+// "poczekaj, potem page.reload()" NIE symuluje "zamknięte" -- dopóki karta
+// Control żyje (nawet tylko czekając przez await), jej WŁASNY, żywy
+// zegarek (app.js's scheduleTimer3Watch/scheduleFinalTimerWatch) sam
+// odpala EXPIRE_TIMER3/EXPIRE_TIMER dokładnie w momencie wygaśnięcia --
+// dokładnie tę gałąź "operator obecny i patrzy", którą te testy MAJĄ
+// wykluczyć. Prawdziwa symulacja: page.goto("about:blank") PRZED
+// czekaniem (zabija kontekst JS razem z jego setTimeout), dopiero PO
+// odczekaniu powrót przez page.goto(control2 URL) -- to jest dopiero
+// odpowiednik "karta była faktycznie zamknięta/rozłączona, gdy czas
+// minął", analogicznie do reload-owego wznowienia z testu #2, tylko z
+// deterministycznym wyłączeniem żywego zegarka na czas przerwy.
 
 test("control2: zegarek 3s w rundach wraca do stanu SPRZED startu (bez naliczenia X), gdy Control zamknięte podczas odliczania", async ({ page, browser }, testInfo) => {
   await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
@@ -1938,11 +1947,19 @@ test("control2: zegarek 3s w rundach wraca do stanu SPRZED startu (bez naliczeni
     expect(duringCalls.length, "Display musi dostać przynajmniej jedno odliczenie LEFT w trakcie timera3").toBeGreaterThan(0);
     expect(duringCalls.at(-1).args[0]).toMatch(/^0[123]$/);
 
-    // Czekamy, aż endsAt FAKTYCZNIE minie, dopiero potem przeładowujemy --
-    // to jest właśnie "Control zamknięte w trakcie odliczania", nie
-    // przerwanie go w połowie.
+    // "Control zamknięte w trakcie odliczania" -- NIE page.reload() po
+    // prostym waitForTimeout(): karta Control, dopóki żyje (nawet tylko
+    // czekając), ma WŁASNY, na żywo działający zegarek
+    // (app.js's scheduleTimer3Watch/makeTimerWatch) -- sam odpaliłby
+    // EXPIRE_TIMER3 (naliczenie X, "operator obecny i patrzy") dokładnie w
+    // momencie wygaśnięcia, ZANIM zdążylibyśmy przeładować -- co dowodziłoby
+    // czegoś innego niż scenariusz z tego zgłoszenia. Prawdziwe "zamknięte"
+    // wymaga, żeby żadna karta nie miała tego zegarka żywego przez cały czas
+    // odliczania -- stąd nawigacja NA ZEWNĄTRZ (zabija kontekst JS Control,
+    // razem z jego setTimeout) PRZED czekaniem, dopiero potem powrót.
+    await page.goto("about:blank").catch(() => {});
     await page.waitForTimeout(3600);
-    await page.reload({ waitUntil: "domcontentloaded" });
+    await page.goto(`/control2?id=${game.id}`, { waitUntil: "domcontentloaded" });
 
     // CANCEL_TIMER3 (nie EXPIRE_TIMER3): zegarek znika, ale licznik X
     // zostaje DOKŁADNIE tam, gdzie był PRZED jego startem -- "0 / 3", nigdy
@@ -2005,10 +2022,16 @@ test("control2: zegarek gracza w finale (15s) wraca do stanu SPRZED startu (used
     await armAndConfirm(page.getByRole("button", { name: "Rozpocznij odliczanie (15s)" }));
     await expect(page.locator('[data-timer-role="final"]')).toBeVisible({ timeout: 10000 });
 
-    // Czekamy aż 15s FAKTYCZNIE miną, dopiero potem przeładowujemy --
-    // "Control zamknięte w trakcie odliczania", nie przerwanie na żywo.
+    // "Control zamknięte w trakcie odliczania" -- NIE page.reload() po
+    // prostym waitForTimeout() (patrz identyczny komentarz w teście
+    // timera3 wyżej): dopóki karta Control żyje, jej WŁASNY żywy zegarek
+    // (scheduleFinalTimerWatch) sam odpaliłby EXPIRE_TIMER dokładnie w
+    // momencie wygaśnięcia, zanim zdążylibyśmy przeładować -- to byłby
+    // scenariusz "operator obecny i patrzy", nie "zamknięte". Nawigacja na
+    // zewnątrz PRZED czekaniem zabija ten kontekst JS na czas odliczania.
+    await page.goto("about:blank").catch(() => {});
     await page.waitForTimeout(15500);
-    await page.reload({ waitUntil: "domcontentloaded" });
+    await page.goto(`/control2?id=${game.id}`, { waitUntil: "domcontentloaded" });
 
     // CANCEL_TIMER (nie EXPIRE_TIMER): zegarek zniknął, ale usedP1 wraca do
     // false -- "Rozpocznij odliczanie (15s)" da się kliknąć PONOWNIE,
