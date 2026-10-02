@@ -6,6 +6,12 @@ export function clampInt(value, min, max, fallback) {
   return Math.max(min, Math.min(max, Math.round(n)));
 }
 
+const SUPPORTED_LANGS = ["pl", "en", "uk"];
+
+export function normalizeLang(lang) {
+  return SUPPORTED_LANGS.includes(lang) ? lang : "pl";
+}
+
 export function escapeHtml(str) {
   return String(str || "")
     .replace(/&/g, "&amp;")

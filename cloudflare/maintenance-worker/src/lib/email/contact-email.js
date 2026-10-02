@@ -1,5 +1,6 @@
 // src/lib/contact-email.js -- contact form email templates (pure).
 import { escEmailText as esc, nl2br } from "./html-escape.js";
+import { normalizeLang } from "../core/utils.js";
 
 export function buildContactEmail(opts) {
   const { type, lang = "pl", ticket, subject, message, originalMessage, replyMessage } = opts;
@@ -55,7 +56,7 @@ export function buildContactEmail(opts) {
     },
   };
 
-  const safeLang = ["pl","en","uk"].includes(lang) ? lang : "pl";
+  const safeLang = normalizeLang(lang);
   const c = copy[safeLang];
 
   let mailSubject = "";

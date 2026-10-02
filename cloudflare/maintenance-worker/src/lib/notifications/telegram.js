@@ -8,6 +8,17 @@ export function getTelegramConfig(env) {
   return { token, chatId };
 }
 
+// Shared cooldown gate for admin notifications -- each call site uses its own
+// KV key so e.g. a contact-form submission doesn't suppress an email notify.
+// Returns true (and marks the slot as used) only if the cooldown has elapsed.
+export async function claimNotifySlot(env, key, cooldownMs = 5 * 60 * 1000) {
+  const last = await env.MAINT_KV.get(key);
+  const now = Date.now();
+  if (last && now - Number(last) < cooldownMs) return false;
+  await env.MAINT_KV.put(key, String(now), { expirationTtl: 600 });
+  return true;
+}
+
 export async function sendTelegram({ token, chatId }, text) {
   try {
     const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
@@ -26,7 +37,11 @@ export async function sendTelegram({ token, chatId }, text) {
 }
 
 export async function handleNotifySubmission(request, env) {
-  // Rate limit: 1 notification per 5 minutes
+  // Uwaga: w przeciwienstwie do claimNotifySlot() nizej, KV jest tu
+  // oznaczane jako "wyslane" TYLKO gdy tg jest skonfigurowane (patrz if
+  // (!tg) ponizej) -- inny ksztalt niz contact.js/inbound-email.js, gdzie
+  // sprawdzenie tg zawsze poprzedza check+mark, wiec nie da sie tego
+  // bezpiecznie scalic bez zmiany zachowania w przypadku braku tg.
   const key = "notify_submission_ts";
   const last = await env.MAINT_KV.get(key);
   const now = Date.now();

@@ -2,7 +2,7 @@
 import { normalizeE2ERecipient } from "../e2e/e2e-api.js";
 import { supabaseRequest, supabaseRpc, summarizeSupabaseError, normalizeRpcValue } from "../core/supabase.js";
 import { uploadToStorage } from "../core/storage.js";
-import { getTelegramConfig, sendTelegram } from "../notifications/telegram.js";
+import { getTelegramConfig, sendTelegram, claimNotifySlot } from "../notifications/telegram.js";
 
 export function decodeMimeWords(str) {
   if (!str || typeof str !== "string") return str || "";
@@ -181,15 +181,9 @@ export async function handleInboundEmail(message, env) {
   // Notify admin via Telegram (best-effort, rate-limited)
   try {
     const tg = getTelegramConfig(env);
-    if (tg) {
-      const tgKey = "notify_email_ts";
-      const last = await env.MAINT_KV.get(tgKey);
-      const now = Date.now();
-      if (!last || now - Number(last) >= 5 * 60 * 1000) {
-        await env.MAINT_KV.put(tgKey, String(now), { expirationTtl: 600 });
-        const label = savedTicket ? `#${savedTicket}` : "(nowe)";
-        await sendTelegram(tg, `📧 Familiada — nowy email\nWiadomość ${label} od ${from}`);
-      }
+    if (tg && await claimNotifySlot(env, "notify_email_ts")) {
+      const label = savedTicket ? `#${savedTicket}` : "(nowe)";
+      await sendTelegram(tg, `📧 Familiada — nowy email\nWiadomość ${label} od ${from}`);
     }
   } catch {}
 }

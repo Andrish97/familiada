@@ -1,14 +1,15 @@
 // src/lib/contact.js -- public contact-form endpoints.
-import { json } from "../core/http.js";
+import { json, readJsonOr400 } from "../core/http.js";
 import { supabaseRpc, supabaseRequest, normalizeRpcValue, summarizeSupabaseError } from "../core/supabase.js";
 import { uploadToStorage } from "../core/storage.js";
 import { buildContactEmail } from "./contact-email.js";
-import { getTelegramConfig, sendTelegram } from "../notifications/telegram.js";
+import { getTelegramConfig, sendTelegram, claimNotifySlot } from "../notifications/telegram.js";
 import { htmlToPlainTextPreview } from "./html-to-text.js";
+import { normalizeLang } from "../core/utils.js";
 
 export async function handleContactSubmit(request, env) {
-  let body;
-  try { body = await request.json(); } catch { return json({ ok: false, error: "invalid_json" }, 400); }
+  const body = await readJsonOr400(request);
+  if (body instanceof Response) return body;
   if (!body || typeof body !== "object") return json({ ok: false, error: "invalid_body" }, 400);
 
   const { email, subject, message, lang = "pl", attachments: formAttachments = [] } = body;
@@ -33,7 +34,7 @@ export async function handleContactSubmit(request, env) {
 
   const ticket = row.ticket_number;
   const msgId = row.message_id;
-  const safeLang = ["pl","en","uk"].includes(lang) ? lang : "pl";
+  const safeLang = normalizeLang(lang);
 
   // Save form attachments
   if (msgId && Array.isArray(formAttachments) && formAttachments.length) {
@@ -89,14 +90,8 @@ export async function handleContactSubmit(request, env) {
   // Notify admin via Telegram (best-effort, rate-limited)
   try {
     const tg = getTelegramConfig(env);
-    if (tg) {
-      const tgKey = "notify_form_ts";
-      const last = await env.MAINT_KV.get(tgKey);
-      const now = Date.now();
-      if (!last || now - Number(last) >= 5 * 60 * 1000) {
-        await env.MAINT_KV.put(tgKey, String(now), { expirationTtl: 600 });
-        await sendTelegram(tg, `📬 Familiada — nowe zgłoszenie\n#${ticket}`);
-      }
+    if (tg && await claimNotifySlot(env, "notify_form_ts")) {
+      await sendTelegram(tg, `📬 Familiada — nowe zgłoszenie\n#${ticket}`);
     }
   } catch (err) {
     console.error("[worker] contact: telegram notify failed:", err);
@@ -107,8 +102,8 @@ export async function handleContactSubmit(request, env) {
 
 export async function handleContactAppend(request, env) {
   if (request.method !== "POST") return json({ ok: false, error: "method_not_allowed" }, 405);
-  let body;
-  try { body = await request.json(); } catch { return json({ ok: false, error: "invalid_json" }, 400); }
+  const body = await readJsonOr400(request);
+  if (body instanceof Response) return body;
 
   const { email, ticket, message, lang = "pl" } = body || {};
   if (!email || !email.includes("@")) return json({ ok: false, error: "invalid_email" }, 422);

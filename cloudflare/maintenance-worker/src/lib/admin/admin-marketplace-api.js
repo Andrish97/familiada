@@ -1,5 +1,5 @@
 // src/lib/admin-marketplace-api.js -- /_admin_api/marketplace/*.
-import { json } from "../core/http.js";
+import { json, readJsonOr400 } from "../core/http.js";
 import { readJson } from "./admin-auth.js";
 import { supabaseRpc, summarizeSupabaseError, normalizeRpcValue } from "../core/supabase.js";
 import { getTelegramConfig, sendTelegram } from "../notifications/telegram.js";
@@ -88,8 +88,8 @@ export async function handleAdminMarketplaceApi(request, env, url) {
   // Wymusza status = withdrawn na opublikowanej grze
   if (url.pathname === "/_admin_api/marketplace/withdraw") {
     if (request.method !== "POST") return new Response("Method Not Allowed", { status: 405 });
-    let body;
-    try { body = await request.json(); } catch { return json({ ok: false, error: "invalid_json" }, 400); }
+    const body = await readJsonOr400(request);
+    if (body instanceof Response) return body;
     const { id } = body || {};
     if (!id) return json({ ok: false, error: "missing_id" }, 400);
 
@@ -106,8 +106,8 @@ export async function handleAdminMarketplaceApi(request, env, url) {
   // Trwale usuwa grę (kaskada czyści user_market_library)
   if (url.pathname === "/_admin_api/marketplace/delete") {
     if (request.method !== "POST") return new Response("Method Not Allowed", { status: 405 });
-    let body;
-    try { body = await request.json(); } catch { return json({ ok: false, error: "invalid_json" }, 400); }
+    const body = await readJsonOr400(request);
+    if (body instanceof Response) return body;
     const { id } = body || {};
     if (!id) return json({ ok: false, error: "missing_id" }, 400);
 
@@ -134,8 +134,8 @@ export async function handleAdminMarketplaceApi(request, env, url) {
   // Importuje wiele gier naraz z JSON { games: [{title, description, lang, payload}] }
   if (url.pathname === "/_admin_api/marketplace/import-bulk") {
     if (request.method !== "POST") return new Response("Method Not Allowed", { status: 405 });
-    let body = {};
-    try { body = await request.json(); } catch { return json({ ok: false, error: "invalid_json" }, 400); }
+    const body = await readJsonOr400(request);
+    if (body instanceof Response) return body;
     const games = body?.games;
     if (!Array.isArray(games) || games.length === 0) return json({ ok: false, error: "missing_games" }, 400);
 

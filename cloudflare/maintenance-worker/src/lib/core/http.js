@@ -10,6 +10,17 @@ export function json(data, status = 200) {
   });
 }
 
+// Parses the request body as JSON, or returns a ready-to-return 400 Response
+// on failure. Caller pattern: `const body = await readJsonOr400(request); if
+// (body instanceof Response) return body;`
+export async function readJsonOr400(request) {
+  try {
+    return await request.json();
+  } catch {
+    return json({ ok: false, error: "invalid_json" }, 400);
+  }
+}
+
 export function withHeaders(res, extra) {
   const headers = new Headers(res.headers);
   Object.entries(extra).forEach(([key, value]) => headers.set(key, value));

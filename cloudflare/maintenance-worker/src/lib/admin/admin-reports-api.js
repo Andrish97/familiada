@@ -1,6 +1,6 @@
 // src/lib/admin-reports-api.js -- /_admin_api/reports/* (legacy, kept for compat).
-import { json } from "../core/http.js";
-import { clampInt } from "../core/utils.js";
+import { json, readJsonOr400 } from "../core/http.js";
+import { clampInt, normalizeLang } from "../core/utils.js";
 import { supabaseRequest, supabaseRpc, summarizeSupabaseError, normalizeRpcValue, extractScalarNumber } from "../core/supabase.js";
 import { buildContactEmail } from "../email/contact-email.js";
 import { htmlToPlainTextPreview } from "../email/html-to-text.js";
@@ -52,12 +52,12 @@ export async function handleAdminReportsApi(request, env, url) {
   if (url.pathname === "/_admin_api/reports/reply") {
     if (request.method !== "POST") return new Response("Method Not Allowed", { status: 405 });
 
-    let body;
-    try { body = await request.json(); } catch { return json({ ok: false, error: "invalid_json" }, 400); }
+    const body = await readJsonOr400(request);
+    if (body instanceof Response) return body;
     const { id, message, lang } = body || {};
     if (!id || !message) return json({ ok: false, error: "Missing id or message" }, 400);
 
-    const safeLang = ["pl","en","uk"].includes(lang) ? lang : "pl";
+    const safeLang = normalizeLang(lang);
 
     // Fetch report for original data
     const reportRes = await supabaseRequest(env, `/rest/v1/contact_reports?id=eq.${encodeURIComponent(id)}&select=*&limit=1`, { method: "GET" });
@@ -126,8 +126,8 @@ export async function handleAdminReportsApi(request, env, url) {
   if (url.pathname === "/_admin_api/reports/close") {
     if (request.method !== "POST") return new Response("Method Not Allowed", { status: 405 });
 
-    let body;
-    try { body = await request.json(); } catch { return json({ ok: false, error: "invalid_json" }, 400); }
+    const body = await readJsonOr400(request);
+    if (body instanceof Response) return body;
     const { id } = body || {};
     if (!id) return json({ ok: false, error: "Missing id" }, 400);
 
@@ -149,12 +149,12 @@ export async function handleAdminReportsApi(request, env, url) {
   if (url.pathname === "/_admin_api/reports/send") {
     if (request.method !== "POST") return new Response("Method Not Allowed", { status: 405 });
 
-    let body;
-    try { body = await request.json(); } catch { return json({ ok: false, error: "invalid_json" }, 400); }
+    const body = await readJsonOr400(request);
+    if (body instanceof Response) return body;
     const { to, subject: msgSubject, message, lang, reply_as } = body || {};
     if (!to || !message) return json({ ok: false, error: "Missing to or message" }, 400);
 
-    const safeLang = ["pl","en","uk"].includes(lang) ? lang : "pl";
+    const safeLang = normalizeLang(lang);
 
     try {
       const { subject: mailSubject, html } = buildContactEmail({
@@ -191,8 +191,8 @@ export async function handleAdminReportsApi(request, env, url) {
   // POST /_admin_api/reports/move-message { message_id, target_ticket }
   if (url.pathname === "/_admin_api/reports/move-message") {
     if (request.method !== "POST") return new Response("Method Not Allowed", { status: 405 });
-    let body;
-    try { body = await request.json(); } catch { return json({ ok: false, error: "invalid_json" }, 400); }
+    const body = await readJsonOr400(request);
+    if (body instanceof Response) return body;
     const { message_id, target_ticket } = body || {};
     if (!message_id || !target_ticket) return json({ ok: false, error: "Missing message_id or target_ticket" }, 400);
 
