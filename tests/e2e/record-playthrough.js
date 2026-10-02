@@ -1413,6 +1413,23 @@ async function scenarioShareDeviceEmail(pages, { browser }) {
   await control.waitForSelector("#shareDeviceOverlay", { state: "visible", timeout: 10_000 });
   await control.waitForTimeout(800); // widz ma zdążyć zobaczyć otwarty modal
 
+  // Udostępnienia mają TTL 4h (shareDevice.js's SHARE_TTL_MS) i są kluczowane
+  // (owner, recipient, device_type) GLOBALNIE dla konta, nie per-grę
+  // (migracja 117's UNIQUE (owner_id, recipient_id, device_type)) -- więc
+  // zostają z poprzedniego przebiegu tego samego scenariusza (ten sam
+  // test1->test2, device_type "host") i blokują pole/przycisk "Dodaj"
+  // (zdiagnozowane w CI run #30: #btnShareDeviceAdd trwale disabled, bo
+  // renderModal() poprawnie wykrył już istniejące udostępnienie z
+  // wcześniejszego przebiegu). Naprawa: jeśli modal od razu pokazuje "już
+  // udostępnione", cofnij najpierw -- dokładnie to samo kliknąłby operator.
+  const alreadyShared = await control.locator("#shareDeviceCurrentWrap").isVisible();
+  if (alreadyShared) {
+    console.log("[record] urządzenie już udostępnione z poprzedniego przebiegu -- cofam, zanim dodam ponownie");
+    await control.locator("#btnRevokeDevice").click();
+    await control.locator("#shareDeviceCurrentWrap").waitFor({ state: "hidden", timeout: 10_000 });
+    await control.waitForTimeout(400);
+  }
+
   // NIE typePaced(): to pole nie jest częścią game_state (czysty, lokalny
   // formularz w shareDevice.js) -- żadne naciśnięcie klawisza nie wywołuje
   // RPC zapisu, więc typePaced's waitForWrite() (15s timeout NA ZNAK)
