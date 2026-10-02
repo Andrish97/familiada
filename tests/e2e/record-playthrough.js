@@ -1445,11 +1445,15 @@ async function scenarioShareDeviceEmail(pages, { browser }) {
   const sentAfter = new Date().toISOString();
   await control.getByRole("button", { name: "Dodaj" }).click();
 
-  // Modal pokazuje "Aktualnie udostępnione dla: test2@familiada.online" —
-  // to jest POTWIERDZENIE zapisu RPC (share_device), widoczne na nagraniu
-  // natychmiast; realny e-mail leci asynchronicznie, osobno (fetch do
-  // Edge Function, bez czekania w UI).
-  await expect(control.locator("#shareDeviceCurrentContent")).toContainText(RECIPIENT_EMAIL, { timeout: 15_000 });
+  // Modal pokazuje "Aktualnie udostępnione dla: ..." — to jest POTWIERDZENIE
+  // zapisu RPC (share_device), widoczne na nagraniu natychmiast; realny
+  // e-mail leci asynchronicznie, osobno (fetch do Edge Function, bez
+  // czekania w UI). shareDevice.js's renderModal() pokazuje
+  // `recipient_username || recipient_email` -- skoro konto testowe MA
+  // ustawiony username ("test2"), modal poprawnie pokazuje tylko to, nie
+  // pełny e-mail (zdiagnozowane w CI run #31: treść była "test2", nie
+  // "test2@familiada.online" -- to zachowanie aplikacji, nie błąd).
+  await expect(control.locator("#shareDeviceCurrentContent")).toContainText("test2", { timeout: 15_000 });
   await control.waitForTimeout(2000); // widz ma zdążyć przeczytać potwierdzenie
 
   console.log(`[record] czekam na e-mail udostępnienia do ${RECIPIENT_EMAIL}`);
