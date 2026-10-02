@@ -227,6 +227,20 @@ async function positionWindow(context, page, bounds) {
   const session = await context.newCDPSession(page);
   const { windowId } = await session.send("Browser.getWindowForTarget");
   await session.send("Browser.setWindowBounds", { windowId, bounds: { ...bounds, windowState: "normal" } });
+  // CDP potwierdza przyjęcie komendy, ale renderer bywa o jedną klatkę do
+  // tyłu -- zaobserwowane w CI (run #27): goto() wystrzelony zaraz po tym
+  // await trafiał na window.innerWidth jeszcze ze STAREGO (domyślnego,
+  // węższego niż 980px) rozmiaru okna, więc guardDesktopOnly()'s PIERWSZY
+  // apply() (na starcie strony) ustawiał #deviceGuard na "narrow" i
+  // przechwytywał kliknięcia na stałe (overlay odświeża się tylko na
+  // kolejny "resize", którego już nie było, bo okno nie zmieniało już
+  // rozmiaru po nawigacji). Komentarz wyżej (SCREEN_W/QUAD_W) opisywał
+  // DOKŁADNIE ten sam objaw i "naprawiał" go podniesieniem rozdzielczości
+  // (960->1280px) -- to zmniejszyło częstotliwość (szerszy margines do
+  // wyścigu), ale nie usunęło samego wyścigu, stąd nawrót. Prawdziwa
+  // naprawa: jawnie poczekać, aż innerWidth TEJ strony faktycznie odzwierciedli
+  // nowy rozmiar, zanim cokolwiek nawiguje/klika na niej dalej.
+  await page.waitForFunction((w) => window.innerWidth >= w, bounds.width - 4, { timeout: 5000 }).catch(() => {});
 }
 
 async function tileDevices(contexts, pages) {
