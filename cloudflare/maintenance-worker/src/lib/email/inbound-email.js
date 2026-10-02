@@ -1,8 +1,8 @@
 // src/lib/inbound-email.js -- Cloudflare Email Routing inbound handler + MIME parsing.
-import { normalizeE2ERecipient } from "./e2e-api.js";
-import { supabaseRequest, supabaseRpc, summarizeSupabaseError, normalizeRpcValue } from "./supabase.js";
-import { uploadToStorage } from "./storage.js";
-import { getTelegramConfig, sendTelegram } from "./telegram.js";
+import { normalizeE2ERecipient } from "../e2e/e2e-api.js";
+import { supabaseRequest, supabaseRpc, summarizeSupabaseError, normalizeRpcValue } from "../core/supabase.js";
+import { uploadToStorage } from "../core/storage.js";
+import { getTelegramConfig, sendTelegram } from "../notifications/telegram.js";
 
 export function decodeMimeWords(str) {
   if (!str || typeof str !== "string") return str || "";

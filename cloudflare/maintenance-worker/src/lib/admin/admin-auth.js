@@ -1,5 +1,5 @@
 // src/lib/admin-auth.js -- admin bypass cookie + Cloudflare Access checks.
-import { getCookie } from "./http.js";
+import { getCookie } from "../core/http.js";
 
 export function hasAdminBypass(request, env) {
   const hostOnly = getCookie(request, "__Host-fml_admin");

@@ -1,6 +1,6 @@
 // src/lib/admin-config-api.js -- /_admin_api/config/* (telegram test, lead-finder token).
-import { json } from "./http.js";
-import { getTelegramConfig, sendTelegram } from "./telegram.js";
+import { json } from "../core/http.js";
+import { getTelegramConfig, sendTelegram } from "../notifications/telegram.js";
 
 export async function handleAdminConfigApi(request, env, url) {
 

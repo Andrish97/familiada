@@ -1,6 +1,6 @@
 // src/lib/origin.js -- proxying to the GitHub Pages origin, maintenance/404
 // pages, and host/path classification.
-import { withHeaders } from "./http.js";
+import { withHeaders } from "../core/http.js";
 
 export async function serveMaintenance(request, originBase, originHost, resolveOverride) {
   const maintUrl = new URL("/maintenance", originBase);

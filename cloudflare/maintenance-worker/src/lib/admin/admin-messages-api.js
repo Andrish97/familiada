@@ -1,10 +1,10 @@
 // src/lib/admin-messages-api.js -- /_admin_api/messages*, /cleanup/trash, /attachments*.
-import { json } from "./http.js";
+import { json } from "../core/http.js";
 import { readJson } from "./admin-auth.js";
-import { clampInt } from "./utils.js";
-import { supabaseRpc, supabaseRequest, summarizeSupabaseError, normalizeRpcValue, extractScalarNumber, getSupabaseConfig } from "./supabase.js";
-import { deleteAttachmentStorageFiles } from "./cleanup.js";
-import { downloadFromStorage } from "./storage.js";
+import { clampInt } from "../core/utils.js";
+import { supabaseRpc, supabaseRequest, summarizeSupabaseError, normalizeRpcValue, extractScalarNumber, getSupabaseConfig } from "../core/supabase.js";
+import { deleteAttachmentStorageFiles } from "../core/cleanup.js";
+import { downloadFromStorage } from "../core/storage.js";
 
 export async function handleAdminMessagesApi(request, env, url) {
 

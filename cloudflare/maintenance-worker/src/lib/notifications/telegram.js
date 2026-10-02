@@ -1,5 +1,5 @@
 // src/lib/telegram.js -- Telegram push notifications for admin.
-import { json } from "./http.js";
+import { json } from "../core/http.js";
 
 export function getTelegramConfig(env) {
   const token  = String(env.TELEGRAM_BOT_TOKEN || "").trim();

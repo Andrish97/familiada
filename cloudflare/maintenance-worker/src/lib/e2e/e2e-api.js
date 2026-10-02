@@ -1,9 +1,9 @@
 // src/lib/e2e-api.js -- /_e2e_api/* test-only endpoints + /login captcha bypass.
 // See tests/README.md for the full mechanism description.
-import { json } from "./http.js";
-import { readJson } from "./admin-auth.js";
-import { supabaseRequest, supabaseRpc } from "./supabase.js";
-import { fetchFromOrigin } from "./origin.js";
+import { json } from "../core/http.js";
+import { readJson } from "../admin/admin-auth.js";
+import { supabaseRequest, supabaseRpc } from "../core/supabase.js";
+import { fetchFromOrigin } from "../origin/origin.js";
 
 export const TURNSTILE_TEST_SITEKEY = "1x00000000000000000000AA"; // oficjalny, zawsze-przechodzący testowy sitekey Cloudflare
 const E2E_TOKEN_MAX_AGE_MS = 5 * 60 * 1000; // 5 minut

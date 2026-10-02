@@ -1,9 +1,9 @@
 // src/lib/admin-api.js -- /_admin_api/* core dispatcher (auth, state, bypass, stats).
-import { json } from "./http.js";
+import { json } from "../core/http.js";
 import { isAdminAuthorized, readJson, setAdminBypassCookieForAllDomains, clearAdminBypassCookieForAllDomains } from "./admin-auth.js";
-import { clampInt } from "./utils.js";
-import { supabaseRpc, summarizeSupabaseError } from "./supabase.js";
-import { getState, validateState, invalidateStateCache } from "./state.js";
+import { clampInt } from "../core/utils.js";
+import { supabaseRpc, summarizeSupabaseError } from "../core/supabase.js";
+import { getState, validateState, invalidateStateCache } from "../core/state.js";
 import { handleAdminMailApi } from "./admin-mail-api.js";
 import { handleAdminMarketplaceApi } from "./admin-marketplace-api.js";
 import { handleAdminMarketingApi } from "./admin-marketing-api.js";

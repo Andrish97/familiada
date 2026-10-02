@@ -1,8 +1,8 @@
 // src/lib/admin-reports-api.js -- /_admin_api/reports/* (legacy, kept for compat).
-import { json } from "./http.js";
-import { clampInt } from "./utils.js";
-import { supabaseRequest, supabaseRpc, summarizeSupabaseError, normalizeRpcValue, extractScalarNumber } from "./supabase.js";
-import { buildContactEmail } from "./contact-email.js";
+import { json } from "../core/http.js";
+import { clampInt } from "../core/utils.js";
+import { supabaseRequest, supabaseRpc, summarizeSupabaseError, normalizeRpcValue, extractScalarNumber } from "../core/supabase.js";
+import { buildContactEmail } from "../email/contact-email.js";
 
 export async function handleAdminReportsApi(request, env, url) {
 

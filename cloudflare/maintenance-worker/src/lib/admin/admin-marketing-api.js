@@ -1,8 +1,8 @@
 // src/lib/admin-marketing-api.js -- /_admin_api/marketing/* (preview + bulk send).
-import { json } from "./http.js";
+import { json } from "../core/http.js";
 import { readJson } from "./admin-auth.js";
-import { supabaseRequest } from "./supabase.js";
-import { buildMarketingEmail } from "./marketing-email.js";
+import { supabaseRequest } from "../core/supabase.js";
+import { buildMarketingEmail } from "../email/marketing-email.js";
 
 export async function handleAdminMarketingApi(request, env, url) {
   // POST /_admin_api/marketing/preview { template_id, custom_subject, custom_body }

@@ -1,8 +1,8 @@
 // src/lib/admin-marketplace-api.js -- /_admin_api/marketplace/*.
-import { json } from "./http.js";
+import { json } from "../core/http.js";
 import { readJson } from "./admin-auth.js";
-import { supabaseRpc, summarizeSupabaseError, normalizeRpcValue } from "./supabase.js";
-import { getTelegramConfig, sendTelegram } from "./telegram.js";
+import { supabaseRpc, summarizeSupabaseError, normalizeRpcValue } from "../core/supabase.js";
+import { getTelegramConfig, sendTelegram } from "../notifications/telegram.js";
 
 export const GH_RAW_BASE = "https://raw.githubusercontent.com/Andrish97/familiada/main/marketplace";
 

@@ -1,8 +1,8 @@
 // src/lib/admin-mail-api.js -- /_admin_api/mail/* (settings, queue, logs).
-import { json } from "./http.js";
+import { json } from "../core/http.js";
 import { readJson } from "./admin-auth.js";
-import { clampInt } from "./utils.js";
-import { supabaseRequest, supabaseRpc, summarizeSupabaseError, normalizeRpcValue, extractScalarNumber } from "./supabase.js";
+import { clampInt } from "../core/utils.js";
+import { supabaseRequest, supabaseRpc, summarizeSupabaseError, normalizeRpcValue, extractScalarNumber } from "../core/supabase.js";
 
 export const MAIL_PROVIDERS = ["brevo", "mailgun", "sendpulse", "zeptomail"];
 const DEFAULT_MAIL_SETTINGS = {

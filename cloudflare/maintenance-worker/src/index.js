@@ -6,12 +6,12 @@
 // proxying, etc). This split is purely mechanical (every line of logic moved
 // verbatim into its new file, nothing rewritten) -- see git history for the
 // single-file version if something here looks surprising.
-import { handleInboundEmail } from "./lib/inbound-email.js";
-import { cleanupExpiredAttachments, cleanupExpiredE2EEmails } from "./lib/cleanup.js";
-import { handleE2EApi, handleE2ELoginBypass } from "./lib/e2e-api.js";
-import { getState } from "./lib/state.js";
-import { json, withHeaders } from "./lib/http.js";
-import { handleAdminApi } from "./lib/admin-api.js";
+import { handleInboundEmail } from "./lib/email/inbound-email.js";
+import { cleanupExpiredAttachments, cleanupExpiredE2EEmails } from "./lib/core/cleanup.js";
+import { handleE2EApi, handleE2ELoginBypass } from "./lib/e2e/e2e-api.js";
+import { getState } from "./lib/core/state.js";
+import { json, withHeaders } from "./lib/core/http.js";
+import { handleAdminApi } from "./lib/admin/admin-api.js";
 import {
   fetchFromOrigin,
   fetchWith404,
@@ -19,18 +19,18 @@ import {
   isBlockedPath,
   serveMaintenance,
   serveNotFoundPage,
-} from "./lib/origin.js";
+} from "./lib/origin/origin.js";
 import {
   isSettingsAsset,
   isStaticAssetPath,
   serveStaticAsset,
   isCommonAsset,
   isMaintenanceAsset,
-} from "./lib/assets.js";
-import { hasAdminBypass } from "./lib/admin-auth.js";
-import { handleNotifySubmission } from "./lib/telegram.js";
-import { handleContactAppend, handleContactSubmit } from "./lib/contact.js";
-import { isBot, serveGameDetailSsr, serveMarketplaceSsr, serveDynamicSitemap } from "./lib/ssr.js";
+} from "./lib/origin/assets.js";
+import { hasAdminBypass } from "./lib/admin/admin-auth.js";
+import { handleNotifySubmission } from "./lib/notifications/telegram.js";
+import { handleContactAppend, handleContactSubmit } from "./lib/email/contact.js";
+import { isBot, serveGameDetailSsr, serveMarketplaceSsr, serveDynamicSitemap } from "./lib/ssr/ssr.js";
 
 export default {
   async email(message, env) {

@@ -1,9 +1,9 @@
 // src/lib/contact.js -- public contact-form endpoints.
-import { json } from "./http.js";
-import { supabaseRpc, supabaseRequest, normalizeRpcValue, summarizeSupabaseError } from "./supabase.js";
-import { uploadToStorage } from "./storage.js";
+import { json } from "../core/http.js";
+import { supabaseRpc, supabaseRequest, normalizeRpcValue, summarizeSupabaseError } from "../core/supabase.js";
+import { uploadToStorage } from "../core/storage.js";
 import { buildContactEmail } from "./contact-email.js";
-import { getTelegramConfig, sendTelegram } from "./telegram.js";
+import { getTelegramConfig, sendTelegram } from "../notifications/telegram.js";
 
 export async function handleContactSubmit(request, env) {
   let body;

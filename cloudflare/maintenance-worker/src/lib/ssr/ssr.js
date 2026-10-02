@@ -1,7 +1,7 @@
 // src/lib/ssr.js -- bot detection + server-side rendering for marketplace pages + sitemap.
-import { getSupabaseConfig, supabaseRpc } from "./supabase.js";
-import { escapeHtml } from "./utils.js";
-import { serveNotFoundPage } from "./origin.js";
+import { getSupabaseConfig, supabaseRpc } from "../core/supabase.js";
+import { escapeHtml } from "../core/utils.js";
+import { serveNotFoundPage } from "../origin/origin.js";
 
 export const BOT_UA_PATTERNS = [
   "googlebot", "google-inspectiontool", "mediapartners-google", "googleweblight",
