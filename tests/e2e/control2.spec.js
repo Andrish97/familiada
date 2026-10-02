@@ -1762,6 +1762,25 @@ test("@mailbox control2: udostępnianie urządzenia (Prowadzący) przez e-mail -
     }
     const after = new Date(Date.now() - 2_000).toISOString();
 
+    // DIAGNOSTYKA TYMCZASOWA -- ten test padał na "Nie otrzymano maila" w
+    // KAŻDYM dotychczasowym przebiegu CI (różne timeouty: 60s/90s, flaga
+    // email_notifications jawnie zresetowana wyżej -- żadne z tego nie
+    // pomogło), co wskazuje na coś poza samą kolejką mail_queue/cooldownem.
+    // control2/js/shareDevice.js's sendShareEmail() łyka błąd fetch() do
+    // send-mail CAŁKOWICIE po cichu (`.catch(() => {})`) -- bez tego logu
+    // nie da się odróżnić "fetch się nie powiódł" od "powiódł się, ale
+    // mail-worker/provider zawiódł po drodze".
+    page.on("response", (res) => {
+      if (res.url().includes("/functions/v1/send-mail")) {
+        res.text().then((body) => console.log(`[e2e-diag:mail] send-mail response status=${res.status()} body=${body}`)).catch(() => {});
+      }
+    });
+    page.on("requestfailed", (req) => {
+      if (req.url().includes("/functions/v1/send-mail")) {
+        console.log(`[e2e-diag:mail] send-mail request FAILED: ${req.failure()?.errorText}`);
+      }
+    });
+
     await page.goto(`/control2?id=${game.id}`, { waitUntil: "domcontentloaded" });
     await expect(page.locator(".stepTitle")).toHaveText("Urządzenia", { timeout: 15000 });
 
