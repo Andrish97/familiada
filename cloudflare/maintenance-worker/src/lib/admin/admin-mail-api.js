@@ -4,7 +4,6 @@ import { readJson } from "./admin-auth.js";
 import { clampInt } from "../core/utils.js";
 import { supabaseRequest, supabaseRpc, summarizeSupabaseError, normalizeRpcValue, extractScalarNumber } from "../core/supabase.js";
 
-export const MAIL_PROVIDERS = ["brevo", "mailgun", "sendpulse", "zeptomail"];
 const DEFAULT_MAIL_SETTINGS = {
   delay_ms: 250,
   batch_max: 100,

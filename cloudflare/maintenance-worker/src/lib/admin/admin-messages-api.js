@@ -219,6 +219,16 @@ export async function handleAdminMessagesApi(request, env, url) {
     return json({ ok: true, id: row?.id, ticket_number: row?.ticket_number });
   }
 
+  // GET /_admin_api/reports/messages?id=xxx
+  if (url.pathname === "/_admin_api/reports/messages" && request.method === "GET") {
+    const id = String(url.searchParams.get("id") || "").trim();
+    if (!id) return json({ ok: false, error: "Missing id" }, 400);
+    const rpc = await supabaseRpc(env, "get_report_messages", { p_report_id: id });
+    if (!rpc.ok) return json({ ok: false, error: "messages_load_failed" }, rpc.status || 500);
+    const msgs = Array.isArray(rpc.data) ? rpc.data : [];
+    return json({ ok: true, messages: msgs });
+  }
+
   // PUT /_admin_api/reports/status  { report_id, status }
   if (url.pathname === "/_admin_api/reports/status" && request.method === "PUT") {
     const body = await readJson(request);

@@ -8,7 +8,6 @@ import { handleAdminMailApi } from "./admin-mail-api.js";
 import { handleAdminMarketplaceApi } from "./admin-marketplace-api.js";
 import { handleAdminMarketingApi } from "./admin-marketing-api.js";
 import { handleAdminMessagesApi } from "./admin-messages-api.js";
-import { handleAdminReportsApi } from "./admin-reports-api.js";
 import { handleAdminConfigApi } from "./admin-config-api.js";
 
 export async function handleAdminApi(request, env) {
@@ -97,13 +96,8 @@ export async function handleAdminApi(request, env) {
     return handleAdminMessagesApi(request, env, url);
   }
 
-  if (url.pathname === "/_admin_api/reports" || url.pathname === "/_admin_api/reports/status") {
+  if (url.pathname.startsWith("/_admin_api/reports")) {
     return handleAdminMessagesApi(request, env, url);
-  }
-
-  // legacy reports endpoints — kept for backwards compatibility
-  if (url.pathname.startsWith("/_admin_api/reports/")) {
-    return handleAdminReportsApi(request, env, url);
   }
 
   if (url.pathname.startsWith("/_admin_api/config/")) {
