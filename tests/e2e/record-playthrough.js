@@ -538,6 +538,18 @@ async function scenarioRoundsMechanics(pages, { contexts }) {
   await secondControlTab.waitForSelector("#resourceLockGuard", { state: "visible", timeout: 15000 });
   await secondControlTab.waitForTimeout(2500); // widz ma zdążyć przeczytać komunikat blokady na drugiej karcie
   await secondControlTab.close();
+  // Naprawiona luka (CI run #28): secondControlTab to NOWA KARTA W TYM SAMYM
+  // OKNIE co `control` (ten sam kontekst, celowo -- patrz komentarz wyżej o
+  // wspólnych ciasteczkach), nie osobne okno -- positionWindow() na niej
+  // WYŻEJ zmniejszał więc CAŁE współdzielone okno do RECIPIENT_QUAD (900px,
+  // poniżej progu 980px guardDesktopOnly), a samo zamknięcie karty nie
+  // przywracało rozmiaru oknu z powrotem. `control` zostawał trwale zbyt
+  // wąski -- dokładnie ten sam objaw ("#deviceGuard narrow" blokuje
+  // kliknięcia), co wcześniej (błędnie) przypisano samemu wyścigowi
+  // CDP-resize w positionWindow() (patrz komentarz tam). Jawne przywrócenie
+  // rozmiaru okna do właściwej ćwiartki Control, zanim cokolwiek dalej na
+  // `control` kliknie.
+  await positionWindow(contexts.control, control, QUADRANTS.control);
   await control.waitForTimeout(500);
 
   // ===== QR na wyświetlaczu — Prowadzący i Przycisk, niezależnie i oba
