@@ -1,6 +1,6 @@
 const { test, expect } = require("@playwright/test");
 const path = require("node:path");
-const { pathToFileURL } = require("node:url");
+const fs = require("node:fs");
 const { generateE2EToken } = require("./helpers/e2e-token");
 const { clearMailbox, waitForEmail, extractHttpLinks, restoreTestAccount } = require("./helpers/mailbox");
 const { loginAsTestUser } = require("./helpers/login");
@@ -28,8 +28,10 @@ const AUTH_MAIL_GAP_MS = 65_000;
 const lastAuthMailAt = new Map();
 
 async function loadAuthEmailCopy(lang) {
-  const file = path.resolve(__dirname, "../../translation", `${lang}.js`);
-  const dict = (await import(pathToFileURL(file).href)).default;
+  // translation/*.js to ESM bez "type": "module" — Node 20 w CI nie wykrywa
+  // tego sam, więc import przez data: URL (jak w tests/unit/gamesRename.test.js).
+  const src = fs.readFileSync(path.resolve(__dirname, "../../translation", `${lang}.js`), "utf8");
+  const dict = (await import("data:text/javascript;base64," + Buffer.from(src).toString("base64"))).default;
   return { authEmail: dict.authEmail, index: dict.index };
 }
 
