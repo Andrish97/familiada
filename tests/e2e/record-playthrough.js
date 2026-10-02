@@ -568,7 +568,14 @@ async function scenarioRoundsMechanics(pages, { contexts }) {
   await display.waitForTimeout(1500); // widz ma zdążyć zobaczyć oba kody naraz
   await clickPaced(qrToggle("host", false), ADMIN_PACE_MS);
   await clickPaced(qrToggle("buzzer", false), ADMIN_PACE_MS);
-  await display.waitForSelector("#qrScreen.hidden", { timeout: 10000 });
+  // state:"attached" (nie domyślne "visible") -- selektor sam w sobie
+  // sprawdza klasę "hidden" (czyli docelowo display:none), więc czekanie na
+  // "visible" byłoby sprzeczne z własnym warunkiem i nigdy by się nie
+  // spełniło (zdiagnozowane w CI run #29: element poprawnie dostawał klasę
+  // "hidden" za każdym razem, ale waitForSelector i tak zawsze wyczerpywał
+  // timeout, bo pytał o widoczność elementu, który z definicji ma być
+  // niewidoczny).
+  await display.waitForSelector("#qrScreen.hidden", { state: "attached", timeout: 10000 });
   await control.waitForTimeout(500);
 
   // Zgłoszone: "dodaj testy... jeden test niech używa dźwięku z display" —
