@@ -1106,6 +1106,18 @@ test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśni�
 // ===== 10. Mnożnik rundy =====
 
 test("control2: mnożnik rundy — runda 4. z domyślnym ×2 faktycznie przemnaża bank", async ({ page, browser }, testInfo) => {
+  // Ten sam wzorzec i przyczyna co przy teście "pełny finał" (patrz
+  // komentarz przy jego test.setTimeout(240_000) wyżej w tym pliku) --
+  // zdiagnozowane 1:1 z logów [e2e-diag-state] CI (run #299/#300, oba
+  // solo I w pełnym zestawie): 4 pełne rundy x ~30-35s realnego czasu
+  // (gate dźwięku/animacji + polling anon zamiast prawdziwego push +
+  // RTT do produkcyjnego Supabase) to legalnie ~120-140s SAMEJ rozgrywki,
+  // zanim test w ogóle dotrze do rundy 4 -- bez żadnego faktycznego
+  // zawieszenia (każdy commit/lock w logach rozstrzygał się w <1s,
+  // zero luk >8s w całym przebiegu). Domyślne 150_000ms z góry pliku to
+  // za ciasny margines na tę długość testu, nie błąd aplikacji. Zapas,
+  // nie naprawa buga.
+  test.setTimeout(240_000);
   await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
   const roundQ = (n) => ({ ord: n, text: `Pytanie rundowe ${n}`, answers: [{ ord: 1, text: "Jedyna odpowiedź", fixed_points: 40 }] });
   // 5. pytanie (nieużywane) tylko po to, żeby pula NIE wyczerpała się po
