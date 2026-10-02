@@ -1489,11 +1489,18 @@ async function scenarioShareDeviceEmail(pages, { browser }) {
   await control.waitForTimeout(2000); // widz ma zdążyć przeczytać potwierdzenie
 
   console.log(`[record] czekam na e-mail udostępnienia do ${RECIPIENT_EMAIL}`);
+  // BEZ `timeout` -- domyślne 90s z helpers/mailbox.js. Ten sam test w
+  // control2.spec.js jawnie skracał do 60_000, co było dokładnie na
+  // granicy worst-case opóźnienia kolejki (mail-worker przetwarza
+  // mail_queue co 60s przez pg_cron -- mail wstawiony tuż PO tiku czeka
+  // prawie całą minutę na następny, zanim doliczyć czas wysyłki przez
+  // łańcuch dostawców), stąd sporadyczne "Nie otrzymano maila... w
+  // 60000 ms" (naprawione tam w commicie f1f13fa, ten plik miał własną,
+  // zduplikowaną kopię tego samego 60_000 i nie dostał tamtej poprawki).
   const email = await waitForEmail({
     recipient: RECIPIENT_EMAIL,
     after: sentAfter,
     subject: /Udostępniono urządzenie/,
-    timeout: 60_000,
   });
   const links = extractHttpLinks(email).filter((u) => u.includes("/host2"));
   if (!links.length) throw new Error("[record] e-mail udostępnienia nie zawierał linku do /host2");
