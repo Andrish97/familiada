@@ -1,13 +1,14 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import crypto from "node:crypto";
-import fs from "node:fs/promises";
 
-// Worker jest modulem ES dla runtime Cloudflare, ale jego pakiet nie ustawia
-// `type: module`. Data URL pozwala przetestowac dokladnie ten sam plik bez
-// zmiany sposobu, w jaki Wrangler buduje produkcyjny Worker.
-const workerSource = await fs.readFile(new URL("../../cloudflare/maintenance-worker/src/index.js", import.meta.url), "utf8");
-const { default: worker } = await import(`data:text/javascript;base64,${Buffer.from(workerSource).toString("base64")}`);
+// cloudflare/maintenance-worker/package.json ustawia "type": "module", więc
+// ten plik i wszystko, co z niego importuje (src/lib/**), jest ladowane
+// przez Node jako prawdziwe moduly ES z realnych sciezek plikowych --
+// relatywne importy w index.js rozwiazuja sie normalnie. To testuje
+// dokladnie ten sam plik, ktory buduje Wrangler (esbuild ignoruje
+// package.json "type" i tak samo traktuje ten plik jako ESM).
+const { default: worker } = await import("../../cloudflare/maintenance-worker/src/index.js");
 
 const SECRET = "unit-test-e2e-secret";
 
