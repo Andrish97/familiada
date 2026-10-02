@@ -42,8 +42,13 @@ async function waitForAuthMailSlot(account, testInfo) {
   if (wait > 0) await new Promise((resolve) => setTimeout(resolve, wait));
 }
 
-function expectMailInLanguage(email, copy, lang, label) {
+function expectMailInLanguage(email, copy, lang, label, typeKey) {
   const html = (email.body_html || "").replace(/&amp;/g, "&");
+  // Znacznik wstawiany tylko przez send-email czytający tłumaczenia strony —
+  // stara wersja z tekstami w kodzie (identycznymi) go nie ma. "@lang" wyklucza
+  // też ciche przejście na polski przy brakującym tłumaczeniu.
+  expect(html, `${label}: mail nie powstał z translation/${lang}.js`)
+    .toContain(`<meta name="familiada-i18n" content="authEmail.${typeKey}@${lang}">`);
   expect(email.subject, `${label}: temat`).toBe(copy.subject);
   for (const field of ["subtitle", "title", "desc", "btn", "ignore", "footer"]) {
     expect(html, `${label}: brak pola ${field}`).toContain(copy[field]);
@@ -200,7 +205,7 @@ for (const lang of MAIL_LANGS) {
       await expect(page.locator("#status")).toContainText(index.statusResetSent, { timeout: 30_000 });
 
       const email = await waitForEmail({ recipient: PASSWORD_EMAIL, after });
-      expectMailInLanguage(email, authEmail.recovery, lang, `reset ${lang}`);
+      expectMailInLanguage(email, authEmail.recovery, lang, `reset ${lang}`, "recovery");
     } finally {
       await restoreTestAccount("test11");
       await clearMailbox(PASSWORD_EMAIL);
@@ -233,8 +238,8 @@ for (const lang of MAIL_LANGS) {
         waitForEmail({ recipient: PROFILE_EMAIL, after }),
         waitForEmail({ recipient: PROFILE_NEW_EMAIL, after }),
       ]);
-      expectMailInLanguage(oldEmail, authEmail.emailChange, lang, `zmiana e-maila ${lang} (stary adres)`);
-      expectMailInLanguage(newEmail, authEmail.emailChange, lang, `zmiana e-maila ${lang} (nowy adres)`);
+      expectMailInLanguage(oldEmail, authEmail.emailChange, lang, `zmiana e-maila ${lang} (stary adres)`, "emailChange");
+      expectMailInLanguage(newEmail, authEmail.emailChange, lang, `zmiana e-maila ${lang} (nowy adres)`, "emailChange");
     } finally {
       await restoreTestAccount("test12");
       await clearMailbox(PROFILE_EMAIL);

@@ -716,11 +716,12 @@ function templateFor(type: string): EmailType {
   return "signup";
 }
 
-function wrapEmailDoc(innerHtml: string): string {
+function wrapEmailDoc(innerHtml: string, i18nSource = ""): string {
+  const sourceMeta = i18nSource ? `\n  <meta name="familiada-i18n" content="${i18nSource}">` : "";
   return `<!doctype html>
 <html>
 <head>
-  <meta charset="utf-8">
+  <meta charset="utf-8">${sourceMeta}
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="dark">
   <meta name="supported-color-schemes" content="dark">
@@ -764,5 +765,5 @@ function renderEmail(t: CopyBlock, link: string, emailChangeStyle = false): stri
     <div style="margin-top:14px;font-size:12px;opacity:.7;text-align:center;">${t.footer}</div>
   </div>
 </div>
-`);
+`, t.source);
 }

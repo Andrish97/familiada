@@ -16,6 +16,9 @@ export type CopyBlock = {
   copyHint: string;
   linkLabel?: string;
   footer: string;
+  // Skąd wzięto teksty, np. "authEmail.recovery@en" — trafia do <meta> w mailu,
+  // żeby test e2e mógł potwierdzić, że mail powstał z tłumaczeń strony.
+  source: string;
 };
 
 const TYPE_KEYS: Record<EmailType, string> = {
@@ -102,11 +105,11 @@ function pickBlock(dict: Record<string, unknown>, type: EmailType): CopyBlock | 
 
 export async function getEmailCopy(type: EmailType, lang: EmailLang): Promise<CopyBlock> {
   const block = pickBlock(await loadDict(lang), type);
-  if (block) return block;
+  if (block) return { ...block, source: `authEmail.${TYPE_KEYS[type]}@${lang}` };
   if (lang !== "pl") {
     console.warn("[send-email] missing authEmail copy, falling back to pl", { type, lang });
     const plBlock = pickBlock(await loadDict("pl"), type);
-    if (plBlock) return plBlock;
+    if (plBlock) return { ...plBlock, source: `authEmail.${TYPE_KEYS[type]}@pl` };
   }
   throw new Error(`Missing authEmail.${TYPE_KEYS[type]} in translations (${lang})`);
 }
