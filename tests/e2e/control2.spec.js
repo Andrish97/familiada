@@ -1747,7 +1747,17 @@ test("@mailbox control2: udostępnianie urządzenia (Prowadzący) przez e-mail -
     const recipientUsername = recipient.split("@")[0];
     await expect(page.locator("#shareDeviceCurrentContent")).toContainText(recipientUsername, { timeout: 15000 });
 
-    const email = await waitForEmail({ recipient, after, subject: /Udostępniono urządzenie/, timeout: 60_000 });
+    // BEZ `timeout` -- domyślne 90s z helpers/mailbox.js, tak jak WSZYSTKIE
+    // inne testy mailowe w repo (bases.spec.js/polls-hub.spec.js/
+    // subscriptions.spec.js/account-password-email.spec.js). Zgłoszone:
+    // poprzednia wersja jawnie skracała do 60_000 -- ale docs/email-system-
+    // description.md's mail-worker przetwarza kolejkę `mail_queue` co 60s
+    // (pg_cron), więc worst-case opóźnienie samo w sobie zbliża się do 60s
+    // (mail wstawiony tuż PO tiku czeka na kolejny), zanim doliczyć jeszcze
+    // czas wysyłki przez łańcuch dostawców -- 60_000 nie był bezpiecznym
+    // marginesem ponad to, tylko dokładnie na jego granicy (realny powód
+    // sporadycznych "Nie otrzymano maila... w 60000 ms" w CI, nie infra flake).
+    const email = await waitForEmail({ recipient, after, subject: /Udostępniono urządzenie/ });
     const links = extractHttpLinks(email).filter((u) => u.includes("/host2"));
     expect(links.length, "mail musi zawierać działający link do /host2").toBeGreaterThan(0);
 
