@@ -1070,7 +1070,31 @@ test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśni�
     // Host odsłania się lokalnie po geście, BEZ żadnej zmiany w game_state
     // (host2/js/render.js's `peeked`), i zasłona wraca sama przy KOLEJNEJ
     // zmianie stanu gry (nie trzeba nic specjalnie robić, żeby ją przywrócić).
+    // DIAGNOSTYKA TYMCZASOWA — pierwszy przebieg tej asercji nie przeszedł
+    // (#cover2 zostało coverOn po geście). Zanim coś zgaduję na ślepo,
+    // sprawdzam wprost: czy pointerdown/pointerup w ogóle dochodzą do
+    // document (host2/js/main.js's setupPeekSwipe nasłuchuje tam), i co
+    // faktycznie stoi pod (300,220)/(300,360) w tym layoutcie CI.
+    const diagBefore = await hostPage.evaluate(() => {
+      window.__peekDiag = { down: 0, up: 0 };
+      document.addEventListener("pointerdown", () => { window.__peekDiag.down++; }, { capture: true });
+      document.addEventListener("pointerup", () => { window.__peekDiag.up++; }, { capture: true });
+      const a = document.elementFromPoint(300, 220);
+      const b = document.elementFromPoint(300, 360);
+      return {
+        cover2Class: document.getElementById("cover2")?.className,
+        elAt1: a ? `${a.tagName}#${a.id}.${a.className}` : null,
+        elAt2: b ? `${b.tagName}#${b.id}.${b.className}` : null,
+        viewport: { w: window.innerWidth, h: window.innerHeight },
+      };
+    });
+    console.log("[e2e-diag:host] peek-diag BEFORE", JSON.stringify(diagBefore));
+
     await hostPeekSwipe(hostPage);
+
+    const diagAfter = await hostPage.evaluate(() => window.__peekDiag);
+    console.log("[e2e-diag:host] peek-diag AFTER", JSON.stringify(diagAfter));
+
     await expect(hostPage.locator("#cover2")).toHaveClass(/coverOff/, { timeout: 5000 });
 
     // ===== F7: gracz 2 — pytanie #1 oznaczone jako "powtórzenie" =====
