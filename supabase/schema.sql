@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict DiuFqStHvlLmxM3NIwVTPpjVPBd4pKk7pJm6OmRF9vRqFiVAc3TF81DGWl0fQEP
+\restrict 9zbJ6QbFbFpRbkJP7xEXBKcdsntzvNKn2vs4m5I50byptRUHVv0l5YMByn7nhtP
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -5774,6 +5774,31 @@ $$;
 
 
 --
+-- Name: mail_cooldown_email_release("text", "text", integer); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."mail_cooldown_email_release"("p_email" "text", "p_action_key" "text", "p_max_age_seconds" integer DEFAULT 60) RETURNS boolean
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+DECLARE
+  v_target text;
+BEGIN
+  v_target := 'email:' || md5(lower(trim(p_email)));
+
+  UPDATE public.mail_cooldowns
+     SET next_allowed_at = now(),
+         updated_at = now()
+   WHERE target_key = v_target
+     AND action_key = p_action_key
+     AND updated_at >= (now() - make_interval(secs => p_max_age_seconds));
+
+  RETURN true;
+END;
+$$;
+
+
+--
 -- Name: mail_cooldown_email_reserve("text", "text"); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -6011,12 +6036,14 @@ $_$;
 CREATE FUNCTION "public"."mail_queue_cooldown_guard"() RETURNS "trigger"
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public'
-    AS $$
+    AS $_$
 DECLARE
   v_enforce boolean;
   v_ok boolean;
   v_until timestamptz;
   v_baseline_target text;
+  v_sender_email text;
+  v_both_e2e boolean;
 BEGIN
   SELECT enforce INTO v_enforce
   FROM public.mail_cooldown_policies
@@ -6027,26 +6054,35 @@ BEGIN
   END IF;
 
   IF v_enforce THEN
-    -- Nieprzekraczalna podłoga, niezależna od action_key — to jest to, co
-    -- faktycznie zamyka dziurę (wymyślenie nowego, ale wciąż rozpoznanego
-    -- action_key nie pomaga obejść TEJ rezerwacji). target_key per
-    -- (nadawca, odbiorca) — 'svc:'+action_key jako fallback dla wierszy bez
-    -- created_by (service-role), żeby różne serwisowe funkcje nie wpadały
-    -- w jeden, wspólny koszyk.
-    v_baseline_target := 'pair:' || coalesce(NEW.created_by::text, 'svc:' || NEW.cooldown_action_key)
-      || ':' || md5(lower(trim(NEW.to_email)));
+    IF NEW.created_by IS NOT NULL THEN
+      SELECT lower(email) INTO v_sender_email FROM auth.users WHERE id = NEW.created_by;
+    END IF;
 
-    SELECT ok, next_allowed_at INTO v_ok, v_until
-    FROM public.mail_cooldown_reserve('baseline:recipient', v_baseline_target);
+    v_both_e2e := v_sender_email ~ '^test([1-9]|1[0-3])@familiada[.]online$'
+      AND lower(trim(NEW.to_email)) ~ '^test([1-9]|1[0-3])@familiada[.]online$';
 
-    IF NOT v_ok THEN
-      RAISE EXCEPTION 'cooldown_active: baseline for % until %', NEW.to_email, v_until;
+    IF NOT v_both_e2e THEN
+      -- Nieprzekraczalna podłoga, niezależna od action_key — to jest to, co
+      -- faktycznie zamyka dziurę (wymyślenie nowego, ale wciąż rozpoznanego
+      -- action_key nie pomaga obejść TEJ rezerwacji). target_key per
+      -- (nadawca, odbiorca) — 'svc:'+action_key jako fallback dla wierszy bez
+      -- created_by (service-role), żeby różne serwisowe funkcje nie wpadały
+      -- w jeden, wspólny koszyk.
+      v_baseline_target := 'pair:' || coalesce(NEW.created_by::text, 'svc:' || NEW.cooldown_action_key)
+        || ':' || md5(lower(trim(NEW.to_email)));
+
+      SELECT ok, next_allowed_at INTO v_ok, v_until
+      FROM public.mail_cooldown_reserve('baseline:recipient', v_baseline_target);
+
+      IF NOT v_ok THEN
+        RAISE EXCEPTION 'cooldown_active: baseline for % until %', NEW.to_email, v_until;
+      END IF;
     END IF;
   END IF;
 
   RETURN NEW;
 END;
-$$;
+$_$;
 
 
 --
@@ -16285,5 +16321,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict DiuFqStHvlLmxM3NIwVTPpjVPBd4pKk7pJm6OmRF9vRqFiVAc3TF81DGWl0fQEP
+\unrestrict 9zbJ6QbFbFpRbkJP7xEXBKcdsntzvNKn2vs4m5I50byptRUHVv0l5YMByn7nhtP
 
