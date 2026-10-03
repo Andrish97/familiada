@@ -82,7 +82,10 @@
 .share-role-select option{ background: #111; color: #fff; }
 .share-role-select:disabled{ opacity: .5; cursor: not-allowed; }
 
-.btn.xsm{ padding: 6px 10px; font-size: 12px; border-radius: 10px; }
+/* .btn.xsm przeniesione do css/base.css (ładowanego wszędzie) -- control.html/
+   control2.html używają tej klasy w modalu udostępniania urządzenia, ale nie
+   ładują tego pliku wcale (zgłoszone: przycisk tam wyglądał jak pełnowymiarowy
+   .btn). Zostaje tu zaimportowane niejawnie przez base.css, nie duplikowane. */
 
 /* Baza, którą ktoś chce mi udostępnić: podbity kolorystycznie cały kafel
    (złota ramka i delikatne złote tło) zamiast kropki przy etykiecie. */
