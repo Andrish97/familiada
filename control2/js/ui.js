@@ -558,15 +558,26 @@ export function createUI({ root, emit }) {
   // jest wprost, TYLKO gdy true. Używane przez pięć dużych przejść planszy
   // (Rozpocznij rundę/Zakończ rundę/Rozpocznij finał/Zakończ grę×2),
   // blokowanych przez boardBusy() — patrz control2/js/app.js's dispatchGated().
-  // disabled tutaj ZAWSZE oznacza boardBusy() (wszystkie 4 wywołania w tym
-  // pliku) — czyli "trwa animacja/dźwięk dużego przejścia planszy". Bez
-  // żadnej widocznej zmiany poza wyszarzeniem operator widział martwy,
-  // nieruchomy ekran przez cały czas trwania blokady (network round-trip +
-  // resztę czasu animacji/dźwięku) i brał to za zawieszenie (zgłoszone) —
-  // pulsujący przycisk komunikuje "trwa coś", nie "nic się nie dzieje".
-  function navButton(label, { cls = "c2-btn primary c2-intro-btn", onclick, disabled = false } = {}) {
-    const el = h("button", { class: disabled ? `${cls} c2-btn-busy` : cls, type: "button", onclick: disabled ? undefined : onclick }, [document.createTextNode(label)]);
-    if (disabled) el.disabled = true;
+  // `busy` (osobno od `disabled`) oznacza WYŁĄCZNIE boardBusy() — "trwa
+  // animacja/dźwięk dużego przejścia planszy", network round-trip w locie.
+  // Tylko TEN stan dostaje pulsujący przycisk ("trwa coś", nie "nic się nie
+  // dzieje"). `disabled` samo w sobie (np. "jeszcze nie wszystko odkryte",
+  // "trwa odliczanie gracza", "punkty jeszcze nie pokazane") to zwykła,
+  // NIEPULSUJĄCA blokada — przycisk po prostu jeszcze nie jest dostępny,
+  // nic "nie trwa" w tle, więc nie ma czego sygnalizować.
+  //
+  // Zgłoszone: "wszystkie przyciski dalej migają" — przyczyna: dawniej
+  // JEDEN parametr `disabled` włączał pulsowanie bezwarunkowo, więc każde
+  // wywołanie, które domieszało do boardBusy() inny powód blokady (np.
+  // `disabled: boardBusy() || timerRunningNow` na ekranie wpisywania finału)
+  // pulsowało przez CAŁY czas trwania TEGO powodu (np. całe 15-20s
+  // odliczania gracza), nie tylko podczas realnego oczekiwania na sieć/
+  // dźwięk. Rozdzielenie na dwa parametry naprawia to raz, w jednym miejscu,
+  // zamiast w każdym z 11 wywołań osobno.
+  function navButton(label, { cls = "c2-btn primary c2-intro-btn", onclick, disabled = false, busy = false } = {}) {
+    const isDisabled = disabled || busy;
+    const el = h("button", { class: busy ? `${cls} c2-btn-busy` : cls, type: "button", onclick: isDisabled ? undefined : onclick }, [document.createTextNode(label)]);
+    if (isDisabled) el.disabled = true;
     return el;
   }
 
@@ -727,7 +738,7 @@ export function createUI({ root, emit }) {
           h("div", { class: "c2-intro-hint", text: t("control.roundsIntroHint") }),
         ])],
         nav: [navButton(t("control.roundsIntroBtn"), {
-          disabled: boardBusy(),
+          busy: boardBusy(),
           onclick: () => emit("rounds.introNext"),
         })],
       });
@@ -749,7 +760,7 @@ export function createUI({ root, emit }) {
           scoreRow,
         ].filter(Boolean))],
         nav: [navButton(t("control.roundsStartBtn"), {
-          disabled: boardBusy(),
+          busy: boardBusy(),
           onclick: () => emit("game.dispatch", { type: "START_ROUND" }),
         })],
       });
@@ -937,7 +948,7 @@ export function createUI({ root, emit }) {
     if ((state.phase === "PLAY" || state.phase === "STEAL") && r.canEndRound) {
       statusItems.push(navButton(t("control.roundsEndRound"), {
         cls: "c2-btn primary c2-statusbar-end",
-        disabled: boardBusy(),
+        busy: boardBusy(),
         onclick: () => emit("game.dispatch", { type: "END_ROUND" }),
       }));
     }
@@ -952,7 +963,8 @@ export function createUI({ root, emit }) {
         : t("control.roundsNextRoundBtn");
       statusItems.push(navButton(label, {
         cls: "c2-btn primary c2-statusbar-end",
-        disabled: boardBusy() || r.revealed.length < r.answers.length,
+        disabled: r.revealed.length < r.answers.length,
+        busy: boardBusy(),
         onclick: () => emit("game.dispatch", { type: "NEXT_AFTER_REVEAL" }),
       }));
     }
@@ -1025,7 +1037,7 @@ export function createUI({ root, emit }) {
         stepLabel: t("control.roundsGameEndTitle"),
         body: [h("div", { class: "c2-intro" }, introBody)],
         nav: [navButton(t("control.roundsGameEndBtn"), {
-          disabled: boardBusy(),
+          busy: boardBusy(),
           onclick: () => emit("game.dispatch", revealAction),
         })],
       });
@@ -1046,11 +1058,11 @@ export function createUI({ root, emit }) {
       nav: [
         navButton(t("control.restartGame"), {
           cls: "c2-btn c2-intro-btn",
-          disabled: boardBusy(),
+          busy: boardBusy(),
           onclick: () => emit("game.restart"),
         }),
         navButton(t("control.returnToMyGames"), {
-          disabled: boardBusy(),
+          busy: boardBusy(),
           onclick: () => emit("session.finish"),
         }),
       ],
@@ -1074,7 +1086,7 @@ export function createUI({ root, emit }) {
         h("div", { class: "c2-intro-hint", text: t("control.finalStartHint") }),
       ])],
       nav: [navButton(t("control.finalStartBtn"), {
-        disabled: boardBusy(),
+        busy: boardBusy(),
         onclick: () => emit("game.dispatch", { type: "START_FINAL" }),
       })],
     });
@@ -1324,7 +1336,8 @@ export function createUI({ root, emit }) {
     const timerRunningNow = f.runtime.timer.running && f.runtime.timer.phase === timerPhase;
     const nav = [navButton(t("common.next"), {
       cls: "c2-btn primary",
-      disabled: boardBusy() || timerRunningNow,
+      disabled: timerRunningNow,
+      busy: boardBusy(),
       onclick: () => emit("game.dispatch", { type: "START_MAPPING", round }),
     })];
     gameplayShell({ stepLabel: t("control.finalEntryStepLabel", { round }), body, nav });
@@ -1589,7 +1602,8 @@ export function createUI({ root, emit }) {
       h("span", {}, [document.createTextNode(t("control.statusFinalSumLabel")), h("b", { text: String(f.runtime.sum) })]),
       navButton(t("common.next"), {
         cls: "c2-btn primary c2-statusbar-end",
-        disabled: !row.revealedPoints || boardBusy(),
+        disabled: !row.revealedPoints,
+        busy: boardBusy(),
         onclick: row.revealedPoints ? () => emit("game.dispatch", { type: "NEXT_QUESTION", round, idx: idx + 1 }) : undefined,
       }),
     ]);
@@ -1624,7 +1638,7 @@ export function createUI({ root, emit }) {
         h("button", { class: "c2-btn-repeat", type: "button", onclick: () => emit("final.repeatTest") }, [document.createTextNode(t("control.finalRepeatSound"))]),
       ])],
       nav: [navButton(t("control.finalP2StartBtn"), {
-        disabled: boardBusy(),
+        busy: boardBusy(),
         onclick: () => emit("game.dispatch", { type: "START_P2_ROUND" }),
       })],
     });

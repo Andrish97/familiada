@@ -516,6 +516,19 @@ main{
     letter-spacing: .03em
 }
 
+/* Przeniesione z css/bases.css (zgłoszone: modal udostępniania urządzenia w
+   control.html/control2.html -- te strony nie ładują bases.css wcale, więc
+   .btn.xsm (przycisk usuwania/"Dodaj" w shareRow, control/js/share-device.js
+   i control2/js/shareDevice.js) nie miał TU żadnego rozmiaru i spadał do
+   pełnowymiarowego .btn -- stąd "kafelki za duże"/źle dopasowany przycisk w
+   wąskim wierszu shareRow). base.css ładują wszystkie strony, więc .xsm
+   działa teraz wszędzie z jednego miejsca, bez duplikatu w bases.css. */
+.btn.xsm {
+    padding: 6px 10px;
+    border-radius: 10px;
+    font-size: 12px;
+}
+
 .btn.icon,.inp {
     border-radius: 14px
 }
