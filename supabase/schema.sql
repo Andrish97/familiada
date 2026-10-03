@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict hwoUotMHpq4Wa9C3M3fAwbMT9deFPZ7YTczzSkHzKupeaWQPadz2zvfYKvbbzrV
+\restrict Mg8d4hd3CNjSB6UCbC9r05x6TMggAJhGedOdl8DS06XYc3h1lUPLX3hXjNZv8Pg
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -723,107 +723,78 @@ $$;
 -- Name: base_share_by_email("uuid", "text", "public"."base_share_role"); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION "public"."base_share_by_email"("p_base_id" "uuid", "p_email" "text", "p_role" "public"."base_share_role") RETURNS TABLE("ok" boolean, "err" "text", "mail_to" "text", "mail_link" "text", "base_name" "text", "owner_label" "text")
+CREATE FUNCTION "public"."base_share_by_email"("p_base_id" "uuid", "p_email" "text", "p_role" "public"."base_share_role") RETURNS TABLE("ok" boolean, "err" "text", "mail_to" "text", "mail_link" "text", "base_name" "text", "owner_label" "text", "cooldown_until" timestamp with time zone, "recipient_id" "uuid")
     LANGUAGE "plpgsql" SECURITY DEFINER
     AS $$
-declare
+DECLARE
   v_owner uuid;
   v_recipient uuid;
   v_norm_email text;
   v_base_name text;
   v_owner_label text;
-  v_last_ts timestamptz;
   v_task public.base_share_tasks%rowtype;
-begin
-  perform public.base_share_tasks_cleanup();
+  v_target text;
+  v_cd_ok boolean;
+  v_cd_until timestamptz;
+BEGIN
+  PERFORM public.base_share_tasks_cleanup();
 
   v_norm_email := lower(trim(p_email));
 
-  select owner_id, name into v_owner, v_base_name
-  from public.question_bases
-  where id = p_base_id;
+  SELECT owner_id, name INTO v_owner, v_base_name
+  FROM public.question_bases
+  WHERE id = p_base_id;
 
-  if v_owner is null or v_owner <> auth.uid() then
-    return query select false, 'not_owner', null, null, null, null;
-    return;
-  end if;
+  IF v_owner IS NULL OR v_owner <> auth.uid() THEN
+    RETURN QUERY SELECT false, 'not_owner', NULL::text, NULL::text, NULL::text, NULL::text, NULL::timestamptz, NULL::uuid;
+    RETURN;
+  END IF;
 
-  -- recipient po email
-  select id into v_recipient
-  from public.profiles
-  where lower(email) = v_norm_email;
+  SELECT id INTO v_recipient FROM public.profiles WHERE lower(email) = v_norm_email;
 
-  if v_recipient is null then
-    -- nie ujawniamy detali -> ok=false
-    return query select false, 'unknown_user', null, null, null, null;
-    return;
-  end if;
+  IF v_recipient IS NULL THEN
+    RETURN QUERY SELECT false, 'unknown_user', NULL::text, NULL::text, NULL::text, NULL::text, NULL::timestamptz, NULL::uuid;
+    RETURN;
+  END IF;
 
-  if v_recipient = v_owner then
-    return query select false, 'owner', null, null, null, null;
-    return;
-  end if;
+  IF v_recipient = v_owner THEN
+    RETURN QUERY SELECT false, 'owner', NULL::text, NULL::text, NULL::text, NULL::text, NULL::timestamptz, NULL::uuid;
+    RETURN;
+  END IF;
 
-  -- jeśli już jest share -> tylko update roli (bez invite)
-  if exists (
-    select 1 from public.question_base_shares s
-    where s.base_id = p_base_id and s.user_id = v_recipient
-  ) then
-    update public.question_base_shares
-      set role = p_role
-    where base_id = p_base_id and user_id = v_recipient;
+  IF EXISTS (SELECT 1 FROM public.question_base_shares s WHERE s.base_id = p_base_id AND s.user_id = v_recipient) THEN
+    UPDATE public.question_base_shares SET role = p_role WHERE base_id = p_base_id AND user_id = v_recipient;
+    RETURN QUERY SELECT true, NULL::text, NULL::text, NULL::text, v_base_name, NULL::text, NULL::timestamptz, v_recipient;
+    RETURN;
+  END IF;
 
-    return query select true, null, null, null, v_base_name, null;
-    return;
-  end if;
+  v_target := 'pair:' || v_owner::text || ':' || v_recipient::text || ':base:' || p_base_id::text;
+  SELECT ok, next_allowed_at INTO v_cd_ok, v_cd_until FROM public.mail_cooldown_check('base:share', v_target);
+  IF NOT v_cd_ok THEN
+    RETURN QUERY SELECT false, 'cooldown', NULL::text, NULL::text, NULL::text, NULL::text, v_cd_until, v_recipient;
+    RETURN;
+  END IF;
 
-  -- cooldown: ostatnie cancelled/declined/revoked (my: owner + base + recipient)
-  select greatest(
-    max(t.declined_at),
-    max(t.cancelled_at)
-  ) into v_last_ts
-  from public.base_share_tasks t
-  where t.owner_id = v_owner
-    and t.base_id = p_base_id
-    and t.recipient_user_id = v_recipient
-    and t.status in ('declined','cancelled');
+  IF EXISTS (
+    SELECT 1 FROM public.base_share_tasks t
+    WHERE t.owner_id = v_owner AND t.base_id = p_base_id AND t.recipient_user_id = v_recipient
+      AND t.status IN ('pending', 'opened')
+  ) THEN
+    RETURN QUERY SELECT false, 'already_pending', NULL::text, NULL::text, NULL::text, NULL::text, NULL::timestamptz, v_recipient;
+    RETURN;
+  END IF;
 
-  if v_last_ts is not null and v_last_ts > now() - interval '24 hours' then
-    return query select false, 'cooldown', null, null, null, null;
-    return;
-  end if;
+  SELECT coalesce(pr.username, pr.email) INTO v_owner_label FROM public.profiles pr WHERE pr.id = v_owner;
 
-  -- jeśli jest już aktywny pending/opened -> blokuj
-  if exists (
-    select 1 from public.base_share_tasks t
-    where t.owner_id = v_owner
-      and t.base_id = p_base_id
-      and t.recipient_user_id = v_recipient
-      and t.status in ('pending','opened')
-  ) then
-    return query select false, 'already_pending', null, null, null, null;
-    return;
-  end if;
+  INSERT INTO public.base_share_tasks(owner_id, base_id, recipient_user_id, recipient_email, role, status)
+  VALUES (v_owner, p_base_id, v_recipient, v_norm_email, p_role, 'pending')
+  RETURNING * INTO v_task;
 
-  -- label ownera do maila
-  select coalesce(pr.username, pr.email) into v_owner_label
-  from public.profiles pr
-  where pr.id = v_owner;
+  PERFORM public.mail_cooldown_reserve('base:share', v_target);
 
-  insert into public.base_share_tasks(owner_id, base_id, recipient_user_id, recipient_email, role, status)
-  values (v_owner, p_base_id, v_recipient, v_norm_email, p_role, 'pending')
-  returning * into v_task;
-
-  -- link do bases.html z tokenem
-  return query
-  select
-    true as ok,
-    null as err,
-    v_norm_email as mail_to,
-    ('/bases?share=' || v_task.token::text) as mail_link,
-    v_base_name as base_name,
-    v_owner_label as owner_label;
-end;
+  RETURN QUERY
+  SELECT true, NULL::text, v_norm_email, ('/bases?share=' || v_task.token::text), v_base_name, v_owner_label, NULL::timestamptz, v_recipient;
+END;
 $$;
 
 
@@ -831,109 +802,76 @@ $$;
 -- Name: base_share_by_user("uuid", "uuid", "public"."base_share_role"); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION "public"."base_share_by_user"("p_base_id" "uuid", "p_recipient_user_id" "uuid", "p_role" "public"."base_share_role") RETURNS TABLE("ok" boolean, "err" "text", "mail_to" "text", "mail_link" "text", "base_name" "text", "owner_label" "text")
+CREATE FUNCTION "public"."base_share_by_user"("p_base_id" "uuid", "p_recipient_user_id" "uuid", "p_role" "public"."base_share_role") RETURNS TABLE("ok" boolean, "err" "text", "mail_to" "text", "mail_link" "text", "base_name" "text", "owner_label" "text", "cooldown_until" timestamp with time zone, "recipient_id" "uuid")
     LANGUAGE "plpgsql" SECURITY DEFINER
     AS $$
-declare
+DECLARE
   v_owner uuid;
   v_recipient uuid;
   v_base_name text;
   v_owner_label text;
-  v_last_ts timestamptz;
   v_norm_email text;
   v_task public.base_share_tasks%rowtype;
-begin
-  perform public.base_share_tasks_cleanup();
+  v_target text;
+  v_cd_ok boolean;
+  v_cd_until timestamptz;
+BEGIN
+  PERFORM public.base_share_tasks_cleanup();
 
   v_recipient := p_recipient_user_id;
 
-  select owner_id, name
-    into v_owner, v_base_name
-  from public.question_bases
-  where id = p_base_id;
+  SELECT owner_id, name INTO v_owner, v_base_name FROM public.question_bases WHERE id = p_base_id;
 
-  if v_owner is null or v_owner <> auth.uid() then
-    return query select false, 'not_owner', null, null, null, null;
-    return;
-  end if;
+  IF v_owner IS NULL OR v_owner <> auth.uid() THEN
+    RETURN QUERY SELECT false, 'not_owner', NULL::text, NULL::text, NULL::text, NULL::text, NULL::timestamptz, NULL::uuid;
+    RETURN;
+  END IF;
 
-  if v_recipient is null then
-    return query select false, 'unknown_user', null, null, null, null;
-    return;
-  end if;
+  IF v_recipient IS NULL THEN
+    RETURN QUERY SELECT false, 'unknown_user', NULL::text, NULL::text, NULL::text, NULL::text, NULL::timestamptz, NULL::uuid;
+    RETURN;
+  END IF;
 
-  if v_recipient = v_owner then
-    return query select false, 'owner', null, null, null, null;
-    return;
-  end if;
+  IF v_recipient = v_owner THEN
+    RETURN QUERY SELECT false, 'owner', NULL::text, NULL::text, NULL::text, NULL::text, NULL::timestamptz, NULL::uuid;
+    RETURN;
+  END IF;
 
-  -- email odbiorcy (opcjonalnie – brak emaila nie blokuje taska)
-  select nullif(lower(trim(pr.email)), '')
-    into v_norm_email
-  from public.profiles pr
-  where pr.id = v_recipient;
+  SELECT nullif(lower(trim(pr.email)), '') INTO v_norm_email FROM public.profiles pr WHERE pr.id = v_recipient;
 
-  -- jeśli już jest share -> update roli (bez invite/task)
-  if exists (
-    select 1
-    from public.question_base_shares s
-    where s.base_id = p_base_id and s.user_id = v_recipient
-  ) then
-    update public.question_base_shares
-      set role = p_role
-    where base_id = p_base_id and user_id = v_recipient;
+  IF EXISTS (SELECT 1 FROM public.question_base_shares s WHERE s.base_id = p_base_id AND s.user_id = v_recipient) THEN
+    UPDATE public.question_base_shares SET role = p_role WHERE base_id = p_base_id AND user_id = v_recipient;
+    RETURN QUERY SELECT true, NULL::text, NULL::text, NULL::text, v_base_name, NULL::text, NULL::timestamptz, v_recipient;
+    RETURN;
+  END IF;
 
-    return query select true, null, null, null, v_base_name, null;
-    return;
-  end if;
+  v_target := 'pair:' || v_owner::text || ':' || v_recipient::text || ':base:' || p_base_id::text;
+  SELECT ok, next_allowed_at INTO v_cd_ok, v_cd_until FROM public.mail_cooldown_check('base:share', v_target);
+  IF NOT v_cd_ok THEN
+    RETURN QUERY SELECT false, 'cooldown', NULL::text, NULL::text, NULL::text, NULL::text, v_cd_until, v_recipient;
+    RETURN;
+  END IF;
 
-  -- cooldown: ostatnie declined/cancelled w 24h
-  select greatest(max(t.declined_at), max(t.cancelled_at))
-    into v_last_ts
-  from public.base_share_tasks t
-  where t.owner_id = v_owner
-    and t.base_id = p_base_id
-    and t.recipient_user_id = v_recipient
-    and t.status in ('declined','cancelled');
+  IF EXISTS (
+    SELECT 1 FROM public.base_share_tasks t
+    WHERE t.owner_id = v_owner AND t.base_id = p_base_id AND t.recipient_user_id = v_recipient
+      AND t.status IN ('pending', 'opened')
+  ) THEN
+    RETURN QUERY SELECT false, 'already_pending', NULL::text, NULL::text, NULL::text, NULL::text, NULL::timestamptz, v_recipient;
+    RETURN;
+  END IF;
 
-  if v_last_ts is not null and v_last_ts > now() - interval '24 hours' then
-    return query select false, 'cooldown', null, null, null, null;
-    return;
-  end if;
+  SELECT coalesce(pr.username, pr.email) INTO v_owner_label FROM public.profiles pr WHERE pr.id = v_owner;
 
-  -- jeśli już jest pending/opened -> blokuj
-  if exists (
-    select 1
-    from public.base_share_tasks t
-    where t.owner_id = v_owner
-      and t.base_id = p_base_id
-      and t.recipient_user_id = v_recipient
-      and t.status in ('pending','opened')
-  ) then
-    return query select false, 'already_pending', null, null, null, null;
-    return;
-  end if;
+  INSERT INTO public.base_share_tasks(owner_id, base_id, recipient_user_id, recipient_email, role, status)
+  VALUES (v_owner, p_base_id, v_recipient, v_norm_email, p_role, 'pending')
+  RETURNING * INTO v_task;
 
-  select coalesce(pr.username, pr.email)
-    into v_owner_label
-  from public.profiles pr
-  where pr.id = v_owner;
+  PERFORM public.mail_cooldown_reserve('base:share', v_target);
 
-  insert into public.base_share_tasks(
-    owner_id, base_id, recipient_user_id, recipient_email, role, status
-  )
-  values (v_owner, p_base_id, v_recipient, v_norm_email, p_role, 'pending')
-  returning * into v_task;
-
-  return query
-  select
-    true,
-    null,
-    v_norm_email,
-    ('/bases?share=' || v_task.token::text),
-    v_base_name,
-    v_owner_label;
-end;
+  RETURN QUERY
+  SELECT true, NULL::text, v_norm_email, ('/bases?share=' || v_task.token::text), v_base_name, v_owner_label, NULL::timestamptz, v_recipient;
+END;
 $$;
 
 
@@ -964,44 +902,6 @@ begin
   return true;
 exception when others then
   return false;
-end;
-$$;
-
-
---
--- Name: base_share_cooldown_until("uuid", "uuid"); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION "public"."base_share_cooldown_until"("p_base_id" "uuid", "p_recipient_user_id" "uuid") RETURNS timestamp with time zone
-    LANGUAGE "plpgsql" SECURITY DEFINER
-    AS $$
-declare
-  v_owner uuid;
-  v_last timestamptz;
-begin
-  select owner_id into v_owner
-  from public.question_bases
-  where id = p_base_id;
-
-  if v_owner is null or v_owner <> auth.uid() then
-    return null;
-  end if;
-
-  select greatest(
-    max(t.declined_at),
-    max(t.cancelled_at)
-  ) into v_last
-  from public.base_share_tasks t
-  where t.owner_id = v_owner
-    and t.base_id = p_base_id
-    and t.recipient_user_id = p_recipient_user_id
-    and t.status in ('declined','cancelled');
-
-  if v_last is null then
-    return null;
-  end if;
-
-  return v_last + interval '24 hours';
 end;
 $$;
 
@@ -2013,44 +1913,54 @@ CREATE FUNCTION "public"."e2e_poll_subscriptions_cleanup"("p_other_user_id" "uui
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public', 'pg_temp'
     AS $_$
-declare
+DECLARE
   v_uid uuid := auth.uid();
   v_caller_email text;
   v_other_email text;
   v_subscriptions_deleted integer := 0;
   v_tasks_deleted integer := 0;
   v_cooldowns_deleted integer := 0;
-begin
-  select lower(email) into v_caller_email from auth.users where id = v_uid;
-  select lower(email) into v_other_email from auth.users where id = p_other_user_id;
+  v_mail_cooldowns_deleted integer := 0;
+BEGIN
+  SELECT lower(email) INTO v_caller_email FROM auth.users WHERE id = v_uid;
+  SELECT lower(email) INTO v_other_email FROM auth.users WHERE id = p_other_user_id;
 
-  if v_uid is null
-     or v_caller_email !~ '^test([1-9]|1[0-3])@familiada[.]online$'
-     or v_other_email !~ '^test([1-9]|1[0-3])@familiada[.]online$' then
-    return jsonb_build_object('ok', false, 'error', 'test accounts required');
-  end if;
+  IF v_uid IS NULL
+     OR v_caller_email !~ '^test([1-9]|1[0-3])@familiada[.]online$'
+     OR v_other_email !~ '^test([1-9]|1[0-3])@familiada[.]online$' THEN
+    RETURN jsonb_build_object('ok', false, 'error', 'test accounts required');
+  END IF;
 
-  delete from public.poll_tasks
-  where (owner_id = v_uid and recipient_user_id = p_other_user_id)
-     or (owner_id = p_other_user_id and recipient_user_id = v_uid);
-  get diagnostics v_tasks_deleted = row_count;
+  DELETE FROM public.poll_tasks
+  WHERE (owner_id = v_uid AND recipient_user_id = p_other_user_id)
+     OR (owner_id = p_other_user_id AND recipient_user_id = v_uid);
+  GET DIAGNOSTICS v_tasks_deleted = ROW_COUNT;
 
-  delete from public.poll_subscriptions
-  where (owner_id = v_uid and subscriber_user_id = p_other_user_id)
-     or (owner_id = p_other_user_id and subscriber_user_id = v_uid);
-  get diagnostics v_subscriptions_deleted = row_count;
+  DELETE FROM public.poll_subscriptions
+  WHERE (owner_id = v_uid AND subscriber_user_id = p_other_user_id)
+     OR (owner_id = p_other_user_id AND subscriber_user_id = v_uid);
+  GET DIAGNOSTICS v_subscriptions_deleted = ROW_COUNT;
 
-  delete from public.email_cooldowns
-  where email_hash in (md5(v_caller_email), md5(v_other_email));
-  get diagnostics v_cooldowns_deleted = row_count;
+  DELETE FROM public.email_cooldowns
+  WHERE email_hash IN (md5(v_caller_email), md5(v_other_email));
+  GET DIAGNOSTICS v_cooldowns_deleted = ROW_COUNT;
 
-  return jsonb_build_object(
+  DELETE FROM public.mail_cooldowns
+  WHERE action_key IN ('poll:invite', 'poll:resend', 'poll:share')
+    AND (
+      target_key LIKE 'pair:' || v_uid::text || ':' || p_other_user_id::text || '%'
+      OR target_key LIKE 'pair:' || p_other_user_id::text || ':' || v_uid::text || '%'
+    );
+  GET DIAGNOSTICS v_mail_cooldowns_deleted = ROW_COUNT;
+
+  RETURN jsonb_build_object(
     'ok', true,
     'subscriptions_deleted', v_subscriptions_deleted,
     'tasks_deleted', v_tasks_deleted,
-    'cooldowns_deleted', v_cooldowns_deleted
+    'cooldowns_deleted', v_cooldowns_deleted,
+    'mail_cooldowns_deleted', v_mail_cooldowns_deleted
   );
-end;
+END;
 $_$;
 
 
@@ -2067,6 +1977,7 @@ DECLARE
   v_caller_email text;
   v_other_email text;
   v_deleted integer := 0;
+  v_mail_cooldowns_deleted integer := 0;
 BEGIN
   SELECT lower(email) INTO v_caller_email FROM auth.users WHERE id = v_uid;
   SELECT lower(email) INTO v_other_email FROM auth.users WHERE id = p_other_user_id;
@@ -2082,7 +1993,17 @@ BEGIN
      OR (owner_id = p_other_user_id AND recipient_id = v_uid);
   GET DIAGNOSTICS v_deleted = ROW_COUNT;
 
-  RETURN jsonb_build_object('ok', true, 'deleted', v_deleted);
+  -- device:share cooldown target_key niesie też device_type/game_id, stąd
+  -- LIKE z prefiksem pary, nie dokładna wartość.
+  DELETE FROM public.mail_cooldowns
+  WHERE action_key = 'device:share'
+    AND (
+      target_key LIKE 'pair:' || v_uid::text || ':' || p_other_user_id::text || '%'
+      OR target_key LIKE 'pair:' || p_other_user_id::text || ':' || v_uid::text || '%'
+    );
+  GET DIAGNOSTICS v_mail_cooldowns_deleted = ROW_COUNT;
+
+  RETURN jsonb_build_object('ok', true, 'deleted', v_deleted, 'mail_cooldowns_deleted', v_mail_cooldowns_deleted);
 END;
 $_$;
 
@@ -5826,6 +5747,93 @@ $$;
 
 
 --
+-- Name: mail_cooldown_check("text", "text"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."mail_cooldown_check"("p_action_key" "text", "p_target_key" "text") RETURNS TABLE("ok" boolean, "next_allowed_at" timestamp with time zone)
+    LANGUAGE "sql" STABLE SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+  SELECT (mc.next_allowed_at IS NULL OR mc.next_allowed_at <= now()), mc.next_allowed_at
+  FROM (SELECT 1) AS _dummy
+  LEFT JOIN public.mail_cooldowns mc
+    ON mc.action_key = p_action_key AND mc.target_key = p_target_key;
+$$;
+
+
+--
+-- Name: mail_cooldown_email_check("text", "text"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."mail_cooldown_email_check"("p_action_key" "text", "p_email" "text") RETURNS TABLE("ok" boolean, "next_allowed_at" timestamp with time zone)
+    LANGUAGE "sql" STABLE SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+  SELECT * FROM public.mail_cooldown_check(p_action_key, 'email:' || md5(lower(trim(p_email))));
+$$;
+
+
+--
+-- Name: mail_cooldown_email_reserve("text", "text"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."mail_cooldown_email_reserve"("p_action_key" "text", "p_email" "text") RETURNS TABLE("ok" boolean, "next_allowed_at" timestamp with time zone)
+    LANGUAGE "sql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+  SELECT * FROM public.mail_cooldown_reserve(p_action_key, 'email:' || md5(lower(trim(p_email))));
+$$;
+
+
+--
+-- Name: mail_cooldown_reserve("text", "text"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."mail_cooldown_reserve"("p_action_key" "text", "p_target_key" "text") RETURNS TABLE("ok" boolean, "next_allowed_at" timestamp with time zone)
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+DECLARE
+  v_seconds integer;
+  v_cur_next timestamptz;
+  v_new_next timestamptz;
+BEGIN
+  SELECT cooldown_seconds INTO v_seconds
+  FROM public.mail_cooldown_policies
+  WHERE action_key = p_action_key;
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'mail_cooldown_reserve: unknown action_key %', p_action_key;
+  END IF;
+
+  SELECT next_allowed_at INTO v_cur_next
+  FROM public.mail_cooldowns
+  WHERE action_key = p_action_key AND target_key = p_target_key
+  FOR UPDATE;
+
+  IF NOT FOUND THEN
+    v_new_next := now() + make_interval(secs => v_seconds);
+    INSERT INTO public.mail_cooldowns(action_key, target_key, next_allowed_at, updated_at)
+    VALUES (p_action_key, p_target_key, v_new_next, now());
+    RETURN QUERY SELECT true, v_new_next;
+    RETURN;
+  END IF;
+
+  IF v_cur_next <= now() THEN
+    v_new_next := now() + make_interval(secs => v_seconds);
+    UPDATE public.mail_cooldowns
+      SET next_allowed_at = v_new_next, updated_at = now()
+      WHERE action_key = p_action_key AND target_key = p_target_key;
+    RETURN QUERY SELECT true, v_new_next;
+    RETURN;
+  END IF;
+
+  RETURN QUERY SELECT false, v_cur_next;
+END;
+$$;
+
+
+--
 -- Name: mail_cron_set("text", boolean, integer, "text"); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -5997,6 +6005,51 @@ $_$;
 
 
 --
+-- Name: mail_queue_cooldown_guard(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."mail_queue_cooldown_guard"() RETURNS "trigger"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+DECLARE
+  v_enforce boolean;
+  v_ok boolean;
+  v_until timestamptz;
+  v_baseline_target text;
+BEGIN
+  SELECT enforce INTO v_enforce
+  FROM public.mail_cooldown_policies
+  WHERE action_key = NEW.cooldown_action_key;
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'mail_queue: unknown cooldown_action_key %', NEW.cooldown_action_key;
+  END IF;
+
+  IF v_enforce THEN
+    -- Nieprzekraczalna podłoga, niezależna od action_key — to jest to, co
+    -- faktycznie zamyka dziurę (wymyślenie nowego, ale wciąż rozpoznanego
+    -- action_key nie pomaga obejść TEJ rezerwacji). target_key per
+    -- (nadawca, odbiorca) — 'svc:'+action_key jako fallback dla wierszy bez
+    -- created_by (service-role), żeby różne serwisowe funkcje nie wpadały
+    -- w jeden, wspólny koszyk.
+    v_baseline_target := 'pair:' || coalesce(NEW.created_by::text, 'svc:' || NEW.cooldown_action_key)
+      || ':' || md5(lower(trim(NEW.to_email)));
+
+    SELECT ok, next_allowed_at INTO v_ok, v_until
+    FROM public.mail_cooldown_reserve('baseline:recipient', v_baseline_target);
+
+    IF NOT v_ok THEN
+      RAISE EXCEPTION 'cooldown_active: baseline for % until %', NEW.to_email, v_until;
+    END IF;
+  END IF;
+
+  RETURN NEW;
+END;
+$$;
+
+
+--
 -- Name: mail_queue_mark("uuid", boolean, "text", "text"); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -6041,7 +6094,9 @@ CREATE TABLE "public"."mail_queue" (
     "picked_at" timestamp with time zone,
     "last_attempt_at" timestamp with time zone,
     "from_email" "text",
-    "text" "text"
+    "text" "text",
+    "cooldown_action_key" "text" NOT NULL,
+    "cooldown_target_key" "text" NOT NULL
 );
 
 
@@ -9911,7 +9966,7 @@ CREATE FUNCTION "public"."polls_hub_share_poll"("p_game_id" "uuid", "p_sub_ids" 
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public', 'pg_temp'
     AS $$
-declare
+DECLARE
   v_uid uuid := auth.uid();
   v_poll_type text;
   v_share_key text;
@@ -9919,167 +9974,118 @@ declare
   v_cancelled int := 0;
   v_kept int := 0;
   v_blocked int := 0;
-  v_blocked_sub_ids uuid[] := array[]::uuid[];
+  v_blocked_sub_ids jsonb := '[]'::jsonb;
   v_mail jsonb := '[]'::jsonb;
-begin
-  if v_uid is null then
-    return jsonb_build_object('ok', false, 'error', 'auth required');
-  end if;
+BEGIN
+  IF v_uid IS NULL THEN
+    RETURN jsonb_build_object('ok', false, 'err', 'auth required');
+  END IF;
 
-  select g.type::text, g.share_key_poll
-    into v_poll_type, v_share_key
-  from public.games g
-  where g.id = p_game_id and g.owner_id = v_uid
-  limit 1;
+  SELECT g.type::text, g.share_key_poll INTO v_poll_type, v_share_key
+  FROM public.games g WHERE g.id = p_game_id AND g.owner_id = v_uid LIMIT 1;
 
-  if not found then
-    return jsonb_build_object('ok', false, 'error', 'game not found');
-  end if;
+  IF NOT FOUND THEN
+    RETURN jsonb_build_object('ok', false, 'err', 'game not found');
+  END IF;
+  IF v_poll_type NOT IN ('poll_text', 'poll_points') THEN
+    RETURN jsonb_build_object('ok', false, 'err', 'not a poll game');
+  END IF;
 
-  if v_poll_type not in ('poll_text','poll_points') then
-    return jsonb_build_object('ok', false, 'error', 'not a poll game');
-  end if;
-
-  update public.poll_tasks t
-  set status = 'cancelled',
-      cancelled_at = now()
-  where t.owner_id = v_uid
-    and t.game_id = p_game_id
-    and t.status in ('pending','opened')
-    and (
-      (t.recipient_user_id is not null and not exists (
-        select 1
-        from public.poll_subscriptions s
-        where s.id = any(coalesce(p_sub_ids, array[]::uuid[]))
-          and s.owner_id = v_uid
-          and s.status = 'active'
-          and s.subscriber_user_id = t.recipient_user_id
+  UPDATE public.poll_tasks t
+  SET status = 'cancelled', cancelled_at = now()
+  WHERE t.owner_id = v_uid AND t.game_id = p_game_id AND t.status IN ('pending', 'opened')
+    AND (
+      (t.recipient_user_id IS NOT NULL AND NOT EXISTS (
+        SELECT 1 FROM public.poll_subscriptions s
+        WHERE s.id = ANY(coalesce(p_sub_ids, array[]::uuid[])) AND s.owner_id = v_uid
+          AND s.status = 'active' AND s.subscriber_user_id = t.recipient_user_id
       ))
-      or
-      (t.recipient_user_id is null and t.recipient_email is not null and not exists (
-        select 1
-        from public.poll_subscriptions s
-        where s.id = any(coalesce(p_sub_ids, array[]::uuid[]))
-          and s.owner_id = v_uid
-          and s.status = 'active'
-          and s.subscriber_email is not null
-          and lower(s.subscriber_email) = lower(t.recipient_email)
+      OR (t.recipient_user_id IS NULL AND t.recipient_email IS NOT NULL AND NOT EXISTS (
+        SELECT 1 FROM public.poll_subscriptions s
+        WHERE s.id = ANY(coalesce(p_sub_ids, array[]::uuid[])) AND s.owner_id = v_uid
+          AND s.status = 'active' AND s.subscriber_email IS NOT NULL
+          AND lower(s.subscriber_email) = lower(t.recipient_email)
       ))
     );
+  GET DIAGNOSTICS v_cancelled = ROW_COUNT;
 
-  get diagnostics v_cancelled = row_count;
-
-  with sel as (
-    select
-      s.id as sub_id,
+  WITH sel AS (
+    SELECT
+      s.id AS sub_id,
       s.subscriber_user_id,
-      lower(s.subscriber_email) as subscriber_email,
-      lower(p.email) as subscriber_profile_email,
-      lower(coalesce(s.subscriber_email, p.email)) as resolved_email
-    from public.poll_subscriptions s
-    left join public.profiles p on p.id = s.subscriber_user_id
-    where s.owner_id = v_uid
-      and s.status = 'active'
-      and s.id = any(coalesce(p_sub_ids, array[]::uuid[]))
+      lower(s.subscriber_email) AS subscriber_email,
+      lower(coalesce(s.subscriber_email, p.email)) AS resolved_email,
+      'pair:' || v_uid::text || ':' ||
+        coalesce(s.subscriber_user_id::text, 'email:' || md5(lower(coalesce(s.subscriber_email, '')))) ||
+        ':game:' || p_game_id::text AS cooldown_target
+    FROM public.poll_subscriptions s
+    LEFT JOIN public.profiles p ON p.id = s.subscriber_user_id
+    WHERE s.owner_id = v_uid AND s.status = 'active' AND s.id = ANY(coalesce(p_sub_ids, array[]::uuid[]))
   ),
-  cooldown as (
-    select
-      sel.sub_id,
-      max(coalesce(t.cancelled_at, t.declined_at, t.created_at)) as last_block_ts
-    from sel
-    join public.poll_tasks t
-      on t.owner_id = v_uid
-     and t.game_id = p_game_id
-     and t.status in ('cancelled','declined')
-     and (
-        (sel.subscriber_user_id is not null and t.recipient_user_id = sel.subscriber_user_id)
-        or
-        (sel.subscriber_user_id is null and sel.subscriber_email is not null and lower(t.recipient_email) = sel.subscriber_email)
-     )
-    where coalesce(t.cancelled_at, t.declined_at, t.created_at) > now() - interval '24 hours'
-    group by sel.sub_id
+  cooldown AS (
+    SELECT sel.sub_id, mc.next_allowed_at
+    FROM sel
+    JOIN public.mail_cooldowns mc ON mc.action_key = 'poll:share' AND mc.target_key = sel.cooldown_target
+    WHERE mc.next_allowed_at > now()
   ),
-  existing as (
-    select
-      sel.sub_id,
-      t.id as task_id
-    from sel
-    left join public.poll_tasks t
-      on t.owner_id = v_uid
-     and t.game_id = p_game_id
-     and t.status in ('pending','opened','done')
-     and (
-        (sel.subscriber_user_id is not null and t.recipient_user_id = sel.subscriber_user_id)
-        or
-        (sel.subscriber_user_id is null and sel.subscriber_email is not null and lower(t.recipient_email) = sel.subscriber_email)
-     )
+  existing AS (
+    SELECT sel.sub_id, t.id AS task_id
+    FROM sel
+    LEFT JOIN public.poll_tasks t
+      ON t.owner_id = v_uid AND t.game_id = p_game_id AND t.status IN ('pending', 'opened', 'done')
+     AND ((sel.subscriber_user_id IS NOT NULL AND t.recipient_user_id = sel.subscriber_user_id)
+       OR (sel.subscriber_user_id IS NULL AND sel.subscriber_email IS NOT NULL AND lower(t.recipient_email) = sel.subscriber_email))
   ),
-  ins as (
-    insert into public.poll_tasks(
-      owner_id, recipient_user_id, recipient_email,
-      game_id, poll_type, share_key_poll, token, status, created_at
-    )
-    select
-      v_uid,
-      e.subscriber_user_id,
-      case
-        when e.subscriber_user_id is not null then null
-        else e.resolved_email
-      end,
-      p_game_id,
-      v_poll_type,
-      v_share_key,
-      gen_random_uuid(),
-      'pending',
-      now()
-    from (
-      select sel.*
-      from sel
-      join existing ex on ex.sub_id = sel.sub_id
-      left join cooldown cd on cd.sub_id = sel.sub_id
-      where ex.task_id is null
-        and cd.sub_id is null
-    ) e
-    returning id, recipient_user_id, recipient_email, token
+  to_insert AS (
+    SELECT sel.* FROM sel
+    JOIN existing ex ON ex.sub_id = sel.sub_id
+    LEFT JOIN cooldown cd ON cd.sub_id = sel.sub_id
+    WHERE ex.task_id IS NULL AND cd.sub_id IS NULL
   ),
-  mail_rows as (
-    select
-      i.id,
-      coalesce(lower(i.recipient_email), lower(p.email)) as to_email,
-      i.token
-    from ins i
-    left join public.profiles p on p.id = i.recipient_user_id
+  ins AS (
+    INSERT INTO public.poll_tasks(owner_id, recipient_user_id, recipient_email, game_id, poll_type, share_key_poll, token, status, created_at)
+    SELECT
+      v_uid, e.subscriber_user_id,
+      CASE WHEN e.subscriber_user_id IS NOT NULL THEN NULL ELSE e.resolved_email END,
+      p_game_id, v_poll_type, v_share_key, gen_random_uuid(), 'pending', now()
+    FROM to_insert e
+    RETURNING id, recipient_user_id, recipient_email, token
+  ),
+  reserved AS (
+    -- Rezerwacja cooldownu TYLKO dla wierszy, które faktycznie przeszły
+    -- przez `ins` (czyli naprawdę zostały wstawione) -- nie wcześniej,
+    -- żeby nie konsumować cooldownu dla zablokowanych/już-istniejących.
+    SELECT r.id, pc.ok
+    FROM ins r
+    CROSS JOIN LATERAL public.mail_cooldown_reserve(
+      'poll:share',
+      'pair:' || v_uid::text || ':' ||
+        coalesce(r.recipient_user_id::text, 'email:' || md5(lower(coalesce(r.recipient_email, '')))) ||
+        ':game:' || p_game_id::text
+    ) pc
+  ),
+  mail_rows AS (
+    SELECT i.id, coalesce(lower(i.recipient_email), lower(p.email)) AS to_email, i.token
+    FROM ins i
+    JOIN reserved rv ON rv.id = i.id AND rv.ok
+    LEFT JOIN public.profiles p ON p.id = i.recipient_user_id
   )
-  select
-    (select count(*) from ins)::int,
-    (select count(*) from cooldown)::int,
-    (select array_agg(sub_id) from cooldown),
-    coalesce(
-      jsonb_agg(
-        jsonb_build_object(
-          'task_id', id,
-          'to', to_email,
-          'token', token,
-          'link', ('poll-go?t=' || token::text)
-        )
-      ) filter (where public._norm_email(to_email) is not null),
-      '[]'::jsonb
-    )
-  into v_created, v_blocked, v_blocked_sub_ids, v_mail
-  from mail_rows;
+  SELECT
+    (SELECT count(*) FROM ins)::int,
+    (SELECT count(*) FROM cooldown)::int,
+    coalesce((SELECT jsonb_agg(jsonb_build_object('sub_id', c.sub_id, 'cooldown_until', c.next_allowed_at)) FROM cooldown c), '[]'::jsonb),
+    coalesce(jsonb_agg(jsonb_build_object('task_id', id, 'to', to_email, 'token', token, 'link', ('poll-go?t=' || token::text)))
+      FILTER (WHERE public._norm_email(to_email) IS NOT NULL), '[]'::jsonb)
+  INTO v_created, v_blocked, v_blocked_sub_ids, v_mail
+  FROM mail_rows;
 
-  v_kept := greatest(coalesce(array_length(p_sub_ids,1),0) - v_created, 0);
+  v_kept := greatest(coalesce(array_length(p_sub_ids, 1), 0) - v_created, 0);
 
-  return jsonb_build_object(
-    'ok', true,
-    'created', v_created,
-    'cancelled', v_cancelled,
-    'kept', v_kept,
-    'blocked', v_blocked,
-    'blocked_sub_ids', coalesce(v_blocked_sub_ids, array[]::uuid[]),
-    'mail', v_mail
+  RETURN jsonb_build_object(
+    'ok', true, 'created', v_created, 'cancelled', v_cancelled, 'kept', v_kept,
+    'blocked', v_blocked, 'blocked_sub_ids', v_blocked_sub_ids, 'mail', v_mail
   );
-end;
+END;
 $$;
 
 
@@ -10133,11 +10139,13 @@ DECLARE
   v_sub         public.poll_subscriptions%rowtype;
   v_to          text;
   v_link        text;
-  v_until       timestamptz;
+  v_target      text;
+  v_cd_ok       boolean;
+  v_cd_until    timestamptz;
   v_unsub_token uuid;
 BEGIN
   IF v_uid IS NULL THEN
-    RETURN jsonb_build_object('ok', false, 'error', 'auth required');
+    RETURN jsonb_build_object('ok', false, 'err', 'auth required');
   END IF;
 
   SELECT * INTO v_sub
@@ -10145,30 +10153,29 @@ BEGIN
   WHERE id = p_id AND owner_id = v_uid
   LIMIT 1;
 
-  IF NOT found THEN
-    RETURN jsonb_build_object('ok', false, 'error', 'not found');
+  IF NOT FOUND THEN
+    RETURN jsonb_build_object('ok', false, 'err', 'not found');
   END IF;
 
   IF v_sub.status <> 'pending' THEN
-    RETURN jsonb_build_object('ok', false, 'error', 'only pending can be resent');
+    RETURN jsonb_build_object('ok', false, 'err', 'only pending can be resent');
   END IF;
 
-  IF v_sub.email_sent_at IS NOT NULL THEN
-    v_until := v_sub.email_sent_at + interval '24 hours';
-    IF now() < v_until THEN
-      RETURN jsonb_build_object('ok', false, 'error', 'cooldown', 'cooldown_until', v_until);
-    END IF;
+  v_target := 'pair:' || v_uid::text || ':' ||
+    coalesce(v_sub.subscriber_user_id::text, 'email:' || md5(lower(coalesce(v_sub.subscriber_email, ''))));
+  SELECT ok, next_allowed_at INTO v_cd_ok, v_cd_until FROM public.mail_cooldown_check('poll:resend', v_target);
+  IF NOT v_cd_ok THEN
+    RETURN jsonb_build_object('ok', false, 'err', 'cooldown', 'cooldown_until', v_cd_until);
   END IF;
 
   IF v_sub.subscriber_email IS NOT NULL THEN
     v_to := lower(v_sub.subscriber_email);
   ELSIF v_sub.subscriber_user_id IS NOT NULL THEN
-    SELECT lower(p.email) INTO v_to
-    FROM public.profiles p WHERE p.id = v_sub.subscriber_user_id LIMIT 1;
+    SELECT lower(p.email) INTO v_to FROM public.profiles p WHERE p.id = v_sub.subscriber_user_id LIMIT 1;
   END IF;
 
   IF public._norm_email(v_to) IS NULL THEN
-    RETURN jsonb_build_object('ok', false, 'error', 'no email for this subscriber');
+    RETURN jsonb_build_object('ok', false, 'err', 'no email for this subscriber');
   END IF;
 
   v_link := ('poll-go?s=' || v_sub.token::text)::text;
@@ -10177,7 +10184,8 @@ BEGIN
   SET email_sent_at = now(), email_send_count = email_send_count + 1
   WHERE id = p_id;
 
-  -- unsub token tylko dla email-only
+  PERFORM public.mail_cooldown_reserve('poll:resend', v_target);
+
   IF v_sub.subscriber_email IS NOT NULL THEN
     v_unsub_token := public._ensure_unsub_token(v_to);
   END IF;
@@ -10259,104 +10267,61 @@ CREATE FUNCTION "public"."polls_hub_subscription_invite"("p_recipient" "text") R
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public', 'pg_temp'
     AS $$
-declare
-  v_rec text := lower(trim(coalesce(p_recipient,'')));
-  v_user_id uuid;
-  v_email text;
-  v_token uuid;
-  v_id uuid;
-  v_last public.poll_subscriptions%rowtype;
-  v_until timestamptz;
-  v_block_ts timestamptz;
-begin
-  if v_rec = '' then
-    return jsonb_build_object('ok', false, 'error', 'empty recipient');
-  end if;
+DECLARE
+  v_rec      text := lower(trim(coalesce(p_recipient, '')));
+  v_user_id  uuid;
+  v_email    text;
+  v_id       uuid;
+  v_token    uuid;
+  v_target   text;
+  v_cd_ok    boolean;
+  v_cd_until timestamptz;
+BEGIN
+  IF v_rec = '' THEN
+    RETURN jsonb_build_object('ok', false, 'err', 'empty recipient');
+  END IF;
 
-  -- 1) spróbuj po username
-  select id, email into v_user_id, v_email
-  from public.profiles
-  where lower(username) = v_rec
-  limit 1;
-
-  -- 2) jeśli nie znaleziono po username, spróbuj po email
-  if v_user_id is null then
-    select id, email into v_user_id, v_email
-    from public.profiles
-    where lower(email) = v_rec
-    limit 1;
-  end if;
-
-  -- docelowy email do rekordu (z profilu albo wpisany)
-  if v_email is null then
+  SELECT id, email INTO v_user_id, v_email FROM public.profiles WHERE lower(username) = v_rec LIMIT 1;
+  IF v_user_id IS NULL THEN
+    SELECT id, email INTO v_user_id, v_email FROM public.profiles WHERE lower(email) = v_rec LIMIT 1;
+  END IF;
+  IF v_email IS NULL THEN
     v_email := v_rec;
-  end if;
+  END IF;
 
-  -- jeśli już istnieje pending/active do tego odbiorcy (po user_id lub email), nie twórz duplikatu
-  select ps.id, ps.token into v_id, v_token
-  from public.poll_subscriptions ps
-  where ps.owner_id = auth.uid()
-    and (
-      (v_user_id is not null and ps.subscriber_user_id = v_user_id)
-      or (ps.subscriber_email is not null and lower(ps.subscriber_email) = v_email)
-    )
-    and ps.status in ('pending','active')
-  limit 1;
+  SELECT ps.id, ps.token INTO v_id, v_token
+  FROM public.poll_subscriptions ps
+  WHERE ps.owner_id = auth.uid()
+    AND ((v_user_id IS NOT NULL AND ps.subscriber_user_id = v_user_id)
+      OR (ps.subscriber_email IS NOT NULL AND lower(ps.subscriber_email) = v_email))
+    AND ps.status IN ('pending', 'active')
+  LIMIT 1;
 
-  if v_id is not null then
-    return jsonb_build_object(
-      'ok', true,
-      'already', true,
-      'id', v_id,
-      'token', v_token,
-      'channel', case when v_user_id is not null then 'onsite' else 'email' end
+  IF v_id IS NOT NULL THEN
+    RETURN jsonb_build_object(
+      'ok', true, 'already', true, 'id', v_id, 'token', v_token,
+      'channel', CASE WHEN v_user_id IS NOT NULL THEN 'onsite' ELSE 'email' END
     );
-  end if;
+  END IF;
 
-  -- cooldown 5 dni po cancelled/declined (także dla email-only)
-  select * into v_last
-  from public.poll_subscriptions ps
-  where ps.owner_id = auth.uid()
-    and (
-      (v_user_id is not null and ps.subscriber_user_id = v_user_id)
-      or (ps.subscriber_email is not null and lower(ps.subscriber_email) = v_email)
-    )
-    and ps.status in ('cancelled','declined')
-  order by coalesce(ps.cancelled_at, ps.declined_at, ps.created_at) desc
-  limit 1;
+  v_target := 'pair:' || auth.uid()::text || ':' || coalesce(v_user_id::text, 'email:' || md5(v_email));
+  SELECT ok, next_allowed_at INTO v_cd_ok, v_cd_until FROM public.mail_cooldown_check('poll:invite', v_target);
+  IF NOT v_cd_ok THEN
+    RETURN jsonb_build_object('ok', false, 'err', 'cooldown', 'cooldown_until', v_cd_until);
+  END IF;
 
-  if v_last.id is not null then
-    v_block_ts := coalesce(v_last.cancelled_at, v_last.declined_at, v_last.created_at);
-    v_until := v_block_ts + interval '5 days';
-    if now() < v_until then
-      return jsonb_build_object('ok', false, 'error', 'cooldown', 'cooldown_until', v_until);
-    end if;
-  end if;
+  INSERT INTO public.poll_subscriptions (owner_id, subscriber_user_id, subscriber_email, status)
+  VALUES (auth.uid(), v_user_id, CASE WHEN v_user_id IS NULL THEN v_email ELSE NULL END, 'pending')
+  RETURNING id, token INTO v_id, v_token;
 
-  -- wstaw invite/subscription
-  insert into public.poll_subscriptions (
-    owner_id,
-    subscriber_user_id,
-    subscriber_email,
-    status
-  )
-  values (
-    auth.uid(),
-    v_user_id,
-    case when v_user_id is null then v_email else null end,
-    'pending'
-  )
-  returning id, token into v_id, v_token;
+  PERFORM public.mail_cooldown_reserve('poll:invite', v_target);
 
-  return jsonb_build_object(
-    'ok', true,
-    'already', false,
-    'id', v_id,
-    'token', v_token,
-    'channel', case when v_user_id is not null then 'onsite' else 'email' end,
-    'email', case when v_user_id is null then v_email else null end
+  RETURN jsonb_build_object(
+    'ok', true, 'already', false, 'id', v_id, 'token', v_token,
+    'channel', CASE WHEN v_user_id IS NOT NULL THEN 'onsite' ELSE 'email' END,
+    'email', CASE WHEN v_user_id IS NULL THEN v_email ELSE NULL END
   );
-end;
+END;
 $$;
 
 
@@ -10540,37 +10505,6 @@ begin
   get diagnostics v_n = row_count;
   return jsonb_build_object('ok', true, 'updated', v_n);
 end;
-$$;
-
-
---
--- Name: polls_sub_cooldown_active("uuid", "uuid", "text"); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION "public"."polls_sub_cooldown_active"("p_owner_id" "uuid", "p_subscriber_user_id" "uuid", "p_subscriber_email" "text") RETURNS boolean
-    LANGUAGE "sql" SECURITY DEFINER
-    SET "search_path" TO 'public'
-    AS $$
-  with cand as (
-    select
-      greatest(
-        coalesce(s.declined_at,  '-infinity'::timestamptz),
-        coalesce(s.cancelled_at, '-infinity'::timestamptz),
-        coalesce(s.created_at,   '-infinity'::timestamptz)
-      ) as last_action_at
-    from public.poll_subscriptions s
-    where s.owner_id = p_owner_id
-      and (
-        (p_subscriber_user_id is not null and s.subscriber_user_id = p_subscriber_user_id)
-        or (p_subscriber_user_id is null and p_subscriber_email is not null and lower(s.subscriber_email) = lower(p_subscriber_email))
-      )
-    order by last_action_at desc
-    limit 1
-  )
-  select exists (
-    select 1 from cand
-    where last_action_at > now() - interval '5 days'
-  );
 $$;
 
 
@@ -11249,6 +11183,9 @@ CREATE FUNCTION "public"."share_device"("p_recipient_user_id" "uuid", "p_device_
 DECLARE
   v_owner uuid := auth.uid();
   v_created boolean;
+  v_mail_allowed boolean := false;
+  v_cooldown_until timestamptz;
+  v_target text;
 BEGIN
   IF v_owner IS NULL THEN RETURN jsonb_build_object('ok', false, 'err', 'not_authenticated'); END IF;
   IF v_owner = p_recipient_user_id THEN RETURN jsonb_build_object('ok', false, 'err', 'self_share'); END IF;
@@ -11257,6 +11194,7 @@ BEGIN
   v_created := NOT EXISTS (
     SELECT 1 FROM public.shared_devices
     WHERE owner_id = v_owner AND recipient_id = p_recipient_user_id AND device_type = p_device_type
+      AND game_id IS NOT DISTINCT FROM p_game_id
   );
 
   INSERT INTO public.shared_devices (owner_id, recipient_id, device_type, game_id, game_name, expires_at)
@@ -11264,7 +11202,20 @@ BEGIN
   ON CONFLICT (owner_id, recipient_id, device_type)
   DO UPDATE SET game_id = EXCLUDED.game_id, game_name = EXCLUDED.game_name, expires_at = EXCLUDED.expires_at;
 
-  RETURN jsonb_build_object('ok', true, 'created', v_created);
+  IF v_created THEN
+    v_target := 'pair:' || v_owner::text || ':' || p_recipient_user_id::text
+      || ':device:' || p_device_type || ':game:' || coalesce(p_game_id::text, 'none');
+
+    SELECT ok, next_allowed_at INTO v_mail_allowed, v_cooldown_until
+    FROM public.mail_cooldown_reserve('device:share', v_target);
+  END IF;
+
+  RETURN jsonb_build_object(
+    'ok', true,
+    'created', v_created,
+    'mail_allowed', v_mail_allowed,
+    'cooldown_until', v_cooldown_until
+  );
 END;
 $$;
 
@@ -12426,6 +12377,33 @@ CREATE TABLE "public"."konta_do_stworzenia" (
 
 
 --
+-- Name: mail_cooldown_policies; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE "public"."mail_cooldown_policies" (
+    "action_key" "text" NOT NULL,
+    "scope" "text" NOT NULL,
+    "cooldown_seconds" integer NOT NULL,
+    "enforce" boolean DEFAULT true NOT NULL,
+    "description" "text",
+    CONSTRAINT "mail_cooldown_policies_cooldown_seconds_check" CHECK (("cooldown_seconds" >= 0)),
+    CONSTRAINT "mail_cooldown_policies_scope_check" CHECK (("scope" = ANY (ARRAY['email'::"text", 'user'::"text", 'pair'::"text"])))
+);
+
+
+--
+-- Name: mail_cooldowns; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE "public"."mail_cooldowns" (
+    "action_key" "text" NOT NULL,
+    "target_key" "text" NOT NULL,
+    "next_allowed_at" timestamp with time zone NOT NULL,
+    "updated_at" timestamp with time zone DEFAULT "now"() NOT NULL
+);
+
+
+--
 -- Name: mail_function_logs; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -13222,6 +13200,22 @@ ALTER TABLE ONLY "public"."games"
 
 ALTER TABLE ONLY "public"."guest_migration_staging"
     ADD CONSTRAINT "guest_migration_staging_pkey" PRIMARY KEY ("user_id");
+
+
+--
+-- Name: mail_cooldown_policies mail_cooldown_policies_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."mail_cooldown_policies"
+    ADD CONSTRAINT "mail_cooldown_policies_pkey" PRIMARY KEY ("action_key");
+
+
+--
+-- Name: mail_cooldowns mail_cooldowns_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."mail_cooldowns"
+    ADD CONSTRAINT "mail_cooldowns_pkey" PRIMARY KEY ("action_key", "target_key");
 
 
 --
@@ -14384,6 +14378,13 @@ CREATE TRIGGER "trg_guard_game_poll_close" BEFORE UPDATE OF "status" ON "public"
 
 
 --
+-- Name: mail_queue trg_mail_queue_cooldown_guard; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "trg_mail_queue_cooldown_guard" BEFORE INSERT ON "public"."mail_queue" FOR EACH ROW EXECUTE FUNCTION "public"."mail_queue_cooldown_guard"();
+
+
+--
 -- Name: market_game_ratings trg_market_game_rating_stats; Type: TRIGGER; Schema: public; Owner: -
 --
 
@@ -14622,6 +14623,14 @@ ALTER TABLE ONLY "public"."games"
 
 ALTER TABLE ONLY "public"."guest_migration_staging"
     ADD CONSTRAINT "guest_migration_staging_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
+
+
+--
+-- Name: mail_cooldowns mail_cooldowns_action_key_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."mail_cooldowns"
+    ADD CONSTRAINT "mail_cooldowns_action_key_fkey" FOREIGN KEY ("action_key") REFERENCES "public"."mail_cooldown_policies"("action_key");
 
 
 --
@@ -15387,6 +15396,18 @@ ALTER TABLE "public"."guest_migration_staging" ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "guest_migration_staging_service_only" ON "public"."guest_migration_staging" TO "authenticated" USING (false) WITH CHECK (false);
 
+
+--
+-- Name: mail_cooldown_policies; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE "public"."mail_cooldown_policies" ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: mail_cooldowns; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE "public"."mail_cooldowns" ENABLE ROW LEVEL SECURITY;
 
 --
 -- Name: mail_function_logs; Type: ROW SECURITY; Schema: public; Owner: -
@@ -16264,5 +16285,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict hwoUotMHpq4Wa9C3M3fAwbMT9deFPZ7YTczzSkHzKupeaWQPadz2zvfYKvbbzrV
+\unrestrict Mg8d4hd3CNjSB6UCbC9r05x6TMggAJhGedOdl8DS06XYc3h1lUPLX3hXjNZv8Pg
 
