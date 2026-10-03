@@ -397,9 +397,18 @@
        (jak w kroku wpisywania), nie stać wyśrodkowanym prostokątem. */
     .c2-mapinput .c2-entrytile-input { display:flex; min-width:0; }
     /* Kafelek "Gracz 1" (runda 2, obok c2-mapinput) — ta sama obramówka co
-       c2-entrytile, wyśrodkowany w pionie, wartość złota jak wszędzie indziej. */
+       c2-entrytile, wyśrodkowany w pionie, wartość złota jak wszędzie indziej.
+       Zgłoszone: widać tylko etykietę "Gracz 1", nie samą odpowiedź --
+       przyczyna: .c2-entrytile-p1ans dziedziczy z bazowej reguły
+       overflow:hidden/text-overflow:ellipsis/white-space:nowrap myślane pod
+       JEDNOLINIJKOWY podgląd w Rundzie 2 (gdzie kafelek jest szerszy, bez
+       etykiety nad sobą) -- tu kafelek jest wąski (1/3) i wartość stoi POD
+       etykietą w kolumnie, więc 1-linijkowy ellipsis+hidden obcina ją
+       praktycznie do zera wysokości. white-space:normal (ustawione niżej)
+       nie wystarczyło, bo nie czyści overflow/text-overflow z bazowej
+       reguły -- jawne nadpisanie obu. */
     .c2-map-p1tile { justify-content:center; align-items:center; text-align:center; gap:6px; }
-    .c2-map-p1tile .c2-entrytile-p1ans { font-size:.92rem; white-space:normal; opacity:1; }
+    .c2-map-p1tile .c2-entrytile-p1ans { font-size:.92rem; white-space:normal; opacity:1; overflow:visible; text-overflow:unset; }
     .c2-entrytile-input input {
       width:100%; height:100%; flex:1; box-sizing:border-box; padding:8px 12px;
       border-radius:10px; border:1px solid rgba(255,255,255,.2);

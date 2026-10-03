@@ -216,6 +216,37 @@ test("mapowanie: MATCH dolicza punkty do sumy raz, MISS dokłada 0 i gra answer_
   assert.equal(store.commits.at(-1).soundCueKey, "answer_wrong");
 });
 
+test("mapowanie: MISS/SKIP odsłaniają punkty (0) i grają answer_wrong od razu w REVEAL_ANSWER_ONLY, bez osobnego REVEAL_POINTS", async () => {
+  const { store, dispatch } = makeEngine();
+  await dispatch({ type: "START_FINAL" });
+  await dispatch({ type: "START_MAPPING", round: 1 });
+
+  await dispatch({ type: "RESOLVE_MAPPING", round: 1, idx: 0, mode: "MANUAL", kind: "MISS", outText: "coś innego" });
+  await dispatch({ type: "REVEAL_ANSWER_ONLY", round: 1, idx: 0 });
+  assert.equal(store.state.final.runtime.map1[0].revealedAnswer, true);
+  assert.equal(store.state.final.runtime.map1[0].revealedPoints, true, "punkty odsłonięte automatycznie, bez REVEAL_POINTS");
+  assert.equal(store.state.final.runtime.map1[0].pts, 0);
+  assert.equal(store.commits.at(-1).soundCueKey, "answer_wrong", "dźwięk błędu od razu przy odsłanianiu, nie dopiero przy punktach");
+
+  await dispatch({ type: "RESOLVE_MAPPING", round: 1, idx: 1, mode: "MANUAL", kind: "SKIP" });
+  await dispatch({ type: "REVEAL_ANSWER_ONLY", round: 1, idx: 1 });
+  assert.equal(store.state.final.runtime.map1[1].revealedPoints, true);
+  assert.equal(store.commits.at(-1).soundCueKey, "answer_wrong");
+  assert.equal(store.state.final.runtime.sum, 0, "MISS/SKIP nie dokładają punktów");
+});
+
+test("mapowanie: MATCH zostaje dwuetapowe -- REVEAL_ANSWER_ONLY samo nie odsłania punktów", async () => {
+  const { store, dispatch } = makeEngine();
+  await dispatch({ type: "START_FINAL" });
+  await dispatch({ type: "START_MAPPING", round: 1 });
+
+  await dispatch({ type: "RESOLVE_MAPPING", round: 1, idx: 0, mode: "MANUAL", kind: "MATCH", outText: "Odpowiedź", pts: 40 });
+  await dispatch({ type: "REVEAL_ANSWER_ONLY", round: 1, idx: 0 });
+  assert.equal(store.state.final.runtime.map1[0].revealedAnswer, true);
+  assert.equal(store.state.final.runtime.map1[0].revealedPoints, false, "MATCH zostaje dwuetapowe -- operator musi osobno pokazać punkty");
+  assert.equal(store.commits.at(-1).soundCueKey, "reveal");
+});
+
 test("wcześniejsze wyjście: osiągnięcie finalTarget w trakcie rundy 1 przeskakuje od razu do f_end", async () => {
   const { store, dispatch } = makeEngine({ finalTarget: 50 });
   await dispatch({ type: "START_FINAL" });
