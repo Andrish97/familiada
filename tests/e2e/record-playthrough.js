@@ -1462,16 +1462,18 @@ async function scenarioShareDeviceEmail(pages, { browser }) {
     const { data } = await window.__sbClient.auth.getUser();
     return data?.user?.id || null;
   });
+  let recipientUid = null;
   {
     const recipientSetupCtx = await browser.newContext();
     const recipientSetupPage = await recipientSetupCtx.newPage();
     try {
       await loginAsTestUser(recipientSetupPage, recipientSetupCtx, { username: RECIPIENT_EMAIL });
-      await recipientSetupPage.evaluate(async (ownerUid) => {
+      recipientUid = await recipientSetupPage.evaluate(async (ownerUid) => {
         const sb = window.__sbClient;
         const { data: userData } = await sb.auth.getUser();
         await sb.from("user_flags").upsert({ user_id: userData.user.id, email_notifications: true }, { onConflict: "user_id" });
         if (ownerUid) await sb.rpc("e2e_shared_devices_cleanup", { p_other_user_id: ownerUid });
+        return userData.user.id;
       }, testUid);
       console.log("[record] user_flags.email_notifications wymuszone na true + stare udostępnienia wyczyszczone dla test2");
     } finally {
@@ -1568,6 +1570,19 @@ async function scenarioShareDeviceEmail(pages, { browser }) {
 
   await recipientContext.close();
   await control.waitForTimeout(500);
+
+  // ZNALEZIONA REALNA PRZYCZYNA (control2.spec.js's @mailbox test, run #333):
+  // bez tego to udostępnienie zostawało w bazie (TTL 4h) i zanieczyszczało
+  // KAŻDY inny test/scenariusz, który loguje się jako ten sam, hardcodowany
+  // operator (test1) i pokazuje "Aktualnie udostępnione dla: ..." dla
+  // urządzenia "host" -- list_my_device_shares() zwraca WSZYSTKIE
+  // udostępnienia tego device_type niezależnie od gry/testu, a UI bierze
+  // pierwsze dopasowanie, więc stare "test2" z tego scenariusza przesłaniało
+  // świeże udostępnienie innego testu. Sprzątamy po sobie, zamiast liczyć na
+  // TTL albo na cleanup innego testu.
+  await control.evaluate(async (rid) => {
+    await window.__sbClient.rpc("unshare_device", { p_recipient_user_id: rid, p_device_type: "host" });
+  }, recipientUid);
 }
 
 async function scenarioLogoLock(pages, { setupPage, logoId, logoLockTabId }) {

@@ -1786,6 +1786,29 @@ test("@mailbox control2: udostępnianie urządzenia (Prowadzący) przez e-mail -
     } finally {
       await recipientSetupContext.close().catch(() => {});
     }
+
+    // ZNALEZIONA REALNA PRZYCZYNA (run #333): list_my_device_shares() (RPC
+    // za #shareDeviceCurrentContent) zwraca WSZYSTKIE udostępnienia danego
+    // device_type dla operatora -- niezależnie od odbiorcy I od gry -- a UI
+    // bierze po prostu pierwsze dopasowanie. test1 (operator, na stałe) ma
+    // "host" udostępniony test2 z osobnego, niepowiązanego przebiegu
+    // tests/e2e/record-playthrough.js (ten sam hardcodowany operator) --
+    // e2e_shared_devices_cleanup wyżej czyści tylko parę (test1,test10), nie
+    // (test1,test2), więc ten stary wpis został i modal pokazywał "test2"
+    // zamiast świeżo dodanego "test10". Czyścimy więc TU, szeroko, każde
+    // istniejące "host"-udostępnienie operatora, niezależnie od odbiorcy --
+    // to jest czysto porządek testowy (operator i tak zawsze zaczyna ten
+    // test z zerowym stanem), nie zmiana produktowego zachowania.
+    const staleHostShares = await page.evaluate(async () => {
+      const { data } = await window.__sbClient.rpc("list_my_device_shares");
+      return (data || []).filter((s) => s.device_type === "host").map((s) => s.recipient_id);
+    });
+    for (const staleRecipientId of staleHostShares) {
+      await page.evaluate(async (rid) => {
+        await window.__sbClient.rpc("unshare_device", { p_recipient_user_id: rid, p_device_type: "host" });
+      }, staleRecipientId);
+    }
+
     const after = new Date(Date.now() - 2_000).toISOString();
 
     await page.goto(`/control2?id=${game.id}`, { waitUntil: "domcontentloaded" });
