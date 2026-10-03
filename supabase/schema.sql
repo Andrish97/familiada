@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict SKBpSKwiRSAKJa70ctfX6n1YFcwgKbfHviML4OmdwwygpZp9NoX6bzeNtU69so0
+\restrict hwoUotMHpq4Wa9C3M3fAwbMT9deFPZ7YTczzSkHzKupeaWQPadz2zvfYKvbbzrV
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -2051,6 +2051,39 @@ begin
     'cooldowns_deleted', v_cooldowns_deleted
   );
 end;
+$_$;
+
+
+--
+-- Name: e2e_shared_devices_cleanup("uuid"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."e2e_shared_devices_cleanup"("p_other_user_id" "uuid") RETURNS "jsonb"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $_$
+DECLARE
+  v_uid uuid := auth.uid();
+  v_caller_email text;
+  v_other_email text;
+  v_deleted integer := 0;
+BEGIN
+  SELECT lower(email) INTO v_caller_email FROM auth.users WHERE id = v_uid;
+  SELECT lower(email) INTO v_other_email FROM auth.users WHERE id = p_other_user_id;
+
+  IF v_uid IS NULL
+     OR v_caller_email !~ '^test([1-9]|1[0-3])@familiada[.]online$'
+     OR v_other_email !~ '^test([1-9]|1[0-3])@familiada[.]online$' THEN
+    RETURN jsonb_build_object('ok', false, 'error', 'test accounts required');
+  END IF;
+
+  DELETE FROM public.shared_devices
+  WHERE (owner_id = v_uid AND recipient_id = p_other_user_id)
+     OR (owner_id = p_other_user_id AND recipient_id = v_uid);
+  GET DIAGNOSTICS v_deleted = ROW_COUNT;
+
+  RETURN jsonb_build_object('ok', true, 'deleted', v_deleted);
+END;
 $_$;
 
 
@@ -11215,17 +11248,23 @@ CREATE FUNCTION "public"."share_device"("p_recipient_user_id" "uuid", "p_device_
     AS $$
 DECLARE
   v_owner uuid := auth.uid();
+  v_created boolean;
 BEGIN
   IF v_owner IS NULL THEN RETURN jsonb_build_object('ok', false, 'err', 'not_authenticated'); END IF;
   IF v_owner = p_recipient_user_id THEN RETURN jsonb_build_object('ok', false, 'err', 'self_share'); END IF;
   IF p_device_type NOT IN ('host', 'buzzer', 'display') THEN RETURN jsonb_build_object('ok', false, 'err', 'invalid_type'); END IF;
+
+  v_created := NOT EXISTS (
+    SELECT 1 FROM public.shared_devices
+    WHERE owner_id = v_owner AND recipient_id = p_recipient_user_id AND device_type = p_device_type
+  );
 
   INSERT INTO public.shared_devices (owner_id, recipient_id, device_type, game_id, game_name, expires_at)
   VALUES (v_owner, p_recipient_user_id, p_device_type, p_game_id, p_game_name, p_expires_at)
   ON CONFLICT (owner_id, recipient_id, device_type)
   DO UPDATE SET game_id = EXCLUDED.game_id, game_name = EXCLUDED.game_name, expires_at = EXCLUDED.expires_at;
 
-  RETURN jsonb_build_object('ok', true);
+  RETURN jsonb_build_object('ok', true, 'created', v_created);
 END;
 $$;
 
@@ -16225,5 +16264,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict SKBpSKwiRSAKJa70ctfX6n1YFcwgKbfHviML4OmdwwygpZp9NoX6bzeNtU69so0
+\unrestrict hwoUotMHpq4Wa9C3M3fAwbMT9deFPZ7YTczzSkHzKupeaWQPadz2zvfYKvbbzrV
 
