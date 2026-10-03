@@ -1075,14 +1075,30 @@ test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśni�
     // sprawdzam wprost: czy pointerdown/pointerup w ogóle dochodzą do
     // document (host2/js/main.js's setupPeekSwipe nasłuchuje tam), i co
     // faktycznie stoi pod (300,220)/(300,360) w tym layoutcie CI.
+    // Runda 1 diagnostyki pokazała: pointerdown/pointerup DOCHODZĄ do
+    // document (down:1,up:1), a mimo to #cover2 zostało coverOn -- więc
+    // albo warunek w handlerze (isCoverableAtAll/dystans) nie przeszedł,
+    // albo setPeek faktycznie zadziałał i coś INNEGO (kolejny render()) od
+    // razu to cofnęło, zanim 5s polling assercji złapał choć jeden klatkę
+    // coverOff. Nagrywam PEŁNĄ historię zmian klasy #cover2 w czasie
+    // (monkeypatch classList.toggle), żeby to jednoznacznie rozstrzygnąć.
     const diagBefore = await hostPage.evaluate(() => {
-      window.__peekDiag = { down: 0, up: 0 };
+      window.__peekDiag = { down: 0, up: 0, classHistory: [] };
       document.addEventListener("pointerdown", () => { window.__peekDiag.down++; }, { capture: true });
       document.addEventListener("pointerup", () => { window.__peekDiag.up++; }, { capture: true });
+      const cover2 = document.getElementById("cover2");
+      if (cover2) {
+        const origToggle = cover2.classList.toggle.bind(cover2.classList);
+        cover2.classList.toggle = (cls, force) => {
+          const r = origToggle(cls, force);
+          window.__peekDiag.classHistory.push({ t: performance.now(), cls, force, resultClassName: cover2.className });
+          return r;
+        };
+      }
       const a = document.elementFromPoint(300, 220);
       const b = document.elementFromPoint(300, 360);
       return {
-        cover2Class: document.getElementById("cover2")?.className,
+        cover2Class: cover2?.className,
         elAt1: a ? `${a.tagName}#${a.id}.${a.className}` : null,
         elAt2: b ? `${b.tagName}#${b.id}.${b.className}` : null,
         viewport: { w: window.innerWidth, h: window.innerHeight },
@@ -1091,8 +1107,9 @@ test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśni�
     console.log("[e2e-diag:host] peek-diag BEFORE", JSON.stringify(diagBefore));
 
     await hostPeekSwipe(hostPage);
+    await hostPage.waitForTimeout(2000);
 
-    const diagAfter = await hostPage.evaluate(() => window.__peekDiag);
+    const diagAfter = await hostPage.evaluate(() => ({ ...window.__peekDiag, cover2ClassNow: document.getElementById("cover2")?.className }));
     console.log("[e2e-diag:host] peek-diag AFTER", JSON.stringify(diagAfter));
 
     await expect(hostPage.locator("#cover2")).toHaveClass(/coverOff/, { timeout: 5000 });
