@@ -1792,10 +1792,32 @@ async function dumpFailureDiagnostics(controlPage, scenarioFile) {
   console.log(`[record] diagnostyka ${scenarioFile}:`, JSON.stringify(dump));
 }
 
+// SCENARIO_FILTER (opcjonalna zmienna środowiskowa) -- czysto dla szybkiej
+// iteracji przy naprawianiu jednego scenariusza: zamiast czekać ~35 min na
+// cały przebieg, uruchamia tylko scenariusze, których `file` zawiera dany
+// podciąg (porównanie bez rozszerzenia .mp4, case-insensitive; można podać
+// kilka, rozdzielonych przecinkiem -- dopasowany, jeśli zawiera
+// KTÓRYKOLWIEK z nich). Puste/nieustawione = wszystkie scenariusze (pełny
+// przebieg, tak jak dotąd) -- to jest jedyny tryb używany do kontrolnego,
+// końcowego potwierdzenia, że całość przechodzi na zielono.
+function filterScenarios(all) {
+  const raw = String(process.env.SCENARIO_FILTER || "").trim();
+  if (!raw) return all;
+  const needles = raw.split(",").map((s) => s.trim().toLowerCase()).filter(Boolean);
+  const filtered = all.filter((s) => needles.some((n) => s.file.toLowerCase().includes(n)));
+  if (!filtered.length) {
+    throw new Error(`SCENARIO_FILTER="${raw}" nie dopasował żadnego scenariusza. Dostępne: ${all.map((s) => s.file).join(", ")}`);
+  }
+  console.log(`[record] SCENARIO_FILTER="${raw}" -> ${filtered.map((s) => s.file).join(", ")}`);
+  return filtered;
+}
+
 async function main() {
   for (const env of ["E2E_BYPASS_SECRET", "TEST_PASSWORD"]) {
     if (!process.env[env]) throw new Error(`Brak ${env} w zmiennych środowiskowych`);
   }
+
+  const scenariosToRun = filterScenarios(SCENARIOS);
 
   const browser = await chromium.launch({
     headless: false,
@@ -1806,7 +1828,34 @@ async function main() {
   });
 
   try {
-    for (const scenario of SCENARIOS) {
+    // Zgłoszone: kolejka maili (scenariusz 8, udostępnianie urządzenia)
+    // bywa pusta nawet po 90s timeoutu waitForEmail() -- nie to samo co
+    // zbyt ciasny margines (ten osobno naprawiony, patrz commit o 60s/90s).
+    // Realna przyczyna: email_providers.rem_worker (budżet dla maili
+    // wysyłanych przez mail-worker co 60s, w odróżnieniu od rem_immediate
+    // dla maili auth -- reset/zmiana hasła -- wysyłanych wprost z
+    // send-email) wyczerpuje się w ciągu dnia po wielu testowych
+    // przebiegach na tym samym koncie i NIE odnawia się sam poza
+    // zaplanowanym resetem o północy (pg_cron, reset_email_limits()).
+    // Wołane tu wprost, bezpiecznie (tylko odnawia licznik do 80%/20%
+    // daily_limit, nic nie wysyła) -- "ręczny reset cooldownu", o którym
+    // była mowa, zautomatyzowany, żeby nie trzeba było robić go z
+    // zewnątrz przy każdym przebiegu. RPC nie ma żadnego GRANT/REVOKE w
+    // migracji (2026-04-23_email_providers_limits.sql), więc jest wołalna
+    // z tego samego, zwykłego klienta co restoreDemoGame().
+    {
+      const resetCtx = await browser.newContext({ baseURL: BASE_URL });
+      const resetPage = await resetCtx.newPage();
+      await loginAsTestUser(resetPage, resetCtx);
+      const resetResult = await resetPage.evaluate(async () => {
+        const { error } = await window.__sbClient.rpc("reset_email_limits");
+        return { error: error?.message || null };
+      });
+      console.log("[record] reset_email_limits:", resetResult.error ? `FAILED (${resetResult.error})` : "OK");
+      await resetCtx.close().catch(() => {});
+    }
+
+    for (const scenario of scenariosToRun) {
       console.log(`\n=== Scenariusz: ${scenario.file} ===`);
       const setupCtx = await browser.newContext({ baseURL: BASE_URL });
       const setupPage = await setupCtx.newPage();

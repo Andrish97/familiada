@@ -1,7 +1,12 @@
 name: E2E Recorded Playthrough (Control v2)
 
 on:
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      scenario_filter:
+        description: 'Opcjonalnie: odpal tylko scenariusze, których nazwa pliku zawiera dany podciąg (np. "08-udostepnianie" albo "10-mnoznik,04-final" -- kilka, rozdzielonych przecinkiem). Puste = cały przebieg (wszystkie scenariusze) -- tryb kontrolny, do użycia na końcu po naprawieniu pojedynczych scenariuszy osobno.'
+        required: false
+        default: ""
 
 # WAŻNE: tak samo jak e2e-tests.yml — celowo tylko workflow_dispatch. Ten
 # workflow loguje się na prawdziwe konto testowe na produkcji i tworzy
@@ -79,6 +84,7 @@ jobs:
           E2E_BYPASS_SECRET: ${{ secrets.E2E_BYPASS_SECRET }}
           TEST_PASSWORD: ${{ secrets.TEST_PASSWORD }}
           RECORD_OUT_DIR: ${{ github.workspace }}/tests/recordings
+          SCENARIO_FILTER: ${{ github.event.inputs.scenario_filter }}
         run: node tests/e2e/record-playthrough.js
 
       - name: Upload recordings
