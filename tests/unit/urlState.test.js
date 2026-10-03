@@ -87,6 +87,25 @@ test("cleanup E2E usuwa też cooldowny z ujednoliconego mail_cooldowns", () => {
   assert.match(sql, /REVOKE ALL ON FUNCTION public\.e2e_shared_devices_cleanup/);
 });
 
+test("podłoga baseline:recipient pomija parę e2e->e2e, żeby CI nie fałszywie blokował mail", () => {
+  const sql = read("supabase/migrations/2026-10-04_296_mail_queue_baseline_e2e_exempt.sql");
+  assert.match(sql, /test\(\[1-9\]\|1\[0-3\]\)@familiada/);
+  assert.match(sql, /v_both_e2e/);
+  assert.match(sql, /IF NOT v_both_e2e THEN/);
+  assert.match(sql, /RAISE EXCEPTION 'mail_queue: unknown cooldown_action_key/);
+});
+
+test("restore konta e2e czyści też cooldown auth:reset_password z mail_cooldowns", () => {
+  const sql = read("supabase/migrations/2026-10-04_297_mail_cooldown_email_release.sql");
+  assert.match(sql, /CREATE FUNCTION public\.mail_cooldown_email_release/);
+  assert.match(sql, /UPDATE public\.mail_cooldowns/);
+  assert.match(sql, /target_key = v_target/);
+
+  const worker = read("cloudflare/maintenance-worker/src/lib/e2e/e2e-api.js");
+  assert.match(worker, /mail_cooldown_email_release/);
+  assert.match(worker, /mail_cooldown_cleanup_failed/);
+});
+
 test("oznaczenie maila ankiety obejmuje adres i zarejestrowane konto", () => {
   const sql = read("supabase/migrations/2026-09-30_286_mark_registered_poll_tasks_emailed.sql");
   assert.match(sql, /recipient_email is not null or recipient_user_id is not null/);

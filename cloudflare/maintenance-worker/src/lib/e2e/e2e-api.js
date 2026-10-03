@@ -186,7 +186,13 @@ export async function restoreE2EAccount(request, env) {
   if (!cooldownRes.ok) return json({ ok: false, error: "cooldown_cleanup_failed" }, cooldownRes.status || 500);
 
   // Reset hasla jest uruchamiany przed zalogowaniem, dlatego jego cooldown
-  // jest hashowany po adresie w osobnej tabeli email_cooldowns.
+  // jest hashowany po adresie w osobnej tabeli email_cooldowns. Migracja
+  // 293 przeniosła auth:reset_password na nowy, wspólny mechanizm
+  // (mail_cooldowns) -- login.js go faktycznie czyta, więc czyszczenie
+  // samego starego email_cooldowns nie wystarczy (zgłoszone: run
+  // 37146230051, "Nie otrzymano maila" dla test11 -- cooldown z
+  // wcześniejszego przebiegu tego samego dnia zostawał aktywny, login.js
+  // pokazywał "Wysłano" bez realnego wysłania).
   if (account === "test11") {
     const emailCooldownRes = await supabaseRpc(env, "cooldown_email_release", {
       p_email: config.targetEmail,
@@ -195,6 +201,14 @@ export async function restoreE2EAccount(request, env) {
     });
     if (!emailCooldownRes.ok) {
       return json({ ok: false, error: "email_cooldown_cleanup_failed" }, emailCooldownRes.status || 500);
+    }
+    const mailCooldownRes = await supabaseRpc(env, "mail_cooldown_email_release", {
+      p_email: config.targetEmail,
+      p_action_key: "auth:reset_password",
+      p_max_age_seconds: 172800,
+    });
+    if (!mailCooldownRes.ok) {
+      return json({ ok: false, error: "mail_cooldown_cleanup_failed" }, mailCooldownRes.status || 500);
     }
   }
 
