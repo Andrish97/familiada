@@ -1834,13 +1834,22 @@ test("@mailbox control2: udostępnianie urządzenia (Prowadzący) przez e-mail -
     // odbiorcy/typu i sprawdza created=false -- to jest naprawiony sygnał,
     // na którym shareDevice.js opiera decyzję "wysłać drugi mail czy nie",
     // bez kosztu drugiego 90s oczekiwania na pocztę.
-    const resendResult = await page.evaluate(async (recipientId) => {
+    // ZNALEZIONA REALNA NIEZGODNOŚĆ przy ujednolicaniu cooldownów (migracja
+    // 290): v_created teraz prawidłowo uwzględnia też game_id (bez tego
+    // zmiana gry dla tej samej osoby/urządzenia cicho nie wysyłała maila,
+    // mimo że odbiorca realnie potrzebuje nowego linku -- patrz migracja
+    // 290). Ten test MUSI więc podać TEN SAM p_game_id co pierwotne
+    // udostępnienie wyżej, inaczej to jest już inna, nowa kombinacja
+    // (created=true słusznie) -- nie regresja, tylko stary test pisany
+    // pod starą, mniej precyzyjną granularność.
+    const resendResult = await page.evaluate(async ({ recipientId, gameId }) => {
       const { data, error } = await window.__sbClient.rpc("share_device", {
         p_recipient_user_id: recipientId,
         p_device_type: "host",
+        p_game_id: gameId,
       });
       return { data, error: error?.message || null };
-    }, recipientUid);
+    }, { recipientId: recipientUid, gameId: game.id });
     expect(resendResult.error).toBeNull();
     expect(resendResult.data?.ok).toBe(true);
     expect(resendResult.data?.created, "powtórne udostępnienie temu samemu odbiorcy nie powinno być 'created' -- inaczej shareDevice.js wysłałby drugi mail").toBe(false);
