@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict Mg8d4hd3CNjSB6UCbC9r05x6TMggAJhGedOdl8DS06XYc3h1lUPLX3hXjNZv8Pg
+\restrict DiuFqStHvlLmxM3NIwVTPpjVPBd4pKk7pJm6OmRF9vRqFiVAc3TF81DGWl0fQEP
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -769,7 +769,7 @@ BEGIN
   END IF;
 
   v_target := 'pair:' || v_owner::text || ':' || v_recipient::text || ':base:' || p_base_id::text;
-  SELECT ok, next_allowed_at INTO v_cd_ok, v_cd_until FROM public.mail_cooldown_check('base:share', v_target);
+  SELECT mcc.ok, mcc.next_allowed_at INTO v_cd_ok, v_cd_until FROM public.mail_cooldown_check('base:share', v_target) AS mcc;
   IF NOT v_cd_ok THEN
     RETURN QUERY SELECT false, 'cooldown', NULL::text, NULL::text, NULL::text, NULL::text, v_cd_until, v_recipient;
     RETURN;
@@ -846,7 +846,7 @@ BEGIN
   END IF;
 
   v_target := 'pair:' || v_owner::text || ':' || v_recipient::text || ':base:' || p_base_id::text;
-  SELECT ok, next_allowed_at INTO v_cd_ok, v_cd_until FROM public.mail_cooldown_check('base:share', v_target);
+  SELECT mcc.ok, mcc.next_allowed_at INTO v_cd_ok, v_cd_until FROM public.mail_cooldown_check('base:share', v_target) AS mcc;
   IF NOT v_cd_ok THEN
     RETURN QUERY SELECT false, 'cooldown', NULL::text, NULL::text, NULL::text, NULL::text, v_cd_until, v_recipient;
     RETURN;
@@ -5806,9 +5806,9 @@ BEGIN
     RAISE EXCEPTION 'mail_cooldown_reserve: unknown action_key %', p_action_key;
   END IF;
 
-  SELECT next_allowed_at INTO v_cur_next
-  FROM public.mail_cooldowns
-  WHERE action_key = p_action_key AND target_key = p_target_key
+  SELECT mc.next_allowed_at INTO v_cur_next
+  FROM public.mail_cooldowns mc
+  WHERE mc.action_key = p_action_key AND mc.target_key = p_target_key
   FOR UPDATE;
 
   IF NOT FOUND THEN
@@ -16285,5 +16285,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict Mg8d4hd3CNjSB6UCbC9r05x6TMggAJhGedOdl8DS06XYc3h1lUPLX3hXjNZv8Pg
+\unrestrict DiuFqStHvlLmxM3NIwVTPpjVPBd4pKk7pJm6OmRF9vRqFiVAc3TF81DGWl0fQEP
 
