@@ -625,10 +625,21 @@ const REDUCERS = {
     return sameStep(state);
   },
 
+  // Zgłoszone: "brak odpowiedzi ma od razu dawać dźwięk błędu już podczas
+  // odsłaniania odpowiedzi, a punkty mają się odsłonić automatycznie bez
+  // klikania" — dla MISS/SKIP nie ma żadnej realnej wartości dramaturgicznej
+  // w osobnym drugim kroku "Pokaż punkty" (zawsze 0 pkt, zawsze
+  // "answer_wrong") — więc REVEAL_ANSWER_ONLY od razu woła tę samą logikę co
+  // REVEAL_POINTS dla tego przypadku, w jednym kliknięciu/jednym dźwięku.
+  // MATCH zostaje dwuetapowe (realne punkty, realna suspensja) — patrz
+  // REVEAL_POINTS niżej, nietknięte dla tej gałęzi.
   async REVEAL_ANSWER_ONLY(state, action) {
     const row = state.final.runtime[mapKey(action.round)][action.idx];
     row.outText = shownText(row);
     row.revealedAnswer = true;
+    if (row.kind !== "MATCH") {
+      return REDUCERS.REVEAL_POINTS(state, action);
+    }
     row.revealedPoints = false;
     return { ...sameStep(state), soundCueKey: "reveal" };
   },

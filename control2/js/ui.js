@@ -1569,8 +1569,29 @@ export function createUI({ root, emit }) {
     // zgłoszone: "suma finału jak inne włączniki ma być niżej, nie na
     // górze" — w Rundach pasek statusu (Bank/Gra) idzie PO siatce, nie
     // przed nią (patrz renderRounds wyżej); ten ekran miał go odwrotnie.
+    // "Dalej" MIESZKA w TYM SAMYM pasku (c2-statusbar-end, dokładnie jak
+    // "Zakończ rundę" w Rundach, patrz tam) — zgłoszone: "suma finału miała
+    // być na pasku z dalej, a nie na osobnym pasku" — osobny
+    // .c2-gameplay-nav (własny border-top/padding-top) dawał DWA paski
+    // jeden nad drugim zamiast jednego. nav:null niżej — bez osobnego
+    // paska nawigacji na tym ekranie, tak jak w Rundach.
+    //
+    // NEXT_QUESTION's `idx` to 1-bazowy numer PYTANIA, z którego schodzimy
+    // (nextIdx = action.idx+1 w engine.js) — nie 0-bazowy indeks tablicy,
+    // którym operuje reszta tego ekranu. Bez +1 operator zostawałby
+    // uwięziony na tym samym pytaniu (nextIdx trafiałby z powrotem w ten
+    // sam krok). Przycisk ZAWSZE widoczny (zgłoszone: "jak w starym
+    // Control"), wyszarzony/nieklikalny dopóki punkty nie są odsłonięte —
+    // nie znika, tylko czeka zablokowany (onclick też undefined, nie tylko
+    // atrybut disabled — podwójne zabezpieczenie przed przedwczesnym
+    // przejściem dalej).
     const finalStatusBar = h("div", { class: "c2-statusbar" }, [
       h("span", {}, [document.createTextNode(t("control.statusFinalSumLabel")), h("b", { text: String(f.runtime.sum) })]),
+      navButton(t("common.next"), {
+        cls: "c2-btn primary c2-statusbar-end",
+        disabled: !row.revealedPoints || boardBusy(),
+        onclick: row.revealedPoints ? () => emit("game.dispatch", { type: "NEXT_QUESTION", round, idx: idx + 1 }) : undefined,
+      }),
     ]);
 
     const body = [
@@ -1583,23 +1604,7 @@ export function createUI({ root, emit }) {
       finalStatusBar,
     ];
 
-    // NEXT_QUESTION's `idx` to 1-bazowy numer PYTANIA, z którego schodzimy
-    // (nextIdx = action.idx+1 w engine.js) — nie 0-bazowy indeks tablicy,
-    // którym operuje reszta tego ekranu. Bez +1 operator zostawałby
-    // uwięziony na tym samym pytaniu (nextIdx trafiałby z powrotem w ten
-    // sam krok). Pasek nawigacji ZAWSZE widoczny (zgłoszone: "jak w starym
-    // Control"), "Dalej" wyszarzony/nieklikalny dopóki punkty nie są
-    // odsłonięte — nie znika, tylko czeka zablokowany (onclick też
-    // undefined, nie tylko atrybut disabled — podwójne zabezpieczenie przed
-    // przedwczesnym przejściem dalej).
-    //
-    const nav = [h("button", {
-      class: "c2-btn primary", type: "button",
-      disabled: row.revealedPoints && !boardBusy() ? undefined : "",
-      onclick: row.revealedPoints ? () => emit("game.dispatch", { type: "NEXT_QUESTION", round, idx: idx + 1 }) : undefined,
-    }, [document.createTextNode(t("common.next"))])];
-
-    gameplayShell({ stepLabel: t("control.finalMappingStepLabel", { n: idx + 1 }), body, nav });
+    gameplayShell({ stepLabel: t("control.finalMappingStepLabel", { n: idx + 1 }), body, nav: null });
   }
 
   function renderFinalP2Start(state) {

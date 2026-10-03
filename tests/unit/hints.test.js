@@ -172,6 +172,9 @@ test("getFinalHint: powtórzenie u gracza 2 pokazuje się RAZEM ze zwykłą podp
   await engine.dispatch({ type: "RESOLVE_MAPPING", round: 2, idx: 0, mode: "MANUAL", kind: "SKIP", matchId: null, outText: "", pts: 0 });
   await engine.dispatch({ type: "REVEAL_ANSWER_ONLY", round: 2, idx: 0 });
   // Po odsłonięciu wraca zwykły hint bez wzmianki o powtórzeniu — repeat jest
-  // już historią, nie ma czego dalej pilnować.
-  assert.match(getFinalHint(store.state), /„Pokaż punkty”/);
+  // już historią, nie ma czego dalej pilnować. SKIP/MISS odsłaniają punkty (0)
+  // automatycznie w tym samym kroku (zgłoszone -- brak odpowiedzi nie ma
+  // osobnego "Pokaż punkty", patrz REDUCERS.REVEAL_ANSWER_ONLY), więc hint od
+  // razu mówi "Punkty odsłonięte", nie "Pokaż punkty".
+  assert.match(getFinalHint(store.state), /Punkty odsłonięte/);
 });
