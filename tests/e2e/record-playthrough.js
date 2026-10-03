@@ -1741,8 +1741,22 @@ const SCENARIOS = [
   },
   {
     file: "10-mnoznik-rundy.mp4",
+    // ZNALEZIONA REALNA PRZYCZYNA ("Alfa: 500" nigdy nie widoczne, run #37
+    // i #335): tylko 4 pytania w puli = runda 4 jest OSTATNIĄ rundą (pula
+    // wyczerpana) -- po "Zakończ rundę" engine.js's R9③ skacze PROSTO do
+    // r_gameEnd, pomijając ekran startu rundy 5 (r_roundStart), na którym
+    // normalnie pokazuje się literalny tekst "Alfa: <suma>" (control2/js/
+    // ui.js's scoreLine, dokładnie ten sam mechanizm co już działający
+    // check "Alfa: 300" po rundzie 3->4 wyżej w scenarioRoundMultiplier).
+    // Ekran "Koniec gry" (przed kliknięciem "Zakończ grę") NIE pokazuje
+    // wyniku w ogóle, a po kliknięciu pokazuje go w innym formacie
+    // ("X wygrywa z wynikiem..."), nie "Alfa: 500" -- to był błąd w
+    // SCENARIUSZU (złożenie puli), nie w produkcie. 5. pytanie (ord 1,
+    // reużyty z puli scenariusza 1 -- bezpieczne, każdy scenariusz gra na
+    // WŁASNEJ, niezależnej kopii gry demo) daje rundzie 4 następczynię,
+    // więc "Alfa: 500" faktycznie się pojawia na ekranie startu rundy 5.
     makeGame: (setupPage) => restoreDemoGame(setupPage, {
-      pickOrds: [13, 14, 15, 16],
+      pickOrds: [13, 14, 15, 16, 1],
       settings: { game: { advanced: { finalMinPoints: 999 } } },
     }),
     run: scenarioRoundMultiplier,
