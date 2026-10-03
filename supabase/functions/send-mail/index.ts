@@ -47,14 +47,28 @@ serve(async (req) => {
     let body: any;
     try { body = JSON.parse(raw); } catch { return json({ ok: false, error: "Invalid JSON" }, 400); }
 
+    // Ujednolicenie cooldownów maili: KAŻDY wiersz mail_queue musi nieść
+    // cooldown_action_key/cooldown_target_key -- to jest to, co BEFORE
+    // INSERT trigger (migracja 289) sprawdza/wymusza. Wymagane tu, na
+    // poziomie Edge Function, tylko dla czytelniejszego błędu 400 od razu
+    // -- sam trigger w bazie jest ostateczną instancją (odrzuci też
+    // nierozpoznany action_key), ta walidacja nie zastępuje tamtej.
+    const topActionKey = body.cooldownActionKey ? String(body.cooldownActionKey).trim() : "";
+    const topTargetKey = body.cooldownTargetKey ? String(body.cooldownTargetKey).trim() : "";
+
     const items = Array.isArray(body.items) ? body.items : [body];
     const validItems = items.filter((x: any) => x?.to && x?.subject && x?.html).map((x: any) => ({
       to: String(x.to).trim(),
       subject: String(x.subject).trim(),
       html: String(x.html).trim(),
+      cooldownActionKey: x.cooldownActionKey ? String(x.cooldownActionKey).trim() : topActionKey,
+      cooldownTargetKey: x.cooldownTargetKey ? String(x.cooldownTargetKey).trim() : topTargetKey,
     }));
 
     if (!validItems.length) return json({ ok: false, error: "No valid emails" }, 400);
+    if (validItems.some((it: any) => !it.cooldownActionKey || !it.cooldownTargetKey)) {
+      return json({ ok: false, error: "Missing cooldownActionKey/cooldownTargetKey" }, 400);
+    }
 
     const settings = await sbAdmin.from("mail_settings").select("delay_ms,batch_max").eq("id", 1).maybeSingle();
     const batchMax = Math.min(500, Math.max(1, Number(settings?.data?.batch_max) || 100));
@@ -69,10 +83,20 @@ serve(async (req) => {
       status: "pending",
       not_before: new Date().toISOString(),
       attempts: 0,
+      cooldown_action_key: it.cooldownActionKey,
+      cooldown_target_key: it.cooldownTargetKey,
     }));
 
     const { error } = await sbAdmin.from("mail_queue").insert(rows);
-    if (error) throw error;
+    if (error) {
+      // Trigger w bazie (migracja 289) odrzuca nierozpoznany action_key i
+      // wiersze wciąż w cooldownie (baseline:recipient) wyjątkiem -- to
+      // jedyne miejsce, gdzie to się realnie materializuje dla klienta.
+      if (String(error.message || "").includes("cooldown_active")) {
+        return json({ ok: false, error: "cooldown" }, 429);
+      }
+      throw error;
+    }
 
     return json({ ok: true, queued: rows.length });
   } catch (e) {

@@ -71,16 +71,24 @@ export async function handleContactSubmit(request, env) {
     
     const emailText = htmlToPlainTextPreview(html);
 
+    // cooldown_action_key/cooldown_target_key: wymagane przez trigger na
+    // mail_queue (ujednolicenie cooldownów, migracja 289) -- "contact:
+    // confirmation" ma enforce=false w mail_cooldown_policies (ten mail
+    // ma już własny rate-limit wyżej, w save_form_message), więc trigger
+    // nie rezerwuje tu niczego -- wymaga tylko ROZPOZNANEGO action_key.
+    const toEmailNorm = String(email || "").trim().toLowerCase();
     await supabaseRequest(env, "/rest/v1/mail_queue", {
       method: "POST",
       headers: { Prefer: "return=minimal" },
       body: {
-        to_email: String(email || "").trim().toLowerCase(),
+        to_email: toEmailNorm,
         subject: confirmSubject,
         html: html,
         text: emailText,
         from_email: "no-reply@familiada.online",
         meta: { type: "contact_confirmation", ticket },
+        cooldown_action_key: "contact:confirmation",
+        cooldown_target_key: `email:${toEmailNorm}`,
       },
     });
   } catch (err) {

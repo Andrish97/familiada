@@ -10,6 +10,7 @@ import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-
 import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../core/modal-sheet.js?v=v2026-10-03T08070";
 import "../core/contact-modal.js?v=v2026-10-03T08070";
 import { icon, iconText } from "../core/icons.js?v=v2026-10-03T08070";
+import { mailCooldownCheck } from "../core/cooldown.js?v=v2026-10-03T08070";
 
 initI18n({ withSwitcher: true }).then(() => {
   document.documentElement.classList.remove('page-loading');
@@ -168,7 +169,6 @@ let shareBaseline = new Set();
 const archiveState = { polls: false, tasks: false };
 const sortState = { polls: "newest", tasks: "newest" };
 const sortSelects = new Map();
-const COOLDOWN_MS = 24 * 60 * 60 * 1000;
 
 function setProgress({ show = false, step = "—", i = 0, n = 0, msg = "" } = {}) {
   if (progressOverlay) progressOverlay.style.display = show ? "grid" : "none";
@@ -648,21 +648,33 @@ async function openShareModal() {
     if (taskError) throw taskError;
 
     const statusBySub = new Map();
-    const cooldownUntilBySub = new Map();
     for (const task of taskRows || []) {
       const emailKey = String(task.recipient_email || "").toLowerCase();
       const userKey = task.recipient_user_id ? String(task.recipient_user_id) : "";
       if (userKey) statusBySub.set(userKey, task.status);
       if (emailKey) statusBySub.set(emailKey, task.status);
-      if (task.status === "cancelled" || task.status === "declined") {
-        const baseTs = parseDate(task.cancelled_at) || parseDate(task.declined_at) || parseDate(task.created_at);
-        const until = baseTs ? baseTs + COOLDOWN_MS : 0;
-        if (until) {
-          if (userKey) cooldownUntilBySub.set(userKey, Math.max(cooldownUntilBySub.get(userKey) || 0, until));
-          if (emailKey) cooldownUntilBySub.set(emailKey, Math.max(cooldownUntilBySub.get(emailKey) || 0, until));
-        }
-      }
     }
+
+    // ZNALEZIONA REALNA NIEZGODNOŚĆ przy ujednolicaniu cooldownów (migracja
+    // 292): ten podgląd liczył cooldown SAM, z surowych cancelled_at/
+    // declined_at poll_tasks -- ale polls_hub_share_poll już nie liczy tak
+    // cooldownu (rezerwuje go w mail_cooldowns, w momencie faktycznej
+    // wysyłki, nie w momencie cancel/decline). Stary kod pokazywałby więc
+    // odznakę cooldownu na podstawie kryterium, które RPC już nie stosuje.
+    // mail_cooldown_check (ten sam target_key co polls_hub_share_poll)
+    // -- tylko dla zarejestrowanych (subscriber_user_id), bez md5 po
+    // stronie klienta dla odbiorców e-mail-only (rzadszy przypadek, bez
+    // podglądu -- realne wymuszenie i tak dzieje się w samym RPC).
+    const cooldownUntilBySub = new Map();
+    await Promise.all(activeSubs
+      .filter((s) => s.subscriber_user_id)
+      .map(async (s) => {
+        const target = `pair:${currentUser.id}:${s.subscriber_user_id}:game:${sharePollId}`;
+        try {
+          const { ok, nextAllowedAtMs } = await mailCooldownCheck("poll:share", target);
+          if (!ok && nextAllowedAtMs) cooldownUntilBySub.set(String(s.subscriber_user_id), nextAllowedAtMs);
+        } catch { /* nieblokujące -- brak podglądu, realne wymuszenie i tak jest w RPC */ }
+      }));
 
     for (const sub of activeSubs) {
       const emailKey = String(sub.subscriber_email || "").toLowerCase();
@@ -855,6 +867,13 @@ async function saveShareModal() {
             to: item.to,
             subject: MSG.mailTaskSubject(pollName || MSG.pollFallback()),
             html,
+            // Wymagane przez trigger na mail_queue (ujednolicenie
+            // cooldownów, migracja 289) -- per-akcyjny cooldown (poll:share)
+            // już zarezerwowało polls_hub_share_poll przed chwilą; target_key
+            // tu nie musi bitowo zgadzać się z tamtym (trigger sprawdza
+            // tylko baseline:recipient po created_by+to), email wystarcza.
+            cooldownActionKey: "poll:share",
+            cooldownTargetKey: `email:${String(item.to || "").toLowerCase()}`,
           };
         })
         .filter((x) => x.to && x.subject && x.html);

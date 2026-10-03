@@ -77,6 +77,16 @@ test("cleanup E2E usuwa limity mailowe wyłącznie pomiędzy kontami testowymi",
   assert.match(sql, /revoke all on function public\.e2e_poll_subscriptions_cleanup/);
 });
 
+test("cleanup E2E usuwa też cooldowny z ujednoliconego mail_cooldowns", () => {
+  const sql = read("supabase/migrations/2026-10-04_294_e2e_cleanup_mail_cooldowns.sql");
+  assert.match(sql, /test\(\[1-9\]\|1\[0-3\]\)@familiada/);
+  assert.match(sql, /DELETE FROM public\.mail_cooldowns/);
+  assert.match(sql, /action_key IN \('poll:invite', 'poll:resend', 'poll:share'\)/);
+  assert.match(sql, /action_key = 'device:share'/);
+  assert.match(sql, /REVOKE ALL ON FUNCTION public\.e2e_poll_subscriptions_cleanup/);
+  assert.match(sql, /REVOKE ALL ON FUNCTION public\.e2e_shared_devices_cleanup/);
+});
+
 test("oznaczenie maila ankiety obejmuje adres i zarejestrowane konto", () => {
   const sql = read("supabase/migrations/2026-09-30_286_mark_registered_poll_tasks_emailed.sql");
   assert.match(sql, /recipient_email is not null or recipient_user_id is not null/);

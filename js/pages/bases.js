@@ -14,6 +14,7 @@ import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-
 import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../core/modal-sheet.js?v=v2026-10-03T08070";
 import "../core/contact-modal.js?v=v2026-10-03T08070";
 import { icon, iconText } from "../core/icons.js?v=v2026-10-03T08070";
+import { createCooldownTicker, formatCooldownRemaining } from "../core/cooldown.js?v=v2026-10-03T08070";
 initI18n({ withSwitcher: true }).then(() => {
   document.documentElement.classList.remove('page-loading');
 });
@@ -790,7 +791,7 @@ function buildMailHtml({ title, body, actionLabel, actionUrl }) {
   return wrapEmailDoc(inner);
 }
 
-async function sendMail({ to, subject, html }) {
+async function sendMail({ to, subject, html, cooldownActionKey, cooldownTargetKey }) {
   const { data } = await sb().auth.getSession();
   const token = data?.session?.access_token;
   if (!token) throw new Error(t("bases.mail.noSession"));
@@ -801,7 +802,7 @@ async function sendMail({ to, subject, html }) {
       Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ to, subject, html }),
+    body: JSON.stringify({ to, subject, html, cooldownActionKey, cooldownTargetKey }),
   });
 
   if (!res.ok) {
@@ -810,7 +811,11 @@ async function sendMail({ to, subject, html }) {
   }
 }
 
-async function sendBaseShareEmail({ to, link, baseName, ownerLabel }) {
+// cooldownTargetKey musi być IDENTYCZNY jak w base_share_by_email/by_user
+// (migracja 291) -- "pair:<owner>:<recipient>:base:<base_id>" -- inaczej
+// trigger na mail_queue rezerwowałby inny, niezależny koszyk niż to, co RPC
+// właśnie sprawdziło/zarezerwowało.
+async function sendBaseShareEmail({ to, link, baseName, ownerLabel, recipientId, baseId }) {
   const actionUrl = mailLink(link);
   const html = buildMailHtml({
     title: t("bases.mail.title"),
@@ -822,6 +827,8 @@ async function sendBaseShareEmail({ to, link, baseName, ownerLabel }) {
     to,
     subject: t("bases.mail.subject", { base: baseName || "—" }),
     html,
+    cooldownActionKey: "base:share",
+    cooldownTargetKey: `pair:${currentUser.id}:${recipientId}:base:${baseId}`,
   });
 }
 
@@ -867,25 +874,13 @@ function setShareModalCache(baseId, payload) {
   shareModalCache.set(key, { ts: Date.now(), payload });
 }
 
-function msLeftLabel(ms) {
-  const s = Math.max(0, Math.floor(ms / 1000));
-  const h = Math.floor(s / 3600);
-  const m = Math.floor((s % 3600) / 60);
-  if (h <= 0) return `${m}m`;
-  return `${h}h ${m}m`;
-}
-
-async function getCooldownUntil(baseId, userId) {
-  const { data, error } = await sb().rpc("base_share_cooldown_until", {
-    p_base_id: baseId,
-    p_recipient_user_id: userId,
-  });
-  if (error) {
-    console.warn("[bases] base_share_cooldown_until error:", error);
-    return null;
-  }
-  return data ? new Date(data).getTime() : null;
-}
+// Żywy licznik cooldownu "base:share" -- zastępuje martwe msLeftLabel/
+// getCooldownUntil (nigdy nie wywoływane, zweryfikowane grepem) i statyczny,
+// jednorazowy komunikat "bases.share.cooldown" bez odliczania. Jeden
+// cooldown_until na raz (modal share jest jednoinstancyjny), stąd stały klucz.
+const shareCooldownTicker = createCooldownTicker();
+shareCooldownTicker.bind({ key: "base:share", labelEl: shareMsg, disableEls: [btnShareAdd] });
+shareCooldownTicker.start();
 
 async function renderShareModal() {
   const b = selectedBase();
@@ -1148,12 +1143,21 @@ async function shareAddInner() {
 
   if (error || !row?.ok) {
     const err = row?.err || "";
-    if (err === "cooldown") setMsg(shareMsg, t("bases.share.cooldown"));
-    else if (err === "already_pending") setMsg(shareMsg, t("bases.share.alreadyPending"));
-    else setMsg(shareMsg, t("bases.share.failed"));
+    if (err === "cooldown") {
+      // Ticker przejmuje shareMsg i sam renderuje odliczanie (formatCooldownRemaining) --
+      // bez tego byłby to martwy, jednorazowy komunikat jak dawniej.
+      shareCooldownTicker.setEndMs("base:share", Date.parse(row.cooldown_until) || 0);
+    } else if (err === "already_pending") {
+      shareCooldownTicker.setEndMs("base:share", 0);
+      setMsg(shareMsg, t("bases.share.alreadyPending"));
+    } else {
+      shareCooldownTicker.setEndMs("base:share", 0);
+      setMsg(shareMsg, t("bases.share.failed"));
+    }
     return;
   }
-  
+  shareCooldownTicker.setEndMs("base:share", 0);
+
   // jeśli mail_to/link są obecne – wysyłamy maila
   let mailFailed = false;
   if (row?.mail_to && row?.mail_link) {
@@ -1163,6 +1167,8 @@ async function shareAddInner() {
         link: row.mail_link,
         baseName: row.base_name,
         ownerLabel: row.owner_label,
+        recipientId: row.recipient_id,
+        baseId: b.id,
       });
     } catch (e) {
       console.warn("[bases] email send failed:", e);

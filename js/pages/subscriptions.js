@@ -7,6 +7,7 @@ import { getUiLang, initI18n, t } from "../../translation/translation.js?v=v2026
 import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-10-03T08070";
 import "../core/contact-modal.js?v=v2026-10-03T08070";
 import { icon, iconText } from "../core/icons.js?v=v2026-10-03T08070";
+import { createCooldownTicker } from "../core/cooldown.js?v=v2026-10-03T08070";
 
 const i18nReady = initI18n({ withSwitcher: true }).catch((err) => {
   console.error("[subscriptions] i18n nieaktywny:", err);
@@ -190,6 +191,14 @@ function cooldownTextFromUntil(untilTsMs) {
     : "pollsHubSubscriptions.cooldownLeftHours", { n });
 }
 
+// Mechanizm (żywe odliczanie + auto-disable) z wspólnego js/core/cooldown.js,
+// ale FORMAT tekstu zostaje własny, lokalnie zlokalizowany (cooldownTextFromUntil
+// powyżej) -- zastąpienie go gołym "Xh Ym" z cooldown.js byłoby regresją i18n.
+// resetBindings() na początku każdego renderSubscribers(), bo lista jest
+// przebudowywana w całości przy każdym odświeżeniu.
+const resendCooldownTicker = createCooldownTicker();
+resendCooldownTicker.start();
+
 
 function mailLink(path, { withLang = false } = {}) {
   let u;
@@ -267,14 +276,14 @@ function buildMailHtml({ title, subtitle, body, actionLabel, actionUrl, unsubTok
   return wrapEmailDoc(inner);
 }
 
-async function sendMail({ to, subject, html }) {
+async function sendMail({ to, subject, html, cooldownActionKey, cooldownTargetKey }) {
   const { data } = await sb().auth.getSession();
   const token = data?.session?.access_token;
   if (!token) throw new Error(t("pollsHubSubscriptions.errors.mailSession"));
   const doReq = async (accessToken) => fetch(MAIL_FUNCTION_URL, {
     method: "POST",
     headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ to, subject, html }),
+    body: JSON.stringify({ to, subject, html, cooldownActionKey, cooldownTargetKey }),
   });
   let res = await doReq(token);
   if (res.status === 401) {
@@ -285,10 +294,18 @@ async function sendMail({ to, subject, html }) {
   if (!res.ok) throw new Error((await res.text()) || t("pollsHubSubscriptions.errors.mailSend"));
 }
 
+// Mail tu wysyłany ZAWSZE w konsekwencji polls_hub_subscriber_resend (czy to
+// z invite(), czy z samego resend) -- stąd action_key "poll:resend", a nie
+// "poll:invite". target_key nie musi bitowo zgadzać się z tym, co RPC użyło
+// wewnętrznie (trigger na mail_queue sprawdza tylko baseline:recipient po
+// created_by+to_email, niezależnie od tej wartości) -- email wystarcza jako
+// rozpoznawalny, czytelny identyfikator do audytu.
 async function sendSubscriptionEmail({ to, link, ownerLabel, unsubToken, isRegistered }) {
   await sendMail({
     to,
     subject: t("pollsHubSubscriptions.mail.subscriptionTitle", { owner: ownerLabel }),
+    cooldownActionKey: "poll:resend",
+    cooldownTargetKey: `email:${String(to || "").trim().toLowerCase()}`,
     html: buildMailHtml({
       title: t("pollsHubSubscriptions.mail.subscriptionTitle", { owner: ownerLabel }),
       subtitle: t("pollsHubSubscriptions.mail.subtitle"),
@@ -341,6 +358,7 @@ function renderSubscribers() {
     return false;
   });
   const sorted = sortList("subscribers", visible);
+  resendCooldownTicker.resetBindings();
   const render = (el) => {
     if (!el) return;
     el.innerHTML = "";
@@ -383,27 +401,34 @@ function renderSubscribers() {
         resendBtn.title = t("pollsHubSubscriptions.actions.resend");
         resendBtn.innerHTML = icon("refresh");
         const until = cooldownUntil(row.email_sent_at);
-        if (until && Date.now() < until) {
-          resendBtn.classList.add("cooldown");
-          resendBtn.title = MSG.resendCooldownAlert(until);
-        }
+        resendCooldownTicker.bind({
+          key: `resend:${row.sub_id}`,
+          disableEls: [resendBtn],
+          onTick: (rem, active) => {
+            resendBtn.classList.toggle("cooldown", active);
+            if (active) resendBtn.title = MSG.resendCooldownAlert(Date.now() + rem);
+            else resendBtn.title = t("pollsHubSubscriptions.actions.resend");
+          },
+        });
+        resendCooldownTicker.setEndMs(`resend:${row.sub_id}`, until);
         resendBtn.addEventListener("click", async (e) => {
           e.stopPropagation();
           try {
-            if (until && Date.now() < until) {
-              await alertModal({ text: MSG.resendCooldownAlert(until) });
+            if (resendCooldownTicker.getRemainingMs(`resend:${row.sub_id}`) > 0) {
+              await alertModal({ text: MSG.resendCooldownAlert(Date.now() + resendCooldownTicker.getRemainingMs(`resend:${row.sub_id}`)) });
               return;
             }
             resendBtn.disabled = true;
             const { data, error } = await sb().rpc("polls_hub_subscriber_resend", { p_id: row.sub_id });
             if (error) throw error;
             if (data?.ok === false) {
-              if (data?.error === "cooldown") {
+              if (data?.err === "cooldown") {
                 const untilTs = parseDate(data?.cooldown_until) || (Date.now() + 24 * 60 * 60 * 1000);
+                resendCooldownTicker.setEndMs(`resend:${row.sub_id}`, untilTs);
                 await alertModal({ text: MSG.resendCooldownAlert(untilTs) });
                 return;
               }
-              throw new Error(data?.error || "fail");
+              throw new Error(data?.err || "fail");
             }
             if (data?.to && data?.link) {
               const ownerLabel = who?.querySelector('.account-who')?.textContent || "Familiada";
@@ -613,18 +638,18 @@ async function invite(value) {
     const { data, error } = await sb().rpc("polls_hub_subscription_invite", { p_recipient: recipient });
     if (error) throw error;
     if (data?.ok === false) {
-        if (data?.error === "cooldown") {
+        if (data?.err === "cooldown") {
           const untilTs = parseDate(data?.cooldown_until) || (Date.now() + 5 * 24 * 60 * 60 * 1000);
           await alertModal({ text: cooldownTextFromUntil(untilTs) });
           return;
         }
-      throw new Error(data?.error || "invite");
+      throw new Error(data?.err || "invite");
     }
 
     if (!data?.already && data?.id) {
       const { data: resendData, error: resendError } = await sb().rpc("polls_hub_subscriber_resend", { p_id: data.id });
       if (resendError || resendData?.ok === false) {
-        throw resendError || new Error(String(resendData?.error || "resend_failed"));
+        throw resendError || new Error(String(resendData?.err || "resend_failed"));
       }
       if (resendData?.to && resendData?.link) {
         try {

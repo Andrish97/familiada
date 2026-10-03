@@ -23,7 +23,7 @@ import { isGuestUser } from "../core/guest-mode.js?v=v2026-10-03T08070";
 import { alertModal, confirmModal } from "../core/modal.js?v=v2026-10-03T08070";
 
 import { sb } from "../core/supabase.js?v=v2026-10-03T08070";
-import { cooldownEmailGet, cooldownEmailReserve } from "../core/cooldown.js?v=v2026-10-03T08070";
+import { mailCooldownEmailCheck, mailCooldownEmailReserve } from "../core/cooldown.js?v=v2026-10-03T08070";
 import { initI18n, t, getUiLang, withLangParam, applyTranslations } from "../../translation/translation.js?v=v2026-10-03T08070";
 import "../core/contact-modal.js?v=v2026-10-03T08070";
 
@@ -435,12 +435,11 @@ let isBusy = false;
 
 const RESET_COOLDOWN_MS = 60 * 60 * 1000; // 1h
 const RESET_ACTION_KEY = "auth:reset_password";
-const RESET_COOLDOWN_SECONDS = 60 * 60;
-
+// Czas trwania cooldownu (1h) jest teraz DANE w mail_cooldown_policies
+// (migracja 288/293), nie parametrem wywołania -- stąd brak tu już
+// *_COOLDOWN_SECONDS (dawniej przekazywane do cooldownEmailReserve).
 const GUEST_UPGRADE_ACTION_KEY = "auth:guest_upgrade_email";
-const GUEST_UPGRADE_COOLDOWN_SECONDS = 60 * 60;
 const SIGNUP_RESEND_ACTION_KEY = "auth:signup_confirm";
-const RESEND_COOLDOWN_SECONDS = 60 * 60;
 
 let _forgotTimer = null;
 let _forgotDebounce = null;
@@ -462,8 +461,8 @@ function setForgotUntil(email, untilMs) {
 async function refreshForgotUntil(email) {
   const e = String(email || "").trim().toLowerCase();
   if (!e || !e.includes("@")) return 0;
-  const map = await cooldownEmailGet(e, [RESET_ACTION_KEY]);
-  const until = map.get(RESET_ACTION_KEY) || 0;
+  const { ok, nextAllowedAtMs } = await mailCooldownEmailCheck(RESET_ACTION_KEY, e);
+  const until = ok ? 0 : nextAllowedAtMs;
   setForgotUntil(e, until);
   return until;
 }
@@ -646,7 +645,7 @@ async function handlePendingEmailResend(emailAddr, pendingIntent) {
   // Fallback for environments without the new RPC.
   if (!reserveOk && !nextAllowedAtMs) {
     const actionKey = intent === "guest_migrate" ? GUEST_UPGRADE_ACTION_KEY : SIGNUP_RESEND_ACTION_KEY;
-    const reserve = await cooldownEmailReserve(emailAddr, actionKey, RESEND_COOLDOWN_SECONDS);
+    const reserve = await mailCooldownEmailReserve(actionKey, emailAddr);
     reserveOk = !!reserve.ok;
     nextAllowedAtMs = reserve.nextAllowedAtMs || 0;
   }
@@ -918,7 +917,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         // Guest migrate: email-only + 1h resend cooldown.
         if (migrateGuest) {
-          const reserve = await cooldownEmailReserve(mail, GUEST_UPGRADE_ACTION_KEY, GUEST_UPGRADE_COOLDOWN_SECONDS);
+          const reserve = await mailCooldownEmailReserve(GUEST_UPGRADE_ACTION_KEY, mail);
           if (!reserve.ok) {
             const left = (reserve.nextAllowedAtMs || 0) - Date.now();
             if (left > 0) return setErr(t("index.errResendCooldown", { time: formatLeft(left) }));
@@ -1111,7 +1110,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         return;
       }
       // 3) reserve cooldown (cross-device) + send
-      const reserve = await cooldownEmailReserve(resolved, RESET_ACTION_KEY, RESET_COOLDOWN_SECONDS);
+      const reserve = await mailCooldownEmailReserve(RESET_ACTION_KEY, resolved);
       if (reserve.nextAllowedAtMs) setForgotUntil(resolved, reserve.nextAllowedAtMs);
 
       if (!reserve.ok) {

@@ -1,5 +1,5 @@
 import { sb } from "../core/supabase.js?v=v2026-10-03T08070";
-import { cooldownGet, cooldownReserve, cooldownRelease, cooldownEmailReserve } from "../core/cooldown.js?v=v2026-10-03T08070";
+import { cooldownGet, cooldownReserve, cooldownRelease, mailCooldownEmailReserve } from "../core/cooldown.js?v=v2026-10-03T08070";
 import { requireAuth, updateUserLanguage, validatePassword, validateUsername, signOut, niceAuthError, initPasswordToggles, convertGuestToRegisteredEmailOnly } from "../core/auth.js?v=v2026-10-03T08070";
 import { getUserEmailNotificationsFlag, setUserEmailNotificationsFlag } from "../core/user-flags.js?v=v2026-10-03T08070";
 import { initI18n, t, getUiLang, withLangParam } from "../../translation/translation.js?v=v2026-10-03T08070";
@@ -230,7 +230,8 @@ async function reserveCooldownOrThrow(key) {
 // per-email, więc musi być identyczny niezależnie skąd gość próbuje, inaczej
 // mógłby obejść 1h limit przełączając się między /login a /account.
 const GUEST_UPGRADE_ACTION_KEY = "auth:guest_upgrade_email";
-const GUEST_UPGRADE_COOLDOWN_SECONDS = 60 * 60;
+// Czas trwania (1h) jest teraz DANE w mail_cooldown_policies (migracja
+// 288/293), nie parametrem wywołania.
 
 let migratePendingEmail = "";
 
@@ -286,7 +287,7 @@ async function handleMigrateSubmit() {
 
     setStatus(t("account.statusMigrating"));
 
-    const reserve = await cooldownEmailReserve(mail, GUEST_UPGRADE_ACTION_KEY, GUEST_UPGRADE_COOLDOWN_SECONDS);
+    const reserve = await mailCooldownEmailReserve(GUEST_UPGRADE_ACTION_KEY, mail);
     if (!reserve.ok) {
       const left = (reserve.nextAllowedAtMs || 0) - Date.now();
       throw new Error(
@@ -326,7 +327,7 @@ async function handleMigrateResend() {
   try {
     if (!migratePendingEmail) throw new Error(t("account.errNoPendingEmail"));
 
-    const reserve = await cooldownEmailReserve(migratePendingEmail, GUEST_UPGRADE_ACTION_KEY, GUEST_UPGRADE_COOLDOWN_SECONDS);
+    const reserve = await mailCooldownEmailReserve(GUEST_UPGRADE_ACTION_KEY, migratePendingEmail);
     if (!reserve.ok) {
       const left = (reserve.nextAllowedAtMs || 0) - Date.now();
       throw new Error(

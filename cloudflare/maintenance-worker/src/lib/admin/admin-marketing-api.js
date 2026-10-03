@@ -22,7 +22,11 @@ export async function handleAdminMarketingApi(request, env, url) {
 
     const emailText = htmlToPlainTextPreview(emailHtml);
 
-    // Insert into mail_queue (batch insert for all recipients)
+    // Insert into mail_queue (batch insert for all recipients) --
+    // cooldown_action_key/cooldown_target_key wymagane przez trigger
+    // (ujednolicenie cooldownów, migracja 289); "admin:marketing" ma
+    // enforce=false (celowo powtarzalna wysyłka kampanii do tych samych
+    // adresów, nigdy nie ma być throttlowana).
     const queueRows = validEmails.map(email => ({
       to_email: email,
       subject: String(mktSubject),
@@ -30,6 +34,8 @@ export async function handleAdminMarketingApi(request, env, url) {
       text: emailText,
       from_email: "kontakt@familiada.online",
       meta: { type: "marketing", template_id: template_id || "custom" },
+      cooldown_action_key: "admin:marketing",
+      cooldown_target_key: `email:${email}`,
     }));
 
     const qRes = await supabaseRequest(env, "/rest/v1/mail_queue", {

@@ -118,17 +118,23 @@ export async function handleAdminMessagesApi(request, env, url) {
 
     const emailText = htmlToPlainTextPreview(emailHtml);
 
-    // Insert into mail_queue first
+    // Insert into mail_queue first -- cooldown_action_key/cooldown_target_key
+    // wymagane przez trigger (ujednolicenie cooldownów, migracja 289);
+    // "admin:compose" ma enforce=false (admin legalnie odpowiada tej samej
+    // osobie wielokrotnie w ciągu minut, nigdy nie ma być throttlowane).
+    const toEmailNorm = String(to_email).trim().toLowerCase();
     const queueRes = await supabaseRequest(env, "/rest/v1/mail_queue", {
       method: "POST",
       headers: { Prefer: "return=representation" },
       body: {
-        to_email: String(to_email).trim().toLowerCase(),
+        to_email: toEmailNorm,
         subject:  String(msgSubject || ""),
         html:     emailHtml,
         text:     emailText,
         from_email: "kontakt@familiada.online",
         meta: { type: "admin_compose", report_id: report_id || null, attachments: sendAttachments?.map(a => ({ filename: a.filename, mime_type: a.mime_type, storage_path: a.storage_path })) || [] },
+        cooldown_action_key: "admin:compose",
+        cooldown_target_key: `email:${toEmailNorm}`,
       },
     });
     const queueRow = Array.isArray(queueRes.data) && queueRes.data.length ? queueRes.data[0] : null;

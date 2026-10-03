@@ -2,6 +2,7 @@
 
 import { sb, SUPABASE_URL } from "../../js/core/supabase.js?v=v2026-10-03T08070";
 import { t } from "../../translation/translation.js?v=v2026-10-03T08070";
+import { createCooldownTicker, mailCooldownCheck } from "../../js/core/cooldown.js?v=v2026-10-03T08070";
 
 const MAIL_FUNCTION_URL = `${SUPABASE_URL}/functions/v1/send-mail`;
 const SHARE_TTL_MS = 4 * 60 * 60 * 1000;
@@ -53,7 +54,7 @@ function buildMailHtml({ title, body, actionLabel, actionUrl }) {
   return `<!doctype html><html><head><meta charset="utf-8"><meta name="color-scheme" content="dark"><style>:root{color-scheme:dark;}</style></head><body style="margin:0;padding:0;background:#050914;color:#fff;">${inner}</body></html>`;
 }
 
-async function sendShareEmail({ to, ownerLabel, deviceType, gameId, gameName, shareKey }) {
+async function sendShareEmail({ to, ownerLabel, deviceType, gameId, gameName, shareKey, cooldownTargetKey }) {
   const { data } = await sb().auth.getSession();
   const token = data?.session?.access_token;
   if (!token) return;
@@ -61,20 +62,22 @@ async function sendShareEmail({ to, ownerLabel, deviceType, gameId, gameName, sh
   const subject = t("control.shareDeviceModal.mailSubject", { type: typeLabel }) || `Udostępniono urządzenie: ${typeLabel}`;
   const body = t("control.shareDeviceModal.mailBody", { owner: ownerLabel, type: typeLabel, game: gameName || "—" }) ||
     `${ownerLabel} udostępnił(a) Ci urządzenie: ${typeLabel}${gameName ? ` (gra: ${gameName})` : ""}.`;
-  
+
   const page = deviceType === "display" ? "display" : deviceType;
   const actionUrl = new URL(`/${page}?id=${gameId}&key=${shareKey}`, location.origin).href;
-  
+
   const html = buildMailHtml({
     title: subject,
     body,
     actionLabel: t("control.shareDeviceModal.openDevice") || `Otwórz: ${typeLabel}`,
     actionUrl,
   });
+  // cooldownActionKey/cooldownTargetKey wymagane przez trigger na mail_queue
+  // (ujednolicenie cooldownów, migracja 289).
   await fetch(MAIL_FUNCTION_URL, {
     method: "POST",
     headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ to, subject, html }),
+    body: JSON.stringify({ to, subject, html, cooldownActionKey: "device:share", cooldownTargetKey }),
   }).catch(() => {});
 }
 
@@ -104,12 +107,22 @@ export function initShareDevice({ currentUser, game }) {
   }
 
   let _deviceType = null;
+  const cooldownTicker = createCooldownTicker();
+  cooldownTicker.start();
+
+  // Jak w control2/js/shareDevice.js -- target_key per (owner,recipient,
+  // device_type,game), bo inna gra = inny, potrzebny link (nigdy nie
+  // throttlowana tym samym cooldownem).
+  function deviceCooldownTarget(recipientUserId) {
+    return `pair:${currentUser.id}:${recipientUserId}:device:${_deviceType}:game:${game?.id || "none"}`;
+  }
 
   btnClose?.addEventListener("click", () => { overlay.style.display = "none"; });
   overlay.addEventListener("click", (e) => { if (e.target === overlay) overlay.style.display = "none"; });
 
   async function renderModal() {
     if (msgEl) msgEl.textContent = "";
+    cooldownTicker.resetBindings();
 
     // Aktualnie udostępnione dla tego urządzenia
     const { data: shares } = await sb().rpc("list_my_device_shares");
@@ -149,6 +162,16 @@ export function initShareDevice({ currentUser, game }) {
     if (!activeSubs.length) {
       subsList.innerHTML = `<div style="opacity:.55;font-size:.85rem;">${t("control.shareDeviceModal.noSubs") || "Brak subskrybentów."}</div>`;
     } else {
+      // Podgląd cooldownu per wiersz (patrz control2/js/shareDevice.js) --
+      // dostęp udostępnia się i tak natychmiast, to tylko podgląd maila.
+      const cooldownUntilBySub = new Map();
+      await Promise.all(activeSubs.map(async (sub) => {
+        try {
+          const { ok, nextAllowedAtMs } = await mailCooldownCheck("device:share", deviceCooldownTarget(sub.subscriber_user_id));
+          if (!ok && nextAllowedAtMs) cooldownUntilBySub.set(sub.subscriber_user_id, nextAllowedAtMs);
+        } catch { /* nieblokujące */ }
+      }));
+
       subsList.innerHTML = "";
       for (const sub of activeSubs) {
         const isShared = current?.recipient_id === sub.subscriber_user_id;
@@ -159,17 +182,28 @@ export function initShareDevice({ currentUser, game }) {
         row.innerHTML = `
           <div class="shareEmail" title="${esc(sub.subscriber_email || label)}">${esc(label)}</div>
           <div class="shareRowActions">
+            <span class="shareCooldownHint" style="font-size:.75rem;opacity:.7;" hidden></span>
             <button class="btn xsm" data-uid="${esc(sub.subscriber_user_id)}" data-email="${esc(sub.subscriber_email || "")}" type="button" ${current ? "disabled" : ""}>
               ${t("bases.shareModal.add") || "Dodaj"}
             </button>
           </div>`;
-        
-        row.querySelector("button")?.addEventListener("click", async () => {
+
+        const btn = row.querySelector("button");
+        const hintEl = row.querySelector(".shareCooldownHint");
+        if (!current) {
+          cooldownTicker.bind({ key: `device:${sub.subscriber_user_id}`, labelEl: hintEl, disableEls: [btn] });
+          cooldownTicker.setEndMs(`device:${sub.subscriber_user_id}`, cooldownUntilBySub.get(sub.subscriber_user_id) || 0);
+        }
+
+        btn?.addEventListener("click", async () => {
           if (msgEl) msgEl.textContent = "";
           try {
-            await doShare(sub.subscriber_user_id, sub.subscriber_email);
+            const mailSent = await doShare(sub.subscriber_user_id, sub.subscriber_email);
             await renderModal();
             await refreshBadges();
+            if (mailSent === false) {
+              msgEl && (msgEl.textContent = t("control.shareDeviceModal.mailCooldown") || "Udostępniono, ale e-mail nie poszedł -- niedawno już wysłaliśmy powiadomienie dla tej gry.");
+            }
           } catch (e) {
             if (msgEl) msgEl.textContent = e?.message || "Błąd.";
           }
@@ -179,6 +213,8 @@ export function initShareDevice({ currentUser, game }) {
     }
   }
 
+  // Zwraca true (mail wysłany), false (udostępnione, mail wstrzymany
+  // cooldownem), albo undefined (nic do wysłania).
   async function doShare(userId, email) {
     const expiresAt = new Date(Date.now() + SHARE_TTL_MS).toISOString();
     const { data, error } = await sb().rpc("share_device", {
@@ -191,24 +227,34 @@ export function initShareDevice({ currentUser, game }) {
     const res = Array.isArray(data) ? data[0] : data;
     if (error || !res?.ok) throw new Error(res?.err || "Błąd.");
 
-    // Email jeśli odbiorca ma włączone powiadomienia
-    if (email) {
-      const { data: flags } = await sb().from("user_flags").select("email_notifications").eq("user_id", userId).maybeSingle();
-      if (flags?.email_notifications !== false) {
-        const shareKey = _deviceType === "host" ? game.share_key_host 
-                       : _deviceType === "buzzer" ? game.share_key_buzzer
-                       : game.share_key_display;
-
-        await sendShareEmail({ 
-          to: email, 
-          ownerLabel: currentUser?.username || currentUser?.email || "—", 
-          deviceType: _deviceType, 
-          gameId: game.id,
-          gameName: game.name,
-          shareKey
-        });
-      }
+    // ZNALEZIONA REALNA USTERKA: ten plik (w odróżnieniu od control2/js/
+    // shareDevice.js, naprawionego migracją 287) wysyłał mail przy KAŻDYM
+    // kliknięciu "Dodaj", bez sprawdzenia res?.created -- dokładnie ten
+    // sam bug spamu, tylko w starym, siostrzanym control.html. Naprawione
+    // tu wraz z ujednolicaniem cooldownów (ten sam warunek co control2).
+    if (!email || !res?.created) return undefined;
+    if (!res?.mail_allowed) {
+      cooldownTicker.setEndMs(`device:${userId}`, Date.parse(res?.cooldown_until) || 0);
+      return false;
     }
+
+    const { data: flags } = await sb().from("user_flags").select("email_notifications").eq("user_id", userId).maybeSingle();
+    if (flags?.email_notifications === false) return undefined;
+
+    const shareKey = _deviceType === "host" ? game.share_key_host
+                   : _deviceType === "buzzer" ? game.share_key_buzzer
+                   : game.share_key_display;
+
+    await sendShareEmail({
+      to: email,
+      ownerLabel: currentUser?.username || currentUser?.email || "—",
+      deviceType: _deviceType,
+      gameId: game.id,
+      gameName: game.name,
+      shareKey,
+      cooldownTargetKey: deviceCooldownTarget(userId),
+    });
+    return true;
   }
 
   // Dodaj przez input
@@ -219,10 +265,13 @@ export function initShareDevice({ currentUser, game }) {
     const profile = await resolveToUserId(raw);
     if (!profile) { if (msgEl) msgEl.textContent = t("bases.share.userNotFound") || "Nie znaleziono użytkownika."; return; }
     try {
-      await doShare(profile.id, profile.email);
+      const mailSent = await doShare(profile.id, profile.email);
       if (emailInp) emailInp.value = "";
       await renderModal();
       await refreshBadges();
+      if (mailSent === false) {
+        msgEl && (msgEl.textContent = t("control.shareDeviceModal.mailCooldown") || "Udostępniono, ale e-mail nie poszedł -- niedawno już wysłaliśmy powiadomienie dla tej gry.");
+      }
     } catch (e) {
       if (msgEl) msgEl.textContent = e?.message || "Błąd.";
     }
