@@ -293,6 +293,18 @@ async function openTiledDevices(browser, game) {
     pages.buzzer.goto(`/buzzer2?id=${game.id}&key=${game.share_key_buzzer}`, { waitUntil: "domcontentloaded" }),
   ]);
 
+  // ZNALEZIONA REALNA PRZYCZYNA (run #334, scenario_filter jako JEDYNY
+  // scenariusz sesji -- zupełnie zimny start, bez ciepłego cache/połączeń
+  // TLS z poprzednich scenariuszy): `waitUntil: "domcontentloaded"` wraca,
+  // gdy DOM jest gotowy, ale PRZED tym, jak JS aplikacji Control zdąży
+  // zainicjalizować `window.__sbClient` -- w pełnym przebiegu (poprzednie
+  // scenariusze już rozgrzały wszystko w tle) ten wyścig nigdy nie był
+  // widoczny; przy jedynym, zimnym scenariuszu przegrywa zawsze. Czekamy
+  // więc wprost na gotowość klienta Control (jedyne urządzenie, które go
+  // realnie używa do RPC w scenariuszach), zamiast zakładać, że
+  // domcontentloaded wystarczy.
+  await pages.control.waitForFunction(() => !!window.__sbClient, { timeout: 15_000 });
+
   return { contexts, pages };
 }
 
