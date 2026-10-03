@@ -206,6 +206,23 @@ async function clickX(page) {
   await armAndConfirm(xTile(page));
 }
 
+// Symuluje gest przesunięcia (peek) na Hoście — host2/js/main.js's
+// setupPeekSwipe(): pointerdown -> pointerup w odległości >= 60px, lokalnie
+// pokazuje treść pod zasłoną pasma 2, BEZ żadnego zapisu do game_state.
+// Ten sam helper co tests/e2e/record-playthrough.js's hostPeekSwipe
+// (świadomie zduplikowany, nie importowany -- record-playthrough.js to
+// osobny skrypt nagrania, nie biblioteka współdzielona z testami). Zasłona
+// jest jednokierunkowa W SILNIKU (state.host.covered nigdy nie wraca na
+// false samo) -- to NIE jest bug do naprawienia nową logiką w Control;
+// jedyny sposób odsłonięcia to właśnie ten gest NA URZĄDZENIU Hosta, i to
+// TEST ma go wykonywać, żeby to pokryć, nie panel.
+async function hostPeekSwipe(hostPage) {
+  await hostPage.mouse.move(300, 220);
+  await hostPage.mouse.down();
+  await hostPage.mouse.move(300, 360, { steps: 10 });
+  await hostPage.mouse.up();
+}
+
 async function getDisplayCalls(displayPage, filterPrefix = "") {
   return displayPage.evaluate((prefix) => (window.__displayLog || [])
     .filter((e) => e.call.startsWith(prefix))
@@ -1048,6 +1065,14 @@ test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśni�
     // gest "peek" operatora na urządzeniu Hosta.
     await expect(hostPage.locator("#cover2")).toHaveClass(/coverOn/, { timeout: 10000 });
 
+    // Formalna asercja samego gestu "peek" (dotąd demonstrowana TYLKO w
+    // tests/e2e/record-playthrough.js, bez pokrycia w tym pliku, zgłoszone):
+    // Host odsłania się lokalnie po geście, BEZ żadnej zmiany w game_state
+    // (host2/js/render.js's `peeked`), i zasłona wraca sama przy KOLEJNEJ
+    // zmianie stanu gry (nie trzeba nic specjalnie robić, żeby ją przywrócić).
+    await hostPeekSwipe(hostPage);
+    await expect(hostPage.locator("#cover2")).toHaveClass(/coverOff/, { timeout: 5000 });
+
     // ===== F7: gracz 2 — pytanie #1 oznaczone jako "powtórzenie" =====
     await expect(page.locator(".c2-stepper")).toContainText("Finał — gracz 2, wpisywanie", { timeout: 22000 });
     await clearSfxLog(page);
@@ -1057,6 +1082,9 @@ test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśni�
     // ubocznego), ale tu włączamy, więc armAndConfirm.
     await armAndConfirm(page.getByRole("button", { name: "Powtórzenie" }).first());
     await expect.poll(() => getSfxKeys(page), { timeout: 5000 }).toEqual(expect.arrayContaining(["answer_repeat"]));
+    // Zasłona wraca SAMA przy tej pierwszej kolejnej zmianie stanu gry po
+    // peeku wyżej — bez żadnej dodatkowej akcji operatora na Hoście.
+    await expect(hostPage.locator("#cover2")).toHaveClass(/coverOn/, { timeout: 10000 });
 
     const p2Inputs = page.locator("#app input[type=text]");
     for (let i = 1; i < 5; i++) await p2Inputs.nth(i).fill("Odp. finałowa");
