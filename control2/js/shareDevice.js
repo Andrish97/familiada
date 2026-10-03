@@ -195,7 +195,7 @@ export function createShareDevice({ currentUser, game, onBadgesChanged }) {
     const res = Array.isArray(data) ? data[0] : data;
     if (error || !res?.ok) throw new Error(res?.err || "Błąd.");
 
-    if (email) {
+    if (email && res?.created) {
       const { data: flags } = await sb().from("user_flags").select("email_notifications").eq("user_id", userId).maybeSingle();
       if (flags?.email_notifications !== false) {
         const shareKey = _deviceType === "host" ? game.share_key_host

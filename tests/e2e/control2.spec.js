@@ -1760,15 +1760,29 @@ test("@mailbox control2: udostępnianie urządzenia (Prowadzący) przez e-mail -
     // wymuszamy ją z powrotem na true PRZED udostępnieniem: logujemy się
     // NA KONTO ODBIORCY w osobnym, efemerycznym kontekście (user_flags ma
     // RLS tylko na własny wiersz -- auth.uid()=user_id) i nadpisujemy.
+    // Ten sam kontekst usuwa też udostępnienie z poprzedniego przebiegu
+    // (e2e_shared_devices_cleanup, migracja 287) -- shared_devices ma TTL
+    // 4h i UNIQUE (owner,recipient,typ) GLOBALNIE na konto, nie per-grę,
+    // więc inaczej kolejny przebieg tego samego dnia zastaje już istniejące
+    // udostępnienie i #shareDeviceCurrentContent nigdy nie pokaże formularza
+    // "Dodaj" (zdiagnozowane w tests/e2e/record-playthrough.js's bliźniaczym
+    // scenariuszu, CI run #30).
+    const ownerUid = await page.evaluate(async () => {
+      const { data } = await window.__sbClient.auth.getUser();
+      return data?.user?.id || null;
+    });
     const recipientSetupContext = await browser.newContext();
     const recipientSetupPage = await recipientSetupContext.newPage();
+    let recipientUid = null;
     try {
       await loginAsTestUser(recipientSetupPage, recipientSetupContext, { username: recipient });
-      await recipientSetupPage.evaluate(async () => {
+      recipientUid = await recipientSetupPage.evaluate(async (ownerId) => {
         const sb = window.__sbClient;
         const { data: userData } = await sb.auth.getUser();
         await sb.from("user_flags").upsert({ user_id: userData.user.id, email_notifications: true }, { onConflict: "user_id" });
-      });
+        if (ownerId) await sb.rpc("e2e_shared_devices_cleanup", { p_other_user_id: ownerId });
+        return userData.user.id;
+      }, ownerUid);
     } finally {
       await recipientSetupContext.close().catch(() => {});
     }
@@ -1788,6 +1802,25 @@ test("@mailbox control2: udostępnianie urządzenia (Prowadzący) przez e-mail -
     // e-mail -- real finding z pierwszego przebiegu CI, nie zgadywane.
     const recipientUsername = recipient.split("@")[0];
     await expect(page.locator("#shareDeviceCurrentContent")).toContainText(recipientUsername, { timeout: 15000 });
+
+    // Zgłoszony realny bug naprawiony migracją 287: share_device() robiło
+    // ON CONFLICT DO UPDATE bez sygnalizowania wywołującemu, czy to nowy
+    // wiersz czy aktualizacja -- shareDevice.js wysyłało więc pełny mail
+    // przy KAŻDYM "Dodaj", nawet dla już istniejącego udostępnienia. Test
+    // bezpośrednio (RPC, bez UI) powtarza share_device dla tego samego
+    // odbiorcy/typu i sprawdza created=false -- to jest naprawiony sygnał,
+    // na którym shareDevice.js opiera decyzję "wysłać drugi mail czy nie",
+    // bez kosztu drugiego 90s oczekiwania na pocztę.
+    const resendResult = await page.evaluate(async (recipientId) => {
+      const { data, error } = await window.__sbClient.rpc("share_device", {
+        p_recipient_user_id: recipientId,
+        p_device_type: "host",
+      });
+      return { data, error: error?.message || null };
+    }, recipientUid);
+    expect(resendResult.error).toBeNull();
+    expect(resendResult.data?.ok).toBe(true);
+    expect(resendResult.data?.created, "powtórne udostępnienie temu samemu odbiorcy nie powinno być 'created' -- inaczej shareDevice.js wysłałby drugi mail").toBe(false);
 
     // BEZ `timeout` -- domyślne 90s z helpers/mailbox.js, tak jak WSZYSTKIE
     // inne testy mailowe w repo (bases.spec.js/polls-hub.spec.js/

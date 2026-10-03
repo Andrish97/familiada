@@ -1438,6 +1438,47 @@ async function scenarioShareDeviceEmail(pages, { browser }) {
   const { control } = pages;
   const RECIPIENT_EMAIL = "test2@familiada.online";
 
+  // Zgłoszone: maile mają cooldown/suppression, żeby nie spamować -- przy
+  // wielokrotnym testowaniu na TYM SAMYM koncie trzeba to ręcznie zdjąć w
+  // bazie przed testem. docs/email-system-description.md: mail-worker
+  // POMIJA wysyłkę CICHO (bez błędu), gdy user_flags.email_notifications
+  // odbiorcy jest false -- wygląda identycznie jak zwykły timeout, tylko
+  // mail nigdy się nie zjawi. test2 jest tu odbiorcą w WIELU przebiegach
+  // tego scenariusza (każde CI) -- zamiast liczyć na to, że nikt nigdy nie
+  // zgasił tej flagi, wymuszamy ją z powrotem na true PRZED udostępnieniem:
+  // logujemy się NA KONTO ODBIORCY w osobnym, efemerycznym kontekście
+  // (user_flags ma RLS tylko na własny wiersz -- auth.uid()=user_id) i
+  // nadpisujemy. Identyczny wzorzec jak w control2.spec.js's @mailbox test
+  // dla tego samego scenariusza (tam na test10, nie test2 -- inne konto
+  // odbiorcy, ten sam mechanizm).
+  //
+  // Ten sam kontekst usuwa też od razu udostępnienie z poprzedniego
+  // przebiegu (e2e_shared_devices_cleanup, migracja 287 -- analogiczne do
+  // e2e_poll_subscriptions_cleanup) zamiast klikać "Cofnij" w UI dopiero
+  // gdy modal każe -- shared_devices ma TTL 4h i UNIQUE (owner,recipient,
+  // typ) GLOBALNIE na konto, nie per-grę, więc inaczej każdy kolejny
+  // przebieg tego samego dnia zastaje już istniejące udostępnienie.
+  const testUid = await control.evaluate(async () => {
+    const { data } = await window.__sbClient.auth.getUser();
+    return data?.user?.id || null;
+  });
+  {
+    const recipientSetupCtx = await browser.newContext();
+    const recipientSetupPage = await recipientSetupCtx.newPage();
+    try {
+      await loginAsTestUser(recipientSetupPage, recipientSetupCtx, { username: RECIPIENT_EMAIL });
+      await recipientSetupPage.evaluate(async (ownerUid) => {
+        const sb = window.__sbClient;
+        const { data: userData } = await sb.auth.getUser();
+        await sb.from("user_flags").upsert({ user_id: userData.user.id, email_notifications: true }, { onConflict: "user_id" });
+        if (ownerUid) await sb.rpc("e2e_shared_devices_cleanup", { p_other_user_id: ownerUid });
+      }, testUid);
+      console.log("[record] user_flags.email_notifications wymuszone na true + stare udostępnienia wyczyszczone dla test2");
+    } finally {
+      await recipientSetupCtx.close().catch(() => {});
+    }
+  }
+
   // Krok Urządzeń jest już widoczny (openTiledDevices) -- "Udostępnij" dla
   // Prowadzącego (wiersz host), dokładnie jak operator kliknąłby na żywo.
   await expect(control.locator(".stepTitle")).toHaveText("Urządzenia", { timeout: 15000 });
@@ -1445,15 +1486,11 @@ async function scenarioShareDeviceEmail(pages, { browser }) {
   await control.waitForSelector("#shareDeviceOverlay", { state: "visible", timeout: 10_000 });
   await control.waitForTimeout(800); // widz ma zdążyć zobaczyć otwarty modal
 
-  // Udostępnienia mają TTL 4h (shareDevice.js's SHARE_TTL_MS) i są kluczowane
-  // (owner, recipient, device_type) GLOBALNIE dla konta, nie per-grę
-  // (migracja 117's UNIQUE (owner_id, recipient_id, device_type)) -- więc
-  // zostają z poprzedniego przebiegu tego samego scenariusza (ten sam
-  // test1->test2, device_type "host") i blokują pole/przycisk "Dodaj"
-  // (zdiagnozowane w CI run #30: #btnShareDeviceAdd trwale disabled, bo
-  // renderModal() poprawnie wykrył już istniejące udostępnienie z
-  // wcześniejszego przebiegu). Naprawa: jeśli modal od razu pokazuje "już
-  // udostępnione", cofnij najpierw -- dokładnie to samo kliknąłby operator.
+  // Zapasowa siatka bezpieczeństwa: e2e_shared_devices_cleanup wyżej
+  // powinno już usunąć każde stare udostępnienie między tymi dwoma
+  // kontami (dowolny device_type), ale gdyby coś mu umknęło (np. race),
+  // modal i tak pokaże "już udostępnione" -- wtedy cofamy przez UI,
+  // dokładnie jak zrobiłby operator.
   const alreadyShared = await control.locator("#shareDeviceCurrentWrap").isVisible();
   if (alreadyShared) {
     console.log("[record] urządzenie już udostępnione z poprzedniego przebiegu -- cofam, zanim dodam ponownie");
