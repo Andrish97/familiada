@@ -91,6 +91,14 @@ function setupFullscreenButton() {
   document.addEventListener("fullscreenchange", syncIcon);
 }
 
+// ZGŁOSZONY, REALNY BUG (nie tylko test): było `renderer.setPeek(!renderer.isCovered())`.
+// isCovered() = authoritativeCovered && !peeked -- na starcie gestu, gdy
+// zasłona jest aktywna i peeked=false, isCovered() JUŻ zwraca true, więc
+// !isCovered() dawało false -> setPeek(false) -> peeked zostawało false,
+// BEZ ŻADNEJ ZMIANY. Gest nigdy nie mógł zadziałać za pierwszym razem w
+// dokładnie tej sytuacji, w której operator chce go użyć (zakryte, chce
+// odkryć). Poprawka: przełączaj WŁASNY stan peeked (isPeeked()), nie
+// wypadkową authoritativeCovered+peeked.
 function setupPeekSwipe(renderer) {
   let sx = 0, sy = 0, active = false;
   const MIN = 60;
@@ -101,7 +109,7 @@ function setupPeekSwipe(renderer) {
     if (!renderer.isCoverableAtAll()) return;
     const dx = e.clientX - sx, dy = e.clientY - sy;
     if (Math.hypot(dx, dy) < MIN) return;
-    renderer.setPeek(!renderer.isCovered());
+    renderer.setPeek(!renderer.isPeeked());
   }, { passive: true });
 }
 
@@ -116,6 +124,13 @@ async function main() {
 
   startPresenceHeartbeat({ gameId, key });
   const renderer = createHostRenderer();
+  // Zmiana orientacji w locie (obrót tabletu) ma przeliczyć podpowiedź
+  // przesunięcia (portrait/landscape mają inny kierunek) -- dokładnie jak
+  // stare js/pages/host.js's window.addEventListener("resize", ...).
+  // setupOrientationClass() (niżej) już nasłuchuje na resize dla samego
+  // --outer-left/--outer-right; ten listener jest celowo osobny, bo
+  // renderer jeszcze nie istnieje w momencie jej wywołania.
+  window.addEventListener("resize", () => renderer.updateSwipeHint());
   const coverLogo = createCoverLogoRenderer({ gameId, key });
   const hostTheme = await createHostThemeApplier();
   setupPeekSwipe(renderer);

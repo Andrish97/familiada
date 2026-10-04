@@ -72,6 +72,8 @@ export function createHostRenderer() {
   const paperText1 = $("paperText1");
   const paperText2 = $("paperText2");
   const cover2 = $("cover2");
+  const cover2Swipe = $("cover2Swipe");
+  const p2Hint = $("p2Hint");
 
   let authoritativeCovered = false;
   let peeked = false;
@@ -81,10 +83,37 @@ export function createHostRenderer() {
     if (timerHandle) { clearInterval(timerHandle); timerHandle = null; }
   }
 
+  // Zgłoszony, realny bug: #cover2Swipe/#p2Hint miały statyczny, zaszyty
+  // na sztywno tekst "—" w host2.html -- operator nie miał żadnej
+  // wskazówki, że w ogóle istnieje gest przesunięcia, w który kierunek, ani
+  // że cokolwiek się stało po geście (sama zasłona wizualnie nie zmienia
+  // się poza pozycją). 1:1 odtworzone z js/pages/host.js's
+  // updateSwipeHint() (stary host.html) — jedyna zmiana: orientacja czytana
+  // z html.portrait/.landscape (host2/js/main.js's setupOrientationClass)
+  // zamiast osobnej lokalnej funkcji getOrientation(). cover2Swipe (WEWNĄTRZ
+  // zasłony, widoczny gdy zasłonięte) pokazuje co zrobić ŻEBY odsłonić;
+  // p2Hint (POZA zasłoną, widoczny tylko gdy odkryte — patrz css/host.css)
+  // zawsze pokazuje jak zasłonić z powrotem.
+  function updateSwipeHint() {
+    const portrait = document.documentElement.classList.contains("portrait");
+    const covered = authoritativeCovered && !peeked;
+    const onCover = portrait
+      ? (covered ? t("host.swipeRevealDown") : t("host.swipeCoverUp"))
+      : (covered ? t("host.swipeRevealRight") : t("host.swipeCoverLeft"));
+    if (cover2Swipe) cover2Swipe.textContent = onCover;
+    if (p2Hint) p2Hint.textContent = portrait ? t("host.swipeCoverUp") : t("host.swipeCoverLeft");
+  }
+
   function applyCover() {
     const covered = authoritativeCovered && !peeked;
     cover2?.classList.toggle("coverOn", covered);
     cover2?.classList.toggle("coverOff", !covered);
+    // Zgłoszony, realny bug: brakowało tego -- css/host.css's #p2Hint
+    // widoczność idzie przez html.p2Open (patrz stare js/pages/host.js),
+    // które tu nigdy nie było ustawiane, więc #p2Hint był NA STAŁE
+    // niewidoczny niezależnie od stanu zasłony.
+    document.documentElement.classList.toggle("p2Open", !covered);
+    updateSwipeHint();
   }
 
   // content: zwykły string (jak dawniej) albo tablica "wierszy" (patrz
@@ -239,7 +268,8 @@ export function createHostRenderer() {
   }
 
   function isCovered() { return authoritativeCovered && !peeked; }
+  function isPeeked() { return peeked; }
   function isCoverableAtAll() { return authoritativeCovered; }
 
-  return { render, setPeek, isCovered, isCoverableAtAll };
+  return { render, setPeek, isCovered, isPeeked, isCoverableAtAll, updateSwipeHint };
 }
