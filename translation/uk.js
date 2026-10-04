@@ -4980,6 +4980,7 @@ const uk = {
     setupDoneBtn: "Готово — почати гру",
     summaryStepperTitle: "Підсумок налаштувань",
     finalPickIncompleteWarning: "Фінал встановлено на \"вибір вручну\", але в налаштуваннях гри не вибрано 5 питань.",
+    deviceOfflineWarning: "Відключений пристрій: {devices}. Гра продовжується — підключіть знову з верхньої панелі, коли буде можливо.",
     keyboardShortcutsTitle: "Клавіатурні скорочення",
     introStepTitle: "Початок гри",
     roundStepLabel: "Раунд {round}",

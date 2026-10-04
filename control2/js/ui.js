@@ -73,6 +73,27 @@ export function createUI({ root, emit }) {
   function boardBusy() { return busy; }
   function revealLocked() { return busy; }
 
+  // Zgłoszone: "Czy mamy jakąś blokadę dalszych akcji... jeśli w trakcie
+  // gry któreś urządzenie zerwało połączenie?... operator jest teraz
+  // wróżka — zatrzymuje się i czeka, aż mu się kontrolki zaktualizują,
+  // nic nie klikając." Zbadane: `presenceFlags` (ctx.presenceFlags) było
+  // dotąd czytane WYŁĄCZNIE w `updateTopbarDots()` (mała kropka w
+  // topbarze, łatwa do przeoczenia) i w `renderDevicesStep()` (gating
+  // "Dalej" TYLKO na kroku Urządzeń, przed startem gry) — podczas
+  // właściwej rozgrywki (Rundy/Finał) nic nigdy nie sprawdzało presence
+  // w ogóle. Ponowne podłączenie samo w sobie już działa poprawnie
+  // (control2.spec.js's test "zerwanie połączenia... i ponowne
+  // podłączenie") — brakowało tylko WIDOCZNEGO ostrzeżenia, gdy operator
+  // dalej gra, a urządzenie jest offline. Świadomie OSTRZEŻENIE, nie
+  // twarda blokada: chwilowy zanik połączenia (np. krótka przerwa w
+  // sieci widza-prowadzącego) nie powinien zamrozić całej transmisji na
+  // żywo — operator ma widzieć problem i decydować sam, czy czekać.
+  // Ustawiane raz, na początku render() (ten sam wzorzec co `busy`
+  // wyżej), żeby gameplayShell() (poniżej) nie musiało przyjmować
+  // dodatkowego parametru w KAŻDYM z >10 miejsc wywołania.
+  let currentPresence = {};
+  let currentSettings = {};
+
   // Statusy urządzeń w TOPBARZE (poza #app, statyczne w control2.html) —
   // dokładnie jak dzisiejsze control/js/ui.js's setDeviceBadges: aktualizacja
   // imperatywna przy każdym renderze, nie przebudowa DOM.
@@ -522,17 +543,41 @@ export function createUI({ root, emit }) {
     root.appendChild(h("div", { class: "cardBody" }, body));
   }
 
+  // Zgłoszone: "operator jest teraz wróżka" — lista wymaganych urządzeń,
+  // które właśnie NIE są online (ta sama definicja "wymagane" co
+  // renderDevicesStep: Wyświetlacz zawsze, Prowadzący/Przycisk tylko gdy
+  // operator nie odznaczył noHostTablet/physicalBuzzer). `null`, gdy
+  // wszystko jest online — nic do pokazania.
+  function offlineDeviceNames() {
+    const missing = [];
+    if (!currentPresence.display) missing.push(t("control.deviceDisplay"));
+    if (!currentPresence.host && !currentSettings.noHostTablet) missing.push(t("control.deviceHost"));
+    if (!currentPresence.buzzer && !currentSettings.physicalBuzzer) missing.push(t("control.deviceBuzzer"));
+    return missing.length ? missing : null;
+  }
+
   // ============================================================
   // Wspólny szablon 3 głównych ekranów rozgrywki (sekcja 3b):
   // jedna karta, mały stepper na górze, treść na środku, nawigacja na dole.
   // ============================================================
   function gameplayShell({ stepLabel, body, nav }) {
     clear();
+    // Zgłoszone: "Czy mamy jakąś blokadę dalszych akcji... jeśli w
+    // trakcie gry któreś urządzenie zerwało połączenie?... operator jest
+    // teraz wróżka" — ŚWIADOMIE ostrzeżenie, nie blokada (patrz komentarz
+    // przy currentPresence wyżej): widoczne na KAŻDYM z 3 głównych
+    // ekranów rozgrywki (Rundy/Finał-wpisywanie/Finał-odsłanianie), nad
+    // stepperem, więc nie da się go przeoczyć ani przewinąć poza widok.
+    const offline = offlineDeviceNames();
+    const warning = offline
+      ? h("div", { class: "msg msg-pill", text: t("control.deviceOfflineWarning", { devices: offline.join(", ") }) })
+      : null;
     // .c2-gameplay-card (720px, wyśrodkowane) tylko TU — na WŁASNYM
     // kontenerze tego szablonu, nie na #app. Urządzenia/Podsumowanie mają
     // zostać na pełną szerokość (patrz control2.html) — tylko te trzy
     // przeprojektowane ekrany rozgrywki mają być węższe (plan, sekcja 3b).
     root.appendChild(h("div", { class: "c2-card-inner c2-gameplay c2-gameplay-card" }, [
+      warning,
       h("div", { class: "c2-stepper", text: stepLabel }),
       h("div", { class: "c2-gameplay-body" }, body),
       nav ? h("div", { class: "c2-gameplay-nav" }, nav) : null,
@@ -1671,6 +1716,10 @@ export function createUI({ root, emit }) {
     // przekazywane osobno do każdego renderXxx() — te dwie funkcje je już i
     // tak czytają z domknięcia.
     busy = !!ctx.busy;
+    // Ten sam wzorzec co `busy` wyżej — ustawione raz tu, czytane przez
+    // domknięcie w gameplayShell() (ostrzeżenie o rozłączonym urządzeniu).
+    currentPresence = ctx.presenceFlags || {};
+    currentSettings = state.settings || {};
     // Każdy renderXxx() woła clear() (root.innerHTML="") i buduje CAŁE #app
     // od zera — .c2-scroll-area dostaje więc świeży element przy KAŻDYM
     // renderze, nie tylko przy realnej zmianie ekranu (np. presence ping z

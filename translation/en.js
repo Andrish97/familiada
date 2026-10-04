@@ -4994,6 +4994,7 @@ const en = {
     setupDoneBtn: "Done — start the game",
     summaryStepperTitle: "Settings summary",
     finalPickIncompleteWarning: "The final is set to \"manually selected\", but 5 questions have not been picked in the game settings.",
+    deviceOfflineWarning: "Disconnected device: {devices}. The game keeps running — reconnect from the topbar when possible.",
     keyboardShortcutsTitle: "Keyboard shortcuts",
     introStepTitle: "Starting the game",
     roundStepLabel: "Round {round}",
