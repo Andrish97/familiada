@@ -4697,6 +4697,7 @@ const pl = {
     setupDoneBtn: "Gotowe — przejdź do rozgrywki",
     summaryStepperTitle: "Podsumowanie ustawień",
     finalPickIncompleteWarning: "Finał ustawiony na \"wybrane ręcznie\", ale nie wybrano 5 pytań w ustawieniach gry.",
+    deviceOfflineWarning: "Rozłączone urządzenie: {devices}. Gra działa dalej — podłącz ponownie z topbaru, gdy będzie możliwe.",
     keyboardShortcutsTitle: "Skróty klawiszowe",
     introStepTitle: "Rozpoczęcie gry",
     roundStepLabel: "Runda {round}",

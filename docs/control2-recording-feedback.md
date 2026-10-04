@@ -499,7 +499,8 @@ wywołują).
 
 ## 21. Blokada/powrót przy zerwaniu połączenia urządzenia
 
-⬜ **NIE ZACZĘTE**
+✅ **ZROBIONE** — świadomie jako OSTRZEŻENIE, nie twarda blokada (patrz
+uzasadnienie niżej).
 
 > "Czy mamy jakaś blokadę dalszych akcji (cofnięcie stanu) jeśli w trakcie
 > gry któreś urządzenie zerwało połączenie? Albo po prostu żeby ono
@@ -507,10 +508,41 @@ wywołują).
 > międzyczasie dużo naklikać. Teraz widzę że operator jest wróżka i się
 > zatrzymuje i czeka aż mu się kontrolki zaktualizują i nic nie klika."
 
-Wymaga zbadania `device_presence`/`js/core/game-state-subscribe.js` i
-`control2/js/app.js` — czy jest jakikolwiek mechanizm ostrzegania
-operatora lub blokady akcji przy wykrytym rozłączeniu urządzenia
-odbiorczego. Prawdopodobnie brak — do zaprojektowania.
+Dwa oddzielne pytania w tym zgłoszeniu:
+
+1. **"Żeby poprawnie wracało"** — ✅🔍 już działało: zweryfikowane istniejącym
+   testem `control2.spec.js`'s "zerwanie połączenia wszystkich trzech
+   urządzeń naraz i ponowne podłączenie przez modal" — świeżo podłączone
+   urządzenie dostaje PRAWDZIWY, aktualny stan gry (nie pusty/czarny
+   ekran), gra toczy się dalej poprawnie na nowej karcie.
+2. **"Blokada dalszych akcji"** — ❌ potwierdzona realna luka: `presenceFlags`
+   (`control2/js/app.js`) było czytane WYŁĄCZNIE w `updateTopbarDots()`
+   (mała kropka w topbarze — łatwa do przeoczenia) i w `renderDevicesStep()`
+   (gating "Dalej" TYLKO na kroku Urządzeń, przed startem gry). Podczas
+   właściwej rozgrywki (Rundy/Finał) NIC nigdy nie sprawdzało presence —
+   operator mógł klikać dalej przez całą grę z rozłączonym urządzeniem,
+   bez żadnego czytelnego sygnału.
+
+**Decyzja projektowa**: ostrzeżenie, nie twarda blokada akcji. Uzasadnienie:
+chwilowy zanik połączenia (krótka przerwa w sieci jednego urządzenia) nie
+powinien zamrozić całej transmisji na żywo — to by zamieniło drobny,
+przejściowy problem sieciowy w przerwanie show. Zamiast tego: widoczny,
+złoty baner (`.msg.msg-pill`, ten sam komponent co istniejące ostrzeżenie
+`finalPickIncompleteWarning`) na KAŻDYM z 3 głównych ekranów rozgrywki
+(Rundy/Finał-wpisywanie/Finał-odsłanianie, `gameplayShell()`), nad
+stepperem — nie da się go przeoczyć ani przewinąć poza widok. Wymienia
+dokładnie, które urządzenie(a) są offline (`control.deviceOfflineWarning`,
+nowy klucz w `translation/{pl,en,uk}.js`), z tą samą definicją "wymagane"
+co krok Urządzeń (Wyświetlacz zawsze, Prowadzący/Przycisk tylko gdy
+operator nie odznaczył `noHostTablet`/`physicalBuzzer`). Operator widzi
+problem i sam decyduje, czy czekać na powrót urządzenia, czy kontynuować.
+
+Zweryfikowane offline harnessem (statyczny HTML + Playwright, prawdziwy
+`control2/js/ui.js` z syntetycznym stanem, bez Supabase): baner pojawia
+się/znika poprawnie przy zmianie `presenceFlags`, poprawnie pomija
+urządzenia wyłączone ustawieniami (`noHostTablet`/`physicalBuzzer`),
+zero błędów konsoli. Nie zweryfikowane w prawdziwej przeglądarce na
+żywo/w nagraniu.
 
 ## 22. Komunikat blokady "dalej" (logo) — liczba mnoga, bez "tej gry"
 
