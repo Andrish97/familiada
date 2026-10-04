@@ -230,7 +230,32 @@ html.landscape .pane2::before {
     padding-top: calc(var(--line)*var(--baseline-shift));
     transform: translateY(var(--ios-text-shift));
     color: var(--h-ink);
-    letter-spacing: var(--h-letter-spacing)
+    letter-spacing: var(--h-letter-spacing);
+    /* Zgłoszone: "Odpowiedzi gracza 1 w drugiej linijce się nie mieszczą"
+       -- potwierdzone offline harnessem (statyczny CSS + Playwright, bez
+       Supabase): na telefonowym rozmiarze ekranu (375x812, portret) długa
+       zawartość pasma 2 w rundzie 2 finału (odpowiedź gracza 1 + status +
+       pełna lista planszy) realnie przekracza wysokość pudełka — .pane's
+       overflow:hidden wtedy po cichu UCINA resztę listy, bez żadnego
+       sygnału dla prowadzącego, że coś jest niewidoczne. Na tablecie
+       (768x1024+) ta sama treść mieści się bez problemu — to tylko
+       najmniejsze ekrany. .text samo (nie .pane — ten zostaje overflow:
+       hidden, żeby nic nie wylewało się na redMargin/cover2) dostaje
+       własny, ukryty scroll jako bezpiecznik: Host to ekran dotykowy
+       używany wyłącznie przez prowadzącego (nie widza), więc przewinięcie
+       nie psuje żadnej publicznej prezentacji, a chroni przed utratą
+       treści na małych ekranach. Pasek przewijania ukryty celowo (to ma
+       dalej wyglądać jak kartka papieru, nie jak okno z scrollbarem) --
+       funkcja przewijania (dotyk/kółko myszy) działa niezależnie od jego
+       widoczności. */
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: none;
+    -ms-overflow-style: none
+}
+
+.text::-webkit-scrollbar {
+    display: none
 }
 
 /* Kolory statusu — TE SAME w każdym motywie (host2/js/render.js's
