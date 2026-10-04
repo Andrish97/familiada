@@ -113,7 +113,7 @@ const en = {
     forbiddenMessage: "Your permission to edit this item was revoked during this session.",
     gameMessage: "This game is currently in use in another tab or device.",
     logoMessage: "This logo is currently being edited in another tab or device.",
-    logoInUseMessage: "This game's logo is currently being edited in another tab or device.",
+    logoInUseMessage: "Logos are currently being edited or in use elsewhere.",
     baseItemMessage: "This database item is currently being edited in another tab or by another user.",
     logoPoolBusyControl: "You can't edit or delete a logo while playing a game.",
     logoPoolBusySettings: "You can't edit or delete a logo while changing game settings.",
