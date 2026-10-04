@@ -51,6 +51,35 @@ Plansza zostaje do momentu animacji ekranu końcowego. Nagrania 03/04/05
 mają pokazać odpowiednio punkty, niższą nagrodę oraz nagrodę główną;
 mapowanie braków i powtórzeń nie wymaga już dodatkowego kliknięcia punktów.
 
+### Wyniki produkcyjne
+
+- Poprawki wdrożone na `www.familiada.online`: commit `8db149be0`,
+  [wdrożenie](https://github.com/Andrish97/familiada/actions/runs/37206662430).
+- [Pierwszy wąski przebieg](https://github.com/Andrish97/familiada/actions/runs/37206734634):
+  przeszły wyścig obu Buzzerów oraz rozłączenie i odzyskanie wszystkich
+  urządzeń. Pole Wpisano przeszło pomiary dla obu graczy (zrzuty 1280×720).
+  Cztery testy zakończyły się błędami sprawdzeń: timeout przed reveal pod
+  koniec 19,75-sekundowego intro/outro oraz niezdefiniowana zmienna
+  wyświetlacza. Poprawiono testy w `cd0795173`;
+  [ponowienie wszystkich czterech](https://github.com/Andrish97/familiada/actions/runs/37208325593)
+  przeszło bez retry (4/4). Łącznie potwierdzono wszystkie sześć wybranych
+  przypadków na produkcji. Intro ma animację, Buzzer świeci przed wysyłką,
+  pełny finał pokazuje niższą nagrodę 1305, wczesny finał główną 26500,
+  a gra bez finału ekran 90 punktów. Zrzuty pola Wpisano obu graczy
+  sprawdzono wizualnie obok automatycznych pomiarów.
+- [Nagrania 01/03/04/05/06](https://github.com/Andrish97/familiada/actions/runs/37206743564)
+  przeszły. Finał 04 potwierdził niższą nagrodę 1167, a finał 05 nagrodę
+  główną 25960. Nagrania 03 i 06 ponowiono po `9867cfb5d`, ponieważ
+  wcześniejszy zapis kończył się przed pełnym outro. Scenariusz 03 teraz
+  jawnie sprawdza ekran 300 punktów i czeka na koniec dźwięku.
+  [Ponowienie 03/06](https://github.com/Andrish97/familiada/actions/runs/37208515468)
+  zakończyło się sukcesem: oba nagrania obejmują pełne outro, a 03
+  potwierdza ekran punktów. Nie uruchamiano całego zestawu testów.
+
+**Aktualny status dodatkowych poprawek z tej sesji: wdrożone i sprawdzone
+na produkcji.** Poniższe wcześniejsze opisy lokalnych poprawek i starych
+interpretacji pozostawiono jako historię; obowiązują wyniki powyżej.
+
 ---
 
 ## 1. Przycisk pojedynku ma się zapalać po kliknięciu, nie po zatwierdzeniu
