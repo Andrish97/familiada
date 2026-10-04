@@ -35,7 +35,9 @@ dopisywany do tego pliku ma trzymać się tej samej zasady.
 
 ## 1. Przycisk pojedynku ma się zapalać po kliknięciu, nie po zatwierdzeniu
 
-⬜ **NIE ZACZĘTE**
+✅ **ZROBIONE** — realny bug znaleziony w `buzzer2/js/render.js`, nie w
+`control2/js/ui.js` (tam rzeczywiście już było poprawnie, jak podejrzewano
+niżej — ale to był tylko fragment problemu).
 
 > "Przycisk ma się zapalac po naciśnięciu"
 >
@@ -44,12 +46,31 @@ dopisywany do tego pliku ma trzymać się tej samej zasady.
 > tym jak się rozpocznie rozgrywka, a w pojedynku ma się świecić kolor
 > drużyny która została zawieszona"
 
-Dotyczy `renderDuelAccept()` w `control2/js/ui.js` (~linia 661-700). Przy
-pierwszym czytaniu kodu wygląda, jakby już działało poprawnie (tile'e A/B
-reagują na `selectedTeam` natychmiast po kliknięciu, nie dopiero po
-`ACCEPT_BUZZ`) — ale to NIE zostało zweryfikowane na żywej grze ani w
-nagraniu, więc nie oznaczać jako gotowe bez realnej obserwacji. Priorytet:
-obejrzeć dokładnie na nagraniu/żywo, co faktycznie się dzieje.
+Po obejrzeniu nagrania (user ma dostęp, ja nie — patrz niżej) doprecyzowane:
+
+> "Akcja się dzieje zbyt szybko i nie jestem w stanie potwierdzić
+> zachowania przycisku. Ma być tak: naciskają zaświeca ten który pierwszy
+> nacisnął i przyciski kontrolka w panelu. Operator to widzi i zatwierdza."
+
+**Prawdziwa przyczyna**: `renderDuelAccept()` w `control2/js/ui.js`
+(~linia 661-700) faktycznie działa poprawnie — tile'e A/B reagują na
+`duel.lastPressed` natychmiast, nie czekają na `ACCEPT_BUZZ`. Ale
+**`buzzer2/js/render.js`'s `deriveButtonState()`** (sam przycisk na
+URZĄDZENIU Buzzer, czyli połowa zgłoszenia — "zaświeca ten który pierwszy
+nacisnął") czytał WYŁĄCZNIE `duel.firstTeam`, ustawiane dopiero przez
+`ACCEPT_BUZZ`, czyli PO potwierdzeniu operatora. Surowe naciśnięcie
+(`duel.lastPressed`, zapisywane bezpośrednio przez RPC
+`game_state_buzzer_press`, zanim operator cokolwiek kliknie) było
+całkowicie ignorowane — `buzzer2/js/main.js`'s `press()` ma nawet
+komentarz "przycisk pokazuje PUSHED_x od razu", który był zwyczajnie
+nieprawdziwy. Stary (nie-v2) `js/pages/buzzer.js`'s `press()` miał to
+poprawnie: lokalny, optymistyczny `show(PUSHED_x)` natychmiast po
+kliknięciu. Naprawione: `deriveButtonState()` czyta teraz
+`firstTeam || lastPressed` — światło zapala się od razu po naciśnięciu
+(`lastPressed`), zostaje tą samą drużyną przez całą resztę rundy, gdy
+operator potwierdzi (`firstTeam`), i gaśnie z powrotem do `ON`, jeśli
+operator kliknie "Ponów naciśnięcie" przed potwierdzeniem. 7 nowych
+testów jednostkowych w `tests/unit/buzzer2.render.test.js`.
 
 ## 2. Przyciski "dalej" migają
 
@@ -66,7 +87,12 @@ blokada) we wszystkich 11 wywołaniach `navButton()`.
 
 ## 3. Modal ustawień wisi, nie widać wpisywania z klawiatury/suwaka
 
-✅ **ZROBIONE** — przyczyna była w SKRYPCIE NAGRYWANIA, nie w produkcie.
+✅🔧 **ZROBIONE + JEDNA POPRAWKA PO FEEDBACKU Z NAGRANIA** — przyczyna była
+w SKRYPCIE NAGRYWANIA, nie w produkcie. **Uwaga środowiskowa**: z tej
+sesji/sandboksa NIE MAM dostępu do samego nagrania (pobieranie artefaktu z
+GitHub Actions blokowane przez politykę sieciową — Azure Blob Storage poza
+dozwoloną listą hostów, potwierdzone, nie do obejścia) — poniższe oparte
+wyłącznie na opisie właściciela, który obejrzał nagranie sam.
 
 > "Modal ustawień wisi i nie widzę rzeczywistego wpisywania z klawiatury i
 > przesuwania suwaka"
@@ -88,11 +114,25 @@ widzowi wygląda to jak kilkaset ms "niczego", a potem nagła zmiana.
 Naprawione: nazwa drużyny teraz przez `pressSequentially()` (znak po
 znaku, jak już robił `typePaced()` dla pól w `#app`), suwaki przez nowy
 helper `animateSlider()` (kilka pośrednich kroków wartości z pauzą —
-widoczny przesuw uchwytu). Nie wymaga triggera pełnego nagrania do
-weryfikacji logiki (sama mechanika zapisu — `input`/`change` na końcu —
-jest identyczna co wcześniej), ale do oceny WIZUALNEJ jakości ostateczne
-potwierdzenie wymaga obejrzenia kolejnego przebiegu
-`E2E Recorded Playthrough (Control v2)`.
+widoczny przesuw uchwytu).
+
+**Feedback po tym przebiegu (run #45)**: "Co do wpisywania i suwaków jest
+lepiej ale dalej chwilę wisi bez akcji a potem mistrzowie quiz pojawia się
+nagle w polu (to już progres względem poprzednich bo wcześniej tam się
+nic nie pojawiało) suwak poprawnie się przesuwa." — czyli suwak (`animateSlider`)
+w pełni naprawiony, tekst drużyny WCIĄŻ "czeka, potem nagle się pojawia".
+Prawdopodobna przyczyna: `#gsTeamA`'s "input" handler
+(`js/pages/game-settings2.js`) woła przy KAŻDYM znaku `postPreviewRow()`
+— `postMessage` do osadzonego `/display2?preview=1`, które przerysowuje
+podgląd nazwy drużyny na symulowanej matrycy LED (realna praca głównego
+wątku). Na wolniejszym, współdzielonym runnerze CI ten koszt per znak
+może przekraczać odstęp między znakami — główny wątek (ten sam, na którym
+maluje się SAM INPUT) nie nadąża z przemalowaniem, więc kilka znaków
+"dogania się" w jednej klatce. Podniesione `pressSequentially()`'s
+`delay` z 70ms na 140ms, żeby dać realny margines na przemalowanie, nie
+tylko na samo zdarzenie "input". **Nie potwierdzone wizualnie** (nie mam
+dostępu do nagrania z tej sesji) — do zweryfikowania przy następnym
+przebiegu `E2E Recorded Playthrough (Control v2)`.
 
 ## 4. Logo bez animacji wejścia na starcie rundy + timing dźwięku
 
@@ -509,14 +549,32 @@ widać na żywo — prawdopodobnie przed naprawą modala udostępniania
 (punkt 23 wyżej, ten sam obszar) w tej samej sesji; podać dokładną
 stronę/krok, jeśli problem się powtórzy.
 
+## 25. "Gotowe — przejdź do rozgrywki" ma inny styl niż pozostałe "Dalej"
+
+✅ **ZROBIONE** — nowe zgłoszenie po przebiegu nagrania #45 (nie część
+oryginalnej listy 24 punktów).
+
+> "Gotowe przejdz do rozgrywki ma inny styl niż pozostałe przyciski dalej"
+
+Przyczyna: ten przycisk (`renderSetupFinish()`, `control2/js/ui.js`) był
+gołym `<button class="btn gold">` (globalny styl przycisków całej apki —
+`css/base.css`), nie `navButton()` jak KAŻDE inne "Dalej" w rozgrywce
+(`c2-btn primary c2-intro-btn` — inny padding/border-radius/czcionka,
+`control2.html`). Naprawione: ujednolicone na `navButton()`, z tą samą
+busy/disabled gałęzią co reszta (C2-02) — `finalIncomplete` to statyczna
+walidacja (disabled, bez pulsowania), `boardBusy()` to realne oczekiwanie
+na sieć (busy, pulsuje).
+
 ---
 
 ## Podsumowanie liczbowe (na dzień zapisu)
 
-- ✅ Zrobione: 9 (punkty 2, 7, 8, 15, 16, 19, 22, 23 + częściowo 9)
-- ✅🔍 Sprawdzone, już poprawne: 2 (punkty 14, 24)
+- ✅ Zrobione: 13 (punkty 1, 2, 3, 7, 8, 15, 16, 19, 22, 23, 25 + częściowo 9)
+- ✅🔍 Sprawdzone, już poprawne: 5 (punkty 4, 6, 10, 14, 24)
 - 🚫 Zablokowane (brak zasobu — nowy plik dźwiękowy): 1 (punkt 5)
-- ⬜ Nie zaczęte: reszta (punkty 1, 3, 4, 6, 10, 11, 17, 18, 20, 21)
+- ⬜ Nie zaczęte: reszta (punkty 11, 17, 18, 20, 21)
+- 🔧 Oczekuje wizualnego potwierdzenia nagraniem (nie mam dostępu z tej
+  sesji — patrz punkt 3): poprawka suwaka/wpisywania w modalu ustawień
 
 ## Jak kontynuować w nowej sesji
 

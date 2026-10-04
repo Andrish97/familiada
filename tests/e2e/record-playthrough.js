@@ -687,8 +687,22 @@ async function scenarioRoundsMechanics(pages, { contexts }) {
   // sieciowego do czekania na każdy znak, więc wystarczy wbudowane
   // pressSequentially() z opóźnieniem między znakami (ten sam wzorzec co
   // już używany niżej w tym pliku dla pola e-maila odbiorcy).
+  //
+  // Zgłoszone PONOWNIE po obejrzeniu nagrania z delay:70 — "dalej chwilę
+  // wisi bez akcji a potem Mistrzowie Quizu pojawia się nagle w polu".
+  // Przyczyna: #gsTeamA's "input" handler (js/pages/game-settings2.js)
+  // przy KAŻDYM znaku woła postPreviewRow() — postMessage do osadzonego
+  // /display2?preview=1, które przerysowuje podgląd nazwy drużyny na
+  // symulowanej matrycy LED (realna praca głównego wątku, nie coś
+  // darmowego). Na współdzielonym, wolniejszym runnerze CI ten koszt per
+  // znak bywa dłuższy niż 70ms odstępu — główny wątek (ten sam, na którym
+  // maluje się też SAM INPUT) nie nadąża z przemalowaniem między
+  // klawiszami, więc kilka znaków loguje się logicznie, a widocznie
+  // "doganiają" się w jednej klatce. Podniesione do 140ms, żeby dać
+  // realny margines na przemalowanie między znakami, nie tylko na samo
+  // zdarzenie "input".
   await gsTeamAInput.clear(); // czyści domyślną nazwę drużyny, zanim wpiszemy nową znak po znaku
-  await gsTeamAInput.pressSequentially("Mistrzowie Quizu", { delay: 70 });
+  await gsTeamAInput.pressSequentially("Mistrzowie Quizu", { delay: 140 });
   await control.waitForTimeout(800); // niech nagranie złapie podgląd Wyświetlacza aktualizujący się na żywo
 
   // Zgłoszone: "...i pokręć głośności" — doprecyzowane później: "suwaki w
