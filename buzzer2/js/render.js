@@ -142,9 +142,11 @@ export function createButtonRenderer() {
     if (state === STATE.PUSHED_B) { btnB?.classList.add("lit"); btnA?.classList.add("dim"); }
   }
 
-  function render(row) {
+  function render(row, pressedTeam = null) {
     applyColors(row.detail?.display?.colors);
-    const state = deriveButtonState(row);
+    const confirmed = deriveButtonState(row);
+    const state = confirmed === STATE.ON && pressedTeam
+      ? (pressedTeam === "A" ? STATE.PUSHED_A : STATE.PUSHED_B) : confirmed;
     show(state);
     // Migracja 264 -- blokada w bazie (game_state.locked_until, ustawiana
     // przez Control PO każdym przejściu z dźwiękiem/animacją, np.

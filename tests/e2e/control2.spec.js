@@ -229,6 +229,74 @@ async function getDisplayCalls(displayPage, filterPrefix = "") {
     .map((e) => ({ call: e.call, args: e.args })), filterPrefix);
 }
 
+async function expectMappingFieldFits(page, testInfo, label) {
+  await expect(page.locator(".c2-mapinput input")).toBeVisible();
+  const geometry = await page.locator(".c2-mapinput").evaluate((tile) => {
+    const box = tile.getBoundingClientRect();
+    const input = tile.querySelector("input").getBoundingClientRect();
+    const column = tile.querySelector(".c2-mapinput-labelcol").getBoundingClientRect();
+    const caption = tile.querySelector(".c2-field-label").getBoundingClientRect();
+    return { top: input.top - box.top, bottom: box.bottom - input.bottom, right: box.right - input.right, centered: Math.abs((column.left + column.right) / 2 - (caption.left + caption.right) / 2), horizontalOverflow: tile.scrollWidth - tile.clientWidth };
+  });
+  expect(geometry.top).toBeGreaterThanOrEqual(5);
+  expect(geometry.bottom).toBeGreaterThanOrEqual(5);
+  expect(geometry.right).toBeGreaterThanOrEqual(5);
+  expect(geometry.centered).toBeLessThanOrEqual(1);
+  expect(geometry.horizontalOverflow).toBeLessThanOrEqual(1);
+  await page.screenshot({ path: testInfo.outputPath(`shot-mapping-${label}.png`) });
+}
+
+test("control2: intro logo i natychmiastowe światło Buzzera przed wysyłką", async ({ page, browser }, testInfo) => {
+  test.setTimeout(120000);
+  await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
+  const game = await makeGame(page, `E2E-CONTROL2-INTRO-${Date.now()}`, { roundQuestions: [TWO_QUESTIONS[0]] });
+  const contexts = [], errors = [];
+  let releasePress;
+  try {
+    const displayPage = await openAnon(browser, contexts, `/display2?id=${game.id}&key=${game.share_key_display}`, "display", errors);
+    await openAnon(browser, contexts, `/host2?id=${game.id}&key=${game.share_key_host}`, "host", errors);
+    const buzzerPage = await openAnon(browser, contexts, `/buzzer2?id=${game.id}&key=${game.share_key_buzzer}`, "buzzer", errors);
+    await page.goto(`/control2?id=${game.id}`, { waitUntil: "domcontentloaded" });
+    await page.getByRole("button", { name: "Dalej", exact: true }).click();
+    await clearDisplayLog(displayPage);
+    await page.getByRole("button", { name: "Gotowe — przejdź do rozgrywki" }).click();
+    await expect(page.getByRole("button", { name: "Rozpocznij grę", exact: true })).toBeVisible();
+    await expect.poll(async () => (await getDisplayCalls(displayPage, "api.big.clear")).length).toBeGreaterThan(0);
+    expect(await getDisplayCalls(displayPage, "api.logo.show")).toEqual([]);
+    await clearSfxLog(page);
+    await page.getByRole("button", { name: "Rozpocznij grę", exact: true }).click();
+    await waitForSfxKeysAnyOrder(page, ["show_intro", "reveal"]);
+    await expect.poll(async () => (await getDisplayCalls(displayPage, "api.logo.show")).at(-1)?.args[0]?.ms || 0).toBeGreaterThan(14);
+    await expect(page.getByRole("button", { name: "Rozpocznij rundę", exact: true })).toBeEnabled({ timeout: 22000 });
+    await displayPage.screenshot({ path: testInfo.outputPath("shot-intro-logo.png") });
+    await page.getByRole("button", { name: "Rozpocznij rundę", exact: true }).click();
+    await expect(buzzerPage.locator("#btnA")).toBeEnabled({ timeout: 15000 });
+
+    // Pause only the outgoing request; continue it to the real production RPC.
+    // This proves the light appears before the network can return a winner.
+    const held = new Promise((resolve) => { releasePress = resolve; });
+    let requests = 0;
+    await buzzerPage.route("**/rpc/game_state_buzzer_press", async (route) => { requests++; await held; await route.continue(); });
+    await clearSfxLog(page);
+    await buzzerPage.locator("#btnA").click();
+    await expect(buzzerPage.locator("#btnA")).toHaveClass(/\blit\b/);
+    await expect(buzzerPage.locator("#btnB")).toBeDisabled();
+    await expect.poll(() => requests).toBe(1);
+    expect(await page.getByRole("button", { name: "Zatwierdź: Alfa" }).count()).toBe(0);
+    const response = buzzerPage.waitForResponse((res) => res.url().includes("/rpc/game_state_buzzer_press"));
+    releasePress();
+    expect((await response).ok()).toBe(true);
+    await expect(page.getByRole("button", { name: "Zatwierdź: Alfa" })).toBeEnabled({ timeout: 15000 });
+    await waitForSfxSequence(page, ["buzzer_press"]);
+    await expect(buzzerPage.locator("#btnA")).toHaveClass(/\blit\b/);
+    expect(errors).toEqual([]);
+  } finally {
+    releasePress?.();
+    for (const ctx of contexts) await ctx.close().catch(() => {});
+    await deleteGame(page, game.id);
+  }
+});
+
 async function makeGame(page, name, { settings = {}, roundQuestions = [], finalAnswerPts = null } = {}) {
   return page.evaluate(async ({ name, settings, roundQuestions, finalAnswerPts }) => {
     // js/pages/editor.js's clip17()/normQ() clip answer/question text
@@ -277,7 +345,8 @@ async function makeGame(page, name, { settings = {}, roundQuestions = [], finalA
       const { error: upErr } = await sb.from("games").update({
         settings: {
           teams: { teamA: "Alfa", teamB: "Beta" },
-          game: { hasFinal: true, finalQuestionsMode: "pick" },
+          ...settings,
+          game: { ...settings.game, hasFinal: true, finalQuestionsMode: "pick" },
           questions: { final: finalPicked, rounds: [] },
         },
       }).eq("id", g.id);
@@ -608,6 +677,7 @@ test("control2: próg w rundzie -> finał, wczesne zakończenie po 4/5 pytaniach
   const game = await makeGame(page, `E2E-CONTROL2-FINAL-${Date.now()}`, {
     roundQuestions: [{ ord: 1, text: "Pytanie testowe (runda)", answers: [{ ord: 1, text: "Odp. warta 300", fixed_points: 300 }] }],
     finalAnswerPts: 50,
+    settings: { game: { advanced: { endScreenMode: "money" } } },
   });
   const contexts = [];
   const errors = [];
@@ -691,6 +761,7 @@ test("control2: próg w rundzie -> finał, wczesne zakończenie po 4/5 pytaniach
     // "reset pojedynku...", tam już sprawdzona dla remisu).
     await page.getByRole("button", { name: "Zakończ grę", exact: true }).click();
     await expect(page.getByText("Wygrała drużyna Alfa wynikiem 500:0")).toBeVisible({ timeout: 10000 });
+    await expect.poll(async () => (await getDisplayCalls(displayPage, "api.win.set")).at(-1)?.args[0], { timeout: 15000 }).toBe(26500);
     const finishBtn = page.getByRole("button", { name: "Wróć do moich gier" });
     await expect(finishBtn).toBeVisible({ timeout: 10000 });
     await finishBtn.click();
@@ -951,6 +1022,7 @@ test("control2: QR na wyświetlaczu — host i buzzer niezależne, każdy z osob
 // lokalny "peek" operatora), więc Host zostaje zasłonięty przez cały finał.
 
 test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśnięcie timera, powtórzenie, odsłonięcie P1 na Display przy starcie P2", async ({ page, browser }, testInfo) => {
+  await page.setViewportSize({ width: 1280, height: 720 });
   // 180s okazało się za ciasne w CI: 15s realnego oczekiwania na timer
   // gracza 1 + 10 pytań mapowania, z których KAŻDE ma teraz poprawnie
   // wymuszaną blokadę na długość dźwięku "Pokaż odpowiedź"/"Pokaż punkty"
@@ -963,6 +1035,7 @@ test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśni�
   const game = await makeGame(page, `E2E-CONTROL2-FINALFULL-${Date.now()}`, {
     roundQuestions: [{ ord: 1, text: "Pytanie testowe (runda)", answers: [{ ord: 1, text: "Odp. warta 300", fixed_points: 300 }] }],
     finalAnswerPts: 15,
+    settings: { game: { advanced: { endScreenMode: "money" } } },
   });
   const contexts = [];
   const errors = [];
@@ -1029,6 +1102,7 @@ test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśni�
     await page.getByRole("button", { name: "Dalej" }).click();
     for (let i = 0; i < 5; i++) {
       await expect(page.locator(".c2-stepper")).toContainText(`Finał — mapowanie ${i + 1}/5`, { timeout: 22000 });
+      if (i === 0) await expectMappingFieldFits(page, testInfo, "p1");
       // Zgłoszone: wybór dopasowania w finale też idzie przez zaznacz ->
       // potwierdź (armableTile), jak reszta konsekwentnych kafli.
       await armAndConfirm(page.getByRole("button", { name: "Odp. finałowa (15)" }));
@@ -1116,6 +1190,7 @@ test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśni�
 
     // ===== F8/F9: mapowanie gracza 2 — pytanie #1 to SKIP (powtórzenie), reszta MATCH =====
     for (let i = 0; i < 5; i++) {
+      if (i === 0) await expectMappingFieldFits(page, testInfo, "p2");
       await expect(page.locator(".c2-stepper")).toContainText(`Finał — mapowanie ${i + 1}/5`, { timeout: 22000 });
       if (i > 0) await armAndConfirm(page.getByRole("button", { name: "Odp. finałowa (15)" }));
       await armAndConfirm(page.getByRole("button", { name: "Pokaż odpowiedź" }));
@@ -1133,8 +1208,10 @@ test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśni�
 
     // ===== F10: koniec finału =====
     await clearSfxLog(page);
+    await clearDisplayLog(displayPage);
     await page.getByRole("button", { name: "Zakończ grę", exact: true }).click();
-    await waitForSfxKeysAnyOrder(page, ["round_transition", "reveal"], 15000); // final_end combo (synced, kolejność zależy od realnych czasów trwania plików)
+    await waitForSfxKeysAnyOrder(page, ["show_intro", "reveal"], 15000);
+    await expect.poll(async () => (await getDisplayCalls(displayPage, "api.win.set")).at(-1)?.args[0], { timeout: 15000 }).toBe(1305);
     await expect.poll(async () => {
       const calls = await getDisplayCalls(displayPage, "api.indicator.set");
       return calls.some((c) => c.args[0] === "OFF");
@@ -2021,14 +2098,23 @@ test("control2: zerwanie połączenia wszystkich trzech urządzeń naraz i ponow
     // #dotX -- worst-case to ~16.5s, nie 15s. 15000ms (dokładnie na granicy)
     // bywał za ciasny pod obciążeniem runnera CI (real finding: ten test
     // padał powtarzalnie w CI, nie losowo).
-    await expect(page.locator("#dotDisplay")).toHaveClass(/\bbad\b/, { timeout: 20000 });
-    await expect(page.locator("#dotHost")).toHaveClass(/\bbad\b/, { timeout: 20000 });
-    await expect(page.locator("#dotBuzzer")).toHaveClass(/\bbad\b/, { timeout: 20000 });
+    await expect(page.locator("#dotDisplay")).toHaveClass(/\bbad\b/, { timeout: 8500 });
+    await expect(page.locator("#dotHost")).toHaveClass(/\bbad\b/, { timeout: 8500 });
+    await expect(page.locator("#dotBuzzer")).toHaveClass(/\bbad\b/, { timeout: 8500 });
+    await expect(answerTile(page, 2)).toBeDisabled();
+    await expect(page.locator(".c2-gameplay .msg-pill")).toHaveCount(0);
+    const revBefore = await page.evaluate(async (id) => (await window.__sbClient.from("game_state").select("rev").eq("game_id", id).single()).data.rev, game.id);
+    await answerTile(page, 2).evaluate((button) => button.click());
+    const revAfter = await page.evaluate(async (id) => (await window.__sbClient.from("game_state").select("rev").eq("game_id", id).single()).data.rev, game.id);
+    expect(revAfter).toBe(revBefore);
 
     // ===== Ponowne podłączenie po kolei, przez modal =====
     displayPage = await reconnectViaModal(browser, page, "display", contexts, errors);
+    await expect(answerTile(page, 2)).toBeDisabled();
     await reconnectViaModal(browser, page, "host", contexts, errors);
+    await expect(answerTile(page, 2)).toBeDisabled();
     buzzerPage = await reconnectViaModal(browser, page, "buzzer", contexts, errors);
+    await expect(answerTile(page, 2)).toBeEnabled({ timeout: 10000 });
 
     // Świeżo podłączony Display musi pokazać PRAWDZIWY, aktualny obraz gry
     // (odkrytą odpowiedź #1) -- nie pusty/czarny ekran. Dowód realnego

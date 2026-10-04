@@ -20,8 +20,9 @@
 //     "reveal", bez "round_transition").
 //   - R6-R7 (goEndRound): "reveal" najpierw, "round_transition" po nim.
 //   - F0 (startFinal): "final_theme" najpierw, "reveal" po nim.
-//   - F14 (finishFinal): synced "round_transition"+"reveal", a PO całej
-//     tej parze dodatkowo "show_intro".
+//   - Koniec rundy finału: scoring, potem round_transition (lub samo
+//     round_transition po ostatnim Dalej). FINISH_FINAL gra później
+//     show_intro+reveal zsynchronizowane na koniec, bez powtarzania fanfary.
 
 import { deriveEvents } from "./deriveEvents.js?v=v2026-10-04T10235";
 
@@ -49,8 +50,7 @@ export function createSoundCueEngine({ playSfx, getSfxDuration }) {
   }
 
   async function playFinalEndCombo() {
-    const totalS = await playSyncedCombo("round_transition", "reveal");
-    setTimeout(() => playSfx("show_intro"), Math.max(0, totalS * 1000));
+    return playSyncedCombo("show_intro", "reveal");
   }
 
   // Wołane raz na KAŻDĄ zmianę wiersza (prevRow -> nextRow). `prevRow===null`
@@ -59,6 +59,12 @@ export function createSoundCueEngine({ playSfx, getSfxDuration }) {
   function handleTransition(prevRow, nextRow) {
     if (!prevRow || !nextRow) return;
     const events = deriveEvents(prevRow, nextRow);
+    // The device RPC records the winning press before operator acceptance.
+    // Use that confirmed change, so the losing simultaneous press stays silent.
+    const pressed = nextRow.detail?.rounds?.duel?.lastPressed;
+    if (nextRow.step === "r_duel" && pressed && !prevRow.detail?.rounds?.duel?.lastPressed && !nextRow.detail?.settings?.physicalBuzzer) {
+      playSfx("buzzer_press");
+    }
     const isRoundStart = nextRow.step === "r_duel" && nextRow.phase === "DUEL" && prevRow.step === "r_roundStart";
     // END_ROUND jest zawsze dispatchowany z step="r_play", phase PLAY lub
     // STEAL (rozstrzygnięta kradzież zostaje w fazie STEAL aż do końca
@@ -81,8 +87,10 @@ export function createSoundCueEngine({ playSfx, getSfxDuration }) {
     const isP2RoundReveal = prevRow.step === "f_p2_start" && nextRow.step === "f_p2_entry";
     for (const ev of events) {
       if (ev.kind !== "SOUND_CUE" || !ev.key) continue;
-      if (ev.key === "round_transition" && (isRoundStart || isFinalP2Start || isP2RoundReveal)) playSyncedCombo("round_transition", "reveal");
+      if (nextRow.step === "f_end" && prevRow.step !== "f_end" && (ev.key === "answer_correct" || ev.key === "answer_wrong")) playSequentialCombo(ev.key, "round_transition");
+      else if (ev.key === "round_transition" && (isRoundStart || isFinalP2Start || isP2RoundReveal)) playSyncedCombo("round_transition", "reveal");
       else if (ev.key === "round_transition" && isRoundEnd) playSequentialCombo("reveal", "round_transition");
+      else if (ev.key === "show_intro" && ((prevRow.step === "r_intro" && nextRow.step === "r_roundStart") || (!prevRow.detail?.locks?.gameEnded && nextRow.detail?.locks?.gameEnded))) playSyncedCombo("show_intro", "reveal");
       else if (ev.key === "final_theme") playSequentialCombo("final_theme", "reveal");
       else if (ev.key === "final_end") playFinalEndCombo();
       else playSfx(ev.key);

@@ -136,7 +136,7 @@ function duelRegisterResult(d, team, { pts, isX, isTop }) {
 
 function gotoEnd(state) {
   state.final.runtime.timer = { running: false, phase: null, endsAt: 0 };
-  return { step: "f_end", phase: null, controlTeam: null, topCard: "final" };
+  return { step: "f_end", phase: null, controlTeam: null, topCard: "final", soundCueKey: "round_transition" };
 }
 
 // R9: dokąd pójdzie gra po końcu bieżącej rundy — CZYSTA funkcja (żadnej
@@ -716,10 +716,8 @@ const REDUCERS = {
     const f = state.final;
     state.rounds.totals[f.winnerTeam] = (state.rounds.totals[f.winnerTeam] || 0) + f.runtime.sum;
     state.locks.gameEnded = true;
-    // "final_end" (nie "round_transition"): gameFinal.js's finishFinal()
-    // nakłada round_transition+reveal zsynchronizowane, a PO nich show_intro
-    // — inna sekwencja niż F7's sam combo, więc osobny klucz zamiast
-    // przeciążania "round_transition" (soundReactor.js rozróżnia po kluczu).
+    // Round-end already played on entering f_end. This cue starts the
+    // game outro with reveal and changes the board only at reveal.
     return { ...sameStep(state), soundCueKey: "final_end" };
   },
 };

@@ -34,6 +34,25 @@ function makeEngine(durations = {}) {
 // (atrapowymi) czasami trwania, bez potrzeby fake timerów.
 const flush = () => new Promise((resolve) => setTimeout(resolve, 20));
 
+test("Intro reveal starts toward the end of show_intro", async () => {
+  const { engine, played } = makeEngine({ show_intro: 0.05, reveal: 0.02 });
+  engine.handleTransition(row({ step: "r_intro" }), row({ step: "r_roundStart", sound_cue_seq: 1, sound_cue_key: "show_intro" }));
+  await flush();
+  assert.deepEqual(played, ["show_intro"]);
+  await new Promise((resolve) => setTimeout(resolve, 60));
+  assert.deepEqual(played, ["show_intro", "reveal"]);
+});
+
+test("Winning buzzer press plays its existing sound before operator acceptance", () => {
+  const { engine, played } = makeEngine();
+  const prev = row({ step: "r_duel" });
+  const next = row({ step: "r_duel", detail: { rounds: { duel: { lastPressed: "A" } } } });
+  engine.handleTransition(prev, next);
+  assert.deepEqual(played, ["buzzer_press"]);
+  engine.handleTransition(next, next);
+  assert.deepEqual(played, ["buzzer_press"]);
+});
+
 test("brak poprzedniego wiersza => nic nie gra (SNAPSHOT_RENDER, nie realna zmiana)", async () => {
   const { engine, played } = makeEngine();
   engine.handleTransition(null, row({ sound_cue_seq: 1, sound_cue_key: "reveal" }));
@@ -123,16 +142,24 @@ test("final_theme gra SEKWENCYJNIE: final_theme, potem reveal", async () => {
   assert.deepEqual(played, ["final_theme", "reveal"]);
 });
 
-test("final_end gra synced round_transition+reveal, a PO nich show_intro", async () => {
-  const { engine, played } = makeEngine({ round_transition: 0.05, reveal: 0.05 });
+test("final_end plays outro+reveal without repeating the round-end sound", async () => {
+  const { engine, played } = makeEngine({ show_intro: 0.05, reveal: 0.05 });
   const a = row({ sound_cue_seq: 0 });
   const b = row({ sound_cue_seq: 1, sound_cue_key: "final_end" });
   engine.handleTransition(a, b);
   await new Promise((resolve) => setTimeout(resolve, 150));
-  assert.ok(played.includes("round_transition"));
+  assert.ok(!played.includes("round_transition"));
   assert.ok(played.includes("reveal"));
   assert.ok(played.includes("show_intro"));
-  assert.equal(played[played.length - 1], "show_intro"); // zawsze ostatni
+  assert.deepEqual(played, ["show_intro", "reveal"]);
+});
+
+test("Reaching final target plays scoring first and round-end afterward", async () => {
+  const { engine, played } = makeEngine({ answer_correct: 0.03 });
+  engine.handleTransition(row({ step: "f_p1_map_q1" }), row({ step: "f_end", sound_cue_seq: 1, sound_cue_key: "answer_correct" }));
+  assert.deepEqual(played, ["answer_correct"]);
+  await new Promise((resolve) => setTimeout(resolve, 70));
+  assert.deepEqual(played, ["answer_correct", "round_transition"]);
 });
 
 test("brak zmiany sound_cue_seq => nic nie gra", async () => {

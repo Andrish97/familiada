@@ -256,7 +256,12 @@ export function createRenderer({ scene, qr, getSfxDuration }) {
     // Nazwy drużyn są już wtedy znane (denormalizowane z game-settings
     // przed startem gry) — pokazujemy je na "small" razem z logo na "big",
     // to dwa niezależne płótna.
-    if (row.step === "r_intro") { paintTeamNames(row); await api.logo.show(); return; }
+    if (row.step === "r_intro") { api.big.clear(); return; }
+    if (row.step === "r_roundStart" && row.detail?.rounds?.roundNo === 1) {
+      paintTeamNames(row);
+      await api.logo.show();
+      return;
+    }
     if (row.top_card === "rounds") { paintTeamNames(row); await paintRoundsBoard(row); return; }
     if (row.top_card === "final") { paintTeamNames(row); await paintFinalBoard(row); return; }
     api.big.clear();
@@ -268,11 +273,13 @@ export function createRenderer({ scene, qr, getSfxDuration }) {
     if (row.top_card === "rounds") {
       // Bez finału: jedyny dźwięk tego kroku (GAME_END_SHOW) to "show_intro"
       // — animacja logo/WIN trwa dokładnie tyle, ile on, nie sztywną liczbę.
-      const showIntroMs = await timing.dur("show_intro");
+      const { offsetMs, revealMs } = await timing.revealSyncSplit("show_intro");
+      if (offsetMs > 0) await new Promise((resolve) => setTimeout(resolve, offsetMs));
       const totals = row.detail.rounds.totals || { A: 0, B: 0 };
       const screen = resolveRoundsEndScreen(row.detail.settings, { isDraw: totals.A === totals.B, totals });
-      if (screen.kind === "logo") await api.logo.show({ ...LOGO_IN_ANIM, ms: showIntroMs });
-      else await api.win.set(screen.amount, { animIn: { ...LOGO_IN_ANIM, ms: showIntroMs } });
+      api.big.clear();
+      if (screen.kind === "logo") await api.logo.show({ ...LOGO_IN_ANIM, ms: revealMs });
+      else await api.win.set(screen.amount, { animIn: { ...LOGO_IN_ANIM, ms: revealMs } });
       return;
     }
     // Finał (FINISH_FINAL): dźwięk to synced("round_transition","reveal")
@@ -283,14 +290,15 @@ export function createRenderer({ scene, qr, getSfxDuration }) {
     // revealMs to czas samego "reveal" (logo/WIN i doliczony wynik finału
     // pojawiają się W TYM MOMENCIE, trwając dokładnie tyle co on — kończą
     // się razem z dźwiękiem, nie wcześniej/później).
-    const { offsetMs, revealMs } = await timing.revealSyncSplit("round_transition");
+    const { offsetMs, revealMs } = await timing.revealSyncSplit("show_intro");
     // Sama plansza finału jest w tym momencie WCIĄŻ w pełni namalowana na
     // "big" (nic wcześniej jej nie chowa — inaczej niż r_gameEnd, gdzie
     // STEP_CHANGE do "r_gameEnd" już wcześniej odpalił animOut na etapie
     // "Zakończ rundę") — bez tego animOut logo/WIN rysowałoby się WPROST na
     // planszy finału, ten sam rodzaj artefaktu co naprawiony wcześniej przy
     // pierwszej rundzie.
-    await api.big.animOut({ ...ROUND_OUT_ANIM, ms: offsetMs });
+    if (offsetMs > 0) await new Promise((resolve) => setTimeout(resolve, offsetMs));
+    api.big.clear();
     // "reveal" zaczyna grać TERAZ — punkty (z doliczonym wynikiem finału,
     // już w row.detail.rounds.totals — engine.js's FINISH_FINAL dolicza go
     // PRZED tym zapisem) i logo/WIN pojawiają się w tym samym momencie.
@@ -467,9 +475,13 @@ export function createRenderer({ scene, qr, getSfxDuration }) {
             // control/js/gameFinal.js's startP2Round(): zapowiedź "20" po
             // stronie zwycięzcy, ten sam mechanizm co przy f_p1_entry.
             showTimerPlaceholder(nextRow, "20");
-          } else if (ev.to === "r_intro") {
+          } else if (ev.to === "r_roundStart" && ev.from === "r_intro") {
+            const { offsetMs, revealMs } = await timing.revealSyncSplit("show_intro");
+            if (offsetMs > 0) await new Promise((resolve) => setTimeout(resolve, offsetMs));
             paintTeamNames(nextRow);
-            await api.logo.show();
+            await api.logo.show({ ...LOGO_IN_ANIM, ms: revealMs });
+          } else if (ev.to === "r_intro") {
+            api.big.clear();
           }
           break;
         // engine.js's END_ROUND (R6-R7) rusza WCZEŚNIEJ niż STEP_CHANGE do

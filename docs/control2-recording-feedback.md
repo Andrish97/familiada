@@ -30,10 +30,38 @@ dopisywany do tego pliku ma trzymać się tej samej zasady.
   konkret).
 - 🔧 **W TOKU** — aktywnie naprawiane, zobacz notatkę.
 - ⬜ **NIE ZACZĘTE** — zero kodu, czeka.
+- 🧪 **POPRAWIONE LOKALNIE** — zmiana w bieżącym workspace, nie oznacza wdrożenia ani potwierdzenia nowym nagraniem.
+
+## Kontynuacja Codex — 2026-10-04
+
+Zaktualizowano lokalne `main` do `origin/main` (`39a8841f1`) przed dalszą
+pracą. Najnowsze polecenia właściciela mają pierwszeństwo nad wcześniejszymi
+interpretacjami tego dokumentu: pracować teraz; uruchamiać tylko potrzebne,
+wąskie testy; rozłączenie wykrywać szybciej i blokować akcje bez banera;
+Buzzer ma zapalić się lokalnie PRZED wysyłką; ponownie naprawić pole Wpisano.
+
+Przygotowano wdrożenie na `main` i wąską weryfikację na produkcji przez
+GitHub Actions. 69 wybranych testów jednostkowych przeszło; nie jest to
+potwierdzenie działania produkcji. Nowe testy produkcyjne mierzą pole
+Wpisano dla obu graczy, sprawdzają światło przed wysłaniem prawdziwego RPC,
+animację intro oraz blokadę rozgrywki i odzyskanie połączeń bez banera.
+Poprawiono też kolejność końca finału: dźwięk końca rundy przy wejściu do
+podsumowania, a dźwięk zakończenia gry dopiero przy zakończeniu gry.
+Plansza zostaje do momentu animacji ekranu końcowego. Nagrania 03/04/05
+mają pokazać odpowiednio punkty, niższą nagrodę oraz nagrodę główną;
+mapowanie braków i powtórzeń nie wymaga już dodatkowego kliknięcia punktów.
 
 ---
 
 ## 1. Przycisk pojedynku ma się zapalać po kliknięciu, nie po zatwierdzeniu
+
+🧪 **DODATKOWA POPRAWKA LOKALNA**: poprzednia zmiana czytała `lastPressed`,
+ale dopiero PO odpowiedzi RPC. Właściciel ponownie zgłosił problem i wskazał
+stary Buzzer (`js/pages/buzzer.js`: `show()` przed `persistState/sendClick`).
+`buzzer2/js/press.js` teraz zapala lokalne światło przed wywołaniem RPC,
+blokuje kolejne kliknięcie w trakcie żądania, zachowuje światło przy starym
+odczycie, przy przegranej pobiera zwycięzcę, przy błędzie sieci cofa lokalne
+światło. Trzy testy zachowania w `tests/unit/buzzer2.press.test.js` przeszły.
 
 ✅ **ZROBIONE** — realny bug znaleziony w `buzzer2/js/render.js`, nie w
 `control2/js/ui.js` (tam rzeczywiście już było poprawnie, jak podejrzewano
@@ -136,6 +164,16 @@ przebiegu `E2E Recorded Playthrough (Control v2)`.
 
 ## 4. Logo bez animacji wejścia na starcie rundy + timing dźwięku
 
+🧪 **PONOWNIE OTWARTE I POPRAWIONE LOKALNIE**: poniższy wcześniejszy audyt
+sprawdzał ZNIKANIE logo przy starcie planszy, zamiast WEJŚCIA logo.
+`r_intro` wyświetlał logo natychmiast (`logo.show()` z domyślnymi 14 ms),
+jeszcze przed kliknięciem Rozpocznij grę. Teraz `r_intro` zostawia czerń;
+`r_intro → r_roundStart` uruchamia `show_intro` z `reveal` zsynchronizowanymi
+na koniec. Logo wjeżdża dopiero przy starcie `reveal`, na czas tego dźwięku.
+Blokada operatora obejmuje oba dźwięki, także gdy `reveal` jest dłuższy.
+Reconnect po intro odtwarza logo, nie pustą planszę pierwszej rundy.
+Wcześniejszy opis poniżej dotyczy tylko osobnego przejścia do planszy.
+
 ✅🔍 **SPRAWDZONE — już poprawnie zaimplementowane** (znalezione przy
 audycie kodu pod inny punkt, nie przez nową pracę w tej sesji; wcześniej
 oznaczone jako "nie zaczęte" przez przeoczenie — fix już był na `main`).
@@ -155,6 +193,13 @@ Kod wprost cytuje to zgłoszenie w komentarzu. Trigger nagrania
 zakończeniu.
 
 ## 5. Dźwięk przycisku ma grać na kliknięciu, nie tylko na potwierdzeniu
+
+🧪 **POPRAWIONE LOKALNIE — poprzednia interpretacja poniżej była błędna**.
+Zgłoszenie dotyczy Buzzera, a istniejący `buzzer_press` jest właściwym
+zasobem. Wspólny `soundCueEngine` odtwarza go przy potwierdzonym pojawieniu
+się `duel.lastPressed`, przed akceptacją operatora. Przegrane zgłoszenie
+nie generuje dodatkowego dźwięku. Zachowane odtwarzanie przy zatwierdzeniu
+zgodnie z oryginalnym „również”. Test tego zdarzenia przeszedł.
 
 🚫 **ZABLOKOWANE — brak zasobu dźwiękowego**
 
@@ -368,6 +413,12 @@ faktycznie zepsuty — patrz punkt 8 wyżej, teraz naprawiony.**
 
 ## 14. Kafelek "Wpisano" w mapowaniu — tekst wychodzi z kafelka
 
+🔧 **PONOWNIE OTWARTE (2026-10-04)** — właściciel nadal widzi przesunięcie.
+Wprowadzono lokalnie `minmax(0,…)` dla kolumn, zerowe minimalne wymiary
+pola i wrappera, `height:auto`/stretch zamiast procentowej wysokości pola
+w siatce oraz jawny `box-sizing` kafla. Poprzedni harness nie wystarcza do
+uznania zgłoszenia za rozwiązane; potrzebna ponowna kontrola layoutu.
+
 ✅🔍 **SPRAWDZONE, JUŻ POPRAWNE**
 
 > "Kafelek wpisano w mapowaniu ma dalej przesunięty teksy wpisano i pole
@@ -514,6 +565,19 @@ Triggerowany wąski przebieg CI (`--grep "koniec gry bez finału w trybie"`)
 w toku w momencie zapisu tej notatki.
 
 ## 21. Blokada/powrót przy zerwaniu połączenia urządzenia
+
+🧪 **PONOWNIE OTWARTE I POPRAWIONE LOKALNIE** — właściciel odrzucił
+poniższą decyzję o samym ostrzeżeniu. Baner usunięto z `gameplayShell`;
+kontrolki pozostają sygnałem. Próg obecności skrócono z 15 do 6,5 sekundy
+(heartbeat urządzeń co 3 s), polling z 1,5 s do 750 ms. Lokalny zegar
+wygasza obecność co 250 ms również podczas zawieszonego żądania, a zapytanie
+ma timeout i ochronę przed nakładaniem. `deviceGate` blokuje akcje gry dla
+brakujących wymaganych urządzeń, z wyjątkami `noHostTablet/physicalBuzzer`.
+Sprawdzenie jest w UI, handlerach (także skrót zegarka i restart) oraz
+przy wykonaniu zakolejkowanego dispatchu. Automatyczne wygaśnięcia zegarów
+nadal zapisują rzeczywisty upływ czasu. Ponowne podłączenie odblokowuje
+ten sam stan gry. Test reguł wymaganych urządzeń przeszedł.
+Poniższy opis banera jest historyczny, nie stanowi aktualnej decyzji.
 
 ✅ **ZROBIONE** — świadomie jako OSTRZEŻENIE, nie twarda blokada (patrz
 uzasadnienie niżej).

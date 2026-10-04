@@ -100,6 +100,7 @@ import { createEngine } from "./engine.js?v=v2026-10-04T10235";
 import { createActionGate } from "./actionGate.js?v=v2026-10-04T10235";
 import { createDevices } from "./devices.js?v=v2026-10-04T10235";
 import { createPresence } from "./presence.js?v=v2026-10-04T10235";
+import { missingDevices } from "./deviceGate.js?v=v2026-10-04T10235";
 import { createSoundReactor } from "./soundReactor.js?v=v2026-10-04T10235";
 import { createUI } from "./ui.js?v=v2026-10-04T10235";
 import { createShareDevice } from "./shareDevice.js?v=v2026-10-04T10235";
@@ -296,11 +297,12 @@ async function main() {
   //     (actionGate.computeGateMs(), policzony z POTWIERDZONEGO
   //     sound_cue_key, nie zgadywany z wyprzedzeniem).
   let committing = false;
+  let presenceFlags = {};
   let lockedUntil = 0;
   // Patrz armLock() niżej -- prawdziwa (nie zgadywana z góry) blokada na
   // czas round-tripu store.setLock(ms).
   let lockConfirmPending = false;
-  function busy() { return committing || lockConfirmPending || Date.now() < lockedUntil; }
+  function busy() { return committing || lockConfirmPending || Date.now() < lockedUntil || missingDevices(store.state, presenceFlags).length > 0; }
 
   // Uzbraja klienckie `lockedUntil` na czas `ms` (potwierdzonego dźwięku/
   // animacji) I dociąga je do realnego czasu, w którym serwer (migracja
@@ -352,6 +354,9 @@ async function main() {
   // dostawać DOKŁADNIE tę samą blokadę, inaczej auto-pudło z 3s zegarka
   // zostawiałoby okno bez ochrony, którego ręczne ADD_X już nie ma.
   async function dispatchGatedNow(action) {
+    // Expiration records real elapsed time even while an endpoint is absent.
+    // Queued operator actions are rechecked when they actually execute.
+    if (!action.type.startsWith("EXPIRE_") && missingDevices(store.state, presenceFlags).length) return null;
     const prevRow = store.state.__row || null;
     committing = true;
     let nextRow = null;
@@ -461,7 +466,6 @@ async function main() {
     connectCodes[kind] = await devices.generateConnectCode(kind).catch(() => null);
   }
 
-  let presenceFlags = {};
   const presence = createPresence({
     gameId,
     onChange: ({ flags }) => { presenceFlags = flags; renderCurrent(); },
@@ -518,7 +522,7 @@ async function main() {
   const scheduleTimer3Watch = makeTimerWatch(() => store.state.rounds?.timer3, "EXPIRE_TIMER3");
 
   function renderCtx() {
-    return { urls, presenceFlags, connectCodes, shareBadges, busy: busy() };
+    return { urls, presenceFlags, connectCodes, shareBadges, busy: busy(), devicesBlocked: missingDevices(store.state, presenceFlags).length > 0 };
   }
 
   function renderCurrent() {
@@ -762,7 +766,9 @@ async function main() {
       committing = false;
     }
     if (soundCueKey) {
-      const ms = await actionGate.timing.dur(soundCueKey);
+      const ms = nextStep === "r_roundStart" && soundCueKey === "show_intro"
+        ? await actionGate.computeGateMs("SHOW_INTRO", null, store.state.__row)
+        : await actionGate.timing.dur(soundCueKey);
       armLock(ms);
     }
     renderCurrent();
@@ -822,6 +828,9 @@ async function main() {
 
   async function handle(action, payload) {
     try {
+      const gameAction = action === "game.dispatch" || action === "rounds.introNext" || action === "final.toggleTimer" || action === "game.restart" || action === "setup.start";
+      if (gameAction && busy() && payload?.type !== "SET_ENTRY_TEXT") return;
+      if (gameAction && missingDevices(store.state, presenceFlags).length) return;
       if (action === "ui.rerender") {
         // Czysto lokalna zmiana UI (np. zaznaczenie drużyny w trybie
         // physicalBuzzer, przed potwierdzeniem) — bez zapisu do game_state.
@@ -1023,11 +1032,13 @@ async function main() {
   // renderGameEnd/renderFinalEnd, akcja "game.restart" w handle() niżej) —
   // dokładnie ta sama logika, dwa miejsca wywołania.
   async function restartGame() {
+    if (busy()) return;
     const ok = await confirmModal({
       title: "Zacznij od nowa",
       text: "To wróci do podłączania urządzeń i wyzeruje postęp gry (drużyny, pytania, wyniki). Parowanie urządzeń zostaje. Ustawienia zaawansowane zostają zachowane.",
     });
     if (!ok) return;
+    if (busy()) return;
     const keptAdvanced = {};
     for (const key of ADVANCED_SETTINGS_KEYS) keptAdvanced[key] = store.state.settings[key];
     store.state.locks = { gameStarted: false, finalActive: false, gameEnded: false };

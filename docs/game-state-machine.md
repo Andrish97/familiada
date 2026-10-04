@@ -38,10 +38,10 @@ Ta strona jest wygenerowana z `shared/gameStateMachine.js` — jedynego źródł
 - **Karta**: `rounds`
 - **Wejście**: operator klika 'Rozpocznij' po zakończeniu ustawień
 - **Zapis (`detail`)**: locks.gameStarted=true
-- **Display**: Logo/plansza powitalna.
+- **Display**: Czarny ekran do kliknięcia 'Rozpocznij grę'.
 - **Host**: Puste.
 - **Buzzer**: Wyłączony.
-- **Dźwięki**: `show_intro`
+- **Dźwięki**: —
 - **Dozwolone kolejne kroki**: `r_roundStart`
 
 ### `r_roundStart`
@@ -50,10 +50,10 @@ Ta strona jest wygenerowana z `shared/gameStateMachine.js` — jedynego źródł
 - **Dozwolone fazy**: `READY`
 - **Wejście**: koniec poprzedniej rundy (bez wejścia w finał/koniec gry) lub po r_intro
 - **Zapis (`detail`)**: roundNo
-- **Display**: Logo widoczne, plansza rundy jeszcze ukryta.
+- **Display**: Pierwsza runda: logo wjeżdża na reveal pod koniec show_intro. Kolejne rundy: poprzednia plansza zostaje do startu następnej.
 - **Host**: Puste, czeka.
 - **Buzzer**: Wyłączony.
-- **Dźwięki**: —
+- **Dźwięki**: `show_intro`, `reveal`
 - **Dozwolone kolejne kroki**: `r_duel`
 
 ### `r_duel`

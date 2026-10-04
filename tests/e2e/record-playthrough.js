@@ -1185,7 +1185,7 @@ function matchButtonLabel(a) {
 // nic realnie nie ginie z demonstrowanej różnorodności. =====
 
 async function scenarioFinalFull(pages, { game }) {
-  const { control, buzzer, host } = pages;
+  const { control, buzzer, host, display } = pages;
   const fq = game.finalQuestions;
 
   await clickPaced(control.getByRole("button", { name: "Dalej" }), ADMIN_PACE_MS);
@@ -1258,7 +1258,7 @@ async function scenarioFinalFull(pages, { game }) {
     // potwierdź jak odpowiedzi w Rundach (nazwa stała, druga linijka to
     // żywy podgląd).
     await armAndConfirmPaced(control.getByRole("button", { name: "Pokaż odpowiedź" }));
-    await armAndConfirmPaced(control.getByRole("button", { name: "Pokaż punkty" }));
+    if (P1_PLAN[i] === true) await armAndConfirmPaced(control.getByRole("button", { name: "Pokaż punkty" }));
     await clickPaced(control.getByRole("button", { name: "Dalej" }));
   }
 
@@ -1297,14 +1297,13 @@ async function scenarioFinalFull(pages, { game }) {
   for (let i = 0; i < 5; i++) {
     if (P2_PLAN[i] === true) await armAndConfirmPaced(control.getByRole("button", { name: matchButtonLabel(answerByRank(fq[i], P2_MATCH_RANK[i])) }));
     await armAndConfirmPaced(control.getByRole("button", { name: "Pokaż odpowiedź" }));
-    await armAndConfirmPaced(control.getByRole("button", { name: "Pokaż punkty" }));
+    if (P2_PLAN[i] === true) await armAndConfirmPaced(control.getByRole("button", { name: "Pokaż punkty" }));
     // Suma po TYM trafieniu (idx3: 70+35=105) przekracza finalTarget:100
     // (makeGame) -> REVEAL_POINTS w engine.js skacze PROSTO do f_end, silnik
     // NIE czeka na kolejne "Dalej" -- ekran mapowania po prostu już nie
     // istnieje, klik w "Dalej" nie miałby czego trafić. Pytanie #5 gracza 2
     // (SKIP) nigdy nie zostaje odsłonięte -- drużyna wygrywa finał w tym
     // właśnie momencie.
-    if (i === 3) break;
     await clickPaced(control.getByRole("button", { name: "Dalej" }));
   }
 
@@ -1314,6 +1313,8 @@ async function scenarioFinalFull(pages, { game }) {
   // przejdzie dalej do właściwego ekranu końcowego.
   await control.waitForTimeout(2000);
   await clickPaced(control.getByRole("button", { name: "Zakończ grę", exact: true }));
+  await expect.poll(() => display.evaluate(() => (window.__displayLog || []).filter((call) => call.call === "api.win.set").at(-1)?.args[0]), { timeout: 20000 }).toBe(1167);
+  await expect(control.getByRole("button", { name: "Wróć do moich gier" })).toBeEnabled({ timeout: 65000 });
   await control.waitForTimeout(4000); // ekran końcowy widoczny chwilę na nagraniu
 }
 
@@ -1330,7 +1331,7 @@ async function scenarioFinalFull(pages, { game }) {
 // obniżony próg. =====
 
 async function scenarioFinalEarlyExit(pages, { game }) {
-  const { control, buzzer, host } = pages;
+  const { control, buzzer, host, display } = pages;
   const q0 = game.finalQuestions[0];
   const top = answerByRank(q0, 1);
 
@@ -1376,6 +1377,8 @@ async function scenarioFinalEarlyExit(pages, { game }) {
   // ekranie przed odsłonięciem, widz ma zdążyć go zobaczyć.
   await control.waitForTimeout(2000);
   await clickPaced(control.getByRole("button", { name: "Zakończ grę", exact: true }));
+  await expect.poll(() => display.evaluate(() => (window.__displayLog || []).filter((call) => call.call === "api.win.set").at(-1)?.args[0]), { timeout: 20000 }).toBe(25960);
+  await expect(control.getByRole("button", { name: "Wróć do moich gier" })).toBeEnabled({ timeout: 65000 });
   await control.waitForTimeout(4000); // ekran końcowy widoczny chwilę na nagraniu
 }
 
@@ -1702,7 +1705,7 @@ const SCENARIOS = [
   },
   {
     file: "03-rundy-progresja-bez-finalu.mp4",
-    makeGame: (setupPage) => restoreDemoGame(setupPage, { pickOrds: PROGRESSION_ROUND_ORDS }),
+    makeGame: (setupPage) => restoreDemoGame(setupPage, { pickOrds: PROGRESSION_ROUND_ORDS, settings: { game: { advanced: { endScreenMode: "points" } } } }),
     // showReload: TYLKO tu (nie w scenariuszu 02) -- sam dowód wznowienia
     // stanu jest niezależny od hasFinal, pokazanie go raz wystarcza, bez
     // dublowania czasu nagrania w dwóch prawie identycznych scenariuszach.
@@ -1731,14 +1734,11 @@ const SCENARIOS = [
       pickOrds: FINAL_SETUP_ROUND_ORDS,
       // Prawdziwe pytania demo (nie sztuczne "Pytanie finałowe N") — inny
       // ord niż FINAL_SETUP_ROUND_ORDS. scenarioFinalFull dopasowuje przy
-      // każdym MATCH INNE miejsce w rankingu odpowiedzi (patrz
-      // P1_MATCH_RANK/P2_MATCH_RANK i answerByRank() tam), a finalTarget
-      // obniżony do 100 (domyślne 200) tak, żeby suma realnych trafień
-      // (28+18+24+35=105) przekroczyła go dopiero na ostatnim trafieniu
-      // gracza 2 — zgłoszone wprost: drużyna ma FAKTYCZNIE WYGRAĆ finał w
-      // tym scenariuszu, nie tylko bezpiecznie zostać pod progiem.
+      // każdym MATCH INNE miejsce w rankingu odpowiedzi. Suma trafień
+      // (28+18+24+35=105) pozostaje poniżej progu 200: pierwszy finał
+      // pokazuje niższą nagrodę, drugi scenariusz nagrodę główną.
       finalPickOrds: [9, 10, 11, 12, 13],
-      settings: { game: { advanced: { finalMinPoints: 280, finalTarget: 100 } } },
+      settings: { game: { advanced: { finalMinPoints: 280, finalTarget: 200, endScreenMode: "money" } } },
     }),
     run: scenarioFinalFull,
   },
@@ -1758,7 +1758,7 @@ const SCENARIOS = [
     makeGame: (setupPage) => restoreDemoGame(setupPage, {
       pickOrds: FINAL_SETUP_ROUND_ORDS,
       finalPickOrds: [9, 10, 11, 12, 13],
-      settings: { game: { advanced: { finalMinPoints: 280, finalTarget: 30 } } },
+      settings: { game: { advanced: { finalMinPoints: 280, finalTarget: 30, endScreenMode: "money" } } },
     }),
     run: scenarioFinalEarlyExit,
   },

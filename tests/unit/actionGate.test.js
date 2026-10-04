@@ -21,6 +21,11 @@ function makeGate(durations = {}) {
   return createActionGate({ getSfxDuration });
 }
 
+test("SHOW_INTRO blocks through both the intro and the logo reveal", async () => {
+  const gate = makeGate({ show_intro: 3, reveal: 4 });
+  assert.equal(await gate.computeGateMs("SHOW_INTRO", row(), row({ sound_cue_seq: 1 })), 4000);
+});
+
 test("brak nextRow (świadomy no-op) => 0, bez wyjątku", async () => {
   const gate = makeGate();
   const ms = await gate.computeGateMs("ADD_X", row({ sound_cue_seq: 3 }), null);
@@ -74,8 +79,8 @@ test("START_P2_ROUND: round_transition dłuższy niż reveal", async () => {
   assert.equal(ms, 2200);
 });
 
-test("GAME_END_SHOW: NIE jest już specjalnym przypadkiem — domyślna gałąź, gate = dur(show_intro)", async () => {
-  const gate = makeGate({ show_intro: 0.4 });
+test("GAME_END_SHOW: blocks through show_intro and reveal", async () => {
+  const gate = makeGate({ show_intro: 0.4, reveal: 0.2 });
   const prev = row({ sound_cue_seq: 0 });
   const next = row({ sound_cue_key: "show_intro", sound_cue_seq: 1 });
   const ms = await gate.computeGateMs("GAME_END_SHOW", prev, next);
@@ -150,9 +155,14 @@ test("START_FINAL: gate to SUMA final_theme+reveal — żadna kolejna akcja nie 
   assert.equal(ms, 1600 + 9000);
 });
 
-test("FINISH_FINAL: synced(round_transition,reveal) + sequential show_intro W CAŁOŚCI", async () => {
+test("FINISH_FINAL: outro show_intro+reveal; round-end sound already played", async () => {
   const gate = makeGate({ round_transition: 0.5, reveal: 0.3, show_intro: 1.2 });
   const next = row({ sound_cue_key: "final_end", sound_cue_seq: 1 });
   const ms = await gate.computeGateMs("FINISH_FINAL", row(), next);
-  assert.equal(ms, 500 + 1200, "max(round_transition,reveal)=500ms + show_intro w pełni doliczone");
+  assert.equal(ms, 1200);
+});
+
+test("Reaching final target waits for the scoring sound and then round-end sound", async () => {
+  const gate = makeGate({ answer_correct: 0.4, round_transition: 1.2 });
+  assert.equal(await gate.computeGateMs("REVEAL_POINTS", row({ step: "f_p1_map_q1" }), row({ step: "f_end", sound_cue_key: "answer_correct", sound_cue_seq: 1 })), 1600);
 });

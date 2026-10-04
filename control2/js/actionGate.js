@@ -42,9 +42,8 @@
 //     policzone RAZEM (suma sekwencyjna), z tego samego powodu co
 //     END_ROUND wyzej (zgloszone: nakladanie sie na START_ROUND kolejnej
 //     akcji).
-//   - FINISH_FINAL: synced("round_transition","reveal"), a PO CALEJ tej
-//     parze dodatkowo "show_intro" -- jedyne miejsce, gdzie kolejny czlon
-//     TEZ sie liczy do blokady (to juz ekran koncowy, nic po nim).
+//   - FINISH_FINAL: synced("show_intro","reveal"). Koniec rundy finału
+//     gra wcześniej, przy przejściu do f_end, z własną blokadą.
 // Kazda inna akcja: gate to czas trwania tego, co faktycznie zagralo w TYM
 // konkretnym zapisie (wykryte przez zmiane sound_cue_seq).
 
@@ -65,13 +64,15 @@ export function createActionGate({ getSfxDuration }) {
     return (await timing.dur(keyA)) + (await timing.dur(keyB));
   }
   const SPECIAL = {
+    SHOW_INTRO: () => timing.syncedMs("show_intro", "reveal"),
+    GAME_END_SHOW: () => timing.syncedMs("show_intro", "reveal"),
     START_ROUND: () => timing.syncedMs("round_transition", "reveal"),
     NEXT_QUESTION: async (prevRow, nextRow) =>
-      nextRow?.step === "f_p2_start" ? timing.syncedMs("round_transition", "reveal") : 0,
+      nextRow?.step === "f_p2_start" ? timing.syncedMs("round_transition", "reveal") : nextRow?.step === "f_end" ? timing.dur("round_transition") : 0,
     START_P2_ROUND: () => timing.syncedMs("round_transition", "reveal"),
     END_ROUND: () => sequentialMs("reveal", "round_transition"),
     START_FINAL: () => sequentialMs("final_theme", "reveal"),
-    FINISH_FINAL: async () => (await timing.syncedMs("round_transition", "reveal")) + (await timing.dur("show_intro")),
+    FINISH_FINAL: () => timing.syncedMs("show_intro", "reveal"),
   };
 
   // actionType: action.type z payloadu dispatchu (control2/js/app.js's
@@ -80,6 +81,9 @@ export function createActionGate({ getSfxDuration }) {
   // świadomym no-opie — wtedy 0, nic się nie zmieniło, nic do zablokowania).
   async function computeGateMs(actionType, prevRow, nextRow) {
     if (!nextRow) return 0;
+    if (nextRow.step === "f_end" && prevRow?.step !== "f_end" && ["answer_correct", "answer_wrong"].includes(nextRow.sound_cue_key) && nextRow.sound_cue_seq !== prevRow?.sound_cue_seq) {
+      return sequentialMs(nextRow.sound_cue_key, "round_transition");
+    }
     const special = SPECIAL[actionType];
     if (special) return special(prevRow, nextRow);
     const soundFired = !prevRow || nextRow.sound_cue_seq !== prevRow.sound_cue_seq;

@@ -13,11 +13,13 @@
 
 import { sb } from "../../js/core/supabase.js?v=v2026-10-04T10235";
 
-const ONLINE_MS = 15_000;
-const POLL_MS = 1_500;
+const ONLINE_MS = 6_500; // Two missed 3s heartbeats, with a small margin.
+const POLL_MS = 750;
 
 export function createPresence({ gameId, onChange }) {
   let timer = null;
+  let expiryTimer = null;
+  let inFlight = false;
   let flags = { display: false, host: false, buzzer: false };
   let lastSeenAt = { display: null, host: null, buzzer: null };
   // Zgłoszone: "cały panel jest zlagowany, przewijanie też" — onChange()
@@ -43,12 +45,17 @@ export function createPresence({ gameId, onChange }) {
   }
 
   async function tick() {
+    if (inFlight) return;
+    inFlight = true;
+    try {
     const { data, error } = await sb()
       .from("device_presence")
       .select("device_type,last_seen_at")
-      .eq("game_id", gameId);
+      .eq("game_id", gameId)
+      .abortSignal(AbortSignal.timeout(ONLINE_MS));
 
     if (error) {
+      lastSeenAt = { display: null, host: null, buzzer: null };
       flags = { display: false, host: false, buzzer: false };
       reportIfChanged({ flags, lastSeenAt, error });
       return;
@@ -66,6 +73,13 @@ export function createPresence({ gameId, onChange }) {
     flags = { display: isOnline(lastSeenAt.display), host: isOnline(lastSeenAt.host), buzzer: isOnline(lastSeenAt.buzzer) };
 
     reportIfChanged({ flags, lastSeenAt, error: null });
+    } catch (error) {
+      lastSeenAt = { display: null, host: null, buzzer: null };
+      flags = { display: false, host: false, buzzer: false };
+      reportIfChanged({ flags, lastSeenAt, error });
+    } finally {
+      inFlight = false;
+    }
   }
 
   // App.js's onChange tylko destrukturyzuje `flags` (renderCurrent() go
@@ -82,10 +96,17 @@ export function createPresence({ gameId, onChange }) {
   function start() {
     tick();
     timer = setInterval(tick, POLL_MS);
+    // Expire locally even when a presence query is still waiting for the network.
+    expiryTimer = setInterval(() => {
+      flags = Object.fromEntries(Object.entries(lastSeenAt).map(([kind, at]) => [kind, isOnline(at)]));
+      reportIfChanged({ flags, lastSeenAt, error: null });
+    }, 250);
   }
 
   function stop() {
     if (timer) clearInterval(timer);
+    if (expiryTimer) clearInterval(expiryTimer);
+    expiryTimer = null;
     timer = null;
   }
 

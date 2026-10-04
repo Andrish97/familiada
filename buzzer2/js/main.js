@@ -14,8 +14,9 @@ import { initI18n, setUiLang } from "../../translation/translation.js?v=v2026-10
 import { startKeepAlive } from "../../js/core/keep-alive.js?v=v2026-10-04T10235";
 import { sb } from "../../js/core/supabase.js?v=v2026-10-04T10235";
 import { createSubscription } from "../../js/core/game-state-subscribe.js?v=v2026-10-04T10235";
-import { createButtonRenderer, STATE, deriveButtonState, isLockedRow } from "./render.js?v=v2026-10-04T10235";
+import { createButtonRenderer, isLockedRow } from "./render.js?v=v2026-10-04T10235";
 import { ringDoorbell } from "../../js/core/game-state-doorbell.js?v=v2026-10-04T10235";
+import { createPressController } from "./press.js?v=v2026-10-04T10235";
 import { icon } from "../../js/core/icons.js?v=v2026-10-04T10235";
 
 // videoWakeLockFallback: patrz identyczny komentarz w host2/js/main.js —
@@ -123,7 +124,7 @@ async function main() {
     lockTimer = null;
     if (!isLockedRow(row)) return;
     const msLeft = new Date(row.locked_until).getTime() - Date.now();
-    lockTimer = setTimeout(() => renderer.render(row), Math.max(0, msLeft) + 20);
+    lockTimer = setTimeout(() => presses.render(lastRow), Math.max(0, msLeft) + 20);
   }
 
   const subscription = createSubscription({
@@ -142,35 +143,31 @@ async function main() {
           .catch((e) => console.warn("[buzzer2] setUiLang nie powiodło się, spróbuję ponownie przy kolejnym wierszu:", e));
       }
       lastRow = row;
-      renderer.render(row);
+      presses.render(row);
       scheduleUnlockRerender(row);
     },
     onError: (error) => console.warn("[buzzer2] game_state_get failed:", error),
   });
 
-  async function press(team) {
-    if (!lastRow || deriveButtonState(lastRow) !== STATE.ON || isLockedRow(lastRow)) return;
-    const { data, error } = await sb().rpc("game_state_buzzer_press", {
+  const presses = createPressController({
+    getRow: () => lastRow,
+    render: (row, team) => renderer.render(row, team),
+    send: (team) => sb().rpc("game_state_buzzer_press", {
       p_game_id: gameId, p_key: key, p_team: team,
-    });
-    if (!error) {
-      subscription.applyRow(data);
-      lastRow = data;
-      renderer.render(data);
+    }),
+    applyRow: (row) => subscription.applyRow(row),
+    refetch: () => subscription.refetchNow(),
+    onAccepted: (data) => {
       // game_state_buzzer_press idzie z pominięciem control2/js/store.js,
       // więc nic INNEGO nie zadzwoni dzwonkiem po tym zapisie — bez tego
       // Control (i Display/Host) nigdy by się nie dowiedzieli, że ktoś
       // nacisnął (znalezione na żywo przez control2-full-game.spec.js:
       // Buzzer widział własne wciśnięcie, ale Control — nie).
       ringDoorbell(gameId, data.rev);
-      return;
-    }
-    if (String(error.message || "").includes("already_pressed")) {
-      await subscription.refetchNow();
-      return;
-    }
-    console.warn("[buzzer2] press failed, spróbuj ponownie:", error);
-  }
+    },
+    onError: (error) => console.warn("[buzzer2] press failed, spróbuj ponownie:", error),
+  });
+  const press = presses.press;
 
   document.getElementById("btnA")?.addEventListener("click", () => press("A"));
   document.getElementById("btnB")?.addEventListener("click", () => press("B"));

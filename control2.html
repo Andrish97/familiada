@@ -386,7 +386,8 @@
        odstępy od krawędzi kafla do pola są równe, tutaj były różne) — przy
        okazji samo pole ma tę samą wysokość co w kroku wpisywania. */
     .c2-mapinput {
-      display:grid; grid-template-columns:1fr 2fr; gap:12px;
+      display:grid; grid-template-columns:minmax(0,1fr) minmax(0,2fr); gap:12px;
+      min-width:0; min-height:0; box-sizing:border-box;
       border-radius:14px; border:1px solid var(--line2); background:rgba(255,255,255,.06);
       padding:6px;
     }
@@ -395,7 +396,8 @@
     .c2-mapinput .c2-field-label { font-size:.78rem; }
     /* Bez align-items:center: pole ma wypełniać całą wysokość tego kafla
        (jak w kroku wpisywania), nie stać wyśrodkowanym prostokątem. */
-    .c2-mapinput .c2-entrytile-input { display:flex; min-width:0; }
+    .c2-mapinput .c2-entrytile-input { display:flex; min-width:0; min-height:0; align-items:stretch; }
+    .c2-mapinput .c2-entrytile-input input { min-width:0; min-height:0; height:auto; margin:0; align-self:stretch; }
     /* Kafelek "Gracz 1" (runda 2, obok c2-mapinput) — ta sama obramówka co
        c2-entrytile, wyśrodkowany w pionie, wartość złota jak wszędzie indziej.
        Zgłoszone: widać tylko etykietę "Gracz 1", nie samą odpowiedź --
