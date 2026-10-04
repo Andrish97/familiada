@@ -32,6 +32,7 @@ const { spawn } = require("node:child_process");
 const fs = require("node:fs");
 const path = require("node:path");
 const { loginAsTestUser } = require("./helpers/login");
+const { installDisplayPerformance, startRunnerPerformance, collectDisplayPerformance } = require("./helpers/display-performance.cjs");
 const { waitForEmail, extractHttpLinks } = require("./helpers/mailbox");
 
 const BASE_URL = "https://www.familiada.online";
@@ -281,6 +282,7 @@ async function openTiledDevices(browser, game) {
   for (const name of ["control", "display", "host", "buzzer"]) {
     const ctx = await browser.newContext({ baseURL: BASE_URL, viewport: null }); // viewport:null -> rozmiar okna, nie fixed viewport
     contexts[name] = ctx;
+    if (name === "display") await installDisplayPerformance(ctx);
     pages[name] = await ctx.newPage();
   }
   await loginAsTestUser(pages.control, contexts.control);
@@ -317,11 +319,11 @@ async function closeAll(contexts) {
 const DOT_ID = { display: "dotDisplay", host: "dotHost", buzzer: "dotBuzzer" };
 
 // control2/js/presence.js: urządzenie liczy się jako offline dopiero
-// 15s (ONLINE_MS) po ostatnim pingu, sprawdzane co 1.5s (POLL_MS) —
+// 6,5s (ONLINE_MS) po ostatnim pingu; lokalne wygaszenie co 250ms —
 // zamknięcie kontekstu przeglądarki nie zmienia kropki NATYCHMIAST, trzeba
 // poczekać, aż ostatni ping faktycznie się zestarzeje. Timeout z zapasem
 // ponad ten najgorszy przypadek (ostatni ping tuż przed zamknięciem +
-// 15s + kolejny tick pollowania).
+// 6,5s + kolejny tick lokalnego wygaszenia).
 async function waitForDotStatus(control, kind, status, timeoutMs = 30_000) {
   await control.waitForFunction(
     ({ id, status }) => document.getElementById(id)?.className.includes(status),
@@ -363,6 +365,7 @@ async function reconnectDeviceViaModal(browser, control, kind) {
   if (!url) throw new Error(`[record] modal (${kind}) nie pokazał żadnego URL-a do ponownego podłączenia`);
 
   const context = await browser.newContext({ baseURL: BASE_URL, viewport: null });
+  if (kind === "display") await installDisplayPerformance(context);
   const page = await context.newPage();
   await positionWindow(context, page, QUADRANTS[kind]);
   await page.goto(url, { waitUntil: "domcontentloaded" });
@@ -1985,7 +1988,10 @@ async function main() {
       const game = await scenario.makeGame(setupPage);
 
       const { contexts, pages } = await openTiledDevices(browser, game);
-      const rec = startRecording(path.join(OUT_DIR, scenario.file));
+      await pages.display.evaluate(() => window.__displayPerf?.reset());
+      const stopPerformance = startRunnerPerformance();
+      const recording = process.env.RECORD_VIDEO !== "false";
+      const rec = recording ? startRecording(path.join(OUT_DIR, scenario.file)) : null;
       try {
         // { contexts, browser, game } — contexts/browser: tylko scenariusz 6
         // (scenarioDeviceReconnect) z tego korzysta (zamyka/otwiera konteksty
@@ -2001,6 +2007,12 @@ async function main() {
         });
         throw err;
       } finally {
+        const runner = stopPerformance();
+        const display = await collectDisplayPerformance(pages.display).catch(() => null);
+        const report = { scenario: scenario.file, recording, runner, display };
+        fs.mkdirSync(OUT_DIR, { recursive: true });
+        fs.writeFileSync(path.join(OUT_DIR, scenario.file.replace(/\.mp4$/, ".performance.json")), JSON.stringify(report, null, 2));
+        console.log("[performance]", JSON.stringify(report));
         await stopRecording(rec);
         await closeAll(contexts);
       }

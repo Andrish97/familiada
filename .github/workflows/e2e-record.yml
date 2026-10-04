@@ -7,6 +7,11 @@ on:
         description: 'Opcjonalnie: odpal tylko scenariusze, których nazwa pliku zawiera dany podciąg (np. "08-udostepnianie" albo "10-mnoznik,04-final" -- kilka, rozdzielonych przecinkiem). Puste = cały przebieg (wszystkie scenariusze) -- tryb kontrolny, do użycia na końcu po naprawieniu pojedynczych scenariuszy osobno.'
         required: false
         default: ""
+      record_video:
+        description: 'Nagrywaj MP4. Wyłącz tylko do porównania wydajności tej samej rozgrywki produkcyjnej bez ffmpeg.'
+        type: boolean
+        required: false
+        default: true
 
 # WAŻNE: tak samo jak e2e-tests.yml — celowo tylko workflow_dispatch. Ten
 # workflow loguje się na prawdziwe konto testowe na produkcji i tworzy
@@ -85,6 +90,7 @@ jobs:
           TEST_PASSWORD: ${{ secrets.TEST_PASSWORD }}
           RECORD_OUT_DIR: ${{ github.workspace }}/tests/recordings
           SCENARIO_FILTER: ${{ github.event.inputs.scenario_filter }}
+          RECORD_VIDEO: ${{ github.event.inputs.record_video }}
         run: node tests/e2e/record-playthrough.js
 
       - name: Upload recordings

@@ -71,7 +71,32 @@ function instrumentSceneApi(api) {
     for (const k of Object.keys(obj)) {
       const v = obj[k];
       if (typeof v === "function") {
-        out[k] = (...args) => { window.__displayLog.push({ call: `${path}.${k}`, args }); return v.apply(obj, args); };
+        out[k] = (...args) => {
+          const call = `${path}.${k}`;
+          window.__displayLog.push({ call, args });
+          const perf = window.__displayPerf;
+          if (!perf) return v.apply(obj, args);
+          const start = performance.now();
+          const findMs = (value) => {
+            if (!value || typeof value !== "object") return 0;
+            if (Number.isFinite(value.ms)) return value.ms;
+            return findMs(value.animOut) + findMs(value.animIn);
+          };
+          const targetMs = args.reduce((sum, arg) => sum + findMs(arg), 0);
+          perf.active++;
+          let syncMs;
+          const finish = () => {
+            perf.active--;
+            if (targetMs > 0) perf.animations.push({ call, targetMs, actualMs: performance.now() - start, syncMs });
+          };
+          try {
+            const result = v.apply(obj, args);
+            syncMs = performance.now() - start;
+            if (result && typeof result.then === "function") return result.finally(finish);
+            finish();
+            return result;
+          } catch (error) { syncMs = performance.now() - start; finish(); throw error; }
+        };
       } else if (v && typeof v === "object") {
         out[k] = wrap(v, `${path}.${k}`);
       } else {

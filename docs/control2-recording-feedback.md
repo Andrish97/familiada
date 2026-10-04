@@ -410,7 +410,10 @@ zdarzenia końca rundy/gry względem dźwięku "outro". Wymaga obserwacji na
 
 ## 11. Czy lag Display to RAM Playwrighta?
 
-⬜ **NIE ZBADANE**
+🔧 **W TOKU — pomiary produkcyjne**. Dodano raport czasu animacji względem
+żądanego czasu dźwięku, klatek, długich zadań JS, pamięci Chromium/ffmpeg
+i dostępnego RAM runnera. Ten sam scenariusz można uruchomić z nagrywaniem
+oraz bez niego, przy zachowaniu prawdziwych urządzeń i produkcyjnej bazy.
 
 > "Czy wyświetlacz laguje bo llaywrigth ma mało RAMu?"
 
