@@ -6,20 +6,20 @@
 // engine.js) — ale i tak przechodzi przez assertTransition(), żeby tabela
 // stanów była mechanizmem wszędzie, nie tylko wewnątrz silnika reguł gry.
 
-import { guardDesktopOnly } from "../../js/core/device-guard.js?v=v2026-10-04T10080";
-import { guardResourceLock, guardResourceBusy } from "../../js/core/resource-lock.js?v=v2026-10-04T10080";
-import { initI18n, getUiLang, t } from "../../translation/translation.js?v=v2026-10-04T10080";
-import { requireAuth } from "../../js/core/auth.js?v=v2026-10-04T10080";
-import { setTopbarAccount } from "../../js/core/topbar-controller.js?v=v2026-10-04T10080";
-import { sb } from "../../js/core/supabase.js?v=v2026-10-04T10080";
-import { loadQuestions, loadAnswers } from "../../js/core/game-validate.js?v=v2026-10-04T10080";
-import { loadSfxManifest, initSfx, setCurrentGameId, unlockAudio, applySfxGameSettings, loadSfxFromCloud, playSfx, getSfxDuration } from "../../js/core/sfx.js?v=v2026-10-04T10080";
-import { listGameSounds } from "../../js/core/sfx-cloud.js?v=v2026-10-04T10080";
-import { assertTransition } from "../../shared/gameStateMachine.js?v=v2026-10-04T10080";
-import { confirmModal } from "../../js/core/modal.js?v=v2026-10-04T10080";
-import { DEFAULT_SETTINGS } from "../../shared/gameStateShape.js?v=v2026-10-04T10080";
-import { rt } from "../../js/core/realtime.js?v=v2026-10-04T10080";
-import { doorbellTopic } from "../../js/core/game-state-doorbell.js?v=v2026-10-04T10080";
+import { guardDesktopOnly } from "../../js/core/device-guard.js?v=v2026-10-04T10103";
+import { guardResourceLock, guardResourceBusy } from "../../js/core/resource-lock.js?v=v2026-10-04T10103";
+import { initI18n, getUiLang, t } from "../../translation/translation.js?v=v2026-10-04T10103";
+import { requireAuth } from "../../js/core/auth.js?v=v2026-10-04T10103";
+import { setTopbarAccount } from "../../js/core/topbar-controller.js?v=v2026-10-04T10103";
+import { sb } from "../../js/core/supabase.js?v=v2026-10-04T10103";
+import { loadQuestions, loadAnswers } from "../../js/core/game-validate.js?v=v2026-10-04T10103";
+import { loadSfxManifest, initSfx, setCurrentGameId, unlockAudio, applySfxGameSettings, loadSfxFromCloud, playSfx, getSfxDuration } from "../../js/core/sfx.js?v=v2026-10-04T10103";
+import { listGameSounds } from "../../js/core/sfx-cloud.js?v=v2026-10-04T10103";
+import { assertTransition } from "../../shared/gameStateMachine.js?v=v2026-10-04T10103";
+import { confirmModal } from "../../js/core/modal.js?v=v2026-10-04T10103";
+import { DEFAULT_SETTINGS } from "../../shared/gameStateShape.js?v=v2026-10-04T10103";
+import { rt } from "../../js/core/realtime.js?v=v2026-10-04T10103";
+import { doorbellTopic } from "../../js/core/game-state-doorbell.js?v=v2026-10-04T10103";
 
 function qrImgSrc(url) {
   const u = encodeURIComponent(String(url ?? ""));
@@ -95,15 +95,15 @@ function applyGameSettingsToState(settings, state) {
   }
 }
 
-import { createStore } from "./store.js?v=v2026-10-04T10080";
-import { createEngine } from "./engine.js?v=v2026-10-04T10080";
-import { createActionGate } from "./actionGate.js?v=v2026-10-04T10080";
-import { createDevices } from "./devices.js?v=v2026-10-04T10080";
-import { createPresence } from "./presence.js?v=v2026-10-04T10080";
-import { createSoundReactor } from "./soundReactor.js?v=v2026-10-04T10080";
-import { createUI } from "./ui.js?v=v2026-10-04T10080";
-import { createShareDevice } from "./shareDevice.js?v=v2026-10-04T10080";
-import { icon } from "../../js/core/icons.js?v=v2026-10-04T10080";
+import { createStore } from "./store.js?v=v2026-10-04T10103";
+import { createEngine } from "./engine.js?v=v2026-10-04T10103";
+import { createActionGate } from "./actionGate.js?v=v2026-10-04T10103";
+import { createDevices } from "./devices.js?v=v2026-10-04T10103";
+import { createPresence } from "./presence.js?v=v2026-10-04T10103";
+import { createSoundReactor } from "./soundReactor.js?v=v2026-10-04T10103";
+import { createUI } from "./ui.js?v=v2026-10-04T10103";
+import { createShareDevice } from "./shareDevice.js?v=v2026-10-04T10103";
+import { icon } from "../../js/core/icons.js?v=v2026-10-04T10103";
 
 guardDesktopOnly();
 
