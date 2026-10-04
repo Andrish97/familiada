@@ -1119,7 +1119,12 @@ test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśni�
       await expect(page.locator(".c2-stepper")).toContainText(`Finał — mapowanie ${i + 1}/5`, { timeout: 22000 });
       if (i > 0) await armAndConfirm(page.getByRole("button", { name: "Odp. finałowa (15)" }));
       await armAndConfirm(page.getByRole("button", { name: "Pokaż odpowiedź" }));
-      await armAndConfirm(page.getByRole("button", { name: "Pokaż punkty" }));
+      // C2-14 (engine.js's REVEAL_ANSWER_ONLY): dla kind!=MATCH (tu i=0,
+      // "powtórzenie" -> SKIP) ten sam klik od razu dogrywa REVEAL_POINTS --
+      // "Pokaż punkty" zostaje trwale wyszarzone (nie ma czego potwierdzać),
+      // więc dla i=0 go NIE klikamy, inaczej armAndConfirm czeka w kółko na
+      // przycisk, który nigdy się nie odblokuje.
+      if (i > 0) await armAndConfirm(page.getByRole("button", { name: "Pokaż punkty" }));
       await page.getByRole("button", { name: "Dalej" }).click();
     }
     // 75 (gracz 1) + 0 (powtórzenie) + 4x15 (gracz 2) = 135 < 200 — pełne 10/10, bez wczesnego wyjścia.
