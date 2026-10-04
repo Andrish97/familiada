@@ -905,6 +905,7 @@ async function scenarioRoundsMechanics(pages, { contexts }) {
 
   // ===== Koniec gry bez finału =====
   await clickPaced(control.getByRole("button", { name: "Zakończ grę" }));
+  await expect(control.getByRole("button", { name: "Wróć do moich gier" })).toBeEnabled({ timeout: 65000 });
   await control.waitForTimeout(4000); // zostaw ekran końcowy widoczny chwilę na nagraniu
 
   // ===== "Zacznij od nowa" — control2.spec.js's test "\"Zacznij od nowa\"
@@ -1704,6 +1705,7 @@ async function scenarioLogoLock(pages, { setupPage, logoId, logoLockTabId }) {
   await clickPaced(control.getByRole("button", { name: "Zakończ rundę" }));
   await control.waitForTimeout(2000);
   await clickPaced(control.getByRole("button", { name: "Zakończ grę" }));
+  await expect(control.getByRole("button", { name: "Wróć do moich gier" })).toBeEnabled({ timeout: 65000 });
   await control.waitForTimeout(4000); // ekran końcowy widoczny chwilę na nagraniu
 }
 

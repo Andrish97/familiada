@@ -45,7 +45,7 @@ Najdłuższy klip, łączy demo urządzeń/ustawień z pełną rozgrywką 2 rund
 
 **Koniec gry**
 
-- "Zakończ grę" → pełne outro i wejście logo. Restart czeka na zakończenie dźwięku.
+- "Zakończ grę" → pełne outro i wejście logo, potem około 4 s na obejrzenie ekranu końcowego. Restart czeka na zakończenie dźwięku.
 - "Zacznij od nowa" w topbarze → modal potwierdzenia → "Tak" → powrót do kroku "Urządzenia".
 
 **Na co zwrócić uwagę**
@@ -177,7 +177,7 @@ Logo gry jest blokowane ZEWNĘTRZNIE (dokładnie tym samym mechanizmem co klikni
 
 **Zwolnienie i samoistne wznowienie** — blokada logo zostaje zwolniona z zewnątrz (nie przez kliknięcie w tym oknie Control) — ekran blokady znika SAM, Control wznawia się do kroku "Urządzenia" bez żadnej ręcznej interwencji operatora.
 
-**Krótka runda** — dowód, że po odzyskaniu Control działa normalnie, nie tylko "odblokował się i stoi": pełne przejście przez urządzenia/podsumowanie, start gry, jedna pełna runda (A wygrywa, odkrywa wszystkie 6 odpowiedzi), "Zakończ grę" → ekran końcowy \~4s.
+**Krótka runda** — po odzyskaniu Control pełne przejście przez urządzenia/podsumowanie, start gry i jedna pełna runda (A wygrywa, odkrywa wszystkie 6 odpowiedzi). "Zakończ grę" → pełne outro i logo, widoczne około 4 s po końcu dźwięku.
 
 **Na co zwrócić uwagę:**
 
