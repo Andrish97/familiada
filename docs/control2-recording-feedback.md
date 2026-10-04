@@ -13,6 +13,14 @@ kolejnego punktu — nie na końcu, nie "później". Commit z poprawką kodu i
 commit aktualizujący ten plik mogą (i zwykle powinny) być tym samym
 commitem.
 
+**Zasada cytowania (poprawione 2026-10-04 na wyraźną prośbę właściciela)**:
+cytaty w blockquote pod każdym punktem to DOSŁOWNA, pełna treść
+oryginalnej wiadomości właściciela (z zachowanymi literówkami) — nie
+parafraza, nie streszczenie, nie "..." ucinające środek. Wcześniejsza
+wersja tego pliku miała kilka cytatów skróconych/sparafrazowanych — zostały
+poprawione po tym, jak właściciel to wprost wytknął. Każdy kolejny punkt
+dopisywany do tego pliku ma trzymać się tej samej zasady.
+
 ## Legenda statusów
 
 - ✅ **ZROBIONE** — poprawka w kodzie, zmergowana do `main`.
@@ -29,10 +37,12 @@ commitem.
 
 ⬜ **NIE ZACZĘTE**
 
-> "Przycisk ma się zapalać po naciśnięciu... zatwierdzanie to tylko akcja
-> operatora. Przycisk ma gasnąć dopiero po tym jak się rozpocznie
-> rozgrywka, a w pojedynku ma się świecić kolor drużyny która została
-> zawieszona."
+> "Przycisk ma się zapalac po naciśnięciu"
+>
+> "Przycisk ma się zapalac Po kliknięciu a nie dopiero po zatwierdzeniu,
+> zatwierdzanie to tylko akcja operatora. Przycisk ma gasnąć dopiero po
+> tym jak się rozpocznie rozgrywka, a w pojedynku ma się świecić kolor
+> drużyny która została zawieszona"
 
 Dotyczy `renderDuelAccept()` w `control2/js/ui.js` (~linia 661-700). Przy
 pierwszym czytaniu kodu wygląda, jakby już działało poprawnie (tile'e A/B
@@ -45,6 +55,8 @@ obejrzeć dokładnie na nagraniu/żywo, co faktycznie się dzieje.
 
 ✅ **ZROBIONE** — commit `4788577` na `main`.
 
+> "Wszystkie przyciski typu \"dalej\" mrugają"
+
 Przyczyna: `navButton()` w `control2/js/ui.js` dodawał pulsującą klasę
 `c2-btn-busy` dla KAŻDEGO `disabled`, nie tylko dla realnego oczekiwania na
 sieć (`boardBusy()`). Np. "Dalej" na wpisywaniu finału pulsowało przez całe
@@ -56,8 +68,13 @@ blokada) we wszystkich 11 wywołaniach `navButton()`.
 
 ✅ **ZROBIONE** — przyczyna była w SKRYPCIE NAGRYWANIA, nie w produkcie.
 
-> "6. Wcześniej tak mówiłeś [że to może być artefakt Playwrighta], a w
-> video jest problem, trzeba to zbadać."
+> "Modal ustawień wisi i nie widzę rzeczywistego wpisywania z klawiatury i
+> przesuwania suwaka"
+
+Po mojej wcześniejszej (błędnej) sugestii, że to może być artefakt
+Playwrighta, nie realny problem, właściciel skorygował wprost:
+
+> "6. Wcześniej tak mówiłeś, a w video jest problem, trzeba to zbadać"
 
 Zbadane: `game-settings2.js`/`control2/js/app.js`'s `gsOverlay`/`gsFrame`
 same nie mają tu żadnego buga (sidebar/zapis/zamknięcie modala miały już
@@ -101,6 +118,8 @@ zakończeniu.
 
 🚫 **ZABLOKOWANE — brak zasobu dźwiękowego**
 
+> "Dźwięk przycisku ma być odtwarzany podczas kliknięcia również"
+
 Zbadane: `armableTile()` w `control2/js/ui.js` (wzorzec zaznacz→potwierdź)
 faktycznie NIE odtwarza żadnego dźwięku przy pierwszym kliknięciu
 (zaznaczeniu) — dźwięki w tym systemie pochodzą wyłącznie z
@@ -138,6 +157,8 @@ wymuszona, nie przez przypadkową kolejność linii kodu.
 ✅ **ZROBIONE** — commit na `main` (gałąź `claude/control-shared-state-refactor-f4yiwa`,
 łączony `render.js`+`main.js`+`control2.spec.js`).
 
+> "Host nigdy się nie odsłania a prosiłem żeby się odsłaniał do jakiś czas"
+
 Pierwotnie źle zinterpretowane jako "dodać nową logikę auto-reveal w
 panelu" — właściciel skorygował: **to TEST ma demonstrować/asercjonować
 gest "peek", nie panel ma dostać nową logikę.** Zasłona Hosta zostaje
@@ -152,8 +173,13 @@ poniżej) — znaleziony i naprawiony przy okazji.
 
 ✅ **ZROBIONE** — ten sam commit co punkt 7.
 
-> "Odsłanianie może nie działać ponieważ mamy '-' zamiast przesuń w prawo/
-> w dół żeby odsłonić, jakby cały mechanizm może być zjebany."
+> "Zamiast podpowiedzi o odsłanianiu ma hoscie jest \"-\" cały czas"
+
+Po mojej diagnozie (status punkt-po-punkcie w poprzednim komunikacie)
+właściciel dopisał własną hipotezę co do przyczyny:
+
+> "8. Odsłanianie może nie działać ponieważ mamy \"-\" zamiast przesuń w
+> prawo/w dół żeby odsłonić, jakby cały mechanizm może być zjebany"
 
 Trafna intuicja — potwierdzone DWOMA niezależnymi, realnymi bugami w
 `host2/`:
@@ -180,6 +206,24 @@ Trafna intuicja — potwierdzone DWOMA niezależnymi, realnymi bugami w
    widocznością `#p2Hint` w `css/host.css`, nigdy nie było ustawiane w
    host2 — `#p2Hint` był więc NA STAŁE niewidoczny niezależnie od stanu).
 
+**Dodatkowa weryfikacja (na wyraźną prośbę właściciela — "zobacz stary
+host, tam były odpowiedzi zależne od orientacji i języka, łącznie 12
+wariantów: 6 na zasłonie i 6 na dole odsłoniętej części")**: potwierdzone
+bezpośrednim porównaniem, że `host2/js/render.js`'s `updateSwipeHint()`
+jest DOKŁADNYM, 1:1 portem starego `js/pages/host.js`'s `updateSwipeHint()`
+(linie 347-360 tam) — identyczna logika wyboru klucza po orientacji
+(`portrait`/`landscape`) i stanie zasłony. 4 klucze tłumaczeń
+(`host.swipeRevealDown`, `host.swipeCoverUp`, `host.swipeRevealRight`,
+`host.swipeCoverLeft`) × 3 języki (`translation/{pl,en,uk}.js`, każdy ma
+wszystkie 4 klucze w pełni przetłumaczone, zweryfikowane grepem) = 12
+przetłumaczonych wariantów tekstu w sumie, rozłożonych na 2 miejsca na
+ekranie Hosta: `#cover2Swipe` (na samej zasłonie — cykluje między
+wszystkimi 4 kluczami zależnie od orientacji × stanu zasłony) i `#p2Hint`
+(na dole, pod odsłoniętą częścią — pokazuje zawsze wariant "przesuń, żeby
+zasłonić" odpowiedni dla orientacji). Zero wariantów zgubionych przy
+porcie — `host2` zachowuje się identycznie jak stary `host.html` w tym
+zakresie.
+
 Zdiagnozowane metodą: tymczasowa instrumentacja w `control2.spec.js`
 (monkeypatch `classList.toggle` nagrywający historię zmian klasy `#cover2`
 w czasie) pokazała JEDNOZNACZNIE, że `peeked` nigdy nie przechodziło na
@@ -204,9 +248,9 @@ który nigdy się nie odblokuje, aż do timeoutu 240s. Naprawione w
 ✅🔧 **CZĘŚCIOWO ZROBIONE** (przyczyna "Błąd: locked" naprawiona; "nie czeka
 na dźwięk" to osobna, wciąż otwarta sprawa — patrz punkt 20)
 
-> "Przebieg nie czeka na koniec gry (dźwięk) i klika rozpocznij na nowo, i
-> też widzę przy tym okienko błędu dziwnie systemówe `familiada.online
-> says Błąd: locked`."
+> "Przebieg nie czeka na koniec gry (dźwięk i klika rozpocznim na nowo) i
+> tez widzę przy tym okienko błędu dziwnie systemówe familiada.online says
+> Błąd: locked"
 
 Znaleziona przyczyna: przycisk "Zacznij od nowa" **w topbarze**
 (`#btnStartOver`) był jedynym dużym przejściem w całym Control v2, które
@@ -254,11 +298,25 @@ zdarzenia końca rundy/gry względem dźwięku "outro". Wymaga obserwacji na
 
 ⬜ **NIE ZBADANE**
 
+> "Czy wyświetlacz laguje bo llaywrigth ma mało RAMu?"
+
 Pytanie otwarte — nie ustalono jeszcze, czy to artefakt środowiska CI
 (ograniczony RAM kontenera uruchamiającego nagranie) czy realny problem
 wydajności animacji w `display2/js/scene.js`.
 
 ## 12-13. Wyjaśnienie mechanizmu "peek" (nie bug, wyjaśnienie)
+
+> "\"Prowadzący demonstruje gest podejrzenia (\"peek\") mimo zasłony pasma
+> 2.\" - nie rozumiem o co chodzi"
+
+> "\"Przejście do gracza 2 — \"Rozpocznij 2 rundę\", Wyświetlacz pokazuje
+> PEŁNE odkryte odpowiedzi gracza 1 (nie placeholdery), Prowadzący znowu
+> demonstruje \"peek\" (zasłona wraca sama po akcji).\" - nie rozumiem z
+> zasłoną"
+
+(Obie linie to właściciel cytujący z powrotem opisy scenariuszy z mojego
+własnego komunikatu statusu, z dopisaną informacją, że nie rozumie, o co w
+nich chodzi.)
 
 Wyjaśnione właścicielowi w rozmowie: zasłona pasma 2 Hosta jest
 jednokierunkowa w silniku (nigdy się sama nie zdejmuje), jedyny sposób
@@ -271,6 +329,9 @@ faktycznie zepsuty — patrz punkt 8 wyżej, teraz naprawiony.**
 ## 14. Kafelek "Wpisano" w mapowaniu — tekst wychodzi z kafelka
 
 ✅🔍 **SPRAWDZONE, JUŻ POPRAWNE**
+
+> "Kafelek wpisano w mapowaniu ma dalej przesunięty teksy wpisano i pole
+> tekstowe które nie jest w kafelku tylko wyłazi leko z niego"
 
 Zbudowany offline'owy harness (lokalny serwer + Playwright, ładuje
 prawdziwy `control2/js/ui.js` z syntetycznym stanem, bez Supabase) i
@@ -286,6 +347,8 @@ konkretnej odpowiedzi).
 
 ✅ **ZROBIONE** — commit `15e41c4` na `main`.
 
+> "Suma finału miała być na pasku z dalej a nie na osobnym pasku"
+
 Scalone w jeden pasek (`c2-statusbar` z `c2-statusbar-end` dla przycisku
 "Dalej"), dokładnie jak "Zakończ rundę" w Rundach. Wcześniej był osobny
 pasek sumy POD paskiem nawigacji (`c2-gameplay-nav`), z pustym miejscem
@@ -295,6 +358,9 @@ między nimi.
 
 ✅ **ZROBIONE** — commit `15e41c4` na `main`, z 2 nowymi testami
 jednostkowymi w `tests/unit/final.engine.test.js`.
+
+> "Brak odpowiedzi ma od razu dawać dźwięk błędu juz podczas odsłaniania
+> odpowiedzi, a punkty mają się odslonic automatycznie bez klikania."
 
 `REDUCERS.REVEAL_ANSWER_ONLY` w `control2/js/engine.js`: dla MISS/SKIP
 (`row.kind !== "MATCH"`) od razu woła `REDUCERS.REVEAL_POINTS` w tym samym
@@ -306,12 +372,16 @@ czekania na osobny klik "Pokaż punkty". MATCH zostaje dwuetapowe
 
 ⬜ **NIE ZACZĘTE**
 
+> "Odpowiedzi gracza 1 w drugiej linijce się nie mieszczą"
+
 Dotyczy `host2/js/render.js` lub `css/host.css` — overflow tekstu w
 `#paperText1`/`#paperText2` przy dłuższych odpowiedziach. Nie zbadane.
 
 ## 18. Przyciski "powtórzenie" migają podczas odliczania
 
 ⬜ **NIE POTWIERDZONE PO NAPRAWIE #2** — do zweryfikowania na żywo
+
+> "Przyciski powtórzenie migają podczas odliczania"
 
 `c2-btn-repeat` (w `renderFinalEntry`, `control2/js/ui.js`) NIE używa
 `navButton()`/`c2-btn-busy`, więc naprawa z punktu 2 go bezpośrednio nie
@@ -322,6 +392,9 @@ hipoteza. Sprawdzić osobno na żywo po deployu punktu 2.
 ## 19. Kafelek "Gracz 1" w mapowaniu gracza 2 — napis zamiast odpowiedzi
 
 ✅ **ZROBIONE** — commit `15e41c4` na `main`.
+
+> "W kafelku Gracz 1 w mapowaniu gracza 2 nie widać odpowiedzi tylko napis
+> gracz 1"
 
 `.c2-map-p1tile .c2-entrytile-p1ans` dziedziczyło `overflow:hidden`/
 `text-overflow:ellipsis`/`white-space:nowrap` z bazowej reguły myślanej
@@ -334,12 +407,14 @@ Naprawione jawnym nadpisaniem `overflow`/`text-overflow` w `control2.html`.
 
 ⬜ **NIE ZACZĘTE**
 
-> "Po osiągnięciu ma być dźwięk zakończenia rundy, a potem dopiero przy
-> zakończeniu gry dźwięk zakończenia gry... Pytanie czemu ani jedna
-> rozgrywka nie kończy się alternatywnym zamiast logo punktami lub
-> wygraną — trzeba to poprawić: pierwszy finał ma się zakończyć nagrodą
-> ale niższą (nie osiągamy punktów), a drugi nagrodą główną. Jedno z
-> zakończeń gry bez finału ma pokazać punkty."
+> "Przy kończy mam wrażenie że przyciski nie czekają na dźwięk. Czyli po
+> osiągnięciu ma być dźwięk zakończenia rundy, a potem dopiero przy
+> zakończeniu gry ma być dźwięk zakończenia gry. Tak jak pisałem wyżej
+> plansza ma się zmieniać dopiero z planszy ma akcję finału. Pytanie
+> czemu ani jedna rozgrywka nie kończy się alternatywnym zamiast logo
+> punktami lub wygrana, trzeba to poprawić i pierwszy finał ma się
+> zakończyć nagroda ale niższa (nie osiągamy punktów), a drugi nagroda
+> główna. Jedno z zakończeń gry bez finału ma pokazać punkty"
 
 Dwuczęściowe: (a) timing dźwięków końca rundy/gry względem przycisków —
 `control2/js/soundReactor.js`/`engine.js`; (b) scenariusze testowe
@@ -354,10 +429,11 @@ wywołują).
 
 ⬜ **NIE ZACZĘTE**
 
-> "Czy mamy jakąś blokadę dalszych akcji (cofnięcie stanu), jeśli w
-> trakcie gry któreś urządzenie zerwało połączenie? Albo żeby ono
-> poprawnie wracało. Operator jest teraz wróżką — zatrzymuje się i czeka,
-> aż mu się kontrolki zaktualizują, nic nie klikając."
+> "Czy mamy jakaś blokadę dalszych akcji (cofnięcie stanu) jeśli w trakcie
+> gry któreś urządzenie zerwało połączenie? Albo po prostu żeby ono
+> poprawnie wracało. Bo urządzenie może się stracić, a operator w
+> międzyczasie dużo naklikać. Teraz widzę że operator jest wróżka i się
+> zatrzymuje i czeka aż mu się kontrolki zaktualizują i nic nie klika."
 
 Wymaga zbadania `device_presence`/`js/core/game-state-subscribe.js` i
 `control2/js/app.js` — czy jest jakikolwiek mechanizm ostrzegania
@@ -369,7 +445,13 @@ odbiorczego. Prawdopodobnie brak — do zaprojektowania.
 ✅ **ZROBIONE** — poprawiony tekst w `translation/{pl,en,uk}.js`
 (`resourceLock.logoInUseMessage`).
 
-> "7. Ma tam być liczba mnoga i bez 'tej gry'."
+> "Blokada dalej ma tekst pojedynczego logo a miała zawsze w Control 2
+> sugerować że loga są edytowane czy w ogóle zajęte w innym miejscu
+> (pisałem o tym)"
+
+Po mojej pierwszej (niewystarczającej) poprawce doprecyzowanie:
+
+> "7. Ma tam być liczba mnoga i bez \"tej gry\""
 
 Poprzedni tekst PL: "Logo tej gry jest właśnie edytowane w innej karcie
 lub przez inne urządzenie." → nowy: "Loga są właśnie edytowane lub zajęte
@@ -380,6 +462,10 @@ dalej nie spełniała dokładnej treści, jakiej chciał właściciel.
 ## 23. Modal udostępniania urządzenia — kafelki za duże, zły layout
 
 ✅ **ZROBIONE** — commit `4788577` na `main`.
+
+> "Przyciski okienko udostępniania tam gdzie aktualnie udostEpniono dla
+> wygląda okropnie kafelki za duże przycisk usuwania dziwnie umieszczony
+> między aktualnie udostEpniono a kaflami niw ma przerwy"
 
 Prawdziwa przyczyna: `.btn.xsm` (przycisk usuwania/"Dodaj" w
 `shareRow`) był stylowany WYŁĄCZNIE w `css/bases.css` — ale
@@ -393,10 +479,10 @@ między etykietą "Aktualnie udostępnione dla:" a wierszem poniżej
 
 ✅🔍 **SPRAWDZONE, JUŻ POPRAWNE**
 
-> "Jedynka może być badgem na przycisku — sprawdź wszystkie badge
-> powiadomień na przyciskach, na hamburgerze itd. w każdym miejscu gdzie
-> są, i mają się pojawiać konsekwentnie na bazach, hubie ankiet, podłącz
-> urządzenie, subskrypcjach."
+> "Jedynka może być badgem na przycisku (sory za prośbę ale sprawdź
+> wsztkie budge powiadomień ma przyciskach na humburgerze itd. w każdym
+> miejscu gdzie są) no i mają się pojawiać konsekwentnie na bazach, hubie
+> ankiet, podłącz urządzenie, subscrybcje"
 
 Zbadane: `css/base.css`'s `.badge`/`.has-badge` to jeden, wspólny,
 prawidłowo zaprojektowany komponent (pastylka z tłem/obramowaniem, nie
