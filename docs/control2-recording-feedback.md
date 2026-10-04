@@ -477,7 +477,9 @@ Naprawione jawnym nadpisaniem `overflow`/`text-overflow` w `control2.html`.
 
 ## 20. Sekwencja dźwięków + alternatywne zakończenia gry
 
-⬜ **NIE ZACZĘTE**
+✅🔧 **ZROBIONE W WIĘKSZOŚCI** — dwuczęściowe zgłoszenie, część (a) już
+naprawiona (bundlowany commit, zweryfikowane w kodzie), część (b) świeży
+test dodany, **czeka na potwierdzenie z CI**.
 
 > "Przy kończy mam wrażenie że przyciski nie czekają na dźwięk. Czyli po
 > osiągnięciu ma być dźwięk zakończenia rundy, a potem dopiero przy
@@ -488,14 +490,28 @@ Naprawione jawnym nadpisaniem `overflow`/`text-overflow` w `control2.html`.
 > zakończyć nagroda ale niższa (nie osiągamy punktów), a drugi nagroda
 > główna. Jedno z zakończeń gry bez finału ma pokazać punkty"
 
-Dwuczęściowe: (a) timing dźwięków końca rundy/gry względem przycisków —
-`control2/js/soundReactor.js`/`engine.js`; (b) scenariusze testowe
-(`tests/e2e/record-playthrough.js` i/lub `control2.spec.js`) nie pokrywają
-żadnego alternatywnego ekranu końcowego (`endScreenMode="points"/"money"`)
-— trzeba dodać/poprawić scenariusze tak, żeby faktycznie to demonstrowały
-(`shared/endScreen.js`'s `resolveRoundsEndScreen`/`resolveFinalEndScreen`
-już obsługują te warianty w silniku, testy po prostu nigdy ich nie
-wywołują).
+**(a) "nie czeka na dźwięk"** — ✅ zweryfikowane bezpośrednio w kodzie
+(`control2/js/ui.js`'s `renderEndScreen()`): przycisk "Zakończ grę" ORAZ
+oba przyciski po nim ("Zagraj ponownie"/"Wróć do moich gier") już mają
+`navButton()` z `busy: boardBusy()` — ten sam mechanizm actionGate co
+każde inne duże przejście. Komentarz w kodzie wprost cytuje to zgłoszenie
+("po zakończeniu gry od razu wychodzi, nie czeka na koniec dźwięku") jako
+już naprawione w tym samym bundlowanym commicie co punkty 4/6/10/16.
+
+**(b) brak alternatywnych zakończeń w testach** — 🔧 nowy test dodany:
+`control2.spec.js`'s "koniec gry bez finału w trybie 'punkty' — Wyświetlacz
+pokazuje WIN, nie logo" — gra z `endScreenMode:"points"`, 1 pytanie w puli
+(najkrótsza ścieżka do `r_gameEnd`), `physicalBuzzer`+`noHostTablet` (zero
+Host/Buzzera), asercja wprost na `window.__displayLog`: `api.win.set(90,...)`
+faktycznie się wywołuje, `api.logo.show` NIE. **Zakres świadomie
+ograniczony**: pokrywa tylko "jedno z zakończeń gry BEZ finału ma pokazać
+punkty" (dosłowny cytat) — NIE pokrywa dwuetapowego scenariusza finałowego
+z cytatu ("pierwszy finał kończy się nagrodą niższą, drugi nagrodą główną",
+`endScreenMode="money"` w finale) — to wymagałoby dwóch pełnych przebiegów
+finału z różnymi wynikami, znacznie większy test; odłożone jako osobne,
+późniejsze rozszerzenie, jeśli właściciel potwierdzi że to priorytet.
+Triggerowany wąski przebieg CI (`--grep "koniec gry bez finału w trybie"`)
+w toku w momencie zapisu tej notatki.
 
 ## 21. Blokada/powrót przy zerwaniu połączenia urządzenia
 
