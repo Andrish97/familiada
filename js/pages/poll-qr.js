@@ -1,7 +1,7 @@
 import QRCode from "https://cdn.jsdelivr.net/npm/qrcode@1.5.3/+esm";
-import { sb } from "../core/supabase.js?v=v2026-10-04T10174";
-import { initI18n, setUiLang, t, getUiLang } from "../../translation/translation.js?v=v2026-10-04T10174";
-import { icon } from "../core/icons.js?v=v2026-10-04T10174";
+import { sb } from "../core/supabase.js?v=v2026-10-04T10235";
+import { initI18n, setUiLang, t, getUiLang } from "../../translation/translation.js?v=v2026-10-04T10235";
+import { icon } from "../core/icons.js?v=v2026-10-04T10235";
 
 // 1. Inicjalizacja i18n
 await initI18n({ withSwitcher: false });

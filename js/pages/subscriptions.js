@@ -1,13 +1,13 @@
-import { sb, SUPABASE_URL } from "../core/supabase.js?v=v2026-10-04T10174";
-import { requireAuth, signOut } from "../core/auth.js?v=v2026-10-04T10174";
-import { isGuestUser, showGuestBlockedOverlay } from "../core/guest-mode.js?v=v2026-10-04T10174";
-import { alertModal, confirmModal } from "../core/modal.js?v=v2026-10-04T10174";
-import { initUiSelect } from "../core/ui-select.js?v=v2026-10-04T10174";
-import { getUiLang, initI18n, t } from "../../translation/translation.js?v=v2026-10-04T10174";
-import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-10-04T10174";
-import "../core/contact-modal.js?v=v2026-10-04T10174";
-import { icon, iconText } from "../core/icons.js?v=v2026-10-04T10174";
-import { createCooldownTicker } from "../core/cooldown.js?v=v2026-10-04T10174";
+import { sb, SUPABASE_URL } from "../core/supabase.js?v=v2026-10-04T10235";
+import { requireAuth, signOut } from "../core/auth.js?v=v2026-10-04T10235";
+import { isGuestUser, showGuestBlockedOverlay } from "../core/guest-mode.js?v=v2026-10-04T10235";
+import { alertModal, confirmModal } from "../core/modal.js?v=v2026-10-04T10235";
+import { initUiSelect } from "../core/ui-select.js?v=v2026-10-04T10235";
+import { getUiLang, initI18n, t } from "../../translation/translation.js?v=v2026-10-04T10235";
+import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-10-04T10235";
+import "../core/contact-modal.js?v=v2026-10-04T10235";
+import { icon, iconText } from "../core/icons.js?v=v2026-10-04T10235";
+import { createCooldownTicker } from "../core/cooldown.js?v=v2026-10-04T10235";
 
 const i18nReady = initI18n({ withSwitcher: true }).catch((err) => {
   console.error("[subscriptions] i18n nieaktywny:", err);
