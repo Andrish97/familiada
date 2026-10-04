@@ -441,15 +441,25 @@ po przewinięciu: ostatnia linia listy ("Spanie do poludnia w niedziele
 
 ## 18. Przyciski "powtórzenie" migają podczas odliczania
 
-⬜ **NIE POTWIERDZONE PO NAPRAWIE #2** — do zweryfikowania na żywo
+✅🔍 **SPRAWDZONE — już poprawnie naprawione** (hipoteza z poprzedniej
+notatki potwierdzona w kodzie).
 
 > "Przyciski powtórzenie migają podczas odliczania"
 
-`c2-btn-repeat` (w `renderFinalEntry`, `control2/js/ui.js`) NIE używa
-`navButton()`/`c2-btn-busy`, więc naprawa z punktu 2 go bezpośrednio nie
-dotyczy. Możliwe, że user widział wizualny efekt sąsiedztwa z mrugającym
-wtedy "Dalej" (już naprawionym) — ale to nie zweryfikowane, tylko
-hipoteza. Sprawdzić osobno na żywo po deployu punktu 2.
+Potwierdzone: `control2/js/app.js` ma komentarz WPROST cytujący ten
+problem ("zgłoszone wprost — 'licznik i przyciski cały czas migają'") przy
+mechanizmie `ui.tickTimers()` (ten sam commit co punkty 4/6/10 — bundlowany,
+nieopisany osobno w tym pliku). Przyczyna: pełny `render()` co 250ms podczas
+odliczania przebudowywał CAŁY ekran (`root.innerHTML="" ` + od nowa), co
+restartowało CSS-animacje/przejścia WSZYSTKICH przycisków na ekranie,
+łącznie z `c2-btn-repeat` — stąd wrażenie migania całego panelu, nie tylko
+cyfr licznika. Naprawione zastąpieniem pełnego re-renderu wywołaniem
+`ui.tickTimers(state)`, które podmienia WYŁĄCZNIE `textContent` dwóch
+konkretnych elementów (`[data-timer-role="timer3"]`/`[data-timer-role=
+"final"]`) — reszta DOM, w tym `c2-btn-repeat` i fokus operatora w polu
+tekstowym, zostaje całkowicie nietknięta przez cały czas odliczania
+(`control2/js/ui.js`'s `tickTimers()`, zweryfikowane bezpośrednio w
+kodzie).
 
 ## 19. Kafelek "Gracz 1" w mapowaniu gracza 2 — napis zamiast odpowiedzi
 
