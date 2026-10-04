@@ -159,15 +159,30 @@ sprawdzony przebieg był przed tą poprawką).
 
 ## 9. Koniec gry nie czeka na dźwięk + alert "Błąd: locked"
 
-⬜ **NIE ZACZĘTE**
+✅🔧 **CZĘŚCIOWO ZROBIONE** (przyczyna "Błąd: locked" naprawiona; "nie czeka
+na dźwięk" to osobna, wciąż otwarta sprawa — patrz punkt 20)
 
 > "Przebieg nie czeka na koniec gry (dźwięk) i klika rozpocznij na nowo, i
 > też widzę przy tym okienko błędu dziwnie systemówe `familiada.online
 > says Błąd: locked`."
 
-To `window.alert()` użyty jako obsługa błędu — do znalezienia (grep
-`alert(` w `control2/js/`) i zamiany na właściwy UI, plus znalezienie i
-naprawienie samego wyścigu "locked" przy restarcie gry.
+Znaleziona przyczyna: przycisk "Zacznij od nowa" **w topbarze**
+(`#btnStartOver`) był jedynym dużym przejściem w całym Control v2, które
+NIE było objęte systemem blokady `busy()`/`navButton()` — zawsze klikalny,
+nawet gdy serwer wciąż trzyma `locked_until` z poprzedniej akcji (np.
+dźwięk końca gry). Kliknięcie w tym oknie kończyło się realnym
+`LockedError('locked')` z `control2/js/persist.js`, złapanym jedynie
+gołym `alert(\`Błąd: ${e.message}\`)` w `app.js`'s `handle()`. Ten sam
+przycisk na ekranach końca gry (`renderGameEnd`/`renderFinalEnd` w
+`ui.js`) już poprawnie używał `navButton()`'s `busy`/`disabled` — problem
+dotyczył wyłącznie wersji w topbarze, dostępnej przez cały czas gry.
+
+Naprawione w `control2/js/app.js`: `btnStartOver.disabled` jest teraz
+synchronizowane z `busy()` przy każdym `renderCurrent()`, plus dodatkowy
+guard w samym handlerze kliknięcia.
+
+Druga połowa zgłoszenia ("nie czeka na dźwięk") to osobny temat — pełna
+sekwencja dźwięków koniec rundy→koniec gry, patrz punkt 20.
 
 ## 10. Koniec rundy: logo ma wejść dopiero na dźwięku outro (ciągła animacja)
 
@@ -340,9 +355,9 @@ się wszędzie tam, gdzie powinien (nie tylko gdzie już jest podłączony).
 
 ## Podsumowanie liczbowe (na dzień zapisu)
 
-- ✅ Zrobione: 7 (punkty 2, 7, 8, 15, 16, 19, 22, 23 — 8 faktycznie, patrz wyżej)
+- ✅ Zrobione: 9 (punkty 2, 7, 8, 15, 16, 19, 22, 23 + częściowo 9)
 - ✅🔍 Sprawdzone, już poprawne: 1 (punkt 14)
-- ⬜ Nie zaczęte: reszta (punkty 1, 3, 4, 5, 6, 9, 10, 11, 17, 18, 20, 21, 24)
+- ⬜ Nie zaczęte: reszta (punkty 1, 3, 4, 5, 6, 10, 11, 17, 18, 20, 21, 24)
 
 ## Jak kontynuować w nowej sesji
 

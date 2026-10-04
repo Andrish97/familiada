@@ -539,6 +539,13 @@ async function main() {
     // żeby np. druga karta Control (blokada resource-lock zwolniona) albo
     // wznowienie po przeładowaniu pokazywały poprawną ikonę od razu.
     syncMuteButton();
+    // Zgłoszone: "Zacznij od nowa" w topbarze (w odróżnieniu od tego samego
+    // przycisku na ekranach końca gry, które już idą przez navButton()'s
+    // busy/disabled) nie było w ogóle objęte blokadą dźwięku/animacji —
+    // kliknięcie w trakcie jeszcze trwającego locked_until z poprzedniej
+    // akcji (np. dźwięku końca gry) kończyło się surowym window.alert
+    // ("Błąd: locked") zamiast po prostu czekać jak reszta dużych przejść.
+    if (btnStartOver) btnStartOver.disabled = busy();
   }
 
   // Samo renderCurrent() maluje cyfry timera3/finału tylko RAZ, w momencie
@@ -1004,6 +1011,12 @@ async function main() {
   function syncMuteButton() { if (btnMute) btnMute.innerHTML = icon(store.state.settings.soundMuted ? "speaker-off" : "speaker-on"); }
   syncMuteButton();
   btnMute?.addEventListener("click", () => { handle("settings.toggleSoundMuted"); });
+  // Zadeklarowane TU (nie przy addEventListener niżej) -- renderCurrent()
+  // (zdefiniowane wyżej w pliku, ale wywoływane dopiero na samym końcu,
+  // store.subscribe(renderCurrent); renderCurrent();) czyta tę zmienną przy
+  // KAŻDYM renderze, więc musi być zainicjalizowana PRZED pierwszym takim
+  // wywołaniem, nie dopiero przy swoim listenerze.
+  const btnStartOver = document.getElementById("btnStartOver");
 
   // Wydzielone z topbara, żeby ten sam "Zacznij od nowa" dało się też
   // wywołać z przycisku na ekranach końca gry (control2/js/ui.js's
@@ -1079,7 +1092,7 @@ async function main() {
   // starym ekranie, z zerowym śladem w UI, że coś się nie udało (znalezione
   // przy diagnozie e2e: "Zacznij od nowa" → "Tak" nie wracał do D0, bez
   // żadnego widocznego błędu).
-  document.getElementById("btnStartOver")?.addEventListener("click", () => handle("game.restart"));
+  btnStartOver?.addEventListener("click", () => { if (!busy()) handle("game.restart"); });
 
   store.subscribe(renderCurrent);
   renderCurrent();
