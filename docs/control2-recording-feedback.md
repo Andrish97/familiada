@@ -410,12 +410,34 @@ czekania na osobny klik "Pokaż punkty". MATCH zostaje dwuetapowe
 
 ## 17. Odpowiedzi gracza 1 nie mieszczą się w drugiej linijce (Host)
 
-⬜ **NIE ZACZĘTE**
+✅ **ZROBIONE** — potwierdzone offline harnessem (statyczny CSS + Playwright,
+bez Supabase/produkcji — ten sam wzorzec co punkty 14/19).
 
 > "Odpowiedzi gracza 1 w drugiej linijce się nie mieszczą"
 
-Dotyczy `host2/js/render.js` lub `css/host.css` — overflow tekstu w
-`#paperText1`/`#paperText2` przy dłuższych odpowiedziach. Nie zbadane.
+Zbadane dokładnie: `#paperText1`/`#paperText2` (`.text` w `css/host.css`)
+to `<pre>` z `white-space:pre-wrap`, ale ich kontener `.pane` ma
+`overflow:hidden` i brak dynamicznego skalowania czcionki — na
+rozdzielczościach tabletowych (768×1024+) treść rundy 2 finału (odpowiedź
+gracza 1 + status + pełna lista planszy, ~9 linii z zawijaniem) mieści się
+bez problemu, ale na rozdzielczości TELEFONU (375×812, portret) ta sama,
+realistyczna treść NAPRAWDĘ przekracza wysokość pudełka
+(`scrollHeight:557px` vs `clientHeight:326px`, zmierzone bezpośrednio) —
+`.pane`'s `overflow:hidden` wtedy po cichu ucina ostatnie 3-4 linie listy
+odpowiedzi, bez żadnego sygnału dla prowadzącego, że coś jest niewidoczne.
+Dotyczy to zarówno `host.html` jak i `host2.html` (dzielą ten sam
+`css/host.css`) — to nie regresja Control v2, tylko wcześniej nieodkryty,
+współdzielony limit.
+
+Naprawione w `css/host.css`: `.text` dostało własny `overflow-y:auto`
+(scrollbar ukryty — `scrollbar-width:none` + `::-webkit-scrollbar{display:
+none}` — ma dalej wyglądać jak kartka papieru, nie okno z paskiem), `.pane`
+zostaje `overflow:hidden` bez zmian (nic nie wylewa się na `redMargin`/
+`cover2`). Host to ekran dotykowy używany wyłącznie przez prowadzącego —
+przewinięcie nie psuje żadnej publicznej prezentacji, tylko chroni przed
+cichą utratą treści na najmniejszych ekranach. Potwierdzone zrzutem ekranu
+po przewinięciu: ostatnia linia listy ("Spanie do poludnia w niedziele
+(5)") staje się osiągalna.
 
 ## 18. Przyciski "powtórzenie" migają podczas odliczania
 
