@@ -164,9 +164,17 @@ w czasie) pokazała JEDNOZNACZNIE, że `peeked` nigdy nie przechodziło na
 Instrumentacja usunięta po znalezieniu przyczyny, zostały tylko docelowe
 asercje w teście.
 
-**Do weryfikacji po następnym przebiegu CI**: czy `control2.spec.js`'s
-test "finał — obaj gracze..." teraz faktycznie przechodzi (ostatni
-sprawdzony przebieg był przed tą poprawką).
+**Potwierdzone w CI (run #318, 2026-10-04)**: gest peek faktycznie działa —
+`hostPeekSwipe()` → `#cover2` dostaje `coverOff`, a po kolejnej zmianie
+stanu (start rundy 2 finału) wraca samo do `coverOn`, **obie asercje
+przeszły**. Ten sam przebieg wykrył NIEZWIĄZANY bug w samym teście
+(nie w produkcji): pętla mapowania gracza 2 dla wiersza "powtórzenie"
+(i=0, kind=SKIP) klikała też "Pokaż punkty", a ten kafel po C2-14 jest
+dla kind≠MATCH trwale wyszarzony (REVEAL_ANSWER_ONLY dogrywa
+REVEAL_POINTS w tym samym kliknięciu) — test czekał w kółko na przycisk,
+który nigdy się nie odblokuje, aż do timeoutu 240s. Naprawione w
+`control2.spec.js` (klikamy "Pokaż punkty" tylko dla i>0). Peek-mechanizm
+(punkty 7-8) uznany za w pełni zweryfikowany.
 
 ## 9. Koniec gry nie czeka na dźwięk + alert "Błąd: locked"
 
