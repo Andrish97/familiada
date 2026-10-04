@@ -81,11 +81,22 @@ animacyjny problem, nie da się ocenić z samego czytania kodu.
 
 ## 5. Dźwięk przycisku ma grać na kliknięciu, nie tylko na potwierdzeniu
 
-⬜ **NIE ZACZĘTE**
+🚫 **ZABLOKOWANE — brak zasobu dźwiękowego**
 
-`armableTile()` w `control2/js/ui.js` (wzorzec zaznacz→potwierdź) — dźwięk
-kliknięcia dziś gra prawdopodobnie tylko przy drugim kliknięciu
-(potwierdzeniu). Sprawdzić `playSfx` wywołania wokół `armedKey` w `ui.js`.
+Zbadane: `armableTile()` w `control2/js/ui.js` (wzorzec zaznacz→potwierdź)
+faktycznie NIE odtwarza żadnego dźwięku przy pierwszym kliknięciu
+(zaznaczeniu) — dźwięki w tym systemie pochodzą wyłącznie z
+`sound_cue_key`/`sound_cue_seq` w `game_state`, ustawianych przez silnik
+PO potwierdzonym zapisie (`control2/js/soundReactor.js`), nie z
+bezpośrednich wywołań `playSfx()` w warstwie UI przy samym kliknięciu.
+
+Żeby to zrobić, potrzebny jest NOWY, krótki dźwięk "kliknięcia"/"tyknięcia"
+UI — takiej kategorii nie ma w `audio/sounds.json` (ani odpowiadającego
+pliku mp3 w `audio/`), i nie da się go wygenerować bez realnego zasobu
+audio. Do odblokowania: właściciel dostarcza plik dźwiękowy (krótki klik,
+podobny do `buzzer_press`), wtedy dodanie kategorii do `sounds.json` +
+wywołania `playSfx()` w `armableTile()`'s pierwszym kliknięciu to
+mechanicznie proste zadanie.
 
 ## 6. Animacja odkrycia: najpierw tekst, potem suma
 
@@ -338,26 +349,46 @@ między etykietą "Aktualnie udostępnione dla:" a wierszem poniżej
 
 ## 24. Audyt wszystkich badge'y powiadomień
 
-⬜ **NIE ZACZĘTE**
+✅🔍 **SPRAWDZONE, JUŻ POPRAWNE**
 
 > "Jedynka może być badgem na przycisku — sprawdź wszystkie badge
 > powiadomień na przyciskach, na hamburgerze itd. w każdym miejscu gdzie
 > są, i mają się pojawiać konsekwentnie na bazach, hubie ankiet, podłącz
 > urządzenie, subskrypcjach."
 
-Wymaga przeglądu `js/pages/bases.js`, `polls-hub.js`, `control2/js/
-shareDevice.js` (już ma `.badge` w `device-row`, patrz `h("span", {class:
-"badge"...`), `subscriptions.js`, plus wspólnego komponentu hamburgera
-(jeśli istnieje) — sprawdzić spójność stylu i czy badge faktycznie pojawia
-się wszędzie tam, gdzie powinien (nie tylko gdzie już jest podłączony).
+Zbadane: `css/base.css`'s `.badge`/`.has-badge` to jeden, wspólny,
+prawidłowo zaprojektowany komponent (pastylka z tłem/obramowaniem, nie
+goła cyfra) — i jest spójnie podłączony wszędzie, gdzie sprawdziłem:
+
+- `games.html`/`js/pages/games.js`: "Podłącz urządzenie"
+  (`connectDeviceBadge`), "Ankiety" (`pollsHubBadge`), "Subskrypcje"
+  (`subscriptionsHubBadge`), "Bazy pytań" (`basesBadge`, przez
+  `refreshBasesBadge()`) — wszystkie cztery mają markup w HTML i są
+  aktywnie sterowane w JS.
+- `bases.html`/`polls-hub.html`: `#btnGoAlt`/`#altBadge` (link do
+  Subskrypcji z poziomu Baz/Hubu ankiet).
+- `control2/js/ui.js` (modal udostępniania urządzenia, D0/D1): przycisk
+  "Udostępnij" dostaje `has-badge` + `<span class="badge">1</span>`
+  spójnie z resztą systemu.
+- `control/js/share-device.js`: ten sam wzorzec (`has-badge` toggle).
+- `js/core/topbar-controller.js`: hamburger (mobile, <980px) ma WŁASNY,
+  zagregowany badge (`.topbar-menu-toggle .badge`), aktualizowany przez
+  `MutationObserver` obserwujący wszystkie badge'e w zwiniętym menu —
+  pokazuje się, gdy COKOLWIEK wewnątrz ma powiadomienie.
+
+Nie znalazłem miejsca z gołą cyfrą zamiast stylu pastylki. Jeśli nadal to
+widać na żywo — prawdopodobnie przed naprawą modala udostępniania
+(punkt 23 wyżej, ten sam obszar) w tej samej sesji; podać dokładną
+stronę/krok, jeśli problem się powtórzy.
 
 ---
 
 ## Podsumowanie liczbowe (na dzień zapisu)
 
 - ✅ Zrobione: 9 (punkty 2, 7, 8, 15, 16, 19, 22, 23 + częściowo 9)
-- ✅🔍 Sprawdzone, już poprawne: 1 (punkt 14)
-- ⬜ Nie zaczęte: reszta (punkty 1, 3, 4, 5, 6, 10, 11, 17, 18, 20, 21, 24)
+- ✅🔍 Sprawdzone, już poprawne: 2 (punkty 14, 24)
+- 🚫 Zablokowane (brak zasobu — nowy plik dźwiękowy): 1 (punkt 5)
+- ⬜ Nie zaczęte: reszta (punkty 1, 3, 4, 6, 10, 11, 17, 18, 20, 21)
 
 ## Jak kontynuować w nowej sesji
 
