@@ -559,6 +559,31 @@ async function typePaced(locator, text, msPerChar = 90) {
   }
 }
 
+// Zgłoszone (po realnym nagraniu, punkt 3/C2-05): "modal ustawień wisi, nie
+// widać wpisywania z klawiatury/suwaka" — do tego momentu suwaki w tym
+// skrypcie (#gsFrame's input.sfx-vol, control2's input.summarySoundVol)
+// dostawały wartość docelową JEDNYM .evaluate(), bez żadnego kroku
+// pośredniego — na nagraniu wygląda to jak nic (kilkaset ms zera akcji),
+// potem nagle inna wartość, zamiast widocznego przesunięcia uchwytu.
+// Ten helper rozkłada tę samą zmianę na kilka pośrednich kroków wartości,
+// z krótką pauzą między nimi, więc widz faktycznie widzi suwak jadący do
+// nowej pozycji — identyczny mechanizm zapisu (set value + dispatch
+// "input", na końcu też "change"), tylko rozciągnięty w czasie.
+async function animateSlider(locator, toValue, { steps = 8, stepDelay = 70 } = {}) {
+  const from = Number(await locator.evaluate((el) => el.value));
+  const to = Number(toValue);
+  for (let i = 1; i <= steps; i++) {
+    const v = Math.round(from + ((to - from) * i) / steps);
+    const isLast = i === steps;
+    await locator.evaluate((el, { v, isLast }) => {
+      el.value = String(v);
+      el.dispatchEvent(new Event("input", { bubbles: true }));
+      if (isLast) el.dispatchEvent(new Event("change", { bubbles: true }));
+    }, { v, isLast });
+    await locator.page().waitForTimeout(stepDelay);
+  }
+}
+
 // ===== Scenariusz 1: pojedynek z resetem, pass, kradzież wygrana i
 // przegrana, dosłanianie reszty, mnożnik pominięty (2 pytania), koniec gry
 // bez finału. Ten sam przebieg co control2.spec.js's test "reset
@@ -655,7 +680,15 @@ async function scenarioRoundsMechanics(pages, { contexts }) {
   await control.waitForTimeout(600); // niech nagranie złapie otwarcie modala
   const gsFrame = control.frameLocator("#gsFrame");
   const gsTeamAInput = gsFrame.locator("#gsTeamA");
-  await gsTeamAInput.fill("Mistrzowie Quizu");
+  // Zgłoszone (punkt 3/C2-05): ".fill() wsadza cały tekst na raz, na
+  // nagraniu wygląda to jak wklejenie, nie jak realne wpisywanie z
+  // klawiatury" — tu, w odróżnieniu od typePaced() (control2's #app,
+  // zapisuje do game_state), to zwykłe pole formularza bez żadnego zapisu
+  // sieciowego do czekania na każdy znak, więc wystarczy wbudowane
+  // pressSequentially() z opóźnieniem między znakami (ten sam wzorzec co
+  // już używany niżej w tym pliku dla pola e-maila odbiorcy).
+  await gsTeamAInput.clear(); // czyści domyślną nazwę drużyny, zanim wpiszemy nową znak po znaku
+  await gsTeamAInput.pressSequentially("Mistrzowie Quizu", { delay: 70 });
   await control.waitForTimeout(800); // niech nagranie złapie podgląd Wyświetlacza aktualizujący się na żywo
 
   // Zgłoszone: "...i pokręć głośności" — doprecyzowane później: "suwaki w
@@ -677,11 +710,11 @@ async function scenarioRoundsMechanics(pages, { contexts }) {
   await control.waitForTimeout(400);
   const transitionSlider = gsFrame.locator('input.sfx-vol[data-sfx-vol="round_transition"]');
   await transitionSlider.waitFor({ state: "visible", timeout: 10_000 });
-  // .fill() na range input nie zawsze niezawodnie odpala "input" (na czym
-  // wisi handler zapisujący głośność) — ustawiamy value i wysyłamy zdarzenie
-  // wprost.
-  await transitionSlider.evaluate((el) => { el.value = "70"; el.dispatchEvent(new Event("input", { bubbles: true })); });
-  await control.waitForTimeout(600); // niech nagranie złapie suwak i zaktualizowaną etykietę %
+  // Zgłoszone (punkt 3/C2-05): jeden skok wartości wygląda na nagraniu jak
+  // nic się nie dzieje, a potem nagła zmiana — animateSlider() (patrz wyżej)
+  // rozkłada to na kilka widocznych kroków przesuwu uchwytu.
+  await animateSlider(transitionSlider, 70);
+  await control.waitForTimeout(400); // niech nagranie złapie zaktualizowaną etykietę %
 
   // Real bug znaleziony przez failed nagranie (przebieg #12/#13): "Zapisz
   // wszystko" (#btnSaveAll) jest zdefiniowany w game-settings2.html, więc
@@ -727,15 +760,9 @@ async function scenarioRoundsMechanics(pages, { contexts }) {
   const revealSlider = control.locator('input.summarySoundVol[data-sfx-vol="reveal"]');
   await revealSlider.scrollIntoViewIfNeeded();
   await revealSlider.waitFor({ state: "visible", timeout: 10_000 });
-  // .fill() na range input nie zawsze niezawodnie odpala "input"/"change"
-  // (na czym wiszą handlery podglądu lokalnego i commitu do game_state) —
-  // ustawiamy value i wysyłamy oba zdarzenia wprost.
-  await revealSlider.evaluate((el) => {
-    el.value = "40";
-    el.dispatchEvent(new Event("input", { bubbles: true }));
-    el.dispatchEvent(new Event("change", { bubbles: true }));
-  });
-  await control.waitForTimeout(600); // niech nagranie złapie suwak i zaktualizowaną etykietę %
+  // Jak wyżej (punkt 3/C2-05) — widoczny przesuw uchwytu, nie jeden skok.
+  await animateSlider(revealSlider, 40);
+  await control.waitForTimeout(400); // niech nagranie złapie zaktualizowaną etykietę %
 
   await clickPaced(control.getByRole("button", { name: "Gotowe — przejdź do rozgrywki" }), ADMIN_PACE_MS);
   await clickPaced(control.getByRole("button", { name: "Rozpocznij grę" }), ADMIN_PACE_MS);

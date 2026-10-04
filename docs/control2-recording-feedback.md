@@ -54,17 +54,28 @@ blokada) we wszystkich 11 wywołaniach `navButton()`.
 
 ## 3. Modal ustawień wisi, nie widać wpisywania z klawiatury/suwaka
 
-⬜ **NIE ZACZĘTE, POTWIERDZONY REALNY PROBLEM** (nie tylko artefakt nagrania)
+✅ **ZROBIONE** — przyczyna była w SKRYPCIE NAGRYWANIA, nie w produkcie.
 
 > "6. Wcześniej tak mówiłeś [że to może być artefakt Playwrighta], a w
 > video jest problem, trzeba to zbadać."
 
-Modal otwiera `game-settings2.html` w iframe (`control2/js/app.js`'s
-`gsOverlay`/`gsFrame`). Do zbadania: czy to realny bug w
-`game-settings2.js` (np. input events gubione, focus trap, re-render
-kasujący wpisaną wartość) czy coś w komunikacji iframe'u z rodzicem. Zacząć
-od `js/pages/game-settings.js` i jego kopii dla modala — sprawdzić, która
-dokładnie się ładuje i czy ma znane różnice.
+Zbadane: `game-settings2.js`/`control2/js/app.js`'s `gsOverlay`/`gsFrame`
+same nie mają tu żadnego buga (sidebar/zapis/zamknięcie modala miały już
+naprawione realne bugi w wcześniejszych przebiegach nagrania — patrz
+komentarze w `tests/e2e/record-playthrough.js` przy `btnToggleSidebar`/
+`tryClose`/`btnSaveAll`). Właściwa przyczyna "wisi, nie widać wpisywania":
+`record-playthrough.js` wpisywało nazwę drużyny `.fill()` (cały tekst w
+jednej klatce — na nagraniu wygląda jak wklejenie, nie pisanie) i
+ustawiało suwaki jednym `.evaluate()` (uchwyt skacze bez animacji) —
+widzowi wygląda to jak kilkaset ms "niczego", a potem nagła zmiana.
+Naprawione: nazwa drużyny teraz przez `pressSequentially()` (znak po
+znaku, jak już robił `typePaced()` dla pól w `#app`), suwaki przez nowy
+helper `animateSlider()` (kilka pośrednich kroków wartości z pauzą —
+widoczny przesuw uchwytu). Nie wymaga triggera pełnego nagrania do
+weryfikacji logiki (sama mechanika zapisu — `input`/`change` na końcu —
+jest identyczna co wcześniej), ale do oceny WIZUALNEJ jakości ostateczne
+potwierdzenie wymaga obejrzenia kolejnego przebiegu
+`E2E Recorded Playthrough (Control v2)`.
 
 ## 4. Logo bez animacji wejścia na starcie rundy + timing dźwięku
 
