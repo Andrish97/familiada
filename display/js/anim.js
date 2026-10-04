@@ -17,6 +17,8 @@ export function createAnimator({
   clearArea,
   clearTileAt,
   dotOff,
+  now = () => performance.now(),
+  wait = sleep,
 }) {
   const clampMs = (ms, fallback) => {
     const n = Number(ms);
@@ -24,10 +26,16 @@ export function createAnimator({
     return Math.max(0, base | 0);
   };
 
-  const sleepStep = async (msPerStep) => {
-    const t = clampMs(msPerStep, 0);
-    if (t <= 0) return;
-    await sleep(t);
+  // Każdy krok ma termin w jednej osi czasu. Koszt SVG i opóźnienie
+  // wcześniejszego timera nie są dodawane ponownie do kolejnych pauz.
+  const stepPacer = (totalMs, steps) => {
+    const start = now();
+    const duration = clampMs(totalMs, 0);
+    let completed = 0;
+    return async () => {
+      const deadline = start + duration * (++completed) / (steps || 1);
+      while (now() < deadline) await wait(Math.max(1, deadline - now()));
+    };
   };
 
   // ===== helpers do iteracji po kafelkach =====
@@ -102,7 +110,7 @@ export function createAnimator({
 
     const order = buildEdgeTileOrder(A, dir);
     const steps = order.length || 1;
-    const stepMs = clampMs(totalMs, 0) / steps;
+    const pace = stepPacer(totalMs, steps);
 
     const rowOffset = A.r1;
     const colOffset = A.c1;
@@ -117,7 +125,7 @@ export function createAnimator({
           }
         }
       }
-      await sleepStep(stepMs);
+      await pace();
     }
   }
 
@@ -126,11 +134,11 @@ export function createAnimator({
 
     const order = buildEdgeTileOrder(A, dir);
     const steps = order.length || 1;
-    const stepMs = clampMs(totalMs, 0) / steps;
+    const pace = stepPacer(totalMs, steps);
 
     for (const { c, r } of order) {
       clearTileAt(big, c, r);
-      await sleepStep(stepMs);
+      await pace();
     }
   }
 
@@ -138,7 +146,8 @@ export function createAnimator({
   // MATRIX – animacja piksel po pikselu
   // axis: "down" | "up" | "left" | "right"
   //
-  // TEJ CZĘŚCI NIE DOTYKAMY – działa jak chciałeś.
+  // Kolejność pikseli pozostaje taka sama; pauzy korzystają ze wspólnego
+  // czasu animacji zamiast dodawać koszt każdego poprzedniego kroku.
   // ============================================================
   async function inMatrix(big, area, axis = "down", totalMs = 600, opts = {}) {
     const A = area || { c1: 1, r1: 1, c2: 30, r2: 10 };
@@ -168,7 +177,7 @@ export function createAnimator({
       steps = totalPixelCols;
     }
 
-    const stepMs = clampMs(totalMs, 0) / (steps || 1);
+    const pace = stepPacer(totalMs, steps);
 
     const rowOffset = A.r1;
     const colOffset = A.c1;
@@ -193,7 +202,7 @@ export function createAnimator({
           }
         }
 
-        await sleepStep(stepMs);
+        await pace();
       }
     } else {
       // LEFT/RIGHT – każdy "krok" to jedna pionowa kolumna pikseli
@@ -215,7 +224,7 @@ export function createAnimator({
           }
         }
 
-        await sleepStep(stepMs);
+        await pace();
       }
     }
   }
@@ -241,7 +250,7 @@ export function createAnimator({
       steps = totalPixelCols;
     }
 
-    const stepMs = clampMs(totalMs, 0) / (steps || 1);
+    const pace = stepPacer(totalMs, steps);
 
     const rowOffset = A.r1;
     const colOffset = A.c1;
@@ -262,7 +271,7 @@ export function createAnimator({
           }
         }
 
-        await sleepStep(stepMs);
+        await pace();
       }
     } else {
       for (const gpc of order) {
@@ -280,7 +289,7 @@ export function createAnimator({
           }
         }
 
-        await sleepStep(stepMs);
+        await pace();
       }
     }
   }

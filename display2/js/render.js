@@ -496,19 +496,22 @@ export function createRenderer({ scene, qr, getSfxDuration }) {
           break;
         case "ANSWER_REVEALED": {
           const r = nextRow.detail.rounds;
-          for (const ord of ev.ords) {
+          const bankChanged = r.bankPts !== (prevRow.detail?.rounds?.bankPts ?? 0);
+          // Odpowiedź najpierw, suma potem; obie mieszczą się w jednym
+          // dźwięku, zamiast każda dostać cały jego czas.
+          const rowMs = bankChanged ? answerAnimMs * 0.8 : answerAnimMs;
+          await Promise.all(ev.ords.map((ord) => {
             const ans = r.answers.find((a) => a.ord === ord);
-            if (!ans) continue;
-            api.rounds.setRow(ord, { text: ans.text, pts: String(ans.fixed_points), animIn: { ...ANSWER_ANIM, ms: answerAnimMs } });
-          }
+            if (!ans) return;
+            return api.rounds.setRow(ord, { text: ans.text, pts: String(ans.fixed_points), animIn: { ...ANSWER_ANIM, ms: rowMs } });
+          }));
           // R8 (odkrywanie reszty, phase REVEAL) jest czysto pokazowe —
           // bankPts się wtedy nie zmienia (control/js/display.js's
           // roundsRevealRow tam w ogóle nie woła RSUMA/TOP) — bez tego
           // sprawdzenia SUMA dostawałaby zbędną animację na niezmienioną
           // liczbę przy każdym kliknięciu w R8.
-          const prevBank = prevRow.detail?.rounds?.bankPts ?? 0;
-          if (r.bankPts !== prevBank) {
-            api.rounds.setSuma(String(r.bankPts ?? 0), { animIn: { ...ANSWER_ANIM, ms: answerAnimMs } });
+          if (bankChanged) {
+            await api.rounds.setSuma(String(r.bankPts ?? 0), { animIn: { ...ANSWER_ANIM, ms: answerAnimMs - rowMs } });
             api.small.topDigits(pad3(r.bankPts));
           }
           // W pojedynku trafienie nie-topowej odpowiedzi oddaje głos DRUGIEJ
@@ -554,16 +557,22 @@ export function createRenderer({ scene, qr, getSfxDuration }) {
         // brak treści gracza 1, zawsze zera, i pomylone strony.
         case "FINAL_ANSWER_REVEALED": {
           const row = nextRow.detail.final.runtime[ev.round][ev.idx];
-          if (ev.round === "map1") api.final.setLeft(ev.idx + 1, row.outText, { animIn: { ...ANSWER_ANIM, ms: answerAnimMs } });
-          else api.final.setRight(ev.idx + 1, row.outText, { animIn: { ...ANSWER_ANIM, ms: answerAnimMs } });
+          const hasPoints = events.some((event) => event.kind === "FINAL_POINTS_REVEALED" && event.round === ev.round && event.idx === ev.idx);
+          const ms = hasPoints ? answerAnimMs * 0.6 : answerAnimMs;
+          if (ev.round === "map1") await api.final.setLeft(ev.idx + 1, row.outText, { animIn: { ...ANSWER_ANIM, ms } });
+          else await api.final.setRight(ev.idx + 1, row.outText, { animIn: { ...ANSWER_ANIM, ms } });
           break;
         }
         case "FINAL_POINTS_REVEALED": {
           const f = nextRow.detail.final;
           const row = f.runtime[ev.round][ev.idx];
-          if (ev.round === "map1") api.final.setA(ev.idx + 1, String(row.pts), { animIn: { ...ANSWER_ANIM, ms: answerAnimMs } });
-          else api.final.setB(ev.idx + 1, String(row.pts), { animIn: { ...ANSWER_ANIM, ms: answerAnimMs } });
-          api.final.setSumaFor(ev.round === "map1" ? "A" : "B", String(f.runtime.sum), { animIn: { ...ANSWER_ANIM, ms: answerAnimMs } });
+          const hasAnswer = events.some((event) => event.kind === "FINAL_ANSWER_REVEALED" && event.round === ev.round && event.idx === ev.idx);
+          const ms = hasAnswer ? answerAnimMs * 0.4 : answerAnimMs;
+          const animIn = { ...ANSWER_ANIM, ms };
+          await Promise.all([
+            ev.round === "map1" ? api.final.setA(ev.idx + 1, String(row.pts), { animIn }) : api.final.setB(ev.idx + 1, String(row.pts), { animIn }),
+            api.final.setSumaFor(ev.round === "map1" ? "A" : "B", String(f.runtime.sum), { animIn }),
+          ]);
           break;
         }
         case "TIMER_STARTED":

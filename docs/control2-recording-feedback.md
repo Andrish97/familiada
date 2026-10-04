@@ -251,6 +251,12 @@ mechanicznie proste zadanie.
 
 ## 6. Animacja odkrycia: najpierw tekst, potem suma
 
+🔧 **KOREKTA WCZEŚNIEJSZEGO AUDYTU — punkt 11 ujawnił realny błąd**:
+wywołania były w prawidłowej kolejności w pliku, ale bez `await`, więc
+suma animowała się równolegle, a tekst i punkty w `setRow` kolejno przez
+dwa pełne czasy dźwięku. Przygotowano wspólną animację tekstu/punktów oraz
+oczekiwanie na odsłonięcie przed sumą, z jednym budżetem czasu dźwięku.
+
 ✅🔍 **SPRAWDZONE — już poprawnie zaimplementowane** (ten sam audyt co
 punkt 4 wyżej; wcześniej oznaczone "nie zaczęte" przez przeoczenie).
 
@@ -414,6 +420,26 @@ zdarzenia końca rundy/gry względem dźwięku "outro". Wymaga obserwacji na
 żądanego czasu dźwięku, klatek, długich zadań JS, pamięci Chromium/ffmpeg
 i dostępnego RAM runnera. Ten sam scenariusz można uruchomić z nagrywaniem
 oraz bez niego, przy zachowaniu prawdziwych urządzeń i produkcyjnej bazy.
+
+[Pomiar bez nagrywania](https://github.com/Andrish97/familiada/actions/runs/37210840043):
+14,9 GB dostępnego RAM (minimum), Chromium do 2,39 GB RSS, Display do
+10,4 MB sterty JS. P95 odstępu klatek podczas animacji 16,7 ms, żadnej
+klatki powyżej 50 ms. Odpowiedź animowała się jednak około 3,62 s przy
+zadanym czasie 1,824 s; logo 2,12 s przy zadanych 1,85 s. Pierwsza przyczyna
+to sekwencja dwóch pełnych animacji tekstu i punktów; druga to sumowanie
+kosztu SVG i opóźnień kolejnych pauz.
+[Pomiar z nagrywaniem](https://github.com/Andrish97/familiada/actions/runs/37211297208)
+potwierdził te same problemy: odpowiedź 3,64–3,78 s zamiast 1,824 s,
+logo 2,26–2,31 s zamiast 1,85 s. Dostępny RAM nie spadł poniżej 14,3 GB,
+ffmpeg osiągał około 722 MB RSS, P95 klatek nadal 16,7 ms. Brak podstaw,
+żeby przypisywać wykryty lag niedoborowi RAM. Nagrywanie dodaje trochę
+narzutu, lecz główna przyczyna jest w sekwencji i czasie animacji.
+
+Przygotowano poprawkę: równoległy tekst/punkty jednej odpowiedzi, `await`
+przed sumą, jeden budżet dźwięku na całą sekwencję, kompensowanie opóźnień
+pauz względem wspólnego czasu animacji. Cztery testy regresji czasu i
+kolejności oraz 35 powiązanych testów przeszły. Weryfikacja wdrożenia
+odbywa się w pełnym cyklu wszystkich 10 nagrań produkcyjnych.
 
 > "Czy wyświetlacz laguje bo llaywrigth ma mało RAMu?"
 

@@ -1419,31 +1419,52 @@ async function scenarioDeviceReconnect(pages, { contexts, browser }) {
   await armAndConfirmPaced(answerTile(control, 1)); // odp. #1 (top) -> wygrywa pojedynek, reszta rundy zostaje NIEODSŁONIĘTA
 
   // ===== Zerwanie połączenia WSZYSTKICH trzech urządzeń naraz =====
+  const readBank = () => control.evaluate(async () => {
+    const { data, error } = await window.__sbClient.from("game_state").select("detail").eq("game_id", new URL(location.href).searchParams.get("id")).single();
+    if (error) throw error;
+    return data.detail.rounds.bankPts;
+  });
+  const initialBank = await readBank();
   console.log("[record] symulacja zerwania połączenia: zamykam Display/Host/Buzzer");
   await Promise.all([contexts.display.close(), contexts.host.close(), contexts.buzzer.close()]);
+  // Operator nie jest "wróżką": jeszcze przed wygaśnięciem presence
+  // wykonuje normalną akcję. Zapis zostaje i musi wrócić na urządzeniach.
+  console.log("[record] operator odsłania odpowiedź 2 przed wykryciem rozłączenia");
+  await armAndConfirmPaced(answerTile(control, 2), ADMIN_PACE_MS);
+  expect(await readBank()).toBeGreaterThan(initialBank);
   await Promise.all([
     waitForDotStatus(control, "display", "bad"),
     waitForDotStatus(control, "host", "bad"),
     waitForDotStatus(control, "buzzer", "bad"),
   ]);
+  await expect(answerTile(control, 3)).toBeDisabled();
+  const blockedBank = await readBank();
+  await answerTile(control, 3).evaluate((button) => { button.click(); button.click(); });
+  expect(await readBank()).toBe(blockedBank);
   await control.waitForTimeout(2000); // widz ma zdążyć zobaczyć wszystkie trzy kropki na czerwono naraz
 
   // ===== Ponowne podłączenie PO KOLEI, przez modal (Display -> Host -> Buzzer) =====
   const display2 = await reconnectDeviceViaModal(browser, control, "display");
   contexts.display = display2.context; pages.display = display2.page;
+  await expect(answerTile(control, 3)).toBeDisabled();
+  await expect.poll(() => display2.page.evaluate(() => {
+    const text = window.__displayLog?.filter((call) => call.call === "api.rounds.setAll").at(-1)?.args[0]?.rows[1]?.text;
+    return typeof text === "string" && text.length > 0 && !text.startsWith("…");
+  }), { timeout: 15000 }).toBe(true);
   await control.waitForTimeout(1500); // widz ma zdążyć zobaczyć zieloną kropkę I odzyskany obraz gry na Display
 
   const host2 = await reconnectDeviceViaModal(browser, control, "host");
   contexts.host = host2.context; pages.host = host2.page;
+  await expect(answerTile(control, 3)).toBeDisabled();
   await control.waitForTimeout(1500);
 
   const buzzer2 = await reconnectDeviceViaModal(browser, control, "buzzer");
   contexts.buzzer = buzzer2.context; pages.buzzer = buzzer2.page;
+  await expect(answerTile(control, 3)).toBeEnabled({ timeout: 10000 });
   await control.waitForTimeout(1500);
 
   // ===== Dowód, że gra działa dalej: dokończ rundę 1 na świeżo podłączonych
   // urządzeniach (Display/Host odbierają odsłonięcia normalnie) =====
-  await armAndConfirmPaced(answerTile(control, 2));
   await armAndConfirmPaced(answerTile(control, 3));
   await armAndConfirmPaced(answerTile(control, 4));
   await armAndConfirmPaced(answerTile(control, 5));

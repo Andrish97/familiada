@@ -542,7 +542,14 @@ export async function createScene() {
     rounds: {
       setText: async (idx1to6, text, { animOut=null, animIn=null } = {}) => { const i=(idx1to6|0)-1; if (i<0||i>5) throw new Error("idx1to6 musi być 1..6"); const t = clipText((text??"").toString(),17); roundsState.text[i]=t; await updateField(GLYPHS, big, ROUNDS.answers[i], t, {out:animOut, in:animIn, color:LIT.main}); setRoundNumberVisible(idx1to6, hasVisibleText(roundsState.text[i])); relocateSumaIfNeeded(); },
       setPts: async (idx1to6, pts, { animOut=null, animIn=null } = {}) => { const i=(idx1to6|0)-1; if (i<0||i>5) throw new Error("idx1to6 musi być 1..6"); const p = alignRight((pts??"").toString(),2); roundsState.pts[i]=(pts??"").toString(); await updateField(GLYPHS, big, ROUNDS.points[i], p, {out:animOut, in:animIn, color:LIT.main}); setRoundNumberVisible(idx1to6, isNonEmpty(roundsState.text[i])||isNonEmpty(roundsState.pts[i])); relocateSumaIfNeeded(); },
-      setRow: async (idx1to6, { text=undefined, pts=undefined, animOut=null, animIn=null } = {}) => { if (text!==undefined) await api.rounds.setText(idx1to6,text,{animOut,animIn}); if (pts!==undefined) await api.rounds.setPts(idx1to6,pts,{animOut,animIn}); },
+      setRow: async (idx1to6, { text=undefined, pts=undefined, animOut=null, animIn=null } = {}) => {
+        // Tekst i punkty należą do jednej odpowiedzi: wspólny czas, różne
+        // pola SVG. Sekwencja dwóch pełnych animacji podwajała ten czas.
+        const fields = [];
+        if (text !== undefined) fields.push(api.rounds.setText(idx1to6, text, { animOut, animIn }));
+        if (pts !== undefined) fields.push(api.rounds.setPts(idx1to6, pts, { animOut, animIn }));
+        await Promise.all(fields);
+      },
       setSuma: async (val, { animOut=null, animIn=null } = {}) => { roundsState.suma=(val??"").toString(); relocateSumaIfNeeded(); const F=roundsSumaFields(); await updateField(GLYPHS, big, F.val, alignRight(roundsState.suma,3), {out:animOut, in:animIn, color:LIT.main}); },
       setX: (name, on) => {
         const key = (name??"").toString().toUpperCase(); const cell = ROUNDS.xCells[key]; if (!cell) throw new Error(`Nieznane X: ${name}`);

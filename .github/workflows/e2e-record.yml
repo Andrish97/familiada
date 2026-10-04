@@ -20,6 +20,12 @@ on:
 # ekranie X11 z wirtualnym urządzeniem dźwiękowym, żeby nagrać obraz I
 # dźwięk czterech urządzeń na raz — patrz tests/e2e/record-playthrough.js.
 
+# restore_my_demo odtwarza jedno demo test1 i usuwa poprzednie. Przebiegi
+# nagrań muszą być szeregowe również pomiędzy osobnymi uruchomieniami CI.
+concurrency:
+  group: control2-recordings-production-test1
+  cancel-in-progress: false
+
 jobs:
   record:
     runs-on: ubuntu-latest
