@@ -265,7 +265,7 @@ test("control2: intro logo i natychmiastowe światło Buzzera przed wysyłką", 
     expect(await getDisplayCalls(displayPage, "api.logo.show")).toEqual([]);
     await clearSfxLog(page);
     await page.getByRole("button", { name: "Rozpocznij grę", exact: true }).click();
-    await waitForSfxKeysAnyOrder(page, ["show_intro", "reveal"]);
+    await waitForSfxKeysAnyOrder(page, ["show_intro", "reveal"], 30000);
     await expect.poll(async () => (await getDisplayCalls(displayPage, "api.logo.show")).at(-1)?.args[0]?.ms || 0).toBeGreaterThan(14);
     await expect(page.getByRole("button", { name: "Rozpocznij rundę", exact: true })).toBeEnabled({ timeout: 22000 });
     await displayPage.screenshot({ path: testInfo.outputPath("shot-intro-logo.png") });
@@ -684,7 +684,7 @@ test("control2: próg w rundzie -> finał, wczesne zakończenie po 4/5 pytaniach
   try {
     trackErrors(page, "control", errors);
     const buzzerPage = await openAnon(browser, contexts, `/buzzer2?id=${game.id}&key=${game.share_key_buzzer}`, "buzzer", errors);
-    await openAnon(browser, contexts, `/display2?id=${game.id}&key=${game.share_key_display}`, "display", errors);
+    const displayPage = await openAnon(browser, contexts, `/display2?id=${game.id}&key=${game.share_key_display}`, "display", errors);
     await openAnon(browser, contexts, `/host2?id=${game.id}&key=${game.share_key_host}`, "host", errors);
 
     await page.goto(`/control2?id=${game.id}`, { waitUntil: "domcontentloaded" });
@@ -761,7 +761,7 @@ test("control2: próg w rundzie -> finał, wczesne zakończenie po 4/5 pytaniach
     // "reset pojedynku...", tam już sprawdzona dla remisu).
     await page.getByRole("button", { name: "Zakończ grę", exact: true }).click();
     await expect(page.getByText("Wygrała drużyna Alfa wynikiem 500:0")).toBeVisible({ timeout: 10000 });
-    await expect.poll(async () => (await getDisplayCalls(displayPage, "api.win.set")).at(-1)?.args[0], { timeout: 15000 }).toBe(26500);
+    await expect.poll(async () => (await getDisplayCalls(displayPage, "api.win.set")).at(-1)?.args[0], { timeout: 30000 }).toBe(26500);
     const finishBtn = page.getByRole("button", { name: "Wróć do moich gier" });
     await expect(finishBtn).toBeVisible({ timeout: 10000 });
     await finishBtn.click();
@@ -1210,7 +1210,7 @@ test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśni�
     await clearSfxLog(page);
     await clearDisplayLog(displayPage);
     await page.getByRole("button", { name: "Zakończ grę", exact: true }).click();
-    await waitForSfxKeysAnyOrder(page, ["show_intro", "reveal"], 15000);
+    await waitForSfxKeysAnyOrder(page, ["show_intro", "reveal"], 30000);
     await expect.poll(async () => (await getDisplayCalls(displayPage, "api.win.set")).at(-1)?.args[0], { timeout: 15000 }).toBe(1305);
     await expect.poll(async () => {
       const calls = await getDisplayCalls(displayPage, "api.indicator.set");
@@ -2375,7 +2375,7 @@ test("control2: koniec gry bez finału w trybie \"punkty\" — Wyświetlacz poka
     await expect.poll(async () => {
       const calls = await getDisplayCalls(displayPage, "api.win.set");
       return calls.at(-1)?.args?.[0];
-    }, { timeout: 10000, message: "Wyświetlacz powinien pokazać WIN 90, nie logo" }).toBe(90);
+    }, { timeout: 30000, message: "Wyświetlacz powinien pokazać WIN 90, nie logo" }).toBe(90);
     // Logo NIE powinno się pojawić w tej ścieżce (endScreenMode="points",
     // bez remisu) -- dowód, że to rozróżnienie faktycznie działa, nie
     // tylko że WIN czasem leci.

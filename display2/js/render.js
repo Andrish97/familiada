@@ -271,8 +271,8 @@ export function createRenderer({ scene, qr, getSfxDuration }) {
     api.indicator.set("OFF");
     api.small.topDigits("000");
     if (row.top_card === "rounds") {
-      // Bez finału: jedyny dźwięk tego kroku (GAME_END_SHOW) to "show_intro"
-      // — animacja logo/WIN trwa dokładnie tyle, ile on, nie sztywną liczbę.
+      // Zakończenie gry: show_intro i reveal kończą się razem.
+      // Plansza pozostaje widoczna do rozpoczęcia reveal.
       const { offsetMs, revealMs } = await timing.revealSyncSplit("show_intro");
       if (offsetMs > 0) await new Promise((resolve) => setTimeout(resolve, offsetMs));
       const totals = row.detail.rounds.totals || { A: 0, B: 0 };
@@ -282,21 +282,12 @@ export function createRenderer({ scene, qr, getSfxDuration }) {
       else await api.win.set(screen.amount, { animIn: { ...LOGO_IN_ANIM, ms: revealMs } });
       return;
     }
-    // Finał (FINISH_FINAL): dźwięk to synced("round_transition","reveal")
-    // + sequential "show_intro" (patrz shared/soundCueEngine.js). Zgłoszone
-    // wprost: "Animacja logo ma się zacząć wtedy, kiedy gra reveal" i
-    // "Punkty z drużyn przeskakują też na reveal" — offsetMs to czas ZANIM
-    // "reveal" zacznie grać (animOut planszy finału trwa dokładnie tyle),
-    // revealMs to czas samego "reveal" (logo/WIN i doliczony wynik finału
-    // pojawiają się W TYM MOMENCIE, trwając dokładnie tyle co on — kończą
-    // się razem z dźwiękiem, nie wcześniej/później).
+    // Koniec rundy finału zagrał już przy wejściu do podsumowania.
+    // FINISH_FINAL gra show_intro z reveal; wynik i ekran końcowy
+    // pojawiają się dopiero przy reveal i kończą animację wraz z dźwiękiem.
     const { offsetMs, revealMs } = await timing.revealSyncSplit("show_intro");
-    // Sama plansza finału jest w tym momencie WCIĄŻ w pełni namalowana na
-    // "big" (nic wcześniej jej nie chowa — inaczej niż r_gameEnd, gdzie
-    // STEP_CHANGE do "r_gameEnd" już wcześniej odpalił animOut na etapie
-    // "Zakończ rundę") — bez tego animOut logo/WIN rysowałoby się WPROST na
-    // planszy finału, ten sam rodzaj artefaktu co naprawiony wcześniej przy
-    // pierwszej rundzie.
+    // Zachowujemy planszę przez początek outro, a przed wejściem ekranu
+    // końcowego czyścimy wspólne płótno, żeby obrazy się nie nakładały.
     if (offsetMs > 0) await new Promise((resolve) => setTimeout(resolve, offsetMs));
     api.big.clear();
     // "reveal" zaczyna grać TERAZ — punkty (z doliczonym wynikiem finału,
