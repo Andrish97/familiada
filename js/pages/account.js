@@ -1,13 +1,13 @@
-import { sb } from "../core/supabase.js?v=v2026-10-04T14511";
-import { cooldownGet, cooldownReserve, cooldownRelease, mailCooldownEmailReserve } from "../core/cooldown.js?v=v2026-10-04T14511";
-import { requireAuth, updateUserLanguage, validatePassword, validateUsername, signOut, niceAuthError, initPasswordToggles, convertGuestToRegisteredEmailOnly } from "../core/auth.js?v=v2026-10-04T14511";
-import { getUserEmailNotificationsFlag, setUserEmailNotificationsFlag } from "../core/user-flags.js?v=v2026-10-04T14511";
-import { initI18n, t, getUiLang, withLangParam } from "../../translation/translation.js?v=v2026-10-04T14511";
-import { confirmModal } from "../core/modal.js?v=v2026-10-04T14511";
-import { isGuestUser, hideForGuest } from "../core/guest-mode.js?v=v2026-10-04T14511";
-import "../core/contact-modal.js?v=v2026-10-04T14511";
-import { deleteGameSoundsFolder } from "../core/sfx-cloud.js?v=v2026-10-04T14511";
-import { icon, iconText } from "../core/icons.js?v=v2026-10-04T14511";
+import { sb } from "../core/supabase.js?v=v2026-10-04T15084";
+import { cooldownGet, cooldownReserve, cooldownRelease, mailCooldownEmailReserve } from "../core/cooldown.js?v=v2026-10-04T15084";
+import { requireAuth, updateUserLanguage, validatePassword, validateUsername, signOut, niceAuthError, initPasswordToggles, convertGuestToRegisteredEmailOnly } from "../core/auth.js?v=v2026-10-04T15084";
+import { getUserEmailNotificationsFlag, setUserEmailNotificationsFlag } from "../core/user-flags.js?v=v2026-10-04T15084";
+import { initI18n, t, getUiLang, withLangParam } from "../../translation/translation.js?v=v2026-10-04T15084";
+import { confirmModal } from "../core/modal.js?v=v2026-10-04T15084";
+import { isGuestUser, hideForGuest } from "../core/guest-mode.js?v=v2026-10-04T15084";
+import "../core/contact-modal.js?v=v2026-10-04T15084";
+import { deleteGameSoundsFolder } from "../core/sfx-cloud.js?v=v2026-10-04T15084";
+import { icon, iconText } from "../core/icons.js?v=v2026-10-04T15084";
 
 
 const status = document.getElementById("status");
