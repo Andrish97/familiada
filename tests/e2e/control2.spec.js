@@ -2224,3 +2224,81 @@ test("control2: zegarek gracza w finale (15s) wraca do stanu SPRZED startu (used
     await deleteGame(page, game.id);
   }
 });
+
+// ===== 21. Koniec gry bez finału w trybie "punkty" — Wyświetlacz pokazuje
+// WIN, nie logo =====
+//
+// Zgłoszone wprost: "Pytanie czemu ani jedna rozgrywka nie kończy się
+// alternatywnym zamiast logo punktami lub wygraną, trzeba to poprawić...
+// Jedno z zakończeń gry bez finału ma pokazać punkty." Silnik
+// (shared/endScreen.js's resolveRoundsEndScreen) już obsługiwał warianty
+// "points"/"money" (pokryte testami jednostkowymi w
+// tests/unit/settings.branching.test.js) — ale ŻADEN e2e/nagraniowy
+// scenariusz nigdy faktycznie nie ustawiał endScreenMode!=="logo" i nie
+// sprawdzał, że Wyświetlacz naprawdę woła api.win.set (nie api.logo.show).
+// To jest właśnie ten brakujący, rzeczywisty dowód.
+//
+// Najkrótsza możliwa ścieżka do r_gameEnd: 1 pytanie w puli (wyczerpanie
+// puli samo, niezależnie od progu, wymusza r_gameEnd — engine.js's
+// finalizeRound()/previewRoundEndDestination), physicalBuzzer+
+// noHostTablet (zero potrzeby otwierania Host/Buzzera), wszystkie 3
+// odpowiedzi odsłonięte PRZED "Zakończ rundę" (END_ROUND z
+// r.revealed.length>=r.answers.length finalizuje rundę OD RAZU, bez
+// pośredniego kroku R8 "Przejdź do...").
+test("control2: koniec gry bez finału w trybie \"punkty\" — Wyświetlacz pokazuje WIN, nie logo", async ({ page, browser }, testInfo) => {
+  await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
+  const game = await makeGame(page, `E2E-CONTROL2-ENDPOINTS-${Date.now()}`, {
+    roundQuestions: [TWO_QUESTIONS[0]],
+    settings: { game: { hasFinal: false, advanced: { endScreenMode: "points" } } },
+  });
+  const contexts = [];
+  const errors = [];
+  try {
+    trackErrors(page, "control", errors);
+    const displayPage = await openAnon(browser, contexts, `/display2?id=${game.id}&key=${game.share_key_display}`, "display", errors);
+
+    await page.goto(`/control2?id=${game.id}`, { waitUntil: "domcontentloaded" });
+    await expect(page.locator(".stepTitle")).toHaveText("Urządzenia", { timeout: 15000 });
+    await page.getByLabel("Przycisk fizyczny").check();
+    await page.getByLabel("Nie używaj tabletu prowadzącego").check();
+
+    await page.getByRole("button", { name: "Dalej" }).click();
+    await expect(page.locator(".stepTitle")).toHaveText("Podsumowanie", { timeout: 10000 });
+    await page.getByRole("button", { name: "Gotowe — przejdź do rozgrywki" }).click();
+    await page.getByRole("button", { name: "Rozpocznij grę" }).click();
+    await expect(page.locator(".c2-stepper")).toContainText("Runda 1", { timeout: 22000 });
+    await page.getByRole("button", { name: "Rozpocznij rundę" }).click();
+
+    await expect(page.getByRole("button", { name: "Alfa" })).toBeVisible({ timeout: 10000 });
+    await page.getByRole("button", { name: "Alfa" }).click();
+    await armAndConfirm(page.getByRole("button", { name: "Zatwierdź: Alfa" }));
+
+    await revealAnswer(page, 1); // 40
+    await revealAnswer(page, 2); // 30 -> bank 70
+    await revealAnswer(page, 3); // 20 -> bank 90, wszystko odsłonięte
+
+    // END_ROUND z wszystkim już odsłoniętym finalizuje rundę od razu --
+    // pula (1 pytanie) wyczerpana -> prosto do r_gameEnd, bez R8.
+    await page.getByRole("button", { name: "Zakończ rundę" }).click();
+    await expect(page.locator(".c2-stepper")).toContainText("Koniec gry", { timeout: 22000 });
+
+    await clearDisplayLog(displayPage);
+    await page.getByRole("button", { name: "Zakończ grę" }).click();
+    await expect(page.getByText("Wygrała drużyna Alfa wynikiem 90:0")).toBeVisible({ timeout: 10000 });
+
+    await expect.poll(async () => {
+      const calls = await getDisplayCalls(displayPage, "api.win.set");
+      return calls.at(-1)?.args?.[0];
+    }, { timeout: 10000, message: "Wyświetlacz powinien pokazać WIN 90, nie logo" }).toBe(90);
+    // Logo NIE powinno się pojawić w tej ścieżce (endScreenMode="points",
+    // bez remisu) -- dowód, że to rozróżnienie faktycznie działa, nie
+    // tylko że WIN czasem leci.
+    const logoCalls = await getDisplayCalls(displayPage, "api.logo.show");
+    expect(logoCalls, "logo nie powinno się pojawić przy endScreenMode=\"points\" bez remisu").toEqual([]);
+
+    expect(errors, "żadne z urządzeń nie powinno rzucić błędu JS: " + errors.join(" | ")).toEqual([]);
+  } finally {
+    for (const ctx of contexts) await ctx.close().catch(() => {});
+    await deleteGame(page, game.id);
+  }
+});
