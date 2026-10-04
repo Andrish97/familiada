@@ -1,20 +1,20 @@
 // js/pages/bases.js
 // Lista baz pytań (warstwa 1) – styl i ergonomia jak strona gier (games).
 
-import { addRenameGesture } from "../core/rename-gesture.js?v=v2026-10-04T09183";
+import { addRenameGesture } from "../core/rename-gesture.js?v=v2026-10-04T09204";
 
-import { sb, SUPABASE_URL } from "../core/supabase.js?v=v2026-10-04T09183";
-import { updateChecked, ROW_GONE } from "../core/db-guard.js?v=v2026-10-04T09183";
-import { requireAuth } from "../core/auth.js?v=v2026-10-04T09183";
-import { alertModal, confirmModal } from "../core/modal.js?v=v2026-10-04T09183";
-import { isGuestUser, hideForGuest } from "../core/guest-mode.js?v=v2026-10-04T09183";
-import { initUiSelect } from "../core/ui-select.js?v=v2026-10-04T09183";
-import { getUiLang, initI18n, t, withLangParam } from "../../translation/translation.js?v=v2026-10-04T09183";
-import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-10-04T09183";
-import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../core/modal-sheet.js?v=v2026-10-04T09183";
-import "../core/contact-modal.js?v=v2026-10-04T09183";
-import { icon, iconText } from "../core/icons.js?v=v2026-10-04T09183";
-import { createCooldownTicker, formatCooldownRemaining } from "../core/cooldown.js?v=v2026-10-04T09183";
+import { sb, SUPABASE_URL } from "../core/supabase.js?v=v2026-10-04T09204";
+import { updateChecked, ROW_GONE } from "../core/db-guard.js?v=v2026-10-04T09204";
+import { requireAuth } from "../core/auth.js?v=v2026-10-04T09204";
+import { alertModal, confirmModal } from "../core/modal.js?v=v2026-10-04T09204";
+import { isGuestUser, hideForGuest } from "../core/guest-mode.js?v=v2026-10-04T09204";
+import { initUiSelect } from "../core/ui-select.js?v=v2026-10-04T09204";
+import { getUiLang, initI18n, t, withLangParam } from "../../translation/translation.js?v=v2026-10-04T09204";
+import { initTopbarAccountDropdown } from "../core/topbar-controller.js?v=v2026-10-04T09204";
+import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../core/modal-sheet.js?v=v2026-10-04T09204";
+import "../core/contact-modal.js?v=v2026-10-04T09204";
+import { icon, iconText } from "../core/icons.js?v=v2026-10-04T09204";
+import { createCooldownTicker, formatCooldownRemaining } from "../core/cooldown.js?v=v2026-10-04T09204";
 initI18n({ withSwitcher: true }).then(() => {
   document.documentElement.classList.remove('page-loading');
 });
