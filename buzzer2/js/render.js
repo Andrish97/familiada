@@ -24,17 +24,42 @@ export const STATE = { OFF: "OFF", ON: "ON", PUSHED_A: "PUSHED_A", PUSHED_B: "PU
 // pojedynku (grep potwierdzony: "ON" tylko przy wejściu w r_duel, "RESET"+
 // "ON" tylko po pełnym reset cyklu) — Buzzer zostaje zapalony/przygaszony
 // (PUSHED_<zwycięzca>) przez całą resztę PLAY/STEAL/REVEAL, nie gaśnie do
-// czarnego. duel.firstTeam (nie lastPressed — to surowe zdarzenie
-// naciśnięcia, firstTeam to POTWIERDZONY zwycięzca pojedynku, patrz
-// engine.js's ACCEPT_BUZZ) trzyma się w state przez całą resztę rundy,
-// więc to jest właściwe pole do jednoznacznego odczytu tego stanu.
+// czarnego. duel.firstTeam (POTWIERDZONY zwycięzca pojedynku, patrz
+// engine.js's ACCEPT_BUZZ) trzyma się w state przez całą resztę rundy —
+// dlatego poniższa funkcja woli je, gdy jest ustawione. PRZED
+// potwierdzeniem jedyny sygnał to duel.lastPressed (surowe zdarzenie
+// naciśnięcia) — patrz poprawka niżej, to pole NIE jest ignorowane.
+// Zgłoszone (nagranie): "naciskają, zaświeca ten który pierwszy nacisnął
+// [...] operator to widzi i zatwierdza" — realny bug, nie coś do samej
+// weryfikacji. Ta funkcja czytała WYŁĄCZNIE `firstTeam` (ustawiane
+// dopiero przez ACCEPT_BUZZ, czyli PO potwierdzeniu operatora) — surowe
+// naciśnięcie (`lastPressed`, zapisywane bezpośrednio przez
+// `game_state_buzzer_press`, zanim operator cokolwiek kliknie) było
+// całkowicie ignorowane. `buzzer2/js/main.js`'s `press()` woła
+// `renderer.render(data)` z komentarzem "przycisk pokazuje PUSHED_x od
+// razu" — ale przy starym kodzie to nigdy nie było prawdą: `derive
+// ButtonState` i tak zwracał `ON` (nic nie świeci), dopóki operator nie
+// zatwierdził. Stary (nie-v2) `js/pages/buzzer.js`'s `press()` miał to
+// poprawnie — lokalny, optymistyczny `show(PUSHED_x)` natychmiast po
+// kliknięciu, zanim nawet broadcast do Control odleciał.
+// Naprawione: `lastPressed` jako fallback, gdy `firstTeam` jeszcze nie
+// jest ustawione — światło zapala się od razu po naciśnięciu, nie czeka
+// na operatora. `firstTeam` ma pierwszeństwo (gdy już ustawione, zawsze
+// zgadza się z `lastPressed` tej samej rundy — ACCEPT_BUZZ nigdy nie
+// zmienia `lastPressed`), więc światło zostaje dokładnie tej samej
+// drużyny przez całą resztę rundy, bez żadnego mignięcia przy
+// potwierdzeniu. "Ponów naciśnięcie" (RETRY_DUEL) czyści `lastPressed`
+// na `null` tylko, gdy `firstTeam` wciąż nie jest ustawione — światło
+// poprawnie gaśnie (wraca do `ON`), jeśli operator odrzuci zgłoszenie
+// przed zatwierdzeniem.
 export function deriveButtonState(row) {
   if (row.top_card !== "rounds") return STATE.OFF;
   if (row.detail.settings?.physicalBuzzer) return STATE.OFF;
   const duel = row.detail.rounds?.duel;
   if (!duel?.enabled) return STATE.OFF;
-  if (!duel.firstTeam) return STATE.ON;
-  return duel.firstTeam === "A" ? STATE.PUSHED_A : STATE.PUSHED_B;
+  const pressed = duel.firstTeam || duel.lastPressed;
+  if (!pressed) return STATE.ON;
+  return pressed === "A" ? STATE.PUSHED_A : STATE.PUSHED_B;
 }
 
 export function createButtonRenderer() {

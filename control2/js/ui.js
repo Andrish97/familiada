@@ -472,11 +472,19 @@ export function createUI({ root, emit }) {
     }
 
     const finalIncomplete = hasFinal && s.finalQuestionsMode === "pick" && (state.final.picked?.length !== 5 || !state.final.confirmed);
-    const start = h("button", {
-      class: "btn gold", type: "button",
-      disabled: finalIncomplete || boardBusy() ? "" : undefined,
+    // Zgłoszone: "Gotowe przejdź do rozgrywki ma inny styl niż pozostałe
+    // przyciski dalej" — to był gołe `<button class="btn gold">` (globalny
+    // styl przycisków apki), nie navButton() jak KAŻDE inne "Dalej" w
+    // rozgrywce (c2-btn primary c2-intro-btn — inny padding/border-radius/
+    // czcionka). Ujednolicone: ten sam komponent, ta sama busy/disabled
+    // gałąź co resztę (C2-02) — finalIncomplete to statyczna walidacja
+    // (disabled, bez pulsowania), boardBusy() to realne oczekiwanie na sieć
+    // (busy, pulsuje).
+    const start = navButton(t("control.setupDoneBtn"), {
+      disabled: finalIncomplete,
+      busy: boardBusy(),
       onclick: () => emit("setup.start"),
-    }, [document.createTextNode(t("control.setupDoneBtn"))]);
+    });
     const changeSettings = h("button", { class: "btn sm", type: "button", onclick: () => emit("setup.openSettings") }, [document.createTextNode(t("control.summarySettingsLink"))]);
     // "Wstecz" (jak stare control.html's btnSetupFinishBack) — swobodny
     // powrót do Urządzeń, nic nie resetuje. c2-btn-back popycha go do
