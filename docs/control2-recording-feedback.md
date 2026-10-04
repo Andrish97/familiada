@@ -565,6 +565,20 @@ busy/disabled gałęzią co reszta (C2-02) — `finalIncomplete` to statyczna
 walidacja (disabled, bez pulsowania), `boardBusy()` to realne oczekiwanie
 na sieć (busy, pulsuje).
 
+**Dołożony audyt (na prośbę: "zobacz też pozostałe przyciski dalej
+wstecz jakie mają style")**: znaleziony DRUGI przypadek tego samego buga —
+`renderDevicesStep()`'s "Dalej" (krok Urządzeń, D0/D1) był też gołym
+`<button class="btn gold">`. Naprawiony tym samym sposobem. Pełny grep
+`control2/js/ui.js`/`control2.html` po tej poprawce: zero pozostałych
+`class: "btn gold"` przypisanych do nawigacji (jedyne, co zostało z
+"btn gold", to przyciski "Kopiuj" kodu połączenia — mała, per-wierszowa
+akcja, nie krok nawigacji, więc poprawny, inny kontekst). "Wstecz"
+(jedyny egzemplarz w całym control2, na Podsumowaniu) celowo wygląda
+inaczej — zwykła `.btn` bez `gold`, stonowany styl akcji drugoplanowej,
+zgodny z konwencją całej apki (przyciski "wstecz"/"cofnij" nigdzie nie
+dostają głównego akcentu kolorystycznego) — to nie jest niekonsekwencja
+do naprawy.
+
 ---
 
 ## Podsumowanie liczbowe (na dzień zapisu)

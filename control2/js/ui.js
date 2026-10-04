@@ -226,11 +226,15 @@ export function createUI({ root, emit }) {
     const buzzerReady = !!presenceFlags.buzzer || state.settings.physicalBuzzer;
     const requiredOnline = displayReady && hostReady && buzzerReady;
 
-    const next = h("button", {
-      class: "btn gold", type: "button",
-      disabled: requiredOnline ? undefined : "",
-      onclick: requiredOnline ? () => emit("devices.next") : undefined,
-    }, [document.createTextNode(t("common.next"))]);
+    // Ten sam bug co "Gotowe — przejdź do rozgrywki" (punkt 25,
+    // docs/control2-recording-feedback.md) -- gołe `<button class="btn
+    // gold">` zamiast navButton(), więc inny styl niż KAŻDE "Dalej" w
+    // rozgrywce. Ujednolicone z tej samej przyczyny (zgłoszone: "zobacz
+    // też pozostałe przyciski dalej/wstecz jakie mają style").
+    const next = navButton(t("common.next"), {
+      disabled: !requiredOnline,
+      onclick: () => emit("devices.next"),
+    });
 
     root.appendChild(h("div", { class: "cardBody" }, [
       // .stepTitle zostaje (niewidoczny, display:none w control.css — testy
