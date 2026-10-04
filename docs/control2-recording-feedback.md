@@ -79,16 +79,23 @@ potwierdzenie wymaga obejrzenia kolejnego przebiegu
 
 ## 4. Logo bez animacji wejścia na starcie rundy + timing dźwięku
 
-⬜ **NIE ZACZĘTE**
+✅🔍 **SPRAWDZONE — już poprawnie zaimplementowane** (znalezione przy
+audycie kodu pod inny punkt, nie przez nową pracę w tej sesji; wcześniej
+oznaczone jako "nie zaczęte" przez przeoczenie — fix już był na `main`).
 
 > "Przy rozpoczęciu rundy logo jest od razu na wyświetlaczu, nie ma
 > animacji wejścia. Animacja ma być wtedy jak gra dźwięk przejść
 > ekranowych. A ten dźwięk ma grać pod koniec intro."
 
-Dotyczy `display2/js/render.js` (sekwencja logo→plansza na starcie rundy)
-i `control2/js/soundReactor.js` (timing `round_transition`/`reveal`).
-Wymaga realnej obserwacji na żywo lub w nagraniu — czysto timingowy/
-animacyjny problem, nie da się ocenić z samego czytania kodu.
+`display2/js/render.js`'s `renderDiff()`, gałąź `STEP_CHANGE` do `r_duel`
+z `r_roundStart` (pierwsza runda): `timing.revealSyncSplit("round_transition")`
+dzieli czas combo dźwięku na `offsetMs` (ile trwa `api.logo.hide()`) i
+`revealMs` (ile trwa wjazd planszy) — logo chowa się przez `offsetMs`,
+PO CZYM (nie równolegle) plansza wjeżdża z animacją trwającą dokładnie
+`revealMs`, zsynchronizowaną z końcem dźwięku `round_transition`/`reveal`.
+Kod wprost cytuje to zgłoszenie w komentarzu. Trigger nagrania
+"01-rundy-mechanika" w toku — ostateczne wizualne potwierdzenie po jego
+zakończeniu.
 
 ## 5. Dźwięk przycisku ma grać na kliknięciu, nie tylko na potwierdzeniu
 
@@ -111,15 +118,20 @@ mechanicznie proste zadanie.
 
 ## 6. Animacja odkrycia: najpierw tekst, potem suma
 
-⬜ **NIE ZACZĘTE**
+✅🔍 **SPRAWDZONE — już poprawnie zaimplementowane** (ten sam audyt co
+punkt 4 wyżej; wcześniej oznaczone "nie zaczęte" przez przeoczenie).
 
 > "Jeśli chodzi o animacje ekranu to najpierw ma się odsłonić odpowiedź a
 > dopiero wtedy zmienić się suma, a nie na odwrót."
 
-Dotyczy `display2/js/render.js` — kolejność wywołań `scene.api` dla
-`R <ord> TXT...`/`RSUMA`/`TOP` (rundy) i `FL`/`FR`/`FA`/`FB`/`FSUMA`
-(finał). Do sprawdzenia: `shared/deriveEvents.js` i konkretna kolejność w
-`render.js`'s event handlerach.
+`display2/js/render.js`: w rundach, `ANSWER_REVEALED` najpierw woła
+`api.rounds.setRow()` (tekst/punkty konkretnej odpowiedzi) w pętli, DOPIERO
+POTEM (i tylko jeśli `bankPts` się realnie zmienił — R8 jest czysto
+pokazowe) `api.rounds.setSuma()`. W finale to w ogóle DWA ODDZIELNE
+zdarzenia z różnych kliknięć operatora (`FINAL_ANSWER_REVEALED` →
+`setLeft`/`setRight`, zawsze osobno i wcześniej niż `FINAL_POINTS_REVEALED`
+→ `setA`/`setB`/`setSumaFor`), więc kolejność jest strukturalnie
+wymuszona, nie przez przypadkową kolejność linii kodu.
 
 ## 7. Host ma się odsłaniać gestem — mechanizm był realnie zepsuty
 
@@ -216,12 +228,23 @@ sekwencja dźwięków koniec rundy→koniec gry, patrz punkt 20.
 
 ## 10. Koniec rundy: logo ma wejść dopiero na dźwięku outro (ciągła animacja)
 
-⬜ **NIE ZACZĘTE**
+✅🔍 **SPRAWDZONE — już poprawnie zaimplementowane** (ten sam audyt co
+punkty 4/6 wyżej; wcześniej oznaczone "nie zaczęte" przez przeoczenie).
 
 > "Logo na końcu rund jakoś dziwnie długo się nie wyświetla. Ma być tak:
 > plansza zostaje i się nie chowa, dopiero jak przy dźwięku outro ma się
 > pojawić logo, to wtedy plansza znika i pojawia się logo (tak jakby
 > ciągła animacja) i zmiany na planszy zawsze z dźwiękiem zmiany."
+
+`display2/js/render.js`'s `showEndScreen()`: plansza rund NIE jest chowana
+przy wejściu w `r_gameEnd` (`STEP_CHANGE` do `r_gameEnd` tylko aktualizuje
+`totals`/`TOP`, zostawia dużą planszę bez zmian — komentarz wprost:
+"Sama duża plansza... świadomie zostaje bez zmian — animOut dopiero przy
+starcie następnej rundy"). Dopiero `GAME_ENDED` (klik "Zakończ grę"/"Pokaż
+koniec gry") woła `showEndScreen()`, które liczy `showIntroMs =
+timing.dur("show_intro")` i chowa/pokazuje logo z animacją trwającą
+dokładnie tyle, ile ten dźwięk — jedna, ciągła sekwencja zsynchronizowana
+z dźwiękiem, zgodnie ze zgłoszeniem.
 
 Dotyczy `display2/js/render.js` + `control2/js/soundReactor.js` — timing
 zdarzenia końca rundy/gry względem dźwięku "outro". Wymaga obserwacji na
