@@ -973,7 +973,7 @@ async function scenarioPhysicalBuzzerNoHost(pages) {
 // hasFinal=false) — sama progresja rund jest identyczna w obu wariantach. =====
 
 async function scenarioRoundsThreshold(pages, { expectFinal, showReload = false }) {
-  const { control, buzzer } = pages;
+  const { control, buzzer, display } = pages;
 
   await clickPaced(control.getByRole("button", { name: "Dalej" }), ADMIN_PACE_MS);
   await clickPaced(control.getByRole("button", { name: "Gotowe — przejdź do rozgrywki" }), ADMIN_PACE_MS);
@@ -1045,6 +1045,8 @@ async function scenarioRoundsThreshold(pages, { expectFinal, showReload = false 
     await control.waitForTimeout(4000); // ekran wpisywania gracza 1 widoczny chwilę — pełny final to osobne scenariusze
   } else {
     await clickPaced(control.getByRole("button", { name: "Zakończ grę" }));
+    await expect.poll(() => display.evaluate(() => window.__displayLog?.filter((call) => call.call === "api.win.set").at(-1)?.args[0]), { timeout: 30000 }).toBe(300);
+    await expect(control.getByRole("button", { name: "Wróć do moich gier" })).toBeEnabled({ timeout: 65000 });
     await control.waitForTimeout(4000);
   }
 }
@@ -1461,6 +1463,7 @@ async function scenarioDeviceReconnect(pages, { contexts, browser }) {
   await control.waitForTimeout(2000);
 
   await clickPaced(control.getByRole("button", { name: "Zakończ grę" }));
+  await expect(control.getByRole("button", { name: "Wróć do moich gier" })).toBeEnabled({ timeout: 65000 });
   await control.waitForTimeout(4000); // ekran końcowy widoczny chwilę na nagraniu
 }
 
