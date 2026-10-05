@@ -852,8 +852,6 @@ async function boot() {
     IMAGE: initImageEditor(ctx),
   };
 
-  import("../../shared/js/core/updater.js?v=v2026-10-05T13555").then((m) => m.initUpdater()).catch(() => {});
-
   bindUi();
   setActiveListMode(listModeFromUrl(), { updateUrl: false });
   await refresh();
