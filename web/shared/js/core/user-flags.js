@@ -1,4 +1,4 @@
-import { sb } from "./supabase.js?v=v2026-10-05T23294";
+import { sb } from "./supabase.js?v=v2026-10-05T23360";
 
 // =======================================================
 // Email notifications flag (global per user)
