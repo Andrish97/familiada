@@ -842,9 +842,12 @@ async function scenarioRoundsMechanics(pages, { contexts }) {
   await expect.poll(async () => (await acceptMistrzowie.count()) + (await acceptBeta.count()), { timeout: 10000 }).toBeGreaterThan(0);
   const raceWinner = (await acceptMistrzowie.count()) > 0 ? "A" : "B";
   const raceWinnerBtn = raceWinner === "A" ? acceptMistrzowie : acceptBeta;
+  const buzzerSoundCount = () => display.evaluate(() => (window.__sfxLog || []).filter((entry) => entry.key === "buzzer_press").length);
+  await expect.poll(buzzerSoundCount, { timeout: 10000, message: "Wyświetlacz powinien zagrać Buzzer już przy naciśnięciu" }).toBe(1);
   await control.waitForTimeout(2000); // widz ma zdążyć zobaczyć, który kafel się pojawił (dowód wyścigu)
   await armAndConfirmPaced(raceWinnerBtn);
-  expect(await control.evaluate(() => (window.__sfxLog || []).filter((entry) => entry.key === "buzzer_press").length)).toBe(1);
+  expect(await buzzerSoundCount(), "Zatwierdzenie nie może powtarzać dźwięku Buzzera").toBe(1);
+  expect(await control.evaluate(() => (window.__sfxLog || []).filter((entry) => entry.key === "buzzer_press").length)).toBe(0);
   await buzzer.waitForSelector(`#btn${raceWinner}.lit`, { timeout: 10000 });
   await buzzer.waitForTimeout(2000); // widz ma zdążyć zobaczyć zaświecony/przygaszony przycisk na Buzzerze
 
