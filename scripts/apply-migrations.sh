@@ -164,8 +164,8 @@ else
     if ! docker exec -i "$DB_CONTAINER" psql -U "$DB_USER" -d "$DB_NAME" \
         -v ON_ERROR_STOP=1 -1 -f "/dev/stdin" < "$f"; then
       log "FAIL  $base (SQL error — see output above)"
-      log "WARN  $base — marking as applied to prevent retry; fix manually if needed"
-      sql_ok=false
+      log "ERROR $base — transaction rolled back; migration is NOT marked as applied"
+      exit 6
     fi
 
     if ! docker exec -i "$DB_CONTAINER" psql -U "$DB_USER" -d "$DB_NAME" \

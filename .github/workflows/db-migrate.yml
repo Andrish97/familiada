@@ -58,13 +58,17 @@ jobs:
             supabase/migrations/ \
             "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:$STAGING/migrations/"
 
+          rsync -az --checksum -e "ssh -i ~/.ssh/id_ed25519" \
+            scripts/apply-migrations.sh \
+            "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:$STAGING/apply-migrations.sh"
+
       # 6️⃣ Run migrations on server
       - name: Run migrations (server-side)
         run: |
           STAGING="/home/${{ secrets.SERVER_USER }}/.deploy/db-migrate/${{ github.sha }}"
           ssh -i ~/.ssh/id_ed25519 "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" \
             "export GITHUB_SHA='${{ github.sha }}'; \
-             /home/${{ secrets.SERVER_USER }}/supabase-selfhost/supabase/scripts/apply-migrations.sh \"$STAGING\""
+             bash \"$STAGING/apply-migrations.sh\" \"$STAGING\""
 
       # 7️⃣ Fetch schema + logs (bez wywalania się)
       - name: Fetch schema.sql + logs from server
