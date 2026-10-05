@@ -32,8 +32,8 @@ function getBaseIdFromUrl() {
 }
 
 function buildManualUrl() {
-  const url = new URL("../manual", location.href);
-  const ret = `${location.pathname.split("/").slice(-2).join("/")}${location.search}${location.hash}`;
+  const url = new URL("/manual/", location.href);
+  const ret = `${location.pathname}${location.search}${location.hash}`;
   url.searchParams.set("ret", ret);
   url.searchParams.set("lang", getUiLang() || "pl");
   url.hash = "bases";
@@ -50,13 +50,13 @@ if (btnBack) btnBack.dataset.sheetBack = "1";
 btnBack?.addEventListener("click", () => {
   if (handleSheetBack()) return;
   // powrót do listy baz (warstwa 1)
-  location.href = withLangParam("../bases");
+  location.href = withLangParam("/bases/");
 });
 
 
 /* ================= Init ================= */
 (async function init() {
-  const requireAuthP = requireAuth(withLangParam("../login")); // start równolegle z initI18n
+  const requireAuthP = requireAuth(withLangParam("/login/")); // start równolegle z initI18n
   await initI18n({ withSwitcher: true });
   document.documentElement.classList.remove('page-loading');
 
@@ -68,7 +68,7 @@ btnBack?.addEventListener("click", () => {
   const baseId = getBaseIdFromUrl();
   if (!baseId) {
     void alertModal({ text: t("baseExplorer.errors.missingBaseId") });
-    location.href = withLangParam("../bases");
+    location.href = withLangParam("/bases/");
     return;
   }
 

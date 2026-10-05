@@ -1508,11 +1508,11 @@ function getRetParam() {
 
 function getBackLink() {
   const rawRet = getRetParam();
-  return withLangParam(rawRet || "games");
+  return withLangParam(new URL(rawRet || "/games/", location.origin + "/").href);
 }
 
 function getCurrentRelativeUrl() {
-  return `${location.pathname.split("/").pop() || "bases"}${location.search}${location.hash}`;
+  return `${location.pathname}${location.search}${location.hash}`;
 }
 
 function buildManualUrl() {
@@ -1525,7 +1525,7 @@ function buildManualUrl() {
 
 document.addEventListener("DOMContentLoaded", () => {
   btnGoAlt?.addEventListener("click", async () => {
-    const page = document.body.dataset.altPage || "subscriptions";
+    const page = document.body.dataset.altPage || "/subscriptions/";
     location.href = `${page}?ret=${encodeURIComponent(getCurrentRelativeUrl())}`;
   });
 

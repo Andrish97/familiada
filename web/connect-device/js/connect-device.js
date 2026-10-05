@@ -57,7 +57,7 @@ function deviceTypeIcon(type) {
 const _isMobile = isMobileDevice();
 
 function getCurrentRelativeUrl() {
-  return `${location.pathname.split("/").pop() || "connect-device"}${location.search}${location.hash}`;
+  return `${location.pathname}${location.search}${location.hash}`;
 }
 
 function buildManualUrl() {
@@ -369,17 +369,17 @@ async function startQrScan() {
   btnBack?.addEventListener("click", () => {
     location.href = (isLoggedIn && !guestMode)
       ? withLangParam("/games/")
-      : withLangParam("index");
+      : withLangParam("/");
   });
 
   if (isLoggedIn && !guestMode) {
-    if (btnBack) btnBack.textContent = t("connectDevice.topbar.back") || "Moje gry";
+    if (btnBack) btnBack.innerHTML = iconText("arrow-left", t("connectDevice.topbar.back") || "Moje gry");
     if (btnManual) btnManual.style.display = "";
     btnManual?.addEventListener("click", () => { location.href = buildManualUrl(); });
   } else {
     if (btnBack) {
       btnBack.dataset.i18n = "index.backHome";
-      btnBack.textContent = t("index.backHome") || "Strona główna";
+      btnBack.innerHTML = iconText("arrow-left", t("index.backHome") || "Strona główna");
     }
     if (btnManual) btnManual.style.display = "none";
   }

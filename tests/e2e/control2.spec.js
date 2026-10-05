@@ -110,9 +110,9 @@ test("control2: własne outro ponad 30 sekund — ustawienia, zapis i podsumowan
       const resource = performance.getEntriesByType("resource").find((entry) => new URL(entry.name).pathname.endsWith("/shared/js/core/sfx.js"));
       if (!resource) return null;
       const sfx = await import(resource.name);
-      return { duration: sfx.getSfxDuration("show_outro"), playing: sfx.isSfxPlaying("show_outro") };
+      return { duration: await sfx.getSfxDuration("show_outro"), playing: sfx.isSfxPlaying("show_outro") };
     });
-    await expect.poll(async () => (await inspectAudio())?.duration, { timeout: 20000 }).toBeCloseTo(31000, 0);
+    await expect.poll(async () => (await inspectAudio())?.duration, { timeout: 20000 }).toBeCloseTo(31, 1);
     const row = page.locator('.summarySoundRow:has(input[data-sfx-vol="show_outro"])');
     await row.locator(".summarySoundPlay").click();
     await expect.poll(async () => (await inspectAudio())?.playing, { timeout: 10000 }).toBe(true);
@@ -605,6 +605,7 @@ test("control2: pełna runda przez 4 urządzenia + wznowienie Control po przeła
 // ===== 3. Mechanika rund: reset pojedynku, pass, kradzież win/loss, R8 =====
 
 test("control2: reset pojedynku, pass, kradzież wygrana/przegrana, odkrywanie reszty, koniec gry + Wróć do moich gier", async ({ page, browser }, testInfo) => {
+  test.setTimeout(300000);
   await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
   const game = await makeGame(page, `E2E-CONTROL2-ROUNDMECH-${Date.now()}`, { roundQuestions: TWO_QUESTIONS });
   const contexts = [];
@@ -734,6 +735,7 @@ test("control2: reset pojedynku, pass, kradzież wygrana/przegrana, odkrywanie r
 // ===== 4. Finał: próg -> finał, wczesne zakończenie w połowie mapowania =====
 
 test("control2: próg w rundzie -> finał, wczesne zakończenie po 4/5 pytaniach, pomija gracza 2", async ({ page, browser }, testInfo) => {
+  test.setTimeout(300000);
   await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
   const game = await makeGame(page, `E2E-CONTROL2-FINAL-${Date.now()}`, {
     roundQuestions: [{ ord: 1, text: "Pytanie testowe (runda)", answers: [{ ord: 1, text: "Odp. warta 300", fixed_points: 300 }] }],

@@ -799,7 +799,7 @@ function wireEvents() {
   // Nav
   els.btnGoGames?.addEventListener("click", () => {
     if (handleSheetBack()) return;
-    window.location.href = withLangParam(!currentUser ? "/" : "games");
+    window.location.href = withLangParam(!currentUser ? "/" : "/games/");
   });
   els.btnManual?.addEventListener("click", () => {
     const url = new URL("/manual/", location.href);

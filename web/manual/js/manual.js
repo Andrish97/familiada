@@ -104,8 +104,7 @@ function normalizeRetTarget(rawRet) {
   try {
     const target = new URL(trimmed, location.origin + "/");
     if (target.origin !== location.origin) return fallback;
-    const rel = `${target.pathname.replace(/^\/+/, "")}${target.search}${target.hash}`;
-    return withLangParam(rel || "games");
+    return withLangParam(target.href);
   } catch {
     return fallback;
   }
@@ -152,7 +151,7 @@ function buildPrivacyUrl() {
   const p = new URLSearchParams(location.search);
   if (p.get("modal")) url.searchParams.set("modal", p.get("modal"));
   url.searchParams.set("lang", new URLSearchParams(location.search).get("lang") || localStorage.getItem("uiLang") || "pl");
-  const manualPath = `${location.pathname.split("/").pop() || "manual"}${location.search}${location.hash}`;
+  const manualPath = `${location.pathname}${location.search}${location.hash}`;
   url.searchParams.set("man", manualPath);
   return url.toString();
 }

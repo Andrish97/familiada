@@ -104,7 +104,7 @@ function redoAction() {
   if (window._textCloseRerenderAll) window._textCloseRerenderAll();
 }
 
-const backTarget = withLangParam(ret || "games");
+const backTarget = withLangParam(new URL(ret || "/games/", location.origin + "/").href);
 
 
 function getRetPathnameLower() {
@@ -118,7 +118,7 @@ function getRetPathnameLower() {
 
 function buildManualUrl() {
   const url = new URL("/manual/", location.href);
-  const current = `${location.pathname.split("/").pop() || "polls"}${location.search}${location.hash}`;
+  const current = `${location.pathname}${location.search}${location.hash}`;
   url.searchParams.set("ret", current);
   const lang = (new URLSearchParams(location.search).get("lang") || localStorage.getItem("uiLang") || "pl");
   url.searchParams.set("lang", lang);

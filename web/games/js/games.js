@@ -1386,7 +1386,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   // btnManual
   btnManual?.addEventListener("click", async () => {
     const url = new URL("/manual/", location.href);
-    const ret = `${location.pathname.split("/").pop() || ""}${location.search}${location.hash}`;
+    const ret = `${location.pathname}${location.search}${location.hash}`;
     url.searchParams.set("ret", ret);
     url.hash = "general";
     location.href = url.toString();

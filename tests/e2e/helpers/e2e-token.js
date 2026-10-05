@@ -14,7 +14,9 @@ function generateE2EToken(secret) {
   if (!secret) {
     throw new Error("generateE2EToken: brak sekretu (E2E_BYPASS_SECRET)");
   }
-  const payload = { iat: Date.now(), nonce: crypto.randomUUID() };
+  // Leave one second for clock differences between CI and the Worker.
+  // The signature, nonce and five-minute server TTL remain unchanged.
+  const payload = { iat: Date.now() - 1000, nonce: crypto.randomUUID() };
   const payloadB64 = Buffer.from(JSON.stringify(payload)).toString("base64");
   const sig = crypto.createHmac("sha256", secret).update(payloadB64).digest("hex");
   return `${payloadB64}.${sig}`;

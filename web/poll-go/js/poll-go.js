@@ -118,7 +118,7 @@ function redirectToLogin() {
 }
 
 function redirectToHub() {
-  const hubPage = taskToken ? "polls-hub" : "subscriptions";
+  const hubPage = taskToken ? "/polls-hub/" : "/subscriptions/";
   const url = new URL(hubPage, location.href);
   if (taskToken) url.searchParams.set("t", taskToken);
   if (subToken) url.searchParams.set("s", subToken);
@@ -209,7 +209,7 @@ function openVote(type) {
     console.error("[poll-go] goToken missing in openVote");
     return;
   }
-  const page = type === "poll_points" ? "poll-points" : "poll-text";
+  const page = type === "poll_points" ? "/poll-points/" : "/poll-text/";
   location.href = `${page}?t=${encodeURIComponent(goToken)}`;
 }
 

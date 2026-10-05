@@ -53,7 +53,7 @@ function setStatus(m = "") { if (status) status.textContent = m; }
 
 function buildManualUrl() {
   const url = new URL("/manual/", location.href);
-  const ret = `${location.pathname.split("/").pop() || "account"}${location.search}${location.hash}`;
+  const ret = `${location.pathname}${location.search}${location.hash}`;
   url.searchParams.set("ret", ret);
   url.searchParams.set("lang", getUiLang() || "pl");
   url.hash = "general";

@@ -52,7 +52,7 @@ function getRetPathnameLower() {
 }
 
 function getCurrentRelativeUrl() {
-  return `${location.pathname.split("/").pop() || "subscriptions"}${location.search}${location.hash}`;
+  return `${location.pathname}${location.search}${location.hash}`;
 }
 
 const who = $("who");

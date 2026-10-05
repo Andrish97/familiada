@@ -877,8 +877,8 @@ async function sendZeroStatesToDevices() {
   const btnLegalClose = document.getElementById("btnLegalClose");
   
   function buildHelpUrl() {
-    const url = new URL("../manual", location.href);
-    const ret = `${location.pathname.split("/").slice(-2).join("/")}${location.search}${location.hash}`;
+    const url = new URL("/manual/", location.href);
+    const ret = `${location.pathname}${location.search}${location.hash}`;
     url.searchParams.set("ret", ret);
     url.searchParams.set("modal", "control");
     url.searchParams.set("lang", getUiLang() || "pl");
@@ -888,8 +888,8 @@ async function sendZeroStatesToDevices() {
   }
 
   function buildLegalUrl() {
-    const url = new URL("../privacy", location.href);
-    const ret = `${location.pathname.split("/").slice(-2).join("/")}${location.search}${location.hash}`;
+    const url = new URL("/privacy/", location.href);
+    const ret = `${location.pathname}${location.search}${location.hash}`;
     url.searchParams.set("ret", ret);
     url.searchParams.set("modal", "control");
     url.searchParams.set("lang", getUiLang() || "pl");
@@ -971,7 +971,7 @@ async function sendZeroStatesToDevices() {
     await shareDevice.expireShares();
     await expireConnectCodes();
     suppressUnloadWarn = true;
-    location.href = "../games";
+    location.href = "/games/";
   });
   
   ui.on("top.manual", () => {

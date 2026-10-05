@@ -41,7 +41,7 @@ function getRetPathnameLower() {
 }
 
 function getCurrentRelativeUrl() {
-  return `${location.pathname.split("/").pop() || "polls-hub"}${location.search}${location.hash}`;
+  return `${location.pathname}${location.search}${location.hash}`;
 }
 
 const who = $("who");
@@ -514,7 +514,7 @@ function renderTasks() {
           await alertModal({ text: MSG.loadHubFail() });
           return;
         }
-        const page = task.poll_type === "poll_points" ? "poll-points" : "poll-text";
+        const page = task.poll_type === "poll_points" ? "/poll-points/" : "/poll-text/";
         location.href = `${page}?t=${encodeURIComponent(task.token)}&lang=${encodeURIComponent(getUiLang() || "pl")}`;
       });
       listEl.appendChild(item);
@@ -1106,7 +1106,7 @@ async function refreshData() {
       if (found) {
         const ok = await confirmModal({ text: MSG.focusTaskPrompt() });
         if (ok) {
-          const page = found.poll_type === "poll_points" ? "poll-points" : "poll-text";
+          const page = found.poll_type === "poll_points" ? "/poll-points/" : "/poll-text/";
           location.href = `${page}?t=${encodeURIComponent(focusTaskToken)}&lang=${encodeURIComponent(getUiLang() || "pl")}`;
         }
       }
@@ -1152,7 +1152,7 @@ function updateBackButtonLabel() {
 
 function getBackLink() {
   const rawRet = getRetParam();
-  return rawRet || "games";
+  return new URL(rawRet || "/games/", location.origin + "/").href;
 }
 
 document.addEventListener("DOMContentLoaded", async () => {

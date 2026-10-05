@@ -4606,7 +4606,7 @@ export function wireActions({ state }) {
       const gameId = res.result?.gameId;
 
       // (opcjonalnie) nawigacja do strony gier:
-      location.href = `../games`;
+      location.href = `/games/`;
 
       return true;
     } catch (e) {

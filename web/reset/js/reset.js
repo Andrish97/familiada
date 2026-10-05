@@ -68,7 +68,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   initPasswordToggles();
   if (pwdHint) pwdHint.textContent = getPasswordRulesText();
   setErr("");
-  if (back) back.href = withLangParam(back.dataset.baseHref || "login");
+  if (back) back.href = withLangParam(back.dataset.baseHref || "/login/");
   const syncLanguage = () => updateUserLanguage(getUiLang());
   window.addEventListener("i18n:lang", syncLanguage);
 

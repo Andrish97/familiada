@@ -1637,7 +1637,7 @@ async function main() {
   document.querySelector('.topbar')?.classList.add('topbar-ready');
 
   if (!gameId) {
-    location.href = "/my-games";
+    location.href = "/games/";
     return;
   }
 

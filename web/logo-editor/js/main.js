@@ -715,7 +715,7 @@ async function exportSelected() {
 ========================================================= */
 function pageUrl(path, params, hash) {
   const url = new URL(path, location.href);
-  url.searchParams.set("ret", `${location.pathname.split("/").slice(-2).join("/")}${location.search}${location.hash}`);
+  url.searchParams.set("ret", `${location.pathname}${location.search}${location.hash}`);
   url.searchParams.set("lang", getUiLang() || "pl");
   for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v);
   url.hash = hash;
@@ -747,12 +747,12 @@ function bindUi() {
   el.btnBack.dataset.sheetBack = "1"; // znacznik dla contact-modal.js (patrz js/pages/bases.js)
   el.btnBack.addEventListener("click", () => {
     if (handleSheetBack()) return;
-    location.href = withLangParam("../games");
+    location.href = withLangParam("/games/");
   });
   el.btnCloseEditor.addEventListener("click", () => void closeEditor());
   el.btnManual.addEventListener("click", () => {
     if (editorMode) openHelp();
-    else location.href = pageUrl("../manual", {}, "logo");
+    else location.href = pageUrl("/manual/", {}, "logo");
   });
 
   const closeHelp = () => el.helpOverlay.classList.add("hidden");
@@ -827,7 +827,7 @@ async function boot() {
   await initI18n({ withSwitcher: true });
   document.documentElement.classList.remove("page-loading");
 
-  currentUser = await requireAuth(withLangParam("../login"));
+  currentUser = await requireAuth(withLangParam("/login/"));
   initTopbarAccountDropdown(currentUser, { accountHref: "../account", loginHref: "../login" });
   document.querySelector(".topbar")?.classList.add("topbar-ready");
 
