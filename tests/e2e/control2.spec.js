@@ -1203,7 +1203,7 @@ test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśni�
     await expect.poll(async () => {
       const calls = await getDisplayCalls(displayPage);
       return calls.some((c) => c.call === "api.indicator.set" && c.args[0] === "ON_A")
-        && calls.some((c) => c.call === "api.small.leftDigits" && c.args[0] === "15");
+        && calls.some((c) => c.call === "api.small.rightDigits" && c.args[0] === "15");
     }, { timeout: 10000 }).toBe(true);
     await expect(hostPage.locator("#cover2")).toHaveClass(/coverOn/, { timeout: 10000 });
 
@@ -1299,6 +1299,13 @@ test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśni�
     await expect(hostPage.locator("#cover2")).toHaveClass(/coverOn/, { timeout: 10000 });
 
     const p2Inputs = page.locator("#app input[type=text]");
+    const repeatFirst = page.locator(".c2-entryrow .c2-btn-repeat").first();
+    await expect(repeatFirst).toHaveClass(/\bon\b/);
+    await p2Inputs.nth(0).focus();
+    await expect(repeatFirst).toHaveClass(/\bon\b/);
+    await p2Inputs.nth(0).fill("Inna odpowiedź");
+    await expect(repeatFirst).not.toHaveClass(/\bon\b/);
+    await armAndConfirm(page.getByRole("button", { name: "Powtórzenie" }).first());
     for (let i = 1; i < 5; i++) await p2Inputs.nth(i).fill("Odp. finałowa");
     // Start/stop zegarka to zaznacz->potwierdź (patrz wyżej).
     await armAndConfirm(page.getByRole("button", { name: "Rozpocznij odliczanie (20s)" }));
@@ -1343,7 +1350,7 @@ test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśni�
     await expect.poll(async () => (await getDisplayCalls(displayPage, "api.win.set")).at(-1)?.args[0], { timeout: 15000 }).toBe(1305);
     await expect.poll(async () => {
       const calls = await getDisplayCalls(displayPage, "api.indicator.set");
-      return calls.at(-1)?.args[0] === "A";
+      return calls.at(-1)?.args[0] === "ON_A";
     }, { timeout: 10000 }).toBe(true);
 
     expect(errors, "żadne z urządzeń nie powinno rzucić błędu JS: " + errors.join(" | ")).toEqual([]);
@@ -2235,6 +2242,7 @@ test("control2: zerwanie połączenia wszystkich trzech urządzeń naraz i ponow
     await expect(page.locator(".c2-gameplay .msg-pill")).toHaveCount(0);
     await expect(page.locator("#deviceLostOverlay")).toBeVisible();
     await expect(page.locator("#deviceLostText")).toContainText("Wyświetlacz");
+    await expect(page.locator("#deviceLostClose")).toHaveText("OK");
     await page.locator("#deviceLostClose").click();
     const revBefore = await page.evaluate(async (id) => (await window.__sbClient.from("game_state").select("rev").eq("game_id", id).single()).data.rev, game.id);
     await answerTile(page, 2).evaluate((button) => button.click());
@@ -2501,14 +2509,13 @@ test("control2: koniec gry bez finału w trybie \"punkty\" — Wyświetlacz poka
     await page.getByRole("button", { name: /^(Zakończ rundę|Przejdź do zakończenia gry)$/ }).click();
     await expect(page.locator(".c2-stepper")).toContainText("Koniec gry", { timeout: 22000 });
 
+    await expect.poll(async () => (await getDisplayCalls(displayPage, "api.win.set")).at(-1)?.args?.[0]).toBe(90);
     await clearDisplayLog(displayPage);
     await page.getByRole("button", { name: "Zakończ grę" }).click();
     await expect(page.getByText("Wygrała drużyna Alfa wynikiem 90:0")).toBeVisible({ timeout: 10000 });
 
-    await expect.poll(async () => {
-      const calls = await getDisplayCalls(displayPage, "api.win.set");
-      return calls.at(-1)?.args?.[0];
-    }, { timeout: 30000, message: "Wyświetlacz powinien pokazać WIN 90, nie logo" }).toBe(90);
+    // Outro does not repeat the result animation.
+    expect(await getDisplayCalls(displayPage, "api.win.set")).toEqual([]);
     // Logo NIE powinno się pojawić w tej ścieżce (endScreenMode="points",
     // bez remisu) -- dowód, że to rozróżnienie faktycznie działa, nie
     // tylko że WIN czasem leci.
