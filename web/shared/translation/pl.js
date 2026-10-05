@@ -4890,6 +4890,16 @@ const pl = {
     footerRight: "Jeśli to błąd — <a href=\"mailto:kontakt@familiada.online\">kontakt@familiada.online</a>",
   },
   connectDevice: {
+    tv: {
+      pageTitle: "Familiada — Podłącz wyświetlacz",
+      title: "Podłącz wyświetlacz",
+      codeLabel: "Wpisz kod z panelu sterowania",
+      invalidFormat: "Wpisz 6-cyfrowy kod Wyświetlacza lub ekranu QR ankiety.",
+      checking: "Sprawdzanie kodu…",
+      invalidCode: "Kod jest nieprawidłowy lub wygasł. Sprawdź kod w panelu sterowania.",
+      wrongDevice: "Ten kod nie jest kodem wyświetlacza. Wpisz kod Wyświetlacza z panelu sterowania lub ekranu QR z ankiety.",
+      networkError: "Nie udało się połączyć. Sprawdź połączenie internetowe i spróbuj ponownie.",
+    },
     title: "Familiada — podłącz urządzenie",
     topbar: { back: "Moje gry" },
     header: {

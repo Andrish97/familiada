@@ -76,6 +76,7 @@ export function createHostRenderer() {
   const p2Hint = $("p2Hint");
 
   let authoritativeCovered = false;
+  let enabled = true;
   let peeked = false;
   let timerHandle = null;
 
@@ -95,6 +96,11 @@ export function createHostRenderer() {
   // p2Hint (POZA zasłoną, widoczny tylko gdy odkryte — patrz css/host.css)
   // zawsze pokazuje jak zasłonić z powrotem.
   function updateSwipeHint() {
+    if (!enabled) {
+      if (cover2Swipe) cover2Swipe.textContent = "";
+      if (p2Hint) p2Hint.textContent = "";
+      return;
+    }
     const portrait = document.documentElement.classList.contains("portrait");
     const covered = authoritativeCovered && !peeked;
     const onCover = portrait
@@ -254,17 +260,19 @@ export function createHostRenderer() {
   }
 
   function render(row) {
-    authoritativeCovered = !!row.detail?.host?.covered;
+    enabled = !row.detail?.settings?.noHostTablet;
+    authoritativeCovered = enabled && !!row.detail?.host?.covered;
     peeked = false; // nowy stan resetuje podgląd
     stopTimerTick(); // nowy wiersz zastępuje ewentualny poprzedni tick jednorazowo w renderFinalEntry
-    if (row.top_card === "rounds") renderRounds(row);
+    if (row.detail?.settings?.noHostTablet) { setPane1(""); setPane2(""); }
+    else if (row.top_card === "rounds") renderRounds(row);
     else if (row.top_card === "final") renderFinal(row);
     else { setPane1(""); setPane2(""); }
     applyCover();
   }
 
   function setPeek(on) {
-    peeked = !!on;
+    peeked = enabled && !!on;
     applyCover();
   }
 

@@ -1,34 +1,67 @@
 import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-05T22313";
+import { initI18n, t, getUiLang } from "../../../shared/translation/translation.js?v=v2026-10-05T22313";
+await initI18n();
 const form = document.getElementById("tvConnectForm");
 const input = document.getElementById("tvCode");
 const button = document.getElementById("tvConnect");
 const message = document.getElementById("tvMessage");
 let pending = false;
+let messageKey = "";
+const langButton = document.querySelector(".lang-btn");
+const langMenu = document.querySelector(".lang-menu");
+function setMessage(key) { messageKey = key; message.textContent = key ? t(`connectDevice.tv.${key}`) : ""; }
+langButton?.addEventListener("click", () => {
+  if (langMenu && !langMenu.hidden) langMenu.querySelector(`[data-lang="${getUiLang()}"]`)?.focus();
+});
+window.addEventListener("i18n:lang", () => { setMessage(messageKey); langButton?.focus(); });
 input.focus();
 input.addEventListener("input", () => { input.value = input.value.replace(/\D/g, "").slice(0, 6); });
 document.addEventListener("keydown", (event) => {
-  if (event.key === "ArrowDown") { event.preventDefault(); button.focus(); }
-  if (event.key === "ArrowUp") { event.preventDefault(); input.focus(); }
+  const active = document.activeElement;
+  if (langMenu && !langMenu.hidden && langMenu.contains(active)) {
+    const options = [...langMenu.querySelectorAll(".lang-option")];
+    if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+      event.preventDefault();
+      const direction = event.key === "ArrowDown" ? 1 : -1;
+      options[(options.indexOf(active) + direction + options.length) % options.length]?.focus();
+      return;
+    }
+    if (["Escape", "BrowserBack", "Backspace"].includes(event.key)) {
+      event.preventDefault(); langMenu.hidden = true; langButton?.focus(); return;
+    }
+  } else if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+    event.preventDefault();
+    const controls = [langButton, input, button].filter(node => node && !node.disabled);
+    const direction = event.key === "ArrowDown" ? 1 : -1;
+    controls[(controls.indexOf(active) + direction + controls.length) % controls.length]?.focus();
+    return;
+  }
+  if (event.key === "Select" || event.keyCode === 23) {
+    event.preventDefault();
+    if (active?.tagName === "BUTTON") active.click();
+    else if (active === input) form.requestSubmit();
+  }
 });
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
   if (pending) return;
   const code = input.value.trim();
-  if (!/^\d{6}$/.test(code)) { message.textContent = "Wpisz 6-cyfrowy kod Wyświetlacza lub ekranu QR ankiety."; input.focus(); return; }
+  if (!/^\d{6}$/.test(code)) { setMessage("invalidFormat"); input.focus(); return; }
   pending = true;
   button.disabled = true;
-  message.textContent = "Sprawdzanie kodu…";
+  setMessage("checking");
   try {
     const { data, error } = await sb().rpc("resolve_device_connect_code", { p_code: code });
-    if (error || !data?.ok) { message.textContent = "Kod jest nieprawidłowy lub wygasł. Sprawdź kod w panelu sterowania."; return; }
-    if (!["display", "poll_qr"].includes(data.device_type)) { message.textContent = "Ten kod nie jest kodem wyświetlacza. Wpisz kod Wyświetlacza z panelu sterowania lub ekranu QR z ankiety."; return; }
+    if (error || !data?.ok) { setMessage("invalidCode"); return; }
+    if (!["display", "poll_qr"].includes(data.device_type)) { setMessage("wrongDevice"); return; }
     if (!data.game_id || !data.share_key) throw new Error("missing display credentials");
     const target = new URL(data.device_type === "poll_qr" ? "/poll-qr/" : "/display/", location.origin);
     target.searchParams.set("id", data.game_id);
     target.searchParams.set("key", data.share_key);
+    target.searchParams.set("lang", getUiLang());
     location.replace(target.href);
   } catch {
-    message.textContent = "Nie udało się połączyć. Sprawdź połączenie internetowe i spróbuj ponownie.";
+    setMessage("networkError");
   } finally {
     pending = false;
     button.disabled = false;

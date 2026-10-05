@@ -4531,6 +4531,16 @@ const en = {
     footerRight: "If this is a mistake, <a href=\"mailto:kontakt@familiada.online\">kontakt@familiada.online</a>",
   },
   connectDevice: {
+    tv: {
+      pageTitle: "Familiada — Connect display",
+      title: "Connect display",
+      codeLabel: "Enter the code from the control panel",
+      invalidFormat: "Enter the 6-digit code for a Display or a poll QR screen.",
+      checking: "Checking code…",
+      invalidCode: "The code is invalid or has expired. Check the code in the control panel.",
+      wrongDevice: "This is not a display code. Enter the Display code from the control panel or the QR screen code from a poll.",
+      networkError: "Could not connect. Check your internet connection and try again.",
+    },
     title: "Familiada — connect a device",
     topbar: { back: "My games" },
     header: {

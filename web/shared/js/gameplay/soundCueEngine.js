@@ -49,6 +49,7 @@ export function createSoundCueEngine({ playSfx, getSfxDuration, stopSfx = () => 
       if (event.key === "round_transition") synced("round_transition", "reveal", token);
       else if (event.key === "show_intro") synced("show_intro", "reveal", token);
       else if (event.key === "final_theme" && previous.step === "f_start" && next.step === "f_p1_entry") startFinal(token);
+      else if (event.key === "final_theme" && next.step === "f_end") synced("final_theme", "reveal", token);
       else if (event.key === "final_end") play("show_outro", token);
       else play(event.key, token);
     }

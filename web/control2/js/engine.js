@@ -535,6 +535,8 @@ const REDUCERS = {
   // ---- F1/F8: wpisywanie odpowiedzi + flaga powtórzenia ----
   async SET_ENTRY_TEXT(state, action) {
     const key = entryKey(action.round);
+    const mapping = state.final.runtime[mapKey(action.round)][action.idx];
+    if (mapping.revealedAnswer) return null;
     const prev = state.final.runtime[key][action.idx] || {};
     // control/js/gameFinal.js: wpisanie nowego tekstu gasi "powtórzenie" —
     // repeat włącza się wyłącznie przyciskiem, ale gaśnie jako efekt uboczny
@@ -544,13 +546,15 @@ const REDUCERS = {
       next.repeat = false;
       state.final.runtime.map2[action.idx] = emptyMapRows()[0];
     }
+    if (action.text !== prev.text) state.final.runtime[mapKey(action.round)][action.idx] = emptyMapRows()[0];
     state.final.runtime[key][action.idx] = next;
     return sameStep(state);
   },
 
   async SET_REPEAT(state, action) {
-    if (action.round !== 2) return null;
+    if (action.round !== 2 || state.final.runtime.map2[action.idx].revealedAnswer) return null;
     const prevEntry = state.final.runtime.p2[action.idx] || {};
+    if (action.repeat && (prevEntry.text || "").trim()) return null;
     state.final.runtime.p2[action.idx] = { ...prevEntry, repeat: !!action.repeat };
     // Zgłoszone: zdjęcie flagi ma TYLKO zdjąć flagę -- jeśli operator
     // zaznaczył "powtórzenie" przez pomyłkę (lub zmienił zdanie, a na
@@ -568,7 +572,7 @@ const REDUCERS = {
     } else if (prevEntry.repeat) {
       state.final.runtime.map2[action.idx] = emptyMapRows()[0];
     }
-    return { ...sameStep(state), soundCueKey: action.repeat ? "answer_repeat" : undefined };
+    return { ...sameStep(state), soundCueKey: action.repeat && state.step === "f_p2_entry" ? "answer_repeat" : undefined };
   },
 
   // control/js/gameFinal.js's p1StartTimer()/p2StartTimer(): timer gracza to
@@ -629,6 +633,9 @@ const REDUCERS = {
   // ---- F2-F6/F9-F13: rozstrzygnięcie dopasowania + dwuetapowe odsłonięcie ----
   async RESOLVE_MAPPING(state, action) {
     const row = state.final.runtime[mapKey(action.round)][action.idx];
+    if (row.revealedAnswer) return null;
+    const hasText = (state.final.runtime[entryKey(action.round)][action.idx]?.text || "").trim().length > 0;
+    if ((action.kind === "SKIP" && hasText) || (["MATCH", "MISS"].includes(action.kind) && !hasText)) return null;
     if (action.mode) row.mode = action.mode;
     if (action.kind) row.kind = action.kind;
     if (action.matchId !== undefined) row.matchId = action.matchId;

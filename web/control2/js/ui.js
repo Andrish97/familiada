@@ -1256,7 +1256,7 @@ export function createUI({ root, emit }) {
         }
         // Shift+Enter w pustym polu (tylko runda 2) — przełącza "Powtórzenie",
         // dokładnie jak stare control/js/gameFinal.js's renderP2Entry.
-        if (round === 2 && e.key === "Enter" && e.shiftKey) {
+        if (round === 2 && e.key === "Enter" && e.shiftKey && !inp.value.trim()) {
           e.preventDefault();
           emit("game.dispatch", { type: "SET_REPEAT", round: 2, idx: i, repeat: !row.repeat });
           root.querySelector(`.c2-entryrow[data-i="${i + 1}"] input`)?.focus();
@@ -1280,6 +1280,7 @@ export function createUI({ root, emit }) {
       ];
       if (round === 2) {
         const repeat = row.repeat === true;
+        const repeatBlocked = boardBusy() || !!(row.text || "").trim();
         // boardBusy() -- SAME gap i naprawa co pole input wyżej: SET_REPEAT
         // to też pełny zapis detail, podlega temu samemu serwerowemu
         // locked_until co przejście "Start rundy 2" (gate =
@@ -1298,10 +1299,10 @@ export function createUI({ root, emit }) {
         // Skrót Shift+Enter (niżej) zostaje jednoklikowy w obie strony --
         // złożony gest, mało przypadkowy, w odróżnieniu od kliknięcia myszą.
         const repeatArmKey = `repeat:${i}`;
-        const repeatArmed = !boardBusy() && !repeat && armedKey === repeatArmKey;
+        const repeatArmed = !repeatBlocked && !repeat && armedKey === repeatArmKey;
         const repeatBtn = h("button", {
           class: `c2-btn-repeat ${repeat ? "on" : ""} ${repeatArmed ? "c2-tile-armed" : ""}`.trim(), type: "button",
-          onclick: boardBusy() ? undefined : (e) => {
+          onclick: repeatBlocked ? undefined : (e) => {
             if (repeat) {
               armedKey = null;
               emit("game.dispatch", { type: "SET_REPEAT", round: 2, idx: i, repeat: false });
@@ -1317,7 +1318,7 @@ export function createUI({ root, emit }) {
           },
         }, []);
         repeatBtn.innerHTML = repeat ? iconText("check", t("control.finalUi.p2RepeatOn")) : t("control.finalUi.p2RepeatOff");
-        if (boardBusy()) repeatBtn.disabled = true;
+        if (repeatBlocked) repeatBtn.disabled = true;
         cells.push(repeatBtn);
       }
       rows.push(h("div", { class: `c2-entryrow ${round === 2 ? "p2" : "p1"}`, "data-i": String(i) }, cells));
@@ -1548,7 +1549,7 @@ export function createUI({ root, emit }) {
         key: `map-repeat:${round}:${idx}`,
         text: t("control.finalUi.p2RepeatOff"),
         active: p2IsRepeat,
-        disabled: locked || revealLocked(),
+        disabled: locked || hasTyped || revealLocked(),
         danger: true,
         onclick: () => {
           if (locked || revealLocked() || f.runtime.p2[idx]?.repeat === true) return;

@@ -195,3 +195,13 @@ test("restart cancels sounds waiting for the end of the final theme", async () =
   await new Promise(resolve => setTimeout(resolve, 120));
   assert.deepEqual(played, ["final_theme"]);
 });
+
+
+test("wynik finału: dłuższy reveal zaczyna pierwszy, muzyka kończy się razem z nim", async () => {
+  const { engine, played } = makeEngine({ final_theme: 0.02, reveal: 0.08 });
+  engine.handleTransition(row({ step: "f_p2_map_q5" }), row({ step: "f_end", sound_cue_seq: 1, sound_cue_key: "final_theme" }));
+  await flush();
+  assert.deepEqual(played, ["reveal"]);
+  await new Promise(resolve => setTimeout(resolve, 80));
+  assert.deepEqual(played, ["reveal", "final_theme"]);
+});

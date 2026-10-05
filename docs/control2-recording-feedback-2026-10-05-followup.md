@@ -21,7 +21,7 @@ Punkt oznaczamy jako wykonany po poprawieniu i sprawdzeniu zachowania. Zmiana w 
 - [ ] 13. Suma finału jest stale pokazywana w banku na górze planszy, także przy przejściach i po ponownym podłączeniu.
 - [ ] 14. Od rozpoczęcia finału znika wynik drużyny przeciwnej. W jego miejscu pojawia się odliczanie; po zatrzymaniu lub wygaśnięciu zegara pozostaje puste miejsce. Wynik zwycięskiej drużyny pozostaje widoczny.
 - [ ] 15. Między graczami finału pozostaje dźwięk przejścia rundy. Nie odtwarzać muzyki finału w tym przejściu.
-- [ ] 16. „Zakończ finał” pokazuje logo, punkty albo kwotę z samą muzyką finału, bez przejścia rundy. „Zakończ grę” odtwarza tylko outro.
+- [ ] 16. „Zakończ finał” pokazuje logo, punkty albo kwotę z muzyką finału i reveal zsynchronizowanymi na koniec, bez przejścia rundy. „Zakończ grę” odtwarza tylko outro.
 - [ ] 17. Przy końcu gry bez finału (ustawienie bez finału, osiągnięcie progu lub wyczerpanie pytań) nie odsłaniać pozostałych odpowiedzi. Zablokować dalszą rozgrywkę; „Przejdź do zakończenia gry” gra przejście rundy z reveal i pokazuje wynik. Następne „Zakończ grę” odtwarza tylko outro.
 - [ ] 18. Podpowiedź „Wybierz subskrybenta…” umieścić pod listą „Aktualnie udostępnione dla”.
 - [ ] 19. Usunąć znikanie i ponowne pojawianie się listy „Aktualnie udostępnione dla”; ustalić przyczynę przebudowy lub warunkowego ukrywania.
@@ -73,3 +73,29 @@ Przygotowana poprawka nagrywania: kolejka obrazu 128 pakietów zamiast 8, osobna
 Końcowy wybrany zestaw lokalny: 114 testów zaliczonych, zero niezaliczonych. Oddzielna kontrola MD/HTML potwierdziła zachowanie sekcji Ankiety bez zmian i usunięcie roboczych adnotacji.
 
 Przebieg bez nagrywania 37380767772 również zakończony poprawnie. Porównanie tej samej wersji i scenariusza: z filmem p95=16,7 ms, maksimum=33,4 ms; bez filmu p95=16,8 ms, maksimum=33,3 ms. W obu zero przerw ponad 50 ms i dwa długie zadania. Nagrywanie nie pogorszyło istotnie pomiaru klatek przeglądarki; powielanie klatek następuje w przechwytywaniu/zapisie. Poprawkę nagrywania sprawdzamy przed pełnym kolejnym cyklem.
+
+Stan po publikacji: poprawki punktów 01–19 i 21 wdrożone przez Pages 37383003127 (sukces). Checkboxy działania pozostają otwarte do zakończenia weryfikacji produkcyjnej. Testy produkcyjne: 37383587398 (in_progress). Pierwsze uruchomienie 37383354283 zatrzymał błędnie przekazany filtr powłoki, przed właściwą weryfikacją; filtr poprawiono. Nowe filmy po poprawkach jeszcze niegotowe.
+
+## Dodatkowa uwaga TV — 2026-10-06
+
+- [ ] 22. Zastąpić obrazkowe logo tekstowym „FAMILIADA” w górnym pasku, jak na pozostałych stronach. Usunąć gradient strony: jednolite tło `#050914`. Pole kodu i złoty przycisk mają korzystać ze stylów systemu; zaznaczenie pola bez grubej obwódki. Zachować wygodne rozmiary i obsługę pilota.
+
+Pierwszy film po naprawie zapisu (37383797709) jest gotowy: 60 klatek/s, 17474 klatki, 122 powielone i 120 odrzuconych (około 0,7% każde), zamiast około 76% powielonych. Zmiana istotnie poprawiła przechwytywanie; pełny cykl nagrań pozostaje do wykonania.
+
+- [ ] 23. Dodać zmianę języka w górnym pasku TV: Polski, English i Українська. Przetłumaczyć formularz, tytuł i wszystkie komunikaty; zachować wybór po odświeżeniu i przekazać język do otwieranego ekranu. Obsłużyć menu pilotem.
+
+## Doprecyzowania — urządzenia i finał
+
+- Wyłączenie Prowadzącego ma czyścić jego otwarty ekran i zatrzymywać lokalny zegar; gest odsłaniania nie może pokazać poprzedniego przebiegu. Nieaktywne urządzenie nie jest wymagane przez blokadę połączenia.
+- Wyłączony Przycisk pozostaje nieaktywny. Baza również odrzuca naciśnięcie, żeby wcześniejsza otwarta strona nie mogła zmienić gry (migracja 299).
+- Powtórzenie przy mapowaniu to znacznik braku odpowiedzi: bez osobnego dźwięku przy zaznaczeniu, przy odsłonięciu automatyczne zero i dźwięk błędnej odpowiedzi. Znacznik pozostaje widoczny operatorowi i Prowadzącemu.
+- Przed odsłonięciem można zmienić każdą odpowiedź i jej przyporządkowanie: usunąć tekst, po usunięciu tekstu wybrać brak odpowiedzi lub powtórzenie albo uzupełnić brakującą odpowiedź. Zmiana tekstu unieważnia poprzedni wybór. Edycja jest możliwa przed rozpoczęciem zegara i po upływie czasu; istniejące blokady połączenia/przejść pozostają. Po odsłonięciu odpowiedź jest zamrożona.
+- Wynik finału (logo/punkty/kwota) odsłania się podczas reveal. Reveal i muzyka finału kończą się razem; dłuższy dźwięk zaczyna pierwszy. Outro pozostaje osobną akcją.
+
+Weryfikacja poprzedniego wdrożenia: produkcja 37383587398 — 7 przypadków zaliczonych, 1 niezaliczony (restart podczas intro; trwa sprawdzenie przyczyny). Pełny cykl nowych filmów nadal nieukończony.
+
+Doprecyzowanie dostępności: tekst w polu blokuje brak odpowiedzi i powtórzenie; puste pole udostępnia tylko brak odpowiedzi oraz powtórzenie (gracz 2). Reguła obowiązuje w panelu i w silniku, także dla skrótów klawiaturowych.
+
+Restart: ustalona przyczyna produkcyjnego błędu — opóźnione odczytanie długości intro ustawiało blokadę ponownie po jej zdjęciu przez restart. Stare przejścia i potwierdzenia blokady sprawdzają teraz generację przebiegu; po restarcie są ignorowane. Wybrane testy doprecyzowań: 78/78 zaliczonych. Zmiany oczekują na publikację i test produkcyjny.
+
+Końcowy wybrany zestaw po doprecyzowaniach i korekcie restartu: 123/123 zaliczonych; pełnego zestawu nie uruchamiano.

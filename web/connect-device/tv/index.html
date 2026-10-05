@@ -5,19 +5,23 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex">
-  <title>Familiada — Podłącz wyświetlacz</title>
+  <title data-i18n="connectDevice.tv.pageTitle">Familiada — Podłącz wyświetlacz</title>
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-05T22313">
   <link rel="stylesheet" href="/connect-device/tv/css/tv.css?v=v2026-10-05T22313">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
   <script type="module" src="/connect-device/tv/js/tv.js?v=v2026-10-05T22313"></script>
 </head>
-<body>
+<body class="tv-body">
+  <header class="topbar tv-topbar">
+    <div class="brand">FAMILIADA</div>
+    <div class="topbar-section topbar-section-3 tv-language"></div>
+  </header>
   <main>
-    <img class="tv-logo" src="/assets/img/logo.svg?v=v2026-10-05T22313" alt="Familiada" width="420" height="180">
-    <h1>Podłącz wyświetlacz</h1>
+    <h1 data-i18n="connectDevice.tv.title">Podłącz wyświetlacz</h1>
     <form id="tvConnectForm" novalidate>
-      <label for="tvCode">Wpisz kod z panelu sterowania</label>
-      <input id="tvCode" type="text" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="off" autofocus required aria-describedby="tvMessage">
-      <button id="tvConnect" type="submit">Podłącz</button>
+      <label for="tvCode" data-i18n="connectDevice.tv.codeLabel">Wpisz kod z panelu sterowania</label>
+      <input class="inp tv-code" id="tvCode" type="text" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="off" autofocus required aria-describedby="tvMessage">
+      <button class="btn gold tv-connect" id="tvConnect" type="submit" data-i18n="connectDevice.enterCode.btn">Podłącz</button>
       <p id="tvMessage" role="status" aria-live="polite"></p>
     </form>
   </main>

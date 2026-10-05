@@ -70,7 +70,7 @@ test("control2: TV odrzuca inne urządzenia, kod display otwiera stary Wyświetl
   test.setTimeout(120000);
   await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
   const game = await makeGame(page, `E2E-TV-${Date.now()}`, { roundQuestions: [TWO_QUESTIONS[0]] });
-  const context = await browser.newContext({ userAgent: "Mozilla/5.0 (SMART-TV; LINUX; Tizen 6.0) TV Safari/537.36" });
+  const context = await browser.newContext({ locale: "pl-PL", userAgent: "Mozilla/5.0 (SMART-TV; LINUX; Tizen 6.0) TV Safari/537.36" });
   try {
     const codes = await page.evaluate(async (game) => {
       const result = {};
@@ -912,6 +912,8 @@ test("control2: physicalBuzzer + noHostTablet — urządzenia pominięte, ręczn
     // (host+buzzer pominięte) trzeba go realnie podłączyć, inaczej "Dalej"
     // zostaje trwale zablokowane.
     await openAnon(browser, contexts, `/display2?id=${game.id}&key=${game.share_key_display}`, "display", []);
+    const hostPage = await openAnon(browser, contexts, `/host2?id=${game.id}&key=${game.share_key_host}`, "host", []);
+    const buzzerPage = await openAnon(browser, contexts, `/buzzer2?id=${game.id}&key=${game.share_key_buzzer}`, "buzzer", []);
 
     await page.goto(`/control2?id=${game.id}`, { waitUntil: "domcontentloaded" });
     await expect(page.locator(".stepTitle")).toHaveText("Urządzenia", { timeout: 15000 });
@@ -959,6 +961,15 @@ test("control2: physicalBuzzer + noHostTablet — urządzenia pominięte, ręczn
     await page.getByRole("button", { name: "Gotowe — przejdź do rozgrywki" }).click();
     await page.getByRole("button", { name: "Rozpocznij grę" }).click();
     await page.getByRole("button", { name: "Rozpocznij rundę" }).click();
+    await expect(buzzerPage.locator("#offScreen")).toBeVisible();
+    await expect(buzzerPage.locator("#btnA")).toBeDisabled();
+    await expect(hostPage.locator("#paperText1")).toBeEmpty();
+    await expect(hostPage.locator("#paperText2")).toBeEmpty();
+    await expect.poll(async () => buzzerPage.evaluate(async ({ id, key }) => {
+      const { error } = await window.__sbClient.rpc("game_state_buzzer_press", { p_game_id: id, p_key: key, p_team: "A" });
+      return error?.message;
+    }, { id: game.id, key: game.share_key_buzzer }), { timeout: 30000 }).toBe("device_disabled");
+
     await expect(page.locator("#dotHostRow")).toHaveClass(/\bhidden\b/);
     await expect(page.locator("#dotBuzzerRow")).toHaveClass(/\bhidden\b/);
 
@@ -1305,6 +1316,8 @@ test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśni�
     await expect(repeatFirst).toHaveClass(/\bon\b/);
     await p2Inputs.nth(0).fill("Inna odpowiedź");
     await expect(repeatFirst).not.toHaveClass(/\bon\b/);
+    await expect(repeatFirst).toBeDisabled();
+    await p2Inputs.nth(0).fill("");
     await armAndConfirm(page.getByRole("button", { name: "Powtórzenie" }).first());
     for (let i = 1; i < 5; i++) await p2Inputs.nth(i).fill("Odp. finałowa");
     // Start/stop zegarka to zaznacz->potwierdź (patrz wyżej).

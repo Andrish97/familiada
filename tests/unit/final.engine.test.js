@@ -33,6 +33,7 @@ function makeEngine(settingsOverrides = {}, nowFn) {
 }
 
 async function matchAnswer(dispatch, round, idx, pts) {
+  await dispatch({ type: "SET_ENTRY_TEXT", round, idx, text: "Odpowiedź" });
   await dispatch({ type: "RESOLVE_MAPPING", round, idx, mode: "MANUAL", kind: "MATCH", outText: "Odpowiedź", pts });
   await dispatch({ type: "REVEAL_ANSWER_ONLY", round, idx });
   return dispatch({ type: "REVEAL_POINTS", round, idx });
@@ -61,7 +62,8 @@ test("SET_ENTRY_TEXT/SET_REPEAT: zapisują tekst gracza i flagę powtórzenia (t
   await dispatch({ type: "SET_ENTRY_TEXT", round: 1, idx: 0, text: "Mleko" });
   assert.equal(store.state.final.runtime.p1[0].text, "Mleko");
 
-  await dispatch({ type: "SET_ENTRY_TEXT", round: 2, idx: 0, text: "Mleko" });
+  await dispatch({ type: "SET_ENTRY_TEXT", round: 2, idx: 0, text: "" });
+  store.state.step = "f_p2_entry";
   await dispatch({ type: "SET_REPEAT", round: 2, idx: 0, repeat: true });
   assert.equal(store.state.final.runtime.p2[0].repeat, true);
   assert.equal(store.state.final.runtime.map2[0].kind, "SKIP", "powtórzenie wymuszone jako SKIP, nie osobny typ");
@@ -71,13 +73,13 @@ test("SET_ENTRY_TEXT/SET_REPEAT: zapisują tekst gracza i flagę powtórzenia (t
 test("SET_REPEAT: zdjęcie flagi usuwa wymuszone SKIP i zachowuje wpisany tekst", async () => {
   const { store, dispatch } = makeEngine();
   await dispatch({ type: "START_FINAL" });
-  await dispatch({ type: "SET_ENTRY_TEXT", round: 2, idx: 0, text: "Mleko" });
+  await dispatch({ type: "SET_ENTRY_TEXT", round: 2, idx: 0, text: "" });
   await dispatch({ type: "SET_REPEAT", round: 2, idx: 0, repeat: true });
   assert.equal(store.state.final.runtime.map2[0].kind, "SKIP");
 
   await dispatch({ type: "SET_REPEAT", round: 2, idx: 0, repeat: false });
   assert.equal(store.state.final.runtime.p2[0].repeat, false, "flaga zdjęta");
-  assert.equal(store.state.final.runtime.p2[0].text, "Mleko", "wpisana odpowiedź zostaje");
+  assert.equal(store.state.final.runtime.p2[0].text, "", "wpisana odpowiedź zostaje");
   assert.equal(store.state.final.runtime.map2[0].kind, null, "zdjęcie powtórzenia usuwa wymuszone SKIP");
   assert.equal(store.commits.at(-1).soundCueKey, null, "zdjęcie flagi nie gra dźwięku");
 });
@@ -189,6 +191,7 @@ test("mapowanie: 'pokaż odpowiedź' musi poprzedzać 'pokaż punkty' w danych (
   const { store, dispatch } = makeEngine();
   await dispatch({ type: "START_FINAL" });
   await dispatch({ type: "START_MAPPING", round: 1 });
+  await dispatch({ type: "SET_ENTRY_TEXT", round: 1, idx: 0, text: "Ser" });
   await dispatch({ type: "RESOLVE_MAPPING", round: 1, idx: 0, mode: "MANUAL", kind: "MATCH", outText: "Ser", pts: 25 });
   await dispatch({ type: "REVEAL_ANSWER_ONLY", round: 1, idx: 0 });
   assert.equal(store.state.final.runtime.map1[0].revealedAnswer, true);
@@ -209,6 +212,7 @@ test("mapowanie: MATCH dolicza punkty do sumy raz, MISS dokłada 0 i gra answer_
   await dispatch({ type: "REVEAL_POINTS", round: 1, idx: 0 }); // ponownie — brak podwójnego liczenia
   assert.equal(store.state.final.runtime.sum, 30);
 
+  await dispatch({ type: "SET_ENTRY_TEXT", round: 1, idx: 1, text: "coś innego" });
   await dispatch({ type: "RESOLVE_MAPPING", round: 1, idx: 1, mode: "MANUAL", kind: "MISS", outText: "coś innego" });
   await dispatch({ type: "REVEAL_ANSWER_ONLY", round: 1, idx: 1 });
   await dispatch({ type: "REVEAL_POINTS", round: 1, idx: 1 });
@@ -221,6 +225,7 @@ test("mapowanie: MISS odsłania odpowiedź i punkty osobno, SKIP odsłania zero 
   await dispatch({ type: "START_FINAL" });
   await dispatch({ type: "START_MAPPING", round: 1 });
 
+  await dispatch({ type: "SET_ENTRY_TEXT", round: 1, idx: 0, text: "coś innego" });
   await dispatch({ type: "RESOLVE_MAPPING", round: 1, idx: 0, mode: "MANUAL", kind: "MISS", outText: "coś innego" });
   await dispatch({ type: "REVEAL_ANSWER_ONLY", round: 1, idx: 0 });
   assert.equal(store.state.final.runtime.map1[0].revealedAnswer, true);
@@ -243,6 +248,7 @@ test("mapowanie: MATCH zostaje dwuetapowe -- REVEAL_ANSWER_ONLY samo nie odsłan
   await dispatch({ type: "START_FINAL" });
   await dispatch({ type: "START_MAPPING", round: 1 });
 
+  await dispatch({ type: "SET_ENTRY_TEXT", round: 1, idx: 0, text: "Odpowiedź" });
   await dispatch({ type: "RESOLVE_MAPPING", round: 1, idx: 0, mode: "MANUAL", kind: "MATCH", outText: "Odpowiedź", pts: 40 });
   await dispatch({ type: "REVEAL_ANSWER_ONLY", round: 1, idx: 0 });
   assert.equal(store.state.final.runtime.map1[0].revealedAnswer, true);
@@ -364,12 +370,69 @@ test("resolveFinalEndScreen: 'points' i 'money' liczą różne kwoty (w odróżn
 test("typing new content clears repeat and its forced skip; unchanged text preserves repeat", async () => {
   const { store, dispatch } = makeEngine();
   await dispatch({ type: "START_FINAL" });
-  await dispatch({ type: "SET_ENTRY_TEXT", round: 2, idx: 0, text: "Mleko" });
+  await dispatch({ type: "SET_ENTRY_TEXT", round: 2, idx: 0, text: "" });
   await dispatch({ type: "SET_REPEAT", round: 2, idx: 0, repeat: true });
-  await dispatch({ type: "SET_ENTRY_TEXT", round: 2, idx: 0, text: "Mleko" });
+  await dispatch({ type: "SET_ENTRY_TEXT", round: 2, idx: 0, text: "" });
   assert.equal(store.state.final.runtime.p2[0].repeat, true);
   await dispatch({ type: "SET_ENTRY_TEXT", round: 2, idx: 0, text: "Woda" });
   assert.equal(store.state.final.runtime.p2[0].repeat, false);
   assert.equal(store.state.final.runtime.map2[0].kind, null);
   assert.equal(store.state.final.runtime.p2[0].text, "Woda");
+});
+
+
+test("mapowanie: zmiana tekstu unieważnia wybór, także po końcu czasu", async () => {
+  const { store, dispatch } = makeEngine();
+  await dispatch({ type: "START_FINAL" });
+  await dispatch({ type: "START_MAPPING", round: 1 });
+  await dispatch({ type: "RESOLVE_MAPPING", round: 1, idx: 0, kind: "SKIP", pts: 0 });
+  await dispatch({ type: "SET_ENTRY_TEXT", round: 1, idx: 0, text: "Mleko" });
+  assert.equal(store.state.final.runtime.map1[0].kind, null);
+  await dispatch({ type: "RESOLVE_MAPPING", round: 1, idx: 0, kind: "MATCH", outText: "Mleko", pts: 40 });
+  await dispatch({ type: "SET_ENTRY_TEXT", round: 1, idx: 0, text: "" });
+  assert.equal(store.state.final.runtime.map1[0].kind, null);
+  await dispatch({ type: "RESOLVE_MAPPING", round: 1, idx: 0, kind: "SKIP", pts: 0 });
+  await dispatch({ type: "REVEAL_ANSWER_ONLY", round: 1, idx: 0 });
+  assert.equal(store.state.final.runtime.map1[0].revealedPoints, true);
+  assert.equal(await dispatch({ type: "SET_ENTRY_TEXT", round: 1, idx: 0, text: "Zmiana po odsłonięciu" }), null);
+  assert.equal(await dispatch({ type: "RESOLVE_MAPPING", round: 1, idx: 0, kind: "MATCH", pts: 40 }), null);
+  assert.equal(store.state.final.runtime.sum, 0);
+});
+
+test("powtórzenie w mapowaniu jest cichym znacznikiem SKIP i można je zastąpić", async () => {
+  const { store, dispatch } = makeEngine();
+  await dispatch({ type: "START_FINAL" });
+  store.state.step = "f_p2_map_q1";
+  await dispatch({ type: "SET_REPEAT", round: 2, idx: 0, repeat: true });
+  assert.equal(store.commits.at(-1).soundCueKey, null);
+  assert.equal(store.state.final.runtime.map2[0].kind, "SKIP");
+  await dispatch({ type: "SET_ENTRY_TEXT", round: 2, idx: 0, text: "Zapamiętana odpowiedź" });
+  assert.equal(store.state.final.runtime.p2[0].repeat, false);
+  assert.equal(store.state.final.runtime.map2[0].kind, null);
+  await dispatch({ type: "SET_ENTRY_TEXT", round: 2, idx: 0, text: "" });
+  await dispatch({ type: "SET_REPEAT", round: 2, idx: 0, repeat: true });
+  await dispatch({ type: "REVEAL_ANSWER_ONLY", round: 2, idx: 0 });
+  assert.equal(store.state.final.runtime.map2[0].revealedPoints, true);
+  assert.equal(store.commits.at(-1).soundCueKey, "answer_wrong");
+  assert.equal(await dispatch({ type: "SET_REPEAT", round: 2, idx: 0, repeat: false }), null);
+});
+
+
+test("puste pole dopuszcza tylko brak lub powtórzenie; tekst blokuje oba", async () => {
+  const { store, dispatch } = makeEngine();
+  await dispatch({ type: "START_FINAL" });
+  store.state.step = "f_p2_map_q1";
+  for (const kind of ["MATCH", "MISS"]) {
+    assert.equal(await dispatch({ type: "RESOLVE_MAPPING", round: 2, idx: 0, kind, pts: 40 }), null);
+  }
+  await dispatch({ type: "SET_REPEAT", round: 2, idx: 0, repeat: true });
+  assert.equal(store.state.final.runtime.p2[0].repeat, true);
+  await dispatch({ type: "SET_ENTRY_TEXT", round: 2, idx: 0, text: "Mleko" });
+  assert.equal(await dispatch({ type: "SET_REPEAT", round: 2, idx: 0, repeat: true }), null);
+  assert.equal(await dispatch({ type: "RESOLVE_MAPPING", round: 2, idx: 0, kind: "SKIP" }), null);
+  await dispatch({ type: "RESOLVE_MAPPING", round: 2, idx: 0, kind: "MATCH", pts: 40, outText: "Mleko" });
+  assert.equal(store.state.final.runtime.map2[0].kind, "MATCH");
+  await dispatch({ type: "SET_ENTRY_TEXT", round: 2, idx: 0, text: " " });
+  await dispatch({ type: "RESOLVE_MAPPING", round: 2, idx: 0, kind: "SKIP", pts: 0, outText: "" });
+  assert.equal(store.state.final.runtime.map2[0].kind, "SKIP");
 });

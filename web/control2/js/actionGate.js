@@ -6,7 +6,7 @@ export function createActionGate({ getSfxDuration }) {
     SHOW_INTRO: () => timing.syncedMs("show_intro", "reveal"),
     START_ROUND: () => timing.syncedMs("round_transition", "reveal"),
     END_ROUND: () => timing.syncedMs("round_transition", "reveal"),
-    NEXT_QUESTION: (_, next) => next?.step === "f_end" ? timing.dur("final_theme") : next?.step === "f_p2_start" ? timing.syncedMs("round_transition", "reveal") : 0,
+    NEXT_QUESTION: (_, next) => next?.step === "f_end" ? timing.syncedMs("final_theme", "reveal") : next?.step === "f_p2_start" ? timing.syncedMs("round_transition", "reveal") : 0,
     START_P2_ROUND: () => timing.syncedMs("round_transition", "reveal"),
     START_FINAL: async () => (await timing.dur("final_theme")) + (await timing.syncedMs("round_transition", "reveal")),
     FINISH_FINAL: () => timing.dur("show_outro"),

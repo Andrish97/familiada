@@ -70,7 +70,7 @@ Następnie otwórz tablicę w nowym oknie przeglądarki, przeciągnij je na drug
 
 Na komputerze otwórz kod Wyświetlacza w Panelu sterowania. W przeglądarce telewizora wejdź na www.familiada.online. Rozpoznany TV pokaże uproszczoną stronę podłączenia z logo Familiady, polem na sześciocyfrowy kod i przyciskiem „Podłącz”. Wpisz kod Wyświetlacza. Nie trzeba logować się na telewizorze ani podłączać go przewodem do komputera.
 
-Pole kodu jest wybrane od razu. Strzałki góra i dół przełączają między polem a przyciskiem; OK lub Enter zatwierdza. Na Wyświetlaczu odblokuj dźwięk, jeśli ma grać z telewizora. Przeglądarka może pozwolić na pełny ekran dopiero po naciśnięciu pilota.
+Pole kodu jest wybrane od razu. Strzałki góra i dół przełączają między wyborem języka w górnym pasku, polem kodu i przyciskiem „Podłącz”; OK lub Enter zatwierdza. Strona domyślnie korzysta z języka przeglądarki TV: polskiego, angielskiego albo ukraińskiego (dla innych języków — polskiego). Ręczny wybór zostaje zapamiętany. W menu języka strzałki wybierają opcję, a OK lub Enter ją zatwierdza. Na Wyświetlaczu odblokuj dźwięk, jeśli ma grać z telewizora. Przeglądarka może pozwolić na pełny ekran dopiero po naciśnięciu pilota.
 
 Możesz też otworzyć na TV bezpośredni link Wyświetlacza skopiowany z Panelu sterowania. Jeżeli przeglądarka telewizora nie została rozpoznana, otwórz [stronę podłączenia TV](https://www.familiada.online/connect-device/tv/) i wpisz kod. Dotyczy to również niestandardowej przeglądarki na Apple TV. Na TV można podłączyć Wyświetlacz gry albo Wyświetlacz QR ankiety; kody Prowadzącego i Przycisku są odrzucane.
 
@@ -310,7 +310,7 @@ Gdy gracz powtórzy odpowiedź pierwszego zawodnika, oznacz „Powtórzenie” i
 
 #### Gracz 2 — dopasowanie i odsłanianie
 
-Po wpisywaniu dopasuj i odsłoń odpowiedzi drugiego gracza tak samo jak pierwszego. W panelu i na ekranie Prowadzącego „Gracz 1” wskazuje wcześniejszą wybraną odpowiedź, a „Wprowadzono” — obecny wpis operatora. Nie muszą mieć identycznego brzmienia. Powtórzenie nie daje punktów. Punkty obu graczy trafiają do tej samej sumy na górze Wyświetlacza. Zegar znika po zatrzymaniu lub wygaśnięciu, a wynik drużyny przeciwnej już nie wraca.
+Po wpisywaniu dopasuj i odsłoń odpowiedzi drugiego gracza tak samo jak pierwszego. W panelu i na ekranie Prowadzącego „Gracz 1” wskazuje wcześniejszą wybraną odpowiedź, a „Wprowadzono” — obecny wpis operatora. Nie muszą mieć identycznego brzmienia. Powtórzenie nie daje punktów. Przy mapowaniu jest znacznikiem braku odpowiedzi: samo zaznaczenie nie odtwarza dźwięku, a odsłonięcie pokazuje automatycznie zero z dźwiękiem błędnej odpowiedzi. Puste pole udostępnia tylko brak odpowiedzi i powtórzenie; wpisany tekst blokuje oba warianty. Przed odsłonięciem można poprawić wpis i przyporządkowanie także po końcu czasu. Aby wybrać brak lub powtórzenie zamiast wpisanej odpowiedzi, najpierw usuń tekst. Punkty obu graczy trafiają do tej samej sumy na górze Wyświetlacza. Zegar znika po zatrzymaniu lub wygaśnięciu, a wynik drużyny przeciwnej już nie wraca.
 
 **Ważne:** Wyświetlacz mieści 17 znaków odpowiedzi w rundach i 11 w finale, razem ze spacjami. Dłuższy tekst jest skracany tylko na planszy; pełny pozostaje w panelu i na ekranie Prowadzącego. Kropka oznacza urwane słowo. Jeśli następny znak to spacja lub interpunkcja, kropka nie jest dodawana.
 
@@ -318,7 +318,7 @@ Po wpisywaniu dopasuj i odsłoń odpowiedzi drugiego gracza tak samo jak pierwsz
 
 Osiągnięcie progu blokuje dalszą ocenę odpowiedzi. Kolumna podpowiedzi informuje o osiągniętym progu, a przycisk zmienia się na „Zakończ finał”, zarówno przy graczu 1, jak i 2. Wynik nie pojawia się automatycznie: operator wybiera moment zakończenia. Jeżeli progu nie osiągnięto, „Zakończ finał” pojawia się po odsłonięciu ostatnich punktów gracza 2.
 
-„Zakończ finał” pokazuje wybrany ekran końcowy — logo, punkty albo kwotę — z samą „Muzyką finału”. Nie gra wtedy dodatkowe „Przejście rundy” ani „Zmiana na wyświetlaczu”. Następne „Zakończ grę” odtwarza tylko „Muzykę outro programu”. Wynik pozostaje widoczny, a wskaźnik zwycięskiej drużyny nie gaśnie. Przy zakończeniu finału ekran Prowadzącego jest czyszczony; wynik oglądaj na Wyświetlaczu.
+„Zakończ finał” pokazuje wybrany ekran końcowy — logo, punkty albo kwotę — podczas „Zmiany na wyświetlaczu”, która kończy się razem z „Muzyką finału”. Dłuższy dźwięk rozpoczyna się wcześniej. Nie gra wtedy dodatkowe „Przejście rundy”. Następne „Zakończ grę” odtwarza tylko „Muzykę outro programu”. Wynik pozostaje widoczny, a wskaźnik zwycięskiej drużyny nie gaśnie. Przy zakończeniu finału ekran Prowadzącego jest czyszczony; wynik oglądaj na Wyświetlaczu.
 
 #### Zakończenie gry bez finału
 

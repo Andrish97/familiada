@@ -330,8 +330,10 @@ export function createRenderer({ scene, qr, getSfxDuration }) {
       else await api.win.set(screen.amount, { animIn: { ...LOGO_IN_ANIM, ms: revealMs } });
       return;
     }
-    // Zakończ finał zmienia planszę podczas samej muzyki finału.
-    const revealMs = animate ? await timing.dur("final_theme") : 0;
+    // Wynik odsłania się podczas reveal, kończącego się razem z muzyką finału.
+    const split = animate ? await timing.revealSyncSplit("final_theme") : { offsetMs: 0, revealMs: 0 };
+    if (split.offsetMs > 0) await wait(split.offsetMs);
+    const revealMs = split.revealMs;
     // Czyścimy wspólne płótno przed wejściem końcowego obrazu.
     api.big.clear();
     // Before outro, the final sum has not yet been added to round totals.

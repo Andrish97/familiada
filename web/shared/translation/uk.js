@@ -4515,6 +4515,16 @@ const uk = {
     footerRight: "Якщо це помилка — <a href=\"mailto:kontakt@familiada.online\">kontakt@familiada.online</a>",
   },
   connectDevice: {
+    tv: {
+      pageTitle: "Familiada — Підключіть дисплей",
+      title: "Підключіть дисплей",
+      codeLabel: "Введіть код із панелі керування",
+      invalidFormat: "Введіть 6-значний код дисплея або екрана QR опитування.",
+      checking: "Перевірка коду…",
+      invalidCode: "Код недійсний або термін його дії закінчився. Перевірте код у панелі керування.",
+      wrongDevice: "Це не код дисплея. Введіть код дисплея з панелі керування або код екрана QR з опитування.",
+      networkError: "Не вдалося підключитися. Перевірте підключення до інтернету та спробуйте ще раз.",
+    },
     title: "Familiada — підключити пристрій",
     topbar: { back: "Мої ігри" },
     header: {

@@ -324,8 +324,8 @@ async function main() {
   // zawsze WCZEŚNIEJ niż chwila odebrania TEJ odpowiedzi tutaj, więc to
   // zawsze bezpieczne (nigdy za krótkie) górne ograniczenie, niezależnie od
   // realnych warunków sieci.
-  function armLock(ms) {
-    if (ms <= 0) return;
+  function armLock(ms, generation = dispatchGeneration) {
+    if (ms <= 0 || restarting || generation !== dispatchGeneration) return;
     lockedUntil = Math.max(lockedUntil, Date.now() + ms);
     setTimeout(renderCurrent, ms + 20);
     lockConfirmPending = true;
@@ -336,6 +336,7 @@ async function main() {
     console.log(`[e2e-diag-state] t=${_armT0} armLock START ms=${ms} lockedUntil=${lockedUntil}`);
     store.setLock(ms)
       .then(() => {
+        if (restarting || generation !== dispatchGeneration) return;
         const confirmed = Date.now() + ms;
         if (confirmed > lockedUntil) {
           lockedUntil = confirmed;
@@ -344,6 +345,7 @@ async function main() {
       })
       .catch(() => {})
       .finally(() => {
+        if (generation !== dispatchGeneration) return;
         lockConfirmPending = false;
         console.log(`[e2e-diag-state] t=${Date.now()} armLock SETTLED afterMs=${Date.now() - _armT0}`);
         renderCurrent();
@@ -781,6 +783,7 @@ async function main() {
   // (ta sama liczba, co realnie steruje animacją na Displayu), zamiast
   // zgadywać nowy zestaw stałych.
   async function advance(nextStep, extra = {}, soundCueKey) {
+    const generation = dispatchGeneration;
     assertTransition(store.state.step, nextStep);
     store.state.step = nextStep;
     Object.assign(store.state, extra);
@@ -795,7 +798,7 @@ async function main() {
       const ms = nextStep === "r_roundStart" && soundCueKey === "show_intro"
         ? await actionGate.computeGateMs("SHOW_INTRO", null, store.state.__row)
         : await actionGate.timing.dur(soundCueKey);
-      armLock(ms);
+      armLock(ms, generation);
     }
     renderCurrent();
   }

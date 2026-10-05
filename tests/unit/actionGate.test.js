@@ -166,3 +166,9 @@ test("Reaching final target waits only for scoring until the operator finishes t
   const gate = makeGate({ answer_correct: 0.4, round_transition: 1.2, reveal: 0.8 });
   assert.equal(await gate.computeGateMs("REVEAL_POINTS", row({ step: "f_p1_map_q1" }), row({ step: "f_end", sound_cue_key: "answer_correct", sound_cue_seq: 1 })), 400);
 });
+
+
+test("zakończenie finału czeka na dłuższy reveal lub muzykę finału", async () => {
+  const gate = makeGate({ final_theme: 2, reveal: 5 });
+  assert.equal(await gate.computeGateMs("NEXT_QUESTION", row(), row({ step: "f_end" })), 5000);
+});
