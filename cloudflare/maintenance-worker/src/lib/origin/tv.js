@@ -8,7 +8,7 @@ export function tvRedirect(request, url) {
   if (request.headers.get("sec-fetch-dest") !== "document" && !(request.headers.get("accept") || "").includes("text/html")) return null;
   const path = url.pathname.replace(/\/index\.html$/, "/").replace(/\/$/, "");
   if (path === "/connect-device" && url.searchParams.get("tv") === "1") return null;
-  if ((path === "/display" || path === "/display2") && url.searchParams.get("id") && url.searchParams.get("key") && !url.searchParams.has("preview")) return null;
+  if (["/display", "/display2", "/poll-qr"].includes(path) && url.searchParams.get("id") && url.searchParams.get("key") && !url.searchParams.has("preview")) return null;
   const target = new URL("https://www.familiada.online/connect-device/?tv=1");
   const lang = url.searchParams.get("lang");
   if (lang && lang !== "pl") target.searchParams.set("lang", lang);

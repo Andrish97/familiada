@@ -14,13 +14,22 @@ Kontrolki urządzeń znajdują się w górnym pasku. Udostępnienie urządzenia 
 
 ### Telewizor — sam kod i Wyświetlacz
 
-Na rozpoznanym telewizorze otwarcie dowolnej strony Familiady prowadzi do uproszczonego ekranu „Podłącz wyświetlacz”. Jest tylko pole sześciocyfrowego kodu, przycisk „Podłącz” i komunikat o wyniku. Nie ma logowania, listy gier ani panelu sterowania. Kody Prowadzącego, Przycisku i innych urządzeń są odrzucane. Poprawny kod Wyświetlacza otwiera obecnie starszy Wyświetlacz, używany przez Control.
+Na rozpoznanym telewizorze otwarcie dowolnej strony Familiady prowadzi do uproszczonego ekranu „Podłącz wyświetlacz” z logo Familiady. Jest pole sześciocyfrowego kodu, złoty przycisk „Podłącz” i komunikat o wyniku. Nie ma logowania, listy gier ani panelu sterowania. Przyjmowane są kody Wyświetlacza gry i ekranu QR ankiety; kody Prowadzącego, Przycisku i innych urządzeń są odrzucane. Poprawny kod Wyświetlacza gry otwiera obecnie starszy Wyświetlacz, używany przez Control.
 
-Pole kodu jest zaznaczone od razu. Strzałkami góra/dół przechodzisz między nim a przyciskiem; OK/Enter zatwierdza. Rozpoznawanie telewizora opiera się na oznaczeniu przeglądarki TV.
+Pole kodu jest zaznaczone od razu. Strzałkami góra/dół przechodzisz między nim a przyciskiem; OK/Enter zatwierdza. Rozpoznawanie telewizora opiera się na oznaczeniu przeglądarki TV i może nie wykryć telewizora, który przedstawia się jako zwykły komputer. Rozpoznanie sprzętu służy do wyboru interfejsu; dostęp do wyświetlanego materiału zależy od poprawnego kodu i klucza.
 
 Nowy Wyświetlacz ma duży przycisk odblokowania dźwięku, zaznaczany automatycznie, gdy jest potrzebny. Możesz użyć OK/Enter na pilocie. Próbuje też automatycznie wejść w pełny ekran; jeśli przeglądarka wymaga działania użytkownika, ponawia próbę przy pierwszym naciśnięciu lub kliknięciu, w tym przy odblokowaniu dźwięku.
 
 Przy HDMI lub AirPlay otwórz Wyświetlacz na komputerze i prześlij obraz na TV — telewizor nie jest wtedy osobno podłączany kodem. Apple TV może służyć do przesyłania obrazu przez AirPlay z Maca, iPhone’a lub iPada. Telewizor z własną przeglądarką może zamiast tego wejść na Familiadę i wpisać kod.
+
+## Polls — ekran QR na samodzielnym telewizorze
+
+1. Na komputerze lub telefonie otwórz ankietę i okno wyświetlacza QR. Znajdziesz w nim sześciocyfrowy kod podłączenia ekranu.
+2. W przeglądarce telewizora wejdź na `www.familiada.online`. Rozpoznany TV pokaże stronę „Podłącz wyświetlacz”.
+3. Wpisz kod z okna QR ankiety i wybierz „Podłącz”. Telewizor otworzy sam ekran QR tej ankiety, bez logowania i obsługi panelu.
+4. Uczestnicy skanują QR z telewizora swoimi telefonami i odpowiadają na ankietę na telefonach.
+
+Telewizor jest wtedy samodzielnym urządzeniem z dostępem do internetu — nie wymaga HDMI ani przesyłania obrazu z komputera. Jeśli jego przeglądarka nie została rozpoznana jako TV, otwórz bezpośrednio `https://www.familiada.online/connect-device/tv/` i wpisz kod. Kod ekranu QR prowadzi do ankiety, a kod Wyświetlacza gry do planszy rozgrywki. Bezpośredni link ekranu QR z poprawnym kluczem również działa na TV.
 
 ## Control — pojedynek i runda
 

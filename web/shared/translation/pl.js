@@ -1554,6 +1554,25 @@ const pl = {
           <span class="m-code">Podłącz urządzenie</span>, aby ręcznie połączyć TV lub drugi ekran.</li>
       </ul>
 
+      <p class="m-p">
+        <span class="m-strong">Telewizor jako samodzielny ekran:</span>
+        w jego przeglądarce otwórz <span class="m-code">www.familiada.online</span>.
+        Rozpoznany telewizor przejdzie bezpośrednio do uproszczonej strony podłączenia.
+        Wpisz 6-cyfrowy kod z okna <span class="m-code">QR na wyświetlaczu</span>
+        i wybierz <span class="m-code">Podłącz</span>.
+        Na TV pojawi się kod QR ankiety, który uczestnicy skanują telefonami.
+        Nie potrzebujesz logowania na telewizorze, kabla HDMI ani przesyłania obrazu z komputera.
+      </p>
+      <p class="m-p">
+        Możesz również otworzyć bezpośredni link do ekranu QR ankiety —
+        adres <span class="m-code">/poll-qr/</span> zawierający identyfikator i klucz ankiety
+        jest dopuszczony na TV tak samo jak link do Wyświetlacza gry.
+        Sam adres bez tych danych prowadzi do wpisywania kodu.
+        Jeśli przeglądarka TV nie została rozpoznana, np. niestandardowa przeglądarka na Apple TV,
+        otwórz <a href="https://www.familiada.online/connect-device/tv/">stronę podłączenia TV</a> i wpisz kod.
+        Przez HDMI lub AirPlay możesz zamiast tego przesłać ekran QR otwarty na komputerze lub innym urządzeniu.
+      </p>
+
       <h3 class="m-h2">Przebieg ankiety</h3>
     
       <p class="m-p">

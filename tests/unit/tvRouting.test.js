@@ -12,8 +12,10 @@ test("TV routes every website page to code entry, including other device links",
   }
 });
 test("TV accepts Display and code page without loops but redirects missing credentials", () => {
-  for (const path of ["/connect-device/?tv=1", "/connect-device/index.html?tv=1", "/display/?id=a&key=b", "/display2/index.html?id=a&key=b"]) assert.equal(redirect(path), null);
+  for (const path of ["/connect-device/?tv=1", "/connect-device/index.html?tv=1", "/display/?id=a&key=b", "/display2/index.html?id=a&key=b", "/poll-qr/?id=a&key=b"]) assert.equal(redirect(path), null);
   assert.equal(redirect("/display/" )?.status, 302);
+  assert.equal(redirect("/poll-qr/")?.status, 302);
+  assert.equal(redirect("/poll-qr/?id=a&key=b&preview=1")?.status, 302);
 });
 test("TV leaves assets, API requests and normal desktop/mobile navigation unchanged", () => {
   assert.equal(redirect("/assets/audio/show_outro/classic.mp3", { accept: "*/*", "sec-fetch-dest": "audio" }), null);
