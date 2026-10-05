@@ -465,8 +465,9 @@ export function createRenderer({ scene, qr, getSfxDuration }) {
             }
             // Plansza rund zostaje do świadomego „Zakończ grę”.
           } else if (ev.to === "f_p1_entry" && ev.from === "f_start") {
-            // control/js/gameFinal.js's startFinal(): zapowiedź "15" po
-            // stronie zwycięzcy, zanim operator w ogóle uruchomi timer.
+            // Keep the winner score; reserve the opposite side for the timer.
+            paintTotals(nextRow);
+            api.small.topDigits(pad3(nextRow.detail.final.runtime.sum));
             const leadMs = await timing.dur("final_theme");
             const { offsetMs, revealMs } = await timing.revealSyncSplit("round_transition");
             await wait(leadMs + offsetMs);
@@ -474,7 +475,7 @@ export function createRenderer({ scene, qr, getSfxDuration }) {
             await paintFinalBoard(nextRow, { animIn: { ...FINAL_BOARD_ANIM, ms: revealMs / 2 } });
             showTimerPlaceholder(nextRow, "15");
             // Wskaźnik na zwycięzcę zapala się TU (plan, sekcja 2a: "zostaje
-            // zapalony przez cały finał, gaśnie dopiero na F14") — nie przez
+            // zapalony przez cały finał i zakończenie gry") — nie przez
             // CONTROL_CHANGED, bo control_team zostaje null przez cały
             // finał (winner idzie z detail.final.winnerTeam, osobnego pola,
             // którego deriveEvents nie diffuje jako CONTROL_CHANGED).
