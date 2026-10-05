@@ -1,5 +1,5 @@
 // ================== KOMUNIKATY / TEKSTY WYŚWIETLACZA ==================
-import { t } from "../../shared/translation/translation.js?v=v2026-10-05T20345";
+import { t } from "../../shared/translation/translation.js?v=v2026-10-05T22313";
 
 const DISPLAY_MSG = {
   get TEAM_A_DEFAULT() { return t("control.teamADefault"); },

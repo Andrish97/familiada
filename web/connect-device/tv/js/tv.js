@@ -1,4 +1,4 @@
-import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-05T20345";
+import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-05T22313";
 const form = document.getElementById("tvConnectForm");
 const input = document.getElementById("tvCode");
 const button = document.getElementById("tvConnect");
