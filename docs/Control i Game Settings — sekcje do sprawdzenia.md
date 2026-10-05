@@ -148,6 +148,8 @@ Gdy wszystko się zgadza — kliknij **Gra gotowa**.
 
 Pierwsze kliknięcie kafelka wymagającego potwierdzenia zaznacza go. Drugie zatwierdza czynność. W ten sposób przyjmujesz zgłoszenie, odsłaniasz odpowiedzi w rundach, dodajesz X i oddajesz kontrolę. Samo zaznaczenie nie zmienia wyniku. Wyszarzone przyciski są niedostępne; podczas dźwięku lub przejścia poczekaj, aż panel je odblokuje. Wskazówki do bieżącego kroku znajdziesz w kolumnie podpowiedzi.
 
+**Wskazówka:** Zaznaczenie kafelka pozwala sprawdzić wybór przed wykonaniem czynności. Punkty i plansza zmieniają się dopiero po zatwierdzeniu. Jeśli panel czeka na dźwięk lub przejście, pozwól mu je dokończyć.
+
 ### 3) Rundy — przebieg gry krok po kroku
 
 W rundach prowadzisz właściwą rozgrywkę: pytania, odpowiedzi, punkty i bank rundy. Gracze widzą tablicę na wyświetlaczu, prowadzący zadaje pytania i pilnuje przebiegu, a operator odsłania odpowiedzi, nalicza punkty oraz dodaje błędy (X).
@@ -236,11 +238,15 @@ Po zakończeniu rundy operator przypisuje odpowiedzi drugiego zawodnika do listy
 
 Dla każdego pytania porównaj wpis z listą punktowanych odpowiedzi. Wybierz pasującą odpowiedź albo oznacz pudło, brak odpowiedzi lub powtórzenie. Przy trafieniu odsłoń najpierw odpowiedź, potem punkty. Przy pudle, braku odpowiedzi i powtórzeniu zero pojawia się automatycznie podczas odsłaniania odpowiedzi, z dźwiękiem błędu. Suma finału jest na pasku z przyciskiem „Dalej”; samo dopasowanie tekstu nie zwiększa tej sumy.
 
+**Ważne:** Wyświetlacz mieści 17 znaków odpowiedzi w rundach i 11 w finale, razem ze spacjami. Dłuższa odpowiedź jest skracana tylko na planszy; pełny tekst pozostaje w panelu i na ekranie Prowadzącego. Kropka oznacza urwane słowo. Jeśli skrócenie wypada przed spacją lub znakiem interpunkcyjnym, kropka nie jest dodawana.
+
 #### Kiedy finał się kończy
 
 Po odsłonięciu punktów, które osiągają lub przekraczają cel finału, dalsza ocena odpowiedzi zostaje zablokowana. W kolumnie podpowiedzi pojawia się informacja o osiągnięciu progu, a przycisk zmienia się na „Zakończ finał”. Dotyczy to zarówno pierwszego, jak i drugiego gracza. Nie ma automatycznego przejścia: operator wybiera moment pokazania wyniku. Jeżeli celu nie osiągnięto, „Zakończ finał” pojawia się po odsłonięciu ostatnich punktów drugiego gracza.
 
 „Zakończ finał” pokazuje wybrany ekran końcowy: logo, punkty albo kwotę wygranej. Zmianie planszy towarzyszą dźwięk większej zmiany planszy i dźwięk przejścia rundy. Dopiero następne „Zakończ grę” odtwarza muzykę outro programu. Wynik pozostaje widoczny — nie ma drugiego odsłonięcia ani powtórzenia dźwięku zmiany planszy.
+
+**Uwaga:** Osiągnięcie celu finału blokuje dalszą ocenę odpowiedzi, ale nie pokazuje wyniku automatycznie. Wybierz „Zakończ finał”, aby pokazać wynik. „Zakończ grę” to następna czynność — uruchamia muzykę outro programu.
 
 #### Zakończenie gry bez finału
 
@@ -323,6 +329,8 @@ Druga część zawiera:
 #### Przejścia i zakończenie
 
 Przy przygotowaniu finału, przejściu przed wpisywaniem gracza 2 i po zakończeniu finału obie części Prowadzącego są czyszczone. Pusty ekran w tych krokach jest zamierzony; ekran wyniku oglądaj na Wyświetlaczu. Przy zakończeniu gry bez finału Prowadzący może nadal pokazywać ostatni stan rundy — nie jest osobnym ekranem nagrody.
+
+
 
 
 
