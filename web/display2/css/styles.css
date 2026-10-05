@@ -145,6 +145,8 @@ body {
 .audio-unlock-btn:hover {
     background: rgba(0,0,0,.4)
 }
+.audio-unlock-btn { min-width: min(70vw, 640px); min-height: 110px; font-size: clamp(24px, 3vw, 42px); }
+.audio-unlock-btn:focus-visible { outline: 5px solid #ffd45a; outline-offset: 10px; }
 
 /* ===== 3 WARSTWY WYŚWIETLANIA ===== */
 

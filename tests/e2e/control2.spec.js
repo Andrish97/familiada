@@ -66,6 +66,47 @@
 
 const { test, expect } = require("@playwright/test");
 
+test("control2: TV odrzuca inne urządzenia, kod display otwiera stary Wyświetlacz", async ({ page, browser }, testInfo) => {
+  test.setTimeout(120000);
+  await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
+  const game = await makeGame(page, `E2E-TV-${Date.now()}`, { roundQuestions: [TWO_QUESTIONS[0]] });
+  const context = await browser.newContext({ userAgent: "Mozilla/5.0 (SMART-TV; LINUX; Tizen 6.0) TV Safari/537.36" });
+  try {
+    const codes = await page.evaluate(async (game) => {
+      const result = {};
+      for (const type of ["display", "host", "buzzer"]) {
+        const { data, error } = await window.__sbClient.rpc("generate_device_connect_code", { p_game_id: game.id, p_device_type: type, p_share_key: game[`share_key_${type}`], p_game_name: "E2E-TV" });
+        if (error || !data?.ok) throw new Error(error?.message || JSON.stringify(data));
+        result[type] = data.code;
+      }
+      return result;
+    }, game);
+    const tv = await context.newPage();
+    await tv.goto("https://www.familiada.online/");
+    for (const type of ["host", "buzzer"]) {
+      await tv.locator("#tvCode").fill(codes[type]);
+      await tv.locator("#tvConnect").click();
+      await expect(tv.locator("#tvMessage")).toContainText("nie jest kodem wyświetlacza");
+      expect(new URL(tv.url()).pathname).toBe("/connect-device/");
+    }
+    await tv.locator("#tvCode").fill(codes.display);
+    await tv.locator("#tvCode").press("Enter");
+    await expect.poll(() => new URL(tv.url()).pathname).toBe("/display/");
+    expect(new URL(tv.url()).searchParams.get("id")).toBe(game.id);
+    await expect(tv.locator("#fsBtn")).toBeVisible();
+    // The new Display remains directly accessible; its sound prompt works with TV OK.
+    await tv.goto(`https://www.familiada.online/display2/?id=${game.id}&key=${game.share_key_display}`);
+    await page.goto(`/control2?id=${game.id}`);
+    await expect(page.locator(".stepTitle")).toHaveText("Urządzenia", { timeout: 15000 });
+    await page.locator('.toggle-item:has(input[name="soundSource"][value="display"])').click();
+    await expect(tv.locator("#audioUnlockScreen")).toBeVisible({ timeout: 15000 });
+    await expect(tv.locator("#btnAudioUnlock")).toBeFocused();
+    await tv.keyboard.press("Enter");
+    await expect(tv.locator("#audioUnlockScreen")).toBeHidden();
+    await expect.poll(() => tv.evaluate(() => !!document.fullscreenElement)).toBe(true);
+  } finally { await context.close(); await deleteGame(page, game.id); }
+});
+
 test("control2: własne outro ponad 30 sekund — ustawienia, zapis i podsumowanie", async ({ page, browser }, testInfo) => {
   test.setTimeout(180000);
   await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);

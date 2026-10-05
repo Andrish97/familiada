@@ -12,6 +12,16 @@ Stan opisu: 5 października 2026. Osobny materiał do przeglądu przed włączen
 
 Kontrolki urządzeń znajdują się w górnym pasku. Udostępnienie urządzenia e-mailem daje odbiorcy link do podłączenia; zapis odbiorcy na liście nie oznacza jeszcze dostarczenia wiadomości.
 
+### Telewizor — sam kod i Wyświetlacz
+
+Na rozpoznanym telewizorze otwarcie dowolnej strony Familiady prowadzi do uproszczonego ekranu „Podłącz wyświetlacz”. Jest tylko pole sześciocyfrowego kodu, przycisk „Podłącz” i komunikat o wyniku. Nie ma logowania, listy gier ani panelu sterowania. Kody Prowadzącego, Przycisku i innych urządzeń są odrzucane. Poprawny kod Wyświetlacza otwiera obecnie starszy Wyświetlacz, używany przez Control.
+
+Pole kodu jest zaznaczone od razu. Strzałkami góra/dół przechodzisz między nim a przyciskiem; OK/Enter zatwierdza. Rozpoznawanie telewizora opiera się na oznaczeniu przeglądarki TV.
+
+Nowy Wyświetlacz ma duży przycisk odblokowania dźwięku, zaznaczany automatycznie, gdy jest potrzebny. Możesz użyć OK/Enter na pilocie. Próbuje też automatycznie wejść w pełny ekran; jeśli przeglądarka wymaga działania użytkownika, ponawia próbę przy pierwszym naciśnięciu lub kliknięciu, w tym przy odblokowaniu dźwięku.
+
+Przy HDMI lub AirPlay otwórz Wyświetlacz na komputerze i prześlij obraz na TV — telewizor nie jest wtedy osobno podłączany kodem. Apple TV może służyć do przesyłania obrazu przez AirPlay z Maca, iPhone’a lub iPada. Telewizor z własną przeglądarką może zamiast tego wejść na Familiadę i wpisać kod.
+
 ## Control — pojedynek i runda
 
 - Przycisk rozświetla się lokalnie przy naciśnięciu, przed wysłaniem zgłoszenia. Dźwięk zwycięskiego zgłoszenia gra raz, bez powtórzenia przy zatwierdzeniu przez operatora.

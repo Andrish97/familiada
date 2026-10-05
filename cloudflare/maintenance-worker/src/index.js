@@ -34,6 +34,7 @@ import { hasAdminBypass } from "./lib/admin/admin-auth.js";
 import { handleNotifySubmission } from "./lib/notifications/telegram.js";
 import { handleContactAppend, handleContactSubmit } from "./lib/email/contact.js";
 import { isBot, serveGameDetailSsr, serveMarketplaceSsr, serveDynamicSitemap } from "./lib/ssr/ssr.js";
+import { tvRedirect } from "./lib/origin/tv.js";
 
 export default {
   async email(message, env) {
@@ -54,6 +55,10 @@ export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
     const host = url.host.toLowerCase();
+    if (host === "www.familiada.online" || host === "familiada.online" || host === "settings.familiada.online") {
+      const redirect = tvRedirect(request, url);
+      if (redirect) return redirect;
+    }
 
     // Prywatne API testow produkcyjnych. Obslugiwane przed redirectem apex
     // i maintenance gate, ale zawsze wymaga krotkozyjacego tokenu HMAC.
@@ -250,6 +255,11 @@ export default {
     const state = await getState(env);
 
     if (!state.enabled || state.mode === "off" || isBypass) {
+      if (["/connect-device/", "/connect-device", "/connect-device/index.html"].includes(url.pathname) && url.searchParams.get("tv") === "1") {
+        const tvUrl = new URL(url);
+        tvUrl.pathname = "/connect-device/tv/index.html";
+        return withHeaders(await fetchFromOrigin(request, tvUrl, ORIGIN_BASE, ORIGIN_HOST, ORIGIN_RESOLVE), { "Cache-Control": "no-store", Vary: "User-Agent" });
+      }
       return fetchWith404(request, ORIGIN_BASE, ORIGIN_HOST, ORIGIN_RESOLVE); // brak prac
     }
 

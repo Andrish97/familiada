@@ -21,6 +21,16 @@ startKeepAlive();
 
 const $ = (id) => document.getElementById(id);
 
+function enterFullscreen() {
+  if (!/Smart[- ]?TV|HbbTV|NetCast|Web[O0]S|Tizen|Android[ /_-]?TV|Google[ /_-]?TV|BRAVIA|Viera|AFT\w+|AppleTV|CrKey|Roku|TV Safari/i.test(navigator.userAgent)) return;
+  if (document.fullscreenElement || document.webkitFullscreenElement) return;
+  const root = document.documentElement;
+  try {
+    const result = root.requestFullscreen ? root.requestFullscreen() : root.webkitRequestFullscreen?.();
+    result?.catch?.(() => {});
+  } catch {}
+}
+
 function parseParams() {
   const u = new URL(location.href);
   return { gameId: u.searchParams.get("id") || "", key: u.searchParams.get("key") || "" };
@@ -198,6 +208,16 @@ window.addEventListener("DOMContentLoaded", async () => {
     await bootPreview(params);
     return;
   }
+  enterFullscreen();
+  document.addEventListener("keydown", (event) => {
+    const screen = $("audioUnlockScreen");
+    if (screen && !screen.classList.contains("hidden") && (event.key === "Enter" || event.key === " " || event.key === "Select" || event.keyCode === 23)) {
+      event.preventDefault();
+      $("btnAudioUnlock")?.click();
+    }
+  });
+  document.addEventListener("pointerdown", enterFullscreen, { once: true });
+  document.addEventListener("keydown", enterFullscreen, { once: true });
 
   try {
     const { gameId, key } = parseParams();
@@ -218,11 +238,17 @@ window.addEventListener("DOMContentLoaded", async () => {
     function syncAudioUnlockScreen(row) {
       if (!audioUnlockScreen) return;
       const wantsDisplaySound = row.detail?.settings?.soundSource === "display";
-      audioUnlockScreen.classList.toggle("hidden", !wantsDisplaySound || isAudioUnlocked());
+      const visible = wantsDisplaySound && !isAudioUnlocked();
+      const wasHidden = audioUnlockScreen.classList.contains("hidden");
+      audioUnlockScreen.classList.toggle("hidden", !visible);
+      audioUnlockScreen.setAttribute("aria-hidden", String(!visible));
+      if (visible && wasHidden) btnAudioUnlock?.focus({ preventScroll: true });
     }
     btnAudioUnlock?.addEventListener("click", () => {
+      enterFullscreen();
       unlockAudio();
       audioUnlockScreen?.classList.add("hidden");
+      audioUnlockScreen?.setAttribute("aria-hidden", "true");
     });
 
     const scene = await createScene();
