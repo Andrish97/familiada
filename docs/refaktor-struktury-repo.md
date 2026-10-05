@@ -81,21 +81,26 @@ Przeniesiono frontend do `web/`, strony do katalogów oraz zasoby wspólne.
 Usunięto przekierowanie `builder.html` i nieużywany szkic Workera
 `src/index.js.tmp`. HTML audytu ikon znajduje się w `docs/ikony.html`.
 
-Refaktor pozostaje w trakcie integracji. Samo przeniesienie nie oznacza
-gotowego wdrożenia. Przed publikacją trzeba zakończyć poprawianie ścieżek,
-dostosować Worker i testy, sprawdzić brak brakujących zasobów oraz
-wersjonowanie. Nową ścieżkę tłumaczeń obsługują również Worker i Edge
-Function `send-email`; wdrożenie musi obejmować te komponenty, nie tylko
-Pages. Następnie sprawdzić produkcyjnie logowanie, listę gier,
-panel settings, podglądy i domyślne logo oraz zestaw urządzeń 2.
+2026-10-05 wdrożono migrację demo 298, następnie Pages, Worker i Edge
+Function `send-email`. Migracja objęła 789 niezmienionych gier i 97 baz;
+edytowane zestawy oraz aktywne rozgrywki są chronione warunkami migracji.
+Nowa ścieżka tłumaczeń obowiązuje także w Workerze i wiadomościach e-mail.
 Nie uruchamiamy całych testów bez potrzeby.
 
 Sprawdzenia lokalne: wykonano kontrolę składni wszystkich skryptów frontendu,
 importów, plików ładowanych przez HTML i CSS, fontów, katalogu dźwięków,
 modułów motywów i domyślnego logo. Sprawdzono mapowanie tras przez Worker,
 reguły panelu settings i przerwy technicznej oraz wersjonowanie zasobów.
-Testy dotyczące tych obszarów przechodzą; produkcyjne sprawdzenie i publikacja
-nie zostały jeszcze wykonane. „Jedynki” nadal istnieją.
+Testy dotyczące tych obszarów przechodzą. Pierwszy produkcyjny test struktury
+zakończył się wynikiem 10/10:
+https://github.com/Andrish97/familiada/actions/runs/37321284678.
+Potwierdził strony i bezpośrednie zasoby, logo, fonty, tłumaczenia, outro,
+manifest, routing i cache. Nie sprawdzał wszystkich interakcji przycisków.
+Po zgłoszeniu błędów poprawiono względne adresy nawigacji i filtr MIME audio;
+dodano osobne testy kliknięć powrotu oraz własnego outro ponad 30 sekund.
+Ich wyniki należy oceniać osobno od dostępności zasobów.
+„Jedynki” nadal istnieją. Usunięto automatyczne sprawdzanie wersji oraz
+przeładowywanie edytora logo; wersjonowanie adresów zasobów pozostaje.
 
 ## Etap późniejszy: usunięcie „jedynek”
 

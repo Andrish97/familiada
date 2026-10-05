@@ -104,7 +104,7 @@ if (!url && paramId && paramKey) {
       throw new Error("invalid_status");
     }
 
-    const base = game.type === "poll_points" ? "poll-points" : "poll-text";
+    const base = game.type === "poll_points" ? "/poll-points/" : "/poll-text/";
     const voteUrl = new URL(base, location.href);
     voteUrl.searchParams.set("id", game.id);
     voteUrl.searchParams.set("key", paramKey);

@@ -340,9 +340,9 @@ function pollLink(g) {
   if (!g) return "";
   const base =
     g.type === TYPES.POLL_TEXT
-      ? "poll-text"
+      ? "/poll-text/"
       : g.type === TYPES.POLL_POINTS
-      ? "poll-points"
+      ? "/poll-points/"
       : "";
   if (!base) return "";
 
