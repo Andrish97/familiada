@@ -11,7 +11,7 @@ Punkt oznaczamy jako wykonany po poprawieniu i sprawdzeniu zachowania. Zmiana w 
 - [x] 03. Przywrócić poprzedni reveal, sprzed podmiany na `reveal_new`, i wyrównać jego głośność do pozostałych plików. Poprzedni plik odnaleźć w historii repozytorium.
 - [ ] 04. Okno utraty połączenia pokazuje przetłumaczony komunikat, nie klucz tłumaczenia.
 - [ ] 05. Przycisk do pojedynku jest widoczny od ekranu „Rozpocznij grę”, ale nie można go nacisnąć przed rozpoczęciem aktywnego pojedynku.
-- [ ] 06. „Zacznij od nowa” nie jest blokowane przez dźwięki, animacje ani rozłączenie urządzeń. Restart musi bezpiecznie zakończyć poprzedni przebieg, bez późniejszych akcji z jego kolejki.
+- [x] 06. „Zacznij od nowa” nie jest blokowane przez dźwięki, animacje ani rozłączenie urządzeń. Restart musi bezpiecznie zakończyć poprzedni przebieg, bez późniejszych akcji z jego kolejki.
 - [ ] 07. Przy rozpoczęciu rundy przejście rundy i reveal kończą się razem. Dłuższy dźwięk rozpoczyna się wcześniej; animacja zmiany planszy trwa podczas reveal.
 - [ ] 08. Prowadzący dostaje informację, kiedy można oddać kontrolę drugiej drużynie.
 - [ ] 09. Na początku finału najpierw gra muzyka finału, następnie przejście rundy i reveal zsynchronizowane na koniec. Plansza zmienia się podczas reveal. To kolejność doprecyzowana w końcowej części uwag.
@@ -78,11 +78,11 @@ Stan po publikacji: poprawki punktów 01–19 i 21 wdrożone przez Pages 3738300
 
 ## Dodatkowa uwaga TV — 2026-10-06
 
-- [ ] 22. Zastąpić obrazkowe logo tekstowym „FAMILIADA” w górnym pasku, jak na pozostałych stronach. Usunąć gradient strony: jednolite tło `#050914`. Pole kodu i złoty przycisk mają korzystać ze stylów systemu; zaznaczenie pola bez grubej obwódki. Zachować wygodne rozmiary i obsługę pilota.
+- [x] 22. Zastąpić obrazkowe logo tekstowym „FAMILIADA” w górnym pasku, jak na pozostałych stronach. Usunąć gradient strony: jednolite tło `#050914`. Pole kodu i złoty przycisk mają korzystać ze stylów systemu; zaznaczenie pola bez grubej obwódki. Zachować wygodne rozmiary i obsługę pilota.
 
 Pierwszy film po naprawie zapisu (37383797709) jest gotowy: 60 klatek/s, 17474 klatki, 122 powielone i 120 odrzuconych (około 0,7% każde), zamiast około 76% powielonych. Zmiana istotnie poprawiła przechwytywanie; pełny cykl nagrań pozostaje do wykonania.
 
-- [ ] 23. Dodać zmianę języka w górnym pasku TV: Polski, English i Українська. Przetłumaczyć formularz, tytuł i wszystkie komunikaty; zachować wybór po odświeżeniu i przekazać język do otwieranego ekranu. Obsłużyć menu pilotem.
+- [x] 23. Dodać zmianę języka w górnym pasku TV: Polski, English i Українська. Przetłumaczyć formularz, tytuł i wszystkie komunikaty; zachować wybór po odświeżeniu i przekazać język do otwieranego ekranu. Obsłużyć menu pilotem.
 
 ## Doprecyzowania — urządzenia i finał
 
@@ -101,3 +101,5 @@ Restart: ustalona przyczyna produkcyjnego błędu — opóźnione odczytanie dł
 Końcowy wybrany zestaw po doprecyzowaniach i korekcie restartu: 123/123 zaliczonych; pełnego zestawu nie uruchamiano.
 
 Produkcja 37388520578: restart podczas intro, wyłączone otwarte urządzenia (w tym odrzucenie RPC naciśnięcia), wczesne zakończenie finału, własne outro i trzy przypadki TV zaliczone. Pełny finał dochodzi do wyniku 135, ale asercja outro obejmowała także poprawny, opóźniony reveal poprzedniego przejścia. Test poprawiono: najpierw czeka na zakończenie przejścia wyniku i sprawdza final_theme + reveal, potem czyści zapis dźwięków i sprawdza osobne outro. Osobny TV 37388921645: 2 zaliczone, błąd gotowości pilota poprawiony; ponowne sprawdzenie 37389506058.
+
+Stan bieżący po doprecyzowaniach: poprawki opublikowane na main, Pages 37388305640 i 37389302752 — sukces; migracja bazy 299, Actions 37388305144 — sukces. Wybrane testy lokalne 123/123. Produkcyjny restart i wyłączone otwarte urządzenia zaliczone. TV po poprawce gotowości pilota: 37389506058 — sukces, trzy testy. Pełny finał ponownie sprawdzany przez 37389738165. Pełny cykl dziesięciu filmów (60 klatek/s, ze statystykami przechwytywania): 37389738480 — uruchomiony; nie jest jeszcze gotowy ani oceniony wizualnie.
