@@ -8,7 +8,7 @@ Aktualizacja: 4 października 2026 — opis zgodny z bieżącymi scenariuszami.
 
 Każde nagranie to osobny plik .mp4 (`tests/e2e/record-playthrough.js`, katalog `tests/recordings/` (zmienna `RECORD_OUT_DIR`)). Wszystkie urządzenia korzystają z produkcji. Dla każdego poniżej: ustawienia gry startowe, kolejność kroków z realnymi wartościami oraz **Na co zwrócić uwagę**. Obok filmów są raporty `.performance.json` z pomiarami animacji, klatek i pamięci runnera. Rozbieżność z opisem należy sprawdzić zarówno w aplikacji, jak i w skrypcie nagrywania.
 
-Na początku gry wyświetlacz pozostaje czarny do uruchomienia intro. Logo wchodzi z animacją przy dźwięku odsłonięcia pod koniec intro. Buzzer zapala się lokalnie przed wysłaniem sygnału, a zatwierdzenie przez operatora stanowi osobną akcję. Na końcu gry plansza pozostaje widoczna do odsłonięcia ekranu końcowego przy outro; nagranie czeka na pełny dźwięk, a potem pozostawia wynik widoczny przez około 4 sekundy.
+Logo wchodzi z animacją przy dźwięku odsłonięcia pod koniec intro. Buzzer zapala się lokalnie przed wysłaniem sygnału, a zatwierdzenie przez operatora stanowi osobną akcję. Bez finału ekran końcowy pojawia się przy reveal i osobnym outro. W finale „Zakończ finał” pokazuje wynik (logo/punkty/nagrodę) z reveal i round_transition; późniejsze „Zakończ grę” odtwarza tylko outro, bez ponownego przejścia planszy. Nagranie czeka na pełny dźwięk, a potem pozostawia wynik widoczny przez około 4 sekundy.
 
 Tryb zakończenia zapisano w ustawieniach osobnych gier: 03 — punkty, 04 i 05 — nagroda. 04 kończy się poniżej progu finału, a 05 osiąga próg i dostaje nagrodę główną.
 
@@ -112,9 +112,9 @@ Dokładnie ta sama progresja rund 1-3 co w scenariuszu 02 (`hasFinal` tym razem 
 
 **Gracz 2 (20s)** — zegarek startuje przed wpisywaniem. Pytanie #1 oznaczone jako "Powtórzenie" (zaznacz→potwierdź, z dźwiękiem); z pozostałych czterech wpisywane są dwa dopasowania, reszta jest pusta. Po wygaśnięciu zegarka mapowane są **wszystkie pięć pytań**. Powtórzenie i braki odsłaniają zero automatycznie przy "Pokaż odpowiedź".
 
-**Pełne zakończenie** — suma trafień wynosi **105**, mniej niż próg 200. Odkrywane są wszystkie 10 odpowiedzi obu graczy, łącznie z pytaniem #5 gracza 2. Przejście do podsumowania gra dźwięk końca rundy finału.
+**Pełne zakończenie** — suma trafień wynosi **105**, mniej niż próg 200. Odkrywane są wszystkie 10 odpowiedzi obu graczy, łącznie z pytaniem #5 gracza 2. Po ostatnim odsłonięciu pojawia się przycisk „Zakończ finał”. Jego kliknięcie pokazuje nagrodę przy reveal i dźwięku przejścia rundy.
 
-**Koniec** — suma finału 105 widoczna przed "Zakończ grę". Następnie pełne outro i niższa nagroda **1167**: `(284 + 105) × 3`. Nagranie czeka na koniec dźwięku i pozostawia nagrodę na ekranie około 4 s.
+**Koniec** — niższa nagroda **1167**: `(284 + 105) × 3` jest już widoczna przed „Zakończ grę”. Ten przycisk odtwarza tylko osobne outro; nagroda pozostaje bez kolejnego reveal. Nagranie czeka na koniec dźwięku i pozostawia nagrodę na ekranie około 4 s.
 
 **Na co zwrócić uwagę:**
 
@@ -133,14 +133,14 @@ Dokładnie ta sama progresja rund 1-3 co w scenariuszu 02 (`hasFinal` tym razem 
 
 **Gracz 1 — TYLKO jedna odpowiedź** — wpisywana jest WYŁĄCZNIE pierwsza odpowiedź (najwyżej punktowana z puli pytania), reszta pól zostaje pusta — zegarek w ogóle pominięty (nieobowiązkowy, "Dalej" działa niezależnie od tego, czy został uruchomiony). Od razu "Dalej" do mapowania.
 
-**Natychmiastowe zakończenie** — wybór dopasowania (zaznacz→potwierdź) → "Pokaż odpowiedź" → "Pokaż punkty" — ta jedna odpowiedź SAMA przekracza obniżony próg (30), więc silnik natychmiast przeskakuje do ekranu końcowego finału. Pytania 2-5 gracza 1 i CAŁY gracz 2 są całkowicie pominięte — ten scenariusz nigdy do nich nie dochodzi.
+**Wczesne zakończenie zatwierdzane przez operatora** — wybór dopasowania (zaznacz→potwierdź) → „Pokaż odpowiedź” → „Pokaż punkty” — ta jedna odpowiedź przekracza obniżony próg (30). Silnik pozostaje na mapowaniu, blokuje dalsze akcje i w kolumnie podpowiedzi informuje o osiągniętym progu. Przycisk zmienia się na „Zakończ finał”; dopiero jego kliknięcie pokazuje wynik. Pytania 2-5 gracza 1 i cały gracz 2 są pominięte.
 
-**Koniec** — suma finału **36**, najpierw dźwięk końca rundy finału. "Zakończ grę" uruchamia osobne outro i pokazuje nagrodę główną **25960**: `(284 + 36) × 3 + 25000`. Wynik pozostaje widoczny około 4 s po końcu dźwięku.
+**Koniec** — „Zakończ finał” pokazuje nagrodę główną **25960**: `(284 + 36) × 3 + 25000` z reveal i dźwiękiem przejścia rundy. „Zakończ grę” uruchamia tylko osobne outro. Wynik pozostaje widoczny około 4 s po końcu dźwięku.
 
 **Na co zwrócić uwagę:**
 
 - Kafel wyboru dopasowania w mapowaniu MUSI być realnie zatwierdzony (dwa kliknięcia) — to miejsce miało realnego buga: pojedynczy klik tylko zaznaczał kafel bez zatwierdzenia, efektywne dopasowanie zostawało na domyślnym "Nie ma na liście" (MISS), suma nigdy nie trafiała progu i "Zakończ grę" nigdy się nie pojawiało.
-- Po "Pokaż punkty" na TEJ jednej odpowiedzi gra kończy się NATYCHMIAST, bez żadnego "Dalej" i bez ekranu drugiego gracza — to poprawne zachowanie (trafiony próg), nie przerwane nagranie.
+- Po „Pokaż punkty” na tej jednej odpowiedzi mapowanie jest zablokowane, a podpowiedź informuje o osiągniętym progu. Operator klika „Zakończ finał”; nie ma dalszych pytań ani ekranu drugiego gracza.
 - Pola gracza 1 (poza pierwszym) i cały ekran gracza 2 NIGDY się nie pojawiają na tym nagraniu — jeśli się pojawią, to znaczy że próg nie został trafiony (regresja).
 
 ## 06 — zerwanie-i-ponowne-podlaczenie.mp4
