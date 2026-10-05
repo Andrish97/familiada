@@ -25,7 +25,7 @@ Najdłuższy klip, łączy demo urządzeń/ustawień z pełną rozgrywką 2 rund
 **Podsumowanie i modal ustawień**
 
 - "Dalej" → krok Podsumowania.
-- Modal ustawień gry: zmiana nazwy drużyny A na "Mistrzowie Quizu" — podgląd WEWNĄTRZ modalu (osobny, mały "Wyświetlacz w trybie podglądu", własny iframe) śledzi wpisywany tekst na żywo, zanim jeszcze zapiszemy; to NIE jest prawdziwy Wyświetlacz (ten przez cały krok ustawień zostaje czarny) ani ten sam widget co podgląd w Podsumowaniu na stronie Control (ten drugi odświeża się dopiero PO zapisaniu modala, nie na bieżąco). Dalej: suwak głośności "round\_transition" na 70%, zapis przez "Zapisz wszystko", zamknięcie modala kliknięciem w tło.
+- Modal ustawień gry: zmiana nazwy drużyny A na "Mistrzowie Quizu" — podgląd WEWNĄTRZ modalu (osobny, mały "Wyświetlacz w trybie podglądu", własny iframe) śledzi wpisywany tekst na żywo, zanim jeszcze zapiszemy; to NIE jest prawdziwy Wyświetlacz (ten przed startem pokazuje nazwy drużyn, a zmiany ustawień otrzymuje po zapisie) ani ten sam widget co podgląd w Podsumowaniu na stronie Control (ten drugi odświeża się dopiero PO zapisaniu modala, nie na bieżąco). Dalej: suwak głośności "round\_transition" na 70%, zapis przez "Zapisz wszystko", zamknięcie modala kliknięciem w tło.
 - Osobny suwak głośności "reveal" wprost w Podsumowaniu (bez modala), ustawiony na 40%.
 
 **Runda 1**
@@ -45,7 +45,7 @@ Najdłuższy klip, łączy demo urządzeń/ustawień z pełną rozgrywką 2 rund
 
 **Koniec gry**
 
-- "Zakończ grę" → pełne outro i wejście logo, potem około 4 s na obejrzenie ekranu końcowego. Restart czeka na zakończenie dźwięku.
+- "Zakończ grę" → wejście logo z reveal przy początku osobnego outro, potem około 4 s na obejrzenie ekranu końcowego. Restart czeka na zakończenie dźwięku.
 - "Zacznij od nowa" w topbarze → modal potwierdzenia → "Tak" → powrót do kroku "Urządzenia".
 
 **Na co zwrócić uwagę**
@@ -53,7 +53,7 @@ Najdłuższy klip, łączy demo urządzeń/ustawień z pełną rozgrywką 2 rund
 - Druga karta Control: pełnoekranowa blokada, nie pusta/błędna strona.
 - Oba kody QR (Prowadzący + Buzzer) widoczne RAZEM w jednym momencie, nie tylko pojedynczo.
 - Ekran odblokowania dźwięku na Display pojawia się natychmiast po przełączeniu źródła.
-- "Mistrzowie Quizu" pojawia się w PODGLĄDZIE WEWNĄTRZ MODALU zanim jeszcze klikniemy "Zapisz wszystko" (ten widget śledzi wpisywany tekst na żywo) — to INNY widget niż podgląd w Podsumowaniu Control (ten odświeża się dopiero po zapisie) i niż prawdziwy Wyświetlacz (który przez cały krok ustawień pokazuje czerń, niezależnie od tego, co dzieje się w modalu).
+- "Mistrzowie Quizu" pojawia się w PODGLĄDZIE WEWNĄTRZ MODALU zanim jeszcze klikniemy "Zapisz wszystko" (ten widget śledzi wpisywany tekst na żywo) — to INNY widget niż podgląd w Podsumowaniu Control (ten odświeża się dopiero po zapisie) i niż prawdziwy Wyświetlacz (który pokazuje nazwy drużyn przed startem i otrzymuje zmiany ustawień po ich zapisaniu).
 - Tytuł fazy na Hoście faktycznie zmienia język i wraca.
 - "Zatwierdź: \[nazwa\]" to JEDEN kafel naraz (nie dwa osobne), nazwa zgadza się z realnym zwycięzcą wyścigu na Buzzerze.
 - Podczas wyciszenia (ikona głośnika przekreślona) dźwięk X-ów jest całkowicie cichy, wraca SŁYSZALNY tuż przed odsłonięciem kradzieży.
@@ -89,7 +89,7 @@ Dokładnie ta sama progresja rund 1-3 co w scenariuszu 02 (`hasFinal` tym razem 
 
 **Runda 3** — jak w 02, A wygrywa topą, odkrywa wszystko, "Zakończ rundę" trafia próg 300.
 
-**Koniec gry** — ustawiony tryb „punkty”: "Zakończ grę" (bez finału) → pełne outro → Wyświetlacz pokazuje **300 punktów**. Wynik pozostaje widoczny około 4 s po zakończeniu dźwięku.
+**Koniec gry** — ustawiony tryb „punkty”: "Zakończ grę" (bez finału) → reveal i początek osobnego outro → Wyświetlacz pokazuje **300 punktów**. Wynik pozostaje widoczny około 4 s po zakończeniu dźwięku.
 
 **Na co zwrócić uwagę:**
 
@@ -149,7 +149,7 @@ Dowód na żywo, że stan gry przeżywa rozłączenie każdego urządzenia nieza
 
 **Runda 1 w toku** — A naciska, zatwierdzenie, trafia odp. #1 (top, wygrywa pojedynek) — reszta rundy CELOWO zostaje nieodkryta.
 
-**Zerwanie wszystkich trzech naraz** — Wyświetlacz, Prowadzący i Buzzer zamykane jednocześnie. Kontrolki czerwienieją po wygaśnięciu ostatnich heartbeatów (6,5 s od ostatniego pingu, z kontrolą co 250 ms). Akcje gry są wtedy wyszarzone i zablokowane, bez dodatkowego banera. Kontrolki nie muszą zmienić koloru w tej samej klatce, bo ostatnie pingi urządzeń mają różne czasy.
+**Zerwanie wszystkich trzech naraz** — Wyświetlacz, Prowadzący i Buzzer zamykane jednocześnie. Kontrolki czerwienieją po wygaśnięciu ostatnich heartbeatów (6,5 s od ostatniego pingu, z kontrolą co 250 ms). Akcje gry są wtedy wyszarzone i zablokowane, bez dodatkowego banera. Jednorazowy modal wymienia odłączone urządzenia i podpowiada sprawdzenie internetu oraz ponowne podłączenie przyciskami w górnym pasku. Kontrolki nie muszą zmienić koloru w tej samej klatce, bo ostatnie pingi urządzeń mają różne czasy.
 
 Operator przed wykryciem awarii odsłania jeszcze odpowiedź #2. Po wykryciu próba odsłonięcia #3 jest blokowana. Po powrocie Wyświetlacza widać także odpowiedź #2 zapisaną podczas przerwy, bez jej ponownego odsłaniania.
 
@@ -161,7 +161,7 @@ Gra pozostaje zablokowana po powrocie samego Wyświetlacza oraz samego Prowadzą
 
 **Runda 2, w całości na nowym Buzzerze** — B naciska Świeżo podłączony Buzzer, zatwierdzenie, pełne odkrycie 6 odpowiedzi, "Zakończ rundę" — dowód, że nowe urządzenie nie tylko świeci na zielono (sama obecność), ale FAKTYCZNIE bierze udział w rozgrywce.
 
-**Koniec** — "Zakończ grę" → pełne outro, potem ekran końcowy widoczny około 4 s.
+**Koniec** — "Zakończ grę" → ekran końcowy z reveal przy początku osobnego outro, widoczny także około 4 s po zakończeniu dźwięku.
 
 **Na co zwrócić uwagę:**
 
@@ -177,7 +177,7 @@ Logo gry jest blokowane ZEWNĘTRZNIE (dokładnie tym samym mechanizmem co klikni
 
 **Zwolnienie i samoistne wznowienie** — blokada logo zostaje zwolniona z zewnątrz (nie przez kliknięcie w tym oknie Control) — ekran blokady znika SAM, Control wznawia się do kroku "Urządzenia" bez żadnej ręcznej interwencji operatora.
 
-**Krótka runda** — po odzyskaniu Control pełne przejście przez urządzenia/podsumowanie, start gry i jedna pełna runda (A wygrywa, odkrywa wszystkie 6 odpowiedzi). "Zakończ grę" → pełne outro i logo, widoczne około 4 s po końcu dźwięku.
+**Krótka runda** — po odzyskaniu Control pełne przejście przez urządzenia/podsumowanie, start gry i jedna pełna runda (A wygrywa, odkrywa wszystkie 6 odpowiedzi). "Zakończ grę" → logo z reveal i osobnym outro, widoczne około 4 s po końcu dźwięku.
 
 **Na co zwrócić uwagę:**
 

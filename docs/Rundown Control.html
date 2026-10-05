@@ -1,0 +1,966 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1"><style>:root{color-scheme:light}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Rundown Control</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+:root{
+  --bg:#f6f3ee;
+  --paper:#fffdf9;
+  --ink:#201d1a;
+  --ink-soft:#5b5650;
+  --line:#ddd6c9;
+  --line-strong:#c7bfae;
+  --team-a:#c4002f;
+  --team-a-soft:#f7e0e3;
+  --team-b:#2a62ff;
+  --team-b-soft:#e2e9ff;
+  --gold:#a97a12;
+  --gold-soft:#f2e6c8;
+  --ok:#2f7a4d;
+  --ok-soft:#dcede1;
+  --manual:#8a5a2a;
+  --manual-soft:#f1e2cd;
+  --focus:#2a62ff;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#141210;
+    --paper:#1c1a17;
+    --ink:#efe9dd;
+    --ink-soft:#b6ada0;
+    --line:#38332c;
+    --line-strong:#4a443a;
+    --team-a:#ff5470;
+    --team-a-soft:#3a1620;
+    --team-b:#7ea0ff;
+    --team-b-soft:#16213e;
+    --gold:#e0b654;
+    --gold-soft:#332608;
+    --ok:#6fcf97;
+    --ok-soft:#12261a;
+    --manual:#e0a45e;
+    --manual-soft:#2e2013;
+    --focus:#7ea0ff;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#141210;
+  --paper:#1c1a17;
+  --ink:#efe9dd;
+  --ink-soft:#b6ada0;
+  --line:#38332c;
+  --line-strong:#4a443a;
+  --team-a:#ff5470;
+  --team-a-soft:#3a1620;
+  --team-b:#7ea0ff;
+  --team-b-soft:#16213e;
+  --gold:#e0b654;
+  --gold-soft:#332608;
+  --ok:#6fcf97;
+  --ok-soft:#12261a;
+  --manual:#e0a45e;
+  --manual-soft:#2e2013;
+  --focus:#7ea0ff;
+}
+
+*{box-sizing:border-box}
+body{
+  background:var(--bg);
+  color:var(--ink);
+  font-family:'IBM Plex Sans', system-ui, sans-serif;
+  font-size:15px;
+  line-height:1.55;
+}
+::selection{background:var(--gold-soft)}
+:focus-visible{outline:2px solid var(--focus); outline-offset:2px}
+
+.rundown{
+  max-width:860px;
+  margin:0 auto;
+  padding:0 20px 96px;
+}
+
+/* ---------- header ---------- */
+.masthead{
+  padding:44px 0 26px;
+  border-bottom:2px solid var(--ink);
+}
+.masthead .kicker{
+  font-family:'IBM Plex Mono', monospace;
+  font-size:12px;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--ink-soft);
+  margin:0 0 10px;
+}
+.masthead h1{
+  font-family:'Barlow Condensed', sans-serif;
+  font-weight:700;
+  font-size:clamp(34px,6vw,52px);
+  letter-spacing:.01em;
+  line-height:1.02;
+  margin:0 0 12px;
+  text-wrap:balance;
+}
+.masthead p{
+  max-width:62ch;
+  color:var(--ink-soft);
+  margin:0;
+  font-size:15.5px;
+}
+
+/* ---------- legend ---------- */
+.legend{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px 18px;
+  margin:22px 0 0;
+  padding:16px 18px;
+  background:var(--paper);
+  border:1px solid var(--line);
+  border-radius:3px;
+}
+.legend-item{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  font-size:12.5px;
+  color:var(--ink-soft);
+  font-family:'IBM Plex Mono',monospace;
+}
+.swatch{
+  width:11px;height:11px;border-radius:2px;flex:none;
+  border:1px solid rgba(0,0,0,.15);
+}
+.swatch.auto{background:var(--ok)}
+.swatch.manual{background:var(--manual)}
+.swatch.a{background:var(--team-a)}
+.swatch.b{background:var(--team-b)}
+.swatch.gold{background:var(--gold)}
+
+/* ---------- TOC ---------- */
+.toc{
+  margin:34px 0 0;
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:1px;
+  background:var(--line);
+  border:1px solid var(--line);
+}
+@media (max-width:560px){ .toc{grid-template-columns:1fr} }
+.toc a{
+  display:flex;
+  align-items:baseline;
+  gap:10px;
+  background:var(--paper);
+  padding:13px 16px;
+  text-decoration:none;
+  color:var(--ink);
+}
+.toc a:hover{background:var(--gold-soft)}
+.toc .letter{
+  font-family:'Barlow Condensed',sans-serif;
+  font-weight:700;
+  font-size:20px;
+  color:var(--gold);
+  flex:none;
+  width:1.2em;
+}
+.toc .toc-label{font-size:13.5px}
+.toc .toc-label b{display:block;font-size:14px;margin-bottom:1px}
+.toc .toc-label span{color:var(--ink-soft);font-size:12px}
+
+/* ---------- section ---------- */
+.segment{
+  margin-top:56px;
+  scroll-margin-top:16px;
+}
+.segment-head{
+  display:flex;
+  gap:18px;
+  align-items:flex-end;
+  border-bottom:2px solid var(--ink);
+  padding-bottom:10px;
+  margin-bottom:22px;
+}
+.segment-head .glyph{
+  font-family:'Barlow Condensed',sans-serif;
+  font-weight:700;
+  font-size:56px;
+  line-height:.8;
+  color:var(--gold);
+}
+.segment-head h2{
+  font-family:'Barlow Condensed',sans-serif;
+  font-weight:700;
+  font-size:26px;
+  margin:0 0 4px;
+  text-wrap:balance;
+}
+.segment-head .sub{
+  color:var(--ink-soft);
+  font-size:13.5px;
+  max-width:56ch;
+}
+
+/* ---------- scenario card ---------- */
+.scenario{
+  border:1px solid var(--line);
+  background:var(--paper);
+  margin-bottom:14px;
+  border-radius:3px;
+  overflow:hidden;
+}
+.scenario summary{
+  list-style:none;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:14px 16px;
+  font-family:'Barlow Condensed',sans-serif;
+}
+.scenario summary::-webkit-details-marker{display:none}
+.scenario summary .code{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:12px;
+  color:var(--ink-soft);
+  flex:none;
+  width:2.6em;
+}
+.scenario summary .title{
+  font-weight:600;
+  font-size:17px;
+  flex:1;
+  color:var(--ink);
+}
+.scenario summary .arrow{
+  font-family:'IBM Plex Mono',monospace;
+  color:var(--ink-soft);
+  transition:transform .15s ease;
+  flex:none;
+}
+.scenario[open] summary .arrow{transform:rotate(90deg)}
+.pill{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:10.5px;
+  letter-spacing:.04em;
+  padding:3px 8px;
+  border-radius:20px;
+  flex:none;
+  white-space:nowrap;
+}
+.pill.auto{background:var(--ok-soft);color:var(--ok)}
+.pill.manual{background:var(--manual-soft);color:var(--manual)}
+
+.scenario-body{
+  padding:4px 16px 18px;
+  border-top:1px solid var(--line);
+}
+.scenario-body .steps{
+  margin:14px 0 18px;
+  padding-left:0;
+  list-style:none;
+  counter-reset:step;
+}
+.scenario-body .steps li{
+  counter-increment:step;
+  position:relative;
+  padding:5px 0 5px 30px;
+  font-size:14px;
+  border-bottom:1px dashed var(--line);
+}
+.scenario-body .steps li:last-child{border-bottom:none}
+.scenario-body .steps li::before{
+  content:counter(step);
+  position:absolute;left:0;top:5px;
+  font-family:'IBM Plex Mono',monospace;
+  font-size:11.5px;
+  color:var(--gold);
+  border:1px solid var(--line-strong);
+  border-radius:50%;
+  width:18px;height:18px;
+  display:flex;align-items:center;justify-content:center;
+}
+.scenario-body .steps code{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:12.5px;
+  background:var(--gold-soft);
+  padding:1px 5px;
+  border-radius:3px;
+}
+.scenario-body .steps .team-a{color:var(--team-a);font-weight:600}
+.scenario-body .steps .team-b{color:var(--team-b);font-weight:600}
+
+.expect-grid{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:1px;
+  background:var(--line);
+  border:1px solid var(--line);
+  margin-top:12px;
+}
+@media (max-width:720px){ .expect-grid{grid-template-columns:1fr 1fr} }
+@media (max-width:420px){ .expect-grid{grid-template-columns:1fr} }
+.expect{
+  background:var(--paper);
+  padding:11px 12px;
+}
+.expect .dev{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:10.5px;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  margin:0 0 6px;
+  padding-bottom:5px;
+  border-bottom:2px solid;
+}
+.expect.display .dev{color:var(--gold);border-color:var(--gold)}
+.expect.host .dev{color:var(--ink-soft);border-color:var(--line-strong)}
+.expect.buzzer .dev{color:var(--ok);border-color:var(--ok)}
+.expect.sound .dev{color:var(--focus);border-color:var(--focus)}
+.expect p{margin:0;font-size:12.8px;color:var(--ink)}
+.expect p + p{margin-top:6px}
+.expect .kv{display:flex;justify-content:space-between;gap:6px;font-size:12.5px}
+.expect .kv b{font-weight:600}
+.expect code{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:11.5px;
+  background:var(--bg);
+  padding:0 4px;
+  border-radius:3px;
+}
+.expect .seq{
+  display:flex;flex-wrap:wrap;gap:4px;margin-top:4px;
+}
+.expect .seq span{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:10.5px;
+  background:var(--bg);
+  border:1px solid var(--line);
+  padding:1px 6px;
+  border-radius:20px;
+}
+.note{
+  margin-top:12px;
+  padding:10px 12px;
+  background:var(--gold-soft);
+  border-left:3px solid var(--gold);
+  font-size:12.8px;
+  border-radius:0 3px 3px 0;
+}
+.note.warn{background:var(--team-a-soft);border-color:var(--team-a)}
+
+footer.colophon{
+  margin-top:64px;
+  padding-top:18px;
+  border-top:1px solid var(--line);
+  font-family:'IBM Plex Mono',monospace;
+  font-size:11.5px;
+  color:var(--ink-soft);
+}
+</style>
+
+<div class="rundown">
+
+  <header class="masthead">
+    <p class="kicker">Control v2 — dokument roboczy testera · familiada.online</p>
+    <h1>Rundown rozgrywki</h1>
+    <p>Każda możliwa ścieżka gry w Control, rozpisana krok po kroku: co klika operator, co w tym momencie ma pokazać Wyświetlacz, ekran Prowadzącego i Przycisk, oraz jaki dźwięk (i w jakiej kolejności) ma się odezwać. Do czytania na telefonie — bez uruchamiania czegokolwiek.</p>
+  </header>
+
+  <div class="legend">
+    <div class="legend-item"><span class="swatch auto"></span>Automatyczny test E2E istnieje</div>
+    <div class="legend-item"><span class="swatch manual"></span>Tylko ten opis — do ręcznej weryfikacji</div>
+    <div class="legend-item"><span class="swatch a"></span>Drużyna A</div>
+    <div class="legend-item"><span class="swatch b"></span>Drużyna B</div>
+    <div class="legend-item"><span class="swatch gold"></span>Dźwięk / sygnał</div>
+  </div>
+
+  <div class="note" style="margin-top:18px">
+    <b>Status dokumentu — 2026-10-05:</b> zaktualizowano opis do wdrożonego Control 2: natychmiastowe zgłoszenie buzzera, ręczne zakończenie finału, osobne outro, blokada rozłączeń i ustawienia gry. Oznaczenie „automatyczny” informuje o scenariuszu testowym, nie o pełnej ocenie wizualnej. Pełny cykl nowych nagrań trwa. Osobny materiał do przeglądu: <a href="Control%20i%20Game%20Settings%20%E2%80%94%20sekcje%20do%20sprawdzenia.md">Control i Game Settings — sekcje do sprawdzenia</a>.
+  </div>
+
+  <nav class="toc">
+    <a href="#sec-a"><span class="letter">A</span><span class="toc-label"><b>Parowanie urządzeń</b><span>przed startem gry</span></span></a>
+    <a href="#sec-b"><span class="letter">B</span><span class="toc-label"><b>Pojedynek</b><span>kto przejmuje kontrolę</span></span></a>
+    <a href="#sec-c"><span class="letter">C</span><span class="toc-label"><b>Rozgrywka</b><span>odkrywanie, X, kradzież</span></span></a>
+    <a href="#sec-d"><span class="letter">D</span><span class="toc-label"><b>Koniec rundy</b><span>mnożnik, rozgałęzienia</span></span></a>
+    <a href="#sec-e"><span class="letter">E</span><span class="toc-label"><b>Koniec gry</b><span>bez finału</span></span></a>
+    <a href="#sec-f"><span class="letter">F</span><span class="toc-label"><b>Finał</b><span>gracz 1, gracz 2, koniec</span></span></a>
+    <a href="#sec-g"><span class="letter">G</span><span class="toc-label"><b>Zachowania operatora</b><span>cofnij, restart, blokady</span></span></a>
+    <a href="#sec-h"><span class="letter">H</span><span class="toc-label"><b>Ustawienia i rozłączenia</b><span>outro, podgląd, blokady</span></span></a>
+  </nav>
+
+  <!-- ============================================================ -->
+  <section class="segment" id="sec-a">
+    <div class="segment-head">
+      <div class="glyph">A</div>
+      <div>
+        <h2>Parowanie urządzeń</h2>
+        <div class="sub">Zanim runda 1 w ogóle się zacznie — D0/D1/D3. Nazwy drużyn są widoczne przed rozpoczęciem rozgrywki.</div>
+      </div>
+    </div>
+
+    <details class="scenario" open>
+      <summary><span class="code">A1</span><span class="title">Podłączenie w standardowym trybie</span><span class="pill auto">automatyczny</span><span class="arrow">›</span></summary>
+      <div class="scenario-body">
+        <ol class="steps">
+          <li>Operator otwiera <code>/control2?id=…</code> — widzi krok „Urządzenia — Wyświetlacz”.</li>
+          <li>Otwiera link/QR na Wyświetlaczu, Prowadzącym i Przycisku (na osobnych urządzeniach).</li>
+          <li>Klika <code>Dalej</code> → krok „Urządzenia — Prowadzący i Przycisk”.</li>
+          <li>Klika <code>Zakończ podłączanie</code> → krok „Podsumowanie”.</li>
+        </ol>
+        <div class="expect-grid">
+          <div class="expect display"><p class="dev">Wyświetlacz</p><p>Po inicjalizacji stanu gry nazwy drużyn są widoczne przed startem. Brak pierwszego wiersza stanu podczas samego otwierania urządzenia nie jest błędem.</p></div>
+          <div class="expect host"><p class="dev">Prowadzący</p><p><code>#paperText1</code>/<code>#paperText2</code> obecne w DOM, puste — czekają na pierwszy realny stan.</p></div>
+          <div class="expect buzzer"><p class="dev">Przycisk</p><p><code>#offScreen</code> widoczny — przyciski A/B nieaktywne, jeszcze nie <code>r_duel</code>.</p></div>
+          <div class="expect sound"><p class="dev">Dźwięk</p><p>Brak — nic się jeszcze nie dzieje w grze.</p></div>
+        </div>
+        <div class="note">Kropki statusu (<code>#dotDisplay/#dotHost/#dotBuzzer</code>) w górnym pasku Control przechodzą na <code>ok</code>, gdy tylko dane urządzenie zapinguje obecność — niezależnie od tego, czy w ogóle otworzono jego stronę wcześniej.</div>
+      </div>
+    </details>
+
+    <details class="scenario">
+      <summary><span class="code">A2</span><span class="title">Fizyczny przycisk + brak tabletu prowadzącego</span><span class="pill auto">automatyczny</span><span class="arrow">›</span></summary>
+      <div class="scenario-body">
+        <ol class="steps">
+          <li>Na kroku D1 operator zaznacza <code>Fizyczny przycisk</code> i <code>Nie używaj tabletu prowadzącego</code>.</li>
+          <li>Wiersze parowania Przycisku/Prowadzącego znikają z listy, zastąpione etykietą „pominięty”.</li>
+          <li>Runda startuje normalnie — pojedynek trzeba rozstrzygnąć ręcznie w Control.</li>
+        </ol>
+        <div class="expect-grid">
+          <div class="expect display"><p class="dev">Wyświetlacz</p><p>Bez zmian — nie wie nic o trybie buzzera, maluje rundę identycznie.</p></div>
+          <div class="expect host"><p class="dev">Prowadzący</p><p>Nie jest w ogóle otwierany w tym scenariuszu (świadomie pominięty) — jeśli ktoś i tak go otworzy, dalej normalnie odbiera stan.</p></div>
+          <div class="expect buzzer"><p class="dev">Przycisk</p><p>Nieużywany — w Control pojawiają się zamiast tego przyciski <code>Drużyna A</code>/<code>Drużyna B</code> z zaznacz→potwierdź (albo <code>Anuluj</code>).</p></div>
+          <div class="expect sound"><p class="dev">Dźwięk</p><p><code>buzzer_press</code> mimo braku fizycznego przycisku — dźwięk gra na samo przyjęcie zgłoszenia w silniku, niezależnie od źródła.</p></div>
+        </div>
+      </div>
+    </details>
+
+    <details class="scenario">
+      <summary><span class="code">A3</span><span class="title">Kod QR na Wyświetlaczu — pojedynczo i podwójnie</span><span class="pill auto">automatyczny</span><span class="arrow">›</span></summary>
+      <div class="scenario-body">
+        <ol class="steps">
+          <li>Operator klika <code>QR na wyświetlaczu</code> przy wierszu Prowadzącego.</li>
+          <li>Klika <code>QR na wyświetlaczu</code> także przy wierszu Przycisku (oba naraz).</li>
+          <li>Klika <code>Ukryj QR</code> przy Prowadzącym.</li>
+        </ol>
+        <div class="expect-grid">
+          <div class="expect display"><p class="dev">Wyświetlacz</p><p>Krok 1: jeden kod (tryb „single”, większy). Krok 2: <b>oba</b> kody obok siebie — Host i Buzzer są niezależne, nie wykluczają się. Krok 3: zostaje tylko kod Buzzera.</p></div>
+          <div class="expect host"><p class="dev">Prowadzący</p><p>Bez zmian.</p></div>
+          <div class="expect buzzer"><p class="dev">Przycisk</p><p>Bez zmian.</p></div>
+          <div class="expect sound"><p class="dev">Dźwięk</p><p>Brak.</p></div>
+        </div>
+      </div>
+    </details>
+
+    <details class="scenario">
+      <summary><span class="code">A4</span><span class="title">Zmiana języka w Control</span><span class="pill auto">automatyczny</span><span class="arrow">›</span></summary>
+      <div class="scenario-body">
+        <ol class="steps">
+          <li>Operator klika przełącznik języka w górnym pasku Control i wybiera inny język.</li>
+        </ol>
+        <div class="expect-grid">
+          <div class="expect display"><p class="dev">Wyświetlacz</p><p>Chrome strony (etykiety, aria-labels) przechodzi na nowy język — treść samej gry (nazwy drużyn, pytania) nie jest tłumaczona, to dane z bazy.</p></div>
+          <div class="expect host"><p class="dev">Prowadzący</p><p>Chrome strony <b>i</b> tytuły faz/statusy („RUNDA X — PRZYCISK", „wpisano"/„brak" itd.) — obecnie w pełni przez <code>t()</code>, tymi samymi kluczami co dawny <code>control/js/gameRounds.js</code>/<code>gameFinal.js</code>.</p></div>
+          <div class="expect buzzer"><p class="dev">Przycisk</p><p>Chrome strony zmienia język.</p></div>
+          <div class="expect sound"><p class="dev">Dźwięk</p><p>Brak.</p></div>
+        </div>
+        <div class="note">Naprawiony dziś gap: <code>host2/js/render.js</code> miał wszystkie te napisy zaszyte na sztywno po polsku — zmiana języka w Control realnie synchronizowała się do urządzeń, ale treść Prowadzącego i tak zostawała polska. Teraz idzie przez te same klucze tłumaczeń co reszta systemu.</div>
+      </div>
+    </details>
+  </section>
+
+  <!-- ============================================================ -->
+  <section class="segment" id="sec-b">
+    <div class="segment-head">
+      <div class="glyph">B</div>
+      <div>
+        <h2>Pojedynek (start rundy)</h2>
+        <div class="sub">Runda zaczyna się zawsze od pojedynku o kontrolę — trzy możliwe zakończenia.</div>
+      </div>
+    </div>
+
+    <details class="scenario" open>
+      <summary><span class="code">B1</span><span class="title">Trafienie w pierwszej próbie</span><span class="pill auto">automatyczny</span><span class="arrow">›</span></summary>
+      <div class="scenario-body">
+        <ol class="steps">
+          <li>Operator klika <code>Start rundy</code>.</li>
+          <li><span class="team-a">Drużyna A</span> bzyka pierwsza na Buzzerze.</li>
+          <li>Operator klika <code>Przyjmij</code>.</li>
+          <li>Operator klika najwyżej punktowaną odpowiedź (np. <code>#1</code>) — drużyna trafia.</li>
+        </ol>
+        <div class="expect-grid">
+          <div class="expect display"><p class="dev">Wyświetlacz</p>
+            <p>Start rundy: nazwy drużyn (dolne pasy), plansza 6 wierszy z placeholderami (<code>……………</code>/<code>——</code>), bank <code>000</code>, wyniki obu drużyn.</p>
+            <p>Po trafieniu: wiersz #1 odsłonięty (tekst + punkty), suma banku i cyfry banku aktualizują się, wskaźnik kontroli świeci po stronie <span class="team-a">A</span>.</p>
+          </div>
+          <div class="expect host"><p class="dev">Prowadzący</p><p>Tytuł: „RUNDA 1 — PRZYCISK” w trakcie oczekiwania, potem bez zmiany treści przy przyjęciu zgłoszenia. Odpowiedź #1 podświetlona na zielono po odsłonięciu.</p></div>
+          <div class="expect buzzer"><p class="dev">Przycisk</p><p>Oba aktywne (przyciemnione) po starcie rundy. Po zgłoszeniu A: przycisk A rozświetlony, B przyciemniony. Po przyjęciu — stan trzyma się do następnej zmiany.</p></div>
+          <div class="expect sound"><p class="dev">Dźwięk</p>
+            <div class="seq"><span>round_transition</span><span>reveal (zsynchronizowane)</span></div>
+            <p style="margin-top:8px">przy starcie rundy, potem:</p>
+            <div class="seq"><span>buzzer_press</span></div>
+            <p>przy zwycięskim naciśnięciu, bez powtórzenia przy zatwierdzeniu przez operatora, potem:</p>
+            <div class="seq"><span>answer_correct</span></div>
+            <p>przy trafieniu #1.</p>
+          </div>
+        </div>
+      </div>
+    </details>
+
+    <details class="scenario">
+      <summary><span class="code">B2</span><span class="title">Pudło pierwszej drużyny, trafienie drugiej</span><span class="pill manual">tylko ręcznie</span><span class="arrow">›</span></summary>
+      <div class="scenario-body">
+        <ol class="steps">
+          <li><span class="team-a">A</span> zgłasza się pierwsza, operator przyjmuje.</li>
+          <li>Operator klika <code>X</code> — A pudłuje.</li>
+          <li>Operator klika trafioną odpowiedź w imieniu <span class="team-b">B</span> (druga próba, ta sama odpowiedź).</li>
+        </ol>
+        <div class="expect-grid">
+          <div class="expect display"><p class="dev">Wyświetlacz</p><p>Krótki błysk slotu X nr 4 po stronie A (ok. 1&nbsp;s, sam gaśnie) — to <b>nie</b> jest ten sam licznik co 3 zwykłe X w rozgrywce. Po trafieniu B: wskaźnik kontroli przeskakuje na <span class="team-b">B</span>, odpowiedź odsłonięta.</p></div>
+          <div class="expect host"><p class="dev">Prowadzący</p><p>Bez zmian przy samym pudle (Host nigdy nie pokazuje X) — dopiero po trafieniu odpowiedź podświetla się na zielono.</p></div>
+          <div class="expect buzzer"><p class="dev">Przycisk</p><p>Po pudle: nadal <code>r_duel</code>, ale teraz to <span class="team-b">B</span> ma próbować — stan pochodzi z <code>duel.currentTeam</code>.</p></div>
+          <div class="expect sound"><p class="dev">Dźwięk</p><div class="seq"><span>answer_wrong</span></div><p style="margin-top:6px">przy pudle A, potem <span class="seq"><span>answer_correct</span></span> przy trafieniu B.</p></div>
+        </div>
+      </div>
+    </details>
+
+    <details class="scenario">
+      <summary><span class="code">B3</span><span class="title">Obie drużyny pudłują → reset pojedynku</span><span class="pill auto">automatyczny</span><span class="arrow">›</span></summary>
+      <div class="scenario-body">
+        <ol class="steps">
+          <li>A zgłasza się, operator przyjmuje, klika <code>X</code> (A pudłuje).</li>
+          <li>Operator klika <code>X</code> ponownie (B, druga próba, też pudłuje).</li>
+          <li>Przycisk otwiera się od nowa — to samo pytanie, ktoś musi zgłosić się ponownie.</li>
+        </ol>
+        <div class="expect-grid">
+          <div class="expect display"><p class="dev">Wyświetlacz</p><p>Dwa krótkie błyski X4 (raz po stronie A, raz po stronie B), żadna odpowiedź nie znika ani się nie odsłania, bank zostaje <code>000</code>.</p></div>
+          <div class="expect host"><p class="dev">Prowadzący</p><p>Bez zmian.</p></div>
+          <div class="expect buzzer"><p class="dev">Przycisk</p><p>Wraca do stanu „oba aktywne, nikt jeszcze nie wcisnął” — nowe zgłoszenie znowu może przyjść od dowolnej drużyny.</p></div>
+          <div class="expect sound"><p class="dev">Dźwięk</p><div class="seq"><span>answer_wrong</span><span>answer_wrong</span></div></div>
+        </div>
+      </div>
+    </details>
+
+    <details class="scenario">
+      <summary><span class="code">B4</span><span class="title">Tryb fizycznego przycisku — zaznacz, anuluj, potwierdź</span><span class="pill auto">automatyczny</span><span class="arrow">›</span></summary>
+      <div class="scenario-body">
+        <ol class="steps">
+          <li>Operator (bez Buzzera na ekranie) klika <code>Drużyna A</code>.</li>
+          <li>Control pokazuje „Wybrano: A” + przyciski <code>Anuluj</code>/<code>Potwierdź</code>.</li>
+          <li>Operator klika <code>Anuluj</code> — wraca do wyboru.</li>
+          <li>Klika <code>Drużyna B</code>, potem <code>Potwierdź</code>.</li>
+        </ol>
+        <div class="expect-grid">
+          <div class="expect display"><p class="dev">Wyświetlacz</p><p>Nic się nie dzieje aż do <code>Potwierdź</code> — samo „zaznaczenie” w Control jest czysto lokalne, nie zapisuje się do <code>game_state</code>.</p></div>
+          <div class="expect host"><p class="dev">Prowadzący</p><p>Bez zmian do potwierdzenia.</p></div>
+          <div class="expect buzzer"><p class="dev">Przycisk</p><p>Nieużywany w tym trybie.</p></div>
+          <div class="expect sound"><p class="dev">Dźwięk</p><p>Brak przy zaznaczeniu/anulowaniu. <div class="seq"><span>buzzer_press</span></div> dopiero po <code>Potwierdź</code>.</p></div>
+        </div>
+      </div>
+    </details>
+  </section>
+
+  <!-- ============================================================ -->
+  <section class="segment" id="sec-c">
+    <div class="segment-head">
+      <div class="glyph">C</div>
+      <div>
+        <h2>Rozgrywka</h2>
+        <div class="sub">Drużyna z kontrolą odkrywa odpowiedzi, może spudłować, oddać pytanie albo stracić bank na rzecz przeciwnika.</div>
+      </div>
+    </div>
+
+    <details class="scenario">
+      <summary><span class="code">C1</span><span class="title">Proste odkrywanie, bez X i bez kradzieży</span><span class="pill manual">tylko ręcznie</span><span class="arrow">›</span></summary>
+      <div class="scenario-body">
+        <ol class="steps">
+          <li>Drużyna z kontrolą odkrywa po kolei wszystkie pozostałe odpowiedzi.</li>
+          <li>Po ostatniej odpowiedzi <code>Zakończ rundę</code> jest od razu dostępne (bez czekania na kradzież).</li>
+        </ol>
+        <div class="expect-grid">
+          <div class="expect display"><p class="dev">Wyświetlacz</p><p>Każde odsłonięcie: tekst+punkty wjeżdżają (<code>matrix right</code>, 500&nbsp;ms), suma banku aktualizuje się za każdym razem.</p></div>
+          <div class="expect host"><p class="dev">Prowadzący</p><p><b>Widzi WSZYSTKIE odpowiedzi i punkty od samego początku rundy</b> (znacznik „✓" oznacza tylko te już odkryte dla widzów) — inaczej nie mógłby ocenić, czy to, co powiedział kontestant, w ogóle pasuje do listy.</p></div>
+          <div class="expect buzzer"><p class="dev">Przycisk</p><p><code>OFF</code> przez całą tę fazę (poza <code>r_duel</code>).</p></div>
+          <div class="expect sound"><p class="dev">Dźwięk</p><p><code>answer_correct</code> przy każdym odsłonięciu.</p></div>
+        </div>
+        <div class="note warn"><b>Znaleziony i naprawiony dziś poważny gap:</b> wcześniejsza wersja <code>host2/js/render.js</code> chowała treść i punkty KAŻDEJ nieodkrytej odpowiedzi pod „______" — prowadzący widziałby pytanie, ale nie miałby żadnej listy odpowiedzi do porównania z tym, co mówi kontestant, co w praktyce robiłoby ekran Prowadzącego bezużytecznym podczas prawdziwej rozgrywki.</div>
+      </div>
+    </details>
+
+    <details class="scenario">
+      <summary><span class="code">C2</span><span class="title">Pass — oddanie pytania przed pierwszym trafieniem</span><span class="pill auto">automatyczny</span><span class="arrow">›</span></summary>
+      <div class="scenario-body">
+        <ol class="steps">
+          <li>Drużyna, która wygrała pojedynek, trafia pierwszą odpowiedź (bank rośnie, <code>allowPass=true</code>).</li>
+          <li>Zamiast kontynuować, operator klika <code>Pass</code>.</li>
+          <li>Kontrola przechodzi na przeciwną drużynę, ta sama runda, ten sam bank.</li>
+        </ol>
+        <div class="expect-grid">
+          <div class="expect display"><p class="dev">Wyświetlacz</p><p>Wskaźnik kontroli przeskakuje na drugą drużynę, bank <b>nie</b> resetuje się.</p></div>
+          <div class="expect host"><p class="dev">Prowadzący</p><p>Bez zmiany treści (Host nie pokazuje kto ma kontrolę).</p></div>
+          <div class="expect buzzer"><p class="dev">Przycisk</p><p><code>OFF</code>.</p></div>
+          <div class="expect sound"><p class="dev">Dźwięk</p><p>Brak dedykowanego dźwięku dla samego Pass.</p></div>
+        </div>
+        <div class="note">Pass jest dostępny <b>tylko raz na rundę</b> i tylko zanim padnie pierwsze trafienie w fazie PLAY — po nim znika do końca rundy.</div>
+      </div>
+    </details>
+
+    <details class="scenario">
+      <summary><span class="code">C3</span><span class="title">3× X → automatyczna kradzież</span><span class="pill auto">automatyczny</span><span class="arrow">›</span></summary>
+      <div class="scenario-body">
+        <ol class="steps">
+          <li>Drużyna z kontrolą pudłuje trzy razy z rzędu (<code>X</code>×3).</li>
+          <li>Po 3. pudle Control automatycznie wchodzi w fazę kradzieży — przycisk „Kradzież” znika (już nie trzeba go klikać).</li>
+        </ol>
+        <div class="expect-grid">
+          <div class="expect display"><p class="dev">Wyświetlacz</p><p>Trzy kolejne lampki X (1/2/3) po stronie pudłującej drużyny zapalają się przyrostowo — <b>inny licznik</b> niż błysk pojedynku (sekcja B2/B3).</p></div>
+          <div class="expect host"><p class="dev">Prowadzący</p><p>Bez zmian (Host nigdy nie pokazuje X).</p></div>
+          <div class="expect buzzer"><p class="dev">Przycisk</p><p><code>OFF</code>.</p></div>
+          <div class="expect sound"><p class="dev">Dźwięk</p><p><code>answer_wrong</code> × 3.</p></div>
+        </div>
+      </div>
+    </details>
+
+    <details class="scenario">
+      <summary><span class="code">C4</span><span class="title">Kradzież — wygrana</span><span class="pill auto">automatyczny</span><span class="arrow">›</span></summary>
+      <div class="scenario-body">
+        <ol class="steps">
+          <li>Po 3. X operator klika trafioną (dowolną nieodkrytą) odpowiedź w imieniu przeciwnika.</li>
+        </ol>
+        <div class="expect-grid">
+          <div class="expect display"><p class="dev">Wyświetlacz</p><p>Odpowiedź odsłania się, bank dolicza się <b>do tej samej sumy</b> — cały bank trafia do drużyny kradnącej dopiero przy końcu rundy.</p></div>
+          <div class="expect host"><p class="dev">Prowadzący</p><p>Odpowiedź podświetla się na zielono.</p></div>
+          <div class="expect buzzer"><p class="dev">Przycisk</p><p><code>OFF</code>.</p></div>
+          <div class="expect sound"><p class="dev">Dźwięk</p><p><code>answer_correct</code>.</p></div>
+        </div>
+      </div>
+    </details>
+
+    <details class="scenario">
+      <summary><span class="code">C5</span><span class="title">Kradzież — przegrana</span><span class="pill auto">automatyczny</span><span class="arrow">›</span></summary>
+      <div class="scenario-body">
+        <ol class="steps">
+          <li>Po 3. X operator klika <code>X</code> jeszcze raz (drużyna kradnąca też pudłuje).</li>
+        </ol>
+        <div class="expect-grid">
+          <div class="expect display"><p class="dev">Wyświetlacz</p><p>Trwały (nie gasnący) znacznik X4 po stronie drużyny, która przegrała kradzież — zostaje widoczny do końca rundy, w odróżnieniu od krótkiego błysku z pojedynku.</p></div>
+          <div class="expect host"><p class="dev">Prowadzący</p><p>Bez zmian.</p></div>
+          <div class="expect buzzer"><p class="dev">Przycisk</p><p><code>OFF</code>.</p></div>
+          <div class="expect sound"><p class="dev">Dźwięk</p><p><code>answer_wrong</code>.</p></div>
+        </div>
+      </div>
+    </details>
+
+    <details class="scenario">
+      <summary><span class="code">C6</span><span class="title">Odkrywanie reszty po zakończeniu rundy (R8)</span><span class="pill auto">automatyczny</span><span class="arrow">›</span></summary>
+      <div class="scenario-body">
+        <ol class="steps">
+          <li>Po <code>Zakończ rundę</code>, jeśli zostały nieodkryte odpowiedzi, operator klika je po kolei.</li>
+        </ol>
+        <div class="expect-grid">
+          <div class="expect display"><p class="dev">Wyświetlacz</p><p>Odpowiedź wjeżdża tak samo jak zwykłe odsłonięcie, ale <b>suma banku i cyfry banku NIE zmieniają się</b> — czysto pokazowe, wynik rundy już zapisany.</p></div>
+          <div class="expect host"><p class="dev">Prowadzący</p><p>Podświetla się na zielono jak zwykle.</p></div>
+          <div class="expect buzzer"><p class="dev">Przycisk</p><p><code>OFF</code>.</p></div>
+          <div class="expect sound"><p class="dev">Dźwięk</p><p><code>answer_correct</code> mimo braku zmiany w banku.</p></div>
+        </div>
+      </div>
+    </details>
+  </section>
+
+  <!-- ============================================================ -->
+  <section class="segment" id="sec-d">
+    <div class="segment-head">
+      <div class="glyph">D</div>
+      <div>
+        <h2>Koniec rundy — rozgałęzienia</h2>
+        <div class="sub">Punkt R9: jedno miejsce, które decyduje co dalej — kolejna runda, finał, czy koniec gry.</div>
+      </div>
+    </div>
+
+    <details class="scenario">
+      <summary><span class="code">D1</span><span class="title">Kontynuacja do kolejnej rundy</span><span class="pill auto">automatyczny</span><span class="arrow">›</span></summary>
+      <div class="scenario-body">
+        <ol class="steps"><li>Próg finału nieosiągnięty, pula pytań nie wyczerpana → <code>r_roundStart</code>, numer rundy +1.</li></ol>
+        <div class="expect-grid">
+          <div class="expect display"><p class="dev">Wyświetlacz</p><p>Stara plansza zjeżdża (<code>edge down</code>, 1&nbsp;s), <b>dopiero po tym</b> nowa wjeżdża pusta (<code>matrix down</code>, 1.5&nbsp;s) — sekwencyjnie, nie równolegle.</p></div>
+          <div class="expect host"><p class="dev">Prowadzący</p><p>Czyszczony, czeka na nową rundę.</p></div>
+          <div class="expect buzzer"><p class="dev">Przycisk</p><p><code>OFF</code> do czasu <code>r_duel</code> kolejnej rundy.</p></div>
+          <div class="expect sound"><p class="dev">Dźwięk</p><div class="seq"><span>reveal</span><span>round_transition (sekwencyjnie, reveal→round_transition)</span></div></div>
+        </div>
+      </div>
+    </details>
+
+    <details class="scenario">
+      <summary><span class="code">D2</span><span class="title">Mnożnik rundy (np. runda 4. = ×2)</span><span class="pill auto">automatyczny</span><span class="arrow">›</span></summary>
+      <div class="scenario-body">
+        <ol class="steps">
+          <li>Domyślne mnożniki: <code>[1,1,1,2,3]</code> — rundy 1–3 = ×1, runda 4 = ×2, runda 5+ = ×3 (ostatnia wartość powtarza się, jeśli rund jest więcej niż wpisów w tablicy).</li>
+          <li>Bank rundy 4, np. 40 pkt, dopisuje się do wyniku jako <b>80</b>, nie 40.</li>
+        </ol>
+        <div class="expect-grid">
+          <div class="expect display"><p class="dev">Wyświetlacz</p><p>Wynik drużyny po rundzie 4. odzwierciedla już przemnożoną wartość.</p></div>
+          <div class="expect host"><p class="dev">Prowadzący</p><p>Bez zmian.</p></div>
+          <div class="expect buzzer"><p class="dev">Przycisk</p><p>Bez zmian.</p></div>
+          <div class="expect sound"><p class="dev">Dźwięk</p><p>Ta sama sekwencja co D1.</p></div>
+        </div>
+      </div>
+    </details>
+
+    <details class="scenario">
+      <summary><span class="code">D3</span><span class="title">Próg osiągnięty + finał włączony → finał</span><span class="pill auto">automatyczny</span><span class="arrow">›</span></summary>
+      <div class="scenario-body">
+        <ol class="steps"><li>Wynik którejkolwiek drużyny ≥ <code>finalMinPoints</code> (domyślnie 300) i finał skonfigurowany → przejście do <code>f_start</code>.</li></ol>
+        <div class="expect-grid">
+          <div class="expect display"><p class="dev">Wyświetlacz</p><p>Bez natychmiastowej zmiany — plansza finału pojawia się dopiero po kliknięciu <code>Start finału</code> (sekcja F1).</p></div>
+          <div class="expect host"><p class="dev">Prowadzący</p><p>Bez zmian.</p></div>
+          <div class="expect buzzer"><p class="dev">Przycisk</p><p>Bez zmian (nadal <code>OFF</code>).</p></div>
+          <div class="expect sound"><p class="dev">Dźwięk</p><p>Brak przy samym wejściu w <code>f_start</code>.</p></div>
+        </div>
+      </div>
+    </details>
+
+    <details class="scenario">
+      <summary><span class="code">D4</span><span class="title">Próg osiągnięty, finał wyłączony → koniec gry</span><span class="pill auto">automatyczny</span><span class="arrow">›</span></summary>
+      <div class="scenario-body"><ol class="steps"><li>To samo co D3, ale <code>hasFinal=false</code> → prosto do <code>r_gameEnd</code> (sekcja E).</li></ol></div>
+    </details>
+
+    <details class="scenario">
+      <summary><span class="code">D5</span><span class="title">Pula pytań wyczerpana → koniec gry</span><span class="pill auto">automatyczny</span><span class="arrow">›</span></summary>
+      <div class="scenario-body"><ol class="steps"><li>Niezależnie od tego, czy próg padł — gdy zabraknie pytań rund, gra i tak kończy się na <code>r_gameEnd</code>.</li></ol></div>
+    </details>
+  </section>
+
+  <!-- ============================================================ -->
+  <section class="segment" id="sec-e">
+    <div class="segment-head">
+      <div class="glyph">E</div>
+      <div>
+        <h2>Koniec gry (bez finału)</h2>
+        <div class="sub">Ekran zakończenia; po blokadzie dźwiękowej możliwy powrót do listy gier lub restart.</div>
+      </div>
+    </div>
+
+    <details class="scenario">
+      <summary><span class="code">E1</span><span class="title">Zwycięzca — tryb logo / punkty / pieniądze</span><span class="pill auto">automatyczny</span><span class="arrow">›</span></summary>
+      <div class="scenario-body"><ol class="steps"><li>Po rozliczeniu rundy i odsłonięciu reszty operator przechodzi do zakończenia gry.</li><li>Klika <code>Zakończ grę</code>.</li></ol><div class="expect-grid"><div class="expect display"><p class="dev">Wyświetlacz</p><p>Plansza zmienia się na logo lub punkty zwycięzcy przy reveal. Bez finału tryb nagrody pokazuje punkty.</p></div><div class="expect host"><p class="dev">Prowadzący</p><p>Odbiera końcowy stan gry.</p></div><div class="expect buzzer"><p class="dev">Przycisk</p><p>Wygaszony.</p></div><div class="expect sound"><p class="dev">Dźwięk</p><p><code>reveal</code> i osobne <code>show_outro</code> od początku zmiany planszy. Dźwięk przejścia rundy nie powtarza się.</p></div></div><div class="note">Dalsze działania i restart czekają na blokadę obejmującą rzeczywistą długość dźwięku.</div></div>
+    </details>
+
+    <details class="scenario">
+      <summary><span class="code">E2</span><span class="title">Remis — zawsze logo</span><span class="pill manual">tylko ręcznie</span><span class="arrow">›</span></summary>
+      <div class="scenario-body"><ol class="steps"><li>Wyniki równe — niezależnie od <code>endScreenMode</code>, zawsze pokazuje logo, nigdy <code>WIN</code>.</li></ol></div>
+    </details>
+
+    <details class="scenario">
+      <summary><span class="code">E3</span><span class="title">Powrót po zakończeniu rozgrywki</span><span class="pill auto">automatyczny</span><span class="arrow">›</span></summary>
+      <div class="scenario-body"><ol class="steps"><li>Po zakończeniu dźwięku zakończenia można opuścić Control i wrócić do listy gier. Builder został usunięty; docelowy adres listy to <code>/games/</code>.</li></ol></div>
+    </details>
+  </section>
+
+  <!-- ============================================================ -->
+  <section class="segment" id="sec-f">
+    <div class="segment-head">
+      <div class="glyph">F</div>
+      <div>
+        <h2>Finał</h2>
+        <div class="sub">Wchodzimy tu tylko przez D3. Dwóch graczy, wpisywanie → mapowanie → koniec.</div>
+      </div>
+    </div>
+
+    <details class="scenario" open>
+      <summary><span class="code">F1</span><span class="title">Start finału</span><span class="pill auto">automatyczny</span><span class="arrow">›</span></summary>
+      <div class="scenario-body">
+        <ol class="steps"><li>Operator klika <code>Start finału</code>.</li></ol>
+        <div class="expect-grid">
+          <div class="expect display"><p class="dev">Wyświetlacz</p><p>Plansza finału wjeżdża z samymi placeholderami (<code>———————————</code> / <code>▒▒</code>). Wskaźnik zapala się po stronie zwycięskiej drużyny i <b>zostaje zapalony przez cały finał</b>.</p></div>
+          <div class="expect host"><p class="dev">Prowadzący</p><p>Zasłonięty (<code>COVER</code>).</p></div>
+          <div class="expect buzzer"><p class="dev">Przycisk</p><p>Wygaszony na resztę finału (krok <code>f_*</code> ≠ <code>r_duel</code> → zawsze <code>OFF</code>).</p></div>
+          <div class="expect sound"><p class="dev">Dźwięk</p><div class="seq"><span>final_theme</span><span>reveal (sekwencyjnie po sobie)</span></div></div>
+        </div>
+      </div>
+    </details>
+
+    <details class="scenario">
+      <summary><span class="code">F2</span><span class="title">Gracz 1 — wpisywanie, licznik 15&nbsp;s</span><span class="pill auto">automatyczny</span><span class="arrow">›</span></summary>
+      <div class="scenario-body">
+        <ol class="steps">
+          <li>Operator klika <code>Start timera</code> — 15&nbsp;s.</li>
+          <li>Gracz wpisuje 5 odpowiedzi (poza zasięgiem tego dokumentu — operator wpisuje w jego imieniu).</li>
+        </ol>
+        <div class="expect-grid">
+          <div class="expect display"><p class="dev">Wyświetlacz</p><p><b>Zanim jeszcze operator kliknie „Start timera”</b>: strona zwycięzcy pokazuje zapowiedź <code>15</code> . Po starcie: te same cyfry odliczają w dół co sekundę do 0, druga drużyna ma cały czas swój normalny wynik.</p></div>
+          <div class="expect host"><p class="dev">Prowadzący</p><p>Tytuł „FINAŁ RUNDA 1 — ODLICZANIE Xs” aktualizuje się na żywo, każde pytanie pokazuje status (wpisano/brak) w czasie rzeczywistym, nie dopiero przy odsłanianiu.</p></div>
+          <div class="expect buzzer"><p class="dev">Przycisk</p><p><code>OFF</code>.</p></div>
+          <div class="expect sound"><p class="dev">Dźwięk</p><p>Brak w trakcie odliczania.</p></div>
+        </div>
+      </div>
+    </details>
+
+    <details class="scenario">
+      <summary><span class="code">F3</span><span class="title">Naturalne wygaśnięcie timera</span><span class="pill auto">automatyczny</span><span class="arrow">›</span></summary>
+      <div class="scenario-body">
+        <ol class="steps"><li>Operator nie klika nic — timer dochodzi do 0 sam.</li></ol>
+        <div class="expect-grid">
+          <div class="expect display"><p class="dev">Wyświetlacz</p><p>Cyfry wracają do normalnego wyniku drużyny (koniec podmiany).</p></div>
+          <div class="expect host"><p class="dev">Prowadzący</p><p>Tytuł przestaje liczyć, wraca do statycznego.</p></div>
+          <div class="expect buzzer"><p class="dev">Przycisk</p><p>Bez zmian.</p></div>
+          <div class="expect sound"><p class="dev">Dźwięk</p><p><code>time_over</code>.</p></div>
+        </div>
+        <div class="note">Brak auto-przejścia do mapowania — operator i tak musi kliknąć <code>Dalej</code> ręcznie.</div>
+        <div class="note warn"><b>Znaleziony dziś gap, już naprawiony:</b> nic w Control nie „obserwowało” aktywnego timera — bez zegarka w karcie operatora <code>time_over</code> odpaliłoby się dopiero po przeładowaniu strony albo przypadkowym zapisie z innego urządzenia. Dograny lekki <code>setTimeout</code> w <code>control2/js/app.js</code> pilnuje tego teraz samodzielnie, tak jak w oryginalnym silniku. Warunek: karta Control musi zostać otwarta (może być w tle) — jeśli operator ją zamknie, zegarek naturalnie wraca do mechanizmu "dogonienia" przy następnym otwarciu.</div>
+      </div>
+    </details>
+
+    <details class="scenario">
+      <summary><span class="code">F4</span><span class="title">Mapowanie — dwuetapowe odsłanianie</span><span class="pill auto">automatyczny</span><span class="arrow">›</span></summary>
+      <div class="scenario-body"><ol class="steps"><li>Operator wybiera i zatwierdza dopasowanie.</li><li>Trafienie: <code>Pokaż odpowiedź</code>, następnie <code>Pokaż punkty</code>. Dopiero odsłonięcie punktów aktualizuje sumę.</li><li>Brak odpowiedzi, pudło i powtórzenie: <code>Pokaż odpowiedź</code> od razu gra dźwięk błędu i automatycznie odsłania zero, bez dodatkowego kliknięcia punktów.</li></ol><div class="note">Kafelek „Wpisano” mieści pole tekstowe. W mapowaniu gracza 2 widoczna jest również odpowiedź gracza 1. Suma finału znajduje się przy przycisku dalszego przebiegu.</div></div>
+    </details>
+
+    <details class="scenario">
+      <summary><span class="code">F5</span><span class="title">Wczesne osiągnięcie celu — gracz 1 lub gracz 2</span><span class="pill auto">automatyczny</span><span class="arrow">›</span></summary>
+      <div class="scenario-body"><ol class="steps"><li>Po odsłonięciu punktów suma osiąga cel finału.</li><li>Dalsze mapowanie jest blokowane. W kolumnie podpowiedzi pojawia się informacja o osiągniętym progu, bez dodatkowego banera.</li><li>Przycisk zmienia się na <code>Zakończ finał</code>. Operator klika go ręcznie — brak automatycznego przejścia.</li><li>Wynik pojawia się z reveal i dźwiękiem przejścia rundy, tak samo jak w F10.</li></ol></div>
+    </details>
+
+    <details class="scenario">
+      <summary><span class="code">F6</span><span class="title">Przejście do gracza 2 — odpowiedzi gracza 1 i zasłona Prowadzącego</span><span class="pill auto">automatyczny</span><span class="arrow">›</span></summary>
+      <div class="scenario-body"><ol class="steps"><li>Po mapowaniu pięciu odpowiedzi gracza 1, jeśli nie osiągnięto progu, operator rozpoczyna drugą rundę finału.</li></ol><div class="expect-grid"><div class="expect display"><p class="dev">Wyświetlacz</p><p>Przy wpisywaniu gracza 2 widoczne są odkryte odpowiedzi gracza 1.</p></div><div class="expect host"><p class="dev">Prowadzący</p><p>Zasłona jest aktywna. Gest przesunięcia lokalnie odsłania treść; kolejna zmiana stanu gry przywraca zasłonę. Nie odsłania to odpowiedzi na Wyświetlaczu.</p></div><div class="expect buzzer"><p class="dev">Przycisk</p><p>Wygaszony.</p></div><div class="expect sound"><p class="dev">Dźwięk</p><p>Reveal towarzyszy zmianie planszy, wraz z dźwiękiem przejścia rundy.</p></div></div></div>
+    </details>
+
+    <details class="scenario">
+      <summary><span class="code">F7</span><span class="title">Gracz 2 — wpisywanie, licznik 20&nbsp;s, flaga „powtórzenie”</span><span class="pill auto">automatyczny</span><span class="arrow">›</span></summary>
+      <div class="scenario-body">
+        <ol class="steps">
+          <li>Operator klika <code>Start timera</code> (20&nbsp;s zamiast 15&nbsp;s).</li>
+          <li>Gdy gracz 2 powtarza dokładnie to, co powiedział gracz 1: operator zaznacza <code>Powtórzenie</code> zamiast wpisywać odpowiedź.</li>
+        </ol>
+        <div class="expect-grid">
+          <div class="expect display"><p class="dev">Wyświetlacz</p><p>Zapowiedź <code>20</code> po stronie zwycięzcy przed startem (naprawione dziś, ten sam mechanizm co F2). Odpowiedź oznaczona jako „powtórzenie” wygląda <b>identycznie jak SKIP</b> — bez wizualnego rozróżnienia.</p></div>
+          <div class="expect host"><p class="dev">Prowadzący</p><p>Jedyne miejsce, gdzie „powtórzenie” faktycznie widać — żółte podkreślenie / status „powtórzenie” w liście pytań.</p></div>
+          <div class="expect buzzer"><p class="dev">Przycisk</p><p><code>OFF</code>.</p></div>
+          <div class="expect sound"><p class="dev">Dźwięk</p><p><code>answer_repeat</code> w momencie zaznaczenia flagi (nie przy właściwym odsłonięciu).</p></div>
+        </div>
+      </div>
+    </details>
+
+    <details class="scenario">
+      <summary><span class="code">F8</span><span class="title">Mapowanie gracza 2, w tym odpowiedź „powtórzenie”</span><span class="pill manual">tylko ręcznie</span><span class="arrow">›</span></summary>
+      <div class="scenario-body"><ol class="steps"><li>Mapowanie jak w F4. Powtórzenie odsłania zero automatycznie przy odsłanianiu odpowiedzi, z dźwiękiem błędu.</li></ol></div>
+    </details>
+
+    <details class="scenario">
+      <summary><span class="code">F9</span><span class="title">Pełne przejście — wszystkie 10 pytań, bez wczesnego wyjścia</span><span class="pill auto">automatyczny</span><span class="arrow">›</span></summary>
+      <div class="scenario-body"><ol class="steps"><li>Bez wcześniejszego osiągnięcia progu mapowane są wszystkie odpowiedzi obu graczy.</li><li>Po odsłonięciu ostatnich punktów drugiego gracza pojawia się <code>Zakończ finał</code>. Wynik nie pojawia się automatycznie.</li></ol></div>
+    </details>
+
+    <details class="scenario">
+      <summary><span class="code">F10</span><span class="title">Koniec finału — przeliczenie nagrody</span><span class="pill auto">automatyczny</span><span class="arrow">›</span></summary>
+      <div class="scenario-body"><ol class="steps"><li><code>Zakończ finał</code> pokazuje wybrany wynik: logo, punkty albo nagrodę. Grają razem <code>reveal</code> i <code>round_transition</code>.</li><li>Po ich blokadzie operator klika <code>Zakończ grę</code>. Gra tylko osobne <code>show_outro</code>; wynik pozostaje na ekranie, bez drugiego reveal.</li></ol><div class="note">Nagroda: (punkty rund + punkty finału) × mnożnik nagrody, plus premia za osiągnięcie celu. W nagraniu 04 niższa nagroda wynosi 1167, a w 05 nagroda główna 25960. Outro nie jest intro i nie powtarza dźwięku przejścia rundy.</div></div>
+    </details>
+  </section>
+
+  <!-- ============================================================ -->
+  <section class="segment" id="sec-g">
+    <div class="segment-head">
+      <div class="glyph">G</div>
+      <div>
+        <h2>Zachowania operatora poza główną ścieżką</h2>
+        <div class="sub">To, co dzieje się, gdy coś idzie nie tak albo operator zmienia zdanie.</div>
+      </div>
+    </div>
+
+    <details class="scenario">
+      <summary><span class="code">G1</span><span class="title">Cofnij ostatnią akcję</span><span class="pill auto">automatyczny</span><span class="arrow">›</span></summary>
+      <div class="scenario-body">
+        <ol class="steps"><li>Operator klika 3. X (auto-kradzież), po czym klika <code>Cofnij ostatnią akcję</code>.</li></ol>
+        <div class="expect-grid">
+          <div class="expect display"><p class="dev">Wyświetlacz</p><p>Wraca do stanu sprzed 3. X (jedna lampka X gaśnie z powrotem).</p></div>
+          <div class="expect host"><p class="dev">Prowadzący</p><p>Wraca do poprzedniego stanu.</p></div>
+          <div class="expect buzzer"><p class="dev">Przycisk</p><p>Wraca do poprzedniego stanu.</p></div>
+          <div class="expect sound"><p class="dev">Dźwięk</p><p>Brak dedykowanego dźwięku cofnięcia — cofa tylko stan współdzielony, nie już odtworzony dźwięk.</p></div>
+        </div>
+        <div class="note">Cofnięcie jest jednopoziomowe — drugie kolejne kliknięcie cofa <i>kolejną</i> akcję wstecz, nie tę samą ponownie.</div>
+      </div>
+    </details>
+
+    <details class="scenario">
+      <summary><span class="code">G2</span><span class="title">„Zacznij od nowa”</span><span class="pill auto">automatyczny</span><span class="arrow">›</span></summary>
+      <div class="scenario-body">
+        <ol class="steps"><li>Operator klika ikonę w górnym pasku, potwierdza w modalu.</li></ol>
+        <div class="expect-grid">
+          <div class="expect display"><p class="dev">Wyświetlacz</p><p>Wraca do przygotowania urządzeń (stan D0); po inicjalizacji widoczne są nazwy drużyn.</p></div>
+          <div class="expect host"><p class="dev">Prowadzący</p><p>Czyszczony.</p></div>
+          <div class="expect buzzer"><p class="dev">Przycisk</p><p><code>OFF</code>.</p></div>
+          <div class="expect sound"><p class="dev">Dźwięk</p><p>Brak.</p></div>
+        </div>
+        <div class="note">Resetuje drużyny, pytania, postęp rund i finału. <b>Nie</b> resetuje: parowania urządzeń (osobny mechanizm) ani ustawień „zaawansowanych” (mnożniki, progi, tryb ekranu końcowego).</div>
+      </div>
+    </details>
+
+    <details class="scenario">
+      <summary><span class="code">G3</span><span class="title">Druga karta Control na tę samą grę</span><span class="pill auto">automatyczny</span><span class="arrow">›</span></summary>
+      <div class="scenario-body"><ol class="steps"><li>Operator (albo ktoś inny) otwiera <code>/control2</code> dla tej samej gry w drugiej karcie.</li></ol>
+        <div class="expect-grid">
+          <div class="expect display"><p class="dev">Wyświetlacz</p><p>Bez wpływu — nadal śledzi ten sam <code>game_state</code>.</p></div>
+          <div class="expect host"><p class="dev">Prowadzący</p><p>Bez wpływu.</p></div>
+          <div class="expect buzzer"><p class="dev">Przycisk</p><p>Bez wpływu.</p></div>
+          <div class="expect sound"><p class="dev">Dźwięk</p><p>—</p></div>
+        </div>
+        <div class="note">Druga karta widzi nakładkę blokady zamiast interfejsu gry — nie może nic kliknąć, dopóki pierwsza karta nie zwolni blokady.</div>
+      </div>
+    </details>
+
+    <details class="scenario">
+      <summary><span class="code">G4</span><span class="title">Wyciszenie dźwięku</span><span class="pill auto">automatyczny</span><span class="arrow">›</span></summary>
+      <div class="scenario-body"><ol class="steps"><li>Operator klika przycisk wyciszenia w górnym pasku, potem wykonuje dowolną akcję, która normalnie gra dźwięk.</li></ol>
+        <div class="expect-grid">
+          <div class="expect display"><p class="dev">Wyświetlacz</p><p>Bez wpływu — dźwięk gra wyłącznie w Control.</p></div>
+          <div class="expect host"><p class="dev">Prowadzący</p><p>Bez wpływu.</p></div>
+          <div class="expect buzzer"><p class="dev">Przycisk</p><p>Bez wpływu.</p></div>
+          <div class="expect sound"><p class="dev">Dźwięk</p><p>Zero odtworzeń, mimo że akcja w grze się wykonuje normalnie.</p></div>
+        </div>
+      </div>
+    </details>
+
+    <details class="scenario">
+      <summary><span class="code">G5</span><span class="title">Przeładowanie Control w trakcie gry</span><span class="pill auto">automatyczny</span><span class="arrow">›</span></summary>
+      <div class="scenario-body"><ol class="steps"><li>Operator odświeża kartę Control w środku rundy 2.</li></ol>
+        <div class="expect-grid">
+          <div class="expect display"><p class="dev">Wyświetlacz</p><p>Nie zauważa niczego — nie zależy od karty Control.</p></div>
+          <div class="expect host"><p class="dev">Prowadzący</p><p>Bez zmian.</p></div>
+          <div class="expect buzzer"><p class="dev">Przycisk</p><p>Bez zmian.</p></div>
+          <div class="expect sound"><p class="dev">Dźwięk</p><p>—</p></div>
+        </div>
+        <div class="note">Cały postęp (numer rundy, wyniki, kto ma kontrolę) wraca dokładnie taki, jaki był — to jest właściwy dowód na to, po co ta przebudowa architektury w ogóle powstała.</div>
+      </div>
+    </details>
+
+    <details class="scenario">
+      <summary><span class="code">G6</span><span class="title">Wyścig dwóch kliknięć Buzzera</span><span class="pill auto">automatyczny</span><span class="arrow">›</span></summary>
+      <div class="scenario-body">
+        <ol class="steps"><li>Obie drużyny bzykają w tej samej chwili (dwa równoległe zgłoszenia do bazy).</li></ol>
+        <div class="expect-grid">
+          <div class="expect display"><p class="dev">Wyświetlacz</p><p>Wskaźnik zaświeci się dokładnie dla jednej drużyny — tej, której zapis wygrał wyścig w bazie.</p></div>
+          <div class="expect host"><p class="dev">Prowadzący</p><p>Bez zmian.</p></div>
+          <div class="expect buzzer"><p class="dev">Przycisk</p><p>Zwycięzca: rozświetlony. Przegrany: dostaje jawny błąd „ktoś był pierwszy” zamiast ciszy.</p></div>
+          <div class="expect sound"><p class="dev">Dźwięk</p><p><code>buzzer_press</code> gra raz przy zwycięskim zgłoszeniu. Zatwierdzenie w Control nie odtwarza go ponownie. Przycisk rozświetla się lokalnie przed wysłaniem sygnału.</p></div>
+        </div>
+        <div class="note">Rozstrzyga pojedynczy, atomowy zapis w bazie (kto pierwszy zapisze <code>lastPressed</code>) — nie licytacja czasów sieciowych po stronie klienta.</div>
+      </div>
+    </details>
+  </section>
+
+
+  <section class="segment" id="sec-h"><div class="segment-head"><div class="glyph">H</div><div><h2>Rozłączenia, ustawienia i dźwięki</h2><div class="sub">Uzupełnienie aktualnego przebiegu Control i Game Settings.</div></div></div>
+  <details class="scenario" open><summary><span class="code">H1</span><span class="title">Rozłączenie i powrót urządzeń</span><span class="arrow">›</span></summary><div class="scenario-body"><p>Po 6,5 s od ostatniego pingu wymaganego urządzenia Control blokuje akcje gry i pokazuje jednorazowy modal wymieniający odłączone urządzenia. Należy sprawdzić internet panelu i urządzeń, a następnie w razie potrzeby podłączyć je ponownie przyciskami w górnym pasku.</p><p>Akcje zapisane przed wykryciem przerwy nie są cofane. Wysłane wcześniej żądanie może zakończyć zapis po wykryciu rozłączenia. Kolejka sprawdza blokadę ponownie przed wykonaniem. Urządzenie wraca z aktualnym stanem bez odgrywania pominiętych animacji; biegnące zegary nie są pauzowane. Odblokowanie następuje po powrocie wszystkich wymaganych urządzeń.</p></div></details>
+  <details class="scenario" open><summary><span class="code">H2</span><span class="title">Game Settings — podgląd i zakończenie</span><span class="arrow">›</span></summary><div class="scenario-body"><p>Podgląd w modalu śledzi wpisywanie nazw i zmiany ustawień przed zapisem. Podgląd Podsumowania Control odświeża się po zapisaniu. Próg wejścia do finału, cel finału i ekran końcowy są odrębnymi ustawieniami. Ekran końcowy może pokazywać logo, punkty lub nagrodę.</p><p>Outro jest osobną kategorią dźwięku, z limitem własnego pliku do 120 sekund. Jest dostępne w ustawieniach oraz Podsumowaniu Control z podglądem odtwarzania i zatrzymania. Intro, reveal, przejście rundy i buzzer pozostają osobnymi kategoriami. Każda ma głośność i wariant „Klasyczny”.</p><p>Dźwięk gra na wybranym źródle: Control albo Wyświetlacz. Źródło „Wyświetlacz” wymaga odblokowania dźwięku na tym urządzeniu.</p></div></details>
+  <details class="scenario"><summary><span class="code">H3</span><span class="title">Długość odpowiedzi i kontrola nagrań</span><span class="arrow">›</span></summary><div class="scenario-body"><p>Rundy: 17 znaków. Finał: 11 znaków. Kropka oznacza urwane słowo; gdy następny znak jest spacją lub interpunkcją, tekst jest przycinany bez dodanej kropki. Hint przy wpisywaniu informuje o prezentacji na Wyświetlaczu. Odpowiedzi demo mieszczą się w 17 znakach; finał może je skrócić.</p><p>Na nagraniach osobno oceń płynność Wyświetlacza, reakcję ustawień, brak migania „Dalej” i „Powtórzenie”, widoczność odpowiedzi gracza 1 oraz układ udostępniania. Zaliczenie testu nie jest oceną płynności filmu.</p></div></details></section>
+
+  <footer class="colophon">
+    familiada.online · Control v2 · dokument towarzyszy <code>tests/e2e/control2.spec.js</code> — scenariusze oznaczone „automatyczny” mają odpowiadający blok <code>test()</code> w tym pliku.
+  </footer>
+
+</div>
+
+</body></html>
