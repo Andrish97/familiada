@@ -99,6 +99,12 @@ manifest, routing i cache. Nie sprawdzał wszystkich interakcji przycisków.
 Po zgłoszeniu błędów poprawiono względne adresy nawigacji i filtr MIME audio;
 dodano osobne testy kliknięć powrotu oraz własnego outro ponad 30 sekund.
 Ich wyniki należy oceniać osobno od dostępności zasobów.
+Pięć testów kliknięć powrotu przeszło na produkcji:
+https://github.com/Andrish97/familiada/actions/runs/37332560704.
+Własne outro 31 s oraz docelowy adres QR potwierdzono w przebiegu:
+https://github.com/Andrish97/familiada/actions/runs/37331185165.
+Test e-maila w tym przebiegu przeszedł dopiero po powtórzeniu (opóźnienie
+wiadomości ponad 90 s w pierwszej próbie).
 „Jedynki” nadal istnieją. Usunięto automatyczne sprawdzanie wersji oraz
 przeładowywanie edytora logo; wersjonowanie adresów zasobów pozostaje.
 

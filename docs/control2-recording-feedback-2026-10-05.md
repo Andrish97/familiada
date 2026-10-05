@@ -27,6 +27,7 @@ Weryfikacja: ukierunkowane testy, wdrożenie na main i przebiegi produkcyjne. Ni
 - Testy powrotów: 5/5 po poprawieniu względnych adresów i inicjalizacji nawigacji. Potwierdzono strzałkę i powrót anonima w „Podłącz urządzenie”, powroty przez instrukcję, Bazy/Subskrypcje i hub ankiet.
 - Pierwszy pełny plik testów Control2: 20 poprawnych, 3 nieudane. Dwa scenariusze końca gry przekraczały limit całego testu 150 s przy outro 65,6 s; zwiększono ich limit do 300 s. Poprawiono też margines zegara w tokenach E2E.
 - Ponowienie: oba zakończenia poprawne, własne outro 31 s wgrane, zapisane i odtwarzane po przeładowaniu, docelowy adres QR poprawny. Test e-maila poprawny po powtórzeniu; pierwsza próba nie otrzymała wiadomości w 90 s. Nie traktować tego jako stabilnego wyniku poczty.
-- Pełny cykl nowych nagrań: https://github.com/Andrish97/familiada/actions/runs/37332836160 — uruchomiony, wynik oczekiwany. Checkboxy wizualnych uwag pozostają do oceny po nagraniach; zaliczony test nie dowodzi płynności obrazu.
+- Pierwszy cykl nagrań https://github.com/Andrish97/familiada/actions/runs/37332836160 zatrzymał się na asercji logu Buzzera: scenariusz wybrał dźwięk z Display, ale sprawdzał log Control. Poprawiono sprawdzanie właściwego źródła, dźwięku przed zatwierdzeniem i braku powtórzenia po zatwierdzeniu.
+- Pełny cykl po poprawce: https://github.com/Andrish97/familiada/actions/runs/37334109511 — wynik oczekiwany. Checkboxy wizualnych uwag pozostają do oceny po nagraniach; zaliczony test nie dowodzi płynności obrazu.
 
 Wyniki: https://github.com/Andrish97/familiada/actions/runs/37331185165 (Control2, własne outro i QR), https://github.com/Andrish97/familiada/actions/runs/37332560704 (nawigacja).
