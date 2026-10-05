@@ -2062,7 +2062,11 @@ async function main() {
         const report = { scenario: scenario.file, recording, runner, display };
         fs.mkdirSync(OUT_DIR, { recursive: true });
         fs.writeFileSync(path.join(OUT_DIR, scenario.file.replace(/\.mp4$/, ".performance.json")), JSON.stringify(report, null, 2));
-        console.log("[performance]", JSON.stringify(report));
+        const { animations, svgUpdates, stateReadDurationsMs, ...displaySummary } = display || {};
+        console.log("[performance]", JSON.stringify({
+          ...report,
+          display: display ? { ...displaySummary, animationCount: animations?.length || 0, svgUpdateCount: svgUpdates?.length || 0, stateReadCount: stateReadDurationsMs?.length || 0 } : null,
+        }));
         await stopRecording(rec);
         await closeAll(contexts);
       }
