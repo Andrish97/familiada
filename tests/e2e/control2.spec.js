@@ -1240,7 +1240,16 @@ test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśni�
     await page.getByRole("button", { name: "Dalej" }).click();
     for (let i = 0; i < 5; i++) {
       await expect(page.locator(".c2-stepper")).toContainText(`Finał — mapowanie ${i + 1}/5`, { timeout: 22000 });
-      if (i === 0) await expectMappingFieldFits(page, testInfo, "p1");
+      if (i === 0) {
+        await expectMappingFieldFits(page, testInfo, "p1");
+        const field = page.locator(".c2-mapinput input");
+        await field.fill("");
+        await expect(page.getByRole("button", { name: "Odp. finałowa (15)" })).toBeDisabled();
+        await expect(page.getByRole("button", { name: "Nie ma na liście (0 pkt)" })).toBeDisabled();
+        await expect(page.getByRole("button", { name: "Brak odpowiedzi", exact: true })).toBeEnabled();
+        await field.fill("Odp. finałowa");
+        await expect(page.getByRole("button", { name: "Brak odpowiedzi", exact: true })).toBeDisabled();
+      }
       // Zgłoszone: wybór dopasowania w finale też idzie przez zaznacz ->
       // potwierdź (armableTile), jak reszta konsekwentnych kafli.
       await armAndConfirm(page.getByRole("button", { name: "Odp. finałowa (15)" }));
@@ -1337,7 +1346,13 @@ test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśni�
 
     // ===== F8/F9: mapowanie gracza 2 — pytanie #1 to SKIP (powtórzenie), reszta MATCH =====
     for (let i = 0; i < 5; i++) {
-      if (i === 0) await expectMappingFieldFits(page, testInfo, "p2");
+      if (i === 0) {
+        await expectMappingFieldFits(page, testInfo, "p2");
+        await expect(page.getByRole("button", { name: "Odp. finałowa (15)" })).toBeDisabled();
+        await expect(page.getByRole("button", { name: "Nie ma na liście (0 pkt)" })).toBeDisabled();
+        await expect(page.getByRole("button", { name: "Brak odpowiedzi", exact: true })).toBeEnabled();
+        await expect(page.getByRole("button", { name: "Powtórzenie", exact: true })).toBeEnabled();
+      }
       await expect(page.locator(".c2-stepper")).toContainText(`Finał — mapowanie ${i + 1}/5`, { timeout: 22000 });
       if (i > 0) await armAndConfirm(page.getByRole("button", { name: "Odp. finałowa (15)" }));
       await armAndConfirm(page.getByRole("button", { name: "Pokaż odpowiedź" }));
