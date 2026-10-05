@@ -8,7 +8,7 @@
 
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { deriveButtonState, STATE } from "../../buzzer2/js/render.js";
+import { deriveButtonState, STATE } from "../../web/buzzer2/js/render.js";
 
 function row({ topCard = "rounds", physicalBuzzer = false, duel }) {
   return {

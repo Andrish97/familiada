@@ -93,7 +93,7 @@ async function restoreDemoGame(setupPage, { pickOrds = [], settings = {}, finalP
     // Zgłoszone wprost: "nie zmieniaj progu punktów... rozgrywka ma być
     // naturalna" — treść demo NIE jest tu w żaden sposób modyfikowana
     // (wszystkie 6 odpowiedzi, realne punkty sumujące się do 100), a próg
-    // (finalMinPoints) zostaje domyślny (300, shared/gameStateShape.js), o
+    // (finalMinPoints) zostaje domyślny (300, web/shared/js/gameplay/gameStateShape.js), o
     // ile scenariusz go jawnie nie nadpisze.
     const picked = pickOrds.map(byOrd);
     for (const q of picked) {
@@ -191,7 +191,7 @@ async function releaseLogoLockExternally(setupPage, logoId, tabId) {
 // Zgłoszone wprost: "nie zmieniaj progu punktów... rozgrywka ma być
 // naturalna" — treść demo NIE jest tu w żaden sposób modyfikowana (ŻADNA
 // odpowiedź nie jest usuwana, próg (finalMinPoints) zostaje domyślny — 300,
-// shared/gameStateShape.js) — więc "naturalne" 3 pełne rundy po 100 pkt
+// web/shared/js/gameplay/gameStateShape.js) — więc "naturalne" 3 pełne rundy po 100 pkt
 // (mnożnik rund 1-3 domyślnie ×1, DEFAULT_SETTINGS.roundMultipliers=
 // [1,1,1,2,3]) dają kumulatywnie 100/200/300: próg trafiony dopiero na
 // końcu 3. rundy, nigdy wcześniej — bez żadnego ręcznego strojenia ustawień.
@@ -384,10 +384,19 @@ async function reconnectDeviceViaModal(browser, control, kind) {
 // nowym wierszu) — więc następna scripted akcja w scenariuszu naturalnie
 // pokaże na nagraniu, że zasłona wraca sama.
 async function hostPeekSwipe(hostPage) {
-  await hostPage.mouse.move(300, 220);
+  const cover = hostPage.locator("#cover2");
+  await expect(cover).toHaveClass(/coverOn/);
+  const bounds = await cover.boundingBox();
+  if (!bounds) throw new Error("Zasłona prowadzącego nie jest widoczna");
+  const x = bounds.x + bounds.width / 2;
+  const y = bounds.y + bounds.height / 3;
+  const portrait = await hostPage.evaluate(() => innerHeight > innerWidth);
+  await hostPage.mouse.move(x, y);
   await hostPage.mouse.down();
-  await hostPage.mouse.move(300, 360, { steps: 10 });
+  await hostPage.mouse.move(x + (portrait ? 0 : 100), y + (portrait ? 100 : 0), { steps: 10 });
   await hostPage.mouse.up();
+  await expect(cover).toHaveClass(/coverOff/);
+  await hostPage.waitForTimeout(1800);
 }
 
 // ===== Odstęp między kolejnymi akcjami zmieniającymi grę. control2/js/
@@ -679,8 +688,8 @@ async function scenarioRoundsMechanics(pages, { contexts }) {
   // — cały ten blok to demo administracyjne (operator NIC nie ogłasza na
   // głos tutaj), więc ADMIN_PACE_MS + odchudzone pauzy lokalne, nie
   // REVEAL_PACE_MS na każdym kroku jak wcześniej.
-  await clickPaced(control.getByRole("button", { name: "Zmień ustawienia" }), ADMIN_PACE_MS);
-  await control.waitForTimeout(600); // niech nagranie złapie otwarcie modala
+  // Otwarcie formularza nie wywołuje game_state_write — bez 15 s timeoutu.
+  await control.getByRole("button", { name: "Zmień ustawienia" }).click();
   const gsFrame = control.frameLocator("#gsFrame");
   const gsTeamAInput = gsFrame.locator("#gsTeamA");
   // Zgłoszone (punkt 3/C2-05): ".fill() wsadza cały tekst na raz, na
@@ -835,6 +844,7 @@ async function scenarioRoundsMechanics(pages, { contexts }) {
   const raceWinnerBtn = raceWinner === "A" ? acceptMistrzowie : acceptBeta;
   await control.waitForTimeout(2000); // widz ma zdążyć zobaczyć, który kafel się pojawił (dowód wyścigu)
   await armAndConfirmPaced(raceWinnerBtn);
+  expect(await control.evaluate(() => (window.__sfxLog || []).filter((entry) => entry.key === "buzzer_press").length)).toBe(1);
   await buzzer.waitForSelector(`#btn${raceWinner}.lit`, { timeout: 10000 });
   await buzzer.waitForTimeout(2000); // widz ma zdążyć zobaczyć zaświecony/przygaszony przycisk na Buzzerze
 
@@ -844,6 +854,7 @@ async function scenarioRoundsMechanics(pages, { contexts }) {
   // czyszczone — nie ma ponownego buzera).
   await armAndConfirmPaced(control.getByRole("button", { name: "X", exact: true }));
   await armAndConfirmPaced(answerTile(control, 1)); // zwycięzca wyścigu trafia -> wygrywa pojedynek, bez nowego zgłoszenia
+  await hostPeekSwipe(pages.host);
 
   // Zgłoszone: "...tez sprawdź mute na chwilę w jednej z rund" — wyciszenie
   // (#btnMute w topbarze Control, współdzielone przez game_state — patrz
@@ -905,7 +916,7 @@ async function scenarioRoundsMechanics(pages, { contexts }) {
 
   // ===== Koniec gry bez finału =====
   await clickPaced(control.getByRole("button", { name: "Zakończ grę" }));
-  await expect(control.getByRole("button", { name: "Wróć do moich gier" })).toBeEnabled({ timeout: 65000 });
+  await expect(control.getByRole("button", { name: "Wróć do moich gier" })).toBeEnabled({ timeout: 150000 });
   await control.waitForTimeout(4000); // zostaw ekran końcowy widoczny chwilę na nagraniu
 
   // ===== "Zacznij od nowa" — control2.spec.js's test "\"Zacznij od nowa\"
@@ -961,7 +972,7 @@ async function scenarioPhysicalBuzzerNoHost(pages) {
 }
 
 // ===== Scenariusz 2/3: progresja przez 3 rundy aż do NATURALNEGO
-// osiągnięcia domyślnego progu (finalMinPoints=300, shared/gameStateShape.js)
+// osiągnięcia domyślnego progu (finalMinPoints=300, web/shared/js/gameplay/gameStateShape.js)
 // — zgłoszone: "nie zmieniaj progu punktów... rozgrywka ma być naturalna".
 // Każda z 3 rund to inne, prawdziwe pytanie demo (PROGRESSION_ROUND_ORDS),
 // odsłonięte w CAŁOŚCI (6 odpowiedzi, realnie sumujące się do 100 —
@@ -1050,7 +1061,7 @@ async function scenarioRoundsThreshold(pages, { expectFinal, showReload = false 
   } else {
     await clickPaced(control.getByRole("button", { name: "Zakończ grę" }));
     await expect.poll(() => display.evaluate(() => window.__displayLog?.filter((call) => call.call === "api.win.set").at(-1)?.args[0]), { timeout: 30000 }).toBe(300);
-    await expect(control.getByRole("button", { name: "Wróć do moich gier" })).toBeEnabled({ timeout: 65000 });
+    await expect(control.getByRole("button", { name: "Wróć do moich gier" })).toBeEnabled({ timeout: 150000 });
     await control.waitForTimeout(4000);
   }
 }
@@ -1113,7 +1124,7 @@ async function playThreeNaturalRoundsToThreshold(pages) {
 // ===== Scenariusz 11: mnożnik rundy — runda 4. z domyślnym ×2 faktycznie
 // przemnaża bank. control2.spec.js's test "mnożnik rundy — runda 4. z
 // domyślnym ×2 faktycznie przemnaża bank" (DEFAULT_SETTINGS.roundMultipliers
-// = [1,1,1,2,3], shared/gameStateShape.js). finalMinPoints podniesiony
+// = [1,1,1,2,3], web/shared/js/gameplay/gameStateShape.js). finalMinPoints podniesiony
 // celowo wysoko (999) w makeGame tego scenariusza -- próg domyślny (300)
 // zostałby trafiony dokładnie po rundzie 3, zanim runda 4 (ta, która
 // faktycznie ma mnożnik ×2) w ogóle by się zaczęła. Czysty pokaz mnożnika,
@@ -1310,6 +1321,12 @@ async function scenarioFinalFull(pages, { game }) {
     // istnieje, klik w "Dalej" nie miałby czego trafić. Pytanie #5 gracza 2
     // (SKIP) nigdy nie zostaje odsłonięte -- drużyna wygrywa finał w tym
     // właśnie momencie.
+    const endFinal = control.getByRole("button", { name: "Zakończ finał", exact: true });
+    if (await endFinal.count()) {
+      await control.waitForTimeout(2000);
+      await clickPaced(endFinal);
+      break;
+    }
     await clickPaced(control.getByRole("button", { name: "Dalej" }));
   }
 
@@ -1320,7 +1337,7 @@ async function scenarioFinalFull(pages, { game }) {
   await control.waitForTimeout(2000);
   await clickPaced(control.getByRole("button", { name: "Zakończ grę", exact: true }));
   await expect.poll(() => display.evaluate(() => (window.__displayLog || []).filter((call) => call.call === "api.win.set").at(-1)?.args[0]), { timeout: 20000 }).toBe(1167);
-  await expect(control.getByRole("button", { name: "Wróć do moich gier" })).toBeEnabled({ timeout: 65000 });
+  await expect(control.getByRole("button", { name: "Wróć do moich gier" })).toBeEnabled({ timeout: 150000 });
   await control.waitForTimeout(4000); // ekran końcowy widoczny chwilę na nagraniu
 }
 
@@ -1382,9 +1399,11 @@ async function scenarioFinalEarlyExit(pages, { game }) {
   // Patrz identyczny komentarz w scenariuszu 4 — pasek z sumą finału na
   // ekranie przed odsłonięciem, widz ma zdążyć go zobaczyć.
   await control.waitForTimeout(2000);
+  await expect(control.locator(".c2-roundlayout-side")).toContainText("Osiągnięto próg finału");
+  await clickPaced(control.getByRole("button", { name: "Zakończ finał", exact: true }));
   await clickPaced(control.getByRole("button", { name: "Zakończ grę", exact: true }));
   await expect.poll(() => display.evaluate(() => (window.__displayLog || []).filter((call) => call.call === "api.win.set").at(-1)?.args[0]), { timeout: 20000 }).toBe(25960);
-  await expect(control.getByRole("button", { name: "Wróć do moich gier" })).toBeEnabled({ timeout: 65000 });
+  await expect(control.getByRole("button", { name: "Wróć do moich gier" })).toBeEnabled({ timeout: 150000 });
   await control.waitForTimeout(4000); // ekran końcowy widoczny chwilę na nagraniu
 }
 
@@ -1439,6 +1458,11 @@ async function scenarioDeviceReconnect(pages, { contexts, browser }) {
     waitForDotStatus(control, "buzzer", "bad"),
   ]);
   await expect(answerTile(control, 3)).toBeDisabled();
+  await expect(control.locator("#deviceLostOverlay")).toBeVisible();
+  await expect(control.locator("#deviceLostText")).toContainText("Wyświetlacz");
+  await expect(control.locator("#deviceLostText")).toContainText("Prowadzący");
+  await control.waitForTimeout(2200);
+  await control.locator("#deviceLostClose").click();
   const blockedBank = await readBank();
   await answerTile(control, 3).evaluate((button) => { button.click(); button.click(); });
   expect(await readBank()).toBe(blockedBank);
@@ -1488,7 +1512,7 @@ async function scenarioDeviceReconnect(pages, { contexts, browser }) {
   await control.waitForTimeout(2000);
 
   await clickPaced(control.getByRole("button", { name: "Zakończ grę" }));
-  await expect(control.getByRole("button", { name: "Wróć do moich gier" })).toBeEnabled({ timeout: 65000 });
+  await expect(control.getByRole("button", { name: "Wróć do moich gier" })).toBeEnabled({ timeout: 150000 });
   await control.waitForTimeout(4000); // ekran końcowy widoczny chwilę na nagraniu
 }
 
@@ -1705,7 +1729,7 @@ async function scenarioLogoLock(pages, { setupPage, logoId, logoLockTabId }) {
   await clickPaced(control.getByRole("button", { name: "Zakończ rundę" }));
   await control.waitForTimeout(2000);
   await clickPaced(control.getByRole("button", { name: "Zakończ grę" }));
-  await expect(control.getByRole("button", { name: "Wróć do moich gier" })).toBeEnabled({ timeout: 65000 });
+  await expect(control.getByRole("button", { name: "Wróć do moich gier" })).toBeEnabled({ timeout: 150000 });
   await control.waitForTimeout(4000); // ekran końcowy widoczny chwilę na nagraniu
 }
 
@@ -1971,6 +1995,9 @@ async function main() {
     headless: false,
     args: [
       "--autoplay-policy=no-user-gesture-required",
+      "--disable-background-timer-throttling",
+      "--disable-renderer-backgrounding",
+      "--disable-backgrounding-occluded-windows",
       `--window-size=${QUAD_W},${QUAD_H}`,
     ],
   });

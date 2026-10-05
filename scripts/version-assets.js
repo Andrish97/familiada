@@ -9,7 +9,8 @@
 const fs = require('fs');
 const path = require('path');
 
-const ROOT = process.cwd();
+const ROOT = fs.existsSync(path.join(process.cwd(), 'web'))
+  ? path.join(process.cwd(), 'web') : process.cwd();
 const version = process.env.VERSION_HASH || `v${new Date().toISOString().replace(/[:.]/g, '').slice(0, -5)}`;
 
 // Rozszerzenia plików, które chcemy wersjonować (zasoby)

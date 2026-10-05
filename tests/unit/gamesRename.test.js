@@ -3,12 +3,11 @@
 // Stara nazwa „builder” (builder.html, js/pages/builder.js,
 // builder-import-export.js, css/builder.css, sekcje tłumaczeń builder.* /
 // builderImportExport.*, klasy builder-*) została zastąpiona przez „games”.
-// builder.html zostaje WYŁĄCZNIE jako przekierowanie na /games, żeby stare
-// zakładki, skróty PWA i linki z e-maili dalej działały.
+// Stary adres i jego przekierowanie są usunięte.
 //
 // Testy pilnują, żeby:
 //  - w kodzie aplikacji nie wróciło żadne odwołanie do „builder”,
-//  - przekierowanie zachowywało ?parametry i #hash,
+//  - stare przekierowanie nie wróciło,
 //  - każdy użyty klucz games.* / gamesImportExport.* istniał w pl/en/uk,
 //  - lokalne <script src>, <link href> i importy JS wskazywały istniejące pliki.
 
@@ -18,14 +17,14 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../web");
 const read = (rel) => fs.readFileSync(path.join(ROOT, rel), "utf8");
 const exists = (rel) => fs.existsSync(path.join(ROOT, rel));
 
 // Katalogi/pliki poza kodem aplikacji albo z „builderem” w innym znaczeniu
 // (narzędzia w settings-tools: kora-builder/theme_builder, generatory e-maili w Workerze,
 // historia w docs, migracje bazy, dane audytu w ikony.html).
-const SKIP_DIRS = new Set([".git", "node_modules", "docs", "supabase", "cloudflare", "tests", "img", "audio", "settings-tools"]);
+const SKIP_DIRS = new Set([".git", "node_modules", "docs", "supabase", "cloudflare", "tests", "img", "audio", "settings-tools", "tools"]);
 const SKIP_FILES = new Set(["builder.html", "ikony.html"]);
 const ALLOWED = /kora-builder|theme_builder|Theme Builder/gi;
 
@@ -42,7 +41,7 @@ function walk(dir = "", out = []) {
 }
 
 async function loadTranslation(lang) {
-  const src = read(`translation/${lang}.js`);
+  const src = read(`shared/translation/${lang}.js`);
   const url = "data:text/javascript;base64," + Buffer.from(src).toString("base64");
   return (await import(url)).default;
 }
@@ -60,12 +59,12 @@ test("stare pliki strony nie istnieją, nowe tak", () => {
   for (const f of ["js/pages/builder.js", "js/pages/builder-import-export.js", "css/builder.css"]) {
     assert.equal(exists(f), false, `${f} powinien być przemianowany`);
   }
-  for (const f of ["games.html", "js/pages/games.js", "js/pages/games-import-export.js", "css/games.css"]) {
+  for (const f of ["games/index.html", "games/js/games.js", "games/js/games-import-export.js", "games/css/games.css"]) {
     assert.equal(exists(f), true, `brak ${f}`);
   }
-  const html = read("games.html");
-  assert.match(html, /src="js\/pages\/games\.js/);
-  assert.match(html, /href="css\/games\.css/);
+  const html = read("games/index.html");
+  assert.match(html, /src="\/games\/js\/games\.js/);
+  assert.match(html, /href="\/games\/css\/games\.css/);
   assert.match(html, /<title data-i18n="games\.title">/);
 });
 
@@ -73,35 +72,22 @@ test("w kodzie aplikacji nie zostało żadne odwołanie do „builder”", () =>
   const hits = [];
   for (const f of walk()) {
     read(f).split("\n").forEach((line, i) => {
-      if (/builder/i.test(line.replace(ALLOWED, ""))) hits.push(`${f}:${i + 1}: ${line.trim().slice(0, 120)}`);
+      if (!f.startsWith("settings/") && /builder/i.test(line.replace(ALLOWED, ""))) hits.push(`${f}:${i + 1}: ${line.trim().slice(0, 120)}`);
     });
   }
   assert.deepEqual(hits, [], "znalezione pozostałości:\n" + hits.join("\n"));
 });
 
-test("builder.html tylko przekierowuje na /games z zachowaniem ?query i #hash", () => {
-  const html = read("builder.html");
-  assert.match(html, /location\.replace\(\s*'\/games'\s*\+\s*location\.search\s*\+\s*location\.hash\s*\)/);
-  assert.match(html, /http-equiv="refresh"\s+content="0;\s*url=\/games"/);
-  assert.match(html, /<meta name="robots" content="noindex/);
-  assert.match(html, /rel="canonical" href="https:\/\/www\.familiada\.online\/games"/);
-  // żadnej logiki aplikacji — sam redirect
-  assert.doesNotMatch(html, /<script[^>]*\bsrc=/);
-  assert.doesNotMatch(html, /<link[^>]*stylesheet/);
-
-  // symulacja: skrypt przekierowania dostaje stary adres z parametrami
-  const script = html.match(/<script>([\s\S]*?)<\/script>/)[1];
-  let target = null;
-  const location = { search: "?tab=market&lang=en", hash: "#x", replace: (u) => { target = u; } };
-  new Function("location", script)(location);
-  assert.equal(target, "/games?tab=market&lang=en#x");
+test("stary builder jest usunięty bez fallbacku", () => {
+  assert.equal(exists("builder.html"), false);
+  assert.equal(exists("builder/index.html"), false);
 });
 
 test("manifest PWA otwiera /games", () => {
   const m = JSON.parse(read("manifest.json"));
-  assert.equal(m.start_url, "/games");
+  assert.equal(m.start_url, "/games/");
   for (const s of m.shortcuts || []) assert.doesNotMatch(String(s.url || s.action || ""), /builder/);
-  assert.ok(JSON.stringify(m).includes('"/games"'));
+  assert.ok(JSON.stringify(m).includes('"/games/"'));
 });
 
 test("tłumaczenia: sekcje games i gamesImportExport, bez builder*, te same klucze w pl/en/uk", async () => {
@@ -125,7 +111,7 @@ test("każdy użyty w kodzie klucz games.* / gamesImportExport.* istnieje w pl/e
   const used = new Map();
   const re = /["'`]((?:games|gamesImportExport)\.[A-Za-z0-9_.]+[A-Za-z0-9_])["'`]/g;
   for (const f of walk()) {
-    if (f.startsWith("translation/")) continue;
+    if (f.startsWith("shared/translation/")) continue;
     for (const m of read(f).matchAll(re)) {
       if (/\.(js|css|html)$/.test(m[1])) continue; // ścieżki plików, nie klucze
       if (!used.has(m[1])) used.set(m[1], f);
@@ -162,16 +148,16 @@ test("lokalne skrypty, style i importy JS wskazują istniejące pliki", () => {
 });
 
 test("powroty do listy gier prowadzą na games (login, confirm, konto, manifest)", () => {
-  assert.match(read("login.html"), /data-games-url="games"/);
-  assert.match(read("login.html"), /_dest = 'games'/);
-  assert.match(read("js/pages/login.js"), /baseUrls\.gamesUrl \|\| "games"/);
-  assert.match(read("confirm.html"), /data-base-href="games"/);
-  assert.match(read("account.html"), /data-base-href="games"/);
+  assert.match(read("login/index.html"), /data-games-url="\/games\/"/);
+  assert.match(read("login/index.html"), /_dest = '\/games\/'/);
+  assert.match(read("login/js/login.js"), /baseUrls\.gamesUrl \|\| "\/games\/"/);
+  assert.match(read("confirm/index.html"), /data-base-href="\/games\/"/);
+  assert.match(read("account/index.html"), /data-base-href="\/games\/"/);
   assert.doesNotMatch(read("index.html"), /sb-.*auth-token/);
-  assert.match(read("js/pages/index.js"), /await getUser\(\)/);
-  assert.match(read("js/pages/index.js"), /location\.replace\(withLangParam\("games"\)\)/);
-  assert.match(read("marketplace.html"), /id="btnGoGames"/);
-  assert.match(read("polls-hub.html"), /id="btnBackToGames"/);
-  assert.match(read("subscriptions.html"), /id="btnBackToGames"/);
-  assert.match(read("js/core/topbar-controller.js"), /#btnBackToGames/);
+  assert.match(read("home/js/index.js"), /await getUser\(\)/);
+  assert.match(read("home/js/index.js"), /location\.replace\(withLangParam\("\/games\/"\)\)/);
+  assert.match(read("marketplace/index.html"), /id="btnGoGames"/);
+  assert.match(read("polls-hub/index.html"), /id="btnBackToGames"/);
+  assert.match(read("subscriptions/index.html"), /id="btnBackToGames"/);
+  assert.match(read("shared/js/core/topbar-controller.js"), /#btnBackToGames/);
 });

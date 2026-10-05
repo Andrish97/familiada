@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
+  <meta name="app-version" content="v2026-10-05T10242"/>
+
+  <meta charset="UTF-8"/>
+  <meta name="robots" content="noindex, follow">
+  <meta name="mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net">
+  <link rel="preconnect" href="https://supabase.familiada.online">
+  <title data-i18n="index.title">Familiada — logowanie</title>
+  <link rel="canonical" href="https://www.familiada.online/login">
+  
+  <link rel="icon" href="/favicon.ico?v=v2026-10-05T10242"/>
+  
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-05T10242"/>
+  <link rel="stylesheet" href="/login/css/login.css?v=v2026-10-05T10242"/>
+  <script>
+    document.documentElement.classList.add('page-loading');
+    try {
+      var _p = new URLSearchParams(location.search);
+      if (!_p.get('force_auth') && !_p.get('setup')) {
+        for (var _i = 0; _i < localStorage.length; _i++) {
+          var _k = localStorage.key(_i);
+          if (!_k || !_k.startsWith('sb-') || !_k.endsWith('-auth-token')) continue;
+          var _s = JSON.parse(localStorage.getItem(_k));
+          var _u = _s && (_s.user || (_s.currentSession && _s.currentSession.user));
+          var _exp = _s && (_s.expires_at || (_s.currentSession && _s.currentSession.expires_at));
+          if (_u && !_u.is_anonymous && (!_exp || Date.now() / 1000 < _exp + 60)) {
+            var _next = _p.get('next');
+            var _dest;
+            if (_next === 'polls-hub') {
+              _dest = '/polls-hub/' + (_p.get('t') ? '?t=' + _p.get('t') : '');
+            } else if (_next === 'subscriptions') {
+              _dest = '/subscriptions/' + (_p.get('s') ? '?s=' + _p.get('s') : '');
+            } else {
+              _dest = '/games/';
+            }
+            location.replace(_dest); break;
+          }
+        }
+      }
+    } catch(_e) {}
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+  <script src="/shared/js/core/security-warning.js?v=v2026-10-05T10242" defer></script>
+  <script type="module" src="/login/js/login.js?v=v2026-10-05T10242" defer></script>
+</head>
+<body class="login-body mode-login no-footer-line skel-body" data-confirm-url="/confirm/" data-reset-url="/reset/" data-games-url="/games/" data-polls-url="/polls-hub/" data-subscriptions-url="/subscriptions/" data-captcha-provider="turnstile" data-captcha-site-key="0x4AAAAAACgSBNCEZ9064to_">
+  <a href="/"
+     class="login-back-fixed"
+     id="btnBackHome"
+     data-i18n="index.backHome" data-i18n-icon="arrow-left">Strona główna</a>
+  <div class="login-shell">
+    <div class="login-card" id="loginCard">
+      <div class="login-header">
+        <div class="login-brand">FAMILIADA</div>
+      </div>
+      <div class="login-intro" data-i18n="index.intro">Aby tworzyć gry i prowadzić rozgrywkę na żywo — zaloguj się. Nie masz konta? Zarejestruj się poniżej.</div>
+      <div class="status" id="status" data-i18n="index.statusChecking">Sprawdzam sesję…</div>
+
+      <div class="form">
+        <input id="email" type="email" placeholder="E-mail lub nazwa użytkownika" autocomplete="email" data-i18n-placeholder="index.placeholderLogin"/>
+        <input id="pass" type="password" placeholder="Hasło" autocomplete="current-password" data-i18n-placeholder="index.placeholderPassword"/>
+        <input id="pass2" type="password" placeholder="Powtórz hasło" autocomplete="new-password" data-i18n-placeholder="index.placeholderPasswordRepeat"/>
+        <div class="hint" id="pwdHint"></div>
+
+        <div class="row">
+          <button class="btn main" id="btnPrimary" type="button" data-i18n="index.btnLogin">Zaloguj</button>
+          <button class="btn" id="btnToggle" type="button" data-i18n="index.btnToggleRegister">Załóż konto</button>
+          <button class="btn" id="btnGuest" type="button" data-i18n="index.btnGuest">Wejdź jako gość</button>
+        </div>
+
+        <div class="meta">
+          <button class="link" id="btnForgot" type="button" data-i18n="index.btnForgot">Przypomnij hasło</button>
+          <span class="cooldown" id="forgotCooldown" hidden></span>
+          <span class="err" id="err"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="login-card setup-card" id="setupCard" hidden>
+      <div class="brand">FAMILIADA</div>
+      <div class="sub" data-i18n="index.setupTitle">Pierwsze logowanie</div>
+      <div class="setup-title" data-i18n="index.setupPrompt">Ustaw nazwę użytkownika</div>
+      <div class="setup-sub" data-i18n="index.setupSub">Będzie widoczna w panelu oraz przy zaproszeniach.</div>
+
+      <form class="setup-form" id="usernameForm">
+        <input id="usernameFirst" placeholder="Nazwa użytkownika" autocomplete="username"  enterkeyhint="done" data-i18n-placeholder="index.placeholderUsername"/>
+        <div class="modal-err" id="usernameErr"></div>
+        <div class="modal-actions">
+          <button class="btn main" id="btnUsernameSave" type="submit" data-i18n="index.btnUsernameSave">Zapisz nazwę</button>
+        </div>
+      </form>
+    </div>
+
+  </div>
+    <div class="footer">
+      <div data-i18n="common.footer.left">© 2026 Familiada — system do gry na żywo</div>
+      <button class="btn-contact-footer" type="button" data-contact-modal data-i18n="common.contactBtn">Kontakt</button>
+    </div>
+</body>
+</html>

@@ -315,3 +315,10 @@ Dodatkowe różnice gościa, nieblokujące UI, ale istotne dla testów:
   prawdziwej produkcyjnej bazie między jednym czyszczeniem a drugim.
   Usuwanie na końcu testu to jedyne "sprzątanie fixture'a", jakiego
   tu potrzeba.
+
+## Frontend po refaktorze
+
+Pliki aplikacji są w `web/`: strona `<nazwa>/index.html`, jej skrypty w
+`<nazwa>/js/`, wspólne moduły w `shared/js/`. Publiczne adresy zasobów
+odpowiadają ścieżkom względem `web/`. Skrypt wersjonowania obejmuje tylko
+frontend. Scenariusze E2E pozostają testami produkcyjnymi.

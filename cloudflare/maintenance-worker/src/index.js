@@ -91,14 +91,14 @@ export default {
 
       // Root on settings subdomain should open settings.html
       if (url.pathname === "/" || url.pathname === "/index.html") {
-        url.pathname = "/settings.html";
+        url.pathname = "/settings/index.html";
         return fetchFromOrigin(request, url, ORIGIN_BASE, ORIGIN_HOST, ORIGIN_RESOLVE);
       }
 
       // allow settings-tools and assets only
-      if (url.pathname.startsWith("/settings-tools/") || isSettingsAsset(url.pathname) || url.pathname === "/version.txt") {
+      if (url.pathname.startsWith("/settings/tools/") || isSettingsAsset(url.pathname) || url.pathname === "/version.txt") {
         const res = await fetchFromOrigin(request, url, ORIGIN_BASE, ORIGIN_HOST, ORIGIN_RESOLVE);
-        if (url.pathname.startsWith("/settings-tools/")) {
+        if (url.pathname.startsWith("/settings/tools/")) {
           return withHeaders(res, {
             "Content-Security-Policy": "frame-ancestors 'self'",
             "X-Frame-Options": "SAMEORIGIN"

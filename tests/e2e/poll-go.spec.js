@@ -123,7 +123,7 @@ test.describe("poll-go.js audyt", () => {
       const { gameId, taskToken, pollType } = await createTaskToken(page, "poll_points");
 
 
-      const url = new URL("poll-go.html", "https://www.familiada.online/");
+      const url = new URL("poll-go/index.html", "https://www.familiada.online/");
       url.searchParams.set("t", taskToken);
 
       await page.goto(url.toString(), { waitUntil: "domcontentloaded" });
@@ -170,7 +170,7 @@ test.describe("poll-go.js audyt", () => {
       gameId = created.gameId;
       const taskToken = created.taskToken;
 
-      const url = new URL("poll-go.html", "https://www.familiada.online/");
+      const url = new URL("poll-go/index.html", "https://www.familiada.online/");
       url.searchParams.set("t", taskToken);
 
       // `page` nigdy się nie loguje (test sprawdza właśnie widok dla
@@ -205,7 +205,7 @@ test.describe("poll-go.js audyt", () => {
       const { subToken } = await createSubToken(page);
 
 
-      const url = new URL("poll-go.html", "https://www.familiada.online/");
+      const url = new URL("poll-go/index.html", "https://www.familiada.online/");
       url.searchParams.set("s", subToken);
 
       await page.goto(url.toString(), { waitUntil: "domcontentloaded" });
@@ -246,7 +246,7 @@ test.describe("poll-go.js audyt", () => {
       await loginAsPooledTestUser(setupPage, setupContext, testInfo.parallelIndex);
       const { subToken } = await createSubToken(setupPage);
 
-      const url = new URL("poll-go.html", "https://www.familiada.online/");
+      const url = new URL("poll-go/index.html", "https://www.familiada.online/");
       url.searchParams.set("s", subToken);
 
       // `page` nigdy się nie loguje (test ma zostać niezalogowany) -- bez
@@ -293,7 +293,7 @@ test.describe("poll-go.js audyt", () => {
       }, taskToken);
 
 
-      const url = new URL("poll-go.html", "https://www.familiada.online/");
+      const url = new URL("poll-go/index.html", "https://www.familiada.online/");
       url.searchParams.set("t", taskToken);
 
       await page.goto(url.toString(), { waitUntil: "domcontentloaded" });
@@ -314,7 +314,7 @@ test.describe("poll-go.js audyt", () => {
     try {
 
       // Brak ?t= i ?s=
-      await page.goto("https://www.familiada.online/poll-go.html", {
+      await page.goto("https://www.familiada.online/poll-go/index.html", {
         waitUntil: "domcontentloaded",
       });
       await page.waitForLoadState("networkidle");
@@ -336,7 +336,7 @@ test.describe("poll-go.js audyt", () => {
       // error) zamiast dojść do gałęzi "nie znaleziono" (ok:false), co
       // zamiast "Link nieważny" pokazuje ogólny MSG.error()/"Błąd". Dlatego
       // tu poprawny format UUID, którego po prostu nie ma w bazie.
-      const url = new URL("poll-go.html", "https://www.familiada.online/");
+      const url = new URL("poll-go/index.html", "https://www.familiada.online/");
       url.searchParams.set("t", "00000000-0000-0000-0000-000000000000");
 
       await page.goto(url.toString(), { waitUntil: "domcontentloaded" });

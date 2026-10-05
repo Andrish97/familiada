@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { createAnimator } from "../../display/js/anim.js";
+import { createAnimator } from "../../web/shared/js/display/anim.js";
 
 function setup() {
   let clock = 0;
@@ -39,4 +39,20 @@ test("matrix timing compensates timer delay and preserves the final pixels", asy
   await animator.outMatrix({}, { c1: 1, c2: 2, r1: 1, r2: 1 }, "up", 50);
   assert.ok(Math.abs(now() - start - 50) < 0.01);
   assert.ok(tiles.every((tile) => tile.dots.flat().every((dot) => dot.fill === "off")));
+});
+
+test("browser animation groups pixel steps into display frames", async (t) => {
+  const original = globalThis.requestAnimationFrame;
+  t.after(() => { if (original) globalThis.requestAnimationFrame = original; else delete globalThis.requestAnimationFrame; });
+  let clock = 0, frames = 0;
+  globalThis.requestAnimationFrame = (callback) => { frames++; clock += 16; queueMicrotask(() => callback(clock)); };
+  const tiles = Array.from({ length: 2 }, () => ({ dots: Array.from({ length: 7 }, () => Array.from({ length: 5 }, () => ({ fill: "off", setAttribute(_, fill) { this.fill = fill; } }))) }));
+  const animator = createAnimator({
+    tileAt: (_, col) => tiles[col - 1], clearTileAt() {}, clearArea() {}, dotOff: "off", now: () => clock,
+    snapArea: () => [tiles.map(() => Array.from({ length: 7 }, () => Array(5).fill("on")))],
+  });
+  await animator.inMatrix({}, { c1: 1, c2: 2, r1: 1, r2: 1 }, "right", 40);
+  assert.equal(frames, 3, "ten pixel columns share three frames instead of ten timers");
+  assert.equal(clock, 48);
+  assert.ok(tiles.every((tile) => tile.dots.flat().every((dot) => dot.fill === "on")));
 });

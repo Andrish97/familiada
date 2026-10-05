@@ -43,3 +43,9 @@ Zabronione jest kopiowanie, modyfikowanie, redystrybucja
 oraz wykorzystywanie komercyjne bez pisemnej zgody autora.
 
 Szczegóły znajdują się w pliku LICENSE.
+
+## Struktura repozytorium
+
+Frontend publikowany do Pages znajduje się w `web/`. Każda strona ma własny
+katalog; współdzielony kod i zasoby znajdują się w `web/shared/`.
+Opis wdrażania i plan usunięcia starego zestawu: [refaktor struktury repozytorium](docs/refaktor-struktury-repo.md).

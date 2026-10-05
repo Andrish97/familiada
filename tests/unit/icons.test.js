@@ -8,9 +8,9 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { ICONS, ICON_NAMES, icon } from "../../js/core/icons.js";
+import { ICONS, ICON_NAMES, icon } from "../../web/shared/js/core/icons.js";
 
-const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../web");
 
 test("każda ikona to kompletny <svg> z viewBox, klasą i currentColor", () => {
   assert.ok(ICON_NAMES.length > 50);

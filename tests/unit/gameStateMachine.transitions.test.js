@@ -1,10 +1,10 @@
-// Testy grafu przejść Control v2 — patrz shared/gameStateMachine.js oraz
+// Testy grafu przejść Control v2 — patrz web/shared/js/gameplay/gameStateMachine.js oraz
 // plan przebudowy, sekcja 2/2b. Uruchamiane przez `npm run test:unit`
 // (tests/package.json) → `node --test unit`.
 
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { STEPS, TRANSITIONS, assertTransition, isValidStep } from "../../shared/gameStateMachine.js";
+import { STEPS, TRANSITIONS, assertTransition, isValidStep } from "../../web/shared/js/gameplay/gameStateMachine.js";
 
 test("każdy krok w STEPS ma tylko dozwolone kolejne kroki (albo pustą listę terminalną)", () => {
   for (const [step, def] of Object.entries(STEPS)) {

@@ -10,7 +10,7 @@
 
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { expiredTimerOnHydrate } from "../../control2/js/timerResume.js";
+import { expiredTimerOnHydrate } from "../../web/control2/js/timerResume.js";
 
 function baseState() {
   return {

@@ -29,7 +29,7 @@ zbugowane. Audytujemy je po kolei, jedna strona na raz. Zrobione:
    **Bez atrap** Supabase.
 6. **Testuj kod z brancha, nie z produkcji**:
    `tests/e2e/helpers/branch-code.js` → `serveBranchCode(context, { pages: ["<strona>"] })`
-   serwuje stronę i cały front-end (`js/ css/ translation/ shared/`) z plików
+   serwuje stronę i cały front-end (`js/ css/ translation/ web/js/gameplay/`) z plików
    repo, a backend zostaje prawdziwy. W specu:
    `test.use({ serviceWorkers: "block" })` + `beforeEach` z `serveBranchCode`
    (drugi kontekst przeglądarki też musi go dostać — patrz `newUserContext`

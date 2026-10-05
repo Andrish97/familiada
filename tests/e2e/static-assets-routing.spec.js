@@ -69,7 +69,7 @@ test.describe("routing Workera: statyczne assety vs. endpointy dynamiczne", () =
   });
 
   test("statyczny asset (css) dostaje realny Cache-Control zamiast no-store", async ({ request }) => {
-    const bare = await request.get("/css/base.css");
+    const bare = await request.get("/shared/css/base.css");
     expect(bare.status()).toBe(200);
     expect(bare.headers()["content-type"] || "").toContain("css");
     // Bez ?v= dostaje ostrożny, krótki TTL — ale musi być cache'owalny,
@@ -77,7 +77,7 @@ test.describe("routing Workera: statyczne assety vs. endpointy dynamiczne", () =
     expect(bare.headers()["cache-control"]).not.toBe("no-store");
     expect(bare.headers()["cache-control"]).toContain("max-age=600");
 
-    const versioned = await request.get("/css/base.css?v=e2e-test-marker");
+    const versioned = await request.get("/shared/css/base.css?v=e2e-test-marker");
     expect(versioned.status()).toBe(200);
     // Z ?v= (jak w realnych referencjach z HTML) — długi, "immutable" TTL,
     // bo URL jest unikalny per deploy.
@@ -88,10 +88,10 @@ test.describe("routing Workera: statyczne assety vs. endpointy dynamiczne", () =
   test("/settings-tools/ i /tools/ zostają zablokowane na publicznym hoście mimo rozszerzenia .json/.js/.css", async ({ request }) => {
     // Regresja znaleziona przy audycie: isStaticAssetPath() dopasowuje po
     // samym rozszerzeniu i działa WCZEŚNIEJ niż isBlockedPath() w fetch(),
-    // więc bez jawnego wykluczenia np. /settings-tools/tools.json (ma
+    // więc bez jawnego wykluczenia np. /settings/data/tools.json (ma
     // rozszerzenie .json) ominąłby blokadę i wyciekłby publicznie mimo że
     // /settings-tools/* ma działać tylko z settings.familiada.online.
-    const res = await request.get("/settings-tools/tools.json");
+    const res = await request.get("/settings/data/tools.json");
     expect(res.status(), "wyciekło mimo isBlockedPath()").toBe(404);
   });
 });

@@ -30,7 +30,7 @@ const lastAuthMailAt = new Map();
 async function loadAuthEmailCopy(lang) {
   // translation/*.js to ESM bez "type": "module" — Node 20 w CI nie wykrywa
   // tego sam, więc import przez data: URL (jak w tests/unit/gamesRename.test.js).
-  const src = fs.readFileSync(path.resolve(__dirname, "../../translation", `${lang}.js`), "utf8");
+  const src = fs.readFileSync(path.resolve(__dirname, "../../web/shared/translation", `${lang}.js`), "utf8");
   const dict = (await import("data:text/javascript;base64," + Buffer.from(src).toString("base64"))).default;
   return { authEmail: dict.authEmail, index: dict.index };
 }

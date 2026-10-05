@@ -1006,7 +1006,7 @@ test.describe("settings: mobile sheet modal -- kontrakt CSS/HTML (oceniający/pr
   });
 
   // Statystyki (openStatsDetailModal) i podgląd wiadomości (mail preview) są
-  // budowane w locie przez confirmModal()/js/core/modal.js (klasa .uni-modal),
+  // budowane w locie przez confirmModal()/shared/js/core/modal.js (klasa .uni-modal),
   // nie istnieją w DOM statycznie -- ani nie da się ich w CI otworzyć
   // realnie (dane z wewnętrznego /_admin_api/*, panel za Cloudflare Access).
   // Test odtwarza dokładnie tę samą strukturę co buildModal({sheet:true})

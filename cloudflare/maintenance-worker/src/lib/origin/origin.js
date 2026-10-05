@@ -65,14 +65,28 @@ export function isBlockedPath(host, pathname) {
     if (!rule.hosts.includes(host)) continue;
     if (rule.paths.includes(pathname)) return true;
     if (pathname.startsWith("/tools/")) return true;
-    if (pathname.startsWith("/settings-tools/")) return true;
+    if (pathname.startsWith("/settings-tools/") || pathname.startsWith("/settings/")) return true;
   }
   return false;
 }
 
 export function fetchFromOrigin(request, url, originBase, originHost, resolveOverride) {
-  const target = new URL(url.pathname + url.search, originBase);
+  const target = new URL(pageIndexPath(url.pathname) + url.search, originBase);
   return fetchWithOrigin(target.toString(), request, originHost, resolveOverride);
+}
+
+const PAGE_ROUTES = new Set([
+  "account", "base-explorer", "bases", "buzzer", "buzzer2", "confirm",
+  "connect-device", "control", "control2", "display", "display2", "editor",
+  "game-settings", "game-settings2", "games", "host", "host2", "login",
+  "logo-editor", "maintenance", "manual", "marketplace", "poll-go",
+  "poll-points", "poll-qr", "poll-text", "polls", "polls-hub", "privacy",
+  "reset", "subscriptions",
+]);
+
+export function pageIndexPath(pathname) {
+  const route = pathname.replace(/^\//, "").replace(/\/$/, "");
+  return PAGE_ROUTES.has(route) ? `/${route}/index.html` : pathname;
 }
 
 export async function fetchWith404(request, originBase, originHost, resolveOverride) {

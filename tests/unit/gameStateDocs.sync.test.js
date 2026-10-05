@@ -1,6 +1,6 @@
 // tests/unit/gameStateDocs.sync.test.js
 // Pilnuje, że docs/game-state-machine.md jest zawsze zgodne z
-// shared/gameStateMachine.js — dokument jest WYPROWADZONY z kodu
+// web/shared/js/gameplay/gameStateMachine.js — dokument jest WYPROWADZONY z kodu
 // (scripts/gen-game-state-docs.mjs), więc ten test wykrywa, gdy ktoś
 // zmienił STEPS bez ponownego wygenerowania dokumentu (albo ręcznie
 // edytował docs/game-state-machine.md, co nie powinno się zdarzyć — plik
@@ -16,7 +16,7 @@ import { generateMarkdown } from "../../scripts/gen-game-state-docs.mjs";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DOC_PATH = path.join(__dirname, "..", "..", "docs", "game-state-machine.md");
 
-test("docs/game-state-machine.md jest zsynchronizowane z shared/gameStateMachine.js", () => {
+test("docs/game-state-machine.md jest zsynchronizowane z web/shared/js/gameplay/gameStateMachine.js", () => {
   const onDisk = readFileSync(DOC_PATH, "utf8");
   const generated = generateMarkdown();
   assert.equal(

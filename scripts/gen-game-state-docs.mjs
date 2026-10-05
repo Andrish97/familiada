@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // scripts/gen-game-state-docs.mjs
 //
-// Generuje docs/game-state-machine.md wprost z shared/gameStateMachine.js —
+// Generuje docs/game-state-machine.md wprost z web/shared/js/gameplay/gameStateMachine.js —
 // mapa kroków/przejść nigdy nie może się rozjechać z kodem, bo dokument
 // nie jest pisany osobno, tylko WYPROWADZONY z tego samego źródła, które
 // egzekwuje assertTransition() w silniku (plan, sekcja 2b).
@@ -16,7 +16,7 @@
 import { writeFileSync, readFileSync, existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
-import { STEPS, TOP_CARDS } from "../shared/gameStateMachine.js";
+import { STEPS, TOP_CARDS } from "../web/shared/js/gameplay/gameStateMachine.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const OUT_PATH = path.join(__dirname, "..", "docs", "game-state-machine.md");
@@ -45,9 +45,9 @@ function stepBlock(stepKey, def) {
 
 export function generateMarkdown() {
   const out = [];
-  out.push("<!-- WYGENEROWANE z shared/gameStateMachine.js przez scripts/gen-game-state-docs.mjs — nie edytuj ręcznie. -->", "");
+  out.push("<!-- WYGENEROWANE z web/shared/js/gameplay/gameStateMachine.js przez scripts/gen-game-state-docs.mjs — nie edytuj ręcznie. -->", "");
   out.push(section("Mapa stanów gry — public.game_state.step", 1));
-  out.push("Ta strona jest wygenerowana z `shared/gameStateMachine.js` — jedynego źródła prawdy, którego `assertTransition()` egzekwuje w `control2/js/engine.js`. Zmiana zachowania wymaga zmiany w kodzie; ten dokument aktualizuje się przez `node scripts/gen-game-state-docs.mjs`.", "");
+  out.push("Ta strona jest wygenerowana z `web/shared/js/gameplay/gameStateMachine.js` — jedynego źródła prawdy, którego `assertTransition()` egzekwuje w `web/control2/js/engine.js`. Zmiana zachowania wymaga zmiany w kodzie; ten dokument aktualizuje się przez `node scripts/gen-game-state-docs.mjs`.", "");
 
   for (const card of TOP_CARDS) {
     const stepsForCard = Object.entries(STEPS).filter(([, def]) => def.card === card);
@@ -68,7 +68,7 @@ function main() {
   if (checkOnly) {
     const current = existsSync(OUT_PATH) ? readFileSync(OUT_PATH, "utf8") : null;
     if (current !== markdown) {
-      console.error("docs/game-state-machine.md jest nieaktualne względem shared/gameStateMachine.js — uruchom: node scripts/gen-game-state-docs.mjs");
+      console.error("docs/game-state-machine.md jest nieaktualne względem web/shared/js/gameplay/gameStateMachine.js — uruchom: node scripts/gen-game-state-docs.mjs");
       process.exit(1);
     }
     console.log("docs/game-state-machine.md jest aktualne.");

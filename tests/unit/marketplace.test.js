@@ -3,16 +3,16 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import pl from "../../translation/pl.js";
-import en from "../../translation/en.js";
-import uk from "../../translation/uk.js";
+import pl from "../../web/shared/translation/pl.js";
+import en from "../../web/shared/translation/en.js";
+import uk from "../../web/shared/translation/uk.js";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const get = (obj, key) => key.split(".").reduce((value, part) => value?.[part], obj);
 
 test("każdy statyczny klucz marketplace użyty w HTML/JS istnieje w PL/EN/UK", () => {
-  const html = fs.readFileSync(path.join(ROOT, "marketplace.html"), "utf8");
-  const js = fs.readFileSync(path.join(ROOT, "js/pages/marketplace.js"), "utf8");
+  const html = fs.readFileSync(path.join(ROOT, "web/marketplace/index.html"), "utf8");
+  const js = fs.readFileSync(path.join(ROOT, "web/marketplace/js/marketplace.js"), "utf8");
   const keys = new Set();
   for (const match of html.matchAll(/(data-i18n(?:-[\w-]+)?)="([^"]+)"/g)) {
     if (!match[1].includes("-icon")) keys.add(match[2]);
@@ -29,7 +29,7 @@ test("każdy statyczny klucz marketplace użyty w HTML/JS istnieje w PL/EN/UK", 
 });
 
 test("polski interfejs używa jednej nazwy: Strona główna", () => {
-  const login = fs.readFileSync(path.join(ROOT, "login.html"), "utf8");
+  const login = fs.readFileSync(path.join(ROOT, "web/login/index.html"), "utf8");
   assert.equal(pl.index.backHome, "Strona główna");
   assert.equal(pl.marketplace.nav.backHome, "Strona główna");
   assert.equal(pl.notFound.homeBtn, "Strona główna");

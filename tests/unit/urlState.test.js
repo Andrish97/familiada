@@ -5,15 +5,15 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
-const read = (file) => fs.readFileSync(path.join(root, file), "utf8");
+const read = (file) => fs.readFileSync(path.join(root, /^(tests|scripts|supabase|cloudflare|services|docs)\//.test(file) ? file : "web/" + file), "utf8");
 
 test("zakładki stron zapisują stan w URL i obsługują historię", () => {
   const cases = [
-    ["js/pages/games.js", /searchParams\.set\("tab", type\)/, /addEventListener\("popstate"/],
-    ["js/pages/bases.js", /searchParams\.set\("tab", activeTab\)/, /addEventListener\("popstate"/],
-    ["js/pages/settings.js", /searchParams\.set\("tab", tab\)/, /addEventListener\("popstate"/],
-    ["js/pages/polls-hub.js", /searchParams\.set\("tab", tab\)/, /addEventListener\("popstate"/],
-    ["js/pages/subscriptions.js", /searchParams\.set\("tab", "subscriptions"\)/, /addEventListener\("popstate"/],
+    ["games/js/games.js", /searchParams\.set\("tab", type\)/, /addEventListener\("popstate"/],
+    ["bases/js/bases.js", /searchParams\.set\("tab", activeTab\)/, /addEventListener\("popstate"/],
+    ["settings/js/settings.js", /searchParams\.set\("tab", tab\)/, /addEventListener\("popstate"/],
+    ["polls-hub/js/polls-hub.js", /searchParams\.set\("tab", tab\)/, /addEventListener\("popstate"/],
+    ["subscriptions/js/subscriptions.js", /searchParams\.set\("tab", "subscriptions"\)/, /addEventListener\("popstate"/],
   ];
   for (const [file, writeUrl, history] of cases) {
     const source = read(file);
@@ -23,13 +23,13 @@ test("zakładki stron zapisują stan w URL i obsługują historię", () => {
 });
 
 test("manual zachowuje istniejący routing sekcji przez hash", () => {
-  const source = read("js/pages/manual.js");
+  const source = read("manual/js/manual.js");
   assert.match(source, /location\.hash = name/);
   assert.match(source, /addEventListener\("hashchange"/);
 });
 
 test("strona główna odzwierciedla przewijaną sekcję w hash", () => {
-  const source = read("js/pages/index.js");
+  const source = read("home/js/index.js");
   assert.match(source, /history\.pushState\(history\.state, "", `#\$\{id\}`\)/);
   assert.match(source, /history\.replaceState\(history\.state, "", `#\$\{activeId\}`\)/);
 });
@@ -44,9 +44,9 @@ test("base-explorer zapisuje konkretny folder i odtwarza go z URL", () => {
 });
 
 test("logo ma trzy zakładki, dynamiczny hint i geometrię wypustek", () => {
-  const html = read("logo-editor.html");
+  const html = read("logo-editor/index.html");
   const js = read("logo-editor/js/main.js");
-  const css = read("logo-editor/logo-editor.css");
+  const css = read("logo-editor/css/logo-editor.css");
 
   for (const id of ["tabLogoText", "tabLogoDraw", "tabLogoImage"]) {
     assert.match(html, new RegExp(`id="${id}"`));
@@ -61,7 +61,7 @@ test("logo ma trzy zakładki, dynamiczny hint i geometrię wypustek", () => {
 });
 
 test("Polls Hub obsługuje aktualną odpowiedź kolejki send-mail", () => {
-  const source = read("js/pages/polls-hub.js");
+  const source = read("polls-hub/js/polls-hub.js");
   assert.match(source, /Number\(payload\.queued\)/);
   assert.match(source, /queued !== items\.length/);
   assert.match(source, /results: items\.map\(\(item\) => \(\{ to: item\.to, ok: true, queued: true \}\)\)/);

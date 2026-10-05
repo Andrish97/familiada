@@ -3,7 +3,7 @@
 // subskrybentów; state jest tym samym mutowalnym obiektem co w prawdziwym
 // store (silniki mutują go bezpośrednio, tak jak dzisiejszy control/js).
 
-import { makeDefaultState } from "../../../shared/gameStateShape.js";
+import { makeDefaultState } from "../../../web/shared/js/gameplay/gameStateShape.js";
 
 export function createFakeStore(gameId = "test-game", overrides = {}) {
   const state = { ...makeDefaultState(gameId), ...overrides };

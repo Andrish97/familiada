@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
+  <meta name="app-version" content="v2026-10-05T10242"/>
+
+  <meta charset="UTF-8"/>
+  <meta name="robots" content="noindex, nofollow"/>
+  <meta name="mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net">
+  <link rel="preconnect" href="https://supabase.familiada.online">
+  <title data-i18n="polls.title">Familiada — ankieta i wyniki</title>
+
+  <link rel="icon" href="/favicon.ico?v=v2026-10-05T10242"/>
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-05T10242"/>
+  <link rel="stylesheet" href="/shared/css/polls.css?v=v2026-10-05T10242"/>
+
+  <script>
+    document.documentElement.classList.add('page-loading');
+    try {
+      var _has = false;
+      for (var _i = 0; _i < localStorage.length; _i++) {
+        var _k = localStorage.key(_i);
+        if (_k && _k.startsWith('sb-') && _k.endsWith('-auth-token')) { _has = true; break; }
+      }
+      if (!_has) location.replace('/login/');
+    } catch(_e) {}
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+  <script src="/shared/js/core/security-warning.js?v=v2026-10-05T10242" defer></script>
+  <script type="module" src="/polls/js/polls.js?v=v2026-10-05T10242" defer></script>
+  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-05T10242" defer></script>
+</head>
+
+<body class="polls-body skel-body">
+  <header class="topbar topbar-layout-4">
+    <div class="topbar-section topbar-section-1">
+      <div class="brand">FAMILIADA</div>
+      <button class="btn" id="btnBack" type="button" data-i18n="polls.backToGames" data-i18n-icon="arrow-left">Moje gry</button>
+    </div>
+    <div class="topbar-section topbar-section-2"></div>
+    <div class="topbar-section topbar-section-3">
+      <button class="btn" id="btnManual" type="button" data-i18n-aria-label="common.manualLabel" data-i18n-title="common.manualLabel" aria-label="Wskazówki" title="Wskazówki"><i class="ico" data-icon="info"></i></button>
+    </div>
+    <div class="topbar-section topbar-section-4">
+      <span class="who" id="who">—</span>
+      <button class="btn" id="btnLogout" type="button" data-i18n="common.authEntry">Zaloguj / Załóż konto</button>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <div class="rowTop">
+      <div>
+        <div class="title" data-i18n="polls.pageTitle">Ankieta</div>
+        <div class="hint" id="hintTop"></div>
+      </div>
+
+      <div class="statusBox">
+        <div class="chip" id="chipType"></div>
+        <div class="chip status" id="chipStatus"></div>
+      </div>
+    </div>
+
+    <div class="card" id="cardMain" style="display:none;">
+      <div class="name" id="gName"></div>
+      <div class="meta" id="gMeta"></div>
+
+      <div class="qrBox">
+        <div class="qrBox img" id="qr"></div>
+      </div>
+
+      <input class="inp pollLinkInp" id="pollLink" readonly placeholder="Link pojawi się po uruchomieniu..." data-i18n-placeholder="polls.linkPlaceholder" />
+
+      <div class="row pollLinkActions">
+        <button class="btn sm" id="btnCopy" type="button" disabled data-i18n="polls.actions.copyLink">Kopiuj link</button>
+        <button class="btn sm gold" id="btnOpen" type="button" disabled data-i18n="polls.actions.openLink">Otwórz link</button>
+        <button class="btn sm" id="btnOpenQr" type="button" data-i18n="polls.actions.qrOnDisplay" disabled>QR na wyświetlaczu</button>
+      </div>
+
+      <div class="row">
+        <button class="btn sm gold" id="btnPollAction" type="button" style="visibility:hidden"></button>
+        <button class="btn sm" id="btnCancelTextCloseTop" type="button" style="display:none;" data-i18n="polls.actions.cancel">Anuluj</button>
+        <button class="btn sm" id="btnRefreshResults" type="button" style="visibility:hidden">
+          <span data-i18n="polls.actions.refresh" data-i18n-icon="refresh">Odśwież wyniki</span>
+        </button>
+      </div>
+
+      <!-- panel dla poll_text: edycja/łączenie/usuwanie + finalizacja -->
+      <div class="card" id="textCloseCard" style="display:none; margin-top:12px;">
+        <div class="name" style="display:flex; justify-content:space-between; align-items:center;">
+          <span data-i18n="polls.textClose.title">Zamykanie — edycja odpowiedzi</span>
+          <div class="tcHistoryTools">
+            <button class="btn sm" id="btnUndo" type="button" title="Cofnij" aria-label="Cofnij" disabled><i class="ico" data-icon="undo"></i></button>
+            <button class="btn sm" id="btnRedo" type="button" title="Ponów" aria-label="Ponów" disabled><i class="ico" data-icon="redo"></i></button>
+          </div>
+        </div>
+        <div class="meta" id="textCloseMeta">—</div>
+        <div id="textCloseList" style="margin-top:10px; display:grid; gap:12px;"></div>
+
+        <div class="row" style="margin-top:12px;">
+          <button class="btn sm" id="btnCancelTextClose" type="button" data-i18n="polls.actions.cancel">Anuluj</button>
+          <button class="btn sm gold" id="btnFinishTextClose" type="button" data-i18n="polls.actions.closeAndNormalize">Zamknij i przelicz</button>
+        </div>
+      </div>
+
+      <div class="card" id="resultsCard" style="display:none; margin-top:12px;">
+        <div class="name" data-i18n="polls.results.title">Wyniki</div>
+        <div class="meta" id="resultsMeta"></div>
+        <div id="resultsList" style="margin-top:10px;"></div>
+      </div>
+    </div>
+
+    <div class="card" id="cardEmpty">
+      <div class="name" data-i18n="polls.empty.title">Brak gry</div>
+      <div class="meta" data-i18n-html="polls.empty.meta">Otwórz stronę z parametrem <b>polls?id=...</b>.</div>
+    </div>
+
+    <div class="foot">
+      <div class="msg" id="msg"></div>
+    </div>
+
+    <div class="footer">
+      <div data-i18n="common.footer.left">© 2026 Familiada — system do gry na żywo</div>
+      <button class="btn-contact-footer" type="button" data-contact-modal data-i18n="common.contactBtn">Kontakt</button>
+    </div>
+  </main>
+
+  <!-- Modal QR wyświetlacza ankiety -->
+  <div class="qrModalOverlay hidden" id="pollQrModalOverlay">
+    <div class="qrModalBox">
+      <div class="qrModalHead">
+        <div class="qrModalTitle" id="pollQrModalTitle" data-i18n="polls.qrModal.title">Wyświetlacz QR</div>
+        <button class="btn xs" id="pollQrModalClose" type="button" aria-label="Zamknij" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
+      </div>
+      <div class="qrModalSubtitle" data-i18n="polls.qrModal.subtitle">Kod do podłączenia wyświetlacza — nie do głosowania</div>
+      <div class="qrModalBody">
+        <div class="qrModalCode">
+          <span class="qrModalCodeVal" id="pollQrModalCodeVal">——————</span>
+        </div>
+        <div class="qrModalActions">
+          <button class="btn gold" id="pollQrModalCopy" type="button" data-i18n="polls.qrModal.copyBtn">Kopiuj</button>
+          <button class="btn" id="pollQrModalOpen" type="button" data-i18n="polls.qrModal.openBtn">Otwórz</button>
+        </div>
+        <div class="qrModalCodeHint" data-i18n="polls.qrModal.hint">Wejdź na familiada.online → Podłącz urządzenie → wprowadź kod</div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

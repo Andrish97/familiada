@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
+  <meta name="app-version" content="v2026-10-05T10242"/>
+
+  <meta charset="UTF-8"/>
+  <meta name="robots" content="noindex, nofollow"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"/>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net">
+  <link rel="preconnect" href="https://supabase.familiada.online">
+  <meta name="description" content="Przycisk do pojedynku"/>
+  <meta property="og:title" content="Przycisk do pojedynku"/>
+  <meta property="og:description" content="Przycisk do pojedynku"/>
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta property="og:type" content="website"/>
+  <title data-i18n="buzzer.title">Familiada — Przycisk do pojedynku</title>
+
+  <link rel="icon" href="/favicon.ico?v=v2026-10-05T10242"/>
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-05T10242"/>
+  <link rel="stylesheet" href="/buzzer2/css/buzzer.css?v=v2026-10-05T10242"/>
+  <script>document.documentElement.classList.add('page-loading')</script>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+  <script src="/shared/js/core/security-warning.js?v=v2026-10-05T10242" defer></script>
+  <script type="module" src="/buzzer/js/buzzer.js?v=v2026-10-05T10242" defer></script>
+</head>
+
+<div class="a2hs" onclick="document.documentElement.classList.remove('showA2HS')">
+  <div class="a2hsCard" onclick="event.stopPropagation()">
+    <h3 class="a2hsTitle" data-i18n="common.a2hsTitle">Pełny ekran na iPhone</h3>
+    <p class="a2hsText" data-i18n-html="common.a2hsBuzzer">
+      W Safari nie da się wymusić prawdziwego pełnego ekranu.
+      Użyj <b>Udostępnij</b> → <b>Do ekranu początkowego</b>.
+    </p>
+    <button class="btn a2hsClose" type="button"
+      onclick="document.documentElement.classList.remove('showA2HS')" data-i18n="common.a2hsOk">OK</button>
+  </div>
+</div>
+
+<body class="buzzer-body">
+  <article style="display:none">
+    <p>Przycisk do pojedynku</p>
+  </article>
+  <button class="fsBtn" id="btnFS" type="button" aria-label="Pełny ekran" title="Pełny ekran" data-i18n-aria-label="common.fullscreen" data-i18n-title="common.fullscreen">
+    <span class="ico" id="fsIco" aria-hidden="true">▢</span>
+  </button>
+
+  <!-- OFF: czarny ekran, nic -->
+  <div class="off" id="offScreen" hidden></div>
+
+  <!-- Rotate hint for portrait mode -->
+  <div class="rotateHint" id="rotateHint">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
+    </svg>
+    <p data-i18n="buzzer.rotateHint">Obróć urządzenie do poziomu</p>
+  </div>
+
+  <!-- ON / PUSHED: przyciski -->
+  <div class="arena" id="arena" hidden>
+    <button class="btnRing red" id="btnA" type="button" aria-label="Przycisk A" data-i18n-aria-label="buzzer.btnA"></button>
+    <button class="btnRing blue" id="btnB" type="button" aria-label="Przycisk B" data-i18n-aria-label="buzzer.btnB"></button>
+  </div>
+</body>
+</html>

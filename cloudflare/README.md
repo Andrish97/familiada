@@ -3,15 +3,15 @@
 ## Behavior (Worker)
 
 ### 1) settings.familiada.online
-- Only `/`, `/index.html`, `/settings`, `/settings.html`, `/settings-tools/*` and assets are allowed.
-- Root (`/`) serves `/settings.html` from `https://familiada.online` (pretty URL `/settings`).
+- `/` and `/index.html` internally serve `/settings/index.html` from Pages.
+- Panel assets are in `/settings/js/`, `/settings/css/`, `/settings/data/`; tools are in `/settings/tools/`. Shared assets retain their public paths.
 - Everything else is 404.
 - Admin API lives here: `/_admin_api/*` (Cloudflare Access).
 - Not affected by maintenance gate.
 
 ### 2) familiada.online + www.familiada.online
 - Normal app behavior.
-- `/settings`, `/settings/`, `/settings.html` redirect to `/settings`.
+- `/settings` and its subpaths are blocked on public hosts. The panel is served on its own subdomain.
 - If origin returns 404 for HTML, worker serves `/404.html` (custom 404).
 - Maintenance gate blocks everything (503 + `/maintenance`), unless bypass cookie.
 
@@ -26,11 +26,15 @@
 - `GET /maintenance-state.json` → `{ enabled:boolean, mode:"off|message|returnAt|countdown", returnAt:string|null }`
 
 ### Pretty URLs (bez .html)
-Root (np. `/games`) obsługuje GitHub Pages – bez dodatkowych rewrite’ów.
-Foldery mają teraz `index.html`, więc `/control`, `/display`, `/logo-editor`, `/base-explorer` działają natywnie.
+Każda strona ma `<nazwa>/index.html` w artefakcie Pages. Worker pobiera ten
+plik wewnętrznie dla tras `/nazwa` oraz `/nazwa/`, zachowując parametry.
+Nie wymaga to przekierowania przeglądarki. Linki aplikacji używają `/nazwa/`.
 
 **Aktualne mapowania w workerze:**
-- `/settings` → `/settings.html` (specjalny przypadek dla panelu)
+- `settings.familiada.online/` → Pages `/settings/index.html`.
+- `/games/` → Pages `/games/index.html`; analogicznie dla pozostałych znanych stron.
+- Brak fallbacków zasobów pod dawnymi ścieżkami oraz brak przekierowania `/builder`.
+- Frontend jest publikowany z `web/`; ta nazwa nie jest częścią adresów URL.
 
 ### Admin API (settings host)
 - `GET  /_admin_api/me` → 200 if authorized by Cloudflare Access
@@ -67,9 +71,9 @@ Example:
 ### Basic routing
 1. `https://familiada.online/` → main site
 2. `https://www.familiada.online/` → main site
-3. `https://familiada.online/settings.html` → **redirect to** `https://familiada.online/settings`
+3. `https://www.familiada.online/settings/` → **404**
 4. `https://settings.familiada.online/` → settings panel
-5. `https://settings.familiada.online/settings.html` → **redirect to** `https://settings.familiada.online/settings`
+5. `https://settings.familiada.online/settings.html` → **404**
 
 ### Maintenance
 1. Turn maintenance ON in settings panel.

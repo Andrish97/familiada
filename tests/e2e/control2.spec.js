@@ -288,6 +288,8 @@ test("control2: intro logo i natychmiastowe światło Buzzera przed wysyłką", 
     expect((await response).ok()).toBe(true);
     await expect(page.getByRole("button", { name: "Zatwierdź: Alfa" })).toBeEnabled({ timeout: 15000 });
     await waitForSfxSequence(page, ["buzzer_press"]);
+    await armAndConfirm(page.getByRole("button", { name: "Zatwierdź: Alfa" }));
+    expect((await getSfxKeys(page)).filter((key) => key === "buzzer_press")).toHaveLength(1);
     await expect(buzzerPage.locator("#btnA")).toHaveClass(/\blit\b/);
     expect(errors).toEqual([]);
   } finally {
@@ -659,6 +661,7 @@ test("control2: reset pojedynku, pass, kradzież wygrana/przegrana, odkrywanie r
     await expect(page.getByText("Remis — 70:70")).toBeVisible({ timeout: 10000 });
     const finishBtn = page.getByRole("button", { name: "Wróć do moich gier" });
     await expect(finishBtn).toBeVisible({ timeout: 10000 });
+    await expect(finishBtn).toBeEnabled({ timeout: 150000 });
     await finishBtn.click();
     await expect(page).toHaveURL(/\/games/, { timeout: 10000 });
     await page.waitForFunction(() => window.__sbClient, { timeout: 10000 }).catch(() => {});
@@ -749,8 +752,10 @@ test("control2: próg w rundzie -> finał, wczesne zakończenie po 4/5 pytaniach
       }
     }
 
-    // Po 4. pytaniu suma = 200 = finalTarget -> natychmiastowy skok do
-    // f_end, BEZ 5. pytania i BEZ gracza 2.
+    await expect(page.locator(".c2-roundlayout-side")).toContainText("Osiągnięto próg finału", { timeout: 10000 });
+    await expect(page.getByRole("button", { name: "Pokaż odpowiedź" })).toBeDisabled();
+    await expect(page.getByRole("button", { name: "Pokaż punkty" })).toBeDisabled();
+    await page.getByRole("button", { name: "Zakończ finał", exact: true }).click();
     await expect(page.locator(".c2-stepper")).toContainText("Koniec gry", { timeout: 22000 });
 
     // finalStatusBar (ui.js's renderFinalMapping) istnieje tylko na
@@ -764,6 +769,7 @@ test("control2: próg w rundzie -> finał, wczesne zakończenie po 4/5 pytaniach
     await expect.poll(async () => (await getDisplayCalls(displayPage, "api.win.set")).at(-1)?.args[0], { timeout: 30000 }).toBe(26500);
     const finishBtn = page.getByRole("button", { name: "Wróć do moich gier" });
     await expect(finishBtn).toBeVisible({ timeout: 10000 });
+    await expect(finishBtn).toBeEnabled({ timeout: 150000 });
     await finishBtn.click();
     await expect(page).toHaveURL(/\/games/, { timeout: 10000 });
     await page.waitForFunction(() => window.__sbClient, { timeout: 10000 }).catch(() => {});
@@ -1200,17 +1206,19 @@ test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśni�
       // więc dla i=0 go NIE klikamy, inaczej armAndConfirm czeka w kółko na
       // przycisk, który nigdy się nie odblokuje.
       if (i > 0) await armAndConfirm(page.getByRole("button", { name: "Pokaż punkty" }));
-      await page.getByRole("button", { name: "Dalej" }).click();
+      if (i < 4) await page.getByRole("button", { name: "Dalej" }).click();
     }
     // 75 (gracz 1) + 0 (powtórzenie) + 4x15 (gracz 2) = 135 < 200 — pełne 10/10, bez wczesnego wyjścia.
+    await page.getByRole("button", { name: "Zakończ finał", exact: true }).click();
     await expect(page.locator(".c2-stepper")).toContainText("Koniec gry", { timeout: 22000 });
     await expect(page.getByText("Suma finału: 135")).toBeVisible({ timeout: 10000 });
 
     // ===== F10: koniec finału =====
     await clearSfxLog(page);
-    await clearDisplayLog(displayPage);
     await page.getByRole("button", { name: "Zakończ grę", exact: true }).click();
-    await waitForSfxKeysAnyOrder(page, ["show_intro", "reveal"], 30000);
+    await waitForSfxKeysAnyOrder(page, ["show_outro"], 15000);
+    expect(await getSfxKeys(page)).not.toContain("round_transition");
+    expect(await getSfxKeys(page)).not.toContain("reveal");
     await expect.poll(async () => (await getDisplayCalls(displayPage, "api.win.set")).at(-1)?.args[0], { timeout: 15000 }).toBe(1305);
     await expect.poll(async () => {
       const calls = await getDisplayCalls(displayPage, "api.indicator.set");
@@ -2103,6 +2111,9 @@ test("control2: zerwanie połączenia wszystkich trzech urządzeń naraz i ponow
     await expect(page.locator("#dotBuzzer")).toHaveClass(/\bbad\b/, { timeout: 8500 });
     await expect(answerTile(page, 2)).toBeDisabled();
     await expect(page.locator(".c2-gameplay .msg-pill")).toHaveCount(0);
+    await expect(page.locator("#deviceLostOverlay")).toBeVisible();
+    await expect(page.locator("#deviceLostText")).toContainText("Wyświetlacz");
+    await page.locator("#deviceLostClose").click();
     const revBefore = await page.evaluate(async (id) => (await window.__sbClient.from("game_state").select("rev").eq("game_id", id).single()).data.rev, game.id);
     await answerTile(page, 2).evaluate((button) => button.click());
     const revAfter = await page.evaluate(async (id) => (await window.__sbClient.from("game_state").select("rev").eq("game_id", id).single()).data.rev, game.id);
@@ -2317,7 +2328,7 @@ test("control2: zegarek gracza w finale (15s) wraca do stanu SPRZED startu (used
 // Zgłoszone wprost: "Pytanie czemu ani jedna rozgrywka nie kończy się
 // alternatywnym zamiast logo punktami lub wygraną, trzeba to poprawić...
 // Jedno z zakończeń gry bez finału ma pokazać punkty." Silnik
-// (shared/endScreen.js's resolveRoundsEndScreen) już obsługiwał warianty
+// (web/shared/js/gameplay/endScreen.js's resolveRoundsEndScreen) już obsługiwał warianty
 // "points"/"money" (pokryte testami jednostkowymi w
 // tests/unit/settings.branching.test.js) — ale ŻADEN e2e/nagraniowy
 // scenariusz nigdy faktycznie nie ustawiał endScreenMode!=="logo" i nie

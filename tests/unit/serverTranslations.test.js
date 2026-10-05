@@ -3,9 +3,9 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import pl from "../../translation/pl.js";
-import en from "../../translation/en.js";
-import uk from "../../translation/uk.js";
+import pl from "../../web/shared/translation/pl.js";
+import en from "../../web/shared/translation/en.js";
+import uk from "../../web/shared/translation/uk.js";
 
 // Teksty używane poza stroną: edge function send-email (sekcja authEmail)
 // i Cloudflare Worker (contactEmail, marketplaceSsr). Obie strony pobierają
@@ -13,7 +13,7 @@ import uk from "../../translation/uk.js";
 // w którymś języku wychodzi dopiero na produkcji — stąd ten test.
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
-const read = (file) => fs.readFileSync(path.join(ROOT, file), "utf8");
+const read = (file) => fs.readFileSync(path.join(ROOT, /^(tests|scripts|supabase|cloudflare|services|docs)\//.test(file) ? file : "web/" + file), "utf8");
 const DICTS = { pl, en, uk };
 const LANGS = Object.keys(DICTS);
 const WORKER = "cloudflare/maintenance-worker/src";
@@ -115,7 +115,7 @@ test("ukraińskie teksty serwerowe nie mieszają cyrylicy z łacinką w jednym s
 
 test("parser workera czyta sekcje identycznie jak prawdziwy import, w PL/EN/UK", () => {
   for (const lang of LANGS) {
-    const code = read(`translation/${lang}.js`);
+    const code = read(`shared/translation/${lang}.js`);
     for (const section of ["contactEmail", "marketplaceSsr", "authEmail"]) {
       assert.deepEqual(extractSection(code, section), DICTS[lang][section], `${lang}.${section}`);
     }
@@ -146,7 +146,7 @@ function mockFetch(t, { originDown = false, game = null } = {}) {
     const m = u.match(/\/translation\/(\w+)\.js/);
     if (m) {
       if (originDown) throw new TypeError("network down");
-      return new Response(read(`translation/${m[1]}.js`), { status: 200, headers: { "Content-Type": "application/javascript" } });
+      return new Response(read(`shared/translation/${m[1]}.js`), { status: 200, headers: { "Content-Type": "application/javascript" } });
     }
     if (u.includes("/rest/v1/rpc/")) {
       return new Response(JSON.stringify(game ? [game] : []), { status: 200, headers: { "Content-Type": "application/json" } });

@@ -17,9 +17,9 @@ const CACHE_TTL_MS = 10 * 60 * 1000;
 const cache = new Map();
 
 async function fetchTranslationCode(lang) {
-  const url = `${ORIGIN_BASE}/translation/${lang}.js?t=${Date.now()}`;
+  const url = `${ORIGIN_BASE}/shared/translation/${lang}.js?t=${Date.now()}`;
   const res = await fetchWithOrigin(url, new Request(url), ORIGIN_HOST, ORIGIN_RESOLVE);
-  if (res.status !== 200) throw new Error(`HTTP ${res.status} for /translation/${lang}.js`);
+  if (res.status !== 200) throw new Error(`HTTP ${res.status} for /shared/translation/${lang}.js`);
   return res.text();
 }
 

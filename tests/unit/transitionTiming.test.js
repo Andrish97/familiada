@@ -1,11 +1,11 @@
-// Testy shared/transitionTiming.js — JEDEN silnik liczący rzeczywiste czasy
+// Testy web/shared/js/gameplay/transitionTiming.js — JEDEN silnik liczący rzeczywiste czasy
 // dźwięku, używany zarówno przez control2/js/actionGate.js (blokada
 // operatora) jak i display2/js/render.js (czas trwania animacji Displaya).
 // getSfxDuration jest tu atrapą (sekundy, nie ms).
 
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { createTransitionTiming } from "../../shared/transitionTiming.js";
+import { createTransitionTiming } from "../../web/shared/js/gameplay/transitionTiming.js";
 
 function makeTiming(durations = {}) {
   const getSfxDuration = async (key) => durations[key] ?? 0;

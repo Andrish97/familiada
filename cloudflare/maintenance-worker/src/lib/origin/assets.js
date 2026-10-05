@@ -19,7 +19,7 @@ const DYNAMIC_JSON_PATHS = new Set(["/maintenance-state.json"]);
 // więc bez tego wykluczenia np. /settings-tools/tools.json (rozszerzenie
 // .json) omijałby tamten blok i wyciekał publicznie mimo blokady.
 function isPubliclyBlockedAssetPath(pathname) {
-  return pathname.startsWith("/tools/") || pathname.startsWith("/settings-tools/");
+  return pathname.startsWith("/tools/") || pathname.startsWith("/settings-tools/") || pathname.startsWith("/settings/");
 }
 
 export function isStaticAssetPath(pathname) {
@@ -65,7 +65,7 @@ export async function serveStaticAsset(request, url, ctx, originBase, originHost
 // zmiany zachowania: isMaintenanceAsset dalej dodatkowo przepuszcza samą
 // ścieżkę "/maintenance", isSettingsAsset zostaje bez zmian.
 function isSharedAssetPath(pathname) {
-  const allowedPrefixes = ["/css/", "/js/", "/translation/", "/img/", "/audio/"];
+  const allowedPrefixes = ["/shared/", "/assets/", "/maintenance/css/", "/maintenance/js/", "/404/css/", "/404/js/"];
   for (const prefix of allowedPrefixes) {
     if (pathname.startsWith(prefix)) return true;
   }
@@ -74,12 +74,12 @@ function isSharedAssetPath(pathname) {
 }
 
 export function isMaintenanceAsset(pathname) {
-  if (pathname === "/maintenance") return true;
+  if (["/maintenance", "/maintenance/", "/maintenance/index.html"].includes(pathname)) return true;
   return isSharedAssetPath(pathname);
 }
 
 export function isSettingsAsset(pathname) {
-  return isSharedAssetPath(pathname);
+  return isSharedAssetPath(pathname) || ["/settings/js/", "/settings/css/", "/settings/data/", "/games/css/", "/host2/fonts/"].some(prefix => pathname.startsWith(prefix));
 }
 
 export function isCommonAsset(pathname) {

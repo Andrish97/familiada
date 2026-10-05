@@ -10,7 +10,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../web");
 const SKIP = new Set([".git", "node_modules", "tests", "docs", "supabase", "cloudflare", "services", "settings-tools"]);
 
 function cssFiles(dir = ROOT, out = []) {
@@ -38,7 +38,7 @@ test("reguły .btn nie ustawiają półprzezroczystego tła (tylko --btn-tint)",
 });
 
 test("base.css: .btn ma kryjące tło z --btn-tint i --under", () => {
-  const src = fs.readFileSync(path.join(ROOT, "css/base.css"), "utf8");
+  const src = fs.readFileSync(path.join(ROOT, "shared/css/base.css"), "utf8");
   assert.match(src, /\.btn \{[^}]*background: linear-gradient\(var\(--btn-tint\), var\(--btn-tint\)\) var\(--under\)/);
   assert.match(src, /:root \{\s*--under: #050914;/);
 });

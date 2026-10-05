@@ -35,7 +35,7 @@
 // testu.
 //
 // Dotyka wyłącznie nowej, addytywnej tabeli public.game_state (migracje
-// 259/260/261) — zero wpływu na dzisiejszy control.html/display.html i ich
+// 259/260/261) — zero wpływu na dzisiejszy control.html/display/index.html i ich
 // dane.
 
 const { test, expect } = require("@playwright/test");

@@ -1,0 +1,1309 @@
+// js/pages/polls.js
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-05T10242";
+import { requireAuth } from "../../shared/js/core/auth.js?v=v2026-10-05T10242";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-05T10242";
+import QRCode from "https://cdn.jsdelivr.net/npm/qrcode@1.5.3/+esm";
+import { initI18n, t, withLangParam, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-05T10242";
+import { initTopbarAccountDropdown } from "../../shared/js/core/topbar-controller.js?v=v2026-10-05T10242";
+import { guardResourceLock } from "../../shared/js/core/resource-lock.js?v=v2026-10-05T10242";
+import { validateGame, gameRuleErrorMessage, RULES } from "../../shared/js/core/game-validate.js?v=v2026-10-05T10242";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-05T10242";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-05T10242";
+
+// initI18n is called at the start of DOMContentLoaded (see below)
+
+const qs = new URLSearchParams(location.search);
+const gameId = qs.get("id");
+const ret = qs.get("ret");
+
+const $ = (id) => document.getElementById(id);
+
+const who = $("who");
+const btnLogout = $("btnLogout");
+const btnBack = $("btnBack");
+const btnManual = $("btnManual");
+const msg = $("msg");
+
+const cardMain = $("cardMain");
+const cardEmpty = $("cardEmpty");
+
+const chipType = $("chipType");
+const chipStatus = $("chipStatus");
+const hintTop = $("hintTop");
+
+const gName = $("gName");
+const gMeta = $("gMeta");
+const pollLinkEl = $("pollLink");
+const qrBox = $("qr");
+
+const btnCopy = $("btnCopy");
+const btnOpen = $("btnOpen");
+const btnOpenQr = $("btnOpenQr");
+
+const btnPollAction = $("btnPollAction");
+
+// QR modal (wyświetlacz ankiety)
+const pollQrModalOverlay = $("pollQrModalOverlay");
+
+const pollQrModalCodeVal = $("pollQrModalCodeVal");
+const pollQrModalCopy    = $("pollQrModalCopy");
+const pollQrModalOpen    = $("pollQrModalOpen");
+const pollQrModalClose   = $("pollQrModalClose");
+let _pollQrDeviceCode = "";
+let _pollQrOpenUrl    = "";
+
+// '⟳ Odśwież' (fallback na stare ID, jeśli HTML jeszcze nie zmieniony)
+const btnRefreshResults = $("btnRefreshResults") || $("btnPreview");
+
+const resultsCard = $("resultsCard");
+const resultsMeta = $("resultsMeta");
+const resultsList = $("resultsList");
+
+const textCloseCard = $("textCloseCard");
+const textCloseMeta = $("textCloseMeta");
+const textCloseList = $("textCloseList");
+const btnCancelTextClose = $("btnCancelTextClose");
+const btnCancelTextCloseTop = $("btnCancelTextCloseTop");
+const btnFinishTextClose = $("btnFinishTextClose");
+const btnUndo = $("btnUndo");
+const btnRedo = $("btnRedo");
+
+let game = null;
+let textCloseModel = null;
+let uiTextCloseOpen = false;
+
+let undoStack = [];
+let redoStack = [];
+
+function saveSnapshot() {
+  if (!textCloseModel) return;
+  // głęboka kopia modelu
+  undoStack.push(JSON.parse(JSON.stringify(textCloseModel)));
+  redoStack = []; // nowa akcja czyści redo
+  updateHistoryButtons();
+}
+
+function updateHistoryButtons() {
+  if (btnUndo) btnUndo.disabled = undoStack.length === 0;
+  if (btnRedo) btnRedo.disabled = redoStack.length === 0;
+}
+
+function undoAction() {
+  if (!uiTextCloseOpen || undoStack.length === 0) return;
+  redoStack.push(JSON.parse(JSON.stringify(textCloseModel)));
+  textCloseModel = undoStack.pop();
+  updateHistoryButtons();
+  if (window._textCloseRerenderAll) window._textCloseRerenderAll();
+}
+
+function redoAction() {
+  if (!uiTextCloseOpen || redoStack.length === 0) return;
+  undoStack.push(JSON.parse(JSON.stringify(textCloseModel)));
+  textCloseModel = redoStack.pop();
+  updateHistoryButtons();
+  if (window._textCloseRerenderAll) window._textCloseRerenderAll();
+}
+
+const backTarget = withLangParam(ret || "games");
+
+
+function getRetPathnameLower() {
+  if (!ret) return "";
+  try {
+    return new URL(ret, location.origin + "/").pathname.toLowerCase();
+  } catch {
+    return "";
+  }
+}
+
+function buildManualUrl() {
+  const url = new URL("/manual/", location.href);
+  const current = `${location.pathname.split("/").pop() || "polls"}${location.search}${location.hash}`;
+  url.searchParams.set("ret", current);
+  const lang = (new URLSearchParams(location.search).get("lang") || localStorage.getItem("uiLang") || "pl");
+  url.searchParams.set("lang", lang);
+  url.hash = "polls";
+  return url.toString();
+}
+
+// ===== Preview DOM cache (poll_points) =====
+let ppCache = null;
+// ppCache = { qsKey, ansKey, valByAnswerId, builtAt }
+
+// --- QR modal (wyświetlacz ankiety) ---
+function hidePollQrModal() {
+  if (pollQrModalOverlay) pollQrModalOverlay.classList.add("hidden");
+}
+
+async function showPollQrModal() {
+  if (!game || !pollLinkEl?.value) return;
+
+  // URL do strony wyświetlacza (poll-qr) — zawiera aktualny język polls
+  const displayUrl = new URL("/poll-qr/", location.href);
+  displayUrl.searchParams.set("id", game.id);
+  displayUrl.searchParams.set("key", game.share_key_poll);
+  displayUrl.searchParams.set("lang", getUiLang() || "pl");
+  _pollQrOpenUrl = displayUrl.toString();
+
+  if (pollQrModalCodeVal) pollQrModalCodeVal.textContent = "——————";
+  if (pollQrModalOverlay) pollQrModalOverlay.classList.remove("hidden");
+
+  try {
+    const { data, error } = await sb().rpc("generate_device_connect_code", {
+      p_game_id:     game.id,
+      p_device_type: "poll_qr",
+      p_share_key:   game.share_key_poll,
+      p_game_name:   game.name,
+    });
+    if (error || !data?.ok) throw new Error(error?.message || "RPC error");
+    _pollQrDeviceCode = data.code;
+    if (pollQrModalCodeVal) pollQrModalCodeVal.textContent = data.code;
+  } catch (e) {
+    console.warn("[polls] showPollQrModal error", e);
+    setMsg(t("common.genericError") || "Błąd.");
+  }
+}
+
+pollQrModalClose?.addEventListener("click", hidePollQrModal);
+pollQrModalOverlay?.addEventListener("click", (e) => {
+  if (e.target === pollQrModalOverlay) hidePollQrModal();
+});
+pollQrModalCopy?.addEventListener("click", async () => {
+  if (!_pollQrDeviceCode) return;
+  try {
+    await navigator.clipboard.writeText(_pollQrDeviceCode);
+    setMsg(t("polls.qrModal.copied"));
+  } catch {
+    setMsg(t("polls.copy.failed"));
+  }
+});
+pollQrModalOpen?.addEventListener("click", () => {
+  if (!_pollQrOpenUrl) return;
+  const u = new URL(withLangParam("/poll-qr/"), location.href);
+  u.searchParams.set("url", _pollQrOpenUrl);
+  window.open(u.toString(), "_blank", "noopener,noreferrer");
+});
+
+// --- Język QR-a w ankietach (games.poll_qr_lang, migracja 269) ---
+// Wcześniej: broadcast (BroadcastChannel same-browser + Supabase Realtime
+// cross-device) — wymagał, żeby poll-qr.js było podłączone w TEJ SAMEJ
+// chwili, gdy operator zmienia język tutaj; urządzenie offline/dołączone
+// później zostawało trwale z nieaktualnym językiem. Zamiast tego po prostu
+// PERSYSTUJEMY język na games.poll_qr_lang -- poll-qr.js samo się o niego
+// dopytuje (pollowanie, patrz komentarz tam), więc nie ma już czego
+// "wysyłać": broadcastLang() tylko zapisuje, nigdy nie czeka na odbiorcę.
+async function broadcastLang(lang) {
+  if (!game?.id) return;
+  try {
+    await sb().rpc("set_poll_qr_lang", { p_game_id: game.id, p_lang: lang });
+  } catch (e) {
+    console.warn("[polls] set_poll_qr_lang failed", e);
+  }
+}
+
+window.addEventListener("i18n:lang", (e) => {
+  const lang = e?.detail?.lang;
+  if (!lang) return;
+
+  broadcastLang(lang);
+  void refresh();
+});
+
+function setTextCloseUi(open) {
+  uiTextCloseOpen = !!open;
+
+  if (textCloseCard) textCloseCard.style.display = open ? "" : "none";
+
+  // ukryj główne przyciski gdy panel textClose otwarty
+  if (btnPollAction) btnPollAction.style.display = open ? "none" : "";
+  if (btnCancelTextCloseTop) btnCancelTextCloseTop.style.display = open ? "" : "none";
+  if (btnRefreshResults) btnRefreshResults.style.display = open ? "none" : "";
+
+  // wyniki: widoczne zawsze, ale nie podczas textClose
+  if (resultsCard) resultsCard.style.display = open ? "none" : "";
+
+  // czyść historię
+  undoStack = [];
+  redoStack = [];
+  updateHistoryButtons();
+}
+
+function resetPreviewDomCache() {
+  ppCache = null;
+}
+
+const TYPES = {
+  POLL_TEXT: "poll_text",
+  POLL_POINTS: "poll_points",
+  PREPARED: "prepared",
+};
+const STATUS = {
+  DRAFT: "draft",
+  POLL_OPEN: "poll_open",
+  READY: "ready",
+};
+
+function escapeHtml(s) {
+  return String(s ?? "").replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;");
+}
+
+function setMsg(text) {
+  if (!msg) return;
+  msg.textContent = text || "";
+  if (text) setTimeout(() => (msg.textContent = ""), 2400);
+}
+
+function typeLabel(type) {
+  if (type === TYPES.POLL_TEXT) return t("games.types.pollText");
+  if (type === TYPES.POLL_POINTS) return t("games.types.pollPoints");
+  if (type === TYPES.PREPARED) return t("games.types.prepared");
+  return String(type || "—").toUpperCase();
+}
+
+function statusLabel(st) {
+  const s = st || STATUS.DRAFT;
+  if (s === STATUS.DRAFT) return t("games.status.draft");
+  if (s === STATUS.POLL_OPEN) return t("games.status.open");
+  if (s === STATUS.READY) return t("games.status.closed");
+  return String(s).toUpperCase();
+}
+
+function setChips(g) {
+  if (chipType) chipType.textContent = typeLabel(g?.type);
+
+  if (chipStatus) {
+    chipStatus.className = "chip status";
+    const st = g?.status || STATUS.DRAFT;
+    chipStatus.textContent = statusLabel(st);
+    if (st === STATUS.READY) chipStatus.classList.add("ok");
+    else if (st === STATUS.POLL_OPEN) chipStatus.classList.add("warn");
+    else chipStatus.classList.add("bad");
+  }
+
+  // hintTop – bez 'g.desc', bo go nie ma
+  if (hintTop) hintTop.textContent = "";
+}
+
+function setLinkUiVisible(on) {
+  const v = !!on;
+  if (btnCopy) btnCopy.disabled = !v;
+  if (btnOpen) btnOpen.disabled = !v;
+  if (btnOpenQr) btnOpenQr.disabled = !v;
+  if (!v) clearQr();
+}
+
+function setLinkRowVisible(visible) {
+  const v = !!visible;
+
+  // input
+  if (pollLinkEl) {
+    pollLinkEl.style.display = v ? "" : "none";
+    // opcjonalnie: jak ukryte, to czyść wartość
+    if (!v) pollLinkEl.value = "";
+  }
+
+  // przyciski
+  if (btnCopy) btnCopy.style.display = v ? "" : "none";
+  if (btnOpen) btnOpen.style.display = v ? "" : "none";
+  if (btnOpenQr) btnOpenQr.style.display = v ? "" : "none";
+
+  // mini-QR
+  if (!v) clearQr();
+}
+
+
+function clearQr() {
+  if (qrBox) qrBox.innerHTML = "";
+}
+
+async function renderSmallQr(url) {
+  if (!qrBox) return;
+  qrBox.innerHTML = "";
+  if (!url) return;
+
+  try {
+    const wrap = document.createElement("div");
+    wrap.className = "qrFrameSmall";
+
+    const canvas = document.createElement("canvas");
+    await QRCode.toCanvas(canvas, url, { width: 260, margin: 1 });
+
+    wrap.appendChild(canvas);
+    qrBox.appendChild(wrap);
+  } catch (e) {
+    console.warn("[polls] small QR failed:", e);
+    qrBox.textContent = t("polls.qrFailed");
+  }
+}
+
+function pollLink(g) {
+  if (!g) return "";
+  const base =
+    g.type === TYPES.POLL_TEXT
+      ? "poll-text"
+      : g.type === TYPES.POLL_POINTS
+      ? "poll-points"
+      : "";
+  if (!base) return "";
+
+  const u = new URL(withLangParam(base), location.href);
+  u.searchParams.set("id", g.id);
+  u.searchParams.set("key", g.share_key_poll);
+  return u.toString();
+}
+
+function updateRefreshButtonState() {
+  if (!btnRefreshResults) return;
+  btnRefreshResults.disabled = uiTextCloseOpen || !game || !gameId;
+}
+
+/* =======================
+   DB helpers
+======================= */
+
+async function loadGame() {
+  const { data, error } = await sb()
+    .from("games")
+    .select("id,name,type,status,share_key_poll,poll_opened_at,poll_closed_at")
+    .eq("id", gameId)
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+async function listQuestionsBasic() {
+  const { data, error } = await sb()
+    .from("questions")
+    .select("id, ord, text")
+    .eq("game_id", gameId)
+    .order("ord", { ascending: true });
+  if (error) throw error;
+  return data || [];
+}
+
+async function listAnswersFinalForQuestion(qid) {
+  const { data, error } = await sb()
+    .from("answers")
+    .select("id, ord, text, fixed_points")
+    .eq("question_id", qid)
+    .order("ord", { ascending: true });
+  if (error) throw error;
+  return data || [];
+}
+
+async function listAnswersBasicForQuestion(qid) {
+  const { data, error } = await sb()
+    .from("answers")
+    .select("id, ord, text")
+    .eq("question_id", qid)
+    .order("ord", { ascending: true });
+  if (error) throw error;
+  return data || [];
+}
+
+async function getLastSessionIdForQuestion(qid) {
+  const { data, error } = await sb()
+    .from("poll_sessions")
+    .select("id")
+    .eq("game_id", gameId)
+    .eq("question_id", qid)
+    .order("created_at", { ascending: false })
+    .limit(1);
+  if (error) throw error;
+  return data?.[0]?.id || null;
+}
+
+async function getLastSessionIdsByQuestion(questionIds) {
+  const ids = (questionIds || []).filter(Boolean);
+  if (!ids.length) return new Map();
+
+  const { data, error } = await sb()
+    .from("poll_sessions")
+    .select("id,question_id,created_at")
+    .eq("game_id", gameId)
+    .in("question_id", ids)
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+
+  const map = new Map();
+  for (const row of data || []) {
+    if (!row?.question_id || !row?.id) continue;
+    if (!map.has(row.question_id)) map.set(row.question_id, row.id);
+  }
+  return map;
+}
+
+/* =======================
+   Walidacje
+======================= */
+
+// Warunki otwarcia / ponownego otwarcia / zamknięcia liczy baza
+// (game_validate, migracja 273) -- wcześniej tu była osobna kopia reguł,
+// z kilkoma zapytaniami na każde pytanie przy każdym odświeżeniu.
+async function validateCanOpen(g) {
+  if (!g) return { ok: false, reason: t("gameValidate.noGame") };
+  return (await validateGame(g.id)).poll_open;
+}
+
+async function validateCanReopen(g) {
+  return await validateCanOpen(g);
+}
+
+function normalizeCountsTo100(items) {
+  const cleaned = (items || [])
+    .map((x) => ({ ...x, count: Math.max(0, Number(x.count) || 0) }))
+    .filter((x) => x.count > 0);
+
+  if (!cleaned.length) return [];
+
+  const total = cleaned.reduce((s, x) => s + x.count, 0) || 1;
+
+  const raw = cleaned.map((x) => {
+    const r = (100 * x.count) / total;
+    const f = Math.floor(r);
+    return { ...x, raw: r, floor: f, frac: r - f };
+  });
+
+  let sum = raw.reduce((s, x) => s + x.floor, 0);
+  let diff = 100 - sum;
+
+  if (diff > 0) {
+    raw.sort((a, b) => b.frac - a.frac);
+    for (let i = 0; i < diff; i++) raw[i % raw.length].floor += 1;
+  } else if (diff < 0) {
+    diff = -diff;
+    raw.sort((a, b) => b.floor - a.floor);
+    let i = 0;
+    while (diff > 0 && i < raw.length * 5) {
+      const idx = i % raw.length;
+      if (raw[idx].floor > 0) {
+        raw[idx].floor -= 1;
+        diff--;
+      }
+      i++;
+    }
+  }
+
+  return raw.map((x) => ({ ...x, points: x.floor }));
+}
+
+async function validateCanClose(g) {
+  if (!g) return { ok: false, reason: t("gameValidate.noGame") };
+  return (await validateGame(g.id)).poll_close;
+}
+
+/* =======================
+   Wyniki (zawsze widoczne) — bez 'Перегляд наживо'
+======================= */
+
+function buildPollPointsPreviewDom(qsList, ansByQ) {
+  if (!resultsList) return null;
+  
+  // FIX: jeśli ktoś wcześniej wyczyścił resultsList (np. klik ⟳ Odśwież),
+  // to ppCache wskazuje na odłączone elementy i nic się nie pokaże.
+  // Wtedy unieważniamy cache i przebudowujemy DOM.
+  if (ppCache && !resultsList.firstElementChild) {
+    ppCache = null;
+  }
+
+  const qsKey = qsList.map((q) => q.id).join(",");
+  const ansKey = qsList
+    .map((q) => {
+      const ans = ansByQ.get(q.id) || [];
+      return `${q.id}:${ans.map((a) => a.id).join("|")}`;
+    })
+    .join(";");
+
+  if (ppCache && ppCache.qsKey === qsKey && ppCache.ansKey === ansKey) return ppCache;
+
+  resultsList.innerHTML = "";
+  const valByAnswerId = new Map();
+
+  for (const q of qsList) {
+    const ans = ansByQ.get(q.id) || [];
+
+    const box = document.createElement("div");
+    box.className = "resultQ";
+    box.innerHTML = `<div class="qTitle">P${q.ord}: ${escapeHtml(q.text)}</div>`;
+
+    for (const a of ans) {
+      const row = document.createElement("div");
+      row.className = "aRow";
+      row.innerHTML = `<div class="aTxt"></div><div class="aVal"></div>`;
+      row.querySelector(".aTxt").textContent = a.text;
+      row.querySelector(".aVal").textContent = "0";
+      valByAnswerId.set(a.id, row.querySelector(".aVal"));
+      box.appendChild(row);
+    }
+
+    resultsList.appendChild(box);
+  }
+
+  ppCache = { qsKey, ansKey, valByAnswerId, builtAt: Date.now() };
+  return ppCache;
+}
+
+function updatePollPointsPreviewValues(valuesByAnswerId) {
+  if (!ppCache?.valByAnswerId) return;
+  for (const [aid, valEl] of ppCache.valByAnswerId.entries()) {
+    const v = valuesByAnswerId.get(aid) || 0;
+    const next = String(v);
+    if (valEl.textContent !== next) valEl.textContent = next;
+  }
+}
+
+function showResultsCard() {
+  if (resultsCard) resultsCard.style.display = uiTextCloseOpen ? "none" : "";
+}
+
+function setResultsMeta(text) {
+  if (!resultsMeta) return;
+  resultsMeta.textContent = text || "";
+}
+
+async function previewResults() {
+  showResultsCard();
+  if (!resultsList || !resultsMeta || !resultsCard) return;
+  if (uiTextCloseOpen) return;
+  if (!game) return;
+
+  resultsList.style.display = "grid";
+  setResultsMeta(t("polls.results.loading"));
+
+  const { data, error } = await sb().rpc("get_poll_preview", { p_game_id: gameId });
+  if (error) throw error;
+
+  const { status, type, questions } = data;
+
+  // FINAL (po zamknięciu)
+  if (status === STATUS.READY) {
+    for (const q of questions) {
+      const box = document.createElement("div");
+      box.className = "resultQ";
+      box.innerHTML = `<div class="qTitle">P${q.ord}: ${escapeHtml(q.text)}</div>`;
+      for (const a of q.answers || []) {
+        const row = document.createElement("div");
+        row.className = "aRow";
+        row.innerHTML = `<div class="aTxt"></div><div class="aVal"></div>`;
+        row.querySelector(".aTxt").textContent = a.text;
+        row.querySelector(".aVal").textContent = String(Number(a.fixed_points) || 0);
+        box.appendChild(row);
+      }
+      resultsList.appendChild(box);
+    }
+    setResultsMeta(t("polls.results.final"));
+    return;
+  }
+
+  // LIVE poll_points
+  if (type === TYPES.POLL_POINTS) {
+    const ansByQ = new Map(questions.map((q) => [q.id, q.answers || []]));
+    buildPollPointsPreviewDom(questions, ansByQ);
+
+    const values = new Map();
+    for (const q of questions) {
+      for (const a of q.answers || []) values.set(a.id, a.votes || 0);
+    }
+    updatePollPointsPreviewValues(values);
+    setResultsMeta("");
+    return;
+  }
+
+  // LIVE poll_text
+  for (const q of questions) {
+    const rows = q.text_rows || [];
+
+    const box = document.createElement("div");
+    box.className = "resultQ";
+    box.innerHTML = `<div class="qTitle">P${q.ord}: ${escapeHtml(q.text)}</div>`;
+
+    for (const a of rows) {
+      const row = document.createElement("div");
+      row.className = "aRow";
+      row.innerHTML = `<div class="aTxt"></div><div class="aVal"></div>`;
+      row.querySelector(".aTxt").textContent = a.text;
+      row.querySelector(".aVal").textContent = String(a.val);
+      box.appendChild(row);
+    }
+
+    resultsList.appendChild(box);
+  }
+
+  setResultsMeta(""); // <— TU usuwamy LIVE tekst
+}
+
+/* =======================
+   poll_text close panel
+======================= */
+
+function clip17Final(s) {
+  const t1 = String(s ?? "").trim();
+  if (!t1) return "";
+  return t1.length > 17 ? t1.slice(0, 17) : t1;
+}
+
+// normalizacja 'klasyczna' dla text-close (z Twojej wersji)
+function normalizeTo100Int(items) {
+  const normalized = normalizeCountsTo100(items);
+  if (!normalized.length) return [];
+
+  let filtered = normalized.filter((x) => x.points >= 3);
+  filtered.sort((a, b) => b.points - a.points);
+  if (filtered.length > 6) filtered = filtered.slice(0, 6);
+
+  const base = filtered.map((x) => ({ text: x.text, points: x.points }));
+
+  const used = new Set();
+  for (const x of base) {
+    let p = Number(x.points) || 0;
+    while (p > 0 && used.has(p)) p--;
+    x.points = p;
+    used.add(p);
+  }
+  return base;
+}
+
+function mergeDuplicatesInPlace(items) {
+  const map = new Map();
+  for (const it of items || []) {
+    const key = String(it.text ?? "").trim().toLowerCase();
+    const cnt = Number(it.count) || 0;
+    if (!key || cnt <= 0) continue;
+
+    if (!map.has(key)) map.set(key, { text: String(it.text ?? "").trim(), count: cnt });
+    else map.get(key).count += cnt;
+  }
+  return [...map.values()].sort((a, b) => b.count - a.count);
+}
+
+function validateTextCloseModel() {
+  if (!textCloseModel || !btnFinishTextClose) return;
+
+  let allOk = true;
+  for (const q of textCloseModel) {
+    const validCount = q.items.filter((it) => it.text?.trim() && Number(it.count) > 0).length;
+    if (validCount < 3) {
+      allOk = false;
+      break;
+    }
+  }
+  btnFinishTextClose.disabled = !allOk;
+}
+
+async function buildTextClosePanel() {
+  // #btnFinishTextClose nie ma domyślnie atrybutu disabled w HTML — bez tego
+  // jest klikalne od razu po załadowaniu strony, na długo zanim poniższe
+  // zapytania (10x sekwencyjnie, sesja + wpisy na pytanie) w ogóle ustawią
+  // textCloseModel. Klik w tym oknie trafia w early-return w handlerze
+  // (textCloseModel jeszcze null) i nie robi kompletnie nic — bez błędu, bez
+  // modala — potwierdzone diagnostyką w e2e. validateTextCloseModel() poniżej
+  // dopiero WYŁĄCZA przycisk gdy walidacja nie przejdzie, nigdy go nie blokuje
+  // na starcie, więc trzeba to zrobić tutaj jawnie.
+  if (btnFinishTextClose) btnFinishTextClose.disabled = true;
+  setTextCloseUi(true);
+  if (textCloseList) textCloseList.innerHTML = "";
+  if (textCloseMeta) textCloseMeta.textContent = t("polls.textClose.loading");
+
+  const qsList = await listQuestionsBasic();
+  const model = [];
+
+  for (const q of qsList) {
+    const sid = await getLastSessionIdForQuestion(q.id);
+    const map = new Map();
+
+    if (sid) {
+      const { data, error } = await sb()
+        .from("poll_text_entries")
+        .select("answer_norm")
+        .eq("poll_session_id", sid)
+        .eq("question_id", q.id);
+      if (error) throw error;
+
+      for (const r of data || []) {
+        const k = (r.answer_norm || "").trim();
+        if (!k) continue;
+        map.set(k, (map.get(k) || 0) + 1);
+      }
+    }
+
+    const items = [...map.entries()]
+      .map(([txt, count]) => ({ text: txt, count }))
+      .sort((a, b) => b.count - a.count);
+
+    model.push({ question_id: q.id, ord: q.ord, text: q.text, items });
+  }
+
+  textCloseModel = model;
+  window._textCloseRerenderAll = renderTextCloseFromModel;
+  renderTextCloseFromModel();
+
+  return textCloseModel;
+}
+
+function renderTextCloseFromModel() {
+  if (!textCloseList) return;
+  textCloseList.innerHTML = "";
+
+  if (textCloseMeta) textCloseMeta.textContent = t("polls.textClose.instructions");
+
+  for (const q of textCloseModel) {
+    const box = document.createElement("div");
+    box.className = "tcQ";
+    box.innerHTML = `
+      <div class="head">
+        <div>
+          <div class="qTitle">P${q.ord}: ${escapeHtml(q.text)}</div>
+          <div class="qHint">${t("polls.textClose.hint")}</div>
+        </div>
+        <div class="tcTools">
+          <button class="btn sm tcMergeDup" type="button" title="${t("polls.textClose.mergeTitle")}">${t("polls.textClose.mergeLabel")}</button>
+        </div>
+      </div>
+      <div class="tcList"></div>
+    `;
+
+    const list = box.querySelector(".tcList");
+    const btnDup = box.querySelector(".tcMergeDup");
+
+    btnDup?.addEventListener("click", () => {
+      saveSnapshot();
+      q.items = mergeDuplicatesInPlace(q.items);
+      rerender();
+    });
+
+    const rerender = () => {
+      list.innerHTML = "";
+      q.items.sort((a, b) => b.count - a.count);
+      validateTextCloseModel();
+
+      let mergeSrcIdx = null; // tryb merge na touch
+
+      for (let idx = 0; idx < q.items.length; idx++) {
+        const it = q.items[idx];
+
+        const row = document.createElement("div");
+        row.className = "tcItem";
+        row.draggable = true;
+        row.innerHTML = `
+          <input class="tcTxtInp" type="text" />
+          <div class="tcCnt"></div>
+          <button class="tcMergeBtn" type="button" title="${t("polls.textClose.mergeWith")}" aria-label="${t("polls.textClose.mergeWith")}">${icon("merge")}</button>
+          <button class="tcDel" type="button" title="${t("polls.textClose.remove")}" aria-label="${t("polls.textClose.remove")}">${icon("trash")}</button>
+        `;
+
+        const inp = row.querySelector(".tcTxtInp");
+        inp.value = it.text;
+
+        inp.addEventListener("focus", () => {
+          inp._oldValue = inp.value;
+        });
+
+        inp.addEventListener("input", () => {
+          it.text = inp.value;
+          validateTextCloseModel();
+        });
+
+        inp.addEventListener("blur", () => {
+          if (inp.value !== inp._oldValue) {
+            // Przywróć stary stan, zapisz snapshot, potem przywróć nowy
+            const newValue = inp.value;
+            it.text = inp._oldValue;
+            saveSnapshot();
+            it.text = newValue;
+          }
+        });
+
+        row.querySelector(".tcCnt").textContent = String(it.count || 0);
+
+        row.querySelector(".tcDel").addEventListener("click", () => {
+          saveSnapshot();
+          q.items.splice(idx, 1);
+          rerender();
+        });
+
+        row.addEventListener("dragstart", (e) => {
+          row.classList.add("dragging");
+          e.dataTransfer.setData("text/plain", String(idx));
+        });
+        row.addEventListener("dragend", () => row.classList.remove("dragging"));
+        row.addEventListener("dragover", (e) => e.preventDefault());
+
+        row.addEventListener("drop", (e) => {
+          e.preventDefault();
+          const fromIdx = Number(e.dataTransfer.getData("text/plain"));
+          const toIdx = idx;
+          if (!Number.isFinite(fromIdx) || fromIdx === toIdx) return;
+
+          const fromIt = q.items[fromIdx];
+          const toIt = q.items[toIdx];
+          if (!fromIt || !toIt) return;
+
+          saveSnapshot();
+          toIt.count += fromIt.count;
+          q.items.splice(fromIdx, 1);
+          rerender();
+        });
+
+        // Przycisk ⇄ — tryb merge na touch
+        row.querySelector(".tcMergeBtn").addEventListener("click", () => {
+          if (mergeSrcIdx === idx) {
+            // anuluj tryb
+            mergeSrcIdx = null;
+            list.querySelectorAll(".tcItem").forEach(r => r.classList.remove("merge-src", "merge-target"));
+            return;
+          }
+          if (mergeSrcIdx !== null) {
+            // wykonaj merge: mergeSrcIdx → idx
+            const fromIt = q.items[mergeSrcIdx];
+            const toIt = q.items[idx];
+            if (fromIt && toIt) {
+              saveSnapshot();
+              toIt.count += fromIt.count;
+              q.items.splice(mergeSrcIdx, 1);
+            }
+            mergeSrcIdx = null;
+            rerender();
+            return;
+          }
+          // wejdź w tryb wyboru celu
+          mergeSrcIdx = idx;
+          list.querySelectorAll(".tcItem").forEach((r, i) => {
+            r.classList.remove("merge-src", "merge-target");
+            if (i === idx) r.classList.add("merge-src");
+            else r.classList.add("merge-target");
+          });
+        });
+
+        list.appendChild(row);
+      }
+    };
+
+    rerender();
+    textCloseList?.appendChild(box);
+  }
+}
+
+/* =======================
+   UI / Actions
+======================= */
+
+function setActionButton(label, disabled, hint) {
+  if (btnPollAction) {
+    btnPollAction.textContent = label || "";
+    btnPollAction.disabled = !!disabled;
+    btnPollAction.style.visibility = '';
+  }
+  if (btnRefreshResults) btnRefreshResults.style.visibility = '';
+  if (hintTop) hintTop.textContent = hint || "";
+}
+
+async function applyPollPointsUniqueFixedPoints() {
+  // placeholder jak u Ciebie (jeśli masz realną implementację w repo – podmień tutaj)
+}
+
+async function refresh() {
+  if (!gameId) {
+    if (cardMain) cardMain.style.display = "none";
+    if (cardEmpty) cardEmpty.style.display = "";
+    setMsg(t("polls.missingId"));
+    return;
+  }
+
+  game = await loadGame();
+
+  if (cardEmpty) cardEmpty.style.display = "none";
+  if (cardMain) cardMain.style.display = "";
+
+  setChips(game);
+
+  if (gName) gName.textContent = game.name || t("polls.defaultName");
+
+  if (gMeta) {
+    if (game.type === TYPES.POLL_TEXT) {
+      gMeta.textContent = t("polls.meta.pollText", { min: RULES.QN_MIN });
+    } else if (game.type === TYPES.POLL_POINTS) {
+      gMeta.textContent = t("polls.meta.pollPoints", {
+        min: RULES.QN_MIN,
+        minAns: RULES.AN_MIN,
+        maxAns: RULES.AN_MAX,
+      });
+    } else {
+      gMeta.textContent = t("polls.meta.prepared");
+    }
+  }
+
+  // resultsCard zawsze widoczny (poza textClose)
+  showResultsCard();
+
+  // link + QR (pokazujemy TYLKO gdy poll jest otwarty)
+  const st = game.status || STATUS.DRAFT;
+  
+  if (st === STATUS.POLL_OPEN) {
+    setLinkRowVisible(true);
+  
+    const link = pollLink(game);
+    if (pollLinkEl) pollLinkEl.value = link;
+  
+    setLinkUiVisible(true);
+    await renderSmallQr(link);
+  } else {
+    // draft + ready: link i przyciski mają zniknąć
+    setLinkRowVisible(false);
+    setLinkUiVisible(false);
+  }
+
+  updateRefreshButtonState();
+
+  // Uruchamiamy walidację i podgląd wyników równolegle — są niezależne
+  const validatePromise = (() => {
+    if (game.type === TYPES.PREPARED) return Promise.resolve(null);
+    if (st === STATUS.DRAFT)      return validateCanOpen(game);
+    if (st === STATUS.POLL_OPEN)  return validateCanClose(game);
+    if (st === STATUS.READY)      return validateCanReopen(game);
+    return Promise.resolve(null);
+  })();
+
+  if (!uiTextCloseOpen) {
+    try {
+      resetPreviewDomCache();
+      await Promise.all([previewResults(), validatePromise]);
+    } catch (e) {
+      console.warn('[polls] previewResults in refresh failed', e);
+      setResultsMeta(t('polls.results.refreshFailed'));
+    }
+  }
+
+  // przycisk główny (validatePromise już rozwiązany)
+  const chk = await validatePromise;
+
+  if (game.type === TYPES.PREPARED) {
+    setActionButton(t('polls.actions.noPoll'), true, t('polls.meta.prepared'));
+    return;
+  }
+
+  if (st === STATUS.DRAFT) {
+    setActionButton(
+      t('polls.actions.openPoll'),
+      !chk.ok,
+      chk.ok ? t('polls.actions.openReady') : chk.reason
+    );
+    return;
+  }
+
+  if (st === STATUS.POLL_OPEN) {
+    setActionButton(
+      t('polls.actions.closePoll'),
+      !chk.ok,
+      chk.ok ? t('polls.actions.closeReady') : chk.reason
+    );
+    return;
+  }
+
+  if (st === STATUS.READY) {
+    setActionButton(
+      t('polls.actions.reopenPoll'),
+      !chk.ok,
+      chk.ok ? t('polls.actions.reopenHint') : chk.reason
+    );
+    return;
+  }
+
+  setActionButton('', true, t('polls.actions.unknownStatus'));
+}
+
+/* =======================
+   Init
+======================= */
+
+document.addEventListener("DOMContentLoaded", async () => {
+  const requireAuthP = requireAuth("/login/"); // start równolegle z initI18n
+  await initI18n({ withSwitcher: true });
+  document.documentElement.classList.remove('page-loading');
+
+  const u = await requireAuthP;
+  initTopbarAccountDropdown(u);
+  document.querySelector('.topbar')?.classList.add('topbar-ready');
+
+  if (btnBack) {
+    btnBack.innerHTML = iconText("arrow-left", getRetPathnameLower().endsWith("/polls-hub/") ? t("polls.backToHub") : t("polls.backToGames"));
+  }
+
+  btnManual?.addEventListener("click", () => {
+    location.href = buildManualUrl();
+  });
+
+  btnBack?.addEventListener("click", async () => {
+    if (uiTextCloseOpen) {
+      const ok = await confirmModal({
+        title: t("polls.textClose.leaveCheckTitle"),
+        text: t("polls.textClose.leaveCheckText"),
+        okText: t("polls.textClose.leaveOk"),
+        cancelText: t("polls.textClose.leaveCancel"),
+      });
+      if (!ok) return;
+      setTextCloseUi(false);
+    }
+    location.href = backTarget;
+  });
+
+  // Guard: jeśli jest otwarty edytor tekstu, potwierdź przed wylogowaniem
+  const btnLogoutMenu = document.getElementById("topbar-account-logout");
+  btnLogoutMenu?.addEventListener("click", async (e) => {
+    if (!uiTextCloseOpen) return;
+
+    e.preventDefault();
+    e.stopImmediatePropagation();
+
+    const ok = await confirmModal({
+      title: t("polls.textClose.leaveCheckTitle"),
+      text: t("polls.textClose.logoutWarn"),
+      okText: t("polls.textClose.logoutOk"),
+      cancelText: t("polls.textClose.leaveCancel"),
+    });
+    if (!ok) return;
+    setTextCloseUi(false);
+
+    btnLogoutMenu.click();
+  }, true); // capture = true, żeby interceptować przed handlerem dropdown
+
+  btnCopy?.addEventListener("click", async () => {
+    if (!pollLinkEl?.value) return;
+    try {
+      await navigator.clipboard.writeText(pollLinkEl.value);
+      setMsg(t("polls.copy.success"));
+    } catch {
+      setMsg(t("polls.copy.failed"));
+    }
+  });
+
+  btnOpen?.addEventListener("click", () => {
+    if (!pollLinkEl?.value) return;
+    window.open(pollLinkEl.value, "_blank", "noopener,noreferrer");
+  });
+
+  btnOpenQr?.addEventListener("click", () => {
+    showPollQrModal();
+  });
+
+  // ⟳ Odśwież (naprawione: zawsze pokazuje loading + błąd w meta)
+  btnRefreshResults?.addEventListener("click", async () => {
+    if (!game || btnRefreshResults.disabled) return;
+
+    try {
+      setResultsMeta(t("polls.results.loading"));
+      await previewResults();
+      setMsg(t("polls.results.refreshed"));
+    } catch (e) {
+      console.warn("[polls] refresh results error:", e);
+      setResultsMeta(t("polls.results.refreshFailed"));
+      await alertModal({ text: `${t("polls.results.refreshFailed")}\n\n${e?.message || e}` });
+    }
+  });
+
+  btnPollAction?.addEventListener("click", async () => {
+    if (!game) return;
+    const st = game.status || STATUS.DRAFT;
+
+    // OPEN
+    if (st === STATUS.DRAFT) {
+      const chk = await validateCanOpen(game);
+      if (!chk.ok) return setMsg(chk.reason);
+
+      const ok = await confirmModal({
+        title: t("polls.modals.open.title"),
+        text: t("polls.modals.open.text", { name: game.name }),
+        okText: t("polls.modals.open.ok"),
+        cancelText: t("polls.modals.open.cancel"),
+      });
+      if (!ok) return;
+
+      try {
+        const { error } = await sb().rpc("poll_open", { p_game_id: gameId, p_key: game.share_key_poll });
+        if (error) throw error;
+        setMsg(t("polls.status.opened"));
+        await refresh();
+      } catch (e) {
+        console.error("[polls] open error:", e);
+        await alertModal({ text: `${t("polls.errors.open")}\n\n${e?.message || e}` });
+      }
+      return;
+    }
+
+    // CLOSE
+    if (st === STATUS.POLL_OPEN) {
+      const chk = await validateCanClose(game);
+      if (!chk.ok) return setMsg(chk.reason);
+
+      if (game.type === TYPES.POLL_POINTS) {
+        const ok = await confirmModal({
+          title: t("polls.modals.closePoints.title"),
+          text: t("polls.modals.closePoints.text"),
+          okText: t("polls.modals.closePoints.ok"),
+          cancelText: t("polls.modals.closePoints.cancel"),
+        });
+        if (!ok) return;
+
+        try {
+          const { error } = await sb().rpc("poll_points_close_and_normalize", {
+            p_game_id: gameId,
+            p_key: game.share_key_poll,
+          });
+          if (error) throw error;
+
+          await applyPollPointsUniqueFixedPoints();
+
+          setMsg(t("polls.status.closedPoints"));
+          await refresh();
+        } catch (e) {
+          console.error("[polls] close points error:", e);
+          await alertModal({ text: `${t("polls.errors.close")}\n\n${gameRuleErrorMessage(e) || e?.message || e}` });
+        }
+        return;
+      }
+
+      // poll_text: otwórz panel merge/delete
+      try {
+        textCloseModel = await buildTextClosePanel();
+        setMsg(t("polls.textClose.editHint"));
+      } catch (e) {
+        console.error("[polls] build text close:", e);
+        await alertModal({ text: `${t("polls.errors.loadAnswers")}\n\n${e?.message || e}` });
+      }
+      return;
+    }
+
+    // REOPEN
+    if (st === STATUS.READY) {
+      const chk = await validateCanReopen(game);
+      if (!chk.ok) return setMsg(chk.reason);
+
+      const ok = await confirmModal({
+        title: t("polls.modals.reopen.title"),
+        text: t("polls.modals.reopen.text"),
+        okText: t("polls.modals.reopen.ok"),
+        cancelText: t("polls.modals.reopen.cancel"),
+      });
+      if (!ok) return;
+
+      try {
+        const { error } = await sb().rpc("poll_open", { p_game_id: gameId, p_key: game.share_key_poll });
+        if (error) throw error;
+
+        setMsg(t("polls.status.reopened"));
+        await refresh();
+      } catch (e) {
+        console.error("[polls] reopen error:", e);
+        await alertModal({ text: `${t("polls.errors.reopen")}\n\n${e?.message || e}` });
+      }
+      return;
+    }
+  });
+
+  btnCancelTextClose?.addEventListener("click", () => {
+    setTextCloseUi(false);
+    setMsg(t("polls.textClose.cancelled"));
+    void refresh();
+  });
+
+  btnCancelTextCloseTop?.addEventListener("click", () => {
+    setTextCloseUi(false);
+    setMsg(t("polls.textClose.cancelled"));
+    void refresh();
+  });
+
+  btnUndo?.addEventListener("click", undoAction);
+  btnRedo?.addEventListener("click", redoAction);
+
+  // Globalne skróty klawiszowe (tylko w trybie zamykania)
+  document.addEventListener("keydown", (e) => {
+    if (!uiTextCloseOpen) return;
+
+    const isZ = e.key.toLowerCase() === "z";
+    const isY = e.key.toLowerCase() === "y";
+    const ctrl = e.ctrlKey || e.metaKey;
+    const shift = e.shiftKey;
+
+    if (ctrl && isZ) {
+      e.preventDefault();
+      if (shift) redoAction();
+      else undoAction();
+    } else if (ctrl && isY) {
+      e.preventDefault();
+      redoAction();
+    }
+  });
+
+  btnFinishTextClose?.addEventListener("click", async () => {
+    if (!game || game.type !== TYPES.POLL_TEXT) return;
+    if (!textCloseModel) return;
+
+    btnFinishTextClose.disabled = true;
+    btnCancelTextClose.disabled = true;
+    if (btnCancelTextCloseTop) btnCancelTextCloseTop.disabled = true;
+
+    try {
+      const payloadItems = [];
+
+      for (const q of textCloseModel) {
+        const cleaned = q.items
+          .map((x) => ({ text: clip17Final(x.text), count: Number(x.count) || 0 }))
+          .filter((x) => x.text && x.count > 0);
+
+        const final = normalizeTo100Int(cleaned)
+          .map((x) => ({ text: clip17Final(x.text), points: Number(x.points) || 0 }))
+          .filter((x) => x.text);
+
+        if (final.length < 3) {
+          throw new Error(t("polls.textClose.minAnswers", { ord: q.ord }));
+        }
+
+        payloadItems.push({ question_id: q.question_id, answers: final });
+      }
+
+      const ok = await confirmModal({
+        title: t("polls.modals.closeText.title"),
+        text: t("polls.modals.closeText.text"),
+        okText: t("polls.modals.closeText.ok"),
+        cancelText: t("polls.modals.closeText.cancel"),
+      });
+      if (!ok) return;
+
+      const { error } = await sb().rpc("poll_text_close_apply", {
+        p_game_id: gameId,
+        p_key: game.share_key_poll,
+        p_payload: { items: payloadItems },
+      });
+      if (error) throw error;
+
+      setMsg(t("polls.status.closed"));
+      setTextCloseUi(false);
+      resetPreviewDomCache();
+      await refresh();
+    } catch (e) {
+      console.error("[polls] close text error:", e);
+      await alertModal({ text: `${t("polls.errors.close")}\n\n${gameRuleErrorMessage(e) || e?.message || e}` });
+    } finally {
+      btnFinishTextClose.disabled = false;
+      btnCancelTextClose.disabled = false;
+      if (btnCancelTextCloseTop) btnCancelTextCloseTop.disabled = false;
+    }
+  });
+
+  // resourceType: "game" — dołącza do już istniejącego wspólnego klucza
+  // z editor.js/game-settings.js (patrz komentarz w editor.js przy tym
+  // samym wywołaniu): zamykanie ankiety zapisuje znormalizowane punkty do
+  // answers.fixed_points, więc otwarcie ankiety wyklucza edytor/ustawienia
+  // tej samej gry i odwrotnie, nie tylko drugą kartę tej samej strony.
+  if (gameId) {
+    const lock = await guardResourceLock({
+      resourceType: "game",
+      resourceId: gameId,
+      context: "polls",
+      message: t("resourceLock.gameMessage"),
+      backHref: backTarget,
+    });
+    if (!lock.ok) return;
+  }
+
+  await refresh();
+});

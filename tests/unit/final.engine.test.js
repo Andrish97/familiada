@@ -4,10 +4,10 @@
 
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { createEngine } from "../../control2/js/engine.js";
+import { createEngine } from "../../web/control2/js/engine.js";
 import { createFakeStore } from "./helpers/fakeStore.js";
-import { DEFAULT_SETTINGS } from "../../shared/gameStateShape.js";
-import { resolveFinalEndScreen } from "../../shared/endScreen.js";
+import { DEFAULT_SETTINGS } from "../../web/shared/js/gameplay/gameStateShape.js";
+import { resolveFinalEndScreen } from "../../web/shared/js/gameplay/endScreen.js";
 
 const FAKE_PICKED_IDS = ["q1", "q2", "q3", "q4", "q5"];
 const FAKE_QUESTIONS = FAKE_PICKED_IDS.map((id, i) => ({ id, ord: i + 1, text: `Pytanie finałowe ${i + 1}` }));
@@ -247,14 +247,22 @@ test("mapowanie: MATCH zostaje dwuetapowe -- REVEAL_ANSWER_ONLY samo nie odsłan
   assert.equal(store.commits.at(-1).soundCueKey, "reveal");
 });
 
-test("wcześniejsze wyjście: osiągnięcie finalTarget w trakcie rundy 1 przeskakuje od razu do f_end", async () => {
+test("osiągnięcie celu w rundzie 1 blokuje akcje i czeka na ręczne zakończenie finału", async () => {
   const { store, dispatch } = makeEngine({ finalTarget: 50 });
   await dispatch({ type: "START_FINAL" });
   await dispatch({ type: "START_MAPPING", round: 1 });
   const result = await matchAnswer(dispatch, 1, 0, 60); // 60 >= 50
   assert.ok(result); // commit zwrócony, nie null
-  assert.equal(store.state.step, "f_end");
+  assert.equal(store.state.step, "f_p1_map_q1");
   assert.equal(store.state.final.runtime.reached200, true);
+  assert.equal(store.commits.at(-1).soundCueKey, "answer_correct");
+  const commitsBefore = store.commits.length;
+  assert.equal(await dispatch({ type: "SET_ENTRY_TEXT", round: 1, idx: 1, text: "spóźniona akcja" }), null);
+  assert.equal(await dispatch({ type: "REVEAL_POINTS", round: 1, idx: 1 }), null);
+  assert.equal(store.commits.length, commitsBefore);
+  await dispatch({ type: "NEXT_QUESTION", round: 1, idx: 1 });
+  assert.equal(store.state.step, "f_end");
+  assert.equal(store.commits.at(-1).soundCueKey, "round_transition");
 });
 
 test("po f_p1_map_q5 bez wcześniejszego wyjścia -> f_p2_start (round_transition), START_P2_ROUND NIE odsłania Hosta", async () => {
@@ -273,7 +281,7 @@ test("po f_p1_map_q5 bez wcześniejszego wyjścia -> f_p2_start (round_transitio
   assert.equal(store.state.host.covered, true, "pasmo 2 u Hosta zostaje zasłonięte przez cały finał — jedyny podgląd to lokalny peek");
 });
 
-test("po f_p2_map_q5 bez wcześniejszego wyjścia -> f_end", async () => {
+test("ostatnia odpowiedź gracza 2 czeka na ręczne zakończenie finału poniżej celu", async () => {
   const { store, dispatch } = makeEngine({ finalTarget: 999 });
   await dispatch({ type: "START_FINAL" });
   await dispatch({ type: "START_MAPPING", round: 1 });
@@ -288,9 +296,35 @@ test("po f_p2_map_q5 bez wcześniejszego wyjścia -> f_end", async () => {
   for (let i = 0; i < 5; i++) {
     await dispatch({ type: "RESOLVE_MAPPING", round: 2, idx: i, mode: "MANUAL", kind: "SKIP" });
     await dispatch({ type: "REVEAL_ANSWER_ONLY", round: 2, idx: i });
-    await dispatch({ type: "REVEAL_POINTS", round: 2, idx: i });
-    await dispatch({ type: "NEXT_QUESTION", round: 2, idx: i + 1 });
+    if (i < 4) await dispatch({ type: "NEXT_QUESTION", round: 2, idx: i + 1 });
   }
+  assert.equal(store.state.step, "f_p2_map_q5");
+  assert.equal(store.state.final.runtime.reached200, false);
+  assert.equal(store.commits.at(-1).soundCueKey, "answer_wrong");
+  await dispatch({ type: "NEXT_QUESTION", round: 2, idx: 5 });
+  assert.equal(store.state.step, "f_end");
+});
+
+test("ostatnie trafienie gracza 2 czeka na ręczne zakończenie finału poniżej celu", async () => {
+  const { store, dispatch } = makeEngine({ finalTarget: 999 });
+  await dispatch({ type: "START_FINAL" });
+  await dispatch({ type: "START_MAPPING", round: 1 });
+  for (let i = 0; i < 5; i++) {
+    await dispatch({ type: "RESOLVE_MAPPING", round: 1, idx: i, mode: "MANUAL", kind: "SKIP" });
+    await dispatch({ type: "REVEAL_ANSWER_ONLY", round: 1, idx: i });
+    await dispatch({ type: "NEXT_QUESTION", round: 1, idx: i + 1 });
+  }
+  await dispatch({ type: "START_P2_ROUND" });
+  await dispatch({ type: "START_MAPPING", round: 2 });
+  for (let i = 0; i < 5; i++) {
+    await matchAnswer(dispatch, 2, i, 5);
+    if (i < 4) await dispatch({ type: "NEXT_QUESTION", round: 2, idx: i + 1 });
+  }
+  assert.equal(store.state.step, "f_p2_map_q5");
+  assert.equal(store.state.final.runtime.sum, 25);
+  assert.equal(store.state.final.runtime.reached200, false);
+  assert.equal(store.commits.at(-1).soundCueKey, "answer_correct");
+  await dispatch({ type: "NEXT_QUESTION", round: 2, idx: 5 });
   assert.equal(store.state.step, "f_end");
 });
 

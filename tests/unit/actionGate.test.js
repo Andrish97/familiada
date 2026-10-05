@@ -3,14 +3,14 @@
 // armRevealCooldown()/armBoardTransition() rozsianych po ui.js. getSfxDuration
 // jest tu atrapą (sekundy, nie ms) — sam moduł nie dotyka window/Audio.
 //
-// Formuły korzystają z shared/transitionTiming.js — TEGO SAMEGO modułu,
+// Formuły korzystają z web/shared/js/gameplay/transitionTiming.js — TEGO SAMEGO modułu,
 // którego display2/js/render.js używa do liczenia czasu animacji, więc
 // gate tutaj z definicji zgadza się z tym, co faktycznie maluje Display
 // (zgłoszone: "Animacja... zawsze = dźwięki" — zero osobno dobranych liczb).
 
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { createActionGate } from "../../control2/js/actionGate.js";
+import { createActionGate } from "../../web/control2/js/actionGate.js";
 
 function row(overrides = {}) {
   return { sound_cue_key: null, sound_cue_seq: 0, ...overrides };
@@ -79,12 +79,12 @@ test("START_P2_ROUND: round_transition dłuższy niż reveal", async () => {
   assert.equal(ms, 2200);
 });
 
-test("GAME_END_SHOW: blocks through show_intro and reveal", async () => {
-  const gate = makeGate({ show_intro: 0.4, reveal: 0.2 });
+test("GAME_END_SHOW: reveal and outro start together, without repeating round transition", async () => {
+  const gate = makeGate({ round_transition: 0.4, reveal: 0.2, show_outro: 60 });
   const prev = row({ sound_cue_seq: 0 });
   const next = row({ sound_cue_key: "show_intro", sound_cue_seq: 1 });
   const ms = await gate.computeGateMs("GAME_END_SHOW", prev, next);
-  assert.equal(ms, 400);
+  assert.equal(ms, 60000);
 });
 
 test("START_ROUND: synced combo round_transition+reveal, gate = max(obu) — ta sama liczba co animacja planszy na Displayu", async () => {
@@ -155,14 +155,14 @@ test("START_FINAL: gate to SUMA final_theme+reveal — żadna kolejna akcja nie 
   assert.equal(ms, 1600 + 9000);
 });
 
-test("FINISH_FINAL: outro show_intro+reveal; round-end sound already played", async () => {
-  const gate = makeGate({ round_transition: 0.5, reveal: 0.3, show_intro: 1.2 });
+test("FINISH_FINAL: allows a two-minute outro after the board transition", async () => {
+  const gate = makeGate({ round_transition: 0.5, reveal: 0.3, show_outro: 120 });
   const next = row({ sound_cue_key: "final_end", sound_cue_seq: 1 });
   const ms = await gate.computeGateMs("FINISH_FINAL", row(), next);
-  assert.equal(ms, 1200);
+  assert.equal(ms, 120000);
 });
 
 test("Reaching final target waits for the scoring sound and then round-end sound", async () => {
-  const gate = makeGate({ answer_correct: 0.4, round_transition: 1.2 });
+  const gate = makeGate({ answer_correct: 0.4, round_transition: 1.2, reveal: 0.8 });
   assert.equal(await gate.computeGateMs("REVEAL_POINTS", row({ step: "f_p1_map_q1" }), row({ step: "f_end", sound_cue_key: "answer_correct", sound_cue_seq: 1 })), 1600);
 });

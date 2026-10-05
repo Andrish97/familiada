@@ -63,7 +63,7 @@ function evalTranslationModule(code: string): Record<string, unknown> {
 }
 
 async function fetchDict(lang: EmailLang): Promise<Record<string, unknown>> {
-  const url = `${translationsOrigin()}/translation/${lang}.js?t=${Date.now()}`;
+  const url = `${translationsOrigin()}/shared/translation/${lang}.js?t=${Date.now()}`;
   const res = await fetch(url, {
     headers: { accept: "text/javascript, application/javascript, */*" },
     signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),

@@ -1,0 +1,1280 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
+  <meta name="app-version" content="v2026-10-05T10242"/>
+
+  <meta charset="utf-8" />
+  <meta name="robots" content="noindex, nofollow"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Kora — builder 3×10 z kafelków 5×7</title>
+  <style>
+    :root{
+      --bg:#0f1115; --fg:#e8e8e8; --muted:#a7a7a7;
+      --card:#171a21; --border:#24283a;
+      --btn:#121521; --btnb:#2a2f44;
+      --accent:#7aa2ff; --danger:#ff6b6b;
+
+      --dot:6px; --dot-gap:2px;
+      --tile-gap:2px;      /* przerwa 2px między kafelkami */
+      --sep:#2a2f44;       /* kolor przerwy */
+      --tile-bg:#0b0d14;
+
+      --left:380px;
+      --gap:12px;
+    }
+
+    html,body{height:100%;margin:0}
+    body{
+      background:var(--bg); color:var(--fg);
+      font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+      overflow:hidden; /* bez scrolla strony */
+    }
+
+    header{
+      padding:12px 14px;
+      border-bottom:1px solid var(--border);
+      display:flex; gap:10px; align-items:center; justify-content:space-between;
+      box-sizing:border-box;
+    }
+
+    .row{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+    .hint{color:var(--muted); font-size:12px; line-height:1.35}
+
+    .btn{
+      appearance:none; border:1px solid var(--btnb); background:var(--btn);
+      color:var(--fg); padding:8px 10px; border-radius:10px;
+      cursor:pointer; font-weight:750;
+    }
+    .btn:hover{border-color:#3a4261}
+    .btn:active{transform:translateY(1px)}
+    .btn.primary{border-color:#3553a8;background:#15224b}
+    .btn.danger{border-color:#6a2a2a;background:#2a1212;color:#ffd7d7}
+
+    input[type="file"]{color:var(--muted)}
+    input[type="text"]{
+      background:#0f1220; border:1px solid var(--btnb); color:var(--fg);
+      border-radius:10px; padding:8px 10px; font-weight:750;
+      width:160px; box-sizing:border-box;
+    }
+
+    .layout{
+      height: calc(100vh - 0px);
+      display:grid;
+      grid-template-columns: var(--left) 1fr;
+      gap: var(--gap);
+      padding: 12px;
+      box-sizing:border-box;
+      min-height:0;
+    }
+
+    .card{
+      background:linear-gradient(180deg,var(--card),#131722);
+      border:1px solid var(--border);
+      border-radius:16px;
+      padding:12px;
+      box-sizing:border-box;
+      min-height:0; /* ważne dla scrolli wewnątrz */
+      display:flex;
+      flex-direction:column;
+    }
+
+    .card h2{
+      margin:0 0 10px;
+      font-size:14px;
+      letter-spacing:.3px;
+      color:#cfd6ff;
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      flex: 0 0 auto;
+    }
+
+    svg.ico{ width:1.15em; height:1.15em; vertical-align:-0.2em; flex-shrink:0; }
+
+    .pill{
+      font-size:12px; color:#cfd6ff;
+      border:1px solid var(--btnb);
+      background:#0c0e16;
+      padding:6px 8px;
+      border-radius:999px;
+      display:inline-flex;
+      gap:6px;
+      align-items:center;
+      white-space:nowrap;
+    }
+
+    /* ===== LEWA: paleta (scroll) ===== */
+    .leftCardTop{
+      flex: 0 0 auto;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      margin-bottom:10px;
+    }
+
+    .paletteScroll{
+      flex: 1 1 auto;
+      min-height:0;
+      overflow:auto;
+      padding-right:6px;
+    }
+
+    .palette{
+      display:grid;
+      grid-template-columns: repeat(auto-fill, minmax(92px, 1fr));
+      gap:10px;
+    }
+
+    .palItem{
+      border:1px solid var(--btnb);
+      background:#0c0e16;
+      border-radius:14px;
+      padding:8px;
+      cursor:pointer;
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      align-items:center;
+      justify-content:center;
+      user-select:none;
+      box-sizing:border-box;
+      position:relative;
+    }
+    .palItem:hover{border-color:#3a4261}
+    .palItem.selected{
+      border-color:#3553a8;
+      box-shadow:0 0 0 1px rgba(122,162,255,.25);
+    }
+
+    .star{
+      position:absolute;
+      top:6px; right:6px;
+      width:26px; height:26px;
+      border-radius:10px;
+      border:1px solid var(--btnb);
+      background:#0b0d14;
+      display:flex; align-items:center; justify-content:center;
+      font-size:14px;
+      opacity:.95;
+    }
+    .star.on{ border-color:#6b5a1a; background:#1d1a0b; color:#ffd87a; }
+    .star:active{ transform:translateY(1px); }
+
+    .k{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-weight:900;
+      color:#cfd6ff;
+    }
+
+    .glyph57{
+      display:grid;
+      grid-template-columns:repeat(5,var(--dot));
+      grid-template-rows:repeat(7,var(--dot));
+      gap:var(--dot-gap);
+      padding:8px;
+      border-radius:12px;
+      border:1px solid var(--btnb);
+      background:#0c0e16;
+      box-sizing:border-box;
+    }
+    .dot{width:var(--dot);height:var(--dot);border-radius:999px;background:#1f2333}
+    .dot.on{
+      background:#e9edff;
+      box-shadow:0 0 0 1px rgba(233,237,255,.05), 0 0 10px rgba(122,162,255,.08);
+    }
+
+    /* ===== PRAWA: układ pionowy, każdy blok scrolluje ===== */
+    .rightStack{
+      flex: 1 1 auto;
+      min-height:0;
+      display:grid;
+      grid-template-rows: auto 1fr;
+      gap: var(--gap);
+    }
+
+    .topTools{
+      flex:0 0 auto;
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      align-items:center;
+      justify-content:space-between;
+    }
+
+    .boardSection{
+      flex:1 1 auto;
+      min-height:0;
+      display:grid;
+      grid-template-columns: 1fr 300px;
+      gap: var(--gap);
+    }
+
+    /* Plansza - ma własny scroll */
+    .boardViewport{
+      border:1px solid var(--border);
+      border-radius:16px;
+      background:#0a0c13;
+      padding:10px;
+      box-sizing:border-box;
+      min-height:0;
+      overflow:auto; /* scroll */
+      position:relative;
+    }
+
+    /* Wewnętrzny kontener skalowany (transform) */
+    .boardScale{
+      transform-origin: top left;
+      display:inline-block;
+    }
+
+    /* Jedna plansza “łączna”: tło separatora + gap = 2px */
+    .board{
+      display:grid;
+      grid-template-columns:repeat(3, max-content);
+      gap:var(--tile-gap);
+      background:var(--sep);
+      padding:var(--tile-gap);
+      border-radius:16px;
+      box-sizing:border-box;
+      overflow:hidden;
+      align-content:start;
+      justify-content:start;
+    }
+
+    .tile{
+      background:var(--tile-bg);
+      border-radius:10px;
+      padding:6px;
+      box-sizing:border-box;
+      cursor:pointer;
+      user-select:none;
+      overflow:hidden;
+
+      display:grid;
+      grid-template-columns:repeat(5,var(--dot));
+      grid-template-rows:repeat(7,var(--dot));
+      gap:var(--dot-gap);
+      align-content:start;
+      justify-content:start;
+    }
+
+    /* Panel boczny: struktura, lista symboli, eksport — każdy scroll */
+    .sideStack{
+      min-height:0;
+      display:grid;
+      grid-template-rows: 1fr 1.2fr 1fr;
+      gap: var(--gap);
+    }
+
+    .panel{
+      border:1px solid var(--border);
+      border-radius:16px;
+      padding:10px;
+      background:#0a0c13;
+      box-sizing:border-box;
+      min-height:0;
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+    }
+    .panel .title{
+      font-size:13px;
+      color:#cfd6ff;
+      font-weight:800;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      flex:0 0 auto;
+    }
+    .panel .scroll{
+      flex:1 1 auto;
+      min-height:0;
+      overflow:auto;
+      border:1px solid var(--btnb);
+      border-radius:14px;
+      background:#070912;
+      padding:10px;
+      box-sizing:border-box;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-size:12px;
+      line-height:1.35;
+      white-space:pre;
+      color:#d7ddff;
+    }
+
+    .symList{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      white-space:normal;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    }
+    .symRow{
+      display:flex;
+      gap:8px;
+      align-items:center;
+      justify-content:space-between;
+      padding:8px 10px;
+      border:1px solid var(--btnb);
+      border-radius:12px;
+      background:#0c0e16;
+      cursor:pointer;
+      user-select:none;
+    }
+    .symRow:hover{ border-color:#3a4261; }
+    .symRow.active{
+      border-color:#3553a8;
+      box-shadow:0 0 0 1px rgba(122,162,255,.25);
+    }
+    .symName{
+      font-weight:900;
+      color:#cfd6ff;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    }
+    .symMeta{
+      color:var(--muted);
+      font-size:12px;
+    }
+
+    .smallTools{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      align-items:center;
+    }
+
+    .dangerText{ color: #ffd7d7; }
+
+    @media (max-width: 1200px){
+      body{overflow:auto}
+      .layout{height:auto; grid-template-columns:1fr}
+      .boardSection{grid-template-columns:1fr}
+      .sideStack{grid-template-rows:auto auto auto}
+      .boardViewport{max-height:60vh}
+    }
+
+    /* ===== naprawa: prawy panel i jego wnętrza nie mogą wypychać karty ===== */
+    
+    /* karta prawa ma być pojemnikiem z ograniczeniem wysokości */
+    .card {
+      min-height: 0;
+      overflow: hidden; /* ważne: nic nie ma wyciekać poza kartę */
+    }
+    
+    /* prawa kolumna: ten blok MUSI się kurczyć */
+    .rightStack{
+      min-height: 0;
+      height: 100%;
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr); /* auto na nagłówek, reszta się skaluje */
+      gap: var(--gap);
+    }
+    
+    /* sekcja z planszą + panelami: też musi się kurczyć */
+    .boardSection{
+      min-height: 0;
+      height: 100%;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 300px; /* lewa kolumna może się kurczyć */
+      gap: var(--gap);
+    }
+    
+    /* plansza (viewport) — przewijana i ograniczona */
+    .boardViewport{
+      min-height: 0;
+      height: 100%;
+      overflow: auto;
+    }
+    
+    /* prawa kolumna z 3 panelami: każdy panel ma dostać ułamek wysokości */
+    .sideStack{
+      min-height: 0;
+      height: 100%;
+      display: grid;
+      grid-template-rows: minmax(0, 1fr) minmax(0, 1.2fr) minmax(0, 1fr);
+      gap: var(--gap);
+    }
+    
+    /* panel musi pozwolić scrollowi działać wewnątrz */
+    .panel{
+      min-height: 0;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    /* a to jest realnie scrollujące pole */
+    .panel .scroll{
+      min-height: 0;
+      overflow: auto;
+    }
+    /* ====== FIX: layout ma się mieścić POD headerem bez zgadywania wysokości ====== */
+    html, body { height: 100%; }
+    
+    body{
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+    
+    /* header jest stałą częścią, niech się nie kurczy */
+    header{
+      flex: 0 0 auto;
+    }
+    
+    /* layout zajmuje resztę wysokości okna */
+    .layout{
+      flex: 1 1 auto;
+      min-height: 0;      /* KLUCZ: pozwala potomkom się kurczyć */
+      height: auto;       /* usuwa złe założenia typu 100vh */
+      overflow: hidden;   /* nic nie ma wypływać poza layout */
+    }
+    
+    /* prawa karta i jej wnętrza muszą się kurczyć */
+    .card{
+      min-height: 0;
+      overflow: hidden;
+    }
+    
+    /* prawa karta ma mieć 100% wysokości dostępnej w kolumnie */
+    .card:last-child{ height: 100%; }
+    
+    /* w prawym panelu: auto + reszta jako minmax(0,1fr) */
+    .rightStack{
+      min-height: 0;
+      height: 100%;
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr);
+      gap: var(--gap);
+    }
+    
+    /* plansza + panele: MUSI mieć min-height 0 */
+    .boardSection{
+      min-height: 0;
+      height: 100%;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 300px;
+      gap: var(--gap);
+    }
+    
+    /* viewport planszy ma własny scroll i ograniczenie wysokości */
+    .boardViewport{
+      min-height: 0;
+      height: 100%;
+      overflow: auto;
+    }
+    
+    /* prawa kolumna z panelami: każdy panel dostaje część wysokości */
+    .sideStack{
+      min-height: 0;
+      height: 100%;
+      display: grid;
+      grid-template-rows: minmax(0, 1fr) minmax(0, 1.2fr) minmax(0, 1fr);
+      gap: var(--gap);
+    }
+    
+    /* panele szare: MUSZĄ mieć overflow hidden + min-height 0 */
+    .panel{
+      min-height: 0;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    /* scrollowane wnętrze panelu: MUSI mieć min-height 0 */
+    .panel .scroll{
+      min-height: 0;
+      overflow: auto;
+    }
+    
+    /* dolny hint w prawym panelu nie może wypychać */
+    .rightStack > .hint{
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .fileBtn{
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 10px;
+      border: 1px solid #2a2f44;
+      background: #121521;
+      color: var(--fg);
+      font-weight: 700;
+      cursor: pointer;
+      user-select: none;
+    }
+    
+    .fileBtn:hover{
+      border-color: #3a4261;
+    }
+    
+    .fileBtn:active{
+      transform: translateY(1px);
+    }
+    
+    .fileBtn input{
+      display: none;
+    }
+  </style>
+</head>
+
+<body>
+<header>
+  <div class="row">
+    <label class="fileBtn">
+      Wybierz plik fontu 5×7
+      <input id="fontFile" type="file" accept=".json,application/json" hidden />
+    </label>
+    <label class="fileBtn">
+      Wczytaj plik 3x10 do edycji
+      <input id="bigFile" type="file" accept=".json,application/json" hidden />
+    </label>
+    <span id="status" class="hint">Brak fontu 5×7 — wczytaj JSON.</span>
+  </div>
+
+  <div class="row">
+    <span class="hint">Pędzel:</span>
+    <span id="brushChar" class="btn" style="cursor:default;">(brak)</span>
+    <button id="eraseBrush" class="btn danger">Gumka</button>
+    <button id="clearGrid" class="btn danger">Wyczyść</button>
+  </div>
+</header>
+
+<div class="layout">
+  <!-- LEWA: Paleta -->
+  <section class="card">
+    <h2>Paleta pędzli 5×7</h2>
+
+    <div class="leftCardTop">
+      <input id="filterInput" type="text" placeholder="Filtr (np. █, →)" style="width:100%;" />
+      <div class="row">
+        <span class="pill">Alt+klik na planszy = pipeta</span>
+        <span class="pill">Ctrl/Alt + kółko = zoom planszy</span>
+        <span class="pill"><i class="ico" data-icon="star"></i> = ulubione</span>
+      </div>
+      <div class="hint">Paleta ma własny scroll. Gumka to tryb (nie gubi pędzla).</div>
+    </div>
+
+    <div class="paletteScroll">
+      <div style="margin:0 0 10px; color:#cfd6ff; font-weight:900;">Ulubione</div>
+      <div id="favPalette" class="palette" style="margin-bottom:14px;"></div>
+
+      <div style="margin:0 0 10px; color:#cfd6ff; font-weight:900;">Wszystkie</div>
+      <div id="palette" class="palette"></div>
+    </div>
+  </section>
+
+  <!-- PRAWA: plansza + panele -->
+  <section class="card">
+    <div class="topTools">
+      <div>
+        <h2 style="margin:0;">Plansza 3×10 (edycja = podgląd)</h2>
+        <div class="hint">
+          LPM: wstaw/kasuj (gumka). PPM: zawsze kasuje. Alt+LPM: pipeta. Zoom: Ctrl/Alt + kółko.
+        </div>
+      </div>
+
+      <div class="row">
+        <button id="zoomOut" class="btn" aria-label="Pomniejsz"><i class="ico" data-icon="zoom-out"></i></button>
+        <button id="zoomReset" class="btn">100%</button>
+        <button id="zoomIn" class="btn" aria-label="Powiększ"><i class="ico" data-icon="zoom-in"></i></button>
+      </div>
+    </div>
+
+    <div class="rightStack">
+      <div class="boardSection">
+        <!-- Plansza z własnym scrollem + zoom -->
+        <div id="boardViewport" class="boardViewport">
+          <div id="boardScale" class="boardScale">
+            <div id="board" class="board" aria-label="Plansza 3x10"></div>
+          </div>
+        </div>
+
+        <!-- Panele boczne, każdy ma własny scroll -->
+        <div class="sideStack">
+          <!-- Struktura -->
+          <div class="panel">
+            <div class="title">
+              <span>Struktura 10×3</span>
+              <span class="hint">spacje = ·</span>
+            </div>
+            <div id="structBox" class="scroll">···
+···
+···
+···
+···
+···
+···
+···
+···
+···</div>
+          </div>
+
+          <!-- Lista symboli 3x10 -->
+          <div class="panel">
+            <div class="title">
+              <span>Symbole 3×10</span>
+              <span id="symCount" class="hint">0</span>
+            </div>
+
+            <div class="smallTools">
+              <input id="symbolInput" type="text" maxlength="2" placeholder="np. A" />
+              <button id="newSymbol" class="btn primary" disabled>Nowy</button>
+              <button id="saveSymbol" class="btn primary" disabled>Zapisz</button>
+              <button id="copySymbol" class="btn" disabled>Kopiuj</button>
+              <button id="deleteSymbol" class="btn danger" disabled>Usuń</button>
+            </div>
+
+            <div id="symList" class="scroll" style="white-space:normal; padding:10px;">
+              <div class="hint">Wczytaj JSON 3×10 albo zacznij od „Nowy”.</div>
+            </div>
+
+            <div class="hint">
+              Klik na symbol: wczytaj do planszy. Sortowanie listy: unicode.
+            </div>
+          </div>
+
+          <!-- Eksport -->
+          <div class="panel">
+            <div class="title">
+              <span>Eksport JSON</span>
+              <span class="hint">unicode</span>
+            </div>
+
+            <div class="smallTools">
+              <button id="exportBtn" class="btn" disabled>Pobierz JSON</button>
+            </div>
+
+            <div id="exportBox" class="scroll">(eksport pojawi się po zapisaniu symboli)</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="hint">
+        Tip: wczytaj font 5×7 → wybierz pędzel → edytuj planszę → „Zapisz”. Możesz wczytać istniejący JSON 3×10 i dopisywać.
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+/* ====== Stałe ====== */
+const GRID_W = 3;
+const GRID_H = 10;
+
+/* ====== Stan ====== */
+let font57 = null;
+let glyphMap = null;            // Map<char, [7 numbers]>
+let glyphOrder = [];            // wszystkie glify 1-znakowe, unicode sort
+let favorites = new Set();
+
+let grid = makeEmptyGrid();
+
+let brush = " ";
+let lastBrush = "█";
+let eraseMode = false;
+
+let savedBig = {};              // symbol -> [10 strings po 3]
+let currentSymbol = null;       // aktualnie edytowany symbol (klucz w savedBig) lub null
+let boardScale = 1.0;
+
+/* ====== DOM ====== */
+const statusEl = document.getElementById("status");
+const brushCharEl = document.getElementById("brushChar");
+const eraseBtn = document.getElementById("eraseBrush");
+
+const filterInput = document.getElementById("filterInput");
+const paletteEl = document.getElementById("palette");
+const favPaletteEl = document.getElementById("favPalette");
+
+const boardViewport = document.getElementById("boardViewport");
+const boardScaleEl = document.getElementById("boardScale");
+const boardEl = document.getElementById("board");
+
+const structBox = document.getElementById("structBox");
+
+const symbolInput = document.getElementById("symbolInput");
+const newBtn = document.getElementById("newSymbol");
+const saveBtn = document.getElementById("saveSymbol");
+const copyBtn = document.getElementById("copySymbol");
+const delBtn = document.getElementById("deleteSymbol");
+const symListEl = document.getElementById("symList");
+const symCountEl = document.getElementById("symCount");
+
+const exportBtn = document.getElementById("exportBtn");
+const exportBox = document.getElementById("exportBox");
+
+const zoomOutBtn = document.getElementById("zoomOut");
+const zoomResetBtn = document.getElementById("zoomReset");
+const zoomInBtn = document.getElementById("zoomIn");
+
+/* ====== Utils ====== */
+function makeEmptyGrid(){
+  return Array.from({length: GRID_H}, () => Array.from({length: GRID_W}, () => " "));
+}
+function gridToRows(g){ return g.map(r => r.join("")); }
+function rowsToGrid(rows){
+  const g = makeEmptyGrid();
+  for (let y=0; y<GRID_H; y++){
+    const r = (rows?.[y] ?? "   ");
+    for (let x=0; x<GRID_W; x++){
+      g[y][x] = (r[x] ?? " ");
+    }
+  }
+  return g;
+}
+
+function unicodeSort(a,b){
+  const la = Array.from(a);
+  const lb = Array.from(b);
+  const n = Math.min(la.length, lb.length);
+  for (let i=0;i<n;i++){
+    const da = la[i].codePointAt(0);
+    const db = lb[i].codePointAt(0);
+    if (da !== db) return da - db;
+  }
+  if (la.length !== lb.length) return la.length - lb.length;
+  return a.localeCompare(b, "und");
+}
+
+function clamp(v, a, b){ return Math.max(a, Math.min(b, v)); }
+
+function updateBrushHeader(){
+  if (!glyphMap){
+    brushCharEl.textContent = "(brak)";
+    return;
+  }
+  if (eraseMode){
+    const base = (brush && brush !== " ") ? brush : (lastBrush ?? " ");
+    brushCharEl.textContent = base === " " ? "(gumka)" : `${base} (gumka)`;
+  } else {
+    const base = (brush && brush !== " ") ? brush : (lastBrush ?? " ");
+    brushCharEl.textContent = base === " " ? "(spacja)" : base;
+  }
+}
+
+function updateEraserUI(){
+  eraseBtn.classList.toggle("primary", eraseMode);
+  eraseBtn.classList.toggle("danger", !eraseMode);
+  updateBrushHeader();
+}
+
+function setBrush(ch){
+  brush = ch;
+  if (ch !== " ") lastBrush = ch;
+  eraseMode = false;
+  updateEraserUI();
+
+  for (const node of document.querySelectorAll(".palItem")){
+    node.classList.toggle("selected", node.dataset.ch === ch);
+  }
+}
+
+function toggleFavorite(ch){
+  if (favorites.has(ch)) favorites.delete(ch);
+  else favorites.add(ch);
+  renderPalettes();
+}
+
+/* ====== Font flatten ====== */
+function buildGlyphMapAnyGroups(font) {
+  const raw = new Map();
+
+  for (const [groupName, group] of Object.entries(font)) {
+    if (groupName === "meta") continue;
+    if (!group || typeof group !== "object") continue;
+
+    for (const [ch, v] of Object.entries(group)) {
+      if (Array.isArray(v) && v.length === 7) raw.set(ch, v.slice());
+    }
+  }
+
+  if (!raw.has(" ")) raw.set(" ", [0,0,0,0,0,0,0]);
+
+  const order = Array.from(raw.keys())
+    .filter(ch => typeof ch === "string" && ch.length === 1)
+    .sort(unicodeSort);
+
+  return { map: raw, order };
+}
+
+/* ====== Render dots ====== */
+function makeDots(rows7, containerEl){
+  for (let y=0; y<7; y++){
+    const bits = rows7?.[y] ?? 0;
+    for (let x=0; x<5; x++){
+      const d = document.createElement("div");
+      d.className = "dot";
+      if (((bits >> (4-x)) & 1) === 1) d.classList.add("on");
+      containerEl.appendChild(d);
+    }
+  }
+}
+
+/* ====== Paleta ====== */
+function makePalItem(ch){
+  const rows7 = glyphMap.get(ch);
+
+  const item = document.createElement("div");
+  item.className = "palItem";
+  item.dataset.ch = ch;
+
+  const star = document.createElement("button");
+  star.type = "button";
+  star.className = "star" + (favorites.has(ch) ? " on" : "");
+  star.innerHTML = `<i class="ico" data-icon="${favorites.has(ch) ? "star" : "star-empty"}"></i>`;
+  star.title = favorites.has(ch) ? "Usuń z ulubionych" : "Dodaj do ulubionych";
+  star.addEventListener("click", (ev)=>{
+    ev.stopPropagation();
+    toggleFavorite(ch);
+  });
+
+  const mini = document.createElement("div");
+  mini.className = "glyph57";
+  makeDots(rows7, mini);
+
+  const k = document.createElement("div");
+  k.className = "k";
+  k.textContent = (ch === " ") ? "␠" : ch;
+
+  item.appendChild(star);
+  item.appendChild(mini);
+  item.appendChild(k);
+
+  item.addEventListener("click", ()=> setBrush(ch));
+  return item;
+}
+
+function renderPalettes(){
+  favPaletteEl.innerHTML = "";
+  paletteEl.innerHTML = "";
+
+  if (!glyphMap){
+    favPaletteEl.innerHTML = `<div class="hint">Wczytaj font 5×7.</div>`;
+    paletteEl.innerHTML = `<div class="hint">Wczytaj font 5×7.</div>`;
+    return;
+  }
+
+  const favList = Array.from(favorites).filter(ch => glyphMap.has(ch)).sort(unicodeSort);
+  if (favList.length === 0){
+    favPaletteEl.innerHTML = `<div class="hint">Brak ulubionych. Kliknij <i class="ico" data-icon="star-empty"></i>.</div>`;
+  } else {
+    for (const ch of favList) favPaletteEl.appendChild(makePalItem(ch));
+  }
+
+  const q = (filterInput.value ?? "").trim();
+  const list = glyphOrder.filter(ch => q ? ch.includes(q) : true);
+
+  for (const ch of list) paletteEl.appendChild(makePalItem(ch));
+
+  // odśwież zaznaczenia
+  setBrush(brush ?? lastBrush ?? " ");
+}
+
+/* ====== Plansza ====== */
+function setScale(next, keepCenter=true){
+  const old = boardScale;
+  boardScale = clamp(next, 0.35, 4.0);
+  boardScaleEl.style.transform = `scale(${boardScale})`;
+
+  // opcjonalnie: zachowaj przybliżony środek widoku
+  if (keepCenter){
+    const vx = boardViewport;
+    const cx = vx.scrollLeft + vx.clientWidth/2;
+    const cy = vx.scrollTop + vx.clientHeight/2;
+    const ratio = boardScale / old;
+
+    vx.scrollLeft = (cx * ratio) - vx.clientWidth/2;
+    vx.scrollTop  = (cy * ratio) - vx.clientHeight/2;
+  }
+
+  zoomResetBtn.textContent = `${Math.round(boardScale*100)}%`;
+}
+
+function renderBoard(){
+  boardEl.innerHTML = "";
+  boardEl.style.gridTemplateColumns = `repeat(${GRID_W}, max-content)`;
+
+  for (let y=0; y<GRID_H; y++){
+    for (let x=0; x<GRID_W; x++){
+      const ch = grid[y][x];
+      const rows7 = glyphMap?.get(ch) ?? glyphMap?.get(" ") ?? [0,0,0,0,0,0,0];
+
+      const tile = document.createElement("div");
+      tile.className = "tile";
+      tile.title = `(${x+1},${y+1}) ${ch === " " ? "spacja" : ch}`;
+
+      makeDots(rows7, tile);
+
+      tile.addEventListener("click", (ev)=>{
+        if (!glyphMap) return;
+
+        // pipeta Alt+klik
+        if (ev.altKey){
+          const picked = grid[y][x];
+          if (picked && picked !== " ") setBrush(picked);
+          return;
+        }
+
+        if (eraseMode){
+          grid[y][x] = " ";
+        } else {
+          const b = (brush && brush !== " ") ? brush : (lastBrush ?? " ");
+          grid[y][x] = b;
+        }
+        renderAll(false);
+      });
+
+      tile.addEventListener("contextmenu", (ev)=>{
+        ev.preventDefault();
+        grid[y][x] = " ";
+        renderAll(false);
+      });
+
+      boardEl.appendChild(tile);
+    }
+  }
+}
+
+function renderStructure(){
+  const rows = gridToRows(grid);
+  structBox.textContent = rows.map(r => r.replace(/ /g, "·")).join("\n");
+}
+
+/* ====== Symbole 3×10: lista, load, new, copy, delete, save ====== */
+function renderSymbolList(){
+  symListEl.innerHTML = "";
+
+  const keys = Object.keys(savedBig).sort(unicodeSort);
+  symCountEl.textContent = String(keys.length);
+
+  if (keys.length === 0){
+    symListEl.innerHTML = `<div class="hint">Brak symboli. Kliknij „Nowy”, wpisz nazwę i „Zapisz”.</div>`;
+    return;
+  }
+
+  const wrap = document.createElement("div");
+  wrap.className = "symList";
+
+  for (const k of keys){
+    const row = document.createElement("div");
+    row.className = "symRow" + (currentSymbol === k ? " active" : "");
+    row.title = "Kliknij, aby wczytać na planszę";
+
+    const left = document.createElement("div");
+    const name = document.createElement("div");
+    name.className = "symName";
+    name.textContent = k;
+    const meta = document.createElement("div");
+    meta.className = "symMeta";
+    meta.textContent = "3×10";
+
+    left.appendChild(name);
+    left.appendChild(meta);
+
+    const right = document.createElement("div");
+    right.className = "symMeta";
+    right.textContent = (k === currentSymbol) ? "edytujesz" : "";
+
+    row.appendChild(left);
+    row.appendChild(right);
+
+    row.addEventListener("click", ()=>{
+      loadSymbolToGrid(k);
+    });
+
+    wrap.appendChild(row);
+  }
+
+  symListEl.appendChild(wrap);
+}
+
+function loadSymbolToGrid(sym){
+  const rows = savedBig[sym];
+  if (!rows) return;
+  grid = rowsToGrid(rows);
+  currentSymbol = sym;
+  symbolInput.value = sym;
+  updateSymbolButtons();
+  renderAll(false);
+}
+
+function updateSymbolButtons(){
+  const hasFont = !!glyphMap;
+  const hasAny = Object.keys(savedBig).length > 0;
+  const hasCurrent = !!currentSymbol && !!savedBig[currentSymbol];
+
+  newBtn.disabled = !hasFont;
+  saveBtn.disabled = !hasFont;
+  exportBtn.disabled = !hasAny;
+
+  copyBtn.disabled = !hasCurrent;
+  delBtn.disabled = !hasCurrent;
+}
+
+function saveCurrentToMap(sym){
+  if (!glyphMap){
+    alert("Najpierw wczytaj font 5×7.");
+    return false;
+  }
+  if (!sym){
+    alert("Wpisz nazwę symbolu (np. A).");
+    return false;
+  }
+  if (sym.length > 2){
+    alert("Symbol max 2 znaki.");
+    return false;
+  }
+
+  // walidacja: każdy znak musi istnieć w foncie
+  for (let y=0; y<GRID_H; y++){
+    for (let x=0; x<GRID_W; x++){
+      const ch = grid[y][x];
+      if (!glyphMap.has(ch)){
+        alert(`W siatce jest znak „${ch}”, którego nie ma w foncie 5×7.`);
+        return false;
+      }
+    }
+  }
+
+  savedBig[sym] = gridToRows(grid);
+  currentSymbol = sym;
+  updateSymbolButtons();
+  renderSymbolList();
+  renderExportPreview();
+  return true;
+}
+
+function newSymbol(){
+  currentSymbol = null;
+  symbolInput.value = "";
+  grid = makeEmptyGrid();
+  updateSymbolButtons();
+  renderAll(false);
+  renderSymbolList();
+}
+
+function copySymbol(){
+  if (!currentSymbol || !savedBig[currentSymbol]) return;
+
+  const base = currentSymbol;
+  const suggested = base.length === 1 ? `${base}2` : `${base}_2`;
+
+  const name = prompt("Nazwa kopii:", suggested);
+  if (name === null) return; // anuluj
+
+  const sym = String(name).trim();
+  if (!sym){ alert("Pusta nazwa."); return; }
+  if (sym.length > 2){ alert("Symbol max 2 znaki."); return; }
+
+  // kopiuj dane bieżącego
+  savedBig[sym] = savedBig[currentSymbol].slice();
+  loadSymbolToGrid(sym);
+  renderSymbolList();
+  renderExportPreview();
+}
+
+function deleteSymbol(){
+  if (!currentSymbol || !savedBig[currentSymbol]) return;
+  const ok = confirm(`Usunąć symbol „${currentSymbol}”?`);
+  if (!ok) return;
+
+  delete savedBig[currentSymbol];
+  currentSymbol = null;
+  symbolInput.value = "";
+  updateSymbolButtons();
+  renderSymbolList();
+  renderExportPreview();
+}
+
+/* ====== Eksport ====== */
+function renderExportPreview(){
+  const keys = Object.keys(savedBig).sort(unicodeSort);
+  if (keys.length === 0){
+    exportBox.textContent = "(eksport pojawi się po zapisaniu symboli)";
+    return;
+  }
+  const out = {};
+  for (const k of keys){
+    // twardy format 10×3
+    const rows = (savedBig[k] ?? []).slice(0, GRID_H).map(r => (r ?? "   ").slice(0, GRID_W).padEnd(GRID_W, " "));
+    while (rows.length < GRID_H) rows.push("   ");
+    out[k] = rows;
+  }
+  exportBox.textContent = JSON.stringify(out, null, 2);
+}
+
+function downloadExport(){
+  const keys = Object.keys(savedBig).sort(unicodeSort);
+  const out = {};
+  for (const k of keys){
+    const rows = (savedBig[k] ?? []).slice(0, GRID_H).map(r => (r ?? "   ").slice(0, GRID_W).padEnd(GRID_W, " "));
+    while (rows.length < GRID_H) rows.push("   ");
+    out[k] = rows;
+  }
+  const txt = JSON.stringify(out, null, 2);
+  const blob = new Blob([txt], {type:"application/json"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "kora-3x10.json?v=v2026-10-05T10242";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(a.href);
+}
+
+/* ====== Render all ====== */
+function renderAll(rerenderList=true){
+  renderBoard();
+  renderStructure();
+  renderExportPreview();
+  updateBrushHeader();
+  if (rerenderList) renderSymbolList();
+}
+
+/* ====== Load font 5×7 ====== */
+document.getElementById("fontFile").addEventListener("change", async (e)=>{
+  const f = e.target.files?.[0];
+  if (!f) return;
+  try{
+    const txt = await f.text();
+    const obj = JSON.parse(txt);
+    loadFont(obj);
+  }catch(err){
+    alert("Nie mogę wczytać fontu 5×7: " + err.message);
+  }
+});
+
+function loadFont(obj){
+  font57 = obj;
+  const built = buildGlyphMapAnyGroups(obj);
+  glyphMap = built.map;
+  glyphOrder = built.order;
+
+  statusEl.textContent = `Wczytano font 5×7: ${obj.meta?.name ?? "(bez nazwy)"} — glifów: ${glyphOrder.length}`;
+
+  // domyślny pędzel
+  if (glyphMap.has("█")) { brush = "█"; lastBrush = "█"; }
+  else {
+    const first = glyphOrder.find(ch => ch !== " ") ?? " ";
+    brush = first;
+    if (first !== " ") lastBrush = first;
+  }
+
+  // odblokuj przyciski symboli
+  updateSymbolButtons();
+
+  renderPalettes();
+  renderAll(true);
+}
+
+/* ====== Load JSON 3×10 ====== */
+document.getElementById("bigFile").addEventListener("change", async (e)=>{
+  const f = e.target.files?.[0];
+  if (!f) return;
+  try{
+    const txt = await f.text();
+    const obj = JSON.parse(txt);
+    loadBigJson(obj);
+  }catch(err){
+    alert("Nie mogę wczytać JSON 3×10: " + err.message);
+  }
+});
+
+function loadBigJson(obj){
+  // oczekiwany format: { "A": ["...", ...10], "B": [...] }
+  if (!obj || typeof obj !== "object" || Array.isArray(obj)){
+    alert("Zły format JSON 3×10 (oczekuję obiektu).");
+    return;
+  }
+
+  // merge: dopisuj/nadpisuj
+  for (const [k, v] of Object.entries(obj)){
+    if (typeof k !== "string") continue;
+    if (!Array.isArray(v)) continue;
+
+    // normalizacja do 10x3
+    const rows = v.slice(0, GRID_H).map(r => String(r ?? "   ").slice(0, GRID_W).padEnd(GRID_W, " "));
+    while (rows.length < GRID_H) rows.push("   ");
+    savedBig[k] = rows;
+  }
+
+  // ustaw aktywny na pierwszy w unicode
+  const keys = Object.keys(savedBig).sort(unicodeSort);
+  if (keys.length > 0){
+    currentSymbol = keys[0];
+    symbolInput.value = currentSymbol;
+    grid = rowsToGrid(savedBig[currentSymbol]);
+  }
+
+  updateSymbolButtons();
+  renderAll(true);
+}
+
+/* ====== UI actions ====== */
+filterInput.addEventListener("input", renderPalettes);
+
+eraseBtn.addEventListener("click", ()=>{
+  eraseMode = !eraseMode;
+  updateEraserUI();
+});
+
+document.getElementById("clearGrid").addEventListener("click", ()=>{
+  grid = makeEmptyGrid();
+  renderAll(false);
+});
+
+newBtn.addEventListener("click", newSymbol);
+
+saveBtn.addEventListener("click", ()=>{
+  const sym = (symbolInput.value ?? "").trim();
+  saveCurrentToMap(sym);
+});
+
+copyBtn.addEventListener("click", copySymbol);
+delBtn.addEventListener("click", deleteSymbol);
+
+exportBtn.addEventListener("click", downloadExport);
+
+/* ====== Zoom (wheel/pinch) ====== */
+function wheelZoomHandler(ev){
+  // Zoom tylko gdy Ctrl (pinch na macu często wysyła ctrlKey) albo Alt
+  if (!(ev.ctrlKey || ev.altKey)) return;
+  ev.preventDefault();
+
+  const delta = ev.deltaY;
+  const factor = (delta > 0) ? 0.92 : 1.08;
+  setScale(boardScale * factor, true);
+}
+boardViewport.addEventListener("wheel", wheelZoomHandler, { passive:false });
+
+zoomOutBtn.addEventListener("click", ()=> setScale(boardScale * 0.9, true));
+zoomInBtn.addEventListener("click", ()=> setScale(boardScale * 1.1, true));
+zoomResetBtn.addEventListener("click", ()=> setScale(1.0, true));
+
+/* ====== Start ====== */
+function init(){
+  // Twoje wymagane init-y (sensowne w stanie bez fontu):
+  brush = " ";
+  lastBrush = "█";
+  eraseMode = false;
+  updateEraserUI();
+  brushCharEl.textContent = "(brak)";
+  statusEl.textContent = "Brak fontu 5×7 — wczytaj JSON.";
+  setScale(1.0, false);
+
+  renderPalettes();
+  updateSymbolButtons();
+  renderAll(true);
+}
+init();
+</script>
+<script src="/settings/js/tools-guard.js?v=v2026-10-05T10242" defer></script>
+<script type="module" src="/shared/js/core/icons.js?v=v2026-10-05T10242"></script>
+</body>
+</html>

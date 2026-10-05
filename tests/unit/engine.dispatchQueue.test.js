@@ -14,8 +14,8 @@
 
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { createEngine } from "../../control2/js/engine.js";
-import { makeDefaultState } from "../../shared/gameStateShape.js";
+import { createEngine } from "../../web/control2/js/engine.js";
+import { makeDefaultState } from "../../web/shared/js/gameplay/gameStateShape.js";
 
 // Atrapa store z KONTROLOWANYM opóźnieniem w commit() — żeby zamodelować
 // dokładnie ten scenariusz z na żywo: drugi dispatch() startuje, zanim

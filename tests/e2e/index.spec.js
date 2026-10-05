@@ -96,9 +96,9 @@ test("wolny backend nie blokuje strony, a wielokrotne kliknięcie nie duplikuje 
 test("PL/EN/UK: cały zależny interfejs, tytuły, obrazy i linki zmieniają język", async ({ page }) => {
   await openIndex(page);
   const cases = [
-    { lang: "en", title: /live game hosting system/, heading: /Free Familiada Online/, image: "/img/en/", query: "en" },
-    { lang: "uk", title: /система для проведення гри наживо/, heading: /Безкоштовна Familiada Online/, image: "/img/uk/", query: "uk" },
-    { lang: "pl", title: /system do prowadzenia gry na żywo/, heading: /Darmowa Familiada Online/, image: "/img/pl/", query: null },
+    { lang: "en", title: /live game hosting system/, heading: /Free Familiada Online/, image: "/assets/img/en/", query: "en" },
+    { lang: "uk", title: /система для проведення гри наживо/, heading: /Безкоштовна Familiada Online/, image: "/assets/img/uk/", query: "uk" },
+    { lang: "pl", title: /system do prowadzenia gry na żywo/, heading: /Darmowa Familiada Online/, image: "/assets/img/pl/", query: null },
   ];
 
   for (const item of cases) {

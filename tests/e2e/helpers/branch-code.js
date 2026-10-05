@@ -1,7 +1,7 @@
 // tests/e2e/helpers/branch-code.js
 // "Kopia" strony do testów bez wdrażania: prawdziwa produkcja (konta testowe,
 // prawdziwa baza, Worker, Turnstile-bypass), ale wybrane strony oraz CAŁY
-// kod front-endu (js/, css/, translation/, shared/, base-explorer/) serwowane z plików tego
+// kod front-endu (js/, css/, translation/, web/js/gameplay/, base-explorer/) serwowane z plików tego
 // repo -- czyli z brancha, na którym odpalono workflow. Dzięki temu poprawki
 // można sprawdzić na prawdziwym backendzie ZANIM trafią na main/produkcję.
 //
@@ -13,10 +13,10 @@
 const fs = require("fs");
 const path = require("path");
 
-const REPO_ROOT = path.resolve(__dirname, "..", "..", "..");
+const REPO_ROOT = path.resolve(__dirname, "..", "..", "..", "web");
 const PROD_ORIGIN = "https://www.familiada.online";
 // base-explorer/ -- JS i CSS bazy pytań leżą obok strony, nie w js/ i css/
-const CODE_DIRS = ["js/", "css/", "translation/", "shared/", "base-explorer/"];
+const CODE_DIRS = ["shared/", "assets/", "home/", "games/", "editor/", "bases/", "account/", "marketplace/", "polls/", "polls-hub/", "subscriptions/", "connect-device/", "base-explorer/", "control2/", "display2/", "host2/", "buzzer2/", "logo-editor/", "game-settings2/"];
 
 const MIME = {
   ".html": "text/html; charset=utf-8",
@@ -29,12 +29,12 @@ function localFileFor(pathname, pages) {
   // Strona główna jest serwowana pod "/", a nie "/index". Bez tego
   // pages:["index"] cicho testowało produkcyjny HTML zamiast pliku z brancha.
   if (!rel && pages.includes("index")) return path.join(REPO_ROOT, "index.html");
-  const page = rel.replace(/\.html$/, "");
-  if (pages.includes(page)) return path.join(REPO_ROOT, `${page}.html`);
+  const page = rel.replace(/\.html$/, "").replace(/\/$/, "");
+  if (pages.includes(page)) return path.join(REPO_ROOT, `${page}/index.html`);
   // Trasy typu /marketplace/game/<slug> są obsługiwane przez tę samą stronę
   // SPA. Bez tego deep-link w teście brał HTML produkcyjny zamiast z brancha.
   const routedPage = pages.find((name) => rel.startsWith(`${name}/`));
-  if (routedPage) return path.join(REPO_ROOT, `${routedPage}.html`);
+  if (routedPage) return path.join(REPO_ROOT, `${routedPage}/index.html`);
   if (!CODE_DIRS.some((d) => rel.startsWith(d))) return null;
   const abs = path.join(REPO_ROOT, rel);
   if (!abs.startsWith(REPO_ROOT + path.sep)) return null;

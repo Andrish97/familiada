@@ -1,14 +1,14 @@
-// Testy shared/hints.js — czysta funkcja stanu, bez DOM. Chodzi o to samo
+// Testy web/shared/js/gameplay/hints.js — czysta funkcja stanu, bez DOM. Chodzi o to samo
 // zachowanie co dawne ROUNDS_MSG/FINAL_MSG w control/js/gameRounds.js i
 // gameFinal.js, tylko wyprowadzone z bieżącego game_state, nie z
 // imperatywnych setXMsg() wołanych przy każdym zdarzeniu.
 
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { getRoundsHint, getFinalHint } from "../../shared/hints.js";
-import { createEngine } from "../../control2/js/engine.js";
+import { getRoundsHint, getFinalHint } from "../../web/shared/js/gameplay/hints.js";
+import { createEngine } from "../../web/control2/js/engine.js";
 import { createFakeStore } from "./helpers/fakeStore.js";
-import { DEFAULT_SETTINGS } from "../../shared/gameStateShape.js";
+import { DEFAULT_SETTINGS } from "../../web/shared/js/gameplay/gameStateShape.js";
 
 function questionPool(n = 3) {
   return Array.from({ length: n }, (_, i) => ({ id: `q${i + 1}`, ord: i + 1, text: `Pytanie ${i + 1}` }));

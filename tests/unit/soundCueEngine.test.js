@@ -1,4 +1,4 @@
-// Testy shared/soundCueEngine.js — reguły "który SOUND_CUE gra jaką
+// Testy web/shared/js/gameplay/soundCueEngine.js — reguły "który SOUND_CUE gra jaką
 // kombinację", wyciągnięte z control2/js/soundReactor.js tak, żeby
 // display2/js/soundReactor.js mogło je reużyć 1:1 (zgłoszone: dźwięk ma móc
 // grać z Wyświetlacza zamiast Control). playSfx/getSfxDuration są tu
@@ -7,7 +7,7 @@
 
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { createSoundCueEngine } from "../../shared/soundCueEngine.js";
+import { createSoundCueEngine } from "../../web/shared/js/gameplay/soundCueEngine.js";
 
 function row(overrides = {}) {
   return {
@@ -50,6 +50,15 @@ test("Winning buzzer press plays its existing sound before operator acceptance",
   engine.handleTransition(prev, next);
   assert.deepEqual(played, ["buzzer_press"]);
   engine.handleTransition(next, next);
+  assert.deepEqual(played, ["buzzer_press"]);
+});
+
+test("buzzer RPC cue and operator acceptance do not replay the press", () => {
+  const { engine, played } = makeEngine();
+  const previous = row({ step: "r_duel" });
+  const pressed = row({ step: "r_duel", sound_cue_seq: 1, sound_cue_key: "buzzer_press", detail: { rounds: { duel: { lastPressed: "A" } } } });
+  engine.handleTransition(previous, pressed);
+  engine.handleTransition(pressed, { ...pressed, sound_cue_seq: 2 });
   assert.deepEqual(played, ["buzzer_press"]);
 });
 
@@ -142,16 +151,20 @@ test("final_theme gra SEKWENCYJNIE: final_theme, potem reveal", async () => {
   assert.deepEqual(played, ["final_theme", "reveal"]);
 });
 
-test("final_end plays outro+reveal without repeating the round-end sound", async () => {
-  const { engine, played } = makeEngine({ show_intro: 0.05, reveal: 0.05 });
+test("final_end starts reveal and outro together without repeating round transition", async () => {
+  const { engine, played } = makeEngine({ round_transition: 0.05, reveal: 0.05 });
   const a = row({ sound_cue_seq: 0 });
   const b = row({ sound_cue_seq: 1, sound_cue_key: "final_end" });
   engine.handleTransition(a, b);
+  assert.deepEqual(played, ["reveal", "show_outro"]);
   await new Promise((resolve) => setTimeout(resolve, 150));
-  assert.ok(!played.includes("round_transition"));
-  assert.ok(played.includes("reveal"));
-  assert.ok(played.includes("show_intro"));
-  assert.deepEqual(played, ["show_intro", "reveal"]);
+  assert.deepEqual(played, ["reveal", "show_outro"]);
+});
+
+test("FINISH_FINAL plays only outro because the final result is already visible", () => {
+  const { engine, played } = makeEngine();
+  engine.handleTransition(row({ step: "f_end", top_card: "final" }), row({ step: "f_end", top_card: "final", sound_cue_seq: 1, sound_cue_key: "final_end" }));
+  assert.deepEqual(played, ["show_outro"]);
 });
 
 test("Reaching final target plays scoring first and round-end afterward", async () => {
@@ -159,7 +172,7 @@ test("Reaching final target plays scoring first and round-end afterward", async 
   engine.handleTransition(row({ step: "f_p1_map_q1" }), row({ step: "f_end", sound_cue_seq: 1, sound_cue_key: "answer_correct" }));
   assert.deepEqual(played, ["answer_correct"]);
   await new Promise((resolve) => setTimeout(resolve, 70));
-  assert.deepEqual(played, ["answer_correct", "round_transition"]);
+  assert.deepEqual(played, ["answer_correct", "round_transition", "reveal"]);
 });
 
 test("brak zmiany sound_cue_seq => nic nie gra", async () => {

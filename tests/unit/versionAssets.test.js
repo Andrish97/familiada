@@ -18,6 +18,7 @@ import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
+const WEB_ROOT = path.join(ROOT, "web");
 const SCRIPT = path.join(ROOT, "scripts/version-assets.js");
 const SKIP = new Set([".git", "node_modules", "img", "audio", "tests", "docs", "supabase", "cloudflare", "services", "searxng", ".github"]);
 const VERSION = "vTEST123";
@@ -90,8 +91,8 @@ test("żadna strona nie ładuje tego samego modułu pod dwoma różnymi adresami
   // connect-device.js importował go jeszcze raz bez ?v=. Ten sam adres w
   // <script> i w imporcie (np. topbar-controller.js z tym samym ?v=) jest OK.
   const conflicts = [];
-  for (const html of fs.readdirSync(ROOT).filter((f) => f.endsWith(".html"))) {
-    const src = fs.readFileSync(path.join(ROOT, html), "utf8").replace(/<!--[\s\S]*?-->/g, "");
+  for (const html of walk(WEB_ROOT).filter((f) => f.endsWith(".html"))) {
+    const src = fs.readFileSync(path.join(WEB_ROOT, html), "utf8").replace(/<!--[\s\S]*?-->/g, "");
     const urls = new Map(); // ścieżka -> Set(pełnych adresów)
     const add = (p, full) => {
       if (!urls.has(p)) urls.set(p, new Set());
@@ -106,7 +107,7 @@ test("żadna strona nie ładuje tego samego modułu pod dwoma różnymi adresami
     }
     for (const u of scripts) {
       const s = path.posix.normalize(u.replace(/^\//, "").split("?")[0]);
-      const file = path.join(ROOT, s);
+      const file = path.join(WEB_ROOT, s.replace(/^\//, ""));
       if (!fs.existsSync(file)) continue;
       const js = fs.readFileSync(file, "utf8");
       for (const m of js.matchAll(/\bimport\s+(?:[\w*{}\s,$]+?\s+from\s+)?["']([^"']+)["']/g)) {

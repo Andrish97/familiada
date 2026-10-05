@@ -87,7 +87,7 @@ test.describe("poll-voting (poll-points.js i poll-text.js) audyt", () => {
       await loginAsPooledTestUser(page, context, testInfo.parallelIndex);
       const game = await createPollGame(page, "poll_points");
 
-      const url = new URL("poll-points.html", "https://www.familiada.online/");
+      const url = new URL("poll-points/index.html", "https://www.familiada.online/");
       url.searchParams.set("id", game.gameId);
       url.searchParams.set("key", game.shareKey);
 
@@ -138,7 +138,7 @@ test.describe("poll-voting (poll-points.js i poll-text.js) audyt", () => {
       const game = await createPollGame(page, "poll_text");
 
 
-      const url = new URL("poll-text.html", "https://www.familiada.online/");
+      const url = new URL("poll-text/index.html", "https://www.familiada.online/");
       url.searchParams.set("id", game.gameId);
       url.searchParams.set("key", game.shareKey);
 
@@ -195,7 +195,7 @@ test.describe("poll-voting (poll-points.js i poll-text.js) audyt", () => {
         `${game.gameId}_${game.shareKey}`
       );
 
-      const url = new URL("poll-text.html", "https://www.familiada.online/");
+      const url = new URL("poll-text/index.html", "https://www.familiada.online/");
       url.searchParams.set("id", game.gameId);
       url.searchParams.set("key", game.shareKey);
 
@@ -223,7 +223,7 @@ test.describe("poll-voting (poll-points.js i poll-text.js) audyt", () => {
     try {
 
       // Brak ?id i ?key
-      await page.goto("https://www.familiada.online/poll-points.html", {
+      await page.goto("https://www.familiada.online/poll-points/index.html", {
         waitUntil: "domcontentloaded",
       });
       await page.waitForLoadState("networkidle");
@@ -246,7 +246,7 @@ test.describe("poll-voting (poll-points.js i poll-text.js) audyt", () => {
       const game = await createPollGame(page, "poll_text");
 
 
-      const url = new URL("poll-text.html", "https://www.familiada.online/");
+      const url = new URL("poll-text/index.html", "https://www.familiada.online/");
       url.searchParams.set("id", game.gameId);
       url.searchParams.set("key", game.shareKey);
 

@@ -5,10 +5,10 @@
 
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { createEngine } from "../../control2/js/engine.js";
+import { createEngine } from "../../web/control2/js/engine.js";
 import { createFakeStore } from "./helpers/fakeStore.js";
-import { DEFAULT_SETTINGS } from "../../shared/gameStateShape.js";
-import { resolveRoundsEndScreen, resolveEndScreenMode } from "../../shared/endScreen.js";
+import { DEFAULT_SETTINGS } from "../../web/shared/js/gameplay/gameStateShape.js";
+import { resolveRoundsEndScreen, resolveEndScreenMode } from "../../web/shared/js/gameplay/endScreen.js";
 
 function questionPool(n = 1) {
   return Array.from({ length: n }, (_, i) => ({ id: `q${i + 1}`, ord: i + 1, text: `Pytanie ${i + 1}` }));

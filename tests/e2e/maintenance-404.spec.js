@@ -28,7 +28,7 @@ test("404: Worker zwraca prawdziwe 404 bez cache i z globalnym CSP", async ({ re
   const csp = response.headers()["content-security-policy"] || "";
   expect(csp).toContain("script-src");
   expect(csp).toContain("connect-src 'self'");
-  expect(await response.text()).toContain('src="/js/pages/404.js');
+  expect(await response.text()).toContain('src="/404/js/404.js');
 });
 
 test("404: PL/EN/UK, akcje i zasoby mają poprawne adresy", async ({ page }) => {
@@ -44,7 +44,7 @@ test("404: PL/EN/UK, akcje i zasoby mają poprawne adresy", async ({ page }) => 
     await expect(page.locator("#title")).toHaveText(item.title);
     await expect(page.locator('.notfound-actions a[href="/"]')).toBeVisible();
     await expect(page.locator('.notfound-actions a[href="/marketplace"]')).toBeVisible();
-    await expect(page.locator('script[src^="/js/core/security-warning.js"]')).toHaveCount(1);
+    await expect(page.locator('script[src^="/shared/js/core/security-warning.js"]')).toHaveCount(1);
     await expect(page.locator('meta[http-equiv="Content-Security-Policy"]')).toHaveAttribute(
       "content",
       /default-src 'self'/
@@ -65,8 +65,8 @@ test("maintenance: standardowa treść przełącza się w PL/EN/UK", async ({ pa
     await expect(page.locator("html")).not.toHaveClass(/page-loading/);
     await expect(page.locator("#title")).toHaveText(item.title);
     await expect(page.locator("#description")).toContainText(item.text);
-    await expect(page.locator('link[href^="/css/maintenance.css"]')).toHaveCount(1);
-    await expect(page.locator('script[src^="/js/pages/maintenance.js"]')).toHaveCount(1);
+    await expect(page.locator('link[href^="/maintenance/css/maintenance.css"]')).toHaveCount(1);
+    await expect(page.locator('script[src^="/maintenance/js/maintenance.js"]')).toHaveCount(1);
   }
 });
 

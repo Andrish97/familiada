@@ -3,10 +3,16 @@ const os = require("node:os");
 
 async function installDisplayPerformance(context) {
   await context.addInitScript(() => {
-    const perf = window.__displayPerf = { active: 0, animations: [], frames: [], longTasks: [], heapPeakBytes: 0 };
+    const perf = window.__displayPerf = { active: 0, animations: [], frames: [], svgUpdates: [], longTasks: [], heapPeakBytes: 0 };
+    let svgChanges = 0;
+    new MutationObserver((records) => {
+      if (perf.active) svgChanges += records.length;
+    }).observe(document, { subtree: true, attributes: true, attributeFilter: ["fill"] });
     let previous = null;
     const tick = (now) => {
       if (previous !== null && perf.active && document.visibilityState === "visible") perf.frames.push(now - previous);
+      if (perf.active) perf.svgUpdates.push({ at: performance.timeOrigin + now, count: svgChanges });
+      svgChanges = 0;
       previous = now;
       requestAnimationFrame(tick);
     };
@@ -17,7 +23,7 @@ async function installDisplayPerformance(context) {
       }).observe({ type: "longtask" });
     }
     setInterval(() => { perf.heapPeakBytes = Math.max(perf.heapPeakBytes, performance.memory?.usedJSHeapSize || 0); }, 1000);
-    perf.reset = () => { perf.animations = []; perf.frames = []; perf.longTasks = []; perf.heapPeakBytes = 0; };
+    perf.reset = () => { perf.animations = []; perf.frames = []; perf.svgUpdates = []; perf.longTasks = []; perf.heapPeakBytes = 0; };
   });
 }
 
@@ -69,6 +75,7 @@ async function collectDisplayPerformance(page) {
       heapPeakBytes: perf.heapPeakBytes, svgNodes: document.querySelectorAll("svg *").length,
       stateReadDurationsMs: performance.getEntriesByType("resource").filter((entry) => entry.name.split("?")[0].endsWith("/rpc/game_state_get")).map((entry) => entry.duration),
       animations: perf.animations,
+      svgUpdates: perf.svgUpdates,
     };
   });
 }

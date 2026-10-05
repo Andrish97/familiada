@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
+  <meta name="app-version" content="v2026-10-05T10242"/>
+
+  <meta charset="UTF-8" />
+  <meta name="robots" content="index, follow">
+  <meta name="mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <link rel="preconnect" href="https://cdn.jsdelivr.net">
+  <link rel="preconnect" href="https://supabase.familiada.online">
+  <title data-i18n="privacy.title">Familiada Online — polityka prywatności</title>
+  <meta name="description" content="Polityka prywatności serwisu Familiada Online: zasady przetwarzania danych osobowych, pliki cookies i kontakt z administratorem." data-i18n-content="privacy.description">
+  <link rel="canonical" href="https://www.familiada.online/privacy">
+  <link rel="alternate" hreflang="pl" href="https://www.familiada.online/privacy" />
+  <link rel="alternate" hreflang="en" href="https://www.familiada.online/privacy?lang=en" />
+  <link rel="alternate" hreflang="uk" href="https://www.familiada.online/privacy?lang=uk" />
+  <link rel="alternate" hreflang="x-default" href="https://www.familiada.online/privacy" />
+  <link rel="icon" href="/favicon.ico?v=v2026-10-05T10242" />
+
+  <!-- Hide topbar/footer in modal mode — MUST be before base.css -->
+  <style id="modalHideStyle">
+    /* Filled by script if modal mode */
+  </style>
+  <script>
+    try {
+      const modal = new URLSearchParams(location.search).get("modal");
+      if (modal && modal !== "false") {
+        document.getElementById("modalHideStyle").textContent = ".topbar,.footer{display:none!important;visibility:hidden!important}.wrap{padding-top:0!important}";
+        document.documentElement.classList.add("modal-mode");
+      }
+    } catch(e){}
+  </script>
+
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-05T10242" />
+  <link rel="stylesheet" href="/manual/css/manual.css?v=v2026-10-05T10242" />
+  <script>document.documentElement.classList.add('page-loading')</script>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+  <script type="module" src="/privacy/js/privacy.js?v=v2026-10-05T10242" defer></script>
+  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-05T10242" defer></script>
+  <script src="/shared/js/core/security-warning.js?v=v2026-10-05T10242" defer></script>
+</head>
+
+<body class="manual-body skel-body">
+  <header class="topbar topbar-layout-4">
+    <div class="topbar-section topbar-section-1">
+      <div class="brand">FAMILIADA</div>
+      <button class="btn" id="btnBack" type="button" data-i18n="privacy.backToManual" data-i18n-icon="arrow-left">Wskazówki</button>
+    </div>
+    <div class="topbar-section topbar-section-2"></div>
+    <div class="topbar-section topbar-section-3">
+      <div class="topbar-close-slot" aria-hidden="true"></div>
+    </div>
+    <div class="topbar-section topbar-section-4">
+      <span class="who" id="who"></span>
+      <button class="btn" id="btnLogout" type="button" data-i18n="common.authEntry">Zaloguj / Załóż konto</button>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <h1 class="page-title" data-i18n="privacy.pageTitle">Familiada Online — Polityka Prywatności</h1>
+
+    <section class="m-doc" data-i18n-html="privacy.content">
+      <p class="m-p"><strong>Familiada Online</strong></p>
+      <p class="m-p">Data ostatniej aktualizacji: 15 lipca 2026 r.</p>
+
+      <h2 class="m-h2">1. Informacje ogólne</h2>
+      <p class="m-p">
+        Niniejsza Polityka Prywatności określa zasady przetwarzania danych osobowych użytkowników
+        serwisu Familiada Online, dostępnego pod adresem:
+      </p>
+      <p class="m-p"><span class="m-code">https://www.familiada.online</span></p>
+      <p class="m-p">
+        Serwis ma charakter projektu hobbystycznego i nie stanowi zarejestrowanej działalności gospodarczej.
+      </p>
+
+      <h2 class="m-h2">2. Administrator danych</h2>
+      <p class="m-p">Administratorem danych jest twórca serwisu Familiada Online.</p>
+      <p class="m-p">Kontakt: <span class="m-code">kontakt@familiada.online</span></p>
+
+      <h2 class="m-h2">3. Zakres przetwarzanych danych</h2>
+      <p class="m-p">Dane podawane przez użytkownika:</p>
+      <ul class="m-ul">
+        <li>adres e-mail</li>
+        <li>nazwa użytkownika</li>
+        <li>treści tworzone w aplikacji (gry, ankiety)</li>
+      </ul>
+      <p class="m-p">Dane techniczne:</p>
+      <ul class="m-ul">
+        <li>adres IP</li>
+        <li>dane przeglądarki i urządzenia</li>
+        <li>informacje o sesji</li>
+      </ul>
+
+      <h2 class="m-h2">4. Cele przetwarzania</h2>
+      <p class="m-p">Dane przetwarzane są w celu:</p>
+      <ul class="m-ul">
+        <li>obsługi konta użytkownika</li>
+        <li>realizacji funkcji aplikacji</li>
+        <li>wysyłki wiadomości systemowych</li>
+        <li>zapewnienia bezpieczeństwa</li>
+      </ul>
+      <p class="m-p">Dane nie są sprzedawane ani wykorzystywane do marketingu zewnętrznego.</p>
+
+      <h2 class="m-h2">5. Podmioty przetwarzające</h2>
+      <p class="m-p">Serwis korzysta z infrastruktury:</p>
+      <ul class="m-ul">
+        <li>GitHub Pages (hosting interfejsu)</li>
+        <li>Cloudflare (DNS i zabezpieczenia)</li>
+        <li>Supabase (serwer aplikacji i baza danych) – serwer własny w Oracle Cloud</li>
+        <li>Zeptomail (główny dostawca e-mail)</li>
+        <li>Brevo (zapasowy dostawca poczty)</li>
+        <li>Mailgun (zapasowy dostawca poczty)</li>
+        <li>SendPulse (zapasowy dostawca poczty)</li>
+        <li>Groq (analiza powtarzalności gier społeczności – AI)</li>
+        <li>DeepSeek (analiza powtarzalności gier społeczności – AI)</li>
+      </ul>
+      <p class="m-p">Podmioty te przetwarzają dane wyłącznie w zakresie technicznym.</p>
+
+      <h2 class="m-h2">6. Okres przechowywania</h2>
+      <p class="m-p">Dane przechowywane są przez okres posiadania konta lub do momentu jego usunięcia.</p>
+
+      <h2 class="m-h2">7. Prawa użytkownika</h2>
+      <p class="m-p">Użytkownik ma prawo do:</p>
+      <ul class="m-ul">
+        <li>dostępu do danych</li>
+        <li>poprawienia danych</li>
+        <li>usunięcia danych</li>
+        <li>ograniczenia przetwarzania</li>
+      </ul>
+      <p class="m-p">Kontakt w celu realizacji praw: <span class="m-code">kontakt@familiada.online</span></p>
+
+      <h2 class="m-h2">8. Bezpieczeństwo</h2>
+      <p class="m-p">Serwis korzysta z połączenia HTTPS oraz zabezpieczeń infrastruktury chmurowej.</p>
+
+      <h2 class="m-h2">9. Pliki cookies</h2>
+      <p class="m-p">Serwis wykorzystuje wyłącznie techniczne pliki cookies niezbędne do działania aplikacji.</p>
+    </section>
+
+    <div class="footer">
+      <div data-i18n="common.footer.left">© 2026 Familiada — system do gry na żywo</div>
+      <button class="btn-contact-footer" type="button" data-contact-modal data-i18n="common.contactBtn">Kontakt</button>
+    </div>
+
+  </main>
+</body>
+</html>

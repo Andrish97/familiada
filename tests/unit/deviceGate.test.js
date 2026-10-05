@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { missingDevices } from "../../control2/js/deviceGate.js";
+import { missingDevices } from "../../web/control2/js/deviceGate.js";
 
 test("Disconnect blocks only required devices during an active game", () => {
   const state = { locks: { gameStarted: true }, settings: {} };

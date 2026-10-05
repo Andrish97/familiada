@@ -1,8 +1,8 @@
-// Testy shared/deriveEvents.js — patrz plan przebudowy, sekcja 3.
+// Testy web/shared/js/gameplay/deriveEvents.js — patrz plan przebudowy, sekcja 3.
 
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { deriveEvents } from "../../shared/deriveEvents.js";
+import { deriveEvents } from "../../web/shared/js/gameplay/deriveEvents.js";
 
 function row(overrides = {}) {
   return {

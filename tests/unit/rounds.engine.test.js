@@ -1,15 +1,15 @@
 // Testy silnika rund control2/js/engine.js (dispatch()) — pokrywają
 // rozgałęzienia z tabeli stanów A w planie przebudowy (R0-R10). Każda
 // akcja idzie przez jeden generyczny dispatch(), który sam egzekwuje
-// shared/gameStateMachine.js (assertTransition) — jeśli reducer kiedyś
+// web/shared/js/gameplay/gameStateMachine.js (assertTransition) — jeśli reducer kiedyś
 // zaproponuje nielegalny skok, te testy i tak by to złapały (dispatch by
 // rzucił), więc nie trzeba tego osobno asercjonować w każdym teście.
 
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { createEngine, getRoundMultiplier, isThresholdHit } from "../../control2/js/engine.js";
+import { createEngine, getRoundMultiplier, isThresholdHit } from "../../web/control2/js/engine.js";
 import { createFakeStore } from "./helpers/fakeStore.js";
-import { DEFAULT_SETTINGS } from "../../shared/gameStateShape.js";
+import { DEFAULT_SETTINGS } from "../../web/shared/js/gameplay/gameStateShape.js";
 
 function questionPool(n = 3) {
   return Array.from({ length: n }, (_, i) => ({ id: `q${i + 1}`, ord: i + 1, text: `Pytanie ${i + 1}` }));
@@ -182,11 +182,11 @@ test("pojedynek: obie drużyny pudłują -> RESET cyklu, BEZ ponownego buzzera �
   assert.equal(store.state.controlTeam, "A");
 });
 
-test("ACCEPT_BUZZ: gra buzzer_press w trybie normalnym, ale NIE gra żadnego dźwięku w trybie physicalBuzzer", async () => {
+test("ACCEPT_BUZZ: operator acceptance is silent in both buzzer modes", async () => {
   const normal = makeEngine();
   await normal.dispatch({ type: "START_ROUND" });
   await normal.dispatch({ type: "ACCEPT_BUZZ", team: "A" });
-  assert.equal(normal.store.commits.at(-1).soundCueKey, "buzzer_press");
+  assert.equal(normal.store.commits.at(-1).soundCueKey, null);
 
   const physical = makeEngine({ settings: { ...DEFAULT_SETTINGS, physicalBuzzer: true } });
   await physical.dispatch({ type: "START_ROUND" });

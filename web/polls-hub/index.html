@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
+  <meta name="app-version" content="v2026-10-05T10242"/>
+
+  <meta charset="UTF-8"/>
+  <meta name="robots" content="noindex, nofollow"/>
+  <meta name="mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net">
+  <link rel="preconnect" href="https://supabase.familiada.online">
+  <title data-i18n="pollsHubPolls.title">Familiada — centrum ankiet</title>
+
+  <link rel="icon" href="/favicon.ico?v=v2026-10-05T10242"/>
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-05T10242"/>
+  <link rel="stylesheet" href="/games/css/games.css?v=v2026-10-05T10242"/>
+  <link rel="stylesheet" href="/polls-hub/css/polls-hub.css?v=v2026-10-05T10242"/>
+  <script>
+    document.documentElement.classList.add('page-loading');
+    try {
+      var _has = false;
+      for (var _i = 0; _i < localStorage.length; _i++) {
+        var _k = localStorage.key(_i);
+        if (_k && _k.startsWith('sb-') && _k.endsWith('-auth-token')) { _has = true; break; }
+      }
+      if (!_has) location.replace('/login/');
+    } catch(_e) {}
+  </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+  <script type="module" src="/polls-hub/js/polls-hub.js?v=v2026-10-05T10242" defer></script>
+  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-05T10242" defer></script>
+  <script src="/shared/js/core/security-warning.js?v=v2026-10-05T10242" defer></script>
+</head>
+
+<body class="polls-hub-body skel-body">
+  <header class="topbar topbar-layout-4">
+    <div class="topbar-section topbar-section-1">
+      <div class="brand">FAMILIADA</div>
+      <button class="btn" id="btnBackToGames" type="button" data-i18n="pollsHubPolls.backToGames" data-i18n-icon="arrow-left">Moje gry</button>
+    </div>
+    <div class="topbar-section topbar-section-2">
+      <button class="btn" id="btnGoAlt" type="button"><span data-i18n="games.nav.pollsHubSubs" data-i18n-icon-after="bell">Subskrypcje</span> <span class="badge" id="altBadge" aria-hidden="true"></span></button>
+    </div>
+    <div class="topbar-section topbar-section-3">
+      <button class="btn" id="btnManual" type="button" data-i18n-aria-label="common.manualLabel" data-i18n-title="common.manualLabel" aria-label="Wskazówki" title="Wskazówki"><i class="ico" data-icon="info"></i></button>
+    </div>
+    <div class="topbar-section topbar-section-4">
+      <span class="who" id="who">—</span>
+      <button class="btn" id="btnLogout" type="button" data-i18n="common.authEntry">Zaloguj / Załóż konto</button>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <div class="bar">
+      <div>
+        <div class="title" data-i18n="pollsHubPolls.header.title">Centrum ankiet</div>
+        <div class="hint" data-i18n="pollsHubPolls.header.hint">Zarządzaj ankietami oraz zaproszeniami do ankiety.</div>
+      </div>
+    </div>
+
+    <section class="hub-desktop hub-desktop-single">
+      <div class="card hub-card">
+        <div class="hub-tab-panel active" id="panelPolls">
+          <div class="hub-grid">
+            <section class="hub-col">
+              <div class="hub-col-head">
+                <div>
+                  <div class="hub-col-title" data-i18n="pollsHubPolls.sections.myPolls">Moje ankiety</div>
+                  <div class="hub-col-hint" data-i18n="pollsHubPolls.sections.selectHint">Kliknij kafelek, aby go zaznaczyć.</div>
+                </div>
+                <div class="hub-controls">
+                  <div class="ui-select" id="sortPollsDesktop"><button class="ui-select-btn inp sm" type="button"><span class="ui-select-label">—</span><span class="ui-select-caret" aria-hidden="true"><i class="ico" data-icon="caret-down"></i></span></button><div class="ui-select-menu" role="listbox"></div></div>
+                  <div class="hub-toggle" data-kind="polls"><button class="btn xs btn-toggle" data-toggle="current" data-i18n="pollsHubPolls.toggle.current">Aktualne</button><button class="btn xs btn-toggle" data-toggle="archive" data-i18n="pollsHubPolls.toggle.archive">Archiwalne</button></div>
+                  <button class="btn xs" id="btnShare" type="button" disabled data-i18n="pollsHubPolls.actions.share">Udostępnij</button>
+                  <button class="btn xs" id="btnDetails" type="button" disabled data-i18n="pollsHubPolls.actions.details">Szczegóły</button>
+                </div>
+              </div>
+              <div class="hub-list" id="pollsListDesktop"></div>
+            </section>
+            <section class="hub-col">
+              <div class="hub-col-head">
+                <div>
+                  <div class="hub-col-title" data-i18n="pollsHubPolls.sections.tasks">Zadania</div>
+                  <div class="hub-col-hint" data-i18n="pollsHubPolls.sections.tasksHint">Dwuklik otwiera ankietę.</div>
+                </div>
+                <div class="hub-controls">
+                  <div class="ui-select" id="sortTasksDesktop"><button class="ui-select-btn inp sm" type="button"><span class="ui-select-label">—</span><span class="ui-select-caret" aria-hidden="true"><i class="ico" data-icon="caret-down"></i></span></button><div class="ui-select-menu" role="listbox"></div></div>
+                  <div class="hub-toggle" data-kind="tasks"><button class="btn xs btn-toggle" data-toggle="current" data-i18n="pollsHubPolls.toggle.current">Aktualne</button><button class="btn xs btn-toggle" data-toggle="archive" data-i18n="pollsHubPolls.toggle.archive">Archiwalne</button></div>
+                </div>
+              </div>
+              <div class="hub-list" id="tasksListDesktop"></div>
+            </section>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="hub-mobile">
+      <div class="tabs-card hub-tabs hub-tabs-mobile" id="hubTabsMobile">
+        <div class="tabs-strip">
+          <div class="tab-slot slot-mobile-polls"><button class="tab-label" id="tabPollsMobile" type="button" data-i18n="pollsHubPolls.tabs.polls">Ankiety</button><div class="tab-wrapper"><div class="tab-active" data-i18n="pollsHubPolls.tabs.polls">Ankiety</div><div class="tab-corner tab-corner-left"></div><div class="tab-corner tab-corner-right"></div></div></div>
+          <div class="tab-slot slot-mobile-tasks"><button class="tab-label" id="tabTasksMobile" type="button"><span data-i18n="pollsHubPolls.tabs.tasks">Zadania</span><span class="hub-tab-badge is-empty" data-badge="tasks"></span></button><div class="tab-wrapper"><div class="tab-active"><span data-i18n="pollsHubPolls.tabs.tasks">Zadania</span></div><div class="tab-corner tab-corner-left"></div><div class="tab-corner tab-corner-right"></div></div></div>
+        </div>
+        <div class="card hub-card">
+          <div class="hub-tab-panel hub-mobile-panel" id="panelPollsMobile">
+            <div class="hub-col-head"><div><div class="hub-col-title" data-i18n="pollsHubPolls.sections.myPolls">Moje ankiety</div><div class="hub-col-hint" data-i18n="pollsHubPolls.sections.selectHint">Kliknij kafelek, aby go zaznaczyć.</div></div><div class="hub-controls"><div class="ui-select" id="sortPollsMobile"><button class="ui-select-btn inp sm" type="button"><span class="ui-select-label">—</span><span class="ui-select-caret" aria-hidden="true"><i class="ico" data-icon="caret-down"></i></span></button><div class="ui-select-menu" role="listbox"></div></div><div class="hub-toggle" data-kind="polls"><button class="btn xs btn-toggle" data-toggle="current" data-i18n="pollsHubPolls.toggle.current">Aktualne</button><button class="btn xs btn-toggle" data-toggle="archive" data-i18n="pollsHubPolls.toggle.archive">Archiwalne</button></div><button class="btn xs" id="btnShareMobile" type="button" disabled data-i18n="pollsHubPolls.actions.share">Udostępnij</button><button class="btn xs" id="btnDetailsMobile" type="button" disabled data-i18n="pollsHubPolls.actions.details">Szczegóły</button></div></div>
+            <div class="hub-list" id="pollsListMobile"></div>
+          </div>
+          <div class="hub-tab-panel hub-mobile-panel" id="panelTasksMobile">
+            <div class="hub-col-head"><div><div class="hub-col-title" data-i18n="pollsHubPolls.sections.tasks">Zadania</div><div class="hub-col-hint" data-i18n="pollsHubPolls.sections.tasksHint">Dwuklik otwiera ankietę.</div></div><div class="hub-controls"><div class="ui-select" id="sortTasksMobile"><button class="ui-select-btn inp sm" type="button"><span class="ui-select-label">—</span><span class="ui-select-caret" aria-hidden="true"><i class="ico" data-icon="caret-down"></i></span></button><div class="ui-select-menu" role="listbox"></div></div><div class="hub-toggle" data-kind="tasks"><button class="btn xs btn-toggle" data-toggle="current" data-i18n="pollsHubPolls.toggle.current">Aktualne</button><button class="btn xs btn-toggle" data-toggle="archive" data-i18n="pollsHubPolls.toggle.archive">Archiwalne</button></div></div></div>
+            <div class="hub-list" id="tasksListMobile"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="overlay modal--sheet" id="shareOverlay" style="display:none;"><div class="modal"><div class="mHead"><div class="mTitle" id="shareTitle" data-i18n="pollsHubPolls.share.title">Udostępnij ankietę</div><button class="btn sm" id="btnShareClose" type="button" aria-label="Zamknij" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button></div><div class="mSub" data-i18n="pollsHubPolls.share.subtitle">Wybierz subskrybentów, którym chcesz wysłać zadanie.</div><div class="hub-share-list" id="shareList"></div><div class="hub-modal-actions"><button class="btn sm gold" id="btnShareSave" type="button" data-i18n="pollsHubPolls.share.save">Zapisz udostępnienie</button><div class="hub-modal-msg" id="shareMsg"></div></div></div></div>
+    <div class="overlay modal--sheet" id="detailsOverlay" style="display:none;"><div class="modal"><div class="mHead"><div class="mTitle" id="detailsTitle" data-i18n="pollsHubPolls.details.title">Szczegóły ankiety</div><button class="btn sm" id="btnDetailsClose" type="button" aria-label="Zamknij" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button></div><div class="mSub" data-i18n="pollsHubPolls.details.subtitle">Usuń głos powiązany z zadaniem, jeśli to konieczne.</div><div class="hub-details-grid"><div><div class="hub-details-head" data-i18n="pollsHubPolls.details.voted">Wypełnili</div><div class="hub-details-list" id="detailsVoted"></div></div><div><div class="hub-details-head" data-i18n="pollsHubPolls.details.pending">Nie wypełnili</div><div class="hub-details-list" id="detailsPending"></div></div><div><div class="hub-details-head" data-i18n="pollsHubPolls.details.declined">Odrzucili</div><div class="hub-details-list" id="detailsDeclined"></div></div><div><div class="hub-details-head" data-i18n="pollsHubPolls.details.cancelled">Anulowane</div><div class="hub-details-list" id="detailsCancelled"></div></div></div><div class="hub-details-side"><div class="hub-details-head" data-i18n="pollsHubPolls.details.anon">Anonimowe</div><div class="hub-anon-count" id="detailsAnon">0</div></div><div class="hub-modal-actions"></div></div></div>
+
+    <div class="footer">
+      <div data-i18n="common.footer.left">© 2026 Familiada — system do gry na żywo</div>
+      <button class="btn-contact-footer" type="button" data-contact-modal data-i18n="common.contactBtn">Kontakt</button>
+    </div>
+  </main>
+
+  <div class="overlay" id="progressOverlay" style="display:none;"><div class="modal"><div class="mTitle" data-i18n="pollsHubPolls.progress.title">Przetwarzanie</div><div class="mSub" data-i18n="pollsHubPolls.progress.subtitle">Proszę czekać…</div><div style="margin-top:12px;gap:10px"><div class="importRow" style="align-items:center"><div id="progressStep" style="font-weight:800;letter-spacing:.04em">—</div><div id="progressCount" style="margin-left:auto;opacity:.8">0/0</div></div><div style="height:10px;border-radius:999px;background:rgba(255,255,255,.10);overflow:hidden"><div id="progressBar" style="height:100%;width:0%;background:rgba(255,255,255,.85)"></div></div><div class="importMsg" id="progressMsg" style="min-height:18px"></div></div></div></div>
+</body>
+</html>
