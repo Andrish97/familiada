@@ -20,8 +20,8 @@
     <h1 data-i18n="connectDevice.tv.title">Podłącz wyświetlacz</h1>
     <form id="tvConnectForm" novalidate>
       <label for="tvCode" data-i18n="connectDevice.tv.codeLabel">Wpisz kod z panelu sterowania</label>
-      <input class="inp tv-code" id="tvCode" type="text" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="off" autofocus required aria-describedby="tvMessage">
-      <button class="btn gold tv-connect" id="tvConnect" type="submit" data-i18n="connectDevice.enterCode.btn">Podłącz</button>
+      <input class="inp tv-code" id="tvCode" disabled type="text" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="off" autofocus required aria-describedby="tvMessage">
+      <button class="btn gold tv-connect" id="tvConnect" disabled type="submit" data-i18n="connectDevice.enterCode.btn">Podłącz</button>
       <p id="tvMessage" role="status" aria-live="polite"></p>
     </form>
   </main>

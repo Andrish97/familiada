@@ -17,7 +17,6 @@ window.addEventListener("i18n:lang", () => {
   setMessage(messageKey);
   if (langMenu?.contains(document.activeElement)) langButton?.focus();
 });
-input.focus();
 input.addEventListener("input", () => { input.value = input.value.replace(/\D/g, "").slice(0, 6); });
 document.addEventListener("keydown", (event) => {
   const active = document.activeElement;
@@ -70,3 +69,7 @@ form.addEventListener("submit", async (event) => {
     button.disabled = false;
   }
 });
+
+input.disabled = false;
+button.disabled = false;
+input.focus();
