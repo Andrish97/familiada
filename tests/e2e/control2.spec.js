@@ -65,6 +65,64 @@
 // narysował (SVG dot-matrix, nie tekst).
 
 const { test, expect } = require("@playwright/test");
+
+test("control2: własne outro ponad 30 sekund — ustawienia, zapis i podsumowanie", async ({ page, browser }, testInfo) => {
+  test.setTimeout(180000);
+  await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
+  const game = await makeGame(page, `E2E-CONTROL2-CUSTOM-OUTRO-${Date.now()}`, { roundQuestions: [TWO_QUESTIONS[0]] });
+  const contexts = [];
+  try {
+    await openAnon(browser, contexts, `/display2?id=${game.id}&key=${game.share_key_display}`, "display", []);
+    await page.goto(`/control2?id=${game.id}`, { waitUntil: "domcontentloaded" });
+    await expect(page.locator(".stepTitle")).toHaveText("Urządzenia", { timeout: 15000 });
+    await page.getByLabel("Przycisk fizyczny").check();
+    await page.getByLabel("Nie używaj tabletu prowadzącego").check();
+    await page.getByRole("button", { name: "Dalej", exact: true }).click();
+    await expect(page.locator(".stepTitle")).toHaveText("Podsumowanie", { timeout: 10000 });
+    await expect(page.locator('.summarySoundRow:has(input[data-sfx-vol="show_outro"])')).toContainText("Muzyka outro programu");
+    await page.getByRole("button", { name: "Zmień ustawienia" }).click();
+    const frame = page.frameLocator("#gsFrame");
+    await expect(frame.locator("#gsTeamA")).toBeVisible({ timeout: 15000 });
+    await frame.locator("#btnToggleSidebar").click();
+    await frame.locator('.gs-sidebar-item[data-cat="sound"]').click();
+    const fileInput = frame.locator('input[data-sfx-key="show_outro"]');
+    await expect(fileInput).toHaveAttribute("accept", "audio/mpeg,audio/wav,audio/ogg");
+    // A real 31-second PCM WAV verifies the separate outro limit (>30s).
+    const sampleRate = 8000;
+    const samples = sampleRate * 31;
+    const wav = Buffer.alloc(44 + samples * 2);
+    wav.write("RIFF", 0); wav.writeUInt32LE(wav.length - 8, 4); wav.write("WAVEfmt ", 8);
+    wav.writeUInt32LE(16, 16); wav.writeUInt16LE(1, 20); wav.writeUInt16LE(1, 22);
+    wav.writeUInt32LE(sampleRate, 24); wav.writeUInt32LE(sampleRate * 2, 28);
+    wav.writeUInt16LE(2, 32); wav.writeUInt16LE(16, 34); wav.write("data", 36);
+    wav.writeUInt32LE(samples * 2, 40);
+    for (let i = 0; i < samples; i++) wav.writeInt16LE(Math.round(Math.sin(i * 2 * Math.PI * 440 / sampleRate) * 500), 44 + i * 2);
+    await fileInput.setInputFiles({ name: "outro-test-31s.wav", mimeType: "audio/wav", buffer: wav });
+    await expect(frame.locator('.sfx-row:has(input[data-sfx-key="show_outro"]) .sfx-file-name')).toHaveText("outro-test-31s.wav", { timeout: 15000 });
+    const save = frame.getByRole("button", { name: "Zapisz wszystko" });
+    await save.click();
+    await expect(save).toBeEnabled({ timeout: 30000 });
+    await page.locator("#gsOverlay").click({ position: { x: 5, y: 5 } });
+    await expect(page.locator("#gsOverlay")).toHaveClass(/hidden/, { timeout: 10000 });
+    await page.reload({ waitUntil: "domcontentloaded" });
+    await expect(page.locator(".stepTitle")).toHaveText("Podsumowanie", { timeout: 15000 });
+    const inspectAudio = () => page.evaluate(async () => {
+      const resource = performance.getEntriesByType("resource").find((entry) => new URL(entry.name).pathname.endsWith("/shared/js/core/sfx.js"));
+      if (!resource) return null;
+      const sfx = await import(resource.name);
+      return { duration: sfx.getSfxDuration("show_outro"), playing: sfx.isSfxPlaying("show_outro") };
+    });
+    await expect.poll(async () => (await inspectAudio())?.duration, { timeout: 20000 }).toBeCloseTo(31000, 0);
+    const row = page.locator('.summarySoundRow:has(input[data-sfx-vol="show_outro"])');
+    await row.locator(".summarySoundPlay").click();
+    await expect.poll(async () => (await inspectAudio())?.playing, { timeout: 10000 }).toBe(true);
+    await row.locator(".summarySoundPlay").click();
+    await expect.poll(async () => (await inspectAudio())?.playing).toBe(false);
+  } finally {
+    for (const context of contexts) await context.close().catch(() => {});
+    await deleteGame(page, game.id);
+  }
+});
 const { loginAsPooledTestUser, loginAsTestUser, testAccountUsername, isKnownNoiseText, isKnownNoiseUrl } = require("./helpers/login");
 const { clearMailbox, waitForEmail, extractHttpLinks } = require("./helpers/mailbox");
 

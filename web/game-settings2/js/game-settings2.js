@@ -879,7 +879,7 @@ async function renderSound() {
       </div>
       <div class="sfx-file-wrap">
         ${fileTagHtml}${uploadBtnHtml}
-        <input class="sfx-file-input" type="file" accept="/assets/audio/mpeg,audio/wav,audio/ogg" data-sfx-key="${escAttr(key)}"/>
+        <input class="sfx-file-input" type="file" accept="audio/mpeg,audio/wav,audio/ogg" data-sfx-key="${escAttr(key)}"/>
       </div>
     `;
 
