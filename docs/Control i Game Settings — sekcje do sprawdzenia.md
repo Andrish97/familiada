@@ -91,11 +91,11 @@ Alternatywnie: na urządzeniu mobilnym możesz zeskanować **kod QR** widoczny w
 
 **Tryb bez tabletu prowadzącego**
 
-Jeśli prowadzący nie korzysta z osobnego urządzenia (telefonu/tabletu), zaznacz opcję **„Nie używaj tabletu prowadzącego"** przy urządzeniu Prowadzący. Po zaznaczeniu: przyciski i kod połączenia dla prowadzącego są wyszarzone, podpięcie urządzenia prowadzącego nie jest wymagane do przejścia dalej, a kontrolka Prowadzącego w górnym pasku staje się nieaktywna. Operator może samodzielnie prowadzić rozgrywkę z panelu sterowania.
+Jeśli prowadzący nie korzysta z osobnego urządzenia (telefonu/tabletu), zaznacz opcję **„Nie używaj tabletu prowadzącego"** przy urządzeniu Prowadzący. Po zaznaczeniu: przyciski i kod połączenia dla prowadzącego są wyszarzone, podpięcie urządzenia prowadzącego nie jest wymagane do przejścia dalej, a kontrolka Prowadzącego w górnym pasku staje się nieaktywna. Operator może samodzielnie prowadzić rozgrywkę z panelu sterowania. Już otwarty ekran Prowadzącego zostaje wyczyszczony po otrzymaniu tego ustawienia. Zamknięcie pominiętego urządzenia nie blokuje gry.
 
 **Przycisk fizyczny**
 
-Jeśli zamiast Przycisku do pojedynku w przeglądarce używasz przycisku fizycznego, (np. sprzętowego przycisku podłączonego inną ścieżką), zaznacz opcję **„Fizyczny przycisk"** przy urządzeniu Przycisk. Po zaznaczeniu: podpięcie urządzenia przycisku nie jest wymagane, a przebieg pojedynku zmienia się — operator sam decyduje, kto nacisnął pierwszy.
+Jeśli zamiast Przycisku do pojedynku w przeglądarce używasz przycisku fizycznego, (np. sprzętowego przycisku podłączonego inną ścieżką), zaznacz opcję **„Fizyczny przycisk"** przy urządzeniu Przycisk. Po zaznaczeniu: podpięcie urządzenia przycisku nie jest wymagane, a przebieg pojedynku zmienia się — operator sam decyduje, kto nacisnął pierwszy. Otwarty Przycisk w przeglądarce pozostaje nieaktywny i nie może zgłosić naciśnięcia. Jego zamknięcie nie blokuje gry.
 
 W trybie fizycznego przycisku przebieg pojedynku wygląda tak:
 

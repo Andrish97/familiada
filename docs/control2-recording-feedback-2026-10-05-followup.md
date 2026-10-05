@@ -99,3 +99,5 @@ Doprecyzowanie dostępności: tekst w polu blokuje brak odpowiedzi i powtórzeni
 Restart: ustalona przyczyna produkcyjnego błędu — opóźnione odczytanie długości intro ustawiało blokadę ponownie po jej zdjęciu przez restart. Stare przejścia i potwierdzenia blokady sprawdzają teraz generację przebiegu; po restarcie są ignorowane. Wybrane testy doprecyzowań: 78/78 zaliczonych. Zmiany oczekują na publikację i test produkcyjny.
 
 Końcowy wybrany zestaw po doprecyzowaniach i korekcie restartu: 123/123 zaliczonych; pełnego zestawu nie uruchamiano.
+
+Produkcja 37388520578: restart podczas intro, wyłączone otwarte urządzenia (w tym odrzucenie RPC naciśnięcia), wczesne zakończenie finału, własne outro i trzy przypadki TV zaliczone. Pełny finał dochodzi do wyniku 135, ale asercja outro obejmowała także poprawny, opóźniony reveal poprzedniego przejścia. Test poprawiono: najpierw czeka na zakończenie przejścia wyniku i sprawdza final_theme + reveal, potem czyści zapis dźwięków i sprawdza osobne outro. Osobny TV 37388921645: 2 zaliczone, błąd gotowości pilota poprawiony; ponowne sprawdzenie 37389506058.

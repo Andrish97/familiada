@@ -1365,10 +1365,14 @@ test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśni�
       if (i < 4) await page.getByRole("button", { name: "Dalej" }).click();
     }
     // 75 (gracz 1) + 0 (powtórzenie) + 4x15 (gracz 2) = 135 < 200 — pełne 10/10, bez wczesnego wyjścia.
+    await clearSfxLog(page);
     await page.getByRole("button", { name: "Zakończ finał", exact: true }).click();
     await expect(page.locator(".c2-stepper")).toContainText("Koniec gry", { timeout: 22000 });
     await expect(page.getByText("Suma finału: 135")).toBeVisible({ timeout: 10000 });
 
+    // Najpierw kończy się przejście wyniku; dopiero potem liczymy dźwięki outro.
+    await expect(page.getByRole("button", { name: "Zakończ grę", exact: true })).toBeEnabled({ timeout: 30000 });
+    await waitForSfxKeysAnyOrder(page, ["final_theme", "reveal"], 10000);
     // ===== F10: koniec finału =====
     await clearSfxLog(page);
     await page.getByRole("button", { name: "Zakończ grę", exact: true }).click();
