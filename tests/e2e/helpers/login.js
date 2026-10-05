@@ -54,6 +54,10 @@ function instrumentPage(page) {
     }
   });
   page.on("response", (res) => {
+    if (/\/functions\/v1\/(send-mail|send-email|mail-worker)(?:\?|$)/.test(res.url())) {
+      res.json().then((body) => console.log("[e2e-mail]", JSON.stringify({ status: res.status(), endpoint: new URL(res.url()).pathname, result: body })))
+        .catch(() => console.log("[e2e-mail]", res.status(), new URL(res.url()).pathname));
+    }
     if (res.status() >= 400) {
       console.log("[e2e-diag] HTTP", res.status(), res.url());
     }
