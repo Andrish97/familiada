@@ -4539,7 +4539,7 @@ const pl = {
       answer_wrong: "Błędna odpowiedź (X)",
       answer_repeat: "Powtórzenie odpowiedzi w finale",
       time_over: "Koniec czasu w finale",
-      reveal: "Odsłonięcia i przejścia na tablicy",
+      reveal: "Zmiana na wyświetlaczu",
     },
     finalConfirmed: "Finał zatwierdzony!",
     finalReloadStart: "Wczytywanie…",
@@ -4554,6 +4554,7 @@ const pl = {
     dash: "—",
     answerFallback: "Odpowiedź",
     shareDeviceModal: {
+      noneCurrent: "Nie udostępniono jeszcze tego urządzenia.",
       title: "Udostępnij",
       subtitle: "Wybierz subskrybenta lub wpisz e-mail.",
       currentLabel: "Aktualnie udostępnione dla:",
@@ -4624,6 +4625,7 @@ const pl = {
       roundStartSfx: "Startuję rundę – leci dźwięk przejścia.",
     },
     roundsHost: {
+      passAvailable: "Można oddać kontrolę drugiej drużynie.",
       roundTitleDuelBuzzer: "RUNDA {round} — PRZYCISK",
       roundTitleDuel: "RUNDA {round} — POJEDYNEK",
       roundTitlePlay: "RUNDA {round} — ROZGRYWKA",

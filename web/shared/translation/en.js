@@ -4835,6 +4835,7 @@ const en = {
     dash: "—",
     answerFallback: "Answer",
     shareDeviceModal: {
+      noneCurrent: "This device has not been shared yet.",
       title: "Share",
       subtitle: "Pick a subscriber or enter an email.",
       subtitle2: "Select subscribers and devices to share.",
@@ -4903,6 +4904,7 @@ const en = {
       roundStartSfx: "Starting round — transition sound is playing.",
     },
     roundsHost: {
+      passAvailable: "Control can be passed to the other team.",
       roundTitleDuelBuzzer: "ROUND {round} — BUZZER",
       roundTitleDuel: "ROUND {round} — DUEL",
       roundTitlePlay: "ROUND {round} — PLAY",

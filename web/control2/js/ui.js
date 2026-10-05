@@ -22,6 +22,8 @@ import { getSfxCategories, getSfxVariant, isSfxPlaying, playSfx, stopSfx, onSfxE
 import { buildDisplayPreviewRow } from "../../shared/js/gameplay/previewRow.js?v=v2026-10-05T19174";
 import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-05T19174";
 
+import { previewPendingRoundEndDestination } from "./engine.js?v=v2026-10-05T19174";
+
 const $ = (id) => document.getElementById(id);
 const on = (el, ev, fn) => el && el.addEventListener(ev, fn);
 
@@ -961,7 +963,9 @@ export function createUI({ root, emit }) {
     // zamiast osobnego .c2-gameplay-nav z własnym border-top/padding-top
     // (stąd nav:null niżej — bez oddzielnego paska nawigacji na tym ekranie).
     if ((state.phase === "PLAY" || state.phase === "STEAL") && r.canEndRound) {
-      statusItems.push(navButton(t("control.roundsEndRound"), {
+      const label = previewPendingRoundEndDestination(state) === "GAME_END"
+        ? t("control.roundsGoToGameEndBtn") : t("control.roundsEndRound");
+      statusItems.push(navButton(label, {
         cls: "c2-btn primary c2-statusbar-end",
         busy: boardBusy(),
         onclick: () => emit("game.dispatch", { type: "END_ROUND" }),
@@ -1073,7 +1077,7 @@ export function createUI({ root, emit }) {
       nav: [
         navButton(t("control.restartGame"), {
           cls: "c2-btn c2-intro-btn",
-          busy: boardBusy(),
+          busy: false,
           onclick: () => emit("game.restart"),
         }),
         navButton(t("control.returnToMyGames"), {

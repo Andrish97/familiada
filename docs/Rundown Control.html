@@ -379,7 +379,7 @@ footer.colophon{
   </div>
 
   <div class="note" style="margin-top:18px">
-    <b>Status dokumentu — 2026-10-05:</b> zaktualizowano opis do wdrożonego Control 2: natychmiastowe zgłoszenie buzzera, ręczne zakończenie finału, osobne outro, blokada rozłączeń i ustawienia gry. Oznaczenie „automatyczny” informuje o scenariuszu testowym, nie o pełnej ocenie wizualnej. Wszystkie 10 nowych nagrań jest gotowych; ich ocenę wizualną pozostawiono do przeglądu. Osobny materiał do przeglądu: <a href="Control%20i%20Game%20Settings%20%E2%80%94%20sekcje%20do%20sprawdzenia.md">Control i Game Settings — sekcje do sprawdzenia</a>.
+    <b>Status dokumentu — 2026-10-06:</b> opis uzupełniono o najnowszą korektę dźwięków, zakończeń, zegara finału i restartu. Zmiany tej korekty są sprawdzone lokalnie, ale nie są jeszcze wdrożone ani potwierdzone nowymi nagraniami. Lista i stan weryfikacji: <a href="control2-recording-feedback-2026-10-05-followup.md">uwagi do nagrań</a>. Instrukcja do przeglądu: <a href="Control%20i%20Game%20Settings%20%E2%80%94%20sekcje%20do%20sprawdzenia.html">Panel sterowania i Ustawienia rozgrywki</a>.
   </div>
 
   <nav class="toc">
@@ -690,7 +690,7 @@ footer.colophon{
           <div class="expect display"><p class="dev">Wyświetlacz</p><p>Stara plansza zjeżdża (<code>edge down</code>, 1&nbsp;s), <b>dopiero po tym</b> nowa wjeżdża pusta (<code>matrix down</code>, 1.5&nbsp;s) — sekwencyjnie, nie równolegle.</p></div>
           <div class="expect host"><p class="dev">Prowadzący</p><p>Czyszczony, czeka na nową rundę.</p></div>
           <div class="expect buzzer"><p class="dev">Przycisk</p><p><code>OFF</code> do czasu <code>r_duel</code> kolejnej rundy.</p></div>
-          <div class="expect sound"><p class="dev">Dźwięk</p><div class="seq"><span>reveal</span><span>round_transition (sekwencyjnie, reveal→round_transition)</span></div></div>
+          <div class="expect sound"><p class="dev">Dźwięk</p><div class="seq"><span>reveal</span><span>round_transition (razem z reveal, wspólny koniec)</span></div></div>
         </div>
       </div>
     </details>
@@ -741,13 +741,13 @@ footer.colophon{
       <div class="glyph">E</div>
       <div>
         <h2>Koniec gry (bez finału)</h2>
-        <div class="sub">Ekran zakończenia; po blokadzie dźwiękowej możliwy powrót do listy gier lub restart.</div>
+        <div class="sub">Ekran zakończenia; powrót do listy gier po blokadzie dźwiękowej, restart dostępny także podczas dźwięku.</div>
       </div>
     </div>
 
     <details class="scenario">
       <summary><span class="code">E1</span><span class="title">Zwycięzca — tryb logo / punkty / pieniądze</span><span class="pill auto">automatyczny</span><span class="arrow">›</span></summary>
-      <div class="scenario-body"><ol class="steps"><li>Po rozliczeniu rundy i odsłonięciu reszty operator przechodzi do zakończenia gry.</li><li>Klika <code>Zakończ grę</code>.</li></ol><div class="expect-grid"><div class="expect display"><p class="dev">Wyświetlacz</p><p>Plansza zmienia się na logo lub punkty zwycięzcy przy reveal. Bez finału tryb nagrody pokazuje punkty.</p></div><div class="expect host"><p class="dev">Prowadzący</p><p>Odbiera końcowy stan gry.</p></div><div class="expect buzzer"><p class="dev">Przycisk</p><p>Wygaszony.</p></div><div class="expect sound"><p class="dev">Dźwięk</p><p><code>reveal</code> i osobne <code>show_outro</code> od początku zmiany planszy. Dźwięk przejścia rundy nie powtarza się.</p></div></div><div class="note">Dalsze działania i restart czekają na blokadę obejmującą rzeczywistą długość dźwięku.</div></div>
+      <div class="scenario-body"><ol class="steps"><li>Przy terminalnej rundzie nie odsłaniamy reszty odpowiedzi. Operator klika <code>Przejdź do zakończenia gry</code>: bank zostaje rozliczony, grają round_transition i reveal zsynchronizowane na koniec, pojawia się wynik.</li><li>Klika <code>Zakończ grę</code>.</li></ol><div class="expect-grid"><div class="expect display"><p class="dev">Wyświetlacz</p><p>Plansza zmienia się na logo lub punkty zwycięzcy przy reveal. Bez finału tryb nagrody pokazuje punkty.</p></div><div class="expect host"><p class="dev">Prowadzący</p><p>Odbiera końcowy stan gry.</p></div><div class="expect buzzer"><p class="dev">Przycisk</p><p>Przycisk pojedynku jest nieaktywny. Wskaźnik zwycięskiej drużyny na Wyświetlaczu pozostaje zapalony.</p></div><div class="expect sound"><p class="dev">Dźwięk</p><p>Wynik: <code>round_transition</code> i <code>reveal</code>. Następne <code>Zakończ grę</code>: tylko <code>show_outro</code>, bez kolejnej zmiany planszy.</p></div></div><div class="note">Dalsze działania czekają na blokadę obejmującą długość dźwięku. Restart jest zawsze dostępny i przerywa poprzedni przebieg.</div></div>
     </details>
 
     <details class="scenario">
@@ -779,7 +779,7 @@ footer.colophon{
           <div class="expect display"><p class="dev">Wyświetlacz</p><p>Plansza finału wjeżdża z samymi placeholderami (<code>———————————</code> / <code>▒▒</code>). Wskaźnik zapala się po stronie zwycięskiej drużyny i <b>zostaje zapalony przez cały finał</b>.</p></div>
           <div class="expect host"><p class="dev">Prowadzący</p><p>Zasłonięty (<code>COVER</code>).</p></div>
           <div class="expect buzzer"><p class="dev">Przycisk</p><p>Wygaszony na resztę finału (krok <code>f_*</code> ≠ <code>r_duel</code> → zawsze <code>OFF</code>).</p></div>
-          <div class="expect sound"><p class="dev">Dźwięk</p><div class="seq"><span>final_theme</span><span>reveal (sekwencyjnie po sobie)</span></div></div>
+          <div class="expect sound"><p class="dev">Dźwięk</p><div class="seq"><span>final_theme</span><span>round_transition + reveal (po muzyce finału, wspólny koniec)</span></div></div>
         </div>
       </div>
     </details>
@@ -792,7 +792,7 @@ footer.colophon{
           <li>Gracz wpisuje 5 odpowiedzi (poza zasięgiem tego dokumentu — operator wpisuje w jego imieniu).</li>
         </ol>
         <div class="expect-grid">
-          <div class="expect display"><p class="dev">Wyświetlacz</p><p><b>Zanim jeszcze operator kliknie „Start timera”</b>: strona zwycięzcy pokazuje zapowiedź <code>15</code> . Po starcie: te same cyfry odliczają w dół co sekundę do 0, druga drużyna ma cały czas swój normalny wynik.</p></div>
+          <div class="expect display"><p class="dev">Wyświetlacz</p><p><b>Zanim jeszcze operator kliknie „Start timera”</b>: strona przeciwnej drużyny pokazuje zapowiedź <code>15</code>. Po starcie te cyfry odliczają w dół. Wynik zwycięzców pozostaje widoczny; po zatrzymaniu lub wygaśnięciu zegara miejsce przeciwnej drużyny pozostaje puste.</p></div>
           <div class="expect host"><p class="dev">Prowadzący</p><p>Tytuł „FINAŁ RUNDA 1 — ODLICZANIE Xs” aktualizuje się na żywo, każde pytanie pokazuje status (wpisano/brak) w czasie rzeczywistym, nie dopiero przy odsłanianiu.</p></div>
           <div class="expect buzzer"><p class="dev">Przycisk</p><p><code>OFF</code>.</p></div>
           <div class="expect sound"><p class="dev">Dźwięk</p><p>Brak w trakcie odliczania.</p></div>
@@ -817,17 +817,17 @@ footer.colophon{
 
     <details class="scenario">
       <summary><span class="code">F4</span><span class="title">Mapowanie — dwuetapowe odsłanianie</span><span class="pill auto">automatyczny</span><span class="arrow">›</span></summary>
-      <div class="scenario-body"><ol class="steps"><li>Operator wybiera i zatwierdza dopasowanie.</li><li>Trafienie: <code>Pokaż odpowiedź</code>, następnie <code>Pokaż punkty</code>. Dopiero odsłonięcie punktów aktualizuje sumę.</li><li>Brak odpowiedzi, pudło i powtórzenie: <code>Pokaż odpowiedź</code> od razu gra dźwięk błędu i automatycznie odsłania zero, bez dodatkowego kliknięcia punktów.</li></ol><div class="note">Kafelek „Wpisano” mieści pole tekstowe. W mapowaniu gracza 2 widoczna jest również odpowiedź gracza 1. Suma finału znajduje się przy przycisku dalszego przebiegu.</div></div>
+      <div class="scenario-body"><ol class="steps"><li>Operator wybiera i zatwierdza dopasowanie.</li><li>Trafienie: <code>Pokaż odpowiedź</code>, następnie <code>Pokaż punkty</code>. Dopiero odsłonięcie punktów aktualizuje sumę.</li><li>Brak odpowiedzi i powtórzenie: <code>Pokaż odpowiedź</code> automatycznie odsłania zero z dźwiękiem błędu. Wpisana błędna odpowiedź: tekst odsłania się z reveal, a operator osobno odsłania zero z dźwiękiem błędu.</li></ol><div class="note">Kafelek „Wpisano” mieści pole tekstowe. W mapowaniu gracza 2 widoczna jest również odpowiedź gracza 1. Suma finału znajduje się przy przycisku dalszego przebiegu.</div></div>
     </details>
 
     <details class="scenario">
       <summary><span class="code">F5</span><span class="title">Wczesne osiągnięcie celu — gracz 1 lub gracz 2</span><span class="pill auto">automatyczny</span><span class="arrow">›</span></summary>
-      <div class="scenario-body"><ol class="steps"><li>Po odsłonięciu punktów suma osiąga cel finału.</li><li>Dalsze mapowanie jest blokowane. W kolumnie podpowiedzi pojawia się informacja o osiągniętym progu, bez dodatkowego banera.</li><li>Przycisk zmienia się na <code>Zakończ finał</code>. Operator klika go ręcznie — brak automatycznego przejścia.</li><li>Wynik pojawia się z reveal i dźwiękiem przejścia rundy, tak samo jak w F10.</li></ol></div>
+      <div class="scenario-body"><ol class="steps"><li>Po odsłonięciu punktów suma osiąga cel finału.</li><li>Dalsze mapowanie jest blokowane. W kolumnie podpowiedzi pojawia się informacja o osiągniętym progu, bez dodatkowego banera.</li><li>Przycisk zmienia się na <code>Zakończ finał</code>. Operator klika go ręcznie — brak automatycznego przejścia.</li><li>Wynik pojawia się z samym final_theme, tak samo jak w F10.</li></ol></div>
     </details>
 
     <details class="scenario">
       <summary><span class="code">F6</span><span class="title">Przejście do gracza 2 — odpowiedzi gracza 1 i zasłona Prowadzącego</span><span class="pill auto">automatyczny</span><span class="arrow">›</span></summary>
-      <div class="scenario-body"><ol class="steps"><li>Po mapowaniu pięciu odpowiedzi gracza 1, jeśli nie osiągnięto progu, operator rozpoczyna drugą rundę finału.</li></ol><div class="expect-grid"><div class="expect display"><p class="dev">Wyświetlacz</p><p>Przy wpisywaniu gracza 2 widoczne są odkryte odpowiedzi gracza 1.</p></div><div class="expect host"><p class="dev">Prowadzący</p><p>Zasłona jest aktywna. Gest przesunięcia lokalnie odsłania treść; kolejna zmiana stanu gry przywraca zasłonę. Nie odsłania to odpowiedzi na Wyświetlaczu.</p></div><div class="expect buzzer"><p class="dev">Przycisk</p><p>Wygaszony.</p></div><div class="expect sound"><p class="dev">Dźwięk</p><p>Reveal towarzyszy zmianie planszy, wraz z dźwiękiem przejścia rundy.</p></div></div></div>
+      <div class="scenario-body"><ol class="steps"><li>Po mapowaniu pięciu odpowiedzi gracza 1, jeśli nie osiągnięto progu, operator rozpoczyna drugą rundę finału.</li></ol><div class="expect-grid"><div class="expect display"><p class="dev">Wyświetlacz</p><p>Przy wpisywaniu gracza 2 widoczne są odkryte odpowiedzi gracza 1.</p></div><div class="expect host"><p class="dev">Prowadzący</p><p>Zasłona jest aktywna. Gest przesunięcia lokalnie odsłania treść; kolejna zmiana stanu gry przywraca zasłonę. Nie odsłania to odpowiedzi na Wyświetlaczu.</p></div><div class="expect buzzer"><p class="dev">Przycisk</p><p>Przycisk pojedynku jest nieaktywny. Wskaźnik zwycięskiej drużyny na Wyświetlaczu pozostaje zapalony.</p></div><div class="expect sound"><p class="dev">Dźwięk</p><p>Reveal towarzyszy zmianie planszy, wraz z dźwiękiem przejścia rundy.</p></div></div></div>
     </details>
 
     <details class="scenario">
@@ -838,7 +838,7 @@ footer.colophon{
           <li>Gdy gracz 2 powtarza dokładnie to, co powiedział gracz 1: operator zaznacza <code>Powtórzenie</code> zamiast wpisywać odpowiedź.</li>
         </ol>
         <div class="expect-grid">
-          <div class="expect display"><p class="dev">Wyświetlacz</p><p>Zapowiedź <code>20</code> po stronie zwycięzcy przed startem (naprawione dziś, ten sam mechanizm co F2). Odpowiedź oznaczona jako „powtórzenie” wygląda <b>identycznie jak SKIP</b> — bez wizualnego rozróżnienia.</p></div>
+          <div class="expect display"><p class="dev">Wyświetlacz</p><p>Zapowiedź <code>20</code> po stronie przeciwnej drużyny przed startem (naprawione dziś, ten sam mechanizm co F2). Odpowiedź oznaczona jako „powtórzenie” wygląda <b>identycznie jak SKIP</b> — bez wizualnego rozróżnienia.</p></div>
           <div class="expect host"><p class="dev">Prowadzący</p><p>Jedyne miejsce, gdzie „powtórzenie” faktycznie widać — status „powtórzenie” w liście pytań.</p></div>
           <div class="expect buzzer"><p class="dev">Przycisk</p><p><code>OFF</code>.</p></div>
           <div class="expect sound"><p class="dev">Dźwięk</p><p><code>answer_repeat</code> w momencie zaznaczenia flagi (nie przy właściwym odsłonięciu).</p></div>
@@ -858,7 +858,7 @@ footer.colophon{
 
     <details class="scenario">
       <summary><span class="code">F10</span><span class="title">Koniec finału — przeliczenie nagrody</span><span class="pill auto">automatyczny</span><span class="arrow">›</span></summary>
-      <div class="scenario-body"><ol class="steps"><li><code>Zakończ finał</code> pokazuje wybrany wynik: logo, punkty albo nagrodę. Grają razem <code>reveal</code> i <code>round_transition</code>.</li><li>Po ich blokadzie operator klika <code>Zakończ grę</code>. Gra tylko osobne <code>show_outro</code>; wynik pozostaje na ekranie, bez drugiego reveal.</li></ol><div class="note">Nagroda: (punkty rund + punkty finału) × mnożnik nagrody, plus premia za osiągnięcie celu. W nagraniu 04 niższa nagroda wynosi 1167, a w 05 nagroda główna 25960. Outro nie jest intro i nie powtarza dźwięku przejścia rundy.</div></div>
+      <div class="scenario-body"><ol class="steps"><li><code>Zakończ finał</code> pokazuje wybrany wynik: logo, punkty albo nagrodę. Gra tylko <code>final_theme</code>.</li><li>Po blokadzie muzyki finału operator klika <code>Zakończ grę</code>. Gra tylko osobne <code>show_outro</code>; wynik pozostaje na ekranie, bez drugiego reveal.</li></ol><div class="note">Nagroda: (punkty rund + punkty finału) × mnożnik nagrody, plus premia za osiągnięcie celu. W nagraniu 04 niższa nagroda wynosi 1167, a w 05 nagroda główna 25960. Outro nie jest intro i nie powtarza dźwięku przejścia rundy.</div></div>
     </details>
   </section>
 
@@ -985,7 +985,7 @@ footer.colophon{
 <h3>Finał — mapowanie i odsłanianie</h3>
 <p>Pierwsza część pokazuje np. <code>FINAŁ — ODSŁANIANIE (RUNDA 2)</code> oraz <code>Pytanie 3: …</code>. Numer określa aktualnie oceniane pytanie, a „RUNDA 2” oznacza drugiego gracza finału.</p>
 <p>Druga część zawiera:</p>
-<ol><li><b><code>Gracz 1: …</code></b> — tylko przy mapowaniu gracza 2. To wcześniejsza, wpisana odpowiedź pierwszego gracza na to samo pytanie; <code>—</code> oznacza pusty wpis.</li>
+<ol><li><b><code>Gracz 1: …</code></b> — tylko przy mapowaniu gracza 2. To wcześniejsza, wybrana odpowiedź pierwszego gracza na to samo pytanie; <code>—</code> oznacza pusty wpis.</li>
 <li><b><code>Wprowadzono: …</code></b> — tekst wpisany przez operatora dla aktualnego gracza. Wiersz jest pomijany, jeśli nie ma wpisu albo oznaczono powtórzenie.</li>
 <li><b><code>Stan: …</code></b> — informacja o obecnym dopasowaniu, według tabeli poniżej.</li>
 <li><b><code>Lista odpowiedzi:</code></b> — wszystkie odpowiedzi z bazy na bieżące pytanie, z punktami w nawiasach, od najwyżej punktowanej.</li>

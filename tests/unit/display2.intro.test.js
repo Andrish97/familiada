@@ -49,12 +49,17 @@ test("Reconnect after intro restores logo rather than an empty round board", asy
   assert.equal(calls.some((call) => call.name === "rounds.setAll"), false);
 });
 
-test("team names are painted before the game starts, including the initial black board", async () => {
+test("team names stay hidden during device setup and appear at Start game", async () => {
   const { renderer, calls, state } = setup();
   state.step = "devices_display";
   state.display.mode = "BLACK";
   state.teams = { teamA: "Alfa", teamB: "Beta" };
   await renderer.renderSnapshot(stateToRow(state));
+  assert.deepEqual(calls.filter((call) => ["small.long1", "small.long2"].includes(call.name)), []);
+  const previous = stateToRow(state);
+  state.step = "r_intro";
+  state.display.mode = "GAME";
+  await renderer.renderDiff(previous, stateToRow(state));
   assert.deepEqual(calls.filter((call) => ["small.long1", "small.long2"].includes(call.name)).map((call) => call.args[0]), ["Alfa", "Beta"]);
   assert.equal(calls.some((call) => call.name === "logo.show"), false);
 });
@@ -90,4 +95,45 @@ test("final result appears only after Finish final; outro does not redraw or cou
   assert.equal(calls.some((call) => call.name === "win.set" || call.name === "logo.show"), false);
   await renderer.renderSnapshot(endedGame);
   assert.equal(calls.filter((call) => call.name === "win.set").at(-1).args[0], 26500);
+});
+
+for (const winner of ["A", "B"]) test(`final keeps ${winner}'s score and bank while the opponent side becomes the timer`, async () => {
+  const { renderer, calls, state } = setup();
+  state.topCard = "final";
+  state.step = "f_p1_entry";
+  state.final.winnerTeam = winner;
+  state.final.runtime.sum = 64;
+  state.rounds.totals = { A: 350, B: 220 };
+  state.final.runtime.timer = { running: true, endsAt: Date.now() + 15000 };
+  await renderer.renderSnapshot(stateToRow(state));
+  renderer.cancel();
+  const own = winner === "A" ? "small.leftDigits" : "small.rightDigits";
+  const other = winner === "A" ? "small.rightDigits" : "small.leftDigits";
+  assert.equal(calls.filter(call => call.name === own).at(-1).args[0], String(state.rounds.totals[winner]));
+  assert.match(calls.filter(call => call.name === other).at(-1).args[0], /^1[45]$/);
+  assert.equal(calls.filter(call => call.name === "small.topDigits").at(-1).args[0].trim(), "64");
+  state.final.runtime.timer.running = false;
+  await renderer.renderSnapshot(stateToRow(state));
+  assert.equal(calls.filter(call => call.name === other).at(-1).args[0], "");
+  assert.equal(calls.filter(call => call.name === own).at(-1).args[0], String(state.rounds.totals[winner]));
+});
+
+test("restart cancels the pending final-start delay and prevents the old board from returning", async () => {
+  const { renderer, calls, state } = setup();
+  state.topCard = "final";
+  state.step = "f_start";
+  const before = stateToRow(state);
+  state.step = "f_p1_entry";
+  const pending = renderer.renderDiff(before, stateToRow(state));
+  const cancelled = assert.rejects(pending, { name: "AbortError" });
+  await new Promise(resolve => setTimeout(resolve, 5));
+  renderer.cancel();
+  await cancelled;
+  state.step = "devices_display";
+  state.topCard = "devices";
+  state.display.mode = "BLACK";
+  calls.length = 0;
+  await renderer.renderSnapshot(stateToRow(state));
+  await new Promise(resolve => setTimeout(resolve, 80));
+  assert.equal(calls.some(call => call.name === "final.setAll"), false);
 });

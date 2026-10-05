@@ -56,3 +56,18 @@ test("browser animation groups pixel steps into display frames", async (t) => {
   assert.equal(clock, 48);
   assert.ok(tiles.every((tile) => tile.dots.flat().every((dot) => dot.fill === "on")));
 });
+
+test("restart cancels a matrix animation before it can overwrite the new screen", async () => {
+  let generation = 0, writes = 0, clock = 0;
+  const dots = Array.from({ length: 7 }, () => Array.from({ length: 5 }, () => ({
+    setAttribute() { writes++; },
+  })));
+  const animator = createAnimator({
+    tileAt: () => ({ dots }), clearTileAt() {}, clearArea() {}, dotOff: "off",
+    snapArea: () => [[Array.from({ length: 7 }, () => Array(5).fill("on"))]],
+    getGeneration: () => generation, now: () => clock,
+    wait: async ms => { clock += ms; generation++; },
+  });
+  await assert.rejects(animator.inMatrix({}, { c1: 1, c2: 1, r1: 1, r2: 1 }, "down", 100), { name: "AbortError" });
+  assert.equal(writes, 5, "only the first pixel row was painted before cancellation");
+});

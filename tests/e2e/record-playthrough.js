@@ -257,21 +257,40 @@ function startRecording(outFile) {
   const args = [
     "-y",
     "-video_size", `${SCREEN_W}x${SCREEN_H}`,
-    "-framerate", "30",
+    "-framerate", "60",
+    "-thread_queue_size", "128",
     "-f", "x11grab", "-i", DISPLAY_NUM,
-    "-f", "pulse", "-i", `${PULSE_SINK}.monitor`,
-    "-c:v", "libx264", "-preset", "veryfast", "-pix_fmt", "yuv420p",
+    "-thread_queue_size", "512", "-probesize", "32", "-analyzeduration", "100000",
+    "-f", "pulse", "-fragment_size", "4096", "-i", `${PULSE_SINK}.monitor`,
+    "-c:v", "libx264", "-preset", "ultrafast", "-tune", "zerolatency",
+    "-crf", "20", "-threads", "2", "-pix_fmt", "yuv420p",
+    "-r", "60", "-fps_mode", "cfr", "-progress", "pipe:1", "-nostats",
     "-c:a", "aac", "-b:a", "160k",
     outFile,
   ];
   console.log("[record] ffmpeg", args.join(" "));
-  return spawn("ffmpeg", args, { stdio: ["ignore", "inherit", "inherit"] });
+  const proc = spawn("ffmpeg", args, { stdio: ["ignore", "pipe", "inherit"] });
+  proc.captureStats = { targetFps: 60, frame: 0, dup_frames: 0, drop_frames: 0 };
+  let pending = "";
+  proc.stdout.on("data", chunk => {
+    pending += chunk.toString();
+    const lines = pending.split("\n");
+    pending = lines.pop();
+    for (const line of lines) {
+      const separator = line.indexOf("=");
+      if (separator < 0) continue;
+      const key = line.slice(0, separator), value = line.slice(separator + 1).trim();
+      if (["frame", "dup_frames", "drop_frames"].includes(key)) proc.captureStats[key] = Number(value);
+      else if (["fps", "speed", "out_time"].includes(key)) proc.captureStats[key] = value;
+    }
+  });
+  return proc;
 }
 
 async function stopRecording(proc) {
   if (!proc || proc.exitCode !== null) return;
   proc.kill("SIGINT"); // finalizuje plik zamiast urwać go w połowie
-  await new Promise((resolve) => proc.once("exit", resolve));
+  await new Promise((resolve) => proc.once("close", resolve));
 }
 
 // ===== Otwarcie i skasowanie 4 urządzeń jednej gry, po jednym oknie na ćwiartkę =====
@@ -702,17 +721,9 @@ async function scenarioRoundsMechanics(pages, { contexts }) {
   //
   // Zgłoszone PONOWNIE po obejrzeniu nagrania z delay:70 — "dalej chwilę
   // wisi bez akcji a potem Mistrzowie Quizu pojawia się nagle w polu".
-  // Przyczyna: #gsTeamA's "input" handler (js/pages/game-settings2.js)
-  // przy KAŻDYM znaku woła postPreviewRow() — postMessage do osadzonego
-  // /display2?preview=1, które przerysowuje podgląd nazwy drużyny na
-  // symulowanej matrycy LED (realna praca głównego wątku, nie coś
-  // darmowego). Na współdzielonym, wolniejszym runnerze CI ten koszt per
-  // znak bywa dłuższy niż 70ms odstępu — główny wątek (ten sam, na którym
-  // maluje się też SAM INPUT) nie nadąża z przemalowaniem między
-  // klawiszami, więc kilka znaków loguje się logicznie, a widocznie
-  // "doganiają" się w jednej klatce. Podniesione do 140ms, żeby dać
-  // realny margines na przemalowanie między znakami, nie tylko na samo
-  // zdarzenie "input".
+  // 140 ms makes typing readable in the recording. A film alone cannot
+  // establish whether a delay came from the form or the capture process;
+  // use the paired recording/no-recording measurements to diagnose it.
   await gsTeamAInput.clear(); // czyści domyślną nazwę drużyny, zanim wpiszemy nową znak po znaku
   await gsTeamAInput.pressSequentially("Mistrzowie Quizu", { delay: 140 });
   await control.waitForTimeout(800); // niech nagranie złapie podgląd Wyświetlacza aktualizujący się na żywo
@@ -871,7 +882,7 @@ async function scenarioRoundsMechanics(pages, { contexts }) {
   await control.locator("#btnMute").click();
   await control.waitForTimeout(600);
   await armAndConfirmPaced(answerTile(control, 2)); // B kradnie WYGRANĄ
-  await clickPaced(control.getByRole("button", { name: "Zakończ rundę" }));
+  await clickPaced(control.getByRole("button", { name: /^(Zakończ rundę|Przejdź do zakończenia gry)$/ }));
   await control.waitForTimeout(2000); // widz ma zdążyć zobaczyć zaktualizowany wynik przed startem kolejnej rundy
   // Dosłanianie reszty — 6 odpowiedzi, ord 1-2 już odsłonięte (pojedynek+kradzież),
   // zostają 3-4-5-6.
@@ -906,16 +917,10 @@ async function scenarioRoundsMechanics(pages, { contexts }) {
   await armAndConfirmPaced(control.getByRole("button", { name: "X", exact: true }));
   await armAndConfirmPaced(control.getByRole("button", { name: "X", exact: true })); // 3x pudło A -> auto-KRADZIEŻ dla B
   await armAndConfirmPaced(control.getByRole("button", { name: "X", exact: true })); // B kradnie, ale PUDŁUJE -> kradzież PRZEGRANA
-  await clickPaced(control.getByRole("button", { name: "Zakończ rundę" }));
+  await clickPaced(control.getByRole("button", { name: /^(Zakończ rundę|Przejdź do zakończenia gry)$/ }));
   await control.waitForTimeout(2000); // widz ma zdążyć zobaczyć zaktualizowany wynik przed startem kolejnej rundy
-  // Dosłanianie reszty — ord 1-2 już odsłonięte, zostają 3-4-5-6.
-  await armAndConfirmPaced(answerTile(control, 3));
-  await armAndConfirmPaced(answerTile(control, 4));
-  await armAndConfirmPaced(answerTile(control, 5));
-  await armAndConfirmPaced(answerTile(control, 6));
-  // Tu docelowo jest koniec gry (bez finału), nie kolejna runda — ten sam
-  // krok pośredni, ale kontekstowo inny label (r.roundEndDestination==="GAME_END").
-  await clickPaced(control.getByRole("button", { name: "Przejdź do zakończenia gry" }));
+  // The terminal round goes directly to its result; hidden answers stay hidden.
+  await expect(control.getByRole("button", { name: "Zakończ grę", exact: true })).toBeVisible();
 
   // ===== Koniec gry bez finału =====
   await clickPaced(control.getByRole("button", { name: "Zakończ grę" }));
@@ -1008,7 +1013,7 @@ async function scenarioRoundsThreshold(pages, { expectFinal, showReload = false 
   await armAndConfirmPaced(answerTile(control, 4)); // odp. #4
   await armAndConfirmPaced(answerTile(control, 5)); // odp. #5
   await armAndConfirmPaced(answerTile(control, 6)); // odp. #6 -> wszystko odsłonięte -> koniec rundy pomija ekran dosłaniania
-  await clickPaced(control.getByRole("button", { name: "Zakończ rundę" }));
+  await clickPaced(control.getByRole("button", { name: /^(Zakończ rundę|Przejdź do zakończenia gry)$/ }));
   await control.waitForTimeout(2000); // widz ma zdążyć zobaczyć zaktualizowany wynik przed startem kolejnej rundy
 
   // ===== RUNDA 2: B pudłuje -> BEZ resetu, druga próba (A) wygrywa
@@ -1042,7 +1047,7 @@ async function scenarioRoundsThreshold(pages, { expectFinal, showReload = false 
   await armAndConfirmPaced(answerTile(control, 4)); // odp. #4
   await armAndConfirmPaced(answerTile(control, 5)); // odp. #5
   await armAndConfirmPaced(answerTile(control, 6)); // odp. #6 -> wszystko odsłonięte
-  await clickPaced(control.getByRole("button", { name: "Zakończ rundę" }));
+  await clickPaced(control.getByRole("button", { name: /^(Zakończ rundę|Przejdź do zakończenia gry)$/ }));
   await control.waitForTimeout(2000); // widz ma zdążyć zobaczyć zaktualizowany wynik przed startem kolejnej rundy
 
   // ===== RUNDA 3: pojedynek wygrany za pierwszym razem, reszta w PLAY,
@@ -1056,7 +1061,7 @@ async function scenarioRoundsThreshold(pages, { expectFinal, showReload = false 
   await armAndConfirmPaced(answerTile(control, 4)); // odp. #4
   await armAndConfirmPaced(answerTile(control, 5)); // odp. #5
   await armAndConfirmPaced(answerTile(control, 6)); // odp. #6 -> wszystko odsłonięte
-  await clickPaced(control.getByRole("button", { name: "Zakończ rundę" })); // domyślny próg (300) osiągnięty
+  await clickPaced(control.getByRole("button", { name: /^(Zakończ rundę|Przejdź do zakończenia gry)$/ })); // domyślny próg (300) osiągnięty
 
   if (expectFinal) {
     await clickPaced(control.getByRole("button", { name: "Rozpocznij finał" }));
@@ -1094,7 +1099,7 @@ async function playThreeNaturalRoundsToThreshold(pages) {
     await armAndConfirmPaced(answerTile(control, 4)); // odp. #4
     await armAndConfirmPaced(answerTile(control, 5)); // odp. #5
     await armAndConfirmPaced(answerTile(control, 6)); // odp. #6 -> wszystko odsłonięte
-    await clickPaced(control.getByRole("button", { name: "Zakończ rundę" }));
+    await clickPaced(control.getByRole("button", { name: /^(Zakończ rundę|Przejdź do zakończenia gry)$/ }));
     await control.waitForTimeout(2000); // widz ma zdążyć zobaczyć zaktualizowany wynik przed startem kolejnej rundy
   }
 
@@ -1117,7 +1122,7 @@ async function playThreeNaturalRoundsToThreshold(pages) {
   await armAndConfirmPaced(control.getByRole("button", { name: "X", exact: true }));
   await armAndConfirmPaced(control.getByRole("button", { name: "X", exact: true })); // 3x pudło B -> auto-KRADZIEŻ dla A
   await armAndConfirmPaced(answerTile(control, 3)); // A kradnie WYGRANĄ -> bank nadal pełny (skradziona odpowiedź trafia do banku)
-  await clickPaced(control.getByRole("button", { name: "Zakończ rundę" })); // domyślny próg (300) osiągnięty, ale zostały nieodsłonięte odpowiedzi
+  await clickPaced(control.getByRole("button", { name: /^(Zakończ rundę|Przejdź do zakończenia gry)$/ })); // domyślny próg (300) osiągnięty, ale zostały nieodsłonięte odpowiedzi
   await armAndConfirmPaced(answerTile(control, 4)); // dosłanianie reszty
   await armAndConfirmPaced(answerTile(control, 5));
   await armAndConfirmPaced(answerTile(control, 6));
@@ -1157,7 +1162,7 @@ async function scenarioRoundMultiplier(pages) {
   console.log("[record] mnożnik rundy — rundy 1-3 (×1)");
   for (let round = 1; round <= 3; round++) {
     await playFullRound();
-    await clickPaced(control.getByRole("button", { name: "Zakończ rundę" }));
+    await clickPaced(control.getByRole("button", { name: /^(Zakończ rundę|Przejdź do zakończenia gry)$/ }));
     await control.waitForTimeout(1500);
   }
   await expect(control.getByText("Alfa: 300")).toBeVisible({ timeout: 10000 });
@@ -1165,7 +1170,7 @@ async function scenarioRoundMultiplier(pages) {
   console.log("[record] mnożnik rundy — runda 4 (×2, dowód przemnożenia banku)");
   await playFullRound();
   await control.waitForTimeout(800); // widz ma zdążyć zobaczyć pełny bank 100 przed "Zakończ rundę"
-  await clickPaced(control.getByRole("button", { name: "Zakończ rundę" }));
+  await clickPaced(control.getByRole("button", { name: /^(Zakończ rundę|Przejdź do zakończenia gry)$/ }));
   await expect(control.getByText("Alfa: 500")).toBeVisible({ timeout: 10000 }); // 300 + 100x2, nie 400
   await control.waitForTimeout(2500);
 }
@@ -1278,7 +1283,7 @@ async function scenarioFinalFull(pages, { game }) {
     // potwierdź jak odpowiedzi w Rundach (nazwa stała, druga linijka to
     // żywy podgląd).
     await armAndConfirmPaced(control.getByRole("button", { name: "Pokaż odpowiedź" }));
-    if (P1_PLAN[i] === true) await armAndConfirmPaced(control.getByRole("button", { name: "Pokaż punkty" }));
+    if (P1_PLAN[i]) await armAndConfirmPaced(control.getByRole("button", { name: "Pokaż punkty" }));
     await clickPaced(control.getByRole("button", { name: "Dalej" }));
   }
 
@@ -1317,7 +1322,7 @@ async function scenarioFinalFull(pages, { game }) {
   for (let i = 0; i < 5; i++) {
     if (P2_PLAN[i] === true) await armAndConfirmPaced(control.getByRole("button", { name: matchButtonLabel(answerByRank(fq[i], P2_MATCH_RANK[i])) }));
     await armAndConfirmPaced(control.getByRole("button", { name: "Pokaż odpowiedź" }));
-    if (P2_PLAN[i] === true) await armAndConfirmPaced(control.getByRole("button", { name: "Pokaż punkty" }));
+    if (P2_PLAN[i]) await armAndConfirmPaced(control.getByRole("button", { name: "Pokaż punkty" }));
     // Suma po TYM trafieniu (idx3: 70+35=105) przekracza finalTarget:100
     // (makeGame) -> REVEAL_POINTS w engine.js skacze PROSTO do f_end, silnik
     // NIE czeka na kolejne "Dalej" -- ekran mapowania po prostu już nie
@@ -1497,7 +1502,7 @@ async function scenarioDeviceReconnect(pages, { contexts, browser }) {
   await armAndConfirmPaced(answerTile(control, 4));
   await armAndConfirmPaced(answerTile(control, 5));
   await armAndConfirmPaced(answerTile(control, 6));
-  await clickPaced(control.getByRole("button", { name: "Zakończ rundę" }));
+  await clickPaced(control.getByRole("button", { name: /^(Zakończ rundę|Przejdź do zakończenia gry)$/ }));
   await control.waitForTimeout(2000);
 
   // ===== Runda 2, w CAŁOŚCI na ponownie podłączonym Buzzerze — nie tylko
@@ -1511,7 +1516,7 @@ async function scenarioDeviceReconnect(pages, { contexts, browser }) {
   await armAndConfirmPaced(answerTile(control, 4));
   await armAndConfirmPaced(answerTile(control, 5));
   await armAndConfirmPaced(answerTile(control, 6));
-  await clickPaced(control.getByRole("button", { name: "Zakończ rundę" }));
+  await clickPaced(control.getByRole("button", { name: /^(Zakończ rundę|Przejdź do zakończenia gry)$/ }));
   await control.waitForTimeout(2000);
 
   await clickPaced(control.getByRole("button", { name: "Zakończ grę" }));
@@ -1732,7 +1737,7 @@ async function scenarioLogoLock(pages, { setupPage, logoId, logoLockTabId }) {
   await armAndConfirmPaced(answerTile(control, 4)); // odp. #4
   await armAndConfirmPaced(answerTile(control, 5)); // odp. #5
   await armAndConfirmPaced(answerTile(control, 6)); // odp. #6
-  await clickPaced(control.getByRole("button", { name: "Zakończ rundę" }));
+  await clickPaced(control.getByRole("button", { name: /^(Zakończ rundę|Przejdź do zakończenia gry)$/ }));
   await control.waitForTimeout(2000);
   await clickPaced(control.getByRole("button", { name: "Zakończ grę" }));
   await expect(control.getByRole("button", { name: "Wróć do moich gier" })).toBeEnabled({ timeout: 150000 });
@@ -2063,9 +2068,10 @@ async function main() {
         });
         throw err;
       } finally {
+        await stopRecording(rec);
         const runner = stopPerformance();
         const display = await collectDisplayPerformance(pages.display).catch(() => null);
-        const report = { scenario: scenario.file, recording, runner, display };
+        const report = { scenario: scenario.file, recording, capture: rec?.captureStats || null, runner, display };
         fs.mkdirSync(OUT_DIR, { recursive: true });
         fs.writeFileSync(path.join(OUT_DIR, scenario.file.replace(/\.mp4$/, ".performance.json")), JSON.stringify(report, null, 2));
         const { animations, svgUpdates, stateReadDurationsMs, ...displaySummary } = display || {};
@@ -2073,7 +2079,6 @@ async function main() {
           ...report,
           display: display ? { ...displaySummary, animationCount: animations?.length || 0, svgUpdateCount: svgUpdates?.length || 0, stateReadCount: stateReadDurationsMs?.length || 0 } : null,
         }));
-        await stopRecording(rec);
         await closeAll(contexts);
       }
 

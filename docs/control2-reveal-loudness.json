@@ -1,0 +1,82 @@
+{
+  "source": "31f3e75aa^:audio/reveal/classic.mp3",
+  "referenceFiles": [
+    {
+      "key": "buzzer_press",
+      "input_i": "-16.05",
+      "input_tp": "-2.11",
+      "input_lra": "0.00",
+      "input_thresh": "-29.63",
+      "output_i": "-15.96",
+      "output_tp": "-2.06",
+      "output_lra": "0.00",
+      "output_thresh": "-29.54",
+      "normalization_type": "linear",
+      "target_offset": "-0.04"
+    },
+    {
+      "key": "round_transition",
+      "input_i": "-16.28",
+      "input_tp": "-7.09",
+      "input_lra": "2.70",
+      "input_thresh": "-27.40",
+      "output_i": "-15.96",
+      "output_tp": "-7.06",
+      "output_lra": "1.40",
+      "output_thresh": "-26.80",
+      "normalization_type": "dynamic",
+      "target_offset": "-0.04"
+    },
+    {
+      "key": "answer_correct",
+      "input_i": "-16.03",
+      "input_tp": "-1.83",
+      "input_lra": "0.00",
+      "input_thresh": "-28.75",
+      "output_i": "-15.99",
+      "output_tp": "-1.80",
+      "output_lra": "0.00",
+      "output_thresh": "-28.71",
+      "normalization_type": "linear",
+      "target_offset": "-0.01"
+    },
+    {
+      "key": "final_theme",
+      "input_i": "-16.25",
+      "input_tp": "-3.86",
+      "input_lra": "0.80",
+      "input_thresh": "-27.04",
+      "output_i": "-15.50",
+      "output_tp": "-2.97",
+      "output_lra": "0.50",
+      "output_thresh": "-26.16",
+      "normalization_type": "dynamic",
+      "target_offset": "-0.50"
+    }
+  ],
+  "targetLUFS": -16.15,
+  "original": {
+    "input_i": "-7.34",
+    "input_tp": "3.54",
+    "input_lra": "0.00",
+    "input_thresh": "-18.43",
+    "output_i": "-16.17",
+    "output_tp": "-5.27",
+    "output_lra": "0.00",
+    "output_thresh": "-27.26",
+    "normalization_type": "linear",
+    "target_offset": "0.02"
+  },
+  "output": {
+    "input_i": "-16.43",
+    "input_tp": "-5.84",
+    "input_lra": "0.00",
+    "input_thresh": "-27.51",
+    "output_i": "-16.13",
+    "output_tp": "-5.56",
+    "output_lra": "0.00",
+    "output_thresh": "-27.22",
+    "normalization_type": "linear",
+    "target_offset": "-0.02"
+  }
+}

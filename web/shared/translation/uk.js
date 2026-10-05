@@ -4819,6 +4819,7 @@ const uk = {
     dash: "—",
     answerFallback: "Відповідь",
     shareDeviceModal: {
+      noneCurrent: "Цей пристрій ще нікому не надано.",
       title: "Поділитися",
       subtitle: "Обери підписника або введи e-mail.",
       currentLabel: "Актуально надано доступ для:",
@@ -4889,6 +4890,7 @@ const uk = {
       roundStartSfx: "Починаю раунд — звучить перехідний звук.",
     },
     roundsHost: {
+      passAvailable: "Можна передати хід іншій команді.",
       roundTitleDuelBuzzer: "РАУНД {round} — КНОПКА",
       roundTitleDuel: "РАУНД {round} — ДУЕЛЬ",
       roundTitlePlay: "РАУНД {round} — ГРА",

@@ -33,6 +33,7 @@ import { t } from "../../shared/translation/translation.js?v=v2026-10-05T19174";
 import { clipDisplayText } from "../../shared/js/gameplay/displayText.js?v=v2026-10-05T19174";
 
 export async function createScene() {
+  let animationGeneration = 0;
   const $ = (id) => document.getElementById(id);
 
   let SUMA_LABEL = t("display.sumLabel");
@@ -140,7 +141,7 @@ export async function createScene() {
     return snap;
   };
 
-  const anim = createAnimator({ tileAt, snapArea, clearArea, clearTileAt, dotOff: COLORS.dotOff });
+  const anim = createAnimator({ tileAt, snapArea, clearArea, clearTileAt, dotOff: COLORS.dotOff, getGeneration: () => animationGeneration });
   if (typeof anim.outEdge !== "function" && typeof anim.inEdge === "function") anim.outEdge = (...args) => anim.inEdge(...args);
   if (typeof anim.outMatrix !== "function" && typeof anim.inMatrix === "function") anim.outMatrix = (...args) => anim.inMatrix(...args);
 
@@ -694,5 +695,5 @@ export async function createScene() {
   setLongTextCenteredMax15(GLYPHS, long1, "", LIT.main);
   setLongTextCenteredMax15(GLYPHS, long2, "", LIT.main);
 
-  return { api, themeMgr };
+  return { api, themeMgr, cancelAnimations() { animationGeneration++; } };
 }

@@ -117,6 +117,7 @@ export function createShareDevice({ currentUser, game, onBadgesChanged }) {
   }
 
   let _deviceType = null;
+  let renderVersion = 0;
   const cooldownTicker = createCooldownTicker();
   cooldownTicker.start();
 
@@ -132,11 +133,14 @@ export function createShareDevice({ currentUser, game, onBadgesChanged }) {
   overlay.addEventListener("click", (e) => { if (e.target === overlay) overlay.style.display = "none"; });
 
   async function renderModal() {
+    const version = ++renderVersion;
+    const deviceType = _deviceType;
     if (msgEl) msgEl.textContent = "";
     cooldownTicker.resetBindings();
 
     const { data: shares } = await sb().rpc("list_my_device_shares");
-    const current = (shares || []).find((s) => s.device_type === _deviceType);
+    if (version !== renderVersion) return;
+    const current = (shares || []).find((s) => s.device_type === deviceType);
 
     if (currentWrap && currentCont) {
       if (current) {
@@ -157,7 +161,8 @@ export function createShareDevice({ currentUser, game, onBadgesChanged }) {
         if (emailInp) emailInp.disabled = true;
         if (btnAdd) btnAdd.disabled = true;
       } else {
-        currentWrap.style.display = "none";
+        currentWrap.style.display = "";
+        currentCont.textContent = t("control.shareDeviceModal.noneCurrent");
         if (emailInp) emailInp.disabled = false;
         if (btnAdd) btnAdd.disabled = false;
       }
@@ -165,6 +170,7 @@ export function createShareDevice({ currentUser, game, onBadgesChanged }) {
 
     if (!subsList) return;
     const { data: subs } = await sb().rpc("polls_hub_list_my_subscribers");
+    if (version !== renderVersion) return;
     const activeSubs = (subs || []).filter((r) => r.status === "active" && r.subscriber_user_id);
 
     if (!activeSubs.length) {

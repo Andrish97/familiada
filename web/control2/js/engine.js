@@ -136,7 +136,7 @@ function duelRegisterResult(d, team, { pts, isX, isTop }) {
 
 function gotoEnd(state) {
   state.final.runtime.timer = { running: false, phase: null, endsAt: 0 };
-  return { step: "f_end", phase: null, controlTeam: null, topCard: "final", soundCueKey: "round_transition" };
+  return { step: "f_end", phase: null, controlTeam: null, topCard: "final", soundCueKey: "final_theme" };
 }
 
 // R9: dokąd pójdzie gra po końcu bieżącej rundy — CZYSTA funkcja (żadnej
@@ -153,6 +153,15 @@ export function previewRoundEndDestination(state) {
   }
   if (!state.rounds._questionPool.length) return "GAME_END";
   return "NEXT_ROUND";
+}
+
+// Preview before awarding the current bank, for the end-round button.
+export function previewPendingRoundEndDestination(state) {
+  const r = state.rounds;
+  const winner = r.steal.used && r.steal.won ? r.steal.team : state.controlTeam;
+  const totals = { ...r.totals };
+  if (winner) totals[winner] = (totals[winner] || 0) + r.bankPts * getRoundMultiplier(state.settings, r.roundNo);
+  return previewRoundEndDestination({ ...state, rounds: { ...r, totals } });
 }
 
 // R9: koniec rundy — jedyny punkt, gdzie decyduje się co dalej (kolejna
@@ -277,11 +286,11 @@ const REDUCERS = {
       const result = duelRegisterResult(r.duel, team, { pts: ans.fixed_points, isX: false, isTop });
       if (result.type === "WIN") {
         r.allowPass = true;
-        return { step: "r_play", phase: "PLAY", controlTeam: result.winner, topCard: "rounds", soundCueKey: "answer_correct" };
+        return { step: "r_play", phase: "PLAY", controlTeam: result.winner, topCard: "rounds", soundCueKey: "reveal" };
       }
       // CONTINUE_SECOND lub RESET — duel.currentTeam już zaktualizowany przez
       // duelRegisterResult, zostajemy w tym samym kroku/fazie.
-      return { step: "r_play", phase: "DUEL", controlTeam: null, topCard: "rounds", soundCueKey: "answer_correct" };
+      return { step: "r_play", phase: "DUEL", controlTeam: null, topCard: "rounds", soundCueKey: "reveal" };
     }
 
     r.revealed.push(action.ord);
@@ -294,11 +303,11 @@ const REDUCERS = {
       r.stealWon = true;
       r.steal.active = false;
       r.canEndRound = true;
-      return { step: "r_play", phase: "STEAL", controlTeam: state.controlTeam, topCard: "rounds", soundCueKey: "answer_correct" };
+      return { step: "r_play", phase: "STEAL", controlTeam: state.controlTeam, topCard: "rounds", soundCueKey: "reveal" };
     }
 
     if (r.revealed.length >= r.answers.length) r.canEndRound = true;
-    return { step: "r_play", phase: state.phase, controlTeam: state.controlTeam, topCard: "rounds", soundCueKey: "answer_correct" };
+    return { step: "r_play", phase: state.phase, controlTeam: state.controlTeam, topCard: "rounds", soundCueKey: "reveal" };
   },
 
   // ---- R4: pass (raz na rundę, tylko PLAY, tylko przed 1. trafieniem) ----
@@ -428,6 +437,9 @@ const REDUCERS = {
     r.totals[winner] = (r.totals[winner] || 0) + r.bankPts * multiplier;
     r.bankPts = 0;
 
+    if (previewRoundEndDestination(state) === "GAME_END") {
+      return { ...finalizeRound(state), soundCueKey: "round_transition" };
+    }
     if (r.revealed.length < r.answers.length) {
       // Destination policzone TERAZ (totals już ostateczne dla tej rundy) i
       // zapisane w state — control2/js/ui.js czyta je wprost, żeby podpisać
@@ -450,7 +462,7 @@ const REDUCERS = {
     const r = state.rounds;
     if (r.revealed.includes(action.ord)) return null;
     r.revealed.push(action.ord);
-    return { step: "r_play", phase: "REVEAL", controlTeam: state.controlTeam, topCard: "rounds", soundCueKey: "answer_correct" };
+    return { step: "r_play", phase: "REVEAL", controlTeam: state.controlTeam, topCard: "rounds", soundCueKey: "reveal" };
   },
 
   // ---- R8->R9: operator potwierdza koniec rundy PO ręcznym odsłonięciu
@@ -528,7 +540,10 @@ const REDUCERS = {
     // repeat włącza się wyłącznie przyciskiem, ale gaśnie jako efekt uboczny
     // innych akcji operatora (tu: edycja pola).
     const next = { ...prev, text: action.text };
-    if (action.round === 2 && prev.repeat === true) next.repeat = false;
+    if (action.round === 2 && prev.repeat === true && action.text !== prev.text) {
+      next.repeat = false;
+      state.final.runtime.map2[action.idx] = emptyMapRows()[0];
+    }
     state.final.runtime[key][action.idx] = next;
     return sameStep(state);
   },
@@ -550,6 +565,8 @@ const REDUCERS = {
       row.matchId = null;
       row.outText = "";
       row.pts = 0;
+    } else if (prevEntry.repeat) {
+      state.final.runtime.map2[action.idx] = emptyMapRows()[0];
     }
     return { ...sameStep(state), soundCueKey: action.repeat ? "answer_repeat" : undefined };
   },
@@ -638,7 +655,7 @@ const REDUCERS = {
     const row = state.final.runtime[mapKey(action.round)][action.idx];
     row.outText = shownText(row);
     row.revealedAnswer = true;
-    if (row.kind !== "MATCH") {
+    if (row.kind === "SKIP") {
       return REDUCERS.REVEAL_POINTS(state, action);
     }
     row.revealedPoints = false;

@@ -56,7 +56,7 @@ export function deriveButtonState(row) {
   if (row.top_card !== "rounds") return STATE.OFF;
   if (row.detail.settings?.physicalBuzzer) return STATE.OFF;
   const duel = row.detail.rounds?.duel;
-  if (!duel?.enabled) return STATE.OFF;
+  if (!duel?.enabled) return row.step === "r_intro" || row.step === "r_roundStart" ? STATE.ON : STATE.OFF;
   const pressed = duel.firstTeam || duel.lastPressed;
   if (!pressed) return STATE.ON;
   return pressed === "A" ? STATE.PUSHED_A : STATE.PUSHED_B;
@@ -160,7 +160,7 @@ export function createButtonRenderer() {
     // stanu (ON zostaje ON, nie OFF -- to nie jest "gra jeszcze się nie
     // zaczęła", tylko "za wcześnie o ułamek sekundy"), tylko dokładamy
     // disabled na czas blokady.
-    if (state === STATE.ON && isLockedRow(row)) {
+    if (state === STATE.ON && (isLockedRow(row) || row.step !== "r_duel" || !row.detail?.rounds?.duel?.enabled)) {
       if (btnA) btnA.disabled = true;
       if (btnB) btnB.disabled = true;
     }

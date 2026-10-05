@@ -7,7 +7,7 @@
 
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { createEngine, getRoundMultiplier, isThresholdHit } from "../../web/control2/js/engine.js";
+import { createEngine, getRoundMultiplier, isThresholdHit, previewPendingRoundEndDestination } from "../../web/control2/js/engine.js";
 import { createFakeStore } from "./helpers/fakeStore.js";
 import { DEFAULT_SETTINGS } from "../../web/shared/js/gameplay/gameStateShape.js";
 
@@ -447,4 +447,22 @@ test("GAME_END_SHOW: idempotentne — drugie wywołanie jest no-opem", async () 
   const second = await dispatch({ type: "GAME_END_SHOW" });
   assert.equal(second, null);
   assert.equal(store.state.rev, revAfterFirst);
+});
+
+
+test("terminal round previews game end before awarding the bank and skips remaining answers", async () => {
+  const { store, dispatch } = makeEngine({ settings: { ...DEFAULT_SETTINGS, hasFinal: false, finalMinPoints: 30, roundMultipliers: [2] } });
+  await dispatch({ type: "START_ROUND" });
+  await dispatch({ type: "ACCEPT_BUZZ", team: "A" });
+  await dispatch({ type: "REVEAL_ANSWER", ord: 1 });
+  assert.equal(previewPendingRoundEndDestination(store.state), "GAME_END");
+  assert.equal(store.state.rounds.totals.A, 0, "preview does not award the bank");
+  const revealed = [...store.state.rounds.revealed];
+  await dispatch({ type: "END_ROUND" });
+  assert.equal(store.state.step, "r_gameEnd");
+  assert.deepEqual(store.state.rounds.revealed, revealed);
+  assert.equal(store.state.rounds.totals.A, 80);
+  assert.equal(store.commits.at(-1).soundCueKey, "round_transition");
+  await dispatch({ type: "GAME_END_SHOW" });
+  assert.equal(store.commits.at(-1).soundCueKey, "final_end");
 });

@@ -165,7 +165,8 @@ export function createHostRenderer() {
       setPane2([r.question?.text || "", "", ...answerLines]);
       return;
     }
-    setPane1(`${title}\n\n${r.question?.text || ""}`);
+    const passHint = row.phase === "PLAY" && r.allowPass && !r.passUsed ? `\n\n${rh("passAvailable")}` : "";
+    setPane1(`${title}\n\n${r.question?.text || ""}${passHint}`);
     setPane2(answerLines);
   }
 
@@ -187,7 +188,7 @@ export function createHostRenderer() {
 
     const lines = [];
     if (round === 2) {
-      const p1Text = f.runtime.p1[idx]?.text || "";
+      const p1Text = f.runtime.map1[idx]?.outText || f.runtime.p1[idx]?.text || "";
       lines.push(`${fh("player1Label")}: ${p1Text || fu("fallbackAnswer")}`, "");
     }
     if (!rep && input) lines.push(`${fh("enteredLabel")}: ${input}`);

@@ -24,7 +24,7 @@ function row(overrides = {}) {
 function makeEngine(durations = {}) {
   const played = [];
   const playSfx = (key) => played.push(key);
-  const getSfxDuration = async (key) => durations[key] ?? 0;
+  const getSfxDuration = async (key) => durations[key] ?? 0.001;
   const engine = createSoundCueEngine({ playSfx, getSfxDuration });
   return { engine, played };
 }
@@ -108,12 +108,13 @@ test("F7->F8 (START_P2_ROUND, f_p2_start -> f_p2_entry) z cue round_transition g
   assert.deepEqual(played.slice().sort(), ["reveal", "round_transition"].sort());
 });
 
-test("koniec rundy (step r_play, phase PLAY -> dowolny) z cue round_transition gra SEKWENCYJNIE: reveal, potem round_transition", async () => {
+test("koniec rundy (step r_play, phase PLAY -> dowolny) z cue round_transition gra równolegle: reveal i round_transition kończą się razem", async () => {
   const { engine, played } = makeEngine({ reveal: 0.05 });
   const a = row({ step: "r_play", phase: "PLAY", sound_cue_seq: 0 });
   const b = row({ step: "r_gameEnd", phase: null, sound_cue_seq: 1, sound_cue_key: "round_transition" });
   engine.handleTransition(a, b);
-  assert.deepEqual(played, ["reveal"]); // od razu, bez czekania na drugi
+  await flush();
+  assert.deepEqual(played, ["reveal"]);
   await new Promise((resolve) => setTimeout(resolve, 100));
   assert.deepEqual(played, ["reveal", "round_transition"]);
 });
@@ -136,29 +137,30 @@ test("koniec rundy z fazy REVEAL (R8, po NEXT_AFTER_REVEAL) liczy się tak samo 
   const a = row({ step: "r_play", phase: "REVEAL", sound_cue_seq: 0 });
   const b = row({ step: "r_roundStart", phase: "READY", sound_cue_seq: 1, sound_cue_key: "round_transition" });
   engine.handleTransition(a, b);
-  assert.deepEqual(played, ["reveal"]); // od razu, bez czekania na drugi
+  await flush();
+  assert.deepEqual(played, ["reveal"]);
   await new Promise((resolve) => setTimeout(resolve, 100));
   assert.deepEqual(played, ["reveal", "round_transition"]);
 });
 
-test("final_theme gra SEKWENCYJNIE: final_theme, potem reveal", async () => {
+test("start finału: final_theme, potem round_transition i reveal", async () => {
   const { engine, played } = makeEngine({ final_theme: 0.05 });
-  const a = row({ sound_cue_seq: 0 });
-  const b = row({ sound_cue_seq: 1, sound_cue_key: "final_theme" });
+  const a = row({ step: "f_start", sound_cue_seq: 0 });
+  const b = row({ step: "f_p1_entry", sound_cue_seq: 1, sound_cue_key: "final_theme" });
   engine.handleTransition(a, b);
   assert.deepEqual(played, ["final_theme"]);
   await new Promise((resolve) => setTimeout(resolve, 100));
-  assert.deepEqual(played, ["final_theme", "reveal"]);
+  assert.deepEqual(played, ["final_theme", "round_transition", "reveal"]);
 });
 
-test("final_end starts reveal and outro together without repeating round transition", async () => {
+test("final_end plays only outro without another board change", async () => {
   const { engine, played } = makeEngine({ round_transition: 0.05, reveal: 0.05 });
   const a = row({ sound_cue_seq: 0 });
   const b = row({ sound_cue_seq: 1, sound_cue_key: "final_end" });
   engine.handleTransition(a, b);
-  assert.deepEqual(played, ["reveal", "show_outro"]);
+  assert.deepEqual(played, ["show_outro"]);
   await new Promise((resolve) => setTimeout(resolve, 150));
-  assert.deepEqual(played, ["reveal", "show_outro"]);
+  assert.deepEqual(played, ["show_outro"]);
 });
 
 test("FINISH_FINAL plays only outro because the final result is already visible", () => {
@@ -167,12 +169,12 @@ test("FINISH_FINAL plays only outro because the final result is already visible"
   assert.deepEqual(played, ["show_outro"]);
 });
 
-test("Reaching final target plays scoring first and round-end afterward", async () => {
+test("Reaching final target plays scoring and awaits manual final completion", async () => {
   const { engine, played } = makeEngine({ answer_correct: 0.03 });
   engine.handleTransition(row({ step: "f_p1_map_q1" }), row({ step: "f_end", sound_cue_seq: 1, sound_cue_key: "answer_correct" }));
   assert.deepEqual(played, ["answer_correct"]);
   await new Promise((resolve) => setTimeout(resolve, 70));
-  assert.deepEqual(played, ["answer_correct", "round_transition", "reveal"]);
+  assert.deepEqual(played, ["answer_correct"]);
 });
 
 test("brak zmiany sound_cue_seq => nic nie gra", async () => {
@@ -182,4 +184,14 @@ test("brak zmiany sound_cue_seq => nic nie gra", async () => {
   engine.handleTransition(a, b);
   await flush();
   assert.deepEqual(played, []);
+});
+
+
+test("restart cancels sounds waiting for the end of the final theme", async () => {
+  const { engine, played } = makeEngine({ final_theme: 0.08 });
+  engine.handleTransition(row({ step: "f_start" }), row({ step: "f_p1_entry", sound_cue_seq: 1, sound_cue_key: "final_theme" }));
+  await flush();
+  engine.handleTransition(row({ step: "f_p1_entry" }), row({ step: "devices_display", top_card: "devices" }));
+  await new Promise(resolve => setTimeout(resolve, 120));
+  assert.deepEqual(played, ["final_theme"]);
 });

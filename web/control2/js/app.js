@@ -299,6 +299,8 @@ async function main() {
   let committing = false;
   let presenceFlags = {};
   let disconnectEpisode = false;
+  let restarting = false;
+  let dispatchGeneration = 0;
   let lockedUntil = 0;
   // Patrz armLock() niżej -- prawdziwa (nie zgadywana z góry) blokada na
   // czas round-tripu store.setLock(ms).
@@ -413,7 +415,8 @@ async function main() {
   // kończy, zanim zacznie się następny.
   let _dispatchGatedQueue = Promise.resolve();
   function dispatchGated(action) {
-    const run = () => dispatchGatedNow(action);
+    const generation = dispatchGeneration;
+    const run = () => generation === dispatchGeneration && !restarting ? dispatchGatedNow(action) : null;
     const result = _dispatchGatedQueue.then(run, run);
     _dispatchGatedQueue = result.catch(() => {});
     return result;
@@ -572,7 +575,7 @@ async function main() {
     // kliknięcie w trakcie jeszcze trwającego locked_until z poprzedniej
     // akcji (np. dźwięku końca gry) kończyło się surowym window.alert
     // ("Błąd: locked") zamiast po prostu czekać jak reszta dużych przejść.
-    if (btnStartOver) btnStartOver.disabled = busy();
+    if (btnStartOver) btnStartOver.disabled = false;
   }
 
   // Samo renderCurrent() maluje cyfry timera3/finału tylko RAZ, w momencie
@@ -851,7 +854,8 @@ async function main() {
 
   async function handle(action, payload) {
     try {
-      const gameAction = action === "game.dispatch" || action === "rounds.introNext" || action === "final.toggleTimer" || action === "game.restart" || action === "setup.start";
+      const gameAction = action === "game.dispatch" || action === "rounds.introNext" || action === "final.toggleTimer" || action === "setup.start";
+      if (gameAction && restarting) return;
       if (gameAction && busy() && payload?.type !== "SET_ENTRY_TEXT") return;
       if (gameAction && missingDevices(store.state, presenceFlags).length) return;
       if (action === "ui.rerender") {
@@ -1055,13 +1059,26 @@ async function main() {
   // renderGameEnd/renderFinalEnd, akcja "game.restart" w handle() niżej) —
   // dokładnie ta sama logika, dwa miejsca wywołania.
   async function restartGame() {
-    if (busy()) return;
+    if (restarting) return;
     const ok = await confirmModal({
       title: "Zacznij od nowa",
       text: "To wróci do podłączania urządzeń i wyzeruje postęp gry (drużyny, pytania, wyniki). Parowanie urządzeń zostaje. Ustawienia zaawansowane zostają zachowane.",
     });
     if (!ok) return;
-    if (busy()) return;
+    restarting = true;
+    dispatchGeneration++;
+    try {
+      await _dispatchGatedQueue;
+      await store.setLock(0);
+      lockedUntil = 0;
+      lockConfirmPending = false;
+      await restartGameNow();
+    } finally {
+      restarting = false;
+      renderCurrent();
+    }
+  }
+  async function restartGameNow() {
     const keptAdvanced = {};
     for (const key of ADVANCED_SETTINGS_KEYS) keptAdvanced[key] = store.state.settings[key];
     store.state.locks = { gameStarted: false, finalActive: false, gameEnded: false };
@@ -1126,7 +1143,7 @@ async function main() {
   // starym ekranie, z zerowym śladem w UI, że coś się nie udało (znalezione
   // przy diagnozie e2e: "Zacznij od nowa" → "Tak" nie wracał do D0, bez
   // żadnego widocznego błędu).
-  btnStartOver?.addEventListener("click", () => { if (!busy()) handle("game.restart"); });
+  btnStartOver?.addEventListener("click", () => { handle("game.restart"); });
 
   store.subscribe(renderCurrent);
   renderCurrent();

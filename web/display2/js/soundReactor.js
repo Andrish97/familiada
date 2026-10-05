@@ -10,11 +10,11 @@
 // domyślne "control", ten reaktor po prostu nic nie robi (zero podwójnego
 // odtwarzania z dwóch urządzeń naraz).
 
-import { playSfx, getSfxDuration } from "../../shared/js/core/sfx.js?v=v2026-10-05T19174";
+import { playSfx, getSfxDuration, stopSfx } from "../../shared/js/core/sfx.js?v=v2026-10-05T19174";
 import { createSoundCueEngine } from "../../shared/js/gameplay/soundCueEngine.js?v=v2026-10-05T19174";
 
 export function createDisplaySoundReactor() {
-  const engine = createSoundCueEngine({ playSfx, getSfxDuration });
+  const engine = createSoundCueEngine({ playSfx, getSfxDuration, stopSfx });
   let prevRow = null;
 
   function onRow(row) {
@@ -24,6 +24,8 @@ export function createDisplaySoundReactor() {
       const isDisplaySource = settings.soundSource === "display";
       if (isDisplaySource && !settings.soundMuted) {
         engine.handleTransition(prevRow, row);
+      } else {
+        engine.cancel();
       }
     }
     prevRow = row;

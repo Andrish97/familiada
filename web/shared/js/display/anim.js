@@ -17,6 +17,7 @@ export function createAnimator({
   clearArea,
   clearTileAt,
   dotOff,
+  getGeneration = () => 0,
   now = () => performance.now(),
   wait = sleep,
 }) {
@@ -29,12 +30,16 @@ export function createAnimator({
   // Każdy krok ma termin w jednej osi czasu. Koszt SVG i opóźnienie
   // wcześniejszego timera nie są dodawane ponownie do kolejnych pauz.
   const stepPacer = (totalMs, steps) => {
+    const token = getGeneration();
+    const check = () => { if (token !== getGeneration()) throw Object.assign(new Error("Animation cancelled"), { name: "AbortError" }); };
     const start = now();
     const duration = clampMs(totalMs, 0);
     let completed = 0;
     return async () => {
+      check();
       const deadline = start + duration * (++completed) / (steps || 1);
       while (now() < deadline) {
+        check();
         // Zmiany SVG grupujemy według klatek, zamiast budzić główny wątek
         // osobnym timerem dla każdego kafelka/paska pikseli.
         if (wait === sleep && typeof requestAnimationFrame === "function") {
@@ -43,6 +48,7 @@ export function createAnimator({
           await wait(Math.max(1, deadline - now()));
         }
       }
+      check();
     };
   };
 

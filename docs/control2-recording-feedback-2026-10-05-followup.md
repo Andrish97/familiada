@@ -1,0 +1,75 @@
+# Uwagi do nagrań i instrukcji — kolejna korekta
+
+Źródło: uwagi przesłane w rozmowie oraz lokalne poprawki WIELKIMI LITERAMI w pliku „Control i Game Settings — sekcje do sprawdzenia.md”. Lista dotyczy nowego Panelu sterowania i nowych ekranów urządzeń. Pierwszego Wyświetlacza nie zmieniamy.
+
+Punkt oznaczamy jako wykonany po poprawieniu i sprawdzeniu zachowania. Zmiana w kodzie, wdrożenie i ocena płynności nagrania to osobne informacje; nie zastępują się nawzajem.
+
+## Nagrania i działanie gry
+
+- [ ] 01. Wyświetlacz pozostaje czarny podczas podłączania urządzeń i Podsumowania. Aktywuje się wraz z nazwami drużyn dopiero na ekranie z przyciskiem „Rozpocznij grę”.
+- [ ] 02. Przy zakończeniu zwykłej rundy reveal i przejście rundy grają razem, bez sekwencji jeden po drugim.
+- [x] 03. Przywrócić poprzedni reveal, sprzed podmiany na `reveal_new`, i wyrównać jego głośność do pozostałych plików. Poprzedni plik odnaleźć w historii repozytorium.
+- [ ] 04. Okno utraty połączenia pokazuje przetłumaczony komunikat, nie klucz tłumaczenia.
+- [ ] 05. Przycisk do pojedynku jest widoczny od ekranu „Rozpocznij grę”, ale nie można go nacisnąć przed rozpoczęciem aktywnego pojedynku.
+- [ ] 06. „Zacznij od nowa” nie jest blokowane przez dźwięki, animacje ani rozłączenie urządzeń. Restart musi bezpiecznie zakończyć poprzedni przebieg, bez późniejszych akcji z jego kolejki.
+- [ ] 07. Przy rozpoczęciu rundy przejście rundy i reveal kończą się razem. Dłuższy dźwięk rozpoczyna się wcześniej; animacja zmiany planszy trwa podczas reveal.
+- [ ] 08. Prowadzący dostaje informację, kiedy można oddać kontrolę drugiej drużynie.
+- [ ] 09. Na początku finału najpierw gra muzyka finału, następnie przejście rundy i reveal zsynchronizowane na koniec. Plansza zmienia się podczas reveal. To kolejność doprecyzowana w końcowej części uwag.
+- [ ] 10. Wskaźnik drużyny zwycięskiej pozostaje zapalony do końca gry, również na ekranie wyniku.
+- [ ] 11. Odsłanianiu odpowiedzi towarzyszy przywrócony stary reveal. Sprawdzić rundy i finał, aby nie zostały niespójne reguły odtwarzania.
+- [ ] 12. Brak odpowiedzi odsłania odpowiedź i zero automatycznie, z samym dźwiękiem błędnej odpowiedzi. Pudło z wpisanym tekstem odsłania się jak normalna odpowiedź z reveal; zero odsłania operator osobno, wtedy gra dźwięk błędnej odpowiedzi. Powtórzenie daje zero.
+- [ ] 13. Suma finału jest stale pokazywana w banku na górze planszy, także przy przejściach i po ponownym podłączeniu.
+- [ ] 14. Od rozpoczęcia finału znika wynik drużyny przeciwnej. W jego miejscu pojawia się odliczanie; po zatrzymaniu lub wygaśnięciu zegara pozostaje puste miejsce. Wynik zwycięskiej drużyny pozostaje widoczny.
+- [ ] 15. Między graczami finału pozostaje dźwięk przejścia rundy. Nie odtwarzać muzyki finału w tym przejściu.
+- [ ] 16. „Zakończ finał” pokazuje logo, punkty albo kwotę z samą muzyką finału, bez przejścia rundy. „Zakończ grę” odtwarza tylko outro.
+- [ ] 17. Przy końcu gry bez finału (ustawienie bez finału, osiągnięcie progu lub wyczerpanie pytań) nie odsłaniać pozostałych odpowiedzi. Zablokować dalszą rozgrywkę; „Przejdź do zakończenia gry” gra przejście rundy z reveal i pokazuje wynik. Następne „Zakończ grę” odtwarza tylko outro.
+- [ ] 18. Podpowiedź „Wybierz subskrybenta…” umieścić pod listą „Aktualnie udostępnione dla”.
+- [ ] 19. Usunąć znikanie i ponowne pojawianie się listy „Aktualnie udostępnione dla”; ustalić przyczynę przebudowy lub warunkowego ukrywania.
+- [ ] 20. Zdiagnozować pomijanie klatek animacji, sprawdzić renderer i zapis nagrań. Zweryfikować wdrożoną stronę; nie uznawać płynności na podstawie samych asercji gry.
+- [ ] 21. Wpisywanie nowej treści w polu oznaczonym jako powtórzenie zdejmuje oznaczenie. Samo ustawienie kursora nie zmienia powtórzenia. Umożliwić powrót do pominiętych pytań i poprawę odpowiedzi przed końcem czasu.
+
+## Instrukcja — uwagi z lokalnego pliku
+
+- [ ] M01. Zachować dotychczasowe sekcje i nazwy systemu, bez nazw technicznych i bez treści o nagraniach.
+- [ ] M02. Usunąć podział urządzeń na „Krok 1/2/3”; pozostawić nagłówki „Wyświetlacz”, „Prowadzący i Przycisk”, „Dźwięk”.
+- [ ] M03. Telewizor, pominięcie Prowadzącego, fizyczny Przycisk i rozłączenie opisać jako pogrubione informacje we właściwych sekcjach, nie osobne kroki.
+- [ ] M04. Usunąć nieaktualny akapit o „Czarnym ekranie” i powtórzony opis HDMI. Nazwy drużyn opisać zgodnie z punktem 01.
+- [ ] M05. Przy nazwach przycisków przywrócić ikony: podłączenie urządzenia, ponowne rozpoczęcie gry oraz skróty klawiaturowe, z symbolami ⇧ i ⌘ dla Maca.
+- [ ] M06. Rozróżnić samodzielny TV i HDMI: przy HDMI wybrać właściwe wyjście dźwięku w systemie komputera; źródło „Wyświetlacz” służy odtwarzaniu na osobnym urządzeniu.
+- [ ] M07. Uzupełnić ponowne losowanie pytań rund i finału oraz link do sekcji Ustawień rozgrywki.
+- [ ] M08. Rozpoczęcie gry opisać przed rundami. Używać nazwy dźwięku obecnej w ustawieniach, zamiast „dźwięk większej zmiany planszy”.
+- [ ] M09. Informacje Prowadzącego umieścić przy odpowiednich etapach panelu i Wyświetlacza. Zasłona chroni pytania i odpowiedzi przed przypadkowym zobaczeniem przez graczy; po pojedynku pytanie jest jawne.
+- [ ] M10. Rozróżnić wpis gracza od wybranej odpowiedzi przy informacji „Gracz 1”. Opisać powrót do pytań i możliwość poprawienia powtórzenia.
+- [ ] M11. Outro opisać razem z pozostałymi dźwiękami; zamiast osobnej podsekcji podać limity kategorii: 5 s, 30 s i 2 minuty.
+- [ ] M12. Ujednolicić opis finału, zakończenia bez finału i restartu z poprawionym działaniem. Zachować notki „Ważne”, „Uwaga”, „Wskazówka”.
+- [ ] M13. Sekcję Ankiety pozostawić poza ponowną redakcją; zachować ostatnio dodany opis TV i QR.
+- [ ] M14. Dodać organizację finału: możliwość udziału zawodnika drugiej drużyny za zgodą zwycięzców oraz przygotowanie miejsca i słuchawek dla oczekującego gracza.
+- [ ] M15. Dla każdego gracza finału osobno opisać przygotowanie, wpisywanie i odsłanianie. Dodać uwagę o dobraniu liczby pytań do progu, żeby nie skończyć rund bez finału przypadkiem.
+
+## Sprawdzenie i wdrożenie
+
+- [x] Wybrane testy przejść, dźwięków, Przycisku, Wyświetlacza i wpisywania finału.
+- [ ] Wdrożenie zmian na `main` i potwierdzenie publikacji strony oraz Workera.
+- [ ] Testy produkcyjne właściwych przypadków, z resetem limitów i blokad przed ponowną wysyłką maila na ten sam adres.
+- [ ] Nowe nagrania przypadków zmienionych przez tę listę i zapis pomiarów animacji.
+- [ ] Zaktualizowana osobna instrukcja MD i HTML do sprawdzenia.
+
+## Dziennik pracy
+
+Lista utworzona przed zmianami. Lokalne uwagi użytkownika w instrukcji zachowane; stan źródłowy należy zabezpieczyć przed jej redakcją.
+
+W toku: reguły dźwięków i blokad, Wyświetlacz, powtórzenie, informacja Prowadzącego o oddaniu kontroli oraz udostępnianie. Pierwsze uruchomienie wybranych testów: 92 zaliczone, 12 niezaliczonych; część oczekiwań opisuje poprzednie reguły i wymaga aktualizacji. Nie jest to jeszcze wynik końcowy ani potwierdzenie wdrożenia. Kopia lokalnego manuala z uwagami została zapisana przed redakcją w `/tmp/control2-manual-feedback-original.md`.
+
+2026-10-06: użytkownik potwierdza płynne działanie starego systemu na żywo i wskazuje nagranie jako przyczynę pomijania klatek. Wstrzymujemy zmiany wydajności renderera do porównania tego samego scenariusza produkcyjnego z `record_video=true` i `record_video=false`. Wycofano dodatkowe filtrowanie zapisów kropek SVG, żeby nie zmieniać renderowania na podstawie samego filmu. Anulowanie animacji przy restarcie pozostaje osobną poprawką funkcjonalną.
+
+Sprawdzone lokalnie: przywrócony reveal ma głośność −16,43 LUFS (mediana porównanych dźwięków −16,15 LUFS); pomiary w `control2-reveal-loudness.json`. Wybrane testy przejść, dźwięków, banku i zegara finału oraz anulowania restartu przechodzą. Instrukcja MD i HTML została uzupełniona na podstawie lokalnych uwag; sekcja Ankiety zachowana. Wdrożenie i nowe nagrania pozostają do wykonania.
+
+Porównanie nagrywania na tej samej wersji produkcyjnej `008a24cc0d1689f60d02befda98211ee9883e16e`, scenariusz `01-rundy-mechanika`: zapis filmu — Actions 37380727168; bez zapisu — Actions 37380767772. Przebiegi są szeregowe i nie wdrażamy zmian pomiędzy nimi. Wyniki nie są jeszcze dostępne.
+
+Porównanie — przebieg z nagrywaniem 37380727168 zakończony poprawnie: FFmpeg zapisał 9693 klatki, w tym 7369 powielonych (około 76%), 48 odrzuconych. W logu jest ostrzeżenie o blokującej się kolejce wejścia X11 (`thread_queue_size=8`). Jednocześnie odstęp klatek przeglądarki p95=16,7 ms, maksimum=33,4 ms, zero przerw ponad 50 ms, minimum wolnej pamięci około 14,25 GB. To wskazuje na przechwytywanie filmu; nie dowodzi, że użytkownik ma taki problem na żywo. Wynik bez nagrywania jeszcze oczekiwany.
+
+Przygotowana poprawka nagrywania: kolejka obrazu 128 pakietów zamiast 8, osobna kolejka dźwięku, krótsze buforowanie/probowanie dźwięku, 60 klatek/s oraz kodowanie bez oczekiwania na przyszłe klatki. Liczniki klatek powielonych i odrzuconych zapisujemy obok pomiarów przeglądarki. Zmiana wymaga osobnego sprawdzenia produkcyjnego. Dokumentacja opcji: https://ffmpeg.org/ffmpeg.html oraz https://ffmpeg.org/ffmpeg-devices.html#pulse.
+
+Końcowy wybrany zestaw lokalny: 114 testów zaliczonych, zero niezaliczonych. Oddzielna kontrola MD/HTML potwierdziła zachowanie sekcji Ankiety bez zmian i usunięcie roboczych adnotacji.
+
+Przebieg bez nagrywania 37380767772 również zakończony poprawnie. Porównanie tej samej wersji i scenariusza: z filmem p95=16,7 ms, maksimum=33,4 ms; bez filmu p95=16,8 ms, maksimum=33,3 ms. W obu zero przerw ponad 50 ms i dwa długie zadania. Nagrywanie nie pogorszyło istotnie pomiaru klatek przeglądarki; powielanie klatek następuje w przechwytywaniu/zapisie. Poprawkę nagrywania sprawdzamy przed pełnym kolejnym cyklem.

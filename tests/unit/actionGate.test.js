@@ -79,7 +79,7 @@ test("START_P2_ROUND: round_transition dłuższy niż reveal", async () => {
   assert.equal(ms, 2200);
 });
 
-test("GAME_END_SHOW: reveal and outro start together, without repeating round transition", async () => {
+test("GAME_END_SHOW: only outro plays after the result is visible", async () => {
   const gate = makeGate({ round_transition: 0.4, reveal: 0.2, show_outro: 60 });
   const prev = row({ sound_cue_seq: 0 });
   const next = row({ sound_cue_key: "show_intro", sound_cue_seq: 1 });
@@ -118,21 +118,21 @@ test("NEXT_QUESTION NIE do f_p2_start (zwykłe pytanie w bloku): 0, nawet jeśli
 // Zgłoszone na żywo: "dźwięk końca rundy gra i przed i po odsłanianiu, a
 // przycisk >rozpocznij rundę< może przerwać odtwarzanie" i "dźwięk końca
 // rundy i dźwięk rozpoczęcia finału się nakładają" — END_ROUND blokuje
-// teraz CAŁĄ sekwencję reveal+round_transition (suma), nie tylko pierwszy
+// teraz równoległe reveal+round_transition (maksimum obu czasów), nie tylko pierwszy
 // człon, żeby żadna kolejna akcja (Rozpocznij rundę/Rozpocznij finał) nie
 // mogła wystartować i przerwać jeszcze grającego round_transition.
-test("END_ROUND: gate to SUMA reveal+round_transition — żadna kolejna akcja nie przerwie jeszcze grającego round_transition", async () => {
+test("END_ROUND: gate to max(reveal, round_transition) — żadna kolejna akcja nie przerwie jeszcze grającego round_transition", async () => {
   const gate = makeGate({ reveal: 0.9, round_transition: 5 });
   const next = row({ step: "r_roundStart", sound_cue_key: "round_transition", sound_cue_seq: 1 });
   const ms = await gate.computeGateMs("END_ROUND", row(), next);
-  assert.equal(ms, 900 + 5000);
+  assert.equal(ms, 5000);
 });
 
-test("END_ROUND -> f_start: ta sama formuła (suma reveal+round_transition), niezależnie od docelowego kroku", async () => {
+test("END_ROUND -> f_start: ta sama formuła max(reveal, round_transition), niezależnie od docelowego kroku", async () => {
   const gate = makeGate({ reveal: 0.9, round_transition: 5 });
   const next = row({ step: "f_start", sound_cue_key: "round_transition", sound_cue_seq: 1 });
   const ms = await gate.computeGateMs("END_ROUND", row(), next);
-  assert.equal(ms, 900 + 5000);
+  assert.equal(ms, 5000);
 });
 
 // NEXT_AFTER_REVEAL nie gra już żadnego dźwięku (engine.js) — zgłoszone:
@@ -162,7 +162,7 @@ test("FINISH_FINAL: allows a two-minute outro after the board transition", async
   assert.equal(ms, 120000);
 });
 
-test("Reaching final target waits for the scoring sound and then round-end sound", async () => {
+test("Reaching final target waits only for scoring until the operator finishes the final", async () => {
   const gate = makeGate({ answer_correct: 0.4, round_transition: 1.2, reveal: 0.8 });
-  assert.equal(await gate.computeGateMs("REVEAL_POINTS", row({ step: "f_p1_map_q1" }), row({ step: "f_end", sound_cue_key: "answer_correct", sound_cue_seq: 1 })), 1600);
+  assert.equal(await gate.computeGateMs("REVEAL_POINTS", row({ step: "f_p1_map_q1" }), row({ step: "f_end", sound_cue_key: "answer_correct", sound_cue_seq: 1 })), 400);
 });

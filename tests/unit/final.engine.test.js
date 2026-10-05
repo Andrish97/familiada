@@ -68,7 +68,7 @@ test("SET_ENTRY_TEXT/SET_REPEAT: zapisują tekst gracza i flagę powtórzenia (t
   assert.equal(store.commits.at(-1).soundCueKey, "answer_repeat");
 });
 
-test("SET_REPEAT: zdjęcie flagi (repeat:false) NIE rusza mapowania -- da się wrócić do wpisanej odpowiedzi", async () => {
+test("SET_REPEAT: zdjęcie flagi usuwa wymuszone SKIP i zachowuje wpisany tekst", async () => {
   const { store, dispatch } = makeEngine();
   await dispatch({ type: "START_FINAL" });
   await dispatch({ type: "SET_ENTRY_TEXT", round: 2, idx: 0, text: "Mleko" });
@@ -78,7 +78,7 @@ test("SET_REPEAT: zdjęcie flagi (repeat:false) NIE rusza mapowania -- da się w
   await dispatch({ type: "SET_REPEAT", round: 2, idx: 0, repeat: false });
   assert.equal(store.state.final.runtime.p2[0].repeat, false, "flaga zdjęta");
   assert.equal(store.state.final.runtime.p2[0].text, "Mleko", "wpisana odpowiedź zostaje");
-  assert.equal(store.state.final.runtime.map2[0].kind, "SKIP", "mapowanie NIE jest cofane automatycznie -- SKIP sprzed zdjęcia flagi zostaje, dopóki operator ręcznie nie przemapuje na ekranie dopasowania");
+  assert.equal(store.state.final.runtime.map2[0].kind, null, "zdjęcie powtórzenia usuwa wymuszone SKIP");
   assert.equal(store.commits.at(-1).soundCueKey, null, "zdjęcie flagi nie gra dźwięku");
 });
 
@@ -216,7 +216,7 @@ test("mapowanie: MATCH dolicza punkty do sumy raz, MISS dokłada 0 i gra answer_
   assert.equal(store.commits.at(-1).soundCueKey, "answer_wrong");
 });
 
-test("mapowanie: MISS/SKIP odsłaniają punkty (0) i grają answer_wrong od razu w REVEAL_ANSWER_ONLY, bez osobnego REVEAL_POINTS", async () => {
+test("mapowanie: MISS odsłania odpowiedź i punkty osobno, SKIP odsłania zero automatycznie", async () => {
   const { store, dispatch } = makeEngine();
   await dispatch({ type: "START_FINAL" });
   await dispatch({ type: "START_MAPPING", round: 1 });
@@ -224,9 +224,12 @@ test("mapowanie: MISS/SKIP odsłaniają punkty (0) i grają answer_wrong od razu
   await dispatch({ type: "RESOLVE_MAPPING", round: 1, idx: 0, mode: "MANUAL", kind: "MISS", outText: "coś innego" });
   await dispatch({ type: "REVEAL_ANSWER_ONLY", round: 1, idx: 0 });
   assert.equal(store.state.final.runtime.map1[0].revealedAnswer, true);
-  assert.equal(store.state.final.runtime.map1[0].revealedPoints, true, "punkty odsłonięte automatycznie, bez REVEAL_POINTS");
+  assert.equal(store.state.final.runtime.map1[0].revealedPoints, false, "wpisana błędna odpowiedź czeka na odsłonięcie punktów");
   assert.equal(store.state.final.runtime.map1[0].pts, 0);
-  assert.equal(store.commits.at(-1).soundCueKey, "answer_wrong", "dźwięk błędu od razu przy odsłanianiu, nie dopiero przy punktach");
+  assert.equal(store.commits.at(-1).soundCueKey, "reveal");
+  await dispatch({ type: "REVEAL_POINTS", round: 1, idx: 0 });
+  assert.equal(store.state.final.runtime.map1[0].revealedPoints, true);
+  assert.equal(store.commits.at(-1).soundCueKey, "answer_wrong");
 
   await dispatch({ type: "RESOLVE_MAPPING", round: 1, idx: 1, mode: "MANUAL", kind: "SKIP" });
   await dispatch({ type: "REVEAL_ANSWER_ONLY", round: 1, idx: 1 });
@@ -262,7 +265,7 @@ test("osiągnięcie celu w rundzie 1 blokuje akcje i czeka na ręczne zakończen
   assert.equal(store.commits.length, commitsBefore);
   await dispatch({ type: "NEXT_QUESTION", round: 1, idx: 1 });
   assert.equal(store.state.step, "f_end");
-  assert.equal(store.commits.at(-1).soundCueKey, "round_transition");
+  assert.equal(store.commits.at(-1).soundCueKey, "final_theme");
 });
 
 test("po f_p1_map_q5 bez wcześniejszego wyjścia -> f_p2_start (round_transition), START_P2_ROUND NIE odsłania Hosta", async () => {
@@ -355,4 +358,18 @@ test("resolveFinalEndScreen: 'points' i 'money' liczą różne kwoty (w odróżn
 
   const moneyNoBonus = resolveFinalEndScreen(moneySettings, { totalPointsAll: 400, hitTarget: false });
   assert.deepEqual(moneyNoBonus, { kind: "win", amount: 400 * 3 });
+});
+
+
+test("typing new content clears repeat and its forced skip; unchanged text preserves repeat", async () => {
+  const { store, dispatch } = makeEngine();
+  await dispatch({ type: "START_FINAL" });
+  await dispatch({ type: "SET_ENTRY_TEXT", round: 2, idx: 0, text: "Mleko" });
+  await dispatch({ type: "SET_REPEAT", round: 2, idx: 0, repeat: true });
+  await dispatch({ type: "SET_ENTRY_TEXT", round: 2, idx: 0, text: "Mleko" });
+  assert.equal(store.state.final.runtime.p2[0].repeat, true);
+  await dispatch({ type: "SET_ENTRY_TEXT", round: 2, idx: 0, text: "Woda" });
+  assert.equal(store.state.final.runtime.p2[0].repeat, false);
+  assert.equal(store.state.final.runtime.map2[0].kind, null);
+  assert.equal(store.state.final.runtime.p2[0].text, "Woda");
 });

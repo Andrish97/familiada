@@ -40,7 +40,36 @@ function pad3(n) { return String(Math.max(0, Number(n) || 0)).padStart(3, " "); 
 
 export function createRenderer({ scene, qr, getSfxDuration }) {
   const timing = createTransitionTiming({ getSfxDuration });
-  const { api } = scene;
+  let generation = 0;
+  let activeGeneration = 0;
+  const waits = new Map();
+  const abortError = () => Object.assign(new Error("Render cancelled"), { name: "AbortError" });
+  function guardedApi(object) {
+    return new Proxy(object, { get(target, name) {
+      const value = target[name];
+      if (typeof value === "function") return (...args) => {
+        if (activeGeneration !== generation) throw abortError();
+        return value.apply(target, args);
+      };
+      return value && typeof value === "object" ? guardedApi(value) : value;
+    } });
+  }
+  const api = guardedApi(scene.api);
+  function wait(ms) {
+    if (activeGeneration !== generation) return Promise.reject(abortError());
+    return new Promise((resolve, reject) => {
+      const timer = setTimeout(() => { waits.delete(timer); resolve(); }, Math.max(0, ms));
+      waits.set(timer, reject);
+    });
+  }
+  function cancel() {
+    generation++;
+    stopTimerTick();
+    stopTimer3Tick();
+    scene.cancelAnimations?.();
+    for (const [timer, reject] of waits) { clearTimeout(timer); reject(abortError()); }
+    waits.clear();
+  }
   let timerHandle = null;
 
   function stopTimerTick() {
@@ -77,7 +106,7 @@ export function createRenderer({ scene, qr, getSfxDuration }) {
         return;
       }
       const digits = String(remaining).padStart(2, "0");
-      if (winnerTeam === "A") api.small.leftDigits(digits); else api.small.rightDigits(digits);
+      if (winnerTeam === "A") api.small.rightDigits(digits); else api.small.leftDigits(digits);
     };
     tick();
     timerHandle = setInterval(tick, 250);
@@ -85,6 +114,12 @@ export function createRenderer({ scene, qr, getSfxDuration }) {
 
   function paintTotals(row) {
     const totals = row.detail?.rounds?.totals || { A: 0, B: 0 };
+    if (row.top_card === "final" && row.detail?.final?.winnerTeam && row.step !== "f_start") {
+      const winner = row.detail.final.winnerTeam;
+      api.small.leftDigits(winner === "A" ? String(totals.A ?? 0) : "");
+      api.small.rightDigits(winner === "B" ? String(totals.B ?? 0) : "");
+      return;
+    }
     api.small.leftDigits(String(totals.A ?? 0));
     api.small.rightDigits(String(totals.B ?? 0));
   }
@@ -134,8 +169,8 @@ export function createRenderer({ scene, qr, getSfxDuration }) {
   // dopiero potem zaczyna właściwe odliczanie tych samych cyfr w dół.
   function showTimerPlaceholder(row, text) {
     const winnerTeam = row.detail?.final?.winnerTeam;
-    if (winnerTeam === "A") api.small.leftDigits(text);
-    else if (winnerTeam === "B") api.small.rightDigits(text);
+    if (winnerTeam === "A") api.small.rightDigits(text);
+    else if (winnerTeam === "B") api.small.leftDigits(text);
   }
 
   function applyIndicator(row) {
@@ -155,8 +190,12 @@ export function createRenderer({ scene, qr, getSfxDuration }) {
       if (cur === "A") return api.indicator.set("ON_A");
       if (cur === "B") return api.indicator.set("ON_B");
     }
-    if (row.detail?.locks?.finalActive && row.detail?.final?.winnerTeam) {
+    if ((row.detail?.locks?.finalActive || row.step === "f_end") && row.detail?.final?.winnerTeam) {
       return api.indicator.set(row.detail.final.winnerTeam === "A" ? "ON_A" : "ON_B");
+    }
+    if (row.step === "r_gameEnd" || row.step === "f_start") {
+      const totals = row.detail?.rounds?.totals || {};
+      if (totals.A !== totals.B) return api.indicator.set(totals.A > totals.B ? "ON_A" : "ON_B");
     }
     api.indicator.set("OFF");
   }
@@ -173,6 +212,9 @@ export function createRenderer({ scene, qr, getSfxDuration }) {
       api.small.clearAll();
       api.indicator.set("OFF");
       return;
+    }
+    if (row.step === "devices_display" || row.step === "setup_finish") {
+      api.big.clear(); api.small.clearAll(); api.indicator.set("OFF"); return;
     }
     // mode === "GAME" — namaluj planszę odpowiednią dla bieżącego kroku.
     await paintForStep(row);
@@ -232,6 +274,8 @@ export function createRenderer({ scene, qr, getSfxDuration }) {
       };
     });
     await api.final.setAll({ rows, animIn });
+    api.small.topDigits(pad3(f.runtime.sum));
+    paintTotals(row);
     applyIndicator(row);
     startTimerTick(row);
     if (!f.runtime.timer?.running) paintTotals(row);
@@ -258,24 +302,27 @@ export function createRenderer({ scene, qr, getSfxDuration }) {
     // Nazwy drużyn są już wtedy znane (denormalizowane z game-settings
     // przed startem gry) — pokazujemy je na "small" razem z logo na "big",
     // to dwa niezależne płótna.
-    if (row.step === "r_intro") { api.big.clear(); paintTeamNames(row); return; }
+    if (row.step === "r_intro") { api.big.clear(); paintTeamNames(row); paintTotals(row); return; }
     if (row.step === "r_roundStart" && row.detail?.rounds?.roundNo === 1) {
       paintTeamNames(row);
       await api.logo.show();
       return;
     }
-    if (row.top_card === "rounds") { paintTeamNames(row); await paintRoundsBoard(row); return; }
+    if (row.top_card === "rounds" || row.step === "f_start") { paintTeamNames(row); await paintRoundsBoard(row); return; }
     if (row.top_card === "final") { paintTeamNames(row); await paintFinalBoard(row); return; }
     api.big.clear();
   }
 
-  async function showEndScreen(row) {
-    api.indicator.set("OFF");
-    api.small.topDigits("000");
+  async function showEndScreen(row, { animate = true } = {}) {
+    stopTimerTick();
+    paintTeamNames(row);
+    paintTotals(row);
+    applyIndicator(row);
+    api.small.topDigits(row.top_card === "final" ? pad3(row.detail.final.runtime.sum) : "000");
     if (row.top_card === "rounds") {
       // Końcowa plansza zmienia się od początku reveal i przejścia rundy.
       // Osobne outro gra dopiero po przejściu, nie opóźnia rysowania.
-      const revealMs = await timing.dur("reveal");
+      const revealMs = animate ? await timing.dur("reveal") : 0;
       const totals = row.detail.rounds.totals || { A: 0, B: 0 };
       const screen = resolveRoundsEndScreen(row.detail.settings, { isDraw: totals.A === totals.B, totals });
       api.big.clear();
@@ -283,13 +330,12 @@ export function createRenderer({ scene, qr, getSfxDuration }) {
       else await api.win.set(screen.amount, { animIn: { ...LOGO_IN_ANIM, ms: revealMs } });
       return;
     }
-    // FINISH_FINAL zmienia planszę przy reveal i przejściu rundy.
-    const revealMs = await timing.dur("reveal");
+    // Zakończ finał zmienia planszę podczas samej muzyki finału.
+    const revealMs = animate ? await timing.dur("final_theme") : 0;
     // Czyścimy wspólne płótno przed wejściem końcowego obrazu.
     api.big.clear();
-    // "reveal" zaczyna grać TERAZ — punkty (z doliczonym wynikiem finału,
-    // już w row.detail.rounds.totals — engine.js's FINISH_FINAL dolicza go
-    // PRZED tym zapisem) i logo/WIN pojawiają się w tym samym momencie.
+    // Before outro, the final sum has not yet been added to round totals.
+    // Reconnecting after outro must not add it a second time.
     paintTotals(row);
     const winnerTeam = row.detail.final.winnerTeam;
     const totals = row.detail.rounds.totals || { A: 0, B: 0 };
@@ -305,6 +351,7 @@ export function createRenderer({ scene, qr, getSfxDuration }) {
   // Pierwsze renderowanie / reconnect — bez animacji.
   // ============================================================
   async function renderSnapshot(row) {
+    activeGeneration = generation;
     stopTimerTick();
     stopTimer3Tick();
     if (row.detail?.display?.colors) {
@@ -316,9 +363,8 @@ export function createRenderer({ scene, qr, getSfxDuration }) {
     }
     if (row.detail?.display?.theme) api.theme.set(row.detail.display.theme);
 
-    if (row.detail?.locks?.gameEnded || row.step === "f_end") { await showEndScreen(row); return; }
+    if (row.detail?.locks?.gameEnded || row.step === "f_end" || row.step === "r_gameEnd") { await showEndScreen(row, { animate: false }); return; }
     await applyDisplayMode(row);
-    if (!row.detail?.locks?.gameStarted) paintTeamNames(row, true);
   }
 
   // ============================================================
@@ -337,8 +383,11 @@ export function createRenderer({ scene, qr, getSfxDuration }) {
   // wzorzec, tylko przeniesiony na stronę odbiorcy (Display samo sekwencjonuje
   // to, co kiedyś sekwencjonował nadawca poleceń).
   async function renderDiff(prevRow, nextRow) {
+    activeGeneration = generation;
     const transitionStartedAt = Date.now();
-    if (!nextRow.detail?.locks?.gameStarted) paintTeamNames(nextRow);
+    if (["devices_display", "setup_finish"].includes(nextRow.step) && nextRow.detail?.display?.mode !== "QR") {
+      await applyDisplayMode(nextRow); return;
+    }
     const events = deriveEvents(prevRow, nextRow);
     // Jeden dispatch = jeden potwierdzony sound_cue_key dla CAŁEGO wiersza —
     // odsłonięcia (odpowiedzi/punkty rund lub finału) animują się dokładnie
@@ -409,20 +458,20 @@ export function createRenderer({ scene, qr, getSfxDuration }) {
             // klik "Zakończ grę"/"Pokaż koniec gry").
             api.small.topDigits("000");
             paintTotals(nextRow);
-            if (ev.to === "f_start") {
-              // Dwie animacje z rzędu (stara plansza znika, nowa plansza
-              // finału wjeżdża), ale tylko JEDEN relewantny dźwięk tutaj
-              // ("round_transition" gra już nad tym nowym ekranem, więc nie
-              // determinuje jego wjazdu) — podział na pół, żeby SUMA obu
-              // faz wciąż była dokładnie tyle, ile trwa "reveal", bez
-              // zmyślania osobnej stałej.
-              await api.big.animOut({ ...ROUND_OUT_ANIM, ms: revealMs / 2 });
-              await paintFinalBoard(nextRow, { animIn: { ...FINAL_BOARD_ANIM, ms: revealMs / 2 } });
+            if (ev.to === "r_gameEnd") {
+              const { offsetMs } = await timing.revealSyncSplit("round_transition");
+              if (offsetMs > 0) await wait(offsetMs);
+              await showEndScreen(nextRow);
             }
             // Plansza rund zostaje do świadomego „Zakończ grę”.
           } else if (ev.to === "f_p1_entry" && ev.from === "f_start") {
             // control/js/gameFinal.js's startFinal(): zapowiedź "15" po
             // stronie zwycięzcy, zanim operator w ogóle uruchomi timer.
+            const leadMs = await timing.dur("final_theme");
+            const { offsetMs, revealMs } = await timing.revealSyncSplit("round_transition");
+            await wait(leadMs + offsetMs);
+            await api.big.animOut({ ...ROUND_OUT_ANIM, ms: revealMs / 2 });
+            await paintFinalBoard(nextRow, { animIn: { ...FINAL_BOARD_ANIM, ms: revealMs / 2 } });
             showTimerPlaceholder(nextRow, "15");
             // Wskaźnik na zwycięzcę zapala się TU (plan, sekcja 2a: "zostaje
             // zapalony przez cały finał, gaśnie dopiero na F14") — nie przez
@@ -452,7 +501,7 @@ export function createRenderer({ scene, qr, getSfxDuration }) {
             // zaczyna się dokładnie wtedy, kiedy zaczyna grać "reveal", i
             // trwa dokładnie tyle co on.
             const { offsetMs, revealMs } = await timing.revealSyncSplit("round_transition");
-            if (offsetMs > 0) await new Promise((resolve) => setTimeout(resolve, offsetMs));
+            if (offsetMs > 0) await wait(offsetMs);
             const f = nextRow.detail.final;
             const rows = Array.from({ length: 5 }, (_, i) => {
               const m1 = f.runtime.map1[i];
@@ -467,11 +516,13 @@ export function createRenderer({ scene, qr, getSfxDuration }) {
             showTimerPlaceholder(nextRow, "20");
           } else if (ev.to === "r_roundStart" && ev.from === "r_intro") {
             const { offsetMs, revealMs } = await timing.revealSyncSplit("show_intro");
-            if (offsetMs > 0) await new Promise((resolve) => setTimeout(resolve, offsetMs));
+            if (offsetMs > 0) await wait(offsetMs);
             paintTeamNames(nextRow);
             await api.logo.show({ ...LOGO_IN_ANIM, ms: revealMs });
           } else if (ev.to === "r_intro") {
             api.big.clear();
+            paintTeamNames(nextRow, true);
+            paintTotals(nextRow);
           }
           break;
         // engine.js's END_ROUND (R6-R7) rusza WCZEŚNIEJ niż STEP_CHANGE do
@@ -530,7 +581,8 @@ export function createRenderer({ scene, qr, getSfxDuration }) {
           // ten sam dźwięk, który faktycznie gra na pudło w pojedynku.
           if (ev.team) {
             api.rounds.setX(`4${ev.team}`, true);
-            setTimeout(() => api.rounds.setX(`4${ev.team}`, false), answerAnimMs);
+            const token = generation;
+            setTimeout(() => { if (token === generation) api.rounds.setX(`4${ev.team}`, false); }, answerAnimMs);
           }
           // Pudło w pojedynku też oddaje głos drugiej drużynie (ten sam
           // powód co w ANSWER_REVEALED wyżej).
@@ -572,6 +624,7 @@ export function createRenderer({ scene, qr, getSfxDuration }) {
             ev.round === "map1" ? api.final.setA(ev.idx + 1, String(row.pts), { animIn }) : api.final.setB(ev.idx + 1, String(row.pts), { animIn }),
             api.final.setSumaFor(ev.round === "map1" ? "A" : "B", String(f.runtime.sum), { animIn }),
           ]);
+          api.small.topDigits(pad3(f.runtime.sum));
           break;
         }
         case "TIMER_STARTED":
@@ -590,7 +643,6 @@ export function createRenderer({ scene, qr, getSfxDuration }) {
           break;
         case "DISPLAY_MODE_CHANGED":
           await applyDisplayMode(nextRow);
-          if (!nextRow.detail?.locks?.gameStarted) paintTeamNames(nextRow, true);
           break;
         case "GAME_ENDED":
           // Ten sam events[] może nieść STEP_CHANGE (do "r_gameEnd") TUŻ
@@ -598,7 +650,7 @@ export function createRenderer({ scene, qr, getSfxDuration }) {
           // await nad całą pętlą to zdarzenie startuje dopiero PO tym, jak
           // animOut planszy rund z poprzedniego case'a faktycznie się
           // skończył, zamiast malować logo/WIN w tym samym momencie.
-          if (nextRow.top_card !== "final") await showEndScreen(nextRow);
+          applyIndicator(nextRow);
           break;
         // HOST_COVER_CHANGED, SOUND_CUE — nie dotyczą Display.
         default:
@@ -608,10 +660,10 @@ export function createRenderer({ scene, qr, getSfxDuration }) {
     if (nextRow.step === "f_end" && prevRow.step !== "f_end") {
       const scoringMs = ["answer_correct", "answer_wrong"].includes(nextRow.sound_cue_key) ? answerAnimMs : 0;
       const remainingMs = scoringMs - (Date.now() - transitionStartedAt);
-      if (remainingMs > 0) await new Promise((resolve) => setTimeout(resolve, remainingMs));
+      if (remainingMs > 0) await wait(remainingMs);
       await showEndScreen(nextRow);
     }
   }
 
-  return { renderSnapshot, renderDiff };
+  return { renderSnapshot, renderDiff, cancel };
 }

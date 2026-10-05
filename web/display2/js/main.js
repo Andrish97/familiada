@@ -282,6 +282,8 @@ window.addEventListener("DOMContentLoaded", async () => {
 
     const renderer = createRenderer({ scene, qr, getSfxDuration });
     let prevRow = null;
+    let renderQueue = Promise.resolve();
+    let renderGeneration = 0;
     let appliedLang = null;
 
     const subscription = createSubscription({
@@ -319,7 +321,7 @@ window.addEventListener("DOMContentLoaded", async () => {
         // Widoczność kontenerów zależy wyłącznie od trybu — samo malowanie
         // planszy/QR/czarnego to render.js.
         const mode = row.detail?.display?.mode || "BLACK";
-        if (mode === "GAME" || (mode === "BLACK" && !row.detail?.locks?.gameStarted)) {
+        if (mode === "GAME" && !["devices_display", "setup_finish"].includes(row.step)) {
           $("blackScreen")?.classList.add("hidden");
           $("qrScreen")?.classList.add("hidden");
           $("gameScreen")?.classList.remove("hidden");
@@ -331,18 +333,20 @@ window.addEventListener("DOMContentLoaded", async () => {
           $("blackScreen")?.classList.remove("hidden");
         }
 
-        // Zapisz PRZED await-em na render — jeśli malowanie tego wiersza się
-        // wywali w połowie, kolejny wiersz ma i tak diffować względem
-        // NAJNOWSZEGO znanego stanu, nie zawiesić się na starym na zawsze.
-        // await tutaj (js/core/game-state-subscribe.js's fetchOnce() sam
-        // czeka na to wywołanie) jest tym, co faktycznie serializuje kolejne
-        // przebiegi renderDiff() — bez tego dwa dzwonki z rzędu potrafiły
-        // odpalić dwa NAKŁADAJĄCE SIĘ malowania na tym samym płótnie SVG
-        // (zgłoszone: lagi, podwójny/brzydki dźwięk przy odsłanianiu).
+        // Rendering is serialized separately from RPC reads. A new restart
+        // can cancel the current animation without waiting for its sound.
         const prev = prevRow;
         prevRow = row;
-        if (!prev) await renderer.renderSnapshot(row);
-        else await renderer.renderDiff(prev, row);
+        const restarting = row.top_card === "devices" && prev?.top_card !== "devices";
+        if (restarting) { renderGeneration++; renderer.cancel(); }
+        const token = renderGeneration;
+        renderQueue = renderQueue.then(async () => {
+          if (token !== renderGeneration) return;
+          if (!prev || restarting) await renderer.renderSnapshot(row);
+          else await renderer.renderDiff(prev, row);
+        }).catch(error => {
+          if (error?.name !== "AbortError") console.warn("[display2] render failed", error);
+        });
       },
       onError: (error) => {
         console.warn("[display2] game_state_get failed:", error);

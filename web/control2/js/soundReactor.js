@@ -19,11 +19,11 @@
 // display2/js/soundReactor.js przejmuje odtwarzanie, a ten tutaj po prostu
 // nic nie robi (zero podwójnego odtwarzania).
 
-import { playSfx, getSfxDuration } from "../../shared/js/core/sfx.js?v=v2026-10-05T19174";
+import { playSfx, getSfxDuration, stopSfx } from "../../shared/js/core/sfx.js?v=v2026-10-05T19174";
 import { createSoundCueEngine } from "../../shared/js/gameplay/soundCueEngine.js?v=v2026-10-05T19174";
 
 export function createSoundReactor(store) {
-  const engine = createSoundCueEngine({ playSfx, getSfxDuration });
+  const engine = createSoundCueEngine({ playSfx, getSfxDuration, stopSfx });
   let prevRow = null;
 
   function onStateChange(state) {
@@ -38,6 +38,8 @@ export function createSoundReactor(store) {
       const isControlSource = (settings.soundSource || "control") === "control";
       if (isControlSource && !settings.soundMuted) {
         engine.handleTransition(prevRow, nextRow);
+      } else {
+        engine.cancel();
       }
     }
     prevRow = nextRow;

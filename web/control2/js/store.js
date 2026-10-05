@@ -244,12 +244,23 @@ export function createStore(gameId) {
       // przychodzi jako float z ułamkiem ms (np. 19751.995), co Postgres
       // odrzuca (22P02 invalid input syntax for type integer). Zaokrąglenie
       // o ~1ms nie ma znaczenia dla samej blokady.
-      const row = await persist.setLock({ expectedRev: state.rev, lockMs: Math.round(ms) });
+      let row;
+      for (let attempt = 0; attempt < 3; attempt++) {
+        try {
+          row = await persist.setLock({ expectedRev: state.rev, lockMs: Math.round(ms) });
+          break;
+        } catch (error) {
+          if (ms !== 0 || !(error instanceof StaleWriteError) || attempt === 2) throw error;
+          await hydrate();
+        }
+      }
       console.log(`[e2e-diag-state] t=${Date.now()} setLockNow OK afterMs=${Date.now() - _t0} newRev=${row.rev}`);
       applyRow(row);
       emit();
     } catch (e) {
       console.log(`[e2e-diag-state] t=${Date.now()} setLockNow CATCH afterMs=${Date.now() - _t0}: ${e?.constructor?.name} ${e?.message}`);
+      // Restart requires a confirmed unlock; never silently proceed while locked.
+      if (ms === 0) throw e;
       // Najlepszy wysiłek — treść stanu jest już poprawnie zapisana przez
       // wcześniejszy commit(), tylko serwerowa blokada się nie ustawiła
       // (np. rev już nieaktualny, bo coś innego zdążyło napisać pierwsze).

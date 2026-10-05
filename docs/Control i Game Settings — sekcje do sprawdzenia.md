@@ -8,7 +8,7 @@ Panel sterowania prowadzi operatora krok po kroku: najpierw podłączasz urządz
 
 ### Co musi być gotowe, zanim zaczniesz
 
-- Gra powinna mieć przygotowane pytania i odpowiedzi (z edytora), a jeśli jest to gra ankietowa — ankieta powinna być zakończona i zatwierdzona.
+- Gra powinna mieć przygotowane pytania i odpowiedzi (z edytora), a jeśli jest to gra ankietowa — powinna być zakończona i zatwierdzona.
 
 - Operator powinien mieć komputer z dużym ekranem, na którym pytanie, odpowiedzi i podpowiedzi są czytelne.
 
@@ -32,6 +32,19 @@ System celowo rozdziela ekrany, żeby każdy robił swoje:
 
 - **Przycisk** — służy do sygnału w pojedynku (kto pierwszy).
 
+Ekran Prowadzącego ma dwie części. W pionie są to część górna i dolna, a w poziomie lewa i prawa. Pierwsza podaje etap gry oraz, zależnie od etapu, pytanie. Druga zawiera materiały potrzebne do prowadzenia: listę odpowiedzi, pytania finału albo szczegóły aktualnego dopasowania. Druga część może być przykryta zasłoną.
+
+**Zasłona na ekranie Prowadzącego**
+
+- W pionie przesuń zasłonę **w dół**, aby odsłonić treść; **w górę**, aby zasłonić.
+- W poziomie przesuń **w prawo**, aby odsłonić; **w lewo**, aby zasłonić.
+- Na zasłonie i pod odsłoniętą treścią są wskazówki odpowiednie do orientacji urządzenia.
+- Odsłonięcie służy tylko prowadzącemu. Nie odkrywa odpowiedzi dla publiczności i nie zatwierdza żadnej akcji gry. Zasłona chroni pytania i odpowiedzi przed przypadkowym zobaczeniem przez graczy.
+- **Każda nowa zmiana stanu gry przywraca zasłonę**, jeśli dany stan wymaga zasłonięcia. Dlatego po działaniu operatora może być potrzebny kolejny gest.
+
+Odsłoń treść na swoim urządzeniu, gdy potrzebujesz przeczytać pytanie albo sprawdzić odpowiedzi. Nie traktuj zasłony jako informacji, że odpowiedzi zniknęły z gry.
+
+
 #### Układ Panelu sterowania
 
 W górnym pasku sprawdzisz połączenie Wyświetlacza, Prowadzącego i Przycisku. Przyciski urządzeń pozwalają wrócić do ich linków, kodów i udostępniania także w trakcie gry. Główna część panelu zmienia się wraz z etapem: w przygotowaniu pokazuje urządzenia lub Podsumowanie, w rundach pytanie i odpowiedzi, a w finale pola wpisywania albo ocenę pojedynczej odpowiedzi.
@@ -42,11 +55,10 @@ Kolumna podpowiedzi wyjaśnia, kto teraz odpowiada i na jaką czynność czeka s
 
 Pierwszy etap w panelu to podłączenie urządzeń. W górnym pasku panelu widzisz trzy statusy: **Wyświetlacz**, **Prowadzący**, **Przycisk do pojedynku**. Operator zaczyna od podłączenia wymaganych urządzeń. Prowadzący jest opcjonalny — rozgrywkę można prowadzić bezpośrednio z Panelu sterowania.
 
-#### Krok 1: Wyświetlacz
+#### Wyświetlacz
 
-W tym kroku panel pokazuje **6-cyfrowy kod** i kod QR dla wyświetlacza. Najlepiej otworzyć wyświetlacz na telewizorze lub rzutniku w trybie pełnoekranowym (bez pasków przeglądarki). Dopiero gdy Wyświetlacz jest połączony, panel pozwala przejść dalej.
+Panel pokazuje **6-cyfrowy kod** i kod QR dla wyświetlacza. Najlepiej otworzyć wyświetlacz na telewizorze lub rzutniku w trybie pełnoekranowym (bez pasków przeglądarki). Dopiero gdy Wyświetlacz jest połączony, panel pozwala przejść dalej.
 
-Jeśli przed przygotowaniem gry Wyświetlacz pokazuje pozostałości poprzedniej rozgrywki, użyj „Czarny ekran”. Nazwy drużyn są widoczne już przed rozpoczęciem gry, dzięki czemu można sprawdzić je przed wejściem w pierwszą rundę.
 
 **Jak wygodnie wyświetlić tablicę na drugim ekranie?**
 
@@ -54,7 +66,7 @@ Dla najlepszego efektu użyj trybu rozszerzonego ekranu. W systemie **Windows** 
 
 Następnie otwórz tablicę w nowym oknie przeglądarki, przeciągnij je na drugi ekran i włącz tryb pełnoekranowy. Dzięki temu możesz jednocześnie sterować na swoim urządzeniu i wyświetlać treść dla innych.
 
-#### Telewizor jako osobne urządzenie
+**Telewizor jako osobne urządzenie**
 
 Na komputerze otwórz kod Wyświetlacza w Panelu sterowania. W przeglądarce telewizora wejdź na www.familiada.online. Rozpoznany TV pokaże uproszczoną stronę podłączenia z logo Familiady, polem na sześciocyfrowy kod i przyciskiem „Podłącz”. Wpisz kod Wyświetlacza. Nie trzeba logować się na telewizorze ani podłączać go przewodem do komputera.
 
@@ -62,27 +74,26 @@ Pole kodu jest wybrane od razu. Strzałki góra i dół przełączają między p
 
 Możesz też otworzyć na TV bezpośredni link Wyświetlacza skopiowany z Panelu sterowania. Jeżeli przeglądarka telewizora nie została rozpoznana, otwórz [stronę podłączenia TV](https://www.familiada.online/connect-device/tv/) i wpisz kod. Dotyczy to również niestandardowej przeglądarki na Apple TV. Na TV można podłączyć Wyświetlacz gry albo Wyświetlacz QR ankiety; kody Prowadzącego i Przycisku są odrzucane.
 
-Przy HDMI otwórz Wyświetlacz w osobnym oknie na komputerze, przenieś je na ekran telewizora i włącz pełny ekran. Przy AirPlay prześlij otwarty Wyświetlacz z Maca, iPhone’a lub iPada na Apple TV. W takim połączeniu kod wpisujesz na urządzeniu, które otwiera stronę, a telewizor odbiera jego obraz.
 
-#### Krok 2: Prowadzący i Przycisk
+#### Prowadzący i Przycisk
 
-W drugim kroku podłączasz urządzenie prowadzącego i urządzenie przycisku. Panel pokazuje **6-cyfrowy kod** i kod QR dla każdego z nich. W praktyce najlepiej użyć dwóch osobnych telefonów albo telefonu i tabletu.
+Następnie podłączasz urządzenie prowadzącego i urządzenie przycisku. Panel pokazuje **6-cyfrowy kod** i kod QR dla każdego z nich. W praktyce najlepiej użyć dwóch osobnych telefonów albo telefonu i tabletu.
 
-W tym kroku jest opcja **„QR na wyświetlaczu"** — po jej użyciu kody QR mogą zostać pokazane na dużym ekranie (po podłączeniu wyświetlacza), żeby ekipa mogła szybko zeskanować je telefonami. To przyspiesza start na planie, bo nie trzeba przepisywać linków.
+Dostępna jest opcja **„QR na wyświetlaczu"** — po jej użyciu kody QR mogą zostać pokazane na dużym ekranie (po podłączeniu wyświetlacza), żeby ekipa mogła szybko zeskanować je telefonami. To przyspiesza start na planie, bo nie trzeba przepisywać linków.
 
-Poprzez opcję **„Udostępnij"** — możesz szybko wysłać komuś link w wiadomości e-mail lub udostępnić go swoim subskrybentom. Udostępnione urządzenia będą widoczne na koncie (tylko dla zarejestrowanych) w panelu `Podłącz urządzenie `. Osoby niezarejestrowane otrzymają link w wiadomości e-mail.
+Poprzez opcję **„Udostępnij"** — możesz szybko wysłać komuś link w wiadomości e-mail lub udostępnić go swoim subskrybentom. Udostępnione urządzenia będą widoczne na koncie (tylko dla zarejestrowanych) w panelu **📱 Podłącz urządzenie**. Osoby niezarejestrowane otrzymają link w wiadomości e-mail.
 
 **Jak wygodnie podłączyć urządzenie?**
 
-Najprostszy sposób: wejdź na `familiada.online`, kliknij `Podłącz urządzenie ` w górnym pasku i wprowadź **6-cyfrowy kod** widoczny przy urządzeniu w Panelu sterowania.
+Najprostszy sposób: wejdź na `familiada.online`, kliknij **📱 Podłącz urządzenie** w górnym pasku i wprowadź **6-cyfrowy kod** widoczny przy urządzeniu w Panelu sterowania.
 
 Alternatywnie: na urządzeniu mobilnym możesz zeskanować **kod QR** widoczny w panelu. Dla najlepszego użytkowania sugerowane jest zainstalowanie aplikacji webowej — na stronie **Moje gry** kliknij przycisk pobierania, aby uzyskać wskazówki.
 
-#### Tryb bez tabletu prowadzącego
+**Tryb bez tabletu prowadzącego**
 
 Jeśli prowadzący nie korzysta z osobnego urządzenia (telefonu/tabletu), zaznacz opcję **„Nie używaj tabletu prowadzącego"** przy urządzeniu Prowadzący. Po zaznaczeniu: przyciski i kod połączenia dla prowadzącego są wyszarzone, podpięcie urządzenia prowadzącego nie jest wymagane do przejścia dalej, a kontrolka Prowadzącego w górnym pasku staje się nieaktywna. Operator może samodzielnie prowadzić rozgrywkę z panelu sterowania.
 
-#### Przycisk fizyczny
+**Przycisk fizyczny**
 
 Jeśli zamiast Przycisku do pojedynku w przeglądarce używasz przycisku fizycznego, (np. sprzętowego przycisku podłączonego inną ścieżką), zaznacz opcję **„Fizyczny przycisk"** przy urządzeniu Przycisk. Po zaznaczeniu: podpięcie urządzenia przycisku nie jest wymagane, a przebieg pojedynku zmienia się — operator sam decyduje, kto nacisnął pierwszy.
 
@@ -90,19 +101,21 @@ W trybie fizycznego przycisku przebieg pojedynku wygląda tak:
 
 - Po uruchomieniu pojedynku pojawiają się dwa przyciski: `Drużyna A` i `Drużyna B`.
 
-- Operator klika drużynę, która nacisnęła fizyczny przycisk jako pierwsza — przycisk się podświetla.
+- Operator klika drużynę, która nacisnęła fizyczny przycisk jako pierwsza — kafelek tej drużyny się podświetla.
 
 - Operator klika `Zatwierdź`, aby potwierdzić wybór i przejść dalej.
 
-#### Rozłączenie urządzenia
+**Rozłączenie urządzenia**
 
 Gdy wymagane urządzenie przestaje zgłaszać obecność, po około 6,5 sekundy Panel sterowania pokazuje jednorazowo okno z nazwami odłączonych urządzeń i blokuje dalsze działania. Sprawdź internet w Panelu sterowania i na urządzeniach. Jeśli połączenie nie wróci, podłącz je ponownie przyciskami w górnym pasku. Gra odblokuje się po powrocie wszystkich wymaganych urządzeń. Urządzenia pominięte w przygotowaniu nie blokują rozgrywki.
 
 Działania zatwierdzone przed wykryciem rozłączenia pozostają zapisane. Czynność już wysłana może jeszcze zakończyć zapis; system nie cofa wyniku. Urządzenie po powrocie pokazuje aktualny stan gry, bez powtarzania pominiętych animacji. Uruchomiony zegar nadal odlicza czas.
 
-#### Krok 3: Dźwięk
+#### Dźwięk
 
 Wybierz źródło dźwięku: „Panel sterowania” albo „Wyświetlacz”. Dźwięki gry odtwarzane są tylko na wybranym urządzeniu. Jeśli wybierasz Wyświetlacz, naciśnij na nim przycisk odblokowania dźwięku. Na telewizorze można użyć OK lub Enter na pilocie. Przeglądarka może wymagać kliknięcia, zanim pozwoli na odtwarzanie. Po podłączeniu sprawdź również poziom głośności samego telewizora lub głośników.
+
+**Uwaga:** Źródło „Wyświetlacz” wybierz, gdy dźwięk ma odtwarzać osobny telewizor lub inne osobne urządzenie. Przy HDMI zwykle wygodniej pozostawić „Panel sterowania” i wybrać telewizor jako wyjście dźwięku w ustawieniach komputera. Po podłączeniu HDMI system często robi to automatycznie. Przy AirPlay przesyłasz obraz i dźwięk z Maca, iPhone’a lub iPada na Apple TV.
 
 ### 2) Ustawienia
 
@@ -110,7 +123,7 @@ Gdy urządzenia są połączone, przechodzisz do podsumowania ustawień. Wszystk
 
 #### Nazwy drużyn
 
-Nazwy drużyn są widoczne na Wyświetlaczu już przed startem oraz w Panelu sterowania podczas rozgrywki. Puste pola w Ustawieniach rozgrywki oznaczają użycie nazw „Drużyna A” i „Drużyna B”. Sprawdź pisownię w Podsumowaniu przed rozpoczęciem gry.
+Nazwy drużyn sprawdź w Podsumowaniu. Wyświetlacz pozostaje wtedy czarny; nazwy pojawią się dopiero po „Gotowe — przejdź do rozgrywki”, na ekranie z przyciskiem „Rozpocznij grę”. Puste pola w Ustawieniach rozgrywki oznaczają nazwy „Drużyna A” i „Drużyna B”.
 
 #### Wygląd
 
@@ -126,7 +139,7 @@ Nazwy drużyn są widoczne na Wyświetlaczu już przed startem oraz w Panelu ste
 
 - Suwak **głośności** pozwala dostosować poziom każdego dźwięku.
 
-- Przycisk **** pozwala odsłuchać dźwięk przed rozgrywką.
+- Przycisk **▶** pozwala odsłuchać dźwięk przed rozgrywką.
 
 Jeśli zmienisz poziom głośności tutaj, zostanie on zmieniony tylko dla tej konkretnej rozgrywki. Przy ponownym uruchomieniu rozgrywki zostaną wczytane wartości nadane w **Ustawieniach rozgrywki**.
 
@@ -134,15 +147,16 @@ Jeśli zmienisz poziom głośności tutaj, zostanie on zmieniony tylko dla tej k
 
 Tu zobaczysz tylko potwierdzenie, czy rozgrywka ma finał.
 
-Jeśli finał jest włączony i wybrano tryb **Ręcznie** — tutaj zobaczysz wybrane przez Ciebie 5 pytań finałowych. Przy trybie **Losowe** zobaczysz wylosowane pytania finałowe.
-
+Jeśli finał jest włączony i wybrano tryb **Ręcznie** — tutaj zobaczysz wybrane przez Ciebie 5 pytań finałowych. Przy trybie **Losuj** zobaczysz wylosowane pytania finałowe.
+Przy trybie „Losuj” możesz użyć „Losuj ponownie” przy tej sekcji, aby zmienić zestaw przed rozpoczęciem gry. Wybrana kolejność i ręcznie wybrane pytania finału pozostają bez zmian.
 #### Rundy: kolejność pytań
 
-Jeśli wybrano tryb **Kolejność** dla pytań rund — tutaj będzie widoczna kolejność pytań, które zostaną użyte podczas rozgrywki zasadniczej. Przy trybie **Losowe** zobaczysz wylosowane pytania rund.
+Jeśli wybrano tryb **Kolejność** dla pytań rund — tutaj będzie widoczna kolejność pytań, które zostaną użyte podczas rozgrywki zasadniczej. Przy trybie **Losuj** zobaczysz wylosowane pytania rund.
+Przy trybie „Losuj” użyj „Losuj ponownie” przy pytaniach rund, aby zmienić ich kolejność przed rozpoczęciem gry.
 
-Zawsze możesz wcisnąć przycisk **Zmień ustawienia**, po czym otworzy się okienko ustawień — szczegóły w zakładce **Ustawienia rozgrywki**.
+Zawsze możesz wcisnąć przycisk **Zmień ustawienia**, po czym otworzy się okienko ustawień — szczegóły w zakładce **Ustawienia rozgrywki**. Szczegóły znajdziesz w [Ustawieniach rozgrywki](#ustawienia-rozgrywki).
 
-Gdy wszystko się zgadza — kliknij **Gra gotowa**.
+Gdy wszystko się zgadza — kliknij **Gotowe — przejdź do rozgrywki**.
 
 #### Zaznaczanie i zatwierdzanie
 
@@ -150,31 +164,41 @@ Pierwsze kliknięcie kafelka wymagającego potwierdzenia zaznacza go. Drugie zat
 
 **Wskazówka:** Zaznaczenie kafelka pozwala sprawdzić wybór przed wykonaniem czynności. Punkty i plansza zmieniają się dopiero po zatwierdzeniu. Jeśli panel czeka na dźwięk lub przejście, pozwól mu je dokończyć.
 
-### 3) Rundy — przebieg gry krok po kroku
+### 3) Rozpoczęcie gry
+
+Po sprawdzeniu Podsumowania wybierz „Gotowe — przejdź do rozgrywki”. Wyświetlacz aktywuje się i pokazuje nazwy drużyn, bez logo i planszy odpowiedzi. Przycisk do pojedynku jest już widoczny, ale jeszcze nie przyjmuje naciśnięć.
+
+„Rozpocznij grę” uruchamia muzykę intro programu. Logo wchodzi z animacją podczas dźwięku „Zmiana na wyświetlaczu”; oba dźwięki kończą się razem. Poczekaj na koniec przejścia, a następnie wybierz „Rozpocznij rundę”. To osobna czynność: otwiera planszę pytania i uruchamia pojedynek. „Przejście rundy” i „Zmiana na wyświetlaczu” kończą się jednocześnie; dłuższy dźwięk zaczyna się wcześniej.
+
+**Prowadzący:** Treść pytania będzie dostępna na etapie pojedynku. Nie odczytuj materiałów przed przygotowaniem zawodników.
+
+### 4) Rundy — przebieg gry krok po kroku
 
 W rundach prowadzisz właściwą rozgrywkę: pytania, odpowiedzi, punkty i bank rundy. Gracze widzą tablicę na wyświetlaczu, prowadzący zadaje pytania i pilnuje przebiegu, a operator odsłania odpowiedzi, nalicza punkty oraz dodaje błędy (X).
 
 Najważniejsza zasada w praktyce: prowadzący skupia się na uczestnikach, a operator na obsłudze systemu. Dzięki temu gra jest płynna, a tablica zawsze pokazuje to, co powinno być w danym momencie.
 
-#### Start rundy: „Rozpocznij grę" i intro
-
-Po Podsumowaniu wybierz „Rozpocznij grę”. Uruchamia się intro; pod jego koniec logo pojawia się z animacją i dźwiękiem większej zmiany planszy. Poczekaj na zakończenie przejścia. Następnie wybierz „Rozpocznij rundę”, aby otworzyć planszę pytania i rozpocząć pojedynek. Rozpoczęcie gry i rozpoczęcie rundy to dwie osobne czynności.
-
 #### Pojedynek: kto przejmuje kontrolę
 
-Każde pytanie zaczyna się od pojedynku „głów rodzin”. Przycisk rozświetla się od razu po naciśnięciu, a zgłoszenie informuje operatora, kto był pierwszy. Dźwięk przyjętego zgłoszenia odtwarza się raz, przy naciśnięciu. Operator przyjmuje wskazaną drużynę; zatwierdzenie nie powtarza dźwięku. Jeśli zgłaszanie trzeba powtórzyć, wybierz „Ponów naciśnięcie”. W trybie fizycznego przycisku operator wskazuje drużynę ręcznie.
+Każde pytanie zaczyna się od pojedynku „głów rodzin”. Przycisk rozświetla się od razu po naciśnięciu, a zgłoszenie informuje operatora, kto był pierwszy. Dźwięk przyjętego zgłoszenia odtwarza się raz, przy naciśnięciu. Operator przyjmuje wskazaną drużynę. Jeśli zgłaszanie trzeba powtórzyć, wybierz „Ponów naciśnięcie”. W trybie fizycznego przycisku operator wskazuje drużynę ręcznie.
 
 Zgodnie z regulaminem, jeśli pierwsza odpowiedź nie jest najwyżej punktowana, druga „głowa" ma szansę odpowiedzieć lepiej i przejąć kontrolę. Panel prowadzi operatora przez decyzję kontroli rundy, a wyświetlacz pokazuje, która drużyna aktualnie gra (wskaźnik drużyny).
+
+**Prowadzący:** Tytuł „RUNDA 1 — PRZYCISK” oznacza, że trwa pojedynek, także po przyjęciu zgłoszenia przez operatora. Pytanie i pełną listę odpowiedzi z punktami zobaczysz po odsłonięciu drugiej części. Zasłona zapobiega przypadkowemu odczytaniu pytania przez graczy przed jego zadaniem. Numer w tytule zmienia się wraz z rundą.
 
 #### Oddanie pytania
 
 Zgodnie z ustaleniami rozgrywki, po uzyskaniu kontroli drużyna może też zdecydować, że **oddaje pytanie** przeciwnikom. Jest to ruch taktyczny: zamiast „dobić" pytanie, drużyna może przekazać szansę rywalom. Panel udostępnia tę opcję tylko w odpowiednim momencie i pilnuje, żeby nie dało się jej nadużywać.
+
+**Prowadzący:** Gdy można oddać kontrolę, w pierwszej części pojawia się podpowiedź. Decyzję drużyny realizuje operator w Panelu sterowania.
 
 #### Rozgrywka pytania: odsłanianie odpowiedzi i bank
 
 Po ustaleniu kontroli drużyna odpowiada, a operator zaznacza i zatwierdza trafione odpowiedzi. Na Wyświetlaczu najpierw odsłania się odpowiedź, a potem zmienia się bank rundy. Kafelek odsłoniętej odpowiedzi w panelu staje się zielony i nie przyznaje punktów ponownie. Bank to punkty z bieżącego pytania; wynik drużyny zostanie uzupełniony przy rozliczeniu rundy, z uwzględnieniem mnożnika.
 
 Rozgrywka trwa do odsłonięcia wszystkich odpowiedzi albo trzech pudeł drużyny grającej. Trzeci X uruchamia kradzież przez przeciwników. Podpowiedź w panelu wskazuje aktualny etap i dostępny następny krok.
+
+**Prowadzący:** „RUNDA 1 — ROZGRYWKA” oznacza grę drużyny po pojedynku. Pytanie jest już jawne w pierwszej części. W drugiej widzisz pełne odpowiedzi i punkty, także jeszcze zakryte na Wyświetlaczu. Wiersz „2) Rower (24)” oznacza drugą odpowiedź i 24 punkty. Zielony wiersz oznacza odpowiedź odsłoniętą publiczności. Prowadzący nie pokazuje banku, X ani wyników drużyn — sprawdzaj je na Wyświetlaczu lub w panelu.
 
 #### Pudła (X) i limit 3 sekund
 
@@ -188,13 +212,19 @@ To jest „bat na tempo". Odliczanie pozwala operatorowi szybko zamknąć zawaha
 
 Gdy drużyna grająca wykorzysta trzy „szanse" zanim odsłoni wszystkie odpowiedzi, pytanie przechodzi do drużyny przeciwnej. Przeciwnicy mają prawo do **jednej odpowiedzi**: jeśli trafi — bank przechodzi do nich, jeśli nie — bank zostaje u drużyny grającej. To domyka pytanie i rundę zgodnie z regulaminem.
 
+**Prowadzący:** Tytuł zmienia się na „RUNDA 1 — KRADZIEŻ”. Lista odpowiedzi pozostaje dostępna pod zasłoną; pytanie pozostaje jawne. Nazwę drużyny wykonującej próbę i rozstrzygnięcie sprawdzisz w panelu i na Wyświetlaczu.
+
 #### Odsłanianie brakujących odpowiedzi i zakończenie rundy
 
-Gdy pytanie jest rozstrzygnięte, wybierz „Zakończ rundę”. Bank zostaje dopisany właściwej drużynie z uwzględnieniem mnożnika. Jeśli pozostały zakryte odpowiedzi, odsłoń je kolejno dla publiczności — nie przyznają już dodatkowych punktów drużynie. W tym etapie znika wskazanie „Gra:”, ponieważ rozgrywka pytania została rozliczona. Plansza pozostaje widoczna do kolejnego przejścia.
+Jeśli po tej rundzie będzie kolejna runda albo finał, a pytanie jest już rozstrzygnięte, wybierz „Zakończ rundę”. Bank zostaje dopisany właściwej drużynie z uwzględnieniem mnożnika. Jeśli pozostały zakryte odpowiedzi, odsłoń je kolejno dla publiczności — nie przyznają już dodatkowych punktów drużynie. Plansza pozostaje widoczna do kolejnego przejścia.
 
 **Praktyczna uwaga:**
 
 Panel celowo rozdziela „rozgrywkę pytania" od „zakończenia rundy". Dzięki temu operator nie skasuje przypadkiem stanu tablicy, zanim prowadzący dopowie puentę lub zanim padnie „dziękujemy".
+
+**Prowadzący:** „RUNDA 1 — ODSŁANIANIE” oznacza pokaz pozostałych odpowiedzi po rozliczeniu banku. Kolejne odsłonięte wiersze stają się zielone.
+
+Przy zakończeniu rundy „Zmiana na wyświetlaczu” i „Przejście rundy” grają razem i kończą się jednocześnie. Po odsłonięciu pozostałych odpowiedzi użyj przycisku wskazującego następną rundę albo finał.
 
 #### Zakończenie rund i przejście dalej
 
@@ -204,89 +234,27 @@ Jeśli finał jest **włączony**, a warunek zakończenia rund został spełnion
 
 Jeśli pytania do rund się wyczerpią przed osiągnięciem progu punktów, rozgrywka przechodzi do zakończenia gry. Sam brak pytań nie kwalifikuje do finału. Finał wymaga osiągnięcia progu i włączenia go w ustawieniach.
 
-### 4) Finał
+**Uwaga:** Dobierz liczbę pytań i próg punktów tak, aby nie wyczerpać pytań przed planowanym finałem. Samo włączenie finału nie gwarantuje jego rozpoczęcia.
 
-Finał jest osobnym trybem gry. Bierze w nim udział dwóch zawodników z drużyny, która wygrała rozgrywkę zasadniczą. Odpowiadają na te same **5 pytań**, a ich punkty sumują się. Celem jest osiągnięcie progu finału (domyślnie **200 punktów**, chyba że ustawiono inaczej).
+### 5) Finał
+
+W finale dwóch zawodników odpowiada na te same **5 pytań**. Ich punkty sumują się; celem jest ustawiony próg finału, domyślnie **200 punktów**. Zwykle grają dwie osoby z drużyny zwycięskiej. Za jej zgodą możesz organizacyjnie wybrać po jednym zawodniku z każdej drużyny — system nadal rozlicza jeden wspólny finał zwycięzców.
 
 #### Przygotowanie finału
 
-Przed rozpoczęciem finału musi być przygotowanych dokładnie 5 pytań. Przy ustawieniu „Ręcznie” wybierz je w zakładce „Pytania — Finał” Ustawień rozgrywki; przy „Losowe” system wybiera je automatycznie. Sprawdź pytania w Podsumowaniu przed rozpoczęciem gry.
+Przed grą sprawdź pięć pytań w Podsumowaniu. Przy „Ręcznie” wybierz je w Ustawieniach rozgrywki; przy „Losuj” system dobiera je automatycznie. Przygotuj miejsce oczekiwania i słuchawki z muzyką dla drugiego zawodnika: podczas pierwszej rundy nie może słyszeć pytań ani odpowiedzi.
 
-W finale bardzo ważne jest, żeby drugi zawodnik nie znał odpowiedzi pierwszego. Dlatego w czasie rundy pierwszego zawodnika drugi zawodnik **oddala się i zakłada słuchawki z muzyką**, żeby nie słyszeć pytań ani odpowiedzi.
+„Rozpocznij finał” odtwarza „Muzykę finału”. Następnie grają „Przejście rundy” i „Zmiana na wyświetlaczu”, zsynchronizowane na koniec. W czasie zmiany pojawia się plansza finału. Wynik zwycięskiej drużyny pozostaje widoczny, a miejsce wyniku przeciwnej drużyny jest przeznaczone na zegar. Suma finału jest stale pokazywana w banku na górze.
 
-#### Runda 1 – pierwszy zawodnik (15 sekund)
+**Prowadzący:** Podczas przygotowania finału ekran jest pusty. Materiały pojawiają się po rozpoczęciu pierwszej rundy.
 
-Prowadzący czyta po kolei pięć pytań, a pierwszy zawodnik odpowiada w limicie **15 sekund**. Operator w tym czasie **wpisuje odpowiedzi** w panelu finału. Na tym etapie odpowiedzi nie są jeszcze oceniane ani odsłaniane.
+#### Gracz 1 — przygotowanie i wpisywanie
 
-Po zakończeniu rundy operator przypisuje wpisane odpowiedzi do listy punktowanych wyników i **odsłania je na tablicy**. Jeśli odpowiedź nie pasuje do żadnej pozycji z listy, otrzymuje **0 punktów**.
+Upewnij się, że drugi zawodnik oczekuje poza grą. Prowadzący czyta po kolei pytania; operator wpisuje odpowiedzi przy właściwych pytaniach. Odpowiedzi nie są jeszcze oceniane ani pokazywane publiczności.
 
-Po odsłonięciu odpowiedzi pierwszego zawodnika przygotuj drugiego zawodnika i przypomnij zasady finału. Podczas wpisywania odpowiedzi drugiego gracza Wyświetlacz pokazuje odkryte odpowiedzi gracza 1. Drugi gracz nie powinien patrzeć na tablicę. Operator widzi wcześniejsze odpowiedzi przy polach wpisywania, aby rozpoznać powtórzenia.
+Zegar pierwszego gracza ma **15 sekund**. Nie rusza po samym otwarciu ekranu: uruchom go przyciskiem albo skrótem **⇧ Shift + Ctrl** (Mac: **⇧ + ⌘**). Tym samym przyciskiem lub skrótem możesz zatrzymać odliczanie. Enter przechodzi do następnego pola, a strzałki góra i dół pozwalają zmienić pytanie. Puste pole to brak wpisu, nie ostateczna ocena odpowiedzi.
 
-#### Wpisywanie i odliczanie w panelu
-
-Wpisuj odpowiedzi przy odpowiednich pytaniach. Enter przechodzi do następnego pola, a strzałki góra i dół pomagają zmienić pytanie. Odliczanie nie rusza samo po otwarciu ekranu: uruchom je przyciskiem albo skrótem Shift + Ctrl (na Macu Shift + Cmd). Tym samym przyciskiem lub skrótem możesz je zatrzymać, gdy gracz skończy odpowiadać. Puste pole oznacza brak odpowiedzi; wpisany tekst nie jest jeszcze oceną ani punktami.
-
-#### Runda 2 – drugi zawodnik (20 sekund) i powtórki
-
-Drugi zawodnik wraca do gry i odpowiada na te same pytania w limicie **20 sekund**. W momencie gdy na tablicy pojawia się połówka z odpowiedziami pierwszego zawodnika, drugi zawodnik **odwraca się**, żeby ich nie widzieć i nie sugerować się nimi.
-
-Operator znów najpierw wpisuje wszystkie odpowiedzi drugiego zawodnika, bez odsłaniania i bez oceniania „na bieżąco". Jeśli druga osoba poda odpowiedź identyczną jak pierwsza, jest to **powtórka** — zawodnik musi podać inną odpowiedź, a operator może oznaczyć tę próbę jako powtórzoną. Odpowiedzi powtórzone nie dają punktów. Zaprezentować dźwięk powtórzenia można przed rozpoczęciem 2 rundy, żeby gracz wiedział, jak to będzie brzmiało podczas rozgrywki.
-
-Po zakończeniu rundy operator przypisuje odpowiedzi drugiego zawodnika do listy punktowanych wyników i **odsłania je po kolei** na tablicy. Punkty obu zawodników sumują się.
-
-#### Ocenianie i odsłanianie odpowiedzi
-
-Dla każdego pytania porównaj wpis z listą punktowanych odpowiedzi. Wybierz pasującą odpowiedź albo oznacz pudło, brak odpowiedzi lub powtórzenie. Przy trafieniu odsłoń najpierw odpowiedź, potem punkty. Przy pudle, braku odpowiedzi i powtórzeniu zero pojawia się automatycznie podczas odsłaniania odpowiedzi, z dźwiękiem błędu. Suma finału jest na pasku z przyciskiem „Dalej”; samo dopasowanie tekstu nie zwiększa tej sumy.
-
-**Ważne:** Wyświetlacz mieści 17 znaków odpowiedzi w rundach i 11 w finale, razem ze spacjami. Dłuższa odpowiedź jest skracana tylko na planszy; pełny tekst pozostaje w panelu i na ekranie Prowadzącego. Kropka oznacza urwane słowo. Jeśli skrócenie wypada przed spacją lub znakiem interpunkcyjnym, kropka nie jest dodawana.
-
-#### Kiedy finał się kończy
-
-Po odsłonięciu punktów, które osiągają lub przekraczają cel finału, dalsza ocena odpowiedzi zostaje zablokowana. W kolumnie podpowiedzi pojawia się informacja o osiągnięciu progu, a przycisk zmienia się na „Zakończ finał”. Dotyczy to zarówno pierwszego, jak i drugiego gracza. Nie ma automatycznego przejścia: operator wybiera moment pokazania wyniku. Jeżeli celu nie osiągnięto, „Zakończ finał” pojawia się po odsłonięciu ostatnich punktów drugiego gracza.
-
-„Zakończ finał” pokazuje wybrany ekran końcowy: logo, punkty albo kwotę wygranej. Zmianie planszy towarzyszą dźwięk większej zmiany planszy i dźwięk przejścia rundy. Dopiero następne „Zakończ grę” odtwarza muzykę outro programu. Wynik pozostaje widoczny — nie ma drugiego odsłonięcia ani powtórzenia dźwięku zmiany planszy.
-
-**Uwaga:** Osiągnięcie celu finału blokuje dalszą ocenę odpowiedzi, ale nie pokazuje wyniku automatycznie. Wybierz „Zakończ finał”, aby pokazać wynik. „Zakończ grę” to następna czynność — uruchamia muzykę outro programu.
-
-#### Zakończenie gry bez finału
-
-Po rozliczeniu rundy i odsłonięciu pozostałych odpowiedzi wybierz „Przejdź do zakończenia gry”. „Zakończ grę” pokazuje ekran końcowy wraz z dźwiękiem większej zmiany planszy i odtwarza muzykę outro programu. Dźwięk zakończenia rundy nie jest powtarzany. Przy trybie „Pokaż kwotę (po finale)” gra bez finału pokazuje punkty; przy remisie pokazuje logo.
-
-#### Ponowne rozpoczęcie gry
-
-Po zakończeniu możesz wybrać „Zacznij od nowa”. Potwierdź tę czynność, aby wrócić do przygotowania urządzeń. Trwające dźwięki końcowe blokują ponowne rozpoczęcie — poczekaj na zakończenie outro.
-
-### Prowadzący — co widzi i jak czytać ekran
-
-Ekran Prowadzącego ma dwie części. W pionie są to część górna i dolna, a w poziomie lewa i prawa. Pierwsza podaje etap gry oraz, zależnie od etapu, pytanie. Druga zawiera materiały potrzebne do prowadzenia: listę odpowiedzi, pytania finału albo szczegóły aktualnego dopasowania. Druga część może być przykryta zasłoną.
-
-#### Zasłona i gest odsłonięcia
-
-- W pionie przesuń zasłonę **w dół**, aby odsłonić treść; **w górę**, aby zasłonić.
-- W poziomie przesuń **w prawo**, aby odsłonić; **w lewo**, aby zasłonić.
-- Na zasłonie i pod odsłoniętą treścią są wskazówki odpowiednie do orientacji urządzenia.
-- Odsłonięcie służy tylko prowadzącemu. Nie odkrywa odpowiedzi dla publiczności i nie zatwierdza żadnej akcji gry.
-- **Każda nowa zmiana stanu gry przywraca zasłonę**, jeśli dany stan wymaga zasłonięcia. Dlatego po działaniu operatora może być potrzebny kolejny gest. Samo lokalne odliczanie sekund nie jest nową akcją operatora.
-
-Odsłoń treść na swoim urządzeniu, gdy potrzebujesz przeczytać pytanie albo sprawdzić odpowiedzi. Nie traktuj zasłony jako informacji, że odpowiedzi zniknęły z gry.
-
-#### Rundy — tytuł mówi, co teraz robicie
-
-| Napis w pierwszej części | Jak go odczytywać | Co jest w drugiej części po odsłonięciu |
-|---|---|---|
-| `RUNDA 1 — PRZYCISK` | Trwa pojedynek, łącznie z ocenianiem odpowiedzi zgłoszonych drużyn. Zatwierdzenie buzzera samo nie zmienia tego tytułu. | Pytanie, następnie pełna lista odpowiedzi z punktami. Pytanie jest tutaj, pod zasłoną; pierwsza część pokazuje tylko tytuł. |
-| `RUNDA 1 — ROZGRYWKA` | Pojedynek rozstrzygnięty; trwa odkrywanie odpowiedzi przez drużynę grającą. | Lista odpowiedzi. Pytanie jest już w pierwszej części pod tytułem. |
-| `RUNDA 1 — KRADZIEŻ` | Druga drużyna ma próbę kradzieży. | Ta sama lista odpowiedzi z oznaczeniami odkrytych pozycji. Pytanie pozostaje w pierwszej części. |
-| `RUNDA 1 — ODSŁANIANIE` | Runda jest rozliczona, operator odkrywa pozostałe odpowiedzi dla publiczności. | Lista z kolejnymi pozycjami zmieniającymi kolor na zielony. |
-| `RUNDA 1` | Stan rundy bez jednej z powyższych aktywnych faz, np. przygotowanie lub przejście. | Materiały wynikające z bieżącego stanu rundy. |
-
-Numer w tytule zmienia się wraz z rundą. Przykładowy wiersz `2) Rower (24)` oznacza: druga pozycja na liście, odpowiedź „Rower”, 24 punkty. Prowadzący widzi **pełne treści i punkty wszystkich odpowiedzi od początku**, także tych zakrytych dla publiczności.
-
-**Zielony wiersz w rundach oznacza odpowiedź już odsłoniętą na Wyświetlaczu.** Zwykły kolor oznacza odpowiedź jeszcze zakrytą. Sama obecność odpowiedzi na ekranie Prowadzącego nie znaczy, że gracze i publiczność już ją widzą.
-
-W rundach Prowadzący nie pokazuje banku, X, wyniku drużyn ani wskazania kontroli. Tytuł „KRADZIEŻ” określa fazę; nie podaje nazwy drużyny wykonującej próbę. Te informacje sprawdzaj na Wyświetlaczu lub w Panelu sterowania.
-
-#### Finał — wpisywanie odpowiedzi
+**Prowadzący podczas wpisywania:**
 
 Pierwsza część pokazuje `FINAŁ RUNDA 1` albo `FINAŁ RUNDA 2`. Po uruchomieniu zegara tytuł zawiera także odliczanie, np. `FINAŁ RUNDA 1 — ODLICZANIE 12s`. Jest to pozostały czas bieżącego gracza. Bez uruchomionego zegara tytuł nie zawiera sekund.
 
@@ -306,13 +274,17 @@ Druga część pokazuje pięć pytań z numerami i statusem wpisu, np.:
 
 Na tym etapie prowadzący czyta pytania i śledzi, gdzie operator ma już wpis. Ekran pokazuje statusy, **nie treść właśnie wpisywanych odpowiedzi**. Treść wpisu jest dostępna przy późniejszym mapowaniu.
 
-#### Finał — mapowanie i odsłanianie
+#### Gracz 1 — dopasowanie i odsłanianie
+
+Po zakończeniu odpowiadania przejdź do odsłaniania. Dla każdego pytania porównaj wpis z listą punktowanych odpowiedzi i wybierz pasującą pozycję albo pudło. Wyświetlacz pokazuje wybraną odpowiedź, a pełny wpis pozostaje w panelu. Przy trafieniu odsłoń odpowiedź z dźwiękiem „Zmiana na wyświetlaczu”, a potem punkty z „Poprawną odpowiedzią”. Przy wpisanej błędnej odpowiedzi odsłoń tekst z „Zmianą na wyświetlaczu”, a następnie zero z „Błędną odpowiedzią”. Brak odpowiedzi automatycznie pokazuje odpowiedź i zero z samą „Błędną odpowiedzią”. Dopasowanie samo nie nalicza punktów; suma zwiększa się przy odsłonięciu punktów.
+
+**Prowadzący podczas odsłaniania:**
 
 Pierwsza część pokazuje np. `FINAŁ — ODSŁANIANIE (RUNDA 2)` oraz `Pytanie 3: …`. Numer określa aktualnie oceniane pytanie, a „RUNDA 2” oznacza drugiego gracza finału.
 
 Druga część zawiera:
 
-1. **`Gracz 1: …`** — tylko przy mapowaniu gracza 2. To wcześniejsza, wpisana odpowiedź pierwszego gracza na to samo pytanie; `—` oznacza pusty wpis.
+1. **`Gracz 1: …`** — tylko przy mapowaniu gracza 2. To wcześniejsza, wybrana odpowiedź pierwszego gracza na to samo pytanie; `—` oznacza brak odpowiedzi.
 2. **`Wprowadzono: …`** — tekst wpisany przez operatora dla aktualnego gracza. Wiersz jest pomijany, jeśli nie ma wpisu albo oznaczono powtórzenie.
 3. **`Stan: …`** — informacja o obecnym dopasowaniu, według tabeli poniżej.
 4. **`Lista odpowiedzi:`** — wszystkie odpowiedzi z bazy na bieżące pytanie, z punktami w nawiasach, od najwyżej punktowanej.
@@ -326,17 +298,37 @@ Druga część zawiera:
 
 **Kolory w finale opisują dopasowanie, a nie etap animacji na Wyświetlaczu.** Zielone „z listy” nie oznacza samo w sobie, że publiczność już zobaczyła odpowiedź lub punkty. Rozróżniaj tekst wpisany przez operatora od wybranej odpowiedzi z bazy: mogą mieć inne brzmienie, np. wpis „na rowerze” dopasowany do „Rower (24)”.
 
-#### Przejścia i zakończenie
+#### Gracz 2 — przygotowanie i wpisywanie
 
-Przy przygotowaniu finału, przejściu przed wpisywaniem gracza 2 i po zakończeniu finału obie części Prowadzącego są czyszczone. Pusty ekran w tych krokach jest zamierzony; ekran wyniku oglądaj na Wyświetlaczu. Przy zakończeniu gry bez finału Prowadzący może nadal pokazywać ostatni stan rundy — nie jest osobnym ekranem nagrody.
+Jeżeli nie osiągnięto progu, po piątym pytaniu gracza 1 przejdź do przygotowania drugiego zawodnika. W tym przejściu gra „Przejście rundy”; ekran Prowadzącego jest czyszczony. Przypomnij zasady i możesz zaprezentować dźwięk powtórzenia.
 
+„Rozpocznij 2 rundę” przywraca odkryte odpowiedzi gracza 1 na Wyświetlaczu. Drugi zawodnik odwraca się od tablicy, aby ich nie widzieć. Operator widzi je przy polach odpowiedzi, co pomaga rozpoznać powtórzenie. Zegar ma **20 sekund** i uruchamiasz go tak samo jak przy graczu 1. Prowadzący widzi tytuł „FINAŁ RUNDA 2”, odliczanie po uruchomieniu zegara i pięć pytań ze statusami wpisów.
 
+Gdy gracz powtórzy odpowiedź pierwszego zawodnika, oznacz „Powtórzenie” i poproś o inną odpowiedź. Zaznaczenie odtwarza dźwięk powtórzenia. Dopóki pozostaje czas, prowadzący może ponownie czytać pominięte pytania, także te z powtórzeniem. Gracz może się poprawić. Wpisanie nowej treści automatycznie usuwa oznaczenie powtórzenia; samo ustawienie kursora tego nie robi.
 
+**Wskazówka:** Pytania można czytać w kolejnych obiegach do końca czasu. „Dalej” wypowiedziane przez zawodnika nie zamyka pytania na resztę rundy.
 
+#### Gracz 2 — dopasowanie i odsłanianie
 
+Po wpisywaniu dopasuj i odsłoń odpowiedzi drugiego gracza tak samo jak pierwszego. W panelu i na ekranie Prowadzącego „Gracz 1” wskazuje wcześniejszą wybraną odpowiedź, a „Wprowadzono” — obecny wpis operatora. Nie muszą mieć identycznego brzmienia. Powtórzenie nie daje punktów. Punkty obu graczy trafiają do tej samej sumy na górze Wyświetlacza. Zegar znika po zatrzymaniu lub wygaśnięciu, a wynik drużyny przeciwnej już nie wraca.
 
+**Ważne:** Wyświetlacz mieści 17 znaków odpowiedzi w rundach i 11 w finale, razem ze spacjami. Dłuższy tekst jest skracany tylko na planszy; pełny pozostaje w panelu i na ekranie Prowadzącego. Kropka oznacza urwane słowo. Jeśli następny znak to spacja lub interpunkcja, kropka nie jest dodawana.
 
+#### Kiedy finał się kończy
 
+Osiągnięcie progu blokuje dalszą ocenę odpowiedzi. Kolumna podpowiedzi informuje o osiągniętym progu, a przycisk zmienia się na „Zakończ finał”, zarówno przy graczu 1, jak i 2. Wynik nie pojawia się automatycznie: operator wybiera moment zakończenia. Jeżeli progu nie osiągnięto, „Zakończ finał” pojawia się po odsłonięciu ostatnich punktów gracza 2.
+
+„Zakończ finał” pokazuje wybrany ekran końcowy — logo, punkty albo kwotę — z samą „Muzyką finału”. Nie gra wtedy dodatkowe „Przejście rundy” ani „Zmiana na wyświetlaczu”. Następne „Zakończ grę” odtwarza tylko „Muzykę outro programu”. Wynik pozostaje widoczny, a wskaźnik zwycięskiej drużyny nie gaśnie. Przy zakończeniu finału ekran Prowadzącego jest czyszczony; wynik oglądaj na Wyświetlaczu.
+
+#### Zakończenie gry bez finału
+
+Jeżeli finał jest wyłączony i osiągnięto próg rund albo wyczerpały się pytania, dalsze działania rundy zostają zablokowane. Nie odsłaniasz pozostałych odpowiedzi. „Przejdź do zakończenia gry” rozlicza bank, odtwarza jednocześnie „Przejście rundy” i „Zmianę na wyświetlaczu” oraz pokazuje ekran końcowy. Potem „Zakończ grę” odtwarza tylko „Muzykę outro programu”. Przy „Pokaż kwotę (po finale)” zakończenie bez finału pokazuje punkty; przy remisie pokazuje logo.
+
+Prowadzący może nadal pokazywać ostatni stan rundy — jego ekran nie jest ekranem nagrody.
+
+#### Ponowne rozpoczęcie gry
+
+Przycisk **↻ Zacznij od nowa** jest dostępny także podczas dźwięków, przejść i rozłączenia urządzeń. Potwierdzenie restartu wraca do przygotowania urządzeń, przerywa dźwięki i usuwa oczekujące działania poprzedniej rozgrywki.
 
 ## Ustawienia rozgrywki
 
@@ -346,7 +338,7 @@ Otworzysz ją ze strony **Moje gry** przyciskiem **Ustawienia rozgrywki** przy w
 
 ### Drużyny
 
-Wpisz nazwy drużyn. Pojawiają się na Wyświetlaczu już przed rozpoczęciem gry, a podczas rozgrywki także w Panelu sterowania. Sprawdź je na podglądzie i w Podsumowaniu.
+Wpisz nazwy drużyn i sprawdź je na podglądzie oraz w Podsumowaniu. Na Wyświetlaczu gry pojawią się dopiero na ekranie z przyciskiem „Rozpocznij grę”, po przygotowaniu urządzeń i ustawień.
 
 Jeśli nie wpiszesz nic — zostaną wyświetlone domyślne wartości **Drużyna A** i **Drużyna B**.
 
@@ -376,7 +368,7 @@ Przycisk **Przywróć domyślne** w sekcji Wygląd resetuje kolory, motyw i logo
 
 ### Dźwięk
 
-W tej sekcji konfigurujesz dźwięki używane podczas rozgrywki. Każda kategoria dźwiękowa (np. **Poprawna odpowiedź**, **Błędna odpowiedź**, **Intro**, **Przejście rundy**, **Muzyka outro programu**, **Odsłanianie**) ma własne ustawienia.
+W tej sekcji konfigurujesz dźwięki używane podczas rozgrywki. Każda kategoria dźwiękowa (np. **Poprawna odpowiedź**, **Błędna odpowiedź**, **Intro**, **Przejście rundy**, **Muzyka outro programu**, **Zmiana na wyświetlaczu**) ma własne ustawienia.
 
 #### Wariant dźwięku
 
@@ -394,9 +386,15 @@ Aby usunąć własny plik, użyj przycisku **X** przy pliku. Jeśli chcesz wróc
 
 Własny plik audio jest zapisywany w chmurze razem z grą i będzie dostępny na każdym urządzeniu, na którym uruchomisz tę grę.
 
-#### Muzyka outro programu
+**Limity własnych plików:**
 
-To osobny dźwięk zakończenia gry. Własny plik może trwać do 2 minut. Wybierz wariant „Własny”, wskaż plik i odsłuchaj go, a następnie zapisz ustawienia. Dźwięk jest również dostępny w Podsumowaniu Panelu sterowania. Outro nie zastępuje dźwięku przejścia rundy: po finale najpierw pokazujesz wynik przez „Zakończ finał”, a dopiero „Zakończ grę” uruchamia outro. Ekran wyniku pozostaje wtedy widoczny.
+| Kategorie | Maksymalna długość |
+|---|---|
+| Naciśnięcie Przycisku, poprawna i błędna odpowiedź, powtórzenie, limit czasu, zmiana na wyświetlaczu | 5 sekund |
+| Muzyka intro programu, przejście rundy, muzyka finału | 30 sekund |
+| Muzyka outro programu | 2 minuty |
+
+Outro odtwarza przycisk „Zakończ grę”, gdy ekran końcowy jest już widoczny. Własne pliki i głośność ustawiasz tak samo dla każdej kategorii.
 
 #### Głośność
 
@@ -416,13 +414,13 @@ Przełącznik **Czy gra zawiera finał?** decyduje, czy gra zakończy się etape
 
 #### Tryb pytań do rund
 
-- **Losowe** — pytania do rund zostaną wylosowane automatycznie przy starcie rozgrywki. Nie musisz nic wybierać — system sam dobierze pytania z puli.
+- **Losuj** — pytania do rund zostaną wylosowane automatycznie przy starcie rozgrywki. Nie musisz nic wybierać — system sam dobierze pytania z puli.
 
 - **Kolejność** — możesz ręcznie ustalić kolejność pytań spośród dostępnych.
 
 #### Tryb pytań do finału
 
-- **Losowe** — 5 pytań finałowych zostanie wylosowanych automatycznie (z pominięciem pytań użytych w rundach). Losowanie odbywa się przy wejściu do kroku Podsumowanie w Panelu sterowania.
+- **Losuj** — 5 pytań finałowych zostanie wylosowanych automatycznie (z pominięciem pytań użytych w rundach). Losowanie odbywa się przy wejściu do kroku Podsumowanie w Panelu sterowania.
 
 - **Ręcznie** — wybierz dokładnie 5 pytań w zakładce „Pytania — Finał” Ustawień rozgrywki. Przed startem sprawdź wybór w Podsumowaniu Panelu sterowania.
 
