@@ -17,14 +17,11 @@
 //    komunikat zamiast cichego "sukcesu" (updateChecked, ROW_GONE).
 
 //
-// Strona /bases i cały front-end (js/, css/, translation/) są serwowane z
-// plików TEGO repo (helpers/branch-code.js), a backend jest prawdziwy --
-// więc workflow odpalony na branchu testuje poprawki przed wdrożeniem.
+// Strona /bases i zasoby są pobierane z wdrożonej produkcji.
 
 const fs = require("fs");
 const { test, expect } = require("@playwright/test");
 const { loginAsTestUser, testAccountUsername } = require("./helpers/login");
-const { serveBranchCode } = require("./helpers/branch-code");
 const { clearMailbox, waitForEmail, extractHttpLinks, resetMailProviderLimits } = require("./helpers/mailbox");
 
 const BASE_URL = "https://www.familiada.online/bases";
@@ -32,13 +29,8 @@ const BASE_URL = "https://www.familiada.online/bases";
 // service worker obsłużyłby żądania z własnego cache z pominięciem page.route
 test.use({ serviceWorkers: "block" });
 
-test.beforeEach(async ({ context }) => {
-  await serveBranchCode(context, { pages: ["bases"] });
-});
-
 async function newUserContext(browser, username, contextOptions = {}) {
   const ctx = await browser.newContext({ serviceWorkers: "block", ...contextOptions });
-  await serveBranchCode(ctx, { pages: ["bases"] });
   const pg = await ctx.newPage();
   await loginAsTestUser(pg, ctx, { username });
   return { ctx, page: pg };
@@ -149,7 +141,7 @@ test("@mailbox bazy: udostępnienie z UI wysyła działający link", async ({ pa
     expect(`${email.body || ""}\n${email.body_html || ""}`).toContain(name);
     const invitation = extractHttpLinks(email).find((link) => {
       const url = new URL(link);
-      return /\/bases(?:\.html)?$/.test(url.pathname) && url.searchParams.has("share");
+      return /\/bases\/?$/.test(url.pathname) && url.searchParams.has("share");
     });
     expect(invitation, "mail musi zawierać link /bases?share=").toBeTruthy();
   } finally {

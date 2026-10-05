@@ -193,7 +193,7 @@ Celowo krótki, BEZ żadnej rozgrywki — sedno to sam krok Urządzeń i prawdzi
 
 **Potwierdzenie w UI** — modal pokazuje "Aktualnie udostępnione dla: test2" (nazwę istniejącego konta) — to potwierdzenie zapisu, nie dostarczenia maila.
 
-**Prawdziwy e-mail** — nagranie czeka na dostarczenie maila (do 90s) z tematem zawierającym "Udostępniono urządzenie" i linkiem do `/host2?...`.
+**Prawdziwy e-mail** — nagranie czeka na dostarczenie maila (do 180s) z tematem zawierającym "Udostępniono urządzenie" i linkiem do `/host2?...`. Przed ponowną wysyłką na ten sam adres test resetuje limity wysyłki oraz blokadę ponownego udostępnienia.
 
 **Odbiorca klika link** — zupełnie NOWE, osobne okno przeglądarki (inny kontekst niż reszta urządzeń) otwiera link z maila — strona Prowadzącego ładuje się normalnie, BEZ żadnego logowania (sam klucz w URL-u wystarcza).
 

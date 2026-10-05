@@ -160,4 +160,4 @@ Zapisz zmiany przez „Zapisz wszystko”. Edycja podglądu przed zapisem nie je
 | 07–08 | Blokada logo i samoistne wznowienie; układ udostępniania i prawdziwy link z e-maila. |
 | 09–10 | Ręczny wybór drużyny i pomijane urządzenia; mnożnik czwartej rundy. |
 
-Sprawdź płynność ruchu i brak przeskakiwania klatek na rzeczywistych filmach. Zaliczone asercje E2E same nie potwierdzają jakości animacji. Pełny cykl nagrań jest w trakcie; ten dokument nie oznacza akceptacji wizualnej wszystkich punktów.
+Sprawdź płynność ruchu i brak przeskakiwania klatek na rzeczywistych filmach. Zaliczone asercje E2E same nie potwierdzają jakości animacji. Wszystkie 10 nagrań jest gotowych: filmy 01–06 w przebiegu [37334109511](https://github.com/Andrish97/familiada/actions/runs/37334109511), a 07–10 w udanym przebiegu [37340921533](https://github.com/Andrish97/familiada/actions/runs/37340921533). Ten dokument nie oznacza akceptacji wizualnej wszystkich punktów.
