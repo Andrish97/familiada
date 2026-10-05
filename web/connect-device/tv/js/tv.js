@@ -13,7 +13,10 @@ function setMessage(key) { messageKey = key; message.textContent = key ? t(`conn
 langButton?.addEventListener("click", () => {
   if (langMenu && !langMenu.hidden) langMenu.querySelector(`[data-lang="${getUiLang()}"]`)?.focus();
 });
-window.addEventListener("i18n:lang", () => { setMessage(messageKey); langButton?.focus(); });
+window.addEventListener("i18n:lang", () => {
+  setMessage(messageKey);
+  if (langMenu?.contains(document.activeElement)) langButton?.focus();
+});
 input.focus();
 input.addEventListener("input", () => { input.value = input.value.replace(/\D/g, "").slice(0, 6); });
 document.addEventListener("keydown", (event) => {
