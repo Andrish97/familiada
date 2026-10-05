@@ -1,7 +1,7 @@
 // js/core/sfx.js
 // Rozszerzony moduł dźwięku: manifest, warianty, głośności, własne pliki (IndexedDB).
 
-const MANIFEST_PATH = "/shared/data/sounds.json?v=v2026-10-05T22313";
+const MANIFEST_PATH = "/shared/data/sounds.json?v=v2026-10-05T23244";
 const AUDIO_BASE    = "/assets/audio/";
 const IDB_NAME      = "familiada-sfx";
 const IDB_STORE     = "custom-files";
@@ -418,7 +418,7 @@ export function unlockAudio() {
   try {
     const a = new Audio();
     a.volume = 0;
-    a.src = "/assets/audio/reveal/classic.mp3?v=v2026-10-05T22313";
+    a.src = "/assets/audio/reveal/classic.mp3?v=v2026-10-05T23244";
     a.play().catch(() => {});
     unlocked = true;
     return true;
@@ -450,7 +450,7 @@ export async function initSfx() {
 
 /**
  * Nadpisuje ustawienia z game.settings.sound (per-game).
- * volumes: { key: 0–100 }, variants: { key: "classic.mp3?v=v2026-10-05T22313" }
+ * volumes: { key: 0–100 }, variants: { key: "classic.mp3?v=v2026-10-05T23244" }
  */
 export function applySfxGameSettings({ volumes = {}, variants = {} } = {}) {
   for (const [key, pct] of Object.entries(volumes)) {

@@ -1,8 +1,8 @@
 // /familiada/js/pages/controlapp.js
-import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-05T22313";
-import { getUiLang, initI18n, t } from "../../shared/translation/translation.js?v=v2026-10-05T22313";
-import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-05T22313";
-import { guardDesktopOnly } from "../../shared/js/core/device-guard.js?v=v2026-10-05T22313";
+import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-05T23244";
+import { getUiLang, initI18n, t } from "../../shared/translation/translation.js?v=v2026-10-05T23244";
+import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-05T23244";
+import { guardDesktopOnly } from "../../shared/js/core/device-guard.js?v=v2026-10-05T23244";
 
 guardDesktopOnly();
 
@@ -41,24 +41,24 @@ const APP_MSG = {
 };
 // ================= KONIEC KOMUNIKATÓW =================
 
-import { requireAuth, signOut } from "../../shared/js/core/auth.js?v=v2026-10-05T22313";
-import { setTopbarAccount } from "../../shared/js/core/topbar-controller.js?v=v2026-10-05T22313";
-import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-05T22313";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-05T22313";
-import { rt } from "../../shared/js/core/realtime.js?v=v2026-10-05T22313";
-import { validateGame, loadGameBasic, loadQuestions, loadAnswers } from "../../shared/js/core/game-validate.js?v=v2026-10-05T22313";
-import { unlockAudio, isAudioUnlocked, playSfx, setCurrentGameId, loadSfxManifest, initSfx, applySfxGameSettings, loadSfxFromCloud, getSfxCustomFiles, getSfxCategories, getSfxVariant, getSfxVolume, isSfxPlaying, stopSfx, onSfxEnd, setSessionSfxVolume } from "../../shared/js/core/sfx.js?v=v2026-10-05T22313";
-import { listGameSounds } from "../../shared/js/core/sfx-cloud.js?v=v2026-10-05T22313";
-import { createStore } from "./store.js?v=v2026-10-05T22313";
-import { createUI } from "./ui.js?v=v2026-10-05T22313";
-import { createDevices } from "./devices.js?v=v2026-10-05T22313";
-import { createPresence } from "./presence.js?v=v2026-10-05T22313";
-import { createDisplay } from "./display.js?v=v2026-10-05T22313";
-import { createRounds } from "./gameRounds.js?v=v2026-10-05T22313";
-import { createFinal } from "./gameFinal.js?v=v2026-10-05T22313";
-import { initShareDevice } from "./share-device.js?v=v2026-10-05T22313";
-import { loadFont5x7, buildLogoPreviewCanvas } from "../../shared/js/core/logo-preview.js?v=v2026-10-05T22313";
-import { sessionStart, sessionEnd, sessionLogError } from "./sessionTracking.js?v=v2026-10-05T22313";
+import { requireAuth, signOut } from "../../shared/js/core/auth.js?v=v2026-10-05T23244";
+import { setTopbarAccount } from "../../shared/js/core/topbar-controller.js?v=v2026-10-05T23244";
+import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-05T23244";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-05T23244";
+import { rt } from "../../shared/js/core/realtime.js?v=v2026-10-05T23244";
+import { validateGame, loadGameBasic, loadQuestions, loadAnswers } from "../../shared/js/core/game-validate.js?v=v2026-10-05T23244";
+import { unlockAudio, isAudioUnlocked, playSfx, setCurrentGameId, loadSfxManifest, initSfx, applySfxGameSettings, loadSfxFromCloud, getSfxCustomFiles, getSfxCategories, getSfxVariant, getSfxVolume, isSfxPlaying, stopSfx, onSfxEnd, setSessionSfxVolume } from "../../shared/js/core/sfx.js?v=v2026-10-05T23244";
+import { listGameSounds } from "../../shared/js/core/sfx-cloud.js?v=v2026-10-05T23244";
+import { createStore } from "./store.js?v=v2026-10-05T23244";
+import { createUI } from "./ui.js?v=v2026-10-05T23244";
+import { createDevices } from "./devices.js?v=v2026-10-05T23244";
+import { createPresence } from "./presence.js?v=v2026-10-05T23244";
+import { createDisplay } from "./display.js?v=v2026-10-05T23244";
+import { createRounds } from "./gameRounds.js?v=v2026-10-05T23244";
+import { createFinal } from "./gameFinal.js?v=v2026-10-05T23244";
+import { initShareDevice } from "./share-device.js?v=v2026-10-05T23244";
+import { loadFont5x7, buildLogoPreviewCanvas } from "../../shared/js/core/logo-preview.js?v=v2026-10-05T23244";
+import { sessionStart, sessionEnd, sessionLogError } from "./sessionTracking.js?v=v2026-10-05T23244";
 
 initI18n({ withSwitcher: true });
 
