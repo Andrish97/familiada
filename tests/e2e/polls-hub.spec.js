@@ -3,7 +3,7 @@ import loginHelpers from './helpers/login.js';
 import mailboxHelpers from './helpers/mailbox.js';
 
 const { loginAsTestUser, testAccountUsername } = loginHelpers;
-const { clearMailbox, waitForEmail, extractHttpLinks } = mailboxHelpers;
+const { clearMailbox, waitForEmail, extractHttpLinks, resetMailProviderLimits } = mailboxHelpers;
 
 async function userId(page) {
   return page.evaluate(async () => (await window.__sbClient.auth.getUser()).data.user.id);
@@ -74,6 +74,7 @@ for (const [type, target] of [['poll_text', 'poll-text'], ['poll_points', 'poll-
       const recipientId = await userId(recipientPage);
       await cleanupPair(ownerPage, recipientId);
       await makeActiveSubscription(ownerPage, recipientPage, recipient);
+      await resetMailProviderLimits(ownerPage);
       await clearMailbox(recipient);
       const after = new Date(Date.now() - 2_000).toISOString();
       const name = `E2E-MAIL-${type}-${Date.now()}`;

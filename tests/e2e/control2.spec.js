@@ -173,7 +173,7 @@ test("control2: własne outro ponad 30 sekund — ustawienia, zapis i podsumowan
   }
 });
 const { loginAsPooledTestUser, loginAsTestUser, testAccountUsername, isKnownNoiseText, isKnownNoiseUrl } = require("./helpers/login");
-const { clearMailbox, waitForEmail, extractHttpLinks } = require("./helpers/mailbox");
+const { clearMailbox, waitForEmail, extractHttpLinks, resetMailProviderLimits } = require("./helpers/mailbox");
 
 test.setTimeout(150_000);
 
@@ -1985,6 +1985,7 @@ test("@mailbox control2: udostępnianie urządzenia (Prowadzący) przez e-mail -
   const game = await makeGame(page, `E2E-CONTROL2-SHAREMAIL-${Date.now()}`);
   const contexts = [];
   try {
+    await resetMailProviderLimits(page);
     await clearMailbox(recipient);
 
     // Zgłoszone: maile mają cooldown/suppression, żeby nie spamować -- przy

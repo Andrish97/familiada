@@ -25,7 +25,7 @@ const fs = require("fs");
 const { test, expect } = require("@playwright/test");
 const { loginAsTestUser, testAccountUsername } = require("./helpers/login");
 const { serveBranchCode } = require("./helpers/branch-code");
-const { clearMailbox, waitForEmail, extractHttpLinks } = require("./helpers/mailbox");
+const { clearMailbox, waitForEmail, extractHttpLinks, resetMailProviderLimits } = require("./helpers/mailbox");
 
 const BASE_URL = "https://www.familiada.online/bases";
 
@@ -132,6 +132,7 @@ test("@mailbox bazy: udostępnienie z UI wysyła działający link", async ({ pa
   try {
     await loginAsTestUser(page, context, { username: testAccountUsername(1) });
     baseId = await createBaseDirect(page, name);
+    await resetMailProviderLimits(page);
     await clearMailbox(recipient);
     const after = new Date(Date.now() - 2_000).toISOString();
 

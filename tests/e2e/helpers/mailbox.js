@@ -22,6 +22,14 @@ async function clearMailbox(recipient) {
   await api(`/emails?recipient=${encodeURIComponent(recipient)}`, { method: "DELETE" });
 }
 
+async function resetMailProviderLimits(page) {
+  await page.evaluate(async () => {
+    const { error } = await window.__sbClient.rpc("reset_email_limits");
+    if (error) throw new Error(`reset_email_limits: ${error.message}`);
+  });
+  console.log("[e2e-mail] provider limits reset before delivery test");
+}
+
 async function waitForEmail({ recipient, after, subject, timeout = 90_000 }) {
   const deadline = Date.now() + timeout;
   while (Date.now() < deadline) {
@@ -48,4 +56,4 @@ async function restoreTestAccount(account) {
   });
 }
 
-module.exports = { clearMailbox, waitForEmail, extractHttpLinks, restoreTestAccount };
+module.exports = { clearMailbox, waitForEmail, extractHttpLinks, restoreTestAccount, resetMailProviderLimits };
