@@ -44,7 +44,9 @@ export async function serveStaticAsset(request, url, ctx, originBase, originHost
   const cacheKey = new Request(url.toString(), request);
 
   const cached = await edgeCache.match(cacheKey);
-  if (cached) return cached;
+  if (cached && !(cached.headers.get("Content-Type") || "").includes("text/html")) return cached;
+  // An old/bad origin response must not pin HTML under a JS/CSS URL for a year.
+  if (cached) await edgeCache.delete(cacheKey);
 
   const target = new URL(url.pathname + url.search, originBase);
   const res = await fetchWithOrigin(target.toString(), request, originHost, resolveOverride, {
@@ -52,6 +54,9 @@ export async function serveStaticAsset(request, url, ctx, originBase, originHost
     cacheControl: cacheControlFor(url),
   });
 
+  if ((res.headers.get("Content-Type") || "").includes("text/html") && res.status === 200) {
+    return new Response("Invalid static asset response", { status: 502, headers: { "Content-Type": "text/plain", "Cache-Control": "no-store" } });
+  }
   if (request.method === "GET" && res.status === 200) {
     ctx.waitUntil(edgeCache.put(cacheKey, res.clone()));
   }

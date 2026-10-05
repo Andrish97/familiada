@@ -103,7 +103,7 @@ test("konto test11: reset hasla przez prawdziwy e-mail i przywrocenie stanu", as
     await page.locator("#email").fill(PASSWORD_EMAIL);
     await page.locator("#pass").fill(temporaryPassword);
     await page.locator("#btnPrimary").click();
-    await page.waitForURL(/\/games(?:[?#]|$)/, { timeout: 30_000 });
+    await page.waitForURL(/\/games\/?(?:[?#]|$)/, { timeout: 30_000 });
   } finally {
     await restoreTestAccount("test11");
     await clearMailbox(PASSWORD_EMAIL);

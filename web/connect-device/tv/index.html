@@ -13,7 +13,7 @@
 <body>
   <main>
     <h1>Podłącz wyświetlacz</h1>
-    <form id="tvConnectForm">
+    <form id="tvConnectForm" novalidate>
       <label for="tvCode">Wpisz kod z panelu sterowania</label>
       <input id="tvCode" type="text" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="off" autofocus required aria-describedby="tvMessage">
       <button id="tvConnect" type="submit">Podłącz</button>
