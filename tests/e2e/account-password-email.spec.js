@@ -97,7 +97,7 @@ test("konto test11: reset hasla przez prawdziwy e-mail i przywrocenie stanu", as
     await page.locator("#save").click();
     // Po sukcesie reset.js pokazuje krotki status i automatycznie wraca do
     // /login po 900 ms; URL jest stabilniejszym sygnalem niz migajacy tekst.
-    await page.waitForURL(/\/login(?:[?#]|$)/, { timeout: 30_000 });
+    await page.waitForURL(/\/login\/?(?:[?#]|$)/, { timeout: 30_000 });
 
     await openLoginWithCaptchaBypass(page, context);
     await page.locator("#email").fill(PASSWORD_EMAIL);

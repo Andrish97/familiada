@@ -115,16 +115,16 @@ for (const [type, target] of [['poll_text', 'poll-text'], ['poll_points', 'poll-
 
       if (directVote) {
         await Promise.all([
-          recipientPage.waitForURL(new RegExp(`/${target}(?:\\?|$)`)),
+          recipientPage.waitForURL(new RegExp(`/${target}/?(?:\\?|$)`)),
           voteButton.click(),
         ]);
       } else {
         await expect(hubButton).toBeVisible();
         await hubButton.click();
-        await expect(recipientPage).toHaveURL(/\/polls-hub(?:\?|$)/);
+        await expect(recipientPage).toHaveURL(/\/polls-hub\/?(?:\?|$)/);
         await expect(recipientPage.locator('.uni-modal .mSub')).toBeVisible({ timeout: 20_000 });
         await Promise.all([
-          recipientPage.waitForURL(new RegExp(`/${target}(?:\\?|$)`)),
+          recipientPage.waitForURL(new RegExp(`/${target}/?(?:\\?|$)`)),
           recipientPage.locator('.uni-modal .uni-foot .btn.gold').click(),
         ]);
       }

@@ -7,6 +7,10 @@ on:
         description: 'Opcjonalnie: odpal tylko wybrany plik/wzorzec (np. "e2e/nowy-test.spec.js" albo "--grep nazwa"). Puste = wszystkie testy, w równoległych grupach (patrz niżej). To pole jest najczęściej używane -- pojedynczy plik/wzorzec zamiast całego zestawu.'
         required: false
         default: ""
+      workers:
+        description: 'Liczba workerów; 1 do diagnostyki współdzielonych kont i poczty.'
+        required: false
+        default: "4"
 
 # WAŻNE: celowo tylko workflow_dispatch — ani push, ani pull_request.
 # Ten workflow loguje się na prawdziwe konta na produkcji i ma dostęp do
@@ -74,7 +78,7 @@ on:
 # górę bez kolejnego czystego przebiegu na obecnej wartości.
 env:
   TEST_ACCOUNT_COUNT: "10"
-  TEST_WORKERS: "4"
+  TEST_WORKERS: ${{ inputs.workers || '4' }}
 
 jobs:
   e2e-grouped:

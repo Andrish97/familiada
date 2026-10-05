@@ -80,6 +80,21 @@ export async function handleE2EApi(request, env, url) {
     return json({ ok: false, error: "unauthorized" }, 401);
   }
 
+  if (url.pathname === "/_e2e_api/mail-delivery" && request.method === "GET") {
+    const recipient = normalizeE2ERecipient(url.searchParams.get("recipient"));
+    const afterMs = Date.parse(url.searchParams.get("after") || "");
+    if (!recipient || !Number.isFinite(afterMs) || afterMs < Date.now() - 25 * 60 * 60 * 1000 || afterMs > Date.now() + 60_000) {
+      return json({ ok: false, error: "invalid_query" }, 400);
+    }
+    const after = encodeURIComponent(new Date(afterMs).toISOString());
+    const results = await Promise.all([
+      supabaseRequest(env, `/rest/v1/mail_queue?select=id,created_at,status,attempts,not_before,last_attempt_at,provider_used,last_error&to_email=eq.${encodeURIComponent(recipient)}&created_at=gte.${after}&order=created_at.asc&limit=30`),
+      supabaseRequest(env, `/rest/v1/mail_function_logs?select=created_at,function_name,event,status,provider,queue_id,error&recipient_email=eq.${encodeURIComponent(recipient)}&created_at=gte.${after}&order=created_at.asc&limit=60`),
+    ]);
+    if (results.some((res) => !res.ok)) return json({ ok: false, error: "delivery_read_failed" }, 500);
+    return json({ ok: true, queue: results[0].data || [], events: results[1].data || [] });
+  }
+
   if (url.pathname === "/_e2e_api/emails" && request.method === "GET") {
     const recipient = normalizeE2ERecipient(url.searchParams.get("recipient"));
     const afterRaw = String(url.searchParams.get("after") || "");

@@ -31,13 +31,21 @@ async function resetMailProviderLimits(page) {
 }
 
 async function waitForEmail({ recipient, after, subject, timeout = 90_000 }) {
+  const startedAt = Date.now();
   const deadline = Date.now() + timeout;
   while (Date.now() < deadline) {
     const data = await api(`/emails?recipient=${encodeURIComponent(recipient)}&after=${encodeURIComponent(after)}`);
     const email = (data.emails || []).find((row) => !subject || subject.test(row.subject || ""));
-    if (email) return email;
+    if (email) {
+      console.log("[e2e-mail] received", JSON.stringify({ recipient, elapsedMs: Date.now() - startedAt, receivedAt: email.received_at }));
+      return email;
+    }
     await new Promise((resolve) => setTimeout(resolve, 2_000));
   }
+  try {
+    const delivery = await api(`/mail-delivery?recipient=${encodeURIComponent(recipient)}&after=${encodeURIComponent(after)}`);
+    console.log("[e2e-mail] delivery diagnosis", JSON.stringify({ recipient, ...delivery }));
+  } catch (error) { console.log("[e2e-mail] delivery diagnosis unavailable:", error.message); }
   throw new Error(`Nie otrzymano maila dla ${recipient} w ${timeout} ms`);
 }
 

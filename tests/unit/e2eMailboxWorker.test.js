@@ -12,6 +12,17 @@ const { default: worker } = await import("../../cloudflare/maintenance-worker/sr
 
 const SECRET = "unit-test-e2e-secret";
 
+test("Diagnostyka dostarczenia wymaga tokenu i adresu testowego w krótkim oknie", async () => {
+  const after = encodeURIComponent(new Date().toISOString());
+  for (const [recipient, headers, status] of [
+    ["test1@familiada.online", {}, 401],
+    ["real@example.com", { "X-E2E-Token": token() }, 400],
+  ]) {
+    const response = await worker.fetch(new Request(`https://www.familiada.online/_e2e_api/mail-delivery?recipient=${encodeURIComponent(recipient)}&after=${after}`, { headers }), env(), {});
+    assert.equal(response.status, status);
+  }
+});
+
 function token() {
   const payload = Buffer.from(JSON.stringify({ iat: Date.now(), nonce: crypto.randomUUID() })).toString("base64");
   const signature = crypto.createHmac("sha256", SECRET).update(payload).digest("hex");

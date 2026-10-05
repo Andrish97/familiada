@@ -54,6 +54,9 @@ function instrumentPage(page) {
     }
   });
   page.on("response", (res) => {
+    if (/\.js(?:\?|$)/.test(res.url()) && (res.headers()["content-type"] || "").includes("text/html")) {
+      console.log("[e2e-diag] module returned HTML", res.status(), res.url());
+    }
     if (/\/functions\/v1\/(send-mail|send-email|mail-worker)(?:\?|$)/.test(res.url())) {
       res.json().then((body) => console.log("[e2e-mail]", JSON.stringify({ status: res.status(), endpoint: new URL(res.url()).pathname, result: body })))
         .catch(() => console.log("[e2e-mail]", res.status(), new URL(res.url()).pathname));
