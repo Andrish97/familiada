@@ -47,7 +47,7 @@
 // Kazda inna akcja: gate to czas trwania tego, co faktycznie zagralo w TYM
 // konkretnym zapisie (wykryte przez zmiane sound_cue_seq).
 
-import { createTransitionTiming } from "../../shared/js/gameplay/transitionTiming.js?v=v2026-10-05T15233";
+import { createTransitionTiming } from "../../shared/js/gameplay/transitionTiming.js?v=v2026-10-05T16230";
 
 export function createActionGate({ getSfxDuration }) {
   const timing = createTransitionTiming({ getSfxDuration });
