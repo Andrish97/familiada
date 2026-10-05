@@ -12,7 +12,8 @@ for (const path of ["/connect-device", "/connect-device/"]) {
   });
 }
 
-test("instrukcja: powrót zachowuje ścieżkę, parametry i fragment", async ({ page }) => {
+test("instrukcja: powrót zachowuje ścieżkę, parametry i fragment", async ({ page }, testInfo) => {
+  await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
   const target = "/connect-device/?lang=en#connect";
   await page.goto(`/manual/?lang=en&ret=${encodeURIComponent(target)}`, { waitUntil: "networkidle" });
   await page.locator("#btnBack").click();

@@ -799,8 +799,12 @@ function updateBackButtonLabel() {
 }
 
 function getBackLink() {
-  return getSafeRetUrl() || "games";
+  return getSafeRetUrl() || "/games/";
 }
+
+// Navigation is usable while authentication and lists are still loading.
+btnBack?.addEventListener("click", () => { location.href = getBackLink(); });
+btnManual?.addEventListener("click", () => { location.href = buildManualUrl(); });
 
 document.addEventListener("DOMContentLoaded", async () => {
   await i18nReady;
@@ -846,8 +850,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   inviteInputMobile?.addEventListener("keydown", (e) => { if (e.key === "Enter") doInviteMobile(); });
 
   updateBackButtonLabel();
-  btnBack?.addEventListener("click", () => { location.href = getBackLink(); });
-  btnManual?.addEventListener("click", () => { location.href = buildManualUrl(); });
 
   const onI18nLangChange = () => {
     renderSelect(sortAD, "subscribers");
