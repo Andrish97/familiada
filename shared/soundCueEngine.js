@@ -24,7 +24,7 @@
 //     round_transition po ostatnim Dalej). FINISH_FINAL gra później
 //     show_intro+reveal zsynchronizowane na koniec, bez powtarzania fanfary.
 
-import { deriveEvents } from "./deriveEvents.js?v=v2026-10-04T15084";
+import { deriveEvents } from "./deriveEvents.js?v=v2026-10-05T10242";
 
 export function createSoundCueEngine({ playSfx, getSfxDuration }) {
   async function durationOf(key) {
