@@ -112,7 +112,7 @@ test.describe("poll-qr.js audyt", () => {
       const game = await createPollGame(page);
 
 
-      const pollQrUrl = new URL("poll-qr/index.html", "https://www.familiada.online/");
+      const pollQrUrl = new URL("/poll-qr/", "https://www.familiada.online/");
       pollQrUrl.searchParams.set("id", game.gameId);
       pollQrUrl.searchParams.set("key", game.shareKey);
 
@@ -125,6 +125,16 @@ test.describe("poll-qr.js audyt", () => {
 
       const src = await qrImage.getAttribute("src");
       expect(src).toMatch(/^data:image\/png;base64,/);
+      // Check the real generated QR, including its destination route.
+      const expectedQr = await page.evaluate(async ({ gameId, shareKey }) => {
+        const { default: QRCode } = await import("https://cdn.jsdelivr.net/npm/qrcode@1.5.3/+esm");
+        const url = new URL("/poll-points/", location.origin);
+        url.searchParams.set("id", gameId);
+        url.searchParams.set("key", shareKey);
+        url.searchParams.set("lang", "pl");
+        return QRCode.toDataURL(url.toString(), { width: 840, margin: 1 });
+      }, game);
+      expect(src).toBe(expectedQr);
 
       await deleteGame(page, game.gameId);
     } finally {
