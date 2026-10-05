@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict Xejchgh8xN7LUcVa4LIlb5CcfSn9AfTMnBPxLWAUztTm1fAwz59RqiXoYRB3HyE
+\restrict FEI0DggcRLgik2yLjduhHs4zQfOT4iq6cMPKfTKCm11aC7c4v3BzNlKTkLaTbES
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -2953,6 +2953,10 @@ begin
   select * into v_old from public.game_state where game_id = p_game_id for update;
   if found and v_old.locked_until is not null and v_old.locked_until > now() then
     raise exception 'locked';
+  end if;
+
+  if coalesce((v_old.detail #>> '{settings,physicalBuzzer}')::boolean, false) then
+    raise exception 'device_disabled';
   end if;
 
   update public.game_state
@@ -16321,5 +16325,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict Xejchgh8xN7LUcVa4LIlb5CcfSn9AfTMnBPxLWAUztTm1fAwz59RqiXoYRB3HyE
+\unrestrict FEI0DggcRLgik2yLjduhHs4zQfOT4iq6cMPKfTKCm11aC7c4v3BzNlKTkLaTbES
 
