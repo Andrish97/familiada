@@ -1,10 +1,10 @@
 // scene.js
-import { loadJson, buildGlyphMap, resolveGlyph } from "../../shared/js/display/fonts.js?v=v2026-10-05T14122";
-import { createAnimator } from "../../shared/js/display/anim.js?v=v2026-10-05T14122";
-import { createDisplays } from "../../shared/js/display/displays.js?v=v2026-10-05T14122";
-import { createThemeManager } from "../../shared/js/display/theme_manager.js?v=v2026-10-05T14122";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-05T14122";
-import { t } from "../../shared/translation/translation.js?v=v2026-10-05T14122";
+import { loadJson, buildGlyphMap, resolveGlyph } from "../../shared/js/display/fonts.js?v=v2026-10-05T15031";
+import { createAnimator } from "../../shared/js/display/anim.js?v=v2026-10-05T15031";
+import { createDisplays } from "../../shared/js/display/displays.js?v=v2026-10-05T15031";
+import { createThemeManager } from "../../shared/js/display/theme_manager.js?v=v2026-10-05T15031";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-05T15031";
+import { t } from "../../shared/translation/translation.js?v=v2026-10-05T15031";
 
 export async function createScene() {
   const NS = "http://www.w3.org/2000/svg";
