@@ -119,6 +119,14 @@ test("control2: własne outro ponad 30 sekund — ustawienia, zapis i podsumowan
     await row.locator(".summarySoundPlay").click();
     await expect.poll(async () => (await inspectAudio())?.playing).toBe(false);
   } finally {
+    await page.evaluate(async (gameId) => {
+      const sb = window.__sbClient;
+      if (!sb) return;
+      const { data } = await sb.auth.getUser();
+      if (!data.user) return;
+      const { error } = await sb.storage.from("user-sounds").remove([`${data.user.id}/${gameId}/show_outro`]);
+      if (error) throw new Error(error.message);
+    }, game.id).catch((error) => console.warn("Custom outro cleanup:", error.message));
     for (const context of contexts) await context.close().catch(() => {});
     await deleteGame(page, game.id);
   }
