@@ -2301,7 +2301,7 @@ const pl = {
         Punkty obu zawodników sumują się.
       </p>
 
-      <p class="m-p">W finale Ctrl+Enter (⌘+Enter na Macu) obsługuje timer, a Shift+Enter przełącza Powtórzenie w pustym polu drugiego gracza. Każda runda wymaga uruchomienia timera. Można go ręcznie zatrzymać dopiero po wpisaniu tekstu we wszystkich pięciu polach; Powtórzenie nie wypełnia pola. Enter i strzałki przechodzą tylko między pustymi polami; poprawienie uzupełnionego wymaga kliknięcia.</p>
+      <p class="m-p">W finale Ctrl+Enter (⌘+Enter na Macu) obsługuje timer, a Shift+Enter oznacza Powtórzenie i odtwarza jego dźwięk w pustym polu drugiego gracza. Każda runda wymaga uruchomienia timera. Można go ręcznie zatrzymać dopiero po wpisaniu tekstu we wszystkich pięciu polach; Powtórzenie nie wypełnia pola. Enter i strzałki przechodzą tylko między pustymi polami; poprawienie uzupełnionego wymaga kliknięcia. Każde naciśnięcie Powtórzenia odtwarza dźwięk ponownie. Oznaczenie usuwa wyłącznie wpisanie tekstu.</p>
       <p class="m-p">Podczas dopasowania 1–6 wybiera pozycję z listy, W wpisaną odpowiedź, O brak, a R powtórzenie. Wybór jest pojedynczy. Enter odsłania odpowiedź, kolejny Enter punkty; brak i powtórzenie automatycznie pokazują zero. N i Enter przechodzą dalej. Mysz: odsłanianie wymaga dwóch kliknięć. Litery i cyfry podczas edycji są tekstem. Otwarte okno blokuje skróty gry w tle.</p>
       <h3 class="m-h3">Kiedy finał się kończy</h3>
 

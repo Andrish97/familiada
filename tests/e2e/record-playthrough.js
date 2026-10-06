@@ -1324,7 +1324,7 @@ async function scenarioFinalFull(pages, { game }) {
   await armAndConfirmPaced(control.getByRole("button", { name: "Rozpocznij odliczanie (20s)" }));
   // Włączenie "Powtórzenie" też zaznacz->potwierdź (konsekwentne: dźwięk +
   // wymuszony SKIP w mapowaniu) -- zdjęcie flagi zostaje jednoklikowe.
-  await armAndConfirmPaced(control.getByRole("button", { name: "Powtórzenie" }).first());
+  await clickPaced(control.getByRole("button", { name: "Powtórzenie" }).first());
   const p2Inputs = control.locator("#app input[type=text]");
   await p2Inputs.nth(0).focus();
   await expect(control.locator(".c2-btn-repeat").first()).toHaveClass(/\bon\b/);

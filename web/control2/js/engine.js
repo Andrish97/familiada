@@ -554,25 +554,15 @@ const REDUCERS = {
   async SET_REPEAT(state, action) {
     if (action.round !== 2 || state.final.runtime.map2[action.idx].revealedAnswer) return null;
     const prevEntry = state.final.runtime.p2[action.idx] || {};
-    if (action.repeat && (prevEntry.text || "").trim()) return null;
-    state.final.runtime.p2[action.idx] = { ...prevEntry, repeat: !!action.repeat };
-    // Zgłoszone: zdjęcie flagi ma TYLKO zdjąć flagę -- jeśli operator
-    // zaznaczył "powtórzenie" przez pomyłkę (lub zmienił zdanie, a na
-    // zegarku gracza 2 jest jeszcze czas), odznaczenie ma zostawić pytanie
-    // w stanie sprzed oznaczenia, żeby dało się wrócić do wpisanej
-    // odpowiedzi -- nie trwale wymuszać SKIP niezależnie od kierunku.
-    // Wymuszenie SKIP (i dźwięk niżej) dotyczy więc wyłącznie włączenia.
-    if (action.repeat) {
-      const row = state.final.runtime.map2[action.idx];
-      row.mode = "MANUAL";
-      row.kind = "SKIP";
-      row.matchId = null;
-      row.outText = "";
-      row.pts = 0;
-    } else if (prevEntry.repeat) {
-      state.final.runtime.map2[action.idx] = emptyMapRows()[0];
-    }
-    return { ...sameStep(state), soundCueKey: action.repeat && state.step === "f_p2_entry" ? "answer_repeat" : undefined };
+    if (action.repeat === false || (prevEntry.text || "").trim()) return null;
+    state.final.runtime.p2[action.idx] = { ...prevEntry, repeat: true };
+    const row = state.final.runtime.map2[action.idx];
+    row.mode = "MANUAL";
+    row.kind = "SKIP";
+    row.matchId = null;
+    row.outText = "";
+    row.pts = 0;
+    return { ...sameStep(state), soundCueKey: state.step === "f_p2_entry" ? "answer_repeat" : undefined };
   },
 
   // control/js/gameFinal.js's p1StartTimer()/p2StartTimer(): timer gracza to
@@ -643,12 +633,6 @@ const REDUCERS = {
     if (action.matchId !== undefined) row.matchId = action.matchId;
     if (action.outText !== undefined) row.outText = action.outText;
     if (action.pts !== undefined) row.pts = action.pts;
-    // control/js/gameFinal.js: kliknięcie MATCH/MISS/SKIP też gasi
-    // "powtórzenie" (ta sama zasada co przy wpisywaniu — patrz SET_ENTRY_TEXT).
-    if (action.round === 2) {
-      const p2 = state.final.runtime.p2[action.idx];
-      if (p2?.repeat === true) state.final.runtime.p2[action.idx] = { ...p2, repeat: false };
-    }
     return sameStep(state);
   },
 

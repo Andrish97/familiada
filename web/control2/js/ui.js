@@ -1320,7 +1320,7 @@ export function createUI({ root, emit }) {
         if (e.defaultPrevented || e.repeat || e.isComposing || e.ctrlKey || e.metaKey || e.altKey) return;
         if (round === 2 && e.key === "Enter" && e.shiftKey && !e.currentTarget.value.trim()) {
           e.preventDefault();
-          emit("game.dispatch", { type: "SET_REPEAT", round: 2, idx: i, repeat: !row.repeat });
+          emit("game.dispatch", { type: "SET_REPEAT", round: 2, idx: i, repeat: true });
           return;
         }
         if (e.shiftKey || !["Enter", "ArrowDown", "ArrowUp"].includes(e.key)) return;
@@ -1354,32 +1354,12 @@ export function createUI({ root, emit }) {
         // ekran wpisywania gracza 2 dostawał 'locked' -- ta sama klasa bugu,
         // inny przycisk na tym samym ekranie.
         //
-        // Zgłoszone: WŁĄCZENIE "powtórzenia" jest konsekwentne (gra dźwięk
-        // answer_repeat i wymusza SKIP w mapowaniu, engine.js's SET_REPEAT)
-        // -- zaznacz->potwierdź jak reszta kosztownych kafli finału, żeby
-        // przypadkowy pojedynczy klik nie wywołał tego na żywo. WYŁĄCZENIE
-        // jest celowo pojedynczym klikiem: SET_REPEAT z repeat:false TYLKO
-        // zdejmuje flagę (żadnego dźwięku, żadnej zmiany mapowania) --
-        // bezpieczne, odwracalne cofnięcie nie powinno wymagać potwierdzenia.
-        // Skrót Shift+Enter (niżej) zostaje jednoklikowy w obie strony --
-        // złożony gest, mało przypadkowy, w odróżnieniu od kliknięcia myszą.
-        const repeatArmKey = `repeat:${i}`;
-        const repeatArmed = !repeatBlocked && !repeat && armedKey === repeatArmKey;
+        // Repeat is an immediate sound cue; only typing removes its marker.
         const repeatBtn = h("button", {
-          class: `c2-btn-repeat ${repeat ? "on" : ""} ${repeatArmed ? "c2-tile-armed" : ""}`.trim(), type: "button",
-          onclick: repeatBlocked ? undefined : (e) => {
-            if (repeat) {
-              armedKey = null;
-              emit("game.dispatch", { type: "SET_REPEAT", round: 2, idx: i, repeat: false });
-              return;
-            }
-            if (armedKey === repeatArmKey || (e && e.detail >= 2)) {
-              armedKey = null;
-              emit("game.dispatch", { type: "SET_REPEAT", round: 2, idx: i, repeat: true });
-            } else {
-              armedKey = repeatArmKey;
-              emit("ui.rerender");
-            }
+          class: `c2-btn-repeat ${repeat ? "on" : ""}`.trim(), type: "button",
+          onclick: repeatBlocked ? undefined : () => {
+            armedKey = null;
+            emit("game.dispatch", { type: "SET_REPEAT", round: 2, idx: i, repeat: true });
           },
         }, []);
         repeatBtn.innerHTML = repeat ? iconText("check", t("control.finalUi.p2RepeatOn")) : t("control.finalUi.p2RepeatOff");
@@ -1831,7 +1811,7 @@ export function createUI({ root, emit }) {
     const editButton = root.querySelector("#btnOpenGsModal");
     if (editButton) bindShortcut(editButton, "e", () => emit("setup.openSettings"));
     const hint = root.querySelector(".c2-hint");
-    if (hint && !hint.querySelector(".c2-hint-shortcuts")) {
+    if (hint && !/^(devices_|setup_)/.test(s) && !hint.querySelector(".c2-hint-shortcuts")) {
       const list = h("div", { class: "c2-hint-shortcuts" }, [
         h("div", { class: "c2-hint-shortcuts-title", text: `${t("control.keyboardShortcutsTitle")}:` }),
       ]);

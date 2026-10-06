@@ -1439,7 +1439,7 @@ test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśni�
     // dźwięk + wymuszony SKIP w mapowaniu, ui.js) -- jak reszta kosztownych
     // kafli finału. Wyłączenie zostaje jednoklikowe (bezpieczne, bez efektu
     // ubocznego), ale tu włączamy, więc armAndConfirm.
-    await armAndConfirm(page.getByRole("button", { name: "Powtórzenie" }).first());
+    await page.getByRole("button", { name: "Powtórzenie" }).first().click();
     await expect.poll(() => getSfxKeys(page), { timeout: 5000 }).toEqual(expect.arrayContaining(["answer_repeat"]));
     // Zasłona wraca SAMA przy tej pierwszej kolejnej zmianie stanu gry po
     // peeku wyżej — bez żadnej dodatkowej akcji operatora na Hoście.
@@ -1453,6 +1453,12 @@ test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśni�
     await page.setViewportSize({ width:1366, height:768 });
     const repeatFirst = page.locator(".c2-entryrow .c2-btn-repeat").first();
     await expect(repeatFirst).toHaveClass(/\bon\b/);
+    await expect(repeatFirst).toBeEnabled();
+    await clearSfxLog(page);
+    await repeatFirst.click();
+    await expect(repeatFirst).toHaveClass(/\bon\b/);
+    await expect.poll(() => getSfxKeys(page)).toEqual(expect.arrayContaining(["answer_repeat"]));
+    await expect(p2Inputs.nth(0)).toBeEnabled();
     await p2Inputs.nth(0).focus();
     await expect(repeatFirst).toHaveClass(/\bon\b/);
     await p2Inputs.nth(0).evaluate(() => { window.__repeatButtonBefore = document.querySelector(".c2-btn-repeat"); });
@@ -1461,7 +1467,7 @@ test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśni�
     await expect(repeatFirst).not.toHaveClass(/\bon\b/);
     await expect(repeatFirst).toBeDisabled();
     await p2Inputs.nth(0).fill("");
-    await armAndConfirm(page.getByRole("button", { name: "Powtórzenie" }).first());
+    await page.getByRole("button", { name: "Powtórzenie" }).first().click();
     for (let i = 1; i < 5; i++) await p2Inputs.nth(i).fill("Odp. finałowa");
     // Start/stop zegarka to zaznacz->potwierdź (patrz wyżej).
     await armAndConfirm(page.getByRole("button", { name: "Rozpocznij odliczanie (20s)" }));
@@ -2741,6 +2747,52 @@ test("control2: koniec gry bez finału w trybie \"punkty\" — Wyświetlacz poka
 
     expect(errors, "żadne z urządzeń nie powinno rzucić błędu JS: " + errors.join(" | ")).toEqual([]);
   } finally {
+    for (const ctx of contexts) await ctx.close().catch(() => {});
+    await deleteGame(page, game.id);
+  }
+});
+
+test("control2: opóźnione potwierdzenie Display blokuje następną akcję i buzzer po końcu dźwięku", async ({ page, browser }, testInfo) => {
+  test.setTimeout(150000);
+  await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
+  const game = await makeGame(page, `E2E-CONTROL2-ACK-${Date.now()}`, { roundQuestions: [TWO_QUESTIONS[0]] });
+  const contexts = [];
+  let release;
+  const held = new Promise(resolve => { release = resolve; });
+  try {
+    const display = await openAnon(browser, contexts, `/display2?id=${game.id}&key=${game.share_key_display}`, "display", []);
+    await openAnon(browser, contexts, `/host2?id=${game.id}&key=${game.share_key_host}`, "host", []);
+    const buzzer = await openAnon(browser, contexts, `/buzzer2?id=${game.id}&key=${game.share_key_buzzer}`, "buzzer", []);
+    await page.goto(`/control2?id=${game.id}`, { waitUntil: "domcontentloaded" });
+    await expect(page.locator("#dotDisplay")).toHaveClass(/\bok\b/);
+    await expect(page.locator("#dotHost")).toHaveClass(/\bok\b/);
+    await expect(page.locator("#dotBuzzer")).toHaveClass(/\bok\b/);
+    await expect(page.locator(".c2-hint-shortcuts")).toHaveCount(0);
+    await page.getByRole("button", { name: "Dalej" }).click();
+    await expect(page.locator(".c2-hint-shortcuts")).toHaveCount(0);
+    await page.getByRole("button", { name: "Gotowe — przejdź do rozgrywki" }).click();
+    await page.getByRole("button", { name: "Rozpocznij grę" }).click();
+    await expect(page.getByRole("button", { name: "Rozpocznij rundę" })).toBeEnabled({ timeout: 20000 });
+    let intercepted = false;
+    await display.route("**/rpc/game_state_display_complete", async route => {
+      intercepted = true;
+      await held;
+      await route.continue();
+    });
+    await page.getByRole("button", { name: "Rozpocznij rundę" }).click();
+    await expect.poll(() => intercepted, { timeout: 20000 }).toBe(true);
+    // The actual scene has finished, and the full sound lock has elapsed,
+    // but its real completion has not reached the server yet.
+    await page.waitForTimeout(2000);
+    await expect(page.getByRole("button", { name: "Ponów naciśnięcie" })).toBeDisabled();
+    await expect(buzzer.locator("#btnA")).toBeDisabled();
+    const readyBefore = await page.evaluate(async id => (await window.__sbClient.from("game_state_display_completion").select("rendered_rev,requested_rev").eq("game_id",id).single()).data, game.id);
+    expect(readyBefore.rendered_rev).toBeLessThan(readyBefore.requested_rev);
+    release();
+    await expect(buzzer.locator("#btnA")).toBeEnabled({ timeout: 15000 });
+    await expect(page.getByRole("button", { name: "Ponów naciśnięcie" })).toBeEnabled({ timeout: 15000 });
+  } finally {
+    release();
     for (const ctx of contexts) await ctx.close().catch(() => {});
     await deleteGame(page, game.id);
   }

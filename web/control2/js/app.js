@@ -1,3 +1,4 @@
+import { createRenderCompletionGate } from "../../shared/js/gameplay/renderCompletion.js";
 // control2/js/app.js
 // Punkt wejścia Control v2 — spina store/engine/devices/presence/
 // soundReactor/ui. Nawigacja przedmeczowa (devices_display →
@@ -13,7 +14,7 @@ import { requireAuth } from "../../shared/js/core/auth.js?v=v2026-10-06T20451";
 import { setTopbarAccount } from "../../shared/js/core/topbar-controller.js?v=v2026-10-06T20451";
 import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-06T20451";
 import { loadQuestions, loadAnswers } from "../../shared/js/core/game-validate.js?v=v2026-10-06T20451";
-import { loadSfxManifest, initSfx, setCurrentGameId, unlockAudio, applySfxGameSettings, loadSfxFromCloud, playSfx, getSfxDurationAccurate as getSfxDuration, listSfx } from "../../shared/js/core/sfx.js?v=v2026-10-06T20451";
+import { loadSfxManifest, initSfx, setCurrentGameId, unlockAudio, applySfxGameSettings, loadSfxFromCloud, playSfx, getSfxDurationAccurate as getSfxDuration, listSfx, isAnySfxPlaying } from "../../shared/js/core/sfx.js?v=v2026-10-06T20451";
 import { listGameSounds } from "../../shared/js/core/sfx-cloud.js?v=v2026-10-06T20451";
 import { assertTransition } from "../../shared/js/gameplay/gameStateMachine.js?v=v2026-10-06T20451";
 import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-06T20451";
@@ -310,7 +311,39 @@ async function main() {
   // Patrz armLock() niżej -- prawdziwa (nie zgadywana z góry) blokada na
   // czas round-tripu store.setLock(ms).
   let lockConfirmPending = false;
-  function busy() { return committing || lockConfirmPending || Date.now() < lockedUntil || missingDevices(store.state, presenceFlags).length > 0; }
+  const displayCompletion = createRenderCompletionGate(store.state.rev);
+  let lastDisplayCueSeq = store.state.__row?.sound_cue_seq;
+  let lastDisplayStep = store.state.step;
+  function noteDisplayRequest() {
+    const s = store.state;
+    if (s.step !== lastDisplayStep || s.__row?.sound_cue_seq !== lastDisplayCueSeq) {
+      displayCompletion.request(s.rev);
+      lastDisplayStep = s.step;
+      lastDisplayCueSeq = s.__row?.sound_cue_seq;
+    }
+  }
+  function waitingForDisplay() {
+    return !/^(devices_|setup_)/.test(store.state.step) && displayCompletion.pending;
+  }
+  let completionReadPending = false;
+  async function refreshDisplayCompletion() {
+    if (completionReadPending || !waitingForDisplay()) return;
+    completionReadPending = true;
+    try {
+      const { data, error } = await sb().from("game_state_display_completion").select("rendered_rev").eq("game_id", gameId).maybeSingle();
+      if (!error && data && displayCompletion.acknowledge(data.rendered_rev)) {
+        renderCurrent();
+      }
+    } finally { completionReadPending = false; }
+  }
+  setInterval(() => { void refreshDisplayCompletion(); }, 500);
+  function soundBusy() { return isAnySfxPlaying(); }
+  let lastSoundBusy = false;
+  setInterval(() => {
+    const current = soundBusy();
+    if (current !== lastSoundBusy) { lastSoundBusy = current; renderCurrent(); }
+  }, 125);
+  function busy() { return soundBusy() || committing || lockConfirmPending || waitingForDisplay() || Date.now() < lockedUntil || missingDevices(store.state, presenceFlags).length > 0; }
 
   // Uzbraja klienckie `lockedUntil` na czas `ms` (potwierdzonego dźwięku/
   // animacji) I dociąga je do realnego czasu, w którym serwer (migracja
@@ -367,6 +400,7 @@ async function main() {
     // Expiration records real elapsed time even while an endpoint is absent.
     // Queued operator actions are rechecked when they actually execute.
     if (!action.type.startsWith("EXPIRE_") && missingDevices(store.state, presenceFlags).length) return null;
+    if (waitingForDisplay() && !action.type.startsWith("EXPIRE_")) return null;
     const prevRow = store.state.__row || null;
     committing = true;
     typingCommit = action.type === "SET_ENTRY_TEXT";
@@ -398,7 +432,10 @@ async function main() {
     // Migracja 264 -- ta sama blokada, egzekwowana też w bazie (nie tylko w
     // tej karcie przeglądarki). Best-effort: nieudane ustawienie nie cofa
     // już potwierdzonego zapisu treści powyżej, patrz store.js's setLockNow().
-    if (ms > 0) armLock(ms);
+    if (ms > 0) {
+      displayCompletion.request(nextRow.rev);
+      armLock(ms);
+    }
     renderCurrent();
     console.log(`[e2e-diag-state] t=${Date.now()} dispatchGatedNow END type=${action.type} totalMs=${Date.now() - _dgT0}`);
     return nextRow;
@@ -560,10 +597,11 @@ async function main() {
   const scheduleTimer3Watch = makeTimerWatch(() => store.state.rounds?.timer3, "EXPIRE_TIMER3");
 
   function renderCtx() {
-    return { urls, presenceFlags, connectCodes, shareBadges, typingPending:typingCommit, busy: (committing && !typingCommit) || lockConfirmPending || Date.now() < lockedUntil || missingDevices(store.state, presenceFlags).length > 0, devicesBlocked: missingDevices(store.state, presenceFlags).length > 0 };
+    return { urls, presenceFlags, connectCodes, shareBadges, typingPending:typingCommit, busy: soundBusy() || (committing && !typingCommit) || lockConfirmPending || waitingForDisplay() || Date.now() < lockedUntil || missingDevices(store.state, presenceFlags).length > 0, devicesBlocked: missingDevices(store.state, presenceFlags).length > 0 };
   }
 
   function renderCurrent() {
+    noteDisplayRequest();
     scheduleFinalTimerWatch();
     scheduleTimer3Watch();
     // Zawinięte w try/catch -- dispatchGatedNow() woła renderCurrent()

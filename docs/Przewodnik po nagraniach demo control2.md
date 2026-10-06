@@ -122,7 +122,7 @@ Dokładnie ta sama progresja rund 1-3 co w scenariuszu 02 (`hasFinal` tym razem 
 
 **Przejście do gracza 2** — "Rozpocznij 2 rundę", Wyświetlacz pokazuje PEŁNE odkryte odpowiedzi gracza 1 (nie placeholdery), Prowadzący znowu demonstruje "peek" (zasłona wraca sama po akcji).
 
-**Gracz 2 (20s)** — zegarek startuje przed wpisywaniem. Pytanie #1 oznaczone jako "Powtórzenie" (zaznacz→potwierdź, z dźwiękiem); z pozostałych czterech wpisywane są dwa dopasowania, reszta jest pusta. Po wygaśnięciu zegarka mapowane są **wszystkie pięć pytań**. Powtórzenie i braki odsłaniają zero automatycznie przy "Pokaż odpowiedź".
+**Gracz 2 (20s)** — zegarek startuje przed wpisywaniem. Pytanie #1 oznaczone jako "Powtórzenie" (jedno kliknięcie z dźwiękiem; każde kolejne kliknięcie odtwarza go ponownie); z pozostałych czterech wpisywane są dwa dopasowania, reszta jest pusta. Po wygaśnięciu zegarka mapowane są **wszystkie pięć pytań**. Powtórzenie i braki odsłaniają zero automatycznie przy "Pokaż odpowiedź".
 
 **Pełne zakończenie** — suma trafień wynosi **105**, mniej niż próg 200. Odkrywane są wszystkie 10 odpowiedzi obu graczy, łącznie z pytaniem #5 gracza 2. Po ostatnim odsłonięciu pojawia się przycisk „Zakończ finał”. Jego kliknięcie pokazuje nagrodę przy reveal i muzyce finału, kończących się razem.
 

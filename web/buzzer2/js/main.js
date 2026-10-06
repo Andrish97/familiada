@@ -111,6 +111,21 @@ async function main() {
   let lastRow = null;
   let appliedLang = null;
   let lockTimer = null;
+  let displayReady = false;
+  let displayCheckPending = false;
+  async function checkDisplayReady() {
+    if (displayCheckPending || !lastRow || displayReady) return;
+    displayCheckPending = true;
+    const row = lastRow;
+    try {
+      const { data, error } = await sb().rpc("game_state_display_is_ready", { p_game_id: gameId, p_key: key });
+      if (!error && row === lastRow && data === true) {
+        displayReady = true;
+        presses.render(lastRow);
+      }
+    } finally { displayCheckPending = false; }
+  }
+  setInterval(() => { void checkDisplayReady(); }, 500);
 
   // Migracja 264 -- game_state_set_lock (control2/js/store.js) NIE dzwoni
   // dzwonkiem i NIE podbija rev (patrz komentarz tam) -- więc bez własnego
@@ -143,15 +158,17 @@ async function main() {
           .catch((e) => console.warn("[buzzer2] setUiLang nie powiodło się, spróbuję ponownie przy kolejnym wierszu:", e));
       }
       lastRow = row;
+      displayReady = false;
       presses.render(row);
+      void checkDisplayReady();
       scheduleUnlockRerender(row);
     },
     onError: (error) => console.warn("[buzzer2] game_state_get failed:", error),
   });
 
   const presses = createPressController({
-    getRow: () => lastRow,
-    render: (row, team) => renderer.render(row, team),
+    getRow: () => lastRow ? { ...lastRow, display_animation_pending: !displayReady } : null,
+    render: (row, team) => renderer.render(row ? { ...row, display_animation_pending: !displayReady } : row, team),
     send: (team) => sb().rpc("game_state_buzzer_press", {
       p_game_id: gameId, p_key: key, p_team: team,
     }),

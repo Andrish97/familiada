@@ -303,6 +303,11 @@ export function isSfxPlaying(key) {
   return !!a && !a.paused && !a.ended;
 }
 
+// Actual audio state, used in addition to timing estimates for action gates.
+export function isAnySfxPlaying() {
+  return [...cache.values()].some(audio => !audio.paused && !audio.ended);
+}
+
 export function debugSfx(key) {
   const a = cache.get(key);
   if (!a) { console.warn("[sfx debug]", key, "— NOT IN CACHE"); return; }

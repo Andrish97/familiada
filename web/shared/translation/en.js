@@ -2282,7 +2282,7 @@ const en = {
         The points of both contestants are summed.
       </p>
       
-      <p class="m-p">In the final, Ctrl+Enter (⌘+Enter on Mac) starts or stops the timer; Shift+Enter toggles Repeat in an empty player 2 field. Each round requires starting the timer. Early stopping requires text in all five fields; Repeat does not fill a field. Enter and arrows move only between empty fields; click a completed field to edit it.</p>
+      <p class="m-p">In the final, Ctrl+Enter (⌘+Enter on Mac) starts or stops the timer; Shift+Enter marks Repeat and plays its sound in an empty player 2 field. Each round requires starting the timer. Early stopping requires text in all five fields; Repeat does not fill a field. Enter and arrows move only between empty fields; click a completed field to edit it. Each press of Repeat plays its sound again. Only typing text removes the marker.</p>
       <p class="m-p">When matching, 1–6 selects a list answer, W the written answer, O no answer and R repeat. Selection is immediate. Enter reveals the answer, then another Enter reveals points; no answer and repeat reveal zero automatically. N then Enter advances. Mouse reveals require two clicks. Letters and numbers remain text while editing. Dialogs block gameplay shortcuts in the background.</p>
       <h3 class="m-h3">When the final ends</h3>
       

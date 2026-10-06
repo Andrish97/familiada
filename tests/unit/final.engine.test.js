@@ -70,18 +70,20 @@ test("SET_ENTRY_TEXT/SET_REPEAT: zapisują tekst gracza i flagę powtórzenia (t
   assert.equal(store.commits.at(-1).soundCueKey, "answer_repeat");
 });
 
-test("SET_REPEAT: zdjęcie flagi usuwa wymuszone SKIP i zachowuje wpisany tekst", async () => {
+test("repeat can be replayed; clicking never removes its marker", async () => {
   const { store, dispatch } = makeEngine();
   await dispatch({ type: "START_FINAL" });
-  await dispatch({ type: "SET_ENTRY_TEXT", round: 2, idx: 0, text: "" });
+  store.state.step = "f_p2_entry";
   await dispatch({ type: "SET_REPEAT", round: 2, idx: 0, repeat: true });
-  assert.equal(store.state.final.runtime.map2[0].kind, "SKIP");
-
-  await dispatch({ type: "SET_REPEAT", round: 2, idx: 0, repeat: false });
-  assert.equal(store.state.final.runtime.p2[0].repeat, false, "flaga zdjęta");
-  assert.equal(store.state.final.runtime.p2[0].text, "", "wpisana odpowiedź zostaje");
-  assert.equal(store.state.final.runtime.map2[0].kind, null, "zdjęcie powtórzenia usuwa wymuszone SKIP");
-  assert.equal(store.commits.at(-1).soundCueKey, null, "zdjęcie flagi nie gra dźwięku");
+  const first = store.commits.length;
+  await dispatch({ type: "SET_REPEAT", round: 2, idx: 0, repeat: true });
+  assert.equal(store.commits.length, first + 1);
+  assert.equal(store.commits.at(-1).soundCueKey, "answer_repeat");
+  assert.equal(await dispatch({ type: "SET_REPEAT", round: 2, idx: 0, repeat: false }), null);
+  assert.equal(store.state.final.runtime.p2[0].repeat, true);
+  await dispatch({ type: "SET_ENTRY_TEXT", round: 2, idx: 0, text: "Mleko" });
+  assert.equal(store.state.final.runtime.p2[0].repeat, false);
+  assert.equal(store.commits.at(-1).soundCueKey, null);
 });
 
 test("SET_REPEAT: nie dotyczy rundy 1 (no-op)", async () => {

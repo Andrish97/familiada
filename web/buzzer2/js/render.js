@@ -177,6 +177,7 @@ export function createButtonRenderer() {
 // setLockNow -- więc bez własnego zegarka przycisk zostałby disabled aż do
 // KOLEJNEGO, niepowiązanego zapisu w grze).
 export function isLockedRow(row) {
+  if (row?.display_animation_pending) return true;
   const until = row?.locked_until;
   if (!until) return false;
   return new Date(until).getTime() > Date.now();

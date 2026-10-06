@@ -1,3 +1,4 @@
+import { renderAndConfirm } from "../../shared/js/gameplay/renderCompletion.js";
 // display2/js/main.js
 // Punkt wejścia Display v2. Napisane od zera (nie kopia display/js/main.js)
 // — inna orkiestracja: zamiast kanału komend + snapshotu z device_state,
@@ -15,7 +16,7 @@ import { createQRController } from "./qr.js?v=v2026-10-06T20451";
 import { createSubscription } from "../../shared/js/core/game-state-subscribe.js?v=v2026-10-06T20451";
 import { createRenderer } from "./render.js?v=v2026-10-06T20451";
 import { createDisplaySoundReactor } from "./soundReactor.js?v=v2026-10-06T20451";
-import { loadSfxManifest, initSfx, setCurrentGameId, applySfxGameSettings, unlockAudio, isAudioUnlocked, getSfxDurationAccurate as getSfxDuration, listSfx } from "../../shared/js/core/sfx.js?v=v2026-10-06T20451";
+import { loadSfxManifest, initSfx, setCurrentGameId, applySfxGameSettings, unlockAudio, isAudioUnlocked, getSfxDurationAccurate as getSfxDuration, listSfx, isAnySfxPlaying } from "../../shared/js/core/sfx.js?v=v2026-10-06T20451";
 
 startKeepAlive();
 
@@ -286,6 +287,20 @@ window.addEventListener("DOMContentLoaded", async () => {
     let renderGeneration = 0;
     let appliedLang = null;
 
+    let completedRenderRev = -1;
+    let reportedRenderRev = -1;
+    let reportingCompletion = false;
+    async function reportCompletion() {
+      if (reportingCompletion || completedRenderRev <= reportedRenderRev || isAnySfxPlaying()) return;
+      reportingCompletion = true;
+      const revision = completedRenderRev;
+      try {
+        const { error } = await sb().rpc("game_state_display_complete", { p_game_id: gameId, p_key: key, p_rev: revision });
+        if (!error) reportedRenderRev = revision;
+      } finally { reportingCompletion = false; }
+    }
+    // Retry a lost acknowledgment without replaying any animation.
+    setInterval(() => { void reportCompletion().catch(() => {}); }, 500);
     const subscription = createSubscription({
       gameId: game.id,
       deviceType: "display",
@@ -343,8 +358,14 @@ window.addEventListener("DOMContentLoaded", async () => {
         const token = renderGeneration;
         renderQueue = renderQueue.then(async () => {
           if (token !== renderGeneration) return;
-          if (!prev || restarting) await renderer.renderSnapshot(row);
-          else await renderer.renderDiff(prev, row);
+          await renderAndConfirm(
+            () => !prev || restarting ? renderer.renderSnapshot(row) : renderer.renderDiff(prev, row),
+            async () => {
+              completedRenderRev = Math.max(completedRenderRev, row.rev);
+              await reportCompletion();
+            },
+            () => token === renderGeneration,
+          );
         }).catch(error => {
           if (error?.name !== "AbortError") console.warn("[display2] render failed", error);
         });

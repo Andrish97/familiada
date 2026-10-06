@@ -335,7 +335,7 @@ Jeżeli nie osiągnięto progu, po piątym pytaniu gracza 1 przejdź do przygoto
 
 `Rozpocznij 2 rundę` przywraca odkryte odpowiedzi gracza 1 na Wyświetlaczu. Drugi zawodnik odwraca się od tablicy, aby ich nie widzieć. Operator widzi je przy polach odpowiedzi, co pomaga rozpoznać powtórzenie. Zegar ma **20 sekund** i uruchamiasz go tak samo jak przy graczu 1. Prowadzący widzi tytuł „FINAŁ RUNDA 2”, odliczanie po uruchomieniu zegara i pięć pytań ze statusami wpisów.
 
-Gdy gracz powtórzy odpowiedź pierwszego zawodnika, oznacz `Powtórzenie` i poproś o inną odpowiedź. Zaznaczenie odtwarza dźwięk powtórzenia. Dopóki pozostaje czas, prowadzący może ponownie czytać pominięte pytania, także te z powtórzeniem. Gracz może się poprawić. Wpisanie nowej treści automatycznie usuwa oznaczenie powtórzenia; samo ustawienie kursora tego nie robi.
+Gdy gracz powtórzy odpowiedź pierwszego zawodnika, oznacz `Powtórzenie` i poproś o inną odpowiedź. Każde kliknięcie odtwarza dźwięk powtórzenia, również gdy oznaczenie jest już włączone. Ponowne kliknięcie nie usuwa oznaczenia. Dopóki pozostaje czas, prowadzący może ponownie czytać pominięte pytania, także te z powtórzeniem. Gracz może się poprawić. Wpisanie nowej treści automatycznie usuwa oznaczenie powtórzenia; samo ustawienie kursora tego nie robi.
 
 **Wskazówka:** Pytania można czytać w kolejnych obiegach do końca czasu. `Dalej` wypowiedziane przez zawodnika nie zamyka pytania na resztę rundy.
 

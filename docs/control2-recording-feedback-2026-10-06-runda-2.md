@@ -93,3 +93,35 @@ przypadek. Łącznie 25 wybranych testów lokalnych.
   obecności obrazu oraz dźwięku wykonywane automatycznie po zakończeniu.
   Wizualna ocena synchronizacji, wyglądu logo i czytelności przebiegu pozostaje
   do obejrzenia w tych nowych filmach; wyniki testów nie zastępują tej oceny.
+
+## Dalsze ustalenia: wspólne potwierdzenie zakończenia
+
+- Skróty ukryte także na ekranach urządzeń i podsumowania ustawień.
+- Przy wpisywaniu gracza 2 Powtórzenie działa jednym kliknięciem. Każde
+  kolejne kliknięcie odtwarza dźwięk ponownie; nie zdejmuje oznaczenia.
+  Shift+Enter działa tak samo. Znacznik usuwa wpisanie tekstu.
+- Panel czeka na rzeczywiste zakończenie rysowania Display przy każdej
+  zmianie etapu lub akcji z dźwiękiem/animacją, a nie wyłącznie na czas pliku.
+  Display potwierdza cały numer zmiany po zakończeniu `renderSnapshot` lub
+  `renderDiff`. Równoległe animacje punktów i sumy mają jedno potwierdzenie,
+  po zakończeniu obu. Błąd albo anulowanie rysowania nie wysyła potwierdzenia.
+- Starsze potwierdzenie nie odblokowuje nowszej zmiany. Zagubioną odpowiedź
+  Display ponawia bez ponownego uruchamiania animacji.
+- Panel sprawdza też rzeczywisty stan odtwarzania dźwięków. Gdy dźwięk
+  gra na Display, jego potwierdzenie czeka również na koniec odtwarzania.
+- Dotyczy finału, rund, wejść plansz oraz zakończeń. Ostatnia punktowana
+  odpowiedź kończy odsłanianie i animację sumy przed możliwością przejścia
+  do wyniku. Przy zakończeniu rund bez finału nadal pomijamy odsłanianie
+  pozostałych odpowiedzi. Restart zachowuje możliwość przerwania przebiegu.
+- Buzzer czeka na to samo potwierdzenie; baza odrzuca zgłoszenie podczas
+  niedokończonej zmiany planszy oraz przedwczesne zakończenie rund/finału.
+- Migracja 305 dodaje osobną tabelę potwierdzeń i sprawdzanie klucza Display.
+  Właściciel może odczytać postęp, ale zwykły klient nie może sam zapisać
+  potwierdzenia do tabeli. Potwierdzenie usuwa się wraz ze stanem gry.
+- Migracja i sprawdzenia SQL: przebieg
+  https://github.com/Andrish97/familiada/actions/runs/37536059271 zakończony poprawnie.
+- Lokalnie: 54 wybrane testy, w tym dwie równoległe animacje/jedna odpowiedź,
+  anulowanie, spóźnione potwierdzenie i ponowne odtwarzanie Powtórzenia.
+- Sprawdzenie produkcyjne obejmie dodatkowo celowe zatrzymanie odpowiedzi
+  Display po zakończeniu animacji i dźwięku; panel oraz Buzzer mają pozostać
+  zablokowane do doręczenia potwierdzenia.
