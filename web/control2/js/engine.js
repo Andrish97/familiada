@@ -542,11 +542,11 @@ const REDUCERS = {
     // repeat włącza się wyłącznie przyciskiem, ale gaśnie jako efekt uboczny
     // innych akcji operatora (tu: edycja pola).
     const next = { ...prev, text: action.text };
-    if (action.round === 2 && prev.repeat === true && action.text !== prev.text) {
+    if (action.round === 2 && prev.repeat === true && (action.text || "") !== (prev.text || "")) {
       next.repeat = false;
       state.final.runtime.map2[action.idx] = emptyMapRows()[0];
     }
-    if (action.text !== prev.text) state.final.runtime[mapKey(action.round)][action.idx] = emptyMapRows()[0];
+    if ((action.text || "") !== (prev.text || "")) state.final.runtime[mapKey(action.round)][action.idx] = emptyMapRows()[0];
     state.final.runtime[key][action.idx] = next;
     return sameStep(state);
   },
