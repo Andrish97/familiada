@@ -11,6 +11,11 @@ on:
         description: 'Liczba workerów; 1 do diagnostyki współdzielonych kont i poczty.'
         required: false
         default: "4"
+      retain_statistics_games:
+        description: 'Zachowaj gry, których rekordy statystyk odczytano w wybranych testach Control2, do ręcznego sprawdzenia w panelu.'
+        type: boolean
+        required: false
+        default: false
 
 # WAŻNE: celowo tylko workflow_dispatch — ani push, ani pull_request.
 # Ten workflow loguje się na prawdziwe konta na produkcji i ma dostęp do
@@ -205,6 +210,7 @@ jobs:
         env:
           E2E_BYPASS_SECRET: ${{ secrets.E2E_BYPASS_SECRET }}
           TEST_PASSWORD: ${{ secrets.TEST_PASSWORD }}
+          KEEP_STATISTICS_GAMES: ${{ inputs.retain_statistics_games && '1' || '0' }}
         run: npx playwright test ${{ github.event.inputs.spec_filter }} --workers="$TEST_WORKERS"
         working-directory: tests
 

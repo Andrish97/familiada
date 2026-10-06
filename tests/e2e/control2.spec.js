@@ -476,7 +476,13 @@ async function makeGame(page, name, { settings = {}, roundQuestions = [], finalA
   }, { name, settings, roundQuestions, finalAnswerPts });
 }
 
+const statisticsGameIds = new Set();
+
 async function deleteGame(page, gameId) {
+  if (process.env.KEEP_STATISTICS_GAMES === "1" && statisticsGameIds.has(gameId)) {
+    console.log(`[statistics-review] kept production game ${gameId}`);
+    return;
+  }
   await page.evaluate(async (gid) => {
     const sb = window.__sbClient;
     await sb.from("games").delete().eq("id", gid);
@@ -484,6 +490,7 @@ async function deleteGame(page, gameId) {
 }
 
 async function readControl2Sessions(page, gameId) {
+  statisticsGameIds.add(gameId);
   return page.evaluate(async (gid) => {
     const { data, error } = await window.__sbClient.from("game_sessions")
       .select("id,status,ended_at,rounds_played,rounds_score_a,rounds_score_b,team_a_score,team_b_score,final_points,stats_detail")
