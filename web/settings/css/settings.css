@@ -2575,7 +2575,6 @@ body.tools-fullscreen .tools-frame-wrap iframe{
 .excluded-account-copy .stat-sub{display:block;margin-top:4px}
 .excluded-account-row>.btn{flex-shrink:0;margin-left:auto}
 [data-activity-chart] svg{width:100%;height:auto;min-height:140px}
-[data-activity-chart] details{font-size:.85rem;margin-top:8px}
 .activity-chart-tooltip{min-height:20px;margin-top:12px;color:var(--gold,#ffeaa6)}
 [data-activity-chart] circle{cursor:pointer;transition:r .12s ease}
 [data-activity-chart] circle:hover,[data-activity-chart] circle:focus{r:6;fill:var(--gold,#ffeaa6);outline:none}

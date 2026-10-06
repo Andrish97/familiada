@@ -98,9 +98,6 @@ export function startActivityPanel() {
       if (i===0||i===points.length-1||i%stride===0) svg.append(shape('text',{x:point.x,y:240,fill:'rgba(255,255,255,.5)','font-size':11,'text-anchor':points.length===1?'middle':i===0?'start':i===points.length-1?'end':'middle'},label(point.item)));
     }
     chart.append(tooltip,svg);
-    const table=document.createElement("details");const caption=document.createElement("summary");caption.textContent="Pokaż wartości wykresu";table.append(caption);
-    for (const item of items) {const line=document.createElement("div");line.textContent=new Date(item.bucket).toLocaleString("pl-PL",{timeZone:"Europe/Warsaw"})+" — "+item.users;table.append(line);}
-    chart.append(table);
   }
   initUiSelect(document.getElementById('activityChartPeriod'),{options:periods,value:period,onChange(value){period=value;paintChart();}});
   async function load(force=false) {
