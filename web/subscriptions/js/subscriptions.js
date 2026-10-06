@@ -1,13 +1,13 @@
-import { sb, SUPABASE_URL } from "../../shared/js/core/supabase.js?v=v2026-10-05T23360";
-import { requireAuth, signOut } from "../../shared/js/core/auth.js?v=v2026-10-05T23360";
-import { isGuestUser, showGuestBlockedOverlay } from "../../shared/js/core/guest-mode.js?v=v2026-10-05T23360";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-05T23360";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-05T23360";
-import { getUiLang, initI18n, t } from "../../shared/translation/translation.js?v=v2026-10-05T23360";
-import { initTopbarAccountDropdown } from "../../shared/js/core/topbar-controller.js?v=v2026-10-05T23360";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-05T23360";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-05T23360";
-import { createCooldownTicker } from "../../shared/js/core/cooldown.js?v=v2026-10-05T23360";
+import { sb, SUPABASE_URL } from "../../shared/js/core/supabase.js?v=v2026-10-06T00380";
+import { requireAuth, signOut } from "../../shared/js/core/auth.js?v=v2026-10-06T00380";
+import { isGuestUser, showGuestBlockedOverlay } from "../../shared/js/core/guest-mode.js?v=v2026-10-06T00380";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-06T00380";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-06T00380";
+import { getUiLang, initI18n, t } from "../../shared/translation/translation.js?v=v2026-10-06T00380";
+import { initTopbarAccountDropdown } from "../../shared/js/core/topbar-controller.js?v=v2026-10-06T00380";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-06T00380";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-06T00380";
+import { createCooldownTicker } from "../../shared/js/core/cooldown.js?v=v2026-10-06T00380";
 
 const i18nReady = initI18n({ withSwitcher: true }).catch((err) => {
   console.error("[subscriptions] i18n nieaktywny:", err);
