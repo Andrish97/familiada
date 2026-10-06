@@ -13,7 +13,7 @@ import { requireAuth } from "../../shared/js/core/auth.js?v=v2026-10-06T20065";
 import { setTopbarAccount } from "../../shared/js/core/topbar-controller.js?v=v2026-10-06T20065";
 import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-06T20065";
 import { loadQuestions, loadAnswers } from "../../shared/js/core/game-validate.js?v=v2026-10-06T20065";
-import { loadSfxManifest, initSfx, setCurrentGameId, unlockAudio, applySfxGameSettings, loadSfxFromCloud, playSfx, getSfxDuration } from "../../shared/js/core/sfx.js?v=v2026-10-06T20065";
+import { loadSfxManifest, initSfx, setCurrentGameId, unlockAudio, applySfxGameSettings, loadSfxFromCloud, playSfx, getSfxDurationAccurate as getSfxDuration, listSfx } from "../../shared/js/core/sfx.js?v=v2026-10-06T20065";
 import { listGameSounds } from "../../shared/js/core/sfx-cloud.js?v=v2026-10-06T20065";
 import { assertTransition } from "../../shared/js/gameplay/gameStateMachine.js?v=v2026-10-06T20065";
 import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-06T20065";
@@ -243,6 +243,8 @@ async function main() {
     }
   }
 
+  // Prepare audio lengths while the operator connects devices.
+  void Promise.all(listSfx().map(getSfxDuration));
   const store = createStore(gameId);
   const expiredTimer = await store.hydrate();
   const sessionTelemetry = createSessionTelemetry(gameId, () => store.state);

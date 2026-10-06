@@ -15,7 +15,7 @@ import { createQRController } from "./qr.js?v=v2026-10-06T20065";
 import { createSubscription } from "../../shared/js/core/game-state-subscribe.js?v=v2026-10-06T20065";
 import { createRenderer } from "./render.js?v=v2026-10-06T20065";
 import { createDisplaySoundReactor } from "./soundReactor.js?v=v2026-10-06T20065";
-import { loadSfxManifest, initSfx, setCurrentGameId, applySfxGameSettings, unlockAudio, isAudioUnlocked, getSfxDuration } from "../../shared/js/core/sfx.js?v=v2026-10-06T20065";
+import { loadSfxManifest, initSfx, setCurrentGameId, applySfxGameSettings, unlockAudio, isAudioUnlocked, getSfxDurationAccurate as getSfxDuration, listSfx } from "../../shared/js/core/sfx.js?v=v2026-10-06T20065";
 
 startKeepAlive();
 
@@ -315,6 +315,7 @@ window.addEventListener("DOMContentLoaded", async () => {
         if (row.detail?.settings?.sound) {
           applySfxGameSettings(row.detail.settings.sound);
         }
+        void Promise.all(listSfx().map(getSfxDuration));
         soundReactor.onRow(row);
         syncAudioUnlockScreen(row);
 

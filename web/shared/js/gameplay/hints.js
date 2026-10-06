@@ -65,7 +65,7 @@ export function getRoundsHint(state) {
   }
 
   if (state.phase === "REVEAL") {
-    return "Klikaj brakujące odpowiedzi, żeby pokazać je na wyświetlaczu (bez zmiany punktów).";
+    return "Odsłoń pozostałe odpowiedzi. Punkty się nie zmienią.";
   }
 
   return "";
@@ -118,11 +118,11 @@ export function getFinalHint(state) {
     // operator ma wiedzieć NARAZ że to powtórzenie ORAZ co ma zrobić dalej,
     // nie dwa osobne, następujące po sobie stany hinta.
     if (round === 2 && entry.repeat && !row.revealedAnswer) {
-      return "Oznaczone jako powtórzenie odpowiedzi gracza 1 — liczy się jak brak odpowiedzi. Zmień zaznaczone dopasowanie, jeśli trzeba, i potwierdź „Pokaż odpowiedź”, żeby odsłonić na Wyświetlaczu.";
+      return "Powtórzenie — liczy się jak brak odpowiedzi. Sprawdź dopasowanie i pokaż odpowiedź.";
     }
-    if (!row.revealedAnswer) return "Zmień zaznaczone dopasowanie, jeśli trzeba, i potwierdź „Pokaż odpowiedź”, żeby odsłonić na Wyświetlaczu.";
-    if (!row.revealedPoints) return "Odpowiedź odsłonięta. Potwierdź „Pokaż punkty”, żeby dopisać je do sumy.";
-    return "Punkty odsłonięte. Kliknij „Dalej”, żeby przejść do kolejnego pytania.";
+    if (!row.revealedAnswer) return "Sprawdź dopasowanie i pokaż odpowiedź.";
+    if (!row.revealedPoints) return "Pokaż punkty.";
+    return "Punkty odsłonięte. Przejdź dalej.";
   }
 
   if (step === "f_end") return "Finał zakończony.";

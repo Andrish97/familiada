@@ -326,16 +326,17 @@ export function createRenderer({ scene, qr, getSfxDuration }) {
       const revealMs = animate ? await timing.dur("reveal") : 0;
       const totals = row.detail.rounds.totals || { A: 0, B: 0 };
       const screen = resolveRoundsEndScreen(row.detail.settings, { isDraw: totals.A === totals.B, totals });
+      if (animate) await api.big.animOut({ ...ROUND_OUT_ANIM, ms: revealMs / 2 });
       api.big.clear();
-      if (screen.kind === "logo") await api.logo.show({ ...LOGO_IN_ANIM, ms: revealMs });
-      else await api.win.set(screen.amount, { animIn: { ...LOGO_IN_ANIM, ms: revealMs } });
+      if (screen.kind === "logo") await api.logo.show({ ...LOGO_IN_ANIM, ms: revealMs / 2 });
+      else await api.win.set(screen.amount, { animIn: { ...LOGO_IN_ANIM, ms: revealMs / 2 } });
       return;
     }
     // Wynik odsłania się podczas reveal, kończącego się razem z muzyką finału.
     const split = animate ? await timing.revealSyncSplit("final_theme") : { offsetMs: 0, revealMs: 0 };
     if (split.offsetMs > 0) await wait(split.offsetMs);
     const revealMs = split.revealMs;
-    // Czyścimy wspólne płótno przed wejściem końcowego obrazu.
+    if (animate) await api.big.animOut({ ...FINAL_OUT_ANIM, ms: revealMs / 2 });
     api.big.clear();
     // Before outro, the final sum has not yet been added to round totals.
     // Reconnecting after outro must not add it a second time.
@@ -346,8 +347,8 @@ export function createRenderer({ scene, qr, getSfxDuration }) {
       totalPointsAll: (totals[winnerTeam] || 0) + (row.detail.locks.gameEnded ? 0 : row.detail.final.runtime.sum || 0),
       hitTarget: !!row.detail.final.runtime.reached200,
     });
-    if (screen.kind === "logo") await api.logo.show({ ...LOGO_IN_ANIM, ms: revealMs });
-    else await api.win.set(screen.amount, { animIn: { ...LOGO_IN_ANIM, ms: revealMs } });
+    if (screen.kind === "logo") await api.logo.show({ ...LOGO_IN_ANIM, ms: revealMs / 2 });
+    else await api.win.set(screen.amount, { animIn: { ...LOGO_IN_ANIM, ms: revealMs / 2 } });
   }
 
   // ============================================================
@@ -420,10 +421,11 @@ export function createRenderer({ scene, qr, getSfxDuration }) {
             // zaczyna grać "reveal", i kończy się z nim razem).
             const { offsetMs, revealMs } = await timing.revealSyncSplit("round_transition");
             const isFirstRound = nextRow.detail.rounds.roundNo === 1;
-            if (isFirstRound) await api.logo.hide({ ...LOGO_OUT_ANIM, ms: offsetMs });
+            if (offsetMs > 0) await wait(offsetMs);
+            if (isFirstRound) await api.logo.hide({ ...LOGO_OUT_ANIM, ms: revealMs / 2 });
             await paintRoundsBoard(nextRow, {
-              animIn: { ...ROUND_INTRO_ANIM, ms: revealMs },
-              animOut: isFirstRound ? null : { ...ROUND_OUT_ANIM, ms: offsetMs },
+              animIn: { ...ROUND_INTRO_ANIM, ms: revealMs / 2 },
+              animOut: isFirstRound ? null : { ...ROUND_OUT_ANIM, ms: revealMs / 2 },
             });
           } else if (ev.to === "r_play" && ev.from === "r_duel") {
             // R2->R3 (ACCEPT_BUZZ): control_team zostaje null (dopiero PLAY
@@ -491,7 +493,7 @@ export function createRenderer({ scene, qr, getSfxDuration }) {
             const { offsetMs, revealMs: maskMs } = await timing.revealSyncSplit("round_transition");
             if (offsetMs > 0) await wait(offsetMs);
             const rows = Array.from({ length: 5 }, () => ({ left: FINAL_TEXT_PLACEHOLDER, a: FINAL_PTS_PLACEHOLDER }));
-            await api.final.setHalf("A", { rows, animOut: { ...FINAL_OUT_ANIM, ms: maskMs } });
+            await api.final.setHalf("A", { rows, animOut: { ...FINAL_OUT_ANIM, ms: maskMs / 2 }, animIn: { ...FINAL_BOARD_ANIM, ms: maskMs / 2 } });
           } else if (ev.to === "f_p2_entry" && ev.from === "f_p2_start") {
             // Naprawiona luka (uzgodniona z Tobą, patrz engine.js's
             // START_P2_ROUND): odpowiedzi gracza 1 wracają na Display W TYM
@@ -515,7 +517,7 @@ export function createRenderer({ scene, qr, getSfxDuration }) {
                 a: m1?.revealedPoints ? String(m1.pts) : FINAL_PTS_PLACEHOLDER,
               };
             });
-            await api.final.setHalf("A", { rows, animIn: { ...FINAL_BOARD_ANIM, ms: revealMs } });
+            await api.final.setHalf("A", { rows, animOut: { ...FINAL_OUT_ANIM, ms: revealMs / 2 }, animIn: { ...FINAL_BOARD_ANIM, ms: revealMs / 2 } });
             // control/js/gameFinal.js's startP2Round(): zapowiedź "20" po
             // stronie zwycięzcy, ten sam mechanizm co przy f_p1_entry.
             showTimerPlaceholder(nextRow, "20");

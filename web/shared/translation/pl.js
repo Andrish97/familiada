@@ -4298,7 +4298,7 @@ const pl = {
     },
   },
   control: {
-    shortcuts: {"answers": "1–6 → Enter — odsłoń odpowiedź", "x": "X → Enter — pudło", "t": "T → Enter — timer", "a": "A → Enter — drużyna A", "b": "B → Enter — powrót / ręczny wybór drużyny B w pojedynku", "c": "C → Enter — zatwierdź zgłoszenie", "p": "P → Enter — oddaj kontrolę", "n": "N → Enter — przycisk dalszego przejścia", "e": "E → Enter — zmień ustawienia", "w": "W — wpisana odpowiedź", "o": "O — brak odpowiedzi", "r": "R — powtórzenie", "m": "M — wycisz / włącz dźwięk", "reveal": "Enter — odsłoń odpowiedź, kolejny Enter — punkty", "fields": "↑ / ↓ / Enter — poprzednie / następne puste pole", "entryTimer": "Ctrl+Enter (Cmd+Enter na Macu) — start / stop timera", "entryRepeat": "Shift+Enter w pustym polu — powtórzenie"},
+    shortcuts: {"mappingAnswers": "1–6 — zaznacz odpowiedź z listy", "answers": "1–6 → Enter — odsłoń odpowiedź", "x": "X → Enter — pudło", "t": "T → Enter — timer", "a": "A → Enter — drużyna A", "b": "B → Enter — powrót / ręczny wybór drużyny B w pojedynku", "c": "C → Enter — zatwierdź zgłoszenie", "p": "P → Enter — oddaj kontrolę", "n": "N → Enter — przycisk dalszego przejścia", "e": "E → Enter — zmień ustawienia", "w": "W — wpisana odpowiedź", "o": "O — brak odpowiedzi", "r": "R — powtórzenie", "m": "M — wycisz / włącz dźwięk", "reveal": "Enter — odsłoń odpowiedź, kolejny Enter — punkty", "fields": "↑ / ↓ / Enter — poprzednie / następne puste pole", "entryTimer": "Ctrl+Enter (Cmd+Enter na Macu) — start / stop timera", "entryRepeat": "Shift+Enter w pustym polu — powtórzenie"},
     title: "Familiada — panel sterowania",
     loading: "Ładowanie panelu…",
     backToGames: "Moje gry",

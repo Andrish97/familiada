@@ -409,6 +409,30 @@ export function getSfxDuration(key) {
   return p;
 }
 
+// Control2 and Display2 use decoded duration: MP3 metadata may initially
+// estimate a different length. Cache by the actual source, including uploads.
+const decodedDurations = new Map();
+export async function getSfxDurationAccurate(key) {
+  const source = cache.get(key)?.src;
+  const Decoder = globalThis.OfflineAudioContext || globalThis.webkitOfflineAudioContext;
+  if (!source || !Decoder) return getSfxDuration(key);
+  if (!decodedDurations.has(source)) {
+    const pending = (async () => {
+      const response = await fetch(source, { signal: AbortSignal.timeout(5000) });
+      if (!response.ok) throw new Error("Audio duration fetch failed");
+      const bytes = await response.arrayBuffer();
+      const context = new Decoder(1, 1, 44100);
+      const buffer = await context.decodeAudioData(bytes);
+      if (!Number.isFinite(buffer.duration) || buffer.duration <= 0) throw new Error("Invalid decoded duration");
+      return buffer.duration;
+    })();
+    decodedDurations.set(source, pending);
+    pending.catch(() => decodedDurations.delete(source));
+  }
+  try { return await decodedDurations.get(source); }
+  catch { return getSfxDuration(key); }
+}
+
 /* ========= AUDIO UNLOCK ========= */
 
 let unlocked = false;

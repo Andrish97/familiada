@@ -169,12 +169,23 @@ function glyphsOnce() {
   return _glyphsPromise;
 }
 
-function drawSolidGrid(canvas, bits150, colorHex) {
+function logoBounds(bits) {
+  let left = DOT_W, top = DOT_H, right = -1, bottom = -1;
+  for (let y = 0; y < DOT_H; y++) for (let x = 0; x < DOT_W; x++) {
+    if (!bits[y * DOT_W + x]) continue;
+    left = Math.min(left, x); right = Math.max(right, x);
+    top = Math.min(top, y); bottom = Math.max(bottom, y);
+  }
+  return right < 0 ? { left: 0, top: 0, width: DOT_W, height: DOT_H }
+    : { left, top, width: right - left + 1, height: bottom - top + 1 };
+}
+
+function drawSolidGrid(canvas, bits150, colorHex, bounds) {
   const ctx = canvas.getContext("2d");
   const cw = canvas.width, ch = canvas.height;
-  const scale = Math.min(cw / DOT_W, ch / DOT_H);
-  const ox = Math.floor((cw - DOT_W * scale) / 2);
-  const oy = Math.floor((ch - DOT_H * scale) / 2);
+  const scale = Math.min(cw / bounds.width, ch / bounds.height);
+  const ox = Math.floor((cw - bounds.width * scale) / 2);
+  const oy = Math.floor((ch - bounds.height * scale) / 2);
   ctx.imageSmoothingEnabled = false;
   ctx.clearRect(0, 0, cw, ch);
   ctx.fillStyle = colorHex;
@@ -184,7 +195,7 @@ function drawSolidGrid(canvas, bits150, colorHex) {
       // +1px zapasu na krawędziach — bez tego zaokrąglenia skali potrafią
       // zostawić jednopikselowe przerwy między sąsiednimi kwadratami
       // (zgłoszony wymóg: "siatka bez przerw").
-      ctx.fillRect(ox + x * scale, oy + y * scale, scale + 1, scale + 1);
+      ctx.fillRect(ox + (x - bounds.left) * scale, oy + (y - bounds.top) * scale, scale + 1, scale + 1);
     }
   }
 }
@@ -194,9 +205,10 @@ async function renderCustomLogo(el, logo, dotColor, shouldPaint = () => true) {
   if (!shouldPaint()) return;
   const bits150 = logoToBits150(logo, glyphs);
   const canvas = document.createElement("canvas");
-  canvas.width = DOT_W * 6;
-  canvas.height = DOT_H * 6;
-  drawSolidGrid(canvas, bits150, dotColor);
+  const bounds = logoBounds(bits150);
+  canvas.width = bounds.width * 6;
+  canvas.height = bounds.height * 6;
+  drawSolidGrid(canvas, bits150, dotColor, bounds);
   el.innerHTML = "";
   canvas.style.cssText = "width:100%;height:100%;object-fit:contain;display:block";
   el.appendChild(canvas);

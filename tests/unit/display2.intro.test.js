@@ -146,3 +146,20 @@ test("pregame names and a reconnect before the first round both keep score panel
   await renderer.renderSnapshot(stateToRow(state));
   for (const name of ["small.leftDigits", "small.rightDigits"]) assert.equal(calls.findLast(call => call.name === name).args[0], "");
 });
+
+test("round board disappearance and appearance each use half of reveal", async () => {
+  const { renderer, calls, state } = setup();
+  state.step = "r_roundStart";
+  state.rounds.roundNo = 1;
+  const before = stateToRow(state);
+  state.step = "r_duel";
+  state.phase = "DUEL";
+  const after = stateToRow(state);
+  after.sound_cue_key = "round_transition";
+  await renderer.renderDiff(before, after);
+  const out = calls.find(c => c.name === "logo.hide");
+  const into = calls.find(c => c.name === "rounds.setAll");
+  assert.equal(out.args[0].ms, 10);
+  assert.equal(into.args[0].animIn.ms, 10);
+  assert.ok(calls.indexOf(out) < calls.indexOf(into));
+});

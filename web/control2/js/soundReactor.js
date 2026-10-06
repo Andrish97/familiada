@@ -19,7 +19,7 @@
 // display2/js/soundReactor.js przejmuje odtwarzanie, a ten tutaj po prostu
 // nic nie robi (zero podwójnego odtwarzania).
 
-import { playSfx, getSfxDuration, stopSfx } from "../../shared/js/core/sfx.js?v=v2026-10-06T20065";
+import { playSfx, getSfxDurationAccurate as getSfxDuration, stopSfx } from "../../shared/js/core/sfx.js?v=v2026-10-06T20065";
 import { createSoundCueEngine } from "../../shared/js/gameplay/soundCueEngine.js?v=v2026-10-06T20065";
 
 export function createSoundReactor(store) {

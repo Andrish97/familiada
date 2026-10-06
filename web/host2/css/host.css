@@ -403,10 +403,10 @@ div#cover2Logo {
     flex: 0 0 auto;
     max-width: min(92%,720px);
     padding: 0 10px;
-    font-family: "Caveat-Variable",cursive;
+    font-family: var(--h-font,"Caveat-Variable",cursive);
     font-size: clamp(14px,calc(var(--line)*.72),30px);
     line-height: 1.15;
-    color: #fc0;
+    color: var(--h-dot,#fc0);
     text-shadow: 0 4px 18px rgba(0,0,0,.45);
     white-space: normal;
     word-break: break-word

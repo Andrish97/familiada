@@ -4597,7 +4597,7 @@ const en = {
     },
   },
   control: {
-    shortcuts: {"answers": "1–6 → Enter — reveal answer", "x": "X → Enter — strike", "t": "T → Enter — timer", "a": "A → Enter — team A", "b": "B → Enter — back / manual team B selection in the duel", "c": "C → Enter — confirm buzzer", "p": "P → Enter — pass control", "n": "N → Enter — current next action", "e": "E → Enter — edit settings", "w": "W — written answer", "o": "O — omitted answer", "r": "R — repeat", "m": "M — mute / unmute", "reveal": "Enter — reveal answer; next Enter — points", "fields": "↑ / ↓ / Enter — previous / next empty field", "entryTimer": "Ctrl+Enter (Cmd+Enter on Mac) — start / stop timer", "entryRepeat": "Shift+Enter in an empty field — repeat"},
+    shortcuts: {"mappingAnswers": "1–6 — select a list answer", "answers": "1–6 → Enter — reveal answer", "x": "X → Enter — strike", "t": "T → Enter — timer", "a": "A → Enter — team A", "b": "B → Enter — back / manual team B selection in the duel", "c": "C → Enter — confirm buzzer", "p": "P → Enter — pass control", "n": "N → Enter — current next action", "e": "E → Enter — edit settings", "w": "W — written answer", "o": "O — omitted answer", "r": "R — repeat", "m": "M — mute / unmute", "reveal": "Enter — reveal answer; next Enter — points", "fields": "↑ / ↓ / Enter — previous / next empty field", "entryTimer": "Ctrl+Enter (Cmd+Enter on Mac) — start / stop timer", "entryRepeat": "Shift+Enter in an empty field — repeat"},
     title: "Familiada — control panel",
     loading: "Loading panel…",
     backToGames: "My games",

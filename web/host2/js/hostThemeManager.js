@@ -37,6 +37,7 @@ export async function createHostThemeApplier() {
   let currentKey = null;
 
   async function apply(row) {
+    document.documentElement.style.setProperty("--h-dot", row.detail?.display?.colors?.DOT || "#ffcc00");
     const key = row.detail?.display?.theme || defaultKey;
     if (key === currentKey) return;
     currentKey = key;

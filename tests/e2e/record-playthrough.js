@@ -1328,12 +1328,8 @@ async function scenarioFinalFull(pages, { game }) {
   const p2Inputs = control.locator("#app input[type=text]");
   await p2Inputs.nth(0).focus();
   await expect(control.locator(".c2-btn-repeat").first()).toHaveClass(/\bon\b/);
-  await typePaced(p2Inputs.nth(0), "Nowa odpowiedź", 250);
-  await expect(control.locator(".c2-btn-repeat").first()).not.toHaveClass(/\bon\b/);
-  await fillPaced(p2Inputs.nth(0), "", 250);
-  await p2Inputs.nth(0).focus();
-  await control.keyboard.press("Shift+Enter");
-  await expect(control.locator(".c2-btn-repeat").first()).toHaveClass(/\bon\b/);
+  // Edycję znacznika powtórzenia sprawdza osobno control2.spec.js.
+  // Nagranie przedstawia ciągłe wpisywanie odpowiedzi podczas odliczania.
   for (let i = 1; i < 5; i++) {
     if (P2_PLAN[i] === true) await typePaced(p2Inputs.nth(i), answerByRank(fq[i], P2_MATCH_RANK[i]).text);
     // false: nic nie wpisujemy -> AUTO+SKIP

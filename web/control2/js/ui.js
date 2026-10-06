@@ -709,7 +709,7 @@ export function createUI({ root, emit }) {
     if (text) children.push(h("div", { class: "c2-hint-main", text }));
     if (shortcuts && shortcuts.length) {
       children.push(h("div", { class: "c2-hint-shortcuts" }, [
-        h("div", { class: "c2-hint-shortcuts-title", text: t("control.keyboardShortcutsTitle") }),
+        h("div", { class: "c2-hint-shortcuts-title", text: `${t("control.keyboardShortcutsTitle")}:` }),
         ...shortcuts.map((s) => h("div", { class: "c2-hint-shortcut", text: s })),
       ]));
     }
@@ -1830,20 +1830,16 @@ export function createUI({ root, emit }) {
     }
     const editButton = root.querySelector("#btnOpenGsModal");
     if (editButton) bindShortcut(editButton, "e", () => emit("setup.openSettings"));
-    let hint = root.querySelector(".c2-hint");
-    if (!hint && root.querySelector(".c2-intro")) {
-      hint = h("div", { class: "c2-hint" });
-      root.querySelector(".c2-intro").append(hint);
-    }
-    if (hint) {
-      const list = h("div", { class: "c2-hint-shortcuts" });
-      for (const [key, binding] of keyboardActions) {
-        if (binding.el.disabled || key === "reveal" || /^[2-6]$/.test(key)) continue;
-        const code = key === "1" ? "answers" : key;
-        list.append(h("div", { class: "c2-hint-shortcut", text: t(`control.shortcuts.${code}`) }));
-      }
-      if (/^f_p[12]_map_q/.test(s)) list.append(h("div", { class: "c2-hint-shortcut", text: t("control.shortcuts.reveal") }));
-      list.append(h("div", { class: "c2-hint-shortcut", text: t("control.shortcuts.m") }));
+    const hint = root.querySelector(".c2-hint");
+    if (hint && !hint.querySelector(".c2-hint-shortcuts")) {
+      const list = h("div", { class: "c2-hint-shortcuts" }, [
+        h("div", { class: "c2-hint-shortcuts-title", text: `${t("control.keyboardShortcutsTitle")}:` }),
+      ]);
+      const mapping = /^f_p[12]_map_q/.test(s);
+      const codes = mapping
+        ? ["mappingAnswers", "w", "o", ...(s.startsWith("f_p2_") ? ["r"] : []), "reveal", "n", "b", "m"]
+        : [...new Set([...keyboardActions].filter(([key, binding]) => !binding.el.disabled && key !== "reveal" && !/^[2-6]$/.test(key)).map(([key]) => key === "1" ? "answers" : key)), "m"];
+      for (const code of codes) list.append(h("div", { class: "c2-hint-shortcut", text: t(`control.shortcuts.${code}`) }));
       hint.append(list);
     }
     const scrollArea = root.querySelector(".c2-scroll-area");

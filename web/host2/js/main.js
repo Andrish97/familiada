@@ -131,6 +131,7 @@ async function main() {
   // --outer-left/--outer-right; ten listener jest celowo osobny, bo
   // renderer jeszcze nie istnieje w momencie jej wywołania.
   window.addEventListener("resize", () => renderer.updateSwipeHint());
+  window.addEventListener("i18n:lang", () => renderer.updateSwipeHint());
   const coverLogo = createCoverLogoRenderer({ gameId, key });
   coverLogo.apply({ step:null, detail:{} });
   const hostTheme = await createHostThemeApplier();
