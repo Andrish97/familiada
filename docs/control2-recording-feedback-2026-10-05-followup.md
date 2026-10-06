@@ -9,42 +9,42 @@ Punkt oznaczamy jako wykonany po poprawieniu i sprawdzeniu zachowania. Zmiana w 
 - [ ] 01. Wyświetlacz pozostaje czarny podczas podłączania urządzeń i Podsumowania. Aktywuje się wraz z nazwami drużyn dopiero na ekranie z przyciskiem „Rozpocznij grę”.
 - [ ] 02. Przy zakończeniu zwykłej rundy reveal i przejście rundy grają razem, bez sekwencji jeden po drugim.
 - [x] 03. Przywrócić poprzedni reveal, sprzed podmiany na `reveal_new`, i wyrównać jego głośność do pozostałych plików. Poprzedni plik odnaleźć w historii repozytorium.
-- [ ] 04. Okno utraty połączenia pokazuje przetłumaczony komunikat, nie klucz tłumaczenia.
+- [x] 04. Okno utraty połączenia pokazuje przetłumaczony komunikat, nie klucz tłumaczenia.
 - [ ] 05. Przycisk do pojedynku jest widoczny od ekranu „Rozpocznij grę”, ale nie można go nacisnąć przed rozpoczęciem aktywnego pojedynku.
 - [x] 06. „Zacznij od nowa” nie jest blokowane przez dźwięki, animacje ani rozłączenie urządzeń. Restart musi bezpiecznie zakończyć poprzedni przebieg, bez późniejszych akcji z jego kolejki.
 - [ ] 07. Przy rozpoczęciu rundy przejście rundy i reveal kończą się razem. Dłuższy dźwięk rozpoczyna się wcześniej; animacja zmiany planszy trwa podczas reveal.
 - [ ] 08. Prowadzący dostaje informację, kiedy można oddać kontrolę drugiej drużynie.
-- [ ] 09. Na początku finału najpierw gra muzyka finału, następnie przejście rundy i reveal zsynchronizowane na koniec. Plansza zmienia się podczas reveal. To kolejność doprecyzowana w końcowej części uwag.
-- [ ] 10. Wskaźnik drużyny zwycięskiej pozostaje zapalony do końca gry, również na ekranie wyniku.
+- [x] 09. Na początku finału najpierw gra muzyka finału, następnie przejście rundy i reveal zsynchronizowane na koniec. Plansza zmienia się podczas reveal. To kolejność doprecyzowana w końcowej części uwag.
+- [x] 10. Wskaźnik drużyny zwycięskiej pozostaje zapalony do końca gry, również na ekranie wyniku.
 - [ ] 11. Odsłanianiu odpowiedzi towarzyszy przywrócony stary reveal. Sprawdzić rundy i finał, aby nie zostały niespójne reguły odtwarzania.
-- [ ] 12. Brak odpowiedzi odsłania odpowiedź i zero automatycznie, z samym dźwiękiem błędnej odpowiedzi. Pudło z wpisanym tekstem odsłania się jak normalna odpowiedź z reveal; zero odsłania operator osobno, wtedy gra dźwięk błędnej odpowiedzi. Powtórzenie daje zero.
-- [ ] 13. Suma finału jest stale pokazywana w banku na górze planszy, także przy przejściach i po ponownym podłączeniu.
-- [ ] 14. Od rozpoczęcia finału znika wynik drużyny przeciwnej. W jego miejscu pojawia się odliczanie; po zatrzymaniu lub wygaśnięciu zegara pozostaje puste miejsce. Wynik zwycięskiej drużyny pozostaje widoczny.
-- [ ] 15. Między graczami finału pozostaje dźwięk przejścia rundy. Nie odtwarzać muzyki finału w tym przejściu.
-- [ ] 16. „Zakończ finał” pokazuje logo, punkty albo kwotę z muzyką finału i reveal zsynchronizowanymi na koniec, bez przejścia rundy. „Zakończ grę” odtwarza tylko outro.
-- [ ] 17. Przy końcu gry bez finału (ustawienie bez finału, osiągnięcie progu lub wyczerpanie pytań) nie odsłaniać pozostałych odpowiedzi. Zablokować dalszą rozgrywkę; „Przejdź do zakończenia gry” gra przejście rundy z reveal i pokazuje wynik. Następne „Zakończ grę” odtwarza tylko outro.
-- [ ] 18. Podpowiedź „Wybierz subskrybenta…” umieścić pod listą „Aktualnie udostępnione dla”.
-- [ ] 19. Usunąć znikanie i ponowne pojawianie się listy „Aktualnie udostępnione dla”; ustalić przyczynę przebudowy lub warunkowego ukrywania.
+- [x] 12. Brak odpowiedzi odsłania odpowiedź i zero automatycznie, z samym dźwiękiem błędnej odpowiedzi. Pudło z wpisanym tekstem odsłania się jak normalna odpowiedź z reveal; zero odsłania operator osobno, wtedy gra dźwięk błędnej odpowiedzi. Powtórzenie daje zero.
+- [x] 13. Suma finału jest stale pokazywana w banku na górze planszy, także przy przejściach i po ponownym podłączeniu.
+- [x] 14. Od rozpoczęcia finału znika wynik drużyny przeciwnej. W jego miejscu pojawia się odliczanie; po zatrzymaniu lub wygaśnięciu zegara pozostaje puste miejsce. Wynik zwycięskiej drużyny pozostaje widoczny.
+- [x] 15. Między graczami finału pozostaje dźwięk przejścia rundy. Nie odtwarzać muzyki finału w tym przejściu.
+- [x] 16. „Zakończ finał” pokazuje logo, punkty albo kwotę z muzyką finału i reveal zsynchronizowanymi na koniec, bez przejścia rundy. „Zakończ grę” odtwarza tylko outro.
+- [x] 17. Przy końcu gry bez finału (ustawienie bez finału, osiągnięcie progu lub wyczerpanie pytań) nie odsłaniać pozostałych odpowiedzi. Zablokować dalszą rozgrywkę; „Przejdź do zakończenia gry” gra przejście rundy z reveal i pokazuje wynik. Następne „Zakończ grę” odtwarza tylko outro.
+- [x] 18. Podpowiedź „Wybierz subskrybenta…” umieścić pod listą „Aktualnie udostępnione dla”.
+- [x] 19. Usunąć znikanie i ponowne pojawianie się listy „Aktualnie udostępnione dla”; ustalić przyczynę przebudowy lub warunkowego ukrywania.
 - [ ] 20. Zdiagnozować pomijanie klatek animacji, sprawdzić renderer i zapis nagrań. Zweryfikować wdrożoną stronę; nie uznawać płynności na podstawie samych asercji gry.
-- [ ] 21. Wpisywanie nowej treści w polu oznaczonym jako powtórzenie zdejmuje oznaczenie. Samo ustawienie kursora nie zmienia powtórzenia. Umożliwić powrót do pominiętych pytań i poprawę odpowiedzi przed końcem czasu.
+- [x] 21. Wpisywanie nowej treści w polu oznaczonym jako powtórzenie zdejmuje oznaczenie. Samo ustawienie kursora nie zmienia powtórzenia. Umożliwić powrót do pominiętych pytań i poprawę odpowiedzi przed końcem czasu.
 
 ## Instrukcja — uwagi z lokalnego pliku
 
-- [ ] M01. Zachować dotychczasowe sekcje i nazwy systemu, bez nazw technicznych i bez treści o nagraniach.
-- [ ] M02. Usunąć podział urządzeń na „Krok 1/2/3”; pozostawić nagłówki „Wyświetlacz”, „Prowadzący i Przycisk”, „Dźwięk”.
-- [ ] M03. Telewizor, pominięcie Prowadzącego, fizyczny Przycisk i rozłączenie opisać jako pogrubione informacje we właściwych sekcjach, nie osobne kroki.
-- [ ] M04. Usunąć nieaktualny akapit o „Czarnym ekranie” i powtórzony opis HDMI. Nazwy drużyn opisać zgodnie z punktem 01.
-- [ ] M05. Przy nazwach przycisków przywrócić ikony: podłączenie urządzenia, ponowne rozpoczęcie gry oraz skróty klawiaturowe, z symbolami ⇧ i ⌘ dla Maca.
-- [ ] M06. Rozróżnić samodzielny TV i HDMI: przy HDMI wybrać właściwe wyjście dźwięku w systemie komputera; źródło „Wyświetlacz” służy odtwarzaniu na osobnym urządzeniu.
-- [ ] M07. Uzupełnić ponowne losowanie pytań rund i finału oraz link do sekcji Ustawień rozgrywki.
-- [ ] M08. Rozpoczęcie gry opisać przed rundami. Używać nazwy dźwięku obecnej w ustawieniach, zamiast „dźwięk większej zmiany planszy”.
-- [ ] M09. Informacje Prowadzącego umieścić przy odpowiednich etapach panelu i Wyświetlacza. Zasłona chroni pytania i odpowiedzi przed przypadkowym zobaczeniem przez graczy; po pojedynku pytanie jest jawne.
-- [ ] M10. Rozróżnić wpis gracza od wybranej odpowiedzi przy informacji „Gracz 1”. Opisać powrót do pytań i możliwość poprawienia powtórzenia.
-- [ ] M11. Outro opisać razem z pozostałymi dźwiękami; zamiast osobnej podsekcji podać limity kategorii: 5 s, 30 s i 2 minuty.
-- [ ] M12. Ujednolicić opis finału, zakończenia bez finału i restartu z poprawionym działaniem. Zachować notki „Ważne”, „Uwaga”, „Wskazówka”.
-- [ ] M13. Sekcję Ankiety pozostawić poza ponowną redakcją; zachować ostatnio dodany opis TV i QR.
-- [ ] M14. Dodać organizację finału: możliwość udziału zawodnika drugiej drużyny za zgodą zwycięzców oraz przygotowanie miejsca i słuchawek dla oczekującego gracza.
-- [ ] M15. Dla każdego gracza finału osobno opisać przygotowanie, wpisywanie i odsłanianie. Dodać uwagę o dobraniu liczby pytań do progu, żeby nie skończyć rund bez finału przypadkiem.
+- [x] M01. Zachować dotychczasowe sekcje i nazwy systemu, bez nazw technicznych i bez treści o nagraniach.
+- [x] M02. Usunąć podział urządzeń na „Krok 1/2/3”; pozostawić nagłówki „Wyświetlacz”, „Prowadzący i Przycisk”, „Dźwięk”.
+- [x] M03. Telewizor, pominięcie Prowadzącego, fizyczny Przycisk i rozłączenie opisać jako pogrubione informacje we właściwych sekcjach, nie osobne kroki.
+- [x] M04. Usunąć nieaktualny akapit o „Czarnym ekranie” i powtórzony opis HDMI. Nazwy drużyn opisać zgodnie z punktem 01.
+- [x] M05. Przy nazwach przycisków przywrócić ikony: podłączenie urządzenia, ponowne rozpoczęcie gry oraz skróty klawiaturowe, z symbolami ⇧ i ⌘ dla Maca.
+- [x] M06. Rozróżnić samodzielny TV i HDMI: przy HDMI wybrać właściwe wyjście dźwięku w systemie komputera; źródło „Wyświetlacz” służy odtwarzaniu na osobnym urządzeniu.
+- [x] M07. Uzupełnić ponowne losowanie pytań rund i finału oraz link do sekcji Ustawień rozgrywki.
+- [x] M08. Rozpoczęcie gry opisać przed rundami. Używać nazwy dźwięku obecnej w ustawieniach, zamiast „dźwięk większej zmiany planszy”.
+- [x] M09. Informacje Prowadzącego umieścić przy odpowiednich etapach panelu i Wyświetlacza. Zasłona chroni pytania i odpowiedzi przed przypadkowym zobaczeniem przez graczy; po pojedynku pytanie jest jawne.
+- [x] M10. Rozróżnić wpis gracza od wybranej odpowiedzi przy informacji „Gracz 1”. Opisać powrót do pytań i możliwość poprawienia powtórzenia.
+- [x] M11. Outro opisać razem z pozostałymi dźwiękami; zamiast osobnej podsekcji podać limity kategorii: 5 s, 30 s i 2 minuty.
+- [x] M12. Ujednolicić opis finału, zakończenia bez finału i restartu z poprawionym działaniem. Zachować notki „Ważne”, „Uwaga”, „Wskazówka”.
+- [x] M13. Sekcję Ankiety pozostawić poza ponowną redakcją; zachować ostatnio dodany opis TV i QR.
+- [x] M14. Dodać organizację finału: możliwość udziału zawodnika drugiej drużyny za zgodą zwycięzców oraz przygotowanie miejsca i słuchawek dla oczekującego gracza.
+- [x] M15. Dla każdego gracza finału osobno opisać przygotowanie, wpisywanie i odsłanianie. Dodać uwagę o dobraniu liczby pytań do progu, żeby nie skończyć rund bez finału przypadkiem.
 
 ## Sprawdzenie i wdrożenie
 
@@ -52,7 +52,7 @@ Punkt oznaczamy jako wykonany po poprawieniu i sprawdzeniu zachowania. Zmiana w 
 - [ ] Wdrożenie zmian na `main` i potwierdzenie publikacji strony oraz Workera.
 - [ ] Testy produkcyjne właściwych przypadków, z resetem limitów i blokad przed ponowną wysyłką maila na ten sam adres.
 - [ ] Nowe nagrania przypadków zmienionych przez tę listę i zapis pomiarów animacji.
-- [ ] Zaktualizowana osobna instrukcja MD i HTML do sprawdzenia.
+- [x] Zaktualizowana osobna instrukcja MD i HTML do sprawdzenia.
 
 ## Dziennik pracy
 
@@ -111,3 +111,7 @@ Nagrania: z 37389738480 dostępne 01–06; pełny finał ponownie sprawdzony prz
 Końcowe potwierdzenie tej korekty: Pages 37395005185 i 37395413671 — sukces. Produkcyjne zasoby zawierają przyciski i ikony we wszystkich trzech językach oraz Odsłanianie w polskich ustawieniach. Produkcja 37395415616 — 3/3 zaliczone: nazwa w Podsumowaniu i Ustawieniach, status „z listy” bez przekreślenia, wybrana odpowiedź nadal przekreślona, czyszczenie Hosta przy końcu bez finału.
 
 Dogrywka 07 zakończona sukcesem (37395118136, ponowienie po przejściowym błędzie GitHub Pages). Komplet 10 MP4 i raportów zebrany w ignorowanym przez Git katalogu `tests/recordings/2026-10-06/`, galeria `index.html`. Film 07 jest po ostatnich poprawkach manuala/Hosta; 01–06 i 08–10 pokazują wcześniejszą nazwę dźwięku i wygląd Hosta. Szczegóły wersji i źródła nagrań w przewodniku.
+
+Weryfikacja instrukcji: wszystkie robocze uwagi z bieżącej korekty rozstrzygnięte, ikony pochodzą z zestawu aplikacji, przyciski poprawione w PL/EN/UK. HTML do przeglądu ma poprawne ścieżki obrazów i działające odnośniki do sekcji. Aktualna zmiana M13: po zatwierdzeniu Ankiet opublikowano polski fragment TV i usunięto Ankiety z plików do przeglądu. Nowe opisy Panelu i Ustawień rozgrywki pozostają osobnym materiałem do akceptacji.
+
+Film 02 jest powtarzany przez 37396346583: skrypt czeka teraz na zakończenie wejścia planszy finału, a dopiero potem pozostawia ją przez cztery sekundy. Poprzedni stały czas czterech sekund mógł uciąć przejście. Pozostałych dziewięciu filmów nie powtarzamy.
