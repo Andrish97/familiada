@@ -1247,14 +1247,14 @@ function renderExcludedList(users) {
   }
   el.replaceChildren();
   for (const user of users) {
-    const row=document.createElement("div");row.className="activity-row";
-    const text=document.createElement("span");
+    const row=document.createElement("div");row.className="activity-row excluded-account-row";
+    const text=document.createElement("div");text.className="excluded-account-copy";
     text.textContent=`${user.username || "—"} · ${user.email || ""}`;
     row.append(text);
     if (user.automatic) {
       const badge=document.createElement("span");badge.className="stat-sub";
       badge.textContent=user.reason === "test_guest" ? " · Gość testowy — wykluczenie automatyczne" : " · Konto testowe — wykluczenie automatyczne";
-      row.append(badge);
+      text.append(badge);
     } else {
       const button=document.createElement("button");button.className="btn xs";button.type="button";button.textContent="Usuń";
       button.addEventListener("click",()=>removeExcludedUser(user.user_id));row.append(button);

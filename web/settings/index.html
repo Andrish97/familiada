@@ -652,8 +652,12 @@
             <button class="btn sm" type="button">Odśwież aktywność</button></div>
           <p data-activity-summary aria-live="polite">Oczekiwanie na sprawdzenie aktywności…</p>
           <div data-activity-rows></div>
-          <div class="activity-chart-controls"><label for="activityChartPeriod">Wykres aktywnych użytkowników</label>
-            <select class="inp" id="activityChartPeriod"><option value="hour">Godzinowo — 48 godzin</option><option value="day">Dziennie — 30 dni</option><option value="week">Tygodniowo — 90 dni</option></select></div>
+          <div class="activity-chart-controls"><span id="activityChartLabel">Wykres aktywnych użytkowników</span>
+            <div class="ui-select" id="activityChartPeriod">
+              <button class="ui-select-btn" type="button" aria-labelledby="activityChartLabel activityChartSelected" aria-haspopup="listbox" aria-expanded="false">
+                <span class="ui-select-label" id="activityChartSelected">Godzinowo — 48 godzin</span><span class="ui-select-caret" aria-hidden="true">▾</span>
+              </button><div class="ui-select-menu" role="listbox"></div>
+            </div></div>
           <div data-activity-chart></div>
           <p class="field-hint">Unikalni użytkownicy z sygnałem otwartej strony w danym przedziale, również z kart w tle. Nie sumuj godzin, aby uzyskać liczbę osób w dniu. Strefa czasu: Warszawa. Historia do 90 dni; dostępna od wdrożenia nowych sygnałów.</p>
           <p class="field-hint" data-activity-time>Nie sprawdzono jeszcze aktywności.</p>

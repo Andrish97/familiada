@@ -1,6 +1,8 @@
 const PAGE_NAMES = {home:'Strona główna',games:'Moje gry',control:'Panel sterowania',control2:'Panel sterowania 2',editor:'Edytor gry','game-settings':'Ustawienia rozgrywki','game-settings2':'Ustawienia rozgrywki 2',bases:'Bazy pytań','base-explorer':'Edytor bazy','logo-editor':'Edytor logo',polls:'Ankieta','polls-hub':'Ankiety',subscriptions:'Subskrypcje',account:'Konto',marketplace:'Gry społeczności',manual:'Instrukcja','connect-device':'Podłącz urządzenie'};
 const CONTEXT_NAMES = {control:'Panel sterowania',editor:'Edytor gry','game-settings':'Ustawienia rozgrywki','game-settings2':'Ustawienia rozgrywki 2','logo-editor':'Edytor logo','base-explorer':'Edytor bazy'};
 const RESOURCE_NAMES = {game:'Gra',logo:'Logo',base:'Baza',base_question:'Pytanie bazy',base_folder:'Folder bazy',base_tag:'Tag bazy'};
+import { initUiSelect } from "../../shared/js/core/ui-select.js";
+
 export function gameActivity(game) {
   const open = !game.ended_at && ['started','playing','final'].includes(game.status);
   const preparing = /^(devices_|settings_|r_intro)/.test(game.step || '');
@@ -32,20 +34,21 @@ export function startActivityPanel() {
   const refresh=root.querySelector('button');
   let pending=false;
   let history=null;
-  const period=root.querySelector("#activityChartPeriod");
+  let period='hour';
+  const periods=[{value:'hour',label:'Godzinowo — 48 godzin'},{value:'day',label:'Dziennie — 30 dni'},{value:'week',label:'Tygodniowo — 90 dni'}];
   const chart=root.querySelector("[data-activity-chart]");
   function paintChart() {
     chart.replaceChildren();
-    const items=history?.[period.value]||[];
+    const items=history?.[period]||[];
     if (!items.length) { chart.textContent="Brak historii w tym przedziale. Dane zbierają się od wdrożenia.";return; }
     const max=Math.max(1,...items.map(item=>Number(item.users)));
     const svg=document.createElementNS("http://www.w3.org/2000/svg","svg");
-    svg.setAttribute("viewBox","0 0 900 220");svg.setAttribute("role","img");svg.setAttribute("aria-label","Aktywni użytkownicy — "+period.selectedOptions[0].textContent);
+    svg.setAttribute("viewBox","0 0 900 220");svg.setAttribute("role","img");svg.setAttribute("aria-label","Aktywni użytkownicy — "+periods.find(item=>item.value===period).label);
     const width=840/items.length;
     for (const [i,item] of items.entries()) {
       const rect=document.createElementNS(svg.namespaceURI,"rect");const h=160*Number(item.users)/max;
       rect.setAttribute("x",String(40+i*width));rect.setAttribute("y",String(180-h));rect.setAttribute("width",String(Math.max(1,width-3)));rect.setAttribute("height",String(h));rect.setAttribute("fill","#ffeaa6");
-      const label=new Date(item.bucket).toLocaleString("pl-PL",{timeZone:"Europe/Warsaw",day:"2-digit",month:"2-digit",...(period.value==="hour"?{hour:"2-digit",minute:"2-digit"}:{})});
+      const label=new Date(item.bucket).toLocaleString("pl-PL",{timeZone:"Europe/Warsaw",day:"2-digit",month:"2-digit",...(period==="hour"?{hour:"2-digit",minute:"2-digit"}:{})});
       const title=document.createElementNS(svg.namespaceURI,"title");title.textContent=label+": "+item.users+" użytkowników";rect.append(title);svg.append(rect);
       if (i===0 || i===items.length-1 || i%Math.ceil(items.length/6)===0) {
         const text=document.createElementNS(svg.namespaceURI,"text");text.setAttribute("x",String(40+i*width));text.setAttribute("y","205");text.setAttribute("fill","currentColor");text.setAttribute("font-size","11");text.textContent=label;svg.append(text);
@@ -56,7 +59,7 @@ export function startActivityPanel() {
     for (const item of items) {const line=document.createElement("div");line.textContent=new Date(item.bucket).toLocaleString("pl-PL",{timeZone:"Europe/Warsaw"})+" — "+item.users;table.append(line);}
     chart.append(table);
   }
-  period.addEventListener("change",paintChart);
+  initUiSelect(root.querySelector('#activityChartPeriod'),{options:periods,value:period,onChange(value){period=value;paintChart();}});
   function row(title,detail,risk=false) {
     const item=document.createElement('div');item.className='activity-row'+(risk?' activity-risk':'');
     const strong=document.createElement('strong');strong.textContent=title;

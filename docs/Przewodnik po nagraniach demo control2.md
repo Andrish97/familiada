@@ -252,3 +252,22 @@ Domyślny przebieg skrócono do sześciu filmów: **01, 03, 04, 05, 06 i 07**. S
 W nowym 04 zwróć uwagę na wybór dopasowania klawiszami **1–6/W/O**, kolejne **Enter** odsłaniające odpowiedź i punkty oraz **N, Enter** przechodzące dalej. Drugi gracz pokazuje obsługę myszą, powrót do Powtórzenia, wpisanie tekstu usuwające znacznik i ponowne zaznaczenie po wyczyszczeniu pola. Pola i przyciski powinny pozostawać stabilne podczas pisania.
 
 Nowy 05 wymaga uruchomienia timera mimo jednej wpisanej odpowiedzi. Pozostałe puste pola uniemożliwiają ręczny stop; skrypt czeka na naturalny koniec czasu. Osiągnięty próg nadal wymaga ręcznego Zakończ finał. Zatwierdzenie drużyny ma krótsze pauzy demonstracyjne, a działania nadal czekają na rzeczywistą dostępność przycisków.
+# Nowy komplet po poprawkach z 6 października 2026
+
+Gotowe filmy są w `tests/recordings/2026-10-06-poprawki/index.html`.
+To osobny komplet, żeby nie pomylić go z poprzednimi nagraniami.
+
+| Film | Zakres | Długość |
+| --- | --- | --- |
+| 01 — rundy, mechanika | Pojedynek, przycisk, odsłanianie, pudła, oddanie kontroli i kradzież. | 4:26 |
+| 03 — progresja bez finału | Kolejne rundy i zakończenie gry bez finału. | 4:02 |
+| 04 — pełny finał | Obaj gracze, wpisywanie, timer, dopasowanie, odsłanianie i skróty. | 7:07 |
+| 05 — wczesne zakończenie finału | Próg punktów i ręczne zakończenie finału. | 5:06 |
+| 06 — rozłączenie i powrót | Utrata połączenia urządzeń, blokada i powrót. | 3:25 |
+| 07 — blokada logo | Domyślne logo podczas blokady i ponowne wczytanie Hosta w Podsumowaniu. | 2:28 |
+
+Źródła: przebiegi `37504846098` (ukończone 01 i 03) i `37507776319`
+(ukończone 04–07). Pierwszy zatrzymał się przed nagrywaniem 04 przy
+ponownym logowaniu; brakujące cztery ukończył drugi przebieg.
+Sprawdzono komplet sześciu plików, czas trwania oraz obecność ścieżek
+obrazu i dźwięku. Podgląd aktywności wdrażany później nie zmienia tych filmów.

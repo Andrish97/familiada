@@ -64,3 +64,29 @@ pozostają zachowane. Wdrożenie nie dotyka nagrań.
   etykiety i dedykowane testy podglądu; zachować wspólne blokady edycji,
   nowy zestaw i historyczne statystyki. Patrz `refaktor-struktury-repo.md`.
 - [ ] Zapisać wyniki testów, migracji i kontroli produkcyjnej po wykonaniu.
+
+## Wyniki wdrożenia 6 października 2026
+
+- Commit funkcji: `18859d6fe`.
+- Wąskie testy lokalne: 5/5 (uprawnienia endpointu, rozróżnianie starego
+  i nowego Control, zarezerwowane prefiksy). Kontrola importów zasobów: 1/1.
+- Migracje 303 i 304: przebieg `37516716275`, sukces. Przed migracją
+  przeszły testy SQL m.in. wykluczeń zwykłego/testowego gościa, nazw
+  z dopiskami i wyjątków administracyjnych. Po migracji przeszła kontrola
+  zapisu, deduplikacji i uprawnień na rzeczywistej produkcyjnej bazie.
+- Worker: `37516716239`, sukces. Pages po ponownym uruchomieniu:
+  `37517381618`, sukces; pierwszy przebieg czekał przed uruchomieniem joba.
+- Dwa testy przeglądarkowe na produkcji: `37517375061`, sukces bez retry.
+  Faktyczny ping konta testowego, wspólne wykluczenie, odmowa odczytu
+  administracyjnego snapshotu zwykłemu użytkownikowi, odmowa zmiany nazwy
+  na prefiks `admin` w bazie oraz oznaczenie i wykluczenie gościa E2E.
+- Chronione Settings nie było otwierane automatycznie: wygląd listy
+  i wykresu sprawdza użytkownik przez swoją sesję Cloudflare Access.
+
+Po zgłoszeniu użytkownika poprawiono wyrównanie przycisku „Usuń” w liście
+wykluczeń i zastosowano wspólny UI Select do wyboru przedziału wykresu.
+Nie dodano sztucznych danych historii. Aby sprawdzić podgląd, należy
+odświeżyć stronę na zwykłym koncie poza wykluczeniami i otworzyć np.
+„Moje gry” lub edytor; sygnał powinien pojawić się w około 45 s.
+Settings samo nie jest śledzone, a konto testN oraz gość testowy nie
+zwiększają widocznych liczników.
