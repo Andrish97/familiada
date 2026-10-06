@@ -207,3 +207,17 @@ Bezpieczna kolejność:
 
 Historycznych migracji tworzących stary mechanizm nie usuwać. Nie usuwać
 całej tabeli ani funkcji tylko dlatego, że ich nazwa nie zawiera `2`.
+
+### Przypomnienie: podgląd aktywności w Maintenance
+
+- [ ] Przy wycofaniu starego zestawu usunąć z planowanego podglądu
+  „Aktywność teraz” obsługę starego Control i jego urządzeń: dedykowane
+  sygnały aktywności, rozpoznawanie starej rozgrywki, zapytania, etykiety
+  oraz testy dotyczące wyłącznie tego zestawu. Jeśli funkcja zostanie
+  wdrożona wcześniej, uwzględnić ją w tym samym etapie sprzątania.
+- [ ] Sprawdzić, czy podgląd nadal poprawnie pokazuje gry nowego zestawu
+  oraz aktywne edycje. Zachować wspólne blokady zasobów (`edit_locks`),
+  obecność urządzeń używaną przez nowy zestaw i historyczne statystyki.
+
+Podgląd jest na etapie propozycji. To przypomnienie nie oznacza wdrożenia
+funkcji ani usunięcia któregokolwiek elementu obecnego systemu.
