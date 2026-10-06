@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict QCZDFRT1J2S6eHXXk9qVzMZgXOLyQ4NoI5RZBs2kctIHfVTTu3EOdbP5zHmfCyc
+\restrict d0eh2dwisLod7UaObZoLkywq7OdajiZPB6e17lZsACYWV9ziUpEieH3c6bixd10
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -3647,7 +3647,7 @@ DECLARE
   excluded_ids uuid[];
   result jsonb;
 BEGIN
-  SELECT ARRAY(SELECT user_id FROM public.stats_excluded_users) INTO excluded_ids;
+  SELECT ARRAY(SELECT user_id FROM public.stats_exclusions_effective) INTO excluded_ids;
 
   WITH eligible_games AS (
     SELECT g.id, g.name, g.type::text AS type, g.status::text AS status,
@@ -3710,7 +3710,7 @@ DECLARE
   excluded_ids uuid[];
   result jsonb;
 BEGIN
-  SELECT ARRAY(SELECT user_id FROM public.stats_excluded_users) INTO excluded_ids;
+  SELECT ARRAY(SELECT user_id FROM public.stats_exclusions_effective) INTO excluded_ids;
 
   WITH eligible_games AS (
     SELECT g.id, g.owner_id, g.type::text AS type, g.status::text AS status
@@ -3849,7 +3849,7 @@ DECLARE
   ratings_new_7d   bigint;
   ratings_new_30d  bigint;
 BEGIN
-  SELECT ARRAY(SELECT user_id FROM public.stats_excluded_users) INTO excluded_ids;
+  SELECT ARRAY(SELECT user_id FROM public.stats_exclusions_effective) INTO excluded_ids;
 
   -- Users
   SELECT COUNT(*) INTO total_users     FROM public.profiles WHERE NOT (id = ANY(excluded_ids));
@@ -4090,6 +4090,59 @@ CREATE FUNCTION "public"."get_game_by_key"("p_key" "text") RETURNS TABLE("id" "u
      or g.share_key_display = p_key
      or g.share_key_host = p_key
   limit 1;
+$$;
+
+
+--
+-- Name: get_maintenance_activity(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."get_maintenance_activity"() RETURNS "jsonb"
+    LANGUAGE "sql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $$
+ WITH pages AS (
+ SELECT a.*,coalesce(p.username,p.email,'Użytkownik') AS username FROM public.site_activity a
+ JOIN public.profiles p ON p.id=a.user_id WHERE a.last_seen_at>now()-interval '90 seconds' AND NOT EXISTS(SELECT 1 FROM public.stats_exclusions_effective e WHERE e.user_id=a.user_id)
+ ), locks AS (
+ SELECT l.*,coalesce(p.username,p.email,'Użytkownik') AS username,
+ CASE WHEN l.resource_type='game' THEN g.name ELSE NULL END AS resource_name
+ FROM public.edit_locks l LEFT JOIN public.profiles p ON p.id=l.holder_user_id
+ LEFT JOIN public.games g ON l.resource_type='game' AND g.id=l.resource_id
+ WHERE l.heartbeat_at>now()-interval '25 seconds' AND NOT EXISTS(SELECT 1 FROM public.stats_exclusions_effective e WHERE e.user_id=l.holder_user_id)
+ ), devices AS (
+ SELECT game_id,max(last_seen_at) AS last_seen_at,jsonb_agg(DISTINCT device_type::text) AS devices
+ FROM public.device_presence WHERE last_seen_at>now()-interval '25 seconds' GROUP BY game_id
+ ), sessions AS (
+ SELECT DISTINCT ON(game_id) * FROM public.game_sessions ORDER BY game_id,started_at DESC,id
+ ), candidates AS (
+ SELECT game_id FROM devices
+ UNION SELECT game_id FROM pages WHERE game_id IS NOT NULL AND page IN ('control','control2')
+ UNION SELECT game_id FROM sessions WHERE ended_at IS NULL AND status IN ('started','playing','final') AND last_seen_at>now()-interval '15 minutes'
+ UNION SELECT resource_id FROM locks WHERE resource_type='game' AND holder_context='control'
+ ), games AS (
+ SELECT g.id AS game_id,g.owner_id AS user_id,coalesce(p.username,p.email,'Użytkownik') AS username,g.name,
+ coalesce((SELECT max(CASE WHEN a.page='control2' THEN 2 ELSE 1 END) FROM pages a WHERE a.game_id=g.id AND a.page IN ('control','control2')),s.control_version,1) AS control_version,
+ s.status,s.ended_at,s.last_seen_at AS session_seen_at,
+ CASE WHEN s.control_version=2 OR EXISTS(SELECT 1 FROM pages a WHERE a.game_id=g.id AND a.page='control2') THEN st.step::text ELSE NULL END AS step,
+ CASE WHEN s.control_version=2 OR EXISTS(SELECT 1 FROM pages a WHERE a.game_id=g.id AND a.page='control2') THEN st.phase::text ELSE NULL END AS phase,
+ coalesce(d.devices,'[]'::jsonb) AS devices,d.last_seen_at AS devices_seen_at,
+ EXISTS(SELECT 1 FROM pages a WHERE a.game_id=g.id AND a.page IN ('control','control2')) AS operator_online,
+ EXISTS(SELECT 1 FROM locks l WHERE l.resource_type='game' AND l.resource_id=g.id AND l.holder_context='control') AS control_lock
+ FROM candidates c JOIN public.games g ON g.id=c.game_id LEFT JOIN public.profiles p ON p.id=g.owner_id
+ LEFT JOIN sessions s ON s.game_id=g.id LEFT JOIN devices d ON d.game_id=g.id LEFT JOIN public.game_state st ON st.game_id=g.id
+ WHERE NOT EXISTS(SELECT 1 FROM public.stats_exclusions_effective e WHERE e.user_id=g.owner_id)
+ ), history_rows AS (SELECT * FROM public.site_activity_hours h WHERE NOT EXISTS(SELECT 1 FROM public.stats_exclusions_effective e WHERE e.user_id=h.user_id))
+ SELECT jsonb_build_object('generated_at',now(),
+ 'pages',coalesce((SELECT jsonb_agg(to_jsonb(x)) FROM (SELECT * FROM pages ORDER BY last_seen_at DESC LIMIT 500) x),'[]'::jsonb),
+ 'locks',coalesce((SELECT jsonb_agg(to_jsonb(x)) FROM (SELECT * FROM locks ORDER BY heartbeat_at DESC LIMIT 500) x),'[]'::jsonb),
+ 'games',coalesce((SELECT jsonb_agg(to_jsonb(x)) FROM (SELECT * FROM games ORDER BY name,game_id LIMIT 500) x),'[]'::jsonb),
+ 'history',jsonb_build_object(
+ 'hour',coalesce((SELECT jsonb_agg(to_jsonb(x)) FROM (SELECT b AS bucket,count(DISTINCT h.user_id) AS users FROM generate_series(greatest((SELECT min(bucket) FROM history_rows),date_trunc('hour',now())-interval '47 hours'),date_trunc('hour',now()),interval '1 hour') b LEFT JOIN history_rows h ON h.bucket=b WHERE EXISTS(SELECT 1 FROM history_rows) GROUP BY b ORDER BY b) x),'[]'::jsonb),
+ 'day',coalesce((SELECT jsonb_agg(to_jsonb(x)) FROM (SELECT b AT TIME ZONE 'Europe/Warsaw' AS bucket,count(DISTINCT h.user_id) AS users FROM generate_series(greatest((SELECT date_trunc('day',min(bucket) AT TIME ZONE 'Europe/Warsaw') FROM history_rows),date_trunc('day',now() AT TIME ZONE 'Europe/Warsaw')-interval '29 days'),date_trunc('day',now() AT TIME ZONE 'Europe/Warsaw'),interval '1 day') b LEFT JOIN history_rows h ON date_trunc('day',h.bucket AT TIME ZONE 'Europe/Warsaw')=b WHERE EXISTS(SELECT 1 FROM history_rows) GROUP BY b ORDER BY b) x),'[]'::jsonb),
+ 'week',coalesce((SELECT jsonb_agg(to_jsonb(x)) FROM (SELECT b AT TIME ZONE 'Europe/Warsaw' AS bucket,count(DISTINCT h.user_id) AS users FROM generate_series(greatest((SELECT date_trunc('week',min(bucket) AT TIME ZONE 'Europe/Warsaw') FROM history_rows),date_trunc('week',now() AT TIME ZONE 'Europe/Warsaw')-interval '12 weeks'),date_trunc('week',now() AT TIME ZONE 'Europe/Warsaw'),interval '1 week') b LEFT JOIN history_rows h ON date_trunc('week',h.bucket AT TIME ZONE 'Europe/Warsaw')=b WHERE EXISTS(SELECT 1 FROM history_rows) GROUP BY b ORDER BY b) x),'[]'::jsonb),
+ 'since',(SELECT min(bucket) FROM history_rows),'timezone','Europe/Warsaw'),
+ 'truncated',(SELECT count(*)>500 FROM pages) OR (SELECT count(*)>500 FROM locks) OR (SELECT count(*)>500 FROM games));
 $$;
 
 
@@ -4446,7 +4499,7 @@ DECLARE
 
   trend_users jsonb;
 BEGIN
-  SELECT ARRAY(SELECT user_id FROM public.stats_excluded_users) INTO excluded_ids;
+  SELECT ARRAY(SELECT user_id FROM public.stats_exclusions_effective) INTO excluded_ids;
 
   SELECT COUNT(*) INTO total_confirmed
     FROM public.profiles WHERE is_guest = false AND NOT (id = ANY(excluded_ids));
@@ -4552,7 +4605,7 @@ DECLARE
   result       jsonb;
   excluded_ids uuid[];
 BEGIN
-  SELECT ARRAY(SELECT user_id FROM public.stats_excluded_users) INTO excluded_ids;
+  SELECT ARRAY(SELECT user_id FROM public.stats_exclusions_effective) INTO excluded_ids;
 
   CASE p_type
 
@@ -10654,6 +10707,29 @@ $$;
 
 
 --
+-- Name: profiles_reserve_test_username(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."profiles_reserve_test_username"() RETURNS "trigger"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $_$
+DECLARE reason text;
+BEGIN
+ IF TG_OP='UPDATE' AND NEW.username IS NOT DISTINCT FROM OLD.username THEN RETURN NEW; END IF;
+ reason:=public.reserved_username_reason(NEW.username);
+ IF reason IS NULL THEN RETURN NEW; END IF;
+ IF reason='test' AND btrim(NEW.username) ~* '^test[0-9]+$' AND EXISTS (
+ SELECT 1 FROM auth.users u WHERE u.id=NEW.id
+ AND lower(u.email)=lower(btrim(NEW.username))||'@familiada.online'
+ ) THEN RETURN NEW; END IF;
+ IF EXISTS(SELECT 1 FROM public.reserved_username_accounts a WHERE a.user_id=NEW.id AND a.username=lower(btrim(NEW.username))) THEN RETURN NEW; END IF;
+ RAISE EXCEPTION 'username unavailable' USING ERRCODE='23505';
+ RETURN NEW;
+END $_$;
+
+
+--
 -- Name: questions_rules_state_stmt(); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -10696,6 +10772,32 @@ begin
 
   return jsonb_build_object('ok', true);
 end;
+$$;
+
+
+--
+-- Name: reserved_username_prefixes_list(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."reserved_username_prefixes_list"() RETURNS "jsonb"
+    LANGUAGE "sql" STABLE SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $$
+ SELECT coalesce(jsonb_agg(jsonb_build_object('prefix',prefix,'kind',kind) ORDER BY prefix),'[]'::jsonb)
+ FROM public.reserved_username_prefixes;
+$$;
+
+
+--
+-- Name: reserved_username_reason("text"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."reserved_username_reason"("p_username" "text") RETURNS "text"
+    LANGUAGE "sql" STABLE SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $$
+ SELECT kind FROM public.reserved_username_prefixes
+ WHERE starts_with(lower(btrim(p_username)),prefix) ORDER BY length(prefix) DESC LIMIT 1;
 $$;
 
 
@@ -11326,6 +11428,32 @@ $$;
 
 
 --
+-- Name: site_activity_ping("uuid", "text", "uuid", boolean); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."site_activity_ping"("p_tab_id" "uuid", "p_page" "text", "p_game_id" "uuid" DEFAULT NULL::"uuid", "p_visible" boolean DEFAULT true) RETURNS "void"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $$
+DECLARE uid uuid := auth.uid(); gid uuid;
+BEGIN
+ IF uid IS NULL THEN RAISE EXCEPTION 'unauthorized'; END IF;
+ IF p_tab_id IS NULL OR p_page IS NULL OR p_page NOT IN
+ ('home','games','control','control2','editor','game-settings','game-settings2','bases','base-explorer','logo-editor','polls','polls-hub','subscriptions','account','marketplace','manual','connect-device') THEN RAISE EXCEPTION 'invalid_page'; END IF;
+ IF p_game_id IS NOT NULL AND p_page IN ('control','control2','editor','game-settings','game-settings2','polls') THEN
+   SELECT id INTO gid FROM public.games WHERE id=p_game_id AND owner_id=uid;
+ END IF;
+ -- One row per tab, bounded lifetime. No historical log.
+ DELETE FROM public.site_activity WHERE last_seen_at < now()-interval '1 day';
+ DELETE FROM public.site_activity_hours WHERE bucket < now()-interval '90 days';
+ INSERT INTO public.site_activity_hours(bucket,user_id) VALUES(date_trunc('hour',now() AT TIME ZONE 'UTC') AT TIME ZONE 'UTC',uid) ON CONFLICT DO NOTHING;
+ INSERT INTO public.site_activity(user_id,tab_id,page,game_id,visible,last_seen_at)
+ VALUES(uid,p_tab_id,p_page,gid,coalesce(p_visible,true),now())
+ ON CONFLICT(user_id,tab_id) DO UPDATE SET page=excluded.page,game_id=excluded.game_id,visible=excluded.visible,last_seen_at=excluded.last_seen_at;
+END $$;
+
+
+--
 -- Name: slugify("text"); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -11399,24 +11527,12 @@ $$;
 --
 
 CREATE FUNCTION "public"."stats_excluded_list"() RETURNS "jsonb"
-    LANGUAGE "plpgsql" SECURITY DEFINER
-    SET "search_path" TO 'public'
+    LANGUAGE "sql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_temp'
     AS $$
-DECLARE
-  result jsonb;
-BEGIN
-  SELECT COALESCE(jsonb_agg(jsonb_build_object(
-    'user_id',  e.user_id,
-    'username', p.username,
-    'email',    p.email,
-    'added_at', e.added_at
-  ) ORDER BY e.added_at), '[]'::jsonb)
-  INTO result
-  FROM public.stats_excluded_users e
-  JOIN public.profiles p ON p.id = e.user_id;
-
-  RETURN result;
-END;
+ SELECT coalesce(jsonb_agg(jsonb_build_object('user_id',e.user_id,'username',p.username,'email',p.email,
+ 'added_at',e.added_at,'reason',e.reason,'automatic',e.reason<>'manual') ORDER BY e.added_at),'[]'::jsonb)
+ FROM public.stats_exclusions_effective e JOIN public.profiles p ON p.id=e.user_id;
 $$;
 
 
@@ -13107,6 +13223,29 @@ CREATE TABLE "public"."reports" (
 
 
 --
+-- Name: reserved_username_accounts; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE "public"."reserved_username_accounts" (
+    "user_id" "uuid" NOT NULL,
+    "username" "text" NOT NULL,
+    CONSTRAINT "reserved_username_accounts_username_check" CHECK (("username" = "lower"("btrim"("username"))))
+);
+
+
+--
+-- Name: reserved_username_prefixes; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE "public"."reserved_username_prefixes" (
+    "prefix" "text" NOT NULL,
+    "kind" "text" NOT NULL,
+    CONSTRAINT "reserved_username_prefixes_kind_check" CHECK (("kind" = ANY (ARRAY['test'::"text", 'system'::"text"]))),
+    CONSTRAINT "reserved_username_prefixes_prefix_check" CHECK ((("prefix" = "lower"("btrim"("prefix"))) AND ("length"("prefix") > 0)))
+);
+
+
+--
 -- Name: schema_migrations; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -13136,6 +13275,30 @@ CREATE TABLE "public"."shared_devices" (
 
 
 --
+-- Name: site_activity; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE "public"."site_activity" (
+    "user_id" "uuid" NOT NULL,
+    "tab_id" "uuid" NOT NULL,
+    "page" "text" NOT NULL,
+    "game_id" "uuid",
+    "visible" boolean DEFAULT true NOT NULL,
+    "last_seen_at" timestamp with time zone DEFAULT "now"() NOT NULL
+);
+
+
+--
+-- Name: site_activity_hours; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE "public"."site_activity_hours" (
+    "bucket" timestamp with time zone NOT NULL,
+    "user_id" "uuid" NOT NULL
+);
+
+
+--
 -- Name: stats_excluded_users; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -13143,6 +13306,33 @@ CREATE TABLE "public"."stats_excluded_users" (
     "user_id" "uuid" NOT NULL,
     "added_at" timestamp with time zone DEFAULT "now"() NOT NULL
 );
+
+
+--
+-- Name: stats_exclusions_effective; Type: VIEW; Schema: public; Owner: -
+--
+
+CREATE VIEW "public"."stats_exclusions_effective" AS
+ SELECT DISTINCT ON ("user_id") "user_id",
+    "added_at",
+    "reason"
+   FROM ( SELECT "stats_excluded_users"."user_id",
+            "stats_excluded_users"."added_at",
+            'manual'::"text" AS "reason",
+            2 AS "priority"
+           FROM "public"."stats_excluded_users"
+        UNION ALL
+         SELECT "p"."id",
+            "p"."created_at",
+                CASE
+                    WHEN (COALESCE(("u"."raw_app_meta_data" ->> 'is_test_guest'::"text"), 'false'::"text") = 'true'::"text") THEN 'test_guest'::"text"
+                    ELSE 'test_account'::"text"
+                END AS "case",
+            1
+           FROM ("public"."profiles" "p"
+             JOIN "auth"."users" "u" ON (("u"."id" = "p"."id")))
+          WHERE (("lower"(("u"."email")::"text") ~ '^test[0-9]+@familiada[.]online$'::"text") OR (COALESCE(("u"."raw_app_meta_data" ->> 'is_test_guest'::"text"), 'false'::"text") = 'true'::"text"))) "x"
+  ORDER BY "user_id", "priority";
 
 
 --
@@ -13773,6 +13963,22 @@ ALTER TABLE ONLY "public"."reports"
 
 
 --
+-- Name: reserved_username_accounts reserved_username_accounts_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."reserved_username_accounts"
+    ADD CONSTRAINT "reserved_username_accounts_pkey" PRIMARY KEY ("user_id", "username");
+
+
+--
+-- Name: reserved_username_prefixes reserved_username_prefixes_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."reserved_username_prefixes"
+    ADD CONSTRAINT "reserved_username_prefixes_pkey" PRIMARY KEY ("prefix");
+
+
+--
 -- Name: schema_migrations schema_migrations_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -13794,6 +14000,22 @@ ALTER TABLE ONLY "public"."shared_devices"
 
 ALTER TABLE ONLY "public"."shared_devices"
     ADD CONSTRAINT "shared_devices_pkey" PRIMARY KEY ("id");
+
+
+--
+-- Name: site_activity_hours site_activity_hours_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."site_activity_hours"
+    ADD CONSTRAINT "site_activity_hours_pkey" PRIMARY KEY ("bucket", "user_id");
+
+
+--
+-- Name: site_activity site_activity_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."site_activity"
+    ADD CONSTRAINT "site_activity_pkey" PRIMARY KEY ("user_id", "tab_id");
 
 
 --
@@ -14509,6 +14731,13 @@ CREATE INDEX "reports_status_idx" ON "public"."reports" USING "btree" ("status")
 
 
 --
+-- Name: site_activity_seen_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX "site_activity_seen_idx" ON "public"."site_activity" USING "btree" ("last_seen_at");
+
+
+--
 -- Name: uml_market_game_idx; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -14541,6 +14770,13 @@ CREATE TRIGGER "contact_reports_updated_at" BEFORE UPDATE ON "public"."contact_r
 --
 
 CREATE TRIGGER "game_state_track_session" AFTER INSERT OR UPDATE OF "detail", "step", "phase" ON "public"."game_state" FOR EACH ROW EXECUTE FUNCTION "public"."track_control2_session"();
+
+
+--
+-- Name: profiles profiles_reserve_test_username; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "profiles_reserve_test_username" BEFORE INSERT OR UPDATE OF "username" ON "public"."profiles" FOR EACH ROW EXECUTE FUNCTION "public"."profiles_reserve_test_username"();
 
 
 --
@@ -15210,6 +15446,14 @@ ALTER TABLE ONLY "public"."questions"
 
 
 --
+-- Name: reserved_username_accounts reserved_username_accounts_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."reserved_username_accounts"
+    ADD CONSTRAINT "reserved_username_accounts_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "public"."profiles"("id") ON DELETE CASCADE;
+
+
+--
 -- Name: shared_devices shared_devices_game_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -15231,6 +15475,30 @@ ALTER TABLE ONLY "public"."shared_devices"
 
 ALTER TABLE ONLY "public"."shared_devices"
     ADD CONSTRAINT "shared_devices_recipient_id_fkey" FOREIGN KEY ("recipient_id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
+
+
+--
+-- Name: site_activity site_activity_game_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."site_activity"
+    ADD CONSTRAINT "site_activity_game_id_fkey" FOREIGN KEY ("game_id") REFERENCES "public"."games"("id") ON DELETE CASCADE;
+
+
+--
+-- Name: site_activity_hours site_activity_hours_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."site_activity_hours"
+    ADD CONSTRAINT "site_activity_hours_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "public"."profiles"("id") ON DELETE CASCADE;
+
+
+--
+-- Name: site_activity site_activity_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."site_activity"
+    ADD CONSTRAINT "site_activity_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "public"."profiles"("id") ON DELETE CASCADE;
 
 
 --
@@ -16461,10 +16729,34 @@ CREATE POLICY "recipient can view" ON "public"."shared_devices" FOR SELECT USING
 ALTER TABLE "public"."reports" ENABLE ROW LEVEL SECURITY;
 
 --
+-- Name: reserved_username_accounts; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE "public"."reserved_username_accounts" ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: reserved_username_prefixes; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE "public"."reserved_username_prefixes" ENABLE ROW LEVEL SECURITY;
+
+--
 -- Name: shared_devices; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
 ALTER TABLE "public"."shared_devices" ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: site_activity; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE "public"."site_activity" ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: site_activity_hours; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE "public"."site_activity_hours" ENABLE ROW LEVEL SECURITY;
 
 --
 -- Name: user_market_library uml_own; Type: POLICY; Schema: public; Owner: -
@@ -16571,5 +16863,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict QCZDFRT1J2S6eHXXk9qVzMZgXOLyQ4NoI5RZBs2kctIHfVTTu3EOdbP5zHmfCyc
+\unrestrict d0eh2dwisLod7UaObZoLkywq7OdajiZPB6e17lZsACYWV9ziUpEieH3c6bixd10
 
