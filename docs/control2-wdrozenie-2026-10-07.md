@@ -60,3 +60,24 @@ Odczytane z produkcyjnej bazy i dołączone do artefaktu statystyk:
 Konserwacja pozostaje włączona. Nie usuwano starych danych, nie uruchamiano
 migracji kasującej i nie wyłączano konserwacji automatycznie. Wcześniej otwarte
 karty starego zestawu wymagają odświeżenia, aby załadować nowe strony.
+
+## Uzupełnienie manuala po kontroli wdrożenia
+
+Pierwsza publikacja nie zawierała pełnych tłumaczeń EN/UK ani stylu
+Prowadzącego ze szkicu. Uzupełniono oba języki na podstawie zatwierdzonego
+MD oraz przywrócono wyróżnienie Prowadzącego, grupowanie jego informacji,
+notki, uwagi i wygląd przycisków z ikonami aplikacji. Wszystkie języki
+mają 49 podsekcji, trzy tabele i osiem odwołań do ikon. Treść pozostałych
+sekcji manuala porównano z poprzednią wersją i pozostaje identyczna.
+Zmiana typografii tabel jest ograniczona do Panelu sterowania i Ustawień
+rozgrywki; nie zmienia tabeli w sekcji baz.
+
+Źródła EN/UK: `docs/manual/control-game-settings.en.md` oraz
+`docs/manual/control-game-settings.uk.md`. Polski MD pozostaje źródłem
+zatwierdzonej treści.
+
+[Publikacja pełnych sekcji i stylów](https://github.com/Andrish97/familiada/actions/runs/37545642002): sukces.
+[Testy manuala na produkcji PL/EN/UK](https://github.com/Andrish97/familiada/actions/runs/37545795549):
+**3/3**, bez ponowień. Sprawdzono treść Powtórzenia, styl Prowadzącego,
+notki i uwagi, hydratację ikon SVG oraz limit własnego outro we wszystkich
+językach. Wybrane testy lokalne: **7/7**. Nie powtarzano rozgrywek.
