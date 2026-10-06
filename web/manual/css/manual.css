@@ -220,7 +220,7 @@ html.modal-mode .wrap {
     }
 }
 
-/* ── m-table (tabele skrótów klawiszowych) ── */
+/* Shared table style throughout the manual. */
 .m-table-wrap {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
@@ -233,7 +233,7 @@ html.modal-mode .wrap {
     width: 100%;
     border-collapse: collapse;
     font-size: 14px;
-    white-space: nowrap;
+    white-space: normal;
 }
 
 .m-table th {
@@ -251,18 +251,14 @@ html.modal-mode .wrap {
 .m-table td {
     padding: 8px 14px;
     border-bottom: 1px solid rgba(255,255,255,.06);
+    vertical-align: top;
+    font-family: inherit;
+    line-height: 1.6;
     color: rgba(255,255,255,.88);
 }
 
 .m-table tr:last-child td {
     border-bottom: none;
-}
-
-.m-table td:not(:first-child) {
-    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-    font-size: 13px;
-    color: var(--gold);
-    opacity: .9;
 }
 
 .m-table tr:hover td {
@@ -326,9 +322,4 @@ body.manual-in-control-modal .m-wrap { padding-bottom: 16px; }
     border-color: rgba(255,234,166,.3);
     background: rgba(255,234,166,.08);
     color: var(--gold);
-}
-:is(#tab-control, #tab-gameSettings, #control, #gameSettings) .m-table td:not(:first-child) {
-    font-family: inherit;
-    color: rgba(255,255,255,.88);
-    opacity: 1;
 }

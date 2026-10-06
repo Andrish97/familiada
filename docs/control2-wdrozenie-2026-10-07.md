@@ -69,8 +69,9 @@ MD oraz przywrócono wyróżnienie Prowadzącego, grupowanie jego informacji,
 notki, uwagi i wygląd przycisków z ikonami aplikacji. Wszystkie języki
 mają 49 podsekcji, trzy tabele i osiem odwołań do ikon. Treść pozostałych
 sekcji manuala porównano z poprzednią wersją i pozostaje identyczna.
-Zmiana typografii tabel jest ograniczona do Panelu sterowania i Ustawień
-rozgrywki; nie zmienia tabeli w sekcji baz.
+Na życzenie użytkownika wszystkie tabele manuala mają jeden wspólny styl,
+również w sekcji baz. Nie ma wyjątków zależnych od zakładki; opisy zawijają
+się w komórkach i korzystają z tej samej typografii.
 
 Źródła EN/UK: `docs/manual/control-game-settings.en.md` oraz
 `docs/manual/control-game-settings.uk.md`. Polski MD pozostaje źródłem
