@@ -2784,13 +2784,28 @@ test("control2: opóźnione potwierdzenie Display blokuje następną akcję i bu
     // The actual scene has finished, and the full sound lock has elapsed,
     // but its real completion has not reached the server yet.
     await page.waitForTimeout(2000);
-    await expect(page.getByRole("button", { name: "Ponów naciśnięcie" })).toBeDisabled();
     await expect(buzzer.locator("#btnA")).toBeDisabled();
     const readyBefore = await page.evaluate(async id => (await window.__sbClient.from("game_state_display_completion").select("rendered_rev,requested_rev").eq("game_id",id).single()).data, game.id);
     expect(readyBefore.rendered_rev).toBeLessThan(readyBefore.requested_rev);
     release();
     await expect(buzzer.locator("#btnA")).toBeEnabled({ timeout: 15000 });
-    await expect(page.getByRole("button", { name: "Ponów naciśnięcie" })).toBeEnabled({ timeout: 15000 });
+    await display.unroute("**/rpc/game_state_display_complete");
+    await buzzer.locator("#btnA").click();
+    await armAndConfirm(page.getByRole("button", { name: /^Zatwierdź:/ }));
+    await expect(page.locator('[data-shortcut="1"]')).toBeEnabled({ timeout: 15000 });
+    intercepted = false;
+    const heldScore = new Promise(resolve => { release = resolve; });
+    await display.route("**/rpc/game_state_display_complete", async route => {
+      intercepted = true;
+      await heldScore;
+      await route.continue();
+    });
+    await armAndConfirm(page.locator('[data-shortcut="1"]'));
+    await expect.poll(() => intercepted, { timeout: 15000 }).toBe(true);
+    await page.waitForTimeout(2000);
+    await expect(page.locator('[data-shortcut="2"]')).toBeDisabled();
+    release();
+    await expect(page.locator('[data-shortcut="2"]')).toBeEnabled({ timeout: 15000 });
   } finally {
     release();
     for (const ctx of contexts) await ctx.close().catch(() => {});
