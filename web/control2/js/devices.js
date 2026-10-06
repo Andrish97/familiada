@@ -12,8 +12,8 @@
 // 2026-05-30_203) — to czysty lookup "kod -> share_key", niezwiązany z
 // komendami, nie wymaga żadnej zmiany dla v2.
 
-import { getUiLang } from "../../shared/translation/translation.js?v=v2026-10-06T16422";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-06T16422";
+import { getUiLang } from "../../shared/translation/translation.js?v=v2026-10-06T17053";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-06T17053";
 
 function makeUrl(path, gameId, key, { lang } = {}) {
   const u = new URL(path, location.origin);
