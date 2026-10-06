@@ -1,16 +1,16 @@
 // js/pages/marketplace.js
 
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-06T23164";
-import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-06T23164";
-import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-06T23164";
-import { initI18n, t, getUiLang, withLangParam, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-06T23164";
-import { initTopbarAccountDropdown } from "../../shared/js/core/topbar-controller.js?v=v2026-10-06T23164";
-import { exportGame } from "../../games/js/games-import-export.js?v=v2026-10-06T23164";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-06T23164";
-import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-06T23164";
-import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-06T23164";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-06T23164";
-import { icon, iconText, starRating } from "../../shared/js/core/icons.js?v=v2026-10-06T23164";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-06T23205";
+import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-06T23205";
+import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-06T23205";
+import { initI18n, t, getUiLang, withLangParam, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-06T23205";
+import { initTopbarAccountDropdown } from "../../shared/js/core/topbar-controller.js?v=v2026-10-06T23205";
+import { exportGame } from "../../games/js/games-import-export.js?v=v2026-10-06T23205";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-06T23205";
+import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-06T23205";
+import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-06T23205";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-06T23205";
+import { icon, iconText, starRating } from "../../shared/js/core/icons.js?v=v2026-10-06T23205";
 
 /* =========================================================
    Constants
