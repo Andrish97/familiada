@@ -331,7 +331,7 @@ async function main() {
     if (!completionUIReady || completionReadPending || !waitingForDisplay()) return;
     completionReadPending = true;
     try {
-      const { data, error } = await sb().from("game_state_display_completion").select("rendered_rev").eq("game_id", gameId).maybeSingle();
+      const { data, error } = await sb().from("game_state_display_completion").select("rendered_rev").eq("game_id", gameId).maybeSingle().abortSignal(AbortSignal.timeout(6500));
       if (!error && data && displayCompletion.acknowledge(data.rendered_rev)) {
         renderCurrent();
       }

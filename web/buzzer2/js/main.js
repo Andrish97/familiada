@@ -118,7 +118,7 @@ async function main() {
     displayCheckPending = true;
     const row = lastRow;
     try {
-      const { data, error } = await sb().rpc("game_state_display_is_ready", { p_game_id: gameId, p_key: key });
+      const { data, error } = await sb().rpc("game_state_display_is_ready", { p_game_id: gameId, p_key: key }).abortSignal(AbortSignal.timeout(6500));
       if (!error && row === lastRow && data === true) {
         displayReady = true;
         presses.render(lastRow);

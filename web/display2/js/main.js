@@ -39,7 +39,7 @@ function parseParams() {
 
 async function authDisplayOrThrow(gameId, key) {
   if (!gameId || !key) throw new Error("Brak id lub key w URL.");
-  const { data, error } = await sb().rpc("display_auth", { p_game_id: gameId, p_key: key });
+  const { data, error } = await sb().rpc("display_auth", { p_game_id: gameId, p_key: key }).abortSignal(AbortSignal.timeout(6500));
   if (error) throw error;
   const row = Array.isArray(data) ? data[0] : data;
   if (!row?.id) throw new Error("Zły klucz (display) albo gra nie istnieje.");
@@ -295,7 +295,7 @@ window.addEventListener("DOMContentLoaded", async () => {
       reportingCompletion = true;
       const revision = completedRenderRev;
       try {
-        const { error } = await sb().rpc("game_state_display_complete", { p_game_id: gameId, p_key: key, p_rev: revision });
+        const { error } = await sb().rpc("game_state_display_complete", { p_game_id: gameId, p_key: key, p_rev: revision }).abortSignal(AbortSignal.timeout(6500));
         if (!error) reportedRenderRev = revision;
       } finally { reportingCompletion = false; }
     }
