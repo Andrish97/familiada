@@ -77,9 +77,60 @@
 ### 11. Skróty bez konfliktu z językiem klawiatury
 
 - [x] Zweryfikowane: Ctrl+Shift może przełączać układ klawiatury Windows. Przeglądarka nie daje gwarancji zablokowania skrótu systemowego. [Odpowiedź moderatora Microsoft](https://learn.microsoft.com/en-ie/answers/questions/3248977/how-to-delete-shortcut-ctrl-shift).
-- Propozycja: **Ctrl+Enter na Windows/Linux, Cmd+Enter na Mac — timer**; **Shift+Enter w pustym polu gracza 2 — Powtórzenie**. Są to propozycje do następnego wdrożenia, a nie aktualne skróty.
+- Zatwierdzone przez użytkownika: **Ctrl+Enter na Windows/Linux, Cmd+Enter na Mac — timer**; **Shift+Enter w pustym polu gracza 2 — Powtórzenie**, oraz zestaw czynności poniżej. Rozszerzenie o inne etapy Control jest częścią planu. Skróty nie są jeszcze wdrożone.
 - [ ] Obsłużyć wyłącznie dokładną kombinację i etapy wpisywania finału. Skrót timera nie może jednocześnie przenosić fokusu, zatwierdzać formularza ani wpisywać znaku. Uwzględnić powtarzanie klawisza i komponowanie tekstu.
 - [ ] Usunąć reakcję na samo Ctrl+Shift/Cmd+Shift i zaktualizować podpowiedzi oraz manual. Nie gwarantować braku kolizji z indywidualnymi skrótami ustawionymi przez użytkownika.
+
+#### Zatwierdzony zestaw czynności
+
+| Czynność | Windows / Linux | Mac | Zakres |
+|---|---|---|---|
+| Start lub wcześniejsze zatrzymanie timera finału | Ctrl+Enter | Cmd+Enter | Wpisywanie gracza 1 lub 2; obowiązują reguły punktu 08. |
+| Powtórzenie | Shift+Enter | Shift+Enter | Tylko puste pole gracza 2; przełączenie znacznika. |
+| Następne puste pole | Enter lub ↓ | Enter lub ↓ | Wpisywanie finału, według punktu 09. |
+| Poprzednie puste pole | ↑ | ↑ | Wpisywanie finału, według punktu 09. |
+| Zaznaczenie odpowiedzi lub dopasowania | 1–9 | 1–9 | Rundy i mapowanie finału; tylko istniejące i dostępne pozycje. |
+| Zatwierdzenie zaznaczonego kafelka | Enter | Enter | Obsługa kafelków poza polami tekstowymi. |
+| Zaznaczenie pudła X | X | X | Pojedynek, rozgrywka i kradzież, jeśli pudło jest dostępne. |
+| Zaznaczenie odliczania 3 sekund | T | T | Tylko etap rundy z dostępnym przyciskiem timera. |
+| Zaznaczenie oddania kontroli | P | P | Tylko runda z dostępną możliwością oddania kontroli. |
+| Zaznaczenie dalszego przejścia | N | N | Bieżący, widoczny przycisk nawigacji, zgodnie z tabelą etapów poniżej. |
+
+#### Rozszerzenie na pozostałe etapy Control
+
+| Etap / czynność | Skrót | Działanie |
+|---|---|---|
+| Urządzenia | N, następnie Enter | Wybranie i uruchomienie dostępnego Dalej. Nie pomija sprawdzania wymaganych urządzeń. |
+| Podsumowanie | N, następnie Enter | Gotowe — przejdź do rozgrywki. |
+| Podsumowanie: zmiana ustawień | E, następnie Enter | Zmień ustawienia. |
+| Dostępny powrót do poprzedniego kroku | W, następnie Enter | Widoczny przycisk Wstecz; nie cofa stanu rozgrywki ani wyniku. |
+| Rozpoczęcie gry / rundy / finału | N, następnie Enter | Widoczny przycisk rozpoczęcia właściwy dla bieżącego etapu. |
+| Pojedynek z przyciskiem fizycznym | A albo B, następnie Enter | Wybór drużyny, a następnie potwierdzenie jej zgłoszenia. Nie symuluje naciśnięcia urządzenia w normalnym trybie. |
+| Mapowanie finału: odsłonięcie odpowiedzi | O, następnie Enter | Pokaż odpowiedź. |
+| Mapowanie finału: odsłonięcie punktów | P, następnie Enter | Pokaż punkty; znaczenie P wynika z etapu i nie nakłada się na oddanie kontroli w rundach. |
+| Koniec rundy / przejście do wyniku | N, następnie Enter | Widoczna, dostępna akcja końca rundy lub dalszego przejścia. |
+| Zakończenie finału / gry | N, następnie Enter | Zakończ finał lub Zakończ grę, według aktualnego etapu i po zakończeniu obowiązujących blokad. |
+| Końcowy powrót do listy gier | N, następnie Enter | Wróć do moich gier, gdy jest główną dostępną nawigacją. |
+| Wyciszenie / włączenie dźwięku | M, następnie Enter | Wybranie przycisku dźwięku w górnym pasku i jego uruchomienie. |
+| Rozpoczęcie od nowa | R, następnie Enter | Wybranie restartu i otwarcie istniejącego okna potwierdzenia. Nie zatwierdza automatycznie tego okna. |
+
+#### Reguły działania i bezpieczeństwo wpisywania
+
+- [ ] Litery i cyfry nie wywołują czynności przy aktywnym polu tekstowym, polu wyboru, suwaku ani edytowalnej treści. Nie odbieramy standardowej obsługi klawiatury tym elementom. Specjalne skróty wpisywania finału są obsługiwane osobno.
+- [ ] Zaznaczenie kafelka wymagającego potwierdzenia to tylko zaznaczenie; Enter uruchamia jego istniejące zatwierdzenie. Dla zwykłego przycisku nawigacji zaznaczenie oznacza ustawienie fokusu, a Enter wykonuje standardowe kliknięcie. Jedno naciśnięcie nie może uruchamiać równocześnie obsługi własnej i natywnego kliknięcia.
+- [ ] Jeden wspólny mechanizm wyboru czynności według etapu. Wszystkie skróty korzystają z istniejących akcji i blokad, bez osobnej ścieżki omijającej zatwierdzenia lub silnik.
+- [ ] Gdy otwarte jest okno ustawień, udostępniania albo potwierdzenia, skróty rozgrywki w tle są nieaktywne. W oknach pozostawić standardowe Tab / Shift+Tab i Enter na wybranym przycisku. Nie przechwytywać skrótów paska adresu, wyszukiwania ani narzędzi przeglądarki.
+- [ ] Obsłużyć PL, EN i UK. Skróty literowe pozostają na tych samych fizycznych klawiszach przy zmianie układu klawiatury; wpisywanie liter narodowych i komponowanie tekstu pozostają normalne. Czytelne oznaczenia klawiszy pokazywać w podpowiedziach.
+- [ ] Ignorować przytrzymanie klawisza powodujące kolejne zdarzenia. Ctrl/Cmd+Enter nie przenosi fokusu do innego pytania. Gdy czynność jest niedostępna, skrót jej nie wykonuje.
+- [ ] Weryfikacja przy domyślnych ustawieniach: Chrome, Firefox i Opera na Windows; Safari, Chrome, Firefox i Opera na Macu. Dodatkowo sprawdzić układ polski i ukraiński oraz wpisywanie z aktywnym polem. Dokumentacja skrótów przeglądarek nie zastępuje testu naszej implementacji.
+
+#### Dokumentacja i podpowiedzi
+
+- [ ] Dodać zestaw do instrukcji Panelu sterowania w PL, EN i UK po wdrożeniu. Uaktualnić także robocze MD i HTML, z zachowaniem właściwego stylu przycisków i oznaczeń klawiszy.
+- [ ] W istniejącej kolumnie podpowiedzi pokazywać skróty odpowiednie do bieżącego etapu, z nazwą aktualnej czynności zamiast ogólnego Dalej. Nie dodawać osobnego banera ani instrukcji obsługi operatora na tablecie Prowadzącego.
+- [ ] Przy wpisywaniu finału wskazać timer, powtórzenie w rundzie 2 i przechodzenie między pustymi polami. Przy mapowaniu wskazać wybór dopasowania, odsłonięcie odpowiedzi/punktów i dalsze przejście.
+- [ ] Wyjaśnić w instrukcji różnicę między zaznaczeniem skrótem a zatwierdzeniem Enter oraz powód, dla którego litery i cyfry podczas edycji pola nie uruchamiają akcji.
+- [ ] Uaktualnić scenariusze testów i opis nagrań. Pokazać przynajmniej zatwierdzenie drużyny, odpowiedź/X, timer finału, powtórzenie, nawigację pustych pól i obsługę dalszego przejścia z klawiatury.
 
 ### 12. Wysokość odpowiedzi gracza 2
 
