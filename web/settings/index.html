@@ -656,7 +656,7 @@
           </div>
 
           <div class="stats-grid">
-            <div class="stat-box" id="statActivityBox" role="button" tabindex="0" aria-controls="maintenanceActivity">
+            <div class="stat-box" id="statActivityBox" data-detail="activity" role="button" tabindex="0">
               <div class="stat-label">Aktywność teraz</div>
               <div class="stat-value" id="statActivityValue">—</div>
               <div class="stat-sub" id="statActivitySub">Oczekiwanie na dane</div>
@@ -728,18 +728,7 @@
             </div>
           </div>
 
-          <section class="stats-section" id="maintenanceActivity" aria-label="Aktywność teraz">
-            <div class="stats-section-label activity-section-head"><span>Aktywność teraz</span><button class="btn sm" type="button">Odśwież</button></div>
-            <div class="stats-inner-card">
-              <p class="stat-sub" data-activity-summary aria-live="polite">Oczekiwanie na dane…</p>
-              <div class="mail-table-wrap"><table class="mail-table activity-table">
-                <thead><tr><th>Użytkownik</th><th>Aktywność</th><th>Gra / zasób</th><th>Urządzenia / karta</th><th>Ostatni kontakt</th></tr></thead>
-                <tbody data-activity-rows></tbody>
-              </table></div>
-              <p class="field-hint" data-activity-time>Nie sprawdzono jeszcze aktywności.</p>
-              <p class="field-hint">Uwzględnia wspólne wykluczenia. Otwarta karta nie potwierdza wykonywania czynności; nowe sygnały wymagają odświeżenia wcześniej otwartej strony.</p>
-            </div>
-          </section>
+
 
           <!-- Retencja & Aktywność -->
           <div class="stats-section">

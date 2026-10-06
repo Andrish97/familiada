@@ -25,13 +25,33 @@ function stepName(game) {
   if (game.step.startsWith('f_')) return 'Finał — przejście';
   return {BUZZ:'Pojedynek',PLAY:'Odpowiedzi drużyny',STEAL:'Kradzież banku',REVEAL:'Odsłanianie pozostałych odpowiedzi'}[game.phase] || 'Rundy';
 }
+export function activityDetailRows(data) {
+  const result=[];
+  const editLocks=data.locks.filter(lock=>lock.holder_context!=='control');
+  function add(user,activity,resource,context,stamp) {
+    result.push({user,activity,resource:resource||'—',context,last_seen_at:stamp?new Date(stamp).toISOString():null});
+  }
+  for (const game of data.games) {
+    const activity=gameActivity(game);
+    const devices=game.devices.map(d=>({display:'Wyświetlacz',host:'Prowadzący',buzzer:'Przycisk'})[d]||d).join(', ');
+    const contacts=[game.session_seen_at,game.devices_seen_at,...data.pages.filter(page=>page.game_id===game.game_id).map(page=>page.last_seen_at),...data.locks.filter(lock=>lock.resource_id===game.game_id).map(lock=>lock.heartbeat_at)].filter(Boolean).map(Date.parse);
+    add(game.username,activity.label+(stepName(game)?' · '+stepName(game):''),game.name,`Zestaw ${game.control_version}${devices?' · '+devices:''}`,contacts.length?Math.max(...contacts):null,activity.risk);
+  }
+  for (const lock of editLocks) {
+    const context=String(lock.holder_context||'').split(':')[0];
+    add(lock.username,'Aktywna edycja',`${RESOURCE_NAMES[lock.resource_type]||'Zasób'}${lock.resource_name?' — '+lock.resource_name:''}`,CONTEXT_NAMES[context]||'Edytor',lock.heartbeat_at);
+  }
+  for (const page of data.pages) {
+    if (['control','control2'].includes(page.page) && data.games.some(g=>g.game_id===page.game_id)) continue;
+    add(page.username,PAGE_NAMES[page.page]||'Otwarta strona',null,page.visible?'Karta widoczna':'Karta w tle',page.last_seen_at);
+  }
+  return result;
+}
+
 export function startActivityPanel() {
-  const root=document.getElementById('maintenanceActivity');
+  const root=document.getElementById('statsPanel');
   if (!root) return;
-  const summary=root.querySelector('[data-activity-summary]');
-  const rows=root.querySelector('[data-activity-rows]');
-  const time=root.querySelector('[data-activity-time]');
-  const refresh=root.querySelector('button');
+  const refresh=document.getElementById('btnStatsRefresh');
   let pending=false;
   let history=null;
   let period='hour';
@@ -41,33 +61,48 @@ export function startActivityPanel() {
     chart.replaceChildren();
     const items=history?.[period]||[];
     if (!items.length) { chart.textContent="Brak historii w tym przedziale. Dane zbierają się od wdrożenia.";return; }
-    const max=Math.max(1,...items.map(item=>Number(item.users)));
-    const svg=document.createElementNS("http://www.w3.org/2000/svg","svg");
-    svg.setAttribute("viewBox","0 0 900 220");svg.setAttribute("role","img");svg.setAttribute("aria-label","Aktywni użytkownicy — "+periods.find(item=>item.value===period).label);
-    const width=840/items.length;
-    for (const [i,item] of items.entries()) {
-      const rect=document.createElementNS(svg.namespaceURI,"rect");const h=160*Number(item.users)/max;
-      rect.setAttribute("x",String(40+i*width));rect.setAttribute("y",String(180-h));rect.setAttribute("width",String(Math.max(1,width-3)));rect.setAttribute("height",String(h));rect.setAttribute("fill","#ffeaa6");
-      const label=new Date(item.bucket).toLocaleString("pl-PL",{timeZone:"Europe/Warsaw",day:"2-digit",month:"2-digit",...(period==="hour"?{hour:"2-digit",minute:"2-digit"}:{})});
-      const title=document.createElementNS(svg.namespaceURI,"title");title.textContent=label+": "+item.users+" użytkowników";rect.append(title);svg.append(rect);
-      if (i===0 || i===items.length-1 || i%Math.ceil(items.length/6)===0) {
-        const text=document.createElementNS(svg.namespaceURI,"text");text.setAttribute("x",String(40+i*width));text.setAttribute("y","205");text.setAttribute("fill","currentColor");text.setAttribute("font-size","11");text.textContent=label;svg.append(text);
-      }
+    const ns='http://www.w3.org/2000/svg';
+    function shape(tag,attrs,text) {
+      const node=document.createElementNS(ns,tag);
+      for (const [key,value] of Object.entries(attrs||{})) node.setAttribute(key,String(value));
+      if (text!=null) node.textContent=text;
+      return node;
     }
-    const scale=document.createElementNS(svg.namespaceURI,"text");scale.setAttribute("x","4");scale.setAttribute("y","20");scale.setAttribute("fill","currentColor");scale.setAttribute("font-size","12");scale.textContent=String(max);svg.append(scale);chart.append(svg);
+    const maximum=Math.max(4,Math.ceil(Math.max(...items.map(item=>Number(item.users)))/4)*4);
+    const left=48,right=878,top=22,bottom=210;
+    const svg=shape('svg',{viewBox:'0 0 920 260',role:'group','aria-label':'Aktywni użytkownicy — '+periods.find(item=>item.value===period).label});
+    const defs=shape('defs');const gradient=shape('linearGradient',{id:'activity-line-fill',x1:0,y1:0,x2:0,y2:1});
+    gradient.append(shape('stop',{offset:'0%','stop-color':'#ffeaa6','stop-opacity':'.2'}),shape('stop',{offset:'100%','stop-color':'#ffeaa6','stop-opacity':'.01'}));defs.append(gradient);svg.append(defs);
+    for (let tick=0;tick<=4;tick++) {
+      const y=bottom-(bottom-top)*tick/4;
+      svg.append(shape('line',{x1:left,x2:right,y1:y,y2:y,stroke:'rgba(255,255,255,.09)','stroke-dasharray':'3 5'}));
+      svg.append(shape('text',{x:left-12,y:y+4,fill:'rgba(255,255,255,.5)','font-size':11,'text-anchor':'end'},maximum*tick/4));
+    }
+    const points=items.map((item,i)=>({item,x:items.length===1?(left+right)/2:left+(right-left)*i/(items.length-1),y:bottom-(bottom-top)*Number(item.users)/maximum}));
+    const path=points.map((point,i)=>(i?'L':'M')+point.x+','+point.y).join(' ');
+    if (points.length>1) {
+      svg.append(shape('path',{d:path+' L'+points.at(-1).x+','+bottom+' L'+points[0].x+','+bottom+' Z',fill:'url(#activity-line-fill)'}));
+      svg.append(shape('path',{d:path,fill:'none',stroke:'#ffeaa6','stroke-width':2.5,'stroke-linejoin':'round','stroke-linecap':'round','vector-effect':'non-scaling-stroke'}));
+    }
+    const tooltip=document.createElement('div');tooltip.className='stat-sub activity-chart-tooltip';
+    function label(item) {return new Date(item.bucket).toLocaleString('pl-PL',{timeZone:'Europe/Warsaw',day:'2-digit',month:'2-digit',...(period==='hour'?{hour:'2-digit',minute:'2-digit'}:{})});}
+    function describe(item) {tooltip.textContent=label(item)+' · Użytkownicy: '+item.users;}
+    describe(items.at(-1));
+    const stride=Math.max(1,Math.ceil((points.length-1)/4));
+    for (const [i,point] of points.entries()) {
+      const description=label(point.item)+': '+point.item.users+' użytkowników';
+      const dot=shape('circle',{cx:point.x,cy:point.y,r:4,fill:'#10172a',stroke:'#ffeaa6','stroke-width':2,tabindex:0,'aria-label':description});
+      dot.append(shape('title',{},description));
+      for (const event of ['pointerenter','focus','click']) dot.addEventListener(event,()=>describe(point.item));
+      svg.append(dot);
+      if (i===0||i===points.length-1||i%stride===0) svg.append(shape('text',{x:point.x,y:240,fill:'rgba(255,255,255,.5)','font-size':11,'text-anchor':points.length===1?'middle':i===0?'start':i===points.length-1?'end':'middle'},label(point.item)));
+    }
+    chart.append(tooltip,svg);
     const table=document.createElement("details");const caption=document.createElement("summary");caption.textContent="Pokaż wartości wykresu";table.append(caption);
     for (const item of items) {const line=document.createElement("div");line.textContent=new Date(item.bucket).toLocaleString("pl-PL",{timeZone:"Europe/Warsaw"})+" — "+item.users;table.append(line);}
     chart.append(table);
   }
   initUiSelect(document.getElementById('activityChartPeriod'),{options:periods,value:period,onChange(value){period=value;paintChart();}});
-  function row(user,activity,resource,context,stamp,risk=false) {
-    const item=document.createElement('tr');
-    if (risk) item.className='activity-risk';
-    for (const value of [user,activity,resource,context,stamp?new Date(stamp).toLocaleTimeString('pl-PL'):'—']) {
-      const cell=document.createElement('td');cell.textContent=value || '—';item.append(cell);
-    }
-    rows.append(item);
-  }
   async function load(force=false) {
     if (pending || (!force && (document.hidden || (root.closest('[hidden]') && document.getElementById('panelScreen')?.hidden)))) return;
     pending=true;refresh.disabled=true;
@@ -76,50 +111,23 @@ export function startActivityPanel() {
       if (!response.ok) throw new Error('unavailable');
       const data=await response.json();if (!data.ok) throw new Error('unavailable');
       history=data.history;paintChart();
-      rows.replaceChildren();
       const users=new Set([...data.pages.map(p=>p.user_id),...data.locks.map(l=>l.holder_user_id),...data.games.map(g=>g.user_id)].filter(Boolean));
       const riskGames=data.games.filter(g=>gameActivity(g).risk).length;
       const editLocks=data.locks.filter(l=>l.holder_context!=='control');
-      summary.textContent=`Użytkownicy: ${users.size} · Gry w toku lub możliwe: ${riskGames} · Blokady edycji: ${editLocks.length}`+(data.truncated?' · Lista ograniczona do 500 wpisów w każdej kategorii':'');
       document.getElementById('statActivityValue').textContent=String(users.size);
       document.getElementById('maintenanceActivityValue').textContent=String(users.size);
       const counters=`Gry w toku lub możliwe: ${riskGames} | Edycje: ${editLocks.length}`;
       document.getElementById('statActivitySub').textContent=counters;
       document.getElementById('maintenanceActivitySummary').textContent=counters;
       document.getElementById('maintenanceActivityTime').textContent='Odświeżono: '+new Date(data.generated_at).toLocaleTimeString('pl-PL')+' · Uwzględnia wykluczenia';
-      for (const game of data.games) {
-        const activity=gameActivity(game);
-        const devices=game.devices.map(d=>({display:'Wyświetlacz',host:'Prowadzący',buzzer:'Przycisk'})[d]||d).join(', ');
-        const contacts=[game.session_seen_at,game.devices_seen_at,...data.pages.filter(page=>page.game_id===game.game_id).map(page=>page.last_seen_at),...data.locks.filter(lock=>lock.resource_id===game.game_id).map(lock=>lock.heartbeat_at)].filter(Boolean).map(Date.parse);
-        row(game.username,activity.label+(stepName(game)?' · '+stepName(game):''),game.name,`Zestaw ${game.control_version}${devices?' · '+devices:''}`,contacts.length?Math.max(...contacts):null,activity.risk);
-      }
-      for (const lock of editLocks) {
-        const context=String(lock.holder_context||'').split(':')[0];
-        row(lock.username,'Aktywna edycja',`${RESOURCE_NAMES[lock.resource_type]||'Zasób'}${lock.resource_name?' — '+lock.resource_name:''}`,CONTEXT_NAMES[context]||'Edytor',lock.heartbeat_at);
-      }
-      for (const page of data.pages) {
-        if (['control','control2'].includes(page.page) && data.games.some(g=>g.game_id===page.game_id)) continue;
-        row(page.username,PAGE_NAMES[page.page]||'Otwarta strona',null,page.visible?'Karta widoczna':'Karta w tle',page.last_seen_at);
-      }
-      if (!rows.childElementCount) {
-        const item=document.createElement('tr');const cell=document.createElement('td');cell.colSpan=5;cell.className='activity-empty';cell.textContent='Nie wykryto aktywności.';item.append(cell);rows.append(item);
-      }
-      time.textContent='Ostatnie odświeżenie: '+new Date(data.generated_at).toLocaleTimeString('pl-PL');
     } catch {
-      summary.textContent='Nie udało się sprawdzić aktywności. Widoczne dane mogą być nieaktualne.';
       document.getElementById('maintenanceActivitySummary').textContent='Nie udało się sprawdzić aktywności — poprzednie dane mogą być nieaktualne.';
       document.getElementById('statActivityValue').textContent='—';
       document.getElementById('maintenanceActivityValue').textContent='—';
       document.getElementById('statActivitySub').textContent='Brak aktualnego potwierdzenia';
-      time.textContent='Brak aktualnego potwierdzenia — nie traktuj tego jako braku użytkowników.';
     } finally {pending=false;refresh.disabled=false;}
   }
   refresh.addEventListener('click',()=>void load(true));
-  document.getElementById('btnStatsRefresh')?.addEventListener('click',()=>void load(true));
-  const tile=document.getElementById('statActivityBox');
-  const showDetails=()=>root.scrollIntoView({behavior:'smooth',block:'start'});
-  tile?.addEventListener('click',showDetails);
-  tile?.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();showDetails();}});
   const timer=setInterval(()=>void load(),15000);
   window.addEventListener('pagehide',()=>clearInterval(timer),{once:true});
   void load(true);

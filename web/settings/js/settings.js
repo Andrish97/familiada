@@ -28,7 +28,7 @@ const btnBackSheet = document.getElementById("btnBackSheet");
 if (btnBackSheet) btnBackSheet.dataset.sheetBack = "1";
 btnBackSheet?.addEventListener("click", () => { handleSheetBack(); });
 
-import { startActivityPanel } from "./activity.js?v=v2026-10-06T19264";
+import { startActivityPanel, activityDetailRows } from "./activity.js?v=v2026-10-06T19264";
 
 const API_BASE = "/_admin_api";
 const TOOLS_MANIFEST = "/settings/data/tools.json?v=v2026-10-06T19264";
@@ -5322,6 +5322,11 @@ function esc(str) {
 }
 
 const STAT_DETAIL_CONFIG = {
+  activity: {
+    title: 'Aktywność teraz',
+    cols: ['Użytkownik','Aktywność','Gra / zasób','Urządzenia / karta','Ostatni kontakt'],
+    row: r => [r.user,r.activity,r.resource,r.context,r.last_seen_at?fmtDate(r.last_seen_at):'—'],
+  },
   users: {
     title: "Użytkownicy",
     cols: ["Nazwa użytkownika", "E-mail", "Język", "Gość?", "Rejestracja"],
@@ -5785,7 +5790,7 @@ async function openStatsDetailModal(type) {
   }
 
   try {
-    const endpoint = type === "polls"
+    const endpoint = type === "activity" ? `${API_BASE}/activity` : type === "polls"
       ? `${API_BASE}/stats/polls/detail?limit=500`
       : `${API_BASE}/stats/detail?type=${encodeURIComponent(type)}&limit=500`;
     const res = await apiFetch(endpoint, { method: "GET" });
@@ -5796,7 +5801,7 @@ async function openStatsDetailModal(type) {
     }
     const data = await res.json();
     if (!data.ok) throw new Error(data.error || "błąd");
-    allRows = data.rows || [];
+    allRows = type === "activity" ? activityDetailRows(data) : data.rows || [];
     renderPage(1);
   } catch (err) {
     tableWrap.textContent = `Błąd: ${err.message}`;
@@ -5814,6 +5819,9 @@ function wireStatsEvents() {
 
   document.querySelectorAll(".stat-box[data-detail]").forEach(box => {
     box.addEventListener("click", () => openStatsDetailModal(box.dataset.detail));
+    if (box.dataset.detail === 'activity') box.addEventListener('keydown',event=>{
+      if (event.key==='Enter'||event.key===' ') {event.preventDefault();box.click();}
+    });
   });
 
   const btnAdd = document.getElementById("btnExcludeAdd");
