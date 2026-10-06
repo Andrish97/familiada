@@ -2036,12 +2036,14 @@ const pl = {
         Bez tego możesz nie usłyszeć sygnałów, które wspierają tempo gry.
       </p>
 
+      <p class="m-p">M przełącza wyciszenie od razu, bez Entera.</p>
       <h3 class="m-h2">2) Ustawienia</h3>
 
       <p class="m-p">
         Gdy urządzenia są online, przechodzisz do podsumowania ustawień. Wszystkie opcje (kolory, dźwięk, parametry gry) możesz wcześniej skonfigurować na stronie <span class="m-strong">Ustawień rozgrywki</span> — Panel sterowania wczyta je automatycznie.
       </p>
 
+      <p class="m-p">W Podsumowaniu E zaznacza zmianę ustawień, a Enter ją otwiera. B i Enter wracają, gdy powrót jest dostępny.</p>
       <h3 class="m-h3">Nazwy drużyn</h3>
 
       <p class="m-p">
@@ -2130,6 +2132,7 @@ const pl = {
         a wyświetlacz pokazuje, która drużyna aktualnie gra (wskaźnik drużyny).
       </p>
 
+      <p class="m-p">C i Enter zatwierdzają drużynę wskazaną przez Przycisk. W trybie fizycznego przycisku A/B zaznacza drużynę, a Enter zatwierdza.</p>
       <h3 class="m-h3">Oddanie pytania</h3>
 
       <p class="m-p">
@@ -2139,6 +2142,7 @@ const pl = {
         Panel udostępnia tę opcję tylko w odpowiednim momencie i pilnuje, żeby nie dało się jej nadużywać.
       </p>
 
+      <p class="m-p">P zaznacza oddanie kontroli; Enter je zatwierdza.</p>
       <h3 class="m-h3">Rozgrywka pytania: odsłanianie odpowiedzi i bank</h3>
 
       <p class="m-p">
@@ -2154,6 +2158,7 @@ const pl = {
         wtedy operator zakończy etap i przejdzie do kradzieży (gdy są spełnione warunki).
       </p>
 
+      <p class="m-p">1–6 zaznacza odpowiedź; Enter ją odsłania.</p>
       <h3 class="m-h3">Pudła (X) i limit 3 sekund</h3>
 
       <p class="m-p">
@@ -2169,6 +2174,7 @@ const pl = {
         bez dyskusji i utrzymać rytm rozgrywki.
       </div>
 
+      <p class="m-p">X zaznacza pudło, a T timer; Enter wykonuje zaznaczoną czynność.</p>
       <h3 class="m-h3">Kradzież banku (jedna odpowiedź)</h3>
 
       <p class="m-p">
@@ -2221,7 +2227,8 @@ const pl = {
         albo do zakończenia gry (jeśli finał jest wyłączony).
       </div>
 
-    <h3 class="m-h2">4) Finał</h3>
+    <p class="m-p">N zaznacza aktualny przycisk dalszego przejścia; Enter go uruchamia.</p>
+      <h3 class="m-h2">4) Finał</h3>
 
       <p class="m-p">
         Finał jest osobnym trybem gry. Bierze w nim udział dwóch zawodników
@@ -2267,6 +2274,8 @@ const pl = {
         a prowadzący przygotowuje wejście drugiego zawodnika i przypomina zasady finału.
       </p>
 
+      <p class="m-p">W finale Ctrl+Enter (⌘+Enter na Macu) obsługuje timer. Każda runda wymaga uruchomienia timera. Można go ręcznie zatrzymać dopiero po wpisaniu tekstu we wszystkich pięciu polach; Powtórzenie nie wypełnia pola. Enter i strzałki przechodzą tylko między pustymi polami; poprawienie uzupełnionego wymaga kliknięcia.</p>
+      <p class="m-p">Podczas dopasowania 1–6 wybiera pozycję z listy, W wpisaną odpowiedź, a O brak odpowiedzi. Wybór jest pojedynczy. Enter odsłania odpowiedź, kolejny Enter punkty; brak i powtórzenie automatycznie pokazują zero. N i Enter przechodzą dalej. Mysz: odsłanianie wymaga dwóch kliknięć. Litery i cyfry podczas edycji są tekstem. Otwarte okno blokuje skróty gry w tle.</p>
       <h3 class="m-h3">Runda 2 – drugi zawodnik (20 sekund) i powtórki</h3>
 
       <p class="m-p">
@@ -2292,6 +2301,8 @@ const pl = {
         Punkty obu zawodników sumują się.
       </p>
 
+      <p class="m-p">W finale Ctrl+Enter (⌘+Enter na Macu) obsługuje timer, a Shift+Enter przełącza Powtórzenie w pustym polu drugiego gracza. Każda runda wymaga uruchomienia timera. Można go ręcznie zatrzymać dopiero po wpisaniu tekstu we wszystkich pięciu polach; Powtórzenie nie wypełnia pola. Enter i strzałki przechodzą tylko między pustymi polami; poprawienie uzupełnionego wymaga kliknięcia.</p>
+      <p class="m-p">Podczas dopasowania 1–6 wybiera pozycję z listy, W wpisaną odpowiedź, O brak, a R powtórzenie. Wybór jest pojedynczy. Enter odsłania odpowiedź, kolejny Enter punkty; brak i powtórzenie automatycznie pokazują zero. N i Enter przechodzą dalej. Mysz: odsłanianie wymaga dwóch kliknięć. Litery i cyfry podczas edycji są tekstem. Otwarte okno blokuje skróty gry w tle.</p>
       <h3 class="m-h3">Kiedy finał się kończy</h3>
 
       <p class="m-p">
@@ -2304,7 +2315,7 @@ const pl = {
         Po zakończeniu finału system wyświetla ekran końcowy zgodnie z ustawieniami zakończenia gry:
         <span class="m-strong">logo</span>, <span class="m-strong">punkty</span> albo
         <span class="m-strong">kwotę wygranej</span>.
-      </p><h3 class="m-h3">Panel sterowania 2 — klawiatura</h3><p class="m-p">W rundach 1–6 zaznacza odpowiedź, a Enter ją odsłania. C i Enter zatwierdzają zgłoszenie Przycisku; A/B i Enter wybierają drużynę przy fizycznym przycisku. X oznacza pudło, T timer, P oddanie kontroli, N dalsze przejście, B powrót, a E zmianę ustawień — po zaznaczeniu użyj Enter. M przełącza wyciszenie od razu. Restart nie ma skrótu.</p><p class="m-p">W finale Ctrl+Enter (⌘+Enter na Macu) obsługuje timer, a Shift+Enter przełącza Powtórzenie w pustym polu drugiego gracza. Każda runda wymaga uruchomienia timera. Można go ręcznie zatrzymać dopiero po wpisaniu tekstu we wszystkich pięciu polach; Powtórzenie nie wypełnia pola. Enter i strzałki przechodzą tylko między pustymi polami; poprawienie uzupełnionego wymaga kliknięcia.</p><p class="m-p">Podczas dopasowania 1–6 wybiera pozycję z listy, W wpisaną odpowiedź, O brak, a R powtórzenie. Wybór jest pojedynczy. Enter odsłania odpowiedź, kolejny Enter punkty; brak i powtórzenie automatycznie pokazują zero. N i Enter przechodzą dalej. Mysz: odsłanianie wymaga dwóch kliknięć. Litery i cyfry podczas edycji są tekstem. Otwarte okno blokuje skróty gry w tle.</p><p class="m-p">Na tablecie Prowadzącego podpowiedź o oddaniu kontroli jest czerwona i podkreślona. Przy urwaniu słowa na Wyświetlaczu usuwa się do dwóch końcowych samogłosek przed kropką; granica słowa nie dostaje kropki. Limity to 17 znaków w rundach i 11 w finale, razem z kropką.</p><p class="m-p">Tablet Prowadzącego ponownie wczytuje logo przy wejściu w Podsumowanie ustawień. Jeśli wcześniej trwa edycja wybranego logo, do tego czasu pokazuje logo domyślne; bez blokady pokazuje logo z ustawień gry.</p>`,
+      </p><p class="m-p">Na tablecie Prowadzącego podpowiedź o oddaniu kontroli jest czerwona i podkreślona. Przy urwaniu słowa na Wyświetlaczu usuwa się do dwóch końcowych samogłosek przed kropką; granica słowa nie dostaje kropki. Limity to 17 znaków w rundach i 11 w finale, razem z kropką.</p><p class="m-p">Tablet Prowadzącego ponownie wczytuje logo przy wejściu w Podsumowanie ustawień. Jeśli wcześniej trwa edycja wybranego logo, do tego czasu pokazuje logo domyślne; bez blokady pokazuje logo z ustawień gry.</p>`,
       community: `<p class="m-p">
         Gry Społeczności to katalog gotowych gier stworzonych przez innych użytkowników
         i zweryfikowanych przez moderatorów. Możesz je przeglądać, dodawać do swojej biblioteki

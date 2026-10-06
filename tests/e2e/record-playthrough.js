@@ -2067,7 +2067,7 @@ async function main() {
     // zewnątrz przy każdym przebiegu. RPC nie ma żadnego GRANT/REVOKE w
     // migracji (2026-04-23_email_providers_limits.sql), więc jest wołalna
     // z tego samego, zwykłego klienta co restoreDemoGame().
-    {
+    if (scenariosToRun.some((scenario) => scenario.file.startsWith("08-"))) {
       const resetCtx = await browser.newContext({ baseURL: BASE_URL });
       const resetPage = await resetCtx.newPage();
       await loginAsTestUser(resetPage, resetCtx);

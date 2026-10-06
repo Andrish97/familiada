@@ -117,12 +117,16 @@ Wybierz źródło dźwięku: „Panel sterowania” albo „Wyświetlacz”. Dź
 
 **Uwaga:** Źródło „Wyświetlacz” wybierz, gdy dźwięk ma odtwarzać osobny telewizor lub inne osobne urządzenie na którym będzie otwarta karta urządzenia „Wyświetlacz”. Przy HDMI zwykle wygodniej pozostawić „Panel sterowania” i wybrać telewizor jako wyjście dźwięku w ustawieniach komputera. Po podłączeniu HDMI system często robi to automatycznie. Przy AirPlay przesyłasz obraz i dźwięk z Maca, iPhone’a lub iPada na Apple TV.
 
+**Skrót:** M wycisza lub przywraca dźwięk od razu, bez Entera.
+
 ### 2) Ustawienia
 
 **Prowadzący:** Tablet pokazuje logo wybrane w ustawieniach gry. Gdy wcześniej trwa edycja tego logo, pokazuje domyślne logo Familiady. Przy wejściu operatora w Podsumowanie ustawień pobiera wybrane logo ponownie; wcześniej pokazane logo domyślne zostaje wtedy zastąpione właściwym.
 
 
 Gdy urządzenia są połączone, przechodzisz do podsumowania ustawień. Wszystkie opcje (kolory, dźwięk, parametry gry) możesz wcześniej skonfigurować na stronie **Ustawień rozgrywki** — Panel sterowania wczyta je automatycznie.
+
+**Skróty:** W Podsumowaniu E zaznacza zmianę ustawień, a Enter ją otwiera. B i Enter wracają, gdy powrót jest dostępny.
 
 #### Nazwy drużyn
 
@@ -165,6 +169,8 @@ Pierwsze kliknięcie kafelka wymagającego potwierdzenia zaznacza go. Drugie zat
 
 **Wskazówka:** Zaznaczenie kafelka pozwala sprawdzić wybór przed wykonaniem czynności. Punkty i plansza zmieniają się dopiero po zatwierdzeniu. Jeśli panel czeka na dźwięk lub przejście, pozwól mu je dokończyć.
 
+**Ważne:** Litery i cyfry w aktywnym polu pozostają zwykłym tekstem. Skróty nie omijają blokad, dźwięków ani animacji i nie wykonują czynności w tle otwartego okna. Restart nie ma skrótu.
+
 ### 3) Rozpoczęcie gry
 
 Po sprawdzeniu Podsumowania wybierz `Gotowe — przejdź do rozgrywki`. Wyświetlacz aktywuje się i pokazuje nazwy drużyn, bez logo i planszy odpowiedzi. Przycisk do pojedynku jest już widoczny, ale jeszcze nie przyjmuje naciśnięć.
@@ -191,11 +197,17 @@ Zgodnie z regulaminem, jeśli pierwsza odpowiedź nie jest najwyżej punktowana,
 
 **Prowadzący:** Tytuł „RUNDA 1 — PRZYCISK” oznacza, że trwa pojedynek, także po przyjęciu zgłoszenia przez operatora. Pytanie i pełną treść odpowiedzi z punktami zobaczysz po odsłonięciu drugiej części. Zasłona zapobiega przypadkowemu odczytaniu pytania przez graczy przed jego zadaniem. Numer w tytule zmienia się wraz z rundą.
 
+**Skróty:** C i Enter zatwierdzają drużynę wskazaną przez Przycisk. W trybie fizycznego przycisku A/B zaznacza drużynę, a Enter zatwierdza.
+
 #### Oddanie pytania
 
 Zgodnie z ustaleniami rozgrywki, po uzyskaniu kontroli drużyna może też zdecydować, że **oddaje pytanie** przeciwnikom. Jest to ruch taktyczny: zamiast „dobić" pytanie, drużyna może przekazać szansę rywalom. Panel udostępnia tę opcję tylko w odpowiednim momencie i pilnuje, żeby nie dało się jej nadużywać.
 
 **Prowadzący:** Gdy można oddać kontrolę, w pierwszej części pojawia się czerwona, podkreślona podpowiedź. Ten styl dotyczy wyłącznie tabletu prowadzącego. Decyzję drużyny realizuje operator w Panelu sterowania.
+
+**Skrót:** P zaznacza oddanie kontroli, Enter je zatwierdza.
+
+**Prowadzący:** Podpowiedź o możliwości oddania kontroli jest czerwona i podkreślona. Powrót do pustego pytania oznaczonego jako Powtórzenie zachowuje znacznik. Wpisanie nowej odpowiedzi usuwa go automatycznie.
 
 #### Rozgrywka pytania: odsłanianie odpowiedzi i bank
 
@@ -205,6 +217,8 @@ Rozgrywka trwa do odsłonięcia wszystkich odpowiedzi albo trzech pudeł drużyn
 
 **Prowadzący:** „RUNDA 1 — ROZGRYWKA” oznacza grę drużyny po pojedynku. Pytanie jest już jawne w pierwszej części. W drugiej widzisz pełne odpowiedzi i punkty, także jeszcze zakryte na Wyświetlaczu. Wiersz „2) Rower (24)” oznacza drugą odpowiedź i 24 punkty. Zielony wiersz oznacza odpowiedź odsłoniętą publiczności. Prowadzący nie pokazuje banku, X ani wyników drużyn — sprawdzaj je na Wyświetlaczu lub w panelu.
 
+**Skróty:** 1–6 zaznacza odpowiedź, Enter ją odsłania.
+
 #### Pudła (X) i limit 3 sekund
 
 Błędna odpowiedź jest oznaczana symbolem **X** na tablicy. Trzy błędy oznaczają utratę kontroli i przejście do kradzieży przez przeciwników. System ma także mechanikę limitu czasu **3 sekund** na odpowiedź — przekroczenie limitu jest traktowane jak pudło (X).
@@ -212,6 +226,8 @@ Błędna odpowiedź jest oznaczana symbolem **X** na tablicy. Trzy błędy oznac
 **Po co odliczanie?**
 
 To jest „bat na tempo". Odliczanie pozwala operatorowi szybko zamknąć zawahanie bez dyskusji i utrzymać rytm rozgrywki.
+
+**Skróty:** X zaznacza pudło, T timer; Enter wykonuje zaznaczoną czynność.
 
 #### Kradzież banku (jedna odpowiedź)
 
@@ -240,6 +256,8 @@ Jeśli finał jest **włączony**, a warunek zakończenia rund został spełnion
 Jeśli pytania do rund się wyczerpią przed osiągnięciem progu punktów, rozgrywka przechodzi do zakończenia gry. Sam brak pytań nie kwalifikuje do finału. Finał wymaga osiągnięcia progu i włączenia go w ustawieniach.
 
 **Uwaga:** Dobierz liczbę pytań i próg punktów tak, aby nie wyczerpać pytań przed planowanym finałem. Samo włączenie finału nie gwarantuje jego rozpoczęcia.
+
+**Skrót:** N zaznacza aktualny przycisk dalszego przejścia, Enter go uruchamia.
 
 ### 5) Finał
 
@@ -281,6 +299,8 @@ Druga część pokazuje pięć pytań z numerami i statusem wpisu, np.:
 
 Na tym etapie prowadzący czyta pytania i śledzi, gdzie operator ma już wpis. Ekran pokazuje statusy, **nie treść właśnie wpisywanych odpowiedzi**. Treść wpisu jest dostępna przy późniejszym mapowaniu.
 
+**Skróty:** Ctrl+Enter (⌘+Enter na Macu) uruchamia lub zatrzymuje timer. ↑ / ↓ / Enter przechodzą tylko między pustymi polami; poprawienie uzupełnionego wymaga kliknięcia.
+
 #### Gracz 1 — dopasowanie i odsłanianie
 
 Po zakończeniu odpowiadania przejdź do odsłaniania. Dla każdego pytania porównaj wpis z listą punktowanych odpowiedzi i wybierz pasującą pozycję albo `Nie ma na liście (0 pkt)`. Wyświetlacz pokazuje wybraną odpowiedź, a pełny wpis pozostaje w panelu. Przy trafieniu odsłoń odpowiedź, a następnie punkty. Przy wpisanej błędnej odpowiedzi odsłoń tekst, a następnie zero. Brak odpowiedzi automatycznie pokazuje odpowiedź i zero. Dopasowanie samo nie nalicza punktów; suma zwiększa się przy odsłonięciu punktów.
@@ -307,6 +327,8 @@ Druga część zawiera:
 
 **Kolory w finale opisują dopasowanie, a nie etap animacji na Wyświetlaczu.** Zielone „z listy” nie oznacza samo w sobie, że publiczność już zobaczyła odpowiedź lub punkty. Rozróżniaj tekst wpisany przez operatora od wybranej odpowiedzi z bazy: mogą mieć inne brzmienie, np. wpis „na rowerze” dopasowany do „Rower (24)”.
 
+W dopasowaniu **1–6** wybiera odpowiedź z listy, **W** wpisaną odpowiedź, **O** brak odpowiedzi, a **R** powtórzenie. Zaznaczanie odbywa się od razu jednym kliknięciem lub skrótem. Pierwszy Enter odsłania odpowiedź, a następny punkty po zakończeniu przejścia. Brak odpowiedzi i powtórzenie automatycznie pokazują zero. **N i Enter** przechodzą do kolejnego pytania. Przy odsłanianiu myszą obowiązuje zaznaczenie i potwierdzenie drugim kliknięciem.
+
 #### Gracz 2 — przygotowanie i wpisywanie
 
 Jeżeli nie osiągnięto progu, po piątym pytaniu gracza 1 przejdź do przygotowania drugiego zawodnika. Tablet Prowadzącego jest czyszczony. Przypomnij zasady i możesz zaprezentować dźwięk powtórzenia.
@@ -317,11 +339,15 @@ Gdy gracz powtórzy odpowiedź pierwszego zawodnika, oznacz `Powtórzenie` i pop
 
 **Wskazówka:** Pytania można czytać w kolejnych obiegach do końca czasu. `Dalej` wypowiedziane przez zawodnika nie zamyka pytania na resztę rundy.
 
+**Skróty:** Ctrl+Enter (⌘+Enter na Macu) uruchamia lub zatrzymuje timer. ↑ / ↓ / Enter przechodzą tylko między pustymi polami; poprawienie uzupełnionego wymaga kliknięcia. Shift+Enter w pustym polu zaznacza lub zdejmuje Powtórzenie.
+
 #### Gracz 2 — dopasowanie i odsłanianie
 
 Po wpisywaniu dopasuj i odsłoń odpowiedzi drugiego gracza tak samo jak pierwszego. W panelu i na tablecie Prowadzącego „Gracz 1” wskazuje wcześniejszą wybraną odpowiedź, a „Wprowadzono” — obecny wpis operatora. Nie muszą mieć identycznego brzmienia. Powtórzenie nie daje punktów. Punkty obu graczy trafiają do tej samej sumy na górze Wyświetlacza.
 
 **Ważne:** Wyświetlacz mieści 17 znaków odpowiedzi w rundach i 11 w finale, razem ze spacjami. Dłuższy tekst jest skracany tylko na planszy; pełny pozostaje w panelu i na tablecie Prowadzącego. Kropka oznacza urwane słowo. Jeśli następny znak to spacja lub interpunkcja, kropka nie jest dodawana. Przy urwaniu słowa usuwa się dodatkowo do dwóch końcowych samogłosek przed kropką. Dotyczy to odpowiedzi polskich, angielskich i ukraińskich; kropka mieści się w limicie znaków.
+
+W dopasowaniu **1–6** wybiera odpowiedź z listy, **W** wpisaną odpowiedź, **O** brak odpowiedzi, a **R** powtórzenie. Zaznaczanie odbywa się od razu jednym kliknięciem lub skrótem. Pierwszy Enter odsłania odpowiedź, a następny punkty po zakończeniu przejścia. Brak odpowiedzi i powtórzenie automatycznie pokazują zero. **N i Enter** przechodzą do kolejnego pytania. Przy odsłanianiu myszą obowiązuje zaznaczenie i potwierdzenie drugim kliknięciem.
 
 #### Kiedy finał się kończy
 
@@ -339,29 +365,7 @@ Tablet Prowadzącego zostaje wyczyszczony po przejściu do zakończenia gry. Wyn
 
 Uruchamiasz przyciskiem ![](manual-assets/refresh.svg) (Zacznij od nowa). Potwierdzenie restartu wraca do przygotowania urządzeń, przerywa dźwięki i usuwa oczekujące działania poprzedniej rozgrywki.
 
-### Skróty klawiatury Panelu sterowania 2
-
-| Skrót | Czynność |
-|---|---|
-| 1–6, następnie Enter | Zaznacz i odsłoń odpowiedź w rundzie. |
-| C, następnie Enter | Zatwierdź drużynę wskazaną przez Przycisk. |
-| A/B, następnie Enter | Wybierz i zatwierdź drużynę w trybie fizycznego przycisku. |
-| X, następnie Enter | Zaznacz i wykonaj pudło. |
-| T, następnie Enter | Obsłuż timer. |
-| P, następnie Enter | Oddaj kontrolę. |
-| N, następnie Enter | Wykonaj aktualną czynność dalszego przejścia. |
-| B, następnie Enter | Wróć, gdy powrót jest dostępny. |
-| E, następnie Enter | Zmień ustawienia w Podsumowaniu. |
-| M | Wycisz lub przywróć dźwięk od razu, bez Entera. |
-| Ctrl+Enter / ⌘+Enter na Macu | Podczas wpisywania finału uruchom lub zatrzymaj timer. |
-| Shift+Enter | W pustym polu gracza 2 zaznacz lub zdejmij Powtórzenie. |
-| ↑ / ↓ / Enter | Podczas wpisywania wybierz poprzednie / następne puste pole. |
-
-W dopasowaniu **1–6** wybiera odpowiedź z listy, **W** wpisaną odpowiedź, **O** brak odpowiedzi, a **R** powtórzenie. Zaznaczanie odbywa się od razu jednym kliknięciem lub skrótem. Pierwszy Enter odsłania odpowiedź, a następny punkty po zakończeniu przejścia. Brak odpowiedzi i powtórzenie automatycznie pokazują zero. **N i Enter** przechodzą do kolejnego pytania. Przy odsłanianiu myszą obowiązuje zaznaczenie i potwierdzenie drugim kliknięciem.
-
-**Ważne:** Litery i cyfry w aktywnym polu pozostają zwykłym tekstem. Skróty nie omijają blokad, dźwięków ani animacji i nie wykonują czynności w tle otwartego okna. Restart nie ma skrótu.
-
-**Prowadzący:** Podpowiedź o możliwości oddania kontroli jest czerwona i podkreślona. Powrót do pustego pytania oznaczonego jako Powtórzenie zachowuje znacznik. Wpisanie nowej odpowiedzi usuwa go automatycznie.
+Restart nie ma skrótu klawiaturowego.
 
 ## Ustawienia rozgrywki
 

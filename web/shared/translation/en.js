@@ -2018,12 +2018,14 @@ const en = {
         Without it you may not hear signals that help keep the game pace.
       </p>
     
+      <p class="m-p">M toggles mute immediately, without Enter.</p>
       <h3 class="m-h2">2) Settings</h3>
 
       <p class="m-p">
         When devices are online, you move on to the settings summary. All options (colors, sound, game parameters) can be configured in advance on the <span class="m-code">Game Settings</span> page — the Control Panel will load them automatically.
       </p>
 
+      <p class="m-p">In the settings summary, E selects Edit settings and Enter opens it. B then Enter goes back when available.</p>
       <h3 class="m-h3">Team names</h3>
 
       <p class="m-p">
@@ -2112,6 +2114,7 @@ const en = {
         and the display shows which team is currently playing (team indicator).
       </p>
 
+      <p class="m-p">C then Enter confirms the team registered by the buzzer. With physical buzzers, A/B selects a team and Enter confirms.</p>
       <h3 class="m-h3">Giving up the question</h3>
     
       <p class="m-p">
@@ -2121,6 +2124,7 @@ const en = {
         The panel provides this option only at the right moment and ensures it cannot be abused.
       </p>
     
+      <p class="m-p">P selects passing control; Enter confirms.</p>
       <h3 class="m-h3">Playing the question: revealing answers and the bank</h3>
     
       <p class="m-p">
@@ -2136,6 +2140,7 @@ const en = {
         then the operator ends the stage and moves to the steal (when conditions are met).
       </p>
     
+      <p class="m-p">1–6 selects an answer; Enter reveals it.</p>
       <h3 class="m-h3">Misses (X) and the 3-second limit</h3>
     
       <p class="m-p">
@@ -2151,6 +2156,7 @@ const en = {
         without debate and keep the rhythm of the game.
       </div>
     
+      <p class="m-p">X selects a strike and T the timer; Enter performs the selected action.</p>
       <h3 class="m-h3">Stealing the bank (one answer)</h3>
     
       <p class="m-p">
@@ -2203,7 +2209,8 @@ const en = {
         or to the ending (if the final is disabled).
       </div>
     
-    <h3 class="m-h2">4) Final</h3>
+    <p class="m-p">N selects the current next-action button; Enter activates it.</p>
+      <h3 class="m-h2">4) Final</h3>
 
       <p class="m-p">
         The final is a separate game mode. Two contestants
@@ -2249,6 +2256,8 @@ const en = {
         and the host prepares the entry of the second contestant and reminds the final rules.
       </p>
       
+      <p class="m-p">In the final, Ctrl+Enter (⌘+Enter on Mac) starts or stops the timer. Each round requires starting the timer. Early stopping requires text in all five fields; Repeat does not fill a field. Enter and arrows move only between empty fields; click a completed field to edit it.</p>
+      <p class="m-p">When matching, 1–6 selects a list answer, W the written answer, and O no answer. Selection is immediate. Enter reveals the answer, then another Enter reveals points; no answer and repeat reveal zero automatically. N then Enter advances. Mouse reveals require two clicks. Letters and numbers remain text while editing. Dialogs block gameplay shortcuts in the background.</p>
       <h3 class="m-h3">Round 2 – second contestant (20 seconds) and repeats</h3>
       
       <p class="m-p">
@@ -2273,6 +2282,8 @@ const en = {
         The points of both contestants are summed.
       </p>
       
+      <p class="m-p">In the final, Ctrl+Enter (⌘+Enter on Mac) starts or stops the timer; Shift+Enter toggles Repeat in an empty player 2 field. Each round requires starting the timer. Early stopping requires text in all five fields; Repeat does not fill a field. Enter and arrows move only between empty fields; click a completed field to edit it.</p>
+      <p class="m-p">When matching, 1–6 selects a list answer, W the written answer, O no answer and R repeat. Selection is immediate. Enter reveals the answer, then another Enter reveals points; no answer and repeat reveal zero automatically. N then Enter advances. Mouse reveals require two clicks. Letters and numbers remain text while editing. Dialogs block gameplay shortcuts in the background.</p>
       <h3 class="m-h3">When the final ends</h3>
       
       <p class="m-p">
@@ -2285,7 +2296,7 @@ const en = {
         After the final the system shows the ending screen according to the game ending settings:
         <span class="m-strong">logo</span>, <span class="m-strong">points</span> or
         <span class="m-strong">prize amount</span>.
-      </p><h3 class="m-h3">Control panel 2 — keyboard</h3><p class="m-p">In rounds, 1–6 selects an answer and Enter reveals it. C then Enter confirms the buzzer; A/B then Enter selects a team with physical buzzers. X selects a strike, T the timer, P pass control, N the next action, B back and E edit settings; confirm with Enter. M toggles mute immediately. Restart has no shortcut.</p><p class="m-p">In the final, Ctrl+Enter (⌘+Enter on Mac) starts or stops the timer; Shift+Enter toggles Repeat in an empty player 2 field. Each round requires starting the timer. Early stopping requires text in all five fields; Repeat does not fill a field. Enter and arrows move only between empty fields; click a completed field to edit it.</p><p class="m-p">When matching, 1–6 selects a list answer, W the written answer, O no answer and R repeat. Selection is immediate. Enter reveals the answer, then another Enter reveals points; no answer and repeat reveal zero automatically. N then Enter advances. Mouse reveals require two clicks. Letters and numbers remain text while editing. Dialogs block gameplay shortcuts in the background.</p><p class="m-p">On the Host tablet, the pass-control hint is red and underlined. A word cut on the Display loses up to two trailing vowels before the dot; word boundaries receive no dot. Limits are 17 characters in rounds and 11 in the final, including the dot.</p><p class="m-p">The Host tablet reloads the selected logo when the operator enters the settings summary. If the selected logo was being edited earlier, the default logo stays until then; without a lock, the game’s selected logo is shown.</p>`,
+      </p><p class="m-p">On the Host tablet, the pass-control hint is red and underlined. A word cut on the Display loses up to two trailing vowels before the dot; word boundaries receive no dot. Limits are 17 characters in rounds and 11 in the final, including the dot.</p><p class="m-p">The Host tablet reloads the selected logo when the operator enters the settings summary. If the selected logo was being edited earlier, the default logo stays until then; without a lock, the game’s selected logo is shown.</p>`,
       community: `<p class="m-p">
         Community Games is a catalogue of ready-made games created by other users
         and verified by moderators. You can browse them, add them to your library

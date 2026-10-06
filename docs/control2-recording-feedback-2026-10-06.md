@@ -198,3 +198,19 @@ Pierwszy rzeczywisty przebieg produkcyjny [37497958845](https://github.com/Andri
 Ustalona logika Hosta (doprecyzowanie użytkownika): logo ustawione w grze jest pobierane także przed pierwszym stanem Control. Przy aktywnej edycji logo Host pokazuje domyślne; wejście w Podsumowanie ustawień wymusza ponowne pobranie. Nowe RPC host2_logo_get_public uwzględnia 25-sekundowy czas ważności blokady, weryfikuje klucz Hosta i właściciela logo, bez zmiany odczytu starego Wyświetlacza. Migracja 302 przeszła izolowany preflight oraz wdrożenie produkcyjne: [37500814515](https://github.com/Andrish97/familiada/actions/runs/37500814515).
 
 Dogrywka obu finałów [37501098511](https://github.com/Andrish97/familiada/actions/runs/37501098511): wcześniejsze zakończenie zaliczone; pełny finał wykrył zbyt wczesny wybór klawiszem 1 podczas zapisu poprawionego pola dopasowania. Obsługa klawiatury czeka teraz także na zapis wpisu i na zakończenie pojedynczego wyboru dopasowania; nadal nie kolejkuje działań za blokadą dźwięku.
+
+
+### Kontrola produkcyjna 37502623955
+
+Cztery z sześciu przypadków przeszły, w tym Host z blokadą logo i ponownym
+wczytaniem w Podsumowaniu. Dwa przypadki (fizyczny przycisk i pełny finał)
+zatrzymały się przy skrótach przed odblokowaniem UI po przejściu planszy.
+Test fizycznego przycisku miał domyślny limit 5 s; test finału naciskał
+cyfrę przed potwierdzeniem dostępności kafla. Testy czekają teraz na
+faktyczne odblokowanie (maksymalnie 22 s), bez kolejki akcji za muzyką.
+Wymagany jest ponowny przebieg obu przypadków.
+
+Na prośbę użytkownika opis skrótów w manualu PL/EN/UK i osobnym szkicu
+przeniesiono do odpowiednich sekcji rozgrywki; usunięto zbiorczą sekcję.
+Przygotowano też plan późniejszego sprzątania bazy w
+`docs/refaktor-struktury-repo.md`; żadnych obiektów bazy nie usunięto.

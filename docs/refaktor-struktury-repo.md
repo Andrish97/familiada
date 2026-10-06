@@ -161,3 +161,49 @@ Historyczne migracje SQL pozostają: nie są śmieciami i nie usuwamy ich tylko
 dlatego, że opisują dawną funkcję. Historyczne audyty i nagrania w `docs/`
 można zarchiwizować po oddzielnym przeglądzie, bez kasowania materiałów
 przekazanych przez użytkownika.
+
+## Baza danych po wyłączeniu starego zestawu — audyt 6 października 2026
+
+To plan późniejszego sprzątania, nie wykonana migracja. Audyt dotyczy kodu
+repozytorium i zapisanego schematu; przed usuwaniem trzeba ponownie sprawdzić
+zależności w aktualnej bazie produkcyjnej.
+
+| Element | Obecne użycie | Decyzja |
+| --- | --- | --- |
+| `device_state` | Snapshoty starego Display, Hosta i Buzzera; zestaw 2 korzysta z `game_state`. | Kandydat do usunięcia po wyłączeniu wszystkich starych urządzeń. |
+| `device_state_get`, `device_state_set_public` | Odczyt i zapis tych snapshotów przez stare urządzenia. | Usunąć razem ze starym mechanizmem snapshotów. |
+| `device_state_set_admin`, `ensure_device_state` | Brak wywołań w aktualnym frontendzie; ich definicje odwołują się do dawnej kolumny `kind`, podczas gdy tabela ma `device_type`. | Sprawdzić wywołania po stronie bazy i usunąć, jeśli nie ma innych klientów. |
+| Typ `device_kind` | W zapisanym schemacie występuje w sygnaturze starego `device_state_set_admin`. | Usunąć dopiero po sprawdzeniu i usunięciu wszystkich zależności. Nie mylić z potrzebnym `device_type`. |
+| `game_session_start`, `game_session_update`, `game_session_end` | Wywołuje je `control/js/sessionTracking.js`; nowy Control ma zapis statystyk po stronie bazy i `control2_session_ping`. | Wycofać stare funkcje zapisu dopiero po wyłączeniu Control1. Zachować historię statystyk. |
+
+**Zostają:** `game_sessions`, historyczne wpisy obu generacji, widok
+`game_sessions_effective`, funkcje odczytu statystyk i panel administracyjny.
+Oznaczenie dotychczasowych wpisów jako archiwalnych następuje przy właściwym
+przełączeniu, nie podczas równoległego działania zestawów.
+
+**Zostają również wspólne elementy:** gry, pytania, odpowiedzi, ustawienia
+i klucze urządzeń w `games`, obecność urządzeń i `device_ping`, kody
+podłączenia, udostępnianie urządzeń, blokady edycji, loga, konta i uprawnienia.
+`display_auth` i `display_logo_get_public` nadal są używane przez nowy
+Display. Nowy Host korzysta dodatkowo z `host2_logo_get_public`.
+Usuwanie starych stron nie uzasadnia usuwania tych funkcji ani danych.
+
+Bezpieczna kolejność:
+
+1. Przełączyć nawigację, kody podłączenia i linki na nowy zestaw; potwierdzić
+   działanie produkcyjne i zapis statystyk. Pozostawić okres na wygaszenie
+   otwartych starych kart oraz wcześniej udostępnionych adresów.
+2. Sprawdzić aktualne funkcje, triggery, publikacje Realtime, polityki RLS,
+   uprawnienia i zależności typów w produkcyjnej bazie. Wyszukiwanie w kodzie
+   samo nie dowodzi, że nie istnieje stary klient lub zewnętrzny konsument.
+3. Zrobić kopię schematu i danych `device_state` oraz zachować definicje
+   wycofywanych funkcji. Nie kasować historii `game_sessions`.
+4. Przygotować osobną migrację usuwającą wyłącznie potwierdzone pozostałości,
+   z jawnymi sygnaturami funkcji i bez `DROP ... CASCADE`. Najpierw funkcje
+   zależne, następnie tabela, na końcu nieużywany typ.
+5. Sprawdzić migrację i odtworzenie kopii, a po wdrożeniu przeprowadzić
+   produkcyjny przebieg nowego zestawu: podłączenie, powrót urządzenia,
+   rundę, finał i odczyt nowych oraz historycznych statystyk.
+
+Historycznych migracji tworzących stary mechanizm nie usuwać. Nie usuwać
+całej tabeli ani funkcji tylko dlatego, że ich nazwa nie zawiera `2`.

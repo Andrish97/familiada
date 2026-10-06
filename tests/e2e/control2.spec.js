@@ -1068,7 +1068,7 @@ test("control2: physicalBuzzer + noHostTablet — urządzenia pominięte, ręczn
     // tu tylko oba kafle drużyn są klikalne). Przyciski pokazują realną
     // nazwę drużyny (Alfa/Beta), nie kod "A"/"B".
     await expect(page.getByRole("button", { name: "Alfa" })).toBeVisible({ timeout: 10000 });
-    await expect(page.getByRole("button", { name: "Alfa" })).toBeEnabled();
+    await expect(page.getByRole("button", { name: "Alfa" })).toBeEnabled({ timeout: 22000 });
     await page.keyboard.press("a");
     await expect(page.getByRole("button", { name: "Zatwierdź: Alfa" })).toBeVisible();
     await page.keyboard.press("b");
@@ -1369,6 +1369,9 @@ test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśni�
       // Zgłoszone: wybór dopasowania w finale też idzie przez zaznacz ->
       // potwierdź (armableTile), jak reszta konsekwentnych kafli.
       await p1Inputs.first().evaluate(() => document.activeElement?.blur());
+      // Klawisz podczas przejścia planszy ma być ignorowany; poczekaj na
+      // faktyczne odblokowanie kafla, zamiast wyprzedzać dźwięk testem.
+      await expect(page.locator('[data-shortcut="1"]')).toBeEnabled({ timeout: 22000 });
       await page.keyboard.press("1");
       await expect(page.locator('[data-shortcut="1"]')).toHaveClass(/c2-tile-primary/);
       if (i === 0) {
