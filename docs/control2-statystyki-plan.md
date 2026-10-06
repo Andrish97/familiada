@@ -45,3 +45,18 @@ Sesje zaczęte przed instalacją statystyk mogą zawierać tylko obserwowany od 
 | Zakończenie bez finału | Jedna sesja zakończona, jedna runda 90:0, brak punktów finału, przyczyna `questions_exhausted`; runda naliczona tylko raz. |
 
 Dowody odczytano z artefaktu `production-statistics-records` w powyższym przebiegu: sześć plików `statistics-*.json`. Nie są to dane z atrapy ani z lokalnej bazy. Kod i baza starego Control nadal mogą działać równolegle; archiwizacja obecnych wpisów pozostaje odłożona do zakończenia migracji produktu.
+
+## Zachowane gry do ręcznego sprawdzenia
+
+Na prośbę użytkownika powtórzono dwa prawdziwe przypadki na koncie **test1@familiada.online** i pozostawiono gry oraz ich sesje w bazie. [Przebieg 37489529236](https://github.com/Andrish97/familiada/actions/runs/37489529236): 2/2 zaliczone, 4,2 minuty.
+
+| Gra | ID | Zapis |
+|---|---|---|
+| E2E-CONTROL2-FINALFULL-1791301296021 | `c0dd5c27-4961-431a-932a-2bec105376af` | Pełny finał, 135 pkt finału, 300:0 w rundach, 435:0 końcowo, nagroda 1 305. |
+| E2E-CONTROL2-ENDPOINTS-1791301486589 | `f0690caf-a871-4e0e-acaf-2cd17677e6c0` | Zakończenie bez finału, jedna runda, 90:0. |
+
+Kontrola widoczności na produkcji potwierdziła, że konto test1 jest wykluczone ze statystyk, dlatego standardowy `get_stats_detail` nie pokazuje jego rozgrywek. [Przebieg 37491323090](https://github.com/Andrish97/familiada/actions/runs/37491323090). Wykluczenie nie blokuje zapisywania danych i nie zostało automatycznie usunięte.
+
+Aby zobaczyć gry w standardowej historii administratora, w sekcji **Wykluczenia ze statystyk** usuń konto test1 z listy i ponownie otwórz Rozgrywki. Przywrócenie wykluczenia ponownie ukryje jego dane w zbiorczych statystykach; zapisane sesje pozostaną w bazie.
+
+Workflow testów otrzymał opcję `retain_statistics_games`, domyślnie wyłączoną. Przy jej świadomym włączeniu pozostają wyłącznie gry, dla których test odczytał rekordy statystyk; standardowe przebiegi nadal sprzątają swoje gry.
