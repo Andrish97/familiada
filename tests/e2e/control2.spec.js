@@ -493,6 +493,12 @@ async function readControl2Sessions(page, gameId) {
   }, gameId);
 }
 
+async function attachStatistics(testInfo, label, rows) {
+  await testInfo.attach(`statistics-${label}.json`, {
+    body: Buffer.from(JSON.stringify(rows, null, 2)), contentType: "application/json",
+  });
+}
+
 function trackErrors(p, label, bucket) {
   p.on("pageerror", (err) => bucket.push(`${label}: ${err.message}`));
 }
@@ -670,6 +676,7 @@ test("control2: pełna runda przez 4 urządzenia + wznowienie Control po przeła
     expect(afterReload).toHaveLength(1);
     expect(afterReload[0].id).toBe(beforeReload[0].id);
     expect(afterReload[0].rounds_played).toBe(1);
+    await attachStatistics(testInfo, "reload", afterReload);
 
     expect(errors, "żadne z 4 urządzeń nie powinno rzucić błędu JS: " + errors.join(" | ")).toEqual([]);
   } finally {
@@ -909,6 +916,7 @@ test("control2: próg w rundzie -> finał, wczesne zakończenie po 4/5 pytaniach
     expect(earlyFinalSessions[0].stats_detail.prize).toBe(26500);
     expect(earlyFinalSessions[0].stats_detail.final.mapping1.filter(row => row.revealedPoints)).toHaveLength(4);
     expect(earlyFinalSessions[0].stats_detail.final.mapping2.filter(row => row.revealedPoints)).toHaveLength(0);
+    await attachStatistics(testInfo, "early-final", earlyFinalSessions);
     await expect.poll(async () => (await getDisplayCalls(displayPage, "api.win.set")).at(-1)?.args[0], { timeout: 30000 }).toBe(26500);
     const finishBtn = page.getByRole("button", { name: "Wróć do moich gier" });
     await expect(finishBtn).toBeVisible({ timeout: 10000 });
@@ -1069,6 +1077,7 @@ test("control2: \"Zacznij od nowa\" w trakcie gry wraca do D0", async ({ page, b
     const newSessions = await readControl2Sessions(page, game.id);
     expect(newSessions[1].id).not.toBe(restartedSessions[0].id);
     expect(newSessions[1].ended_at).toBeNull();
+    await attachStatistics(testInfo, "restart", newSessions);
   } finally {
     for (const ctx of contexts) await ctx.close().catch(() => {});
     await deleteGame(page, game.id);
@@ -1432,6 +1441,7 @@ test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśni�
     expect(finalSessions[0].stats_detail.final.mapping2).toHaveLength(5);
     expect(finalSessions[0].stats_detail.end_reason).toBe("final_complete");
     expect(finalSessions[0].stats_detail.prize).toBe(1305);
+    await attachStatistics(testInfo, "full-final", finalSessions);
     await expect.poll(async () => {
       const calls = await getDisplayCalls(displayPage, "api.indicator.set");
       return calls.at(-1)?.args[0] === "ON_A";
@@ -2366,6 +2376,16 @@ test("control2: zerwanie połączenia wszystkich trzech urządzeń naraz i ponow
     await revealAnswer(page, 1);
     await expect(page.getByText("Bank: 40")).toBeVisible({ timeout: 10000 });
 
+    await expect.poll(async () => {
+      const sessions = await readControl2Sessions(page, game.id);
+      return (sessions[0]?.stats_detail.events || []).map(event => event.kind);
+    }).toEqual(expect.arrayContaining(["disconnect", "reconnect"]));
+    const reconnectSessions = await readControl2Sessions(page, game.id);
+    expect(reconnectSessions).toHaveLength(1);
+    expect(reconnectSessions[0].rounds_played).toBe(1);
+    expect(reconnectSessions[0].ended_at).toBeNull();
+    await attachStatistics(testInfo, "reconnect", reconnectSessions);
+
     expect(errors, "żadne z urządzeń (stare ani świeżo podłączone) nie powinno rzucić błędu JS: " + errors.join(" | ")).toEqual([]);
   } finally {
     for (const ctx of contexts) await ctx.close().catch(() => {});
@@ -2606,6 +2626,7 @@ test("control2: koniec gry bez finału w trybie \"punkty\" — Wyświetlacz poka
     expect(completedSessions[0].ended_at).toBeTruthy();
     expect(completedSessions[0].stats_detail.end_reason).toBe("questions_exhausted");
     expect(completedSessions[0].stats_detail.rounds["1"].awarded_a).toBe(90);
+    await attachStatistics(testInfo, "no-final", completedSessions);
 
     // Outro does not repeat the result animation.
     expect(await getDisplayCalls(displayPage, "api.win.set")).toEqual([]);
