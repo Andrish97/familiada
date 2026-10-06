@@ -1,13 +1,15 @@
 \set ON_ERROR_STOP on
-CREATE ROLE anon;
-CREATE ROLE authenticated;
+DO $$ BEGIN
+ IF NOT EXISTS(SELECT FROM pg_roles WHERE rolname='anon') THEN CREATE ROLE anon; END IF;
+ IF NOT EXISTS(SELECT FROM pg_roles WHERE rolname='authenticated') THEN CREATE ROLE authenticated; END IF;
+END $$;
 CREATE SCHEMA auth;
 CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql AS $$ SELECT nullif(current_setting('test.uid',true),'')::uuid $$;
-CREATE TABLE public.games(id uuid PRIMARY KEY, owner_id uuid, share_key_display text);
-CREATE TABLE public.game_state(game_id uuid PRIMARY KEY REFERENCES games(id), rev bigint, step text, phase text, sound_cue_key text);
+CREATE TABLE public.games(id uuid PRIMARY KEY, owner_id uuid, share_key_display text, share_key_buzzer text);
+CREATE TABLE public.game_state(game_id uuid PRIMARY KEY REFERENCES games(id), rev bigint, step text, phase text, sound_cue_key text, sound_cue_seq bigint DEFAULT 0, detail jsonb DEFAULT '{}');
 \ir ../../supabase/migrations/2026-10-06_305_display_render_completion.sql
-INSERT INTO games VALUES('00000000-0000-0000-0000-000000000001','00000000-0000-0000-0000-000000000002','display-key');
-INSERT INTO game_state VALUES('00000000-0000-0000-0000-000000000001',5,'f_p1_map_q1',NULL,'answer_correct');
+INSERT INTO games VALUES('00000000-0000-0000-0000-000000000001','00000000-0000-0000-0000-000000000002','display-key','buzzer-key');
+INSERT INTO game_state VALUES('00000000-0000-0000-0000-000000000001',5,'f_p1_map_q1',NULL,'answer_correct',1,'{}');
 DO $$ BEGIN
  BEGIN
   UPDATE game_state SET step='f_end',rev=6;
