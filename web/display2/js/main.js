@@ -6,16 +6,16 @@
 // (device_ping) i walidacja klucza (display_auth) to te same, generyczne,
 // niezwiązane z komendami RPC co dziś — reużyte bez zmian.
 
-import { initFullscreenButton } from "../../shared/js/display/fullscreen.js?v=v2026-10-06T20065";
-import { initI18n, setUiLang } from "../../shared/translation/translation.js?v=v2026-10-06T20065";
-import { startKeepAlive } from "../../shared/js/core/keep-alive.js?v=v2026-10-06T20065";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-06T20065";
-import { createScene } from "./scene.js?v=v2026-10-06T20065";
-import { createQRController } from "./qr.js?v=v2026-10-06T20065";
-import { createSubscription } from "../../shared/js/core/game-state-subscribe.js?v=v2026-10-06T20065";
-import { createRenderer } from "./render.js?v=v2026-10-06T20065";
-import { createDisplaySoundReactor } from "./soundReactor.js?v=v2026-10-06T20065";
-import { loadSfxManifest, initSfx, setCurrentGameId, applySfxGameSettings, unlockAudio, isAudioUnlocked, getSfxDuration } from "../../shared/js/core/sfx.js?v=v2026-10-06T20065";
+import { initFullscreenButton } from "../../shared/js/display/fullscreen.js?v=v2026-10-06T20080";
+import { initI18n, setUiLang } from "../../shared/translation/translation.js?v=v2026-10-06T20080";
+import { startKeepAlive } from "../../shared/js/core/keep-alive.js?v=v2026-10-06T20080";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-06T20080";
+import { createScene } from "./scene.js?v=v2026-10-06T20080";
+import { createQRController } from "./qr.js?v=v2026-10-06T20080";
+import { createSubscription } from "../../shared/js/core/game-state-subscribe.js?v=v2026-10-06T20080";
+import { createRenderer } from "./render.js?v=v2026-10-06T20080";
+import { createDisplaySoundReactor } from "./soundReactor.js?v=v2026-10-06T20080";
+import { loadSfxManifest, initSfx, setCurrentGameId, applySfxGameSettings, unlockAudio, isAudioUnlocked, getSfxDuration } from "../../shared/js/core/sfx.js?v=v2026-10-06T20080";
 
 startKeepAlive();
 
