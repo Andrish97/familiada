@@ -397,7 +397,11 @@ export function createRenderer({ scene, qr, getSfxDuration }) {
     // odsłonięcia (odpowiedzi/punkty rund lub finału) animują się dokładnie
     // tyle, ile trwa TEN dźwięk (answer_correct/answer_wrong/reveal, zależnie
     // od kontekstu), zamiast sztywnej stałej ANSWER_ANIM.
-    const answerAnimMs = await timing.dur(nextRow.sound_cue_key);
+    // Reconnect/polling may combine the last score and Finish final in one
+    // received row. Do not replay the old score using the final-theme length
+    // before starting the result transition for the current sound.
+    const closingFinal = nextRow.step === "f_end" && prevRow.step !== "f_end";
+    const answerAnimMs = closingFinal ? 0 : await timing.dur(nextRow.sound_cue_key);
     for (const ev of events) {
       switch (ev.kind) {
         case "SNAPSHOT_RENDER":

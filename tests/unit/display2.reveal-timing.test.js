@@ -55,3 +55,26 @@ test("automatic final zero waits for the answer without doubling the sound durat
   assert.equal(answer.args[2].animIn.ms + points.args[2].animIn.ms, 1000);
   assert.equal(calls.find((call) => call.name === "final.setSumaFor").args[2].animIn.ms, points.args[2].animIn.ms);
 });
+
+
+test("coalesced last score and Finish final do not replay points to final-theme duration", async () => {
+  const { renderer, calls } = setup();
+  const state = makeDefaultState("coalesced-final");
+  state.step = "f_p1_map_q1";
+  state.topCard = "final";
+  state.final.winnerTeam = "A";
+  state.final.runtime.map1[0] = { outText: "Mleko", pts: 36, revealedAnswer: true, revealedPoints: false };
+  const before = row(state);
+  state.final.runtime.map1[0].revealedPoints = true;
+  state.final.runtime.sum = 36;
+  state.final.runtime.reached200 = true;
+  state.step = "f_end";
+  const after = row(state);
+  after.sound_cue_key = "final_theme";
+  await renderer.renderDiff(before, after);
+  assert.equal(calls.find(c => c.name === "final.setA").args[2].animIn.ms, 0);
+  assert.equal(calls.find(c => c.name === "big.animOut").args[0].ms, 500);
+  const result = calls.find(c => c.name === "logo.show" || c.name === "win.set");
+  assert.ok(result);
+  assert.equal(result.name === "logo.show" ? result.args[0].ms : result.args[1].animIn.ms, 500);
+});

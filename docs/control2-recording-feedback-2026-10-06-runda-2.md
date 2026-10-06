@@ -67,3 +67,10 @@ z przełączeniem języka.
 Weryfikacja lokalna: 24 testy dotyczące odsłaniania, intro/przejść, Hosta,
 podpowiedzi i dekodowanego pomiaru czasu; bez pełnego zestawu testów.
 Statusy na liście pozostają otwarte do weryfikacji produkcyjnej.
+
+Dodatkowo potwierdzono błąd 05 testem regresji: jeśli ostatnie punkty i
+„Zakończ finał” dotrą w jednym odczycie, stare odsłonięcie korzystało z
+nowego dźwięku `final_theme` (około 4,5 s). Teraz zaległe punkty są uzupełniane
+bez animacji, a animowane jest bieżące przejście do wyniku. Nie opóźnia go
+ponowne odtwarzanie zaległej zmiany. Test lokalny odtwarza dokładnie ten
+przypadek. Łącznie 25 wybranych testów lokalnych.
