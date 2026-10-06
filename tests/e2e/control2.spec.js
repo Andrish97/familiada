@@ -1982,6 +1982,8 @@ test("control2: zmiana języka w Control propaguje się do Hosta — tytuł fazy
     await page.getByRole("button", { name: "Rozpocznij rundę" }).click();
 
     await expect(hostPage.locator("#paperText1")).toContainText("PRZYCISK", { timeout: 10000 });
+    await expect(hostPage.locator("#p2Hint")).toContainText("zasłonić");
+    await expect(hostPage.locator("#cover2Swipe")).toContainText("odsłonić");
 
     await page.locator(".lang-btn").click();
     // Zmiana języka leci przez window "i18n:lang" -> store.commit() poza
@@ -1991,6 +1993,11 @@ test("control2: zmiana języka w Control propaguje się do Hosta — tytuł fazy
 
     await expect(hostPage.locator("#paperText1")).toContainText("BUZZER", { timeout: 10000 });
     await expect(hostPage.locator("#paperText1")).not.toContainText("PRZYCISK");
+    await expect(hostPage.locator("#p2Hint")).toContainText("cover");
+    await page.locator(".lang-btn").click();
+    await clickConfirmed(page.locator('.lang-option[data-lang="pl"]'));
+    await expect(hostPage.locator("#p2Hint")).toContainText("zasłonić");
+    await expect(hostPage.locator("#cover2Swipe")).toContainText("odsłonić");
   } finally {
     for (const ctx of contexts) await ctx.close().catch(() => {});
     await deleteGame(page, game.id);
