@@ -15,9 +15,9 @@ export function isManualButton(text, lang, {hasIcon=false, context=''}={}) {
 
 export function decorateManualControls(root, lang) {
   // Older sections sometimes mark a button reference as bold text.
-  for (const element of root.querySelectorAll('.m-doc .m-strong')) {
+  for (const element of root.querySelectorAll('.m-doc .m-strong, .m-doc b, .m-doc strong')) {
     const context=element.closest('p,li')?.textContent||'';
-    if (/przycisk|button|кноп|kliknij|naciśnij|click|press|натис|відкрий|open/i.test(context)
+    if (/przycisk|\bbuttons?\b|кноп|kliknij|naciśnij|\bclick\b|\bpress\b|натис|відкрий|\bopen\b/i.test(context)
         && isManualButton(element.textContent,lang,{context})) {
       element.classList.remove('m-strong');
       element.classList.add('m-code');
