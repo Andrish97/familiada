@@ -325,23 +325,24 @@ async function main() {
   function waitingForDisplay() {
     return !/^(devices_|setup_)/.test(store.state.step) && displayCompletion.pending;
   }
+  let completionUIReady = false;
   let completionReadPending = false;
   async function refreshDisplayCompletion() {
-    if (completionReadPending || !waitingForDisplay()) return;
+    if (!completionUIReady || completionReadPending || !waitingForDisplay()) return;
     completionReadPending = true;
     try {
       const { data, error } = await sb().from("game_state_display_completion").select("rendered_rev").eq("game_id", gameId).maybeSingle();
       if (!error && data && displayCompletion.acknowledge(data.rendered_rev)) {
         renderCurrent();
       }
-    } finally { completionReadPending = false; }
+    } catch { /* Keep waiting; the next poll retries. */ } finally { completionReadPending = false; }
   }
   setInterval(() => { void refreshDisplayCompletion(); }, 500);
   function soundBusy() { return isAnySfxPlaying(); }
   let lastSoundBusy = false;
   setInterval(() => {
     const current = soundBusy();
-    if (current !== lastSoundBusy) { lastSoundBusy = current; renderCurrent(); }
+    if (current !== lastSoundBusy) { lastSoundBusy = current; if (completionUIReady) renderCurrent(); }
   }, 125);
   function busy() { return soundBusy() || committing || lockConfirmPending || waitingForDisplay() || Date.now() < lockedUntil || missingDevices(store.state, presenceFlags).length > 0; }
 
@@ -1204,6 +1205,7 @@ async function main() {
   btnStartOver?.addEventListener("click", () => { handle("game.restart"); });
 
   store.subscribe(renderCurrent);
+  completionUIReady = true;
   renderCurrent();
 
   // TYMCZASOWA diagnostyka (do usunięcia po znalezieniu przyczyny testów
