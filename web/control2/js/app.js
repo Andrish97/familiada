@@ -558,7 +558,7 @@ async function main() {
   const scheduleTimer3Watch = makeTimerWatch(() => store.state.rounds?.timer3, "EXPIRE_TIMER3");
 
   function renderCtx() {
-    return { urls, presenceFlags, connectCodes, shareBadges, busy: (committing && !typingCommit) || lockConfirmPending || Date.now() < lockedUntil || missingDevices(store.state, presenceFlags).length > 0, devicesBlocked: missingDevices(store.state, presenceFlags).length > 0 };
+    return { urls, presenceFlags, connectCodes, shareBadges, typingPending:typingCommit, busy: (committing && !typingCommit) || lockConfirmPending || Date.now() < lockedUntil || missingDevices(store.state, presenceFlags).length > 0, devicesBlocked: missingDevices(store.state, presenceFlags).length > 0 };
   }
 
   function renderCurrent() {
@@ -874,6 +874,7 @@ async function main() {
       if (gameAction && typingCommit && payload?.type !== "SET_ENTRY_TEXT") await _dispatchGatedQueue;
       if (gameAction && busy() && payload?.type !== "SET_ENTRY_TEXT") return;
       if (gameAction && missingDevices(store.state, presenceFlags).length) return;
+      if (action === "ui.flushTyping") { await _dispatchGatedQueue; return; }
       if (action === "ui.rerender") {
         // Czysto lokalna zmiana UI (np. zaznaczenie drużyny w trybie
         // physicalBuzzer, przed potwierdzeniem) — bez zapisu do game_state.

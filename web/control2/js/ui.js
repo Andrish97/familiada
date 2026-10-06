@@ -57,6 +57,8 @@ export function createUI({ root, emit }) {
   // nie ma drugiego kliknięcia.
   let armedKey = null;
   let currentState = null;
+  let typingPending = false;
+  let pendingMappingChoice = null;
   let keyboardTarget = null;
   const keyboardActions = new Map();
   function bindShortcut(el, key, run, select) {
@@ -72,11 +74,19 @@ export function createUI({ root, emit }) {
   document.addEventListener("pointerdown", (event) => {
     if (root.contains(event.target)) keyboardTarget = null;
   });
-  document.addEventListener("keydown", (event) => {
+  document.addEventListener("keydown", async (event) => {
     if (event.defaultPrevented || event.repeat || event.isComposing || event.ctrlKey || event.metaKey || event.altKey || event.shiftKey || !shortcutsAllowed()) return;
     if (event.target.closest?.("input, textarea, select, [contenteditable='true']")) return;
     const key = event.code.startsWith("Key") ? event.code.slice(3).toLowerCase() : event.code.startsWith("Digit") ? event.code.slice(5) : event.key;
     if (key === "m") { event.preventDefault(); emit("settings.toggleSoundMuted"); return; }
+    const stepBefore = currentState?.step;
+    if (typingPending || pendingMappingChoice) {
+      if (key !== "Enter" && !keyboardActions.has(key)) return;
+      event.preventDefault();
+      if (typingPending) await emit("ui.flushTyping");
+      if (pendingMappingChoice) await pendingMappingChoice;
+      if (currentState?.step !== stepBefore || !shortcutsAllowed()) return;
+    }
     if (key === "Enter") {
       const mapping = /^f_p[12]_map_q[1-5]$/.test(currentState?.step || "");
       const mouseSelection = armedKey?.startsWith("ans:") ? armedKey.slice(4) : armedKey === "acceptBuzz" ? "c" : armedKey === "pass" ? "p" : armedKey === "x" ? "x" : armedKey?.startsWith("timer:") ? "t" : null;
@@ -90,8 +100,16 @@ export function createUI({ root, emit }) {
     const selected = keyboardActions.get(key);
     if (!selected || selected.el.disabled || boardBusy()) return;
     event.preventDefault(); keyboardTarget = key;
-    if (selected.select) { selected.select(); if (/^f_p[12]_map_q/.test(currentState?.step || "")) keyboardTarget = null; }
-    else selected.el.focus();
+    if (selected.select) {
+      const mapping = /^f_p[12]_map_q/.test(currentState?.step || "");
+      const work = selected.select();
+      if (mapping) {
+        keyboardTarget = null;
+        pendingMappingChoice = Promise.resolve(work);
+        const choice = pendingMappingChoice;
+        try { await choice; } finally { if (pendingMappingChoice === choice) pendingMappingChoice = null; }
+      }
+    } else selected.el.focus();
   });
 
   // Blokada operatora względem dźwięku/animacji (odsłanianie POJEDYNCZYCH
@@ -1750,6 +1768,7 @@ export function createUI({ root, emit }) {
     currentState = state;
     keyboardActions.clear();
     busy = !!ctx.busy;
+    typingPending = !!ctx.typingPending;
     devicesBlocked = !!ctx.devicesBlocked;
     // Każdy renderXxx() woła clear() (root.innerHTML="") i buduje CAŁE #app
     // od zera — .c2-scroll-area dostaje więc świeży element przy KAŻDYM
