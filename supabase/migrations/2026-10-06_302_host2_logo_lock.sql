@@ -11,6 +11,7 @@ BEGIN
   SELECT * INTO g FROM public.games WHERE id = p_game_id;
   IF NOT FOUND OR p_key IS NULL OR p_key = '' OR g.share_key_host IS DISTINCT FROM p_key THEN RETURN NULL; END IF;
   logo_id := nullif(g.settings->'display'->>'logoId', '')::uuid;
+  IF logo_id IS NOT NULL AND NOT EXISTS(SELECT 1 FROM public.user_logos l WHERE l.id = logo_id AND l.user_id = g.owner_id) THEN logo_id := NULL; END IF;
   SELECT EXISTS(SELECT 1 FROM public.edit_locks l WHERE l.resource_type = 'logo' AND l.resource_id = logo_id
     AND l.heartbeat_at > now() - interval '25 seconds') INTO busy;
   IF NOT busy AND logo_id IS NOT NULL THEN

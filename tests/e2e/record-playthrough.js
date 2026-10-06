@@ -153,7 +153,7 @@ async function deleteGame(page, gameId) {
 
 function blankGlyphPayload() {
   return {
-    layers: [{ color: "main", rows: Array.from({ length: 10 }, () => " ".repeat(30)) }],
+    layers: [{ color: "main", rows: Array.from({ length: 10 }, (_, i) => i === 4 ? "FAMILIADA".padStart(19).padEnd(30) : " ".repeat(30)) }],
     source: { mode: "TEXT" },
   };
 }
@@ -1287,7 +1287,7 @@ async function scenarioFinalFull(pages, { game }) {
   }
   // Wpisywanie powyżej już zjadło kilka sekund PO starcie zegarka -- reszta
   // to tylko dociągnięcie do naturalnego wygaśnięcia (15s), z zapasem.
-  await control.waitForTimeout(12_000);
+  await expect(control.getByRole("button", { name: "Czas wykorzystany" })).toBeVisible({ timeout:20000 });
 
   await clickPaced(control.getByRole("button", { name: "Dalej" }));
   for (let i = 0; i < 5; i++) {
@@ -1406,8 +1406,8 @@ async function scenarioFinalEarlyExit(pages, { game }) {
   await host.waitForTimeout(1500);
 
   // Tylko JEDNA odpowiedź — reszta pól gracza 1 zostaje pusta, bo i tak
-  // nigdy do nich nie dojdziemy. Zegarek pomijamy całkowicie (opcjonalny —
-  // "Dalej" działa niezależnie od tego, czy w ogóle był uruchomiony).
+  // nigdy do nich nie dojdziemy. Timer jest obowiązkowy; puste pola
+  // uniemożliwiają wcześniejszy stop, więc czekamy na koniec czasu.
   const p1Inputs = control.locator("#app input[type=text]");
   await p1Inputs.nth(0).focus();
   await control.keyboard.press("Control+Enter");
@@ -1736,7 +1736,7 @@ async function scenarioShareDeviceEmail(pages, { browser }) {
 }
 
 async function scenarioLogoLock(pages, { setupPage, logoId, logoLockTabId }) {
-  const { control, buzzer } = pages;
+  const { control, buzzer, host } = pages;
 
   // Okno Control zostało otwarte (przez openTiledDevices, PRZED startem
   // nagrania) z logiem już zablokowanym — overlay jest więc widoczny od
@@ -1752,6 +1752,10 @@ async function scenarioLogoLock(pages, { setupPage, logoId, logoLockTabId }) {
   // wyrenderowanie kroku "Urządzenia") bez żadnej ręcznej interwencji.
   await control.waitForSelector("#resourceLockGuard", { state: "hidden", timeout: 20000 });
   await expect(control.locator(".stepTitle")).toHaveText("Urządzenia", { timeout: 15000 });
+  await expect.poll(() => host.locator("#cover2Logo canvas").evaluateAll(canvases => canvases.some(canvas => {
+    const pixels = canvas.getContext("2d").getImageData(0,0,canvas.width,canvas.height).data;
+    return pixels.some((value,idx) => idx % 4 === 3 && value > 0);
+  })), {timeout:15000}).toBe(true);
   await control.waitForTimeout(1000);
 
   // Krótka runda — dowód, że po odzyskaniu Control działa normalnie, nie

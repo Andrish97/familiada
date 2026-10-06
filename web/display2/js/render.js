@@ -113,7 +113,7 @@ export function createRenderer({ scene, qr, getSfxDuration }) {
   }
 
   function paintTotals(row) {
-    if (row.step === "r_intro") { api.small.leftDigits(""); api.small.rightDigits(""); return; }
+    if (row.step === "r_intro" || (row.step === "r_roundStart" && !row.detail?.rounds?.question)) { api.small.leftDigits(""); api.small.rightDigits(""); return; }
     const totals = row.detail?.rounds?.totals || { A: 0, B: 0 };
     if (row.top_card === "final" && row.detail?.final?.winnerTeam && row.step !== "f_start") {
       const winner = row.detail.final.winnerTeam;

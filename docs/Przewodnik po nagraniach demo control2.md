@@ -244,3 +244,11 @@ Krótki, pokazowy scenariusz (jedna odpowiedź) — sedno to mechanizm ręcznego
 - Po 3. rundzie wynik musi pokazywać dokładnie "Alfa: 300".
 - W rundzie 4, TUŻ przed kliknięciem "Zakończ rundę", bank na ekranie pokazuje pełne 100 — to jest wartość PRZED przemnożeniem.
 - Po "Zakończ rundę" w rundzie 4 wynik MUSI pokazać dokładnie "Alfa: 500", nigdy "Alfa: 400" — to jest dokładnie ten liczbowy dowód, że mnożnik rundy 4 (×2) faktycznie działa, nie tylko wyświetla się w ustawieniach.
+
+## Następny komplet po uwagach z 6 października
+
+Domyślny przebieg skrócono do sześciu filmów: **01, 03, 04, 05, 06 i 07**. Stary film 02 powtarza dojście do finału pokazane w 04/05; 08 (mail), 09 (fizyczny przycisk) i 10 (mnożnik) można nadal uruchomić osobno. Dotychczasowe filmy w galerii pozostają wcześniejszym kompletem do czasu pobrania nowych — aktualizacja skryptu nie oznacza, że nagrania już powstały.
+
+W nowym 04 zwróć uwagę na wybór dopasowania klawiszami **1–6/W/O**, kolejne **Enter** odsłaniające odpowiedź i punkty oraz **N, Enter** przechodzące dalej. Drugi gracz pokazuje obsługę myszą, powrót do Powtórzenia, wpisanie tekstu usuwające znacznik i ponowne zaznaczenie po wyczyszczeniu pola. Pola i przyciski powinny pozostawać stabilne podczas pisania.
+
+Nowy 05 wymaga uruchomienia timera mimo jednej wpisanej odpowiedzi. Pozostałe puste pola uniemożliwiają ręczny stop; skrypt czeka na naturalny koniec czasu. Osiągnięty próg nadal wymaga ręcznego Zakończ finał. Zatwierdzenie drużyny ma krótsze pauzy demonstracyjne, a działania nadal czekają na rzeczywistą dostępność przycisków.

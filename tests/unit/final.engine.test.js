@@ -452,3 +452,18 @@ test("puste pole dopuszcza tylko brak lub powtórzenie; tekst blokuje oba", asyn
   await dispatch({ type: "RESOLVE_MAPPING", round: 2, idx: 0, kind: "SKIP", pts: 0, outText: "" });
   assert.equal(store.state.final.runtime.map2[0].kind, "SKIP");
 });
+
+test("a repeat marker does not permit stopping player 2 early while its field is empty", async () => {
+  const { store, dispatch } = makeEngine();
+  await dispatch({type:"START_FINAL"});
+  store.state.step = "f_p2_entry";
+  for (let idx = 1; idx < 5; idx++) await dispatch({type:"SET_ENTRY_TEXT",round:2,idx,text:"Answer"});
+  await dispatch({type:"SET_REPEAT",round:2,idx:0,repeat:true});
+  await dispatch({type:"START_TIMER",phase:"P2"});
+  assert.equal(await dispatch({type:"EXPIRE_TIMER"}), null);
+  assert.equal(store.state.final.runtime.timer.running,true);
+  await dispatch({type:"SET_ENTRY_TEXT",round:2,idx:0,text:"Different answer"});
+  await dispatch({type:"EXPIRE_TIMER"});
+  assert.equal(store.state.final.runtime.timer.running,false);
+  assert.equal(store.state.final.runtime.p2[0].repeat,false);
+});

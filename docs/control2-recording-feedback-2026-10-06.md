@@ -12,8 +12,8 @@
 
 ### 02. Podpowiedź o oddaniu kontroli
 
-- [ ] Informację o możliwości oddania kontroli wyświetlać na czerwono i podkreśloną.
-- [ ] Uzupełnić opis tabletu Prowadzącego w manualu MD i HTML: znaczenie i wygląd tej podpowiedzi. Sprawdzić również jej obecność w Panelu sterowania.
+- [ ] Informację o możliwości oddania kontroli wyświetlać na czerwono i podkreśloną **wyłącznie na tablecie Prowadzącego**. Podpowiedź w Control zachowuje zwykły styl.
+- [ ] Uzupełnić opis tabletu Prowadzącego w manualu MD i HTML: znaczenie i wygląd tej podpowiedzi. Styl czerwony i podkreślenie nie dotyczą Panelu sterowania.
 - Podpowiedź pozostaje w istniejącym miejscu; bez nowego banera.
 
 ### 03. Blokada rundy przy przejściu do zakończenia gry
@@ -188,3 +188,9 @@ Domyślnie uruchamiane są 01, 03, 04, 05, 06 i 07. Film 02 powtarza drogę do f
 - 07: blokada logo, zwolnienie i sprawdzenie powrotu logo na tablecie Prowadzącego.
 
 Test literalnych ścieżek importów i zasobów: 1/1. Szerszy audyt struktury ma istniejący przed zmianami błąd oczekiwania dla /connect-device/tv; nie jest wynikiem tego przebiegu. Weryfikacja rzeczywistych przeglądarek na Windows/Mac pozostaje osobnym sprawdzeniem; produkcyjny runner sprawdza Chromium na Linux.
+
+Doprecyzowanie użytkownika: punkt 02 dotyczy wyłącznie Hosta; czerwony styl w Control został cofnięty.
+
+Punkt 13: ustalono konkretną przyczynę pustego logo filmu 07 — funkcja tworząca logo testowe używała dziesięciu wierszy samych spacji. Zastąpiono je widocznym napisem FAMILIADA i dodano produkcyjne sprawdzenie niepustych pikseli canvas Hosta po zwolnieniu blokady. Sam test odzyskania Control nie wystarczał.
+
+Pierwszy rzeczywisty przebieg produkcyjny [37497958845](https://github.com/Andrish97/familiada/actions/runs/37497958845): 5/7 zaliczonych. Intro/buzzer, ustawienia, blokada logo, odzyskanie urządzeń i zakończenie bez finału przeszły. Dwa finały wykryły odrzucanie startu timera podczas kończenia zapisu pola. Poprawiono oczekiwanie na zapis tekstu dla kliknięcia i Ctrl/Cmd+Enter; będzie osobny przebieg potwierdzający.

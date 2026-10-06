@@ -1,6 +1,8 @@
 \set ON_ERROR_STOP on
 -- Runs after the statistics fixture, only inside its disposable CI database.
 BEGIN;
+CREATE FUNCTION pg_temp.assert_true(ok boolean,message text) RETURNS void LANGUAGE plpgsql AS $$
+BEGIN IF ok IS DISTINCT FROM true THEN RAISE EXCEPTION 'Assertion: %',message; END IF; END $$;
 ALTER TABLE games ADD COLUMN share_key_host text, ADD COLUMN settings jsonb DEFAULT '{}';
 CREATE TABLE user_logos(id uuid PRIMARY KEY,user_id uuid,name text,type text,payload jsonb);
 CREATE TABLE edit_locks(resource_type text,resource_id uuid,heartbeat_at timestamptz);

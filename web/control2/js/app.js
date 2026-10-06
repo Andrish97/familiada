@@ -862,15 +862,16 @@ async function main() {
     // szybko wciśnięty skrót (albo skrót w trakcie jeszcze trwającej
     // blokady po poprzednim przejściu) mógł tak samo pomieszać intencje,
     // jak opisany wcześniej wyścig na przycisku r_intro.
-    if (busy()) return;
+    if (busy() && !typingCommit) return;
     e.preventDefault();
-    toggleFinalTimer(step === "f_p1_entry" ? 1 : 2).catch(() => {});
+    handle("final.toggleTimer", { round:step === "f_p1_entry" ? 1 : 2 });
   }, { capture: true });
 
   async function handle(action, payload) {
     try {
       const gameAction = action === "game.dispatch" || action === "rounds.introNext" || action === "final.toggleTimer" || action === "setup.start";
       if (gameAction && restarting) return;
+      if (gameAction && typingCommit && payload?.type !== "SET_ENTRY_TEXT") await _dispatchGatedQueue;
       if (gameAction && busy() && payload?.type !== "SET_ENTRY_TEXT") return;
       if (gameAction && missingDevices(store.state, presenceFlags).length) return;
       if (action === "ui.rerender") {

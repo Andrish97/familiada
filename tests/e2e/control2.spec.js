@@ -1068,13 +1068,17 @@ test("control2: physicalBuzzer + noHostTablet — urządzenia pominięte, ręczn
     // tu tylko oba kafle drużyn są klikalne). Przyciski pokazują realną
     // nazwę drużyny (Alfa/Beta), nie kod "A"/"B".
     await expect(page.getByRole("button", { name: "Alfa" })).toBeVisible({ timeout: 10000 });
-    await page.getByRole("button", { name: "Alfa" }).click();
+    await expect(page.getByRole("button", { name: "Alfa" })).toBeEnabled();
+    await page.keyboard.press("a");
     await expect(page.getByRole("button", { name: "Zatwierdź: Alfa" })).toBeVisible();
-    await page.getByRole("button", { name: "Beta" }).click();
+    await page.keyboard.press("b");
     await expect(page.getByRole("button", { name: "Zatwierdź: Beta" })).toBeVisible();
-    await armAndConfirm(page.getByRole("button", { name: "Zatwierdź: Beta" }));
+    await page.keyboard.press("Enter");
 
-    await revealAnswer(page, 1); // B trafia -> przejmuje kontrolę
+    await expect(page.locator('[data-shortcut="1"]')).toBeEnabled();
+    await page.keyboard.press("1");
+    await expect(page.locator('[data-shortcut="1"]')).toHaveClass(/c2-tile-armed/);
+    await page.keyboard.press("Enter"); // B trafia -> przejmuje kontrolę
     await expect(page.getByText("Bank: 40")).toBeVisible({ timeout: 10000 });
   } finally {
     for (const ctx of contexts) await ctx.close().catch(() => {});
@@ -1742,7 +1746,7 @@ test("control2: wyciszenie dźwięku — po Mute żaden klucz SFX się nie odtwa
     await waitForSfxKeysAnyOrder(page, ["round_transition", "reveal"], 10000);
 
     await expect(buzzerPage.getByRole("button", { name: "Przycisk A" })).toBeEnabled({ timeout: 10000 });
-    await page.locator("#btnMute").click();
+    await page.keyboard.press("m");
     await expect(page.locator("#btnMute .ico-speaker-off")).toHaveCount(1);
 
     await clearSfxLog(page);
@@ -2021,7 +2025,8 @@ test("control2: modal ustawień gry — zmiana nazwy drużyny odświeża podglą
     await page.getByRole("button", { name: "Dalej" }).click();
     await expect(page.locator(".stepTitle")).toHaveText("Podsumowanie", { timeout: 10000 });
 
-    await page.getByRole("button", { name: "Zmień ustawienia" }).click();
+    await page.keyboard.press("e");
+    await page.keyboard.press("Enter");
     await expect(page.locator("#gsOverlay")).not.toHaveClass(/hidden/, { timeout: 5000 });
 
     const gsFrame = page.frameLocator("#gsFrame");
@@ -2080,7 +2085,7 @@ test("control2: modal ustawień gry — zmiana nazwy drużyny odświeża podglą
 // konkretnych selektorów.
 function blankGlyphPayload() {
   return {
-    layers: [{ color: "main", rows: Array.from({ length: 10 }, () => " ".repeat(30)) }],
+    layers: [{ color: "main", rows: Array.from({ length: 10 }, (_, i) => i === 4 ? "FAMILIADA".padStart(19).padEnd(30) : " ".repeat(30)) }],
     source: { mode: "TEXT" },
   };
 }
@@ -2103,11 +2108,11 @@ async function releaseLogoLock(page, logoId, tabId) {
   }, { logoId, tabId }).catch(() => {});
 }
 
-test("control2: zablokowany, gdy logo gry jest edytowane w logo-editorze — i wznawia się samo po zwolnieniu", async ({ page, context }, testInfo) => {
+test("control2: zablokowany, gdy logo gry jest edytowane w logo-editorze — i wznawia się samo po zwolnieniu", async ({ page, context, browser }, testInfo) => {
   await loginAsPooledTestUser(page, context, testInfo.parallelIndex);
 
   const logoName = `E2E-CONTROL2-LOGOLOCK-${Date.now()}`;
-  const { logoId, gameId } = await page.evaluate(async ({ name, payload }) => {
+  const { logoId, gameId, hostKey } = await page.evaluate(async ({ name, payload }) => {
     const sb = window.__sbClient;
     const { data: userData } = await sb.auth.getUser();
     const { data: logo, error: logoErr } = await sb.from("user_logos")
@@ -2120,11 +2125,13 @@ test("control2: zablokowany, gdy logo gry jest edytowane w logo-editorze — i w
         owner_id: userData.user.id, type: "prepared", status: "ready",
         settings: { teams: { teamA: "Alfa", teamB: "Beta" }, game: { hasFinal: false }, display: { logoId: logo.id } },
       })
-      .select("id").single();
+      .select("id, share_key_host").single();
     if (gameErr) throw new Error("insert game failed: " + gameErr.message);
-    return { logoId: logo.id, gameId: game.id };
+    return { logoId: logo.id, gameId: game.id, hostKey:game.share_key_host };
   }, { name: logoName, payload: blankGlyphPayload() });
 
+  const logoContexts = [];
+  const hostPage = await openAnon(browser, logoContexts, `/host2?id=${gameId}&key=${hostKey}`, "host", []);
   const lockTabId = `e2e-fake-logo-editor-${Date.now()}`;
   try {
     await acquireLogoLock(page, logoId, lockTabId);
@@ -2143,7 +2150,12 @@ test("control2: zablokowany, gdy logo gry jest edytowane w logo-editorze — i w
     // żeby przy okazji sprawdzić fallback pollingu.
     await expect(page.locator("#resourceLockGuard")).toBeHidden({ timeout: 15000 });
     await expect(page.locator(".stepTitle")).toHaveText("Urządzenia", { timeout: 15000 });
+    await expect.poll(() => hostPage.locator("#cover2Logo canvas").evaluateAll(canvases => canvases.some(canvas => {
+      const pixels = canvas.getContext("2d").getImageData(0,0,canvas.width,canvas.height).data;
+      return pixels.some((value,idx) => idx % 4 === 3 && value > 0);
+    })), {timeout:15000}).toBe(true);
   } finally {
+    await Promise.all(logoContexts.map(context => context.close().catch(() => {})));
     await releaseLogoLock(page, logoId, lockTabId);
     await page.evaluate(async (id) => { await window.__sbClient.from("games").delete().eq("id", id); }, gameId);
     await page.evaluate(async (id) => { await window.__sbClient.from("user_logos").delete().eq("id", id); }, logoId);

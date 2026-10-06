@@ -137,3 +137,12 @@ test("restart cancels the pending final-start delay and prevents the old board f
   await new Promise(resolve => setTimeout(resolve, 80));
   assert.equal(calls.some(call => call.name === "final.setAll"), false);
 });
+
+test("pregame names and a reconnect before the first round both keep score panels blank", async () => {
+  const { renderer, calls, state } = setup();
+  await renderer.renderSnapshot(stateToRow(state));
+  for (const name of ["small.leftDigits", "small.rightDigits"]) assert.equal(calls.findLast(call => call.name === name).args[0], "");
+  state.step = "r_roundStart";
+  await renderer.renderSnapshot(stateToRow(state));
+  for (const name of ["small.leftDigits", "small.rightDigits"]) assert.equal(calls.findLast(call => call.name === name).args[0], "");
+});

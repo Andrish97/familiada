@@ -69,6 +69,9 @@ export function createUI({ root, emit }) {
   function shortcutsAllowed() {
     return ![...document.querySelectorAll(".overlay, .gsOverlay, .helpOverlay, .legalOverlay, .qrModalOverlay, [role='dialog']")].some((el) => el.getClientRects().length && getComputedStyle(el).visibility !== "hidden");
   }
+  document.addEventListener("pointerdown", (event) => {
+    if (root.contains(event.target)) keyboardTarget = null;
+  });
   document.addEventListener("keydown", (event) => {
     if (event.defaultPrevented || event.repeat || event.isComposing || event.ctrlKey || event.metaKey || event.altKey || event.shiftKey || !shortcutsAllowed()) return;
     if (event.target.closest?.("input, textarea, select, [contenteditable='true']")) return;
@@ -76,8 +79,9 @@ export function createUI({ root, emit }) {
     if (key === "m") { event.preventDefault(); emit("settings.toggleSoundMuted"); return; }
     if (key === "Enter") {
       const mapping = /^f_p[12]_map_q[1-5]$/.test(currentState?.step || "");
+      const mouseSelection = armedKey?.startsWith("ans:") ? armedKey.slice(4) : armedKey === "acceptBuzz" ? "c" : armedKey === "pass" ? "p" : armedKey === "x" ? "x" : armedKey?.startsWith("timer:") ? "t" : null;
       const selected = keyboardTarget && ["n", "b", "e", "t"].includes(keyboardTarget)
-        ? keyboardActions.get(keyboardTarget) : mapping ? keyboardActions.get("reveal") : keyboardActions.get(keyboardTarget);
+        ? keyboardActions.get(keyboardTarget) : mapping ? keyboardActions.get("reveal") : keyboardActions.get(keyboardTarget || mouseSelection);
       if (mapping) event.preventDefault();
       if (!selected || selected.el.disabled || boardBusy()) return;
       event.preventDefault(); selected.run(); keyboardTarget = null;
@@ -1741,7 +1745,7 @@ export function createUI({ root, emit }) {
     // boardBusy()/revealLocked() wyżej. Ustawiane TU, na początku, zamiast
     // przekazywane osobno do każdego renderXxx() — te dwie funkcje je już i
     // tak czytają z domknięcia.
-    const previousStep = currentState?.step;
+    if (root.dataset.step !== state.step) keyboardTarget = null;
     const oldEntry = /^f_p[12]_entry$/.test(state.step) && root.dataset.step === state.step ? root.firstElementChild : null;
     currentState = state;
     keyboardActions.clear();
@@ -1813,7 +1817,6 @@ export function createUI({ root, emit }) {
       root.querySelector(".c2-intro").append(hint);
     }
     if (hint) {
-      if (state.phase === "PLAY" && state.rounds.allowPass && !state.rounds.passUsed && !state.rounds.canEndRound) hint.querySelector(".c2-hint-main")?.classList.add("c2-pass-hint");
       const list = h("div", { class: "c2-hint-shortcuts" });
       for (const [key, binding] of keyboardActions) {
         if (binding.el.disabled || key === "reveal" || /^[2-6]$/.test(key)) continue;
