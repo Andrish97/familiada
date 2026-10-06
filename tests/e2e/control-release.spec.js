@@ -75,6 +75,17 @@ for(const [lang,hostLabel,repeatText,outroLimit] of [
   await expect(bases.locator('.m-table').first()).toBeVisible();
   expect(await tableCellStyle(bases.locator('.m-table td').first())).toEqual(expected);
   expect(await tableCellStyle(bases.locator('.m-table td').nth(1))).toEqual(expected);
+  const controlButtonStyle=await control.locator('p.m-p .m-code').first().evaluate(el=>{
+    const css=getComputedStyle(el);
+    return {font:css.fontFamily,size:css.fontSize,weight:css.fontWeight,padding:css.padding,radius:css.borderRadius,background:css.backgroundColor,border:css.borderColor};
+  });
+  await page.locator('button[data-tab="edit"]').click();
+  const existingButtonStyle=await page.locator('#tab-edit p.m-p .m-code').first().evaluate(el=>{
+    const css=getComputedStyle(el);
+    return {font:css.fontFamily,size:css.fontSize,weight:css.fontWeight,padding:css.padding,radius:css.borderRadius,background:css.backgroundColor,border:css.borderColor};
+  });
+  expect(controlButtonStyle).toEqual(existingButtonStyle);
+
 
  });
 }

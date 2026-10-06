@@ -30,7 +30,8 @@ test('all manual languages contain the same sections, Host blocks and applicatio
   assert.equal(count(control,/class="m-note"/g),9);
   assert.equal(count(control+gameSettings,/data-icon="/g),8);
   assert.doesNotMatch(control+gameSettings,/manual-assets\//);
-  assert.match(control+gameSettings,/m-control/);
+  assert.match(control+gameSettings,/class="m-code"/);
+  assert.doesNotMatch(control+gameSettings,/m-control|<li><p class="m-p">/);
  }
  assert.match(en.manual.content.control,/Every click plays the repeat sound/);
  assert.match(uk.manual.content.control,/Кожне натискання відтворює звук/);

@@ -82,3 +82,9 @@ zatwierdzonej treści.
 **3/3**, bez ponowień. Sprawdzono treść Powtórzenia, styl Prowadzącego,
 notki i uwagi, hydratację ikon SVG oraz limit własnego outro we wszystkich
 językach. Wybrane testy lokalne: **7/7**. Nie powtarzano rozgrywek.
+
+Po uwadze wizualnej użytkownika usunięto odrębny złoty styl przycisków
+w nowych sekcjach. Używają istniejącego `m-code`, tak jak reszta manuala.
+Pogrubienia korzystają z `m-strong`, tytuły notek z `b`, a listy nie dodają
+wewnętrznych akapitów zwiększających odstępy. Nowy styl `m-host` pozostaje
+wyłącznie wyróżnieniem informacji dla Prowadzącego.
