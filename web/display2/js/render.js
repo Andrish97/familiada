@@ -409,20 +409,9 @@ export function createRenderer({ scene, qr, getSfxDuration }) {
           break;
         case "STEP_CHANGE":
           if (ev.to === "r_duel" && ev.from === "r_roundStart") {
-            // Pierwsza runda: LOGO HIDE (await — MUSI dobiec końca, inaczej
-            // logo i wjeżdżająca plansza nakładają się) DOPIERO POTEM sama
-            // SUMA...ANIMIN (plansza wjeżdża na pusto) — dokładnie
-            // control/js/gameRounds.js's startRound(): `await display.hideLogo()`
-            // zawsze PRZED roundsBoardPlaceholders(), nigdy równolegle.
-            // Kolejne rundy: najpierw ANIMOUT starej planszy, DOPIERO PO NIM
-            // (setAll() sam sekwencjonuje wewnątrz) nowa SUMA...ANIMIN —
-            // control/js/display.js's roundsBoardPlaceholdersNewRound().
-            // "round_transition"+"reveal" grają zsynchronizowane na koniec
-            // (web/js/gameplay/soundCueEngine.js's playSyncedCombo) — offsetMs to
-            // czas ZANIM "reveal" zacznie grać (tyle trwa logo.hide/stara
-            // plansza znikająca), revealMs to czas samego "reveal" (tyle
-            // trwa wjazd nowej planszy — zaczyna się dokładnie wtedy, kiedy
-            // zaczyna grać "reveal", i kończy się z nim razem).
+            // The old image disappears in the first half of reveal;
+            // the new board appears in its second half. The preceding
+            // audio offset leaves the old image visible.
             const { offsetMs, revealMs } = await timing.revealSyncSplit("round_transition");
             const isFirstRound = nextRow.detail.rounds.roundNo === 1;
             if (offsetMs > 0) await wait(offsetMs);
@@ -490,27 +479,14 @@ export function createRenderer({ scene, qr, getSfxDuration }) {
             // którego deriveEvents nie diffuje jako CONTROL_CHANGED).
             applyIndicator(nextRow);
           } else if (ev.to === "f_p2_start") {
-            // Zamaskuj odpowiedzi gracza 1 z powrotem na placeholdery — sam
-            // dźwięk to wciąż synced("round_transition","reveal") (F7, ta
-            // sama kombinacja co START_ROUND), jedna faza (samo maskowanie,
-            // bez odpowiadającej animIn na tym kroku), więc pełny czas combo.
+            // Replace player 1 answers with placeholders during reveal:
+            // equal disappearance and appearance phases.
             const { offsetMs, revealMs: maskMs } = await timing.revealSyncSplit("round_transition");
             if (offsetMs > 0) await wait(offsetMs);
             const rows = Array.from({ length: 5 }, () => ({ left: FINAL_TEXT_PLACEHOLDER, a: FINAL_PTS_PLACEHOLDER }));
             await api.final.setHalf("A", { rows, animOut: { ...FINAL_OUT_ANIM, ms: maskMs / 2 }, animIn: { ...FINAL_BOARD_ANIM, ms: maskMs / 2 } });
           } else if (ev.to === "f_p2_entry" && ev.from === "f_p2_start") {
-            // Naprawiona luka (uzgodniona z Tobą, patrz engine.js's
-            // START_P2_ROUND): odpowiedzi gracza 1 wracają na Display W TYM
-            // SAMYM momencie co odsłonięcie Hosta (HOST_COVER_CHANGED,
-            // obsłużone niżej dla host2, Display samo o tym nie wie).
-            // Zgłoszone wprost: "między F7 i F8 miał być dźwięk przejścia
-            // rundy plus odsłonięcie" — engine.js's START_P2_ROUND emituje
-            // teraz "round_transition" (synced combo z "reveal", ta sama
-            // kombinacja co START_ROUND/F7-wejście, NIE samo "reveal").
-            // offsetMs to czas ZANIM "reveal" zacznie grać (nic się jeszcze
-            // nie zmienia na ekranie — plansza zostaje zamaskowana), animIn
-            // zaczyna się dokładnie wtedy, kiedy zaczyna grać "reveal", i
-            // trwa dokładnie tyle co on.
+            // Restore player 1 answers with the same two-phase transition.
             const { offsetMs, revealMs } = await timing.revealSyncSplit("round_transition");
             if (offsetMs > 0) await wait(offsetMs);
             const f = nextRow.detail.final;

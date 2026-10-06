@@ -142,5 +142,6 @@ export function getFinalEntryShortcuts(round) {
     t("control.shortcuts.entryTimer"),
   ];
   if (round === 2) shortcuts.push(t("control.shortcuts.entryRepeat"));
+  shortcuts.push(t("control.shortcuts.m"));
   return shortcuts;
 }
