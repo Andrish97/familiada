@@ -214,3 +214,14 @@ Na prośbę użytkownika opis skrótów w manualu PL/EN/UK i osobnym szkicu
 przeniesiono do odpowiednich sekcji rozgrywki; usunięto zbiorczą sekcję.
 Przygotowano też plan późniejszego sprzątania bazy w
 `docs/refaktor-struktury-repo.md`; żadnych obiektów bazy nie usunięto.
+
+
+### Ponowne testy i przerwany przebieg nagrań
+
+Produkcja: `37504136863` — oba przypadki przeszły bez powtórek: fizyczny
+przycisk i pełny finał. Nagrania `37504846098`: 01 i 03 ukończone;
+przy przygotowaniu 04 ponowne logowanie operatora w drugim kontekście
+przekroczyło 20 s. Nagrywanie 04 jeszcze nie rozpoczęło się. Skrypt
+przekazuje teraz rzeczywistą sesję z przygotowania gry do okna operatora,
+bez ponownego logowania; Display, Host i Buzzer pozostają anonimowe.
+Wznawiamy tylko brakujące 04, 05, 06 i 07.

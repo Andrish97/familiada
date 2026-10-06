@@ -31,7 +31,7 @@ const { chromium, expect } = require("@playwright/test");
 const { spawn } = require("node:child_process");
 const fs = require("node:fs");
 const path = require("node:path");
-const { loginAsTestUser } = require("./helpers/login");
+const { loginAsTestUser, instrumentPage } = require("./helpers/login");
 const { installDisplayPerformance, startRunnerPerformance, collectDisplayPerformance } = require("./helpers/display-performance.cjs");
 const { waitForEmail, extractHttpLinks } = require("./helpers/mailbox");
 
@@ -295,16 +295,18 @@ async function stopRecording(proc) {
 
 // ===== Otwarcie i skasowanie 4 urządzeń jednej gry, po jednym oknie na ćwiartkę =====
 
-async function openTiledDevices(browser, game) {
+async function openTiledDevices(browser, game, operatorStorageState) {
   const contexts = {};
   const pages = {};
   for (const name of ["control", "display", "host", "buzzer"]) {
-    const ctx = await browser.newContext({ baseURL: BASE_URL, viewport: null }); // viewport:null -> rozmiar okna, nie fixed viewport
+    const ctx = await browser.newContext({ baseURL: BASE_URL, viewport: null, ...(name === "control" ? { storageState: operatorStorageState } : {}) }); // viewport:null -> rozmiar okna, nie fixed viewport
     contexts[name] = ctx;
     if (name === "display") await installDisplayPerformance(ctx);
     pages[name] = await ctx.newPage();
   }
-  await loginAsTestUser(pages.control, contexts.control);
+  // Prawdziwa sesja operatora z kontekstu, który przygotował grę.
+  // Urządzenia pozostają anonimowe i korzystają z własnych kluczy.
+  instrumentPage(pages.control);
   await tileDevices(contexts, pages);
 
   await Promise.all([
@@ -2086,7 +2088,7 @@ async function main() {
       await loginAsTestUser(setupPage, setupCtx);
       const game = await scenario.makeGame(setupPage);
 
-      const { contexts, pages } = await openTiledDevices(browser, game);
+      const { contexts, pages } = await openTiledDevices(browser, game, await setupCtx.storageState());
       await pages.display.evaluate(() => window.__displayPerf?.reset());
       const stopPerformance = startRunnerPerformance();
       const recording = process.env.RECORD_VIDEO !== "false";
