@@ -94,3 +94,10 @@ w całym manualu. Wspólne oznaczanie `m-control` rozpoznaje przyciski
 we wszystkich trzech językach i działa także po zmianie języka.
 Skróty, wymiary, adresy, wartości i przykładowe statusy zachowują `m-code`.
 Słowo „Dalej” wypowiadane przez zawodnika nie jest oznaczane jako przycisk.
+
+[Test ostatecznego stylu przycisków na produkcji](https://github.com/Andrish97/familiada/actions/runs/37547383976):
+**3/3 PL/EN/UK**, bez ponowień. Porównano rzeczywiste style przycisków
+w Panelu sterowania i Edycji gry oraz tabel w Ustawieniach i Bazach.
+Sprawdzono, że skrót Win+P, mnożniki i wymiary logo nie otrzymują stylu
+przycisku. Zachowane testy Host/notek/SVG i limitu outro również zaliczone.
+Wybrane testy lokalne klasyfikacji i sekcji manuala: **9/9**.
