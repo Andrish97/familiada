@@ -1065,7 +1065,8 @@ async function scenarioRoundsThreshold(pages, { expectFinal, showReload = false 
 
   if (expectFinal) {
     await clickPaced(control.getByRole("button", { name: "Rozpocznij finał" }));
-    await control.waitForTimeout(4000); // ekran wpisywania gracza 1 widoczny chwilę — pełny final to osobne scenariusze
+    await expect(control.locator("#app input[type=text]").first()).toBeEnabled({ timeout: 45000 });
+    await control.waitForTimeout(4000); // pełne wejście planszy finału, potem chwila na obejrzenie
   } else {
     await clickPaced(control.getByRole("button", { name: "Zakończ grę" }));
     await expect.poll(() => display.evaluate(() => window.__displayLog?.filter((call) => call.call === "api.win.set").at(-1)?.args[0]), { timeout: 30000 }).toBe(300);

@@ -2,19 +2,30 @@
 
 Oct 1, 2026 · @Andrii Shum
 
-Aktualizacja: 4 października 2026 — opis zgodny z bieżącymi scenariuszami.
+Aktualizacja: 6 października 2026 — komplet 10 filmów w `tests/recordings/2026-10-06/`; wspólna galeria: `index.html`.
+
+
+## Gotowe pliki i zakres wersji
+
+- 01–06: [przebieg 37389738480](https://github.com/Andrish97/familiada/actions/runs/37389738480). Przerwał się przed wysyłką maila w 08, bo stary skrypt oczekiwał ukrycia sekcji udostępnień.
+- 08–10: [dogrywka 37393196812](https://github.com/Andrish97/familiada/actions/runs/37393196812), sukces. Po resecie limitów prawdziwy mail dotarł po około 56,6 s; odbiorca otworzył udostępnionego Prowadzącego.
+- 07: [dogrywka 37395118136](https://github.com/Andrish97/familiada/actions/runs/37395118136), sukces po ponowieniu przejściowego błędu strony GitHuba. Scenariusz był wcześniej umieszczony na końcu kolejki; odtąd scenariusze są sortowane po numerze.
+
+Filmy 01–06 i 08–10 pokazują stan sprzed ostatnich uwag do manuala: dźwięk miał jeszcze zmienioną nazwę, status „z listy” był też przekreślony, a Prowadzący zachowywał ostatnią rundę przy zakończeniu bez finału. Te trzy zmiany są już opublikowane i sprawdzone na produkcji ([3 zaliczone przypadki](https://github.com/Andrish97/familiada/actions/runs/37395415616)). Film 07 pochodzi z wersji po poprawkach.
+
+Nagrania mają 60 klatek/s. Obok każdego znajduje się raport przechwytywania i odstępów klatek przeglądarki. Pierwszy wcześniejszy zapis miał około 76% powielonych klatek; w obecnych dłuższych nagraniach udział wynosi około 0,4–1,0%. Krótkie filmy mają większy udział, więc oceniaj je razem z liczbą klatek i obrazem.
 
 ## Jak z tego korzystać
 
 Każde nagranie to osobny plik .mp4 (`tests/e2e/record-playthrough.js`, katalog `tests/recordings/` (zmienna `RECORD_OUT_DIR`)). Wszystkie urządzenia korzystają z produkcji. Dla każdego poniżej: ustawienia gry startowe, kolejność kroków z realnymi wartościami oraz **Na co zwrócić uwagę**. Obok filmów są raporty `.performance.json` z pomiarami animacji, klatek i pamięci runnera. Rozbieżność z opisem należy sprawdzić zarówno w aplikacji, jak i w skrypcie nagrywania.
 
-Logo wchodzi z animacją przy dźwięku odsłonięcia pod koniec intro. Buzzer zapala się lokalnie przed wysłaniem sygnału, a zatwierdzenie przez operatora stanowi osobną akcję. Bez finału ekran końcowy pojawia się przy reveal i osobnym outro. W finale „Zakończ finał” pokazuje wynik (logo/punkty/nagrodę) z reveal i round_transition; późniejsze „Zakończ grę” odtwarza tylko outro, bez ponownego przejścia planszy. Nagranie czeka na pełny dźwięk, a potem pozostawia wynik widoczny przez około 4 sekundy.
+Logo wchodzi z animacją przy dźwięku odsłonięcia pod koniec intro. Buzzer zapala się lokalnie przed wysłaniem sygnału, a zatwierdzenie przez operatora stanowi osobną akcję. Bez finału ekran końcowy pojawia się z reveal i przejściem rundy, a outro jest osobną akcją. W finale „Zakończ finał” pokazuje wynik (logo/punkty/nagrodę) z reveal i muzyką finału, zsynchronizowanymi na koniec; późniejsze „Zakończ grę” odtwarza tylko outro, bez ponownego przejścia planszy. Nagranie czeka na pełny dźwięk, a potem pozostawia wynik widoczny przez około 4 sekundy.
 
 Tryb zakończenia zapisano w ustawieniach osobnych gier: 03 — punkty, 04 i 05 — nagroda. 04 kończy się poniżej progu finału, a 05 osiąga próg i dostaje nagrodę główną.
 
 ## 01 — rundy-mechanika.mp4
 
-Najdłuższy klip, łączy demo urządzeń/ustawień z pełną rozgrywką 2 rund (bez finału, pytania demo ord 1-2).
+Klip łączy demo urządzeń/ustawień z pełną rozgrywką 2 rund (bez finału, pytania demo ord 1-2).
 
 **Urządzenia i ustawienia (przed startem gry)**
 
@@ -25,7 +36,7 @@ Najdłuższy klip, łączy demo urządzeń/ustawień z pełną rozgrywką 2 rund
 **Podsumowanie i modal ustawień**
 
 - "Dalej" → krok Podsumowania.
-- Modal ustawień gry: zmiana nazwy drużyny A na "Mistrzowie Quizu" — podgląd WEWNĄTRZ modalu (osobny, mały "Wyświetlacz w trybie podglądu", własny iframe) śledzi wpisywany tekst na żywo, zanim jeszcze zapiszemy; to NIE jest prawdziwy Wyświetlacz (ten przed startem pokazuje nazwy drużyn, a zmiany ustawień otrzymuje po zapisie) ani ten sam widget co podgląd w Podsumowaniu na stronie Control (ten drugi odświeża się dopiero PO zapisaniu modala, nie na bieżąco). Dalej: suwak głośności "round\_transition" na 70%, zapis przez "Zapisz wszystko", zamknięcie modala kliknięciem w tło.
+- Modal ustawień gry: zmiana nazwy drużyny A na "Mistrzowie Quizu" — podgląd WEWNĄTRZ modalu (osobny, mały "Wyświetlacz w trybie podglądu", własny iframe) śledzi wpisywany tekst na żywo, zanim jeszcze zapiszemy; to NIE jest prawdziwy Wyświetlacz (ten w Podsumowaniu pozostaje czarny, a nazwy drużyn pokazuje dopiero na etapie „Rozpocznij grę” po zapisaniu ustawień) ani ten sam widget co podgląd w Podsumowaniu na stronie Control (ten drugi odświeża się dopiero PO zapisaniu modala, nie na bieżąco). Dalej: suwak głośności "round\_transition" na 70%, zapis przez "Zapisz wszystko", zamknięcie modala kliknięciem w tło.
 - Osobny suwak głośności "reveal" wprost w Podsumowaniu (bez modala), ustawiony na 40%.
 
 **Runda 1**
@@ -89,7 +100,7 @@ Dokładnie ta sama progresja rund 1-3 co w scenariuszu 02 (`hasFinal` tym razem 
 
 **Runda 3** — jak w 02, A wygrywa topą, odkrywa wszystko, "Zakończ rundę" trafia próg 300.
 
-**Koniec gry** — ustawiony tryb „punkty”: "Zakończ grę" (bez finału) → reveal i początek osobnego outro → Wyświetlacz pokazuje **300 punktów**. Wynik pozostaje widoczny około 4 s po zakończeniu dźwięku.
+**Koniec gry** — ustawiony tryb „punkty”: „Przejdź do zakończenia gry” → przejście rundy i reveal → Wyświetlacz pokazuje **300 punktów**; następne „Zakończ grę” odtwarza osobne outro. Wynik pozostaje widoczny około 4 s po zakończeniu dźwięku.
 
 **Na co zwrócić uwagę:**
 
@@ -104,15 +115,15 @@ Dokładnie ta sama progresja rund 1-3 co w scenariuszu 02 (`hasFinal` tym razem 
 
 **Dojazd do progu (3 rundy)** — rundy 1-2 proste (A wygrywa topą, pełne 100 pkt każda). Runda 3: B wygrywa pojedynek trafiając TOPą odpowiedzią, odkrywa też odp. #2, POTEM 3× X (pudła B) → auto-kradzież dla A → A kradnie WYGRANĄ (bank liczy się w całości). "Zakończ rundę" trafia próg (280), ale zostają nieodkryte odpowiedzi — doszłanianie reszty, potem kontekstowy przycisk "Przejdź do finału" (nie automatyczne pominięcie).
 
-**Start finału** — "Rozpocznij finał" (final\_theme, potem reveal). Prowadzący przesuwa palcem, żeby lokalnie odsłonić zasłoniętą treść. To podgląd dla prowadzącego; kolejna zmiana gry przywraca zasłonę.
+**Start finału** — "Rozpocznij finał" (muzyka finału, potem przejście rundy z reveal). Prowadzący przesuwa palcem, żeby lokalnie odsłonić zasłoniętą treść. To podgląd dla prowadzącego; kolejna zmiana gry przywraca zasłonę.
 
-**Gracz 1 (15s)** — zegarek startuje przed wpisywaniem. 5 pytań: 2× dopasowanie, 1× zła odpowiedź, 2× puste pole. Po naturalnym wygaśnięciu: "Dalej" → mapowanie. Dopasowanie wymaga "Pokaż odpowiedź", następnie "Pokaż punkty". Brak/pudło odsłania zero i gra dźwięk błędu od razu przy "Pokaż odpowiedź"; dodatkowego kliknięcia punktów nie ma.
+**Gracz 1 (15s)** — zegarek startuje przed wpisywaniem. 5 pytań: 2× dopasowanie, 1× zła odpowiedź, 2× puste pole. Po naturalnym wygaśnięciu: "Dalej" → mapowanie. Dopasowanie wymaga "Pokaż odpowiedź", następnie "Pokaż punkty". Brak odsłania zero i gra dźwięk błędu od razu przy „Pokaż odpowiedź”; dodatkowego kliknięcia punktów nie ma. Wpisana błędna odpowiedź odsłania tekst z reveal, a zero odsłania operator osobno przy „Pokaż punkty”.
 
 **Przejście do gracza 2** — "Rozpocznij 2 rundę", Wyświetlacz pokazuje PEŁNE odkryte odpowiedzi gracza 1 (nie placeholdery), Prowadzący znowu demonstruje "peek" (zasłona wraca sama po akcji).
 
 **Gracz 2 (20s)** — zegarek startuje przed wpisywaniem. Pytanie #1 oznaczone jako "Powtórzenie" (zaznacz→potwierdź, z dźwiękiem); z pozostałych czterech wpisywane są dwa dopasowania, reszta jest pusta. Po wygaśnięciu zegarka mapowane są **wszystkie pięć pytań**. Powtórzenie i braki odsłaniają zero automatycznie przy "Pokaż odpowiedź".
 
-**Pełne zakończenie** — suma trafień wynosi **105**, mniej niż próg 200. Odkrywane są wszystkie 10 odpowiedzi obu graczy, łącznie z pytaniem #5 gracza 2. Po ostatnim odsłonięciu pojawia się przycisk „Zakończ finał”. Jego kliknięcie pokazuje nagrodę przy reveal i dźwięku przejścia rundy.
+**Pełne zakończenie** — suma trafień wynosi **105**, mniej niż próg 200. Odkrywane są wszystkie 10 odpowiedzi obu graczy, łącznie z pytaniem #5 gracza 2. Po ostatnim odsłonięciu pojawia się przycisk „Zakończ finał”. Jego kliknięcie pokazuje nagrodę przy reveal i muzyce finału, kończących się razem.
 
 **Koniec** — niższa nagroda **1167**: `(284 + 105) × 3` jest już widoczna przed „Zakończ grę”. Ten przycisk odtwarza tylko osobne outro; nagroda pozostaje bez kolejnego reveal. Nagranie czeka na koniec dźwięku i pozostawia nagrodę na ekranie około 4 s.
 
@@ -135,7 +146,7 @@ Dokładnie ta sama progresja rund 1-3 co w scenariuszu 02 (`hasFinal` tym razem 
 
 **Wczesne zakończenie zatwierdzane przez operatora** — wybór dopasowania (zaznacz→potwierdź) → „Pokaż odpowiedź” → „Pokaż punkty” — ta jedna odpowiedź przekracza obniżony próg (30). Silnik pozostaje na mapowaniu, blokuje dalsze akcje i w kolumnie podpowiedzi informuje o osiągniętym progu. Przycisk zmienia się na „Zakończ finał”; dopiero jego kliknięcie pokazuje wynik. Pytania 2-5 gracza 1 i cały gracz 2 są pominięte.
 
-**Koniec** — „Zakończ finał” pokazuje nagrodę główną **25960**: `(284 + 36) × 3 + 25000` z reveal i dźwiękiem przejścia rundy. „Zakończ grę” uruchamia tylko osobne outro. Wynik pozostaje widoczny około 4 s po końcu dźwięku.
+**Koniec** — „Zakończ finał” pokazuje nagrodę główną **25960**: `(284 + 36) × 3 + 25000` z reveal i muzyką finału, kończącymi się razem. „Zakończ grę” uruchamia tylko osobne outro. Wynik pozostaje widoczny około 4 s po końcu dźwięku.
 
 **Na co zwrócić uwagę:**
 
@@ -161,7 +172,7 @@ Gra pozostaje zablokowana po powrocie samego Wyświetlacza oraz samego Prowadzą
 
 **Runda 2, w całości na nowym Buzzerze** — B naciska Świeżo podłączony Buzzer, zatwierdzenie, pełne odkrycie 6 odpowiedzi, "Zakończ rundę" — dowód, że nowe urządzenie nie tylko świeci na zielono (sama obecność), ale FAKTYCZNIE bierze udział w rozgrywce.
 
-**Koniec** — "Zakończ grę" → ekran końcowy z reveal przy początku osobnego outro, widoczny także około 4 s po zakończeniu dźwięku.
+**Koniec** — „Przejdź do zakończenia gry” pokazuje ekran końcowy z reveal i przejściem rundy; „Zakończ grę” odtwarza osobne outro, widoczny także około 4 s po zakończeniu dźwięku.
 
 **Na co zwrócić uwagę:**
 
@@ -177,7 +188,7 @@ Logo gry jest blokowane ZEWNĘTRZNIE (dokładnie tym samym mechanizmem co klikni
 
 **Zwolnienie i samoistne wznowienie** — blokada logo zostaje zwolniona z zewnątrz (nie przez kliknięcie w tym oknie Control) — ekran blokady znika SAM, Control wznawia się do kroku "Urządzenia" bez żadnej ręcznej interwencji operatora.
 
-**Krótka runda** — po odzyskaniu Control pełne przejście przez urządzenia/podsumowanie, start gry i jedna pełna runda (A wygrywa, odkrywa wszystkie 6 odpowiedzi). "Zakończ grę" → logo z reveal i osobnym outro, widoczne około 4 s po końcu dźwięku.
+**Krótka runda** — po odzyskaniu Control pełne przejście przez urządzenia/podsumowanie, start gry i jedna pełna runda (A wygrywa, odkrywa wszystkie 6 odpowiedzi). „Przejdź do zakończenia gry” pokazuje logo z reveal i przejściem rundy, a „Zakończ grę” odtwarza osobne outro, widoczne około 4 s po końcu dźwięku.
 
 **Na co zwrócić uwagę:**
 
