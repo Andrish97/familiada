@@ -964,6 +964,8 @@ test("control2: próg w rundzie -> finał, wczesne zakończenie po 4/5 pytaniach
     // "reset pojedynku...", tam już sprawdzona dla remisu).
     await page.getByRole("button", { name: "Zakończ grę", exact: true }).click();
     await expect(page.getByText("Wygrała drużyna Alfa wynikiem 500:0")).toBeVisible({ timeout: 10000 });
+    // The UI renders optimistically before the final RPC is committed.
+    await expect.poll(async () => (await readControl2Sessions(page, game.id))[0]?.status, { timeout: 15000 }).toBe("final");
     const earlyFinalSessions = await readControl2Sessions(page, game.id);
     expect(earlyFinalSessions).toHaveLength(1);
     expect(earlyFinalSessions[0]).toMatchObject({ status: "final", rounds_score_a: 300, team_a_score: 500, final_points: 200 });
