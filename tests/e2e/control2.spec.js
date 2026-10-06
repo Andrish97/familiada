@@ -494,9 +494,10 @@ async function readControl2Sessions(page, gameId) {
 }
 
 async function attachStatistics(testInfo, label, rows) {
-  await testInfo.attach(`statistics-${label}.json`, {
-    body: Buffer.from(JSON.stringify(rows, null, 2)), contentType: "application/json",
-  });
+  const name = `statistics-${label}.json`;
+  const path = testInfo.outputPath(name);
+  await require("node:fs/promises").writeFile(path, JSON.stringify(rows, null, 2));
+  await testInfo.attach(name, { path, contentType: "application/json" });
 }
 
 function trackErrors(p, label, bucket) {
