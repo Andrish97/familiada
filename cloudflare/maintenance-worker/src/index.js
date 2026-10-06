@@ -199,12 +199,8 @@ export default {
       return new Response("Unauthorized", { status: 401 });
     }
 
-    // Redirect ?lang=pl → clean URL (pl is default, no param needed)
-    if (request.method === "GET" && url.searchParams.get("lang") === "pl") {
-      const clean = new URL(url);
-      clean.searchParams.delete("lang");
-      return Response.redirect(clean.toString(), 301);
-    }
+    // Explicit language parameters must survive proxying. Removing lang=pl
+    // would make a fresh English-language browser render English instead.
 
     // Public notification endpoint (rate-limited, no auth required) - for marketplace, lead-finder etc
     if (url.pathname === "/_api/notify-submission" && request.method === "POST") {

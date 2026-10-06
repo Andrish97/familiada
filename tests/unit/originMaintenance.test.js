@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
 import {serveMaintenance,fetchWith404} from '../../cloudflare/maintenance-worker/src/lib/origin/origin.js';
 test('maintenance fetches its actual index instead of a directory redirect',async()=>{
  const original=globalThis.fetch;let target;
@@ -29,4 +30,9 @@ test('TV entry uses the simplified page through the same proxy used by bypass',a
   assert.equal(target,'https://familiada.online/connect-device/tv/index.html?tv=1&lang=uk');
   assert.equal(pageIndexPath('/'),'/index.html');
  } finally {globalThis.fetch=original;}
+});
+
+test('Worker does not discard an explicitly requested Polish language',()=>{
+ const source=readFileSync(new URL('../../cloudflare/maintenance-worker/src/index.js',import.meta.url),'utf8');
+ assert.doesNotMatch(source,/searchParams\.delete\(["']lang["']\)/);
 });
