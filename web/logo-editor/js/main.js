@@ -9,29 +9,29 @@
 //   preview-zoom.js – pinch-zoom pełnoekranowego podglądu
 //   text.js / draw.js / image.js – edytory trybów (wspólne API: open/close/getCreatePayload)
 
-import { addRenameGesture } from "../../shared/js/core/rename-gesture.js?v=v2026-10-06T00425";
-import { loadFont5x7, buildLogoPreviewCanvas } from "../../shared/js/core/logo-preview.js?v=v2026-10-06T00425";
-import { requireAuth } from "../../shared/js/core/auth.js?v=v2026-10-06T00425";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-06T00425";
-import { getUiLang, initI18n, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-06T00425";
-import { initTopbarAccountDropdown } from "../../shared/js/core/topbar-controller.js?v=v2026-10-06T00425";
-import { isMobileDevice } from "../../shared/js/core/pwa.js?v=v2026-10-06T00425";
-import { isPhoneScreen } from "../../shared/js/core/device-guard.js?v=v2026-10-06T00425";
-import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-06T00425";
-import { guardResourceLock, acquireResourceLock, isResourceBusy, findBusyContext } from "../../shared/js/core/resource-lock.js?v=v2026-10-06T00425";
-import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-06T00425";
-import { icon } from "../../shared/js/core/icons.js?v=v2026-10-06T00425";
+import { addRenameGesture } from "../../shared/js/core/rename-gesture.js?v=v2026-10-06T15021";
+import { loadFont5x7, buildLogoPreviewCanvas } from "../../shared/js/core/logo-preview.js?v=v2026-10-06T15021";
+import { requireAuth } from "../../shared/js/core/auth.js?v=v2026-10-06T15021";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-06T15021";
+import { getUiLang, initI18n, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-06T15021";
+import { initTopbarAccountDropdown } from "../../shared/js/core/topbar-controller.js?v=v2026-10-06T15021";
+import { isMobileDevice } from "../../shared/js/core/pwa.js?v=v2026-10-06T15021";
+import { isPhoneScreen } from "../../shared/js/core/device-guard.js?v=v2026-10-06T15021";
+import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-06T15021";
+import { guardResourceLock, acquireResourceLock, isResourceBusy, findBusyContext } from "../../shared/js/core/resource-lock.js?v=v2026-10-06T15021";
+import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-06T15021";
+import { icon } from "../../shared/js/core/icons.js?v=v2026-10-06T15021";
 
-import { TYPE_GLYPH, TYPE_PIX, emptyRows, normalizeRows, renderPreview, logoToPreview } from "./render.js?v=v2026-10-06T00425";
-import { listLogos, fetchLogo, createLogo, updateLogo, deleteLogo, isUniqueViolation } from "./db.js?v=v2026-10-06T00425";
-import { buildExport, downloadJson, parseImport, safeFileName } from "./transfer.js?v=v2026-10-06T00425";
-import { initPreviewPinchZoom, lockPageZoomForPreview, unlockPageZoomAfterPreview } from "./preview-zoom.js?v=v2026-10-06T00425";
-import { initTextEditor, decompileRows } from "./text.js?v=v2026-10-06T00425";
-import { initDrawEditor } from "./draw.js?v=v2026-10-06T00425";
-import { initImageEditor } from "./image.js?v=v2026-10-06T00425";
+import { TYPE_GLYPH, TYPE_PIX, emptyRows, normalizeRows, renderPreview, logoToPreview } from "./render.js?v=v2026-10-06T15021";
+import { listLogos, fetchLogo, createLogo, updateLogo, deleteLogo, isUniqueViolation } from "./db.js?v=v2026-10-06T15021";
+import { buildExport, downloadJson, parseImport, safeFileName } from "./transfer.js?v=v2026-10-06T15021";
+import { initPreviewPinchZoom, lockPageZoomForPreview, unlockPageZoomAfterPreview } from "./preview-zoom.js?v=v2026-10-06T15021";
+import { initTextEditor, decompileRows } from "./text.js?v=v2026-10-06T15021";
+import { initDrawEditor } from "./draw.js?v=v2026-10-06T15021";
+import { initImageEditor } from "./image.js?v=v2026-10-06T15021";
 
-const FONT_3x10_URL = "/shared/fonts/display/font_3x10.json?v=v2026-10-06T00425";
-const FONT_5x7_URL = "/shared/fonts/display/font_5x7.json?v=v2026-10-06T00425";
+const FONT_3x10_URL = "/shared/fonts/display/font_3x10.json?v=v2026-10-06T15021";
+const FONT_5x7_URL = "/shared/fonts/display/font_5x7.json?v=v2026-10-06T15021";
 // Edycja wymaga miejsca na pasek narzędzi i scenę -- na telefonie dostępna
 // jest tylko lista (podgląd, import/eksport, nazwa, usuwanie). Telefon wg
 // wspólnej reguły isPhoneScreen() (js/core/device-guard.js): krótszy bok
