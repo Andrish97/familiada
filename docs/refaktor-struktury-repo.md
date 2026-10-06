@@ -221,3 +221,29 @@ całej tabeli ani funkcji tylko dlatego, że ich nazwa nie zawiera `2`.
 
 Podgląd jest na etapie propozycji. To przypomnienie nie oznacza wdrożenia
 funkcji ani usunięcia któregokolwiek elementu obecnego systemu.
+
+## Przełączenie produkcyjne — 7 października 2026
+
+Nowe wejścia z Moich gier prowadzą do `control2` i `game-settings2`.
+Podłączenie kodem, udostępnione urządzenia i TV otwierają Display2, Host2
+oraz Buzzer2. Dawne strony mają przekierowanie do odpowiednika zestawu 2
+z zachowaniem parametrów i fragmentu adresu. Pozostałe pliki starego
+zestawu oraz RPC pozostają na czas wygaszenia wcześniej otwartych kart;
+przełączenie nie usuwa danych ani starych snapshotów.
+
+Zatwierdzony polski dokument zastępuje sekcje Panel sterowania i Ustawienia
+rozgrywki w manualu. Angielska i ukraińska wersja otrzymują korekty
+zakończenia gry i osobnego outro; pełne tłumaczenie zatwierdzonego polskiego
+tekstu pozostaje osobnym zadaniem. Instrukcje używają ikon aplikacji.
+
+Dotychczasowe wpisy Control 1 są oznaczone w kolumnie Źródło jako
+„Archiwum — Control 1”. Statusy, daty i wszystkie wyniki pozostają zapisane
+bez zmian; nowe wpisy nadal pochodzą z Control 2. Nie zmieniamy statusów
+na `legacy`, ponieważ spowodowałoby to ukrycie części istniejących danych.
+Przełączenie frontendu nie wymaga nowej migracji SQL; wymagane migracje
+300–305 były wcześniej wdrożone.
+
+Testy produkcyjne korzystają z podpisanego, pięciominutowego tokenu
+`X-E2E-Token`, odświeżanego dla żądań testowych również na urządzeniach.
+Token omija konserwację, ale nie logowanie ani uprawnienia użytkownika
+lub administratora. Konserwacji nie wyłączamy automatycznie.

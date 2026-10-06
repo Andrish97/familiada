@@ -1583,7 +1583,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
 
       if (!gameId) return;
-      location.href = `/control/?id=${encodeURIComponent(gameId)}`;
+      location.href = `/control2/?id=${encodeURIComponent(gameId)}`;
       return;
     }
 
@@ -1595,7 +1595,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         void alertModal({ text: chk.reason });
         return;
       }
-      location.href = `/control/?id=${encodeURIComponent(selectedId)}`;
+      location.href = `/control2/?id=${encodeURIComponent(selectedId)}`;
     } catch (e) {
       console.error(e);
       void alertModal({ text: MSG.alertCheckFailed() });
@@ -1627,7 +1627,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       ? marketGamesAll.find(g => g.market_game_id === selectedMarketId)?.game_id
       : selectedId;
     if (!gameId) return;
-    location.href = `/game-settings/?id=${encodeURIComponent(gameId)}`;
+    location.href = `/game-settings2/?id=${encodeURIComponent(gameId)}`;
   });
 
   // EXPORT — pobierz dane z paskiem, potem instant download

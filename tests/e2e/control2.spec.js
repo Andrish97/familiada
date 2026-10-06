@@ -64,9 +64,9 @@
 // (Web Audio nie zostawia śladu w DOM), ani tego, co dokładnie Display
 // narysował (SVG dot-matrix, nie tekst).
 
-const { test, expect } = require("@playwright/test");
+const { test, expect } = require("./helpers/production-test");
 
-test("control2: TV odrzuca inne urządzenia, kod display otwiera stary Wyświetlacz", async ({ page, browser }, testInfo) => {
+test("control2: TV odrzuca inne urządzenia, kod display otwiera nowy Wyświetlacz", async ({ page, browser }, testInfo) => {
   test.setTimeout(120000);
   await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
   const game = await makeGame(page, `E2E-TV-${Date.now()}`, { roundQuestions: [TWO_QUESTIONS[0]] });
@@ -91,7 +91,7 @@ test("control2: TV odrzuca inne urządzenia, kod display otwiera stary Wyświetl
     }
     await tv.locator("#tvCode").fill(codes.display);
     await tv.locator("#tvCode").press("Enter");
-    await expect.poll(() => new URL(tv.url()).pathname).toBe("/display/");
+    await expect.poll(() => new URL(tv.url()).pathname).toBe("/display2/");
     expect(new URL(tv.url()).searchParams.get("id")).toBe(game.id);
     await expect(tv.locator("#fsBtn")).toBeVisible();
     // The new Display remains directly accessible; its sound prompt works with TV OK.

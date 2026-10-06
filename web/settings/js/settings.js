@@ -5365,7 +5365,7 @@ const STAT_DETAIL_CONFIG = {
     row: r => [
       r.game_name || "—",
       r.owner || "—",
-      r.effective_status === "legacy" ? "Archiwum" : Number(r.control_version) === 2 ? "Control 2" : "Control 1",
+      r.effective_status === "legacy" ? "Archiwum" : Number(r.control_version) === 2 ? "Control 2" : "Archiwum — Control 1",
       fmtDate(r.started_at),
       fmtSessionDuration(r),
       r.effective_status === "legacy" ? "—" : (r.rounds_played ?? "—"),

@@ -2185,32 +2185,9 @@ const en = {
       </div>
 
       <h3 class="m-h3">Ending rounds and moving on</h3>
-      
-      <p class="m-p">
-        After each round the system updates team scores and checks
-        whether the end-of-game condition has been met (set in “Additional settings”).
-        Most often it’s a points threshold, e.g. <span class="m-strong">300</span>,
-        but it can be different — depending on how you want to run the tournament.
-      </p>
-      
-      <p class="m-p">
-        If the final is <span class="m-strong">enabled</span> and the round-end condition is met,
-        the game moves to the final.
-        If the final is <span class="m-strong">disabled</span>, the game ends after rounds
-        and the system goes to the ending screen (logo/points/prize — according to settings).
-      </p>
-      
-      <div class="m-warn">
-        <b>Warning:</b><br/>
-        If the game runs out of questions during play
-        before the points threshold is reached,
-        the system ends rounds due to lack of questions.
-        Then the game moves to the final (if enabled)
-        or to the ending (if the final is disabled).
-      </div>
-    
-    <p class="m-p">N selects the current next-action button; Enter activates it.</p>
-      <h3 class="m-h2">4) Final</h3>
+<p class="m-p">The final requires reaching the rounds threshold and enabling the final. Running out of questions alone does not qualify a team for the final. When ending without a final, other round actions are blocked and remaining answers are not revealed. <span class="m-code">Go to game ending</span> awards the bank and shows the ending screen. Only the subsequent <span class="m-code">End game</span> plays the programme outro music. “Show prize amount (after final)” shows points when ending without a final; a tie shows the logo.</p>
+<p class="m-p">N selects the next-action button; Enter activates it.</p>
+<h3 class="m-h2">4) Final</h3>
 
       <p class="m-p">
         The final is a separate game mode. Two contestants
@@ -2285,18 +2262,8 @@ const en = {
       <p class="m-p">In the final, Ctrl+Enter (⌘+Enter on Mac) starts or stops the timer; Shift+Enter marks Repeat and plays its sound in an empty player 2 field. Each round requires starting the timer. Early stopping requires text in all five fields; Repeat does not fill a field. Enter and arrows move only between empty fields; click a completed field to edit it. Each press of Repeat plays its sound again. Only typing text removes the marker.</p>
       <p class="m-p">When matching, 1–6 selects a list answer, W the written answer, O no answer and R repeat. Selection is immediate. Enter reveals the answer, then another Enter reveals points; no answer and repeat reveal zero automatically. N then Enter advances. Mouse reveals require two clicks. Letters and numbers remain text while editing. Dialogs block gameplay shortcuts in the background.</p>
       <h3 class="m-h3">When the final ends</h3>
-      
-      <p class="m-p">
-        The final ends when the total points reach or exceed
-        the set threshold. It can happen that the threshold is reached after the first contestant’s turn
-        — then the second contestant does not need to play, and the game goes straight to the ending.
-      </p>
-      
-      <p class="m-p">
-        After the final the system shows the ending screen according to the game ending settings:
-        <span class="m-strong">logo</span>, <span class="m-strong">points</span> or
-        <span class="m-strong">prize amount</span>.
-      </p><p class="m-p">On the Host tablet, the pass-control hint is red and underlined. A word cut on the Display loses up to two trailing vowels before the dot; word boundaries receive no dot. Limits are 17 characters in rounds and 11 in the final, including the dot.</p><p class="m-p">The Host tablet reloads the selected logo when the operator enters the settings summary. If the selected logo was being edited earlier, the default logo stays until then; without a lock, the game’s selected logo is shown.</p>`,
+<p class="m-p">Reaching the final threshold blocks further answer assessment. The hint reports the threshold and the button changes to <span class="m-code">Finish final</span>, even for player 1. The result is not shown automatically. If the threshold is not reached, the same button appears after revealing player 2’s last points.</p>
+<p class="m-p"><span class="m-code">Finish final</span> shows the selected ending screen: logo, points or prize amount. The following <span class="m-code">End game</span> only plays the programme outro music; the result and winning team indicator remain visible. The Host tablet is cleared when the final ends.</p><p class="m-p">On the Host tablet, the pass-control hint is red and underlined. A word cut on the Display loses up to two trailing vowels before the dot; word boundaries receive no dot. Limits are 17 characters in rounds and 11 in the final, including the dot.</p><p class="m-p">The Host tablet reloads the selected logo when the operator enters the settings summary. If the selected logo was being edited earlier, the default logo stays until then; without a lock, the game’s selected logo is shown.</p>`,
       community: `<p class="m-p">
         Community Games is a catalogue of ready-made games created by other users
         and verified by moderators. You can browse them, add them to your library
@@ -2434,7 +2401,8 @@ const en = {
         In this section you configure the sounds used during gameplay. Each sound category (e.g. <span class="m-strong">Correct answer</span>, <span class="m-strong">Wrong answer</span>, <span class="m-strong">Intro</span>, <span class="m-strong">Round transition</span>, <span class="m-strong">Reveal</span>) has its own settings.
       </p>
 
-      <h3 class="m-h3">Sound Variant</h3>
+      <p class="m-p">Programme outro music is a separate sound category. Choose a preset or a custom file up to 2 minutes long, adjust its volume and preview it. The “End game” button plays the outro once the ending screen is already visible.</p>
+<h3 class="m-h3">Sound Variant</h3>
 
       <p class="m-p">For each category you can choose a <span class="m-strong">variant</span> from the list:</p>
 
