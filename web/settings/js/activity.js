@@ -36,7 +36,7 @@ export function startActivityPanel() {
   let history=null;
   let period='hour';
   const periods=[{value:'hour',label:'Godzinowo — 48 godzin'},{value:'day',label:'Dziennie — 30 dni'},{value:'week',label:'Tygodniowo — 90 dni'}];
-  const chart=root.querySelector("[data-activity-chart]");
+  const chart=document.querySelector("[data-activity-chart]");
   function paintChart() {
     chart.replaceChildren();
     const items=history?.[period]||[];
@@ -59,12 +59,14 @@ export function startActivityPanel() {
     for (const item of items) {const line=document.createElement("div");line.textContent=new Date(item.bucket).toLocaleString("pl-PL",{timeZone:"Europe/Warsaw"})+" — "+item.users;table.append(line);}
     chart.append(table);
   }
-  initUiSelect(root.querySelector('#activityChartPeriod'),{options:periods,value:period,onChange(value){period=value;paintChart();}});
-  function row(title,detail,risk=false) {
-    const item=document.createElement('div');item.className='activity-row'+(risk?' activity-risk':'');
-    const strong=document.createElement('strong');strong.textContent=title;
-    const text=document.createElement('div');text.textContent=detail;
-    item.append(strong,text);rows.append(item);
+  initUiSelect(document.getElementById('activityChartPeriod'),{options:periods,value:period,onChange(value){period=value;paintChart();}});
+  function row(user,activity,resource,context,stamp,risk=false) {
+    const item=document.createElement('tr');
+    if (risk) item.className='activity-risk';
+    for (const value of [user,activity,resource,context,stamp?new Date(stamp).toLocaleTimeString('pl-PL'):'—']) {
+      const cell=document.createElement('td');cell.textContent=value || '—';item.append(cell);
+    }
+    rows.append(item);
   }
   async function load(force=false) {
     if (pending || (!force && (document.hidden || (root.closest('[hidden]') && document.getElementById('panelScreen')?.hidden)))) return;
@@ -79,29 +81,45 @@ export function startActivityPanel() {
       const riskGames=data.games.filter(g=>gameActivity(g).risk).length;
       const editLocks=data.locks.filter(l=>l.holder_context!=='control');
       summary.textContent=`Użytkownicy: ${users.size} · Gry w toku lub możliwe: ${riskGames} · Blokady edycji: ${editLocks.length}`+(data.truncated?' · Lista ograniczona do 500 wpisów w każdej kategorii':'');
-      document.getElementById("maintenanceActivitySummary").textContent=summary.textContent+" · Odświeżono: "+new Date(data.generated_at).toLocaleTimeString("pl-PL");
+      document.getElementById('statActivityValue').textContent=String(users.size);
+      document.getElementById('maintenanceActivityValue').textContent=String(users.size);
+      const counters=`Gry w toku lub możliwe: ${riskGames} | Edycje: ${editLocks.length}`;
+      document.getElementById('statActivitySub').textContent=counters;
+      document.getElementById('maintenanceActivitySummary').textContent=counters;
+      document.getElementById('maintenanceActivityTime').textContent='Odświeżono: '+new Date(data.generated_at).toLocaleTimeString('pl-PL')+' · Uwzględnia wykluczenia';
       for (const game of data.games) {
         const activity=gameActivity(game);
         const devices=game.devices.map(d=>({display:'Wyświetlacz',host:'Prowadzący',buzzer:'Przycisk'})[d]||d).join(', ');
-        row(`${game.username} — ${game.name}`,`${activity.label} · Zestaw ${game.control_version}${stepName(game)?' · '+stepName(game):''}${devices?' · '+devices:''}`,activity.risk);
+        const contacts=[game.session_seen_at,game.devices_seen_at,...data.pages.filter(page=>page.game_id===game.game_id).map(page=>page.last_seen_at),...data.locks.filter(lock=>lock.resource_id===game.game_id).map(lock=>lock.heartbeat_at)].filter(Boolean).map(Date.parse);
+        row(game.username,activity.label+(stepName(game)?' · '+stepName(game):''),game.name,`Zestaw ${game.control_version}${devices?' · '+devices:''}`,contacts.length?Math.max(...contacts):null,activity.risk);
       }
       for (const lock of editLocks) {
         const context=String(lock.holder_context||'').split(':')[0];
-        row(`${lock.username} — ${CONTEXT_NAMES[context]||'Edycja zasobu'}`,`${RESOURCE_NAMES[lock.resource_type]||'Zasób'}${lock.resource_name?' — '+lock.resource_name:''} · Aktywna blokada edycji`);
+        row(lock.username,'Aktywna edycja',`${RESOURCE_NAMES[lock.resource_type]||'Zasób'}${lock.resource_name?' — '+lock.resource_name:''}`,CONTEXT_NAMES[context]||'Edytor',lock.heartbeat_at);
       }
       for (const page of data.pages) {
         if (['control','control2'].includes(page.page) && data.games.some(g=>g.game_id===page.game_id)) continue;
-        row(`${page.username} — ${PAGE_NAMES[page.page]||'Otwarta strona'}`,`${page.visible?'Karta widoczna':'Karta w tle'} · Ostatni kontakt: ${new Date(page.last_seen_at).toLocaleTimeString('pl-PL')}`);
+        row(page.username,PAGE_NAMES[page.page]||'Otwarta strona',null,page.visible?'Karta widoczna':'Karta w tle',page.last_seen_at);
       }
-      if (!rows.childElementCount) row('Nie wykryto aktywnych gier ani edycji','To nie potwierdza braku użytkowników: starsze otwarte karty mogą nie wysyłać nowych sygnałów.');
+      if (!rows.childElementCount) {
+        const item=document.createElement('tr');const cell=document.createElement('td');cell.colSpan=5;cell.className='activity-empty';cell.textContent='Nie wykryto aktywności.';item.append(cell);rows.append(item);
+      }
       time.textContent='Ostatnie odświeżenie: '+new Date(data.generated_at).toLocaleTimeString('pl-PL');
     } catch {
       summary.textContent='Nie udało się sprawdzić aktywności. Widoczne dane mogą być nieaktualne.';
       document.getElementById('maintenanceActivitySummary').textContent='Nie udało się sprawdzić aktywności — poprzednie dane mogą być nieaktualne.';
+      document.getElementById('statActivityValue').textContent='—';
+      document.getElementById('maintenanceActivityValue').textContent='—';
+      document.getElementById('statActivitySub').textContent='Brak aktualnego potwierdzenia';
       time.textContent='Brak aktualnego potwierdzenia — nie traktuj tego jako braku użytkowników.';
     } finally {pending=false;refresh.disabled=false;}
   }
   refresh.addEventListener('click',()=>void load(true));
+  document.getElementById('btnStatsRefresh')?.addEventListener('click',()=>void load(true));
+  const tile=document.getElementById('statActivityBox');
+  const showDetails=()=>root.scrollIntoView({behavior:'smooth',block:'start'});
+  tile?.addEventListener('click',showDetails);
+  tile?.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();showDetails();}});
   const timer=setInterval(()=>void load(),15000);
   window.addEventListener('pagehide',()=>clearInterval(timer),{once:true});
   void load(true);

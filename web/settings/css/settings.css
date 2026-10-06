@@ -2565,17 +2565,22 @@ body.tools-fullscreen .tools-frame-wrap iframe{
 .msg-icon-btn svg.ico { width: 16px; height: 16px; vertical-align: 0; }
 
 /* Operational presence before maintenance; matches existing settings cards. */
-.activity-panel{margin-bottom:24px;padding:16px;border:1px solid var(--line,rgba(255,255,255,.15));border-radius:12px}
-.activity-panel .panel-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .activity-row{padding:10px 12px;margin:8px 0;border:1px solid rgba(255,255,255,.12);border-radius:10px;overflow-wrap:anywhere}
 .activity-row>div{font-size:.85rem;opacity:.8;margin-top:4px}
-.activity-risk{border-color:#ffeaa6}
 
 .activity-chart-controls{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:20px}
 .activity-chart-controls .ui-select{width:260px;max-width:100%}
-.excluded-account-row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.excluded-account-row{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0;padding:8px 12px}
 .excluded-account-copy{flex:1;min-width:0;overflow-wrap:anywhere}
 .excluded-account-copy .stat-sub{display:block;margin-top:4px}
 .excluded-account-row>.btn{flex-shrink:0;margin-left:auto}
 [data-activity-chart] svg{width:100%;height:auto;min-height:140px}
 [data-activity-chart] details{font-size:.85rem;margin-top:8px}
+.maintenance-activity-grid{max-width:340px;grid-template-columns:minmax(0,1fr);margin-bottom:24px}
+.activity-section-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.activity-table{min-width:680px;width:100%}
+.activity-table td{vertical-align:top;white-space:normal;overflow-wrap:anywhere}
+.activity-table tr.activity-risk td:nth-child(2){color:var(--gold,#ffeaa6)}
+.activity-table .activity-empty{text-align:center;padding:24px;opacity:.55}
+#maintenanceActivity{scroll-margin-top:90px}
+#statActivityBox:focus-visible{outline:2px solid var(--gold,#ffeaa6);outline-offset:3px}

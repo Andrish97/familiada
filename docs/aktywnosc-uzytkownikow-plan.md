@@ -1,7 +1,10 @@
 # Aktywność użytkowników — wdrożenie
 
 Pełny podgląd „Aktywność teraz” i wykresy należą do karty Statystyki.
-Maintenance pokazuje skrócone podsumowanie i odnośnik do szczegółów.
+Maintenance pokazuje nieklikalny kafelek z liczbą użytkowników oraz
+podsumowaniem gier i edycji. W Statystykach kafelek znajduje się w siatce
+z pozostałymi licznikami i prowadzi do tabeli szczegółów. Wykres aktywności
+jest osobną kartą w dotychczasowej sekcji wykresów.
 
 ## Sygnały bieżące
 

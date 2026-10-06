@@ -74,10 +74,13 @@
           <div class="panel-sub">Ustawienia strony maintenance</div>
         </div>
 
-        <div class="activity-panel"><strong>Aktywność teraz</strong>
-          <p id="maintenanceActivitySummary">Nie sprawdzono jeszcze aktywności.</p>
-          <a class="btn sm" href="?tab=stats#maintenanceActivity">Szczegóły i wykresy w Statystykach</a>
-          <p class="field-hint">Podsumowanie uwzględnia wspólne wykluczenia ze statystyk.</p>
+        <div class="stats-grid maintenance-activity-grid">
+          <div class="stat-box stat-box-static">
+            <div class="stat-label">Aktywność teraz</div>
+            <div class="stat-value" id="maintenanceActivityValue">—</div>
+            <div class="stat-sub" id="maintenanceActivitySummary">Oczekiwanie na dane</div>
+            <div class="stat-sub dim" id="maintenanceActivityTime">Uwzględnia wspólne wykluczenia</div>
+          </div>
         </div>
 
         <div class="maintenance-controls" id="maintenanceControls">
@@ -647,27 +650,19 @@
             <div class="panel-sub">Monitoruj aktywność i rozwój platformy</div>
           </div>
           
-        <section class="activity-panel" id="maintenanceActivity" aria-label="Aktywność teraz">
-          <div class="panel-head"><div class="panel-title">Aktywność teraz</div>
-            <button class="btn sm" type="button">Odśwież aktywność</button></div>
-          <p data-activity-summary aria-live="polite">Oczekiwanie na sprawdzenie aktywności…</p>
-          <div data-activity-rows></div>
-          <div class="activity-chart-controls"><span id="activityChartLabel">Wykres aktywnych użytkowników</span>
-            <div class="ui-select active" id="activityChartPeriod">
-              <button class="btn sm ui-select-btn" type="button" aria-labelledby="activityChartLabel activityChartSelected" aria-haspopup="listbox" aria-expanded="false">
-                <span class="ui-select-label" id="activityChartSelected">Godzinowo — 48 godzin</span><span class="ui-select-caret" aria-hidden="true"><i class="ico" data-icon="caret-down"></i></span>
-              </button><div class="ui-select-menu" role="listbox"></div>
-            </div></div>
-          <div data-activity-chart></div>
-          <p class="field-hint">Unikalni użytkownicy z sygnałem otwartej strony w danym przedziale, również z kart w tle. Nie sumuj godzin, aby uzyskać liczbę osób w dniu. Strefa czasu: Warszawa. Historia do 90 dni; dostępna od wdrożenia nowych sygnałów.</p>
-          <p class="field-hint" data-activity-time>Nie sprawdzono jeszcze aktywności.</p>
-          <p class="field-hint">Podgląd uwzględnia wspólne wykluczenia ze statystyk i obejmuje oba zestawy sterowania, urządzenia i blokady edycji. Nowe sygnały ze stron działają po ich odświeżeniu. Otwarta karta nie oznacza, że użytkownik właśnie jej używa. Brak wpisów nie gwarantuje, że nikomu nie przerwiesz pracy.</p>
-        </section>
+
           <div class="mail-controls" style="margin-bottom:12px">
             <button class="btn sm" id="btnStatsRefresh" type="button">Odśwież</button>
           </div>
 
           <div class="stats-grid">
+            <div class="stat-box" id="statActivityBox" role="button" tabindex="0" aria-controls="maintenanceActivity">
+              <div class="stat-label">Aktywność teraz</div>
+              <div class="stat-value" id="statActivityValue">—</div>
+              <div class="stat-sub" id="statActivitySub">Oczekiwanie na dane</div>
+              <div class="stat-sub dim">Pokaż aktywnych użytkowników</div>
+            </div>
+
             <div class="stat-box" data-detail="users">
               <div class="stat-label">Użytkownicy</div>
               <div class="stat-value" id="statUsersTotal">0</div>
@@ -733,6 +728,19 @@
             </div>
           </div>
 
+          <section class="stats-section" id="maintenanceActivity" aria-label="Aktywność teraz">
+            <div class="stats-section-label activity-section-head"><span>Aktywność teraz</span><button class="btn sm" type="button">Odśwież</button></div>
+            <div class="stats-inner-card">
+              <p class="stat-sub" data-activity-summary aria-live="polite">Oczekiwanie na dane…</p>
+              <div class="mail-table-wrap"><table class="mail-table activity-table">
+                <thead><tr><th>Użytkownik</th><th>Aktywność</th><th>Gra / zasób</th><th>Urządzenia / karta</th><th>Ostatni kontakt</th></tr></thead>
+                <tbody data-activity-rows></tbody>
+              </table></div>
+              <p class="field-hint" data-activity-time>Nie sprawdzono jeszcze aktywności.</p>
+              <p class="field-hint">Uwzględnia wspólne wykluczenia. Otwarta karta nie potwierdza wykonywania czynności; nowe sygnały wymagają odświeżenia wcześniej otwartej strony.</p>
+            </div>
+          </section>
+
           <!-- Retencja & Aktywność -->
           <div class="stats-section">
             <div class="stats-section-label">Retencja &amp; Aktywność</div>
@@ -756,6 +764,17 @@
               <div class="stats-inner-label">Nowi użytkownicy — ostatnie 14 dni</div>
               <div id="trendChart" style="display:flex;align-items:flex-end;gap:3px;height:64px"></div>
               <div id="trendLabels" style="display:flex;gap:3px;margin-top:4px"></div>
+            </div>
+            <div class="stats-inner-card" id="activityHistory">
+              <div class="stats-inner-label">Aktywni użytkownicy</div>
+          <div class="activity-chart-controls"><span id="activityChartLabel">Przedział</span>
+            <div class="ui-select active" id="activityChartPeriod">
+              <button class="btn sm ui-select-btn" type="button" aria-labelledby="activityChartLabel activityChartSelected" aria-haspopup="listbox" aria-expanded="false">
+                <span class="ui-select-label" id="activityChartSelected">Godzinowo — 48 godzin</span><span class="ui-select-caret" aria-hidden="true"><i class="ico" data-icon="caret-down"></i></span>
+              </button><div class="ui-select-menu" role="listbox"></div>
+            </div></div>
+          <div data-activity-chart></div>
+          <p class="field-hint">Unikalni użytkownicy z sygnałem otwartej strony w danym przedziale, również z kart w tle. Nie sumuj godzin, aby uzyskać liczbę osób w dniu. Strefa czasu: Warszawa. Historia do 90 dni; dostępna od wdrożenia nowych sygnałów.</p>
             </div>
           </div>
 
