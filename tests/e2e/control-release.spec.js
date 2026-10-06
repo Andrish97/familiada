@@ -65,5 +65,16 @@ for(const [lang,hostLabel,repeatText,outroLimit] of [
   await expect(settings.locator('svg.ico-play')).toBeVisible();
   await expect(settings.locator('svg.ico-stop')).toBeVisible();
   expect(await settings.locator('.m-table').count()).toBe(1);
+  const tableCellStyle=locator=>locator.evaluate(el=>{
+    const css=getComputedStyle(el);
+    return {font:css.fontFamily,size:css.fontSize,color:css.color,lineHeight:css.lineHeight,padding:css.padding,verticalAlign:css.verticalAlign};
+  });
+  const expected=await tableCellStyle(settings.locator('.m-table td').first());
+  await page.locator('button[data-tab="bases"]').click();
+  const bases=page.locator('#tab-bases');
+  await expect(bases.locator('.m-table').first()).toBeVisible();
+  expect(await tableCellStyle(bases.locator('.m-table td').first())).toEqual(expected);
+  expect(await tableCellStyle(bases.locator('.m-table td').nth(1))).toEqual(expected);
+
  });
 }
