@@ -507,6 +507,33 @@ async function attachStatistics(testInfo, label, rows) {
   await testInfo.attach(name, { path, contentType: "application/json" });
 }
 
+test("control2: widoczność zachowanych statystyk w panelu administratora", async ({ page }, testInfo) => {
+  test.skip(process.env.KEEP_STATISTICS_GAMES !== "1", "Only inspect explicitly retained production games.");
+  await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
+  const report = await page.evaluate(async () => {
+    const sb = window.__sbClient;
+    const { data: user, error: authError } = await sb.auth.getUser();
+    if (authError) throw authError;
+    const { data: games, error: gamesError } = await sb.from("games").select("id,name")
+      .eq("owner_id", user.user.id).like("name", "E2E-CONTROL2-%");
+    if (gamesError) throw gamesError;
+    const { data: history, error: historyError } = await sb.rpc("get_stats_detail", { p_type: "gameplay", p_limit: 200 });
+    if (historyError) throw historyError;
+    const names = new Set((games || []).map(game => game.name));
+    return {
+      account: user.user.email,
+      games: games || [],
+      // Return only these owned test games, never unrelated users' history.
+      visibleRows: (history || []).filter(row => names.has(row.game_name)),
+    };
+  });
+  expect(report.games.length).toBeGreaterThanOrEqual(2);
+  const path = testInfo.outputPath("statistics-panel-visibility.json");
+  await require("node:fs/promises").writeFile(path, JSON.stringify(report, null, 2));
+  await testInfo.attach("statistics-panel-visibility.json", { path, contentType: "application/json" });
+  console.log(`[statistics-review] ${report.account}: ${report.games.length} owned games, ${report.visibleRows.length} rows visible in admin history`);
+});
+
 function trackErrors(p, label, bucket) {
   p.on("pageerror", (err) => bucket.push(`${label}: ${err.message}`));
 }
