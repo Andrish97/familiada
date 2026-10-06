@@ -5347,10 +5347,11 @@ const STAT_DETAIL_CONFIG = {
   },
   gameplay: {
     title: "Rozgrywki",
-    cols: ["Gra", "Właściciel", "Kiedy", "Czas trwania", "Rundy", "Wynik rund", "Finał", "Pkt w finale", "Wynik końcowy", "Zwycięzca", "Status"],
+    cols: ["Gra", "Właściciel", "Źródło", "Kiedy", "Czas trwania", "Rundy", "Wynik rund", "Finał", "Pkt w finale", "Wynik końcowy", "Zwycięzca", "Status", "Szczegóły"],
     row: r => [
       r.game_name || "—",
       r.owner || "—",
+      r.effective_status === "legacy" ? "Archiwum" : Number(r.control_version) === 2 ? "Control 2" : "Control 1",
       fmtDate(r.started_at),
       fmtSessionDuration(r),
       r.effective_status === "legacy" ? "—" : (r.rounds_played ?? "—"),
@@ -5360,6 +5361,7 @@ const STAT_DETAIL_CONFIG = {
       (r.team_a_score != null && r.team_b_score != null) ? `${r.team_a_score}:${r.team_b_score}` : "—",
       fmtSessionWinner(r),
       fmtSessionStatus(r),
+      fmtSessionDetails(r),
     ],
   },
   polls: {
@@ -5412,10 +5414,53 @@ function fmtSessionDuration(r) {
 }
 
 function fmtSessionWinner(r) {
-  if (r.winner_team === "A") return "Drużyna A";
-  if (r.winner_team === "B") return "Drużyna B";
+  if (r.winner_team === "A") return r.stats_detail?.teams?.teamA || "Drużyna A";
+  if (r.winner_team === "B") return r.stats_detail?.teams?.teamB || "Drużyna B";
   if (r.effective_status === "final") return "Remis";
   return "—";
+}
+
+// DOM/textContent keeps player-entered names and answers out of HTML parsing.
+function fmtSessionDetails(r) {
+  if (Number(r.control_version) !== 2) return "—";
+  const info = r.stats_detail || {};
+  const details = document.createElement("details");
+  const summary = document.createElement("summary");
+  summary.textContent = "Pokaż przebieg";
+  details.appendChild(summary);
+  function line(text) {
+    const p = document.createElement("p");
+    p.textContent = text;
+    p.style.cssText = "white-space:normal;margin:8px 0;min-width:210px";
+    details.appendChild(p);
+  }
+  const teams = info.teams || {};
+  line(`${teams.teamA || "Drużyna A"} / ${teams.teamB || "Drużyna B"}`);
+  const reasons = { restart: "Rozpoczęto od nowa", final_target: "Osiągnięto próg finału", final_complete: "Ukończono finał", rounds_target: "Osiągnięto próg rund", questions_exhausted: "Wyczerpano pytania" };
+  if (info.end_reason) line(reasons[info.end_reason] || info.end_reason);
+  if (info.resumed_at_install) line("Zapis statystyk rozpoczęty po wznowieniu trwającej gry.");
+  Object.values(info.rounds || {}).sort((a,b) => a.number-b.number).forEach(round => {
+    line(`Runda ${round.number}: ${round.question?.text || "—"}. Bank ${round.bank ?? "—"} × ${round.multiplier ?? "—"}; przyznano ${round.awarded_a}:${round.awarded_b}; wynik ${round.score_a}:${round.score_b}${round.steal?.used ? (round.steal.won ? "; kradzież udana" : "; kradzież nieudana") : ""}.`);
+  });
+  if (info.final) {
+    [1,2].forEach(player => {
+      const mapping = info.final[`mapping${player}`] || [];
+      const entries = info.final[`player${player}`] || [];
+      const sum = mapping.reduce((total,row) => total + (row?.revealedPoints ? Number(row.pts) || 0 : 0),0);
+      line(`Gracz ${player}: ${sum} pkt.`);
+      mapping.forEach((row,i) => {
+        if (!row?.revealedAnswer && !entries[i]?.text && !entries[i]?.repeat) return;
+        line(`${i+1}. ${entries[i]?.repeat || row?.repeat ? "Powtórzenie" : entries[i]?.text || "Brak odpowiedzi"} → ${row?.outText || "—"} (${row?.revealedPoints ? row.pts : "—"} pkt)`);
+      });
+    });
+    line(`Finał: ${info.final.points} / ${info.final.target} pkt.`);
+  }
+  if (info.prize != null) line(`Nagroda: ${Number(info.prize).toLocaleString("pl-PL")}`);
+  (info.events || []).forEach(event => {
+    const labels = { error:"Błąd", disconnect:"Utracono połączenie", reconnect:"Połączenie przywrócone" };
+    line(`${fmtDate(event.at)} — ${labels[event.kind] || event.kind}${event.devices?.length ? ": " + event.devices.map(kind => ({display:"Wyświetlacz",host:"Prowadzący",buzzer:"Przycisk"}[kind] || kind)).join(", ") : ""}${event.message ? ": " + event.message : ""}`);
+  });
+  return details;
 }
 
 const SESSION_STATUS_LABELS = {
@@ -5430,7 +5475,9 @@ const SESSION_STATUS_LABELS = {
 };
 
 function fmtSessionStatus(r) {
-  const [label, kind] = SESSION_STATUS_LABELS[r.effective_status] || [r.effective_status || "—", "off"];
+  const [label, kind] = Number(r.control_version) === 2 && r.effective_status === "abandoned"
+    ? [r.ended_at ? "Przerwana" : "Utracono kontakt", "off"]
+    : SESSION_STATUS_LABELS[r.effective_status] || [r.effective_status || "—", "off"];
   const errCount = Number(r.error_count) || 0;
   const wrap = document.createElement("span");
   wrap.style.cssText = "display:inline-flex;gap:6px;align-items:center";
@@ -5449,6 +5496,7 @@ function fmtSessionStatus(r) {
 }
 
 const FINAL_STEP_LABELS = {
+  finished: "Ukończony",
   final_start: "Rozpoczęty (bez odpowiedzi)",
   p1_q1: "Gracz 1 — pytanie 1 z 5",
   p1_q2: "Gracz 1 — pytanie 2 z 5",

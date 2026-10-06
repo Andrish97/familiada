@@ -101,6 +101,7 @@ import { createActionGate } from "./actionGate.js?v=v2026-10-06T00425";
 import { createDevices } from "./devices.js?v=v2026-10-06T00425";
 import { createPresence } from "./presence.js?v=v2026-10-06T00425";
 import { missingDevices } from "./deviceGate.js?v=v2026-10-06T00425";
+import { createSessionTelemetry } from "./sessionTelemetry.js?v=v2026-10-06T00425";
 import { createSoundReactor } from "./soundReactor.js?v=v2026-10-06T00425";
 import { createUI } from "./ui.js?v=v2026-10-06T00425";
 import { createShareDevice } from "./shareDevice.js?v=v2026-10-06T00425";
@@ -244,6 +245,7 @@ async function main() {
 
   const store = createStore(gameId);
   const expiredTimer = await store.hydrate();
+  const sessionTelemetry = createSessionTelemetry(gameId, () => store.state);
 
   // Tylko przed startem gry (D0-D3) — po "Rozpocznij" te pola żyją już
   // wyłącznie w game_state i nie mają być nadpisywane przy każdym
@@ -480,6 +482,7 @@ async function main() {
       const missing = missingDevices(store.state, flags);
       const overlay = document.getElementById("deviceLostOverlay");
       if (!missing.length) {
+        if (disconnectEpisode) void sessionTelemetry.report({ kind: "reconnect" });
         disconnectEpisode = false;
         overlay?.classList.add("hidden");
       } else {
@@ -487,6 +490,7 @@ async function main() {
         const labels = { display: t("control.deviceDisplay"), host: t("control.deviceHost"), buzzer: t("control.deviceBuzzer") };
         if (text) text.textContent = t("control.deviceLostText", { devices: missing.map((kind) => labels[kind]).join(", ") });
         if (!disconnectEpisode && missing.some((kind) => previous[kind])) {
+          void sessionTelemetry.report({ kind: "disconnect", devices: missing });
           disconnectEpisode = true;
           overlay?.classList.remove("hidden");
           document.getElementById("deviceLostClose")?.focus();
@@ -1042,6 +1046,7 @@ async function main() {
       if (action === "game.dispatch") { await dispatchGated(payload); return; }
     } catch (e) {
       console.error("[control2] akcja nie powiodła się:", action, e);
+      void sessionTelemetry.report({ kind: "error", message: `${action}: ${e.message || e}` });
       alert(`Błąd: ${e.message || e}`);
     }
   }

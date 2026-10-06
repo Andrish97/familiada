@@ -483,6 +483,16 @@ async function deleteGame(page, gameId) {
   }, gameId).catch(() => {});
 }
 
+async function readControl2Sessions(page, gameId) {
+  return page.evaluate(async (gid) => {
+    const { data, error } = await window.__sbClient.from("game_sessions")
+      .select("id,status,ended_at,rounds_played,rounds_score_a,rounds_score_b,team_a_score,team_b_score,final_points,stats_detail")
+      .eq("game_id", gid).eq("control_version", 2).order("started_at");
+    if (error) throw new Error("read production statistics: " + error.message);
+    return data;
+  }, gameId);
+}
+
 function trackErrors(p, label, bucket) {
   p.on("pageerror", (err) => bucket.push(`${label}: ${err.message}`));
 }
@@ -650,9 +660,16 @@ test("control2: pełna runda przez 4 urządzenia + wznowienie Control po przeła
     await expect(page.locator(".c2-stepper")).toContainText("Runda 2", { timeout: 22000 });
 
     // ===== KLUCZOWY MOMENT: przeładowanie Control w środku rundy 2 =====
+    const beforeReload = await readControl2Sessions(page, game.id);
+    expect(beforeReload).toHaveLength(1);
+    expect(beforeReload[0]).toMatchObject({ rounds_played: 1, rounds_score_a: 90 });
     await page.reload({ waitUntil: "domcontentloaded" });
     await expect(page.locator(".c2-stepper")).toContainText("Runda 2", { timeout: 22000 });
     await expect(page.getByText("Alfa: 90")).toBeVisible({ timeout: 10000 });
+    const afterReload = await readControl2Sessions(page, game.id);
+    expect(afterReload).toHaveLength(1);
+    expect(afterReload[0].id).toBe(beforeReload[0].id);
+    expect(afterReload[0].rounds_played).toBe(1);
 
     expect(errors, "żadne z 4 urządzeń nie powinno rzucić błędu JS: " + errors.join(" | ")).toEqual([]);
   } finally {
@@ -885,6 +902,13 @@ test("control2: próg w rundzie -> finał, wczesne zakończenie po 4/5 pytaniach
     // "reset pojedynku...", tam już sprawdzona dla remisu).
     await page.getByRole("button", { name: "Zakończ grę", exact: true }).click();
     await expect(page.getByText("Wygrała drużyna Alfa wynikiem 500:0")).toBeVisible({ timeout: 10000 });
+    const earlyFinalSessions = await readControl2Sessions(page, game.id);
+    expect(earlyFinalSessions).toHaveLength(1);
+    expect(earlyFinalSessions[0]).toMatchObject({ status: "final", rounds_score_a: 300, team_a_score: 500, final_points: 200 });
+    expect(earlyFinalSessions[0].stats_detail.end_reason).toBe("final_target");
+    expect(earlyFinalSessions[0].stats_detail.prize).toBe(26500);
+    expect(earlyFinalSessions[0].stats_detail.final.mapping1.filter(row => row.revealedPoints)).toHaveLength(4);
+    expect(earlyFinalSessions[0].stats_detail.final.mapping2.filter(row => row.revealedPoints)).toHaveLength(0);
     await expect.poll(async () => (await getDisplayCalls(displayPage, "api.win.set")).at(-1)?.args[0], { timeout: 30000 }).toBe(26500);
     const finishBtn = page.getByRole("button", { name: "Wróć do moich gier" });
     await expect(finishBtn).toBeVisible({ timeout: 10000 });
@@ -1031,6 +1055,20 @@ test("control2: \"Zacznij od nowa\" w trakcie gry wraca do D0", async ({ page, b
 
     await expect(page.locator(".stepTitle")).toHaveText("Urządzenia", { timeout: 10000 });
     await expect(displayPage.locator("#blackScreen")).toBeVisible();
+    const restartedSessions = await readControl2Sessions(page, game.id);
+    expect(restartedSessions).toHaveLength(1);
+    expect(restartedSessions[0].status).toBe("abandoned");
+    expect(restartedSessions[0].ended_at).toBeTruthy();
+    expect(restartedSessions[0].stats_detail.end_reason).toBe("restart");
+    await page.getByRole("button", { name: "Dalej", exact: true }).click();
+    await page.getByRole("button", { name: "Gotowe — przejdź do rozgrywki" }).click();
+    // Readiness is not itself a new play.
+    expect(await readControl2Sessions(page, game.id)).toHaveLength(1);
+    await page.getByRole("button", { name: "Rozpocznij grę", exact: true }).click();
+    await expect.poll(async () => (await readControl2Sessions(page, game.id)).length).toBe(2);
+    const newSessions = await readControl2Sessions(page, game.id);
+    expect(newSessions[1].id).not.toBe(restartedSessions[0].id);
+    expect(newSessions[1].ended_at).toBeNull();
   } finally {
     for (const ctx of contexts) await ctx.close().catch(() => {});
     await deleteGame(page, game.id);
@@ -1386,6 +1424,14 @@ test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśni�
     expect(await getSfxKeys(page)).not.toContain("round_transition");
     expect(await getSfxKeys(page)).not.toContain("reveal");
     await expect.poll(async () => (await getDisplayCalls(displayPage, "api.win.set")).at(-1)?.args[0], { timeout: 15000 }).toBe(1305);
+    const finalSessions = await readControl2Sessions(page, game.id);
+    expect(finalSessions).toHaveLength(1);
+    expect(finalSessions[0]).toMatchObject({ status: "final", final_points: 135 });
+    expect(finalSessions[0].team_a_score - finalSessions[0].rounds_score_a).toBe(135);
+    expect(finalSessions[0].stats_detail.final.mapping1).toHaveLength(5);
+    expect(finalSessions[0].stats_detail.final.mapping2).toHaveLength(5);
+    expect(finalSessions[0].stats_detail.end_reason).toBe("final_complete");
+    expect(finalSessions[0].stats_detail.prize).toBe(1305);
     await expect.poll(async () => {
       const calls = await getDisplayCalls(displayPage, "api.indicator.set");
       return calls.at(-1)?.args[0] === "ON_A";
@@ -2554,6 +2600,12 @@ test("control2: koniec gry bez finału w trybie \"punkty\" — Wyświetlacz poka
     await clearDisplayLog(displayPage);
     await page.getByRole("button", { name: "Zakończ grę" }).click();
     await expect(page.getByText("Wygrała drużyna Alfa wynikiem 90:0")).toBeVisible({ timeout: 10000 });
+    const completedSessions = await readControl2Sessions(page, game.id);
+    expect(completedSessions).toHaveLength(1);
+    expect(completedSessions[0]).toMatchObject({ status: "final", rounds_played: 1, rounds_score_a: 90, rounds_score_b: 0, team_a_score: 90, final_points: null });
+    expect(completedSessions[0].ended_at).toBeTruthy();
+    expect(completedSessions[0].stats_detail.end_reason).toBe("questions_exhausted");
+    expect(completedSessions[0].stats_detail.rounds["1"].awarded_a).toBe(90);
 
     // Outro does not repeat the result animation.
     expect(await getDisplayCalls(displayPage, "api.win.set")).toEqual([]);
