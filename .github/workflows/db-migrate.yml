@@ -12,7 +12,30 @@ on:
   workflow_dispatch: {}
 
 jobs:
+  verify-control2-statistics:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: test-only-password
+          POSTGRES_DB: statistics_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check additive migration and statistics lifecycle in isolated database
+        env:
+          PGPASSWORD: test-only-password
+        run: psql -h localhost -U postgres -d statistics_test -v ON_ERROR_STOP=1 -f tests/sql/control2-sessions.sql
   migrate:
+    needs: verify-control2-statistics
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
