@@ -1901,6 +1901,7 @@ function makeLogoLockScenario() {
   };
 }
 SCENARIOS.push(makeLogoLockScenario());
+SCENARIOS.sort((a, b) => a.file.localeCompare(b.file));
 
 // Zrzut diagnostyczny na wypadek błędu scenariusza — video samo w sobie nie
 // jest dostępne z poziomu tej sesji do wglądu (artefakt CI, nie plik lokalny

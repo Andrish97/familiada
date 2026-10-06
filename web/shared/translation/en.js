@@ -1189,7 +1189,7 @@ const en = {
       <h3 class="m-h3">Adding a new base</h3>
   
       <p class="m-p">
-        In the “Question bases” view click the <span class="m-strong">New base</span> tile.
+        In the “Question bases” view click the <span class="m-code"><i class="ico" data-icon="plus"></i> New base</span> tile.
         A window will open where you enter the base name.
       </p>
   
@@ -1205,7 +1205,7 @@ const en = {
       </p>
   
       <ul class="m-ul">
-        <li><span class="m-strong">Edit</span> — the user can add, delete, and modify questions, folders, tags, create games from questions, and export questions to a base</li>
+        <li><span class="m-code">Edit</span> — the user can add, delete, and modify questions, folders, tags, create games from questions, and export questions to a base</li>
         <li><span class="m-strong">View</span> — the user can only browse the base and create games from available questions</li>
       </ul>
   
@@ -1717,73 +1717,73 @@ const en = {
         whether that user exists. If not, a message is shown.
         For email, invitations can also be sent to non-registered people as an email message.
       </p>`,
-      logo: `<p class=”m-p”>
+      logo: `<p class="m-p">
         The system lets you set your own logo that appears on the display
         (during the start or end of the game). You can access the logo creator from the top bar of the “My games” page
-        using the <span class=”m-code”>Logo <i class="ico" data-icon="display"></i></span> button.
+        using the <span class="m-code">Logo <i class="ico" data-icon="display"></i></span> button.
       </p>
 
-      <div class=”m-note”>
+      <div class="m-note">
         <b>Important:</b><br/>
-        The logo has a technical size of <span class=”m-code”>30×10</span> (character tiles) or <span class=”m-code”>150×70</span> (pixels).
+        The logo has a technical size of <span class="m-code">30×10</span> (character tiles) or <span class="m-code">150×70</span> (pixels).
         This limitation comes from the physical layout of the board and ensures readability live.
       </div>
 
-      <h3 class=”m-h2”>Creating and editing a logo</h3>
+      <h3 class="m-h2">Creating and editing a logo</h3>
 
-      <p class=”m-p”>
-        You create a new logo by clicking the tile with the <i class="ico" data-icon="plus"></i> symbol. You can save the logo under your own name. After creating it, to start editing, select the tile and click the <span class=”m-code”>Edit</span> button. The editor for that logo type will open. You can save your work and always come back to edit.
+      <p class="m-p">
+        You create a new logo by clicking the tile with the <i class="ico" data-icon="plus"></i> symbol. You can save the logo under your own name. After creating it, to start editing, select the tile and click the <span class="m-code">Edit</span> button. The editor for that logo type will open. You can save your work and always come back to edit.
       </p>
 
-      <p class=”m-p”>
+      <p class="m-p">
         All logos you create will be available in the Control Panel, and you can choose which one to use in a given game.
       </p>
 
-      <h3 class=”m-h3”>Logo creation modes</h3>
+      <h3 class="m-h3">Logo creation modes</h3>
 
-      <p class=”m-p”>
+      <p class="m-p">
         When creating a new logo you choose one of the modes.
         Each mode leads to the same result (a logo on the display),
         but differs in how it is created.
       </p>
 
-      <ul class=”m-ul”>
+      <ul class="m-ul">
         <li>
-          <span class=”m-strong”>Text</span> — a classic logo made of characters (the “Familiada” style).
+          <span class="m-strong">Text</span> — a classic logo made of characters (the “Familiada” style).
           Good when you want a quick, readable title.
         </li>
         <li>
-          <span class=”m-strong”>Drawing</span> — draw by hand on a grid (like a simple graphics editor).
+          <span class="m-strong">Drawing</span> — draw by hand on a grid (like a simple graphics editor).
           Good for icons and simple shapes.
         </li>
         <li>
-          <span class=”m-strong”>Image</span> — import an image and fit it to the board.
+          <span class="m-strong">Image</span> — import an image and fit it to the board.
           Good when you already have a ready logo, e.g. a company logo.
         </li>
       </ul>
 
-      <h3 class=”m-h3”>Display preview</h3>
+      <h3 class="m-h3">Display preview</h3>
 
-      <p class=”m-p”>
+      <p class="m-p">
         In the editor you always see a preview “as on the board.”
         This is important because what looks good in high resolution
-        may be unreadable when reduced to <span class=”m-code”>150×70</span>.
+        may be unreadable when reduced to <span class="m-code">150×70</span>.
       </p>
 
-      <div class=”m-note”>
+      <div class="m-note">
         <b>Practical tip:</b><br/>
         Thick shapes, large letters, and high contrast work best.
         Thin lines, small details, and subtle gradients usually disappear.
       </div>
 
-      <h3 class=”m-h3”>Logo import and export</h3>
+      <h3 class="m-h3">Logo import and export</h3>
 
-      <p class=”m-p”>
+      <p class="m-p">
         The editor allows exporting the active logo to a file and importing a logo from a file.
         This lets you move logos between accounts or make backups.
       </p>
 
-      <div class=”m-warn”>
+      <div class="m-warn">
         <b>Warning:</b><br/>
         Do not edit logo files manually. This is a technical format — manual changes may cause
         the import to fail or the logo to work incorrectly.
@@ -1842,7 +1842,7 @@ const en = {
       <div class="m-note">
         <b>Tip:</b><br/>
         For the best experience with Buzzer and Host, we recommend installing the Familiada.online web app.
-        On your phone go to <span class="m-strong">My games</span> and click the download button — you'll get instructions on how to install it.
+        On your phone go to <span class="m-strong">My games</span> and click the <span class="m-code"><i class="ico" data-icon="download"></i></span> button — you'll get instructions on how to install it.
       </div>`,
       control: `<p class="m-p">
         You reach the Control Panel from the “My games” list
@@ -1921,95 +1921,95 @@ const en = {
         The operator starts by making sure all are online.
       </p>
     
-      <h3 class=”m-h3”>Step 1: Display</h3>
+      <h3 class="m-h3">Step 1: Display</h3>
 
-      <p class=”m-p”>
-        In this step the panel shows a <span class=”m-strong”>6-digit code</span> and QR code for the display.
+      <p class="m-p">
+        In this step the panel shows a <span class="m-strong">6-digit code</span> and QR code for the display.
         It’s best to open the display on a TV or projector,
         in full-screen mode (no browser bars).
         Only when the display is online will the panel allow you to proceed.
       </p>
 
-      <p class=”m-p”>
-        <span class=”m-strong”>”Black screen”</span> — if after loading the display you see leftovers from a previous game,
+      <p class="m-p">
+        <span class="m-strong">”Black screen”</span> — if after loading the display you see leftovers from a previous game,
         use this button to restore a black screen while you finish setting up.
       </p>
 
-      <div class=”m-note”>
+      <div class="m-note">
         <b>How to show the board on a second screen?</b><br/>
         For the best result use extended display mode.
-        On <span class=”m-strong”>Windows</span> press <span class=”m-code”>Win + P</span>,
-        on <span class=”m-strong”>Mac</span> use <span class=”m-code”>⌘ F1</span> (sometimes also <span class=”m-code”>Fn</span>).<br/><br/>
+        On <span class="m-strong">Windows</span> press <span class="m-code">Win + P</span>,
+        on <span class="m-strong">Mac</span> use <span class="m-code">⌘ F1</span> (sometimes also <span class="m-code">Fn</span>).<br/><br/>
         Then open the board in a new browser window, drag it to the second screen (TV or monitor) and enable full-screen mode.
         This lets you control the game on your device while displaying content for others.
       </div>
 
-      <h3 class=”m-h3”>Step 2: Host and buzzer</h3>
+      <h3 class="m-h3">Step 2: Host and buzzer</h3>
 
-      <p class=”m-p”>
+      <p class="m-p">
         In the second step you connect the host device and the buzzer device.
         The panel shows a 6-digit code and QR code for each.
         In practice it’s best to use two separate phones or a phone and a tablet.
       </p>
 
-      <p class=”m-p”>
-        In this step there is an option <span class=”m-strong”>”QR on display”</span> —
+      <p class="m-p">
+        In this step there is an option <span class="m-code">QR on display</span> —
         after using it the QR codes can be shown on the large screen,
         so the crew can quickly scan them with phones.
         This speeds up the start on set because there is no need to type links manually.
       </p>
 
-      <p class=”m-p”>
-        Via the <span class=”m-strong”>”Share”</span> option — you can quickly send someone a link by email or share with your subscribers.
-        Shared devices will appear in their account (registered users only) in the <span class=”m-code”>Connect device <i class="ico" data-icon="phone"></i></span> panel.
+      <p class="m-p">
+        Via the <span class="m-code">Share</span> option — you can quickly send someone a link by email or share with your subscribers.
+        Shared devices will appear in their account (registered users only) in the <span class="m-code">Connect device <i class="ico" data-icon="phone"></i></span> panel.
         Non-registered users will simply receive an email with the link.
       </p>
 
-      <div class=”m-note”>
+      <div class="m-note">
         <b>How to conveniently connect a device?</b><br/>
-        Easiest way: go to <span class=”m-code”>familiada.online</span>, click <span class=”m-code”>Connect device <i class="ico" data-icon="phone"></i></span>
-        in the top bar and enter the <span class=”m-strong”>6-digit code</span> shown next to the device in the operator panel.<br/><br/>
-        Alternatively: on a mobile device you can scan the <span class=”m-strong”>QR code</span> visible in the panel.
-        For the best experience we recommend installing the web app — go to <span class=”m-strong”>My games</span>
-        and click the download button for installation instructions.
+        Easiest way: go to <span class="m-code">familiada.online</span>, click <span class="m-code">Connect device <i class="ico" data-icon="phone"></i></span>
+        in the top bar and enter the <span class="m-strong">6-digit code</span> shown next to the device in the operator panel.<br/><br/>
+        Alternatively: on a mobile device you can scan the <span class="m-strong">QR code</span> visible in the panel.
+        For the best experience we recommend installing the web app — go to <span class="m-strong">My games</span>
+        and click the <span class="m-code"><i class="ico" data-icon="download"></i></span> button for installation instructions.
       </div>
 
-      <h3 class=”m-h3”>Mode without host tablet</h3>
+      <h3 class="m-h3">Mode without host tablet</h3>
 
-      <p class=”m-p”>
+      <p class="m-p">
         If the host is not using a separate device (phone/tablet), check the option
-        <span class=”m-strong”>”Don't use host tablet”</span> next to the Host device.
+        <span class="m-strong">”Don't use host tablet”</span> next to the Host device.
         Once checked: the host device buttons and connection code are grayed out,
         the host device is not required to proceed,
         and the host status dot in the top bar becomes inactive.
         The operator can run the game entirely from the control panel.
       </p>
 
-      <h3 class=”m-h3”>Physical buzzer</h3>
+      <h3 class="m-h3">Physical buzzer</h3>
 
-      <p class=”m-p”>
+      <p class="m-p">
         If you use a physical buzzer instead of the browser-based button,
-        check the option <span class=”m-strong”>”Physical buzzer”</span> next to the Buzzer device.
+        check the option <span class="m-strong">”Physical buzzer”</span> next to the Buzzer device.
         Once checked: the buzzer device is not required,
         and the duel flow changes — the operator decides who pressed first.
       </p>
 
-      <p class=”m-p”>Physical buzzer duel flow:</p>
+      <p class="m-p">Physical buzzer duel flow:</p>
 
-      <ol class=”m-ul”>
-        <li>After starting a duel, two buttons appear: <span class=”m-code”>Team A</span> and <span class=”m-code”>Team B</span>.</li>
+      <ol class="m-ul">
+        <li>After starting a duel, two buttons appear: <span class="m-code">Team A</span> and <span class="m-code">Team B</span>.</li>
         <li>The operator clicks the team that pressed the physical buzzer first — the button highlights.</li>
-        <li>The operator clicks <span class=”m-code”>Confirm</span> to confirm the selection and proceed.</li>
+        <li>The operator clicks <span class="m-code">Confirm</span> to confirm the selection and proceed.</li>
       </ol>
 
-      <div class=”m-warn”>
+      <div class="m-warn">
         <b>Warning:</b><br/>
         If any device disconnects during the game, the panel can show a warning.
         Most often it helps to disable battery saving, avoid minimizing the browser,
         and keep devices on one stable Wi-Fi network.
       </div>
 
-      <h3 class=”m-h3”>Step 3: Sound</h3>
+      <h3 class="m-h3">Step 3: Sound</h3>
     
       <p class="m-p">
         Browsers block automatic sound playback
@@ -2018,61 +2018,61 @@ const en = {
         Without it you may not hear signals that help keep the game pace.
       </p>
     
-      <h3 class=”m-h2”>2) Settings</h3>
+      <h3 class="m-h2">2) Settings</h3>
 
-      <p class=”m-p”>
-        When devices are online, you move on to the settings summary. All options (colors, sound, game parameters) can be configured in advance on the <span class=”m-strong”>Game Settings</span> page — the Control Panel will load them automatically.
+      <p class="m-p">
+        When devices are online, you move on to the settings summary. All options (colors, sound, game parameters) can be configured in advance on the <span class="m-code">Game Settings</span> page — the Control Panel will load them automatically.
       </p>
 
-      <h3 class=”m-h3”>Team names</h3>
+      <h3 class="m-h3">Team names</h3>
 
-      <p class=”m-p”>
-        These are the labels visible on the display, on the host’s device, and in the results. If you leave the <span class=”m-strong”>Game Settings</span> blank, the default values will be loaded: <span class=”m-strong”>Team A</span> and <span class=”m-strong”>Team B</span>.
+      <p class="m-p">
+        These are the labels visible on the display, on the host’s device, and in the results. If you leave the <span class="m-code">Game Settings</span> blank, the default values will be loaded: <span class="m-strong">Team A</span> and <span class="m-strong">Team B</span>.
       </p>
 
-      <h3 class=”m-h3”>Appearance</h3>
+      <h3 class="m-h3">Appearance</h3>
 
-      <ul class=”m-ul”>
-        <li><span class=”m-strong”>Colors</span> — team colors, background, and dots.</li>
-        <li><span class=”m-strong”>Theme</span> — the visual style of the board.</li>
-        <li><span class=”m-strong”>Logo</span> — the logo displayed during gameplay.</li>
+      <ul class="m-ul">
+        <li><span class="m-strong">Colors</span> — team colors, background, and dots.</li>
+        <li><span class="m-strong">Theme</span> — the visual style of the board.</li>
+        <li><span class="m-strong">Logo</span> — the logo displayed during gameplay.</li>
       </ul>
 
-      <h3 class=”m-h3”>Sound</h3>
+      <h3 class="m-h3">Sound</h3>
 
-      <ul class=”m-ul”>
-        <li>For each sound category you see the current <span class=”m-strong”>variant</span> (e.g. Classic or the name of a custom file).</li>
-        <li>The <span class=”m-strong”>volume</span> slider lets you adjust the level of each sound.</li>
-        <li>The <span class=”m-strong”>▶</span> button lets you preview the sound before gameplay.</li>
+      <ul class="m-ul">
+        <li>For each sound category you see the current <span class="m-strong">variant</span> (e.g. Classic or the name of a custom file).</li>
+        <li>The <span class="m-strong">volume</span> slider lets you adjust the level of each sound.</li>
+        <li>The <span class="m-code"><i class="ico" data-icon="play"></i></span> button lets you preview the sound before gameplay.</li>
       </ul>
 
-      <div class=”m-note”>
-        If you change the volume level here, it will only be changed for this specific game session. When you start a new game session, the values set in <span class=”m-strong”>Game Settings</span> will be loaded.
+      <div class="m-note">
+        If you change the volume level here, it will only be changed for this specific game session. When you start a new game session, the values set in <span class="m-code">Game Settings</span> will be loaded.
       </div>
 
-      <h3 class=”m-h3”>Final</h3>
+      <h3 class="m-h3">Final</h3>
 
-      <p class=”m-p”>Here you will only see confirmation of whether the game has a final.</p>
+      <p class="m-p">Here you will only see confirmation of whether the game has a final.</p>
 
-      <p class=”m-p”>
-        If the final is enabled and <span class=”m-strong”>Manual</span> mode was selected — here you will see the 5 final questions you chose. With <span class=”m-strong”>Random</span> mode you will see the randomly drawn final questions.
+      <p class="m-p">
+        If the final is enabled and <span class="m-strong">Manual</span> mode was selected — here you will see the 5 final questions you chose. With <span class="m-strong">Random</span> mode you will see the randomly drawn final questions.
       </p>
 
-      <h3 class=”m-h3”>Rounds: question order</h3>
+      <h3 class="m-h3">Rounds: question order</h3>
 
-      <p class=”m-p”>
-        If <span class=”m-strong”>Order</span> mode was selected for round questions — here you will see the order of questions that will be used during the main rounds. With <span class=”m-strong”>Random</span> mode you will see the randomly drawn round questions.
+      <p class="m-p">
+        If <span class="m-strong">Order</span> mode was selected for round questions — here you will see the order of questions that will be used during the main rounds. With <span class="m-strong">Random</span> mode you will see the randomly drawn round questions.
       </p>
 
-      <div class=”m-note”>
-        You can always press the <span class=”m-strong”>Change settings</span> button, which will open the settings window — see the <span class=”m-strong”>Game Settings</span> tab for details.
+      <div class="m-note">
+        You can always press the <span class="m-code">Change settings</span> button, which will open the settings window — see the <span class="m-code">Game Settings</span> tab for details.
       </div>
 
-      <p class=”m-p”>
-        When everything looks good — click <span class=”m-strong”>Done — start the game</span>.
+      <p class="m-p">
+        When everything looks good — click <span class="m-code">Done — start the game</span>.
       </p>
 
-      <h3 class=”m-h2”>3) Rounds — gameplay step by step</h3>
+      <h3 class="m-h2">3) Rounds — gameplay step by step</h3>
     
       <p class="m-p">
         In rounds you conduct the main gameplay: questions, answers, points, and the round bank.
@@ -2304,7 +2304,7 @@ const en = {
 
       <p class="m-p">
         Click a game card to see details: the full list of questions and answers.
-        If the game suits you, click <span class="m-strong">Add to library</span>.
+        If the game suits you, click <span class="m-code">Add to library</span>.
         The game will appear in the <span class="m-strong">Community Games</span>
         tab in your My games view.
       </p>
@@ -2313,7 +2313,7 @@ const en = {
 
       <p class="m-p">
         In <b>My Games</b>, go to the <span class="m-strong">Community Games</span> tab,
-        select a game and click <span class="m-strong">Play</span>. The control panel will open shortly and you can start the game.</p>
+        select a game and click <span class="m-code">Play</span>. The control panel will open shortly and you can start the game.</p>
 
       <div class="m-warn">
         Playing does not modify the original or anyone else's data.
@@ -2321,9 +2321,9 @@ const en = {
 
       <p class="m-p">
         If you have a game you want to share with the community, click
-        <span class="m-strong">My submitted</span> on the Community Games page.
+        <span class="m-code">My submissions</span> on the Community Games page.
         Here you can see all games submitted by you. Press
-        <span class="m-strong">Submit a new game to Community Games</span>,
+        <span class="m-code">Submit a new game</span>,
         select a game, provide a title, write a description and choose a language.
       </p>
 
@@ -2374,7 +2374,7 @@ const en = {
       </p>
 
       <p class="m-p">
-        You can open it from the <span class="m-strong">My Games</span> page using the <span class="m-strong">Game Settings</span> button next to the selected game.
+        You can open it from the <span class="m-strong">My Games</span> page using the <span class="m-code">Game Settings</span> button next to the selected game.
       </p>
 
       <h3 class="m-h2">Teams</h3>
@@ -2414,7 +2414,7 @@ const en = {
       </p>
 
       <div class="m-note">
-        The <span class="m-strong">Restore Defaults</span> button in the Appearance section resets colors, theme, and logo to their default values.
+        The <span class="m-code">Restore defaults</span> button in the Appearance section resets colors, theme, and logo to their default values.
       </div>
 
       <h3 class="m-h2">Sound</h3>
@@ -2429,17 +2429,17 @@ const en = {
 
       <ul class="m-ul">
         <li>Predefined variants are available (e.g. <span class="m-strong">Classic</span>)</li>
-        <li>The <span class="m-strong">Custom</span> option lets you load your own audio file (MP3, WAV, OGG) — after selecting it, a <span class="m-strong">Choose file</span> button appears</li>
+        <li>The <span class="m-strong">Custom</span> option lets you load your own audio file (MP3, WAV, OGG) — after selecting it, a <span class="m-code">Choose file</span> button appears</li>
       </ul>
 
       <h3 class="m-h3">Custom Audio File</h3>
 
       <p class="m-p">
-        After clicking <span class="m-strong">Choose file</span> you select a file from your disk. A label with the file name appears in the table next to that category.
+        After clicking <span class="m-code">Choose file</span> you select a file from your disk. A label with the file name appears in the table next to that category.
       </p>
 
       <p class="m-p">
-        To remove a custom file, use the <span class="m-strong">X</span> button next to the file.
+        To remove a custom file, use the <span class="m-code"><i class="ico" data-icon="trash"></i></span> button next to the file.
         If you want to go back to a predefined variant — change the variant to something other than <span class="m-strong">Custom</span>.
       </p>
 
@@ -2453,14 +2453,14 @@ const en = {
         Each category has a volume slider (0–100%). Changes are saved and loaded automatically with each game session.
       </p>
 
-      <h3 class="m-h3">Play Button (<i class="ico" data-icon="play"></i>)</h3>
+      <h3 class="m-h3">Play Button (<span class="m-code"><i class="ico" data-icon="play"></i></span>)</h3>
 
       <p class="m-p">
-        Next to each category there is a small play button. Click it to hear the selected sound at the set volume. Clicking again (<i class="ico" data-icon="stop"></i>) stops playback.
+        Next to each category there is a small play button. Click it to hear the selected sound at the set volume. Clicking again (<span class="m-code"><i class="ico" data-icon="stop"></i></span>) stops playback.
       </p>
 
       <div class="m-note">
-        The <span class="m-strong">Restore Defaults</span> button in the Sound section resets all variants to <span class="m-strong">Classic</span>, volumes to <span class="m-strong">100%</span>, and removes all custom audio files (from the cloud and locally).<br><b>This operation is irreversible — files must be uploaded again.</b>
+        The <span class="m-code">Restore defaults</span> button in the Sound section resets all variants to <span class="m-strong">Classic</span>, volumes to <span class="m-strong">100%</span>, and removes all custom audio files (from the cloud and locally).<br><b>This operation is irreversible — files must be uploaded again.</b>
       </div>
 
       <h3 class="m-h2">Questions</h3>
@@ -2513,13 +2513,13 @@ const en = {
       <h3 class="m-h3">Save Settings</h3>
 
       <p class="m-p">
-        Changes are saved after clicking <span class="m-strong">Save all</span>. There is no auto-save on change — remember to click the button before leaving.
+        Changes are saved after clicking <span class="m-code">Save all</span>. There is no auto-save on change — remember to click the button before leaving.
       </p>
 
       <h3 class="m-h3">Restore Defaults</h3>
 
       <p class="m-p">
-        The <span class="m-strong">Restore Defaults</span> button at the top of the page resets all settings to their default values.
+        The <span class="m-code">Restore defaults</span> button at the top of the page resets all settings to their default values.
       </p>
 
       <div class="m-warn">
@@ -2569,14 +2569,14 @@ const en = {
       </p>
 
       <p class="m-p">
-        In this step there is an option <span class="m-strong">"QR on display"</span> —
+        In this step there is an option <span class="m-code">QR on display</span> —
         after using it the QR codes can be shown on the large screen,
         so the crew can quickly scan them with phones.
         This speeds up the start on set because there is no need to type links manually.
       </p>
 
       <p class="m-p">
-        Via the <span class="m-strong">"Share"</span> option — you can quickly send someone a link by email or share with your subscribers.
+        Via the <span class="m-code">Share</span> option — you can quickly send someone a link by email or share with your subscribers.
         Shared devices will appear in their account (registered users only) in the <span class="m-code">Connect device <i class="ico" data-icon="phone"></i></span> panel.
         Non-registered users will simply receive an email with the link.
       </p>
@@ -2587,7 +2587,7 @@ const en = {
         in the top bar and enter the <span class="m-strong">6-digit code</span> shown next to the device in the operator panel.<br/><br/>
         Alternatively: on a mobile device you can scan the <span class="m-strong">QR code</span> visible in the panel.
         For the best experience we recommend installing the web app — go to <span class="m-strong">My games</span>
-        and click the download button for installation instructions.
+        and click the <span class="m-code"><i class="ico" data-icon="download"></i></span> button for installation instructions.
       </div>
 
       <h3 class="m-h3">Mode without host tablet</h3>
