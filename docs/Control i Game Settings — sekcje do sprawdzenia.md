@@ -207,7 +207,7 @@ Zgodnie z ustaleniami rozgrywki, po uzyskaniu kontroli drużyna może też zdecy
 
 **Skrót:** P zaznacza oddanie kontroli, Enter je zatwierdza.
 
-**Prowadzący:** Podpowiedź o możliwości oddania kontroli jest czerwona i podkreślona. Powrót do pustego pytania oznaczonego jako Powtórzenie zachowuje znacznik. Wpisanie nowej odpowiedzi usuwa go automatycznie.
+**Prowadzący:** Podpowiedź o możliwości oddania kontroli jest czerwona i podkreślona.
 
 #### Rozgrywka pytania: odsłanianie odpowiedzi i bank
 
@@ -251,7 +251,7 @@ Po odsłonięciu pozostałych odpowiedzi użyj przycisku wskazującego następn�
 
 Po każdej rundzie system aktualizuje wynik drużyn i sprawdza, czy spełniono warunek zakończenia rozgrywki (ustawiony w „Dodatkowych ustawieniach"). Najczęściej jest to próg punktów, np. **300**, ale może być inny — zależnie od tego, jak chcesz poprowadzić turniej.
 
-Jeśli finał jest **włączony**, a warunek zakończenia rund został spełniony, rozgrywka przechodzi do finału. Jeśli finał jest **wyłączony**, rozgrywka kończy się po rundach i system przechodzi do ekranu zakończenia (logo/punkty/kwota — zgodnie z ustawieniami).
+Jeśli finał jest **włączony**, a próg rund został osiągnięty, przycisk dalszego przejścia prowadzi do finału. Przy zakończeniu bez finału wybierz `Przejdź do zakończenia gry`, aby rozliczyć bank i pokazać ekran końcowy. Samo osiągnięcie progu nie pokazuje wyniku automatycznie; pozostałe działania rundy są zablokowane, a brakujących odpowiedzi nie odsłaniasz.
 
 Jeśli pytania do rund się wyczerpią przed osiągnięciem progu punktów, rozgrywka przechodzi do zakończenia gry. Sam brak pytań nie kwalifikuje do finału. Finał wymaga osiągnięcia progu i włączenia go w ustawieniach.
 
@@ -327,7 +327,7 @@ Druga część zawiera:
 
 **Kolory w finale opisują dopasowanie, a nie etap animacji na Wyświetlaczu.** Zielone „z listy” nie oznacza samo w sobie, że publiczność już zobaczyła odpowiedź lub punkty. Rozróżniaj tekst wpisany przez operatora od wybranej odpowiedzi z bazy: mogą mieć inne brzmienie, np. wpis „na rowerze” dopasowany do „Rower (24)”.
 
-W dopasowaniu **1–6** wybiera odpowiedź z listy, **W** wpisaną odpowiedź, **O** brak odpowiedzi, a **R** powtórzenie. Zaznaczanie odbywa się od razu jednym kliknięciem lub skrótem. Pierwszy Enter odsłania odpowiedź, a następny punkty po zakończeniu przejścia. Brak odpowiedzi i powtórzenie automatycznie pokazują zero. **N i Enter** przechodzą do kolejnego pytania. Przy odsłanianiu myszą obowiązuje zaznaczenie i potwierdzenie drugim kliknięciem.
+W dopasowaniu gracza 1 **1–6** wybiera odpowiedź z listy, **W** wpisaną odpowiedź, a **O** brak odpowiedzi. Przy graczu 2 dochodzi **R** — powtórzenie. Zaznaczanie odbywa się od razu jednym kliknięciem lub skrótem. Pierwszy Enter odsłania odpowiedź, a następny punkty po zakończeniu przejścia. Brak odpowiedzi i powtórzenie automatycznie pokazują zero. **N i Enter** przechodzą do kolejnego pytania. Przy odsłanianiu myszą obowiązuje zaznaczenie i potwierdzenie drugim kliknięciem.
 
 #### Gracz 2 — przygotowanie i wpisywanie
 
@@ -335,19 +335,19 @@ Jeżeli nie osiągnięto progu, po piątym pytaniu gracza 1 przejdź do przygoto
 
 `Rozpocznij 2 rundę` przywraca odkryte odpowiedzi gracza 1 na Wyświetlaczu. Drugi zawodnik odwraca się od tablicy, aby ich nie widzieć. Operator widzi je przy polach odpowiedzi, co pomaga rozpoznać powtórzenie. Zegar ma **20 sekund** i uruchamiasz go tak samo jak przy graczu 1. Prowadzący widzi tytuł „FINAŁ RUNDA 2”, odliczanie po uruchomieniu zegara i pięć pytań ze statusami wpisów.
 
-Gdy gracz powtórzy odpowiedź pierwszego zawodnika, oznacz `Powtórzenie` i poproś o inną odpowiedź. Każde kliknięcie odtwarza dźwięk powtórzenia, również gdy oznaczenie jest już włączone. Ponowne kliknięcie nie usuwa oznaczenia. Dopóki pozostaje czas, prowadzący może ponownie czytać pominięte pytania, także te z powtórzeniem. Gracz może się poprawić. Wpisanie nowej treści automatycznie usuwa oznaczenie powtórzenia; samo ustawienie kursora tego nie robi.
+Gdy gracz powtórzy odpowiedź pierwszego zawodnika, jednym kliknięciem oznacz `Powtórzenie` i poproś o inną odpowiedź. Każde kliknięcie odtwarza dźwięk powtórzenia, również gdy oznaczenie jest już włączone. Ponowne kliknięcie nie usuwa oznaczenia. Dopóki pozostaje czas, prowadzący może ponownie czytać pominięte pytania, także te z powtórzeniem. Gracz może się poprawić. Wpisanie nowej treści automatycznie usuwa oznaczenie powtórzenia; samo ustawienie kursora tego nie robi.
 
 **Wskazówka:** Pytania można czytać w kolejnych obiegach do końca czasu. `Dalej` wypowiedziane przez zawodnika nie zamyka pytania na resztę rundy.
 
-**Skróty:** Ctrl+Enter (⌘+Enter na Macu) uruchamia lub zatrzymuje timer. ↑ / ↓ / Enter przechodzą tylko między pustymi polami; poprawienie uzupełnionego wymaga kliknięcia. Shift+Enter w pustym polu zaznacza lub zdejmuje Powtórzenie.
+**Skróty:** Ctrl+Enter (⌘+Enter na Macu) uruchamia lub zatrzymuje timer. ↑ / ↓ / Enter przechodzą tylko między pustymi polami; poprawienie uzupełnionego wymaga kliknięcia. Shift+Enter w pustym polu drugiego gracza oznacza Powtórzenie i odtwarza jego dźwięk. Kolejne naciśnięcie odtwarza dźwięk ponownie; oznaczenie usuwa wyłącznie wpisanie tekstu.
 
 #### Gracz 2 — dopasowanie i odsłanianie
 
-Po wpisywaniu dopasuj i odsłoń odpowiedzi drugiego gracza tak samo jak pierwszego. W panelu i na tablecie Prowadzącego „Gracz 1” wskazuje wcześniejszą wybraną odpowiedź, a „Wprowadzono” — obecny wpis operatora. Nie muszą mieć identycznego brzmienia. Powtórzenie nie daje punktów. Punkty obu graczy trafiają do tej samej sumy na górze Wyświetlacza.
+Po wpisywaniu dopasuj i odsłoń odpowiedzi drugiego gracza tak samo jak pierwszego. W panelu i na tablecie Prowadzącego „Gracz 1” wskazuje wcześniejszą wybraną odpowiedź, a „Wprowadzono” — obecny wpis operatora. Nie muszą mieć identycznego brzmienia. W dopasowaniu `Powtórzenie` jest tylko oznaczeniem odpowiedzi: jego wybór nie odtwarza dźwięku powtórzenia. Przy odsłanianiu działa jak brak odpowiedzi — automatycznie pokazuje zero i odtwarza dźwięk błędnej odpowiedzi. Punkty obu graczy trafiają do tej samej sumy na górze Wyświetlacza.
 
 **Ważne:** Wyświetlacz mieści 17 znaków odpowiedzi w rundach i 11 w finale, razem ze spacjami. Dłuższy tekst jest skracany tylko na planszy; pełny pozostaje w panelu i na tablecie Prowadzącego. Kropka oznacza urwane słowo. Jeśli następny znak to spacja lub interpunkcja, kropka nie jest dodawana. Przy urwaniu słowa usuwa się dodatkowo do dwóch końcowych samogłosek przed kropką. Dotyczy to odpowiedzi polskich, angielskich i ukraińskich; kropka mieści się w limicie znaków.
 
-W dopasowaniu **1–6** wybiera odpowiedź z listy, **W** wpisaną odpowiedź, **O** brak odpowiedzi, a **R** powtórzenie. Zaznaczanie odbywa się od razu jednym kliknięciem lub skrótem. Pierwszy Enter odsłania odpowiedź, a następny punkty po zakończeniu przejścia. Brak odpowiedzi i powtórzenie automatycznie pokazują zero. **N i Enter** przechodzą do kolejnego pytania. Przy odsłanianiu myszą obowiązuje zaznaczenie i potwierdzenie drugim kliknięciem.
+W dopasowaniu gracza 1 **1–6** wybiera odpowiedź z listy, **W** wpisaną odpowiedź, a **O** brak odpowiedzi. Przy graczu 2 dochodzi **R** — powtórzenie. Zaznaczanie odbywa się od razu jednym kliknięciem lub skrótem. Pierwszy Enter odsłania odpowiedź, a następny punkty po zakończeniu przejścia. Brak odpowiedzi i powtórzenie automatycznie pokazują zero. **N i Enter** przechodzą do kolejnego pytania. Przy odsłanianiu myszą obowiązuje zaznaczenie i potwierdzenie drugim kliknięciem.
 
 #### Kiedy finał się kończy
 
