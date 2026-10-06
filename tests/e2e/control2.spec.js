@@ -2143,6 +2143,7 @@ test("control2: zablokowany, gdy logo gry jest edytowane w logo-editorze — i w
     // jest wołane zanim Control zdąży namalować krok "Urządzenia").
     await expect(page.locator(".stepTitle")).toHaveCount(0);
 
+    await expect(hostPage.locator("#cover2Logo svg")).toHaveCount(1, {timeout:10000});
     await releaseLogoLock(page, logoId, lockTabId);
 
     // Odzyskanie działa DWIEMA niezależnymi drogami (broadcast RELEASED +
@@ -2150,6 +2151,10 @@ test("control2: zablokowany, gdy logo gry jest edytowane w logo-editorze — i w
     // żeby przy okazji sprawdzić fallback pollingu.
     await expect(page.locator("#resourceLockGuard")).toBeHidden({ timeout: 15000 });
     await expect(page.locator(".stepTitle")).toHaveText("Urządzenia", { timeout: 15000 });
+    await page.getByLabel("Przycisk fizyczny").check();
+    await openAnon(browser, logoContexts, `/display2?id=${gameId}&key=${await page.evaluate(async id => (await window.__sbClient.from("games").select("share_key_display").eq("id",id).single()).data.share_key_display, gameId)}`, "display", []);
+    await page.getByRole("button", {name:"Dalej",exact:true}).click();
+    await expect(page.locator(".stepTitle")).toHaveText("Podsumowanie");
     await expect.poll(() => hostPage.locator("#cover2Logo canvas").evaluateAll(canvases => canvases.some(canvas => {
       const pixels = canvas.getContext("2d").getImageData(0,0,canvas.width,canvas.height).data;
       return pixels.some((value,idx) => idx % 4 === 3 && value > 0);

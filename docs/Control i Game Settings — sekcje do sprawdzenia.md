@@ -119,6 +119,9 @@ Wybierz źródło dźwięku: „Panel sterowania” albo „Wyświetlacz”. Dź
 
 ### 2) Ustawienia
 
+**Prowadzący:** Tablet pokazuje logo wybrane w ustawieniach gry. Gdy wcześniej trwa edycja tego logo, pokazuje domyślne logo Familiady. Przy wejściu operatora w Podsumowanie ustawień pobiera wybrane logo ponownie; wcześniej pokazane logo domyślne zostaje wtedy zastąpione właściwym.
+
+
 Gdy urządzenia są połączone, przechodzisz do podsumowania ustawień. Wszystkie opcje (kolory, dźwięk, parametry gry) możesz wcześniej skonfigurować na stronie **Ustawień rozgrywki** — Panel sterowania wczyta je automatycznie.
 
 #### Nazwy drużyn
@@ -192,7 +195,7 @@ Zgodnie z regulaminem, jeśli pierwsza odpowiedź nie jest najwyżej punktowana,
 
 Zgodnie z ustaleniami rozgrywki, po uzyskaniu kontroli drużyna może też zdecydować, że **oddaje pytanie** przeciwnikom. Jest to ruch taktyczny: zamiast „dobić" pytanie, drużyna może przekazać szansę rywalom. Panel udostępnia tę opcję tylko w odpowiednim momencie i pilnuje, żeby nie dało się jej nadużywać.
 
-**Prowadzący:** Gdy można oddać kontrolę, w pierwszej części pojawia się podpowiedź. Decyzję drużyny realizuje operator w Panelu sterowania.
+**Prowadzący:** Gdy można oddać kontrolę, w pierwszej części pojawia się czerwona, podkreślona podpowiedź. Ten styl dotyczy wyłącznie tabletu prowadzącego. Decyzję drużyny realizuje operator w Panelu sterowania.
 
 #### Rozgrywka pytania: odsłanianie odpowiedzi i bank
 

@@ -1744,6 +1744,7 @@ async function scenarioLogoLock(pages, { setupPage, logoId, logoLockTabId }) {
   await control.waitForSelector("#resourceLockGuard", { state: "visible", timeout: 15000 });
   await control.waitForTimeout(3500); // widz ma zdążyć przeczytać komunikat blokady
 
+  await expect(host.locator("#cover2Logo svg")).toHaveCount(1, {timeout:10000});
   console.log("[record] zwalniam zewnętrzną blokadę logo");
   await releaseLogoLockExternally(setupPage, logoId, logoLockTabId);
 
@@ -1752,15 +1753,16 @@ async function scenarioLogoLock(pages, { setupPage, logoId, logoLockTabId }) {
   // wyrenderowanie kroku "Urządzenia") bez żadnej ręcznej interwencji.
   await control.waitForSelector("#resourceLockGuard", { state: "hidden", timeout: 20000 });
   await expect(control.locator(".stepTitle")).toHaveText("Urządzenia", { timeout: 15000 });
-  await expect.poll(() => host.locator("#cover2Logo canvas").evaluateAll(canvases => canvases.some(canvas => {
-    const pixels = canvas.getContext("2d").getImageData(0,0,canvas.width,canvas.height).data;
-    return pixels.some((value,idx) => idx % 4 === 3 && value > 0);
-  })), {timeout:15000}).toBe(true);
   await control.waitForTimeout(1000);
 
   // Krótka runda — dowód, że po odzyskaniu Control działa normalnie, nie
   // tylko "odblokował się i stoi".
   await clickPaced(control.getByRole("button", { name: "Dalej" }), ADMIN_PACE_MS);
+  await expect.poll(() => host.locator("#cover2Logo canvas").evaluateAll(canvases => canvases.some(canvas => {
+    const pixels = canvas.getContext("2d").getImageData(0,0,canvas.width,canvas.height).data;
+    return pixels.some((value,idx) => idx % 4 === 3 && value > 0);
+  })), {timeout:15000}).toBe(true);
+
   await clickPaced(control.getByRole("button", { name: "Gotowe — przejdź do rozgrywki" }), ADMIN_PACE_MS);
   await clickPaced(control.getByRole("button", { name: "Rozpocznij grę" }), ADMIN_PACE_MS);
   await clickPaced(control.getByRole("button", { name: "Rozpocznij rundę" }));

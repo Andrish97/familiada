@@ -139,8 +139,9 @@ async function loadWordmarkPaths() {
   return _svgPathsPromise;
 }
 
-async function renderDefaultLogo(el, dotColor) {
+async function renderDefaultLogo(el, dotColor, shouldPaint = () => true) {
   const { bright, dim, transform, viewBox } = await loadWordmarkPaths();
+  if (!shouldPaint()) return;
   if (!bright) return; // wczytanie się nie powiodło — zostaw poprzednią zawartość
   const { light, mid, dark } = gradientStopsAroundDot(dotColor);
   const gradId = "cover2LogoGrad";
@@ -188,8 +189,9 @@ function drawSolidGrid(canvas, bits150, colorHex) {
   }
 }
 
-async function renderCustomLogo(el, logo, dotColor) {
+async function renderCustomLogo(el, logo, dotColor, shouldPaint = () => true) {
   const glyphs = logo?.type === "GLYPH_30x10" ? await glyphsOnce() : null;
+  if (!shouldPaint()) return;
   const bits150 = logoToBits150(logo, glyphs);
   const canvas = document.createElement("canvas");
   canvas.width = DOT_W * 6;
@@ -205,31 +207,50 @@ async function renderCustomLogo(el, logo, dotColor) {
 export function createCoverLogoRenderer({ gameId, key }) {
   const el = document.getElementById("cover2Logo");
   let lastDot = null;
-  let lastLogoId; // undefined != null -> pierwsze wywołanie zawsze maluje
+  let lastLogoId;
+  let lastStep;
+  let lastSummaryRev;
+  let awaitingSummary = false;
   let fetchSeq = 0;
 
-  function apply(row) {
+  async function apply(row) {
     if (!el) return;
     const dot = row.detail?.display?.colors?.DOT || DEFAULT_DOT_COLOR;
     const logoId = row.detail?.display?.logoId ?? null;
-    if (dot === lastDot && logoId === lastLogoId && el.childElementCount) return;
+    const summary = row.step === "setup_finish";
+    const refreshSummary = summary && (lastStep !== "setup_finish" || lastSummaryRev !== row.rev);
+    lastStep = row.step;
+    if (summary) lastSummaryRev = row.rev;
+    if (!refreshSummary && dot === lastDot && logoId === lastLogoId && el.childElementCount) return;
     lastDot = dot;
     lastLogoId = logoId;
-
     const seq = ++fetchSeq;
-    if (!logoId) {
-      renderDefaultLogo(el, dot);
+    const current = () => seq === fetchSeq;
+    if (awaitingSummary && !summary) {
+      await renderDefaultLogo(el, dot, current);
       return;
     }
-
-    sb().rpc("display_logo_get_public", { p_game_id: gameId, p_key: key })
-      .then(({ data, error }) => {
-        if (seq !== fetchSeq) return;
-        if (error) { lastLogoId = undefined; return; }
-        if (data?.type && data?.payload) renderCustomLogo(el, data, dot);
-        else { lastLogoId = undefined; renderDefaultLogo(el, dot); }
-      })
-      .catch(() => { if (seq === fetchSeq) lastLogoId = undefined; });
+    // A Host opened before Control has no game_state yet. Still resolve the
+    // selected game logo; show the default while checking its editing lock.
+    if (!el.childElementCount) await renderDefaultLogo(el, dot, current);
+    try {
+      const { data, error } = await sb().rpc("host2_logo_get_public", { p_game_id:gameId, p_key:key });
+      if (!current()) return;
+      if (error) throw error;
+      if (data?.busy) {
+        awaitingSummary = true;
+        await renderDefaultLogo(el, dot, current);
+        return;
+      }
+      awaitingSummary = false;
+      const logo = data?.logo;
+      if (logo?.type && logo?.payload) await renderCustomLogo(el, logo, dot, current);
+      else await renderDefaultLogo(el, dot, current);
+    } catch {
+      if (!current()) return;
+      lastLogoId = undefined;
+      await renderDefaultLogo(el, dot, current);
+    }
   }
 
   return { apply };

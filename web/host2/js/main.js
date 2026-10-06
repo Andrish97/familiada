@@ -132,6 +132,7 @@ async function main() {
   // renderer jeszcze nie istnieje w momencie jej wywołania.
   window.addEventListener("resize", () => renderer.updateSwipeHint());
   const coverLogo = createCoverLogoRenderer({ gameId, key });
+  coverLogo.apply({ step:null, detail:{} });
   const hostTheme = await createHostThemeApplier();
   setupPeekSwipe(renderer);
 
