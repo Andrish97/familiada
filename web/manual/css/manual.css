@@ -314,3 +314,14 @@ body.manual-in-control-modal .m-wrap { padding-bottom: 16px; }
 .m-warn > :last-child { margin-bottom: 0; }
 .m-host .m-table-wrap { margin: 12px 0; }
 .m-host-title .m-strong { color: inherit; }
+
+/* UI buttons use this shared style; shortcuts and values keep m-code. */
+.m-code.m-control {
+    font-family: inherit;
+    font-weight: 800;
+    padding: 4px 9px;
+    border-radius: 10px;
+    border-color: rgba(255,234,166,.3);
+    background: rgba(255,234,166,.08);
+    color: var(--gold);
+}

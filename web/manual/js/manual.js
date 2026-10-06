@@ -8,6 +8,8 @@ import { initTopbarAccountDropdown } from "../../shared/js/core/topbar-controlle
 import "../../shared/js/core/contact-modal.js?v=v2026-10-06T23215";
 import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-06T23215";
 
+import { decorateManualControls } from "./controls.js";
+
 function isModalMode() {
   const p = new URLSearchParams(location.search);
   const m = p.get("modal");
@@ -214,6 +216,7 @@ async function init() {
     document.documentElement.classList.remove('page-loading');
   }
 
+  decorateManualControls(document, document.documentElement.lang);
   applyControlModalLayout();
   wireTabs();
   updateBackButtonLabel();
@@ -228,5 +231,6 @@ void init();
 
 
 window.addEventListener("i18n:lang", () => {
+  decorateManualControls(document, document.documentElement.lang);
   updateBackButtonLabel();
 });

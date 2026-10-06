@@ -88,3 +88,9 @@ w nowych sekcjach. Używają istniejącego `m-code`, tak jak reszta manuala.
 Pogrubienia korzystają z `m-strong`, tytuły notek z `b`, a listy nie dodają
 wewnętrznych akapitów zwiększających odstępy. Nowy styl `m-host` pozostaje
 wyłącznie wyróżnieniem informacji dla Prowadzącego.
+
+Ostateczna decyzja użytkownika: nowy złoty styl przycisków obowiązuje
+w całym manualu. Wspólne oznaczanie `m-control` rozpoznaje przyciski
+we wszystkich trzech językach i działa także po zmianie języka.
+Skróty, wymiary, adresy, wartości i przykładowe statusy zachowują `m-code`.
+Słowo „Dalej” wypowiadane przez zawodnika nie jest oznaczane jako przycisk.

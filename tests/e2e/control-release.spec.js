@@ -75,6 +75,9 @@ for(const [lang,hostLabel,repeatText,outroLimit] of [
   await expect(bases.locator('.m-table').first()).toBeVisible();
   expect(await tableCellStyle(bases.locator('.m-table td').first())).toEqual(expected);
   expect(await tableCellStyle(bases.locator('.m-table td').nth(1))).toEqual(expected);
+  await expect(control.locator('p.m-p .m-code').first()).toHaveClass(/m-control/);
+  await expect(control.locator('.m-code').filter({hasText:'Win + P'}).first()).not.toHaveClass(/m-control/);
+  await expect(settings.locator('.m-code').filter({hasText:'1,1,1,2,3'}).first()).not.toHaveClass(/m-control/);
   const controlButtonStyle=await control.locator('p.m-p .m-code').first().evaluate(el=>{
     const css=getComputedStyle(el);
     return {font:css.fontFamily,size:css.fontSize,weight:css.fontWeight,padding:css.padding,radius:css.borderRadius,background:css.backgroundColor,border:css.borderColor};
@@ -84,7 +87,10 @@ for(const [lang,hostLabel,repeatText,outroLimit] of [
     const css=getComputedStyle(el);
     return {font:css.fontFamily,size:css.fontSize,weight:css.fontWeight,padding:css.padding,radius:css.borderRadius,background:css.backgroundColor,border:css.borderColor};
   });
+  await expect(page.locator('#tab-edit p.m-p .m-code').first()).toHaveClass(/m-control/);
   expect(controlButtonStyle).toEqual(existingButtonStyle);
+  await page.locator('button[data-tab="logo"]').click();
+  await expect(page.locator('#tab-logo .m-code').filter({hasText:'30×10'}).first()).not.toHaveClass(/m-control/);
 
 
  });
