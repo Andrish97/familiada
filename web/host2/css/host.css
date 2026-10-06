@@ -433,3 +433,5 @@ div#cover2Logo {
         transition: none!important
     }
 }
+
+.host-pass-hint { margin-top:1em; color:#e53935; text-decoration:underline; }

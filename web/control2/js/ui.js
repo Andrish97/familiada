@@ -25,14 +25,14 @@ import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-06T1505
 import { previewPendingRoundEndDestination } from "./engine.js?v=v2026-10-06T15053";
 
 const $ = (id) => document.getElementById(id);
-const on = (el, ev, fn) => el && el.addEventListener(ev, fn);
+const on = (el, ev, fn) => el && (el[`on${ev}`] = fn);
 
 function h(tag, attrs = {}, children = []) {
   const el = document.createElement(tag);
   for (const [k, v] of Object.entries(attrs)) {
     if (k === "class") el.className = v;
     else if (k === "text") el.textContent = v;
-    else if (k.startsWith("on") && typeof v === "function") el.addEventListener(k.slice(2), v);
+    else if (k.startsWith("on") && typeof v === "function") el[k] = v;
     else if (v !== undefined && v !== null) el.setAttribute(k, v);
   }
   for (const c of [].concat(children)) if (c) el.appendChild(c);
@@ -56,6 +56,39 @@ export function createUI({ root, emit }) {
   // stan UI, jak pendingPhysicalTeam — nic się nie zmienia w grze, dopóki
   // nie ma drugiego kliknięcia.
   let armedKey = null;
+  let currentState = null;
+  let keyboardTarget = null;
+  const keyboardActions = new Map();
+  function bindShortcut(el, key, run, select) {
+    if (!key || (/^[0-9]+$/.test(key) && !/^[1-6]$/.test(key))) return el;
+    el.dataset.shortcut = key;
+    el.setAttribute("aria-keyshortcuts", key === "reveal" ? "Enter" : key.toUpperCase());
+    keyboardActions.set(key, { el, run, select });
+    return el;
+  }
+  function shortcutsAllowed() {
+    return ![...document.querySelectorAll(".overlay, .gsOverlay, .helpOverlay, .legalOverlay, .qrModalOverlay, [role='dialog']")].some((el) => el.getClientRects().length && getComputedStyle(el).visibility !== "hidden");
+  }
+  document.addEventListener("keydown", (event) => {
+    if (event.defaultPrevented || event.repeat || event.isComposing || event.ctrlKey || event.metaKey || event.altKey || event.shiftKey || !shortcutsAllowed()) return;
+    if (event.target.closest?.("input, textarea, select, [contenteditable='true']")) return;
+    const key = event.code.startsWith("Key") ? event.code.slice(3).toLowerCase() : event.code.startsWith("Digit") ? event.code.slice(5) : event.key;
+    if (key === "m") { event.preventDefault(); emit("settings.toggleSoundMuted"); return; }
+    if (key === "Enter") {
+      const mapping = /^f_p[12]_map_q[1-5]$/.test(currentState?.step || "");
+      const selected = keyboardTarget && ["n", "b", "e", "t"].includes(keyboardTarget)
+        ? keyboardActions.get(keyboardTarget) : mapping ? keyboardActions.get("reveal") : keyboardActions.get(keyboardTarget);
+      if (mapping) event.preventDefault();
+      if (!selected || selected.el.disabled || boardBusy()) return;
+      event.preventDefault(); selected.run(); keyboardTarget = null;
+      return;
+    }
+    const selected = keyboardActions.get(key);
+    if (!selected || selected.el.disabled || boardBusy()) return;
+    event.preventDefault(); keyboardTarget = key;
+    if (selected.select) { selected.select(); if (/^f_p[12]_map_q/.test(currentState?.step || "")) keyboardTarget = null; }
+    else selected.el.focus();
+  });
 
   // Blokada operatora względem dźwięku/animacji (odsłanianie POJEDYNCZYCH
   // kafli I duże przejścia planszy — Rozpocznij/Zakończ rundę, Rozpocznij
@@ -504,6 +537,10 @@ export function createUI({ root, emit }) {
     // zagnieżdżonego wewnątrz .card (to była druga, zbędna warstwa: root
     // już siedzi w .control-main-card, które jest jedynym widocznym
     // obramowaniem).
+    bindShortcut(changeSettings, "e", () => emit("setup.openSettings"));
+    bindShortcut(back, "b", () => emit("setup.back"));
+    const editSettings = root.querySelector("#btnOpenGsModal");
+    if (editSettings) bindShortcut(editSettings, "e", () => emit("setup.openSettings"));
     const body = [
       // .stepTitle zostaje bare "Podsumowanie" — stabilny selektor testów
       // E2E (patrz control2.spec.js). Widoczny .c2-stepper dostaje opisowy
@@ -556,7 +593,7 @@ export function createUI({ root, emit }) {
   const THIRD = (i) => `${i * 2 + 1} / ${i * 2 + 3}`; // i=0,1,2 — 1 jednostka
   const HALF = (i) => `${i * 3 + 1} / ${i * 3 + 4}`;  // i=0,1   — 1,5 jednostki
 
-  function tile(content, { row, col, cls = "", onclick, disabled = false } = {}) {
+  function tile(content, { row, col, shortcut, cls = "", onclick, disabled = false } = {}) {
     const el = h("button", {
       class: `c2-tile ${cls}`.trim(),
       type: "button",
@@ -565,7 +602,7 @@ export function createUI({ root, emit }) {
     el.style.gridRow = String(row);
     el.style.gridColumn = col;
     if (disabled) el.disabled = true;
-    return el;
+    return bindShortcut(el, shortcut, onclick);
   }
 
   // Samodzielny przycisk nawigacji (nie kafel siatki) z tym samym
@@ -591,11 +628,12 @@ export function createUI({ root, emit }) {
   // odliczania gracza), nie tylko podczas realnego oczekiwania na sieć/
   // dźwięk. Rozdzielenie na dwa parametry naprawia to raz, w jednym miejscu,
   // zamiast w każdym z 11 wywołań osobno.
-  function navButton(label, { cls = "c2-btn primary c2-intro-btn", onclick, disabled = false, busy = false } = {}) {
+  function navButton(label, { shortcut = "n", cls = "c2-btn primary c2-intro-btn", onclick, disabled = false, busy = false } = {}) {
     const isDisabled = disabled || busy;
     const el = h("button", { class: cls, type: "button", onclick: isDisabled ? undefined : onclick }, [document.createTextNode(label)]);
     if (isDisabled) el.disabled = true;
-    return el;
+    if (/^f_p[12]_entry$/.test(currentState?.step || "") && shortcut === "n") el.dataset.entryNext = "true";
+    return bindShortcut(el, shortcut, onclick);
   }
 
   function tileGrid(tiles) {
@@ -607,7 +645,7 @@ export function createUI({ root, emit }) {
   // drugie na tym samym kaflu odpala prawdziwe onclick.
   function armableTile(key, content, { onclick, disabled, cls = "", ...rest }) {
     const armed = !disabled && armedKey === key;
-    return tile(content, {
+    const el = tile(content, {
       ...rest,
       disabled,
       cls: `${cls} ${armed ? "c2-tile-armed" : ""}`.trim(),
@@ -632,6 +670,8 @@ export function createUI({ root, emit }) {
         }
       },
     });
+    const shortcut = key.startsWith("ans:") ? key.slice(4) : key === "pass" ? "p" : key === "x" ? "x" : key.startsWith("map-answer:") || key.startsWith("map-points:") ? "reveal" : null;
+    return bindShortcut(el, shortcut, onclick, () => { armedKey = key; emit("ui.rerender"); });
   }
 
   // Blok podpowiedzi — zawsze bezpośrednio NAD siatką/wierszami wpisywania,
@@ -688,12 +728,12 @@ export function createUI({ root, emit }) {
     // zanim ta sekwencja (dziś: control2/js/app.js's dispatchGated() po
     // "Rozpocznij rundę") się nie skończy.
     tiles.push(tile(teamName(state, "A"), {
-      row: 1, col: HALF(0), cls: selectedTeam === "A" ? "c2-tile-primary" : "",
+      shortcut: isPhysical ? "a" : null, row: 1, col: HALF(0), cls: selectedTeam === "A" ? "c2-tile-primary" : "",
       disabled: isPhysical ? boardBusy() : true,
       onclick: isPhysical && !boardBusy() ? () => { pendingPhysicalTeam = "A"; emit("ui.rerender"); } : undefined,
     }));
     tiles.push(tile(teamName(state, "B"), {
-      row: 1, col: HALF(1), cls: selectedTeam === "B" ? "c2-tile-primary" : "",
+      shortcut: isPhysical ? "b" : null, row: 1, col: HALF(1), cls: selectedTeam === "B" ? "c2-tile-primary" : "",
       disabled: isPhysical ? boardBusy() : true,
       onclick: isPhysical && !boardBusy() ? () => { pendingPhysicalTeam = "B"; emit("ui.rerender"); } : undefined,
     }));
@@ -703,7 +743,7 @@ export function createUI({ root, emit }) {
       const acceptClickable = !boardBusy();
       const acceptArmed = acceptClickable && armedKey === acceptArmKey;
       tiles.push(tile(t("control.roundsBuzzAcceptTeam", { name: teamName(state, selectedTeam) }), {
-        row: 2, col: "1 / 7", cls: acceptArmed ? "c2-tile-armed" : "",
+        shortcut: "c", row: 2, col: "1 / 7", cls: acceptArmed ? "c2-tile-armed" : "",
         disabled: !acceptClickable,
         onclick: acceptClickable ? (e) => {
           if (armedKey === acceptArmKey || (e && e.detail >= 2)) {
@@ -719,6 +759,15 @@ export function createUI({ root, emit }) {
       }));
     }
 
+    const confirm = keyboardActions.get("c");
+    if (confirm) {
+      confirm.select = () => { armedKey = "acceptBuzz"; emit("ui.rerender"); };
+      confirm.run = () => emit("game.dispatch", { type: "ACCEPT_BUZZ", team: selectedTeam });
+    }
+    for (const key of ["a", "b"]) {
+      const teamAction = keyboardActions.get(key);
+      if (teamAction) { teamAction.select = teamAction.run; teamAction.run = () => emit("game.dispatch", { type: "ACCEPT_BUZZ", team: key === "a" ? "A" : "B" }); }
+    }
     if (!isPhysical && r.duel.lastPressed) {
       tiles.push(tile(t("control.roundsBuzzRetry"), { row: 3, col: "1 / 7", disabled: boardBusy(), onclick: () => emit("game.dispatch", { type: "RETRY_DUEL" }) }));
     }
@@ -811,7 +860,8 @@ export function createUI({ root, emit }) {
     // znikają razem, zostaje tylko "Zakończ rundę" w nav na dole.
     const xAvailable = ((state.phase === "DUEL" && r.duel.firstTeam) || state.phase === "PLAY" || state.phase === "STEAL")
       && !r.canEndRound && !r.lockPlayControls;
-    const passAvailable = state.phase === "PLAY" && r.allowPass && !r.passUsed;
+    const finishingGame = r.canEndRound && ["PLAY", "STEAL"].includes(state.phase) && previewPendingRoundEndDestination(state) === "GAME_END";
+    const passAvailable = !finishingGame && state.phase === "PLAY" && r.allowPass && !r.passUsed;
 
     // Uzbrojony kafel z poprzedniego renderu mógł przestać być prawdziwy
     // (odpowiedź już odsłonięta gdzie indziej, runda się skończyła...) —
@@ -853,7 +903,7 @@ export function createUI({ root, emit }) {
         // jeszcze na ekranie"). REVEAL_ANSWER i REVEAL_LEFT zawsze zwracają
         // soundCueKey "answer_correct" (engine.js) — trafienie odpowiedzi
         // zawsze oznacza dźwięk poprawnej odpowiedzi, niezależnie od fazy.
-        disabled: revealed || revealLocked(),
+        disabled: finishingGame || revealed || revealLocked(),
         onclick: () => emit("game.dispatch", { type: state.phase === "REVEAL" ? "REVEAL_LEFT" : "REVEAL_ANSWER", ord: a.ord }),
       }));
     });
@@ -911,7 +961,7 @@ export function createUI({ root, emit }) {
         h("div", { class: "c2-tile-sub", text: t("control.finalTimerStopShort") }),
       ]) : t("control.roundsStartTimer3");
       const timer3Tile = tile(content, {
-        row: 6, col: HALF(1),
+        shortcut: "t", row: 6, col: HALF(1),
         cls: running ? "c2-tile-timer" : "c2-tile-timer startable",
         disabled: revealLocked(),
         onclick: () => emit("game.dispatch", { type: running ? "CANCEL_TIMER3" : "START_TIMER3" }),
@@ -1076,6 +1126,7 @@ export function createUI({ root, emit }) {
       // ma każde inne duże przejście planszy (navButton wyżej).
       nav: [
         navButton(t("control.restartGame"), {
+          shortcut: null,
           cls: "c2-btn c2-intro-btn",
           busy: false,
           onclick: () => emit("game.restart"),
@@ -1158,7 +1209,7 @@ export function createUI({ root, emit }) {
       const secLeft = Math.max(0, Math.ceil((timer.endsAt - Date.now()) / 1000));
       const filled = round === 1
         ? f.runtime.p1.every((x) => String(x?.text || "").trim().length > 0)
-        : f.runtime.p2.every((x) => (x?.repeat ? true : String(x?.text || "").trim().length > 0));
+        : f.runtime.p2.every((x) => String(x?.text || "").trim().length > 0);
       const clickable = filled && !revealLocked();
       const armed = clickable && armedKey === armKey;
       // Dokładnie jak stare control/js/gameFinal.js's setTimerBtnLabel: gdy
@@ -1242,29 +1293,21 @@ export function createUI({ root, emit }) {
       // TEXT z pięciu .fill() zaraz po "Rozpocznij finał" odrzuconych
       // 'locked', zanim serwerowa blokada z final_theme zdążyła wygasnąć).
       if (boardBusy()) inp.disabled = true;
-      on(inp, "input", () => emit("game.dispatch", { type: "SET_ENTRY_TEXT", round, idx: i, text: inp.value }));
+      on(inp, "input", (e) => emit("game.dispatch", { type: "SET_ENTRY_TEXT", round, idx: i, text: e.currentTarget.value }));
       on(inp, "keydown", (e) => {
-        if (e.key === "ArrowDown") {
-          e.preventDefault();
-          root.querySelector(`.c2-entryrow[data-i="${i + 1}"] input`)?.focus();
-          return;
-        }
-        if (e.key === "ArrowUp") {
-          e.preventDefault();
-          root.querySelector(`.c2-entryrow[data-i="${i - 1}"] input`)?.focus();
-          return;
-        }
-        // Shift+Enter w pustym polu (tylko runda 2) — przełącza "Powtórzenie",
-        // dokładnie jak stare control/js/gameFinal.js's renderP2Entry.
-        if (round === 2 && e.key === "Enter" && e.shiftKey && !inp.value.trim()) {
+        if (e.defaultPrevented || e.repeat || e.isComposing || e.ctrlKey || e.metaKey || e.altKey) return;
+        if (round === 2 && e.key === "Enter" && e.shiftKey && !e.currentTarget.value.trim()) {
           e.preventDefault();
           emit("game.dispatch", { type: "SET_REPEAT", round: 2, idx: i, repeat: !row.repeat });
-          root.querySelector(`.c2-entryrow[data-i="${i + 1}"] input`)?.focus();
           return;
         }
-        if (e.key === "Enter") {
-          e.preventDefault();
-          root.querySelector(`.c2-entryrow[data-i="${i + 1}"] input`)?.focus();
+        if (e.shiftKey || !["Enter", "ArrowDown", "ArrowUp"].includes(e.key)) return;
+        e.preventDefault();
+        const direction = e.key === "ArrowUp" ? -1 : 1;
+        for (let offset = 1; offset <= 5; offset++) {
+          const idx = (i + direction * offset + 5) % 5;
+          const candidate = root.querySelector(`.c2-entryrow[data-i="${idx}"] input`);
+          if (candidate && !candidate.value.trim()) { candidate.focus(); break; }
         }
       });
 
@@ -1323,7 +1366,9 @@ export function createUI({ root, emit }) {
       }
       rows.push(h("div", { class: `c2-entryrow ${round === 2 ? "p2" : "p1"}`, "data-i": String(i) }, cells));
     }
-    rows.push(finalTimerRow(state, round));
+    const timerButton = finalTimerRow(state, round);
+    rows.push(timerButton);
+    bindShortcut(timerButton, "t", () => emit("final.toggleTimer", { round }));
 
     // Nagłówek nad siatką — Finał-mapowanie ma nad swoją siatką c2-question
     // (treść pytania), wpisywanie go dotąd nie miało wcale, przez co jego
@@ -1356,7 +1401,7 @@ export function createUI({ root, emit }) {
     const timerRunningNow = f.runtime.timer.running && f.runtime.timer.phase === timerPhase;
     const nav = [navButton(t("common.next"), {
       cls: "c2-btn primary",
-      disabled: timerRunningNow,
+      disabled: timerRunningNow || !f.runtime.timer[`used${timerPhase}`],
       busy: boardBusy(),
       onclick: () => emit("game.dispatch", { type: "START_MAPPING", round }),
     })];
@@ -1446,7 +1491,7 @@ export function createUI({ root, emit }) {
     // osobno od etykiety, nie jedna linijka pod spodem jak dawniej.
     const inp = h("input", { type: "text", value: inputText, placeholder: t("control.finalUi.playerAnswer"), autocomplete: "off" });
     if (locked || devicesBlocked) inp.disabled = true;
-    on(inp, "input", () => emit("game.dispatch", { type: "SET_ENTRY_TEXT", round, idx, text: inp.value }));
+    on(inp, "input", (e) => emit("game.dispatch", { type: "SET_ENTRY_TEXT", round, idx, text: e.currentTarget.value }));
     const wpisanoTile = h("div", { class: "c2-mapinput" }, [
       h("div", { class: "c2-mapinput-labelcol" }, [h("div", { class: "c2-field-label", text: t("control.finalUi.mapInputLabel") })]),
       h("div", { class: "c2-entrytile-input" }, [inp]),
@@ -1506,7 +1551,7 @@ export function createUI({ root, emit }) {
         onclick: () => emit("game.dispatch", { type: "REVEAL_POINTS", round, idx }),
       });
 
-    const matchOptions = (question?.answers || []).map((a) => ({
+    const matchOptions = (question?.answers || []).slice(0, 6).map((a) => ({
       key: `map-match:${round}:${idx}:${a.id}`,
       text: `${a.text} (${a.fixed_points})`,
       active: !p2IsRepeat && effective.kind === "MATCH" && effective.matchId === a.id,
@@ -1570,13 +1615,30 @@ export function createUI({ root, emit }) {
     // Wcześniej te kafle dispatchowały RESOLVE_MAPPING/SET_REPEAT od razu na
     // pierwszy klik — jedyne miejsce w tym ekranie bez bufora przeciwko
     // przypadkowemu kliknięciu.
-    const optionTiles = options.slice(0, 9).map((o, i) => armableTile(o.key, o.content || o.text, {
+    const optionTiles = options.slice(0, 9).map((o, i) => tile(o.content || o.text, {
+      shortcut: i < matchOptions.length ? String(i + 1) : o.key.startsWith("map-miss:") ? "w" : o.key.startsWith("map-skip:") ? "o" : "r",
       row: Math.floor(i / 3) + 2,
       col: THIRD(i % 3),
       cls: [o.active && "c2-tile-primary", o.danger && "c2-tile-danger"].filter(Boolean).join(" "),
       disabled: o.disabled,
       onclick: o.onclick,
     }));
+    for (const option of options) {
+      const shortcut = option.key.startsWith("map-match:") ? String(matchOptions.indexOf(option) + 1) : option.key.startsWith("map-miss:") ? "w" : option.key.startsWith("map-skip:") ? "o" : "r";
+      const binding = keyboardActions.get(shortcut);
+      if (binding) binding.select = binding.run;
+    }
+    // Enter reveals only the currently available stage, never advances a question.
+    const availableReveal = !row.revealedAnswer ? revealAnswerTile : revealPointsTile;
+    const revealBinding = keyboardActions.get("reveal");
+    if (revealBinding) revealBinding.el = availableReveal;
+    if (!row.revealedAnswer) keyboardActions.set("reveal", {
+      el: revealAnswerTile,
+      run: async () => {
+        if (row.kind == null) await emit("game.dispatch", { type: "RESOLVE_MAPPING", round, idx, ...defaultResolve(inputText) });
+        await emit("game.dispatch", { type: "REVEAL_ANSWER_ONLY", round, idx });
+      },
+    });
     while (optionTiles.length < 9) {
       const slotEl = h("div", { class: "c2-tile-slot" });
       slotEl.style.gridRow = String(Math.floor(optionTiles.length / 3) + 2);
@@ -1679,6 +1741,10 @@ export function createUI({ root, emit }) {
     // boardBusy()/revealLocked() wyżej. Ustawiane TU, na początku, zamiast
     // przekazywane osobno do każdego renderXxx() — te dwie funkcje je już i
     // tak czytają z domknięcia.
+    const previousStep = currentState?.step;
+    const oldEntry = /^f_p[12]_entry$/.test(state.step) && root.dataset.step === state.step ? root.firstElementChild : null;
+    currentState = state;
+    keyboardActions.clear();
     busy = !!ctx.busy;
     devicesBlocked = !!ctx.devicesBlocked;
     // Każdy renderXxx() woła clear() (root.innerHTML="") i buduje CAŁE #app
@@ -1710,6 +1776,10 @@ export function createUI({ root, emit }) {
     } : null;
     updateTopbarDots(state, ctx.presenceFlags);
     const s = state.step;
+    const liveRoot = root;
+    if (oldEntry) root = document.createElement("div");
+    let freshEntry;
+    try {
     if (s === "devices_display") renderDevicesStep(state, ctx);
     else if (s === "setup_finish") renderSetupFinish(state, ctx);
     else if (s === "r_intro" || s === "r_roundStart") renderRounds(state);
@@ -1726,6 +1796,34 @@ export function createUI({ root, emit }) {
       clear();
       root.appendChild(h("div", { class: "c2-card-inner" }, [h("p", { text: t("control.unhandledStepDebug", { step: s }) })]));
     }
+    freshEntry = root.firstElementChild;
+    } finally { root = liveRoot; }
+    root.dataset.step = s;
+    if (oldEntry && freshEntry) {
+      reconcileEntry(oldEntry, freshEntry);
+      for (const binding of keyboardActions.values()) {
+        if (binding.el.dataset.shortcut) binding.el = root.querySelector(`[data-shortcut="${binding.el.dataset.shortcut}"]`) || binding.el;
+      }
+    }
+    const editButton = root.querySelector("#btnOpenGsModal");
+    if (editButton) bindShortcut(editButton, "e", () => emit("setup.openSettings"));
+    let hint = root.querySelector(".c2-hint");
+    if (!hint && root.querySelector(".c2-intro")) {
+      hint = h("div", { class: "c2-hint" });
+      root.querySelector(".c2-intro").append(hint);
+    }
+    if (hint) {
+      if (state.phase === "PLAY" && state.rounds.allowPass && !state.rounds.passUsed && !state.rounds.canEndRound) hint.querySelector(".c2-hint-main")?.classList.add("c2-pass-hint");
+      const list = h("div", { class: "c2-hint-shortcuts" });
+      for (const [key, binding] of keyboardActions) {
+        if (binding.el.disabled || key === "reveal" || /^[2-6]$/.test(key)) continue;
+        const code = key === "1" ? "answers" : key;
+        list.append(h("div", { class: "c2-hint-shortcut", text: t(`control.shortcuts.${code}`) }));
+      }
+      if (/^f_p[12]_map_q/.test(s)) list.append(h("div", { class: "c2-hint-shortcut", text: t("control.shortcuts.reveal") }));
+      list.append(h("div", { class: "c2-hint-shortcut", text: t("control.shortcuts.m") }));
+      hint.append(list);
+    }
     const scrollArea = root.querySelector(".c2-scroll-area");
     if (scrollArea) scrollArea.scrollTop = scrollBefore;
     if (savedFocus) {
@@ -1735,6 +1833,25 @@ export function createUI({ root, emit }) {
         input.focus();
         try { input.setSelectionRange(savedFocus.selStart, savedFocus.selEnd); } catch {}
       }
+    }
+  }
+
+  function reconcileEntry(existing, fresh) {
+    if (existing.nodeType !== fresh.nodeType || existing.nodeName !== fresh.nodeName) { existing.replaceWith(fresh); return; }
+    if (existing.nodeType === 3) { if (existing.data !== fresh.data) existing.data = fresh.data; return; }
+    for (const attr of [...existing.attributes]) if (!fresh.hasAttribute(attr.name)) existing.removeAttribute(attr.name);
+    for (const attr of [...fresh.attributes]) if (existing.getAttribute(attr.name) !== attr.value) existing.setAttribute(attr.name, attr.value);
+    for (const event of ["onclick", "oninput", "onkeydown", "onchange"]) existing[event] = fresh[event];
+    if (existing.tagName === "INPUT") {
+      // Preserve a locally typed value while its preceding writes are pending.
+      if (document.activeElement !== existing && existing.value !== fresh.value) existing.value = fresh.value;
+      return;
+    }
+    const oldChildren = [...existing.childNodes], newChildren = [...fresh.childNodes];
+    for (let i = 0; i < Math.max(oldChildren.length, newChildren.length); i++) {
+      if (!newChildren[i]) oldChildren[i].remove();
+      else if (!oldChildren[i]) existing.append(newChildren[i]);
+      else reconcileEntry(oldChildren[i], newChildren[i]);
     }
   }
 

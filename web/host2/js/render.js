@@ -172,7 +172,13 @@ export function createHostRenderer() {
       return;
     }
     const passHint = row.phase === "PLAY" && r.allowPass && !r.passUsed ? `\n\n${rh("passAvailable")}` : "";
-    setPane1(`${title}\n\n${r.question?.text || ""}${passHint}`);
+    setPane1(`${title}\n\n${r.question?.text || ""}`);
+    if (passHint) {
+      const hint = document.createElement("div");
+      hint.className = "host-pass-hint";
+      hint.textContent = rh("passAvailable");
+      paperText1?.appendChild(hint);
+    }
     setPane2(answerLines);
   }
 

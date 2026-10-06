@@ -988,7 +988,11 @@ async function renderShareModal() {
   if (shareSharedList) {
     const rows = shared || [];
     if (!rows.length) {
-      shareSharedList.innerHTML = `<div style="opacity:.75">${t("bases.shareModal.emptyShared")}</div>`;
+      const empty = document.createElement("div");
+      empty.className = "share-empty-state";
+      empty.style.cssText = "border:1px dashed var(--line2);border-radius:12px;padding:12px;font-size:.85rem;opacity:.7";
+      empty.textContent = t("bases.shareModal.emptyShared");
+      shareSharedList.replaceChildren(empty);
     } else {
       shareSharedList.innerHTML = "";
       for (const r of rows) {

@@ -212,23 +212,24 @@ export function createCoverLogoRenderer({ gameId, key }) {
     if (!el) return;
     const dot = row.detail?.display?.colors?.DOT || DEFAULT_DOT_COLOR;
     const logoId = row.detail?.display?.logoId ?? null;
-    if (dot === lastDot && logoId === lastLogoId) return;
+    if (dot === lastDot && logoId === lastLogoId && el.childElementCount) return;
     lastDot = dot;
     lastLogoId = logoId;
 
+    const seq = ++fetchSeq;
     if (!logoId) {
       renderDefaultLogo(el, dot);
       return;
     }
 
-    const seq = ++fetchSeq;
     sb().rpc("display_logo_get_public", { p_game_id: gameId, p_key: key })
       .then(({ data, error }) => {
-        if (error || seq !== fetchSeq) return;
+        if (seq !== fetchSeq) return;
+        if (error) { lastLogoId = undefined; return; }
         if (data?.type && data?.payload) renderCustomLogo(el, data, dot);
-        else renderDefaultLogo(el, dot); // logo zniknęło/niedostępne -> fallback
+        else { lastLogoId = undefined; renderDefaultLogo(el, dot); }
       })
-      .catch(() => {});
+      .catch(() => { if (seq === fetchSeq) lastLogoId = undefined; });
   }
 
   return { apply };

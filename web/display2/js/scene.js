@@ -588,7 +588,14 @@ export async function createScene() {
       setA: async (idx1to5, pts, { animOut=null, animIn=null } = {}) => { const i=(idx1to5|0)-1; if (i<0||i>4) throw new Error("idx1to5 musi być 1..5"); await updateField(GLYPHS, big, FINAL.ptsA[i], alignRight((pts??"").toString(),2), {out:animOut, in:animIn, color:LIT.main}); },
       setB: async (idx1to5, pts, { animOut=null, animIn=null } = {}) => { const i=(idx1to5|0)-1; if (i<0||i>4) throw new Error("idx1to5 musi być 1..5"); await updateField(GLYPHS, big, FINAL.ptsB[i], alignRight((pts??"").toString(),2), {out:animOut, in:animIn, color:LIT.main}); },
       setRight: async (idx1to5, text, { animOut=null, animIn=null } = {}) => { const i=(idx1to5|0)-1; if (i<0||i>4) throw new Error("idx1to5 musi być 1..5"); await updateField(GLYPHS, big, FINAL.rightTxt[i], clipText((text??"").toString(),11), {out:animOut, in:animIn, color:LIT.main}); },
-      setRow: async (idx1to5, { left=undefined, a=undefined, b=undefined, right=undefined, animOut=null, animIn=null } = {}) => { if (left!==undefined) await api.final.setLeft(idx1to5,left,{animOut,animIn}); if (a!==undefined) await api.final.setA(idx1to5,a,{animOut,animIn}); if (b!==undefined) await api.final.setB(idx1to5,b,{animOut,animIn}); if (right!==undefined) await api.final.setRight(idx1to5,right,{animOut,animIn}); },
+      setRow: async (idx1to5, { left=undefined, a=undefined, b=undefined, right=undefined, animOut=null, animIn=null } = {}) => {
+        const tasks = [];
+        if (left !== undefined) tasks.push(api.final.setLeft(idx1to5,left,{animOut,animIn}));
+        if (a !== undefined) tasks.push(api.final.setA(idx1to5,a,{animOut,animIn}));
+        if (b !== undefined) tasks.push(api.final.setB(idx1to5,b,{animOut,animIn}));
+        if (right !== undefined) tasks.push(api.final.setRight(idx1to5,right,{animOut,animIn}));
+        await Promise.all(tasks);
+      },
       setSumMode: (side) => { const s=(side??"").toString().toUpperCase(); if (s!=="A"&&s!=="B") throw new Error(`FSUMMODE: nieznana strona: ${side}`); finalState.sumMode=s; drawFinalSum(); },
       setSuma: async (val, { animOut=null, animIn=null } = {}) => { if (finalState.sumMode==="A") finalState.sumA=(val??"").toString(); else finalState.sumB=(val??"").toString(); const isA=(finalState.sumMode==="A"); clearFinalSumRow(); writeField(GLYPHS, big, isA?FINAL.sumaALabel:FINAL.sumaBLabel, SUMA_LABEL, LIT.main); await updateField(GLYPHS, big, isA?FINAL.sumaAVal:FINAL.sumaBVal, alignRight((val??"").toString(),3), {out:animOut, in:animIn, color:LIT.main}); },
       setSumaFor: async (side, val, anims={}) => { const s=(side??"").toString().toUpperCase(); if (s!=="A"&&s!=="B") throw new Error(`setSumaFor: nieznana strona: ${side}`); finalState.sumMode=s; return api.final.setSuma(val, anims); },

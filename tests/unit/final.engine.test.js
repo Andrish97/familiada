@@ -101,6 +101,7 @@ test("timer P1: START_TIMER ustawia endsAt +15s, EXPIRE_TIMER zatrzymuje i gra t
   assert.equal(store.state.final.runtime.timer.running, true);
   assert.equal(store.state.final.runtime.timer.endsAt, t + 15_000);
 
+  t += 15_000;
   await dispatch({ type: "EXPIRE_TIMER" });
   assert.equal(store.state.final.runtime.timer.running, false);
   assert.equal(store.commits.at(-1).soundCueKey, "time_over");
@@ -167,22 +168,25 @@ test("timer P1/P2: usedP1/usedP2 są niezależne — wyczerpanie P1 nie blokuje 
   assert.equal(store.state.final.runtime.timer.phase, "P2");
 });
 
-test("START_MAPPING: czyści timer, jeśli operator kliknął 'Dalej' zanim ten naturalnie wygasł (bez tego running=true zostałoby w zapisanym stanie na zawsze)", async () => {
+test("START_MAPPING rejects an unstarted or running timer; early stop requires five actual answers", async () => {
   let t = 1_000_000;
   const { store, dispatch } = makeEngine({}, () => t);
   await dispatch({ type: "START_FINAL" });
+  assert.equal(await dispatch({ type: "START_MAPPING", round: 1 }), null);
   await dispatch({ type: "START_TIMER", phase: "P1" });
-  assert.equal(store.state.final.runtime.timer.running, true);
-
-  t += 3_000; // operator klika "Dalej" po 3s, timer miał jeszcze 12s
+  assert.equal(await dispatch({ type: "START_MAPPING", round: 1 }), null);
+  assert.equal(await dispatch({ type: "EXPIRE_TIMER" }), null);
+  for (let idx = 0; idx < 5; idx++) await dispatch({ type: "SET_ENTRY_TEXT", round: 1, idx, text: "Answer" });
+  await dispatch({ type: "EXPIRE_TIMER" });
+  store.state.final.runtime.timer.usedP1 = true;
   await dispatch({ type: "START_MAPPING", round: 1 });
-  assert.equal(store.state.final.runtime.timer.running, false, "inaczej kolejny hydrate() fałszywie odpali EXPIRE_TIMER poza wpisywaniem");
-  assert.equal(store.state.final.runtime.timer.endsAt, 0);
+  assert.equal(store.state.step, "f_p1_map_q1");
 });
 
 test("START_MAPPING: f_p1_entry -> f_p1_map_q1 (dozwolone przejście z tabeli)", async () => {
   const { store, dispatch } = makeEngine();
   await dispatch({ type: "START_FINAL" });
+  store.state.final.runtime.timer.usedP1 = true;
   await dispatch({ type: "START_MAPPING", round: 1 });
   assert.equal(store.state.step, "f_p1_map_q1");
 });
@@ -190,6 +194,7 @@ test("START_MAPPING: f_p1_entry -> f_p1_map_q1 (dozwolone przejście z tabeli)",
 test("mapowanie: 'pokaż odpowiedź' musi poprzedzać 'pokaż punkty' w danych (revealedAnswer przed revealedPoints)", async () => {
   const { store, dispatch } = makeEngine();
   await dispatch({ type: "START_FINAL" });
+  store.state.final.runtime.timer.usedP1 = true;
   await dispatch({ type: "START_MAPPING", round: 1 });
   await dispatch({ type: "SET_ENTRY_TEXT", round: 1, idx: 0, text: "Ser" });
   await dispatch({ type: "RESOLVE_MAPPING", round: 1, idx: 0, mode: "MANUAL", kind: "MATCH", outText: "Ser", pts: 25 });
@@ -203,6 +208,7 @@ test("mapowanie: 'pokaż odpowiedź' musi poprzedzać 'pokaż punkty' w danych (
 test("mapowanie: MATCH dolicza punkty do sumy raz, MISS dokłada 0 i gra answer_wrong", async () => {
   const { store, dispatch } = makeEngine();
   await dispatch({ type: "START_FINAL" });
+  store.state.final.runtime.timer.usedP1 = true;
   await dispatch({ type: "START_MAPPING", round: 1 });
 
   await matchAnswer(dispatch, 1, 0, 30);
@@ -223,6 +229,7 @@ test("mapowanie: MATCH dolicza punkty do sumy raz, MISS dokłada 0 i gra answer_
 test("mapowanie: MISS odsłania odpowiedź i punkty osobno, SKIP odsłania zero automatycznie", async () => {
   const { store, dispatch } = makeEngine();
   await dispatch({ type: "START_FINAL" });
+  store.state.final.runtime.timer.usedP1 = true;
   await dispatch({ type: "START_MAPPING", round: 1 });
 
   await dispatch({ type: "SET_ENTRY_TEXT", round: 1, idx: 0, text: "coś innego" });
@@ -246,6 +253,7 @@ test("mapowanie: MISS odsłania odpowiedź i punkty osobno, SKIP odsłania zero 
 test("mapowanie: MATCH zostaje dwuetapowe -- REVEAL_ANSWER_ONLY samo nie odsłania punktów", async () => {
   const { store, dispatch } = makeEngine();
   await dispatch({ type: "START_FINAL" });
+  store.state.final.runtime.timer.usedP1 = true;
   await dispatch({ type: "START_MAPPING", round: 1 });
 
   await dispatch({ type: "SET_ENTRY_TEXT", round: 1, idx: 0, text: "Odpowiedź" });
@@ -259,6 +267,7 @@ test("mapowanie: MATCH zostaje dwuetapowe -- REVEAL_ANSWER_ONLY samo nie odsłan
 test("osiągnięcie celu w rundzie 1 blokuje akcje i czeka na ręczne zakończenie finału", async () => {
   const { store, dispatch } = makeEngine({ finalTarget: 50 });
   await dispatch({ type: "START_FINAL" });
+  store.state.final.runtime.timer.usedP1 = true;
   await dispatch({ type: "START_MAPPING", round: 1 });
   const result = await matchAnswer(dispatch, 1, 0, 60); // 60 >= 50
   assert.ok(result); // commit zwrócony, nie null
@@ -277,6 +286,7 @@ test("osiągnięcie celu w rundzie 1 blokuje akcje i czeka na ręczne zakończen
 test("po f_p1_map_q5 bez wcześniejszego wyjścia -> f_p2_start (round_transition), START_P2_ROUND NIE odsłania Hosta", async () => {
   const { store, dispatch } = makeEngine({ finalTarget: 999 }); // nigdy nie trafiony
   await dispatch({ type: "START_FINAL" });
+  store.state.final.runtime.timer.usedP1 = true;
   await dispatch({ type: "START_MAPPING", round: 1 });
   for (let i = 0; i < 5; i++) {
     await matchAnswer(dispatch, 1, i, 5);
@@ -293,6 +303,7 @@ test("po f_p1_map_q5 bez wcześniejszego wyjścia -> f_p2_start (round_transitio
 test("ostatnia odpowiedź gracza 2 czeka na ręczne zakończenie finału poniżej celu", async () => {
   const { store, dispatch } = makeEngine({ finalTarget: 999 });
   await dispatch({ type: "START_FINAL" });
+  store.state.final.runtime.timer.usedP1 = true;
   await dispatch({ type: "START_MAPPING", round: 1 });
   for (let i = 0; i < 5; i++) {
     await dispatch({ type: "RESOLVE_MAPPING", round: 1, idx: i, mode: "MANUAL", kind: "SKIP" });
@@ -301,6 +312,7 @@ test("ostatnia odpowiedź gracza 2 czeka na ręczne zakończenie finału poniże
     await dispatch({ type: "NEXT_QUESTION", round: 1, idx: i + 1 });
   }
   await dispatch({ type: "START_P2_ROUND" });
+  store.state.final.runtime.timer.usedP2 = true;
   await dispatch({ type: "START_MAPPING", round: 2 });
   for (let i = 0; i < 5; i++) {
     await dispatch({ type: "RESOLVE_MAPPING", round: 2, idx: i, mode: "MANUAL", kind: "SKIP" });
@@ -317,6 +329,7 @@ test("ostatnia odpowiedź gracza 2 czeka na ręczne zakończenie finału poniże
 test("ostatnie trafienie gracza 2 czeka na ręczne zakończenie finału poniżej celu", async () => {
   const { store, dispatch } = makeEngine({ finalTarget: 999 });
   await dispatch({ type: "START_FINAL" });
+  store.state.final.runtime.timer.usedP1 = true;
   await dispatch({ type: "START_MAPPING", round: 1 });
   for (let i = 0; i < 5; i++) {
     await dispatch({ type: "RESOLVE_MAPPING", round: 1, idx: i, mode: "MANUAL", kind: "SKIP" });
@@ -324,6 +337,7 @@ test("ostatnie trafienie gracza 2 czeka na ręczne zakończenie finału poniżej
     await dispatch({ type: "NEXT_QUESTION", round: 1, idx: i + 1 });
   }
   await dispatch({ type: "START_P2_ROUND" });
+  store.state.final.runtime.timer.usedP2 = true;
   await dispatch({ type: "START_MAPPING", round: 2 });
   for (let i = 0; i < 5; i++) {
     await matchAnswer(dispatch, 2, i, 5);
@@ -340,6 +354,7 @@ test("ostatnie trafienie gracza 2 czeka na ręczne zakończenie finału poniżej
 test("FINISH_FINAL: sumę finału wtapia w totals zwycięzcy, idempotentne", async () => {
   const { store, dispatch } = makeEngine();
   await dispatch({ type: "START_FINAL" }); // winner=A, totals.A=350
+  store.state.final.runtime.timer.usedP1 = true;
   await dispatch({ type: "START_MAPPING", round: 1 });
   await matchAnswer(dispatch, 1, 0, 40); // sum=40, finalTarget domyślnie 200 więc bez wcześniejszego wyjścia
   store.state.step = "f_end"; // symulacja dojścia do końca liniową ścieżką (już przetestowane wyżej)
@@ -384,6 +399,7 @@ test("typing new content clears repeat and its forced skip; unchanged text prese
 test("mapowanie: zmiana tekstu unieważnia wybór, także po końcu czasu", async () => {
   const { store, dispatch } = makeEngine();
   await dispatch({ type: "START_FINAL" });
+  store.state.final.runtime.timer.usedP1 = true;
   await dispatch({ type: "START_MAPPING", round: 1 });
   await dispatch({ type: "RESOLVE_MAPPING", round: 1, idx: 0, kind: "SKIP", pts: 0 });
   await dispatch({ type: "SET_ENTRY_TEXT", round: 1, idx: 0, text: "Mleko" });

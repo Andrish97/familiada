@@ -49,7 +49,7 @@ Odsłoń treść na swoim urządzeniu, gdy potrzebujesz przeczytać pytanie albo
 
 W górnym pasku sprawdzisz połączenie Wyświetlacza, Prowadzącego i Przycisku. Przyciski urządzeń pozwalają wrócić do ich linków, kodów i udostępniania także w trakcie gry. Główna część panelu zmienia się wraz z etapem: w przygotowaniu pokazuje urządzenia lub Podsumowanie, w rundach pytanie i odpowiedzi, a w finale pola wpisywania albo ocenę pojedynczej odpowiedzi.
 
-Kolumna podpowiedzi wyjaśnia, kto teraz odpowiada i na jaką czynność czeka system. Pasek pod planszą pokazuje bieżące informacje: w rundach drużynę grającą i bank, a przy odsłanianiu finału sumę punktów. Przycisk dalszego przejścia opisuje następny krok. Nie musisz zgadywać, co zrobi `Dalej` — przy ważnych przejściach jego nazwa zmienia się np. na „Przejdź do finału” lub `Zakończ finał`.
+Kolumna podpowiedzi wyjaśnia, kto teraz odpowiada i na jaką czynność czeka system. Pasek pod planszą pokazuje bieżące informacje: w rundach drużynę grającą i bank, a przy odsłanianiu finału sumę punktów. Przycisk dalszego przejścia opisuje następny krok. Nie musisz zgadywać, co zrobi `Dalej` — przy ważnych przejściach jego nazwa zmienia się np. na `Przejdź do finału` lub `Zakończ finał`.
 
 ### 1) Urządzenia
 
@@ -93,7 +93,7 @@ Alternatywnie: na urządzeniu mobilnym możesz zeskanować **kod QR** widoczny w
 
 Jeśli prowadzący nie korzysta z osobnego urządzenia (telefonu/tabletu), zaznacz opcję `Nie używaj tabletu prowadzącego` przy urządzeniu Prowadzący. Po zaznaczeniu: przyciski i kod połączenia dla prowadzącego są wyszarzone, podpięcie urządzenia prowadzącego nie jest wymagane do przejścia dalej, a kontrolka Prowadzącego w górnym pasku staje się nieaktywna. Operator może samodzielnie prowadzić rozgrywkę z panelu sterowania.
 
-`Przycisk fizyczny`
+**Przycisk fizyczny**
 
 Jeśli zamiast Przycisku do pojedynku w przeglądarce używasz przycisku fizycznego, (np. sprzętowego przycisku podłączonego inną ścieżką), zaznacz opcję `Przycisk fizyczny` przy urządzeniu Przycisk. Po zaznaczeniu: podpięcie urządzenia przycisku nie jest wymagane, a przebieg pojedynku zmienia się — operator sam decyduje, kto nacisnął pierwszy.
 
@@ -115,7 +115,7 @@ Działania zatwierdzone przed wykryciem rozłączenia pozostają zapisane. Czynn
 
 Wybierz źródło dźwięku: „Panel sterowania” albo „Wyświetlacz”. Dźwięki gry odtwarzane są tylko na wybranym urządzeniu. Jeśli wybierasz Wyświetlacz, naciśnij na nim przycisk odblokowania dźwięku. Na telewizorze można użyć OK lub Enter na pilocie. Przeglądarka może wymagać kliknięcia, zanim pozwoli na odtwarzanie. Po podłączeniu sprawdź również poziom głośności samego telewizora lub głośników.
 
-**Uwaga:** Źródło „Wyświetlacz” wybierz, gdy dźwięk ma odtwarzać osobny telewizor lub inne osobne urządzenie. Przy HDMI zwykle wygodniej pozostawić „Panel sterowania” i wybrać telewizor jako wyjście dźwięku w ustawieniach komputera. Po podłączeniu HDMI system często robi to automatycznie. Przy AirPlay przesyłasz obraz i dźwięk z Maca, iPhone’a lub iPada na Apple TV.
+**Uwaga:** Źródło „Wyświetlacz” wybierz, gdy dźwięk ma odtwarzać osobny telewizor lub inne osobne urządzenie na którym będzie otwarta karta urządzenia „Wyświetlacz”. Przy HDMI zwykle wygodniej pozostawić „Panel sterowania” i wybrać telewizor jako wyjście dźwięku w ustawieniach komputera. Po podłączeniu HDMI system często robi to automatycznie. Przy AirPlay przesyłasz obraz i dźwięk z Maca, iPhone’a lub iPada na Apple TV.
 
 ### 2) Ustawienia
 
@@ -254,7 +254,7 @@ Przed grą sprawdź pięć pytań w Podsumowaniu. Przy trybie **Ręcznie** wybie
 
 Upewnij się, że drugi zawodnik oczekuje poza grą. Prowadzący czyta po kolei pytania; operator wpisuje odpowiedzi przy właściwych pytaniach. Odpowiedzi nie są jeszcze oceniane ani pokazywane publiczności.
 
-Zegar pierwszego gracza ma **15 sekund**. Nie rusza po samym otwarciu etapu: uruchom go przyciskiem albo skrótem **Shift + Ctrl** (Mac: **⇧ + ⌘**). Tym samym przyciskiem lub skrótem możesz zatrzymać odliczanie. Enter przechodzi do następnego pola, a strzałki góra i dół pozwalają zmienić pytanie. Puste pole to brak wpisu, nie ostateczna ocena odpowiedzi.
+Zegar pierwszego gracza ma **15 sekund**. Nie rusza po samym otwarciu etapu: uruchom go przyciskiem albo skrótem **Ctrl + Enter** (Mac: **⌘ + Enter**). Tym samym przyciskiem lub skrótem możesz zatrzymać odliczanie. Enter i strzałka w dół przechodzą do następnego pustego pola, a strzałka w górę do poprzedniego pustego pola. Po ostatnim pytaniu przechodzisz do pierwszego. Żeby poprawić uzupełnioną odpowiedź, kliknij jej pole. Puste pole to brak wpisu, nie ostateczna ocena odpowiedzi. Każdy gracz musi wykorzystać timer przed przejściem do dopasowania. Ręczne zatrzymanie jest dostępne dopiero po wpisaniu tekstu we wszystkich pięciu polach; samo Powtórzenie nie wypełnia pola. Po naturalnym upływie czasu możesz przejść dalej z brakami.
 
 **Wskazówka:** Po upływie czasu możesz poprawić literówki i uzupełnić zapamiętaną odpowiedź, gdy prowadzący jeszcze rozmawia z zawodnikiem. Poprawki są możliwe również podczas dopasowania, do odsłonięcia odpowiedzi.
 
@@ -306,7 +306,7 @@ Druga część zawiera:
 
 #### Gracz 2 — przygotowanie i wpisywanie
 
-Jeżeli nie osiągnięto progu, po piątym pytaniu gracza 1 przejdź do przygotowania drugiego zawodnika. W tym przejściu gra „Przejście rundy”; tablet Prowadzącego jest czyszczony. Przypomnij zasady i możesz zaprezentować dźwięk powtórzenia.
+Jeżeli nie osiągnięto progu, po piątym pytaniu gracza 1 przejdź do przygotowania drugiego zawodnika. Tablet Prowadzącego jest czyszczony. Przypomnij zasady i możesz zaprezentować dźwięk powtórzenia.
 
 `Rozpocznij 2 rundę` przywraca odkryte odpowiedzi gracza 1 na Wyświetlaczu. Drugi zawodnik odwraca się od tablicy, aby ich nie widzieć. Operator widzi je przy polach odpowiedzi, co pomaga rozpoznać powtórzenie. Zegar ma **20 sekund** i uruchamiasz go tak samo jak przy graczu 1. Prowadzący widzi tytuł „FINAŁ RUNDA 2”, odliczanie po uruchomieniu zegara i pięć pytań ze statusami wpisów.
 
@@ -318,7 +318,7 @@ Gdy gracz powtórzy odpowiedź pierwszego zawodnika, oznacz `Powtórzenie` i pop
 
 Po wpisywaniu dopasuj i odsłoń odpowiedzi drugiego gracza tak samo jak pierwszego. W panelu i na tablecie Prowadzącego „Gracz 1” wskazuje wcześniejszą wybraną odpowiedź, a „Wprowadzono” — obecny wpis operatora. Nie muszą mieć identycznego brzmienia. Powtórzenie nie daje punktów. Punkty obu graczy trafiają do tej samej sumy na górze Wyświetlacza.
 
-**Ważne:** Wyświetlacz mieści 17 znaków odpowiedzi w rundach i 11 w finale, razem ze spacjami. Dłuższy tekst jest skracany tylko na planszy; pełny pozostaje w panelu i na tablecie Prowadzącego. Kropka oznacza urwane słowo. Jeśli następny znak to spacja lub interpunkcja, kropka nie jest dodawana.
+**Ważne:** Wyświetlacz mieści 17 znaków odpowiedzi w rundach i 11 w finale, razem ze spacjami. Dłuższy tekst jest skracany tylko na planszy; pełny pozostaje w panelu i na tablecie Prowadzącego. Kropka oznacza urwane słowo. Jeśli następny znak to spacja lub interpunkcja, kropka nie jest dodawana. Przy urwaniu słowa usuwa się dodatkowo do dwóch końcowych samogłosek przed kropką. Dotyczy to odpowiedzi polskich, angielskich i ukraińskich; kropka mieści się w limicie znaków.
 
 #### Kiedy finał się kończy
 
@@ -335,6 +335,30 @@ Tablet Prowadzącego zostaje wyczyszczony po przejściu do zakończenia gry. Wyn
 #### Ponowne rozpoczęcie gry
 
 Uruchamiasz przyciskiem ![](manual-assets/refresh.svg) (Zacznij od nowa). Potwierdzenie restartu wraca do przygotowania urządzeń, przerywa dźwięki i usuwa oczekujące działania poprzedniej rozgrywki.
+
+### Skróty klawiatury Panelu sterowania 2
+
+| Skrót | Czynność |
+|---|---|
+| 1–6, następnie Enter | Zaznacz i odsłoń odpowiedź w rundzie. |
+| C, następnie Enter | Zatwierdź drużynę wskazaną przez Przycisk. |
+| A/B, następnie Enter | Wybierz i zatwierdź drużynę w trybie fizycznego przycisku. |
+| X, następnie Enter | Zaznacz i wykonaj pudło. |
+| T, następnie Enter | Obsłuż timer. |
+| P, następnie Enter | Oddaj kontrolę. |
+| N, następnie Enter | Wykonaj aktualną czynność dalszego przejścia. |
+| B, następnie Enter | Wróć, gdy powrót jest dostępny. |
+| E, następnie Enter | Zmień ustawienia w Podsumowaniu. |
+| M | Wycisz lub przywróć dźwięk od razu, bez Entera. |
+| Ctrl+Enter / ⌘+Enter na Macu | Podczas wpisywania finału uruchom lub zatrzymaj timer. |
+| Shift+Enter | W pustym polu gracza 2 zaznacz lub zdejmij Powtórzenie. |
+| ↑ / ↓ / Enter | Podczas wpisywania wybierz poprzednie / następne puste pole. |
+
+W dopasowaniu **1–6** wybiera odpowiedź z listy, **W** wpisaną odpowiedź, **O** brak odpowiedzi, a **R** powtórzenie. Zaznaczanie odbywa się od razu jednym kliknięciem lub skrótem. Pierwszy Enter odsłania odpowiedź, a następny punkty po zakończeniu przejścia. Brak odpowiedzi i powtórzenie automatycznie pokazują zero. **N i Enter** przechodzą do kolejnego pytania. Przy odsłanianiu myszą obowiązuje zaznaczenie i potwierdzenie drugim kliknięciem.
+
+**Ważne:** Litery i cyfry w aktywnym polu pozostają zwykłym tekstem. Skróty nie omijają blokad, dźwięków ani animacji i nie wykonują czynności w tle otwartego okna. Restart nie ma skrótu.
+
+**Prowadzący:** Podpowiedź o możliwości oddania kontroli jest czerwona i podkreślona. Powrót do pustego pytania oznaczonego jako Powtórzenie zachowuje znacznik. Wpisanie nowej odpowiedzi usuwa go automatycznie.
 
 ## Ustawienia rozgrywki
 

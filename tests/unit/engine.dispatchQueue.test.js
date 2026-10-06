@@ -14,6 +14,7 @@
 
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { createFakeStore } from "./helpers/fakeStore.js";
 import { createEngine } from "../../web/control2/js/engine.js";
 import { makeDefaultState } from "../../web/shared/js/gameplay/gameStateShape.js";
 
@@ -81,4 +82,21 @@ test("dispatch: trzy nakładające się ADD_X — wszystkie trzy liczą się po 
   assert.equal(store.getMaxConcurrent(), 1);
   assert.deepEqual(store.commits.map((c) => c.xB), [1, 2, 3]);
   assert.equal(results.filter(Boolean).length, 3, "żaden dispatch nie zwrócił null/no-op");
+});
+
+test("a round transition writes its sound gate in the same commit as the new duel", async () => {
+  const store = createFakeStore("atomic-round");
+  store.state.step = "r_roundStart";
+  store.state.rounds._questionPool = [{ id:"q1", ord:1, text:"Question" }];
+  let written;
+  const originalCommit = store.commit;
+  store.commit = async (options) => { written = options; return originalCommit(options); };
+  const engine = createEngine({ store, loadAnswers:async () => [{id:"a1",ord:1,text:"Answer",fixed_points:10}], computeCommitGate:async (type, previous, next) => {
+    assert.equal(type, "START_ROUND");
+    assert.equal(next.step, "r_duel");
+    assert.equal(next.sound_cue_key, "round_transition");
+    return 4200;
+  }});
+  await engine.dispatch({type:"START_ROUND"});
+  assert.deepEqual(written, {soundCueKey:"round_transition",lockMs:4200});
 });

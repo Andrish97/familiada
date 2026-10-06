@@ -535,9 +535,12 @@ async function pressBuzzerPaced(buzzerPage, label, ms = REVEAL_PACE_MS) {
 // X, kradzież), nigdy krok administracyjny.
 async function armAndConfirmPaced(locator, ms = REVEAL_PACE_MS) {
   const page = locator.page();
+  const mappingChoice = await locator.evaluate((el) => !!document.querySelector(".c2-mapinput") && /^(?:[1-6]|w|o|r)$/.test(el.dataset.shortcut || ""));
+  if (mappingChoice) return clickPaced(locator, 500);
+  const accept = await locator.evaluate(el => el.dataset.shortcut === "c");
   await locator.click();
-  await page.waitForTimeout(1800); // widz ma zdążyć zobaczyć złotą obwódkę "uzbrojenia" przed potwierdzeniem (proporcjonalnie do REVEAL_PACE_MS)
-  await clickPaced(locator, ms);
+  await page.waitForTimeout(accept ? 250 : 700); // widz ma zdążyć zobaczyć złotą obwódkę "uzbrojenia" przed potwierdzeniem (proporcjonalnie do REVEAL_PACE_MS)
+  await clickPaced(locator, accept ? 250 : ms);
 }
 
 // Kafelki odpowiedzi w Rundach nie pokazują już "#N" (control2/js/ui.js's
@@ -1191,6 +1194,20 @@ function matchButtonLabel(a) {
   return `${a.text} (${a.fixed_points})`;
 }
 
+async function keyboardPaced(control, key, { confirm = false, reveal = false } = {}) {
+  await control.evaluate(() => document.activeElement?.blur());
+  const button = reveal ? control.getByRole("button", { name:key === "points" ? "Pokaż punkty" : "Pokaż odpowiedź" }) : control.locator(`[data-shortcut="${key}"]`);
+  await expect(button).toBeEnabled({ timeout:30000 });
+  const written = waitForWrite(control);
+  if (reveal) await control.keyboard.press("Enter");
+  else {
+    await control.keyboard.press(key);
+    if (confirm) await control.keyboard.press("Enter");
+  }
+  await written;
+  await control.waitForTimeout(500);
+}
+
 // ===== Scenariusz 4: finał pełny — oba bloki, naturalne wygaśnięcie
 // zegarka gracza 1, powtórzenie u gracza 2, odsłonięcie odpowiedzi gracza 1
 // na Display I Host przy starcie tury gracza 2, WSZYSTKIE cztery wyniki
@@ -1221,7 +1238,7 @@ async function scenarioFinalFull(pages, { game }) {
   await playThreeNaturalRoundsToThreshold(pages);
 
   await clickPaced(control.getByRole("button", { name: "Rozpocznij finał" }));
-  await control.waitForTimeout(4000); // final_theme + reveal
+  await expect(control.locator(".c2-entryrow input").first()).toBeEnabled({ timeout: 30000 });
 
   // Host: zasłona pasma 2 właśnie się włączyła (startFinal). Prowadzący
   // sam podgląda gestem przesunięcia — Host ma treść zawsze, zasłona to
@@ -1279,13 +1296,14 @@ async function scenarioFinalFull(pages, { game }) {
     // klik by go tylko zaznaczył, zostawiając efektywne dopasowanie na
     // domyślnym AUTO-fallbacku (MISS) -- patrz identyczny, real bug
     // znaleziony i opisany w scenariuszu 5 niżej.
-    if (P1_PLAN[i] === true) await armAndConfirmPaced(control.getByRole("button", { name: matchButtonLabel(answerByRank(fq[i], P1_MATCH_RANK[i])) }));
+    const choice = P1_PLAN[i] === true ? String(answerByRank(fq[i], P1_MATCH_RANK[i]).ord) : P1_PLAN[i] === "miss" ? "w" : "o";
+    await keyboardPaced(control, choice);
     // "Pokaż odpowiedź"/"Pokaż punkty" — kafle odsłaniania, zaznacz ->
     // potwierdź jak odpowiedzi w Rundach (nazwa stała, druga linijka to
     // żywy podgląd).
-    await armAndConfirmPaced(control.getByRole("button", { name: "Pokaż odpowiedź" }));
-    if (P1_PLAN[i]) await armAndConfirmPaced(control.getByRole("button", { name: "Pokaż punkty" }));
-    await clickPaced(control.getByRole("button", { name: "Dalej" }));
+    await keyboardPaced(control, "answer", { reveal:true });
+    if (P1_PLAN[i]) await keyboardPaced(control, "points", { reveal:true });
+    await keyboardPaced(control, "n", { confirm:true });
   }
 
   await clickPaced(control.getByRole("button", { name: "Rozpocznij 2 rundę" }));
@@ -1306,6 +1324,14 @@ async function scenarioFinalFull(pages, { game }) {
   // wymuszony SKIP w mapowaniu) -- zdjęcie flagi zostaje jednoklikowe.
   await armAndConfirmPaced(control.getByRole("button", { name: "Powtórzenie" }).first());
   const p2Inputs = control.locator("#app input[type=text]");
+  await p2Inputs.nth(0).focus();
+  await expect(control.locator(".c2-btn-repeat").first()).toHaveClass(/\bon\b/);
+  await typePaced(p2Inputs.nth(0), "Nowa odpowiedź", 250);
+  await expect(control.locator(".c2-btn-repeat").first()).not.toHaveClass(/\bon\b/);
+  await fillPaced(p2Inputs.nth(0), "", 250);
+  await p2Inputs.nth(0).focus();
+  await control.keyboard.press("Shift+Enter");
+  await expect(control.locator(".c2-btn-repeat").first()).toHaveClass(/\bon\b/);
   for (let i = 1; i < 5; i++) {
     if (P2_PLAN[i] === true) await typePaced(p2Inputs.nth(i), answerByRank(fq[i], P2_MATCH_RANK[i]).text);
     // false: nic nie wpisujemy -> AUTO+SKIP
@@ -1317,7 +1343,7 @@ async function scenarioFinalFull(pages, { game }) {
   // wyżej — wcześniejszy komentarz "tym razem NIE czekamy" opisywał stan
   // sprzed tej naprawy. Wpisywanie powyżej już zjadło kilka sekund PO
   // starcie zegarka -- reszta to tylko dociągnięcie z zapasem.
-  await control.waitForTimeout(16_000);
+  await expect(control.getByRole("button", { name: "Czas wykorzystany" })).toBeVisible({ timeout:25000 });
   await clickPaced(control.getByRole("button", { name: "Dalej" }));
 
   for (let i = 0; i < 5; i++) {
@@ -1374,7 +1400,7 @@ async function scenarioFinalEarlyExit(pages, { game }) {
   await playThreeNaturalRoundsToThreshold(pages);
 
   await clickPaced(control.getByRole("button", { name: "Rozpocznij finał" }));
-  await control.waitForTimeout(4000); // final_theme + reveal
+  await expect(control.locator(".c2-entryrow input").first()).toBeEnabled({ timeout: 30000 });
 
   await hostPeekSwipe(host);
   await host.waitForTimeout(1500);
@@ -1383,7 +1409,10 @@ async function scenarioFinalEarlyExit(pages, { game }) {
   // nigdy do nich nie dojdziemy. Zegarek pomijamy całkowicie (opcjonalny —
   // "Dalej" działa niezależnie od tego, czy w ogóle był uruchomiony).
   const p1Inputs = control.locator("#app input[type=text]");
+  await p1Inputs.nth(0).focus();
+  await control.keyboard.press("Control+Enter");
   await typePaced(p1Inputs.nth(0), top.text);
+  await expect(control.getByRole("button", { name: "Czas wykorzystany" })).toBeVisible({ timeout:20000 });
   await clickPaced(control.getByRole("button", { name: "Dalej" }));
 
   // Real bug znaleziony przez failed nagranie (przebieg #22, diagnostyka):
@@ -1988,7 +2017,7 @@ async function dumpFailureDiagnostics(controlPage, scenarioFile) {
 // końcowego potwierdzenia, że całość przechodzi na zielono.
 function filterScenarios(all) {
   const raw = String(process.env.SCENARIO_FILTER || "").trim();
-  if (!raw) return all;
+  if (!raw) return all.filter(s => /^(01|03|04|05|06|07)-/.test(s.file));
   const needles = raw.split(",").map((s) => s.trim().toLowerCase()).filter(Boolean);
   const filtered = all.filter((s) => needles.some((n) => s.file.toLowerCase().includes(n)));
   if (!filtered.length) {

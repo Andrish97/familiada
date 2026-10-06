@@ -116,6 +116,7 @@ test("getFinalHint: f_start i etap wpisywania (zegarek jeszcze nieużyty / w tra
   await engine.dispatch({ type: "START_TIMER", phase: "P1" });
   assert.match(getFinalHint(store.state), /Wpisz odpowiedzi gracza 1.*zatrzymać odliczanie/);
 
+  t += 15_000;
   await engine.dispatch({ type: "EXPIRE_TIMER" });
   assert.match(getFinalHint(store.state), /Czas wykorzystany.*dokończyć wpisywanie/);
 });
@@ -130,6 +131,7 @@ test("getFinalHint: mapowanie pytania — puste, wpisane, odsłonięte, z punkta
     now: () => t,
   });
   await engine.dispatch({ type: "START_FINAL" });
+  store.state.final.runtime.timer.usedP1 = true;
   await engine.dispatch({ type: "START_MAPPING", round: 1 });
 
   // Rozstrzygnięcie jest zawsze już jakieś (domyślne MISS/SKIP) — hint nie
@@ -157,9 +159,11 @@ test("getFinalHint: powtórzenie u gracza 2 pokazuje się RAZEM ze zwykłą podp
     now: () => t,
   });
   await engine.dispatch({ type: "START_FINAL" });
+  store.state.final.runtime.timer.usedP1 = true;
   await engine.dispatch({ type: "START_MAPPING", round: 1 });
   for (let i = 0; i < 5; i++) await engine.dispatch({ type: "NEXT_QUESTION", round: 1, idx: i + 1 });
   await engine.dispatch({ type: "START_P2_ROUND" });
+  store.state.final.runtime.timer.usedP2 = true;
   await engine.dispatch({ type: "START_MAPPING", round: 2 });
 
   assert.match(getFinalHint(store.state), /potwierdź „Pokaż odpowiedź”/);

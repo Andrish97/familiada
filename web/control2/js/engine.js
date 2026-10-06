@@ -594,9 +594,11 @@ const REDUCERS = {
   // więc usedP1/usedP2 zostaje zużyte (zgodne z regułą "jednorazowa
   // szansa"). Dla zastanego już wygasłego zegarka PRZY WZNOWIENIU (nikt
   // nie patrzył) patrz CANCEL_TIMER niżej — inny reducer, inne zachowanie.
-  async EXPIRE_TIMER(state) {
+  async EXPIRE_TIMER(state, action, deps) {
     const t = state.final.runtime.timer;
     if (!t.running) return null;
+    const entries = state.final.runtime[t.phase === "P1" ? "p1" : "p2"];
+    if (deps.now() < t.endsAt && !entries.every((entry) => String(entry?.text || "").trim())) return null;
     state.final.runtime.timer = { ...t, running: false, endsAt: 0 };
     return { ...sameStep(state), soundCueKey: "time_over" };
     // Brak auto-przejścia do mapowania — operator klika "dalej" ręcznie
@@ -697,6 +699,9 @@ const REDUCERS = {
   // trakcie mapowania) fałszywie odpalałoby EXPIRE_TIMER/"time_over" poza
   // kontekstem wpisywania.
   async START_MAPPING(state, action) {
+    const timer = state.final.runtime.timer;
+    const phase = action.round === 1 ? "P1" : "P2";
+    if (state.step !== `f_p${action.round}_entry` || timer.running || !timer[`used${phase}`]) return null;
     state.final.runtime.timer = { ...state.final.runtime.timer, running: false, phase: null, endsAt: 0 };
     return { step: `f_p${action.round}_map_q1`, phase: null, controlTeam: null, topCard: "final" };
   },
@@ -747,7 +752,7 @@ const REDUCERS = {
   },
 };
 
-export function createEngine({ store, loadQuestionPool, loadQuestions, loadAnswers, now = Date.now }) {
+export function createEngine({ store, loadQuestionPool, loadQuestions, loadAnswers, now = Date.now, computeCommitGate = async () => 0 }) {
   const deps = { loadQuestionPool, loadQuestions, loadAnswers, now };
 
   async function dispatchNow(action) {
@@ -759,7 +764,11 @@ export function createEngine({ store, loadQuestionPool, loadQuestions, loadAnswe
     const awaitingFinalEnd = /^f_p[12]_map_q[1-5]$/.test(store.state.step) &&
       (runtime?.reached200 || (store.state.step === "f_p2_map_q5" && runtime.map2.every((answer) => answer.revealedPoints)));
     if (awaitingFinalEnd && action.type !== "NEXT_QUESTION") return null;
+    if (store.state.step === "r_play" && ["PLAY", "STEAL"].includes(store.state.phase) &&
+        store.state.rounds.canEndRound && previewPendingRoundEndDestination(store.state) === "GAME_END" &&
+        action.type !== "END_ROUND") return null;
 
+    const previousRow = store.state.__row || null;
     const result = await reducer(store.state, action, deps);
     if (!result) return null; // no-op, świadomie — akcja nie miała zastosowania
 
@@ -773,7 +782,10 @@ export function createEngine({ store, loadQuestionPool, loadQuestions, loadAnswe
     store.state.controlTeam = result.controlTeam ?? null;
     store.state.topCard = result.topCard ?? store.state.topCard;
 
-    return store.commit({ soundCueKey: result.soundCueKey });
+    const proposedRow = { step: result.step, sound_cue_key: result.soundCueKey,
+      sound_cue_seq: (previousRow?.sound_cue_seq || 0) + (result.soundCueKey ? 1 : 0) };
+    const lockMs = await computeCommitGate(action.type, previousRow, proposedRow);
+    return store.commit({ soundCueKey: result.soundCueKey, lockMs });
   }
 
   // Zserializowane — bez tego dwa dispatch() wystrzelone bez odczekania na

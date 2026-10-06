@@ -283,6 +283,7 @@ async function main() {
     loadQuestions,
     loadAnswers,
     now: Date.now,
+    computeCommitGate: (...args) => actionGate.computeGateMs(...args),
   });
   const actionGate = createActionGate({ getSfxDuration });
 
@@ -366,6 +367,7 @@ async function main() {
     if (!action.type.startsWith("EXPIRE_") && missingDevices(store.state, presenceFlags).length) return null;
     const prevRow = store.state.__row || null;
     committing = true;
+    typingCommit = action.type === "SET_ENTRY_TEXT";
     let nextRow = null;
     // TYMCZASOWA diagnostyka -- patrz komentarz przy armLock().
     const _dgT0 = Date.now();
@@ -385,6 +387,7 @@ async function main() {
       renderCurrent();
       nextRow = await engine.dispatch(action);
     } finally {
+      typingCommit = false;
       committing = false;
     }
     console.log(`[e2e-diag-state] t=${Date.now()} dispatchGatedNow AFTER-ENGINE type=${action.type} afterMs=${Date.now() - _dgT0} nextRowRev=${nextRow?.rev}`);
@@ -393,7 +396,7 @@ async function main() {
     // Migracja 264 -- ta sama blokada, egzekwowana też w bazie (nie tylko w
     // tej karcie przeglądarki). Best-effort: nieudane ustawienie nie cofa
     // już potwierdzonego zapisu treści powyżej, patrz store.js's setLockNow().
-    armLock(ms);
+    if (ms > 0) armLock(ms);
     renderCurrent();
     console.log(`[e2e-diag-state] t=${Date.now()} dispatchGatedNow END type=${action.type} totalMs=${Date.now() - _dgT0}`);
     return nextRow;
@@ -418,6 +421,7 @@ async function main() {
   // renderCurrent()+reducer+commit dla KAŻDEGO dispatchGated w pełni się
   // kończy, zanim zacznie się następny.
   let _dispatchGatedQueue = Promise.resolve();
+  let typingCommit = false;
   function dispatchGated(action) {
     const generation = dispatchGeneration;
     const run = () => generation === dispatchGeneration && !restarting ? dispatchGatedNow(action) : null;
@@ -554,7 +558,7 @@ async function main() {
   const scheduleTimer3Watch = makeTimerWatch(() => store.state.rounds?.timer3, "EXPIRE_TIMER3");
 
   function renderCtx() {
-    return { urls, presenceFlags, connectCodes, shareBadges, busy: busy(), devicesBlocked: missingDevices(store.state, presenceFlags).length > 0 };
+    return { urls, presenceFlags, connectCodes, shareBadges, busy: (committing && !typingCommit) || lockConfirmPending || Date.now() < lockedUntil || missingDevices(store.state, presenceFlags).length > 0, devicesBlocked: missingDevices(store.state, presenceFlags).length > 0 };
   }
 
   function renderCurrent() {
@@ -794,7 +798,10 @@ async function main() {
     committing = true;
     renderCurrent();
     try {
-      await store.commit({ soundCueKey });
+      const lockMs = soundCueKey === "show_intro"
+        ? await actionGate.computeGateMs("SHOW_INTRO", null, { step: nextStep })
+        : await actionGate.timing.dur(soundCueKey);
+      await store.commit({ soundCueKey, lockMs });
     } finally {
       committing = false;
     }
@@ -817,7 +824,7 @@ async function main() {
     return store.state.final.runtime.p1.every((x) => String(x?.text || "").trim().length > 0);
   }
   function allFilledP2() {
-    return store.state.final.runtime.p2.every((x) => (x?.repeat ? true : String(x?.text || "").trim().length > 0));
+    return store.state.final.runtime.p2.every((x) => String(x?.text || "").trim().length > 0);
   }
   async function toggleFinalTimer(round) {
     const phase = round === 1 ? "P1" : "P2";
@@ -825,12 +832,12 @@ async function main() {
     if (timer.running && timer.phase === phase) {
       const filled = round === 1 ? allFilledP1() : allFilledP2();
       if (!filled) return;
-      await engine.dispatch({ type: "EXPIRE_TIMER" });
+      await dispatchGated({ type: "EXPIRE_TIMER" });
       return;
     }
     const used = round === 1 ? timer.usedP1 : timer.usedP2;
     if (used) return;
-    await engine.dispatch({ type: "START_TIMER", phase });
+    await dispatchGated({ type: "START_TIMER", phase });
   }
 
   // ---------------- SKRÓT: Ctrl/Cmd+Shift -> start/zatrzymanie odliczania ----------------
@@ -843,7 +850,8 @@ async function main() {
   }
   document.addEventListener("keydown", (e) => {
     const main = isMacLike() ? e.metaKey : e.ctrlKey;
-    if (!main || !e.shiftKey || e.altKey || e.repeat) return;
+    if (!main || e.key !== "Enter" || e.shiftKey || e.altKey || e.repeat || e.isComposing || (isMacLike() ? e.ctrlKey : e.metaKey)) return;
+    if ([...document.querySelectorAll(".overlay, .gsOverlay, .helpOverlay, .legalOverlay, .qrModalOverlay, [role='dialog']")].some((el) => el.getClientRects().length && getComputedStyle(el).visibility !== "hidden")) return;
     const step = store.state.step;
     if (step !== "f_p1_entry" && step !== "f_p2_entry") return;
     // Skrót woła engine.dispatch() BEZPOŚREDNIO, z pominięciem

@@ -89,7 +89,7 @@
 | Powtórzenie | Shift+Enter | Shift+Enter | Tylko puste pole gracza 2; przełączenie znacznika. |
 | Następne puste pole | Enter lub ↓ | Enter lub ↓ | Wpisywanie finału, według punktu 09. |
 | Poprzednie puste pole | ↑ | ↑ | Wpisywanie finału, według punktu 09. |
-| Odpowiedź z listy | 1–9 | 1–9 | W rundach zaznaczenie; w mapowaniu natychmiastowy wybór dopasowania, bez dodatkowego potwierdzenia. Tylko dostępne pozycje. |
+| Odpowiedź z listy | 1–6 | 1–6 | W rundach zaznaczenie; w mapowaniu natychmiastowy wybór dopasowania, bez dodatkowego potwierdzenia. Tylko dostępne pozycje. |
 | Zatwierdzenie / odsłanianie | Enter | Enter | W rundach zatwierdza zaznaczony kafelek; w mapowaniu odsłania odpowiedź, a po zakończeniu przejścia — punkty. |
 | Zaznaczenie pudła X | X | X | Pojedynek, rozgrywka i kradzież, jeśli pudło jest dostępne. |
 | Zaznaczenie odliczania 3 sekund | T | T | Tylko etap rundy z dostępnym przyciskiem timera. |
@@ -103,19 +103,19 @@
 | Urządzenia | N, następnie Enter | Wybranie i uruchomienie dostępnego Dalej. Nie pomija sprawdzania wymaganych urządzeń. |
 | Podsumowanie | N, następnie Enter | Gotowe — przejdź do rozgrywki. |
 | Podsumowanie: zmiana ustawień | E, następnie Enter | Zmień ustawienia. |
-| Dostępny powrót do poprzedniego kroku | W, następnie Enter | Widoczny przycisk Wstecz; nie cofa stanu rozgrywki ani wyniku. |
+| Dostępny powrót do poprzedniego kroku | B, następnie Enter | Widoczny przycisk Wstecz; nie cofa stanu rozgrywki ani wyniku. |
 | Rozpoczęcie gry / rundy / finału | N, następnie Enter | Widoczny przycisk rozpoczęcia właściwy dla bieżącego etapu. |
-| Pojedynek | A albo B, następnie Enter | Zaznaczenie dostępnej drużyny i potwierdzenie jej zgłoszenia. Przy fizycznym przycisku dostępne są obie drużyny; w normalnym trybie skrót potwierdza dostępne zgłoszenie i nie symuluje naciśnięcia urządzenia. |
+| Pojedynek | A albo B, następnie Enter | Zaznaczenie dostępnej drużyny i potwierdzenie jej zgłoszenia. Przy fizycznym przycisku dostępne są obie drużyny; w normalnym trybie C, następnie Enter zaznacza i zatwierdza przycisk potwierdzenia drużyny wskazanej przez Buzzer. Nie symuluje naciśnięcia urządzenia. |
 | Mapowanie finału: odsłonięcie odpowiedzi | Enter | Pokaż odpowiedź po wyborze dopasowania. Mysz: dwuklik przycisku odsłaniania. |
 | Mapowanie finału: odsłonięcie punktów | Kolejny Enter | Pokaż punkty po końcu odsłaniania odpowiedzi. Mysz: dwuklik przycisku odsłaniania punktów. |
 | Mapowanie finału: brak odpowiedzi | O | Pojedynczy wybór Brak odpowiedzi, wyłącznie gdy pole tekstowe jest puste. Następny Enter odsłania brak i zero automatycznie. |
-| Mapowanie finału: odpowiedź spoza listy | Z | Natychmiastowy wybór Nie ma na liście (0 pkt), wyłącznie gdy istnieje wpisany tekst. Następny Enter odsłania dosłownie wpisaną odpowiedź. |
+| Mapowanie finału: odpowiedź spoza listy | W | Natychmiastowy wybór Nie ma na liście (0 pkt), wyłącznie gdy istnieje wpisany tekst. Następny Enter odsłania dosłownie wpisaną odpowiedź. |
 | Mapowanie gracza 2: powtórzenie | R | Pojedynczy wybór Powtórzenie przy pustym polu i przed odsłonięciem. Enter odsłania powtórzenie i zero automatycznie. W mapowaniu nie odtwarza dźwięku powtórzenia. Shift+Enter pozostaje skrótem podczas wpisywania gracza 2. |
 | Koniec rundy / przejście do wyniku | N, następnie Enter | Widoczna, dostępna akcja końca rundy lub dalszego przejścia. |
 | Zakończenie finału / gry | N, następnie Enter | Zakończ finał lub Zakończ grę, według aktualnego etapu i po zakończeniu obowiązujących blokad. |
 | Końcowy powrót do listy gier | N, następnie Enter | Wróć do moich gier, gdy jest główną dostępną nawigacją. |
 | Wyciszenie / włączenie dźwięku — globalnie w Control | M | Natychmiastowe przełączenie wyciszenia, bez Enter, we wszystkich krokach Control. Podczas edycji pola M pozostaje literą. Korzystać z osobnej obsługi wyciszenia, dostępnej także podczas przejścia/dźwięku. |
-| Rozpoczęcie od nowa poza mapowaniem | R, następnie Enter | Wybranie restartu i otwarcie istniejącego okna potwierdzenia. W mapowaniu R jest zarezerwowane dla Powtórzenia; przycisk restartu nadal pozostaje dostępny. Nie zatwierdzać automatycznie okna restartu. |
+| Rozpoczęcie od nowa | Bez skrótu | Wyłącznie przycisk i istniejące potwierdzenie. R jest zarezerwowane dla Powtórzenia. |
 
 #### Reguły działania i bezpieczeństwo wpisywania
 
@@ -134,9 +134,9 @@
 - [ ] Dodać zestaw do instrukcji Panelu sterowania w PL, EN i UK po wdrożeniu. Uaktualnić także robocze MD i HTML, z zachowaniem właściwego stylu przycisków i oznaczeń klawiszy.
 - [ ] W istniejącej kolumnie podpowiedzi pokazywać skróty odpowiednie do bieżącego etapu, z nazwą aktualnej czynności zamiast ogólnego Dalej. Nie dodawać osobnego banera ani instrukcji obsługi operatora na tablecie Prowadzącego.
 - [ ] Przy wpisywaniu finału wskazać timer, powtórzenie w rundzie 2 i przechodzenie między pustymi polami. Przy mapowaniu wskazać wybór dopasowania, odsłonięcie odpowiedzi/punktów i dalsze przejście.
-- [ ] Przy mapowaniu wskazać O — Brak odpowiedzi, R — Powtórzenie oraz Z — Nie ma na liście. Podpowiedzi i dostępność skrótów zależą od treści pola; po odsłonięciu odpowiedzi wybór jest zablokowany. Cyfry i litery w aktywnym polu pozostają tekstem.
+- [ ] Przy mapowaniu wskazać O — Brak odpowiedzi, R — Powtórzenie oraz W — Nie ma na liście. Podpowiedzi i dostępność skrótów zależą od treści pola; po odsłonięciu odpowiedzi wybór jest zablokowany. Cyfry i litery w aktywnym polu pozostają tekstem.
 - [ ] Wyjaśnić w instrukcji różnicę między zaznaczeniem skrótem a zatwierdzeniem Enter oraz powód, dla którego litery i cyfry podczas edycji pola nie uruchamiają akcji.
-- [ ] Wyraźnie opisać wyjątek mapowania: 1–9 / Z / O / R wybiera od razu; Enter odsłania, zamiast potwierdzać wybór. Uaktualnić myszowe instrukcje i testy: wybór opcji pojedynczy, odsłanianie dwuklikowe. W rundach 1–9 zaznacza odpowiedź, Enter odsłania zaznaczoną; X i T zaznaczają odpowiednie przyciski, Enter je uruchamia. N wybiera bieżące dalsze przejście, Enter przechodzi dalej.
+- [ ] Wyraźnie opisać wyjątek mapowania: 1–6 / W / O / R wybiera od razu; Enter odsłania, zamiast potwierdzać wybór. Uaktualnić myszowe instrukcje i testy: wybór opcji pojedynczy, odsłanianie dwuklikowe. W rundach 1–6 zaznacza odpowiedź, Enter odsłania zaznaczoną; X i T zaznaczają odpowiednie przyciski, Enter je uruchamia. N wybiera bieżące dalsze przejście, Enter przechodzi dalej.
 - [ ] Uaktualnić scenariusze testów i opis nagrań. Pokazać przynajmniej zatwierdzenie drużyny, odpowiedź/X, timer finału, powtórzenie, nawigację pustych pól i obsługę dalszego przejścia z klawiatury.
 
 ### 12. Wysokość odpowiedzi gracza 2
@@ -169,3 +169,22 @@
 3. Wyświetlanie, podpowiedzi, logo i puste listy: 01, 02, 06, 13, 14.
 4. Krótsza demonstracja zatwierdzenia drużyny, pokazanie kasowania powtórzenia i poprawiony scenariusz 05: 05, 10.
 5. Uaktualnić manual zgodnie z faktycznie wdrożonym zachowaniem; wybrane testy produkcyjne i nowe filmy. Raport dla każdego numeru: co zmieniono, jak sprawdzono i w którym filmie jest widoczne.
+
+## Przebieg wdrożenia
+
+Zmiany robocze: obowiązkowy timer i blokada jego wcześniejszego zatrzymania przy pustym polu; blokada innych działań przed końcem gry; zapis czasu blokady razem z nowym stanem rundy; zachowanie pól i przycisków podczas wpisywania; nawigacja po pustych polach; skróty 1–6/C/A/B/X/T/P/N/B/E/M oraz W/O/R w dopasowaniu. Poprawiono ukrycie zer przed grą, końcówki skracanych odpowiedzi, czerwone podkreślone podpowiedzi, wysokość wpisywania gracza 2, ponawianie wczytania logo Hosta i pustą listę udostępnień w Control oraz bazach. Manual PL/EN/UK zawiera nowe reguły i skróty; pełne nowe opisy Control 2 / Game Settings 2 nadal są osobnym dokumentem do sprawdzenia.
+
+Wybrane testy jednostkowe: 134/134 przed wdrożeniem. Wynik produkcji i filmów zostanie dopisany po rzeczywistym zakończeniu przebiegu. Nie oznaczamy samych zmian kodu jako potwierdzenia z nagrania.
+
+### Skrócony zestaw nagrań
+
+Domyślnie uruchamiane są 01, 03, 04, 05, 06 i 07. Film 02 powtarza drogę do finału z 04/05; 09 (wariant bez Hosta i z fizycznym przyciskiem), 10 (mnożnik) i 08 (poczta) pozostają dostępne osobno, kiedy zmiana ich dotyczy. Testy automatyczne tych wariantów pozostają w repo — ograniczamy powtarzane nagrania, nie usuwamy zabezpieczeń regresji.
+
+- 01: pojedynki, X, oddanie kontroli, kradzież i zakończenie po wyczerpaniu pytań.
+- 03: progresja, próg bez finału, wynik w punktach oraz wznowienie Control.
+- 04: cała droga do pełnego finału, oba timery, wszystkie rodzaje dopasowania, poprawianie powtórzenia oraz niższa nagroda.
+- 05: timer z jednym wpisem, naturalny koniec czasu, wcześniejsze zakończenie finału i nagroda główna.
+- 06: utrata urządzeń i powrót do tej samej rozgrywki.
+- 07: blokada logo, zwolnienie i sprawdzenie powrotu logo na tablecie Prowadzącego.
+
+Test literalnych ścieżek importów i zasobów: 1/1. Szerszy audyt struktury ma istniejący przed zmianami błąd oczekiwania dla /connect-device/tv; nie jest wynikiem tego przebiegu. Weryfikacja rzeczywistych przeglądarek na Windows/Mac pozostaje osobnym sprawdzeniem; produkcyjny runner sprawdza Chromium na Linux.

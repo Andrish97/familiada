@@ -113,6 +113,7 @@ export function createRenderer({ scene, qr, getSfxDuration }) {
   }
 
   function paintTotals(row) {
+    if (row.step === "r_intro") { api.small.leftDigits(""); api.small.rightDigits(""); return; }
     const totals = row.detail?.rounds?.totals || { A: 0, B: 0 };
     if (row.top_card === "final" && row.detail?.final?.winnerTeam && row.step !== "f_start") {
       const winner = row.detail.final.winnerTeam;
@@ -487,7 +488,8 @@ export function createRenderer({ scene, qr, getSfxDuration }) {
             // dźwięk to wciąż synced("round_transition","reveal") (F7, ta
             // sama kombinacja co START_ROUND), jedna faza (samo maskowanie,
             // bez odpowiadającej animIn na tym kroku), więc pełny czas combo.
-            const maskMs = await timing.syncedMs("round_transition", "reveal");
+            const { offsetMs, revealMs: maskMs } = await timing.revealSyncSplit("round_transition");
+            if (offsetMs > 0) await wait(offsetMs);
             const rows = Array.from({ length: 5 }, () => ({ left: FINAL_TEXT_PLACEHOLDER, a: FINAL_PTS_PLACEHOLDER }));
             await api.final.setHalf("A", { rows, animOut: { ...FINAL_OUT_ANIM, ms: maskMs } });
           } else if (ev.to === "f_p2_entry" && ev.from === "f_p2_start") {

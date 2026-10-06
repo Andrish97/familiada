@@ -266,6 +266,12 @@ async function settleAfterWrite(page) {
 
 async function armAndConfirm(locator) {
   const page = locator.page();
+  const mappingChoice = await locator.evaluate((el) => !!document.querySelector(".c2-mapinput") && /^(?:[1-6]|w|o|r)$/.test(el.dataset.shortcut || ""));
+  if (mappingChoice) {
+    const response = page.waitForResponse((resp) => WRITE_RPC_RE.test(resp.url()), { timeout: 15000 });
+    await locator.click();
+    await response; await settleAfterWrite(page); return;
+  }
   await locator.click(); // uzbrojenie — lokalne, bez zapisu
   const responded = page.waitForResponse((resp) => WRITE_RPC_RE.test(resp.url()), { timeout: 15000 }).catch(() => null);
   await locator.click(); // potwierdzenie — faktyczny zapis do game_state
@@ -376,6 +382,8 @@ test("control2: intro logo i natychmiastowe światło Buzzera przed wysyłką", 
     expect(await getDisplayCalls(displayPage, "api.logo.show")).toEqual([]);
     await expect(displayPage.locator("#gameScreen")).toBeVisible();
     await expect.poll(async () => (await getDisplayCalls(displayPage, "api.small.long1")).at(-1)?.args[0]).toBe("Alfa");
+    await expect.poll(async () => (await getDisplayCalls(displayPage, "api.small.leftDigits")).at(-1)?.args[0]).toBe("");
+    await expect.poll(async () => (await getDisplayCalls(displayPage, "api.small.rightDigits")).at(-1)?.args[0]).toBe("");
     await expect(buzzerPage.locator("#btnA")).toBeVisible();
     await expect(buzzerPage.locator("#btnB")).toBeVisible();
     await expect(buzzerPage.locator("#btnA")).toBeDisabled();
@@ -386,7 +394,16 @@ test("control2: intro logo i natychmiastowe światło Buzzera przed wysyłką", 
     await expect.poll(async () => (await getDisplayCalls(displayPage, "api.logo.show")).at(-1)?.args[0]?.ms || 0).toBeGreaterThan(14);
     await expect(page.getByRole("button", { name: "Rozpocznij rundę", exact: true })).toBeEnabled({ timeout: 22000 });
     await displayPage.screenshot({ path: testInfo.outputPath("shot-intro-logo.png") });
+    const roundWrite = page.waitForResponse(resp => WRITE_RPC_RE.test(resp.url()));
     await page.getByRole("button", { name: "Rozpocznij rundę", exact: true }).click();
+    const written = await (await roundWrite).json();
+    expect(Date.parse(written.locked_until)).toBeGreaterThan(Date.now());
+    const premature = await buzzerPage.evaluate(async ({id,key}) => {
+      const result = await window.__sbClient.rpc("game_state_buzzer_press", {p_game_id:id,p_key:key,p_team:"A"});
+      return { error: result.error?.message, pressed: result.data?.detail?.rounds?.duel?.lastPressed };
+    }, {id:game.id,key:game.share_key_buzzer});
+    expect(premature.error).toContain("locked");
+    expect(premature.pressed).toBeFalsy();
     await expect(buzzerPage.locator("#btnA")).toBeEnabled({ timeout: 15000 });
 
     // Pause only the outgoing request; continue it to the real production RPC.
@@ -1247,7 +1264,7 @@ test("control2: QR na wyświetlaczu — host i buzzer niezależne, każdy z osob
 // lokalny "peek" operatora), więc Host zostaje zasłonięty przez cały finał.
 
 test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśnięcie timera, powtórzenie, odsłonięcie P1 na Display przy starcie P2", async ({ page, browser }, testInfo) => {
-  await page.setViewportSize({ width: 1280, height: 720 });
+  await page.setViewportSize({ width: 1366, height: 768 });
   // 180s okazało się za ciasne w CI: 15s realnego oczekiwania na timer
   // gracza 1 + 10 pytań mapowania, z których KAŻDE ma teraz poprawnie
   // wymuszaną blokadę na długość dźwięku "Pokaż odpowiedź"/"Pokaż punkty"
@@ -1282,7 +1299,10 @@ test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśni�
     await expect(buzzerPage.getByRole("button", { name: "Przycisk A" })).toBeEnabled({ timeout: 10000 });
     await buzzerPage.getByRole("button", { name: "Przycisk A" }).click();
     await expect(page.getByRole("button", { name: "Zatwierdź: Alfa" })).toBeEnabled({ timeout: 10000 });
-    await armAndConfirm(page.getByRole("button", { name: "Zatwierdź: Alfa" }));
+    await page.keyboard.press("c");
+    await expect(page.getByRole("button", { name: "Zatwierdź: Alfa" })).toHaveClass(/c2-tile-armed/);
+    await page.keyboard.press("Enter");
+    await settleAfterWrite(page);
     await revealAnswer(page, 1);
     await clickX(page);
     await clickX(page);
@@ -1309,11 +1329,16 @@ test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśni�
     await expect(page.locator(".c2-stepper")).toContainText("Finał — gracz 1, wpisywanie", { timeout: 22000 });
     const p1Inputs = page.locator("#app input[type=text]");
     await expect(p1Inputs).toHaveCount(5, { timeout: 10000 });
+    await expect(page.getByRole("button", { name: "Dalej", exact: true })).toBeDisabled();
+    await p1Inputs.nth(0).evaluate((input) => { window.__entryInputBefore = input; window.__entryTimerBefore = document.querySelector(".c2-timer-row"); });
     for (let i = 0; i < 5; i++) await p1Inputs.nth(i).fill(`Odp. finałowa`);
+    await expect.poll(() => page.evaluate(() => window.__entryInputBefore === document.querySelector(".c2-entryrow input") && window.__entryTimerBefore === document.querySelector(".c2-timer-row"))).toBe(true);
 
     await clearSfxLog(page);
     // Start zegarka to zaznacz->potwierdź (nieodwracalne — usedP1 jednorazowe).
-    await armAndConfirm(page.getByRole("button", { name: "Rozpocznij odliczanie (15s)" }));
+    await p1Inputs.nth(0).focus();
+    await page.keyboard.press("Control+Enter");
+    await expect(page.locator('[data-timer-role="final"]')).toBeVisible();
     // Bez klikania niczego: dograny dziś zegarek w control2/js/app.js sam
     // dispatch'uje EXPIRE_TIMER po 15s. Zegarek jest jednorazowy (usedP1) —
     // kafel wraca WIDOCZNY (jak w starym Control), ale pokazuje "Czas
@@ -1339,7 +1364,9 @@ test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśni�
       }
       // Zgłoszone: wybór dopasowania w finale też idzie przez zaznacz ->
       // potwierdź (armableTile), jak reszta konsekwentnych kafli.
-      await armAndConfirm(page.getByRole("button", { name: "Odp. finałowa (15)" }));
+      await p1Inputs.first().evaluate(() => document.activeElement?.blur());
+      await page.keyboard.press("1");
+      await expect(page.locator('[data-shortcut="1"]')).toHaveClass(/c2-tile-primary/);
       if (i === 0) {
         await expect(hostPage.locator("#paperText2 .hostGreen:not(.hostStrike)")).toHaveText("z listy");
         await expect(hostPage.locator("#paperText2 .hostStrike")).toHaveText("Odp. finałowa (15)");
@@ -1410,11 +1437,18 @@ test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśni�
     await expect(hostPage.locator("#cover2")).toHaveClass(/coverOn/, { timeout: 10000 });
 
     const p2Inputs = page.locator("#app input[type=text]");
+    for (const viewport of [{ width:1366, height:768 }, { width:1920, height:1080 }]) {
+      await page.setViewportSize(viewport);
+      await expect.poll(() => page.locator(".c2-gameplay-body").evaluate(el => el.scrollHeight <= el.clientHeight + 2)).toBe(true);
+    }
+    await page.setViewportSize({ width:1366, height:768 });
     const repeatFirst = page.locator(".c2-entryrow .c2-btn-repeat").first();
     await expect(repeatFirst).toHaveClass(/\bon\b/);
     await p2Inputs.nth(0).focus();
     await expect(repeatFirst).toHaveClass(/\bon\b/);
+    await p2Inputs.nth(0).evaluate(() => { window.__repeatButtonBefore = document.querySelector(".c2-btn-repeat"); });
     await p2Inputs.nth(0).fill("Inna odpowiedź");
+    await expect.poll(() => page.evaluate(() => window.__repeatButtonBefore === document.querySelector(".c2-btn-repeat"))).toBe(true);
     await expect(repeatFirst).not.toHaveClass(/\bon\b/);
     await expect(repeatFirst).toBeDisabled();
     await p2Inputs.nth(0).fill("");
@@ -1432,7 +1466,8 @@ test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśni�
     // START_MAPPING (engine.js) nadal bezwarunkowo zeruje stan zegarka przy
     // wejściu w mapowanie — to sprawdzenie zostaje, tylko dochodzi się tam
     // teraz legalną ścieżką, nie przypadkowym przerwaniem w trakcie.
-    await armAndConfirm(page.getByRole("button", { name: "Zatrzymaj" }));
+    await expect(page.getByRole("button", { name: "Zatrzymaj" })).toBeDisabled();
+    await expect(page.getByRole("button", { name: "Czas wykorzystany" })).toBeVisible({ timeout: 25000 });
     await page.getByRole("button", { name: "Dalej" }).click();
 
     // ===== F8/F9: mapowanie gracza 2 — pytanie #1 to SKIP (powtórzenie), reszta MATCH =====

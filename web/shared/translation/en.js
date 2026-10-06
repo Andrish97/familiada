@@ -2285,7 +2285,7 @@ const en = {
         After the final the system shows the ending screen according to the game ending settings:
         <span class="m-strong">logo</span>, <span class="m-strong">points</span> or
         <span class="m-strong">prize amount</span>.
-      </p>`,
+      </p><h3 class="m-h3">Control panel 2 — keyboard</h3><p class="m-p">In rounds, 1–6 selects an answer and Enter reveals it. C then Enter confirms the buzzer; A/B then Enter selects a team with physical buzzers. X selects a strike, T the timer, P pass control, N the next action, B back and E edit settings; confirm with Enter. M toggles mute immediately. Restart has no shortcut.</p><p class="m-p">In the final, Ctrl+Enter (⌘+Enter on Mac) starts or stops the timer; Shift+Enter toggles Repeat in an empty player 2 field. Each round requires starting the timer. Early stopping requires text in all five fields; Repeat does not fill a field. Enter and arrows move only between empty fields; click a completed field to edit it.</p><p class="m-p">When matching, 1–6 selects a list answer, W the written answer, O no answer and R repeat. Selection is immediate. Enter reveals the answer, then another Enter reveals points; no answer and repeat reveal zero automatically. N then Enter advances. Mouse reveals require two clicks. Letters and numbers remain text while editing. Dialogs block gameplay shortcuts in the background.</p><p class="m-p">The pass-control hint is red and underlined. A word cut on the Display loses up to two trailing vowels before the dot; word boundaries receive no dot. Limits are 17 characters in rounds and 11 in the final, including the dot.</p>`,
       community: `<p class="m-p">
         Community Games is a catalogue of ready-made games created by other users
         and verified by moderators. You can browse them, add them to your library
@@ -4586,6 +4586,7 @@ const en = {
     },
   },
   control: {
+    shortcuts: {"answers": "1–6 → Enter — reveal answer", "x": "X → Enter — strike", "t": "T → Enter — timer", "a": "A → Enter — team A", "b": "B → Enter — back / manual team B selection in the duel", "c": "C → Enter — confirm buzzer", "p": "P → Enter — pass control", "n": "N → Enter — current next action", "e": "E → Enter — edit settings", "w": "W — written answer", "o": "O — omitted answer", "r": "R — repeat", "m": "M — mute / unmute", "reveal": "Enter — reveal answer; next Enter — points", "fields": "↑ / ↓ / Enter — previous / next empty field", "entryTimer": "Ctrl+Enter (Cmd+Enter on Mac) — start / stop timer", "entryRepeat": "Shift+Enter in an empty field — repeat"},
     title: "Familiada — control panel",
     loading: "Loading panel…",
     backToGames: "My games",

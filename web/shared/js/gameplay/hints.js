@@ -1,3 +1,4 @@
+import { t } from "../../translation/translation.js?v=v2026-10-06T15053";
 // web/js/gameplay/hints.js
 // Blok podpowiedzi nad siatką (control2/js/ui.js) — odpowiednik starego
 // control/js/gameRounds.js's/gameFinal.js's setDuelMsg/setPlayMsg/
@@ -96,7 +97,7 @@ export function getFinalHint(state) {
     // (zgłoszone) — "Możesz opcjonalnie uruchomić..." nie ma już sensu, skoro
     // już trwa.
     if (running) return `Wpisz odpowiedzi gracza ${round}. Jeśli wpiszesz wszystkie odpowiedzi, będziesz mógł zatrzymać odliczanie wcześniej.${repeatNote}`;
-    return `Wpisz odpowiedzi gracza ${round}. Możesz opcjonalnie uruchomić odliczanie (${round === 1 ? "15" : "20"}s) — jednorazowo.${repeatNote}`;
+    return `Wpisz odpowiedzi gracza ${round}. Uruchom odliczanie (${round === 1 ? "15" : "20"}s) — jednorazowo.${repeatNote}`;
   }
 
   if (step === "f_p2_start") return "Odpowiedzi gracza 1 zostają zasłonięte na Display przed startem tury gracza 2.";
@@ -137,9 +138,9 @@ export function getFinalHint(state) {
 // ma czego powtarzać.
 export function getFinalEntryShortcuts(round) {
   const shortcuts = [
-    "↑ / ↓ / Enter — przejście do kolejnego pola",
-    "Ctrl+Shift (Cmd+Shift na Mac) — start/zatrzymanie odliczania",
+    t("control.shortcuts.fields"),
+    t("control.shortcuts.entryTimer"),
   ];
-  if (round === 2) shortcuts.push("Shift+Enter w pustym polu — przełącza „Powtórzenie”");
+  if (round === 2) shortcuts.push(t("control.shortcuts.entryRepeat"));
   return shortcuts;
 }

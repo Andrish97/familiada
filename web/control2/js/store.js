@@ -124,13 +124,14 @@ export function createStore(gameId) {
   // te same referencje z `state`, więc późniejsza mutacja i tak przeciekałaby
   // do już "zbudowanego" payloadu, unieważniając cały ten fix.
   let _writeQueue = Promise.resolve();
-  function commit({ soundCueKey } = {}) {
+  function commit({ soundCueKey, lockMs } = {}) {
     const payload = {
       step: state.step,
       topCard: state.topCard,
       phase: state.phase,
       controlTeam: state.controlTeam,
       soundCueKey: soundCueKey ?? null,
+      lockMs: lockMs == null ? null : Math.ceil(lockMs),
       detail: structuredClone(buildDetail(state)),
     };
     const run = () => commitNow(payload);
