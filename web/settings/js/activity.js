@@ -60,7 +60,12 @@ export function startActivityPanel() {
   function paintChart() {
     chart.replaceChildren();
     const items=history?.[period]||[];
-    if (!items.length) { chart.textContent="Brak historii w tym przedziale. Dane zbierają się od wdrożenia.";return; }
+    if (!items.length) {
+      const empty=document.createElement('div');empty.className='activity-chart-empty';
+      const title=document.createElement('strong');title.textContent='Brak danych';
+      const hint=document.createElement('span');hint.textContent='W tym przedziale nie zarejestrowano aktywności.';
+      empty.append(title,hint);chart.append(empty);return;
+    }
     const ns='http://www.w3.org/2000/svg';
     function shape(tag,attrs,text) {
       const node=document.createElementNS(ns,tag);

@@ -2576,6 +2576,9 @@ body.tools-fullscreen .tools-frame-wrap iframe{
 .excluded-account-row>.btn{flex-shrink:0;margin-left:auto}
 [data-activity-chart] svg{width:100%;height:auto;min-height:140px}
 .activity-chart-tooltip{min-height:20px;margin-top:12px;color:var(--gold,#ffeaa6)}
+.activity-chart-empty{min-height:200px;margin-top:14px;padding:24px;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;text-align:center;border:1px dashed rgba(255,255,255,.12);border-radius:12px;background:rgba(255,255,255,.015)}
+.activity-chart-empty strong{font-size:14px;font-weight:700;opacity:.65}
+.activity-chart-empty span{font-size:12px;line-height:1.5;opacity:.4}
 [data-activity-chart] circle{cursor:pointer;transition:r .12s ease}
 [data-activity-chart] circle:hover,[data-activity-chart] circle:focus{r:6;fill:var(--gold,#ffeaa6);outline:none}
 .maintenance-activity-grid{max-width:340px;grid-template-columns:minmax(0,1fr);margin-bottom:24px}
