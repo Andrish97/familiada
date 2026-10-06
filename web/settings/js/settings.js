@@ -28,6 +28,8 @@ const btnBackSheet = document.getElementById("btnBackSheet");
 if (btnBackSheet) btnBackSheet.dataset.sheetBack = "1";
 btnBackSheet?.addEventListener("click", () => { handleSheetBack(); });
 
+import { startActivityPanel } from "./activity.js";
+
 const API_BASE = "/_admin_api";
 const TOOLS_MANIFEST = "/settings/data/tools.json?v=v2026-10-06T17303";
 const POLL_MS = 15000;
@@ -1243,15 +1245,22 @@ function renderExcludedList(users) {
     el.innerHTML = `<div style="opacity:.4;font-size:12px">Brak wykluczonych kont.</div>`;
     return;
   }
-  el.innerHTML = users.map(u => `
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 10px;border:1px solid rgba(255,255,255,.08);border-radius:8px;font-size:12px">
-      <span><b>${u.username || "—"}</b> <span style="opacity:.4">${u.email}</span></span>
-      <button class="btn xs" type="button" data-uid="${u.user_id}" style="opacity:.6">Usuń</button>
-    </div>`).join("");
-
-  el.querySelectorAll("[data-uid]").forEach(btn => {
-    btn.addEventListener("click", () => removeExcludedUser(btn.dataset.uid));
-  });
+  el.replaceChildren();
+  for (const user of users) {
+    const row=document.createElement("div");row.className="activity-row";
+    const text=document.createElement("span");
+    text.textContent=`${user.username || "—"} · ${user.email || ""}`;
+    row.append(text);
+    if (user.automatic) {
+      const badge=document.createElement("span");badge.className="stat-sub";
+      badge.textContent=user.reason === "test_guest" ? " · Gość testowy — wykluczenie automatyczne" : " · Konto testowe — wykluczenie automatyczne";
+      row.append(badge);
+    } else {
+      const button=document.createElement("button");button.className="btn xs";button.type="button";button.textContent="Usuń";
+      button.addEventListener("click",()=>removeExcludedUser(user.user_id));row.append(button);
+    }
+    el.append(row);
+  }
 }
 
 async function loadExcludedUsers() {
@@ -7183,6 +7192,7 @@ function wireEvents() {
   const ok = await checkMe();
   if (ok) {
     showPanel();
+    startActivityPanel();
     activateSettingsTabFromUrl();
     await loadState();
     if (!pollTimer) pollTimer = setInterval(() => loadState({ silent: true }), POLL_MS);

@@ -80,6 +80,19 @@ export async function handleE2EApi(request, env, url) {
     return json({ ok: false, error: "unauthorized" }, 401);
   }
 
+  if (url.pathname === "/_e2e_api/mark-test-guest" && request.method === "POST") {
+    const token = request.headers.get("Authorization") || "";
+    if (!token.startsWith("Bearer ")) return json({ok:false,error:"guest_token_required"},401);
+    const user = await supabaseRequest(env,"/auth/v1/user",{headers:{Authorization:token}});
+    if (!user.ok || !user.data?.id) return json({ok:false,error:"invalid_guest"},401);
+    const profile = await supabaseRequest(env,`/rest/v1/profiles?id=eq.${encodeURIComponent(user.data.id)}&select=is_guest`);
+    if (!profile.ok || profile.data?.[0]?.is_guest !== true) return json({ok:false,error:"not_guest"},403);
+    const result = await supabaseRequest(env,`/auth/v1/admin/users/${encodeURIComponent(user.data.id)}`,{
+      method:"PUT",body:{app_metadata:{...user.data.app_metadata,is_test_guest:true}}
+    });
+    return json({ok:result.ok},result.ok?200:502);
+  }
+
   if (url.pathname === "/_e2e_api/mail-delivery" && request.method === "GET") {
     const recipient = normalizeE2ERecipient(url.searchParams.get("recipient"));
     const afterMs = Date.parse(url.searchParams.get("after") || "");

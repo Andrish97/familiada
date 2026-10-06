@@ -2563,3 +2563,15 @@ body.tools-fullscreen .tools-frame-wrap iframe{
 .session-status-errors { color: #fbbf24; font-size: 12px; white-space: nowrap; }
 
 .msg-icon-btn svg.ico { width: 16px; height: 16px; vertical-align: 0; }
+
+/* Operational presence before maintenance; matches existing settings cards. */
+.activity-panel{margin-bottom:24px;padding:16px;border:1px solid var(--line,rgba(255,255,255,.15));border-radius:12px}
+.activity-panel .panel-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.activity-row{padding:10px 12px;margin:8px 0;border:1px solid rgba(255,255,255,.12);border-radius:10px;overflow-wrap:anywhere}
+.activity-row>div{font-size:.85rem;opacity:.8;margin-top:4px}
+.activity-risk{border-color:#ffeaa6}
+
+.activity-chart-controls{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:20px}
+.activity-chart-controls select{max-width:260px}
+[data-activity-chart] svg{width:100%;height:auto;min-height:140px}
+[data-activity-chart] details{font-size:.85rem;margin-top:8px}

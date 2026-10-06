@@ -58,6 +58,13 @@ export async function handleAdminApi(request, env) {
     return handleAdminMailApi(request, env, url);
   }
 
+  if (url.pathname === "/_admin_api/activity") {
+    if (request.method !== "GET") return new Response("Method Not Allowed", { status:405 });
+    const result = await supabaseRpc(env,"get_maintenance_activity",{});
+    if (!result.ok) return json({ok:false,error:"activity_failed"},502);
+    return json({ok:true,...result.data});
+  }
+
   if (url.pathname === "/_admin_api/stats/detail") {
     if (request.method !== "GET") return new Response("Method Not Allowed", { status: 405 });
     const type = String(url.searchParams.get("type") || "");

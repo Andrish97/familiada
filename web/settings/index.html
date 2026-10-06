@@ -74,6 +74,12 @@
           <div class="panel-sub">Ustawienia strony maintenance</div>
         </div>
 
+        <div class="activity-panel"><strong>Aktywność teraz</strong>
+          <p id="maintenanceActivitySummary">Nie sprawdzono jeszcze aktywności.</p>
+          <a class="btn sm" href="?tab=stats#maintenanceActivity">Szczegóły i wykresy w Statystykach</a>
+          <p class="field-hint">Podsumowanie uwzględnia wspólne wykluczenia ze statystyk.</p>
+        </div>
+
         <div class="maintenance-controls" id="maintenanceControls">
           <div class="mode-slider" id="modeSliderWrap">
             <input class="mode-range" id="modeSlider" type="range" min="0" max="2" step="1" value="0" aria-label="Maintenance mode"/>
@@ -641,6 +647,18 @@
             <div class="panel-sub">Monitoruj aktywność i rozwój platformy</div>
           </div>
           
+        <section class="activity-panel" id="maintenanceActivity" aria-label="Aktywność teraz">
+          <div class="panel-head"><div class="panel-title">Aktywność teraz</div>
+            <button class="btn sm" type="button">Odśwież aktywność</button></div>
+          <p data-activity-summary aria-live="polite">Oczekiwanie na sprawdzenie aktywności…</p>
+          <div data-activity-rows></div>
+          <div class="activity-chart-controls"><label for="activityChartPeriod">Wykres aktywnych użytkowników</label>
+            <select class="inp" id="activityChartPeriod"><option value="hour">Godzinowo — 48 godzin</option><option value="day">Dziennie — 30 dni</option><option value="week">Tygodniowo — 90 dni</option></select></div>
+          <div data-activity-chart></div>
+          <p class="field-hint">Unikalni użytkownicy z sygnałem otwartej strony w danym przedziale, również z kart w tle. Nie sumuj godzin, aby uzyskać liczbę osób w dniu. Strefa czasu: Warszawa. Historia do 90 dni; dostępna od wdrożenia nowych sygnałów.</p>
+          <p class="field-hint" data-activity-time>Nie sprawdzono jeszcze aktywności.</p>
+          <p class="field-hint">Podgląd uwzględnia wspólne wykluczenia ze statystyk i obejmuje oba zestawy sterowania, urządzenia i blokady edycji. Nowe sygnały ze stron działają po ich odświeżeniu. Otwarta karta nie oznacza, że użytkownik właśnie jej używa. Brak wpisów nie gwarantuje, że nikomu nie przerwiesz pracy.</p>
+        </section>
           <div class="mail-controls" style="margin-bottom:12px">
             <button class="btn sm" id="btnStatsRefresh" type="button">Odśwież</button>
           </div>

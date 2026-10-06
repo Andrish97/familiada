@@ -237,6 +237,17 @@ async function loginAsGuest(page, context) {
     await dumpPageDiagnostics(page, res);
     throw e;
   }
+  // Server-side app_metadata marker, authorized by the signed E2E token.
+  // Ordinary guests and their editable user_metadata are not excluded.
+  const token = generateE2EToken(process.env.E2E_BYPASS_SECRET);
+  const marked = await page.evaluate(async (testToken) => {
+    const {data} = await window.__sbClient.auth.getSession();
+    const response = await fetch('/_e2e_api/mark-test-guest', {method:'POST',headers:{
+      'X-E2E-Token':testToken,Authorization:`Bearer ${data.session.access_token}`
+    }});
+    return response.ok;
+  },token);
+  if (!marked) throw new Error('Failed to mark test guest');
   await clearE2EBypass(context);
 }
 

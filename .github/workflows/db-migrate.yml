@@ -42,6 +42,12 @@ jobs:
         env:
           PGPASSWORD: test-only-password
         run: psql -h localhost -U postgres -d statistics_test -v ON_ERROR_STOP=1 -f tests/sql/host2-logo.sql
+      - name: Check maintenance activity and shared exclusions
+        env:
+          PGPASSWORD: test-only-password
+        run: |
+          psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -c 'CREATE DATABASE activity_test'
+          psql -h localhost -U postgres -d activity_test -v ON_ERROR_STOP=1 -f tests/sql/maintenance-activity.sql
   migrate:
     needs: verify-control2-statistics
     runs-on: ubuntu-latest
@@ -100,6 +106,12 @@ jobs:
           ssh -i ~/.ssh/id_ed25519 "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" \
             "export GITHUB_SHA='${{ github.sha }}'; \
              bash \"$STAGING/apply-migrations.sh\" \"$STAGING\""
+
+      - name: Verify activity writes and exclusions on production database
+        run: |
+          ssh -i ~/.ssh/id_ed25519 "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" \
+            'docker exec -i supabase-db psql -U supabase_admin -d postgres -v ON_ERROR_STOP=1' \
+            < tests/sql/maintenance-activity-production.sql
 
       # 7️⃣ Fetch schema + logs (bez wywalania się)
       - name: Fetch schema.sql + logs from server

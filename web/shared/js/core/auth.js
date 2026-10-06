@@ -125,6 +125,8 @@ export async function resolveLoginToEmail(loginOrEmail) {
   return await loginToEmail(loginOrEmail);
 }
 
+import { reservedUsernameReason } from "./reserved-usernames.js";
+
 export function validateUsername(un, { allowEmpty = false } = {}) {
   const v = String(un || "").trim();
   if (!v) {
@@ -134,6 +136,8 @@ export function validateUsername(un, { allowEmpty = false } = {}) {
   // Reserve guest_* namespace for auto-generated guest usernames.
   // NOTE: guests will be prompted to change it after account upgrade.
   if (v.toLowerCase().startsWith("guest_")) throw new Error(t("auth.usernameReservedGuest"));
+  const reserved=reservedUsernameReason(v);
+  if (reserved) throw new Error(t("index.errUsernameTaken"));
   if (v.length < 3) throw new Error(t("auth.usernameMin"));
   if (v.length > 20) throw new Error(t("auth.usernameMax"));
   if (!/^[a-zA-Z0-9_.-]+$/.test(v)) throw new Error(t("auth.usernameChars"));
