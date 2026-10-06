@@ -34,6 +34,10 @@ jobs:
         env:
           PGPASSWORD: test-only-password
         run: psql -h localhost -U postgres -d statistics_test -v ON_ERROR_STOP=1 -f tests/sql/control2-sessions.sql
+      - name: Check concurrent telemetry and gameplay preserve events
+        env:
+          PGPASSWORD: test-only-password
+        run: python3 tests/sql/control2-sessions-concurrency.py
   migrate:
     needs: verify-control2-statistics
     runs-on: ubuntu-latest

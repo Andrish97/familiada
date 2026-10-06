@@ -24,6 +24,7 @@ INSERT INTO game_sessions(game_id,status,team_a_score) VALUES
  ('00000000-0000-0000-0000-000000000001','legacy',37),
  ('00000000-0000-0000-0000-000000000001','final',100);
 \ir ../../supabase/migrations/2026-10-06_300_control2_sessions.sql
+\ir ../../supabase/migrations/2026-10-06_301_control2_session_event_serialization.sql
 
 CREATE FUNCTION pg_temp.assert_true(ok boolean,message text) RETURNS void LANGUAGE plpgsql AS $$
 BEGIN IF ok IS DISTINCT FROM true THEN RAISE EXCEPTION 'Assertion: %',message; END IF; END $$;
@@ -70,5 +71,5 @@ DO $$ BEGIN
   EXCEPTION WHEN OTHERS THEN IF SQLERRM <> 'forbidden' THEN RAISE; END IF; END;
 END $$;
 SELECT pg_temp.assert_true(NOT has_table_privilege('anon','game_session_active','SELECT'),'pointer private');
-ROLLBACK;
+COMMIT;
 \echo 'Control2 statistics SQL checks passed'

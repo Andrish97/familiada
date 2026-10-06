@@ -5497,6 +5497,7 @@ function fmtSessionStatus(r) {
 
 const FINAL_STEP_LABELS = {
   finished: "Ukończony",
+  player2_entry: "Gracz 2 — przygotowanie i wpisywanie",
   final_start: "Rozpoczęty (bez odpowiedzi)",
   p1_q1: "Gracz 1 — pytanie 1 z 5",
   p1_q2: "Gracz 1 — pytanie 2 z 5",
