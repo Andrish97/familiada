@@ -24,7 +24,7 @@ test('release: approved Polish manual and native icons are published',async({pag
  await expect(control).toContainText('Ponowne kliknięcie nie usuwa oznaczenia');
  await expect(control).toContainText('oznaczenie usuwa wyłącznie wpisanie tekstu');
  await expect(control).toContainText('Sam brak pytań nie kwalifikuje do finału');
- await expect(control.locator('[data-icon] svg').first()).toBeVisible();
+ await expect(control.locator('svg.ico').first()).toBeVisible();
  await page.locator('[data-tab="gameSettings"]').first().click();
  await expect(page.locator('#tab-gameSettings')).toContainText('2 minuty');
  await expect(page.locator('#tab-gameSettings')).toContainText('Muzyka outro programu');

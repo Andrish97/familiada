@@ -1,6 +1,5 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {readFileSync} from 'node:fs';
 import {serveMaintenance,fetchWith404} from '../../cloudflare/maintenance-worker/src/lib/origin/origin.js';
 test('maintenance fetches its actual index instead of a directory redirect',async()=>{
  const original=globalThis.fetch;let target;
@@ -32,7 +31,16 @@ test('TV entry uses the simplified page through the same proxy used by bypass',a
  } finally {globalThis.fetch=original;}
 });
 
-test('Worker does not discard an explicitly requested Polish language',()=>{
- const source=readFileSync(new URL('../../cloudflare/maintenance-worker/src/index.js',import.meta.url),'utf8');
- assert.doesNotMatch(source,/searchParams\.delete\(["']lang["']\)/);
+test('Worker serves the explicitly requested Polish page without a language redirect',async()=>{
+ const {default:worker}=await import('../../cloudflare/maintenance-worker/src/index.js');
+ const {setStateCache}=await import('../../cloudflare/maintenance-worker/src/lib/core/state.js');
+ setStateCache({enabled:false,mode:'off'});
+ const original=globalThis.fetch;let target;
+ globalThis.fetch=async url=>{target=url;return new Response('Polski',{headers:{'Content-Type':'text/html'}});};
+ try {
+  const response=await worker.fetch(new Request('https://www.familiada.online/manual/?lang=pl'),{MAINT_KV:{get:async()=>null}},{});
+  assert.equal(response.status,200);
+  assert.equal(new URL(target).searchParams.get('lang'),'pl');
+  assert.equal(await response.text(),'Polski');
+ } finally {globalThis.fetch=original;}
 });
