@@ -1844,426 +1844,253 @@ const en = {
         For the best experience with Buzzer and Host, we recommend installing the Familiada.online web app.
         On your phone go to <span class="m-strong">My games</span> and click the <span class="m-code"><i class="ico" data-icon="download"></i></span> button — you'll get instructions on how to install it.
       </div>`,
-      control: `<p class="m-p">
-        You reach the Control Panel from the “My games” list
-        using the <span class="m-code">Play</span> button.
-        This mode is intended only for running the live game —
-        you no longer edit questions or poll results here.
-      </p>
-    
-      <p class="m-p">
-        The control panel guides the operator step by step:
-        first you connect devices, then set game parameters,
-        and finally go through rounds and (optionally) the final.
-        Each step unlocks only when the previous one is ready,
-        which minimizes the risk of mistakes during gameplay.
-      </p>
-    
-      <h3 class="m-h2">What must be ready before you start</h3>
-    
-      <ul class="m-ul">
-        <li>
-          The game should have prepared questions and answers (from the editor),
-          and if it is a poll-based game — the poll should be closed and approved.
-        </li>
-        <li>
-          The operator should have a computer with preferably a large screen (the panel is designed for desktop mode).
-        </li>
-        <li>
-          Separate devices should be prepared: a display (TV/projector), the host’s device,
-          and a device acting as the buzzer.
-        </li>
-        <li>
-          Stable Wi-Fi (the most common issues are killed background tabs / network switching).
-        </li>
-      </ul>
-    
-      <div class="m-note">
-        <b>Why so many “formalities”?</b><br/>
-        The gameplay is live and has a TV pace. The control panel is meant to enforce the procedure,
-        not add stress for the operator. That’s why the system requires readiness of equipment and settings before starting.
-      </div>
-    
-      <h3 class="m-h2">Who sees what</h3>
-    
-      <p class="m-p">
-        The system deliberately separates screens so everyone does their job:
-      </p>
-    
-      <ul class="m-ul">
-        <li>
-          <span class="m-strong">Operator (Control Panel)</span> — sees all buttons,
-          game status, bank, Xs, messages, and the next procedural steps.
-          The operator controls what appears on the board.
-        </li>
-        <li>
-          <span class="m-strong">Display</span> — shows the game board: questions, answers,
-          points, bank, errors (X), and start/end screens.
-          This is the screen visible to participants and the audience.
-        </li>
-        <li>
-          <span class="m-strong">Host</span> — receives content to read and a context preview,
-          but does not control the course of the game (the operator does).
-        </li>
-        <li>
-          <span class="m-strong">Buzzer</span> — used to signal the face-off (who is first).
-        </li>
-      </ul>
-    
-      <h3 class="m-h2">1) Devices</h3>
-    
-      <p class="m-p">
-        The first stage in the panel is connecting devices.
-        In the top bar you see three statuses:
-        <span class="m-strong">Display</span>,
-        <span class="m-strong">Host</span>,
-        <span class="m-strong">Buzzer</span>.
-        The operator starts by making sure all are online.
-      </p>
-    
-      <h3 class="m-h3">Step 1: Display</h3>
-
-      <p class="m-p">
-        In this step the panel shows a <span class="m-strong">6-digit code</span> and QR code for the display.
-        It’s best to open the display on a TV or projector,
-        in full-screen mode (no browser bars).
-        Only when the display is online will the panel allow you to proceed.
-      </p>
-
-      <p class="m-p">
-        <span class="m-strong">”Black screen”</span> — if after loading the display you see leftovers from a previous game,
-        use this button to restore a black screen while you finish setting up.
-      </p>
-
-      <div class="m-note">
-        <b>How to show the board on a second screen?</b><br/>
-        For the best result use extended display mode.
-        On <span class="m-strong">Windows</span> press <span class="m-code">Win + P</span>,
-        on <span class="m-strong">Mac</span> use <span class="m-code">⌘ F1</span> (sometimes also <span class="m-code">Fn</span>).<br/><br/>
-        Then open the board in a new browser window, drag it to the second screen (TV or monitor) and enable full-screen mode.
-        This lets you control the game on your device while displaying content for others.
-      </div>
-
-      <h3 class="m-h3">Step 2: Host and buzzer</h3>
-
-      <p class="m-p">
-        In the second step you connect the host device and the buzzer device.
-        The panel shows a 6-digit code and QR code for each.
-        In practice it’s best to use two separate phones or a phone and a tablet.
-      </p>
-
-      <p class="m-p">
-        In this step there is an option <span class="m-code">QR on display</span> —
-        after using it the QR codes can be shown on the large screen,
-        so the crew can quickly scan them with phones.
-        This speeds up the start on set because there is no need to type links manually.
-      </p>
-
-      <p class="m-p">
-        Via the <span class="m-code">Share</span> option — you can quickly send someone a link by email or share with your subscribers.
-        Shared devices will appear in their account (registered users only) in the <span class="m-code">Connect device <i class="ico" data-icon="phone"></i></span> panel.
-        Non-registered users will simply receive an email with the link.
-      </p>
-
-      <div class="m-note">
-        <b>How to conveniently connect a device?</b><br/>
-        Easiest way: go to <span class="m-code">familiada.online</span>, click <span class="m-code">Connect device <i class="ico" data-icon="phone"></i></span>
-        in the top bar and enter the <span class="m-strong">6-digit code</span> shown next to the device in the operator panel.<br/><br/>
-        Alternatively: on a mobile device you can scan the <span class="m-strong">QR code</span> visible in the panel.
-        For the best experience we recommend installing the web app — go to <span class="m-strong">My games</span>
-        and click the <span class="m-code"><i class="ico" data-icon="download"></i></span> button for installation instructions.
-      </div>
-
-      <h3 class="m-h3">Mode without host tablet</h3>
-
-      <p class="m-p">
-        If the host is not using a separate device (phone/tablet), check the option
-        <span class="m-strong">”Don't use host tablet”</span> next to the Host device.
-        Once checked: the host device buttons and connection code are grayed out,
-        the host device is not required to proceed,
-        and the host status dot in the top bar becomes inactive.
-        The operator can run the game entirely from the control panel.
-      </p>
-
-      <h3 class="m-h3">Physical buzzer</h3>
-
-      <p class="m-p">
-        If you use a physical buzzer instead of the browser-based button,
-        check the option <span class="m-strong">”Physical buzzer”</span> next to the Buzzer device.
-        Once checked: the buzzer device is not required,
-        and the duel flow changes — the operator decides who pressed first.
-      </p>
-
-      <p class="m-p">Physical buzzer duel flow:</p>
-
-      <ol class="m-ul">
-        <li>After starting a duel, two buttons appear: <span class="m-code">Team A</span> and <span class="m-code">Team B</span>.</li>
-        <li>The operator clicks the team that pressed the physical buzzer first — the button highlights.</li>
-        <li>The operator clicks <span class="m-code">Confirm</span> to confirm the selection and proceed.</li>
-      </ol>
-
-      <div class="m-warn">
-        <b>Warning:</b><br/>
-        If any device disconnects during the game, the panel can show a warning.
-        Most often it helps to disable battery saving, avoid minimizing the browser,
-        and keep devices on one stable Wi-Fi network.
-      </div>
-
-      <h3 class="m-h3">Step 3: Sound</h3>
-    
-      <p class="m-p">
-        Browsers block automatic sound playback
-        until the user performs a “gesture” (click).
-        That’s why the panel has a separate step to unlock sound.
-        Without it you may not hear signals that help keep the game pace.
-      </p>
-    
-      <p class="m-p">M toggles mute immediately, without Enter.</p>
-      <h3 class="m-h2">2) Settings</h3>
-
-      <p class="m-p">
-        When devices are online, you move on to the settings summary. All options (colors, sound, game parameters) can be configured in advance on the <span class="m-code">Game Settings</span> page — the Control Panel will load them automatically.
-      </p>
-
-      <p class="m-p">In the settings summary, E selects Edit settings and Enter opens it. B then Enter goes back when available.</p>
-      <h3 class="m-h3">Team names</h3>
-
-      <p class="m-p">
-        These are the labels visible on the display, on the host’s device, and in the results. If you leave the <span class="m-code">Game Settings</span> blank, the default values will be loaded: <span class="m-strong">Team A</span> and <span class="m-strong">Team B</span>.
-      </p>
-
-      <h3 class="m-h3">Appearance</h3>
-
-      <ul class="m-ul">
-        <li><span class="m-strong">Colors</span> — team colors, background, and dots.</li>
-        <li><span class="m-strong">Theme</span> — the visual style of the board.</li>
-        <li><span class="m-strong">Logo</span> — the logo displayed during gameplay.</li>
-      </ul>
-
-      <h3 class="m-h3">Sound</h3>
-
-      <ul class="m-ul">
-        <li>For each sound category you see the current <span class="m-strong">variant</span> (e.g. Classic or the name of a custom file).</li>
-        <li>The <span class="m-strong">volume</span> slider lets you adjust the level of each sound.</li>
-        <li>The <span class="m-code"><i class="ico" data-icon="play"></i></span> button lets you preview the sound before gameplay.</li>
-      </ul>
-
-      <div class="m-note">
-        If you change the volume level here, it will only be changed for this specific game session. When you start a new game session, the values set in <span class="m-code">Game Settings</span> will be loaded.
-      </div>
-
-      <h3 class="m-h3">Final</h3>
-
-      <p class="m-p">Here you will only see confirmation of whether the game has a final.</p>
-
-      <p class="m-p">
-        If the final is enabled and <span class="m-strong">Manual</span> mode was selected — here you will see the 5 final questions you chose. With <span class="m-strong">Random</span> mode you will see the randomly drawn final questions.
-      </p>
-
-      <h3 class="m-h3">Rounds: question order</h3>
-
-      <p class="m-p">
-        If <span class="m-strong">Order</span> mode was selected for round questions — here you will see the order of questions that will be used during the main rounds. With <span class="m-strong">Random</span> mode you will see the randomly drawn round questions.
-      </p>
-
-      <div class="m-note">
-        You can always press the <span class="m-code">Change settings</span> button, which will open the settings window — see the <span class="m-code">Game Settings</span> tab for details.
-      </div>
-
-      <p class="m-p">
-        When everything looks good — click <span class="m-code">Done — start the game</span>.
-      </p>
-
-      <h3 class="m-h2">3) Rounds — gameplay step by step</h3>
-    
-      <p class="m-p">
-        In rounds you conduct the main gameplay: questions, answers, points, and the round bank.
-        Players see the board on the display, the host asks questions and keeps the flow,
-        while the operator reveals answers, counts points, and adds errors (X).
-      </p>
-      
-      <p class="m-p">
-        The most important practical rule: the host focuses on the contestants,
-        and the operator on running the system. This keeps the game smooth,
-        and the board always shows what it should at any moment.
-      </p>
-    
-      <h3 class="m-h3">Round start: "Game ready" and intro</h3>
-    
-      <p class="m-p">
-        When starting rounds, the panel first prepares the display (clears the board and sets the game state),
-        and then lets you start the intro.
-        This organizes the beginning of the game: the audience gets a clear start,
-        and the operator has a clear moment to enter the first question.
-      </p>
-    
-      <h3 class="m-h3">Face-off: who takes control</h3>
-    
-      <p class="m-p">
-        Each question starts with the “family heads” face-off at the podium.
-        At this moment the <span class="m-strong">Buzzer</span> device is key:
-        the signal from the buzzer tells the panel someone pressed first.
-        The operator confirms which side gains priority,
-        and the host moves on to the answers.
-      </p>
-    
-      <p class="m-p">
-        According to the rules, if the first answer is not the highest-scoring,
-        the second “head” can answer better and take control.
-        The panel guides the operator through the round control decision,
-        and the display shows which team is currently playing (team indicator).
-      </p>
-
-      <p class="m-p">C then Enter confirms the team registered by the buzzer. With physical buzzers, A/B selects a team and Enter confirms.</p>
-      <h3 class="m-h3">Giving up the question</h3>
-    
-      <p class="m-p">
-        According to game arrangements, after gaining control a team can also decide
-        that it <span class="m-strong">gives up the question</span> to the opponents.
-        This is a tactical move: instead of “finishing” the question, the team can pass the chance to rivals.
-        The panel provides this option only at the right moment and ensures it cannot be abused.
-      </p>
-    
-      <p class="m-p">P selects passing control; Enter confirms.</p>
-      <h3 class="m-h3">Playing the question: revealing answers and the bank</h3>
-    
-      <p class="m-p">
-        After control is set, the team answers and the operator reveals the correct answers on the board.
-        Each correct answer adds points to the <span class="m-strong">round bank</span>.
-        The bank is visible on the display and grows with each correct answer.
-      </p>
-    
-      <p class="m-p">
-        Gameplay continues until:
-        all answers are revealed,
-        or the team loses three “chances” (three Xs),
-        then the operator ends the stage and moves to the steal (when conditions are met).
-      </p>
-    
-      <p class="m-p">1–6 selects an answer; Enter reveals it.</p>
-      <h3 class="m-h3">Misses (X) and the 3-second limit</h3>
-    
-      <p class="m-p">
-        A wrong answer is marked with an <span class="m-strong">X</span> on the board.
-        Three errors mean losing control and giving a steal attempt to the opponents.
-        The system also has a <span class="m-strong">3-second</span> time limit for answers —
-        exceeding the limit is treated as a miss (X).
-      </p>
-    
-      <div class="m-note">
-        <b>Why a timer?</b><br/>
-        It’s a “whip for pace.” The timer lets the operator close hesitation quickly
-        without debate and keep the rhythm of the game.
-      </div>
-    
-      <p class="m-p">X selects a strike and T the timer; Enter performs the selected action.</p>
-      <h3 class="m-h3">Stealing the bank (one answer)</h3>
-    
-      <p class="m-p">
-        When the playing team uses three “chances” before revealing all answers,
-        the question passes to the opposing team.
-        The opponents get <span class="m-strong">one answer</span>:
-        if they hit — the bank goes to them,
-        if not — the bank stays with the playing team.
-        This closes the question and the round according to the rules.
-      </p>
-    
-      <h3 class="m-h3">Revealing missing answers and ending the round</h3>
-    
-      <p class="m-p">
-        After the question is resolved the operator can reveal missing answers “for information,”
-        so the audience sees the full board.
-        Then the operator ends the round: the bank is added to the correct team,
-        taking the round multiplier into account.
-      </p>
-    
-      <div class="m-note">
-        <b>Practical note:</b><br/>
-        The panel deliberately separates “playing the question” from “ending the round.”
-        This way the operator doesn’t accidentally clear the board state
-        before the host delivers the punchline or before “thank you” is said.
-      </div>
-
-      <h3 class="m-h3">Ending rounds and moving on</h3>
-<p class="m-p">The final requires reaching the rounds threshold and enabling the final. Running out of questions alone does not qualify a team for the final. When ending without a final, other round actions are blocked and remaining answers are not revealed. <span class="m-code">Go to game ending</span> awards the bank and shows the ending screen. Only the subsequent <span class="m-code">End game</span> plays the programme outro music. “Show prize amount (after final)” shows points when ending without a final; a tie shows the logo.</p>
-<p class="m-p">N selects the next-action button; Enter activates it.</p>
-<h3 class="m-h2">4) Final</h3>
-
-      <p class="m-p">
-        The final is a separate game mode. Two contestants
-        from the team that won the main game take part.
-        They answer the same <span class="m-strong">5 questions</span>,
-        and their points are summed. The goal is to reach the final threshold
-        (default <span class="m-strong">200 points</span>, unless set otherwise).
-      </p>
-      
-      <h3 class="m-h3">Final preparation</h3>
-      
-      <p class="m-p">
-        Before starting the final, in game settings you must have selected and confirmed
-        <span class="m-strong">exactly 5 final questions</span>.
-        This ensures the final is ready to run without searching for questions during play.
-      </p>
-      
-      <p class="m-p">
-        In the final it is very important that the second contestant does not know the first contestant’s answers.
-        Therefore during the first contestant’s round the second contestant
-        <span class="m-strong">moves away and wears headphones with music</span>,
-        so they cannot hear the questions or answers.
-      </p>
-      
-      <h3 class="m-h3">Round 1 – first contestant (15 seconds)</h3>
-      
-      <p class="m-p">
-        The host reads five questions in a row, and the first contestant answers within
-        <span class="m-strong">15 seconds</span>.
-        The operator <span class="m-strong">types the answers</span> in the final panel.
-        At this stage answers are not yet scored or revealed.
-      </p>
-      
-      <p class="m-p">
-        After the round the operator assigns the typed answers to the list of scored results
-        and <span class="m-strong">reveals them on the board</span>.
-        If an answer does not match any item in the list,
-        it receives <span class="m-strong">0 points</span>.
-      </p>
-      
-      <p class="m-p">
-        After revealing the first contestant’s answers, the system hides their half of the board,
-        and the host prepares the entry of the second contestant and reminds the final rules.
-      </p>
-      
-      <p class="m-p">In the final, Ctrl+Enter (⌘+Enter on Mac) starts or stops the timer. Each round requires starting the timer. Early stopping requires text in all five fields; Repeat does not fill a field. Enter and arrows move only between empty fields; click a completed field to edit it.</p>
-      <p class="m-p">When matching, 1–6 selects a list answer, W the written answer, and O no answer. Selection is immediate. Enter reveals the answer, then another Enter reveals points; no answer and repeat reveal zero automatically. N then Enter advances. Mouse reveals require two clicks. Letters and numbers remain text while editing. Dialogs block gameplay shortcuts in the background.</p>
-      <h3 class="m-h3">Round 2 – second contestant (20 seconds) and repeats</h3>
-      
-      <p class="m-p">
-        The second contestant returns and answers the same questions within
-        <span class="m-strong">20 seconds</span>.
-        When the half-board with the first contestant’s answers appears,
-        the second contestant <span class="m-strong">turns away</span>
-        so they cannot see them and be influenced.
-      </p>
-      
-      <p class="m-p">
-        The operator again first types all answers of the second contestant,
-        without revealing or scoring them “live.”
-        If the second person gives the same answer as the first,
-        it is a <span class="m-strong">repeat</span> — the contestant must give another answer,
-        and the operator can mark the attempt as repeated.
-        Repeated answers do not score points. The repeat sound can be demonstrated before round 2 starts, so the player knows what it will sound like during the game.</p>
-      
-      <p class="m-p">
-        After the round the operator assigns the second contestant’s answers to the list of scored results
-        and <span class="m-strong">reveals them one by one</span> on the board.
-        The points of both contestants are summed.
-      </p>
-      
-      <p class="m-p">In the final, Ctrl+Enter (⌘+Enter on Mac) starts or stops the timer; Shift+Enter marks Repeat and plays its sound in an empty player 2 field. Each round requires starting the timer. Early stopping requires text in all five fields; Repeat does not fill a field. Enter and arrows move only between empty fields; click a completed field to edit it. Each press of Repeat plays its sound again. Only typing text removes the marker.</p>
-      <p class="m-p">When matching, 1–6 selects a list answer, W the written answer, O no answer and R repeat. Selection is immediate. Enter reveals the answer, then another Enter reveals points; no answer and repeat reveal zero automatically. N then Enter advances. Mouse reveals require two clicks. Letters and numbers remain text while editing. Dialogs block gameplay shortcuts in the background.</p>
-      <h3 class="m-h3">When the final ends</h3>
-<p class="m-p">Reaching the final threshold blocks further answer assessment. The hint reports the threshold and the button changes to <span class="m-code">Finish final</span>, even for player 1. The result is not shown automatically. If the threshold is not reached, the same button appears after revealing player 2’s last points.</p>
-<p class="m-p"><span class="m-code">Finish final</span> shows the selected ending screen: logo, points or prize amount. The following <span class="m-code">End game</span> only plays the programme outro music; the result and winning team indicator remain visible. The Host tablet is cleared when the final ends.</p><p class="m-p">On the Host tablet, the pass-control hint is red and underlined. A word cut on the Display loses up to two trailing vowels before the dot; word boundaries receive no dot. Limits are 17 characters in rounds and 11 in the final, including the dot.</p><p class="m-p">The Host tablet reloads the selected logo when the operator enters the settings summary. If the selected logo was being edited earlier, the default logo stays until then; without a lock, the game’s selected logo is shown.</p>`,
+      control: `<p class="m-p">Open the Control Panel from <strong>My games</strong> using <span class="m-code m-control">Play</span>. It is for running a live game; you do not edit questions or poll results here.</p>
+<p class="m-p">The panel guides the operator step by step: connect devices, check game settings, then run the rounds and optional final. Each stage becomes available when the preceding stage is ready, reducing the risk of mistakes during play.</p>
+<h3 class="m-h2">Before you start</h3>
+<ul class="m-ul">
+<li>Prepare questions and answers in the editor. A poll-based game must be finished and approved.</li>
+<li>The operator needs a computer with a screen large enough to read questions, answers and hints comfortably.</li>
+<li>Prepare separate devices for the Display (TV/projector), Host and Buzzer.</li>
+<li>Use stable Wi-Fi. Browser suspension and switching networks are common causes of connection problems.</li>
+</ul>
+<p class="m-p"><strong>Why these preparations?</strong></p>
+<p class="m-p">A live game moves at television pace. The panel handles the procedure without adding pressure for the operator, so devices and settings must be ready before starting.</p>
+<h3 class="m-h2">Who sees what</h3>
+<p class="m-p">The screens have separate roles:</p>
+<ul class="m-ul">
+<li><strong>Operator (Control Panel)</strong> — all controls, game status, bank, strikes (X), messages and procedural steps. The operator controls what appears on the board.</li>
+<li><strong>Display</strong> — questions, answers, points, bank, strikes and opening/ending screens, visible to contestants and the audience.</li>
+<li><strong>Host</strong> — reading material and context, without game controls. The operator runs the game.</li>
+<li><strong>Buzzer</strong> — signals which team pressed first in the duel.</li>
+</ul>
+<p class="m-p">The Host tablet has two sections: top/bottom in portrait and left/right in landscape. The first shows the game stage and, when appropriate, the question. The second contains the answer list, final questions or current answer-matching details. This second section can be covered.</p>
+<aside class="m-host"><p class="m-host-title"><strong>Cover on the Host tablet</strong></p>
+<ul class="m-ul">
+<li>In portrait, swipe <strong>down</strong> to reveal and <strong>up</strong> to cover.</li>
+<li>In landscape, swipe <strong>right</strong> to reveal and <strong>left</strong> to cover.</li>
+<li>Instructions on the cover and below the revealed material follow the device orientation.</li>
+<li>Revealing is only for the Host: it does not show an answer to the audience or confirm a game action. The cover keeps contestants from accidentally seeing questions and answers.</li>
+<li><strong>Each new game-state change restores the cover</strong> when that stage requires it. Another swipe may be needed after an operator action.</li>
+</ul>
+<p class="m-p">Reveal the material when you need to read a question or check answers. The cover does not mean that answers have disappeared from the game.</p>
+</aside>
+<h4 class="m-h3">Control Panel layout</h4>
+<p class="m-p">The top bar shows Display, Host and Buzzer connections. Device buttons let you reopen links, codes and sharing during play. The main area follows the current stage: devices or the Summary during preparation, questions and answers in rounds, and entry fields or individual answer assessment in the final.</p>
+<p class="m-p">The hints column explains who is answering and what action is needed. The bar below the board shows the playing team and bank in rounds, or the final total during final reveals. The next-action button describes its destination: at major transitions, <span class="m-code">Next</span> becomes, for example, <span class="m-code m-control">Go to the final</span> or <span class="m-code m-control">Finish final</span>.</p>
+<h3 class="m-h2">1) Devices</h3>
+<p class="m-p">Connect devices first. The top bar shows <strong>Display</strong>, <strong>Host</strong> and <strong>Buzzer</strong> status. Connect all required devices; the Host is optional and the game can be hosted directly from the Control Panel.</p>
+<h4 class="m-h3">Display</h4>
+<p class="m-p">The panel provides a <strong>6-digit code</strong>. Open the Display on a TV or projector in fullscreen without browser bars. The panel allows the next step once the Display is connected.</p>
+<p class="m-p"><strong>Using a second screen</strong></p>
+<p class="m-p">For best results, extend your desktop: <strong>Windows</strong> uses <span class="m-code">Win + P</span>; on a <strong>Mac</strong>, use <span class="m-code">⌘ F1</span> (sometimes with <span class="m-code">Fn</span>).</p>
+<p class="m-p">Open the board in a separate browser window, move it to the second screen and enable fullscreen. This lets you operate the panel while the audience sees the board.</p>
+<p class="m-p"><strong>TV as a separate device</strong></p>
+<p class="m-p">On your computer, open the Display code in the Control Panel. Visit <a href="http://www.familiada.online">www.familiada.online</a> in the TV browser. A recognised TV opens a simplified connection page with Familiada branding, a six-digit code field and <span class="m-code">Connect</span>. Enter the Display code. No TV login or cable connection to the computer is needed.</p>
+<p class="m-p">The code field is focused automatically. Up/down moves between the field and button; OK or Enter confirms. Unlock sound on the Display if audio should play from the TV. The browser may require a remote-control press before allowing fullscreen.</p>
+<p class="m-p">You can also open the Display link copied from the panel directly on the TV. If the browser is not recognised, open the <a href="https://www.familiada.online/connect-device/tv/">TV connection page</a> and enter the code. This also applies to custom browsers on Apple TV. TVs accept game Display or poll QR Display codes; Host and Buzzer codes are rejected.</p>
+<h4 class="m-h3">Host and Buzzer</h4>
+<p class="m-p">Connect the Host device and Buzzer next. Each has a <strong>6-digit code</strong> and QR code. Two separate phones, or a phone and tablet, are usually convenient.</p>
+<p class="m-p"><span class="m-code m-control">QR on display</span> shows the QR codes on the connected large screen so the team can scan them without copying links.</p>
+<p class="m-p">Use <span class="m-code m-control">Share</span> to send a link by email or share it with your subscribers. Registered recipients find shared devices under <span class="m-code">Connect device</span> <span class="m-code m-control"><i class="ico" data-icon="phone"></i></span>. Unregistered recipients receive an email link.</p>
+<p class="m-p"><strong>Connecting a device conveniently</strong></p>
+<p class="m-p">Visit <span class="m-code">familiada.online</span>, select <span class="m-code">Connect device</span> <span class="m-code m-control"><i class="ico" data-icon="phone"></i></span> in the top bar and enter the <strong>6-digit code</strong> shown beside the device in the Control Panel.</p>
+<p class="m-p">Alternatively, scan its <strong>QR code</strong> on a mobile device. Installing the web app is recommended: select <span class="m-code m-control"><i class="ico" data-icon="download"></i></span> on <strong>My games</strong> for instructions.</p>
+<p class="m-p"><strong>Without a Host tablet</strong></p>
+<p class="m-p">Select <span class="m-code m-control">No host tablet</span> beside the Host device if the Host has no separate phone/tablet. Host connection controls and code become unavailable, the Host is no longer required to continue, and its top-bar indicator becomes inactive. The operator can host directly from the panel.</p>
+<p class="m-p"><strong>Physical buzzer</strong></p>
+<p class="m-p">If you use a hardware buzzer connected separately instead of a browser Buzzer, select <span class="m-code m-control">Physical buzzer</span>. A browser Buzzer connection is no longer required; the operator decides who pressed first.</p>
+<p class="m-p">In this mode:</p>
+<ul class="m-ul">
+<li>The duel shows <span class="m-code m-control">Team A</span> and <span class="m-code m-control">Team B</span> buttons.</li>
+<li>Select the team that pressed first; its tile lights up.</li>
+<li>Select <span class="m-code m-control">Confirm</span> to accept the choice and continue.</li>
+</ul>
+<p class="m-p"><strong>Device disconnection</strong></p>
+<p class="m-p">When a required device stops reporting its presence, after about 6.5 seconds the panel shows a one-time dialog naming disconnected devices and blocks further actions. Check the panel&#39;s and devices&#39; internet connections. If they do not recover, reconnect using top-bar buttons. Play unlocks when all required devices return. Devices skipped during preparation do not block play.</p>
+<p class="m-p">Previously confirmed actions remain saved. An action already sent may still finish saving; the system does not roll back the result. A returning device displays the current state without replaying missed animations. A running timer keeps counting down.</p>
+<h4 class="m-h3">Sound</h4>
+<p class="m-p">Choose <strong>Control panel</strong> or <strong>Display</strong> as the sound source; only that device plays game audio. For Display audio, press its sound-unlock button; TV OK or Enter also works. Browsers may require a click before permitting playback. Check the TV/speaker volume too.</p>
+<div class="m-warn"><strong>Warning:</strong> Choose Display when audio should play on a separate TV or other device running the Display page. With HDMI, keeping Control panel as the source and selecting the TV as the computer&#39;s audio output is usually easier; the system often does this automatically. AirPlay sends video and sound from a Mac, iPhone or iPad to Apple TV.</div>
+<p class="m-p"><strong>Shortcut:</strong> M mutes or restores sound immediately, without Enter.</p>
+<h3 class="m-h2">2) Settings</h3>
+<div class="m-host"><strong class="m-host-title">Host:</strong> The tablet shows the logo selected in game settings. If that logo is being edited earlier, it shows the default Familiada logo. When the operator opens the settings Summary, the tablet reloads the selected logo and replaces the temporary default.</div>
+<p class="m-p">After connecting devices, check the settings Summary. Colours, sounds and game parameters can be configured beforehand in <strong>Game settings</strong> and are loaded automatically.</p>
+<p class="m-p"><strong>Shortcuts:</strong> In the Summary, E selects settings editing and Enter opens it. B followed by Enter goes back when available.</p>
+<h4 class="m-h3">Team names</h4>
+<p class="m-p">Check names in the Summary. The Display stays black here. Names appear after <span class="m-code m-control">Done — start the game</span>, on the screen with <span class="m-code m-control">Start game</span>. Empty Game settings fields use <strong>Team A</strong> and <strong>Team B</strong>.</p>
+<h4 class="m-h3">Appearance</h4>
+<ul class="m-ul">
+<li><strong>Colours</strong> — teams, background and dots.</li>
+<li><strong>Theme</strong> — board appearance.</li>
+<li><strong>Logo</strong> — shown during play.</li>
+</ul>
+<h4 class="m-h3">Sound</h4>
+<ul class="m-ul">
+<li>Each category shows the current <strong>variant</strong>, such as Classic or a custom filename.</li>
+<li>Its <strong>volume</strong> slider adjusts that sound.</li>
+<li><span class="m-code m-control"><i class="ico" data-icon="play"></i></span> previews it before play.</li>
+</ul>
+<p class="m-p">Volume changes here apply only to this game session. The next session loads the values saved in <strong>Game settings</strong>.</p>
+<h4 class="m-h3">Final</h4>
+<p class="m-p">This shows whether the game includes a final.</p>
+<p class="m-p">In <strong>Manual</strong> mode, it shows your five selected final questions. In <strong>Random</strong> mode, it shows the drawn questions; use <span class="m-code m-control">Reshuffle</span> to draw another set before starting. The specified order and manually selected final questions remain unchanged.</p>
+<h4 class="m-h3">Rounds: question order</h4>
+<p class="m-p"><strong>Order</strong> mode shows the main-round question sequence. <strong>Random</strong> mode shows the drawn round questions; use <span class="m-code m-control">Reshuffle</span> beside them to change their order before starting.</p>
+<p class="m-p">Use <span class="m-code m-control">Change settings</span> whenever needed to open the settings dialog. See <a href="#gameSettings">Game settings</a> for details.</p>
+<p class="m-p">When everything is ready, select <span class="m-code m-control">Done — start the game</span>.</p>
+<h4 class="m-h3">Selecting and confirming</h4>
+<p class="m-p">For tiles requiring confirmation, the first click selects and the second confirms. This applies to accepting a buzzer press, revealing round answers, adding X and passing control. Selection alone does not change the score. Grey buttons are unavailable; wait for the panel to unlock them during sound or transitions. The hints column explains the current step.</p>
+<div class="m-note"><strong>Tip:</strong> Selection lets you check the choice before performing it. Points and the board change only after confirmation. Allow an ongoing sound or transition to finish.</div>
+<div class="m-note"><strong>Important:</strong> Letters and digits in an active text field remain text. Shortcuts respect locks, sound and animations and do not act behind an open dialog. Restart has no shortcut.</div>
+<h3 class="m-h2">3) Starting the game</h3>
+<p class="m-p">After checking the Summary, select <span class="m-code m-control">Done — start the game</span>. The Display becomes active and shows team names without a logo or answer board. The Buzzer is visible but does not yet accept presses.</p>
+<div class="m-note"><strong>Tip:</strong> You can leave the panel at this stage until the actual show starts. The following stages run at the pace of the game.</div>
+<p class="m-p"><span class="m-code m-control">Start game</span> plays the intro and animated logo entrance. After the transition, select <span class="m-code m-control">Start</span> to open the question board and begin the duel.</p>
+<div class="m-host"><strong class="m-host-title">Host:</strong> The question becomes available at the duel stage. Do not read the material before contestants are ready.</div>
+<h3 class="m-h2">4) Rounds — step by step</h3>
+<p class="m-p">Rounds contain questions, answers, points and the round bank. Contestants watch the Display, the Host asks questions and manages the show, and the operator reveals answers, awards points and adds strikes (X).</p>
+<p class="m-p">The Host focuses on contestants and the operator on the panel, keeping play smooth and the board accurate.</p>
+<div class="m-note"><strong>Tip:</strong> One person can host and operate, but must move efficiently between talking to contestants and using the panel.</div>
+<h4 class="m-h3">Duel: taking control</h4>
+<p class="m-p">Each question begins with a duel between family representatives. The Buzzer lights up immediately when pressed and tells the operator which team was first. Accept that team. Use <span class="m-code m-control">Retry</span> if the press needs repeating. With a physical buzzer, select the team manually.</p>
+<p class="m-p">If the first answer is not the highest-scoring one, the other representative may give a better answer and take control. The panel guides this decision; the Display indicates the team currently playing.</p>
+<div class="m-host"><strong class="m-host-title">Host:</strong> <span class="m-code">ROUND 1 — BUZZER</span> means the duel is in progress, including after the operator accepts a press. Reveal the second section to see the question and full answer list with points. The cover prevents contestants reading the question prematurely. The title&#39;s round number changes accordingly.</div>
+<p class="m-p"><strong>Shortcuts:</strong> C then Enter confirms the team indicated by the Buzzer. With a physical buzzer, A/B selects the team and Enter confirms.</p>
+<h4 class="m-h3">Passing the question</h4>
+<p class="m-p">After taking control, the team may <strong>pass the question</strong> to its opponents as a tactical choice. The panel offers this only at the appropriate moment and prevents repeated misuse.</p>
+<div class="m-host"><strong class="m-host-title">Host:</strong> When passing control is possible, the first section shows a red, underlined hint. This style applies only to the Host tablet. The operator carries out the team&#39;s decision in the panel.</div>
+<p class="m-p"><strong>Shortcut:</strong> P selects passing control; Enter confirms.</p>
+<div class="m-host"><strong class="m-host-title">Host:</strong> The pass-control hint is red and underlined.</div>
+<h4 class="m-h3">Playing the question: reveals and bank</h4>
+<p class="m-p">Once control is decided, the team answers and the operator selects and confirms matching answers. The Display reveals the answer first, then updates the round bank. Revealed tiles turn green and cannot award points again. The bank belongs to the current question; the team score updates at round settlement with the multiplier applied.</p>
+<p class="m-p">Play continues until every answer is revealed or the playing team has three strikes. The third X opens a steal for the opponents. The panel hint identifies the stage and next action.</p>
+<div class="m-host"><strong class="m-host-title">Host:</strong> <span class="m-code">ROUND 1 — PLAY</span> means the team is playing after the duel. The first section shows the question openly. The second has full answers and points, including answers still hidden from the audience. <span class="m-code">2) Bicycle (24)</span> is answer 2 worth 24 points. Green means publicly revealed. The Host does not show the bank, strikes or team scores; check the Display or panel.</div>
+<p class="m-p"><strong>Shortcuts:</strong> 1–6 selects an answer; Enter reveals it.</p>
+<h4 class="m-h3">Strikes (X) and the 3-second limit</h4>
+<p class="m-p">An incorrect answer adds <strong>X</strong>. Three strikes lose control and allow the opponents to steal. The <strong>3-second</strong> answer timer also counts expiry as a strike.</p>
+<p class="m-p"><strong>Why a timer?</strong></p>
+<p class="m-p">It helps the operator end hesitation promptly, avoid debate and maintain the game&#39;s pace.</p>
+<p class="m-p"><strong>Shortcuts:</strong> X selects a strike, T the timer; Enter performs the selected action.</p>
+<h4 class="m-h3">Stealing the bank (one answer)</h4>
+<p class="m-p">After three strikes before all answers are revealed, the opponents get <strong>one answer</strong>. A correct answer wins the bank; otherwise the playing team keeps it. This resolves the question and round.</p>
+<div class="m-host"><strong class="m-host-title">Host:</strong> The title becomes <span class="m-code">ROUND 1 — STEAL</span>. The answer list remains beneath the cover and the question remains open. Check the Display or panel for the stealing team&#39;s name.</div>
+<h4 class="m-h3">Remaining answers and ending a round</h4>
+<p class="m-p">If another round or the final follows and the question is resolved, select <span class="m-code m-control">End round</span>. The bank is awarded to the appropriate team with the multiplier applied. Reveal any remaining answers to the audience; they award no further team points. The board stays visible until the next transition.</p>
+<div class="m-note"><p><strong>Practical note:</strong></p><p class="m-p">The panel separates playing a question from ending a round. This avoids accidentally clearing the board before the Host finishes speaking or thanks the contestants.</p>
+</div>
+<div class="m-host"><strong class="m-host-title">Host:</strong> <span class="m-code">ROUND 1 — REVEAL</span> shows the remaining answers after settlement. Each revealed row turns green.</div>
+<p class="m-p">After revealing remaining answers, use the button for the next round or final.</p>
+<h4 class="m-h3">Ending rounds and continuing</h4>
+<p class="m-p">After each round, scores update and the ending condition from <strong>Additional settings</strong> is checked. It is usually a threshold such as <strong>300</strong>, but you can choose another for your tournament.</p>
+<p class="m-p">With the final <strong>enabled</strong> and the rounds threshold reached, the next-action button leads to the final. To end without a final, select <span class="m-code m-control">Go to end of game</span> to award the bank and show the ending screen. Reaching the threshold alone does not show the result automatically; other round actions are blocked and remaining answers are not revealed.</p>
+<p class="m-p">Running out of round questions before the threshold ends the main game. It does not qualify a team for the final: the threshold must be reached and the final enabled.</p>
+<div class="m-warn"><strong>Warning:</strong> Choose enough questions and a suitable threshold to reach the planned final. Enabling a final alone does not guarantee it will start.</div>
+<p class="m-p"><strong>Shortcut:</strong> N selects the current next-action button; Enter activates it.</p>
+<h3 class="m-h2">5) Final</h3>
+<p class="m-p">Two contestants answer the same <strong>5 questions</strong>. Their points add up towards the configured target, <strong>200</strong> by default. Usually both come from the winning team. With its agreement, you may organise one contestant from each team; the system still awards one shared final to the winners.</p>
+<h4 class="m-h3">Preparing the final</h4>
+<p class="m-p">Check the five questions in the Summary before play. Select them in Game settings for <strong>Manual</strong> mode, or let <strong>Random</strong> mode draw them. Prepare a waiting area and headphones playing music for contestant 2, who must not hear the first contestant&#39;s questions or answers.</p>
+<p class="m-p"><span class="m-code m-control">Start</span> opens the final board. The winning team&#39;s score remains visible, the opponent&#39;s score area is reserved for the timer, and the final total appears in the top bank.</p>
+<div class="m-host"><strong class="m-host-title">Host:</strong> The tablet shows no material during final preparation. It appears when the first round starts.</div>
+<h4 class="m-h3">Player 1 — preparation and entry</h4>
+<p class="m-p">Make sure contestant 2 waits outside the game. The Host reads the questions in sequence; the operator enters answers beside the corresponding questions. They are not yet assessed or shown to the audience.</p>
+<p class="m-p">Player 1 has <strong>15 seconds</strong>. The timer does not start simply by opening this stage: use its button or <strong>Ctrl + Enter</strong> (<strong>⌘ + Enter</strong> on Mac). The same control stops it. Enter/down moves to the next empty field; up moves to the previous empty field, wrapping after the last question. Click a completed field to edit it. An empty field means no entry, not a final assessment. Each player must start the timer before matching. Early stopping requires text in all five fields; Repeat alone does not fill a field. Natural expiry allows you to continue with missing entries.</p>
+<div class="m-note"><strong>Tip:</strong> After expiry, correct typos or enter an answer you remember while the Host talks to the contestant. Editing remains possible during matching until the answer is revealed.</div>
+<aside class="m-host"><p class="m-host-title"><strong>Host during entry:</strong></p>
+<p class="m-p">The first section shows <span class="m-code">FINAL ROUND 1</span> or <span class="m-code">FINAL ROUND 2</span>. Once the timer starts, the title includes the remaining time, such as <span class="m-code">FINAL ROUND 1 — COUNTDOWN 12s</span>. Without a running timer it shows no seconds.</p>
+<p class="m-p">The second section shows five numbered questions with entry status, for example:</p>
+<pre class="m-pre">1) Name a means of transport. — entered
+2) What do you take on holiday? — missing
+3) What do you drink in the morning? — repeat</pre>
+<div class="m-table-wrap"><table class="m-table">
+<thead>
+<tr>
+<th>Question status</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><span class="m-code">entered</span></td>
+<td>The operator saved non-empty answer text. It does not confirm a match or award points yet.</td>
+</tr>
+<tr>
+<td><span class="m-code">missing</span></td>
+<td>The answer field is empty, not necessarily permanently skipped.</td>
+</tr>
+<tr>
+<td><span class="m-code">repeat</span></td>
+<td>Player 2&#39;s answer was marked as repeating player 1. It scores zero on reveal.</td>
+</tr>
+</tbody></table>
+</div>
+<p class="m-p">The Host reads questions and checks which entries are complete. This screen shows statuses, <strong>not the answers currently being typed</strong>. The entered text appears later during matching.</p>
+</aside>
+<p class="m-p"><strong>Shortcuts:</strong> Ctrl+Enter (⌘+Enter on Mac) starts/stops the timer. ↑ / ↓ / Enter moves only among empty fields; click a completed field to edit it.</p>
+<h4 class="m-h3">Player 1 — matching and revealing</h4>
+<p class="m-p">After answering, proceed to reveals. Compare each entry with the scoring list and choose a matching answer or <span class="m-code m-control">Not on the list (0 pts)</span>. The Display shows your chosen answer; the full entry remains in the panel. For a match, reveal the answer then its points. For a written incorrect answer, reveal the text then zero. Missing answers automatically reveal the answer and zero. Matching alone awards nothing; the total changes when points are revealed.</p>
+<div class="m-note"><strong>Tip:</strong> Before revealing an unlisted written answer, correct any typos. Once revealed, the answer cannot be changed.</div>
+<aside class="m-host"><p class="m-host-title"><strong>Host during reveals:</strong></p>
+<p class="m-p">The first section shows, for example, <span class="m-code">FINAL — REVEAL (ROUND 2)</span> and <span class="m-code">Question 3: …</span>. The number identifies the assessed question; round 2 means the second final player.</p>
+<p class="m-p">The second section contains:</p>
+<ol class="m-ul">
+<li><strong><span class="m-code">Player 1: …</span></strong> — only while matching player 2. The first player&#39;s previously selected answer to that question; <span class="m-code">—</span> means no answer.</li>
+<li><strong><span class="m-code">Entered: …</span></strong> — the operator&#39;s current text. Omitted if there is no entry or Repeat is marked.</li>
+<li><strong><span class="m-code">Status: …</span></strong> — current matching status, as below.</li>
+<li><strong><span class="m-code">Answer list:</span></strong> — all scoring answers to the question, highest first, with points in brackets.</li>
+</ol>
+<div class="m-table-wrap"><table class="m-table">
+<thead>
+<tr>
+<th>Status</th>
+<th>Appearance</th>
+<th>Interpretation</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><span class="m-code">from list</span></td>
+<td>Green text; the selected list answer is green and struck through.</td>
+<td>The entry was assigned to a scoring answer. Strikethrough means selected, <strong>not incorrect or cancelled</strong>.</td>
+</tr>
+<tr>
+<td><span class="m-code">not on list</span></td>
+<td>Yellow text.</td>
+<td>There is an entry but no scoring match. Keeping this choice reveals the literal text, then zero points. You can change it before reveal.</td>
+</tr>
+<tr>
+<td><span class="m-code">no answer</span></td>
+<td>Red text.</td>
+<td>The current player has no answer text.</td>
+</tr>
+<tr>
+<td><span class="m-code">repeat</span></td>
+<td>Yellow text.</td>
+<td>Player 2 repeated player 1&#39;s answer; no points are awarded.</td>
+</tr>
+</tbody></table>
+</div>
+<p class="m-p"><strong>Final colours describe matching, not Display animation stages.</strong> A green list match does not by itself mean the audience has seen the answer or points. Distinguish the operator&#39;s text from the chosen scoring answer, such as “by bike” matched to “Bicycle (24)”.</p>
+</aside>
+<p class="m-p">During player 1 matching, <strong>1–6</strong> chooses a list answer, <strong>W</strong> the written answer and <strong>O</strong> no answer. Player 2 also has <strong>R</strong> for Repeat. Selection takes one click or shortcut. The first Enter reveals the answer; the next reveals points after the transition. Missing answers and repeats automatically show zero. <strong>N then Enter</strong> advances to the next question. Mouse reveals require selection and a second confirmation click.</p>
+<h4 class="m-h3">Player 2 — preparation and entry</h4>
+<p class="m-p">If the target is not reached, after player 1&#39;s fifth question prepare contestant 2. The Host tablet clears. Explain the rules and optionally demonstrate the repeat sound.</p>
+<p class="m-p"><span class="m-code m-control">Start</span> restores player 1&#39;s revealed answers on the Display. Contestant 2 turns away to avoid seeing them. The operator sees those answers beside the entry fields to recognise repeats. The timer is <strong>20 seconds</strong>, started as for player 1. The Host sees <span class="m-code">FINAL ROUND 2</span>, a countdown when running, and five questions with entry statuses.</p>
+<p class="m-p">When contestant 2 repeats player 1&#39;s answer, mark <span class="m-code m-control">Repeat</span> with one click and ask for another answer. Every click plays the repeat sound, even if already marked. Clicking again does not remove the mark. While time remains, the Host can reread skipped questions, including repeats, so the contestant can improve the answer. Typing new text automatically clears Repeat; merely focusing the field does not.</p>
+<div class="m-note"><strong>Tip:</strong> Questions can be revisited until time runs out. A contestant saying <span class="m-code">Next</span> does not close the question for the remainder of the round.</div>
+<p class="m-p"><strong>Shortcuts:</strong> Ctrl+Enter (⌘+Enter on Mac) starts/stops the timer. ↑ / ↓ / Enter moves only among empty fields; click to edit completed fields. Shift+Enter in an empty player 2 field marks Repeat and plays its sound. Each further press replays the sound; only typing text clears the mark.</p>
+<h4 class="m-h3">Player 2 — matching and revealing</h4>
+<p class="m-p">Match and reveal as for player 1. In the panel and on the Host tablet, <strong>Player 1</strong> is the earlier selected answer and <strong>Entered</strong> is the operator&#39;s current text; their wording may differ. During matching, <span class="m-code m-control">Repeat</span> is only a marker: selecting it does not play the repeat sound. Revealing it behaves like no answer, automatically showing zero and playing the wrong-answer sound. Both players contribute to the same total at the top of the Display.</p>
+<div class="m-note"><strong>Important:</strong> Display answers fit 17 characters in rounds and 11 in the final, including spaces. Only the board shortens longer text; the panel and Host retain it in full. A dot marks a cut word. If the next character is a space or punctuation, no dot is added. When cutting a word, up to two trailing vowels are also removed before the dot. This applies to Polish, English and Ukrainian answers; the dot counts towards the limit.</div>
+<p class="m-p">During player 1 matching, <strong>1–6</strong> chooses a list answer, <strong>W</strong> the written answer and <strong>O</strong> no answer. Player 2 also has <strong>R</strong> for Repeat. Selection takes one click or shortcut. The first Enter reveals the answer; the next reveals points after the transition. Missing answers and repeats automatically show zero. <strong>N then Enter</strong> advances to the next question. Mouse reveals require selection and a second confirmation click.</p>
+<h4 class="m-h3">When the final ends</h4>
+<p class="m-p">Reaching the target blocks further answer assessment. The hints column reports the target and the button becomes <span class="m-code m-control">Finish final</span>, for either player 1 or 2. The result is not automatic; the operator chooses when to finish. If the target is not reached, <span class="m-code m-control">Finish final</span> appears after player 2&#39;s last points are revealed.</p>
+<p class="m-p"><span class="m-code m-control">Finish final</span> shows the configured ending screen: logo, points or prize amount. The following <span class="m-code m-control">Finish game</span> only plays <strong>Show outro music</strong>. The result stays visible and the winning team&#39;s indicator remains lit. The Host tablet clears when the final ends; read the result on the Display.</p>
+<h4 class="m-h3">Ending without a final</h4>
+<p class="m-p">If the final is disabled and the rounds threshold is reached, or questions run out, other round actions are blocked. Do not reveal remaining answers. <span class="m-code m-control">Go to end of game</span> awards the bank and shows the ending screen. Then <span class="m-code m-control">Finish game</span> only plays <strong>Show outro music</strong>. With <strong>Show prize amount (after final)</strong>, ending without a final shows points; a tie shows the logo.</p>
+<p class="m-p">The Host tablet clears when proceeding to the game ending. Read the result on the Display.</p>
+<h4 class="m-h3">Restarting the game</h4>
+<p class="m-p">Use <span class="m-code m-control"><i class="ico" data-icon="refresh"></i></span> (<strong>Start over</strong>). Confirming returns to device preparation, stops sounds and discards pending actions from the previous game.</p>
+<p class="m-p">Restart has no keyboard shortcut.</p>
+`,
       community: `<p class="m-p">
         Community Games is a catalogue of ready-made games created by other users
         and verified by moderators. You can browse them, add them to your library
@@ -2345,165 +2172,100 @@ const en = {
         directly — without going through moderation.
         They are distinguished by a dedicated badge.
       </p>`,
-      gameSettings: `<h2 class="m-h2">Game Settings</h2>
-
-      <p class="m-p">
-        The Game Settings page lets you configure your game at your own pace — before you open the Control Panel and start the live game. Everything you set here is saved to the game and will be automatically loaded by the Control Panel.
-      </p>
-
-      <p class="m-p">
-        You can open it from the <span class="m-strong">My Games</span> page using the <span class="m-code">Game Settings</span> button next to the selected game.
-      </p>
-
-      <h3 class="m-h2">Teams</h3>
-
-      <p class="m-p">
-        Enter the team names. These names will be displayed on the board during gameplay and on the host's device.
-      </p>
-
-      <div class="m-warn">
-        If you leave this blank — the default values <span class="m-strong">Team A</span> and <span class="m-strong">Team B</span> will be displayed.
-      </div>
-
-      <h3 class="m-h2">Appearance</h3>
-
-      <h3 class="m-h3">Colors</h3>
-
-      <p class="m-p">Here you set the colors of four elements:</p>
-
-      <ul class="m-ul">
-        <li><span class="m-strong">Team A color</span> and <span class="m-strong">Team B color</span> — colors of board elements depending on the teams.</li>
-        <li><span class="m-strong">Board background color</span> — the main background of the display.</li>
-        <li><span class="m-strong">Dot color</span> — the color of the dots on the score displays on the board.</li>
-      </ul>
-
-      <p class="m-p">Colors update on the preview immediately after selection. Click the color field to open the color picker.</p>
-
-      <h3 class="m-h3">Theme</h3>
-
-      <p class="m-p">
-        Choose the visual theme of the board. The theme affects the graphic style of the entire display. The default theme is <span class="m-strong">Classic</span>.
-      </p>
-
-      <h3 class="m-h3">Logo</h3>
-
-      <p class="m-p">
-        If you have created your own logo (using the <span class="m-strong">My Logo</span> tool), you can select it for this game. The logo appears on the start and end screens. If you don't select anything — the default Familiad.online logo is displayed.
-      </p>
-
-      <div class="m-note">
-        The <span class="m-code">Restore defaults</span> button in the Appearance section resets colors, theme, and logo to their default values.
-      </div>
-
-      <h3 class="m-h2">Sound</h3>
-
-      <p class="m-p">
-        In this section you configure the sounds used during gameplay. Each sound category (e.g. <span class="m-strong">Correct answer</span>, <span class="m-strong">Wrong answer</span>, <span class="m-strong">Intro</span>, <span class="m-strong">Round transition</span>, <span class="m-strong">Reveal</span>) has its own settings.
-      </p>
-
-      <p class="m-p">Programme outro music is a separate sound category. Choose a preset or a custom file up to 2 minutes long, adjust its volume and preview it. The “End game” button plays the outro once the ending screen is already visible.</p>
-<h3 class="m-h3">Sound Variant</h3>
-
-      <p class="m-p">For each category you can choose a <span class="m-strong">variant</span> from the list:</p>
-
-      <ul class="m-ul">
-        <li>Predefined variants are available (e.g. <span class="m-strong">Classic</span>)</li>
-        <li>The <span class="m-strong">Custom</span> option lets you load your own audio file (MP3, WAV, OGG) — after selecting it, a <span class="m-code">Choose file</span> button appears</li>
-      </ul>
-
-      <h3 class="m-h3">Custom Audio File</h3>
-
-      <p class="m-p">
-        After clicking <span class="m-code">Choose file</span> you select a file from your disk. A label with the file name appears in the table next to that category.
-      </p>
-
-      <p class="m-p">
-        To remove a custom file, use the <span class="m-code"><i class="ico" data-icon="trash"></i></span> button next to the file.
-        If you want to go back to a predefined variant — change the variant to something other than <span class="m-strong">Custom</span>.
-      </p>
-
-      <div class="m-warn">
-        Custom audio files are saved in the cloud together with the game and will be available on any device where you run this game.
-      </div>
-
-      <h3 class="m-h3">Volume</h3>
-
-      <p class="m-p">
-        Each category has a volume slider (0–100%). Changes are saved and loaded automatically with each game session.
-      </p>
-
-      <h3 class="m-h3">Play Button (<span class="m-code"><i class="ico" data-icon="play"></i></span>)</h3>
-
-      <p class="m-p">
-        Next to each category there is a small play button. Click it to hear the selected sound at the set volume. Clicking again (<span class="m-code"><i class="ico" data-icon="stop"></i></span>) stops playback.
-      </p>
-
-      <div class="m-note">
-        The <span class="m-code">Restore defaults</span> button in the Sound section resets all variants to <span class="m-strong">Classic</span>, volumes to <span class="m-strong">100%</span>, and removes all custom audio files (from the cloud and locally).<br><b>This operation is irreversible — files must be uploaded again.</b>
-      </div>
-
-      <h3 class="m-h2">Questions</h3>
-
-      <h3 class="m-h3">Final</h3>
-
-      <p class="m-p">
-        The <span class="m-strong">Does the game include a final?</span> toggle decides whether the game will end with a final stage. When the final is <span class="m-strong">off</span>, gameplay ends after the main rounds. When it is <span class="m-strong">on</span> — additional options for selecting final questions become available.
-      </p>
-
-      <h3 class="m-h3">Round Question Mode</h3>
-
-      <ul class="m-ul">
-        <li><span class="m-strong">Random</span> — questions for the rounds will be drawn automatically at the start of gameplay. You don't need to select anything — the system will pick questions from the pool.</li>
-        <li><span class="m-strong">Select</span> — you can manually set the order of questions from those available.</li>
-      </ul>
-
-      <h3 class="m-h3">Final Question Mode</h3>
-
-      <ul class="m-ul">
-        <li><span class="m-strong">Random</span> — 5 final questions will be drawn automatically (skipping questions used in the rounds). The draw happens when you enter the Summary step in the Control Panel.</li>
-        <li><span class="m-strong">Select</span> — in the Control Panel (Settings step → Final) you can manually select exactly 5 questions and confirm them.</li>
-      </ul>
-
-      <h3 class="m-h3">Additional Settings</h3>
-
-      <p class="m-p">
-        Here you tailor the gameplay parameters to your format. The options do not change the game rules, only its thresholds and pace.
-      </p>
-
-      <ul class="m-ul">
-        <li><span class="m-strong">Round multipliers</span> — entered comma-separated (e.g. <span class="m-code">1,1,1,2,3</span>). Each round's bank is multiplied by the corresponding multiplier. This matches the classic doubling/tripling in later stages. If the game continues further, the last multiplier is applied to subsequent rounds.</li>
-        <li><span class="m-strong">Game target</span> — the number of points after which one team can qualify for the final (classically: 300). If no team reaches the threshold before questions run out — the rounds end naturally.</li>
-        <li><span class="m-strong">Final target</span> — the number of points to earn in the final to win the main prize (classically: 200).</li>
-        <li><span class="m-strong">Game ending</span> — what the display shows after gameplay ends:
-          <ul class="m-ul">
-            <li><span class="m-strong">Logo</span> — logo screen</li>
-            <li><span class="m-strong">Points</span> — the winning team's final score</li>
-            <li><span class="m-strong">Prize amount</span> — the calculated prize amount (for games with monetary prizes)</li>
-          </ul>
-        </li>
-        <li><span class="m-strong">Prize multiplier</span> — if the team did not reach the final target, the prize equals points earned during the entire game multiplied by this factor (classically: ×3).</li>
-        <li><span class="m-strong">Main prize amount</span> — amount added to the prize when a team reaches the final target (classically: 25,000).</li>
-      </ul>
-
-      <div class="m-note">
-        Additional settings have sensible default values corresponding to the classic Familiada. For most games you won't need to change them.
-      </div>
-
-      <h3 class="m-h3">Save Settings</h3>
-
-      <p class="m-p">
-        Changes are saved after clicking <span class="m-code">Save all</span>. There is no auto-save on change — remember to click the button before leaving.
-      </p>
-
-      <h3 class="m-h3">Restore Defaults</h3>
-
-      <p class="m-p">
-        The <span class="m-code">Restore defaults</span> button at the top of the page resets all settings to their default values.
-      </p>
-
-      <div class="m-warn">
-        This action is irreversible — if you press it accidentally and confirm, you will have to redo everything from scratch (including re-uploading audio files).
-      </div>`,
+      gameSettings: `<p class="m-p">Configure the game here before opening the Control Panel for live play. Everything is saved with the game and loaded automatically by the panel.</p>
+<p class="m-p">Open <strong>Game settings</strong> beside the selected game on <strong>My games</strong>.</p>
+<h3 class="m-h2">Teams</h3>
+<p class="m-p">Enter team names and check them in the preview and Summary. On the game Display they appear only at the <span class="m-code m-control">Start game</span> screen, after devices and settings are prepared.</p>
+<p class="m-p">Empty fields use <strong>Team A</strong> and <strong>Team B</strong>.</p>
+<h3 class="m-h2">Appearance</h3>
+<h4 class="m-h3">Colours</h4>
+<p class="m-p">Set four elements:</p>
+<ul class="m-ul">
+<li><strong>Team A colour</strong> and <strong>Team B colour</strong> — team-related board elements.</li>
+<li><strong>Board background colour</strong> — the Display&#39;s main background.</li>
+<li><strong>Dot colour</strong> — dots used by the board&#39;s score displays.</li>
+</ul>
+<p class="m-p">Selections update the preview immediately. Click a colour field to open the picker.</p>
+<h4 class="m-h3">Theme</h4>
+<p class="m-p">Choose the visual theme for the whole Display. <strong>Classic</strong> is the default.</p>
+<h4 class="m-h3">Logo</h4>
+<p class="m-p">Choose your own logo under <strong>Logo</strong>. <strong>Default</strong> means Familiada&#39;s logo; <strong>No logo</strong> means no custom mark. The chosen logo appears at the opening; its ending appearance depends on the configured ending screen. Game settings previews unsaved edits, whereas the panel Summary uses saved settings.</p>
+<p class="m-p"><span class="m-code m-control">Restore defaults</span> in Appearance resets colours, theme and logo.</p>
+<h3 class="m-h2">Sound</h3>
+<p class="m-p">Each game sound category has separate settings, including <strong>Correct answer</strong>, <strong>Wrong answer</strong>, <strong>Intro</strong>, <strong>Round transition</strong>, <strong>Show outro music</strong> and <strong>Reveal</strong>.</p>
+<h4 class="m-h3">Sound variant</h4>
+<p class="m-p">Choose a <strong>variant</strong> for each category:</p>
+<ul class="m-ul">
+<li>Presets such as <strong>Classic</strong>.</li>
+<li><strong>Custom</strong> uploads an MP3, WAV or OGG; selecting it shows <span class="m-code m-control">Choose file</span>.</li>
+</ul>
+<h4 class="m-h3">Custom audio file</h4>
+<p class="m-p">Select <span class="m-code m-control">Choose file</span> and pick a file. Its name appears beside the category.</p>
+<p class="m-p">Remove it using <span class="m-code m-control"><i class="ico" data-icon="trash"></i></span>. To return to a preset, choose a variant other than <strong>Custom</strong>.</p>
+<p class="m-p">Custom audio is saved in the cloud with the game and is available wherever you run it.</p>
+<p class="m-p"><strong>Custom file limits:</strong></p>
+<div class="m-table-wrap"><table class="m-table">
+<thead>
+<tr>
+<th>Categories</th>
+<th>Maximum duration</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Buzzer press, correct/wrong answer, repeat, time limit, reveal</td>
+<td>5 seconds</td>
+</tr>
+<tr>
+<td>Show intro music, round transition, final theme music</td>
+<td>30 seconds</td>
+</tr>
+<tr>
+<td>Show outro music</td>
+<td>2 minutes</td>
+</tr>
+</tbody></table>
+</div>
+<p class="m-p"><span class="m-code m-control">Finish game</span> plays the outro once the ending screen is already visible. Custom files and volume work the same way for every category.</p>
+<h4 class="m-h3">Volume</h4>
+<p class="m-p">Each category has a 0–100% volume slider. Saved levels load automatically in each game session.</p>
+<h4 class="m-h3">Playback button</h4>
+<p class="m-p">Select <span class="m-code m-control"><i class="ico" data-icon="play"></i></span> beside a category to preview it at the chosen volume. During playback it becomes <span class="m-code m-control"><i class="ico" data-icon="stop"></i></span>, which stops the sound.</p>
+<div class="m-warn"><span class="m-code m-control">Restore defaults</span> in Sound sets every variant to <strong>Classic</strong>, volumes to <strong>100%</strong>, and removes all custom audio locally and from the cloud. <strong>This cannot be undone; files must be uploaded again.</strong></div>
+<h3 class="m-h2">Questions</h3>
+<h4 class="m-h3">Final</h4>
+<p class="m-p"><strong>Does the game include a final?</strong> enables the final stage. When <strong>off</strong>, play ends after the main rounds. When <strong>on</strong>, final-question selection becomes available.</p>
+<h4 class="m-h3">Round question mode</h4>
+<ul class="m-ul">
+<li><strong>Random</strong> draws round questions automatically at game start. No manual selection is needed.</li>
+<li><strong>Order</strong> lets you arrange the available questions manually.</li>
+</ul>
+<h4 class="m-h3">Final question mode</h4>
+<ul class="m-ul">
+<li><strong>Random</strong> draws five final questions, excluding those used in rounds, when entering the Control Panel Summary.</li>
+<li><strong>Manual</strong> requires exactly five questions in Game settings&#39; <strong>Questions — Final</strong> tab. Check them in the panel Summary before starting.</li>
+</ul>
+<h4 class="m-h3">Additional settings</h4>
+<p class="m-p">Adjust the format&#39;s thresholds and pace without changing the rules.</p>
+<ul class="m-ul">
+<li><strong>Round multipliers</strong> — comma-separated, such as <span class="m-code">1,1,1,2,3</span>. Each round bank uses the corresponding multiplier, including classic doubling/tripling. Later rounds reuse the last multiplier.</li>
+<li><strong>Points threshold for the final</strong> — a team&#39;s qualifying rounds score, classically 300. If neither team reaches it before questions run out, the rounds end naturally.</li>
+<li><strong>Final target (pts)</strong> — the final points needed for the main prize, classically 200.</li>
+<li><strong>Game ending</strong> — the screen shown after play:</li>
+<li><strong>Logo</strong> — logo screen.</li>
+<li><strong>Points</strong> — the winning team&#39;s final score.</li>
+<li><strong>Prize amount</strong> — calculated monetary prize.</li>
+<li><strong>Prize multiplier (after final)</strong> — if the target is missed, points earned throughout the game multiplied by this factor, classically ×3.</li>
+<li><strong>Main prize amount</strong> — added to the prize when the final target is reached, classically 25,000.</li>
+</ul>
+<p class="m-p">The default values follow classic Familiada and suit most games.</p>
+<div class="m-warn"><strong>Warning:</strong> Round and prize multipliers currently accept positive whole numbers. <span class="m-code">0.5</span> is not supported.</div>
+<h4 class="m-h3">Saving settings</h4>
+<p class="m-p">Changes save when you select <span class="m-code m-control">Save all</span>. Editing a field does not auto-save: save before leaving.</p>
+<h4 class="m-h3">Restore defaults</h4>
+<p class="m-p">The page&#39;s <span class="m-code m-control">Restore defaults</span> button resets all game settings.</p>
+<div class="m-warn">This is irreversible: after confirming accidentally, you must configure everything again, including re-uploading audio files.</div>
+<p class="m-p">The qualification threshold uses rounds points; the final target uses both players&#39; final points. They are separate settings. With prize amounts enabled, reaching the final target includes the main prize; otherwise a lower prize is calculated from points and the multiplier. A game without a final shows points in this mode.</p>
+`,
       /* DRAFT gameSettings (based on control section, without settings):
       gameSettings: `<h3 class="m-h2">1) Devices</h3>
 

@@ -39,3 +39,31 @@ test('release: Games play and settings links open the new panel',async({page},te
  expect(body).toContain('/game-settings2/?id=');
  expect(body).not.toContain('`/control/?id=');
 });
+
+for(const [lang,hostLabel,repeatText,outroLimit] of [
+ ['pl','Prowadzącego','Ponowne kliknięcie nie usuwa oznaczenia','2 minuty'],
+ ['en','Host','Clicking again does not remove the mark','2 minutes'],
+ ['uk','Ведучого','Повторне натискання не прибирає позначки','2 хвилини'],
+]) {
+ test(`release: manual ${lang} has styled Host instructions, notes and native icons`,async({page},testInfo)=>{
+  await page.goto(`/manual/?modal=1&lang=${lang}#control`);
+  const control=page.locator('#tab-control');
+  await expect(control).toContainText(repeatText);
+  const host=control.locator('.m-host').first();
+  await expect(host).toContainText(hostLabel);
+  await expect.poll(()=>host.evaluate(el=>getComputedStyle(el).borderLeftWidth)).toBe('3px');
+  await expect(control.locator('.m-note').first()).toBeVisible();
+  await expect(control.locator('svg.ico').first()).toBeVisible();
+  await expect(control.locator('[data-icon]')).toHaveCount(0);
+  await host.scrollIntoViewIfNeeded();
+  await page.screenshot({path:testInfo.outputPath(`manual-host-${lang}.png`)});
+  await page.locator('button[data-tab="gameSettings"]').click();
+  const settings=page.locator('#tab-gameSettings');
+  await expect(settings).toContainText(outroLimit);
+  await expect(settings.locator('.m-warn').first()).toBeVisible();
+  await expect(settings.locator('svg.ico-trash')).toBeVisible();
+  await expect(settings.locator('svg.ico-play')).toBeVisible();
+  await expect(settings.locator('svg.ico-stop')).toBeVisible();
+  expect(await settings.locator('.m-table').count()).toBe(1);
+ });
+}

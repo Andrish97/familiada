@@ -300,3 +300,35 @@ body.manual-in-control-modal .m-wrap { padding-bottom: 16px; }
 /* Literal controls in instructions use the same badge and application icon set. */
 .m-code{display:inline-flex;align-items:center;gap:5px;vertical-align:baseline;line-height:1.45}
 .m-code .ico{width:1em;height:1em;flex-shrink:0;vertical-align:middle}
+
+/* Host instructions are distinct from operator instructions. */
+.m-host {
+    border-left: 3px solid #71b9cf;
+    background: rgba(113,185,207,.05);
+    border-radius: 0 12px 12px 0;
+    padding: 14px 18px;
+    margin: 18px 0;
+}
+.m-host-title { color: #9cd5e5; }
+.m-host > :first-child,
+.m-note > :first-child,
+.m-warn > :first-child { margin-top: 0; }
+.m-host > :last-child,
+.m-note > :last-child,
+.m-warn > :last-child { margin-bottom: 0; }
+.m-host .m-table-wrap { margin: 12px 0; }
+.m-note strong { color: var(--gold); }
+.m-code.m-control {
+    font-family: inherit;
+    font-weight: 800;
+    padding: 4px 9px;
+    border-radius: 10px;
+    border-color: rgba(255,234,166,.3);
+    background: rgba(255,234,166,.08);
+    color: var(--gold);
+}
+.m-doc .m-table td:not(:first-child) {
+    font-family: inherit;
+    color: rgba(255,255,255,.88);
+    opacity: 1;
+}

@@ -232,9 +232,10 @@ zestawu oraz RPC pozostają na czas wygaszenia wcześniej otwartych kart;
 przełączenie nie usuwa danych ani starych snapshotów.
 
 Zatwierdzony polski dokument zastępuje sekcje Panel sterowania i Ustawienia
-rozgrywki w manualu. Angielska i ukraińska wersja otrzymują korekty
-zakończenia gry i osobnego outro; pełne tłumaczenie zatwierdzonego polskiego
-tekstu pozostaje osobnym zadaniem. Instrukcje używają ikon aplikacji.
+rozgrywki w manualu. Angielska i ukraińska wersja zostały następnie uzupełnione o pełny zakres
+zatwierdzonego polskiego tekstu. Sekcje korzystają ze wspólnego stylu
+Prowadzącego, notek, uwag i ikon aplikacji. Źródła tłumaczeń są w
+`docs/manual/`. Pozostałych sekcji manuala nie zmieniono.
 
 Dotychczasowe wpisy Control 1 są oznaczone w kolumnie Źródło jako
 „Archiwum — Control 1”. Statusy, daty i wszystkie wyniki pozostają zapisane

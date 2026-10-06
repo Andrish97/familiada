@@ -17,3 +17,23 @@ test('approved manual uses application icons and current Repeat behaviour',()=>{
  assert.match(pl.manual.content.gameSettings,/data-icon="play"/);
  assert.match(pl.manual.content.gameSettings,/2 minuty/);
 });
+
+test('all manual languages contain the same sections, Host blocks and application icons',async()=>{
+ const {default:en}=await import('../../web/shared/translation/en.js');
+ const {default:uk}=await import('../../web/shared/translation/uk.js');
+ const count=(html,pattern)=>(html.match(pattern)||[]).length;
+ for(const translation of [pl,en,uk]){
+  const {control,gameSettings}=translation.manual.content;
+  assert.equal(count(control+gameSettings,/<h[34] /g),49);
+  assert.equal(count(control+gameSettings,/<table class="m-table">/g),3);
+  assert.equal(count(control,/class="m-host"/g),12);
+  assert.equal(count(control,/class="m-note"/g),9);
+  assert.equal(count(control+gameSettings,/data-icon="/g),8);
+  assert.doesNotMatch(control+gameSettings,/manual-assets\//);
+  assert.match(control+gameSettings,/m-control/);
+ }
+ assert.match(en.manual.content.control,/Every click plays the repeat sound/);
+ assert.match(uk.manual.content.control,/Кожне натискання відтворює звук/);
+ assert.match(en.manual.content.gameSettings,/2 minutes/);
+ assert.match(uk.manual.content.gameSettings,/2 хвилини/);
+});
