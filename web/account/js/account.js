@@ -1,13 +1,13 @@
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-06T15053";
-import { cooldownGet, cooldownReserve, cooldownRelease, mailCooldownEmailReserve } from "../../shared/js/core/cooldown.js?v=v2026-10-06T15053";
-import { requireAuth, updateUserLanguage, validatePassword, validateUsername, signOut, niceAuthError, initPasswordToggles, convertGuestToRegisteredEmailOnly } from "../../shared/js/core/auth.js?v=v2026-10-06T15053";
-import { getUserEmailNotificationsFlag, setUserEmailNotificationsFlag } from "../../shared/js/core/user-flags.js?v=v2026-10-06T15053";
-import { initI18n, t, getUiLang, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-06T15053";
-import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-06T15053";
-import { isGuestUser, hideForGuest } from "../../shared/js/core/guest-mode.js?v=v2026-10-06T15053";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-06T15053";
-import { deleteGameSoundsFolder } from "../../shared/js/core/sfx-cloud.js?v=v2026-10-06T15053";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-06T15053";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-06T16422";
+import { cooldownGet, cooldownReserve, cooldownRelease, mailCooldownEmailReserve } from "../../shared/js/core/cooldown.js?v=v2026-10-06T16422";
+import { requireAuth, updateUserLanguage, validatePassword, validateUsername, signOut, niceAuthError, initPasswordToggles, convertGuestToRegisteredEmailOnly } from "../../shared/js/core/auth.js?v=v2026-10-06T16422";
+import { getUserEmailNotificationsFlag, setUserEmailNotificationsFlag } from "../../shared/js/core/user-flags.js?v=v2026-10-06T16422";
+import { initI18n, t, getUiLang, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-06T16422";
+import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-06T16422";
+import { isGuestUser, hideForGuest } from "../../shared/js/core/guest-mode.js?v=v2026-10-06T16422";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-06T16422";
+import { deleteGameSoundsFolder } from "../../shared/js/core/sfx-cloud.js?v=v2026-10-06T16422";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-06T16422";
 
 
 const status = document.getElementById("status");
