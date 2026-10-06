@@ -180,7 +180,7 @@ export default {
     // oficjalny, zawsze-przechodzący testowy sitekey Turnstile — nic więcej.
     if (
       (host === "www.familiada.online" || host === "familiada.online") &&
-      url.pathname === "/login" &&
+      ["/login", "/login/", "/login/index.html"].includes(url.pathname) &&
       request.method === "GET"
     ) {
       const e2eRes = await handleE2ELoginBypass(request, env, url, ORIGIN_BASE, ORIGIN_HOST, ORIGIN_RESOLVE);

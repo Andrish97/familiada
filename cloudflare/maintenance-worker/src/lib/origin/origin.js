@@ -71,13 +71,16 @@ export function isBlockedPath(host, pathname) {
 }
 
 export function fetchFromOrigin(request, url, originBase, originHost, resolveOverride) {
-  const target = new URL(pageIndexPath(url.pathname) + url.search, originBase);
+  const isTvConnect = ["/connect-device", "/connect-device/", "/connect-device/index.html"].includes(url.pathname)
+    && url.searchParams.get("tv") === "1";
+  const targetPath = isTvConnect ? "/connect-device/tv/index.html" : pageIndexPath(url.pathname);
+  const target = new URL(targetPath + url.search, originBase);
   return fetchWithOrigin(target.toString(), request, originHost, resolveOverride);
 }
 
 const PAGE_ROUTES = new Set([
   "account", "base-explorer", "bases", "buzzer", "buzzer2", "confirm",
-  "connect-device", "control", "control2", "display", "display2", "editor",
+  "connect-device", "connect-device/tv", "control", "control2", "display", "display2", "editor",
   "game-settings", "game-settings2", "games", "host", "host2", "login",
   "logo-editor", "maintenance", "manual", "marketplace", "poll-go",
   "poll-points", "poll-qr", "poll-text", "polls", "polls-hub", "privacy",
@@ -85,6 +88,7 @@ const PAGE_ROUTES = new Set([
 ]);
 
 export function pageIndexPath(pathname) {
+  if (pathname === "/") return "/index.html";
   const route = pathname.replace(/^\//, "").replace(/\/$/, "");
   return PAGE_ROUTES.has(route) ? `/${route}/index.html` : pathname;
 }

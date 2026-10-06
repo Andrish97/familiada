@@ -18,3 +18,15 @@ test('HTML proxy preserves Location on origin redirects',async()=>{
   assert.equal(response.status,301);assert.equal(response.headers.get('Location'),'https://www.familiada.online/games/');
  } finally {globalThis.fetch=original;}
 });
+
+test('TV entry uses the simplified page through the same proxy used by bypass',async()=>{
+ const {fetchFromOrigin,pageIndexPath}=await import('../../cloudflare/maintenance-worker/src/lib/origin/origin.js');
+ const original=globalThis.fetch;let target;
+ globalThis.fetch=async url=>{target=url;return new Response('TV',{headers:{'Content-Type':'text/html'}});};
+ try {
+  const request=new Request('https://www.familiada.online/connect-device/?tv=1&lang=uk');
+  await fetchFromOrigin(request,new URL(request.url),'https://familiada.online','familiada.online','andrish97.github.io');
+  assert.equal(target,'https://familiada.online/connect-device/tv/index.html?tv=1&lang=uk');
+  assert.equal(pageIndexPath('/'),'/index.html');
+ } finally {globalThis.fetch=original;}
+});
