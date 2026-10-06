@@ -16,9 +16,9 @@
 // na starym stanie na zawsze" to brak JAKIEJKOLWIEK kolejnej zmiany w grze,
 // co i tak nie ma znaczenia (nic nowego do pokazania).
 
-import { sb } from "./supabase.js?v=v2026-10-06T20080";
-import { rt } from "./realtime.js?v=v2026-10-06T20080";
-import { doorbellTopic } from "./game-state-doorbell.js?v=v2026-10-06T20080";
+import { sb } from "./supabase.js?v=v2026-10-06T20310";
+import { rt } from "./realtime.js?v=v2026-10-06T20310";
+import { doorbellTopic } from "./game-state-doorbell.js?v=v2026-10-06T20310";
 
 export function createSubscription({ gameId, deviceType, key, onRow, onError }) {
   let lastRev = -1;
