@@ -107,8 +107,8 @@ export function getFinalHint(state) {
     const idx = Number(step.slice(-1)) - 1;
     const entry = f.runtime[round === 1 ? "p1" : "p2"][idx] || {};
     const row = f.runtime[round === 1 ? "map1" : "map2"][idx];
-    if (f.runtime.reached200) return `Osiągnięto próg finału (${state.settings.finalTarget} pkt). Dalsze akcje są zablokowane. Kliknij „Zakończ finał”, aby pokazać logo, punkty lub kwotę nagrody zgodnie z ustawieniami.`;
-    if (round === 2 && idx === 4 && row.revealedPoints) return "Wszystkie odpowiedzi finału zostały odsłonięte. Kliknij „Zakończ finał”, aby pokazać logo, punkty lub kwotę nagrody zgodnie z ustawieniami.";
+    if (f.runtime.reached200) return `Osiągnięto próg finału (${state.settings.finalTarget} pkt). Kliknij „Zakończ finał”.`;
+    if (round === 2 && idx === 4 && row.revealedPoints) return "Wszystkie odpowiedzi odsłonięte. Kliknij „Zakończ finał”.";
     // Rozstrzygnięcie jest ZAWSZE już jakieś, nawet zanim operator cokolwiek
     // kliknął (domyślnie: dopasowanie z listy jeśli wybrane ręcznie, inaczej
     // "Nie ma na liście" gdy coś wpisano / "Brak odpowiedzi" gdy pusto —
