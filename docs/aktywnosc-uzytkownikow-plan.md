@@ -95,3 +95,13 @@ odświeżyć stronę na zwykłym koncie poza wykluczeniami i otworzyć np.
 „Moje gry” lub edytor; sygnał powinien pojawić się w około 45 s.
 Settings samo nie jest śledzone, a konto testN oraz gość testowy nie
 zwiększają widocznych liczników.
+
+## Sprzątanie po przełączeniu produkcyjnym
+
+Plan rozszerzono w `refaktor-struktury-repo.md`, w sekcji „Sprzątanie bazy,
+statystyk i aktywności po przełączeniu”. Usuwamy rozpoznawanie starego
+Control z bieżącej aktywności, a nie całą funkcję aktywności. Godzinowa
+historia jest wspólna dla stron i nie ma wersji Control — zostaje wraz
+z retencją 90 dni oraz wspólnymi wykluczeniami. Zmianę nazw tras trzeba
+zgrać z listą stron w RPC pingu, frontendem i zapytaniem administratora.
+To plan; nie wykonano migracji usuwającej dane.

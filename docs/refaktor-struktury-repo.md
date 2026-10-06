@@ -210,7 +210,7 @@ całej tabeli ani funkcji tylko dlatego, że ich nazwa nie zawiera `2`.
 
 ### Przypomnienie: podgląd aktywności w Maintenance
 
-- [ ] Przy wycofaniu starego zestawu usunąć z planowanego podglądu
+- [ ] Przy wycofaniu starego zestawu usunąć z wdrożonego podglądu
   „Aktywność teraz” obsługę starego Control i jego urządzeń: dedykowane
   sygnały aktywności, rozpoznawanie starej rozgrywki, zapytania, etykiety
   oraz testy dotyczące wyłącznie tego zestawu. Jeśli funkcja zostanie
@@ -219,8 +219,8 @@ całej tabeli ani funkcji tylko dlatego, że ich nazwa nie zawiera `2`.
   oraz aktywne edycje. Zachować wspólne blokady zasobów (`edit_locks`),
   obecność urządzeń używaną przez nowy zestaw i historyczne statystyki.
 
-Podgląd jest na etapie propozycji. To przypomnienie nie oznacza wdrożenia
-funkcji ani usunięcia któregokolwiek elementu obecnego systemu.
+Podgląd aktywności został wdrożony migracjami 303–304. Przypomnienie
+dotyczy usunięcia jego obsługi starego zestawu, a nie usuwania całej funkcji.
 
 ## Przełączenie produkcyjne — 7 października 2026
 
@@ -247,3 +247,99 @@ Testy produkcyjne korzystają z podpisanego, pięciominutowego tokenu
 `X-E2E-Token`, odświeżanego dla żądań testowych również na urządzeniach.
 Token omija konserwację, ale nie logowanie ani uprawnienia użytkownika
 lub administratora. Konserwacji nie wyłączamy automatycznie.
+
+## Sprzątanie bazy, statystyk i aktywności po przełączeniu
+
+Audyt kodu i zapisanego schematu z 7 października 2026. Poniższy zakres nie
+jest wykonaną migracją ani świeżym odczytem katalogów produkcyjnej bazy.
+Do kontroli aktualnej produkcji przygotowano wyłącznie odczytowy skrypt
+[sql/control-cleanup-audit.sql](sql/control-cleanup-audit.sql).
+
+### 1. Wycofanie starego kodu i klientów
+
+Usunąć stare moduły razem ze starymi stronami, następnie poprawić nazwy
+folderów, linki i Workera zgodnie z wcześniejszą kolejnością. Zatrzymać
+możliwość korzystania ze starych RPC przed usunięciem ich danych: samo
+przekierowanie HTML nie zatrzymuje już otwartej karty ze starym JavaScriptem.
+Pozostawić działające adresy podłączenia urządzeń, z parametrami `id`, `key`
+i językiem, kierujące do nowego zestawu.
+
+### 2. Osobna migracja bazy
+
+Po kopii schematu i danych oraz kontroli produkcyjnych zależności:
+
+- Usunąć `device_state_get`, `device_state_set_public`, `device_state_set_admin`
+  i `ensure_device_state`, podając pełne sygnatury.
+- Usunąć stare RPC zapisu statystyk: `game_session_start`,
+  `game_session_update`, `game_session_end`. Nowy Control zapisuje wyniki
+  triggerami i korzysta z `control2_session_ping` oraz zapisu zdarzeń.
+- Usunąć tabelę `device_state` z jej własną polityką, indeksami i FK.
+  Najpierw sprawdzić triggery, publikacje Realtime i zależności spoza frontendu.
+- Na końcu usunąć typ `device_kind`, jeśli nie ma już zależności.
+  Typ `device_type` zostaje.
+
+Nie stosować `DROP ... CASCADE`. Zależności w katalogach PostgreSQL nie
+zastępują przeglądu treści funkcji PL/pgSQL i zapytań dynamicznych.
+Nie przepisywać wdrożonych migracji 300–305; dopisać nową migrację.
+Historyczne migracje pozostają w repozytorium.
+
+### 3. Statystyki: zachować wyniki, wycofać stary zapis
+
+`game_sessions` pozostaje jedną historią. Zachować wcześniejsze archiwum,
+Control 1 i nowe sesje, także ich daty, statusy, wyniki i metadane. Nie zerować
+statystyk i nie przenosić wszystkich wpisów do `control_version=2`.
+Nie oznaczać dawnych rozgrywek statusem `legacy`: obecne formatowanie ukrywa
+wtedy m.in. liczbę rund i czas. Etykieta „Archiwum — Control 1” już odróżnia
+stare wpisy bez utraty danych.
+
+Pozostają `game_sessions_effective`, `game_session_active`, triggery nowego
+zapisu, jego RPC, funkcje odczytu statystyk i wspólne wykluczenia. Numer 2
+w `control_version` opisuje generację danych; nie usuwamy go przy zmianie
+nazwy katalogu na `control`.
+
+Stare sesje bez `ended_at` wymagają osobnego przeglądu. Nie podstawiać czasu
+wdrożenia jako czasu zakończenia gry: byłby fałszywy. Wycofać je z bieżącego
+podglądu przez wybór sesji nowej generacji, zachowując historyczny status
+„Utracono kontakt” wynikający z istniejącego widoku. Jeżeli później potrzebne
+będzie osobne oznaczenie archiwizacji w bazie, użyć osobnego pola z datą
+archiwizacji, bez zmiany znaczenia daty zakończenia.
+
+### 4. Aktywność: uprościć rozpoznawanie, zachować wykresy
+
+Zmienić `get_maintenance_activity` w nowej migracji: usunąć rozpoznawanie
+starego Control, wybierać do bieżącej rozgrywki sesje `control_version=2`,
+i korzystać z etapów `game_state`. Obecnie zapytanie wybiera najnowszą sesję
+każdej gry niezależnie od generacji; po wycofaniu starego zestawu może ona
+niepotrzebnie przedstawiać dawną sesję jako aktualną.
+
+Przy zmianie tras zsynchronizować listę stron w `site_activity_ping`,
+`shared/js/core/activity.js` i etykiety `settings/js/activity.js`. `control`
+i `game-settings` będą oznaczały nowy zestaw; tymczasowe aliasy z 2 mogą
+pozostać tylko na czas obsługi dawnych adresów. Kontekst blokady `control`
+jest wspólny i zostaje. Zachować również `edit_locks`, `device_presence`,
+`device_ping` i kontrolę połączeń używaną przez nowy zestaw.
+
+`site_activity` jest bieżącym podglądem kart. Wygasłe rekordy usuwa ping po
+jednym dniu; przy porządkowaniu można usunąć wygasłe wpisy, ale nie wszystkie
+rekordy `page='control'`, bo ta nazwa będzie używana ponownie.
+
+`site_activity_hours` zapisuje tylko godzinę i użytkownika, bez wersji Control
+lub nazwy strony. Nie można wydzielić z niego „historii starego Control”.
+Zachować tę tabelę oraz wykresy. Obecna retencja to 90 dni; czyszczenie
+wykonuje się przy kolejnych pingach. Jeśli ma działać również bez ruchu,
+przenieść tę samą retencję do regularnego zadania serwera, bez skracania jej
+przy okazji refaktoru.
+
+Wspólne wykluczenia, rozpoznawanie testN, oznaczenie gości testowych i blokady
+zarezerwowanych nazw pozostają. Wykluczenie z wykresu nie oznacza fizycznego
+usunięcia historii użytkownika.
+
+### 5. Sprawdzenie po sprzątaniu
+
+Przed zmianą zachować liczby sesji każdej generacji i istniejące wyniki.
+Po migracji porównać je oraz sprawdzić rzeczywisty zapis nowej rozgrywki,
+wznowienie, finał i zakończenie bez finału. Sprawdzić podłączenie kodem,
+udostępnienie urządzenia, powrót po rozłączeniu, historyczne statystyki,
+aktywność edytora i nowego Control oraz niezmienioną historię wykresów.
+Użyć wybranych testów produkcyjnych z bypass tokenem przy konserwacji;
+nie uruchamiać całego zestawu bez potrzeby.
