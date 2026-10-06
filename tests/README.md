@@ -28,9 +28,13 @@ odwiedzającego — brak jakiegokolwiek wpływu na prawdziwych użytkowników.
 - **Jednorazowy** — Worker zapisuje zużyty `nonce` w istniejącym KV
   (`MAINT_KV`, ten sam co reszta workera) na 10 minut; drugie użycie
   tego samego tokenu jest odrzucane.
-- Potrzebny tylko na moment logowania — po zalogowaniu testy działają
-  na normalnej, prawdziwej sesji (ważnej ~1h), token bypass nie jest
-  już nigdzie potrzebny w danym runie.
+- Przy logowaniu token jednorazowo omija captchę. Po zalogowaniu test działa
+  na normalnej sesji użytkownika.
+- Podczas konserwacji testy Control i przełączenia produkcyjnego korzystają
+  z `helpers/production-test.js`: każde żądanie do publicznego hosta otrzymuje
+  świeży podpisany token, także w osobnych kontekstach urządzeń. Worker
+  sprawdza podpis i pięciominutowy limit przed ominięciem konserwacji.
+  Ominięcie konserwacji nie nadaje sesji ani uprawnień do panelu administratora.
 
 ## Cloudflare Bot Fight Mode — wyłączony na stałe
 

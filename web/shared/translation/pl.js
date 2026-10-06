@@ -2036,7 +2036,7 @@ const pl = {
 <pre class="m-pre">1) Wymień środek transportu. — wpisano
 2) Co zabierasz na wakacje? — brak
 3) Co pijesz rano? — powtórzenie</pre>
-<table>
+<div class="m-table-wrap"><table class="m-table">
 <thead>
 <tr>
 <th>Status przy pytaniu</th>
@@ -2056,7 +2056,7 @@ const pl = {
 <td>Przy graczu 2 operator oznaczył odpowiedź jako powtórzoną po graczu 1. Przy odsłanianiu daje zero punktów.</td>
 </tr>
 </tbody></table>
-<p class="m-p">Na tym etapie prowadzący czyta pytania i śledzi, gdzie operator ma już wpis. Ekran pokazuje statusy, <strong>nie treść właśnie wpisywanych odpowiedzi</strong>. Treść wpisu jest dostępna przy późniejszym mapowaniu.</p>
+</div><p class="m-p">Na tym etapie prowadzący czyta pytania i śledzi, gdzie operator ma już wpis. Ekran pokazuje statusy, <strong>nie treść właśnie wpisywanych odpowiedzi</strong>. Treść wpisu jest dostępna przy późniejszym mapowaniu.</p>
 <p class="m-p"><strong>Skróty:</strong> Ctrl+Enter (⌘+Enter na Macu) uruchamia lub zatrzymuje timer. ↑ / ↓ / Enter przechodzą tylko między pustymi polami; poprawienie uzupełnionego wymaga kliknięcia.</p>
 <h4 class="m-h3">Gracz 1 — dopasowanie i odsłanianie</h4>
 <p class="m-p">Po zakończeniu odpowiadania przejdź do odsłaniania. Dla każdego pytania porównaj wpis z listą punktowanych odpowiedzi i wybierz pasującą pozycję albo <span class="m-code">Nie ma na liście (0 pkt)</span>. Wyświetlacz pokazuje wybraną odpowiedź, a pełny wpis pozostaje w panelu. Przy trafieniu odsłoń odpowiedź, a następnie punkty. Przy wpisanej błędnej odpowiedzi odsłoń tekst, a następnie zero. Brak odpowiedzi automatycznie pokazuje odpowiedź i zero. Dopasowanie samo nie nalicza punktów; suma zwiększa się przy odsłonięciu punktów.</p>
@@ -2070,7 +2070,7 @@ const pl = {
 <li><strong><span class="m-code">Stan: …</span></strong> — informacja o obecnym dopasowaniu, według tabeli poniżej.</li>
 <li><strong><span class="m-code">Lista odpowiedzi:</span></strong> — wszystkie odpowiedzi z bazy na bieżące pytanie, z punktami w nawiasach, od najwyżej punktowanej.</li>
 </ol>
-<table>
+<div class="m-table-wrap"><table class="m-table">
 <thead>
 <tr>
 <th>Stan</th>
@@ -2099,7 +2099,7 @@ const pl = {
 <td>Odpowiedź drugiego gracza oznaczono jako powtórzoną; nie punktuje.</td>
 </tr>
 </tbody></table>
-<p class="m-p"><strong>Kolory w finale opisują dopasowanie, a nie etap animacji na Wyświetlaczu.</strong> Zielone „z listy” nie oznacza samo w sobie, że publiczność już zobaczyła odpowiedź lub punkty. Rozróżniaj tekst wpisany przez operatora od wybranej odpowiedzi z bazy: mogą mieć inne brzmienie, np. wpis „na rowerze” dopasowany do „Rower (24)”.</p>
+</div><p class="m-p"><strong>Kolory w finale opisują dopasowanie, a nie etap animacji na Wyświetlaczu.</strong> Zielone „z listy” nie oznacza samo w sobie, że publiczność już zobaczyła odpowiedź lub punkty. Rozróżniaj tekst wpisany przez operatora od wybranej odpowiedzi z bazy: mogą mieć inne brzmienie, np. wpis „na rowerze” dopasowany do „Rower (24)”.</p>
 <p class="m-p">W dopasowaniu gracza 1 <strong>1–6</strong> wybiera odpowiedź z listy, <strong>W</strong> wpisaną odpowiedź, a <strong>O</strong> brak odpowiedzi. Przy graczu 2 dochodzi <strong>R</strong> — powtórzenie. Zaznaczanie odbywa się od razu jednym kliknięciem lub skrótem. Pierwszy Enter odsłania odpowiedź, a następny punkty po zakończeniu przejścia. Brak odpowiedzi i powtórzenie automatycznie pokazują zero. <strong>N i Enter</strong> przechodzą do kolejnego pytania. Przy odsłanianiu myszą obowiązuje zaznaczenie i potwierdzenie drugim kliknięciem.</p>
 <h4 class="m-h3">Gracz 2 — przygotowanie i wpisywanie</h4>
 <p class="m-p">Jeżeli nie osiągnięto progu, po piątym pytaniu gracza 1 przejdź do przygotowania drugiego zawodnika. Tablet Prowadzącego jest czyszczony. Przypomnij zasady i możesz zaprezentować dźwięk powtórzenia.</p>
@@ -2239,7 +2239,7 @@ const pl = {
 <p class="m-p">Aby usunąć własny plik, użyj przycisku <span class="m-code"><i class="ico" data-icon="trash"></i></span> przy pliku. Jeśli chcesz wrócić do gotowego wariantu — zmień wariant na inny niż <strong>Własny</strong>.</p>
 <p class="m-p">Własny plik audio jest zapisywany w chmurze razem z grą i będzie dostępny na każdym urządzeniu, na którym uruchomisz tę grę.</p>
 <p class="m-p"><strong>Limity własnych plików:</strong></p>
-<table>
+<div class="m-table-wrap"><table class="m-table">
 <thead>
 <tr>
 <th>Kategorie</th>
@@ -2259,7 +2259,7 @@ const pl = {
 <td>2 minuty</td>
 </tr>
 </tbody></table>
-<p class="m-p">Outro odtwarza przycisk <span class="m-code">Zakończ grę</span>, gdy ekran końcowy jest już widoczny. Własne pliki i głośność ustawiasz tak samo dla każdej kategorii.</p>
+</div><p class="m-p">Outro odtwarza przycisk <span class="m-code">Zakończ grę</span>, gdy ekran końcowy jest już widoczny. Własne pliki i głośność ustawiasz tak samo dla każdej kategorii.</p>
 <h4 class="m-h3">Głośność</h4>
 <p class="m-p">Przy każdej kategorii jest suwak głośności (0–100%). Zmiany są zapisywane i wczytywane automatycznie przy każdej rozgrywce.</p>
 <h4 class="m-h3">Przycisk odtwarzania</h4>
