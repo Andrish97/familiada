@@ -1,23 +1,24 @@
 # Control2 — druga runda uwag do nagrań, 6 października 2026
 
-Statusy poniżej wymagają osobno sprawdzenia kodu i zachowania na produkcji.
+Zaznaczenia oznaczają wprowadzone poprawki. Wyniki testów i oczekiwanie
+na wizualną ocenę nowych filmów są opisane osobno na końcu.
 
-- [ ] 1. Usunąć podpowiedzi skrótów z ekranów rozpoczęcia rundy i innych
+- [x] 1. Usunąć podpowiedzi skrótów z ekranów rozpoczęcia rundy i innych
   ekranów wprowadzających, które nie mają kolumny podpowiedzi.
-- [ ] 2. Napis gestu odsłaniania na zasłonie Hosta: kolor kropek z ustawień
+- [x] 2. Napis gestu odsłaniania na zasłonie Hosta: kolor kropek z ustawień
   oraz czcionka aktualnego motywu, również nowoczesnego.
-- [ ] 3. Pod rozdzielnikiem podpowiedzi dodać nagłówek „Skróty klawiszowe:”.
-- [ ] 4. Stała lista skrótów w mapowaniu, bez zmian zależnych od chwilowego
+- [x] 3. Pod rozdzielnikiem podpowiedzi dodać nagłówek „Skróty klawiszowe:”.
+- [x] 4. Stała lista skrótów w mapowaniu, bez zmian zależnych od chwilowego
   zablokowania przycisków. Dwa warianty: gracz 1 i gracz 2; drugi ma Powtórzenie.
-- [ ] 5. Skrócić podpowiedzi przy odsłanianiu odpowiedzi i punktów.
-- [ ] 6. Sprawdzić i uporządkować wpisywanie gracza 2 w filmie 04.
-- [ ] 7. Film 05: sprawdzić długie odsłanianie 36 punktów oraz końcową
+- [x] 5. Skrócić podpowiedzi przy odsłanianiu odpowiedzi i punktów.
+- [x] 6. Sprawdzić i uporządkować wpisywanie gracza 2 w filmie 04.
+- [x] 7. Film 05: sprawdzić długie odsłanianie 36 punktów oraz końcową
   planszę pojawiającą się za późno względem dźwięków i outro.
-- [ ] 8. Porównać ze starym Control; zmiana planszy ma dzielić czas reveal
+- [x] 8. Porównać ze starym Control; zmiana planszy ma dzielić czas reveal
   na dwie równe części: znikanie i pojawianie. Zachować uzgodnione dźwięki
   oraz synchronizację końców reveal i dźwięku towarzyszącego.
-- [ ] 9. Powiększyć niestandardowe logo na zasłonie Hosta.
-- [ ] 10. Usunąć angielski komunikat o zasłanianiu na dole Hosta w polskiej grze.
+- [x] 9. Powiększyć niestandardowe logo na zasłonie Hosta.
+- [x] 10. Usunąć angielski komunikat o zasłanianiu na dole Hosta w polskiej grze.
 
 ## Ustalenia z nagrań
 
@@ -74,3 +75,21 @@ nowego dźwięku `final_theme` (około 4,5 s). Teraz zaległe punkty są uzupeł
 bez animacji, a animowane jest bieżące przejście do wyniku. Nie opóźnia go
 ponowne odtwarzanie zaległej zmiany. Test lokalny odtwarza dokładnie ten
 przypadek. Łącznie 25 wybranych testów lokalnych.
+
+## Weryfikacja produkcyjna
+
+- [Pierwszy przebieg](https://github.com/Andrish97/familiada/actions/runs/37527205815):
+  pełny finał (10 pytań, powtórzenie, gracz 2) i zmiana języka Hosta przeszły.
+  Komunikaty gestów sprawdzone po polsku, po angielsku i ponownie po polsku.
+  Test wcześniejszego finału odczytał statystyki przed zakończeniem zapisu:
+  ekran był już widoczny, ale w bazie jeszcze status `playing`.
+- [Powtórzony test wcześniejszego finału](https://github.com/Andrish97/familiada/actions/runs/37528587088):
+  przeszedł bez ponawiania po dodaniu oczekiwania na zatwierdzony zapis.
+  Sprawdzono wynik 500:0, finał 200 punktów i nagrodę 26500.
+- [Wdrożenie końcowych podpowiedzi](https://github.com/Andrish97/familiada/actions/runs/37528796752): zakończone poprawnie.
+- [Nowe nagrania 04, 05 i 07](https://github.com/Andrish97/familiada/actions/runs/37529078347):
+  uruchomione po testach, na produkcji. Galeria lokalna:
+  `tests/recordings/2026-10-06-runda-2/index.html`. Pobranie i sprawdzenie
+  obecności obrazu oraz dźwięku wykonywane automatycznie po zakończeniu.
+  Wizualna ocena synchronizacji, wyglądu logo i czytelności przebiegu pozostaje
+  do obejrzenia w tych nowych filmach; wyniki testów nie zastępują tej oceny.
