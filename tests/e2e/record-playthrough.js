@@ -1609,11 +1609,12 @@ async function scenarioShareDeviceEmail(pages, { browser }) {
   // kontami (dowolny device_type), ale gdyby coś mu umknęło (np. race),
   // modal i tak pokaże "już udostępnione" -- wtedy cofamy przez UI,
   // dokładnie jak zrobiłby operator.
-  const alreadyShared = await control.locator("#shareDeviceCurrentWrap").isVisible();
+  const alreadyShared = await control.locator("#btnRevokeDevice").isVisible();
   if (alreadyShared) {
     console.log("[record] urządzenie już udostępnione z poprzedniego przebiegu -- cofam, zanim dodam ponownie");
     await control.locator("#btnRevokeDevice").click();
-    await control.locator("#shareDeviceCurrentWrap").waitFor({ state: "hidden", timeout: 10_000 });
+    await expect(control.locator("#shareDeviceCurrentContent")).toContainText("Nie udostępniono jeszcze tego urządzenia.", { timeout: 10_000 });
+    await expect(control.locator("#shareDeviceEmail")).toBeEnabled();
     await control.waitForTimeout(400);
   }
 
