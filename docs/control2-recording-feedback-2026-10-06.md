@@ -108,6 +108,9 @@
 | Pojedynek z przyciskiem fizycznym | A albo B, następnie Enter | Wybór drużyny, a następnie potwierdzenie jej zgłoszenia. Nie symuluje naciśnięcia urządzenia w normalnym trybie. |
 | Mapowanie finału: odsłonięcie odpowiedzi | O, następnie Enter | Pokaż odpowiedź. |
 | Mapowanie finału: odsłonięcie punktów | P, następnie Enter | Pokaż punkty; znaczenie P wynika z etapu i nie nakłada się na oddanie kontroli w rundach. |
+| Mapowanie finału: brak odpowiedzi | 0, następnie Enter | Brak odpowiedzi, wyłącznie gdy pole tekstowe jest puste. |
+| Mapowanie finału: odpowiedź spoza listy | Z, następnie Enter | Nie ma na liście (0 pkt), wyłącznie gdy istnieje wpisany tekst. |
+| Mapowanie gracza 2: powtórzenie | Shift+Enter w pustym polu | Przełączenie znacznika, także podczas dopasowania, przed odsłonięciem. W mapowaniu nie odtwarza dźwięku powtórzenia. |
 | Koniec rundy / przejście do wyniku | N, następnie Enter | Widoczna, dostępna akcja końca rundy lub dalszego przejścia. |
 | Zakończenie finału / gry | N, następnie Enter | Zakończ finał lub Zakończ grę, według aktualnego etapu i po zakończeniu obowiązujących blokad. |
 | Końcowy powrót do listy gier | N, następnie Enter | Wróć do moich gier, gdy jest główną dostępną nawigacją. |
@@ -129,6 +132,7 @@
 - [ ] Dodać zestaw do instrukcji Panelu sterowania w PL, EN i UK po wdrożeniu. Uaktualnić także robocze MD i HTML, z zachowaniem właściwego stylu przycisków i oznaczeń klawiszy.
 - [ ] W istniejącej kolumnie podpowiedzi pokazywać skróty odpowiednie do bieżącego etapu, z nazwą aktualnej czynności zamiast ogólnego Dalej. Nie dodawać osobnego banera ani instrukcji obsługi operatora na tablecie Prowadzącego.
 - [ ] Przy wpisywaniu finału wskazać timer, powtórzenie w rundzie 2 i przechodzenie między pustymi polami. Przy mapowaniu wskazać wybór dopasowania, odsłonięcie odpowiedzi/punktów i dalsze przejście.
+- [ ] Przy mapowaniu wskazać także 0 — Brak odpowiedzi i Z — Nie ma na liście. Podpowiedzi i dostępność skrótów zależą od treści pola; po odsłonięciu odpowiedzi wybór jest zablokowany. Cyfry i litery w aktywnym polu pozostają tekstem.
 - [ ] Wyjaśnić w instrukcji różnicę między zaznaczeniem skrótem a zatwierdzeniem Enter oraz powód, dla którego litery i cyfry podczas edycji pola nie uruchamiają akcji.
 - [ ] Uaktualnić scenariusze testów i opis nagrań. Pokazać przynajmniej zatwierdzenie drużyny, odpowiedź/X, timer finału, powtórzenie, nawigację pustych pól i obsługę dalszego przejścia z klawiatury.
 
