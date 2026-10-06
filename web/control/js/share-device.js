@@ -1,8 +1,8 @@
 // control/js/share-device.js
 
-import { sb, SUPABASE_URL } from "../../shared/js/core/supabase.js?v=v2026-10-06T19334";
-import { t } from "../../shared/translation/translation.js?v=v2026-10-06T19334";
-import { createCooldownTicker, mailCooldownCheck } from "../../shared/js/core/cooldown.js?v=v2026-10-06T19334";
+import { sb, SUPABASE_URL } from "../../shared/js/core/supabase.js?v=v2026-10-06T19403";
+import { t } from "../../shared/translation/translation.js?v=v2026-10-06T19403";
+import { createCooldownTicker, mailCooldownCheck } from "../../shared/js/core/cooldown.js?v=v2026-10-06T19403";
 
 const MAIL_FUNCTION_URL = `${SUPABASE_URL}/functions/v1/send-mail`;
 const SHARE_TTL_MS = 4 * 60 * 60 * 1000;
