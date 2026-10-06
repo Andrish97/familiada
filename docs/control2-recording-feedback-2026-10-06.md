@@ -105,23 +105,23 @@
 | Podsumowanie: zmiana ustawień | E, następnie Enter | Zmień ustawienia. |
 | Dostępny powrót do poprzedniego kroku | W, następnie Enter | Widoczny przycisk Wstecz; nie cofa stanu rozgrywki ani wyniku. |
 | Rozpoczęcie gry / rundy / finału | N, następnie Enter | Widoczny przycisk rozpoczęcia właściwy dla bieżącego etapu. |
-| Pojedynek z przyciskiem fizycznym | A albo B, następnie Enter | Wybór drużyny, a następnie potwierdzenie jej zgłoszenia. Nie symuluje naciśnięcia urządzenia w normalnym trybie. |
-| Mapowanie finału: odsłonięcie odpowiedzi | Enter lub O | Pokaż odpowiedź, jednym naciśnięciem. |
-| Mapowanie finału: odsłonięcie punktów | Enter lub P | Pokaż punkty, jednym naciśnięciem, dopiero po końcu odsłaniania odpowiedzi. Znaczenie P nie nakłada się na oddanie kontroli w rundach. |
-| Mapowanie finału: brak odpowiedzi | 0 | Natychmiastowy wybór Brak odpowiedzi, wyłącznie gdy pole tekstowe jest puste. Następny Enter odsłania brak i zero automatycznie. |
+| Pojedynek | A albo B, następnie Enter | Zaznaczenie dostępnej drużyny i potwierdzenie jej zgłoszenia. Przy fizycznym przycisku dostępne są obie drużyny; w normalnym trybie skrót potwierdza dostępne zgłoszenie i nie symuluje naciśnięcia urządzenia. |
+| Mapowanie finału: odsłonięcie odpowiedzi | Enter | Pokaż odpowiedź po wyborze dopasowania. Mysz: dwuklik przycisku odsłaniania. |
+| Mapowanie finału: odsłonięcie punktów | Kolejny Enter | Pokaż punkty po końcu odsłaniania odpowiedzi. Mysz: dwuklik przycisku odsłaniania punktów. |
+| Mapowanie finału: brak odpowiedzi | O | Pojedynczy wybór Brak odpowiedzi, wyłącznie gdy pole tekstowe jest puste. Następny Enter odsłania brak i zero automatycznie. |
 | Mapowanie finału: odpowiedź spoza listy | Z | Natychmiastowy wybór Nie ma na liście (0 pkt), wyłącznie gdy istnieje wpisany tekst. Następny Enter odsłania dosłownie wpisaną odpowiedź. |
-| Mapowanie gracza 2: powtórzenie | Shift+Enter w pustym polu | Przełączenie znacznika, także podczas dopasowania, przed odsłonięciem. W mapowaniu nie odtwarza dźwięku powtórzenia. |
+| Mapowanie gracza 2: powtórzenie | R | Pojedynczy wybór Powtórzenie przy pustym polu i przed odsłonięciem. Enter odsłania powtórzenie i zero automatycznie. W mapowaniu nie odtwarza dźwięku powtórzenia. Shift+Enter pozostaje skrótem podczas wpisywania gracza 2. |
 | Koniec rundy / przejście do wyniku | N, następnie Enter | Widoczna, dostępna akcja końca rundy lub dalszego przejścia. |
 | Zakończenie finału / gry | N, następnie Enter | Zakończ finał lub Zakończ grę, według aktualnego etapu i po zakończeniu obowiązujących blokad. |
 | Końcowy powrót do listy gier | N, następnie Enter | Wróć do moich gier, gdy jest główną dostępną nawigacją. |
-| Wyciszenie / włączenie dźwięku | M, następnie Enter | Wybranie przycisku dźwięku w górnym pasku i jego uruchomienie. |
-| Rozpoczęcie od nowa | R, następnie Enter | Wybranie restartu i otwarcie istniejącego okna potwierdzenia. Nie zatwierdza automatycznie tego okna. |
+| Wyciszenie / włączenie dźwięku — globalnie w Control | M | Natychmiastowe przełączenie wyciszenia, bez Enter, we wszystkich krokach Control. Podczas edycji pola M pozostaje literą. Korzystać z osobnej obsługi wyciszenia, dostępnej także podczas przejścia/dźwięku. |
+| Rozpoczęcie od nowa poza mapowaniem | R, następnie Enter | Wybranie restartu i otwarcie istniejącego okna potwierdzenia. W mapowaniu R jest zarezerwowane dla Powtórzenia; przycisk restartu nadal pozostaje dostępny. Nie zatwierdzać automatycznie okna restartu. |
 
 #### Reguły działania i bezpieczeństwo wpisywania
 
 - [ ] Litery i cyfry nie wywołują czynności przy aktywnym polu tekstowym, polu wyboru, suwaku ani edytowalnej treści. Nie odbieramy standardowej obsługi klawiatury tym elementom. Specjalne skróty wpisywania finału są obsługiwane osobno.
 - [ ] Zaznaczenie kafelka wymagającego potwierdzenia to tylko zaznaczenie; Enter uruchamia jego istniejące zatwierdzenie. Dla zwykłego przycisku nawigacji zaznaczenie oznacza ustawienie fokusu, a Enter wykonuje standardowe kliknięcie. Jedno naciśnięcie nie może uruchamiać równocześnie obsługi własnej i natywnego kliknięcia.
-- [ ] Mapowanie finału jest wyjątkiem od zaznaczania i potwierdzania: wybór z listy, wpisana odpowiedź, brak i powtórzenie działają jednym kliknięciem/odpowiednim klawiszem. Pokaż odpowiedź i Pokaż punkty także działają pojedynczym kliknięciem swoich przycisków. Nie dodawać osobnego zatwierdzania dopasowania.
+- [ ] Mapowanie finału jest wyjątkiem od zaznaczania i potwierdzania: wybór z listy, wpisana odpowiedź, brak i powtórzenie działają jednym kliknięciem/odpowiednim klawiszem. Pokaż odpowiedź i Pokaż punkty pozostają dwuklikowe przy obsłudze myszą; klawiatura korzysta z wyboru opcji i kolejnych Enter. Nie dodawać osobnego zatwierdzania dopasowania.
 - [ ] W mapowaniu Enter nie potwierdza drugi raz wybranej opcji. Pierwszy odsłania odpowiedź, kolejny odsłania punkty po zakończeniu przejścia. Brak/powtórzenie odsłaniają zero automatycznie, więc nie wymagają drugiego Enter. Dalsze przejście pozostaje pod N i Enter; Enter nie ma samoczynnie przechodzić do następnego pytania.
 - [ ] Jeden wspólny mechanizm wyboru czynności według etapu. Wszystkie skróty korzystają z istniejących akcji i blokad, bez osobnej ścieżki omijającej zatwierdzenia lub silnik.
 - [ ] Gdy otwarte jest okno ustawień, udostępniania albo potwierdzenia, skróty rozgrywki w tle są nieaktywne. W oknach pozostawić standardowe Tab / Shift+Tab i Enter na wybranym przycisku. Nie przechwytywać skrótów paska adresu, wyszukiwania ani narzędzi przeglądarki.
@@ -134,9 +134,9 @@
 - [ ] Dodać zestaw do instrukcji Panelu sterowania w PL, EN i UK po wdrożeniu. Uaktualnić także robocze MD i HTML, z zachowaniem właściwego stylu przycisków i oznaczeń klawiszy.
 - [ ] W istniejącej kolumnie podpowiedzi pokazywać skróty odpowiednie do bieżącego etapu, z nazwą aktualnej czynności zamiast ogólnego Dalej. Nie dodawać osobnego banera ani instrukcji obsługi operatora na tablecie Prowadzącego.
 - [ ] Przy wpisywaniu finału wskazać timer, powtórzenie w rundzie 2 i przechodzenie między pustymi polami. Przy mapowaniu wskazać wybór dopasowania, odsłonięcie odpowiedzi/punktów i dalsze przejście.
-- [ ] Przy mapowaniu wskazać także 0 — Brak odpowiedzi i Z — Nie ma na liście. Podpowiedzi i dostępność skrótów zależą od treści pola; po odsłonięciu odpowiedzi wybór jest zablokowany. Cyfry i litery w aktywnym polu pozostają tekstem.
+- [ ] Przy mapowaniu wskazać O — Brak odpowiedzi, R — Powtórzenie oraz Z — Nie ma na liście. Podpowiedzi i dostępność skrótów zależą od treści pola; po odsłonięciu odpowiedzi wybór jest zablokowany. Cyfry i litery w aktywnym polu pozostają tekstem.
 - [ ] Wyjaśnić w instrukcji różnicę między zaznaczeniem skrótem a zatwierdzeniem Enter oraz powód, dla którego litery i cyfry podczas edycji pola nie uruchamiają akcji.
-- [ ] Wyraźnie opisać wyjątek mapowania: 1–9 / Z / 0 wybiera od razu; Enter odsłania, zamiast potwierdzać wybór. Uaktualnić myszowe instrukcje i testy, które obecnie klikają mapowanie dwukrotnie.
+- [ ] Wyraźnie opisać wyjątek mapowania: 1–9 / Z / O / R wybiera od razu; Enter odsłania, zamiast potwierdzać wybór. Uaktualnić myszowe instrukcje i testy: wybór opcji pojedynczy, odsłanianie dwuklikowe. W rundach 1–9 zaznacza odpowiedź, Enter odsłania zaznaczoną; X i T zaznaczają odpowiednie przyciski, Enter je uruchamia. N wybiera bieżące dalsze przejście, Enter przechodzi dalej.
 - [ ] Uaktualnić scenariusze testów i opis nagrań. Pokazać przynajmniej zatwierdzenie drużyny, odpowiedź/X, timer finału, powtórzenie, nawigację pustych pól i obsługę dalszego przejścia z klawiatury.
 
 ### 12. Wysokość odpowiedzi gracza 2

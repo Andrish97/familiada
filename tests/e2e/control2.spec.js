@@ -520,8 +520,11 @@ test("control2: widoczność zachowanych statystyk w panelu administratora", asy
     const { data: history, error: historyError } = await sb.rpc("get_stats_detail", { p_type: "gameplay", p_limit: 200 });
     if (historyError) throw historyError;
     const names = new Set((games || []).map(game => game.name));
+    const { data: excluded, error: excludedError } = await sb.rpc("stats_excluded_list");
+    if (excludedError) throw excludedError;
     return {
       account: user.user.email,
+      excludedFromStatistics: (excluded || []).some(row => row.user_id === user.user.id),
       games: games || [],
       // Return only these owned test games, never unrelated users' history.
       visibleRows: (history || []).filter(row => names.has(row.game_name)),
@@ -531,7 +534,7 @@ test("control2: widoczność zachowanych statystyk w panelu administratora", asy
   const path = testInfo.outputPath("statistics-panel-visibility.json");
   await require("node:fs/promises").writeFile(path, JSON.stringify(report, null, 2));
   await testInfo.attach("statistics-panel-visibility.json", { path, contentType: "application/json" });
-  console.log(`[statistics-review] ${report.account}: ${report.games.length} owned games, ${report.visibleRows.length} rows visible in admin history`);
+  console.log(`[statistics-review] ${report.account}: ${report.games.length} owned games, ${report.visibleRows.length} rows visible in admin history, excluded=${report.excludedFromStatistics}`);
 });
 
 function trackErrors(p, label, bucket) {
