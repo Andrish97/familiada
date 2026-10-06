@@ -1,24 +1,24 @@
 // js/pages/game-settings.js
-import { requireAuth } from "../../shared/js/core/auth.js?v=v2026-10-06T20383";
-import { t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-06T20383";
-import { setTopbarAccount } from "../../shared/js/core/topbar-controller.js?v=v2026-10-06T20383";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-06T20383";
-import { loadQuestions } from "../../shared/js/core/game-validate.js?v=v2026-10-06T20383";
-import { loadFont5x7, buildLogoPreviewCanvas } from "../../shared/js/core/logo-preview.js?v=v2026-10-06T20383";
-import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-06T20383";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-06T20383";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-06T20383";
+import { requireAuth } from "../../shared/js/core/auth.js?v=v2026-10-06T20451";
+import { t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-06T20451";
+import { setTopbarAccount } from "../../shared/js/core/topbar-controller.js?v=v2026-10-06T20451";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-06T20451";
+import { loadQuestions } from "../../shared/js/core/game-validate.js?v=v2026-10-06T20451";
+import { loadFont5x7, buildLogoPreviewCanvas } from "../../shared/js/core/logo-preview.js?v=v2026-10-06T20451";
+import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-06T20451";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-06T20451";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-06T20451";
 import {
   loadSfxManifest, getSfxCategories,
   setSfxCustomBlob, clearSfxCustomFile, clearAllSfxCustomFiles, getSfxCustomFiles,
   playSfx, setSfxVolume,
-} from "../../shared/js/core/sfx.js?v=v2026-10-06T20383";
+} from "../../shared/js/core/sfx.js?v=v2026-10-06T20451";
 import {
   uploadGameSound, deleteGameSound, deleteAllGameSounds,
-} from "../../shared/js/core/sfx-cloud.js?v=v2026-10-06T20383";
-import { guardDesktopOnly } from "../../shared/js/core/device-guard.js?v=v2026-10-06T20383";
-import { guardResourceLock } from "../../shared/js/core/resource-lock.js?v=v2026-10-06T20383";
-import { updateChecked, ROW_GONE } from "../../shared/js/core/db-guard.js?v=v2026-10-06T20383";
+} from "../../shared/js/core/sfx-cloud.js?v=v2026-10-06T20451";
+import { guardDesktopOnly } from "../../shared/js/core/device-guard.js?v=v2026-10-06T20451";
+import { guardResourceLock } from "../../shared/js/core/resource-lock.js?v=v2026-10-06T20451";
+import { updateChecked, ROW_GONE } from "../../shared/js/core/db-guard.js?v=v2026-10-06T20451";
 
 guardDesktopOnly();
 

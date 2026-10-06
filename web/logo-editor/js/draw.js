@@ -14,14 +14,14 @@
 // Każda zakończona zmiana woła commit() -- jedno miejsce, które zapisuje
 // snapshot, oznacza „niezapisane zmiany” i odświeża podgląd.
 
-import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-06T20383";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-06T20383";
-import { t } from "../../shared/translation/translation.js?v=v2026-10-06T20383";
-import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-06T20383";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-06T20383";
-import { DOT_W, DOT_H, TYPE_PIX, PIX_FORMAT, packBits, unpackBits } from "./render.js?v=v2026-10-06T20383";
-import { WORLD_W, WORLD_H, sceneToBits } from "./draw/raster.js?v=v2026-10-06T20383";
-import { SHAPES, shapeById, buildShapePath, buildArrowPath } from "./draw/shapes.js?v=v2026-10-06T20383";
+import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-06T20451";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-06T20451";
+import { t } from "../../shared/translation/translation.js?v=v2026-10-06T20451";
+import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-06T20451";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-06T20451";
+import { DOT_W, DOT_H, TYPE_PIX, PIX_FORMAT, packBits, unpackBits } from "./render.js?v=v2026-10-06T20451";
+import { WORLD_W, WORLD_H, sceneToBits } from "./draw/raster.js?v=v2026-10-06T20451";
+import { SHAPES, shapeById, buildShapePath, buildArrowPath } from "./draw/shapes.js?v=v2026-10-06T20451";
 
 const TOOL = { SELECT: "SELECT", PAN: "PAN", TEXT: "TEXT", BRUSH: "BRUSH", ERASER: "ERASER", SHAPES: "SHAPES" };
 const MAX_ZOOM = 12;
