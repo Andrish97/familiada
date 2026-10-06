@@ -18,14 +18,14 @@ import {
   clearGuestLocalMarker,
   initPasswordToggles,
   resetPasswordToggles,
-} from "../../shared/js/core/auth.js?v=v2026-10-06T19403";
-import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-06T19403";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-06T19403";
+} from "../../shared/js/core/auth.js?v=v2026-10-06T20065";
+import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-06T20065";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-06T20065";
 
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-06T19403";
-import { mailCooldownEmailCheck, mailCooldownEmailReserve } from "../../shared/js/core/cooldown.js?v=v2026-10-06T19403";
-import { initI18n, t, getUiLang, withLangParam, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-06T19403";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-06T19403";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-06T20065";
+import { mailCooldownEmailCheck, mailCooldownEmailReserve } from "../../shared/js/core/cooldown.js?v=v2026-10-06T20065";
+import { initI18n, t, getUiLang, withLangParam, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-06T20065";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-06T20065";
 
 const $ = (s) => document.querySelector(s);
 const email = $("#email");
