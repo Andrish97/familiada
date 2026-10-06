@@ -2131,10 +2131,11 @@ test("control2: zablokowany, gdy logo gry jest edytowane w logo-editorze — i w
   }, { name: logoName, payload: blankGlyphPayload() });
 
   const logoContexts = [];
-  const hostPage = await openAnon(browser, logoContexts, `/host2?id=${gameId}&key=${hostKey}`, "host", []);
+  let hostPage;
   const lockTabId = `e2e-fake-logo-editor-${Date.now()}`;
   try {
     await acquireLogoLock(page, logoId, lockTabId);
+    hostPage = await openAnon(browser, logoContexts, `/host2?id=${gameId}&key=${hostKey}`, "host", []);
 
     await page.goto(`/control2?id=${gameId}`, { waitUntil: "domcontentloaded" });
     await expect(page.locator("#resourceLockGuard")).toBeVisible({ timeout: 15000 });
