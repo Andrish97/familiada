@@ -125,3 +125,30 @@ przypadek. Łącznie 25 wybranych testów lokalnych.
 - Sprawdzenie produkcyjne obejmie dodatkowo celowe zatrzymanie odpowiedzi
   Display po zakończeniu animacji i dźwięku; panel oraz Buzzer mają pozostać
   zablokowane do doręczenia potwierdzenia.
+
+### Wyniki po wdrożeniu wspólnego mechanizmu
+
+- [Wdrożenie panelu i urządzeń](https://github.com/Andrish97/familiada/actions/runs/37539027794): poprawne.
+- [Pierwsze cztery sprawdzenia produkcyjne](https://github.com/Andrish97/familiada/actions/runs/37537192566):
+  wcześniejszy finał i zakończenie rund bez finału przeszły. Pełny finał ujawnił
+  wyprzedzanie kliknięcia Powtórzenia przez późniejsze wpisywanie, gdy klik
+  czekał na zapis poprzedniej edycji. Panel rezerwuje teraz tę akcję od razu;
+  późniejsze wpisywanie nie może jej wyprzedzić i zgubić startu timera.
+  Test opóźnionego potwierdzenia miał limit 20 s przy intro trwającym około
+  20,7 s; oczekiwanie w teście dostosowano do pełnego intro.
+- [Powtórzenie dwóch przypadków](https://github.com/Andrish97/familiada/actions/runs/37539470756):
+  **2/2 przeszły bez ponawiania**. Pełny finał sprawdził ponowne odtworzenie
+  dźwięku Powtórzenia z zachowaniem oznaczenia, zdjęcie oznaczenia przez tekst,
+  oba timery i mapowanie obu graczy. Drugi test zatrzymał żądanie potwierdzenia
+  po zakończeniu rysowania: Buzzer i kolejna odpowiedź operatora pozostawały
+  niedostępne mimo zakończenia czasu dźwięku. Doręczenie odpowiedzi je odblokowało.
+- Łącznie cztery wybrane scenariusze sprawdzone na rzeczywistej produkcji;
+  bez uruchamiania całego zestawu E2E.
+- Żądania potwierdzeń mają limit czasu sieciowego i ponawianie. Przekroczenie
+  limitu **nie** oznacza zakończenia animacji i **nie** odblokowuje rozgrywki.
+  Display nie zgłasza potwierdzenia dla tymczasowego stanu rev=0, który może
+  być pokazany przed utworzeniem stanu gry przez operatora.
+- Poprzednie nagrania 04/05/07 są już pobrane w galerii
+  `tests/recordings/2026-10-06-runda-2/index.html`; mają obraz i dźwięk.
+  Zostały nagrane przed dodaniem tego wspólnego potwierdzania i nowej obsługi
+  Powtórzenia. Nie stanowią filmu z wersji opisanej w tej sekcji.
