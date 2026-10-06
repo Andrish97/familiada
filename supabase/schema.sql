@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict RJyacdbbV30wANo2ttv184BigOQZAE5fsQR5d9v4uPient5o9UO4Mr3G0meeMEo
+\restrict ryjtTONFleJfOV27rI217CFfHBzW6lOWdlhbYMZjFLPCmlgbVQsu3BezgeroMX2
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -11662,7 +11662,7 @@ BEGIN
   started := coalesce((d #>> '{locks,gameStarted}')::boolean, false);
   was_started := coalesce((prev #>> '{locks,gameStarted}')::boolean, false);
   SELECT s.* INTO sess FROM public.game_session_active x
-    JOIN public.game_sessions s ON s.id=x.session_id WHERE x.game_id=NEW.game_id;
+    JOIN public.game_sessions s ON s.id=x.session_id WHERE x.game_id=NEW.game_id FOR UPDATE OF s;
   sid := sess.id;
 
   -- Restart is observed in the same transaction as its new blank state.
@@ -11730,8 +11730,9 @@ BEGIN
       'points',fp,'target',d #> '{settings,finalTarget}'));
     final_step:=CASE
       WHEN NEW.step::text='f_end' THEN 'finished'
-      WHEN NEW.step::text LIKE 'f_p1%' THEN 'p1_q' || coalesce(substring(NEW.step::text from 'q([1-5])$'), '1')
-      WHEN NEW.step::text LIKE 'f_p2%' THEN 'p2_q' || coalesce(substring(NEW.step::text from 'q([1-5])$'), '1')
+      WHEN NEW.step::text LIKE 'f_p1_map_q%' THEN 'p1_q' || coalesce(substring(NEW.step::text from 'q([1-5])$'), '1')
+      WHEN NEW.step::text LIKE 'f_p2_map_q%' THEN 'p2_q' || coalesce(substring(NEW.step::text from 'q([1-5])$'), '1')
+      WHEN NEW.step::text IN ('f_p2_start','f_p2_entry') THEN 'player2_entry'
       ELSE 'final_start' END;
   END IF;
   IF NEW.step::text IN ('r_gameEnd','f_end') THEN
@@ -16542,5 +16543,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict RJyacdbbV30wANo2ttv184BigOQZAE5fsQR5d9v4uPient5o9UO4Mr3G0meeMEo
+\unrestrict ryjtTONFleJfOV27rI217CFfHBzW6lOWdlhbYMZjFLPCmlgbVQsu3BezgeroMX2
 
