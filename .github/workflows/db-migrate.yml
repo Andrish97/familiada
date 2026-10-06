@@ -48,6 +48,12 @@ jobs:
         run: |
           psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -c 'CREATE DATABASE activity_test'
           psql -h localhost -U postgres -d activity_test -v ON_ERROR_STOP=1 -f tests/sql/maintenance-activity.sql
+      - name: Check Display completion guards
+        env:
+          PGPASSWORD: test-only-password
+        run: |
+          psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -c 'CREATE DATABASE display_completion_test'
+          psql -h localhost -U postgres -d display_completion_test -v ON_ERROR_STOP=1 -f tests/sql/display-completion.sql
   migrate:
     needs: verify-control2-statistics
     runs-on: ubuntu-latest
