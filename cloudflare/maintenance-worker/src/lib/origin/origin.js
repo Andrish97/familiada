@@ -8,7 +8,7 @@ export const ORIGIN_HOST = "familiada.online";
 export const ORIGIN_RESOLVE = "andrish97.github.io";
 
 export async function serveMaintenance(request, originBase, originHost, resolveOverride) {
-  const maintUrl = new URL("/maintenance", originBase);
+  const maintUrl = new URL("/maintenance/index.html", originBase);
   const res = await fetchWithOrigin(maintUrl.toString(), request, originHost, resolveOverride);
 
   return new Response(res.body, {
@@ -92,6 +92,7 @@ export function pageIndexPath(pathname) {
 export async function fetchWith404(request, originBase, originHost, resolveOverride) {
   const url = new URL(request.url);
   const res = await fetchFromOrigin(request, url, originBase, originHost, resolveOverride);
+  if (res.status >= 300 && res.status < 400) return res;
   if (res.status !== 404) {
     // HTML bez no-store = cache w przeglądarce → stale wersje
     const ct = res.headers.get("Content-Type") || "";
@@ -133,6 +134,12 @@ export async function fetchWithOrigin(url, request, originHost, resolveOverride,
   }
 
   const res = await fetch(url, init);
+
+  // Preserve origin redirects, including Location, rather than returning
+  // their HTML body without a destination.
+  if (res.status >= 300 && res.status < 400 && res.headers.has("Location")) {
+    return withHeaders(res, { "Cache-Control": "no-store" });
+  }
 
   const ct = res.headers.get("Content-Type") || "";
   const accept = headers.get("Accept") || "";

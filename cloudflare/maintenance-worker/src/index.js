@@ -8,7 +8,7 @@
 // single-file version if something here looks surprising.
 import { handleInboundEmail } from "./lib/email/inbound-email.js";
 import { cleanupExpiredAttachments, cleanupExpiredE2EEmails } from "./lib/core/cleanup.js";
-import { handleE2EApi, handleE2ELoginBypass } from "./lib/e2e/e2e-api.js";
+import { handleE2EApi, handleE2ELoginBypass, authorizeE2EApi } from "./lib/e2e/e2e-api.js";
 import { getState } from "./lib/core/state.js";
 import { json, withHeaders } from "./lib/core/http.js";
 import { handleAdminApi } from "./lib/admin/admin-api.js";
@@ -249,6 +249,13 @@ export default {
     // Block settings on public hosts (serve custom 404)
     if (isBlockedPath(host, url.pathname)) {
       return serveNotFoundPage(request, ORIGIN_BASE, ORIGIN_HOST, ORIGIN_RESOLVE);
+    }
+
+    // Signed, short-lived production-test token bypasses maintenance only.
+    // It grants no account session or access to admin endpoints.
+    if (host === "www.familiada.online" && ["GET", "HEAD"].includes(request.method)
+        && await authorizeE2EApi(request, env)) {
+      return fetchWith404(request, ORIGIN_BASE, ORIGIN_HOST, ORIGIN_RESOLVE);
     }
 
     // GLOBAL GATE
