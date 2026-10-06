@@ -296,3 +296,7 @@ body.manual-in-control-modal { background: var(--bg); }
 body.manual-in-control-modal .topbar-close-slot{ display:block; }
 body.manual-in-control-modal .topbar { position: sticky; top: 0; z-index: 5; }
 body.manual-in-control-modal .m-wrap { padding-bottom: 16px; }
+
+/* Literal controls in instructions use the same badge and application icon set. */
+.m-code{display:inline-flex;align-items:center;gap:5px;vertical-align:baseline;line-height:1.45}
+.m-code .ico{width:1em;height:1em;flex-shrink:0;vertical-align:middle}

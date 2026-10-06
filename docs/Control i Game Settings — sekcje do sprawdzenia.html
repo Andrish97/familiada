@@ -303,7 +303,9 @@ body.manual-in-control-modal .topbar-close-slot{ display:block; }
 body.manual-in-control-modal .topbar { position: sticky; top: 0; z-index: 5; }
 body.manual-in-control-modal .m-wrap { padding-bottom: 16px; }
 
-:root{color-scheme:dark;--gold:#ffeaa6}body{margin:0;background:#050914;color:#eef0f5;font:17px/1.7 system-ui,sans-serif}main{max-width:1000px;margin:auto;padding:36px 24px 80px}h1,h2,h3{color:var(--gold)}nav{display:flex;gap:20px;flex-wrap:wrap;border-bottom:1px solid #ffffff24;padding-bottom:24px}a{color:var(--gold)}section{padding-top:28px;scroll-margin-top:20px}.m-doc{max-width:none}.m-note,.m-warn{background:#ffffff08;border:1px solid #ffffff24;border-radius:12px;padding:18px;margin:22px 0}.m-warn{border-color:#ffeaa650}.m-code,code{color:var(--gold)}table{border-collapse:collapse;width:100%;font-size:.95em}th,td{border:1px solid #ffffff24;text-align:left;padding:12px;vertical-align:top}th{background:#ffffff08}.table-wrap{overflow-x:auto}pre{white-space:pre-wrap;background:#ffffff08;padding:18px;border-radius:12px}i.ico{display:none}</style>
+:root{color-scheme:dark;--gold:#ffeaa6;--line2:rgba(255,255,255,.18);--line2:rgba(255,255,255,.18)}body{margin:0;background:#050914;color:#eef0f5;font:17px/1.7 system-ui,sans-serif}main{max-width:1000px;margin:auto;padding:36px 24px 80px}h1,h2,h3{color:var(--gold)}nav{display:flex;gap:20px;flex-wrap:wrap;border-bottom:1px solid #ffffff24;padding-bottom:24px}a{color:var(--gold)}section{padding-top:28px;scroll-margin-top:20px}.m-doc{max-width:none}.m-note,.m-warn{background:#ffffff08;border:1px solid #ffffff24;border-radius:12px;padding:18px;margin:22px 0}.m-warn{border-color:#ffeaa650}.m-code,code{color:var(--gold)}table{border-collapse:collapse;width:100%;font-size:.95em}th,td{border:1px solid #ffffff24;text-align:left;padding:12px;vertical-align:top}th{background:#ffffff08}.table-wrap{overflow-x:auto}pre{white-space:pre-wrap;background:#ffffff08;padding:18px;border-radius:12px}
+.m-host{border-left:3px solid #71b9cf;background:#71b9cf0d;border-radius:0 12px 12px 0;padding:14px 18px;margin:18px 0}.m-host-title{color:#9cd5e5;margin-top:0}.m-host>p:first-child{margin-top:0}.m-host>p:last-child{margin-bottom:0}.m-code{display:inline-flex;align-items:center;gap:5px;vertical-align:baseline;line-height:1.45}.m-icon{width:1em;height:1em;vertical-align:middle;flex-shrink:0}.m-host .table-wrap{margin:12px 0}
+</style>
 </head>
 <body>
 <main>
@@ -311,12 +313,11 @@ body.manual-in-control-modal .m-wrap { padding-bottom: 16px; }
 <nav>
 <a href="#control">Panel sterowania</a>
 <a href="#gameSettings">Ustawienia rozgrywki</a>
-<a href="#polls">Ankiety</a>
 </nav>
 <section id="control">
 <h2>Panel sterowania</h2>
 <div class="m-doc">
-<p class="m-p">Do Panelu sterowania przechodzisz z listy „Moje gry" za pomocą przycisku <code>Graj</code>. Ten tryb jest przeznaczony wyłącznie do prowadzenia rozgrywki na żywo — w tym miejscu nie edytujesz już pytań ani wyników ankiety.</p>
+<p class="m-p">Do Panelu sterowania przechodzisz z listy „Moje gry" za pomocą przycisku <span class="m-code">Graj</span>. Ten tryb jest przeznaczony wyłącznie do prowadzenia rozgrywki na żywo — w tym miejscu nie edytujesz już pytań ani wyników ankiety.</p>
 <p class="m-p">Panel sterowania prowadzi operatora krok po kroku: najpierw podłączasz urządzenia, potem ustawiasz parametry rozgrywki, a na końcu przechodzisz przez rundy i (opcjonalnie) finał. Kolejne kroki odblokowują się dopiero wtedy, gdy poprzednie są gotowe, co minimalizuje ryzyko pomyłek podczas rozgrywki.</p>
 <h3 class="m-h2">Co musi być gotowe, zanim zaczniesz</h3>
 <ul class="m-ul">
@@ -347,8 +348,8 @@ body.manual-in-control-modal .m-wrap { padding-bottom: 16px; }
 <ul class="m-ul">
 <li><strong>Przycisk</strong> — służy do sygnału w pojedynku (kto pierwszy).</li>
 </ul>
-<p class="m-p">Ekran Prowadzącego ma dwie części. W pionie są to część górna i dolna, a w poziomie lewa i prawa. Pierwsza podaje etap gry oraz, zależnie od etapu, pytanie. Druga zawiera materiały potrzebne do prowadzenia: listę odpowiedzi, pytania finału albo szczegóły aktualnego dopasowania. Druga część może być przykryta zasłoną.</p>
-<p class="m-p"><strong>Zasłona na ekranie Prowadzącego</strong></p>
+<p class="m-p">Tablet Prowadzącego ma dwie części. W pionie są to część górna i dolna, a w poziomie lewa i prawa. Pierwsza podaje etap gry oraz, zależnie od etapu, pytanie. Druga zawiera materiały potrzebne do prowadzenia: listę odpowiedzi, pytania finału albo szczegóły aktualnego dopasowania. Druga część może być przykryta zasłoną.</p>
+<p class="m-p"><strong>Zasłona na tablecie Prowadzącego</strong></p>
 <ul class="m-ul">
 <li>W pionie przesuń zasłonę <strong>w dół</strong>, aby odsłonić treść; <strong>w górę</strong>, aby zasłonić.</li>
 <li>W poziomie przesuń <strong>w prawo</strong>, aby odsłonić; <strong>w lewo</strong>, aby zasłonić.</li>
@@ -359,38 +360,38 @@ body.manual-in-control-modal .m-wrap { padding-bottom: 16px; }
 <p class="m-p">Odsłoń treść na swoim urządzeniu, gdy potrzebujesz przeczytać pytanie albo sprawdzić odpowiedzi. Nie traktuj zasłony jako informacji, że odpowiedzi zniknęły z gry.</p>
 <h3 class="m-h3">Układ Panelu sterowania</h3>
 <p class="m-p">W górnym pasku sprawdzisz połączenie Wyświetlacza, Prowadzącego i Przycisku. Przyciski urządzeń pozwalają wrócić do ich linków, kodów i udostępniania także w trakcie gry. Główna część panelu zmienia się wraz z etapem: w przygotowaniu pokazuje urządzenia lub Podsumowanie, w rundach pytanie i odpowiedzi, a w finale pola wpisywania albo ocenę pojedynczej odpowiedzi.</p>
-<p class="m-p">Kolumna podpowiedzi wyjaśnia, kto teraz odpowiada i na jaką czynność czeka system. Pasek pod planszą pokazuje bieżące informacje: w rundach drużynę grającą i bank, a przy odsłanianiu finału sumę punktów. Przycisk dalszego przejścia opisuje następny krok. Nie musisz zgadywać, co zrobi „Dalej” — przy ważnych przejściach jego nazwa zmienia się np. na „Przejdź do finału” lub „Zakończ finał”.</p>
+<p class="m-p">Kolumna podpowiedzi wyjaśnia, kto teraz odpowiada i na jaką czynność czeka system. Pasek pod planszą pokazuje bieżące informacje: w rundach drużynę grającą i bank, a przy odsłanianiu finału sumę punktów. Przycisk dalszego przejścia opisuje następny krok. Nie musisz zgadywać, co zrobi <span class="m-code">Dalej</span> — przy ważnych przejściach jego nazwa zmienia się np. na „Przejdź do finału” lub <span class="m-code">Zakończ finał</span>.</p>
 <h3 class="m-h2">1) Urządzenia</h3>
 <p class="m-p">Pierwszy etap w panelu to podłączenie urządzeń. W górnym pasku panelu widzisz trzy statusy: <strong>Wyświetlacz</strong>, <strong>Prowadzący</strong>, <strong>Przycisk do pojedynku</strong>. Operator zaczyna od podłączenia wymaganych urządzeń. Prowadzący jest opcjonalny — rozgrywkę można prowadzić bezpośrednio z Panelu sterowania.</p>
 <h3 class="m-h3">Wyświetlacz</h3>
-<p class="m-p">Panel pokazuje <strong>6-cyfrowy kod</strong> i kod QR dla wyświetlacza. Najlepiej otworzyć wyświetlacz na telewizorze lub rzutniku w trybie pełnoekranowym (bez pasków przeglądarki). Dopiero gdy Wyświetlacz jest połączony, panel pozwala przejść dalej.</p>
+<p class="m-p">Panel pokazuje <strong>6-cyfrowy kod</strong> dla Wyświetlacza. Najlepiej otworzyć Wyświetlacz na telewizorze lub rzutniku w trybie pełnoekranowym (bez pasków przeglądarki). Dopiero gdy Wyświetlacz jest połączony, panel pozwala przejść dalej.</p>
 <p class="m-p"><strong>Jak wygodnie wyświetlić tablicę na drugim ekranie?</strong></p>
-<p class="m-p">Dla najlepszego efektu użyj trybu rozszerzonego ekranu. W systemie <strong>Windows</strong> przełączysz go skrótem <code>Win + P</code>, a na <strong>Macu</strong> użyj <code>⌘ F1</code> (czasem dodatkowo <code>Fn</code>).</p>
+<p class="m-p">Dla najlepszego efektu użyj trybu rozszerzonego ekranu. W systemie <strong>Windows</strong> przełączysz go skrótem <span class="m-code">Win + P</span>, a na <strong>Macu</strong> użyj <span class="m-code">⌘ F1</span> (czasem dodatkowo <span class="m-code">Fn</span>).</p>
 <p class="m-p">Następnie otwórz tablicę w nowym oknie przeglądarki, przeciągnij je na drugi ekran i włącz tryb pełnoekranowy. Dzięki temu możesz jednocześnie sterować na swoim urządzeniu i wyświetlać treść dla innych.</p>
 <p class="m-p"><strong>Telewizor jako osobne urządzenie</strong></p>
-<p class="m-p">Na komputerze otwórz kod Wyświetlacza w Panelu sterowania. W przeglądarce telewizora wejdź na www.familiada.online. Rozpoznany TV pokaże uproszczoną stronę podłączenia z logo Familiady, polem na sześciocyfrowy kod i przyciskiem „Podłącz”. Wpisz kod Wyświetlacza. Nie trzeba logować się na telewizorze ani podłączać go przewodem do komputera.</p>
-<p class="m-p">Pole kodu jest wybrane od razu. Strzałki góra i dół przełączają między wyborem języka w górnym pasku, polem kodu i przyciskiem „Podłącz”; OK lub Enter zatwierdza. Strona domyślnie korzysta z języka przeglądarki TV: polskiego, angielskiego albo ukraińskiego (dla innych języków — polskiego). Ręczny wybór zostaje zapamiętany. W menu języka strzałki wybierają opcję, a OK lub Enter ją zatwierdza. Na Wyświetlaczu odblokuj dźwięk, jeśli ma grać z telewizora. Przeglądarka może pozwolić na pełny ekran dopiero po naciśnięciu pilota.</p>
+<p class="m-p">Na komputerze otwórz kod Wyświetlacza w Panelu sterowania. W przeglądarce telewizora wejdź na www.familiada.online. Rozpoznany TV pokaże uproszczoną stronę podłączenia z logo Familiady, polem na sześciocyfrowy kod i przyciskiem <span class="m-code">Podłącz</span>. Wpisz kod Wyświetlacza. Nie trzeba logować się na telewizorze ani podłączać go przewodem do komputera.</p>
+<p class="m-p">Pole kodu jest wybrane od razu. Strzałki góra i dół przełączają między polem a przyciskiem; OK lub Enter zatwierdza. Na Wyświetlaczu odblokuj dźwięk, jeśli ma grać z telewizora. Przeglądarka może pozwolić na pełny ekran dopiero po naciśnięciu pilota.</p>
 <p class="m-p">Możesz też otworzyć na TV bezpośredni link Wyświetlacza skopiowany z Panelu sterowania. Jeżeli przeglądarka telewizora nie została rozpoznana, otwórz <a href="https://www.familiada.online/connect-device/tv/">stronę podłączenia TV</a> i wpisz kod. Dotyczy to również niestandardowej przeglądarki na Apple TV. Na TV można podłączyć Wyświetlacz gry albo Wyświetlacz QR ankiety; kody Prowadzącego i Przycisku są odrzucane.</p>
 <h3 class="m-h3">Prowadzący i Przycisk</h3>
 <p class="m-p">Następnie podłączasz urządzenie prowadzącego i urządzenie przycisku. Panel pokazuje <strong>6-cyfrowy kod</strong> i kod QR dla każdego z nich. W praktyce najlepiej użyć dwóch osobnych telefonów albo telefonu i tabletu.</p>
-<p class="m-p">Dostępna jest opcja <strong>„QR na wyświetlaczu"</strong> — po jej użyciu kody QR mogą zostać pokazane na dużym ekranie (po podłączeniu wyświetlacza), żeby ekipa mogła szybko zeskanować je telefonami. To przyspiesza start na planie, bo nie trzeba przepisywać linków.</p>
-<p class="m-p">Poprzez opcję <strong>„Udostępnij"</strong> — możesz szybko wysłać komuś link w wiadomości e-mail lub udostępnić go swoim subskrybentom. Udostępnione urządzenia będą widoczne na koncie (tylko dla zarejestrowanych) w panelu <strong>📱 Podłącz urządzenie</strong>. Osoby niezarejestrowane otrzymają link w wiadomości e-mail.</p>
+<p class="m-p">Dostępna jest opcja <span class="m-code">QR na wyświetlaczu</span> — po jej użyciu kody QR mogą zostać pokazane na dużym ekranie (po podłączeniu wyświetlacza), żeby ekipa mogła szybko zeskanować je telefonami. To przyspiesza start na planie, bo nie trzeba przepisywać linków.</p>
+<p class="m-p">Poprzez opcję <span class="m-code">Udostępnij</span> możesz wysłać komuś link w wiadomości e-mail lub udostępnić go swoim subskrybentom. Udostępnione urządzenia będą widoczne na koncie (tylko dla zarejestrowanych) w panelu <span class="m-code">Podłącz urządzenie <img class="m-icon" src="manual-assets/phone.svg" alt="" width="16" height="16"></span>. Osoby niezarejestrowane otrzymają link w wiadomości e-mail.</p>
 <p class="m-p"><strong>Jak wygodnie podłączyć urządzenie?</strong></p>
-<p class="m-p">Najprostszy sposób: wejdź na <code>familiada.online</code>, kliknij <strong>📱 Podłącz urządzenie</strong> w górnym pasku i wprowadź <strong>6-cyfrowy kod</strong> widoczny przy urządzeniu w Panelu sterowania.</p>
-<p class="m-p">Alternatywnie: na urządzeniu mobilnym możesz zeskanować <strong>kod QR</strong> widoczny w panelu. Dla najlepszego użytkowania sugerowane jest zainstalowanie aplikacji webowej — na stronie <strong>Moje gry</strong> kliknij przycisk pobierania, aby uzyskać wskazówki.</p>
+<p class="m-p">Najprostszy sposób: wejdź na <span class="m-code">familiada.online</span>, kliknij <span class="m-code">Podłącz urządzenie <img class="m-icon" src="manual-assets/phone.svg" alt="" width="16" height="16"></span> w górnym pasku i wprowadź <strong>6-cyfrowy kod</strong> widoczny przy urządzeniu w Panelu sterowania.</p>
+<p class="m-p">Alternatywnie: na urządzeniu mobilnym możesz zeskanować <strong>kod QR</strong> widoczny w panelu. Dla najlepszego użytkowania sugerowane jest zainstalowanie aplikacji webowej — na stronie <strong>Moje gry</strong> kliknij przycisk <span class="m-code"><img class="m-icon" src="manual-assets/download.svg" alt="" width="16" height="16"></span>, aby uzyskać wskazówki.</p>
 <p class="m-p"><strong>Tryb bez tabletu prowadzącego</strong></p>
-<p class="m-p">Jeśli prowadzący nie korzysta z osobnego urządzenia (telefonu/tabletu), zaznacz opcję <strong>„Nie używaj tabletu prowadzącego"</strong> przy urządzeniu Prowadzący. Po zaznaczeniu: przyciski i kod połączenia dla prowadzącego są wyszarzone, podpięcie urządzenia prowadzącego nie jest wymagane do przejścia dalej, a kontrolka Prowadzącego w górnym pasku staje się nieaktywna. Operator może samodzielnie prowadzić rozgrywkę z panelu sterowania. Już otwarty ekran Prowadzącego zostaje wyczyszczony po otrzymaniu tego ustawienia. Zamknięcie pominiętego urządzenia nie blokuje gry.</p>
-<p class="m-p"><strong>Przycisk fizyczny</strong></p>
-<p class="m-p">Jeśli zamiast Przycisku do pojedynku w przeglądarce używasz przycisku fizycznego, (np. sprzętowego przycisku podłączonego inną ścieżką), zaznacz opcję <strong>„Fizyczny przycisk"</strong> przy urządzeniu Przycisk. Po zaznaczeniu: podpięcie urządzenia przycisku nie jest wymagane, a przebieg pojedynku zmienia się — operator sam decyduje, kto nacisnął pierwszy. Otwarty Przycisk w przeglądarce pozostaje nieaktywny i nie może zgłosić naciśnięcia. Jego zamknięcie nie blokuje gry.</p>
+<p class="m-p">Jeśli prowadzący nie korzysta z osobnego urządzenia (telefonu/tabletu), zaznacz opcję <span class="m-code">Nie używaj tabletu prowadzącego</span> przy urządzeniu Prowadzący. Po zaznaczeniu: przyciski i kod połączenia dla prowadzącego są wyszarzone, podpięcie urządzenia prowadzącego nie jest wymagane do przejścia dalej, a kontrolka Prowadzącego w górnym pasku staje się nieaktywna. Operator może samodzielnie prowadzić rozgrywkę z panelu sterowania.</p>
+<p class="m-p"><span class="m-code">Przycisk fizyczny</span></p>
+<p class="m-p">Jeśli zamiast Przycisku do pojedynku w przeglądarce używasz przycisku fizycznego, (np. sprzętowego przycisku podłączonego inną ścieżką), zaznacz opcję <span class="m-code">Przycisk fizyczny</span> przy urządzeniu Przycisk. Po zaznaczeniu: podpięcie urządzenia przycisku nie jest wymagane, a przebieg pojedynku zmienia się — operator sam decyduje, kto nacisnął pierwszy.</p>
 <p class="m-p">W trybie fizycznego przycisku przebieg pojedynku wygląda tak:</p>
 <ul class="m-ul">
-<li>Po uruchomieniu pojedynku pojawiają się dwa przyciski: <code>Drużyna A</code> i <code>Drużyna B</code>.</li>
+<li>Po uruchomieniu pojedynku pojawiają się dwa przyciski: <span class="m-code">Drużyna A</span> i <span class="m-code">Drużyna B</span>.</li>
 </ul>
 <ul class="m-ul">
 <li>Operator klika drużynę, która nacisnęła fizyczny przycisk jako pierwsza — kafelek tej drużyny się podświetla.</li>
 </ul>
 <ul class="m-ul">
-<li>Operator klika <code>Zatwierdź</code>, aby potwierdzić wybór i przejść dalej.</li>
+<li>Operator klika <span class="m-code">Zatwierdź</span>, aby potwierdzić wybór i przejść dalej.</li>
 </ul>
 <p class="m-p"><strong>Rozłączenie urządzenia</strong></p>
 <p class="m-p">Gdy wymagane urządzenie przestaje zgłaszać obecność, po około 6,5 sekundy Panel sterowania pokazuje jednorazowo okno z nazwami odłączonych urządzeń i blokuje dalsze działania. Sprawdź internet w Panelu sterowania i na urządzeniach. Jeśli połączenie nie wróci, podłącz je ponownie przyciskami w górnym pasku. Gra odblokuje się po powrocie wszystkich wymaganych urządzeń. Urządzenia pominięte w przygotowaniu nie blokują rozgrywki.</p>
@@ -401,7 +402,7 @@ body.manual-in-control-modal .m-wrap { padding-bottom: 16px; }
 <h3 class="m-h2">2) Ustawienia</h3>
 <p class="m-p">Gdy urządzenia są połączone, przechodzisz do podsumowania ustawień. Wszystkie opcje (kolory, dźwięk, parametry gry) możesz wcześniej skonfigurować na stronie <strong>Ustawień rozgrywki</strong> — Panel sterowania wczyta je automatycznie.</p>
 <h3 class="m-h3">Nazwy drużyn</h3>
-<p class="m-p">Nazwy drużyn sprawdź w Podsumowaniu. Wyświetlacz pozostaje wtedy czarny; nazwy pojawią się dopiero po „Gotowe — przejdź do rozgrywki”, na ekranie z przyciskiem „Rozpocznij grę”. Puste pola w Ustawieniach rozgrywki oznaczają nazwy „Drużyna A” i „Drużyna B”.</p>
+<p class="m-p">Nazwy drużyn sprawdź w Podsumowaniu. Wyświetlacz pozostaje wtedy czarny; nazwy pojawią się dopiero po <span class="m-code">Gotowe — przejdź do rozgrywki</span>, na ekranie z przyciskiem <span class="m-code">Rozpocznij grę</span>. Puste pola w Ustawieniach rozgrywki oznaczają nazwy „Drużyna A” i „Drużyna B”.</p>
 <h3 class="m-h3">Wygląd</h3>
 <ul class="m-ul">
 <li><strong>Kolory</strong> — kolory drużyn, tła i kropek.</li>
@@ -420,52 +421,52 @@ body.manual-in-control-modal .m-wrap { padding-bottom: 16px; }
 <li>Suwak <strong>głośności</strong> pozwala dostosować poziom każdego dźwięku.</li>
 </ul>
 <ul class="m-ul">
-<li>Przycisk <strong>▶</strong> pozwala odsłuchać dźwięk przed rozgrywką.</li>
+<li>Przycisk <span class="m-code"><img class="m-icon" src="manual-assets/play.svg" alt="" width="16" height="16"></span> pozwala odsłuchać dźwięk przed rozgrywką.</li>
 </ul>
 <p class="m-p">Jeśli zmienisz poziom głośności tutaj, zostanie on zmieniony tylko dla tej konkretnej rozgrywki. Przy ponownym uruchomieniu rozgrywki zostaną wczytane wartości nadane w <strong>Ustawieniach rozgrywki</strong>.</p>
 <h3 class="m-h3">Finał</h3>
 <p class="m-p">Tu zobaczysz tylko potwierdzenie, czy rozgrywka ma finał.</p>
-<p class="m-p">Jeśli finał jest włączony i wybrano tryb <strong>Ręcznie</strong> — tutaj zobaczysz wybrane przez Ciebie 5 pytań finałowych. Przy trybie <strong>Losuj</strong> zobaczysz wylosowane pytania finałowe.</p>
-<p class="m-p">Przy trybie „Losuj” możesz użyć „Losuj ponownie” przy tej sekcji, aby zmienić zestaw przed rozpoczęciem gry. Wybrana kolejność i ręcznie wybrane pytania finału pozostają bez zmian.</p>
+<p class="m-p">Jeśli finał jest włączony i wybrano tryb <strong>Ręcznie</strong> — tutaj zobaczysz wybrane przez Ciebie 5 pytań finałowych. Przy trybie <strong>Losuj</strong> zobaczysz wylosowane pytania finałowe. Możesz użyć <span class="m-code">Losuj ponownie</span> przy tej sekcji, aby zmienić zestaw przed rozpoczęciem gry. Wybrana kolejność i ręcznie wybrane pytania finału pozostają bez zmian.</p>
 <h3 class="m-h3">Rundy: kolejność pytań</h3>
-<p class="m-p">Jeśli wybrano tryb <strong>Kolejność</strong> dla pytań rund — tutaj będzie widoczna kolejność pytań, które zostaną użyte podczas rozgrywki zasadniczej. Przy trybie <strong>Losuj</strong> zobaczysz wylosowane pytania rund.</p>
-<p class="m-p">Przy trybie „Losuj” użyj „Losuj ponownie” przy pytaniach rund, aby zmienić ich kolejność przed rozpoczęciem gry.</p>
-<p class="m-p">Zawsze możesz wcisnąć przycisk <strong>Zmień ustawienia</strong>, po czym otworzy się okienko ustawień — szczegóły w zakładce <strong>Ustawienia rozgrywki</strong>. Szczegóły znajdziesz w <a href="#ustawienia-rozgrywki">Ustawieniach rozgrywki</a>.</p>
-<p class="m-p">Gdy wszystko się zgadza — kliknij <strong>Gotowe — przejdź do rozgrywki</strong>.</p>
+<p class="m-p">Jeśli wybrano tryb <strong>Kolejność</strong> dla pytań rund — tutaj będzie widoczna kolejność pytań, które zostaną użyte podczas rozgrywki zasadniczej. Przy trybie <strong>Losuj</strong> zobaczysz wylosowane pytania rund.  Możesz użyć <span class="m-code">Losuj ponownie</span> przy pytaniach rund, aby zmienić ich kolejność przed rozpoczęciem gry.</p>
+<p class="m-p">Zawsze możesz wybrać <span class="m-code">Zmień ustawienia</span>, aby otworzyć okno ustawień. Szczegóły znajdziesz w <a href="#ustawienia-rozgrywki">Ustawieniach rozgrywki</a>.</p>
+<p class="m-p">Gdy wszystko się zgadza — kliknij <span class="m-code">Gotowe — przejdź do rozgrywki</span>.</p>
 <h3 class="m-h3">Zaznaczanie i zatwierdzanie</h3>
 <p class="m-p">Pierwsze kliknięcie kafelka wymagającego potwierdzenia zaznacza go. Drugie zatwierdza czynność. W ten sposób przyjmujesz zgłoszenie, odsłaniasz odpowiedzi w rundach, dodajesz X i oddajesz kontrolę. Samo zaznaczenie nie zmienia wyniku. Wyszarzone przyciski są niedostępne; podczas dźwięku lub przejścia poczekaj, aż panel je odblokuje. Wskazówki do bieżącego kroku znajdziesz w kolumnie podpowiedzi.</p>
 <p class="m-note"><strong>Wskazówka:</strong> Zaznaczenie kafelka pozwala sprawdzić wybór przed wykonaniem czynności. Punkty i plansza zmieniają się dopiero po zatwierdzeniu. Jeśli panel czeka na dźwięk lub przejście, pozwól mu je dokończyć.</p>
 <h3 class="m-h2">3) Rozpoczęcie gry</h3>
-<p class="m-p">Po sprawdzeniu Podsumowania wybierz „Gotowe — przejdź do rozgrywki”. Wyświetlacz aktywuje się i pokazuje nazwy drużyn, bez logo i planszy odpowiedzi. Przycisk do pojedynku jest już widoczny, ale jeszcze nie przyjmuje naciśnięć.</p>
-<p class="m-p">„Rozpocznij grę” uruchamia muzykę intro programu. Logo wchodzi z animacją podczas dźwięku „Zmiana na wyświetlaczu”; oba dźwięki kończą się razem. Poczekaj na koniec przejścia, a następnie wybierz „Rozpocznij rundę”. To osobna czynność: otwiera planszę pytania i uruchamia pojedynek. „Przejście rundy” i „Zmiana na wyświetlaczu” kończą się jednocześnie; dłuższy dźwięk zaczyna się wcześniej.</p>
-<p class="m-p"><strong>Prowadzący:</strong> Treść pytania będzie dostępna na etapie pojedynku. Nie odczytuj materiałów przed przygotowaniem zawodników.</p>
+<p class="m-p">Po sprawdzeniu Podsumowania wybierz <span class="m-code">Gotowe — przejdź do rozgrywki</span>. Wyświetlacz aktywuje się i pokazuje nazwy drużyn, bez logo i planszy odpowiedzi. Przycisk do pojedynku jest już widoczny, ale jeszcze nie przyjmuje naciśnięć.</p>
+<p class="m-note"><strong>Wskazówka:</strong> W tym stanie możesz pozostawić panel aż do rozpoczęcia właściwej rozgrywki. Kolejne etapy prowadzisz już w telewizyjnym tempie.</p>
+<p class="m-p"><span class="m-code">Rozpocznij grę</span> uruchamia intro i animowane wejście logo na Wyświetlaczu. Po zakończeniu przejścia wybierz <span class="m-code">Rozpocznij rundę</span>, aby otworzyć planszę pytania i rozpocząć pojedynek.</p>
+<p class="m-host"><strong>Prowadzący:</strong> Treść pytania będzie dostępna na etapie pojedynku. Nie odczytuj materiałów przed przygotowaniem zawodników.</p>
 <h3 class="m-h2">4) Rundy — przebieg gry krok po kroku</h3>
 <p class="m-p">W rundach prowadzisz właściwą rozgrywkę: pytania, odpowiedzi, punkty i bank rundy. Gracze widzą tablicę na wyświetlaczu, prowadzący zadaje pytania i pilnuje przebiegu, a operator odsłania odpowiedzi, nalicza punkty oraz dodaje błędy (X).</p>
-<p class="m-p">Najważniejsza zasada w praktyce: prowadzący skupia się na uczestnikach, a operator na obsłudze systemu. Dzięki temu gra jest płynna, a tablica zawsze pokazuje to, co powinno być w danym momencie.</p>
+<p class="m-p">Najważniejsza zasada w praktyce: prowadzący skupia się na uczestnikach, a operator na obsłudze systemu. Dzięki temu gra jest płynna, a tablica pokazuje właściwe informacje.</p>
+<p class="m-note"><strong>Wskazówka:</strong> Możesz połączyć rolę operatora i prowadzącego, ale wymaga to sprawnego przechodzenia między rozmową z uczestnikami a obsługą panelu.</p>
 <h3 class="m-h3">Pojedynek: kto przejmuje kontrolę</h3>
-<p class="m-p">Każde pytanie zaczyna się od pojedynku „głów rodzin”. Przycisk rozświetla się od razu po naciśnięciu, a zgłoszenie informuje operatora, kto był pierwszy. Dźwięk przyjętego zgłoszenia odtwarza się raz, przy naciśnięciu. Operator przyjmuje wskazaną drużynę. Jeśli zgłaszanie trzeba powtórzyć, wybierz „Ponów naciśnięcie”. W trybie fizycznego przycisku operator wskazuje drużynę ręcznie.</p>
+<p class="m-p">Każde pytanie zaczyna się od pojedynku „głów rodzin”. Przycisk rozświetla się od razu po naciśnięciu, a zgłoszenie informuje operatora, kto był pierwszy. Operator przyjmuje wskazaną drużynę. Jeśli zgłaszanie trzeba powtórzyć, wybierz <span class="m-code">Ponów naciśnięcie</span>. W trybie fizycznego przycisku operator wskazuje drużynę ręcznie.</p>
 <p class="m-p">Zgodnie z regulaminem, jeśli pierwsza odpowiedź nie jest najwyżej punktowana, druga „głowa" ma szansę odpowiedzieć lepiej i przejąć kontrolę. Panel prowadzi operatora przez decyzję kontroli rundy, a wyświetlacz pokazuje, która drużyna aktualnie gra (wskaźnik drużyny).</p>
-<p class="m-p"><strong>Prowadzący:</strong> Tytuł „RUNDA 1 — PRZYCISK” oznacza, że trwa pojedynek, także po przyjęciu zgłoszenia przez operatora. Pytanie i pełną listę odpowiedzi z punktami zobaczysz po odsłonięciu drugiej części. Zasłona zapobiega przypadkowemu odczytaniu pytania przez graczy przed jego zadaniem. Numer w tytule zmienia się wraz z rundą.</p>
+<p class="m-host"><strong>Prowadzący:</strong> Tytuł „RUNDA 1 — PRZYCISK” oznacza, że trwa pojedynek, także po przyjęciu zgłoszenia przez operatora. Pytanie i pełną treść odpowiedzi z punktami zobaczysz po odsłonięciu drugiej części. Zasłona zapobiega przypadkowemu odczytaniu pytania przez graczy przed jego zadaniem. Numer w tytule zmienia się wraz z rundą.</p>
 <h3 class="m-h3">Oddanie pytania</h3>
 <p class="m-p">Zgodnie z ustaleniami rozgrywki, po uzyskaniu kontroli drużyna może też zdecydować, że <strong>oddaje pytanie</strong> przeciwnikom. Jest to ruch taktyczny: zamiast „dobić" pytanie, drużyna może przekazać szansę rywalom. Panel udostępnia tę opcję tylko w odpowiednim momencie i pilnuje, żeby nie dało się jej nadużywać.</p>
-<p class="m-p"><strong>Prowadzący:</strong> Gdy można oddać kontrolę, w pierwszej części pojawia się podpowiedź. Decyzję drużyny realizuje operator w Panelu sterowania.</p>
+<p class="m-host"><strong>Prowadzący:</strong> Gdy można oddać kontrolę, w pierwszej części pojawia się podpowiedź. Decyzję drużyny realizuje operator w Panelu sterowania.</p>
 <h3 class="m-h3">Rozgrywka pytania: odsłanianie odpowiedzi i bank</h3>
 <p class="m-p">Po ustaleniu kontroli drużyna odpowiada, a operator zaznacza i zatwierdza trafione odpowiedzi. Na Wyświetlaczu najpierw odsłania się odpowiedź, a potem zmienia się bank rundy. Kafelek odsłoniętej odpowiedzi w panelu staje się zielony i nie przyznaje punktów ponownie. Bank to punkty z bieżącego pytania; wynik drużyny zostanie uzupełniony przy rozliczeniu rundy, z uwzględnieniem mnożnika.</p>
 <p class="m-p">Rozgrywka trwa do odsłonięcia wszystkich odpowiedzi albo trzech pudeł drużyny grającej. Trzeci X uruchamia kradzież przez przeciwników. Podpowiedź w panelu wskazuje aktualny etap i dostępny następny krok.</p>
-<p class="m-p"><strong>Prowadzący:</strong> „RUNDA 1 — ROZGRYWKA” oznacza grę drużyny po pojedynku. Pytanie jest już jawne w pierwszej części. W drugiej widzisz pełne odpowiedzi i punkty, także jeszcze zakryte na Wyświetlaczu. Wiersz „2) Rower (24)” oznacza drugą odpowiedź i 24 punkty. Zielony wiersz oznacza odpowiedź odsłoniętą publiczności. Prowadzący nie pokazuje banku, X ani wyników drużyn — sprawdzaj je na Wyświetlaczu lub w panelu.</p>
+<p class="m-host"><strong>Prowadzący:</strong> „RUNDA 1 — ROZGRYWKA” oznacza grę drużyny po pojedynku. Pytanie jest już jawne w pierwszej części. W drugiej widzisz pełne odpowiedzi i punkty, także jeszcze zakryte na Wyświetlaczu. Wiersz „2) Rower (24)” oznacza drugą odpowiedź i 24 punkty. Zielony wiersz oznacza odpowiedź odsłoniętą publiczności. Prowadzący nie pokazuje banku, X ani wyników drużyn — sprawdzaj je na Wyświetlaczu lub w panelu.</p>
 <h3 class="m-h3">Pudła (X) i limit 3 sekund</h3>
 <p class="m-p">Błędna odpowiedź jest oznaczana symbolem <strong>X</strong> na tablicy. Trzy błędy oznaczają utratę kontroli i przejście do kradzieży przez przeciwników. System ma także mechanikę limitu czasu <strong>3 sekund</strong> na odpowiedź — przekroczenie limitu jest traktowane jak pudło (X).</p>
 <p class="m-p"><strong>Po co odliczanie?</strong></p>
 <p class="m-p">To jest „bat na tempo". Odliczanie pozwala operatorowi szybko zamknąć zawahanie bez dyskusji i utrzymać rytm rozgrywki.</p>
 <h3 class="m-h3">Kradzież banku (jedna odpowiedź)</h3>
 <p class="m-p">Gdy drużyna grająca wykorzysta trzy „szanse" zanim odsłoni wszystkie odpowiedzi, pytanie przechodzi do drużyny przeciwnej. Przeciwnicy mają prawo do <strong>jednej odpowiedzi</strong>: jeśli trafi — bank przechodzi do nich, jeśli nie — bank zostaje u drużyny grającej. To domyka pytanie i rundę zgodnie z regulaminem.</p>
-<p class="m-p"><strong>Prowadzący:</strong> Tytuł zmienia się na „RUNDA 1 — KRADZIEŻ”. Lista odpowiedzi pozostaje dostępna pod zasłoną; pytanie pozostaje jawne. Nazwę drużyny wykonującej próbę i rozstrzygnięcie sprawdzisz w panelu i na Wyświetlaczu.</p>
+<p class="m-host"><strong>Prowadzący:</strong> Tytuł zmienia się na „RUNDA 1 — KRADZIEŻ”. Lista odpowiedzi pozostaje dostępna pod zasłoną; pytanie pozostaje jawne. Nazwę drużyny wykonującej próbę i rozstrzygnięcie sprawdzisz w panelu i na Wyświetlaczu.</p>
 <h3 class="m-h3">Odsłanianie brakujących odpowiedzi i zakończenie rundy</h3>
 <p class="m-p">Jeśli po tej rundzie będzie kolejna runda albo finał, a pytanie jest już rozstrzygnięte, wybierz „Zakończ rundę”. Bank zostaje dopisany właściwej drużynie z uwzględnieniem mnożnika. Jeśli pozostały zakryte odpowiedzi, odsłoń je kolejno dla publiczności — nie przyznają już dodatkowych punktów drużynie. Plansza pozostaje widoczna do kolejnego przejścia.</p>
-<p class="m-p"><strong>Praktyczna uwaga:</strong></p>
+<p class="m-note"><strong>Praktyczna uwaga:</strong></p>
 <p class="m-p">Panel celowo rozdziela „rozgrywkę pytania" od „zakończenia rundy". Dzięki temu operator nie skasuje przypadkiem stanu tablicy, zanim prowadzący dopowie puentę lub zanim padnie „dziękujemy".</p>
-<p class="m-p"><strong>Prowadzący:</strong> „RUNDA 1 — ODSŁANIANIE” oznacza pokaz pozostałych odpowiedzi po rozliczeniu banku. Kolejne odsłonięte wiersze stają się zielone.</p>
-<p class="m-p">Przy zakończeniu rundy „Zmiana na wyświetlaczu” i „Przejście rundy” grają razem i kończą się jednocześnie. Po odsłonięciu pozostałych odpowiedzi użyj przycisku wskazującego następną rundę albo finał.</p>
+<p class="m-host"><strong>Prowadzący:</strong> „RUNDA 1 — ODSŁANIANIE” oznacza pokaz pozostałych odpowiedzi po rozliczeniu banku. Kolejne odsłonięte wiersze stają się zielone.</p>
+<p class="m-p">Po odsłonięciu pozostałych odpowiedzi użyj przycisku wskazującego następną rundę albo finał.</p>
 <h3 class="m-h3">Zakończenie rund i przejście dalej</h3>
 <p class="m-p">Po każdej rundzie system aktualizuje wynik drużyn i sprawdza, czy spełniono warunek zakończenia rozgrywki (ustawiony w „Dodatkowych ustawieniach"). Najczęściej jest to próg punktów, np. <strong>300</strong>, ale może być inny — zależnie od tego, jak chcesz poprowadzić turniej.</p>
 <p class="m-p">Jeśli finał jest <strong>włączony</strong>, a warunek zakończenia rund został spełniony, rozgrywka przechodzi do finału. Jeśli finał jest <strong>wyłączony</strong>, rozgrywka kończy się po rundach i system przechodzi do ekranu zakończenia (logo/punkty/kwota — zgodnie z ustawieniami).</p>
@@ -474,14 +475,15 @@ body.manual-in-control-modal .m-wrap { padding-bottom: 16px; }
 <h3 class="m-h2">5) Finał</h3>
 <p class="m-p">W finale dwóch zawodników odpowiada na te same <strong>5 pytań</strong>. Ich punkty sumują się; celem jest ustawiony próg finału, domyślnie <strong>200 punktów</strong>. Zwykle grają dwie osoby z drużyny zwycięskiej. Za jej zgodą możesz organizacyjnie wybrać po jednym zawodniku z każdej drużyny — system nadal rozlicza jeden wspólny finał zwycięzców.</p>
 <h3 class="m-h3">Przygotowanie finału</h3>
-<p class="m-p">Przed grą sprawdź pięć pytań w Podsumowaniu. Przy „Ręcznie” wybierz je w Ustawieniach rozgrywki; przy „Losuj” system dobiera je automatycznie. Przygotuj miejsce oczekiwania i słuchawki z muzyką dla drugiego zawodnika: podczas pierwszej rundy nie może słyszeć pytań ani odpowiedzi.</p>
-<p class="m-p">„Rozpocznij finał” odtwarza „Muzykę finału”. Następnie grają „Przejście rundy” i „Zmiana na wyświetlaczu”, zsynchronizowane na koniec. W czasie zmiany pojawia się plansza finału. Wynik zwycięskiej drużyny pozostaje widoczny, a miejsce wyniku przeciwnej drużyny jest przeznaczone na zegar. Suma finału jest stale pokazywana w banku na górze.</p>
-<p class="m-p"><strong>Prowadzący:</strong> Podczas przygotowania finału ekran jest pusty. Materiały pojawiają się po rozpoczęciu pierwszej rundy.</p>
+<p class="m-p">Przed grą sprawdź pięć pytań w Podsumowaniu. Przy trybie <strong>Ręcznie</strong> wybierz je w Ustawieniach rozgrywki; przy trybie <strong>Losuj</strong> system dobiera je automatycznie. Przygotuj miejsce oczekiwania i słuchawki z muzyką dla drugiego zawodnika: podczas pierwszej rundy nie może słyszeć pytań ani odpowiedzi.</p>
+<p class="m-p"><span class="m-code">Rozpocznij finał</span> otwiera planszę finału. Wynik zwycięskiej drużyny pozostaje widoczny, a miejsce wyniku przeciwnej drużyny jest przeznaczone na zegar. Suma finału jest pokazywana w banku na górze.</p>
+<p class="m-host"><strong>Prowadzący:</strong> Podczas przygotowania finału tablet nie pokazuje materiałów. Materiały pojawiają się po rozpoczęciu pierwszej rundy.</p>
 <h3 class="m-h3">Gracz 1 — przygotowanie i wpisywanie</h3>
 <p class="m-p">Upewnij się, że drugi zawodnik oczekuje poza grą. Prowadzący czyta po kolei pytania; operator wpisuje odpowiedzi przy właściwych pytaniach. Odpowiedzi nie są jeszcze oceniane ani pokazywane publiczności.</p>
-<p class="m-p">Zegar pierwszego gracza ma <strong>15 sekund</strong>. Nie rusza po samym otwarciu ekranu: uruchom go przyciskiem albo skrótem <strong>⇧ Shift + Ctrl</strong> (Mac: <strong>⇧ + ⌘</strong>). Tym samym przyciskiem lub skrótem możesz zatrzymać odliczanie. Enter przechodzi do następnego pola, a strzałki góra i dół pozwalają zmienić pytanie. Puste pole to brak wpisu, nie ostateczna ocena odpowiedzi.</p>
-<p class="m-p"><strong>Prowadzący podczas wpisywania:</strong></p>
-<p class="m-p">Pierwsza część pokazuje <code>FINAŁ RUNDA 1</code> albo <code>FINAŁ RUNDA 2</code>. Po uruchomieniu zegara tytuł zawiera także odliczanie, np. <code>FINAŁ RUNDA 1 — ODLICZANIE 12s</code>. Jest to pozostały czas bieżącego gracza. Bez uruchomionego zegara tytuł nie zawiera sekund.</p>
+<p class="m-p">Zegar pierwszego gracza ma <strong>15 sekund</strong>. Nie rusza po samym otwarciu etapu: uruchom go przyciskiem albo skrótem <strong>Shift + Ctrl</strong> (Mac: <strong>⇧ + ⌘</strong>). Tym samym przyciskiem lub skrótem możesz zatrzymać odliczanie. Enter przechodzi do następnego pola, a strzałki góra i dół pozwalają zmienić pytanie. Puste pole to brak wpisu, nie ostateczna ocena odpowiedzi.</p>
+<p class="m-note"><strong>Wskazówka:</strong> Po upływie czasu możesz poprawić literówki i uzupełnić zapamiętaną odpowiedź, gdy prowadzący jeszcze rozmawia z zawodnikiem. Poprawki są możliwe również podczas dopasowania, do odsłonięcia odpowiedzi.</p>
+<div class="m-host"><p class="m-host-title"><strong>Prowadzący podczas wpisywania:</strong></p>
+<p class="m-p">Pierwsza część pokazuje <span class="m-code">FINAŁ RUNDA 1</span> albo <span class="m-code">FINAŁ RUNDA 2</span>. Po uruchomieniu zegara tytuł zawiera także odliczanie, np. <span class="m-code">FINAŁ RUNDA 1 — ODLICZANIE 12s</span>. Jest to pozostały czas bieżącego gracza. Bez uruchomionego zegara tytuł nie zawiera sekund.</p>
 <p class="m-p">Druga część pokazuje pięć pytań z numerami i statusem wpisu, np.:</p>
 <pre><code>
 1) Wymień środek transportu. — wpisano
@@ -489,45 +491,48 @@ body.manual-in-control-modal .m-wrap { padding-bottom: 16px; }
 3) Co pijesz rano? — powtórzenie
 </code></pre>
 <div class="table-wrap"><table>
-<tr><td>Status przy pytaniu</td><td>Znaczenie</td></tr>
-<tr><td><code>wpisano</code></td><td>Operator zapisał niepusty tekst odpowiedzi. To jeszcze nie potwierdzenie trafienia ani przyznania punktów.</td></tr>
-<tr><td><code>brak</code></td><td>Pole odpowiedzi jest puste. Nie oznacza to automatycznie, że gracz już definitywnie pominął pytanie.</td></tr>
-<tr><td><code>powtórzenie</code></td><td>Przy graczu 2 operator oznaczył odpowiedź jako powtórzoną po graczu 1. Przy odsłanianiu daje zero punktów.</td></tr>
+<tr><th>Status przy pytaniu</th><th>Znaczenie</th></tr>
+<tr><td><span class="m-code">wpisano</span></td><td>Operator zapisał niepusty tekst odpowiedzi. To jeszcze nie potwierdzenie trafienia ani przyznania punktów.</td></tr>
+<tr><td><span class="m-code">brak</span></td><td>Pole odpowiedzi jest puste. Nie oznacza to automatycznie, że gracz już definitywnie pominął pytanie.</td></tr>
+<tr><td><span class="m-code">powtórzenie</span></td><td>Przy graczu 2 operator oznaczył odpowiedź jako powtórzoną po graczu 1. Przy odsłanianiu daje zero punktów.</td></tr>
 </table></div>
 <p class="m-p">Na tym etapie prowadzący czyta pytania i śledzi, gdzie operator ma już wpis. Ekran pokazuje statusy, <strong>nie treść właśnie wpisywanych odpowiedzi</strong>. Treść wpisu jest dostępna przy późniejszym mapowaniu.</p>
+</div>
 <h3 class="m-h3">Gracz 1 — dopasowanie i odsłanianie</h3>
-<p class="m-p">Po zakończeniu odpowiadania przejdź do odsłaniania. Dla każdego pytania porównaj wpis z listą punktowanych odpowiedzi i wybierz pasującą pozycję albo pudło. Wyświetlacz pokazuje wybraną odpowiedź, a pełny wpis pozostaje w panelu. Przy trafieniu odsłoń odpowiedź z dźwiękiem „Zmiana na wyświetlaczu”, a potem punkty z „Poprawną odpowiedzią”. Przy wpisanej błędnej odpowiedzi odsłoń tekst z „Zmianą na wyświetlaczu”, a następnie zero z „Błędną odpowiedzią”. Brak odpowiedzi automatycznie pokazuje odpowiedź i zero z samą „Błędną odpowiedzią”. Dopasowanie samo nie nalicza punktów; suma zwiększa się przy odsłonięciu punktów.</p>
-<p class="m-p"><strong>Prowadzący podczas odsłaniania:</strong></p>
-<p class="m-p">Pierwsza część pokazuje np. <code>FINAŁ — ODSŁANIANIE (RUNDA 2)</code> oraz <code>Pytanie 3: …</code>. Numer określa aktualnie oceniane pytanie, a „RUNDA 2” oznacza drugiego gracza finału.</p>
+<p class="m-p">Po zakończeniu odpowiadania przejdź do odsłaniania. Dla każdego pytania porównaj wpis z listą punktowanych odpowiedzi i wybierz pasującą pozycję albo <span class="m-code">Nie ma na liście (0 pkt)</span>. Wyświetlacz pokazuje wybraną odpowiedź, a pełny wpis pozostaje w panelu. Przy trafieniu odsłoń odpowiedź, a następnie punkty. Przy wpisanej błędnej odpowiedzi odsłoń tekst, a następnie zero. Brak odpowiedzi automatycznie pokazuje odpowiedź i zero. Dopasowanie samo nie nalicza punktów; suma zwiększa się przy odsłonięciu punktów.</p>
+<p class="m-note"><strong>Wskazówka:</strong> Jeśli pokażesz dosłownie wpisaną odpowiedź, której nie ma na liście, możesz wcześniej poprawić literówki w polu. Po odsłonięciu nie można już zmienić odpowiedzi.</p>
+<div class="m-host"><p class="m-host-title"><strong>Prowadzący podczas odsłaniania:</strong></p>
+<p class="m-p">Pierwsza część pokazuje np. <span class="m-code">FINAŁ — ODSŁANIANIE (RUNDA 2)</span> oraz <span class="m-code">Pytanie 3: …</span>. Numer określa aktualnie oceniane pytanie, a „RUNDA 2” oznacza drugiego gracza finału.</p>
 <p class="m-p">Druga część zawiera:</p>
-<p class="m-p">1. <strong><code>Gracz 1: …</code></strong> — tylko przy mapowaniu gracza 2. To wcześniejsza, wybrana odpowiedź pierwszego gracza na to samo pytanie; <code>—</code> oznacza brak odpowiedzi.</p>
-<p class="m-p">2. <strong><code>Wprowadzono: …</code></strong> — tekst wpisany przez operatora dla aktualnego gracza. Wiersz jest pomijany, jeśli nie ma wpisu albo oznaczono powtórzenie.</p>
-<p class="m-p">3. <strong><code>Stan: …</code></strong> — informacja o obecnym dopasowaniu, według tabeli poniżej.</p>
-<p class="m-p">4. <strong><code>Lista odpowiedzi:</code></strong> — wszystkie odpowiedzi z bazy na bieżące pytanie, z punktami w nawiasach, od najwyżej punktowanej.</p>
+<p class="m-p">1. <strong><span class="m-code">Gracz 1: …</span></strong> — tylko przy mapowaniu gracza 2. To wcześniejsza, wybrana odpowiedź pierwszego gracza na to samo pytanie; <span class="m-code">—</span> oznacza brak odpowiedzi.</p>
+<p class="m-p">2. <strong><span class="m-code">Wprowadzono: …</span></strong> — tekst wpisany przez operatora dla aktualnego gracza. Wiersz jest pomijany, jeśli nie ma wpisu albo oznaczono powtórzenie.</p>
+<p class="m-p">3. <strong><span class="m-code">Stan: …</span></strong> — informacja o obecnym dopasowaniu, według tabeli poniżej.</p>
+<p class="m-p">4. <strong><span class="m-code">Lista odpowiedzi:</span></strong> — wszystkie odpowiedzi z bazy na bieżące pytanie, z punktami w nawiasach, od najwyżej punktowanej.</p>
 <div class="table-wrap"><table>
-<tr><td>Stan</td><td>Wygląd</td><td>Jak go interpretować</td></tr>
-<tr><td><code>z listy</code></td><td>Zielony, przekreślony napis. Wybrane dopasowanie na liście też jest zielone i przekreślone.</td><td>Wpis został przypisany do konkretnej odpowiedzi z bazy. Przekreślenie oznacza wybraną pozycję, <strong>nie błąd ani anulowanie</strong>.</td></tr>
-<tr><td><code>nie ma na liście</code></td><td>Żółty napis.</td><td>Jest wpis, lecz aktualny stan nie ma dopasowania do pozycji z bazy. Przy odsłonięciu jako pudło będzie zero. Podczas wybierania dopasowania ten status może jeszcze się zmienić.</td></tr>
-<tr><td><code>brak odpowiedzi</code></td><td>Czerwony napis.</td><td>Nie ma tekstu odpowiedzi aktualnego gracza.</td></tr>
-<tr><td><code>powtórzenie</code></td><td>Żółty napis.</td><td>Odpowiedź drugiego gracza oznaczono jako powtórzoną; nie punktuje.</td></tr>
+<tr><th>Stan</th><th>Wygląd</th><th>Jak go interpretować</th></tr>
+<tr><td><span class="m-code">z listy</span></td><td>Zielony napis. Wybrana odpowiedź na liście jest zielona i przekreślona.</td><td>Wpis został przypisany do konkretnej odpowiedzi z bazy. Przekreślenie na liście oznacza wybraną pozycję, <strong>nie błąd ani anulowanie</strong>.</td></tr>
+<tr><td><span class="m-code">nie ma na liście</span></td><td>Żółty napis.</td><td>Jest wpis, ale nie przypisano go do odpowiedzi z bazy. Jeśli pozostawisz ten wybór, Wyświetlacz pokaże dosłownie wpisaną odpowiedź, a po odsłonięciu punktów — zero. Przed odsłonięciem możesz zmienić dopasowanie.</td></tr>
+<tr><td><span class="m-code">brak odpowiedzi</span></td><td>Czerwony napis.</td><td>Nie ma tekstu odpowiedzi aktualnego gracza.</td></tr>
+<tr><td><span class="m-code">powtórzenie</span></td><td>Żółty napis.</td><td>Odpowiedź drugiego gracza oznaczono jako powtórzoną; nie punktuje.</td></tr>
 </table></div>
 <p class="m-p"><strong>Kolory w finale opisują dopasowanie, a nie etap animacji na Wyświetlaczu.</strong> Zielone „z listy” nie oznacza samo w sobie, że publiczność już zobaczyła odpowiedź lub punkty. Rozróżniaj tekst wpisany przez operatora od wybranej odpowiedzi z bazy: mogą mieć inne brzmienie, np. wpis „na rowerze” dopasowany do „Rower (24)”.</p>
+</div>
 <h3 class="m-h3">Gracz 2 — przygotowanie i wpisywanie</h3>
-<p class="m-p">Jeżeli nie osiągnięto progu, po piątym pytaniu gracza 1 przejdź do przygotowania drugiego zawodnika. W tym przejściu gra „Przejście rundy”; ekran Prowadzącego jest czyszczony. Przypomnij zasady i możesz zaprezentować dźwięk powtórzenia.</p>
-<p class="m-p">„Rozpocznij 2 rundę” przywraca odkryte odpowiedzi gracza 1 na Wyświetlaczu. Drugi zawodnik odwraca się od tablicy, aby ich nie widzieć. Operator widzi je przy polach odpowiedzi, co pomaga rozpoznać powtórzenie. Zegar ma <strong>20 sekund</strong> i uruchamiasz go tak samo jak przy graczu 1. Prowadzący widzi tytuł „FINAŁ RUNDA 2”, odliczanie po uruchomieniu zegara i pięć pytań ze statusami wpisów.</p>
-<p class="m-p">Gdy gracz powtórzy odpowiedź pierwszego zawodnika, oznacz „Powtórzenie” i poproś o inną odpowiedź. Zaznaczenie odtwarza dźwięk powtórzenia. Dopóki pozostaje czas, prowadzący może ponownie czytać pominięte pytania, także te z powtórzeniem. Gracz może się poprawić. Wpisanie nowej treści automatycznie usuwa oznaczenie powtórzenia; samo ustawienie kursora tego nie robi.</p>
-<p class="m-note"><strong>Wskazówka:</strong> Pytania można czytać w kolejnych obiegach do końca czasu. „Dalej” wypowiedziane przez zawodnika nie zamyka pytania na resztę rundy.</p>
+<p class="m-p">Jeżeli nie osiągnięto progu, po piątym pytaniu gracza 1 przejdź do przygotowania drugiego zawodnika. W tym przejściu gra „Przejście rundy”; tablet Prowadzącego jest czyszczony. Przypomnij zasady i możesz zaprezentować dźwięk powtórzenia.</p>
+<p class="m-p"><span class="m-code">Rozpocznij 2 rundę</span> przywraca odkryte odpowiedzi gracza 1 na Wyświetlaczu. Drugi zawodnik odwraca się od tablicy, aby ich nie widzieć. Operator widzi je przy polach odpowiedzi, co pomaga rozpoznać powtórzenie. Zegar ma <strong>20 sekund</strong> i uruchamiasz go tak samo jak przy graczu 1. Prowadzący widzi tytuł „FINAŁ RUNDA 2”, odliczanie po uruchomieniu zegara i pięć pytań ze statusami wpisów.</p>
+<p class="m-p">Gdy gracz powtórzy odpowiedź pierwszego zawodnika, oznacz <span class="m-code">Powtórzenie</span> i poproś o inną odpowiedź. Zaznaczenie odtwarza dźwięk powtórzenia. Dopóki pozostaje czas, prowadzący może ponownie czytać pominięte pytania, także te z powtórzeniem. Gracz może się poprawić. Wpisanie nowej treści automatycznie usuwa oznaczenie powtórzenia; samo ustawienie kursora tego nie robi.</p>
+<p class="m-note"><strong>Wskazówka:</strong> Pytania można czytać w kolejnych obiegach do końca czasu. <span class="m-code">Dalej</span> wypowiedziane przez zawodnika nie zamyka pytania na resztę rundy.</p>
 <h3 class="m-h3">Gracz 2 — dopasowanie i odsłanianie</h3>
-<p class="m-p">Po wpisywaniu dopasuj i odsłoń odpowiedzi drugiego gracza tak samo jak pierwszego. W panelu i na ekranie Prowadzącego „Gracz 1” wskazuje wcześniejszą wybraną odpowiedź, a „Wprowadzono” — obecny wpis operatora. Nie muszą mieć identycznego brzmienia. Powtórzenie nie daje punktów. Przy mapowaniu jest znacznikiem braku odpowiedzi: samo zaznaczenie nie odtwarza dźwięku, a odsłonięcie pokazuje automatycznie zero z dźwiękiem błędnej odpowiedzi. Puste pole udostępnia tylko brak odpowiedzi i powtórzenie; wpisany tekst blokuje oba warianty. Przed odsłonięciem można poprawić wpis i przyporządkowanie także po końcu czasu. Aby wybrać brak lub powtórzenie zamiast wpisanej odpowiedzi, najpierw usuń tekst. Punkty obu graczy trafiają do tej samej sumy na górze Wyświetlacza. Zegar znika po zatrzymaniu lub wygaśnięciu, a wynik drużyny przeciwnej już nie wraca.</p>
-<p class="m-note"><strong>Ważne:</strong> Wyświetlacz mieści 17 znaków odpowiedzi w rundach i 11 w finale, razem ze spacjami. Dłuższy tekst jest skracany tylko na planszy; pełny pozostaje w panelu i na ekranie Prowadzącego. Kropka oznacza urwane słowo. Jeśli następny znak to spacja lub interpunkcja, kropka nie jest dodawana.</p>
+<p class="m-p">Po wpisywaniu dopasuj i odsłoń odpowiedzi drugiego gracza tak samo jak pierwszego. W panelu i na tablecie Prowadzącego „Gracz 1” wskazuje wcześniejszą wybraną odpowiedź, a „Wprowadzono” — obecny wpis operatora. Nie muszą mieć identycznego brzmienia. Powtórzenie nie daje punktów. Punkty obu graczy trafiają do tej samej sumy na górze Wyświetlacza.</p>
+<p class="m-note"><strong>Ważne:</strong> Wyświetlacz mieści 17 znaków odpowiedzi w rundach i 11 w finale, razem ze spacjami. Dłuższy tekst jest skracany tylko na planszy; pełny pozostaje w panelu i na tablecie Prowadzącego. Kropka oznacza urwane słowo. Jeśli następny znak to spacja lub interpunkcja, kropka nie jest dodawana.</p>
 <h3 class="m-h3">Kiedy finał się kończy</h3>
-<p class="m-p">Osiągnięcie progu blokuje dalszą ocenę odpowiedzi. Kolumna podpowiedzi informuje o osiągniętym progu, a przycisk zmienia się na „Zakończ finał”, zarówno przy graczu 1, jak i 2. Wynik nie pojawia się automatycznie: operator wybiera moment zakończenia. Jeżeli progu nie osiągnięto, „Zakończ finał” pojawia się po odsłonięciu ostatnich punktów gracza 2.</p>
-<p class="m-p">„Zakończ finał” pokazuje wybrany ekran końcowy — logo, punkty albo kwotę — podczas „Zmiany na wyświetlaczu”, która kończy się razem z „Muzyką finału”. Dłuższy dźwięk rozpoczyna się wcześniej. Nie gra wtedy dodatkowe „Przejście rundy”. Następne „Zakończ grę” odtwarza tylko „Muzykę outro programu”. Wynik pozostaje widoczny, a wskaźnik zwycięskiej drużyny nie gaśnie. Przy zakończeniu finału ekran Prowadzącego jest czyszczony; wynik oglądaj na Wyświetlaczu.</p>
+<p class="m-p">Osiągnięcie progu blokuje dalszą ocenę odpowiedzi. Kolumna podpowiedzi informuje o osiągniętym progu, a przycisk zmienia się na <span class="m-code">Zakończ finał</span>, zarówno przy graczu 1, jak i 2. Wynik nie pojawia się automatycznie: operator wybiera moment zakończenia. Jeżeli progu nie osiągnięto, <span class="m-code">Zakończ finał</span> pojawia się po odsłonięciu ostatnich punktów gracza 2.</p>
+<p class="m-p"><span class="m-code">Zakończ finał</span> pokazuje wybrany ekran końcowy — logo, punkty albo kwotę. Następne <span class="m-code">Zakończ grę</span> odtwarza tylko „Muzykę outro programu”. Wynik pozostaje widoczny, a wskaźnik zwycięskiej drużyny nie gaśnie. Przy zakończeniu finału tablet Prowadzącego jest czyszczony; wynik oglądaj na Wyświetlaczu.</p>
 <h3 class="m-h3">Zakończenie gry bez finału</h3>
-<p class="m-p">Jeżeli finał jest wyłączony i osiągnięto próg rund albo wyczerpały się pytania, dalsze działania rundy zostają zablokowane. Nie odsłaniasz pozostałych odpowiedzi. „Przejdź do zakończenia gry” rozlicza bank, odtwarza jednocześnie „Przejście rundy” i „Zmianę na wyświetlaczu” oraz pokazuje ekran końcowy. Potem „Zakończ grę” odtwarza tylko „Muzykę outro programu”. Przy „Pokaż kwotę (po finale)” zakończenie bez finału pokazuje punkty; przy remisie pokazuje logo.</p>
-<p class="m-p">Prowadzący może nadal pokazywać ostatni stan rundy — jego ekran nie jest ekranem nagrody.</p>
+<p class="m-p">Jeżeli finał jest wyłączony i osiągnięto próg rund albo wyczerpały się pytania, dalsze działania rundy zostają zablokowane. Nie odsłaniasz pozostałych odpowiedzi. <span class="m-code">Przejdź do zakończenia gry</span> rozlicza bank i pokazuje ekran końcowy. Potem <span class="m-code">Zakończ grę</span> odtwarza tylko „Muzykę outro programu”. Przy „Pokaż kwotę (po finale)” zakończenie bez finału pokazuje punkty; przy remisie pokazuje logo.</p>
+<p class="m-p">Tablet Prowadzącego zostaje wyczyszczony po przejściu do zakończenia gry. Wynik oglądaj na Wyświetlaczu.</p>
 <h3 class="m-h3">Ponowne rozpoczęcie gry</h3>
-<p class="m-p">Przycisk <strong>↻ Zacznij od nowa</strong> jest dostępny także podczas dźwięków, przejść i rozłączenia urządzeń. Potwierdzenie restartu wraca do przygotowania urządzeń, przerywa dźwięki i usuwa oczekujące działania poprzedniej rozgrywki.</p>
+<p class="m-p">Uruchamiasz przyciskiem <span class="m-code"><img class="m-icon" src="manual-assets/refresh.svg" alt="" width="16" height="16"></span> (Zacznij od nowa). Potwierdzenie restartu wraca do przygotowania urządzeń, przerywa dźwięki i usuwa oczekujące działania poprzedniej rozgrywki.</p>
 </div>
 </section>
 <section id="gameSettings"><span id="ustawienia-rozgrywki"></span>
@@ -536,7 +541,7 @@ body.manual-in-control-modal .m-wrap { padding-bottom: 16px; }
 <p class="m-p">Strona Ustawień rozgrywki pozwala skonfigurować grę na spokojnie — zanim wejdziesz do Panelu sterowania i zaczniesz rozgrywkę na żywo. Wszystko, co tu ustawisz, jest zapisane do gry i zostanie automatycznie wczytane przez Panel sterowania.</p>
 <p class="m-p">Otworzysz ją ze strony <strong>Moje gry</strong> przyciskiem <strong>Ustawienia rozgrywki</strong> przy wybranej grze.</p>
 <h3 class="m-h2">Drużyny</h3>
-<p class="m-p">Wpisz nazwy drużyn i sprawdź je na podglądzie oraz w Podsumowaniu. Na Wyświetlaczu gry pojawią się dopiero na ekranie z przyciskiem „Rozpocznij grę”, po przygotowaniu urządzeń i ustawień.</p>
+<p class="m-p">Wpisz nazwy drużyn i sprawdź je na podglądzie oraz w Podsumowaniu. Na Wyświetlaczu gry pojawią się dopiero na ekranie z przyciskiem <span class="m-code">Rozpocznij grę</span>, po przygotowaniu urządzeń i ustawień.</p>
 <p class="m-p">Jeśli nie wpiszesz nic — zostaną wyświetlone domyślne wartości <strong>Drużyna A</strong> i <strong>Drużyna B</strong>.</p>
 <h3 class="m-h2">Wygląd</h3>
 <h3 class="m-h3">Kolory</h3>
@@ -555,34 +560,34 @@ body.manual-in-control-modal .m-wrap { padding-bottom: 16px; }
 <p class="m-p">Wybierz motyw wizualny tablicy. Motyw wpływa na styl graficzny całego wyświetlacza. Domyślny motyw to <strong>Klasyczny</strong>.</p>
 <h3 class="m-h3">Logo</h3>
 <p class="m-p">Jeśli masz własne logo, wybierz je w sekcji „Logo”. Wybór „Domyślne” oznacza logo Familiady, a „Bez logo” rezygnację z własnego znaku. Wybrane logo pojawia się na początku gry; na końcu zależy od ustawionego trybu ekranu końcowego. Podgląd w Ustawieniach rozgrywki pokazuje edytowane wartości przed zapisem. Podsumowanie w Panelu sterowania korzysta z zapisanych ustawień.</p>
-<p class="m-p">Przycisk <strong>Przywróć domyślne</strong> w sekcji Wygląd resetuje kolory, motyw i logo do wartości domyślnych.</p>
+<p class="m-p">Przycisk <span class="m-code">Przywróć domyślne</span> w sekcji Wygląd resetuje kolory, motyw i logo do wartości domyślnych.</p>
 <h3 class="m-h2">Dźwięk</h3>
-<p class="m-p">W tej sekcji konfigurujesz dźwięki używane podczas rozgrywki. Każda kategoria dźwiękowa (np. <strong>Poprawna odpowiedź</strong>, <strong>Błędna odpowiedź</strong>, <strong>Intro</strong>, <strong>Przejście rundy</strong>, <strong>Muzyka outro programu</strong>, <strong>Zmiana na wyświetlaczu</strong>) ma własne ustawienia.</p>
+<p class="m-p">W tej sekcji konfigurujesz dźwięki używane podczas rozgrywki. Każda kategoria dźwiękowa (np. <strong>Poprawna odpowiedź</strong>, <strong>Błędna odpowiedź</strong>, <strong>Intro</strong>, <strong>Przejście rundy</strong>, <strong>Muzyka outro programu</strong>, <strong>Odsłanianie</strong>) ma własne ustawienia.</p>
 <h3 class="m-h3">Wariant dźwięku</h3>
 <p class="m-p">Przy każdej kategorii możesz wybrać <strong>wariant</strong> z listy:</p>
 <ul class="m-ul">
 <li>Dostępne są gotowe warianty (np. <strong>Klasyczny</strong>)</li>
 </ul>
 <ul class="m-ul">
-<li>Opcja <strong>Własny</strong> pozwala załadować własny plik audio (MP3, WAV, OGG) — po wybraniu jej pojawia się przycisk <strong>Wybierz plik</strong></li>
+<li>Opcja <strong>Własny</strong> pozwala załadować własny plik audio (MP3, WAV, OGG) — po wybraniu jej pojawia się przycisk <span class="m-code">Wybierz plik</span></li>
 </ul>
 <h3 class="m-h3">Własny plik audio</h3>
-<p class="m-p">Po kliknięciu <strong>Wybierz plik</strong> wskazujesz plik z dysku. W tabeli przy danej kategorii pojawia się etykieta z nazwą pliku.</p>
-<p class="m-p">Aby usunąć własny plik, użyj przycisku <strong>X</strong> przy pliku. Jeśli chcesz wrócić do gotowego wariantu — zmień wariant na inny niż <strong>Własny</strong>.</p>
+<p class="m-p">Po kliknięciu <span class="m-code">Wybierz plik</span> wskazujesz plik z dysku. W tabeli przy danej kategorii pojawia się etykieta z nazwą pliku.</p>
+<p class="m-p">Aby usunąć własny plik, użyj przycisku <span class="m-code"><img class="m-icon" src="manual-assets/trash.svg" alt="" width="16" height="16"></span> przy pliku. Jeśli chcesz wrócić do gotowego wariantu — zmień wariant na inny niż <strong>Własny</strong>.</p>
 <p class="m-p">Własny plik audio jest zapisywany w chmurze razem z grą i będzie dostępny na każdym urządzeniu, na którym uruchomisz tę grę.</p>
 <p class="m-p"><strong>Limity własnych plików:</strong></p>
 <div class="table-wrap"><table>
-<tr><td>Kategorie</td><td>Maksymalna długość</td></tr>
-<tr><td>Naciśnięcie Przycisku, poprawna i błędna odpowiedź, powtórzenie, limit czasu, zmiana na wyświetlaczu</td><td>5 sekund</td></tr>
+<tr><th>Kategorie</th><th>Maksymalna długość</th></tr>
+<tr><td>Naciśnięcie Przycisku, poprawna i błędna odpowiedź, powtórzenie, limit czasu, odsłanianie</td><td>5 sekund</td></tr>
 <tr><td>Muzyka intro programu, przejście rundy, muzyka finału</td><td>30 sekund</td></tr>
 <tr><td>Muzyka outro programu</td><td>2 minuty</td></tr>
 </table></div>
-<p class="m-p">Outro odtwarza przycisk „Zakończ grę”, gdy ekran końcowy jest już widoczny. Własne pliki i głośność ustawiasz tak samo dla każdej kategorii.</p>
+<p class="m-p">Outro odtwarza przycisk <span class="m-code">Zakończ grę</span>, gdy ekran końcowy jest już widoczny. Własne pliki i głośność ustawiasz tak samo dla każdej kategorii.</p>
 <h3 class="m-h3">Głośność</h3>
 <p class="m-p">Przy każdej kategorii jest suwak głośności (0–100%). Zmiany są zapisywane i wczytywane automatycznie przy każdej rozgrywce.</p>
 <h3 class="m-h3">Przycisk odtwarzania</h3>
-<p class="m-p">Obok każdej kategorii jest mały przycisk odtwarzania. Kliknij go, żeby usłyszeć wybrany dźwięk z ustawioną głośnością. Ponowne kliknięcie przycisku zatrzymania zatrzymuje odtwarzanie.</p>
-<p class="m-p">Przycisk <strong>Przywróć domyślne</strong> w sekcji Dźwięk resetuje wszystkie warianty do <strong>Klasycznego</strong>, głośności do <strong>100%</strong> oraz usuwa wszystkie własne pliki audio (z chmury i lokalnie). <strong>Operacja jest nieodwracalna — pliki trzeba wgrać ponownie.</strong></p>
+<p class="m-p">Obok każdej kategorii jest przycisk <span class="m-code"><img class="m-icon" src="manual-assets/play.svg" alt="" width="16" height="16"></span>. Kliknij go, żeby usłyszeć wybrany dźwięk z ustawioną głośnością. Podczas odtwarzania zmienia się na <span class="m-code"><img class="m-icon" src="manual-assets/stop.svg" alt="" width="16" height="16"></span>, którym zatrzymasz dźwięk.</p>
+<p class="m-p">Przycisk <span class="m-code">Przywróć domyślne</span> w sekcji Dźwięk resetuje wszystkie warianty do <strong>Klasycznego</strong>, głośności do <strong>100%</strong> oraz usuwa wszystkie własne pliki audio (z chmury i lokalnie). <strong>Operacja jest nieodwracalna — pliki trzeba wgrać ponownie.</strong></p>
 <h3 class="m-h2">Pytania</h3>
 <h3 class="m-h3">Finał</h3>
 <p class="m-p">Przełącznik <strong>Czy gra zawiera finał?</strong> decyduje, czy gra zakończy się etapem finałowym. Gdy finał jest <strong>wyłączony</strong>, rozgrywka kończy się po rundach zasadniczych. Gdy jest <strong>włączony</strong> — dostępne stają się dodatkowe opcje wyboru pytań finałowych.</p>
@@ -603,7 +608,7 @@ body.manual-in-control-modal .m-wrap { padding-bottom: 16px; }
 <h3 class="m-h3">Dodatkowe ustawienia</h3>
 <p class="m-p">Tu dopasowujesz parametry rozgrywki do swojego formatu. Opcje nie zmieniają zasad gry, tylko jej progi i tempo.</p>
 <ul class="m-ul">
-<li><strong>Mnożniki rund</strong> — wpisywane po przecinku (np. <code>1,1,1,2,3</code>). Bank każdej rundy jest mnożony przez odpowiadający mnożnik. To odpowiada klasycznemu podwajaniu/potrajaniu w kolejnych etapach. Jeśli rozgrywka trwa dalej, do kolejnych rund stosowany jest ostatni mnożnik.</li>
+<li><strong>Mnożniki rund</strong> — wpisywane po przecinku (np. <span class="m-code">1,1,1,2,3</span>). Bank każdej rundy jest mnożony przez odpowiadający mnożnik. To odpowiada klasycznemu podwajaniu/potrajaniu w kolejnych etapach. Jeśli rozgrywka trwa dalej, do kolejnych rund stosowany jest ostatni mnożnik.</li>
 </ul>
 <ul class="m-ul">
 <li><strong>Próg punktów do finału</strong> — liczba punktów, po której osiągnięciu jedna z drużyn może zakwalifikować się do finału (klasycznie: 300). Jeśli żadna drużyna nie osiągnie progu przed wyczerpaniem pytań — rundy kończą się naturalnie.</li>
@@ -630,281 +635,16 @@ body.manual-in-control-modal .m-wrap { padding-bottom: 16px; }
 <li><strong>Kwota główna nagrody</strong> — kwota dodawana do nagrody, gdy drużyna osiągnie cel finału (klasycznie: 25 000).</li>
 </ul>
 <p class="m-p">Dodatkowe ustawienia mają rozsądne wartości domyślne odpowiadające klasycznej Familiadzie. Dla większości rozgrywek nie musisz ich zmieniać.</p>
+<p class="m-warn"><strong>Uwaga:</strong> Mnożniki rund i nagrody są obecnie dodatnimi liczbami całkowitymi. Wartość <span class="m-code">0,5</span> nie jest obsługiwana.</p>
 <h3 class="m-h3">Zapis ustawień</h3>
-<p class="m-p">Zmiany są zapisywane po kliknięciu <strong>Zapisz wszystko</strong>. Nie ma automatycznego zapisu przy samej zmianie — pamiętaj o kliknięciu przycisku przed wyjściem.</p>
+<p class="m-p">Zmiany są zapisywane po kliknięciu <span class="m-code">Zapisz wszystko</span>. Nie ma automatycznego zapisu przy samej zmianie — pamiętaj o kliknięciu przycisku przed wyjściem.</p>
 <h3 class="m-h3">Przywróć domyślne</h3>
-<p class="m-p">Przycisk <strong>Przywróć domyślne</strong> na górze strony resetuje całość ustawień do wartości domyślnych.</p>
+<p class="m-p">Przycisk <span class="m-code">Przywróć domyślne</span> na górze strony resetuje całość ustawień do wartości domyślnych.</p>
 <p class="m-p">Ta czynność jest nieodwracalna — jeśli wciśniesz przypadkiem i zatwierdzisz, trzeba będzie zmieniać wszystko od nowa (w tym wgrywanie plików dźwiękowych).</p>
 <p class="m-p">Próg punktów do finału dotyczy wyniku z rund, a cel finału punktów obu graczy finału. To dwa osobne ustawienia. Gdy włączono wyświetlanie kwoty, osiągnięcie celu finału uwzględnia kwotę głównej nagrody; bez osiągnięcia celu wyświetlana jest niższa nagroda obliczona z punktów i mnożnika. Gra bez finału pokazuje w tym trybie punkty.</p>
 </div>
 </section>
-<section id="polls">
-<h2>Ankiety</h2>
-<div class="m-doc">
-<p class="m-p">
-        Zakładka „Ankiety” opisuje etap zbierania odpowiedzi
-        od ankietowanych przed właściwą rozgrywką.
-        Ankieta jest mostem pomiędzy przygotowaniem gry
-        a jej rozegraniem na żywo.
-      </p>
-    
-      <p class="m-p">
-        Na tym etapie system przestaje być edytorem treści,
-        a zaczyna działać jak narzędzie do zbierania danych.
-        Z tego powodu wiele opcji edycji jest celowo ograniczonych.
-      </p>
 
-
-      <p class="m-p">
-        Do ankiet przechodzisz z górnego paska na stronie „Moje gry”
-        przyciskiem <span class="m-code">Ankiety <i class="ico" data-icon="polls">
-</i>
-</span>.
-      </p>
-
-      <h3 class="m-h2">Strona ankiet</h3>
-
-      <p class="m-p">
-        Na komputerze widzisz dwa obszary:
-      </p>
-
-      <ul class="m-ul">
-        <li>
-<span class="m-strong">Moje ankiety</span> — lista ankiet, które tworzysz i prowadzisz.</li>
-        <li>
-<span class="m-strong">Zadania</span> — zaproszenia do ankiety od innych użytkowników.</li>
-      </ul>
-
-      <p class="m-p">
-        Złota kropka przy przycisku „Ankiety <i class="ico" data-icon="polls">
-</i>” pokazuje liczbę aktywnych zadań do wykonania.
-      </p>
-
-      <p class="m-p">
-        Udostępnianie ankiety odbywa się z listy „Moje ankiety”: zaznacz kafelek i kliknij
-        <span class="m-code">Udostępnij</span>, następnie wybierz odbiorców i zapisz.
-        Kafelek ankiety pokazuje bieżące wyniki, a przycisk <span class="m-code">Szczegóły</span>
-        daje podgląd listy oddanych głosów, oczekujących, odrzuconych oraz anonimowych odpowiedzi.
-      </p>
-
-      <h3 class="m-h3">Moje ankiety</h3>
-      <p class="m-p">
-        Każdy kafelek ma kolor, który oznacza stan ankiety:
-      </p>
-      <ul class="m-ul">
-        <li>
-<span class="m-strong">Szary</span> — szkic, brakuje wymagań do uruchomienia.</li>
-        <li>
-<span class="m-strong">Czerwony</span> — szkic gotowy do uruchomienia.</li>
-        <li>
-<span class="m-strong">Pomarańczowy</span> — ankieta otwarta, brak głosów.</li>
-        <li>
-<span class="m-strong">Żółty</span> — ankieta otwarta, są wyniki lub aktywne zadania.</li>
-        <li>
-<span class="m-strong">Zielony</span> — ankieta otwarta, cele zebrane (zadania wykonane lub ≥10 głosów).</li>
-        <li>
-<span class="m-strong">Niebieski</span> — ankieta zamknięta.</li>
-      </ul>
-
-      <h3 class="m-h3">Zadania</h3>
-      <p class="m-p">
-        Zadania to zaproszenia do ankiety. Kolory:
-        <span class="m-strong">zielony</span> — dostępne,
-        <span class="m-strong">niebieski</span> — wykonane.
-        Dwuklik otwiera ankietę, a przycisk <span class="m-code">
-<i class="ico" data-icon="cancel">
-</i>
-</span> odrzuca zadanie.
-      </p>
-
-      <h3 class="m-h2">Rodzaje ankiet</h3>
-    
-      <p class="m-p">
-        W zależności od typu gry ankieta może działać w jednym z dwóch trybów:
-      </p>
-    
-      <ul class="m-ul">
-        <li>
-          <span class="m-strong">Ankieta tekstowa</span> —
-          ankietowani wpisują własne odpowiedzi tekstowe.
-        </li>
-        <li>
-          <span class="m-strong">Punktacja</span> —
-          ankietowani wybierają jedną z przygotowanych odpowiedzi.
-        </li>
-      </ul>
-    
-      <p class="m-p">
-        Gry preparowane nie posiadają ankiety —
-        odpowiedzi i punkty są w nich ustalane ręcznie.
-      </p>
-    
-      <h3 class="m-h2">Uruchamianie ankiety</h3>
-    
-      <p class="m-p">
-        Ankietę można uruchomić wyłącznie dla gry
-        znajdującej się w stanie <span class="m-strong">Szkic</span>.
-        Przed uruchomieniem system sprawdza,
-        czy gra spełnia minimalne wymagania.
-      </p>
-    
-      <ul class="m-ul">
-        <li>minimalna liczba pytań,</li>
-        <li>w trybie punktacji — odpowiednia liczba odpowiedzi przy każdym pytaniu.</li>
-      </ul>
-    
-      <div class="m-note">
-        <b>Dlaczego?</b>
-<br/>
-        Dzięki temu nie da się uruchomić ankiety,
-        który nie może zostać później poprawnie zamknięty
-        i użyty w rozgrywce.
-      </div>
-    
-      <h3 class="m-h2">Link i kod QR do głosowania</h3>
-
-      <p class="m-p">
-        Po uruchomieniu ankiety system generuje
-        unikalny link do ankiety.
-        Link ten można skopiować lub otworzyć w nowej karcie —
-        uczestnicy wpisują go na swoich telefonach i oddają głos.
-        Mały kod QR widoczny na stronie ankiety też koduje ten link.
-      </p>
-
-      <h3 class="m-h2">QR na wyświetlaczu (TV / rzutnik)</h3>
-
-      <p class="m-p">
-        Przycisk <span class="m-code">QR na wyświetlaczu</span> otwiera okno z kodem urządzenia:
-      </p>
-      <ul class="m-ul">
-        <li>
-<span class="m-strong">6-cyfrowy kod</span> — wpisz go na stronie
-          <span class="m-code">Podłącz urządzenie</span>, aby ręcznie połączyć TV lub drugi ekran.</li>
-      </ul>
-
-      <p class="m-p">
-        <span class="m-strong">Telewizor jako samodzielny ekran:</span>
-        w jego przeglądarce otwórz <span class="m-code">www.familiada.online</span>.
-        Rozpoznany telewizor przejdzie bezpośrednio do uproszczonej strony podłączenia.
-        Wpisz 6-cyfrowy kod z okna <span class="m-code">QR na wyświetlaczu</span>
-        i wybierz <span class="m-code">Podłącz</span>.
-        Na TV pojawi się kod QR ankiety, który uczestnicy skanują telefonami.
-        Nie potrzebujesz logowania na telewizorze, kabla HDMI ani przesyłania obrazu z komputera.
-      </p>
-      <p class="m-p">Możesz również otworzyć na telewizorze bezpośredni link do Wyświetlacza QR skopiowany z okna ankiety. Taki link otworzy ekran z kodem QR, podobnie jak link Wyświetlacza gry otwiera planszę rozgrywki. Jeśli przeglądarka TV nie została rozpoznana, np. niestandardowa przeglądarka na Apple TV, otwórz <a href="https://www.familiada.online/connect-device/tv/">stronę podłączenia TV</a> i wpisz kod. Przez HDMI lub AirPlay możesz zamiast tego przesłać ekran QR otwarty na komputerze lub innym urządzeniu.</p>
-
-      <h3 class="m-h2">Przebieg ankiety</h3>
-    
-      <p class="m-p">
-        Ankietowani przechodzą przez pytania po kolei.
-        System pilnuje kolejności
-        i nie pozwala pominąć pytania.
-      </p>
-    
-      <p class="m-p">
-        W ankiecie tekstowej każda odpowiedź:
-      </p>
-    
-      <ul class="m-ul">
-        <li>jest ograniczona do 17 znaków,</li>
-        <li>jest normalizowana (wielkość liter, spacje),</li>
-        <li>zliczana jest jako osobna propozycja.</li>
-      </ul>
-    
-      <p class="m-p">
-        W punktacji ankietowany
-        wybiera jedną z przygotowanych odpowiedzi,
-        a system zapisuje oddany głos.
-      </p>
-    
-      <h3 class="m-h2">Zamykanie ankiety</h3>
-    
-      <p class="m-p">
-        Zamknięcie ankiety jest osobnym,
-        świadomym etapem pracy.
-        System nie pozwala zamknąć ankiety,
-        jeśli zebrane dane nie spełniają
-        minimalnych warunków jakości.
-      </p>
-    
-      <h3 class="m-h3">Punktacja</h3>
-    
-      <p class="m-p">
-        Przy zamykaniu ankiety punktacji
-        system przelicza wyniki na punkty
-        i normalizuje je do skali 0–100
-        dla każdego pytania.
-      </p>
-    
-      <div class="m-note">
-        <b>Efekt:</b>
-        otrzymujesz gotową listę odpowiedzi z punktami,
-        bez potrzeby ręcznego liczenia.
-      </div>
-    
-      <h3 class="m-h3">Ankieta tekstowa</h3>
-    
-      <p class="m-p">
-        W ankiecie tekstowej (klasycznym) ankietowani wpisują własne odpowiedzi.
-        Po zamknięciu ankiety system przechodzi do etapu porządkowania wyników.
-        Operator może łączyć oczywiście podobne odpowiedzi
-        oraz usuwać literówki lub oczywiste duplikaty.
-      </p>
-      
-      <p class="m-p">
-        Następnie odpowiedzi są normalizowane do skali punktowej.
-        Na tym etapie system stosuje dodatkowe ograniczenia,
-        które mają na celu zachowanie czytelności tablicy
-        i dynamiki rozgrywki.
-      </p>
-      
-      <p class="m-p">
-        Odpowiedzi o bardzo małej liczbie wskazań,
-        które po normalizacji uzyskują
-        <span class="m-strong">mniej niż 8 punktów</span>,
-        są automatycznie odrzucane.
-        Takie odpowiedzi zwykle nie mają znaczenia dla gry
-        i nie byłyby czytelne dla widzów.
-      </p>
-      
-      <p class="m-p">
-        Dla jednego pytania na tablicy
-        może znaleźć się maksymalnie
-        <span class="m-strong">6 odpowiedzi</span>.
-        Jeżeli poprawnych odpowiedzi jest więcej,
-        system wybiera te najlepiej punktowane,
-        a pozostałe są pomijane.
-      </p>
-      
-      <p class="m-p">
-        Z tego powodu suma punktów dla jednego pytania
-        <span class="m-strong">nie zawsze wynosi dokładnie 100</span>.
-        Punkty przypisane są wyłącznie do odpowiedzi,
-        które faktycznie trafiają na tablicę.
-      </p>
-    
-      <div class="m-warn">
-        <b>Uwaga:</b>
-        po zamknięciu ankiety
-        nie można już zmieniać jej wyników
-        bez ponownego uruchomienia ankiety.
-      </div>
-    
-      <h3 class="m-h2">Ponowne uruchomienie ankiety</h3>
-    
-      <p class="m-p">
-        Zamkniętą ankietę można uruchomić ponownie,
-        co powoduje usunięcie poprzednich wyników
-        i rozpoczęcie zbierania odpowiedzi od nowa.
-      </p>
-    
-      <p class="m-p">
-        Ta opcja jest przydatna,
-        gdy ankieta została uruchomiona testowo
-        lub doszło do błędu organizacyjnego.
-      </p>
-</div>
-</section>
 </main>
 </body>
 </html>

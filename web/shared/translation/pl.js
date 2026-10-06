@@ -1196,7 +1196,7 @@ const pl = {
       <h3 class="m-h3">Dodawanie nowej bazy</h3>
   
       <p class="m-p">
-        W widoku „Bazy pytań” kliknij kafelek <span class="m-strong">Nowa baza</span>.
+        W widoku „Bazy pytań” kliknij kafelek <span class="m-code"><i class="ico" data-icon="plus"></i> Nowa baza</span>.
         Otworzy się okno, w którym podajesz nazwę bazy.
       </p>
   
@@ -1460,7 +1460,7 @@ const pl = {
       </ul>
 
       <p class="m-p">
-        Złota kropka przy przycisku „Ankiety <i class="ico" data-icon="polls"></i>” pokazuje liczbę aktywnych zadań do wykonania.
+        Złota kropka przy przycisku <span class="m-code">Ankiety <i class="ico" data-icon="polls"></i></span> pokazuje liczbę aktywnych zadań do wykonania.
       </p>
 
       <p class="m-p">
@@ -1563,15 +1563,7 @@ const pl = {
         Na TV pojawi się kod QR ankiety, który uczestnicy skanują telefonami.
         Nie potrzebujesz logowania na telewizorze, kabla HDMI ani przesyłania obrazu z komputera.
       </p>
-      <p class="m-p">
-        Możesz również otworzyć bezpośredni link do ekranu QR ankiety —
-        adres <span class="m-code">/poll-qr/</span> zawierający identyfikator i klucz ankiety
-        jest dopuszczony na TV tak samo jak link do Wyświetlacza gry.
-        Sam adres bez tych danych prowadzi do wpisywania kodu.
-        Jeśli przeglądarka TV nie została rozpoznana, np. niestandardowa przeglądarka na Apple TV,
-        otwórz <a href="https://www.familiada.online/connect-device/tv/">stronę podłączenia TV</a> i wpisz kod.
-        Przez HDMI lub AirPlay możesz zamiast tego przesłać ekran QR otwarty na komputerze lub innym urządzeniu.
-      </p>
+      <p class="m-p">Możesz również otworzyć na telewizorze bezpośredni link do Wyświetlacza QR skopiowany z okna ankiety. Taki link otworzy ekran z kodem QR, podobnie jak link Wyświetlacza gry otwiera planszę rozgrywki. Jeśli przeglądarka TV nie została rozpoznana, np. niestandardowa przeglądarka na Apple TV, otwórz <a href="https://www.familiada.online/connect-device/tv/">stronę podłączenia TV</a> i wpisz kod. Przez HDMI lub AirPlay możesz zamiast tego przesłać ekran QR otwarty na komputerze lub innym urządzeniu.</p>
 
       <h3 class="m-h2">Przebieg ankiety</h3>
     
@@ -1702,7 +1694,7 @@ const pl = {
       </ul>
 
       <p class="m-p">
-        Złota kropka przy przycisku „Subskrypcje <i class="ico" data-icon="bell"></i>” pokazuje liczbę zaproszeń do zaakceptowania.
+        Złota kropka przy przycisku <span class="m-code">Subskrypcje <i class="ico" data-icon="bell"></i></span> pokazuje liczbę zaproszeń do zaakceptowania.
       </p>
 
       <h3 class="m-h3">Moi subskrybenci</h3>
@@ -1718,7 +1710,7 @@ const pl = {
         <span class="m-strong">żółty</span> — oczekujące,
         <span class="m-strong">zielony</span> — aktywne,
         <span class="m-strong">czerwony</span> — odrzucone/anulowane.
-        Przyciski <span class="m-code"><i class="ico" data-icon="trash"></i></span> usuwa subskrybenta, a <span class="m-code"><i class="ico" data-icon="refresh"></i></span> ponawia zaproszenie.
+        Przycisk <span class="m-code"><i class="ico" data-icon="trash"></i></span> usuwa subskrybenta, a <span class="m-code"><i class="ico" data-icon="refresh"></i></span> ponawia zaproszenie.
       </p>
 
       <h3 class="m-h3">Moje subskrypcje</h3>
@@ -1868,7 +1860,7 @@ const pl = {
       <div class="m-note">
         <b>Wskazówka:</b><br/>
         Dla najlepszego użytkowania przycisku i prowadzącego sugerowane jest zainstalowanie aplikacji webowej Familiada.online.
-        Na swoim telefonie na stronie <span class="m-strong">Moje gry</span> kliknij przycisk pobierania — dostaniesz wskazówki, jak ją pobrać.
+        Na swoim telefonie na stronie <span class="m-strong">Moje gry</span> kliknij przycisk <span class="m-code"><i class="ico" data-icon="download"></i></span> — dostaniesz wskazówki, jak ją pobrać.
       </div>`,
       control: `<p class="m-p">
         Do Panelu sterowania przechodzisz z listy „Moje gry"
@@ -1978,14 +1970,14 @@ const pl = {
       </p>
 
       <p class="m-p">
-        W tym kroku jest opcja <span class="m-strong">„QR na wyświetlaczu"</span> —
+        W tym kroku jest opcja <span class="m-code">QR na wyświetlaczu</span> —
         po jej użyciu kody QR mogą zostać pokazane na dużym ekranie (po podłączeniu wyświetlacza),
         żeby ekipa mogła szybko zeskanować je telefonami.
         To przyspiesza start na planie, bo nie trzeba przepisywać linków.
       </p>
 
       <p class="m-p">
-        Poprzez opcję <span class="m-strong">„Udostępnij"</span> — możesz szybko wysłać komuś link w wiadomości e-mail lub udostępnić go swoim subskrybentom. Udostępnione urządzenia będą widoczne na koncie (tylko dla zarejestrowanych) w panelu <span class="m-code">Podłącz urządzenie <i class="ico" data-icon="phone"></i></span>. Osoby niezarejestrowane otrzymają link w wiadomości e-mail.
+        Poprzez opcję <span class="m-code">Udostępnij</span> — możesz szybko wysłać komuś link w wiadomości e-mail lub udostępnić go swoim subskrybentom. Udostępnione urządzenia będą widoczne na koncie (tylko dla zarejestrowanych) w panelu <span class="m-code">Podłącz urządzenie <i class="ico" data-icon="phone"></i></span>. Osoby niezarejestrowane otrzymają link w wiadomości e-mail.
       </p>
 
       <div class="m-note">
@@ -1994,7 +1986,7 @@ const pl = {
         w górnym pasku i wprowadź <span class="m-strong">6-cyfrowy kod</span> widoczny przy urządzeniu w Panelu sterowania.<br/><br/>
         Alternatywnie: na urządzeniu mobilnym możesz zeskanować <span class="m-strong">kod QR</span> widoczny w panelu.
         Dla najlepszego użytkowania sugerowane jest zainstalowanie aplikacji webowej — na stronie <span class="m-strong">Moje gry</span>
-        kliknij przycisk pobierania, aby uzyskać wskazówki.
+        kliknij przycisk <span class="m-code"><i class="ico" data-icon="download"></i></span>, aby uzyskać wskazówki.
       </div>
 
       <h3 class="m-h3">Tryb bez tabletu prowadzącego</h3>
@@ -2069,7 +2061,7 @@ const pl = {
       <ul class="m-ul">
         <li>Przy każdej kategorii dźwiękowej widzisz aktualny <span class="m-strong">wariant</span> (np. Klasyczny lub nazwę własnego pliku).</li>
         <li>Suwak <span class="m-strong">głośności</span> pozwala dostosować poziom każdego dźwięku.</li>
-        <li>Przycisk <span class="m-strong"><i class="ico" data-icon="play"></i></span> pozwala odsłuchać dźwięk przed rozgrywką.</li>
+        <li>Przycisk <span class="m-code"><i class="ico" data-icon="play"></i></span> pozwala odsłuchać dźwięk przed rozgrywką.</li>
       </ul>
 
       <div class="m-note">
@@ -2091,11 +2083,11 @@ const pl = {
       </p>
 
       <div class="m-note">
-        Zawsze możesz wcisnąć przycisk <span class="m-strong">Zmień ustawienia</span>, po czym otworzy się okienko ustawień — szczegóły w zakładce <span class="m-strong">Ustawienia rozgrywki</span>.
+        Zawsze możesz wcisnąć przycisk <span class="m-code">Zmień ustawienia</span>, po czym otworzy się okienko ustawień — szczegóły w zakładce <span class="m-code">Ustawienia rozgrywki</span>.
       </div>
 
       <p class="m-p">
-        Gdy wszystko się zgadza — kliknij <span class="m-strong">Gotowe — przejdź do rozgrywki</span>.
+        Gdy wszystko się zgadza — kliknij <span class="m-code">Gotowe — przejdź do rozgrywki</span>.
       </p>
 
       <h3 class="m-h2">3) Rundy — przebieg gry krok po kroku</h3>
@@ -2331,7 +2323,7 @@ const pl = {
 
       <p class="m-p">
         Kliknij kartę gry, aby zobaczyć szczegóły: pełną listę pytań i odpowiedzi.
-        Jeśli gra Ci odpowiada, kliknij <span class="m-strong">Dodaj do biblioteki</span>.
+        Jeśli gra Ci odpowiada, kliknij <span class="m-code">Dodaj do biblioteki</span>.
         Gra trafi do zakładki <span class="m-strong">Gry Społeczności</span>
         w widoku Moje gry.
       </p>
@@ -2340,7 +2332,7 @@ const pl = {
 
       <p class="m-p">
         Na stronie <b>Moje gry</b> przejdź do zakładki <span class="m-strong">Gry Społeczności</span>,
-        zaznacz wybraną grę i kliknij <span class="m-strong">Graj</span>. Po chwili otworzy się panel sterowania i możesz prowadzić rozgrywkę.</p>
+        zaznacz wybraną grę i kliknij <span class="m-code">Graj</span>. Po chwili otworzy się panel sterowania i możesz prowadzić rozgrywkę.</p>
 
       <div class="m-warn">
         Granie nie modyfikuje oryginału ani cudzych danych.
@@ -2348,7 +2340,7 @@ const pl = {
 
       <p class="m-p">
         Jeśli masz grę, którą chcesz podzielić się ze społecznością, kliknij
-        <span class="m-strong">Moje wysłane</span> na stronie Gier Społeczności.
+        <span class="m-code">Moje wysłane</span> na stronie Gier Społeczności.
         Tutaj widzisz wszystkie gry wysłane przez Ciebie. Naciśnij
         <span class="m-strong">Wyślij nową grę do gier społeczności</span>,
         wybierz grę, podaj tytuł, napisz opis i wybierz język.
@@ -2401,7 +2393,7 @@ const pl = {
       </p>
 
       <p class="m-p">
-        Otworzysz ją ze strony <span class="m-strong">Moje gry</span> przyciskiem <span class="m-strong">Ustawienia rozgrywki</span> przy wybranej grze.
+        Otworzysz ją ze strony <span class="m-strong">Moje gry</span> przyciskiem <span class="m-code">Ustawienia rozgrywki</span> przy wybranej grze.
       </p>
 
       <h3 class="m-h2">Drużyny</h3>
@@ -2441,7 +2433,7 @@ const pl = {
       </p>
 
       <div class="m-note">
-        Przycisk <span class="m-strong">Przywróć domyślne</span> w sekcji Wygląd resetuje kolory, motyw i logo do wartości domyślnych.
+        Przycisk <span class="m-code">Przywróć domyślne</span> w sekcji Wygląd resetuje kolory, motyw i logo do wartości domyślnych.
       </div>
 
       <h3 class="m-h2">Dźwięk</h3>
@@ -2456,17 +2448,17 @@ const pl = {
 
       <ul class="m-ul">
         <li>Dostępne są warianty predefiniowane (np. <span class="m-strong">Klasyczny</span>)</li>
-        <li>Opcja <span class="m-strong">Własny</span> pozwala załadować własny plik audio (MP3, WAV, OGG) — po wybraniu jej pojawia się przycisk <span class="m-strong">Wybierz plik</span></li>
+        <li>Opcja <span class="m-strong">Własny</span> pozwala załadować własny plik audio (MP3, WAV, OGG) — po wybraniu jej pojawia się przycisk <span class="m-code">Wybierz plik</span></li>
       </ul>
 
       <h3 class="m-h3">Własny plik audio</h3>
 
       <p class="m-p">
-        Po kliknięciu <span class="m-strong">Wybierz plik</span> wskazujesz plik z dysku. W tabeli przy danej kategorii pojawia się etykieta z nazwą pliku.
+        Po kliknięciu <span class="m-code">Wybierz plik</span> wskazujesz plik z dysku. W tabeli przy danej kategorii pojawia się etykieta z nazwą pliku.
       </p>
 
       <p class="m-p">
-        Aby usunąć własny plik, użyj przycisku <span class="m-strong">X</span> przy pliku.
+        Aby usunąć własny plik, użyj przycisku <span class="m-code"><i class="ico" data-icon="trash"></i></span> przy pliku.
         Jeśli chcesz wrócić do wariantu predefiniowanego — zmień wariant na inny niż <span class="m-strong">Własny</span>.
       </p>
 
@@ -2480,14 +2472,14 @@ const pl = {
         Przy każdej kategorii jest suwak głośności (0–100%). Zmiany są zapisywane i wczytywane automatycznie przy każdej rozgrywce.
       </p>
 
-      <h3 class="m-h3">Przycisk odtwarzania (<i class="ico" data-icon="play"></i>)</h3>
+      <h3 class="m-h3">Przycisk odtwarzania (<span class="m-code"><i class="ico" data-icon="play"></i></span>)</h3>
 
       <p class="m-p">
         Obok każdej kategorii jest mały przycisk odtwarzania. Kliknij go, żeby usłyszeć wybrany dźwięk z ustawioną głośnością. Ponowne kliknięcie (<i class="ico" data-icon="stop"></i>) zatrzymuje odtwarzanie.
       </p>
 
       <div class="m-note">
-        Przycisk <span class="m-strong">Przywróć domyślne</span> w sekcji Dźwięk resetuje wszystkie warianty do <span class="m-strong">Klasycznego</span>, głośności do <span class="m-strong">100%</span> oraz usuwa wszystkie własne pliki audio (z chmury i lokalnie).<br><b>Operacja jest nieodwracalna — pliki trzeba wgrać ponownie.</b>
+        Przycisk <span class="m-code">Przywróć domyślne</span> w sekcji Dźwięk resetuje wszystkie warianty do <span class="m-strong">Klasycznego</span>, głośności do <span class="m-strong">100%</span> oraz usuwa wszystkie własne pliki audio (z chmury i lokalnie).<br><b>Operacja jest nieodwracalna — pliki trzeba wgrać ponownie.</b>
       </div>
 
       <h3 class="m-h2">Pytania</h3>
@@ -2540,13 +2532,13 @@ const pl = {
       <h3 class="m-h3">Zapis ustawień</h3>
 
       <p class="m-p">
-        Zmiany są zapisywane po kliknięciu <span class="m-strong">Zapisz wszystko</span>. Nie ma automatycznego zapisu przy samej zmianie — pamiętaj o kliknięciu przycisku przed wyjściem.
+        Zmiany są zapisywane po kliknięciu <span class="m-code">Zapisz wszystko</span>. Nie ma automatycznego zapisu przy samej zmianie — pamiętaj o kliknięciu przycisku przed wyjściem.
       </p>
 
       <h3 class="m-h3">Przywróć domyślne</h3>
 
       <p class="m-p">
-        Przycisk <span class="m-strong">Przywróć domyślne</span> na górze strony resetuje całość ustawień do wartości domyślnych.
+        Przycisk <span class="m-code">Przywróć domyślne</span> na górze strony resetuje całość ustawień do wartości domyślnych.
       </p>
 
       <div class="m-warn">
@@ -4539,7 +4531,7 @@ const pl = {
       answer_wrong: "Błędna odpowiedź (X)",
       answer_repeat: "Powtórzenie odpowiedzi w finale",
       time_over: "Koniec czasu w finale",
-      reveal: "Zmiana na wyświetlaczu",
+      reveal: "Odsłanianie",
     },
     finalConfirmed: "Finał zatwierdzony!",
     finalReloadStart: "Wczytywanie…",

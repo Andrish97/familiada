@@ -121,11 +121,13 @@ test("control2: własne outro ponad 30 sekund — ustawienia, zapis i podsumowan
     await page.getByRole("button", { name: "Dalej", exact: true }).click();
     await expect(page.locator(".stepTitle")).toHaveText("Podsumowanie", { timeout: 10000 });
     await expect(page.locator('.summarySoundRow:has(input[data-sfx-vol="show_outro"])')).toContainText("Muzyka outro programu");
+    await expect(page.locator('.summarySoundRow:has(input[data-sfx-vol="reveal"])')).toContainText("Odsłanianie");
     await page.getByRole("button", { name: "Zmień ustawienia" }).click();
     const frame = page.frameLocator("#gsFrame");
     await expect(frame.locator("#gsTeamA")).toBeVisible({ timeout: 15000 });
     await frame.locator("#btnToggleSidebar").click();
     await frame.locator('.gs-sidebar-item[data-cat="sound"]').click();
+    await expect(frame.locator('.sfx-row[data-key="reveal"]')).toContainText("Odsłanianie");
     const fileInput = frame.locator('input[data-sfx-key="show_outro"]');
     await expect(fileInput).toHaveAttribute("accept", "audio/mpeg,audio/wav,audio/ogg");
     // A real 31-second PCM WAV verifies the separate outro limit (>30s).
@@ -1253,6 +1255,10 @@ test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśni�
       // Zgłoszone: wybór dopasowania w finale też idzie przez zaznacz ->
       // potwierdź (armableTile), jak reszta konsekwentnych kafli.
       await armAndConfirm(page.getByRole("button", { name: "Odp. finałowa (15)" }));
+      if (i === 0) {
+        await expect(hostPage.locator("#paperText2 .hostGreen:not(.hostStrike)")).toHaveText("z listy");
+        await expect(hostPage.locator("#paperText2 .hostStrike")).toHaveText("Odp. finałowa (15)");
+      }
       await armAndConfirm(page.getByRole("button", { name: "Pokaż odpowiedź" }));
       await armAndConfirm(page.getByRole("button", { name: "Pokaż punkty" }));
       // Suma widoczna na ekranie mapowania (ui.js's finalStatusBar) —
@@ -2516,10 +2522,10 @@ test("control2: koniec gry bez finału w trybie \"punkty\" — Wyświetlacz poka
     trackErrors(page, "control", errors);
     const displayPage = await openAnon(browser, contexts, `/display2?id=${game.id}&key=${game.share_key_display}`, "display", errors);
 
+    const hostPage = await openAnon(browser, contexts, `/host2?id=${game.id}&key=${game.share_key_host}`, "host", errors);
     await page.goto(`/control2?id=${game.id}`, { waitUntil: "domcontentloaded" });
     await expect(page.locator(".stepTitle")).toHaveText("Urządzenia", { timeout: 15000 });
     await page.getByLabel("Przycisk fizyczny").check();
-    await page.getByLabel("Nie używaj tabletu prowadzącego").check();
 
     await page.getByRole("button", { name: "Dalej" }).click();
     await expect(page.locator(".stepTitle")).toHaveText("Podsumowanie", { timeout: 10000 });
@@ -2538,8 +2544,11 @@ test("control2: koniec gry bez finału w trybie \"punkty\" — Wyświetlacz poka
 
     // END_ROUND z wszystkim już odsłoniętym finalizuje rundę od razu --
     // pula (1 pytanie) wyczerpana -> prosto do r_gameEnd, bez R8.
+    await expect(hostPage.locator("#paperText2")).not.toBeEmpty();
     await page.getByRole("button", { name: /^(Zakończ rundę|Przejdź do zakończenia gry)$/ }).click();
     await expect(page.locator(".c2-stepper")).toContainText("Koniec gry", { timeout: 22000 });
+    await expect(hostPage.locator("#paperText1")).toBeEmpty();
+    await expect(hostPage.locator("#paperText2")).toBeEmpty();
 
     await expect.poll(async () => (await getDisplayCalls(displayPage, "api.win.set")).at(-1)?.args?.[0]).toBe(90);
     await clearDisplayLog(displayPage);

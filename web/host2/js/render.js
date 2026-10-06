@@ -203,7 +203,7 @@ export function createHostRenderer() {
     let status, statusCls;
     if (rep) { status = fh("statusRepeat"); statusCls = "hostYellow"; }
     else if (!input) { status = fh("statusEmpty"); statusCls = "hostRed"; }
-    else if (row1.kind === "MATCH" && row1.matchId) { status = fh("statusMatch"); statusCls = "hostGreen hostStrike"; }
+    else if (row1.kind === "MATCH" && row1.matchId) { status = fh("statusMatch"); statusCls = "hostGreen"; }
     else { status = fh("statusMissing"); statusCls = "hostYellow"; }
     lines.push([`${fh("statusLabel")}: `, { text: status, cls: statusCls }], "");
     lines.push(fh("answersListLabel"));
@@ -264,7 +264,7 @@ export function createHostRenderer() {
     authoritativeCovered = enabled && !!row.detail?.host?.covered;
     peeked = false; // nowy stan resetuje podgląd
     stopTimerTick(); // nowy wiersz zastępuje ewentualny poprzedni tick jednorazowo w renderFinalEntry
-    if (row.detail?.settings?.noHostTablet) { setPane1(""); setPane2(""); }
+    if (row.detail?.settings?.noHostTablet || row.step === "r_gameEnd" || row.detail?.locks?.gameEnded) { setPane1(""); setPane2(""); }
     else if (row.top_card === "rounds") renderRounds(row);
     else if (row.top_card === "final") renderFinal(row);
     else { setPane1(""); setPane2(""); }
