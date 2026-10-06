@@ -89,8 +89,8 @@
 | Powtórzenie | Shift+Enter | Shift+Enter | Tylko puste pole gracza 2; przełączenie znacznika. |
 | Następne puste pole | Enter lub ↓ | Enter lub ↓ | Wpisywanie finału, według punktu 09. |
 | Poprzednie puste pole | ↑ | ↑ | Wpisywanie finału, według punktu 09. |
-| Zaznaczenie odpowiedzi lub dopasowania | 1–9 | 1–9 | Rundy i mapowanie finału; tylko istniejące i dostępne pozycje. |
-| Zatwierdzenie zaznaczonego kafelka | Enter | Enter | Obsługa kafelków poza polami tekstowymi. |
+| Odpowiedź z listy | 1–9 | 1–9 | W rundach zaznaczenie; w mapowaniu natychmiastowy wybór dopasowania, bez dodatkowego potwierdzenia. Tylko dostępne pozycje. |
+| Zatwierdzenie / odsłanianie | Enter | Enter | W rundach zatwierdza zaznaczony kafelek; w mapowaniu odsłania odpowiedź, a po zakończeniu przejścia — punkty. |
 | Zaznaczenie pudła X | X | X | Pojedynek, rozgrywka i kradzież, jeśli pudło jest dostępne. |
 | Zaznaczenie odliczania 3 sekund | T | T | Tylko etap rundy z dostępnym przyciskiem timera. |
 | Zaznaczenie oddania kontroli | P | P | Tylko runda z dostępną możliwością oddania kontroli. |
@@ -106,10 +106,10 @@
 | Dostępny powrót do poprzedniego kroku | W, następnie Enter | Widoczny przycisk Wstecz; nie cofa stanu rozgrywki ani wyniku. |
 | Rozpoczęcie gry / rundy / finału | N, następnie Enter | Widoczny przycisk rozpoczęcia właściwy dla bieżącego etapu. |
 | Pojedynek z przyciskiem fizycznym | A albo B, następnie Enter | Wybór drużyny, a następnie potwierdzenie jej zgłoszenia. Nie symuluje naciśnięcia urządzenia w normalnym trybie. |
-| Mapowanie finału: odsłonięcie odpowiedzi | O, następnie Enter | Pokaż odpowiedź. |
-| Mapowanie finału: odsłonięcie punktów | P, następnie Enter | Pokaż punkty; znaczenie P wynika z etapu i nie nakłada się na oddanie kontroli w rundach. |
-| Mapowanie finału: brak odpowiedzi | 0, następnie Enter | Brak odpowiedzi, wyłącznie gdy pole tekstowe jest puste. |
-| Mapowanie finału: odpowiedź spoza listy | Z, następnie Enter | Nie ma na liście (0 pkt), wyłącznie gdy istnieje wpisany tekst. |
+| Mapowanie finału: odsłonięcie odpowiedzi | Enter lub O | Pokaż odpowiedź, jednym naciśnięciem. |
+| Mapowanie finału: odsłonięcie punktów | Enter lub P | Pokaż punkty, jednym naciśnięciem, dopiero po końcu odsłaniania odpowiedzi. Znaczenie P nie nakłada się na oddanie kontroli w rundach. |
+| Mapowanie finału: brak odpowiedzi | 0 | Natychmiastowy wybór Brak odpowiedzi, wyłącznie gdy pole tekstowe jest puste. Następny Enter odsłania brak i zero automatycznie. |
+| Mapowanie finału: odpowiedź spoza listy | Z | Natychmiastowy wybór Nie ma na liście (0 pkt), wyłącznie gdy istnieje wpisany tekst. Następny Enter odsłania dosłownie wpisaną odpowiedź. |
 | Mapowanie gracza 2: powtórzenie | Shift+Enter w pustym polu | Przełączenie znacznika, także podczas dopasowania, przed odsłonięciem. W mapowaniu nie odtwarza dźwięku powtórzenia. |
 | Koniec rundy / przejście do wyniku | N, następnie Enter | Widoczna, dostępna akcja końca rundy lub dalszego przejścia. |
 | Zakończenie finału / gry | N, następnie Enter | Zakończ finał lub Zakończ grę, według aktualnego etapu i po zakończeniu obowiązujących blokad. |
@@ -121,6 +121,8 @@
 
 - [ ] Litery i cyfry nie wywołują czynności przy aktywnym polu tekstowym, polu wyboru, suwaku ani edytowalnej treści. Nie odbieramy standardowej obsługi klawiatury tym elementom. Specjalne skróty wpisywania finału są obsługiwane osobno.
 - [ ] Zaznaczenie kafelka wymagającego potwierdzenia to tylko zaznaczenie; Enter uruchamia jego istniejące zatwierdzenie. Dla zwykłego przycisku nawigacji zaznaczenie oznacza ustawienie fokusu, a Enter wykonuje standardowe kliknięcie. Jedno naciśnięcie nie może uruchamiać równocześnie obsługi własnej i natywnego kliknięcia.
+- [ ] Mapowanie finału jest wyjątkiem od zaznaczania i potwierdzania: wybór z listy, wpisana odpowiedź, brak i powtórzenie działają jednym kliknięciem/odpowiednim klawiszem. Pokaż odpowiedź i Pokaż punkty także działają pojedynczym kliknięciem swoich przycisków. Nie dodawać osobnego zatwierdzania dopasowania.
+- [ ] W mapowaniu Enter nie potwierdza drugi raz wybranej opcji. Pierwszy odsłania odpowiedź, kolejny odsłania punkty po zakończeniu przejścia. Brak/powtórzenie odsłaniają zero automatycznie, więc nie wymagają drugiego Enter. Dalsze przejście pozostaje pod N i Enter; Enter nie ma samoczynnie przechodzić do następnego pytania.
 - [ ] Jeden wspólny mechanizm wyboru czynności według etapu. Wszystkie skróty korzystają z istniejących akcji i blokad, bez osobnej ścieżki omijającej zatwierdzenia lub silnik.
 - [ ] Gdy otwarte jest okno ustawień, udostępniania albo potwierdzenia, skróty rozgrywki w tle są nieaktywne. W oknach pozostawić standardowe Tab / Shift+Tab i Enter na wybranym przycisku. Nie przechwytywać skrótów paska adresu, wyszukiwania ani narzędzi przeglądarki.
 - [ ] Obsłużyć PL, EN i UK. Skróty literowe pozostają na tych samych fizycznych klawiszach przy zmianie układu klawiatury; wpisywanie liter narodowych i komponowanie tekstu pozostają normalne. Czytelne oznaczenia klawiszy pokazywać w podpowiedziach.
@@ -134,6 +136,7 @@
 - [ ] Przy wpisywaniu finału wskazać timer, powtórzenie w rundzie 2 i przechodzenie między pustymi polami. Przy mapowaniu wskazać wybór dopasowania, odsłonięcie odpowiedzi/punktów i dalsze przejście.
 - [ ] Przy mapowaniu wskazać także 0 — Brak odpowiedzi i Z — Nie ma na liście. Podpowiedzi i dostępność skrótów zależą od treści pola; po odsłonięciu odpowiedzi wybór jest zablokowany. Cyfry i litery w aktywnym polu pozostają tekstem.
 - [ ] Wyjaśnić w instrukcji różnicę między zaznaczeniem skrótem a zatwierdzeniem Enter oraz powód, dla którego litery i cyfry podczas edycji pola nie uruchamiają akcji.
+- [ ] Wyraźnie opisać wyjątek mapowania: 1–9 / Z / 0 wybiera od razu; Enter odsłania, zamiast potwierdzać wybór. Uaktualnić myszowe instrukcje i testy, które obecnie klikają mapowanie dwukrotnie.
 - [ ] Uaktualnić scenariusze testów i opis nagrań. Pokazać przynajmniej zatwierdzenie drużyny, odpowiedź/X, timer finału, powtórzenie, nawigację pustych pól i obsługę dalszego przejścia z klawiatury.
 
 ### 12. Wysokość odpowiedzi gracza 2
