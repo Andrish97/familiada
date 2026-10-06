@@ -7,11 +7,12 @@ Aktualizacja: 6 października 2026 — komplet 10 filmów w `tests/recordings/20
 
 ## Gotowe pliki i zakres wersji
 
-- 01–06: [przebieg 37389738480](https://github.com/Andrish97/familiada/actions/runs/37389738480). Przerwał się przed wysyłką maila w 08, bo stary skrypt oczekiwał ukrycia sekcji udostępnień.
+- 01, 03–06: [przebieg 37389738480](https://github.com/Andrish97/familiada/actions/runs/37389738480). Przerwał się przed wysyłką maila w 08, bo stary skrypt oczekiwał ukrycia sekcji udostępnień.
 - 08–10: [dogrywka 37393196812](https://github.com/Andrish97/familiada/actions/runs/37393196812), sukces. Po resecie limitów prawdziwy mail dotarł po około 56,6 s; odbiorca otworzył udostępnionego Prowadzącego.
 - 07: [dogrywka 37395118136](https://github.com/Andrish97/familiada/actions/runs/37395118136), sukces po ponowieniu przejściowego błędu strony GitHuba. Scenariusz był wcześniej umieszczony na końcu kolejki; odtąd scenariusze są sortowane po numerze.
+- 02: [dogrywka 37396346583](https://github.com/Andrish97/familiada/actions/runs/37396346583), sukces. Obejmuje całe wejście planszy finału, a dopiero potem cztery sekundy na obejrzenie gotowego ekranu.
 
-Filmy 01–06 i 08–10 pokazują stan sprzed ostatnich uwag do manuala: dźwięk miał jeszcze zmienioną nazwę, status „z listy” był też przekreślony, a Prowadzący zachowywał ostatnią rundę przy zakończeniu bez finału. Te trzy zmiany są już opublikowane i sprawdzone na produkcji ([3 zaliczone przypadki](https://github.com/Andrish97/familiada/actions/runs/37395415616)). Film 07 pochodzi z wersji po poprawkach.
+Filmy 01, 03–06 i 08–10 pokazują stan sprzed ostatnich uwag do manuala: dźwięk miał jeszcze zmienioną nazwę, status „z listy” był też przekreślony, a Prowadzący zachowywał ostatnią rundę przy zakończeniu bez finału. Te trzy zmiany są już opublikowane i sprawdzone na produkcji ([3 zaliczone przypadki](https://github.com/Andrish97/familiada/actions/runs/37395415616)). Filmy 02 i 07 pochodzą z wersji po poprawkach.
 
 Nagrania mają 60 klatek/s. Obok każdego znajduje się raport przechwytywania i odstępów klatek przeglądarki. Pierwszy wcześniejszy zapis miał około 76% powielonych klatek; w obecnych dłuższych nagraniach udział wynosi około 0,4–1,0%. Krótkie filmy mają większy udział, więc oceniaj je razem z liczbą klatek i obrazem.
 

@@ -115,3 +115,5 @@ Dogrywka 07 zakończona sukcesem (37395118136, ponowienie po przejściowym błę
 Weryfikacja instrukcji: wszystkie robocze uwagi z bieżącej korekty rozstrzygnięte, ikony pochodzą z zestawu aplikacji, przyciski poprawione w PL/EN/UK. HTML do przeglądu ma poprawne ścieżki obrazów i działające odnośniki do sekcji. Aktualna zmiana M13: po zatwierdzeniu Ankiet opublikowano polski fragment TV i usunięto Ankiety z plików do przeglądu. Nowe opisy Panelu i Ustawień rozgrywki pozostają osobnym materiałem do akceptacji.
 
 Film 02 jest powtarzany przez 37396346583: skrypt czeka teraz na zakończenie wejścia planszy finału, a dopiero potem pozostawia ją przez cztery sekundy. Poprzedni stały czas czterech sekund mógł uciąć przejście. Pozostałych dziewięciu filmów nie powtarzamy.
+
+Film 02, dogrywka 37396346583 — sukces. Lokalną galerię zaktualizowano do najnowszego pliku; jest komplet 10 MP4 i 10 raportów. Przewodnik wskazuje pochodzenie filmów i różnice wersji: 02 i 07 są po ostatniej korekcie nazwy i Hosta, pozostałe z wcześniejszego przebiegu. Nie twierdzimy, że starsze filmy przedstawiają ostatnie drobne zmiany instrukcji/Hosta.
