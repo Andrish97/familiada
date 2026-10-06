@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict d0eh2dwisLod7UaObZoLkywq7OdajiZPB6e17lZsACYWV9ziUpEieH3c6bixd10
+\restrict m2MWpZmL40ZWpbe5bIrkIHAdDyFsYflbqf60xh4VsUBY1Aewabn0Y9bE6bo8CT4
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -3017,6 +3017,46 @@ $$;
 
 
 --
+-- Name: game_state_display_complete("uuid", "text", bigint); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."game_state_display_complete"("p_game_id" "uuid", "p_key" "text", "p_rev" bigint) RETURNS "void"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $$
+DECLARE g public.games; current_rev bigint;
+BEGIN
+ SELECT * INTO g FROM public.games WHERE id = p_game_id;
+ IF NOT FOUND OR nullif(p_key, '') IS NULL OR g.share_key_display IS DISTINCT FROM p_key THEN
+  RAISE EXCEPTION 'forbidden';
+ END IF;
+ SELECT rev INTO current_rev FROM public.game_state WHERE game_id = p_game_id;
+ IF current_rev IS NULL OR p_rev IS NULL OR p_rev < 0 OR p_rev > current_rev THEN RAISE EXCEPTION 'invalid revision'; END IF;
+ INSERT INTO public.game_state_display_completion(game_id, rendered_rev) VALUES(p_game_id, p_rev)
+ ON CONFLICT (game_id) DO UPDATE SET rendered_rev = greatest(game_state_display_completion.rendered_rev, excluded.rendered_rev);
+END $$;
+
+
+--
+-- Name: game_state_display_is_ready("uuid", "text"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."game_state_display_is_ready"("p_game_id" "uuid", "p_key" "text") RETURNS boolean
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $$
+DECLARE g public.games;
+BEGIN
+ SELECT * INTO g FROM public.games WHERE id = p_game_id;
+ IF NOT FOUND OR nullif(p_key,'') IS NULL OR
+   (g.share_key_display IS DISTINCT FROM p_key AND g.share_key_buzzer IS DISTINCT FROM p_key) THEN
+  RAISE EXCEPTION 'forbidden';
+ END IF;
+ RETURN coalesce((SELECT rendered_rev >= requested_rev FROM public.game_state_display_completion WHERE game_id = p_game_id), false);
+END $$;
+
+
+--
 -- Name: game_state_get("uuid", "public"."device_type", "text"); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -4814,6 +4854,29 @@ BEGIN
     );
 END;
 $$;
+
+
+--
+-- Name: guard_final_display_completion(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."guard_final_display_completion"() RETURNS "trigger"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $$
+BEGIN
+ IF NEW.step::text = 'r_duel' AND NEW.detail#>>'{rounds,duel,lastPressed}' IS DISTINCT FROM OLD.detail#>>'{rounds,duel,lastPressed}' AND
+   EXISTS(SELECT FROM public.game_state_display_completion WHERE game_id = OLD.game_id AND rendered_rev < requested_rev) THEN
+  RAISE EXCEPTION 'display still rendering';
+ END IF;
+ IF ((NEW.step::text = 'f_end' AND OLD.step::text LIKE 'f_p%_map_q%') OR
+     (OLD.step::text IN ('r_duel', 'r_play') AND OLD.sound_cue_key = 'reveal' AND
+      (NEW.step::text IN ('r_gameEnd', 'f_start', 'r_roundStart') OR NEW.phase::text = 'REVEAL'))) AND
+   coalesce((SELECT rendered_rev < requested_rev FROM public.game_state_display_completion WHERE game_id = OLD.game_id), true) THEN
+  RAISE EXCEPTION 'display still rendering';
+ END IF;
+ RETURN NEW;
+END $$;
 
 
 --
@@ -10776,6 +10839,24 @@ $$;
 
 
 --
+-- Name: request_display_completion(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."request_display_completion"() RETURNS "trigger"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $$
+BEGIN
+ IF TG_OP = 'INSERT' OR NEW.step IS DISTINCT FROM OLD.step OR
+    NEW.sound_cue_seq IS DISTINCT FROM OLD.sound_cue_seq THEN
+  INSERT INTO public.game_state_display_completion(game_id, requested_rev) VALUES(NEW.game_id, NEW.rev)
+  ON CONFLICT(game_id) DO UPDATE SET requested_rev = excluded.requested_rev;
+ END IF;
+ RETURN NEW;
+END $$;
+
+
+--
 -- Name: reserved_username_prefixes_list(); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -12645,6 +12726,17 @@ CREATE VIEW "public"."game_sessions_effective" WITH ("security_invoker"='true') 
 
 
 --
+-- Name: game_state_display_completion; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE "public"."game_state_display_completion" (
+    "game_id" "uuid" NOT NULL,
+    "rendered_rev" bigint DEFAULT 0 NOT NULL,
+    "requested_rev" bigint DEFAULT 0 NOT NULL
+);
+
+
+--
 -- Name: game_state_history; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -13600,6 +13692,14 @@ ALTER TABLE ONLY "public"."game_session_active"
 
 ALTER TABLE ONLY "public"."game_sessions"
     ADD CONSTRAINT "game_sessions_pkey" PRIMARY KEY ("id");
+
+
+--
+-- Name: game_state_display_completion game_state_display_completion_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."game_state_display_completion"
+    ADD CONSTRAINT "game_state_display_completion_pkey" PRIMARY KEY ("game_id");
 
 
 --
@@ -14773,10 +14873,24 @@ CREATE TRIGGER "game_state_track_session" AFTER INSERT OR UPDATE OF "detail", "s
 
 
 --
+-- Name: game_state guard_final_display_completion; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "guard_final_display_completion" BEFORE UPDATE ON "public"."game_state" FOR EACH ROW EXECUTE FUNCTION "public"."guard_final_display_completion"();
+
+
+--
 -- Name: profiles profiles_reserve_test_username; Type: TRIGGER; Schema: public; Owner: -
 --
 
 CREATE TRIGGER "profiles_reserve_test_username" BEFORE INSERT OR UPDATE OF "username" ON "public"."profiles" FOR EACH ROW EXECUTE FUNCTION "public"."profiles_reserve_test_username"();
+
+
+--
+-- Name: game_state request_display_completion; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "request_display_completion" AFTER INSERT OR UPDATE ON "public"."game_state" FOR EACH ROW EXECUTE FUNCTION "public"."request_display_completion"();
 
 
 --
@@ -15099,6 +15213,14 @@ ALTER TABLE ONLY "public"."game_session_active"
 
 ALTER TABLE ONLY "public"."game_sessions"
     ADD CONSTRAINT "game_sessions_game_id_fkey" FOREIGN KEY ("game_id") REFERENCES "public"."games"("id") ON DELETE CASCADE;
+
+
+--
+-- Name: game_state_display_completion game_state_display_completion_game_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."game_state_display_completion"
+    ADD CONSTRAINT "game_state_display_completion_game_id_fkey" FOREIGN KEY ("game_id") REFERENCES "public"."game_state"("game_id") ON DELETE CASCADE;
 
 
 --
@@ -15756,6 +15878,15 @@ CREATE POLICY "device_state_owner_read" ON "public"."device_state" FOR SELECT TO
 
 
 --
+-- Name: game_state_display_completion display_completion_owner; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "display_completion_owner" ON "public"."game_state_display_completion" FOR SELECT TO "authenticated" USING ((EXISTS ( SELECT 1
+   FROM "public"."games" "g"
+  WHERE (("g"."id" = "game_state_display_completion"."game_id") AND ("g"."owner_id" = "auth"."uid"())))));
+
+
+--
 -- Name: e2e_emails; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
@@ -15872,6 +16003,12 @@ CREATE POLICY "game_sessions_owner_read" ON "public"."game_sessions" FOR SELECT 
 --
 
 ALTER TABLE "public"."game_state" ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: game_state_display_completion; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE "public"."game_state_display_completion" ENABLE ROW LEVEL SECURITY;
 
 --
 -- Name: game_state_history; Type: ROW SECURITY; Schema: public; Owner: -
@@ -16863,5 +17000,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict d0eh2dwisLod7UaObZoLkywq7OdajiZPB6e17lZsACYWV9ziUpEieH3c6bixd10
+\unrestrict m2MWpZmL40ZWpbe5bIrkIHAdDyFsYflbqf60xh4VsUBY1Aewabn0Y9bE6bo8CT4
 
