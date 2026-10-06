@@ -1,16 +1,16 @@
-import { sb, SUPABASE_URL } from "../../shared/js/core/supabase.js?v=v2026-10-06T15053";
-import { updateChecked } from "../../shared/js/core/db-guard.js?v=v2026-10-06T15053";
-import { requireAuth } from "../../shared/js/core/auth.js?v=v2026-10-06T15053";
-import { isGuestUser, showGuestBlockedOverlay } from "../../shared/js/core/guest-mode.js?v=v2026-10-06T15053";
-import { validateGame, rulesFromState } from "../../shared/js/core/game-validate.js?v=v2026-10-06T15053";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-06T15053";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-06T15053";
-import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-06T15053";
-import { initTopbarAccountDropdown } from "../../shared/js/core/topbar-controller.js?v=v2026-10-06T15053";
-import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-06T15053";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-06T15053";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-06T15053";
-import { mailCooldownCheck } from "../../shared/js/core/cooldown.js?v=v2026-10-06T15053";
+import { sb, SUPABASE_URL } from "../../shared/js/core/supabase.js?v=v2026-10-06T16422";
+import { updateChecked } from "../../shared/js/core/db-guard.js?v=v2026-10-06T16422";
+import { requireAuth } from "../../shared/js/core/auth.js?v=v2026-10-06T16422";
+import { isGuestUser, showGuestBlockedOverlay } from "../../shared/js/core/guest-mode.js?v=v2026-10-06T16422";
+import { validateGame, rulesFromState } from "../../shared/js/core/game-validate.js?v=v2026-10-06T16422";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-06T16422";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-06T16422";
+import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-06T16422";
+import { initTopbarAccountDropdown } from "../../shared/js/core/topbar-controller.js?v=v2026-10-06T16422";
+import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-06T16422";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-06T16422";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-06T16422";
+import { mailCooldownCheck } from "../../shared/js/core/cooldown.js?v=v2026-10-06T16422";
 
 initI18n({ withSwitcher: true }).then(() => {
   document.documentElement.classList.remove('page-loading');
