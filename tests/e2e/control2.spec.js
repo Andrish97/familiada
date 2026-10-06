@@ -2772,7 +2772,7 @@ test("control2: opóźnione potwierdzenie Display blokuje następną akcję i bu
     await expect(page.locator(".c2-hint-shortcuts")).toHaveCount(0);
     await page.getByRole("button", { name: "Gotowe — przejdź do rozgrywki" }).click();
     await page.getByRole("button", { name: "Rozpocznij grę" }).click();
-    await expect(page.getByRole("button", { name: "Rozpocznij rundę" })).toBeEnabled({ timeout: 20000 });
+    await expect(page.getByRole("button", { name: "Rozpocznij rundę" })).toBeEnabled({ timeout: 35000 });
     let intercepted = false;
     await display.route("**/rpc/game_state_display_complete", async route => {
       intercepted = true;

@@ -303,6 +303,7 @@ async function main() {
   //     (actionGate.computeGateMs(), policzony z POTWIERDZONEGO
   //     sound_cue_key, nie zgadywany z wyprzedzeniem).
   let committing = false;
+  let queuedGameAction = false;
   let presenceFlags = {};
   let disconnectEpisode = false;
   let restarting = false;
@@ -315,11 +316,11 @@ async function main() {
   let lastDisplayCueSeq = store.state.__row?.sound_cue_seq;
   let lastDisplayStep = store.state.step;
   function noteDisplayRequest() {
-    const s = store.state;
-    if (s.step !== lastDisplayStep || s.__row?.sound_cue_seq !== lastDisplayCueSeq) {
-      displayCompletion.request(s.rev);
-      lastDisplayStep = s.step;
-      lastDisplayCueSeq = s.__row?.sound_cue_seq;
+    const row = store.state.__row;
+    if (row && (row.step !== lastDisplayStep || row.sound_cue_seq !== lastDisplayCueSeq)) {
+      displayCompletion.request(row.rev);
+      lastDisplayStep = row.step;
+      lastDisplayCueSeq = row.sound_cue_seq;
     }
   }
   function waitingForDisplay() {
@@ -344,7 +345,7 @@ async function main() {
     const current = soundBusy();
     if (current !== lastSoundBusy) { lastSoundBusy = current; if (completionUIReady) renderCurrent(); }
   }, 125);
-  function busy() { return soundBusy() || committing || lockConfirmPending || waitingForDisplay() || Date.now() < lockedUntil || missingDevices(store.state, presenceFlags).length > 0; }
+  function busy() { return queuedGameAction || soundBusy() || committing || lockConfirmPending || waitingForDisplay() || Date.now() < lockedUntil || missingDevices(store.state, presenceFlags).length > 0; }
 
   // Uzbraja klienckie `lockedUntil` na czas `ms` (potwierdzonego dźwięku/
   // animacji) I dociąga je do realnego czasu, w którym serwer (migracja
@@ -598,7 +599,7 @@ async function main() {
   const scheduleTimer3Watch = makeTimerWatch(() => store.state.rounds?.timer3, "EXPIRE_TIMER3");
 
   function renderCtx() {
-    return { urls, presenceFlags, connectCodes, shareBadges, typingPending:typingCommit, busy: soundBusy() || (committing && !typingCommit) || lockConfirmPending || waitingForDisplay() || Date.now() < lockedUntil || missingDevices(store.state, presenceFlags).length > 0, devicesBlocked: missingDevices(store.state, presenceFlags).length > 0 };
+    return { urls, presenceFlags, connectCodes, shareBadges, typingPending:typingCommit, busy: queuedGameAction || soundBusy() || (committing && !typingCommit) || lockConfirmPending || waitingForDisplay() || Date.now() < lockedUntil || missingDevices(store.state, presenceFlags).length > 0, devicesBlocked: missingDevices(store.state, presenceFlags).length > 0 };
   }
 
   function renderCurrent() {
@@ -912,7 +913,15 @@ async function main() {
     try {
       const gameAction = action === "game.dispatch" || action === "rounds.introNext" || action === "final.toggleTimer" || action === "setup.start";
       if (gameAction && restarting) return;
-      if (gameAction && typingCommit && payload?.type !== "SET_ENTRY_TEXT") await _dispatchGatedQueue;
+      if (gameAction && queuedGameAction && payload?.type !== "SET_ENTRY_TEXT") return;
+      if (gameAction && typingCommit && payload?.type !== "SET_ENTRY_TEXT") {
+        // Reserve this command immediately: later typing cannot overtake
+        // a repeat press and leave the next timer click silently discarded.
+        queuedGameAction = true;
+        renderCurrent();
+        try { await _dispatchGatedQueue; }
+        finally { queuedGameAction = false; }
+      }
       if (gameAction && busy() && payload?.type !== "SET_ENTRY_TEXT") return;
       if (gameAction && missingDevices(store.state, presenceFlags).length) return;
       if (action === "ui.flushTyping") { await _dispatchGatedQueue; return; }

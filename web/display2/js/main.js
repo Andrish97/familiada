@@ -291,7 +291,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     let reportedRenderRev = -1;
     let reportingCompletion = false;
     async function reportCompletion() {
-      if (reportingCompletion || completedRenderRev <= reportedRenderRev || isAnySfxPlaying()) return;
+      if (reportingCompletion || completedRenderRev <= 0 || completedRenderRev <= reportedRenderRev || isAnySfxPlaying()) return;
       reportingCompletion = true;
       const revision = completedRenderRev;
       try {
