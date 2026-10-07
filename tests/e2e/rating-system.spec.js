@@ -7,13 +7,14 @@ const { serveBranchCode } = require("./helpers/branch-code");
 test.use({ serviceWorkers: "block" });
 test.beforeEach(async ({ context }) => {
   await serveBranchCode(context, { pages: ["games"] });
-  // Gwarantuj kod strony z checkouta nawet gdy worker/cache produkcyjny
-  // przechwyciłby adres głównego modułu przed ogólnym routowaniem.
-  await context.route("**/games/js/games.js*", async (route) => {
+  // Serwuj moduły tej strony z checkouta, bo test celuje w kod z brancha.
+  await context.route("**/games/js/*.js*", async (route) => {
+    const pathname = new URL(route.request().url()).pathname.replace(/^\/games\//, "");
+    const file = path.resolve(__dirname, "../../web/games", pathname.replace(/^js\//, "js/"));
     await route.fulfill({
       status: 200,
       contentType: "text/javascript; charset=utf-8",
-      body: fs.readFileSync(path.resolve(__dirname, "../../web/games/js/games.js")),
+      body: fs.readFileSync(file),
     });
   });
   await context.route("**/rest/v1/app_ratings*", async (route) => {
