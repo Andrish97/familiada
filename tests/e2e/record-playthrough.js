@@ -1315,6 +1315,7 @@ async function scenarioFinalFull(pages, { game, summaryAlreadyOpen = false, cont
   // tylko lokalna nakładka. Ta próba znika sama na następnej akcji
   // (wpisanie pierwszej odpowiedzi wysyła nowy stan, co resetuje peek).
   await hostPeekSwipe(host);
+  if (game.recordLogoId) await expect(host.locator("#cover2Logo canvas")).toHaveCount(1, { timeout: 15_000 });
   await host.waitForTimeout(1500);
 
   // Nie trzeba wpisywać WSZYSTKICH pięciu odpowiedzi na gracza, żeby
