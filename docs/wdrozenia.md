@@ -74,6 +74,8 @@ bo `PAGES` deklaruje blokady; adresy po mapie stron; instrukcja na końcu.
    zlecać agentom, nie powtarzać analiz zapisanych w dokumentach.
    **Agenci na tańszym modelu** (Haiku do szukania, Sonnet do analizy),
    mocniejszy tylko gdy zadanie tego wymaga (decyzja 2026-10-07).
+   Stan pracy zapisywany w „Dzienniku” po każdym kroku, tak żeby po
+   kompaktowaniu kontekstu dało się kontynuować z samych dokumentów.
 4. Przed wyczerpaniem limitu: zapisać stan w dzienniku, wypchnąć, ustawić
    przypomnienie (`send_later`) na wznowienie pracy.
 
