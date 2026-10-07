@@ -1552,6 +1552,71 @@ async function scenarioDeviceReconnect(pages, { contexts, browser }) {
   await control.waitForTimeout(4000); // ekran końcowy widoczny chwilę na nagraniu
 }
 
+// ===== Scenariusz 12: poprawki z wieczora — zwrot pytań po wyłączeniu
+// finału oraz ponowne odblokowanie dźwięku Display po powrocie Control. =====
+async function scenarioRecentFixes(pages) {
+  const { control, display } = pages;
+
+  // Uruchamiamy dźwięk z Display i pokazujemy pierwsze odblokowanie.
+  await control.locator('.toggle-item:has(input[name="soundSource"][value="display"])').click();
+  await expect(display.locator("#audioUnlockScreen")).toBeVisible({ timeout: 10_000 });
+  await control.waitForTimeout(1000);
+  await display.locator("#btnAudioUnlock").click();
+  await expect(display.locator("#audioUnlockScreen")).toBeHidden({ timeout: 10_000 });
+
+  // Na ekranie ustawień wyłączamy finał i zapisujemy bez otwierania zakładki
+  // Rundy. Po ponownym otwarciu pokazujemy, że pięć pytań finałowych wróciło
+  // na koniec puli rund (11 + 5).
+  await clickPaced(control.getByRole("button", { name: "Dalej" }), ADMIN_PACE_MS);
+  await control.getByRole("button", { name: "Zmień ustawienia" }).click();
+  const gsFrame = control.frameLocator("#gsFrame");
+  await gsFrame.locator("#btnToggleSidebar").click();
+  await gsFrame.locator('.gs-sidebar-item[data-cat="questions"]').click();
+  await gsFrame.locator('.toggle-item:has(input[name="gsHasFinal"][value="no"])').click();
+  await control.waitForTimeout(700); // widz widzi wyłączenie finału przed zapisem
+  const saveButton = gsFrame.getByRole("button", { name: "Zapisz wszystko" });
+  await saveButton.click();
+  await expect(saveButton).toBeEnabled({ timeout: 15_000 });
+  await control.locator("#gsOverlay").click({ position: { x: 5, y: 5 } });
+  await control.locator("#gsOverlay").waitFor({ state: "hidden", timeout: 10_000 });
+
+  const restoredCounts = await control.evaluate(async () => {
+    const id = new URL(location.href).searchParams.get("id");
+    const { data, error } = await window.__sbClient.from("games").select("settings").eq("id", id).single();
+    if (error) throw error;
+    return { rounds: data.settings.questions.rounds.length, final: data.settings.questions.final.length };
+  });
+  expect(restoredCounts).toEqual({ rounds: 16, final: 0 });
+  await control.getByRole("button", { name: "Zmień ustawienia" }).click();
+  const verifyFrame = control.frameLocator("#gsFrame");
+  await verifyFrame.locator("#btnToggleSidebar").click();
+  await verifyFrame.locator('.gs-sidebar-item[data-cat="rounds"]').click();
+  await expect(verifyFrame.locator("#gsRoundsOrderList .roundsOrderItem")).toHaveCount(16);
+  await control.waitForTimeout(1500); // widz widzi wszystkie pytania w puli rund
+  await control.locator("#gsOverlay").click({ position: { x: 5, y: 5 } });
+  await control.locator("#gsOverlay").waitFor({ state: "hidden", timeout: 10_000 });
+
+  await clickPaced(control.getByRole("button", { name: "Gotowe — przejdź do rozgrywki" }), ADMIN_PACE_MS);
+  await clickPaced(control.getByRole("button", { name: "Rozpocznij grę" }), ADMIN_PACE_MS);
+  await clickPaced(control.getByRole("button", { name: "Rozpocznij rundę" }));
+  await clickPaced(pages.buzzer.getByRole("button", { name: "Przycisk A" }));
+  await armAndConfirmPaced(control.getByRole("button", { name: "Zatwierdź: Alfa" }));
+
+  // Odwzorowujemy powrót połączenia przeglądarki Control. W czasie żądania
+  // Display ma pokazać przycisk, a akcja odpowiedzi pozostaje zablokowana.
+  await control.evaluate(() => window.dispatchEvent(new Event("offline")));
+  await control.waitForTimeout(800);
+  await control.evaluate(() => window.dispatchEvent(new Event("online")));
+  await expect(display.locator("#audioUnlockScreen")).toBeVisible({ timeout: 10_000 });
+  await expect(answerTile(control, 1)).toBeDisabled();
+  await display.waitForTimeout(1800); // czytelne ujęcie przycisku odblokowania na Display
+  await display.locator("#btnAudioUnlock").click();
+  await expect(display.locator("#audioUnlockScreen")).toBeHidden({ timeout: 10_000 });
+  await expect(answerTile(control, 1)).toBeEnabled({ timeout: 10_000 });
+  await armAndConfirmPaced(answerTile(control, 1));
+  await control.waitForTimeout(2500); // widać wznowioną grę po natychmiastowym odblokowaniu
+}
+
 // ===== Scenariusz 7: blokada logo — Control czeka, aż logo-editor.js
 // zwolni logo referencowane przez grę, i wznawia się SAM, gdy się zwolni.
 // Zgłoszone: "dostosuj testy, żeby też testowały... blokadę logo (samego
@@ -1900,6 +1965,14 @@ const SCENARIOS = [
       settings: { game: { advanced: { finalMinPoints: 999 } } },
     }),
     run: scenarioRoundMultiplier,
+  },
+  {
+    file: "12-poprawki-wieczoru.mp4",
+    makeGame: (setupPage) => restoreDemoGame(setupPage, {
+      pickOrds: [1, 2, 8, 9, 10, 11, 12, 13, 14, 15, 16],
+      finalPickOrds: [3, 4, 5, 6, 7],
+    }),
+    run: scenarioRecentFixes,
   },
 ];
 

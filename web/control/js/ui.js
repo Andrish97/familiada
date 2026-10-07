@@ -16,13 +16,14 @@
 // setStealMsg/setRevealMsg/ROUNDS_MSG/FINAL_MSG, ale jako czysta funkcja
 // bieżącego game_state (web/js/gameplay/hints.js), nie ulotny stan ustawiany przy
 // każdym zdarzeniu — "wszystko idzie przez tabelę stanów".
-import { getRoundsHint, getFinalHint, getFinalEntryShortcuts, teamName } from "../../shared/js/gameplay/hints.js?v=v2026-10-07T22015";
-import { t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-07T22015";
-import { getSfxCategories, getSfxVariant, isSfxPlaying, playSfx, stopSfx, onSfxEnd, setSfxVolume } from "../../shared/js/core/sfx.js?v=v2026-10-07T22015";
-import { buildDisplayPreviewRow } from "../../shared/js/gameplay/previewRow.js?v=v2026-10-07T22015";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-07T22015";
+import { getRoundsHint, getFinalHint, getFinalEntryShortcuts, teamName } from "../../shared/js/gameplay/hints.js?v=v2026-10-07T23002";
+import { t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-07T23002";
+import { getSfxCategories, getSfxVariant, isSfxPlaying, playSfx, stopSfx, onSfxEnd, setSfxVolume } from "../../shared/js/core/sfx.js?v=v2026-10-07T23002";
+import { buildDisplayPreviewRow } from "../../shared/js/gameplay/previewRow.js?v=v2026-10-07T23002";
+import { DEFAULT_SETTINGS } from "../../shared/js/gameplay/gameStateShape.js?v=v2026-10-07T23002";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-07T23002";
 
-import { previewPendingRoundEndDestination } from "./engine.js?v=v2026-10-07T22015";
+import { previewPendingRoundEndDestination } from "./engine.js?v=v2026-10-07T23002";
 
 const $ = (id) => document.getElementById(id);
 const on = (el, ev, fn) => el && (el[`on${ev}`] = fn);
@@ -41,6 +42,9 @@ function h(tag, attrs = {}, children = []) {
 
 export function createUI({ root, emit }) {
   function clear() { root.innerHTML = ""; }
+  function stopSummarySoundPreview() {
+    getSfxCategories().forEach(({ key }) => { if (isSfxPlaying(key)) stopSfx(key); });
+  }
 
   // Tryb physicalBuzzer (plan, tabela A/R2): operator wybiera drużynę
   // wprost zamiast czekać na Buzzer — dwuetapowo (zaznacz → potwierdź, jak
@@ -385,7 +389,7 @@ export function createUI({ root, emit }) {
       const desc = t("control.sfxDesc." + key) || key;
       const volPct = Math.round((state.settings.sound?.volumes?.[key] ?? 100));
 
-      const playBtn = h("button", { class: "btn sm summarySoundPlay", type: "button" });
+      const playBtn = h("button", { class: "btn sm summarySoundPlay sound-preview-btn", type: "button" });
       playBtn.innerHTML = SVG_PLAY;
       on(playBtn, "click", () => {
         if (isSfxPlaying(key)) {
@@ -399,7 +403,7 @@ export function createUI({ root, emit }) {
       });
 
       const volLabel = h("span", { class: "summarySoundVolLabel", text: `${volPct}%` });
-      const slider = h("input", { class: "summarySoundVol", type: "range", min: "0", max: "100", step: "1", "data-sfx-vol": key });
+      const slider = h("input", { class: "summarySoundVol sound-volume-slider", type: "range", min: "0", max: "100", step: "1", "data-sfx-vol": key });
       slider.value = String(volPct);
       on(slider, "input", () => {
         const pct = parseInt(slider.value, 10);
@@ -437,6 +441,7 @@ export function createUI({ root, emit }) {
     const s = state.settings;
     const d = state.display;
     const hasFinal = s.hasFinal === true;
+    const displaySoundNeedsUnlock = s.soundSource === "display" && ctx.displayAudioUnlocked !== true;
 
     const previewSrc = ctx.urls?.displayUrl
       ? `${ctx.urls.displayUrl}${ctx.urls.displayUrl.includes("?") ? "&" : "?"}preview=1`
@@ -507,12 +512,12 @@ export function createUI({ root, emit }) {
     // ten krok (app.js's ensureQuestionsDrawn) — poniższy podgląd pokazuje
     // CO faktycznie wylosowano, nie tylko sam fakt trybu.
     const roundsValueRow = [document.createTextNode(
-      s.roundsQuestionsMode === "pick" ? t("control.roundsOrderFixed", { count: s.roundsPicked?.length || 0 }) : t("control.summaryQModeRandom")
+      s.roundsQuestionsMode === "pick" ? t("control.roundsOrderFixed", { count: state.rounds._questionPool?.length ?? s.roundsPicked?.length ?? 0 }) : t("control.summaryQModeRandom")
     )];
     if (s.roundsQuestionsMode !== "pick") {
       roundsValueRow.push(h("button", { class: "btn sm", type: "button", onclick: () => emit("setup.reshuffleRounds") }, [document.createTextNode(t("control.reshuffleQuestions"))]));
     }
-    const roundsPreview = s.roundsQuestionsMode !== "pick" ? questionPreviewList(state.rounds._questionPool) : null;
+    const roundsPreview = questionPreviewList(state.rounds._questionPool);
     sections.push(summarySection(t("control.summaryRoundsQuestions"), h("div", {}, [
       h("div", { class: "summaryQMode c2-summary-row" }, roundsValueRow),
       roundsPreview,
@@ -525,7 +530,7 @@ export function createUI({ root, emit }) {
       if (s.finalQuestionsMode !== "pick") {
         finalValueRow.push(h("button", { class: "btn sm", type: "button", onclick: () => emit("setup.reshuffleFinal") }, [document.createTextNode(t("control.reshuffleQuestions"))]));
       }
-      const finalPreview = s.finalQuestionsMode !== "pick" ? questionPreviewList(state.final.pickedPreview) : null;
+      const finalPreview = questionPreviewList(state.final.pickedPreview);
       sections.push(summarySection(t("control.summaryFinalQuestions"), h("div", {}, [
         h("div", { class: "summaryQMode c2-summary-row" }, finalValueRow),
         finalPreview,
@@ -536,10 +541,45 @@ export function createUI({ root, emit }) {
     // wąską kolumnę. Podgląd Display zostaje po lewej; dźwięk i ustawienia
     // gry po prawej, bez pustego pasa szerokiej karty.
     const displaySummarySection = sections.find((section) => section.classList.contains("c2-summary-display"));
-    const leftSummarySections = sections.filter((section) => !section.classList.contains("c2-summary-display") && !section.classList.contains("c2-summary-sound"));
+    const isQuestionSection = (section) => section.classList.contains("c2-summary-rounds") || section.classList.contains("c2-summary-final-questions");
+    const questionSummarySections = sections.filter(isQuestionSection);
+    const leftSummarySections = sections.filter((section) => !section.classList.contains("c2-summary-display") && !section.classList.contains("c2-summary-sound") && !isQuestionSection(section));
     const rightSummarySections = sections.filter((section) => section.classList.contains("c2-summary-sound"));
 
-    const finalIncomplete = hasFinal && s.finalQuestionsMode === "pick" && (state.final.picked?.length !== 5 || !state.final.confirmed);
+    const defaultAdvanced = {
+      roundMultipliers: DEFAULT_SETTINGS.roundMultipliers,
+      finalMinPoints: DEFAULT_SETTINGS.finalMinPoints,
+      finalTarget: DEFAULT_SETTINGS.finalTarget,
+      endScreenMode: DEFAULT_SETTINGS.endScreenMode,
+      finalPrizeMultiplier: DEFAULT_SETTINGS.finalPrizeMultiplier,
+      mainPrizeAmount: DEFAULT_SETTINGS.mainPrizeAmount,
+    };
+    const advancedLabels = {
+      roundMultipliers: t("gameSettings.game.roundMultipliers"),
+      finalMinPoints: t("gameSettings.game.finalMinPoints"),
+      finalTarget: t("gameSettings.game.finalTarget"),
+      endScreenMode: t("gameSettings.game.endModeLabel"),
+      finalPrizeMultiplier: t("gameSettings.game.prizeMultiplier"),
+      mainPrizeAmount: t("gameSettings.game.prizeAmount"),
+    };
+    const advancedRows = Object.keys(defaultAdvanced).filter((key) =>
+      JSON.stringify(s[key]) !== JSON.stringify(defaultAdvanced[key])
+    ).map((key) => {
+      let value = Array.isArray(s[key]) ? s[key].join(" · ") : String(s[key]);
+      if (key === "endScreenMode") {
+        const modeLabels = { logo: t("gameSettings.game.endModeLogoShort"), points: t("gameSettings.game.endModePointsShort"), money: t("gameSettings.game.endModeMoneyShort") };
+        value = modeLabels[s[key]] || value;
+      }
+      return h("div", { class: "c2-advanced-row" }, [
+        h("span", { class: "c2-advanced-label", text: advancedLabels[key] || key }),
+        h("span", { class: "c2-advanced-value", text: value }),
+      ]);
+    });
+    if (advancedRows.length) {
+      leftSummarySections.push(summarySection(t("control.summaryGame"), h("div", { class: "c2-advanced-settings" }, advancedRows), "c2-summary-advanced"));
+    }
+
+    const finalIncomplete = hasFinal && (state.final.picked?.length !== 5 || !state.final.confirmed);
     // Zgłoszone: "Gotowe przejdź do rozgrywki ma inny styl niż pozostałe
     // przyciski dalej" — to był gołe `<button class="btn gold">` (globalny
     // styl przycisków apki), nie navButton() jak KAŻDE inne "Dalej" w
@@ -549,16 +589,16 @@ export function createUI({ root, emit }) {
     // (disabled, bez pulsowania), boardBusy() to realne oczekiwanie na sieć
     // (busy, pulsuje).
     const start = navButton(t("control.setupDoneBtn"), {
-      disabled: finalIncomplete,
+      disabled: finalIncomplete || displaySoundNeedsUnlock,
       busy: boardBusy(),
-      onclick: () => emit("setup.start"),
+      onclick: () => { stopSummarySoundPreview(); emit("setup.start"); },
     });
-    const changeSettings = h("button", { class: "btn sm", type: "button", onclick: () => emit("setup.openSettings") }, [document.createTextNode(t("control.summarySettingsLink"))]);
+    const changeSettings = h("button", { class: "btn sm", type: "button", onclick: () => { stopSummarySoundPreview(); emit("setup.openSettings"); } }, [document.createTextNode(t("control.summarySettingsLink"))]);
     // "Wstecz" (jak stare control.html's btnSetupFinishBack) — swobodny
     // powrót do Urządzeń, nic nie resetuje. c2-btn-back popycha go do
     // lewej krawędzi stopki (patrz control2.html: .stepFootButtons ma
     // justify-content:flex-end, ten jeden dostaje margin-right:auto).
-    const back = h("button", { class: "btn c2-btn-back", type: "button", disabled: boardBusy() ? "" : undefined, onclick: boardBusy() ? undefined : () => emit("setup.back") }, [document.createTextNode(t("common.back"))]);
+    const back = h("button", { class: "btn c2-btn-back", type: "button", disabled: boardBusy() ? "" : undefined, onclick: boardBusy() ? undefined : () => { stopSummarySoundPreview(); emit("setup.back"); } }, [document.createTextNode(t("common.back"))]);
 
     // Płasko, tak jak renderDevicesStep — jedno .cardBody na root, BEZ
     // zagnieżdżonego wewnątrz .card (to była druga, zbędna warstwa: root
@@ -586,6 +626,7 @@ export function createUI({ root, emit }) {
           h("div", { class: "c2-summary-column" }, leftSummarySections),
           h("div", { class: "c2-summary-column" }, rightSummarySections),
         ]),
+        h("div", { class: `c2-summary-question-grid${hasFinal ? " has-final" : ""}` }, questionSummarySections),
       ]),
       h("div", { class: "stepFoot" }, [
         h("div", { class: "stepFootButtons" }, [back, changeSettings, start]),
@@ -682,19 +723,11 @@ export function createUI({ root, emit }) {
       ...rest,
       disabled,
       cls: `${cls} ${armed ? "c2-tile-armed" : ""}`.trim(),
-      // Zgłoszone: "zaznaczanie jest zlagowane" — dwa OSOBNE kliknięcia
-      // (zaznacz -> potwierdź) czasem gubiły się w wyścigu z przychodzącym
-      // odświeżeniem stanu (walidacja armedKey przy każdym renderze wyżej
-      // potrafi cofnąć zaznaczenie MIĘDZY dwoma kliknięciami operatora, jeśli
-      // akurat w tej chwili dotarł nowy wiersz z sieci) — drugie kliknięcie
-      // trafiało wtedy na świeżo zresetowany kafel i tylko go zaznaczało
-      // ponownie, zamiast potwierdzać. `event.detail>=2` (drugie kliknięcie
-      // natywnego podwójnego kliknięcia — licznik od przeglądarki, niezależny
-      // od naszego stanu armedKey) daje niezawodne obejście: podwójny klik
-      // ZAWSZE potwierdza od razu, niezależnie od tego, czy pierwsze
-      // kliknięcie zdążyło zaznaczyć kafel w naszym stanie czy nie.
-      onclick: disabled ? undefined : (e) => {
-        if (armedKey === key || (e && e.detail >= 2)) {
+      // Pierwszy tap widocznie zaznacza kafel. Drugi tap na tym samym
+      // aktywnym kaflu zatwierdza; nie polegamy na dblclick/click.detail,
+      // które działają niespójnie na urządzeniach dotykowych.
+      onclick: disabled ? undefined : () => {
+        if (armedKey === key) {
           armedKey = null;
           onclick();
         } else {
@@ -778,8 +811,8 @@ export function createUI({ root, emit }) {
       tiles.push(tile(t("control.roundsBuzzAcceptTeam", { name: teamName(state, selectedTeam) }), {
         shortcut: "c", row: 2, col: "1 / 7", cls: acceptArmed ? "c2-tile-armed" : "",
         disabled: !acceptClickable,
-        onclick: acceptClickable ? (e) => {
-          if (armedKey === acceptArmKey || (e && e.detail >= 2)) {
+        onclick: acceptClickable ? () => {
+          if (armedKey === acceptArmKey) {
             armedKey = null;
             const team = selectedTeam;
             if (isPhysical) pendingPhysicalTeam = null;
@@ -1259,8 +1292,8 @@ export function createUI({ root, emit }) {
         class: `c2-tile c2-timer-row c2-tile-timer ${clickable ? "startable" : ""} ${armed ? "c2-tile-armed" : ""}`.trim(),
         type: "button",
         disabled: clickable ? undefined : "",
-        onclick: clickable ? (e) => {
-          if (armedKey === armKey || (e && e.detail >= 2)) {
+        onclick: clickable ? () => {
+          if (armedKey === armKey) {
             armedKey = null;
             emit("final.toggleTimer", { round });
           } else {
@@ -1286,8 +1319,8 @@ export function createUI({ root, emit }) {
       class: `c2-tile c2-timer-row c2-tile-timer startable ${armed ? "c2-tile-armed" : ""}`.trim(),
       type: "button",
       disabled: clickable ? undefined : "",
-      onclick: clickable ? (e) => {
-        if (armedKey === armKey || (e && e.detail >= 2)) {
+      onclick: clickable ? () => {
+        if (armedKey === armKey) {
           armedKey = null;
           emit("final.toggleTimer", { round });
         } else {
@@ -1624,7 +1657,7 @@ export function createUI({ root, emit }) {
     // Zgłoszone: wybór dopasowania w finale (MATCH/MISS/SKIP/Powtórzenie) ma
     // reagować jak reszta konsekwentnych kafli w tej appce — zaznacz ->
     // potwierdź (armableTile, jak odpowiedzi/X/Oddaj kontrolę w Rundach), z
-    // podwójnym kliknięciem jako skrótem (armableTile's event.detail>=2).
+    // drugim tapnięciem po widocznym zaznaczeniu.
     // Wcześniej te kafle dispatchowały RESOLVE_MAPPING/SET_REPEAT od razu na
     // pierwszy klik — jedyne miejsce w tym ekranie bez bufora przeciwko
     // przypadkowemu kliknięciu.

@@ -12,9 +12,9 @@
   <link rel="preconnect" href="https://supabase.familiada.online">
   <title data-i18n="control.title">Familiada — panel sterowania</title>
 
-  <link rel="icon" href="/favicon.ico?v=v2026-10-07T22015"/>
-  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-07T22015"/>
-  <link rel="stylesheet" href="/control/css/control.css?v=v2026-10-07T22015"/>
+  <link rel="icon" href="/favicon.ico?v=v2026-10-07T23002"/>
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-07T23002"/>
+  <link rel="stylesheet" href="/control/css/control.css?v=v2026-10-07T23002"/>
   <script>
     document.documentElement.classList.add('page-loading');
     try {
@@ -31,12 +31,12 @@
   <style>html[data-mobile-guard]{overflow:hidden;touch-action:none}html[data-mobile-guard] body{visibility:hidden}</style>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-  <script src="/shared/js/core/security-warning.js?v=v2026-10-07T22015" defer></script>
+  <script src="/shared/js/core/security-warning.js?v=v2026-10-07T23002" defer></script>
   <script type="module">
-    import { initI18n } from "/shared/translation/translation.js?v=v2026-10-07T22015";
+    import { initI18n } from "/shared/translation/translation.js?v=v2026-10-07T23002";
     await initI18n({ withSwitcher: true });
     document.documentElement.classList.remove('page-loading');
-    import("/control/js/app.js?v=v2026-10-07T22015");
+    import("/control/js/app.js?v=v2026-10-07T23002");
   </script>
 
   <style>
@@ -220,7 +220,16 @@
     .c2-summary-columns { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); align-items:start; gap:12px; }
     .c2-summary-column { display:flex; flex-direction:column; gap:10px; min-width:0; }
     .c2-summary-column > .summarySection { min-width:0; margin:0; }
+    .c2-summary-question-grid { display:grid; grid-template-columns:minmax(0,1fr); gap:12px; }
+    .c2-summary-question-grid.has-final { grid-template-columns:repeat(2,minmax(0,1fr)); }
+    .c2-summary-question-grid > .summarySection { min-width:0; margin:0; }
+    .c2-advanced-settings { display:grid; gap:6px; }
+    .c2-advanced-row { display:flex; justify-content:space-between; align-items:baseline; gap:12px; padding:4px 0; }
+    .c2-advanced-label { opacity:.75; }
+    .c2-advanced-value { text-align:right; font-weight:700; }
     .c2-summary-grid > .c2-summary-display { margin:0; }
+    .c2-summary-display .summaryDisplayInfo { display:flex; flex-wrap:wrap; align-items:center; gap:8px 24px; }
+    .c2-summary-display .summaryDisplayRow { min-width:0; white-space:nowrap; }
     /* Podgląd wylosowanej puli pytań (rounds._questionPool / final.pickedPreview)
        — pionowa, numerowana lista pod wierszem trybu (zgłoszone: poprzedni,
        zawijany ciąg "tagów" wyglądał jak jeden zlepiony akapit) — każde
@@ -302,6 +311,7 @@
        nie dostają przycisku, więc rytm siatki się nie rusza. ---- */
     .c2-tilegrid { display:grid; grid-template-columns:repeat(6, 1fr); grid-template-rows:repeat(5, minmax(0,1fr)); gap:10px; flex:1; min-height:0; }
     .c2-tile {
+      touch-action: manipulation;
       display:flex; align-items:center; justify-content:center; text-align:center;
       padding:8px 10px; border-radius:14px; border:1px solid var(--line2);
       background:rgba(255,255,255,.06); color:#fff; font-weight:800; font-size:.88rem; line-height:1.3;
@@ -385,6 +395,7 @@
     }
     @media (max-width:1100px) {
       .c2-summary-columns { grid-template-columns:minmax(0,1fr); }
+      .c2-summary-question-grid.has-final { grid-template-columns:minmax(0,1fr); }
     }
     .c2-entrytile-p1ans b { color:var(--gold); font-weight:800; }
     /* Pole wpisywania ma wyglądać jak realne pole formularza (obramowanie +
@@ -471,13 +482,14 @@
        wiersz w tej samej skali co reszta siatki wpisywania (zgłoszone). */
     .c2-timer-row { width:100%; font-size:1.02rem; }
 
-    /* Podgląd Display w Podsumowaniu rozciąga się do szerokości karty, ale
-       jego wysokość nie może wypchnąć treści poza ograniczoną kartę. */
+    /* Podgląd Display jest wyśrodkowany, ma stałe proporcje 16:9 i
+       ograniczoną szerokość, żeby nie dominował nad resztą Podsumowania. */
     #c2DisplayPreview {
-      width:100%;
-      height:min(calc((100dvh - var(--topbar-h, 70px)) * .38), 360px);
-      max-height:100%;
+      width:min(100%, 640px);
+      height:auto;
       box-sizing:border-box;
+      aspect-ratio:16/9;
+      margin-inline:auto;
       box-sizing:border-box;
       background: #000;
       border-radius: 10px;
@@ -636,6 +648,6 @@
       <button class="btn-contact-footer" type="button" data-contact-modal data-i18n="common.contactBtn">Kontakt</button>
     </div>
   </main>
-  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-07T22015"></script>
+  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-07T23002"></script>
 </body>
 </html>

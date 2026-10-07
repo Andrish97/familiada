@@ -96,6 +96,9 @@ test("control2: TV odrzuca inne urządzenia, kod display otwiera nowy Wyświetla
     await expect(tv.locator("#fsBtn")).toBeVisible();
     // The new Display remains directly accessible; its sound prompt works with TV OK.
     await tv.goto(`https://www.familiada.online/display/?id=${game.id}&key=${game.share_key_display}`);
+    // Przycisk jest widoczny od początku i czeka na kliknięcie, niezależnie
+    // od tego, czy panel zdążył już wybrać źródło dźwięku.
+    await expect(tv.locator("#audioUnlockScreen")).toBeVisible({ timeout: 15000 });
     await page.goto(`/control?id=${game.id}`);
     await expect(page.locator(".stepTitle")).toHaveText("Urządzenia", { timeout: 15000 });
     await page.locator('.toggle-item:has(input[name="soundSource"][value="display"])').click();
@@ -617,7 +620,28 @@ async function openAnon(browser, contexts, path, label, errors) {
 test("control2: parowanie urządzeń — linki renderują się bez błędu, Control widzi je jako online", async ({ page, browser }, testInfo) => {
   await page.setViewportSize({ width: 1366, height: 768 });
   await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
-  const game = await makeGame(page, `E2E-CONTROL2-PAIRING-${Date.now()}`);
+  const game = await makeGame(page, `E2E-CONTROL2-PAIRING-${Date.now()}`, {
+    settings: { game: { hasFinal: true, roundsQuestionsMode: "pick", finalQuestionsMode: "random", advanced: { finalTarget: 250 } } },
+    roundQuestions: Array.from({ length: 6 }, (_, i) => ({
+      ord: i + 1,
+      text: `Pytanie rundy ${i + 1}`,
+      answers: [{ ord: 1, text: `Odp. ${i + 1}`, fixed_points: 10 }],
+    })),
+  });
+  await page.evaluate(async (gameId) => {
+    const sb = window.__sbClient;
+    const { data: questions, error: readError } = await sb.from("questions").select("id, text, ord").eq("game_id", gameId).order("ord");
+    if (readError) throw new Error(readError.message);
+    const { data: current, error: gameError } = await sb.from("games").select("settings").eq("id", gameId).single();
+    if (gameError) throw new Error(gameError.message);
+    const settings = current.settings;
+    settings.questions = {
+      rounds: questions,
+      final: [],
+    };
+    const { error } = await sb.from("games").update({ settings }).eq("id", gameId);
+    if (error) throw new Error(error.message);
+  }, game.id);
   const contexts = [];
   try {
     await page.goto(`/control?id=${game.id}`, { waitUntil: "domcontentloaded" });
@@ -655,14 +679,67 @@ test("control2: parowanie urządzeń — linki renderują się bez błędu, Cont
     const deviceListFits = await page.locator(".c2-devices-layout .c2-scroll-area").evaluate((el) => el.scrollHeight <= el.clientHeight + 1);
     expect(deviceListFits, "Urządzenia powinny mieścić się bez przewijania przy 1366×768").toBe(true);
 
+    await page.locator('.toggle-item:has(input[name="soundSource"][value="display"])').click();
+    await expect(page.locator('.device-row:has(input[name="soundSource"][value="display"]) .device-opt-check-hint').last())
+      .toContainText("bez tego start gry będzie zablokowany");
+    await expect(displayPage.locator("#audioUnlockScreen")).not.toHaveClass(/hidden/, { timeout: 10000 });
+
     await page.getByRole("button", { name: "Dalej" }).click();
     await expect(page.locator(".stepTitle")).toHaveText("Podsumowanie", { timeout: 10000 });
+    await expect(page.locator(".c2-summary-rounds .c2-qpreview-text")).toHaveCount(1);
+    await expect(page.locator(".c2-summary-final-questions .c2-qpreview-text")).toHaveCount(5);
+    const initialRoundQuestion = await page.locator(".c2-summary-rounds .c2-qpreview-text").textContent();
+    const initialFinalQuestions = await page.locator(".c2-summary-final-questions .c2-qpreview-text").allTextContents();
+    expect(initialFinalQuestions).not.toContain(initialRoundQuestion);
+    expect(new Set([...initialFinalQuestions, initialRoundQuestion])).toHaveSize(6);
+    await expect(page.locator(".c2-summary-advanced")).toContainText("250");
+    const questionCards = await page.locator(".c2-summary-question-grid > .summarySection").evaluateAll((els) => els.map((el) => {
+      const rect = el.getBoundingClientRect();
+      return { left: rect.left, width: rect.width };
+    }));
+    expect(questionCards).toHaveLength(2);
+    expect(questionCards[1].left).toBeGreaterThan(questionCards[0].left + questionCards[0].width - 2);
+    await page.evaluate(() => { window.__originalRandom = Math.random; Math.random = () => 0.99; });
+    await page.locator(".c2-summary-final-questions .c2-summary-row .btn").click();
+    await expect(page.locator(".c2-summary-final-questions .c2-qpreview-text")).not.toHaveText(initialFinalQuestions);
+    await expect(page.locator(".c2-summary-rounds .c2-qpreview-text")).toHaveText([initialFinalQuestions[4]]);
+    await page.evaluate(() => { Math.random = window.__originalRandom; delete window.__originalRandom; });
     const displayPreview = page.locator("#c2DisplayPreview");
-    const [previewWidth, sectionWidth] = await Promise.all([
-      displayPreview.evaluate((el) => el.getBoundingClientRect().width),
-      page.locator(".c2-summary-display").evaluate((el) => el.getBoundingClientRect().width),
-    ]);
-    expect(previewWidth).toBeGreaterThan(sectionWidth * 0.95);
+    const previewBox = await displayPreview.evaluate((el) => {
+      const rect = el.getBoundingClientRect();
+      const section = el.closest(".c2-summary-display").getBoundingClientRect();
+      return { width: rect.width, height: rect.height, left: rect.left, sectionLeft: section.left, sectionWidth: section.width };
+    });
+    expect(previewBox.width).toBeLessThanOrEqual(641);
+    expect(previewBox.width / previewBox.height).toBeCloseTo(16 / 9, 1);
+    expect(Math.abs((previewBox.left + previewBox.width / 2) - (previewBox.sectionLeft + previewBox.sectionWidth / 2))).toBeLessThan(2);
+
+    const revealPreview = page.locator('.summarySoundRow:has(input[data-sfx-vol="reveal"]) .summarySoundPlay');
+    const beginGame = page.getByRole("button", { name: "Gotowe — przejdź do rozgrywki" });
+    await expect(beginGame).toBeDisabled();
+    await expect(page.locator(".c2-audio-gate-hint")).toHaveCount(0);
+    await displayPage.locator("#btnAudioUnlock").click();
+    await expect(beginGame).toBeEnabled({ timeout: 10000 });
+    await revealPreview.click();
+    await expect(revealPreview.locator(".ico")).toHaveClass(/ico-stop/);
+    await expect(beginGame).toBeEnabled();
+    await beginGame.click();
+    await expect(page.locator(".stepTitle")).not.toHaveText("Podsumowanie", { timeout: 10000 });
+
+    // Po utracie i odzyskaniu połączenia Control przy źródle Display
+    // ponownie wymaga gestu na Wyświetlaczu. Akcje gry pozostają zablokowane
+    // do potwierdzenia, a odpowiedź Display odblokowuje je bez reloadu.
+    const startRound = page.getByRole("button", { name: "Rozpocznij rundę" });
+    await expect(startRound).toBeVisible();
+    await page.evaluate(() => {
+      window.dispatchEvent(new Event("offline"));
+      window.dispatchEvent(new Event("online"));
+    });
+    await expect(displayPage.locator("#audioUnlockScreen")).toBeVisible({ timeout: 10000 });
+    await expect(startRound).toBeDisabled();
+    await displayPage.locator("#btnAudioUnlock").click();
+    await expect(displayPage.locator("#audioUnlockScreen")).toBeHidden({ timeout: 10000 });
+    await expect(startRound).toBeEnabled({ timeout: 10000 });
 
     expect(errors, "żadne z urządzeń nie powinno rzucić błędu JS: " + errors.join(" | ")).toEqual([]);
   } finally {
@@ -1816,8 +1893,8 @@ test("control2: dźwięk ze źródła Wyświetlacz — odblokowanie, głośnoś�
     await expect(page.locator(".stepTitle")).toHaveText("Urządzenia", { timeout: 15000 });
     await expect(page.locator("#dotDisplay")).toHaveClass(/\bok\b/, { timeout: 15000 });
 
-    // Przed przełączeniem: Display nigdy nie pokazuje ekranu odblokowania.
-    await expect(displayPage.locator("#audioUnlockScreen")).toHaveClass(/\bhidden\b/);
+    // Przycisk Display pozostaje widoczny do jawnego kliknięcia.
+    await expect(displayPage.locator("#audioUnlockScreen")).toBeVisible();
 
     // Przełącznik dwustanowy (.toggle-group, jak "Losowo"/"Wybierz" w
     // ustawieniach gry) — widoczny tekst opcji to CSS content:attr(data-text)

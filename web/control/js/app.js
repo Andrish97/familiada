@@ -1,4 +1,4 @@
-import { createRenderCompletionGate } from "../../shared/js/gameplay/renderCompletion.js?v=v2026-10-07T22015";
+import { createRenderCompletionGate } from "../../shared/js/gameplay/renderCompletion.js?v=v2026-10-07T23002";
 // control/js/app.js
 // Punkt wejścia Control v2 — spina store/engine/devices/presence/
 // soundReactor/ui. Nawigacja przedmeczowa (devices_display →
@@ -7,20 +7,20 @@ import { createRenderCompletionGate } from "../../shared/js/gameplay/renderCompl
 // engine.js) — ale i tak przechodzi przez assertTransition(), żeby tabela
 // stanów była mechanizmem wszędzie, nie tylko wewnątrz silnika reguł gry.
 
-import { guardDesktopOnly } from "../../shared/js/core/device-guard.js?v=v2026-10-07T22015";
-import { guardResourceLock, guardResourceBusy } from "../../shared/js/core/resource-lock.js?v=v2026-10-07T22015";
-import { initI18n, getUiLang, t } from "../../shared/translation/translation.js?v=v2026-10-07T22015";
-import { requireAuth } from "../../shared/js/core/auth.js?v=v2026-10-07T22015";
-import { setTopbarAccount } from "../../shared/js/core/topbar-controller.js?v=v2026-10-07T22015";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-07T22015";
-import { loadQuestions, loadAnswers } from "../../shared/js/core/game-validate.js?v=v2026-10-07T22015";
-import { loadSfxManifest, initSfx, setCurrentGameId, unlockAudio, applySfxGameSettings, loadSfxFromCloud, playSfx, getSfxDurationAccurate as getSfxDuration, listSfx, isAnySfxPlaying } from "../../shared/js/core/sfx.js?v=v2026-10-07T22015";
-import { listGameSounds } from "../../shared/js/core/sfx-cloud.js?v=v2026-10-07T22015";
-import { assertTransition } from "../../shared/js/gameplay/gameStateMachine.js?v=v2026-10-07T22015";
-import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-07T22015";
-import { DEFAULT_SETTINGS } from "../../shared/js/gameplay/gameStateShape.js?v=v2026-10-07T22015";
-import { rt } from "../../shared/js/core/realtime.js?v=v2026-10-07T22015";
-import { doorbellTopic } from "../../shared/js/core/game-state-doorbell.js?v=v2026-10-07T22015";
+import { guardDesktopOnly } from "../../shared/js/core/device-guard.js?v=v2026-10-07T23002";
+import { guardResourceLock, guardResourceBusy } from "../../shared/js/core/resource-lock.js?v=v2026-10-07T23002";
+import { initI18n, getUiLang, t } from "../../shared/translation/translation.js?v=v2026-10-07T23002";
+import { requireAuth } from "../../shared/js/core/auth.js?v=v2026-10-07T23002";
+import { setTopbarAccount } from "../../shared/js/core/topbar-controller.js?v=v2026-10-07T23002";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-07T23002";
+import { loadQuestions, loadAnswers } from "../../shared/js/core/game-validate.js?v=v2026-10-07T23002";
+import { loadSfxManifest, initSfx, setCurrentGameId, unlockAudio, applySfxGameSettings, loadSfxFromCloud, playSfx, getSfxDurationAccurate as getSfxDuration, listSfx, isAnySfxPlaying } from "../../shared/js/core/sfx.js?v=v2026-10-07T23002";
+import { listGameSounds } from "../../shared/js/core/sfx-cloud.js?v=v2026-10-07T23002";
+import { assertTransition } from "../../shared/js/gameplay/gameStateMachine.js?v=v2026-10-07T23002";
+import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-07T23002";
+import { DEFAULT_SETTINGS } from "../../shared/js/gameplay/gameStateShape.js?v=v2026-10-07T23002";
+import { rt } from "../../shared/js/core/realtime.js?v=v2026-10-07T23002";
+import { doorbellTopic } from "../../shared/js/core/game-state-doorbell.js?v=v2026-10-07T23002";
 
 function qrImgSrc(url) {
   const u = encodeURIComponent(String(url ?? ""));
@@ -87,6 +87,9 @@ function applyGameSettingsToState(settings, state) {
       const ids = questions.final.map((q) => q.id).filter(Boolean);
       if (ids.length > 0) {
         state.final.picked = ids.slice(0, 5);
+        state.final.pickedPreview = questions.final.slice(0, 5)
+          .filter((q) => q?.id && q?.text)
+          .map((q) => ({ id: q.id, text: q.text }));
         state.final.confirmed = true;
       }
     }
@@ -96,17 +99,17 @@ function applyGameSettingsToState(settings, state) {
   }
 }
 
-import { createStore } from "./store.js?v=v2026-10-07T22015";
-import { createEngine } from "./engine.js?v=v2026-10-07T22015";
-import { createActionGate } from "./actionGate.js?v=v2026-10-07T22015";
-import { createDevices } from "./devices.js?v=v2026-10-07T22015";
-import { createPresence } from "./presence.js?v=v2026-10-07T22015";
-import { missingDevices } from "./deviceGate.js?v=v2026-10-07T22015";
-import { createSessionTelemetry } from "./sessionTelemetry.js?v=v2026-10-07T22015";
-import { createSoundReactor } from "./soundReactor.js?v=v2026-10-07T22015";
-import { createUI } from "./ui.js?v=v2026-10-07T22015";
-import { createShareDevice } from "./shareDevice.js?v=v2026-10-07T22015";
-import { icon } from "../../shared/js/core/icons.js?v=v2026-10-07T22015";
+import { createStore } from "./store.js?v=v2026-10-07T23002";
+import { createEngine } from "./engine.js?v=v2026-10-07T23002";
+import { createActionGate } from "./actionGate.js?v=v2026-10-07T23002";
+import { createDevices } from "./devices.js?v=v2026-10-07T23002";
+import { createPresence } from "./presence.js?v=v2026-10-07T23002";
+import { missingDevices } from "./deviceGate.js?v=v2026-10-07T23002";
+import { createSessionTelemetry } from "./sessionTelemetry.js?v=v2026-10-07T23002";
+import { createSoundReactor } from "./soundReactor.js?v=v2026-10-07T23002";
+import { createUI } from "./ui.js?v=v2026-10-07T23002";
+import { createShareDevice } from "./shareDevice.js?v=v2026-10-07T23002";
+import { icon } from "../../shared/js/core/icons.js?v=v2026-10-07T23002";
 
 guardDesktopOnly();
 
@@ -142,24 +145,24 @@ async function pickQuestionPool(state) {
   return pool;
 }
 
-// Ten sam algorytm co dawne "setup.reshuffleFinal" (wykluczenie ręcznie
-// wybranej puli rund, tasowanie, pierwsze 5) — wydzielone, żeby móc go
-// wołać zarówno z tamtej akcji, jak i z automatycznego pierwszego losowania
-// (ensureQuestionsDrawn niżej). Zwraca też "pickedPreview" (id+tekst) —
+// Losowanie finału wybiera 5 pytań z puli rund i zwraca pozostałą pulę.
+// Używane przy pierwszym wejściu w Podsumowanie i przy ponownym losowaniu.
+// Zwraca też "pickedPreview" (id+tekst) —
 // samo `picked` to tylko ID, za mało żeby operator zobaczył CO wylosowano
 // w Podsumowaniu, zanim finał się realnie zacznie.
-async function drawFinalPicks(state) {
-  const all = await loadQuestions(state.gameId);
-  const roundsPicked = new Set((state.settings.roundsPicked || []).map((q) => String(q.id)));
-  const pool = state.settings.roundsQuestionsMode === "pick" && roundsPicked.size
-    ? all.filter((q) => !roundsPicked.has(String(q.id)))
-    : all.slice();
-  for (let i = pool.length - 1; i > 0; i--) {
+async function drawFinalPicks(state, roundPool) {
+  const shuffled = roundPool.slice();
+  for (let i = shuffled.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
-    [pool[i], pool[j]] = [pool[j], pool[i]];
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
   }
-  const picks = pool.slice(0, 5);
-  return { picked: picks.map((q) => q.id), pickedPreview: picks.map((q) => ({ id: q.id, text: q.text })) };
+  const picks = shuffled.slice(0, 5);
+  const pickedIds = new Set(picks.map((q) => String(q.id)));
+  return {
+    picked: picks.map((q) => q.id),
+    pickedPreview: picks.map((q) => ({ id: q.id, text: q.text })),
+    roundsPool: roundPool.filter((q) => !pickedIds.has(String(q.id))),
+  };
 }
 
 async function main() {
@@ -317,6 +320,12 @@ async function main() {
   let committing = false;
   let queuedGameAction = false;
   let presenceFlags = {};
+  let displayAudioUnlocked = null;
+  let displayAudioUnlockNonce = null;
+  let requestedDisplayAudioUnlockNonce = null;
+  let displayUnlockRetryTimer = null;
+  let controlOffline = !navigator.onLine;
+  let presenceUnavailable = false;
   let disconnectEpisode = false;
   let lastDisconnectState = "";
   let restarting = false;
@@ -339,6 +348,51 @@ async function main() {
   function waitingForDisplay() {
     return !/^(devices_|setup_)/.test(store.state.step) && displayCompletion.pending;
   }
+  function waitingForDisplayAudioUnlock() {
+    return store.state.settings.soundSource === "display"
+      && !!requestedDisplayAudioUnlockNonce
+      && (displayAudioUnlocked !== true || displayAudioUnlockNonce !== requestedDisplayAudioUnlockNonce);
+  }
+  rt(doorbellTopic(gameId)).onBroadcast("audio_unlock_completed", (message) => {
+    const nonce = message?.payload?.nonce;
+    if (typeof nonce !== "string" || nonce !== requestedDisplayAudioUnlockNonce) return;
+    displayAudioUnlocked = true;
+    displayAudioUnlockNonce = nonce;
+    clearInterval(displayUnlockRetryTimer);
+    displayUnlockRetryTimer = null;
+    renderCurrent();
+  });
+  function requestDisplayAudioUnlock() {
+    if (store.state.settings.soundSource !== "display"
+      || /^(devices_|setup_)/.test(store.state.step)
+      || store.state.locks.gameEnded) return;
+    requestedDisplayAudioUnlockNonce = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    displayAudioUnlocked = false;
+    const publish = () => {
+      if (!waitingForDisplayAudioUnlock()) {
+        clearInterval(displayUnlockRetryTimer);
+        displayUnlockRetryTimer = null;
+        return;
+      }
+      rt(doorbellTopic(gameId)).sendBroadcast("audio_unlock_required", {
+        nonce: requestedDisplayAudioUnlockNonce,
+      }, { mode: "http" }).catch(() => {});
+    };
+    clearInterval(displayUnlockRetryTimer);
+    publish();
+    displayUnlockRetryTimer = setInterval(publish, 1500);
+    renderCurrent();
+  }
+  function onControlReconnect() {
+    controlOffline = false;
+    requestDisplayAudioUnlock();
+    renderCurrent();
+  }
+  window.addEventListener("offline", () => {
+    controlOffline = true;
+    renderCurrent();
+  });
+  window.addEventListener("online", onControlReconnect);
   let completionUIReady = false;
   let completionReadPending = false;
   async function refreshDisplayCompletion() {
@@ -358,7 +412,10 @@ async function main() {
     const current = soundBusy();
     if (current !== lastSoundBusy) { lastSoundBusy = current; if (completionUIReady) renderCurrent(); }
   }, 125);
-  function busy() { return queuedGameAction || soundBusy() || committing || lockConfirmPending || waitingForDisplay() || Date.now() < lockedUntil || missingDevices(store.state, presenceFlags).length > 0; }
+  // Dźwięk odsłuchiwany w Podsumowaniu jest podglądem, nie dźwiękiem akcji
+  // gry. Nie może blokować przejścia do rozgrywki; UI zatrzymuje go przy
+  // wyjściu z Podsumowania. Poza tym krokiem aktywne SFX nadal blokują akcje.
+  function busy() { return controlOffline || waitingForDisplayAudioUnlock() || queuedGameAction || (soundBusy() && store.state.step !== "setup_finish") || committing || lockConfirmPending || waitingForDisplay() || Date.now() < lockedUntil || missingDevices(store.state, presenceFlags).length > 0; }
 
   // Uzbraja klienckie `lockedUntil` na czas `ms` (potwierdzonego dźwięku/
   // animacji) I dociąga je do realnego czasu, w którym serwer (migracja
@@ -412,6 +469,7 @@ async function main() {
   // dostawać DOKŁADNIE tę samą blokadę, inaczej auto-pudło z 3s zegarka
   // zostawiałoby okno bez ochrony, którego ręczne ADD_X już nie ma.
   async function dispatchGatedNow(action) {
+    if (controlOffline || waitingForDisplayAudioUnlock()) return null;
     // Expiration records real elapsed time even while an endpoint is absent.
     // Queued operator actions are rechecked when they actually execute.
     if (!action.type.startsWith("EXPIRE_") && missingDevices(store.state, presenceFlags).length) return null;
@@ -534,9 +592,20 @@ async function main() {
 
   const presence = createPresence({
     gameId,
-    onChange: ({ flags }) => {
+    onChange: ({ flags, displayAudioUnlocked: audioUnlocked, displayAudioUnlockNonce: audioUnlockNonce, error }) => {
       const previous = presenceFlags;
       presenceFlags = flags;
+      displayAudioUnlocked = audioUnlocked;
+      displayAudioUnlockNonce = audioUnlockNonce;
+      if (error) presenceUnavailable = true;
+      else if (presenceUnavailable) {
+        presenceUnavailable = false;
+        requestDisplayAudioUnlock();
+      }
+      if (requestedDisplayAudioUnlockNonce && audioUnlocked === true && audioUnlockNonce === requestedDisplayAudioUnlockNonce) {
+        clearInterval(displayUnlockRetryTimer);
+        displayUnlockRetryTimer = null;
+      }
       const missing = missingDevices(store.state, flags);
       const presenceMessage = `presence:${["display", "host", "buzzer"].map((kind) => `${kind}=${flags[kind] ? "online" : "offline"}`).join(",")}`;
       const overlay = document.getElementById("deviceLostOverlay");
@@ -634,7 +703,7 @@ async function main() {
     if (ended && !outroReturnReady && !outroUnlockTimer) {
       outroUnlockTimer = setTimeout(() => { outroUnlockTimer = null; renderCurrent(); }, Math.max(0, 30_000 - (Date.now() - outroStartedAt)) + 20);
     }
-    return { urls, presenceFlags, connectCodes, shareBadges, typingPending:typingCommit, outroReturnReady, busy: queuedGameAction || soundBusy() || (committing && !typingCommit) || lockConfirmPending || waitingForDisplay() || Date.now() < lockedUntil || missingDevices(store.state, presenceFlags).length > 0, devicesBlocked: missingDevices(store.state, presenceFlags).length > 0 };
+    return { urls, presenceFlags, displayAudioUnlocked, connectCodes, shareBadges, typingPending:typingCommit, outroReturnReady, busy: controlOffline || waitingForDisplayAudioUnlock() || queuedGameAction || (soundBusy() && store.state.step !== "setup_finish") || (committing && !typingCommit) || lockConfirmPending || waitingForDisplay() || Date.now() < lockedUntil || missingDevices(store.state, presenceFlags).length > 0, devicesBlocked: missingDevices(store.state, presenceFlags).length > 0 };
   }
 
   function renderCurrent() {
@@ -811,6 +880,16 @@ async function main() {
       try {
         const { data: freshGame } = await sb().from("games").select("settings").eq("id", gameId).single();
         applyGameSettingsToState(freshGame?.settings, store.state);
+        // Wyłączenie finału zwraca jego dotychczasowe pytania do puli rund.
+        // Odbuduj pulę z aktualnych ustawień (w tym ręcznej kolejności), aby
+        // Podsumowanie nie pokazywało np. 10/15 po odjęciu pytań finałowych.
+        if (store.state.settings.hasFinal !== true
+          && (store.state.final.picked?.length || store.state.final.pickedPreview?.length)) {
+          store.state.final.picked = [];
+          store.state.final.pickedPreview = [];
+          store.state.final.confirmed = false;
+          store.state.rounds._questionPool = await pickQuestionPool(store.state);
+        }
         await store.commit();
       } catch (e) { console.warn("[control2] odświeżenie ustawień po zamknięciu modala nie powiodło się:", e); }
     }
@@ -850,13 +929,14 @@ async function main() {
   // jawnie, osobną akcją).
   async function ensureQuestionsDrawn() {
     const st = store.state;
-    if (st.settings.roundsQuestionsMode !== "pick" && !st.rounds._questionPool?.length) {
+    if (!st.rounds._questionPool?.length) {
       st.rounds._questionPool = await pickQuestionPool(st);
     }
     if (st.settings.hasFinal === true && st.settings.finalQuestionsMode !== "pick" && !st.final.picked?.length) {
-      const { picked, pickedPreview } = await drawFinalPicks(st);
+      const { picked, pickedPreview, roundsPool } = await drawFinalPicks(st, st.rounds._questionPool);
       st.final.picked = picked;
       st.final.pickedPreview = pickedPreview;
+      st.rounds._questionPool = roundsPool;
       st.final.confirmed = true;
     }
   }
@@ -868,6 +948,7 @@ async function main() {
   // (ta sama liczba, co realnie steruje animacją na Displayu), zamiast
   // zgadywać nowy zestaw stałych.
   async function advance(nextStep, extra = {}, soundCueKey) {
+    if (controlOffline || waitingForDisplayAudioUnlock()) return;
     const generation = dispatchGeneration;
     assertTransition(store.state.step, nextStep);
     store.state.step = nextStep;
@@ -1109,9 +1190,15 @@ async function main() {
       }
       if (action === "setup.reshuffleFinal") {
         if (store.state.settings.finalQuestionsMode === "pick" || store.state.locks.gameStarted) return;
-        const { picked, pickedPreview } = await drawFinalPicks(store.state);
+        const all = await loadQuestions(store.state.gameId);
+        const byId = new Map(all.map((q) => [String(q.id), q]));
+        const oldFinal = (store.state.final.picked || []).map((id) => byId.get(String(id))).filter(Boolean);
+        const alreadyInRounds = new Set((store.state.rounds._questionPool || []).map((q) => String(q.id)));
+        const candidates = [...(store.state.rounds._questionPool || []), ...oldFinal.filter((q) => !alreadyInRounds.has(String(q.id)))];
+        const { picked, pickedPreview, roundsPool } = await drawFinalPicks(store.state, candidates);
         store.state.final.picked = picked;
         store.state.final.pickedPreview = pickedPreview;
+        store.state.rounds._questionPool = roundsPool;
         store.state.final.confirmed = true;
         await store.commit();
         return;

@@ -3,28 +3,28 @@
 // 1 blokad, podgląd Wyświetlacza przez display2?preview=1 + web/js/gameplay/previewRow.js
 // itd.) — trzymana jako osobny plik, żeby modal Control v2 nie zależał od
 // tej samej strony, którą wciąż ładuje stary control.html przez /game-settings.
-import { requireAuth } from "../../shared/js/core/auth.js?v=v2026-10-07T22015";
-import { t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-07T22015";
-import { setTopbarAccount } from "../../shared/js/core/topbar-controller.js?v=v2026-10-07T22015";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-07T22015";
-import { loadQuestions } from "../../shared/js/core/game-validate.js?v=v2026-10-07T22015";
-import { loadFont5x7, buildLogoPreviewCanvas } from "../../shared/js/core/logo-preview.js?v=v2026-10-07T22015";
-import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-07T22015";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-07T22015";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-07T22015";
-import { buildDisplayPreviewRow } from "../../shared/js/gameplay/previewRow.js?v=v2026-10-07T22015";
+import { requireAuth } from "../../shared/js/core/auth.js?v=v2026-10-07T23002";
+import { t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-07T23002";
+import { setTopbarAccount } from "../../shared/js/core/topbar-controller.js?v=v2026-10-07T23002";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-07T23002";
+import { loadQuestions } from "../../shared/js/core/game-validate.js?v=v2026-10-07T23002";
+import { loadFont5x7, buildLogoPreviewCanvas } from "../../shared/js/core/logo-preview.js?v=v2026-10-07T23002";
+import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-07T23002";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-07T23002";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-07T23002";
+import { buildDisplayPreviewRow } from "../../shared/js/gameplay/previewRow.js?v=v2026-10-07T23002";
 import {
   loadSfxManifest, getSfxCategories,
   setSfxCustomBlob, clearSfxCustomFile, clearAllSfxCustomFiles, getSfxCustomFiles,
   playSfx, setSfxVolume,
-} from "../../shared/js/core/sfx.js?v=v2026-10-07T22015";
+} from "../../shared/js/core/sfx.js?v=v2026-10-07T23002";
 import {
   uploadGameSound, deleteGameSound, deleteAllGameSounds,
-} from "../../shared/js/core/sfx-cloud.js?v=v2026-10-07T22015";
-import { guardDesktopOnly } from "../../shared/js/core/device-guard.js?v=v2026-10-07T22015";
-import { guardResourceLock, guardResourceBusy } from "../../shared/js/core/resource-lock.js?v=v2026-10-07T22015";
-import { updateChecked, ROW_GONE } from "../../shared/js/core/db-guard.js?v=v2026-10-07T22015";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-07T22015";
+} from "../../shared/js/core/sfx-cloud.js?v=v2026-10-07T23002";
+import { guardDesktopOnly } from "../../shared/js/core/device-guard.js?v=v2026-10-07T23002";
+import { guardResourceLock, guardResourceBusy } from "../../shared/js/core/resource-lock.js?v=v2026-10-07T23002";
+import { updateChecked, ROW_GONE } from "../../shared/js/core/db-guard.js?v=v2026-10-07T23002";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-07T23002";
 
 guardDesktopOnly();
 
@@ -280,13 +280,14 @@ async function saveAll() {
 
     const hasFinal = localSettings.game.hasFinal === true;
 
-    // Finał wyłączony — wyczyść wybrane pytania finału (żeby martwa lista
-    // nie zostawała w bazie i nie wykluczała tych pytań z puli rund przy
-    // kolejnym wczytaniu ustawień ani w trakcie realnej rozgrywki) i
-    // zresetuj tryb wyboru na domyślny, żeby nie zostawało osierocone
-    // "Wybrane ręcznie" bez żadnych wybranych pytań.
+    // Finał wyłączony — oddaj jego pytania do puli rund PRZED wyczyszczeniem
+    // listy finałowej. Zmiana może zostać zapisana bez otwierania zakładki
+    // Rundy, więc renderRounds() nie może być jedynym miejscem uzupełnienia.
     if (!hasFinal) {
-      if (localSettings.questions.final.length > 0) localSettings.questions.final = [];
+      const inRounds = new Set(localSettings.questions.rounds.map(q => String(q.id)));
+      const returned = localSettings.questions.final.filter(q => q?.id && !inRounds.has(String(q.id)));
+      localSettings.questions.rounds = [...localSettings.questions.rounds, ...returned];
+      localSettings.questions.final = [];
       if (localSettings.game.finalQuestionsMode !== "random") localSettings.game.finalQuestionsMode = "random";
     }
 
@@ -872,9 +873,9 @@ async function renderSound() {
         </button>
         <div class="ui-select-menu" role="listbox"></div>
       </div>
-      <button class="sfx-preview-btn" type="button" data-sfx-preview="${escAttr(key)}" title="Podgląd"${previewDisabled ? " disabled" : ""}>${icon("play")}</button>
+      <button class="sfx-preview-btn sound-preview-btn" type="button" data-sfx-preview="${escAttr(key)}" title="Podgląd"${previewDisabled ? " disabled" : ""}>${icon("play")}</button>
       <div class="sfx-vol-wrap">
-        <input class="sfx-vol" type="range" min="0" max="100" step="1" value="${volPct}" data-sfx-vol="${escAttr(key)}"/>
+        <input class="sfx-vol sound-volume-slider" type="range" min="0" max="100" step="1" value="${volPct}" data-sfx-vol="${escAttr(key)}"/>
         <span class="sfx-vol-label" id="sfxVol_${escAttr(key)}">${volPct}%</span>
       </div>
       <div class="sfx-file-wrap">
@@ -1132,7 +1133,7 @@ function renderQuestions() {
             </label>
           </div>
           <div class="gs-hint">${t("gameSettings.questions.roundsModeHint")}</div>
-          ${hasFinal && finalRandom && !roundsRandom ? `<div class="gs-hint" style="margin-top:6px">${icon("warning")} ${t("gameSettings.questions.finalRandomRoundsOrderedWarning") || "Finał losowy + rundy w ustalonej kolejności: finał wylosuje 5 pytań spoza Twojej listy rund, dopiero przy starcie gry w panelu prowadzącego — jeśli baza ma niewiele pytań, pula do losowania finału będzie odpowiednio mniejsza."}</div>` : ""}
+          ${hasFinal && finalRandom && !roundsRandom ? `<div class="gs-hint" style="margin-top:6px">${icon("warning")} ${t("gameSettings.questions.finalRandomRoundsOrderedWarning")}</div>` : ""}
         </div>
       </div>
     </div>
@@ -1142,8 +1143,11 @@ function renderQuestions() {
     radio.addEventListener("change", () => {
       localSettings.game.hasFinal = radio.value === "yes";
       if (!localSettings.game.hasFinal) {
-        // Wyłączenie finału od razu w UI: wyczyść wybrane pytania finału
-        // (przywraca je do puli rund) i zresetuj tryb na domyślny (losowo).
+        // Od razu przywróć pytania finału do listy rund — operator może
+        // zapisać ustawienia bez otwierania osobnej zakładki Rundy.
+        const inRounds = new Set(localSettings.questions.rounds.map(q => String(q.id)));
+        const returned = localSettings.questions.final.filter(q => q?.id && !inRounds.has(String(q.id)));
+        localSettings.questions.rounds = [...localSettings.questions.rounds, ...returned];
         localSettings.questions.final = [];
         localSettings.game.finalQuestionsMode = "random";
       }

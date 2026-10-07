@@ -1,4 +1,4 @@
-import { renderAndConfirm } from "../../shared/js/gameplay/renderCompletion.js?v=v2026-10-07T22015";
+import { renderAndConfirm } from "../../shared/js/gameplay/renderCompletion.js?v=v2026-10-07T23002";
 // display/js/main.js
 // Punkt wejścia Display v2. Napisane od zera (nie kopia display/js/main.js)
 // — inna orkiestracja: zamiast kanału komend + snapshotu z device_state,
@@ -7,16 +7,18 @@ import { renderAndConfirm } from "../../shared/js/gameplay/renderCompletion.js?v
 // (device_ping) i walidacja klucza (display_auth) to te same, generyczne,
 // niezwiązane z komendami RPC co dziś — reużyte bez zmian.
 
-import { initFullscreenButton } from "../../shared/js/display/fullscreen.js?v=v2026-10-07T22015";
-import { initI18n, setUiLang } from "../../shared/translation/translation.js?v=v2026-10-07T22015";
-import { startKeepAlive } from "../../shared/js/core/keep-alive.js?v=v2026-10-07T22015";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-07T22015";
-import { createScene } from "./scene.js?v=v2026-10-07T22015";
-import { createQRController } from "./qr.js?v=v2026-10-07T22015";
-import { createSubscription } from "../../shared/js/core/game-state-subscribe.js?v=v2026-10-07T22015";
-import { createRenderer } from "./render.js?v=v2026-10-07T22015";
-import { createDisplaySoundReactor } from "./soundReactor.js?v=v2026-10-07T22015";
-import { loadSfxManifest, initSfx, setCurrentGameId, applySfxGameSettings, unlockAudio, isAudioUnlocked, getSfxDurationAccurate as getSfxDuration, listSfx, isAnySfxPlaying } from "../../shared/js/core/sfx.js?v=v2026-10-07T22015";
+import { initFullscreenButton } from "../../shared/js/display/fullscreen.js?v=v2026-10-07T23002";
+import { initI18n, setUiLang } from "../../shared/translation/translation.js?v=v2026-10-07T23002";
+import { startKeepAlive } from "../../shared/js/core/keep-alive.js?v=v2026-10-07T23002";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-07T23002";
+import { createScene } from "./scene.js?v=v2026-10-07T23002";
+import { createQRController } from "./qr.js?v=v2026-10-07T23002";
+import { createSubscription } from "../../shared/js/core/game-state-subscribe.js?v=v2026-10-07T23002";
+import { rt } from "../../shared/js/core/realtime.js?v=v2026-10-07T23002";
+import { doorbellTopic } from "../../shared/js/core/game-state-doorbell.js?v=v2026-10-07T23002";
+import { createRenderer } from "./render.js?v=v2026-10-07T23002";
+import { createDisplaySoundReactor } from "./soundReactor.js?v=v2026-10-07T23002";
+import { loadSfxManifest, initSfx, setCurrentGameId, applySfxGameSettings, unlockAudio, getSfxDurationAccurate as getSfxDuration, listSfx, isAnySfxPlaying } from "../../shared/js/core/sfx.js?v=v2026-10-07T23002";
 
 startKeepAlive();
 
@@ -49,17 +51,40 @@ async function authDisplayOrThrow(gameId, key) {
 function startPresenceHeartbeat({ gameId, key }, pingMs = 3000) {
   const DEVICE_ID_KEY = "familiada:deviceId:display";
   let deviceId = localStorage.getItem(DEVICE_ID_KEY) || null;
+  let meta = { audio_unlocked: false, audio_unlock_nonce: null };
+  let metaVersion = 0;
+  let pingWork = null;
   const ping = async () => {
-    const { data, error } = await sb().rpc("device_ping", {
-      p_game_id: gameId, p_device_type: "display", p_key: key, p_device_id: deviceId, p_meta: {},
-    });
-    if (!error && data?.device_id && !deviceId) {
-      deviceId = data.device_id;
-      localStorage.setItem(DEVICE_ID_KEY, deviceId);
+    // Heartbeaty nie mogą się wyprzedzać: wolna odpowiedź ze starym
+    // audio_unlocked:false nie może nadpisać nowszego potwierdzenia true.
+    if (pingWork) {
+      await pingWork;
+      return ping();
     }
+    pingWork = (async () => {
+      let version;
+      let ok;
+      do {
+        version = metaVersion;
+        const { data, error } = await sb().rpc("device_ping", {
+          p_game_id: gameId, p_device_type: "display", p_key: key, p_device_id: deviceId, p_meta: { ...meta },
+        }).abortSignal(AbortSignal.timeout(6500));
+        if (!error && data?.device_id && !deviceId) {
+          deviceId = data.device_id;
+          localStorage.setItem(DEVICE_ID_KEY, deviceId);
+        }
+        ok = !error && !!data?.device_id;
+      } while (version !== metaVersion);
+      return ok;
+    })();
+    try { return await pingWork; }
+    finally { pingWork = null; }
   };
   ping();
   setInterval(ping, pingMs);
+  return {
+    setMeta(patch) { meta = { ...meta, ...patch }; metaVersion++; return ping(); },
+  };
 }
 
 function showBlack() {
@@ -223,7 +248,7 @@ window.addEventListener("DOMContentLoaded", async () => {
   try {
     const { gameId, key } = parseParams();
     const game = await authDisplayOrThrow(gameId, key);
-    startPresenceHeartbeat({ gameId: game.id, key });
+    const displayPresence = startPresenceHeartbeat({ gameId: game.id, key });
 
     // Dźwięk "ze źródła Wyświetlacz" (zgłoszone) — ten sam js/core/sfx.js co
     // Control, wczytany niezależnie tutaj. Głośności/warianty (BEZ własnych
@@ -236,20 +261,46 @@ window.addEventListener("DOMContentLoaded", async () => {
 
     const audioUnlockScreen = $("audioUnlockScreen");
     const btnAudioUnlock = $("btnAudioUnlock");
-    function syncAudioUnlockScreen(row) {
+    let audioUnlockReported = false;
+    let audioUnlockRequestNonce = null;
+    function syncAudioUnlockScreen() {
       if (!audioUnlockScreen) return;
-      const wantsDisplaySound = row.detail?.settings?.soundSource === "display";
-      const visible = wantsDisplaySound && !isAudioUnlocked();
+      // Pokaż przycisk na Wyświetlaczu od początku i zostaw go do kliknięcia,
+      // niezależnie od wybranego źródła dźwięku w Panelu sterowania.
+      const visible = !audioUnlockReported;
       const wasHidden = audioUnlockScreen.classList.contains("hidden");
       audioUnlockScreen.classList.toggle("hidden", !visible);
       audioUnlockScreen.setAttribute("aria-hidden", String(!visible));
       if (visible && wasHidden) btnAudioUnlock?.focus({ preventScroll: true });
     }
-    btnAudioUnlock?.addEventListener("click", () => {
+    syncAudioUnlockScreen();
+    btnAudioUnlock?.addEventListener("click", async () => {
       enterFullscreen();
-      unlockAudio();
-      audioUnlockScreen?.classList.add("hidden");
-      audioUnlockScreen?.setAttribute("aria-hidden", "true");
+      if (!unlockAudio()) return;
+      // Nie chowaj przycisku przed potwierdzeniem serwera. Jeśli połączenie
+      // chwilowo nie działa, operator może ponowić kliknięcie zamiast zostać
+      // zablokowanym bez widocznego sposobu odblokowania.
+      btnAudioUnlock.disabled = true;
+      let reported = false;
+      try {
+        reported = await displayPresence.setMeta({
+          audio_unlocked: true,
+          audio_unlock_nonce: audioUnlockRequestNonce,
+        });
+      }
+      catch { /* pozostaw widoczny przycisk, aby można było ponowić */ }
+      if (reported) {
+        audioUnlockReported = true;
+        audioUnlockScreen?.classList.add("hidden");
+        audioUnlockScreen?.setAttribute("aria-hidden", "true");
+        if (audioUnlockRequestNonce) {
+          rt(doorbellTopic(game.id)).sendBroadcast("audio_unlock_completed", {
+            nonce: audioUnlockRequestNonce,
+          }, { mode: "http" }).catch(() => {});
+        }
+      } else {
+        btnAudioUnlock.disabled = false;
+      }
     });
 
     const scene = await createScene();
@@ -305,6 +356,20 @@ window.addEventListener("DOMContentLoaded", async () => {
       gameId: game.id,
       deviceType: "display",
       key,
+      onBroadcast: {
+        audio_unlock_required: (message) => {
+          const nonce = message?.payload?.nonce;
+          if (typeof nonce !== "string" || !nonce || nonce === audioUnlockRequestNonce) return;
+          audioUnlockRequestNonce = nonce;
+          audioUnlockReported = false;
+          // Przycisk został wyłączony na czas potwierdzania poprzedniego
+          // kliknięcia. Nowe żądanie (np. po powrocie Control) musi znów
+          // pozwalać na gest użytkownika.
+          if (btnAudioUnlock) btnAudioUnlock.disabled = false;
+          syncAudioUnlockScreen();
+          void displayPresence.setMeta({ audio_unlocked: false, audio_unlock_nonce: nonce }).catch(() => {});
+        },
+      },
       onRow: async (row) => {
         // Język idzie za operatorem w Control (control/js/app.js's
         // LANG-push, dawniej osobna komenda `LANG <code>` — dziś zwykłe

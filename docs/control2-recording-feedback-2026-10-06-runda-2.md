@@ -181,9 +181,36 @@ przypadek. Łącznie 25 wybranych testów lokalnych.
 - Na szerokim ekranie karty Urządzeń mają ciaśniejsze odstępy i niższy kod
   parowania, żeby komplet mieścił się bez przewijania przy typowym rozmiarze
   okna. Test parowania sprawdza wysokość listy przy 1366×768.
-- Podsumowanie jest podzielone na dwie kolumny: podgląd Display zajmuje pełną
-  szerokość, a pozostałe ustawienia są rozłożone po obu stronach. Wysokość
-  podglądu jest ograniczona, żeby nie wypychał treści poza kartę.
+- Podsumowanie jest podzielone na dwie kolumny. Podgląd Display jest
+  wyśrodkowany, ograniczony do 640 px i zachowuje proporcje 16:9, a pozostałe
+  ustawienia są rozłożone po obu stronach.
 - W mapowaniu finału przywrócono pełną wysokość panelu podpowiedzi. Pasek był
   elementem widoku, który przesunął się wraz z kartą; nie był paskiem
   przewijania wymagającym usunięcia.
+- Odsłuch dźwięku w Podsumowaniu nie blokuje przycisku przejścia do gry.
+  Jedno kliknięcie uruchamia lub zatrzymuje podgląd; przejście zatrzymuje
+  odsłuch. W Ustawieniach rozgrywki i Podsumowaniu
+  przyciski odtwarzania oraz suwaki głośności mają wspólny wygląd; podczas
+  odsłuchu ikona zmienia się z trójkąta na kwadrat zatrzymania.
+- Jeśli źródłem dźwięku jest Wyświetlacz, przycisk rozpoczęcia gry pozostaje
+  zablokowany do chwili odblokowania dźwięku na tym urządzeniu. Wyświetlacz
+  zgłasza ten stan w heartbeat. Krótka informacja o blokadzie jest w
+  podpowiedzi kafelka „Dźwięk” w kroku Urządzenia; Podsumowanie nie pokazuje
+  dodatkowego komunikatu, więc jego przyciski nie zmieniają położenia. Przycisk
+  odblokowania jest widoczny na Wyświetlaczu od początku do kliknięcia i znika
+  dopiero po potwierdzeniu zgłoszenia przez serwer. Przy problemie z
+  połączeniem zostaje dostępny do ponowienia. Jeśli Control utraci i odzyska
+  połączenie podczas gry, ponownie wyświetla przycisk na Display i blokuje
+  akcje aż do kliknięcia. Potwierdzenie wraca osobnym komunikatem realtime,
+  więc blokada schodzi bez odświeżania strony; heartbeat pozostaje kontrolą
+  zapasową.
+- Przy losowym finale pytania są losowane najpierw z puli rund i usuwane z
+  rund. Ponowne losowanie zwraca poprzednie pytania finału na koniec puli rund,
+  po czym losuje nowy zestaw. Podsumowanie pokazuje obie pule po tym podziale.
+- Potwierdzanie kafli rozgrywki opiera się na widocznym zaznaczeniu i kolejnym
+  tapnięciu, a nie na natywnym podwójnym kliknięciu przeglądarki. Kafle używają
+  `touch-action: manipulation`, aby dotyk działał tak samo przewidywalnie.
+- Wyłączenie finału czyści jego wybór i dopisuje te pytania na koniec puli
+  rund, również wtedy, gdy operator zapisze ustawienia bez otwierania zakładki
+  Rundy. Po zamknięciu ustawień Control ponownie buduje pulę przedmeczową z
+  aktualnej konfiguracji, więc Podsumowanie pokazuje pełną liczbę pytań rund.
