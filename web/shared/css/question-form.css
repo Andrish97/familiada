@@ -128,7 +128,8 @@
 
 /* "+ Dodaj odpowiedź 3/6" -- pierwszy wiersz listy */
 .qf-row.qf-add {
-    display: flex;
+    display: grid;
+    grid-template-columns: minmax(0,1fr) auto;
     gap: 10px;
     border-style: dashed;
     border-color: rgba(255,234,166,.35);
@@ -139,6 +140,15 @@
     font: inherit;
     text-align: left;
     cursor: pointer
+}
+
+.qf-addPlus {
+    grid-column: 1 / -1;
+    justify-self: center;
+    color: var(--gold);
+    font-size: 30px;
+    font-weight: 500;
+    line-height: 1;
 }
 
 .qf-add:hover {

@@ -279,6 +279,13 @@ body.editor-body .wrap {
     border-color: rgba(255,234,166,.85)
 }
 
+.addTile .plus {
+    color: var(--gold);
+    font-size: 32px;
+    font-weight: 500;
+    line-height: 1
+}
+
 .addTile .txt {
     font-weight: 1000;
     color: #fff

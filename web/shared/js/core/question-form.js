@@ -153,13 +153,17 @@ export function buildAddAnswerTile(count) {
   btn.type = "button";
   btn.className = "qf-row qf-add";
   btn.disabled = !canAdd;
+  const plus = document.createElement("span");
+  plus.className = "qf-addPlus";
+  plus.setAttribute("aria-hidden", "true");
+  plus.textContent = "+";
   const lbl = document.createElement("span");
   lbl.className = "qf-addLbl";
   lbl.textContent = canAdd ? t("questionForm.addAnswer") : t("questionForm.answerLimit");
   const cnt = document.createElement("span");
   cnt.className = "qf-addCnt";
   cnt.textContent = `${count}/${LIMITS.AN_MAX}`;
-  btn.append(lbl, cnt);
+  btn.append(plus, lbl, cnt);
   return btn;
 }
 

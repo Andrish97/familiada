@@ -475,6 +475,7 @@ async function boot() {
     addQ.type = "button";
     addQ.className = "qcard addTile";
     addQ.innerHTML = `
+      <div class="plus" aria-hidden="true">+</div>
       <div class="txt"></div>
       <div class="sub"></div>
     `;
