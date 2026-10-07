@@ -175,3 +175,15 @@ przypadek. Łącznie 25 wybranych testów lokalnych.
   Film i raport są w `tests/recordings/2026-10-07-uwagi/`. Scenariusz przeszedł;
   raport zapisał 60,01 kl./s, 0 pominiętych klatek i 0 długich zadań Display.
   Film trwa 7:06.9. Pełnego zestawu testów nie uruchamiano.
+
+## Układ Urządzeń i Podsumowania — 8 października
+
+- Na szerokim ekranie karty Urządzeń mają ciaśniejsze odstępy i niższy kod
+  parowania, żeby komplet mieścił się bez przewijania przy typowym rozmiarze
+  okna. Test parowania sprawdza wysokość listy przy 1366×768.
+- Podsumowanie jest podzielone na dwie kolumny: podgląd Display zajmuje pełną
+  szerokość, a pozostałe ustawienia są rozłożone po obu stronach. Wysokość
+  podglądu jest ograniczona, żeby nie wypychał treści poza kartę.
+- W mapowaniu finału przywrócono pełną wysokość panelu podpowiedzi. Pasek był
+  elementem widoku, który przesunął się wraz z kartą; nie był paskiem
+  przewijania wymagającym usunięcia.

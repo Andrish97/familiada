@@ -142,10 +142,7 @@
        pierwszą. */
     .c2-hint { flex:none; display:flex; flex-direction:column; }
     .c2-hint-main { font-size:.88rem; line-height:1.4; opacity:.85; }
-    /* Wysokość daje flex rodzica (.c2-roundlayout-side .c2-hint). Nie
-       wymuszaj równocześnie height:100% na elemencie flex — na ekranie
-       mapowania potrafiło to wywołać wąski pasek przewijania po prawej. */
-    .c2-final-hint { min-height:0; box-sizing:border-box; }
+    .c2-final-hint { height:100%; min-height:0; box-sizing:border-box; }
     .c2-final-hint .c2-hint-main { font-size:.8rem; line-height:1.3; }
     .c2-final-hint .c2-hint-shortcuts { margin-top:auto; padding-top:8px; gap:2px; flex:0 0 auto; }
     .c2-final-hint .c2-hint-shortcut { font-size:.76rem; line-height:1.25; }
@@ -217,6 +214,13 @@
        dociągnięty do tej samej skali co reszta Podsumowania, żeby nie ginął
        obok 1.15rem summarySectionValue. */
     .c2-summary-row .btn.sm { font-size:1rem; padding:9px 15px; }
+    /* Podsumowanie wykorzystuje szerokość karty: podgląd Display jest na
+       całą szerokość, a reszta informacji układa się w dwóch kolumnach. */
+    .c2-summary-grid { display:flex; flex-direction:column; gap:12px; }
+    .c2-summary-columns { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); align-items:start; gap:12px; }
+    .c2-summary-column { display:flex; flex-direction:column; gap:10px; min-width:0; }
+    .c2-summary-column > .summarySection { min-width:0; margin:0; }
+    .c2-summary-grid > .c2-summary-display { margin:0; }
     /* Podgląd wylosowanej puli pytań (rounds._questionPool / final.pickedPreview)
        — pionowa, numerowana lista pod wierszem trybu (zgłoszone: poprzedni,
        zawijany ciąg "tagów" wyglądał jak jeden zlepiony akapit) — każde
@@ -370,6 +374,17 @@
       .c2-devices-layout { display:grid; grid-template-columns:minmax(0,1fr); grid-template-rows:minmax(0,1fr) auto; gap:8px; }
       .c2-devices-layout .c2-roundlayout-divider { display:none; }
       .c2-devices-layout .c2-roundlayout-side { padding-top:0; flex:none; }
+      .c2-devicerows .device-row { padding:7px 9px; gap:4px; }
+      .c2-devicerows .device-row-2 { gap:5px; }
+      .c2-devicerows .device-row-2 .btn { padding:5px 7px; }
+      .c2-devicerows .device-row-opt { padding-top:4px; }
+      .c2-devicerows .toggle-group { margin-top:4px !important; }
+      .c2-devices-layout .c2-roundlayout-main > .c2-scroll-area { gap:6px; }
+      .c2-devicerows .device-connect-code { min-height:32px; padding:0 8px; }
+      .c2-devicerows .device-connect-code-val { font-size:.85rem; letter-spacing:.08em; }
+    }
+    @media (max-width:1100px) {
+      .c2-summary-columns { grid-template-columns:minmax(0,1fr); }
     }
     .c2-entrytile-p1ans b { color:var(--gold); font-weight:800; }
     /* Pole wpisywania ma wyglądać jak realne pole formularza (obramowanie +
@@ -456,25 +471,14 @@
        wiersz w tej samej skali co reszta siatki wpisywania (zgłoszone). */
     .c2-timer-row { width:100%; font-size:1.02rem; }
 
-    /* Zgłoszone: podgląd ma być liczony od WYSOKOŚCI prześwitu (widocznego
-       bez scrollowania obszaru .c2-scroll-area przy aktualnym rozmiarze
-       okna), nie od szerokości karty jak dotąd (width:100%) — na szerokim
-       oknie 16:9 liczone od pełnej szerokości karty robiło się bardzo
-       wysokie i wypychało resztę Podsumowania (drużyny/dźwięk/finał) poza
-       widoczny obszar. .c2-scroll-area (patrz wyżej) jest już dziś
-       dokładnie tym "prześwitem" -- związane flexem z 100dvh-var(--topbar-h)
-       przez cały łańcuch .wrap.wide->.shell->...->#app. Podgląd dostaje
-       WIĘC height policzone z TEJ SAMEJ wysokości (nie z arbitralnego vh),
-       jako ułamek (nie całość — reszta sekcji Podsumowania musi zostać
-       widoczna w tym samym obszarze) — width:fit-content pozwala aspect-ratio
-       wyliczyć szerokość Z tej wysokości, zamiast odwrotnie; max-width:100%
-       to tylko zabezpieczenie na wąskie okno (telefon), gdzie wyliczona w
-       ten sposób szerokość przekroczyłaby szerokość karty. */
+    /* Podgląd Display w Podsumowaniu rozciąga się do szerokości karty, ale
+       jego wysokość nie może wypchnąć treści poza ograniczoną kartę. */
     #c2DisplayPreview {
-      height: min(calc((100dvh - var(--topbar-h, 70px)) * 0.4), 420px);
-      width: fit-content;
-      max-width: 100%;
-      aspect-ratio: 16/9;
+      width:100%;
+      height:min(calc((100dvh - var(--topbar-h, 70px)) * .38), 360px);
+      max-height:100%;
+      box-sizing:border-box;
+      box-sizing:border-box;
       background: #000;
       border-radius: 10px;
       overflow: hidden;
