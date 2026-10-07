@@ -1566,7 +1566,7 @@ async function scenarioRecentFixes(pages) {
 
   // Na ekranie ustawień wyłączamy finał i zapisujemy bez otwierania zakładki
   // Rundy. Po ponownym otwarciu pokazujemy, że pięć pytań finałowych wróciło
-  // na koniec puli rund (2 + 5).
+  // na koniec puli rund (11 + 5).
   await clickPaced(control.getByRole("button", { name: "Dalej" }), ADMIN_PACE_MS);
   await control.getByRole("button", { name: "Zmień ustawienia" }).click();
   const gsFrame = control.frameLocator("#gsFrame");
@@ -1586,12 +1586,12 @@ async function scenarioRecentFixes(pages) {
     if (error) throw error;
     return { rounds: data.settings.questions.rounds.length, final: data.settings.questions.final.length };
   });
-  expect(restoredCounts).toEqual({ rounds: 7, final: 0 });
+  expect(restoredCounts).toEqual({ rounds: 16, final: 0 });
   await control.getByRole("button", { name: "Zmień ustawienia" }).click();
   const verifyFrame = control.frameLocator("#gsFrame");
   await verifyFrame.locator("#btnToggleSidebar").click();
   await verifyFrame.locator('.gs-sidebar-item[data-cat="rounds"]').click();
-  await expect(verifyFrame.locator("#gsRoundsOrderList .roundsOrderItem")).toHaveCount(7);
+  await expect(verifyFrame.locator("#gsRoundsOrderList .roundsOrderItem")).toHaveCount(16);
   await control.waitForTimeout(1500); // widz widzi wszystkie pytania w puli rund
   await control.locator("#gsOverlay").click({ position: { x: 5, y: 5 } });
   await control.locator("#gsOverlay").waitFor({ state: "hidden", timeout: 10_000 });
@@ -1969,7 +1969,7 @@ const SCENARIOS = [
   {
     file: "12-poprawki-wieczoru.mp4",
     makeGame: (setupPage) => restoreDemoGame(setupPage, {
-      pickOrds: [1, 2],
+      pickOrds: [1, 2, 8, 9, 10, 11, 12, 13, 14, 15, 16],
       finalPickOrds: [3, 4, 5, 6, 7],
     }),
     run: scenarioRecentFixes,
