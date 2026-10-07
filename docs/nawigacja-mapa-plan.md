@@ -646,12 +646,12 @@ właściciel zmienia zasób (`games/editor`, `polls/editor`, `logo/editor`,
 |---|---|---|
 | `/games/` | `/games/` | lista gier |
 | `/editor/?id=` | `/games/editor/?id=&q=` | edytor pytań (z pytaniem w adresie) |
-| `/game-settings/?id=` | `/games/settings/?id=` | **propozycja**: ustawienia to edycja gry, jak edytor; Control tylko do nich linkuje (patrz niżej) |
+| `/game-settings/?id=` | `/games/settings/?id=` | ustawienia to edycja gry, jak edytor; Control tylko do nich linkuje (decyzja) |
 | `/control/?id=` | `/control/?id=` | pulpit operatora |
 | `/display/?id=&key=` | `/control/display/?id=&key=` | urządzenia rozgrywki w folderze Control |
 | `/host/?id=&key=` | `/control/host/?id=&key=` | |
 | `/buzzer/?id=&key=` | `/control/buzzer/?id=&key=` | |
-| `/connect-device/` (+ `/tv/`) | `/connect/` (+ `/connect/tv/`) | adres wpisywany ręcznie na telewizorze — krótki |
+| `/connect-device/` (+ `/tv/`) | `/connect/` (+ `/connect/tv/`) | adres wpisywany ręcznie na telewizorze — krótki (decyzja) |
 | `/polls-hub/` | `/polls/` | hub ankiet (karty: ankiety / zadania) |
 | `/polls/?id=` | `/polls/editor/?id=` | ankieta jednej gry — od strony właściciela to edytor (otwieranie, zamykanie, wyniki) |
 | `/poll-text/` | `/polls/vote/text/` | głosowanie (tekst) — strona głosującego, nie edytora |
@@ -661,7 +661,7 @@ właściciel zmienia zasób (`games/editor`, `polls/editor`, `logo/editor`,
 | `/poll-go/?t=|s=` | `/go/` | **wspólne wejście z zewnątrz** (niżej) |
 | `/bases/` | `/bases/` | |
 | `/base-explorer/?base=` | `/bases/explorer/?id=&folder=` | |
-| `/logo/`, `/logo/editor-<typ>/` | `/logo/`, `/logo/editor/<typ>/` | **propozycja**: jak `games/editor/` i `polls/vote/text/` — podfoldery zamiast myślnika |
+| `/logo/`, `/logo/editor-<typ>/` | `/logo/`, `/logo/editor/<typ>/` | jak `games/editor/` i `polls/vote/text/` — podfoldery zamiast myślnika (decyzja) |
 | `/login/`, `/reset/`, `/confirm/` | `/login/`, `/login/reset/`, `/login/confirm/` | reset i potwierdzenie to kroki logowania; linki z maili żyją godzinę |
 | `/account/`, `/marketplace/`, `/manual/`, `/privacy/` | bez zmian | `/privacy/` celowo stały (adres polityki bywa podawany na zewnątrz) |
 | `/settings/` (admin), `/maintenance/`, `/404` | bez zmian | |
@@ -689,6 +689,12 @@ Wtedy przy kolejnym porządkowaniu zmienia się tylko tabela w `/go/`,
 a linki w skrzynkach, kody QR i zakładki dalej działają. To nie jest
 „fallback starego adresu”, tylko jeden stały punkt wejścia z zewnątrz.
 
+**Stare linki (decyzja): bez fallbacków.** Zaproszenia nie mają czasu
+ważności (`poll_tasks` / `poll_subscriptions` mają tylko status, żyją do
+wykonania lub anulowania), więc linki `/poll-go/` w już wysłanych mailach
+i zakładki `/display/` na telewizorach po zmianie przestają działać —
+świadomie.
+
 ### Co trzeba przestawić przy przenosinach (lista kontrolna na stronę)
 
 - ścieżki względne `../../shared/...` w HTML/JS/CSS (głębokość folderu),
@@ -713,6 +719,49 @@ a linki w skrzynkach, kody QR i zakładki dalej działają. To nie jest
 4. Rozgrywka: `/control/display|host|buzzer/`, `/connect/`.
 5. Bazy: `/bases/explorer/`. Logo: ewentualnie `/logo/editor/<typ>/`.
 6. Logowanie: `/login/reset/`, `/login/confirm/`.
+
+## 9. Mapa blokad — każda strona deklaruje swoje zasoby (propozycja)
+
+Dokumentacja dziś: `docs/plan-testy-i-poprawki.md` — „Mapa zasobów”,
+„Model: zasób ma stan busy/free”, „Krzyżowe blokady między zasobami”
+(częściowo nieaktualne: Control opisany jako „krok 7, jeszcze nie”).
+Pula logo („Warstwa B”, migracja 256) jest zrobiona pośrednio: Control
+i ustawienia gry trzymają blokadę **gry** z `holder_context`, a edytor
+logo sam pyta, czy jakaś **gra** jest otwarta (`findBusyContext("game",
+…)`), i to samo robi `update_logo_checked` w bazie. Edytor logo musi więc
+wiedzieć o grach, choć jego zasobem jest tylko logo.
+
+Zasada: **strona deklaruje w mapie, które zasoby trzyma na wyłączność
+(`locks`) i na które tylko czeka (`waits`)**; konflikt rozstrzyga jeden
+mechanizm po zasobach, bez wiedzy, która strona je trzyma.
+
+| Strona | `locks` (na wyłączność, do wyjścia ze strony) |
+|---|---|
+| `/games/editor/?id=G` | `game:G` |
+| `/games/settings/?id=G` | `game:G`, `logos` (cała pula — wybór logo) |
+| `/polls/editor/?id=G` | `game:G` |
+| `/control/?id=G` | `game:G`, `logos` (cała pula) |
+| `/logo/editor/<typ>/?id=L` | `logo:L` |
+| `/bases/explorer/?id=B` | `base:B` |
+| akcje z list (zmiana nazwy, usuwanie, reset) | sprawdzenie, czy ten sam zasób jest wolny |
+
+`logos` to osobny zasób („cała pula logo użytkownika”): `logo:L` jest
+zajęte, gdy ktoś trzyma `logo:L` **albo** `logos`; `logos` jest zajęte,
+gdy ktoś trzyma `logos` **albo dowolne** `logo:L`. Wtedy:
+
+- edytor logo pyta tylko o `logo:L` — o grach nie wie nic,
+- zapis logo w bazie (`update_logo_checked`) sprawdza, że piszący trzyma
+  `logo:L`, zamiast szukać otwartych gier po `holder_context`,
+- **zmiana zachowania do potwierdzenia**: Control / ustawienia gry nie
+  wejdą, dopóki edytowane jest *jakiekolwiek* logo (dziś czekają tylko
+  na logo swojej gry) — to druga strona zasady „blokują wszystkie loga”.
+
+Wdrożenie: migracja (`acquire_edit_lock` rozumie `logos`;
+`update_logo_checked` / `delete_resource_checked('logo')` sprawdzają
+`logo:L` + `logos`), `resource-lock.js` (wiele zasobów naraz już jest:
+`acquireResourceLocks`), Control i ustawienia gry biorą `logos`, edytor
+i lista logo bez `findBusyContext("game")`, pola `locks` w `PAGES`
+(sekcja 2) i jeden opis zamiast trzech sekcji w `plan-testy-i-poprawki.md`.
 
 ## 7. Decyzje
 
@@ -749,3 +798,8 @@ Podjęte (2026-10-07):
 - **Przeglądarkowe „Wstecz”** działa jak przycisk ↩ (karty przez
   `replaceState`, bez wpisów historii dla stanu wewnątrz strony).
 - **Kolejność wdrażania**: zaczynamy od edytora logo (sekcja 6, krok 5a).
+- **Adresy (sekcja 8)**: `/games/settings/`, `/logo/editor/<typ>/`,
+  `/connect/`, `/go/` jako jedyne wejście z zewnątrz; stare linki
+  (maile, zakładki TV) bez fallbacków.
+- **Blokady**: zasobem edytora logo jest tylko logo; Control i ustawienia
+  gry trzymają swoją grę i całą pulę logo (sekcja 9).
