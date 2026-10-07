@@ -193,7 +193,8 @@ test("usuwanie logo: zablokowane, gdy używająca go gra ma teraz otwarte ustawi
     await settingsPage.waitForLoadState("networkidle");
     await waitForLock(settingsPage, "game", gameId);
 
-    await page.goto("https://www.familiada.online/logo/", { waitUntil: "domcontentloaded" });
+    // PIX bez obrazu źródłowego jest na karcie „Rysunek”.
+    await page.goto("https://www.familiada.online/logo/?tab=draw", { waitUntil: "domcontentloaded" });
     await page.waitForLoadState("networkidle");
 
     const tile = page.locator(`.logoTile[data-key="${logoId}"]`);
@@ -244,7 +245,8 @@ test("usuwanie logo: działa normalnie, gdy nic go nie blokuje", async ({ page, 
 
   let deleted = false;
   try {
-    await page.goto("https://www.familiada.online/logo/", { waitUntil: "domcontentloaded" });
+    // PIX bez obrazu źródłowego jest na karcie „Rysunek”.
+    await page.goto("https://www.familiada.online/logo/?tab=draw", { waitUntil: "domcontentloaded" });
     await page.waitForLoadState("networkidle");
 
     const tile = page.locator(`.logoTile[data-key="${logoId}"]`);

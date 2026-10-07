@@ -754,7 +754,7 @@ test.describe("logo: mobile sheet modal (zmiana nazwy/import)", () => {
       await page.goto(LOGO_EDITOR_URL, { waitUntil: "domcontentloaded" });
       await page.waitForLoadState("networkidle");
 
-      const tile = page.locator("#grid .card", { hasText: name });
+      const tile = page.locator("#grid .logoTile", { hasText: name });
       await expect(tile).toBeVisible({ timeout: 15000 });
       await tile.dblclick();
 
