@@ -627,6 +627,87 @@ pliku, a CSS korzystał z tych samych wartości (komentarz przy `@media`).
 7. Przyciski w `PAGES` (role/urządzenie), generator diagramów 6 map,
    test e2e przechodzący 6 map (patrz koniec sekcji 3).
 
+## 8. Struktura adresów — jeden folder na zasób (propozycja)
+
+Zasada: **pierwszy segment adresu = obszar aplikacji** (gry, logo, bazy,
+ankiety, rozgrywka), a strony szczegółu i edytory leżą w jego folderze.
+Wtedy adres sam mówi, gdzie jesteś, „Wstecz” do `parent` to zwykle folder
+wyżej, a mapa (`PAGES`) i statystyki aktywności grupują się same.
+
+### Docelowe drzewo
+
+| Dziś | Po zmianie | Uwagi |
+|---|---|---|
+| `/games/` | `/games/` | lista gier |
+| `/editor/?id=` | `/games/editor/?id=&q=` | edytor pytań (z pytaniem w adresie) |
+| `/game-settings/?id=` | `/games/settings/?id=` | **propozycja**: ustawienia to edycja gry, jak edytor; Control tylko do nich linkuje (patrz niżej) |
+| `/control/?id=` | `/control/?id=` | pulpit operatora |
+| `/display/?id=&key=` | `/control/display/?id=&key=` | urządzenia rozgrywki w folderze Control |
+| `/host/?id=&key=` | `/control/host/?id=&key=` | |
+| `/buzzer/?id=&key=` | `/control/buzzer/?id=&key=` | |
+| `/connect-device/` (+ `/tv/`) | `/connect/` (+ `/connect/tv/`) | adres wpisywany ręcznie na telewizorze — krótki |
+| `/polls-hub/` | `/polls/` | hub ankiet (karty: ankiety / zadania) |
+| `/subscriptions/` | `/polls/subscriptions/` | druga strona huba (przełącznik „Ankiety / Subskrypcje”) |
+| `/polls/?id=` | `/polls/poll/?id=` | ankieta jednej gry |
+| `/poll-text/` | `/polls/poll/text/` | głosowanie (tekst) |
+| `/poll-points/` | `/polls/poll/points/` | głosowanie (punkty) |
+| `/poll-qr/?id=&key=` | `/polls/poll/qr/?id=&key=` | QR na wyświetlaczu; małe litery w adresach |
+| `/poll-go/?t=|s=` | `/go/` | **wspólne wejście z zewnątrz** (niżej) |
+| `/bases/` | `/bases/` | |
+| `/base-explorer/?base=` | `/bases/explorer/?id=&folder=` | |
+| `/logo/`, `/logo/editor-<typ>/` | `/logo/`, `/logo/editor/<typ>/` | **propozycja**: to samo co `games/editor/` i `polls/poll/text/` — podfoldery zamiast myślnika |
+| `/login/`, `/reset/`, `/confirm/` | `/login/`, `/login/reset/`, `/login/confirm/` | reset i potwierdzenie to kroki logowania; linki z maili żyją godzinę |
+| `/account/`, `/marketplace/`, `/manual/`, `/privacy/` | bez zmian | `/privacy/` celowo stały (adres polityki bywa podawany na zewnątrz) |
+| `/settings/` (admin), `/maintenance/`, `/404` | bez zmian | |
+
+Na najwyższym poziomie zostaje: `/`, `/login/`, `/games/`, `/control/`,
+`/polls/`, `/bases/`, `/logo/`, `/marketplace/`, `/connect/`, `/go/`,
+`/account/`, `/manual/`, `/privacy/` (+ admin i techniczne).
+
+### `/go/` — jedyne adresy, które wychodzą poza aplikację
+
+Dziś na zewnątrz trafiają różne adresy: linki w mailach (`poll-go?t=`,
+`poll-go?s=` z RPC w bazie), kody QR urządzeń i ankiety (`/display`,
+`/host`, `/buzzer`, `/poll-qr` z `id`+`key`), zakładki na telewizorach.
+Każda zmiana struktury je psuje. Propozycja: **wszystko, co opuszcza
+aplikację (mail, QR, link do urządzenia), idzie przez `/go/`**, a `/go/`
+zamienia je na bieżący adres wewnętrzny:
+
+| Link zewnętrzny | Prowadzi do |
+|---|---|
+| `/go/?t=<token>` | zadanie ankiety → `/polls/poll/text|points/` (jak dziś poll-go) |
+| `/go/?s=<token>` | zaproszenie do subskrypcji → `/polls/subscriptions/` |
+| `/go/?d=display&id=&key=` | `/control/display/?id=&key=` (tak samo host, buzzer, poll-qr) |
+
+Wtedy przy kolejnym porządkowaniu zmienia się tylko tabela w `/go/`,
+a linki w skrzynkach, kody QR i zakładki dalej działają. To nie jest
+„fallback starego adresu”, tylko jeden stały punkt wejścia z zewnątrz.
+
+### Co trzeba przestawić przy przenosinach (lista kontrolna na stronę)
+
+- ścieżki względne `../../shared/...` w HTML/JS/CSS (głębokość folderu),
+- linki w kodzie stron, mapa `PAGES`, etykiety ↩ w instrukcji,
+- Worker: `PAGE_ROUTES` (`origin.js`) i wyjątki telewizora (`tv.js`:
+  `/display`, `/poll-qr`, `/connect-device`),
+- baza: linki w mailach (RPC z `poll-go?t=` / `?s=`, migracja 292) →
+  `go?t=` / `go?s=`; lista stron aktywności (`site_activity_ping`) —
+  aktywność liczona po pierwszym segmencie, więc edytor i ustawienia gry
+  wpadną do „games” (jeśli statystyki mają je rozróżniać, `activity.js`
+  musi brać dwa segmenty),
+- manifest PWA (`shortcuts`, `file_handlers`), `sitemap.xml`,
+  `branch-code.js` i specy e2e, testy jednostkowe,
+- `connect-device` zapamiętuje urządzenia (`shared_devices`) — sprawdzić,
+  czy trzyma adresy, czy tylko typ i klucz.
+
+### Kolejność (każdy obszar osobno: branch → testy → `main`)
+
+1. `/go/` (nowy, obok `poll-go`) + linki w mailach i kodach QR na `/go/`.
+2. Ankiety: `/polls/`, `/polls/subscriptions/`, `/polls/poll/…`.
+3. Gry: `/games/editor/`, `/games/settings/`.
+4. Rozgrywka: `/control/display|host|buzzer/`, `/connect/`.
+5. Bazy: `/bases/explorer/`. Logo: ewentualnie `/logo/editor/<typ>/`.
+6. Logowanie: `/login/reset/`, `/login/confirm/`.
+
 ## 7. Decyzje
 
 Podjęte (2026-10-07):
