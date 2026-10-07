@@ -641,18 +641,23 @@
 .finalLists{
   margin-top:12px;
   display:grid;
-  grid-template-columns:1fr 1fr;
+  /* minmax(0,…): bez tego długie (nowrap) pytania rozpychały kolumny
+     i prawa lista wychodziła poza kartę */
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr);
   gap:14px;
 }
 .finalCol{
   display:flex;
   flex-direction:column;
+  min-width:0;
   min-height:280px;
 }
 .finalCol .qList{
   flex:1;
   min-height:0;
-  overflow:auto;
+  max-height:60vh;
+  overflow-y:auto;
+  overflow-x:hidden;
 }
 .finalCol .mini{
   margin-top:0;
@@ -668,7 +673,7 @@
   flex-direction:column;
   gap:10px;
   padding:10px;
-  background:rgba(0,0,0,.14);
+  background:#11151d; /* kryjące (= rgba(0,0,0,.14) na karcie), patrz css/base.css */
   min-height:60px;
 }
 .qList.droptarget{
@@ -679,17 +684,16 @@
   display:flex;
   align-items:center;
   gap:8px;
-  background:rgba(255,255,255,.07);
+  background:#22252d; /* kryjące (= rgba(255,255,255,.07) na liście) */
   border-radius:6px;
   padding:7px 10px;
   cursor:grab;
   font-size:.83rem;
   user-select:none;
   overflow:hidden;
-  transition:background .12s;
 }
 .qRow:active{ cursor:grabbing; }
-.qRow:hover{ background:rgba(255,255,255,.16); }
+.qRow:hover{ background:#373a41; }
 .qRow .meta{
   font-weight:1000;
   font-size:.65rem;
@@ -721,26 +725,29 @@
   display:flex;
   align-items:center;
   gap:8px;
-  background:rgba(255,255,255,.07);
+  /* Kryjące tła zamiast rgba: w Chrome na Androidzie półprzezroczyste tła
+     wierszy nakładały się przy przerysowaniach — pasy, połówki wierszy
+     jaśniejsze (patrz css/base.css, „KRYJĄCE TŁA PRZYCISKÓW”). */
+  background:#242831;
   border-radius:6px;
   padding:7px 10px;
   cursor:grab;
   font-size:.83rem;
   user-select:none;
-  overflow:hidden;
-  transition:background .12s;
 }
 .roundsOrderItem:active{ cursor:grabbing; }
-.roundsOrderItem:hover{ background:rgba(255,255,255,.16); }
-.roundsOrderItem.dragging{ opacity:.5; cursor:grabbing; }
+.roundsOrderItem:hover{ background:#3a3d45; }
+.roundsOrderItem.dragging{ background:#1b1f27; color:rgba(255,255,255,.5); cursor:grabbing; }
 .roundsOrderHandle{
-  opacity:.4;
+  color:rgba(255,255,255,.4);
   font-size:.9rem;
   cursor:grab;
   user-select:none;
   flex-shrink:0;
+  display:flex;
+  align-items:center;
 }
-.roundsOrderItem:hover .roundsOrderHandle{ opacity:1; }
+.roundsOrderItem:hover .roundsOrderHandle{ color:#fff; }
 .roundsOrderNum{
   font-weight:1000;
   font-size:.65rem;
@@ -764,21 +771,25 @@
   height:28px;
   min-width:28px;
   border-radius:8px;
-  border:1px solid rgba(255,255,255,.12);
-  background:rgba(0,0,0,.12);
+  border:1px solid #3a3e47;
+  background:#1a1d25;
   color:#fff;
   cursor:pointer;
   display:grid;
   place-items:center;
+  padding:0;
   font-size:14px;
-  transition:background .12s ease,border-color .12s ease;
 }
-.roundsOrderBtn:hover{
-  background:rgba(0,0,0,.20);
-  border-color:rgba(255,255,255,.22);
+.roundsOrderBtn:hover:not(:disabled){
+  background:#14171e;
+  border-color:var(--gold,#ffeaa6);
+  color:var(--gold,#ffeaa6);
 }
+/* bez opacity (osobna warstwa = te same artefakty) — przygaszony kolor */
 .roundsOrderBtn:disabled{
-  opacity:.3;
+  color:#4a4e57;
+  border-color:#2c3038;
+  background:#1f222a;
   cursor:default;
 }
 

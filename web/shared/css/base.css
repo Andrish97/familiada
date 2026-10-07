@@ -106,6 +106,56 @@ svg.ico {
     cursor: not-allowed;
 }
 
+/* ===== RADIO — ten sam wzorzec co checkbox, tylko okrągły =====
+   Kółko z ramką, po zaznaczeniu złota ramka i złota kropka w środku.
+   Pomija ukryte radio przełączników-pigułek (.toggle-item). */
+:root input[type="radio"]:not(.toggle-item > input) {
+    -webkit-appearance: none;
+    appearance: none;
+    box-sizing: border-box;
+    width: 18px;
+    height: 18px;
+    min-width: 0;
+    min-height: 0;
+    padding: 0;
+    margin: 0 .25em 0 0;
+    box-shadow: none;
+    outline: 0;
+    flex-shrink: 0;
+    display: inline-grid;
+    place-content: center;
+    vertical-align: -0.25em;
+    border-radius: 50%;
+    border: 1.5px solid rgba(255,255,255,.38);
+    background: #141822;
+    cursor: pointer;
+    transition: border-color .12s;
+}
+:root input[type="radio"]:not(.toggle-item > input)::after {
+    content: "";
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--gold, #ffeaa6);
+    transform: scale(0);
+    transition: transform .12s;
+}
+:root input[type="radio"]:not(.toggle-item > input):hover:not(:disabled),
+:root input[type="radio"]:not(.toggle-item > input):checked {
+    border-color: var(--gold, #ffeaa6);
+}
+:root input[type="radio"]:not(.toggle-item > input):checked::after {
+    transform: scale(1);
+}
+:root input[type="radio"]:not(.toggle-item > input):focus-visible {
+    outline: 2px solid rgba(255,234,166,.7);
+    outline-offset: 2px;
+}
+:root input[type="radio"]:not(.toggle-item > input):disabled {
+    opacity: .4;
+    cursor: not-allowed;
+}
+
 /* Gwiazdki oceny ze starRating() — odstęp przejmuje z rodzica (.stars, .mkt-stars) */
 .ico-stars {
     display: inline-flex;
