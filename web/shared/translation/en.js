@@ -3849,7 +3849,6 @@ const en = {
       textCreateTitle: "New text logo",
       drawCreateTitle: "New drawn logo",
       imageCreateTitle: "New logo from image",
-      subtitle: "Choose how you want to create it.",
       nameModalTitle: "New logo",
       nameModalSub: "Enter a name for the new logo.",
       textTitle: "Text",

@@ -3836,7 +3836,6 @@ const uk = {
       textCreateTitle: "Новий текстовий логотип",
       drawCreateTitle: "Новий намальований логотип",
       imageCreateTitle: "Новий логотип із зображення",
-      subtitle: "Обери, як його створити.",
       nameModalTitle: "Новий логотип",
       nameModalSub: "Введи назву нового логотипу.",
       textTitle: "Текст",
