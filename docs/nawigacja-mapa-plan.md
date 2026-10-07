@@ -117,45 +117,221 @@ bierą z `backHref()`.
 
 ---
 
-## 3. Mapa przekierowań (role × strona)
+## 3. Sześć map: 3 role × 2 urządzenia
 
-Legenda: **OK** — wchodzi; **→ X** — przekierowanie; **[gość]** — overlay
-„tylko dla konta” (Wstecz → parent, Załóż konto → login); **[urządz.]** —
-overlay device-guard.
+Każda mapa to osobny, kompletny obraz tego, co widzi dana osoba: od czego
+zaczyna, jakie ma przyciski na każdej stronie i dokąd one prowadzą. Mapy
+odpowiadają 1:1 wpisom w `nav-map.js` — kod i test e2e czytają te same dane.
 
-| Strona | Niezalogowany | Gość | Konto | Telefon |
-|---|---|---|---|---|
-| `/` landing | OK | OK *(do decyzji: → /games/)* | → `/games/` | OK |
-| `/login/` | OK | OK (migracja konta) | → `next` lub `/games/` | OK |
-| `/reset/` `/confirm/` | OK (token) | OK | OK | OK |
-| `/games/` | → login?next | OK, bez: Ankiety, Subskrypcje, Podłącz urządzenie | OK | OK (hamburger) |
-| `/editor/` `/polls/` `/bases/` `/base-explorer/` `/logo-editor/` | → login?next | OK (bases bez udostępniania) | OK | OK |
-| `/polls-hub/` `/subscriptions/` | → login?next | [gość] | OK | OK |
-| `/control/` `/game-settings/` | → login?next | OK | OK | [urządz.] |
-| `/marketplace/` | OK (tylko przeglądanie), Wstecz → `/` | OK (bez oceniania/wysyłania), Wstecz → `/games/` | OK | OK |
-| `/connect-device/` | OK, Wstecz → `/` | OK, Wstecz → `/games/` | OK + moje urządzenia | OK |
-| `/account/` | → login?next | OK (tylko usuń/migruj) | OK | OK |
-| `/manual/` | → login?next *(do decyzji: public)* | OK | OK | OK |
-| `/privacy/` | OK | OK | OK | OK |
-| `/display/` `/host/` `/buzzer/` `/poll-*` `/connect-device/tv/` | z klucza w URL, bez topbaru — poza mapą | | | |
-| `/settings/` | Cloudflare Access — poza mapą | | | |
+|  | Desktop (> 980 px) | Mobile (≤ 980 px, telefon = krótszy bok < 700 px) |
+|---|---|---|
+| **Niezalogowany** | Mapa A1 | Mapa A2 |
+| **Gość** | Mapa B1 | Mapa B2 |
+| **Zalogowany** | Mapa C1 | Mapa C2 |
 
-Zasada „Wstecz” dla stron `public`: parent liczony od roli —
-niezalogowany wraca na `/`, gość i konto na `/games/` (jedna reguła zamiast
-różnych ifów w connect-device i marketplace).
+Oznaczenia w mapach: `→` przejście, `↩` przycisk „Wstecz” (sekcja 1 topbaru),
+`?` instrukcja (zawsze wraca tam, skąd weszła), `☰` hamburger,
+**⚠ dziś** — jak działa teraz, jeśli inaczej niż w mapie.
+
+Wspólne dla wszystkich map (nie powtarzam w każdej):
+- `?` → `/manual/?ret=<bieżąca>#<sekcja>` → `↩` wraca na bieżącą;
+  w instrukcji „Prywatność” → `/privacy/` → `↩` do instrukcji.
+- Strony urządzeń (`/display/`, `/host/`, `/buzzer/`, `/poll-*`,
+  `/connect-device/tv/`) otwierane z klucza w adresie — bez topbaru,
+  bez ról, poza mapami.
+- `/reset/` i `/confirm/` — z linku w mailu, po sukcesie → `/login/` /
+  `/games/`.
+
+---
+
+### Mapa A1 — Niezalogowany, desktop
+
+Start: `/` (landing). Wszystko poza stronami publicznymi → `/login/?next=<adres>`.
 
 ```mermaid
 flowchart LR
-  home["/ landing"] -->|zaloguj| login
-  login -->|next / domyślnie| games
-  games --> editor & polls & bases & logo["logo-editor"] & control & gs["game-settings"] & market["marketplace"] & cd["connect-device"] & account
-  games -. tylko konto .-> hub["polls-hub"] & subs["subscriptions"]
-  hub -->|ret| polls
-  bases -->|ret| explorer["base-explorer"]
-  subs <-->|ret| hub
-  manual["manual (?)"] -->|ret| any(("strona, z której wszedł"))
-  manual --> privacy
+  home["/ landing"]
+  home -->|Zaczynamy| login["/login/"]
+  home -->|Społeczność| market["/marketplace/<br/>tylko przeglądanie"]
+  home -->|Podłącz urządzenie| cd["/connect-device/"]
+  home -->|Prywatność| privacy["/privacy/"]
+  login -->|Zaloguj| next(("next albo /games/<br/>= mapa C1"))
+  login -->|Graj jako gość| guest(("/games/<br/>= mapa B1"))
+  login -->|Nie pamiętam hasła| reset["/reset/"]
+  market -->|↩| home
+  cd -->|↩| home
+  privacy -->|↩| home
+  locked["/games/ /editor/ /polls/ /bases/ ...<br/>(link z zewnątrz)"] -->|brak sesji| login
 ```
+
+| Strona | Przyciski | Cel |
+|---|---|---|
+| `/` | Zaczynamy · Społeczność · Podłącz urządzenie · Prywatność | login · marketplace · connect-device · privacy |
+| `/login/` | Zaloguj / Zarejestruj · Graj jako gość · Nie pamiętam hasła | `next` lub `/games/` · `/games/` (gość) · reset |
+| `/marketplace/` | ↩ „Strona główna” · podgląd gier · topbar: „Zaloguj / Załóż konto” | `/` · — · `/login/?next=/marketplace/` |
+| `/connect-device/` | ↩ · skan QR / kod | `/` · strona urządzenia |
+| każda inna | — | `/login/?next=<adres>` |
+
+**⚠ dziś:** `next` działa tylko dla ankiet i subskrypcji (po zalogowaniu
+z linku do edytora ląduje się na `/games/`); `/control/` bez sesji →
+`/control/login` (404); `/account/` bez sesji → ekran ustawiania nazwy;
+`/manual/` wymaga logowania; w marketplace przycisk w sekcji 1 to „Moje gry”.
+
+### Mapa A2 — Niezalogowany, mobile
+
+Te same strony i cele co A1. Różnice:
+
+| Gdzie | Desktop | Mobile |
+|---|---|---|
+| topbar marketplace / connect-device / privacy | ↩ · `?` · „Zaloguj / Załóż konto” w pasku | ↩ w pasku, reszta w `☰` |
+| modale (podgląd gry w marketplace) | okno | pełny ekran (≤ 600 px), ↩ zamyka modal zamiast wychodzić ze strony |
+| connect-device | kod ręcznie, kamera rzadko | skan QR kamerą jako główna akcja |
+
+---
+
+### Mapa B1 — Gość, desktop
+
+Start: `/games/` (po „Graj jako gość”). Gość ma swoje gry, ale bez funkcji
+społecznościowych i współdzielenia.
+
+```mermaid
+flowchart LR
+  games["/games/"]
+  games -->|Społeczność| market["/marketplace/<br/>bez oceniania i wysyłania"]
+  games -->|Logo| logo["/logo-editor/"]
+  games -->|Bazy| bases["/bases/<br/>bez udostępniania"]
+  bases -->|otwórz bazę| explorer["/base-explorer/"]
+  games -->|Edytuj| editor["/editor/"]
+  games -->|Ankieta| polls["/polls/"]
+  games -->|Graj| control["/control/"]
+  games -->|Ustawienia gry| gs["/game-settings/"]
+  games -->|Nazwa ▾ → Ustawienia konta| account["/account/<br/>usuń / zamień na konto"]
+  games -->|Nazwa ▾ → Załóż konto| login["/login/ (migracja)"]
+  market & logo & bases & editor & polls & control & gs & account -->|↩| games
+  explorer -->|↩| bases
+  hub["/polls-hub/ /subscriptions/<br/>(link z zewnątrz)"] -->|okno „tylko dla konta”| games
+```
+
+| Strona | Widoczne przyciski | Ukryte dla gościa |
+|---|---|---|
+| `/games/` | Społeczność · Logo · Bazy · `?` · Nazwa ▾ (Ustawienia konta, Załóż konto) | Ankiety · Subskrypcje · Podłącz urządzenie |
+| `/bases/` | ↩ Gry · moje bazy | zakładka „Udostępnione” · Udostępnij · Subskrypcje |
+| `/marketplace/` | ↩ Gry · przeglądanie · podgląd | Oceń · Moje wysłane |
+| `/account/` | ↩ Gry · Zamień na konto · Usuń | nazwa, e-mail, hasło, powiadomienia, ocena, demo |
+| `/connect-device/` | ↩ Gry | moje urządzenia |
+| `/polls-hub/` `/subscriptions/` | okno „Tylko dla konta”: Wstecz → `/games/`, Załóż konto → `/login/?force_auth=1` | — |
+
+**⚠ dziś:** „Ustawienia konta” w menu tylko na `/games/`; connect-device ↩
+prowadzi gościa na `/` (landing) zamiast na `/games/`; okno „tylko dla konta”
+wygląda inaczej niż okno blokady urządzenia.
+
+### Mapa B2 — Gość, mobile
+
+Te same strony co B1. Różnice:
+
+| Gdzie | Desktop | Mobile |
+|---|---|---|
+| topbar `/games/` | przyciski w pasku, nadmiar w „Więcej ▾” | wszystko w `☰` (licznik na `☰`) |
+| „Graj”, „Ustawienia gry” | → control / game-settings | **telefon:** przycisk nieaktywny z podpowiedzią „Na komputerze lub tablecie”; **tablet w pionie:** wchodzi, okno „Obróć tablet” |
+| `/logo-editor/` | lista + edycja | telefon: tylko lista (podgląd, import/eksport, nazwa) |
+| `/editor/` | lista pytań + edycja obok | edycja pytania na pełnym ekranie, ↩ najpierw zamyka pytanie |
+| modale | okno | pełny ekran, ↩ zamyka modal |
+| `/games/` | — | „Zainstaluj” (PWA), jeśli nie jest zainstalowana |
+
+**⚠ dziś:** na telefonie „Graj” i „Ustawienia gry” prowadzą na stronę,
+która od razu pokazuje blokadę — mapa proponuje zablokować już przycisk.
+
+---
+
+### Mapa C1 — Zalogowany, desktop
+
+Start: `/games/`; wejście na `/` lub `/login/` z sesją → `/games/`.
+
+```mermaid
+flowchart LR
+  games["/games/"]
+  games -->|Społeczność| market["/marketplace/"]
+  games -->|Logo| logo["/logo-editor/"]
+  games -->|Podłącz urządzenie| cd["/connect-device/"]
+  games -->|Ankiety| hub["/polls-hub/"]
+  games -->|Subskrypcje| subs["/subscriptions/"]
+  games -->|Bazy| bases["/bases/"]
+  games -->|Edytuj| editor["/editor/"]
+  games -->|Ankieta| polls["/polls/"]
+  games -->|Graj| control["/control/"]
+  games -->|Ustawienia gry| gs["/game-settings/"]
+  games -->|Nazwa ▾ → Ustawienia konta| account["/account/"]
+  games -->|Nazwa ▾ → Wyloguj| login["/login/"]
+  hub -->|otwórz ankietę| polls
+  hub <-->|Subskrypcje / Ankiety| subs
+  bases -->|Subskrypcje| subs
+  bases -->|otwórz bazę| explorer["/base-explorer/"]
+  polls -->|↩ ret| hub
+  explorer -->|↩ ret| bases
+  subs -->|↩ ret| from(("skąd przyszedł:<br/>games / hub / bases"))
+  market & logo & cd & hub & bases & editor & control & gs & account -->|↩| games
+```
+
+| Strona | ↩ prowadzi do | Pozostałe przyciski → cel |
+|---|---|---|
+| `/games/` | — (strona główna) | Społeczność, Logo, Podłącz urządzenie, Ankiety, Subskrypcje, Bazy, `?`, Nazwa ▾; na kafelku: Podgląd, Edytuj, Graj, Ustawienia, Ankieta |
+| `/polls-hub/` | `ret` / Gry | Subskrypcje → `/subscriptions/?ret=…`; ankieta → `/polls/?id=…&ret=…`; zadanie → `/poll-*/?t=…` |
+| `/subscriptions/` | `ret` / Gry | Ankiety → `/polls-hub/?ret=…` |
+| `/polls/` | `ret` / Gry | — |
+| `/bases/` | `ret` / Gry | Subskrypcje → `/subscriptions/?ret=…`; baza → `/base-explorer/?base=…&ret=…` |
+| `/base-explorer/` | `ret` / Bazy | — |
+| `/editor/`, `/logo-editor/`, `/marketplace/`, `/connect-device/`, `/account/` | `ret` / Gry | — |
+| `/control/` | Gry (z ostrzeżeniem w trakcie gry) | Ustawienia gry (modal) |
+| `/game-settings/` | `ret` / Gry | Graj → `/control/?id=…` |
+
+**⚠ dziś:** z `/games/` wychodzi `?from=games`, którego nikt nie czyta;
+bases → base-explorer bez `ret` (powrót gubi zakładkę); editor, logo-editor,
+control, game-settings zawsze wracają na `/games/`, część bez języka.
+
+### Mapa C2 — Zalogowany, mobile
+
+Te same strony co C1. Różnice:
+
+| Gdzie | Desktop | Mobile |
+|---|---|---|
+| topbar `/games/` | 6 przycisków w pasku + „Więcej ▾” | wszystko w `☰`, liczniki zsumowane na `☰` |
+| topbar pozostałych stron | ↩ · sekcja 2 · `?` · Nazwa ▾ | ↩ w pasku; sekcja 2, `?`, konto płasko w `☰` |
+| „Graj”, „Ustawienia gry” | → control / game-settings | **telefon:** nieaktywne z podpowiedzią; **tablet w pionie:** „Obróć tablet”; **wąskie okno komputera:** „Poszerz okno” |
+| `/connect-device/` | kod ręcznie, kamera rzadko | skan QR kamerą jako główna akcja |
+| `/logo-editor/`, `/editor/`, modale | jak w B2 | jak w B2 |
+| `/control/` (tablet) | — | operator na tablecie w poziomie |
+
+---
+
+### Jak z tego zrobić jedno źródło prawdy
+
+Sześć map to sześć „widoków” tej samej tabeli `PAGES` z `nav-map.js`,
+rozszerzonej o przyciski:
+
+```js
+games: {
+  path: "/games/", access: "guest", parent: null,
+  buttons: {
+    marketplace:   { to: "marketplace" },
+    logoEditor:    { to: "logoEditor" },
+    connectDevice: { to: "connectDevice", roles: ["user"] },
+    pollsHub:      { to: "pollsHub",      roles: ["user"] },
+    subscriptions: { to: "subscriptions", roles: ["user"] },
+    bases:         { to: "bases" },
+    play:          { to: "control",       device: "wide" },  // telefon: nieaktywny
+    settings:      { to: "gameSettings",  device: "wide" },
+  },
+},
+```
+
+- `initPage()` chowa/blokuje przyciski wg `roles` i `device`, podpina cele
+  przez `linkTo()` (z `ret` i językiem).
+- Skrypt `scripts/nav-maps.mjs` generuje z `PAGES` sześć diagramów
+  (mermaid) do tego dokumentu — mapy nie rozjadą się z kodem.
+- Test `frontend-navigation.spec.js` przechodzi każdą z 6 map: dla roli
+  i viewportu (1280×800 / 390×844) klika każdy przycisk i sprawdza cel
+  oraz ↩.
+
 
 ---
 
@@ -204,14 +380,13 @@ pliku, a CSS korzystał z tych samych wartości (komentarz przy `@media`).
    mapy), stare `next=polls-hub|subscriptions` zostaje jako alias.
 4. `initPage()` strona po stronie (kolejność jak audyty), wspólny wygląd
    overlayu gość/urządzenie.
-5. Test `tests/e2e/frontend-navigation.spec.js` generowany z `PAGES`:
-   dla każdej strony × rola sprawdza przekierowanie / overlay / cel „Wstecz”
-   i etykietę; wariant mobilny (viewport 390×844) — hamburger, overlay
-   urządzenia na control/game-settings.
+5. Przyciski w `PAGES` (role/urządzenie), generator diagramów 6 map,
+   test e2e przechodzący 6 map (patrz koniec sekcji 3).
 
 ## 7. Do decyzji
 
 - Gość na `/` — zostaje na landing czy od razu `/games/`?
+- Telefon: „Graj”/„Ustawienia gry” nieaktywne z podpowiedzią czy całkiem ukryte?
 - `/manual/` dla niezalogowanych — publiczna (pomoc przed założeniem konta)?
 - Po zalogowaniu z `/` — zawsze `/games/`, czy ostatnio odwiedzona strona?
 - Czy `ret` ma przechodzić łańcuchem (polls-hub → polls → manual → z powrotem
