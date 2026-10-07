@@ -1,6 +1,6 @@
-import { deriveEvents } from "./deriveEvents.js?v=v2026-10-07T00265";
+import { deriveEvents } from "./deriveEvents.js?v=v2026-10-07T00323";
 
-import { createTransitionTiming } from "./transitionTiming.js?v=v2026-10-07T00265";
+import { createTransitionTiming } from "./transitionTiming.js?v=v2026-10-07T00323";
 
 export function createSoundCueEngine({ playSfx, getSfxDuration, stopSfx = () => {} }) {
   const timing = createTransitionTiming({ getSfxDuration });
