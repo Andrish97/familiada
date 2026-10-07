@@ -30,6 +30,17 @@ Komunikat mówi tylko, **jaki zasób** jest zajęty (gra / logo / baza) i,
 dla puli logo, **dlaczego** (rozgrywka / ustawienia gry) — nigdy, która
 karta. Blokuje też własną drugą kartę tego samego użytkownika.
 
+### Zakresy blokad — jak długo trzymana
+
+| Zakres | Trzymana | Funkcja | Konflikt pokazany jako | Gdzie dziś |
+|---|---|---|---|---|
+| **strona** | od wejścia do wyjścia ze strony (cała sesja edycji) | `guardResourceLock` | pełnoekranowy komunikat, wejście samo po zwolnieniu | edytor pytań, ustawienia gry, ankieta gry, Control, edytor logo |
+| **okno** | od otwarcia do zamknięcia okna edycji; `lease.ok` sprawdzane tuż przed zapisem (heartbeat może je stracić: `gone` / `forbidden`) | `acquireResourceLock(s)` | okno się nie otwiera (alert) / zapis przerwany komunikatem | eksplorator bazy: zmiana nazwy pytania/folderu (`base-explorer:rename`), okno pytania (`:question-modal`), okno tagów (`:tags-edit`, `:tags-assign`) |
+| **akcja** | tylko na czas jednego zapisu (wszystkie zasoby naraz albo żaden, stała kolejność = bez zakleszczeń) | `acquireResourceLocks` | alert, akcja przerwana | eksplorator bazy: usuń, przenieś, przypisz tag, kolejność folderów, usuń tagi, zapis tagów (`:tags-assign-save`) |
+| **sprawdzenie** | nic nie trzyma — jedno pytanie „wolne?” przed akcją | `isResourceBusy` | alert | lista gier (zmiana nazwy, reset, eksport, usunięcie kopii), lista logo (zmiana nazwy) |
+| **czekanie** | nic nie trzyma — wejście czeka na zwolnienie | `guardResourceBusy` | pełnoekranowy komunikat | Control i ustawienia gry czekają na logo swojej gry |
+| **baza** | nic nie trzyma — RPC odrzuca zapis / usunięcie | `*_checked` | alert z powodem | usuwanie gry / logo / bazy, zapis logo |
+
 ## 2. Zasoby
 
 | Typ | Co to | Kto trzyma |
@@ -49,7 +60,7 @@ karta. Blokuje też własną drugą kartę tego samego użytkownika.
 | Ankieta gry `/polls/?id=G` (`polls/js/polls.js:1298`) | `game:G` (`polls`) | — | — |
 | Control `/control/?id=G` (`control/js/app.js:195`) | `game:G` (`control`) | `logo` swojej gry (`:214`) | — |
 | Edytor logo `/logo/editor-*/?id=L` (`logo/js/editor-page.js`) | `logo:L` (`logo-editor`) | — | **pula**: `findBusyContext("game", ["settings","control"])` przy wejściu; odrzucony zapis (`update_logo_checked`) → komunikat i koniec edycji |
-| Eksplorator bazy `/base-explorer/?base=B` | — (brak blokady strony) | — | każda akcja bierze krótkie blokady elementów: usuń / przenieś / zmień nazwę / tagi / kolejność folderów / okno pytania (`actions.js`, `tags-modal.js`, konteksty `base-explorer:*`) |
+| Eksplorator bazy `/base-explorer/?base=B` | — (brak blokady strony) | — | blokady **okna** (zmiana nazwy, okno pytania, okno tagów) i **akcji** (usuń, przenieś, przypisz tag, kolejność, zapis tagów) na elementach: `base_question` / `base_folder` / `base_tag` (`actions.js:955–4415`, `tags-modal.js:235–553`, konteksty `base-explorer:*`) |
 | Host (urządzenie) | — | — | `host2_logo_get_public`: logo w edycji (`logo:L` zajęte) → Host pokazuje „zajęte” zamiast logo |
 | Głosowanie, QR, `poll-go` | — | — | celowo bez blokad (wielu naraz / tylko odczyt) |
 
@@ -91,7 +102,12 @@ zmienić przy otwartej ankiecie. Opisane w `docs/audyt-stron.md` (Games).
    samą bazę otwartą; konflikt łapią dopiero blokady elementów przy akcji.
    (Decyzja z audytu bazy: „precyzyjne blokady każdego elementu” — zostaje,
    ale trzeba to tu opisać jako świadomy wyjątek albo zmienić.)
-6. **Konteksty** są wolnym tekstem (`editor`, `settings`, `polls`,
+6. **Ta sama czynność, różne zakresy.** Zmiana nazwy w eksploratorze bazy
+   trzyma blokadę **okna** przez cały czas otwartego okna; zmiana nazwy
+   gry i logo na listach tylko **sprawdza** przy zatwierdzeniu (ktoś może
+   zająć zasób, kiedy okno jest otwarte); zmiana nazwy bazy na liście nie
+   robi nic.
+7. **Konteksty** są wolnym tekstem (`editor`, `settings`, `polls`,
    `control`, `logo-editor`, `base-explorer:*`) i w bazie znaczenie mają
    tylko `settings` / `control` (pula). Nigdzie nie ma ich listy.
 
@@ -133,6 +149,18 @@ Skutki:
 - zmiana nazwy gry / bazy i usunięcie kopii ze Społeczności przez RPC
   sprawdzające blokadę (druga warstwa jak przy usuwaniu).
 
+**Zasada zakresów** (ta sama czynność = ten sam zakres w całej aplikacji):
+
+| Czynność | Zakres |
+|---|---|
+| strona edycji zasobu (edytor, ustawienia, ankieta, Control, edytor logo, eksplorator bazy) | **strona** |
+| okno, w którym zmienia się zasób (zmiana nazwy — na każdej liście i w eksploratorze, okno pytania, okno tagów) | **okno** (+ druga warstwa w bazie przy zapisie) |
+| jednorazowa akcja bez okna (usuń, przenieś, reset, przypisz tag, kolejność) | **akcja** (+ druga warstwa w bazie) |
+| odczyt, który musi być spójny (eksport) | **sprawdzenie** |
+
+W mapie stron (`PAGES`) zakres jest częścią deklaracji, np.
+`rename: { scope: "okno", resource: "game" }`.
+
 ### Kroki wdrożenia
 
 1. Migracja: `acquire_edit_lock` zna `logos` i zgodność `logo:L` ↔ `logos`;
@@ -144,7 +172,8 @@ Skutki:
 3. Control i ustawienia gry: `game:G` + `logos`; bez `guardResourceBusy`.
 4. Edytor i lista logo: bez `findBusyContext`; komunikat „logo zajęte”
    rozróżnia tylko powód (edycja w innej karcie / rozgrywka / ustawienia).
-5. Pola `locks` w mapie stron; test, który porównuje mapę z wywołaniami
+5. Okna zmiany nazwy na listach (gry, logo, bazy) na zakres **okno**;
+   pola `locks` / `scope` w mapie stron; test, który porównuje mapę z wywołaniami
    blokad w kodzie stron.
 6. Testy e2e blokad (`cross-resource-locks.spec.js`, `logo-editor.spec.js`)
    na nową zgodność; usunięcie `findBusyContext` i kontekstów z reguł.
