@@ -15,7 +15,8 @@ utracie kontekstu wystarczy przeczytać ten plik i wskazaną sekcję źródła.
    - wygląd list, subskrypcji i edytorów:
      [`ujednolicenie-wygladu.md`](ujednolicenie-wygladu.md),
    - ankiety (hub znika, strona ankiety, subskrypcje z zadaniami):
-     [`ankiety-refaktor.md`](ankiety-refaktor.md).
+     [`ankiety-refaktor.md`](ankiety-refaktor.md),
+   - usuwanie gry i konta: [`usuwanie-danych.md`](usuwanie-danych.md).
 2. **Decyzja użytkownika** → w tej samej turze dopisana do sekcji
    „Decyzje” właściwego źródła (z datą), commit. Nie w samej rozmowie.
 3. **Tok pracy**: branch roboczy → testy jednostkowe
@@ -45,9 +46,10 @@ utracie kontekstu wystarczy przeczytać ten plik i wskazaną sekcję źródła.
 | E8 | Jeden moduł kart `?tab=`, stan eksploratora (baza + foldery) | nawigacja 6.6 | do zrobienia |
 | E10 | Ujednolicenie wyglądu: listy (pasek, karty, kafle, dolny pasek), edytory (tytuł i informacja w topbarze, jedno pole nazwy, edytor logo bez wskaźnika zapisu), ankieta bez podpowiedzi pod tytułem | ujednolicenie-wygladu.md | do zrobienia — **pierwszy** |
 | E11 | Ankiety: hub znika, strona ankiety z udostępnianiem subskrybentom, podgląd Gra · Ankieta, subskrypcje z kartą Zadania | ankiety-refaktor.md | czeka na decyzję (pytania w sekcji 3) |
+| E12 | Usuwanie gry i konta: jedna droga w bazie, maile i dane po e-mailu, pliki, komunikaty | usuwanie-danych.md | czeka na decyzję (sekcja 4) |
 | E9 | Przyciski w `PAGES`, `locks` w `PAGES`, diagramy 6 map, e2e map | nawigacja 6.7, blokady 6 krok 7 | do zrobienia |
 
-Kolejność: E0 → **E10** → E11 → E2 → E3 → E4 → E5 (a…f) → E6 → E7 → E8 → E9. Etapy
+Kolejność: E0 → **E10** → E11 → E12 → E2 → E3 → E4 → E5 (a…f) → E6 → E7 → E8 → E9. Etapy
 idą po kolei, nie równolegle — dotykają tych samych stron i tych samych
 speców e2e.
 

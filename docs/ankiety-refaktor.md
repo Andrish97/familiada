@@ -305,6 +305,13 @@ Każdy mail ma stopkę jak dziś: konto → „ustawienia konta”; bez konta �
 - usunięcie subskrybenta wycofuje jego zaproszenia;
 - usunięcie nieużywanych RPC (sekcja 4) i huba.
 
+### 6.8 Usunięcie gry i konta
+
+Wg [`usuwanie-danych.md`](usuwanie-danych.md) (E12). Dla ankiet:
+usunięcie gry z otwartą ankietą = Przerwij + usuń; zaproszenia i maile
+w kolejce znikają; głosujący i zaproszeni widzą „Ta ankieta została
+usunięta”.
+
 ## 5. Wpływ na inne plany
 
 - `ujednolicenie-wygladu.md`: sekcja o hubie nieaktualna (hub znika);
