@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict m2MWpZmL40ZWpbe5bIrkIHAdDyFsYflbqf60xh4VsUBY1Aewabn0Y9bE6bo8CT4
+\restrict P5ltwd0hN9k3eAvhK2jJeoe13pnghVZRjMORCNu7ME2b9GeWDKfXCBMEipvbeG1
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -47,18 +47,6 @@ COMMENT ON SCHEMA "public" IS 'standard public schema';
 CREATE TYPE "public"."base_share_role" AS ENUM (
     'viewer',
     'editor'
-);
-
-
---
--- Name: device_kind; Type: TYPE; Schema: public; Owner: -
---
-
-CREATE TYPE "public"."device_kind" AS ENUM (
-    'display',
-    'host',
-    'buzzer',
-    'control'
 );
 
 
@@ -1725,121 +1713,6 @@ $$;
 
 
 --
--- Name: device_state_get("uuid", "public"."device_type", "text"); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION "public"."device_state_get"("p_game_id" "uuid", "p_device_type" "public"."device_type", "p_key" "text") RETURNS "jsonb"
-    LANGUAGE "plpgsql" SECURITY DEFINER
-    AS $$
-declare
-  g public.games;
-  ok boolean := false;
-  out jsonb;
-begin
-  select * into g from public.games where id = p_game_id;
-  if not found then raise exception 'not found'; end if;
-
-  if p_device_type='display' and g.share_key_display = p_key then ok := true; end if;
-  if p_device_type='host'    and g.share_key_host    = p_key then ok := true; end if;
-
-  if p_device_type='buzzer' then
-    if coalesce(g.share_key_buzzer,'') <> '' and g.share_key_buzzer = p_key then ok := true; end if;
-    if coalesce(g.share_key_buzzer,'') = ''  and g.share_key_host   = p_key then ok := true; end if;
-  end if;
-
-  if not ok then raise exception 'forbidden'; end if;
-
-  select state into out
-  from public.device_state
-  where game_id = p_game_id and device_type = p_device_type;
-
-  return coalesce(out, '{}'::jsonb);
-end;
-$$;
-
-
---
--- Name: device_state_set_admin("uuid", "public"."device_kind", "jsonb"); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION "public"."device_state_set_admin"("p_game_id" "uuid", "p_kind" "public"."device_kind", "p_patch" "jsonb") RETURNS "jsonb"
-    LANGUAGE "plpgsql" SECURITY DEFINER
-    AS $$
-declare
-  ok boolean;
-  out jsonb;
-begin
-  if auth.uid() is null then
-    raise exception 'not authenticated';
-  end if;
-
-  if not exists (
-    select 1 from public.games g
-    where g.id = p_game_id and g.owner_id = auth.uid()
-  ) then
-    raise exception 'forbidden';
-  end if;
-
-  insert into public.device_state(game_id, kind)
-  values (p_game_id, p_kind)
-  on conflict (game_id, kind) do nothing;
-
-  update public.device_state
-  set state = coalesce(state, '{}'::jsonb) || coalesce(p_patch, '{}'::jsonb),
-      updated_at = now()
-  where game_id = p_game_id and kind = p_kind;
-
-  select state into out
-  from public.device_state
-  where game_id = p_game_id and kind = p_kind;
-
-  return coalesce(out, '{}'::jsonb);
-end $$;
-
-
---
--- Name: device_state_set_public("uuid", "public"."device_type", "text", "jsonb"); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION "public"."device_state_set_public"("p_game_id" "uuid", "p_device_type" "public"."device_type", "p_key" "text", "p_patch" "jsonb") RETURNS "jsonb"
-    LANGUAGE "plpgsql" SECURITY DEFINER
-    AS $$
-declare
-  g public.games;
-  ok boolean := false;
-  cur jsonb;
-  merged jsonb;
-begin
-  select * into g from public.games where id = p_game_id;
-  if not found then raise exception 'not found'; end if;
-
-  if p_device_type='display' and g.share_key_display = p_key then ok := true; end if;
-  if p_device_type='host'    and g.share_key_host    = p_key then ok := true; end if;
-
-  if p_device_type='buzzer' then
-    if coalesce(g.share_key_buzzer,'') <> '' and g.share_key_buzzer = p_key then ok := true; end if;
-    if coalesce(g.share_key_buzzer,'') = ''  and g.share_key_host   = p_key then ok := true; end if;
-  end if;
-
-  if not ok then raise exception 'forbidden'; end if;
-
-  select state into cur
-  from public.device_state
-  where game_id = p_game_id and device_type = p_device_type;
-
-  merged := coalesce(cur, '{}'::jsonb) || coalesce(p_patch, '{}'::jsonb);
-
-  insert into public.device_state(game_id, device_type, state, updated_at)
-  values (p_game_id, p_device_type, merged, now())
-  on conflict (game_id, device_type)
-  do update set state = excluded.state, updated_at = now();
-
-  return jsonb_build_object('ok', true, 'updated_at', now(), 'state', merged);
-end;
-$$;
-
-
---
 -- Name: display_auth("uuid", "text"); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -2241,22 +2114,6 @@ begin
   end if;
 
   return new;
-end $$;
-
-
---
--- Name: ensure_device_state("uuid"); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION "public"."ensure_device_state"("p_game_id" "uuid") RETURNS "void"
-    LANGUAGE "plpgsql"
-    AS $$
-begin
-  insert into public.device_state(game_id, kind) values
-    (p_game_id, 'display'),
-    (p_game_id, 'host'),
-    (p_game_id, 'buzzer')
-  on conflict (game_id, kind) do nothing;
 end $$;
 
 
@@ -2817,100 +2674,6 @@ begin
     'poll_open', v_poll_open,
     'export', v_export
   );
-end;
-$$;
-
-
---
--- Name: game_session_end("uuid", "text", "text", "text", integer, integer, integer, integer, integer); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION "public"."game_session_end"("p_session_id" "uuid", "p_status" "text", "p_error_message" "text" DEFAULT NULL::"text", "p_winner_team" "text" DEFAULT NULL::"text", "p_team_a_score" integer DEFAULT NULL::integer, "p_team_b_score" integer DEFAULT NULL::integer, "p_rounds_score_a" integer DEFAULT NULL::integer, "p_rounds_score_b" integer DEFAULT NULL::integer, "p_final_points" integer DEFAULT NULL::integer) RETURNS "void"
-    LANGUAGE "plpgsql" SECURITY DEFINER
-    AS $$
-declare
-  v_owner uuid;
-begin
-  select g.owner_id into v_owner
-  from public.game_sessions s
-  join public.games g on g.id = s.game_id
-  where s.id = p_session_id;
-
-  if not found then raise exception 'session not found'; end if;
-  if auth.uid() is null or v_owner <> auth.uid() then
-    raise exception 'forbidden';
-  end if;
-
-  update public.game_sessions
-  set
-    ended_at = now(),
-    last_seen_at = now(),
-    status = p_status,
-    error_message = coalesce(p_error_message, error_message),
-    winner_team = coalesce(p_winner_team, winner_team),
-    team_a_score = coalesce(p_team_a_score, team_a_score),
-    team_b_score = coalesce(p_team_b_score, team_b_score),
-    rounds_score_a = coalesce(p_rounds_score_a, rounds_score_a),
-    rounds_score_b = coalesce(p_rounds_score_b, rounds_score_b),
-    final_points = coalesce(p_final_points, final_points)
-  where id = p_session_id;
-end;
-$$;
-
-
---
--- Name: game_session_start("uuid", "jsonb"); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION "public"."game_session_start"("p_game_id" "uuid", "p_client_meta" "jsonb" DEFAULT '{}'::"jsonb") RETURNS "uuid"
-    LANGUAGE "plpgsql" SECURITY DEFINER
-    AS $$
-declare
-  v_owner uuid;
-  v_id uuid;
-begin
-  select owner_id into v_owner from public.games where id = p_game_id;
-  if not found then raise exception 'game not found'; end if;
-  if auth.uid() is null or v_owner <> auth.uid() then
-    raise exception 'forbidden';
-  end if;
-
-  insert into public.game_sessions(game_id, client_meta)
-  values (p_game_id, coalesce(p_client_meta, '{}'::jsonb))
-  returning id into v_id;
-
-  return v_id;
-end;
-$$;
-
-
---
--- Name: game_session_update("uuid", "text", integer, "jsonb"); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION "public"."game_session_update"("p_session_id" "uuid", "p_status" "text" DEFAULT NULL::"text", "p_rounds_played" integer DEFAULT NULL::integer, "p_client_meta_patch" "jsonb" DEFAULT NULL::"jsonb") RETURNS "void"
-    LANGUAGE "plpgsql" SECURITY DEFINER
-    AS $$
-declare
-  v_owner uuid;
-begin
-  select g.owner_id into v_owner
-  from public.game_sessions s
-  join public.games g on g.id = s.game_id
-  where s.id = p_session_id;
-
-  if not found then raise exception 'session not found'; end if;
-  if auth.uid() is null or v_owner <> auth.uid() then
-    raise exception 'forbidden';
-  end if;
-
-  update public.game_sessions
-  set
-    last_seen_at = now(),
-    status = coalesce(p_status, status),
-    rounds_played = coalesce(p_rounds_played, rounds_played),
-    client_meta = case when p_client_meta_patch is not null then client_meta || p_client_meta_patch else client_meta end
-  where id = p_session_id;
 end;
 $$;
 
@@ -4154,20 +3917,20 @@ CREATE FUNCTION "public"."get_maintenance_activity"() RETURNS "jsonb"
  SELECT game_id,max(last_seen_at) AS last_seen_at,jsonb_agg(DISTINCT device_type::text) AS devices
  FROM public.device_presence WHERE last_seen_at>now()-interval '25 seconds' GROUP BY game_id
  ), sessions AS (
- SELECT DISTINCT ON(game_id) * FROM public.game_sessions ORDER BY game_id,started_at DESC,id
+ SELECT DISTINCT ON(game_id) * FROM public.game_sessions WHERE control_version=2 ORDER BY game_id,started_at DESC,id
  ), candidates AS (
  SELECT game_id FROM devices
- UNION SELECT game_id FROM pages WHERE game_id IS NOT NULL AND page IN ('control','control2')
+ UNION SELECT game_id FROM pages WHERE game_id IS NOT NULL AND page IN ('control')
  UNION SELECT game_id FROM sessions WHERE ended_at IS NULL AND status IN ('started','playing','final') AND last_seen_at>now()-interval '15 minutes'
  UNION SELECT resource_id FROM locks WHERE resource_type='game' AND holder_context='control'
  ), games AS (
  SELECT g.id AS game_id,g.owner_id AS user_id,coalesce(p.username,p.email,'Użytkownik') AS username,g.name,
- coalesce((SELECT max(CASE WHEN a.page='control2' THEN 2 ELSE 1 END) FROM pages a WHERE a.game_id=g.id AND a.page IN ('control','control2')),s.control_version,1) AS control_version,
+ 2 AS control_version,
  s.status,s.ended_at,s.last_seen_at AS session_seen_at,
- CASE WHEN s.control_version=2 OR EXISTS(SELECT 1 FROM pages a WHERE a.game_id=g.id AND a.page='control2') THEN st.step::text ELSE NULL END AS step,
- CASE WHEN s.control_version=2 OR EXISTS(SELECT 1 FROM pages a WHERE a.game_id=g.id AND a.page='control2') THEN st.phase::text ELSE NULL END AS phase,
+ st.step::text AS step,
+ st.phase::text AS phase,
  coalesce(d.devices,'[]'::jsonb) AS devices,d.last_seen_at AS devices_seen_at,
- EXISTS(SELECT 1 FROM pages a WHERE a.game_id=g.id AND a.page IN ('control','control2')) AS operator_online,
+ EXISTS(SELECT 1 FROM pages a WHERE a.game_id=g.id AND a.page IN ('control')) AS operator_online,
  EXISTS(SELECT 1 FROM locks l WHERE l.resource_type='game' AND l.resource_id=g.id AND l.holder_context='control') AS control_lock
  FROM candidates c JOIN public.games g ON g.id=c.game_id LEFT JOIN public.profiles p ON p.id=g.owner_id
  LEFT JOIN sessions s ON s.game_id=g.id LEFT JOIN devices d ON d.game_id=g.id LEFT JOIN public.game_state st ON st.game_id=g.id
@@ -11520,8 +11283,8 @@ DECLARE uid uuid := auth.uid(); gid uuid;
 BEGIN
  IF uid IS NULL THEN RAISE EXCEPTION 'unauthorized'; END IF;
  IF p_tab_id IS NULL OR p_page IS NULL OR p_page NOT IN
- ('home','games','control','control2','editor','game-settings','game-settings2','bases','base-explorer','logo-editor','polls','polls-hub','subscriptions','account','marketplace','manual','connect-device') THEN RAISE EXCEPTION 'invalid_page'; END IF;
- IF p_game_id IS NOT NULL AND p_page IN ('control','control2','editor','game-settings','game-settings2','polls') THEN
+ ('home','games','control','editor','game-settings','bases','base-explorer','logo-editor','polls','polls-hub','subscriptions','account','marketplace','manual','connect-device') THEN RAISE EXCEPTION 'invalid_page'; END IF;
+ IF p_game_id IS NOT NULL AND p_page IN ('control','editor','game-settings','polls') THEN
    SELECT id INTO gid FROM public.games WHERE id=p_game_id AND owner_id=uid;
  END IF;
  -- One row per tab, bounded lifetime. No historical log.
@@ -12502,18 +12265,6 @@ CREATE TABLE "public"."device_presence" (
     "device_id" "text" NOT NULL,
     "last_seen_at" timestamp with time zone DEFAULT "now"() NOT NULL,
     "meta" "jsonb" DEFAULT '{}'::"jsonb" NOT NULL
-);
-
-
---
--- Name: device_state; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE "public"."device_state" (
-    "game_id" "uuid" NOT NULL,
-    "device_type" "public"."device_type" NOT NULL,
-    "state" "jsonb" DEFAULT '{}'::"jsonb" NOT NULL,
-    "updated_at" timestamp with time zone DEFAULT "now"() NOT NULL
 );
 
 
@@ -13596,14 +13347,6 @@ ALTER TABLE ONLY "public"."device_connect_codes"
 
 ALTER TABLE ONLY "public"."device_presence"
     ADD CONSTRAINT "device_presence_pkey" PRIMARY KEY ("game_id", "device_type", "device_id");
-
-
---
--- Name: device_state device_state_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY "public"."device_state"
-    ADD CONSTRAINT "device_state_pkey" PRIMARY KEY ("game_id", "device_type");
 
 
 --
@@ -15184,14 +14927,6 @@ ALTER TABLE ONLY "public"."device_presence"
 
 
 --
--- Name: device_state device_state_game_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY "public"."device_state"
-    ADD CONSTRAINT "device_state_game_id_fkey" FOREIGN KEY ("game_id") REFERENCES "public"."games"("id") ON DELETE CASCADE;
-
-
---
 -- Name: game_session_active game_session_active_game_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -15860,21 +15595,6 @@ ALTER TABLE "public"."device_presence" ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "device_presence_owner_read" ON "public"."device_presence" FOR SELECT TO "authenticated" USING ((EXISTS ( SELECT 1
    FROM "public"."games" "g"
   WHERE (("g"."id" = "device_presence"."game_id") AND ("g"."owner_id" = "auth"."uid"())))));
-
-
---
--- Name: device_state; Type: ROW SECURITY; Schema: public; Owner: -
---
-
-ALTER TABLE "public"."device_state" ENABLE ROW LEVEL SECURITY;
-
---
--- Name: device_state device_state_owner_read; Type: POLICY; Schema: public; Owner: -
---
-
-CREATE POLICY "device_state_owner_read" ON "public"."device_state" FOR SELECT TO "authenticated" USING ((EXISTS ( SELECT 1
-   FROM "public"."games" "g"
-  WHERE (("g"."id" = "device_state"."game_id") AND ("g"."owner_id" = "auth"."uid"())))));
 
 
 --
@@ -17000,5 +16720,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict m2MWpZmL40ZWpbe5bIrkIHAdDyFsYflbqf60xh4VsUBY1Aewabn0Y9bE6bo8CT4
+\unrestrict P5ltwd0hN9k3eAvhK2jJeoe13pnghVZRjMORCNu7ME2b9GeWDKfXCBMEipvbeG1
 
