@@ -512,7 +512,7 @@ export function createUI({ root, emit }) {
     if (s.roundsQuestionsMode !== "pick") {
       roundsValueRow.push(h("button", { class: "btn sm", type: "button", onclick: () => emit("setup.reshuffleRounds") }, [document.createTextNode(t("control.reshuffleQuestions"))]));
     }
-    const roundsPreview = s.roundsQuestionsMode !== "pick" ? questionPreviewList(state.rounds._questionPool) : null;
+    const roundsPreview = questionPreviewList(s.roundsQuestionsMode === "pick" ? s.roundsPicked : state.rounds._questionPool);
     sections.push(summarySection(t("control.summaryRoundsQuestions"), h("div", {}, [
       h("div", { class: "summaryQMode c2-summary-row" }, roundsValueRow),
       roundsPreview,
@@ -525,7 +525,7 @@ export function createUI({ root, emit }) {
       if (s.finalQuestionsMode !== "pick") {
         finalValueRow.push(h("button", { class: "btn sm", type: "button", onclick: () => emit("setup.reshuffleFinal") }, [document.createTextNode(t("control.reshuffleQuestions"))]));
       }
-      const finalPreview = s.finalQuestionsMode !== "pick" ? questionPreviewList(state.final.pickedPreview) : null;
+      const finalPreview = questionPreviewList(state.final.pickedPreview);
       sections.push(summarySection(t("control.summaryFinalQuestions"), h("div", {}, [
         h("div", { class: "summaryQMode c2-summary-row" }, finalValueRow),
         finalPreview,
@@ -536,8 +536,43 @@ export function createUI({ root, emit }) {
     // wąską kolumnę. Podgląd Display zostaje po lewej; dźwięk i ustawienia
     // gry po prawej, bez pustego pasa szerokiej karty.
     const displaySummarySection = sections.find((section) => section.classList.contains("c2-summary-display"));
-    const leftSummarySections = sections.filter((section) => !section.classList.contains("c2-summary-display") && !section.classList.contains("c2-summary-sound"));
+    const isQuestionSection = (section) => section.classList.contains("c2-summary-rounds") || section.classList.contains("c2-summary-final-questions");
+    const questionSummarySections = sections.filter(isQuestionSection);
+    const leftSummarySections = sections.filter((section) => !section.classList.contains("c2-summary-display") && !section.classList.contains("c2-summary-sound") && !isQuestionSection(section));
     const rightSummarySections = sections.filter((section) => section.classList.contains("c2-summary-sound"));
+
+    const defaultAdvanced = {
+      roundMultipliers: DEFAULT_SETTINGS.roundMultipliers,
+      finalMinPoints: DEFAULT_SETTINGS.finalMinPoints,
+      finalTarget: DEFAULT_SETTINGS.finalTarget,
+      endScreenMode: DEFAULT_SETTINGS.endScreenMode,
+      finalPrizeMultiplier: DEFAULT_SETTINGS.finalPrizeMultiplier,
+      mainPrizeAmount: DEFAULT_SETTINGS.mainPrizeAmount,
+    };
+    const advancedLabels = {
+      roundMultipliers: t("gameSettings.game.roundMultipliers"),
+      finalMinPoints: t("gameSettings.game.finalMinPoints"),
+      finalTarget: t("gameSettings.game.finalTarget"),
+      endScreenMode: t("gameSettings.game.endModeLabel"),
+      finalPrizeMultiplier: t("gameSettings.game.prizeMultiplier"),
+      mainPrizeAmount: t("gameSettings.game.prizeAmount"),
+    };
+    const advancedRows = Object.keys(defaultAdvanced).filter((key) =>
+      JSON.stringify(s[key]) !== JSON.stringify(defaultAdvanced[key])
+    ).map((key) => {
+      let value = Array.isArray(s[key]) ? s[key].join(" · ") : String(s[key]);
+      if (key === "endScreenMode") {
+        const modeLabels = { logo: t("gameSettings.game.endModeLogoShort"), points: t("gameSettings.game.endModePointsShort"), money: t("gameSettings.game.endModeMoneyShort") };
+        value = modeLabels[s[key]] || value;
+      }
+      return h("div", { class: "c2-advanced-row" }, [
+        h("span", { class: "c2-advanced-label", text: advancedLabels[key] || key }),
+        h("span", { class: "c2-advanced-value", text: value }),
+      ]);
+    });
+    if (advancedRows.length) {
+      leftSummarySections.push(summarySection(t("control.summaryGame"), h("div", { class: "c2-advanced-settings" }, advancedRows), "c2-summary-advanced"));
+    }
 
     const finalIncomplete = hasFinal && s.finalQuestionsMode === "pick" && (state.final.picked?.length !== 5 || !state.final.confirmed);
     // Zgłoszone: "Gotowe przejdź do rozgrywki ma inny styl niż pozostałe
@@ -586,6 +621,7 @@ export function createUI({ root, emit }) {
           h("div", { class: "c2-summary-column" }, leftSummarySections),
           h("div", { class: "c2-summary-column" }, rightSummarySections),
         ]),
+        h("div", { class: `c2-summary-question-grid${hasFinal ? " has-final" : ""}` }, questionSummarySections),
       ]),
       h("div", { class: "stepFoot" }, [
         h("div", { class: "stepFootButtons" }, [back, changeSettings, start]),

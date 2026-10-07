@@ -87,6 +87,9 @@ function applyGameSettingsToState(settings, state) {
       const ids = questions.final.map((q) => q.id).filter(Boolean);
       if (ids.length > 0) {
         state.final.picked = ids.slice(0, 5);
+        state.final.pickedPreview = questions.final.slice(0, 5)
+          .filter((q) => q?.id && q?.text)
+          .map((q) => ({ id: q.id, text: q.text }));
         state.final.confirmed = true;
       }
     }

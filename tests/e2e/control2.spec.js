@@ -617,7 +617,25 @@ async function openAnon(browser, contexts, path, label, errors) {
 test("control2: parowanie urządzeń — linki renderują się bez błędu, Control widzi je jako online", async ({ page, browser }, testInfo) => {
   await page.setViewportSize({ width: 1366, height: 768 });
   await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
-  const game = await makeGame(page, `E2E-CONTROL2-PAIRING-${Date.now()}`);
+  const game = await makeGame(page, `E2E-CONTROL2-PAIRING-${Date.now()}`, {
+    settings: { game: { hasFinal: true, roundsQuestionsMode: "pick", advanced: { finalTarget: 250 } } },
+    roundQuestions: [{ ord: 1, text: "Pytanie rundy testowej", answers: [{ ord: 1, text: "Odpowiedź", fixed_points: 10 }] }],
+    finalAnswerPts: 5,
+  });
+  await page.evaluate(async (gameId) => {
+    const sb = window.__sbClient;
+    const { data: questions, error: readError } = await sb.from("questions").select("id, text, ord").eq("game_id", gameId).order("ord");
+    if (readError) throw new Error(readError.message);
+    const { data: current, error: gameError } = await sb.from("games").select("settings").eq("id", gameId).single();
+    if (gameError) throw new Error(gameError.message);
+    const settings = current.settings;
+    settings.questions = {
+      rounds: questions.filter((q) => q.ord === 1),
+      final: questions.filter((q) => q.ord >= 101).map(({ id, text }) => ({ id, text })),
+    };
+    const { error } = await sb.from("games").update({ settings }).eq("id", gameId);
+    if (error) throw new Error(error.message);
+  }, game.id);
   const contexts = [];
   try {
     await page.goto(`/control?id=${game.id}`, { waitUntil: "domcontentloaded" });
@@ -657,6 +675,15 @@ test("control2: parowanie urządzeń — linki renderują się bez błędu, Cont
 
     await page.getByRole("button", { name: "Dalej" }).click();
     await expect(page.locator(".stepTitle")).toHaveText("Podsumowanie", { timeout: 10000 });
+    await expect(page.locator(".c2-summary-rounds .c2-qpreview-text")).toHaveText(["Pytanie rundy testowej"]);
+    await expect(page.locator(".c2-summary-final-questions .c2-qpreview-text")).toHaveCount(5);
+    await expect(page.locator(".c2-summary-advanced")).toContainText("250");
+    const questionCards = await page.locator(".c2-summary-question-grid > .summarySection").evaluateAll((els) => els.map((el) => {
+      const rect = el.getBoundingClientRect();
+      return { left: rect.left, width: rect.width };
+    }));
+    expect(questionCards).toHaveLength(2);
+    expect(questionCards[1].left).toBeGreaterThan(questionCards[0].left + questionCards[0].width - 2);
     const displayPreview = page.locator("#c2DisplayPreview");
     const previewBox = await displayPreview.evaluate((el) => {
       const rect = el.getBoundingClientRect();
