@@ -321,6 +321,11 @@ async function main() {
   let queuedGameAction = false;
   let presenceFlags = {};
   let displayAudioUnlocked = null;
+  let displayAudioUnlockNonce = null;
+  let requestedDisplayAudioUnlockNonce = null;
+  let displayUnlockRetryTimer = null;
+  let controlOffline = !navigator.onLine;
+  let presenceUnavailable = false;
   let disconnectEpisode = false;
   let lastDisconnectState = "";
   let restarting = false;
@@ -343,6 +348,51 @@ async function main() {
   function waitingForDisplay() {
     return !/^(devices_|setup_)/.test(store.state.step) && displayCompletion.pending;
   }
+  function waitingForDisplayAudioUnlock() {
+    return store.state.settings.soundSource === "display"
+      && !!requestedDisplayAudioUnlockNonce
+      && (displayAudioUnlocked !== true || displayAudioUnlockNonce !== requestedDisplayAudioUnlockNonce);
+  }
+  rt(doorbellTopic(gameId)).onBroadcast("audio_unlock_completed", (message) => {
+    const nonce = message?.payload?.nonce;
+    if (typeof nonce !== "string" || nonce !== requestedDisplayAudioUnlockNonce) return;
+    displayAudioUnlocked = true;
+    displayAudioUnlockNonce = nonce;
+    clearInterval(displayUnlockRetryTimer);
+    displayUnlockRetryTimer = null;
+    renderCurrent();
+  });
+  function requestDisplayAudioUnlock() {
+    if (store.state.settings.soundSource !== "display"
+      || /^(devices_|setup_)/.test(store.state.step)
+      || store.state.locks.gameEnded) return;
+    requestedDisplayAudioUnlockNonce = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    displayAudioUnlocked = false;
+    const publish = () => {
+      if (!waitingForDisplayAudioUnlock()) {
+        clearInterval(displayUnlockRetryTimer);
+        displayUnlockRetryTimer = null;
+        return;
+      }
+      rt(doorbellTopic(gameId)).sendBroadcast("audio_unlock_required", {
+        nonce: requestedDisplayAudioUnlockNonce,
+      }, { mode: "http" }).catch(() => {});
+    };
+    clearInterval(displayUnlockRetryTimer);
+    publish();
+    displayUnlockRetryTimer = setInterval(publish, 1500);
+    renderCurrent();
+  }
+  function onControlReconnect() {
+    controlOffline = false;
+    requestDisplayAudioUnlock();
+    renderCurrent();
+  }
+  window.addEventListener("offline", () => {
+    controlOffline = true;
+    renderCurrent();
+  });
+  window.addEventListener("online", onControlReconnect);
   let completionUIReady = false;
   let completionReadPending = false;
   async function refreshDisplayCompletion() {
@@ -365,7 +415,7 @@ async function main() {
   // Dźwięk odsłuchiwany w Podsumowaniu jest podglądem, nie dźwiękiem akcji
   // gry. Nie może blokować przejścia do rozgrywki; UI zatrzymuje go przy
   // wyjściu z Podsumowania. Poza tym krokiem aktywne SFX nadal blokują akcje.
-  function busy() { return queuedGameAction || (soundBusy() && store.state.step !== "setup_finish") || committing || lockConfirmPending || waitingForDisplay() || Date.now() < lockedUntil || missingDevices(store.state, presenceFlags).length > 0; }
+  function busy() { return controlOffline || waitingForDisplayAudioUnlock() || queuedGameAction || (soundBusy() && store.state.step !== "setup_finish") || committing || lockConfirmPending || waitingForDisplay() || Date.now() < lockedUntil || missingDevices(store.state, presenceFlags).length > 0; }
 
   // Uzbraja klienckie `lockedUntil` na czas `ms` (potwierdzonego dźwięku/
   // animacji) I dociąga je do realnego czasu, w którym serwer (migracja
@@ -419,6 +469,7 @@ async function main() {
   // dostawać DOKŁADNIE tę samą blokadę, inaczej auto-pudło z 3s zegarka
   // zostawiałoby okno bez ochrony, którego ręczne ADD_X już nie ma.
   async function dispatchGatedNow(action) {
+    if (controlOffline || waitingForDisplayAudioUnlock()) return null;
     // Expiration records real elapsed time even while an endpoint is absent.
     // Queued operator actions are rechecked when they actually execute.
     if (!action.type.startsWith("EXPIRE_") && missingDevices(store.state, presenceFlags).length) return null;
@@ -541,10 +592,20 @@ async function main() {
 
   const presence = createPresence({
     gameId,
-    onChange: ({ flags, displayAudioUnlocked: audioUnlocked }) => {
+    onChange: ({ flags, displayAudioUnlocked: audioUnlocked, displayAudioUnlockNonce: audioUnlockNonce, error }) => {
       const previous = presenceFlags;
       presenceFlags = flags;
       displayAudioUnlocked = audioUnlocked;
+      displayAudioUnlockNonce = audioUnlockNonce;
+      if (error) presenceUnavailable = true;
+      else if (presenceUnavailable) {
+        presenceUnavailable = false;
+        requestDisplayAudioUnlock();
+      }
+      if (requestedDisplayAudioUnlockNonce && audioUnlocked === true && audioUnlockNonce === requestedDisplayAudioUnlockNonce) {
+        clearInterval(displayUnlockRetryTimer);
+        displayUnlockRetryTimer = null;
+      }
       const missing = missingDevices(store.state, flags);
       const presenceMessage = `presence:${["display", "host", "buzzer"].map((kind) => `${kind}=${flags[kind] ? "online" : "offline"}`).join(",")}`;
       const overlay = document.getElementById("deviceLostOverlay");
@@ -642,7 +703,7 @@ async function main() {
     if (ended && !outroReturnReady && !outroUnlockTimer) {
       outroUnlockTimer = setTimeout(() => { outroUnlockTimer = null; renderCurrent(); }, Math.max(0, 30_000 - (Date.now() - outroStartedAt)) + 20);
     }
-    return { urls, presenceFlags, displayAudioUnlocked, connectCodes, shareBadges, typingPending:typingCommit, outroReturnReady, busy: queuedGameAction || (soundBusy() && store.state.step !== "setup_finish") || (committing && !typingCommit) || lockConfirmPending || waitingForDisplay() || Date.now() < lockedUntil || missingDevices(store.state, presenceFlags).length > 0, devicesBlocked: missingDevices(store.state, presenceFlags).length > 0 };
+    return { urls, presenceFlags, displayAudioUnlocked, connectCodes, shareBadges, typingPending:typingCommit, outroReturnReady, busy: controlOffline || waitingForDisplayAudioUnlock() || queuedGameAction || (soundBusy() && store.state.step !== "setup_finish") || (committing && !typingCommit) || lockConfirmPending || waitingForDisplay() || Date.now() < lockedUntil || missingDevices(store.state, presenceFlags).length > 0, devicesBlocked: missingDevices(store.state, presenceFlags).length > 0 };
   }
 
   function renderCurrent() {
@@ -877,6 +938,7 @@ async function main() {
   // (ta sama liczba, co realnie steruje animacją na Displayu), zamiast
   // zgadywać nowy zestaw stałych.
   async function advance(nextStep, extra = {}, soundCueKey) {
+    if (controlOffline || waitingForDisplayAudioUnlock()) return;
     const generation = dispatchGeneration;
     assertTransition(store.state.step, nextStep);
     store.state.step = nextStep;

@@ -22,6 +22,7 @@ export function createPresence({ gameId, onChange }) {
   let inFlight = false;
   let flags = { display: false, host: false, buzzer: false };
   let displayAudioUnlocked = null;
+  let displayAudioUnlockNonce = null;
   let lastSeenAt = { display: null, host: null, buzzer: null };
   // Zgłoszone: "cały panel jest zlagowany, przewijanie też" — onChange()
   // (control/js/app.js's renderCurrent(), pełny root.innerHTML="" +
@@ -59,7 +60,8 @@ export function createPresence({ gameId, onChange }) {
       lastSeenAt = { display: null, host: null, buzzer: null };
       flags = { display: false, host: false, buzzer: false };
       displayAudioUnlocked = null;
-      reportIfChanged({ flags, lastSeenAt, displayAudioUnlocked, error });
+      displayAudioUnlockNonce = null;
+      reportIfChanged({ flags, lastSeenAt, displayAudioUnlocked, displayAudioUnlockNonce, error });
       return;
     }
 
@@ -68,6 +70,7 @@ export function createPresence({ gameId, onChange }) {
     const h = pickNewest(rows, "host");
     const b = pickNewest(rows, "buzzer");
     displayAudioUnlocked = d?.meta?.audio_unlocked === true;
+    displayAudioUnlockNonce = typeof d?.meta?.audio_unlock_nonce === "string" ? d.meta.audio_unlock_nonce : null;
 
     lastSeenAt = { display: d?.last_seen_at ?? null, host: h?.last_seen_at ?? null, buzzer: b?.last_seen_at ?? null };
     // isOnline() liczy się od Date.now() — flags może się zmienić (online
@@ -75,12 +78,13 @@ export function createPresence({ gameId, onChange }) {
     // porównanie musi patrzeć na WYLICZONE flags, nie na surowe lastSeenAt.
     flags = { display: isOnline(lastSeenAt.display), host: isOnline(lastSeenAt.host), buzzer: isOnline(lastSeenAt.buzzer) };
 
-    reportIfChanged({ flags, lastSeenAt, displayAudioUnlocked, error: null });
+    reportIfChanged({ flags, lastSeenAt, displayAudioUnlocked, displayAudioUnlockNonce, error: null });
     } catch (error) {
       lastSeenAt = { display: null, host: null, buzzer: null };
       flags = { display: false, host: false, buzzer: false };
       displayAudioUnlocked = null;
-      reportIfChanged({ flags, lastSeenAt, displayAudioUnlocked, error });
+      displayAudioUnlockNonce = null;
+      reportIfChanged({ flags, lastSeenAt, displayAudioUnlocked, displayAudioUnlockNonce, error });
     } finally {
       inFlight = false;
     }
@@ -91,8 +95,12 @@ export function createPresence({ gameId, onChange }) {
   // nie wpływa na to, czy warto zawiadamiać. Wywołanie tylko przy realnej
   // zmianie flags.
   function reportIfChanged(payload) {
-    const reported = { ...payload, displayAudioUnlocked: payload.displayAudioUnlocked ?? displayAudioUnlocked };
-    const fp = JSON.stringify({ flags: reported.flags, displayAudioUnlocked: reported.displayAudioUnlocked });
+    const reported = {
+      ...payload,
+      displayAudioUnlocked: payload.displayAudioUnlocked ?? displayAudioUnlocked,
+      displayAudioUnlockNonce: payload.displayAudioUnlockNonce ?? displayAudioUnlockNonce,
+    };
+    const fp = JSON.stringify({ flags: reported.flags, displayAudioUnlocked: reported.displayAudioUnlocked, displayAudioUnlockNonce: reported.displayAudioUnlockNonce });
     if (fp === lastReported) return;
     lastReported = fp;
     onChange?.(reported);

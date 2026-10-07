@@ -96,6 +96,9 @@ test("control2: TV odrzuca inne urządzenia, kod display otwiera nowy Wyświetla
     await expect(tv.locator("#fsBtn")).toBeVisible();
     // The new Display remains directly accessible; its sound prompt works with TV OK.
     await tv.goto(`https://www.familiada.online/display/?id=${game.id}&key=${game.share_key_display}`);
+    // Przycisk jest widoczny od początku i czeka na kliknięcie, niezależnie
+    // od tego, czy panel zdążył już wybrać źródło dźwięku.
+    await expect(tv.locator("#audioUnlockScreen")).toBeVisible({ timeout: 15000 });
     await page.goto(`/control?id=${game.id}`);
     await expect(page.locator(".stepTitle")).toHaveText("Urządzenia", { timeout: 15000 });
     await page.locator('.toggle-item:has(input[name="soundSource"][value="display"])').click();
@@ -676,7 +679,9 @@ test("control2: parowanie urządzeń — linki renderują się bez błędu, Cont
     const deviceListFits = await page.locator(".c2-devices-layout .c2-scroll-area").evaluate((el) => el.scrollHeight <= el.clientHeight + 1);
     expect(deviceListFits, "Urządzenia powinny mieścić się bez przewijania przy 1366×768").toBe(true);
 
-    await page.locator('input[name="soundSource"][value="display"]').check();
+    await page.locator('.toggle-item:has(input[name="soundSource"][value="display"])').click();
+    await expect(page.locator('.device-row:has(input[name="soundSource"][value="display"]) .device-opt-check-hint').last())
+      .toContainText("bez tego start gry będzie zablokowany");
     await expect(displayPage.locator("#audioUnlockScreen")).not.toHaveClass(/hidden/, { timeout: 10000 });
 
     await page.getByRole("button", { name: "Dalej" }).click();
@@ -712,7 +717,7 @@ test("control2: parowanie urządzeń — linki renderują się bez błędu, Cont
     const revealPreview = page.locator('.summarySoundRow:has(input[data-sfx-vol="reveal"]) .summarySoundPlay');
     const beginGame = page.getByRole("button", { name: "Gotowe — przejdź do rozgrywki" });
     await expect(beginGame).toBeDisabled();
-    await expect(page.locator(".c2-audio-gate-hint")).toContainText("Odblokuj dźwięk na Wyświetlaczu");
+    await expect(page.locator(".c2-audio-gate-hint")).toHaveCount(0);
     await displayPage.locator("#btnAudioUnlock").click();
     await expect(beginGame).toBeEnabled({ timeout: 10000 });
     await revealPreview.click();
@@ -720,6 +725,21 @@ test("control2: parowanie urządzeń — linki renderują się bez błędu, Cont
     await expect(beginGame).toBeEnabled();
     await beginGame.click();
     await expect(page.locator(".stepTitle")).not.toHaveText("Podsumowanie", { timeout: 10000 });
+
+    // Po utracie i odzyskaniu połączenia Control przy źródle Display
+    // ponownie wymaga gestu na Wyświetlaczu. Akcje gry pozostają zablokowane
+    // do potwierdzenia, a odpowiedź Display odblokowuje je bez reloadu.
+    const startRound = page.getByRole("button", { name: "Rozpocznij rundę" });
+    await expect(startRound).toBeVisible();
+    await page.evaluate(() => {
+      window.dispatchEvent(new Event("offline"));
+      window.dispatchEvent(new Event("online"));
+    });
+    await expect(displayPage.locator("#audioUnlockScreen")).toBeVisible({ timeout: 10000 });
+    await expect(startRound).toBeDisabled();
+    await displayPage.locator("#btnAudioUnlock").click();
+    await expect(displayPage.locator("#audioUnlockScreen")).toBeHidden({ timeout: 10000 });
+    await expect(startRound).toBeEnabled({ timeout: 10000 });
 
     expect(errors, "żadne z urządzeń nie powinno rzucić błędu JS: " + errors.join(" | ")).toEqual([]);
   } finally {
@@ -1873,8 +1893,8 @@ test("control2: dźwięk ze źródła Wyświetlacz — odblokowanie, głośnoś�
     await expect(page.locator(".stepTitle")).toHaveText("Urządzenia", { timeout: 15000 });
     await expect(page.locator("#dotDisplay")).toHaveClass(/\bok\b/, { timeout: 15000 });
 
-    // Przed przełączeniem: Display nigdy nie pokazuje ekranu odblokowania.
-    await expect(displayPage.locator("#audioUnlockScreen")).toHaveClass(/\bhidden\b/);
+    // Przycisk Display pozostaje widoczny do jawnego kliknięcia.
+    await expect(displayPage.locator("#audioUnlockScreen")).toBeVisible();
 
     // Przełącznik dwustanowy (.toggle-group, jak "Losowo"/"Wybierz" w
     // ustawieniach gry) — widoczny tekst opcji to CSS content:attr(data-text)

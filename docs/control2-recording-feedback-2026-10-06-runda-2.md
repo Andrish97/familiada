@@ -194,7 +194,16 @@ przypadek. Łącznie 25 wybranych testów lokalnych.
   odsłuchu ikona zmienia się z trójkąta na kwadrat zatrzymania.
 - Jeśli źródłem dźwięku jest Wyświetlacz, przycisk rozpoczęcia gry pozostaje
   zablokowany do chwili odblokowania dźwięku na tym urządzeniu. Wyświetlacz
-  zgłasza ten stan w heartbeat, a Podsumowanie pokazuje krótką podpowiedź.
+  zgłasza ten stan w heartbeat. Krótka informacja o blokadzie jest w
+  podpowiedzi kafelka „Dźwięk” w kroku Urządzenia; Podsumowanie nie pokazuje
+  dodatkowego komunikatu, więc jego przyciski nie zmieniają położenia. Przycisk
+  odblokowania jest widoczny na Wyświetlaczu od początku do kliknięcia i znika
+  dopiero po potwierdzeniu zgłoszenia przez serwer. Przy problemie z
+  połączeniem zostaje dostępny do ponowienia. Jeśli Control utraci i odzyska
+  połączenie podczas gry, ponownie wyświetla przycisk na Display i blokuje
+  akcje aż do kliknięcia. Potwierdzenie wraca osobnym komunikatem realtime,
+  więc blokada schodzi bez odświeżania strony; heartbeat pozostaje kontrolą
+  zapasową.
 - Przy losowym finale pytania są losowane najpierw z puli rund i usuwane z
   rund. Ponowne losowanie zwraca poprzednie pytania finału na koniec puli rund,
   po czym losuje nowy zestaw. Podsumowanie pokazuje obie pule po tym podziale.

@@ -631,7 +631,6 @@ export function createUI({ root, emit }) {
       h("div", { class: "stepFoot" }, [
         h("div", { class: "stepFootButtons" }, [back, changeSettings, start]),
         finalIncomplete ? h("div", { class: "msg msg-pill", text: t("control.finalPickIncompleteWarning") }) : null,
-        displaySoundNeedsUnlock ? h("div", { class: "c2-audio-gate-hint", text: t("control.summaryDisplayAudioUnlockHint") }) : null,
       ]),
     ];
 
