@@ -180,6 +180,23 @@ pierwsza przeszkoda zatrzymuje i nie idziemy dalej.
   dostaje `forbidden` → pełnoekranowy komunikat „Odebrano Ci dostęp do tej
   bazy” z wyjściem do listy baz.
 
+### Blokady są trwałe — bez „przejmij kontrolę” (decyzja 2026-10-07)
+
+- Blokada trwa, dopóki karta, która ją trzyma, jest otwarta. Nigdzie nie
+  ma „przejmij kontrolę”, wymuszenia ani pomijania blokady — także przy
+  usuwaniu gry i usuwaniu konta (`usuwanie-danych.md`).
+- Dziś w kodzie nie ma przejmowania; jedyna droga utraty blokady to
+  wygaśnięcie po 25 s bez odnowienia.
+- **Luka do naprawy**: odnowienie (`resource-lock.js:232`) obsługuje
+  tylko `gone` i `forbidden`, a ignoruje `locked`. Gdy karta w tle
+  przestanie odnawiać (przeglądarka zwalnia liczniki ukrytych kart nawet
+  do 1 na minutę; uśpiony komputer), blokada wygasa, inna karta ją bierze,
+  a pierwsza po wybudzeniu dalej edytuje — dwie edycje naraz.
+- Naprawa: odnowienie zwracające `locked` → pełna blokada strony;
+  odnowienie od razu przy powrocie karty na wierzch; TTL dłuższy niż
+  spowolnione liczniki w tle (np. 2 min) — zamknięta karta i tak zwalnia
+  blokadę od razu (`pagehide`), TTL dotyczy tylko awarii.
+
 ### Zgodność zasobów (reguła w bazie, jedna dla wszystkich)
 
 - wyłączne `X` przeszkadza każdemu innemu trzymaniu `X`;

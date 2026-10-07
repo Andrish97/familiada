@@ -220,15 +220,23 @@ Topbar (wg `ujednolicenie-wygladu.md`): `FAMILIADA` + „Wstecz” ·
 Sekcja **Link i QR**: QR (duży), pole z linkiem (tylko do odczytu),
 przyciski **Kopiuj** · **Otwórz** · **QR na wyświetlaczu** (kod urządzenia).
 
-Sekcja **Subskrybenci**: wiersz na aktywnego subskrybenta — nazwa,
-oznaczenie stanu (— / **czeka** / **zagłosował** / **odrzucił**), po prawej
-pole wyboru albo **Przypomnij** (przy „czeka”, raz na 24 h); pod listą
-**Wyślij zaproszenia** (aktywny, gdy coś zaznaczono). Brak subskrybentów →
-„Nie masz subskrybentów” + link do Subskrypcji.
-- zaznaczenie + „Wyślij zaproszenia” → zaproszenie + mail (6.4);
-- odznaczenie osoby, która czeka → zaproszenie wycofane (bez maila);
-  ponowne zaznaczenie → nowe zaproszenie i nowy mail;
-- **zagłosował** / **odrzucił** — bez pola wyboru.
+Sekcja **Subskrybenci** — kafle (wzór kafli z list; decyzja 2026-10-07):
+- kafel zaproszonego: nazwa, oznaczenie stanu (**czeka** /
+  **zagłosował** / **odrzucił**), w rogu ikony: **dzwonek** = Przypomnij
+  (tylko „czeka”, raz na 24 h) obok **kosza** = usuń udostępnienie;
+- **kosz** (każdy stan): zaproszenie usunięte; **jeśli osoba zagłosowała,
+  jej głos też jest usuwany**; odrzucone zaproszenie usuwa się tak samo;
+- niezaproszeni subskrybenci: kafle do zaznaczenia + **Wyślij
+  zaproszenia** (zaproszenie + mail, 6.4); po usunięciu udostępnienia
+  osobę można zaprosić ponownie (nowe zaproszenie, nowy mail);
+- brak subskrybentów → „Nie masz subskrybentów” + link do Subskrypcji.
+
+**Wyniki na żywo bez skakania** (dziś przycisk ⟳, bo lista skakała):
+odświeżanie co kilka sekund **bez przebudowy listy** — stała kolejność
+(punktacja: kolejność odpowiedzi z gry; tekst: kolejność pojawienia się,
+nowe na końcu), zmieniają się tylko liczby i szerokość pasków (płynne
+przejście CSS), nic się nie przesuwa; sortowanie według głosów dopiero
+przy zamykaniu. Przycisk ⟳ znika *(do potwierdzenia)*.
 
 **C. Zamykanie ankiety tekstowej** — „Zamknij” przełącza treść (B) na
 pełnoszerokie okno scalania odpowiedzi (jak dziś: scal / zmień nazwę /
@@ -258,7 +266,7 @@ Zadania).
 | zagłosował | „Dziękujemy, głos oddany” | znika |
 | odrzucił | „Zaproszenie odrzucone” | znika |
 | ankieta zamknięta | „Ankieta została zamknięta” | znika |
-| przerwana / ponownie uruchomiona / wycofane | „To zaproszenie wygasło” | znika |
+| przerwana / ponownie uruchomiona / udostępnienie usunięte | „To zaproszenie wygasło” | znika |
 
 Odrzucenie: jedno kliknięcie, bez potwierdzenia; właściciel widzi
 „odrzucił”; niczego nie blokuje.
@@ -269,10 +277,10 @@ Odrzucenie: jedno kliknięcie, bez potwierdzenia; właściciel widzi
 |---|---|---|---|---|
 | Zaproszenie do subskrypcji | właściciel dodaje subskrybenta (kafel „+”) | podany e-mail / użytkownik | „X chce wysyłać Ci ankiety” → Akceptuj | jak dziś: 1 na 5 dni na osobę; ponowne wysłanie 1 na 24 h |
 | **Zaproszenie do ankiety** | „Wyślij zaproszenia” przy otwartej ankiecie | zaznaczeni subskrybenci (aktywni) | „X zaprasza Cię do ankiety „nazwa”” → Zagłosuj (link `?t=`) | 1 na osobę na uruchomienie |
-| Przypomnienie (decyzja 2026-10-07) | „Przypomnij” przy osobie, która czeka | ta osoba | jak zaproszenie, „Przypomnienie” | 1 na 24 h na osobę |
+| Przypomnienie (decyzja 2026-10-07) | dzwonek na kafelku osoby, która czeka | ta osoba | jak zaproszenie, „Przypomnienie” | 1 na 24 h na osobę |
 
 **Bez maili** przy: zamknięciu, przerwaniu, ponownym uruchomieniu,
-wycofaniu zaproszenia — link sam mówi, co się stało (6.3).
+usunięciu udostępnienia — link sam mówi, co się stało (6.3).
 
 Każdy mail ma stopkę jak dziś: konto → „ustawienia konta”; bez konta →
 „wypisz się od tego nadawcy” / „wypisz się ze wszystkich”.
@@ -298,7 +306,7 @@ Każdy mail ma stopkę jak dziś: konto → „ustawienia konta”; bez konta �
   uruchomienia (albo oznacza je jako nieaktualne kluczem);
 - nowa akcja „przerwij” (do szkicu, bez przeliczania);
 - zamknięcie bez warunku „czekające zaproszenia”;
-- `poll_tasks`: stany `pending` / `done` / `declined`; wycofanie = usunięcie;
+- `poll_tasks`: stany `pending` / `done` / `declined`; usunięcie udostępnienia = usunięcie zaproszenia i głosu tej osoby;
   zaproszenie ważne tylko przy bieżącym kluczu gry;
 - uruchom / zamknij / przerwij / zaproszenia / reset: `auth.uid()` =
   właściciel + blokada `game:G` tej karty;

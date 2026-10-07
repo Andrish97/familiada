@@ -52,9 +52,9 @@ i niepotwierdzonych kont (`guest_cleanup_expired`).
 1. Jedna droga usunięcia w bazie: `delete_resource_checked('game')` —
    także dla kopii ze Społeczności i wycofania importu; reguła RLS na
    bezpośredni `delete` gier usunięta.
-2. Otwarta ankieta nie blokuje usunięcia: usunięcie = **Przerwij +
-   usuń** (z potwierdzeniem „Ankieta jest otwarta — głosy przepadną”).
-   Zajęta blokada gry dalej blokuje.
+2. Otwarta ankieta nie blokuje usunięcia: w istniejącym oknie
+   potwierdzenia usunięcia dochodzi informacja „Ankieta zostanie
+   przerwana” (decyzja 2026-10-07). Zajęta blokada gry dalej blokuje.
 3. Usunięcie gry usuwa jej maile z kolejki, zapamiętane urządzenia tej gry
    i jej pliki (dźwięki) — w bazie / jednej funkcji, nie po stronie
    przeglądarki.
@@ -62,14 +62,17 @@ i niepotwierdzonych kont (`guest_cleanup_expired`).
    komunikatów technicznych.
 
 **Konto**
-1. Usunięcie konta jest ostateczne i **nie czeka** na blokady ani otwarte
-   ankiety (to decyzja właściciela danych); otwarte ankiety są przerywane.
+1. Usunięcie konta **respektuje blokady** — bez pomijania (blokady są
+   trwałe, decyzja 2026-10-07): gdy którykolwiek mój zasób jest trzymany
+   (moja inna karta, współpracownik w mojej bazie), odmowa z komunikatem,
+   co jest otwarte. Otwarte ankiety nie blokują — są przerywane (info
+   w oknie potwierdzenia).
 2. **Moje głosy w cudzych ankietach zostają anonimowe** (bez powiązania
-   z kontem) — cudze wyniki się nie zmieniają.
+   z kontem) — cudze wyniki się nie zmieniają (decyzja 2026-10-07).
 3. Usuwane też wszystko, co powiązane z moim **e-mailem**: subskrypcje
    i zaproszenia tylko po e-mailu, zaproszenia do baz, oczekujące
    i nieudane maile do mnie i ode mnie, logi maili, tokeny wypisania,
-   limity wysyłek, zgłoszenia kontaktowe (albo ich anonimizacja).
+   limity wysyłek, zgłoszenia kontaktowe — **całe** (decyzja 2026-10-07).
    Ponowna rejestracja tym samym e-mailem zaczyna od zera.
 4. Współpracownik mojej bazy: przy najbliższej akcji / odnowieniu
    blokady komunikat „Baza została usunięta” z wyjściem do listy baz.
@@ -77,11 +80,10 @@ i niepotwierdzonych kont (`guest_cleanup_expired`).
    także przy porzuceniu konta gościa.
 6. Jedna funkcja usuwania używana przez wszystkie trzy wejścia.
 
-## 4. Pytania
+## 4. Decyzje (2026-10-07)
 
-1. Usunięcie gry z otwartą ankietą: **Przerwij + usuń** z potwierdzeniem
-   (propozycja), czy jak dziś odmowa, dopóki ankieta otwarta?
-2. Moje głosy w cudzych ankietach po usunięciu konta: zostają anonimowe
-   (propozycja) czy usuwane?
-3. Zgłoszenia kontaktowe po usunięciu konta: usunąć czy zanonimizować
-   (zostawić treść, usunąć e-mail i IP)?
+1. Usunięcie gry z otwartą ankietą: dozwolone; okno potwierdzenia mówi,
+   że ankieta zostanie przerwana.
+2. Głosy usuniętego konta w cudzych ankietach: zostają anonimowe.
+3. Zgłoszenia kontaktowe usuniętego konta: usuwane całe.
+4. Blokady nie są pomijane — także przy usuwaniu konta.
