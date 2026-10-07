@@ -281,8 +281,7 @@ body.editor-body .wrap {
 
 .addTile .plus {
     color: var(--gold);
-    font-size: 32px;
-    font-weight: 500;
+    font-size: 28px;
     line-height: 1
 }
 

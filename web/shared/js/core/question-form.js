@@ -156,7 +156,7 @@ export function buildAddAnswerTile(count) {
   const plus = document.createElement("span");
   plus.className = "qf-addPlus";
   plus.setAttribute("aria-hidden", "true");
-  plus.textContent = "+";
+  plus.innerHTML = icon("plus");
   const lbl = document.createElement("span");
   lbl.className = "qf-addLbl";
   lbl.textContent = canAdd ? t("questionForm.addAnswer") : t("questionForm.answerLimit");

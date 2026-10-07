@@ -2485,7 +2485,7 @@ const uk = {
     },
   },
   questionForm: {
-    addAnswer: "+ Додати відповідь",
+    addAnswer: "Додати відповідь",
     answerLimit: "Досягнуто ліміту відповідей",
     deleteAnswer: "Видалити відповідь",
     sumLabel: "СУМА",
@@ -2766,7 +2766,7 @@ const uk = {
     actions: {
       delete: "Видалити",
       addQuestion: "Додати питання",
-      addAnswer: "+ Додати відповідь",
+      addAnswer: "Додати відповідь",
     },
     labels: {
       questionNumber: "Питання {ord}",

@@ -2498,7 +2498,7 @@ const en = {
     },
   },
   questionForm: {
-    addAnswer: "+ Add answer",
+    addAnswer: "Add answer",
     answerLimit: "Answer limit reached",
     deleteAnswer: "Delete answer",
     sumLabel: "SUM",
@@ -2779,7 +2779,7 @@ const en = {
     actions: {
       delete: "Delete",
       addQuestion: "Add question",
-      addAnswer: "+ Add answer",
+      addAnswer: "Add answer",
     },
     labels: {
       questionNumber: "Question {ord}",

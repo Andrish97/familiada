@@ -2387,7 +2387,7 @@ const pl = {
     },
   },
   questionForm: {
-    addAnswer: "+ Dodaj odpowiedź",
+    addAnswer: "Dodaj odpowiedź",
     answerLimit: "Limit odpowiedzi osiągnięty",
     deleteAnswer: "Usuń odpowiedź",
     sumLabel: "SUMA",
@@ -2668,7 +2668,7 @@ const pl = {
     actions: {
       delete: "Usuń",
       addQuestion: "Dodaj pytanie",
-      addAnswer: "+ Dodaj odpowiedź",
+      addAnswer: "Dodaj odpowiedź",
     },
     labels: {
       questionNumber: "Pytanie {ord}",

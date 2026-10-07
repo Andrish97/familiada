@@ -475,11 +475,11 @@ async function boot() {
     addQ.type = "button";
     addQ.className = "qcard addTile";
     addQ.innerHTML = `
-      <div class="plus" aria-hidden="true">+</div>
+      <div class="plus">${icon("plus")}</div>
       <div class="txt"></div>
       <div class="sub"></div>
     `;
-    addQ.querySelector(".txt").textContent = MSG.addQuestionLabel();
+    addQ.querySelector(".txt").textContent = MSG.addQuestionLabel().replace(/^[+＋]\s*/, "");
     addQ.addEventListener("click", addQuestion);
     qList.appendChild(addQ);
 
