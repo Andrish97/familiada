@@ -193,10 +193,10 @@ karty:
 
 | Dziś | Po podziale | ↩ |
 |---|---|---|
-| `/logo-editor/` lista + tryb edycji (`is-editor`, `topbar-no-menu`, `btnCloseEditor` ✕) | `/logo/` — tylko lista · **3 osobne strony** jak edytor pytań: `/logo/editor-text/?id=…`, `/logo/editor-draw/?id=…`, `/logo/editor-image/?id=…` | „← Wróć do: Logo” → `/logo/?logo=<id>` |
+| `/logo-editor/` lista + tryb edycji (`is-editor`, `topbar-no-menu`, `btnCloseEditor` ✕) | `/logo/` — tylko lista · **3 osobne strony** jak edytor pytań: `/logo/editor-text/?id=…`, `/logo/editor-draw/?id=…`, `/logo/editor-image/?id=…` | „← Wróć do: Logo” → `/logo/?tab=<typ>` |
 | Control → ustawienia gry w `iframe` | `/game-settings/?id=…&ret=/control/?id=…` | „← Wróć do: Control” |
 | Control / game-settings / logo-editor → instrukcja, prywatność w `iframe` | `/manual/?ret=…`, `/privacy/?ret=…` | „← Wróć do: {strona}” |
-| `/editor/` — wybrane pytanie tylko w pamięci (`activeQId`, `editor.js:362`) | `/editor/?id=<gra>&q=<pytanie>` — po powrocie (z instrukcji, odświeżeniu, linku) otwiera się to samo pytanie | telefon: ↩ zamyka pytanie (`?q=` znika z adresu); bez pytania: ↩ → `/games/?game=<id>` |
+| `/editor/` — wybrane pytanie tylko w pamięci (`activeQId`, `editor.js:362`) | `/editor/?id=<gra>&q=<pytanie>` — po powrocie (z instrukcji, odświeżeniu, linku) otwiera się to samo pytanie | telefon: ↩ zamyka pytanie (`?q=` znika z adresu); bez pytania: ↩ → `/games/` (karta z `ret` albo z typu gry) |
 
 **Adresy (decyzja):** lista `/logo/`, edytory `/logo/editor-text/`,
 `/logo/editor-draw/`, `/logo/editor-image/` (`?id=<logo>`); w mapie skrótowo `/logo/editor-<typ>/`. Stary
@@ -212,44 +212,88 @@ przekierowanie na `/draw/?id=…` (ten sam `ret`). Edytor logo staje się
 wspólny kod (zapis, kopia robocza, podgląd, topbar) w module, każda strona
 ładuje tylko swój edytor (`text.js` / `draw.js` / `image.js`).
 
-### Mapa pamięta konkretną grę / logo (zasoby)
+### Co pamięta powrót: zasób na stronach szczegółu, kartę na listach (decyzja)
 
-Powrót nie prowadzi „na listę”, tylko do **tej samej gry / logo / bazy** —
-zaznaczonej, z właściwą zakładką. Mapa rozszerza się o zasób:
+- **Strony szczegółu** pamiętają swój zasób w adresie (`?id=`) i swój stan:
+  edytor pytań — pytanie, eksplorator baz — bazę i folder.
+- **Listy** pamiętają tylko **kartę** (`?tab=`). Zaznaczenia gry / logo /
+  bazy nie pamiętamy.
 
-| Zasób | Strony szczegółu (`?id=`) | Lista zaznacza (`?<zasób>=`) |
-|---|---|---|
-| gra | `/editor/` (+ `&q=<pytanie>`), `/polls/`, `/control/`, `/game-settings/` | `/games/?game=<id>` (zakładka z typu gry), `/polls-hub/?game=<id>` |
-| logo | `/logo/editor-<typ>/` | `/logo/?logo=<id>` (zakładka z typu logo) |
-| baza | `/base-explorer/?id=<id>&folder=…` (dziś `?base=`, zostaje jako alias) | `/bases/?base=<id>` |
+| Strona | Stan w adresie (wraca przez `ret`) |
+|---|---|
+| `/editor/` | `id` (gra), `q` (pytanie) |
+| `/control/`, `/game-settings/`, `/polls/` | `id` (gra) |
+| `/logo/editor-<typ>/` | `id` (logo) |
+| `/base-explorer/` | `id` (baza; dziś `?base=` — zostaje jako alias), `folder` |
+| `/games/`, `/logo/`, `/bases/`, `/polls-hub/`, `/subscriptions/`, `/marketplace/`, `/manual/` | `tab` (+ w marketplace `q`, `filter`, `sort`, jak dziś) |
 
 ```js
-editor:       { path: "/editor/",       resource: "game", parent: "games",      state: ["id", "q"] },
-control:      { path: "/control/",      resource: "game", parent: "games",      state: ["id"] },
-gameSettings: { path: "/game-settings/",resource: "game", parent: "control",    state: ["id"] },
-logoDraw:     { path: "/logo/editor-draw/", resource: "logo", parent: "logoEditor", state: ["id"] },
-games:        { path: "/games/",        select: "game",   state: ["game", "tab"] },
-logoEditor:   { path: "/logo/",  select: "logo",   state: ["logo", "tab"] },
+editor:       { path: "/editor/",            resource: "game", parent: "games",      state: ["id", "q"] },
+control:      { path: "/control/",           resource: "game", parent: "games",      state: ["id"] },
+gameSettings: { path: "/game-settings/",     resource: "game", parent: "control",    state: ["id"] },
+logoDraw:     { path: "/logo/editor-draw/",  resource: "logo", parent: "logoEditor", state: ["id"] },
+baseExplorer: { path: "/base-explorer/",     resource: "base", parent: "bases",      state: ["id", "folder"] },
+games:        { path: "/games/",   tabs: ["prepared", "poll_text", "poll_points", "market"], state: ["tab"] },
+logoEditor:   { path: "/logo/",    tabs: ["text", "draw", "image"],                       state: ["tab"] },
 ```
 
-- `backHref()` bez `ret`: `parent` + zasób bieżącej strony →
-  z `/control/?id=7` ↩ `/games/?game=7`; z `/logo/editor-draw/?id=3` ↩
-  `/logo/?logo=3`.
-- `parent` też z zasobem: `gameSettings.parent = "control"` — bez `ret`
-  ↩ prowadzi do Control tej gry (na telefonie, gdzie Control jest
-  zablokowany, do `/games/?game=<id>`).
-- Gra/logo usunięte w międzyczasie → lista bez zaznaczenia, bez błędu.
+- `backHref()` bez `ret`: `parent` z kartą wynikającą z typu zasobu —
+  z edytora gry punktowanej ↩ `/games/?tab=poll_points`, z
+  `/logo/editor-draw/` ↩ `/logo/?tab=draw`. Z `ret` — karta, z której
+  się wyszło.
+- `gameSettings.parent = "control"` — bez `ret` ↩ prowadzi do Control tej
+  gry (`/control/?id=…`); na telefonie, gdzie Control jest zablokowany —
+  do `/games/` z kartą typu gry.
 - `state` to jedyne parametry zapisywane w `ret` — reszta adresu (tokeny
   `t`, `s`, `share`, otwarte okna) nie wchodzi do powrotu.
+
+**Eksplorator baz** — baza i folder już są w adresie (`?base=`, `?folder=`,
+`base-explorer/js/state.js:131`), ale:
+- bases → eksplorator idzie bez `ret` (`bases.js:1551`), a ↩ z eksploratora
+  zawsze na `/bases/` (gubi kartę „Udostępnione”);
+- rozwinięte gałęzie drzewa (`state.treeOpen`, `actions.js:3304`) żyją
+  tylko w pamięci — po powrocie z instrukcji drzewo jest zwinięte.
+
+Propozycja: drzewo (zbiór rozwiniętych folderów) w `localStorage` pod
+kluczem `explorer:tree:<id bazy>` — to stan widoku, za długi do adresu;
+otwarty folder dalej w `?folder=`, a jego przodkowie zawsze rozwinięci.
+
+### Karty — jeden sposób na wszystkich stronach
+
+Dziś każda strona robi to inaczej:
+
+| Strona | Dziś |
+|---|---|
+| `/games/` | `?tab=poll_text\|poll_points\|market`, domyślna `prepared` bez parametru, `pushState` |
+| `/bases/` | `?tab=shared` + zapas w `sessionStorage` (`basesMobileTab`), `pushState` |
+| `/polls-hub/` | `?tab=tasks`, `pushState` |
+| `/subscriptions/` | `?tab=subscriptions`, w kodzie karty to `"a"` / `"b"`, `pushState` |
+| `/logo-editor/` | `?tab=draw\|image` (domyślna `text`), `pushState` |
+| `/manual/` | karta w `#hash` (`#control`), Control dodatkowo `?tab=control` |
+| `/base-explorer/` | folder `?folder=`, `pushState` |
+| `/settings/` (admin) | `?tab=`, `pushState` |
+
+Jedna reguła (`setTab()` / `tabFromUrl()` we wspólnym module, lista kart
+w `PAGES[...].tabs`):
+1. Karta zawsze w `?tab=<nazwa>`; nazwy z listy w mapie, nieznana →
+   pierwsza; pierwsza (domyślna) bez parametru.
+2. Zmiana karty to `replaceState`, nie `pushState` — przeglądarkowe
+   „Wstecz” i ↩ to powrót do poprzedniej **strony**, nie przewijanie kart
+   (tak samo jak przycisk ↩ z mapy). *Do potwierdzenia.*
+3. Bez zapasu w `sessionStorage` — adres jest jedynym źródłem.
+4. Instrukcja: karta też w `?tab=` (`#hash` tylko kotwica w karcie);
+   stare linki z `#control` → `?tab=control`.
+5. Te same nazwy w kodzie i w adresie (subscriptions: `tasks`/`subs`
+   zamiast `"a"`/`"b"`).
 
 ### Okna na telefonie — powrót zawsze do strony podstawowej (decyzja)
 
 Na telefonie dialogi (modal-sheet ≤ 600 px) zajmują cały ekran, ale **nie
 są stanem strony**: nie ma ich w adresie ani w `ret`. Wyjście z okna na
 inną stronę (np. `?` z podglądu gry) i powrót ↩ → strona podstawowa
-z zaznaczonym zasobem (`/games/?game=7`), okno się **nie** otwiera
-ponownie. Granica: stan strony (`id`, `q`, `tab`, `folder`, zaznaczenie)
-jest w adresie i wraca; okna nie.
+z tą samą kartą (`/games/?tab=poll_text`), okno się **nie** otwiera
+ponownie. Granica: stan strony (`id`, `q`, `tab`, `folder`) jest
+w adresie i wraca; okna nie.
 
 **Control w trakcie gry** — wyjście do instrukcji jest bezpieczne
 (stan w bazie, urządzenia dalej wyświetlają), ale operator traci widok
@@ -416,7 +460,7 @@ flowchart LR
   games -->|Logo| logo["/logo/"]
   logo -->|Nowe / Edytuj| logoEdit["/logo/editor-<typ>/?id="]
   control -->|Ustawienia gry| gs
-  logoEdit -->|↩ ?logo=id| logo
+  logoEdit -->|↩ ?tab=typ| logo
   gs -->|↩ ret| control
   games -->|Podłącz urządzenie| cd["/connect-device/"]
   games -->|Ankiety| hub["/polls-hub/"]
@@ -435,7 +479,7 @@ flowchart LR
   polls -->|↩ ret| hub
   explorer -->|↩ ret| bases
   subs -->|↩ ret| from(("skąd przyszedł:<br/>games / hub / bases"))
-  editor & control -->|↩ ?game=id| games
+  editor & control -->|↩ ?tab=typ gry| games
   market & logo & cd & hub & bases & account -->|↩| games
 ```
 
@@ -445,14 +489,14 @@ flowchart LR
 | `/polls-hub/` | `ret` / Gry | Subskrypcje → `/subscriptions/?ret=…`; ankieta → `/polls/?id=…&ret=…`; zadanie → `/poll-*/?t=…` |
 | `/subscriptions/` | `ret` / Gry | Ankiety → `/polls-hub/?ret=…` |
 | `/polls/` | `ret` / Gry | — |
-| `/bases/` | `ret` / Gry | Subskrypcje → `/subscriptions/?ret=…`; baza → `/base-explorer/?id=…&ret=…` |
-| `/base-explorer/` | `ret` / Bazy | — |
-| `/editor/?id=G&q=Q` | `ret` / `/games/?game=G` | — |
+| `/bases/` | `ret` / Gry | Subskrypcje → `/subscriptions/?ret=…`; baza → `/base-explorer/?id=…&ret=<bases?tab=…>` |
+| `/base-explorer/?id=B&folder=F` | `ret` / Bazy (z kartą) | drzewo folderów pamiętane per baza |
+| `/editor/?id=G&q=Q` | `ret` / `/games/?tab=<typ G>` | — |
 | `/marketplace/`, `/connect-device/`, `/account/` | `ret` / Gry | — |
-| `/control/?id=G` | `/games/?game=G` (z ostrzeżeniem w trakcie gry) | Ustawienia gry → `/game-settings/?id=…&ret=<control>` · `?` → `/manual/?ret=<control>` |
+| `/control/?id=G` | `ret` / `/games/?tab=<typ G>` (z ostrzeżeniem w trakcie gry) | Ustawienia gry → `/game-settings/?id=…&ret=<control>` · `?` → `/manual/?ret=<control>` |
 | `/game-settings/?id=G` | `ret` / Control tej gry | Graj → `/control/?id=…` (ukryte, gdy `ret` to Control — ↩ robi to samo) · `?` |
-| `/logo/?logo=L` | Gry | Nowe logo → utworzenie + `/logo/editor-<typ>/?id=…`; Edytuj → `/logo/editor-<typ>/?id=L` · `?` |
-| `/logo/editor-<typ>/?id=L` | `/logo/?logo=L` (autozapis przed wyjściem, bez pytań) | `?` → `/manual/?ret=<edytor>#logo` |
+| `/logo/?tab=T` | Gry | Nowe logo → utworzenie + `/logo/editor-<typ>/?id=…`; Edytuj → `/logo/editor-<typ>/?id=L` · `?` |
+| `/logo/editor-<typ>/?id=L` | `ret` / `/logo/?tab=<typ>` (autozapis przed wyjściem, bez pytań) | `?` → `/manual/?ret=<edytor>#logo` |
 
 **⚠ dziś:** z `/games/` wychodzi `?from=games`, którego nikt nie czyta;
 bases → base-explorer bez `ret` (powrót gubi zakładkę); editor, logo-editor,
@@ -558,8 +602,9 @@ pliku, a CSS korzystał z tych samych wartości (komentarz przy `@media`).
    c) autozapis w game-settings, Control → zwykłe przejście do ustawień,
       usunięcie `gs:*`,
    d) usunięcie `?modal=` z manual i privacy (stare linki → zwykła strona).
-6. Zasoby w mapie: `?game=` / `?logo=` / `?base=` na listach,
-   `state` w `ret`, powrót do konkretnej gry/logo.
+6. `state` w mapie i w `ret`; jeden moduł kart (`?tab=`, `replaceState`,
+   bez `sessionStorage`); eksplorator: `ret` z bases, drzewo w
+   `localStorage` per baza.
 7. Przyciski w `PAGES` (role/urządzenie), generator diagramów 6 map,
    test e2e przechodzący 6 map (patrz koniec sekcji 3).
 
@@ -584,9 +629,13 @@ Podjęte (2026-10-07):
   można wrócić do pracy po zamknięciu.
 - **Adresy logo**: `/logo/` (lista) i `/logo/editor-text|draw|image/?id=`;
   `/logo-editor/` → przekierowanie na `/logo/`.
-- **Powroty pamiętają konkretną grę / logo** (zasób w mapie).
+- **Powroty**: strony szczegółu pamiętają zasób (`?id=`) i swój stan
+  (pytanie, baza + foldery); listy pamiętają tylko kartę — bez zaznaczeń.
+  Karty ujednolicone (`?tab=`) na wszystkich stronach.
 - **Edytor pytań**: `?q=<pytanie>` w adresie, powrót do edytowanego pytania.
 - **Okna na telefonie**: powrót zawsze do strony podstawowej, nie do okna.
 
 Otwarte:
+- Zmiana karty: `replaceState` (Wstecz = poprzednia strona) czy jak dziś
+  `pushState` (Wstecz przełącza karty)?
 - Control w trakcie gry: `?` w nowej karcie czy zwykłe przejście?
