@@ -438,6 +438,45 @@ test("ustawienia gry: finał — wybranie dokładnie 5 z 6 pytań zapisuje się,
   }
 });
 
+test("ustawienia gry: wyłączenie finału zwraca jego pytania na koniec puli rund", async ({ page, context }) => {
+  test.setTimeout(60_000);
+  await loginAsTestUser(page, context);
+  const gameId = await createGame(page);
+  try {
+    const ids = [];
+    for (let i = 1; i <= 15; i++) ids.push(await addQuestionApi(page, gameId, i, `Q${i}`));
+    await page.evaluate(async ({ id, ids }) => {
+      const { data, error: readError } = await window.__sbClient.from("games").select("settings").eq("id", id).single();
+      if (readError) throw new Error(readError.message);
+      const question = (qid, i) => ({ id: qid, ord: i + 1, text: `Q${i + 1}` });
+      const settings = {
+        ...data.settings,
+        game: { ...(data.settings?.game || {}), hasFinal: true, finalQuestionsMode: "pick", roundsQuestionsMode: "pick" },
+        questions: {
+          ...(data.settings?.questions || {}),
+          final: ids.slice(0, 5).map(question),
+          rounds: ids.slice(5).map((id, index) => question(id, index + 5)),
+        },
+      };
+      const { error } = await window.__sbClient.from("games").update({ settings }).eq("id", id);
+      if (error) throw new Error(error.message);
+    }, { id: gameId, ids });
+
+    await openSettings(page, gameId);
+    await switchTab(page, "questions");
+    await page.locator('.toggle-item:has(input[name="gsHasFinal"][value="no"])').click();
+    // Zapis bez wchodzenia do zakładki Rundy musi zachować pytania finału.
+    await saveAndWait(page);
+
+    const game = await getGameRow(page, gameId);
+    expect(game.settings.game.hasFinal).toBe(false);
+    expect(game.settings.questions.final).toHaveLength(0);
+    expect(game.settings.questions.rounds.map((q) => q.id)).toEqual([...ids.slice(5), ...ids.slice(0, 5)]);
+  } finally {
+    await deleteGame(page, gameId);
+  }
+});
+
 test("ustawienia gry: rundy — zmiana kolejności strzałką zapisuje nową kolejność", async ({ page, context }) => {
   test.setTimeout(60_000);
   await loginAsTestUser(page, context);

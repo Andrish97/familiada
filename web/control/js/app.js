@@ -880,6 +880,16 @@ async function main() {
       try {
         const { data: freshGame } = await sb().from("games").select("settings").eq("id", gameId).single();
         applyGameSettingsToState(freshGame?.settings, store.state);
+        // Wyłączenie finału zwraca jego dotychczasowe pytania do puli rund.
+        // Odbuduj pulę z aktualnych ustawień (w tym ręcznej kolejności), aby
+        // Podsumowanie nie pokazywało np. 10/15 po odjęciu pytań finałowych.
+        if (store.state.settings.hasFinal !== true
+          && (store.state.final.picked?.length || store.state.final.pickedPreview?.length)) {
+          store.state.final.picked = [];
+          store.state.final.pickedPreview = [];
+          store.state.final.confirmed = false;
+          store.state.rounds._questionPool = await pickQuestionPool(store.state);
+        }
         await store.commit();
       } catch (e) { console.warn("[control2] odświeżenie ustawień po zamknięciu modala nie powiodło się:", e); }
     }

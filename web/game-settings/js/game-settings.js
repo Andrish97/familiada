@@ -280,13 +280,14 @@ async function saveAll() {
 
     const hasFinal = localSettings.game.hasFinal === true;
 
-    // Finał wyłączony — wyczyść wybrane pytania finału (żeby martwa lista
-    // nie zostawała w bazie i nie wykluczała tych pytań z puli rund przy
-    // kolejnym wczytaniu ustawień ani w trakcie realnej rozgrywki) i
-    // zresetuj tryb wyboru na domyślny, żeby nie zostawało osierocone
-    // "Wybrane ręcznie" bez żadnych wybranych pytań.
+    // Finał wyłączony — oddaj jego pytania do puli rund PRZED wyczyszczeniem
+    // listy finałowej. Zmiana może zostać zapisana bez otwierania zakładki
+    // Rundy, więc renderRounds() nie może być jedynym miejscem uzupełnienia.
     if (!hasFinal) {
-      if (localSettings.questions.final.length > 0) localSettings.questions.final = [];
+      const inRounds = new Set(localSettings.questions.rounds.map(q => String(q.id)));
+      const returned = localSettings.questions.final.filter(q => q?.id && !inRounds.has(String(q.id)));
+      localSettings.questions.rounds = [...localSettings.questions.rounds, ...returned];
+      localSettings.questions.final = [];
       if (localSettings.game.finalQuestionsMode !== "random") localSettings.game.finalQuestionsMode = "random";
     }
 
@@ -1142,8 +1143,11 @@ function renderQuestions() {
     radio.addEventListener("change", () => {
       localSettings.game.hasFinal = radio.value === "yes";
       if (!localSettings.game.hasFinal) {
-        // Wyłączenie finału od razu w UI: wyczyść wybrane pytania finału
-        // (przywraca je do puli rund) i zresetuj tryb na domyślny (losowo).
+        // Od razu przywróć pytania finału do listy rund — operator może
+        // zapisać ustawienia bez otwierania osobnej zakładki Rundy.
+        const inRounds = new Set(localSettings.questions.rounds.map(q => String(q.id)));
+        const returned = localSettings.questions.final.filter(q => q?.id && !inRounds.has(String(q.id)));
+        localSettings.questions.rounds = [...localSettings.questions.rounds, ...returned];
         localSettings.questions.final = [];
         localSettings.game.finalQuestionsMode = "random";
       }

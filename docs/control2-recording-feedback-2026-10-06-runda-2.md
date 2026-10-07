@@ -210,3 +210,7 @@ przypadek. Łącznie 25 wybranych testów lokalnych.
 - Potwierdzanie kafli rozgrywki opiera się na widocznym zaznaczeniu i kolejnym
   tapnięciu, a nie na natywnym podwójnym kliknięciu przeglądarki. Kafle używają
   `touch-action: manipulation`, aby dotyk działał tak samo przewidywalnie.
+- Wyłączenie finału czyści jego wybór i dopisuje te pytania na koniec puli
+  rund, również wtedy, gdy operator zapisze ustawienia bez otwierania zakładki
+  Rundy. Po zamknięciu ustawień Control ponownie buduje pulę przedmeczową z
+  aktualnej konfiguracji, więc Podsumowanie pokazuje pełną liczbę pytań rund.
