@@ -1667,6 +1667,7 @@ async function scenarioRecentFixes(pages, { game }) {
   // Wyłączenie finału bez otwierania zakładki Rundy zwraca wybrane pytania
   // na koniec. Następnie ponownie włączamy finał losowy, aby ten sam film
   // pokazał losowanie z puli rund.
+  await gsFrame.locator("#btnToggleSidebar").click();
   await gsFrame.locator('.gs-sidebar-item[data-cat="questions"]').click();
   await gsFrame.locator('.toggle-item:has(input[name="gsHasFinal"][value="no"])').click();
   await control.waitForTimeout(800);
