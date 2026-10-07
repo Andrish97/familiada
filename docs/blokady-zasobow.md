@@ -184,7 +184,8 @@ pierwsza przeszkoda zatrzymuje i nie idziemy dalej.
 
 - Blokada trwa, dopóki karta, która ją trzyma, jest otwarta. Nigdzie nie
   ma „przejmij kontrolę”, wymuszenia ani pomijania blokady — także przy
-  usuwaniu gry i usuwaniu konta (`usuwanie-danych.md`).
+  usuwaniu gry. **Jedyny wyjątek: usunięcie konta** jest nadrzędne
+  (`usuwanie-danych.md`); strony trzymające usunięte zasoby dostają `gone`.
 - Dziś w kodzie nie ma przejmowania; jedyna droga utraty blokady to
   wygaśnięcie po 25 s bez odnowienia.
 - **Luka do naprawy**: odnowienie (`resource-lock.js:232`) obsługuje
@@ -196,6 +197,26 @@ pierwsza przeszkoda zatrzymuje i nie idziemy dalej.
   odnowienie od razu przy powrocie karty na wierzch; TTL dłuższy niż
   spowolnione liczniki w tle (np. 2 min) — zamknięta karta i tak zwalnia
   blokadę od razu (`pagehide`), TTL dotyczy tylko awarii.
+
+### Blokady stanu — tak samo twarde jak blokady zasobów (decyzja 2026-10-07)
+
+Poza blokadą zasobu (kto trzyma) są **reguły stanu** gry (`game_rules_compute`,
+`rules_state`, migracje 273–275): np. pytań nie da się edytować przy
+otwartej ankiecie; Control nie gra gry, która nie jest gotowa. Zasada:
+- strona, której stan zasobu nie pozwala na jej pracę, **blokuje się
+  w całości** (ten sam pełnoekranowy komunikat co przy zajętym zasobie,
+  z wyjściem do strony nadrzędnej) — także gdy wejdzie się „mykiem”
+  (ręcznie wpisany adres, stara zakładka, druga karta);
+- nic nie da się zrobić — żadnych częściowo działających przycisków;
+- baza odrzuca zapis niezależnie od strony (dziś: `guard_game_content`
+  blokuje pytania i odpowiedzi przy otwartej ankiecie);
+- jeśli stan zmieni się w trakcie (np. ankieta uruchomiona z innego
+  miejsca), strona przy najbliższym odnowieniu / zapisie przechodzi
+  w tę samą pełną blokadę.
+
+Dziś edytor przy niedozwolonym stanie od razu przenosi z komunikatem
+(`editor.js:330`); do ujednolicenia z blokadą zasobu (ten sam overlay)
+na wszystkich stronach gry: edytor, ustawienia, ankieta, Control.
 
 ### Zgodność zasobów (reguła w bazie, jedna dla wszystkich)
 

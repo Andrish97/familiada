@@ -228,7 +228,8 @@ Sekcja **Subskrybenci** — kafle (wzór kafli z list; decyzja 2026-10-07):
   jej głos też jest usuwany**; odrzucone zaproszenie usuwa się tak samo;
 - niezaproszeni subskrybenci: kafle do zaznaczenia + **Wyślij
   zaproszenia** (zaproszenie + mail, 6.4); po usunięciu udostępnienia
-  osobę można zaprosić ponownie (nowe zaproszenie, nowy mail);
+  osobę można zaprosić ponownie, **ale z limitem maili** (6.4) — dla
+  wszystkich tak samo (decyzja 2026-10-07);
 - brak subskrybentów → „Nie masz subskrybentów” + link do Subskrypcji.
 
 **Wyniki na żywo bez skakania** (dziś przycisk ⟳, bo lista skakała):
@@ -236,7 +237,8 @@ odświeżanie co kilka sekund **bez przebudowy listy** — stała kolejność
 (punktacja: kolejność odpowiedzi z gry; tekst: kolejność pojawienia się,
 nowe na końcu), zmieniają się tylko liczby i szerokość pasków (płynne
 przejście CSS), nic się nie przesuwa; sortowanie według głosów dopiero
-przy zamykaniu. Przycisk ⟳ znika *(do potwierdzenia)*.
+przy zamykaniu. Stała wysokość listy i wierszy. **Przycisk ⟳ znika**
+(decyzja 2026-10-07).
 
 **C. Zamykanie ankiety tekstowej** — „Zamknij” przełącza treść (B) na
 pełnoszerokie okno scalania odpowiedzi (jak dziś: scal / zmień nazwę /
@@ -276,8 +278,15 @@ Odrzucenie: jedno kliknięcie, bez potwierdzenia; właściciel widzi
 | Mail | Kiedy | Do kogo | Treść / przycisk | Limit |
 |---|---|---|---|---|
 | Zaproszenie do subskrypcji | właściciel dodaje subskrybenta (kafel „+”) | podany e-mail / użytkownik | „X chce wysyłać Ci ankiety” → Akceptuj | jak dziś: 1 na 5 dni na osobę; ponowne wysłanie 1 na 24 h |
-| **Zaproszenie do ankiety** | „Wyślij zaproszenia” przy otwartej ankiecie | zaznaczeni subskrybenci (aktywni) | „X zaprasza Cię do ankiety „nazwa”” → Zagłosuj (link `?t=`) | 1 na osobę na uruchomienie |
-| Przypomnienie (decyzja 2026-10-07) | dzwonek na kafelku osoby, która czeka | ta osoba | jak zaproszenie, „Przypomnienie” | 1 na 24 h na osobę |
+| **Zaproszenie do ankiety** | „Wyślij zaproszenia” przy otwartej ankiecie | zaznaczeni subskrybenci (aktywni) | „X zaprasza Cię do ankiety „nazwa”” → Zagłosuj (link `?t=`) | wspólny limit niżej |
+| Przypomnienie (decyzja 2026-10-07) | dzwonek na kafelku osoby, która czeka | ta osoba | jak zaproszenie, „Przypomnienie” | wspólny limit niżej |
+
+**Limit maili ankietowych** (decyzja 2026-10-07 — nie naprzykrzać się):
+jeden wspólny limit dla zaproszenia, ponownego zaproszenia po usunięciu
+udostępnienia i przypomnienia — **najwyżej 1 mail na osobę na grę na
+24 h**, dla wszystkich subskrybentów (z kontem i tylko e-mail).
+Kafel osoby pokazuje, kiedy znów będzie można wysłać (dzwonek /
+zaproszenie nieaktywne do tego czasu).
 
 **Bez maili** przy: zamknięciu, przerwaniu, ponownym uruchomieniu,
 usunięciu udostępnienia — link sam mówi, co się stało (6.3).

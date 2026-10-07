@@ -62,11 +62,11 @@ i niepotwierdzonych kont (`guest_cleanup_expired`).
    komunikatów technicznych.
 
 **Konto**
-1. Usunięcie konta **respektuje blokady** — bez pomijania (blokady są
-   trwałe, decyzja 2026-10-07): gdy którykolwiek mój zasób jest trzymany
-   (moja inna karta, współpracownik w mojej bazie), odmowa z komunikatem,
-   co jest otwarte. Otwarte ankiety nie blokują — są przerywane (info
-   w oknie potwierdzenia).
+1. **Usunięcie konta jest nadrzędne** (decyzja 2026-10-07): nie czeka na
+   blokady ani otwarte ankiety — usuwa wszystko. Otwarte strony innych
+   (współpracownik w mojej bazie, moja druga karta) przy najbliższym
+   odnowieniu blokady / akcji dostają `gone` → komunikat „usunięte”.
+   To jedyny wyjątek od zasady „blokady trwałe” (`blokady-zasobow.md`).
 2. **Moje głosy w cudzych ankietach zostają anonimowe** (bez powiązania
    z kontem) — cudze wyniki się nie zmieniają (decyzja 2026-10-07).
 3. Usuwane też wszystko, co powiązane z moim **e-mailem**: subskrypcje
@@ -86,4 +86,5 @@ i niepotwierdzonych kont (`guest_cleanup_expired`).
    że ankieta zostanie przerwana.
 2. Głosy usuniętego konta w cudzych ankietach: zostają anonimowe.
 3. Zgłoszenia kontaktowe usuniętego konta: usuwane całe.
-4. Blokady nie są pomijane — także przy usuwaniu konta.
+4. Usunięcie konta jest nadrzędne — pomija blokady (jedyny wyjątek).
+   Usunięcie gry blokady respektuje.
