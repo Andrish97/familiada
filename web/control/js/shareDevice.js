@@ -11,7 +11,7 @@
 // (zwykły wzorzec tego pliku), a ten moduł wystawia open(kind) do wywołania
 // z control/js/app.js's handle(). Znaczki (badge) też nie są aktualizowane
 // bezpośrednio w DOM (te węzły znikają przy każdym re-renderze) — zamiast
-// tego refreshBadges() zwraca zwykły obiekt {display,host,buzzer: bool},
+// tego refreshBadges() zwraca zwykły obiekt {display,host,buzzer: liczba},
 // który app.js dokłada do ctx.shareBadges na kolejny ui.render().
 
 import { sb, SUPABASE_URL } from "../../shared/js/core/supabase.js?v=v2026-10-07T06442";
@@ -313,7 +313,7 @@ export function createShareDevice({ currentUser, game, onBadgesChanged }) {
       const { data } = await sb().rpc("list_my_device_shares");
       const shares = data || [];
       const badges = {};
-      for (const kind of deviceKinds) badges[kind] = shares.some((s) => s.device_type === kind);
+      for (const kind of deviceKinds) badges[kind] = shares.filter((s) => s.device_type === kind).length;
       onBadgesChanged?.(badges);
       return badges;
     } catch {

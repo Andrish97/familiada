@@ -1300,11 +1300,22 @@ html.showA2HS .a2hs {
     }
 }
 
-/* ===== Badge (kropka/licznik) ===== */
-.badge{
-  display: none;
+/* ===== Badge powiadomień (licznik) =====
+   JEDNO źródło wyglądu dla wszystkich liczników powiadomień w aplikacji:
+   - .badge na przyciskach (topbar, „Więcej”, hamburger, Control → „Udostępnij”),
+     widoczny tylko gdy przycisk ma .has-badge,
+   - .hub-tab-badge przy wypustkach / tytułach kolumn (Bazy, Ankiety,
+     Subskrypcje), ukrywany klasą .is-empty.
+   Selektory „.btn .badge” / „.tab-label .hub-tab-badge” mają wyższą
+   specyficzność celowo: control.css i editor.css mają własne, globalne
+   „.badge” (pigułki statusu), które inaczej nadpisywałyby licznik. */
+.badge,
+.btn .badge,
+.hub-tab-badge,
+.tab-label .hub-tab-badge{
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
 
   min-width: 18px;
   height: 18px;
@@ -1317,14 +1328,22 @@ html.showA2HS .a2hs {
   color: var(--gold);
   font-size: 11px;
   font-weight: 1000;
+  letter-spacing: 0;
+  text-transform: none;
+  white-space: nowrap;
 
   margin-left: 8px;
   line-height: 1;
+  vertical-align: middle;
 }
 
-.has-badge .badge{
-  display: inline-flex;
-}
+.badge,
+.btn .badge{ display: none; }
+.has-badge .badge,
+.btn.has-badge .badge{ display: inline-flex; }
+
+.hub-tab-badge{ display: inline-flex; }
+.hub-tab-badge.is-empty{ display: none; }
 
 
 

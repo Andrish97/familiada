@@ -1258,18 +1258,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       btnConnectDevice.style.display = "";
     }
 
-    async function refreshConnectDeviceBadge() {
-      try {
-        const { data } = await sb().rpc("list_shared_devices_for_me");
-        const n = (data || []).length;
-        if (connectDeviceBadge) {
-          connectDeviceBadge.textContent = n > 0 ? (n > 99 ? "99+" : String(n)) : "";
-          btnConnectDevice?.classList.toggle("has-badge", n > 0);
-        }
-      } catch {}
-    }
-    void refreshConnectDeviceBadge();
-
     btnConnectDevice?.addEventListener("click", () => {
       location.href = "/connect-device/";
     });
@@ -1284,6 +1272,13 @@ document.addEventListener("DOMContentLoaded", async () => {
   // Po ustaleniu widoczności btnConnectDevice przelicz overflow nav
   requestAnimationFrame(() => _navRecalc?.());
 
+  // Jeden zapis licznika dla wszystkich przycisków topbara (jak w bazach,
+  // ankietach i subskrypcjach): 0 → pusto i bez .has-badge, >99 → „99+”.
+  function setNavBadge(btn, badgeEl, n){
+    if (badgeEl) badgeEl.textContent = n > 99 ? "99+" : (n > 0 ? String(n) : "");
+    btn?.classList.toggle("has-badge", n > 0);
+  }
+
   async function refreshPollsHubDot(){
     // dot ma się pokazać, gdy są aktywne zadania / zaproszenia
     try{
@@ -1291,20 +1286,31 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (error) throw error;
 
       const row = Array.isArray(data) ? data[0] : data;
-      const tasks = Number(row?.tasks_pending ?? 0);
-      const invites = Number(row?.subs_pending ?? 0);
-      const pollsText = tasks > 99 ? "99+" : String(tasks);
-      const subsText = invites > 99 ? "99+" : String(invites);
-      btnPollsHub?.classList.toggle("has-badge", tasks > 0);
-      if (pollsHubBadge) pollsHubBadge.textContent = tasks > 0 ? pollsText : "";
-      btnSubscriptionsHub?.classList.toggle("has-badge", invites > 0);
-      if (subscriptionsHubBadge) subscriptionsHubBadge.textContent = invites > 0 ? subsText : "";
+      setNavBadge(btnPollsHub, pollsHubBadge, Number(row?.tasks_pending ?? 0));
+      setNavBadge(btnSubscriptionsHub, subscriptionsHubBadge, Number(row?.subs_pending ?? 0));
     } catch (e){
       // jak RPC nie istnieje / nie zwróci pól — nie blokujemy UI
-      btnPollsHub?.classList.remove("has-badge");
-      if (pollsHubBadge) pollsHubBadge.textContent = "";
-      btnSubscriptionsHub?.classList.remove("has-badge");
-      if (subscriptionsHubBadge) subscriptionsHubBadge.textContent = "";
+      setNavBadge(btnPollsHub, pollsHubBadge, 0);
+      setNavBadge(btnSubscriptionsHub, subscriptionsHubBadge, 0);
+    }
+  }
+
+  // Licznik = dokładnie to, co pokaże lista na /connect-device/ na tym
+  // urządzeniu (telefon/tablet: prowadzący + przycisk, komputer/TV:
+  // wyświetlacz) — wcześniej liczył wszystkie udostępnienia, więc badge
+  // obiecywał więcej pozycji niż było na stronie.
+  async function refreshConnectDeviceBadge(){
+    if (!showConnectDevice) return;
+    try{
+      const { data, error } = await sb().rpc("list_shared_devices_for_me");
+      if (error) throw error;
+      const mobile = isMobileDevice();
+      const n = (data || []).filter((item) => mobile
+        ? (item.device_type === "host" || item.device_type === "buzzer")
+        : item.device_type === "display").length;
+      setNavBadge(btnConnectDevice, connectDeviceBadge, n);
+    } catch {
+      // cicho, UI ma działać dalej
     }
   }
 
@@ -1313,19 +1319,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       const { data: cnt, error } = await sb().rpc("bases_count_incoming_share_invites");
       if (error) throw error;
 
-      const n = Number(cnt || 0);
-      const el = document.getElementById("basesBadge");
-      const btn = document.getElementById("btnBases");
-
-      if (!el || !btn) return;
-
-      if (n > 0){
-        el.textContent = n > 99 ? "99+" : String(n);
-        btn.classList.add("has-badge");
-      } else {
-        el.textContent = "";
-        btn.classList.remove("has-badge");
-      }
+      setNavBadge(document.getElementById("btnBases"), document.getElementById("basesBadge"), Number(cnt || 0));
     } catch {
       // cicho, UI ma działać dalej
     }
@@ -1339,7 +1333,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   async function refreshBadgesNow(){
     if (badgesRefreshInFlight) return badgesRefreshInFlight;
     badgesRefreshInFlight = (async () => {
-      await Promise.allSettled([refreshPollsHubDot(), refreshBasesBadge()]);
+      await Promise.allSettled([refreshPollsHubDot(), refreshBasesBadge(), refreshConnectDeviceBadge()]);
       lastBadgesRefreshAt = Date.now();
     })();
     try {

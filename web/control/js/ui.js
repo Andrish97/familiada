@@ -186,13 +186,15 @@ export function createUI({ root, emit }) {
         // analogów dla host/buzzer nie ma).
         row2.push(h("a", { class: "btn", href: url, target: "_blank", rel: "noopener" }, [document.createTextNode(t("common.open"))]));
       }
-      const shared = !!shareBadges[kind];
+      // Licznik udostępnień — ten sam .badge/.has-badge co w topbarach
+      // (styl z base.css: „.btn .badge” wygrywa z pigułkami statusu z control.css).
+      const shared = Number(shareBadges[kind]) || 0;
       row2.push(h("button", {
-        class: `btn ${shared ? "has-badge" : ""}`.trim(), type: "button",
+        class: `btn ${shared > 0 ? "has-badge" : ""}`.trim(), type: "button",
         onclick: () => emit("devices.shareOpen", kind),
       }, [
-        document.createTextNode(t("control.shareDevice")),
-        h("span", { class: "badge", "aria-hidden": "true", text: shared ? "1" : "" }),
+        document.createTextNode(`${t("control.shareDevice")} `),
+        h("span", { class: "badge", "aria-hidden": "true", text: shared > 99 ? "99+" : (shared > 0 ? String(shared) : "") }),
       ]));
       return h("div", { class: "device-row", "data-device": kind }, [
         h("div", { class: "device-row-1" }, [

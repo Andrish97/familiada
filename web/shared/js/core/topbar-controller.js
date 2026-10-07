@@ -55,6 +55,25 @@ let _overflowState = null; // { expandAll, collapseAll, recalc }
 let _accountState = null;  // { expand, collapse }
 let _mobileActive = false;
 
+// ── Liczniki powiadomień (.badge) ─────────────────────────────────────────────
+// Wspólny zapis/odczyt licznika na przycisku: pusty tekst + brak .has-badge
+// gdy 0, „99+” powyżej 99. Używane przez „Więcej” i hamburger.
+function parseBadgeNumber(raw) {
+  const m = String(raw || '').trim().match(/\d+/);
+  const n = m ? Number(m[0]) : 0;
+  return Number.isFinite(n) ? n : 0;
+}
+
+function readBadgeCount(btn) {
+  if (!btn || !btn.classList.contains('has-badge')) return 0;
+  return parseBadgeNumber(btn.querySelector('.badge')?.textContent);
+}
+
+function setBadgeCount(badgeEl, btn, n) {
+  if (badgeEl) badgeEl.textContent = n > 99 ? '99+' : (n > 0 ? String(n) : '');
+  btn?.classList.toggle('has-badge', n > 0);
+}
+
 // ── Overflow nav (section-2) ──────────────────────────────────────────────────
 /**
  * Rejestruje overflow nav dla section-2 (używane tylko na stronie gier).
@@ -86,15 +105,18 @@ export function setTopbarNavPriority({ moreEl, moreDropdownEl } = {}) {
 
   function updateMoreBadge(hiddenBtns) {
     if (!moreBadge) return;
-    const sum = hiddenBtns.reduce((acc, btn) => {
-      const b = btn?.querySelector('.badge');
-      return acc + (b ? (parseInt(b.textContent) || 0) : 0);
-    }, 0);
-    moreBadge.textContent = sum > 99 ? '99+' : sum > 0 ? String(sum) : '';
-    btnMore?.classList.toggle('has-badge', sum > 0);
+    const sum = hiddenBtns.reduce((acc, btn) => acc + readBadgeCount(btn), 0);
+    setBadgeCount(moreBadge, btnMore, sum);
   }
 
-  const badgeObserver = new MutationObserver(() => updateMoreBadge(_hiddenBtns));
+  // Zmiana licznika na którymś przycisku: odśwież sumę na „Więcej” ORAZ
+  // klony w rozwijanym menu (to kopie z chwili recalc(), same się nie
+  // aktualizują — bez tego dropdown pokazywał nieaktualne liczby).
+  const badgeObserver = new MutationObserver(() => {
+    if (_mobileActive) return;
+    if (_hiddenBtns.length) recalc();
+    else updateMoreBadge([]);
+  });
   getButtons().forEach(btn => {
     if (btn) badgeObserver.observe(btn, { subtree: true, characterData: true, childList: true });
   });
@@ -176,6 +198,10 @@ export function setTopbarNavPriority({ moreEl, moreDropdownEl } = {}) {
 
   function expandAll() {
     getButtons().forEach(btn => { if (btn) btn.style.display = ''; });
+    // Na mobile „Więcej” jest schowane — jego licznik nie może zostać,
+    // bo hamburger sumuje widoczne liczniki i liczyłby je podwójnie.
+    _hiddenBtns = [];
+    updateMoreBadge([]);
     moreEl.style.display = 'none';
     moreDropdownEl.hidden = true;
     moreDropdownEl.innerHTML = '';
@@ -388,21 +414,25 @@ function initTopbarController() {
   let overlay, panel, closeBtn, mount, tabGroup, group2, group4, sep, toggleBtn, toggleBadge, badgeObserver;
   let isMobileMounted = false;
 
-  const parseBadgeNumber = (raw) => {
-    const m = String(raw || '').trim().match(/\d+/);
-    const n = m ? Number(m[0]) : 0;
-    return Number.isFinite(n) ? n : 0;
+  // Suma liczników przycisków WIDOCZNYCH w panelu (schowane, np. „Więcej”
+  // albo przycisk ukryty dla gościa, nie mogą podbijać licznika hamburgera).
+  // Panel bywa zamknięty (display:none na overlayu), więc nie getClientRects —
+  // sprawdzamy własny display elementu i jego przodków do korzenia panelu.
+  const isHiddenWithin = (el, root) => {
+    for (let n = el; n && n !== root; n = n.parentElement) {
+      if (getComputedStyle(n).display === 'none') return true;
+    }
+    return false;
   };
 
   const computeMenuBadgeSum = () =>
-    [...(mount || document).querySelectorAll('.has-badge .badge')]
-      .reduce((sum, b) => sum + parseBadgeNumber(b.textContent), 0);
+    [...(mount || document).querySelectorAll('.has-badge')]
+      .filter((btn) => btn.querySelector('.badge') && !isHiddenWithin(btn, mount))
+      .reduce((sum, btn) => sum + readBadgeCount(btn), 0);
 
   const updateMenuBadge = () => {
     if (!toggleBtn || !toggleBadge) return;
-    const sum = computeMenuBadgeSum();
-    toggleBadge.textContent = sum > 99 ? '99+' : (sum > 0 ? String(sum) : '');
-    toggleBtn.classList.toggle('has-badge', sum > 0);
+    setBadgeCount(toggleBadge, toggleBtn, computeMenuBadgeSum());
   };
 
   const isVisible = (el) => {

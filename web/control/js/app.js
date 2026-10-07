@@ -552,7 +552,7 @@ async function main() {
   }
 
   // "Udostępnij" per urządzenie (D0/D1) — modal 1:1 ze starym Control
-  // (control/js/shareDevice.js). Znaczek (badge "1"/puste) na przycisku
+  // (control/js/shareDevice.js). Licznik (badge, liczba udostępnień/puste) na przycisku
   // idzie przez ctx.shareBadges zamiast bezpośredniej mutacji DOM, bo wiersz
   // urządzenia jest przebudowywany przy każdym renderDevicesStep().
   let shareBadges = {};
