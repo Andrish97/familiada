@@ -1557,6 +1557,14 @@ async function scenarioDeviceReconnect(pages, { contexts, browser }) {
 async function scenarioRecentFixes(pages) {
   const { control, display } = pages;
 
+  await expect(control.locator(".stepTitle")).toHaveText("Urządzenia");
+  await control.waitForTimeout(1200); // przypięta podpowiedź pozostaje widoczna na ekranie urządzeń
+  // Kody urządzeń są dostępne również z klikalnych statusów w górnym pasku.
+  await control.locator("#dotHostRow").click();
+  await expect(control.locator("#qrModalOverlay")).toBeVisible();
+  await control.waitForTimeout(1000);
+  await control.locator("#qrModalClose").click();
+
   // Uruchamiamy dźwięk z Display i pokazujemy pierwsze odblokowanie.
   await control.locator('.toggle-item:has(input[name="soundSource"][value="display"])').click();
   await expect(display.locator("#audioUnlockScreen")).toBeVisible({ timeout: 10_000 });
@@ -1587,15 +1595,13 @@ async function scenarioRecentFixes(pages) {
     return { rounds: data.settings.questions.rounds.length, final: data.settings.questions.final.length };
   });
   expect(restoredCounts).toEqual({ rounds: 16, final: 0 });
-  await control.getByRole("button", { name: "Zmień ustawienia" }).click();
-  const verifyFrame = control.frameLocator("#gsFrame");
-  await verifyFrame.locator("#btnToggleSidebar").click();
-  await verifyFrame.locator('.gs-sidebar-item[data-cat="rounds"]').click();
-  await expect(verifyFrame.locator("#gsRoundsOrderList .roundsOrderItem")).toHaveCount(16);
-  await control.waitForTimeout(1500); // widz widzi wszystkie pytania w puli rund
-  await control.locator("#gsOverlay").click({ position: { x: 5, y: 5 } });
-  await control.locator("#gsOverlay").waitFor({ state: "hidden", timeout: 10_000 });
-
+  await expect(control.locator("#c2DisplayPreview")).toBeVisible();
+  await expect(control.locator(".c2-summary-rounds .c2-qpreview-item")).toHaveCount(16);
+  await control.waitForTimeout(1800); // widok podsumowania: podgląd Display 16:9, ustawienia i pula pytań
+  // Podgląd dźwięku nie może blokować przejścia do gry; Gotowe zatrzymuje go
+  // i od razu przechodzi dalej.
+  await control.locator(".summarySoundPlay").first().click();
+  await control.waitForTimeout(250);
   await clickPaced(control.getByRole("button", { name: "Gotowe — przejdź do rozgrywki" }), ADMIN_PACE_MS);
   await clickPaced(control.getByRole("button", { name: "Rozpocznij grę" }), ADMIN_PACE_MS);
   await clickPaced(control.getByRole("button", { name: "Rozpocznij rundę" }));
