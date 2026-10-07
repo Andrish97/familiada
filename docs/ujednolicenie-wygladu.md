@@ -35,7 +35,11 @@ Od góry:
 | Hub ankiet | **Ankiety · Zadania** | karta Ankiety: **Szczegóły, Udostępnij**; karta Zadania: nic | aktualne / archiwalne, sortowanie, wyszukiwanie | nic |
 | Subskrypcje | **Moi subskrybenci · Moje subskrypcje** | jak w hubie (do ustalenia przy wdrożeniu, co jest akcją kafla) | aktualne / archiwalne, sortowanie, wyszukiwanie | nic |
 
-## 2. Hub ankiet (największa zmiana)
+## 2. Hub ankiet — NIEAKTUALNE
+
+> 2026-10-07: hub znika całkiem — patrz [`ankiety-refaktor.md`](ankiety-refaktor.md) (E11).
+> Subskrypcje dostają trzecią kartę **Zadania**. Opis niżej zostaje tylko
+> jako wzór układu dla subskrypcji.
 
 Dziś: na komputerze dwie kolumny obok siebie (Moje ankiety | Zadania),
 każda z własnym nagłówkiem, sortowaniem i przełącznikiem aktualne /
