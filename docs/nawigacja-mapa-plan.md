@@ -722,6 +722,9 @@ i zakładki `/display/` na telewizorach po zmianie przestają działać —
 
 ## 9. Mapa blokad — każda strona deklaruje swoje zasoby (propozycja)
 
+> Pełny opis (stan faktyczny, rozbieżności, mapa docelowa, kroki):
+> [`docs/blokady-zasobow.md`](blokady-zasobow.md). Poniżej skrót.
+
 Dokumentacja dziś: `docs/plan-testy-i-poprawki.md` — „Mapa zasobów”,
 „Model: zasób ma stan busy/free”, „Krzyżowe blokady między zasobami”
 (częściowo nieaktualne: Control opisany jako „krok 7, jeszcze nie”).

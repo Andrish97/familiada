@@ -172,6 +172,9 @@ zasobu widzi czy jest zajęty, ale nie może nic zapisać poza RPC.
 
 ### Mapa zasobów (po zbudowaniu ogólnego mechanizmu)
 
+> **Aktualny opis blokad: [`docs/blokady-zasobow.md`](blokady-zasobow.md).** Ta sekcja to historia decyzji, częściowo nieaktualna.
+
+
 **Korekta (istotna zmiana względem wcześniejszej wersji tej sekcji)**:
 zasada ogólna, nie specyficzna dla gry — gdy dwie różne strony dotykają
 **tego samego zasobu** (tu akurat: konkretnej gry o danym id, ale
@@ -199,6 +202,9 @@ w tym testy "edytor blokuje ustawienia" i "ustawienia blokują edytor").
 | `game` (rozgrywka) | `control/` | 🔲 **świadomie odłożone**, osobny kompleksowy punkt razem z zapisem/przywracaniem stanu (patrz sekcja "Control") — dołączy do tego samego wspólnego klucza `game`, nie osobnego |
 
 ### Model: zasób ma stan `busy`/`free`
+
+> **Aktualny opis blokad: [`docs/blokady-zasobow.md`](blokady-zasobow.md).** Ta sekcja to historia decyzji, częściowo nieaktualna.
+
 
 Jedna zasada dla wszystkiego: **jakiekolwiek użycie przełącza zasób w
 `busy`**, a wszystkie POZOSTAŁE miejsca, gdzie ten sam zasób mógłby zostać
@@ -2128,6 +2134,9 @@ kompletny (A, B, C + mobile), gotowe do Warstwy 1.
 ---
 
 ## Krzyżowe blokady między zasobami — mechanizm ✅ zamknięty, reszta kategorii otwarta
+
+> **Aktualny opis blokad: [`docs/blokady-zasobow.md`](blokady-zasobow.md).** Ta sekcja to historia decyzji, częściowo nieaktualna.
+
 
 Generyczny mechanizm (tri-state `gone`, `delete_resource_checked` dla
 `game`/`logo`) opisany niżej jest **zbudowany i przetestowany e2e (6/6,
