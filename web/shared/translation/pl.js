@@ -3735,6 +3735,9 @@ const pl = {
     },
     create: {
       title: "Nowe logo",
+      textCreateTitle: "Nowe logo tekstowe",
+      drawCreateTitle: "Nowe logo rysunkowe",
+      imageCreateTitle: "Nowe logo z obrazu",
       subtitle: "Wybierz, jak chcesz je stworzyć.",
       nameModalTitle: "Nowe logo",
       nameModalSub: "Podaj nazwę nowego logo.",

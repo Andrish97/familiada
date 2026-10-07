@@ -312,10 +312,20 @@ function renderList() {
 
   const add = document.createElement("div");
   add.className = "addCard le-edit-only";
+  const createTitleKey = {
+    TEXT: "textCreateTitle",
+    DRAW: "drawCreateTitle",
+    IMAGE: "imageCreateTitle",
+  }[activeListMode];
+  const createSubtitleKey = {
+    TEXT: "textSubtitle",
+    DRAW: "drawSubtitle",
+    IMAGE: "imageSubtitle",
+  }[activeListMode];
   add.innerHTML = `
     <div class="plus">${icon("plus")}</div>
-    <div class="txt">${esc(t("logoEditor.create.title"))}</div>
-    <div class="sub">${esc(t("logoEditor.create.subtitle"))}</div>`;
+    <div class="txt">${esc(t(`logoEditor.create.${createTitleKey}`))}</div>
+    <div class="sub">${esc(t(`logoEditor.create.${createSubtitleKey}`))}</div>`;
   add.addEventListener("click", () => openNameModal({ kind: "create", mode: activeListMode }));
   el.grid.appendChild(add);
 
