@@ -72,6 +72,8 @@ bo `PAGES` deklaruje blokady; adresy po mapie stron; instrukcja na końcu.
    subskrypcji i ankiet.
 3. Oszczędnie z kontekstem: czytać fragmenty plików, wyszukiwanie
    zlecać agentom, nie powtarzać analiz zapisanych w dokumentach.
+   **Agenci na tańszym modelu** (Haiku do szukania, Sonnet do analizy),
+   mocniejszy tylko gdy zadanie tego wymaga (decyzja 2026-10-07).
 4. Przed wyczerpaniem limitu: zapisać stan w dzienniku, wypchnąć, ustawić
    przypomnienie (`send_later`) na wznowienie pracy.
 
