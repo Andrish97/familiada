@@ -51,7 +51,7 @@ utracie kontekstu wystarczy przeczytać ten plik i wskazaną sekcję źródła.
 | 13 | E13 | **Instrukcja (manual) zaktualizowana do nowych zasad** — ostatni etap | wszystkie | do zrobienia |
 | — | E1 | Edytor logo: lista + 3 strony, autozapis | nawigacja 6.5a | zrobione |
 
-Kolejność = kolumna #. Uzasadnienie: E0 daje wiarygodne testy; E3 to
+**Kolejność = kolumna # — PROPOZYCJA, czeka na potwierdzenie użytkownika (nie zaczynać etapów przed potwierdzeniem).** Uzasadnienie: E0 daje wiarygodne testy; E3 to
 drobiazg; E10 pierwszy z dużych (decyzja); E11 wcześnie, bo zamyka lukę
 bezpieczeństwa na produkcji (korzysta z obecnej blokady `game:G`, nie
 potrzebuje E2); E12 po E11 (te same tabele ankiet); E2 przed nawigacją,
