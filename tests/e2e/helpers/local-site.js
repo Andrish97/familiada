@@ -15,7 +15,8 @@ const fs = require("fs");
 const path = require("path");
 const { loginAsTestUser, instrumentPage } = require("./login");
 
-const REPO_ROOT = path.resolve(__dirname, "..", "..", "..");
+// Strony leżą w web/ (docs/refaktor-struktury-repo.md), tak jak na Pages.
+const REPO_ROOT = path.resolve(__dirname, "..", "..", "..", "web");
 
 const MIME = {
   ".html": "text/html; charset=utf-8",
