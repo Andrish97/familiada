@@ -1,4 +1,4 @@
-import { t } from "../../translation/translation.js?v=v2026-10-07T20271";
+import { t } from "../../translation/translation.js?v=v2026-10-07T21172";
 // web/js/gameplay/hints.js
 // Blok podpowiedzi nad siatką (control/js/ui.js) — odpowiednik starego
 // control/js/gameRounds.js's/gameFinal.js's setDuelMsg/setPlayMsg/
@@ -75,7 +75,7 @@ export function getFinalHint(state) {
   const f = state.final;
   const step = state.step;
 
-  if (step === "f_start") return "Kliknij „Start finału”, żeby rozpocząć.";
+  if (step === "f_start") return "Rozpocznij finał.";
 
   if (step === "f_p1_entry" || step === "f_p2_entry") {
     const round = step === "f_p1_entry" ? 1 : 2;
@@ -89,26 +89,20 @@ export function getFinalHint(state) {
     // Runda 2: przypomnienie o przycisku "Powtórzenie" — dopisane do KAŻDEJ
     // gałęzi poza "czas wykorzystany" (tam nie ma już czego pilnować),
     // żeby operator nie wpisywał ręcznie tego, co gracz 2 tylko powtórzył.
-    const repeatNote = round === 2
-      ? " Jeśli gracz powtórzy odpowiedź gracza 1, użyj przycisku „Powtórzenie” zamiast wpisywać ją ponownie."
-      : "";
-    if (used && !running) return "Czas wykorzystany. Kliknij „Dalej”, żeby przejść do odsłaniania — możesz jeszcze dokończyć wpisywanie odpowiedzi, zanim klikniesz.";
-    // Odliczanie w toku: drugie zdanie mówi o zatrzymaniu, nie o starcie
-    // (zgłoszone) — "Możesz opcjonalnie uruchomić..." nie ma już sensu, skoro
-    // już trwa.
-    if (running) return `Wpisz odpowiedzi gracza ${round}. Jeśli wpiszesz wszystkie odpowiedzi, będziesz mógł zatrzymać odliczanie wcześniej.${repeatNote}`;
-    return `Wpisz odpowiedzi gracza ${round}. Uruchom odliczanie (${round === 1 ? "15" : "20"}s) — jednorazowo.${repeatNote}`;
+    if (used && !running) return "Czas minął. Uzupełnij odpowiedzi lub kliknij „Dalej”.";
+    if (running) return `Wpisz odpowiedzi gracza ${round}. Timer działa.`;
+    return `Wpisz odpowiedzi gracza ${round} i uruchom timer.`;
   }
 
-  if (step === "f_p2_start") return "Odpowiedzi gracza 1 zostają zasłonięte na Display przed startem tury gracza 2.";
+  if (step === "f_p2_start") return "Odpowiedzi gracza 1 są ukryte.";
 
   if (step.startsWith("f_p1_map_q") || step.startsWith("f_p2_map_q")) {
     const round = step.startsWith("f_p1_map_q") ? 1 : 2;
     const idx = Number(step.slice(-1)) - 1;
     const entry = f.runtime[round === 1 ? "p1" : "p2"][idx] || {};
     const row = f.runtime[round === 1 ? "map1" : "map2"][idx];
-    if (f.runtime.reached200) return `Osiągnięto próg finału (${state.settings.finalTarget} pkt). Kliknij „Zakończ finał”.`;
-    if (round === 2 && idx === 4 && row.revealedPoints) return "Wszystkie odpowiedzi odsłonięte. Kliknij „Zakończ finał”.";
+    if (f.runtime.reached200) return "Osiągnięto próg finału. Zakończ finał.";
+    if (round === 2 && idx === 4 && row.revealedPoints) return "Wszystkie odpowiedzi odsłonięte. Zakończ finał.";
     // Rozstrzygnięcie jest ZAWSZE już jakieś, nawet zanim operator cokolwiek
     // kliknął (domyślnie: dopasowanie z listy jeśli wybrane ręcznie, inaczej
     // "Nie ma na liście" gdy coś wpisano / "Brak odpowiedzi" gdy pusto —
@@ -118,11 +112,11 @@ export function getFinalHint(state) {
     // operator ma wiedzieć NARAZ że to powtórzenie ORAZ co ma zrobić dalej,
     // nie dwa osobne, następujące po sobie stany hinta.
     if (round === 2 && entry.repeat && !row.revealedAnswer) {
-      return "Powtórzenie — liczy się jak brak odpowiedzi. Sprawdź dopasowanie i pokaż odpowiedź.";
+      return "Powtórzenie liczy się jak brak. Sprawdź i odsłoń odpowiedź.";
     }
-    if (!row.revealedAnswer) return "Sprawdź dopasowanie i pokaż odpowiedź.";
-    if (!row.revealedPoints) return "Pokaż punkty.";
-    return "Punkty odsłonięte. Przejdź dalej.";
+    if (!row.revealedAnswer) return "Sprawdź dopasowanie i odsłoń odpowiedź.";
+    if (!row.revealedPoints) return "Odsłoń punkty.";
+    return "Przejdź dalej.";
   }
 
   if (step === "f_end") return "Finał zakończony.";
