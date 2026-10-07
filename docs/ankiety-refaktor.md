@@ -167,6 +167,120 @@ pośrednie, kopia klucza w zaproszeniu (zaproszenie ważne tylko przy
 bieżącym kluczu gry), `poll_task_opened`, warunek „czekające zaproszenia
 blokują zamknięcie”, `polls_hub_can_close`, nieużywane RPC (sekcja 4).
 
+## 6. Specyfikacja (do potwierdzenia)
+
+Dotyczy gier **tekst** i **punktacja**. Preparowane bez zmian.
+
+### 6.1 Stany i przejścia
+
+```
+Szkic ──Uruchom──▶ Otwarta ──Zamknij──▶ Zamknięta
+  ▲                   │                    │
+  └─────Przerwij──────┘                    ├──Uruchom ponownie──▶ Otwarta
+  ▲                                        │
+  └──────────Edytuj pytania (potwierdzenie)┘
+```
+
+| Przejście | Kto / skąd | Warunek | Skutek |
+|---|---|---|---|
+| **Uruchom** (Szkic → Otwarta) | właściciel, strona ankiety | pytania gotowe (jak dziś) | nowy klucz ankiety → nowy link i QR; głosów 0 |
+| **Zamknij** (Otwarta → Zamknięta) | jw. | minimum odpowiedzi (punktacja: ≥3 odpowiedzi z ≥3 pkt na pytanie; tekst: ≥3 różne odpowiedzi); czekające zaproszenia **nie** blokują | głosy przeliczone na odpowiedzi gry (tekst: jak dziś okno scalania); link, QR, kod urządzenia i zaproszenia przestają działać |
+| **Przerwij** (Otwarta → Szkic) | jw. | zawsze; potwierdzenie „Głosy przepadną, linki i zaproszenia wygasną” | głosy usunięte; link, QR, kod urządzenia i zaproszenia przestają działać; pytania znów edytowalne |
+| **Uruchom ponownie** (Zamknięta → Otwarta) | jw. | potwierdzenie „Głosy przepadną, trzeba udostępnić od nowa” | jak Uruchom: nowy klucz, głosów 0; odpowiedzi gry z poprzedniego zamknięcia zostają do następnego zamknięcia |
+| **Edytuj pytania** (Zamknięta → Szkic) | właściciel, edytor pytań (po wzięciu blokady gry) | potwierdzenie „Wyniki ankiety zostaną wyzerowane” | jak dziś (reset do edycji) |
+
+Każda akcja: tylko właściciel, tylko gdy trzyma blokadę gry (strona
+ankiety / edytor) — sprawdzane w bazie. Głosowanie nie wymaga konta ani
+blokady (po kluczu z linku / tokenie zaproszenia).
+
+### 6.2 Strona ankiety (właściciel)
+
+| Stan | Widzi | Przyciski |
+|---|---|---|
+| Szkic | „Ankieta nie jest uruchomiona” | Uruchom |
+| Otwarta | **Głosy: N** (jeden licznik: link + zaproszenia); wyniki na żywo; **Udostępnij**: link (kopiuj / otwórz), QR, QR na wyświetlaczu; **Subskrybenci**: lista z zaznaczeniem i stanem osoby | Zamknij (wyłączony z powodem, gdy brak minimum) · Przerwij |
+| Zamknięta | wyniki końcowe | Uruchom ponownie |
+
+Lista subskrybentów (tylko przy otwartej ankiecie): każdy aktywny
+subskrybent z polem wyboru i stanem: — (niezaproszony) · **czeka** ·
+**zagłosował** · **odrzucił**.
+- zaznaczenie + „Wyślij zaproszenia” → zaproszenie + mail (6.4);
+- odznaczenie osoby, która **czeka** → zaproszenie wycofane (bez maila);
+- **zagłosował** / **odrzucił** — bez zmian, pola nie da się odznaczyć;
+- ponowne zaznaczenie po wycofaniu → nowe zaproszenie i nowy mail;
+- **Przypomnij** przy osobie, która czeka — ponowny mail z tym samym
+  linkiem, najwyżej raz na 24 h *(do potwierdzenia)*.
+
+### 6.3 Głosujący
+
+**Z linku / QR** (bez konta). Jeden głos na uruchomienie w tej przeglądarce
+(znacznik zapisany z kluczem — przy nowym uruchomieniu i tak potrzebny
+nowy link).
+
+| Sytuacja | Widzi |
+|---|---|
+| ankieta otwarta, ten link aktualny | głosowanie → „Dziękujemy, głos oddany” |
+| już głosował | „Już oddałeś głos w tej ankiecie” |
+| ankieta zamknięta (link z tego uruchomienia) | „Ankieta została zamknięta” |
+| link z wcześniejszego uruchomienia albo ankieta przerwana / w szkicu | „Ten link wygasł” |
+| gra usunięta / zły link | „Nie ma takiej ankiety” |
+
+**Z zaproszenia** (link z maila; z kontem także karta Subskrypcje →
+Zadania).
+
+| Sytuacja | Link z maila | Karta Zadania |
+|---|---|---|
+| czeka, ankieta otwarta | Zagłosuj · Odrzuć | kafel: Zagłosuj · Odrzuć (✕) |
+| zagłosował | „Dziękujemy, głos oddany” | znika |
+| odrzucił | „Zaproszenie odrzucone” | znika |
+| ankieta zamknięta | „Ankieta została zamknięta” | znika |
+| przerwana / ponownie uruchomiona / wycofane | „To zaproszenie wygasło” | znika |
+
+Odrzucenie: jedno kliknięcie, bez potwierdzenia; właściciel widzi
+„odrzucił”; niczego nie blokuje.
+
+### 6.4 Maile
+
+| Mail | Kiedy | Do kogo | Treść / przycisk | Limit |
+|---|---|---|---|---|
+| Zaproszenie do subskrypcji | właściciel dodaje subskrybenta (kafel „+”) | podany e-mail / użytkownik | „X chce wysyłać Ci ankiety” → Akceptuj | jak dziś: 1 na 5 dni na osobę; ponowne wysłanie 1 na 24 h |
+| **Zaproszenie do ankiety** | „Wyślij zaproszenia” przy otwartej ankiecie | zaznaczeni subskrybenci (aktywni) | „X zaprasza Cię do ankiety „nazwa”” → Zagłosuj (link `?t=`) | 1 na osobę na uruchomienie |
+| Przypomnienie *(do potwierdzenia)* | „Przypomnij” przy osobie, która czeka | ta osoba | jak zaproszenie, „Przypomnienie” | 1 na 24 h na osobę |
+
+**Bez maili** przy: zamknięciu, przerwaniu, ponownym uruchomieniu,
+wycofaniu zaproszenia — link sam mówi, co się stało (6.3).
+
+Każdy mail ma stopkę jak dziś: konto → „ustawienia konta”; bez konta →
+„wypisz się od tego nadawcy” / „wypisz się ze wszystkich”.
+
+### 6.5 Subskrypcje a zaproszenia
+
+- usunięcie subskrybenta / jego wypisanie się / odrzucenie subskrypcji →
+  jego czekające zaproszenia wycofane;
+- zaprosić do ankiety można tylko aktywnego subskrybenta;
+- karta **Zadania** w Subskrypcjach: tylko zaproszenia „czeka” do
+  otwartych ankiet; badge w topbarze = ich liczba.
+
+### 6.6 Ekran QR i kod urządzenia
+
+- `/poll-qr/` sprawdza stan co kilka sekund; po zamknięciu / przerwaniu /
+  nowym uruchomieniu pokazuje „Ankieta została zamknięta” albo „Ten link
+  wygasł” zamiast kodu;
+- kod urządzenia (6 cyfr) ważny tylko w tym uruchomieniu.
+
+### 6.7 Baza (zakres zmian)
+
+- `poll_open`: nowy `share_key_poll`; usuwa zaproszenia poprzedniego
+  uruchomienia (albo oznacza je jako nieaktualne kluczem);
+- nowa akcja „przerwij” (do szkicu, bez przeliczania);
+- zamknięcie bez warunku „czekające zaproszenia”;
+- `poll_tasks`: stany `pending` / `done` / `declined`; wycofanie = usunięcie;
+  zaproszenie ważne tylko przy bieżącym kluczu gry;
+- uruchom / zamknij / przerwij / zaproszenia / reset: `auth.uid()` =
+  właściciel + blokada `game:G` tej karty;
+- usunięcie subskrybenta wycofuje jego zaproszenia;
+- usunięcie nieużywanych RPC (sekcja 4) i huba.
+
 ## 5. Wpływ na inne plany
 
 - `ujednolicenie-wygladu.md`: sekcja o hubie nieaktualna (hub znika);
