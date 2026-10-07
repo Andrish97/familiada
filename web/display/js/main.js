@@ -1,4 +1,4 @@
-import { renderAndConfirm } from "../../shared/js/gameplay/renderCompletion.js?v=v2026-10-07T20055";
+import { renderAndConfirm } from "../../shared/js/gameplay/renderCompletion.js?v=v2026-10-07T20071";
 // display/js/main.js
 // Punkt wejścia Display v2. Napisane od zera (nie kopia display/js/main.js)
 // — inna orkiestracja: zamiast kanału komend + snapshotu z device_state,
@@ -7,16 +7,16 @@ import { renderAndConfirm } from "../../shared/js/gameplay/renderCompletion.js?v
 // (device_ping) i walidacja klucza (display_auth) to te same, generyczne,
 // niezwiązane z komendami RPC co dziś — reużyte bez zmian.
 
-import { initFullscreenButton } from "../../shared/js/display/fullscreen.js?v=v2026-10-07T20055";
-import { initI18n, setUiLang } from "../../shared/translation/translation.js?v=v2026-10-07T20055";
-import { startKeepAlive } from "../../shared/js/core/keep-alive.js?v=v2026-10-07T20055";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-07T20055";
-import { createScene } from "./scene.js?v=v2026-10-07T20055";
-import { createQRController } from "./qr.js?v=v2026-10-07T20055";
-import { createSubscription } from "../../shared/js/core/game-state-subscribe.js?v=v2026-10-07T20055";
-import { createRenderer } from "./render.js?v=v2026-10-07T20055";
-import { createDisplaySoundReactor } from "./soundReactor.js?v=v2026-10-07T20055";
-import { loadSfxManifest, initSfx, setCurrentGameId, applySfxGameSettings, unlockAudio, isAudioUnlocked, getSfxDurationAccurate as getSfxDuration, listSfx, isAnySfxPlaying } from "../../shared/js/core/sfx.js?v=v2026-10-07T20055";
+import { initFullscreenButton } from "../../shared/js/display/fullscreen.js?v=v2026-10-07T20071";
+import { initI18n, setUiLang } from "../../shared/translation/translation.js?v=v2026-10-07T20071";
+import { startKeepAlive } from "../../shared/js/core/keep-alive.js?v=v2026-10-07T20071";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-07T20071";
+import { createScene } from "./scene.js?v=v2026-10-07T20071";
+import { createQRController } from "./qr.js?v=v2026-10-07T20071";
+import { createSubscription } from "../../shared/js/core/game-state-subscribe.js?v=v2026-10-07T20071";
+import { createRenderer } from "./render.js?v=v2026-10-07T20071";
+import { createDisplaySoundReactor } from "./soundReactor.js?v=v2026-10-07T20071";
+import { loadSfxManifest, initSfx, setCurrentGameId, applySfxGameSettings, unlockAudio, isAudioUnlocked, getSfxDurationAccurate as getSfxDuration, listSfx, isAnySfxPlaying } from "../../shared/js/core/sfx.js?v=v2026-10-07T20071";
 
 startKeepAlive();
 
