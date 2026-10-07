@@ -49,9 +49,10 @@ async function authDisplayOrThrow(gameId, key) {
 function startPresenceHeartbeat({ gameId, key }, pingMs = 3000) {
   const DEVICE_ID_KEY = "familiada:deviceId:display";
   let deviceId = localStorage.getItem(DEVICE_ID_KEY) || null;
+  let meta = { audio_unlocked: false };
   const ping = async () => {
     const { data, error } = await sb().rpc("device_ping", {
-      p_game_id: gameId, p_device_type: "display", p_key: key, p_device_id: deviceId, p_meta: {},
+      p_game_id: gameId, p_device_type: "display", p_key: key, p_device_id: deviceId, p_meta: meta,
     });
     if (!error && data?.device_id && !deviceId) {
       deviceId = data.device_id;
@@ -60,6 +61,9 @@ function startPresenceHeartbeat({ gameId, key }, pingMs = 3000) {
   };
   ping();
   setInterval(ping, pingMs);
+  return {
+    setMeta(patch) { meta = { ...meta, ...patch }; ping(); },
+  };
 }
 
 function showBlack() {
@@ -223,7 +227,7 @@ window.addEventListener("DOMContentLoaded", async () => {
   try {
     const { gameId, key } = parseParams();
     const game = await authDisplayOrThrow(gameId, key);
-    startPresenceHeartbeat({ gameId: game.id, key });
+    const displayPresence = startPresenceHeartbeat({ gameId: game.id, key });
 
     // Dźwięk "ze źródła Wyświetlacz" (zgłoszone) — ten sam js/core/sfx.js co
     // Control, wczytany niezależnie tutaj. Głośności/warianty (BEZ własnych
@@ -248,6 +252,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     btnAudioUnlock?.addEventListener("click", () => {
       enterFullscreen();
       unlockAudio();
+      displayPresence.setMeta({ audio_unlocked: true });
       audioUnlockScreen?.classList.add("hidden");
       audioUnlockScreen?.setAttribute("aria-hidden", "true");
     });

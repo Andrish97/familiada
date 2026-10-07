@@ -188,6 +188,16 @@ przypadek. Łącznie 25 wybranych testów lokalnych.
   elementem widoku, który przesunął się wraz z kartą; nie był paskiem
   przewijania wymagającym usunięcia.
 - Odsłuch dźwięku w Podsumowaniu nie blokuje przycisku przejścia do gry.
-  Przejście zatrzymuje odsłuch. W Ustawieniach rozgrywki i Podsumowaniu
+  Jedno kliknięcie uruchamia lub zatrzymuje podgląd; przejście zatrzymuje
+  odsłuch. W Ustawieniach rozgrywki i Podsumowaniu
   przyciski odtwarzania oraz suwaki głośności mają wspólny wygląd; podczas
   odsłuchu ikona zmienia się z trójkąta na kwadrat zatrzymania.
+- Jeśli źródłem dźwięku jest Wyświetlacz, przycisk rozpoczęcia gry pozostaje
+  zablokowany do chwili odblokowania dźwięku na tym urządzeniu. Wyświetlacz
+  zgłasza ten stan w heartbeat, a Podsumowanie pokazuje krótką podpowiedź.
+- Przy losowym finale pytania są losowane najpierw z puli rund i usuwane z
+  rund. Ponowne losowanie zwraca poprzednie pytania finału na koniec puli rund,
+  po czym losuje nowy zestaw. Podsumowanie pokazuje obie pule po tym podziale.
+- Potwierdzanie kafli rozgrywki opiera się na widocznym zaznaczeniu i kolejnym
+  tapnięciu, a nie na natywnym podwójnym kliknięciu przeglądarki. Kafle używają
+  `touch-action: manipulation`, aby dotyk działał tak samo przewidywalnie.

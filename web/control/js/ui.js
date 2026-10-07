@@ -441,6 +441,7 @@ export function createUI({ root, emit }) {
     const s = state.settings;
     const d = state.display;
     const hasFinal = s.hasFinal === true;
+    const displaySoundNeedsUnlock = s.soundSource === "display" && ctx.displayAudioUnlocked !== true;
 
     const previewSrc = ctx.urls?.displayUrl
       ? `${ctx.urls.displayUrl}${ctx.urls.displayUrl.includes("?") ? "&" : "?"}preview=1`
@@ -511,12 +512,12 @@ export function createUI({ root, emit }) {
     // ten krok (app.js's ensureQuestionsDrawn) — poniższy podgląd pokazuje
     // CO faktycznie wylosowano, nie tylko sam fakt trybu.
     const roundsValueRow = [document.createTextNode(
-      s.roundsQuestionsMode === "pick" ? t("control.roundsOrderFixed", { count: s.roundsPicked?.length || 0 }) : t("control.summaryQModeRandom")
+      s.roundsQuestionsMode === "pick" ? t("control.roundsOrderFixed", { count: state.rounds._questionPool?.length ?? s.roundsPicked?.length ?? 0 }) : t("control.summaryQModeRandom")
     )];
     if (s.roundsQuestionsMode !== "pick") {
       roundsValueRow.push(h("button", { class: "btn sm", type: "button", onclick: () => emit("setup.reshuffleRounds") }, [document.createTextNode(t("control.reshuffleQuestions"))]));
     }
-    const roundsPreview = questionPreviewList(s.roundsQuestionsMode === "pick" ? s.roundsPicked : state.rounds._questionPool);
+    const roundsPreview = questionPreviewList(state.rounds._questionPool);
     sections.push(summarySection(t("control.summaryRoundsQuestions"), h("div", {}, [
       h("div", { class: "summaryQMode c2-summary-row" }, roundsValueRow),
       roundsPreview,
@@ -578,7 +579,7 @@ export function createUI({ root, emit }) {
       leftSummarySections.push(summarySection(t("control.summaryGame"), h("div", { class: "c2-advanced-settings" }, advancedRows), "c2-summary-advanced"));
     }
 
-    const finalIncomplete = hasFinal && s.finalQuestionsMode === "pick" && (state.final.picked?.length !== 5 || !state.final.confirmed);
+    const finalIncomplete = hasFinal && (state.final.picked?.length !== 5 || !state.final.confirmed);
     // Zgłoszone: "Gotowe przejdź do rozgrywki ma inny styl niż pozostałe
     // przyciski dalej" — to był gołe `<button class="btn gold">` (globalny
     // styl przycisków apki), nie navButton() jak KAŻDE inne "Dalej" w
@@ -588,7 +589,7 @@ export function createUI({ root, emit }) {
     // (disabled, bez pulsowania), boardBusy() to realne oczekiwanie na sieć
     // (busy, pulsuje).
     const start = navButton(t("control.setupDoneBtn"), {
-      disabled: finalIncomplete,
+      disabled: finalIncomplete || displaySoundNeedsUnlock,
       busy: boardBusy(),
       onclick: () => { stopSummarySoundPreview(); emit("setup.start"); },
     });
@@ -630,6 +631,7 @@ export function createUI({ root, emit }) {
       h("div", { class: "stepFoot" }, [
         h("div", { class: "stepFootButtons" }, [back, changeSettings, start]),
         finalIncomplete ? h("div", { class: "msg msg-pill", text: t("control.finalPickIncompleteWarning") }) : null,
+        displaySoundNeedsUnlock ? h("div", { class: "c2-audio-gate-hint", text: t("control.summaryDisplayAudioUnlockHint") }) : null,
       ]),
     ];
 
@@ -722,19 +724,11 @@ export function createUI({ root, emit }) {
       ...rest,
       disabled,
       cls: `${cls} ${armed ? "c2-tile-armed" : ""}`.trim(),
-      // Zgłoszone: "zaznaczanie jest zlagowane" — dwa OSOBNE kliknięcia
-      // (zaznacz -> potwierdź) czasem gubiły się w wyścigu z przychodzącym
-      // odświeżeniem stanu (walidacja armedKey przy każdym renderze wyżej
-      // potrafi cofnąć zaznaczenie MIĘDZY dwoma kliknięciami operatora, jeśli
-      // akurat w tej chwili dotarł nowy wiersz z sieci) — drugie kliknięcie
-      // trafiało wtedy na świeżo zresetowany kafel i tylko go zaznaczało
-      // ponownie, zamiast potwierdzać. `event.detail>=2` (drugie kliknięcie
-      // natywnego podwójnego kliknięcia — licznik od przeglądarki, niezależny
-      // od naszego stanu armedKey) daje niezawodne obejście: podwójny klik
-      // ZAWSZE potwierdza od razu, niezależnie od tego, czy pierwsze
-      // kliknięcie zdążyło zaznaczyć kafel w naszym stanie czy nie.
-      onclick: disabled ? undefined : (e) => {
-        if (armedKey === key || (e && e.detail >= 2)) {
+      // Pierwszy tap widocznie zaznacza kafel. Drugi tap na tym samym
+      // aktywnym kaflu zatwierdza; nie polegamy na dblclick/click.detail,
+      // które działają niespójnie na urządzeniach dotykowych.
+      onclick: disabled ? undefined : () => {
+        if (armedKey === key) {
           armedKey = null;
           onclick();
         } else {
@@ -818,8 +812,8 @@ export function createUI({ root, emit }) {
       tiles.push(tile(t("control.roundsBuzzAcceptTeam", { name: teamName(state, selectedTeam) }), {
         shortcut: "c", row: 2, col: "1 / 7", cls: acceptArmed ? "c2-tile-armed" : "",
         disabled: !acceptClickable,
-        onclick: acceptClickable ? (e) => {
-          if (armedKey === acceptArmKey || (e && e.detail >= 2)) {
+        onclick: acceptClickable ? () => {
+          if (armedKey === acceptArmKey) {
             armedKey = null;
             const team = selectedTeam;
             if (isPhysical) pendingPhysicalTeam = null;
@@ -1299,8 +1293,8 @@ export function createUI({ root, emit }) {
         class: `c2-tile c2-timer-row c2-tile-timer ${clickable ? "startable" : ""} ${armed ? "c2-tile-armed" : ""}`.trim(),
         type: "button",
         disabled: clickable ? undefined : "",
-        onclick: clickable ? (e) => {
-          if (armedKey === armKey || (e && e.detail >= 2)) {
+        onclick: clickable ? () => {
+          if (armedKey === armKey) {
             armedKey = null;
             emit("final.toggleTimer", { round });
           } else {
@@ -1326,8 +1320,8 @@ export function createUI({ root, emit }) {
       class: `c2-tile c2-timer-row c2-tile-timer startable ${armed ? "c2-tile-armed" : ""}`.trim(),
       type: "button",
       disabled: clickable ? undefined : "",
-      onclick: clickable ? (e) => {
-        if (armedKey === armKey || (e && e.detail >= 2)) {
+      onclick: clickable ? () => {
+        if (armedKey === armKey) {
           armedKey = null;
           emit("final.toggleTimer", { round });
         } else {
@@ -1664,7 +1658,7 @@ export function createUI({ root, emit }) {
     // Zgłoszone: wybór dopasowania w finale (MATCH/MISS/SKIP/Powtórzenie) ma
     // reagować jak reszta konsekwentnych kafli w tej appce — zaznacz ->
     // potwierdź (armableTile, jak odpowiedzi/X/Oddaj kontrolę w Rundach), z
-    // podwójnym kliknięciem jako skrótem (armableTile's event.detail>=2).
+    // drugim tapnięciem po widocznym zaznaczeniu.
     // Wcześniej te kafle dispatchowały RESOLVE_MAPPING/SET_REPEAT od razu na
     // pierwszy klik — jedyne miejsce w tym ekranie bez bufora przeciwko
     // przypadkowemu kliknięciu.

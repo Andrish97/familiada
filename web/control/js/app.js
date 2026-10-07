@@ -145,24 +145,24 @@ async function pickQuestionPool(state) {
   return pool;
 }
 
-// Ten sam algorytm co dawne "setup.reshuffleFinal" (wykluczenie ręcznie
-// wybranej puli rund, tasowanie, pierwsze 5) — wydzielone, żeby móc go
-// wołać zarówno z tamtej akcji, jak i z automatycznego pierwszego losowania
-// (ensureQuestionsDrawn niżej). Zwraca też "pickedPreview" (id+tekst) —
+// Losowanie finału wybiera 5 pytań z puli rund i zwraca pozostałą pulę.
+// Używane przy pierwszym wejściu w Podsumowanie i przy ponownym losowaniu.
+// Zwraca też "pickedPreview" (id+tekst) —
 // samo `picked` to tylko ID, za mało żeby operator zobaczył CO wylosowano
 // w Podsumowaniu, zanim finał się realnie zacznie.
-async function drawFinalPicks(state) {
-  const all = await loadQuestions(state.gameId);
-  const roundsPicked = new Set((state.settings.roundsPicked || []).map((q) => String(q.id)));
-  const pool = state.settings.roundsQuestionsMode === "pick" && roundsPicked.size
-    ? all.filter((q) => !roundsPicked.has(String(q.id)))
-    : all.slice();
-  for (let i = pool.length - 1; i > 0; i--) {
+async function drawFinalPicks(state, roundPool) {
+  const shuffled = roundPool.slice();
+  for (let i = shuffled.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
-    [pool[i], pool[j]] = [pool[j], pool[i]];
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
   }
-  const picks = pool.slice(0, 5);
-  return { picked: picks.map((q) => q.id), pickedPreview: picks.map((q) => ({ id: q.id, text: q.text })) };
+  const picks = shuffled.slice(0, 5);
+  const pickedIds = new Set(picks.map((q) => String(q.id)));
+  return {
+    picked: picks.map((q) => q.id),
+    pickedPreview: picks.map((q) => ({ id: q.id, text: q.text })),
+    roundsPool: roundPool.filter((q) => !pickedIds.has(String(q.id))),
+  };
 }
 
 async function main() {
@@ -320,6 +320,7 @@ async function main() {
   let committing = false;
   let queuedGameAction = false;
   let presenceFlags = {};
+  let displayAudioUnlocked = null;
   let disconnectEpisode = false;
   let lastDisconnectState = "";
   let restarting = false;
@@ -540,9 +541,10 @@ async function main() {
 
   const presence = createPresence({
     gameId,
-    onChange: ({ flags }) => {
+    onChange: ({ flags, displayAudioUnlocked: audioUnlocked }) => {
       const previous = presenceFlags;
       presenceFlags = flags;
+      displayAudioUnlocked = audioUnlocked;
       const missing = missingDevices(store.state, flags);
       const presenceMessage = `presence:${["display", "host", "buzzer"].map((kind) => `${kind}=${flags[kind] ? "online" : "offline"}`).join(",")}`;
       const overlay = document.getElementById("deviceLostOverlay");
@@ -640,7 +642,7 @@ async function main() {
     if (ended && !outroReturnReady && !outroUnlockTimer) {
       outroUnlockTimer = setTimeout(() => { outroUnlockTimer = null; renderCurrent(); }, Math.max(0, 30_000 - (Date.now() - outroStartedAt)) + 20);
     }
-    return { urls, presenceFlags, connectCodes, shareBadges, typingPending:typingCommit, outroReturnReady, busy: queuedGameAction || soundBusy() || (committing && !typingCommit) || lockConfirmPending || waitingForDisplay() || Date.now() < lockedUntil || missingDevices(store.state, presenceFlags).length > 0, devicesBlocked: missingDevices(store.state, presenceFlags).length > 0 };
+    return { urls, presenceFlags, displayAudioUnlocked, connectCodes, shareBadges, typingPending:typingCommit, outroReturnReady, busy: queuedGameAction || (soundBusy() && store.state.step !== "setup_finish") || (committing && !typingCommit) || lockConfirmPending || waitingForDisplay() || Date.now() < lockedUntil || missingDevices(store.state, presenceFlags).length > 0, devicesBlocked: missingDevices(store.state, presenceFlags).length > 0 };
   }
 
   function renderCurrent() {
@@ -856,13 +858,14 @@ async function main() {
   // jawnie, osobną akcją).
   async function ensureQuestionsDrawn() {
     const st = store.state;
-    if (st.settings.roundsQuestionsMode !== "pick" && !st.rounds._questionPool?.length) {
+    if (!st.rounds._questionPool?.length) {
       st.rounds._questionPool = await pickQuestionPool(st);
     }
     if (st.settings.hasFinal === true && st.settings.finalQuestionsMode !== "pick" && !st.final.picked?.length) {
-      const { picked, pickedPreview } = await drawFinalPicks(st);
+      const { picked, pickedPreview, roundsPool } = await drawFinalPicks(st, st.rounds._questionPool);
       st.final.picked = picked;
       st.final.pickedPreview = pickedPreview;
+      st.rounds._questionPool = roundsPool;
       st.final.confirmed = true;
     }
   }
@@ -1115,9 +1118,15 @@ async function main() {
       }
       if (action === "setup.reshuffleFinal") {
         if (store.state.settings.finalQuestionsMode === "pick" || store.state.locks.gameStarted) return;
-        const { picked, pickedPreview } = await drawFinalPicks(store.state);
+        const all = await loadQuestions(store.state.gameId);
+        const byId = new Map(all.map((q) => [String(q.id), q]));
+        const oldFinal = (store.state.final.picked || []).map((id) => byId.get(String(id))).filter(Boolean);
+        const alreadyInRounds = new Set((store.state.rounds._questionPool || []).map((q) => String(q.id)));
+        const candidates = [...(store.state.rounds._questionPool || []), ...oldFinal.filter((q) => !alreadyInRounds.has(String(q.id)))];
+        const { picked, pickedPreview, roundsPool } = await drawFinalPicks(store.state, candidates);
         store.state.final.picked = picked;
         store.state.final.pickedPreview = pickedPreview;
+        store.state.rounds._questionPool = roundsPool;
         store.state.final.confirmed = true;
         await store.commit();
         return;

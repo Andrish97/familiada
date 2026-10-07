@@ -618,9 +618,12 @@ test("control2: parowanie urządzeń — linki renderują się bez błędu, Cont
   await page.setViewportSize({ width: 1366, height: 768 });
   await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
   const game = await makeGame(page, `E2E-CONTROL2-PAIRING-${Date.now()}`, {
-    settings: { game: { hasFinal: true, roundsQuestionsMode: "pick", advanced: { finalTarget: 250 } } },
-    roundQuestions: [{ ord: 1, text: "Pytanie rundy testowej", answers: [{ ord: 1, text: "Odpowiedź", fixed_points: 10 }] }],
-    finalAnswerPts: 5,
+    settings: { game: { hasFinal: true, roundsQuestionsMode: "pick", finalQuestionsMode: "random", advanced: { finalTarget: 250 } } },
+    roundQuestions: Array.from({ length: 6 }, (_, i) => ({
+      ord: i + 1,
+      text: `Pytanie rundy ${i + 1}`,
+      answers: [{ ord: 1, text: `Odp. ${i + 1}`, fixed_points: 10 }],
+    })),
   });
   await page.evaluate(async (gameId) => {
     const sb = window.__sbClient;
@@ -630,8 +633,8 @@ test("control2: parowanie urządzeń — linki renderują się bez błędu, Cont
     if (gameError) throw new Error(gameError.message);
     const settings = current.settings;
     settings.questions = {
-      rounds: questions.filter((q) => q.ord === 1),
-      final: questions.filter((q) => q.ord >= 101).map(({ id, text }) => ({ id, text })),
+      rounds: questions,
+      final: [],
     };
     const { error } = await sb.from("games").update({ settings }).eq("id", gameId);
     if (error) throw new Error(error.message);
@@ -673,10 +676,17 @@ test("control2: parowanie urządzeń — linki renderują się bez błędu, Cont
     const deviceListFits = await page.locator(".c2-devices-layout .c2-scroll-area").evaluate((el) => el.scrollHeight <= el.clientHeight + 1);
     expect(deviceListFits, "Urządzenia powinny mieścić się bez przewijania przy 1366×768").toBe(true);
 
+    await page.locator('input[name="soundSource"][value="display"]').check();
+    await expect(displayPage.locator("#audioUnlockScreen")).not.toHaveClass(/hidden/, { timeout: 10000 });
+
     await page.getByRole("button", { name: "Dalej" }).click();
     await expect(page.locator(".stepTitle")).toHaveText("Podsumowanie", { timeout: 10000 });
-    await expect(page.locator(".c2-summary-rounds .c2-qpreview-text")).toHaveText(["Pytanie rundy testowej"]);
+    await expect(page.locator(".c2-summary-rounds .c2-qpreview-text")).toHaveCount(1);
     await expect(page.locator(".c2-summary-final-questions .c2-qpreview-text")).toHaveCount(5);
+    const initialRoundQuestion = await page.locator(".c2-summary-rounds .c2-qpreview-text").textContent();
+    const initialFinalQuestions = await page.locator(".c2-summary-final-questions .c2-qpreview-text").allTextContents();
+    expect(initialFinalQuestions).not.toContain(initialRoundQuestion);
+    expect(new Set([...initialFinalQuestions, initialRoundQuestion])).toHaveSize(6);
     await expect(page.locator(".c2-summary-advanced")).toContainText("250");
     const questionCards = await page.locator(".c2-summary-question-grid > .summarySection").evaluateAll((els) => els.map((el) => {
       const rect = el.getBoundingClientRect();
@@ -684,6 +694,11 @@ test("control2: parowanie urządzeń — linki renderują się bez błędu, Cont
     }));
     expect(questionCards).toHaveLength(2);
     expect(questionCards[1].left).toBeGreaterThan(questionCards[0].left + questionCards[0].width - 2);
+    await page.evaluate(() => { window.__originalRandom = Math.random; Math.random = () => 0.99; });
+    await page.locator(".c2-summary-final-questions .c2-summary-row .btn").click();
+    await expect(page.locator(".c2-summary-final-questions .c2-qpreview-text")).not.toHaveText(initialFinalQuestions);
+    await expect(page.locator(".c2-summary-rounds .c2-qpreview-text")).toHaveText([initialFinalQuestions[4]]);
+    await page.evaluate(() => { Math.random = window.__originalRandom; delete window.__originalRandom; });
     const displayPreview = page.locator("#c2DisplayPreview");
     const previewBox = await displayPreview.evaluate((el) => {
       const rect = el.getBoundingClientRect();
@@ -695,9 +710,13 @@ test("control2: parowanie urządzeń — linki renderują się bez błędu, Cont
     expect(Math.abs((previewBox.left + previewBox.width / 2) - (previewBox.sectionLeft + previewBox.sectionWidth / 2))).toBeLessThan(2);
 
     const revealPreview = page.locator('.summarySoundRow:has(input[data-sfx-vol="reveal"]) .summarySoundPlay');
+    const beginGame = page.getByRole("button", { name: "Gotowe — przejdź do rozgrywki" });
+    await expect(beginGame).toBeDisabled();
+    await expect(page.locator(".c2-audio-gate-hint")).toContainText("Odblokuj dźwięk na Wyświetlaczu");
+    await displayPage.locator("#btnAudioUnlock").click();
+    await expect(beginGame).toBeEnabled({ timeout: 10000 });
     await revealPreview.click();
     await expect(revealPreview.locator(".ico")).toHaveClass(/ico-stop/);
-    const beginGame = page.getByRole("button", { name: "Gotowe — przejdź do rozgrywki" });
     await expect(beginGame).toBeEnabled();
     await beginGame.click();
     await expect(page.locator(".stepTitle")).not.toHaveText("Podsumowanie", { timeout: 10000 });

@@ -1132,7 +1132,7 @@ function renderQuestions() {
             </label>
           </div>
           <div class="gs-hint">${t("gameSettings.questions.roundsModeHint")}</div>
-          ${hasFinal && finalRandom && !roundsRandom ? `<div class="gs-hint" style="margin-top:6px">${icon("warning")} ${t("gameSettings.questions.finalRandomRoundsOrderedWarning") || "Finał losowy + rundy w ustalonej kolejności: finał wylosuje 5 pytań spoza Twojej listy rund, dopiero przy starcie gry w panelu prowadzącego — jeśli baza ma niewiele pytań, pula do losowania finału będzie odpowiednio mniejsza."}</div>` : ""}
+          ${hasFinal && finalRandom && !roundsRandom ? `<div class="gs-hint" style="margin-top:6px">${icon("warning")} ${t("gameSettings.questions.finalRandomRoundsOrderedWarning")}</div>` : ""}
         </div>
       </div>
     </div>
