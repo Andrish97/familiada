@@ -181,9 +181,9 @@ przypadek. Łącznie 25 wybranych testów lokalnych.
 - Na szerokim ekranie karty Urządzeń mają ciaśniejsze odstępy i niższy kod
   parowania, żeby komplet mieścił się bez przewijania przy typowym rozmiarze
   okna. Test parowania sprawdza wysokość listy przy 1366×768.
-- Podsumowanie jest podzielone na dwie kolumny: podgląd Display zajmuje pełną
-  szerokość, a pozostałe ustawienia są rozłożone po obu stronach. Wysokość
-  podglądu jest ograniczona, żeby nie wypychał treści poza kartę.
+- Podsumowanie jest podzielone na dwie kolumny. Podgląd Display jest
+  wyśrodkowany, ograniczony do 640 px i zachowuje proporcje 16:9, a pozostałe
+  ustawienia są rozłożone po obu stronach.
 - W mapowaniu finału przywrócono pełną wysokość panelu podpowiedzi. Pasek był
   elementem widoku, który przesunął się wraz z kartą; nie był paskiem
   przewijania wymagającym usunięcia.

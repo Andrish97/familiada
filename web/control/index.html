@@ -471,13 +471,14 @@
        wiersz w tej samej skali co reszta siatki wpisywania (zgłoszone). */
     .c2-timer-row { width:100%; font-size:1.02rem; }
 
-    /* Podgląd Display w Podsumowaniu rozciąga się do szerokości karty, ale
-       jego wysokość nie może wypchnąć treści poza ograniczoną kartę. */
+    /* Podgląd Display jest wyśrodkowany, ma stałe proporcje 16:9 i
+       ograniczoną szerokość, żeby nie dominował nad resztą Podsumowania. */
     #c2DisplayPreview {
-      width:100%;
-      height:min(calc((100dvh - var(--topbar-h, 70px)) * .38), 360px);
-      max-height:100%;
+      width:min(100%, 640px);
+      height:auto;
       box-sizing:border-box;
+      aspect-ratio:16/9;
+      margin-inline:auto;
       box-sizing:border-box;
       background: #000;
       border-radius: 10px;

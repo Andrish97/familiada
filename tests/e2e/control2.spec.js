@@ -658,11 +658,14 @@ test("control2: parowanie urządzeń — linki renderują się bez błędu, Cont
     await page.getByRole("button", { name: "Dalej" }).click();
     await expect(page.locator(".stepTitle")).toHaveText("Podsumowanie", { timeout: 10000 });
     const displayPreview = page.locator("#c2DisplayPreview");
-    const [previewWidth, sectionWidth] = await Promise.all([
-      displayPreview.evaluate((el) => el.getBoundingClientRect().width),
-      page.locator(".c2-summary-display").evaluate((el) => el.getBoundingClientRect().width),
-    ]);
-    expect(previewWidth).toBeGreaterThan(sectionWidth * 0.95);
+    const previewBox = await displayPreview.evaluate((el) => {
+      const rect = el.getBoundingClientRect();
+      const section = el.closest(".c2-summary-display").getBoundingClientRect();
+      return { width: rect.width, height: rect.height, left: rect.left, sectionLeft: section.left, sectionWidth: section.width };
+    });
+    expect(previewBox.width).toBeLessThanOrEqual(641);
+    expect(previewBox.width / previewBox.height).toBeCloseTo(16 / 9, 1);
+    expect(Math.abs((previewBox.left + previewBox.width / 2) - (previewBox.sectionLeft + previewBox.sectionWidth / 2))).toBeLessThan(2);
 
     expect(errors, "żadne z urządzeń nie powinno rzucić błędu JS: " + errors.join(" | ")).toEqual([]);
   } finally {
