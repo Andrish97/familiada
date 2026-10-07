@@ -4566,7 +4566,7 @@ const uk = {
     advSaved: "Збережено.",
     advReset: "Скинуто.",
     deviceStatusOk: "ПІДКЛЮЧЕНО",
-    deviceStatusOffline: "OFFLINE",
+    deviceStatusDisconnected: "ВІДКЛЮЧЕНО",
     deviceStatusNone: "—",
     deviceSeenNone: "—",
     qrCodeBtn: "QR-код",

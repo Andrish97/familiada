@@ -186,11 +186,10 @@ export function createUI({ root, emit }) {
         // analogów dla host/buzzer nie ma).
         row2.push(h("a", { class: "btn", href: url, target: "_blank", rel: "noopener" }, [document.createTextNode(t("common.open"))]));
       }
-      // Licznik udostępnień — ten sam .badge/.has-badge co w topbarach
-      // (styl z base.css: „.btn .badge” wygrywa z pigułkami statusu z control.css).
+      // Licznik udostępnień — ten sam .badge co w topbarach (base.css).
       const shared = Number(shareBadges[kind]) || 0;
       row2.push(h("button", {
-        class: `btn ${shared > 0 ? "has-badge" : ""}`.trim(), type: "button",
+        class: "btn", type: "button",
         onclick: () => emit("devices.shareOpen", kind),
       }, [
         document.createTextNode(`${t("control.shareDevice")} `),
@@ -199,7 +198,7 @@ export function createUI({ root, emit }) {
       return h("div", { class: "device-row", "data-device": kind }, [
         h("div", { class: "device-row-1" }, [
           h("div", { class: "device-name", text: label }),
-          h("div", { class: `conn-status ${online ? "conn-status--connected" : "conn-status--offline"}`, text: online ? t("control.deviceStatusOk") : t("control.deviceStatusOffline") }),
+          h("div", { class: `conn-status ${online ? "conn-status--connected" : "conn-status--disconnected"}`, text: online ? t("control.deviceStatusOk") : t("control.deviceStatusDisconnected") }),
         ]),
         h("div", { class: "device-row-2" }, row2),
       ]);

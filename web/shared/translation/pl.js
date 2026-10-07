@@ -4281,7 +4281,7 @@ const pl = {
     advSaved: "Zapisano.",
     advReset: "Reset OK.",
     deviceStatusOk: "POŁĄCZONO",
-    deviceStatusOffline: "OFFLINE",
+    deviceStatusDisconnected: "ODŁĄCZONO",
     deviceStatusNone: "—",
     deviceSeenNone: "—",
     controlPrefix: "Sterowanie: ",

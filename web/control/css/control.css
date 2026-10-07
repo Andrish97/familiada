@@ -926,7 +926,7 @@
     grid-column: span 2;
 }
 
-/* Status urządzenia: osobna klasa .conn-status (base.css) — ani licznik
+/* Status urządzenia (POŁĄCZONO / ODŁĄCZONO): osobna klasa .conn-status (base.css) — ani licznik
    powiadomień (.badge), ani oznaczenie (.tag). */
 
 .rowBtns {

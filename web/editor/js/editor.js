@@ -29,9 +29,6 @@ const MSG = {
   gameNotFound: () => t("editor.alert.gameNotFound"),
   resetFailed: () => t("editor.alert.resetFailed"),
   resetPollConfirm: () => t("editor.confirm.resetPoll"),
-  typePollText: () => t("editor.type.pollText"),
-  typePollPoints: () => t("editor.type.pollPoints"),
-  typePrepared: () => t("editor.type.prepared"),
   nameSaved: () => t("editor.status.nameSaved"),
   nameSaveError: () => t("editor.status.nameSaveError"),
   addQuestionError: () => t("editor.status.addQuestionError"),
@@ -399,10 +396,6 @@ async function boot() {
     $("pageTitle").textContent = cfg.title;
     $("hintTop").textContent = cfg.hintTop;
     $("hintBottom").textContent = cfg.hintBottom;
-    $("typeBadge").textContent =
-      cfg.type === TYPES.PREPARED ? MSG.typePrepared() :
-      cfg.type === TYPES.POLL_POINTS ? MSG.typePollPoints() :
-      MSG.typePollText();
     document.body.classList.toggle("only-questions", !cfg.allowAnswers);
     document.body.classList.toggle("no-points", !cfg.allowPoints);
   }

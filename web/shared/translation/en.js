@@ -4579,7 +4579,7 @@ const en = {
     advSaved: "Saved.",
     advReset: "Reset OK.",
     deviceStatusOk: "CONNECTED",
-    deviceStatusOffline: "OFFLINE",
+    deviceStatusDisconnected: "DISCONNECTED",
     deviceStatusNone: "—",
     deviceSeenNone: "—",
     qrCodeBtn: "QR Code",

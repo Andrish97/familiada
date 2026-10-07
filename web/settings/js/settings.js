@@ -2624,15 +2624,13 @@ function updateFolderBadges(inboxUnread, reportsOpen) {
   const badgeInbox = document.getElementById("badgeInbox");
   const badgeReports = document.getElementById("badgeReports");
   
-  // Liczniki = wspólny licznik powiadomień (.hub-tab-badge z base.css).
+  // Liczniki = wspólny licznik powiadomień (.badge z base.css; pusty = schowany).
   if (badgeInbox) {
     badgeInbox.textContent = inboxUnread > 99 ? "99+" : String(inboxUnread || "");
-    badgeInbox.classList.toggle("is-empty", !(inboxUnread > 0));
   }
   
   if (badgeReports) {
     badgeReports.textContent = reportsOpen > 99 ? "99+" : String(reportsOpen || "");
-    badgeReports.classList.toggle("is-empty", !(reportsOpen > 0));
   }
 }
 

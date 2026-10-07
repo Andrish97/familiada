@@ -1226,7 +1226,6 @@ function setSharedBasesBadge(n) {
   if (!basesSharedBadge) return;
   const v = Number(n || 0);
   basesSharedBadge.textContent = v > 99 ? "99+" : (v > 0 ? String(v) : "");
-  basesSharedBadge.classList.toggle("is-empty", !(v > 0));
 }
 
 /* ================= Render kafelków ================= */
@@ -1682,7 +1681,6 @@ async function refreshAltBadge() {
     const n = Number(row?.subs_pending || 0);
     if (!altBadgeEl || !btnGoAlt) return;
     altBadgeEl.textContent = n > 99 ? "99+" : (n > 0 ? String(n) : "");
-    btnGoAlt.classList.toggle("has-badge", n > 0);
   } catch {}
 }
 

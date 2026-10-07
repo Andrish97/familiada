@@ -164,9 +164,8 @@
 .bases-tabs-card:has(.slot-mine.active) .bases-card{ border-top-left-radius: 0; }
 .bases-tabs-card:has(.slot-shared.active) .bases-card{ border-top-right-radius: 0; }
 
-/* licznik zaproszeń przy "Udostępnione" -- wspólny styl .hub-tab-badge
-   (shared/css/base.css), widoczny także na aktywnej wypustce, jak w Ankietach
-   i Subskrypcjach */
+/* licznik zaproszeń przy "Udostępnione" -- wspólny .badge (shared/css/base.css),
+   widoczny także na aktywnej wypustce, jak w Ankietach i Subskrypcjach */
 
 /* Gość: bez udostępnień, więc bez wypustek -- zwykła, zaokrąglona karta */
 .bases-guest .bases-tabs-card .tabs-strip{ display: none; }

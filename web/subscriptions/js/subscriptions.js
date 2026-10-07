@@ -324,8 +324,7 @@ function statusOrder(status) {
 
 function setBadge(name, count) {
   document.querySelectorAll(`[data-badge="${name}"]`).forEach((el) => {
-    el.textContent = count > 99 ? "99+" : String(count);
-    el.classList.toggle("is-empty", !count);
+    el.textContent = count > 99 ? "99+" : (count > 0 ? String(count) : "");
   });
 }
 

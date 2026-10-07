@@ -206,20 +206,6 @@ body.editor-body .wrap {
     flex-direction: column;
 }
 
-.badgeRow {
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-    margin-bottom: 10px
-}
-
-/* #typeBadge / #lockBadge: oznaczenia = .tag z base.css */
-/* Typ gry jest już w tytule strony (#pageTitle) — oznaczenie byłoby
-   duplikatem, więc zostaje schowane (jak dotąd). */
-#typeBadge { display: none; }
-
-
-
 .block {
     margin-bottom: 12px
 }

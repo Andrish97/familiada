@@ -56,8 +56,8 @@ let _accountState = null;  // { expand, collapse }
 let _mobileActive = false;
 
 // ── Liczniki powiadomień (.badge) ─────────────────────────────────────────────
-// Wspólny zapis/odczyt licznika na przycisku: pusty tekst + brak .has-badge
-// gdy 0, „99+” powyżej 99. Używane przez „Więcej” i hamburger.
+// Wspólny zapis/odczyt licznika .badge: pusty tekst gdy 0 (CSS chowa pusty
+// .badge), „99+” powyżej 99. Używane przez „Więcej” i hamburger.
 function parseBadgeNumber(raw) {
   const m = String(raw || '').trim().match(/\d+/);
   const n = m ? Number(m[0]) : 0;
@@ -65,13 +65,11 @@ function parseBadgeNumber(raw) {
 }
 
 function readBadgeCount(btn) {
-  if (!btn || !btn.classList.contains('has-badge')) return 0;
-  return parseBadgeNumber(btn.querySelector('.badge')?.textContent);
+  return parseBadgeNumber(btn?.querySelector('.badge')?.textContent);
 }
 
-function setBadgeCount(badgeEl, btn, n) {
+function setBadgeCount(badgeEl, n) {
   if (badgeEl) badgeEl.textContent = n > 99 ? '99+' : (n > 0 ? String(n) : '');
-  btn?.classList.toggle('has-badge', n > 0);
 }
 
 // ── Overflow nav (section-2) ──────────────────────────────────────────────────
@@ -106,7 +104,7 @@ export function setTopbarNavPriority({ moreEl, moreDropdownEl } = {}) {
   function updateMoreBadge(hiddenBtns) {
     if (!moreBadge) return;
     const sum = hiddenBtns.reduce((acc, btn) => acc + readBadgeCount(btn), 0);
-    setBadgeCount(moreBadge, btnMore, sum);
+    setBadgeCount(moreBadge, sum);
   }
 
   // Zmiana licznika na którymś przycisku: odśwież sumę na „Więcej” ORAZ
@@ -426,13 +424,13 @@ function initTopbarController() {
   };
 
   const computeMenuBadgeSum = () =>
-    [...(mount || document).querySelectorAll('.has-badge')]
-      .filter((btn) => btn.querySelector('.badge') && !isHiddenWithin(btn, mount))
-      .reduce((sum, btn) => sum + readBadgeCount(btn), 0);
+    [...(mount || document).querySelectorAll('.badge')]
+      .filter((b) => !isHiddenWithin(b, mount))
+      .reduce((sum, b) => sum + parseBadgeNumber(b.textContent), 0);
 
   const updateMenuBadge = () => {
     if (!toggleBtn || !toggleBadge) return;
-    setBadgeCount(toggleBadge, toggleBtn, computeMenuBadgeSum());
+    setBadgeCount(toggleBadge, computeMenuBadgeSum());
   };
 
   const isVisible = (el) => {

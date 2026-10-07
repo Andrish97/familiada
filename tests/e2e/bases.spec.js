@@ -499,7 +499,7 @@ test.describe("bases: audyt -- zaproszenia i link z maila", () => {
 
       await page2.goto(BASE_URL, { waitUntil: "domcontentloaded" });
       await page2.waitForLoadState("networkidle");
-      await expect(page2.locator("#basesSharedBadge")).not.toHaveClass(/is-empty/);
+      await expect(page2.locator("#basesSharedBadge")).not.toBeEmpty();
       await page2.locator("#tabBasesShared").click();
 
       const tile = page2.locator("#sharedGrid .card.proposed", { hasText: name });

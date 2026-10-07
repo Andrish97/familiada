@@ -1301,18 +1301,13 @@ html.showA2HS .a2hs {
 }
 
 /* ===== Badge powiadomień (licznik) =====
-   JEDNO źródło wyglądu dla wszystkich liczników powiadomień w aplikacji:
-   - .badge na przyciskach (topbar, „Więcej”, hamburger, Control → „Udostępnij”),
-     widoczny tylko gdy przycisk ma .has-badge,
-   - .hub-tab-badge przy wypustkach / tytułach kolumn (Bazy, Ankiety,
-     Subskrypcje), ukrywany klasą .is-empty.
-   Etykiety tekstowe (status, typ, rola…) to NIE .badge, tylko .tag niżej.
-   „.btn .badge” / „.tab-label .hub-tab-badge” mają wyższą specyficzność,
-   żeby żaden styl strony nie nadpisał licznika na przycisku/wypustce. */
-.badge,
-.btn .badge,
-.hub-tab-badge,
-.tab-label .hub-tab-badge{
+   JEDNA klasa .badge dla wszystkich liczników powiadomień: przyciski
+   topbara, „Więcej”, hamburger, wypustki i tytuły kolumn (Bazy, Ankiety,
+   Subskrypcje), Control → „Udostępnij”, foldery poczty w panelu admina.
+   Widoczny, gdy ma liczbę; pusty (0) = schowany — JS wpisuje "" przy 0.
+   Etykiety tekstowe (status, rola, język…) to NIE .badge, tylko .tag niżej. */
+.badge{
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
@@ -1336,14 +1331,7 @@ html.showA2HS .a2hs {
   line-height: 1;
   vertical-align: middle;
 }
-
-.badge,
-.btn .badge{ display: none; }
-.has-badge .badge,
-.btn.has-badge .badge{ display: inline-flex; }
-
-.hub-tab-badge{ display: inline-flex; }
-.hub-tab-badge.is-empty{ display: none; }
+.badge:empty{ display: none; }
 
 /* ===== Oznaczenie (etykieta tekstowa) =====
    Drugi, osobny styl obok licznika powiadomień: .tag to stała informacja
@@ -1383,7 +1371,7 @@ html.showA2HS .a2hs {
 /* ===== Status połączenia urządzenia (Control) =====
    Trzeci, osobny styl: stan na żywo (zmienia się w trakcie gry), większy
    od .tag — tej samej wysokości co przyciski w wierszu urządzenia.
-   --connected (POŁĄCZONO) i --offline mają własne klasy. */
+   --connected (POŁĄCZONO) i --disconnected (ODŁĄCZONO) mają własne klasy. */
 .conn-status{
   display: inline-flex;
   align-items: center;
@@ -1406,7 +1394,7 @@ html.showA2HS .a2hs {
   background: rgba(80,200,120,.16);
   color: #7ef0a2;
 }
-.conn-status--offline{
+.conn-status--disconnected{
   border-color: rgba(255,120,120,.45);
   background: rgba(255,120,120,.16);
   color: #ffb3b3;

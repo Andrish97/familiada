@@ -1273,10 +1273,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   requestAnimationFrame(() => _navRecalc?.());
 
   // Jeden zapis licznika dla wszystkich przycisków topbara (jak w bazach,
-  // ankietach i subskrypcjach): 0 → pusto i bez .has-badge, >99 → „99+”.
-  function setNavBadge(btn, badgeEl, n){
+  // ankietach i subskrypcjach): 0 → pusto (CSS chowa pusty .badge), >99 → „99+”.
+  function setNavBadge(badgeEl, n){
     if (badgeEl) badgeEl.textContent = n > 99 ? "99+" : (n > 0 ? String(n) : "");
-    btn?.classList.toggle("has-badge", n > 0);
   }
 
   async function refreshPollsHubDot(){
@@ -1286,12 +1285,12 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (error) throw error;
 
       const row = Array.isArray(data) ? data[0] : data;
-      setNavBadge(btnPollsHub, pollsHubBadge, Number(row?.tasks_pending ?? 0));
-      setNavBadge(btnSubscriptionsHub, subscriptionsHubBadge, Number(row?.subs_pending ?? 0));
+      setNavBadge(pollsHubBadge, Number(row?.tasks_pending ?? 0));
+      setNavBadge(subscriptionsHubBadge, Number(row?.subs_pending ?? 0));
     } catch (e){
       // jak RPC nie istnieje / nie zwróci pól — nie blokujemy UI
-      setNavBadge(btnPollsHub, pollsHubBadge, 0);
-      setNavBadge(btnSubscriptionsHub, subscriptionsHubBadge, 0);
+      setNavBadge(pollsHubBadge, 0);
+      setNavBadge(subscriptionsHubBadge, 0);
     }
   }
 
@@ -1308,7 +1307,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       const n = (data || []).filter((item) => mobile
         ? (item.device_type === "host" || item.device_type === "buzzer")
         : item.device_type === "display").length;
-      setNavBadge(btnConnectDevice, connectDeviceBadge, n);
+      setNavBadge(connectDeviceBadge, n);
     } catch {
       // cicho, UI ma działać dalej
     }
@@ -1319,7 +1318,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       const { data: cnt, error } = await sb().rpc("bases_count_incoming_share_invites");
       if (error) throw error;
 
-      setNavBadge(document.getElementById("btnBases"), document.getElementById("basesBadge"), Number(cnt || 0));
+      setNavBadge(document.getElementById("basesBadge"), Number(cnt || 0));
     } catch {
       // cicho, UI ma działać dalej
     }

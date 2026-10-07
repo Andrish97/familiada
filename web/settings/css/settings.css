@@ -1619,7 +1619,7 @@ body.tools-fullscreen .tools-frame-wrap iframe{
   position: relative;
 }
 
-/* liczniki folderów: .hub-tab-badge z base.css (powiadomienia) */
+/* liczniki folderów: .badge z base.css (powiadomienia) */
 
 .mail-folder:hover { background: rgba(255,255,255,.06); }
 .mail-folder.active { background: rgba(255,234,166,.12); color: #ffeaa6; }
