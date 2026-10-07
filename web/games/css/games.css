@@ -206,7 +206,6 @@ body.games-body > main.wrap{
 }
 
 .tab-label.active{ color: #f9fafb; }
-.tab-label:not(.active):hover{ color: #fff; }
 
 .tab-label::after{
   content: "";
@@ -233,7 +232,13 @@ body.games-body > main.wrap{
   pointer-events: none;
   transition: opacity .15s;
 }
-.tab-label:not(.active):hover::before{ opacity: 1; }
+/* Tylko mysz: na dotyku hover „przykleja się” po tapnięciu i zostawał szary
+   prostokąt (zwłaszcza na „Gry Społeczności”, która przed aktywacją czeka
+   na pobranie listy) — jak w bases.css. */
+@media (hover: hover) and (pointer: fine){
+  .tab-label:not(.active):hover{ color: #fff; }
+  .tab-label:not(.active):hover::before{ opacity: 1; }
+}
 
 .tab-wrapper{
   position: absolute;
