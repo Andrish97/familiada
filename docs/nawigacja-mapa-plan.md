@@ -298,8 +298,8 @@ w `PAGES[...].tabs`):
 1. Karta zawsze w `?tab=<nazwa>`; nazwy z listy w mapie, nieznana →
    pierwsza; pierwsza (domyślna) bez parametru.
 2. Zmiana karty to `replaceState`, nie `pushState` — przeglądarkowe
-   „Wstecz” i ↩ to powrót do poprzedniej **strony**, nie przewijanie kart
-   (tak samo jak przycisk ↩ z mapy). *Do potwierdzenia.*
+   „Wstecz” działa jak przycisk ↩: powrót do poprzedniej **strony**, nie
+   przewijanie kart (decyzja).
 3. Bez zapasu w `sessionStorage` — adres jest jedynym źródłem.
 4. Instrukcja: karta też w `?tab=` (`#hash` tylko kotwica w karcie);
    bez obsługi starych `#control`.
@@ -658,6 +658,6 @@ Podjęte (2026-10-07):
 - **Control**: `?` otwiera instrukcję zwykłym przejściem, także w trakcie
   gry (bez nowej karty).
 
-Otwarte:
-- Zmiana karty: `replaceState` (Wstecz = poprzednia strona) czy jak dziś
-  `pushState` (Wstecz przełącza karty)?
+- **Przeglądarkowe „Wstecz”** działa jak przycisk ↩ (karty przez
+  `replaceState`, bez wpisów historii dla stanu wewnątrz strony).
+- **Kolejność wdrażania**: zaczynamy od edytora logo (sekcja 6, krok 5a).
