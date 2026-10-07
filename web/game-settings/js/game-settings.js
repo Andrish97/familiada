@@ -872,9 +872,9 @@ async function renderSound() {
         </button>
         <div class="ui-select-menu" role="listbox"></div>
       </div>
-      <button class="sfx-preview-btn" type="button" data-sfx-preview="${escAttr(key)}" title="Podgląd"${previewDisabled ? " disabled" : ""}>${icon("play")}</button>
+      <button class="sfx-preview-btn sound-preview-btn" type="button" data-sfx-preview="${escAttr(key)}" title="Podgląd"${previewDisabled ? " disabled" : ""}>${icon("play")}</button>
       <div class="sfx-vol-wrap">
-        <input class="sfx-vol" type="range" min="0" max="100" step="1" value="${volPct}" data-sfx-vol="${escAttr(key)}"/>
+        <input class="sfx-vol sound-volume-slider" type="range" min="0" max="100" step="1" value="${volPct}" data-sfx-vol="${escAttr(key)}"/>
         <span class="sfx-vol-label" id="sfxVol_${escAttr(key)}">${volPct}%</span>
       </div>
       <div class="sfx-file-wrap">

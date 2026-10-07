@@ -361,7 +361,10 @@ async function main() {
     const current = soundBusy();
     if (current !== lastSoundBusy) { lastSoundBusy = current; if (completionUIReady) renderCurrent(); }
   }, 125);
-  function busy() { return queuedGameAction || soundBusy() || committing || lockConfirmPending || waitingForDisplay() || Date.now() < lockedUntil || missingDevices(store.state, presenceFlags).length > 0; }
+  // Dźwięk odsłuchiwany w Podsumowaniu jest podglądem, nie dźwiękiem akcji
+  // gry. Nie może blokować przejścia do rozgrywki; UI zatrzymuje go przy
+  // wyjściu z Podsumowania. Poza tym krokiem aktywne SFX nadal blokują akcje.
+  function busy() { return queuedGameAction || (soundBusy() && store.state.step !== "setup_finish") || committing || lockConfirmPending || waitingForDisplay() || Date.now() < lockedUntil || missingDevices(store.state, presenceFlags).length > 0; }
 
   // Uzbraja klienckie `lockedUntil` na czas `ms` (potwierdzonego dźwięku/
   // animacji) I dociąga je do realnego czasu, w którym serwer (migracja

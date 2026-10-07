@@ -187,3 +187,7 @@ przypadek. Łącznie 25 wybranych testów lokalnych.
 - W mapowaniu finału przywrócono pełną wysokość panelu podpowiedzi. Pasek był
   elementem widoku, który przesunął się wraz z kartą; nie był paskiem
   przewijania wymagającym usunięcia.
+- Odsłuch dźwięku w Podsumowaniu nie blokuje przycisku przejścia do gry.
+  Przejście zatrzymuje odsłuch. W Ustawieniach rozgrywki i Podsumowaniu
+  przyciski odtwarzania oraz suwaki głośności mają wspólny wygląd; podczas
+  odsłuchu ikona zmienia się z trójkąta na kwadrat zatrzymania.

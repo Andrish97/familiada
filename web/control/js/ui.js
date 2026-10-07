@@ -20,6 +20,7 @@ import { getRoundsHint, getFinalHint, getFinalEntryShortcuts, teamName } from ".
 import { t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-07T22202";
 import { getSfxCategories, getSfxVariant, isSfxPlaying, playSfx, stopSfx, onSfxEnd, setSfxVolume } from "../../shared/js/core/sfx.js?v=v2026-10-07T22202";
 import { buildDisplayPreviewRow } from "../../shared/js/gameplay/previewRow.js?v=v2026-10-07T22202";
+import { DEFAULT_SETTINGS } from "../../shared/js/gameplay/gameStateShape.js?v=v2026-10-07T22202";
 import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-07T22202";
 
 import { previewPendingRoundEndDestination } from "./engine.js?v=v2026-10-07T22202";
@@ -41,6 +42,9 @@ function h(tag, attrs = {}, children = []) {
 
 export function createUI({ root, emit }) {
   function clear() { root.innerHTML = ""; }
+  function stopSummarySoundPreview() {
+    getSfxCategories().forEach(({ key }) => { if (isSfxPlaying(key)) stopSfx(key); });
+  }
 
   // Tryb physicalBuzzer (plan, tabela A/R2): operator wybiera drużynę
   // wprost zamiast czekać na Buzzer — dwuetapowo (zaznacz → potwierdź, jak
@@ -385,7 +389,7 @@ export function createUI({ root, emit }) {
       const desc = t("control.sfxDesc." + key) || key;
       const volPct = Math.round((state.settings.sound?.volumes?.[key] ?? 100));
 
-      const playBtn = h("button", { class: "btn sm summarySoundPlay", type: "button" });
+      const playBtn = h("button", { class: "btn sm summarySoundPlay sound-preview-btn", type: "button" });
       playBtn.innerHTML = SVG_PLAY;
       on(playBtn, "click", () => {
         if (isSfxPlaying(key)) {
@@ -399,7 +403,7 @@ export function createUI({ root, emit }) {
       });
 
       const volLabel = h("span", { class: "summarySoundVolLabel", text: `${volPct}%` });
-      const slider = h("input", { class: "summarySoundVol", type: "range", min: "0", max: "100", step: "1", "data-sfx-vol": key });
+      const slider = h("input", { class: "summarySoundVol sound-volume-slider", type: "range", min: "0", max: "100", step: "1", "data-sfx-vol": key });
       slider.value = String(volPct);
       on(slider, "input", () => {
         const pct = parseInt(slider.value, 10);
@@ -586,14 +590,14 @@ export function createUI({ root, emit }) {
     const start = navButton(t("control.setupDoneBtn"), {
       disabled: finalIncomplete,
       busy: boardBusy(),
-      onclick: () => emit("setup.start"),
+      onclick: () => { stopSummarySoundPreview(); emit("setup.start"); },
     });
-    const changeSettings = h("button", { class: "btn sm", type: "button", onclick: () => emit("setup.openSettings") }, [document.createTextNode(t("control.summarySettingsLink"))]);
+    const changeSettings = h("button", { class: "btn sm", type: "button", onclick: () => { stopSummarySoundPreview(); emit("setup.openSettings"); } }, [document.createTextNode(t("control.summarySettingsLink"))]);
     // "Wstecz" (jak stare control.html's btnSetupFinishBack) — swobodny
     // powrót do Urządzeń, nic nie resetuje. c2-btn-back popycha go do
     // lewej krawędzi stopki (patrz control2.html: .stepFootButtons ma
     // justify-content:flex-end, ten jeden dostaje margin-right:auto).
-    const back = h("button", { class: "btn c2-btn-back", type: "button", disabled: boardBusy() ? "" : undefined, onclick: boardBusy() ? undefined : () => emit("setup.back") }, [document.createTextNode(t("common.back"))]);
+    const back = h("button", { class: "btn c2-btn-back", type: "button", disabled: boardBusy() ? "" : undefined, onclick: boardBusy() ? undefined : () => { stopSummarySoundPreview(); emit("setup.back"); } }, [document.createTextNode(t("common.back"))]);
 
     // Płasko, tak jak renderDevicesStep — jedno .cardBody na root, BEZ
     // zagnieżdżonego wewnątrz .card (to była druga, zbędna warstwa: root
