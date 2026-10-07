@@ -691,6 +691,7 @@
   font-size:.83rem;
   user-select:none;
   overflow:hidden;
+  flex-shrink:0; /* lista ma max-height i scroll — wiersze nie mogą się ściskać */
 }
 .qRow:active{ cursor:grabbing; }
 .qRow:hover{ background:#373a41; }
