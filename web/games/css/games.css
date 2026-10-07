@@ -466,7 +466,8 @@ body.games-body > main.wrap{
   margin-top: 4px;
   font-size: 11px;
   line-height: 1.3;
-  color: #f5c46b;
+  /* stonowane złoto Familiady (--gold), nie jaskrawy pomarańcz */
+  color: rgba(255,234,166,.55);
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
