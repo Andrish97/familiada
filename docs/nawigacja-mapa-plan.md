@@ -132,6 +132,25 @@ loginUrl()                    // → /login/ (po zalogowaniu zawsze /games/)
    na każdej stronie).
 4. Zwraca użytkownika (albo `null` dla `public`).
 
+### Bez fallbacków (decyzja)
+
+Jedno źródło na każdą rzecz, bez zapasowych ścieżek:
+- **Adres** jest jedynym źródłem stanu strony (`id`, `q`, `tab`,
+  `folder`). Bez zapasu w `sessionStorage` (dziś bases).
+- **Bez aliasów i przekierowań** starych adresów i parametrów:
+  `/logo-editor/`, `?base=`, `#control`, `?modal=`, `?from=` znikają razem
+  ze zmianą; wszystkie linki w kodzie, instrukcji i mailach zmieniane w tym
+  samym kroku.
+- **Bez zgadywania**: karta wraca tylko przez `ret`; bez `ret` — `parent`
+  na domyślnej karcie.
+- **„Wstecz” tylko z mapy**: `ret` z listy `from` albo `parent`. Koniec
+  z `history.back()` / `document.referrer` (dziś okno blokady urządzenia,
+  `device-guard.js:52`) i z twardymi `/games/` w kodzie stron.
+- **Logowanie**: `requireAuth()` bez wartości domyślnej — cel zawsze
+  z mapy (dziś domyślne względne `"login"` daje 404 w Control).
+- Jedyne, co zostaje: zaproszenie z maila (`next=`) — to funkcja, nie
+  zapas.
+
 ### „Wstecz” przez wszystkie kroki, tylko po dozwolonej ścieżce (decyzja)
 
 `linkTo()` zapisuje w `ret` **pełny** bieżący adres — razem z jego własnym
@@ -148,8 +167,10 @@ loginUrl()                    // → /login/ (po zalogowaniu zawsze /games/)
 Każdy krok jest sprawdzany z mapą: `ret` musi wskazywać stronę z listy
 `from` bieżącej strony (np. `polls.from = ["games", "pollsHub"]`,
 `manual.from = *` — wszystkie strony z topbarem). Inny / obcy / zepsuty
-`ret` → „Wstecz” do `parent`. Podwójnych powrotów będzie mało, ale gdyby
-łańcuch urósł, limit 4 poziomów (głębsze `ret` są obcinane do `parent`).
+`ret` → „Wstecz” do `parent` (to reguła mapy, nie zapas — `parent` jest
+celem „Wstecz” dla wejścia bez `ret`, np. z zakładki). Podwójnych powrotów
+będzie mało, ale gdyby łańcuch urósł, limit 4 poziomów (głębsze `ret` są
+obcinane do `parent`).
 
 ### Bez stron modalnych (kierunek)
 
@@ -193,21 +214,22 @@ karty:
 
 | Dziś | Po podziale | ↩ |
 |---|---|---|
-| `/logo-editor/` lista + tryb edycji (`is-editor`, `topbar-no-menu`, `btnCloseEditor` ✕) | `/logo/` — tylko lista · **3 osobne strony** jak edytor pytań: `/logo/editor-text/?id=…`, `/logo/editor-draw/?id=…`, `/logo/editor-image/?id=…` | „← Wróć do: Logo” → `/logo/?tab=<typ>` |
+| `/logo-editor/` lista + tryb edycji (`is-editor`, `topbar-no-menu`, `btnCloseEditor` ✕) | `/logo/` — tylko lista · **3 osobne strony** jak edytor pytań: `/logo/editor-text/?id=…`, `/logo/editor-draw/?id=…`, `/logo/editor-image/?id=…` | „← Wróć do: Logo” → `ret` (lista na karcie, z której wszedł) |
 | Control → ustawienia gry w `iframe` | `/game-settings/?id=…&ret=/control/?id=…` | „← Wróć do: Control” |
 | Control / game-settings / logo-editor → instrukcja, prywatność w `iframe` | `/manual/?ret=…`, `/privacy/?ret=…` | „← Wróć do: {strona}” |
-| `/editor/` — wybrane pytanie tylko w pamięci (`activeQId`, `editor.js:362`) | `/editor/?id=<gra>&q=<pytanie>` — po powrocie (z instrukcji, odświeżeniu, linku) otwiera się to samo pytanie | telefon: ↩ zamyka pytanie (`?q=` znika z adresu); bez pytania: ↩ → `/games/` (karta z `ret` albo z typu gry) |
+| `/editor/` — wybrane pytanie tylko w pamięci (`activeQId`, `editor.js:362`) | `/editor/?id=<gra>&q=<pytanie>` — po powrocie (z instrukcji, odświeżeniu, linku) otwiera się to samo pytanie | telefon: ↩ zamyka pytanie (`?q=` znika z adresu); bez pytania: ↩ → `ret` albo `/games/` |
 
 **Adresy (decyzja):** lista `/logo/`, edytory `/logo/editor-text/`,
 `/logo/editor-draw/`, `/logo/editor-image/` (`?id=<logo>`); w mapie skrótowo `/logo/editor-<typ>/`. Stary
-`/logo-editor/` zostaje jako przekierowanie na `/logo/` (zakładki, cache,
-linki w instrukcji); `?tab=` przenoszone.
+`/logo-editor/` znika (bez przekierowania); linki w kodzie i instrukcji
+zmieniane w tym samym kroku.
 
 W mapie trzy wpisy `logoText`, `logoDraw`, `logoImage` (`access: "guest"`,
 `parent: "logoEditor"`, `device: "noPhone"`, `resource: "logo"`) — na
 telefonie „Edytuj” i „Nowe logo” są ukryte (ta sama reguła co „Graj”).
-Strona sprawdza typ logo z `?id=`: logo rysowane otwarte pod `/text/` →
-przekierowanie na `/draw/?id=…` (ten sam `ret`). Edytor logo staje się
+Link do edytora zawsze buduje lista z typu logo; logo innego typu niż
+strona (np. rysowane pod `/logo/editor-text/`) → komunikat błędu, bez
+przekierowania. Edytor logo staje się
 4 lekkimi stronami zamiast jednej 871-liniowej `main.js` z trzema trybami:
 wspólny kod (zapis, kopia robocza, podgląd, topbar) w module, każda strona
 ładuje tylko swój edytor (`text.js` / `draw.js` / `image.js`).
@@ -224,7 +246,7 @@ wspólny kod (zapis, kopia robocza, podgląd, topbar) w module, każda strona
 | `/editor/` | `id` (gra), `q` (pytanie) |
 | `/control/`, `/game-settings/`, `/polls/` | `id` (gra) |
 | `/logo/editor-<typ>/` | `id` (logo) |
-| `/base-explorer/` | `id` (baza; dziś `?base=` — zostaje jako alias), `folder` |
+| `/base-explorer/` | `id` (baza; dziś `?base=` — zamieniane na `id`, bez aliasu), `folder` |
 | `/games/`, `/logo/`, `/bases/`, `/polls-hub/`, `/subscriptions/`, `/marketplace/`, `/manual/` | `tab` (+ w marketplace `q`, `filter`, `sort`, jak dziś) |
 
 ```js
@@ -237,13 +259,11 @@ games:        { path: "/games/",   tabs: ["prepared", "poll_text", "poll_points"
 logoEditor:   { path: "/logo/",    tabs: ["text", "draw", "image"],                       state: ["tab"] },
 ```
 
-- `backHref()` bez `ret`: `parent` z kartą wynikającą z typu zasobu —
-  z edytora gry punktowanej ↩ `/games/?tab=poll_points`, z
-  `/logo/editor-draw/` ↩ `/logo/?tab=draw`. Z `ret` — karta, z której
-  się wyszło.
+- Karta wraca tylko przez `ret` (karta, z której się wyszło). Bez `ret`
+  ↩ prowadzi do `parent` na jego domyślnej karcie — nic nie jest zgadywane
+  z typu gry/logo.
 - `gameSettings.parent = "control"` — bez `ret` ↩ prowadzi do Control tej
-  gry (`/control/?id=…`); na telefonie, gdzie Control jest zablokowany —
-  do `/games/` z kartą typu gry.
+  gry (`/control/?id=…`).
 - `state` to jedyne parametry zapisywane w `ret` — reszta adresu (tokeny
   `t`, `s`, `share`, otwarte okna) nie wchodzi do powrotu.
 
@@ -282,7 +302,7 @@ w `PAGES[...].tabs`):
    (tak samo jak przycisk ↩ z mapy). *Do potwierdzenia.*
 3. Bez zapasu w `sessionStorage` — adres jest jedynym źródłem.
 4. Instrukcja: karta też w `?tab=` (`#hash` tylko kotwica w karcie);
-   stare linki z `#control` → `?tab=control`.
+   bez obsługi starych `#control`.
 5. Te same nazwy w kodzie i w adresie (subscriptions: `tasks`/`subs`
    zamiast `"a"`/`"b"`).
 
@@ -295,15 +315,13 @@ z tą samą kartą (`/games/?tab=poll_text`), okno się **nie** otwiera
 ponownie. Granica: stan strony (`id`, `q`, `tab`, `folder`) jest
 w adresie i wraca; okna nie.
 
-**Control w trakcie gry** — wyjście do instrukcji jest bezpieczne
-(stan w bazie, urządzenia dalej wyświetlają), ale operator traci widok
-pulpitu. Propozycja: w trakcie gry `?` otwiera instrukcję w nowej karcie
-(`target=_blank`), przed grą — zwykłe przejście. Do decyzji.
+**Control w trakcie gry** (decyzja) — `?` to zwykłe przejście, jak
+wszędzie. Wyjście jest bezpieczne: stan gry jest w bazie, urządzenia dalej
+wyświetlają, a ↩ wraca do Control i `store.hydrate()` odtwarza pulpit.
 
 **Przejściowo** (do czasu kroków z sekcji 6) obecne `?modal=` działa dalej;
 nie dokładamy nowych stron modalnych i nie ujednolicamy starych — idą do
-usunięcia. Stare linki z `?modal=` (cache, zakładki) → ta sama strona bez
-trybu modala.
+usunięcia razem z parametrem (bez obsługi starych linków).
 
 Strony z własną logiką powrotu (edytor w trybie edycji pytania, modal-sheet,
 ostrzeżenie w trakcie gry w Control) dalej przechwytują klik, ale cel
@@ -460,7 +478,7 @@ flowchart LR
   games -->|Logo| logo["/logo/"]
   logo -->|Nowe / Edytuj| logoEdit["/logo/editor-<typ>/?id="]
   control -->|Ustawienia gry| gs
-  logoEdit -->|↩ ?tab=typ| logo
+  logoEdit -->|↩ ret| logo
   gs -->|↩ ret| control
   games -->|Podłącz urządzenie| cd["/connect-device/"]
   games -->|Ankiety| hub["/polls-hub/"]
@@ -479,7 +497,7 @@ flowchart LR
   polls -->|↩ ret| hub
   explorer -->|↩ ret| bases
   subs -->|↩ ret| from(("skąd przyszedł:<br/>games / hub / bases"))
-  editor & control -->|↩ ?tab=typ gry| games
+  editor & control -->|↩ ret / games| games
   market & logo & cd & hub & bases & account -->|↩| games
 ```
 
@@ -491,12 +509,12 @@ flowchart LR
 | `/polls/` | `ret` / Gry | — |
 | `/bases/` | `ret` / Gry | Subskrypcje → `/subscriptions/?ret=…`; baza → `/base-explorer/?id=…&ret=<bases?tab=…>` |
 | `/base-explorer/?id=B&folder=F` | `ret` / Bazy (z kartą) | drzewo folderów pamiętane per baza |
-| `/editor/?id=G&q=Q` | `ret` / `/games/?tab=<typ G>` | — |
+| `/editor/?id=G&q=Q` | `ret` / `/games/` | — |
 | `/marketplace/`, `/connect-device/`, `/account/` | `ret` / Gry | — |
-| `/control/?id=G` | `ret` / `/games/?tab=<typ G>` (z ostrzeżeniem w trakcie gry) | Ustawienia gry → `/game-settings/?id=…&ret=<control>` · `?` → `/manual/?ret=<control>` |
+| `/control/?id=G` | `ret` / `/games/` (z ostrzeżeniem w trakcie gry) | Ustawienia gry → `/game-settings/?id=…&ret=<control>` · `?` → `/manual/?ret=<control>` |
 | `/game-settings/?id=G` | `ret` / Control tej gry | Graj → `/control/?id=…` (ukryte, gdy `ret` to Control — ↩ robi to samo) · `?` |
 | `/logo/?tab=T` | Gry | Nowe logo → utworzenie + `/logo/editor-<typ>/?id=…`; Edytuj → `/logo/editor-<typ>/?id=L` · `?` |
-| `/logo/editor-<typ>/?id=L` | `ret` / `/logo/?tab=<typ>` (autozapis przed wyjściem, bez pytań) | `?` → `/manual/?ret=<edytor>#logo` |
+| `/logo/editor-<typ>/?id=L` | `ret` / `/logo/` (autozapis przed wyjściem, bez pytań) | `?` → `/manual/?ret=<edytor>#logo` |
 
 **⚠ dziś:** z `/games/` wychodzi `?from=games`, którego nikt nie czyta;
 bases → base-explorer bez `ret` (powrót gubi zakładkę); editor, logo-editor,
@@ -601,7 +619,7 @@ pliku, a CSS korzystał z tych samych wartości (komentarz przy `@media`).
    b) `/editor/?id=&q=` — pytanie w adresie,
    c) autozapis w game-settings, Control → zwykłe przejście do ustawień,
       usunięcie `gs:*`,
-   d) usunięcie `?modal=` z manual i privacy (stare linki → zwykła strona).
+   d) usunięcie `?modal=` z manual i privacy.
 6. `state` w mapie i w `ret`; jeden moduł kart (`?tab=`, `replaceState`,
    bez `sessionStorage`); eksplorator: `ret` z bases, drzewo w
    `localStorage` per baza.
@@ -628,14 +646,18 @@ Podjęte (2026-10-07):
   otwierane jak edytor pytań, `id` logo w adresie, autozapis bez pytań,
   można wrócić do pracy po zamknięciu.
 - **Adresy logo**: `/logo/` (lista) i `/logo/editor-text|draw|image/?id=`;
-  `/logo-editor/` → przekierowanie na `/logo/`.
+  `/logo-editor/` znika.
+- **Bez fallbacków** (sekcja 2): żadnych aliasów starych adresów i
+  parametrów, przekierowań ze starych ścieżek, zapasów w `sessionStorage`,
+  zgadywania karty ani `history.back()`/`referrer`.
 - **Powroty**: strony szczegółu pamiętają zasób (`?id=`) i swój stan
   (pytanie, baza + foldery); listy pamiętają tylko kartę — bez zaznaczeń.
   Karty ujednolicone (`?tab=`) na wszystkich stronach.
 - **Edytor pytań**: `?q=<pytanie>` w adresie, powrót do edytowanego pytania.
 - **Okna na telefonie**: powrót zawsze do strony podstawowej, nie do okna.
+- **Control**: `?` otwiera instrukcję zwykłym przejściem, także w trakcie
+  gry (bez nowej karty).
 
 Otwarte:
 - Zmiana karty: `replaceState` (Wstecz = poprzednia strona) czy jak dziś
   `pushState` (Wstecz przełącza karty)?
-- Control w trakcie gry: `?` w nowej karcie czy zwykłe przejście?
