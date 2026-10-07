@@ -97,7 +97,7 @@ export const PAGES = {
   subscriptions: { path: "/subscriptions/", access: "user",   parent: "games",     manual: "subscriptions" },
   bases:         { path: "/bases/",         access: "guest",  parent: "games",     manual: "bases" },
   baseExplorer:  { path: "/base-explorer/", access: "guest",  parent: "bases",     manual: "bases" },
-  logoEditor:    { path: "/logo-editor/",   access: "guest",  parent: "games",     manual: "logo" },
+  logoEditor:    { path: "/logo/",   access: "guest",  parent: "games",     manual: "logo" },
   control:       { path: "/control/",       access: "guest",  parent: "games",     manual: "control",  device: "wide" },
   gameSettings:  { path: "/game-settings/", access: "guest",  parent: "games",     manual: "control",  device: "wide" },
   marketplace:   { path: "/marketplace/",   access: "public", parent: "games",     manual: "community" },
@@ -193,10 +193,15 @@ karty:
 
 | Dziś | Po podziale | ↩ |
 |---|---|---|
-| `/logo-editor/` lista + tryb edycji (`is-editor`, `topbar-no-menu`, `btnCloseEditor` ✕) | `/logo-editor/` — tylko lista · **3 osobne strony** jak edytor pytań: `/logo-editor/text/?id=…`, `/logo-editor/draw/?id=…`, `/logo-editor/image/?id=…` | „← Wróć do: Logo” → `/logo-editor/?logo=<id>` |
+| `/logo-editor/` lista + tryb edycji (`is-editor`, `topbar-no-menu`, `btnCloseEditor` ✕) | `/logo/` — tylko lista · **3 osobne strony** jak edytor pytań: `/logo/editor-text/?id=…`, `/logo/editor-draw/?id=…`, `/logo/editor-image/?id=…` | „← Wróć do: Logo” → `/logo/?logo=<id>` |
 | Control → ustawienia gry w `iframe` | `/game-settings/?id=…&ret=/control/?id=…` | „← Wróć do: Control” |
 | Control / game-settings / logo-editor → instrukcja, prywatność w `iframe` | `/manual/?ret=…`, `/privacy/?ret=…` | „← Wróć do: {strona}” |
 | `/editor/` — wybrane pytanie tylko w pamięci (`activeQId`, `editor.js:362`) | `/editor/?id=<gra>&q=<pytanie>` — po powrocie (z instrukcji, odświeżeniu, linku) otwiera się to samo pytanie | telefon: ↩ zamyka pytanie (`?q=` znika z adresu); bez pytania: ↩ → `/games/?game=<id>` |
+
+**Adresy (decyzja):** lista `/logo/`, edytory `/logo/editor-text/`,
+`/logo/editor-draw/`, `/logo/editor-image/` (`?id=<logo>`); w mapie skrótowo `/logo/editor-<typ>/`. Stary
+`/logo-editor/` zostaje jako przekierowanie na `/logo/` (zakładki, cache,
+linki w instrukcji); `?tab=` przenoszone.
 
 W mapie trzy wpisy `logoText`, `logoDraw`, `logoImage` (`access: "guest"`,
 `parent: "logoEditor"`, `device: "noPhone"`, `resource: "logo"`) — na
@@ -215,21 +220,21 @@ zaznaczonej, z właściwą zakładką. Mapa rozszerza się o zasób:
 | Zasób | Strony szczegółu (`?id=`) | Lista zaznacza (`?<zasób>=`) |
 |---|---|---|
 | gra | `/editor/` (+ `&q=<pytanie>`), `/polls/`, `/control/`, `/game-settings/` | `/games/?game=<id>` (zakładka z typu gry), `/polls-hub/?game=<id>` |
-| logo | `/logo-editor/text\|draw\|image/` | `/logo-editor/?logo=<id>` (zakładka z typu logo) |
+| logo | `/logo/editor-<typ>/` | `/logo/?logo=<id>` (zakładka z typu logo) |
 | baza | `/base-explorer/?id=<id>&folder=…` (dziś `?base=`, zostaje jako alias) | `/bases/?base=<id>` |
 
 ```js
 editor:       { path: "/editor/",       resource: "game", parent: "games",      state: ["id", "q"] },
 control:      { path: "/control/",      resource: "game", parent: "games",      state: ["id"] },
 gameSettings: { path: "/game-settings/",resource: "game", parent: "control",    state: ["id"] },
-logoDraw:     { path: "/logo-editor/draw/", resource: "logo", parent: "logoEditor", state: ["id"] },
+logoDraw:     { path: "/logo/editor-draw/", resource: "logo", parent: "logoEditor", state: ["id"] },
 games:        { path: "/games/",        select: "game",   state: ["game", "tab"] },
-logoEditor:   { path: "/logo-editor/",  select: "logo",   state: ["logo", "tab"] },
+logoEditor:   { path: "/logo/",  select: "logo",   state: ["logo", "tab"] },
 ```
 
 - `backHref()` bez `ret`: `parent` + zasób bieżącej strony →
-  z `/control/?id=7` ↩ `/games/?game=7`; z `/logo-editor/draw/?id=3` ↩
-  `/logo-editor/?logo=3`.
+  z `/control/?id=7` ↩ `/games/?game=7`; z `/logo/editor-draw/?id=3` ↩
+  `/logo/?logo=3`.
 - `parent` też z zasobem: `gameSettings.parent = "control"` — bez `ret`
   ↩ prowadzi do Control tej gry (na telefonie, gdzie Control jest
   zablokowany, do `/games/?game=<id>`).
@@ -283,7 +288,7 @@ Wspólne dla wszystkich map (nie powtarzam w każdej):
   w instrukcji „Prywatność” → `/privacy/` → `↩` do instrukcji.
 - **Bez stron modalnych** (sekcja 2): `?`, „Prywatność” i ustawienia gry
   to zawsze przejście z `ret`. Edytor logo to osobna strona
-  `/logo-editor/text|draw|image/`. Nigdzie nie ma ✕ w topbarze — tylko ↩.
+  `/logo/editor-<typ>/`. Nigdzie nie ma ✕ w topbarze — tylko ↩.
 - Strony urządzeń (`/display/`, `/host/`, `/buzzer/`, `/poll-*`,
   `/connect-device/tv/`) otwierane z klucza w adresie — bez topbaru,
   bez ról, poza mapami.
@@ -350,7 +355,7 @@ gdy sam kliknął „Załóż konto”).
 flowchart LR
   games["/games/"]
   games -->|Społeczność| market["/marketplace/<br/>bez oceniania i wysyłania"]
-  games -->|Logo| logo["/logo-editor/"]
+  games -->|Logo| logo["/logo/"]
   games -->|Bazy| bases["/bases/<br/>bez udostępniania"]
   bases -->|otwórz bazę| explorer["/base-explorer/"]
   games -->|Edytuj| editor["/editor/"]
@@ -371,7 +376,7 @@ flowchart LR
 | `/marketplace/` | ↩ Gry · przeglądanie · podgląd | Oceń · Moje wysłane |
 | `/account/` | ↩ Gry · Zamień na konto · Usuń | nazwa, e-mail, hasło, powiadomienia, ocena, demo |
 | `/connect-device/` | ↩ Gry | moje urządzenia |
-| `/control/` `/game-settings/` `/logo-editor/` `/logo-editor/text\|draw\|image/` | jak w C1 | — |
+| `/control/` `/game-settings/` `/logo/` `/logo/editor-<typ>/` | jak w C1 | — |
 | `/polls-hub/` `/subscriptions/` | okno „Tylko dla konta”: Wstecz → `/games/`, Załóż konto → `/login/?force_auth=1` | — |
 
 **⚠ dziś:** „Ustawienia konta” w menu tylko na `/games/`; connect-device ↩
@@ -387,10 +392,10 @@ Te same strony co B1. Różnice:
 |---|---|---|
 | topbar `/games/` | przyciski w pasku, nadmiar w „Więcej ▾” | wszystko w `☰` (licznik na `☰`) |
 | „Graj”, „Ustawienia gry” | → control / game-settings | **telefon:** ukryte (decyzja); **tablet w pionie:** widoczne, po wejściu okno „Obróć tablet” |
-| `/logo-editor/` | lista + edycja | telefon: tylko lista (podgląd, import/eksport, nazwa) |
+| `/logo/` | lista + edycja | telefon: tylko lista (podgląd, import/eksport, nazwa) |
 | `/editor/` | lista pytań + edycja obok | edycja pytania na pełnym ekranie, ↩ najpierw zamyka pytanie |
 | modale | okno | pełny ekran, ↩ zamyka modal |
-| `/logo-editor/` | Nowe logo · Edytuj | telefon: ukryte (tylko lista: podgląd, import/eksport, nazwa) |
+| `/logo/` | Nowe logo · Edytuj | telefon: ukryte (tylko lista: podgląd, import/eksport, nazwa) |
 | `/games/` | — | „Zainstaluj” (PWA), jeśli nie jest zainstalowana |
 
 **⚠ dziś:** na telefonie „Graj” i „Ustawienia gry” prowadzą na stronę,
@@ -408,8 +413,8 @@ Start: `/games/`; wejście na `/` lub `/login/` z sesją → `/games/`.
 flowchart LR
   games["/games/"]
   games -->|Społeczność| market["/marketplace/"]
-  games -->|Logo| logo["/logo-editor/"]
-  logo -->|Nowe / Edytuj| logoEdit["/logo-editor/text|draw|image/?id="]
+  games -->|Logo| logo["/logo/"]
+  logo -->|Nowe / Edytuj| logoEdit["/logo/editor-<typ>/?id="]
   control -->|Ustawienia gry| gs
   logoEdit -->|↩ ?logo=id| logo
   gs -->|↩ ret| control
@@ -446,8 +451,8 @@ flowchart LR
 | `/marketplace/`, `/connect-device/`, `/account/` | `ret` / Gry | — |
 | `/control/?id=G` | `/games/?game=G` (z ostrzeżeniem w trakcie gry) | Ustawienia gry → `/game-settings/?id=…&ret=<control>` · `?` → `/manual/?ret=<control>` |
 | `/game-settings/?id=G` | `ret` / Control tej gry | Graj → `/control/?id=…` (ukryte, gdy `ret` to Control — ↩ robi to samo) · `?` |
-| `/logo-editor/?logo=L` | Gry | Nowe logo → utworzenie + `/logo-editor/<typ>/?id=…`; Edytuj → `/logo-editor/<typ>/?id=L` · `?` |
-| `/logo-editor/text\|draw\|image/?id=L` | `/logo-editor/?logo=L` (autozapis przed wyjściem, bez pytań) | `?` → `/manual/?ret=<edytor>#logo` |
+| `/logo/?logo=L` | Gry | Nowe logo → utworzenie + `/logo/editor-<typ>/?id=…`; Edytuj → `/logo/editor-<typ>/?id=L` · `?` |
+| `/logo/editor-<typ>/?id=L` | `/logo/?logo=L` (autozapis przed wyjściem, bez pytań) | `?` → `/manual/?ret=<edytor>#logo` |
 
 **⚠ dziś:** z `/games/` wychodzi `?from=games`, którego nikt nie czyta;
 bases → base-explorer bez `ret` (powrót gubi zakładkę); editor, logo-editor,
@@ -463,7 +468,7 @@ Te same strony co C1. Różnice:
 | topbar pozostałych stron | ↩ · sekcja 2 · `?` · Nazwa ▾ | ↩ w pasku; sekcja 2, `?`, konto płasko w `☰` |
 | „Graj”, „Ustawienia gry” | → control / game-settings | **telefon:** ukryte; **tablet w pionie:** „Obróć tablet”; **wąskie okno komputera:** „Poszerz okno” |
 | `/connect-device/` | kod ręcznie, kamera rzadko | skan QR kamerą jako główna akcja |
-| `/logo-editor/`, `/editor/`, modale | jak w B2 | jak w B2 |
+| `/logo/`, `/editor/`, modale | jak w B2 | jak w B2 |
 | `/control/` (tablet) | — | operator na tablecie w poziomie |
 
 ---
@@ -547,7 +552,7 @@ pliku, a CSS korzystał z tych samych wartości (komentarz przy `@media`).
    overlayu gość/urządzenie.
 5. Rezygnacja ze stron modalnych (każdy punkt osobno):
    a) refaktor edytora logo: wspólny moduł zapisu (autozapis, kopia
-      robocza, status) + 3 strony `/logo-editor/text|draw|image/?id=`,
+      robocza, status) + 3 strony `/logo/editor-<typ>/?id=`,
       lista tylko listą, usunięcie ✕, `topbar-no-menu` i okien pomocy,
    b) `/editor/?id=&q=` — pytanie w adresie,
    c) autozapis w game-settings, Control → zwykłe przejście do ustawień,
@@ -577,6 +582,8 @@ Podjęte (2026-10-07):
 - **Edytor logo**: refaktor na 3 osobne strony (tekst / rysunek / obraz)
   otwierane jak edytor pytań, `id` logo w adresie, autozapis bez pytań,
   można wrócić do pracy po zamknięciu.
+- **Adresy logo**: `/logo/` (lista) i `/logo/editor-text|draw|image/?id=`;
+  `/logo-editor/` → przekierowanie na `/logo/`.
 - **Powroty pamiętają konkretną grę / logo** (zasób w mapie).
 - **Edytor pytań**: `?q=<pytanie>` w adresie, powrót do edytowanego pytania.
 - **Okna na telefonie**: powrót zawsze do strony podstawowej, nie do okna.
