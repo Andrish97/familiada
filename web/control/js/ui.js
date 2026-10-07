@@ -1815,7 +1815,7 @@ export function createUI({ root, emit }) {
       const mapping = /^f_p[12]_map_q/.test(s);
       const codes = mapping
         ? ["mappingAnswers", "w", "o", ...(s.startsWith("f_p2_") ? ["r"] : []), "reveal", "n", "b", "m"]
-        : [...new Set([...keyboardActions].filter(([key, binding]) => !binding.el.disabled && key !== "reveal" && !/^[2-6]$/.test(key)).map(([key]) => key === "1" ? "answers" : key)), "m"];
+        : [...new Set([...keyboardActions].filter(([key]) => key !== "reveal" && !/^[2-6]$/.test(key)).map(([key]) => key === "1" ? "answers" : key)), "m"];
       for (const code of codes) list.append(h("div", { class: "c2-hint-shortcut", text: t(`control.shortcuts.${code}`) }));
       hint.append(list);
     }
