@@ -170,6 +170,8 @@ przypadek. Łącznie 25 wybranych testów lokalnych.
 - Poprzednie nagranie 07 używało testowego JSON-u z napisem „FAMILIADA”, a nie
   logo z ustawień. Test tworzy teraz logo na podstawie
   `web/shared/data/logo_familiada.json`; poprawiono opis w przewodniku.
-- Kolejne nagranie: tylko scenariusz 04, po wdrożeniu powyższych zmian.
-  Weryfikacja na filmie obejmuje stabilność podpowiedzi i skrótów oraz pełny
-  przebieg finału. Pełnego zestawu testów nie uruchamiamy.
+- Nagranie 04 uruchomiono po wdrożeniu zmian:
+  [przebieg na produkcji](https://github.com/Andrish97/familiada/actions/runs/37688425162).
+  Film i raport są w `tests/recordings/2026-10-07-uwagi/`. Scenariusz przeszedł;
+  raport zapisał 60,01 kl./s, 0 pominiętych klatek i 0 długich zadań Display.
+  Film trwa 7:06.9. Pełnego zestawu testów nie uruchamiano.
