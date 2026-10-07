@@ -1,14 +1,14 @@
 // js/pages/polls.js
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-06T23331";
-import { requireAuth } from "../../shared/js/core/auth.js?v=v2026-10-06T23331";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-06T23331";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-07T00041";
+import { requireAuth } from "../../shared/js/core/auth.js?v=v2026-10-07T00041";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-07T00041";
 import QRCode from "https://cdn.jsdelivr.net/npm/qrcode@1.5.3/+esm";
-import { initI18n, t, withLangParam, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-06T23331";
-import { initTopbarAccountDropdown } from "../../shared/js/core/topbar-controller.js?v=v2026-10-06T23331";
-import { guardResourceLock } from "../../shared/js/core/resource-lock.js?v=v2026-10-06T23331";
-import { validateGame, gameRuleErrorMessage, RULES } from "../../shared/js/core/game-validate.js?v=v2026-10-06T23331";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-06T23331";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-06T23331";
+import { initI18n, t, withLangParam, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-07T00041";
+import { initTopbarAccountDropdown } from "../../shared/js/core/topbar-controller.js?v=v2026-10-07T00041";
+import { guardResourceLock } from "../../shared/js/core/resource-lock.js?v=v2026-10-07T00041";
+import { validateGame, gameRuleErrorMessage, RULES } from "../../shared/js/core/game-validate.js?v=v2026-10-07T00041";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-07T00041";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-07T00041";
 
 // initI18n is called at the start of DOMContentLoaded (see below)
 
