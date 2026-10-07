@@ -1,6 +1,6 @@
-import { icon } from "./icons.js?v=v2026-10-07T17454";
-import { t } from "../../translation/translation.js?v=v2026-10-07T17454";
-import { enterModalSheet, exitModalSheet, isSheetViewport } from "./modal-sheet.js?v=v2026-10-07T17454";
+import { icon } from "./icons.js?v=v2026-10-07T20271";
+import { t } from "../../translation/translation.js?v=v2026-10-07T20271";
+import { enterModalSheet, exitModalSheet, isSheetViewport } from "./modal-sheet.js?v=v2026-10-07T20271";
 let modalSeq = 0;
 
 function modalText(key, fallback) {
@@ -159,6 +159,8 @@ function openModal({
 
     const onKeydown = (e) => {
       if (e.key === "Escape") {
+        const overlays = [...document.querySelectorAll(".overlay")];
+        if (overlays.at(-1) !== overlay) return;
         e.preventDefault();
         finish(false);
       }
