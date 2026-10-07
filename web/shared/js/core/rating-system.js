@@ -61,7 +61,10 @@ function showRatingModal(userId) {
     
     overlay.innerHTML = `
         <div class="modal rating-modal">
-            <div class="mTitle">${t("common.rating.modal.title")}</div>
+            <div class="mHead">
+                <div class="mTitle">${t("common.rating.modal.title")}</div>
+                <button class="btn sm" id="btnRatingX" type="button" aria-label="${t("common.modal.closeLabel")}">${icon("close")}</button>
+            </div>
             <div class="mSub">${t("common.rating.modal.sub")}</div>
 
             <div class="stars-row" id="starsRow">
@@ -102,11 +105,14 @@ function showRatingModal(userId) {
         });
     });
 
-    laterBtn.addEventListener("click", () => {
+    // X działa jak "Później" — zamknięcie bez oceny wraca za 7 dni.
+    const dismissLater = () => {
         // Zapisz datę odrzucenia - wróci za 7 dni
         localStorage.setItem(RATING_DISMISSED_KEY, Date.now().toString());
         overlay.remove();
-    });
+    };
+    laterBtn.addEventListener("click", dismissLater);
+    overlay.querySelector("#btnRatingX").addEventListener("click", dismissLater);
 
     neverBtn.addEventListener("click", () => {
         // Zablokuj na stałe
@@ -132,7 +138,10 @@ function showRatingModal(userId) {
             localStorage.setItem(RATING_LS_KEY, "true");
             overlay.innerHTML = `
                 <div class="modal rating-modal">
-                    <div class="mTitle">${t("common.rating.modal.thanksTitle")}</div>
+                    <div class="mHead">
+                        <div class="mTitle">${t("common.rating.modal.thanksTitle")}</div>
+                        <button class="btn sm" id="btnRatingThanksX" type="button" aria-label="${t("common.modal.closeLabel")}">${icon("close")}</button>
+                    </div>
                     <div class="mSub">${t("common.rating.modal.thanksSub")}</div>
                     <div class="modal-actions">
                         <button class="btn sm gold" id="btnRatingClose">${t("common.done")}</button>
@@ -140,6 +149,7 @@ function showRatingModal(userId) {
                 </div>
             `;
             overlay.querySelector("#btnRatingClose").onclick = () => overlay.remove();
+            overlay.querySelector("#btnRatingThanksX").onclick = () => overlay.remove();
         }
     });
 }

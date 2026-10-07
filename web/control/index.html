@@ -571,9 +571,12 @@
        reużywa control/js/share-device.js bez zmian (patrz control/js/app.js). -->
   <div class="overlay hidden" id="deviceLostOverlay" role="dialog" aria-modal="true" aria-labelledby="deviceLostTitle" aria-describedby="deviceLostText">
     <div class="modal">
-      <div class="mHead"><div class="mTitle" id="deviceLostTitle" data-i18n="control.deviceLostTitle">Utracono połączenie</div></div>
+      <div class="mHead">
+        <div class="mTitle" id="deviceLostTitle" data-i18n="control.deviceLostTitle">Utracono połączenie</div>
+        <button class="btn sm" id="deviceLostX" type="button" aria-label="Zamknij" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
+      </div>
       <p id="deviceLostText" style="white-space:pre-line;line-height:1.5"></p>
-      <div class="mFoot"><button class="btn gold" id="deviceLostClose" type="button" data-i18n="common.a2hsOk">OK</button></div>
+      <div class="modal-actions"><button class="btn gold" id="deviceLostClose" type="button" data-i18n="common.a2hsOk">OK</button></div>
     </div>
   </div>
   <div class="overlay" id="shareDeviceOverlay" style="display:none;">

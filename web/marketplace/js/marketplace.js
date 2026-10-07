@@ -843,6 +843,7 @@ function wireEvents() {
   // Submit modal
   els.btnSubmitNew?.addEventListener("click", openSubmitModal);
   els.btnSubmitCancel?.addEventListener("click", closeSubmitModal);
+  document.getElementById("btnSubmitClose")?.addEventListener("click", closeSubmitModal);
   els.submitOverlay?.addEventListener("click", e => {
     if (e.target !== e.currentTarget) return;
     // W trybie sheet (mobile) modal zastępuje treść strony — jedynym

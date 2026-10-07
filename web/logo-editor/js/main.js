@@ -791,6 +791,7 @@ function bindUi() {
   // modal nazwy
   el.btnRenameOk.addEventListener("click", () => void confirmNameModal());
   $("btnRenameCancel").addEventListener("click", closeNameModal);
+  $("btnRenameClose")?.addEventListener("click", closeNameModal);
   closeOnBackdrop(el.renameOverlay, closeNameModal);
   el.renameInput.addEventListener("keydown", (e) => {
     if (e.key === "Enter") { e.preventDefault(); void confirmNameModal(); }

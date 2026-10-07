@@ -807,6 +807,23 @@ main{
     border-top: 1px solid rgba(255,255,255,.12)
 }
 
+/* Wspólny rząd przycisków akcji w stopce modala: przyciski wyrównane do
+   prawej (główna akcja ostatnia, najbardziej po prawej), komunikat
+   (.importMsg) zawsze po lewej, niezależnie od kolejności w HTML. */
+.modal-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    flex-wrap: wrap
+}
+
+.modal-actions > .importMsg {
+    order: -1;
+    margin-left: 0;
+    margin-right: auto
+}
+
 /* ===== Modal sheet (mobile) =====
    Rozbudowane modale (nie confirm/alert/prompt — te mają klasę .uni-modal
    i zostają małe) dostają na telefonie znacznik .modal--sheet. W tym

@@ -959,7 +959,10 @@
       <!-- ASSIGN REPORT MODAL -->
       <div class="market-preview-overlay modal--sheet" id="assignReportModal" hidden style="z-index:1100">
         <div class="market-preview-card" style="max-width:480px;width:92vw">
-          <div style="font-size:15px;font-weight:700;margin-bottom:14px">Przydziel zgłoszenie</div>
+          <div class="mHead" style="margin-bottom:14px">
+            <div style="font-size:15px;font-weight:700">Przydziel zgłoszenie</div>
+            <button class="btn sm" id="btnAssignClose" type="button" aria-label="Zamknij"><i class="ico" data-icon="close"></i></button>
+          </div>
           <div style="font-size:12px;opacity:.5;margin-bottom:8px">Wybierz istniejące:</div>
           <div id="assignReportList" style="max-height:200px;overflow-y:auto;border:1px solid rgba(255,255,255,.1);border-radius:8px;margin-bottom:14px;padding:4px"></div>
           <div style="font-size:12px;opacity:.5;margin-bottom:6px">Nowe zgłoszenie</div>
@@ -978,7 +981,10 @@
     <!-- Modal: powód odrzucenia -->
     <div class="overlay modal--sheet" id="marketRejectOverlay" style="display:none">
       <div class="modal">
-        <div class="mTitle">Odrzuć zgłoszenie</div>
+        <div class="mHead">
+          <div class="mTitle">Odrzuć zgłoszenie</div>
+          <button class="btn sm" id="btnMarketRejectClose" type="button" aria-label="Zamknij"><i class="ico" data-icon="close"></i></button>
+        </div>
         <div class="mSub">Podaj powód (opcjonalnie — trafi do autora).</div>
         <textarea class="inp" id="marketRejectNote" rows="4" style="width:100%;box-sizing:border-box;margin-top:8px" placeholder="Powód odrzucenia…"></textarea>
         <div class="modal-actions" style="margin-top:12px">
@@ -1002,8 +1008,13 @@
     <!-- Modal: podgląd gry z marketplace -->
     <div class="overlay modal--sheet" id="marketPreviewOverlay" style="display:none">
       <div class="modal modal-wide">
-        <div class="mTitle" id="marketPreviewTitle">—</div>
-        <div class="mSub" id="marketPreviewMeta">—</div>
+        <div class="mHead" style="align-items:flex-start">
+          <div>
+            <div class="mTitle" id="marketPreviewTitle">—</div>
+            <div class="mSub" id="marketPreviewMeta">—</div>
+          </div>
+          <button class="btn sm" id="btnMarketPreviewX" type="button" aria-label="Zamknij"><i class="ico" data-icon="close"></i></button>
+        </div>
         <div class="market-preview-desc" id="marketPreviewDesc"></div>
         <div class="market-preview-questions" id="marketPreviewQuestions"></div>
         <div class="modal-actions">

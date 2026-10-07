@@ -651,10 +651,13 @@ body.polls-hub-body .bar{
   flex-wrap: wrap;
   gap: 10px;
   align-items: center;
+  justify-content: flex-end;
 }
 .hub-modal-msg{
   font-size: 12px;
   opacity: .8;
+  order: -1;
+  margin-right: auto;
 }
 
 .hub-details-grid{

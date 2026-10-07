@@ -55,7 +55,7 @@ function ensureMobileStyle() {
         border-radius: 0;
         margin: 0;
       }
-      #contactModalOverlay.overlay:not(.modal--sheet) .mTitle {
+      #contactModalOverlay.overlay:not(.modal--sheet) .mHead {
         position: sticky;
         top: 0;
         background: var(--card);
@@ -69,7 +69,10 @@ function ensureMobileStyle() {
 function buildModalHtml() {
   return `
     <div class="modal">
-      <div class="mTitle" id="cModalTitle"></div>
+      <div class="mHead">
+        <div class="mTitle" id="cModalTitle"></div>
+        <button class="btn sm" id="cModalX" type="button" aria-label="Zamknij">${icon("close")}</button>
+      </div>
       <div id="cModalForm">
         <div class="field" style="margin-top:14px">
           <label class="field-label" id="cModalEmailLabel"></label>
@@ -127,6 +130,8 @@ function applyLabels() {
   set("cModalSubmit",       "contact.modal.submit");
   set("cModalSuccessTitle", "contact.modal.successTitle");
   set("cModalDone",         "common.done");
+  const xBtn = document.getElementById("cModalX");
+  if (xBtn) xBtn.setAttribute("aria-label", t("common.modal.closeLabel") || "Zamknij");
   const ticketInp = document.getElementById("cModalTicket");
   if (ticketInp) ticketInp.placeholder = t("contact.modal.ticketPlaceholder") || "2026-0001";
 }
@@ -150,6 +155,7 @@ function ensureModal() {
     closeContactModal();
   });
   document.getElementById("cModalClose")?.addEventListener("click", closeContactModal);
+  document.getElementById("cModalX")?.addEventListener("click", closeContactModal);
   document.getElementById("cModalDone")?.addEventListener("click", closeContactModal);
   document.getElementById("cModalSubmit")?.addEventListener("click", submitContact);
   document.getElementById("cModalTicket")?.addEventListener("input", () => {

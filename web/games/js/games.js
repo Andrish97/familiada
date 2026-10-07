@@ -1759,6 +1759,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // RENAME (modal)
   btnNameCancel?.addEventListener("click", closeRenameModal);
+  document.getElementById("btnNameClose")?.addEventListener("click", closeRenameModal);
   nameOverlay?.addEventListener("click", (ev) => {
     if (ev.target !== nameOverlay) return;
     if (nameOverlay.classList.contains("modal--sheet") && isSheetViewport()) return;

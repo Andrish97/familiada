@@ -69,7 +69,7 @@ function buildModal({
   if (body) bodyWrap.appendChild(body);
 
   const foot = document.createElement("div");
-  foot.className = "importRow uni-foot";
+  foot.className = "importRow uni-foot modal-actions";
 
   const okBtn = document.createElement("button");
   okBtn.className = "btn sm gold";
@@ -85,9 +85,9 @@ function buildModal({
   msg.className = "importMsg";
   msg.textContent = "";
 
-  foot.appendChild(okBtn);
-  if (showCancel) foot.appendChild(cancelBtn);
   foot.appendChild(msg);
+  if (showCancel) foot.appendChild(cancelBtn);
+  foot.appendChild(okBtn);
 
   modal.appendChild(head);
   modal.appendChild(sub);

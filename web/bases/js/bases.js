@@ -1644,6 +1644,7 @@ document.addEventListener("DOMContentLoaded", () => {
   btnCancelImport?.addEventListener("click", () => closeImportModal());
 
   btnNameCancel?.addEventListener("click", () => closeNameModal());
+  document.getElementById("btnNameClose")?.addEventListener("click", () => closeNameModal());
   btnNameOk?.addEventListener("click", () => nameOk());
   nameInp?.addEventListener("keydown", (e) => {
     if (e.key === "Enter") nameOk();

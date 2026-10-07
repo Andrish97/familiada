@@ -247,7 +247,7 @@
           <div class="importMsg" id="exportBaseProgMsg" style="min-height:18px"></div>
         </div>
 
-        <div class="importRow" style="margin-top:10px;">
+        <div class="importRow modal-actions" style="margin-top:10px;">
           <button class="btn sm gold" id="btnExportBaseDo" type="button" data-i18n="games.exportBase.confirm">Eksportuj</button>
           <div class="importMsg" id="exportBaseMsg"></div>
         </div>
@@ -282,7 +282,7 @@
           <div class="importMsg" id="importProgMsg" style="min-height:18px"></div>
         </div>
 
-        <div class="importRow" style="margin-top:12px">
+        <div class="importRow modal-actions" style="margin-top:12px">
           <button class="btn sm gold" id="btnImportJson" type="button" disabled data-i18n="games.import.confirm">Importuj</button>
           <div class="importMsg" id="importMsg"></div>
         </div>
@@ -303,16 +303,19 @@
     <!-- Modal: zmiana nazwy -->
     <div class="overlay modal--sheet" id="nameOverlay" style="display:none;">
       <div class="modal">
-        <div class="mTitle" id="nameTitle" data-i18n="games.nameModal.title">Zmień nazwę</div>
+        <div class="mHead">
+          <div class="mTitle" id="nameTitle" data-i18n="games.nameModal.title">Zmień nazwę</div>
+          <button class="btn sm" id="btnNameClose" type="button" aria-label="Zamknij" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
+        </div>
         <div class="mSub" id="nameSub" data-i18n="games.nameModal.sub">Podaj nową nazwę gry.</div>
 
         <div class="importRow">
           <input id="nameInp" class="inp" type="text" maxlength="80" placeholder="Nazwa..." data-i18n-placeholder="games.nameModal.placeholder"/>
         </div>
 
-        <div class="importRow">
-          <button class="btn sm gold" id="btnNameOk" type="button" data-i18n="games.common.save">Zapisz</button>
+        <div class="importRow modal-actions">
           <button class="btn sm" id="btnNameCancel" type="button" data-i18n="games.common.cancel">Anuluj</button>
+          <button class="btn sm gold" id="btnNameOk" type="button" data-i18n="games.common.save">Zapisz</button>
           <div class="importMsg" id="nameMsg"></div>
         </div>
       </div>

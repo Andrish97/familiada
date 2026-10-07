@@ -545,9 +545,11 @@ async function main() {
     },
   });
   presence.start();
-  document.getElementById("deviceLostClose")?.addEventListener("click", () => {
-    document.getElementById("deviceLostOverlay")?.classList.add("hidden");
-  });
+  for (const id of ["deviceLostClose", "deviceLostX"]) {
+    document.getElementById(id)?.addEventListener("click", () => {
+      document.getElementById("deviceLostOverlay")?.classList.add("hidden");
+    });
+  }
 
   // "Udostępnij" per urządzenie (D0/D1) — modal 1:1 ze starym Control
   // (control/js/shareDevice.js). Znaczek (badge "1"/puste) na przycisku

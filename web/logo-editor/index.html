@@ -332,16 +332,19 @@
   <!-- Modal: zmiana nazwy logo -->
   <div class="overlay modal--sheet" id="renameOverlay" style="display:none;">
     <div class="modal">
-      <div class="mTitle" id="renameTitle" data-i18n="logoEditor.rename.title">Zmień nazwę</div>
+      <div class="mHead">
+        <div class="mTitle" id="renameTitle" data-i18n="logoEditor.rename.title">Zmień nazwę</div>
+        <button class="btn sm" id="btnRenameClose" type="button" aria-label="Zamknij" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
+      </div>
       <div class="mSub" id="renameSub" data-i18n="logoEditor.rename.sub">Wpisz nową nazwę i zapisz.</div>
 
       <div class="importRow">
         <input id="renameInput" class="inp" type="text" maxlength="80" placeholder="Nazwa..." data-i18n-placeholder="logoEditor.rename.placeholder"/>
       </div>
 
-      <div class="importRow">
-        <button class="btn sm gold" id="btnRenameOk" type="button" data-i18n="logoEditor.common.save">Zapisz</button>
+      <div class="importRow modal-actions">
         <button class="btn sm" id="btnRenameCancel" type="button" data-i18n="logoEditor.common.cancel">Anuluj</button>
+        <button class="btn sm gold" id="btnRenameOk" type="button" data-i18n="logoEditor.common.save">Zapisz</button>
         <div class="importMsg" id="renameMsg"></div>
       </div>
     </div>
@@ -378,7 +381,7 @@
         <div class="importMsg" id="logoImportMsg" style="min-height:18px"></div>
       </div>
 
-      <div class="importRow" style="margin-top:12px">
+      <div class="importRow modal-actions" style="margin-top:12px">
         <button class="btn sm gold" id="btnLogoImportConfirm" type="button" disabled data-i18n="logoEditor.import.confirm">Importuj</button>
       </div>
     </div>

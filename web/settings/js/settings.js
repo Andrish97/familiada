@@ -4731,6 +4731,7 @@ function wireReportsEvents() {
   });
 
   document.getElementById("btnAssignCancel")?.addEventListener("click", closeAssignModal);
+  document.getElementById("btnAssignClose")?.addEventListener("click", closeAssignModal);
   document.getElementById("assignReportModal")?.addEventListener("click", (e) => {
     if (e.target !== e.currentTarget) return;
     if (isSheetViewport()) return; // sheet mode (mobile): tylko widoczny przycisk zamyka
@@ -4811,6 +4812,7 @@ function wireMarketplaceEvents() {
 
   // Modal podglądu
   document.getElementById("btnMarketPreviewClose")?.addEventListener("click", closeMarketPreview);
+  document.getElementById("btnMarketPreviewX")?.addEventListener("click", closeMarketPreview);
   document.getElementById("btnMarketPreviewApprove")?.addEventListener("click", () => {
     if (marketPreviewId) approveMarketGame(marketPreviewId);
   });
@@ -4831,6 +4833,7 @@ function wireMarketplaceEvents() {
 
   // Modal reject
   document.getElementById("btnMarketRejectCancel")?.addEventListener("click", closeRejectModal);
+  document.getElementById("btnMarketRejectClose")?.addEventListener("click", closeRejectModal);
   document.getElementById("btnMarketRejectConfirm")?.addEventListener("click", confirmReject);
   document.getElementById("marketRejectOverlay")?.addEventListener("click", (e) => {
     if (e.target !== e.currentTarget) return;
