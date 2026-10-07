@@ -138,7 +138,8 @@ w regułach i bez wiedzy, która strona trzyma.
 | `/logo/editor/<typ>/?id=L` | `logo:L` wyłącznie |
 | `/bases/explorer/?id=B` | **`base:B` współdzielone** (obecność — współpracownicy mogą mieć bazę otwartą naraz) + jak dziś elementy (`base_question` / `base_folder` / `base_tag`) wyłącznie w oknach i akcjach |
 | okno zmiany nazwy (lista gier / logo / baz, eksplorator) | zasób, którego nazwę zmienia, wyłącznie — do zamknięcia okna |
-| akcje całej bazy (zmiana nazwy, udostępnianie, usunięcie) | `base:B` wyłącznie |
+| akcje całej bazy (zmiana nazwy, usunięcie) | `base:B` wyłącznie |
+| udostępnianie bazy (dodanie / odebranie dostępu) | **nic** — nie zmienia zawartości bazy, więc działa przy otwartym eksploratorze |
 | inne akcje z list (reset, usunięcie, przeniesienie…) | swój zasób wyłącznie, na czas zapisu |
 
 ### Kto rozpoznaje — i jaki komunikat
@@ -149,8 +150,9 @@ w regułach i bez wiedzy, która strona trzyma.
 | dowolne `logo:L` (trwa edycja logo) | wejście do Control i ustawień **każdej** gry (biorą `logos`) | „Trwa edycja logo — zamknij edytor logo, żeby otworzyć rozgrywkę / ustawienia” |
 | `logos` (otwarty Control lub ustawienia) | wejście do edytora logo; nowe logo, zmiana nazwy, usunięcie logo | „Trwa rozgrywka” / „Otwarte ustawienia gry” (powód z tego, kto trzyma `logos`) |
 | `logo:L` (inna karta) | edytor tego logo, zmiana nazwy, usunięcie | „To logo jest edytowane gdzie indziej” |
-| `base:B` współdzielone (eksplorator otwarty) | zmiana nazwy bazy, udostępnianie, usunięcie bazy | „Baza jest otwarta — zmiana całej bazy niemożliwa” |
-| `base:B` wyłączne (trwa zmiana całej bazy: okno zmiany nazwy, udostępnianie, usuwanie) | wejście do eksploratora tej bazy — **pełna blokada strony** (jak zajęta gra), strona wczytuje się sama po zwolnieniu | „Trwa zmiana całej bazy” |
+| `base:B` współdzielone (eksplorator otwarty) | zmiana nazwy bazy, usunięcie bazy | „Baza jest otwarta — zmiana całej bazy niemożliwa” |
+| odebrany dostęp do bazy | otwarty eksplorator osoby, której odebrano dostęp (`forbidden` przy odnowieniu blokady albo przy akcji) | „Odebrano Ci dostęp do tej bazy” |
+| `base:B` wyłączne (trwa zmiana całej bazy: okno zmiany nazwy, usuwanie) | wejście do eksploratora tej bazy — **pełna blokada strony** (jak zajęta gra), strona wczytuje się sama po zwolnieniu | „Trwa zmiana całej bazy” |
 | element bazy | to samo okno / akcja u innej osoby | jak dziś |
 
 Kolejność sprawdzania przy wejściu do Control / ustawień: najpierw
@@ -161,8 +163,8 @@ pierwsza przeszkoda zatrzymuje i nie idziemy dalej.
 
 - **`base:B`** — cała baza. Eksplorator trzyma ją współdzielenie (wielu
   współpracowników naraz) i **rozpoznaje** trzymanie wyłączne: akcja
-  całej bazy (zmiana nazwy, udostępnianie, usunięcie) → pełna blokada
-  strony eksploratora. W drugą stronę: otwarty eksplorator → akcja całej
+  całej bazy (zmiana nazwy, usunięcie) → pełna blokada strony
+  eksploratora. W drugą stronę: otwarty eksplorator → akcja całej
   bazy odmówiona.
 - **Elementy** (`base_question`, `base_folder`, `base_tag`) — osobne
   zasoby, używane **tylko wewnątrz eksploratora** (okna i akcje); nie
@@ -171,9 +173,12 @@ pierwsza przeszkoda zatrzymuje i nie idziemy dalej.
 - Eksplorator, któremu wygasło trzymanie (uśpiony laptop) i ktoś w tym
   czasie wziął `base:B` wyłącznie, przy odnowieniu dostaje `locked` →
   pełna blokada strony (tak samo jak inne strony przy utracie blokady).
-- *Otwarte pytanie*: odebranie dostępu współpracownikowi, który ma
-  eksplorator otwarty — blokowane jak reszta udostępniania, czy zawsze
-  dozwolone (jego eksplorator dostaje `forbidden` i komunikat)?
+- **Udostępnianie nie blokuje i nie jest blokowane** (decyzja
+  2026-10-07): nie zmienia zawartości bazy, więc przy otwartym
+  eksploratorze można dodać kolejnych edytujących i odebrać dostęp. Osoba,
+  której odebrano dostęp, przy najbliższym odnowieniu blokady albo akcji
+  dostaje `forbidden` → pełnoekranowy komunikat „Odebrano Ci dostęp do tej
+  bazy” z wyjściem do listy baz.
 
 ### Zgodność zasobów (reguła w bazie, jedna dla wszystkich)
 
@@ -196,15 +201,16 @@ nazwy / usunięcie odmawia, gdy zasób albo jego „rodzic” (`logos`,
    (id = użytkownik) i `base:B`; reguła zgodności w `acquire_edit_lock`;
    `update_logo_checked` / `delete_resource_checked` / nowe
    `rename_resource_checked` i sprawdzenie w `market_remove_from_library`
-   i RPC udostępniania bazy po tej samej regule; usunięcie
+   po tej samej regule (udostępnianie bazy bez blokad); usunięcie
    `holder_context` z reguł.
 2. `resource-lock.js`: `guardResourceLocks([...])` — strona trzyma kilka
    zasobów (wyłącznie / współdzielenie), pierwsza przeszkoda = jej
    komunikat, wejście samo po zwolnieniu; `findBusyContext` znika.
 3. Control i ustawienia gry: `game:G` + `logos`; bez `guardResourceBusy`.
 4. Edytor i lista logo: tylko `logo:L` (i rozpoznanie `logos`).
-5. Eksplorator bazy: `base:B` współdzielone; lista baz i udostępnianie:
-   `base:B` wyłącznie.
+5. Eksplorator bazy: `base:B` współdzielone, pełna blokada przy
+   `base:B` wyłącznym i komunikat przy odebranym dostępie; lista baz
+   (zmiana nazwy, usunięcie): `base:B` wyłącznie.
 6. Okna zmiany nazwy na listach trzymają zasób do zamknięcia okna.
 7. Pola `locks` w mapie stron; test porównujący mapę z wywołaniami
    blokad w kodzie; e2e blokad (`cross-resource-locks.spec.js`,

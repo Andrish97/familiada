@@ -11,7 +11,9 @@ utracie kontekstu wystarczy przeczytać ten plik i wskazaną sekcję źródła.
    - nawigacja, adresy, karty, strony modalne: [`nawigacja-mapa-plan.md`](nawigacja-mapa-plan.md)
      (sekcja 6 — kroki, sekcja 7 — decyzje, sekcja 8 — adresy),
    - blokady zasobów: [`blokady-zasobow.md`](blokady-zasobow.md)
-     (sekcja 6 — mapa docelowa i kroki).
+     (sekcja 6 — mapa docelowa i kroki),
+   - wygląd list, hubu, subskrypcji i edytorów:
+     [`ujednolicenie-wygladu.md`](ujednolicenie-wygladu.md).
 2. **Decyzja użytkownika** → w tej samej turze dopisana do sekcji
    „Decyzje” właściwego źródła (z datą), commit. Nie w samej rozmowie.
 3. **Tok pracy**: branch roboczy → testy jednostkowe
@@ -30,7 +32,7 @@ utracie kontekstu wystarczy przeczytać ten plik i wskazaną sekcję źródła.
 
 | ID | Etap | Źródło | Status |
 |---|---|---|---|
-| E0 | Zielone e2e jako punkt odniesienia: `mobile-sheet-modals` (szerokość arkusza 360 vs >370, tekst „← Wstecz” vs ikona), przekroczenia czasu w eksploratorze bazy | — | czeka na decyzję (margines) |
+| E0 | Zielone e2e jako punkt odniesienia: `mobile-sheet-modals` (szerokość arkusza = szerokość treści strony — margines 15 px zostaje, decyzja 2026-10-07; tekst „← Wstecz” vs ikona), przekroczenia czasu w eksploratorze bazy | — | do zrobienia |
 | E1 | Edytor logo: lista `/logo/` + 3 strony edytorów, autozapis | nawigacja 6.5a | zrobione |
 | E2 | Blokady wg mapy docelowej (kroki 1–6; krok 7 `locks` w `PAGES` po E4) | blokady 6 | do zrobienia |
 | E3 | Drobne błędy logowania (`requireAuth` w control/account, domyślny argument, `withLangParam`) | nawigacja 6.1 | do zrobienia |
@@ -39,9 +41,10 @@ utracie kontekstu wystarczy przeczytać ten plik i wskazaną sekcję źródła.
 | E6 | `initPage()` strona po stronie, wspólny overlay gość/urządzenie | nawigacja 6.4 | do zrobienia |
 | E7 | Bez stron modalnych: b) edytor `?q=` c) ustawienia gry z autozapisem, Control zwykłym przejściem d) bez `?modal=` w manual/privacy | nawigacja 6.5 | do zrobienia |
 | E8 | Jeden moduł kart `?tab=`, stan eksploratora (baza + foldery) | nawigacja 6.6 | do zrobienia |
+| E10 | Ujednolicenie wyglądu: listy (pasek, karty, kafle, dolny pasek), hub ankiet, subskrypcje, edytory (tytuł i informacja w topbarze, jedno pole nazwy, edytor logo bez wskaźnika zapisu), tekst `reopenHint` | ujednolicenie-wygladu.md | do zrobienia — **pierwszy** |
 | E9 | Przyciski w `PAGES`, `locks` w `PAGES`, diagramy 6 map, e2e map | nawigacja 6.7, blokady 6 krok 7 | do zrobienia |
 
-Kolejność: E0 → E2 → E3 → E4 → E5 (a…f) → E6 → E7 → E8 → E9. Etapy
+Kolejność: E0 → **E10** → E2 → E3 → E4 → E5 (a…f) → E6 → E7 → E8 → E9. Etapy
 idą po kolei, nie równolegle — dotykają tych samych stron i tych samych
 speców e2e.
 
