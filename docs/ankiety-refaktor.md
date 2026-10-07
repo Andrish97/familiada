@@ -208,10 +208,10 @@ Topbar (wg `ujednolicenie-wygladu.md`): `FAMILIADA` + „Wstecz” ·
   Szkic: **Uruchom** · Otwarta: **Zamknij** (wyłączony z powodem obok,
   gdy brak minimum) + **Przerwij** · Zamknięta: **Uruchom ponownie**.
 
-**B. Treść** — na komputerze dwie kolumny, na telefonie karty
-**Udostępnianie · Wyniki** (wzór kart z list):
+**B. Treść** — karty **Udostępnianie · Wyniki** na każdym urządzeniu,
+także na komputerze (wzór kart z list; decyzja 2026-10-07):
 
-| Stan | Kolumna lewa: **Udostępnianie** | Kolumna prawa: **Wyniki** |
+| Stan | Karta **Udostępnianie** | Karta **Wyniki** |
 |---|---|---|
 | Szkic | pusta karta: „Uruchom ankietę, żeby ją udostępnić” | lista pytań bez wyników |
 | Otwarta | sekcja **Link i QR** + sekcja **Subskrybenci** (niżej) | wyniki na żywo (odświeżanie samo co kilka sekund, bez przycisku ⟳) |
