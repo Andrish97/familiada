@@ -151,11 +151,11 @@ async function deleteGame(page, gameId) {
 // sam skutek (aktywny wiersz w edit_locks) bez zależności od selektorów
 // zupełnie innej strony. =====
 
-function blankGlyphPayload() {
-  return {
-    layers: [{ color: "main", rows: Array.from({ length: 10 }, (_, i) => i === 4 ? "FAMILIADA".padStart(19).padEnd(30) : " ".repeat(30)) }],
-    source: { mode: "TEXT" },
-  };
+function familiadaGlyphPayload() {
+  // Scenariusz blokady ma pokazywać logo używane przez aplikację, a nie
+  // syntetyczny napis „FAMILIADA”, który wcześniej maskował błąd wczytania
+  // właściwego JSON-u.
+  return JSON.parse(fs.readFileSync(path.join(__dirname, "../../web/shared/data/logo_familiada.json"), "utf8"));
 }
 
 async function insertLogo(setupPage, name) {
@@ -167,7 +167,7 @@ async function insertLogo(setupPage, name) {
       .select("id").single();
     if (error) throw new Error("insert logo failed: " + error.message);
     return data.id;
-  }, { name, payload: blankGlyphPayload() });
+  }, { name, payload: familiadaGlyphPayload() });
 }
 
 async function acquireLogoLockExternally(setupPage, logoId, tabId) {

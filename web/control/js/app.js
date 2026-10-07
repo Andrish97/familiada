@@ -248,6 +248,18 @@ async function main() {
   void Promise.all(listSfx().map(getSfxDuration));
   const store = createStore(gameId);
   const expiredTimer = await store.hydrate();
+  const outroStartedKey = `control2:outro-started:${gameId}`;
+  let outroStartedAt = null;
+  let outroUnlockTimer = null;
+  let outroWasEnded = !!store.state.locks.gameEnded;
+  if (outroWasEnded) {
+    const savedStart = Number(sessionStorage.getItem(outroStartedKey));
+    const persistedStart = Date.parse(store.state.__row?.updated_at || "");
+    outroStartedAt = savedStart || (Number.isFinite(persistedStart) ? persistedStart : Date.now());
+    sessionStorage.setItem(outroStartedKey, String(outroStartedAt));
+  } else {
+    sessionStorage.removeItem(outroStartedKey);
+  }
   const sessionTelemetry = createSessionTelemetry(gameId, () => store.state);
 
   // Tylko przed startem gry (D0-D3) — po "Rozpocznij" te pola żyją już
@@ -606,7 +618,23 @@ async function main() {
   const scheduleTimer3Watch = makeTimerWatch(() => store.state.rounds?.timer3, "EXPIRE_TIMER3");
 
   function renderCtx() {
-    return { urls, presenceFlags, connectCodes, shareBadges, typingPending:typingCommit, busy: queuedGameAction || soundBusy() || (committing && !typingCommit) || lockConfirmPending || waitingForDisplay() || Date.now() < lockedUntil || missingDevices(store.state, presenceFlags).length > 0, devicesBlocked: missingDevices(store.state, presenceFlags).length > 0 };
+    const ended = !!store.state.locks.gameEnded;
+    if (!ended) {
+      outroWasEnded = false;
+      outroStartedAt = null;
+      if (outroUnlockTimer) clearTimeout(outroUnlockTimer);
+      outroUnlockTimer = null;
+      sessionStorage.removeItem(outroStartedKey);
+    } else if (!outroWasEnded) {
+      outroWasEnded = true;
+      outroStartedAt = Date.now();
+      sessionStorage.setItem(outroStartedKey, String(outroStartedAt));
+    }
+    const outroReturnReady = ended && Date.now() - (outroStartedAt || Date.now()) >= 30_000;
+    if (ended && !outroReturnReady && !outroUnlockTimer) {
+      outroUnlockTimer = setTimeout(() => { outroUnlockTimer = null; renderCurrent(); }, Math.max(0, 30_000 - (Date.now() - outroStartedAt)) + 20);
+    }
+    return { urls, presenceFlags, connectCodes, shareBadges, typingPending:typingCommit, outroReturnReady, busy: queuedGameAction || soundBusy() || (committing && !typingCommit) || lockConfirmPending || waitingForDisplay() || Date.now() < lockedUntil || missingDevices(store.state, presenceFlags).length > 0, devicesBlocked: missingDevices(store.state, presenceFlags).length > 0 };
   }
 
   function renderCurrent() {

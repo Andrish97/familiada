@@ -152,3 +152,24 @@ przypadek. Łącznie 25 wybranych testów lokalnych.
   `tests/recordings/2026-10-06-runda-2/index.html`; mają obraz i dźwięk.
   Zostały nagrane przed dodaniem tego wspólnego potwierdzania i nowej obsługi
   Powtórzenia. Nie stanowią filmu z wersji opisanej w tej sekcji.
+
+## Uwagi po ostatnim przeglądzie nagrań — 7 października
+
+- Wspólny modal: nagłówek i dolny pasek pozostają nieruchome, przewija się
+  wyłącznie treść. Wdrożono wspólny styl używany przez pozostałe modale.
+- Ekran Urządzenia: przewijana jest tylko lista urządzeń; podpowiedź pozostaje
+  widoczna, również podczas klikania odtwarzania dźwięku. Na zwykłym ekranie
+  układ mieści urządzenia bez przewijania.
+- Blokada akcji nie zmienia listy skrótów. W podpowiedziach finału skrócono
+  treść; pasek skrótów i separator pozostają przy dolnej krawędzi, a opis
+  kroku zajmuje miejsce nad nimi.
+- Outro: „Wróć do moich gier” odblokowuje się po 30 sekundach od rozpoczęcia
+  zakończenia, nawet jeśli dłuższy plik outro nadal gra. Nie zatrzymuje to
+  muzyki ani nie odblokowuje pozostałych akcji. Powrót nie wyświetla pytania
+  o opuszczenie gry; Control2 nie rejestruje też ostrzeżenia `beforeunload`.
+- Poprzednie nagranie 07 używało testowego JSON-u z napisem „FAMILIADA”, a nie
+  logo z ustawień. Test tworzy teraz logo na podstawie
+  `web/shared/data/logo_familiada.json`; poprawiono opis w przewodniku.
+- Kolejne nagranie: tylko scenariusz 04, po wdrożeniu powyższych zmian.
+  Weryfikacja na filmie obejmuje stabilność podpowiedzi i skrótów oraz pełny
+  przebieg finału. Pełnego zestawu testów nie uruchamiamy.

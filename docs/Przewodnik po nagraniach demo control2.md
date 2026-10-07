@@ -249,7 +249,7 @@ Krótki, pokazowy scenariusz (jedna odpowiedź) — sedno to mechanizm ręcznego
 
 Domyślny przebieg skrócono do sześciu filmów: **01, 03, 04, 05, 06 i 07**. Stary film 02 powtarza dojście do finału pokazane w 04/05; 08 (mail), 09 (fizyczny przycisk) i 10 (mnożnik) można nadal uruchomić osobno. Dotychczasowe filmy w galerii pozostają wcześniejszym kompletem do czasu pobrania nowych — aktualizacja skryptu nie oznacza, że nagrania już powstały.
 
-W nowym 04 zwróć uwagę na wybór dopasowania klawiszami **1–6/W/O**, kolejne **Enter** odsłaniające odpowiedź i punkty oraz **N, Enter** przechodzące dalej. Drugi gracz pokazuje obsługę myszą, powrót do Powtórzenia, wpisanie tekstu usuwające znacznik i ponowne zaznaczenie po wyczyszczeniu pola. Pola i przyciski powinny pozostawać stabilne podczas pisania.
+W nowym 04 zwróć uwagę na wybór dopasowania klawiszami **1–6/W/O**, kolejne **Enter** odsłaniające odpowiedź i punkty oraz **N, Enter** przechodzące dalej. Drugi gracz pokazuje obsługę myszą, powrót do Powtórzenia, wpisanie tekstu usuwające znacznik i ponowne zaznaczenie po wyczyszczeniu pola. Pola i przyciski powinny pozostawać stabilne podczas pisania. Przy podpowiedziach treść ma się zmieniać, ale pasek skrótów i separator pozostają przypięte na dole. Podczas blokady akcji lista skrótów nie znika. Na zwykłym ekranie podpowiedź i skróty powinny być widoczne bez przewijania.
 
 Nowy 05 wymaga uruchomienia timera mimo jednej wpisanej odpowiedzi. Pozostałe puste pola uniemożliwiają ręczny stop; skrypt czeka na naturalny koniec czasu. Osiągnięty próg nadal wymaga ręcznego Zakończ finał. Zatwierdzenie drużyny ma krótsze pauzy demonstracyjne, a działania nadal czekają na rzeczywistą dostępność przycisków.
 # Nowy komplet po poprawkach z 6 października 2026
@@ -271,3 +271,9 @@ To osobny komplet, żeby nie pomylić go z poprzednimi nagraniami.
 ponownym logowaniu; brakujące cztery ukończył drugi przebieg.
 Sprawdzono komplet sześciu plików, czas trwania oraz obecność ścieżek
 obrazu i dźwięku. Podgląd aktywności wdrażany później nie zmienia tych filmów.
+
+W scenariuszu 07 logo testowe pochodzi z `web/shared/data/logo_familiada.json`.
+Wcześniejsza wersja nagrania tworzyła własny, sztuczny JSON z napisem
+„FAMILIADA”, dlatego taki napis pojawiał się na środku Display. Nie był to
+obraz logo pobranego z ustawień gry. Nowe nagranie pozwoli sprawdzić właściwy
+plik logo; nie zmienia to scenariusza 04.

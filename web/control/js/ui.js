@@ -128,6 +128,7 @@ export function createUI({ root, emit }) {
   // store'a/silnika wprost... zero logiki gry tutaj").
   let busy = false;
   let devicesBlocked = false;
+  let outroReturnReady = false;
   function boardBusy() { return busy; }
   function revealLocked() { return busy; }
 
@@ -1151,7 +1152,7 @@ export function createUI({ root, emit }) {
           onclick: () => emit("game.restart"),
         }),
         navButton(t("control.returnToMyGames"), {
-          busy: boardBusy(),
+          busy: boardBusy() && !outroReturnReady,
           onclick: () => emit("session.finish"),
         }),
       ],
@@ -1747,6 +1748,7 @@ export function createUI({ root, emit }) {
     busy = !!ctx.busy;
     typingPending = !!ctx.typingPending;
     devicesBlocked = !!ctx.devicesBlocked;
+    outroReturnReady = !!ctx.outroReturnReady;
     // Każdy renderXxx() woła clear() (root.innerHTML="") i buduje CAŁE #app
     // od zera — .c2-scroll-area dostaje więc świeży element przy KAŻDYM
     // renderze, nie tylko przy realnej zmianie ekranu (np. presence ping z
