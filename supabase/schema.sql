@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict P5ltwd0hN9k3eAvhK2jJeoe13pnghVZRjMORCNu7ME2b9GeWDKfXCBMEipvbeG1
+\restrict XVQGxqH7uu22hecGZm1dik7u8G7cDdJ5RXYeYsV2E4BsJwp9ydP81oIc5h5ybnz
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -11283,7 +11283,7 @@ DECLARE uid uuid := auth.uid(); gid uuid;
 BEGIN
  IF uid IS NULL THEN RAISE EXCEPTION 'unauthorized'; END IF;
  IF p_tab_id IS NULL OR p_page IS NULL OR p_page NOT IN
- ('home','games','control','editor','game-settings','bases','base-explorer','logo-editor','polls','polls-hub','subscriptions','account','marketplace','manual','connect-device') THEN RAISE EXCEPTION 'invalid_page'; END IF;
+ ('home','games','control','editor','game-settings','bases','base-explorer','logo','polls','polls-hub','subscriptions','account','marketplace','manual','connect-device') THEN RAISE EXCEPTION 'invalid_page'; END IF;
  IF p_game_id IS NOT NULL AND p_page IN ('control','editor','game-settings','polls') THEN
    SELECT id INTO gid FROM public.games WHERE id=p_game_id AND owner_id=uid;
  END IF;
@@ -16720,5 +16720,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict P5ltwd0hN9k3eAvhK2jJeoe13pnghVZRjMORCNu7ME2b9GeWDKfXCBMEipvbeG1
+\unrestrict XVQGxqH7uu22hecGZm1dik7u8G7cDdJ5RXYeYsV2E4BsJwp9ydP81oIc5h5ybnz
 
