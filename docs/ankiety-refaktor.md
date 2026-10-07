@@ -21,6 +21,9 @@ Stan faktyczny sprawdzony w kodzie 2026-10-07 (opis niżej, sekcja 4).
 - **Subskrypcje** dostają trzecią kartę **Zadania** — ankiety do
   zagłosowania (dziś karta „Zadania” w hubie). Karty: Moi subskrybenci ·
   Moje subskrypcje · Zadania.
+- **Ponowne uruchomienie = nowe udostępnienie**: nowy klucz, stare linki,
+  QR i zaproszenia tracą ważność; nikt nie głosuje ponownie starym
+  linkiem (sekcja 4b).
 - Osobne liczenie głosów (anonimowe / od subskrybentów) — prawdopodobnie
   zbędne (patrz pytania).
 
@@ -116,20 +119,31 @@ Stan faktyczny sprawdzony w kodzie 2026-10-07 (opis niżej, sekcja 4).
 
 ## 4b. Prostszy mechanizm (propozycja)
 
-**Runda.** Każde uruchomienie ankiety to nowa runda (`poll_round` w grze).
-Głosy i zaproszenia należą do rundy. Ponowne uruchomienie = następna
-runda: stare głosy i zaproszenia przestają się liczyć same, bez kasowania
-i anulowania; znacznik „głosowałem” w przeglądarce zawiera numer rundy,
-więc wszyscy mogą głosować od nowa.
+**Każde uruchomienie = nowe udostępnienie** (decyzja 2026-10-07).
+Uruchomienie nadaje ankiecie **nowy klucz** (`share_key_poll`
+zmienia się przy każdym `poll_open`). Stare linki, kody QR, kody urządzeń
+i zaproszenia **tracą ważność** — po ponownym uruchomieniu trzeba
+udostępnić od nowa (nowy link / QR, nowe zaproszenia). Głosy poprzedniego
+uruchomienia przepadają. Nikt nie głosuje „od nowa” starym linkiem.
 
-**Stany ankiety** (jedno źródło: `games.status` + runda):
+**Stany ankiety** (jedno źródło: `games.status` + bieżący klucz):
 
 | Stan | Właściciel (strona ankiety) | Głosujący z linku / QR | Zaproszony (karta Zadania / link z maila) |
 |---|---|---|---|
 | Szkic | Uruchom | „Ankieta jeszcze nie jest otwarta” | — (zaproszeń nie ma) |
-| Otwarta | Zamknij; link + QR; zaproś subskrybentów; liczba głosów | głosowanie / „Dziękujemy, głos oddany” | Zagłosuj · Odrzuć |
-| Zamknięta | Uruchom ponownie (potwierdzenie: głosy i zaproszenia tej rundy przepadają) | „Ankieta została zamknięta” | „Ankieta została zamknięta” (znika z Zadań) |
-| Nowa runda po moim zaproszeniu | — | — | stare zaproszenie: „Ankieta została uruchomiona ponownie — poczekaj na nowe zaproszenie” |
+| Otwarta | Zamknij · Przerwij; link + QR; zaproś subskrybentów; liczba głosów | głosowanie / „Dziękujemy, głos oddany” | Zagłosuj · Odrzuć |
+| Zamknięta | Uruchom ponownie (potwierdzenie: głosy przepadają, trzeba udostępnić od nowa) | „Ankieta została zamknięta” | „Ankieta została zamknięta” (znika z Zadań) |
+| Link / zaproszenie ze starszego uruchomienia | — | „Ten link wygasł” | „To zaproszenie wygasło” (znika z Zadań) |
+
+**Zamknięcie a przerwanie.** Dziś ankietę da się zamknąć tylko przy
+minimum odpowiedzi (punktacja: ≥3 odpowiedzi z ≥3 punktami na pytanie;
+tekst: ≥3 różne odpowiedzi) i gdy żadne zaproszenie nie czeka. Przy
+otwartej ankiecie pytań nie da się edytować — z mało głosami nie ma
+wyjścia. Propozycja: dwie akcje przy otwartej ankiecie:
+- **Zamknij** — przelicza głosy na odpowiedzi gry; tylko przy minimum
+  odpowiedzi;
+- **Przerwij** — zawsze dostępne; głosy przepadają, linki i zaproszenia
+  wygasają, ankieta wraca do szkicu i można edytować pytania.
 
 **Zaproszenie** — 3 stany: **czeka · zagłosował · odrzucił**. Bez
 „otwarte” i „anulowane”: wycofanie zaproszenia = usunięcie (link mówi
@@ -149,9 +163,9 @@ która trzyma `game:G`; baza sprawdza blokadę (`*_checked`). Głosowanie
 dalej po kluczu z linku.
 
 **Do usunięcia**: hub, `poll_tasks.opened_at/cancelled_at` i stany
-pośrednie, kopia klucza w zaproszeniu, `poll_task_opened`, warunek
-„czekające zaproszenia blokują zamknięcie”, `polls_hub_can_close`,
-nieużywane RPC (sekcja 4), znacznik „głosowałem” bez rundy.
+pośrednie, kopia klucza w zaproszeniu (zaproszenie ważne tylko przy
+bieżącym kluczu gry), `poll_task_opened`, warunek „czekające zaproszenia
+blokują zamknięcie”, `polls_hub_can_close`, nieużywane RPC (sekcja 4).
 
 ## 5. Wpływ na inne plany
 
