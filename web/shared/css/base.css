@@ -8,6 +8,13 @@
     --gold: #ffeaa6
 }
 
+/* Bez niebieskiej poświaty przy dotknięciu elementu (Chrome/Safari mobilne).
+   Właściwość dziedziczy się — wystarczy na html. Obwódka klawiatury
+   (:focus-visible) zostaje. */
+html {
+    -webkit-tap-highlight-color: transparent;
+}
+
 * {
     box-sizing: border-box
 }
