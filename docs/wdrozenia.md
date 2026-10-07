@@ -16,7 +16,8 @@ utracie kontekstu wystarczy przeczytać ten plik i wskazaną sekcję źródła.
      [`ujednolicenie-wygladu.md`](ujednolicenie-wygladu.md),
    - ankiety (hub znika, strona ankiety, subskrypcje z zadaniami):
      [`ankiety-refaktor.md`](ankiety-refaktor.md),
-   - usuwanie gry i konta: [`usuwanie-danych.md`](usuwanie-danych.md).
+   - usuwanie gry i konta: [`usuwanie-danych.md`](usuwanie-danych.md),
+   - granice maili do innych osób: [`maile-granice.md`](maile-granice.md) (część E11).
 2. **Decyzja użytkownika** → w tej samej turze dopisana do sekcji
    „Decyzje” właściwego źródła (z datą), commit. Nie w samej rozmowie.
 3. **Tok pracy**: branch roboczy → testy jednostkowe

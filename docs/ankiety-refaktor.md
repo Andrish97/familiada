@@ -281,7 +281,8 @@ Odrzucenie: jedno kliknięcie, bez potwierdzenia; właściciel widzi
 | **Zaproszenie do ankiety** | „Wyślij zaproszenia” przy otwartej ankiecie | zaznaczeni subskrybenci (aktywni) | „X zaprasza Cię do ankiety „nazwa”” → Zagłosuj (link `?t=`) | wspólny limit niżej |
 | Przypomnienie (decyzja 2026-10-07) | dzwonek na kafelku osoby, która czeka | ta osoba | jak zaproszenie, „Przypomnienie” | wspólny limit niżej |
 
-**Limit maili ankietowych** (decyzja 2026-10-07 — nie naprzykrzać się):
+**Limit maili ankietowych** — szczegóły i liczby w
+[`maile-granice.md`](maile-granice.md) (do potwierdzenia). Wcześniejszy zapis:
 jeden wspólny limit dla zaproszenia, ponownego zaproszenia po usunięciu
 udostępnienia i przypomnienia — **najwyżej 1 mail na osobę na grę na
 24 h**, dla wszystkich subskrybentów (z kontem i tylko e-mail).
