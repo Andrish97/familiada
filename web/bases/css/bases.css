@@ -249,3 +249,6 @@
 
   .bases-section .grid{ overflow: visible; }
 }
+
+/* Kafelki baz zachowują tę samą wysokość co kafelki gier. */
+.bases-section .grid .card{ min-height:130px; }

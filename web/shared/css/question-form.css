@@ -131,8 +131,9 @@
     display: flex;
     gap: 10px;
     border-style: dashed;
-    border-color: rgba(255,255,255,.2);
-    --btn-tint: rgba(255,255,255,.04);
+    border-color: rgba(255,234,166,.35);
+    border-radius: 16px;
+    --btn-tint: rgba(255,234,166,.06);
     background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, #050914); /* kryjące: css/base.css */
     color: #fff;
     font: inherit;
@@ -141,7 +142,8 @@
 }
 
 .qf-add:hover {
-    filter: brightness(1.08)
+    filter: brightness(1.08);
+    border-color: rgba(255,234,166,.85)
 }
 
 .qf-add .qf-addLbl {

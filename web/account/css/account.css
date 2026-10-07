@@ -20,13 +20,6 @@ main.account-wrap .bar > div {
   gap: 6px;
 }
 
-.account-status .status {
-  font-size: 12px;
-  opacity: .5;
-  padding: 2px 0;
-  text-align: right;
-}
-
 .account-status .err {
   min-height: 18px;
   color: #ff9d9d;

@@ -165,7 +165,6 @@ export function createShareDevice({ currentUser, game, onBadgesChanged }) {
         currentCont.replaceChildren();
         const empty = document.createElement("div");
         empty.className = "share-empty-state";
-        empty.style.cssText = "border:1px dashed var(--line2);border-radius:12px;padding:12px;font-size:.85rem;opacity:.7";
         empty.textContent = t("control.shareDeviceModal.noneCurrent");
         currentCont.appendChild(empty);
         if (emailInp) emailInp.disabled = false;

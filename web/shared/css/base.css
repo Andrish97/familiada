@@ -1802,3 +1802,12 @@ body{
     font-weight: 700;
     font-size: 11px;
 }
+
+/* Wspólny pusty stan list udostępniania (bazy i Control). */
+.share-empty-state{
+  border:1px dashed var(--line2);
+  border-radius:12px;
+  padding:12px;
+  font-size:.85rem;
+  opacity:.7;
+}

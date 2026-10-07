@@ -948,7 +948,7 @@ async function renderShareModal() {
   if (sharePendingList) {
     const rows = pending || [];
     if (!rows.length) {
-      sharePendingList.innerHTML = `<div style="opacity:.75">${t("bases.shareModal.emptyPending")}</div>`;
+      sharePendingList.innerHTML = `<div class="share-empty-state">${t("bases.shareModal.emptyPending")}</div>`;
     } else {
       sharePendingList.innerHTML = "";
       for (const r of rows) {
@@ -990,7 +990,6 @@ async function renderShareModal() {
     if (!rows.length) {
       const empty = document.createElement("div");
       empty.className = "share-empty-state";
-      empty.style.cssText = "border:1px dashed var(--line2);border-radius:12px;padding:12px;font-size:.85rem;opacity:.7";
       empty.textContent = t("bases.shareModal.emptyShared");
       shareSharedList.replaceChildren(empty);
     } else {

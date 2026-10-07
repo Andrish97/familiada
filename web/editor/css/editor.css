@@ -261,18 +261,19 @@ body.editor-body .wrap {
 
 .addTile {
     border-radius: 18px;
-    border: 1px dashed rgba(255,255,255,.2);
+    border: 1px dashed rgba(255,234,166,.35);
     --btn-tint: rgba(255,255,255,.04);
   background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, #050914); /* kryjące: css/base.css */
 
-    padding: 12px;
+    padding: 14px;
     align-items: center;
     cursor: pointer;
-    min-height: 60px
+    min-height: 130px
 }
 
 .addTile:hover {
-    filter: brightness(1.08)
+    filter: brightness(1.08);
+    border-color: rgba(255,234,166,.85)
 }
 
 .addTile .plus {
