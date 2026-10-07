@@ -1306,9 +1306,9 @@ html.showA2HS .a2hs {
      widoczny tylko gdy przycisk ma .has-badge,
    - .hub-tab-badge przy wypustkach / tytułach kolumn (Bazy, Ankiety,
      Subskrypcje), ukrywany klasą .is-empty.
-   Selektory „.btn .badge” / „.tab-label .hub-tab-badge” mają wyższą
-   specyficzność celowo: control.css i editor.css mają własne, globalne
-   „.badge” (pigułki statusu), które inaczej nadpisywałyby licznik. */
+   Etykiety tekstowe (status, typ, rola…) to NIE .badge, tylko .tag niżej.
+   „.btn .badge” / „.tab-label .hub-tab-badge” mają wyższą specyficzność,
+   żeby żaden styl strony nie nadpisał licznika na przycisku/wypustce. */
 .badge,
 .btn .badge,
 .hub-tab-badge,
@@ -1344,6 +1344,41 @@ html.showA2HS .a2hs {
 
 .hub-tab-badge{ display: inline-flex; }
 .hub-tab-badge.is-empty{ display: none; }
+
+/* ===== Oznaczenie (etykieta tekstowa) =====
+   Drugi, osobny styl obok licznika powiadomień: .tag to stała informacja
+   o obiekcie (typ gry, status urządzenia, „Od: …”, rola, język, status
+   zgłoszenia, liczba głosów…), NIE coś do odczytania/obsłużenia.
+   Różni się od .badge celowo: prostokąt z zaokrągleniem zamiast kółka,
+   tekst zamiast liczby, kolor zależny od znaczenia.
+   Warianty: domyślny (neutralny), --gold, --ok, --bad, --warn, --info, --muted. */
+.tag{
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+
+  padding: 3px 8px;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,.16);
+  background: rgba(255,255,255,.07);
+  color: rgba(255,255,255,.9);
+
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: .04em;
+  line-height: 1.2;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+/* odstęp tylko za ikoną (bez flex-gap: „Finał <b>3</b>/5” ma zostać ciągłym tekstem) */
+.tag > svg.ico:not(:last-child){ margin-right: 5px; }
+.tag--upper{ text-transform: uppercase; }
+.tag--gold { border-color: rgba(255,234,166,.40); background: rgba(255,234,166,.12); color: var(--gold); }
+.tag--ok   { border-color: rgba(80,200,120,.35);  background: rgba(80,200,120,.13);  color: #7ef0a2; }
+.tag--bad  { border-color: rgba(255,110,110,.45); background: rgba(255,110,110,.15); color: #ffaaaa; }
+.tag--warn { border-color: rgba(255,200,60,.42);  background: rgba(255,200,60,.14);  color: #ffd86e; }
+.tag--info { border-color: rgba(140,200,255,.40); background: rgba(140,200,255,.14); color: #bfe3ff; }
+.tag--muted{ border-color: rgba(160,160,160,.22); background: rgba(160,160,160,.10); color: #c0c0c0; }
 
 
 

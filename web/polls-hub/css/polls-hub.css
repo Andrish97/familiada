@@ -462,26 +462,13 @@ body.polls-hub-body .bar{
   max-width: 55%;
 }
 
-/* badge: nie łamie się, nie skraca — scroll poziomy w środku */
+/* oznaczenie (.tag z base.css): nie łamie się, nie skraca — scroll poziomy w środku */
 .hub-item-badge{
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 4px 8px;
-  border-radius: 999px;
-  border: 1px solid rgba(255,234,166,.45);
-  background: rgba(255,234,166,.14);
-  color: var(--gold);
-  font-size: 11px;
-  font-weight: 1000;
-  letter-spacing: .02em;
-  white-space: nowrap;
   flex: 0 1 auto;
   max-width: 100%;
   overflow-x: auto;           /* ✅ pełna informacja */
   overflow-y: hidden;
   scrollbar-width: thin;
-  flex-direction: row;
 }
 
 .hub-item-badge::-webkit-scrollbar{
@@ -490,12 +477,6 @@ body.polls-hub-body .bar{
 .hub-item-badge::-webkit-scrollbar-thumb{
   background: rgba(255,255,255,.22);
   border-radius: 999px;
-}
-
-.hub-item-badge-alt{
-  border-color: rgba(140,200,255,.45);
-  background: rgba(140,200,255,.16);
-  color: #bfe3ff;
 }
 
 /* przyciski w itemie */

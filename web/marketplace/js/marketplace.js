@@ -12,6 +12,9 @@ import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } fro
 import "../../shared/js/core/contact-modal.js?v=v2026-10-07T06442";
 import { icon, iconText, starRating } from "../../shared/js/core/icons.js?v=v2026-10-07T06442";
 
+// Status zgłoszonej gry → wariant oznaczenia (.tag z base.css).
+const MKT_STATUS_TAG = { pending: "tag--warn", published: "tag--ok", rejected: "tag--bad", withdrawn: "tag--muted" };
+
 /* =========================================================
    Constants
 ========================================================= */
@@ -255,15 +258,15 @@ function makeGameCard(g) {
   card.dataset.id = g.id;
 
   const authorLabel = isProducer
-    ? `<span class="mkt-badge mkt-badge-producer">${esc(t("marketplace.producerBadge"))}</span>`
+    ? `<span class="tag tag--gold mkt-badge-producer">${esc(t("marketplace.producerBadge"))}</span>`
     : `<span class="mkt-author">${esc(t("marketplace.authorLabel").replace("{author}", g.author_username))}</span>`;
 
   const inLibrary = !!g.in_library;
 
   card.innerHTML = `
     <div class="mkt-card-top">
-      <span class="mkt-lang-badge">${esc(g.lang.toUpperCase())}</span>
-      ${inLibrary ? `<span class="mkt-badge mkt-badge-added">${iconText("check", t("marketplace.addedBadge"))}</span>` : ""}
+      <span class="tag tag--gold mkt-lang-badge">${esc(g.lang.toUpperCase())}</span>
+      ${inLibrary ? `<span class="tag tag--ok mkt-badge-added">${iconText("check", t("marketplace.addedBadge"))}</span>` : ""}
     </div>
     <div class="mkt-card-title">${esc(g.title)}</div>
     <div class="mkt-card-author">${authorLabel}</div>
@@ -339,7 +342,7 @@ function renderDetail(g) {
   if (els.detailMeta) {
     const isProducer = g.origin === "producer" || !g.author_username;
     if (isProducer) {
-      els.detailMeta.innerHTML = `${esc(g.lang.toUpperCase())} · <span class="mkt-badge mkt-badge-producer">${esc(t("marketplace.producerBadge"))}</span>`;
+      els.detailMeta.innerHTML = `${esc(g.lang.toUpperCase())} · <span class="tag tag--gold mkt-badge-producer">${esc(t("marketplace.producerBadge"))}</span>`;
     } else {
       els.detailMeta.textContent = `${g.lang.toUpperCase()} · ${g.author_username}`;
     }
@@ -475,7 +478,7 @@ function refreshCardInLibrary(id, inLibrary) {
   if (inLibrary && !badge) {
     const top = card.querySelector(".mkt-card-top");
     const span = document.createElement("span");
-    span.className = "mkt-badge mkt-badge-added";
+    span.className = "tag tag--ok mkt-badge-added";
     span.innerHTML = iconText("check", t("marketplace.addedBadge"));
     top?.appendChild(span);
   } else if (!inLibrary && badge) {
@@ -513,7 +516,7 @@ async function loadMySent() {
   };
 
   els.mySentList.innerHTML = rows.map(g => {
-    const statusClass = `mkt-status-${g.status}`;
+    const statusClass = MKT_STATUS_TAG[g.status] || "";
     const note = g.moderation_note
       ? `<div class="mkt-sent-note">${esc(t("marketplace.mySent.reasonLabel").replace("{note}", g.moderation_note))}</div>`
       : "";
@@ -528,7 +531,7 @@ async function loadMySent() {
       <div class="mkt-sent-info">
         <div class="mkt-sent-title">${esc(g.title)}</div>
         <div class="mkt-sent-meta">${esc(g.lang.toUpperCase())} · ${libraryInfo} ${ratingInfo}</div>
-        <span class="mkt-status-badge ${statusClass}">${esc(statusLabels[g.status] ?? g.status)}</span>
+        <span class="tag tag--upper ${statusClass} mkt-status-badge">${esc(statusLabels[g.status] ?? g.status)}</span>
         ${note}
       </div>
       <div class="mkt-sent-actions">

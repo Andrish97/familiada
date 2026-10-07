@@ -102,23 +102,7 @@
   margin-top:8px;
 }
 
-.tileBadge{
-  display:inline-flex;
-  align-items:center;
-  gap:6px;
-  padding:4px 10px;
-  border-radius:999px;
-  border:1px solid rgba(255,255,255,.16);
-  background:rgba(255,255,255,.07);
-  font-size:12px;
-  line-height:1;
-  letter-spacing:.02em;
-  opacity:.95;
-}
-
-.tileBadge[data-kind="from"]{ border-color:rgba(120,200,255,.25); background:rgba(120,200,255,.10); }
-.tileBadge[data-kind="role"]{ border-color:rgba(255,234,166,.25); background:rgba(255,234,166,.10); }
-.tileBadge[data-kind="proposed"]{ border-color:rgba(255,210,80,.45); background:rgba(255,210,80,.14); color:#ffe08a; }
+/* oznaczenia na kafelku: .tag z base.css (kolor wg data-kind w bases.js) */
 
 /* X jest tu <button> — wygląd (ramka jak w logo) z games.css */
 .games-body .grid .card .x{

@@ -648,8 +648,8 @@ test("control2: parowanie urządzeń — linki renderują się bez błędu, Cont
     // "CONNECTED" (EN), "ПІДКЛЮЧЕНО" (UK); ten test od zawsze błędnie
     // oczekiwał angielskiego słowa mimo że reszta asercji w tym pliku jest
     // po polsku — nigdy wcześniej nie uruchomiony na żywo.
-    await expect(page.locator('.device-row[data-device="host"] .device-row-1 .badge')).toHaveText("POŁĄCZONO", { timeout: 10000 });
-    await expect(page.locator('.device-row[data-device="buzzer"] .device-row-1 .badge')).toHaveText("POŁĄCZONO", { timeout: 10000 });
+    await expect(page.locator('.device-row[data-device="host"] .device-row-1 .tag')).toHaveText("POŁĄCZONO", { timeout: 10000 });
+    await expect(page.locator('.device-row[data-device="buzzer"] .device-row-1 .tag')).toHaveText("POŁĄCZONO", { timeout: 10000 });
 
     await page.getByRole("button", { name: "Dalej" }).click();
     await expect(page.locator(".stepTitle")).toHaveText("Podsumowanie", { timeout: 10000 });

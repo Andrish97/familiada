@@ -454,7 +454,7 @@ function renderPolls() {
       item.className = `hub-item ${pollTileClass(poll)} ${poll.game_id === selectedPollId ? "selected" : ""}`;
       const badgesHtml = poll.poll_state === "draft"
         ? ""
-        : `<div class="hub-item-actions hub-item-actions--poll-badges"><span class="hub-item-badge">${MSG.votesBadgeLabel()}: ${m.left}</span><span class="hub-item-badge hub-item-badge-alt">${MSG.anonBadgeLabel()}: ${m.anon}</span></div>`;
+        : `<div class="hub-item-actions hub-item-actions--poll-badges"><span class="tag tag--gold hub-item-badge">${MSG.votesBadgeLabel()}: ${m.left}</span><span class="tag tag--info hub-item-badge">${MSG.anonBadgeLabel()}: ${m.anon}</span></div>`;
       item.innerHTML = `<div><div class="hub-item-title">${pollTypeLabel(poll.poll_type)} — ${escapeHtml(poll.name || MSG.dash())}</div><div class="hub-item-sub">${poll.poll_state === "open" ? MSG.pollStateOpen() : poll.poll_state === "closed" ? MSG.pollStateClosed() : MSG.pollStateDraft()}</div></div>${badgesHtml}`;
       item.addEventListener("click", () => selectPoll(poll));
       item.addEventListener("dblclick", () => openPoll(poll));

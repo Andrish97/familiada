@@ -33,7 +33,7 @@
 .dot {
   transition: background .25s ease, border-color .25s ease, box-shadow .25s ease;
 }
-.badge {
+.tag {
   transition: background .25s ease, border-color .25s ease, color .25s ease;
 }
 
@@ -919,43 +919,15 @@
     }
 }
 
-.badge,.name {
+.name {
     font-weight: 1000;
     font-size: 15px;
     letter-spacing: .04em;
-    grid-column: span 2; /;
+    grid-column: span 2;
 }
 
-.badge {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 10px 15px;
-    border-radius: 14px;
-    border: 1px solid rgba(255,255,255,.2);
-    background: rgba(255,255,255,.08);
-    font-size: 11px;
-    font-weight: 900;
-    text-transform: uppercase;
-    white-space: nowrap
-}
-.badge:empty { display: none; }
-
-.badge.mid {
-    border-color: rgba(255,234,166,.35);
-    background: rgba(255,234,166,.1);
-    color: var(--gold)
-}
-
-.badge.bad {
-    border-color: rgba(255,120,120,.45);
-    background: rgba(255,120,120,.16)
-}
-
-.badge-soft {
-    background: rgba(255,255,255,.04);
-    border-color: rgba(255,255,255,.16)
-}
+/* Status urządzenia (POŁĄCZONO / BRAK POŁĄCZENIA) = oznaczenie .tag z
+   base.css; liczniki na przyciskach to osobny .badge (powiadomienia). */
 
 .rowBtns {
     display: flex;

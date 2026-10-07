@@ -1361,20 +1361,7 @@ body.tools-fullscreen .tools-frame-wrap iframe{
   font-weight: 500;
 }
 
-.game-badge {
-  font-size: 10px;
-  padding: 2px 7px;
-  border-radius: 99px;
-  font-weight: 600;
-  flex-shrink: 0;
-  white-space: nowrap;
-}
-
-.badge-dup { background: rgba(251,191,36,.12); color: var(--yellow); border: 1px solid rgba(251,191,36,.25); }
-.badge-weak { background: rgba(248,113,113,.08); color: var(--red); border: 1px solid rgba(248,113,113,.2); }
-.badge-ok { background: rgba(74,222,128,.08); color: var(--green); border: 1px solid rgba(74,222,128,.2); }
-.badge-new { background: rgba(96,165,250,.1); color: var(--blue); border: 1px solid rgba(96,165,250,.25); }
-.badge-rej { background: rgba(248,113,113,.08); color: var(--red); border: 1px solid rgba(248,113,113,.2); }
+/* DUP / SŁABE: oznaczenia = .tag z base.css */
 
 .game-chevron {
   color: var(--muted);
@@ -1632,21 +1619,7 @@ body.tools-fullscreen .tools-frame-wrap iframe{
   position: relative;
 }
 
-.mail-folder-badge {
-  background: #ffeaa6;
-  color: #050914;
-  font-size: 11px;
-  font-weight: 700;
-  padding: 2px 6px;
-  border-radius: 10px;
-  min-width: 18px;
-  text-align: center;
-  display: none;
-}
-
-.mail-folder-badge.visible {
-  display: inline-block;
-}
+/* liczniki folderów: .hub-tab-badge z base.css (powiadomienia) */
 
 .mail-folder:hover { background: rgba(255,255,255,.06); }
 .mail-folder.active { background: rgba(255,234,166,.12); color: #ffeaa6; }
@@ -1719,31 +1692,11 @@ body.tools-fullscreen .tools-frame-wrap iframe{
 .mail-ti-preview { font-size: 11px; opacity: .38; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .mail-ti-ticket { font-size: 10px; color: #ffeaa6; opacity: .7; margin-top: 3px; }
 
-/* Ticket number badge - prominent display */
-.mail-ti-ticket-badge {
-  font-size: 10px;
-  padding: 1px 6px;
-  border-radius: 4px;
-  background: rgba(255, 234, 166, 0.12);
-  color: #ffeaa6;
-  border: 1px solid rgba(255, 234, 166, 0.25);
-  white-space: nowrap;
-  font-weight: 500;
-  margin-right: 6px;
-}
+/* numer zgłoszenia na liście: .tag.tag--gold z base.css */
+.mail-ti-ticket-badge { margin-right: 6px; }
 
-/* Ticket badge in conversation header */
-.mail-ticket-badge {
-  font-size: 11px;
-  padding: 2px 7px;
-  border-radius: 6px;
-  background: rgba(255, 234, 166, 0.15);
-  color: #ffeaa6;
-  white-space: nowrap;
-  font-weight: 500;
-  margin-left: 6px;
-  cursor: pointer;
-}
+/* numer zgłoszenia w nagłówku rozmowy: .tag.tag--gold z base.css */
+.mail-ticket-badge { margin-left: 6px; cursor: pointer; }
 
 .mail-conv {
   display: flex;

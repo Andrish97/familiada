@@ -213,25 +213,12 @@ body.editor-body .wrap {
     margin-bottom: 10px
 }
 
-.badge,.lock {
-    padding: 8px 10px;
-    border-radius: 999px;
-    font-weight: 1000;
-    font-size: 11px
-}
+/* #typeBadge / #lockBadge: oznaczenia = .tag z base.css */
+/* Typ gry jest już w tytule strony (#pageTitle) — oznaczenie byłoby
+   duplikatem, więc zostaje schowane (jak dotąd). */
+#typeBadge { display: none; }
 
-.badge {
-    border: 1px solid rgba(255,255,255,.16);
-    background: var(--card2);
-    letter-spacing: .12em;
-    text-transform: uppercase;
-    color: var(--gold)
-}
 
-.lock {
-    border: 1px solid rgba(255,120,120,.35);
-    background: rgba(255,120,120,.1)
-}
 
 .block {
     margin-bottom: 12px

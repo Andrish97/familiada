@@ -503,8 +503,8 @@ function renderGameList() {
       <div class="game-row">
         <input type="checkbox" class="game-cb" data-id="${game.id}" ${checked} />
         <span class="game-title">${game.title}</span>
-        ${hasDup ? `<span class="game-badge badge-dup">DUP</span>` : ``}
-        ${isWeak ? `<span class="game-badge badge-weak">SŁABE</span>` : ``}
+        ${hasDup ? `<span class="tag tag--warn">DUP</span>` : ``}
+        ${isWeak ? `<span class="tag tag--bad">SŁABE</span>` : ``}
         <span class="game-title" style="color:var(--muted);font-size:12px;flex:1;margin-left:10px">${topLine} · ${qualityLine}</span>
         <button class="btn sm" data-action="uniq" data-id="${game.id}">Unikalność</button>
         <button class="btn sm" data-action="edit" data-id="${game.id}">Edytuj</button>

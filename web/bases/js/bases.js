@@ -1302,7 +1302,7 @@ function render() {
       ? badges
           .map(
             (x) =>
-              `<span class="tileBadge" data-kind="${escapeHtml(x.kind)}" title="${escapeHtml(
+              `<span class="tag ${TILE_TAG_VARIANT[x.kind] || ""} tileBadge" data-kind="${escapeHtml(x.kind)}" title="${escapeHtml(
                 x.title || ""
               )}">${x.icon ? icon(x.icon) : ""}${escapeHtml(x.text || "")}</span>`
           )
@@ -1670,6 +1670,9 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 
+
+// Oznaczenia na kafelku (.tag z base.css): kolor wg znaczenia.
+const TILE_TAG_VARIANT = { proposed: "tag--warn", from: "tag--info", role: "tag--gold", mine: "" };
 
 async function refreshAltBadge() {
   try {

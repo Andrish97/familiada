@@ -406,12 +406,12 @@ test("ustawienia gry: finał — wybranie dokładnie 5 z 6 pytań zapisuje się,
     for (let i = 0; i < 5; i++) {
       await page.locator("#gsFinalePool .qRow").first().click();
     }
-    await expect(page.locator(".badge b")).toHaveText("5");
+    await expect(page.locator(".gs-badge-row .tag b")).toHaveText("5");
     await expect(page.locator("#gsFinalePool .qRow")).toHaveCount(1);
 
     // Próba dodania 6-go — handler odrzuca po limicie, bez re-renderu
     await page.locator("#gsFinalePool .qRow").first().click();
-    await expect(page.locator(".badge b")).toHaveText("5");
+    await expect(page.locator(".gs-badge-row .tag b")).toHaveText("5");
     await expect(page.locator("#gsFinalePool .qRow")).toHaveCount(1);
 
     // localSettings.questions.rounds wypełnia się automatycznie dopiero przy

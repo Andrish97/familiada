@@ -2624,14 +2624,15 @@ function updateFolderBadges(inboxUnread, reportsOpen) {
   const badgeInbox = document.getElementById("badgeInbox");
   const badgeReports = document.getElementById("badgeReports");
   
+  // Liczniki = wspólny licznik powiadomień (.hub-tab-badge z base.css).
   if (badgeInbox) {
-    badgeInbox.textContent = inboxUnread;
-    badgeInbox.classList.toggle("visible", inboxUnread > 0);
+    badgeInbox.textContent = inboxUnread > 99 ? "99+" : String(inboxUnread || "");
+    badgeInbox.classList.toggle("is-empty", !(inboxUnread > 0));
   }
   
   if (badgeReports) {
-    badgeReports.textContent = reportsOpen;
-    badgeReports.classList.toggle("visible", reportsOpen > 0);
+    badgeReports.textContent = reportsOpen > 99 ? "99+" : String(reportsOpen || "");
+    badgeReports.classList.toggle("is-empty", !(reportsOpen > 0));
   }
 }
 
@@ -2766,7 +2767,7 @@ function renderMailList(rows) {
       // Strip [Marketing] prefix from subject
       const displaySubject = stripMarketingPrefix(r.subject);
       // Ticket number badge for messages with tickets
-      const ticketBadge = r.ticket_number ? `<span class="mail-ti-ticket-badge">${escSetting(r.ticket_number)}</span>` : "";
+      const ticketBadge = r.ticket_number ? `<span class="tag tag--gold mail-ti-ticket-badge">${escSetting(r.ticket_number)}</span>` : "";
 
       item.innerHTML = `
         <div class="mail-ti-row">
@@ -2791,7 +2792,7 @@ function renderMailList(rows) {
     const from = isInbound ? (r.from_email || "—") : (r.to_email || "—");
 
     // Ticket number badge for messages with tickets - displayed prominently
-    const ticketBadge = r.ticket_number ? `<span class="mail-ti-ticket-badge">${escSetting(r.ticket_number)}</span>` : "";
+    const ticketBadge = r.ticket_number ? `<span class="tag tag--gold mail-ti-ticket-badge">${escSetting(r.ticket_number)}</span>` : "";
 
     // Marketing badge for ALL marketing emails (outbound campaigns + inbound replies)
     const marketingBadge = isMarketingEmail(r)
@@ -3042,7 +3043,7 @@ function renderMessageDetail(msg, attachments = [], threadMessages = []) {
   
   let ticketBadge = "";
   if (msg.ticket_number) {
-    ticketBadge = `<span class="mail-ticket-badge" data-report-id="${escSetting(msg.report_id)}" style="cursor:pointer;font-size:11px;padding:2px 7px;border-radius:6px;background:rgba(255,234,166,.15);color:#ffeaa6;margin-left:6px" title="Przejdź do zgłoszenia">${escSetting(msg.ticket_number)}</span>`;
+    ticketBadge = `<span class="tag tag--gold mail-ticket-badge" data-report-id="${escSetting(msg.report_id)}" title="Przejdź do zgłoszenia">${escSetting(msg.ticket_number)}</span>`;
   }
   
   // Marketing badge for conversation header
