@@ -634,6 +634,12 @@ ankiety, rozgrywka), a strony szczegółu i edytory leżą w jego folderze.
 Wtedy adres sam mówi, gdzie jesteś, „Wstecz” do `parent` to zwykle folder
 wyżej, a mapa (`PAGES`) i statystyki aktywności grupują się same.
 
+Nazwy podfolderów znaczą to samo w każdym obszarze: **`editor/`** — tu
+właściciel zmienia zasób (`games/editor`, `polls/editor`, `logo/editor`,
+`bases/explorer` jako wyjątek nazwy, bo to przeglądarka folderów);
+**`vote/`** — strony uczestnika z zewnątrz; urządzenia rozgrywki pod
+`control/`.
+
 ### Docelowe drzewo
 
 | Dziś | Po zmianie | Uwagi |
@@ -647,21 +653,21 @@ wyżej, a mapa (`PAGES`) i statystyki aktywności grupują się same.
 | `/buzzer/?id=&key=` | `/control/buzzer/?id=&key=` | |
 | `/connect-device/` (+ `/tv/`) | `/connect/` (+ `/connect/tv/`) | adres wpisywany ręcznie na telewizorze — krótki |
 | `/polls-hub/` | `/polls/` | hub ankiet (karty: ankiety / zadania) |
-| `/subscriptions/` | `/polls/subscriptions/` | druga strona huba (przełącznik „Ankiety / Subskrypcje”) |
-| `/polls/?id=` | `/polls/poll/?id=` | ankieta jednej gry |
-| `/poll-text/` | `/polls/poll/text/` | głosowanie (tekst) |
-| `/poll-points/` | `/polls/poll/points/` | głosowanie (punkty) |
-| `/poll-qr/?id=&key=` | `/polls/poll/qr/?id=&key=` | QR na wyświetlaczu; małe litery w adresach |
+| `/polls/?id=` | `/polls/editor/?id=` | ankieta jednej gry — od strony właściciela to edytor (otwieranie, zamykanie, wyniki) |
+| `/poll-text/` | `/polls/vote/text/` | głosowanie (tekst) — strona głosującego, nie edytora |
+| `/poll-points/` | `/polls/vote/points/` | głosowanie (punkty) |
+| `/poll-qr/?id=&key=` | `/polls/vote/qr/?id=&key=` | kod QR do głosowania na wyświetlaczu; małe litery w adresach |
+| `/subscriptions/` | `/subscriptions/` | **bez zmian** — osobny blok: subskrypcje są używane w różnych miejscach (bazy, ankiety, urządzenia), nie tylko w ankietach (decyzja) |
 | `/poll-go/?t=|s=` | `/go/` | **wspólne wejście z zewnątrz** (niżej) |
 | `/bases/` | `/bases/` | |
 | `/base-explorer/?base=` | `/bases/explorer/?id=&folder=` | |
-| `/logo/`, `/logo/editor-<typ>/` | `/logo/`, `/logo/editor/<typ>/` | **propozycja**: to samo co `games/editor/` i `polls/poll/text/` — podfoldery zamiast myślnika |
+| `/logo/`, `/logo/editor-<typ>/` | `/logo/`, `/logo/editor/<typ>/` | **propozycja**: jak `games/editor/` i `polls/vote/text/` — podfoldery zamiast myślnika |
 | `/login/`, `/reset/`, `/confirm/` | `/login/`, `/login/reset/`, `/login/confirm/` | reset i potwierdzenie to kroki logowania; linki z maili żyją godzinę |
 | `/account/`, `/marketplace/`, `/manual/`, `/privacy/` | bez zmian | `/privacy/` celowo stały (adres polityki bywa podawany na zewnątrz) |
 | `/settings/` (admin), `/maintenance/`, `/404` | bez zmian | |
 
 Na najwyższym poziomie zostaje: `/`, `/login/`, `/games/`, `/control/`,
-`/polls/`, `/bases/`, `/logo/`, `/marketplace/`, `/connect/`, `/go/`,
+`/polls/`, `/subscriptions/`, `/bases/`, `/logo/`, `/marketplace/`, `/connect/`, `/go/`,
 `/account/`, `/manual/`, `/privacy/` (+ admin i techniczne).
 
 ### `/go/` — jedyne adresy, które wychodzą poza aplikację
@@ -675,8 +681,8 @@ zamienia je na bieżący adres wewnętrzny:
 
 | Link zewnętrzny | Prowadzi do |
 |---|---|
-| `/go/?t=<token>` | zadanie ankiety → `/polls/poll/text|points/` (jak dziś poll-go) |
-| `/go/?s=<token>` | zaproszenie do subskrypcji → `/polls/subscriptions/` |
+| `/go/?t=<token>` | zadanie ankiety → `/polls/vote/text|points/` (jak dziś poll-go) |
+| `/go/?s=<token>` | zaproszenie do subskrypcji → `/subscriptions/` |
 | `/go/?d=display&id=&key=` | `/control/display/?id=&key=` (tak samo host, buzzer, poll-qr) |
 
 Wtedy przy kolejnym porządkowaniu zmienia się tylko tabela w `/go/`,
@@ -702,7 +708,7 @@ a linki w skrzynkach, kody QR i zakładki dalej działają. To nie jest
 ### Kolejność (każdy obszar osobno: branch → testy → `main`)
 
 1. `/go/` (nowy, obok `poll-go`) + linki w mailach i kodach QR na `/go/`.
-2. Ankiety: `/polls/`, `/polls/subscriptions/`, `/polls/poll/…`.
+2. Ankiety: `/polls/` (hub), `/polls/editor/`, `/polls/vote/…`.
 3. Gry: `/games/editor/`, `/games/settings/`.
 4. Rozgrywka: `/control/display|host|buzzer/`, `/connect/`.
 5. Bazy: `/bases/explorer/`. Logo: ewentualnie `/logo/editor/<typ>/`.

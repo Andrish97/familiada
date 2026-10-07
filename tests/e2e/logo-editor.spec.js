@@ -948,6 +948,29 @@ test.describe("blokady", () => {
       await lock("release_edit_lock");
     }
   });
+
+  test("pula zajęta W TRAKCIE edycji: zapis odrzucony, edycja kończy się komunikatem, logo nietknięte", async ({ page }) => {
+    await open(page);
+    const id = await L.insertLogo(page, { name: L.uniq("pool-mid"), type: "GLYPH_30x10", payload: L.textPayload("AB") });
+    const gameId = await page.evaluate(async () => {
+      const { data } = await window.__sbClient.from("games").select("id").limit(1).maybeSingle();
+      return data?.id || null;
+    });
+    test.skip(!gameId, "konto testowe nie ma żadnej gry");
+    await edit(page, id);
+    const tab = `e2e-le2-mid-${Date.now()}`;
+    const lock = (fn) => page.evaluate(async ({ fn, gameId, tab }) => window.__sbClient.rpc(fn, {
+      p_resource_type: "game", p_resource_id: gameId, p_tab_id: tab, ...(fn === "acquire_edit_lock" ? { p_context: "settings" } : {}),
+    }), { fn, gameId, tab });
+    await lock("acquire_edit_lock");
+    try {
+      await page.fill("#textValue", "CD");
+      await expect(page.locator("#resourceLockGuardMsg")).toContainText(/ustawienia/i, { timeout: 15000 });
+      expect((await L.readLogo(page, id)).payload.source.text).toBe("AB");
+    } finally {
+      await lock("release_edit_lock");
+    }
+  });
 });
 
 /* ======================= ZGODNOŚĆ ZE STARYMI DANYMI =======================

@@ -8,6 +8,14 @@
 // czynność w toku (pisanie napisu na scenie, przeciągany kształt, wczytywany
 // obraz) -> editor.isInteracting() i zapis czeka. Wyjście („Wstecz”, „?”,
 // schowanie karty) -> zapis od razu. Stan widać w #saveStatus.
+//
+// Blokady zasobów (resource-lock.js), jak przy edycji gry:
+//   - to logo w innej karcie -> guardResourceLock: komunikat, wejście samo,
+//     gdy tamta karta je zwolni; nasza blokada trzymana do wyjścia ze strony
+//     (pagehide), więc Control/ustawienia gry czekają, aż edytor się zamknie,
+//   - cała pula logo zajęta (Control albo ustawienia którejś gry) -- przy
+//     wejściu i przy każdym zapisie (RPC update_logo_checked): komunikat
+//     z powrotem na listę.
 
 import { loadFont5x7 } from "../../shared/js/core/logo-preview.js?v=v2026-10-07T07203";
 import { requireAuth } from "../../shared/js/core/auth.js?v=v2026-10-07T07203";
@@ -173,7 +181,18 @@ export async function bootEditorPage({ mode, initEditor }) {
         setStatus(dirty ? "dirty" : "saved");
       } catch (e) {
         console.error("[logo/editor] autosave failed:", e);
-        setStatus("error", e?.code === "RESOURCE_IN_USE" ? busyMessage(e.reason) : t("logoEditor.status.saveRetry"));
+        if (e?.code === "RESOURCE_IN_USE") {
+          // Pula logo zajęła się w trakcie edycji (otwarty Control albo
+          // ustawienia gry): baza odrzuca zapis, więc edycja się kończy --
+          // ten sam pełnoekranowy komunikat co przy wejściu (jak editor.js
+          // przy odrzuconym zapisie). W bazie zostaje ostatni zapisany stan.
+          ready = false;
+          clearTimeout(timer);
+          setStatus("error", busyMessage(e.reason));
+          block(busyMessage(e.reason));
+          return;
+        }
+        setStatus("error", t("logoEditor.status.saveRetry"));
         schedule(RETRY_MS);
       }
     })();
@@ -193,6 +212,7 @@ export async function bootEditorPage({ mode, initEditor }) {
    */
   let leaveFailed = false;
   async function leave(href) {
+    if (!ready) { location.href = href; return; }
     const done = await save({ force: true });
     if (done || statusState === "invalid" || leaveFailed) { location.href = href; return; }
     leaveFailed = true;
