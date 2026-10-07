@@ -55,6 +55,24 @@ i jak się nazywa. Strony przestają same składać `?ret=`, `?from=`, etykiety
 | modal-sheet (pełnoekranowe modale) | szerokość okna ≤ 600 px |
 | device-guard (control, game-settings) | krótszy bok ekranu < 700 px |
 
+**Tryb modala (strona w `iframe` na innej stronie)**
+
+| Strona w modalu | Kto otwiera | Parametr | Problem |
+|---|---|---|---|
+| `/game-settings/` | Control (`control/app.js:767`) | `modal=1` | inny format niż reszta; zamykanie własnym protokołem `gs:requestClose / gs:close / gs:ready` |
+| `/manual/` | Control, game-settings, logo-editor (tylko w trybie edycji) | `modal=control` / `modal=logo-editor` | każda strona ma WŁASNĄ kopię okna pomocy (HTML + JS) — 3 kopie |
+| `/privacy/` | te same trzy | `modal=control` / `modal=logo-editor` | w `<head>` chowa topbar dla każdej wartości, ale `privacy.js:51` rozpoznaje tylko `control` → w logo-editorze inny układ |
+
+- Modal w modalu: Control → ustawienia gry (iframe) → „?” → instrukcja
+  (iframe w iframe).
+- `ret` w modalu jest bez sensu, a bywa zepsuty: game-settings ustawia
+  `ret=game-settings?...` (bez `/`, `game-settings.js:1831`).
+- Strona w modalu przy braku sesji przekierowuje **sam iframe** na
+  `/login/` (game-settings woła `requireAuth`) — logowanie w okienku.
+- Ta sama strona otwierana raz jako modal, raz jako zwykła strona: w
+  logo-editorze „?” na liście = przejście na `/manual/`, w trybie edycji =
+  modal; w game-settings „?” = zawsze modal.
+
 ---
 
 ## 2. Propozycja: `shared/js/core/nav-map.js`
@@ -133,6 +151,61 @@ Każdy krok jest sprawdzany z mapą: `ret` musi wskazywać stronę z listy
 `ret` → „Wstecz” do `parent`. Podwójnych powrotów będzie mało, ale gdyby
 łańcuch urósł, limit 4 poziomów (głębsze `ret` są obcinane do `parent`).
 
+### Tryb modala — część mapy, nie wyjątek
+
+Strona może mieć w mapie `modal: true`. Wtedy da się ją otworzyć na dwa
+sposoby: jako zwykłą stronę albo w oknie (iframe) na innej stronie.
+
+```js
+gameSettings: { ..., modal: true },  // otwiera: control
+manual:       { ..., modal: true },  // otwiera: control, gameSettings, logoEditor
+privacy:      { ..., modal: true },  // otwiera: te same, także z manual
+```
+
+**Jeden moduł `shared/js/core/page-modal.js`** zamiast 3 kopii okna pomocy:
+
+```js
+openPageModal("manual", { tab: "control" })   // host: overlay + iframe + spinner
+// → /manual/?modal=<host>&tab=control&lang=…  (zawsze ten sam format: modal=<id strony-hosta>)
+```
+
+**Jeden protokół `postMessage`** (zamiast `gs:*` i ręcznych przycisków):
+
+| Wiadomość | Kierunek | Znaczenie |
+|---|---|---|
+| `nav:ready` | strona → host | gotowa, schowaj spinner |
+| `nav:requestClose` | host → strona | klik w tło / X — strona może zapytać o niezapisane zmiany |
+| `nav:close` | strona → host | zamknij okno (host odświeża swoje dane, np. ustawienia gry) |
+| `nav:open {page}` | strona → host | „przejdź do innej strony” — host decyduje (patrz niżej) |
+| `nav:authLost` | strona → host | brak sesji — host przekierowuje CAŁE okno na `/login/` |
+
+**Zasady w trybie modala** (`initPage()` sam je stosuje, gdy jest `?modal=`):
+
+1. **Bez topbaru i bez stopki**; zamiast „↩ Wróć do” jest **✕ Zamknij**
+   (→ `nav:requestClose` → `nav:close`).
+2. **Wstecz wewnątrz okna** tylko między stronami modalnymi:
+   instrukcja → Prywatność → „← Instrukcja” podmienia treść tego samego
+   okna (ten sam łańcuch `ret`, tylko w obrębie modala). Nigdy nie wychodzi
+   z okna na inną stronę.
+3. **Linki wychodzące z modala** (np. „Graj” w ustawieniach gry, link do
+   `/games/` w instrukcji) są ukryte albo idą przez `nav:open` — host sam
+   decyduje (Control: ignoruje w trakcie gry, inaczej zamyka okno i
+   przechodzi).
+4. **Bez przekierowań w iframe**: brak sesji → `nav:authLost`; blokada
+   urządzenia i blokada gościa nie są sprawdzane (sprawdził je już host).
+5. **Jeden poziom okna**: strona w modalu, która chce otworzyć inną stronę
+   modalną (ustawienia gry → „?”), wysyła `nav:open {page:"manual"}` —
+   host PODMIENIA zawartość swojego okna (z „← Ustawienia gry” na powrót),
+   zamiast otwierać iframe w iframe.
+6. **Kiedy modal, kiedy zwykłe przejście** — jedna reguła: modal tylko
+   tam, gdzie wyjście ze strony gubi stan: Control, game-settings,
+   logo-editor w trybie edycji (i każdy edytor z niezapisanymi zmianami).
+   Wszędzie indziej „?” i „Prywatność” to zwykłe przejście z `ret`.
+7. **Telefon**: okno = pełny ekran (jak modal-sheet ≤ 600 px), ✕ w miejscu
+   „Wstecz”. W praktyce rzadkie — Control i game-settings są na telefonie
+   zablokowane, edycja logo też — więc na telefonie „?” to prawie zawsze
+   zwykła strona.
+
 Strony z własną logiką powrotu (edytor w trybie edycji pytania, modal-sheet,
 ostrzeżenie w trakcie gry w Control) dalej przechwytują klik, ale cel
 bierą z `backHref()`.
@@ -158,6 +231,11 @@ Oznaczenia w mapach: `→` przejście, `↩` przycisk „Wstecz” (sekcja 1 top
 Wspólne dla wszystkich map (nie powtarzam w każdej):
 - `?` → `/manual/?ret=<bieżąca>#<sekcja>` → `↩` wraca na bieżącą;
   w instrukcji „Prywatność” → `/privacy/` → `↩` do instrukcji.
+- **Modale** (szczegóły w sekcji 2): `?` i „Prywatność” na Control,
+  game-settings i logo-editorze (tryb edycji) otwierają okno zamiast
+  przechodzić; ustawienia gry w Control też są oknem. W oknie zamiast ↩
+  jest ✕, a instrukcja ↔ prywatność przełącza się w tym samym oknie.
+  Ta sama warstwa jest w każdej z 6 map — w tabelach oznaczona **[okno]**.
 - Strony urządzeń (`/display/`, `/host/`, `/buzzer/`, `/poll-*`,
   `/connect-device/tv/`) otwierane z klucza w adresie — bez topbaru,
   bez ról, poza mapami.
@@ -192,7 +270,7 @@ flowchart LR
 | `/` | Zaczynamy · Społeczność · Podłącz urządzenie · Prywatność | login · marketplace · connect-device · privacy |
 | `/login/` | Zaloguj / Zarejestruj · Graj jako gość · Nie pamiętam hasła | `/games/` (wyjątek: zaproszenie z maila) · `/games/` · reset |
 | `/marketplace/` | ↩ „Strona główna” · podgląd gier · topbar: „Zaloguj / Załóż konto” | `/` · — · `/login/` |
-| `/privacy/` | ↩ „Strona główna” | `/` |
+| `/privacy/` | ↩ „Strona główna” (nigdy jako okno — niezalogowany nie ma stron-hostów) | `/` |
 | `/connect-device/` | ↩ · skan QR / kod | `/` · strona urządzenia |
 | każda inna (w tym `/manual/`) | — | `/login/` |
 
@@ -245,6 +323,7 @@ flowchart LR
 | `/marketplace/` | ↩ Gry · przeglądanie · podgląd | Oceń · Moje wysłane |
 | `/account/` | ↩ Gry · Zamień na konto · Usuń | nazwa, e-mail, hasło, powiadomienia, ocena, demo |
 | `/connect-device/` | ↩ Gry | moje urządzenia |
+| `/control/` `/game-settings/` `/logo-editor/` | jak w C1 — te same okna **[okno]** | — |
 | `/polls-hub/` `/subscriptions/` | okno „Tylko dla konta”: Wstecz → `/games/`, Załóż konto → `/login/?force_auth=1` | — |
 
 **⚠ dziś:** „Ustawienia konta” w menu tylko na `/games/`; connect-device ↩
@@ -263,6 +342,7 @@ Te same strony co B1. Różnice:
 | `/logo-editor/` | lista + edycja | telefon: tylko lista (podgląd, import/eksport, nazwa) |
 | `/editor/` | lista pytań + edycja obok | edycja pytania na pełnym ekranie, ↩ najpierw zamyka pytanie |
 | modale | okno | pełny ekran, ↩ zamyka modal |
+| **[okno]** instrukcja/prywatność | w edycji logo | edycja logo na telefonie niedostępna → `?` zawsze zwykła strona; tablet: okno na pełny ekran z ✕ |
 | `/games/` | — | „Zainstaluj” (PWA), jeśli nie jest zainstalowana |
 
 **⚠ dziś:** na telefonie „Graj” i „Ustawienia gry” prowadzą na stronę,
@@ -308,8 +388,10 @@ flowchart LR
 | `/bases/` | `ret` / Gry | Subskrypcje → `/subscriptions/?ret=…`; baza → `/base-explorer/?base=…&ret=…` |
 | `/base-explorer/` | `ret` / Bazy | — |
 | `/editor/`, `/logo-editor/`, `/marketplace/`, `/connect-device/`, `/account/` | `ret` / Gry | — |
-| `/control/` | Gry (z ostrzeżeniem w trakcie gry) | Ustawienia gry (modal) |
-| `/game-settings/` | `ret` / Gry | Graj → `/control/?id=…` |
+| `/control/` | Gry (z ostrzeżeniem w trakcie gry) | Ustawienia gry **[okno]** · `?` **[okno]** → Prywatność w tym samym oknie |
+| `/game-settings/` | `ret` / Gry | Graj → `/control/?id=…` · `?` **[okno]** |
+| `/game-settings/` **[okno w Control]** | ✕ (pyta o niezapisane zmiany) | `?` → podmienia okno na instrukcję z „← Ustawienia gry”; „Graj” ukryte |
+| `/logo-editor/` | Gry | lista: `?` → `/manual/?ret=…`; tryb edycji: `?` **[okno]** |
 
 **⚠ dziś:** z `/games/` wychodzi `?from=games`, którego nikt nie czyta;
 bases → base-explorer bez `ret` (powrót gubi zakładkę); editor, logo-editor,
@@ -326,7 +408,7 @@ Te same strony co C1. Różnice:
 | „Graj”, „Ustawienia gry” | → control / game-settings | **telefon:** nieaktywne z podpowiedzią; **tablet w pionie:** „Obróć tablet”; **wąskie okno komputera:** „Poszerz okno” |
 | `/connect-device/` | kod ręcznie, kamera rzadko | skan QR kamerą jako główna akcja |
 | `/logo-editor/`, `/editor/`, modale | jak w B2 | jak w B2 |
-| `/control/` (tablet) | — | operator na tablecie w poziomie |
+| `/control/` (tablet) | — | operator na tablecie w poziomie; okna (ustawienia gry, `?`) na pełny ekran z ✕ |
 
 ---
 
@@ -407,7 +489,9 @@ pliku, a CSS korzystał z tych samych wartości (komentarz przy `@media`).
    wyjątek zaproszeń z maila zostaje); `ret` łańcuchem z listą `from`.
 4. `initPage()` strona po stronie (kolejność jak audyty), wspólny wygląd
    overlayu gość/urządzenie.
-5. Przyciski w `PAGES` (role/urządzenie), generator diagramów 6 map,
+5. `page-modal.js` + protokół `nav:*`: najpierw instrukcja/prywatność
+   (usuwa 3 kopie), potem game-settings (zamiana `gs:*` i `modal=1`).
+6. Przyciski w `PAGES` (role/urządzenie), generator diagramów 6 map,
    test e2e przechodzący 6 map (patrz koniec sekcji 3).
 
 ## 7. Decyzje
@@ -423,3 +507,5 @@ Podjęte (2026-10-07):
 
 Otwarte:
 - Telefon: „Graj”/„Ustawienia gry” nieaktywne z podpowiedzią czy całkiem ukryte?
+- Modal: czy reguła „okno tylko tam, gdzie wyjście gubi stan” — czy np. `?`
+  ma być oknem na wszystkich stronach (spójniej, ale bez linku do instrukcji)?
