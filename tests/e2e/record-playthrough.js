@@ -2099,7 +2099,7 @@ const SCENARIOS = [
   {
     file: "12-poprawki-wieczoru.mp4",
     makeGame: async (setupPage) => {
-      const logoId = await insertLogo(setupPage, `Wzór — Gwiazdy E2E`, recordingExampleLogoPayload());
+      const logoId = await insertLogo(setupPage, `Wzór — Gwiazdy E2E ${Date.now()}`, recordingExampleLogoPayload());
       const game = await restoreDemoGame(setupPage, {
         pickOrds: [1, 2, 8],
         finalPickOrds: [3, 4, 5, 6, 7],
