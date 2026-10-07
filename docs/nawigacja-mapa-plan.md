@@ -720,51 +720,14 @@ i zakładki `/display/` na telewizorach po zmianie przestają działać —
 5. Bazy: `/bases/explorer/`. Logo: ewentualnie `/logo/editor/<typ>/`.
 6. Logowanie: `/login/reset/`, `/login/confirm/`.
 
-## 9. Mapa blokad — każda strona deklaruje swoje zasoby (propozycja)
+## 9. Mapa blokad
 
-> Pełny opis (stan faktyczny, rozbieżności, mapa docelowa, kroki):
-> [`docs/blokady-zasobow.md`](blokady-zasobow.md). Poniżej skrót.
-
-Dokumentacja dziś: `docs/plan-testy-i-poprawki.md` — „Mapa zasobów”,
-„Model: zasób ma stan busy/free”, „Krzyżowe blokady między zasobami”
-(częściowo nieaktualne: Control opisany jako „krok 7, jeszcze nie”).
-Pula logo („Warstwa B”, migracja 256) jest zrobiona pośrednio: Control
-i ustawienia gry trzymają blokadę **gry** z `holder_context`, a edytor
-logo sam pyta, czy jakaś **gra** jest otwarta (`findBusyContext("game",
-…)`), i to samo robi `update_logo_checked` w bazie. Edytor logo musi więc
-wiedzieć o grach, choć jego zasobem jest tylko logo.
-
-Zasada: **strona deklaruje w mapie, które zasoby trzyma na wyłączność
-(`locks`) i na które tylko czeka (`waits`)**; konflikt rozstrzyga jeden
-mechanizm po zasobach, bez wiedzy, która strona je trzyma.
-
-| Strona | `locks` (na wyłączność, do wyjścia ze strony) |
-|---|---|
-| `/games/editor/?id=G` | `game:G` |
-| `/games/settings/?id=G` | `game:G`, `logos` (cała pula — wybór logo) |
-| `/polls/editor/?id=G` | `game:G` |
-| `/control/?id=G` | `game:G`, `logos` (cała pula) |
-| `/logo/editor/<typ>/?id=L` | `logo:L` |
-| `/bases/explorer/?id=B` | `base:B` |
-| akcje z list (zmiana nazwy, usuwanie, reset) | sprawdzenie, czy ten sam zasób jest wolny |
-
-`logos` to osobny zasób („cała pula logo użytkownika”): `logo:L` jest
-zajęte, gdy ktoś trzyma `logo:L` **albo** `logos`; `logos` jest zajęte,
-gdy ktoś trzyma `logos` **albo dowolne** `logo:L`. Wtedy:
-
-- edytor logo pyta tylko o `logo:L` — o grach nie wie nic,
-- zapis logo w bazie (`update_logo_checked`) sprawdza, że piszący trzyma
-  `logo:L`, zamiast szukać otwartych gier po `holder_context`,
-- **zmiana zachowania do potwierdzenia**: Control / ustawienia gry nie
-  wejdą, dopóki edytowane jest *jakiekolwiek* logo (dziś czekają tylko
-  na logo swojej gry) — to druga strona zasady „blokują wszystkie loga”.
-
-Wdrożenie: migracja (`acquire_edit_lock` rozumie `logos`;
-`update_logo_checked` / `delete_resource_checked('logo')` sprawdzają
-`logo:L` + `logos`), `resource-lock.js` (wiele zasobów naraz już jest:
-`acquireResourceLocks`), Control i ustawienia gry biorą `logos`, edytor
-i lista logo bez `findBusyContext("game")`, pola `locks` w `PAGES`
-(sekcja 2) i jeden opis zamiast trzech sekcji w `plan-testy-i-poprawki.md`.
+Opis blokad ma jedno miejsce: [`docs/blokady-zasobow.md`](blokady-zasobow.md)
+(stan faktyczny, rozbieżności, mapa docelowa, kroki). Tutaj tylko
+powiązanie z mapą stron: każdy wpis `PAGES` (sekcja 2) dostaje pole
+`locks` — co strona / jej okna trzymają (`game:G`, `logos`, `logo:L`,
+`base:B` współdzielone…); to, kto zostaje zatrzymany i jakim
+komunikatem, wynika z zasobów (tabela „Kto rozpoznaje” w tamtym pliku).
 
 ## 7. Decyzje
 
@@ -804,5 +767,10 @@ Podjęte (2026-10-07):
 - **Adresy (sekcja 8)**: `/games/settings/`, `/logo/editor/<typ>/`,
   `/connect/`, `/go/` jako jedyne wejście z zewnątrz; stare linki
   (maile, zakładki TV) bez fallbacków.
-- **Blokady**: zasobem edytora logo jest tylko logo; Control i ustawienia
-  gry trzymają swoją grę i całą pulę logo (sekcja 9).
+- **Blokady** (`docs/blokady-zasobow.md`, sekcja 6): zasobem edytora logo
+  jest tylko logo; Control i ustawienia gry trzymają swoją grę i całą pulę
+  logo (współdzielenie) — zajęta gra albo edytowane dowolne logo
+  zatrzymuje wejście, każde swoim komunikatem; eksplorator bazy trzyma
+  bazę współdzielenie (zmiana nazwy / udostępnianie / usunięcie całej
+  bazy zablokowane), elementy jak dziś; opis według „kto trzyma — kto
+  rozpoznaje”, nie według czasu trzymania.

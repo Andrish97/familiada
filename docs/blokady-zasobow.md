@@ -30,16 +30,17 @@ Komunikat mówi tylko, **jaki zasób** jest zajęty (gra / logo / baza) i,
 dla puli logo, **dlaczego** (rozgrywka / ustawienia gry) — nigdy, która
 karta. Blokuje też własną drugą kartę tego samego użytkownika.
 
-### Zakresy blokad — jak długo trzymana
+### Dwa rodzaje trzymania
 
-| Zakres | Trzymana | Funkcja | Konflikt pokazany jako | Gdzie dziś |
-|---|---|---|---|---|
-| **strona** | od wejścia do wyjścia ze strony (cała sesja edycji) | `guardResourceLock` | pełnoekranowy komunikat, wejście samo po zwolnieniu | edytor pytań, ustawienia gry, ankieta gry, Control, edytor logo |
-| **okno** | od otwarcia do zamknięcia okna edycji; `lease.ok` sprawdzane tuż przed zapisem (heartbeat może je stracić: `gone` / `forbidden`) | `acquireResourceLock(s)` | okno się nie otwiera (alert) / zapis przerwany komunikatem | eksplorator bazy: zmiana nazwy pytania/folderu (`base-explorer:rename`), okno pytania (`:question-modal`), okno tagów (`:tags-edit`, `:tags-assign`) |
-| **akcja** | tylko na czas jednego zapisu (wszystkie zasoby naraz albo żaden, stała kolejność = bez zakleszczeń) | `acquireResourceLocks` | alert, akcja przerwana | eksplorator bazy: usuń, przenieś, przypisz tag, kolejność folderów, usuń tagi, zapis tagów (`:tags-assign-save`) |
-| **sprawdzenie** | nic nie trzyma — jedno pytanie „wolne?” przed akcją | `isResourceBusy` | alert | lista gier (zmiana nazwy, reset, eksport, usunięcie kopii), lista logo (zmiana nazwy) |
-| **czekanie** | nic nie trzyma — wejście czeka na zwolnienie | `guardResourceBusy` | pełnoekranowy komunikat | Control i ustawienia gry czekają na logo swojej gry |
-| **baza** | nic nie trzyma — RPC odrzuca zapis / usunięcie | `*_checked` | alert z powodem | usuwanie gry / logo / bazy, zapis logo |
+| Rodzaj | Ilu naraz | Przykład |
+|---|---|---|
+| **wyłączne** | jedna karta | edytor trzyma swoją grę / swoje logo; okno pytania w bazie trzyma pytanie |
+| **współdzielone** *(docelowo, patrz 6)* | wiele kart naraz; wyklucza tylko trzymanie wyłączne tego samego zasobu albo jego części | Control i ustawienia kilku gier naraz trzymają pulę logo; kilku współpracowników ma otwartą tę samą bazę |
+
+Dziś istnieje tylko trzymanie wyłączne (`edit_locks`: jeden wiersz na
+zasób). Opis jest ułożony według tego, **kto trzyma** blokadę i **kto ją
+rozpoznaje** (kto zostaje zatrzymany) — nie według tego, jak długo jest
+trzymana.
 
 ## 2. Zasoby
 
@@ -84,6 +85,17 @@ Osobna kategoria (nie blokady, tylko **stan** w bazie): reguły gry
 (`game_validate`, `rules_state`, migracje 273–275) — np. pytań nie da się
 zmienić przy otwartej ankiecie. Opisane w `docs/audyt-stron.md` (Games).
 
+## 4a. Stan faktyczny: kto trzyma → kto rozpoznaje
+
+| Zasób | Kto trzyma | Kto rozpoznaje (zostaje zatrzymany) | Kto **nie** rozpoznaje, a powinien |
+|---|---|---|---|
+| `game:G` | edytor pytań, ustawienia gry, ankieta gry, Control — na wyłączność, do wyjścia ze strony | wejście na te same cztery strony (komunikat „gra zajęta”); lista gier: zmiana nazwy, reset, eksport, usunięcie kopii (sprawdzenie strony); usunięcie gry (baza) | zmiana nazwy gry w bazie; usunięcie kopii ze Społeczności w bazie |
+| `logo:L` | edytor logo — na wyłączność, do wyjścia ze strony | edytor logo w innej karcie; zmiana nazwy na liście (sprawdzenie strony); usunięcie logo (baza); Control i ustawienia gry, której to logo (czekają); Host (pokazuje „zajęte”) | zapis i zmiana nazwy logo w bazie (`update_logo_checked`) |
+| pula logo (bez wiersza) | — nikt; wyprowadzana z `game:G` trzymanego przez ustawienia / Control | edytor logo: wejście i każdy zapis; lista logo: nowe logo, zmiana nazwy, usunięcie (baza) | — (ale rozpoznawanie idzie przez gry, nie przez pulę) |
+| *(edycja dowolnego logo)* | — | — | Control i ustawienia gry nie sprawdzają, czy edytowane jest **inne** logo niż ich gry |
+| `base_question`, `base_folder`, `base_tag` | eksplorator bazy: okna (zmiana nazwy, pytanie, tagi) i akcje (usuń, przenieś, przypisz tag, kolejność, zapis tagów) — na wyłączność | te same okna i akcje w innej karcie / u współpracownika; usunięcie bazy (baza) | — |
+| `base:B` | **nikt** | — | zmiana nazwy bazy, zmiana udostępniania, usunięcie bazy — przy otwartym eksploratorze |
+
 ## 5. Rozbieżności (do naprawy)
 
 1. **Pula logo nie jest zasobem.** Istnieje tylko jako zapytanie „czy
@@ -102,78 +114,79 @@ zmienić przy otwartej ankiecie. Opisane w `docs/audyt-stron.md` (Games).
    samą bazę otwartą; konflikt łapią dopiero blokady elementów przy akcji.
    (Decyzja z audytu bazy: „precyzyjne blokady każdego elementu” — zostaje,
    ale trzeba to tu opisać jako świadomy wyjątek albo zmienić.)
-6. **Ta sama czynność, różne zakresy.** Zmiana nazwy w eksploratorze bazy
-   trzyma blokadę **okna** przez cały czas otwartego okna; zmiana nazwy
-   gry i logo na listach tylko **sprawdza** przy zatwierdzeniu (ktoś może
-   zająć zasób, kiedy okno jest otwarte); zmiana nazwy bazy na liście nie
-   robi nic.
+6. **Zmiana nazwy nie trzyma blokady na listach.** W eksploratorze bazy
+   okno zmiany nazwy trzyma element, dopóki jest otwarte; na liście gier
+   i logo jest tylko sprawdzenie przy zatwierdzeniu, a na liście baz nic —
+   w czasie otwartego okna ktoś może wejść w edycję tego samego zasobu.
 7. **Konteksty** są wolnym tekstem (`editor`, `settings`, `polls`,
    `control`, `logo-editor`, `base-explorer:*`) i w bazie znaczenie mają
    tylko `settings` / `control` (pula). Nigdzie nie ma ich listy.
 
-## 6. Mapa docelowa
+## 6. Mapa docelowa (decyzje 2026-10-07)
 
-Każda strona **deklaruje w mapie stron** (`PAGES` w
-`docs/nawigacja-mapa-plan.md`, sekcja 2) zasoby, które trzyma; konflikt
-rozstrzyga jeden mechanizm po samych zasobach — bez wiedzy, która strona
-je trzyma, i bez kontekstów w regułach.
+Każda strona i każde okno **deklaruje w mapie stron** (`PAGES`,
+`docs/nawigacja-mapa-plan.md`, sekcja 2), co trzyma; to, kto zostaje
+zatrzymany, wynika z samych zasobów — jeden mechanizm, bez kontekstów
+w regułach i bez wiedzy, która strona trzyma.
 
-| Strona | `locks` (do wyjścia ze strony) | `waits` |
-|---|---|---|
-| `/games/editor/?id=G` | `game:G` | — |
-| `/games/settings/?id=G` | `game:G`, `logos` | — |
-| `/polls/editor/?id=G` | `game:G` | — |
-| `/control/?id=G` | `game:G`, `logos` | — |
-| `/logo/editor/<typ>/?id=L` | `logo:L` | — |
-| `/bases/explorer/?id=B` | (decyzja: `base:B` albo jak dziś tylko elementy) | — |
-| akcje z list | sprawdzenie tego samego zasobu w RPC `*_checked` | |
+### Kto trzyma
 
-**`logos`** — nowy typ zasobu: „cała pula logo użytkownika” (`resource_id`
-= id użytkownika). Zgodność:
-
-- `logo:L` zajęte, gdy ktoś inny trzyma `logo:L` **albo** `logos`,
-- `logos` zajęte, gdy ktoś inny trzyma `logos` **albo dowolne** `logo:L`
-  użytkownika.
-
-Skutki:
-
-- edytor logo pyta tylko o `logo:L` — o grach nie wie nic,
-- `update_logo_checked` / `delete_resource_checked('logo')` sprawdzają
-  `logo:L` + `logos` (bez szukania gier po kontekście),
-- Control / ustawienia gry biorą `game:G` + `logos` jedną operacją
-  (`acquireResourceLocks` — wszystkie albo żaden) i **nie wejdą, dopóki
-  edytowane jest jakiekolwiek logo** (dziś czekają tylko na logo swojej
-  gry) — **do potwierdzenia**,
-- `guardResourceBusy(logo swojej gry)` w Control i ustawieniach znika
-  (zawiera się w `logos`),
-- zmiana nazwy gry / bazy i usunięcie kopii ze Społeczności przez RPC
-  sprawdzające blokadę (druga warstwa jak przy usuwaniu).
-
-**Zasada zakresów** (ta sama czynność = ten sam zakres w całej aplikacji):
-
-| Czynność | Zakres |
+| Kto | Trzyma |
 |---|---|
-| strona edycji zasobu (edytor, ustawienia, ankieta, Control, edytor logo, eksplorator bazy) | **strona** |
-| okno, w którym zmienia się zasób (zmiana nazwy — na każdej liście i w eksploratorze, okno pytania, okno tagów) | **okno** (+ druga warstwa w bazie przy zapisie) |
-| jednorazowa akcja bez okna (usuń, przenieś, reset, przypisz tag, kolejność) | **akcja** (+ druga warstwa w bazie) |
-| odczyt, który musi być spójny (eksport) | **sprawdzenie** |
+| `/games/editor/?id=G`, `/polls/editor/?id=G` | `game:G` wyłącznie |
+| `/games/settings/?id=G`, `/control/?id=G` | `game:G` wyłącznie **+ `logos` współdzielone** (cała pula logo użytkownika) |
+| `/logo/editor/<typ>/?id=L` | `logo:L` wyłącznie |
+| `/bases/explorer/?id=B` | **`base:B` współdzielone** (obecność — współpracownicy mogą mieć bazę otwartą naraz) + jak dziś elementy (`base_question` / `base_folder` / `base_tag`) wyłącznie w oknach i akcjach |
+| okno zmiany nazwy (lista gier / logo / baz, eksplorator) | zasób, którego nazwę zmienia, wyłącznie — do zamknięcia okna |
+| akcje całej bazy (zmiana nazwy, udostępnianie, usunięcie) | `base:B` wyłącznie |
+| inne akcje z list (reset, usunięcie, przeniesienie…) | swój zasób wyłącznie, na czas zapisu |
 
-W mapie stron (`PAGES`) zakres jest częścią deklaracji, np.
-`rename: { scope: "okno", resource: "game" }`.
+### Kto rozpoznaje — i jaki komunikat
+
+| Gdy zajęte… | Zatrzymany | Komunikat |
+|---|---|---|
+| `game:G` (ktoś trzyma) | wejście do edytora, ustawień, ankiety, Control tej gry; akcje na grze z listy | „Ta gra jest otwarta gdzie indziej” |
+| dowolne `logo:L` (trwa edycja logo) | wejście do Control i ustawień **każdej** gry (biorą `logos`) | „Trwa edycja logo — zamknij edytor logo, żeby otworzyć rozgrywkę / ustawienia” |
+| `logos` (otwarty Control lub ustawienia) | wejście do edytora logo; nowe logo, zmiana nazwy, usunięcie logo | „Trwa rozgrywka” / „Otwarte ustawienia gry” (powód z tego, kto trzyma `logos`) |
+| `logo:L` (inna karta) | edytor tego logo, zmiana nazwy, usunięcie | „To logo jest edytowane gdzie indziej” |
+| `base:B` współdzielone (eksplorator otwarty) | zmiana nazwy bazy, udostępnianie, usunięcie bazy | „Baza jest otwarta — zmiana całej bazy niemożliwa” |
+| element bazy | to samo okno / akcja u innej osoby | jak dziś |
+
+Kolejność sprawdzania przy wejściu do Control / ustawień: najpierw
+`game:G` (komunikat o grze), potem `logos` (komunikat o edycji logo) —
+pierwsza przeszkoda zatrzymuje i nie idziemy dalej.
+
+### Zgodność zasobów (reguła w bazie, jedna dla wszystkich)
+
+- wyłączne `X` przeszkadza każdemu innemu trzymaniu `X`;
+- współdzielone `X` nie przeszkadza innemu współdzielonemu `X`;
+- współdzielone `logos` ↔ wyłączne `logo:L` (dowolne logo użytkownika)
+  wykluczają się nawzajem;
+- współdzielone `base:B` ↔ wyłączne `base:B` (akcje całej bazy)
+  wykluczają się; współdzielone `base:B` **nie** wyklucza elementów bazy
+  (na tym polega współpraca).
+
+Druga warstwa w bazie (`*_checked`) stosuje tę samą regułę: zapis / zmiana
+nazwy / usunięcie odmawia, gdy zasób albo jego „rodzic” (`logos`,
+`base:B`) jest trzymany przez kogoś innego.
 
 ### Kroki wdrożenia
 
-1. Migracja: `acquire_edit_lock` zna `logos` i zgodność `logo:L` ↔ `logos`;
-   `update_logo_checked`, `delete_resource_checked('logo')` po nowej
-   regule; `rename_resource_checked` dla gry i bazy; sprawdzenie
-   `game:G` w `market_remove_from_library`.
-2. `resource-lock.js`: `guardResourceLocks()` (blokada strony na kilka
-   zasobów naraz, ten sam komunikat i wejście po zwolnieniu).
+1. Migracja: trzymanie współdzielone (np. `edit_locks` z kluczem
+   (typ, id, karta) dla współdzielonych + kolumna `mode`), zasoby `logos`
+   (id = użytkownik) i `base:B`; reguła zgodności w `acquire_edit_lock`;
+   `update_logo_checked` / `delete_resource_checked` / nowe
+   `rename_resource_checked` i sprawdzenie w `market_remove_from_library`
+   i RPC udostępniania bazy po tej samej regule; usunięcie
+   `holder_context` z reguł.
+2. `resource-lock.js`: `guardResourceLocks([...])` — strona trzyma kilka
+   zasobów (wyłącznie / współdzielenie), pierwsza przeszkoda = jej
+   komunikat, wejście samo po zwolnieniu; `findBusyContext` znika.
 3. Control i ustawienia gry: `game:G` + `logos`; bez `guardResourceBusy`.
-4. Edytor i lista logo: bez `findBusyContext`; komunikat „logo zajęte”
-   rozróżnia tylko powód (edycja w innej karcie / rozgrywka / ustawienia).
-5. Okna zmiany nazwy na listach (gry, logo, bazy) na zakres **okno**;
-   pola `locks` / `scope` w mapie stron; test, który porównuje mapę z wywołaniami
-   blokad w kodzie stron.
-6. Testy e2e blokad (`cross-resource-locks.spec.js`, `logo-editor.spec.js`)
-   na nową zgodność; usunięcie `findBusyContext` i kontekstów z reguł.
+4. Edytor i lista logo: tylko `logo:L` (i rozpoznanie `logos`).
+5. Eksplorator bazy: `base:B` współdzielone; lista baz i udostępnianie:
+   `base:B` wyłącznie.
+6. Okna zmiany nazwy na listach trzymają zasób do zamknięcia okna.
+7. Pola `locks` w mapie stron; test porównujący mapę z wywołaniami
+   blokad w kodzie; e2e blokad (`cross-resource-locks.spec.js`,
+   `logo-editor.spec.js`, bazy) na nową regułę i komunikaty.
