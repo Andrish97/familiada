@@ -9,8 +9,8 @@
 // modala), a nie osobny przycisk wewnątrz modala — analogicznie do tego,
 // jak editor.js/editor.css robi to swoim jedynym `btnBack`.
 
-import { t } from "../../translation/translation.js?v=v2026-10-07T01010";
-import { icon, iconText } from "./icons.js?v=v2026-10-07T01010";
+import { t } from "../../translation/translation.js?v=v2026-10-07T01025";
+import { icon, iconText } from "./icons.js?v=v2026-10-07T01025";
 
 const SHEET_MQ = "(max-width:600px)";
 const sheetMql = window.matchMedia(SHEET_MQ);
