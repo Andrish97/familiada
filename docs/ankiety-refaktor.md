@@ -176,9 +176,11 @@ Dotyczy gier **tekst** i **punktacja**. Preparowane bez zmian.
 ```
 Szkic ──Uruchom──▶ Otwarta ──Zamknij──▶ Zamknięta
   ▲                   │                    │
-  └─────Przerwij──────┘                    ├──Uruchom ponownie──▶ Otwarta
+  └─────Przerwij──────┘                    │
   ▲                                        │
-  └──────────Edytuj pytania (potwierdzenie)┘
+  └──Przerwij (wyniki zerowane)────────────┘
+     „Uruchom ponownie” = Przerwij + Uruchom (jedno kliknięcie)
+     „Edytuj pytania” w edytorze = Przerwij (dziś: reset do edycji)
 ```
 
 | Przejście | Kto / skąd | Warunek | Skutek |
@@ -186,30 +188,52 @@ Szkic ──Uruchom──▶ Otwarta ──Zamknij──▶ Zamknięta
 | **Uruchom** (Szkic → Otwarta) | właściciel, strona ankiety | pytania gotowe (jak dziś) | nowy klucz ankiety → nowy link i QR; głosów 0 |
 | **Zamknij** (Otwarta → Zamknięta) | jw. | minimum odpowiedzi (punktacja: ≥3 odpowiedzi z ≥3 pkt na pytanie; tekst: ≥3 różne odpowiedzi); czekające zaproszenia **nie** blokują | głosy przeliczone na odpowiedzi gry (tekst: jak dziś okno scalania); link, QR, kod urządzenia i zaproszenia przestają działać |
 | **Przerwij** (Otwarta → Szkic) | jw. | zawsze; potwierdzenie „Głosy przepadną, linki i zaproszenia wygasną” | głosy usunięte; link, QR, kod urządzenia i zaproszenia przestają działać; pytania znów edytowalne |
-| **Uruchom ponownie** (Zamknięta → Otwarta) | jw. | potwierdzenie „Głosy przepadną, trzeba udostępnić od nowa” | jak Uruchom: nowy klucz, głosów 0; odpowiedzi gry z poprzedniego zamknięcia zostają do następnego zamknięcia |
-| **Edytuj pytania** (Zamknięta → Szkic) | właściciel, edytor pytań (po wzięciu blokady gry) | potwierdzenie „Wyniki ankiety zostaną wyzerowane” | jak dziś (reset do edycji) |
+| **Uruchom ponownie** (Zamknięta → Otwarta) = Przerwij + Uruchom | jw. | potwierdzenie „Głosy i wyniki zostaną usunięte, trzeba udostępnić od nowa” | **wyniki zerowane** (punkty odpowiedzi = 0, jak przy edycji) + nowy klucz, głosów 0 (decyzja 2026-10-07) |
+| **Edytuj pytania** (Zamknięta → Szkic) | właściciel, wejście do edytora pytań | potwierdzenie „Wyniki ankiety zostaną wyzerowane” | **istnieje dziś** (`game_reset_poll_for_edit`: status szkic, punkty 0; w ankiecie tekstowej zostają odpowiedzi ustalone przy zamknięciu, z punktami 0). Do poprawy: edytor robi reset **przed** wzięciem blokady gry — odwrócić kolejność |
 
 Każda akcja: tylko właściciel, tylko gdy trzyma blokadę gry (strona
 ankiety / edytor) — sprawdzane w bazie. Głosowanie nie wymaga konta ani
-blokady (po kluczu z linku / tokenie zaproszenia).
+blokady (po kluczu z linku / tokenie zaproszenia). Luka (sekcja 4a)
+naprawiana w ramach tego etapu, nie osobno (decyzja 2026-10-07).
 
-### 6.2 Strona ankiety (właściciel)
+### 6.2 Strona ankiety (właściciel) — układ
 
-| Stan | Widzi | Przyciski |
+Topbar (wg `ujednolicenie-wygladu.md`): `FAMILIADA` + „Wstecz” ·
+**ANKIETA** / nazwa gry · `?` · konto. Pod topbarem:
+
+**A. Pasek stanu** (pełna szerokość, zawsze):
+- po lewej: oznaczenia (tagi) — typ (Tekst / Punktacja), stan (Szkic /
+  Otwarta / Zamknięta), przy otwartej **Głosy: N**;
+- po prawej: przyciski stanu —
+  Szkic: **Uruchom** · Otwarta: **Zamknij** (wyłączony z powodem obok,
+  gdy brak minimum) + **Przerwij** · Zamknięta: **Uruchom ponownie**.
+
+**B. Treść** — na komputerze dwie kolumny, na telefonie karty
+**Udostępnianie · Wyniki** (wzór kart z list):
+
+| Stan | Kolumna lewa: **Udostępnianie** | Kolumna prawa: **Wyniki** |
 |---|---|---|
-| Szkic | „Ankieta nie jest uruchomiona” | Uruchom |
-| Otwarta | **Głosy: N** (jeden licznik: link + zaproszenia); wyniki na żywo; **Udostępnij**: link (kopiuj / otwórz), QR, QR na wyświetlaczu; **Subskrybenci**: lista z zaznaczeniem i stanem osoby | Zamknij (wyłączony z powodem, gdy brak minimum) · Przerwij |
-| Zamknięta | wyniki końcowe | Uruchom ponownie |
+| Szkic | pusta karta: „Uruchom ankietę, żeby ją udostępnić” | lista pytań bez wyników |
+| Otwarta | sekcja **Link i QR** + sekcja **Subskrybenci** (niżej) | wyniki na żywo (odświeżanie samo co kilka sekund, bez przycisku ⟳) |
+| Zamknięta | pusta karta: „Ankieta zamknięta — udostępnianie wygasło” | wyniki końcowe (punkty w grze) |
 
-Lista subskrybentów (tylko przy otwartej ankiecie): każdy aktywny
-subskrybent z polem wyboru i stanem: — (niezaproszony) · **czeka** ·
-**zagłosował** · **odrzucił**.
+Sekcja **Link i QR**: QR (duży), pole z linkiem (tylko do odczytu),
+przyciski **Kopiuj** · **Otwórz** · **QR na wyświetlaczu** (kod urządzenia).
+
+Sekcja **Subskrybenci**: wiersz na aktywnego subskrybenta — nazwa,
+oznaczenie stanu (— / **czeka** / **zagłosował** / **odrzucił**), po prawej
+pole wyboru albo **Przypomnij** (przy „czeka”, raz na 24 h); pod listą
+**Wyślij zaproszenia** (aktywny, gdy coś zaznaczono). Brak subskrybentów →
+„Nie masz subskrybentów” + link do Subskrypcji.
 - zaznaczenie + „Wyślij zaproszenia” → zaproszenie + mail (6.4);
-- odznaczenie osoby, która **czeka** → zaproszenie wycofane (bez maila);
-- **zagłosował** / **odrzucił** — bez zmian, pola nie da się odznaczyć;
-- ponowne zaznaczenie po wycofaniu → nowe zaproszenie i nowy mail;
-- **Przypomnij** przy osobie, która czeka — ponowny mail z tym samym
-  linkiem, najwyżej raz na 24 h *(do potwierdzenia)*.
+- odznaczenie osoby, która czeka → zaproszenie wycofane (bez maila);
+  ponowne zaznaczenie → nowe zaproszenie i nowy mail;
+- **zagłosował** / **odrzucił** — bez pola wyboru.
+
+**C. Zamykanie ankiety tekstowej** — „Zamknij” przełącza treść (B) na
+pełnoszerokie okno scalania odpowiedzi (jak dziś: scal / zmień nazwę /
+usuń, cofnij / ponów) z **Anuluj** i **Zamknij i przelicz**; pasek stanu
+zostaje.
 
 ### 6.3 Głosujący
 
@@ -245,7 +269,7 @@ Odrzucenie: jedno kliknięcie, bez potwierdzenia; właściciel widzi
 |---|---|---|---|---|
 | Zaproszenie do subskrypcji | właściciel dodaje subskrybenta (kafel „+”) | podany e-mail / użytkownik | „X chce wysyłać Ci ankiety” → Akceptuj | jak dziś: 1 na 5 dni na osobę; ponowne wysłanie 1 na 24 h |
 | **Zaproszenie do ankiety** | „Wyślij zaproszenia” przy otwartej ankiecie | zaznaczeni subskrybenci (aktywni) | „X zaprasza Cię do ankiety „nazwa”” → Zagłosuj (link `?t=`) | 1 na osobę na uruchomienie |
-| Przypomnienie *(do potwierdzenia)* | „Przypomnij” przy osobie, która czeka | ta osoba | jak zaproszenie, „Przypomnienie” | 1 na 24 h na osobę |
+| Przypomnienie (decyzja 2026-10-07) | „Przypomnij” przy osobie, która czeka | ta osoba | jak zaproszenie, „Przypomnienie” | 1 na 24 h na osobę |
 
 **Bez maili** przy: zamknięciu, przerwaniu, ponownym uruchomieniu,
 wycofaniu zaproszenia — link sam mówi, co się stało (6.3).
