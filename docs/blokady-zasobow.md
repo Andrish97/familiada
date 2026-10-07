@@ -150,11 +150,30 @@ w regułach i bez wiedzy, która strona trzyma.
 | `logos` (otwarty Control lub ustawienia) | wejście do edytora logo; nowe logo, zmiana nazwy, usunięcie logo | „Trwa rozgrywka” / „Otwarte ustawienia gry” (powód z tego, kto trzyma `logos`) |
 | `logo:L` (inna karta) | edytor tego logo, zmiana nazwy, usunięcie | „To logo jest edytowane gdzie indziej” |
 | `base:B` współdzielone (eksplorator otwarty) | zmiana nazwy bazy, udostępnianie, usunięcie bazy | „Baza jest otwarta — zmiana całej bazy niemożliwa” |
+| `base:B` wyłączne (trwa zmiana całej bazy: okno zmiany nazwy, udostępnianie, usuwanie) | wejście do eksploratora tej bazy — **pełna blokada strony** (jak zajęta gra), strona wczytuje się sama po zwolnieniu | „Trwa zmiana całej bazy” |
 | element bazy | to samo okno / akcja u innej osoby | jak dziś |
 
 Kolejność sprawdzania przy wejściu do Control / ustawień: najpierw
 `game:G` (komunikat o grze), potem `logos` (komunikat o edycji logo) —
 pierwsza przeszkoda zatrzymuje i nie idziemy dalej.
+
+### Baza: dwa poziomy zasobów (decyzja 2026-10-07)
+
+- **`base:B`** — cała baza. Eksplorator trzyma ją współdzielenie (wielu
+  współpracowników naraz) i **rozpoznaje** trzymanie wyłączne: akcja
+  całej bazy (zmiana nazwy, udostępnianie, usunięcie) → pełna blokada
+  strony eksploratora. W drugą stronę: otwarty eksplorator → akcja całej
+  bazy odmówiona.
+- **Elementy** (`base_question`, `base_folder`, `base_tag`) — osobne
+  zasoby, używane **tylko wewnątrz eksploratora** (okna i akcje); nie
+  wchodzą w relację z `base:B` współdzielonym. Z `base:B` wyłącznym nie
+  spotkają się, bo przy nim eksplorator jest zablokowany w całości.
+- Eksplorator, któremu wygasło trzymanie (uśpiony laptop) i ktoś w tym
+  czasie wziął `base:B` wyłącznie, przy odnowieniu dostaje `locked` →
+  pełna blokada strony (tak samo jak inne strony przy utracie blokady).
+- *Otwarte pytanie*: odebranie dostępu współpracownikowi, który ma
+  eksplorator otwarty — blokowane jak reszta udostępniania, czy zawsze
+  dozwolone (jego eksplorator dostaje `forbidden` i komunikat)?
 
 ### Zgodność zasobów (reguła w bazie, jedna dla wszystkich)
 
