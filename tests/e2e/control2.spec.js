@@ -694,6 +694,14 @@ test("control2: parowanie urządzeń — linki renderują się bez błędu, Cont
     expect(previewBox.width / previewBox.height).toBeCloseTo(16 / 9, 1);
     expect(Math.abs((previewBox.left + previewBox.width / 2) - (previewBox.sectionLeft + previewBox.sectionWidth / 2))).toBeLessThan(2);
 
+    const revealPreview = page.locator('.summarySoundRow:has(input[data-sfx-vol="reveal"]) .summarySoundPlay');
+    await revealPreview.click();
+    await expect(revealPreview.locator(".ico")).toHaveClass(/ico-stop/);
+    const beginGame = page.getByRole("button", { name: "Gotowe — przejdź do rozgrywki" });
+    await expect(beginGame).toBeEnabled();
+    await beginGame.click();
+    await expect(page.locator(".stepTitle")).not.toHaveText("Podsumowanie", { timeout: 10000 });
+
     expect(errors, "żadne z urządzeń nie powinno rzucić błędu JS: " + errors.join(" | ")).toEqual([]);
   } finally {
     for (const ctx of contexts) await ctx.close().catch(() => {});
