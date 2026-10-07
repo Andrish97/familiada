@@ -101,3 +101,39 @@ w Panelu sterowania i Edycji gry oraz tabel w Ustawieniach i Bazach.
 Sprawdzono, że skrót Win+P, mnożniki i wymiary logo nie otrzymują stylu
 przycisku. Zachowane testy Host/notek/SVG i limitu outro również zaliczone.
 Wybrane testy lokalne klasyfikacji i sekcji manuala: **9/9**.
+
+## Końcowe przeniesienie stron i sprzątanie bazy
+
+Bieżący zestaw zajmuje `/control/`, `/display/`, `/host/`, `/buzzer/`
+i `/game-settings/`. Usunięto stare moduły oraz katalogi z sufiksem `2`.
+Zaktualizowano adresy urządzeń, kodów, QR, e-maili, TV, podglądów,
+importy, fonty, Worker oraz aktywne testy i scenariusze nagrań.
+
+Migracja 306 usuwa stary snapshot `device_state`, typ `device_kind`
+i RPC poprzedniego zestawu wraz ze wszystkimi historycznymi sygnaturami
+zapisu końca sesji. Migracja 307 upraszcza bieżącą aktywność do nowego
+Control i kanonicznych nazw stron. Historia rozgrywek i godzinowej
+aktywności pozostaje. Kopia snapshotów i schematu jest zapisana na serwerze.
+
+[Pages](https://github.com/Andrish97/familiada/actions/runs/37550022417),
+[Worker](https://github.com/Andrish97/familiada/actions/runs/37550022403)
+i [migracje](https://github.com/Andrish97/familiada/actions/runs/37550022320)
+wdrożone pomyślnie. Kontrole SQL przeszły również na rzeczywistej bazie
+produkcyjnej. Testy lokalne tras i zasobów: 19/19, a końcowa kontrola
+po zsynchronizowaniu wersji zasobów: 5/5.
+
+[Wybrane testy przeglądarkowe](https://github.com/Andrish97/familiada/actions/runs/37550308054)
+zakończyły się wynikiem **10/10 bez ponowień** (5,6 minuty). Sprawdzono adresy stron i zasoby, nawigację Moich gier, TV,
+własne outro, podłączenie urządzeń, pełny finał i zakończenie bez finału.
+Używają bypass tokenu; konserwacja pozostaje włączona.
+
+Rzeczywisty zapis po migracjach, odczytany z produkcyjnej bazy:
+
+| Przypadek | Rundy | Finał | Wynik końcowy | Zakończenie zapisane |
+| --- | --- | --- | --- | --- |
+| Pełny finał obu graczy | 300:0 | 135 | 435:0 | Tak |
+| Bez finału | 90:0 | — | 90:0 | Tak |
+
+Rekordy dołączono do artefaktu `production-statistics-records`.
+Gry pozostawiono do przeglądu; konta testowe pozostają automatycznie
+wykluczone ze zbiorczych statystyk i wykresów aktywności.

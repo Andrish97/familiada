@@ -112,8 +112,10 @@ przeładowywanie edytora logo; wersjonowanie adresów zasobów pozostaje.
 
 ## Końcowe przeniesienie i sprzątanie — 7 października 2026
 
-Zmiany są przygotowane lokalnie; publikacja i migracje wymagają jeszcze
-potwierdzenia wynikami wdrożenia. Wybrane testy tras i zasobów: 19/19.
+Strony, Worker oraz migracje 306–307 są wdrożone na produkcji.
+Wybrane testy lokalne tras i zasobów: 19/19. Testy SQL przed migracją
+i kontrole rzeczywistej bazy po migracji zakończyły się sukcesem.
+Wybrane testy przeglądarkowe: **10/10 na produkcji**, bez ponowień.
 
 Bieżący zestaw przejmuje katalogi i publiczne adresy `control/`, `display/`,
 `host/`, `buzzer/` i `game-settings/`. Usunięto stare moduły tych stron
@@ -166,3 +168,18 @@ Wybrane testy przeglądarkowe używają bypass tokenu podczas konserwacji.
 Konserwacji nie wyłączamy automatycznie.
 
 Historyczne migracje SQL i materiały z dawnych nagrań pozostają w repo.
+
+Wdrożenia:
+
+- [Pages](https://github.com/Andrish97/familiada/actions/runs/37550022417) — sukces.
+- [Worker](https://github.com/Andrish97/familiada/actions/runs/37550022403) — sukces.
+- [Baza, migracje i kontrole produkcyjne](https://github.com/Andrish97/familiada/actions/runs/37550022320) — sukces.
+
+[Końcowy przebieg przeglądarkowy](https://github.com/Andrish97/familiada/actions/runs/37550308054):
+**10/10**, bez ponowień, 5,6 minuty. Potwierdzono kanoniczne adresy,
+zasoby i stronę główną, nawigację Moich gier, TV, własne outro,
+podłączenie urządzeń, pełny finał oraz zakończenie bez finału.
+Artefakt `production-statistics-records` zawiera rzeczywiste rekordy
+odczytane z produkcyjnej bazy po zakończeniu obu rozgrywek:
+300:0 + 135 punktów finału = 435:0 oraz 90:0 bez finału.
+Obie sesje mają zapisane `ended_at`. Gry testowe zachowano.

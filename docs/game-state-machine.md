@@ -2,7 +2,7 @@
 
 # Mapa stanów gry — public.game_state.step
 
-Ta strona jest wygenerowana z `web/shared/js/gameplay/gameStateMachine.js` — jedynego źródła prawdy, którego `assertTransition()` egzekwuje w `web/control2/js/engine.js`. Zmiana zachowania wymaga zmiany w kodzie; ten dokument aktualizuje się przez `node scripts/gen-game-state-docs.mjs`.
+Ta strona jest wygenerowana z `web/shared/js/gameplay/gameStateMachine.js` — jedynego źródła prawdy, którego `assertTransition()` egzekwuje w `web/control/js/engine.js`. Zmiana zachowania wymaga zmiany w kodzie; ten dokument aktualizuje się przez `node scripts/gen-game-state-docs.mjs`.
 
 ## Karta: `devices`
 
