@@ -615,6 +615,7 @@ async function openAnon(browser, contexts, path, label, errors) {
 // ===== 1. Parowanie urządzeń =====
 
 test("control2: parowanie urządzeń — linki renderują się bez błędu, Control widzi je jako online", async ({ page, browser }, testInfo) => {
+  await page.setViewportSize({ width: 1366, height: 768 });
   await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
   const game = await makeGame(page, `E2E-CONTROL2-PAIRING-${Date.now()}`);
   const contexts = [];
@@ -651,9 +652,17 @@ test("control2: parowanie urządzeń — linki renderują się bez błędu, Cont
     await expect(page.locator('.device-row[data-device="host"] .device-row-1 .conn-status')).toHaveText("POŁĄCZONO", { timeout: 10000 });
     await expect(page.locator('.device-row[data-device="buzzer"] .device-row-1 .conn-status')).toHaveText("POŁĄCZONO", { timeout: 10000 });
     await expect(page.locator('.device-row[data-device="host"] .device-row-1 .conn-status')).toHaveClass(/\bconn-status--connected\b/);
+    const deviceListFits = await page.locator(".c2-devices-layout .c2-scroll-area").evaluate((el) => el.scrollHeight <= el.clientHeight + 1);
+    expect(deviceListFits, "Urządzenia powinny mieścić się bez przewijania przy 1366×768").toBe(true);
 
     await page.getByRole("button", { name: "Dalej" }).click();
     await expect(page.locator(".stepTitle")).toHaveText("Podsumowanie", { timeout: 10000 });
+    const displayPreview = page.locator("#c2DisplayPreview");
+    const [previewWidth, sectionWidth] = await Promise.all([
+      displayPreview.evaluate((el) => el.getBoundingClientRect().width),
+      page.locator(".c2-summary-display").evaluate((el) => el.getBoundingClientRect().width),
+    ]);
+    expect(previewWidth).toBeGreaterThan(sectionWidth * 0.95);
 
     expect(errors, "żadne z urządzeń nie powinno rzucić błędu JS: " + errors.join(" | ")).toEqual([]);
   } finally {

@@ -16,13 +16,13 @@
 // setStealMsg/setRevealMsg/ROUNDS_MSG/FINAL_MSG, ale jako czysta funkcja
 // bieżącego game_state (web/js/gameplay/hints.js), nie ulotny stan ustawiany przy
 // każdym zdarzeniu — "wszystko idzie przez tabelę stanów".
-import { getRoundsHint, getFinalHint, getFinalEntryShortcuts, teamName } from "../../shared/js/gameplay/hints.js?v=v2026-10-07T21172";
-import { t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-07T21172";
-import { getSfxCategories, getSfxVariant, isSfxPlaying, playSfx, stopSfx, onSfxEnd, setSfxVolume } from "../../shared/js/core/sfx.js?v=v2026-10-07T21172";
-import { buildDisplayPreviewRow } from "../../shared/js/gameplay/previewRow.js?v=v2026-10-07T21172";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-07T21172";
+import { getRoundsHint, getFinalHint, getFinalEntryShortcuts, teamName } from "../../shared/js/gameplay/hints.js?v=v2026-10-07T22015";
+import { t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-07T22015";
+import { getSfxCategories, getSfxVariant, isSfxPlaying, playSfx, stopSfx, onSfxEnd, setSfxVolume } from "../../shared/js/core/sfx.js?v=v2026-10-07T22015";
+import { buildDisplayPreviewRow } from "../../shared/js/gameplay/previewRow.js?v=v2026-10-07T22015";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-07T22015";
 
-import { previewPendingRoundEndDestination } from "./engine.js?v=v2026-10-07T21172";
+import { previewPendingRoundEndDestination } from "./engine.js?v=v2026-10-07T22015";
 
 const $ = (id) => document.getElementById(id);
 const on = (el, ev, fn) => el && (el[`on${ev}`] = fn);
@@ -334,8 +334,8 @@ export function createUI({ root, emit }) {
     ));
   }
 
-  function summarySection(title, valueNode) {
-    return h("div", { class: "summarySection" }, [
+  function summarySection(title, valueNode, extraClass = "") {
+    return h("div", { class: `summarySection ${extraClass}`.trim() }, [
       h("div", { class: "summarySectionTitle", text: title }),
       valueNode,
     ]);
@@ -419,7 +419,7 @@ export function createUI({ root, emit }) {
       ]);
     });
 
-    return summarySection(t("control.summarySound"), h("div", { id: "summarySoundList" }, rows));
+    return summarySection(t("control.summarySound"), h("div", { id: "summarySoundList" }, rows), "c2-summary-sound");
   }
 
   // Wiersz-atrapa "rundy w toku" do podglądu D3 — patrz web/js/gameplay/previewRow.js
@@ -490,15 +490,15 @@ export function createUI({ root, emit }) {
       summarySection(t("control.summaryTeams"), h("div", { class: "summarySectionValue", text: t("control.teamsVsFormat", {
         teamA: state.teams.teamA || t("control.teamADefault"),
         teamB: state.teams.teamB || t("control.teamBDefault"),
-      }) })),
+      }) }), "c2-summary-teams"),
       summarySection(t("control.summaryDisplay"), h("div", { class: "summaryDisplayInfo" }, [
         h("div", { class: "summaryDisplayRow" }, [h("span", { class: "summaryDisplayLabel", text: `${t("control.summaryColors")}: ` }), colorDots(d.colors)]),
         h("div", { class: "summaryDisplayRow" }, [h("span", { class: "summaryDisplayLabel", text: `${t("control.summaryTheme")}: ` }), document.createTextNode(d.theme || t("control.summaryDefault"))]),
         h("div", { class: "summaryDisplayRow" }, [h("span", { class: "summaryDisplayLabel", text: `${t("control.summaryLogo")}: ` }), document.createTextNode(d.logoId ? t("control.summaryLogoCustom") : t("control.summaryDefault"))]),
         h("div", { id: "c2DisplayPreview" }, previewFrame ? [previewFrame] : []),
-      ])),
+      ]), "c2-summary-display"),
       soundSummarySection(state),
-      summarySection(t("control.summaryFinal"), h("div", { class: "summarySectionValue", text: hasFinal ? t("control.toggleYes") : t("control.toggleNo") })),
+      summarySection(t("control.summaryFinal"), h("div", { class: "summarySectionValue", text: hasFinal ? t("control.toggleYes") : t("control.toggleNo") }), "c2-summary-final"),
     ].filter(Boolean);
     // "Losuj ponownie" mieszka PRZY danej sekcji pytań (nie w stopce z resztą
     // nawigacji) — to akcja dotycząca konkretnie tej puli, nie kroku jako
@@ -516,7 +516,7 @@ export function createUI({ root, emit }) {
     sections.push(summarySection(t("control.summaryRoundsQuestions"), h("div", {}, [
       h("div", { class: "summaryQMode c2-summary-row" }, roundsValueRow),
       roundsPreview,
-    ].filter(Boolean))));
+    ].filter(Boolean)), "c2-summary-rounds"));
 
     if (hasFinal) {
       const finalValueRow = [document.createTextNode(
@@ -529,8 +529,15 @@ export function createUI({ root, emit }) {
       sections.push(summarySection(t("control.summaryFinalQuestions"), h("div", {}, [
         h("div", { class: "summaryQMode c2-summary-row" }, finalValueRow),
         finalPreview,
-      ].filter(Boolean))));
+      ].filter(Boolean)), "c2-summary-final-questions"));
     }
+
+    // Grupy informacji zajmują obie kolumny zamiast układać się w długą,
+    // wąską kolumnę. Podgląd Display zostaje po lewej; dźwięk i ustawienia
+    // gry po prawej, bez pustego pasa szerokiej karty.
+    const displaySummarySection = sections.find((section) => section.classList.contains("c2-summary-display"));
+    const leftSummarySections = sections.filter((section) => !section.classList.contains("c2-summary-display") && !section.classList.contains("c2-summary-sound"));
+    const rightSummarySections = sections.filter((section) => section.classList.contains("c2-summary-sound"));
 
     const finalIncomplete = hasFinal && s.finalQuestionsMode === "pick" && (state.final.picked?.length !== 5 || !state.final.confirmed);
     // Zgłoszone: "Gotowe przejdź do rozgrywki ma inny styl niż pozostałe
@@ -573,7 +580,13 @@ export function createUI({ root, emit }) {
       // .c2-scroll-area: dolne przyciski (Wstecz/Zmień ustawienia/Gotowe) mają
       // zostać wyłączone z przewijania — przewija się TYLKO treść sekcji
       // podsumowania, .stepFoot zawsze zostaje widoczny na dole karty.
-      h("div", { class: "c2-scroll-area" }, sections),
+      h("div", { class: "c2-scroll-area c2-summary-grid" }, [
+        displaySummarySection,
+        h("div", { class: "c2-summary-columns" }, [
+          h("div", { class: "c2-summary-column" }, leftSummarySections),
+          h("div", { class: "c2-summary-column" }, rightSummarySections),
+        ]),
+      ]),
       h("div", { class: "stepFoot" }, [
         h("div", { class: "stepFootButtons" }, [back, changeSettings, start]),
         finalIncomplete ? h("div", { class: "msg msg-pill", text: t("control.finalPickIncompleteWarning") }) : null,

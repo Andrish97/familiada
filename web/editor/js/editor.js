@@ -3,22 +3,22 @@
 // Każde pole zapisuje się samo (tekst: po pauzie w pisaniu i przy wyjściu z
 // pola, punkty: przy wyjściu z pola). Limity i obsługa pól są wspólne z
 // modalem pytania w bazie pytań (js/core/question-form.js).
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-07T21172";
-import { requireAuth } from "../../shared/js/core/auth.js?v=v2026-10-07T21172";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-07T21172";
-import { parseQaText } from "../../shared/js/core/text-import.js?v=v2026-10-07T21172";
-import { validateGame, gameRuleErrorMessage, RULES as GV_RULES, TYPES } from "../../shared/js/core/game-validate.js?v=v2026-10-07T21172";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-07T22015";
+import { requireAuth } from "../../shared/js/core/auth.js?v=v2026-10-07T22015";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-07T22015";
+import { parseQaText } from "../../shared/js/core/text-import.js?v=v2026-10-07T22015";
+import { validateGame, gameRuleErrorMessage, RULES as GV_RULES, TYPES } from "../../shared/js/core/game-validate.js?v=v2026-10-07T22015";
 import {
   LIMITS, normQuestionText, normAnswerText, parsePoints,
   wireTextLimit, wirePointsInput, sumPoints, renderSumPill, questionProblems,
   buildAnswerRow, buildAddAnswerTile,
-} from "../../shared/js/core/question-form.js?v=v2026-10-07T21172";
-import { guardResourceLock, showBlockingOverlay } from "../../shared/js/core/resource-lock.js?v=v2026-10-07T21172";
-import { updateChecked, ROW_GONE } from "../../shared/js/core/db-guard.js?v=v2026-10-07T21172";
-import { initI18n, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-07T21172";
-import { initTopbarAccountDropdown } from "../../shared/js/core/topbar-controller.js?v=v2026-10-07T21172";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-07T21172";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-07T21172";
+} from "../../shared/js/core/question-form.js?v=v2026-10-07T22015";
+import { guardResourceLock, showBlockingOverlay } from "../../shared/js/core/resource-lock.js?v=v2026-10-07T22015";
+import { updateChecked, ROW_GONE } from "../../shared/js/core/db-guard.js?v=v2026-10-07T22015";
+import { initI18n, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-07T22015";
+import { initTopbarAccountDropdown } from "../../shared/js/core/topbar-controller.js?v=v2026-10-07T22015";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-07T22015";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-07T22015";
 // initI18n + remove('page-loading') są w boot() — przed requireAuth, żeby body pojawiło się przed auth/danymi
 
 const MSG = {
