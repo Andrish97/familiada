@@ -475,11 +475,8 @@ async function boot() {
     addQ.type = "button";
     addQ.className = "qcard addTile";
     addQ.innerHTML = `
-      <div class="plus">${icon("plus")}</div>
-      <div>
-        <div class="txt"></div>
-        <div class="sub"></div>
-      </div>
+      <div class="txt"></div>
+      <div class="sub"></div>
     `;
     addQ.querySelector(".txt").textContent = MSG.addQuestionLabel();
     addQ.addEventListener("click", addQuestion);

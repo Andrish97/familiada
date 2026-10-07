@@ -110,7 +110,7 @@ function instrumentPage(page) {
   });
 }
 
-async function withE2EBypass(context) {
+async function withE2EBypass(context, { suppressRating = true } = {}) {
   const secret = process.env.E2E_BYPASS_SECRET;
   if (!secret) throw new Error("Brak E2E_BYPASS_SECRET w zmiennych środowiskowych");
 
@@ -124,9 +124,9 @@ async function withE2EBypass(context) {
   // — nie testujemy tego, a zasłania klikalne elementy. Suppress ustawiany
   // przed pierwszą nawigacją (addInitScript), więc initRatingSystem() od
   // razu wychodzi wcześnie (patrz rating-system.js:19).
-  await context.addInitScript(() => {
+  await context.addInitScript((shouldSuppressRating) => {
     try {
-      localStorage.setItem("fam:app_rating_suppressed", "true");
+      if (shouldSuppressRating) localStorage.setItem("fam:app_rating_suppressed", "true");
       // getUiLang() (translation/translation.js) sięga po navigator.language
       // zanim spadnie na domyślne "pl" — Chromium w CI ma en-US, więc bez
       // tego cała strona (i teksty przycisków w modalach) renderuje się po
@@ -135,7 +135,7 @@ async function withE2EBypass(context) {
     } catch {
       // ignore
     }
-  });
+  }, suppressRating);
 }
 
 async function clearE2EBypass(context) {
@@ -187,7 +187,7 @@ async function loginAsTestUser(page, context, opts = {}) {
   if (!username || !password) throw new Error("Brak TEST_PASSWORD w zmiennych środowiskowych");
 
   instrumentPage(page);
-  await withE2EBypass(context);
+  await withE2EBypass(context, { suppressRating: opts.suppressRating !== false });
   const res = await page.goto(LOGIN_URL, { waitUntil: "domcontentloaded" });
   // login.js attaches #btnPrimary/#btnGuest click listeners only after an
   // async initI18n()+getUser() chain inside its DOMContentLoaded handler.
@@ -217,7 +217,7 @@ async function loginAsTestUser(page, context, opts = {}) {
 /** Zakłada świeże konto gościa, zostawia stronę na /games. Gość sam wygaśnie po 5 dniach. */
 async function loginAsGuest(page, context) {
   instrumentPage(page);
-  await withE2EBypass(context);
+  await withE2EBypass(context, { suppressRating: opts.suppressRating !== false });
   const res = await page.goto(LOGIN_URL, { waitUntil: "domcontentloaded" });
   // See the identical comment in loginAsTestUser — #btnGuest's listener is
   // wired by the same async chain.

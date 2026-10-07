@@ -256,7 +256,10 @@ body.editor-body .wrap {
 
 .addTile {
     display: flex;
-    gap: 10px
+    flex-direction: column;
+    justify-content: center;
+    gap: 6px;
+    text-align: center
 }
 
 .addTile {
@@ -276,31 +279,15 @@ body.editor-body .wrap {
     border-color: rgba(255,234,166,.85)
 }
 
-.addTile .plus {
-    width: 34px;
-    height: 34px;
-    border-radius: 14px;
-    border: 1px solid rgba(255,234,166,.28);
-    --btn-tint: rgba(255,234,166,.1);
-  background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, #050914); /* kryjące: css/base.css */
-
-    color: var(--gold);
-    display: grid;
-    place-items: center
-}
-
-.addTile .plus,.addTile .txt {
-    font-weight: 1000
+.addTile .txt {
+    font-weight: 1000;
+    color: #fff
 }
 
 .addTile .sub {
     opacity: .75;
     font-size: 12px;
     font-weight: 800
-}
-
-.addTile .txt {
-    color: #fff
 }
 
 .addTile .sub {
@@ -316,10 +303,8 @@ body.editor-body .wrap {
 
 .addTile:disabled .txt,
 .addTile:disabled .sub,
-.addTile:disabled .plus,
 .addTile[aria-disabled="true"] .txt,
-.addTile[aria-disabled="true"] .sub,
-.addTile[aria-disabled="true"] .plus {
+.addTile[aria-disabled="true"] .sub {
     color: rgba(255,255,255,.92);
     opacity: 1;
 }
@@ -466,11 +451,6 @@ body.editor-body .wrap {
         min-height: 72px
     }
 
-    .addTile .plus {
-        width: 30px;
-        height: 30px;
-        border-radius: 12px
-    }
 
 }
 
