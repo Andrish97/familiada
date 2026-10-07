@@ -1,11 +1,12 @@
 const {test,expect}=require('./helpers/production-test');
 const {loginAsPooledTestUser}=require('./helpers/login');
+const {generateE2EToken}=require('./helpers/e2e-token');
 
 test('release: canonical routes serve the current app and preserve connection parameters',async({context})=>{
   const scripts={control:'app.js',display:'main.js',host:'main.js',buzzer:'main.js','game-settings':'game-settings.js'};
   for(const [name,script] of Object.entries(scripts)) {
-    const page=await context.newPage();
-    const response=await page.goto(`/${name}/?id=release-probe&key=release-key&lang=en&ret=%2Fgames%2F#probe`,{waitUntil:'commit'});
+    const response=await context.request.get(`/${name}/?id=release-probe&key=release-key&lang=en&ret=%2Fgames%2F`,{headers:{"X-E2E-Token":generateE2EToken(process.env.E2E_BYPASS_SECRET)}});
+    expect(response.status()).toBe(200);
     const url=new URL(response.url());
     expect(url.pathname).toBe(`/${name}/`);
     expect(url.searchParams.get('id')).toBe('release-probe');
@@ -13,7 +14,6 @@ test('release: canonical routes serve the current app and preserve connection pa
     expect(url.searchParams.get('lang')).toBe('en');
     expect(url.searchParams.get('ret')).toBe('/games/');
     expect(await response.text()).toContain(`/${name}/js/${script}`);
-    await page.close();
   }
 });
 
@@ -31,7 +31,9 @@ test('release: approved Polish manual and native icons are published',async({pag
 
 test('release: Games play and settings links open the new panel',async({page},testInfo)=>{
  await loginAsPooledTestUser(page,page.context(),testInfo.parallelIndex);
- const source=await page.request.get('/games/js/games.js');
+ await page.goto('/games/');
+ const script=await page.locator('script[src*="/games/js/games.js"]').getAttribute('src');
+ const source=await page.request.get(script);
  expect(source.ok()).toBeTruthy();
  const body=await source.text();
  expect(body).toContain('/control/?id=');
