@@ -14,10 +14,10 @@
 // tego refreshBadges() zwraca zwykły obiekt {display,host,buzzer: liczba},
 // który app.js dokłada do ctx.shareBadges na kolejny ui.render().
 
-import { sb, SUPABASE_URL } from "../../shared/js/core/supabase.js?v=v2026-10-07T20071";
-import { t } from "../../shared/translation/translation.js?v=v2026-10-07T20071";
-import { icon } from "../../shared/js/core/icons.js?v=v2026-10-07T20071";
-import { createCooldownTicker, mailCooldownCheck } from "../../shared/js/core/cooldown.js?v=v2026-10-07T20071";
+import { sb, SUPABASE_URL } from "../../shared/js/core/supabase.js?v=v2026-10-07T20245";
+import { t } from "../../shared/translation/translation.js?v=v2026-10-07T20245";
+import { icon } from "../../shared/js/core/icons.js?v=v2026-10-07T20245";
+import { createCooldownTicker, mailCooldownCheck } from "../../shared/js/core/cooldown.js?v=v2026-10-07T20245";
 
 const MAIL_FUNCTION_URL = `${SUPABASE_URL}/functions/v1/send-mail`;
 const SHARE_TTL_MS = 4 * 60 * 60 * 1000;

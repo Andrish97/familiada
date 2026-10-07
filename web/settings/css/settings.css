@@ -2539,8 +2539,9 @@ body.tools-fullscreen .tools-frame-wrap iframe{
 
 /* Szczegóły rozgrywki otwierają się nad tabelą statystyk. */
 .stats-session-details-overlay{z-index:10001!important;top:0!important;padding:16px!important}
-.stats-session-details-overlay .modal{width:min(760px,94vw);max-height:86vh;overflow:auto}
-.stats-session-details-overlay .uni-body{display:block}
+.stats-session-details-overlay .modal{display:flex;flex-direction:column;width:min(760px,94vw);max-height:86vh;overflow:hidden}
+.stats-session-details-overlay .uni-head,.stats-session-details-overlay .mSub,.stats-session-details-overlay .uni-foot{flex:0 0 auto}
+.stats-session-details-overlay .uni-body{display:block;min-height:0;overflow:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
 .stats-session-run-details{white-space:normal;line-height:1.5;overflow-wrap:anywhere}
 .stats-session-run-teams{display:block;margin-bottom:10px;color:var(--gold,#ffeaa6);font-size:14px}
 .stats-session-run-line{margin:7px 0;color:rgba(255,255,255,.82);font-size:13px}

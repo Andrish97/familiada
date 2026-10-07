@@ -1,6 +1,6 @@
 // js/core/game-validate.js
-import { sb } from "./supabase.js?v=v2026-10-07T20071";
-import { t } from "../../translation/translation.js?v=v2026-10-07T20071";
+import { sb } from "./supabase.js?v=v2026-10-07T20245";
+import { t } from "../../translation/translation.js?v=v2026-10-07T20245";
 
 /**
  * Typy gier:
