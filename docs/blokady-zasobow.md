@@ -198,7 +198,18 @@ pierwsza przeszkoda zatrzymuje i nie idziemy dalej.
   spowolnione liczniki w tle (np. 2 min) — zamknięta karta i tak zwalnia
   blokadę od razu (`pagehide`), TTL dotyczy tylko awarii.
 
-### Blokady stanu — tak samo twarde jak blokady zasobów (decyzja 2026-10-07)
+### Blokady stanu i akcji — tak samo twarde jak blokady zasobów (decyzja 2026-10-07)
+
+Zakres blokad obejmuje **trzy rodzaje** (jeden opis, jeden wygląd, jedna
+druga warstwa w bazie): blokady zasobów (kto trzyma), blokady stanu
+(strona nie może pracować w tym stanie gry) i **blokady akcji według
+kryteriów danej gry** — każdy przycisk / akcja (graj, ustawienia,
+ankieta, eksport, edycja, uruchomienie / zamknięcie ankiety, usunięcie…)
+ma warunki zależne od typu i stanu gry (`game_rules_compute`:
+edit / play / poll_entry / poll_open / poll_close / export). Akcja
+niedozwolona: przycisk nieaktywny z powodem, a baza i tak odmawia.
+Do spisania w tabeli: akcja → warunki → gdzie sprawdzane (strona, baza).
+
 
 Poza blokadą zasobu (kto trzyma) są **reguły stanu** gry (`game_rules_compute`,
 `rules_state`, migracje 273–275): np. pytań nie da się edytować przy

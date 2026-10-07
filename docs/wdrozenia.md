@@ -41,7 +41,7 @@ utracie kontekstu wystarczy przeczytać ten plik i wskazaną sekcję źródła.
 | 3 | E10 | Wygląd: listy (pasek, karty, kafle, dolny pasek), edytory (tytuł i nazwa w topbarze, jedno pole nazwy, logo bez wskaźnika zapisu), ankieta bez podpowiedzi pod tytułem | ujednolicenie-wygladu.md | do zrobienia |
 | 4 | E11 | Ankiety: luka bezpieczeństwa, klucz na uruchomienie, Przerwij, zaproszenia (3 stany), limity maili, strona ankiety (karty Udostępnianie · Wyniki), hub znika, Subskrypcje + Zadania, podgląd Gra · Ankieta, blokady stanu na stronach gry | ankiety-refaktor.md, maile-granice.md, blokady „Blokady stanu” | do zrobienia |
 | 5 | E12 | Usuwanie gry i konta | usuwanie-danych.md | do zrobienia |
-| 6 | E2 | Blokady wg mapy docelowej (współdzielone, `logos`, `base:B`, odnowienie `locked`, TTL, DB `*_checked`) | blokady 6 | do zrobienia |
+| 6 | E2 | Blokady wg mapy docelowej (współdzielone, `logos`, `base:B`, odnowienie `locked`, TTL, DB `*_checked`) + blokady stanu i akcji wg kryteriów gier (tabela akcja → warunki) | blokady 6 | do zrobienia |
 | 7 | E4 | `nav-map.js` (`PAGES`, `linkTo`, `backHref`), `ret`, gość na `/` → `/games/` | nawigacja 6.2–6.3 | do zrobienia |
 | 8 | E5 | Adresy a) `/go/` b) ankiety c) gry d) urządzenia + `/connect/` e) bazy, logo f) logowanie | nawigacja 8 | do zrobienia |
 | 9 | E6 | `initPage()`, wspólny overlay gość/urządzenie | nawigacja 6.4 | do zrobienia |
@@ -64,7 +64,12 @@ bo `PAGES` deklaruje blokady; adresy po mapie stron; instrukcja na końcu.
 2. Kod: branch → testy (unit + e2e z filtrem) → `main` → e2e na `main`.
    **Migracje bezpieczne** (dodające, zgodne wstecz z działającym kodem)
    → od razu na `main`, potem testy. Migracje zmieniające zachowanie
-   produkcji razem z kodem, który ich wymaga.
+   produkcji razem z kodem, który ich wymaga. **Migracje usuwające**
+   (funkcje, kolumny, tabele) dopiero po potwierdzeniu testami, że nowa
+   droga działa na produkcji.
+5. Dostępne narzędzia testowe: e2e z prawdziwą skrzynką mailową
+   (`e2e_mailbox`) i kontami testowymi — używać ich do maili, kont,
+   subskrypcji i ankiet.
 3. Oszczędnie z kontekstem: czytać fragmenty plików, wyszukiwanie
    zlecać agentom, nie powtarzać analiz zapisanych w dokumentach.
 4. Przed wyczerpaniem limitu: zapisać stan w dzienniku, wypchnąć, ustawić
