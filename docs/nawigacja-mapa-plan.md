@@ -26,9 +26,10 @@ i jak się nazywa. Strony przestają same składać `?ret=`, `?from=`, etykiety
 - `requireAuth()` w control jest wołane bez argumentu → domyślne `"login"` to
   ścieżka WZGLĘDNA → przekierowanie na `/control/login` (404).
   (`control/app.js:173`, `auth.js:298`). **To jest realny błąd.**
-- Niezalogowany wyrzucony na `/login/` nie wraca tam, skąd przyszedł —
-  `next` obsługuje tylko `polls-hub` i `subscriptions` (`login.js:559`).
-  Link do `/editor/?id=…` po zalogowaniu kończy na `/games/`.
+- Po zalogowaniu zawsze `/games/` — **tak ma zostać** (decyzja). Jedyny
+  wyjątek już istnieje: zaproszenie z maila (`/poll-go/` →
+  `/login/?next=polls-hub|subscriptions`, `login.js:559`), który po
+  zalogowaniu otwiera to zadanie/subskrypcję.
 - `account` woła `requireAuth("/login/?setup=username")` — niezalogowany
   ląduje na ekranie ustawiania nazwy zamiast logowania.
 - Gość: polls-hub/subscriptions pokazują overlay (`showGuestBlockedOverlay`),
@@ -65,6 +66,8 @@ Jeden deklaratywny plik. Każda strona to wpis:
 // access:  kto wchodzi: "public" | "guest" (gość + konto) | "user" (tylko konto)
 // device:  "any" | "wide" (Control/ustawienia gry: device-guard)
 // parent:  dokąd „Wstecz”, gdy nie ma poprawnego ?ret=
+// from:    strony, na które „Wstecz” wolno wrócić (dozwolona ścieżka) — ?ret=
+//          spoza tej listy jest ignorowane i „Wstecz” idzie do parent
 // manual:  kotwica instrukcji (#...) dla przycisku „?”
 export const PAGES = {
   home:          { path: "/",               access: "public" },
@@ -82,7 +85,7 @@ export const PAGES = {
   marketplace:   { path: "/marketplace/",   access: "public", parent: "games",     manual: "community" },
   connectDevice: { path: "/connect-device/",access: "public", parent: "games",     manual: "connect" },
   account:       { path: "/account/",       access: "guest",  parent: "games",     manual: "general" },
-  manual:        { path: "/manual/",        access: "guest",  parent: "games" },
+  manual:        { path: "/manual/",        access: "guest",  parent: "games" },  // decyzja: tylko z kontem/gościem
   privacy:       { path: "/privacy/",       access: "public", parent: "manual" },
 };
 ```
@@ -98,8 +101,8 @@ zawsze `nav.backTo` = „Wróć do: {page}”. Koniec z tabelami etykiet.
 const user = await initPage("editor");
 
 linkTo("polls", { id })       // → /polls/?id=…&ret=<bieżący url>&lang=…
-backHref("polls")             // poprawny ?ret= (ta sama domena, znana strona) albo parent
-loginUrl()                    // → /login/?next=<bieżący url>
+backHref("polls")             // ?ret=, jeśli to dozwolona ścieżka (from), inaczej parent
+loginUrl()                    // → /login/ (po zalogowaniu zawsze /games/)
 ```
 
 `initPage(id)` robi po kolei:
@@ -110,6 +113,25 @@ loginUrl()                    // → /login/?next=<bieżący url>
    (`/manual/?ret=…#<manual>`), konto (`setTopbarAccount` z tym samym menu
    na każdej stronie).
 4. Zwraca użytkownika (albo `null` dla `public`).
+
+### „Wstecz” przez wszystkie kroki, tylko po dozwolonej ścieżce (decyzja)
+
+`linkTo()` zapisuje w `ret` **pełny** bieżący adres — razem z jego własnym
+`ret`. Dzięki temu łańcuch odtwarza się sam, krok po kroku:
+
+```
+/games/
+  → /polls-hub/?ret=/games/
+    → /polls/?id=7&ret=/polls-hub/?ret=/games/
+      → /manual/?ret=/polls/?id=7&ret=/polls-hub/?ret=/games/#polls
+↩ manual → polls(7) → polls-hub → games
+```
+
+Każdy krok jest sprawdzany z mapą: `ret` musi wskazywać stronę z listy
+`from` bieżącej strony (np. `polls.from = ["games", "pollsHub"]`,
+`manual.from = *` — wszystkie strony z topbarem). Inny / obcy / zepsuty
+`ret` → „Wstecz” do `parent`. Podwójnych powrotów będzie mało, ale gdyby
+łańcuch urósł, limit 4 poziomów (głębsze `ret` są obcinane do `parent`).
 
 Strony z własną logiką powrotu (edytor w trybie edycji pytania, modal-sheet,
 ostrzeżenie w trakcie gry w Control) dalej przechwytują klik, ale cel
@@ -146,7 +168,8 @@ Wspólne dla wszystkich map (nie powtarzam w każdej):
 
 ### Mapa A1 — Niezalogowany, desktop
 
-Start: `/` (landing). Wszystko poza stronami publicznymi → `/login/?next=<adres>`.
+Start: `/` (landing). Wszystko poza stronami publicznymi → `/login/`.
+Logowanie tylko na `/login/` (landing ma tylko przycisk „Zaczynamy”).
 
 ```mermaid
 flowchart LR
@@ -155,27 +178,27 @@ flowchart LR
   home -->|Społeczność| market["/marketplace/<br/>tylko przeglądanie"]
   home -->|Podłącz urządzenie| cd["/connect-device/"]
   home -->|Prywatność| privacy["/privacy/"]
-  login -->|Zaloguj| next(("next albo /games/<br/>= mapa C1"))
+  login -->|Zaloguj| afterLogin(("/games/<br/>= mapa C1"))
   login -->|Graj jako gość| guest(("/games/<br/>= mapa B1"))
   login -->|Nie pamiętam hasła| reset["/reset/"]
   market -->|↩| home
   cd -->|↩| home
   privacy -->|↩| home
-  locked["/games/ /editor/ /polls/ /bases/ ...<br/>(link z zewnątrz)"] -->|brak sesji| login
+  locked["/games/ /editor/ /manual/ ...<br/>(link z zewnątrz)"] -->|brak sesji| login
 ```
 
 | Strona | Przyciski | Cel |
 |---|---|---|
 | `/` | Zaczynamy · Społeczność · Podłącz urządzenie · Prywatność | login · marketplace · connect-device · privacy |
-| `/login/` | Zaloguj / Zarejestruj · Graj jako gość · Nie pamiętam hasła | `next` lub `/games/` · `/games/` (gość) · reset |
-| `/marketplace/` | ↩ „Strona główna” · podgląd gier · topbar: „Zaloguj / Załóż konto” | `/` · — · `/login/?next=/marketplace/` |
+| `/login/` | Zaloguj / Zarejestruj · Graj jako gość · Nie pamiętam hasła | `/games/` (wyjątek: zaproszenie z maila) · `/games/` · reset |
+| `/marketplace/` | ↩ „Strona główna” · podgląd gier · topbar: „Zaloguj / Załóż konto” | `/` · — · `/login/` |
+| `/privacy/` | ↩ „Strona główna” | `/` |
 | `/connect-device/` | ↩ · skan QR / kod | `/` · strona urządzenia |
-| każda inna | — | `/login/?next=<adres>` |
+| każda inna (w tym `/manual/`) | — | `/login/` |
 
-**⚠ dziś:** `next` działa tylko dla ankiet i subskrypcji (po zalogowaniu
-z linku do edytora ląduje się na `/games/`); `/control/` bez sesji →
-`/control/login` (404); `/account/` bez sesji → ekran ustawiania nazwy;
-`/manual/` wymaga logowania; w marketplace przycisk w sekcji 1 to „Moje gry”.
+**⚠ dziś:** `/control/` bez sesji → `/control/login` (404); `/account/`
+bez sesji → ekran ustawiania nazwy; w marketplace przycisk w sekcji 1 to
+„Moje gry”.
 
 ### Mapa A2 — Niezalogowany, mobile
 
@@ -191,8 +214,11 @@ Te same strony i cele co A1. Różnice:
 
 ### Mapa B1 — Gość, desktop
 
-Start: `/games/` (po „Graj jako gość”). Gość ma swoje gry, ale bez funkcji
-społecznościowych i współdzielenia.
+Start: `/games/` (po „Graj jako gość”). Konto gościa to prawie pełne konto:
+ma swoje gry, bazy, logo, ankiety i grę, bez funkcji społecznościowych
+i współdzielenia. Gość wchodzący na `/` lub `/login/` → od razu `/games/`
+(tak samo jak zalogowany; na `/login/` zostaje tylko z `force_auth=1`, czyli
+gdy sam kliknął „Załóż konto”).
 
 ```mermaid
 flowchart LR
@@ -223,7 +249,8 @@ flowchart LR
 
 **⚠ dziś:** „Ustawienia konta” w menu tylko na `/games/`; connect-device ↩
 prowadzi gościa na `/` (landing) zamiast na `/games/`; okno „tylko dla konta”
-wygląda inaczej niż okno blokady urządzenia.
+wygląda inaczej niż okno blokady urządzenia; gość na `/` zostaje na landingu
+(`home/js/index.js:10`).
 
 ### Mapa B2 — Gość, mobile
 
@@ -376,18 +403,23 @@ pliku, a CSS korzystał z tych samych wartości (komentarz przy `@media`).
    `withLangParam` w twardych `/games/`.
 2. `nav-map.js` + `backHref/linkTo/loginUrl` + klucze `nav.*`; podmiana
    `?from=games` na `linkTo()`; usunięcie trzech tabel etykiet.
-3. `login`: ogólne `next=<ścieżka>` (walidacja: ta sama domena + strona z
-   mapy), stare `next=polls-hub|subscriptions` zostaje jako alias.
+3. Gość na `/` → `/games/`; `login` bez zmian w celu (zawsze `/games/`,
+   wyjątek zaproszeń z maila zostaje); `ret` łańcuchem z listą `from`.
 4. `initPage()` strona po stronie (kolejność jak audyty), wspólny wygląd
    overlayu gość/urządzenie.
 5. Przyciski w `PAGES` (role/urządzenie), generator diagramów 6 map,
    test e2e przechodzący 6 map (patrz koniec sekcji 3).
 
-## 7. Do decyzji
+## 7. Decyzje
 
-- Gość na `/` — zostaje na landing czy od razu `/games/`?
+Podjęte (2026-10-07):
+- **Gość na `/`** → od razu `/games/` — konto gościa to prawie pełne konto.
+- **`/manual/`** — tylko z kontem/gościem. Publiczna jest tylko polityka
+  prywatności (oraz landing, login, Społeczność, podłączanie urządzenia).
+- **Po zalogowaniu** zawsze `/games/`. Logowanie tylko na `/login/`.
+  Wyjątek, który już działa: zaproszenie z maila do ankiety/subskrypcji.
+- **„Wstecz”** wraca przez wszystkie kroki, ale tylko po dozwolonej ścieżce
+  (lista `from` w mapie); podwójnych powrotów będzie mało.
+
+Otwarte:
 - Telefon: „Graj”/„Ustawienia gry” nieaktywne z podpowiedzią czy całkiem ukryte?
-- `/manual/` dla niezalogowanych — publiczna (pomoc przed założeniem konta)?
-- Po zalogowaniu z `/` — zawsze `/games/`, czy ostatnio odwiedzona strona?
-- Czy `ret` ma przechodzić łańcuchem (polls-hub → polls → manual → z powrotem
-  do polls, a stamtąd do polls-hub), czy powrót tylko o jeden poziom?
