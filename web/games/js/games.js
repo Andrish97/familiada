@@ -1,36 +1,36 @@
-import { addRenameGesture } from "../../shared/js/core/rename-gesture.js?v=v2026-10-07T22435";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-07T22435";
-import { requireAuth } from "../../shared/js/core/auth.js?v=v2026-10-07T22435";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-07T22435";
-import { hideForGuest, isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-07T22435";
-import { initI18n, t, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-07T22435";
-import { initRatingSystem } from "../../shared/js/core/rating-system.js?v=v2026-10-07T22435";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-07T22435";
-import { maybeShowGuestInfoModal } from "../../shared/js/core/guest-info-modal.js?v=v2026-10-07T22435";
-import { maybeShowGuestMigrateReminder } from "../../shared/js/core/guest-migrate-reminder.js?v=v2026-10-07T22435";
+import { addRenameGesture } from "../../shared/js/core/rename-gesture.js?v=v2026-10-07T22483";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-07T22483";
+import { requireAuth } from "../../shared/js/core/auth.js?v=v2026-10-07T22483";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-07T22483";
+import { hideForGuest, isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-07T22483";
+import { initI18n, t, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-07T22483";
+import { initRatingSystem } from "../../shared/js/core/rating-system.js?v=v2026-10-07T22483";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-07T22483";
+import { maybeShowGuestInfoModal } from "../../shared/js/core/guest-info-modal.js?v=v2026-10-07T22483";
+import { maybeShowGuestMigrateReminder } from "../../shared/js/core/guest-migrate-reminder.js?v=v2026-10-07T22483";
 
-import { initPwa, isStandalone, isMobileDevice } from "../../shared/js/core/pwa.js?v=v2026-10-07T22435";
-import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-07T22435";
+import { initPwa, isStandalone, isMobileDevice } from "../../shared/js/core/pwa.js?v=v2026-10-07T22483";
+import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-07T22483";
 
 // Zarejestruj listener PWA jak najwcześniej – beforeinstallprompt może odpalić przed requireAuth
 const pwaApi = initPwa();
 // Jeśli beforeinstallprompt już odpalił zanim dodaliśmy listener w IIFE, sprawdzimy po zalogowaniu
 
 
-import { exportGame, importGame, downloadJson } from "./games-import-export.js?v=v2026-10-07T22435";
-import { setTopbarNavPriority, setTopbarAccount } from '../../shared/js/core/topbar-controller.js?v=v2026-10-07T22435';
+import { exportGame, importGame, downloadJson } from "./games-import-export.js?v=v2026-10-07T22483";
+import { setTopbarNavPriority, setTopbarAccount } from '../../shared/js/core/topbar-controller.js?v=v2026-10-07T22483';
 
-import "../../shared/js/core/contact-modal.js?v=v2026-10-07T22435";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-07T22483";
 import {
   TYPES,
   STATUS,
   loadGameBasic,
   validateGame,
   rulesFromState,
-} from "../../shared/js/core/game-validate.js?v=v2026-10-07T22435";
-import { deleteGameSoundsFolder } from "../../shared/js/core/sfx-cloud.js?v=v2026-10-07T22435";
-import { isResourceBusy } from "../../shared/js/core/resource-lock.js?v=v2026-10-07T22435";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-07T22435";
+} from "../../shared/js/core/game-validate.js?v=v2026-10-07T22483";
+import { deleteGameSoundsFolder } from "../../shared/js/core/sfx-cloud.js?v=v2026-10-07T22483";
+import { isResourceBusy } from "../../shared/js/core/resource-lock.js?v=v2026-10-07T22483";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-07T22483";
 
 const MSG = {
   exportBaseEmpty: () => t("games.exportBase.empty"),
