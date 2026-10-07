@@ -129,7 +129,7 @@
 /* "+ Dodaj odpowiedź 3/6" -- pierwszy wiersz listy */
 .qf-row.qf-add {
     display: grid;
-    grid-template-columns: minmax(0,1fr) auto;
+    grid-template-columns: 36px minmax(0,1fr) auto;
     gap: 10px;
     border-style: dashed;
     border-color: rgba(255,234,166,.35);
@@ -143,8 +143,9 @@
 }
 
 .qf-addPlus {
-    grid-column: 1 / -1;
+    grid-column: 1;
     justify-self: center;
+    margin-left: 12px;
     color: var(--gold);
     font-size: 30px;
     font-weight: 500;
