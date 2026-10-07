@@ -7,21 +7,18 @@
 // snap-to-grid z dzisiejszego host.js (kosmetyka do dostrojenia wizualnie
 // później, nie architektura).
 
-import { initI18n, setUiLang } from "../../shared/translation/translation.js?v=v2026-10-07T17454";
-import { startKeepAlive } from "../../shared/js/core/keep-alive.js?v=v2026-10-07T17454";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-07T17454";
-import { createSubscription } from "../../shared/js/core/game-state-subscribe.js?v=v2026-10-07T17454";
-import { createHostRenderer } from "./render.js?v=v2026-10-07T17454";
-import { createCoverLogoRenderer } from "./coverLogo.js?v=v2026-10-07T17454";
-import { createHostThemeApplier } from "./hostThemeManager.js?v=v2026-10-07T17454";
-import { icon } from "../../shared/js/core/icons.js?v=v2026-10-07T17454";
+import { initI18n, setUiLang } from "../../shared/translation/translation.js?v=v2026-10-07T20055";
+import { startKeepAlive } from "../../shared/js/core/keep-alive.js?v=v2026-10-07T20055";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-07T20055";
+import { createSubscription } from "../../shared/js/core/game-state-subscribe.js?v=v2026-10-07T20055";
+import { createHostRenderer } from "./render.js?v=v2026-10-07T20055";
+import { createCoverLogoRenderer } from "./coverLogo.js?v=v2026-10-07T20055";
+import { createHostThemeApplier } from "./hostThemeManager.js?v=v2026-10-07T20055";
+import { icon } from "../../shared/js/core/icons.js?v=v2026-10-07T20055";
 
-// videoWakeLockFallback: Host jest zwykle na osobnym tablecie/telefonie
-// prowadzącego (patrz plan) — dokładnie to urządzenie, które przeglądarka
-// najchętniej usypia w trakcie długiej gry. Włączone tylko tu i w
-// buzzer/js/main.js (nie w display2 — ten zwykle stoi podłączony do
-// zasilania/TV, mniejsze ryzyko), zgodnie z tym, co zgłoszone.
-startKeepAlive({ videoWakeLockFallback: true });
+// Wszystkie trzy urządzenia utrzymują ekran aktywny przez Wake Lock
+// oraz zapasowy, wyciszony strumień wideo.
+startKeepAlive();
 
 function parseParams() {
   const u = new URL(location.href);

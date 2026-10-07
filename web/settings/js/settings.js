@@ -12,13 +12,13 @@ Settings panel (admin)
 - GET /_admin_api/mail/logs
 */
 
-import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-07T17454";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-07T17454";
-import { alertModal, confirmModal, promptModal } from "../../shared/js/core/modal.js?v=v2026-10-07T17454";
-import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-07T17454";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-07T17454";
-import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-07T17454";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-07T17454";
+import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-07T20055";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-07T20055";
+import { alertModal, confirmModal, promptModal } from "../../shared/js/core/modal.js?v=v2026-10-07T20055";
+import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-07T20055";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-07T20055";
+import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-07T20055";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-07T20055";
 
 // settings.html nie ma naturalnego przycisku wstecz na mobile (panel admina
 // bez nawigacji "do tyłu") -- btnBackSheet istnieje wyłącznie na potrzeby
@@ -28,10 +28,10 @@ const btnBackSheet = document.getElementById("btnBackSheet");
 if (btnBackSheet) btnBackSheet.dataset.sheetBack = "1";
 btnBackSheet?.addEventListener("click", () => { handleSheetBack(); });
 
-import { startActivityPanel, activityDetailRows } from "./activity.js?v=v2026-10-07T17454";
+import { startActivityPanel, activityDetailRows } from "./activity.js?v=v2026-10-07T20055";
 
 const API_BASE = "/_admin_api";
-const TOOLS_MANIFEST = "/settings/data/tools.json?v=v2026-10-07T17454";
+const TOOLS_MANIFEST = "/settings/data/tools.json?v=v2026-10-07T20055";
 const POLL_MS = 15000;
 const MINUTES_MIN = 10;
 const MAIL_PROVIDERS = ["brevo", "mailgun", "sendpulse", "zeptomail"];
@@ -1046,8 +1046,8 @@ async function openMaintenancePreview() {
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-07T17454"/>
-  <link rel="stylesheet" href="/maintenance/css/maintenance.css?v=v2026-10-07T17454"/>
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-07T20055"/>
+  <link rel="stylesheet" href="/maintenance/css/maintenance.css?v=v2026-10-07T20055"/>
   <style>
     body{margin:0;padding:0}
     .custom-maintenance-content { font-size: 18px; line-height: 1.6; opacity: 0.9; }
@@ -5439,19 +5439,42 @@ function fmtSessionWinner(r) {
 // DOM/textContent keeps player-entered names and answers out of HTML parsing.
 function fmtSessionDetails(r) {
   if (Number(r.control_version) !== 2) return "—";
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "btn sm stats-session-details-button";
+  button.textContent = "Pokaż przebieg";
+  button.addEventListener("click", () => {
+    void openSessionRunDetailsModal(r).finally(() => button.focus());
+  });
+  return button;
+}
+
+function openSessionRunDetailsModal(r) {
+  return confirmModal({
+    title: "Przebieg rozgrywki",
+    text: "",
+    okText: "Wróć do tabeli",
+    showCancel: false,
+    body: buildSessionRunDetails(r),
+    onReady: ({ overlay }) => overlay?.classList.add("stats-session-details-overlay"),
+  });
+}
+
+function buildSessionRunDetails(r) {
   const info = r.stats_detail || {};
-  const details = document.createElement("details");
-  const summary = document.createElement("summary");
-  summary.textContent = "Pokaż przebieg";
-  details.appendChild(summary);
+  const details = document.createElement("div");
+  details.className = "stats-session-run-details";
   function line(text) {
     const p = document.createElement("p");
     p.textContent = text;
-    p.style.cssText = "white-space:normal;margin:8px 0;min-width:210px";
+    p.className = "stats-session-run-line";
     details.appendChild(p);
   }
   const teams = info.teams || {};
-  line(`${teams.teamA || "Drużyna A"} / ${teams.teamB || "Drużyna B"}`);
+  const gameTitle = document.createElement("strong");
+  gameTitle.className = "stats-session-run-teams";
+  gameTitle.textContent = `${r.game_name || "Gra"} · ${teams.teamA || "Drużyna A"} / ${teams.teamB || "Drużyna B"}`;
+  details.appendChild(gameTitle);
   const reasons = { restart: "Rozpoczęto od nowa", final_target: "Osiągnięto próg finału", final_complete: "Ukończono finał", rounds_target: "Osiągnięto próg rund", questions_exhausted: "Wyczerpano pytania" };
   if (info.end_reason) line(reasons[info.end_reason] || info.end_reason);
   if (info.resumed_at_install) line("Zapis statystyk rozpoczęty po wznowieniu trwającej gry.");
@@ -5472,10 +5495,63 @@ function fmtSessionDetails(r) {
     line(`Finał: ${info.final.points} / ${info.final.target} pkt.`);
   }
   if (info.prize != null) line(`Nagroda: ${Number(info.prize).toLocaleString("pl-PL")}`);
-  (info.events || []).forEach(event => {
-    const labels = { error:"Błąd", disconnect:"Utracono połączenie", reconnect:"Połączenie przywrócone" };
-    line(`${fmtDate(event.at)} — ${labels[event.kind] || event.kind}${event.devices?.length ? ": " + event.devices.map(kind => ({display:"Wyświetlacz",host:"Prowadzący",buzzer:"Przycisk"}[kind] || kind)).join(", ") : ""}${event.message ? ": " + event.message : ""}`);
-  });
+
+  const events = (info.events || []).filter(event => event?.kind);
+  if (events.length) {
+    const names = { display:"Wyświetlacz", host:"Prowadzący", buzzer:"Przycisk" };
+    const timeOf = event => event.at ? new Date(event.at).toLocaleTimeString("pl-PL", { hour:"2-digit", minute:"2-digit", second:"2-digit" }) : "—";
+    const presenceOf = event => typeof event.message === "string" && event.message.startsWith("presence:")
+      ? event.message.slice("presence:".length).split(",").map(part => {
+        const [kind, state] = part.split("=");
+        return kind ? `${names[kind] || kind}: ${state === "online" ? "online" : "offline"}` : "";
+      }).filter(Boolean).join(" · ")
+      : "";
+    const group = document.createElement("section");
+    group.className = "stats-session-events";
+    const heading = document.createElement("strong");
+    heading.className = "stats-session-events-title";
+    heading.textContent = "Zdarzenia";
+    group.appendChild(heading);
+    let outage = null;
+    const addOutage = end => {
+      if (!outage) return;
+      const row = document.createElement("div");
+      row.className = "stats-session-event";
+      const devices = [...outage.devices].map(kind => names[kind] || kind).join(", ") || "Urządzenie";
+      const interval = end ? `${timeOf(outage.start)}–${timeOf(end)}` : timeOf(outage.start);
+      const title = document.createElement("strong");
+      title.textContent = `Przerwa: ${devices} · ${interval}`;
+      row.appendChild(title);
+      const state = document.createElement("span");
+      state.textContent = outage.state ? `Stan: ${outage.state}` : "Stan innych urządzeń nie został zapisany";
+      row.appendChild(state);
+      group.appendChild(row);
+      outage = null;
+    };
+    events.forEach(event => {
+      if (event.kind === "disconnect") {
+        if (!outage) outage = { start:event, devices:new Set(), state:"" };
+        (event.devices || []).forEach(kind => outage.devices.add(kind));
+        outage.state = presenceOf(event);
+      } else if (event.kind === "reconnect") {
+        if (outage) addOutage(event);
+        else {
+          const row = document.createElement("div");
+          row.className = "stats-session-event";
+          row.textContent = `${timeOf(event)} · Połączenie przywrócone`;
+          group.appendChild(row);
+        }
+      } else {
+        addOutage();
+        const error = document.createElement("div");
+        error.className = "stats-session-event stats-session-event-error";
+        error.textContent = `${timeOf(event)} · Błąd${event.message ? ` · ${event.message}` : ""}`;
+        group.appendChild(error);
+      }
+    });
+    addOutage();
+    details.appendChild(group);
+  }
   return details;
 }
 
@@ -5656,8 +5732,10 @@ function buildStatsTable(cfg, rows) {
     tr.style.background = i % 2 === 0 ? "transparent" : "rgba(255,255,255,.02)";
     cfg.row(r).forEach(cell => {
       const td = document.createElement("td");
-      if (cell instanceof Node) td.appendChild(cell);
-      else td.textContent = cell;
+      if (cell instanceof Node) {
+        td.appendChild(cell);
+        if (cell.classList?.contains("stats-session-details-button")) td.classList.add("stats-session-details-cell");
+      } else td.textContent = cell;
       td.style.cssText = "padding:6px 10px;border-bottom:1px solid rgba(255,255,255,.05);max-width:240px;overflow:hidden;text-overflow:ellipsis";
       tr.appendChild(td);
     });
@@ -5892,7 +5970,7 @@ async function mktRefreshPreview() {
   if (mktActiveTpl === "invitation") {
     // Invitation - full template with feature tiles and images
     const IMG_BASE = "https://familiada.online/img/pl";
-    previewHtml = `<!DOCTYPE html><html lang="pl"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><meta name="color-scheme" content="dark light"/><title>Familiada Online</title></head><body style="margin:0;padding:0;background:#050914;-webkit-text-size-adjust:100%"><table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#050914"><tbody><tr><td align="center" style="padding:24px 12px 32px"><table width="560" cellpadding="0" cellspacing="0" border="0" style="max-width:560px;width:100%;font-family:system-ui,-apple-system,'Segoe UI',Arial,sans-serif;font-size:14px;color:#ffffff"><tbody><tr><td style="padding:14px 16px;background:rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.12);border-radius:16px;margin-bottom:14px" bgcolor="#000"><a href="https://familiada.online" style="text-decoration:none"><div style="font-weight:900;font-size:16px;letter-spacing:.18em;text-transform:uppercase;color:#ffeaa6">FAMILIADA</div><div style="margin-top:3px;font-size:11px;color:rgba(255,255,255,.5);letter-spacing:.05em">familiada.online</div></a></td></tr><tr><td height="12"></td></tr><tr><td style="padding:24px 22px 22px;border-radius:18px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04)"><p style="margin:0 0 18px;font-size:14px;line-height:1.8;color:rgba(255,255,255,.9)">Witam,</p><p style="margin:0 0 14px;font-size:14px;line-height:1.8;color:rgba(255,255,255,.88)">Piszę w sprawie narzędzia, które ułatwia organizację wydarzeń i może realnie wesprzeć realizowane projekty.</p><p style="margin:0 0 14px;font-size:14px;line-height:1.8;color:rgba(255,255,255,.88)"><strong style="color:#fff">familiada.online</strong> to profesjonalna platforma do prowadzenia teleturnieju na żywo. To kompletny system: od zbierania odpowiedzi od gości (kod QR), przez panel operatora, aż po animowaną tablicę wyników z dźwiękami prosto z telewizyjnego studia.</p><div style="height:1px;background:rgba(255,255,255,.08);margin:20px 0"></div><table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:16px"><tbody><tr><td style="padding:0 0 8px"><img src="${IMG_BASE}/landing-polls.webp?v=v2026-10-07T17454" width="516" alt="Sonda QR — goście głosują na żywo" style="width:100%;max-width:516px;border-radius:10px;display:block;border:0"/></td></tr><tr><td style="padding:0 0 4px;font-size:14px;font-weight:700;color:#ffeaa6">Sonda QR — goście głosują na żywo</td></tr><tr><td style="font-size:13px;color:rgba(255,255,255,.75);line-height:1.6">Uczestnicy odpowiadają z własnych telefonów. System automatycznie normalizuje wyniki do 100 punktów.</td></tr></tbody></table><table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:16px"><tbody><tr><td style="padding:0 0 8px"><img src="${IMG_BASE}/landing-control.webp?v=v2026-10-07T17454" width="516" alt="Panel operatora — pełna kontrola" style="width:100%;max-width:516px;border-radius:10px;display:block;border:0"/></td></tr><tr><td style="padding:0 0 4px;font-size:14px;font-weight:700;color:#ffeaa6">Panel operatora — pełna kontrola</td></tr><tr><td style="font-size:13px;color:rgba(255,255,255,.75);line-height:1.6">Intuicyjne sterowanie rundami, punktami i błędami (X) w czasie rzeczywistym.</td></tr></tbody></table><table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:16px"><tbody><tr><td style="padding:0 0 8px"><img src="${IMG_BASE}/landing-display.webp?v=v2026-10-07T17454" width="516" alt="Tablica wyników na TV lub rzutnik" style="width:100%;max-width:516px;border-radius:10px;display:block;border:0"/></td></tr><tr><td style="padding:0 0 4px;font-size:14px;font-weight:700;color:#ffeaa6">Tablica wyników na TV lub rzutnik</td></tr><tr><td style="font-size:13px;color:rgba(255,255,255,.75);line-height:1.6">Animowana tablica z zakrytymi odpowiedziami, bankiem punktów i błędami X — z dźwiękami prosto z telewizyjnego studia.</td></tr></tbody></table><table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:16px"><tbody><tr><td style="padding:0 0 8px"><img src="${IMG_BASE}/landing-host.webp?v=v2026-10-07T17454" width="516" alt="Niezależny widok prowadzącego" style="width:100%;max-width:516px;border-radius:10px;display:block;border:0"/></td></tr><tr><td style="padding:0 0 4px;font-size:14px;font-weight:700;color:#ffeaa6">Niezależny widok prowadzącego</td></tr><tr><td style="font-size:13px;color:rgba(255,255,255,.75);line-height:1.6">Osobny podgląd pytań dla prowadzącego na tablecie lub telefonie — dla pełnej swobody na scenie.</td></tr></tbody></table><div style="height:1px;background:rgba(255,255,255,.08);margin:20px 0"></div><div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);padding:14px;border-radius:12px"><p style="margin:0 0 8px;font-size:13px;font-weight:700;color:#ffeaa6">Gotowe gry w Grach Społeczności</p><p style="margin:0;font-size:12px;color:rgba(255,255,255,.65);line-height:1.5">Gotowe zestawy pytań udostępnione przez innych użytkowników — bez konieczności tworzenia gry od zera.</p></div><div style="height:1px;background:rgba(255,255,255,.08);margin:20px 0"></div><p style="margin:0 0 14px;font-size:14px;line-height:1.8;color:rgba(255,255,255,.88)">System jest dostępny całkowicie bezpłatnie i nie wymaga instalacji żadnych aplikacji. Będę wdzięczny za opinię, czy taki format mógłby wzbogacić dotychczasową ofertę.</p><p style="margin:0 0 18px;font-size:14px;color:rgba(255,255,255,.88)">Pozdrawiam,<br/>Twórca familiada.online</p><div style="margin-top:24px;text-align:center"><a href="https://familiada.online" style="display:inline-block;padding:13px 30px;background:#ffeaa6;color:#050914;font-weight:800;font-size:13px;letter-spacing:.09em;text-transform:uppercase;border-radius:10px;text-decoration:none">Poznaj system familiada.online</a></div><div style="margin-top:32px;padding-top:16px;border-top:1px solid rgba(255,255,255,.08);font-size:11px;color:rgba(255,255,255,.4);line-height:1.6">Wiadomość ma charakter informacyjny i została wysłana jednorazowo do osób związanych z branżą eventową. W przypadku braku chęci otrzymywania dalszych informacji, proszę o krótką wiadomość zwrotną.</div><div style="margin-top:28px;padding-top:16px;border-top:1px solid rgba(255,255,255,.08);font-size:11px;color:rgba(255,255,255,.35);text-align:center;line-height:1.6">Familiada Online — bezpłatny system na <a href="https://familiada.online" style="color:rgba(255,234,166,.5);text-decoration:none">familiada.online</a><br/>Wysłano z kontakt@familiada.online</div></td></tr></tbody></table></td></tr></tbody></table></body></html>`;
+    previewHtml = `<!DOCTYPE html><html lang="pl"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><meta name="color-scheme" content="dark light"/><title>Familiada Online</title></head><body style="margin:0;padding:0;background:#050914;-webkit-text-size-adjust:100%"><table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#050914"><tbody><tr><td align="center" style="padding:24px 12px 32px"><table width="560" cellpadding="0" cellspacing="0" border="0" style="max-width:560px;width:100%;font-family:system-ui,-apple-system,'Segoe UI',Arial,sans-serif;font-size:14px;color:#ffffff"><tbody><tr><td style="padding:14px 16px;background:rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.12);border-radius:16px;margin-bottom:14px" bgcolor="#000"><a href="https://familiada.online" style="text-decoration:none"><div style="font-weight:900;font-size:16px;letter-spacing:.18em;text-transform:uppercase;color:#ffeaa6">FAMILIADA</div><div style="margin-top:3px;font-size:11px;color:rgba(255,255,255,.5);letter-spacing:.05em">familiada.online</div></a></td></tr><tr><td height="12"></td></tr><tr><td style="padding:24px 22px 22px;border-radius:18px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04)"><p style="margin:0 0 18px;font-size:14px;line-height:1.8;color:rgba(255,255,255,.9)">Witam,</p><p style="margin:0 0 14px;font-size:14px;line-height:1.8;color:rgba(255,255,255,.88)">Piszę w sprawie narzędzia, które ułatwia organizację wydarzeń i może realnie wesprzeć realizowane projekty.</p><p style="margin:0 0 14px;font-size:14px;line-height:1.8;color:rgba(255,255,255,.88)"><strong style="color:#fff">familiada.online</strong> to profesjonalna platforma do prowadzenia teleturnieju na żywo. To kompletny system: od zbierania odpowiedzi od gości (kod QR), przez panel operatora, aż po animowaną tablicę wyników z dźwiękami prosto z telewizyjnego studia.</p><div style="height:1px;background:rgba(255,255,255,.08);margin:20px 0"></div><table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:16px"><tbody><tr><td style="padding:0 0 8px"><img src="${IMG_BASE}/landing-polls.webp?v=v2026-10-07T20055" width="516" alt="Sonda QR — goście głosują na żywo" style="width:100%;max-width:516px;border-radius:10px;display:block;border:0"/></td></tr><tr><td style="padding:0 0 4px;font-size:14px;font-weight:700;color:#ffeaa6">Sonda QR — goście głosują na żywo</td></tr><tr><td style="font-size:13px;color:rgba(255,255,255,.75);line-height:1.6">Uczestnicy odpowiadają z własnych telefonów. System automatycznie normalizuje wyniki do 100 punktów.</td></tr></tbody></table><table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:16px"><tbody><tr><td style="padding:0 0 8px"><img src="${IMG_BASE}/landing-control.webp?v=v2026-10-07T20055" width="516" alt="Panel operatora — pełna kontrola" style="width:100%;max-width:516px;border-radius:10px;display:block;border:0"/></td></tr><tr><td style="padding:0 0 4px;font-size:14px;font-weight:700;color:#ffeaa6">Panel operatora — pełna kontrola</td></tr><tr><td style="font-size:13px;color:rgba(255,255,255,.75);line-height:1.6">Intuicyjne sterowanie rundami, punktami i błędami (X) w czasie rzeczywistym.</td></tr></tbody></table><table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:16px"><tbody><tr><td style="padding:0 0 8px"><img src="${IMG_BASE}/landing-display.webp?v=v2026-10-07T20055" width="516" alt="Tablica wyników na TV lub rzutnik" style="width:100%;max-width:516px;border-radius:10px;display:block;border:0"/></td></tr><tr><td style="padding:0 0 4px;font-size:14px;font-weight:700;color:#ffeaa6">Tablica wyników na TV lub rzutnik</td></tr><tr><td style="font-size:13px;color:rgba(255,255,255,.75);line-height:1.6">Animowana tablica z zakrytymi odpowiedziami, bankiem punktów i błędami X — z dźwiękami prosto z telewizyjnego studia.</td></tr></tbody></table><table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:16px"><tbody><tr><td style="padding:0 0 8px"><img src="${IMG_BASE}/landing-host.webp?v=v2026-10-07T20055" width="516" alt="Niezależny widok prowadzącego" style="width:100%;max-width:516px;border-radius:10px;display:block;border:0"/></td></tr><tr><td style="padding:0 0 4px;font-size:14px;font-weight:700;color:#ffeaa6">Niezależny widok prowadzącego</td></tr><tr><td style="font-size:13px;color:rgba(255,255,255,.75);line-height:1.6">Osobny podgląd pytań dla prowadzącego na tablecie lub telefonie — dla pełnej swobody na scenie.</td></tr></tbody></table><div style="height:1px;background:rgba(255,255,255,.08);margin:20px 0"></div><div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);padding:14px;border-radius:12px"><p style="margin:0 0 8px;font-size:13px;font-weight:700;color:#ffeaa6">Gotowe gry w Grach Społeczności</p><p style="margin:0;font-size:12px;color:rgba(255,255,255,.65);line-height:1.5">Gotowe zestawy pytań udostępnione przez innych użytkowników — bez konieczności tworzenia gry od zera.</p></div><div style="height:1px;background:rgba(255,255,255,.08);margin:20px 0"></div><p style="margin:0 0 14px;font-size:14px;line-height:1.8;color:rgba(255,255,255,.88)">System jest dostępny całkowicie bezpłatnie i nie wymaga instalacji żadnych aplikacji. Będę wdzięczny za opinię, czy taki format mógłby wzbogacić dotychczasową ofertę.</p><p style="margin:0 0 18px;font-size:14px;color:rgba(255,255,255,.88)">Pozdrawiam,<br/>Twórca familiada.online</p><div style="margin-top:24px;text-align:center"><a href="https://familiada.online" style="display:inline-block;padding:13px 30px;background:#ffeaa6;color:#050914;font-weight:800;font-size:13px;letter-spacing:.09em;text-transform:uppercase;border-radius:10px;text-decoration:none">Poznaj system familiada.online</a></div><div style="margin-top:32px;padding-top:16px;border-top:1px solid rgba(255,255,255,.08);font-size:11px;color:rgba(255,255,255,.4);line-height:1.6">Wiadomość ma charakter informacyjny i została wysłana jednorazowo do osób związanych z branżą eventową. W przypadku braku chęci otrzymywania dalszych informacji, proszę o krótką wiadomość zwrotną.</div><div style="margin-top:28px;padding-top:16px;border-top:1px solid rgba(255,255,255,.08);font-size:11px;color:rgba(255,255,255,.35);text-align:center;line-height:1.6">Familiada Online — bezpłatny system na <a href="https://familiada.online" style="color:rgba(255,234,166,.5);text-decoration:none">familiada.online</a><br/>Wysłano z kontakt@familiada.online</div></td></tr></tbody></table></td></tr></tbody></table></body></html>`;
   } else if (mktActiveTpl === "newsletter") {
     // Newsletter - Familiada wrapper + TinyMCE HTML + unsubscribe + footer
     previewHtml = `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>:root{color-scheme:dark}</style></head><body style="margin:0;padding:0;background:#050914;color:#ffffff;font-family:system-ui,-apple-system,'Segoe UI',Arial,sans-serif;"><div style="max-width:560px;margin:0 auto;padding:26px 16px;"><div style="padding:14px;background:rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.12);border-radius:16px;margin-bottom:14px;"><a href="https://familiada.online" style="text-decoration:none"><div style="font-weight:900;font-size:16px;letter-spacing:.18em;text-transform:uppercase;color:#ffeaa6">FAMILIADA</div><div style="margin-top:3px;font-size:11px;color:rgba(255,255,255,.5);letter-spacing:.05em">familiada.online</div></a></div><div style="padding:24px 22px 22px;border-radius:18px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04)"><p style="margin:0 0 6px;font-size:20px;font-weight:800;color:#ffeaa6">${escSetting(subject)}</p><div style="height:1px;background:rgba(255,255,255,.08);margin:20px 0"></div><div style="font-size:14px;line-height:1.8;color:rgba(255,255,255,.88)">${bodyHtml || '<em style="opacity:.5">(brak treści)</em>'}</div><div style="margin-top:32px;padding-top:16px;border-top:1px solid rgba(255,255,255,.08);font-size:11px;color:rgba(255,255,255,.4);line-height:1.6">W przypadku braku chęci otrzymywania dalszych informacji, proszę o krótką wiadomość zwrotną.
@@ -5957,7 +6035,7 @@ async function sendMarketing() {
   if (mktActiveTpl === "invitation") {
     // Invitation - full template with feature tiles and images
     const IMG_BASE = "https://familiada.online/img/pl";
-    htmlBody = `<!DOCTYPE html><html lang="pl"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><meta name="color-scheme" content="dark light"/><title>Familiada Online</title></head><body style="margin:0;padding:0;background:#050914;-webkit-text-size-adjust:100%"><table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#050914"><tbody><tr><td align="center" style="padding:24px 12px 32px"><table width="560" cellpadding="0" cellspacing="0" border="0" style="max-width:560px;width:100%;font-family:system-ui,-apple-system,'Segoe UI',Arial,sans-serif;font-size:14px;color:#ffffff"><tbody><tr><td style="padding:14px 16px;background:rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.12);border-radius:16px;margin-bottom:14px" bgcolor="#000"><a href="https://familiada.online" style="text-decoration:none"><div style="font-weight:900;font-size:16px;letter-spacing:.18em;text-transform:uppercase;color:#ffeaa6">FAMILIADA</div><div style="margin-top:3px;font-size:11px;color:rgba(255,255,255,.5);letter-spacing:.05em">familiada.online</div></a></td></tr><tr><td height="12"></td></tr><tr><td style="padding:24px 22px 22px;border-radius:18px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04)"><p style="margin:0 0 18px;font-size:14px;line-height:1.8;color:rgba(255,255,255,.9)">Witam,</p><p style="margin:0 0 14px;font-size:14px;line-height:1.8;color:rgba(255,255,255,.88)">Piszę w sprawie narzędzia, które ułatwia organizację wydarzeń i może realnie wesprzeć realizowane projekty.</p><p style="margin:0 0 14px;font-size:14px;line-height:1.8;color:rgba(255,255,255,.88)"><strong style="color:#fff">familiada.online</strong> to profesjonalna platforma do prowadzenia teleturnieju na żywo. To kompletny system: od zbierania odpowiedzi od gości (kod QR), przez panel operatora, aż po animowaną tablicę wyników z dźwiękami prosto z telewizyjnego studia.</p><div style="height:1px;background:rgba(255,255,255,.08);margin:20px 0"></div><table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:16px"><tbody><tr><td style="padding:0 0 8px"><img src="${IMG_BASE}/landing-polls.webp?v=v2026-10-07T17454" width="516" alt="Sonda QR — goście głosują na żywo" style="width:100%;max-width:516px;border-radius:10px;display:block;border:0"/></td></tr><tr><td style="padding:0 0 4px;font-size:14px;font-weight:700;color:#ffeaa6">Sonda QR — goście głosują na żywo</td></tr><tr><td style="font-size:13px;color:rgba(255,255,255,.75);line-height:1.6">Uczestnicy odpowiadają z własnych telefonów. System automatycznie normalizuje wyniki do 100 punktów.</td></tr></tbody></table><table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:16px"><tbody><tr><td style="padding:0 0 8px"><img src="${IMG_BASE}/landing-control.webp?v=v2026-10-07T17454" width="516" alt="Panel operatora — pełna kontrola" style="width:100%;max-width:516px;border-radius:10px;display:block;border:0"/></td></tr><tr><td style="padding:0 0 4px;font-size:14px;font-weight:700;color:#ffeaa6">Panel operatora — pełna kontrola</td></tr><tr><td style="font-size:13px;color:rgba(255,255,255,.75);line-height:1.6">Intuicyjne sterowanie rundami, punktami i błędami (X) w czasie rzeczywistym.</td></tr></tbody></table><table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:16px"><tbody><tr><td style="padding:0 0 8px"><img src="${IMG_BASE}/landing-display.webp?v=v2026-10-07T17454" width="516" alt="Tablica wyników na TV lub rzutnik" style="width:100%;max-width:516px;border-radius:10px;display:block;border:0"/></td></tr><tr><td style="padding:0 0 4px;font-size:14px;font-weight:700;color:#ffeaa6">Tablica wyników na TV lub rzutnik</td></tr><tr><td style="font-size:13px;color:rgba(255,255,255,.75);line-height:1.6">Animowana tablica z zakrytymi odpowiedziami, bankiem punktów i błędami X — z dźwiękami prosto z telewizyjnego studia.</td></tr></tbody></table><table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:16px"><tbody><tr><td style="padding:0 0 8px"><img src="${IMG_BASE}/landing-host.webp?v=v2026-10-07T17454" width="516" alt="Niezależny widok prowadzącego" style="width:100%;max-width:516px;border-radius:10px;display:block;border:0"/></td></tr><tr><td style="padding:0 0 4px;font-size:14px;font-weight:700;color:#ffeaa6">Niezależny widok prowadzącego</td></tr><tr><td style="font-size:13px;color:rgba(255,255,255,.75);line-height:1.6">Osobny podgląd pytań dla prowadzącego na tablecie lub telefonie — dla pełnej swobody na scenie.</td></tr></tbody></table><div style="height:1px;background:rgba(255,255,255,.08);margin:20px 0"></div><div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);padding:14px;border-radius:12px"><p style="margin:0 0 8px;font-size:13px;font-weight:700;color:#ffeaa6">Gotowe gry w Grach Społeczności</p><p style="margin:0;font-size:12px;color:rgba(255,255,255,.65);line-height:1.5">Gotowe zestawy pytań udostępnione przez innych użytkowników — bez konieczności tworzenia gry od zera.</p></div><div style="height:1px;background:rgba(255,255,255,.08);margin:20px 0"></div><p style="margin:0 0 14px;font-size:14px;line-height:1.8;color:rgba(255,255,255,.88)">System jest dostępny całkowicie bezpłatnie i nie wymaga instalacji żadnych aplikacji. Będę wdzięczny za opinię, czy taki format mógłby wzbogacić dotychczasową ofertę.</p><p style="margin:0 0 18px;font-size:14px;color:rgba(255,255,255,.88)">Pozdrawiam,<br/>Twórca familiada.online</p><div style="margin-top:24px;text-align:center"><a href="https://familiada.online" style="display:inline-block;padding:13px 30px;background:#ffeaa6;color:#050914;font-weight:800;font-size:13px;letter-spacing:.09em;text-transform:uppercase;border-radius:10px;text-decoration:none">Poznaj system familiada.online</a></div><div style="margin-top:32px;padding-top:16px;border-top:1px solid rgba(255,255,255,.08);font-size:11px;color:rgba(255,255,255,.4);line-height:1.6">Wiadomość ma charakter informacyjny i została wysłana jednorazowo do osób związanych z branżą eventową. W przypadku braku chęci otrzymywania dalszych informacji, proszę o krótką wiadomość zwrotną.</div><div style="margin-top:28px;padding-top:16px;border-top:1px solid rgba(255,255,255,.08);font-size:11px;color:rgba(255,255,255,.35);text-align:center;line-height:1.6">Familiada Online — bezpłatny system na <a href="https://familiada.online" style="color:rgba(255,234,166,.5);text-decoration:none">familiada.online</a><br/>Wysłano z kontakt@familiada.online</div></td></tr></tbody></table></td></tr></tbody></table></body></html>`;
+    htmlBody = `<!DOCTYPE html><html lang="pl"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><meta name="color-scheme" content="dark light"/><title>Familiada Online</title></head><body style="margin:0;padding:0;background:#050914;-webkit-text-size-adjust:100%"><table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#050914"><tbody><tr><td align="center" style="padding:24px 12px 32px"><table width="560" cellpadding="0" cellspacing="0" border="0" style="max-width:560px;width:100%;font-family:system-ui,-apple-system,'Segoe UI',Arial,sans-serif;font-size:14px;color:#ffffff"><tbody><tr><td style="padding:14px 16px;background:rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.12);border-radius:16px;margin-bottom:14px" bgcolor="#000"><a href="https://familiada.online" style="text-decoration:none"><div style="font-weight:900;font-size:16px;letter-spacing:.18em;text-transform:uppercase;color:#ffeaa6">FAMILIADA</div><div style="margin-top:3px;font-size:11px;color:rgba(255,255,255,.5);letter-spacing:.05em">familiada.online</div></a></td></tr><tr><td height="12"></td></tr><tr><td style="padding:24px 22px 22px;border-radius:18px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04)"><p style="margin:0 0 18px;font-size:14px;line-height:1.8;color:rgba(255,255,255,.9)">Witam,</p><p style="margin:0 0 14px;font-size:14px;line-height:1.8;color:rgba(255,255,255,.88)">Piszę w sprawie narzędzia, które ułatwia organizację wydarzeń i może realnie wesprzeć realizowane projekty.</p><p style="margin:0 0 14px;font-size:14px;line-height:1.8;color:rgba(255,255,255,.88)"><strong style="color:#fff">familiada.online</strong> to profesjonalna platforma do prowadzenia teleturnieju na żywo. To kompletny system: od zbierania odpowiedzi od gości (kod QR), przez panel operatora, aż po animowaną tablicę wyników z dźwiękami prosto z telewizyjnego studia.</p><div style="height:1px;background:rgba(255,255,255,.08);margin:20px 0"></div><table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:16px"><tbody><tr><td style="padding:0 0 8px"><img src="${IMG_BASE}/landing-polls.webp?v=v2026-10-07T20055" width="516" alt="Sonda QR — goście głosują na żywo" style="width:100%;max-width:516px;border-radius:10px;display:block;border:0"/></td></tr><tr><td style="padding:0 0 4px;font-size:14px;font-weight:700;color:#ffeaa6">Sonda QR — goście głosują na żywo</td></tr><tr><td style="font-size:13px;color:rgba(255,255,255,.75);line-height:1.6">Uczestnicy odpowiadają z własnych telefonów. System automatycznie normalizuje wyniki do 100 punktów.</td></tr></tbody></table><table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:16px"><tbody><tr><td style="padding:0 0 8px"><img src="${IMG_BASE}/landing-control.webp?v=v2026-10-07T20055" width="516" alt="Panel operatora — pełna kontrola" style="width:100%;max-width:516px;border-radius:10px;display:block;border:0"/></td></tr><tr><td style="padding:0 0 4px;font-size:14px;font-weight:700;color:#ffeaa6">Panel operatora — pełna kontrola</td></tr><tr><td style="font-size:13px;color:rgba(255,255,255,.75);line-height:1.6">Intuicyjne sterowanie rundami, punktami i błędami (X) w czasie rzeczywistym.</td></tr></tbody></table><table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:16px"><tbody><tr><td style="padding:0 0 8px"><img src="${IMG_BASE}/landing-display.webp?v=v2026-10-07T20055" width="516" alt="Tablica wyników na TV lub rzutnik" style="width:100%;max-width:516px;border-radius:10px;display:block;border:0"/></td></tr><tr><td style="padding:0 0 4px;font-size:14px;font-weight:700;color:#ffeaa6">Tablica wyników na TV lub rzutnik</td></tr><tr><td style="font-size:13px;color:rgba(255,255,255,.75);line-height:1.6">Animowana tablica z zakrytymi odpowiedziami, bankiem punktów i błędami X — z dźwiękami prosto z telewizyjnego studia.</td></tr></tbody></table><table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:16px"><tbody><tr><td style="padding:0 0 8px"><img src="${IMG_BASE}/landing-host.webp?v=v2026-10-07T20055" width="516" alt="Niezależny widok prowadzącego" style="width:100%;max-width:516px;border-radius:10px;display:block;border:0"/></td></tr><tr><td style="padding:0 0 4px;font-size:14px;font-weight:700;color:#ffeaa6">Niezależny widok prowadzącego</td></tr><tr><td style="font-size:13px;color:rgba(255,255,255,.75);line-height:1.6">Osobny podgląd pytań dla prowadzącego na tablecie lub telefonie — dla pełnej swobody na scenie.</td></tr></tbody></table><div style="height:1px;background:rgba(255,255,255,.08);margin:20px 0"></div><div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);padding:14px;border-radius:12px"><p style="margin:0 0 8px;font-size:13px;font-weight:700;color:#ffeaa6">Gotowe gry w Grach Społeczności</p><p style="margin:0;font-size:12px;color:rgba(255,255,255,.65);line-height:1.5">Gotowe zestawy pytań udostępnione przez innych użytkowników — bez konieczności tworzenia gry od zera.</p></div><div style="height:1px;background:rgba(255,255,255,.08);margin:20px 0"></div><p style="margin:0 0 14px;font-size:14px;line-height:1.8;color:rgba(255,255,255,.88)">System jest dostępny całkowicie bezpłatnie i nie wymaga instalacji żadnych aplikacji. Będę wdzięczny za opinię, czy taki format mógłby wzbogacić dotychczasową ofertę.</p><p style="margin:0 0 18px;font-size:14px;color:rgba(255,255,255,.88)">Pozdrawiam,<br/>Twórca familiada.online</p><div style="margin-top:24px;text-align:center"><a href="https://familiada.online" style="display:inline-block;padding:13px 30px;background:#ffeaa6;color:#050914;font-weight:800;font-size:13px;letter-spacing:.09em;text-transform:uppercase;border-radius:10px;text-decoration:none">Poznaj system familiada.online</a></div><div style="margin-top:32px;padding-top:16px;border-top:1px solid rgba(255,255,255,.08);font-size:11px;color:rgba(255,255,255,.4);line-height:1.6">Wiadomość ma charakter informacyjny i została wysłana jednorazowo do osób związanych z branżą eventową. W przypadku braku chęci otrzymywania dalszych informacji, proszę o krótką wiadomość zwrotną.</div><div style="margin-top:28px;padding-top:16px;border-top:1px solid rgba(255,255,255,.08);font-size:11px;color:rgba(255,255,255,.35);text-align:center;line-height:1.6">Familiada Online — bezpłatny system na <a href="https://familiada.online" style="color:rgba(255,234,166,.5);text-decoration:none">familiada.online</a><br/>Wysłano z kontakt@familiada.online</div></td></tr></tbody></table></td></tr></tbody></table></body></html>`;
   } else if (mktActiveTpl === "newsletter") {
     // Newsletter - Familiada wrapper + TinyMCE HTML + unsubscribe + footer
     htmlBody = `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>:root{color-scheme:dark}</style></head><body style="margin:0;padding:0;background:#050914;color:#ffffff;font-family:system-ui,-apple-system,'Segoe UI',Arial,sans-serif;"><div style="max-width:560px;margin:0 auto;padding:26px 16px;"><div style="padding:14px;background:rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.12);border-radius:16px;margin-bottom:14px;"><a href="https://familiada.online" style="text-decoration:none"><div style="font-weight:900;font-size:16px;letter-spacing:.18em;text-transform:uppercase;color:#ffeaa6">FAMILIADA</div><div style="margin-top:3px;font-size:11px;color:rgba(255,255,255,.5);letter-spacing:.05em">familiada.online</div></a></div><div style="padding:24px 22px 22px;border-radius:18px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04)"><p style="margin:0 0 6px;font-size:20px;font-weight:800;color:#ffeaa6">${escSetting(subject)}</p><div style="height:1px;background:rgba(255,255,255,.08);margin:20px 0"></div><div style="font-size:14px;line-height:1.8;color:rgba(255,255,255,.88)">${bodyHtml}</div><div style="margin-top:32px;padding-top:16px;border-top:1px solid rgba(255,255,255,.08);font-size:11px;color:rgba(255,255,255,.4);line-height:1.6">W przypadku braku chęci otrzymywania dalszych informacji, proszę o krótką wiadomość zwrotną.
@@ -6486,7 +6564,7 @@ function wireEvents() {
   // ═══════════════════════════════════════════════════════════
   // MARKETING CONTACTS
   // ═══════════════════════════════════════════════════════════
-  const { rt } = await import("../../shared/js/core/realtime.js?v=v2026-10-07T17454");
+  const { rt } = await import("../../shared/js/core/realtime.js?v=v2026-10-07T20055");
   const MC_API = "https://leads.familiada.online";
   const MC_PAGE_SIZE = 50;
   let mcToken = null;

@@ -2536,3 +2536,19 @@ body.tools-fullscreen .tools-frame-wrap iframe{
 [data-activity-chart] circle:hover,[data-activity-chart] circle:focus{r:6;fill:var(--gold,#ffeaa6);outline:none}
 .maintenance-activity-grid{max-width:340px;grid-template-columns:minmax(0,1fr);margin-bottom:24px}
 #statActivityBox:focus-visible{outline:2px solid var(--gold,#ffeaa6);outline-offset:3px}
+
+/* Szczegóły rozgrywki otwierają się nad tabelą statystyk. */
+.stats-session-details-overlay{z-index:10001!important;top:0!important;padding:16px!important}
+.stats-session-details-overlay .modal{width:min(760px,94vw);max-height:86vh;overflow:auto}
+.stats-session-details-overlay .uni-body{display:block}
+.stats-session-run-details{white-space:normal;line-height:1.5;overflow-wrap:anywhere}
+.stats-session-run-teams{display:block;margin-bottom:10px;color:var(--gold,#ffeaa6);font-size:14px}
+.stats-session-run-line{margin:7px 0;color:rgba(255,255,255,.82);font-size:13px}
+.stats-session-events{margin-top:14px;padding:10px 12px;border:1px solid rgba(255,255,255,.1);border-radius:12px;background:rgba(255,255,255,.025)}
+.stats-session-events-title{display:block;margin-bottom:7px;color:rgba(255,255,255,.62);font-size:11px;text-transform:uppercase;letter-spacing:.06em}
+.stats-session-event{display:flex;flex-direction:column;gap:3px;padding:8px 0;border-top:1px solid rgba(255,255,255,.07);font-size:12px;line-height:1.45}
+.stats-session-event strong{color:#ffd875}
+.stats-session-event span{color:rgba(255,255,255,.68)}
+.stats-session-event-error{color:#ff9a9a}
+.stats-session-details-cell{white-space:normal!important;vertical-align:middle}
+.stats-session-details-button{white-space:nowrap}

@@ -104,7 +104,7 @@ function startSilentAudio() {
   } catch {}
 }
 
-export function startKeepAlive({ silentAudio = false, videoWakeLockFallback = false } = {}) {
+export function startKeepAlive({ silentAudio = false, videoWakeLockFallback = true } = {}) {
   acquireWebLock();
   acquireScreenWakeLock();
   if (silentAudio) startSilentAudio();
