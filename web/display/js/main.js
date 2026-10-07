@@ -362,6 +362,10 @@ window.addEventListener("DOMContentLoaded", async () => {
           if (typeof nonce !== "string" || !nonce || nonce === audioUnlockRequestNonce) return;
           audioUnlockRequestNonce = nonce;
           audioUnlockReported = false;
+          // Przycisk został wyłączony na czas potwierdzania poprzedniego
+          // kliknięcia. Nowe żądanie (np. po powrocie Control) musi znów
+          // pozwalać na gest użytkownika.
+          if (btnAudioUnlock) btnAudioUnlock.disabled = false;
           syncAudioUnlockScreen();
           void displayPresence.setMeta({ audio_unlocked: false, audio_unlock_nonce: nonce }).catch(() => {});
         },
