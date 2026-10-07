@@ -33,7 +33,7 @@
 .dot {
   transition: background .25s ease, border-color .25s ease, box-shadow .25s ease;
 }
-.tag {
+.conn-status {
   transition: background .25s ease, border-color .25s ease, color .25s ease;
 }
 
@@ -926,8 +926,8 @@
     grid-column: span 2;
 }
 
-/* Status urządzenia (POŁĄCZONO / BRAK POŁĄCZENIA) = oznaczenie .tag z
-   base.css; liczniki na przyciskach to osobny .badge (powiadomienia). */
+/* Status urządzenia: osobna klasa .conn-status (base.css) — ani licznik
+   powiadomień (.badge), ani oznaczenie (.tag). */
 
 .rowBtns {
     display: flex;

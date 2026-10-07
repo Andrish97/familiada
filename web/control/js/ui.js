@@ -199,7 +199,7 @@ export function createUI({ root, emit }) {
       return h("div", { class: "device-row", "data-device": kind }, [
         h("div", { class: "device-row-1" }, [
           h("div", { class: "device-name", text: label }),
-          h("div", { class: `tag tag--upper device-status ${online ? "tag--ok" : "tag--bad"}`, text: online ? t("control.deviceStatusOk") : t("control.deviceStatusOffline") }),
+          h("div", { class: `conn-status ${online ? "conn-status--connected" : "conn-status--offline"}`, text: online ? t("control.deviceStatusOk") : t("control.deviceStatusOffline") }),
         ]),
         h("div", { class: "device-row-2" }, row2),
       ]);
