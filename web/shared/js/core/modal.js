@@ -198,13 +198,13 @@ function openModal({
   });
 }
 
-export function confirmModal({ title, text, okText, cancelText, body = null, initialFocus = null, onReady, sheet = null } = {}) {
+export function confirmModal({ title, text, okText, cancelText, showCancel = true, body = null, initialFocus = null, onReady, sheet = null } = {}) {
   return openModal({
     title: title ?? modalText("common.modal.confirmTitle", "Potwierdź"),
     text: text ?? modalText("common.modal.confirmText", "Na pewno?"),
     okText: okText ?? modalText("common.modal.confirmOk", "Tak"),
     cancelText: cancelText ?? modalText("common.modal.confirmCancel", "Nie"),
-    showCancel: true,
+    showCancel,
     body,
     initialFocus,
     onReady,

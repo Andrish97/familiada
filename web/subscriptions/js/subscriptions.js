@@ -114,12 +114,10 @@ const MSG = {
   updateTextActive: () => t("pollsHubSubscriptions.modal.updateSubscription.textActive"),
   updateOkPending: () => t("pollsHubSubscriptions.modal.updateSubscription.okPending"),
   updateOkActive: () => t("pollsHubSubscriptions.modal.updateSubscription.okActive"),
-  updateCancel: () => t("pollsHubSubscriptions.modal.updateSubscription.cancel"),
 resendCooldownAlert: (untilTsMs) => cooldownTextFromUntil(untilTsMs),
   tokenMismatchTitle: () => t("pollsHubSubscriptions.modal.tokenMismatch.title"),
   tokenMismatchText: () => t("pollsHubSubscriptions.modal.tokenMismatch.text"),
   tokenMismatchOk: () => t("pollsHubSubscriptions.modal.tokenMismatch.ok"),
-  tokenMismatchCancel: () => t("pollsHubSubscriptions.modal.tokenMismatch.cancel"),
 };
 
 
@@ -490,7 +488,8 @@ function renderInvites() {
             title: MSG.updateTitle(),
             text: isPending ? MSG.updateTextPending() : MSG.updateTextActive(),
             okText: isPending ? MSG.updateOkPending() : MSG.updateOkActive(),
-            cancelText: MSG.updateCancel(),
+            // Dolny przycisk "Zamknij" zbędny — modal zamyka X w nagłówku.
+            showCancel: false,
           });
           if (!ok) return;
           try {
@@ -751,7 +750,8 @@ async function refreshData() {
           title: MSG.tokenMismatchTitle(),
           text: MSG.tokenMismatchText(),
           okText: MSG.tokenMismatchOk(),
-          cancelText: MSG.tokenMismatchCancel(),
+          // Dolny przycisk "Zamknij" zbędny — modal zamyka X w nagłówku.
+          showCancel: false,
         });
         if (ok) {
           await signOut();
