@@ -12,9 +12,9 @@
   <link rel="preconnect" href="https://supabase.familiada.online">
   <title data-i18n="control.title">Familiada — panel sterowania</title>
 
-  <link rel="icon" href="/favicon.ico?v=v2026-10-07T20271"/>
-  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-07T20271"/>
-  <link rel="stylesheet" href="/control/css/control.css?v=v2026-10-07T20271"/>
+  <link rel="icon" href="/favicon.ico?v=v2026-10-07T20545"/>
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-07T20545"/>
+  <link rel="stylesheet" href="/control/css/control.css?v=v2026-10-07T20545"/>
   <script>
     document.documentElement.classList.add('page-loading');
     try {
@@ -31,12 +31,12 @@
   <style>html[data-mobile-guard]{overflow:hidden;touch-action:none}html[data-mobile-guard] body{visibility:hidden}</style>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-  <script src="/shared/js/core/security-warning.js?v=v2026-10-07T20271" defer></script>
+  <script src="/shared/js/core/security-warning.js?v=v2026-10-07T20545" defer></script>
   <script type="module">
-    import { initI18n } from "/shared/translation/translation.js?v=v2026-10-07T20271";
+    import { initI18n } from "/shared/translation/translation.js?v=v2026-10-07T20545";
     await initI18n({ withSwitcher: true });
     document.documentElement.classList.remove('page-loading');
-    import("/control/js/app.js?v=v2026-10-07T20271");
+    import("/control/js/app.js?v=v2026-10-07T20545");
   </script>
 
   <style>
@@ -160,6 +160,7 @@
     .c2-roundlayout { display:flex; gap:16px; flex:1; min-height:0; }
     .c2-roundlayout-main { flex:1; min-width:0; min-height:0; display:flex; }
     .c2-roundlayout-main .c2-tilegrid { flex:1; }
+    .c2-roundlayout-main > .c2-scroll-area { flex:1; min-height:0; }
     .c2-roundlayout-divider { width:1px; background:rgba(255,255,255,.14); flex:none; }
     .c2-roundlayout-side { flex:0 0 240px; min-width:0; min-height:0; display:flex; flex-direction:column; }
     .c2-roundlayout-side .c2-hint { flex:1; }
@@ -356,12 +357,12 @@
       .c2-entryrows:has(.p2) { grid-template-rows:repeat(6,minmax(58px,1fr)); }
       .c2-gameplay-body:has(.c2-entryrow.p2) { overflow-y:auto; }
     }
-    .c2-scroll-area:has(.c2-devicerows) .c2-roundlayout { align-items:start; }
+    .c2-devices-layout { align-items:stretch; }
     @media (min-width:1100px) {
       .c2-devicerows { grid-template-columns:repeat(2,minmax(0,1fr)); }
-      .c2-scroll-area:has(.c2-devicerows) .c2-roundlayout { display:grid; grid-template-columns:minmax(0,1fr); gap:8px; flex:none; }
-      .c2-scroll-area:has(.c2-devicerows) .c2-roundlayout-divider { display:none; }
-      .c2-scroll-area:has(.c2-devicerows) .c2-roundlayout-side { padding-top:0; flex:none; }
+      .c2-devices-layout { display:grid; grid-template-columns:minmax(0,1fr); grid-template-rows:minmax(0,1fr) auto; gap:8px; }
+      .c2-devices-layout .c2-roundlayout-divider { display:none; }
+      .c2-devices-layout .c2-roundlayout-side { padding-top:0; flex:none; }
     }
     .c2-entrytile-p1ans b { color:var(--gold); font-weight:800; }
     /* Pole wpisywania ma wyglądać jak realne pole formularza (obramowanie +
@@ -624,6 +625,6 @@
       <button class="btn-contact-footer" type="button" data-contact-modal data-i18n="common.contactBtn">Kontakt</button>
     </div>
   </main>
-  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-07T20271"></script>
+  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-07T20545"></script>
 </body>
 </html>
