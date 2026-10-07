@@ -271,7 +271,7 @@ body.editor-body .wrap {
     padding: 14px;
     align-items: center;
     cursor: pointer;
-    min-height: 130px
+    min-height: 100px
 }
 
 .addTile:hover {
@@ -455,7 +455,7 @@ body.editor-body .wrap {
     .addTile {
         padding: 10px;
         border-radius: 16px;
-        min-height: 72px
+        min-height: 90px
     }
 
 
