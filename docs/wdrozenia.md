@@ -41,7 +41,7 @@ utracie kontekstu wystarczy przeczytać ten plik i wskazaną sekcję źródła.
 | E6 | `initPage()` strona po stronie, wspólny overlay gość/urządzenie | nawigacja 6.4 | do zrobienia |
 | E7 | Bez stron modalnych: b) edytor `?q=` c) ustawienia gry z autozapisem, Control zwykłym przejściem d) bez `?modal=` w manual/privacy | nawigacja 6.5 | do zrobienia |
 | E8 | Jeden moduł kart `?tab=`, stan eksploratora (baza + foldery) | nawigacja 6.6 | do zrobienia |
-| E10 | Ujednolicenie wyglądu: listy (pasek, karty, kafle, dolny pasek), hub ankiet, subskrypcje, edytory (tytuł i informacja w topbarze, jedno pole nazwy, edytor logo bez wskaźnika zapisu), tekst `reopenHint` | ujednolicenie-wygladu.md | do zrobienia — **pierwszy** |
+| E10 | Ujednolicenie wyglądu: listy (pasek, karty, kafle, dolny pasek), hub ankiet, subskrypcje, edytory (tytuł i informacja w topbarze, jedno pole nazwy, edytor logo bez wskaźnika zapisu), ankieta bez podpowiedzi pod tytułem | ujednolicenie-wygladu.md | do zrobienia — **pierwszy** |
 | E9 | Przyciski w `PAGES`, `locks` w `PAGES`, diagramy 6 map, e2e map | nawigacja 6.7, blokady 6 krok 7 | do zrobienia |
 
 Kolejność: E0 → **E10** → E2 → E3 → E4 → E5 (a…f) → E6 → E7 → E8 → E9. Etapy
