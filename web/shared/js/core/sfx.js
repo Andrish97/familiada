@@ -321,7 +321,7 @@ export function onSfxEnd(key, fn) {
   return () => a.removeEventListener("ended", fn);
 }
 
-// Instrumentacja WYŁĄCZNIE do obserwacji w E2E (tests/e2e/control2.spec.js) —
+// Instrumentacja WYŁĄCZNIE do obserwacji w E2E (tests/e2e/control.spec.js) —
 // zero wpływu na normalne działanie: jedna operacja push() na window, zawsze
 // włączona (nie ma trybu "testowego" do przełączania). Bez tego nie dałoby
 // się z Playwrighta zweryfikować, JAKI dźwięk (i w jakiej kolejności) faktycznie

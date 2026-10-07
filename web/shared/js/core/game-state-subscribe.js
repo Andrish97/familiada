@@ -3,12 +3,12 @@
 // game_state_get (RPC, SECURITY DEFINER, sprawdza share_key wewnątrz
 // siebie), nigdy przez bezpośredni SELECT ani postgres_changes (świadomie
 // zablokowane dla anon, patrz plan sekcja 1 — decyzja końcowa, nie
-// tymczasowy fallback). Wspólne dla display2/host2/buzzer2 — parametryzowane
+// tymczasowy fallback). Wspólne dla display/host/buzzer — parametryzowane
 // przez deviceType, żeby nie duplikować identycznej logiki trzy razy.
 //
 // Mechanizm: (1) bootstrap — jedno wywołanie RPC przy starcie strony;
 // (2) "dzwonek" — Control po każdym zapisie wysyła malutki, nieautorytatywny
-// broadcast {rev} (control2/js/store.js's ringDoorbell()) na kanale
+// broadcast {rev} (control/js/store.js's ringDoorbell()) na kanale
 // `familiada-state:<gameId>`, reużywając już sprawdzony js/core/realtime.js
 // bez żadnej zmiany. Na każdy dzwonek z rev > ostatnio znanym — ponowne
 // wywołanie tego samego RPC. Zgubiony dzwonek nie jest problemem: kolejna
@@ -35,7 +35,7 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError }) 
     if (!data) return; // Control jeszcze nigdy nic nie zapisał dla tej gry
     if (data.rev <= lastRev) return; // dzwonek spóźniony/zdublowany — nic nowego
     lastRev = data.rev;
-    // await: display2/js/render.js's renderSnapshot()/renderDiff() mają
+    // await: display/js/render.js's renderSnapshot()/renderDiff() mają
     // realne animacje trwające setki ms-kilka s (matrix down/right, ANIMOUT
     // przed ANIMIN...) — bez tego await, `fetching` niżej wracał do false
     // (i fetchGuarded() wpuszczał KOLEJNY dzwonek) ZANIM poprzedni render w

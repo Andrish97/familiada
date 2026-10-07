@@ -1,138 +1,50 @@
+// control/js/store.js
+// Ten sam kształt co dzisiejszy control/js/store.js (state + emit()/
+// subscribe()), ale hydrate() NAPRAWDĘ wznawia stan z public.game_state
+// zamiast bezwarunkowo go kasować (control/js/store.js:338-343 — "Stan gry
+// nie jest przywracany między sesjami"). To jest dokładnie ta luka, którą
+// cała przebudowa ma zamknąć.
+//
+// Obecność urządzeń (kto jest online) celowo NIE wchodzi do tego stanu —
+// zostaje w public.device_presence (osobny, częsty polling), reużyty bez
+// zmian przez control/js/presence.js. Ten store trzyma wyłącznie to, co
+// jest decyzją/faktem o samej grze (plan, sekcja 2 "0.").
+//
+// gameRounds.js/gameFinal.js NIE importują tego pliku — dostają store przez
+// wstrzyknięcie zależności (ten sam wzorzec co dzisiejsze createRounds/
+// createFinal), więc dają się testować w gołym Node z atrapą store.
+
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-06T23331";
+import { ringDoorbell } from "../../shared/js/core/game-state-doorbell.js?v=v2026-10-06T23331";
+import { createPersist, StaleWriteError } from "./persist.js?v=v2026-10-06T23331";
+import { makeDefaultState, DEFAULT_SETTINGS, PERSISTED_KEYS } from "../../shared/js/gameplay/gameStateShape.js?v=v2026-10-06T23331";
+import { expiredTimerOnHydrate } from "./timerResume.js?v=v2026-10-06T23331";
+
+// Kanał broadcastowy "dzwonek" (plan, sekcja 1 — decyzja końcowa: anon nie
+// ma bezpośredniego dostępu do odczytu game_state wcale, więc postgres_changes
+// nigdy nie zadziała dla Display/Host/Buzzer, i to jest świadome, nie
+// fallback). Niesie WYŁĄCZNIE {rev} — nieautorytatywne, samo w sobie nic nie
+// znaczy poza "coś się zmieniło, dogoń przez game_state_get". Nazwa kanału +
+// wysyłka wydzielone do js/core/game-state-doorbell.js, bo dzwonić musi
+// KAŻDY zapis do game_state, nie tylko te stąd — patrz buzzer/js/main.js
+// (game_state_buzzer_press idzie z pominięciem tego store).
+
+export { StaleWriteError, makeDefaultState, DEFAULT_SETTINGS };
+
+function buildDetail(state) {
+  const detail = {};
+  for (const key of PERSISTED_KEYS) detail[key] = state[key];
+  return detail;
+}
+
+export { expiredTimerOnHydrate };
+
 export function createStore(gameId) {
-  const KEY = `familiada:control:v5:${gameId}`;
   const listeners = new Set();
-  const FINAL_MIN_POINTS = 300; // domyślny próg do finału
-
-  const DEFAULT_ADVANCED = {
-    // mnożniki dla kolejnych rund; ostatnia wartość powtarza się dla dalszych rund
-    roundMultipliers: [1, 1, 1, 2, 3],
-    // próg wejścia do finału (ktoś musi tyle zdobyć w sumie)
-    finalMinPoints: 300,
-    // cel w finale (domyślne 200)
-    finalTarget: 200,
-    // czy na końcu gry wyświetlamy ekran „wygrana" (true) czy samo logo (false)
-    endScreenMode: "logo", // "logo" | "points" | "money"
-    // mnożnik nagrody głównej (po finale) - domyślnie 3
-    finalPrizeMultiplier: 3,
-    // kwota nagrody głównej - domyślnie 25000
-    mainPrizeAmount: 25000,
-
-  };
-
-  function makeDefaultState() {
-    return {
-      gameId,
-      activeCard: "devices",
-  
-      steps: {
-        devices: "devices_display",
-        setup: "setup_finish",
-      },
-  
-      completed: {
-        devices: false,
-        setup: false,
-      },
-  
-      locks: {
-        gameStarted: false,
-        finalActive: false,
-      },
-  
-      teams: {
-        teamA: "",
-        teamB: "",
-      },
-
-      hasFinal: null,
-      
-      // Tryb wyboru pytań: "random" lub "pick"
-      finalQuestionsMode: "random",
-      roundsQuestionsMode: "random",
-      
-      // Wybrane pytania rund w kolejności (dla trybu "pick")
-      roundsPicked: [], // [{id, text, ord}]
-  
-      final: {
-        picked: [],
-        confirmed: false,
-        runtime: {
-          phase: "IDLE",
-          sum: 0,
-          winSide: "A",
-          timer: { running: false, secLeft: 0, phase: "P1" },
-          mapIndex: 0,
-          p1List: null,
-          p2List: null,
-          mapP1: null,
-          mapP2: null,
-          reached200: false,
-        },
-        step: "f_start",
-      },
-  
-      flags: {
-        displayOnline: false,
-        hostOnline: false,
-        buzzerOnline: false,
-        audioUnlocked: false,
-        physicalBuzzer: false,
-        noHostTablet: false,
-        qrOnDisplay: false,
-        qrHostOnDisplay: false,
-        qrBuzzerOnDisplay: false,
-      },
-  
-      rounds: {
-        phase: "IDLE",
-        roundNo: 1,
-        controlTeam: null,
-        bankPts: 0,
-        xA: 0,
-        xB: 0,
-        totals: { A: 0, B: 0 },
-        step: "r_intro",
-        passUsed: false,
-        stealWon: false,
-  
-        question: null,
-        answers: [],
-        revealed: new Set(),
-  
-        duel: {
-          enabled: false,
-          lastPressed: null,
-        },
-  
-        timer3: {
-          running: false,
-          endsAt: 0,
-        },
-  
-        steal: {
-          active: false,
-          used: false,
-        },
-  
-        allowPass: false,
-      },
-  
-      advanced: { ...DEFAULT_ADVANCED },
-
-      display: {
-        colors: { A: "#c4002f", B: "#2a62ff", BACKGROUND: "#d21180", DOT: "#d7ff3d" },
-        theme: null,
-        logoId: null,
-      },
-    };
-  }
-  
-  const state = makeDefaultState();
+  const state = makeDefaultState(gameId);
+  const persist = createPersist(gameId);
 
   function emit() {
-    try {
-      localStorage.setItem(KEY, JSON.stringify(serialize(state)));
-    } catch {}
     for (const fn of listeners) fn(state);
   }
 
@@ -141,325 +53,250 @@ export function createStore(gameId) {
     return () => listeners.delete(fn);
   }
 
-  function serialize(s) {
-    const out = structuredClone(s);
-    out.rounds.revealed = Array.from(s.rounds.revealed);
-    return out;
+  function applyRow(row) {
+    if (!row) return;
+    // Surowy wiersz z bazy (rev/step/phase/... w snake_case), obok stanu
+    // camelCase powyżej — soundReactor.js diffuje TO pole przez
+    // web/js/gameplay/deriveEvents.js (które oczekuje kształtu wiersza game_state,
+    // nie zrzutowanego camelCase stanu). Prywatne, nie część PERSISTED_KEYS.
+    state.__row = row;
+    state.rev = row.rev ?? 0;
+    state.topCard = row.top_card;
+    state.step = row.step;
+    state.phase = row.phase ?? null;
+    state.controlTeam = row.control_team ?? null;
+    state.soundCueKey = row.sound_cue_key ?? null;
+    state.soundCueSeq = row.sound_cue_seq ?? 0;
+
+    const d = row.detail || {};
+    for (const key of PERSISTED_KEYS) {
+      if (d[key] !== undefined) state[key] = d[key];
+    }
   }
 
-  // Stare isFinalActive – zostawione tylko jako pomocnicze (gdyby coś jeszcze wołało po kroku)
-  function isFinalActiveLegacy() {
-    const step = state.final?.step || "f_start";
-    return step !== "f_start";
+  // ---- prawdziwe wznowienie ----
+  async function hydrate() {
+    const { data, error } = await sb()
+      .from("game_state")
+      .select("*")
+      .eq("game_id", gameId)
+      .maybeSingle();
+    if (error) {
+      console.warn("[store] hydrate: nie udało się odczytać game_state", error);
+      return null;
+    }
+    if (!data) return null; // nowa gra, Control jeszcze nigdy nic nie zapisał
+    applyRow(data);
+    emit();
+    return expiredTimerOnHydrate(state);
   }
 
-  function teamsOk() {
-    // Puste nazwy drużyn są poprawnym stanem — wszędzie (HUD, wyświetlacz, podsumowanie)
-    // pokazujemy wtedy domyślną nazwę zależną od języka (np. control.teamADefault).
-    return true;
+  // Zserializowane — engine.js's dispatch() serializuje WŁASNE wywołania, ale
+  // to nie jedyny wywołujący commit(): app.js's proste ustawienia (checkboxy
+  // "Bez tabletu prowadzącego"/"Fizyczny przycisk", QR na Wyświetlaczu,
+  // wyciszenie...) wołają store.commit() WPROST, z pominięciem tej kolejki —
+  // zgłoszony na żywo dowód (szybkie odznaczanie/zaznaczanie checkboxa
+  // urządzeń): "Błąd: stale_write" wyskakujący operatorowi jako goły alert.
+  // Dwa (albo więcej) commit() wystrzelone bez odczekania na siebie ścigają
+  // się o ten sam `rev` — retry-po-stale_write niżej jest tylko JEDNORAZOWY,
+  // więc trzeci nakładający się zapis i tak by przegrał. Kolejka tutaj (ten
+  // sam wzorzec co engine.js's dispatch()) gwarantuje, że KAŻDY zapis do
+  // game_state — z dowolnego miejsca w appce, nie tylko z silnika reguł gry —
+  // w pełni się kończy, zanim zacznie się następny, więc dwa commit() nigdy
+  // nie widzą tego samego `rev` naraz.
+  //
+  // Payload budowany TU, SYNCHRONICZNIE, od razu przy wywołaniu commit() —
+  // NIE leniwie dopiero w commitNow() (które czeka w kolejce, czasem setki
+  // ms). Bez tego dwa commit() wystrzelone blisko siebie z RÓŻNYCH źródeł
+  // (np. dwa checkboxy urządzeń, dwa suwaki głośności, "Losuj ponownie" dla
+  // rund i finału) mogły złapać się nawzajem w locie: payload budowany
+  // leniwie, dopiero gdy przyszła kolej w kolejce, czytał state.settings/
+  // rounds/final PO TYM, jak applyRow() z WCZEŚNIEJSZEGO, już potwierdzonego
+  // zapisu zdążyło nadpisać state TYMI SAMYMI polami z serwera (które go
+  // jeszcze nie znały) — co bezpowrotnie kasowało nowszą, jeszcze
+  // niewysłaną lokalną zmianę, zanim ten drugi zapis w ogóle zdążył ją
+  // wysłać. Zgłoszone na żywo (control2.spec.js's test "physicalBuzzer +
+  // noHostTablet"): oba checkboxy zaznaczone szybko po sobie, druga flaga
+  // nigdy nie docierała do bazy — bez żadnego błędu, wyglądało jak "nic się
+  // nie odświeża". `detail` musi być PRAWDZIWĄ, głęboką kopią
+  // (structuredClone) — PERSISTED_KEYS to zagnieżdżone obiekty (settings/
+  // rounds/final/...), płytkie przypisanie (buildDetail sam w sobie) dzieli
+  // te same referencje z `state`, więc późniejsza mutacja i tak przeciekałaby
+  // do już "zbudowanego" payloadu, unieważniając cały ten fix.
+  let _writeQueue = Promise.resolve();
+  function commit({ soundCueKey, lockMs } = {}) {
+    const payload = {
+      step: state.step,
+      topCard: state.topCard,
+      phase: state.phase,
+      controlTeam: state.controlTeam,
+      soundCueKey: soundCueKey ?? null,
+      lockMs: lockMs == null ? null : Math.ceil(lockMs),
+      detail: structuredClone(buildDetail(state)),
+    };
+    const run = () => commitNow(payload);
+    const result = _writeQueue.then(run, run);
+    _writeQueue = result.catch(() => {});
+    return result;
   }
 
-  function canFinishSetup() {
-    if (!teamsOk()) return false;
+  // ---- zapis: pełny wiersz, synchronicznie potwierdzony (plan, sekcja 4) ----
+  // payload: zbudowany i zamrożony PRZEZ commit() wyżej, synchronicznie, w
+  // momencie wywołania -- nie tutaj (patrz komentarz przy commit()).
+  async function commitNow(payload) {
+    // Dźwięk (soundReactor.js) i "dzwonek" budzący Wyświetlacz siedziały
+    // dotąd za TYM SAMYM emit() — dopiero po pełnym network round-tripie
+    // niżej. Dzwonek zostaje tam (Wyświetlacz i tak musi doczytać
+    // POTWIERDZONY wiersz przez RPC, wcześniejszy dzwonek byłby pusty),
+    // ale dźwięk grał zauważalnie później niż plansza na Wyświetlaczu —
+    // zgłoszone, zaakceptowane świadomie jako kompromis: rozgłoś OD RAZU
+    // (emit() niżej, PRZED await) optymistyczny wiersz zbudowany z już
+    // zmutowanego lokalnie stanu (reducer w engine.js's dispatchNow()
+    // ustawia store.state.step/phase/... PRZED wywołaniem commit() —
+    // "optymistyczny" znaczy tu wyłącznie "jeszcze niepotwierdzony przez
+    // serwer", nie "zgadywany"). sound_cue_seq liczony 1:1 wg tej samej
+    // reguły co SQL (game_state_write, migracja 263: rośnie przy KAŻDYM
+    // zapisie z niepustym soundCueKey, NIE tylko gdy klucz różni się od
+    // poprzedniego — dwa różne zdarzenia w grze, np. dwa trafienia z rzędu,
+    // często dzielą ten sam klucz "answer_correct"/"answer_wrong", a mimo to
+    // każde z nich ma zagrać dźwięk osobno; migracja 260 tego nie robiła,
+    // co gubiło dźwięk przy drugim z pary — patrz komentarz w migracji 263)
+    // — więc druga, prawdziwa notyfikacja po potwierdzeniu zwykle nie
+    // znajdzie już nic nowego (ten sam seq) i nie zagra drugi raz. W rzadkim
+    // przegranym wyścigu z Buzzerem (StaleWriteError niżej) ten wiersz
+    // zostanie skorygowany przez hydrate() — zaakceptowane ryzyko, nie błąd.
+    const newKey = payload.soundCueKey;
+    const optimisticKey = newKey ?? state.soundCueKey;
+    const optimisticSeq = newKey != null ? (state.soundCueSeq || 0) + 1 : (state.soundCueSeq || 0);
+    state.__row = {
+      ...state.__row,
+      top_card: payload.topCard,
+      step: payload.step,
+      phase: payload.phase,
+      control_team: payload.controlTeam,
+      sound_cue_key: optimisticKey,
+      sound_cue_seq: optimisticSeq,
+      detail: payload.detail,
+    };
+    state.soundCueKey = optimisticKey;
+    state.soundCueSeq = optimisticSeq;
+    emit();
 
-    // Jeśli gramy finał (jedyny przypadek wymagający dodatkowego sprawdzenia):
-    if (state.hasFinal === true) {
-      // Tryb losowy - zawsze OK (losowanie w tle)
-      if (state.finalQuestionsMode === "random") return true;
-      // Tryb ręczny - wymaga potwierdzenia 5 pytań
-      return state.final.confirmed === true && state.final.picked.length === 5;
+    // TYMCZASOWA diagnostyka (do usunięcia po znalezieniu przyczyny
+    // "Zatrzymaj"/"X" trwale disabled w control2.spec.js) -- czy
+    // persist.write() w ogóle się rozstrzyga, i w jakim czasie, w ramach
+    // _writeQueue (ta sama kolejka co setLock() niżej -- jeśli COKOLWIEK
+    // tu zawiśnie, wszystko za nim w kolejce, włącznie z setLock(), nigdy
+    // nie dostanie swojej kolejki).
+    async function attempt() {
+      const _t0 = Date.now();
+      console.log(`[e2e-diag-state] t=${_t0} commitNow.attempt START step=${payload.step} expectedRev=${state.rev}`);
+      const row = await persist.write({ ...payload, expectedRev: state.rev });
+      console.log(`[e2e-diag-state] t=${Date.now()} commitNow.attempt WRITE-OK afterMs=${Date.now() - _t0} newRev=${row.rev}`);
+      applyRow(row);
+      emit();
+      ringDoorbell(gameId, row.rev);
+      return row;
     }
 
-    // hasFinal === false LUB null/undefined (gra nigdy nie skonfigurowała
-    // tego pola) - nie ma finału do sprawdzenia, więc OK.
-    return true;
-  }
-
-  function allDevicesOnline() {
-    const f = state.flags;
-    const buzzerOk = f.buzzerOnline || f.physicalBuzzer;
-    const hostOk   = f.hostOnline   || f.noHostTablet;
-    return f.displayOnline && buzzerOk && hostOk;
-  }
-
-  function canStartRounds() {
-    return allDevicesOnline() && state.flags.audioUnlocked && canFinishSetup();
-  }
-
-  // Właściwa funkcja – logika przełączona na locka
-  function isFinalActive() {
-    return state.locks.finalActive === true;
-  }
-
-  function canEnterCard(card) {
-    const totals = state.rounds?.totals || { A: 0, B: 0 };
-    const adv = state.advanced || {};
-    const threshold =
-      typeof adv.finalMinPoints === "number" ? adv.finalMinPoints : FINAL_MIN_POINTS;
-    const hasFinalPoints =
-      (totals.A || 0) >= threshold || (totals.B || 0) >= threshold;
-
-    // URZĄDZENIA – dostępne tylko do momentu "Gra gotowa"
-    if (card === "devices") {
-      return !state.locks.gameStarted;
+    try {
+      return await attempt();
+    } catch (e) {
+      console.log(`[e2e-diag-state] t=${Date.now()} commitNow.attempt THREW: ${e?.constructor?.name} ${e?.message}`);
+      if (!(e instanceof StaleWriteError)) throw e;
+      // Warstwa 2 (docs/plan-testy-i-poprawki.md) zrobiła dokładnie to, co
+      // powinna — ktoś inny zdążył podbić rev pierwszy, zanim nasz zapis
+      // dotarł. Odkąd commit() (wyżej) serializuje WSZYSTKIE własne
+      // wywołania niezależnie od tego, skąd przyszły, jedyny realny "ktoś
+      // inny" to Buzzer (game_state_buzzer_press, zapis z pominięciem tego
+      // store'a — patrz plan, sekcja 1/4). Zamiast twardego błędu operatorowi: doczytaj
+      // świeży wiersz (hydrate aktualizuje state.rev, w tym wszystko inne co
+      // się zmieniło) i spróbuj RAZ jeszcze DOKŁADNIE tę samą, zamierzoną
+      // zmianę z nowym rev — dokładnie ten "bezpieczny retry" z planu,
+      // wcześniej opisany ale nigdy nie zaimplementowany.
+      await hydrate();
+      return await attempt();
     }
-
-    // USTAWIENIA – po urządzeniach, też tylko do "Gra gotowa"
-    if (card === "setup") {
-      return state.completed.devices && !state.locks.gameStarted;
-    }
-
-    // ROUNDS – dostępne po Urządzeniach, ale tylko dopóki finał się nie zaczął
-    if (card === "rounds") {
-      return state.completed.devices && !state.locks.finalActive;
-    }
-
-
-    // FINAŁ – tylko jeśli:
-    // - gra ma finał,
-    // - ustawienia są poprawne (w tym wybrane pytania finału),
-    // - któraś drużyna osiągnęła wymagany próg punktów
-    if (card === "final") {
-      return state.hasFinal === true && canFinishSetup() && hasFinalPoints;
-    }
-
-    return false;
   }
 
-  function setActiveCard(card) {
-    if (!canEnterCard(card)) return;
-    state.activeCard = card;
-    emit();
+  // Migracja 264 — ustawia game_state.locked_until w bazie, PO
+  // potwierdzeniu głównego zapisu (wołający liczy `ms` z POTWIERDZONEGO
+  // sound_cue_key, dokładnie jak dziś dla klienckiego lockedUntil w
+  // control/js/app.js). Przez tę samą kolejkę co commit() — żeby nigdy
+  // nie wyścigał się z kolejnym, prawdziwym zapisem treści.
+  function setLock(ms) {
+    // TYMCZASOWA diagnostyka -- patrz komentarz przy commitNow.attempt().
+    // Loguje MOMENT WEJŚCIA DO KOLEJKI (przed .then), żeby było widać, czy
+    // setLock() w ogóle zdąża dostać swoją kolej w _writeQueue, czy czeka
+    // za czymś, co nigdy się nie rozstrzyga.
+    console.log(`[e2e-diag-state] t=${Date.now()} setLock ENQUEUE ms=${ms}`);
+    const run = () => setLockNow(ms);
+    const result = _writeQueue.then(run, run);
+    _writeQueue = result.catch(() => {});
+    return result;
   }
 
-  function setDevicesStep(step) {
-    state.steps.devices = step;
-    emit();
-  }
-
-  function setSetupStep(step) {
-    state.steps.setup = step;
-    emit();
-  }
-
-  function completeCard(card) {
-    state.completed[card] = true;
-    emit();
-  }
-
-  function setTeams(a, b) {
-    state.teams.teamA = String(a ?? "");
-    state.teams.teamB = String(b ?? "");
-    emit();
-  }
-
-  function setGameStarted(v) {
-    state.locks.gameStarted = !!v;
-    emit();
-  }
-
-  function setHasFinal(v) {
-    state.hasFinal = v;
-    if (v === false) {
-      state.final.picked = [];
-      state.final.confirmed = false;
-    }
-    emit();
-  }
-  
-  function setFinalQuestionsMode(mode) {
-    state.finalQuestionsMode = mode;
-    emit();
-  }
-  
-  function setRoundsQuestionsMode(mode) {
-    state.roundsQuestionsMode = mode;
-    emit();
-  }
-  
-  function setRoundsPicked(orderedQuestions) {
-    state.roundsPicked = Array.isArray(orderedQuestions) ? orderedQuestions.slice() : [];
-    emit();
-  }
-
-  function setFinalActive(v) {
-    state.locks.finalActive = !!v;
-    emit();
-  }
-
-  function confirmFinalQuestions(ids) {
-    state.final.picked = Array.isArray(ids) ? ids.slice(0, 5) : [];
-    state.final.confirmed = true;
-    emit();
-  }
-
-  function unconfirmFinalQuestions() {
-    state.final.confirmed = false;
-    emit();
-  }
-
-  function setOnlineFlags({ display, host, buzzer }) {
-    state.flags.displayOnline = !!display;
-    state.flags.hostOnline = !!host;
-    state.flags.buzzerOnline = !!buzzer;
-    emit();
-  }
-
-  function setAudioUnlocked(v) {
-    state.flags.audioUnlocked = !!v;
-    emit();
-  }
-
-  function setPhysicalBuzzer(v) {
-    state.flags.physicalBuzzer = !!v;
-    emit();
-  }
-
-  function setNoHostTablet(v) {
-    state.flags.noHostTablet = !!v;
-    emit();
-  }
-
-  function setQrOnDisplay(v) {
-    state.flags.qrOnDisplay = !!v;
-    emit();
-  }
-
-  function setQrHostOnDisplay(v) {
-    state.flags.qrHostOnDisplay = !!v;
-    emit();
-  }
-
-  function setQrBuzzerOnDisplay(v) {
-    state.flags.qrBuzzerOnDisplay = !!v;
-    emit();
-  }
-
-  // ---- obsługa typu wejścia na stronę (odświeżenie vs. nowa nawigacja) ----
-
-  function hydrate() {
-    // Stan gry nie jest przywracany między sesjami.
-    try { localStorage.removeItem(KEY); } catch {}
-  }
-
-  function setAdvanced(partial) {
-    const cur = state.advanced || { ...DEFAULT_ADVANCED };
-    const next = { ...cur };
-
-    if (partial.roundMultipliers && Array.isArray(partial.roundMultipliers)) {
-      next.roundMultipliers = partial.roundMultipliers
-        .map((x) => {
-          const n = Number.parseInt(String(x), 10);
-          return Number.isFinite(n) && n > 0 ? n : 1;
-        });
-      if (!next.roundMultipliers.length) {
-        next.roundMultipliers = [...DEFAULT_ADVANCED.roundMultipliers];
+  async function setLockNow(ms) {
+    const _t0 = Date.now();
+    console.log(`[e2e-diag-state] t=${_t0} setLockNow START ms=${ms} expectedRev=${state.rev}`);
+    try {
+      // p_lock_ms jest w bazie typu integer -- realny czas dźwięku (z
+      // metadanych pliku mp3, control/js/actionGate.js's timing.dur())
+      // przychodzi jako float z ułamkiem ms (np. 19751.995), co Postgres
+      // odrzuca (22P02 invalid input syntax for type integer). Zaokrąglenie
+      // o ~1ms nie ma znaczenia dla samej blokady.
+      let row;
+      for (let attempt = 0; attempt < 3; attempt++) {
+        try {
+          row = await persist.setLock({ expectedRev: state.rev, lockMs: Math.round(ms) });
+          break;
+        } catch (error) {
+          if (ms !== 0 || !(error instanceof StaleWriteError) || attempt === 2) throw error;
+          await hydrate();
+        }
       }
+      console.log(`[e2e-diag-state] t=${Date.now()} setLockNow OK afterMs=${Date.now() - _t0} newRev=${row.rev}`);
+      applyRow(row);
+      emit();
+    } catch (e) {
+      console.log(`[e2e-diag-state] t=${Date.now()} setLockNow CATCH afterMs=${Date.now() - _t0}: ${e?.constructor?.name} ${e?.message}`);
+      // Restart requires a confirmed unlock; never silently proceed while locked.
+      if (ms === 0) throw e;
+      // Najlepszy wysiłek — treść stanu jest już poprawnie zapisana przez
+      // wcześniejszy commit(), tylko serwerowa blokada się nie ustawiła
+      // (np. rev już nieaktualny, bo coś innego zdążyło napisać pierwsze).
+      // Klencki lockedUntil (control/js/app.js) działa niezależnie, więc
+      // to nie jest błąd, który operator musi widzieć jako alert.
+      console.warn("[store] setLock nie powiodło się (nieszkodliwe):", e);
     }
-
-    if (typeof partial.finalMinPoints === "number") {
-      next.finalMinPoints = partial.finalMinPoints;
-    }
-
-    if (typeof partial.finalTarget === "number") {
-      next.finalTarget = partial.finalTarget;
-    }
-  
-    // nowy klucz: tryb ekranu końcowego
-    if (typeof partial.endScreenMode === "string") {
-      const m = partial.endScreenMode;
-      if (m === "logo" || m === "points" || m === "money") {
-        next.endScreenMode = m;
-      }
-    }
-
-    // mnożnik nagrody głównej
-    if (typeof partial.finalPrizeMultiplier === "number") {
-      next.finalPrizeMultiplier = partial.finalPrizeMultiplier;
-    }
-
-    // kwota nagrody głównej (max 5 cyfr)
-    if (typeof partial.mainPrizeAmount === "number") {
-      next.mainPrizeAmount = Math.min(partial.mainPrizeAmount, 99999);
-    }
-
-    // stary klucz (kompatybilność)
-    if (typeof partial.winEnabled === "boolean") {
-      next.winEnabled = partial.winEnabled;
-    }
-  
-    state.advanced = next;
-    emit();
   }
 
-  function setDisplay({ colors, theme, logoId } = {}) {
-    if (colors) state.display.colors = { ...state.display.colors, ...colors };
-    if (theme !== undefined) state.display.theme = theme;
-    if (logoId !== undefined) state.display.logoId = logoId;
+  // Migracja 267 — WYŁĄCZNIE detail.settings.uiLang, przez osobne, lekkie
+  // RPC (persist.setUiLang), celowo NIE przez _writeQueue/commit(): język
+  // operatora jest metadaną niezależną od reszty rozgrywki (zgłoszone: nie
+  // ma czekać w kolejce na koniec dźwięku/animacji trwającej akcji gry —
+  // w przeciwieństwie do commit()/setLock() ta funkcja świadomie omija
+  // zarówno kolejkę, jak i serwerowy locked_until, patrz komentarz w
+  // migracji i w persist.js).
+  async function setUiLang(lang) {
+    state.settings.uiLang = lang;
     emit();
+    const row = await persist.setUiLang(lang);
+    applyRow(row);
+    emit();
+    ringDoorbell(gameId, row.rev);
   }
 
-  function resetAdvanced() {
-    state.advanced = { ...DEFAULT_ADVANCED };
+  // Migracja 268 -- ten sam wzorzec co setUiLang() wyżej, dla
+  // detail.settings.soundMuted (patrz komentarz w persist.js/migracji).
+  async function setSoundMuted(muted) {
+    state.settings.soundMuted = muted;
     emit();
+    const row = await persist.setSoundMuted(muted);
+    applyRow(row);
+    emit();
+    ringDoorbell(gameId, row.rev);
   }
 
-  function resetProgress({ keepAdvanced = true } = {}) {
-    const adv = keepAdvanced ? structuredClone(state.advanced) : { ...DEFAULT_ADVANCED };
-    const fresh = makeDefaultState();
-    fresh.advanced = adv;
-  
-    // zachowujemy stałe pola
-    fresh.gameId = state.gameId;
-  
-    // podmień stan “w miejscu” (żeby referencje do `state` nie padły)
-    for (const k of Object.keys(state)) delete state[k];
-    Object.assign(state, fresh);
-  
-    emit();
-  }
-
-  function notify() {
-    emit();
-  }
-
-  return {
-    state,
-    hydrate,
-    subscribe,
-
-    setActiveCard,
-    setDevicesStep,
-    setSetupStep,
-
-    completeCard,
-    setTeams,
-    setHasFinal,
-    setFinalQuestionsMode,
-    setRoundsQuestionsMode,
-    setRoundsPicked,
-    confirmFinalQuestions,
-    unconfirmFinalQuestions,
-
-    setOnlineFlags,
-    setAudioUnlocked,
-    setPhysicalBuzzer,
-    setNoHostTablet,
-    setQrOnDisplay,
-    setQrHostOnDisplay,
-    setQrBuzzerOnDisplay,
-    setFinalActive,
-    setGameStarted,
-    notify,
-
-    teamsOk,
-    canFinishSetup,
-    canStartRounds,
-    canEnterCard,
-
-    setAdvanced,
-    resetAdvanced,
-    resetProgress,
-    setDisplay,
-  };
+  return { state, subscribe, emit, hydrate, commit, setLock, setUiLang, setSoundMuted, applyRow };
 }

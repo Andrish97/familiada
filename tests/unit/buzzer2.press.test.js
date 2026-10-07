@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { createPressController } from "../../web/buzzer2/js/press.js";
+import { createPressController } from "../../web/buzzer/js/press.js";
 
 function setup() {
   let row = { rev: 1, step: "r_duel", top_card: "rounds", detail: { settings: {}, rounds: { duel: { enabled: true, lastPressed: null } } } };

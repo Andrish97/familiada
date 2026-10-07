@@ -106,7 +106,7 @@ export async function cooldownEmailRelease(email, actionKey, maxAgeSeconds = 60)
  * powyżej, czas trwania NIE jest parametrem wywołania, czyta go samo RPC
  * z tabeli "wymiarów" w bazie. target_key koduje własną granularność
  * (patrz konkretne wywołujące: bases.js/polls-hub.js/subscriptions.js/
- * control2/js/shareDevice.js) -- ten moduł nie zgaduje jej formatu.
+ * control/js/shareDevice.js) -- ten moduł nie zgaduje jej formatu.
  */
 export async function mailCooldownCheck(actionKey, targetKey) {
   const { data, error } = await sb().rpc("mail_cooldown_check", {

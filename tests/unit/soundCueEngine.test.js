@@ -1,6 +1,6 @@
 // Testy web/shared/js/gameplay/soundCueEngine.js — reguły "który SOUND_CUE gra jaką
-// kombinację", wyciągnięte z control2/js/soundReactor.js tak, żeby
-// display2/js/soundReactor.js mogło je reużyć 1:1 (zgłoszone: dźwięk ma móc
+// kombinację", wyciągnięte z control/js/soundReactor.js tak, żeby
+// display/js/soundReactor.js mogło je reużyć 1:1 (zgłoszone: dźwięk ma móc
 // grać z Wyświetlacza zamiast Control). playSfx/getSfxDuration są tu
 // atrapami (bez js/core/sfx.js — ten moduł dotyka window/Audio już na
 // etapie importu) — testujemy WYŁĄCZNIE logikę sekwencjonowania.
@@ -129,7 +129,7 @@ test("koniec rundy z fazy STEAL (rozstrzygnięta kradzież) liczy się tak samo 
 });
 
 test("koniec rundy z fazy REVEAL (R8, po NEXT_AFTER_REVEAL) liczy się tak samo jak PLAY/STEAL", async () => {
-  // control2/js/engine.js's NEXT_AFTER_REVEAL — operator ręcznie potwierdza
+  // control/js/engine.js's NEXT_AFTER_REVEAL — operator ręcznie potwierdza
   // koniec rundy PO odsłonięciu reszty odpowiedzi (zgłoszone: ekran kolejnej
   // rundy nie ma się już odpalać sam, tylko po jawnym kliknięciu) — ten sam
   // "koniec rundy" fanfar ma zagrać jak przy END_ROUND bez nic do odsłonięcia.

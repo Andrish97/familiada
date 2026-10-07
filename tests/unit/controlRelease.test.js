@@ -1,14 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import vm from 'node:vm';
 import pl from '../../web/shared/translation/pl.js';
-for(const route of ['control','display','host','buzzer','game-settings']) {
- test(`${route} redirect preserves all connection parameters`,()=>{
+const entryScripts={control:'app.js',display:'main.js',host:'main.js',buzzer:'main.js','game-settings':'game-settings.js'};
+for(const route of Object.keys(entryScripts)) {
+ test(`${route} serves the current application at its canonical route`,()=>{
   const html=readFileSync(new URL(`../../web/${route}/index.html`,import.meta.url),'utf8');
-  let destination;
-  vm.runInNewContext(html.match(/<script>(.*?)<\/script>/s)[1],{location:{search:'?id=g&key=k&lang=uk',hash:'#step',replace:url=>{destination=url;}}});
-  assert.equal(destination,`/${route}2/?id=g&key=k&lang=uk#step`);
+  assert.match(html,new RegExp(`/${route}/js/${entryScripts[route]}`));
+  assert.doesNotMatch(html,/location\.replace\(['"]\/(?:control|display|host|buzzer|game-settings)2\//);
  });
 }
 test('approved manual uses application icons and current Repeat behaviour',()=>{

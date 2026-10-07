@@ -1,15 +1,15 @@
 // Domyślny kształt stanu gry Control v2 — czysta funkcja/dane, zero
-// importów przeglądarkowych. Wydzielone z control2/js/store.js specjalnie
+// importów przeglądarkowych. Wydzielone z control/js/store.js specjalnie
 // po to, żeby dało się jej użyć bez dotykania js/core/supabase.js (które
 // dotyka `window` już na etapie importu) — używane zarówno przez
-// control2/js/store.js (prawdziwy store w przeglądarce), jak i przez atrapy
-// store w testach jednostkowych oraz, w razie potrzeby, przez display2/
-// host2/buzzer2 do namalowania czegoś rozsądnego zanim przyjdzie pierwszy
+// control/js/store.js (prawdziwy store w przeglądarce), jak i przez atrapy
+// store w testach jednostkowych oraz, w razie potrzeby, przez display/
+// host/buzzer do namalowania czegoś rozsądnego zanim przyjdzie pierwszy
 // prawdziwy odczyt game_state.
 
 export const DEFAULT_SETTINGS = {
   hasFinal: null,
-  // Język Display/Host/Buzzer — control2/js/app.js's LANG-push zapisuje tu
+  // Język Display/Host/Buzzer — control/js/app.js's LANG-push zapisuje tu
   // język operatora zamiast wysyłać osobną komendę (control/js/app.js).
   uiLang: null,
   roundsQuestionsMode: "random",
@@ -25,15 +25,15 @@ export const DEFAULT_SETTINGS = {
   mainPrizeAmount: 25000,
   // Dźwięk (zgłoszone: przełącznik źródła w kroku Urządzeń) — "control"
   // (domyślnie, jak dotąd) albo "display": dokładnie JEDNO z dwóch urządzeń
-  // faktycznie odtwarza, gated w control2/js/soundReactor.js i display2/js/
+  // faktycznie odtwarza, gated w control/js/soundReactor.js i display/js/
   // soundReactor.js osobno, oba przez ten sam web/js/gameplay/soundCueEngine.js.
   // soundMuted było wcześniej WYŁĄCZNIE lokalne dla Control (localStorage,
-  // patrz control2/js/soundReactor.js) — teraz musi być tutaj, bo mute ma
+  // patrz control/js/soundReactor.js) — teraz musi być tutaj, bo mute ma
   // działać niezależnie od tego, które urządzenie faktycznie gra.
   soundSource: "control",
   soundMuted: false,
   // Głośności/warianty z games.settings.sound, zdenormalizowane tu RAZ przy
-  // starcie (control2/js/app.js's applyGameSettingsToState), dokładnie jak
+  // starcie (control/js/app.js's applyGameSettingsToState), dokładnie jak
   // reszta ustawień gry — Display2 (anon, bez dostępu do games.settings
   // wprost) czyta je stąd, nie osobnym zapytaniem. Pliki własne (wariant
   // "__custom__") NIE są tu wspierane — wymagałyby osobnego RPC do
@@ -53,7 +53,7 @@ export function makeDefaultState(gameId) {
     soundCueKey: null,
     soundCueSeq: 0,
 
-    // --- persystowane w game_state.detail (patrz control2/js/store.js) ---
+    // --- persystowane w game_state.detail (patrz control/js/store.js) ---
     locks: { gameStarted: false, finalActive: false, gameEnded: false },
     teams: { teamA: "", teamB: "" },
     settings: { ...DEFAULT_SETTINGS },
@@ -70,7 +70,7 @@ export function makeDefaultState(gameId) {
       // Dokąd pójdzie gra po R8 (odkrywanie reszty) — "NEXT_ROUND"/"FINAL"/
       // "GAME_END", obliczone RAZ przez engine.js's END_ROUND (totals w tym
       // momencie już ostateczne dla tej rundy) i tu tylko zapisane, żeby
-      // control2/js/ui.js mogło podpisać przycisk kontekstowo bez importu
+      // control/js/ui.js mogło podpisać przycisk kontekstowo bez importu
       // logiki silnika (patrz komentarz przy END_ROUND).
       roundEndDestination: null,
       question: null,
@@ -128,7 +128,7 @@ export function makeDefaultState(gameId) {
     // Domyślnie zasłonięte, nie odsłonięte — ustalona zasada dla całego
     // Control, nie tylko finału: Prowadzący widzi treść odpowiedzi (w
     // Rundach: pełną listę i punkty od początku rundy — patrz
-    // control2/js/host2/render.js's renderRounds()), a jej fizyczne
+    // control/js/host/render.js's renderRounds()), a jej fizyczne
     // ujawnienie kontestantowi zależy od tego, czy ekran jest w danym
     // momencie odwrócony/z dala od wzroku widza — coś, co ocenia sam
     // operator na miejscu, nie silnik gry. Zasłona jest jednokierunkowa

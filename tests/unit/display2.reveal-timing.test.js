@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { createRenderer } from "../../web/display2/js/render.js";
+import { createRenderer } from "../../web/display/js/render.js";
 import { makeDefaultState } from "../../web/shared/js/gameplay/gameStateShape.js";
 
 function row(state) { return { step: state.step, phase: state.phase, top_card: state.topCard, detail: structuredClone(state), sound_cue_key: "answer_correct" }; }

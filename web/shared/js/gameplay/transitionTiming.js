@@ -1,10 +1,10 @@
 // web/js/gameplay/transitionTiming.js
 //
 // JEDEN silnik liczący RZECZYWISTE czasy trwania dźwięku — używany zarówno
-// przez control2/js/actionGate.js (blokada przycisków operatora) JAK I
-// przez display2/js/render.js (czas trwania animacji Wyświetlacza).
+// przez control/js/actionGate.js (blokada przycisków operatora) JAK I
+// przez display/js/render.js (czas trwania animacji Wyświetlacza).
 // Zgłoszone wprost: "Pozbądźmy się sztywnych zapisanych ram czasowych.
-// Animacja... zawsze = dźwięki" — wcześniej display2/js/render.js miał
+// Animacja... zawsze = dźwięki" — wcześniej display/js/render.js miał
 // własne, ręcznie dobrane stałe (web/js/gameplay/displayAnim.js's `ms`), zupełnie
 // niezależne od tego, ile faktycznie trwa dźwięk temu towarzyszący; ten
 // moduł jest teraz JEDYNYM miejscem, które liczy "ile ma to trwać", żeby
@@ -29,7 +29,7 @@ const FALLBACK_S = 2; // metadane audio (jeszcze) niedostępne — bezpieczny do
 // znanym zachowaniem przeglądarek (Chromium): <audio>.duration bywa Infinity
 // dla plików MP3 bez poprawnego nagłówka Xing/VBR, dopóki metadane nie
 // doczytają się w pełni — bez tego sufitu Infinity propagowałoby się przez
-// syncedMs()/sequentialMs() do control2/js/actionGate.js's armLock(), gdzie
+// syncedMs()/sequentialMs() do control/js/actionGate.js's armLock(), gdzie
 // `lockedUntil = Date.now() + Infinity` blokuje operatora NA ZAWSZE (real bug
 // znaleziony w CI: trzy testy zawiesiły się z przyciskiem trwale disabled
 // przez cały timeout testu, 150s, bez żadnej zmiany stanu).
@@ -48,7 +48,7 @@ export function createTransitionTiming({ getSfxDuration }) {
   }
 
   // Blokujący/łączny czas synced combo (oba dźwięki kończą się razem) —
-  // control2/js/actionGate.js's gate dla START_ROUND/F7/FINISH_FINAL.
+  // control/js/actionGate.js's gate dla START_ROUND/F7/FINISH_FINAL.
   async function syncedMs(keyA, keyB) {
     const [a, b] = await Promise.all([dur(keyA), dur(keyB)]);
     return Math.max(a, b);
@@ -58,7 +58,7 @@ export function createTransitionTiming({ getSfxDuration }) {
   // faza, w której gra wyłącznie `otherKey`) i "revealMs" (czas trwania
   // samego "reveal", od jego startu do końca całej kombinacji — oba dźwięki
   // zawsze kończą się dokładnie w tym momencie, z definicji synced combo).
-  // display2/js/render.js: animOut = offset, animIn ("odsłonięcie") = revealMs
+  // display/js/render.js: animOut = offset, animIn ("odsłonięcie") = revealMs
   // — więc animacja odsłaniania faktycznie zaczyna się dokładnie wtedy, gdy
   // zaczyna grać "reveal", i trwa dokładnie tyle, co on.
   async function revealSyncSplit(otherKey) {

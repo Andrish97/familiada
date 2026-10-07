@@ -4444,7 +4444,7 @@ const pl = {
     controlTitle: "Panel sterowania",
     copyOk: "Skopiowano.",
     copyFail: "Nie mogę skopiować.",
-    // --- control2/js/ui.js (i18n wiring, dopisane, nie z audytu control.html) ---
+    // --- control/js/ui.js (i18n wiring, dopisane, nie z audytu control.html) ---
     teamsVsFormat: "{teamA} vs {teamB}",
     summaryLogoCustom: "niestandardowe",
     roundsOrderFixed: "Ustalona kolejność ({count})",

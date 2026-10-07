@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { createRenderer } from "../../web/display2/js/render.js";
+import { createRenderer } from "../../web/display/js/render.js";
 import { makeDefaultState } from "../../web/shared/js/gameplay/gameStateShape.js";
 
 function stateToRow(state) {

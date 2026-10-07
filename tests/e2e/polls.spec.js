@@ -564,7 +564,7 @@ test("QR w ankietach: zmiana języka w polls.html dociera do już otwartego urz�
   // navigator.language (w CI: en-US), więc test widział "en" od samego
   // startu, mimo jawnego ?lang=pl w nawigacji. Ten sam wzorzec co
   // withE2EBypass() w helpers/login.js, tylko bez tokenu bypass (poll-qr,
-  // jak display2/host2/buzzer2 w control2.spec.js's openAnon(), nie go
+  // jak display/host/buzzer w control2.spec.js's openAnon(), nie go
   // potrzebuje).
   await qrContext.addInitScript(() => {
     try { localStorage.setItem("uiLang", "pl"); } catch {}

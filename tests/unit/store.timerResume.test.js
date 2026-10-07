@@ -1,16 +1,16 @@
-// Pokrywa control2/js/store.js's expiredTimerOnHydrate() — wykrywanie
+// Pokrywa control/js/store.js's expiredTimerOnHydrate() — wykrywanie
 // timerów zastanych już wygasłych w chwili wznowienia Control (karta była
 // zamknięta/przeładowana, gdy endsAt minęło). Czysta funkcja, testowalna
 // bez atrapy Supabase — samo połączenie z game_state_write jest osobne od
 // tej logiki decyzyjnej. Zgłoszone: "chodzi o to, żeby wrócić o krok, a nie
 // pójść dalej w takich sytuacjach" — final.timer i rounds.timer3 mają
-// UMYŚLNIE różną odpowiedź (patrz control2/js/app.js's
+// UMYŚLNIE różną odpowiedź (patrz control/js/app.js's
 // applyExpiredTimersOnResume), więc ta funkcja musi zwracać obie flagi
 // niezależnie, nie tylko "czy COŚ wygasło".
 
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { expiredTimerOnHydrate } from "../../web/control2/js/timerResume.js";
+import { expiredTimerOnHydrate } from "../../web/control/js/timerResume.js";
 
 function baseState() {
   return {

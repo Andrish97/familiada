@@ -47,7 +47,7 @@ export function generateMarkdown() {
   const out = [];
   out.push("<!-- WYGENEROWANE z web/shared/js/gameplay/gameStateMachine.js przez scripts/gen-game-state-docs.mjs — nie edytuj ręcznie. -->", "");
   out.push(section("Mapa stanów gry — public.game_state.step", 1));
-  out.push("Ta strona jest wygenerowana z `web/shared/js/gameplay/gameStateMachine.js` — jedynego źródła prawdy, którego `assertTransition()` egzekwuje w `web/control2/js/engine.js`. Zmiana zachowania wymaga zmiany w kodzie; ten dokument aktualizuje się przez `node scripts/gen-game-state-docs.mjs`.", "");
+  out.push("Ta strona jest wygenerowana z `web/shared/js/gameplay/gameStateMachine.js` — jedynego źródła prawdy, którego `assertTransition()` egzekwuje w `web/control/js/engine.js`. Zmiana zachowania wymaga zmiany w kodzie; ten dokument aktualizuje się przez `node scripts/gen-game-state-docs.mjs`.", "");
 
   for (const card of TOP_CARDS) {
     const stepsForCard = Object.entries(STEPS).filter(([, def]) => def.card === card);

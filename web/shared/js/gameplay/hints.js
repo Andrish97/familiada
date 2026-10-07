@@ -1,6 +1,6 @@
 import { t } from "../../translation/translation.js?v=v2026-10-06T23331";
 // web/js/gameplay/hints.js
-// Blok podpowiedzi nad siatką (control2/js/ui.js) — odpowiednik starego
+// Blok podpowiedzi nad siatką (control/js/ui.js) — odpowiednik starego
 // control/js/gameRounds.js's/gameFinal.js's setDuelMsg/setPlayMsg/
 // setStealMsg/setRevealMsg/setEndMsg/ROUNDS_MSG/FINAL_MSG, ale bez
 // imperatywnego "ustaw wiadomość, gdy coś się zdarzy": tu wszystko idzie
@@ -15,7 +15,7 @@ import { t } from "../../translation/translation.js?v=v2026-10-06T23331";
 // "A"/"B" to wewnętrzne kody drużyn (public.game_team) — nigdy nie
 // pokazujemy ich operatorowi wprost, tylko realną nazwę wpisaną w
 // ustawieniach gry (state.teams.teamA/teamB). Reużywane przez
-// control2/js/ui.js (pasek statusu, ekran pojedynku), żeby te same litery
+// control/js/ui.js (pasek statusu, ekran pojedynku), żeby te same litery
 // nie były tłumaczone w dwóch miejscach dwoma różnymi kawałkami kodu.
 export function teamName(state, code) {
   if (code === "A") return state.teams?.teamA || "Drużyna A";
@@ -112,7 +112,7 @@ export function getFinalHint(state) {
     // Rozstrzygnięcie jest ZAWSZE już jakieś, nawet zanim operator cokolwiek
     // kliknął (domyślnie: dopasowanie z listy jeśli wybrane ręcznie, inaczej
     // "Nie ma na liście" gdy coś wpisano / "Brak odpowiedzi" gdy pusto —
-    // control2/js/ui.js's effectiveMappingResolution) — nie ma tu wyboru
+    // control/js/ui.js's effectiveMappingResolution) — nie ma tu wyboru
     // "X albo Y", tylko potwierdzenie tego, co już jest zaznaczone.
     // Powtórzenie + jeszcze nieodsłonięte: oba zdania razem (zgłoszone) —
     // operator ma wiedzieć NARAZ że to powtórzenie ORAZ co ma zrobić dalej,
@@ -133,7 +133,7 @@ export function getFinalHint(state) {
 // Skróty klawiszowe z dawnego control/js/gameFinal.js's renderP1Entry/
 // renderP2Entry/handleFinalTimerHotkey — działają WYŁĄCZNIE na krokach
 // wpisywania (f_p1_entry/f_p2_entry), dopisywane pod głównym hintem
-// (control2/js/ui.js's hintBlock), nie osobno. Runda 2 dostaje dodatkowo
+// (control/js/ui.js's hintBlock), nie osobno. Runda 2 dostaje dodatkowo
 // Shift+Enter (przełącznik "Powtórzenie") — runda 1 go nie ma, bo tam nie
 // ma czego powtarzać.
 export function getFinalEntryShortcuts(round) {

@@ -112,7 +112,7 @@ function drawThumbFlat150x70(canvas, bits150) {
  * (Uint8Array, 1=zapalony/lit, 0=zgaszony) — ten sam kształt niezależnie od
  * typu źródłowego. Wydzielone z buildLogoPreviewCanvas(), żeby dało się
  * reużyć samo rozstrzygnięcie bitów bez rysowania na canvasie (np.
- * host2/js/coverLogo.js rysuje siatkę litych kwadratów SVG zamiast obrazka).
+ * host/js/coverLogo.js rysuje siatkę litych kwadratów SVG zamiast obrazka).
  * @param {object|null} logo   - { type, payload } — wiersz z bazy albo skonstruowany obiekt
  * @param {Map|null}    glyphs - wynik loadFont5x7() (Map) — wymagane dla typu GLYPH
  */

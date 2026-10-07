@@ -517,9 +517,9 @@ main{
 }
 
 /* Przeniesione z css/bases.css (zgłoszone: modal udostępniania urządzenia w
-   control.html/control2.html -- te strony nie ładują bases.css wcale, więc
+   control.html/control.html -- te strony nie ładują bases.css wcale, więc
    .btn.xsm (przycisk usuwania/"Dodaj" w shareRow, control/js/share-device.js
-   i control2/js/shareDevice.js) nie miał TU żadnego rozmiaru i spadał do
+   i control/js/shareDevice.js) nie miał TU żadnego rozmiaru i spadał do
    pełnowymiarowego .btn -- stąd "kafelki za duże"/źle dopasowany przycisk w
    wąskim wierszu shareRow). base.css ładują wszystkie strony, więc .xsm
    działa teraz wszędzie z jednego miejsca, bez duplikatu w bases.css. */

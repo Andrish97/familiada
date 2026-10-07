@@ -6,7 +6,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { getRoundsHint, getFinalHint } from "../../web/shared/js/gameplay/hints.js";
-import { createEngine } from "../../web/control2/js/engine.js";
+import { createEngine } from "../../web/control/js/engine.js";
 import { createFakeStore } from "./helpers/fakeStore.js";
 import { DEFAULT_SETTINGS } from "../../web/shared/js/gameplay/gameStateShape.js";
 
@@ -68,7 +68,7 @@ test("getRoundsHint: faza DUEL po ACCEPT_BUZZ — pierwsza i druga próba mają 
 });
 
 // Hinty celowo NIE powtarzają, kto ma kontrolę/ile jest w banku — to już
-// pokazuje pasek statusu pod siatką (control2/js/ui.js) — tylko podpowiadają
+// pokazuje pasek statusu pod siatką (control/js/ui.js) — tylko podpowiadają
 // kolejny krok operatora.
 test("getRoundsHint: faza PLAY — z opcją oddania pytania vs bez", async () => {
   const { store, dispatch } = makeEngine();

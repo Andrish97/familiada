@@ -1,5 +1,5 @@
-const PAGE_NAMES = {home:'Strona główna',games:'Moje gry',control:'Panel sterowania',control2:'Panel sterowania 2',editor:'Edytor gry','game-settings':'Ustawienia rozgrywki','game-settings2':'Ustawienia rozgrywki 2',bases:'Bazy pytań','base-explorer':'Edytor bazy','logo-editor':'Edytor logo',polls:'Ankieta','polls-hub':'Ankiety',subscriptions:'Subskrypcje',account:'Konto',marketplace:'Gry społeczności',manual:'Instrukcja','connect-device':'Podłącz urządzenie'};
-const CONTEXT_NAMES = {control:'Panel sterowania',editor:'Edytor gry','game-settings':'Ustawienia rozgrywki','game-settings2':'Ustawienia rozgrywki 2','logo-editor':'Edytor logo','base-explorer':'Edytor bazy'};
+const PAGE_NAMES = {home:'Strona główna',games:'Moje gry',control:'Panel sterowania',editor:'Edytor gry','game-settings':'Ustawienia rozgrywki',bases:'Bazy pytań','base-explorer':'Edytor bazy','logo-editor':'Edytor logo',polls:'Ankieta','polls-hub':'Ankiety',subscriptions:'Subskrypcje',account:'Konto',marketplace:'Gry społeczności',manual:'Instrukcja','connect-device':'Podłącz urządzenie'};
+const CONTEXT_NAMES = {control:'Panel sterowania',editor:'Edytor gry','game-settings':'Ustawienia rozgrywki','logo-editor':'Edytor logo','base-explorer':'Edytor bazy'};
 const RESOURCE_NAMES = {game:'Gra',logo:'Logo',base:'Baza',base_question:'Pytanie bazy',base_folder:'Folder bazy',base_tag:'Tag bazy'};
 import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-06T23331";
 
@@ -42,7 +42,7 @@ export function activityDetailRows(data) {
     add(lock.username,'Aktywna edycja',`${RESOURCE_NAMES[lock.resource_type]||'Zasób'}${lock.resource_name?' — '+lock.resource_name:''}`,CONTEXT_NAMES[context]||'Edytor',lock.heartbeat_at);
   }
   for (const page of data.pages) {
-    if (['control','control2'].includes(page.page) && data.games.some(g=>g.game_id===page.game_id)) continue;
+    if (['control'].includes(page.page) && data.games.some(g=>g.game_id===page.game_id)) continue;
     add(page.username,PAGE_NAMES[page.page]||'Otwarta strona',null,page.visible?'Karta widoczna':'Karta w tle',page.last_seen_at);
   }
   return result;

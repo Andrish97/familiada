@@ -1,250 +1,234 @@
-// /familiada/js/pages/controlapp.js
-import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-06T23331";
-import { getUiLang, initI18n, t } from "../../shared/translation/translation.js?v=v2026-10-06T23331";
-import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-06T23331";
+import { createRenderCompletionGate } from "../../shared/js/gameplay/renderCompletion.js?v=v2026-10-06T23331";
+// control/js/app.js
+// Punkt wejścia Control v2 — spina store/engine/devices/presence/
+// soundReactor/ui. Nawigacja przedmeczowa (devices_display →
+// setup_finish → r_intro → r_roundStart) jest liniowa, bez rozgałęzień,
+// więc żyje tu (app-level), nie w engine.js (patrz komentarz na górze
+// engine.js) — ale i tak przechodzi przez assertTransition(), żeby tabela
+// stanów była mechanizmem wszędzie, nie tylko wewnątrz silnika reguł gry.
+
 import { guardDesktopOnly } from "../../shared/js/core/device-guard.js?v=v2026-10-06T23331";
-
-guardDesktopOnly();
-
-// ================== KOMUNIKATY ==================
-const APP_MSG = {
-  get NO_ID() { return t("control.noId"); },
-  GAME_NOT_READY: (reason) => t("control.gameNotReady", { reason }),
-  get DATA_MISMATCH() { return t("control.dataMismatch"); },
-  get GAME_NOT_FOUND() { return t("control.gameNotFound"); },
-
-  QR_LABEL: (kind) =>
-    kind === "host" ? t("control.deviceHost") :
-    kind === "buzzer" ? t("control.deviceBuzzer") :
-    t("control.qrModalTitle"),
-
-  get QR_COPY_OK() { return t("control.qrCopyOk"); },
-  get QR_COPY_FAIL() { return t("control.qrCopyFail"); },
-
-  get CODE_COPY_OK() { return t("control.codeCopyOk"); },
-  get CODE_COPY_FAIL() { return t("control.codeCopyFail"); },
-
-  get UNLOAD_WARN() { return t("control.unloadWarn"); },
-
-  get CONFIRM_BACK() { return t("control.confirmBack"); },
-
-  get AUDIO_OK() { return t("control.audioOk"); },
-  get AUDIO_FAIL() { return t("control.audioFail"); },
-
-  get FINAL_CONFIRMED() { return t("control.finalConfirmed"); },
-
-  get FINAL_RELOAD_START() { return t("control.finalReloadStart"); },
-  get FINAL_RELOAD_DONE() { return t("control.finalReloadDone"); },
-
-  get ADV_SAVED() { return t("control.advSaved"); },
-  get ADV_RESET() { return t("control.advReset"); },
-};
-// ================= KONIEC KOMUNIKATÓW =================
-
-import { requireAuth, signOut } from "../../shared/js/core/auth.js?v=v2026-10-06T23331";
+import { guardResourceLock, guardResourceBusy } from "../../shared/js/core/resource-lock.js?v=v2026-10-06T23331";
+import { initI18n, getUiLang, t } from "../../shared/translation/translation.js?v=v2026-10-06T23331";
+import { requireAuth } from "../../shared/js/core/auth.js?v=v2026-10-06T23331";
 import { setTopbarAccount } from "../../shared/js/core/topbar-controller.js?v=v2026-10-06T23331";
-import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-06T23331";
 import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-06T23331";
-import { rt } from "../../shared/js/core/realtime.js?v=v2026-10-06T23331";
-import { validateGame, loadGameBasic, loadQuestions, loadAnswers } from "../../shared/js/core/game-validate.js?v=v2026-10-06T23331";
-import { unlockAudio, isAudioUnlocked, playSfx, setCurrentGameId, loadSfxManifest, initSfx, applySfxGameSettings, loadSfxFromCloud, getSfxCustomFiles, getSfxCategories, getSfxVariant, getSfxVolume, isSfxPlaying, stopSfx, onSfxEnd, setSessionSfxVolume } from "../../shared/js/core/sfx.js?v=v2026-10-06T23331";
+import { loadQuestions, loadAnswers } from "../../shared/js/core/game-validate.js?v=v2026-10-06T23331";
+import { loadSfxManifest, initSfx, setCurrentGameId, unlockAudio, applySfxGameSettings, loadSfxFromCloud, playSfx, getSfxDurationAccurate as getSfxDuration, listSfx, isAnySfxPlaying } from "../../shared/js/core/sfx.js?v=v2026-10-06T23331";
 import { listGameSounds } from "../../shared/js/core/sfx-cloud.js?v=v2026-10-06T23331";
-import { createStore } from "./store.js?v=v2026-10-06T23331";
-import { createUI } from "./ui.js?v=v2026-10-06T23331";
-import { createDevices } from "./devices.js?v=v2026-10-06T23331";
-import { createPresence } from "./presence.js?v=v2026-10-06T23331";
-import { createDisplay } from "./display.js?v=v2026-10-06T23331";
-import { createRounds } from "./gameRounds.js?v=v2026-10-06T23331";
-import { createFinal } from "./gameFinal.js?v=v2026-10-06T23331";
-import { initShareDevice } from "./share-device.js?v=v2026-10-06T23331";
-import { loadFont5x7, buildLogoPreviewCanvas } from "../../shared/js/core/logo-preview.js?v=v2026-10-06T23331";
-import { sessionStart, sessionEnd, sessionLogError } from "./sessionTracking.js?v=v2026-10-06T23331";
+import { assertTransition } from "../../shared/js/gameplay/gameStateMachine.js?v=v2026-10-06T23331";
+import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-06T23331";
+import { DEFAULT_SETTINGS } from "../../shared/js/gameplay/gameStateShape.js?v=v2026-10-06T23331";
+import { rt } from "../../shared/js/core/realtime.js?v=v2026-10-06T23331";
+import { doorbellTopic } from "../../shared/js/core/game-state-doorbell.js?v=v2026-10-06T23331";
 
-initI18n({ withSwitcher: true });
-
-const qs = new URLSearchParams(location.search);
-const gameId = qs.get("id");
-
-// ================== KOLORY (domyślne) ==================
-const DEFAULT_COLORS = {
-  A: "#c4002f",
-  B: "#2a62ff",
-  BACKGROUND: "#d21180",
-  DOT: "#d7ff3d",
-};
-
-function normHex(input) {
-  let s = String(input ?? "").trim();
-  if (!s) return null;
-  if (!s.startsWith("#")) s = "#" + s;
-  s = s.toUpperCase();
-  if (!/^#[0-9A-F]{6}$/.test(s)) return null;
-  return s;
+function qrImgSrc(url) {
+  const u = encodeURIComponent(String(url ?? ""));
+  return `https://api.qrserver.com/v1/create-qr-code/?size=320x320&data=${u}`;
 }
 
-function hexToRgb(hex) {
-  const h = normHex(hex);
-  if (!h) return { r: 0, g: 0, b: 0 };
-  const n = parseInt(h.slice(1), 16);
-  return {
-    r: (n >> 16) & 255,
-    g: (n >> 8) & 255,
-    b: n & 255,
-  };
-}
+// Ustawienia "advanced" zachowywane przez "Zacznij od nowa" (sekcja 3a pkt 2
+// — dokładnie jak dzisiejsze resetProgress({keepAdvanced:true})).
+const ADVANCED_SETTINGS_KEYS = ["roundMultipliers", "finalMinPoints", "finalTarget", "endScreenMode", "finalPrizeMultiplier", "mainPrizeAmount"];
 
-function rgbToHex(r, g, b) {
-  const rr = Math.max(0, Math.min(255, Number(r) || 0));
-  const gg = Math.max(0, Math.min(255, Number(g) || 0));
-  const bb = Math.max(0, Math.min(255, Number(b) || 0));
-  const n = (rr << 16) | (gg << 8) | bb;
-  return "#" + n.toString(16).padStart(6, "0").toUpperCase();
-}
-
-// prosty throttle (leading+trailing, ale tu wystarczy trailing)
-function throttleMs(ms, fn) {
-  let t = null;
-  let lastArgs = null;
-
-  return (...args) => {
-    lastArgs = args;
-    if (t) return;
-    t = setTimeout(() => {
-      t = null;
-      const a = lastArgs;
-      lastArgs = null;
-      try { fn(...(a || [])); } catch {}
-    }, ms);
-  };
-}
-// ========================================================
-
-let guestMode = false;
-
-async function ensureAuthOrRedirect() {
-  const user = await requireAuth("../login");
-  guestMode = isGuestUser(user);
-  setTopbarAccount(user, {
-    showAuthEntry: true,
-    onLogout: async () => {
-      if (isEndedUiState()) {
-        await sendZeroStatesToDevices().catch(() => {});
-      }
-      await shareDevice.expireShares();
-      await expireConnectCodes();
-      suppressUnloadWarn = true;
-    },
-  });
-  return user;
-}
-
-function syncPanelStepPills() {
-  const panel = document.querySelector(".cardPanel:not(.hidden)");
-  if (!panel) return;
-
-  const pill = panel.querySelector("[data-panel-step]");
-  if (!pill) return;
-
-  const step = panel.querySelector(".step:not(.hidden)");
-  if (!step) { pill.textContent = ""; return; }
-
-  const st = step.querySelector(".stepTitle");
-  pill.textContent = (st?.textContent || "").trim();
-}
-
-async function loadGameOrThrow() {
-  if (!gameId) throw new Error(APP_MSG.NO_ID);
-
-  let basic;
-  try {
-    basic = await loadGameBasic(gameId);
-  } catch (e) {
-    if (e?.code === "PGRST116") throw Object.assign(new Error(APP_MSG.GAME_NOT_FOUND), { _notFound: true });
-    throw e;
-  }
-
-  // reguły "czy można grać" liczy baza (game_validate)
-  const v = (await validateGame(gameId)).play;
-  if (!v.ok) throw new Error(APP_MSG.GAME_NOT_READY(v.reason));
-
-  const { data, error } = await sb()
-    .from("games")
-    .select("id,name,type,status,share_key_display,share_key_host,share_key_buzzer,settings")
-    .eq("id", gameId)
-    .single();
-
-  if (error) throw error;
-  if (data?.id !== basic.id) throw new Error(APP_MSG.DATA_MISMATCH);
-  return data;
-}
-
-// Stosuje dane z games.settings JSON do store przed startem UI
-function applyGameSettingsToStore(settings, store) {
+// Denormalizacja games.settings (skonfigurowane osobno, na stronie
+// game-settings, ZANIM operator w ogóle otworzy Control) do płaskiego
+// game_state.detail — odpowiednik dzisiejszego control/js/app.js's
+// applyGameSettingsToStore(). D3 ("setup_finish") to w nowej wersji
+// wyłącznie PODSUMOWANIE tych już zapisanych ustawień (plan, tabela D3),
+// nie formularz do wypełnienia — więc to musi się wykonać, zanim operator
+// tam dotrze, nie jako efekt kliknięcia "Rozpocznij".
+function applyGameSettingsToState(settings, state) {
   if (!settings || typeof settings !== "object") return;
-
-  const { teams, display, game, questions, sound } = settings;
-
-  // Dźwięk — głośności i warianty
-  if (sound) applySfxGameSettings(sound);
+  const { teams, display, game, questions } = settings;
 
   if (teams?.teamA || teams?.teamB) {
-    store.setTeams(teams.teamA || "", teams.teamB || "");
+    state.teams.teamA = teams.teamA || "";
+    state.teams.teamB = teams.teamB || "";
   }
 
   if (display) {
-    store.setDisplay({
-      colors: display.colors,
-      theme: display.theme,
-      logoId: display.logoId,
-    });
+    if (display.colors) state.display.colors = { ...state.display.colors, ...display.colors };
+    if (display.theme !== undefined) state.display.theme = display.theme;
+    if (display.logoId !== undefined) state.display.logoId = display.logoId;
   }
 
   if (game) {
-    if (game.hasFinal !== undefined && game.hasFinal !== null) {
-      store.setHasFinal(game.hasFinal);
-    }
-    if (game.finalQuestionsMode) {
-      store.setFinalQuestionsMode(game.finalQuestionsMode);
-    }
-    if (game.roundsQuestionsMode) {
-      store.setRoundsQuestionsMode(game.roundsQuestionsMode);
-    }
+    if (game.hasFinal !== undefined && game.hasFinal !== null) state.settings.hasFinal = game.hasFinal;
+    if (game.finalQuestionsMode) state.settings.finalQuestionsMode = game.finalQuestionsMode;
+    if (game.roundsQuestionsMode) state.settings.roundsQuestionsMode = game.roundsQuestionsMode;
     if (game.advanced && typeof game.advanced === "object") {
-      store.setAdvanced(game.advanced);
+      const adv = game.advanced;
+      if (Array.isArray(adv.roundMultipliers) && adv.roundMultipliers.length) state.settings.roundMultipliers = adv.roundMultipliers;
+      if (typeof adv.finalMinPoints === "number") state.settings.finalMinPoints = adv.finalMinPoints;
+      if (typeof adv.finalTarget === "number") state.settings.finalTarget = adv.finalTarget;
+      if (typeof adv.endScreenMode === "string") state.settings.endScreenMode = adv.endScreenMode;
+      if (typeof adv.finalPrizeMultiplier === "number") state.settings.finalPrizeMultiplier = adv.finalPrizeMultiplier;
+      if (typeof adv.mainPrizeAmount === "number") state.settings.mainPrizeAmount = adv.mainPrizeAmount;
     }
   }
 
+  // Zdenormalizowane głośności/warianty (BEZ własnych plików — patrz
+  // web/js/gameplay/gameStateShape.js's komentarz przy `sound`) — Display2 (anon)
+  // czyta je stąd zamiast osobnego zapytania do games.settings, dokładnie
+  // jak resztę ustawień na tym ekranie.
+  if (settings.sound && typeof settings.sound === "object") {
+    state.settings.sound = {
+      volumes: { ...(settings.sound.volumes || {}) },
+      variants: { ...(settings.sound.variants || {}) },
+    };
+  }
+
   if (questions) {
-    // Tylko gdy finał faktycznie włączony — inaczej martwa lista pytań
-    // finałowych (po wcześniejszym wyłączeniu finału bez wyczyszczenia
-    // wyboru) niepotrzebnie wykluczyłaby te pytania z puli rund w trakcie
-    // realnej rozgrywki (pickQuestionsForRounds w gameRounds.js).
+    // Tak jak w starym applyGameSettingsToStore: tylko gdy finał faktycznie
+    // włączony — inaczej martwa lista pytań finałowych niepotrzebnie
+    // wykluczyłaby te pytania z puli rund (pickQuestionPool niżej).
     if (game?.hasFinal === true && Array.isArray(questions.final) && questions.final.length > 0) {
-      const ids = questions.final.map(q => q.id).filter(Boolean);
-      if (ids.length > 0) store.confirmFinalQuestions(ids);
+      const ids = questions.final.map((q) => q.id).filter(Boolean);
+      if (ids.length > 0) {
+        state.final.picked = ids.slice(0, 5);
+        state.final.confirmed = true;
+      }
     }
     if (Array.isArray(questions.rounds) && questions.rounds.length > 0) {
-      store.setRoundsPicked(questions.rounds);
+      state.settings.roundsPicked = questions.rounds.slice();
     }
   }
 }
 
+import { createStore } from "./store.js?v=v2026-10-06T23331";
+import { createEngine } from "./engine.js?v=v2026-10-06T23331";
+import { createActionGate } from "./actionGate.js?v=v2026-10-06T23331";
+import { createDevices } from "./devices.js?v=v2026-10-06T23331";
+import { createPresence } from "./presence.js?v=v2026-10-06T23331";
+import { missingDevices } from "./deviceGate.js?v=v2026-10-06T23331";
+import { createSessionTelemetry } from "./sessionTelemetry.js?v=v2026-10-06T23331";
+import { createSoundReactor } from "./soundReactor.js?v=v2026-10-06T23331";
+import { createUI } from "./ui.js?v=v2026-10-06T23331";
+import { createShareDevice } from "./shareDevice.js?v=v2026-10-06T23331";
+import { icon } from "../../shared/js/core/icons.js?v=v2026-10-06T23331";
+
+guardDesktopOnly();
+
+async function pickQuestionPool(state) {
+  const all = await loadQuestions(state.gameId);
+  const finalPicked = new Set((state.final.picked || []).map(String));
+  let pool = finalPicked.size ? all.filter((q) => !finalPicked.has(String(q.id))) : all.slice();
+
+  // Realny bug znaleziony przez failed nagranie (przebieg z 2026-09-26,
+  // diagnostyka dumpFailureDiagnostics(): przycisk R8 pokazywał "Przejdź do
+  // następnej rundy" zamiast oczekiwanego "Przejdź do zakończenia gry" po
+  // rundzie, która miała być OSTATNIĄ wg wybranej ręcznie puli 2 pytań).
+  // Plan (tabela A, R1) i komentarz w control/js/engine.js's
+  // previewRoundEndDestination() są tu jednoznaczne: "pick" = KOLEJNOŚĆ Z
+  // roundsPicked, nie "roundsPicked, a potem reszta jako dolewka". Ta
+  // funkcja doklejała [...ordered, ...WSZYSTKO_INNE] -- więc pula w trybie
+  // "pick" nigdy realnie się nie wyczerpywała po wybranych pytaniach, tylko
+  // ciągnęła dalej z reszty bazy pytań gry, co silnik (engine.js's
+  // previewRoundEndDestination -- `!state.rounds._questionPool.length`)
+  // błędnie odczytywał jako "jest jeszcze kolejna runda". Pula w trybie
+  // "pick" ma kończyć się DOKŁADNIE na wybranych pytaniach -- wyczerpanie
+  // jest tu prawidłowym, oczekiwanym skutkiem (R9③ w planie), nie
+  // przypadkiem do "naprawienia" przez dolewanie czegokolwiek więcej.
+  if (state.settings.roundsQuestionsMode === "pick" && state.settings.roundsPicked?.length) {
+    const byId = new Map(pool.map((q) => [String(q.id), q]));
+    return state.settings.roundsPicked.map((p) => byId.get(String(p.id))).filter(Boolean);
+  }
+
+  for (let i = pool.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+  return pool;
+}
+
+// Ten sam algorytm co dawne "setup.reshuffleFinal" (wykluczenie ręcznie
+// wybranej puli rund, tasowanie, pierwsze 5) — wydzielone, żeby móc go
+// wołać zarówno z tamtej akcji, jak i z automatycznego pierwszego losowania
+// (ensureQuestionsDrawn niżej). Zwraca też "pickedPreview" (id+tekst) —
+// samo `picked` to tylko ID, za mało żeby operator zobaczył CO wylosowano
+// w Podsumowaniu, zanim finał się realnie zacznie.
+async function drawFinalPicks(state) {
+  const all = await loadQuestions(state.gameId);
+  const roundsPicked = new Set((state.settings.roundsPicked || []).map((q) => String(q.id)));
+  const pool = state.settings.roundsQuestionsMode === "pick" && roundsPicked.size
+    ? all.filter((q) => !roundsPicked.has(String(q.id)))
+    : all.slice();
+  for (let i = pool.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+  const picks = pool.slice(0, 5);
+  return { picked: picks.map((q) => q.id), pickedPreview: picks.map((q) => ({ id: q.id, text: q.text })) };
+}
+
 async function main() {
-  // Auth i ładowanie gry równolegle — loadGameOrThrow() nie potrzebuje usera
-  const [currentUser, game] = await Promise.all([
-    ensureAuthOrRedirect(),
-    loadGameOrThrow(),
-  ]);
-  document.querySelector('.topbar')?.classList.add('topbar-ready');
+  await initI18n({ withSwitcher: true });
 
-  // Inicjalizuj sfx-new: załaduj manifest + ustaw gameId
-  setCurrentGameId(game.id);
-  loadSfxManifest().then(() => initSfx()).catch(console.warn);
+  const params = new URLSearchParams(location.search);
+  const gameId = params.get("id");
+  const root = document.getElementById("app");
+  if (!gameId) { root.textContent = "Brak parametru ?id= w URL."; return; }
 
-  // Załaduj custom pliki audio z bucketu (fire-and-forget)
+  const user = await requireAuth();
+  if (!user) return; // requireAuth already redirected
+
+  setTopbarAccount(user, { showAuthEntry: true });
+  // css/base.css's skel-body reveal (".topbar-section-3/4" — mute/"Zacznij
+  // od nowa"/info, who/wyloguj — trzymane na opacity:0 aż to się doda,
+  // wzorem KAŻDEJ innej strony w repo, np. control/js/app.js:237) —
+  // zgubione przy pisaniu control2 od zera. Bez tego te przyciski są
+  // NA STAŁE niewidoczne (ale wciąż klikalne/obecne w DOM — dlatego testy
+  // E2E, które celują w selektory, tego nie złapały; zgłoszone przez
+  // właściciela na żywej grze, gdzie po prostu nie było widać ↺/ℹ️/wyloguj).
+  document.querySelector(".topbar")?.classList.add("topbar-ready");
+
+  const { data: game, error: gameError } = await sb().from("games").select("*").eq("id", gameId).single();
+  if (gameError || !game) { root.textContent = "Nie znaleziono gry."; return; }
+
+  // Warstwa 1 blokady (docs/plan-testy-i-poprawki.md, sekcja "Control" —
+  // punkt odłożony do teraz, bo dopiero game_state daje realny stan do
+  // przejęcia). resourceType:"game" to WSPÓLNY klucz z game-settings.js/
+  // game-settings.js/editor.js — Control blokuje edycję ustawień w trakcie
+  // rozgrywki, i widzi odwrotnie, gdy ktoś inny (druga karta Control,
+  // ustawienia, edytor) już trzyma tę samą grę.
+  const lock = await guardResourceLock({
+    resourceType: "game",
+    resourceId: gameId,
+    context: "control",
+    message: t("resourceLock.gameMessage"),
+    backHref: "/games/",
+  });
+  if (!lock.ok) return;
+
+  // "Logo ↔ Control" (docs/plan-testy-i-poprawki.md, sekcja "Krzyżowe
+  // blokady między zasobami" — druga połowa pary "Logo ↔ trwająca
+  // rozgrywka", odłożona tam na "fundament Control", który właśnie powyżej
+  // powstał). Control nie EDYTUJE logo — tylko je referuje (na żywo na
+  // Wyświetlaczu), więc nie zajmuje własnej blokady "logo" (guardResourceBusy,
+  // w odróżnieniu od guardResourceLock, nic nie trzyma/nie zwalnia) — tylko
+  // czeka, aż logo-editor.js zwolni SWOJĄ. Domyślne logo (logoId === null)
+  // nie ma odpowiadającego wiersza user_logos — nic do sprawdzenia.
+  const gameLogoId = game.settings?.display?.logoId;
+  if (gameLogoId) {
+    const logoLock = await guardResourceBusy({
+      resourceType: "logo",
+      resourceId: gameLogoId,
+      message: t("resourceLock.logoInUseMessage"),
+      backHref: "/games/",
+    });
+    if (!logoLock.ok) return;
+  }
+
+  setCurrentGameId(gameId);
+  await loadSfxManifest();
+  await initSfx();
+
+  // Głośności/warianty dźwięku skonfigurowane w game-settings (poza
+  // Control) — dokładnie jak dzisiejsze control/js/app.js's main().
   if (game.settings?.sound) {
-    const sound = game.settings.sound;
-    const customKeys = Object.entries(sound.variants || {})
+    applySfxGameSettings(game.settings.sound);
+    const customKeys = Object.entries(game.settings.sound.variants || {})
       .filter(([, v]) => v === "__custom__")
       .map(([k]) => k);
     if (customKeys.length > 0) {
@@ -252,703 +236,564 @@ async function main() {
         try {
           const { data: { user } } = await sb().auth.getUser();
           if (user?.id) {
-            const urlMap = await listGameSounds(sb(), user.id, game.id, customKeys);
+            const urlMap = await listGameSounds(sb(), user.id, gameId, customKeys);
             if (urlMap.size > 0) loadSfxFromCloud(urlMap);
           }
-        } catch (e) { console.warn("[sfx] cloud load failed", e); }
+        } catch (e) { console.warn("[control2] wczytanie własnych dźwięków nie powiodło się:", e); }
       })();
     }
   }
 
-  // Load questions in background (non-blocking)
-  loadQuestions(game.id).then(qsAll => {
-    sessionStorage.setItem("familiada:questionsCache", JSON.stringify(qsAll));
-  }).catch(console.error);
+  // Prepare audio lengths while the operator connects devices.
+  void Promise.all(listSfx().map(getSfxDuration));
+  const store = createStore(gameId);
+  const expiredTimer = await store.hydrate();
+  const sessionTelemetry = createSessionTelemetry(gameId, () => store.state);
 
-  const ui = createUI();
-  ui.setGameHeader(game.name, `${game.type} / ${game.status}`);
+  // Tylko przed startem gry (D0-D3) — po "Rozpocznij" te pola żyją już
+  // wyłącznie w game_state i nie mają być nadpisywane przy każdym
+  // wznowieniu Control w trakcie rozgrywki (patrz komentarz przy funkcji).
+  if (!store.state.locks.gameStarted) {
+    applyGameSettingsToState(game.settings, store.state);
+    await store.commit();
+  }
 
-  // Share device modal – inicjalizujemy po utworzeniu devices (niżej)
-  let shareDevice = { refreshBadges: async () => {}, expireShares: async () => {} };
+  // Język urządzeń (Display/Host/Buzzer) idzie za językiem operatora w
+  // Control — dokładnie jak dzisiejsze control/js/app.js's LANG-push na
+  // starcie i przy każdej zmianie, tylko teraz przez zwykły zapis do
+  // game_state zamiast broadcastu komend (urządzenia go stamtąd czytają,
+  // patrz *2/js/main.js). Nieograniczone do fazy przedmeczowej — operator
+  // może przełączyć język w dowolnym momencie rozgrywki.
+  if (store.state.settings.uiLang !== getUiLang()) {
+    await store.setUiLang(getUiLang());
+  }
+  window.addEventListener("i18n:lang", async (event) => {
+    const nextLang = event?.detail?.lang;
+    if (!nextLang || store.state.settings.uiLang === nextLang) return;
+    // Migracja 267: osobne, lekkie RPC (jsonb_set WYŁĄCZNIE na
+    // detail.settings.uiLang) — świadomie z pominięciem store.commit()/
+    // locked_until (migracja 264). Zgłoszone: język operatora jest metadaną
+    // niezależną od reszty rozgrywki, nie ma czekać w kolejce na koniec
+    // dźwięku/animacji trwającej akcji gry (wcześniejsza wersja tego
+    // listenera właśnie tak robiła i w 100% deterministyczny sposób gubiła
+    // zmianę, gdy trafiła w to okno — patrz historia commitów).
+    await store.setUiLang(nextLang);
+  });
 
-  
-  // Store tworzony tutaj — zanim zainicjujemy kolory, żeby odczytać display z localStorage
-  const store = createStore(game.id);
-  store.hydrate();
+  const engine = createEngine({
+    store,
+    loadQuestionPool: () => pickQuestionPool(store.state),
+    loadQuestions,
+    loadAnswers,
+    now: Date.now,
+    computeCommitGate: (...args) => actionGate.computeGateMs(...args),
+  });
+  const actionGate = createActionGate({ getSfxDuration });
 
-  // Wczytaj ustawienia z games.settings (DB) i zastosuj do store
-  applyGameSettingsToStore(game.settings, store);
-
-  // ===== Kolory: inicjalizowane ze store.state.display =====
-  let colors = {
-    A: normHex(store.state.display.colors.A) ?? DEFAULT_COLORS.A,
-    B: normHex(store.state.display.colors.B) ?? DEFAULT_COLORS.B,
-    BACKGROUND: normHex(store.state.display.colors.BACKGROUND) ?? DEFAULT_COLORS.BACKGROUND,
-    DOT: normHex(store.state.display.colors.DOT) ?? DEFAULT_COLORS.DOT,
-  };
-
-  // pokaż na start kafelki
-  ui.setSwatches?.({ teamA: colors.A, teamB: colors.B, bg: colors.BACKGROUND, dot: colors.DOT });
-
-  // ===== Motyw: stan UI (lokalny) =====
-  let activeTheme = null;
-  let themeList = [];
-
-  // wczytaj listę motywów z themes.json
-  (async () => {
+  // JEDEN silnik blokady operatora względem dźwięku/animacji (zgłoszone:
+  // "blokowanie akcji względem dźwięku animacji... wszędzie" — patrz
+  // actionGate.js's komentarz na górze). Dwie fazy, obie odzwierciedlone w
+  // tym samym `busy()`, czytanym przez KAŻDY kafel w ui.js (ctx.busy w
+  // render()), zamiast osobnego, ręcznie uzbrajanego zegarka na każdy
+  // przycisk:
+  //  1. `committing` — true od kliknięcia do potwierdzonego zapisu (czas
+  //     sieci, nieznany z góry — bez sztucznego "floora", po prostu czekamy
+  //     na prawdziwą odpowiedź).
+  //  2. `lockedUntil` — po potwierdzeniu, na czas REALNEGO dźwięku
+  //     (actionGate.computeGateMs(), policzony z POTWIERDZONEGO
+  //     sound_cue_key, nie zgadywany z wyprzedzeniem).
+  let committing = false;
+  let queuedGameAction = false;
+  let presenceFlags = {};
+  let disconnectEpisode = false;
+  let restarting = false;
+  let dispatchGeneration = 0;
+  let lockedUntil = 0;
+  // Patrz armLock() niżej -- prawdziwa (nie zgadywana z góry) blokada na
+  // czas round-tripu store.setLock(ms).
+  let lockConfirmPending = false;
+  const displayCompletion = createRenderCompletionGate(store.state.rev);
+  let lastDisplayCueSeq = store.state.__row?.sound_cue_seq;
+  let lastDisplayStep = store.state.step;
+  function noteDisplayRequest() {
+    const row = store.state.__row;
+    if (row && (row.step !== lastDisplayStep || row.sound_cue_seq !== lastDisplayCueSeq)) {
+      displayCompletion.request(row.rev);
+      lastDisplayStep = row.step;
+      lastDisplayCueSeq = row.sound_cue_seq;
+    }
+  }
+  function waitingForDisplay() {
+    return !/^(devices_|setup_)/.test(store.state.step) && displayCompletion.pending;
+  }
+  let completionUIReady = false;
+  let completionReadPending = false;
+  async function refreshDisplayCompletion() {
+    if (!completionUIReady || completionReadPending || !waitingForDisplay()) return;
+    completionReadPending = true;
     try {
-      const res = await fetch("/shared/data/display-themes.json");
-      const json = await res.json();
-      const defaultTheme = json.default || "classic";
-      themeList = json.themes.map(e => {
-        const lang = document.documentElement.lang || "pl";
-        const label = typeof e.label === "object"
-          ? (e.label[lang] ?? e.label["pl"] ?? e.key)
-          : t(e.label);
-        return { key: e.key, label };
+      const { data, error } = await sb().from("game_state_display_completion").select("rendered_rev").eq("game_id", gameId).maybeSingle().abortSignal(AbortSignal.timeout(6500));
+      if (!error && data && displayCompletion.acknowledge(data.rendered_rev)) {
+        renderCurrent();
+      }
+    } catch { /* Keep waiting; the next poll retries. */ } finally { completionReadPending = false; }
+  }
+  setInterval(() => { void refreshDisplayCompletion(); }, 500);
+  function soundBusy() { return isAnySfxPlaying(); }
+  let lastSoundBusy = false;
+  setInterval(() => {
+    const current = soundBusy();
+    if (current !== lastSoundBusy) { lastSoundBusy = current; if (completionUIReady) renderCurrent(); }
+  }, 125);
+  function busy() { return queuedGameAction || soundBusy() || committing || lockConfirmPending || waitingForDisplay() || Date.now() < lockedUntil || missingDevices(store.state, presenceFlags).length > 0; }
+
+  // Uzbraja klienckie `lockedUntil` na czas `ms` (potwierdzonego dźwięku/
+  // animacji) I dociąga je do realnego czasu, w którym serwer (migracja
+  // 264) faktycznie ustawi WŁASNY `locked_until` -- `store.setLock(ms)` to
+  // osobne wywołanie RPC, więc jego round-trip jest nieznany z góry.
+  // Poprzednia wersja liczyła `lockedUntil` OD RAZU (`Date.now()+ms`) plus
+  // sztywny margines 400ms na ten round-trip -- w CI zdarzało się, że sam
+  // round-trip setLock() trwał >1s (dużo więcej niż margines), więc klient
+  // odblokowywał przycisk, ZANIM serwer w ogóle zdążył ustawić swoją
+  // blokadę z TEJ akcji -- server odrzucał kolejny zapis LockedError('locked')
+  // (zgłoszone e2e: "reset pojedynku..." i, mimo marginesu, "próg w rundzie
+  // -> finał" — ADD_X w DUEL). Naprawa: zamiast zgadywać margines,
+  // blokujemy TWARDO (`lockConfirmPending`) aż store.setLock(ms) faktycznie
+  // wróci, i DOPIERO WTEDY liczymy `lockedUntil=Date.now()+ms` -- serwer
+  // ustawia swój `locked_until` W MOMENCIE przetworzenia zapytania, czyli
+  // zawsze WCZEŚNIEJ niż chwila odebrania TEJ odpowiedzi tutaj, więc to
+  // zawsze bezpieczne (nigdy za krótkie) górne ograniczenie, niezależnie od
+  // realnych warunków sieci.
+  function armLock(ms, generation = dispatchGeneration) {
+    if (ms <= 0 || restarting || generation !== dispatchGeneration) return;
+    lockedUntil = Math.max(lockedUntil, Date.now() + ms);
+    setTimeout(renderCurrent, ms + 20);
+    lockConfirmPending = true;
+    // TYMCZASOWA diagnostyka (do usunięcia po znalezieniu przyczyny
+    // "Zatrzymaj"/"X" trwale disabled w control2.spec.js) -- czy
+    // store.setLock(ms) w ogóle się rozstrzyga, i kiedy dokładnie.
+    const _armT0 = Date.now();
+    console.log(`[e2e-diag-state] t=${_armT0} armLock START ms=${ms} lockedUntil=${lockedUntil}`);
+    store.setLock(ms)
+      .then(() => {
+        if (restarting || generation !== dispatchGeneration) return;
+        const confirmed = Date.now() + ms;
+        if (confirmed > lockedUntil) {
+          lockedUntil = confirmed;
+          setTimeout(renderCurrent, ms + 20);
+        }
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (generation !== dispatchGeneration) return;
+        lockConfirmPending = false;
+        console.log(`[e2e-diag-state] t=${Date.now()} armLock SETTLED afterMs=${Date.now() - _armT0}`);
+        renderCurrent();
       });
-      // przywróć zapisany motyw jeśli istnieje na liście, inaczej domyślny
-      const savedTheme = store.state.display.theme;
-      activeTheme = (savedTheme && themeList.some(t => t.key === savedTheme))
-        ? savedTheme
-        : defaultTheme;
-      ui.setThemeOptions?.(themeList);
-      ui.setActiveTheme?.(activeTheme);
+  }
+
+  // JEDYNE miejsce, które w ogóle woła engine.dispatch() — wywoływane zarówno
+  // z operatorskich kliknięć (handle()'s "game.dispatch" niżej) jak i z
+  // automatycznych, niezwiązanych z żadnym kliknięciem wygaśnięć zegarków
+  // (makeTimerWatch niżej — EXPIRE_TIMER/EXPIRE_TIMER3) — oba źródła mają
+  // dostawać DOKŁADNIE tę samą blokadę, inaczej auto-pudło z 3s zegarka
+  // zostawiałoby okno bez ochrony, którego ręczne ADD_X już nie ma.
+  async function dispatchGatedNow(action) {
+    // Expiration records real elapsed time even while an endpoint is absent.
+    // Queued operator actions are rechecked when they actually execute.
+    if (!action.type.startsWith("EXPIRE_") && missingDevices(store.state, presenceFlags).length) return null;
+    if (waitingForDisplay() && !action.type.startsWith("EXPIRE_")) return null;
+    const prevRow = store.state.__row || null;
+    committing = true;
+    typingCommit = action.type === "SET_ENTRY_TEXT";
+    let nextRow = null;
+    // TYMCZASOWA diagnostyka -- patrz komentarz przy armLock().
+    const _dgT0 = Date.now();
+    console.log(`[e2e-diag-state] t=${_dgT0} dispatchGatedNow START type=${action.type}`);
+    try {
+      // Naprawiona luka: ten renderCurrent() (i cała reszta funkcji) była
+      // POZA try/finally chroniącym `committing` -- rzucony tu wyjątek
+      // (np. błąd w konkretnej gałęzi render()) zostawiał `committing`
+      // trwale na true, bo finally niżej nigdy się nie wykonywał. Z
+      // kolejką dispatchGated() (patrz komentarz przy niej) to już nie
+      // "tylko" złamany render na tę jedną akcję -- jeśli to była OSTATNIA
+      // zakolejkowana akcja (np. ostatni SET_ENTRY_TEXT z serii szybkich
+      // .fill()), busy() zostawał zablokowany NA ZAWSZE, bo nic po niej już
+      // nie wywołało dispatchGated ponownie, żeby to odkręcić (znalezione
+      // przy diagnozie e2e: "Rozpocznij odliczanie" trwale disabled mimo
+      // poprawnie wypełnionych wszystkich pól).
+      renderCurrent();
+      nextRow = await engine.dispatch(action);
+    } finally {
+      typingCommit = false;
+      committing = false;
+    }
+    console.log(`[e2e-diag-state] t=${Date.now()} dispatchGatedNow AFTER-ENGINE type=${action.type} afterMs=${Date.now() - _dgT0} nextRowRev=${nextRow?.rev}`);
+    const ms = await actionGate.computeGateMs(action.type, prevRow, nextRow);
+    console.log(`[e2e-diag-state] t=${Date.now()} dispatchGatedNow gateMs type=${action.type} ms=${ms}`);
+    // Migracja 264 -- ta sama blokada, egzekwowana też w bazie (nie tylko w
+    // tej karcie przeglądarki). Best-effort: nieudane ustawienie nie cofa
+    // już potwierdzonego zapisu treści powyżej, patrz store.js's setLockNow().
+    if (ms > 0) {
+      displayCompletion.request(nextRow.rev);
+      armLock(ms);
+    }
+    renderCurrent();
+    console.log(`[e2e-diag-state] t=${Date.now()} dispatchGatedNow END type=${action.type} totalMs=${Date.now() - _dgT0}`);
+    return nextRow;
+  }
+
+  // Zserializowane -- dokładnie ten sam wzorzec i powód co engine.js's
+  // własna `_queue` (patrz komentarz tam), tylko jeden poziom wyżej.
+  // engine.dispatch() samo w sobie już chroni reducer+commit przed
+  // nachodzeniem, ALE dispatchGated() dokłada WŁASNY, synchroniczny
+  // renderCurrent() na SAMYM START (linia `committing = true;
+  // renderCurrent();`, PRZED jeszcze reducerem) -- bez kolejki tutaj dwa
+  // wywołania dispatchGated() wystrzelone bez odczekania (np. pole
+  // "Odpowiedź gracza" wpisywane w f_p1_entry: on(inp,"input",...) woła
+  // emit("game.dispatch",...) na KAŻDY .fill()/wpis, bez await) mogły
+  // nachodzić na siebie -- renderCurrent() z DRUGIEGO, wcześniej
+  // nieuruchomionego jeszcze reducera przebudowywał WSZYSTKIE pola input
+  // od zera z JESZCZE STAREGO stanu (reducer PIERWSZEGO wywołania nie
+  // zdążył jeszcze dopisać swojego tekstu), gubiąc wizualnie to, co
+  // operator/test właśnie wpisał w INNE, równolegle edytowane pole (na
+  // żywo: pole 2/5 w finale zostawało puste -- hasTyped=false -- mimo że
+  // test .fill()'ował je tak samo jak resztę). Kolejka gwarantuje, że
+  // renderCurrent()+reducer+commit dla KAŻDEGO dispatchGated w pełni się
+  // kończy, zanim zacznie się następny.
+  let _dispatchGatedQueue = Promise.resolve();
+  let typingCommit = false;
+  function dispatchGated(action) {
+    const generation = dispatchGeneration;
+    const run = () => generation === dispatchGeneration && !restarting ? dispatchGatedNow(action) : null;
+    const result = _dispatchGatedQueue.then(run, run);
+    _dispatchGatedQueue = result.catch(() => {});
+    return result;
+  }
+
+  // "Dogonienie" timerów zastanych już wygasłych przy wznowieniu (plan,
+  // sekcja 4) — zanim cokolwiek się wyrenderuje operatorowi. Zgłoszone:
+  // "rozłącz/zamknij Control w trakcie timerów — czy one wrócą do stanu
+  // przed, a nie po, bo tak powinny" — OBA timery idą teraz WSTECZ, do
+  // stanu sprzed ich startu (final.timer: CANCEL_TIMER, rounds.timer3:
+  // CANCEL_TIMER3) — symetrycznie, bez naliczania żadnej konsekwencji
+  // (pudło/zużyta szansa gracza) za czas, w którym nikt nie patrzył. Patrz
+  // engine.js's CANCEL_TIMER/CANCEL_TIMER3 dla pełnego uzasadnienia; to
+  // zmiana względem wcześniejszej wersji tego kodu, gdzie final.timer szedł
+  // NAPRZÓD (EXPIRE_TIMER) — zachowane dla LIVE wygaśnięcia/ręcznego
+  // zatrzymania (patrz scheduleFinalTimerWatch/toggleFinalTimer niżej),
+  // tylko NIE dla tego, zastanego już wygasłego przy wznowieniu, przypadku.
+  async function applyExpiredTimersOnResume(expired) {
+    if (!expired) return;
+    if (expired.final) await engine.dispatch({ type: "CANCEL_TIMER" });
+    if (expired.timer3) await engine.dispatch({ type: "CANCEL_TIMER3" });
+  }
+  await applyExpiredTimersOnResume(expiredTimer);
+
+  // Control jest jedynym urządzeniem "authenticated" — może czytać
+  // game_state bezpośrednio (dla siebie), więc na dzwonek reaguje pełnym
+  // hydrate() zamiast RPC z kluczem jak anon. To jedyny sposób, żeby
+  // Control zauważył zmianę zapisaną przez KOGOŚ INNEGO — jedyny taki
+  // przypadek to Buzzer piszący bezpośrednio przez game_state_buzzer_press
+  // (sekcja 1/4 planu). Własne zapisy Control i tak już ma zaaplikowane
+  // synchronicznie przez commit() zanim ten sam dzwonek do niego wróci —
+  // stąd warunek rev > store.state.rev, żeby nie robić zbędnego refetchu.
+  let externalRefreshInFlight = false;
+  rt(doorbellTopic(gameId)).onBroadcast("rev", async (msg) => {
+    const rev = msg?.payload?.rev;
+    if (typeof rev !== "number" || rev <= store.state.rev) return;
+    if (externalRefreshInFlight) return;
+    externalRefreshInFlight = true;
+    try {
+      const expiredNow = await store.hydrate();
+      await applyExpiredTimersOnResume(expiredNow);
+    } finally {
+      externalRefreshInFlight = false;
+    }
+  });
+
+  const devices = createDevices({ game });
+  const urls = devices.buildUrls(getUiLang());
+  const connectCodes = {};
+  for (const kind of ["display", "host", "buzzer"]) {
+    connectCodes[kind] = await devices.generateConnectCode(kind).catch(() => null);
+  }
+
+  const presence = createPresence({
+    gameId,
+    onChange: ({ flags }) => {
+      const previous = presenceFlags;
+      presenceFlags = flags;
+      const missing = missingDevices(store.state, flags);
+      const overlay = document.getElementById("deviceLostOverlay");
+      if (!missing.length) {
+        if (disconnectEpisode) void sessionTelemetry.report({ kind: "reconnect" });
+        disconnectEpisode = false;
+        overlay?.classList.add("hidden");
+      } else {
+        const text = document.getElementById("deviceLostText");
+        const labels = { display: t("control.deviceDisplay"), host: t("control.deviceHost"), buzzer: t("control.deviceBuzzer") };
+        if (text) text.textContent = t("control.deviceLostText", { devices: missing.map((kind) => labels[kind]).join(", ") });
+        if (!disconnectEpisode && missing.some((kind) => previous[kind])) {
+          void sessionTelemetry.report({ kind: "disconnect", devices: missing });
+          disconnectEpisode = true;
+          overlay?.classList.remove("hidden");
+          document.getElementById("deviceLostClose")?.focus();
+        }
+      }
+      renderCurrent();
+    },
+  });
+  presence.start();
+  document.getElementById("deviceLostClose")?.addEventListener("click", () => {
+    document.getElementById("deviceLostOverlay")?.classList.add("hidden");
+  });
+
+  // "Udostępnij" per urządzenie (D0/D1) — modal 1:1 ze starym Control
+  // (control/js/shareDevice.js). Znaczek (badge "1"/puste) na przycisku
+  // idzie przez ctx.shareBadges zamiast bezpośredniej mutacji DOM, bo wiersz
+  // urządzenia jest przebudowywany przy każdym renderDevicesStep().
+  let shareBadges = {};
+  const shareDevice = createShareDevice({
+    currentUser: user,
+    game,
+    onBadgesChanged: (badges) => { shareBadges = badges; renderCurrent(); },
+  });
+  shareDevice.refreshBadges();
+
+  const soundReactor = createSoundReactor(store);
+
+  // Odblokowanie audio po cichu na pierwszej dowolnej interakcji (sekcja 3a
+  // pkt 4) — bez osobnego ekranu, bez dźwięku słyszalnego dla operatora.
+  const unlockOnce = () => { unlockAudio(); document.removeEventListener("pointerdown", unlockOnce); document.removeEventListener("keydown", unlockOnce); };
+  document.addEventListener("pointerdown", unlockOnce, { once: true });
+  document.addEventListener("keydown", unlockOnce, { once: true });
+
+  const root2 = document.getElementById("app");
+  const ui = createUI({ root: root2, emit: handle });
+
+  // Timery (finał 15s/20s, 3s decyzja w rundach) same z siebie NIE wygasają w
+  // żywej karcie Control — silnik dostaje EXPIRE_TIMER/EXPIRE_TIMER3
+  // wyłącznie z hydrate() (start/wznowienie) i z dzwonka po cudzym zapisie
+  // (patrz wyżej). Bez tego zegarka operator musiałby ręcznie odświeżyć
+  // kartę, żeby usłyszeć "koniec czasu"/dostać auto-X — dokładnie to, co w
+  // oryginalnych control/js/gameRounds.js/gameFinal.js robił nieprzerwanie
+  // działający requestAnimationFrame. Zdublowane wywołanie po naturalnym
+  // wygaśnięciu jest nieszkodliwe: oba EXPIRE_* same sprawdzają `running` i
+  // są no-opem, gdy timera już nie ma (np. operator sam rozstrzygnął wcześniej).
+  function makeTimerWatch(getTimer, expireAction) {
+    const w = { endsAt: null, handle: null };
+    return () => {
+      const timer = getTimer();
+      const endsAt = timer?.running ? timer.endsAt : null;
+      if (endsAt === w.endsAt) return;
+      if (w.handle) { clearTimeout(w.handle); w.handle = null; }
+      w.endsAt = endsAt;
+      if (endsAt == null) return;
+      w.handle = setTimeout(() => {
+        dispatchGated({ type: expireAction }).catch(() => {});
+      }, Math.max(0, endsAt - Date.now()));
+    };
+  }
+  const scheduleFinalTimerWatch = makeTimerWatch(() => store.state.final?.runtime?.timer, "EXPIRE_TIMER");
+  const scheduleTimer3Watch = makeTimerWatch(() => store.state.rounds?.timer3, "EXPIRE_TIMER3");
+
+  function renderCtx() {
+    return { urls, presenceFlags, connectCodes, shareBadges, typingPending:typingCommit, busy: queuedGameAction || soundBusy() || (committing && !typingCommit) || lockConfirmPending || waitingForDisplay() || Date.now() < lockedUntil || missingDevices(store.state, presenceFlags).length > 0, devicesBlocked: missingDevices(store.state, presenceFlags).length > 0 };
+  }
+
+  function renderCurrent() {
+    noteDisplayRequest();
+    scheduleFinalTimerWatch();
+    scheduleTimer3Watch();
+    // Zawinięte w try/catch -- dispatchGatedNow() woła renderCurrent()
+    // PRZED ustawieniem committing=false (patrz komentarz tam); rzucony tu
+    // wyjątek bez tego zostawiałby błąd całkowicie niewidoczny (połknięty
+    // przez kolejkę dispatchGated()), a operator z trwale zablokowanym UI
+    // bez żadnego śladu w konsoli, dlaczego.
+    try {
+      ui.render(store.state, renderCtx());
     } catch (e) {
-      console.warn("Nie można wczytać themes.json:", e);
+      console.error("[control2] render() rzucił -- UI może zostać nieaktualne:", e);
     }
-  })();
-
-  // throttlowane wysyłki, żeby nie zabić realtime
-  const sendColorA = throttleMs(120, async (hex) => {
-    if (!devices) return;
-    const h = normHex(hex);
-    if (!h) return;
-    await devices.sendDisplayCmd(`COLOR A ${h}`).catch(() => {});
-    await devices.sendBuzzerCmd(`COLOR_A ${h}`).catch(() => {});
-    await devices.sendHostCmd(`COLOR_A ${h}`).catch(() => {});
-  });
-
-  const sendColorB = throttleMs(120, async (hex) => {
-    if (!devices) return;
-    const h = normHex(hex);
-    if (!h) return;
-    await devices.sendDisplayCmd(`COLOR B ${h}`).catch(() => {});
-    await devices.sendBuzzerCmd(`COLOR_B ${h}`).catch(() => {});
-    await devices.sendHostCmd(`COLOR_B ${h}`).catch(() => {});
-  });
-
-  const sendColorBg = throttleMs(120, async (hex) => {
-    if (!devices) return;
-    const h = normHex(hex);
-    if (!h) return;
-    await devices.sendDisplayCmd(`COLOR BACKGROUND ${h}`).catch(() => {});
-  });
-
-  const sendColorDot = async (hex) => {
-    if (!devices) return;
-    const h = normHex(hex);
-    if (!h) return;
-    await devices.sendDisplayCmd(`COLOR DOT ${h}`).catch(() => {});
-  };
-
-  async function sendColorsReset() {
-    if (!devices) return;
-    await devices.sendDisplayCmd("COLOR RESET").catch(() => {});
-    await devices.sendBuzzerCmd("COLOR_RESET").catch(() => {});
-    await devices.sendHostCmd("COLOR_RESET").catch(() => {});
+    // Mute jest teraz częścią game_state (nie lokalny stan tej karty) —
+    // musi się odświeżyć na KAŻDĄ zmianę stanu, nie tylko po kliknięciu tu,
+    // żeby np. druga karta Control (blokada resource-lock zwolniona) albo
+    // wznowienie po przeładowaniu pokazywały poprawną ikonę od razu.
+    syncMuteButton();
+    // Zgłoszone: "Zacznij od nowa" w topbarze (w odróżnieniu od tego samego
+    // przycisku na ekranach końca gry, które już idą przez navButton()'s
+    // busy/disabled) nie było w ogóle objęte blokadą dźwięku/animacji —
+    // kliknięcie w trakcie jeszcze trwającego locked_until z poprzedniej
+    // akcji (np. dźwięku końca gry) kończyło się surowym window.alert
+    // ("Błąd: locked") zamiast po prostu czekać jak reszta dużych przejść.
+    if (btnStartOver) btnStartOver.disabled = false;
   }
 
-  function applyColor(kind, hex) {
-    const h = normHex(hex);
-    if (!h) return;
-
-    if (kind === "A") {
-      colors.A = h;
-      ui.setSwatches?.({ teamA: colors.A, teamB: colors.B, bg: colors.BACKGROUND, dot: colors.DOT });
-      sendColorA(h);
-      store.setDisplay({ colors: { ...colors } });
-      return;
+  // Samo renderCurrent() maluje cyfry timera3/finału tylko RAZ, w momencie
+  // zmiany stanu — bez czegoś, co odświeża widok co ułamek sekundy, kafel
+  // pokazywałby tę samą liczbę aż do wygaśnięcia. Odświeżamy tylko wtedy,
+  // gdy faktycznie coś odlicza — reszta czasu bez zbędnej pracy.
+  //
+  // ui.tickTimers(), NIE pełny ui.render()/renderCurrent(): zgłoszone
+  // wprost — "licznik i przyciski cały czas migają" oraz "wpisywanie nie ma
+  // blokować licznika". Pełny render() tutaj przebudowywałby CAŁY ekran 4x/s
+  // (root.innerHTML="" + od nowa), co niszczyło fokus/kursor w polach
+  // wpisywania finału (renderFinalEntry tworzy świeże <input> przy każdym
+  // renderze) i restartowało CSS-animacje wszystkich innych, niezwiązanych
+  // przycisków na ekranie — stąd wrażenie ciągłego migania całego panelu, nie
+  // tylko samych cyfr. tickTimers() podmienia WYŁĄCZNIE treść cyfr (patrz
+  // ui.js), więc reszta DOM (w tym fokus operatora w polu tekstowym) zostaje
+  // nietknięta przez cały czas trwania odliczania.
+  setInterval(() => {
+    if (store.state.rounds?.timer3?.running || store.state.final?.runtime?.timer?.running) {
+      ui.tickTimers(store.state);
     }
-    if (kind === "B") {
-      colors.B = h;
-      ui.setSwatches?.({ teamA: colors.A, teamB: colors.B, bg: colors.BACKGROUND, dot: colors.DOT });
-      sendColorB(h);
-      store.setDisplay({ colors: { ...colors } });
-      return;
-    }
-    if (kind === "BACKGROUND") {
-      colors.BACKGROUND = h;
-      ui.setSwatches?.({ teamA: colors.A, teamB: colors.B, bg: colors.BACKGROUND, dot: colors.DOT });
-      sendColorBg(h);
-      store.setDisplay({ colors: { ...colors } });
-      return;
-    }
-    if (kind === "DOT") {
-      colors.DOT = h;
-      ui.setSwatches?.({ teamA: colors.A, teamB: colors.B, bg: colors.BACKGROUND, dot: colors.DOT });
-      sendColorDot(h);
-      store.setDisplay({ colors: { ...colors } });
-      return;
-    }
-  }
-  
+  }, 250);
 
-  // === Modal QR z auth bar (top-status) ===
-  let currentQrKind = null; // "display" | "host" | "buzzer"
-  const _deviceCodes = { display: null, host: null, buzzer: null };
-
-  function qrSrc(url) {
-    const u = encodeURIComponent(String(url ?? ""));
-    return `https://api.qrserver.com/v1/create-qr-code/?size=320x320&data=${u}`;
-  }
-
+  // ===== Modal QR z topbaru (prywatny podgląd operatora — nie to samo co
+  // "QR na wyświetlaczu"; identyczna logika/DOM co dzisiejsze
+  // control/js/app.js's showQrModal/hideQrModal). =====
   function getDeviceUrl(kind) {
-    if (!window || !kind) return null;
-    if (!devices || !devices.getUrls) return null;
-    const urls = devices.getUrls();
     if (kind === "display") return urls.displayUrl;
     if (kind === "host") return urls.hostUrl;
     if (kind === "buzzer") return urls.buzzerUrl;
     return null;
   }
-
-  function hideQrModal() {
-    const overlay = document.getElementById("qrModalOverlay");
-    if (overlay) overlay.classList.add("hidden");
+  function qrModalLabel(kind) {
+    if (kind === "host") return t("control.deviceHost");
+    if (kind === "buzzer") return t("control.deviceBuzzer");
+    return t("control.qrModalTitle");
   }
-
   function showQrModal(kind) {
     const url = getDeviceUrl(kind);
     if (!url) return;
-
-    currentQrKind = kind;
-
-    const overlay     = document.getElementById("qrModalOverlay");
-    const titleEl     = document.getElementById("qrModalTitle");
-    const imgEl       = document.getElementById("qrModalImg");
-    const codeValEl   = document.getElementById("qrModalCodeVal");
-
+    const overlay = document.getElementById("qrModalOverlay");
+    const titleEl = document.getElementById("qrModalTitle");
+    const imgEl = document.getElementById("qrModalImg");
+    const codeValEl = document.getElementById("qrModalCodeVal");
     if (!overlay || !titleEl) return;
-
-    titleEl.textContent = APP_MSG.QR_LABEL(kind);
-    if (codeValEl) codeValEl.textContent = _deviceCodes[kind] || "——————";
-
+    titleEl.textContent = qrModalLabel(kind);
+    if (codeValEl) codeValEl.textContent = connectCodes[kind] || "——————";
     const qrWrap = document.getElementById("qrModalQrWrap");
-    if (kind === "display") {
-      if (qrWrap) qrWrap.style.display = "none";
-    } else {
-      if (qrWrap) qrWrap.style.display = "";
-      if (imgEl) imgEl.src = qrSrc(url);
-    }
-
+    if (kind === "display") { if (qrWrap) qrWrap.style.display = "none"; }
+    else { if (qrWrap) qrWrap.style.display = ""; if (imgEl) imgEl.src = qrImgSrc(url); }
     const openBtn = document.getElementById("qrModalOpen");
     if (openBtn) {
-      if (kind === "display") {
-        openBtn.href = url;
-        openBtn.classList.remove("hidden");
-      } else {
-        openBtn.classList.add("hidden");
-      }
+      if (kind === "display") { openBtn.href = url; openBtn.classList.remove("hidden"); }
+      else openBtn.classList.add("hidden");
     }
-
+    overlay.dataset.kind = kind;
     overlay.classList.remove("hidden");
   }
-
-  async function expireConnectCodes() {
-    try {
-      await sb().from("device_connect_codes").delete().eq("owner_id", (await sb().auth.getUser()).data.user?.id).eq("game_id", game.id);
-    } catch {}
+  function hideQrModal() {
+    document.getElementById("qrModalOverlay")?.classList.add("hidden");
   }
-
-  async function initDeviceCodes() {
-    const cfgs = [
-      { type: "display", valId: "displayCodeVal", shareKey: game.share_key_display },
-      { type: "host",    valId: "hostCodeVal",    shareKey: game.share_key_host },
-      { type: "buzzer",  valId: "buzzerCodeVal",  shareKey: game.share_key_buzzer },
-    ];
-    for (const cfg of cfgs) {
-      try {
-        const { data, error } = await sb().rpc("generate_device_connect_code", {
-          p_game_id:     game.id,
-          p_device_type: cfg.type,
-          p_share_key:   cfg.shareKey || "",
-          p_game_name:   game.name || null,
-        });
-        if (error || !data?.ok || !data?.code) continue;
-        _deviceCodes[cfg.type] = data.code;
-        const el = document.getElementById(cfg.valId);
-        if (el) el.textContent = data.code;
-      } catch {}
-    }
-  }
-
-  async function copyQrLink() {
-    const code = _deviceCodes[currentQrKind];
-    if (!code) return;
-    try {
-      await navigator.clipboard.writeText(code);
-    } catch {}
-  }
-
-  function openQrLink() {
-    const url = getDeviceUrl(currentQrKind);
-    if (!url) return;
-    window.open(url, "_blank");
-  }
-
-
-  // === OSTRZEŻENIE PRZY WYJŚCIU ZE STRONY ===
-  // Gdy nawigujemy "świadomie" (przycisk Powrót / wylogowanie),
-  // nie chcemy drugiego alertu z beforeunload.
-  let suppressUnloadWarn = false;
-
-  function shouldWarnBeforeUnload() {
-    if (suppressUnloadWarn) return false;
-
-    const s = store.state;
-
-    // 1) Jeśli jesteśmy na końcówkach UI, NIE ostrzegamy
-    const activeCard = s.activeCard || "";
-    const rStep = s.steps?.rounds || "";
-    const fStep = s.final?.step || "";
-
-    // ROUNDS: karta "Zakończ grę"
-    if (activeCard === "rounds" && rStep === "r_gameEnd") return false;
-
-    // FINAL: krok "Zakończ finał"
-    if (activeCard === "final" && fStep === "f_end") return false;
-
-    // 2) Jeśli gra już formalnie zakończona
-    if (s.locks?.gameEnded) return false;
-
-    const r = s.rounds || {};
-    const totals = r.totals || { A: 0, B: 0 };
-
-    const gameStarted = !!s.locks?.gameStarted;
-    const finalActive = !!s.locks?.finalActive;
-
-    const someRoundProgress = r.phase && r.phase !== "IDLE";
-
-    const somePoints =
-      (totals.A || 0) > 0 ||
-      (totals.B || 0) > 0 ||
-      (r.bankPts || 0) > 0;
-
-    return gameStarted && (someRoundProgress || somePoints || finalActive);
-  }
-
-function isEndedUiState() {
-  const s = store.state;
-  const activeCard = s.activeCard || "";
-  const rStep = s.steps?.rounds || "";
-  const fStep = s.final?.step || "";
-
-  // ROUNDS: karta "Zakończ grę"
-  if (activeCard === "rounds" && rStep === "r_gameEnd") return true;
-
-  // FINAL: krok "Zakończ finał"
-  if (activeCard === "final" && fStep === "f_end") return true;
-
-  // globalny lock
-  if (s.locks?.gameEnded) return true;
-
-  return false;
-}
-
-function abandonedScoreSnapshot() {
-  const totals = store.state.rounds?.totals || {};
-  const a = Number.isFinite(totals.A) ? totals.A : null;
-  const b = Number.isFinite(totals.B) ? totals.B : null;
-  return { teamAScore: a, teamBScore: b };
-}
-
-async function sendZeroStatesToDevices() {
-  if (!devices) return;
-  try { await devices.sendDisplayCmd("APP GAME"); } catch {}
-  try { await devices.sendDisplayCmd("COLOR RESET"); } catch {}
-  try { await devices.sendDisplayCmd("APP BLACK"); } catch {}
-  try { await devices.sendHostCmd("COLOR_RESET"); } catch {}
-  try { await devices.sendHostCmd("CLEAR"); } catch {}
-  try { await devices.sendHostCmd("COVER"); } catch {}
-  try { await devices.sendBuzzerCmd("OFF"); } catch {}
-  try { await devices.sendBuzzerCmd("COLOR_RESET"); } catch {}
-}
-
-
-  window.addEventListener("beforeunload", (e) => {
-    if (!shouldWarnBeforeUnload()) return;
-    const msg = APP_MSG.UNLOAD_WARN;
-    e.preventDefault();
-    e.returnValue = msg;
-    return msg;
+  document.getElementById("qrModalClose")?.addEventListener("click", hideQrModal);
+  document.getElementById("qrModalOverlay")?.addEventListener("click", (ev) => {
+    if (ev.target?.id === "qrModalOverlay") hideQrModal();
+  });
+  document.getElementById("qrModalCopy")?.addEventListener("click", async () => {
+    const kind = document.getElementById("qrModalOverlay")?.dataset.kind;
+    const code = kind && connectCodes[kind];
+    if (code) { try { await navigator.clipboard.writeText(code); } catch {} }
   });
 
-  // Strażnik historii: jeden dodatkowy wpis daje nam szansę na popstate
-  // zanim przeglądarka opuści stronę.
-  history.pushState({ navGuard: true }, "");
+  // Kropki statusu w topbarze są klikalne PRZEZ CAŁĄ GRĘ (nie tylko na
+  // kroku Urządzenia) — po to są te modale: jeśli urządzenie trzeba
+  // ponownie podłączyć w trakcie rozgrywki (np. tablet się zrestartował),
+  // operator musi mieć skąd wziąć kod/QR bez cofania się do kroku
+  // Urządzenia (które i tak nie jest już wtedy dostępne — poza D0/D3 nie
+  // ma przejścia z powrotem). Te elementy są statyczne (poza #app), więc
+  // jednorazowe podpięcie tu jest bezpieczne, w odróżnieniu od przycisków
+  // w device-row, patrz control/js/shareDevice.js.
+  document.getElementById("dotDisplayRow")?.addEventListener("click", () => showQrModal("display"));
+  document.getElementById("dotHostRow")?.addEventListener("click", () => showQrModal("host"));
+  document.getElementById("dotBuzzerRow")?.addEventListener("click", () => showQrModal("buzzer"));
 
-  let navGuardBusy = false;
-  window.addEventListener("popstate", async () => {
-    if (navGuardBusy) {
-      // Drugie popstate wywołane przez nasze history.go — ignorujemy.
-      navGuardBusy = false;
-      return;
-    }
-    if (!shouldWarnBeforeUnload()) {
-      // Gra nie zaczęta lub już zakończona — przepuszczamy transparentnie.
-      navGuardBusy = true;
-      history.go(-1);
-      return;
-    }
-    // Blokujemy: przywróć guard i pokaż modal.
-    history.pushState({ navGuard: true }, "");
-    const confirmed = await confirmModal({
-      title: t("control.leaveTitle"),
-      text: t("control.leaveText"),
-      okText: t("control.leaveOk"),
-      cancelText: t("control.leaveCancel"),
-    });
-    if (confirmed) {
-      suppressUnloadWarn = true;
-      navGuardBusy = true;
-      history.go(-2);
-    }
-  });
-  window.addEventListener("pagehide", () => {
-    suppressUnloadWarn = true;
-
-    if (isEndedUiState()) {
-      sendZeroStatesToDevices().catch(() => {});
-    }
-    // Zawsze próbuj zamknąć sesję jako porzuconą — no-op, jeśli
-    // sessionEnd("final") już zdążył ją zamknąć wcześniej.
-    sessionEnd("abandoned", abandonedScoreSnapshot());
-    // Wygaś udostępnienia – fire-and-forget (przeglądarka może zabić JS)
-    shareDevice.expireShares().catch(() => {});
-    expireConnectCodes().catch(() => {});
-  });
-
-  // realtime channels
-  const chDisplay = rt(`familiada-display:${game.id}`);
-  const chHost = rt(`familiada-host:${game.id}`);
-  const chBuzzer = rt(`familiada-buzzer:${game.id}`);
-
-  const devices = createDevices({ game, ui, store, chDisplay, chHost, chBuzzer });
-  const presence = createPresence({ game, ui, store, devices, getTheme: () => activeTheme });
-
-  shareDevice = initShareDevice({ currentUser, game, devices });
-  void shareDevice.refreshBadges();
-
-  let wasInSetupFinish = false;
-  let prevDisplayOnline = false;
-  // Załadowana czcionka (potrzebna do podglądu GLYPH)
-  let _logoFont = null;
-  // Domyślne logo Familiady (payload z pliku JSON)
-  let _defaultLogoPayload = null;
-  // Cache załadowanych logo (potrzebny w streszczeniu)
-  let _loadedLogos = [];
-  // Custom pliki dźwiękowe (potrzebne do nazwy pliku w streszczeniu)
-  let _soundCustomFiles = new Map();
-  const _summaryVolumes = new Map(); // zapamiętuje głośności zmienione w podsumowaniu
-  // true gdy game.settings zawierały zapisane ustawienia (nie null)
-  let _hasCustomSettings = game.settings != null && typeof game.settings === "object";
-
-
-
-  const display = createDisplay({ devices, store });
-  const rounds = createRounds({ ui, store, devices, display, loadQuestions, loadAnswers });
-  rounds.bootIfNeeded();
-  const final = createFinal({ ui, store, devices, display, loadAnswers });
-
-  // Generate QR links immediately (synchronous)
-  devices.updateLinksAndQr(getUiLang());
-
-  // Start presence and device init in background (non-blocking)
-  Promise.resolve().then(async () => {
-    try {
-      // start presence (online / offline / OSTATNIO)
-      presence.start();
-      
-      // Initialize device links
-      devices.initLinksAndQr();
-
-      // Generuj kody połączeń
-      await initDeviceCodes().catch(() => {});
-
-      // Send LANG commands (non-blocking)
-      const initialLang = getUiLang();
-      await Promise.all([
-        devices.sendDisplayCmd(`LANG ${initialLang}`).catch(() => {}),
-        devices.sendHostCmd(`LANG ${initialLang}`).catch(() => {}),
-        devices.sendBuzzerCmd(`LANG ${initialLang}`).catch(() => {}),
-      ]);
-
-      if (store.state.flags.qrOnDisplay) {
-        await devices.sendQrLinksToDisplay(_deviceCodes, store.state.flags).catch(() => {});
-      }
-    } catch (e) {
-      console.error("Device init error:", e);
-    }
-  });
-
-  // ===== Realtime: odbiór kliknięć z przycisku (BUZZER_EVT) =====
-  const chControlIn = sb()
-    .channel(`familiada-control:${game.id}`)
-    .on("broadcast", { event: "BUZZER_EVT" }, (msg) => {
-      const line = String(msg?.payload?.line || "").trim().toUpperCase();
-      // spodziewamy się "CLICK A" / "CLICK B"
-      const [cmd, team] = line.split(/\s+/);
-      if (cmd === "CLICK" && (team === "A" || team === "B")) {
-        rounds.handleBuzzerClick(team);
-      }
-    })
-    .subscribe();
-
-  function escapeHtml(s) {
-    return String(s ?? "")
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;")
-      .replaceAll("'", "&#039;");
-  }
-
-  // Language change handler
-  window.addEventListener("i18n:lang", async (event) => {
-    const nextLang = event?.detail?.lang;
-    // Przelicz etykiety motywów po zmianie języka
-    if (themeList.length) {
-      const res = await fetch("/shared/data/display-themes.json").then(r => r.json()).catch(() => null);
-      if (res) {
-        themeList = res.themes.map(e => {
-          const label = typeof e.label === "object"
-            ? (e.label[nextLang] ?? e.label["en"] ?? e.key)
-            : t(e.label);
-          return { key: e.key, label };
-        });
-        ui.setThemeOptions?.(themeList);
-        if (activeTheme) ui.setActiveTheme?.(activeTheme);
-      }
-    }
-    devices.updateLinksAndQr(nextLang);
-    await Promise.all([
-      devices.sendDisplayCmd(`LANG ${nextLang}`).catch(() => {}),
-      devices.sendHostCmd(`LANG ${nextLang}`).catch(() => {}),
-      devices.sendBuzzerCmd(`LANG ${nextLang}`).catch(() => {}),
-    ]);
-    if (store.state.flags.qrOnDisplay) {
-      await devices.sendQrLinksToDisplay(_deviceCodes, store.state.flags).catch(() => {});
-    }
-  });
-
-  // audio: stan początkowy
-  store.setAudioUnlocked(!!isAudioUnlocked());
-  ui.setAudioStatus(store.state.flags.audioUnlocked);
-
-  // === GLOBALNE RENDEROWANIE STANU (Opcja B) ===
-  function renderFromState(state) {
-    // aktywna karta
-    ui.showCard(state.activeCard);
-    syncPanelStepPills();
-
-    // kroki kart
-    ui.showDevicesStep(state.steps.devices);
-    ui.showSetupStep(state.steps.setup);
-
-    // nav enable/disable wg canEnterCard
-    ui.setNavEnabled({
-      devices: store.canEnterCard("devices"),
-      setup: store.canEnterCard("setup"),
-      rounds: store.canEnterCard("rounds"),
-      final: store.canEnterCard("final"),
-    });
-
-    const flags = state.flags || {};
-
-    // ===== DEVICES =====
-
-    const displayReady  = !!flags.displayOnline;
-    const physBuzzer    = !!flags.physicalBuzzer;
-    const noHostTablet  = !!flags.noHostTablet;
-    const buzzerReady   = !!flags.buzzerOnline || physBuzzer;
-    const hostReady     = !!flags.hostOnline   || noHostTablet;
-    const requiredOnline = displayReady && buzzerReady && hostReady;
-
-    // Opt-out: wyszarz całą sekcję urządzenia
-    const buzzerRow = document.querySelector(".device-row[data-device='buzzer']");
-    const hostRow   = document.querySelector(".device-row[data-device='host']");
-    if (buzzerRow) buzzerRow.toggleAttribute("data-opted-out", physBuzzer);
-    if (hostRow)   hostRow.toggleAttribute("data-opted-out", noHostTablet);
-
-    // Topbar: wyszarz dot-row gdy opt-out
-    const dotBuzzerRow = document.getElementById("dotBuzzerRow");
-    const dotHostRow   = document.getElementById("dotHostRow");
-    if (dotBuzzerRow) dotBuzzerRow.classList.toggle("opted-out", physBuzzer);
-    if (dotHostRow)   dotHostRow.classList.toggle("opted-out", noHostTablet);
-
-    // QR na wyświetlaczu tylko gdy wyświetlacz jest online
-    ui.setEnabled("btnQrToggle", displayReady);
-
-    // Aktualizuj przyciski "QR na wyświetlaczu" dla hosta i buzzera
-    updateQrOnDisplayButtons();
-
-
-    ui.setEnabled("btnDevicesNext", requiredOnline);
-
-    // krok 3: „Gotowe — przejdź dalej" po odblokowaniu audio
-    ui.setEnabled(
-      "btnDevicesFinish",
-      requiredOnline && !!flags.audioUnlocked
-    );
-
-    // ===== SETUP =====
-
-    // Blokada: nie pozwól zakończyć setupu (i wejść w rundy), jeśli finał
-    // jest włączony w trybie ręcznym, a 5 pytań finałowych nie zostało
-    // jeszcze potwierdzonych — inaczej próg finału pada w rundach, a finał
-    // i tak się nie odpali.
-    ui.setEnabled("btnSetupFinish2", store.canFinishSetup());
-
-    // ===== detekcja wejścia z setup_finish =====
-    const inSetupFinish =
-      (state.activeCard === "setup" && state.steps?.setup === "setup_finish");
-
-    const displayJustCameOnline = !!state.flags?.displayOnline && !prevDisplayOnline;
-    // wywołaj enterSetupFinish: przy pierwszym wejściu LUB gdy wyświetlacz się podłączył podczas setup_finish
-    if (inSetupFinish && (!wasInSetupFinish || displayJustCameOnline)) {
-      enterSetupFinish().catch(() => {});
-    }
-    if (inSetupFinish) {
-      renderSetupFinishSummary();
-    }
-    wasInSetupFinish = inSetupFinish;
-    prevDisplayOnline = !!state.flags?.displayOnline;
-
-  }
-
-  // startowy render
-  renderFromState(store.state);
-  document.getElementById('ctrlLoader')?.remove();
-  document.documentElement.classList.remove('page-loading');
-
-  // panelStep ustawiony przez renderFromState — teraz odsłaniamy
-  document.querySelectorAll('[data-panel-step]').forEach(el => el.classList.add('ctrl-step-ready'));
-
-  // Kropeczki: czekamy na realtime (~500ms)
-  setTimeout(() => {
-    document.querySelector('.top-status')?.classList.add('ctrl-dots-ready');
-  }, 500);
-
-  store.subscribe(renderFromState);
-
-  // Subskrypcja na zmiany nazw drużyn - aktualizacja HUD w rundach
-  let lastTeams = JSON.stringify(store.state.teams);
-  store.subscribe((s) => {
-    const teamsJson = JSON.stringify(s.teams);
-    if (teamsJson !== lastTeams) {
-      lastTeams = teamsJson;
-      // Aktualizuj HUD rund z nowymi nazwami drużyn
-      const r = s.rounds || {};
-      ui.setRoundsHud(r, s.teams);
-      // Aktualizuj przyciski akceptacji buzzera
-      if (rounds && typeof rounds.syncTeamLabels === "function") {
-        rounds.syncTeamLabels();
-      }
-    }
-  });
-
-  // === NAWIGACJA GÓRNA ===
-  ui.mountNavigation({
-    canEnter: (card) => store.canEnterCard(card),
-    onNavigate: (card) => store.setActiveCard(card),
-  });
-
-
-
+  // ===== Info / Polityka prywatności — identyczna logika co dzisiejszy
+  // control/js/app.js (helpOverlay -> iframe /manual, legalOverlay -> /privacy). =====
   const helpOverlay = document.getElementById("helpOverlay");
   const helpFrame = document.getElementById("helpFrame");
-  const btnHelpClose = document.getElementById("btnHelpClose");
-  const btnLegal = document.getElementById("btnLegal");
-  
   const legalOverlay = document.getElementById("legalOverlay");
   const legalFrame = document.getElementById("legalFrame");
-  const btnBackToManual = document.getElementById("btnBackToManual");
-  const btnLegalClose = document.getElementById("btnLegalClose");
-  
   function buildHelpUrl() {
     const url = new URL("/manual/", location.href);
-    const ret = `${location.pathname}${location.search}${location.hash}`;
-    url.searchParams.set("ret", ret);
     url.searchParams.set("modal", "control");
     url.searchParams.set("lang", getUiLang() || "pl");
     url.searchParams.set("tab", "control");
     url.hash = "control";
     return url.toString();
   }
-
   function buildLegalUrl() {
     const url = new URL("/privacy/", location.href);
-    const ret = `${location.pathname}${location.search}${location.hash}`;
-    url.searchParams.set("ret", ret);
     url.searchParams.set("modal", "control");
     url.searchParams.set("lang", getUiLang() || "pl");
     url.hash = "control";
     return url.toString();
   }
-
-  function openHelpModal() {
-    if (helpFrame) helpFrame.src = buildHelpUrl();
-    helpOverlay?.classList.remove("hidden");
-  }
-
-  function closeHelpModal() {
-    helpOverlay?.classList.add("hidden");
-  }
-
-  function openLegalModal() {
-    if (legalFrame) legalFrame.src = buildLegalUrl();
-    legalOverlay?.classList.remove("hidden");
-  }
-
-  function closeLegalModal() {
-    legalOverlay?.classList.add("hidden");
-  }
-
-  btnHelpClose?.addEventListener("click", (ev) => { ev.stopImmediatePropagation(); closeHelpModal(); });
+  function openHelpModal() { if (helpFrame) helpFrame.src = buildHelpUrl(); helpOverlay?.classList.remove("hidden"); }
+  function closeHelpModal() { helpOverlay?.classList.add("hidden"); }
+  function openLegalModal() { if (legalFrame) legalFrame.src = buildLegalUrl(); legalOverlay?.classList.remove("hidden"); }
+  function closeLegalModal() { legalOverlay?.classList.add("hidden"); }
+  document.getElementById("btnManual")?.addEventListener("click", openHelpModal);
+  document.getElementById("btnHelpClose")?.addEventListener("click", (ev) => { ev.stopImmediatePropagation(); closeHelpModal(); });
   helpOverlay?.addEventListener("click", (ev) => { if (ev.target === helpOverlay) closeHelpModal(); });
-
-  btnLegal?.addEventListener("click", (ev) => { ev.stopImmediatePropagation(); openLegalModal(); });
-  btnBackToManual?.addEventListener("click", (ev) => { ev.stopImmediatePropagation(); closeLegalModal(); openHelpModal(); });
-  btnLegalClose?.addEventListener("click", (ev) => { ev.stopImmediatePropagation(); closeLegalModal(); });
+  document.getElementById("btnLegal")?.addEventListener("click", (ev) => { ev.stopImmediatePropagation(); openLegalModal(); });
+  document.getElementById("btnBackToManual")?.addEventListener("click", (ev) => { ev.stopImmediatePropagation(); closeLegalModal(); openHelpModal(); });
+  document.getElementById("btnLegalClose")?.addEventListener("click", (ev) => { ev.stopImmediatePropagation(); closeLegalModal(); });
   legalOverlay?.addEventListener("click", (ev) => { if (ev.target === legalOverlay) closeLegalModal(); });
 
-  // ===== Helper: aktualizacja etykiet przycisków "QR na wyświetlaczu" =====
-  function updateQrOnDisplayButtons() {
-    const f = store.state.flags;
-    const hostOn    = !!f.qrHostOnDisplay;
-    const buzzerOn  = !!f.qrBuzzerOnDisplay;
-    const displayOk = !!f.displayOnline;
-
-    const btnHost   = document.getElementById("btnQrHostOnDisplay");
-    const btnBuzzer = document.getElementById("btnQrBuzzerOnDisplay");
-
-    if (btnHost) {
-      btnHost.style.display = f.noHostTablet ? "none" : "";
-      btnHost.textContent   = hostOn ? t("control.qrHide") : t("control.qrOnDisplay");
-      btnHost.disabled      = !displayOk;
-    }
-    if (btnBuzzer) {
-      btnBuzzer.style.display = f.physicalBuzzer ? "none" : "";
-      btnBuzzer.textContent   = buzzerOn ? t("control.qrHide") : t("control.qrOnDisplay");
-      btnBuzzer.disabled      = !displayOk;
+  // ===== Modal ustawień gry (edycja WYŁĄCZNIE w game-settings2 — kopia
+  // game-settings.js dedykowana dla Control v2, patrz jej nagłówek — Control
+  // tylko otwiera ten sam modal co dzisiejszy btnOpenGsModal/gsOverlay,
+  // identyczny protokół postMessage gs:requestClose / gs:close). Podgląd
+  // Wyświetlacza wewnątrz modala to WŁASNY iframe game-settings2 (/display?
+  // preview=1 + web/js/gameplay/previewRow.js), aktualizowany na żywo przy każdej
+  // zmianie — nie jest to sterowanie prawdziwym, sparowanym Display (ten
+  // zostaje BLACK przez cały etap ustawień, sekcja 3a pkt 5 planu).
+  const gsOverlayEl = document.getElementById("gsOverlay");
+  const gsFrameEl = document.getElementById("gsFrame");
+  const gsSpinnerEl = document.getElementById("gsSpinner");
+  function openGsModal() {
+    // Spinner widoczny OD RAZU (zgłoszone: "po otwarciu modala ustawień
+    // długo nic nie robi") — iframe sam wczyta moduł i przejdzie przez
+    // requireAuth()+RPC blokad, zanim cokolwiek narysuje; bez tego operator
+    // patrzył na pusty prostokąt przez cały ten czas. Chowany dopiero na
+    // "gs:ready" niżej.
+    gsSpinnerEl?.classList.remove("hidden");
+    if (gsFrameEl) gsFrameEl.src = `/game-settings/?id=${encodeURIComponent(gameId)}&modal=1`;
+    gsOverlayEl?.classList.remove("hidden");
+  }
+  async function onGsModalClose() {
+    gsOverlayEl?.classList.add("hidden");
+    if (gsFrameEl) gsFrameEl.src = "";
+    // Ustawienia mogły się zmienić (drużyny/finał/pytania/dźwięk) —
+    // odśwież podsumowanie D3, tylko gdy gra jeszcze nie wystartowała
+    // (patrz applyGameSettingsToState — po starcie to już wyłącznie
+    // game_state, nie games.settings).
+    if (!store.state.locks.gameStarted) {
+      try {
+        const { data: freshGame } = await sb().from("games").select("settings").eq("id", gameId).single();
+        applyGameSettingsToState(freshGame?.settings, store.state);
+        await store.commit();
+      } catch (e) { console.warn("[control2] odświeżenie ustawień po zamknięciu modala nie powiodło się:", e); }
     }
   }
+  function requestGsModalClose() {
+    gsFrameEl?.contentWindow?.postMessage({ type: "gs:requestClose" }, "*");
+  }
+  document.getElementById("btnOpenGsModal")?.addEventListener("click", openGsModal);
+  gsOverlayEl?.addEventListener("click", (ev) => { if (ev.target === gsOverlayEl) requestGsModalClose(); });
+  window.addEventListener("message", (ev) => {
+    if (ev.data?.type === "gs:close" && ev.source === gsFrameEl?.contentWindow) onGsModalClose();
+    if (ev.data?.type === "gs:ready" && ev.source === gsFrameEl?.contentWindow) gsSpinnerEl?.classList.add("hidden");
+  });
 
-  // === Top bar ===
-  ui.on("top.back", async () => {
-    const midGame = shouldWarnBeforeUnload();
-    if (midGame) {
+  document.getElementById("btnBack")?.addEventListener("click", async () => {
+    // Ostrzeżenie tylko w trakcie realnej rozgrywki (jak dzisiejsze
+    // shouldWarnBeforeUnload()) — z D0-D3 wychodzimy bez pytania.
+    if (store.state.locks.gameStarted && !store.state.locks.gameEnded) {
       const ok = await confirmModal({
         title: t("control.leaveTitle"),
         text: t("control.leaveText"),
@@ -957,612 +802,435 @@ async function sendZeroStatesToDevices() {
       });
       if (!ok) return;
     }
-
-    if (isEndedUiState()) {
-      await sendZeroStatesToDevices().catch(() => {});
-    }
-    // Zawsze próbuj zamknąć sesję jako porzuconą — no-op, jeśli
-    // sessionEnd("final") już zdążył ją zamknąć wcześniej (shouldWarnBeforeUnload()
-    // i isEndedUiState() oba zwracają "spokojnie" na ekranach przeglądu wyniku,
-    // zanim host kliknie faktyczny przycisk kończący — sessionEnd musi więc
-    // być wołany niezależnie od tych flag).
-    sessionEnd("abandoned", abandonedScoreSnapshot());
-
-    await shareDevice.expireShares();
-    await expireConnectCodes();
-    suppressUnloadWarn = true;
+    // Fire-and-forget, jak dzisiejsze control/js/app.js — nie blokujemy
+    // wyjścia na tym, przeglądarka i tak zaraz nawiguje dalej.
+    shareDevice.expireShares().catch(() => {});
     location.href = "/games/";
   });
-  
-  ui.on("top.manual", () => {
-    openHelpModal();
-  });
 
-  ui.on("auth.showQr", (kind) => showQrModal(kind));
-  ui.on("auth.qr.close", () => hideQrModal());
-  ui.on("auth.qr.copy", () => copyQrLink());
+  // "Losowo" ma losować RAZ, od razu przy wejściu w Podsumowanie (D3), i
+  // pokazać co wylosowano — nie dopiero leniwie przy pierwszym Starcie
+  // rundy/finału (plan, sekcja 3a pkt 1). Bezpieczne wołać wielokrotnie:
+  // no-op jeśli pula już wylosowana (a "Losuj ponownie" i tak nadpisuje
+  // jawnie, osobną akcją).
+  async function ensureQuestionsDrawn() {
+    const st = store.state;
+    if (st.settings.roundsQuestionsMode !== "pick" && !st.rounds._questionPool?.length) {
+      st.rounds._questionPool = await pickQuestionPool(st);
+    }
+    if (st.settings.hasFinal === true && st.settings.finalQuestionsMode !== "pick" && !st.final.picked?.length) {
+      const { picked, pickedPreview } = await drawFinalPicks(st);
+      st.final.picked = picked;
+      st.final.pickedPreview = pickedPreview;
+      st.final.confirmed = true;
+    }
+  }
 
-  // DEVICES kroki
-  ui.on("devices.next", () => store.setDevicesStep("devices_audio"));
-  ui.on("devices.back", () => store.setDevicesStep("devices_display"));
-  ui.on("audio.back", () => store.setDevicesStep("devices_display"));
-
-  ui.on("audio.unlock", () => {
-    const ok = unlockAudio();
-    store.setAudioUnlocked(!!ok);
-    ui.setAudioStatus(!!ok);
-    ui.setMsg("msgAudio", ok ? APP_MSG.AUDIO_OK : APP_MSG.AUDIO_FAIL);
-    playSfx("answer_correct");
-  });
-
-  ui.on("devices.finish", () => {
-    store.completeCard("devices");
-    store.setSetupStep("setup_finish");
-    store.setActiveCard("setup");
-  });
-
-  ui.on("devices.copyCode", async (kind) => {
-    const code = _deviceCodes[kind];
-    if (!code) return;
+  // W odróżnieniu od dispatchGated() ten tor (proste przejścia UI-
+  // nawigacyjne, np. "Rozpocznij grę" -> r_roundStart/"show_intro") nie
+  // liczył DOTĄD żadnej blokady wcale -- ani klienckiej, ani bazodanowej.
+  // Migracja 264: domykamy oba na raz, tym samym `timing` co actionGate.js
+  // (ta sama liczba, co realnie steruje animacją na Displayu), zamiast
+  // zgadywać nowy zestaw stałych.
+  async function advance(nextStep, extra = {}, soundCueKey) {
+    const generation = dispatchGeneration;
+    assertTransition(store.state.step, nextStep);
+    store.state.step = nextStep;
+    Object.assign(store.state, extra);
+    committing = true;
+    renderCurrent();
     try {
-      await navigator.clipboard.writeText(code);
-    } catch {}
-  });
+      const lockMs = soundCueKey === "show_intro"
+        ? await actionGate.computeGateMs("SHOW_INTRO", null, { step: nextStep })
+        : await actionGate.timing.dur(soundCueKey);
+      await store.commit({ soundCueKey, lockMs });
+    } finally {
+      committing = false;
+    }
+    if (soundCueKey) {
+      const ms = nextStep === "r_roundStart" && soundCueKey === "show_intro"
+        ? await actionGate.computeGateMs("SHOW_INTRO", null, store.state.__row)
+        : await actionGate.timing.dur(soundCueKey);
+      armLock(ms, generation);
+    }
+    renderCurrent();
+  }
 
-
-  // Wysyła właściwą komendę QR lub BLACK na podstawie qrHostOnDisplay + qrBuzzerOnDisplay + opt-out
-  async function syncQrDisplay() {
-    const f = store.state.flags;
-    const wantHost   = !!f.qrHostOnDisplay   && !f.noHostTablet;
-    const wantBuzzer = !!f.qrBuzzerOnDisplay  && !f.physicalBuzzer;
-
-    if (!wantHost && !wantBuzzer) {
-      store.setQrHostOnDisplay(false);
-      store.setQrBuzzerOnDisplay(false);
-      await devices.sendDisplayCmd("APP BLACK").catch(() => {});
+  // Wpisywanie finału (F1/F8): "Rozpocznij odliczanie"/"Zatrzymaj" to jeden
+  // toggle, dokładnie jak stare control/js/gameFinal.js's p1StartTimer()/
+  // p2StartTimer() — wczesne zatrzymanie dozwolone TYLKO gdy wszystkie pola
+  // są wypełnione (allFilledP1/P2, jak dawne timerStopEarlyIfAllowed),
+  // inaczej klik/skrót nic nie robi. Jedno miejsce prawdy, reużywane przez
+  // kafel w control/js/ui.js i przez skrót Ctrl/Cmd+Shift niżej.
+  function allFilledP1() {
+    return store.state.final.runtime.p1.every((x) => String(x?.text || "").trim().length > 0);
+  }
+  function allFilledP2() {
+    return store.state.final.runtime.p2.every((x) => String(x?.text || "").trim().length > 0);
+  }
+  async function toggleFinalTimer(round) {
+    const phase = round === 1 ? "P1" : "P2";
+    const timer = store.state.final.runtime.timer;
+    if (timer.running && timer.phase === phase) {
+      const filled = round === 1 ? allFilledP1() : allFilledP2();
+      if (!filled) return;
+      await dispatchGated({ type: "EXPIRE_TIMER" });
       return;
     }
-
-    // Przekaż syntetyczne flagi: opt-out = odwrotność tego co chcemy pokazać
-    const syntheticFlags = { ...f, noHostTablet: !wantHost, physicalBuzzer: !wantBuzzer };
-    await devices.sendDisplayCmd("APP QR").catch(() => {});
-    await devices.sendQrLinksToDisplay(_deviceCodes, syntheticFlags).catch(() => {});
-    updateQrOnDisplayButtons();
+    const used = round === 1 ? timer.usedP1 : timer.usedP2;
+    if (used) return;
+    await dispatchGated({ type: "START_TIMER", phase });
   }
 
-  ui.on("devices.physicalBuzzer", async (checked) => {
-    const wasShowingBuzzer = !!store.state.flags.qrBuzzerOnDisplay;
-    store.setPhysicalBuzzer(checked);
-    if (checked && wasShowingBuzzer) {
-      store.setQrBuzzerOnDisplay(false);
-      await syncQrDisplay();
-    }
-    updateQrOnDisplayButtons();
-  });
-
-  ui.on("devices.noHostTablet", async (checked) => {
-    const wasShowingHost = !!store.state.flags.qrHostOnDisplay;
-    store.setNoHostTablet(checked);
-    if (checked && wasShowingHost) {
-      store.setQrHostOnDisplay(false);
-      await syncQrDisplay();
-    }
-    updateQrOnDisplayButtons();
-  });
-
-  // Sync DOM → store na wypadek kliknięcia przed zarejestrowaniem handlerów
-  {
-    const chkBuzzer = document.getElementById("chkPhysicalBuzzer");
-    const chkHost   = document.getElementById("chkNoHostTablet");
-    if (chkBuzzer?.checked) store.setPhysicalBuzzer(true);
-    if (chkHost?.checked)   store.setNoHostTablet(true);
-    if (chkBuzzer?.checked || chkHost?.checked) updateQrOnDisplayButtons();
+  // ---------------- SKRÓT: Ctrl/Cmd+Shift -> start/zatrzymanie odliczania ----------------
+  // 1:1 z dawnym control/js/gameFinal.js's wantsFinalTimerHotkey/
+  // handleFinalTimerHotkey — działa tylko na krokach wpisywania finału
+  // (f_p1_entry/f_p2_entry), celowo nawet gdy operator akurat pisze w polu.
+  function isMacLike() {
+    const p = navigator.platform || "";
+    return /Mac|iPhone|iPad|iPod/i.test(p);
   }
+  document.addEventListener("keydown", (e) => {
+    const main = isMacLike() ? e.metaKey : e.ctrlKey;
+    if (!main || e.key !== "Enter" || e.shiftKey || e.altKey || e.repeat || e.isComposing || (isMacLike() ? e.ctrlKey : e.metaKey)) return;
+    if ([...document.querySelectorAll(".overlay, .gsOverlay, .helpOverlay, .legalOverlay, .qrModalOverlay, [role='dialog']")].some((el) => el.getClientRects().length && getComputedStyle(el).visibility !== "hidden")) return;
+    const step = store.state.step;
+    if (step !== "f_p1_entry" && step !== "f_p2_entry") return;
+    // Skrót woła engine.dispatch() BEZPOŚREDNIO, z pominięciem
+    // dispatchGated() -- jedyne miejsce w całej appce, które mogło
+    // wystrzelić zapis zupełnie bez sprawdzenia busy() (ani przycisk w
+    // ui.js, którego kliknięcie i tak przechodzi przez emit(), nie miał tu
+    // wcześniej żadnej ochrony -- patrz finalTimerRow). Bez tego dwa razy
+    // szybko wciśnięty skrót (albo skrót w trakcie jeszcze trwającej
+    // blokady po poprzednim przejściu) mógł tak samo pomieszać intencje,
+    // jak opisany wcześniej wyścig na przycisku r_intro.
+    if (busy() && !typingCommit) return;
+    e.preventDefault();
+    handle("final.toggleTimer", { round:step === "f_p1_entry" ? 1 : 2 });
+  }, { capture: true });
 
-  // Globalny przycisk "Schowaj QR" — chowa wszystko
-  ui.on("qr.toggle", async () => {
-    store.setQrHostOnDisplay(false);
-    store.setQrBuzzerOnDisplay(false);
-    store.setQrOnDisplay(false);
-    await devices.sendDisplayCmd("APP BLACK").catch(() => {});
-    updateQrOnDisplayButtons();
-  });
-
-  ui.on("qr.host.toggle", async () => {
-    const now = !!store.state.flags.qrHostOnDisplay;
-    store.setQrHostOnDisplay(!now);
-    await syncQrDisplay();
-  });
-
-  ui.on("qr.buzzer.toggle", async () => {
-    const now = !!store.state.flags.qrBuzzerOnDisplay;
-    store.setQrBuzzerOnDisplay(!now);
-    await syncQrDisplay();
-  });
-
-  // Obsługa przycisków QR dla hosta i buzzera (otwierają modal)
-  ui.on("qr.host.show", () => showQrModal("host"));
-  ui.on("qr.buzzer.show", () => showQrModal("buzzer"));
-
-  // SETUP
-  ui.on("setup.backToDevices", () => store.setActiveCard("devices"));
-
-  // ===== Motyw =====
-  const sendTheme = async (key) => {
-    if (!devices || !key) return;
-    await devices.sendDisplayCmd(`THEME ${key}`).catch(() => {});
-  };
-
-  ui.on("setup.finish.back", () => store.setActiveCard("devices"));
-  ui.on("setup.finish", async () => {
-    // Schowaj logo i wyczyść przykładowe wartości paneli — reszta już ustawiona przez enterSetupFinish
-    if (devices) {
-      await devices.sendDisplayCmd("LOGO HIDE").catch(() => {});
-      await devices.sendDisplayCmd('TOP ""').catch(() => {});
-      await devices.sendDisplayCmd('LEFT ""').catch(() => {});
-      await devices.sendDisplayCmd('RIGHT ""').catch(() => {});
-      await devices.sendDisplayCmd("INDICATOR OFF").catch(() => {});
-    }
-    store.completeCard("setup");
-    store.setActiveCard("rounds");
-  });
-  
-  // Przycisk w setup_finish
-  document.getElementById("btnSetupFinish2")?.addEventListener("click", () => {
-    ui.emit("setup.finish");
-  });
-  document.getElementById("btnSetupFinishBack")?.addEventListener("click", () => {
-    ui.emit("setup.finish.back");
-  });
-  
-  // ===== SETUP_FINISH =====
-
-  async function enterSetupFinish() {
-    // Załaduj font i logo potrzebne do podglądu w streszczeniu
-    if (!_logoFont) {
-      try { _logoFont = await loadFont5x7(); } catch {}
-    }
-    if (!_defaultLogoPayload) {
-      try {
-        const r = await fetch(await cacheBust("/shared/data/logo_familiada.json"), { cache: "force-cache" });
-        if (r.ok) _defaultLogoPayload = await r.json();
-      } catch {}
-    }
-    // Załaduj logo użytkownika (potrzebne do podglądu w streszczeniu)
-    if (_loadedLogos.length === 0 && store.state.display.logoId) {
-      try {
-        const { data } = await sb().from("user_logos").select("id,name,type,payload").order("updated_at", { ascending: false });
-        _loadedLogos = data || [];
-      } catch {}
-    }
-
-    // Losowanie pytań (jeśli tryb losowy i jeszcze nie wylosowano)
-    if (store.state.hasFinal === true && store.state.finalQuestionsMode === "random"
-        && (!store.state.final?.confirmed || (store.state.final?.picked || []).length !== 5)) {
-      try {
-        const cached = sessionStorage.getItem("familiada:questionsCache");
-        let all = [];
-        try { all = cached ? JSON.parse(cached) : []; } catch {}
-        const roundsPool = store.state.rounds?._questionPool || [];
-        // Rundy w trybie "kolejność" mają już ustaloną listę pytań
-        // (roundsPicked, wczytaną z ustawień gry) — finał losowy musi ją
-        // ominąć, inaczej może wylosować pytanie, które i tak jest w rundach.
-        const roundsOrdered = store.state.roundsQuestionsMode === "pick"
-          ? (store.state.roundsPicked || [])
-          : [];
-        const usedIds = new Set([
-          ...roundsPool.map(q => String(q.id)),
-          ...roundsOrdered.map(q => String(q.id)),
-        ]);
-        const pool = all.filter(q => !usedIds.has(String(q.id)));
-        const shuffled = pool.slice();
-        for (let i = shuffled.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
-          [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-        }
-        const ids = shuffled.slice(0, 5).map(q => q.id).filter(Boolean);
-        if (ids.length === 5) store.confirmFinalQuestions(ids);
-      } catch {}
-    }
-
-    await rounds.prePickForSummary().catch(() => {});
-    try { _soundCustomFiles = await getSfxCustomFiles(game.id); } catch {}
-
-    // Inicjalizacja urządzeń: wyślij kolory, motyw, logo, nazwy drużyn
-    if (devices) {
-      const teamA = store.state.teams?.teamA || t("gameSettings.teams.defaultA") || "Drużyna A";
-      const teamB = store.state.teams?.teamB || t("gameSettings.teams.defaultB") || "Drużyna B";
-      const q = (s) => `"${String(s ?? "").replace(/"/g, "'")}"`;
-      await devices.sendDisplayCmd("APP GAME").catch(() => {});
-      await devices.sendBuzzerCmd("ON").catch(() => {});
-      await devices.sendHostCmd("COVER").catch(() => {});
-      sendColorA(colors.A);
-      sendColorB(colors.B);
-      sendColorBg(colors.BACKGROUND);
-      sendColorDot(colors.DOT);
-      if (activeTheme) sendTheme(activeTheme);
-      await devices.sendDisplayCmd(`LOGO RELOAD`).catch(() => {});
-      await devices.sendDisplayCmd(`LONG1 ${q(teamA)}`).catch(() => {});
-      await devices.sendDisplayCmd(`LONG2 ${q(teamB)}`).catch(() => {});
-      await devices.sendDisplayCmd("LEFT 123").catch(() => {});
-      await devices.sendDisplayCmd("RIGHT 123").catch(() => {});
-      await devices.sendDisplayCmd("TOP 1").catch(() => {});
-      await devices.sendDisplayCmd("INDICATOR OFF").catch(() => {});
-      await devices.sendHostCmd(`SET1 ${q(teamA)}`).catch(() => {});
-      await devices.sendHostCmd(`SET2 ${q(teamB)}`).catch(() => {});
-    }
-  }
-
-  function renderSetupFinishSummary() {
-    const s = store.state;
-
-    // Baner domyślnych ustawień — tylko gdy nie ma zapisanych ustawień
-    const hintEl = document.getElementById("summaryDefaultHint");
-    const hintTextEl = document.getElementById("summaryDefaultHintText");
-    if (hintEl && hintTextEl) {
-      if (!_hasCustomSettings) {
-        const msg = t("control.summaryDefaultSettings") || "Używasz domyślnych ustawień rozgrywki.";
-        hintTextEl.textContent = msg;
-        hintEl.classList.remove("hidden");
-      } else {
-        hintEl.classList.add("hidden");
-      }
-    }
-
-    const defaultA = t("gameSettings.teams.defaultA") || "Drużyna A";
-    const defaultB = t("gameSettings.teams.defaultB") || "Drużyna B";
-    const teamA = s.teams?.teamA || defaultA;
-    const teamB = s.teams?.teamB || defaultB;
-
-    // Drużyny
-    const teamsEl = document.getElementById("summaryTeams");
-    if (teamsEl) teamsEl.textContent = `${teamA} vs ${teamB}`;
-
-    // Wygląd — kolory z nazwami drużyn
-    const colorDotsEl = document.getElementById("summaryColorDots");
-    if (colorDotsEl) {
-      const c = s.display.colors;
-      const labels = {
-        A: teamA,
-        B: teamB,
-        BACKGROUND: t("control.colorBg") || "Tło",
-        DOT: t("control.colorDot") || "Kropki",
-      };
-      colorDotsEl.innerHTML = ["A", "B", "BACKGROUND", "DOT"].map(k =>
-        `<span class="summaryColorDotItem"><span class="summaryColorDot" style="background:${c[k]}"></span><span class="summaryColorDotLabel">${escapeHtml(labels[k])}</span></span>`
-      ).join("");
-    }
-
-    // Motyw — "Klasyczny" gdy null/brak (domyślny)
-    const themeNameEl = document.getElementById("summaryThemeName");
-    if (themeNameEl) {
-      const effectiveTheme = s.display.theme || "classic";
-      const th = themeList.find(th => th.key === effectiveTheme);
-      themeNameEl.textContent = th?.label || effectiveTheme;
-    }
-
-    const logoTileEl = document.getElementById("summaryLogoTile");
-    if (logoTileEl) {
-      logoTileEl.innerHTML = "";
-      const logoId = s.display.logoId;
-      let logoObj = null;
-      if (logoId) {
-        const found = _loadedLogos.find(l => l.id === logoId);
-        if (found) logoObj = found;
-      }
-      const previewSrc = logoObj ?? (
-        _defaultLogoPayload ? { type: "GLYPH_30x10", payload: _defaultLogoPayload } : null
-      );
-      if (previewSrc && _logoFont) {
-        const canvas = buildLogoPreviewCanvas(previewSrc, _logoFont);
-        const frame = document.createElement("div");
-        frame.className = "summaryLogoFrame";
-        frame.appendChild(canvas);
-        logoTileEl.appendChild(frame);
-      } else {
-        logoTileEl.textContent = logoObj?.name || (logoId ? "—" : t("control.lookLogoDefault"));
-      }
-    }
-
-    // Finał
-    const finalEl = document.getElementById("summaryFinal");
-    if (finalEl) finalEl.textContent = s.hasFinal ? t("common.yes") : t("common.no");
-
-    // Sekcja pytań finału — ukryj gdy nie gramy finału
-    const finalSection = document.getElementById("summaryFinalSection");
-    if (finalSection) finalSection.style.display = s.hasFinal ? "" : "none";
-
-    // Pytania finału — pokaż wylosowane (lub picked)
-    const finalQEl = document.getElementById("summaryFinalQuestions");
-    if (finalQEl) {
-      if (!s.hasFinal) {
-        finalQEl.innerHTML = "";
-      } else {
-        const pickedIds = s.final?.picked || [];
-        const cached = sessionStorage.getItem("familiada:questionsCache");
-        let all = [];
-        try { all = cached ? JSON.parse(cached) : []; } catch {}
-        const items = pickedIds.map(id => {
-          const q = all.find(x => x.id === id);
-          return q ? `<li>${escapeHtml((q.text || "").slice(0, 60))}</li>` : "";
-        }).filter(Boolean);
-        finalQEl.innerHTML = items.length
-          ? items.join("")
-          : `<li class="summaryQRandom">${t("control.summaryQNone")}</li>`;
-      }
-    }
-
-    // Tryb pytań finału
-    const finalQModeEl = document.getElementById("summaryFinalQMode");
-    if (finalQModeEl && s.hasFinal) {
-      const mode = s.finalQuestionsMode === "pick"
-        ? (t("control.summaryQModePick") || "Wybrane")
-        : (t("control.summaryQModeRandom") || "Losowane");
-      finalQModeEl.textContent = mode;
-      finalQModeEl.className = "summaryQMode summaryQMode--" + (s.finalQuestionsMode === "pick" ? "pick" : "random");
-    } else if (finalQModeEl) {
-      finalQModeEl.textContent = "";
-    }
-
-    // Dźwięk
-    const soundListEl = document.getElementById("summarySoundList");
-    if (soundListEl) {
-      const cats = getSfxCategories();
-      const lang = getUiLang() || "pl";
-      const SVG_PLAY = `<svg width="16" height="16" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><polygon points="2,1 11,6 2,11" fill="currentColor"/></svg>`;
-      const SVG_STOP = `<svg width="16" height="16" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="1.5" y="1.5" width="9" height="9" fill="currentColor"/></svg>`;
-
-      const existing = new Map(); // key → row element (jeśli już wyrenderowany)
-      for (const row of soundListEl.children) {
-        existing.set(row.dataset.sfxKey, row);
-      }
-
-      cats.forEach(cat => {
-        const customFile  = _soundCustomFiles.get(cat.key);
-        const isCustom    = !!customFile;
-        const variant     = getSfxVariant(cat.key);
-        const variantLabel = isCustom
-          ? `${t("control.sfxCustom") || "Własny"}: ${customFile.filename}`
-          : (cat.sounds.find(s => s.file.split("?")[0] === variant.split("?")[0])?.label?.[lang] || variant.split("?")[0]);
-        const desc = t("control.sfxDesc." + cat.key) || cat.key;
-
-        if (existing.has(cat.key)) {
-          // Aktualizuj tylko etykietę wariantu — slider i play-btn zostawiamy
-          const row = existing.get(cat.key);
-          const varEl = row.querySelector(".summarySoundVariant");
-          if (varEl) varEl.textContent = variantLabel;
-          return;
-        }
-
-        // Pierwsze renderowanie wiersza
-        const vol    = getSfxVolume(cat.key);
-        const volPct = _summaryVolumes.has(cat.key) ? _summaryVolumes.get(cat.key) : Math.round(vol * 100);
-
-        const row = document.createElement("div");
-        row.className = "summarySoundRow";
-        row.dataset.sfxKey = cat.key;
-        row.innerHTML = `
-          <span class="summarySoundDesc">${escapeHtml(desc)}</span>
-          <span class="summarySoundVariant">${escapeHtml(variantLabel)}</span>
-          <button class="btn sm summarySoundPlay" type="button">${SVG_PLAY}</button>
-          <input class="summarySoundVol" type="range" min="0" max="100" step="1" value="${volPct}">
-          <span class="summarySoundVolLabel">${volPct}%</span>
-        `;
-
-        const playBtn  = row.querySelector(".summarySoundPlay");
-        const slider   = row.querySelector(".summarySoundVol");
-        const volLabel = row.querySelector(".summarySoundVolLabel");
-
-        playBtn.addEventListener("click", () => {
-          if (isSfxPlaying(cat.key)) {
-            stopSfx(cat.key);
-            playBtn.innerHTML = SVG_PLAY;
-          } else {
-            playSfx(cat.key);
-            playBtn.innerHTML = SVG_STOP;
-            onSfxEnd(cat.key, () => { playBtn.innerHTML = SVG_PLAY; });
-          }
-        });
-        slider.addEventListener("input", () => {
-          const pct = parseInt(slider.value, 10);
-          _summaryVolumes.set(cat.key, pct);
-          volLabel.textContent = `${pct}%`;
-          setSessionSfxVolume(cat.key, pct / 100);
-        });
-
-        soundListEl.appendChild(row);
-      });
-    }
-
-    // Pytania rund — pokaż wylosowane (lub ordered)
-    const roundsQEl = document.getElementById("summaryRoundsQuestions");
-    if (roundsQEl) {
-      const pool = s.rounds?._questionPool || [];
-      if (pool.length > 0) {
-        roundsQEl.innerHTML = pool.map(q => `<li>${escapeHtml((q.text || "").slice(0, 60))}</li>`).join("");
-      } else if (s.roundsQuestionsMode === "pick") {
-        const ordered = s.roundsPicked || [];
-        const items = ordered.map(q => `<li>${escapeHtml((q.text || "").slice(0, 60))}</li>`).filter(Boolean);
-        roundsQEl.innerHTML = items.length ? items.join("") : `<li class="summaryQRandom">${t("control.summaryQNoOrder")}</li>`;
-      } else {
-        // Pool empty — prePickForSummary in progress
-        roundsQEl.innerHTML = `<li class="summaryQRandom">${t("control.summaryQRandom") || "Losowanie w toku…"}</li>`;
-      }
-    }
-
-    // Tryb pytań rund
-    const roundsQModeEl = document.getElementById("summaryRoundsQMode");
-    if (roundsQModeEl) {
-      const mode = s.roundsQuestionsMode === "pick"
-        ? (t("control.summaryQModePick") || "Wybrane")
-        : (t("control.summaryQModeRandom") || "Losowane");
-      roundsQModeEl.textContent = mode;
-      roundsQModeEl.className = "summaryQMode summaryQMode--" + (s.roundsQuestionsMode === "pick" ? "pick" : "random");
-    }
-  }
-
-  // ===== GAME SETTINGS MODAL =====
-  const gsOverlayEl = document.getElementById("gsOverlay");
-  const gsFrameEl   = document.getElementById("gsFrame");
-
-  function openGsModal() {
-    const id = store.state.gameId || gameId;
-    gsFrameEl.src = `/game-settings/?id=${encodeURIComponent(id)}&modal=1`;
-    gsOverlayEl?.classList.remove("hidden");
-  }
-
-  let _gsModalCmdBlocked = false;
-
-  async function onGsModalClose() {
-    _gsModalCmdBlocked = true;
-    gsOverlayEl?.classList.add("hidden");
-    gsFrameEl.src = "";
-    // Reload game settings from DB — update local state only, no display commands.
-    // Display will be synced when user clicks "Gotowe".
+  async function handle(action, payload) {
     try {
-      const { data } = await sb().from("games").select("settings").eq("id", gameId).single();
-      if (data) {
-        _hasCustomSettings = data.settings != null && typeof data.settings === "object";
-        applyGameSettingsToStore(data.settings, store);
-        try { _soundCustomFiles = await getSfxCustomFiles(game.id); } catch {}
-        _loadedLogos = [];
-        if (store.state.display.logoId) {
-          try {
-            const { data: logos } = await sb().from("user_logos").select("id,name,type,payload").order("updated_at", { ascending: false });
-            _loadedLogos = logos || [];
-          } catch {}
-        }
-        renderSetupFinishSummary();
-        // Keep local color/theme in sync so "Gotowe" sends the right values
-        const newDisplay = store.state.display;
-        if (newDisplay?.colors) {
-          colors.A = normHex(newDisplay.colors.A) ?? DEFAULT_COLORS.A;
-          colors.B = normHex(newDisplay.colors.B) ?? DEFAULT_COLORS.B;
-          colors.BACKGROUND = normHex(newDisplay.colors.BACKGROUND) ?? DEFAULT_COLORS.BACKGROUND;
-          colors.DOT = normHex(newDisplay.colors.DOT) ?? DEFAULT_COLORS.DOT;
-        }
-        if (newDisplay?.theme) activeTheme = newDisplay.theme;
-        if (store.state.teams?.teamA) store.setTeams(store.state.teams.teamA, store.state.teams.teamB);
+      const gameAction = action === "game.dispatch" || action === "rounds.introNext" || action === "final.toggleTimer" || action === "setup.start";
+      if (gameAction && restarting) return;
+      if (gameAction && queuedGameAction && payload?.type !== "SET_ENTRY_TEXT") return;
+      if (gameAction && typingCommit && payload?.type !== "SET_ENTRY_TEXT") {
+        // Reserve this command immediately: later typing cannot overtake
+        // a repeat press and leave the next timer click silently discarded.
+        queuedGameAction = true;
+        renderCurrent();
+        try { await _dispatchGatedQueue; }
+        finally { queuedGameAction = false; }
       }
-    } catch (e) { console.warn("[gs-modal] reload failed", e); }
-    finally { _gsModalCmdBlocked = false; }
+      if (gameAction && busy() && payload?.type !== "SET_ENTRY_TEXT") return;
+      if (gameAction && missingDevices(store.state, presenceFlags).length) return;
+      if (action === "ui.flushTyping") { await _dispatchGatedQueue; return; }
+      if (action === "ui.rerender") {
+        // Czysto lokalna zmiana UI (np. zaznaczenie drużyny w trybie
+        // physicalBuzzer, przed potwierdzeniem) — bez zapisu do game_state.
+        renderCurrent();
+        return;
+      }
+      // Host/buzzer NIEZALEŻNE — jeden LUB oba naraz na Display (dokładnie
+      // jak dzisiejsze qrHostOnDisplay/qrBuzzerOnDisplay + syncQrDisplay w
+      // control/js/app.js, nie jeden qrTarget na raz jak w pierwszym
+      // przebiegu control2).
+      async function syncQrDisplay() {
+        const q = store.state.display.qr;
+        const wantHost = !!q.host.show && !store.state.settings.noHostTablet;
+        const wantBuzzer = !!q.buzzer.show && !store.state.settings.physicalBuzzer;
+        q.host.show = wantHost;
+        q.buzzer.show = wantBuzzer;
+        q.host.url = wantHost ? urls.hostUrl : null;
+        q.host.code = wantHost ? connectCodes.host : null;
+        q.buzzer.url = wantBuzzer ? urls.buzzerUrl : null;
+        q.buzzer.code = wantBuzzer ? connectCodes.buzzer : null;
+        store.state.display.mode = (wantHost || wantBuzzer) ? "QR" : "BLACK";
+        await store.commit();
+      }
+      if (action === "qr.host.toggle") {
+        store.state.display.qr.host.show = !store.state.display.qr.host.show;
+        await syncQrDisplay();
+        return;
+      }
+      if (action === "qr.buzzer.toggle") {
+        store.state.display.qr.buzzer.show = !store.state.display.qr.buzzer.show;
+        await syncQrDisplay();
+        return;
+      }
+      if (action === "qr.toggle") {
+        // Globalny "Schowaj QR" — chowa oba naraz.
+        store.state.display.qr.host.show = false;
+        store.state.display.qr.buzzer.show = false;
+        await syncQrDisplay();
+        return;
+      }
+      if (action === "devices.noHostTablet") {
+        store.state.settings.noHostTablet = !!payload;
+        if (payload) { store.state.display.qr.host.show = false; }
+        await syncQrDisplay();
+        return;
+      }
+      if (action === "devices.physicalBuzzer") {
+        store.state.settings.physicalBuzzer = !!payload;
+        if (payload) { store.state.display.qr.buzzer.show = false; }
+        await syncQrDisplay();
+        return;
+      }
+      if (action === "devices.soundSource") {
+        // Jeden przełącznik (zgłoszone) — "control" (domyślnie) albo
+        // "display". Gated w obu soundReactor.js (control2 i display2), tak
+        // że dokładnie jedno z dwóch urządzeń faktycznie odtwarza w danej
+        // chwili — bez żadnego dodatkowego zapisu tutaj poza samym polem.
+        store.state.settings.soundSource = payload === "display" ? "display" : "control";
+        await store.commit();
+        return;
+      }
+      if (action === "settings.toggleSoundMuted") {
+        // Współdzielone (nie lokalne — patrz komentarz w soundReactor.js),
+        // żeby wyciszenie działało niezależnie od tego, które urządzenie
+        // faktycznie gra. Migracja 268/store.setSoundMuted() -- NIE
+        // store.commit() -- z tego samego powodu co setUiLang(): wyciszenie
+        // jest metadaną operatora, niezależną od locked_until trwającej
+        // akcji gry. Zgłoszone (e2e "dźwięk ze źródła Wyświetlacz"): klik
+        // #btnMute tuż po odsłonięciu odpowiedzi (locked_until z TEJ akcji
+        // jeszcze trwa) kończył się gołym window.alert("Błąd: locked") przez
+        // pełny commit()/game_state_write.
+        await store.setSoundMuted(!store.state.settings.soundMuted);
+        return;
+      }
+      if (action === "settings.setSoundVolume") {
+        // Suwak w Podsumowaniu (D3) — właściciel gry wprost zażądał, żeby
+        // zmiana głośności TU zapisywała się do game_state (nie do
+        // games.settings, skąd wartość początkowa jest tylko wczytana raz
+        // przy applyGameSettingsToState) — dzięki temu jest widoczna
+        // natychmiast na Wyświetlaczu, jeśli to on gra (soundSource="display").
+        const { key, pct } = payload || {};
+        if (!key || typeof pct !== "number") return;
+        const clamped = Math.max(0, Math.min(100, Math.round(pct)));
+        store.state.settings.sound.volumes[key] = clamped;
+        await store.commit();
+        return;
+      }
+      if (action === "qr.modal.show") {
+        showQrModal(payload);
+        return;
+      }
+      if (action === "devices.copyCode") {
+        const code = connectCodes[payload];
+        if (code) { try { await navigator.clipboard.writeText(code); } catch {} }
+        return;
+      }
+      if (action === "devices.shareOpen") {
+        await shareDevice.open(payload);
+        return;
+      }
+      if (action === "devices.next") {
+        // Wyjście z podłączania: wracamy do BLACK, jeśli operator zostawił widoczny QR.
+        store.state.display.mode = "BLACK";
+        store.state.display.qr.host = { show: false, url: null, code: null };
+        store.state.display.qr.buzzer = { show: false, url: null, code: null };
+        // "Losowo" ma losować OD RAZU i pokazać co wylosowano w Podsumowaniu
+        // — nie leniwie dopiero przy pierwszym Starcie rundy/finału.
+        await ensureQuestionsDrawn();
+        await advance("setup_finish");
+        return;
+      }
+      if (action === "setup.openSettings") {
+        openGsModal();
+        return;
+      }
+      if (action === "setup.back") {
+        // Dokładnie jak stare control/js/app.js's setup.finish.back ->
+        // setActiveCard("devices") — swobodny powrót, nic nie resetuje
+        // (parowanie urządzeń i tak zostaje, bo to osobny mechanizm
+        // presence, nie stan gry).
+        await advance("devices_display");
+        return;
+      }
+      if (action === "setup.start") {
+        // D3 to już tylko podsumowanie — drużyny/finał/pytania są od dawna
+        // ustawione w games.settings i zdenormalizowane wyżej w main().
+        store.state.locks.gameStarted = true;
+        // Plan, sekcja 3a pkt 5: "Display zostaje BLACK aż do faktycznego
+        // rozpoczęcia gry" — to jest dokładnie ten moment. Bez tego
+        // display.mode NIGDZIE indziej nie przechodzi na "GAME" (jedyne inne
+        // miejsca ustawiają "BLACK"/"QR"), więc Wyświetlacz zostawałby czarny
+        // przez całą grę mimo jej realnego postępu — potwierdzony błąd, nie
+        // tylko wrażenie z nagrania.
+        store.state.display.mode = "GAME";
+        await advance("r_intro", { topCard: "rounds" });
+        return;
+      }
+      if (action === "setup.reshuffleRounds") {
+        // Sekcja 3a pkt 1: "Losuj ponownie" — tylko w trybie losowym i tylko
+        // przed startem gry (potem pula jest już w grze). Wymusza budowę puli
+        // teraz (normalnie leniwie budowana dopiero przy pierwszym
+        // START_ROUND), żeby dało się ją przetasować z góry.
+        if (store.state.settings.roundsQuestionsMode === "pick" || store.state.locks.gameStarted) return;
+        store.state.rounds._questionPool = await pickQuestionPool(store.state);
+        await store.commit();
+        return;
+      }
+      if (action === "setup.reshuffleFinal") {
+        if (store.state.settings.finalQuestionsMode === "pick" || store.state.locks.gameStarted) return;
+        const { picked, pickedPreview } = await drawFinalPicks(store.state);
+        store.state.final.picked = picked;
+        store.state.final.pickedPreview = pickedPreview;
+        store.state.final.confirmed = true;
+        await store.commit();
+        return;
+      }
+      if (action === "session.finish") {
+        // Gra już zakończona (locks.gameEnded) — czysta nawigacja z powrotem
+        // do listy gier, bez żadnego dalszego zapisu do game_state.
+        location.href = "/games/";
+        return;
+      }
+      if (action === "rounds.introNext") {
+        // Dokładnie jak dzisiejsze gameRounds.js: intro logo + dźwięk na
+        // starcie gry (nie tylko na końcu — show_intro gra też tutaj).
+        await advance("r_roundStart", { phase: "READY" }, "show_intro");
+        return;
+      }
+      // "Zacznij od nowa" wołane z przycisku na ekranie końca gry (obok
+      // "Wróć do moich gier") — ta sama funkcja co topbar's #btnStartOver.
+      if (action === "game.restart") { await restartGame(); return; }
+      // Próbka dźwięku powtórzenia na ekranie "Rozpocznij 2 rundę" — dokładnie
+      // jak stare control.html's "final.repeatTest": czysto lokalny podgląd
+      // dźwięku, bez żadnego zapisu do game_state (nic w grze się nie zmienia).
+      if (action === "final.repeatTest") { playSfx("answer_repeat"); return; }
+      // Kafel odliczania na ekranie wpisywania finału — ten sam toggle co
+      // skrót Ctrl/Cmd+Shift (patrz toggleFinalTimer wyżej).
+      if (action === "final.toggleTimer") { await toggleFinalTimer(payload.round); return; }
+      if (action === "game.dispatch") { await dispatchGated(payload); return; }
+    } catch (e) {
+      console.error("[control2] akcja nie powiodła się:", action, e);
+      void sessionTelemetry.report({ kind: "error", message: `${action}: ${e.message || e}` });
+      alert(`Błąd: ${e.message || e}`);
+    }
   }
 
-  function requestGsModalClose() {
-    gsFrameEl?.contentWindow?.postMessage({ type: "gs:requestClose" }, "*");
+  const btnMute = document.getElementById("btnMute");
+  function syncMuteButton() { if (btnMute) btnMute.innerHTML = icon(store.state.settings.soundMuted ? "speaker-off" : "speaker-on"); }
+  syncMuteButton();
+  btnMute?.addEventListener("click", () => { handle("settings.toggleSoundMuted"); });
+  // Zadeklarowane TU (nie przy addEventListener niżej) -- renderCurrent()
+  // (zdefiniowane wyżej w pliku, ale wywoływane dopiero na samym końcu,
+  // store.subscribe(renderCurrent); renderCurrent();) czyta tę zmienną przy
+  // KAŻDYM renderze, więc musi być zainicjalizowana PRZED pierwszym takim
+  // wywołaniem, nie dopiero przy swoim listenerze.
+  const btnStartOver = document.getElementById("btnStartOver");
+
+  // Wydzielone z topbara, żeby ten sam "Zacznij od nowa" dało się też
+  // wywołać z przycisku na ekranach końca gry (control/js/ui.js's
+  // renderGameEnd/renderFinalEnd, akcja "game.restart" w handle() niżej) —
+  // dokładnie ta sama logika, dwa miejsca wywołania.
+  async function restartGame() {
+    if (restarting) return;
+    const ok = await confirmModal({
+      title: "Zacznij od nowa",
+      text: "To wróci do podłączania urządzeń i wyzeruje postęp gry (drużyny, pytania, wyniki). Parowanie urządzeń zostaje. Ustawienia zaawansowane zostają zachowane.",
+    });
+    if (!ok) return;
+    restarting = true;
+    dispatchGeneration++;
+    try {
+      await _dispatchGatedQueue;
+      await store.setLock(0);
+      lockedUntil = 0;
+      lockConfirmPending = false;
+      await restartGameNow();
+    } finally {
+      restarting = false;
+      renderCurrent();
+    }
   }
-
-  document.getElementById("btnOpenGsModal")?.addEventListener("click", openGsModal);
-  gsOverlayEl?.addEventListener("click", (ev) => { if (ev.target === gsOverlayEl) requestGsModalClose(); });
-
-  window.addEventListener("message", (ev) => {
-    if (ev.data?.type === "gs:close") onGsModalClose();
-    if (ev.data?.type === "gs:displayCmd" && !_gsModalCmdBlocked && ev.source === gsFrameEl?.contentWindow) {
-      devices?.sendDisplayCmd(ev.data.cmd).catch(() => {});
+  async function restartGameNow() {
+    const keptAdvanced = {};
+    for (const key of ADVANCED_SETTINGS_KEYS) keptAdvanced[key] = store.state.settings[key];
+    store.state.locks = { gameStarted: false, finalActive: false, gameEnded: false };
+    store.state.teams = { teamA: "", teamB: "" };
+    store.state.settings = { ...DEFAULT_SETTINGS, ...keptAdvanced };
+    store.state.rounds = {
+      roundNo: 1, bankPts: 0, xA: 0, xB: 0, totals: { A: 0, B: 0 },
+      passUsed: false, allowPass: false, canEndRound: false, lockPlayControls: false,
+      question: null, answers: [], revealed: [],
+      duel: { enabled: false, lastPressed: null, firstTeam: null, secondTeam: null, currentTeam: null },
+      timer3: { running: false, endsAt: 0, resolved: null },
+      steal: { active: false, used: false, team: null, won: null },
+      stealWon: false, _questionPool: [], _usedQuestionIds: [],
+    };
+    store.state.final = {
+      picked: [], confirmed: false, winnerTeam: null, questions: [],
+      runtime: { sum: 0, timer: { running: false, phase: null, endsAt: 0 }, map1: [null,null,null,null,null], map2: [null,null,null,null,null], p1: [null,null,null,null,null], p2: [null,null,null,null,null], reached200: false },
+    };
+    store.state.display = {
+      mode: "BLACK",
+      qr: { host: { show: false, url: null, code: null }, buzzer: { show: false, url: null, code: null } },
+      colors: store.state.display.colors, theme: store.state.display.theme, logoId: store.state.display.logoId,
+    };
+    store.state.host = { covered: true }; // ta sama domyślna zasłona co makeDefaultState() — patrz web/js/gameplay/gameStateShape.js
+    store.state.step = "devices_display";
+    store.state.phase = null;
+    store.state.controlTeam = null;
+    store.state.topCard = "devices";
+    // Naprawiona luka (znaleziona diagnostyką [e2e-diag-state] powyżej):
+    // commit() MUSI iść zaraz PO mutacji, bez żadnego await pomiędzy --
+    // store.js's commit() czyta state.step/topCard/... SYNCHRONICZNIE, W
+    // MOMENCIE WYWOŁANIA, nie w momencie mutacji. Poprzednia wersja robiła
+    // await sb().from("games").select(...) PRZED commit() -- w tym oknie
+    // (realny network round-trip) potrafiło się dokończyć INNE, już
+    // wcześniej w locie będące potwierdzenie zapisu (np. przejście
+    // "Gotowe" -> r_intro, którego commitNow() wciąż czekał na sieć),
+    // którego applyRow() nadpisywało state.step z powrotem na "r_intro" --
+    // więc gdy restartGame() W KOŃCU wołał commit(), payload budował się
+    // już z NADPISANEGO, złego state.step, i cały reset ginął bez śladu
+    // błędu (na żywo: "Zacznij od nowa" zostawał na starym ekranie).
+    // Rozwiązanie: dwa OSOBNE commity -- najpierw reset (zero await
+    // pomiędzy mutacją a commit()), dopiero PO nim (na już bezpiecznie
+    // zapisanym stanie) odśwież i dograj games.settings drugim commitem.
+    await store.commit();
+    // D3 znów pokaże podsumowanie games.settings (drużyny/finał/pytania) —
+    // odśwież je z bazy, bo mogły się zmienić od czasu wejścia w Control.
+    try {
+      const { data: freshGame } = await sb().from("games").select("settings").eq("id", gameId).single();
+      applyGameSettingsToState(freshGame?.settings, store.state);
+      await store.commit();
+    } catch (e) {
+      console.warn("[control2] odświeżenie games.settings po 'Zacznij od nowa' nie powiodło się:", e);
     }
+  }
+  // Przez handle(), NIE bezpośrednio restartGame -- jedyny try/catch (linia
+  // ~887, alert() na błąd) chroni WYŁĄCZNIE wywołania idące przez handle()
+  // (np. action==="game.restart" z ekranu końca gry). Bezpośredni listener
+  // na restartGame nie miał żadnej ochrony: jeśli store.commit() rzuci
+  // (np. stale_write po wyczerpaniu retry, tuż po serii innych świeżych
+  // zapisów), to nieobsłużone odrzucenie Promise z asynchronicznego
+  // event listenera -- operator zostaje bez żadnego komunikatu, ciągle na
+  // starym ekranie, z zerowym śladem w UI, że coś się nie udało (znalezione
+  // przy diagnozie e2e: "Zacznij od nowa" → "Tak" nie wracał do D0, bez
+  // żadnego widocznego błędu).
+  btnStartOver?.addEventListener("click", () => { handle("game.restart"); });
+
+  store.subscribe(renderCurrent);
+  completionUIReady = true;
+  renderCurrent();
+
+  // TYMCZASOWA diagnostyka (do usunięcia po znalezieniu przyczyny testów
+  // control2 utykających na "Rozpocznij grę" mimo game_state_write
+  // zwracającego 200) -- loguje KAŻDĄ zmianę store.state (własny commit
+  // ALBO cudzy hydrate() z dzwonka) z realnym stemplem czasu, żeby
+  // rozstrzygnąć czy store.state.step faktycznie dochodzi do
+  // "r_roundStart" lokalnie (bug w renderze) czy nigdy tam nie dociera
+  // (bug wcześniej w łańcuchu -- advance()/commit()/handle()).
+  store.subscribe((s) => {
+    console.log(`[e2e-diag-state] t=${Date.now()} step=${s.step} phase=${s.phase} rev=${s.rev} topCard=${s.topCard} totals=${JSON.stringify(s.rounds?.totals)} roundNo=${s.rounds?.roundNo} xA=${s.rounds?.xA}`);
   });
-
-
-    // ROUNDS
-  ui.on("game.startIntro", async () => {
-    if (!store.state.locks.gameStarted) {
-      store.setGameStarted(true);
-      sessionStart(game.id);
-      await rounds.stateGameReady();
-    }
-    await rounds.stateStartGameIntro();
-  });
-
-  ui.on("rounds.start", async () => {
-    await rounds.startRound();
-  });
-
-  // duel
-  ui.on("buzz.enable", () => rounds.enableBuzzerDuel());
-  ui.on("buzz.retry", () => {
-    if (store.state.flags.physicalBuzzer) rounds.confirmPhysicalTeam();
-    else rounds.retryDuel();
-  });
-  ui.on("buzz.acceptA", () => {
-    if (store.state.flags.physicalBuzzer) rounds.physicalSelectTeam("A");
-    else rounds.acceptBuzz("A");
-  });
-  ui.on("buzz.acceptB", () => {
-    if (store.state.flags.physicalBuzzer) rounds.physicalSelectTeam("B");
-    else rounds.acceptBuzz("B");
-  });
-
-  // play
-  ui.on("rounds.pass", () => rounds.passQuestion());
-  ui.on("rounds.timer3", () => rounds.startTimer3());
-  ui.on("rounds.answerClick", (ord) => rounds.revealAnswerByOrd(ord));
-  ui.on("rounds.addX", () => rounds.addX());
-  ui.on("rounds.goEnd", () => rounds.goEndRound());
-
-  // odsłanianie pozostałych odpowiedzi
-  ui.on("rounds.showReveal", () => rounds.showRevealLeft());
-  ui.on("rounds.revealClick", (ord) => rounds.revealLeftByOrd(ord));
-  ui.on("rounds.revealDone", () => rounds.revealDone());
-  ui.on("rounds.gameEndShow", () => rounds.gameEndShow());
-
-  // FINAL (runtime – nie picker)
-  final.bootIfNeeded();
-
-  ui.on("final.start", () => final.startFinal());
-  ui.on("final.back", (card) => store.setActiveCard(card));
-  ui.on("final.backStep", (step) => final.backTo(step));
-
-  ui.on("final.p1.timerStart", () => final.p1StartTimer());
-  ui.on("final.p1.toQ", (n) => final.toP1MapQ(n));
-  ui.on("final.p1.nextQ", (n) => final.nextFromP1Q(n));
-
-  ui.on("final.p2.start", () => final.startP2Round());
-  ui.on("final.repeatTest", () => {
-    playSfx("answer_repeat");
-  });
-
-  ui.on("final.p2.timerStart", () => final.p2StartTimer());
-  ui.on("final.p2.toQ", (n) => final.toP2MapQ(n));
-  ui.on("final.p2.nextQ", (n) => final.nextFromP2Q(n));
-
-  ui.on("final.finish", () => final.finishFinal());
-
-  ui.setRoundsStep(
-    store.state.rounds.phase === "IDLE" || store.state.rounds.phase === "READY"
-      ? "READY"
-      : store.state.rounds.phase === "INTRO"
-      ? "INTRO"
-      : "ROUND"
-  );
-
-  // boot view state
-  ui.setQrToggleLabel(
-    store.state.flags.qrOnDisplay,
-    store.state.flags.displayOnline && store.state.flags.buzzerOnline
-  );
 }
-
-function showGlobalError(msg) {
-  const bar = document.getElementById("alertBar");
-  const txt = document.getElementById("alertTxt");
-  if (txt) txt.textContent = msg;
-  bar?.classList.remove("hidden");
-}
-
-window.addEventListener("unhandledrejection", (ev) => {
-  const msg = ev.reason?.message || String(ev.reason ?? "Nieznany błąd");
-  console.error("[unhandled]", msg);
-  showGlobalError(msg);
-  sessionLogError(msg);
-});
 
 main().catch((e) => {
-  document.documentElement.classList.remove('page-loading');
-  console.error(e);
-  const el = document.getElementById("msgSide");
-  if (el) el.textContent = e?.message || String(e);
-  showGlobalError(e?.message || String(e));
-  if (e?._notFound) {
-    setTimeout(() => { location.href = "/games/?tab=market"; }, 3000);
-  }
+  console.error("[control2] błąd startu:", e);
+  const root = document.getElementById("app");
+  if (root) root.textContent = `Błąd startu: ${e.message || e}`;
 });

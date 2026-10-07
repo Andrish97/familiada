@@ -2,7 +2,7 @@ const { test, expect } = require("@playwright/test");
 const ua = "Mozilla/5.0 (SMART-TV; LINUX; Tizen 6.0) AppleWebKit/537.36 TV Safari/537.36";
 test.use({ locale: "pl-PL", userAgent: ua, viewport: { width: 1920, height: 1080 } });
 test("TV: każda strona kieruje do samego kodu, bez logowania", async ({ page }, testInfo) => {
-  for (const path of ["/", "/login/", "/games/", "/control/", "/control2/", "/host2/?id=x&key=y", "/buzzer/?id=x&key=y"]) {
+  for (const path of ["/", "/login/", "/games/", "/control/", "/control/", "/host/?id=x&key=y", "/buzzer/?id=x&key=y"]) {
     await page.goto(path, { waitUntil: "domcontentloaded" });
     await expect(page.locator("#tvCode")).toBeVisible();
     await expect(page.locator("#tvCode")).toBeFocused();

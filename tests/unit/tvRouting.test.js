@@ -7,12 +7,12 @@ function redirect(path, headers = {}, method = "GET") {
   return tvRedirect(new Request(url, { method, headers: { "user-agent": ua, accept: "text/html", ...headers } }), url);
 }
 test("TV routes every website page to code entry, including other device links", () => {
-  for (const path of ["/", "/login/", "/control/", "/control2/", "/games/", "/host/?id=a&key=b", "/buzzer2/?id=a&key=b", "/display2/?preview=1", "/missing.html"]) {
+  for (const path of ["/", "/login/", "/control/", "/control/", "/games/", "/host/?id=a&key=b", "/buzzer/?id=a&key=b", "/display/?preview=1", "/missing.html"]) {
     assert.equal(redirect(path)?.headers.get("location"), "https://www.familiada.online/connect-device/?tv=1");
   }
 });
 test("TV accepts Display and code page without loops but redirects missing credentials", () => {
-  for (const path of ["/connect-device/?tv=1", "/connect-device/index.html?tv=1", "/display/?id=a&key=b", "/display2/index.html?id=a&key=b", "/poll-qr/?id=a&key=b"]) assert.equal(redirect(path), null);
+  for (const path of ["/connect-device/?tv=1", "/connect-device/index.html?tv=1", "/display/?id=a&key=b", "/display/index.html?id=a&key=b", "/poll-qr/?id=a&key=b"]) assert.equal(redirect(path), null);
   assert.equal(redirect("/display/" )?.status, 302);
   assert.equal(redirect("/poll-qr/")?.status, 302);
   assert.equal(redirect("/poll-qr/?id=a&key=b&preview=1")?.status, 302);

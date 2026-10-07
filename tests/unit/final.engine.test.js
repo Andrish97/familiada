@@ -1,10 +1,10 @@
-// Testy silnika finału control2/js/engine.js (dispatch()) — pokrywają
+// Testy silnika finału control/js/engine.js (dispatch()) — pokrywają
 // tabelę B w planie przebudowy (F0-F14), włącznie z naprawioną luką "Host
 // odsłania się razem z Display" (plan, sekcja 2a).
 
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { createEngine } from "../../web/control2/js/engine.js";
+import { createEngine } from "../../web/control/js/engine.js";
 import { createFakeStore } from "./helpers/fakeStore.js";
 import { DEFAULT_SETTINGS } from "../../web/shared/js/gameplay/gameStateShape.js";
 import { resolveFinalEndScreen } from "../../web/shared/js/gameplay/endScreen.js";

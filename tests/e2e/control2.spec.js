@@ -1,4 +1,4 @@
-// tests/e2e/control2.spec.js
+// tests/e2e/control.spec.js
 //
 // Wszystkie testy E2E dla Control v2 w jednym pliku (na wyraźną prośbę —
 // jeden plik zamiast kilku). Kolejne test() bloki, od najprostszego do
@@ -35,9 +35,9 @@
 //       chwilowe mute w rundzie.
 //   13. Zmiana języka propaguje się do Hosta, w tym samą TREŚĆ tytułu fazy
 //       (nie tylko chrome strony) — regresja na dzisiejszą naprawę i18n.
-//   14. Modal ustawień gry (js/pages/game-settings2.js) — zmiana nazwy
+//   14. Modal ustawień gry (js/pages/game-settings.js) — zmiana nazwy
 //       drużyny faktycznie odświeża zagnieżdżony podgląd Wyświetlacza
-//       (/display2?preview=1) — regresja na naprawę martwego podglądu w
+//       (/display?preview=1) — regresja na naprawę martwego podglądu w
 //       trybie modalu.
 //   15. Blokada logo — Control czeka, aż logo-editor.js zwolni logo
 //       referencowane przez grę, wznawia się sam po zwolnieniu.
@@ -56,7 +56,7 @@
 // można je uruchamiać pojedynczo (--grep) przy diagnozowaniu awarii.
 //
 // Obserwowalność dźwięku/Display: js/core/sfx.js's playSfx() zapisuje każde
-// odtworzenie do window.__sfxLog, a display2/js/main.js owija scene.api tak,
+// odtworzenie do window.__sfxLog, a display/js/main.js owija scene.api tak,
 // że każde wywołanie (revealAnswerRow, setX, indicator.set, ...) ląduje w
 // window.__displayLog — obie instrumentacje istnieją WYŁĄCZNIE do tych
 // testów (patrz komentarze przy ich definicjach), zero wpływu na normalne
@@ -91,12 +91,12 @@ test("control2: TV odrzuca inne urządzenia, kod display otwiera nowy Wyświetla
     }
     await tv.locator("#tvCode").fill(codes.display);
     await tv.locator("#tvCode").press("Enter");
-    await expect.poll(() => new URL(tv.url()).pathname).toBe("/display2/");
+    await expect.poll(() => new URL(tv.url()).pathname).toBe("/display/");
     expect(new URL(tv.url()).searchParams.get("id")).toBe(game.id);
     await expect(tv.locator("#fsBtn")).toBeVisible();
     // The new Display remains directly accessible; its sound prompt works with TV OK.
-    await tv.goto(`https://www.familiada.online/display2/?id=${game.id}&key=${game.share_key_display}`);
-    await page.goto(`/control2?id=${game.id}`);
+    await tv.goto(`https://www.familiada.online/display/?id=${game.id}&key=${game.share_key_display}`);
+    await page.goto(`/control?id=${game.id}`);
     await expect(page.locator(".stepTitle")).toHaveText("Urządzenia", { timeout: 15000 });
     await page.locator('.toggle-item:has(input[name="soundSource"][value="display"])').click();
     await expect(tv.locator("#audioUnlockScreen")).toBeVisible({ timeout: 15000 });
@@ -113,8 +113,8 @@ test("control2: własne outro ponad 30 sekund — ustawienia, zapis i podsumowan
   const game = await makeGame(page, `E2E-CONTROL2-CUSTOM-OUTRO-${Date.now()}`, { roundQuestions: [TWO_QUESTIONS[0]] });
   const contexts = [];
   try {
-    await openAnon(browser, contexts, `/display2?id=${game.id}&key=${game.share_key_display}`, "display", []);
-    await page.goto(`/control2?id=${game.id}`, { waitUntil: "domcontentloaded" });
+    await openAnon(browser, contexts, `/display?id=${game.id}&key=${game.share_key_display}`, "display", []);
+    await page.goto(`/control?id=${game.id}`, { waitUntil: "domcontentloaded" });
     await expect(page.locator(".stepTitle")).toHaveText("Urządzenia", { timeout: 15000 });
     await page.getByLabel("Przycisk fizyczny").check();
     await page.getByLabel("Nie używaj tabletu prowadzącego").check();
@@ -206,7 +206,7 @@ async function waitForSfxSequence(page, keys, timeout = 15000) {
 }
 
 // Jak wyżej, ale bez wymogu kolejności — używane dla playSyncedCombo()
-// (control2/js/soundReactor.js), gdzie o tym, KTÓRY klucz gra pierwszy,
+// (control/js/soundReactor.js), gdzie o tym, KTÓRY klucz gra pierwszy,
 // decyduje realny czas trwania pliku audio (dłuższy zaczyna pierwszy),
 // nie kolejność argumentów — asercja na sztywną kolejność byłaby fałszywie
 // krucha względem samych plików dźwiękowych, nie logiki gry.
@@ -221,7 +221,7 @@ async function clearDisplayLog(displayPage) {
   await displayPage.evaluate(() => { window.__displayLog = []; });
 }
 
-// Kafelki odpowiedzi w Rundach (control2/js/ui.js's renderRounds()) nie
+// Kafelki odpowiedzi w Rundach (control/js/ui.js's renderRounds()) nie
 // pokazują już "#N" — pokazują prawdziwy tekst odpowiedzi (i zmieniają się
 // po odsłonięciu), więc nie da się ich stabilnie wybrać po treści. Kolejność
 // w DOM jest za to stała: renderRounds() dopisuje kafelki odpowiedzi do
@@ -234,7 +234,7 @@ function answerTile(page, n) {
 }
 
 // Odpowiedź/X/"Oddaj kontrolę" idą przez zaznacz -> potwierdź
-// (control2/js/ui.js's armableTile): pierwsze kliknięcie tylko uzbraja
+// (control/js/ui.js's armableTile): pierwsze kliknięcie tylko uzbraja
 // (złota obwódka, zero zapisu — czysto lokalny "ui.rerender", bez sieci),
 // drugie na TYM SAMYM elemencie faktycznie wysyła akcję (game.dispatch ->
 // zapis do bazy). Locator jest "żywy" (przeliczany przy każdym użyciu),
@@ -321,7 +321,7 @@ async function clickX(page) {
   await armAndConfirm(xTile(page));
 }
 
-// Symuluje gest przesunięcia (peek) na Hoście — host2/js/main.js's
+// Symuluje gest przesunięcia (peek) na Hoście — host/js/main.js's
 // setupPeekSwipe(): pointerdown -> pointerup w odległości >= 60px, lokalnie
 // pokazuje treść pod zasłoną pasma 2, BEZ żadnego zapisu do game_state.
 // Ten sam helper co tests/e2e/record-playthrough.js's hostPeekSwipe
@@ -368,10 +368,10 @@ test("control2: intro logo i natychmiastowe światło Buzzera przed wysyłką", 
   const contexts = [], errors = [];
   let releasePress;
   try {
-    const displayPage = await openAnon(browser, contexts, `/display2?id=${game.id}&key=${game.share_key_display}`, "display", errors);
-    await openAnon(browser, contexts, `/host2?id=${game.id}&key=${game.share_key_host}`, "host", errors);
-    const buzzerPage = await openAnon(browser, contexts, `/buzzer2?id=${game.id}&key=${game.share_key_buzzer}`, "buzzer", errors);
-    await page.goto(`/control2?id=${game.id}`, { waitUntil: "domcontentloaded" });
+    const displayPage = await openAnon(browser, contexts, `/display?id=${game.id}&key=${game.share_key_display}`, "display", errors);
+    await openAnon(browser, contexts, `/host?id=${game.id}&key=${game.share_key_host}`, "host", errors);
+    const buzzerPage = await openAnon(browser, contexts, `/buzzer?id=${game.id}&key=${game.share_key_buzzer}`, "buzzer", errors);
+    await page.goto(`/control?id=${game.id}`, { waitUntil: "domcontentloaded" });
     await expect(displayPage.locator("#blackScreen")).toBeVisible();
     await page.getByRole("button", { name: "Dalej", exact: true }).click();
     await expect(displayPage.locator("#blackScreen")).toBeVisible();
@@ -619,20 +619,20 @@ test("control2: parowanie urządzeń — linki renderują się bez błędu, Cont
   const game = await makeGame(page, `E2E-CONTROL2-PAIRING-${Date.now()}`);
   const contexts = [];
   try {
-    await page.goto(`/control2?id=${game.id}`, { waitUntil: "domcontentloaded" });
+    await page.goto(`/control?id=${game.id}`, { waitUntil: "domcontentloaded" });
     await expect(page.locator(".stepTitle")).toHaveText("Urządzenia", { timeout: 15000 });
 
     const errors = [];
-    const displayPage = await openAnon(browser, contexts, `/display2?id=${game.id}&key=${game.share_key_display}`, "display", errors);
+    const displayPage = await openAnon(browser, contexts, `/display?id=${game.id}&key=${game.share_key_display}`, "display", errors);
     // Nowa gra: żaden wiersz game_state jeszcze nie istnieje, więc Display
     // powinien zostać na czarnym ekranie bez błędu — "wznowienie/pierwsze
     // wejście bez specjalnego przypadku" z planu.
     await expect(displayPage.locator("#blackScreen")).not.toHaveClass(/hidden/, { timeout: 10000 });
 
-    const hostPage = await openAnon(browser, contexts, `/host2?id=${game.id}&key=${game.share_key_host}`, "host", errors);
+    const hostPage = await openAnon(browser, contexts, `/host?id=${game.id}&key=${game.share_key_host}`, "host", errors);
     await expect(hostPage.locator("#paperText1")).toBeVisible({ timeout: 10000 });
 
-    const buzzerPage = await openAnon(browser, contexts, `/buzzer2?id=${game.id}&key=${game.share_key_buzzer}`, "buzzer", errors);
+    const buzzerPage = await openAnon(browser, contexts, `/buzzer?id=${game.id}&key=${game.share_key_buzzer}`, "buzzer", errors);
     await expect(buzzerPage.locator("#offScreen")).toBeVisible({ timeout: 10000 });
 
     // Wszystkie 3 urządzenia na JEDNYM ekranie (dokładnie jak stary
@@ -670,12 +670,12 @@ test("control2: pełna runda przez 4 urządzenia + wznowienie Control po przeła
   const errors = [];
   try {
     trackErrors(page, "control", errors);
-    await page.goto(`/control2?id=${game.id}`, { waitUntil: "domcontentloaded" });
+    await page.goto(`/control?id=${game.id}`, { waitUntil: "domcontentloaded" });
     await expect(page.locator(".stepTitle")).toHaveText("Urządzenia", { timeout: 15000 });
 
-    await openAnon(browser, contexts, `/display2?id=${game.id}&key=${game.share_key_display}`, "display", errors);
-    const hostPage = await openAnon(browser, contexts, `/host2?id=${game.id}&key=${game.share_key_host}`, "host", errors);
-    const buzzerPage = await openAnon(browser, contexts, `/buzzer2?id=${game.id}&key=${game.share_key_buzzer}`, "buzzer", errors);
+    await openAnon(browser, contexts, `/display?id=${game.id}&key=${game.share_key_display}`, "display", errors);
+    const hostPage = await openAnon(browser, contexts, `/host?id=${game.id}&key=${game.share_key_host}`, "host", errors);
+    const buzzerPage = await openAnon(browser, contexts, `/buzzer?id=${game.id}&key=${game.share_key_buzzer}`, "buzzer", errors);
 
     await page.getByRole("button", { name: "Dalej" }).click();
     await expect(page.locator(".stepTitle")).toHaveText("Podsumowanie", { timeout: 10000 });
@@ -750,12 +750,12 @@ test("control2: reset pojedynku, pass, kradzież wygrana/przegrana, odkrywanie r
   const errors = [];
   try {
     trackErrors(page, "control", errors);
-    await page.goto(`/control2?id=${game.id}`, { waitUntil: "domcontentloaded" });
+    await page.goto(`/control?id=${game.id}`, { waitUntil: "domcontentloaded" });
     await expect(page.locator(".stepTitle")).toHaveText("Urządzenia", { timeout: 15000 });
 
-    const buzzerPage = await openAnon(browser, contexts, `/buzzer2?id=${game.id}&key=${game.share_key_buzzer}`, "buzzer", errors);
-    const displayPage = await openAnon(browser, contexts, `/display2?id=${game.id}&key=${game.share_key_display}`, "display", errors);
-    await openAnon(browser, contexts, `/host2?id=${game.id}&key=${game.share_key_host}`, "host", errors);
+    const buzzerPage = await openAnon(browser, contexts, `/buzzer?id=${game.id}&key=${game.share_key_buzzer}`, "buzzer", errors);
+    const displayPage = await openAnon(browser, contexts, `/display?id=${game.id}&key=${game.share_key_display}`, "display", errors);
+    await openAnon(browser, contexts, `/host?id=${game.id}&key=${game.share_key_host}`, "host", errors);
 
     await page.getByRole("button", { name: "Dalej" }).click();
     await expect(page.locator(".stepTitle")).toHaveText("Podsumowanie", { timeout: 10000 });
@@ -797,7 +797,7 @@ test("control2: reset pojedynku, pass, kradzież wygrana/przegrana, odkrywanie r
     // DOSŁOWNIE w momencie dźwięku końca rundy — nie dopiero przy starcie
     // NASTĘPNEJ rundy. Sprawdzone TU, W TRAKCIE R8 (jeszcze przed
     // odsłonięciem #3), żeby złapać regresję na wcześniejszy brak
-    // jakiejkolwiek obsługi tego przejścia w display2/js/render.js.
+    // jakiejkolwiek obsługi tego przejścia w display/js/render.js.
     await expect.poll(async () => {
       const calls = await getDisplayCalls(displayPage, "api.small.rightDigits");
       return calls.at(-1)?.args?.[0];
@@ -884,11 +884,11 @@ test("control2: próg w rundzie -> finał, wczesne zakończenie po 4/5 pytaniach
   const errors = [];
   try {
     trackErrors(page, "control", errors);
-    const buzzerPage = await openAnon(browser, contexts, `/buzzer2?id=${game.id}&key=${game.share_key_buzzer}`, "buzzer", errors);
-    const displayPage = await openAnon(browser, contexts, `/display2?id=${game.id}&key=${game.share_key_display}`, "display", errors);
-    await openAnon(browser, contexts, `/host2?id=${game.id}&key=${game.share_key_host}`, "host", errors);
+    const buzzerPage = await openAnon(browser, contexts, `/buzzer?id=${game.id}&key=${game.share_key_buzzer}`, "buzzer", errors);
+    const displayPage = await openAnon(browser, contexts, `/display?id=${game.id}&key=${game.share_key_display}`, "display", errors);
+    await openAnon(browser, contexts, `/host?id=${game.id}&key=${game.share_key_host}`, "host", errors);
 
-    await page.goto(`/control2?id=${game.id}`, { waitUntil: "domcontentloaded" });
+    await page.goto(`/control?id=${game.id}`, { waitUntil: "domcontentloaded" });
     await expect(page.locator(".stepTitle")).toHaveText("Urządzenia", { timeout: 15000 });
     await page.getByRole("button", { name: "Dalej" }).click();
     await expect(page.locator(".stepTitle")).toHaveText("Podsumowanie", { timeout: 10000 });
@@ -1002,11 +1002,11 @@ test("control2: physicalBuzzer + noHostTablet — urządzenia pominięte, ręczn
     // control/js/app.js's requiredOnline) — więc nawet w tym scenariuszu
     // (host+buzzer pominięte) trzeba go realnie podłączyć, inaczej "Dalej"
     // zostaje trwale zablokowane.
-    await openAnon(browser, contexts, `/display2?id=${game.id}&key=${game.share_key_display}`, "display", []);
-    const hostPage = await openAnon(browser, contexts, `/host2?id=${game.id}&key=${game.share_key_host}`, "host", []);
-    const buzzerPage = await openAnon(browser, contexts, `/buzzer2?id=${game.id}&key=${game.share_key_buzzer}`, "buzzer", []);
+    await openAnon(browser, contexts, `/display?id=${game.id}&key=${game.share_key_display}`, "display", []);
+    const hostPage = await openAnon(browser, contexts, `/host?id=${game.id}&key=${game.share_key_host}`, "host", []);
+    const buzzerPage = await openAnon(browser, contexts, `/buzzer?id=${game.id}&key=${game.share_key_buzzer}`, "buzzer", []);
 
-    await page.goto(`/control2?id=${game.id}`, { waitUntil: "domcontentloaded" });
+    await page.goto(`/control?id=${game.id}`, { waitUntil: "domcontentloaded" });
     await expect(page.locator(".stepTitle")).toHaveText("Urządzenia", { timeout: 15000 });
     await expect(page.locator("#dotDisplay")).toHaveClass(/\bok\b/, { timeout: 15000 });
 
@@ -1099,11 +1099,11 @@ test("control2: \"Zacznij od nowa\" w trakcie gry wraca do D0", async ({ page, b
     // Prowadzący/Przycisk bez opt-outu tutaj) -- bez pełnego sparowania
     // zostaje trwale disabled, a goły .click() wisi do końca budżetu testu
     // (150s), zamiast szybko failować z jasnym powodem.
-    const displayPage = await openAnon(browser, contexts, `/display2?id=${game.id}&key=${game.share_key_display}`, "display", []);
-    await openAnon(browser, contexts, `/host2?id=${game.id}&key=${game.share_key_host}`, "host", []);
-    await openAnon(browser, contexts, `/buzzer2?id=${game.id}&key=${game.share_key_buzzer}`, "buzzer", []);
+    const displayPage = await openAnon(browser, contexts, `/display?id=${game.id}&key=${game.share_key_display}`, "display", []);
+    await openAnon(browser, contexts, `/host?id=${game.id}&key=${game.share_key_host}`, "host", []);
+    await openAnon(browser, contexts, `/buzzer?id=${game.id}&key=${game.share_key_buzzer}`, "buzzer", []);
 
-    await page.goto(`/control2?id=${game.id}`, { waitUntil: "domcontentloaded" });
+    await page.goto(`/control?id=${game.id}`, { waitUntil: "domcontentloaded" });
     await expect(page.locator(".stepTitle")).toHaveText("Urządzenia", { timeout: 15000 });
     await expect(page.locator("#dotDisplay")).toHaveClass(/\bok\b/, { timeout: 15000 });
     await expect(page.locator("#dotHost")).toHaveClass(/\bok\b/, { timeout: 15000 });
@@ -1151,13 +1151,13 @@ test("control2: druga karta Control na tę samą grę jest zablokowana (resource
   await loginAsPooledTestUser(page, context, testInfo.parallelIndex);
   const game = await makeGame(page, `E2E-CONTROL2-LOCK-${Date.now()}`);
   try {
-    await page.goto(`/control2?id=${game.id}`, { waitUntil: "domcontentloaded" });
+    await page.goto(`/control?id=${game.id}`, { waitUntil: "domcontentloaded" });
     await expect(page.locator(".stepTitle")).toHaveText("Urządzenia", { timeout: 15000 });
 
     // Druga karta (ta sama sesja/konto, INNY tab_id — sessionStorage nie
     // jest dzielony między kartami) musi zobaczyć overlay blokady.
     const secondTab = await context.newPage();
-    await secondTab.goto(`/control2?id=${game.id}`, { waitUntil: "domcontentloaded" });
+    await secondTab.goto(`/control?id=${game.id}`, { waitUntil: "domcontentloaded" });
     await expect(secondTab.locator("#resourceLockGuard")).toBeVisible({ timeout: 15000 });
     await expect(secondTab.locator(".stepTitle")).toHaveCount(0);
     await secondTab.close();
@@ -1169,7 +1169,7 @@ test("control2: druga karta Control na tę samą grę jest zablokowana (resource
 // ===== 8. QR host/buzzer niezależne na Display =====
 
 // Przycisk "QR na wyświetlaczu"/"Ukryj QR" żyje wewnątrz `.device-row` dla
-// danego urządzenia (control2/js/ui.js's deviceRow()) — po każdym kliknięciu
+// danego urządzenia (control/js/ui.js's deviceRow()) — po każdym kliknięciu
 // etykieta się przełącza, więc kolejne wywołanie tej funkcji z tym samym
 // `kind` musi na nowo odnaleźć przycisk po AKTUALNEJ etykiecie (stąd `wantOn`
 // — czy oczekujemy stanu "wyłączony -> włącz" czy odwrotnie), a nie polegać
@@ -1184,7 +1184,7 @@ function qrToggleBtn(page, kind, wantOn) {
 }
 
 // Krok 1: brak QR w ogóle -> mode="BLACK" -> #qrScreen ukryty CAŁKOWICIE
-// (nie samo puste .qr-grid) — control2/js/app.js's syncQrDisplay() ustawia
+// (nie samo puste .qr-grid) — control/js/app.js's syncQrDisplay() ustawia
 // display.mode="QR" TYLKO gdy chociaż jedno z dwóch jest show:true, inaczej
 // wraca do "BLACK". Ta asercja dowodzi, że wyłączenie OBU naraz faktycznie
 // gasi cały ekran QR na Display, nie zostawia go widocznego z pustą siatką.
@@ -1211,9 +1211,9 @@ test("control2: QR na wyświetlaczu — host i buzzer niezależne, każdy z osob
   const game = await makeGame(page, `E2E-CONTROL2-DUALQR-${Date.now()}`);
   const contexts = [];
   try {
-    const displayPage = await openAnon(browser, contexts, `/display2?id=${game.id}&key=${game.share_key_display}`, "display", []);
+    const displayPage = await openAnon(browser, contexts, `/display?id=${game.id}&key=${game.share_key_display}`, "display", []);
 
-    await page.goto(`/control2?id=${game.id}`, { waitUntil: "domcontentloaded" });
+    await page.goto(`/control?id=${game.id}`, { waitUntil: "domcontentloaded" });
     await expect(page.locator(".stepTitle")).toHaveText("Urządzenia", { timeout: 15000 });
 
     // Stan początkowy: żaden QR nie jest jeszcze pokazany.
@@ -1289,11 +1289,11 @@ test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśni�
   const errors = [];
   try {
     trackErrors(page, "control", errors);
-    const buzzerPage = await openAnon(browser, contexts, `/buzzer2?id=${game.id}&key=${game.share_key_buzzer}`, "buzzer", errors);
-    const displayPage = await openAnon(browser, contexts, `/display2?id=${game.id}&key=${game.share_key_display}`, "display", errors);
-    const hostPage = await openAnon(browser, contexts, `/host2?id=${game.id}&key=${game.share_key_host}`, "host", errors);
+    const buzzerPage = await openAnon(browser, contexts, `/buzzer?id=${game.id}&key=${game.share_key_buzzer}`, "buzzer", errors);
+    const displayPage = await openAnon(browser, contexts, `/display?id=${game.id}&key=${game.share_key_display}`, "display", errors);
+    const hostPage = await openAnon(browser, contexts, `/host?id=${game.id}&key=${game.share_key_host}`, "host", errors);
 
-    await page.goto(`/control2?id=${game.id}`, { waitUntil: "domcontentloaded" });
+    await page.goto(`/control?id=${game.id}`, { waitUntil: "domcontentloaded" });
     await expect(page.locator(".stepTitle")).toHaveText("Urządzenia", { timeout: 15000 });
     await page.getByRole("button", { name: "Dalej" }).click();
     await expect(page.locator(".stepTitle")).toHaveText("Podsumowanie", { timeout: 10000 });
@@ -1345,7 +1345,7 @@ test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśni�
     await p1Inputs.nth(0).focus();
     await page.keyboard.press("Control+Enter");
     await expect(page.locator('[data-timer-role="final"]')).toBeVisible();
-    // Bez klikania niczego: dograny dziś zegarek w control2/js/app.js sam
+    // Bez klikania niczego: dograny dziś zegarek w control/js/app.js sam
     // dispatch'uje EXPIRE_TIMER po 15s. Zegarek jest jednorazowy (usedP1) —
     // kafel wraca WIDOCZNY (jak w starym Control), ale pokazuje "Czas
     // wykorzystany" i jest ZABLOKOWANY, bo nie da się go odpalić drugi raz
@@ -1416,12 +1416,12 @@ test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśni�
     // Formalna asercja samego gestu "peek" (dotąd demonstrowana TYLKO w
     // tests/e2e/record-playthrough.js, bez pokrycia w tym pliku, zgłoszone):
     // Host odsłania się lokalnie po geście, BEZ żadnej zmiany w game_state
-    // (host2/js/render.js's `peeked`), i zasłona wraca sama przy KOLEJNEJ
+    // (host/js/render.js's `peeked`), i zasłona wraca sama przy KOLEJNEJ
     // zmianie stanu gry (nie trzeba nic specjalnie robić, żeby ją przywrócić).
     //
     // ZNALEZIONY PRZY OKAZJI REALNY BUG (nie tylko testu -- diagnostyka
     // pokazała klasę #cover2 nigdy się nie zmieniającą po geście):
-    // host2/js/main.js's setupPeekSwipe wołało
+    // host/js/main.js's setupPeekSwipe wołało
     // `renderer.setPeek(!renderer.isCovered())`. isCovered() = authoritative
     // Covered && !peeked -- na starcie gestu (zasłonięte, peeked=false)
     // isCovered() JUŻ zwraca true, więc !isCovered()=false -> setPeek(false)
@@ -1473,7 +1473,7 @@ test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśni�
     await armAndConfirm(page.getByRole("button", { name: "Rozpocznij odliczanie (20s)" }));
     // Zgłoszone: "po drugiej rundzie finału nawet nie czeka na koniec
     // timera i przechodzi dalej" — "Dalej" jest teraz zablokowany, dopóki
-    // zegarek TEJ rundy aktywnie odlicza (control2/js/ui.js's
+    // zegarek TEJ rundy aktywnie odlicza (control/js/ui.js's
     // renderFinalEntry) — nie da się już przerwać go tym przyciskiem.
     // Zatrzymujemy więc legalnie, przez sam kafel zegarka (wszystkie pola
     // gracza 2 już wypełnione/oznaczone powtórzeniem, więc wczesne
@@ -1573,10 +1573,10 @@ test("control2: mnożnik rundy — runda 4. z domyślnym ×2 faktycznie przemna�
   });
   const contexts = [];
   try {
-    const buzzerPage = await openAnon(browser, contexts, `/buzzer2?id=${game.id}&key=${game.share_key_buzzer}`, "buzzer", []);
-    await openAnon(browser, contexts, `/display2?id=${game.id}&key=${game.share_key_display}`, "display", []);
-    await openAnon(browser, contexts, `/host2?id=${game.id}&key=${game.share_key_host}`, "host", []);
-    await page.goto(`/control2?id=${game.id}`, { waitUntil: "domcontentloaded" });
+    const buzzerPage = await openAnon(browser, contexts, `/buzzer?id=${game.id}&key=${game.share_key_buzzer}`, "buzzer", []);
+    await openAnon(browser, contexts, `/display?id=${game.id}&key=${game.share_key_display}`, "display", []);
+    await openAnon(browser, contexts, `/host?id=${game.id}&key=${game.share_key_host}`, "host", []);
+    await page.goto(`/control?id=${game.id}`, { waitUntil: "domcontentloaded" });
     await expect(page.locator(".stepTitle")).toHaveText("Urządzenia", { timeout: 15000 });
     await expect(page.locator("#dotDisplay")).toHaveClass(/\bok\b/, { timeout: 15000 });
     await expect(page.locator("#dotHost")).toHaveClass(/\bok\b/, { timeout: 15000 });
@@ -1628,10 +1628,10 @@ test("control2: wyścig — oba przyciski Buzzera naciśnięte w tej samej chwil
   const game = await makeGame(page, `E2E-CONTROL2-BUZZRACE-${Date.now()}`, { roundQuestions: [TWO_QUESTIONS[0]] });
   const contexts = [];
   try {
-    const buzzerPage = await openAnon(browser, contexts, `/buzzer2?id=${game.id}&key=${game.share_key_buzzer}`, "buzzer", []);
-    await openAnon(browser, contexts, `/display2?id=${game.id}&key=${game.share_key_display}`, "display", []);
-    await openAnon(browser, contexts, `/host2?id=${game.id}&key=${game.share_key_host}`, "host", []);
-    await page.goto(`/control2?id=${game.id}`, { waitUntil: "domcontentloaded" });
+    const buzzerPage = await openAnon(browser, contexts, `/buzzer?id=${game.id}&key=${game.share_key_buzzer}`, "buzzer", []);
+    await openAnon(browser, contexts, `/display?id=${game.id}&key=${game.share_key_display}`, "display", []);
+    await openAnon(browser, contexts, `/host?id=${game.id}&key=${game.share_key_host}`, "host", []);
+    await page.goto(`/control?id=${game.id}`, { waitUntil: "domcontentloaded" });
     await expect(page.locator(".stepTitle")).toHaveText("Urządzenia", { timeout: 15000 });
     await expect(page.locator("#dotDisplay")).toHaveClass(/\bok\b/, { timeout: 15000 });
     await expect(page.locator("#dotHost")).toHaveClass(/\bok\b/, { timeout: 15000 });
@@ -1660,7 +1660,7 @@ test("control2: wyścig — oba przyciski Buzzera naciśnięte w tej samej chwil
     const loser = winner === "A" ? "B" : "A";
     const winnerName = winner === "A" ? "Alfa" : "Beta";
 
-    // buzzer2/js/render.js's deriveButtonState czyta duel.firstTeam, nie
+    // buzzer/js/render.js's deriveButtonState czyta duel.firstTeam, nie
     // duel.lastPressed — a firstTeam ustawia dopiero ACCEPT_BUZZ (Control
     // klika "Zatwierdź: X"). Bez tego kliknięcia Buzzer zostaje w STATE.ON
     // (oba przyciski "dim") na zawsze — trzeba faktycznie przyjąć zgłoszenie,
@@ -1684,10 +1684,10 @@ test("control2: Ponów naciśnięcie — odrzuca błędne zgłoszenie, Buzzer ot
   const game = await makeGame(page, `E2E-CONTROL2-RETRYDUEL-${Date.now()}`, { roundQuestions: [TWO_QUESTIONS[0]] });
   const contexts = [];
   try {
-    const buzzerPage = await openAnon(browser, contexts, `/buzzer2?id=${game.id}&key=${game.share_key_buzzer}`, "buzzer", []);
-    await openAnon(browser, contexts, `/display2?id=${game.id}&key=${game.share_key_display}`, "display", []);
-    await openAnon(browser, contexts, `/host2?id=${game.id}&key=${game.share_key_host}`, "host", []);
-    await page.goto(`/control2?id=${game.id}`, { waitUntil: "domcontentloaded" });
+    const buzzerPage = await openAnon(browser, contexts, `/buzzer?id=${game.id}&key=${game.share_key_buzzer}`, "buzzer", []);
+    await openAnon(browser, contexts, `/display?id=${game.id}&key=${game.share_key_display}`, "display", []);
+    await openAnon(browser, contexts, `/host?id=${game.id}&key=${game.share_key_host}`, "host", []);
+    await page.goto(`/control?id=${game.id}`, { waitUntil: "domcontentloaded" });
     await expect(page.locator(".stepTitle")).toHaveText("Urządzenia", { timeout: 15000 });
     await expect(page.locator("#dotDisplay")).toHaveClass(/\bok\b/, { timeout: 15000 });
     await expect(page.locator("#dotHost")).toHaveClass(/\bok\b/, { timeout: 15000 });
@@ -1736,10 +1736,10 @@ test("control2: wyciszenie dźwięku — po Mute żaden klucz SFX się nie odtwa
   const game = await makeGame(page, `E2E-CONTROL2-MUTE-${Date.now()}`, { roundQuestions: [TWO_QUESTIONS[0]] });
   const contexts = [];
   try {
-    const buzzerPage = await openAnon(browser, contexts, `/buzzer2?id=${game.id}&key=${game.share_key_buzzer}`, "buzzer", []);
-    await openAnon(browser, contexts, `/display2?id=${game.id}&key=${game.share_key_display}`, "display", []);
-    await openAnon(browser, contexts, `/host2?id=${game.id}&key=${game.share_key_host}`, "host", []);
-    await page.goto(`/control2?id=${game.id}`, { waitUntil: "domcontentloaded" });
+    const buzzerPage = await openAnon(browser, contexts, `/buzzer?id=${game.id}&key=${game.share_key_buzzer}`, "buzzer", []);
+    await openAnon(browser, contexts, `/display?id=${game.id}&key=${game.share_key_display}`, "display", []);
+    await openAnon(browser, contexts, `/host?id=${game.id}&key=${game.share_key_host}`, "host", []);
+    await page.goto(`/control?id=${game.id}`, { waitUntil: "domcontentloaded" });
     await expect(page.locator(".stepTitle")).toHaveText("Urządzenia", { timeout: 15000 });
     await expect(page.locator("#dotDisplay")).toHaveClass(/\bok\b/, { timeout: 15000 });
     await expect(page.locator("#dotHost")).toHaveClass(/\bok\b/, { timeout: 15000 });
@@ -1785,10 +1785,10 @@ test("control2: wyciszenie dźwięku — po Mute żaden klucz SFX się nie odtwa
 // dźwięku (żeby nie dało się ich pomylić w asercjach): (a) modal "Zmień
 // ustawienia" -> games.settings.sound jako punkt wyjściowy, denormalizacja
 // do game_state dopiero po zamknięciu modala; (b) suwak BEZPOŚREDNIO w
-// sekcji "Dźwięk" Podsumowania (control2/js/ui.js's soundSummarySection)
+// sekcji "Dźwięk" Podsumowania (control/js/ui.js's soundSummarySection)
 // -> zapis prosto do game_state na żywo, bez modala. Oba muszą dotrzeć do
 // Display (nie do Control — sprawdzone osobno, że Control zostaje cicho
-// przez cały czas) -> Mute (współdzielony, patrz control2/js/soundReactor.js)
+// przez cały czas) -> Mute (współdzielony, patrz control/js/soundReactor.js)
 // wyciszony na chwilę w środku rundy, potem wznowiony — ten sam #btnMute co
 // w teście "wyciszenie dźwięku" wyżej, tylko że tym razem wycisza
 // urządzenie, które FAKTYCZNIE gra (Display).
@@ -1798,11 +1798,11 @@ test("control2: dźwięk ze źródła Wyświetlacz — odblokowanie, głośnoś�
   const game = await makeGame(page, `E2E-CONTROL2-SOUNDSRC-${Date.now()}`, { roundQuestions: [TWO_QUESTIONS[0]] });
   const contexts = [];
   try {
-    const buzzerPage = await openAnon(browser, contexts, `/buzzer2?id=${game.id}&key=${game.share_key_buzzer}`, "buzzer", []);
-    const displayPage = await openAnon(browser, contexts, `/display2?id=${game.id}&key=${game.share_key_display}`, "display", []);
-    await openAnon(browser, contexts, `/host2?id=${game.id}&key=${game.share_key_host}`, "host", []);
+    const buzzerPage = await openAnon(browser, contexts, `/buzzer?id=${game.id}&key=${game.share_key_buzzer}`, "buzzer", []);
+    const displayPage = await openAnon(browser, contexts, `/display?id=${game.id}&key=${game.share_key_display}`, "display", []);
+    await openAnon(browser, contexts, `/host?id=${game.id}&key=${game.share_key_host}`, "host", []);
 
-    await page.goto(`/control2?id=${game.id}`, { waitUntil: "domcontentloaded" });
+    await page.goto(`/control?id=${game.id}`, { waitUntil: "domcontentloaded" });
     await expect(page.locator(".stepTitle")).toHaveText("Urządzenia", { timeout: 15000 });
     await expect(page.locator("#dotDisplay")).toHaveClass(/\bok\b/, { timeout: 15000 });
 
@@ -1827,11 +1827,11 @@ test("control2: dźwięk ze źródła Wyświetlacz — odblokowanie, głośnoś�
     //
     // (a) Modal "Zmień ustawienia" -> games.settings.sound -> denormalizacja
     //     do game_state DOPIERO po zamknięciu modala (onGsModalClose() w
-    //     control2/js/app.js). To jest "punkt wyjściowy" — trwały, per-gra
+    //     control/js/app.js). To jest "punkt wyjściowy" — trwały, per-gra
     //     domyślny zapis, edytowalny tylko tam (warianty/pliki własne też).
     //
     // (b) Suwak BEZPOŚREDNIO w sekcji "Dźwięk" Podsumowania
-    //     (control2/js/ui.js's soundSummarySection) -> zapis PROSTO do
+    //     (control/js/ui.js's soundSummarySection) -> zapis PROSTO do
     //     game_state ("settings.setSoundVolume" w app.js), NA ŻYWO, bez
     //     dotykania games.settings i bez otwierania modala w ogóle.
     //
@@ -1844,7 +1844,7 @@ test("control2: dźwięk ze źródła Wyświetlacz — odblokowanie, głośnoś�
     await page.getByRole("button", { name: "Zmień ustawienia" }).click();
     await expect(page.locator("#gsOverlay")).not.toHaveClass(/hidden/, { timeout: 5000 });
     const gsFrame = page.frameLocator("#gsFrame");
-    // Poczekaj, aż async inicjalizacja modala (js/pages/game-settings2.js's
+    // Poczekaj, aż async inicjalizacja modala (js/pages/game-settings.js's
     // główna funkcja init -- await requireAuth()/guardResourceLock()/
     // guardResourceBusy(), realnie 0.5-1s RPC-ów) faktycznie się skończy,
     // ZANIM zaczniemy klikać po sidebarze. #gsTeamA staje się widoczny
@@ -1853,7 +1853,7 @@ test("control2: dźwięk ze źródła Wyświetlacz — odblokowanie, głośnoś�
     // gry" niżej. Bez tego kliknięcie kategorii "sound" potrafiło trafić w
     // to samo okno wyścigu co #btnToggleSidebar (naprawione w poprzednim
     // commicie): sidebar?.addEventListener("click", ...setActiveCat...) w
-    // js/pages/game-settings2.js jest wpięty dopiero w tym łańcuchu, więc
+    // js/pages/game-settings.js jest wpięty dopiero w tym łańcuchu, więc
     // klik na ".gs-sidebar-item[data-cat=sound]" trafiający przed jego
     // zakończeniem był no-opem -- renderSound() nigdy się nie wykonywał
     // (diagnostyka .evaluate() potwierdziła: #gsContentInner zostawał z
@@ -1862,7 +1862,7 @@ test("control2: dźwięk ze źródła Wyświetlacz — odblokowanie, głośnoś�
     // W trybie modal (iframe z control2) sidebar startuje jako schowany
     // drawer (css/game-settings.css's .gs-modal-mode .gs-sidebar — domyślnie
     // display:none, otwierany dopiero po kliknięciu ☰ #btnToggleSidebar,
-    // patrz js/pages/game-settings2.js's openSidebar()) — bez tego kliknięcia
+    // patrz js/pages/game-settings.js's openSidebar()) — bez tego kliknięcia
     // .gs-sidebar-item istnieje w DOM, ale nie jest "visible" dla Playwrighta.
     await gsFrame.locator("#btnToggleSidebar").click();
     await gsFrame.locator('.gs-sidebar-item[data-cat="sound"]').click();
@@ -1870,7 +1870,7 @@ test("control2: dźwięk ze źródła Wyświetlacz — odblokowanie, głośnoś�
     await expect(transitionSlider).toBeVisible({ timeout: 10000 });
     // .fill() na <input type="range"> nie zawsze niezawodnie odpala "input"
     // (na czym wisi handler ustawiający localSettings.sound.volumes w
-    // js/pages/game-settings2.js) — ustawiamy value i wysyłamy zdarzenie
+    // js/pages/game-settings.js) — ustawiamy value i wysyłamy zdarzenie
     // wprost.
     await transitionSlider.evaluate((el) => {
       el.value = "70";
@@ -1878,7 +1878,7 @@ test("control2: dźwięk ze źródła Wyświetlacz — odblokowanie, głośnoś�
     });
     const btnSaveAll = gsFrame.getByRole("button", { name: "Zapisz wszystko" });
     await btnSaveAll.click();
-    // saveAll() (js/pages/game-settings2.js) jest asynchroniczny (realny
+    // saveAll() (js/pages/game-settings.js) jest asynchroniczny (realny
     // zapis do bazy) i czyści isDirty dopiero PO zakończeniu -- klik na tło
     // modala (niżej) trafiający przed tym momentem widzi isDirty=true i
     // tryClose() pokazuje confirmModal() "Masz niezapisane zmiany", którego
@@ -1965,9 +1965,9 @@ test("control2: dźwięk ze źródła Wyświetlacz — odblokowanie, głośnoś�
 // ===== 13. Zmiana języka propaguje się do urządzeń, w tym treść Hosta =====
 //
 // Sprawdza całą ścieżkę na raz: przełącznik w topbarze Control -> zapis
-// settings.uiLang do game_state -> odczyt przez host2/js/main.js -> setUiLang
-// -> host2/js/render.js's t()-owane tytuły faz. Regresja na dzisiejszą
-// naprawę: wcześniej host2/js/render.js miał te napisy zaszyte na sztywno po
+// settings.uiLang do game_state -> odczyt przez host/js/main.js -> setUiLang
+// -> host/js/render.js's t()-owane tytuły faz. Regresja na dzisiejszą
+// naprawę: wcześniej host/js/render.js miał te napisy zaszyte na sztywno po
 // polsku, więc nawet gdyby cała reszta ścieżki działała, treść by się nie
 // zmieniła.
 
@@ -1976,10 +1976,10 @@ test("control2: zmiana języka w Control propaguje się do Hosta — tytuł fazy
   const game = await makeGame(page, `E2E-CONTROL2-LANG-${Date.now()}`, { roundQuestions: [TWO_QUESTIONS[0]] });
   const contexts = [];
   try {
-    const hostPage = await openAnon(browser, contexts, `/host2?id=${game.id}&key=${game.share_key_host}`, "host", []);
-    await openAnon(browser, contexts, `/display2?id=${game.id}&key=${game.share_key_display}`, "display", []);
-    await openAnon(browser, contexts, `/buzzer2?id=${game.id}&key=${game.share_key_buzzer}`, "buzzer", []);
-    await page.goto(`/control2?id=${game.id}`, { waitUntil: "domcontentloaded" });
+    const hostPage = await openAnon(browser, contexts, `/host?id=${game.id}&key=${game.share_key_host}`, "host", []);
+    await openAnon(browser, contexts, `/display?id=${game.id}&key=${game.share_key_display}`, "display", []);
+    await openAnon(browser, contexts, `/buzzer?id=${game.id}&key=${game.share_key_buzzer}`, "buzzer", []);
+    await page.goto(`/control?id=${game.id}`, { waitUntil: "domcontentloaded" });
     await expect(page.locator(".stepTitle")).toHaveText("Urządzenia", { timeout: 15000 });
     await expect(page.locator("#dotDisplay")).toHaveClass(/\bok\b/, { timeout: 15000 });
     await expect(page.locator("#dotHost")).toHaveClass(/\bok\b/, { timeout: 15000 });
@@ -2014,15 +2014,15 @@ test("control2: zmiana języka w Control propaguje się do Hosta — tytuł fazy
 
 // ===== 14. Modal ustawień gry — zmiana nazwy drużyny odświeża podgląd Wyświetlacza =====
 //
-// Zgłoszone: podgląd Wyświetlacza w modalu ustawień (js/pages/game-settings2.js)
+// Zgłoszone: podgląd Wyświetlacza w modalu ustawień (js/pages/game-settings.js)
 // był całkowicie martwy — sendDisplayCmd() w trybie modalu tylko przekazywał
 // tekstowe komendy do window.parent, licząc na Control, żeby je dalej
 // przekazał "prawdziwemu" Displayowi (czego Control v2 nigdy nie robi —
-// komend już nie ma). Naprawa: modal sam osadza /display2?preview=1 i
+// komend już nie ma). Naprawa: modal sam osadza /display?preview=1 i
 // przesyła mu postMessage familiada:preview-row, ten sam mechanizm co D3.
 // Ten test dowodzi, że to faktycznie działa: zmiana nazwy drużyny w polu
 // formularza musi się pojawić w window.__displayLog ZAGNIEŻDŻONEGO iframe'a
-// podglądu (display2/js/main.js's instrumentSceneApi(), dodane też do trybu
+// podglądu (display/js/main.js's instrumentSceneApi(), dodane też do trybu
 // podglądu w tej samej naprawie) jako wywołanie api.small.long1(...).
 test("control2: modal ustawień gry — zmiana nazwy drużyny odświeża podgląd Wyświetlacza", async ({ page, browser }, testInfo) => {
   await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
@@ -2032,11 +2032,11 @@ test("control2: modal ustawień gry — zmiana nazwy drużyny odświeża podglą
     // "Dalej" wymaga WSZYSTKICH trzech urządzeń online -- bez sparowania
     // zostaje trwale disabled (patrz analogiczna naprawa w teście "Zacznij
     // od nowa" wyżej).
-    await openAnon(browser, contexts, `/display2?id=${game.id}&key=${game.share_key_display}`, "display", []);
-    await openAnon(browser, contexts, `/host2?id=${game.id}&key=${game.share_key_host}`, "host", []);
-    await openAnon(browser, contexts, `/buzzer2?id=${game.id}&key=${game.share_key_buzzer}`, "buzzer", []);
+    await openAnon(browser, contexts, `/display?id=${game.id}&key=${game.share_key_display}`, "display", []);
+    await openAnon(browser, contexts, `/host?id=${game.id}&key=${game.share_key_host}`, "host", []);
+    await openAnon(browser, contexts, `/buzzer?id=${game.id}&key=${game.share_key_buzzer}`, "buzzer", []);
 
-    await page.goto(`/control2?id=${game.id}`, { waitUntil: "domcontentloaded" });
+    await page.goto(`/control?id=${game.id}`, { waitUntil: "domcontentloaded" });
     await expect(page.locator("#dotDisplay")).toHaveClass(/\bok\b/, { timeout: 15000 });
     await expect(page.locator("#dotHost")).toHaveClass(/\bok\b/, { timeout: 15000 });
     await expect(page.locator("#dotBuzzer")).toHaveClass(/\bok\b/, { timeout: 15000 });
@@ -2052,13 +2052,13 @@ test("control2: modal ustawień gry — zmiana nazwy drużyny odświeża podglą
     // pole nazwy drużyny A jest widoczne od razu, bez przełączania zakładek.
     await expect(gsFrame.locator("#gsTeamA")).toBeVisible({ timeout: 10000 });
 
-    // Zagnieżdżony iframe podglądu (display2/js/main.js's bootPreview()) —
+    // Zagnieżdżony iframe podglądu (display/js/main.js's bootPreview()) —
     // dostępny wprost z page.frames() (ten sam origin, zwykła strona), nie
     // przez frameLocator zagnieżdżony w innym frameLocator. UWAGA: D3
-    // (control2/js/ui.js's renderSetupFinish) ma WŁASNY, NIEZALEŻNY
-    // podgląd-iframe (`/display2?id=...&key=...&preview=1`), zamontowany w
+    // (control/js/ui.js's renderSetupFinish) ma WŁASNY, NIEZALEŻNY
+    // podgląd-iframe (`/display?id=...&key=...&preview=1`), zamontowany w
     // Control jeszcze PRZED otwarciem tego modala -- samo filtrowanie po
-    // "/display2"+"preview=1" w page.frames() (płaska lista wszystkich
+    // "/display"+"preview=1" w page.frames() (płaska lista wszystkich
     // ramek na stronie) łapało WTEDY ten D3-owy iframe zamiast modala,
     // bo pasował do filtra i był w drzewie ramek wcześniej (zgłoszone:
     // test wisiał na __displayLog, mimo że modal realnie wysyłał i
@@ -2067,7 +2067,7 @@ test("control2: modal ustawień gry — zmiana nazwy drużyny odświeża podglą
     // podgląd (sibling w drzewie, nie potomek modala) nigdy nie pasuje.
     const gsFrameHandle = await page.$("#gsFrame");
     const gsFrameObj = await gsFrameHandle.contentFrame();
-    const previewFrame = () => gsFrameObj.childFrames().find((f) => f.url().includes("/display2") && f.url().includes("preview=1"));
+    const previewFrame = () => gsFrameObj.childFrames().find((f) => f.url().includes("/display") && f.url().includes("preview=1"));
     await expect.poll(() => previewFrame()?.url(), { timeout: 10000 }).toBeTruthy();
     await expect.poll(async () => {
       try { return await previewFrame().evaluate(() => Array.isArray(window.__displayLog)); } catch { return false; }
@@ -2090,7 +2090,7 @@ test("control2: modal ustawień gry — zmiana nazwy drużyny odświeża podglą
 // logo-editor.js zwolni logo referencowane przez grę =====
 //
 // js/core/resource-lock.js's guardResourceBusy() — dodane w tej sesji do
-// control2/js/app.js i js/pages/game-settings2.js (patrz komentarze przy
+// control/js/app.js i js/pages/game-settings.js (patrz komentarze przy
 // obu wywołaniach): to urządzenie NIE edytuje logo, tylko je referuje na
 // żywo (podgląd Wyświetlacza), więc nie trzyma własnej blokady — tylko
 // czeka, aż logo-editor.js (jedyny prawdziwy posiadacz "logo" locka)
@@ -2153,9 +2153,9 @@ test("control2: zablokowany, gdy logo gry jest edytowane w logo-editorze — i w
   const lockTabId = `e2e-fake-logo-editor-${Date.now()}`;
   try {
     await acquireLogoLock(page, logoId, lockTabId);
-    hostPage = await openAnon(browser, logoContexts, `/host2?id=${gameId}&key=${hostKey}`, "host", []);
+    hostPage = await openAnon(browser, logoContexts, `/host?id=${gameId}&key=${hostKey}`, "host", []);
 
-    await page.goto(`/control2?id=${gameId}`, { waitUntil: "domcontentloaded" });
+    await page.goto(`/control?id=${gameId}`, { waitUntil: "domcontentloaded" });
     await expect(page.locator("#resourceLockGuard")).toBeVisible({ timeout: 15000 });
     await expect(page.locator("#resourceLockGuardMsg")).toContainText("edytowane", { timeout: 5000 });
     // Zablokowany PRZED wyrenderowaniem czegokolwiek z #app (guardResourceBusy
@@ -2171,7 +2171,7 @@ test("control2: zablokowany, gdy logo gry jest edytowane w logo-editorze — i w
     await expect(page.locator("#resourceLockGuard")).toBeHidden({ timeout: 15000 });
     await expect(page.locator(".stepTitle")).toHaveText("Urządzenia", { timeout: 15000 });
     await page.getByLabel("Przycisk fizyczny").check();
-    await openAnon(browser, logoContexts, `/display2?id=${gameId}&key=${await page.evaluate(async id => (await window.__sbClient.from("games").select("share_key_display").eq("id",id).single()).data.share_key_display, gameId)}`, "display", []);
+    await openAnon(browser, logoContexts, `/display?id=${gameId}&key=${await page.evaluate(async id => (await window.__sbClient.from("games").select("share_key_display").eq("id",id).single()).data.share_key_display, gameId)}`, "display", []);
     await page.getByRole("button", {name:"Dalej",exact:true}).click();
     await expect(page.locator(".stepTitle")).toHaveText("Podsumowanie");
     await expect.poll(() => hostPage.locator("#cover2Logo canvas").evaluateAll(canvases => canvases.some(canvas => {
@@ -2188,7 +2188,7 @@ test("control2: zablokowany, gdy logo gry jest edytowane w logo-editorze — i w
 
 // ===== 16. Udostępnianie urządzenia przez e-mail =====
 //
-// Jedyne dotychczasowe pokrycie tej funkcji (control2/js/shareDevice.js)
+// Jedyne dotychczasowe pokrycie tej funkcji (control/js/shareDevice.js)
 // żyło WYŁĄCZNIE w tests/e2e/record-playthrough.js (scenariusz 8) — realne
 // asercje, ale uruchamiane tylko ręcznie, w ramach wolnego workflow
 // produkującego wideo (e2e-record.yml), nigdy w zwykłym, szybkim cyklu
@@ -2272,7 +2272,7 @@ test("@mailbox control2: udostępnianie urządzenia (Prowadzący) przez e-mail -
 
     const after = new Date(Date.now() - 2_000).toISOString();
 
-    await page.goto(`/control2?id=${game.id}`, { waitUntil: "domcontentloaded" });
+    await page.goto(`/control?id=${game.id}`, { waitUntil: "domcontentloaded" });
     await expect(page.locator(".stepTitle")).toHaveText("Urządzenia", { timeout: 15000 });
 
     await page.locator('[data-device="host"]').getByRole("button", { name: "Udostępnij" }).click();
@@ -2326,8 +2326,8 @@ test("@mailbox control2: udostępnianie urządzenia (Prowadzący) przez e-mail -
     // marginesem ponad to, tylko dokładnie na jego granicy (realny powód
     // sporadycznych "Nie otrzymano maila... w 60000 ms" w CI, nie infra flake).
     const email = await waitForEmail({ recipient, after, subject: /Udostępniono urządzenie/ });
-    const links = extractHttpLinks(email).filter((u) => u.includes("/host2"));
-    expect(links.length, "mail musi zawierać działający link do /host2").toBeGreaterThan(0);
+    const links = extractHttpLinks(email).filter((u) => u.includes("/host"));
+    expect(links.length, "mail musi zawierać działający link do /host").toBeGreaterThan(0);
 
     await page.locator("#btnShareDeviceClose").click();
 
@@ -2367,7 +2367,7 @@ test("@mailbox control2: udostępnianie urządzenia (Prowadzący) przez e-mail -
 // urządzenia niezależnie od Control, bez żadnej ręcznej resynchronizacji
 // poza ponownym wejściem na URL urządzenia.
 
-// Modal kropki statusu (control2/js/app.js's showQrModal) koduje URL
+// Modal kropki statusu (control/js/app.js's showQrModal) koduje URL
 // urządzenia jako obrazek qrserver.com's `data=` query param dla Hosta/
 // Buzzera, a dla Wyświetlacza jako bezpośredni link "Otwórz" (#qrModalOpen).
 async function readDeviceUrlFromModal(control, kind) {
@@ -2405,11 +2405,11 @@ test("control2: zerwanie połączenia wszystkich trzech urządzeń naraz i ponow
   const errors = [];
   try {
     trackErrors(page, "control", errors);
-    let displayPage = await openAnon(browser, contexts, `/display2?id=${game.id}&key=${game.share_key_display}`, "display", errors);
-    const hostPage = await openAnon(browser, contexts, `/host2?id=${game.id}&key=${game.share_key_host}`, "host", errors);
-    let buzzerPage = await openAnon(browser, contexts, `/buzzer2?id=${game.id}&key=${game.share_key_buzzer}`, "buzzer", errors);
+    let displayPage = await openAnon(browser, contexts, `/display?id=${game.id}&key=${game.share_key_display}`, "display", errors);
+    const hostPage = await openAnon(browser, contexts, `/host?id=${game.id}&key=${game.share_key_host}`, "host", errors);
+    let buzzerPage = await openAnon(browser, contexts, `/buzzer?id=${game.id}&key=${game.share_key_buzzer}`, "buzzer", errors);
 
-    await page.goto(`/control2?id=${game.id}`, { waitUntil: "domcontentloaded" });
+    await page.goto(`/control?id=${game.id}`, { waitUntil: "domcontentloaded" });
     await expect(page.locator(".stepTitle")).toHaveText("Urządzenia", { timeout: 15000 });
     await expect(page.locator("#dotDisplay")).toHaveClass(/\bok\b/, { timeout: 15000 });
     await expect(page.locator("#dotHost")).toHaveClass(/\bok\b/, { timeout: 15000 });
@@ -2432,7 +2432,7 @@ test("control2: zerwanie połączenia wszystkich trzech urządzeń naraz i ponow
     await Promise.all(toClose.map((ctx) => ctx.close()));
     // Ten sam wzorzec co naprawiony timeout maila (patrz test #16 wyżej):
     // margines MUSI przekraczać realne worst-case opóźnienie, nie być mu
-    // dokładnie równy. control2/js/presence.js: ONLINE_MS=15_000 (ostatni
+    // dokładnie równy. control/js/presence.js: ONLINE_MS=15_000 (ostatni
     // ping musi być starszy niż 15s, żeby isOnline() zwróciło false) + do
     // POLL_MS=1_500 na kolejny tick, który to w ogóle przeliczy i odświeży
     // #dotX -- worst-case to ~16.5s, nie 15s. 15000ms (dokładnie na granicy)
@@ -2507,7 +2507,7 @@ test("control2: zerwanie połączenia wszystkich trzech urządzeń naraz i ponow
 //
 // Zgłoszone wprost: "rozłącz w trakcie timerów, albo zamknij Control w
 // trakcie timerów -- czy one wrócą do stanu przed, a nie po, bo tak
-// powinny". control2/js/engine.js's CANCEL_TIMER3/CANCEL_TIMER (patrz ich
+// powinny". control/js/engine.js's CANCEL_TIMER3/CANCEL_TIMER (patrz ich
 // komentarze) implementują dokładnie to.
 //
 // WAŻNE, znalezione przy pierwszym przebiegu tych testów w CI: zwykłe
@@ -2528,10 +2528,10 @@ test("control2: zegarek 3s w rundach wraca do stanu SPRZED startu (bez naliczeni
   const game = await makeGame(page, `E2E-CONTROL2-TIMER3REVERT-${Date.now()}`, { roundQuestions: [TWO_QUESTIONS[0]] });
   const contexts = [];
   try {
-    const buzzerPage = await openAnon(browser, contexts, `/buzzer2?id=${game.id}&key=${game.share_key_buzzer}`, "buzzer", []);
-    const displayPage = await openAnon(browser, contexts, `/display2?id=${game.id}&key=${game.share_key_display}`, "display", []);
-    await openAnon(browser, contexts, `/host2?id=${game.id}&key=${game.share_key_host}`, "host", []);
-    await page.goto(`/control2?id=${game.id}`, { waitUntil: "domcontentloaded" });
+    const buzzerPage = await openAnon(browser, contexts, `/buzzer?id=${game.id}&key=${game.share_key_buzzer}`, "buzzer", []);
+    const displayPage = await openAnon(browser, contexts, `/display?id=${game.id}&key=${game.share_key_display}`, "display", []);
+    await openAnon(browser, contexts, `/host?id=${game.id}&key=${game.share_key_host}`, "host", []);
+    await page.goto(`/control?id=${game.id}`, { waitUntil: "domcontentloaded" });
     await expect(page.locator(".stepTitle")).toHaveText("Urządzenia", { timeout: 15000 });
     await expect(page.locator("#dotDisplay")).toHaveClass(/\bok\b/, { timeout: 15000 });
     await expect(page.locator("#dotHost")).toHaveClass(/\bok\b/, { timeout: 15000 });
@@ -2556,7 +2556,7 @@ test("control2: zegarek 3s w rundach wraca do stanu SPRZED startu (bez naliczeni
     await expect(page.locator('[data-timer-role="timer3"]')).toBeVisible({ timeout: 10000 });
 
     // Zgłoszone: Display (nie tylko Control) musi jednoznacznie pokazywać,
-    // że 3s zegarek trwa -- display2/js/render.js's startTimer3Tick()
+    // że 3s zegarek trwa -- display/js/render.js's startTimer3Tick()
     // podmienia LEFT (drużyna A ma kontrolę) na odliczanie w dół,
     // DWUCYFROWE ("03"/"02"/"01", padStart), odróżnialne od zwykłego
     // wyniku drużyny (paintTotals() pisze BEZ wiodącego zera -- "0").
@@ -2577,7 +2577,7 @@ test("control2: zegarek 3s w rundach wraca do stanu SPRZED startu (bez naliczeni
     // razem z jego setTimeout) PRZED czekaniem, dopiero potem powrót.
     await page.goto("about:blank").catch(() => {});
     await page.waitForTimeout(3600);
-    await page.goto(`/control2?id=${game.id}`, { waitUntil: "domcontentloaded" });
+    await page.goto(`/control?id=${game.id}`, { waitUntil: "domcontentloaded" });
 
     // CANCEL_TIMER3 (nie EXPIRE_TIMER3): zegarek znika, ale licznik X
     // zostaje DOKŁADNIE tam, gdzie był PRZED jego startem -- "0 / 3", nigdy
@@ -2608,10 +2608,10 @@ test("control2: zegarek gracza w finale (15s) wraca do stanu SPRZED startu (used
   });
   const contexts = [];
   try {
-    const buzzerPage = await openAnon(browser, contexts, `/buzzer2?id=${game.id}&key=${game.share_key_buzzer}`, "buzzer", []);
-    await openAnon(browser, contexts, `/display2?id=${game.id}&key=${game.share_key_display}`, "display", []);
-    await openAnon(browser, contexts, `/host2?id=${game.id}&key=${game.share_key_host}`, "host", []);
-    await page.goto(`/control2?id=${game.id}`, { waitUntil: "domcontentloaded" });
+    const buzzerPage = await openAnon(browser, contexts, `/buzzer?id=${game.id}&key=${game.share_key_buzzer}`, "buzzer", []);
+    await openAnon(browser, contexts, `/display?id=${game.id}&key=${game.share_key_display}`, "display", []);
+    await openAnon(browser, contexts, `/host?id=${game.id}&key=${game.share_key_host}`, "host", []);
+    await page.goto(`/control?id=${game.id}`, { waitUntil: "domcontentloaded" });
     await expect(page.locator(".stepTitle")).toHaveText("Urządzenia", { timeout: 15000 });
     await page.getByRole("button", { name: "Dalej" }).click();
     await expect(page.locator(".stepTitle")).toHaveText("Podsumowanie", { timeout: 10000 });
@@ -2649,7 +2649,7 @@ test("control2: zegarek gracza w finale (15s) wraca do stanu SPRZED startu (used
     // zewnątrz PRZED czekaniem zabija ten kontekst JS na czas odliczania.
     await page.goto("about:blank").catch(() => {});
     await page.waitForTimeout(15500);
-    await page.goto(`/control2?id=${game.id}`, { waitUntil: "domcontentloaded" });
+    await page.goto(`/control?id=${game.id}`, { waitUntil: "domcontentloaded" });
 
     // CANCEL_TIMER (nie EXPIRE_TIMER): zegarek zniknął, ale usedP1 wraca do
     // false -- "Rozpocznij odliczanie (15s)" da się kliknąć PONOWNIE,
@@ -2695,10 +2695,10 @@ test("control2: koniec gry bez finału w trybie \"punkty\" — Wyświetlacz poka
   const errors = [];
   try {
     trackErrors(page, "control", errors);
-    const displayPage = await openAnon(browser, contexts, `/display2?id=${game.id}&key=${game.share_key_display}`, "display", errors);
+    const displayPage = await openAnon(browser, contexts, `/display?id=${game.id}&key=${game.share_key_display}`, "display", errors);
 
-    const hostPage = await openAnon(browser, contexts, `/host2?id=${game.id}&key=${game.share_key_host}`, "host", errors);
-    await page.goto(`/control2?id=${game.id}`, { waitUntil: "domcontentloaded" });
+    const hostPage = await openAnon(browser, contexts, `/host?id=${game.id}&key=${game.share_key_host}`, "host", errors);
+    await page.goto(`/control?id=${game.id}`, { waitUntil: "domcontentloaded" });
     await expect(page.locator(".stepTitle")).toHaveText("Urządzenia", { timeout: 15000 });
     await page.getByLabel("Przycisk fizyczny").check();
 
@@ -2760,10 +2760,10 @@ test("control2: opóźnione potwierdzenie Display blokuje następną akcję i bu
   let release;
   const held = new Promise(resolve => { release = resolve; });
   try {
-    const display = await openAnon(browser, contexts, `/display2?id=${game.id}&key=${game.share_key_display}`, "display", []);
-    await openAnon(browser, contexts, `/host2?id=${game.id}&key=${game.share_key_host}`, "host", []);
-    const buzzer = await openAnon(browser, contexts, `/buzzer2?id=${game.id}&key=${game.share_key_buzzer}`, "buzzer", []);
-    await page.goto(`/control2?id=${game.id}`, { waitUntil: "domcontentloaded" });
+    const display = await openAnon(browser, contexts, `/display?id=${game.id}&key=${game.share_key_display}`, "display", []);
+    await openAnon(browser, contexts, `/host?id=${game.id}&key=${game.share_key_host}`, "host", []);
+    const buzzer = await openAnon(browser, contexts, `/buzzer?id=${game.id}&key=${game.share_key_buzzer}`, "buzzer", []);
+    await page.goto(`/control?id=${game.id}`, { waitUntil: "domcontentloaded" });
     await expect(page.locator("#dotDisplay")).toHaveClass(/\bok\b/);
     await expect(page.locator("#dotHost")).toHaveClass(/\bok\b/);
     await expect(page.locator("#dotBuzzer")).toHaveClass(/\bok\b/);

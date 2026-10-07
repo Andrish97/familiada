@@ -1,0 +1,437 @@
+/* /familiada/css/host.css */
+
+:root {
+    --line: clamp(25px, 4.0vmin, 36px);
+    --line-px: 24;
+    --font-ratio: 1.1;
+    --baseline-shift: 0.12;
+    --ios-text-shift: 0px;
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-right: env(safe-area-inset-right, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    --safe-left: env(safe-area-inset-left, 0px);
+    --outer-left: 0px;
+    --outer-right: 0px;
+    --snap-top-1: 0px;
+    --snap-top-2: 0px;
+    --pane2-size: 50%;
+    --pane2-size-snap: 50%;
+    --split-line-w: clamp(4px, calc(var(--line) * 0.18), 10px);
+    --split-line: rgba(0,0,0,.12);
+    --split-line-edge: rgba(0,0,0,.30);
+    --swipe-guard-px: clamp(22px, calc(var(--line) * 0.85), 40px);
+    --margin-x: calc(var(--line) * 2.0);
+    --text-left-1: calc(var(--line) * 2.5);
+    --text-right-1: calc(var(--line) * 1.5);
+    --text-left-2: calc(var(--line) * 1.5);
+    --text-right-2: calc(var(--line) * 1.5);
+    --top-pad-1: calc(var(--line) * 1.0);
+    --bottom-pad-1: calc(var(--line) * 2.2);
+    --top-pad-2: calc(var(--line) * 1.0);
+    --bottom-pad-2: calc(var(--line) * 2.2);
+    --cover-grad-a: #c4002f;
+    --cover-grad-b: #2a62ff;
+    /* Motyw wnętrza (host/js/hostThemeManager.js) — domyślnie (bez motywu
+       zastosowanego jeszcze na <html>) to dzisiejszy, jedyny dotąd wygląd:
+       papier w linie + atrament. Zasłona (cover2) NIE jest częścią motywu —
+       zostaje zawsze tym samym brandowym gradientem (--cover-grad-a/b). */
+    --h-paper-bg: #fffdf5;
+    --h-ink: #111;
+    --h-font: "Caveat-Variable", cursive;
+    --h-letter-spacing: normal;
+    --h-line-height-mult: 1
+}
+
+@font-face {
+    font-family:"Caveat-Variable";src:url(/host/fonts/Caveat-Variable.woff2)format("woff2");font-weight:100 900;font-style:normal;font-display:swap
+}
+
+/* Czcionka motywu "modern" (host/js/themes/modern.js) — samohostowana
+   (SIL OFL, jak Caveat-Variable powyżej), dwa pliki bo Google Fonts
+   dzieli glify na podzbiory: "latin" = ASCII/łacina-1 (cyfry, nawiasy,
+   też "ó"), "latin-ext" = reszta polskich znaków diakrytycznych
+   (ą ć ę ł ń ś ź ż itd.) — bez obu przeglądarka po cichu dobrałaby
+   fallback tylko dla brakującego zakresu. */
+@font-face {
+    font-family:"JetBrainsMono-Variable";src:url(/host/fonts/JetBrainsMono-Variable-latin.woff2)format("woff2");font-weight:100 800;font-style:normal;font-display:swap;unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD
+}
+
+@font-face {
+    font-family:"JetBrainsMono-Variable";src:url(/host/fonts/JetBrainsMono-Variable-latinext.woff2)format("woff2");font-weight:100 800;font-style:normal;font-display:swap;unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF
+}
+
+* {
+    -webkit-tap-highlight-color: transparent
+}
+
+body,html {
+    margin: 0;
+    padding: 0;
+    height: 100dvh;
+    width: 100dvw;
+    overflow: hidden;
+    background: var(--h-paper-bg);
+    /* iOS Safari: prevent white bar at bottom */
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0
+}
+
+.host-body {
+    margin: 0;
+    overflow: hidden;
+    user-select: none;
+    height: 100dvh;
+    width: 100dvw;
+    touch-action: none;
+    /* Ensure full height including safe areas */
+    padding-bottom: env(safe-area-inset-bottom, 0px)
+}
+
+.fsBtn {
+    position: fixed;
+    top: calc(var(--safe-top) + 10px);
+    right: calc(var(--safe-right) + 10px);
+    z-index: 200;
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
+    background: rgba(0,0,0,.35);
+    border: 1px solid rgba(255,255,255,.35);
+    box-shadow: 0 4px 14px rgba(0,0,0,.35);
+    color: #fff;
+    font-weight: 900;
+    cursor: pointer
+}
+
+.fsBtn:active {
+    transform: translateY(1px)
+}
+
+.paper {
+    position: fixed;
+    inset: 0;
+    /* iOS Safari: ensure paper covers full area including safe areas */
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 10;
+    background-color: var(--h-paper-bg);
+    background-image: linear-gradient(to bottom,#e7e2d3 1px,transparent 1px);
+    background-size: 100% var(--line);
+    background-position: 0 0
+}
+
+/* Motyw "modern" (host/js/themes/modern.js): tablet — bez linijowania
+   papieru i bez czerwonego marginesu (to elementy "kartki", nie tabletu);
+   kolor tła/atramentu/czcionka idą przez --h-paper-bg/--h-ink/--h-font. */
+html[data-host-theme="modern"] .paper {
+    background-image: none
+}
+
+html[data-host-theme="modern"] .redMargin {
+    display: none
+}
+
+.redMargin {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: calc(var(--outer-left) + var(--margin-x));
+    width: 2px;
+    background: rgba(255,80,80,.55);
+    pointer-events: none
+}
+
+.paperSplit {
+    display: grid;
+    width: 100%;
+    height: 100%
+}
+
+html.portrait .paperSplit {
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr var(--pane2-size-snap)
+}
+
+html.landscape .paperSplit {
+    grid-template-rows: 1fr;
+    grid-template-columns: 1fr var(--pane2-size-snap)
+}
+
+.pane {
+    position: relative;
+    overflow: hidden
+}
+
+html.portrait .pane1 {
+    grid-row: 1;
+    grid-column: 1
+}
+
+html.portrait .pane2 {
+    grid-row: 2;
+    grid-column: 1
+}
+
+html.landscape .pane1 {
+    grid-row: 1;
+    grid-column: 1
+}
+
+html.landscape .pane2 {
+    grid-row: 1;
+    grid-column: 2
+}
+
+.splitLine {
+    display: none!important
+}
+
+.p2Hint,.pane2::before,.text {
+    position: absolute;
+    pointer-events: none
+}
+
+.pane2::before {
+    content: "";
+    z-index: 5;
+    background: linear-gradient(to right,var(--split-line-edge),var(--split-line),var(--split-line-edge))
+}
+
+html.portrait .pane2::before {
+    left: 0;
+    right: 0;
+    top: 0;
+    height: var(--split-line-w)
+}
+
+html.landscape .pane2::before {
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: var(--split-line-w);
+    background: linear-gradient(to bottom,var(--split-line-edge),var(--split-line),var(--split-line-edge))
+}
+
+.p2Hint,.text {
+    font-family: var(--h-font)
+}
+
+.text {
+    margin: 0;
+    white-space: pre-wrap;
+    word-break: break-word;
+    font-size: calc(var(--line)*var(--font-ratio));
+    line-height: calc(var(--line)*var(--h-line-height-mult));
+    padding-top: calc(var(--line)*var(--baseline-shift));
+    transform: translateY(var(--ios-text-shift));
+    color: var(--h-ink);
+    letter-spacing: var(--h-letter-spacing);
+    /* Zgłoszone: "Odpowiedzi gracza 1 w drugiej linijce się nie mieszczą"
+       -- potwierdzone offline harnessem (statyczny CSS + Playwright, bez
+       Supabase): na telefonowym rozmiarze ekranu (375x812, portret) długa
+       zawartość pasma 2 w rundzie 2 finału (odpowiedź gracza 1 + status +
+       pełna lista planszy) realnie przekracza wysokość pudełka — .pane's
+       overflow:hidden wtedy po cichu UCINA resztę listy, bez żadnego
+       sygnału dla prowadzącego, że coś jest niewidoczne. Na tablecie
+       (768x1024+) ta sama treść mieści się bez problemu — to tylko
+       najmniejsze ekrany. .text samo (nie .pane — ten zostaje overflow:
+       hidden, żeby nic nie wylewało się na redMargin/cover2) dostaje
+       własny, ukryty scroll jako bezpiecznik: Host to ekran dotykowy
+       używany wyłącznie przez prowadzącego (nie widza), więc przewinięcie
+       nie psuje żadnej publicznej prezentacji, a chroni przed utratą
+       treści na małych ekranach. Pasek przewijania ukryty celowo (to ma
+       dalej wyglądać jak kartka papieru, nie jak okno z scrollbarem) --
+       funkcja przewijania (dotyk/kółko myszy) działa niezależnie od jego
+       widoczności. */
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: none;
+    -ms-overflow-style: none
+}
+
+.text::-webkit-scrollbar {
+    display: none
+}
+
+/* Kolory statusu — TE SAME w każdym motywie (host/js/render.js's
+   answerLine()/renderFinalMapping(): odsłonięta/trafiona odpowiedź,
+   brak/status wpisu w finale) — tylko neutralny atrament (--h-ink) idzie
+   za motywem, znaczenie kolorów zostaje stałe niezależnie od tła. */
+.text .hostGreen { color: #2ecc71 }
+.text .hostRed { color: #ff3333 }
+.text .hostYellow { color: gold }
+.text .hostStrike { text-decoration: line-through }
+
+.text span {
+    font: inherit;
+    line-height: inherit;
+    text-decoration-thickness: .08em;
+    text-underline-offset: .18em
+}
+
+.text .b {
+    font-variation-settings: "wght"750;
+    font-weight: 750
+}
+
+.pane1 .text {
+    top: calc(var(--safe-top) + var(--top-pad-1) + var(--snap-top-1));
+    bottom: calc(var(--safe-bottom) + var(--bottom-pad-1))
+}
+
+html.portrait .pane1 .text {
+    left: var(--text-left-1);
+    right: var(--text-right-1)
+}
+
+html.landscape .pane1 .text {
+    left: calc(var(--outer-left) + var(--text-left-1));
+    right: var(--text-right-1)
+}
+
+.pane2 .text {
+    top: calc(var(--safe-top) + var(--top-pad-2) + var(--snap-top-2));
+    bottom: calc(var(--safe-bottom) + var(--bottom-pad-2))
+}
+
+html.portrait .p2Hint,html.portrait .pane2 .text {
+    left: var(--text-left-1);
+    right: var(--text-right-1)
+}
+
+html.landscape .p2Hint,html.landscape .pane2 .text {
+    left: var(--text-left-2);
+    right: calc(var(--outer-right) + var(--text-right-2))
+}
+
+.p2Hint {
+    bottom: calc(var(--safe-bottom) + 6px);
+    font-size: calc(var(--line)*.7);
+    line-height: 1.15;
+    color: rgba(0,0,0,.45);
+    opacity: 0;
+    transform: translateY(6px);
+    transition: opacity 140ms ease,transform 140ms ease
+}
+
+html.p2Open .p2Hint {
+    opacity: 1;
+    transform: translateY(0)
+}
+
+.cover2,.cover2Content {
+    position: absolute;
+    inset: 0
+}
+
+.cover2 {
+    z-index: 30;
+    background: linear-gradient(90deg,var(--cover-grad-a) 0%,var(--cover-grad-b) 100%);
+    transition: transform 180ms ease,opacity 160ms ease;
+    will-change: transform,opacity
+}
+
+.cover2.coverOn {
+    transform: translate(0,0);
+    opacity: 1;
+    pointer-events: auto
+}
+
+html.portrait .cover2.coverOff {
+    transform: translateY(120%);
+    opacity: 1;
+    pointer-events: none
+}
+
+html.landscape .cover2.coverOff {
+    transform: translateX(120%);
+    opacity: 1;
+    pointer-events: none
+}
+
+.cover2Content {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: clamp(6px,1.6vh,14px);
+    padding: calc(var(--safe-top) + 10px) calc(var(--safe-right) + 10px) calc(var(--safe-bottom) + 10px) calc(var(--safe-left) + 10px);
+    box-sizing: border-box;
+    min-height: 0;
+    height: 100%
+}
+
+.cover2Logo {
+    flex: 1 1 auto;
+    min-height: 0;
+    max-height: 100%;
+    width: min(820px,86%);
+    max-width: 86%;
+    height: auto;
+    object-fit: contain;
+    display: block;
+    filter: drop-shadow(0 12px 30px rgba(0,0,0,.35));
+    pointer-events: none;
+    -webkit-user-drag: none;
+    user-select: none
+}
+
+/* host2.html WYŁĄCZNIE: #cover2Logo to <div> (host/js/coverLogo.js rysuje
+   do niego <svg>/<canvas>), nie <img> jak w starym host.html — css/host.css
+   jest WSPÓLNE dla obu stron, więc te reguły celują w ID (istnieje tylko w
+   host2.html), żeby .cover2Logo (klasa, dalej używana przez starego <img>
+   w host.html) zostało kompletnie nietknięte. */
+div#cover2Logo {
+    display: flex;
+    align-items: center;
+    justify-content: center
+}
+
+#cover2Logo>svg,#cover2Logo>canvas {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block
+}
+
+.cover2Swipe {
+    flex: 0 0 auto;
+    max-width: min(92%,720px);
+    padding: 0 10px;
+    font-family: var(--h-font,"Caveat-Variable",cursive);
+    font-size: clamp(14px,calc(var(--line)*.72),30px);
+    line-height: 1.15;
+    color: var(--h-dot,#fc0);
+    text-shadow: 0 4px 18px rgba(0,0,0,.45);
+    white-space: normal;
+    word-break: break-word
+}
+
+@media (max-height:280px) {
+    .cover2Swipe {
+        display: none
+    }
+}
+
+.pseudoFS,.pseudoFS body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden
+}
+
+.pseudoFS .fsBtn {
+    opacity: .85
+}
+
+@media (prefers-reduced-motion:reduce) {
+    .cover2,.p2Hint {
+        transition: none!important
+    }
+}
+
+.host-pass-hint { margin-top:1em; color:#e53935; text-decoration:underline; }

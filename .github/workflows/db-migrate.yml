@@ -12,7 +12,7 @@ on:
   workflow_dispatch: {}
 
 jobs:
-  verify-control2-statistics:
+  verify-control-statistics:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     services:
@@ -38,6 +38,12 @@ jobs:
         env:
           PGPASSWORD: test-only-password
         run: python3 tests/sql/control2-sessions-concurrency.py
+      - name: Check cleanup migration preserves session history
+        env:
+          PGPASSWORD: test-only-password
+        run: |
+          psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -c 'CREATE DATABASE cleanup_test'
+          psql -h localhost -U postgres -d cleanup_test -v ON_ERROR_STOP=1 -f tests/sql/control-cleanup.sql
       - name: Check Host2 logo keys and active editing locks
         env:
           PGPASSWORD: test-only-password
@@ -55,7 +61,7 @@ jobs:
           psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -c 'CREATE DATABASE display_completion_test'
           psql -h localhost -U postgres -d display_completion_test -v ON_ERROR_STOP=1 -f tests/sql/display-completion.sql
   migrate:
-    needs: verify-control2-statistics
+    needs: verify-control-statistics
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
@@ -105,6 +111,12 @@ jobs:
             scripts/apply-migrations.sh \
             "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:$STAGING/apply-migrations.sh"
 
+      - name: Back up retired Control snapshots before cleanup
+        run: |
+          STAGING="/home/${{ secrets.SERVER_USER }}/.deploy/db-migrate/${{ github.sha }}"
+          ssh -i ~/.ssh/id_ed25519 "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" \
+            "bash -s -- \"$STAGING\"" < scripts/backup-legacy-control.sh
+
       # 6️⃣ Run migrations on server
       - name: Run migrations (server-side)
         run: |
@@ -118,6 +130,12 @@ jobs:
           ssh -i ~/.ssh/id_ed25519 "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" \
             'docker exec -i supabase-db psql -U supabase_admin -d postgres -v ON_ERROR_STOP=1' \
             < tests/sql/maintenance-activity-production.sql
+
+      - name: Verify legacy Control cleanup and preserve current game tables
+        run: |
+          ssh -i ~/.ssh/id_ed25519 "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" \
+            'docker exec -i supabase-db psql -U supabase_admin -d postgres -v ON_ERROR_STOP=1' \
+            < tests/sql/control-cleanup-production.sql
 
       # 7️⃣ Fetch schema + logs (bez wywalania się)
       - name: Fetch schema.sql + logs from server

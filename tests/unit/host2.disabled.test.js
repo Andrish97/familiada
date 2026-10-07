@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { createHostRenderer } from "../../web/host2/js/render.js";
+import { createHostRenderer } from "../../web/host/js/render.js";
 
 test("wyłączenie Prowadzącego czyści poprzednią treść i uniemożliwia odsłonięcie", () => {
   const previousDocument = globalThis.document;

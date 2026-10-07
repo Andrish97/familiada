@@ -16,7 +16,7 @@ const path = require("path");
 const REPO_ROOT = path.resolve(__dirname, "..", "..", "..", "web");
 const PROD_ORIGIN = "https://www.familiada.online";
 // base-explorer/ -- JS i CSS bazy pytań leżą obok strony, nie w js/ i css/
-const CODE_DIRS = ["shared/", "assets/", "home/", "games/", "editor/", "bases/", "account/", "marketplace/", "polls/", "polls-hub/", "subscriptions/", "connect-device/", "base-explorer/", "control2/", "display2/", "host2/", "buzzer2/", "logo-editor/", "game-settings2/"];
+const CODE_DIRS = ["shared/", "assets/", "home/", "games/", "editor/", "bases/", "account/", "marketplace/", "polls/", "polls-hub/", "subscriptions/", "connect-device/", "base-explorer/", "control/", "display/", "host/", "buzzer/", "logo-editor/", "game-settings/"];
 
 const MIME = {
   ".html": "text/html; charset=utf-8",

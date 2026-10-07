@@ -1,19 +1,18 @@
 const {test,expect}=require('./helpers/production-test');
 const {loginAsPooledTestUser}=require('./helpers/login');
 
-test('release: legacy routes preserve id, key, language and return target',async({context})=>{
-  for(const name of ['control','display','host','buzzer','game-settings']) {
+test('release: canonical routes serve the current app and preserve connection parameters',async({context})=>{
+  const scripts={control:'app.js',display:'main.js',host:'main.js',buzzer:'main.js','game-settings':'game-settings.js'};
+  for(const [name,script] of Object.entries(scripts)) {
     const page=await context.newPage();
-    const request=page.waitForRequest(request=>{
-      const url=new URL(request.url());
-      return request.isNavigationRequest() && url.pathname===`/${name}2/`;
-    });
-    await page.goto(`/${name}/?id=release-probe&key=release-key&lang=en&ret=%2Fgames%2F#probe`,{waitUntil:'commit'});
-    const url=new URL((await request).url());
+    const response=await page.goto(`/${name}/?id=release-probe&key=release-key&lang=en&ret=%2Fgames%2F#probe`,{waitUntil:'commit'});
+    const url=new URL(response.url());
+    expect(url.pathname).toBe(`/${name}/`);
     expect(url.searchParams.get('id')).toBe('release-probe');
     expect(url.searchParams.get('key')).toBe('release-key');
     expect(url.searchParams.get('lang')).toBe('en');
     expect(url.searchParams.get('ret')).toBe('/games/');
+    expect(await response.text()).toContain(`/${name}/js/${script}`);
     await page.close();
   }
 });
@@ -35,9 +34,10 @@ test('release: Games play and settings links open the new panel',async({page},te
  const source=await page.request.get('/games/js/games.js');
  expect(source.ok()).toBeTruthy();
  const body=await source.text();
- expect(body).toContain('/control2/?id=');
- expect(body).toContain('/game-settings2/?id=');
- expect(body).not.toContain('`/control/?id=');
+ expect(body).toContain('/control/?id=');
+ expect(body).toContain('/game-settings/?id=');
+ expect(body).not.toContain('/control2/?id=');
+ expect(body).not.toContain('/game-settings2/?id=');
 });
 
 for(const [lang,hostLabel,repeatText,outroLimit] of [

@@ -44,7 +44,7 @@ function instrumentPage(page) {
     if ((msg.type() === "error" || msg.type() === "warning") && !isKnownNoiseText(msg.text())) {
       console.log(`[e2e-diag] console:${msg.type()}`, msg.text());
     }
-    // "[e2e-diag-state]" to TYMCZASOWA diagnostyka w control2/js/app.js
+    // "[e2e-diag-state]" to TYMCZASOWA diagnostyka w control/js/app.js
     // (console.log, nie warning/error -- inaczej niewidoczne wyżej) --
     // loguje KAŻDĄ zmianę store.state.step z realnym timestampem, żeby
     // rozstrzygnąć, czy stan lokalnie dochodzi do "r_roundStart" (bug w
@@ -96,7 +96,7 @@ function instrumentPage(page) {
     if (isKnownNoiseUrl(req.url())) return;
     console.log("[e2e-diag] requestfailed", req.failure()?.errorText, req.url());
   });
-  // control2/js/app.js's handleAction() łapie KAŻDY błąd akcji w try/catch
+  // control/js/app.js's handleAction() łapie KAŻDY błąd akcji w try/catch
   // i pokazuje go operatorowi jako goły window.alert(`Błąd: ${e.message}`)
   // -- Playwright domyślnie po cichu odrzuca takie dialogi (auto-dismiss),
   // więc bez tego listenera taki błąd jest CAŁKOWICIE niewidoczny w logu CI

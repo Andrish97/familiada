@@ -57,7 +57,7 @@ form.addEventListener("submit", async (event) => {
     if (error || !data?.ok) { setMessage("invalidCode"); return; }
     if (!["display", "poll_qr"].includes(data.device_type)) { setMessage("wrongDevice"); return; }
     if (!data.game_id || !data.share_key) throw new Error("missing display credentials");
-    const target = new URL(data.device_type === "poll_qr" ? "/poll-qr/" : "/display2/", location.origin);
+    const target = new URL(data.device_type === "poll_qr" ? "/poll-qr/" : "/display/", location.origin);
     target.searchParams.set("id", data.game_id);
     target.searchParams.set("key", data.share_key);
     target.searchParams.set("lang", getUiLang());

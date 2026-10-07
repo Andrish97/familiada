@@ -39,19 +39,15 @@ test("frontend HTML, module imports, CSS fonts and literal data URLs resolve", (
   assert.deepEqual(broken, []);
 });
 
-test("current devices and shared modules do not import legacy device folders", () => {
-  const bad = [];
-  for (const file of files.filter(f => /\/(?:control2|display2|host2|buzzer2|shared)\//.test(f) && f.endsWith(".js"))) {
-    const source = fs.readFileSync(file, "utf8");
-    for (const m of source.matchAll(/\b(?:from\s+|import\s*(?:\(\s*)?)["']([^"']+)["']/g)) {
-      const target = path.resolve(path.dirname(file), m[1].split("?")[0]);
-      if (["control", "display", "host", "buzzer"].includes(path.relative(ROOT, target).split(path.sep)[0])) bad.push(`${file} → ${m[1]}`);
-    }
+test("current device pages occupy the canonical folders without legacy copies", () => {
+  for (const device of ["control", "display", "host", "buzzer", "game-settings"]) {
+    const dir = path.join(ROOT, device);
+    assert.ok(fs.existsSync(path.join(dir, "index.html")), `${device}/index.html`);
+    assert.equal(fs.existsSync(path.join(ROOT, `${device}2`)), false, `${device}2 was removed`);
   }
-  assert.deepEqual(bad, []);
-  for (const device of ["control2", "display2", "host2", "buzzer2"]) {
-    const html = fs.readFileSync(path.join(ROOT, device, "index.html"), "utf8");
-    assert.doesNotMatch(html, /\b(?:src|href)=["']\/(?:control|display|host|buzzer)\//);
+  for (const file of files.filter(f => /\/(?:control|display|host|buzzer|game-settings|shared)\//.test(f) && f.endsWith(".js"))) {
+    const source = fs.readFileSync(file, "utf8");
+    assert.doesNotMatch(source, /["'`]\/(?:control|display|host|buzzer|game-settings)2(?:\/|\?|["'`])/);
   }
 });
 

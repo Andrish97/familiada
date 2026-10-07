@@ -1,4 +1,4 @@
-// Pokrywa control2/js/engine.js's dispatch()-owa kolejka — regresja na
+// Pokrywa control/js/engine.js's dispatch()-owa kolejka — regresja na
 // realny bug znaleziony na żywo w control2.spec.js's "pełna runda"
 // (2026-09-11): test klikał kolejne kafle odsłaniania bez czekania na
 // zapis (Playwright's .click() wraca, zanim async handler w app.js w ogóle
@@ -15,7 +15,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createFakeStore } from "./helpers/fakeStore.js";
-import { createEngine } from "../../web/control2/js/engine.js";
+import { createEngine } from "../../web/control/js/engine.js";
 import { makeDefaultState } from "../../web/shared/js/gameplay/gameStateShape.js";
 
 // Atrapa store z KONTROLOWANYM opóźnieniem w commit() — żeby zamodelować

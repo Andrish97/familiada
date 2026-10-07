@@ -5,7 +5,7 @@
 
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { createEngine } from "../../web/control2/js/engine.js";
+import { createEngine } from "../../web/control/js/engine.js";
 import { createFakeStore } from "./helpers/fakeStore.js";
 import { DEFAULT_SETTINGS } from "../../web/shared/js/gameplay/gameStateShape.js";
 import { resolveRoundsEndScreen, resolveEndScreenMode } from "../../web/shared/js/gameplay/endScreen.js";

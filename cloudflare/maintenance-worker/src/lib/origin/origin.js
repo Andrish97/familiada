@@ -79,9 +79,9 @@ export function fetchFromOrigin(request, url, originBase, originHost, resolveOve
 }
 
 const PAGE_ROUTES = new Set([
-  "account", "base-explorer", "bases", "buzzer", "buzzer2", "confirm",
-  "connect-device", "connect-device/tv", "control", "control2", "display", "display2", "editor",
-  "game-settings", "game-settings2", "games", "host", "host2", "login",
+  "account", "base-explorer", "bases", "buzzer", "confirm",
+  "connect-device", "connect-device/tv", "control", "display", "editor",
+  "game-settings", "games", "host", "login",
   "logo-editor", "maintenance", "manual", "marketplace", "poll-go",
   "poll-points", "poll-qr", "poll-text", "polls", "polls-hub", "privacy",
   "reset", "subscriptions",

@@ -3,7 +3,7 @@
 // Nagrywa Control v2 + Display2 + Host2 + Buzzer2 W JEDNYM UJĘCIU (4 okna
 // kafelkowane 2x2 na wirtualnym ekranie X11), z dźwiękiem — do przeglądu
 // wizualnego, NIE część `npm test` / playwright.config.js. Scenariusze to
-// TE SAME kroki co w tests/e2e/control2.spec.js (te same selektory, te
+// TE SAME kroki co w tests/e2e/control.spec.js (te same selektory, te
 // same asercje-jako-punkty-synchronizacji, zamienione tu na krótkie
 // oczekiwania żeby nagranie było oglądalne) — "system testów, który już
 // mamy", owinięty w headed przeglądarkę + ffmpeg zamiast headless.
@@ -39,7 +39,7 @@ const BASE_URL = "https://www.familiada.online";
 const DISPLAY_NUM = process.env.DISPLAY || ":99";
 const PULSE_SINK = process.env.PULSE_SINK || "CaptureSink";
 const OUT_DIR = process.env.RECORD_OUT_DIR || path.join(__dirname, "..", "recordings");
-// control2/js/app.js's guardDesktopOnly() blokuje interakcję (#deviceGuard
+// control/js/app.js's guardDesktopOnly() blokuje interakcję (#deviceGuard
 // overlay przechwytuje kliknięcia) pod matchMedia('(max-width:980px)') —
 // pierwszy przebieg z ćwiartkami 960px szerokości nadział się dokładnie na
 // to. 2560x1440 -> ćwiartki 1280x720, bezpiecznie powyżej progu 980px.
@@ -132,7 +132,7 @@ async function restoreDemoGame(setupPage, { pickOrds = [], settings = {}, finalP
     // finalQuestions: zwrócone TREŚCI (nie tylko id) pytań finałowych, żeby
     // scenariusz mógł zbudować selektory kafli dopasowania (każda realna
     // odpowiedź = osobny przycisk "<tekst> (<punkty>)" w renderFinalMapping,
-    // control2/js/ui.js's matchOptions) bez ponownego odpytywania bazy.
+    // control/js/ui.js's matchOptions) bez ponownego odpytywania bazy.
     return { ...g, finalQuestions: finalPicked };
   }, { pickOrds, settings, finalPickOrds });
 }
@@ -310,10 +310,10 @@ async function openTiledDevices(browser, game, operatorStorageState) {
   await tileDevices(contexts, pages);
 
   await Promise.all([
-    pages.control.goto(`/control2?id=${game.id}`, { waitUntil: "domcontentloaded" }),
-    pages.display.goto(`/display2?id=${game.id}&key=${game.share_key_display}`, { waitUntil: "domcontentloaded" }),
-    pages.host.goto(`/host2?id=${game.id}&key=${game.share_key_host}`, { waitUntil: "domcontentloaded" }),
-    pages.buzzer.goto(`/buzzer2?id=${game.id}&key=${game.share_key_buzzer}`, { waitUntil: "domcontentloaded" }),
+    pages.control.goto(`/control?id=${game.id}`, { waitUntil: "domcontentloaded" }),
+    pages.display.goto(`/display?id=${game.id}&key=${game.share_key_display}`, { waitUntil: "domcontentloaded" }),
+    pages.host.goto(`/host?id=${game.id}&key=${game.share_key_host}`, { waitUntil: "domcontentloaded" }),
+    pages.buzzer.goto(`/buzzer?id=${game.id}&key=${game.share_key_buzzer}`, { waitUntil: "domcontentloaded" }),
   ]);
 
   // ZNALEZIONA REALNA PRZYCZYNA (run #334, scenario_filter jako JEDYNY
@@ -339,7 +339,7 @@ async function closeAll(contexts) {
 
 const DOT_ID = { display: "dotDisplay", host: "dotHost", buzzer: "dotBuzzer" };
 
-// control2/js/presence.js: urządzenie liczy się jako offline dopiero
+// control/js/presence.js: urządzenie liczy się jako offline dopiero
 // 6,5s (ONLINE_MS) po ostatnim pingu; lokalne wygaszenie co 250ms —
 // zamknięcie kontekstu przeglądarki nie zmienia kropki NATYCHMIAST, trzeba
 // poczekać, aż ostatni ping faktycznie się zestarzeje. Timeout z zapasem
@@ -353,7 +353,7 @@ async function waitForDotStatus(control, kind, status, timeoutMs = 30_000) {
   );
 }
 
-// Modal kropki statusu (control2/js/app.js's showQrModal) koduje URL
+// Modal kropki statusu (control/js/app.js's showQrModal) koduje URL
 // urządzenia jako obrazek qrserver.com's `data=` query param dla Hosta/
 // Buzzera (jedyny sposób pokazania QR bez biblioteki po stronie klienta),
 // a dla Wyświetlacza dodatkowo jako bezpośredni link "Otwórz" (#qrModalOpen
@@ -396,12 +396,12 @@ async function reconnectDeviceViaModal(browser, control, kind) {
   return { context, page };
 }
 
-// Symuluje gest przesunięcia (peek) na Hoście — host2/js/main.js's
+// Symuluje gest przesunięcia (peek) na Hoście — host/js/main.js's
 // setupPeekSwipe(): pointerdown -> pointerup w odległości >= 60px, lokalnie
 // pokazuje to, co jest pod zasłoną pasma 2, BEZ żadnego zapisu do
 // game_state (patrz notatka w figurze 7 "Mapa Rozgrywki": Host ma treść
 // zawsze, zasłona to tylko wizualna nakładka). Ten podgląd sam się cofa
-// przy KOLEJNEJ zmianie stanu (host2/js/render.js's `peeked = false` na
+// przy KOLEJNEJ zmianie stanu (host/js/render.js's `peeked = false` na
 // nowym wierszu) — więc następna scripted akcja w scenariuszu naturalnie
 // pokaże na nagraniu, że zasłona wraca sama.
 async function hostPeekSwipe(hostPage) {
@@ -420,7 +420,7 @@ async function hostPeekSwipe(hostPage) {
   await hostPage.waitForTimeout(1800);
 }
 
-// ===== Odstęp między kolejnymi akcjami zmieniającymi grę. control2/js/
+// ===== Odstęp między kolejnymi akcjami zmieniającymi grę. control/js/
 // persist.js's game_state_write() jest asynchroniczne i noszone po REALNEJ
 // sieci (produkcja) — klikanie kolejnego przycisku, zanim poprzedni zapis
 // wróci i rev się zaktualizuje, wysyła kolejny zapis z JUŻ NIEAKTUALNYM
@@ -441,7 +441,7 @@ async function hostPeekSwipe(hostPage) {
 // 1200ms (nie 300ms) — zgłoszone: "przebieg jest zbyt szybki nie mam
 // okazji nawet nic zauważyć". Ta wartość to pauza WIDZA (żeby zdążyć
 // przeczytać, co się właśnie zmieniło na ekranie), nie techniczny wymóg
-// zapisu — control2/js/ui.js ma teraz WŁASNĄ, niezależną blokadę
+// zapisu — control/js/ui.js ma teraz WŁASNĄ, niezależną blokadę
 // odsłaniania na czas animacji Wyświetlacza (REVEAL_ANIM_MS=650ms,
 // zgłoszone osobno: "nie idzie odsłonić następnej odpowiedzi jeśli
 // pierwsza się nie pojawiła jeszcze na ekranie") — 1200ms tutaj jest
@@ -527,7 +527,7 @@ async function pressBuzzerPaced(buzzerPage, label, ms = REVEAL_PACE_MS) {
 }
 
 // Odpowiedź/X/"Oddaj kontrolę" idą przez zaznacz -> potwierdź
-// (control2/js/ui.js's armableTile): pierwsze kliknięcie tylko uzbraja
+// (control/js/ui.js's armableTile): pierwsze kliknięcie tylko uzbraja
 // (złota obwódka) — CZYSTO LOKALNA zmiana UI, zero zapisu do game_state,
 // więc clickPaced's waitForWrite by na niej wisiał do timeoutu. Uzbrojenie
 // dostaje więc zwykły klik + krótką pauzę (żeby złota obwódka było widać w
@@ -545,7 +545,7 @@ async function armAndConfirmPaced(locator, ms = REVEAL_PACE_MS) {
   await clickPaced(locator, accept ? 250 : ms);
 }
 
-// Kafelki odpowiedzi w Rundach nie pokazują już "#N" (control2/js/ui.js's
+// Kafelki odpowiedzi w Rundach nie pokazują już "#N" (control/js/ui.js's
 // renderRounds() pokazuje prawdziwy tekst odpowiedzi) — n-ty (1-bazowy)
 // przycisk w jedynym renderowanym `.c2-tilegrid` to zawsze odpowiedź o
 // ord=n, patrz identyczny komentarz przy control2.spec.js's answerTile().
@@ -706,7 +706,7 @@ async function scenarioRoundsMechanics(pages, { contexts }) {
   // że modal ustawień gry (naprawiony w tej sesji: podgląd Wyświetlacza był
   // martwy w trybie modalu) faktycznie działa. Zmiana nazwy drużyny w
   // formularzu, zapis, zamknięcie kliknięciem poza treścią modala (tak
-  // zamyka się go naprawdę — control2/js/app.js's gsOverlayEl click handler).
+  // zamyka się go naprawdę — control/js/app.js's gsOverlayEl click handler).
   //
   // Zgłoszone (po realnym nagraniu): "na modalu ustawień wisi bardzo długo"
   // — cały ten blok to demo administracyjne (operator NIC nie ogłasza na
@@ -742,7 +742,7 @@ async function scenarioRoundsMechanics(pages, { contexts }) {
   //
   // W trybie modal sidebar startuje jako schowany drawer (css/game-settings.css's
   // .gs-modal-mode .gs-sidebar — domyślnie display:none, otwierany dopiero po
-  // kliknięciu ☰ #btnToggleSidebar, patrz js/pages/game-settings2.js's
+  // kliknięciu ☰ #btnToggleSidebar, patrz js/pages/game-settings.js's
   // openSidebar()) — bez tego kliknięcia .gs-sidebar-item istnieje w DOM, ale
   // nie jest "visible" (real bug znaleziony przez failed nagranie: locator.click
   // Timeout 30000ms, "element is not visible").
@@ -773,7 +773,7 @@ async function scenarioRoundsMechanics(pages, { contexts }) {
   // zapisu, kod czekał tu na stały ADMIN_PACE_MS (900ms, obniżone w tej
   // sesji z 2200ms) i OD RAZU klikał w tło, żeby zamknąć modal. Jeśli
   // prawdziwy zapis (saveAll(), sieć) trwał dłużej niż ten stały czas --
-  // co w CI się zdarza -- klik w tło trafiał, gdy js/pages/game-settings2.js's
+  // co w CI się zdarza -- klik w tło trafiał, gdy js/pages/game-settings.js's
   // isDirty było WCIĄŻ true, więc tryClose() pokazywał
   // confirmModal("Masz niezapisane zmiany...", dokładnie to, co widać na
   // zrzucie), którego nic tu nie obsługiwało -- #gsOverlay nigdy nie
@@ -784,7 +784,7 @@ async function scenarioRoundsMechanics(pages, { contexts }) {
   // powtórzył błąd stałego czasu zamiast Playwrightowego auto-czekania.
   // Naprawa (ten sam wzorzec co control2.spec.js): czekamy na REALNE
   // potwierdzenie -- przycisk wraca na "enabled" dopiero PO zakończeniu
-  // saveAll() (js/pages/game-settings2.js's disabled=true jest pierwszą
+  // saveAll() (js/pages/game-settings.js's disabled=true jest pierwszą
   // instrukcją funkcji, więc "enabled" z powrotem jest niezawodnym
   // sygnałem) -- zamiast zgadywać, ile trwa zapis.
   const btnSaveAll = gsFrame.getByRole("button", { name: "Zapisz wszystko" });
@@ -796,7 +796,7 @@ async function scenarioRoundsMechanics(pages, { contexts }) {
   await control.waitForTimeout(500);
 
   // Drugi, NIEZALEŻNY mechanizm — suwak BEZPOŚREDNIO w sekcji "Dźwięk"
-  // Podsumowania (control2/js/ui.js's soundSummarySection), bez modala —
+  // Podsumowania (control/js/ui.js's soundSummarySection), bez modala —
   // zmiana tu leci na żywo do game_state, widoczna od razu na Wyświetlaczu
   // (bo soundSource="display"), bez zapisu do games.settings w ogóle.
   const revealSlider = control.locator('input.summarySoundVol[data-sfx-vol="reveal"]');
@@ -877,7 +877,7 @@ async function scenarioRoundsMechanics(pages, { contexts }) {
 
   // Zgłoszone: "...tez sprawdź mute na chwilę w jednej z rund" — wyciszenie
   // (#btnMute w topbarze Control, współdzielone przez game_state — patrz
-  // control2/js/soundReactor.js) na czas trzech X, wznowione tuż przed
+  // control/js/soundReactor.js) na czas trzech X, wznowione tuż przed
   // odsłonięciem kradzieży, żeby widz USŁYSZAŁ powrót dźwięku.
   await control.locator("#btnMute").click();
   await control.waitForTimeout(600);
@@ -1184,7 +1184,7 @@ async function scenarioRoundMultiplier(pages) {
 // n-ta w kolejności (1=najwyżej punktowana, 6=najniżej) PRAWDZIWA odpowiedź
 // danego pytania finałowego (game.finalQuestions[i], patrz restoreDemoGame)
 // + etykieta kafla dopasowania — dokładnie ten sam format co
-// control2/js/ui.js's matchOptions ("<tekst> (<punkty>)"). Zgłoszone
+// control/js/ui.js's matchOptions ("<tekst> (<punkty>)"). Zgłoszone
 // wprost: "trafienie to nie zawsze najwyższej punktowana odpowiedź" —
 // scenariusz 4 dopasowuje różne miejsca w rankingu (nie zawsze to samo),
 // dokładnie jak w realnej grze, gdzie gracz może trafić w dowolną z 6
@@ -1269,7 +1269,7 @@ async function scenarioFinalFull(pages, { game }) {
   const P2_MATCH_RANK = [null, 2, null, 1, null];
 
   // Zgłoszone wprost: "wpisywanie w finale ma być podczas odliczania, nie
-  // przed" -- kod (control2/js/ui.js's finalTimerRow/renderFinalEntry) już
+  // przed" -- kod (control/js/ui.js's finalTimerRow/renderFinalEntry) już
   // na to pozwala: pole wpisywania blokuje WYŁĄCZNIE boardBusy() (krótka
   // serwerowa blokada zaraz po przejściu ekranu), nie stan zegarka, a
   // tickTimers() (naprawione przy #13) aktualizuje TYLKO cyfry co 250ms,
@@ -1284,7 +1284,7 @@ async function scenarioFinalFull(pages, { game }) {
     if (P1_PLAN[i] === true) await typePaced(p1Inputs.nth(i), answerByRank(fq[i], P1_MATCH_RANK[i]).text);
     else if (P1_PLAN[i] === "miss") await typePaced(p1Inputs.nth(i), "Zła odpowiedź");
     // false: nic nie wpisujemy -> AUTO+SKIP, widoczne od razu jako domyślne
-    // zaznaczenie na kaflu "Brak odpowiedzi" (control2/js/ui.js's
+    // zaznaczenie na kaflu "Brak odpowiedzi" (control/js/ui.js's
     // effectiveMappingResolution), potwierdzane przez "Pokazana" niżej.
   }
   // Wpisywanie powyżej już zjadło kilka sekund PO starcie zegarka -- reszta
@@ -1336,7 +1336,7 @@ async function scenarioFinalFull(pages, { game }) {
   }
   // Zgłoszone: "po drugiej rundzie finału nawet nie czeka na koniec
   // timera" — "Dalej" jest teraz zablokowany, dopóki zegarek tej rundy
-  // aktywnie odlicza (control2/js/ui.js's renderFinalEntry), więc TEN test
+  // aktywnie odlicza (control/js/ui.js's renderFinalEntry), więc TEN test
   // musi poczekać na naturalne wygaśnięcie (20s) dokładnie jak gracz 1
   // wyżej — wcześniejszy komentarz "tym razem NIE czekamy" opisywał stan
   // sprzed tej naprawy. Wpisywanie powyżej już zjadło kilka sekund PO
@@ -1363,7 +1363,7 @@ async function scenarioFinalFull(pages, { game }) {
     await clickPaced(control.getByRole("button", { name: "Dalej" }));
   }
 
-  // renderEndScreen (control2/js/ui.js) pokazuje TU, na ekranie PRZED
+  // renderEndScreen (control/js/ui.js) pokazuje TU, na ekranie PRZED
   // odsłonięciem ("Zakończ grę" jeszcze nieklikn.), pasek z sumą finału
   // (state.final.runtime.sum) — widz ma zdążyć go przeczytać, zanim klik
   // przejdzie dalej do właściwego ekranu końcowego.
@@ -1414,7 +1414,7 @@ async function scenarioFinalEarlyExit(pages, { game }) {
   await clickPaced(control.getByRole("button", { name: "Dalej" }));
 
   // Real bug znaleziony przez failed nagranie (przebieg #22, diagnostyka):
-  // kafle wyboru dopasowania w finale (control2/js/ui.js's renderFinalMapping,
+  // kafle wyboru dopasowania w finale (control/js/ui.js's renderFinalMapping,
   // optionTiles) idą przez armableTile -- zaznacz -> potwierdź, DOKŁADNIE
   // jak odpowiedzi/X w Rundach (patrz komentarz tam: "z podwójnym
   // kliknięciem jako skrótem"). Zwykły clickPaced (pojedynczy klik) tylko
@@ -1568,12 +1568,12 @@ async function scenarioDeviceReconnect(pages, { contexts, browser }) {
 // ===== Scenariusz 8: udostępnianie urządzenia przez e-mail =====
 // Zgłoszone: "chcę też dodać test podłączania urządzenia przez 'podłącz
 // urządzenie' używając maila — już mamy system ze skrzynką testową".
-// control2/js/shareDevice.js's "Udostępnij": operator wpisuje e-mail
+// control/js/shareDevice.js's "Udostępnij": operator wpisuje e-mail
 // ISTNIEJĄCEGO konta (resolveToUserId tam szuka w profiles -- dowolny
 // adres spoza puli testX skończyłby się "Nie znaleziono użytkownika", bez
 // wysłania czegokolwiek), RPC share_device zapisuje udostępnienie, a
 // js/core/send-mail (Edge Function) wysyła PRAWDZIWY e-mail z linkiem
-// /host2?id=&key=<share_key_host> -- DOKŁADNIE tym samym mechanizmem co
+// /host?id=&key=<share_key_host> -- DOKŁADNIE tym samym mechanizmem co
 // QR/kod, tylko dostarczonym pocztą zamiast zeskanowania. test2@familiada.online
 // to drugie konto z tej samej puli testX co test1 (login.js) -- gwarantowane
 // istniejące na produkcji (e2e-tests.yml's TEST_ACCOUNT_COUNT=10), więc
@@ -1689,8 +1689,8 @@ async function scenarioShareDeviceEmail(pages, { browser }) {
     subject: /Udostępniono urządzenie/,
     timeout: 180_000,
   });
-  const links = extractHttpLinks(email).filter((u) => u.includes("/host2"));
-  if (!links.length) throw new Error("[record] e-mail udostępnienia nie zawierał linku do /host2");
+  const links = extractHttpLinks(email).filter((u) => u.includes("/host"));
+  if (!links.length) throw new Error("[record] e-mail udostępnienia nie zawierał linku do /host");
   const shareLink = links[0];
   console.log("[record] link z maila:", shareLink);
 
@@ -1706,7 +1706,7 @@ async function scenarioShareDeviceEmail(pages, { browser }) {
   await positionWindow(recipientContext, recipientPage, RECIPIENT_QUAD);
   await recipientPage.goto(shareLink, { waitUntil: "domcontentloaded" });
 
-  // Dowód, że link faktycznie działa: strona /host2 z kluczem z maila
+  // Dowód, że link faktycznie działa: strona /host z kluczem z maila
   // ładuje się normalnie (ten sam widok co Host w głównej siatce), bez
   // żadnego logowania -- share_key_host w URL-u wystarcza, dokładnie jak
   // dla kodu/QR. host2.html NIE MA elementu "#app" (selektor skopiowany
@@ -1818,7 +1818,7 @@ const SCENARIOS = [
     // a Runda 3 kończy "Zakończ rundę" z odsłoniętymi tylko 3/6 odpowiedzi
     // (ord1+2+3 -- w demo ord6/7/8 sumuje się to na 41+26+17=84 pkt), reszta
     // (ord4-6, 16 pkt) dochodzi dopiero w R8 "dosłanianie", które z
-    // definicji NIE dolicza się do banku/totals (control2/js/engine.js's
+    // definicji NIE dolicza się do banku/totals (control/js/engine.js's
     // REVEAL_LEFT, czysto pokazowe -- patrz plan i komentarz tam). Suma
     // realnie WCHODZĄCA do totals w momencie "Zakończ rundę" to więc zawsze
     // 200+84=284, NIGDY 300 -- próg 300 przy tym wzorcu (częściowe
@@ -1885,7 +1885,7 @@ const SCENARIOS = [
     // i #335): tylko 4 pytania w puli = runda 4 jest OSTATNIĄ rundą (pula
     // wyczerpana) -- po "Zakończ rundę" engine.js's R9③ skacze PROSTO do
     // r_gameEnd, pomijając ekran startu rundy 5 (r_roundStart), na którym
-    // normalnie pokazuje się literalny tekst "Alfa: <suma>" (control2/js/
+    // normalnie pokazuje się literalny tekst "Alfa: <suma>" (control/js/
     // ui.js's scoreLine, dokładnie ten sam mechanizm co już działający
     // check "Alfa: 300" po rundzie 3->4 wyżej w scenarioRoundMultiplier).
     // Ekran "Koniec gry" (przed kliknięciem "Zakończ grę") NIE pokazuje
@@ -1943,7 +1943,7 @@ SCENARIOS.sort((a, b) => a.file.localeCompare(b.file));
 // locator.click() (np. "waiting for locator(...).nth(N)") potrzebny jest
 // zrzut ekranu + treść tego, co faktycznie jest w DOM w tym momencie:
 // dokładny tekst/stan każdego kafla w .c2-tilegrid, aktualny krok
-// (.c2-stepper), i czy przypadkiem nie wisi natywny alert() (control2/js/
+// (.c2-stepper), i czy przypadkiem nie wisi natywny alert() (control/js/
 // app.js's dispatch handler pokazuje alert() na każdym nieobsłużonym
 // błędzie zapisu — to jest jedyne miejsce, gdzie mogłoby zablokować dalsze
 // kliknięcia bez żadnego śladu w konsoli).
@@ -1978,7 +1978,7 @@ async function dumpFailureDiagnostics(controlPage, scenarioFile) {
   }).catch((e) => ({ evalError: e.message }));
   // Zgłoszone/znalezione po przebiegu #19: przycisk R8 pokazał "Przejdź do
   // zakończenia gry" zamiast "Przejdź do finału" mimo hasFinal=true i progu
-  // trafionego -- statyczna analiza control2/js/engine.js's canEnterFinal()
+  // trafionego -- statyczna analiza control/js/engine.js's canEnterFinal()
   // (final.confirmed/final.picked.length===5) niczego nie wykazała, a
   // dokładnie ten sam warunek ma już zielony test jednostkowy
   // (tests/unit/settings.branching.test.js) z ręcznie ustawionym stanem.

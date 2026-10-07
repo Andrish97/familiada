@@ -1,168 +1,116 @@
-import { t } from "../../shared/translation/translation.js?v=v2026-10-06T23331";
+// control/js/presence.js
+// Obecność urządzeń (kto jest online) — fakt, nie stan gry (plan, sekcja 2
+// punkt "0."), więc zostaje CAŁKOWICIE poza public.game_state, dokładnie
+// jak dziś: tabela public.device_presence, reużyta bez zmian, pollowana
+// przez Control.
+//
+// W odróżnieniu od control/js/presence.js: brak jakiegokolwiek wysyłania
+// komend przy przejściu offline->online ("okno inicjalizacji" dzisiejszego
+// presence.js istniało wyłącznie po to, żeby ustawić urządzenie w znany
+// stan komendami — w v2 urządzenie samo wie, co pokazać, bo czyta
+// game_state przy każdym (re)connect). Ten moduł robi wyłącznie to, co jest
+// realnie faktem obecności: kto jest online, od kiedy.
+
 import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-06T23331";
 
-// ================== KOMUNIKATY (PRESENCE) ==================
-const PRESENCE_MSG = {
-  get SINCE_NONE() { return t("control.deviceSeenNone"); },
-  SINCE_LABEL: (seconds) => t("control.deviceSeenSeconds", { seconds }),
-  ALERT_DROPPED: (label) => t("control.deviceDropped", { label }),
-  get NO_TABLE() { return t("control.presenceNoTable"); },
-};
-// ===========================================================
+const ONLINE_MS = 6_500; // Two missed 3s heartbeats, with a small margin.
+const POLL_MS = 750;
 
-const ONLINE_MS = 15_000;
-const INIT_WINDOW_MS = 20000; // tylko pierwsze 8s od startu presence
-
-function fmtSince(ts) {
-  if (!ts) return PRESENCE_MSG.SINCE_NONE;
-  const ms = Date.now() - new Date(ts).getTime();
-  const s = Math.max(0, Math.round(ms / 1000));
-  return PRESENCE_MSG.SINCE_LABEL(s);
-}
-
-export function createPresence({ game, ui, store, devices, getTheme }) {
+export function createPresence({ gameId, onChange }) {
   let timer = null;
+  let expiryTimer = null;
+  let inFlight = false;
+  let flags = { display: false, host: false, buzzer: false };
+  let lastSeenAt = { display: null, host: null, buzzer: null };
+  // Zgłoszone: "cały panel jest zlagowany, przewijanie też" — onChange()
+  // (control/js/app.js's renderCurrent(), pełny root.innerHTML="" +
+  // odbudowa dla większości ekranów) leciał na KAŻDY tick (co 1.5s), NAWET
+  // gdy obecność faktycznie się nie zmieniła — czyli cały panel przebudowywał
+  // się destrukcyjnie co 1.5s bez przerwy przez całą grę, niezależnie od
+  // tego, co operator akurat robił (w tym w trakcie przewijania). Odcisk
+  // palca ostatnio zgłoszonego stanu — ten sam wzorzec co ui.js's
+  // renderSetupFinish() już stosuje dla podglądu Wyświetlacza — ogranicza
+  // onChange() wyłącznie do realnych zmian obecności.
+  let lastReported = null;
 
-  // poprzednie stany TYLKO dla tej sesji presence
-  let lastDisplayOnline = false;
-  let lastHostOnline = false;
-  let lastBuzzerOnline = false;
-
-  let initEndsAt = 0;
-  
-  let initDone = {
-    display: false,
-    host: false,
-    buzzer: false,
-  };
-
-  async function fetchPresenceSafe() {
-    const { data, error } = await sb()
-      .from("device_presence")
-      .select("device_type,device_id,last_seen_at")
-      .eq("game_id", game.id);
-
-    if (error) return { ok: false, rows: [], error };
-    return { ok: true, rows: (data || []), error: null };
+  function isOnline(lastSeen) {
+    if (!lastSeen) return false;
+    return Date.now() - new Date(lastSeen).getTime() < ONLINE_MS;
   }
 
-  function pickNewest(rows, t) {
-    return (
-      rows
-        .filter((r) => String(r.device_type || "").toLowerCase() === t)
-        .sort((a, b) => new Date(b.last_seen_at) - new Date(a.last_seen_at))[0] || null
-    );
-  }
-
-  function isOnline(row) {
-    if (!row?.last_seen_at) return false;
-    return Date.now() - new Date(row.last_seen_at).getTime() < ONLINE_MS;
-  }
-
-  function alertIfDropped(prevOn, nowOn, label) {
-    if (prevOn === true && nowOn === false) {
-      ui.showAlert(PRESENCE_MSG.ALERT_DROPPED(label));
-    }
+  function pickNewest(rows, deviceType) {
+    return rows
+      .filter((r) => String(r.device_type || "").toLowerCase() === deviceType)
+      .sort((a, b) => new Date(b.last_seen_at) - new Date(a.last_seen_at))[0] || null;
   }
 
   async function tick() {
-    const res = await fetchPresenceSafe();
-    if (!res.ok) {
-      ui.setDeviceBadgesUnavailable();
-      store.setOnlineFlags({ display: false, host: false, buzzer: false });
-      ui.setMsg("msgDevices", PRESENCE_MSG.NO_TABLE);
+    if (inFlight) return;
+    inFlight = true;
+    try {
+    const { data, error } = await sb()
+      .from("device_presence")
+      .select("device_type,last_seen_at")
+      .eq("game_id", gameId)
+      .abortSignal(AbortSignal.timeout(ONLINE_MS));
+
+    if (error) {
+      lastSeenAt = { display: null, host: null, buzzer: null };
+      flags = { display: false, host: false, buzzer: false };
+      reportIfChanged({ flags, lastSeenAt, error });
       return;
     }
 
-    const d = pickNewest(res.rows, "display");
-    const h = pickNewest(res.rows, "host");
-    const b = pickNewest(res.rows, "buzzer");
+    const rows = data || [];
+    const d = pickNewest(rows, "display");
+    const h = pickNewest(rows, "host");
+    const b = pickNewest(rows, "buzzer");
 
-    const dOn = isOnline(d);
-    const hOn = isOnline(h);
-    const bOn = isOnline(b);
+    lastSeenAt = { display: d?.last_seen_at ?? null, host: h?.last_seen_at ?? null, buzzer: b?.last_seen_at ?? null };
+    // isOnline() liczy się od Date.now() — flags może się zmienić (online
+    // -> offline) samym upływem czasu, BEZ żadnej zmiany w bazie, więc
+    // porównanie musi patrzeć na WYLICZONE flags, nie na surowe lastSeenAt.
+    flags = { display: isOnline(lastSeenAt.display), host: isOnline(lastSeenAt.host), buzzer: isOnline(lastSeenAt.buzzer) };
 
-    // poprzednie stany z TEJ sesji
-    const prevDisplay = lastDisplayOnline;
-    const prevHost = lastHostOnline;
-    const prevBuzzer = lastBuzzerOnline;
-
-    // >>> KLUCZOWE: ustaw flagi online NATYCHMIAST,
-    // zanim wyślesz INIT albo zrobisz flush kolejek
-    store.setOnlineFlags({ display: dOn, host: hOn, buzzer: bOn });
-
-    ui.setDeviceBadges({
-      display: { on: dOn, seen: fmtSince(d?.last_seen_at) },
-      host: { on: hOn, seen: fmtSince(h?.last_seen_at) },
-      buzzer: { on: bOn, seen: fmtSince(b?.last_seen_at) },
-    });
-
-    const inInit = Date.now() < initEndsAt;
-
-    if (inInit) {
-      if (hOn && !initDone.host) {
-        initDone.host = true;
-        try {
-          await devices.sendHostCmd("COVER");
-          await devices.sendHostCmd("CLEAR");
-          await devices.sendHostCmd("COLOR_RESET");
-        } catch {}
-      }
-
-      if (bOn && !initDone.buzzer) {
-        initDone.buzzer = true;
-        try {
-          await devices.sendBuzzerCmd("OFF");
-          await devices.sendBuzzerCmd("COLOR_RESET");
-        } catch {}
-      }
-
-      if (dOn && !initDone.display) {
-        initDone.display = true;
-        try {
-          await devices.sendDisplayCmd("APP GAME");
-          await devices.sendDisplayCmd("COLOR RESET");
-          const themeKey = typeof getTheme === "function" ? getTheme() : null;
-          if (themeKey) await devices.sendDisplayCmd(`THEME ${themeKey}`);
-          await devices.sendDisplayCmd("APP BLACK");
-        } catch {}
-      }
+    reportIfChanged({ flags, lastSeenAt, error: null });
+    } catch (error) {
+      lastSeenAt = { display: null, host: null, buzzer: null };
+      flags = { display: false, host: false, buzzer: false };
+      reportIfChanged({ flags, lastSeenAt, error });
+    } finally {
+      inFlight = false;
     }
-
-    // flush kolejek po OFF -> ON
-    if (!prevDisplay && dOn) {
-      try { await devices.flushQueued("display"); } catch {}
-    }
-    if (!prevHost && hOn) {
-      try { await devices.flushQueued("host"); } catch {}
-    }
-    if (!prevBuzzer && bOn) {
-      try { await devices.flushQueued("buzzer"); } catch {}
-    }
-
-    lastDisplayOnline = dOn;
-    lastHostOnline = hOn;
-    lastBuzzerOnline = bOn;
-
-    // <<< USUŃ / NIE RÓB już store.setOnlineFlags na końcu ticka,
-    // bo robiłeś to wyżej
-
   }
 
-  async function start() {
-    initEndsAt = Date.now() + INIT_WINDOW_MS;
-  
-    // reset initDone na start tej sesji Controla
-    initDone = { display: false, host: false, buzzer: false };
-  
-    await tick();
-    timer = setInterval(tick, 1500);
+  // App.js's onChange tylko destrukturyzuje `flags` (renderCurrent() go
+  // zapisuje i przerysowuje cały panel) — reszta payloadu (lastSeenAt/error)
+  // nie wpływa na to, czy warto zawiadamiać. Wywołanie tylko przy realnej
+  // zmianie flags.
+  function reportIfChanged(payload) {
+    const fp = JSON.stringify(payload.flags);
+    if (fp === lastReported) return;
+    lastReported = fp;
+    onChange?.(payload);
+  }
+
+  function start() {
+    tick();
+    timer = setInterval(tick, POLL_MS);
+    // Expire locally even when a presence query is still waiting for the network.
+    expiryTimer = setInterval(() => {
+      flags = Object.fromEntries(Object.entries(lastSeenAt).map(([kind, at]) => [kind, isOnline(at)]));
+      reportIfChanged({ flags, lastSeenAt, error: null });
+    }, 250);
   }
 
   function stop() {
     if (timer) clearInterval(timer);
+    if (expiryTimer) clearInterval(expiryTimer);
+    expiryTimer = null;
     timer = null;
   }
 
-  return { start, stop };
+  function getFlags() { return { ...flags }; }
+
+  return { start, stop, getFlags };
 }

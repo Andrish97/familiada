@@ -1,17 +1,42 @@
-// scene.js
+// display/js/scene.js
+//
+// Silnik rysowania LED-matrix dla Display v2 — NIE jest kopią
+// display/js/scene.js. Ten sam materiał źródłowy (fonts.js/anim.js/
+// displays.js/theme_manager.js — czyste biblioteki rysujące, bez sprzężenia
+// z komendami — zostają reużyte bez zmian, importowane wprost z display/js/),
+// ale sam plik jest napisany od nowa z jedną zmianą struktury: w oryginale
+// zmiana motywu/kolorów (THEME/COLOR) istnieje WYŁĄCZNIE jako gałąź
+// wewnątrz interpretera komend tekstowych (handleCommand) — nie ma żadnego
+// odpowiednika w czystym `api`. Tu ta logika jest wyciągnięta jako
+// pierwszorzędne funkcje `api.theme.set()`/`api.color.set()`/
+// `api.color.reset()`, wywoływane bezpośrednio z render.js na podstawie
+// zdarzeń z deriveEvents — bez żadnego pośredniego formatu tekstowego.
+//
+// Interpreter komend (RBATCH/FBATCH/RTXT/R/RSUMA/RX/FL/FA/FB/FR/F/FSUMA/TOP/
+// LEFT/RIGHT/LONG1/LONG2/INDICATOR/BLANK/LOGO/WIN/DEBUG, tokenizer,
+// parseAnim) w ogóle nie istnieje w tym pliku — display/js/render.js woła
+// `api.*` wprost. `api.debug.showFont(...)` zostaje jako zwykła funkcja do
+// ręcznego wywołania z konsoli przy testach znaczków — bez wejścia przez
+// komendę.
+//
+// Reszta (rysowanie glifów 5x7, layout pól rund/finału, WIN, logo,
+// snapshot/restore) to ten sam algorytm co dziś — przepisywanie pikselowej
+// matematyki animacji/fontów od zera nie dałoby żadnej korzyści, tylko
+// ryzyko niezgodności z tym, jak wygląda dziś (ustalone wprost).
+
 import { loadJson, buildGlyphMap, resolveGlyph } from "../../shared/js/display/fonts.js?v=v2026-10-06T23331";
 import { createAnimator } from "../../shared/js/display/anim.js?v=v2026-10-06T23331";
 import { createDisplays } from "../../shared/js/display/displays.js?v=v2026-10-06T23331";
 import { createThemeManager } from "../../shared/js/display/theme_manager.js?v=v2026-10-06T23331";
 import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-06T23331";
 import { t } from "../../shared/translation/translation.js?v=v2026-10-06T23331";
+import { clipDisplayText } from "../../shared/js/gameplay/displayText.js?v=v2026-10-06T23331";
 
 export async function createScene() {
-  const NS = "http://www.w3.org/2000/svg";
-  const $  = (id) => document.getElementById(id);
+  let animationGeneration = 0;
+  const $ = (id) => document.getElementById(id);
 
   let SUMA_LABEL = t("display.sumLabel");
-  let bigMode = "NONE";
 
   // ============================================================
   // Theme manager + displays
@@ -34,7 +59,7 @@ export async function createScene() {
   let rightTriple = displays.rightTriple;
   let topTriple = displays.topTriple;
 
-  const COLORS = { big: "#000000", cell: "#000000", dotOff: "#2e2e32" };
+  const COLORS = { cell: "#000000", dotOff: "#2e2e32" };
   const updateDotColor = (oldColor, newColor) => {
     const updateTiled = (d) => {
       for (let ty = 0; ty < d.tilesY; ty++)
@@ -56,8 +81,8 @@ export async function createScene() {
     updateTiled(big); updateTiled(leftPanel); updateTiled(rightPanel); updateTiled(topPanel);
     updatePanel(long1); updatePanel(long2);
   };
-  const LIT = { main: "#d7ff3d", top: "#d7ff3d", left: "#d7ff3d", right: "#d7ff3d", bottom: "#d7ff3d" };
   const LIT_DEFAULT = "#d7ff3d";
+  const LIT = { main: LIT_DEFAULT, top: LIT_DEFAULT, left: LIT_DEFAULT, right: LIT_DEFAULT, bottom: LIT_DEFAULT };
 
   // ============================================================
   // Render 5x7 glyph into a tile
@@ -116,7 +141,7 @@ export async function createScene() {
     return snap;
   };
 
-  const anim = createAnimator({ tileAt, snapArea, clearArea, clearTileAt, dotOff: COLORS.dotOff });
+  const anim = createAnimator({ tileAt, snapArea, clearArea, clearTileAt, dotOff: COLORS.dotOff, getGeneration: () => animationGeneration });
   if (typeof anim.outEdge !== "function" && typeof anim.inEdge === "function") anim.outEdge = (...args) => anim.inEdge(...args);
   if (typeof anim.outMatrix !== "function" && typeof anim.inMatrix === "function") anim.outMatrix = (...args) => anim.inMatrix(...args);
 
@@ -206,7 +231,7 @@ export async function createScene() {
   };
 
   const alignRight = (val, width) => { const s = (val ?? "").toString(); if (!s.length) return " ".repeat(width); return s.length >= width ? s.slice(-width) : " ".repeat(width - s.length) + s; };
-  const clipText = (val, max) => { const s = (val ?? "").toString(); return s.length > max ? s.slice(0, max) : s; };
+  const clipText = clipDisplayText;
 
   const updateField = async (GLYPHS, big, f, text, { out = null, in: inn = null, color = LIT.main } = {}) => {
     const area = { c1: f.c1, r1: f.r1, c2: f.c2, r2: f.r2 };
@@ -229,6 +254,12 @@ export async function createScene() {
   })();
 
   const roundsState = { text: Array(6).fill(""), pts: Array(6).fill(""), suma: "", sumaRow: 9 };
+  // Śledzi, która plansza jest aktualnie namalowana — wyłącznie po to, żeby
+  // refreshSumaLabel() (i18n:lang) wiedziało, KTÓRĄ z dwóch osobnych etykiet
+  // "SUMA" bezpiecznie przemalować, nie ryzykując narysowania fragmentu
+  // planszy finału na planszy rund (i odwrotnie) w nieużywanym, ale wciąż
+  // widocznym rogu siatki.
+  let activeBoard = null;
   const xState = { "1A":false,"2A":false,"3A":false,"4A":false,"1B":false,"2B":false,"3B":false,"4B":false };
 
   const hasVisibleText = (s) => (s ?? "").toString().trim().length > 0;
@@ -248,21 +279,6 @@ export async function createScene() {
     const F = roundsSumaFields();
     writeField(GLYPHS, big, F.label, SUMA_LABEL, LIT.main);
     if (isNonEmpty(roundsState.suma)) writeField(GLYPHS, big, F.val, roundsState.suma, LIT.main);
-  };
-
-  const redrawRounds = () => {
-    clearBig(big);
-    for (let i=0;i<6;i++) {
-      const tRaw = roundsState.text[i] ?? "", pRaw = roundsState.pts[i] ?? "";
-      const t = clipText(tRaw,17), p = alignRight(pRaw,2);
-      writeField(GLYPHS, big, ROUNDS.answers[i], t, LIT.main);
-      writeField(GLYPHS, big, ROUNDS.points[i], p, LIT.main);
-      setRoundNumberVisible(i+1, isNonEmpty(tRaw)||isNonEmpty(pRaw));
-    }
-    relocateSumaIfNeeded();
-    const F = roundsSumaFields();
-    writeField(GLYPHS, big, F.label, SUMA_LABEL, LIT.main);
-    writeField(GLYPHS, big, F.val, isNonEmpty(roundsState.suma) ? alignRight(roundsState.suma,3) : "   ", LIT.main);
   };
 
   // ============================
@@ -290,10 +306,17 @@ export async function createScene() {
     else { writeField(GLYPHS, big, FINAL.sumaBLabel, SUMA_LABEL, LIT.main); writeField(GLYPHS, big, FINAL.sumaBVal, alignRight(finalState.sumB,3), LIT.main); }
   };
 
+  // Zgłoszone: etykieta "SUMA" nie tłumaczyła się na żywo w Finale (tylko
+  // w Rundach) — refreshSumaLabel() sprawdzał wyłącznie roundsState.sumaRow,
+  // nigdy nie wołał drawFinalSum() dla planszy finału. activeBoard (nie np.
+  // obecność finalState.sumA/sumB — te bywają puste, zanim gracz zdobędzie
+  // pierwsze punkty, mimo że plansza finału już jest widoczna) mówi wprost,
+  // która plansza jest teraz namalowana, więc nie ma ryzyka przemalowania
+  // złej etykiety na nieużywany fragment siatki.
   const refreshSumaLabel = () => {
     SUMA_LABEL = t("display.sumLabel");
-    if (bigMode === "ROUNDS") { const F = roundsSumaFields(); writeField(GLYPHS, big, F.label, SUMA_LABEL, LIT.main); }
-    else if (bigMode === "FINAL") { const lf = finalState.sumMode==="A"?FINAL.sumaALabel:FINAL.sumaBLabel; writeField(GLYPHS, big, lf, SUMA_LABEL, LIT.main); }
+    if (activeBoard === "rounds" && roundsState.sumaRow) { const F = roundsSumaFields(); writeField(GLYPHS, big, F.label, SUMA_LABEL, LIT.main); }
+    if (activeBoard === "final") drawFinalSum();
   };
   window.addEventListener("i18n:lang", refreshSumaLabel);
 
@@ -346,6 +369,7 @@ export async function createScene() {
   let indicatorState = "OFF";
   const setIndicator = (state) => {
     const s = (state ?? "").toString().toUpperCase();
+    if (s === indicatorState) return;
     if (s === "OFF") { themeMgr.updateControls({ A: false, B: false }); indicatorState = "OFF"; return; }
     if (s === "ON_A") { themeMgr.updateControls({ A: true, B: false }); indicatorState = "ON_A"; return; }
     if (s === "ON_B") { themeMgr.updateControls({ A: false, B: true }); indicatorState = "ON_B"; return; }
@@ -407,7 +431,9 @@ export async function createScene() {
   };
 
   // ============================================================
-  // SNAPSHOT / RESTORE
+  // SNAPSHOT / RESTORE (używane też przez theme.set() poniżej —
+  // zmiana motywu przebudowuje panele SVG, więc trzeba zachować
+  // to, co akurat jest narysowane)
   // ============================================================
   const snapDotsGrid = (panel) => panel.dots.map(row => row.map(el => el.getAttribute("fill")));
   const restoreDotsGrid = (panel, snap) => { if (!snap) return; for (let y=0;y<panel.dots.length;y++) for (let x=0;x<panel.dots[0].length;x++) { const fill = snap?.[y]?.[x]; if (fill != null) panel.dots[y][x].setAttribute("fill", fill); } };
@@ -442,6 +468,22 @@ export async function createScene() {
   };
 
   // ============================================================
+  // Kolor CSS -> rgb, do walidacji wejścia w theme/color
+  // ============================================================
+  const cssColorToRgb = (css) => {
+    const s = (css ?? "").toString().trim();
+    if (!s) return null;
+    const tmp = document.createElement("div");
+    tmp.style.color = s;
+    document.body.appendChild(tmp);
+    const rgb = getComputedStyle(tmp).color;
+    tmp.remove();
+    const m = rgb.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/i);
+    if (!m) return null;
+    return { r: +m[1], g: +m[2], b: +m[3] };
+  };
+
+  // ============================================================
   // API
   // ============================================================
   const api = {
@@ -458,7 +500,7 @@ export async function createScene() {
         if (type==="edge") return anim.outEdge(big, A, dir, speed, opts||{});
         if (type==="matrix") return anim.outMatrix(big, A, axis, speed, opts||{});
       },
-      clear: () => clearBig(big),
+      clear: () => { activeBoard = null; clearBig(big); },
       put: (col, row, ch, color=LIT.main) => putCharAt(GLYPHS, big, col, row, ch, color),
       clearArea: (c1,r1,c2,r2) => clearArea(big, c1,r1,c2,r2),
     },
@@ -475,10 +517,27 @@ export async function createScene() {
     logo: {
       _gameId: null, _key: null,
       bindGame: async (gameId) => { const u = new URL(location.href); const key = u.searchParams.get("key")||""; api.logo._gameId = (gameId??"").toString(); api.logo._key = key; const dbLogo = await loadActiveLogoFromDb(api.logo._gameId, key); ACTIVE_LOGO = (dbLogo&&dbLogo.type&&dbLogo.payload) ? dbLogo : null; },
+      // WYŁĄCZNIE dla podglądu (display/js/main.js's bootPreview) — ustawia
+      // logo wprost z gotowego payloadu (np. jeszcze NIEZAPISANEGO wyboru w
+      // formularzu ustawień gry), bez odpytywania bazy jak bindGame/reload.
+      // logo=null -> wraca do wbudowanego domyślnego logo (ten sam fallback
+      // co _getSource() ma i tak, gdy ACTIVE_LOGO jest puste).
+      setPreview: (logo) => { ACTIVE_LOGO = (logo?.type && logo?.payload) ? logo : null; },
       _getSource: () => { if (ACTIVE_LOGO?.type==="GLYPH_30x10") return { type:"GLYPH_30x10", payload: ACTIVE_LOGO.payload }; if (ACTIVE_LOGO?.type==="PIX_150x70") return { type:"PIX_150x70", payload: ACTIVE_LOGO.payload }; return { type:"GLYPH_30x10", payload: DEFAULT_LOGO }; },
       draw: () => { const src = api.logo._getSource(); if (src.type==="GLYPH_30x10") { drawLogoGrid30x10(src.payload); return; } if (src.type==="PIX_150x70") { drawLogoPix150x70(src.payload?.bits_b64||src.payload?.bits_base64||src.payload?.bitsBase64||"", LIT.main); return; } throw new Error("LOGO: nieznany typ: "+src.type); },
       show: async (animIn = {type:"edge",dir:"left",ms:14}) => { api.logo.draw(); await api.big.animIn({ ...animIn, area: api.big.areaAll() }); },
       hide: async (animOut = {type:"edge",dir:"right",ms:14}) => { await api.big.animOut({ ...animOut, area: api.big.areaAll() }); },
+      reload: async () => {
+        const gid = api.logo._gameId, key = api.logo._key;
+        if (!gid) return;
+        const seq = ++logoSeq;
+        try {
+          const dbLogo = await loadActiveLogoFromDb(gid, key);
+          if (seq !== logoSeq) return;
+          ACTIVE_LOGO = (dbLogo && dbLogo.type && dbLogo.payload) ? dbLogo : null;
+          api.logo.draw();
+        } catch (e) { console.warn("[logo] reload failed:", e); }
+      },
     },
     win: {
       set: async (num, { animOut=null, animIn=null } = {}) => { const A = api.big.areaWin(); if (animOut) await api.big.animOut({...animOut, area:A}); drawWinNumber5(GLYPHS, big, WIN_DIGITS, num, LIT.main); if (animIn) await api.big.animIn({...animIn, area:A}); },
@@ -486,7 +545,14 @@ export async function createScene() {
     rounds: {
       setText: async (idx1to6, text, { animOut=null, animIn=null } = {}) => { const i=(idx1to6|0)-1; if (i<0||i>5) throw new Error("idx1to6 musi być 1..6"); const t = clipText((text??"").toString(),17); roundsState.text[i]=t; await updateField(GLYPHS, big, ROUNDS.answers[i], t, {out:animOut, in:animIn, color:LIT.main}); setRoundNumberVisible(idx1to6, hasVisibleText(roundsState.text[i])); relocateSumaIfNeeded(); },
       setPts: async (idx1to6, pts, { animOut=null, animIn=null } = {}) => { const i=(idx1to6|0)-1; if (i<0||i>5) throw new Error("idx1to6 musi być 1..6"); const p = alignRight((pts??"").toString(),2); roundsState.pts[i]=(pts??"").toString(); await updateField(GLYPHS, big, ROUNDS.points[i], p, {out:animOut, in:animIn, color:LIT.main}); setRoundNumberVisible(idx1to6, isNonEmpty(roundsState.text[i])||isNonEmpty(roundsState.pts[i])); relocateSumaIfNeeded(); },
-      setRow: async (idx1to6, { text=undefined, pts=undefined, animOut=null, animIn=null } = {}) => { if (text!==undefined) await api.rounds.setText(idx1to6,text,{animOut,animIn}); if (pts!==undefined) await api.rounds.setPts(idx1to6,pts,{animOut,animIn}); },
+      setRow: async (idx1to6, { text=undefined, pts=undefined, animOut=null, animIn=null } = {}) => {
+        // Tekst i punkty należą do jednej odpowiedzi: wspólny czas, różne
+        // pola SVG. Sekwencja dwóch pełnych animacji podwajała ten czas.
+        const fields = [];
+        if (text !== undefined) fields.push(api.rounds.setText(idx1to6, text, { animOut, animIn }));
+        if (pts !== undefined) fields.push(api.rounds.setPts(idx1to6, pts, { animOut, animIn }));
+        await Promise.all(fields);
+      },
       setSuma: async (val, { animOut=null, animIn=null } = {}) => { roundsState.suma=(val??"").toString(); relocateSumaIfNeeded(); const F=roundsSumaFields(); await updateField(GLYPHS, big, F.val, alignRight(roundsState.suma,3), {out:animOut, in:animIn, color:LIT.main}); },
       setX: (name, on) => {
         const key = (name??"").toString().toUpperCase(); const cell = ROUNDS.xCells[key]; if (!cell) throw new Error(`Nieznane X: ${name}`);
@@ -506,6 +572,7 @@ export async function createScene() {
         xState[key]=true; if (isBig) drawRoundsBigX(GLYPHS, big, side, LIT.main); else drawBigX_3x3(GLYPHS, big, cell.c1, cell.r1, LIT.main);
       },
       setAll: async ({ rows=[], suma=undefined, animOut=null, animIn=null } = {}) => {
+        activeBoard = "rounds";
         const A_ALL = api.big.areaAll();
         const hasAnyRowData = rows.some(r => isNonEmpty(r?.text)||isNonEmpty(r?.pts));
         if (animOut && !animIn && !hasAnyRowData && suma===undefined) { await api.big.animOut({...animOut, area:A_ALL}); clearBig(big); roundsState.text=Array(6).fill(""); roundsState.pts=Array(6).fill(""); roundsState.suma=""; roundsState.sumaRow=9; return; }
@@ -521,13 +588,19 @@ export async function createScene() {
       setA: async (idx1to5, pts, { animOut=null, animIn=null } = {}) => { const i=(idx1to5|0)-1; if (i<0||i>4) throw new Error("idx1to5 musi być 1..5"); await updateField(GLYPHS, big, FINAL.ptsA[i], alignRight((pts??"").toString(),2), {out:animOut, in:animIn, color:LIT.main}); },
       setB: async (idx1to5, pts, { animOut=null, animIn=null } = {}) => { const i=(idx1to5|0)-1; if (i<0||i>4) throw new Error("idx1to5 musi być 1..5"); await updateField(GLYPHS, big, FINAL.ptsB[i], alignRight((pts??"").toString(),2), {out:animOut, in:animIn, color:LIT.main}); },
       setRight: async (idx1to5, text, { animOut=null, animIn=null } = {}) => { const i=(idx1to5|0)-1; if (i<0||i>4) throw new Error("idx1to5 musi być 1..5"); await updateField(GLYPHS, big, FINAL.rightTxt[i], clipText((text??"").toString(),11), {out:animOut, in:animIn, color:LIT.main}); },
-      setRow: async (idx1to5, { left=undefined, a=undefined, b=undefined, right=undefined, animOut=null, animIn=null } = {}) => { if (left!==undefined) await api.final.setLeft(idx1to5,left,{animOut,animIn}); if (a!==undefined) await api.final.setA(idx1to5,a,{animOut,animIn}); if (b!==undefined) await api.final.setB(idx1to5,b,{animOut,animIn}); if (right!==undefined) await api.final.setRight(idx1to5,right,{animOut,animIn}); },
+      setRow: async (idx1to5, { left=undefined, a=undefined, b=undefined, right=undefined, animOut=null, animIn=null } = {}) => {
+        const tasks = [];
+        if (left !== undefined) tasks.push(api.final.setLeft(idx1to5,left,{animOut,animIn}));
+        if (a !== undefined) tasks.push(api.final.setA(idx1to5,a,{animOut,animIn}));
+        if (b !== undefined) tasks.push(api.final.setB(idx1to5,b,{animOut,animIn}));
+        if (right !== undefined) tasks.push(api.final.setRight(idx1to5,right,{animOut,animIn}));
+        await Promise.all(tasks);
+      },
       setSumMode: (side) => { const s=(side??"").toString().toUpperCase(); if (s!=="A"&&s!=="B") throw new Error(`FSUMMODE: nieznana strona: ${side}`); finalState.sumMode=s; drawFinalSum(); },
       setSuma: async (val, { animOut=null, animIn=null } = {}) => { if (finalState.sumMode==="A") finalState.sumA=(val??"").toString(); else finalState.sumB=(val??"").toString(); const isA=(finalState.sumMode==="A"); clearFinalSumRow(); writeField(GLYPHS, big, isA?FINAL.sumaALabel:FINAL.sumaBLabel, SUMA_LABEL, LIT.main); await updateField(GLYPHS, big, isA?FINAL.sumaAVal:FINAL.sumaBVal, alignRight((val??"").toString(),3), {out:animOut, in:animIn, color:LIT.main}); },
-      setSumaA: async (val, anims={}) => { const prev=finalState.sumMode; finalState.sumMode="A"; await api.final.setSuma(val, anims); finalState.sumMode=prev; },
-      setSumaB: async (val, anims={}) => { const prev=finalState.sumMode; finalState.sumMode="B"; await api.final.setSuma(val, anims); finalState.sumMode=prev; },
       setSumaFor: async (side, val, anims={}) => { const s=(side??"").toString().toUpperCase(); if (s!=="A"&&s!=="B") throw new Error(`setSumaFor: nieznana strona: ${side}`); finalState.sumMode=s; return api.final.setSuma(val, anims); },
       setAll: async ({ rows=[], suma=undefined, sumaSide=null, animOut=null, animIn=null } = {}) => {
+        activeBoard = "final";
         const A_ALL = api.big.areaAll();
         const hasAnyRowData = rows.some(r => isNonEmpty(r?.left)||isNonEmpty(r?.a)||isNonEmpty(r?.b)||isNonEmpty(r?.right));
         if (animOut&&!animIn&&!hasAnyRowData&&suma===undefined) { await api.big.animOut({...animOut, area:A_ALL}); clearBig(big); finalState.sumA=""; finalState.sumB=""; return; }
@@ -543,55 +616,24 @@ export async function createScene() {
         if (animIn) await api.big.animIn({...animIn, area});
       },
     },
-    debug: {
-      showFont: (opts={}) => {
-        const kind=(opts.kind||"ALL").toUpperCase(), group=(opts.group||""), text=(opts.text||"");
-        const groups = Object.keys(FONT5).filter(k=>k!=="meta").map(name=>({name:name.toUpperCase(),map:FONT5[name]||{}}));
-        const allChars = groups.flatMap(g=>Object.keys(g.map));
-        let chars = []; if (kind==="ALL") chars=allChars; else if (kind==="GROUP") { const wanted=group.toUpperCase(); const g=groups.find(g=>g.name===wanted); if (!g) return; chars=Object.keys(g.map); } else if (kind==="TEXT") chars=Array.from(text); else chars=Array.from(text||kind);
-        api.big.clear(); let i=0; for (let row=1;row<=big.tilesY;row++) for (let col=1;col<=big.tilesX;col++) { if (i>=chars.length) return; api.big.put(col, row, chars[i]); i++; }
-      },
-    },
-  };
-
-  // ============================================================
-  // Command handler
-  // ============================================================
-  const unquote = (s) => { const t=(s??"").trim(); if (t.startsWith('"')&&t.endsWith('"')) return t.slice(1,-1); return t; };
-  const tokenize = (raw) => { const tokens=[]; let i=0; while (i<raw.length) { if (raw[i]===" ") { i++; continue; } if (raw[i]==='"') { let j=i+1; while (j<raw.length&&raw[j]!=='"') j++; tokens.push(raw.slice(i,j+1)); i=j+1; } else { let j=i; while (j<raw.length&&raw[j]!==" ") j++; tokens.push(raw.slice(i,j)); i=j; } } return tokens; };
-  const parseAnim = (tokens, startIdx) => {
-    const type=(tokens[startIdx]?? "").toLowerCase(), dirOrAxis=(tokens[startIdx+1]?? "").toLowerCase(), ms=parseInt(tokens[startIdx+2]?? "12",10), extra=(tokens[startIdx+3]?? "").toLowerCase();
-    const base = { type: type==="matrix"?"matrix":"edge", ms: isFinite(ms)?ms:(type==="matrix"?36:12) };
-    if (type==="edge") base.dir=dirOrAxis||"left"; if (type==="matrix") base.axis=dirOrAxis||"down"; if (extra==="pixel") base.pixel=true; return base;
-  };
-
-  const handleCommand = async (line) => {
-    const raw = (line??"").toString().trim(); if (!raw) return;
-    const tokens = tokenize(raw); const head = (tokens[0]?? "").toUpperCase();
-
     // ============================================================
-    // THEME <name> / THEME ACTIVE
+    // theme / color — w oryginalnym scene.js istniały WYŁĄCZNIE jako
+    // gałęzie interpretera komend (THEME <name>, COLOR A|B|BACKGROUND|
+    // DOT|RESET). Tu są pierwszorzędnymi funkcjami — to jest właśnie
+    // wyciągnięcie sprzężenia rysowanie<->komendy, o które chodziło.
     // ============================================================
-    if (head === "THEME") {
-      const action = (tokens[1] ?? "");
-      if (action.toUpperCase() === "ACTIVE") {
-        console.log(themeMgr.getActive());
-        return;
-      }
-      if (!action) { console.warn(`[THEME] Brak nazwy motywu. Dostępne: ${themeMgr.getAvailable().join(", ")}`); return; }
-      const themeName = unquote(action).toLowerCase();
-      try {
+    theme: {
+      getActive: () => themeMgr.getActive(),
+      getAvailable: () => themeMgr.getAvailable(),
+      set: (name) => {
         const oldTheme = themeMgr.getActiveTheme();
-        const config = {
-          colors: oldTheme?.getColors?.(),
-          controls: oldTheme?.getControls?.()
-        };
+        const config = { colors: oldTheme?.getColors?.(), controls: oldTheme?.getControls?.() };
         const snap = {
           big: big.snapshot(), left: leftPanel.snapshot(),
           right: rightPanel.snapshot(), top: topPanel.snapshot(),
           long1: long1.snapshot(), long2: long2.snapshot(),
         };
-        const newTheme = themeMgr.load(themeName, config);
+        const newTheme = themeMgr.load((name ?? "").toString().toLowerCase(), config);
         displaysGroup.innerHTML = "";
         const newDisplays = createDisplays({ svgGroup: displaysGroup, theme: newTheme });
         big = newDisplays.big;
@@ -609,17 +651,27 @@ export async function createScene() {
         topPanel.restore(snap.top);
         long1.restore(snap.long1);
         long2.restore(snap.long2);
-      } catch (e) { console.warn(`[THEME] ${e.message}`); }
-      return;
-    }
-
-    // ============================================================
-    // COLOR A|B|BACKGROUND|DOT <value> / COLOR RESET
-    // ============================================================
-    if (head === "COLOR") {
-      const target = (tokens[1]?? "").toUpperCase();
-      if (target === "RESET") {
-        const def = themeMgr.getDefault(); themeMgr.load(def);
+      },
+    },
+    color: {
+      // target: "A" | "B" | "BG" | "DOT"
+      set: (target, value) => {
+        const key = (target ?? "").toString().toUpperCase();
+        if (key === "DOT") {
+          if (!cssColorToRgb(value)) { console.warn(`color.set: nieprawidłowy kolor: ${value}`); return; }
+          const oldLit = LIT.main;
+          LIT.main = value; LIT.top = value; LIT.left = value; LIT.right = value; LIT.bottom = value;
+          updateDotColor(oldLit, LIT.main);
+          return;
+        }
+        if (!cssColorToRgb(value)) { console.warn(`color.set: nieprawidłowy kolor: ${value}`); return; }
+        const themeKey = key === "A" ? "A" : key === "B" ? "B" : key === "BG" ? "BG" : null;
+        if (!themeKey) { console.warn(`color.set: nieznany cel "${target}" (użyj A | B | BG | DOT)`); return; }
+        themeMgr.updateColors({ [themeKey]: value });
+      },
+      reset: () => {
+        const def = themeMgr.getDefault();
+        themeMgr.load(def);
         const oldDot = COLORS.dotOff;
         COLORS.dotOff = "#2e2e32";
         updateDotColor(oldDot, COLORS.dotOff);
@@ -627,119 +679,19 @@ export async function createScene() {
         const newLit = LIT_DEFAULT;
         LIT.main = newLit; LIT.top = newLit; LIT.left = newLit; LIT.right = newLit; LIT.bottom = newLit;
         updateDotColor(oldLit, LIT.main);
-        return;
-      }
-      if (target === "DOT") {
-        const val = unquote(tokens.slice(2).join(" "));
-        const cssColorToRgb = (css) => { const s=(css??"").toString().trim(); if (!s) return null; const tmp=document.createElement("div"); tmp.style.color=s; document.body.appendChild(tmp); const rgb=getComputedStyle(tmp).color; tmp.remove(); const m=rgb.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/i); if (!m) return null; return {r:+m[1],g:+m[2],b:+m[3]}; };
-        if (!cssColorToRgb(val)) { console.warn(`COLOR: nieprawidłowy kolor: ${val}`); return; }
-        const oldLit = LIT.main;
-        LIT.main = val; LIT.top = val; LIT.left = val; LIT.right = val; LIT.bottom = val;
-        updateDotColor(oldLit, LIT.main);
-        return;
-      }
-      const val = unquote(tokens.slice(2).join(" "));
-      const cssColorToRgb = (css) => { const s=(css??"").toString().trim(); if (!s) return null; const tmp=document.createElement("div"); tmp.style.color=s; document.body.appendChild(tmp); const rgb=getComputedStyle(tmp).color; tmp.remove(); const m=rgb.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/i); if (!m) return null; return {r:+m[1],g:+m[2],b:+m[3]}; };
-      if (!cssColorToRgb(val)) { console.warn(`COLOR: nieprawidłowy kolor: ${val}`); return; }
-      const key = target === "A" ? "A" : target === "B" ? "B" : target === "BACKGROUND" ? "BG" : null;
-      if (!key) { console.warn(`COLOR: nieznany cel "${target}" (użyj A | B | BACKGROUND | DOT)`); return; }
-      themeMgr.updateColors({ [key]: val });
-      return;
-    }
-
-    // DEBUG
-    if (head === "DEBUG") {
-      const op = (tokens[1]?? "").toUpperCase();
-      if (op === "FONT") { const sub = (tokens[2]?? "").toUpperCase(); if (!sub||sub==="ALL") return api.debug.showFont({kind:"ALL"}); if (sub==="GROUP") return api.debug.showFont({kind:"GROUP",group:tokens[3]??""}); if (sub==="TEXT") return api.debug.showFont({kind:"TEXT",text:unquote(tokens.slice(3).join(" "))}); return api.debug.showFont({kind:"TEXT",text:unquote(tokens.slice(2).join(" "))}); }
-    }
-
-    // Small displays
-    if (head === "TOP") return api.small.topDigits(tokens[1] ?? "");
-    if (head === "LEFT") return api.small.leftDigits(tokens[1] ?? "");
-    if (head === "RIGHT") return api.small.rightDigits(tokens[1] ?? "");
-    if (head === "LONG1") return api.small.long1(unquote(tokens.slice(1).join(" ")));
-    if (head === "LONG2") return api.small.long2(unquote(tokens.slice(1).join(" ")));
-
-    // INDICATOR
-    if (head === "INDICATOR") { const val = (tokens[1]?? "OFF").toUpperCase(); if (val==="OFF"||val==="ON_A"||val==="ON_B") return api.indicator.set(val); console.warn("INDICATOR: nieznany stan:", val); return; }
-
-    // BLANK
-    if (head === "BLANK") { bigMode="OTHER"; api.big.clear(); return; }
-
-    // LOGO
-    if (head === "LOGO") {
-      bigMode = "OTHER"; const op = (tokens[1]?? "").toUpperCase();
-      if (op === "LOAD") { console.warn("LOGO LOAD jest wyłączone."); return; }
-      if (op === "RELOAD") { const gid=api.logo._gameId, key=api.logo._key; if (!gid) return; const seq=++logoSeq; loadActiveLogoFromDb(gid,key).then(dbLogo => { if (seq!==logoSeq) return; ACTIVE_LOGO=(dbLogo&&dbLogo.type&&dbLogo.payload)?dbLogo:null; try { api.logo.draw(); } catch(e) { console.warn("[logo] draw after RELOAD failed:", e); } }).catch(e => console.warn("[logo] RELOAD failed:", e)); return; }
-      if (op === "DRAW") { ++logoSeq; api.logo.draw(); return; }
-      if (op === "JSON") { ++logoSeq; try { const bin=atob(tokens[2]||""); const bytes=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) bytes[i]=bin.charCodeAt(i); const d=JSON.parse(new TextDecoder().decode(bytes)); ACTIVE_LOGO=(d?.type&&d?.payload!==undefined)?d:null; api.logo.draw(); } catch(e){console.warn("[logo] JSON cmd failed:",e);} return; }
-      if (op === "SHOW") { let ai=null; const i=tokens.findIndex(t=>t.toUpperCase()==="ANIMIN"); if (i>=0) ai=parseAnim(tokens,i+1); return api.logo.show(ai??{type:"edge",dir:"left",ms:14}); }
-      if (op === "HIDE") { let ao=null; const i=tokens.findIndex(t=>t.toUpperCase()==="ANIMOUT"); if (i>=0) ao=parseAnim(tokens,i+1); return api.logo.hide(ao??{type:"edge",dir:"right",ms:14}); }
-    }
-
-    // WIN
-    if (head === "WIN") {
-      bigMode = "OTHER"; const num=tokens[1]??"";
-      const ao=tokens.findIndex(t=>t.toUpperCase()==="ANIMOUT"), ai=tokens.findIndex(t=>t.toUpperCase()==="ANIMIN");
-      return api.win.set(num, { animOut: ao>=0?parseAnim(tokens,ao+1):null, animIn: ai>=0?parseAnim(tokens,ai+1):null });
-    }
-
-    // RBATCH
-    if (head === "RBATCH") {
-      bigMode = "ROUNDS";
-      const ao=tokens.findIndex(t=>t.toUpperCase()==="ANIMOUT"), ai=tokens.findIndex(t=>t.toUpperCase()==="ANIMIN");
-      const animOut=ao>=0?parseAnim(tokens,ao+1):null, animIn=ai>=0?parseAnim(tokens,ai+1):null;
-      const sIdx=tokens.findIndex(t=>t.toUpperCase()==="SUMA"), suma=sIdx>=0?(tokens[sIdx+1]?? ""):undefined;
-      const rows=Array.from({length:6},()=>({text:"",pts:""}));
-      for (let i=1;i<=6;i++) { const k=tokens.findIndex(t=>t.toUpperCase()===`R${i}`); if (k>=0) { rows[i-1].text=unquote(tokens[k+1]??""); rows[i-1].pts=(tokens[k+2]??""); } }
-      return api.rounds.setAll({rows, suma, animOut, animIn});
-    }
-
-    // RTXT / RPTS / R / RSUMA / RX
-    if (head === "RTXT") { bigMode="ROUNDS"; const idx=parseInt(tokens[1]?? "0",10); const ao=tokens.findIndex(t=>t.toUpperCase()==="ANIMOUT"), ai=tokens.findIndex(t=>t.toUpperCase()==="ANIMIN"); return api.rounds.setText(idx, unquote(tokens[2]?? ""), {animOut: ao>=0?parseAnim(tokens,ao+1):null, animIn: ai>=0?parseAnim(tokens,ai+1):null}); }
-    if (head === "RPTS") { bigMode="ROUNDS"; const idx=parseInt(tokens[1]?? "0",10); const ao=tokens.findIndex(t=>t.toUpperCase()==="ANIMOUT"), ai=tokens.findIndex(t=>t.toUpperCase()==="ANIMIN"); return api.rounds.setPts(idx, tokens[2]??"", {animOut: ao>=0?parseAnim(tokens,ao+1):null, animIn: ai>=0?parseAnim(tokens,ai+1):null}); }
-    if (head === "R") { bigMode="ROUNDS"; const idx=parseInt(tokens[1]?? "0",10); const tIdx=tokens.findIndex(t=>t.toUpperCase()==="TXT"), pIdx=tokens.findIndex(t=>t.toUpperCase()==="PTS"); const text=tIdx>=0?unquote(tokens[tIdx+1]?? ""):undefined, pts=pIdx>=0?(tokens[pIdx+1]?? ""):undefined; const ao=tokens.findIndex(t=>t.toUpperCase()==="ANIMOUT"), ai=tokens.findIndex(t=>t.toUpperCase()==="ANIMIN"); return api.rounds.setRow(idx, {text,pts,animOut:ao>=0?parseAnim(tokens,ao+1):null,animIn:ai>=0?parseAnim(tokens,ai+1):null}); }
-    if (head === "RSUMA") { bigMode="ROUNDS"; const val=tokens[1]??""; const ao=tokens.findIndex(t=>t.toUpperCase()==="ANIMOUT"), ai=tokens.findIndex(t=>t.toUpperCase()==="ANIMIN"); return api.rounds.setSuma(val, {animOut:ao>=0?parseAnim(tokens,ao+1):null,animIn:ai>=0?parseAnim(tokens,ai+1):null}); }
-    if (head === "RX") { bigMode="ROUNDS"; return api.rounds.setX(tokens[1]?? "", (tokens[2]?? "").toUpperCase()==="ON"); }
-
-    // FBATCH / FHALF / FL / FA / FB / FR / F / FSUMA
-    if (head === "FBATCH") {
-      bigMode="FINAL";
-      const ao=tokens.findIndex(t=>t.toUpperCase()==="ANIMOUT"), ai=tokens.findIndex(t=>t.toUpperCase()==="ANIMIN");
-      const animOut=ao>=0?parseAnim(tokens,ao+1):null, animIn=ai>=0?parseAnim(tokens,ai+1):null;
-      let suma=undefined, sumaSide=null; const sIdx=tokens.findIndex(t=>t.toUpperCase()==="SUMA");
-      if (sIdx>=0) { const sideTok=(tokens[sIdx+1]?? "").toUpperCase(); if (sideTok==="A"||sideTok==="B") { sumaSide=sideTok; suma=tokens[sIdx+2]??""; } }
-      const rows=Array.from({length:5},()=>({left:"",a:"",b:"",right:""}));
-      for (let i=1;i<=5;i++) { const k=tokens.findIndex(t=>t.toUpperCase()===`F${i}`); if (k>=0) { rows[i-1].left=unquote(tokens[k+1]?? ""); rows[i-1].a=(tokens[k+2]?? ""); rows[i-1].b=(tokens[k+3]?? ""); rows[i-1].right=unquote(tokens[k+4]?? ""); } }
-      return api.final.setAll({rows, suma, sumaSide, animOut, animIn});
-    }
-    if (head === "FHALF") {
-      bigMode="FINAL"; const side=(tokens[1]?? "").toUpperCase();
-      const ao=tokens.findIndex((t,idx)=>idx>1&&t.toUpperCase()==="ANIMOUT"), ai=tokens.findIndex((t,idx)=>idx>1&&t.toUpperCase()==="ANIMIN");
-      const animOut=ao>=0?parseAnim(tokens,ao+1):null, animIn=ai>=0?parseAnim(tokens,ai+1):null;
-      const rows=Array.from({length:5},()=>({}));
-      for (let i=1;i<=5;i++) { const k=tokens.findIndex(t=>t.toUpperCase()===`F${i}`); if (k<0) continue; rows[i-1] = side==="A" ? {left:unquote(tokens[k+1]?? ""),a:tokens[k+2]??""} : side==="B" ? {b:tokens[k+1]?? "",right:unquote(tokens[k+2]?? "")} : null; if (!rows[i-1]) throw new Error(`FHALF: nieznana strona: ${side}`); }
-      return api.final.setHalf(side, {rows, animOut, animIn});
-    }
-    if (head === "FL") { bigMode="FINAL"; const idx=parseInt(tokens[1]?? "0",10); const ao=tokens.findIndex(t=>t.toUpperCase()==="ANIMOUT"), ai=tokens.findIndex(t=>t.toUpperCase()==="ANIMIN"); return api.final.setLeft(idx, unquote(tokens[2]?? ""), {animOut:ao>=0?parseAnim(tokens,ao+1):null,animIn:ai>=0?parseAnim(tokens,ai+1):null}); }
-    if (head === "FA") { bigMode="FINAL"; const idx=parseInt(tokens[1]?? "0",10); const ao=tokens.findIndex(t=>t.toUpperCase()==="ANIMOUT"), ai=tokens.findIndex(t=>t.toUpperCase()==="ANIMIN"); return api.final.setA(idx, tokens[2]?? "", {animOut:ao>=0?parseAnim(tokens,ao+1):null,animIn:ai>=0?parseAnim(tokens,ai+1):null}); }
-    if (head === "FB") { bigMode="FINAL"; const idx=parseInt(tokens[1]?? "0",10); const ao=tokens.findIndex(t=>t.toUpperCase()==="ANIMOUT"), ai=tokens.findIndex(t=>t.toUpperCase()==="ANIMIN"); return api.final.setB(idx, tokens[2]?? "", {animOut:ao>=0?parseAnim(tokens,ao+1):null,animIn:ai>=0?parseAnim(tokens,ai+1):null}); }
-    if (head === "FR") { bigMode="FINAL"; const idx=parseInt(tokens[1]?? "0",10); const ao=tokens.findIndex(t=>t.toUpperCase()==="ANIMOUT"), ai=tokens.findIndex(t=>t.toUpperCase()==="ANIMIN"); return api.final.setRight(idx, unquote(tokens[2]?? ""), {animOut:ao>=0?parseAnim(tokens,ao+1):null,animIn:ai>=0?parseAnim(tokens,ai+1):null}); }
-    if (head === "F") {
-      bigMode="FINAL"; const idx=parseInt(tokens[1]?? "0",10);
-      const L=tokens.findIndex(t=>t.toUpperCase()==="L"), A=tokens.findIndex(t=>t.toUpperCase()==="A"), B=tokens.findIndex(t=>t.toUpperCase()==="B"), R=tokens.findIndex(t=>t.toUpperCase()==="R");
-      const left=L>=0?unquote(tokens[L+1]?? ""):undefined, a=A>=0?(tokens[A+1]?? ""):undefined, b=B>=0?(tokens[B+1]?? ""):undefined, right=R>=0?unquote(tokens[R+1]?? ""):undefined;
-      const ao=tokens.findIndex(t=>t.toUpperCase()==="ANIMOUT"), ai=tokens.findIndex(t=>t.toUpperCase()==="ANIMIN");
-      return api.final.setRow(idx, {left,a,b,right,animOut:ao>=0?parseAnim(tokens,ao+1):null,animIn:ai>=0?parseAnim(tokens,ai+1):null});
-    }
-    if (head === "FSUMA") {
-      bigMode="FINAL"; let side=(tokens[1]?? "").toUpperCase(); let valIdx=1; if (side==="A"||side==="B") valIdx=2; else side=null; const val=tokens[valIdx]??"";
-      const ao=tokens.findIndex((t,idx)=>idx>valIdx&&t.toUpperCase()==="ANIMOUT"), ai=tokens.findIndex((t,idx)=>idx>valIdx&&t.toUpperCase()==="ANIMIN");
-      if (side==="A"||side==="B") return api.final.setSumaFor(side, val, {animOut:ao>=0?parseAnim(tokens,ao+1):null,animIn:ai>=0?parseAnim(tokens,ai+1):null});
-      return api.final.setSuma(val, {animOut:ao>=0?parseAnim(tokens,ao+1):null,animIn:ai>=0?parseAnim(tokens,ai+1):null});
-    }
-
-    console.warn("Nieznana komenda (scene):", raw);
+      },
+    },
+    debug: {
+      // Wywoływane ręcznie z konsoli do testów znaczków — bez wejścia
+      // przez żadną komendę (interpreter komend nie istnieje w v2).
+      showFont: (opts={}) => {
+        const kind=(opts.kind||"ALL").toUpperCase(), group=(opts.group||""), text=(opts.text||"");
+        const groups = Object.keys(FONT5).filter(k=>k!=="meta").map(name=>({name:name.toUpperCase(),map:FONT5[name]||{}}));
+        const allChars = groups.flatMap(g=>Object.keys(g.map));
+        let chars = []; if (kind==="ALL") chars=allChars; else if (kind==="GROUP") { const wanted=group.toUpperCase(); const g=groups.find(g=>g.name===wanted); if (!g) return; chars=Object.keys(g.map); } else if (kind==="TEXT") chars=Array.from(text); else chars=Array.from(text||kind);
+        api.big.clear(); let i=0; for (let row=1;row<=big.tilesY;row++) for (let col=1;col<=big.tilesX;col++) { if (i>=chars.length) return; api.big.put(col, row, chars[i]); i++; }
+      },
+    },
   };
 
   // Init
@@ -750,5 +702,5 @@ export async function createScene() {
   setLongTextCenteredMax15(GLYPHS, long1, "", LIT.main);
   setLongTextCenteredMax15(GLYPHS, long2, "", LIT.main);
 
-  return { api, handleCommand, themeMgr };
+  return { api, themeMgr, cancelAnimations() { animationGeneration++; } };
 }

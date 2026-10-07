@@ -1,4 +1,8 @@
-// js/pages/game-settings.js
+// js/pages/game-settings.js — kopia game-settings.js dedykowana dla modala
+// Control v2 (control2.html). Identyczna funkcjonalnie z oryginałem (Warstwa
+// 1 blokad, podgląd Wyświetlacza przez display2?preview=1 + web/js/gameplay/previewRow.js
+// itd.) — trzymana jako osobny plik, żeby modal Control v2 nie zależał od
+// tej samej strony, którą wciąż ładuje stary control.html przez /game-settings.
 import { requireAuth } from "../../shared/js/core/auth.js?v=v2026-10-06T23331";
 import { t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-06T23331";
 import { setTopbarAccount } from "../../shared/js/core/topbar-controller.js?v=v2026-10-06T23331";
@@ -8,6 +12,7 @@ import { loadFont5x7, buildLogoPreviewCanvas } from "../../shared/js/core/logo-p
 import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-06T23331";
 import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-06T23331";
 import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-06T23331";
+import { buildDisplayPreviewRow } from "../../shared/js/gameplay/previewRow.js?v=v2026-10-06T23331";
 import {
   loadSfxManifest, getSfxCategories,
   setSfxCustomBlob, clearSfxCustomFile, clearAllSfxCustomFiles, getSfxCustomFiles,
@@ -17,8 +22,9 @@ import {
   uploadGameSound, deleteGameSound, deleteAllGameSounds,
 } from "../../shared/js/core/sfx-cloud.js?v=v2026-10-06T23331";
 import { guardDesktopOnly } from "../../shared/js/core/device-guard.js?v=v2026-10-06T23331";
-import { guardResourceLock } from "../../shared/js/core/resource-lock.js?v=v2026-10-06T23331";
+import { guardResourceLock, guardResourceBusy } from "../../shared/js/core/resource-lock.js?v=v2026-10-06T23331";
 import { updateChecked, ROW_GONE } from "../../shared/js/core/db-guard.js?v=v2026-10-06T23331";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-06T23331";
 
 guardDesktopOnly();
 
@@ -116,6 +122,91 @@ let _displayReady = false;
 // Wykryj modal mode już na poziomie modułu (inline script w <head> dodaje klasę przed renderem)
 const _isModal = document.documentElement.classList.contains("gs-modal-mode");
 
+// Drawer sidebar (☰) w trybie modal -- czysto UI (żadna zależność od
+// auth/game/locków), więc wpięte SYNCHRONICZNIE tu, na poziomie modułu, a
+// NIE w głównej async funkcji init (po await requireAuth()/
+// guardResourceLock()/guardResourceBusy() -- realnie 0.5-1s RPC-ów).
+//
+// Root cause znaleziony przez e2e "dźwięk ze źródła Wyświetlacz"
+// (diagnostyka .evaluate() z testu, nie console.warn z przeglądarki --
+// ten nigdy nie pokazywał logu z WNĘTRZA click handlera, co był
+// właściwym tropem): #btnToggleSidebar staje się WIZUALNIE gotowy
+// natychmiast po wstrzyknięciu klasy .gs-modal-mode na <html> (inline
+// script w <head>, przed jakimkolwiek JS modułu) -- css/game-settings.css's
+// `.gs-modal-mode .gs-sidebar-toggle { display:inline-flex !important; }`
+// (2 klasy) ma WYŻSZĄ specyficzność niż `.hidden { display:none !important; }`
+// (1 klasa), więc przycisk jest klikalny NIEZALEŻNIE od tego, czy klasa
+// "hidden" w markupie została już usunięta przez JS. Ale listener kliku był
+// wpinany dopiero w głównej async funkcji, PO tych RPC-ach -- realny/testowy
+// klik trafiający w to okno (przycisk wygląda gotowy, ale jeszcze bez
+// żadnego handlera) był całkowitym no-opem: sidebar nigdy się nie otwierał,
+// bo klik, który miał to zrobić, już minął, zanim JS zdążył go obsłużyć.
+if (_isModal) {
+  const btnToggle  = document.getElementById("btnToggleSidebar");
+  const sidebarEl  = document.getElementById("gsSidebar");
+  const backdropEl = document.getElementById("gsSidebarBackdrop");
+  if (btnToggle) btnToggle.classList.remove("hidden");
+
+  const openSidebar = () => {
+    sidebarEl?.classList.add("gs-sidebar-open");
+    backdropEl?.classList.add("gs-sidebar-open");
+  };
+  const closeSidebar = () => {
+    sidebarEl?.classList.remove("gs-sidebar-open");
+    backdropEl?.classList.remove("gs-sidebar-open");
+  };
+  btnToggle?.addEventListener("click", openSidebar);
+  backdropEl?.addEventListener("click", closeSidebar);
+  // Zamknij drawer po wyborze kategorii
+  sidebarEl?.addEventListener("click", (e) => {
+    if (e.target.closest(".gs-sidebar-item")) closeSidebar();
+  });
+
+  // Przycisk zamknięcia (✕) -- IDENTYCZNY problem co #btnToggleSidebar
+  // wyżej: `.gs-modal-mode .gs-close-btn { display:inline-flex !important; }`
+  // (2 klasy) też wygrywa specyficznością nad `.hidden` (1 klasa), więc jest
+  // klikalny natychmiast, niezależnie od klasy "hidden" w markupie. Znalezione
+  // przy audycie po tym samym bugu ze sidebarem, nie osobnym zgłoszeniem --
+  // tryClose()/message listener nie zależą od żadnych danych z auth/game/
+  // locków (tylko isDirty, confirmModal, t -- wszystkie dostępne od razu na
+  // poziomie modułu), więc też wpięte tu, synchronicznie.
+  async function tryClose() {
+    // Zgłoszone: modal ma NIE zamykać się (ani pytać o niezapisane zmiany)
+    // w trakcie trwania zapisu -- saveAll() czyści isDirty dopiero PO
+    // zakończeniu (patrz komentarz tam), więc próba zamknięcia tuż po
+    // kliknięciu "Zapisz wszystko", zanim realny zapis sieciowy się
+    // skończy, widziała jeszcze isDirty=true i pokazywała mylący dialog
+    // "Masz niezapisane zmiany..." -- mimo że operator WŁAŚNIE kazał
+    // zapisać (potwierdzone realnym zrzutem ekranu z nagrania e2e).
+    // btnSaveAll.disabled jest już dziś niezawodnym sygnałem "trwa zapis"
+    // (ustawiane jako pierwsza instrukcja saveAll(), patrz tam) -- podczas
+    // gdy jest true, próba zamknięcia jest po prostu ignorowana (bez
+    // dialogu, bez zamykania); operator może spróbować ponownie po
+    // zakończeniu zapisu i zobaczy już poprawny stan.
+    if (btnSaveAll?.disabled) return;
+    if (isDirty) {
+      if (!await confirmModal({ text: t("gameSettings.unsavedConfirmModal") || "Masz niezapisane zmiany. Czy chcesz zamknąć ustawienia?" })) return;
+    }
+    // Reset defaultValue na wszystkich inputach żeby przeglądarka nie pokazała
+    // natywnego "Masz niezapisane zmiany" przy nawigacji iframe
+    document.querySelectorAll("input, textarea, select").forEach(el => {
+      if (el.type === "checkbox" || el.type === "radio") el.defaultChecked = el.checked;
+      else el.defaultValue = el.value;
+    });
+    window.parent.postMessage({ type: "gs:close" }, "*");
+  }
+
+  window.addEventListener("message", (ev) => {
+    if (ev.data?.type === "gs:requestClose") tryClose();
+  });
+
+  const btnGsModalClose = document.getElementById("btnGsModalClose");
+  if (btnGsModalClose) {
+    btnGsModalClose.classList.remove("hidden");
+    btnGsModalClose.addEventListener("click", tryClose);
+  }
+}
+
 // Color modal state — labels populated lazily from t()
 let colorModalTarget = null;
 let colorModalR = 0, colorModalG = 0, colorModalB = 0;
@@ -157,59 +248,72 @@ function clearDirty() {
 }
 
 async function saveAll() {
-  // Warstwa 2 (świeżość referencji): allQuestions/final/rounds mogły
-  // wczytać się raz przy starcie i od tego czasu ktoś (np. w edytorze,
-  // inna karta) mógł usunąć któreś z wybranych pytań. Odśwież przed
-  // zapisem i wyczyść martwe odniesienia — inaczej settings zapisałoby
-  // wskazanie na już nieistniejące pytanie.
-  try {
-    const freshQuestions = await loadQuestions(gameId);
-    const freshIds = new Set(freshQuestions.map(q => q.id));
-    localSettings.questions.final = localSettings.questions.final.filter(q => freshIds.has(q.id));
-    localSettings.questions.rounds = localSettings.questions.rounds.filter(q => freshIds.has(q.id));
-    allQuestions = freshQuestions;
-  } catch (e) {
-    console.warn("[game-settings] refresh questions before save failed:", e);
-  }
-
-  const hasFinal = localSettings.game.hasFinal === true;
-
-  // Finał wyłączony — wyczyść wybrane pytania finału (żeby martwa lista
-  // nie zostawała w bazie i nie wykluczała tych pytań z puli rund przy
-  // kolejnym wczytaniu ustawień ani w trakcie realnej rozgrywki) i
-  // zresetuj tryb wyboru na domyślny, żeby nie zostawało osierocone
-  // "Wybrane ręcznie" bez żadnych wybranych pytań.
-  if (!hasFinal) {
-    if (localSettings.questions.final.length > 0) localSettings.questions.final = [];
-    if (localSettings.game.finalQuestionsMode !== "random") localSettings.game.finalQuestionsMode = "random";
-  }
-
-  // Walidacja: finale w trybie "pick" wymaga dokładnie 5 pytań
-  if (hasFinal && localSettings.game.finalQuestionsMode === "pick") {
-    const count = localSettings.questions.final.length;
-    if (count < 5) {
-      alertModal({ text: t("gameSettings.saveErrorFinalNeed5", { count }) });
-      setActiveCat("finale");
-      return;
-    }
-  }
-
-  // Walidacja: nie można zapisać gdy wybrano "Własny" bez wgranego pliku
-  {
-    let cfCheck = new Map();
-    try { cfCheck = await getSfxCustomFiles(gameId); } catch {}
-    const missing = getSfxCategories().filter(cat =>
-      localSettings.sound.variants[cat.key] === VARIANT_CUSTOM && !cfCheck.get(cat.key)
-    );
-    if (missing.length > 0) {
-      const names = missing.map(cat => t("control.sfxDesc." + cat.key) || cat.key).join(", ");
-      alertModal({ text: (t("gameSettings.saveErrorCustomNoFile") || "Wgraj plik dla: {names}").replace("{names}", names) });
-      return;
-    }
-  }
-
+  // btnSaveAll.disabled=true jest TU, jako pierwsza instrukcja, celowo --
+  // poprzednio szło dopiero tuż przed zapisem, PO dwóch realnych zapytaniach
+  // sieciowych (loadQuestions()/getSfxCustomFiles() niżej), więc przycisk
+  // zostawał "enabled" przez cały ten wstępny odcinek. To był realny bug
+  // (e2e "dźwięk ze źródła Wyświetlacz", root cause znaleziony diagnostyką
+  // .evaluate()/console.warn w tryClose(): klik na tło modala tuż po
+  // "Zapisz wszystko" trafiał w to okno, `await expect(btnSaveAll).
+  // toBeEnabled()` w teście przechodził natychmiast -- bo przycisk nigdy
+  // nie zdążył się jeszcze wyłączyć -- więc isDirty było wciąż `true`,
+  // tryClose() pokazywał confirmModal(), a #gsOverlay nigdy nie znikał).
+  // Ten sam wyścig groził realnemu użytkownikowi: drugi klik "Zapisz" albo
+  // wyjście z modala w tym oknie nie miały żadnego wizualnego ostrzeżenia,
+  // że zapis już trwa.
   if (btnSaveAll) btnSaveAll.disabled = true;
   try {
+    // Warstwa 2 (świeżość referencji): allQuestions/final/rounds mogły
+    // wczytać się raz przy starcie i od tego czasu ktoś (np. w edytorze,
+    // inna karta) mógł usunąć któreś z wybranych pytań. Odśwież przed
+    // zapisem i wyczyść martwe odniesienia — inaczej settings zapisałoby
+    // wskazanie na już nieistniejące pytanie.
+    try {
+      const freshQuestions = await loadQuestions(gameId);
+      const freshIds = new Set(freshQuestions.map(q => q.id));
+      localSettings.questions.final = localSettings.questions.final.filter(q => freshIds.has(q.id));
+      localSettings.questions.rounds = localSettings.questions.rounds.filter(q => freshIds.has(q.id));
+      allQuestions = freshQuestions;
+    } catch (e) {
+      console.warn("[game-settings2] refresh questions before save failed:", e);
+    }
+
+    const hasFinal = localSettings.game.hasFinal === true;
+
+    // Finał wyłączony — wyczyść wybrane pytania finału (żeby martwa lista
+    // nie zostawała w bazie i nie wykluczała tych pytań z puli rund przy
+    // kolejnym wczytaniu ustawień ani w trakcie realnej rozgrywki) i
+    // zresetuj tryb wyboru na domyślny, żeby nie zostawało osierocone
+    // "Wybrane ręcznie" bez żadnych wybranych pytań.
+    if (!hasFinal) {
+      if (localSettings.questions.final.length > 0) localSettings.questions.final = [];
+      if (localSettings.game.finalQuestionsMode !== "random") localSettings.game.finalQuestionsMode = "random";
+    }
+
+    // Walidacja: finale w trybie "pick" wymaga dokładnie 5 pytań
+    if (hasFinal && localSettings.game.finalQuestionsMode === "pick") {
+      const count = localSettings.questions.final.length;
+      if (count < 5) {
+        alertModal({ text: t("gameSettings.saveErrorFinalNeed5", { count }) });
+        setActiveCat("finale");
+        return;
+      }
+    }
+
+    // Walidacja: nie można zapisać gdy wybrano "Własny" bez wgranego pliku
+    {
+      let cfCheck = new Map();
+      try { cfCheck = await getSfxCustomFiles(gameId); } catch {}
+      const missing = getSfxCategories().filter(cat =>
+        localSettings.sound.variants[cat.key] === VARIANT_CUSTOM && !cfCheck.get(cat.key)
+      );
+      if (missing.length > 0) {
+        const names = missing.map(cat => t("control.sfxDesc." + cat.key) || cat.key).join(", ");
+        alertModal({ text: (t("gameSettings.saveErrorCustomNoFile") || "Wgraj plik dla: {names}").replace("{names}", names) });
+        return;
+      }
+    }
+
     // Uzupełnij filenames w sound settings (do streszczenia w control-new)
     await _syncSoundFilenames();
 
@@ -224,12 +328,12 @@ async function saveAll() {
 
     // Synchronizuj custom pliki audio z bucketem (po sukcesie zapisu do DB)
     await _syncSoundBucket().catch(e => {
-      console.warn("[game-settings] bucket sync partial failure:", e);
+      console.warn("[game-settings2] bucket sync partial failure:", e);
     });
 
     clearDirty();
   } catch (e) {
-    console.error("[game-settings] saveAll error:", e);
+    console.error("[game-settings2] saveAll error:", e);
     if (e?.code === ROW_GONE) {
       await alertModal({ text: t("gameSettings.saveConflict") });
     } else {
@@ -380,7 +484,7 @@ function applyColorModal() {
   content?.querySelectorAll(`[data-color-key="${colorModalTarget}"]`).forEach(el => {
     el.style.background = hex;
   });
-  sendDisplayCmd(`COLOR ${colorModalTarget} ${hex}`);
+  postPreviewRow();
   colorModal?.classList.add("hidden");
 }
 
@@ -466,109 +570,44 @@ function renderTeams() {
   document.getElementById("gsTeamA")?.addEventListener("input", e => {
     localSettings.teams.teamA = e.target.value;
     markDirty();
-    const q = (s) => `"${String(s ?? "").replace(/"/g, "'")}"`;
-    sendDisplayCmd(`LONG1 ${q(e.target.value || t("gameSettings.teams.defaultA"))}`);
+    postPreviewRow();
   });
   document.getElementById("gsTeamB")?.addEventListener("input", e => {
     localSettings.teams.teamB = e.target.value;
     markDirty();
-    const q = (s) => `"${String(s ?? "").replace(/"/g, "'")}"`;
-    sendDisplayCmd(`LONG2 ${q(e.target.value || t("gameSettings.teams.defaultB"))}`);
+    postPreviewRow();
   });
 }
 
 // --- WYGLĄD ---
-// Podgląd Wyświetlacza: STARY /display + komendy tekstowe (COLOR/THEME/
-// LOGO/...), tak jak zawsze w tym pliku — w trybie modala (otwartego z
-// control.html) komenda leci do window.parent, licząc, że stary Control ją
-// dalej przekaże prawdziwemu Displayowi (control/js/app.js's gs:displayCmd
-// handler to robi). NIE zamieniać na nowy mechanizm /display2?preview=1 +
-// postMessage z wierszem — ten plik obsługuje starego Control i ma zostać
-// nietknięty, kopia (js/pages/game-settings2.js) już ma nowy mechanizm.
-function sendDisplayCmd(cmd) {
+// Podgląd Wyświetlacza: NIE komendy tekstowe do starego /display (dawny
+// _isModal-forward do window.parent liczył na to, że Control ma gdzie je
+// przekazać — w Control v2 nikt tego nie robi, komend już nie ma wcale, więc
+// ta ścieżka była martwa: podgląd w modalu nic nie pokazywał). Zamiast tego,
+// niezależnie od trybu (modal/samodzielnie), ta strona sama osadza
+// /display?preview=1 (display/js/main.js's bootPreview() — tryb podglądu:
+// zero autoryzacji/subskrypcji, tylko postMessage z gotowym wierszem
+// game_state) i przesyła mu spreparowany wiersz — dokładnie ten sam
+// mechanizm i ta sama funkcja budująca wiersz (web/js/gameplay/previewRow.js) co
+// control2's D3.
+// Wybrane logo (localSettings.display.logoId) jest JESZCZE NIEZAPISANE —
+// przekazujemy jego surowy payload wprost do podglądu (web/js/gameplay/previewRow.js's
+// logoPreview), bo scene.js's bindGame()/reload() czytają logo z bazy i
+// nie zobaczyłyby tego wyboru wcale, dopóki operator nie kliknie "Zapisz
+// wszystko". null = domyślne logo.
+function resolveLogoPreview() {
+  const id = localSettings.display.logoId;
+  if (!id) return null;
+  const logo = _loadedLogos.find(l => l.id === id);
+  return logo ? { type: logo.type, payload: logo.payload } : null;
+}
+
+function postPreviewRow() {
+  if (!_displayReady || !_displayIframe?.contentWindow) return;
   try {
-    if (_isModal) {
-      window.parent.postMessage({ type: "gs:displayCmd", cmd }, "*");
-      return;
-    }
-    if (_displayIframe?.contentWindow?.handleCommand) {
-      _displayIframe.contentWindow.handleCommand(cmd);
-    }
+    const row = buildDisplayPreviewRow({ teams: localSettings.teams, display: localSettings.display, logoPreview: resolveLogoPreview() });
+    _displayIframe.contentWindow.postMessage({ type: "familiada:preview-row", row }, "*");
   } catch {}
-}
-
-function logoToBase64(data) {
-  const json = JSON.stringify(data);
-  const bytes = new TextEncoder().encode(json);
-  let bin = "";
-  bytes.forEach(b => bin += String.fromCharCode(b));
-  return btoa(bin);
-}
-
-function previewLogo(id) {
-  if (_isModal) {
-    try {
-      if (id === null) {
-        sendDisplayCmd(`LOGO JSON ${logoToBase64(null)}`);
-      } else {
-        const logo = _loadedLogos.find(l => l.id === id);
-        if (!logo) return;
-        sendDisplayCmd(`LOGO JSON ${logoToBase64({ type: logo.type, payload: logo.payload })}`);
-      }
-    } catch {}
-    return;
-  }
-  try {
-    const logoApi = _displayIframe?.contentWindow?.scene?.api?.logo;
-    if (!logoApi) {
-      // scene.api.logo not ready yet — fallback to LOGO JSON command
-      if (id === null) {
-        sendDisplayCmd(`LOGO JSON ${logoToBase64(null)}`);
-      } else {
-        const logo = _loadedLogos.find(l => l.id === id);
-        if (logo) sendDisplayCmd(`LOGO JSON ${logoToBase64({ type: logo.type, payload: logo.payload })}`);
-      }
-      return;
-    }
-    if (!logoApi._origGetSource) logoApi._origGetSource = logoApi._getSource;
-    if (id === null) {
-      logoApi._getSource = logoApi._origGetSource;
-    } else {
-      const logo = _loadedLogos.find(l => l.id === id);
-      if (!logo) return;
-      logoApi._getSource = () => ({ type: logo.type, payload: logo.payload });
-    }
-    logoApi.draw();
-  } catch {}
-}
-
-function sendDisplayInitCmds() {
-  const c = localSettings.display.colors;
-  const q = (s) => `"${String(s ?? "").replace(/"/g, "'")}"`;
-  const teamA = localSettings.teams.teamA || t("gameSettings.teams.defaultA");
-  const teamB = localSettings.teams.teamB || t("gameSettings.teams.defaultB");
-  sendDisplayCmd("APP GAME");
-  sendDisplayCmd(`COLOR A ${c.A}`);
-  sendDisplayCmd(`COLOR B ${c.B}`);
-  sendDisplayCmd(`COLOR BACKGROUND ${c.BACKGROUND}`);
-  sendDisplayCmd(`COLOR DOT ${c.DOT}`);
-  const theme = localSettings.display.theme || (themeList[0]?.key ?? "");
-  if (theme) sendDisplayCmd(`THEME ${theme}`);
-  if (_isModal) {
-    sendDisplayCmd("LOGO RELOAD");
-  } else if (localSettings.display.logoId === null || _loadedLogos.length > 0) {
-    // logos already loaded (or default selected) — preview correctly
-    previewLogo(localSettings.display.logoId);
-  } else {
-    // logos not yet loaded — draw default for now; renderLogoGrid will call previewLogo after load
-    sendDisplayCmd("LOGO DRAW");
-  }
-  sendDisplayCmd("LEFT 123");
-  sendDisplayCmd("RIGHT 123");
-  sendDisplayCmd("TOP 1");
-  sendDisplayCmd(`LONG1 ${q(teamA)}`);
-  sendDisplayCmd(`LONG2 ${q(teamB)}`);
-  sendDisplayCmd("INDICATOR OFF");
 }
 
 function createDisplayIframe() {
@@ -578,42 +617,30 @@ function createDisplayIframe() {
 
   _displayIframe = document.createElement("iframe");
   _displayIframe.id = "gsDisplayPreview";
-  _displayIframe.src = "/display/";
+  _displayIframe.src = "/display/?preview=1";
   _displayIframe.style.cssText = "width:100%;height:100%;border:none;display:block";
   _displayIframe.title = "Display preview";
   _displayReady = false;
 
-  // Chrome odpala load najpierw dla about:blank, a potem dla /display.
-  // NIE używamy { once:true } — pomijamy blank, startujemy poll dopiero przy prawdziwym /display.
-  let _pollInterval = null;
-  _displayIframe.addEventListener("load", () => {
-    // Pomiń load z about:blank (przed właściwym /display)
-    try {
-      const loc = _displayIframe.contentWindow?.location?.href ?? "";
-      if (!loc || loc === "about:blank") return;
-    } catch { return; }
-
-    if (_pollInterval) clearInterval(_pollInterval);
-    let attempts = 0;
-    _pollInterval = setInterval(() => {
-      attempts++;
-      try {
-        if (_displayIframe?.contentWindow?.handleCommand) {
-          clearInterval(_pollInterval);
-          _pollInterval = null;
-          _displayReady = true;
-          if (activeCat === "display") {
-            sendDisplayInitCmds();
-          }
-        } else if (attempts >= 50) {
-          clearInterval(_pollInterval);
-          _pollInterval = null;
-        }
-      } catch {
-        clearInterval(_pollInterval);
-        _pollInterval = null;
-      }
-    }, 100);
+  // display/js/main.js's bootPreview() posła "familiada:preview-ready" po
+  // starcie sceny — sygnał gotowości zamiast pollowania obecności
+  // window.handleCommand (który już nie istnieje, komend nie ma).
+  window.addEventListener("message", (e) => {
+    if (e.data?.type !== "familiada:preview-ready") return;
+    if (e.source !== _displayIframe?.contentWindow) return;
+    _displayReady = true;
+    // Podgląd ma być żywy niezależnie od aktywnej zakładki (operator zmienia
+    // nazwę drużyny na zakładce "Drużyny", bez przełączania na "Wygląd") --
+    // warunek `activeCat === "display"` tu był błędem: postPreviewRow()
+    // wcześniej (np. z handlera #gsTeamA input) cicho wychodził wczesnym
+    // returnem, dopóki _displayReady było false (patrz komentarz przy
+    // postPreviewRow()) -- ten input NIGDY nie był ponownie wysłany, jeśli
+    // akurat trafił przed odebraniem "familiada:preview-ready", więc zmiana
+    // ginęła bezpowrotnie zamiast dotrzeć z opóźnieniem. Zgłoszone (e2e
+    // "modal ustawień gry — zmiana nazwy drużyny odświeża podgląd
+    // Wyświetlacza"): #gsTeamA.fill() na zakładce "Drużyny" nigdy nie
+    // docierał do podglądu.
+    postPreviewRow();
   });
 
   holder.appendChild(_displayIframe);
@@ -646,7 +673,7 @@ function renderDisplay() {
       <div class="ui-select" id="gsThemeSelect" style="margin-top:8px;width:100%">
         <button class="btn inp ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
           <span class="ui-select-label">—</span>
-          <span class="ui-select-caret" aria-hidden="true">▾</span>
+          <span class="ui-select-caret" aria-hidden="true"><i class="ico" data-icon="caret-down"></i></span>
         </button>
         <div class="ui-select-menu" role="listbox"></div>
       </div>
@@ -670,8 +697,7 @@ function renderDisplay() {
     onChange: (val) => {
       localSettings.display.theme = val || null;
       markDirty();
-      const key = val || (themeList[0]?.key ?? "");
-      if (key) sendDisplayCmd(`THEME ${key}`);
+      postPreviewRow();
     },
   });
 
@@ -684,7 +710,7 @@ function renderDisplay() {
 
   // Iframe jest zawsze w gsDisplayIframeHolder (sibling gsContentInner) — tylko show/hide
   showDisplayIframe();
-  if (_displayReady) sendDisplayInitCmds();
+  if (_displayReady) postPreviewRow();
   renderLogoGrid();
 }
 
@@ -712,7 +738,7 @@ async function renderLogoGrid() {
     if (error) throw error;
     _loadedLogos = data || [];
     // After loading: update preview iframe with the selected logo
-    if (_displayReady && !_isModal) previewLogo(localSettings.display.logoId);
+    if (_displayReady) postPreviewRow();
   } catch (e) {
     if (document.getElementById("gsLogoGrid")) {
       grid.innerHTML = `<div class="hint">${escText(e?.message || String(e))}</div>`;
@@ -739,7 +765,7 @@ async function renderLogoGrid() {
       markDirty();
       grid.querySelectorAll(".gs-logo-tile").forEach(t => t.classList.remove("selected"));
       tile.classList.add("selected");
-      previewLogo(id);
+      postPreviewRow();
     });
   });
 }
@@ -826,7 +852,7 @@ async function renderSound() {
     const fileTagHtml = custom
       ? `<div class="sfx-file-tag">
            <span class="sfx-file-name" title="${escAttr(custom.filename)}">${escText(custom.filename)}</span>
-           <button class="sfx-file-remove" type="button" data-sfx-clear="${escAttr(key)}" title="Usuń">✕</button>
+           <button class="sfx-file-remove" type="button" data-sfx-clear="${escAttr(key)}" title="Usuń" aria-label="Usuń">${icon("trash")}</button>
          </div>`
       : "";
 
@@ -842,11 +868,11 @@ async function renderSound() {
       <div class="ui-select sfx-variant-select" data-sfx-variant="${escAttr(key)}" style="min-width:0">
         <button class="btn sm ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
           <span class="ui-select-label">—</span>
-          <span class="ui-select-caret" aria-hidden="true">▾</span>
+          <span class="ui-select-caret" aria-hidden="true"><i class="ico" data-icon="caret-down"></i></span>
         </button>
         <div class="ui-select-menu" role="listbox"></div>
       </div>
-      <button class="sfx-preview-btn" type="button" data-sfx-preview="${escAttr(key)}" title="Podgląd"${previewDisabled ? " disabled" : ""}><svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><polygon points="2,1 11,6 2,11" fill="currentColor"/></svg></button>
+      <button class="sfx-preview-btn" type="button" data-sfx-preview="${escAttr(key)}" title="Podgląd"${previewDisabled ? " disabled" : ""}>${icon("play")}</button>
       <div class="sfx-vol-wrap">
         <input class="sfx-vol" type="range" min="0" max="100" step="1" value="${volPct}" data-sfx-vol="${escAttr(key)}"/>
         <span class="sfx-vol-label" id="sfxVol_${escAttr(key)}">${volPct}%</span>
@@ -896,7 +922,7 @@ async function renderSound() {
   function _stopPreview() {
     if (_previewAudio) { try { _previewAudio.pause(); _previewAudio.currentTime = 0; } catch {} }
     if (_previewUrl)   { URL.revokeObjectURL(_previewUrl); _previewUrl = null; }
-    if (_previewBtn)   { _previewBtn.innerHTML = '<svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><polygon points="2,1 11,6 2,11" fill="currentColor"/></svg>'; delete _previewBtn.dataset.playing; }
+    if (_previewBtn)   { _previewBtn.innerHTML = icon("play"); delete _previewBtn.dataset.playing; }
     _previewAudio = null;
     _previewBtn   = null;
   }
@@ -929,7 +955,7 @@ async function renderSound() {
       _previewAudio = audio;
       _previewBtn   = btn;
       _previewUrl   = blobUrl;
-      btn.innerHTML = '<svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="1.5" y="1.5" width="9" height="9" fill="currentColor"/></svg>';
+      btn.innerHTML = icon("stop");
       btn.dataset.playing = "1";
     });
   });
@@ -1106,7 +1132,7 @@ function renderQuestions() {
             </label>
           </div>
           <div class="gs-hint">${t("gameSettings.questions.roundsModeHint")}</div>
-          ${hasFinal && finalRandom && !roundsRandom ? `<div class="gs-hint" style="margin-top:6px">⚠️ ${t("gameSettings.questions.finalRandomRoundsOrderedWarning") || "Finał losowy + rundy w ustalonej kolejności: finał wylosuje 5 pytań spoza Twojej listy rund, dopiero przy starcie gry w panelu prowadzącego — jeśli baza ma niewiele pytań, pula do losowania finału będzie odpowiednio mniejsza."}</div>` : ""}
+          ${hasFinal && finalRandom && !roundsRandom ? `<div class="gs-hint" style="margin-top:6px">${icon("warning")} ${t("gameSettings.questions.finalRandomRoundsOrderedWarning") || "Finał losowy + rundy w ustalonej kolejności: finał wylosuje 5 pytań spoza Twojej listy rund, dopiero przy starcie gry w panelu prowadzącego — jeśli baza ma niewiele pytań, pula do losowania finału będzie odpowiednio mniejsza."}</div>` : ""}
         </div>
       </div>
     </div>
@@ -1316,12 +1342,12 @@ function renderRounds() {
       <div class="roundsOrderList" id="gsRoundsOrderList">
         ${questions.map((q, i) => `
           <div class="roundsOrderItem" draggable="true" data-qid="${escAttr(q.id)}">
-            <div class="roundsOrderHandle">⋮⋮</div>
+            <div class="roundsOrderHandle">${icon("grip")}</div>
             <div class="roundsOrderNum">${i + 1}</div>
             <div class="roundsOrderText">${escText(q.text)}</div>
             <div class="roundsOrderActions">
-              <button class="roundsOrderBtn" data-dir="up" title="${escAttr(t("gameSettings.rounds.up"))}" ${i === 0 ? "disabled" : ""}>↑</button>
-              <button class="roundsOrderBtn" data-dir="down" title="${escAttr(t("gameSettings.rounds.down"))}" ${i === questions.length - 1 ? "disabled" : ""}>↓</button>
+              <button class="roundsOrderBtn" data-dir="up" title="${escAttr(t("gameSettings.rounds.up"))}" ${i === 0 ? "disabled" : ""}>${icon("arrow-up")}</button>
+              <button class="roundsOrderBtn" data-dir="down" title="${escAttr(t("gameSettings.rounds.down"))}" ${i === questions.length - 1 ? "disabled" : ""}>${icon("arrow-down")}</button>
             </div>
           </div>
         `).join("")}
@@ -1625,6 +1651,11 @@ async function main() {
   const { data: game, error: gameErr } = gameResult;
   if (gameErr || !game) {
     if (content) content.innerHTML = `<p style="color:red;padding:20px">${escText(t("gameSettings.loadError"))}${escText(gameErr?.message || t("gameSettings.unknownError"))}</p>`;
+    // "gs:ready": patrz komentarz przy wywołaniu na końcu main() — KAŻDY
+    // wczesny return (łącznie z tym, błędem ładowania gry) musi też zdjąć
+    // spinner Control2 nad iframe'em, inaczej overlay/komunikat błędu
+    // zostaje na zawsze przykryty przez spinner rodzica.
+    if (_isModal) window.parent.postMessage({ type: "gs:ready" }, "*");
     return;
   }
 
@@ -1663,7 +1694,31 @@ async function main() {
     message: t("resourceLock.gameMessage"),
     backHref: "/games/",
   });
-  if (!lock.ok) return;
+  if (!lock.ok) {
+    if (_isModal) window.parent.postMessage({ type: "gs:ready" }, "*");
+    return;
+  }
+
+  // "Logo ↔ ustawienia gry" (docs/plan-testy-i-poprawki.md, sekcja
+  // "Krzyżowe blokady między zasobami") — ta strona nie EDYTUJE logo, tylko
+  // je referuje (podgląd Wyświetlacza), więc nie zajmuje własnej blokady
+  // "logo" (guardResourceBusy, w odróżnieniu od guardResourceLock, nic nie
+  // trzyma/nie zwalnia) — tylko czeka, aż logo-editor.js zwolni SWOJĄ.
+  // Domyślne logo (logoId === null) nie ma odpowiadającego wiersza
+  // user_logos — nic do sprawdzenia.
+  const gameLogoId = game.settings?.display?.logoId;
+  if (gameLogoId) {
+    const logoLock = await guardResourceBusy({
+      resourceType: "logo",
+      resourceId: gameLogoId,
+      message: t("resourceLock.logoInUseMessage"),
+      backHref: "/games/",
+    });
+    if (!logoLock.ok) {
+      if (_isModal) window.parent.postMessage({ type: "gs:ready" }, "*");
+      return;
+    }
+  }
 
   lastSavedSettingsRaw = game.settings ?? {};
 
@@ -1676,50 +1731,9 @@ async function main() {
     // Hide back button — modal backdrop closes it
     if (btnBack) btnBack.classList.add("hidden");
 
-    // Sidebar toggle (☰ button)
-    const btnToggle   = document.getElementById("btnToggleSidebar");
-    const sidebarEl   = document.getElementById("gsSidebar");
-    const backdropEl  = document.getElementById("gsSidebarBackdrop");
-    if (btnToggle) btnToggle.classList.remove("hidden");
-
-    function openSidebar()  {
-      sidebarEl?.classList.add("gs-sidebar-open");
-      backdropEl?.classList.add("gs-sidebar-open");
-    }
-    function closeSidebar() {
-      sidebarEl?.classList.remove("gs-sidebar-open");
-      backdropEl?.classList.remove("gs-sidebar-open");
-    }
-    btnToggle?.addEventListener("click", openSidebar);
-    backdropEl?.addEventListener("click", closeSidebar);
-    // Zamknij drawer po wyborze kategorii
-    sidebarEl?.addEventListener("click", (e) => {
-      if (e.target.closest(".gs-sidebar-item")) closeSidebar();
-    });
-
-    // Handle close requests — confirm if unsaved changes
-    async function tryClose() {
-      if (isDirty) {
-        if (!await confirmModal({ text: t("gameSettings.unsavedConfirmModal") || "Masz niezapisane zmiany. Czy chcesz zamknąć ustawienia?" })) return;
-      }
-      // Reset defaultValue na wszystkich inputach żeby przeglądarka nie pokazała
-      // natywnego "Masz niezapisane zmiany" przy nawigacji iframe
-      document.querySelectorAll("input, textarea, select").forEach(el => {
-        if (el.type === "checkbox" || el.type === "radio") el.defaultChecked = el.checked;
-        else el.defaultValue = el.value;
-      });
-      window.parent.postMessage({ type: "gs:close" }, "*");
-    }
-
-    window.addEventListener("message", (ev) => {
-      if (ev.data?.type === "gs:requestClose") tryClose();
-    });
-
-    const btnGsModalClose = document.getElementById("btnGsModalClose");
-    if (btnGsModalClose) {
-      btnGsModalClose.classList.remove("hidden");
-      btnGsModalClose.addEventListener("click", tryClose);
-    }
+    // Sidebar toggle (☰ button) i przycisk zamknięcia (✕) -- wpięte
+    // synchronicznie na poziomie modułu, patrz komentarz przy _isModal na
+    // górze pliku.
   }
 
   localSettings = mergeSettings(game.settings);
@@ -1848,12 +1862,22 @@ async function main() {
   btnLegalClose?.addEventListener("click", () => legalOverlay?.classList.add("hidden"));
   legalOverlay?.addEventListener("click", (ev) => { if (ev.target === legalOverlay) legalOverlay.classList.add("hidden"); });
 
-  // Create display preview iframe — skip in modal mode (real display managed by control-new)
-  if (!isModal) createDisplayIframe();
-  else sendDisplayInitCmds();
+  // Podgląd Wyświetlacza — ta strona sama osadza /display?preview=1 i
+  // przesyła mu postMessage (patrz postPreviewRow() wyżej), niezależnie od
+  // trybu (modal/samodzielnie): modal nie polega już na Control, żeby
+  // przekazać dalej "prawdziwemu" Displayowi — komend już nie ma.
+  createDisplayIframe();
 
   setActiveCat("teams");
   document.querySelectorAll('[data-skel-step]').forEach(el => el.classList.add('skel-step-ready'));
+  // Zgłoszone: "po otwarciu modala ustawień długo nic nie robi" — Control
+  // (control/js/app.js's openGsModal) pokazuje spinner NAD tym iframe'em od
+  // razu przy otwarciu, bo do TEGO momentu #gsContentInner jest celowo
+  // niewidoczne (data-skel-step). To jedyny niezawodny sygnał "naprawdę
+  // gotowe" — load iframe'a sam w sobie tego nie gwarantuje (HTML potrafi się
+  // załadować, zanim requireAuth()/guardResourceLock()/guardResourceBusy()
+  // niżej w main() w ogóle ruszą).
+  if (_isModal) window.parent.postMessage({ type: "gs:ready" }, "*");
 
   window.addEventListener("i18n:lang", () => {
     resolveThemeLabels();
@@ -1862,6 +1886,10 @@ async function main() {
 }
 
 main().catch(err => {
-  console.error("[game-settings]", err);
+  console.error("[game-settings2]", err);
   if (content) content.innerHTML = `<p style="color:red;padding:20px">${escText(t("gameSettings.errorPrefix"))}${escText(String(err?.message || err))}</p>`;
+  // Nieoczekiwany wyjątek też musi zdjąć spinner Control2 (patrz komentarz
+  // przy pozostałych "gs:ready" w main()) — inaczej błąd zostaje na zawsze
+  // ukryty pod spinnerem rodzica.
+  if (_isModal) window.parent.postMessage({ type: "gs:ready" }, "*");
 });

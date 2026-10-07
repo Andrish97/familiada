@@ -534,7 +534,7 @@ const en = {
     qrBuzzer: "Buzzer",
     qrHostAlt: "QR Host",
     qrBuzzerAlt: "QR Buzzer",
-    // Pole na wyświetlaczu (display2/js/scene.js's SUMA_LABEL) ma stałą
+    // Pole na wyświetlaczu (display/js/scene.js's SUMA_LABEL) ma stałą
     // szerokość 4 znaki (dopasowaną do "SUMA"/"СУМА") — "SUM" ma tylko 3,
     // więc bez wiodącej spacji writeField() lewo-wyrównuje go, zostawiając
     // pustą 4. kratkę z prawej zamiast wyśrodkować etykietę jak w pozostałych

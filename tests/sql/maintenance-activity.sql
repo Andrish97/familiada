@@ -88,3 +88,26 @@ SELECT set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000006'
 SELECT site_activity_ping(gen_random_uuid(),'games');
 SELECT pg_temp.assert_true(NOT EXISTS(SELECT 1 FROM jsonb_array_elements(get_maintenance_activity()->'pages') x WHERE x->>'user_id'='00000000-0000-0000-0000-000000000006'),'activity follows automatic exclusions');
 \echo 'Automatic test exclusions and username reservation checks passed'
+
+-- Canonical names and removal of legacy Control from live activity.
+CREATE TEMP TABLE activity_history_before AS SELECT count(*) AS total FROM site_activity_hours;
+INSERT INTO site_activity(user_id,tab_id,page,game_id) VALUES
+ ('00000000-0000-0000-0000-000000000002',gen_random_uuid(),'control2','00000000-0000-0000-0000-000000000003');
+\ir ../../supabase/migrations/2026-10-07_307_current_control_activity.sql
+SELECT pg_temp.assert_true(NOT EXISTS(SELECT 1 FROM site_activity WHERE page IN ('control2','game-settings2')),'live page names canonical');
+SELECT pg_temp.assert_true((SELECT count(*) FROM site_activity_hours)=(SELECT total FROM activity_history_before),'hourly activity history preserved');
+UPDATE game_sessions SET control_version=1;
+DELETE FROM device_presence;
+DELETE FROM site_activity WHERE game_id IS NOT NULL;
+SELECT pg_temp.assert_true(jsonb_array_length(get_maintenance_activity()->'games')=0,'old sessions stay out of live activity');
+UPDATE game_sessions SET control_version=2;
+SELECT pg_temp.assert_true(get_maintenance_activity()#>>'{games,0,step}'='f_p1_entry','current session still reports live state');
+SELECT set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000002',false);
+SELECT site_activity_ping(gen_random_uuid(),'control','00000000-0000-0000-0000-000000000003');
+SELECT pg_temp.assert_true((get_maintenance_activity()#>>'{games,0,control_version}')::int=2,'canonical Control route stays generation 2');
+DO $$ BEGIN
+ BEGIN PERFORM site_activity_ping(gen_random_uuid(),'control2');
+ RAISE EXCEPTION 'Retired activity page accepted';
+ EXCEPTION WHEN OTHERS THEN IF SQLERRM<>'invalid_page' THEN RAISE; END IF; END;
+END $$;
+\echo 'Current Control activity cleanup checks passed'

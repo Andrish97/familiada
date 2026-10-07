@@ -106,7 +106,7 @@ btnDevicePreviewConnect?.addEventListener("click", () => {
   if (info.device_type === "poll_qr") {
     window.location.href = `/poll-qr/?id=${info.game_id}&key=${info.share_key}&lang=${lang}`;
   } else {
-    const page = info.device_type === "display" ? "display2" : `${info.device_type}2`;
+    const page = info.device_type;
     window.location.href = `/${page}?id=${info.game_id}&key=${info.share_key}&lang=${lang}`;
   }
 });
@@ -199,7 +199,7 @@ async function renderSharedDevices() {
       }
       setMsg(t("connectDevice.shared.opening") || "Otwieranie…");
       try {
-        const page = item.device_type === "display" ? "display2" : `${item.device_type}2`;
+        const page = item.device_type;
         window.location.href = `/${page}?id=${item.game_id}&key=${item.share_key}`;
       } catch (e) {
         setMsg(e?.message || "Błąd.");

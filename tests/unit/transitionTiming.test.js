@@ -1,6 +1,6 @@
 // Testy web/shared/js/gameplay/transitionTiming.js — JEDEN silnik liczący rzeczywiste czasy
-// dźwięku, używany zarówno przez control2/js/actionGate.js (blokada
-// operatora) jak i display2/js/render.js (czas trwania animacji Displaya).
+// dźwięku, używany zarówno przez control/js/actionGate.js (blokada
+// operatora) jak i display/js/render.js (czas trwania animacji Displaya).
 // getSfxDuration jest tu atrapą (sekundy, nie ms).
 
 import { test } from "node:test";
@@ -32,7 +32,7 @@ test("dur(): nieznany/zerowy czas => bezpieczny fallback 2000ms, nie 0", async (
 // trwale disabled): js/core/sfx.js's getSfxDuration() potrafi zwrócić
 // Infinity dla <audio>.duration (znane zachowanie Chromium dla MP3 bez
 // poprawnego nagłówka Xing/VBR) — bez sufitu propagowało się to przez
-// syncedMs()/sequentialMs() aż do control2/js/actionGate.js's armLock(),
+// syncedMs()/sequentialMs() aż do control/js/actionGate.js's armLock(),
 // blokując operatora NA ZAWSZE (lockedUntil = Date.now() + Infinity).
 test("dur(): Infinity (znany bug Chromium z metadanymi MP3) => bezpieczny fallback, NIE Infinity", async () => {
   const t = makeTiming({ round_transition: Infinity });

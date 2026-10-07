@@ -1,4 +1,4 @@
-// Testy silnika rund control2/js/engine.js (dispatch()) — pokrywają
+// Testy silnika rund control/js/engine.js (dispatch()) — pokrywają
 // rozgałęzienia z tabeli stanów A w planie przebudowy (R0-R10). Każda
 // akcja idzie przez jeden generyczny dispatch(), który sam egzekwuje
 // web/shared/js/gameplay/gameStateMachine.js (assertTransition) — jeśli reducer kiedyś
@@ -7,7 +7,7 @@
 
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { createEngine, getRoundMultiplier, isThresholdHit, previewPendingRoundEndDestination } from "../../web/control2/js/engine.js";
+import { createEngine, getRoundMultiplier, isThresholdHit, previewPendingRoundEndDestination } from "../../web/control/js/engine.js";
 import { createFakeStore } from "./helpers/fakeStore.js";
 import { DEFAULT_SETTINGS } from "../../web/shared/js/gameplay/gameStateShape.js";
 
@@ -26,7 +26,7 @@ function answersFor(questionId) {
 function makeEngine(overrides = {}, nowFn) {
   // Testy silnika zaczynają od stanu "gotowe do pierwszej rundy" (po
   // przejściu przez pre-grę devices_display->...->r_intro, celowo poza
-  // zakresem tego silnika — patrz komentarz w control2/js/engine.js).
+  // zakresem tego silnika — patrz komentarz w control/js/engine.js).
   const store = createFakeStore("g1", { step: "r_roundStart", topCard: "rounds", phase: "READY", ...overrides });
   const pool = questionPool();
   const engine = createEngine({
