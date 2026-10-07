@@ -298,7 +298,8 @@ test.describe("tryb Tekst", () => {
     await page.fill("#textValue", "AB~{}");
     await expect(page.locator("#textWarn")).toBeVisible();
     expect(await L.save(page)).not.toMatch(/Zapisano/);
-    expect(await L.readLogoByName(page, name)).toBeNull();
+    // Wiersz jest od „Nowe logo”; niedozwolony stan się nie zapisał.
+    expect((await L.readLogoByName(page, name)).payload.source.text).toBe("");
   });
 
   test("za długi napis: zapis odrzucony", async ({ page }) => {
@@ -308,7 +309,8 @@ test.describe("tryb Tekst", () => {
     await page.fill("#textValue", "FAMILIADA FAMILIADA FAMILIADA");
     await expect(page.locator("#textWarn")).toBeVisible();
     expect(await L.save(page)).not.toMatch(/Zapisano/);
-    expect(await L.readLogoByName(page, name)).toBeNull();
+    // Wiersz jest od „Nowe logo”; niedozwolony stan się nie zapisał.
+    expect((await L.readLogoByName(page, name)).payload.source.text).toBe("");
   });
 
   test("P0-4: napis odtwarzany z wierszy, gdy logo nie ma zapisanego tekstu", async ({ page }) => {
