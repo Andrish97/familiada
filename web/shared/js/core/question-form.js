@@ -146,7 +146,7 @@ export function buildAnswerRow({ text = "", points = null, placeholder = "", poi
   return { row, iText, iPts, bDel };
 }
 
-/** Kafelek "+ Dodaj odpowiedź  3/6" -- pierwszy wiersz listy, przy limicie wyłączony. */
+/** Kafelek dodawania odpowiedzi z ikoną i licznikiem; przy limicie wyłączony. */
 export function buildAddAnswerTile(count) {
   const canAdd = count < LIMITS.AN_MAX;
   const btn = document.createElement("button");
@@ -159,7 +159,7 @@ export function buildAddAnswerTile(count) {
   plus.innerHTML = icon("plus");
   const lbl = document.createElement("span");
   lbl.className = "qf-addLbl";
-  lbl.textContent = canAdd ? t("questionForm.addAnswer") : t("questionForm.answerLimit");
+  lbl.textContent = canAdd ? t("questionForm.addAnswer").replace(/^[+＋]\s*/, "") : t("questionForm.answerLimit");
   const cnt = document.createElement("span");
   cnt.className = "qf-addCnt";
   cnt.textContent = `${count}/${LIMITS.AN_MAX}`;
