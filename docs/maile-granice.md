@@ -8,7 +8,7 @@ sprawdzane w bazie (nie w przeglądarce).
 
 ---
 
-## 1. Zasady (propozycja do potwierdzenia)
+## 1. Zasady (decyzja 2026-10-07)
 
 1. **Zgoda przed treścią.** Do osoby, która nie zaakceptowała subskrypcji,
    może pójść **tylko** zaproszenie do subskrypcji. Mail z ankietą — tylko
@@ -26,7 +26,7 @@ sprawdzane w bazie (nie w przeglądarce).
 6. **Podłoga techniczna** zostaje: najwyżej 1 mail na minutę od tego
    samego nadawcy do tego samego odbiorcy, cokolwiek to jest.
 
-## 2. Tabela granic (liczby do potwierdzenia)
+## 2. Tabela granic (decyzja 2026-10-07)
 
 | Mail | Kiedy wolno | Limit | Po odmowie / braku odpowiedzi |
 |---|---|---|---|
@@ -54,10 +54,8 @@ nowe zaproszenie, ale nie więcej niż 3 maile ode mnie na dobę łącznie.
 - limit ankiety liczony też po stronie przeglądarki (inny klucz niż
   w bazie) — do usunięcia, liczy tylko baza.
 
-## 4. Pytania
+## 4. Decyzje (2026-10-07)
 
-1. Liczby z tabeli 2 (2 maile subskrypcji, 30 dni po odrzuceniu,
-   przypomnienie co 24 h max 2 razy, łącznie 3 na dobę od nadawcy) — ok?
-2. Osoby z kontem: zaproszenia do ankiet dostają **i** w Zadaniach, **i**
-   mailem (jak dziś), czy tylko w Zadaniach (mail tylko dla osób bez
-   konta)?
+- Zasady i liczby z sekcji 1–2 zatwierdzone.
+- Osoby z kontem dostają zaproszenia do ankiet jak dziś: w karcie
+  Zadania **i** mailem (z limitami jak wyżej).

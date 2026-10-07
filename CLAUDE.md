@@ -13,11 +13,15 @@ przepisuje CI), Supabase, Cloudflare Worker. Strony w `web/`.
 
 ## Tok pracy
 
+- Zasady działania i kolejka: `docs/wdrozenia.md` (sekcje „Kolejka”,
+  „Zasady działania”). Praca w tle bez pytania o zgodę.
+
 - Najpierw branch roboczy, testy, potem push na `main`.
 - Unit: `cd tests && node --test unit/*.test.js`.
 - E2E: workflow `e2e-tests.yml` (workflow_dispatch) z niepustym
   `spec_filter` — nigdy całego zestawu. Spece z `tests/e2e/helpers/local-site.js`
   testują kod brancha; pozostałe chodzą po produkcji.
+- Migracje bezpieczne (dodające) od razu na `main`, potem testy.
 - Migracje tylko do przodu: `supabase/migrations/YYYY-MM-DD_NNN_*.sql`,
   stosowane po pushu na `main`; `schema.sql` aktualizuje CI.
 - Bez fallbacków: żadnych aliasów starych adresów ani przekierowań.
