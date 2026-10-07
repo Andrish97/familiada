@@ -16,13 +16,13 @@
 // setStealMsg/setRevealMsg/ROUNDS_MSG/FINAL_MSG, ale jako czysta funkcja
 // bieżącego game_state (web/js/gameplay/hints.js), nie ulotny stan ustawiany przy
 // każdym zdarzeniu — "wszystko idzie przez tabelę stanów".
-import { getRoundsHint, getFinalHint, getFinalEntryShortcuts, teamName } from "../../shared/js/gameplay/hints.js?v=v2026-10-07T20575";
-import { t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-07T20575";
-import { getSfxCategories, getSfxVariant, isSfxPlaying, playSfx, stopSfx, onSfxEnd, setSfxVolume } from "../../shared/js/core/sfx.js?v=v2026-10-07T20575";
-import { buildDisplayPreviewRow } from "../../shared/js/gameplay/previewRow.js?v=v2026-10-07T20575";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-07T20575";
+import { getRoundsHint, getFinalHint, getFinalEntryShortcuts, teamName } from "../../shared/js/gameplay/hints.js?v=v2026-10-07T21060";
+import { t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-07T21060";
+import { getSfxCategories, getSfxVariant, isSfxPlaying, playSfx, stopSfx, onSfxEnd, setSfxVolume } from "../../shared/js/core/sfx.js?v=v2026-10-07T21060";
+import { buildDisplayPreviewRow } from "../../shared/js/gameplay/previewRow.js?v=v2026-10-07T21060";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-07T21060";
 
-import { previewPendingRoundEndDestination } from "./engine.js?v=v2026-10-07T20575";
+import { previewPendingRoundEndDestination } from "./engine.js?v=v2026-10-07T21060";
 
 const $ = (id) => document.getElementById(id);
 const on = (el, ev, fn) => el && (el[`on${ev}`] = fn);
@@ -700,7 +700,7 @@ export function createUI({ root, emit }) {
   // `shortcuts`, gdy podane (control/js/ui.js's renderFinalEntry) — lista
   // opisów skrótów klawiszowych (web/js/gameplay/hints.js's getFinalEntryShortcuts),
   // dopisana POD głównym hintem, oddzielona własną kreską, nie zamiast niego.
-  function hintBlock(text, shortcuts) {
+  function hintBlock(text, shortcuts, extraClass = "") {
     if (!text && !(shortcuts && shortcuts.length)) return null;
     const children = [];
     if (text) children.push(h("div", { class: "c2-hint-main", text }));
@@ -710,7 +710,7 @@ export function createUI({ root, emit }) {
         ...shortcuts.map((s) => h("div", { class: "c2-hint-shortcut", text: s })),
       ]));
     }
-    return h("div", { class: "c2-hint" }, children);
+    return h("div", { class: `c2-hint ${extraClass}`.trim() }, children);
   }
 
   // r_duel PRZED przyjęciem zgłoszenia — patrz komentarz przy jego jedynym
@@ -1381,7 +1381,7 @@ export function createUI({ root, emit }) {
       h("div", { class: "c2-roundlayout" }, [
         h("div", { class: "c2-roundlayout-main" }, [h("div", { class: "c2-entryrows" }, rows)]),
         h("div", { class: "c2-roundlayout-divider" }),
-        h("div", { class: "c2-roundlayout-side" }, [hintBlock(`${getFinalHint(state)}\n\n${t("control.finalAnswerLengthHint")}`, getFinalEntryShortcuts(round))]),
+        h("div", { class: "c2-roundlayout-side" }, [hintBlock(`${getFinalHint(state)}\n${t("control.finalAnswerLengthHint")}`, getFinalEntryShortcuts(round), "c2-final-hint")]),
       ]),
     ];
 
@@ -1695,7 +1695,7 @@ export function createUI({ root, emit }) {
       h("div", { class: "c2-roundlayout" }, [
         h("div", { class: "c2-roundlayout-main" }, [mappingGrid]),
         h("div", { class: "c2-roundlayout-divider" }),
-        h("div", { class: "c2-roundlayout-side" }, [hintBlock(getFinalHint(state))]),
+        h("div", { class: "c2-roundlayout-side" }, [hintBlock(getFinalHint(state), null, "c2-final-hint")]),
       ]),
       finalStatusBar,
     ];

@@ -105,20 +105,18 @@ test("getFinalHint: f_start i etap wpisywania (zegarek jeszcze nieużyty / w tra
     now: () => t,
   });
 
-  assert.match(getFinalHint(store.state), /Start finału/);
+  assert.match(getFinalHint(store.state), /Rozpocznij finał/);
 
   await engine.dispatch({ type: "START_FINAL" });
-  assert.match(getFinalHint(store.state), /Wpisz odpowiedzi gracza 1.*15s/);
+  assert.match(getFinalHint(store.state), /Wpisz odpowiedzi gracza 1 i uruchom timer/);
 
-  // Hint zostaje widoczny podczas odliczania, ale drugie zdanie mówi o
-  // zatrzymaniu zamiast o starcie (zgłoszone) — "15s" znika, bo odliczanie
-  // już trwa, nie trzeba już mówić, ile trwa start.
+  // Krótka podpowiedź odzwierciedla aktywny timer.
   await engine.dispatch({ type: "START_TIMER", phase: "P1" });
-  assert.match(getFinalHint(store.state), /Wpisz odpowiedzi gracza 1.*zatrzymać odliczanie/);
+  assert.match(getFinalHint(store.state), /Wpisz odpowiedzi gracza 1.*Timer działa/);
 
   t += 15_000;
   await engine.dispatch({ type: "EXPIRE_TIMER" });
-  assert.match(getFinalHint(store.state), /Czas wykorzystany.*dokończyć wpisywanie/);
+  assert.match(getFinalHint(store.state), /Czas minął.*Uzupełnij odpowiedzi/);
 });
 
 test("getFinalHint: mapowanie pytania — puste, wpisane, odsłonięte, z punktami; powtórzenie u gracza 2", async () => {
@@ -136,17 +134,17 @@ test("getFinalHint: mapowanie pytania — puste, wpisane, odsłonięte, z punkta
 
   // Rozstrzygnięcie jest zawsze już jakieś (domyślne MISS/SKIP) — hint nie
   // różnicuje już puste/wpisane, tylko mówi "potwierdź, żeby odsłonić".
-  assert.match(getFinalHint(store.state), /pokaż odpowiedź/i);
+  assert.match(getFinalHint(store.state), /odsłoń odpowiedź/i);
 
   await engine.dispatch({ type: "SET_ENTRY_TEXT", round: 1, idx: 0, text: "Mleko" });
-  assert.match(getFinalHint(store.state), /pokaż odpowiedź/i);
+  assert.match(getFinalHint(store.state), /odsłoń odpowiedź/i);
 
   await engine.dispatch({ type: "RESOLVE_MAPPING", round: 1, idx: 0, mode: "MANUAL", kind: "MATCH", matchId: "a1", outText: "Mleko", pts: 10 });
   await engine.dispatch({ type: "REVEAL_ANSWER_ONLY", round: 1, idx: 0 });
-  assert.match(getFinalHint(store.state), /Pokaż punkty/);
+  assert.match(getFinalHint(store.state), /Odsłoń punkty/);
 
   await engine.dispatch({ type: "REVEAL_POINTS", round: 1, idx: 0 });
-  assert.match(getFinalHint(store.state), /Punkty odsłonięte/);
+  assert.match(getFinalHint(store.state), /Przejdź dalej/);
 });
 
 test("getFinalHint: powtórzenie u gracza 2 pokazuje się RAZEM ze zwykłą podpowiedzią mapowania", async () => {
@@ -166,12 +164,11 @@ test("getFinalHint: powtórzenie u gracza 2 pokazuje się RAZEM ze zwykłą podp
   store.state.final.runtime.timer.usedP2 = true;
   await engine.dispatch({ type: "START_MAPPING", round: 2 });
 
-  assert.match(getFinalHint(store.state), /pokaż odpowiedź/i);
+  assert.match(getFinalHint(store.state), /odsłoń odpowiedź/i);
 
   await engine.dispatch({ type: "SET_REPEAT", round: 2, idx: 0, repeat: true });
-  // Oba zdania naraz (zgłoszone), nie tylko "Oznaczone jako powtórzenie"
-  // zamiast instrukcji odsłonięcia.
-  assert.match(getFinalHint(store.state), /Powtórzenie.*pokaż odpowiedź/);
+  // Krótko: powtórzenie jest wyjaśnione razem z akcją odsłonięcia.
+  assert.match(getFinalHint(store.state), /Powtórzenie.*odsłoń odpowiedź/);
 
   await engine.dispatch({ type: "RESOLVE_MAPPING", round: 2, idx: 0, mode: "MANUAL", kind: "SKIP", matchId: null, outText: "", pts: 0 });
   await engine.dispatch({ type: "REVEAL_ANSWER_ONLY", round: 2, idx: 0 });
@@ -180,5 +177,5 @@ test("getFinalHint: powtórzenie u gracza 2 pokazuje się RAZEM ze zwykłą podp
   // automatycznie w tym samym kroku (zgłoszone -- brak odpowiedzi nie ma
   // osobnego "Pokaż punkty", patrz REDUCERS.REVEAL_ANSWER_ONLY), więc hint od
   // razu mówi "Punkty odsłonięte", nie "Pokaż punkty".
-  assert.match(getFinalHint(store.state), /Punkty odsłonięte/);
+  assert.match(getFinalHint(store.state), /Przejdź dalej/);
 });
