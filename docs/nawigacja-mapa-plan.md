@@ -338,7 +338,7 @@ Te same strony co B1. Różnice:
 | Gdzie | Desktop | Mobile |
 |---|---|---|
 | topbar `/games/` | przyciski w pasku, nadmiar w „Więcej ▾” | wszystko w `☰` (licznik na `☰`) |
-| „Graj”, „Ustawienia gry” | → control / game-settings | **telefon:** przycisk nieaktywny z podpowiedzią „Na komputerze lub tablecie”; **tablet w pionie:** wchodzi, okno „Obróć tablet” |
+| „Graj”, „Ustawienia gry” | → control / game-settings | **telefon:** ukryte (decyzja); **tablet w pionie:** widoczne, po wejściu okno „Obróć tablet” |
 | `/logo-editor/` | lista + edycja | telefon: tylko lista (podgląd, import/eksport, nazwa) |
 | `/editor/` | lista pytań + edycja obok | edycja pytania na pełnym ekranie, ↩ najpierw zamyka pytanie |
 | modale | okno | pełny ekran, ↩ zamyka modal |
@@ -346,7 +346,9 @@ Te same strony co B1. Różnice:
 | `/games/` | — | „Zainstaluj” (PWA), jeśli nie jest zainstalowana |
 
 **⚠ dziś:** na telefonie „Graj” i „Ustawienia gry” prowadzą na stronę,
-która od razu pokazuje blokadę — mapa proponuje zablokować już przycisk.
+która od razu pokazuje blokadę — w mapie są na telefonie ukryte. Blokada
+urządzenia na `/control/` i `/game-settings/` zostaje jako zabezpieczenie
+(link wklejony ręcznie, zakładka).
 
 ---
 
@@ -405,7 +407,7 @@ Te same strony co C1. Różnice:
 |---|---|---|
 | topbar `/games/` | 6 przycisków w pasku + „Więcej ▾” | wszystko w `☰`, liczniki zsumowane na `☰` |
 | topbar pozostałych stron | ↩ · sekcja 2 · `?` · Nazwa ▾ | ↩ w pasku; sekcja 2, `?`, konto płasko w `☰` |
-| „Graj”, „Ustawienia gry” | → control / game-settings | **telefon:** nieaktywne z podpowiedzią; **tablet w pionie:** „Obróć tablet”; **wąskie okno komputera:** „Poszerz okno” |
+| „Graj”, „Ustawienia gry” | → control / game-settings | **telefon:** ukryte; **tablet w pionie:** „Obróć tablet”; **wąskie okno komputera:** „Poszerz okno” |
 | `/connect-device/` | kod ręcznie, kamera rzadko | skan QR kamerą jako główna akcja |
 | `/logo-editor/`, `/editor/`, modale | jak w B2 | jak w B2 |
 | `/control/` (tablet) | — | operator na tablecie w poziomie; okna (ustawienia gry, `?`) na pełny ekran z ✕ |
@@ -427,8 +429,8 @@ games: {
     pollsHub:      { to: "pollsHub",      roles: ["user"] },
     subscriptions: { to: "subscriptions", roles: ["user"] },
     bases:         { to: "bases" },
-    play:          { to: "control",       device: "wide" },  // telefon: nieaktywny
-    settings:      { to: "gameSettings",  device: "wide" },
+    play:          { to: "control",       device: "wide" },  // telefon: ukryty
+    settings:      { to: "gameSettings",  device: "wide" },  // telefon: ukryty
   },
 },
 ```
@@ -504,8 +506,10 @@ Podjęte (2026-10-07):
   Wyjątek, który już działa: zaproszenie z maila do ankiety/subskrypcji.
 - **„Wstecz”** wraca przez wszystkie kroki, ale tylko po dozwolonej ścieżce
   (lista `from` w mapie); podwójnych powrotów będzie mało.
+- **Telefon**: „Graj” i „Ustawienia gry” są ukryte (przycisk z
+  `device: "wide"` znika, gdy `isPhoneScreen()`; tablet je widzi). Blokada
+  urządzenia na samych stronach zostaje jako zabezpieczenie.
 
 Otwarte:
-- Telefon: „Graj”/„Ustawienia gry” nieaktywne z podpowiedzią czy całkiem ukryte?
 - Modal: czy reguła „okno tylko tam, gdzie wyjście gubi stan” — czy np. `?`
   ma być oknem na wszystkich stronach (spójniej, ale bez linku do instrukcji)?
