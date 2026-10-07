@@ -885,6 +885,7 @@ const pl = {
     backToBaseManager: "Menedżer bazy",
     backToLogos: "Moje logo",
     backToEditor: "Edytor pytań",
+    backToLogoEditor: "Edytor logo",
     backToPoll: "Ankieta",
     backToSubscriptions: "Subskrypcje",
     backToAccount: "Ustawienia konta",
@@ -3573,10 +3574,15 @@ const pl = {
     shareCooldownAlert: "Ponowne zaproszenie do ankiety możliwe za {hours} godz.",
   },
   logoEditor: {
-    title: "Familiada — edytor logo",
+    title: "Familiada — logo",
+    titles: {
+      text: "Familiada — logo tekstowe",
+      draw: "Familiada — logo rysunkowe",
+      image: "Familiada — logo z obrazu",
+    },
     topbar: {
       backToGames: "Moje gry",
-      logout: "Wyloguj",
+      backToLogos: "Moje logo",
     },
     list: {
       title: "Twoje logo",
@@ -3588,6 +3594,10 @@ const pl = {
       delete: "Usuń",
     },
     status: {
+      autosave: "Zmiany zapisują się same.",
+      unsaved: "Niezapisane zmiany…",
+      notSaved: "Nie zapisano: {reason}",
+      saveRetry: "Błąd zapisu — ponawiam… (drugie wyjście ze strony pominie zapis)",
       saving: "Zapisuję…",
       saved: "Zapisano.",
       deleting: "Usuwam…",
@@ -3597,8 +3607,6 @@ const pl = {
     editor: {
       nameLabel: "Nazwa",
       namePlaceholder: "Np. Moje logo",
-      save: "Zapisz",
-      newLogoPrefix: "Nowe logo — ",
       editLogoPrefix: "Edycja logo — ",
     },
     modes: {
@@ -3774,6 +3782,8 @@ const pl = {
       subtitle: "Nie zamykaj strony — trwa przygotowanie pliku.",
     },
     errors: {
+      notFound: "Nie znaleziono tego logo.",
+      wrongType: "To logo jest innego typu niż ten edytor.",
       saveFailed: "Nie udało się zapisać.",
       saveFailedDetailed: "Nie udało się zapisać.\n\n{error}",
       saveError: "Błąd zapisu.",
@@ -3795,7 +3805,6 @@ const pl = {
       unnamed: "(bez nazwy)",
     },
     confirm: {
-      closeUnsaved: "Masz niezapisane zmiany. Zamknąć bez zapisywania?",
       deleteLogo: "Usunąć logo „{name}”?",
     },
   },

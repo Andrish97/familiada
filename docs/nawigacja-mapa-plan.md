@@ -200,14 +200,15 @@ karty:
 3. Żywy status w miejscu przycisku „Zapisz”: *Zapisywanie… → Zapisano ✓ →
    Błąd zapisu (ponawiam…)*. Błąd też nie pyta — zmiany czekają w kopii
    roboczej i idą przy następnej próbie / następnym otwarciu.
-4. Kopia robocza w `localStorage` pod kluczem `logo:<id>` (to, czego baza
-   jeszcze nie ma); po ponownym otwarciu `?id=` — dosłana do bazy i
-   usunięta.
+4. Bez kopii roboczej w przeglądarce: zapis idzie prosto do bazy po
+   0,7 s przerwy i od razu przy wyjściu / schowaniu karty, więc po
+   powrocie na `?id=` praca jest na miejscu. Czynność w toku (pisanie
+   napisu na scenie, przeciągany kształt, wczytywany obraz) wstrzymuje
+   zapis do jej końca (`isInteracting()` edytora).
 5. Nowe logo: wiersz w bazie powstaje od razu po „Nowe logo” (nazwa
-   domyślna jak dziś, `defaultName()`), żeby `id` było w adresie od
-   pierwszej chwili.
-6. Cofnij/ponów w rysowaniu (`draw.js` `history`) — może iść do tej samej
-   kopii roboczej, wtedy działa też po powrocie.
+   z okna nazwy), żeby `id` było w adresie od pierwszej chwili.
+6. Cofnij/ponów w rysowaniu (`draw.js` `history`) żyje do wyjścia ze
+   strony.
 
 **Podział edytorów na osobne strony** (koniec z ✕ w topbarze i trybem
 „edycja” wewnątrz listy):
@@ -613,8 +614,8 @@ pliku, a CSS korzystał z tych samych wartości (komentarz przy `@media`).
 4. `initPage()` strona po stronie (kolejność jak audyty), wspólny wygląd
    overlayu gość/urządzenie.
 5. Rezygnacja ze stron modalnych (każdy punkt osobno):
-   a) refaktor edytora logo: wspólny moduł zapisu (autozapis, kopia
-      robocza, status) + 3 strony `/logo/editor-<typ>/?id=`,
+   a) **zrobione** — refaktor edytora logo: wspólny moduł
+      `web/logo/js/editor-page.js` (autozapis, stan, blokady) + 3 strony `/logo/editor-<typ>/?id=`,
       lista tylko listą, usunięcie ✕, `topbar-no-menu` i okien pomocy,
    b) `/editor/?id=&q=` — pytanie w adresie,
    c) autozapis w game-settings, Control → zwykłe przejście do ustawień,

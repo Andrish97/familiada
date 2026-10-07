@@ -1,4 +1,4 @@
-// familiada/logo-editor/js/image.js
+// familiada/logo/js/image.js
 // Tryb IMAGE: obraz użytkownika + kadr 26:11 + korekty (jasność, kontrast,
 // gamma, poziomy, dither) -> PIX 150x70.
 //
@@ -456,14 +456,15 @@ export function initImageEditor(ctx) {
   }
 
   // Obraz z assetów strony (demo „Obraz” ma na sztywno
-  // https://www.familiada.online/logo-editor/assets/demo-image.png) ładujemy
+  // https://www.familiada.online/logo/assets/demo-image.png -- migracja 308)
+  // ładujemy
   // z bieżącego originu: pod familiada.online bez www, na podglądzie czy
   // lokalnie byłby to request cross-origin zależny od nagłówków CORS.
   // Zapisany adres się nie zmienia.
   function sameSiteSrc(src) {
     try {
       const u = new URL(src);
-      if (/^(www\.)?familiada\.online$/i.test(u.hostname) && u.pathname.startsWith("/logo-editor/assets/")) {
+      if (/^(www\.)?familiada\.online$/i.test(u.hostname) && u.pathname.startsWith("/logo/assets/")) {
         return new URL(u.pathname, location.origin).href;
       }
     } catch {}
@@ -527,7 +528,7 @@ export function initImageEditor(ctx) {
       }
       imageStatus = "error";
       setStageImage(null);
-      console.error("[logo-editor/image] load failed:", src.slice(0, 80), e);
+      console.error("[logo/image] load failed:", src.slice(0, 80), e);
       void alertModal({ text: t("logoEditor.image.errors.loadFailed") });
     }
   }
@@ -797,7 +798,7 @@ export function initImageEditor(ctx) {
       const path = storagePathFromUrl(url, user?.id);
       if (path) await sb().storage.from(BUCKET).remove([path]);
     } catch (e) {
-      console.warn("[logo-editor/image] could not remove old file:", e);
+      console.warn("[logo/image] could not remove old file:", e);
     }
   }
 
@@ -850,6 +851,12 @@ export function initImageEditor(ctx) {
       if (previewUrl) { URL.revokeObjectURL(previewUrl); previewUrl = null; }
     },
 
+    /** Obraz się wczytuje / obraca albo kadr jest właśnie przeciągany --
+     *  autozapis czeka na koniec. */
+    isInteracting() {
+      return imageStatus === "loading" || rotating || !!drag || !!pinch;
+    },
+
     async getCreatePayload() {
       if (imageStatus === "loading" || rotating) return { ok: false, msg: t("logoEditor.image.errors.stillLoading") };
       if (imageStatus === "error") return { ok: false, msg: t("logoEditor.image.errors.loadFailed") };
@@ -863,7 +870,7 @@ export function initImageEditor(ctx) {
           imageData = null;
           pendingFile = null;
         } catch (e) {
-          console.error("[logo-editor/image] upload failed:", e);
+          console.error("[logo/image] upload failed:", e);
           return { ok: false, msg: t("logoEditor.image.errors.storageFailed", { error: e?.message || e }) };
         }
       }

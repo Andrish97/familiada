@@ -1386,7 +1386,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 
   btnLogoEditor?.addEventListener("click", async () => {
-    location.href = "/logo-editor/";
+    location.href = "/logo/";
   });
 
   btnBases?.addEventListener("click", async () => {

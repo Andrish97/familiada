@@ -1,56 +1,51 @@
-// familiada/logo-editor/js/main.js
-// Strona edytora logo: lista kafelków, modale (nowe / nazwa / import /
-// podgląd), otwieranie edytorów trybów i zapis.
+// familiada/logo/js/list.js
+// Lista logo (/logo/): kafelki w trzech kartach, modale (nowe / nazwa /
+// import / podgląd), eksport. Edycja to osobne strony /logo/editor-*/
+// (editor-page.js) -- „Nowe logo” od razu zakłada wiersz w bazie i otwiera
+// edytor z jego id w adresie.
 //
 // Moduły:
 //   render.js       – format bitów i podgląd „jak na wyświetlaczu”
 //   db.js           – tabela user_logos + pliki w Storage
 //   transfer.js     – eksport/import .famlogo
 //   preview-zoom.js – pinch-zoom pełnoekranowego podglądu
-//   text.js / draw.js / image.js – edytory trybów (wspólne API: open/close/getCreatePayload)
+//   routes.js       – adresy listy i edytorów
 
 import { addRenameGesture } from "../../shared/js/core/rename-gesture.js?v=v2026-10-07T07203";
 import { loadFont5x7, buildLogoPreviewCanvas } from "../../shared/js/core/logo-preview.js?v=v2026-10-07T07203";
 import { requireAuth } from "../../shared/js/core/auth.js?v=v2026-10-07T07203";
 import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-07T07203";
-import { getUiLang, initI18n, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-07T07203";
+import { initI18n, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-07T07203";
 import { initTopbarAccountDropdown } from "../../shared/js/core/topbar-controller.js?v=v2026-10-07T07203";
 import { isMobileDevice } from "../../shared/js/core/pwa.js?v=v2026-10-07T07203";
 import { isPhoneScreen } from "../../shared/js/core/device-guard.js?v=v2026-10-07T07203";
 import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-07T07203";
-import { guardResourceLock, acquireResourceLock, isResourceBusy, findBusyContext } from "../../shared/js/core/resource-lock.js?v=v2026-10-07T07203";
+import { isResourceBusy, findBusyContext } from "../../shared/js/core/resource-lock.js?v=v2026-10-07T07203";
 import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-07T07203";
 import { icon } from "../../shared/js/core/icons.js?v=v2026-10-07T07203";
 
-import { TYPE_GLYPH, TYPE_PIX, emptyRows, normalizeRows, renderPreview, logoToPreview } from "./render.js?v=v2026-10-07T07203";
+import { TYPE_GLYPH, TYPE_PIX, PIX_FORMAT, DOT_W, DOT_H, emptyRows, packBits, renderPreview, logoToPreview } from "./render.js?v=v2026-10-07T07203";
 import { listLogos, fetchLogo, createLogo, updateLogo, deleteLogo, isUniqueViolation } from "./db.js?v=v2026-10-07T07203";
 import { buildExport, downloadJson, parseImport, safeFileName } from "./transfer.js?v=v2026-10-07T07203";
 import { initPreviewPinchZoom, lockPageZoomForPreview, unlockPageZoomAfterPreview } from "./preview-zoom.js?v=v2026-10-07T07203";
-import { initTextEditor, decompileRows } from "./text.js?v=v2026-10-07T07203";
-import { initDrawEditor } from "./draw.js?v=v2026-10-07T07203";
-import { initImageEditor } from "./image.js?v=v2026-10-07T07203";
+import { cannotEditReason } from "./text.js?v=v2026-10-07T07203";
+import { editModeFor, editorUrl, manualUrl } from "./routes.js?v=v2026-10-07T07203";
 
 const FONT_3x10_URL = "/shared/fonts/display/font_3x10.json?v=v2026-10-07T07203";
 const FONT_5x7_URL = "/shared/fonts/display/font_5x7.json?v=v2026-10-07T07203";
 // Edycja wymaga miejsca na pasek narzędzi i scenę -- na telefonie dostępna
-// jest tylko lista (podgląd, import/eksport, nazwa, usuwanie). Telefon wg
-// wspólnej reguły isPhoneScreen() (js/core/device-guard.js): krótszy bok
-// ekranu, więc tablet edytuje w poziomie i w pionie (także po obrocie
-// w trakcie), a telefon w żadnej orientacji.
+// jest tylko lista (podgląd, import/eksport, nazwa, usuwanie); „Edytuj”
+// i „Nowe logo” są ukryte (.le-phone). Telefon wg wspólnej reguły
+// isPhoneScreen() (js/core/device-guard.js): krótszy bok ekranu, więc
+// tablet edytuje w poziomie i w pionie, a telefon w żadnej orientacji.
 
 /* =========================================================
    DOM
 ========================================================= */
 const $ = (id) => document.getElementById(id);
 const el = {
-  brandTitle: $("brandTitle"),
   btnBack: $("btnBack"),
   btnManual: $("btnManual"),
-  btnCloseEditor: $("btnCloseEditor"),
-  helpOverlay: $("helpOverlay"),
-  helpFrame: $("helpFrame"),
-  legalOverlay: $("legalOverlay"),
-  legalFrame: $("legalFrame"),
 
   listShell: $("listShell"),
   grid: $("grid"),
@@ -61,14 +56,6 @@ const el = {
   btnExport: $("btnExport"),
   btnImport: $("btnImport"),
   tabs: { TEXT: $("tabLogoText"), DRAW: $("tabLogoDraw"), IMAGE: $("tabLogoImage") },
-
-  editorShell: $("editorShell"),
-  logoName: $("logoName"),
-  btnSave: $("btnCreate"),
-  editorMsg: $("mMsg"),
-  bigPreview: $("bigPreview"),
-  panes: { TEXT: $("paneText"), DRAW: $("paneDraw"), IMAGE: $("paneImage") },
-  tools: { TEXT: [$("toolsText"), $("charsInline")], DRAW: [$("toolsDraw")], IMAGE: [$("toolsImage"), $("imgPanels")] },
 
   renameOverlay: $("renameOverlay"),
   renameTitle: $("renameTitle"),
@@ -106,16 +93,6 @@ let activeListMode = "TEXT";
 let FONT_3x10 = null;    // znak -> [10 wierszy]
 let GLYPH_5x7 = null;    // Map znak -> [7 intów]
 
-// Otwarty edytor. editingId == null => logo jeszcze nie zapisane (powstaje przy pierwszym „Zapisz”).
-let editorMode = null;   // TEXT | DRAW | IMAGE
-let editingId = null;
-let editorDirty = false;
-let saving = false;
-let logoLock = null;     // blokada „logo edytowane w tej karcie” (resource-lock)
-let lastPreview = null;
-
-let editors = null;      // { TEXT, DRAW, IMAGE }
-
 /* =========================================================
    Drobne pomocnicze
 ========================================================= */
@@ -126,7 +103,6 @@ function show(node, on) {
 }
 
 const setMsg = (text) => { if (el.msg) el.msg.textContent = text || ""; };
-const setEditorMsg = (text) => { if (el.editorMsg) el.editorMsg.textContent = text || ""; };
 const isPhone = isPhoneScreen;
 document.documentElement.classList.toggle("le-phone", isPhone());
 const defaultName = () => t("logoEditor.defaults.logoName");
@@ -198,7 +174,9 @@ function setActiveListMode(mode, { updateUrl = true } = {}) {
     const url = new URL(location.href);
     if (activeListMode === "TEXT") url.searchParams.delete("tab");
     else url.searchParams.set("tab", activeListMode.toLowerCase());
-    if (url.href !== location.href) history.pushState(history.state, "", url);
+    // replaceState: przeglądarkowe „Wstecz” wraca do poprzedniej STRONY,
+    // nie przełącza kart (docs/nawigacja-mapa-plan.md).
+    if (url.href !== location.href) history.replaceState(history.state, "", url);
   }
   renderList();
 }
@@ -246,12 +224,6 @@ function closePreview() {
   closeOverlay(el.previewOverlay);
   unlockPageZoomAfterPreview();
   previewZoom?.reset();
-}
-
-function onEditorPreview(preview) {
-  if (!preview) return;
-  lastPreview = preview;
-  renderPreview(preview, el.bigPreview, GLYPH_5x7);
 }
 
 /* =========================================================
@@ -397,9 +369,7 @@ async function confirmNameModal() {
   }
 
   if (nameModal.kind === "create") {
-    const { mode } = nameModal;
-    closeNameModal();
-    await openEditor(mode, null, makeUniqueName(name));
+    await createAndOpen(nameModal.mode, name);
     return;
   }
 
@@ -425,43 +395,54 @@ async function confirmNameModal() {
 }
 
 /* =========================================================
-   Edytor: otwieranie / zamykanie
+   Edycja: osobne strony /logo/editor-<tryb>/?id=
 ========================================================= */
-function updateEditorHeader() {
-  if (!editorMode) return;
-  const prefix = t(editingId ? "logoEditor.editor.editLogoPrefix" : "logoEditor.editor.newLogoPrefix");
-  el.brandTitle.innerHTML = `<span class="bMain">${esc(prefix)}</span><span class="bMode">${esc(modeLabel(editorMode))}</span>`;
+/** Pusty payload nowego logo danego trybu -- wiersz powstaje od razu, żeby
+ *  edytor miał id w adresie od pierwszej chwili. */
+function emptyPayload(mode) {
+  if (mode === "TEXT") {
+    return { type: TYPE_GLYPH, payload: { layers: [{ color: "main", rows: emptyRows() }], source: { mode: "TEXT", text: "" } } };
+  }
+  return {
+    type: TYPE_PIX,
+    payload: { w: DOT_W, h: DOT_H, format: PIX_FORMAT, bits_b64: packBits(new Uint8Array(DOT_W * DOT_H)), source: { mode } },
+  };
 }
 
-function markDirty() { editorDirty = true; }
-function clearDirty() { editorDirty = false; }
-
-/**
- * Tryb edycji zapisanego logo. GLYPH to zawsze Tekst; PIX -- Obraz, jeśli ma
- * obraz źródłowy, w pozostałych przypadkach Rysunek (także stare logo i demo
- * bez source: ich kropki trafiają na scenę jako warstwa obrazu).
- */
-function editModeFor(logo) {
-  if (logo.type === TYPE_GLYPH) return "TEXT";
-  const src = logo.payload?.source || {};
-  if (src.mode === "IMAGE" || src.imageUrl || src.imageData) return "IMAGE";
-  return "DRAW";
-}
-
-/** Powód odmowy edycji albo null. Jedyny przypadek: napis, którego nie da się odtworzyć. */
-function cannotEditReason(logo, mode) {
-  if (mode !== "TEXT" || typeof logo.payload?.source?.text === "string") return null;
-  const rows = logo.payload?.layers?.[0]?.rows;
-  if (!normalizeRows(rows).join("").trim()) return null;
-  return decompileRows(rows, FONT_3x10) == null ? t("logoEditor.errors.noSourceText") : null;
+async function createAndOpen(mode, name) {
+  el.btnRenameOk.disabled = true;
+  el.renameMsg.textContent = "";
+  try {
+    // Pula logo zajęta (Control / ustawienia gry) -- edytor i tak by nic nie zapisał.
+    const busy = await findBusyContext("game", ["settings", "control"]).catch(() => null);
+    if (busy) {
+      el.renameMsg.textContent = busyMessage(busy);
+      return;
+    }
+    let finalName = makeUniqueName(name);
+    let id;
+    for (let attempt = 0; ; attempt++) {
+      try {
+        id = await createLogo({ user_id: currentUser.id, name: finalName, ...emptyPayload(mode) });
+        break;
+      } catch (e) {
+        // Nazwa zajęta przez logo spoza lokalnej listy (np. z innej karty).
+        if (!isUniqueViolation(e) || attempt > 0) throw e;
+        logos = await listLogos();
+        finalName = makeUniqueName(name);
+      }
+    }
+    location.href = editorUrl(mode, id);
+  } catch (e) {
+    console.error(e);
+    el.renameMsg.textContent = t("logoEditor.errors.saveFailed");
+  } finally {
+    el.btnRenameOk.disabled = false;
+  }
 }
 
 async function editSelected() {
-  if (!selectedId) return;
-  if (isPhone()) {
-    void alertModal({ text: t("logoEditor.errors.noMobileEdit") });
-    return;
-  }
+  if (!selectedId || isPhone()) return;
   let logo;
   try {
     logo = await fetchLogo(selectedId);
@@ -471,172 +452,12 @@ async function editSelected() {
     return;
   }
   const mode = editModeFor(logo);
-  const reason = cannotEditReason(logo, mode);
+  const reason = cannotEditReason(logo, mode, FONT_3x10);
   if (reason) {
     void alertModal({ text: reason });
     return;
   }
-  await openEditor(mode, logo);
-}
-
-/** logo == null => nowe logo o nazwie newName (w bazie powstanie przy pierwszym zapisie). */
-async function openEditor(mode, logo, newName = "") {
-  if (isPhone()) {
-    void alertModal({ text: t("logoEditor.errors.noMobileEdit") });
-    return;
-  }
-
-  // Cała pula logo jest zajęta, gdy Control albo ustawienia którejś gry są
-  // otwarte (zapis i tak zablokuje RPC -- mówimy o tym od razu).
-  const busy = await findBusyContext("game", ["settings", "control"]).catch(() => null);
-  if (busy) {
-    void alertModal({ text: busyMessage(busy) });
-    return;
-  }
-  if (logo) {
-    // To logo edytowane w innej karcie -> pełnoekranowy komunikat (jak w editor.js).
-    const lock = await guardResourceLock({
-      resourceType: "logo",
-      resourceId: logo.id,
-      context: "logo-editor",
-      message: t("resourceLock.logoMessage"),
-      backHref: location.href,
-    });
-    if (!lock.ok) return;
-    logoLock = lock;
-  }
-
-  editorMode = mode;
-  editingId = logo?.id || null;
-  el.editorShell.dataset.mode = mode;
-  for (const [m, pane] of Object.entries(el.panes)) show(pane, m === mode);
-  for (const [m, nodes] of Object.entries(el.tools)) nodes.forEach((n) => show(n, m === mode));
-
-  document.body.classList.add("is-editor", "topbar-no-menu");
-  show(el.listShell, false);
-  show(el.editorShell, true);
-  show(el.btnBack, false);
-  show(el.btnCloseEditor, true);
-  updateEditorHeader();
-
-  el.logoName.value = logo ? logo.name || "" : newName;
-  setEditorMsg("");
-  onEditorPreview(logo ? logoToPreview(logo) : { kind: "GLYPH", rows: emptyRows() });
-
-  editors[mode].open(logo?.payload || null);
-  clearDirty();
-  pushEditorHistory();
-}
-
-async function closeEditor({ force = false, fromHistory = false } = {}) {
-  if (!editorMode) return;
-  if (!force && editorDirty && !(await confirmModal({ text: t("logoEditor.confirm.closeUnsaved") }))) return false;
-
-  editors[editorMode].close();
-  logoLock?.release();
-  logoLock = null;
-  editorMode = null;
-  editingId = null;
-  clearDirty();
-
-  el.editorShell.dataset.mode = "";
-  Object.values(el.panes).forEach((p) => show(p, false));
-  show(el.editorShell, false);
-  show(el.listShell, true);
-  document.body.classList.remove("is-editor", "topbar-no-menu");
-  show(el.btnBack, true);
-  show(el.btnCloseEditor, false);
-  el.brandTitle.textContent = "FAMILIADA";
-
-  if (!fromHistory) popEditorHistory();
-  return true;
-}
-
-/* =========================================================
-   Historia przeglądarki: „Wstecz” w edytorze = zamknij edytor
-   (z pytaniem o niezapisane zmiany); na liście -- zwykłe wyjście ze strony.
-========================================================= */
-let ignoreNextPop = false;
-
-function pushEditorHistory() {
-  try { history.pushState({ logoEditor: "editor" }, "", location.href); } catch {}
-}
-
-function popEditorHistory() {
-  if (history.state?.logoEditor !== "editor") return;
-  ignoreNextPop = true;
-  history.back();
-}
-
-window.addEventListener("popstate", async () => {
-  if (ignoreNextPop) { ignoreNextPop = false; return; }
-  if (!editorMode) return;
-  const closed = await closeEditor({ fromHistory: true });
-  if (closed === false) pushEditorHistory(); // anulowano -- zostajemy w edytorze
-});
-
-window.addEventListener("beforeunload", (e) => {
-  if (!editorMode || !editorDirty) return;
-  e.preventDefault();
-  e.returnValue = "";
-});
-
-/* =========================================================
-   Zapis
-========================================================= */
-async function saveEditor() {
-  if (!editorMode || saving) return;
-  saving = true;
-  el.btnSave.disabled = true;
-  setEditorMsg(t("logoEditor.status.saving"));
-
-  try {
-    const res = await editors[editorMode].getCreatePayload();
-    if (!res?.ok) {
-      setEditorMsg(res?.msg || t("logoEditor.errors.saveFailed"));
-      return;
-    }
-    const payload = res.payload;
-    payload.source = { ...(payload.source || {}), mode: editorMode };
-
-    let name = makeUniqueName(el.logoName.value.trim() || defaultName(), editingId);
-    for (let attempt = 0; ; attempt++) {
-      try {
-        if (editingId) {
-          await updateLogo(editingId, { name, type: res.type, payload });
-        } else {
-          editingId = await createLogo({ user_id: currentUser.id, name, type: res.type, payload });
-          const lock = await acquireResourceLock({ resourceType: "logo", resourceId: editingId, context: "logo-editor" });
-          if (lock?.ok) logoLock = lock;
-        }
-        break;
-      } catch (e) {
-        // Nazwa zajęta przez logo, którego lokalna lista jeszcze nie zna
-        // (np. utworzone w innej karcie) -- odśwież i spróbuj raz jeszcze.
-        if (!isUniqueViolation(e) || attempt > 0) throw e;
-        logos = await listLogos();
-        const next = makeUniqueName(name, editingId);
-        name = next !== name ? next : `${name} (${Date.now() % 100000})`;
-      }
-    }
-
-    el.logoName.value = name;
-    clearDirty();
-    await editors[editorMode].onSaved?.();
-    updateEditorHeader();
-    await refresh();
-    selectTile(editingId);
-    setEditorMsg(t("logoEditor.status.saved"));
-  } catch (e) {
-    console.error(e);
-    setEditorMsg(t("logoEditor.errors.saveError"));
-    void alertModal({
-      text: e?.code === "RESOURCE_IN_USE" ? busyMessage(e.reason) : t("logoEditor.errors.saveFailedDetailed", { error: e?.message || e }),
-    });
-  } finally {
-    saving = false;
-    el.btnSave.disabled = false;
-  }
+  location.href = editorUrl(mode, logo.id);
 }
 
 /* =========================================================
@@ -721,28 +542,6 @@ async function exportSelected() {
 }
 
 /* =========================================================
-   Pomoc / polityka prywatności (iframe w modalu)
-========================================================= */
-function pageUrl(path, params, hash) {
-  const url = new URL(path, location.href);
-  url.searchParams.set("ret", `${location.pathname}${location.search}${location.hash}`);
-  url.searchParams.set("lang", getUiLang() || "pl");
-  for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v);
-  url.hash = hash;
-  return url.toString();
-}
-
-function openHelp() {
-  el.helpFrame.src = pageUrl("../manual", { modal: "logo-editor", tab: "logo" }, "logo");
-  el.helpOverlay.classList.remove("hidden");
-}
-
-function openLegal() {
-  el.legalFrame.src = pageUrl("../privacy", { modal: "logo-editor" }, "logo-editor");
-  el.legalOverlay.classList.remove("hidden");
-}
-
-/* =========================================================
    START
 ========================================================= */
 async function loadFonts() {
@@ -759,20 +558,7 @@ function bindUi() {
     if (handleSheetBack()) return;
     location.href = withLangParam("/games/");
   });
-  el.btnCloseEditor.addEventListener("click", () => void closeEditor());
-  el.btnManual.addEventListener("click", () => {
-    if (editorMode) openHelp();
-    else location.href = pageUrl("/manual/", {}, "logo");
-  });
-
-  const closeHelp = () => el.helpOverlay.classList.add("hidden");
-  const closeLegal = () => el.legalOverlay.classList.add("hidden");
-  $("btnHelpClose").addEventListener("click", (ev) => { ev.stopImmediatePropagation(); closeHelp(); });
-  el.helpOverlay.addEventListener("click", (ev) => { if (ev.target === el.helpOverlay) closeHelp(); });
-  $("btnLegal").addEventListener("click", (ev) => { ev.stopImmediatePropagation(); openLegal(); });
-  $("btnBackToManual").addEventListener("click", (ev) => { ev.stopImmediatePropagation(); closeLegal(); openHelp(); });
-  $("btnLegalClose").addEventListener("click", (ev) => { ev.stopImmediatePropagation(); closeLegal(); });
-  el.legalOverlay.addEventListener("click", (ev) => { if (ev.target === el.legalOverlay) closeLegal(); });
+  el.btnManual.addEventListener("click", () => { location.href = manualUrl(); });
 
   // lista
   el.btnEdit.addEventListener("click", () => void editSelected());
@@ -786,7 +572,6 @@ function bindUi() {
   for (const [mode, tab] of Object.entries(el.tabs)) {
     tab?.addEventListener("click", () => setActiveListMode(mode));
   }
-  window.addEventListener("popstate", () => setActiveListMode(listModeFromUrl(), { updateUrl: false }));
 
   // modal nazwy
   el.btnRenameOk.addEventListener("click", () => void confirmNameModal());
@@ -804,20 +589,11 @@ function bindUi() {
   el.btnImportCancel.addEventListener("click", () => closeOverlay(el.importOverlay));
   closeOnBackdrop(el.importOverlay, () => closeOverlay(el.importOverlay));
 
-  // edytor
-  el.btnSave.addEventListener("click", () => void saveEditor());
-  el.logoName.addEventListener("input", markDirty);
-  el.bigPreview.addEventListener("click", () => {
-    if (editorMode !== "TEXT" && lastPreview) openPreview(lastPreview);
-  });
-  window.addEventListener("logoeditor:openPreview", (ev) => { if (ev?.detail) openPreview(ev.detail); });
-
   // podgląd
   $("btnPreviewClose").addEventListener("click", closePreview);
   closeOnBackdrop(el.previewOverlay, closePreview);
 
   window.addEventListener("i18n:lang", () => {
-    updateEditorHeader();
     setActiveListMode(activeListMode, { updateUrl: false });
   });
 
@@ -838,8 +614,8 @@ async function boot() {
   await initI18n({ withSwitcher: true });
   document.documentElement.classList.remove("page-loading");
 
-  currentUser = await requireAuth(withLangParam("/login/"));
-  initTopbarAccountDropdown(currentUser, { accountHref: "../account", loginHref: "../login" });
+  currentUser = await requireAuth("/login/");
+  initTopbarAccountDropdown(currentUser);
   document.querySelector(".topbar")?.classList.add("topbar-ready");
 
   try {
@@ -848,20 +624,6 @@ async function boot() {
     console.error(e);
     void alertModal({ text: t("logoEditor.errors.fontsLoad") });
   }
-
-  const ctx = {
-    getMode: () => editorMode,
-    markDirty,
-    clearDirty,
-    setEditorMsg,
-    onPreview: onEditorPreview,
-    getFont3x10: () => FONT_3x10,
-  };
-  editors = {
-    TEXT: initTextEditor(ctx),
-    DRAW: initDrawEditor(ctx),
-    IMAGE: initImageEditor(ctx),
-  };
 
   bindUi();
   setActiveListMode(listModeFromUrl(), { updateUrl: false });

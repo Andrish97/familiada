@@ -1,4 +1,4 @@
-// familiada/logo-editor/js/draw.js
+// familiada/logo/js/draw.js
 // Tryb DRAW: rysunek wektorowy (Fabric.js 5, globalne window.fabric) -> PIX 150x70.
 //
 // Świat sceny ma rozmiar ZAPISANY RAZEM Z LOGO (source.world) -- niezależny
@@ -1600,6 +1600,13 @@ export function initDrawEditor(ctx) {
       hideCursorDot();
       hideTip();
       if (toolCtx) toolCtx.innerHTML = "";
+    },
+
+    /** Czynność w toku (pisanie napisu, przeciągany kształt, wielokąt) --
+     *  autozapis czeka, bo getCreatePayload() by ją przerwał. */
+    isInteracting() {
+      const active = canvas?.getActiveObject();
+      return !!(drawing || polyPoints.length || (isTextObj(active) && active.isEditing));
     },
 
     async getCreatePayload() {

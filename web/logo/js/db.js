@@ -1,4 +1,4 @@
-// familiada/logo-editor/js/db.js
+// familiada/logo/js/db.js
 // Dostęp do tabeli user_logos i plików logo w Storage.
 
 import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-07T07203";
@@ -74,6 +74,6 @@ export async function deleteLogo(id) {
     const path = storagePathFromUrl(imageUrl, user?.id);
     if (path) await sb().storage.from("user-logos").remove([path]);
   } catch (e) {
-    console.warn("[logo-editor/db] could not remove image file:", e);
+    console.warn("[logo/db] could not remove image file:", e);
   }
 }

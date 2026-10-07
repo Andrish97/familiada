@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
+  <meta name="app-version" content="v2026-10-07T07203"/>
+
+  <meta charset="UTF-8"/>
+  <meta name="robots" content="noindex, nofollow"/>
+  <meta name="mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net">
+  <link rel="preconnect" href="https://supabase.familiada.online">
+  <title data-i18n="logoEditor.title">Familiada — logo</title>
+
+  <link rel="icon" href="/favicon.ico?v=v2026-10-07T07203"/>
+  <link rel="manifest" href="/manifest.json?v=v2026-10-07T07203"/>
+  <meta name="theme-color" content="#050914"/>
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-07T07203"/>
+  <link rel="stylesheet" href="/games/css/games.css?v=v2026-10-07T07203"/>
+  <link rel="stylesheet" href="/logo/css/logo.css?v=v2026-10-07T07203"/>
+  <script>
+    document.documentElement.classList.add('page-loading');
+    try {
+      var _has = false;
+      for (var _i = 0; _i < localStorage.length; _i++) {
+        var _k = localStorage.key(_i);
+        if (_k && _k.startsWith('sb-') && _k.endsWith('-auth-token')) { _has = true; break; }
+      }
+      if (!_has) location.replace('/login/');
+    } catch(_e) {}
+  </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+
+  <script type="module" src="/logo/js/list.js?v=v2026-10-07T07203" defer></script>
+  <script src="/shared/js/core/security-warning.js?v=v2026-10-07T07203" defer></script>
+</head>
+
+<body class="games-body logo-body skel-body">
+  <!-- TOPBAR (jak games). Lista logo; edytory to osobne strony /logo/editor-*/ -->
+  <header class="topbar topbar-layout-4">
+    <div class="topbar-section topbar-section-1">
+      <div class="brand" id="brandTitle">FAMILIADA</div>
+      <button class="btn" id="btnBack" type="button" data-i18n="logoEditor.topbar.backToGames" data-i18n-icon="arrow-left">Moje gry</button>
+    </div>
+    <div class="topbar-section topbar-section-2"></div>
+    <div class="topbar-section topbar-section-3">
+      <button class="btn" id="btnManual" type="button" data-i18n-aria-label="common.manualLabel" data-i18n-title="common.manualLabel" aria-label="Wskazówki" title="Wskazówki"><i class="ico" data-icon="info"></i></button>
+    </div>
+    <div class="topbar-section topbar-section-4">
+      <span class="who" id="who"></span>
+      <button class="btn" id="btnLogout" type="button" data-i18n="common.authEntry">Wyloguj</button>
+    </div>
+  </header>
+
+  <main class="wrap logoWrap">
+
+    <!-- =========================
+         LIST VIEW (KAFELKI)
+    ========================== -->
+    <section id="listShell">
+      <div class="bar">
+        <div>
+          <div class="title" data-i18n="logoEditor.list.title">Twoje logo</div>
+          <div class="hint" id="hint" data-i18n="logoEditor.list.hint">Kliknij kafelek, żeby go zaznaczyć. Dwuklik (albo przytrzymanie na dotyku) zmienia nazwę.</div>
+        </div>
+
+        <div class="actions">
+          <button class="btn sm gold" id="btnEdit" type="button" disabled data-i18n="logoEditor.list.edit">Edytuj</button>
+          <button class="btn sm" id="btnPreview" type="button" disabled data-i18n="logoEditor.list.preview">Podgląd</button>
+        </div>
+      </div>
+
+      <section class="games-shell logoShell tabs-card logo-tabs-card">
+        <div class="tabs-strip" role="tablist" aria-label="Typ logo">
+          <div class="tab-slot slot-logo-text">
+            <button class="tab-label active" id="tabLogoText" type="button" role="tab" data-i18n="logoEditor.modes.text">Tekst</button>
+            <div class="tab-wrapper"><div class="tab-active" data-i18n="logoEditor.modes.text">Tekst</div><div class="tab-corner tab-corner-left"></div><div class="tab-corner tab-corner-right"></div></div>
+          </div>
+          <div class="tab-slot slot-logo-draw">
+            <button class="tab-label" id="tabLogoDraw" type="button" role="tab" data-i18n="logoEditor.modes.draw">Rysunek</button>
+            <div class="tab-wrapper"><div class="tab-active" data-i18n="logoEditor.modes.draw">Rysunek</div><div class="tab-corner tab-corner-left"></div><div class="tab-corner tab-corner-right"></div></div>
+          </div>
+          <div class="tab-slot slot-logo-image">
+            <button class="tab-label" id="tabLogoImage" type="button" role="tab" data-i18n="logoEditor.modes.image">Obraz</button>
+            <div class="tab-wrapper"><div class="tab-active" data-i18n="logoEditor.modes.image">Obraz</div><div class="tab-corner tab-corner-left"></div><div class="tab-corner tab-corner-right"></div></div>
+          </div>
+        </div>
+        <div class="card games-card logoCard">
+          <div class="grid logoGridBig" id="grid"></div>
+
+          <!-- dół jak games -->
+          <div class="games-bottom">
+            <div class="games-bottom-left"></div>
+            <div class="games-bottom-right">
+              <button class="btn sm" id="btnExport" type="button" disabled data-i18n="logoEditor.list.export">Eksport</button>
+              <button class="btn sm" id="btnImport" type="button" data-i18n="logoEditor.list.import">Import</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="foot">
+        <div id="msg" class="msg"></div>
+      </div>
+    </section>
+
+  <!-- Modal: zmiana nazwy logo -->
+  <div class="overlay modal--sheet" id="renameOverlay" style="display:none;">
+    <div class="modal">
+      <div class="mHead">
+        <div class="mTitle" id="renameTitle" data-i18n="logoEditor.rename.title">Zmień nazwę</div>
+        <button class="btn sm" id="btnRenameClose" type="button" aria-label="Zamknij" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
+      </div>
+      <div class="mSub" id="renameSub" data-i18n="logoEditor.rename.sub">Wpisz nową nazwę i zapisz.</div>
+
+      <div class="importRow">
+        <input id="renameInput" class="inp" type="text" maxlength="80" placeholder="Nazwa..." data-i18n-placeholder="logoEditor.rename.placeholder"/>
+      </div>
+
+      <div class="importRow modal-actions">
+        <button class="btn sm" id="btnRenameCancel" type="button" data-i18n="logoEditor.common.cancel">Anuluj</button>
+        <button class="btn sm gold" id="btnRenameOk" type="button" data-i18n="logoEditor.common.save">Zapisz</button>
+        <div class="importMsg" id="renameMsg"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: import logo -->
+  <div class="overlay modal--sheet" id="logoImportOverlay" style="display:none;">
+    <div class="modal" style="width:min(640px,94vw)">
+      <div class="mHead">
+        <div class="mTitle" data-i18n="logoEditor.import.title">Import logo</div>
+        <button class="btn sm" id="btnLogoImportCancel" type="button" aria-label="Zamknij" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
+      </div>
+
+      <div class="importRow" style="margin-top:8px">
+        <input id="inpImportLogoFile" type="file" accept=".famlogo,.json,application/json" class="inp" style="flex:1;min-width:0">
+      </div>
+
+      <!-- Podgląd canvas -->
+      <div id="logoImportPreviewWrap" style="display:none;margin-top:10px;border-radius:10px;overflow:hidden;border:1px solid rgba(255,255,255,.12)">
+        <canvas id="logoImportPreviewCanvas" style="width:100%;display:block"></canvas>
+      </div>
+      <!-- Błąd -->
+      <div id="logoImportErr" style="display:none;margin-top:8px;color:#f87171;font-size:.88rem"></div>
+
+      <!-- Pasek postępu (podczas zapisu) -->
+      <div id="logoImportProg" style="display:none;margin-top:12px;gap:10px">
+        <div class="importRow" style="align-items:center">
+          <div id="logoImportStep" style="font-weight:800;letter-spacing:.04em">—</div>
+          <div id="logoImportCount" style="margin-left:auto;opacity:.8">0/0</div>
+        </div>
+        <div style="height:10px;border-radius:999px;background:rgba(255,255,255,.10);overflow:hidden">
+          <div id="logoImportBar" style="height:100%;width:0%;background:rgba(255,255,255,.85)"></div>
+        </div>
+        <div class="importMsg" id="logoImportMsg" style="min-height:18px"></div>
+      </div>
+
+      <div class="importRow modal-actions" style="margin-top:12px">
+        <button class="btn sm gold" id="btnLogoImportConfirm" type="button" disabled data-i18n="logoEditor.import.confirm">Importuj</button>
+      </div>
+    </div>
+  </div>
+
+    <!-- Fullscreen preview (MODAL z X) -->
+    <div class="overlay modal--sheet" id="previewOverlay" style="display:none;">
+      <div class="modal previewModal">
+        <div class="previewModalTitle">
+          <div>
+            <div class="mTitle" data-i18n="logoEditor.preview.title">Podgląd</div>
+            <div class="mSub" data-i18n="logoEditor.preview.subtitle">Tak będzie wyglądać logo na wyświetlaczu</div>
+          </div>
+          <button class="btn sm" id="btnPreviewClose" type="button" aria-label="Zamknij" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
+        </div>
+        <div class="previewModalCanvas">
+          <canvas id="bigPreviewFull" width="1600" height="700"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <div data-i18n="common.footer.left">© 2026 Familiada — system do gry na żywo</div>
+      <button class="btn-contact-footer" type="button" data-contact-modal data-i18n="common.contactBtn">Kontakt</button>
+    </div>
+  </main>
+
+
+  <!-- PROGRES: EXPORT LOGO -->
+  <div class="overlay" id="logoExportOverlay" style="display:none;">
+    <div class="modal" style="width:min(640px,94vw)">
+      <div class="mTitle" data-i18n="logoEditor.export.title">Eksport…</div>
+      <div class="mSub" id="logoExportSub" data-i18n="logoEditor.export.subtitle">Nie zamykaj strony — trwa przygotowanie pliku.</div>
+      <div style="margin-top:12px;display:grid;gap:10px">
+        <div style="height:10px;border-radius:999px;background:rgba(255,255,255,.10);overflow:hidden">
+          <div id="logoExportBar" style="height:100%;width:0%;background:rgba(255,255,255,.85);transition:width .2s"></div>
+        </div>
+        <div class="importMsg" id="logoExportMsg" style="min-height:18px"></div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-07T07203"></script>
+  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-07T07203"></script>
+</body>
+</html>

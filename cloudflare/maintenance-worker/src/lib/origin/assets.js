@@ -4,7 +4,7 @@ import { fetchWithOrigin } from "./origin.js";
 // Dopasowanie po rozszerzeniu, nie po folderze — assety żyją w dziesiątkach
 // osobnych katalogów (css/, js/, img/, audio/, translation/, plus własny
 // js/ dla każdej strony: display/, display/, control/, control/, host/,
-// buzzer/, logo-editor/, base-explorer/...) i lista przybywa z każdą nową
+// buzzer/, logo/, base-explorer/...) i lista przybywa z każdą nową
 // stroną. Rozszerzenie jest stałe niezależnie od tego, gdzie plik leży.
 const STATIC_ASSET_RE = /\.(?:js|mjs|css|json|webmanifest|png|jpe?g|gif|svg|webp|avif|ico|woff2?|ttf|otf|eot|mp3|wav|ogg|mp4|webm|txt)$/i;
 

@@ -1,5 +1,6 @@
 // tests/e2e/helpers/logo-editor.js
-// Wspólne kroki testów edytora logo (logo-editor.spec.js).
+// Wspólne kroki testów logo (logo-editor.spec.js): lista /logo/ i trzy
+// strony edytorów /logo/editor-text|draw|image/?id= z autozapisem.
 
 const { expect } = require("@playwright/test");
 const { isKnownNoiseText } = require("./login");
@@ -12,12 +13,12 @@ function collectPageErrors(page) {
   const errors = [];
   page.on("pageerror", (e) => errors.push(e.message));
   page.on("console", (m) => {
-    if (m.type() === "error" && /\/logo-editor\//.test(m.location()?.url || "") && !isKnownNoiseText(m.text())) errors.push(m.text());
+    if (m.type() === "error" && /\/logo\//.test(m.location()?.url || "") && !isKnownNoiseText(m.text())) errors.push(m.text());
   });
   return errors;
 }
 
-async function openList(page, site, path = "/logo-editor") {
+async function openList(page, site, path = "/logo/") {
   await page.goto(`${site.origin}${path}`, { waitUntil: "domcontentloaded" });
   await expect(page.locator("#grid .addCard")).toBeAttached({ timeout: 20000 });
   await page.waitForFunction(() => !!window.__sbClient, null, { timeout: 20000 });
@@ -61,6 +62,15 @@ async function readLogoByName(page, name) {
   }, name);
 }
 
+/** Czeka, aż strona edytora wczyta logo (pole nazwy odblokowane). */
+async function waitEditorReady(page, mode) {
+  await page.waitForURL(new RegExp(`/logo/editor-${mode.toLowerCase()}/\\?id=`), { timeout: 15000 });
+  await expect(page.locator("#editorShell")).toHaveAttribute("data-mode", mode.toUpperCase());
+  await expect(page.locator("#logoName")).toBeEnabled({ timeout: 15000 });
+  if (mode.toUpperCase() === "DRAW") await page.waitForTimeout(300);
+}
+
+/** „Nowe logo” na liście: wiersz w bazie powstaje od razu, edytor otwiera się z jego id. Zwraca id. */
 async function createNew(page, mode, name) {
   const tab = { Text: "#tabLogoText", Draw: "#tabLogoDraw", Image: "#tabLogoImage" }[mode];
   if (!tab) throw new Error(`Unknown logo mode: ${mode}`);
@@ -68,32 +78,55 @@ async function createNew(page, mode, name) {
   await page.locator("#grid .addCard").click();
   await page.fill("#renameInput", name);
   await page.locator("#btnRenameOk").click();
-  await expect(page.locator("#editorShell")).toHaveAttribute("data-mode", mode.toUpperCase(), { timeout: 10000 });
-  if (mode === "Draw") await page.waitForTimeout(300);
+  await waitEditorReady(page, mode);
+  return new URL(page.url()).searchParams.get("id");
 }
 
 async function editLogo(page, site, id) {
   const row = await readLogo(page, id);
   const sourceMode = String(row?.payload?.source?.mode || "").toUpperCase();
-  const tab = row?.type === "GLYPH_30x10" ? "text" : sourceMode === "IMAGE" ? "image" : "draw";
-  await openList(page, site, `/logo-editor${tab === "text" ? "" : `?tab=${tab}`}`);
+  const tab = row?.type === "GLYPH_30x10" ? "text" : sourceMode === "IMAGE" || row?.payload?.source?.imageUrl || row?.payload?.source?.imageData ? "image" : "draw";
+  await openList(page, site, `/logo/${tab === "text" ? "" : `?tab=${tab}`}`);
   await page.locator(`.logoTile[data-key="${id}"]`).click();
   await page.locator("#btnEdit").click();
+  // Edycja zablokowana na liście (alert) zostawia stronę -- wtedy nie czekamy na edytor.
+  await Promise.race([
+    page.waitForURL(/\/logo\/editor-/, { timeout: 15000 }),
+    page.locator(".uni-modal").waitFor({ state: "visible", timeout: 15000 }),
+  ]);
+  if (/\/logo\/editor-/.test(page.url()) && !(await page.locator("#resourceLockGuard").isVisible().catch(() => false))) {
+    await expect(page.locator("#logoName")).toBeEnabled({ timeout: 15000 }).catch(() => {});
+  }
 }
 
+const STATUS = "#saveStatus";
+const settledStates = ["saved", "invalid", "error"];
+
+/**
+ * Autozapis: czeka, aż ostatnia zmiana się zapisze (albo okaże się, że nie
+ * da się jej zapisać) i zwraca tekst stanu. Bez zmian (stan idle) wymusza
+ * zapis „pustą” zmianą nazwy -- payload jest wtedy liczony na nowo z edytora,
+ * jak dawny „Zapisz” bez zmian.
+ */
 async function save(page) {
-  await page.locator("#btnCreate").click();
-  await expect(page.locator("#mMsg")).not.toHaveText(/Zapisuję|^$/, { timeout: 20000 });
-  return page.locator("#mMsg").textContent();
+  const status = page.locator(STATUS);
+  if ((await status.getAttribute("data-state")) === "idle") {
+    await page.locator("#logoName").dispatchEvent("input");
+  }
+  await page.waitForFunction(({ sel, done }) => done.includes(document.querySelector(sel)?.dataset.state), { sel: STATUS, done: settledStates }, { timeout: 20000 });
+  return status.textContent();
 }
 
-/** Zamyka edytor; gdy pyta o niezapisane zmiany -- odpowiada „Nie” (edytor zostaje) i zwraca true. */
+/** Czy edytor zarejestrował zmianę (autozapis ruszył)? Świeżo otwarte logo bez zmian: idle. */
 async function isDirty(page) {
-  await page.locator("#btnCloseEditor").click();
-  const modal = page.locator(".uni-modal");
-  const shown = await modal.waitFor({ state: "visible", timeout: 1500 }).then(() => true).catch(() => false);
-  if (shown) await modal.locator(".uni-foot .btn:not(.gold)").click();
-  return shown;
+  return (await page.locator(STATUS).getAttribute("data-state")) !== "idle";
+}
+
+/** „Wstecz” z edytora: zapis i powrót na listę logo. */
+async function close(page) {
+  await page.locator("#btnBack").click();
+  await page.waitForURL(/\/logo\/(\?|$)/, { timeout: 20000 });
+  await expect(page.locator("#grid .addCard")).toBeAttached({ timeout: 20000 });
 }
 
 async function stage(page) {
@@ -143,6 +176,6 @@ const rect = (left, top, width, height, fill = "#ffffff") => ({ type: "rect", ve
 
 module.exports = {
   PREFIX, uniq, collectPageErrors, openList, cleanup, insertLogo, readLogo, readLogoByName,
-  createNew, editLogo, save, isDirty, stage, drag,
+  createNew, editLogo, waitEditorReady, save, isDirty, close, stage, drag,
   unpack, pack, litCount, bitDiff, litBox, emptyPix, textPayload, rect,
 };

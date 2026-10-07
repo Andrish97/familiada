@@ -877,6 +877,7 @@ const en = {
     backToBaseManager: "Base manager",
     backToLogos: "My logos",
     backToEditor: "Question editor",
+    backToLogoEditor: "Logo editor",
     backToPoll: "Poll",
     backToSubscriptions: "Subscriptions",
     backToAccount: "Account settings",
@@ -3684,10 +3685,15 @@ const en = {
     shareCooldownAlert: "You can invite again in {hours}h.",
   },
   logoEditor: {
-    title: "Familiada — logo editor",
+    title: "Familiada — logos",
+    titles: {
+      text: "Familiada — text logo",
+      draw: "Familiada — drawn logo",
+      image: "Familiada — image logo",
+    },
     topbar: {
       backToGames: "My games",
-      logout: "Log out",
+      backToLogos: "My logos",
     },
     list: {
       title: "Your logos",
@@ -3699,6 +3705,10 @@ const en = {
       delete: "Delete",
     },
     status: {
+      autosave: "Changes are saved automatically.",
+      unsaved: "Unsaved changes…",
+      notSaved: "Not saved: {reason}",
+      saveRetry: "Saving failed — retrying… (leaving again will skip saving)",
       saving: "Saving…",
       saved: "Saved.",
       deleting: "Deleting…",
@@ -3708,8 +3718,6 @@ const en = {
     editor: {
       nameLabel: "Name",
       namePlaceholder: "e.g. My logo",
-      save: "Save",
-      newLogoPrefix: "New logo — ",
       editLogoPrefix: "Editing logo — ",
     },
     modes: {
@@ -3885,6 +3893,8 @@ const en = {
       subtitle: "Don't close the page — preparing the file.",
     },
     errors: {
+      notFound: "This logo was not found.",
+      wrongType: "This logo is of a different type than this editor.",
       saveFailed: "Couldn't save.",
       saveFailedDetailed: "Couldn't save.\n\n{error}",
       saveError: "Save error.",
@@ -3906,7 +3916,6 @@ const en = {
       unnamed: "(unnamed)",
     },
     confirm: {
-      closeUnsaved: "You have unsaved changes. Close without saving?",
       deleteLogo: "Delete the logo “{name}”?",
     },
   },

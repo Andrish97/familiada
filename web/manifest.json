@@ -34,7 +34,7 @@
       }
     },
     {
-      "action": "/logo-editor/",
+      "action": "/logo/",
       "accept": {
         "application/json": [".famlogo"]
       }

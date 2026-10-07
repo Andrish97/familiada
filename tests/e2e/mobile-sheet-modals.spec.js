@@ -705,15 +705,12 @@ test.describe("polls-hub: mobile sheet modal (udostępnianie/szczegóły ankiety
 });
 
 /* =====================================================================
-   6) logo-editor.html -- modal zmiany nazwy / modal importu logo.
-   UWAGA: modal tworzenia (#createOverlay) jest tu POMINIĘTY -- jego jedyny
-   trigger w HTML (".addCard") ma klasę `hide-mobile`, więc na telefonie
-   nie da się go dziś w ogóle otworzyć przez UI. Infrastruktura sheet jest
-   mimo to podłączona pod ten modal w kodzie (logo-editor/js/main.js) --
-   do zweryfikowania osobno, czy to świadomy stan czy przeoczenie.
+   6) lista logo (/logo/) -- modal zmiany nazwy / modal importu logo.
+   Tworzenie i edycja logo są na telefonie ukryte (.le-phone) -- edytory
+   to osobne strony /logo/editor-*/, niedostępne na telefonie.
 ===================================================================== */
 
-const LOGO_EDITOR_URL = "https://www.familiada.online/logo-editor";
+const LOGO_EDITOR_URL = "https://www.familiada.online/logo/";
 
 function blankGlyphPayload() {
   return {
@@ -743,7 +740,7 @@ async function deleteLogoDirect(page, logoId) {
   }, logoId);
 }
 
-test.describe("logo-editor: mobile sheet modal (zmiana nazwy/import)", () => {
+test.describe("logo: mobile sheet modal (zmiana nazwy/import)", () => {
   test.use({ viewport: MOBILE_VIEWPORT });
 
   test("modal zmiany nazwy logo na telefonie zastępuje treść strony (sheet)", async ({ page, context }) => {
@@ -846,7 +843,7 @@ test.describe("logo-editor: mobile sheet modal (zmiana nazwy/import)", () => {
       await btnBack.click();
       await expect(overlay).toBeHidden({ timeout: 5000 });
       await expect(page.locator("#listShell")).toBeVisible();
-      expect(page.url()).toContain("logo-editor");
+      expect(page.url()).toContain("/logo/");
     } finally {
       await deleteLogoDirect(page, logoId);
     }

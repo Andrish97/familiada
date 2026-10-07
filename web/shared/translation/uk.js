@@ -873,6 +873,7 @@ const uk = {
     backToBaseManager: "Менеджер бази",
     backToLogos: "Мої логотипи",
     backToEditor: "Редактор питань",
+    backToLogoEditor: "Редактор логотипу",
     backToPoll: "Опитування",
     backToSubscriptions: "Підписки",
     backToAccount: "Налаштування акаунта",
@@ -3671,10 +3672,15 @@ const uk = {
     shareCooldownAlert: "Повторно запросити до голосування можна через {hours} год.",
   },
   logoEditor: {
-    title: "Familiada — редактор логотипу",
+    title: "Familiada — логотипи",
+    titles: {
+      text: "Familiada — текстовий логотип",
+      draw: "Familiada — намальований логотип",
+      image: "Familiada — логотип із зображення",
+    },
     topbar: {
       backToGames: "Мої ігри",
-      logout: "Вийти",
+      backToLogos: "Мої логотипи",
     },
     list: {
       title: "Твої логотипи",
@@ -3686,6 +3692,10 @@ const uk = {
       delete: "Видалити",
     },
     status: {
+      autosave: "Зміни зберігаються автоматично.",
+      unsaved: "Незбережені зміни…",
+      notSaved: "Не збережено: {reason}",
+      saveRetry: "Помилка збереження — повторюю… (повторний вихід пропустить збереження)",
       saving: "Зберігаю…",
       saved: "Збережено.",
       deleting: "Видаляю…",
@@ -3695,8 +3705,6 @@ const uk = {
     editor: {
       nameLabel: "Назва",
       namePlaceholder: "Напр. Мій логотип",
-      save: "Зберегти",
-      newLogoPrefix: "Новий логотип — ",
       editLogoPrefix: "Редагування логотипу — ",
     },
     modes: {
@@ -3872,6 +3880,8 @@ const uk = {
       subtitle: "Не закривай сторінку — готується файл.",
     },
     errors: {
+      notFound: "Цей логотип не знайдено.",
+      wrongType: "Цей логотип іншого типу, ніж цей редактор.",
       saveFailed: "Не вдалося зберегти.",
       saveFailedDetailed: "Не вдалося зберегти.\n\n{error}",
       saveError: "Помилка збереження.",
@@ -3893,7 +3903,6 @@ const uk = {
       unnamed: "(без назви)",
     },
     confirm: {
-      closeUnsaved: "Є незбережені зміни. Закрити без збереження?",
       deleteLogo: "Видалити логотип «{name}»?",
     },
   },

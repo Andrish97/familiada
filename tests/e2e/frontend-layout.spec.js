@@ -5,7 +5,7 @@ const productionGet = (request, url) => request.get(url, {headers:{"X-E2E-Token"
 // Requests and browser navigation use the deployed production files.
 // No route interception or local source replacement.
 test("refaktor: strony i ich bezpośrednie zasoby działają na produkcji", async ({ request }) => {
-  for (const route of ["/", "/games/", "/game-settings/", "/control/", "/display/", "/host/", "/buzzer/", "/bases/", "/logo-editor/", "/connect-device/"]) {
+  for (const route of ["/", "/games/", "/game-settings/", "/control/", "/display/", "/host/", "/buzzer/", "/bases/", "/logo/", "/logo/editor-draw/", "/connect-device/"]) {
     const response = await productionGet(request,route);
     expect(response.status(), route).toBe(200);
     const html = await response.text();

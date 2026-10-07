@@ -1,5 +1,6 @@
 /* =========================================================
-   Familiada — logo-editor.css (CLEAN)
+   Familiada — logo.css: lista logo (/logo/) i trzy strony edytorów
+   (/logo/editor-text|draw|image/)
    Założenia:
    - brak scrolla strony w widoku edytora
    - Font picker: popover FIXED (nie jest ucinany przez overflow), scroll w liście, X działa
@@ -22,20 +23,6 @@
 
   --lamp-active: #ffeb3b;
   --lamp-glow: rgba(255,235,59,.7);
-}
-
-/* =========================================================
-   TOPBAR CLOSE BUTTON (match lang-switcher size)
-========================================================= */
-#btnCloseEditor {
-  min-width: 38px;
-  min-height: 38px;
-  display: grid;
-  place-items: center;
-  padding: 0;
-  font-size: 18px;
-  font-weight: 900;
-  line-height: 1;
 }
 
 /* =========================================================
@@ -167,7 +154,7 @@
 /* =========================================================
    EDITOR: NO SCROLL (strona)
 ========================================================= */
-.logo-editor-body.is-editor{ overflow: hidden; }
+.logo-body.is-editor{ overflow: hidden; }
 
 .editorShell{
   margin-top: 12px;
@@ -204,14 +191,20 @@
 .etlName{ flex: 1; min-width: 0; }
 
 .editorLineRight{ display:flex; gap: 10px; align-items:center; }
-.editorLineMsg{
-  margin-left: auto;
-  opacity: .85;
+/* Stan autozapisu (w miejscu dawnego „Zapisz”): idle / dirty / saving /
+   saved / invalid (nie da się zapisać — powód) / error (ponawiam). */
+.saveStatus{
   font-size: 12px;
+  opacity: .85;
   white-space: nowrap;
-  overflow:hidden;
+  overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 32%;
+  max-width: 46vw;
+}
+.saveStatus[data-state="invalid"],
+.saveStatus[data-state="error"]{
+  color: #fca5a5;
+  opacity: 1;
 }
 
 /* karta edytora —
@@ -1084,8 +1077,8 @@
    (spójnie jak games)
 ========================================================= */
 
-/* main w logo-editor ma być flex-kolumną jak w stronie gier */
-body.games-body.logo-editor-body > main.logoWrap{
+/* main na stronach logo ma być flex-kolumną jak w stronie gier */
+body.games-body.logo-body > main.logoWrap{
   flex: 1 1 auto;
   min-height: 0;
   display: flex;
@@ -1169,26 +1162,6 @@ body.games-body.logo-editor-body > main.logoWrap{
   flex: 0 0 auto;
 }
 
-.logo-editor-body.is-editor #btnBack{
-  display:none;
-}
-
-.logo-editor-body.is-editor .topbar-section-4 > :not(#btnCloseEditor){
-  display:none;
-}
-
-.helpOverlay{position:fixed;inset:0;background:var(--scrim);z-index:9999;display:grid;place-items:center}
-.helpOverlay.hidden{display:none}
-.helpModal{position:relative;width:min(1500px,92vw);height:min(1050px,90vh);background:var(--surface,#111827);border:1px solid rgba(255,255,255,.16);border-radius:16px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,.45);display:flex;flex-direction:column}
-.helpModalToolbar{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 14px;background:rgba(255,234,166,.08);border-bottom:1px solid rgba(255,255,255,.1)}
-.helpFrame{width:100%;flex:1;border:0;background:var(--bg);display:block}
-
-/* Legal/privacy policy modal */
-.legalOverlay{position:fixed;inset:0;background:var(--scrim);z-index:10000;display:grid;place-items:center}
-.legalOverlay.hidden{display:none}
-.legalModal{position:relative;width:min(1500px,92vw);height:min(1050px,90vh);background:var(--surface,#111827);border:1px solid rgba(255,255,255,.16);border-radius:16px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,.45);display:flex;flex-direction:column}
-.legalModalToolbar{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 14px;background:rgba(255,234,166,.08);border-bottom:1px solid rgba(255,255,255,.1)}
-.legalFrame{width:100%;flex:1;border:0;background:var(--bg);display:block}
 
 /* =========================================================
    SHAPE PICKER (dropdown z kształtami)
@@ -1298,7 +1271,7 @@ body.games-body.logo-editor-body > main.logoWrap{
    odstępów marki — i ma być widoczny także na wąskim ekranie (tam CSS
    topbara chowa markę). Wysoka specyficzność (id) celowo wygrywa z tymi
    regułami. */
-.logo-editor-body.is-editor .topbar .topbar-section-1 #brandTitle{
+.logo-body.is-editor .topbar .topbar-section-1 #brandTitle{
   display: flex;
   align-items: baseline;
   gap: .35em;                 /* flex zjadał spację po „—” */
@@ -1311,10 +1284,10 @@ body.games-body.logo-editor-body > main.logoWrap{
   white-space: nowrap;
   overflow: hidden;
 }
-.logo-editor-body.is-editor #brandTitle .bMain{
+.logo-body.is-editor #brandTitle .bMain{
   flex-shrink: 0;
 }
-.logo-editor-body.is-editor #brandTitle .bMode{
+.logo-body.is-editor #brandTitle .bMode{
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;

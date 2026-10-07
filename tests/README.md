@@ -243,7 +243,7 @@ logowania (`loginAsTestUser` czy `loginAsGuest`) pasuje do danej strony.
 **Niezalogowany (brak sesji w ogóle):** każda strona appki wywołuje
 `requireAuth()` (`js/core/auth.js`) jako pierwszy krok i bez sesji
 przekierowuje na `/login`, zanim cokolwiek się wyrenderuje. Dotyczy to
-`games`, `editor` (gra), `logo-editor`, `game-settings`, `manual`,
+`games`, `editor` (gra), `logo` (lista i edytory), `game-settings`, `manual`,
 `polls-hub`, `polls`, `bases`/`base-explorer`, `account`, `subscriptions`
 i `control/*`. Publicznie, bez logowania, dostępne są tylko strona
 główna (`index.html`) i sam `/login`.

@@ -1,4 +1,4 @@
-// familiada/logo-editor/js/transfer.js
+// familiada/logo/js/transfer.js
 // Eksport/import logo do pliku .famlogo (JSON, bez id i użytkownika).
 //
 // Formaty wejściowe:
@@ -37,7 +37,7 @@ export async function buildExport(logo, fallbackName) {
       try {
         source.imageData = await fetchImageAsDataUrl(source.imageUrl);
       } catch (e) {
-        console.warn("[logo-editor/export] could not embed image:", e);
+        console.warn("[logo/export] could not embed image:", e);
       }
     }
     // Z osadzonym obrazem plik jest samowystarczalny; URL zostaje tylko, gdy osadzenie się nie udało.

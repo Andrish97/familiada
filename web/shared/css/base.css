@@ -838,7 +838,7 @@ main{
    samej klasie .modal--sheet, nie na .overlay. */
 @media (max-width: 600px) {
     /* !important: niektóre strony mają dla swoich sekcji reguły na
-       selektorze ID (np. logo-editor.css: #listShell{display:flex}) —
+       selektorze ID (np. logo.css: #listShell{display:flex}) —
        specyficzność ID bije dowolną liczbę klas, więc bez !important ta
        reguła by przegrywała i dana sekcja zostawałaby widoczna obok
        modala, ściskając go do resztki miejsca zamiast go zastąpić. */
@@ -963,7 +963,7 @@ main{
        (nie mają realnego przejęcia przycisku wstecz) — bez tego zawężenia
        ich "✕" znikałby bez ŻADNEGO zastępczego sposobu zamknięcia.
        !important: niektóre przyciski "✕" mają swój display ustawiony
-       regułą na selektorze ID (np. logo-editor.css:
+       regułą na selektorze ID (np. logo.css:
        #previewOverlay .previewCloseBtn{display:grid}), której
        specyficzność bije dowolną liczbę klas. */
     .modal--sheet.sheet-active .uni-head button[aria-label],
@@ -1559,19 +1559,6 @@ html.showA2HS .a2hs {
   .topbar-layout-4 .topbar-section-3{ grid-area:s3; justify-content:flex-end; align-items:center; }
   .topbar-layout-4 .topbar-section-2,
   .topbar-layout-4 .topbar-section-4{ display:none; }
-
-  /* body.topbar-no-menu (np. edytor logo w trybie edycji): bez hamburgera —
-     sekcja 4 zostaje w topbarze, w jednym wierszu z sekcją 3. */
-  body.topbar-no-menu .topbar-layout-4{
-    grid-template-columns:minmax(0,1fr) auto auto;
-    grid-template-areas:"s1 s3 s4";
-  }
-  body.topbar-no-menu .topbar-layout-4 .topbar-section-4{
-    display:flex;
-    grid-area:s4;
-    align-items:center;
-    gap:8px;
-  }
 
   .topbar-layout-4 .topbar-section-1{
     flex-wrap:nowrap;

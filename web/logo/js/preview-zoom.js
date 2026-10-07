@@ -1,9 +1,9 @@
-// familiada/logo-editor/js/preview-zoom.js
+// familiada/logo/js/preview-zoom.js
 // Pełnoekranowy podgląd: własny pinch-zoom/pan na canvasie i blokada
 // powiększania całej strony na czas otwarcia podglądu.
 
 // Własny pinch-zoom/pan na canvasie podglądu, niezależny od powiększania
-// całej strony przeglądarki (patrz touch-action:none w logo-editor.css —
+// całej strony przeglądarki (patrz touch-action:none w logo.css —
 // bez tego dwa palce na canvasie zoomowałyby cały layout, nie samą treść).
 export function initPreviewPinchZoom(container, canvas) {
   // Model: canvas ma transform-origin 0 0, a jego NIEPRZEKSZTAŁCONY
@@ -165,7 +165,7 @@ export function initPreviewPinchZoom(container, canvas) {
   return { reset };
 }
 
-// touch-action:none na kontenerze canvasa (logo-editor.css) nie wystarcza
+// touch-action:none na kontenerze canvasa (logo.css) nie wystarcza
 // niezawodnie na wszystkich przeglądarkach (zwłaszcza iOS Safari potrafi
 // i tak obsłużyć dwa palce jako natywny zoom CAŁEJ strony, niezależnie od
 // touch-action) — na czas otwarcia podglądu dodatkowo blokujemy

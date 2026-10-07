@@ -44,20 +44,43 @@ test("base-explorer zapisuje konkretny folder i odtwarza go z URL", () => {
 });
 
 test("logo ma trzy zakładki, dynamiczny hint i geometrię wypustek", () => {
-  const html = read("logo-editor/index.html");
-  const js = read("logo-editor/js/main.js");
-  const css = read("logo-editor/css/logo-editor.css");
+  const html = read("logo/index.html");
+  const js = read("logo/js/list.js");
+  const css = read("logo/css/logo.css");
 
   for (const id of ["tabLogoText", "tabLogoDraw", "tabLogoImage"]) {
     assert.match(html, new RegExp(`id="${id}"`));
   }
   assert.doesNotMatch(html, /id="createOverlay"|id="pickText"|id="pickDraw"|id="pickImage"/);
   assert.match(js, /el\.hint\.textContent = t\(hintKeys\[activeListMode\]\)/);
-  assert.match(js, /addEventListener\("popstate"/);
+  // Karta w ?tab= przez replaceState: przeglądarkowe „Wstecz” wraca do
+  // poprzedniej strony, nie przełącza kart (docs/nawigacja-mapa-plan.md).
+  assert.match(js, /history\.replaceState\(history\.state, "", url\)/);
+  assert.doesNotMatch(js, /history\.pushState|addEventListener\("popstate"/);
   assert.match(css, /tabLogoText\.active[\s\S]*tab-corner-left/);
   assert.match(css, /tabLogoImage\.active[\s\S]*tab-corner-right/);
   assert.match(css, /tabLogoText\.active[\s\S]*border-top-left-radius: 0/);
   assert.match(css, /tabLogoImage\.active[\s\S]*border-top-right-radius: 0/);
+});
+
+test("edytory logo to osobne strony z id w adresie, autozapisem i bez ✕", () => {
+  const list = read("logo/index.html");
+  assert.doesNotMatch(list, /id="editorShell"|id="btnCloseEditor"|id="helpOverlay"|id="legalOverlay"|fabric/);
+  for (const [mode, file, init] of [["TEXT", "text", "initTextEditor"], ["DRAW", "draw", "initDrawEditor"], ["IMAGE", "image", "initImageEditor"]]) {
+    const html = read(`logo/editor-${file}/index.html`);
+    const entry = read(`logo/js/editor-${file}.js`);
+    assert.match(html, new RegExp(`src="/logo/js/editor-${file}\\.js`));
+    assert.match(html, new RegExp(`id="editorShell" data-mode="${mode}"`));
+    assert.match(html, /id="saveStatus"/);
+    assert.doesNotMatch(html, /id="btnCreate"|id="btnCloseEditor"|id="helpOverlay"|id="legalOverlay"|modal=/);
+    assert.equal(/fabric@/.test(html), file === "draw", `${file}: fabric.js tylko w edytorze rysunku`);
+    assert.match(entry, new RegExp(`bootEditorPage\\(\\{ mode: "${mode}", initEditor: ${init} \\}\\)`));
+  }
+  const page = read("logo/js/editor-page.js");
+  assert.match(page, /isInteracting/);
+  assert.match(page, /visibilitychange/);
+  assert.doesNotMatch(page, /beforeunload|confirmModal|pushState/);
+  assert.doesNotMatch(read("shared/js/core/topbar-controller.js"), /topbar-no-menu/);
 });
 
 test("Polls Hub obsługuje aktualną odpowiedź kolejki send-mail", () => {

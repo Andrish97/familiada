@@ -1,10 +1,10 @@
-// familiada/logo-editor/js/text.js
+// familiada/logo/js/text.js
 // Tryb TEXT: napis fontem 3x10 -> GLYPH_30x10 (30 kolumn x 10 wierszy znaków
 // fontu 5x7). Glify przycięte do szerokości, stała 1 kolumna przerwy,
 // napis wyśrodkowany.
 
 import { t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-07T07203";
-import { TILES_X, TILES_Y, TYPE_GLYPH } from "./render.js?v=v2026-10-07T07203";
+import { TILES_X, TILES_Y, TYPE_GLYPH, normalizeRows } from "./render.js?v=v2026-10-07T07203";
 
 const GLYPH_W = 3;
 
@@ -118,6 +118,16 @@ export function decompileRows(rows, font) {
     }
   }
   return null;
+}
+
+/** Powód odmowy edycji albo null. Jedyny przypadek: logo tekstowe bez
+ *  zapisanego napisu, którego wierszy nie da się odczytać jako napis
+ *  (edycja by go wyczyściła). Sprawdzają lista i strona edytora. */
+export function cannotEditReason(logo, mode, font) {
+  if (mode !== "TEXT" || typeof logo.payload?.source?.text === "string") return null;
+  const rows = logo.payload?.layers?.[0]?.rows;
+  if (!normalizeRows(rows).join("").trim()) return null;
+  return decompileRows(rows, font || {}) == null ? t("logoEditor.errors.noSourceText") : null;
 }
 
 export function initTextEditor(ctx) {

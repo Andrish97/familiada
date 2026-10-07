@@ -163,7 +163,8 @@ function resolveBackLabelKey() {
   const retPath = getRetPathnameLower();
   if (retPath.endsWith("/base-explorer/")) return "manual.backToBaseManager";
   if (retPath.endsWith("/bases/")) return "baseExplorer.backToBases";
-  if (retPath.endsWith("/logo-editor/")) return "manual.backToLogos";
+  if (retPath === "/logo/") return "manual.backToLogos";
+  if (retPath.startsWith("/logo/editor-")) return "manual.backToLogoEditor";
   if (retPath.endsWith("/editor/")) return "manual.backToEditor";
   if (retPath.endsWith("/polls/")) return "manual.backToPoll";
   if (retPath.endsWith("/subscriptions/")) return "manual.backToSubscriptions";
