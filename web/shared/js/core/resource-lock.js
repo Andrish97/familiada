@@ -250,12 +250,16 @@ export async function guardResourceLock({ resourceType, resourceId, message, tit
     }
   }, HEARTBEAT_MS);
 
+  // Zwraca Promise zwolnienia: strona, która wychodzi własnym przyciskiem
+  // (np. „Wstecz” edytora logo), czeka na nie przed nawigacją -- przy samym
+  // pagehide przeglądarka potrafi ubić żądanie w trakcie przejścia i blokada
+  // wisiałaby do wygaśnięcia TTL (25 s).
   const release = () => {
-    if (released) return;
+    if (released) return Promise.resolve();
     released = true;
     clearInterval(heartbeatTimer);
     clearInterval(retryTimer);
-    void releaseOnce(resourceType, resourceId);
+    return releaseOnce(resourceType, resourceId);
   };
 
   window.addEventListener("pagehide", release);

@@ -64,6 +64,7 @@ export async function bootEditorPage({ mode, initEditor }) {
   let logoId = null;
   let editor = null;
   let logos = [];          // lekka lista -- tylko do unikalnych nazw
+  let logoLock = null;     // blokada logo:L (guardResourceLock)
 
   // Autozapis
   let ready = false;       // logo wczytane do edytora, zmiany się liczą
@@ -211,10 +212,15 @@ export async function bootEditorPage({ mode, initEditor }) {
    * zajęta): pierwszy klik zostaje na stronie z komunikatem, drugi wychodzi.
    */
   let leaveFailed = false;
+  async function go(href) {
+    // Zwolnienie blokady PRZED nawigacją (patrz release() w resource-lock.js).
+    await logoLock?.release?.().catch(() => {});
+    location.href = href;
+  }
   async function leave(href) {
-    if (!ready) { location.href = href; return; }
+    if (!ready) { await go(href); return; }
     const done = await save({ force: true });
-    if (done || statusState === "invalid" || leaveFailed) { location.href = href; return; }
+    if (done || statusState === "invalid" || leaveFailed) { ready = false; await go(href); return; }
     leaveFailed = true;
   }
 
@@ -332,6 +338,7 @@ export async function bootEditorPage({ mode, initEditor }) {
     backHref: listBackUrl(),
   });
   if (!lock.ok) return;
+  logoLock = lock;
 
   editor = initEditor({
     getMode: () => mode,

@@ -64,7 +64,7 @@ test.describe("lista", () => {
 
     await page.locator("#tabLogoDraw").click();
     await expect(page).toHaveURL(/tab=draw/);
-    await expect(page.locator("#hint")).toContainText(/rysować/i);
+    await expect(page.locator("#hint")).toContainText(/rysuj/i);
     await expect(page.locator(".slot-logo-draw .tab-corner-left")).toBeVisible();
     await expect(page.locator(".slot-logo-draw .tab-corner-right")).toBeVisible();
 
@@ -718,7 +718,8 @@ test.describe("tryb Obraz", () => {
     const name = L.uniq("image");
     await L.createNew(page, "Image", name);
     expect(await L.save(page)).toMatch(/Najpierw/);
-    expect(await L.readLogoByName(page, name)).toBeNull();
+    // Wiersz powstaje od razu przy „Nowe logo”, ale bez obrazu nic się nie zapisało.
+    expect((await L.readLogoByName(page, name)).payload.source.imageUrl).toBeFalsy();
 
     await page.setInputFiles("#imgFile", DEMO_IMAGE);
     await expect(page.locator("#cropFrame")).toBeVisible();
@@ -1007,6 +1008,9 @@ test.describe("zgodność ze starymi danymi", () => {
     };
 
     for (const d of demos) {
+      // Adres obrazu demo jak po migracji 308 (/logo-editor/assets -> /logo/assets),
+      // także zanim migracja trafi do bazy (testy na branchu przed wdrożeniem).
+      d.payload = JSON.parse(JSON.stringify(d.payload).replaceAll("/logo-editor/assets/demo-image.png", "/logo/assets/demo-image.png"));
       const id = await L.insertLogo(page, { name: L.uniq(`demo-${d.type}`), type: d.type, payload: d.payload });
       const first = await openAndSave(id);
       const src = d.payload.source || {};
