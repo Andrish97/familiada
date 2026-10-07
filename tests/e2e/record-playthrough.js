@@ -1558,6 +1558,8 @@ async function scenarioRecentFixes(pages) {
   const { control, display } = pages;
 
   await expect(control.locator(".stepTitle")).toHaveText("Urządzenia");
+  for (const kind of ["display", "host", "buzzer"]) await waitForDotStatus(control, kind, "ok");
+  await expect(control.locator("#deviceLostOverlay")).toBeHidden();
   await control.waitForTimeout(1200); // przypięta podpowiedź pozostaje widoczna na ekranie urządzeń
   // Kody urządzeń są dostępne również z klikalnych statusów w górnym pasku.
   await control.locator("#dotHostRow").click();

@@ -214,3 +214,7 @@ przypadek. Łącznie 25 wybranych testów lokalnych.
   rund, również wtedy, gdy operator zapisze ustawienia bez otwierania zakładki
   Rundy. Po zamknięciu ustawień Control ponownie buduje pulę przedmeczową z
   aktualnej konfiguracji, więc Podsumowanie pokazuje pełną liczbę pytań rund.
+- Modal o utracie połączenia pojawia się raz na cały epizod rozłączenia.
+  Ponowne podłączanie urządzeń po kolei aktualizuje szczegóły zdarzenia, ale
+  nie zasłania ponownie Control ani nie blokuje statusów urządzeń w górnym
+  pasku. Po odzyskaniu wszystkich połączeń kolejny epizod może pokazać modal.

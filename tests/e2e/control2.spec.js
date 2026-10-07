@@ -2541,8 +2541,10 @@ test("control2: zerwanie połączenia wszystkich trzech urządzeń naraz i ponow
 
     // ===== Ponowne podłączenie po kolei, przez modal =====
     displayPage = await reconnectViaModal(browser, page, "display", contexts, errors);
+    await expect(page.locator("#deviceLostOverlay")).toBeHidden();
     await expect(answerTile(page, 2)).toBeDisabled();
     await reconnectViaModal(browser, page, "host", contexts, errors);
+    await expect(page.locator("#deviceLostOverlay")).toBeHidden();
     await expect(answerTile(page, 2)).toBeDisabled();
     buzzerPage = await reconnectViaModal(browser, page, "buzzer", contexts, errors);
     await expect(answerTile(page, 2)).toBeEnabled({ timeout: 10000 });

@@ -621,10 +621,16 @@ async function main() {
         const disconnectState = JSON.stringify(flags);
         if ((missing.some((kind) => previous[kind]) || disconnectEpisode) && disconnectState !== lastDisconnectState) {
           void sessionTelemetry.report({ kind: "disconnect", devices: missing, message: presenceMessage });
-          disconnectEpisode = true;
           lastDisconnectState = disconnectState;
-          overlay?.classList.remove("hidden");
-          if (!Object.values(previous).some(Boolean)) document.getElementById("deviceLostClose")?.focus();
+          // Jeden modal na całe zdarzenie utraty połączenia. Przywracanie
+          // urządzeń po kolei zmienia listę brakujących, ale nie powinno
+          // ponownie zasłaniać Control ani blokować kliknięcia kolejnego
+          // statusu w górnym pasku.
+          if (!disconnectEpisode && missing.some((kind) => previous[kind])) {
+            disconnectEpisode = true;
+            overlay?.classList.remove("hidden");
+            document.getElementById("deviceLostClose")?.focus();
+          }
         }
       }
       renderCurrent();
