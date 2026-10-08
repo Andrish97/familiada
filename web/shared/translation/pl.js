@@ -786,11 +786,8 @@ const pl = {
       closeAndNormalize: "Zamknij i przelicz",
       noPoll: "Brak ankiety",
       openPoll: "Uruchomić ankietę",
-      openReady: "Gotowe do uruchomienia.",
       closePoll: "Zamknąć ankietę",
-      closeReady: "Możesz zamknąć ankietę.",
       reopenPoll: "Uruchomić ponownie",
-      reopenHint: "Otworzy nową sesję i usunie poprzednie dane ankietowe.",
       unknownStatus: "Nieznany status.",
     },
     results: {
@@ -2636,6 +2633,7 @@ const pl = {
     gameFallback: "Bez nazwy",
   },
   editor: {
+    pageTitlePrefix: "Edytor gry — ",
     title: "Familiada — edytor gry",
     backToGames: "Moje gry",
     backToQuestions: "Wstecz",
@@ -3608,7 +3606,7 @@ const pl = {
     editor: {
       nameLabel: "Nazwa",
       namePlaceholder: "Np. Moje logo",
-      editLogoPrefix: "Edycja logo — ",
+      editLogoPrefix: "Edytor logo — ",
     },
     modes: {
       text: "Tekst",
@@ -4697,6 +4695,7 @@ const pl = {
     selfXssWarning: "Używanie tej konsoli może pozwolić atakującym na podszywanie się pod Ciebie i kradzież informacji przy użyciu ataku zwanego Self-XSS. Nie wprowadzaj ani nie wklejaj kodu, którego nie rozumiesz.",
   },
   gameSettings: {
+    pageTitle: "Ustawienia gry",
     title: "Familiada — ustawienia gry",
     back: "Moje gry",
     saveAll: "Zapisz wszystko",

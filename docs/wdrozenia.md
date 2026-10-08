@@ -36,9 +36,9 @@ utracie kontekstu wystarczy przeczytać ten plik i wskazaną sekcję źródła.
 
 | # | ID | Etap | Źródło | Status |
 |---|---|---|---|---|
-| 1 | E0 | Zielone e2e: `mobile-sheet-modals` (szerokość arkusza = szerokość treści, margines 15 px zostaje; tekst przycisku „Wstecz” z ikoną), przekroczenia czasu w eksploratorze bazy | — | do zrobienia |
-| 2 | E3 | Drobne błędy logowania (`requireAuth` w control/account, domyślny argument, `withLangParam`) | nawigacja 6.1 | do zrobienia |
-| 3 | E10 | Wygląd: listy (pasek, karty, kafle, dolny pasek), edytory (tytuł i nazwa w topbarze, jedno pole nazwy, logo bez wskaźnika zapisu), ankieta bez podpowiedzi pod tytułem | ujednolicenie-wygladu.md | do zrobienia |
+| 1 | E0 | Zielone e2e: `mobile-sheet-modals` (szerokość arkusza = szerokość treści, margines 15 px zostaje; tekst przycisku „Wstecz” z ikoną), przekroczenia czasu w eksploratorze bazy | — | zrobione |
+| 2 | E3 | Drobne błędy logowania (`requireAuth` w control/account, domyślny argument, `withLangParam`) | nawigacja 6.1 | zrobione |
+| 3 | E10 | Wygląd: listy (pasek, karty, kafle, dolny pasek), edytory (tytuł i nazwa w topbarze, jedno pole nazwy, logo bez wskaźnika zapisu), ankieta bez podpowiedzi pod tytułem | ujednolicenie-wygladu.md | w toku |
 | 4 | E11 | Ankiety: luka bezpieczeństwa, klucz na uruchomienie, Przerwij, zaproszenia (3 stany), limity maili, strona ankiety (karty Udostępnianie · Wyniki), hub znika, Subskrypcje + Zadania, podgląd Gra · Ankieta, blokady stanu na stronach gry | ankiety-refaktor.md, maile-granice.md, blokady „Blokady stanu” | do zrobienia |
 | 5 | E12 | Usuwanie gry i konta | usuwanie-danych.md | do zrobienia |
 | 6 | E2 | Blokady wg mapy docelowej (współdzielone, `logos`, `base:B`, odnowienie `locked`, TTL, DB `*_checked`) + blokady stanu i akcji wg kryteriów gier (tabela akcja → warunki) | blokady 6 | do zrobienia |
@@ -85,3 +85,6 @@ bo `PAGES` deklaruje blokady; adresy po mapie stron; instrukcja na końcu.
 |---|---|---|---|
 | 2026-10-07 | E1 | `8b11046`, `be7226a`, `1f7f135` | branch 37667707570: logo w `cross-resource-locks` ok; `mobile-sheet-modals` logo — tylko szerokość arkusza (E0) |
 | 2026-10-07 | E0 (w toku, wstrzymane) | branch `25b92b3` (testy: szerokość arkusza = treść, „Wstecz” z ikoną) | branch 37702991063: 9 ok, 8 źle — bazy (udostępnianie), eksplorator (tagi, eksport, pytanie), gry (eksport do bazy), hub (2, i tak znika w E11), logo import (`#btnLogoImportCancel` niewidoczny — prawdopodobnie zmiana „Modal: wspólny przewijany obszar” na `main`). Następny krok: przeczytać szczegóły błędów z logu przebiegu |
+| 2026-10-08 | E0 | `25b92b3`, `2be0fe7` (arkusze zamykane „Wstecz” w topbarze — „✕” w nagłówku ukryty na telefonie) | branch 37745173288: `mobile-sheet-modals` zielone |
+| 2026-10-08 | E3 | `b0df9fb` (requireAuth `/login/`, Konto bez `setup=username`, `withLangParam` w powrotach i nakładce blokady) | unit 300/300; na `main` w `4fea5a5` |
+| 2026-10-08 | E10 (część) | `d00e083` stany kafli gier (OTWARTA/ZAMKNIĘTA, GOTOWA) — na `main` | unit 300/300 |

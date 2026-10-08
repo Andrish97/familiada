@@ -780,11 +780,8 @@ const en = {
       closeAndNormalize: "Close and normalize",
       noPoll: "No poll",
       openPoll: "Start poll",
-      openReady: "Ready to start.",
       closePoll: "Close poll",
-      closeReady: "You can close the poll.",
       reopenPoll: "Reopen poll",
-      reopenHint: "Will start a new session and delete previous poll data.",
       unknownStatus: "Unknown status.",
     },
     results: {
@@ -2747,6 +2744,7 @@ const en = {
     gameFallback: "Untitled",
   },
   editor: {
+    pageTitlePrefix: "Game editor — ",
     title: "Familiada — game editor",
     backToGames: "My games",
     backToQuestions: "Back",
@@ -3719,7 +3717,7 @@ const en = {
     editor: {
       nameLabel: "Name",
       namePlaceholder: "e.g. My logo",
-      editLogoPrefix: "Editing logo — ",
+      editLogoPrefix: "Logo editor — ",
     },
     modes: {
       text: "Text",
@@ -4800,6 +4798,7 @@ const en = {
     selfXssWarning: "Using this console may allow attackers to impersonate you and steal your information using an attack called Self-XSS. Do not enter or paste code that you do not understand.",
   },
   gameSettings: {
+    pageTitle: "Game settings",
     title: "Familiada — game settings",
     back: "My games",
     saveAll: "Save all",

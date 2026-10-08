@@ -41,7 +41,12 @@
       <div class="brand">FAMILIADA</div>
       <button class="btn" id="btnBack" type="button" data-i18n="polls.backToGames" data-i18n-icon="arrow-left">Moje gry</button>
     </div>
-    <div class="topbar-section topbar-section-2"></div>
+    <div class="topbar-section topbar-section-2">
+      <div class="topbar-title">
+        <div class="title" data-i18n="polls.pageTitle">Ankieta</div>
+        <div class="subtitle" id="pollGameName"></div>
+      </div>
+    </div>
     <div class="topbar-section topbar-section-3">
       <button class="btn" id="btnManual" type="button" data-i18n-aria-label="common.manualLabel" data-i18n-title="common.manualLabel" aria-label="Wskazówki" title="Wskazówki"><i class="ico" data-icon="info"></i></button>
     </div>
@@ -53,11 +58,6 @@
 
   <main class="wrap">
     <div class="rowTop">
-      <div>
-        <div class="title" data-i18n="polls.pageTitle">Ankieta</div>
-        <div class="hint" id="hintTop"></div>
-      </div>
-
       <div class="statusBox">
         <div class="chip" id="chipType"></div>
         <div class="chip status" id="chipStatus"></div>
@@ -87,6 +87,8 @@
           <span data-i18n="polls.actions.refresh" data-i18n-icon="refresh">Odśwież wyniki</span>
         </button>
       </div>
+      <!-- tylko powód, dla którego przycisku nie da się użyć (bez podpowiedzi „gotowe / możesz”) -->
+      <div class="hint" id="hintTop"></div>
 
       <!-- panel dla poll_text: edycja/łączenie/usuwanie + finalizacja -->
       <div class="card" id="textCloseCard" style="display:none; margin-top:12px;">

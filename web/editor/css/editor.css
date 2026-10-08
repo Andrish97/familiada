@@ -22,27 +22,6 @@ body.editor-body .wrap {
     flex-wrap: wrap
 }
 
-.title {
-    font-weight: 1000;
-    font-size: 18px;
-    margin: 10px 0;
-    letter-spacing: .06em
-}
-
-.namebar {
-    display: flex;
-    gap: 10px;
-    align-items: center;
-    width: 100%
-}
-
-
-#gameName {
-    flex: 1;
-    max-width: 680px;
-    font-size: 16px;
-    font-weight: 900
-}
 
 .layout {
     display: grid;
@@ -80,6 +59,13 @@ body.editor-body .wrap {
     display: flex;
     justify-content: space-between;
     align-items: center
+}
+
+.panelHint {
+    font-size: 12px;
+    opacity: .75;
+    text-align: right;
+    min-width: 0
 }
 
 .panelTitle {
@@ -459,7 +445,7 @@ body.editor-body .wrap {
         display: none;
     }
 
-    body.editor-body.mobile-editing #gameName {
+    body.editor-body.mobile-editing .rowTop .name-field {
         display: none;
     }
 
@@ -491,9 +477,7 @@ body.editor-body .wrap {
         overflow: auto;
     }
 
-    body.editor-body.mobile-editing .rowTop > div:first-child {
-        display: none;
-    }
+
 }
 
 @media (max-height:720px) and (orientation: landscape) {

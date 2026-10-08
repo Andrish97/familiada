@@ -1968,3 +1968,54 @@ body{
   font-size:.85rem;
   opacity:.7;
 }
+
+/* ===== Edytory: nazwa strony w topbarze (sekcja 2) =====
+   Tytuł = jaki to edytor, wielkimi literami; podtytuł = nazwa zasobu tylko
+   tam, gdzie strona nie ma pola nazwy (docs/ujednolicenie-wygladu.md, 4).
+   Na telefonie sekcja 2 topbara jest ukryta (topbar-layout-4). */
+.topbar-title{
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.topbar-title .title{
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.topbar-title .subtitle{
+  opacity: .75;
+  font-size: 12px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ===== Pole nazwy edytora — jedno dla edytora gier i edytorów logo ===== */
+.name-field{
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.name-field-label{
+  font-weight: 900;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  font-size: 12px;
+  opacity: .88;
+  flex: 0 0 auto;
+}
+.name-field .inp{
+  flex: 1;
+  min-width: 0;
+  max-width: 680px;
+  font-size: 16px;
+  font-weight: 900;
+}

@@ -917,6 +917,8 @@ async function refresh() {
   setChips(game);
 
   if (gName) gName.textContent = game.name || t("polls.defaultName");
+  const pollGameName = $("pollGameName");
+  if (pollGameName) pollGameName.textContent = game.name || t("polls.defaultName");
 
   if (gMeta) {
     if (game.type === TYPES.POLL_TEXT) {
@@ -985,7 +987,7 @@ async function refresh() {
     setActionButton(
       t('polls.actions.openPoll'),
       !chk.ok,
-      chk.ok ? t('polls.actions.openReady') : chk.reason
+      chk.ok ? "" : chk.reason
     );
     return;
   }
@@ -994,7 +996,7 @@ async function refresh() {
     setActionButton(
       t('polls.actions.closePoll'),
       !chk.ok,
-      chk.ok ? t('polls.actions.closeReady') : chk.reason
+      chk.ok ? "" : chk.reason
     );
     return;
   }
@@ -1003,7 +1005,7 @@ async function refresh() {
     setActionButton(
       t('polls.actions.reopenPoll'),
       !chk.ok,
-      chk.ok ? t('polls.actions.reopenHint') : chk.reason
+      chk.ok ? "" : chk.reason
     );
     return;
   }

@@ -211,17 +211,6 @@
 }
 
 /* ===== TOPBAR EXTRAS ===== */
-.gs-game-title {
-  font-weight: 700;
-  font-size: .88rem;
-  opacity: .7;
-  max-width: 280px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-
 /* ===== CATEGORY LAYOUT ===== */
 .gs-cat-title {
   font-size: 1rem;

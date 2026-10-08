@@ -42,7 +42,9 @@
       <div class="brand">FAMILIADA</div>
       <button class="btn" id="btnBack" type="button" data-i18n="editor.backToGames" data-i18n-icon="arrow-left">Moje gry</button>
     </div>
-    <div class="topbar-section topbar-section-2"></div>
+    <div class="topbar-section topbar-section-2">
+      <div class="topbar-title"><div class="title" id="pageTitle" data-i18n="editor.pageTitle">Edytor</div></div>
+    </div>
     <div class="topbar-section topbar-section-3">
       <button class="btn" id="btnManual" type="button" data-i18n-aria-label="common.manualLabel" data-i18n-title="common.manualLabel" aria-label="Wskazówki" title="Wskazówki"><i class="ico" data-icon="info"></i></button>
     </div>
@@ -53,13 +55,10 @@
   </header>
 
   <main class="wrap">
+    <!-- pole nazwy (wspólne z edytorami logo: .name-field w base.css) -->
     <div class="rowTop">
-      <div>
-        <div class="title" id="pageTitle" data-i18n="editor.pageTitle">Edytor</div>
-        <div class="hint" id="hintTop"></div>
-      </div>
-
-      <div class="namebar">
+      <div class="name-field">
+        <label class="name-field-label" for="gameName" data-i18n="logoEditor.editor.nameLabel">Nazwa</label>
         <input id="gameName" class="inp" placeholder="Nazwa gry" data-i18n-placeholder="editor.gameNamePlaceholder"/>
       </div>
     </div>
@@ -68,6 +67,7 @@
       <aside class="left">
         <div class="panelHead">
           <div class="panelTitle" data-i18n="editor.questionsTitle">Pytania</div>
+          <div class="panelHint" id="hintTop"></div>
         </div>
 
         <div class="listShell" data-skel-step>

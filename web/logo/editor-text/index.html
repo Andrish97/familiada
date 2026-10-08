@@ -44,10 +44,12 @@
 <body class="games-body logo-body is-editor skel-body">
   <header class="topbar topbar-layout-4">
     <div class="topbar-section topbar-section-1">
+      <div class="brand">FAMILIADA</div>
       <button class="btn" id="btnBack" type="button" data-i18n="logoEditor.topbar.backToLogos" data-i18n-icon="arrow-left">Moje logo</button>
-      <div class="brand" id="brandTitle"></div>
     </div>
-    <div class="topbar-section topbar-section-2"></div>
+    <div class="topbar-section topbar-section-2">
+      <div class="topbar-title"><div class="title" id="brandTitle"></div></div>
+    </div>
     <div class="topbar-section topbar-section-3">
       <button class="btn" id="btnManual" type="button" data-i18n-aria-label="common.manualLabel" data-i18n-title="common.manualLabel" aria-label="Wskazówki" title="Wskazówki"><i class="ico" data-icon="info"></i></button>
     </div>
@@ -59,15 +61,13 @@
 
   <main class="wrap logoWrap">
     <section class="editorShell" id="editorShell" data-mode="TEXT">
-      <!-- cienki pasek: nazwa + stan zapisu -->
-      <div class="editorLine">
-        <div class="editorLineLeft">
-          <span class="etlLbl" data-i18n="logoEditor.editor.nameLabel">Nazwa</span>
-          <input class="inp etlName" id="logoName" placeholder="Np. Moje logo" maxlength="80" data-i18n-placeholder="logoEditor.editor.namePlaceholder" disabled/>
-        </div>
-        <div class="editorLineRight">
-          <span class="saveStatus" id="saveStatus" data-state="idle" role="status" aria-live="polite"></span>
-        </div>
+      <!-- pole nazwy (wspólne z edytorem gier: .name-field w base.css);
+           #saveStatus ukryty — tylko punkt zaczepienia testów, bez informacji
+           o zapisie na stronie -->
+      <div class="name-field">
+        <label class="name-field-label" for="logoName" data-i18n="logoEditor.editor.nameLabel">Nazwa</label>
+        <input class="inp" id="logoName" placeholder="Np. Moje logo" maxlength="80" data-i18n-placeholder="logoEditor.editor.namePlaceholder" disabled/>
+        <span id="saveStatus" data-state="idle" hidden></span>
       </div>
 
       <div class="card games-card editorCard">

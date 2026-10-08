@@ -164,49 +164,6 @@
   gap: 10px;
 }
 
-/* cienki pasek: nazwa + zapisz */
-.editorLine{
-  display:flex;
-  align-items:center;
-  gap: 10px;
-  padding: 10px 12px;
-  border-radius: 16px;
-  border: 1px solid var(--bd-weak);
-  background: var(--bg-weak);
-}
-.editorLineLeft{
-  display:flex;
-  align-items:center;
-  gap: 10px;
-  flex: 1;
-  min-width: 0;
-}
-.etlLbl{
-  font-weight: 900;
-  letter-spacing: .06em;
-  text-transform: uppercase;
-  font-size: 12px;
-  opacity: .88;
-}
-.etlName{ flex: 1; min-width: 0; }
-
-.editorLineRight{ display:flex; gap: 10px; align-items:center; }
-/* Stan autozapisu (w miejscu dawnego „Zapisz”): idle / dirty / saving /
-   saved / invalid (nie da się zapisać — powód) / error (ponawiam). */
-.saveStatus{
-  font-size: 12px;
-  opacity: .85;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 46vw;
-}
-.saveStatus[data-state="invalid"],
-.saveStatus[data-state="error"]{
-  color: #fca5a5;
-  opacity: 1;
-}
-
 /* karta edytora —
    .card.games-card (specificity 0,2,0) ma overflow:hidden, więc
    musimy bić go selektorem o tej samej lub wyższej specyficzności */
@@ -1266,31 +1223,3 @@ body.games-body.logo-body > main.logoWrap{
   border-radius: 6px;
 }
 
-/* Tryb edycji: w miejscu marki „FAMILIADA” jest tytuł edytora („Nowe logo —
-   Obraz”). To nagłówek, nie marka — biały, bez wersalików i szerokich
-   odstępów marki — i ma być widoczny także na wąskim ekranie (tam CSS
-   topbara chowa markę). Wysoka specyficzność (id) celowo wygrywa z tymi
-   regułami. */
-.logo-body.is-editor .topbar .topbar-section-1 #brandTitle{
-  display: flex;
-  align-items: baseline;
-  gap: .35em;                 /* flex zjadał spację po „—” */
-  min-width: 0;
-  color: #fff;
-  font-size: 17px;
-  font-weight: 800;
-  letter-spacing: .01em;
-  text-transform: none;
-  white-space: nowrap;
-  overflow: hidden;
-}
-.logo-body.is-editor #brandTitle .bMain{
-  flex-shrink: 0;
-}
-.logo-body.is-editor #brandTitle .bMode{
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  color: rgba(255,255,255,.62);
-  font-weight: 700;
-}

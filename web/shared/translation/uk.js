@@ -775,11 +775,8 @@ const uk = {
       closeAndNormalize: "Закрити й нормалізувати",
       noPoll: "Немає опитування",
       openPoll: "Запустити опитування",
-      openReady: "Готово до запуску.",
       closePoll: "Закрити опитування",
-      closeReady: "Можна закрити опитування.",
       reopenPoll: "Запустити знову",
-      reopenHint: "Створить нову сесію і видалить попередні дані.",
       unknownStatus: "Невідомий статус.",
     },
     results: {
@@ -2734,6 +2731,7 @@ const uk = {
     gameFallback: "Без назви",
   },
   editor: {
+    pageTitlePrefix: "Редактор гри — ",
     title: "Familiada — редактор гри",
     backToGames: "Мої ігри",
     backToQuestions: "Назад",
@@ -3706,7 +3704,7 @@ const uk = {
     editor: {
       nameLabel: "Назва",
       namePlaceholder: "Напр. Мій логотип",
-      editLogoPrefix: "Редагування логотипу — ",
+      editLogoPrefix: "Редактор логотипу — ",
     },
     modes: {
       text: "Текст",
@@ -4789,6 +4787,7 @@ const uk = {
     selfXssWarning: "Використання цієї консолі може дозволити зловмисникам видавати себе за тебе та красти твою інформацію за допомогою атаки, яка називається Self-XSS. Не вводь і не вставляй код, якого не розумієш.",
   },
   gameSettings: {
+    pageTitle: "Налаштування гри",
     title: "Familiada — налаштування гри",
     back: "Мої ігри",
     saveAll: "Зберегти все",

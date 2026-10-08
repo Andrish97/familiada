@@ -7,7 +7,7 @@
 // Autozapis: każda zmiana -> zapis po krótkiej przerwie (DEBOUNCE_MS);
 // czynność w toku (pisanie napisu na scenie, przeciągany kształt, wczytywany
 // obraz) -> editor.isInteracting() i zapis czeka. Wyjście („Wstecz”, „?”,
-// schowanie karty) -> zapis od razu. Stan widać w #saveStatus.
+// schowanie karty) -> zapis od razu. Bez informacji o zapisie na stronie.
 //
 // Blokady zasobów (resource-lock.js), jak przy edycji gry:
 //   - to logo w innej karcie -> guardResourceLock: komunikat, wejście samo,
@@ -84,19 +84,11 @@ export async function bootEditorPage({ mode, initEditor }) {
     statusText = text;
     renderStatus();
   }
+  // Bez żadnej informacji o zapisie na stronie (decyzja: docs/ujednolicenie-
+  // wygladu.md, sekcja 4). Stan zostaje tylko jako data-state ukrytego
+  // #saveStatus — punkt zaczepienia testów.
   function renderStatus() {
-    if (!el.status) return;
-    el.status.dataset.state = statusState;
-    const texts = {
-      idle: t("logoEditor.status.autosave"),
-      dirty: t("logoEditor.status.unsaved"),
-      saving: t("logoEditor.status.saving"),
-      saved: t("logoEditor.status.saved"),
-      invalid: t("logoEditor.status.notSaved", { reason: statusText }),
-      error: statusText,
-    };
-    el.status.textContent = texts[statusState] ?? "";
-    el.status.title = el.status.textContent;
+    if (el.status) el.status.dataset.state = statusState;
   }
 
   function busyMessage(reason) {
@@ -207,11 +199,9 @@ export async function bootEditorPage({ mode, initEditor }) {
   }
 
   /**
-   * Wyjście ze strony: zapis od razu. Stanu nie do zapisania (invalid) nie
-   * trzymamy -- w bazie zostaje ostatni poprawny. Błąd zapisu (sieć, pula
-   * zajęta): pierwszy klik zostaje na stronie z komunikatem, drugi wychodzi.
+   * Wyjście ze strony: próba zapisu od razu, potem wyjście — bez komunikatów
+   * (stanu nie do zapisania nie trzymamy; w bazie zostaje ostatni zapis).
    */
-  let leaveFailed = false;
   async function go(href) {
     // Zwolnienie blokady PRZED nawigacją (patrz release() w resource-lock.js).
     await logoLock?.release?.().catch(() => {});
@@ -219,9 +209,9 @@ export async function bootEditorPage({ mode, initEditor }) {
   }
   async function leave(href) {
     if (!ready) { await go(href); return; }
-    const done = await save({ force: true });
-    if (done || statusState === "invalid" || leaveFailed) { ready = false; await go(href); return; }
-    leaveFailed = true;
+    await save({ force: true }).catch(() => {});
+    ready = false;
+    await go(href);
   }
 
   /* ---------- podgląd ---------- */
@@ -249,14 +239,7 @@ export async function bootEditorPage({ mode, initEditor }) {
   }
 
   function renderHeader() {
-    el.brandTitle.innerHTML = "";
-    const main = document.createElement("span");
-    main.className = "bMain";
-    main.textContent = t("logoEditor.editor.editLogoPrefix");
-    const sub = document.createElement("span");
-    sub.className = "bMode";
-    sub.textContent = modeLabel();
-    el.brandTitle.append(main, sub);
+    el.brandTitle.textContent = `${t("logoEditor.editor.editLogoPrefix")}${modeLabel()}`;
   }
 
   /** Strona nie może edytować -- komunikat z jedynym wyjściem: lista logo. */

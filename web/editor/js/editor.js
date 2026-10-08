@@ -393,7 +393,7 @@ async function boot() {
   /* ---------- header ---------- */
   function renderHeader() {
     cfg = cfgFromGameType(game.type);
-    $("pageTitle").textContent = cfg.title;
+    $("pageTitle").textContent = `${t("editor.pageTitlePrefix")}${cfg.title}`;
     $("hintTop").textContent = cfg.hintTop;
     $("hintBottom").textContent = cfg.hintBottom;
     document.body.classList.toggle("only-questions", !cfg.allowAnswers);

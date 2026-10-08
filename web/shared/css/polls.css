@@ -93,13 +93,6 @@ body.polls-body {
     color: #fff
 }
 
-.title {
-    font-weight: 1000;
-    font-size: 18px;
-    margin: 10px 0 6px;
-    letter-spacing: .06em
-}
-
 .rowTop,.statusBox {
     display: flex;
     flex-wrap: wrap;
