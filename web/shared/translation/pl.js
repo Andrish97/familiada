@@ -115,20 +115,32 @@ const pl = {
     // Wspólny komunikat dla gry — edytor, ustawienia (i docelowo ankieta/
     // control) wzajemnie się wykluczają dla tej samej gry, więc komunikat
     // rozróżnia tylko TYP zasobu, nie która konkretnie strona trzyma blokadę.
-    gameMessage: "Ta gra jest właśnie używana w innej karcie lub przez inne urządzenie.",
+    gameMessage: "Ta gra jest otwarta gdzie indziej.",
     logoMessage: "To logo jest właśnie edytowane w innej karcie lub przez inne urządzenie.",
     // Zgłoszone: w Control/ustawieniach gry operator NIE wie, które
     // konkretnie logo jest zablokowane (gra może korzystać z dowolnego
     // logo z puli) — w odróżnieniu od logoMessage (edytor logo, gdzie
     // zawsze chodzi o jedno, wprost otwarte logo), ten komunikat celowo
     // NIE sugeruje jednego, konkretnego logo.
-    logoInUseMessage: "Loga są właśnie edytowane lub zajęte w innym miejscu.",
     baseItemMessage: "Ten element bazy jest właśnie edytowany w innej karcie lub przez innego użytkownika.",
     // Cała pula logo użytkownika jest blokowana, gdy Control lub
     // game-settings.js mają aktywną którąkolwiek jego grę — niezależnie od
     // tego, czy TO logo jest przez nią referencowane.
     logoPoolBusyControl: "Nie możesz edytować ani usunąć logo, bo prowadzisz rozgrywkę.",
     logoPoolBusySettings: "Nie możesz edytować ani usunąć logo, bo zmieniasz ustawienia rozgrywki.",
+    lostTitle: "Utracono blokadę",
+    lostMessage: "W międzyczasie ten zasób przejęła inna karta (np. po uśpieniu komputera). Odśwież stronę, żeby wejść ponownie.",
+    // Gra otwarta (ustawienia / Control) zajmuje całą pulę logo; edycja któregokolwiek logo
+    // zatrzymuje wejście do Control i ustawień każdej gry.
+    logoEditBlocksControl: "Trwa edycja logo — zamknij edytor logo, żeby otworzyć rozgrywkę.",
+    logoEditBlocksSettings: "Trwa edycja logo — zamknij edytor logo, żeby otworzyć ustawienia.",
+    logoPoolBusyControlEntry: "Trwa rozgrywka.",
+    logoPoolBusySettingsEntry: "Otwarte ustawienia gry.",
+    logoPoolBusy: "Trwa rozgrywka albo otwarte ustawienia gry.",
+    baseOpenMessage: "Baza jest otwarta — zmiana całej bazy niemożliwa.",
+    baseChangingMessage: "Trwa zmiana całej bazy.",
+    baseAccessRevokedTitle: "Odebrano Ci dostęp",
+    baseAccessRevokedMessage: "Odebrano Ci dostęp do tej bazy.",
   },
   guestInfo: {
     title: "Konto gościa",

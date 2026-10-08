@@ -20,7 +20,7 @@ import { initTopbarAccountDropdown } from "../../shared/js/core/topbar-controlle
 import { isMobileDevice } from "../../shared/js/core/pwa.js?v=v2026-10-08T17384";
 import { isPhoneScreen } from "../../shared/js/core/device-guard.js?v=v2026-10-08T17384";
 import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-08T17384";
-import { isResourceBusy, findBusyContext } from "../../shared/js/core/resource-lock.js?v=v2026-10-08T17384";
+import { isResourceBusy, acquireResourceLock } from "../../shared/js/core/resource-lock.js?v=v2026-10-08T17384";
 import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-08T17384";
 import { icon } from "../../shared/js/core/icons.js?v=v2026-10-08T17384";
 
@@ -136,6 +136,14 @@ function makeUniqueName(baseName, excludeId = null) {
 function busyMessage(reason) {
   if (reason === "control") return t("resourceLock.logoPoolBusyControl");
   if (reason === "settings") return t("resourceLock.logoPoolBusySettings");
+  if (reason === "logo") return t("resourceLock.logoMessage");
+  return t("resourceLock.logoPoolBusy");
+}
+
+/** Komunikat dla odmowy zajęcia logo:L (odpowiedź acquire_edit_lock_mode). */
+function lockBusyMessage(res) {
+  if (res?.error === "gone") return t("resourceLock.goneMessage");
+  if (res?.blocker_type === "logos") return busyMessage(res.blocker_context);
   return t("resourceLock.logoMessage");
 }
 
@@ -341,7 +349,7 @@ async function removeLogo(logo, name) {
 /* =========================================================
    Modal nazwy: zmiana nazwy istniejącego / nazwa nowego logo
 ========================================================= */
-let nameModal = null; // { kind:"rename", logo } | { kind:"create", mode }
+let nameModal = null; // { kind:"rename", logo, lease } | { kind:"create", mode }
 
 function openNameModal(state) {
   nameModal = state;
@@ -354,9 +362,27 @@ function openNameModal(state) {
   setTimeout(() => el.renameInput.select(), 0);
 }
 
-const openRenameModal = (logo) => openNameModal({ kind: "rename", logo });
+// Okno zmiany nazwy trzyma logo:L wyłącznie do zamknięcia okna (docs/blokady-
+// zasobow.md, sekcja 6) -- w tym czasie nikt nie wejdzie w edycję tego logo,
+// a trzymana pula logo (Control / ustawienia gry) nie pozwoli otworzyć okna.
+async function openRenameModal(logo) {
+  let lease;
+  try {
+    lease = await acquireResourceLock({ resourceType: "logo", resourceId: logo.id, context: "logo-list" });
+  } catch (e) {
+    console.error(e);
+    void alertModal({ text: t("logoEditor.rename.failed") });
+    return;
+  }
+  if (!lease?.ok) {
+    void alertModal({ text: lockBusyMessage(lease) });
+    return;
+  }
+  openNameModal({ kind: "rename", logo, lease });
+}
 
 function closeNameModal() {
+  nameModal?.lease?.release?.();
   nameModal = null;
   closeOverlay(el.renameOverlay);
 }
@@ -378,10 +404,10 @@ async function confirmNameModal() {
   el.btnRenameOk.disabled = true;
   el.renameMsg.textContent = "";
   try {
-    // To konkretne logo może być właśnie edytowane w innej karcie -- wtedy
-    // zmiana nazwy stąd nadpisałaby jej zapis. (Zajętość całej puli sprawdza RPC.)
-    if (await isResourceBusy("logo", logo.id)) {
-      el.renameMsg.textContent = t("resourceLock.logoMessage");
+    // Blokada logo:L z otwarcia okna mogła zginąć (uśpiona karta) -- wtedy
+    // zapis stąd nadpisałby cudzą edycję. RPC i tak odmówi, ale mówimy wprost.
+    if (nameModal.lease && !nameModal.lease.ok) {
+      el.renameMsg.textContent = t("resourceLock.lostMessage");
       return;
     }
     if (name !== logo.name) await updateLogo(logo.id, { name: makeUniqueName(name, logo.id) });
@@ -414,10 +440,9 @@ async function createAndOpen(mode, name) {
   el.btnRenameOk.disabled = true;
   el.renameMsg.textContent = "";
   try {
-    // Pula logo zajęta (Control / ustawienia gry) -- edytor i tak by nic nie zapisał.
-    const busy = await findBusyContext("game", ["settings", "control"]).catch(() => null);
-    if (busy) {
-      el.renameMsg.textContent = busyMessage(busy);
+    // Pula logo trzymana (Control / ustawienia gry) -- edytor i tak by nic nie zapisał.
+    if (await isResourceBusy("logos", currentUser.id).catch(() => false)) {
+      el.renameMsg.textContent = t("resourceLock.logoPoolBusy");
       return;
     }
     let finalName = makeUniqueName(name);

@@ -10,6 +10,14 @@ Zmiana blokady w kodzie albo w bazie = zmiana tego pliku i testu
 Stan sprawdzony w kodzie 2026-10-07 (branch `ccr-4a2edd31-ekjnn8`,
 `supabase/schema.sql`).
 
+**Uwaga (E2, 2026-10-08):** sekcje 1–5 opisują stan **sprzed** wdrożenia
+modelu docelowego (migracja 313, `resource-lock.js`) — zostają jako historia
+i uzasadnienie. Obowiązuje sekcja 6 oraz „Kroki wdrożenia” (kroki 1–6
+wdrożone; 7 — mapa `PAGES` — jeszcze nie). Najważniejsze różnice: TTL
+**120 s** (nie 25 s), tryb `shared` / `exclusive` w `edit_locks`, zasób
+`logos`, `guardResourceLocks()`, brak `findBusyContext` i
+`guardResourceBusy`, reguły w bazie bez `holder_context`.
+
 ---
 
 ## 1. Mechanizm
@@ -247,22 +255,49 @@ nazwy / usunięcie odmawia, gdy zasób albo jego „rodzic” (`logos`,
 
 ### Kroki wdrożenia
 
-1. Migracja: trzymanie współdzielone (np. `edit_locks` z kluczem
-   (typ, id, karta) dla współdzielonych + kolumna `mode`), zasoby `logos`
-   (id = użytkownik) i `base:B`; reguła zgodności w `acquire_edit_lock`;
-   `update_logo_checked` / `delete_resource_checked` / nowe
-   `rename_resource_checked` i sprawdzenie w `market_remove_from_library`
-   po tej samej regule (udostępnianie bazy bez blokad); usunięcie
-   `holder_context` z reguł.
-2. `resource-lock.js`: `guardResourceLocks([...])` — strona trzyma kilka
-   zasobów (wyłącznie / współdzielenie), pierwsza przeszkoda = jej
-   komunikat, wejście samo po zwolnieniu; `findBusyContext` znika.
-3. Control i ustawienia gry: `game:G` + `logos`; bez `guardResourceBusy`.
-4. Edytor i lista logo: tylko `logo:L` (i rozpoznanie `logos`).
-5. Eksplorator bazy: `base:B` współdzielone, pełna blokada przy
-   `base:B` wyłącznym i komunikat przy odebranym dostępie; lista baz
-   (zmiana nazwy, usunięcie): `base:B` wyłącznie.
-6. Okna zmiany nazwy na listach trzymają zasób do zamknięcia okna.
+1. **Wdrożone (E2, migracja `2026-10-08_313_locks_shared_model.sql`).**
+   `edit_locks.mode` (`exclusive` | `shared`), klucz (typ, id, karta) +
+   częściowy indeks unikalny dla wyłącznych; zasób `logos` (id = użytkownik)
+   i `base:B` także współdzielone; jedna reguła zgodności w
+   `edit_lock_blockers()` (używana przez `acquire_edit_lock_mode`,
+   `update_logo_checked`, `delete_resource_checked`,
+   `rename_resource_checked`); stara `acquire_edit_lock(typ, id, karta,
+   kontekst)` działa dalej jako trzymanie wyłączne; TTL 120 s
+   (`edit_lock_ttl()`). Druga warstwa: zmiana nazwy gry / bazy / logo
+   (`rename_resource_checked`), zapis i usunięcie logo, usunięcie gry i bazy
+   odmawiają, gdy zasób albo jego „rodzic” jest trzymany przez **inną** kartę
+   (parametr `p_tab_id` — własna karta nie przeszkadza sama sobie).
+   `market_remove_from_library` idzie przez `delete_resource_checked` (312).
+   Reguły nie używają `holder_context` (kolumna zostaje: statystyki aktywności
+   i powód zajęcia puli logo w komunikatach). Test: `docs/sql/test-locks-313.sql`.
+   *Poza zakresem:* widok aktywności w statystykach (migracje 303 / 307) dalej
+   liczy blokady z progiem 25 s.
+2. **Wdrożone.** `resource-lock.js`: `guardResourceLocks([{ type, id, mode,
+   message }], opcje)` (wszystko albo nic, komunikat pierwszej przeszkody,
+   wejście samo po zwolnieniu); odnowienie obsługuje `locked` → pełny overlay
+   „Utracono blokadę” i odnawia od razu przy powrocie karty na wierzch;
+   `guardResourceLock` to skrót dla jednego zasobu; `findBusyContext` i
+   `guardResourceBusy` usunięte.
+3. **Wdrożone.** Control i ustawienia gry: `game:G` wyłącznie + `logos`
+   współdzielone (kolejność: gra, potem logo); komunikaty „Ta gra jest otwarta
+   gdzie indziej” / „Trwa edycja logo — zamknij edytor logo, żeby otworzyć
+   rozgrywkę / ustawienia”.
+4. **Wdrożone.** Edytor logo trzyma `logo:L` wyłącznie; wejście przy
+   trzymanym `logos` → „Trwa rozgrywka.” / „Otwarte ustawienia gry.” (powód z
+   `blocker_context` odpowiedzi bazy; bez kontekstu: „Trwa rozgrywka albo
+   otwarte ustawienia gry.”). Lista logo: nowe logo odmawia przy `logos`;
+   zmiana nazwy i usunięcie — przez bazę.
+5. **Wdrożone.** Eksplorator bazy trzyma `base:B` współdzielone (tylko rola
+   edytora / właściciela; czytelnik nic nie trzyma); wyłączne `base:B` →
+   pełna blokada „Trwa zmiana całej bazy”; `forbidden` → „Odebrano Ci dostęp do
+   tej bazy”. Lista baz: okno zmiany nazwy trzyma `base:B` wyłącznie, usunięcie
+   — na czas akcji. Udostępnianie bez blokad.
+6. **Wdrożone.** Okna zmiany nazwy na liście gier, logo i baz trzymają zasób
+   wyłącznie do zamknięcia okna (zajęty → alert, okno się nie otwiera).
 7. Pola `locks` w mapie stron; test porównujący mapę z wywołaniami
    blokad w kodzie; e2e blokad (`cross-resource-locks.spec.js`,
-   `logo-editor.spec.js`, bazy) na nową regułę i komunikaty.
+   `logo-editor.spec.js`, bazy) na nową regułę i komunikaty. *Częściowo:*
+   oczekiwania w `cross-resource-locks.spec.js`, `logo-editor.spec.js` i
+   `control2.spec.js` dopasowane do nowych komunikatów (bez uruchomienia);
+   brakuje nowych scenariuszy bazy (eksplorator ↔ zmiana nazwy / usunięcie
+   bazy) i mapy `PAGES`.

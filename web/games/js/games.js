@@ -30,7 +30,7 @@ import {
   rulesFromState,
 } from "../../shared/js/core/game-validate.js?v=v2026-10-08T17384";
 import { deleteGameSoundsFolder } from "../../shared/js/core/sfx-cloud.js?v=v2026-10-08T17384";
-import { isResourceBusy } from "../../shared/js/core/resource-lock.js?v=v2026-10-08T17384";
+import { isResourceBusy, acquireResourceLock, getTabId } from "../../shared/js/core/resource-lock.js?v=v2026-10-08T17384";
 import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-08T17384";
 import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-08T17384";
 
@@ -187,6 +187,7 @@ let marketGamesAll = [];
 let selectedMarketId = null;
 
 let renamingGameId = null;
+let renameLease = null; // blokada game:G trzymana, dopóki okno zmiany nazwy jest otwarte
 let nameMode = "rename"; // "rename" | "create"
 let creatingUiType = null;
 
@@ -356,8 +357,24 @@ function setNameMsg(t) {
   nameMsg.textContent = t || "";
 }
 
-function openRenameModal(game) {
+// Okno zmiany nazwy trzyma game:G wyłącznie do zamknięcia okna (docs/blokady-
+// zasobow.md, sekcja 6) -- w tym czasie nikt nie otworzy tej gry w edytorze,
+// ustawieniach, ankiecie ani Control.
+async function openRenameModal(game) {
   if (!game) return;
+  let lease;
+  try {
+    lease = await acquireResourceLock({ resourceType: "game", resourceId: game.id, context: "games-list" });
+  } catch (e) {
+    console.error("[games] rename lock error:", e);
+    void alertModal({ text: t("games.nameModal.failed") });
+    return;
+  }
+  if (!lease?.ok) {
+    void alertModal({ text: t(lease?.error === "gone" ? "resourceLock.goneMessage" : "resourceLock.gameMessage") });
+    return;
+  }
+  renameLease = lease;
   nameMode = "rename";
   renamingGameId = game.id;
   setNameMsg("");
@@ -382,6 +399,8 @@ function openCreateModal(uiType) {
 }
 
 function closeRenameModal() {
+  renameLease?.release?.();
+  renameLease = null;
   renamingGameId = null;
   creatingUiType = null;
   nameMode = "rename";
@@ -393,21 +412,25 @@ async function renameGame(gameId, newName) {
   const val = String(newName || "").trim();
   if (!val) return true;
 
-  // Zasób "game" jest busy, gdy editor.js/game-settings.js/polls.js mają
-  // ją otwartą gdzie indziej — patrz docs/plan-testy-i-poprawki.md,
-  // "Model: zasób ma stan busy/free". Rename nie otwiera własnej sesji
-  // (jednorazowa akcja), więc dostaje alert modal zamiast overlayu.
-  if (await isResourceBusy("game", gameId)) {
-    void alertModal({ text: t("resourceLock.gameMessage") });
+  // game:G trzyma okno zmiany nazwy (renameLease); baza i tak sprawdza
+  // blokady innych kart (rename_resource_checked, migracja 313) i odmawia.
+  if (renameLease && !renameLease.ok) {
+    void alertModal({ text: t("resourceLock.lostMessage") });
     return false;
   }
 
-  const { error } = await sb()
-    .from("games")
-    .update({ name: val })
-    .eq("id", gameId);
-
+  const { data, error } = await sb().rpc("rename_resource_checked", {
+    p_resource_type: "game",
+    p_resource_id: gameId,
+    p_name: val,
+    p_tab_id: getTabId(),
+  });
   if (error) throw error;
+  if (data?.in_use) {
+    void alertModal({ text: t("resourceLock.gameMessage") });
+    return false;
+  }
+  if (!data?.ok) throw new Error(data?.error || "rename failed");
   return true;
 }
 
@@ -795,6 +818,7 @@ async function deleteGame(game) {
   const { data: result, error } = await sb().rpc("delete_resource_checked", {
     p_resource_type: "game",
     p_resource_id: game.id,
+    p_tab_id: getTabId(),
   });
   if (error) {
     console.error("[games] delete error:", error);

@@ -2,6 +2,9 @@
 // Krok 2.5 audytu "wielu miejsc naraz" (docs/plan-testy-i-poprawki.md,
 // sekcja "Krzyżowe blokady między zasobami") — generyczny mechanizm
 // zamiast N osobnych łatek:
+// Model blokad po migracji 313 (docs/blokady-zasobow.md, sekcja 6): wyłączne
+// vs współdzielone (`logos` = pula logo, `base:B`), reguła zgodności w bazie,
+// TTL 120 s, okna zmiany nazwy trzymają zasób do zamknięcia okna.
 // 1) delete_resource_checked(resource_type, resource_id) — blokuje
 //    usunięcie gry/logo, gdy coś żywe (edit_locks / otwarta ankieta)
 //    aktualnie z niego korzysta.
@@ -515,12 +518,11 @@ test("games.js: zmiana nazwy gry zablokowana alert-modalem, gdy gra jest edytowa
     await expect(card).toBeVisible({ timeout: 15000 });
     await card.dblclick();
 
-    await expect(page.locator("#nameOverlay")).toBeVisible({ timeout: 5000 });
-    await page.locator("#nameInp").fill(`${originalName}-RENAMED`);
-    await page.locator("#btnNameOk").click();
-
+    // Okno zmiany nazwy trzyma game:G wyłącznie (migracja 313) -- zajęta gra
+    // nie pozwala nawet otworzyć okna: alert-modal zamiast #nameOverlay.
     await expect(page.locator(".uni-modal .mSub")).toBeVisible({ timeout: 10000 });
-    await expect(page.locator(".uni-modal .mSub")).toContainText("używana", { timeout: 5000 });
+    await expect(page.locator(".uni-modal .mSub")).toContainText("otwarta gdzie indziej", { timeout: 5000 });
+    await expect(page.locator("#nameOverlay")).toBeHidden();
     await page.locator(".uni-foot .btn.gold").click();
 
     const nameAfter = await page.evaluate(async (id) => {
@@ -581,7 +583,7 @@ test("games.js: reset gry do draftu po ankiecie zablokowany alert-modalem, gdy g
     await page.locator(".uni-foot .btn.gold").click();
 
     await expect(page.locator(".uni-modal .mSub")).toBeVisible({ timeout: 10000 });
-    await expect(page.locator(".uni-modal .mSub")).toContainText("używana", { timeout: 5000 });
+    await expect(page.locator(".uni-modal .mSub")).toContainText("otwarta gdzie indziej", { timeout: 5000 });
     await page.locator(".uni-foot .btn.gold").click();
 
     await expect(page).toHaveURL(/\/games/, { timeout: 5000 });
@@ -631,7 +633,7 @@ test("games.js: eksport gry zablokowany alert-modalem, gdy gra jest edytowana gd
     await page.locator("#btnExport").click();
 
     await expect(page.locator(".uni-modal .mSub")).toBeVisible({ timeout: 10000 });
-    await expect(page.locator(".uni-modal .mSub")).toContainText("używana", { timeout: 5000 });
+    await expect(page.locator(".uni-modal .mSub")).toContainText("otwarta gdzie indziej", { timeout: 5000 });
     // Eksport nigdy się nie zaczął -- overlay postępu eksportu nie mógł się pokazać.
     await expect(page.locator("#exportJsonOverlay")).toBeHidden();
     await page.locator(".uni-modal .uni-foot .btn.gold").click();
@@ -645,8 +647,8 @@ test("games.js: eksport gry zablokowany alert-modalem, gdy gra jest edytowana gd
 // Warstwa A: dwie karty nie mogą edytować TEGO SAMEGO logo naraz (ten sam
 // wzorzec co editor.js/game-settings.js dla gry -- lock trzymany przez
 // stronę edytora /logo/editor-*/?id= od wejścia do wyjścia).
-// Warstwa B: Control/game-settings.js blokują edycję/zmianę nazwy/usunięcie
-// WSZYSTKICH logo użytkownika, nawet gdy dany logo nie jest w ogóle
+// Warstwa B: Control/game-settings.js trzymają `logos` współdzielone i blokują
+// edycję/zmianę nazwy/usunięcie WSZYSTKICH logo użytkownika, nawet gdy dany logo nie jest w ogóle
 // referencowany przez żadną grę -- patrz docs/plan-testy-i-poprawki.md,
 // "Model: zasób ma stan busy/free".
 
@@ -740,18 +742,20 @@ test("edytor logo: edycja i zmiana nazwy DOWOLNEGO logo zablokowane, gdy game-se
     await page.waitForURL(/\/logo\/editor-text\/\?id=/, { timeout: 10000 });
 
     // Strona edytora pokazuje blokadę z jedynym wyjściem: powrót na listę.
-    await expect(page.locator("#resourceLockGuardMsg")).toContainText("ustawienia rozgrywki", { timeout: 10000 });
+    // Wejście do edytora: logo:L wyklucza się z `logos` trzymanym przez ustawienia gry.
+    await expect(page.locator("#resourceLockGuardMsg")).toContainText("ustawienia gry", { timeout: 10000 });
     await expect(page.locator("#logoName")).toBeDisabled();
     await page.locator("#resourceLockGuardBack").click();
     await page.waitForURL(/\/logo\/(\?|$)/, { timeout: 10000 });
     await page.waitForLoadState("networkidle");
 
     await expect(tile).toBeVisible({ timeout: 10000 });
+    // Okno zmiany nazwy trzyma logo:L wyłącznie -- przy trzymanym `logos`
+    // (ustawienia gry) okno się nie otwiera, jest alert-modal z powodem.
     await tile.dblclick();
-    await expect(page.locator("#renameOverlay")).toBeVisible({ timeout: 5000 });
-    await page.locator("#renameInput").fill(`${logoName}-RENAMED`);
-    await page.locator("#btnRenameOk").click();
-    await expect(page.locator("#renameMsg")).toContainText("ustawienia rozgrywki", { timeout: 5000 });
+    await expect(page.locator(".uni-modal .mSub")).toContainText("ustawienia rozgrywki", { timeout: 5000 });
+    await expect(page.locator("#renameOverlay")).toBeHidden();
+    await page.locator(".uni-modal .uni-foot .btn.gold").click();
 
     const nameAfter = await page.evaluate(async (id) => {
       const { data } = await window.__sbClient.from("user_logos").select("name").eq("id", id).single();

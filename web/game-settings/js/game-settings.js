@@ -22,7 +22,7 @@ import {
   uploadGameSound, deleteGameSound, deleteAllGameSounds,
 } from "../../shared/js/core/sfx-cloud.js?v=v2026-10-08T17384";
 import { guardDesktopOnly } from "../../shared/js/core/device-guard.js?v=v2026-10-08T17384";
-import { guardResourceLock, guardResourceBusy } from "../../shared/js/core/resource-lock.js?v=v2026-10-08T17384";
+import { guardResourceLocks } from "../../shared/js/core/resource-lock.js?v=v2026-10-08T17384";
 import { updateChecked, ROW_GONE } from "../../shared/js/core/db-guard.js?v=v2026-10-08T17384";
 import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-08T17384";
 
@@ -125,7 +125,7 @@ const _isModal = document.documentElement.classList.contains("gs-modal-mode");
 // Drawer sidebar (☰) w trybie modal -- czysto UI (żadna zależność od
 // auth/game/locków), więc wpięte SYNCHRONICZNIE tu, na poziomie modułu, a
 // NIE w głównej async funkcji init (po await requireAuth()/
-// guardResourceLock()/guardResourceBusy() -- realnie 0.5-1s RPC-ów).
+// guardResourceLocks() -- realnie 0.5-1s RPC-ów).
 //
 // Root cause znaleziony przez e2e "dźwięk ze źródła Wyświetlacz"
 // (diagnostyka .evaluate() z testu, nie console.warn z przeglądarki --
@@ -1622,7 +1622,7 @@ function showIngameGuard() {
     overlay.querySelector("#ingameGuardBack").addEventListener("click", () => { location.href = withLangParam("/games/"); });
     overlay.querySelector("#ingameGuardUnlock").addEventListener("click", async () => {
       // "Odblokuj ustawienia" — nie jest to wymuszenie: acquire_edit_lock
-      // i tak sam zwolni blokadę po ~25s bez odnowienia (Control naprawdę
+      // i tak sam zwolni blokadę po ~120 s bez odnowienia (Control naprawdę
       // zamknięty). To tylko ręczne "sprawdź teraz" zamiast czekać na
       // automatyczny recheck — bezpieczne, bo jeśli Control WCIĄŻ jest
       // otwarty, poniższe po prostu przeładuje i trafi w ten sam guard.
@@ -1680,7 +1680,7 @@ async function main() {
       .eq("resource_type", "game")
       .eq("resource_id", gameId)
       .eq("holder_context", "control")
-      .gt("heartbeat_at", new Date(Date.now() - 25000).toISOString())
+      .gt("heartbeat_at", new Date(Date.now() - 120000).toISOString())
       .maybeSingle();
     if (controlLock) {
       showIngameGuard();
@@ -1688,16 +1688,14 @@ async function main() {
     }
   }
 
-  // resourceType: "game" — wspólny klucz z editor.js (i docelowo
-  // polls.js/control): patrz komentarz w editor.js przy tym samym
-  // wywołaniu.
-  const lock = await guardResourceLock({
-    resourceType: "game",
-    resourceId: gameId,
-    context: "settings",
-    message: t("resourceLock.gameMessage"),
-    backHref: "/games/",
-  });
+  // Blokady strony (docs/blokady-zasobow.md, sekcja 6): game:G wyłącznie
+  // (wspólny klucz z edytorem, ankietą i Control) + logos współdzielone (cała
+  // pula logo użytkownika; id = użytkownik). Najpierw gra, potem pula logo.
+  const { data: { user: lockUser } } = await sb().auth.getUser();
+  const lock = await guardResourceLocks([
+    { type: "game", id: gameId, mode: "exclusive", message: t("resourceLock.gameMessage") },
+    { type: "logos", id: lockUser?.id, mode: "shared", message: t("resourceLock.logoEditBlocksSettings") },
+  ], { context: "settings", backHref: "/games/" });
   if (!lock.ok) {
     if (_isModal) window.parent.postMessage({ type: "gs:ready" }, "*");
     return;
@@ -1707,27 +1705,6 @@ async function main() {
   if (!(await guardGameState(gameId, "play"))) {
     if (_isModal) window.parent.postMessage({ type: "gs:ready" }, "*");
     return;
-  }
-
-  // "Logo ↔ ustawienia gry" (docs/plan-testy-i-poprawki.md, sekcja
-  // "Krzyżowe blokady między zasobami") — ta strona nie EDYTUJE logo, tylko
-  // je referuje (podgląd Wyświetlacza), więc nie zajmuje własnej blokady
-  // "logo" (guardResourceBusy, w odróżnieniu od guardResourceLock, nic nie
-  // trzyma/nie zwalnia) — tylko czeka, aż logo-editor.js zwolni SWOJĄ.
-  // Domyślne logo (logoId === null) nie ma odpowiadającego wiersza
-  // user_logos — nic do sprawdzenia.
-  const gameLogoId = game.settings?.display?.logoId;
-  if (gameLogoId) {
-    const logoLock = await guardResourceBusy({
-      resourceType: "logo",
-      resourceId: gameLogoId,
-      message: t("resourceLock.logoInUseMessage"),
-      backHref: "/games/",
-    });
-    if (!logoLock.ok) {
-      if (_isModal) window.parent.postMessage({ type: "gs:ready" }, "*");
-      return;
-    }
   }
 
   lastSavedSettingsRaw = game.settings ?? {};
@@ -1885,7 +1862,7 @@ async function main() {
   // razu przy otwarciu, bo do TEGO momentu #gsContentInner jest celowo
   // niewidoczne (data-skel-step). To jedyny niezawodny sygnał "naprawdę
   // gotowe" — load iframe'a sam w sobie tego nie gwarantuje (HTML potrafi się
-  // załadować, zanim requireAuth()/guardResourceLock()/guardResourceBusy()
+  // załadować, zanim requireAuth()/guardResourceLocks()
   // niżej w main() w ogóle ruszą).
   if (_isModal) window.parent.postMessage({ type: "gs:ready" }, "*");
 

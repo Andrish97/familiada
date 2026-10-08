@@ -2303,8 +2303,8 @@ test("control2: zablokowany, gdy logo gry jest edytowane w logo-editorze — i w
 
     await page.goto(`/control?id=${gameId}`, { waitUntil: "domcontentloaded" });
     await expect(page.locator("#resourceLockGuard")).toBeVisible({ timeout: 15000 });
-    await expect(page.locator("#resourceLockGuardMsg")).toContainText("edytowane", { timeout: 5000 });
-    // Zablokowany PRZED wyrenderowaniem czegokolwiek z #app (guardResourceBusy
+    await expect(page.locator("#resourceLockGuardMsg")).toContainText("Trwa edycja logo", { timeout: 5000 });
+    // Zablokowany PRZED wyrenderowaniem czegokolwiek z #app (guardResourceLocks
     // jest wołane zanim Control zdąży namalować krok "Urządzenia").
     await expect(page.locator(".stepTitle")).toHaveCount(0);
 

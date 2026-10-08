@@ -933,45 +933,50 @@ test.describe("blokady", () => {
     }, id), { timeout: 10000 }).toBe(0);
   });
 
-  test("otwarte ustawienia gry blokują edycję logo (cała pula)", async ({ page }) => {
+  // Pula logo to zasób `logos` (id = użytkownik), trzymany współdzielenie przez
+  // Control i ustawienia gry (docs/blokady-zasobow.md, sekcja 6). Testy symulują
+  // to obcą kartą, która bierze `logos` kontekstem „settings”.
+  const poolLock = (page, tab) => (fn) => page.evaluate(async ({ fn, tab }) => {
+    const sb = window.__sbClient;
+    const { data: u } = await sb.auth.getUser();
+    if (fn === "acquire_edit_lock_mode") {
+      return sb.rpc(fn, { p_resource_type: "logos", p_resource_id: u.user.id, p_tab_id: tab, p_context: "settings", p_mode: "shared" });
+    }
+    return sb.rpc(fn, { p_resource_type: "logos", p_resource_id: u.user.id, p_tab_id: tab });
+  }, { fn, tab });
+
+  test("otwarte ustawienia gry (logos) blokują edycję logo (cała pula)", async ({ page }) => {
     await open(page);
     const id = await L.insertLogo(page, { name: L.uniq("pool"), type: "GLYPH_30x10", payload: L.textPayload("AB") });
-    const gameId = await page.evaluate(async () => {
-      const { data } = await window.__sbClient.from("games").select("id").limit(1).maybeSingle();
-      return data?.id || null;
-    });
-    test.skip(!gameId, "konto testowe nie ma żadnej gry");
-    const tab = `e2e-le2-${Date.now()}`;
-    const lock = (fn) => page.evaluate(async ({ fn, gameId, tab }) => window.__sbClient.rpc(fn, {
-      p_resource_type: "game", p_resource_id: gameId, p_tab_id: tab, ...(fn === "acquire_edit_lock" ? { p_context: "settings" } : {}),
-    }), { fn, gameId, tab });
-    await lock("acquire_edit_lock");
+    const lock = poolLock(page, `e2e-le2-${Date.now()}`);
+    const got = await lock("acquire_edit_lock_mode");
+    expect(got.data?.ok, "logos współdzielone powinno się zająć").toBe(true);
     try {
       await edit(page, id);
-      await expect(page.locator("#resourceLockGuardMsg")).toContainText(/ustawienia rozgrywki|ustawienia/i, { timeout: 10000 });
+      await expect(page.locator("#resourceLockGuardMsg")).toContainText(/ustawienia gry/i, { timeout: 10000 });
       await expect(page.locator("#logoName")).toBeDisabled();
     } finally {
       await lock("release_edit_lock");
     }
   });
 
-  test("pula zajęta W TRAKCIE edycji: zapis odrzucony, edycja kończy się komunikatem, logo nietknięte", async ({ page }) => {
+  test("pula zajęta po utracie blokady logo w trakcie edycji: zapis odrzucony, logo nietknięte", async ({ page }) => {
     await open(page);
     const id = await L.insertLogo(page, { name: L.uniq("pool-mid"), type: "GLYPH_30x10", payload: L.textPayload("AB") });
-    const gameId = await page.evaluate(async () => {
-      const { data } = await window.__sbClient.from("games").select("id").limit(1).maybeSingle();
-      return data?.id || null;
-    });
-    test.skip(!gameId, "konto testowe nie ma żadnej gry");
     await edit(page, id);
-    const tab = `e2e-le2-mid-${Date.now()}`;
-    const lock = (fn) => page.evaluate(async ({ fn, gameId, tab }) => window.__sbClient.rpc(fn, {
-      p_resource_type: "game", p_resource_id: gameId, p_tab_id: tab, ...(fn === "acquire_edit_lock" ? { p_context: "settings" } : {}),
-    }), { fn, gameId, tab });
-    await lock("acquire_edit_lock");
+    // Edytor trzyma logo:L wyłącznie, więc `logos` nie da się zająć, dopóki trzyma. Symulacja
+    // uśpionej karty: zwolnij blokadę edytora jego własnym tab_id, potem zajmij pulę obcą kartą.
+    await page.evaluate(async (logoId) => {
+      const tabId = sessionStorage.getItem("familiada:tabId");
+      await window.__sbClient.rpc("release_edit_lock", { p_resource_type: "logo", p_resource_id: logoId, p_tab_id: tabId });
+    }, id);
+    const lock = poolLock(page, `e2e-le2-mid-${Date.now()}`);
+    const got = await lock("acquire_edit_lock_mode");
+    expect(got.data?.ok, "logos współdzielone po zwolnieniu logo:L").toBe(true);
     try {
       await page.fill("#textValue", "CD");
-      await expect(page.locator("#resourceLockGuardMsg")).toContainText(/ustawienia/i, { timeout: 15000 });
+      // Zapis (RPC update_logo_checked) albo odnowienie blokady (locked) kończy edycję pełnym komunikatem.
+      await expect(page.locator("#resourceLockGuardMsg")).toContainText(/ustawienia|blokad|rozgrywk/i, { timeout: 15000 });
       expect((await L.readLogo(page, id)).payload.source.text).toBe("AB");
     } finally {
       await lock("release_edit_lock");

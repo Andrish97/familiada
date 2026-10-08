@@ -4,8 +4,9 @@
 import { addRenameGesture } from "../../shared/js/core/rename-gesture.js?v=v2026-10-08T17384";
 
 import { sb, SUPABASE_URL } from "../../shared/js/core/supabase.js?v=v2026-10-08T17384";
-import { updateChecked, ROW_GONE } from "../../shared/js/core/db-guard.js?v=v2026-10-08T17384";
+import { ROW_GONE } from "../../shared/js/core/db-guard.js?v=v2026-10-08T17384";
 import { requireAuth } from "../../shared/js/core/auth.js?v=v2026-10-08T17384";
+import { acquireResourceLock, getTabId } from "../../shared/js/core/resource-lock.js?v=v2026-10-08T17384";
 import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-08T17384";
 import { isGuestUser, hideForGuest } from "../../shared/js/core/guest-mode.js?v=v2026-10-08T17384";
 import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-08T17384";
@@ -164,6 +165,7 @@ const shareModalCache = new Map();
 
 // modal nazwy – tryb
 let nameMode = "create"; // 'create' | 'rename'
+let nameLease = null; // blokada base:B (wyłączna) na czas otwartego okna zmiany nazwy
 let renameBaseId = null; // która baza jest przemianowywana (niezależnie od zaznaczenia)
 
 /* ================= UI helpers ================= */
@@ -418,12 +420,34 @@ async function createBase(name) {
   return data;
 }
 
+/** Komunikat, gdy base:B nie da się zająć wyłącznie (docs/blokady-zasobow.md, sekcja 6). */
+function baseBusyMessage(res) {
+  if (res?.error === "gone") return t("resourceLock.goneMessage");
+  // wyłączne trzymanie = ktoś inny już zmienia całą bazę; współdzielone = baza otwarta w eksploratorze
+  return res?.blocker_mode === "exclusive" ? t("resourceLock.baseChangingMessage") : t("resourceLock.baseOpenMessage");
+}
+
+// Zmiana nazwy przez RPC: baza sprawdza, czy base:B nie jest trzymane przez inną
+// kartę (eksplorator otwarty = współdzielone, zmiana całej bazy = wyłączne).
 async function renameBase(baseId, newName) {
-  await updateChecked(
-    "question_bases",
-    { id: baseId },
-    { name: safeName(newName), updated_at: new Date().toISOString() }
-  );
+  const { data, error } = await sb().rpc("rename_resource_checked", {
+    p_resource_type: "base",
+    p_resource_id: baseId,
+    p_name: safeName(newName),
+    p_tab_id: getTabId(),
+  });
+  if (error) throw error;
+  if (data?.in_use) {
+    const e = new Error("base in use");
+    e.code = "RESOURCE_IN_USE";
+    throw e;
+  }
+  if (data?.error === "not_found_or_forbidden") {
+    const e = new Error("base gone");
+    e.code = ROW_GONE;
+    throw e;
+  }
+  if (!data?.ok) throw new Error(data?.error || "rename failed");
 }
 
 async function deleteBase(base) {
@@ -440,10 +464,30 @@ async function deleteBase(base) {
   // aktywnie edytuje w base-explorerze (Warstwa 1, edit_locks), bez
   // żadnego ostrzeżenia. delete_resource_checked sprawdza to atomowo po
   // stronie serwera, tak samo jak dla gry/logo w games.js.
-  const { data, error } = await sb().rpc("delete_resource_checked", {
-    p_resource_type: "base",
-    p_resource_id: base.id,
-  });
+  // base:B zajęte wyłącznie na czas akcji: otwarty eksplorator (współdzielone)
+  // albo zmiana całej bazy u kogoś innego zatrzymują usunięcie.
+  let lease = null;
+  try {
+    lease = await acquireResourceLock({ resourceType: "base", resourceId: base.id, context: "bases-list" });
+  } catch (e) {
+    console.warn("[bases] delete lock error:", e);
+    void alertModal({ text: t("bases.delete.failed") });
+    return;
+  }
+  if (!lease?.ok) {
+    void alertModal({ text: baseBusyMessage(lease) });
+    return;
+  }
+  let data, error;
+  try {
+    ({ data, error } = await sb().rpc("delete_resource_checked", {
+      p_resource_type: "base",
+      p_resource_id: base.id,
+      p_tab_id: getTabId(),
+    }));
+  } finally {
+    lease.release();
+  }
   if (error) {
     console.warn("[bases] delete error:", error);
     void alertModal({ text: t("bases.delete.failed") });
@@ -1430,7 +1474,23 @@ function openNameModalCreate() {
   setTimeout(() => nameInp.focus(), 0);
 }
 
-function openNameModalRename(base) {
+// Okno zmiany nazwy trzyma base:B wyłącznie do zamknięcia okna -- w tym czasie
+// nikt nie otworzy eksploratora tej bazy (pełna blokada strony), a otwarty
+// eksplorator nie pozwoli otworzyć okna.
+async function openNameModalRename(base) {
+  let lease;
+  try {
+    lease = await acquireResourceLock({ resourceType: "base", resourceId: base.id, context: "bases-list" });
+  } catch (e) {
+    console.warn("[bases] rename lock error:", e);
+    void alertModal({ text: t("bases.nameModal.failed") });
+    return;
+  }
+  if (!lease?.ok) {
+    void alertModal({ text: baseBusyMessage(lease) });
+    return;
+  }
+  nameLease = lease;
   nameMode = "rename";
   renameBaseId = base?.id || null;
   setMsg(nameMsg, "");
@@ -1443,6 +1503,8 @@ function openNameModalRename(base) {
 }
 
 function closeNameModal() {
+  nameLease?.release?.();
+  nameLease = null;
   show(nameOverlay, false);
   exitModalSheet(nameOverlay);
 }
@@ -1467,7 +1529,8 @@ async function nameOk() {
     await refreshView();
   } catch (e) {
     console.warn("[bases] name ok error:", e);
-    setMsg(nameMsg, e?.code === ROW_GONE ? t("resourceLock.goneMessage") : t("bases.nameModal.failed"));
+    setMsg(nameMsg, e?.code === ROW_GONE ? t("resourceLock.goneMessage")
+      : e?.code === "RESOURCE_IN_USE" ? t("resourceLock.baseOpenMessage") : t("bases.nameModal.failed"));
   } finally {
     if (btnNameOk) btnNameOk.disabled = false;
   }

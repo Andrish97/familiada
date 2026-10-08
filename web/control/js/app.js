@@ -8,7 +8,7 @@ import { createRenderCompletionGate } from "../../shared/js/gameplay/renderCompl
 // stanów była mechanizmem wszędzie, nie tylko wewnątrz silnika reguł gry.
 
 import { guardDesktopOnly } from "../../shared/js/core/device-guard.js?v=v2026-10-08T17384";
-import { guardResourceLock, guardResourceBusy } from "../../shared/js/core/resource-lock.js?v=v2026-10-08T17384";
+import { guardResourceLocks } from "../../shared/js/core/resource-lock.js?v=v2026-10-08T17384";
 import { initI18n, getUiLang, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-08T17384";
 import { requireAuth } from "../../shared/js/core/auth.js?v=v2026-10-08T17384";
 import { setTopbarAccount } from "../../shared/js/core/topbar-controller.js?v=v2026-10-08T17384";
@@ -189,43 +189,21 @@ async function main() {
   const { data: game, error: gameError } = await sb().from("games").select("*").eq("id", gameId).single();
   if (gameError || !game) { root.textContent = "Nie znaleziono gry."; return; }
 
-  // Warstwa 1 blokady (docs/plan-testy-i-poprawki.md, sekcja "Control" —
-  // punkt odłożony do teraz, bo dopiero game_state daje realny stan do
-  // przejęcia). resourceType:"game" to WSPÓLNY klucz z game-settings.js/
-  // game-settings.js/editor.js — Control blokuje edycję ustawień w trakcie
-  // rozgrywki, i widzi odwrotnie, gdy ktoś inny (druga karta Control,
-  // ustawienia, edytor) już trzyma tę samą grę.
-  const lock = await guardResourceLock({
-    resourceType: "game",
-    resourceId: gameId,
-    context: "control",
-    message: t("resourceLock.gameMessage"),
-    backHref: "/games/",
-  });
+  // Blokady strony (docs/blokady-zasobow.md, sekcja 6): game:G wyłącznie (wspólny
+  // klucz z edytorem, ustawieniami i ankietą) + logos współdzielone (cała pula
+  // logo użytkownika; id = użytkownik). Kolejność: najpierw gra, potem pula logo
+  // — pierwsza przeszkoda zatrzymuje ze swoim komunikatem. Edycja któregokolwiek
+  // logo (logo:L wyłącznie) wyklucza logos, więc zatrzymuje Control.
+  const { data: { user: lockUser } } = await sb().auth.getUser();
+  const lock = await guardResourceLocks([
+    { type: "game", id: gameId, mode: "exclusive", message: t("resourceLock.gameMessage") },
+    { type: "logos", id: lockUser?.id, mode: "shared", message: t("resourceLock.logoEditBlocksControl") },
+  ], { context: "control", backHref: "/games/" });
   if (!lock.ok) return;
 
   // Blokada stanu: gra, która nie nadaje się do rozgrywki (np. ankieta
   // otwarta, za mało pytań), blokuje Control w całości.
   if (!(await guardGameState(gameId, "play"))) return;
-
-  // "Logo ↔ Control" (docs/plan-testy-i-poprawki.md, sekcja "Krzyżowe
-  // blokady między zasobami" — druga połowa pary "Logo ↔ trwająca
-  // rozgrywka", odłożona tam na "fundament Control", który właśnie powyżej
-  // powstał). Control nie EDYTUJE logo — tylko je referuje (na żywo na
-  // Wyświetlaczu), więc nie zajmuje własnej blokady "logo" (guardResourceBusy,
-  // w odróżnieniu od guardResourceLock, nic nie trzyma/nie zwalnia) — tylko
-  // czeka, aż logo-editor.js zwolni SWOJĄ. Domyślne logo (logoId === null)
-  // nie ma odpowiadającego wiersza user_logos — nic do sprawdzenia.
-  const gameLogoId = game.settings?.display?.logoId;
-  if (gameLogoId) {
-    const logoLock = await guardResourceBusy({
-      resourceType: "logo",
-      resourceId: gameLogoId,
-      message: t("resourceLock.logoInUseMessage"),
-      backHref: "/games/",
-    });
-    if (!logoLock.ok) return;
-  }
 
   setCurrentGameId(gameId);
   await loadSfxManifest();

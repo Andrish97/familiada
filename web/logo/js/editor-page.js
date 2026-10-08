@@ -13,9 +13,10 @@
 //   - to logo w innej karcie -> guardResourceLock: komunikat, wejście samo,
 //     gdy tamta karta je zwolni; nasza blokada trzymana do wyjścia ze strony
 //     (pagehide), więc Control/ustawienia gry czekają, aż edytor się zamknie,
-//   - cała pula logo zajęta (Control albo ustawienia którejś gry) -- przy
-//     wejściu i przy każdym zapisie (RPC update_logo_checked): komunikat
-//     z powrotem na listę.
+//   - cała pula logo zajęta (zasób `logos` trzymany współdzielenie przez Control
+//     albo ustawienia którejś gry) wyklucza logo:L w bazie -- przy wejściu to
+//     samo guardResourceLock, przy każdym zapisie RPC update_logo_checked:
+//     komunikat z powrotem na listę.
 
 import { loadFont5x7 } from "../../shared/js/core/logo-preview.js?v=v2026-10-08T17384";
 import { requireAuth } from "../../shared/js/core/auth.js?v=v2026-10-08T17384";
@@ -24,7 +25,7 @@ import { initTopbarAccountDropdown } from "../../shared/js/core/topbar-controlle
 import { isMobileDevice } from "../../shared/js/core/pwa.js?v=v2026-10-08T17384";
 import { isPhoneScreen } from "../../shared/js/core/device-guard.js?v=v2026-10-08T17384";
 import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-08T17384";
-import { guardResourceLock, findBusyContext, showBlockingOverlay } from "../../shared/js/core/resource-lock.js?v=v2026-10-08T17384";
+import { guardResourceLock, showBlockingOverlay } from "../../shared/js/core/resource-lock.js?v=v2026-10-08T17384";
 import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-08T17384";
 
 import { renderPreview } from "./render.js?v=v2026-10-08T17384";
@@ -91,10 +92,21 @@ export async function bootEditorPage({ mode, initEditor }) {
     if (el.status) el.status.dataset.state = statusState;
   }
 
+  // Zapis odrzucony przez bazę (reason z db.js: logo | control | settings | …).
   function busyMessage(reason) {
     if (reason === "control") return t("resourceLock.logoPoolBusyControl");
     if (reason === "settings") return t("resourceLock.logoPoolBusySettings");
-    return t("resourceLock.logoMessage");
+    if (reason === "logo") return t("resourceLock.logoMessage");
+    return t("resourceLock.logoPoolBusy");
+  }
+
+  // Wejście: odpowiedź acquire_edit_lock_mode mówi, kto przeszkadza --
+  // inna karta z tym logo albo pula logo (logos) trzymana przez Control / ustawienia.
+  function entryBusyMessage(res) {
+    if (res?.blocker_type !== "logos") return t("resourceLock.logoMessage");
+    if (res.blocker_context === "control") return t("resourceLock.logoPoolBusyControlEntry");
+    if (res.blocker_context === "settings") return t("resourceLock.logoPoolBusySettingsEntry");
+    return t("resourceLock.logoPoolBusy");
   }
 
   /** Nazwa niekolidująca (bez względu na wielkość liter) z innymi logo użytkownika. */
@@ -295,11 +307,6 @@ export async function bootEditorPage({ mode, initEditor }) {
     return;
   }
 
-  // Cała pula logo jest zajęta, gdy Control albo ustawienia którejś gry są
-  // otwarte (zapis i tak zablokuje RPC -- mówimy o tym od razu).
-  const busy = await findBusyContext("game", ["settings", "control"]).catch(() => null);
-  if (busy) { block(busyMessage(busy)); return; }
-
   let logo;
   try {
     [logo, logos] = await Promise.all([fetchLogo(logoId), listLogos()]);
@@ -312,12 +319,13 @@ export async function bootEditorPage({ mode, initEditor }) {
   const reason = cannotEditReason(logo, mode, FONT_3x10);
   if (reason) { block(reason); return; }
 
-  // To logo edytowane w innej karcie -> pełnoekranowy komunikat.
+  // To logo edytowane w innej karcie albo pula logo zajęta (Control / ustawienia
+  // gry) -> pełnoekranowy komunikat.
   const lock = await guardResourceLock({
     resourceType: "logo",
     resourceId: logo.id,
     context: "logo-editor",
-    message: t("resourceLock.logoMessage"),
+    message: entryBusyMessage,
     backHref: listBackUrl(),
   });
   if (!lock.ok) return;

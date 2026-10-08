@@ -3,6 +3,7 @@
 
 import { requireAuth } from "../../shared/js/core/auth.js?v=v2026-10-08T17384";
 import { alertModal } from "../../shared/js/core/modal.js?v=v2026-10-08T17384";
+import { guardResourceLocks } from "../../shared/js/core/resource-lock.js?v=v2026-10-08T17384";
 import { getUiLang, initI18n, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-08T17384";
 import { initTopbarAccountDropdown } from "../../shared/js/core/topbar-controller.js?v=v2026-10-08T17384";
 import { VIEW, createState, setRole } from "./state.js?v=v2026-10-08T17384";
@@ -85,6 +86,24 @@ btnBack?.addEventListener("click", () => {
 
     const r = await getBaseRole(baseId, user.id);
     setRole(state, r.role);
+
+    // Eksplorator trzyma base:B współdzielenie (obecność -- współpracownicy
+    // mogą mieć bazę otwartą naraz). Trzymanie wyłączne (zmiana nazwy / usuwanie
+    // całej bazy) zatrzymuje wejście i odnowienie pełnoekranowym komunikatem;
+    // odebrany dostęp daje `forbidden` przy odnowieniu. Czytelnik (viewer) nie
+    // trzyma nic -- nie edytuje, więc nie przeszkadza zmianie całej bazy.
+    if (state.canEdit) {
+      const lock = await guardResourceLocks(
+        [{ type: "base", id: baseId, mode: "shared", message: t("resourceLock.baseChangingMessage") }],
+        {
+          context: "base-explorer",
+          backHref: "/bases/",
+          forbiddenTitle: t("resourceLock.baseAccessRevokedTitle"),
+          forbiddenMessage: t("resourceLock.baseAccessRevokedMessage"),
+        }
+      );
+      if (!lock.ok) return;
+    }
 
     // ===== dane do renderu (etap 1: prosto, wszystko) =====
     const [cats, tags, qs] = await Promise.all([
