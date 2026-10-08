@@ -1,8 +1,8 @@
 // familiada/logo/js/db.js
 // Dostęp do tabeli user_logos i plików logo w Storage.
 
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-08T22530";
-import { storagePathFromUrl } from "./image.js?v=v2026-10-08T22530";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-08T22563";
+import { storagePathFromUrl } from "./image.js?v=v2026-10-08T22563";
 
 /** Błąd „zasób zajęty” z RPC *_checked -- reason: control | settings | … */
 function busyError(result) {

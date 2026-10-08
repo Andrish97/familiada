@@ -1,15 +1,15 @@
-import { sb, SUPABASE_URL } from "../../shared/js/core/supabase.js?v=v2026-10-08T22530";
-import { requireAuth, signOut } from "../../shared/js/core/auth.js?v=v2026-10-08T22530";
-import { isGuestUser, showGuestBlockedOverlay } from "../../shared/js/core/guest-mode.js?v=v2026-10-08T22530";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-08T22530";
-import { getUiLang, initI18n, t } from "../../shared/translation/translation.js?v=v2026-10-08T22530";
-import { initTopbarAccountDropdown } from "../../shared/js/core/topbar-controller.js?v=v2026-10-08T22530";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-08T22530";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-08T22530";
-import { createCooldownTicker } from "../../shared/js/core/cooldown.js?v=v2026-10-08T22530";
-import { enterModalSheet, exitModalSheet, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-08T22530";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-08T22530";
-import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-08T22530";
+import { sb, SUPABASE_URL } from "../../shared/js/core/supabase.js?v=v2026-10-08T22563";
+import { requireAuth, signOut } from "../../shared/js/core/auth.js?v=v2026-10-08T22563";
+import { isGuestUser, showGuestBlockedOverlay } from "../../shared/js/core/guest-mode.js?v=v2026-10-08T22563";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-08T22563";
+import { getUiLang, initI18n, t } from "../../shared/translation/translation.js?v=v2026-10-08T22563";
+import { initTopbarAccountDropdown } from "../../shared/js/core/topbar-controller.js?v=v2026-10-08T22563";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-08T22563";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-08T22563";
+import { createCooldownTicker } from "../../shared/js/core/cooldown.js?v=v2026-10-08T22563";
+import { enterModalSheet, exitModalSheet, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-08T22563";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-08T22563";
+import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-08T22563";
 
 const i18nReady = initI18n({ withSwitcher: true }).catch((err) => {
   console.error("[subscriptions] i18n nieaktywny:", err);
