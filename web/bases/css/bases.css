@@ -116,7 +116,7 @@
 ========================================================= */
 
 .tabs-card.hub-tabs.bases-tabs-card{
-  --tab-height: 48px;
+  --tab-height: 36px;
   --tab-extra: 1px;
   --radius: 12px;
   --surface: #111827;
@@ -193,7 +193,7 @@
 }
 
 @media (max-width: 980px){
-  .tabs-card.hub-tabs.bases-tabs-card{ --tab-height: 56px; }
+  .tabs-card.hub-tabs.bases-tabs-card{ --tab-height: 44px; }
 }
 
 /* =========================================================

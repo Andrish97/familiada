@@ -2460,7 +2460,7 @@ const pl = {
       play: "Graj",
       playMobile: "Graj",
       poll: "Ankieta",
-      pollMobile: "Sond.",
+      pollMobile: "Ankieta",
       exportFile: "Eksportuj do pliku",
       exportFileMobile: "Exp.plk",
       exportBase: "Eksportuj do bazy",
