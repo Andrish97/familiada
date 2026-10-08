@@ -3,8 +3,8 @@
 // Edytor wraca do listy przez ?ret= (lista z kartą, z której wszedł);
 // bez ret — na /logo/ (domyślna karta). Patrz docs/nawigacja-mapa-plan.md.
 
-import { withLangParam } from "../../shared/translation/translation.js?v=v2026-10-08T06592";
-import { TYPE_GLYPH } from "./render.js?v=v2026-10-08T06592";
+import { withLangParam } from "../../shared/translation/translation.js?v=v2026-10-08T07033";
+import { TYPE_GLYPH } from "./render.js?v=v2026-10-08T07033";
 
 export const LIST_PATH = "/logo/";
 
