@@ -780,6 +780,7 @@ async function main() {
     return null;
   }
   function qrModalLabel(kind) {
+    if (kind === "display") return t("control.deviceDisplay");
     if (kind === "host") return t("control.deviceHost");
     if (kind === "buzzer") return t("control.deviceBuzzer");
     return t("control.qrModalTitle");
