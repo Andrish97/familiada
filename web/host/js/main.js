@@ -7,14 +7,14 @@
 // snap-to-grid z dzisiejszego host.js (kosmetyka do dostrojenia wizualnie
 // później, nie architektura).
 
-import { initI18n, setUiLang } from "../../shared/translation/translation.js?v=v2026-10-08T07033";
-import { startKeepAlive } from "../../shared/js/core/keep-alive.js?v=v2026-10-08T07033";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-08T07033";
-import { createSubscription } from "../../shared/js/core/game-state-subscribe.js?v=v2026-10-08T07033";
-import { createHostRenderer } from "./render.js?v=v2026-10-08T07033";
-import { createCoverLogoRenderer } from "./coverLogo.js?v=v2026-10-08T07033";
-import { createHostThemeApplier } from "./hostThemeManager.js?v=v2026-10-08T07033";
-import { icon } from "../../shared/js/core/icons.js?v=v2026-10-08T07033";
+import { initI18n, setUiLang } from "../../shared/translation/translation.js?v=v2026-10-08T07150";
+import { startKeepAlive } from "../../shared/js/core/keep-alive.js?v=v2026-10-08T07150";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-08T07150";
+import { createSubscription } from "../../shared/js/core/game-state-subscribe.js?v=v2026-10-08T07150";
+import { createHostRenderer } from "./render.js?v=v2026-10-08T07150";
+import { createCoverLogoRenderer } from "./coverLogo.js?v=v2026-10-08T07150";
+import { createHostThemeApplier } from "./hostThemeManager.js?v=v2026-10-08T07150";
+import { icon } from "../../shared/js/core/icons.js?v=v2026-10-08T07150";
 
 // Wszystkie trzy urządzenia utrzymują ekran aktywny przez Wake Lock
 // oraz zapasowy, wyciszony strumień wideo.
