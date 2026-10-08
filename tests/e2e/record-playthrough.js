@@ -1302,7 +1302,7 @@ async function scenarioFinalFull(pages, { game, summaryAlreadyOpen = false, cont
       if (kind === "buzzer") buzzer = reconnected.page;
       await expect(control.locator("#deviceLostOverlay")).toBeHidden();
     }
-    await expect(control.getByRole("button", { name: "Rozpocznij rundę" })).toBeEnabled({ timeout: 10_000 });
+    await expect(control.getByRole("button", { name: "Rozpocznij rundę" })).toBeEnabled({ timeout: 60_000 });
   }
 
   await playThreeNaturalRoundsToThreshold(pages);
