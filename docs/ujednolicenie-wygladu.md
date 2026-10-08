@@ -105,6 +105,18 @@ i stany „zapisywanie / zapisano / niezapisane / ponawiam”. Autozapis
 działa w tle i ponawia sam. Zostaje tylko blokada (zasób zajęty →
 pełnoekranowy komunikat), bo to nie jest informacja o zapisie.
 
+### Gry — teksty stanu na kaflach (decyzja 2026-10-08)
+
+Kafel gry pokazuje „TYP • STAN” (`games.js:684` `statusLabel`, klucze
+`games.status.*` w pl / en / uk).
+- **Rodzaj żeński**: dziś `OTWARTY` / `ZAMKNIĘTY` (stary rodzaj męski,
+  z czasów „sondażu punktowego / tekstowego”) → **`OTWARTA` /
+  `ZAMKNIĘTA`** (ankieta, gra). Sprawdzić też inne miejsca z tymi
+  słowami (podgląd, instrukcja, en / uk — odpowiednik gramatyczny).
+- **Preparowane gotowe do gry**: dziś `SZKIC` (gra preparowana ma zawsze
+  stan `draft`) — mylące. Gdy gra preparowana spełnia warunki rozgrywki
+  (`rules.play.ok`) → **`GOTOWA`**; `SZKIC` tylko, gdy jeszcze nie spełnia.
+
 ## 5. Teksty do poprawy
 
 - **Podpowiedź pod tytułem ankiety znika** (decyzja 2026-10-07). Dziś
