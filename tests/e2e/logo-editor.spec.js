@@ -560,7 +560,10 @@ test.describe("tryb Rysunek", () => {
     await L.drag(page, b.x + 500, b.y + 100, b.x + 700, b.y + 250);
     await page.keyboard.press("v");
     await page.keyboard.press("Control+z");
-    await page.mouse.click(b.x + 100, b.y + 175);
+    // Zaznaczenie ramką wokół pierwszego prostokąta, nie kliknięciem w jego
+    // krawędź — krawędź przyciąga się do siatki pikseli logo, więc przy innej
+    // skali sceny (wysokość strony) klik w x=100 trafiał obok kreski.
+    await L.drag(page, b.x + 60, b.y + 60, b.x + 340, b.y + 290);
     await expect(page.locator("#cObjStroke")).toBeVisible();
     await page.keyboard.press("Control+y"); // drugi prostokąt wraca
 
@@ -582,7 +585,7 @@ test.describe("tryb Rysunek", () => {
     await L.drag(page, b.x + 100, b.y + 100, b.x + 300, b.y + 250);
     expect(await L.save(page)).toBe("saved");
     await page.keyboard.press("v");
-    await page.mouse.click(b.x + 100, b.y + 175);
+    await L.drag(page, b.x + 60, b.y + 60, b.x + 340, b.y + 290); // ramka (krawędź przyciąga się do siatki)
     await page.locator("#cObjStrokeColor").click();
     expect(await L.isDirty(page)).toBe(true);
   });
