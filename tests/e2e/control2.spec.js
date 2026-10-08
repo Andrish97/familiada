@@ -721,10 +721,8 @@ test("control2: parowanie urządzeń — linki renderują się bez błędu, Cont
 
     const revealPreview = page.locator('.summarySoundRow:has(input[data-sfx-vol="reveal"]) .summarySoundPlay');
     const beginGame = page.getByRole("button", { name: "Gotowe — przejdź do rozgrywki" });
-    await expect(beginGame).toBeDisabled();
+    await expect(beginGame).toBeEnabled();
     await expect(page.locator(".c2-audio-gate-hint")).toHaveCount(0);
-    await displayPage.locator("#btnAudioUnlock").click();
-    await expect(beginGame).toBeEnabled({ timeout: 10000 });
     await revealPreview.click();
     await expect(revealPreview.locator(".ico")).toHaveClass(/ico-stop/);
     await expect(beginGame).toBeEnabled();
