@@ -107,7 +107,8 @@ const settledStates = ["saved", "invalid", "error"];
  * Autozapis: czeka, aż ostatnia zmiana się zapisze (albo okaże się, że nie
  * da się jej zapisać) i zwraca tekst stanu. Bez zmian (stan idle) wymusza
  * zapis „pustą” zmianą nazwy -- payload jest wtedy liczony na nowo z edytora,
- * jak dawny „Zapisz” bez zmian.
+ * jak dawny „Zapisz” bez zmian. Zwraca stan (data-state) — strona nie
+ * pokazuje żadnego tekstu o zapisie.
  */
 async function save(page) {
   const status = page.locator(STATUS);
@@ -115,7 +116,7 @@ async function save(page) {
     await page.locator("#logoName").dispatchEvent("input");
   }
   await page.waitForFunction(({ sel, done }) => done.includes(document.querySelector(sel)?.dataset.state), { sel: STATUS, done: settledStates }, { timeout: 20000 });
-  return status.textContent();
+  return status.getAttribute("data-state");
 }
 
 /** Czy edytor zarejestrował zmianę (autozapis ruszył)? Świeżo otwarte logo bez zmian: idle. */

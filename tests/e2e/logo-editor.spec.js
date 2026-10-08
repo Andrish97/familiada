@@ -124,7 +124,7 @@ test.describe("lista", () => {
     await L.createNew(page, "Text", taken);
     await expect(page.locator("#logoName")).toHaveValue(`${taken} (2)`);
     await page.fill("#textValue", "AB");
-    expect(await L.save(page)).toMatch(/Zapisano/);
+    expect(await L.save(page)).toBe("saved");
     expect(await L.readLogoByName(page, `${taken} (2)`)).not.toBeNull();
   });
 
@@ -244,7 +244,7 @@ test.describe("import / eksport", () => {
     await L.createNew(page, "Image", name);
     await page.setInputFiles("#imgFile", DEMO_IMAGE);
     await expect(page.locator("#cropFrame")).toBeVisible();
-    expect(await L.save(page)).toMatch(/Zapisano/);
+    expect(await L.save(page)).toBe("saved");
     const orig = await L.readLogoByName(page, name);
     await L.close(page);
 
@@ -259,7 +259,7 @@ test.describe("import / eksport", () => {
     expect(back.payload.bits_b64).toBe(orig.payload.bits_b64);
     await edit(page, back.id);
     await expect(page.locator("#cropFrame")).toBeVisible({ timeout: 15000 });
-    expect(await L.save(page)).toMatch(/Zapisano/);
+    expect(await L.save(page)).toBe("saved");
   });
 
   test("import pliku, który nie jest logo, pokazuje błąd i nic nie zapisuje", async ({ page }) => {
@@ -281,7 +281,7 @@ test.describe("tryb Tekst", () => {
     await L.createNew(page, "Text", name);
     await page.fill("#textValue", "FAMILIADA");
     await expect(page.locator("#textMeasure")).toContainText("/30");
-    expect(await L.save(page)).toMatch(/Zapisano/);
+    expect(await L.save(page)).toBe("saved");
     const row = await L.readLogoByName(page, name);
     expect(row.payload.source.text).toBe("FAMILIADA");
     expect(row.payload.layers[0].rows.join("").trim().length).toBeGreaterThan(0);
@@ -297,7 +297,7 @@ test.describe("tryb Tekst", () => {
     await L.createNew(page, "Text", name);
     await page.fill("#textValue", "AB~{}");
     await expect(page.locator("#textWarn")).toBeVisible();
-    expect(await L.save(page)).not.toMatch(/Zapisano/);
+    expect(await L.save(page)).not.toBe("saved");
     // Wiersz jest od „Nowe logo”; niedozwolony stan się nie zapisał.
     expect((await L.readLogoByName(page, name)).payload.source.text).toBe("");
   });
@@ -308,7 +308,7 @@ test.describe("tryb Tekst", () => {
     await L.createNew(page, "Text", name);
     await page.fill("#textValue", "FAMILIADA FAMILIADA FAMILIADA");
     await expect(page.locator("#textWarn")).toBeVisible();
-    expect(await L.save(page)).not.toMatch(/Zapisano/);
+    expect(await L.save(page)).not.toBe("saved");
     // Wiersz jest od „Nowe logo”; niedozwolony stan się nie zapisał.
     expect((await L.readLogoByName(page, name)).payload.source.text).toBe("");
   });
@@ -319,12 +319,12 @@ test.describe("tryb Tekst", () => {
     const name = L.uniq("rows");
     await L.createNew(page, "Text", name);
     await page.fill("#textValue", "AB  12");
-    expect(await L.save(page)).toMatch(/Zapisano/);
+    expect(await L.save(page)).toBe("saved");
     const saved = await L.readLogoByName(page, name);
     const id = await L.insertLogo(page, { name: L.uniq("rows-only"), type: "GLYPH_30x10", payload: { layers: [{ rows: saved.payload.layers[0].rows }], source: { mode: "TEXT" } } });
     await edit(page, id);
     await expect(page.locator("#textValue")).toHaveValue("AB  12");
-    expect(await L.save(page)).toMatch(/Zapisano/);
+    expect(await L.save(page)).toBe("saved");
     expect((await L.readLogo(page, id)).payload.layers[0].rows).toEqual(saved.payload.layers[0].rows);
   });
 
@@ -351,7 +351,7 @@ test.describe("tryb Rysunek", () => {
     const b = await L.stage(page);
     await L.drag(page, b.x + b.width * 0.2, b.y + b.height * 0.43, b.x + b.width * 0.8, b.y + b.height * 0.43);
     expect(await L.isDirty(page)).toBe(true);
-    expect(await L.save(page)).toMatch(/Zapisano/);
+    expect(await L.save(page)).toBe("saved");
     const row = await L.readLogoByName(page, name);
     expect(row.payload.source.editHistory).toBeUndefined();
     expect(row.payload.source.world).toEqual({ w: 1040, h: 440 });
@@ -365,7 +365,7 @@ test.describe("tryb Rysunek", () => {
     expect(await L.isDirty(page)).toBe(false); // bez zmian -> zamknięte bez pytania
     await edit(page, row.id);
     await page.waitForTimeout(800);
-    expect(await L.save(page)).toMatch(/Zapisano/);
+    expect(await L.save(page)).toBe("saved");
     expect((await L.readLogo(page, row.id)).payload.bits_b64).toBe(row.payload.bits_b64);
     expect(errors).toEqual([]);
   });
@@ -381,7 +381,7 @@ test.describe("tryb Rysunek", () => {
     const id = await L.insertLogo(page, { name: L.uniq("legacy"), type: "PIX_150x70", payload: { ...L.emptyPix, source: { mode: "DRAW", fabricData, bg: "BLACK", editHistory: { undoStack: [], redoStack: [] } } } });
     await edit(page, id);
     await page.waitForTimeout(800);
-    expect(await L.save(page)).toMatch(/Zapisano/);
+    expect(await L.save(page)).toBe("saved");
     const box = L.litBox((await L.readLogo(page, id)).payload.bits_b64);
     expect(box.x0).toBeGreaterThanOrEqual(70);
     expect(box.x0).toBeLessThanOrEqual(80);
@@ -397,7 +397,7 @@ test.describe("tryb Rysunek", () => {
     await edit(page, id);
     await expect(page.locator("#paneDraw")).toBeVisible();
     await page.waitForTimeout(1000);
-    expect(await L.save(page)).toMatch(/Zapisano/);
+    expect(await L.save(page)).toBe("saved");
     expect(L.bitDiff((await L.readLogo(page, id)).payload.bits_b64, b64)).toBe(0);
   });
 
@@ -413,7 +413,7 @@ test.describe("tryb Rysunek", () => {
     await L.drag(page, b.x + 100, b.y + 100, b.x + 300, b.y + 250);
     await page.keyboard.press("f");
     await L.drag(page, b.x + 500, b.y + 100, b.x + 700, b.y + 250);
-    expect(await L.save(page)).toMatch(/Zapisano/);
+    expect(await L.save(page)).toBe("saved");
     const objs = (await L.readLogoByName(page, name)).payload.source.fabricData.objects;
     expect(objs.map((o) => o.type)).toEqual(["rect", "rect"]);
     expect(objs[1].fill).toBe("#ffffff");
@@ -433,7 +433,7 @@ test.describe("tryb Rysunek", () => {
       const cx = b.x + (i % cols) * cw, cy = b.y + Math.floor(i / cols) * ch;
       await L.drag(page, cx + cw * 0.2, cy + ch * 0.2, cx + cw * 0.8, cy + ch * 0.8);
     }
-    expect(await L.save(page)).toMatch(/Zapisano/);
+    expect(await L.save(page)).toBe("saved");
     const row = await L.readLogoByName(page, name);
     expect(row.payload.source.fabricData.objects).toHaveLength(shapes.length);
     expect(L.litCount(row.payload.bits_b64)).toBeGreaterThan(300);
@@ -461,7 +461,7 @@ test.describe("tryb Rysunek", () => {
     const line0 = await page.evaluate(() => window.__drawFabric.getObjects()[0]._line);
     expect(line0.kind).toBe("arrow1");
     expect(Math.abs(line0.y2 - line0.y1)).toBeLessThan(0.01);
-    expect(await L.save(page)).toMatch(/Zapisano/);
+    expect(await L.save(page)).toBe("saved");
     const box0 = L.litBox((await L.readLogoByName(page, name)).payload.bits_b64);
 
     // zaznaczenie ramką i przeciągnięcie uchwytu końca (grot) dalej w prawo
@@ -478,7 +478,7 @@ test.describe("tryb Rysunek", () => {
     expect([o1.sx, o1.sy]).toEqual([1, 1]);
     expect(o1.line.x1).toBeCloseTo(line0.x1, 3);
     expect(o1.line.x2).toBeGreaterThan(line0.x2 + 200);
-    expect(await L.save(page)).toMatch(/Zapisano/);
+    expect(await L.save(page)).toBe("saved");
     const row = await L.readLogoByName(page, name);
     expect(row.payload.source.fabricData.objects[0]._line.x2).toBeCloseTo(o1.line.x2, 3);
     const box1 = L.litBox(row.payload.bits_b64);
@@ -506,7 +506,7 @@ test.describe("tryb Rysunek", () => {
     await page.keyboard.press("Enter");
     await page.mouse.click(b.x + b.width * 0.6, b.y + b.height * 0.2);
     await page.keyboard.press("Escape"); // porzucony szkic
-    expect(await L.save(page)).toMatch(/Zapisano/);
+    expect(await L.save(page)).toBe("saved");
     const objs = (await L.readLogoByName(page, name)).payload.source.fabricData.objects;
     expect(objs).toHaveLength(1);
     expect(objs[0].type).toBe("polygon");
@@ -524,11 +524,11 @@ test.describe("tryb Rysunek", () => {
     await L.drag(page, b.x + 700, b.y + 100, b.x + 800, b.y + 200);
     await page.keyboard.press("e");
     await L.drag(page, b.x + 90, b.y + 150, b.x + 520, b.y + 150, 30); // przez dwa pierwsze
-    expect(await L.save(page)).toMatch(/Zapisano/);
+    expect(await L.save(page)).toBe("saved");
     expect((await L.readLogoByName(page, name)).payload.source.fabricData.objects).toHaveLength(1);
     await page.keyboard.press("Control+z");
     await page.waitForTimeout(300);
-    expect(await L.save(page)).toMatch(/Zapisano/);
+    expect(await L.save(page)).toBe("saved");
     expect((await L.readLogoByName(page, name)).payload.source.fabricData.objects).toHaveLength(3);
   });
 
@@ -539,14 +539,14 @@ test.describe("tryb Rysunek", () => {
     await page.keyboard.press("r");
     const b = await L.stage(page);
     await L.drag(page, b.x + 200, b.y + 100, b.x + 600, b.y + 300);
-    expect(await L.save(page)).toMatch(/Zapisano/);
+    expect(await L.save(page)).toBe("saved");
     const before = (await L.readLogoByName(page, name)).payload.bits_b64;
     for (let i = 0; i < 4; i++) await page.locator("#tZoomIn").click();
     await page.keyboard.press("h");
     await L.drag(page, b.x + 500, b.y + 200, b.x + 300, b.y + 100);
     await page.keyboard.press("v");
     await page.mouse.click(b.x + 5, b.y + 5); // odznacz
-    expect(await L.save(page)).toMatch(/Zapisano/);
+    expect(await L.save(page)).toBe("saved");
     expect((await L.readLogoByName(page, name)).payload.bits_b64).toBe(before);
   });
 
@@ -570,7 +570,7 @@ test.describe("tryb Rysunek", () => {
     await page.locator(".uni-modal .uni-foot .btn.gold").click();
     await page.keyboard.press("Control+z");
     await page.waitForTimeout(300);
-    expect(await L.save(page)).toMatch(/Zapisano/);
+    expect(await L.save(page)).toBe("saved");
     expect((await L.readLogoByName(page, name)).payload.source.fabricData.objects).toHaveLength(3);
   });
 
@@ -580,7 +580,7 @@ test.describe("tryb Rysunek", () => {
     await page.keyboard.press("r");
     const b = await L.stage(page);
     await L.drag(page, b.x + 100, b.y + 100, b.x + 300, b.y + 250);
-    expect(await L.save(page)).toMatch(/Zapisano/);
+    expect(await L.save(page)).toBe("saved");
     await page.keyboard.press("v");
     await page.mouse.click(b.x + 100, b.y + 175);
     await page.locator("#cObjStrokeColor").click();
@@ -616,11 +616,11 @@ test.describe("tryb Rysunek", () => {
     await page.locator("#cSz").press("Enter");
     await page.mouse.click(b.x + b.width - 30, b.y + b.height - 30);
     await page.keyboard.press("v");
-    expect(await L.save(page)).toMatch(/Zapisano/);
+    expect(await L.save(page)).toBe("saved");
     expect((await L.readLogoByName(page, name)).payload.source.fabricData.objects[0].fontSize).toBe(120);
     await page.keyboard.press("Control+z");
     await page.waitForTimeout(300);
-    expect(await L.save(page)).toMatch(/Zapisano/);
+    expect(await L.save(page)).toBe("saved");
     expect((await L.readLogoByName(page, name)).payload.source.fabricData.objects[0].fontSize).toBe(80);
   });
 
@@ -629,13 +629,13 @@ test.describe("tryb Rysunek", () => {
     const name = L.uniq("bg");
     await L.createNew(page, "Draw", name);
     await page.locator("#tBg").click();
-    expect(await L.save(page)).toMatch(/Zapisano/);
+    expect(await L.save(page)).toBe("saved");
     let row = await L.readLogoByName(page, name);
     expect(row.payload.source.bg).toBe("WHITE");
     expect(L.litCount(row.payload.bits_b64)).toBe(150 * 70);
     await page.keyboard.press("Control+z");
     await page.waitForTimeout(300);
-    expect(await L.save(page)).toMatch(/Zapisano/);
+    expect(await L.save(page)).toBe("saved");
     row = await L.readLogoByName(page, name);
     expect(row.payload.source.bg).toBe("BLACK");
     expect(L.litCount(row.payload.bits_b64)).toBe(0);
@@ -649,16 +649,16 @@ test.describe("tryb Rysunek", () => {
     const b = await L.stage(page);
     await L.drag(page, b.x + 200, b.y + 100, b.x + 400, b.y + 250);
     await L.drag(page, b.x + 600, b.y + 100, b.x + 700, b.y + 250);
-    expect(await L.save(page)).toMatch(/Zapisano/);
+    expect(await L.save(page)).toBe("saved");
     const left0 = (await L.readLogoByName(page, name)).payload.source.fabricData.objects[0].left;
     await page.keyboard.press("v");
     await page.mouse.click(b.x + 200, b.y + 175);
     await page.keyboard.press("ArrowRight");
     await page.keyboard.press("Shift+ArrowRight");
-    expect(await L.save(page)).toMatch(/Zapisano/);
+    expect(await L.save(page)).toBe("saved");
     expect(Math.round((await L.readLogoByName(page, name)).payload.source.fabricData.objects[0].left - left0)).toBe(11);
     await page.keyboard.press("Delete");
-    expect(await L.save(page)).toMatch(/Zapisano/);
+    expect(await L.save(page)).toBe("saved");
     expect((await L.readLogoByName(page, name)).payload.source.fabricData.objects).toHaveLength(1);
   });
 
@@ -674,7 +674,7 @@ test.describe("tryb Rysunek", () => {
     await L.drag(page, b.x + 50, b.y + 50, b.x + 600, b.y + 300);
     await page.keyboard.press("Control+d");
     await page.mouse.click(b.x + b.width - 20, b.y + b.height - 20);
-    expect(await L.save(page)).toMatch(/Zapisano/);
+    expect(await L.save(page)).toBe("saved");
     const [a, c, a2, c2] = (await L.readLogoByName(page, name)).payload.source.fabricData.objects;
     expect(Math.round(a2.left - a.left)).toBe(10);
     expect(Math.round(c2.left - c.left)).toBe(10);
@@ -690,7 +690,7 @@ test.describe("tryb Rysunek", () => {
     await page.mouse.click(b.x + 200, b.y + 150);
     await page.keyboard.type("ABC");
     await page.mouse.click(b.x + b.width - 30, b.y + b.height - 30);
-    expect(await L.save(page)).toMatch(/Zapisano/);
+    expect(await L.save(page)).toBe("saved");
     const row = await L.readLogoByName(page, name);
     expect(row.payload.source.fabricData.objects.filter((o) => o.type === "i-text").map((o) => o.text)).toContain("ABC");
     expect(L.litCount(row.payload.bits_b64)).toBeGreaterThan(20);
@@ -705,7 +705,7 @@ test.describe("tryb Rysunek", () => {
       const id = await L.insertLogo(page, { name: L.uniq("retina"), type: "PIX_150x70", payload: { ...L.emptyPix, source: { mode: "DRAW", fabricData, world: { w: 1040, h: 440 } } } });
       await edit(page, id);
       await page.waitForTimeout(800);
-      expect(await L.save(page)).toMatch(/Zapisano/);
+      expect(await L.save(page)).toBe("saved");
       expect(L.litBox((await L.readLogo(page, id)).payload.bits_b64)).toEqual({ x0: 112, y0: 52, x1: 149, y1: 69 });
     });
   });
@@ -725,7 +725,7 @@ test.describe("tryb Obraz", () => {
 
     await page.setInputFiles("#imgFile", DEMO_IMAGE);
     await expect(page.locator("#cropFrame")).toBeVisible();
-    expect(await L.save(page)).toMatch(/Zapisano/);
+    expect(await L.save(page)).toBe("saved");
     const first = await L.readLogoByName(page, name);
     const url1 = first.payload.source.imageUrl;
     expect(url1).toMatch(/^https:\/\/.+\/user-logos\//);
@@ -733,7 +733,7 @@ test.describe("tryb Obraz", () => {
     await page.locator('.imgSetBtn[data-panel="bright"]').click();
     await page.locator("#rngImgBright").fill("40");
     await page.locator("#rngImgBright").dispatchEvent("input");
-    expect(await L.save(page)).toMatch(/Zapisano/);
+    expect(await L.save(page)).toBe("saved");
     const second = await L.readLogo(page, first.id);
     expect(second.payload.source.imageUrl).toBe(url1);
     expect(second.payload.source.bright).toBe(40);
@@ -744,7 +744,7 @@ test.describe("tryb Obraz", () => {
 
     await page.setInputFiles("#imgFile", OTHER_IMAGE);
     await expect(page.locator("#cropFrame")).toBeVisible();
-    expect(await L.save(page)).toMatch(/Zapisano/);
+    expect(await L.save(page)).toBe("saved");
     const third = await L.readLogo(page, first.id);
     expect(third.payload.source.imageUrl).not.toBe(url1);
     const oldStatus = await page.evaluate((u) => fetch(`${u}?t=${Date.now()}`, { cache: "no-store" }).then((r) => r.status), url1);
@@ -773,24 +773,24 @@ test.describe("tryb Obraz", () => {
     await L.createNew(page, "Image", name);
     await page.setInputFiles("#imgFile", DEMO_IMAGE);
     await expect(page.locator("#cropFrame")).toBeVisible();
-    expect(await L.save(page)).toMatch(/Zapisano/);
+    expect(await L.save(page)).toBe("saved");
     const base = (await L.readLogoByName(page, name)).payload;
 
     await page.locator("#chkImgInvert").click();
-    expect(await L.save(page)).toMatch(/Zapisano/);
+    expect(await L.save(page)).toBe("saved");
     const inv = (await L.readLogoByName(page, name)).payload;
     expect(inv.source.invert).toBe(false);
     expect(L.bitDiff(base.bits_b64, inv.bits_b64)).toBeGreaterThan(5000);
 
     await page.locator("#btnImgResetDefault").click();
     await page.waitForTimeout(300);
-    expect(await L.save(page)).toMatch(/Zapisano/);
+    expect(await L.save(page)).toBe("saved");
     expect((await L.readLogoByName(page, name)).payload.source.invert).toBe(true);
 
     // przesunięcie kadru
     const f = await page.locator("#cropFrame").boundingBox();
     await L.drag(page, f.x + f.width / 2, f.y + f.height / 2, f.x + f.width / 2 + 40, f.y + f.height / 2 + 20);
-    expect(await L.save(page)).toMatch(/Zapisano/);
+    expect(await L.save(page)).toBe("saved");
     const moved = (await L.readLogoByName(page, name)).payload;
     expect(moved.source.crop.v).toBe(2);
     expect(L.bitDiff(base.bits_b64, moved.bits_b64)).toBeGreaterThan(50);
@@ -800,7 +800,7 @@ test.describe("tryb Obraz", () => {
     await edit(page, id);
     await expect(page.locator("#cropFrame")).toBeVisible({ timeout: 15000 });
     await page.waitForTimeout(500);
-    expect(await L.save(page)).toMatch(/Zapisano/);
+    expect(await L.save(page)).toBe("saved");
     expect(L.bitDiff((await L.readLogoByName(page, name)).payload.bits_b64, moved.bits_b64)).toBeLessThanOrEqual(30);
   });
 
@@ -857,7 +857,7 @@ test.describe("tryb Obraz", () => {
     await dragFrame(800, 800, true);    // próba powiększenia ponad obraz
     expect(await margin(110)).toBeGreaterThanOrEqual(-0.5);
 
-    expect(await L.save(page)).toMatch(/Zapisano/);
+    expect(await L.save(page)).toBe("saved");
     const row = await L.readLogoByName(page, name);
     expect(row.payload.source).toMatchObject({ rotate: 90, straighten: 20 });
     expect(L.litCount(row.payload.bits_b64)).toBeGreaterThan(100);
@@ -871,7 +871,7 @@ test.describe("tryb Obraz", () => {
     // zapis bez zmian po ponownym otwarciu: dokładnie te same kropki
     await page.locator("#chkImgInvert").click();
     await page.locator("#chkImgInvert").click();
-    expect(await L.save(page)).toMatch(/Zapisano/);
+    expect(await L.save(page)).toBe("saved");
     const again = await L.readLogo(page, row.id);
     expect(again.payload.source).toMatchObject({ rotate: 90, straighten: 20 });
     expect(L.bitDiff(row.payload.bits_b64, again.payload.bits_b64)).toBe(0);
@@ -884,7 +884,7 @@ test.describe("tryb Obraz", () => {
     await page.locator("#btnImgRotR").click();
     await settled();
     expect(await margin(110)).toBeGreaterThanOrEqual(-0.5);
-    expect(await L.save(page)).toMatch(/Zapisano/);
+    expect(await L.save(page)).toBe("saved");
     expect((await L.readLogo(page, row.id)).payload.source.rotate).toBe(90);
     expect(errors).toEqual([]);
   });
@@ -1003,7 +1003,7 @@ test.describe("zgodność ze starymi danymi", () => {
       expect(blocked, "logo demo powinno dać się edytować").toBe(false);
       await expect(page.locator("#editorShell")).toBeVisible();
       await page.waitForTimeout(1500);
-      expect(await L.save(page)).toMatch(/Zapisano/);
+      expect(await L.save(page)).toBe("saved");
       const row = await L.readLogo(page, id);
       await L.close(page);
       return row;
@@ -1121,7 +1121,7 @@ test.describe("tablet (dotyk)", () => {
     expect(await page.evaluate(() => window.__drawFabric.getZoom())).toBeGreaterThan(1.2);
     expect(await objects(page)).toHaveLength(2);
 
-    expect(await L.save(page)).toMatch(/Zapisano/);
+    expect(await L.save(page)).toBe("saved");
     const row = await L.readLogoByName(page, name);
     expect(row.payload.source.fabricData.objects).toHaveLength(2);
     expect(errors).toEqual([]);
@@ -1181,7 +1181,7 @@ test.describe("tablet w pionie i obrót ekranu", () => {
     await page.setViewportSize(PORTRAIT);                                            // i z powrotem
     await page.waitForTimeout(500);
     await expect(page.locator("#editorShell")).toHaveAttribute("data-mode", "DRAW");
-    expect(await L.save(page)).toMatch(/Zapisano/);
+    expect(await L.save(page)).toBe("saved");
     const row = await L.readLogoByName(page, name);
     expect(row.payload.source.fabricData.objects).toHaveLength(2);
     expect(row.payload.source.world).toEqual({ w: 1040, h: 440 }); // świat nie zależy od orientacji
