@@ -1961,7 +1961,7 @@ const pl = {
 <li>Operator klika <span class="m-code">Zatwierdź</span>, aby potwierdzić wybór i przejść dalej.</li>
 </ul>
 <p class="m-p"><span class="m-strong">Rozłączenie urządzenia</span></p>
-<p class="m-p">Gdy wymagane urządzenie przestaje zgłaszać obecność, po około 6,5 sekundy Panel sterowania pokazuje jednorazowo okno z nazwami odłączonych urządzeń i blokuje dalsze działania. Sprawdź internet w Panelu sterowania i na urządzeniach. Jeśli połączenie nie wróci, podłącz je ponownie przyciskami w górnym pasku. Gra odblokuje się po powrocie wszystkich wymaganych urządzeń. Urządzenia pominięte w przygotowaniu nie blokują rozgrywki.</p>
+<p class="m-p">Gdy wymagane urządzenie przestaje zgłaszać obecność, po około 6,5 sekundy Panel sterowania pokazuje jednorazowo okno z nazwami odłączonych urządzeń i blokuje dalsze działania. Sprawdź internet w Panelu sterowania i na urządzeniach. Jeśli połączenie nie wróci, podłącz je ponownie przyciskami w górnym pasku. Gra odblokuje się po powrocie wszystkich wymaganych urządzeń. Jeśli źródłem dźwięku jest Wyświetlacz, po jego ponownym połączeniu odblokuj dźwięk jeszcze raz na Wyświetlaczu — przycisk pojawi się automatycznie, a panel pozostanie zablokowany do kliknięcia. Nie trzeba odświeżać strony. Urządzenia pominięte w przygotowaniu nie blokują rozgrywki.</p>
 <p class="m-p">Działania zatwierdzone przed wykryciem rozłączenia pozostają zapisane. Czynność już wysłana może jeszcze zakończyć zapis; system nie cofa wyniku. Urządzenie po powrocie pokazuje aktualny stan gry, bez powtarzania pominiętych animacji. Uruchomiony zegar nadal odlicza czas.</p>
 <h4 class="m-h3">Dźwięk</h4>
 <p class="m-p">Wybierz źródło dźwięku: „Panel sterowania” albo „Wyświetlacz”. Dźwięki gry odtwarzane są tylko na wybranym urządzeniu. Jeśli wybierasz Wyświetlacz, naciśnij na nim przycisk odblokowania dźwięku. Na telewizorze można użyć OK lub Enter na pilocie. Przeglądarka może wymagać kliknięcia, zanim pozwoli na odtwarzanie. Po podłączeniu sprawdź również poziom głośności samego telewizora lub głośników.</p>
@@ -2290,13 +2290,13 @@ const pl = {
 <p class="m-p">Przełącznik <span class="m-strong">Czy gra zawiera finał?</span> decyduje, czy gra zakończy się etapem finałowym. Gdy finał jest <span class="m-strong">wyłączony</span>, rozgrywka kończy się po rundach zasadniczych. Gdy jest <span class="m-strong">włączony</span> — dostępne stają się dodatkowe opcje wyboru pytań finałowych.</p>
 <h4 class="m-h3">Tryb pytań do rund</h4>
 <ul class="m-ul">
-<li><span class="m-strong">Losuj</span> — pytania do rund zostaną wylosowane automatycznie przy starcie rozgrywki. Nie musisz nic wybierać — system sam dobierze pytania z puli.</li>
-<li><span class="m-strong">Kolejność</span> — możesz ręcznie ustalić kolejność pytań spośród dostępnych.</li>
+<li><span class="m-strong">Losuj</span> — system tasuje pytania dostępne do rund przy wejściu do Podsumowania i pokazuje ich kolejność. Pytania wybrane ręcznie do finału są pomijane. Podczas rozgrywki wykorzystuje je kolejno, po jednym na rundę. <span class="m-code">Losuj ponownie</span> zmienia kolejność przed rozpoczęciem gry.</li>
+<li><span class="m-strong">Kolejność</span> — używane są wyłącznie pytania wybrane i ułożone w zakładce „Pytania — Rundy”, dokładnie w tej kolejności. Po wyczerpaniu tej listy nie są dobierane kolejne pytania.</li>
 </ul>
 <h4 class="m-h3">Tryb pytań do finału</h4>
 <ul class="m-ul">
-<li><span class="m-strong">Losuj</span> — 5 pytań finałowych zostanie wylosowanych automatycznie (z pominięciem pytań użytych w rundach). Losowanie odbywa się przy wejściu do kroku Podsumowanie w Panelu sterowania.</li>
-<li><span class="m-strong">Ręcznie</span> — wybierz dokładnie 5 pytań w zakładce „Pytania — Finał” Ustawień rozgrywki. Przed startem sprawdź wybór w Podsumowaniu Panelu sterowania.</li>
+<li><span class="m-strong">Losuj</span> — przy wejściu do Podsumowania system losuje 5 pytań z puli rund i usuwa je z kolejki rund, żeby nie pojawiły się ponownie podczas gry. Przy <span class="m-strong">Kolejności</span> finał losuje więc z ręcznie wybranej listy. <span class="m-code">Losuj ponownie</span> zwraca poprzednie pytania finału na koniec kolejki rund i losuje nowy zestaw; można to zrobić przed rozpoczęciem gry. Pełny finał wymaga co najmniej 5 pytań w tej puli.</li>
+<li><span class="m-strong">Ręcznie</span> — wybierz dokładnie 5 pytań w zakładce „Pytania — Finał” Ustawień rozgrywki. Te pytania są wyłączone z kolejki rund. Przed startem sprawdź wybór w Podsumowaniu Panelu sterowania.</li>
 </ul>
 <h4 class="m-h3">Dodatkowe ustawienia</h4>
 <p class="m-p">Tu dopasowujesz parametry rozgrywki do swojego formatu. Opcje nie zmieniają zasad gry, tylko jej progi i tempo.</p>
@@ -4842,10 +4842,10 @@ const pl = {
       finaleCount: "Liczba pytań finałowych",
       addFinaleQuestion: "+ Dodaj pytanie finałowe",
       finalModeLabel: "Tryb wyboru pytań finału",
-      finalModeHint: "Losowe = 5 pytań losowanych automatycznie. Ręcznie = wybierz pytania w zakładce \u201EPytania \u2014 Fina\u0142\u201D.",
+      finalModeHint: "Losowe = 5 pytań z puli rund; zostaną usunięte z kolejki rund. Ręcznie = wybierz dokładnie 5 pytań w zakładce \u201EPytania \u2014 Fina\u0142\u201D.",
       roundsSection: "Rundy",
       roundsModeLabel: "Tryb kolejności pytań rund",
-      roundsModeHint: "Losowe = każda runda losuje pytanie. Kolejność = pytania w ustalonej kolejności (zakładka \u201EPytania \u2014 Rundy\u201D).",
+      roundsModeHint: "Losowe = system tasuje pytania dostępne do rund przy wejściu do Podsumowania; ręcznie wybrane pytania finału pomija. Rundy wykorzystują pytania po kolei. Kolejność = używane są tylko pytania z zakładki \u201EPytania \u2014 Rundy\u201D, w ustalonej kolejności.",
       finalRandomRoundsOrderedWarning: "Losowy finał najpierw wybiera 5 pytań z puli rund i usuwa je z rund. Przy ponownym losowaniu poprzednie pytania finału wracają na koniec listy rund.",
     },
     finale: {
