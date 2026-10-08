@@ -6,9 +6,10 @@ nie jest wysyłany na serwer ani zapisywany w bazie.
 
 ## Przykłady i wykrywanie tła
 
-Osiem widocznych kafelków pozwala od razu wybrać przykład: białe, jednolite
-niebieskie i kremowe tło, tło wzorzyste i ciemne, białe detale, postrzępioną
-krawędź obiektu oraz obraz używany w demach. Obraz demo jest wczytywany z
+Dziesięć widocznych kafelków pozwala od razu wybrać przykład: białe,
+niebieskie, zielone i fioletowe jednolite tła, kremowe tło z cieniem, tło
+wzorzyste i ciemne, białe detale, postrzępioną krawędź obiektu oraz obraz
+używany w demach. Obraz demo jest wczytywany z
 `web/logo/assets/demo-image.png` bez przenoszenia.
 Pliki pozostałych próbek SVG są w
 `web/settings/tools/logo-background-lab/samples/`; podczas budowania strony są

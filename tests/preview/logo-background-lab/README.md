@@ -6,11 +6,11 @@ Strona w Ustawieniach jest generowana jako pojedynczy HTML:
 node tests/preview/logo-background-lab/build-settings-tool.mjs
 ```
 
-Osiem przykładowych obrazów jest widocznych jako klikalne kafelki na stronie.
+Dziesięć przykładowych obrazów jest widocznych jako klikalne kafelki na stronie.
 Pliki źródłowe SVG znajdują się w
 `web/settings/tools/logo-background-lab/samples/` i są osadzane w scalonym
-HTML podczas budowania. Przykłady sprawdzają białe i jednolite niebieskie
-tło, kremowe z cieniem,
+HTML podczas budowania. Przykłady sprawdzają białe, niebieskie, zielone i
+fioletowe jednolite tła, kremowe z cieniem,
 nietypowe i ciemne tła, białe detale oraz celowo postrzępione krawędzie
 głównego obiektu. Kafelek „Obraz z demo” wczytuje istniejący plik
 `web/logo/assets/demo-image.png` bez jego przenoszenia.

@@ -8,6 +8,8 @@ const samplesDir = path.resolve(dir, "../../../web/settings/tools/logo-backgroun
 const sampleFiles = {
   WHITE: "white.svg",
   SOLID_BLUE: "solid-blue.svg",
+  SOLID_GREEN: "solid-green.svg",
+  SOLID_VIOLET: "solid-violet.svg",
   CREAM: "cream-shadow.svg",
   PATTERN: "patterned-background.svg",
   DARK: "dark-background.svg",
