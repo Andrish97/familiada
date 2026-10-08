@@ -3437,6 +3437,25 @@ const uk = {
   },
 
   pollsHubSubscriptions: {
+    bar: {
+      title: "Підписки",
+      hintSubscribers: "Натисни плитку, щоб її виділити. Плитка з плюсом додає нового підписника.",
+      hintSubscriptions: "Виділи запрошення й прийми його. Кошик відхиляє або скасовує підписку.",
+      hintTasks: "Виділи опитування й натисни «Голосувати» (або двічі натисни плитку). Кошик відхиляє завдання.",
+    },
+    tab: {
+      subscribers: "Мої підписники",
+      subscribersShort: "Підписн.",
+      subscriptions: "Мої підписки",
+      subscriptionsShort: "Підписки",
+      tasks: "Завдання",
+    },
+    inviteModal: {
+      title: "Новий підписник",
+      sub: "Вкажи e-mail або ім'я користувача. Надішлемо запрошення до підписки.",
+      cancel: "Скасувати",
+    },
+    taskFrom: "Від: {owner}",
     dash: "-",
     title: "Familiada — підписки",
     backToGames: "Мої ігри",
@@ -3467,6 +3486,9 @@ const uk = {
       archive: "Архів",
     },
     actions: {
+      resendLong: "Надіслати знову",
+      resendShort: "Знову",
+      vote: "Голосувати",
       share: "Поділитися",
       details: "Деталі",
       decline: "Відхилити",

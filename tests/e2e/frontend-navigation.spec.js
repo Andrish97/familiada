@@ -34,9 +34,9 @@ test("zalogowany: Bazy → Subskrypcje → Bazy oraz powrót do gier", async ({ 
   await expect.poll(() => new URL(page.url()).pathname).toBe("/games/");
 });
 
-test("zalogowany: hub ankiet wraca do gier bez doklejania folderu", async ({ page }, testInfo) => {
+test("zalogowany: subskrypcje wracają do gier bez doklejania folderu", async ({ page }, testInfo) => {
   await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
-  await page.goto("/polls-hub/", { waitUntil: "networkidle" });
+  await page.goto("/subscriptions/", { waitUntil: "networkidle" });
   await page.locator("#btnBackToGames").click();
   await expect.poll(() => new URL(page.url()).pathname).toBe("/games/");
 });

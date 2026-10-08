@@ -64,7 +64,7 @@ export async function loadAnswers(questionId) {
 
 // Reguły (czy wolno edytować / grać / otworzyć lub zamknąć ankietę) liczy
 // RPC game_validate (migracja 273) -- jedno źródło prawdy dla games, editor,
-// polls, polls-hub i control. Tu tylko tłumaczymy kod błędu na tekst.
+// polls, subscriptions i control. Tu tylko tłumaczymy kod błędu na tekst.
 // Każda akcja: { ok, reason } (+ needsReset dla edit).
 const ACTIONS = ["edit", "play", "poll_entry", "poll_open", "poll_close", "export"];
 

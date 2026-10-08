@@ -102,7 +102,7 @@ let sharedBases = []; // { id, name, owner_id, created_at, updated_at, sharedRol
 let selectedId = null;
 
 // =======================================================
-// Auto-refresh (jak polls-hub)
+// Auto-refresh (jak subscriptions)
 // - co 20s
 // - tylko gdy strona widoczna
 // - nie odświeżaj gdy overlay jest otwarty (żeby nie psuć UX)
@@ -1785,7 +1785,7 @@ function initFileLaunch() {
   document.querySelectorAll('[data-skel-step]').forEach(el => el.classList.add('skel-step-ready'));
   if (!loaded) setHint(t("bases.loadFailed"));
 
-  // auto refresh jak w polls-hub
+  // auto refresh jak w subscriptions
   document.addEventListener("visibilitychange", () => {
     if (document.hidden) stopAutoRefresh();
     else startAutoRefresh();

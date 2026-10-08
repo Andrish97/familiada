@@ -1,0 +1,119 @@
+/* =========================================================
+   KARTA Z WYPUSTKAMI (wszystkie szerokości)
+   Kształt wypustek jak w games.css (.tab-active + .tab-corner), ale 3 × 1/3.
+   Tekst jest na .tab-label (nad wypustką), .tab-active jest tylko tłem.
+========================================================= */
+
+.tabs-card.hub-tabs.subs-tabs-card{
+  --tab-height: 36px;
+  --tab-extra: 1px;
+  --radius: 12px;
+  --surface: #111827;
+  --border-color: var(--line2);
+  overflow: hidden;
+}
+
+.subs-tabs-card .tabs-strip{ display: flex; gap: 0; }
+
+/* równe części, ignoruj --tab-width z games.css */
+.subs-tabs-card .tab-slot{
+  width: auto;
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.subs-tabs-card .tab-label{
+  z-index: 4; /* label zawsze nad aktywną wypustką */
+  font-weight: 1000;
+}
+
+/*
+  games.css ma efekt hover na .tab-label::before. Na touch (sticky hover)
+  wyglądałoby to jak stałe podświetlenie -- tu hover tylko na nieaktywnej
+  wypustce i tylko dla urządzeń z myszą.
+*/
+.subs-tabs-card .tab-label::before{ opacity: 0 !important; }
+@media (hover: hover) and (pointer: fine){
+  .subs-tabs-card .tab-slot:not(.active) .tab-label:hover::before{ opacity: 1 !important; }
+}
+
+.subs-tabs-card .tab-slot.active .tab-label{ color: #f9fafb; }
+.subs-tabs-card .tab-slot.active .tab-wrapper{ display: block; }
+.subs-tabs-card .tab-active{ z-index: 1; }
+
+/* skrajne wypustki: bez zewnętrznego zaokrąglenia */
+.subs-tabs-card:has(.slot-subscribers.active) .slot-subscribers .tab-corner-left,
+.subs-tabs-card:has(.slot-tasks.active) .slot-tasks .tab-corner-right{ display: none; }
+
+/* róg karty wyprostowany po stronie AKTYWNEJ wypustki */
+.subs-card{
+  border-top-left-radius: var(--radius);
+  border-top-right-radius: var(--radius);
+}
+.subs-tabs-card:has(.slot-subscribers.active) .subs-card{ border-top-left-radius: 0; }
+.subs-tabs-card:has(.slot-tasks.active) .subs-card{ border-top-right-radius: 0; }
+
+/* liczniki przy "Moje subskrypcje" i "Zadania" -- wspólny .badge (shared/css/base.css) */
+
+/* widoczna tylko aktywna sekcja; scroll w jej gridzie */
+.subs-layout{
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.subs-section{ display: none; }
+.subs-section.active{
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+.subs-section .grid{
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: 980px){
+  .tabs-card.hub-tabs.subs-tabs-card{ --tab-height: 44px; }
+}
+
+
+/* przyciski akcji zaznaczonego kafla zależą od zakładki (atrybut hidden) */
+.actions .btn[hidden]{ display: none; }
+
+/* kafel subskrypcji / zadania: nazwa, pod nią znaczniki */
+.games-body .grid .card .meta{ display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.games-body .grid .card .sub{
+  margin-top: 4px;
+  font-size: 12px;
+  line-height: 1.3;
+  opacity: .8;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.games-body .grid .card .name{ word-break: break-word; }
+.games-body .grid .card.cooldown .meta .tag--cooldown{ opacity: .85; }
+
+.subs-empty{
+  grid-column: 1 / -1;
+  text-align: center;
+  opacity: .7;
+  padding: 24px 8px;
+}
+
+/* Mobile landscape: scroll strony, bez wewnętrznych scrolli (jak bases.css) */
+@media (max-width: 980px) and (orientation: landscape){
+  .games-shell{ overflow: visible; }
+  .tabs-card.subs-tabs-card,
+  .subs-card,
+  .subs-layout,
+  .subs-section.active{
+    flex: 0 0 auto;
+    min-height: auto;
+  }
+  .subs-section .grid{ overflow: visible; }
+}

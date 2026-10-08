@@ -3450,6 +3450,25 @@ const en = {
   },
 
   pollsHubSubscriptions: {
+    bar: {
+      title: "Subscriptions",
+      hintSubscribers: "Tap a tile to select it. The plus tile adds a new subscriber.",
+      hintSubscriptions: "Select an invitation and accept it. The bin declines or cancels a subscription.",
+      hintTasks: "Select a poll and press Vote (or double-tap the tile). The bin declines the task.",
+    },
+    tab: {
+      subscribers: "My subscribers",
+      subscribersShort: "Subscribers",
+      subscriptions: "My subscriptions",
+      subscriptionsShort: "Subscript.",
+      tasks: "Tasks",
+    },
+    inviteModal: {
+      title: "New subscriber",
+      sub: "Enter an e-mail or a username. We will send a subscription invitation.",
+      cancel: "Cancel",
+    },
+    taskFrom: "From: {owner}",
     dash: "-",
     title: "Familiada — subscriptions",
     backToGames: "My games",
@@ -3480,6 +3499,9 @@ const en = {
       archive: "Archive",
     },
     actions: {
+      resendLong: "Resend invitation",
+      resendShort: "Resend",
+      vote: "Vote",
       share: "Share",
       details: "Details",
       decline: "Decline",

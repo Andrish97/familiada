@@ -50,7 +50,6 @@ const baseUrls = document.body?.dataset || {};
 const confirmUrl = baseUrls.confirmUrl || "confirm";
 const resetUrl = baseUrls.resetUrl || "reset";
 const gamesUrl = baseUrls.gamesUrl || "/games/";
-const pollsUrl = baseUrls.pollsUrl;
 const subscriptionsUrl = baseUrls.subscriptionsUrl;
 const captchaProvider = String(baseUrls.captchaProvider || "hcaptcha").trim().toLowerCase();
 const captchaSiteKey = String(baseUrls.captchaSiteKey || "").trim();
@@ -557,12 +556,15 @@ function buildAuthRedirect(page) {
 }
 
 function buildNextUrl() {
-  const target = nextTarget === "subscriptions" ? subscriptionsUrl : pollsUrl;
+  const target = subscriptionsUrl;
   if (!target) throw new Error(t("index.statusError"));
   const url = new URL(target.startsWith("/") ? target : `/${target}`, location.origin);
 
   if (nextTarget === "subscriptions" && nextSub) url.searchParams.set("s", nextSub);
-  if (nextTarget === "polls-hub" && nextTask) url.searchParams.set("t", nextTask);
+  if (nextTarget === "tasks") {
+    url.searchParams.set("tab", "tasks");
+    if (nextTask) url.searchParams.set("t", nextTask);
+  }
 
   url.searchParams.set("lang", getUiLang());
   return url.toString();
@@ -836,7 +838,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       await syncLanguage();
       if (setupUsername || !u.username) {
         openUsernameSetup();
-      } else if (nextTarget === "polls-hub" || nextTarget === "subscriptions") {
+      } else if (nextTarget === "tasks" || nextTarget === "subscriptions") {
         location.href = buildNextUrl();
       } else {
         location.href = withLangParam(gamesUrl);
@@ -1034,7 +1036,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         await syncLanguage();
         if (!authed?.username) {
           openUsernameSetup();
-        } else if (nextTarget === "polls-hub" || nextTarget === "subscriptions") {
+        } else if (nextTarget === "tasks" || nextTarget === "subscriptions") {
           location.href = buildNextUrl();
         } else {
           location.href = withLangParam(gamesUrl);

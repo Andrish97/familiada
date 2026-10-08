@@ -84,7 +84,7 @@ const PAGE_ROUTES = new Set([
   "game-settings", "games", "host", "login",
   "logo", "logo/editor-draw", "logo/editor-image", "logo/editor-text",
   "maintenance", "manual", "marketplace", "poll-go",
-  "poll-points", "poll-qr", "poll-text", "polls", "polls-hub", "privacy",
+  "poll-points", "poll-qr", "poll-text", "polls", "privacy",
   "reset", "subscriptions",
 ]);
 

@@ -52,8 +52,9 @@ async function closeAlert(page, expected) {
 }
 
 async function inviteRegistered(page, recipient) {
-  await page.locator("#inviteInputDesktop").fill(recipient);
-  await page.locator("#btnInviteDesktop").click();
+  await page.locator("#subscribersGrid .addCard").click();
+  await page.locator("#inviteInput").fill(recipient);
+  await page.locator("#btnInviteOk").click();
   await closeAlert(page, /Zaproszenie zapisane|wysyłka maila nie powiodła się/);
 }
 
@@ -67,16 +68,17 @@ test("pełny przepływ: zaproszenie, akceptacja i anulowanie z czystym stanem", 
     await openSubscriptions(owner.page);
     await inviteRegistered(owner.page, testAccountUsername(8));
 
-    await expect(owner.page.locator("#subscribersListDesktop")).toContainText(/test8/i);
-    await expect(owner.page.locator("#subscribersListDesktop")).toContainText("Oczekujące");
+    await expect(owner.page.locator("#subscribersGrid")).toContainText(/test8/i);
+    await expect(owner.page.locator("#subscribersGrid")).toContainText("Oczekujące");
 
-    await openSubscriptions(subscriber.page);
-    const subscriptionRow = subscriber.page.locator("#subscriptionsListDesktop .hub-item").filter({ hasText: /test7/i });
+    await openSubscriptions(subscriber.page, "?tab=subscriptions");
+    const subscriptionRow = subscriber.page.locator("#subscriptionsGrid .card").filter({ hasText: /test7/i });
     await expect(subscriptionRow).toContainText("Oczekujące");
-    await subscriptionRow.getByRole("button", { name: "Akceptuj" }).click();
+    await subscriptionRow.click();
+    await subscriber.page.locator("#btnAccept").click();
     await expect(subscriptionRow).toContainText("Aktywny");
 
-    await subscriptionRow.getByRole("button", { name: "Anuluj" }).click();
+    await subscriptionRow.locator(".x").click();
     const confirm = subscriber.page.locator(".uni-modal");
     await expect(confirm).toContainText("anulować tę subskrypcję");
     await confirm.getByRole("button", { name: "Anuluj subskrypcję" }).click();
@@ -84,7 +86,7 @@ test("pełny przepływ: zaproszenie, akceptacja i anulowanie z czystym stanem", 
 
     await owner.page.reload({ waitUntil: "domcontentloaded" });
     await expect(owner.page.locator("[data-skel-step]").first()).toHaveClass(/skel-step-ready/);
-    await expect(owner.page.locator("#subscribersListDesktop")).not.toContainText(/test8/i);
+    await expect(owner.page.locator("#subscribersGrid")).not.toContainText(/test8/i);
   } finally {
     await cleanupPair(owner.page, subscriberId).catch(() => {});
     await owner.context.close();
@@ -157,12 +159,13 @@ test("token innego konta: modal wylogowuje zamiast rzucać ReferenceError", asyn
 test("niepoprawny adres nie czyści pola i nie pozostawia aktywnego progressu", async ({ page, context }) => {
   await loginAsTestUser(page, context, { username: testAccountUsername(7) });
   await openSubscriptions(page);
-  await page.locator("#inviteInputDesktop").fill("błędny@adres");
-  await page.locator("#btnInviteDesktop").click();
+  await page.locator("#subscribersGrid .addCard").click();
+  await page.locator("#inviteInput").fill("błędny@adres");
+  await page.locator("#btnInviteOk").click();
   await closeAlert(page, "Niepoprawny e-mail");
-  await expect(page.locator("#inviteInputDesktop")).toHaveValue("błędny@adres");
+  await expect(page.locator("#inviteInput")).toHaveValue("błędny@adres");
   await expect(page.locator("#progressOverlay")).toBeHidden();
-  await expect(page.locator("#btnInviteDesktop")).toBeEnabled();
+  await expect(page.locator("#btnInviteOk")).toBeEnabled();
 });
 
 test("ret nie pozwala opuścić originu, a poprawny powrót jest zachowany", async ({ page, context }) => {
@@ -172,13 +175,12 @@ test("ret nie pozwala opuścić originu, a poprawny powrót jest zachowany", asy
   await page.locator("#btnBackToGames").click();
   await page.waitForURL((url) => url.origin === "https://www.familiada.online" && url.pathname === "/games");
 
-  await openSubscriptions(page, "?ret=%2Fpolls-hub%3Flang%3Den");
-  await expect(page.locator("#btnBackToGames")).toContainText("Centrum ankiet");
+  await openSubscriptions(page, "?ret=%2Fbases%3Flang%3Den");
   await page.locator("#btnBackToGames").click();
-  await page.waitForURL((url) => url.pathname === "/polls-hub" && url.searchParams.get("lang") === "en");
+  await page.waitForURL((url) => url.pathname === "/bases" && url.searchParams.get("lang") === "en");
 });
 
-test("PL/EN/UK oraz mobilne zakładki mają poprawną semantykę i klawiaturę", async ({ browser }) => {
+test("PL/EN/UK oraz zakładki mają poprawną semantykę, klawiaturę i ?tab= w adresie", async ({ browser }) => {
   const mobile = await newUser(browser, 7, { width: 390, height: 844 });
   try {
     const cases = [
@@ -191,14 +193,21 @@ test("PL/EN/UK oraz mobilne zakładki mają poprawną semantykę i klawiaturę",
       await expect(mobile.page.locator(".bar .title")).toHaveText(item.title);
     }
 
+    await openSubscriptions(mobile.page);
+    await expect(mobile.page.getByRole("tab")).toHaveCount(3);
     const first = mobile.page.getByRole("tab").first();
     const second = mobile.page.getByRole("tab").nth(1);
     await first.focus();
     await first.press("ArrowRight");
     await expect(second).toBeFocused();
     await expect(second).toHaveAttribute("aria-selected", "true");
-    await expect(mobile.page.locator("#panelSubscriptionsMobile")).toBeVisible();
-    await expect(mobile.page.locator("#panelSubscribersMobile")).toBeHidden();
+    await expect(mobile.page.locator("#subsSectionSubscriptions")).toBeVisible();
+    await expect(mobile.page.locator("#subsSectionSubscribers")).toBeHidden();
+    expect(new URL(mobile.page.url()).searchParams.get("tab")).toBe("subscriptions");
+
+    await openSubscriptions(mobile.page, "?tab=tasks");
+    await expect(mobile.page.locator("#subsSectionTasks")).toBeVisible();
+    await expect(mobile.page.getByRole("tab").nth(2)).toHaveAttribute("aria-selected", "true");
   } finally {
     await mobile.context.close();
   }

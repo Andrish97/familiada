@@ -109,8 +109,6 @@ const btnSettings = document.getElementById("btnSettings");
 const btnManual = document.getElementById("btnManual");
 const btnLogoEditor = document.getElementById("btnLogoEditor");
 const btnBases = document.getElementById("btnBases");
-const btnPollsHub = document.getElementById("btnPollsHub");
-const pollsHubBadge = document.getElementById("pollsHubBadge");
 const btnSubscriptionsHub = document.getElementById("btnSubscriptionsHub");
 const subscriptionsHubBadge = document.getElementById("subscriptionsHubBadge");
 const navMore = document.getElementById("navMore");
@@ -192,7 +190,7 @@ let nameMode = "rename"; // "rename" | "create"
 let creatingUiType = null;
 
 // =======================================================
-// Auto-refresh (jak polls-hub)
+// Auto-refresh
 // - co 20s
 // - tylko gdy karta widoczna
 // - nie odświeżaj gdy overlay/progress jest otwarty
@@ -1163,9 +1161,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   await maybeShowGuestInfoModal(currentUser);
   maybeShowGuestMigrateReminder(currentUser);
 
-  if (hideForGuest(currentUser, [btnPollsHub, btnSubscriptionsHub])) {
+  if (hideForGuest(currentUser, [btnSubscriptionsHub])) {
     // data-nav-hidden prevents recalc() from resetting display on these buttons
-    if (btnPollsHub) btnPollsHub.dataset.navHidden = "true";
     if (btnSubscriptionsHub) btnSubscriptionsHub.dataset.navHidden = "true";
   }
 
@@ -1292,11 +1289,10 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (error) throw error;
 
       const row = Array.isArray(data) ? data[0] : data;
-      setNavBadge(pollsHubBadge, Number(row?.tasks_pending ?? 0));
-      setNavBadge(subscriptionsHubBadge, Number(row?.subs_pending ?? 0));
+      // jeden przycisk „Subskrypcje”: zaproszenia + zadania do wypełnienia
+      setNavBadge(subscriptionsHubBadge, Number(row?.subs_pending ?? 0) + Number(row?.tasks_pending ?? 0));
     } catch (e){
       // jak RPC nie istnieje / nie zwróci pól — nie blokujemy UI
-      setNavBadge(pollsHubBadge, 0);
       setNavBadge(subscriptionsHubBadge, 0);
     }
   }
@@ -1398,10 +1394,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   btnBases?.addEventListener("click", async () => {
     location.href = "/bases/?from=games";
-  });
-
-  btnPollsHub?.addEventListener("click", () => {
-    location.href = "/polls-hub/?from=games";
   });
 
   btnSubscriptionsHub?.addEventListener("click", () => {
@@ -1939,7 +1931,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   }
 
-  // auto refresh jak w polls-hub
+  // auto refresh
   document.addEventListener("visibilitychange", () => {
     if (document.hidden) stopAutoRefresh();
     else startAutoRefresh();

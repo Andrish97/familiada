@@ -3339,6 +3339,25 @@ const pl = {
   },
 
   pollsHubSubscriptions: {
+    bar: {
+      title: "Subskrypcje",
+      hintSubscribers: "Naciśnij kafelek, żeby go zaznaczyć. Plus dodaje nowego subskrybenta.",
+      hintSubscriptions: "Zaznacz zaproszenie i zaakceptuj je. Kosz odrzuca lub anuluje subskrypcję.",
+      hintTasks: "Zaznacz ankietę i naciśnij Głosuj (albo naciśnij kafelek dwa razy). Kosz odrzuca zadanie.",
+    },
+    tab: {
+      subscribers: "Moi subskrybenci",
+      subscribersShort: "Subskryb.",
+      subscriptions: "Moje subskrypcje",
+      subscriptionsShort: "Subskrypc.",
+      tasks: "Zadania",
+    },
+    inviteModal: {
+      title: "Nowy subskrybent",
+      sub: "Podaj e-mail lub nazwę użytkownika. Wyślemy zaproszenie do subskrypcji.",
+      cancel: "Anuluj",
+    },
+    taskFrom: "Od: {owner}",
     dash: "-",
     title: "Familiada — subskrypcje",
     backToGames: "Moje gry",
@@ -3369,6 +3388,9 @@ const pl = {
       archive: "Archiwalne",
     },
     actions: {
+      resendLong: "Ponów zaproszenie",
+      resendShort: "Ponów",
+      vote: "Głosuj",
       share: "Udostępnij",
       details: "Szczegóły",
       decline: "Odrzuć",

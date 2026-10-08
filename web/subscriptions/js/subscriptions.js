@@ -2,12 +2,13 @@ import { sb, SUPABASE_URL } from "../../shared/js/core/supabase.js?v=v2026-10-08
 import { requireAuth, signOut } from "../../shared/js/core/auth.js?v=v2026-10-08T07385";
 import { isGuestUser, showGuestBlockedOverlay } from "../../shared/js/core/guest-mode.js?v=v2026-10-08T07385";
 import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-08T07385";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-08T07385";
 import { getUiLang, initI18n, t } from "../../shared/translation/translation.js?v=v2026-10-08T07385";
 import { initTopbarAccountDropdown } from "../../shared/js/core/topbar-controller.js?v=v2026-10-08T07385";
 import "../../shared/js/core/contact-modal.js?v=v2026-10-08T07385";
 import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-08T07385";
 import { createCooldownTicker } from "../../shared/js/core/cooldown.js?v=v2026-10-08T07385";
+import { enterModalSheet, exitModalSheet, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-08T07385";
+import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-08T07385";
 
 const i18nReady = initI18n({ withSwitcher: true }).catch((err) => {
   console.error("[subscriptions] i18n nieaktywny:", err);
@@ -22,7 +23,9 @@ function escapeHtml(s) {
 }
 const qs = new URLSearchParams(location.search);
 const focusInviteToken = qs.get("s");
+const focusTaskToken = qs.get("t");
 let focusInviteHandled = false;
+let focusTaskHandled = false;
 let subTokenPrompted = false;
 
 function getRetParam() {
@@ -56,29 +59,22 @@ function getCurrentRelativeUrl() {
 }
 
 const who = $("who");
-const btnLogout = $("btnLogout");
 const btnBack = $("btnBackToGames");
 const btnManual = $("btnManual");
+const hintEl = $("hint");
 
-const tabA = $("tabSubscribersMobile");
-const tabB = $("tabSubscriptionsMobile");
-const panelA = $("panelSubscribersMobile");
-const panelB = $("panelSubscriptionsMobile");
+const TABS = ["subscribers", "subscriptions", "tasks"];
+const tabBtns = { subscribers: $("tabSubscribers"), subscriptions: $("tabSubscriptions"), tasks: $("tabTasks") };
+const sections = { subscribers: $("subsSectionSubscribers"), subscriptions: $("subsSectionSubscriptions"), tasks: $("subsSectionTasks") };
+const grids = { subscribers: $("subscribersGrid"), subscriptions: $("subscriptionsGrid"), tasks: $("tasksGrid") };
 
-const listAD = $("subscribersListDesktop");
-const listAM = $("subscribersListMobile");
-const listBD = $("subscriptionsListDesktop");
-const listBM = $("subscriptionsListMobile");
+const btnResend = $("btnResend");
+const btnAccept = $("btnAccept");
+const btnVote = $("btnVote");
 
-const sortAD = $("sortSubscribersDesktop");
-const sortAM = $("sortSubscribersMobile");
-const sortBD = $("sortSubscriptionsDesktop");
-const sortBM = $("sortSubscriptionsMobile");
-
-const inviteInputDesktop = $("inviteInputDesktop");
-const inviteInputMobile = $("inviteInputMobile");
-const btnInviteDesktop = $("btnInviteDesktop");
-const btnInviteMobile = $("btnInviteMobile");
+const inviteOverlay = $("inviteOverlay");
+const inviteInput = $("inviteInput");
+const btnInviteOk = $("btnInviteOk");
 
 const progressOverlay = $("progressOverlay");
 const progressStep = $("progressStep");
@@ -92,6 +88,7 @@ const MSG = {
   dash: () => t("pollsHubSubscriptions.dash"),
   emptySubscribers: () => t("pollsHubSubscriptions.empty.subscribers"),
   emptySubscriptions: () => t("pollsHubSubscriptions.empty.subscriptions"),
+  emptyTasks: () => t("pollsHubSubscriptions.empty.tasks"),
   invalidEmail: () => t("pollsHubSubscriptions.errors.invalidEmail"),
   unknownUser: () => t("pollsHubSubscriptions.errors.unknownUser"),
   inviteFail: () => t("pollsHubSubscriptions.errors.invite"),
@@ -102,8 +99,10 @@ const MSG = {
   removeFail: () => t("pollsHubSubscriptions.errors.removeSubscriber"),
   acceptFail: () => t("pollsHubSubscriptions.errors.acceptSubscription"),
   updateFail: () => t("pollsHubSubscriptions.errors.updateSubscription"),
+  declineTaskFail: () => t("pollsHubSubscriptions.errors.declineTask"),
   loadFail: () => t("pollsHubSubscriptions.errors.loadHub"),
   focusPrompt: () => t("pollsHubSubscriptions.confirm.focusSub"),
+  focusTaskPrompt: () => t("pollsHubSubscriptions.confirm.focusTask"),
   statusLabel: (s) => t(`pollsHubSubscriptions.status.${s}`),
   removeTitle: () => t("pollsHubSubscriptions.modal.removeSubscriber.title"),
   removeText: () => t("pollsHubSubscriptions.modal.removeSubscriber.text"),
@@ -114,12 +113,14 @@ const MSG = {
   updateTextActive: () => t("pollsHubSubscriptions.modal.updateSubscription.textActive"),
   updateOkPending: () => t("pollsHubSubscriptions.modal.updateSubscription.okPending"),
   updateOkActive: () => t("pollsHubSubscriptions.modal.updateSubscription.okActive"),
-resendCooldownAlert: (untilTsMs) => cooldownTextFromUntil(untilTsMs),
+  declineTaskTitle: () => t("pollsHubSubscriptions.modal.declineTask.title"),
+  declineTaskText: () => t("pollsHubSubscriptions.modal.declineTask.text"),
+  declineTaskOk: () => t("pollsHubSubscriptions.modal.declineTask.ok"),
+  declineTaskCancel: () => t("pollsHubSubscriptions.modal.declineTask.cancel"),
   tokenMismatchTitle: () => t("pollsHubSubscriptions.modal.tokenMismatch.title"),
   tokenMismatchText: () => t("pollsHubSubscriptions.modal.tokenMismatch.text"),
   tokenMismatchOk: () => t("pollsHubSubscriptions.modal.tokenMismatch.ok"),
 };
-
 
 async function callSubscriptionAction(row, action) {
   if (!row?.sub_id) throw new Error("missing_subscription_id");
@@ -143,12 +144,9 @@ async function callOkRpc(name, args) {
 
 let subscribers = [];
 let invites = [];
+let tasks = [];
 
-const archiveState = { subscribers: false, subscriptions: false };
-const sortState = { subscribers: "newest", subscriptions: "newest" };
-const sortSelects = new Map();
 const COOLDOWN_MS = 24 * 60 * 60 * 1000;
-const PENDING_ARCHIVE_MS = 5 * 24 * 60 * 60 * 1000;
 
 function setProgress({ show = false, step = "—", i = 0, n = 0, msg = "" } = {}) {
   if (progressOverlay) progressOverlay.style.display = show ? "grid" : "none";
@@ -159,10 +157,6 @@ function setProgress({ show = false, step = "—", i = 0, n = 0, msg = "" } = {}
 }
 
 function parseDate(value) { return value ? new Date(value).getTime() : 0; }
-function isPendingOld(r) {
-  const base = parseDate(r.email_sent_at) || parseDate(r.created_at);
-  return base ? (Date.now() - base > PENDING_ARCHIVE_MS) : false;
-}
 function cooldownUntil(ts) {
   const base = parseDate(ts);
   return base ? base + COOLDOWN_MS : 0;
@@ -189,14 +183,12 @@ function cooldownTextFromUntil(untilTsMs) {
     : "pollsHubSubscriptions.cooldownLeftHours", { n });
 }
 
-// Mechanizm (żywe odliczanie + auto-disable) z wspólnego js/core/cooldown.js,
-// ale FORMAT tekstu zostaje własny, lokalnie zlokalizowany (cooldownTextFromUntil
-// powyżej) -- zastąpienie go gołym "Xh Ym" z cooldown.js byłoby regresją i18n.
-// resetBindings() na początku każdego renderSubscribers(), bo lista jest
-// przebudowywana w całości przy każdym odświeżeniu.
+// Mechanizm (żywe odliczanie) z wspólnego js/core/cooldown.js, ale FORMAT
+// tekstu zostaje własny, lokalnie zlokalizowany (cooldownTextFromUntil).
+// resetBindings() na początku każdego renderu listy subskrybentów, bo kafle
+// są przebudowywane w całości przy każdym odświeżeniu.
 const resendCooldownTicker = createCooldownTicker();
 resendCooldownTicker.start();
-
 
 function mailLink(path, { withLang = false } = {}) {
   let u;
@@ -316,281 +308,317 @@ async function sendSubscriptionEmail({ to, link, ownerLabel, unsubToken, isRegis
   });
 }
 
-function statusOrder(status) {
-  if (status === "active") return 0;
-  if (status === "pending") return 1;
-  return 2;
+
+function setBadge(id, count) {
+  const el = $(id);
+  if (el) el.textContent = count > 99 ? "99+" : (count > 0 ? String(count) : "");
 }
 
-function setBadge(name, count) {
-  document.querySelectorAll(`[data-badge="${name}"]`).forEach((el) => {
-    el.textContent = count > 99 ? "99+" : (count > 0 ? String(count) : "");
-  });
+// ===== zakładki + zaznaczenie =====
+
+let activeTab = "subscribers";
+let selected = null; // { tab, id }
+
+function tabFromUrl() {
+  const tab = new URLSearchParams(location.search).get("tab");
+  if (TABS.includes(tab)) return tab;
+  return focusTaskToken ? "tasks" : "subscribers";
 }
 
-function renderEmpty(el, txt) {
-  if (!el) return;
-  el.innerHTML = `<div class="hub-empty">${txt}</div>`;
+function setActiveTab(tab) {
+  activeTab = TABS.includes(tab) ? tab : "subscribers";
+  const url = new URL(location.href);
+  if (url.searchParams.get("tab") !== activeTab) {
+    url.searchParams.set("tab", activeTab);
+    history.replaceState(history.state, "", url);
+  }
+  for (const k of TABS) {
+    const on = k === activeTab;
+    sections[k]?.classList.toggle("active", on);
+    tabBtns[k]?.closest(".tab-slot")?.classList.toggle("active", on);
+    tabBtns[k]?.setAttribute("aria-selected", on ? "true" : "false");
+  }
+  const hintKey = { subscribers: "hintSubscribers", subscriptions: "hintSubscriptions", tasks: "hintTasks" }[activeTab];
+  if (hintEl) hintEl.textContent = t(`pollsHubSubscriptions.bar.${hintKey}`);
+  document.querySelectorAll(".actions [data-for]").forEach((b) => { b.hidden = b.dataset.for !== activeTab; });
+  updateActions();
 }
 
-function sortList(kind, list) {
-  const sorted = [...list];
-  const key = sortState[kind];
-  const byName = (a, b) => String((a.subscriber_label || a.owner_label || "")).localeCompare(String((b.subscriber_label || b.owner_label || "")));
-  if (key === "name-asc") sorted.sort(byName);
-  else if (key === "name-desc") sorted.sort((a, b) => byName(b, a));
-  else if (key === "status") sorted.sort((a, b) => statusOrder(a.status) - statusOrder(b.status));
-  else if (key === "oldest") sorted.sort((a, b) => parseDate(a.created_at) - parseDate(b.created_at));
-  else sorted.sort((a, b) => parseDate(b.created_at) - parseDate(a.created_at));
-  return sorted;
+function selectedRow() {
+  if (!selected) return null;
+  const list = selected.tab === "subscribers" ? subscribers : selected.tab === "subscriptions" ? invites : tasks;
+  const key = selected.tab === "tasks" ? "task_id" : "sub_id";
+  return list.find((r) => String(r[key]) === String(selected.id)) || null;
 }
+
+function selectTile(tab, id) {
+  selected = selected && selected.tab === tab && String(selected.id) === String(id) ? null : { tab, id };
+  for (const k of TABS) {
+    grids[k]?.querySelectorAll(".card").forEach((el) => {
+      el.classList.toggle("selected", !!selected && selected.tab === k && el.dataset.id === String(selected.id));
+    });
+  }
+  updateActions();
+}
+
+function updateActions() {
+  const row = selected && selected.tab === activeTab ? selectedRow() : null;
+  if (btnResend) btnResend.disabled = !(row && activeTab === "subscribers" && row.status === "pending");
+  if (btnAccept) btnAccept.disabled = !(row && activeTab === "subscriptions" && row.status === "pending");
+  if (btnVote) btnVote.disabled = !(row && activeTab === "tasks" && row.status === "pending" && row.token);
+}
+
+function sortNewest(list) {
+  return [...list].sort((a, b) => parseDate(b.created_at) - parseDate(a.created_at));
+}
+
+function tagHtml(variant, text) {
+  return `<span class="tag ${variant} tileBadge">${escapeHtml(text)}</span>`;
+}
+
+function statusTagHtml(status) {
+  const variant = status === "active" ? "tag--ok" : status === "declined" ? "tag--bad" : "tag--warn";
+  return tagHtml(variant, MSG.statusLabel(status));
+}
+
+function renderEmptyTile(el, txt) {
+  const d = document.createElement("div");
+  d.className = "subs-empty";
+  d.textContent = txt;
+  el.appendChild(d);
+}
+
+function trashButtonHtml(title) {
+  return `<button class="x" type="button" title="${escapeHtml(title)}" aria-label="${escapeHtml(title)}">${icon("trash")}</button>`;
+}
+
+function buildTile(tab, id, { name, sub = "", metaHtml = "", trashTitle = "" }) {
+  const tile = document.createElement("div");
+  tile.className = "card";
+  tile.dataset.id = String(id);
+  if (selected && selected.tab === tab && String(selected.id) === String(id)) tile.classList.add("selected");
+  tile.innerHTML = `
+    ${trashTitle ? trashButtonHtml(trashTitle) : ""}
+    <div>
+      <div class="name">${escapeHtml(name)}</div>
+      ${sub ? `<div class="sub">${sub}</div>` : ""}
+      <div class="meta">${metaHtml}</div>
+    </div>`;
+  // zaznaczenie nie przebudowuje kafli -- tylko przełącza klasę
+  tile.addEventListener("click", () => selectTile(tab, id));
+  return tile;
+}
+
+// ===== Moi subskrybenci =====
 
 function renderSubscribers() {
-  const visible = subscribers.filter((s) => {
-    if (s.status === "cancelled") return false;
-    if (s.status === "declined") return !s.is_expired;
-    if (archiveState.subscribers) return s.status === "pending" && isPendingOld(s);
-    if (s.status === "active") return true;
-    if (s.status === "pending") return !isPendingOld(s);
-    return false;
-  });
-  const sorted = sortList("subscribers", visible);
-  resendCooldownTicker.resetBindings();
-  const render = (el) => {
-    if (!el) return;
-    el.innerHTML = "";
-    if (!sorted.length) return renderEmpty(el, MSG.emptySubscribers());
-    for (const row of sorted) {
-      const item = document.createElement("div");
-      item.className = `hub-item ${row.status === "active" ? "sub-active" : row.status === "declined" ? "sub-declined" : "sub-pending"}`;
-      item.innerHTML = `<div><div class="hub-item-title">${escapeHtml(row.subscriber_label || MSG.dash())}</div><div class="hub-item-sub">${MSG.statusLabel(row.status)}</div></div><div class="hub-item-actions"></div>`;
-      const actions = item.querySelector(".hub-item-actions");
-
-      if (row.status !== "declined") {
-        const removeBtn = document.createElement("button");
-        removeBtn.className = "btn xs danger";
-        removeBtn.type = "button";
-        removeBtn.setAttribute("aria-label", t("pollsHubSubscriptions.actions.remove"));
-        removeBtn.title = t("pollsHubSubscriptions.actions.remove");
-        removeBtn.innerHTML = icon("trash");
-        removeBtn.addEventListener("click", async (e) => {
-          e.stopPropagation();
-          const ok = await confirmModal({ title: MSG.removeTitle(), text: MSG.removeText(), okText: MSG.removeOk(), cancelText: MSG.removeCancel() });
-          if (!ok) return;
-          try {
-            removeBtn.disabled = true;
-            await callOkRpc("polls_hub_subscriber_remove", { p_id: row.sub_id });
-            await refreshData();
-          } catch {
-            await alertModal({ text: MSG.removeFail() });
-          } finally {
-            removeBtn.disabled = false;
-          }
-        });
-        actions?.appendChild(removeBtn);
-      }
-
-      if (row.status === "pending") {
-        const resendBtn = document.createElement("button");
-        resendBtn.className = "btn xs";
-        resendBtn.type = "button";
-        resendBtn.setAttribute("aria-label", t("pollsHubSubscriptions.actions.resend"));
-        resendBtn.title = t("pollsHubSubscriptions.actions.resend");
-        resendBtn.innerHTML = icon("refresh");
-        const until = cooldownUntil(row.email_sent_at);
-        resendCooldownTicker.bind({
-          key: `resend:${row.sub_id}`,
-          disableEls: [resendBtn],
-          onTick: (rem, active) => {
-            resendBtn.classList.toggle("cooldown", active);
-            if (active) resendBtn.title = MSG.resendCooldownAlert(Date.now() + rem);
-            else resendBtn.title = t("pollsHubSubscriptions.actions.resend");
-          },
-        });
-        resendCooldownTicker.setEndMs(`resend:${row.sub_id}`, until);
-        resendBtn.addEventListener("click", async (e) => {
-          e.stopPropagation();
-          try {
-            if (resendCooldownTicker.getRemainingMs(`resend:${row.sub_id}`) > 0) {
-              await alertModal({ text: MSG.resendCooldownAlert(Date.now() + resendCooldownTicker.getRemainingMs(`resend:${row.sub_id}`)) });
-              return;
-            }
-            resendBtn.disabled = true;
-            const { data, error } = await sb().rpc("polls_hub_subscriber_resend", { p_id: row.sub_id });
-            if (error) throw error;
-            if (data?.ok === false) {
-              if (data?.err === "cooldown") {
-                const untilTs = parseDate(data?.cooldown_until) || (Date.now() + 24 * 60 * 60 * 1000);
-                resendCooldownTicker.setEndMs(`resend:${row.sub_id}`, untilTs);
-                await alertModal({ text: MSG.resendCooldownAlert(untilTs) });
-                return;
-              }
-              throw new Error(data?.err || "fail");
-            }
-            if (data?.to && data?.link) {
-              const ownerLabel = who?.querySelector('.account-who')?.textContent || "Familiada";
-              try {
-                await sendSubscriptionEmail({ to: data.to, link: data.link, ownerLabel, unsubToken: data.unsub_token || null, isRegistered: !!data.registered });
-              } catch {
-                await alertModal({ text: MSG.resendMailFailed() });
-                await refreshData();
-                return;
-              }
-            }
-            await refreshData();
-          } catch {
-            await alertModal({ text: MSG.resendFail() });
-          } finally {
-            resendBtn.disabled = false;
-          }
-        });
-        actions?.appendChild(resendBtn);
-      }
-      el.appendChild(item);
-    }
-  };
-  render(listAD);
-  render(listAM);
-}
-
-function renderInvites() {
-  const visible = invites.filter((s) => {
-    if (s.status === "cancelled") return false;
-    if (s.status === "declined") return !s.is_expired;
-    if (archiveState.subscriptions) return s.status === "pending" && isPendingOld(s);
-    if (s.status === "active") return true;
-    if (s.status === "pending") return !isPendingOld(s);
-    return false;
-  });
-  const sorted = sortList("subscriptions", visible);
-  const render = (el) => {
-    if (!el) return;
-    el.innerHTML = "";
-    if (!sorted.length) return renderEmpty(el, MSG.emptySubscriptions());
-    for (const row of sorted) {
-      const item = document.createElement("div");
-      item.className = `hub-item ${row.status === "active" ? "sub-active" : row.status === "declined" ? "sub-declined" : "sub-pending"}`;
-      item.innerHTML = `<div><div class="hub-item-title">${escapeHtml(row.owner_label || MSG.dash())}</div><div class="hub-item-sub">${MSG.statusLabel(row.status)}</div></div><div class="hub-item-actions"></div>`;
-      const actions = item.querySelector(".hub-item-actions");
-
-      if (row.status !== "declined") {
-        const reject = document.createElement("button");
-        reject.className = "btn xs danger";
-        reject.type = "button";
-        reject.setAttribute("aria-label", t(`pollsHubSubscriptions.actions.${row.status === "pending" ? "decline" : "cancel"}`));
-        reject.title = t(`pollsHubSubscriptions.actions.${row.status === "pending" ? "decline" : "cancel"}`);
-        reject.innerHTML = icon("cancel");
-        reject.addEventListener("click", async (e) => {
-          e.stopPropagation();
-          const isPending = row.status === "pending";
-          const ok = await confirmModal({
-            title: MSG.updateTitle(),
-            text: isPending ? MSG.updateTextPending() : MSG.updateTextActive(),
-            okText: isPending ? MSG.updateOkPending() : MSG.updateOkActive(),
-            // Dolny przycisk "Zamknij" zbędny — modal zamyka X w nagłówku.
-            showCancel: false,
-          });
-          if (!ok) return;
-          try {
-            reject.disabled = true;
-            await callSubscriptionAction(row, isPending ? "reject" : "cancel");
-            await refreshData();
-          } catch {
-            await alertModal({ text: MSG.updateFail() });
-          } finally {
-            reject.disabled = false;
-          }
-        });
-        actions?.appendChild(reject);
-      }
-
-      if (row.status === "pending") {
-        const accept = document.createElement("button");
-        accept.className = "btn xs gold";
-        accept.type = "button";
-        accept.setAttribute("aria-label", t("pollsHubSubscriptions.actions.accept"));
-        accept.title = t("pollsHubSubscriptions.actions.accept");
-        accept.innerHTML = icon("check");
-        accept.addEventListener("click", async (e) => {
-          e.stopPropagation();
-          try {
-            accept.disabled = true;
-            await callSubscriptionAction(row, "accept");
-            await refreshData();
-          } catch {
-            await alertModal({ text: MSG.acceptFail() });
-          } finally {
-            accept.disabled = false;
-          }
-        });
-        actions?.appendChild(accept);
-      }
-
-      el.appendChild(item);
-    }
-  };
-  render(listBD);
-  render(listBM);
-}
-
-function mobileTabFromUrl() {
-  return new URLSearchParams(location.search).get("tab") === "subscriptions" ? "b" : "a";
-}
-
-function setActiveMobileTab(tab, { updateUrl = true } = {}) {
-  tab = tab === "b" ? "b" : "a";
-  if (updateUrl) {
-    const url = new URL(location.href);
-    if (tab === "a") url.searchParams.delete("tab");
-    else url.searchParams.set("tab", "subscriptions");
-    if (url.href !== location.href) history.pushState(history.state, "", url);
-  }
-  tabA?.classList.toggle("active", tab === "a");
-  tabB?.classList.toggle("active", tab === "b");
-  tabA?.setAttribute("aria-selected", String(tab === "a"));
-  tabB?.setAttribute("aria-selected", String(tab === "b"));
-  panelA?.classList.toggle("active", tab === "a");
-  panelB?.classList.toggle("active", tab === "b");
-  if (panelA) panelA.hidden = tab !== "a";
-  if (panelB) panelB.hidden = tab !== "b";
-}
-
-function renderSelect(el, kind) {
+  const el = grids.subscribers;
   if (!el) return;
-  const options = [
-    { value: "newest", label: t("pollsHubSubscriptions.sort.newest") },
-    { value: "oldest", label: t("pollsHubSubscriptions.sort.oldest") },
-    { value: "name-asc", label: t("pollsHubSubscriptions.sort.nameEmailAsc") },
-    { value: "name-desc", label: t("pollsHubSubscriptions.sort.nameEmailDesc") },
-    { value: "status", label: t("pollsHubSubscriptions.sort.status") },
-  ];
-  let api = sortSelects.get(el);
-  if (!api) {
-    api = initUiSelect(el, {
-      value: sortState[kind],
-      options,
-      onChange: (val) => {
-        sortState[kind] = val;
-        if (kind === "subscribers") renderSubscribers();
-        else renderInvites();
-      },
+  resendCooldownTicker.resetBindings();
+  el.innerHTML = "";
+
+  const add = document.createElement("div");
+  add.className = "addCard";
+  add.innerHTML = `<div class="plus">${icon("plus")}</div><div class="name">${escapeHtml(t("pollsHubSubscriptions.inviteModal.title"))}</div>`;
+  add.addEventListener("click", openInviteModal);
+  el.appendChild(add);
+
+  const visible = sortNewest(subscribers.filter((s) => {
+    if (s.status === "cancelled") return false;
+    if (s.status === "declined") return !s.is_expired;
+    return s.status === "active" || s.status === "pending";
+  }));
+  if (!visible.length) renderEmptyTile(el, MSG.emptySubscribers());
+
+  for (const row of visible) {
+    const key = `resend:${row.sub_id}`;
+    const tile = buildTile("subscribers", row.sub_id, {
+      name: row.subscriber_label || MSG.dash(),
+      metaHtml: statusTagHtml(row.status) + (row.status === "pending" ? `<span class="tag tag--muted tag--cooldown tileBadge" hidden></span>` : ""),
+      trashTitle: row.status !== "declined" ? t("pollsHubSubscriptions.actions.remove") : "",
     });
-    sortSelects.set(el, api);
+    const cd = tile.querySelector(".tag--cooldown");
+    if (cd) {
+      resendCooldownTicker.bind({
+        key,
+        labelEl: cd,
+        formatText: (ms) => cooldownTextFromUntil(Date.now() + ms),
+      });
+      resendCooldownTicker.setEndMs(key, cooldownUntil(row.email_sent_at));
+    }
+    tile.querySelector(".x")?.addEventListener("click", async (e) => {
+      e.stopPropagation();
+      const ok = await confirmModal({ title: MSG.removeTitle(), text: MSG.removeText(), okText: MSG.removeOk(), cancelText: MSG.removeCancel() });
+      if (!ok) return;
+      try {
+        await callOkRpc("polls_hub_subscriber_remove", { p_id: row.sub_id });
+        if (selected?.tab === "subscribers" && String(selected.id) === String(row.sub_id)) selected = null;
+        await refreshData();
+      } catch {
+        await alertModal({ text: MSG.removeFail() });
+      }
+    });
+    el.appendChild(tile);
+  }
+}
+
+let resendInFlight = false;
+async function resendSelected() {
+  const row = selected?.tab === "subscribers" ? selectedRow() : null;
+  if (!row || row.status !== "pending" || resendInFlight) return;
+  const key = `resend:${row.sub_id}`;
+  const left = resendCooldownTicker.getRemainingMs(key);
+  if (left > 0) {
+    await alertModal({ text: cooldownTextFromUntil(Date.now() + left) });
     return;
   }
-  api.setOptions(options);
-  api.setValue(sortState[kind], { silent: true });
+  resendInFlight = true;
+  btnResend.disabled = true;
+  try {
+    const { data, error } = await sb().rpc("polls_hub_subscriber_resend", { p_id: row.sub_id });
+    if (error) throw error;
+    if (data?.ok === false) {
+      if (data?.err === "cooldown") {
+        const untilTs = parseDate(data?.cooldown_until) || (Date.now() + COOLDOWN_MS);
+        resendCooldownTicker.setEndMs(key, untilTs);
+        await alertModal({ text: cooldownTextFromUntil(untilTs) });
+        return;
+      }
+      throw new Error(data?.err || "fail");
+    }
+    if (data?.to && data?.link) {
+      const ownerLabel = who?.querySelector('.account-who')?.textContent || "Familiada";
+      try {
+        await sendSubscriptionEmail({ to: data.to, link: data.link, ownerLabel, unsubToken: data.unsub_token || null, isRegistered: !!data.registered });
+      } catch {
+        await alertModal({ text: MSG.resendMailFailed() });
+      }
+    }
+    await refreshData();
+  } catch {
+    await alertModal({ text: MSG.resendFail() });
+  } finally {
+    resendInFlight = false;
+    updateActions();
+  }
 }
 
-function syncToggles() {
-  document.querySelectorAll(".hub-toggle").forEach((wrap) => {
-    const kind = wrap.dataset.kind;
-    wrap.querySelectorAll("button").forEach((b) => {
-      b.classList.toggle("active", archiveState[kind] === (b.dataset.toggle === "archive"));
+// ===== Moje subskrypcje =====
+
+function renderInvites() {
+  const el = grids.subscriptions;
+  if (!el) return;
+  el.innerHTML = "";
+  const visible = sortNewest(invites.filter((s) => {
+    if (s.status === "cancelled") return false;
+    if (s.status === "declined") return !s.is_expired;
+    return s.status === "active" || s.status === "pending";
+  }));
+  if (!visible.length) renderEmptyTile(el, MSG.emptySubscriptions());
+
+  for (const row of visible) {
+    const isPending = row.status === "pending";
+    const tile = buildTile("subscriptions", row.sub_id, {
+      name: row.owner_label || MSG.dash(),
+      metaHtml: statusTagHtml(row.status),
+      trashTitle: row.status !== "declined" ? t(`pollsHubSubscriptions.actions.${isPending ? "decline" : "cancel"}`) : "",
     });
-  });
+    tile.querySelector(".x")?.addEventListener("click", async (e) => {
+      e.stopPropagation();
+      const ok = await confirmModal({
+        title: MSG.updateTitle(),
+        text: isPending ? MSG.updateTextPending() : MSG.updateTextActive(),
+        okText: isPending ? MSG.updateOkPending() : MSG.updateOkActive(),
+        // Dolny przycisk "Zamknij" zbędny — modal zamyka X w nagłówku.
+        showCancel: false,
+      });
+      if (!ok) return;
+      try {
+        await callSubscriptionAction(row, isPending ? "reject" : "cancel");
+        if (selected?.tab === "subscriptions" && String(selected.id) === String(row.sub_id)) selected = null;
+        await refreshData();
+      } catch {
+        await alertModal({ text: MSG.updateFail() });
+      }
+    });
+    el.appendChild(tile);
+  }
 }
 
+async function acceptSelected() {
+  const row = selected?.tab === "subscriptions" ? selectedRow() : null;
+  if (!row || row.status !== "pending") return;
+  btnAccept.disabled = true;
+  try {
+    await callSubscriptionAction(row, "accept");
+    await refreshData();
+  } catch {
+    await alertModal({ text: MSG.acceptFail() });
+  } finally {
+    updateActions();
+  }
+}
+
+// ===== Zadania (ankiety do wypełnienia) =====
+
+function pollTypeLabel(type) {
+  return t(type === "poll_points" ? "pollsHubSubscriptions.pollType.points" : "pollsHubSubscriptions.pollType.text");
+}
+
+function openTask(task) {
+  if (!task?.token) return false;
+  const page = task.poll_type === "poll_points" ? "/poll-points/" : "/poll-text/";
+  location.href = `${page}?t=${encodeURIComponent(task.token)}&lang=${encodeURIComponent(getUiLang() || "pl")}`;
+  return true;
+}
+
+function renderTasks() {
+  const el = grids.tasks;
+  if (!el) return;
+  el.innerHTML = "";
+  // Tylko zadania do wykonania: zamknięcie ankiety anuluje jej oczekujące
+  // zadania po stronie bazy, więc „pending” oznacza ankietę otwartą.
+  const visible = sortNewest(tasks.filter((r) => r.status === "pending"));
+  if (!visible.length) renderEmptyTile(el, MSG.emptyTasks());
+
+  for (const task of visible) {
+    const ownerLabel = (task?.owner_username || task?.owner_email || "").trim() || MSG.dash();
+    const tile = buildTile("tasks", task.task_id, {
+      name: `${pollTypeLabel(task.poll_type)} — ${task.game_name || MSG.dash()}`,
+      sub: escapeHtml(t("pollsHubSubscriptions.taskFrom", { owner: ownerLabel })),
+      metaHtml: tagHtml("tag--gold", t("pollsHubSubscriptions.taskStatus.available")),
+      trashTitle: t("pollsHubSubscriptions.actions.decline"),
+    });
+    tile.querySelector(".x")?.addEventListener("click", async (e) => {
+      e.stopPropagation();
+      const ok = await confirmModal({
+        title: MSG.declineTaskTitle(),
+        text: MSG.declineTaskText(),
+        okText: MSG.declineTaskOk(),
+        cancelText: MSG.declineTaskCancel(),
+      });
+      if (!ok) return;
+      try {
+        setProgress({ show: true, step: t("pollsHubSubscriptions.progress.declineTask"), i: 0, n: 1 });
+        const { data, error } = await sb().rpc("polls_hub_task_decline", { p_task_id: task.task_id });
+        if (error) throw error;
+        if (!data) throw new Error("decline_task_failed");
+        if (selected?.tab === "tasks" && String(selected.id) === String(task.task_id)) selected = null;
+        await refreshData();
+      } catch {
+        await alertModal({ text: MSG.declineTaskFail() });
+      } finally {
+        setProgress({ show: false });
+      }
+    });
+    tile.addEventListener("dblclick", async () => {
+      if (!openTask(task)) await alertModal({ text: MSG.loadFail() });
+    });
+    el.appendChild(tile);
+  }
+}
+
+// ===== zaproszenie nowego subskrybenta =====
 
 function isValidEmail(value) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value || "").trim());
@@ -610,17 +638,17 @@ async function resolveInviteRecipient(input) {
   return email;
 }
 
-function registerToggleHandlers() {
-  document.querySelectorAll(".hub-toggle button").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const kind = btn.closest(".hub-toggle")?.dataset.kind;
-      if (!kind) return;
-      archiveState[kind] = btn.dataset.toggle === "archive";
-      syncToggles();
-      if (kind === "subscribers") renderSubscribers();
-      else renderInvites();
-    });
-  });
+function openInviteModal() {
+  if (!inviteOverlay) return;
+  inviteInput.value = "";
+  inviteOverlay.style.display = "grid";
+  enterModalSheet(inviteOverlay, { backBtn: btnBack, onClose: closeInviteModal });
+  setTimeout(() => inviteInput.focus(), 0);
+}
+
+function closeInviteModal() {
+  if (inviteOverlay) inviteOverlay.style.display = "none";
+  exitModalSheet(inviteOverlay);
 }
 
 let inviteInFlight = false;
@@ -628,19 +656,18 @@ async function invite(value) {
   const v = String(value || "").trim();
   if (!v || inviteInFlight) return false;
   inviteInFlight = true;
-  btnInviteDesktop.disabled = true;
-  btnInviteMobile.disabled = true;
+  btnInviteOk.disabled = true;
   try {
     setProgress({ show: true, step: t("pollsHubSubscriptions.progress.invite"), i: 0, n: 2 });
     const recipient = await resolveInviteRecipient(v);
     const { data, error } = await sb().rpc("polls_hub_subscription_invite", { p_recipient: recipient });
     if (error) throw error;
     if (data?.ok === false) {
-        if (data?.err === "cooldown") {
-          const untilTs = parseDate(data?.cooldown_until) || (Date.now() + 5 * 24 * 60 * 60 * 1000);
-          await alertModal({ text: cooldownTextFromUntil(untilTs) });
-          return;
-        }
+      if (data?.err === "cooldown") {
+        const untilTs = parseDate(data?.cooldown_until) || (Date.now() + 5 * 24 * 60 * 60 * 1000);
+        await alertModal({ text: cooldownTextFromUntil(untilTs) });
+        return false;
+      }
       throw new Error(data?.err || "invite");
     }
 
@@ -659,16 +686,15 @@ async function invite(value) {
             isRegistered: !!resendData.registered,
           });
         } catch {
+          closeInviteModal();
           await alertModal({ text: MSG.inviteMailFailed() });
           await refreshData();
           return true;
         }
       }
-      const url = new URL(location.href);
-      url.searchParams.delete("s");
-      history.replaceState(null, "", url.toString());
     }
 
+    closeInviteModal();
     await refreshData();
     await alertModal({ text: MSG.inviteSaved() });
     return true;
@@ -682,10 +708,11 @@ async function invite(value) {
   } finally {
     setProgress({ show: false });
     inviteInFlight = false;
-    btnInviteDesktop.disabled = false;
-    btnInviteMobile.disabled = false;
+    btnInviteOk.disabled = false;
   }
 }
+
+// ===== odświeżanie =====
 
 let autoRefreshTimer = null;
 function startAutoRefresh() {
@@ -693,6 +720,7 @@ function startAutoRefresh() {
   autoRefreshTimer = setInterval(() => {
     if (document.hidden) return;
     if (progressOverlay && progressOverlay.style.display === "grid") return;
+    if (inviteOverlay && inviteOverlay.style.display !== "none") return;
     refreshData();
   }, 20000);
 }
@@ -707,9 +735,18 @@ async function refreshTopBadges() {
   const { data, error } = await sb().rpc("polls_badge_get");
   if (error) throw error;
   const row = Array.isArray(data) ? data[0] : data;
-  const pendingInvites = Number(row?.subs_pending || 0);
-  setBadge("tasks", 0);
-  setBadge("subs", pendingInvites);
+  setBadge("subsBadge", Number(row?.subs_pending || 0));
+  setBadge("tasksBadge", Number(row?.tasks_pending || 0));
+}
+
+function taskTokenOf(task) {
+  if (task?.token) return task.token;
+  try {
+    if (!task?.go_url) return null;
+    return new URL(task.go_url, location.origin).searchParams.get("t");
+  } catch {
+    return null;
+  }
 }
 
 let subsRefreshInFlight = null;
@@ -719,18 +756,34 @@ async function refreshData() {
 
   subsRefreshInFlight = (async () => {
   try {
-    const [a, b] = await Promise.all([
+    const [a, b, c] = await Promise.all([
       sb().rpc("polls_hub_list_my_subscribers"),
       sb().rpc("polls_hub_list_my_subscriptions"),
+      sb().rpc("polls_hub_list_tasks"),
     ]);
-    if (a.error || b.error) throw a.error || b.error;
+    if (a.error || b.error || c.error) throw a.error || b.error || c.error;
     subscribers = a.data || [];
     invites = b.data || [];
+    tasks = (c.data || []).map((task) => ({ ...task, token: taskTokenOf(task) }));
 
     updateBackButtonLabel();
     renderSubscribers();
     renderInvites();
+    renderTasks();
+    updateActions();
     await refreshTopBadges();
+
+    if (focusTaskToken && !focusTaskHandled) {
+      focusTaskHandled = true;
+      const found = tasks.find((x) => String(x.token) === String(focusTaskToken));
+      if (found) {
+        const ok = await confirmModal({ text: MSG.focusTaskPrompt() });
+        if (ok) openTask(found);
+      }
+      const url = new URL(location.href);
+      url.searchParams.delete("t");
+      history.replaceState(null, "", url.toString());
+    }
 
     if (focusInviteToken && !focusInviteHandled) {
       focusInviteHandled = true;
@@ -778,8 +831,6 @@ async function refreshData() {
   }
 }
 
-
-
 function buildManualUrl() {
   const url = new URL("/manual/", location.href);
   url.searchParams.set("ret", getCurrentRelativeUrl());
@@ -788,12 +839,10 @@ function buildManualUrl() {
   return url.toString();
 }
 
-
 function updateBackButtonLabel() {
   if (!btnBack) return;
   const retPath = getRetPathnameLower();
   if (retPath.endsWith("/bases/")) btnBack.innerHTML = iconText("arrow-left", t("baseExplorer.backToBases"));
-  else if (retPath.endsWith("/polls-hub/")) btnBack.innerHTML = iconText("arrow-left", t("polls.backToHub"));
   else btnBack.innerHTML = iconText("arrow-left", t("pollsHubSubscriptions.backToGames"));
 }
 
@@ -802,7 +851,12 @@ function getBackLink() {
 }
 
 // Navigation is usable while authentication and lists are still loading.
-btnBack?.addEventListener("click", () => { location.href = getBackLink(); });
+// Znacznik dla contact-modal.js: ten przycisk respektuje handleSheetBack().
+if (btnBack) btnBack.dataset.sheetBack = "1";
+btnBack?.addEventListener("click", () => {
+  if (handleSheetBack()) return;
+  location.href = getBackLink();
+});
 btnManual?.addEventListener("click", () => { location.href = buildManualUrl(); });
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -816,56 +870,51 @@ document.addEventListener("DOMContentLoaded", async () => {
   initTopbarAccountDropdown(user);
   document.querySelector('.topbar')?.classList.add('topbar-ready');
 
-  renderSelect(sortAD, "subscribers");
-  renderSelect(sortAM, "subscribers");
-  renderSelect(sortBD, "subscriptions");
-  renderSelect(sortBM, "subscriptions");
-  registerToggleHandlers();
-  syncToggles();
+  initListSearch({ grids: "#subscribersGrid, #subscriptionsGrid, #tasksGrid", tile: ".card", name: ".name" });
 
-  tabA?.addEventListener("click", () => setActiveMobileTab("a"));
-  tabB?.addEventListener("click", () => setActiveMobileTab("b"));
-  [tabA, tabB].forEach((tab, index, tabs) => tab?.addEventListener("keydown", (event) => {
-    let next = null;
-    if (event.key === "ArrowRight" || event.key === "ArrowLeft") next = tabs[index === 0 ? 1 : 0];
-    else if (event.key === "Home") next = tabs[0];
-    else if (event.key === "End") next = tabs[1];
-    if (!next) return;
-    event.preventDefault();
-    setActiveMobileTab(next === tabA ? "a" : "b");
-    next.focus();
-  }));
-  setActiveMobileTab(mobileTabFromUrl(), { updateUrl: false });
-  window.addEventListener("popstate", () => {
-    setActiveMobileTab(mobileTabFromUrl(), { updateUrl: false });
+  TABS.forEach((k, index) => {
+    const btn = tabBtns[k];
+    btn?.addEventListener("click", () => setActiveTab(k));
+    btn?.addEventListener("keydown", (event) => {
+      let next = null;
+      if (event.key === "ArrowRight") next = TABS[(index + 1) % TABS.length];
+      else if (event.key === "ArrowLeft") next = TABS[(index + TABS.length - 1) % TABS.length];
+      else if (event.key === "Home") next = TABS[0];
+      else if (event.key === "End") next = TABS[TABS.length - 1];
+      if (!next) return;
+      event.preventDefault();
+      setActiveTab(next);
+      tabBtns[next]?.focus();
+    });
+  });
+  setActiveTab(tabFromUrl());
+
+  btnResend?.addEventListener("click", resendSelected);
+  btnAccept?.addEventListener("click", acceptSelected);
+  btnVote?.addEventListener("click", () => {
+    const row = selected?.tab === "tasks" ? selectedRow() : null;
+    if (row) openTask(row);
   });
 
-  const doInviteDesktop = async () => { if (await invite(inviteInputDesktop?.value)) inviteInputDesktop.value = ""; };
-  const doInviteMobile = async () => { if (await invite(inviteInputMobile?.value)) inviteInputMobile.value = ""; };
-
-  btnInviteDesktop?.addEventListener("click", doInviteDesktop);
-  btnInviteMobile?.addEventListener("click", doInviteMobile);
-  inviteInputDesktop?.addEventListener("keydown", (e) => { if (e.key === "Enter") doInviteDesktop(); });
-  inviteInputMobile?.addEventListener("keydown", (e) => { if (e.key === "Enter") doInviteMobile(); });
+  $("btnInviteClose")?.addEventListener("click", closeInviteModal);
+  $("btnInviteCancel")?.addEventListener("click", closeInviteModal);
+  btnInviteOk?.addEventListener("click", () => invite(inviteInput?.value));
+  inviteInput?.addEventListener("keydown", (e) => { if (e.key === "Enter") invite(inviteInput.value); });
 
   updateBackButtonLabel();
 
-  const onI18nLangChange = () => {
-    renderSelect(sortAD, "subscribers");
-    renderSelect(sortAM, "subscribers");
-    renderSelect(sortBD, "subscriptions");
-    renderSelect(sortBM, "subscriptions");
+  window.addEventListener("i18n:lang", () => {
     updateBackButtonLabel();
+    setActiveTab(activeTab);
     renderSubscribers();
     renderInvites();
-  };
-  window.addEventListener("i18n:lang", onI18nLangChange);
+    renderTasks();
+  });
 
-  const onVisibilityChange = () => {
+  document.addEventListener("visibilitychange", () => {
     if (document.hidden) stopAutoRefresh();
     else { startAutoRefresh(); refreshData(); }
-  };
-  document.addEventListener("visibilitychange", onVisibilityChange);
+  });
 
   await refreshData();
   document.querySelectorAll('[data-skel-step]').forEach(el => el.classList.add('skel-step-ready'));
