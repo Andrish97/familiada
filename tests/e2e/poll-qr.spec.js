@@ -13,6 +13,13 @@
 // - sprawdzenie statusu gry w device mode
 
 const { test, expect } = require("@playwright/test");
+const { serveBranchCode } = require("./helpers/branch-code");
+
+// Strony głosowania z brancha (komunikaty stanów, E11e); baza z produkcji.
+test.use({ serviceWorkers: "block" });
+test.beforeEach(async ({ context }) => {
+  await serveBranchCode(context, { pages: ["poll-qr", "poll-text", "poll-points", "polls"] });
+});
 const { loginAsPooledTestUser, instrumentPage } = require("./helpers/login");
 
 async function createPollGame(page) {

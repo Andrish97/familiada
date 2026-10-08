@@ -9,6 +9,13 @@
 // Audyt: strona kompleksowa, obsługuje 4 główne ścieżki + edge case'i
 
 const { test, expect } = require("@playwright/test");
+const { serveBranchCode } = require("./helpers/branch-code");
+
+// Strony głosowania z brancha (komunikaty stanów, E11e); baza z produkcji.
+test.use({ serviceWorkers: "block" });
+test.beforeEach(async ({ context }) => {
+  await serveBranchCode(context, { pages: ["poll-go", "poll-text", "poll-points"] });
+});
 const { loginAsPooledTestUser } = require("./helpers/login");
 
 async function createTaskToken(page, pollType = "poll_points", opts = {}) {

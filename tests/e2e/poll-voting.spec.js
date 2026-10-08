@@ -13,6 +13,13 @@
 // - niejasne optional chaining w poll-text
 
 const { test, expect } = require("@playwright/test");
+const { serveBranchCode } = require("./helpers/branch-code");
+
+// Strony głosowania z brancha (komunikaty stanów, E11e); baza z produkcji.
+test.use({ serviceWorkers: "block" });
+test.beforeEach(async ({ context }) => {
+  await serveBranchCode(context, { pages: ["poll-text", "poll-points"] });
+});
 const { loginAsPooledTestUser, instrumentPage } = require("./helpers/login");
 
 async function createPollGame(page, type) {
