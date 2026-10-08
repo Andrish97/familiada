@@ -2753,12 +2753,12 @@ const en = {
     delete: {
       title: "Delete game",
       text: "Do you really want to delete “{name}”?",
+      pollAbort: "The poll will be aborted.",
       ok: "Delete",
       cancel: "Cancel",
     },
     alert: {
       deleteFailed: "Failed to delete game.",
-      deleteInUsePollOpen: "Can't delete the game — its poll is currently open and someone may be voting right now.",
       deleteInUseLocked: "Can't delete the game — it's currently open in another tab (editor, settings, or poll).",
       createFailed: "Failed to create game.",
       resetPollFailed: "Failed to reset poll status.",
@@ -4312,6 +4312,7 @@ const en = {
       invalid_stars: "A rating must be between 1 and 5 stars.",
       cannot_rate_own_game: "You cannot rate your own game.",
       not_found_or_not_published: "The game does not exist or is not published.",
+      locked: "Cannot remove the copy — the game is currently open in another tab (editor, settings, poll or control).",
       unknown: "The operation failed. Please try again.",
     },
     mySent: {
