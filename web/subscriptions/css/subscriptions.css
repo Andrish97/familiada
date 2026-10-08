@@ -117,3 +117,16 @@
   }
   .subs-section .grid{ overflow: visible; }
 }
+
+/* dolny pasek: [Aktualne|Archiwalne] [sortowanie] [szukaj] */
+.games-bottom-left{ flex-wrap: wrap; }
+.subs-view-toggle{ display: flex; gap: 6px; flex: 0 0 auto; }
+.subs-sort.ui-select{ min-width: 150px; width: 150px; flex: 0 0 auto; }
+.subs-sort .ui-select-btn{ min-height: 0; }
+@media (max-width: 600px){
+  .subs-view-toggle{ flex: 1 1 0; }
+  .subs-view-toggle .btn{ flex: 1 1 0; }
+  .subs-sort.ui-select{ flex: 1 1 0; width: auto; min-width: 0; }
+  .games-bottom-left .list-search{ flex: 1 1 100%; width: 100%; order: 3; }
+}
+.games-bottom-left .list-search .searchText{ padding-top: 4px; padding-bottom: 4px; }

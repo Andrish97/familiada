@@ -3489,6 +3489,17 @@ const en = {
   },
 
   pollsHubSubscriptions: {
+    view: {
+      current: "Current",
+      archive: "Archived",
+      sortLabel: "Sort",
+      sort: {
+        newest: "Newest",
+        oldest: "Oldest",
+        nameAsc: "Name A–Z",
+        nameDesc: "Name Z–A",
+      },
+    },
     bar: {
       title: "Subscriptions",
       hintSubscribers: "Tap a tile to select it. The plus tile adds a new subscriber.",
