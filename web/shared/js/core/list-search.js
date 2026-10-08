@@ -6,6 +6,7 @@
 // Stanu nie zapamiętujemy (docs/ujednolicenie-wygladu.md, sekcja 1).
 
 import { t } from "../../translation/translation.js?v=v2026-10-08T07385";
+import { icon } from "./icons.js?v=v2026-10-08T07385";
 
 const norm = (s) => String(s || "").toLocaleLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
 
@@ -18,12 +19,25 @@ const norm = (s) => String(s || "").toLocaleLowerCase().normalize("NFD").replace
 export function initListSearch({ grids, tile, name }) {
   const slot = document.querySelector(".games-bottom-left");
   if (!slot) return;
+  // Ten sam komponent co w menedżerze bazy (.searchBox, base.css).
+  const box = document.createElement("div");
+  box.className = "searchBox list-search";
   const input = document.createElement("input");
   input.type = "search";
-  input.className = "inp sm list-search";
-  input.placeholder = t("common.searchByName");
-  input.setAttribute("aria-label", t("common.searchByName"));
-  slot.appendChild(input);
+  input.className = "searchText";
+  const clear = document.createElement("button");
+  clear.type = "button";
+  clear.className = "btn ghost";
+  clear.innerHTML = icon("close");
+  const label = () => {
+    input.placeholder = t("common.searchByName");
+    input.setAttribute("aria-label", t("common.searchByName"));
+    clear.title = t("baseExplorer.search.clear");
+    clear.setAttribute("aria-label", t("baseExplorer.search.clear"));
+  };
+  label();
+  box.append(input, clear);
+  slot.appendChild(box);
 
   const apply = () => {
     const q = norm(input.value);
@@ -36,10 +50,8 @@ export function initListSearch({ grids, tile, name }) {
     }
   };
   input.addEventListener("input", apply);
+  clear.addEventListener("click", () => { input.value = ""; apply(); input.focus(); });
   const mo = new MutationObserver(() => { if (input.value) apply(); });
   for (const grid of document.querySelectorAll(grids)) mo.observe(grid, { childList: true });
-  window.addEventListener("i18n:lang", () => {
-    input.placeholder = t("common.searchByName");
-    input.setAttribute("aria-label", t("common.searchByName"));
-  });
+  window.addEventListener("i18n:lang", label);
 }

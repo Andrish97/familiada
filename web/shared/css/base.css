@@ -2019,3 +2019,35 @@ body{
   font-size: 16px;
   font-weight: 900;
 }
+
+/* ===== Pole szukania — jedno dla menedżera bazy i list (gry, bazy, logo) =====
+   .searchBox > input.searchText + button.btn.ghost (✕ czyści). Szerokość
+   i dodatki (chipy w menedżerze bazy) ustawia strona. */
+.searchBox{
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 4px 2px 8px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,.14);
+  background: rgba(255,255,255,.04);
+  min-width: 0;
+}
+.searchBox:focus-within{
+  border-color: rgba(120,160,255,.55);
+  box-shadow: 0 0 0 2px rgba(120,160,255,.18);
+}
+.searchText{
+  flex: 1 1 auto;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: 0 0;
+  color: inherit;
+  padding: 6px 4px;
+  font: inherit;
+  font-size: 13px;
+}
+.searchText::placeholder{ opacity: .65; }
+.searchText::-webkit-search-cancel-button{ display: none; }
+

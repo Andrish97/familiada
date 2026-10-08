@@ -246,18 +246,7 @@ input,textarea {
 .searchBox {
   --under: #131723; /* podłoże dla kryjących teł przycisków (css/base.css) */
     width: 300px;
-    display: flex;
-    align-items: center;
     flex-wrap: wrap;
-    gap: 6px;
-    padding: 6px 8px;
-    border-radius: 12px;
-    border: 1px solid rgba(255,255,255,.14)
-}
-
-.searchBox:focus-within {
-    border-color: rgba(120,160,255,.55);
-    box-shadow: 0 0 0 2px rgba(120,160,255,.18)
 }
 
 .searchChips {
@@ -270,15 +259,6 @@ input,textarea {
 .searchText {
     flex: 1 1 140px;
     min-width: 140px;
-    border: 0;
-    outline: 0;
-    background: 0 0;
-    color: inherit;
-    padding: 6px 4px
-}
-
-.searchText::placeholder {
-    opacity: .65
 }
 
 .chip,.tag-dots {
