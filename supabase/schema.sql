@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict bDRT6mor74X8r0zJhOycWUphbIkXHQDehZdHIzsrdho7ku0AmlhEvCbez6mOc0R
+\restrict EWjTRcvvFVVma68talM1HUnyiXrKrxghD25Wprh0C4gEvDf6wiqcVW54TF1OZOi
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -1852,9 +1852,8 @@ begin
       return jsonb_build_object('ok', false, 'error', 'not_found_or_forbidden');
     end if;
 
-    if exists (select 1 from public.games where id = p_resource_id and status = 'poll_open') then
-      return jsonb_build_object('ok', false, 'in_use', true, 'reason', 'poll_open');
-    end if;
+    -- 312: otwarta ankieta nie blokuje usunięcia (zostaje przerwana: głosy, sesje
+    -- i zaproszenia znikają kaskadą). Blokuje tylko zajęta blokada gry.
 
     select resource_type into v_blocker
     from public.edit_locks
@@ -1866,6 +1865,16 @@ begin
     if found then
       return jsonb_build_object('ok', false, 'in_use', true, 'reason', 'locked');
     end if;
+
+    -- 312: maile w kolejce z zaproszeniami do ankiety tej gry (link
+    -- poll-go?t=<token> w treści; mail_queue nie ma kolumny z identyfikatorem gry).
+    delete from public.mail_queue q
+    using public.poll_tasks pt
+    where pt.game_id = p_resource_id
+      and position(('poll-go?t=' || pt.token::text) in q.html) > 0;
+
+    -- 312: zapamiętane urządzenia tej gry (FK dałby tylko SET NULL).
+    delete from public.shared_devices where game_id = p_resource_id;
 
     delete from public.games where id = p_resource_id;
     return jsonb_build_object('ok', true);
@@ -1949,14 +1958,35 @@ CREATE FUNCTION "public"."delete_user_everything"("p_user_id" "uuid") RETURNS "v
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public'
     AS $$
+declare
+  v_emails text[];
+  v_email text;
 begin
   if p_user_id is null then
     raise exception 'p_user_id is required';
   end if;
 
-  -- explicit cleanup (safe even if some rows are already gone)
-  delete from public.poll_text_entries where voter_user_id = p_user_id;
-  delete from public.poll_votes where voter_user_id = p_user_id;
+  -- 312: e-maile konta (małymi literami) -- po nich czyścimy dane bez user_id
+  select coalesce(array_agg(distinct e), array[]::text[]) into v_emails
+  from (
+    select lower(trim(u.email)) as e from auth.users u where u.id = p_user_id
+    union
+    select lower(trim(p.email)) from public.profiles p where p.id = p_user_id
+  ) x
+  where e is not null and e <> '';
+
+  -- 312: usunięcie konta jest nadrzędne -- nie sprawdza blokad (edit_locks);
+  -- blokady trzymane przez to konto i na jego zasobach znikają.
+  delete from public.edit_locks where holder_user_id = p_user_id;
+  delete from public.edit_locks
+   where (resource_type = 'game' and resource_id in (select id from public.games where owner_id = p_user_id))
+      or (resource_type = 'base' and resource_id in (select id from public.question_bases where owner_id = p_user_id))
+      or (resource_type = 'logo' and resource_id in (select id from public.user_logos where user_id = p_user_id));
+
+  -- 312: głosy w cudzych ankietach zostają anonimowe (bez powiązania z kontem);
+  -- głosy w własnych grach znikają razem z grami niżej.
+  update public.poll_text_entries set voter_user_id = null where voter_user_id = p_user_id;
+  update public.poll_votes set voter_user_id = null where voter_user_id = p_user_id;
 
   delete from public.poll_subscriptions where subscriber_user_id = p_user_id;
   delete from public.poll_subscriptions where owner_id = p_user_id;
@@ -1964,13 +1994,40 @@ begin
   delete from public.poll_tasks where recipient_user_id = p_user_id;
   delete from public.poll_tasks where owner_id = p_user_id;
 
+  -- 312: zaproszenia do baz (po user_id i po e-mailu)
+  delete from public.base_share_tasks where recipient_user_id = p_user_id;
+  delete from public.base_share_tasks where owner_id = p_user_id;
+
   delete from public.question_base_shares where user_id = p_user_id;
   delete from public.question_bases where owner_id = p_user_id;
 
+  -- 312: gry (maile ankietowe właściciela znikają niżej przez created_by)
+  delete from public.shared_devices where game_id in (select id from public.games where owner_id = p_user_id);
   delete from public.games where owner_id = p_user_id;
 
   delete from public.user_flags where user_id = p_user_id;
   delete from public.user_logos where user_id = p_user_id;
+
+  -- 312: wszystko powiązane z e-mailem konta
+  delete from public.mail_queue where created_by = p_user_id;
+  delete from public.mail_function_logs where actor_user_id = p_user_id;
+  delete from public.email_intents where user_id = p_user_id;
+  delete from public.contact_reports where user_id = p_user_id;
+  delete from public.mail_cooldowns
+   where position(p_user_id::text in target_key) > 0;
+
+  foreach v_email in array v_emails loop
+    delete from public.poll_subscriptions where lower(subscriber_email) = v_email;
+    delete from public.poll_tasks where lower(recipient_email) = v_email;
+    delete from public.base_share_tasks where lower(recipient_email) = v_email;
+    delete from public.mail_queue where lower(trim(to_email)) = v_email;
+    delete from public.mail_function_logs where lower(recipient_email) = v_email;
+    delete from public.email_unsub_tokens where lower(email) = v_email;
+    delete from public.email_intents where lower(email) = v_email;
+    delete from public.email_cooldowns where email_hash = md5(v_email);
+    delete from public.mail_cooldowns where position(md5(v_email) in target_key) > 0;
+    delete from public.contact_reports where lower(email) = v_email;
+  end loop;
 
   -- profile first (also cascades by FK from auth.users if still present)
   delete from public.profiles where id = p_user_id;
@@ -5211,6 +5268,8 @@ CREATE FUNCTION "public"."guest_discard_current"() RETURNS "jsonb"
 declare
   v_uid uuid := auth.uid();
   v_is_guest boolean := false;
+  v_url text;
+  v_jwt text;
 begin
   if v_uid is null then
     return jsonb_build_object('ok', false, 'error', 'not_authenticated');
@@ -5226,6 +5285,21 @@ begin
   end if;
 
   perform public.delete_user_everything(v_uid);
+
+  -- 312: pliki po usunięciu z bazy (baza najpierw)
+  select value into v_url from public.app_config where key = 'edge_url';
+  select value into v_jwt from public.app_config where key = 'edge_service_role_jwt';
+  if coalesce(v_url, '') <> '' and coalesce(v_jwt, '') <> '' then
+    perform net.http_post(
+      url := v_url || '/functions/v1/cleanup-guest-storage',
+      headers := jsonb_build_object(
+        'Content-Type', 'application/json',
+        'Authorization', 'Bearer ' || v_jwt,
+        'apikey', v_jwt
+      ),
+      body := jsonb_build_object('userId', v_uid)
+    );
+  end if;
 
   return jsonb_build_object('ok', true);
 end;
@@ -7181,16 +7255,30 @@ CREATE FUNCTION "public"."market_remove_from_library"("p_market_game_id" "uuid")
     AS $$
 declare
     v_uid uuid := auth.uid();
+    v_game record;
+    v_res jsonb;
 begin
     if v_uid is null then
         return query select false, 'not_authenticated';
         return;
     end if;
 
-    -- usuń lokalną kopię gry (kaskada usuwa pytania i odpowiedzi)
-    delete from public.games
-     where owner_id        = v_uid
-       and source_market_id = p_market_game_id;
+    -- 312: usunięcie kopii idzie tą samą drogą co lista gier
+    -- (delete_resource_checked: blokada gry, maile, urządzenia).
+    for v_game in
+        select id from public.games
+         where owner_id = v_uid
+           and source_market_id = p_market_game_id
+    loop
+        v_res := public.delete_resource_checked('game', v_game.id);
+        if coalesce((v_res->>'ok')::boolean, false) = false
+           and coalesce(v_res->>'error', '') <> 'not_found_or_forbidden' then
+            -- cała operacja wraca (RETURN przed usunięciem wpisu bibliotecznego;
+            -- kopie usunięte wcześniej w tej pętli zostają usunięte)
+            return query select false, 'locked';
+            return;
+        end if;
+    end loop;
 
     -- usuń wpis biblioteczny
     delete from public.user_market_library
@@ -17051,5 +17139,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict bDRT6mor74X8r0zJhOycWUphbIkXHQDehZdHIzsrdho7ku0AmlhEvCbez6mOc0R
+\unrestrict EWjTRcvvFVVma68talM1HUnyiXrKrxghD25Wprh0C4gEvDf6wiqcVW54TF1OZOi
 
