@@ -775,6 +775,7 @@ test("control2: pełna runda przez 4 urządzenia + wznowienie Control po przeła
     await page.getByRole("button", { name: "Rozpocznij grę" }).click();
     await expect(page.locator(".c2-stepper")).toContainText("Runda 1", { timeout: 22000 });
     await page.getByRole("button", { name: "Rozpocznij rundę" }).click();
+    await expect(page.locator(".c2-stepper-question")).toHaveText("Pytanie testowe 1");
 
     // Regresja: Prowadzący musi widzieć PEŁNĄ treść i punkty KAŻDEJ
     // odpowiedzi od początku rundy, nie tylko już odsłoniętych dla widzów
@@ -786,7 +787,7 @@ test("control2: pełna runda przez 4 urządzenia + wznowienie Control po przeła
     await expect(buzzerPage.getByRole("button", { name: "Przycisk A" })).toBeEnabled({ timeout: 10000 });
     await buzzerPage.getByRole("button", { name: "Przycisk A" }).click();
     await expect(page.getByRole("button", { name: "Zatwierdź: Alfa" })).toBeEnabled({ timeout: 10000 });
-    await expect(page.locator(".c2-grid-question")).toHaveText("Pytanie testowe 1");
+    await expect(page.locator(".c2-stepper-question")).toHaveText("Pytanie testowe 1");
     const duelGridRows = await page.locator(".c2-tilegrid").evaluate((grid) => getComputedStyle(grid).gridTemplateRows.split(" ").length);
     expect(duelGridRows).toBe(6);
     const duelTileHeight = await page.locator(".c2-tilegrid .c2-tile").first().evaluate((tile) => tile.getBoundingClientRect().height);

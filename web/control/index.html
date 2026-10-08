@@ -104,7 +104,9 @@
        przewijania (zgłoszone: "dolne przyciski mają być wyłączone z
        przewijania"). */
     .c2-scroll-area { flex:1; min-height:0; overflow-y:auto; display:flex; flex-direction:column; gap:10px; }
-    .c2-stepper { font-size:.75rem; letter-spacing:.08em; text-transform:uppercase; opacity:.65; border-bottom:1px solid rgba(255,255,255,.12); padding-bottom:8px; }
+    .c2-stepper { height:58px; min-height:58px; box-sizing:border-box; display:flex; align-items:center; gap:14px; font-size:.75rem; letter-spacing:.08em; text-transform:uppercase; opacity:.8; border-bottom:1px solid rgba(255,255,255,.12); padding-bottom:8px; }
+    .c2-stepper-label { flex:0 0 auto; opacity:.72; white-space:nowrap; }
+    .c2-stepper-question { flex:1 1 auto; min-width:0; max-height:42px; overflow:hidden; text-align:left; text-transform:none; letter-spacing:normal; font-size:.86rem; font-weight:700; line-height:1.2; overflow-wrap:anywhere; }
     .c2-gameplay-body { flex:1; width:100%; min-width:0; box-sizing:border-box; overflow:hidden; display:grid; grid-template-columns:minmax(0,1fr); grid-template-rows:minmax(0,1fr) 42px; gap:12px; min-height:0; }
     /* padding-top:16px == .control-main-card's własne padding-bottom:16px
        pod spodem — nad i pod przyciskami tyle samo miejsca (zgłoszone). */
@@ -317,7 +319,6 @@
       cursor:pointer; user-select:none; -webkit-tap-highlight-color:transparent;
       transition:filter .12s ease, background .12s ease, border-color .12s ease;
     }
-    .c2-grid-question { grid-column:1 / 7; display:flex; align-items:center; justify-content:center; min-width:0; padding:4px 8px; text-align:center; font-size:clamp(.68rem,1vw,.9rem); font-weight:700; line-height:1.2; overflow-wrap:anywhere; }
     .c2-tile:hover:not(:disabled) { filter:brightness(1.1); }
     .c2-tile:active:not(:disabled) { transform:translateY(1px); }
     /* Dokładnie jak stare css/base.css's .btn:disabled — opacity .45 +

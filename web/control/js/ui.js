@@ -643,7 +643,7 @@ export function createUI({ root, emit }) {
   // Wspólny szablon 3 głównych ekranów rozgrywki (sekcja 3b):
   // jedna karta, mały stepper na górze, treść na środku, nawigacja na dole.
   // ============================================================
-  function gameplayShell({ stepLabel, body, nav }) {
+  function gameplayShell({ stepLabel, question, body, nav }) {
     clear();
     // .c2-gameplay-card (720px, wyśrodkowane) tylko TU — na WŁASNYM
     // kontenerze tego szablonu, nie na #app. Urządzenia/Podsumowanie mają
@@ -653,7 +653,14 @@ export function createUI({ root, emit }) {
       ? h("div", { class: "c2-gameplay-nav" }, nav)
       : h("div", { class: "c2-gameplay-nav c2-gameplay-nav-empty", "aria-hidden": "true" });
     root.appendChild(h("div", { class: "c2-card-inner c2-gameplay c2-gameplay-card" }, [
-      h("div", { class: "c2-stepper", text: stepLabel }),
+      h("div", { class: "c2-stepper" }, [
+        (() => {
+          const el = h("div", { class: "c2-stepper-question", text: question || "", title: question || "" });
+          if (question) el.style.fontSize = question.length > 150 ? ".68rem" : question.length > 100 ? ".75rem" : ".86rem";
+          return el;
+        })(),
+        h("div", { class: "c2-stepper-label", text: stepLabel }),
+      ]),
       h("div", { class: "c2-gameplay-body" }, body),
       navNode,
     ]));
@@ -664,10 +671,8 @@ export function createUI({ root, emit }) {
   // ustalona wspólnie z właścicielem projektu: jednostka to 1/3 szerokości
   // wiersza, niektóre kafle zajmują 1,5 jednostki (pół wiersza). Wewnętrznie
   // 6 kolumn (LCD z 2 i 3), żeby obie szerokości wyrazić całkowitym `span`.
-  // Wiersz 4 zostaje pusty, chyba że akurat trzeba w nim pokazać coś
-  // rzadkiego (Pass/Kradzież) — nieużywane kafle po prostu nie istnieją w
-  // DOM, więc rytm 5 wierszy się nie rusza niezależnie od tego, co akurat
-  // jest dostępne.
+  // Wiersze mają stałą wysokość; nieobecne akcje zostawiają puste miejsca,
+  // zamiast przesuwać kafle w siatce.
   const THIRD = (i) => `${i * 2 + 1} / ${i * 2 + 3}`; // i=0,1,2 — 1 jednostka
   const HALF = (i) => `${i * 3 + 1} / ${i * 3 + 4}`;  // i=0,1   — 1,5 jednostki
 
@@ -718,14 +723,6 @@ export function createUI({ root, emit }) {
     return h("div", { class: "c2-tilegrid" }, tiles.filter(Boolean));
   }
 
-  function questionGridTile(text, row) {
-    const question = text || t("control.dash");
-    const el = h("div", { class: "c2-grid-question", text: question, title: question });
-    el.style.gridRow = String(row);
-    el.style.fontSize = question.length > 150 ? ".68rem" : question.length > 100 ? ".75rem" : ".86rem";
-    return el;
-  }
-
   // Wariant tile() z zaznacz → potwierdź (patrz armedKey wyżej): pierwsze
   // kliknięcie tylko uzbraja (dopisuje c2-tile-armed, złota obwódka w CSS),
   // drugie na tym samym kaflu odpala prawdziwe onclick.
@@ -774,7 +771,7 @@ export function createUI({ root, emit }) {
 
   // r_duel PRZED przyjęciem zgłoszenia — patrz komentarz przy jego jedynym
   // wywołaniu w renderRounds(). Odpowiednik starego control.html's osobnego
-  // data-step="r_duel": brak pytania/siatki, tylko "kto naciśnie pierwszy".
+  // data-step="r_duel": pytanie w stałym pasku nagłówka i kafle "kto naciśnie pierwszy".
   // Ten sam wspólny szablon co reszta Rund — TA SAMA siatka 6-kolumnowa
   // (tile/tileGrid) i ten sam c2-roundlayout (siatka + kreska + hint po
   // prawej), tylko zamiast odpowiedzi w kaflach siedzą przyciski
@@ -850,14 +847,13 @@ export function createUI({ root, emit }) {
       tiles.push(tile(t("control.roundsBuzzRetry"), { row: 3, col: "1 / 7", disabled: boardBusy(), onclick: () => emit("game.dispatch", { type: "RETRY_DUEL" }) }));
     }
 
-    tiles.push(questionGridTile(r.question?.text, 4));
     const body = [h("div", { class: "c2-roundlayout" }, [
         h("div", { class: "c2-roundlayout-main" }, [tileGrid(tiles)]),
         h("div", { class: "c2-roundlayout-divider" }),
         h("div", { class: "c2-roundlayout-side" }, [hintBlock(getRoundsHint(state))]),
       ])];
 
-    gameplayShell({ stepLabel: t("control.stepDuelTitle", { round: r.roundNo }), body, nav: null });
+    gameplayShell({ stepLabel: t("control.stepDuelTitle", { round: r.roundNo }), question: r.question?.text, body, nav: null });
   }
 
   // ---- Rundy (r_intro..r_gameEnd) ----
@@ -927,8 +923,7 @@ export function createUI({ root, emit }) {
 
     // r_play / dalsza część DUEL po przyjęciu zgłoszenia (wspólny ekran gry
     // właściwej — drużyna, która wygrała pojedynek, odpowiada na TĘ SAMĄ
-    // widoczną siatkę). Pytanie zajmuje wolny, pełnoszeroki wiersz siatki;
-    // poniżej dwie kolumny —
+    // widoczną siatkę). Pytanie jest w stałym pasku nagłówka; poniżej dwie kolumny —
     // siatka odpowiedzi (lewo) i podpowiedź za pionową kreską (prawo); pod
     // tym pasek statusu (kto gra, bank, inne info); na samym dole przyciski
     // nawigacji ("Zakończ rundę" — gameplayShell's nav, jak Finał).
@@ -987,9 +982,9 @@ export function createUI({ root, emit }) {
       }));
     });
 
-    // Wiersz 4 zajmuje pytanie na pełną szerokość. Dzięki temu treść
-    // wykorzystuje wolne miejsce zamiast zmieniać wysokość pozostałych kafli.
-    // "Oddaj kontrolę" pozostaje w wierszu 5, X/Timer w wierszu 6.
+    // Pytanie jest w stałym pasku po lewej stronie nagłówka. Wiersze siatki
+    // pozostają równe i przeznaczone na kafle akcji; "Oddaj kontrolę" jest
+    // w wierszu 5, X/Timer w wierszu 6.
     if (passAvailable) {
       tiles.push(armableTile("pass", t("control.roundsPassControl"), {
         row: 5, col: "1 / 7", cls: "c2-tile-primary",
@@ -1052,7 +1047,6 @@ export function createUI({ root, emit }) {
       tiles.push(timer3Tile);
     }
 
-    tiles.push(questionGridTile(r.question?.text, 4));
     const roundsGrid = tileGrid(tiles);
     roundsGrid.style.gridTemplateRows = "repeat(6, minmax(0,1fr))";
     body.push(h("div", { class: "c2-roundlayout" }, [
@@ -1122,7 +1116,7 @@ export function createUI({ root, emit }) {
     const stepLabel = state.phase === "STEAL"
       ? t("control.stepStealTitle", { round: r.roundNo })
       : t("control.stepPlayTitle", { round: r.roundNo });
-    gameplayShell({ stepLabel, body, nav: null });
+    gameplayShell({ stepLabel, question: r.question?.text, body, nav: null });
   }
 
   // 3 przypadki końca gry — wygrana A, wygrana B, remis — jedna linia
@@ -1705,7 +1699,7 @@ export function createUI({ root, emit }) {
     // "pola wpisywania lepiej żeby były na wysokość kafelka") jest w CSS
     // (.c2-entrytile-input input's flex:1/height:100%) — samo pole
     // wypełnia teraz cały kafelek niezależnie od tego, ile miejsca ma wiersz.
-    const mappingGrid = tileGrid([...row1Tiles, ...optionTiles, questionGridTile(question?.text || t("control.finalUi.questionLabel", { n: idx + 1 }), 5), revealAnswerTile, revealPointsTile]);
+    const mappingGrid = tileGrid([...row1Tiles, ...optionTiles, revealAnswerTile, revealPointsTile]);
     mappingGrid.style.gridTemplateRows = "repeat(6, minmax(0,1fr))";
 
     // control/js/gameFinal.js's updateSumUI() — operator widział sumę na
@@ -1750,7 +1744,7 @@ export function createUI({ root, emit }) {
       finalStatusBar,
     ];
 
-    gameplayShell({ stepLabel: t("control.finalMappingStepLabel", { n: idx + 1 }), body, nav: null });
+    gameplayShell({ stepLabel: t("control.finalMappingStepLabel", { n: idx + 1 }), question: question?.text || t("control.finalUi.questionLabel", { n: idx + 1 }), body, nav: null });
   }
 
   function renderFinalP2Start(state) {
