@@ -26,3 +26,14 @@ przepisuje CI), Supabase, Cloudflare Worker. Strony w `web/`.
   stosowane po pushu na `main`; `schema.sql` aktualizuje CI.
 - Bez fallbacków: żadnych aliasów starych adresów ani przekierowań.
 - Komentarz w JS nie może zawierać `*/` (np. `editor-*/` w ścieżce).
+
+## Limit i wznawianie (decyzja 2026-10-08)
+
+- W trakcie pracy zawsze uzbrojone **jedno** przypomnienie `send_later` na
+  **teraz + 3 h 1 min**. Przy każdym kroku (commit, przebieg e2e,
+  odpowiedź) stare kasowane (`delete_trigger`), ustawiane nowe. Gdy limit
+  zatrzyma pracę, ostatnie przypomnienie wznawia ją 3 h 1 min po ostatniej
+  aktywności — od „Dziennika” w `docs/wdrozenia.md`.
+- Pauza na prośbę użytkownika („poczekaj”, „nie wznawiamy”): przerwać
+  biegnące e2e, żadnych przypomnień ani timerów, wznowienie dopiero po
+  „wracamy”.
