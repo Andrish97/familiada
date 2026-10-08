@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 8Ht8Pd98FszXtitla0mD6OQa4uLoWBAyU1AHHfE8VVZhD2Dhz0Yn1ftI7oLS9LT
+\restrict 7ICQ4hfRBeNbwKf1shxbmHkZgVcOfrcI733plOkKdXGtcVhE51dl1CfEAfUxwWs
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -11163,8 +11163,9 @@ BEGIN
   IF p_nonce IS NULL OR length(p_nonce)<8 OR length(p_nonce)>100 THEN
     RAISE EXCEPTION 'invalid nonce';
   END IF;
-  INSERT INTO public.display_audio_unlock(game_id,request_nonce,acknowledged_nonce,requested_at,acknowledged_at)
-  VALUES(p_game_id,p_nonce,NULL,now(),NULL)
+  INSERT INTO public.display_audio_unlock(
+    game_id,session_nonce,request_nonce,acknowledged_nonce,requested_at,acknowledged_at
+  ) VALUES(p_game_id,p_nonce,p_nonce,NULL,now(),NULL)
   ON CONFLICT(game_id) DO UPDATE SET request_nonce=EXCLUDED.request_nonce,
     acknowledged_nonce=NULL, requested_at=now(), acknowledged_at=NULL;
   RETURN true;
@@ -17537,5 +17538,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 8Ht8Pd98FszXtitla0mD6OQa4uLoWBAyU1AHHfE8VVZhD2Dhz0Yn1ftI7oLS9LT
+\unrestrict 7ICQ4hfRBeNbwKf1shxbmHkZgVcOfrcI733plOkKdXGtcVhE51dl1CfEAfUxwWs
 
