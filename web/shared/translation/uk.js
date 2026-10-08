@@ -2732,7 +2732,7 @@ const uk = {
     gameFallback: "Без назви",
   },
   editor: {
-    pageTitlePrefix: "Редактор гри — ",
+    pageTitlePrefix: "Редактор гри",
     title: "Familiada — редактор гри",
     backToGames: "Мої ігри",
     backToQuestions: "Назад",
@@ -3705,7 +3705,7 @@ const uk = {
     editor: {
       nameLabel: "Назва",
       namePlaceholder: "Напр. Мій логотип",
-      editLogoPrefix: "Редактор логотипу — ",
+      editLogoPrefix: "Редактор логотипу",
     },
     modes: {
       text: "Текст",

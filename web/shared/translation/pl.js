@@ -2634,7 +2634,7 @@ const pl = {
     gameFallback: "Bez nazwy",
   },
   editor: {
-    pageTitlePrefix: "Edytor gry — ",
+    pageTitlePrefix: "Edytor gry",
     title: "Familiada — edytor gry",
     backToGames: "Moje gry",
     backToQuestions: "Wstecz",
@@ -3607,7 +3607,7 @@ const pl = {
     editor: {
       nameLabel: "Nazwa",
       namePlaceholder: "Np. Moje logo",
-      editLogoPrefix: "Edytor logo — ",
+      editLogoPrefix: "Edytor logo",
     },
     modes: {
       text: "Tekst",

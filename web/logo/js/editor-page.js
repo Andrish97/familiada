@@ -239,7 +239,7 @@ export async function bootEditorPage({ mode, initEditor }) {
   }
 
   function renderHeader() {
-    el.brandTitle.textContent = `${t("logoEditor.editor.editLogoPrefix")}${modeLabel()}`;
+    el.brandTitle.textContent = modeLabel();
   }
 
   /** Strona nie może edytować -- komunikat z jedynym wyjściem: lista logo. */

@@ -2745,7 +2745,7 @@ const en = {
     gameFallback: "Untitled",
   },
   editor: {
-    pageTitlePrefix: "Game editor — ",
+    pageTitlePrefix: "Game editor",
     title: "Familiada — game editor",
     backToGames: "My games",
     backToQuestions: "Back",
@@ -3718,7 +3718,7 @@ const en = {
     editor: {
       nameLabel: "Name",
       namePlaceholder: "e.g. My logo",
-      editLogoPrefix: "Logo editor — ",
+      editLogoPrefix: "Logo editor",
     },
     modes: {
       text: "Text",

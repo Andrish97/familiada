@@ -80,8 +80,8 @@ Jeden układ topbaru:
 
 | Strona | Tytuł (wielkie litery) | Podtytuł | Nazwa zasobu | Skąd dziś |
 |---|---|---|---|---|
-| Edytor pytań | EDYTOR GRY — typ gry | — | niżej, w polu nazwy | `#pageTitle` + `#hintTop` pod topbarem |
-| Edytor logo | EDYTOR LOGO — tryb (TEKST / RYSUNEK / OBRAZ) | — | niżej, w polu nazwy | `#brandTitle` w sekcji 1 |
+| Edytor pytań | EDYTOR GRY | typ gry (szary, jak w menedżerze baz — decyzja 2026-10-08) | niżej, w polu nazwy | `#pageTitle` + `#hintTop` pod topbarem |
+| Edytor logo | EDYTOR LOGO | tryb: Tekst / Rysunek / Obraz (szary) | niżej, w polu nazwy | `#brandTitle` w sekcji 1 |
 | Ankieta gry | ANKIETA | nazwa gry | w podtytule | `.title` + `#hintTop` pod topbarem |
 | Menedżer bazy | MENEDŻER BAZY PYTAŃ | nazwa bazy | w podtytule | sekcja 2 (wzór) |
 | Ustawienia gry | USTAWIENIA GRY | nazwa gry | w podtytule | `#gsTitle` w sekcji 2 (sama nazwa) |
