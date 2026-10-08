@@ -649,15 +649,18 @@ export function createUI({ root, emit }) {
     // kontenerze tego szablonu, nie na #app. Urządzenia/Podsumowanie mają
     // zostać na pełną szerokość (patrz control2.html) — tylko te trzy
     // przeprojektowane ekrany rozgrywki mają być węższe (plan, sekcja 3b).
+    const navNode = nav
+      ? h("div", { class: "c2-gameplay-nav" }, nav)
+      : h("div", { class: "c2-gameplay-nav c2-gameplay-nav-empty", "aria-hidden": "true" });
     root.appendChild(h("div", { class: "c2-card-inner c2-gameplay c2-gameplay-card" }, [
       h("div", { class: "c2-stepper", text: stepLabel }),
       h("div", { class: "c2-gameplay-body" }, body),
-      nav ? h("div", { class: "c2-gameplay-nav" }, nav) : null,
+      navNode,
     ]));
   }
 
   // ============================================================
-  // Siatka 3x5 współdzielona przez Rundy-odsłanianie i Finał-odsłanianie —
+  // Sześciorzędowa siatka współdzielona przez wszystkie kroki rozgrywki —
   // ustalona wspólnie z właścicielem projektu: jednostka to 1/3 szerokości
   // wiersza, niektóre kafle zajmują 1,5 jednostki (pół wiersza). Wewnętrznie
   // 6 kolumn (LCD z 2 i 3), żeby obie szerokości wyrazić całkowitym `span`.
@@ -713,6 +716,14 @@ export function createUI({ root, emit }) {
 
   function tileGrid(tiles) {
     return h("div", { class: "c2-tilegrid" }, tiles.filter(Boolean));
+  }
+
+  function questionGridTile(text, row) {
+    const question = text || t("control.dash");
+    const el = h("div", { class: "c2-grid-question", text: question, title: question });
+    el.style.gridRow = String(row);
+    el.style.fontSize = question.length > 150 ? ".68rem" : question.length > 100 ? ".75rem" : ".86rem";
+    return el;
   }
 
   // Wariant tile() z zaznacz → potwierdź (patrz armedKey wyżej): pierwsze
@@ -839,16 +850,12 @@ export function createUI({ root, emit }) {
       tiles.push(tile(t("control.roundsBuzzRetry"), { row: 3, col: "1 / 7", disabled: boardBusy(), onclick: () => emit("game.dispatch", { type: "RETRY_DUEL" }) }));
     }
 
-    const body = [
-      // Pytanie rundy pozostaje widoczne także podczas pojedynku; nagłówek
-      // ma tę samą wysokość co w kolejnych krokach rozgrywki.
-      h("div", { class: "c2-question", text: r.question?.text || t("control.dash") }),
-      h("div", { class: "c2-roundlayout" }, [
+    tiles.push(questionGridTile(r.question?.text, 4));
+    const body = [h("div", { class: "c2-roundlayout" }, [
         h("div", { class: "c2-roundlayout-main" }, [tileGrid(tiles)]),
         h("div", { class: "c2-roundlayout-divider" }),
         h("div", { class: "c2-roundlayout-side" }, [hintBlock(getRoundsHint(state))]),
-      ]),
-    ];
+      ])];
 
     gameplayShell({ stepLabel: t("control.stepDuelTitle", { round: r.roundNo }), body, nav: null });
   }
@@ -906,11 +913,11 @@ export function createUI({ root, emit }) {
     }
 
     // r_duel PRZED przyjęciem zgłoszenia (r.duel.firstTeam jeszcze puste) —
-    // osobny, mniejszy ekran: nic z pytania/siatki/X/timera nie jest jeszcze
+    // osobny, mniejszy ekran: siatka nie pokazuje jeszcze X ani timera
     // grywalne (nikt nie wygrał prawa do odpowiedzi), więc nie pokazujemy
     // tego wcale, dokładnie jak stary control.html's osobny
-    // data-step="r_duel" (sama "Zatwierdź drużynę A/B"+"Ponów naciśnięcie",
-    // bez treści pytania) — patrz renderDuelAccept().
+    // data-step="r_duel" (drużyny, zatwierdzenie zgłoszenia i pytanie;
+    // X/timer pojawiają się po przyjęciu zgłoszenia) — patrz renderDuelAccept().
     if (state.phase === "DUEL" && !r.duel.firstTeam) {
       return renderDuelAccept(state);
     }
@@ -920,12 +927,12 @@ export function createUI({ root, emit }) {
 
     // r_play / dalsza część DUEL po przyjęciu zgłoszenia (wspólny ekran gry
     // właściwej — drużyna, która wygrała pojedynek, odpowiada na TĘ SAMĄ
-    // widoczną siatkę). Układ: pytanie na górze; poniżej dwie kolumny —
+    // widoczną siatkę). Pytanie zajmuje wolny, pełnoszeroki wiersz siatki;
+    // poniżej dwie kolumny —
     // siatka odpowiedzi (lewo) i podpowiedź za pionową kreską (prawo); pod
     // tym pasek statusu (kto gra, bank, inne info); na samym dole przyciski
     // nawigacji ("Zakończ rundę" — gameplayShell's nav, jak Finał).
     const body = [];
-    body.push(h("div", { class: "c2-question", text: r.question?.text || t("control.dash") }));
 
     // Raz osiągnięte canEndRound (wszystko odsłonięte albo kradzież już
     // rozstrzygnięta) nie ma już nic do pudłowania/odmierzania — X i zegarek
@@ -980,12 +987,9 @@ export function createUI({ root, emit }) {
       }));
     });
 
-    // Wiersz 4 celowo PUSTY — ta sama przerwa nad akcjami co w Finale-
-    // mapowaniu (renderFinalMapping's pusty wiersz 5 przed kaflami
-    // odsłaniania), żeby rytm siatki (treść / przerwa / akcje) zgadzał się
-    // między wszystkimi kartami rozgrywki (zgłoszone). "Oddaj kontrolę"
-    // schodzi więc na wiersz 5, X/Timer na wiersz 6 — siatka ma teraz 6
-    // wierszy zamiast 5 (nadpisane inline niżej, jak w mapowaniu).
+    // Wiersz 4 zajmuje pytanie na pełną szerokość. Dzięki temu treść
+    // wykorzystuje wolne miejsce zamiast zmieniać wysokość pozostałych kafli.
+    // "Oddaj kontrolę" pozostaje w wierszu 5, X/Timer w wierszu 6.
     if (passAvailable) {
       tiles.push(armableTile("pass", t("control.roundsPassControl"), {
         row: 5, col: "1 / 7", cls: "c2-tile-primary",
@@ -1048,6 +1052,7 @@ export function createUI({ root, emit }) {
       tiles.push(timer3Tile);
     }
 
+    tiles.push(questionGridTile(r.question?.text, 4));
     const roundsGrid = tileGrid(tiles);
     roundsGrid.style.gridTemplateRows = "repeat(6, minmax(0,1fr))";
     body.push(h("div", { class: "c2-roundlayout" }, [
@@ -1422,15 +1427,9 @@ export function createUI({ root, emit }) {
     rows.push(timerButton);
     bindShortcut(timerButton, "t", () => emit("final.toggleTimer", { round }));
 
-    // Nagłówek nad siatką — Finał-mapowanie ma nad swoją siatką c2-question
-    // (treść pytania), wpisywanie go dotąd nie miało wcale, przez co jego
-    // siatka dostawała więcej wysokości niż mapowania i wiersze między tymi
-    // dwoma ekranami nie kończyły się na tej samej wysokości (zgłoszone).
-    // Ten ekran nie ma JEDNEGO pytania (5 naraz w wierszach), więc zamiast
-    // treści pytania pokazuje, czyj to krok — sama treść nieważna, chodzi o
-    // zarezerwowanie tej samej wysokości nagłówka co u mapowania.
+    // Pięć pytań jest już widocznych w pięciu rzędach formularza; szósty
+    // zajmuje timer. Stepper u góry określa, który gracz wpisuje odpowiedzi.
     const body = [
-      h("div", { class: "c2-question", text: t("control.finalEntryHeading", { round }) }),
       h("div", { class: "c2-roundlayout" }, [
         h("div", { class: "c2-roundlayout-main" }, [h("div", { class: "c2-entryrows" }, rows)]),
         h("div", { class: "c2-roundlayout-divider" }),
@@ -1698,16 +1697,15 @@ export function createUI({ root, emit }) {
       optionTiles.push(slotEl);
     }
 
-    // 6 wierszy zamiast domyślnych 5 (nadpisanie inline, tylko tu — Rundy
-    // mają teraz 6 wierszy przez własne nadpisanie w renderRounds): wiersz 5
-    // celowo PUSTY, żeby dać kaflom odsłaniania w wierszu 6 CAŁY wiersz
-    // przerwy nad sobą, nie tylko margines. Wszystkie 6 wierszy równe —
+    // Wspólna, sześciorzędowa siatka jak w Rundach. Wiersz 5 zajmuje pytanie
+    // na pełną szerokość, a kafle odsłaniania zostają w wierszu 6. Wszystkie
+    // rzędy mają tę samą wysokość —
     // wcześniejsze przeważanie wiersza 1 (Wpisano) było próbą naprawienia
     // wysokości POLA przez wysokość WIERSZA; prawdziwa naprawa (zgłoszone:
     // "pola wpisywania lepiej żeby były na wysokość kafelka") jest w CSS
     // (.c2-entrytile-input input's flex:1/height:100%) — samo pole
     // wypełnia teraz cały kafelek niezależnie od tego, ile miejsca ma wiersz.
-    const mappingGrid = tileGrid([...row1Tiles, revealAnswerTile, revealPointsTile, ...optionTiles]);
+    const mappingGrid = tileGrid([...row1Tiles, ...optionTiles, questionGridTile(question?.text || t("control.finalUi.questionLabel", { n: idx + 1 }), 5), revealAnswerTile, revealPointsTile]);
     mappingGrid.style.gridTemplateRows = "repeat(6, minmax(0,1fr))";
 
     // control/js/gameFinal.js's updateSumUI() — operator widział sumę na
@@ -1744,7 +1742,6 @@ export function createUI({ root, emit }) {
     ]);
 
     const body = [
-      h("div", { class: "c2-question", text: question?.text || t("control.finalUi.questionLabel", { n: idx + 1 }) }),
       h("div", { class: "c2-roundlayout" }, [
         h("div", { class: "c2-roundlayout-main" }, [mappingGrid]),
         h("div", { class: "c2-roundlayout-divider" }),

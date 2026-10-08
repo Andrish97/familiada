@@ -105,15 +105,15 @@
        przewijania"). */
     .c2-scroll-area { flex:1; min-height:0; overflow-y:auto; display:flex; flex-direction:column; gap:10px; }
     .c2-stepper { font-size:.75rem; letter-spacing:.08em; text-transform:uppercase; opacity:.65; border-bottom:1px solid rgba(255,255,255,.12); padding-bottom:8px; }
-    .c2-gameplay-body { flex:1; width:100%; min-width:0; box-sizing:border-box; overflow:hidden; display:flex; flex-direction:column; gap:12px; min-height:0; }
+    .c2-gameplay-body { flex:1; width:100%; min-width:0; box-sizing:border-box; overflow:hidden; display:grid; grid-template-columns:minmax(0,1fr); grid-template-rows:minmax(0,1fr) 42px; gap:12px; min-height:0; }
     /* padding-top:16px == .control-main-card's własne padding-bottom:16px
        pod spodem — nad i pod przyciskami tyle samo miejsca (zgłoszone). */
-    .c2-gameplay-nav { display:flex; gap:8px; justify-content:flex-end; border-top:1px solid rgba(255,255,255,.12); padding-top:16px; flex-wrap:wrap; }
+    .c2-gameplay-nav { min-height:55px; box-sizing:border-box; display:flex; gap:8px; justify-content:flex-end; border-top:1px solid rgba(255,255,255,.12); padding-top:16px; flex-wrap:wrap; }
+    .c2-gameplay-nav-empty { visibility:hidden; border:0; padding:0; }
     /* To samo dla Urządzeń/Podsumowania (control.css's .stepFoot, domyślnie
        tylko 10px u góry vs 28px u dołu po odjęciu cardBody's paddingu
        wyżej — teraz 16px u góry == 16px .control-main-card u dołu). */
     .stepFoot { padding-top:16px; }
-    .c2-question { min-height:2.6em; display:flex; align-items:center; font-size:1.05rem; font-weight:700; line-height:1.3; }
     /* r_intro/r_roundStart ("Rozpocznij grę"/"Rozpocznij rundę") — wyśrodkowana
        "hero" treść zamiast gołego akapitu, zgłoszone jako wyglądające źle. */
     .c2-intro { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; gap:16px; padding:20px; }
@@ -317,6 +317,7 @@
       cursor:pointer; user-select:none; -webkit-tap-highlight-color:transparent;
       transition:filter .12s ease, background .12s ease, border-color .12s ease;
     }
+    .c2-grid-question { grid-column:1 / 7; display:flex; align-items:center; justify-content:center; min-width:0; padding:4px 8px; text-align:center; font-size:clamp(.68rem,1vw,.9rem); font-weight:700; line-height:1.2; overflow-wrap:anywhere; }
     .c2-tile:hover:not(:disabled) { filter:brightness(1.1); }
     .c2-tile:active:not(:disabled) { transform:translateY(1px); }
     /* Dokładnie jak stare css/base.css's .btn:disabled — opacity .45 +
