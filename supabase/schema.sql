@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict rDBFPrmdp3dkvo1Rn4xt7F17b4kdeIWLf018HmQc2U4nTpUGcLiSSQq4NxMrlm3
+\restrict WA7ebuhC3NeN5uNqYvHQRnNs9ScV9Hm9iVGajnmaPBug0iW8LhnQUuwM6cAccx4
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -243,6 +243,28 @@ END $$;
 
 
 --
+-- Name: _poll_daily_cap_until("uuid", "text"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."_poll_daily_cap_until"("p_owner" "uuid", "p_email" "text") RETURNS timestamp with time zone
+    LANGUAGE "sql" STABLE SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+  SELECT x.created_at + interval '24 hours'
+  FROM (
+    SELECT q.created_at
+    FROM public.mail_queue q
+    WHERE q.created_by = p_owner
+      AND lower(trim(q.to_email)) = lower(trim(p_email))
+      AND q.cooldown_action_key = 'poll:share'
+      AND q.created_at > now() - interval '24 hours'
+    ORDER BY q.created_at DESC
+    OFFSET 2 LIMIT 1
+  ) x
+$$;
+
+
+--
 -- Name: _poll_open_unchecked("uuid", "text"); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -270,6 +292,7 @@ begin
   -- status = poll_open (UWAGA: nie dotykamy games.type!)
   update public.games
   set status = 'poll_open',
+      share_key_poll = public.gen_share_key(18), -- E11b: nowy klucz przy każdym uruchomieniu (stare linki/QR/zaproszenia wygasają)
       poll_opened_at = now(),
       poll_closed_at = null,
       updated_at = now()
@@ -279,6 +302,10 @@ begin
   delete from public.poll_votes where game_id = p_game_id;
   delete from public.poll_text_entries where game_id = p_game_id;
   delete from public.poll_sessions where game_id = p_game_id;
+  -- E11b: zaproszenia poprzedniego uruchomienia znikają (nowe uruchomienie = nowe udostępnienie)
+  delete from public.poll_tasks where game_id = p_game_id;
+  -- E11b: kody QR ankiety z poprzedniego uruchomienia przestają działać
+  delete from public.device_connect_codes where game_id = p_game_id and device_type = 'poll_qr';
 
   -- utwórz sesję per pytanie
   insert into public.poll_sessions (game_id, question_id, question_ord, is_open, created_at, closed_at)
@@ -405,10 +432,31 @@ begin
   set is_open = false, closed_at = now()
   where game_id = p_game_id and is_open = true;
 
+  -- E11b: po zamknięciu kod QR ankiety przestaje działać
+  delete from public.device_connect_codes where game_id = p_game_id and device_type = 'poll_qr';
+
   update public.games
   set status = 'ready', poll_closed_at = now()
   where id = p_game_id;
 end;
+$$;
+
+
+--
+-- Name: _poll_sub_mail_limit_until("uuid", "uuid", "text"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."_poll_sub_mail_limit_until"("p_owner" "uuid", "p_user" "uuid", "p_email" "text") RETURNS timestamp with time zone
+    LANGUAGE "sql" STABLE SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+  SELECT CASE WHEN coalesce(sum(s.email_send_count), 0) >= 2
+              THEN max(s.email_sent_at) + interval '30 days' END
+  FROM public.poll_subscriptions s
+  WHERE s.owner_id = p_owner
+    AND ((p_user IS NOT NULL AND s.subscriber_user_id = p_user)
+      OR (p_email IS NOT NULL AND lower(s.subscriber_email) = lower(p_email)))
+    AND s.email_sent_at > now() - interval '30 days'
 $$;
 
 
@@ -482,6 +530,9 @@ begin
   update public.poll_sessions
   set is_open = false, closed_at = now()
   where game_id = p_game_id and is_open = true;
+
+  -- E11b: po zamknięciu kod QR ankiety przestaje działać
+  delete from public.device_connect_codes where game_id = p_game_id and device_type = 'poll_qr';
 
   update public.games
   set status = 'ready', poll_closed_at = now()
@@ -2642,13 +2693,7 @@ begin
     v_poll_close := jsonb_build_object('ok', false, 'code', 'preparedNoPoll');
   elsif g.status <> 'poll_open' then
     v_poll_close := jsonb_build_object('ok', false, 'code', 'closeOnlyOpen');
-  elsif exists (
-    select 1 from public.poll_tasks t
-    where t.owner_id = g.owner_id and t.game_id = p_game_id
-      and t.done_at is null and t.declined_at is null and t.cancelled_at is null
-  ) then
-    -- ktoś z zaproszonych jeszcze nie zagłosował
-    v_poll_close := jsonb_build_object('ok', false, 'code', 'closeWaitForTasks');
+  -- E11b: usunięty warunek „czekające zaproszenia blokują zamknięcie” (closeWaitForTasks)
   else
     v_poll_close := c_ok;
     for r in
@@ -7355,6 +7400,52 @@ $$;
 
 
 --
+-- Name: poll_abort("uuid"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."poll_abort"("p_game_id" "uuid") RETURNS "jsonb"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+DECLARE
+  v_type text;
+  v_status text;
+  v_key text := public.gen_share_key(18);
+BEGIN
+  PERFORM public._poll_assert_owner(p_game_id);
+
+  SELECT g.type::text, g.status::text INTO v_type, v_status
+  FROM public.games g WHERE g.id = p_game_id FOR UPDATE;
+
+  IF v_type NOT IN ('poll_text', 'poll_points') THEN
+    RAISE EXCEPTION 'not_a_poll';
+  END IF;
+  IF v_status NOT IN ('poll_open', 'ready') THEN
+    RAISE EXCEPTION 'poll_not_abortable';
+  END IF;
+
+  DELETE FROM public.poll_votes WHERE game_id = p_game_id;
+  DELETE FROM public.poll_text_entries WHERE game_id = p_game_id;
+  DELETE FROM public.poll_sessions WHERE game_id = p_game_id;
+  DELETE FROM public.poll_tasks WHERE game_id = p_game_id;
+  DELETE FROM public.device_connect_codes WHERE game_id = p_game_id AND device_type = 'poll_qr';
+
+  UPDATE public.games
+     SET status = 'draft', poll_opened_at = NULL, poll_closed_at = NULL,
+         share_key_poll = v_key, updated_at = now()
+   WHERE id = p_game_id;
+
+  -- jak game_reset_poll_for_edit: wyniki zerowane
+  UPDATE public.answers a
+     SET fixed_points = 0
+    FROM public.questions q
+   WHERE q.id = a.question_id AND q.game_id = p_game_id;
+
+  RETURN jsonb_build_object('ok', true, 'share_key_poll', v_key);
+END $$;
+
+
+--
 -- Name: poll_action("text", "uuid", "text"); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -8055,7 +8146,8 @@ BEGIN
     p.username AS owner_label,
     pt.recipient_user_id, pt.recipient_email,
     pt.game_id, g.name AS game_name,
-    pt.poll_type, pt.share_key_poll, pt.opened_at
+    pt.poll_type, pt.share_key_poll, pt.opened_at,
+    g.status::text AS game_status, g.share_key_poll AS game_key -- E11b
   INTO t
   FROM public.poll_tasks pt
   LEFT JOIN public.games g ON g.id = pt.game_id
@@ -8063,10 +8155,18 @@ BEGIN
   WHERE pt.token = p_token LIMIT 1;
 
   IF found THEN
-    IF t.opened_at IS NULL AND t.status = 'pending' THEN
-      UPDATE public.poll_tasks
-      SET status = 'opened', opened_at = now()
-      WHERE id = t.id;
+    -- E11b: zaproszenie ważne tylko przy bieżącym kluczu gry i otwartej ankiecie
+    IF t.status IN ('pending', 'opened') THEN
+      IF t.game_key IS NULL OR t.game_key <> t.share_key_poll
+         OR t.game_status NOT IN ('poll_open', 'ready') THEN
+        RETURN jsonb_build_object('ok', false, 'error', 'expired');
+      ELSIF t.game_status = 'ready' THEN
+        RETURN jsonb_build_object('ok', false, 'error', 'poll_closed');
+      END IF;
+    END IF;
+    -- E11b: tylko znacznik czasu, bez stanu pośredniego 'opened'
+    IF t.opened_at IS NULL THEN
+      UPDATE public.poll_tasks SET opened_at = now() WHERE id = t.id;
     END IF;
     RETURN jsonb_build_object(
       'ok', true, 'kind', 'task',
@@ -8489,6 +8589,108 @@ end $$;
 
 
 --
+-- Name: poll_share_remind("uuid", "uuid"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."poll_share_remind"("p_game_id" "uuid", "p_task_id" "uuid") RETURNS "jsonb"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+DECLARE
+  v_uid uuid := auth.uid();
+  g record;
+  t record;
+  v_to text;
+  v_target text;
+  v_ok boolean;
+  v_until timestamptz;
+BEGIN
+  PERFORM public._poll_assert_owner(p_game_id);
+
+  SELECT id, name, status::text AS status, share_key_poll INTO g
+  FROM public.games WHERE id = p_game_id FOR UPDATE;
+
+  IF g.status <> 'poll_open' THEN
+    RETURN jsonb_build_object('ok', false, 'err', 'poll not open');
+  END IF;
+
+  SELECT * INTO t FROM public.poll_tasks WHERE id = p_task_id AND game_id = p_game_id AND owner_id = v_uid FOR UPDATE;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'task_not_found';
+  END IF;
+  IF t.status NOT IN ('pending', 'opened') THEN
+    RETURN jsonb_build_object('ok', false, 'err', 'task not pending');
+  END IF;
+  IF t.share_key_poll <> g.share_key_poll THEN
+    RETURN jsonb_build_object('ok', false, 'err', 'task expired');
+  END IF;
+  IF t.reminder_count >= 2 THEN
+    RETURN jsonb_build_object('ok', false, 'err', 'reminder limit');
+  END IF;
+
+  v_to := lower(coalesce(t.recipient_email, (SELECT p.email FROM public.profiles p WHERE p.id = t.recipient_user_id)));
+  IF public._norm_email(v_to) IS NULL THEN
+    RETURN jsonb_build_object('ok', false, 'err', 'no email for this recipient');
+  END IF;
+
+  v_target := 'pair:' || v_uid::text || ':' ||
+    coalesce(t.recipient_user_id::text, 'email:' || md5(lower(coalesce(t.recipient_email, '')))) ||
+    ':game:' || p_game_id::text;
+
+  SELECT c.ok, c.next_allowed_at INTO v_ok, v_until FROM public.mail_cooldown_check('poll:share', v_target) c;
+  IF NOT v_ok THEN
+    RETURN jsonb_build_object('ok', false, 'err', 'cooldown', 'cooldown_until', v_until);
+  END IF;
+
+  v_until := public._poll_daily_cap_until(v_uid, v_to);
+  IF v_until IS NOT NULL THEN
+    RETURN jsonb_build_object('ok', false, 'err', 'cooldown', 'cooldown_until', v_until, 'reason', 'daily_cap');
+  END IF;
+
+  SELECT r.ok, r.next_allowed_at INTO v_ok, v_until FROM public.mail_cooldown_reserve('poll:share', v_target) r;
+  IF NOT v_ok THEN
+    RETURN jsonb_build_object('ok', false, 'err', 'cooldown', 'cooldown_until', v_until);
+  END IF;
+
+  UPDATE public.poll_tasks SET reminder_count = reminder_count + 1 WHERE id = t.id;
+
+  RETURN jsonb_build_object(
+    'ok', true,
+    'task_id', t.id, 'to', v_to, 'token', t.token, 'link', 'poll-go?t=' || t.token::text,
+    'game_name', g.name, 'poll_type', t.poll_type,
+    'reminder_count', t.reminder_count + 1,
+    'mail', jsonb_build_array(jsonb_build_object(
+      'task_id', t.id, 'to', v_to, 'token', t.token, 'link', 'poll-go?t=' || t.token::text))
+  );
+END $$;
+
+
+--
+-- Name: poll_share_remove("uuid", "uuid"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."poll_share_remove"("p_game_id" "uuid", "p_task_id" "uuid") RETURNS "jsonb"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+DECLARE
+  v_token text := public.poll_task_voter_token(p_task_id); -- 'task:<id>'
+BEGIN
+  PERFORM public._poll_assert_owner(p_game_id);
+
+  IF NOT EXISTS (SELECT 1 FROM public.poll_tasks WHERE id = p_task_id AND game_id = p_game_id) THEN
+    RAISE EXCEPTION 'task_not_found';
+  END IF;
+
+  DELETE FROM public.poll_votes WHERE game_id = p_game_id AND voter_token = v_token;
+  DELETE FROM public.poll_text_entries WHERE game_id = p_game_id AND voter_token = v_token;
+  DELETE FROM public.poll_tasks WHERE id = p_task_id AND game_id = p_game_id;
+
+  RETURN jsonb_build_object('ok', true);
+END $$;
+
+
+--
 -- Name: poll_sub_accept("uuid"); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -8819,9 +9021,12 @@ BEGIN
     pt.opened_at,
     pt.done_at,
     pt.declined_at,
-    pt.cancelled_at
+    pt.cancelled_at,
+    g.status::text AS game_status, -- E11b
+    g.share_key_poll AS game_key -- E11b
   INTO t
   FROM public.poll_tasks pt
+  LEFT JOIN public.games g ON g.id = pt.game_id
   WHERE pt.token = p_token
   LIMIT 1;
 
@@ -8836,6 +9041,15 @@ BEGIN
 
   IF t.status = 'done' OR t.done_at IS NOT NULL THEN
     RETURN jsonb_build_object('ok', false, 'error', 'already_done');
+  END IF;
+
+  -- E11b: zaproszenie ważne tylko przy bieżącym kluczu gry i otwartej ankiecie
+  IF t.game_key IS NULL OR t.game_key <> t.share_key_poll
+     OR t.game_status NOT IN ('poll_open', 'ready') THEN
+    RETURN jsonb_build_object('ok', false, 'error', 'expired');
+  END IF;
+  IF t.game_status = 'ready' THEN
+    RETURN jsonb_build_object('ok', false, 'error', 'poll_closed');
   END IF;
 
   -- jeżeli task jest przypisany do user_id: wymagamy zgodności sesji
@@ -8858,8 +9072,7 @@ BEGIN
   -- mark opened (pierwsze wejście)
   IF t.opened_at IS NULL THEN
     UPDATE public.poll_tasks
-      SET opened_at = now(),
-          status = CASE WHEN status = 'pending' THEN 'opened' ELSE status END
+      SET opened_at = now() -- E11b: bez stanu pośredniego 'opened'
       WHERE id = t.id;
   END IF;
 
@@ -10013,6 +10226,7 @@ CREATE FUNCTION "public"."polls_hub_share_poll"("p_game_id" "uuid", "p_sub_ids" 
 DECLARE
   v_uid uuid := auth.uid();
   v_poll_type text;
+  v_status text; -- E11b
   v_share_key text;
   v_created int := 0;
   v_cancelled int := 0;
@@ -10025,7 +10239,7 @@ BEGIN
     RETURN jsonb_build_object('ok', false, 'err', 'auth required');
   END IF;
 
-  SELECT g.type::text, g.share_key_poll INTO v_poll_type, v_share_key
+  SELECT g.type::text, g.share_key_poll, g.status::text INTO v_poll_type, v_share_key, v_status
   FROM public.games g WHERE g.id = p_game_id AND g.owner_id = v_uid LIMIT 1;
 
   IF NOT FOUND THEN
@@ -10034,9 +10248,13 @@ BEGIN
   IF v_poll_type NOT IN ('poll_text', 'poll_points') THEN
     RETURN jsonb_build_object('ok', false, 'err', 'not a poll game');
   END IF;
+  -- E11b: udostępniać można tylko otwartą ankietę (sprawdzane w bazie)
+  IF v_status <> 'poll_open' THEN
+    RETURN jsonb_build_object('ok', false, 'err', 'poll not open');
+  END IF;
 
-  UPDATE public.poll_tasks t
-  SET status = 'cancelled', cancelled_at = now()
+  -- E11b: wycofanie zaproszenia = usunięcie wiersza (bez stanu 'cancelled'); czekające nie mają głosów
+  DELETE FROM public.poll_tasks t
   WHERE t.owner_id = v_uid AND t.game_id = p_game_id AND t.status IN ('pending', 'opened')
     AND (
       (t.recipient_user_id IS NOT NULL AND NOT EXISTS (
@@ -10067,16 +10285,26 @@ BEGIN
     WHERE s.owner_id = v_uid AND s.status = 'active' AND s.id = ANY(coalesce(p_sub_ids, array[]::uuid[]))
   ),
   cooldown AS (
-    SELECT sel.sub_id, mc.next_allowed_at
-    FROM sel
-    JOIN public.mail_cooldowns mc ON mc.action_key = 'poll:share' AND mc.target_key = sel.cooldown_target
-    WHERE mc.next_allowed_at > now()
+    -- E11b: blokada = cooldown poll:share (24 h na parę+grę) LUB dobowy limit 3 maili ankietowych nadawca→odbiorca
+    SELECT u.sub_id, max(u.next_allowed_at) AS next_allowed_at
+    FROM (
+      SELECT sel.sub_id, mc.next_allowed_at
+      FROM sel
+      JOIN public.mail_cooldowns mc ON mc.action_key = 'poll:share' AND mc.target_key = sel.cooldown_target
+      WHERE mc.next_allowed_at > now()
+      UNION ALL
+      SELECT sel.sub_id, public._poll_daily_cap_until(v_uid, sel.resolved_email)
+      FROM sel
+      WHERE sel.resolved_email IS NOT NULL
+        AND public._poll_daily_cap_until(v_uid, sel.resolved_email) IS NOT NULL
+    ) u
+    GROUP BY u.sub_id
   ),
   existing AS (
     SELECT sel.sub_id, t.id AS task_id
     FROM sel
     LEFT JOIN public.poll_tasks t
-      ON t.owner_id = v_uid AND t.game_id = p_game_id AND t.status IN ('pending', 'opened', 'done')
+      ON t.owner_id = v_uid AND t.game_id = p_game_id AND t.status IN ('pending', 'opened', 'done', 'declined') /* E11b: odrzucone = nic więcej w tym uruchomieniu */
      AND ((sel.subscriber_user_id IS NOT NULL AND t.recipient_user_id = sel.subscriber_user_id)
        OR (sel.subscriber_user_id IS NULL AND sel.subscriber_email IS NOT NULL AND lower(t.recipient_email) = sel.subscriber_email))
   ),
@@ -10165,6 +10393,13 @@ begin
       cancelled_at = now()
   where id = p_id;
 
+  -- E11b: usunięcie subskrybenta wycofuje jego czekające zaproszenia do ankiet tego właściciela
+  delete from public.poll_tasks pt
+  where pt.owner_id = v_uid
+    and pt.status in ('pending', 'opened')
+    and ((v_sub.subscriber_user_id is not null and pt.recipient_user_id = v_sub.subscriber_user_id)
+      or (v_sub.subscriber_email is not null and lower(pt.recipient_email) = lower(v_sub.subscriber_email)));
+
   return jsonb_build_object('ok', true);
 end;
 $$;
@@ -10187,6 +10422,7 @@ DECLARE
   v_cd_ok       boolean;
   v_cd_until    timestamptz;
   v_unsub_token uuid;
+  v_lim_until   timestamptz; -- E11b
 BEGIN
   IF v_uid IS NULL THEN
     RETURN jsonb_build_object('ok', false, 'err', 'auth required');
@@ -10203,6 +10439,12 @@ BEGIN
 
   IF v_sub.status <> 'pending' THEN
     RETURN jsonb_build_object('ok', false, 'err', 'only pending can be resent');
+  END IF;
+
+  -- E11b: najwyżej 2 maile z zaproszeniem do subskrypcji na parę (okno 30 dni; pierwszy mail też idzie tą drogą)
+  v_lim_until := public._poll_sub_mail_limit_until(v_uid, v_sub.subscriber_user_id, v_sub.subscriber_email);
+  IF v_lim_until IS NOT NULL THEN
+    RETURN jsonb_build_object('ok', false, 'err', 'cooldown', 'cooldown_until', v_lim_until, 'reason', 'mail_limit');
   END IF;
 
   v_target := 'pair:' || v_uid::text || ':' ||
@@ -10284,6 +10526,7 @@ CREATE FUNCTION "public"."polls_hub_subscription_cancel"("p_id" "uuid") RETURNS 
     SET "search_path" TO 'public', 'pg_temp'
     AS $$
 declare v_uid uuid := auth.uid();
+  v_owner uuid; -- E11b
 begin
   if v_uid is null then return jsonb_build_object('ok', false, 'error', 'auth required'); end if;
 
@@ -10292,11 +10535,16 @@ begin
       cancelled_at = now()
   where id = p_id
     and subscriber_user_id = v_uid
-    and status in ('active','pending');
+    and status in ('active','pending')
+  returning owner_id into v_owner; -- E11b
 
   if not found then
     return jsonb_build_object('ok', false, 'error', 'not found or not active/pending');
   end if;
+
+  -- E11b: wypisanie się wycofuje czekające zaproszenia do ankiet tego nadawcy
+  delete from public.poll_tasks pt
+  where pt.owner_id = v_owner and pt.recipient_user_id = v_uid and pt.status in ('pending', 'opened');
 
   return jsonb_build_object('ok', true, 'action', 'cancelled', 'id', p_id);
 end;
@@ -10320,6 +10568,7 @@ DECLARE
   v_target   text;
   v_cd_ok    boolean;
   v_cd_until timestamptz;
+  v_lim_until timestamptz; -- E11b
 BEGIN
   IF v_rec = '' THEN
     RETURN jsonb_build_object('ok', false, 'err', 'empty recipient');
@@ -10349,6 +10598,18 @@ BEGIN
   END IF;
 
   v_target := 'pair:' || auth.uid()::text || ':' || coalesce(v_user_id::text, 'email:' || md5(v_email));
+  -- E11b: po odrzuceniu zaproszenia przez odbiorcę — 30 dni bez nowego zaproszenia
+  SELECT ok, next_allowed_at INTO v_cd_ok, v_cd_until FROM public.mail_cooldown_check('poll:invite_after_reject', v_target);
+  IF NOT v_cd_ok THEN
+    RETURN jsonb_build_object('ok', false, 'err', 'cooldown', 'cooldown_until', v_cd_until, 'reason', 'after_reject');
+  END IF;
+
+  -- E11b: najwyżej 2 maile z zaproszeniem do subskrypcji na parę (okno 30 dni)
+  v_lim_until := public._poll_sub_mail_limit_until(auth.uid(), v_user_id, v_email);
+  IF v_lim_until IS NOT NULL THEN
+    RETURN jsonb_build_object('ok', false, 'err', 'cooldown', 'cooldown_until', v_lim_until, 'reason', 'mail_limit');
+  END IF;
+
   SELECT ok, next_allowed_at INTO v_cd_ok, v_cd_until FROM public.mail_cooldown_check('poll:invite', v_target);
   IF NOT v_cd_ok THEN
     RETURN jsonb_build_object('ok', false, 'err', 'cooldown', 'cooldown_until', v_cd_until);
@@ -10482,6 +10743,7 @@ CREATE FUNCTION "public"."polls_hub_subscription_reject"("p_id" "uuid") RETURNS 
     SET "search_path" TO 'public', 'pg_temp'
     AS $$
 declare v_uid uuid := auth.uid();
+  v_owner uuid; -- E11b
 begin
   if v_uid is null then return jsonb_build_object('ok', false, 'error', 'auth required'); end if;
 
@@ -10490,11 +10752,19 @@ begin
       declined_at = now()
   where id = p_id
     and subscriber_user_id = v_uid
-    and status = 'pending';
+    and status = 'pending'
+  returning owner_id into v_owner; -- E11b
 
   if not found then
     return jsonb_build_object('ok', false, 'error', 'not found or not pending');
   end if;
+
+  -- E11b: odrzucenie wycofuje czekające zaproszenia do ankiet tego nadawcy
+  delete from public.poll_tasks pt
+  where pt.owner_id = v_owner and pt.recipient_user_id = v_uid and pt.status in ('pending', 'opened');
+
+  -- E11b: blokada ponownego zaproszenia do subskrypcji na 30 dni (egzekwuje polls_hub_subscription_invite)
+  PERFORM public.mail_cooldown_reserve('poll:invite_after_reject', 'pair:' || v_owner::text || ':' || v_uid::text);
 
   return jsonb_build_object('ok', true, 'action', 'declined', 'id', p_id);
 end;
@@ -12934,6 +13204,7 @@ CREATE TABLE "public"."poll_tasks" (
     "cancelled_at" timestamp with time zone,
     "email_sent_at" timestamp with time zone,
     "email_send_count" integer DEFAULT 0 NOT NULL,
+    "reminder_count" integer DEFAULT 0 NOT NULL,
     CONSTRAINT "poll_tasks_one_recipient_chk" CHECK (((("recipient_user_id" IS NOT NULL) AND ("recipient_email" IS NULL)) OR (("recipient_user_id" IS NULL) AND ("recipient_email" IS NOT NULL)))),
     CONSTRAINT "poll_tasks_poll_type_check" CHECK (("poll_type" = ANY (ARRAY['poll_text'::"text", 'poll_points'::"text"]))),
     CONSTRAINT "poll_tasks_status_check" CHECK (("status" = ANY (ARRAY['pending'::"text", 'opened'::"text", 'done'::"text", 'declined'::"text", 'cancelled'::"text"])))
@@ -16780,5 +17051,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict rDBFPrmdp3dkvo1Rn4xt7F17b4kdeIWLf018HmQc2U4nTpUGcLiSSQq4NxMrlm3
+\unrestrict WA7ebuhC3NeN5uNqYvHQRnNs9ScV9Hm9iVGajnmaPBug0iW8LhnQUuwM6cAccx4
 
