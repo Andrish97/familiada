@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict WA7ebuhC3NeN5uNqYvHQRnNs9ScV9Hm9iVGajnmaPBug0iW8LhnQUuwM6cAccx4
+\restrict bDRT6mor74X8r0zJhOycWUphbIkXHQDehZdHIzsrdho7ku0AmlhEvCbez6mOc0R
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -2171,7 +2171,7 @@ BEGIN
   GET DIAGNOSTICS v_cooldowns_deleted = ROW_COUNT;
 
   DELETE FROM public.mail_cooldowns
-  WHERE action_key IN ('poll:invite', 'poll:resend', 'poll:share')
+  WHERE action_key IN ('poll:invite', 'poll:resend', 'poll:share', 'poll:invite_after_reject') -- 311: także blokada 30 dni po odrzuceniu (migracja 310)
     AND (
       target_key LIKE 'pair:' || v_uid::text || ':' || p_other_user_id::text || '%'
       OR target_key LIKE 'pair:' || p_other_user_id::text || ':' || v_uid::text || '%'
@@ -17051,5 +17051,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict WA7ebuhC3NeN5uNqYvHQRnNs9ScV9Hm9iVGajnmaPBug0iW8LhnQUuwM6cAccx4
+\unrestrict bDRT6mor74X8r0zJhOycWUphbIkXHQDehZdHIzsrdho7ku0AmlhEvCbez6mOc0R
 
