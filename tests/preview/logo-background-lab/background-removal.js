@@ -4,6 +4,7 @@ const sourceContext = sourceCanvas.getContext("2d", { willReadFrequently: true }
 const backgroundInput = document.getElementById("backgroundColor");
 const toleranceInput = document.getElementById("tolerance");
 const featherInput = document.getElementById("reach");
+const islandLimitInput = document.getElementById("islandLimit");
 const resetButton = document.getElementById("reset");
 const sampleColorButton = document.getElementById("sampleColor");
 const sampleCards = [...document.querySelectorAll(".sample-card")];
@@ -11,6 +12,7 @@ const statusBox = document.getElementById("suitability");
 const MAX_SIDE = 1600;
 const OUTPUTS = [
   { canvasId: "edgeCleanCanvas", statsId: "edgeCleanStats", mode: "edge", cleanup: true },
+  { canvasId: "edgeSmallCanvas", statsId: "edgeSmallStats", mode: "edge-small", cleanup: true },
   { canvasId: "globalCleanCanvas", statsId: "globalCleanStats", mode: "global", cleanup: true },
   { canvasId: "edgeRawCanvas", statsId: "edgeRawStats", mode: "edge", cleanup: false },
 ];
@@ -24,6 +26,8 @@ let cornerSpread = 0;
 let transparentCornerRatio = 0;
 let sampleMode = false;
 let renderFrame = 0;
+let renderTimer = 0;
+let lastRenderAt = 0;
 
 function rgbFromHex(hex) {
   const value = hex.replace("#", "");
@@ -121,7 +125,7 @@ function prepareImage(image, filename, originalWidth = image.naturalWidth, origi
     canvas.width = sourceCanvas.width;
     canvas.height = sourceCanvas.height;
   }
-  for (const control of [backgroundInput, toleranceInput, featherInput, resetButton, sampleColorButton]) control.disabled = false;
+  for (const control of [backgroundInput, toleranceInput, featherInput, islandLimitInput, resetButton, sampleColorButton]) control.disabled = false;
   for (const button of document.querySelectorAll(".download-method")) button.disabled = false;
   updateSuitability();
   scheduleRender();
@@ -171,6 +175,60 @@ function addEdgePixel(pixel, data, background, threshold, tail) {
   visited[pixel] = 1;
   floodQueue[tail++] = pixel;
   return tail;
+}
+function removeSmallInteriorIslands(output, data, width, height, background, threshold, tolerance, feather, cleanup) {
+  const pixelCount = width * height;
+  const maxPixels = Math.max(1, Math.floor(pixelCount * Number(islandLimitInput.value) / 100));
+  let removedArea = 0;
+  let transparent = 0;
+
+  for (let pixel = 0; pixel < pixelCount; pixel++) {
+    if (visited[pixel] !== 0) continue;
+    const index = pixel * 4;
+    if (!isCandidate(index, data, background, threshold)) {
+      visited[pixel] = 2;
+      continue;
+    }
+
+    let head = 0;
+    let tail = 0;
+    floodQueue[tail++] = pixel;
+    visited[pixel] = 3;
+    while (head < tail) {
+      const current = floodQueue[head++];
+      const x = current % width;
+      const y = Math.floor(current / width);
+      if (x > 0 && visited[current - 1] === 0) {
+        const next = current - 1;
+        if (isCandidate(next * 4, data, background, threshold)) { visited[next] = 3; floodQueue[tail++] = next; }
+        else visited[next] = 2;
+      }
+      if (x + 1 < width && visited[current + 1] === 0) {
+        const next = current + 1;
+        if (isCandidate(next * 4, data, background, threshold)) { visited[next] = 3; floodQueue[tail++] = next; }
+        else visited[next] = 2;
+      }
+      if (y > 0 && visited[current - width] === 0) {
+        const next = current - width;
+        if (isCandidate(next * 4, data, background, threshold)) { visited[next] = 3; floodQueue[tail++] = next; }
+        else visited[next] = 2;
+      }
+      if (y + 1 < height && visited[current + width] === 0) {
+        const next = current + width;
+        if (isCandidate(next * 4, data, background, threshold)) { visited[next] = 3; floodQueue[tail++] = next; }
+        else visited[next] = 2;
+      }
+    }
+
+    for (let item = 0; item < tail; item++) {
+      const componentPixel = floodQueue[item];
+      visited[componentPixel] = 2;
+      if (tail > maxPixels) continue;
+      removedArea++;
+      if (recolorPixel(output, data, componentPixel * 4, background, tolerance, feather, cleanup)) transparent++;
+    }
+  }
+  return { area: removedArea, transparent };
 }
 function recolorPixel(output, source, index, background, tolerance, feather, cleanEdge) {
   const delta = colorDelta(source, index, background);
@@ -228,6 +286,11 @@ function renderAlgorithm({ canvasId, statsId, mode, cleanup }, data, width, heig
       if (y > 0) tail = addEdgePixel(pixel - width, data, background, limit, tail);
       if (y + 1 < height) tail = addEdgePixel(pixel + width, data, background, limit, tail);
     }
+    if (mode === "edge-small") {
+      const islands = removeSmallInteriorIslands(result.data, data, width, height, background, limit, tolerance, feather, cleanup);
+      area += islands.area;
+      transparent += islands.transparent;
+    }
   }
 
   context.putImageData(result, 0, 0);
@@ -246,9 +309,26 @@ function processImage() {
   updateSuitability();
 }
 function scheduleRender() {
+  if (renderFrame || renderTimer) return;
+  const delay = Math.max(0, 160 - (performance.now() - lastRenderAt));
+  const request = () => {
+    renderTimer = 0;
+    renderFrame = requestAnimationFrame(() => {
+      renderFrame = 0;
+      lastRenderAt = performance.now();
+      processImage();
+    });
+  };
+  if (delay === 0) request();
+  else renderTimer = setTimeout(request, delay);
+}
+function renderImmediately() {
+  if (renderTimer) clearTimeout(renderTimer);
+  renderTimer = 0;
   if (renderFrame) cancelAnimationFrame(renderFrame);
   renderFrame = requestAnimationFrame(() => {
     renderFrame = 0;
+    lastRenderAt = performance.now();
     processImage();
   });
 }
@@ -270,6 +350,13 @@ for (const card of sampleCards) card.addEventListener("click", () => drawSample(
 backgroundInput.addEventListener("input", () => { updateSuitability(); scheduleRender(); });
 toleranceInput.addEventListener("input", scheduleRender);
 featherInput.addEventListener("input", scheduleRender);
+islandLimitInput.addEventListener("input", scheduleRender);
+for (const input of [backgroundInput, toleranceInput, featherInput, islandLimitInput]) input.addEventListener("change", renderImmediately);
+function updateIslandLimitReadout() {
+  document.getElementById("islandLimitValue").value = `${Number(islandLimitInput.value).toFixed(3).replace(/0+$/, "").replace(/\.$/, "")}% obrazu`;
+}
+islandLimitInput.addEventListener("input", updateIslandLimitReadout);
+updateIslandLimitReadout();
 for (const input of [toleranceInput, featherInput]) {
   input.addEventListener("input", () => {
     document.getElementById(`${input.id}Value`).value = `${input.value} / 255`;
@@ -296,21 +383,23 @@ sourceCanvas.addEventListener("click", event => {
   sampleMode = false;
   sampleColorButton.textContent = "Pobierz kolor z obrazu";
   updateSuitability();
-  scheduleRender();
+  renderImmediately();
 });
 resetButton.addEventListener("click", () => {
   backgroundInput.value = autoBackground;
   toleranceInput.value = "20";
   featherInput.value = "130";
+  islandLimitInput.value = "0.03";
+  updateIslandLimitReadout();
   for (const input of [toleranceInput, featherInput]) {
     document.getElementById(`${input.id}Value`).value = `${input.value} / 255`;
   }
   updateSuitability();
-  scheduleRender();
+  renderImmediately();
 });
 for (const button of document.querySelectorAll(".download-method")) {
   button.addEventListener("click", () => downloadCanvas(button.dataset.canvas, button.dataset.suffix));
 }
-for (const control of [backgroundInput, toleranceInput, featherInput, resetButton, sampleColorButton]) control.disabled = true;
+for (const control of [backgroundInput, toleranceInput, featherInput, islandLimitInput, resetButton, sampleColorButton]) control.disabled = true;
 for (const button of document.querySelectorAll(".download-method")) button.disabled = true;
 drawSample("white");

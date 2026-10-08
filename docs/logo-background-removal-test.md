@@ -29,6 +29,9 @@ może mieć gradient, którego narożniki nie pokazują.
 - **Brzegowe, czysta krawędź**: usuwa piksele podobne do tła, jeśli łączą się
   z krawędzią obrazu. Zrekonstruowany kolor krawędzi ogranicza jasną obwódkę;
   zamknięte białe detale pozostają.
+- **Brzegowe + małe fragmenty**: oprócz tła przy krawędzi usuwa małe,
+  odizolowane obszary podobnego koloru wewnątrz obrazu. Limit ich wielkości
+  można zmienić suwakiem; większe obszary, takie jak wnętrza liter, zostają.
 - **Globalne, czysta krawędź**: usuwa podobne piksele w całym obrazie, także
   wewnątrz logo. Pokazuje ryzyko dla białych detali.
 - **Brzegowe, bez korekty obwódki**: pokazuje wynik bez rekonstrukcji koloru
@@ -40,6 +43,8 @@ może mieć gradient, którego narożniki nie pokazują.
 - Tolerancja: 20/255. Określa, które piksele stają się całkowicie przezroczyste.
 - Miękkość krawędzi: 130/255. Wyznacza zakres przejścia do pełnej
   nieprzezroczystości.
+- Limit małych fragmentów: 0,03% obrazu. Dotyczy wariantu brzegowego
+  z usuwaniem małych fragmentów.
 - Podgląd i eksport są ograniczone do 1600 px na dłuższym boku.
 
 Powyższe wartości są startowe. Po obejrzeniu testów na rzeczywistych logo

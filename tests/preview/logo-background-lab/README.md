@@ -18,10 +18,12 @@ Nierówne i ciemne przykłady powinny zostać oznaczone jako niespełniające
 prostych kryteriów. Jasne elementy odcięte od krawędzi pokazują zaletę
 usuwania obszaru połączonego z brzegiem.
 
-Strona równolegle porównuje trzy warianty:
+Strona równolegle porównuje cztery warianty:
 
 - **Brzegowe, czysta krawędź** — usuwa kolor tła połączony z krawędzią i
   odbarwia częściowo przezroczyste piksele, żeby ograniczyć jasną obwódkę.
+- **Brzegowe + małe fragmenty** — poza krawędzią usuwa małe, odizolowane
+  obszary koloru tła. Suwak limitu chroni większe wnętrza liter i kształtów.
 - **Globalne, czysta krawędź** — usuwa podobny kolor w całym obrazie; może
   wyciąć białe elementy logo.
 - **Brzegowe, bez korekty** — zachowuje oryginalne kolory brzegów i pokazuje
@@ -33,6 +35,7 @@ Wspólne parametry do oceny:
 - tolerancja: 20/255 na start, czyli próg uznania koloru za tło;
 - miękkość krawędzi: 130/255 na start, czyli zakres przejścia do pełnej
   nieprzezroczystości;
+- maksymalny rozmiar dodatkowo usuwanych fragmentów: 0,03% obrazu;
 - ocena tła: jasność mediany i różnica kolorów pomiędzy próbkami z rogów.
 
 Ocena równego tła nie zależy od jasności: różnica próbek do 14 poziomów
