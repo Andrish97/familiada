@@ -684,6 +684,11 @@ test("control2: parowanie urządzeń — linki renderują się bez błędu, Cont
       .toContainText("bez tego start gry będzie zablokowany");
     await expect(displayPage.locator("#audioUnlockScreen")).not.toHaveClass(/hidden/, { timeout: 10000 });
 
+    const nextStep = page.getByRole("button", { name: "Dalej" });
+    await expect(nextStep).toBeDisabled();
+    await displayPage.locator("#btnAudioUnlock").click();
+    await expect(displayPage.locator("#audioUnlockScreen")).toHaveClass(/hidden/);
+    await expect(nextStep).toBeEnabled({ timeout: 10000 });
     await page.getByRole("button", { name: "Dalej" }).click();
     await expect(page.locator(".stepTitle")).toHaveText("Podsumowanie", { timeout: 10000 });
     await expect(page.locator(".c2-summary-rounds .c2-qpreview-text")).toHaveCount(1);
