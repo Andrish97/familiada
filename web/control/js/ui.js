@@ -840,10 +840,9 @@ export function createUI({ root, emit }) {
     }
 
     const body = [
-      // Utrzymujemy taki sam obszar nagłówka jak w rundach i finale, mimo że
-      // pojedynek nie pokazuje pytania. Bez tego wspólna siatka zaczynała się
-      // wyżej i kafle zmieniały rozmiar przy przejściu między krokami.
-      h("div", { class: "c2-question c2-question-spacer", "aria-hidden": "true" }),
+      // Pytanie rundy pozostaje widoczne także podczas pojedynku; nagłówek
+      // ma tę samą wysokość co w kolejnych krokach rozgrywki.
+      h("div", { class: "c2-question", text: r.question?.text || t("control.dash") }),
       h("div", { class: "c2-roundlayout" }, [
         h("div", { class: "c2-roundlayout-main" }, [tileGrid(tiles)]),
         h("div", { class: "c2-roundlayout-divider" }),
