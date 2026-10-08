@@ -1,6 +1,8 @@
 \set ON_ERROR_STOP on
-CREATE ROLE anon;
-CREATE ROLE authenticated;
+DO $$ BEGIN
+  IF NOT EXISTS(SELECT FROM pg_roles WHERE rolname='anon') THEN CREATE ROLE anon; END IF;
+  IF NOT EXISTS(SELECT FROM pg_roles WHERE rolname='authenticated') THEN CREATE ROLE authenticated; END IF;
+END $$;
 CREATE SCHEMA auth;
 CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql AS
   $$ SELECT nullif(current_setting('test.user_id',true),'')::uuid $$;
