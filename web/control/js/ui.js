@@ -42,6 +42,13 @@ function h(tag, attrs = {}, children = []) {
 
 export function createUI({ root, emit }) {
   function clear() { root.innerHTML = ""; }
+  function setTopbarProgress(label) {
+    const el = document.getElementById("c2TopbarProgress");
+    if (el) {
+      el.textContent = label || "";
+      el.title = label || "";
+    }
+  }
   function stopSummarySoundPreview() {
     getSfxCategories().forEach(({ key }) => { if (isSfxPlaying(key)) stopSfx(key); });
   }
@@ -645,6 +652,7 @@ export function createUI({ root, emit }) {
   // ============================================================
   function gameplayShell({ stepLabel, question, body, nav }) {
     clear();
+    setTopbarProgress(stepLabel);
     // .c2-gameplay-card (720px, wyśrodkowane) tylko TU — na WŁASNYM
     // kontenerze tego szablonu, nie na #app. Urządzenia/Podsumowanie mają
     // zostać na pełną szerokość (patrz control2.html) — tylko te trzy
@@ -659,7 +667,6 @@ export function createUI({ root, emit }) {
           if (question) el.style.fontSize = question.length > 150 ? ".68rem" : question.length > 100 ? ".75rem" : ".86rem";
           return el;
         })(),
-        h("div", { class: "c2-stepper-label", text: stepLabel }),
       ]),
       h("div", { class: "c2-gameplay-body" }, body),
       navNode,
@@ -1078,11 +1085,9 @@ export function createUI({ root, emit }) {
     if (state.phase === "STEAL" && r.steal.active) {
       statusItems.push(h("span", {}, [document.createTextNode(t("control.statusStealLabel")), h("b", { text: r.steal.team ? teamName(state, r.steal.team) : t("control.dash") })]));
     }
-    // "Zakończ rundę" mieszka OBOK Gra/Bank, w tym samym pasku (zgłoszone:
-    // za duży odstęp pod kaflami + przycisk ma być obok Gra/Bank) —
-    // .c2-statusbar-end popycha go do prawej krawędzi tego samego wiersza,
-    // zamiast osobnego .c2-gameplay-nav z własnym border-top/padding-top
-    // (stąd nav:null niżej — bez oddzielnego paska nawigacji na tym ekranie).
+    // Wyniki, bank i akcja przejścia tworzą wspólny dolny pasek. gameplayShell
+    // umieszcza go w stałym miejscu pod siatką, więc kafle wypełniają całą
+    // przestrzeń aż do niego.
     if ((state.phase === "PLAY" || state.phase === "STEAL") && r.canEndRound) {
       const label = previewPendingRoundEndDestination(state) === "GAME_END"
         ? t("control.roundsGoToGameEndBtn") : t("control.roundsEndRound");
@@ -1108,7 +1113,7 @@ export function createUI({ root, emit }) {
         onclick: () => emit("game.dispatch", { type: "NEXT_AFTER_REVEAL" }),
       }));
     }
-    body.push(h("div", { class: "c2-statusbar" }, statusItems));
+    const roundStatusBar = h("div", { class: "c2-statusbar" }, statusItems);
 
     // "— kradzież" w STEAL, "— rozgrywka" poza tym (PLAY i odkrywanie
     // reszty w REVEAL) — zgłoszone: te dwa etapy mają się rozróżniać w
@@ -1116,7 +1121,7 @@ export function createUI({ root, emit }) {
     const stepLabel = state.phase === "STEAL"
       ? t("control.stepStealTitle", { round: r.roundNo })
       : t("control.stepPlayTitle", { round: r.roundNo });
-    gameplayShell({ stepLabel, question: r.question?.text, body, nav: null });
+    gameplayShell({ stepLabel, question: r.question?.text, body, nav: [roundStatusBar] });
   }
 
   // 3 przypadki końca gry — wygrana A, wygrana B, remis — jedna linia
@@ -1709,12 +1714,8 @@ export function createUI({ root, emit }) {
     // zgłoszone: "suma finału jak inne włączniki ma być niżej, nie na
     // górze" — w Rundach pasek statusu (Bank/Gra) idzie PO siatce, nie
     // przed nią (patrz renderRounds wyżej); ten ekran miał go odwrotnie.
-    // "Dalej" MIESZKA w TYM SAMYM pasku (c2-statusbar-end, dokładnie jak
-    // "Zakończ rundę" w Rundach, patrz tam) — zgłoszone: "suma finału miała
-    // być na pasku z dalej, a nie na osobnym pasku" — osobny
-    // .c2-gameplay-nav (własny border-top/padding-top) dawał DWA paski
-    // jeden nad drugim zamiast jednego. nav:null niżej — bez osobnego
-    // paska nawigacji na tym ekranie, tak jak w Rundach.
+    // Suma finału i "Dalej" są w dolnym pasku pod siatką, tak samo jak
+    // wyniki i przejście w rundach.
     //
     // NEXT_QUESTION's `idx` to 1-bazowy numer PYTANIA, z którego schodzimy
     // (nextIdx = action.idx+1 w engine.js) — nie 0-bazowy indeks tablicy,
@@ -1741,10 +1742,9 @@ export function createUI({ root, emit }) {
         h("div", { class: "c2-roundlayout-divider" }),
         h("div", { class: "c2-roundlayout-side" }, [hintBlock(getFinalHint(state), null, "c2-final-hint")]),
       ]),
-      finalStatusBar,
     ];
 
-    gameplayShell({ stepLabel: t("control.finalMappingStepLabel", { n: idx + 1 }), question: question?.text || t("control.finalUi.questionLabel", { n: idx + 1 }), body, nav: null });
+    gameplayShell({ stepLabel: t("control.finalMappingStepLabel", { n: idx + 1 }), question: question?.text || t("control.finalUi.questionLabel", { n: idx + 1 }), body, nav: [finalStatusBar] });
   }
 
   function renderFinalP2Start(state) {
@@ -1821,6 +1821,9 @@ export function createUI({ root, emit }) {
     } : null;
     updateTopbarDots(state, ctx.presenceFlags);
     const s = state.step;
+    if (s === "devices_display") setTopbarProgress(t("control.stepDevices"));
+    else if (s === "setup_finish") setTopbarProgress(t("control.summaryStepperTitle"));
+    else setTopbarProgress("");
     const liveRoot = root;
     if (oldEntry) root = document.createElement("div");
     let freshEntry;
