@@ -1,5 +1,5 @@
-import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-08T23072";
-import { initI18n, t, getUiLang } from "../../../shared/translation/translation.js?v=v2026-10-08T23072";
+import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-08T23143";
+import { initI18n, t, getUiLang } from "../../../shared/translation/translation.js?v=v2026-10-08T23143";
 await initI18n();
 const form = document.getElementById("tvConnectForm");
 const input = document.getElementById("tvCode");
