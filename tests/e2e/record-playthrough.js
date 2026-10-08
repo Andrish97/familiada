@@ -1244,15 +1244,12 @@ async function keyboardPaced(control, key, { confirm = false, reveal = false } =
 // control2.spec.js's test "finał — obaj gracze, wszystkie 10 pytań...",
 // tyle że TU liczby są dobrane tak, żeby ostatnie trafienie (gracz 2,
 // pytanie #4) przekroczyło finalTarget (patrz P1_MATCH_RANK/P2_MATCH_RANK
-// i finalTarget:100 w makeGame). Każdy z czterech MATCH-ów trafia w INNE
+// i finalTarget:200 w makeGame). Każdy z czterech MATCH-ów trafia w INNE
 // miejsce rankingu odpowiedzi (2. i 3. u gracza 1, 2. i 1. u gracza 2) —
 // nie mechanicznie zawsze to samo, i nie zawsze najwyższe. Realna suma w
 // kolejności odsłonięć: 28 (P1#1) -> 46 (P1#4, +18) -> 70 (P2#2, +24) -> 105
-// (P2#4, +35) — ostatnie trafienie przekracza próg (100), więc silnik
-// (REVEAL_POINTS w engine.js) skacze PROSTO do f_end zaraz po nim: pytanie
-// #5 gracza 2 (SKIP) nigdy nie zostaje odsłonięte — SKIP jest i tak już
-// pokazany trzykrotnie wcześniej w tym scenariuszu (P1#2, P1#5, P2#3), więc
-// nic realnie nie ginie z demonstrowanej różnorodności. =====
+// (P2#4, +35) — pozostaje poniżej progu 200, więc finał kończy się po
+// przejściu przez wszystkie odpowiedzi, z niższą nagrodą. =====
 
 async function scenarioFinalFull(pages, { game, summaryAlreadyOpen = false, contexts, browser }) {
   let { control, buzzer, host, display } = pages;
@@ -1387,12 +1384,9 @@ async function scenarioFinalFull(pages, { game, summaryAlreadyOpen = false, cont
     if (P2_PLAN[i] === true) await armAndConfirmPaced(control.getByRole("button", { name: matchButtonLabel(answerByRank(fq[i], P2_MATCH_RANK[i])) }));
     await armAndConfirmPaced(control.getByRole("button", { name: "Pokaż odpowiedź" }));
     if (P2_PLAN[i]) await armAndConfirmPaced(control.getByRole("button", { name: "Pokaż punkty" }));
-    // Suma po TYM trafieniu (idx3: 70+35=105) przekracza finalTarget:100
-    // (makeGame) -> REVEAL_POINTS w engine.js skacze PROSTO do f_end, silnik
-    // NIE czeka na kolejne "Dalej" -- ekran mapowania po prostu już nie
-    // istnieje, klik w "Dalej" nie miałby czego trafić. Pytanie #5 gracza 2
-    // (SKIP) nigdy nie zostaje odsłonięte -- drużyna wygrywa finał w tym
-    // właśnie momencie.
+    // Po trafieniu idx3 suma wynosi 105, więc przy progu 200 finał trwa dalej.
+    // Pytanie #5 gracza 2 pokazuje jeszcze ścieżkę SKIP; po nim rozgrywka
+    // przechodzi do wyniku po potwierdzeniu ostatniej planszy.
     const endFinal = control.getByRole("button", { name: "Zakończ finał", exact: true });
     if (await endFinal.count()) {
       await control.waitForTimeout(2000);
@@ -1716,7 +1710,7 @@ async function scenarioRecentFixes(pages, { contexts, browser, game }) {
       game: {
         hasFinal: true,
         finalQuestionsMode: "random",
-        advanced: { finalMinPoints: 280, finalTarget: 100, endScreenMode: "money" },
+        advanced: { finalMinPoints: 280, finalTarget: 200, endScreenMode: "money" },
       },
     },
   });
