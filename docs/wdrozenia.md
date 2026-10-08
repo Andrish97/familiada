@@ -67,6 +67,9 @@ bo `PAGES` deklaruje blokady; adresy po mapie stron; instrukcja na końcu.
    produkcji razem z kodem, który ich wymaga. **Migracje usuwające**
    (funkcje, kolumny, tabele) dopiero po potwierdzeniu testami, że nowa
    droga działa na produkcji.
+6. **Nigdy dwa przebiegi e2e naraz** — dzielą konta testowe i bazę
+   produkcyjną, wzajemnie sprzątają sobie dane (przebieg E10 z 2026-10-08:
+   55 fałszywych błędów przez równoległy przebieg testów ankiet).
 5. Dostępne narzędzia testowe: **lokalny Postgres** do wykonania migracji
    przed wypchnięciem (`docs/sql/local-db.md`); e2e z prawdziwą skrzynką mailową
    (`e2e_mailbox`) i kontami testowymi — używać ich do maili, kont,
@@ -94,3 +97,4 @@ bo `PAGES` deklaruje blokady; adresy po mapie stron; instrukcja na końcu.
 | 2026-10-08 | E11a/E11b | 309 sprawdzona też lokalnie (anon: brak dostępu, obcy: `not_owner`, właściciel: ok); szkic E11b `docs/sql/e11b_draft.sql` wykonuje się lokalnie (poll_abort, rotacja klucza ok) — czeka na frontend E11c–e | — |
 | 2026-10-08 | E11b | `e5a014e` na `main`: migracja 310 (klucz na uruchomienie, `poll_abort`, `poll_share_remove`, `poll_share_remind`, zamknięcie bez czekania na zaproszenia, limity maili). Lokalnie: share tylko przy otwartej, remind blokowany 24 h, close bez warunku zaproszeń, remove ok | po zastosowaniu: e2e polls, poll-go, poll-voting, polls-hub, subscriptions na `main` |
 | 2026-10-08 | E11c/E11d | scalone do brancha (`ce55031`): nowa strona ankiety (pasek stanu, Udostępnianie · Wyniki, kafle subskrybentów, wyniki na żywo), Subskrypcje z 3 kartami, hub usunięty; `polls.spec` na kodzie brancha (`84eb9d0`). Testy na `main` po 310: poprawione `poll-voting` (klucz po uruchomieniu); nierozwiązane: język QR (polls.spec:553), stara strona subskrypcji nie kończy wczytywania | e2e branch: polls, subscriptions, frontend-navigation w toku; agent: filtr/sort w Subskrypcjach |
+| 2026-10-08 | E10 | branch 37745868348: 55/110 źle — kolizja z równoległym przebiegiem na `main` (te same konta); realne: 2 testy logo oczekiwały tekstu stanu zapisu (`a87da93`) | do powtórki po zakończeniu przebiegu E11 |
