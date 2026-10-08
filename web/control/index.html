@@ -104,8 +104,8 @@
        przewijania (zgłoszone: "dolne przyciski mają być wyłączone z
        przewijania"). */
     .c2-scroll-area { flex:1; min-height:0; overflow-y:auto; display:flex; flex-direction:column; gap:10px; }
-    .c2-stepper { height:58px; min-height:58px; box-sizing:border-box; display:flex; align-items:center; border-bottom:1px solid rgba(255,255,255,.12); padding-bottom:8px; }
-    .c2-stepper-question { width:100%; min-width:0; max-height:42px; overflow:hidden; text-align:left; font-size:.86rem; font-weight:700; line-height:1.2; overflow-wrap:anywhere; }
+    .c2-stepper { height:48px; min-height:48px; box-sizing:border-box; display:flex; align-items:center; }
+    .c2-stepper-question { width:100%; min-width:0; max-height:44px; overflow:hidden; text-align:left; font-size:1.08rem; font-weight:700; line-height:1.18; overflow-wrap:anywhere; }
     .c2-gameplay-body { flex:1; width:100%; min-width:0; box-sizing:border-box; overflow:hidden; display:flex; flex-direction:column; min-height:0; }
     /* padding-top:16px == .control-main-card's własne padding-bottom:16px
        pod spodem — nad i pod przyciskami tyle samo miejsca (zgłoszone). */
@@ -114,11 +114,17 @@
     .c2-gameplay-nav:has(.c2-statusbar) { border:0; padding:0; }
     .c2-gameplay-nav:has(.c2-statusbar) .c2-statusbar { width:100%; height:62px; min-height:62px; box-sizing:border-box; padding:8px 2px 0; flex-wrap:nowrap; overflow:hidden; white-space:nowrap; }
     .c2-gameplay-nav:has(.c2-statusbar) .c2-statusbar > span { min-width:0; overflow:hidden; text-overflow:ellipsis; }
+    .topbar-layout-4 { flex-wrap:nowrap; }
+    .topbar-layout-4 .topbar-section { flex-wrap:nowrap; }
+    .topbar-layout-4 .topbar-section-1 { white-space:nowrap; }
     .topbar-layout-4 .topbar-section-2 { flex-wrap:nowrap; gap:8px; }
-    .topbar-layout-4 .topbar-section-2 .top-status { flex:1 1 0%; min-width:0; flex-wrap:nowrap; gap:6px; }
-    .topbar-layout-4 .topbar-section-2 .top-status .dotRow { flex:0 1 auto; min-width:0; padding:8px; }
-    .topbar-layout-4 .topbar-section-2 .top-status .dotRow .lbl { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-    .c2-topbar-progress { flex:0 0 280px; width:280px; max-width:32vw; min-width:230px; height:37px; min-height:37px; box-sizing:border-box; display:flex; align-items:center; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; font-size:.76rem; font-weight:800; letter-spacing:.02em; color:var(--gold); padding:0 8px; border-left:1px solid rgba(255,255,255,.16); }
+    .topbar-layout-4 .topbar-section-2 .top-status { flex:0 0 auto; min-width:0; flex-wrap:nowrap; gap:6px; }
+    .topbar-layout-4 .topbar-section-2 .top-status .dotRow { flex:0 0 48px; width:48px; min-width:48px; padding:6px; justify-content:center; gap:5px; }
+    .topbar-layout-4 .topbar-section-2 .top-status .dotRow .lbl { display:none; }
+    .topbar-layout-4 .topbar-section-2 .top-status .dotRow .ico { width:17px; height:17px; }
+    .c2-topbar-progress { flex:0 0 auto; width:var(--c2-progress-width, 280px); min-width:var(--c2-progress-width, 280px); height:42px; min-height:42px; box-sizing:border-box; display:flex; flex-direction:column; align-items:flex-start; justify-content:center; gap:1px; overflow:hidden; white-space:nowrap; padding:0 8px; }
+    .c2-topbar-progress-main { max-width:100%; overflow:hidden; text-overflow:ellipsis; font-size:.94rem; line-height:1.1; font-weight:900; letter-spacing:.02em; color:var(--gold); }
+    .c2-topbar-progress-detail { max-width:100%; overflow:hidden; text-overflow:ellipsis; font-size:.78rem; line-height:1.1; font-weight:700; color:rgba(255,255,255,.78); }
     /* To samo dla Urządzeń/Podsumowania (control.css's .stepFoot, domyślnie
        tylko 10px u góry vs 28px u dołu po odjęciu cardBody's paddingu
        wyżej — teraz 16px u góry == 16px .control-main-card u dołu). */
@@ -523,13 +529,13 @@
       <div class="c2-topbar-progress" id="c2TopbarProgress" aria-live="polite"></div>
       <div class="top-status" aria-label="Status urządzeń" data-i18n-aria-label="control.statusLabel">
         <div class="dotRow" title="Wyświetlacz" id="dotDisplayRow" data-i18n-title="control.deviceDisplay" style="cursor:pointer;">
-          <span class="dot mid" id="dotDisplay"></span><span class="lbl" data-i18n="control.deviceDisplay">Wyświetlacz</span>
+          <span class="dot mid" id="dotDisplay"></span><i class="ico" data-icon="display" aria-hidden="true"></i><span class="lbl" data-i18n="control.deviceDisplay">Wyświetlacz</span>
         </div>
         <div class="dotRow" title="Prowadzący" id="dotHostRow" data-i18n-title="control.deviceHost" style="cursor:pointer;">
-          <span class="dot mid" id="dotHost"></span><span class="lbl" data-i18n="control.deviceHost">Prowadzący</span>
+          <span class="dot mid" id="dotHost"></span><i class="ico" data-icon="host" aria-hidden="true"></i><span class="lbl" data-i18n="control.deviceHost">Prowadzący</span>
         </div>
         <div class="dotRow" title="Przycisk" id="dotBuzzerRow" data-i18n-title="control.deviceBuzzer" style="cursor:pointer;">
-          <span class="dot mid" id="dotBuzzer"></span><span class="lbl" data-i18n="control.deviceBuzzer">Przycisk do pojedynku</span>
+          <span class="dot mid" id="dotBuzzer"></span><i class="ico" data-icon="buzzer" aria-hidden="true"></i><span class="lbl" data-i18n="control.deviceBuzzer">Przycisk do pojedynku</span>
         </div>
       </div>
     </div>

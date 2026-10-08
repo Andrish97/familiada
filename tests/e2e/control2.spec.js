@@ -791,10 +791,19 @@ test("control2: pełna runda przez 4 urządzenia + wznowienie Control po przeła
     const topbarLayout = await page.evaluate(() => {
       const progress = document.querySelector("#c2TopbarProgress").getBoundingClientRect();
       const display = document.querySelector("#dotDisplayRow").getBoundingClientRect();
-      return { progressRight: progress.right, displayLeft: display.left, progressTop: progress.top, displayTop: display.top };
+      return {
+        progressRight: progress.right,
+        displayLeft: display.left,
+        progressCenter: progress.top + progress.height / 2,
+        displayCenter: display.top + display.height / 2,
+        progressHeight: progress.height,
+        deviceIconCount: document.querySelectorAll("#dotDisplayRow svg, #dotHostRow svg, #dotBuzzerRow svg").length,
+      };
     });
     expect(topbarLayout.progressRight).toBeLessThan(topbarLayout.displayLeft);
-    expect(Math.abs(topbarLayout.progressTop - topbarLayout.displayTop)).toBeLessThan(2);
+    expect(Math.abs(topbarLayout.progressCenter - topbarLayout.displayCenter)).toBeLessThan(2);
+    expect(topbarLayout.progressHeight).toBeGreaterThanOrEqual(40);
+    expect(topbarLayout.deviceIconCount).toBe(3);
 
     // Regresja: Prowadzący musi widzieć PEŁNĄ treść i punkty KAŻDEJ
     // odpowiedzi od początku rundy, nie tylko już odsłoniętych dla widzów
