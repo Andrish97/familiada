@@ -1,7 +1,7 @@
 const PAGE_NAMES = {home:'Strona główna',games:'Moje gry',control:'Panel sterowania',editor:'Edytor gry','game-settings':'Ustawienia rozgrywki',bases:'Bazy pytań','base-explorer':'Edytor bazy',logo:'Logo',polls:'Ankieta',subscriptions:'Subskrypcje',account:'Konto',marketplace:'Gry społeczności',manual:'Instrukcja','connect-device':'Podłącz urządzenie'};
 const CONTEXT_NAMES = {control:'Panel sterowania',editor:'Edytor gry','game-settings':'Ustawienia rozgrywki','logo-editor':'Edytor logo','base-explorer':'Edytor bazy'};
 const RESOURCE_NAMES = {game:'Gra',logo:'Logo',base:'Baza',base_question:'Pytanie bazy',base_folder:'Folder bazy',base_tag:'Tag bazy'};
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-08T22414";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-08T22465";
 
 export function gameActivity(game) {
   const open = !game.ended_at && ['started','playing','final'].includes(game.status);
