@@ -6,7 +6,9 @@ import QRCode from "https://cdn.jsdelivr.net/npm/qrcode@1.5.3/+esm";
 import { initI18n, t, withLangParam, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-08T07385";
 import { initTopbarAccountDropdown } from "../../shared/js/core/topbar-controller.js?v=v2026-10-08T07385";
 import { guardResourceLock } from "../../shared/js/core/resource-lock.js?v=v2026-10-08T07385";
-import { validateGame, gameRuleErrorMessage, RULES } from "../../shared/js/core/game-validate.js?v=v2026-10-08T07385";
+import { validateGame, gameRuleErrorMessage } from "../../shared/js/core/game-validate.js?v=v2026-10-08T07385";
+import { mailCooldownCheck } from "../../shared/js/core/cooldown.js?v=v2026-10-08T07385";
+import { sendPollInviteMails } from "../../shared/js/core/poll-mail.js?v=v2026-10-08T07385";
 import "../../shared/js/core/contact-modal.js?v=v2026-10-08T07385";
 import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-08T07385";
 
@@ -18,29 +20,39 @@ const ret = qs.get("ret");
 
 const $ = (id) => document.getElementById(id);
 
-const who = $("who");
-const btnLogout = $("btnLogout");
 const btnBack = $("btnBack");
 const btnManual = $("btnManual");
 const msg = $("msg");
 
-const cardMain = $("cardMain");
-const cardEmpty = $("cardEmpty");
-
+// pasek stanu
+const pollBar = $("pollBar");
 const chipType = $("chipType");
 const chipStatus = $("chipStatus");
+const chipVotes = $("chipVotes");
 const hintTop = $("hintTop");
+const btnPollAction = $("btnPollAction");
+const btnAbort = $("btnAbort");
+const btnCancelTextCloseTop = $("btnCancelTextCloseTop");
 
-const gName = $("gName");
-const gMeta = $("gMeta");
+// treść
+const cardMain = $("cardMain");
+const cardEmpty = $("cardEmpty");
+const tabShare = $("tabShare");
+const tabResults = $("tabResults");
+const secShare = $("secShare");
+const secResults = $("secResults");
+
+// Udostępnianie
+const shareEmpty = $("shareEmpty");
+const shareBody = $("shareBody");
 const pollLinkEl = $("pollLink");
 const qrBox = $("qr");
-
 const btnCopy = $("btnCopy");
 const btnOpen = $("btnOpen");
 const btnOpenQr = $("btnOpenQr");
-
-const btnPollAction = $("btnPollAction");
+const btnSendInvites = $("btnSendInvites");
+const subsGrid = $("subsGrid");
+const subsEmpty = $("subsEmpty");
 
 // QR modal (wyświetlacz ankiety)
 const pollQrModalOverlay = $("pollQrModalOverlay");
@@ -52,25 +64,24 @@ const pollQrModalClose   = $("pollQrModalClose");
 let _pollQrDeviceCode = "";
 let _pollQrOpenUrl    = "";
 
-// '⟳ Odśwież' (fallback na stare ID, jeśli HTML jeszcze nie zmieniony)
-const btnRefreshResults = $("btnRefreshResults") || $("btnPreview");
-
-const resultsCard = $("resultsCard");
+// Wyniki
 const resultsMeta = $("resultsMeta");
 const resultsList = $("resultsList");
 
-const textCloseCard = $("textCloseCard");
+// zamykanie ankiety tekstowej
+const textCloseShell = $("textCloseShell");
 const textCloseMeta = $("textCloseMeta");
 const textCloseList = $("textCloseList");
 const btnCancelTextClose = $("btnCancelTextClose");
-const btnCancelTextCloseTop = $("btnCancelTextCloseTop");
 const btnFinishTextClose = $("btnFinishTextClose");
 const btnUndo = $("btnUndo");
 const btnRedo = $("btnRedo");
 
 let game = null;
+let currentUser = null;
 let textCloseModel = null;
 let uiTextCloseOpen = false;
+let busy = false; // trwa akcja stanu (uruchom / zamknij / przerwij)
 
 let undoStack = [];
 let redoStack = [];
@@ -125,10 +136,6 @@ function buildManualUrl() {
   url.hash = "polls";
   return url.toString();
 }
-
-// ===== Preview DOM cache (poll_points) =====
-let ppCache = null;
-// ppCache = { qsKey, ansKey, valByAnswerId, builtAt }
 
 // --- QR modal (wyświetlacz ankiety) ---
 function hidePollQrModal() {
@@ -209,29 +216,6 @@ window.addEventListener("i18n:lang", (e) => {
   void refresh();
 });
 
-function setTextCloseUi(open) {
-  uiTextCloseOpen = !!open;
-
-  if (textCloseCard) textCloseCard.style.display = open ? "" : "none";
-
-  // ukryj główne przyciski gdy panel textClose otwarty
-  if (btnPollAction) btnPollAction.style.display = open ? "none" : "";
-  if (btnCancelTextCloseTop) btnCancelTextCloseTop.style.display = open ? "" : "none";
-  if (btnRefreshResults) btnRefreshResults.style.display = open ? "none" : "";
-
-  // wyniki: widoczne zawsze, ale nie podczas textClose
-  if (resultsCard) resultsCard.style.display = open ? "none" : "";
-
-  // czyść historię
-  undoStack = [];
-  redoStack = [];
-  updateHistoryButtons();
-}
-
-function resetPreviewDomCache() {
-  ppCache = null;
-}
-
 const TYPES = {
   POLL_TEXT: "poll_text",
   POLL_POINTS: "poll_points",
@@ -243,14 +227,19 @@ const STATUS = {
   READY: "ready",
 };
 
+const LIVE_REFRESH_MS = 5000;
+
 function escapeHtml(s) {
   return String(s ?? "").replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;");
 }
 
+let msgTimer = null;
 function setMsg(text) {
   if (!msg) return;
   msg.textContent = text || "";
-  if (text) setTimeout(() => (msg.textContent = ""), 2400);
+  msg.classList.toggle("on", !!text);
+  clearTimeout(msgTimer);
+  if (text) msgTimer = setTimeout(() => { msg.textContent = ""; msg.classList.remove("on"); }, 2800);
 }
 
 function typeLabel(type) {
@@ -268,21 +257,50 @@ function statusLabel(st) {
   return String(s).toUpperCase();
 }
 
+function formatUntil(untilMs) {
+  try {
+    return new Date(untilMs).toLocaleString(getUiLang() || "pl", {
+      day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit",
+    });
+  } catch {
+    return new Date(untilMs).toLocaleString();
+  }
+}
+
+/* =======================
+   A. Pasek stanu
+======================= */
+
 function setChips(g) {
   if (chipType) chipType.textContent = typeLabel(g?.type);
 
   if (chipStatus) {
-    chipStatus.className = "chip status";
     const st = g?.status || STATUS.DRAFT;
     chipStatus.textContent = statusLabel(st);
-    if (st === STATUS.READY) chipStatus.classList.add("ok");
-    else if (st === STATUS.POLL_OPEN) chipStatus.classList.add("warn");
-    else chipStatus.classList.add("bad");
+    chipStatus.className = "tag " + (st === STATUS.READY ? "tag--ok" : st === STATUS.POLL_OPEN ? "tag--warn" : "tag--muted");
   }
 
-  // hintTop – bez 'g.desc', bo go nie ma
-  if (hintTop) hintTop.textContent = "";
+  if (chipVotes && g?.status !== STATUS.POLL_OPEN) chipVotes.style.display = "none";
 }
+
+function setVotesChip(n) {
+  if (!chipVotes) return;
+  chipVotes.style.display = "";
+  chipVotes.textContent = t("polls.tags.votes", { n: Number(n) || 0 });
+}
+
+function setActionButton(label, disabled, hint) {
+  if (btnPollAction) {
+    btnPollAction.textContent = label || "";
+    btnPollAction.disabled = !!disabled;
+    btnPollAction.style.visibility = "";
+  }
+  if (hintTop) hintTop.textContent = hint || "";
+}
+
+/* =======================
+   Link i QR
+======================= */
 
 function setLinkUiVisible(on) {
   const v = !!on;
@@ -292,32 +310,15 @@ function setLinkUiVisible(on) {
   if (!v) clearQr();
 }
 
-function setLinkRowVisible(visible) {
-  const v = !!visible;
-
-  // input
-  if (pollLinkEl) {
-    pollLinkEl.style.display = v ? "" : "none";
-    // opcjonalnie: jak ukryte, to czyść wartość
-    if (!v) pollLinkEl.value = "";
-  }
-
-  // przyciski
-  if (btnCopy) btnCopy.style.display = v ? "" : "none";
-  if (btnOpen) btnOpen.style.display = v ? "" : "none";
-  if (btnOpenQr) btnOpenQr.style.display = v ? "" : "none";
-
-  // mini-QR
-  if (!v) clearQr();
-}
-
-
 function clearQr() {
   if (qrBox) qrBox.innerHTML = "";
 }
 
-async function renderSmallQr(url) {
+let renderedQrUrl = "";
+async function renderQr(url) {
   if (!qrBox) return;
+  if (url === renderedQrUrl && qrBox.firstChild) return;
+  renderedQrUrl = url;
   qrBox.innerHTML = "";
   if (!url) return;
 
@@ -326,12 +327,12 @@ async function renderSmallQr(url) {
     wrap.className = "qrFrameSmall";
 
     const canvas = document.createElement("canvas");
-    await QRCode.toCanvas(canvas, url, { width: 260, margin: 1 });
+    await QRCode.toCanvas(canvas, url, { width: 320, margin: 1 });
 
     wrap.appendChild(canvas);
     qrBox.appendChild(wrap);
   } catch (e) {
-    console.warn("[polls] small QR failed:", e);
+    console.warn("[polls] QR failed:", e);
     qrBox.textContent = t("polls.qrFailed");
   }
 }
@@ -350,11 +351,6 @@ function pollLink(g) {
   u.searchParams.set("id", g.id);
   u.searchParams.set("key", g.share_key_poll);
   return u.toString();
-}
-
-function updateRefreshButtonState() {
-  if (!btnRefreshResults) return;
-  btnRefreshResults.disabled = uiTextCloseOpen || !game || !gameId;
 }
 
 /* =======================
@@ -381,26 +377,6 @@ async function listQuestionsBasic() {
   return data || [];
 }
 
-async function listAnswersFinalForQuestion(qid) {
-  const { data, error } = await sb()
-    .from("answers")
-    .select("id, ord, text, fixed_points")
-    .eq("question_id", qid)
-    .order("ord", { ascending: true });
-  if (error) throw error;
-  return data || [];
-}
-
-async function listAnswersBasicForQuestion(qid) {
-  const { data, error } = await sb()
-    .from("answers")
-    .select("id, ord, text")
-    .eq("question_id", qid)
-    .order("ord", { ascending: true });
-  if (error) throw error;
-  return data || [];
-}
-
 async function getLastSessionIdForQuestion(qid) {
   const { data, error } = await sb()
     .from("poll_sessions")
@@ -413,40 +389,36 @@ async function getLastSessionIdForQuestion(qid) {
   return data?.[0]?.id || null;
 }
 
-async function getLastSessionIdsByQuestion(questionIds) {
-  const ids = (questionIds || []).filter(Boolean);
-  if (!ids.length) return new Map();
-
-  const { data, error } = await sb()
-    .from("poll_sessions")
-    .select("id,question_id,created_at")
-    .eq("game_id", gameId)
-    .in("question_id", ids)
-    .order("created_at", { ascending: false });
-  if (error) throw error;
-
-  const map = new Map();
-  for (const row of data || []) {
-    if (!row?.question_id || !row?.id) continue;
-    if (!map.has(row.question_id)) map.set(row.question_id, row.id);
-  }
-  return map;
-}
-
 /* =======================
    Walidacje
 ======================= */
 
-// Warunki otwarcia / ponownego otwarcia / zamknięcia liczy baza
-// (game_validate, migracja 273) -- wcześniej tu była osobna kopia reguł,
-// z kilkoma zapytaniami na każde pytanie przy każdym odświeżeniu.
+// Warunki otwarcia / zamknięcia liczy baza (game_validate, migracja 273).
 async function validateCanOpen(g) {
   if (!g) return { ok: false, reason: t("gameValidate.noGame") };
   return (await validateGame(g.id)).poll_open;
 }
 
-async function validateCanReopen(g) {
-  return await validateCanOpen(g);
+async function validateCanClose(g) {
+  if (!g) return { ok: false, reason: t("gameValidate.noGame") };
+  return (await validateGame(g.id)).poll_close;
+}
+
+function setTextCloseUi(open) {
+  uiTextCloseOpen = !!open;
+
+  // okno scalania zastępuje treść (wypustki), pasek stanu zostaje
+  if (textCloseShell) textCloseShell.style.display = open ? "" : "none";
+  if (cardMain && game) cardMain.style.display = open ? "none" : "";
+
+  if (btnPollAction) btnPollAction.style.display = open ? "none" : "";
+  if (btnAbort) btnAbort.style.display = open ? "none" : (game?.status === STATUS.POLL_OPEN ? "" : "none");
+  if (btnCancelTextCloseTop) btnCancelTextCloseTop.style.display = open ? "" : "none";
+
+  // czyść historię
+  undoStack = [];
+  redoStack = [];
+  updateHistoryButtons();
 }
 
 function normalizeCountsTo100(items) {
@@ -487,150 +459,199 @@ function normalizeCountsTo100(items) {
   return raw.map((x) => ({ ...x, points: x.floor }));
 }
 
-async function validateCanClose(g) {
-  if (!g) return { ok: false, reason: t("gameValidate.noGame") };
-  return (await validateGame(g.id)).poll_close;
-}
-
 /* =======================
-   Wyniki (zawsze widoczne) — bez 'Перегляд наживо'
+   Wyniki — na żywo, bez skakania
+   Lista budowana raz; potem tylko liczby i szerokości pasków (przejście CSS).
+   Punktacja: kolejność odpowiedzi z gry. Tekst: kolejność pojawienia się,
+   nowe na końcu. Sortowanie wg głosów dopiero przy zamykaniu.
 ======================= */
 
-function buildPollPointsPreviewDom(qsList, ansByQ) {
-  if (!resultsList) return null;
-  
-  // FIX: jeśli ktoś wcześniej wyczyścił resultsList (np. klik ⟳ Odśwież),
-  // to ppCache wskazuje na odłączone elementy i nic się nie pokaże.
-  // Wtedy unieważniamy cache i przebudowujemy DOM.
-  if (ppCache && !resultsList.firstElementChild) {
-    ppCache = null;
-  }
+// resDom = { mode, sig, byQ: Map(qid -> { list, rows: Map(key -> { row, bar, val }) }) }
+let resDom = null;
+const textOrder = new Map(); // qid -> [klucze w kolejności pojawienia się]
 
-  const qsKey = qsList.map((q) => q.id).join(",");
-  const ansKey = qsList
-    .map((q) => {
-      const ans = ansByQ.get(q.id) || [];
-      return `${q.id}:${ans.map((a) => a.id).join("|")}`;
-    })
-    .join(";");
+function resetResultsDom() {
+  resDom = null;
+  textOrder.clear();
+  if (resultsList) resultsList.innerHTML = "";
+}
 
-  if (ppCache && ppCache.qsKey === qsKey && ppCache.ansKey === ansKey) return ppCache;
+function resultsMode(status, type) {
+  if (status === STATUS.DRAFT) return "draft";
+  if (status === STATUS.READY) return "final";
+  return type === TYPES.POLL_POINTS ? "points" : "text";
+}
 
+function makeResultRow(text) {
+  const row = document.createElement("div");
+  row.className = "aRow";
+  row.innerHTML = `<div class="aBar"></div><div class="aTxt"></div><div class="aVal">0</div>`;
+  row.querySelector(".aTxt").textContent = text;
+  return { row, bar: row.querySelector(".aBar"), val: row.querySelector(".aVal") };
+}
+
+function setRowValue(r, value, pct) {
+  const next = String(value);
+  if (r.val.textContent !== next) r.val.textContent = next;
+  const w = `${Math.max(0, Math.min(100, pct)).toFixed(1)}%`;
+  if (r.bar.style.width !== w) r.bar.style.width = w;
+}
+
+function buildResultsDom(mode, questions) {
   resultsList.innerHTML = "";
-  const valByAnswerId = new Map();
-
-  for (const q of qsList) {
-    const ans = ansByQ.get(q.id) || [];
-
+  const byQ = new Map();
+  for (const q of questions) {
     const box = document.createElement("div");
     box.className = "resultQ";
-    box.innerHTML = `<div class="qTitle">P${q.ord}: ${escapeHtml(q.text)}</div>`;
+    const title = document.createElement("div");
+    title.className = "qTitle";
+    title.textContent = `P${q.ord}: ${q.text}`;
+    box.appendChild(title);
 
-    for (const a of ans) {
-      const row = document.createElement("div");
-      row.className = "aRow";
-      row.innerHTML = `<div class="aTxt"></div><div class="aVal"></div>`;
-      row.querySelector(".aTxt").textContent = a.text;
-      row.querySelector(".aVal").textContent = "0";
-      valByAnswerId.set(a.id, row.querySelector(".aVal"));
-      box.appendChild(row);
-    }
-
+    const list = document.createElement("div");
+    list.className = "aList";
+    box.appendChild(list);
     resultsList.appendChild(box);
+
+    const rows = new Map();
+    if (mode === "points" || mode === "final") {
+      for (const a of q.answers || []) {
+        const r = makeResultRow(a.text);
+        list.appendChild(r.row);
+        rows.set(a.id, r);
+      }
+    }
+    byQ.set(q.id, { list, rows });
+  }
+  return byQ;
+}
+
+function renderResults(data) {
+  if (!resultsList) return;
+  const { status, type } = data;
+  const questions = data.questions || [];
+  const mode = resultsMode(status, type);
+
+  const sig = [
+    mode,
+    ...questions.map((q) =>
+      mode === "points" || mode === "final"
+        ? `${q.id}:${(q.answers || []).map((a) => a.id).join("|")}`
+        : String(q.id)
+    ),
+  ].join(";");
+
+  if (!resDom || resDom.sig !== sig) {
+    resDom = { mode, sig, byQ: buildResultsDom(mode, questions) };
   }
 
-  ppCache = { qsKey, ansKey, valByAnswerId, builtAt: Date.now() };
-  return ppCache;
-}
-
-function updatePollPointsPreviewValues(valuesByAnswerId) {
-  if (!ppCache?.valByAnswerId) return;
-  for (const [aid, valEl] of ppCache.valByAnswerId.entries()) {
-    const v = valuesByAnswerId.get(aid) || 0;
-    const next = String(v);
-    if (valEl.textContent !== next) valEl.textContent = next;
+  if (mode === "draft") {
+    if (resultsMeta) resultsMeta.textContent = questions.length ? "" : t("polls.results.noQuestions");
+    return;
   }
+
+  for (const q of questions) {
+    const slot = resDom.byQ.get(q.id);
+    if (!slot) continue;
+
+    if (mode === "final") {
+      for (const a of q.answers || []) {
+        const r = slot.rows.get(a.id);
+        if (r) setRowValue(r, Number(a.fixed_points) || 0, Number(a.fixed_points) || 0);
+      }
+    } else if (mode === "points") {
+      const answers = q.answers || [];
+      const total = answers.reduce((s, a) => s + (Number(a.votes) || 0), 0);
+      for (const a of answers) {
+        const r = slot.rows.get(a.id);
+        const v = Number(a.votes) || 0;
+        if (r) setRowValue(r, v, total ? (100 * v) / total : 0);
+      }
+    } else {
+      renderTextRows(q, slot);
+    }
+  }
+
+  if (resultsMeta) resultsMeta.textContent = mode === "final" ? t("polls.results.final") : "";
 }
 
-function showResultsCard() {
-  if (resultsCard) resultsCard.style.display = uiTextCloseOpen ? "none" : "";
-}
+function renderTextRows(q, slot) {
+  const rows = q.text_rows || [];
+  const incoming = new Map(rows.map((r) => [String(r.text), Number(r.val) || 0]));
+  const total = rows.reduce((s, r) => s + (Number(r.val) || 0), 0);
 
-function setResultsMeta(text) {
-  if (!resultsMeta) return;
-  resultsMeta.textContent = text || "";
+  let order = textOrder.get(q.id);
+  if (!order) { order = []; textOrder.set(q.id, order); }
+
+  // nowe — na koniec, w kolejności od najczęstszych
+  for (const r of rows) {
+    const key = String(r.text);
+    if (!order.includes(key)) {
+      order.push(key);
+      const row = makeResultRow(key);
+      slot.list.appendChild(row.row);
+      slot.rows.set(key, row);
+    }
+  }
+
+  // zniknęły z listy (poza TOP 12) — usuń, reszta zostaje na miejscu
+  for (let i = order.length - 1; i >= 0; i--) {
+    const key = order[i];
+    if (!incoming.has(key)) {
+      slot.rows.get(key)?.row.remove();
+      slot.rows.delete(key);
+      order.splice(i, 1);
+    }
+  }
+
+  for (const key of order) {
+    const r = slot.rows.get(key);
+    const v = incoming.get(key) || 0;
+    if (r) setRowValue(r, v, total ? (100 * v) / total : 0);
+  }
 }
 
 async function previewResults() {
-  showResultsCard();
-  if (!resultsList || !resultsMeta || !resultsCard) return;
-  if (uiTextCloseOpen) return;
-  if (!game) return;
-
-  resultsList.style.display = "grid";
-  setResultsMeta(t("polls.results.loading"));
+  if (!game || !resultsList) return;
+  if (game.type === TYPES.PREPARED) {
+    resetResultsDom();
+    if (resultsMeta) resultsMeta.textContent = t("polls.meta.prepared");
+    return;
+  }
 
   const { data, error } = await sb().rpc("get_poll_preview", { p_game_id: gameId });
   if (error) throw error;
-
-  const { status, type, questions } = data;
-
-  // FINAL (po zamknięciu)
-  if (status === STATUS.READY) {
-    for (const q of questions) {
-      const box = document.createElement("div");
-      box.className = "resultQ";
-      box.innerHTML = `<div class="qTitle">P${q.ord}: ${escapeHtml(q.text)}</div>`;
-      for (const a of q.answers || []) {
-        const row = document.createElement("div");
-        row.className = "aRow";
-        row.innerHTML = `<div class="aTxt"></div><div class="aVal"></div>`;
-        row.querySelector(".aTxt").textContent = a.text;
-        row.querySelector(".aVal").textContent = String(Number(a.fixed_points) || 0);
-        box.appendChild(row);
-      }
-      resultsList.appendChild(box);
-    }
-    setResultsMeta(t("polls.results.final"));
-    return;
-  }
-
-  // LIVE poll_points
-  if (type === TYPES.POLL_POINTS) {
-    const ansByQ = new Map(questions.map((q) => [q.id, q.answers || []]));
-    buildPollPointsPreviewDom(questions, ansByQ);
-
-    const values = new Map();
-    for (const q of questions) {
-      for (const a of q.answers || []) values.set(a.id, a.votes || 0);
-    }
-    updatePollPointsPreviewValues(values);
-    setResultsMeta("");
-    return;
-  }
-
-  // LIVE poll_text
-  for (const q of questions) {
-    const rows = q.text_rows || [];
-
-    const box = document.createElement("div");
-    box.className = "resultQ";
-    box.innerHTML = `<div class="qTitle">P${q.ord}: ${escapeHtml(q.text)}</div>`;
-
-    for (const a of rows) {
-      const row = document.createElement("div");
-      row.className = "aRow";
-      row.innerHTML = `<div class="aTxt"></div><div class="aVal"></div>`;
-      row.querySelector(".aTxt").textContent = a.text;
-      row.querySelector(".aVal").textContent = String(a.val);
-      box.appendChild(row);
-    }
-
-    resultsList.appendChild(box);
-  }
-
-  setResultsMeta(""); // <— TU usuwamy LIVE tekst
+  renderResults(data);
 }
+
+// liczba głosujących = wiersze odpowiedzi na pierwsze pytanie (jeden na osobę na pytanie)
+let firstQuestionId = null;
+async function fetchVotersCount() {
+  if (!game || game.status !== STATUS.POLL_OPEN) return null;
+  if (!firstQuestionId) {
+    const qs1 = await listQuestionsBasic();
+    firstQuestionId = qs1[0]?.id || null;
+  }
+  if (!firstQuestionId) return 0;
+  const table = game.type === TYPES.POLL_TEXT ? "poll_text_entries" : "poll_votes";
+  const { count, error } = await sb()
+    .from(table)
+    .select("id", { count: "exact", head: true })
+    .eq("game_id", gameId)
+    .eq("question_id", firstQuestionId);
+  if (error) throw error;
+  return count || 0;
+}
+
+async function refreshVotesChip() {
+  try {
+    const n = await fetchVotersCount();
+    if (n !== null) setVotesChip(n);
+  } catch (e) {
+    console.warn("[polls] votes count failed", e);
+  }
+}
+
 
 /* =======================
    poll_text close panel
@@ -883,26 +904,355 @@ function renderTextCloseFromModel() {
   }
 }
 
+
 /* =======================
-   UI / Actions
+   B. Wypustki Udostępnianie · Wyniki
 ======================= */
 
-function setActionButton(label, disabled, hint) {
-  if (btnPollAction) {
-    btnPollAction.textContent = label || "";
-    btnPollAction.disabled = !!disabled;
-    btnPollAction.style.visibility = '';
+let activeTab = "share";
+let tabTouchedByUser = false;
+
+function setActiveTab(tab, { byUser = false } = {}) {
+  activeTab = tab === "results" ? "results" : "share";
+  if (byUser) tabTouchedByUser = true;
+  const shareOn = activeTab === "share";
+  secShare?.classList.toggle("active", shareOn);
+  secResults?.classList.toggle("active", !shareOn);
+  for (const [btn, on] of [[tabShare, shareOn], [tabResults, !shareOn]]) {
+    btn?.classList.toggle("active", on);
+    btn?.closest(".tab-slot")?.classList.toggle("active", on);
+    btn?.setAttribute("aria-selected", on ? "true" : "false");
   }
-  if (btnRefreshResults) btnRefreshResults.style.visibility = '';
-  if (hintTop) hintTop.textContent = hint || "";
 }
 
-async function applyPollPointsUniqueFixedPoints() {
-  // placeholder jak u Ciebie (jeśli masz realną implementację w repo – podmień tutaj)
+/* =======================
+   Subskrybenci (zaproszenia do ankiety)
+======================= */
+
+let subsAll = [];            // aktywni subskrybenci właściciela
+let tasks = [];              // zaproszenia tego uruchomienia
+const selectedSubIds = new Set();
+const cooldownBySub = new Map(); // sub_id -> do kiedy (ms) nie wyślemy kolejnego maila
+let subsSig = "";
+
+function emailKey(s) {
+  return String(s || "").trim().toLowerCase();
+}
+
+function taskForSub(sub) {
+  return tasks.find((tk) =>
+    sub.subscriber_user_id
+      ? tk.recipient_user_id && String(tk.recipient_user_id) === String(sub.subscriber_user_id)
+      : !tk.recipient_user_id && emailKey(tk.recipient_email) && emailKey(tk.recipient_email) === emailKey(sub.subscriber_email)
+  ) || null;
+}
+
+function taskIsWaiting(tk) {
+  return tk && (tk.status === "pending" || tk.status === "opened");
+}
+
+function subLabel(sub) {
+  return sub.subscriber_label || sub.subscriber_email || "—";
+}
+
+function cooldownActive(subId) {
+  const until = cooldownBySub.get(String(subId)) || 0;
+  return until > Date.now() ? until : 0;
+}
+
+async function loadTasks() {
+  if (!game || !currentUser) { tasks = []; return; }
+  const { data, error } = await sb()
+    .from("poll_tasks")
+    .select("id,recipient_user_id,recipient_email,status,share_key_poll,reminder_count")
+    .eq("game_id", gameId)
+    .eq("owner_id", currentUser.id);
+  if (error) throw error;
+  // zaproszenia z wcześniejszych uruchomień wygasły
+  tasks = (data || []).filter((tk) => tk.share_key_poll === game.share_key_poll);
+}
+
+async function loadSubsData() {
+  if (!game || game.status !== STATUS.POLL_OPEN) return;
+  const { data, error } = await sb().rpc("polls_hub_list_my_subscribers");
+  if (error) throw error;
+  subsAll = (data || []).filter((s) => s.status === "active");
+  await loadTasks();
+
+  // podgląd limitu maili (tylko subskrybenci z kontem; reszta dowie się z odpowiedzi RPC)
+  await Promise.all(subsAll
+    .filter((s) => s.subscriber_user_id)
+    .map(async (s) => {
+      const target = `pair:${currentUser.id}:${s.subscriber_user_id}:game:${gameId}`;
+      try {
+        const { ok, nextAllowedAtMs } = await mailCooldownCheck("poll:share", target);
+        if (!ok && nextAllowedAtMs) cooldownBySub.set(String(s.sub_id), nextAllowedAtMs);
+        else cooldownBySub.delete(String(s.sub_id));
+      } catch { /* nieblokujące — i tak pilnuje baza */ }
+    }));
+
+  renderSubs(true);
+}
+
+async function refreshTasksOnly() {
+  if (!game || game.status !== STATUS.POLL_OPEN) return;
+  await loadTasks();
+  renderSubs();
+}
+
+function tagFor(tk) {
+  if (tk.status === "done") return { cls: "tag--ok", text: t("polls.share.state.done") };
+  if (tk.status === "declined") return { cls: "tag--bad", text: t("polls.share.state.declined") };
+  return { cls: "tag--warn", text: t("polls.share.state.waiting") };
+}
+
+function renderSubs(force = false) {
+  if (!subsGrid) return;
+
+  // zaznaczenia zostają tylko dla wciąż niezaproszonych
+  for (const id of [...selectedSubIds]) {
+    const sub = subsAll.find((s) => String(s.sub_id) === id);
+    if (!sub || taskForSub(sub) || cooldownActive(id)) selectedSubIds.delete(id);
+  }
+
+  const sig = JSON.stringify([
+    subsAll.map((s) => [s.sub_id, subLabel(s), cooldownActive(s.sub_id)]),
+    tasks.map((tk) => [tk.id, tk.status, tk.reminder_count]),
+    [...selectedSubIds].sort(),
+  ]);
+  if (!force && sig === subsSig) return;
+  subsSig = sig;
+
+  if (btnSendInvites) btnSendInvites.disabled = selectedSubIds.size === 0;
+
+  if (!subsAll.length) {
+    subsGrid.innerHTML = "";
+    if (subsEmpty) {
+      subsEmpty.style.display = "";
+      subsEmpty.innerHTML = `${escapeHtml(t("polls.share.noSubs"))} <a href="${escapeHtml(withLangParam("/subscriptions/"))}">${escapeHtml(t("polls.share.noSubsLink"))}</a>`;
+    }
+    return;
+  }
+  if (subsEmpty) subsEmpty.style.display = "none";
+
+  const invited = [];
+  const rest = [];
+  for (const sub of subsAll) {
+    const tk = taskForSub(sub);
+    (tk ? invited : rest).push({ sub, tk });
+  }
+
+  const frag = document.createDocumentFragment();
+
+  for (const { sub, tk } of invited) {
+    const tag = tagFor(tk);
+    const until = cooldownActive(sub.sub_id);
+    const waiting = taskIsWaiting(tk);
+    const limit = (tk.reminder_count || 0) >= 2;
+    const bellTitle = limit ? t("polls.share.reminderLimit")
+      : until ? t("polls.share.canResend", { when: formatUntil(until) })
+      : t("polls.share.remind");
+
+    const tile = document.createElement("div");
+    tile.className = "card subTile invited";
+    tile.innerHTML = `
+      ${waiting ? `<button class="x x-bell" type="button" data-act="remind" ${limit || until ? "disabled" : ""} title="${escapeHtml(bellTitle)}" aria-label="${escapeHtml(bellTitle)}">${icon("bell")}</button>` : ""}
+      <button class="x" type="button" data-act="remove" title="${escapeHtml(t("polls.share.remove"))}" aria-label="${escapeHtml(t("polls.share.remove"))}">${icon("trash")}</button>
+      <div class="name"></div>
+      <div class="meta"><span class="tag ${tag.cls}">${escapeHtml(tag.text)}</span></div>
+      ${waiting && until && !limit ? `<div class="subNote">${escapeHtml(t("polls.share.canResend", { when: formatUntil(until) }))}</div>` : ""}
+    `;
+    tile.querySelector(".name").textContent = subLabel(sub);
+    tile.querySelector('[data-act="remove"]').addEventListener("click", () => void removeShare(tk, sub));
+    tile.querySelector('[data-act="remind"]')?.addEventListener("click", () => void remindShare(tk, sub));
+    frag.appendChild(tile);
+  }
+
+  for (const { sub } of rest) {
+    const id = String(sub.sub_id);
+    const until = cooldownActive(id);
+    const tile = document.createElement("div");
+    tile.className = "card subTile pick" + (selectedSubIds.has(id) ? " selected" : "") + (until ? " blocked" : "");
+    tile.setAttribute("role", "checkbox");
+    tile.setAttribute("aria-checked", selectedSubIds.has(id) ? "true" : "false");
+    tile.innerHTML = `
+      <div class="name" style="padding-right:0"></div>
+      <div class="meta"><span class="tag tag--muted">${escapeHtml(t("polls.share.state.notInvited"))}</span></div>
+      ${until ? `<div class="subNote">${escapeHtml(t("polls.share.canResend", { when: formatUntil(until) }))}</div>` : ""}
+    `;
+    tile.querySelector(".name").textContent = subLabel(sub);
+    if (!until) {
+      tile.tabIndex = 0;
+      const toggle = () => {
+        if (selectedSubIds.has(id)) selectedSubIds.delete(id); else selectedSubIds.add(id);
+        renderSubs();
+      };
+      tile.addEventListener("click", toggle);
+      tile.addEventListener("keydown", (e) => {
+        if (e.key === " " || e.key === "Enter") { e.preventDefault(); toggle(); }
+      });
+    }
+    frag.appendChild(tile);
+  }
+
+  subsGrid.replaceChildren(frag);
+}
+
+function rpcErrText(error, data) {
+  return error?.message || error?.details || data?.err || data?.error || t("common.genericError");
+}
+
+async function sendInvites() {
+  if (!game || busy || !selectedSubIds.size) return;
+  busy = true;
+  if (btnSendInvites) btnSendInvites.disabled = true;
+  try {
+    // baza wycofuje czekające zaproszenia spoza listy — więc wysyłamy czekające + nowo zaznaczone
+    const waitingIds = subsAll.filter((s) => taskIsWaiting(taskForSub(s))).map((s) => String(s.sub_id));
+    const ids = [...new Set([...waitingIds, ...selectedSubIds])];
+
+    const { data, error } = await sb().rpc("polls_hub_share_poll", { p_game_id: gameId, p_sub_ids: ids });
+    if (error || data?.ok === false) {
+      await alertModal({ text: `${t("polls.share.inviteFailed")}\n\n${rpcErrText(error, data)}` });
+      return;
+    }
+
+    for (const b of data?.blocked_sub_ids || []) {
+      const until = Date.parse(b.cooldown_until);
+      if (b.sub_id && Number.isFinite(until)) cooldownBySub.set(String(b.sub_id), until);
+    }
+
+    const res = await sendPollInviteMails({ mailItems: data?.mail, pollName: game.name, currentUser });
+    selectedSubIds.clear();
+
+    if (res.failed) await alertModal({ text: `${t("polls.share.mailFailed")} (${res.failed}/${res.total})` });
+    else setMsg(t("polls.share.invitesSent", { n: res.sent }));
+    if (data?.blocked) setMsg(t("polls.share.invitesBlocked", { n: data.blocked }));
+  } catch (e) {
+    console.error("[polls] send invites", e);
+    await alertModal({ text: `${t("polls.share.inviteFailed")}\n\n${e?.message || e}` });
+  } finally {
+    busy = false;
+    await safeLoadSubs();
+  }
+}
+
+async function remindShare(tk, sub) {
+  if (busy) return;
+  busy = true;
+  try {
+    const { data, error } = await sb().rpc("poll_share_remind", { p_game_id: gameId, p_task_id: tk.id });
+    if (error) throw error;
+    if (!data?.ok) {
+      if (data?.err === "cooldown" && data.cooldown_until) {
+        const until = Date.parse(data.cooldown_until);
+        if (Number.isFinite(until)) cooldownBySub.set(String(sub.sub_id), until);
+        await alertModal({ text: t("polls.share.canResend", { when: formatUntil(until) }) });
+      } else if (data?.err === "reminder limit") {
+        await alertModal({ text: t("polls.share.reminderLimit") });
+      } else {
+        await alertModal({ text: `${t("polls.share.remindFailed")}\n\n${rpcErrText(null, data)}` });
+      }
+      return;
+    }
+    const res = await sendPollInviteMails({ mailItems: data.mail, pollName: game.name, currentUser, reminder: true });
+    if (res.failed) await alertModal({ text: `${t("polls.share.mailFailed")} (${res.failed}/${res.total})` });
+    else setMsg(t("polls.share.reminded"));
+    // po wysłaniu: kolejny mail dopiero za 24 h
+    cooldownBySub.set(String(sub.sub_id), Date.now() + 24 * 3600 * 1000);
+  } catch (e) {
+    console.error("[polls] remind", e);
+    await alertModal({ text: `${t("polls.share.remindFailed")}\n\n${e?.message || e}` });
+  } finally {
+    busy = false;
+    await safeLoadSubs();
+  }
+}
+
+async function removeShare(tk, sub) {
+  if (busy) return;
+  const ok = await confirmModal({
+    title: t("polls.share.removeTitle"),
+    text: tk.status === "done"
+      ? t("polls.share.removeTextVoted", { name: subLabel(sub) })
+      : t("polls.share.removeText", { name: subLabel(sub) }),
+    okText: t("polls.share.removeOk"),
+    cancelText: t("polls.actions.cancel"),
+  });
+  if (!ok) return;
+  busy = true;
+  try {
+    const { data, error } = await sb().rpc("poll_share_remove", { p_game_id: gameId, p_task_id: tk.id });
+    if (error || data?.ok === false) throw new Error(rpcErrText(error, data));
+    setMsg(t("polls.share.removed"));
+  } catch (e) {
+    console.error("[polls] remove share", e);
+    await alertModal({ text: `${t("polls.share.removeFailed")}\n\n${e?.message || e}` });
+  } finally {
+    busy = false;
+    await safeLoadSubs();
+    void refreshVotesChip();
+    void previewResults().catch(() => {});
+  }
+}
+
+async function safeLoadSubs() {
+  try {
+    await loadSubsData();
+  } catch (e) {
+    console.warn("[polls] load subscribers failed", e);
+  }
+}
+
+/* =======================
+   Odświeżanie
+======================= */
+
+let stateKey = null;      // status + klucz: zmiana = nowe uruchomienie / koniec
+let refreshSeq = 0;
+
+function renderShareSection(st, link) {
+  const open = st === STATUS.POLL_OPEN;
+  if (shareBody) shareBody.style.display = open ? "" : "none";
+  if (shareEmpty) {
+    shareEmpty.style.display = open ? "none" : "";
+    shareEmpty.textContent = st === STATUS.READY ? t("polls.share.closedEmpty") : t("polls.share.draftEmpty");
+  }
+  if (open) {
+    if (pollLinkEl) pollLinkEl.value = link;
+    setLinkUiVisible(true);
+    void renderQr(link);
+  } else {
+    if (pollLinkEl) pollLinkEl.value = "";
+    setLinkUiVisible(false);
+    renderedQrUrl = "";
+  }
+}
+
+function applyActionButtons(st, chk) {
+  if (game.type === TYPES.PREPARED) {
+    setActionButton(t("polls.actions.noPoll"), true, "");
+    if (btnAbort) btnAbort.style.display = "none";
+    return;
+  }
+  if (btnAbort) btnAbort.style.display = st === STATUS.POLL_OPEN && !uiTextCloseOpen ? "" : "none";
+  const reason = chk?.ok ? "" : (chk?.reason || "");
+  if (st === STATUS.DRAFT) setActionButton(t("polls.actions.openPoll"), !chk?.ok, reason);
+  else if (st === STATUS.POLL_OPEN) setActionButton(t("polls.actions.closePoll"), !chk?.ok, reason);
+  else if (st === STATUS.READY) setActionButton(t("polls.actions.reopenPoll"), !chk?.ok, reason);
+  else setActionButton("", true, "");
+}
+
+async function validateForState(st) {
+  if (game.type === TYPES.PREPARED) return null;
+  if (st === STATUS.POLL_OPEN) return validateCanClose(game);
+  return validateCanOpen(game); // szkic i zamknięta: te same warunki uruchomienia
 }
 
 async function refresh() {
+  const seq = ++refreshSeq;
   if (!gameId) {
+    if (pollBar) pollBar.style.display = "none";
     if (cardMain) cardMain.style.display = "none";
     if (cardEmpty) cardEmpty.style.display = "";
     setMsg(t("polls.missingId"));
@@ -910,107 +1260,196 @@ async function refresh() {
   }
 
   game = await loadGame();
+  if (seq !== refreshSeq) return;
 
   if (cardEmpty) cardEmpty.style.display = "none";
-  if (cardMain) cardMain.style.display = "";
+  if (pollBar) pollBar.style.display = "";
+  if (cardMain) cardMain.style.display = uiTextCloseOpen ? "none" : "";
+
+  const st = game.status || STATUS.DRAFT;
+  const key = `${st}:${game.share_key_poll}`;
+  if (key !== stateKey) {
+    // nowy stan lub nowe uruchomienie: domyślna wypustka, czysta lista wyników i zaznaczeń
+    stateKey = key;
+    tabTouchedByUser = false;
+    resetResultsDom();
+    selectedSubIds.clear();
+    subsAll = [];
+    tasks = [];
+    subsSig = "";
+    firstQuestionId = null;
+  }
+  if (!tabTouchedByUser) setActiveTab(st === STATUS.POLL_OPEN ? "share" : "results");
 
   setChips(game);
-
-  if (gName) gName.textContent = game.name || t("polls.defaultName");
   const pollGameName = $("pollGameName");
   if (pollGameName) pollGameName.textContent = game.name || t("polls.defaultName");
 
-  if (gMeta) {
-    if (game.type === TYPES.POLL_TEXT) {
-      gMeta.textContent = t("polls.meta.pollText", { min: RULES.QN_MIN });
-    } else if (game.type === TYPES.POLL_POINTS) {
-      gMeta.textContent = t("polls.meta.pollPoints", {
-        min: RULES.QN_MIN,
-        minAns: RULES.AN_MIN,
-        maxAns: RULES.AN_MAX,
-      });
-    } else {
-      gMeta.textContent = t("polls.meta.prepared");
+  renderShareSection(st, st === STATUS.POLL_OPEN ? pollLink(game) : "");
+
+  if (uiTextCloseOpen) return;
+
+  try {
+    const [chk] = await Promise.all([
+      validateForState(st),
+      previewResults(),
+      st === STATUS.POLL_OPEN ? refreshVotesChip() : Promise.resolve(),
+      st === STATUS.POLL_OPEN ? safeLoadSubs() : Promise.resolve(),
+    ]);
+    if (seq !== refreshSeq) return;
+    applyActionButtons(st, chk);
+  } catch (e) {
+    console.warn("[polls] refresh failed", e);
+    if (resultsMeta) resultsMeta.textContent = t("polls.results.refreshFailed");
+    applyActionButtons(st, null);
+  }
+}
+
+// odświeżanie wyników na żywo (bez przebudowy listy)
+async function liveTick() {
+  if (document.hidden || uiTextCloseOpen || busy || !game || game.status !== STATUS.POLL_OPEN) return;
+  try {
+    const g = await loadGame();
+    if (g.status !== game.status || g.share_key_poll !== game.share_key_poll) {
+      await refresh();
+      return;
     }
+    const [chk] = await Promise.all([
+      validateCanClose(game),
+      previewResults(),
+      refreshVotesChip(),
+      refreshTasksOnly(),
+    ]);
+    if (!uiTextCloseOpen && !busy) applyActionButtons(STATUS.POLL_OPEN, chk);
+  } catch (e) {
+    console.warn("[polls] live refresh failed", e);
   }
+}
 
-  // resultsCard zawsze widoczny (poza textClose)
-  showResultsCard();
+/* =======================
+   Akcje stanu
+======================= */
 
-  // link + QR (pokazujemy TYLKO gdy poll jest otwarty)
-  const st = game.status || STATUS.DRAFT;
-  
-  if (st === STATUS.POLL_OPEN) {
-    setLinkRowVisible(true);
-  
-    const link = pollLink(game);
-    if (pollLinkEl) pollLinkEl.value = link;
-  
-    setLinkUiVisible(true);
-    await renderSmallQr(link);
-  } else {
-    // draft + ready: link i przyciski mają zniknąć
-    setLinkRowVisible(false);
-    setLinkUiVisible(false);
+async function openPollFlow() {
+  const chk = await validateCanOpen(game);
+  if (!chk.ok) return setMsg(chk.reason);
+
+  const ok = await confirmModal({
+    title: t("polls.modals.open.title"),
+    text: t("polls.modals.open.text", { name: game.name }),
+    okText: t("polls.modals.open.ok"),
+    cancelText: t("polls.modals.open.cancel"),
+  });
+  if (!ok) return;
+
+  try {
+    const { error } = await sb().rpc("poll_open", { p_game_id: gameId, p_key: game.share_key_poll });
+    if (error) throw error;
+    setMsg(t("polls.status.opened"));
+  } catch (e) {
+    console.error("[polls] open error:", e);
+    await alertModal({ text: `${t("polls.errors.open")}\n\n${e?.message || e}` });
   }
+}
 
-  updateRefreshButtonState();
+async function closePollFlow() {
+  const chk = await validateCanClose(game);
+  if (!chk.ok) return setMsg(chk.reason);
 
-  // Uruchamiamy walidację i podgląd wyników równolegle — są niezależne
-  const validatePromise = (() => {
-    if (game.type === TYPES.PREPARED) return Promise.resolve(null);
-    if (st === STATUS.DRAFT)      return validateCanOpen(game);
-    if (st === STATUS.POLL_OPEN)  return validateCanClose(game);
-    if (st === STATUS.READY)      return validateCanReopen(game);
-    return Promise.resolve(null);
-  })();
+  if (game.type === TYPES.POLL_POINTS) {
+    const ok = await confirmModal({
+      title: t("polls.modals.closePoints.title"),
+      text: t("polls.modals.closePoints.text"),
+      okText: t("polls.modals.closePoints.ok"),
+      cancelText: t("polls.modals.closePoints.cancel"),
+    });
+    if (!ok) return;
 
-  if (!uiTextCloseOpen) {
     try {
-      resetPreviewDomCache();
-      await Promise.all([previewResults(), validatePromise]);
+      const { error } = await sb().rpc("poll_points_close_and_normalize", {
+        p_game_id: gameId,
+        p_key: game.share_key_poll,
+      });
+      if (error) throw error;
+      setMsg(t("polls.status.closedPoints"));
     } catch (e) {
-      console.warn('[polls] previewResults in refresh failed', e);
-      setResultsMeta(t('polls.results.refreshFailed'));
+      console.error("[polls] close points error:", e);
+      await alertModal({ text: `${t("polls.errors.close")}\n\n${gameRuleErrorMessage(e) || e?.message || e}` });
+    }
+    return;
+  }
+
+  // poll_text: pełnoszerokie okno scalania odpowiedzi
+  try {
+    textCloseModel = await buildTextClosePanel();
+    setMsg(t("polls.textClose.editHint"));
+  } catch (e) {
+    console.error("[polls] build text close:", e);
+    setTextCloseUi(false);
+    await alertModal({ text: `${t("polls.errors.loadAnswers")}\n\n${e?.message || e}` });
+  }
+}
+
+async function abortPollFlow() {
+  const ok = await confirmModal({
+    title: t("polls.modals.abort.title"),
+    text: t("polls.modals.abort.text"),
+    okText: t("polls.modals.abort.ok"),
+    cancelText: t("polls.actions.cancel"),
+  });
+  if (!ok) return;
+
+  try {
+    const { data, error } = await sb().rpc("poll_abort", { p_game_id: gameId });
+    if (error || data?.ok === false) throw new Error(rpcErrText(error, data));
+    setMsg(t("polls.status.aborted"));
+  } catch (e) {
+    console.error("[polls] abort error:", e);
+    await alertModal({ text: `${t("polls.errors.abort")}\n\n${e?.message || e}` });
+  }
+}
+
+async function restartPollFlow() {
+  const chk = await validateCanOpen(game);
+  if (!chk.ok) return setMsg(chk.reason);
+
+  const ok = await confirmModal({
+    title: t("polls.modals.reopen.title"),
+    text: t("polls.modals.reopen.text"),
+    okText: t("polls.modals.reopen.ok"),
+    cancelText: t("polls.modals.reopen.cancel"),
+  });
+  if (!ok) return;
+
+  let aborted = false;
+  try {
+    const { data, error } = await sb().rpc("poll_abort", { p_game_id: gameId });
+    if (error || data?.ok === false || !data?.share_key_poll) throw new Error(rpcErrText(error, data));
+    aborted = true;
+    const { error: e2 } = await sb().rpc("poll_open", { p_game_id: gameId, p_key: data.share_key_poll });
+    if (e2) throw e2;
+    setMsg(t("polls.status.reopened"));
+  } catch (e) {
+    console.error("[polls] reopen error:", e);
+    await alertModal({ text: `${t("polls.errors.reopen")}${aborted ? `\n${t("polls.errors.reopenAborted")}` : ""}\n\n${e?.message || e}` });
+  }
+}
+
+async function runStateAction(fn) {
+  if (!game || busy) return;
+  busy = true;
+  if (btnPollAction) btnPollAction.disabled = true;
+  if (btnAbort) btnAbort.disabled = true;
+  try {
+    await fn();
+  } finally {
+    busy = false;
+    if (btnAbort) btnAbort.disabled = false;
+    // stan i klucz zawsze czytamy z bazy od nowa (uruchomienie zmienia share_key_poll)
+    if (!uiTextCloseOpen) {
+      try { await refresh(); } catch (e) { console.warn("[polls] refresh after action", e); }
     }
   }
-
-  // przycisk główny (validatePromise już rozwiązany)
-  const chk = await validatePromise;
-
-  if (game.type === TYPES.PREPARED) {
-    setActionButton(t('polls.actions.noPoll'), true, t('polls.meta.prepared'));
-    return;
-  }
-
-  if (st === STATUS.DRAFT) {
-    setActionButton(
-      t('polls.actions.openPoll'),
-      !chk.ok,
-      chk.ok ? "" : chk.reason
-    );
-    return;
-  }
-
-  if (st === STATUS.POLL_OPEN) {
-    setActionButton(
-      t('polls.actions.closePoll'),
-      !chk.ok,
-      chk.ok ? "" : chk.reason
-    );
-    return;
-  }
-
-  if (st === STATUS.READY) {
-    setActionButton(
-      t('polls.actions.reopenPoll'),
-      !chk.ok,
-      chk.ok ? "" : chk.reason
-    );
-    return;
-  }
-
-  setActionButton('', true, t('polls.actions.unknownStatus'));
 }
 
 /* =======================
@@ -1023,6 +1462,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   document.documentElement.classList.remove('page-loading');
 
   const u = await requireAuthP;
+  currentUser = u;
   initTopbarAccountDropdown(u);
   document.querySelector('.topbar')?.classList.add('topbar-ready');
 
@@ -1068,6 +1508,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     btnLogoutMenu.click();
   }, true); // capture = true, żeby interceptować przed handlerem dropdown
 
+  tabShare?.addEventListener("click", () => setActiveTab("share", { byUser: true }));
+  tabResults?.addEventListener("click", () => setActiveTab("results", { byUser: true }));
+
   btnCopy?.addEventListener("click", async () => {
     if (!pollLinkEl?.value) return;
     try {
@@ -1087,131 +1530,25 @@ document.addEventListener("DOMContentLoaded", async () => {
     showPollQrModal();
   });
 
-  // ⟳ Odśwież (naprawione: zawsze pokazuje loading + błąd w meta)
-  btnRefreshResults?.addEventListener("click", async () => {
-    if (!game || btnRefreshResults.disabled) return;
+  btnSendInvites?.addEventListener("click", () => void sendInvites());
 
-    try {
-      setResultsMeta(t("polls.results.loading"));
-      await previewResults();
-      setMsg(t("polls.results.refreshed"));
-    } catch (e) {
-      console.warn("[polls] refresh results error:", e);
-      setResultsMeta(t("polls.results.refreshFailed"));
-      await alertModal({ text: `${t("polls.results.refreshFailed")}\n\n${e?.message || e}` });
-    }
-  });
-
-  btnPollAction?.addEventListener("click", async () => {
+  btnPollAction?.addEventListener("click", () => {
     if (!game) return;
     const st = game.status || STATUS.DRAFT;
-
-    // OPEN
-    if (st === STATUS.DRAFT) {
-      const chk = await validateCanOpen(game);
-      if (!chk.ok) return setMsg(chk.reason);
-
-      const ok = await confirmModal({
-        title: t("polls.modals.open.title"),
-        text: t("polls.modals.open.text", { name: game.name }),
-        okText: t("polls.modals.open.ok"),
-        cancelText: t("polls.modals.open.cancel"),
-      });
-      if (!ok) return;
-
-      try {
-        const { error } = await sb().rpc("poll_open", { p_game_id: gameId, p_key: game.share_key_poll });
-        if (error) throw error;
-        setMsg(t("polls.status.opened"));
-        await refresh();
-      } catch (e) {
-        console.error("[polls] open error:", e);
-        await alertModal({ text: `${t("polls.errors.open")}\n\n${e?.message || e}` });
-      }
-      return;
-    }
-
-    // CLOSE
-    if (st === STATUS.POLL_OPEN) {
-      const chk = await validateCanClose(game);
-      if (!chk.ok) return setMsg(chk.reason);
-
-      if (game.type === TYPES.POLL_POINTS) {
-        const ok = await confirmModal({
-          title: t("polls.modals.closePoints.title"),
-          text: t("polls.modals.closePoints.text"),
-          okText: t("polls.modals.closePoints.ok"),
-          cancelText: t("polls.modals.closePoints.cancel"),
-        });
-        if (!ok) return;
-
-        try {
-          const { error } = await sb().rpc("poll_points_close_and_normalize", {
-            p_game_id: gameId,
-            p_key: game.share_key_poll,
-          });
-          if (error) throw error;
-
-          await applyPollPointsUniqueFixedPoints();
-
-          setMsg(t("polls.status.closedPoints"));
-          await refresh();
-        } catch (e) {
-          console.error("[polls] close points error:", e);
-          await alertModal({ text: `${t("polls.errors.close")}\n\n${gameRuleErrorMessage(e) || e?.message || e}` });
-        }
-        return;
-      }
-
-      // poll_text: otwórz panel merge/delete
-      try {
-        textCloseModel = await buildTextClosePanel();
-        setMsg(t("polls.textClose.editHint"));
-      } catch (e) {
-        console.error("[polls] build text close:", e);
-        await alertModal({ text: `${t("polls.errors.loadAnswers")}\n\n${e?.message || e}` });
-      }
-      return;
-    }
-
-    // REOPEN
-    if (st === STATUS.READY) {
-      const chk = await validateCanReopen(game);
-      if (!chk.ok) return setMsg(chk.reason);
-
-      const ok = await confirmModal({
-        title: t("polls.modals.reopen.title"),
-        text: t("polls.modals.reopen.text"),
-        okText: t("polls.modals.reopen.ok"),
-        cancelText: t("polls.modals.reopen.cancel"),
-      });
-      if (!ok) return;
-
-      try {
-        const { error } = await sb().rpc("poll_open", { p_game_id: gameId, p_key: game.share_key_poll });
-        if (error) throw error;
-
-        setMsg(t("polls.status.reopened"));
-        await refresh();
-      } catch (e) {
-        console.error("[polls] reopen error:", e);
-        await alertModal({ text: `${t("polls.errors.reopen")}\n\n${e?.message || e}` });
-      }
-      return;
-    }
+    if (st === STATUS.DRAFT) return runStateAction(openPollFlow);
+    if (st === STATUS.POLL_OPEN) return runStateAction(closePollFlow);
+    if (st === STATUS.READY) return runStateAction(restartPollFlow);
   });
 
-  btnCancelTextClose?.addEventListener("click", () => {
+  btnAbort?.addEventListener("click", () => runStateAction(abortPollFlow));
+
+  const cancelTextClose = () => {
     setTextCloseUi(false);
     setMsg(t("polls.textClose.cancelled"));
     void refresh();
-  });
-
-  btnCancelTextCloseTop?.addEventListener("click", () => {
-    setTextCloseUi(false);
-    setMsg(t("polls.textClose.cancelled"));
-    void refresh();
-  });
+  };
+  btnCancelTextClose?.addEventListener("click", cancelTextClose);
+  btnCancelTextCloseTop?.addEventListener("click", cancelTextClose);
 
   btnUndo?.addEventListener("click", undoAction);
   btnRedo?.addEventListener("click", redoAction);
@@ -1279,7 +1616,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       setMsg(t("polls.status.closed"));
       setTextCloseUi(false);
-      resetPreviewDomCache();
+      resetResultsDom();
       await refresh();
     } catch (e) {
       console.error("[polls] close text error:", e);
@@ -1308,4 +1645,5 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   await refresh();
+  setInterval(() => void liveTick(), LIVE_REFRESH_MS);
 });

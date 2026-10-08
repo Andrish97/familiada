@@ -136,7 +136,7 @@ async function openPoll(page, gameId) {
   // w handlerze DOMContentLoaded — ten sam wyścig co przy #btnPrimary na /login.
   await page.waitForLoadState("networkidle");
   await page.locator("#btnPollAction").click();
-  await page.getByRole("button", { name: "Uruchom", exact: true }).click();
+  await page.locator(".uni-foot .btn.gold").click(); // potwierdzenie w modalu (pasek stanu też ma „Uruchom”)
   await expect(page.locator("#pollLink")).not.toHaveValue("", { timeout: 15000 });
   const link = await page.inputValue("#pollLink");
   const key = new URL(link).searchParams.get("key");
@@ -276,7 +276,7 @@ test("ankieta punktowa i tekstowa: tworzenie, zbieranie głosów i zamknięcie",
     await page.goto(`https://www.familiada.online/polls?id=${pointsGame.gameId}`, { waitUntil: "domcontentloaded" });
     await page.waitForLoadState("networkidle");
     mark("points owner page reloaded, waiting for close-poll button");
-    await expect(page.locator("#btnPollAction")).toHaveText("Zamknąć ankietę", { timeout: 60000 });
+    await expect(page.locator("#btnPollAction")).toHaveText("Zamknij", { timeout: 60000 });
     mark("points close button ready, clicking close");
     await page.locator("#btnPollAction").click();
     await page.getByRole("button", { name: "Zakończ", exact: true }).click();
@@ -316,7 +316,7 @@ test("ankieta punktowa i tekstowa: tworzenie, zbieranie głosów i zamknięcie",
     await page.goto(`https://www.familiada.online/polls?id=${textGame.gameId}`, { waitUntil: "domcontentloaded" });
     await page.waitForLoadState("networkidle");
     mark("text owner page reloaded, waiting for close-poll button");
-    await expect(page.locator("#btnPollAction")).toHaveText("Zamknąć ankietę", { timeout: 60000 });
+    await expect(page.locator("#btnPollAction")).toHaveText("Zamknij", { timeout: 60000 });
     mark("text close button ready, opening close panel");
     await page.locator("#btnPollAction").click(); // dla poll_text otwiera panel scalania, jeszcze nie zamyka
 
@@ -427,7 +427,7 @@ test("ankieta tekstowa: literówki, korekta i scalanie odpowiedzi w panelu zamyk
     await page.goto(`https://www.familiada.online/polls?id=${game.gameId}`, { waitUntil: "domcontentloaded" });
     await page.waitForLoadState("networkidle");
     mark("merge-test: owner page reloaded, waiting for close-poll button");
-    await expect(page.locator("#btnPollAction")).toHaveText("Zamknąć ankietę", { timeout: 60000 });
+    await expect(page.locator("#btnPollAction")).toHaveText("Zamknij", { timeout: 60000 });
     mark("merge-test: close button ready, opening close panel");
     await page.locator("#btnPollAction").click();
 
@@ -639,7 +639,7 @@ test("ankieta tekstowa: undo/redo dla edycji tekstu w panelu zamykania", async (
 
     await page.goto(`https://www.familiada.online/polls?id=${game.gameId}`, { waitUntil: "domcontentloaded" });
     await page.waitForLoadState("networkidle");
-    await expect(page.locator("#btnPollAction")).toHaveText("Zamknąć ankietę", { timeout: 60000 });
+    await expect(page.locator("#btnPollAction")).toHaveText("Zamknij", { timeout: 60000 });
     mark("undo-test: opening close panel");
     await page.locator("#btnPollAction").click();
 
@@ -707,7 +707,7 @@ test("ankieta tekstowa: blokada przycisków Cancel przy zapisywaniu", async ({ p
 
     await page.goto(`https://www.familiada.online/polls?id=${game.gameId}`, { waitUntil: "domcontentloaded" });
     await page.waitForLoadState("networkidle");
-    await expect(page.locator("#btnPollAction")).toHaveText("Zamknąć ankietę", { timeout: 60000 });
+    await expect(page.locator("#btnPollAction")).toHaveText("Zamknij", { timeout: 60000 });
     await page.locator("#btnPollAction").click();
 
     await expect(page.locator("#btnFinishTextClose")).toBeEnabled({ timeout: 60000 });
