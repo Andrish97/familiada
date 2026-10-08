@@ -244,16 +244,15 @@ logowania (`loginAsTestUser` czy `loginAsGuest`) pasuje do danej strony.
 `requireAuth()` (`js/core/auth.js`) jako pierwszy krok i bez sesji
 przekierowuje na `/login`, zanim cokolwiek się wyrenderuje. Dotyczy to
 `games`, `editor` (gra), `logo` (lista i edytory), `game-settings`, `manual`,
-`polls-hub`, `polls`, `bases`/`base-explorer`, `account`, `subscriptions`
+`polls`, `bases`/`base-explorer`, `account`, `subscriptions`
 i `control/*`. Publicznie, bez logowania, dostępne są tylko strona
 główna (`index.html`) i sam `/login`.
 
 **Gość** (`user.is_guest === true`, konto założone przyciskiem "Wejdź
 jako gość") **ma sesję, więc mija powyższą blokadę**, ale trafia na
 pełnoekranowy, blokujący overlay (`showGuestBlockedOverlay`,
-`js/core/guest-mode.js`) na dwóch konkretnych stronach — treść
+`js/core/guest-mode.js`) na konkretnej stronie — treść
 `guestGuard.message` w tłumaczeniach mówi wprost które to funkcje:
-- `/polls-hub` (`js/pages/polls-hub.js:1099`) — panel ankiet,
 - `/subscriptions` (`js/pages/subscriptions.js:699`) — subskrypcje.
 
 **`/account` jest częściowym wyjątkiem** — gość NIE dostaje pełnego

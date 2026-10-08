@@ -17,7 +17,7 @@
   <link rel="icon" href="/favicon.ico?v=v2026-10-08T07385"/>
   <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-08T07385"/>
   <link rel="stylesheet" href="/games/css/games.css?v=v2026-10-08T07385"/>
-  <link rel="stylesheet" href="/polls-hub/css/polls-hub.css?v=v2026-10-08T07385"/>
+  <link rel="stylesheet" href="/subscriptions/css/subscriptions.css?v=v2026-10-08T07385"/>
   <script>
     document.documentElement.classList.add('page-loading');
     try {
@@ -36,7 +36,7 @@
   <script src="/shared/js/core/security-warning.js?v=v2026-10-08T07385" defer></script>
 </head>
 
-<body class="polls-hub-body skel-body">
+<body class="games-body skel-body">
   <header class="topbar topbar-layout-4">
     <div class="topbar-section topbar-section-1">
       <div class="brand">FAMILIADA</div>
@@ -55,48 +55,98 @@
   <main class="wrap">
     <div class="bar">
       <div>
-        <div class="title" data-i18n="pollsHubSubscriptions.tabs.subscriptions">Subskrypcje</div>
-        <div class="hint" data-i18n="pollsHubSubscriptions.header.hint">Zarządzaj ankietami oraz zaproszeniami do ankiety.</div>
+        <div class="title" data-i18n="pollsHubSubscriptions.bar.title">Subskrypcje</div>
+        <div class="hint" id="hint" data-i18n="pollsHubSubscriptions.bar.hintSubscribers">Naciśnij kafelek, żeby go zaznaczyć.</div>
+      </div>
+
+      <div class="actions">
+        <button class="btn sm" id="btnResend" type="button" disabled data-for="subscribers">
+          <span class="only-desktop" data-i18n="pollsHubSubscriptions.actions.resendLong">Ponów zaproszenie</span>
+          <span class="only-mobile" data-i18n="pollsHubSubscriptions.actions.resendShort">Ponów</span>
+        </button>
+        <button class="btn sm gold" id="btnAccept" type="button" disabled data-for="subscriptions" hidden data-i18n="pollsHubSubscriptions.actions.accept">Akceptuj</button>
+        <button class="btn sm gold" id="btnVote" type="button" disabled data-for="tasks" hidden data-i18n="pollsHubSubscriptions.actions.vote">Głosuj</button>
       </div>
     </div>
 
-    <section class="hub-desktop hub-desktop-single">
-      <div class="card hub-card">
-        <div class="hub-tab-panel active" id="panelSubs">
-          <div class="hub-grid">
-            <section class="hub-col" data-skel-step>
-              <div class="hub-col-head"><div><div class="hub-col-title" data-i18n="pollsHubSubscriptions.sections.mySubscribers">Moi subskrybenci</div><div class="hub-col-hint" data-i18n="pollsHubSubscriptions.sections.subscribersHint">Zaproś nowych i zarządzaj zaproszeniami.</div></div><div class="hub-controls"><div class="ui-select" id="sortSubscribersDesktop"><button class="ui-select-btn inp sm" type="button"><span class="ui-select-label">—</span><span class="ui-select-caret" aria-hidden="true"><i class="ico" data-icon="caret-down"></i></span></button><div class="ui-select-menu" role="listbox"></div></div><div class="hub-toggle" data-kind="subscribers"><button class="btn xs btn-toggle" data-toggle="current" data-i18n="pollsHubSubscriptions.toggle.current">Aktualne</button><button class="btn xs btn-toggle" data-toggle="archive" data-i18n="pollsHubSubscriptions.toggle.archive">Archiwalne</button></div></div></div>
-              <div class="hub-invite"><input class="inp" id="inviteInputDesktop" placeholder="E-mail lub nazwa użytkownika" data-i18n-placeholder="pollsHubSubscriptions.invite.placeholder"/><button class="btn xs gold" id="btnInviteDesktop" type="button" data-i18n="pollsHubSubscriptions.invite.button">Zaproś</button></div>
-              <div class="hub-list" id="subscribersListDesktop"></div>
-            </section>
-            <section class="hub-col" data-skel-step>
-              <div class="hub-col-head"><div><div class="hub-col-title"><span data-i18n="pollsHubSubscriptions.sections.mySubscriptions">Moje subskrypcje</span><span class="badge" data-badge="subs" aria-hidden="true"></span></div><div class="hub-col-hint" data-i18n="pollsHubSubscriptions.sections.subscriptionsHint">Akceptuj zaproszenia od innych.</div></div><div class="hub-controls"><div class="ui-select" id="sortSubscriptionsDesktop"><button class="ui-select-btn inp sm" type="button"><span class="ui-select-label">—</span><span class="ui-select-caret" aria-hidden="true"><i class="ico" data-icon="caret-down"></i></span></button><div class="ui-select-menu" role="listbox"></div></div><div class="hub-toggle" data-kind="subscriptions"><button class="btn xs btn-toggle" data-toggle="current" data-i18n="pollsHubSubscriptions.toggle.current">Aktualne</button><button class="btn xs btn-toggle" data-toggle="archive" data-i18n="pollsHubSubscriptions.toggle.archive">Archiwalne</button></div></div></div>
-              <div class="hub-list" id="subscriptionsListDesktop"></div>
-            </section>
+    <section class="games-shell">
+      <div class="tabs-card hub-tabs subs-tabs-card" id="subsTabsCard">
+        <div class="tabs-strip" id="subsTabs" role="tablist">
+          <div class="tab-slot slot-subscribers active">
+            <button class="tab-label" id="tabSubscribers" type="button" role="tab" aria-controls="subsSectionSubscribers" aria-selected="true">
+              <span class="only-desktop" data-i18n="pollsHubSubscriptions.tab.subscribers">X</span><span class="only-mobile" data-i18n="pollsHubSubscriptions.tab.subscribersShort">X</span>
+              
+            </button>
+            <div class="tab-wrapper" aria-hidden="true">
+              <div class="tab-active"></div>
+              <div class="tab-corner tab-corner-left"></div>
+              <div class="tab-corner tab-corner-right"></div>
+            </div>
+          </div>
+          <div class="tab-slot slot-subscriptions">
+            <button class="tab-label" id="tabSubscriptions" type="button" role="tab" aria-controls="subsSectionSubscriptions" aria-selected="false">
+              <span class="only-desktop" data-i18n="pollsHubSubscriptions.tab.subscriptions">X</span><span class="only-mobile" data-i18n="pollsHubSubscriptions.tab.subscriptionsShort">X</span>
+              <span class="badge" id="subsBadge" aria-hidden="true"></span>
+            </button>
+            <div class="tab-wrapper" aria-hidden="true">
+              <div class="tab-active"></div>
+              <div class="tab-corner tab-corner-left"></div>
+              <div class="tab-corner tab-corner-right"></div>
+            </div>
+          </div>
+          <div class="tab-slot slot-tasks">
+            <button class="tab-label" id="tabTasks" type="button" role="tab" aria-controls="subsSectionTasks" aria-selected="false">
+              <span data-i18n="pollsHubSubscriptions.tab.tasks">X</span>
+              <span class="badge" id="tasksBadge" aria-hidden="true"></span>
+            </button>
+            <div class="tab-wrapper" aria-hidden="true">
+              <div class="tab-active"></div>
+              <div class="tab-corner tab-corner-left"></div>
+              <div class="tab-corner tab-corner-right"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card games-card subs-card">
+          <div class="subs-layout">
+            <div class="subs-section active" id="subsSectionSubscribers" role="tabpanel" data-skel-step>
+              <div class="grid" id="subscribersGrid"></div>
+            </div>
+            <div class="subs-section" id="subsSectionSubscriptions" role="tabpanel" data-skel-step>
+              <div class="grid" id="subscriptionsGrid"></div>
+            </div>
+            <div class="subs-section" id="subsSectionTasks" role="tabpanel" data-skel-step>
+              <div class="grid" id="tasksGrid"></div>
+            </div>
+          </div>
+
+          <div class="games-bottom">
+            <div class="games-bottom-left"></div>
+            <div class="games-bottom-right"></div>
           </div>
         </div>
       </div>
     </section>
 
-    <section class="hub-mobile">
-      <div class="tabs-card hub-tabs hub-tabs-mobile" id="hubTabsMobile">
-        <div class="tabs-strip" role="tablist">
-          <div class="tab-slot slot-mobile-subscribers"><button class="tab-label" id="tabSubscribersMobile" type="button" role="tab" aria-controls="panelSubscribersMobile" aria-selected="true" data-i18n="pollsHubSubscriptions.tabs.subscribersMobile">Subskryb.</button><div class="tab-wrapper"><div class="tab-active" data-i18n="pollsHubSubscriptions.tabs.subscribersMobile">Subskryb.</div><div class="tab-corner tab-corner-left"></div><div class="tab-corner tab-corner-right"></div></div></div>
-          <div class="tab-slot slot-mobile-subscriptions"><button class="tab-label" id="tabSubscriptionsMobile" type="button" role="tab" aria-controls="panelSubscriptionsMobile" aria-selected="false"><span data-i18n="pollsHubSubscriptions.tabs.subscriptionsMobile">Subskrypc.</span><span class="badge" data-badge="subs" aria-hidden="true"></span></button><div class="tab-wrapper"><div class="tab-active"><span data-i18n="pollsHubSubscriptions.tabs.subscriptionsMobile">Subskrypc.</span></div><div class="tab-corner tab-corner-left"></div><div class="tab-corner tab-corner-right"></div></div></div>
+    <!-- Modal: nowy subskrybent -->
+    <div class="overlay modal--sheet" id="inviteOverlay" style="display:none;">
+      <div class="modal">
+        <div class="mHead">
+          <div class="mTitle" data-i18n="pollsHubSubscriptions.inviteModal.title">Nowy subskrybent</div>
+          <button class="btn sm" id="btnInviteClose" type="button" aria-label="Zamknij" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
         </div>
-        <div class="card hub-card">
-          <div class="hub-tab-panel hub-mobile-panel" id="panelSubscribersMobile" role="tabpanel" aria-labelledby="tabSubscribersMobile" data-skel-step>
-            <div class="hub-col-head"><div><div class="hub-col-title" data-i18n="pollsHubSubscriptions.sections.mySubscribers">Moi subskrybenci</div><div class="hub-col-hint" data-i18n="pollsHubSubscriptions.sections.subscribersHint">Zaproś nowych i zarządzaj zaproszeniami.</div></div><div class="hub-controls"><div class="ui-select" id="sortSubscribersMobile"><button class="ui-select-btn inp sm" type="button"><span class="ui-select-label">—</span><span class="ui-select-caret" aria-hidden="true"><i class="ico" data-icon="caret-down"></i></span></button><div class="ui-select-menu" role="listbox"></div></div><div class="hub-toggle" data-kind="subscribers"><button class="btn xs btn-toggle" data-toggle="current" data-i18n="pollsHubSubscriptions.toggle.current">Aktualne</button><button class="btn xs btn-toggle" data-toggle="archive" data-i18n="pollsHubSubscriptions.toggle.archive">Archiwalne</button></div></div></div>
-            <div class="hub-invite"><input class="inp" id="inviteInputMobile" placeholder="E-mail lub nazwa użytkownika" data-i18n-placeholder="pollsHubSubscriptions.invite.placeholder"/><button class="btn xs gold" id="btnInviteMobile" type="button" data-i18n="pollsHubSubscriptions.invite.button">Zaproś</button></div>
-            <div class="hub-list" id="subscribersListMobile"></div>
-          </div>
-          <div class="hub-tab-panel hub-mobile-panel" id="panelSubscriptionsMobile" role="tabpanel" aria-labelledby="tabSubscriptionsMobile" data-skel-step>
-            <div class="hub-col-head"><div><div class="hub-col-title" data-i18n="pollsHubSubscriptions.sections.mySubscriptions">Moje subskrypcje</div><div class="hub-col-hint" data-i18n="pollsHubSubscriptions.sections.subscriptionsHint">Akceptuj zaproszenia od innych.</div></div><div class="hub-controls"><div class="ui-select" id="sortSubscriptionsMobile"><button class="ui-select-btn inp sm" type="button"><span class="ui-select-label">—</span><span class="ui-select-caret" aria-hidden="true"><i class="ico" data-icon="caret-down"></i></span></button><div class="ui-select-menu" role="listbox"></div></div><div class="hub-toggle" data-kind="subscriptions"><button class="btn xs btn-toggle" data-toggle="current" data-i18n="pollsHubSubscriptions.toggle.current">Aktualne</button><button class="btn xs btn-toggle" data-toggle="archive" data-i18n="pollsHubSubscriptions.toggle.archive">Archiwalne</button></div></div></div>
-            <div class="hub-list" id="subscriptionsListMobile"></div>
-          </div>
+        <div class="mSub" data-i18n="pollsHubSubscriptions.inviteModal.sub">Podaj e-mail lub nazwę użytkownika. Wyślemy zaproszenie do subskrypcji.</div>
+
+        <div class="importRow">
+          <input id="inviteInput" class="inp" type="text" maxlength="200" autocomplete="off" placeholder="E-mail lub nazwa użytkownika" data-i18n-placeholder="pollsHubSubscriptions.invite.placeholder"/>
+        </div>
+
+        <div class="importRow modal-actions">
+          <button class="btn sm" id="btnInviteCancel" type="button" data-i18n="pollsHubSubscriptions.inviteModal.cancel">Anuluj</button>
+          <button class="btn sm gold" id="btnInviteOk" type="button" data-i18n="pollsHubSubscriptions.invite.button">Zaproś</button>
         </div>
       </div>
-    </section>
+    </div>
 
     <div class="footer">
       <div data-i18n="common.footer.left">© 2026 Familiada — system do gry na żywo</div>

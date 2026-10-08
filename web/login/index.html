@@ -33,8 +33,8 @@
           if (_u && !_u.is_anonymous && (!_exp || Date.now() / 1000 < _exp + 60)) {
             var _next = _p.get('next');
             var _dest;
-            if (_next === 'polls-hub') {
-              _dest = '/polls-hub/' + (_p.get('t') ? '?t=' + _p.get('t') : '');
+            if (_next === 'tasks') {
+              _dest = '/subscriptions/?tab=tasks' + (_p.get('t') ? '&t=' + _p.get('t') : '');
             } else if (_next === 'subscriptions') {
               _dest = '/subscriptions/' + (_p.get('s') ? '?s=' + _p.get('s') : '');
             } else {
@@ -50,7 +50,7 @@
   <script src="/shared/js/core/security-warning.js?v=v2026-10-08T07385" defer></script>
   <script type="module" src="/login/js/login.js?v=v2026-10-08T07385" defer></script>
 </head>
-<body class="login-body mode-login no-footer-line skel-body" data-confirm-url="/confirm/" data-reset-url="/reset/" data-games-url="/games/" data-polls-url="/polls-hub/" data-subscriptions-url="/subscriptions/" data-captcha-provider="turnstile" data-captcha-site-key="0x4AAAAAACgSBNCEZ9064to_">
+<body class="login-body mode-login no-footer-line skel-body" data-confirm-url="/confirm/" data-reset-url="/reset/" data-games-url="/games/" data-subscriptions-url="/subscriptions/" data-captcha-provider="turnstile" data-captcha-site-key="0x4AAAAAACgSBNCEZ9064to_">
   <a href="/"
      class="login-back-fixed"
      id="btnBackHome"

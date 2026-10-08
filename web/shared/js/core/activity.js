@@ -1,5 +1,5 @@
 // Operational presence only. Device pages are intentionally excluded.
-const PAGES = new Set(['home','games','control','editor','game-settings','bases','base-explorer','logo','polls','polls-hub','subscriptions','account','marketplace','manual','connect-device']);
+const PAGES = new Set(['home','games','control','editor','game-settings','bases','base-explorer','logo','polls','subscriptions','account','marketplace','manual','connect-device']);
 export function startActivity(client) {
   const page = location.pathname.split('/').filter(Boolean)[0] || 'home';
   if (!PAGES.has(page)) return;

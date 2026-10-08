@@ -2462,7 +2462,7 @@ test("@mailbox control2: udostępnianie urządzenia (Prowadzący) przez e-mail -
     expect(resendResult.data?.created, "powtórne udostępnienie temu samemu odbiorcy nie powinno być 'created' -- inaczej shareDevice.js wysłałby drugi mail").toBe(false);
 
     // BEZ `timeout` -- domyślne 90s z helpers/mailbox.js, tak jak WSZYSTKIE
-    // inne testy mailowe w repo (bases.spec.js/polls-hub.spec.js/
+    // inne testy mailowe w repo (bases.spec.js/
     // subscriptions.spec.js/account-password-email.spec.js). Zgłoszone:
     // poprzednia wersja jawnie skracała do 60_000 -- ale docs/email-system-
     // description.md's mail-worker przetwarza kolejkę `mail_queue` co 60s

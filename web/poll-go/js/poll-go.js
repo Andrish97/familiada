@@ -111,16 +111,18 @@ function addAction(label, kind, handler) {
 function redirectToLogin() {
   const url = new URL("/login/", location.href);
   url.searchParams.set("from", "poll-go");
-  url.searchParams.set("next", taskToken ? "polls-hub" : "subscriptions");
+  url.searchParams.set("next", taskToken ? "tasks" : "subscriptions");
   if (taskToken) url.searchParams.set("t", taskToken);
   if (subToken) url.searchParams.set("s", subToken);
   location.href = url.toString();
 }
 
 function redirectToHub() {
-  const hubPage = taskToken ? "/polls-hub/" : "/subscriptions/";
-  const url = new URL(hubPage, location.href);
-  if (taskToken) url.searchParams.set("t", taskToken);
+  const url = new URL("/subscriptions/", location.href);
+  if (taskToken) {
+    url.searchParams.set("tab", "tasks");
+    url.searchParams.set("t", taskToken);
+  }
   if (subToken) url.searchParams.set("s", subToken);
   location.href = url.toString();
 }

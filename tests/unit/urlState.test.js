@@ -12,8 +12,7 @@ test("zakładki stron zapisują stan w URL i obsługują historię", () => {
     ["games/js/games.js", /searchParams\.set\("tab", type\)/, /addEventListener\("popstate"/],
     ["bases/js/bases.js", /searchParams\.set\("tab", activeTab\)/, /addEventListener\("popstate"/],
     ["settings/js/settings.js", /searchParams\.set\("tab", tab\)/, /addEventListener\("popstate"/],
-    ["polls-hub/js/polls-hub.js", /searchParams\.set\("tab", tab\)/, /addEventListener\("popstate"/],
-    ["subscriptions/js/subscriptions.js", /searchParams\.set\("tab", "subscriptions"\)/, /addEventListener\("popstate"/],
+    ["subscriptions/js/subscriptions.js", /searchParams\.set\("tab", activeTab\)/, /history\.replaceState/],
   ];
   for (const [file, writeUrl, history] of cases) {
     const source = read(file);
@@ -81,13 +80,6 @@ test("edytory logo to osobne strony z id w adresie, autozapisem i bez ✕", () =
   assert.match(page, /visibilitychange/);
   assert.doesNotMatch(page, /beforeunload|confirmModal|pushState/);
   assert.doesNotMatch(read("shared/js/core/topbar-controller.js"), /topbar-no-menu/);
-});
-
-test("Polls Hub obsługuje aktualną odpowiedź kolejki send-mail", () => {
-  const source = read("polls-hub/js/polls-hub.js");
-  assert.match(source, /Number\(payload\.queued\)/);
-  assert.match(source, /queued !== items\.length/);
-  assert.match(source, /results: items\.map\(\(item\) => \(\{ to: item\.to, ok: true, queued: true \}\)\)/);
 });
 
 test("cleanup E2E usuwa limity mailowe wyłącznie pomiędzy kontami testowymi", () => {

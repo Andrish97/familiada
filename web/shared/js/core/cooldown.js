@@ -105,7 +105,7 @@ export async function cooldownEmailRelease(email, actionKey, maxAgeSeconds = 60)
  * mail_cooldowns, migracja 288) -- w odróżnieniu od cooldownGet/Reserve
  * powyżej, czas trwania NIE jest parametrem wywołania, czyta go samo RPC
  * z tabeli "wymiarów" w bazie. target_key koduje własną granularność
- * (patrz konkretne wywołujące: bases.js/polls-hub.js/subscriptions.js/
+ * (patrz konkretne wywołujące: bases.js/subscriptions.js/
  * control/js/shareDevice.js) -- ten moduł nie zgaduje jej formatu.
  */
 export async function mailCooldownCheck(actionKey, targetKey) {
@@ -169,7 +169,7 @@ export async function mailCooldownEmailReserve(actionKey, email) {
 /**
  * Jeden wspólny formater czasu pozostałego -- zastępuje 4 zdublowane,
  * rozjechane wersje (account.js's formatRemaining M:SS, bases.js's martwe
- * msLeftLabel Xh Ym, subscriptions.js's dwie, polls-hub.js's hoursLeftFrom
+ * msLeftLabel Xh Ym, subscriptions.js (cooldownTextFromUntil)
  * zaokrąglające do pełnych godzin). Dobiera format wg rozmiaru: <1h ->
  * M:SS (krótkie cooldowny auth:*), <24h -> "Xh Ym", inaczej -> "Xd Yh".
  */
@@ -229,7 +229,7 @@ export function createCooldownTicker() {
         else if (!el.dataset.locked) el.disabled = false;
       });
       // Dla potrzeb poza textContent/disabled (np. atrybut title) --
-      // polls-hub.js/subscriptions.js's przyciski resend pokazują czas w
+      // subscriptions.js's przyciski resend pokazują czas w
       // tooltipie, nie w osobnym elemencie tekstowym.
       if (onTick) onTick(rem, active);
     }
@@ -247,7 +247,7 @@ export function createCooldownTicker() {
     bind({ key, labelEl, disableEls, formatText, onTick }) {
       bindings.push({ key, labelEl, disableEls, formatText, onTick });
     },
-    // Dla list przebudowywanych w kółko (polls-hub.js/subscriptions.js) --
+    // Dla list przebudowywanych w kółko (subscriptions.js) --
     // czyści stare wiązania (DOM i tak już zniknął przy re-renderze) przed
     // ponownym bind() dla nowo wyrenderowanych wierszy, inaczej tablica
     // rośnie bez końca i "tick" bije też stare, odłączone elementy.

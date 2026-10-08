@@ -92,7 +92,7 @@ async function createSubToken(page) {
 
     // poll_subscriptions ma RLS bez INSERT policy dla klientów — jedyna
     // droga stworzenia zaproszenia to RPC polls_hub_subscription_invite,
-    // tak samo jak robi to prawdziwy UI (polls-hub.js).
+    // tak samo jak robi to prawdziwy UI (subscriptions.js).
     const { data, error } = await sb.rpc("polls_hub_subscription_invite", {
       p_recipient: `e2e-subscriber-${Date.now()}@example.com`,
     });

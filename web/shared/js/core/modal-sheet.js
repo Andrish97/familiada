@@ -71,7 +71,7 @@ export function enterModalSheet(overlayEl, { backBtn, onClose, keepBackBtnText =
 
   // Wymuszone main.wrap{overflow:hidden;height:calc(100dvh - topbar-h)} w
   // trybie sheet (css/base.css) nagle kurczy przewijalny obszar strony (np.
-  // marketplace.html/polls-hub.html mają scroll na całym body) — przeglądarka
+  // marketplace.html mają scroll na całym body) — przeglądarka
   // wtedy sama przycina window.scrollY do nowego, mniejszego zakresu, więc
   // pozycja scrolla jest tracona NA ZAWSZE, jeszcze zanim modal się zamknie.
   // Zapamiętujemy ją tutaj i przywracamy w exitModalSheet(), żeby strona po
