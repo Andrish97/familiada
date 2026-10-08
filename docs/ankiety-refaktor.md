@@ -335,7 +335,7 @@ usunięta”.
 | Krok | Zakres | Stan |
 |---|---|---|
 | E11a | Luka: uruchom / zamknij tylko właściciel (migracja 309, nakładki na oryginały) | na `main` 2026-10-08 |
-| E11b | Baza: nowy klucz przy każdym uruchomieniu; „Przerwij” (do szkicu, bez przeliczania); zamknięcie bez warunku czekających zaproszeń; zaproszenia 3 stany (usunięcie udostępnienia = usunięcie zaproszenia i głosu); zaproszenie ważne tylko z bieżącym kluczem; przypomnienie; limity maili wg `maile-granice.md`; usunięcie subskrybenta wycofuje zaproszenia; właściciel + blokada `game:G` w akcjach | — |
+| E11b | **migracja 310 na `main` 2026-10-08** (zgodna wstecz; lokalnie sprawdzona). Baza: nowy klucz przy każdym uruchomieniu; „Przerwij” (do szkicu, bez przeliczania); zamknięcie bez warunku czekających zaproszeń; zaproszenia 3 stany (usunięcie udostępnienia = usunięcie zaproszenia i głosu); zaproszenie ważne tylko z bieżącym kluczem; przypomnienie; limity maili wg `maile-granice.md`; usunięcie subskrybenta wycofuje zaproszenia; właściciel + blokada `game:G` w akcjach | — |
 | E11c | Strona ankiety: pasek stanu, karty Udostępnianie · Wyniki, kafle subskrybentów (dzwonek, kosz), wyniki na żywo bez skakania | — |
 | E11d | Subskrypcje: karty Moi subskrybenci · Moje subskrypcje · Zadania, kafel „+” z oknem; hub usunięty; badge i linki z maila na Subskrypcje → Zadania | — |
 | E11e | Strony głosowania, `poll-go`, ekran QR: komunikaty „zamknięta / wygasł / wycofane / usunięta”, QR śledzi stan, kod urządzenia wygasa | — |
