@@ -96,9 +96,9 @@ test("control2: TV odrzuca inne urządzenia, kod display otwiera nowy Wyświetla
     await expect(tv.locator("#fsBtn")).toBeVisible();
     // The new Display remains directly accessible; its sound prompt works with TV OK.
     await tv.goto(`https://www.familiada.online/display/?id=${game.id}&key=${game.share_key_display}`);
-    // Przycisk jest widoczny od początku i czeka na kliknięcie, niezależnie
-    // od tego, czy panel zdążył już wybrać źródło dźwięku.
-    await expect(tv.locator("#audioUnlockScreen")).toBeVisible({ timeout: 15000 });
+    // Przy domyślnym źródle Control ekran odblokowania dźwięku na Display
+    // pozostaje ukryty; pojawia się dopiero po wybraniu Display jako źródła.
+    await expect(tv.locator("#audioUnlockScreen")).toBeHidden({ timeout: 15000 });
     await page.goto(`/control?id=${game.id}`);
     await expect(page.locator(".stepTitle")).toHaveText("Urządzenia", { timeout: 15000 });
     await page.locator('.toggle-item:has(input[name="soundSource"][value="display"])').click();
@@ -1893,8 +1893,8 @@ test("control2: dźwięk ze źródła Wyświetlacz — odblokowanie, głośnoś�
     await expect(page.locator(".stepTitle")).toHaveText("Urządzenia", { timeout: 15000 });
     await expect(page.locator("#dotDisplay")).toHaveClass(/\bok\b/, { timeout: 15000 });
 
-    // Przycisk Display pozostaje widoczny do jawnego kliknięcia.
-    await expect(displayPage.locator("#audioUnlockScreen")).toBeVisible();
+    // Domyślnym źródłem jest Control, więc Display nie prosi o odblokowanie.
+    await expect(displayPage.locator("#audioUnlockScreen")).toBeHidden();
 
     // Przełącznik dwustanowy (.toggle-group, jak "Losowo"/"Wybierz" w
     // ustawieniach gry) — widoczny tekst opcji to CSS content:attr(data-text)

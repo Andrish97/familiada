@@ -45,15 +45,11 @@
   </div>
   <div id="blackScreen" class="black-screen"></div>
 
-  <!-- Zgłoszone: gdy dźwięk gra z Wyświetlacza (settings.soundSource==="display"),
-       przeglądarki wymagają gestu użytkownika, zanim odtwarzanie w ogóle
-       zadziała (nikt normalnie nie dotyka ekranu w trakcie gry) — ten ekran
-       jest tym gestem, na wierzchu WSZYSTKIEGO (nad #qrScreen/#blackScreen/
-       #gameScreen), dopóki display/js/main.js's isAudioUnlocked() nie
-       zwróci true. Domyślnie ukryty (hidden w display/js/main.js's
-       syncAudioUnlockScreen() decyduje, kiedy pokazać) — nigdy nie istnieje
-       w starym display.html, więc ta sama, współdzielona display/styles.css
-       jest dla niego bezpieczna (selektor po ID, nic tam nie trafia). -->
+  <!-- Gdy źródłem dźwięku jest Wyświetlacz (settings.soundSource="display"),
+       przeglądarka może wymagać gestu użytkownika przed odtwarzaniem. Ekran
+       odblokowania jest wtedy nad #qrScreen/#blackScreen/#gameScreen i znika
+       po kliknięciu. Przy źródle Control pozostaje ukryty. Nie istnieje w
+       starym display.html; współdzielone display/styles.css celuje w ID. -->
   <div id="audioUnlockScreen" class="audio-unlock-screen hidden" aria-hidden="true">
     <button id="btnAudioUnlock" class="audio-unlock-btn" type="button" data-i18n="display.audioUnlockBtn" data-i18n-icon="speaker-on">Odblokuj dźwięk</button>
   </div>

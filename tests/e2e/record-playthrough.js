@@ -496,8 +496,8 @@ async function hostPeekSwipe(hostPage) {
 //   ADMIN_PACE_MS — jawnie podane tam, gdzie NIC się nie ogłasza: kroki
 //     kreatora urządzeń ("Dalej", "Gotowe — przejdź do rozgrywki",
 //     "Rozpocznij grę"), otwarcie/zapis modala ustawień gry.
-const REVEAL_PACE_MS = 3400;
-const ADMIN_PACE_MS = 900;
+const REVEAL_PACE_MS = 4500;
+const ADMIN_PACE_MS = 1400;
 const WRITE_RPC_RE = /\/rpc\/(game_state_write|game_state_buzzer_press)(\?|$)/;
 
 function waitForWrite(page) {
@@ -563,10 +563,10 @@ async function pressBuzzerPaced(buzzerPage, label, ms = REVEAL_PACE_MS) {
 async function armAndConfirmPaced(locator, ms = REVEAL_PACE_MS) {
   const page = locator.page();
   const mappingChoice = await locator.evaluate((el) => !!document.querySelector(".c2-mapinput") && /^(?:[1-6]|w|o|r)$/.test(el.dataset.shortcut || ""));
-  if (mappingChoice) return clickPaced(locator, 500);
+  if (mappingChoice) return clickPaced(locator, 1200);
   const accept = await locator.evaluate(el => el.dataset.shortcut === "c");
   await locator.click();
-  await page.waitForTimeout(accept ? 250 : 700); // widz ma zdążyć zobaczyć złotą obwódkę "uzbrojenia" przed potwierdzeniem (proporcjonalnie do REVEAL_PACE_MS)
+  await page.waitForTimeout(accept ? 600 : 1000); // zostaw wyraźną chwilę na zobaczenie uzbrojenia przed potwierdzeniem
   await clickPaced(locator, accept ? 250 : ms);
 }
 
@@ -609,7 +609,7 @@ async function fillPaced(locator, text, ms = REVEAL_PACE_MS) {
 // nazwach klawiszy, nie na dowolnym Unicode) — wywoływane dopiero PO
 // ustawieniu focusu/kursora przez press("End"), więc trafia we właściwe,
 // aktualne miejsce.
-async function typePaced(locator, text, msPerChar = 90) {
+async function typePaced(locator, text, msPerChar = 180) {
   const page = locator.page();
   for (const ch of text) {
     const responded = waitForWrite(page);
@@ -795,7 +795,7 @@ async function scenarioRoundsMechanics(pages, { contexts }) {
   //
   // DRUGI real bug znaleziony przez failed nagranie (przebieg z 2026-09-25,
   // zrzut ekranu FAILURE.png): zamiast czekać na REALNE potwierdzenie
-  // zapisu, kod czekał tu na stały ADMIN_PACE_MS (900ms, obniżone w tej
+  // zapisu, kod czekał tu na stały ADMIN_PACE_MS (wcześniej 900ms, obniżone w tej
   // sesji z 2200ms) i OD RAZU klikał w tło, żeby zamknąć modal. Jeśli
   // prawdziwy zapis (saveAll(), sieć) trwał dłużej niż ten stały czas --
   // co w CI się zdarza -- klik w tło trafiał, gdy js/pages/game-settings.js's
@@ -1594,6 +1594,7 @@ async function scenarioRecentFixes(pages, { contexts, browser, game }) {
   let { control, display } = pages;
   await expect(control.locator(".stepTitle")).toHaveText("Urządzenia");
   for (const kind of ["display", "host", "buzzer"]) await waitForDotStatus(control, kind, "ok");
+  await expect(display.locator("#audioUnlockScreen")).toBeHidden();
   await expect(control.locator("#deviceLostOverlay")).toBeHidden();
   await control.waitForTimeout(1200); // lista mieści się na ekranie, a podpowiedź zostaje przypięta
   await control.locator("#dotHostRow").click();

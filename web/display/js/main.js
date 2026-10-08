@@ -263,11 +263,16 @@ window.addEventListener("DOMContentLoaded", async () => {
     const btnAudioUnlock = $("btnAudioUnlock");
     let audioUnlockReported = false;
     let audioUnlockRequestNonce = null;
-    function syncAudioUnlockScreen() {
+    let displaySoundSelected = false;
+    function syncAudioUnlockScreen(row = null) {
       if (!audioUnlockScreen) return;
-      // Pokaż przycisk na Wyświetlaczu od początku i zostaw go do kliknięcia,
-      // niezależnie od wybranego źródła dźwięku w Panelu sterowania.
-      const visible = !audioUnlockReported;
+      const soundSource = row?.detail?.settings?.soundSource;
+      if (soundSource === "display" || soundSource === "control") {
+        displaySoundSelected = soundSource === "display";
+      }
+      // Odblokowanie przeglądarki jest potrzebne tylko wtedy, gdy dźwięk ma
+      // grać z tego urządzenia. Nie zasłaniaj Display, gdy gra dźwięk z Control.
+      const visible = displaySoundSelected && !audioUnlockReported;
       const wasHidden = audioUnlockScreen.classList.contains("hidden");
       audioUnlockScreen.classList.toggle("hidden", !visible);
       audioUnlockScreen.setAttribute("aria-hidden", String(!visible));
