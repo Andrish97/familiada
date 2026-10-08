@@ -839,11 +839,17 @@ export function createUI({ root, emit }) {
       tiles.push(tile(t("control.roundsBuzzRetry"), { row: 3, col: "1 / 7", disabled: boardBusy(), onclick: () => emit("game.dispatch", { type: "RETRY_DUEL" }) }));
     }
 
-    const body = [h("div", { class: "c2-roundlayout" }, [
-      h("div", { class: "c2-roundlayout-main" }, [tileGrid(tiles)]),
-      h("div", { class: "c2-roundlayout-divider" }),
-      h("div", { class: "c2-roundlayout-side" }, [hintBlock(getRoundsHint(state))]),
-    ])];
+    const body = [
+      // Utrzymujemy taki sam obszar nagłówka jak w rundach i finale, mimo że
+      // pojedynek nie pokazuje pytania. Bez tego wspólna siatka zaczynała się
+      // wyżej i kafle zmieniały rozmiar przy przejściu między krokami.
+      h("div", { class: "c2-question c2-question-spacer", "aria-hidden": "true" }),
+      h("div", { class: "c2-roundlayout" }, [
+        h("div", { class: "c2-roundlayout-main" }, [tileGrid(tiles)]),
+        h("div", { class: "c2-roundlayout-divider" }),
+        h("div", { class: "c2-roundlayout-side" }, [hintBlock(getRoundsHint(state))]),
+      ]),
+    ];
 
     gameplayShell({ stepLabel: t("control.stepDuelTitle", { round: r.roundNo }), body, nav: null });
   }
