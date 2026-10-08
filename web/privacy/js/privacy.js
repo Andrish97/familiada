@@ -4,11 +4,11 @@
 // - jeśli user zalogowany -> pokazuj username + Wyloguj
 // - jeśli niezalogowany -> ukryj username + Wyloguj, a Wstecz wraca do /
 
-import { initI18n, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-08T19501";
-import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-08T19501";
-import { initTopbarAccountDropdown } from "../../shared/js/core/topbar-controller.js?v=v2026-10-08T19501";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-08T19501";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-08T19501";
+import { initI18n, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-08T19512";
+import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-08T19512";
+import { initTopbarAccountDropdown } from "../../shared/js/core/topbar-controller.js?v=v2026-10-08T19512";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-08T19512";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-08T19512";
 
 function byId(id) { return document.getElementById(id); }
 
