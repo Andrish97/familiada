@@ -9,6 +9,7 @@ CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql AS
 GRANT USAGE ON SCHEMA auth TO authenticated;
 GRANT EXECUTE ON FUNCTION auth.uid() TO authenticated;
 CREATE TABLE public.games(id uuid PRIMARY KEY,owner_id uuid,share_key_display text);
+GRANT SELECT ON public.games TO authenticated;
 INSERT INTO games VALUES(
   '00000000-0000-0000-0000-000000000001',
   '00000000-0000-0000-0000-000000000002',
