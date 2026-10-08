@@ -1,6 +1,7 @@
 // js/core/game-validate.js
 import { sb } from "./supabase.js?v=v2026-10-08T09233";
-import { t } from "../../translation/translation.js?v=v2026-10-08T09233";
+import { t, withLangParam } from "../../translation/translation.js?v=v2026-10-08T09233";
+import { showBlockingOverlay } from "./resource-lock.js?v=v2026-10-08T09233";
 
 /**
  * Typy gier:
@@ -125,3 +126,30 @@ export function gameRuleErrorMessage(err) {
   if (close) return t(`gameValidate.${close[1]}`, { ord: close[2] || "?" });
   return "";
 }
+
+/**
+ * Blokada stanu strony gry (docs/blokady-zasobow.md, „Blokady stanu i akcji”):
+ * strona, której stan gry nie pozwala na pracę, blokuje się w całości tym
+ * samym pełnoekranowym komunikatem co zajęty zasób — także przy wejściu
+ * ręcznie wpisanym adresem. Wywoływać PO wzięciu blokady zasobu.
+ * @param {string} gameId
+ * @param {"edit"|"play"|"poll_entry"} action
+ * @returns {Promise<object|null>} wynik akcji (ok) albo null (strona zablokowana)
+ */
+export async function guardGameState(gameId, action, { backHref = "/games/" } = {}) {
+  let res = null;
+  try {
+    res = (await validateGame(gameId))[action];
+  } catch (e) {
+    console.error("[game-validate] guardGameState:", e);
+    res = { ok: false, reason: t("gameValidate.noGame") };
+  }
+  if (res?.ok) return res;
+  showBlockingOverlay({
+    title: t("gameValidate.stateBlockedTitle"),
+    message: res?.reason || t("gameValidate.noGame"),
+    backHref: withLangParam(backHref),
+  });
+  return null;
+}
+

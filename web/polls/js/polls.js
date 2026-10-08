@@ -6,7 +6,7 @@ import QRCode from "https://cdn.jsdelivr.net/npm/qrcode@1.5.3/+esm";
 import { initI18n, t, withLangParam, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-08T09233";
 import { initTopbarAccountDropdown } from "../../shared/js/core/topbar-controller.js?v=v2026-10-08T09233";
 import { guardResourceLock } from "../../shared/js/core/resource-lock.js?v=v2026-10-08T09233";
-import { validateGame, gameRuleErrorMessage } from "../../shared/js/core/game-validate.js?v=v2026-10-08T09233";
+import { validateGame, gameRuleErrorMessage, guardGameState } from "../../shared/js/core/game-validate.js?v=v2026-10-08T09233";
 import { mailCooldownCheck } from "../../shared/js/core/cooldown.js?v=v2026-10-08T09233";
 import { sendPollInviteMails } from "../../shared/js/core/poll-mail.js?v=v2026-10-08T09233";
 import "../../shared/js/core/contact-modal.js?v=v2026-10-08T09233";
@@ -1642,6 +1642,8 @@ document.addEventListener("DOMContentLoaded", async () => {
       backHref: backTarget,
     });
     if (!lock.ok) return;
+    // Blokada stanu: strona ankiety tylko dla gry, która może mieć ankietę.
+    if (!(await guardGameState(gameId, "poll_entry", { backHref: backTarget }))) return;
   }
 
   await refresh();

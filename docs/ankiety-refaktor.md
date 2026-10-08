@@ -340,7 +340,7 @@ usunięta”.
 | E11d | **na `main` 2026-10-08** (z filtrem i sortowaniem) — Subskrypcje: karty Moi subskrybenci · Moje subskrypcje · Zadania, kafel „+” z oknem; hub usunięty; badge i linki z maila na Subskrypcje → Zadania | — |
 | E11e | Strony głosowania, `poll-go`, ekran QR: komunikaty „zamknięta / wygasł / wycofane / usunięta”, QR śledzi stan, kod urządzenia wygasa | — |
 | E11f | Podgląd na liście gier: przełącznik Gra · Ankieta z wynikami | — |
-| E11g | Blokady stanu: pełna blokada strony gry przy niedozwolonym stanie (edytor, ustawienia, ankieta, Control), edytor bierze blokadę przed resetem | — |
+| E11g | **na branchu 2026-10-08** — Blokady stanu: pełna blokada strony gry przy niedozwolonym stanie (edytor, ustawienia, ankieta, Control), edytor bierze blokadę przed resetem | — |
 | E11h | Migracja usuwająca: nieużywane RPC huba i stare funkcje (po potwierdzeniu testami) | — |
 
 ## 5. Wpływ na inne plany

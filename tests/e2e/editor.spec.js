@@ -478,7 +478,7 @@ test("edytor: nie ma twardego limitu liczby pytań — dodanie wielu ponad minim
 });
 
 /* ================= M: wejście do edytora gdy ankieta poll_open -> blokada ================= */
-test("edytor: wejście na edytor gdy ankieta jest otwarta (poll_open) -> natychmiastowy redirect, brak dostępu", async ({ page, context }) => {
+test("edytor: wejście na edytor gdy ankieta jest otwarta (poll_open) -> pełna blokada strony, brak dostępu", async ({ page, context }) => {
   test.setTimeout(60_000);
   await loginAsTestUser(page, context);
 
@@ -493,11 +493,12 @@ test("edytor: wejście na edytor gdy ankieta jest otwarta (poll_open) -> natychm
     }, { gameId, key: game.share_key_poll });
 
     await page.goto(`https://www.familiada.online/editor?id=${gameId}`, { waitUntil: "domcontentloaded" });
-    // powód z game_validate zostaje na ekranie do kliknięcia OK (audyt:
-    // wcześniej przekierowanie szło od razu i komunikat znikał nieprzeczytany)
-    await expect(page.locator(".uni-modal .mSub")).toContainText(/ankiet/i, { timeout: 15000 });
+    // Blokada stanu (docs/blokady-zasobow.md): pełnoekranowa blokada z powodem
+    // z game_validate, strona zostaje na miejscu, wyjście tylko do listy gier.
+    await expect(page.locator("#resourceLockGuard")).toBeVisible({ timeout: 15000 });
+    await expect(page.locator("#resourceLockGuardMsg")).toContainText(/ankiet/i);
     await expect(page).toHaveURL(/\/editor/);
-    await page.locator(".uni-foot .btn.gold").click();
+    await page.locator("#resourceLockGuardBack").click();
     await page.waitForURL(/\/games/, { timeout: 15000 });
   } finally {
     await deleteGame(page, gameId);

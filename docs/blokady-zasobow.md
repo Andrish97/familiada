@@ -225,9 +225,11 @@ otwartej ankiecie; Control nie gra gry, która nie jest gotowa. Zasada:
   miejsca), strona przy najbliższym odnowieniu / zapisie przechodzi
   w tę samą pełną blokadę.
 
-Dziś edytor przy niedozwolonym stanie od razu przenosi z komunikatem
-(`editor.js:330`); do ujednolicenia z blokadą zasobu (ten sam overlay)
-na wszystkich stronach gry: edytor, ustawienia, ankieta, Control.
+**Wdrożone 2026-10-08 (E11g):** `guardGameState(gameId, akcja)`
+(`shared/js/core/game-validate.js`) po blokadzie zasobu — edytor
+(`edit`, reset zamkniętej ankiety już z blokadą), ustawienia gry i Control
+(`play`, wcześniej w ogóle nie sprawdzały), strona ankiety (`poll_entry`).
+Ten sam overlay co przy zajętym zasobie, wyjście do listy gier.
 
 ### Zgodność zasobów (reguła w bazie, jedna dla wszystkich)
 

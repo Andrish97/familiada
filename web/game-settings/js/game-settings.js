@@ -7,7 +7,7 @@ import { requireAuth } from "../../shared/js/core/auth.js?v=v2026-10-08T09233";
 import { t, getUiLang, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-08T09233";
 import { setTopbarAccount } from "../../shared/js/core/topbar-controller.js?v=v2026-10-08T09233";
 import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-08T09233";
-import { loadQuestions } from "../../shared/js/core/game-validate.js?v=v2026-10-08T09233";
+import { loadQuestions, guardGameState } from "../../shared/js/core/game-validate.js?v=v2026-10-08T09233";
 import { loadFont5x7, buildLogoPreviewCanvas } from "../../shared/js/core/logo-preview.js?v=v2026-10-08T09233";
 import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-08T09233";
 import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-08T09233";
@@ -1699,6 +1699,12 @@ async function main() {
     backHref: "/games/",
   });
   if (!lock.ok) {
+    if (_isModal) window.parent.postMessage({ type: "gs:ready" }, "*");
+    return;
+  }
+
+  // Blokada stanu: ustawienia rozgrywki tylko dla gry, którą da się grać.
+  if (!(await guardGameState(gameId, "play"))) {
     if (_isModal) window.parent.postMessage({ type: "gs:ready" }, "*");
     return;
   }

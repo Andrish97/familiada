@@ -2540,6 +2540,7 @@ const uk = {
     },
   },
   gameValidate: {
+    stateBlockedTitle: "Недоступно в цьому стані гри",
     lockedTitle: "Редагування заблоковано",
     noGame: "Гру не знайдено.",
     pollOpenNoEdit: "Опитування відкрите — редагування заблоковано.",

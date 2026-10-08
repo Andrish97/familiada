@@ -13,7 +13,7 @@ import { initI18n, getUiLang, t, withLangParam } from "../../shared/translation/
 import { requireAuth } from "../../shared/js/core/auth.js?v=v2026-10-08T09233";
 import { setTopbarAccount } from "../../shared/js/core/topbar-controller.js?v=v2026-10-08T09233";
 import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-08T09233";
-import { loadQuestions, loadAnswers } from "../../shared/js/core/game-validate.js?v=v2026-10-08T09233";
+import { loadQuestions, loadAnswers, guardGameState } from "../../shared/js/core/game-validate.js?v=v2026-10-08T09233";
 import { loadSfxManifest, initSfx, setCurrentGameId, unlockAudio, applySfxGameSettings, loadSfxFromCloud, playSfx, getSfxDurationAccurate as getSfxDuration, listSfx, isAnySfxPlaying } from "../../shared/js/core/sfx.js?v=v2026-10-08T09233";
 import { listGameSounds } from "../../shared/js/core/sfx-cloud.js?v=v2026-10-08T09233";
 import { assertTransition } from "../../shared/js/gameplay/gameStateMachine.js?v=v2026-10-08T09233";
@@ -203,6 +203,10 @@ async function main() {
     backHref: "/games/",
   });
   if (!lock.ok) return;
+
+  // Blokada stanu: gra, która nie nadaje się do rozgrywki (np. ankieta
+  // otwarta, za mało pytań), blokuje Control w całości.
+  if (!(await guardGameState(gameId, "play"))) return;
 
   // "Logo ↔ Control" (docs/plan-testy-i-poprawki.md, sekcja "Krzyżowe
   // blokady między zasobami" — druga połowa pary "Logo ↔ trwająca

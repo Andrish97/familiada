@@ -7,7 +7,7 @@ import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-08T09233";
 import { requireAuth } from "../../shared/js/core/auth.js?v=v2026-10-08T09233";
 import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-08T09233";
 import { parseQaText } from "../../shared/js/core/text-import.js?v=v2026-10-08T09233";
-import { validateGame, gameRuleErrorMessage, RULES as GV_RULES, TYPES } from "../../shared/js/core/game-validate.js?v=v2026-10-08T09233";
+import { validateGame, gameRuleErrorMessage, guardGameState, RULES as GV_RULES, TYPES } from "../../shared/js/core/game-validate.js?v=v2026-10-08T09233";
 import {
   LIMITS, normQuestionText, normAnswerText, parsePoints,
   wireTextLimit, wirePointsInput, sumPoints, renderSumPill, questionProblems,
@@ -320,14 +320,25 @@ async function boot() {
   let game = await loadGame(gameId);
   if (!game) return leaveTo(MSG.gameNotFound());
 
-  // czy wolno edytować (i czy trzeba zresetować zamkniętą ankietę) -- baza
-  let editInfo = null;
-  try {
-    editInfo = (await validateGame(gameId)).edit;
-  } catch (e) {
-    console.error("[editor] game_validate error:", e);
-  }
-  if (!editInfo?.ok) return leaveTo(editInfo?.reason || MSG.cannotEdit());
+  // resourceType: "game" — wspólny klucz z game-settings.js (i docelowo
+  // polls.js/control): edytor i ustawienia operują na tych samych,
+  // powiązanych danych (pytania ↔ wybór finału/rund), więc wzajemnie się
+  // wykluczają dla tej samej gry, nie tylko w obrębie tej samej strony.
+  const lock = await guardResourceLock({
+    resourceType: "game",
+    resourceId: gameId,
+    context: "editor",
+    message: t("resourceLock.gameMessage"),
+    backHref: withLangParam("/games/"),
+  });
+  if (!lock.ok) return;
+
+  // Czy wolno edytować (i czy trzeba zresetować zamkniętą ankietę) — baza.
+  // Najpierw blokada zasobu, potem stan (reset zamkniętej ankiety tylko
+  // z wziętą blokadą gry). Niedozwolony stan (np. otwarta ankieta) blokuje
+  // stronę w całości — także przy wejściu wpisanym adresem.
+  const editInfo = await guardGameState(gameId, "edit");
+  if (!editInfo) return;
 
   if (editInfo.needsReset) {
     const ok = await confirmModal({ text: MSG.resetPollConfirm() });
@@ -341,19 +352,6 @@ async function boot() {
     }
     if (!game) return leaveTo(MSG.gameNotFound());
   }
-
-  // resourceType: "game" — wspólny klucz z game-settings.js (i docelowo
-  // polls.js/control): edytor i ustawienia operują na tych samych,
-  // powiązanych danych (pytania ↔ wybór finału/rund), więc wzajemnie się
-  // wykluczają dla tej samej gry, nie tylko w obrębie tej samej strony.
-  const lock = await guardResourceLock({
-    resourceType: "game",
-    resourceId: gameId,
-    context: "editor",
-    message: t("resourceLock.gameMessage"),
-    backHref: withLangParam("/games/"),
-  });
-  if (!lock.ok) return;
 
   let cfg = cfgFromGameType(game.type);
 

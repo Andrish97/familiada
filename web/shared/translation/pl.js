@@ -2441,6 +2441,7 @@ const pl = {
     },
   },
   gameValidate: {
+    stateBlockedTitle: "Niedostępne w tym stanie gry",
     lockedTitle: "Edycja zablokowana",
     noGame: "Brak gry.",
     pollOpenNoEdit: "Ankieta jest otwarta — edycja zablokowana.",

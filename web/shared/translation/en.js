@@ -2553,6 +2553,7 @@ const en = {
     },
   },
   gameValidate: {
+    stateBlockedTitle: "Not available in this game state",
     lockedTitle: "Editing locked",
     noGame: "Game not found.",
     pollOpenNoEdit: "The poll is open — editing is locked.",
