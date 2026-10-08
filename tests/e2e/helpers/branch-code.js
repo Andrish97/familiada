@@ -33,12 +33,16 @@ function localFileFor(pathname, pages) {
   if (pages.includes(page)) return path.join(REPO_ROOT, `${page}/index.html`);
   // Trasy typu /marketplace/game/<slug> są obsługiwane przez tę samą stronę
   // SPA. Bez tego deep-link w teście brał HTML produkcyjny zamiast z brancha.
+  // Najpierw prawdziwy plik z repo (np. /subscriptions/js/subscriptions.js):
+  // bez tego reguła trasy SPA niżej oddawała HTML strony zamiast skryptu
+  // strony leżącego w jej folderze („Failed to load module script”).
+  if (CODE_DIRS.some((d) => rel.startsWith(d))) {
+    const abs = path.join(REPO_ROOT, rel);
+    if (abs.startsWith(REPO_ROOT + path.sep) && fs.existsSync(abs) && fs.statSync(abs).isFile()) return abs;
+  }
   const routedPage = pages.find((name) => rel.startsWith(`${name}/`));
   if (routedPage) return path.join(REPO_ROOT, `${routedPage}/index.html`);
-  if (!CODE_DIRS.some((d) => rel.startsWith(d))) return null;
-  const abs = path.join(REPO_ROOT, rel);
-  if (!abs.startsWith(REPO_ROOT + path.sep)) return null;
-  return fs.existsSync(abs) && fs.statSync(abs).isFile() ? abs : null;
+  return null;
 }
 
 /**
