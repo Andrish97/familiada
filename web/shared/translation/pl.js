@@ -761,7 +761,6 @@ const pl = {
   polls: {
     title: "Familiada — ankieta i wyniki",
     backToGames: "Moje gry",
-    backToHub: "Centrum ankiet",
     logout: "Wyloguj",
     pageTitle: "Ankieta",
     tabs: {

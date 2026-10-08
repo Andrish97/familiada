@@ -1467,7 +1467,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   document.querySelector('.topbar')?.classList.add('topbar-ready');
 
   if (btnBack) {
-    btnBack.innerHTML = iconText("arrow-left", getRetPathnameLower().endsWith("/polls-hub/") ? t("polls.backToHub") : t("polls.backToGames"));
+    btnBack.innerHTML = iconText("arrow-left", t("polls.backToGames"));
   }
 
   btnManual?.addEventListener("click", () => {

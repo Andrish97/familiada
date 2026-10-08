@@ -750,7 +750,6 @@ const uk = {
   polls: {
     title: "Familiada — опитування та результати",
     backToGames: "Мої ігри",
-    backToHub: "Центр опитувань",
     logout: "Вийти",
     pageTitle: "Опитування",
     tabs: {

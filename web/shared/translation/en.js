@@ -755,7 +755,6 @@ const en = {
   polls: {
     title: "Familiada — poll and results",
     backToGames: "My games",
-    backToHub: "Polls hub",
     logout: "Log out",
     pageTitle: "Poll",
     tabs: {

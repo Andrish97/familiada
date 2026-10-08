@@ -26,3 +26,4 @@ node_modules/
 # Playwright artifacts (screenshots/videos/recorded playthroughs) — CI-only
 tests/test-results/
 tests/recordings/
+.claude/worktrees/
