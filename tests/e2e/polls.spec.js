@@ -33,6 +33,14 @@
 
 const { test, expect } = require("@playwright/test");
 const { loginAsTestUser, instrumentPage } = require("./helpers/login");
+const { serveBranchCode } = require("./helpers/branch-code");
+
+// Strona ankiety (/polls/) i wspólny kod front-endu z brancha — nowa strona
+// (E11c) testowana przed wdrożeniem; baza i reszta stron z produkcji.
+test.use({ serviceWorkers: "block" });
+test.beforeEach(async ({ context }) => {
+  await serveBranchCode(context, { pages: ["polls"] });
+});
 
 const QN_COUNT = 10; // RULES.QN_MIN
 const TOTAL_VOTERS = 100;
