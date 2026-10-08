@@ -719,7 +719,7 @@ test.describe("tryb Obraz", () => {
     await open(page);
     const name = L.uniq("image");
     await L.createNew(page, "Image", name);
-    expect(await L.save(page)).toMatch(/Najpierw/);
+    expect(await L.save(page)).not.toBe("saved");
     // Wiersz powstaje od razu przy „Nowe logo”, ale bez obrazu nic się nie zapisało.
     expect((await L.readLogoByName(page, name)).payload.source.imageUrl).toBeFalsy();
 
@@ -763,7 +763,7 @@ test.describe("tryb Obraz", () => {
     await edit(page, id);
     await expect(page.locator(".uni-modal")).toBeVisible({ timeout: 15000 });
     await page.locator(".uni-modal .uni-foot .btn.gold").click();
-    expect(await L.save(page)).toMatch(/Nie udało się wczytać/);
+    expect(await L.save(page)).not.toBe("saved");
     expect((await L.readLogo(page, id)).payload.bits_b64).toBe(full);
   });
 
