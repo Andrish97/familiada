@@ -1,6 +1,10 @@
 {
   "tools": [
     {
+      "title": "Test usuwania tła logo",
+      "path": "/settings/tools/logo-background-lab/index.html"
+    },
+    {
       "title": "Edytor 5×7 (import/eksport)",
       "path": "/settings/tools/editor_5x7.html"
     },

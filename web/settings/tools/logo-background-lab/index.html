@@ -1,0 +1,498 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Test usuwania tła logo</title>
+  <style>
+    :root { color-scheme: dark; font: 15px/1.45 system-ui, sans-serif; background: #101116; color: #f8f4e8; }
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: clamp(14px, 3vw, 32px); }
+    main { width: min(1440px, 100%); margin: auto; }
+    h1 { margin: 0 0 5px; font-size: clamp(1.3rem, 3vw, 1.8rem); }
+    .intro { margin: 0 0 18px; color: #b9bbc6; }
+    .toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; padding: 12px; border: 1px solid #343641; border-radius: 12px; background: #191a20; }
+    button, .file-button { min-height: 42px; padding: 9px 14px; border: 1px solid #5d501b; border-radius: 9px; background: #ffcc00; color: #211a00; font: inherit; font-weight: 700; font-size: .92rem; cursor: pointer; }
+    button.secondary { border-color: #414451; background: #20222b; color: #f8f4e8; }
+    button:disabled { opacity: .48; cursor: default; }
+    input[type="file"] { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); }
+    .filename { overflow: hidden; color: #c9cad2; text-overflow: ellipsis; white-space: nowrap; }
+    select { min-height: 42px; max-width: 260px; padding: 8px 34px 8px 10px; border: 1px solid #414451; border-radius: 9px; background: #20222b; color: #f8f4e8; font: inherit; }
+    .controls { display: grid; grid-template-columns: 1.4fr 1fr 1fr 1.2fr; gap: 12px; margin: 12px 0; }
+    .control, .status { min-width: 0; padding: 12px; border: 1px solid #343641; border-radius: 10px; background: #191a20; }
+    label.control { display: grid; align-content: start; gap: 8px; color: #c9cad2; font-size: .9rem; }
+    .control output { color: #fff; font-variant-numeric: tabular-nums; }
+    input[type="range"] { width: 100%; accent-color: #ffcc00; }
+    .color-row { display: flex; gap: 10px; align-items: center; }
+    input[type="color"] { width: 48px; height: 38px; padding: 3px; border: 1px solid #414451; border-radius: 7px; background: #20222b; }
+    .status { display: grid; align-content: center; color: #c9cad2; font-size: .88rem; }
+    .status strong { color: #f8f4e8; }
+    .status.good { border-color: #35664a; }
+    .status.warn { border-color: #796020; }
+    .previews { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+    figure { min-width: 0; margin: 0; overflow: hidden; border: 1px solid #343641; border-radius: 12px; background: #191a20; }
+    figcaption { display: flex; justify-content: space-between; gap: 8px; padding: 10px 13px; color: #d1d2d9; }
+    .canvas-wrap { display: grid; min-height: 240px; aspect-ratio: 16 / 10; place-items: center; overflow: auto; }
+    canvas { display: block; width: 100%; height: 100%; object-fit: contain; }
+    #sourceCanvas { cursor: crosshair; }
+    .checkerboard { background-color: #eee; background-image: linear-gradient(45deg,#bbb 25%,transparent 25%),linear-gradient(-45deg,#bbb 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#bbb 75%),linear-gradient(-45deg,transparent 75%,#bbb 75%); background-size: 24px 24px; background-position: 0 0,0 12px,12px -12px,-12px 0; }
+    .hint { margin: 12px 0 0; color: #9fa1ac; font-size: .85rem; }
+    .method-description { min-height: 78px; margin: 0; padding: 9px 12px 4px; color: #b9bbc6; font-size: .8rem; }
+    .download-method { margin: 6px 12px 12px; }
+    @media (max-width: 1100px) { .controls { grid-template-columns: 1fr 1fr; } .previews { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 600px) { .controls, .previews { grid-template-columns: 1fr; } .canvas-wrap { min-height: 190px; } .method-description { min-height: auto; } }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Test usuwania tła logo</h1>
+    <p class="intro">Wczytaj obraz z jasnym, możliwie równym tłem. Narzędzie usuwa tło połączone z krawędziami i zachowuje kolory logo.</p>
+
+    <section class="toolbar" aria-label="Plik i eksport">
+      <label class="file-button" for="imageFile">Wybierz obraz</label>
+      <input id="imageFile" type="file" accept="image/png,image/jpeg,image/webp">
+      <select id="sampleSelect" aria-label="Przykładowy obraz">
+        <option value="white">Przykład: białe tło</option>
+        <option value="cream">Przykład: kremowe tło</option>
+        <option value="pattern">Przykład: złożone tło (niezalecane)</option>
+        <option value="dark">Przykład: ciemne tło (niezalecane)</option>
+        <option value="white-detail">Przykład: białe detale logo</option>
+      </select>
+      <button class="secondary" id="loadSample">Wczytaj przykład</button>
+      <span class="filename" id="filename">Nie wybrano obrazu</span>
+      <button class="secondary" id="reset" disabled>Przywróć auto</button>
+    </section>
+
+    <section class="controls" aria-label="Ustawienia usuwania tła">
+      <label class="control">Kolor tła
+        <span class="color-row"><input id="backgroundColor" type="color" value="#ffffff"><button class="secondary" id="sampleColor" disabled>Pobierz kolor z obrazu</button></span>
+      </label>
+      <label class="control">Tolerancja tła <output id="toleranceValue"></output>
+        <input id="tolerance" type="range" min="0" max="100" value="20" disabled>
+      </label>
+      <label class="control">Miękkość krawędzi <output id="reachValue"></output>
+        <input id="reach" type="range" min="0" max="220" value="130" disabled>
+      </label>
+      <div class="status" id="suitability"><strong>Wczytaj obraz</strong><span>Sprawdzę, czy tło nadaje się do usunięcia.</span></div>
+    </section>
+
+    <section class="previews" aria-label="Porównanie algorytmów">
+      <figure>
+        <figcaption><span>Oryginał</span><span id="dimensions">—</span></figcaption>
+        <div class="canvas-wrap"><canvas id="sourceCanvas" aria-label="Oryginalny obraz"></canvas></div>
+      </figure>
+      <figure>
+        <figcaption><span>Brzegowe · czysta krawędź</span><span id="edgeCleanStats">—</span></figcaption>
+        <div class="canvas-wrap checkerboard"><canvas id="edgeCleanCanvas" aria-label="Usuwanie tła połączonego z brzegiem z oczyszczoną obwódką"></canvas></div>
+        <p class="method-description">Usuwa kolor tła połączony z krawędzią obrazu i koryguje kolor półprzezroczystych pikseli. Zachowuje zamknięte jasne detale.</p>
+        <button class="download-method" data-canvas="edgeCleanCanvas" data-suffix="brzegowe">Pobierz PNG</button>
+      </figure>
+      <figure>
+        <figcaption><span>Globalne · czysta krawędź</span><span id="globalCleanStats">—</span></figcaption>
+        <div class="canvas-wrap checkerboard"><canvas id="globalCleanCanvas" aria-label="Globalne usuwanie koloru tła z oczyszczoną obwódką"></canvas></div>
+        <p class="method-description">Usuwa podobny kolor w całym obrazie. Może też usunąć jasne elementy logo o tym samym kolorze co tło.</p>
+        <button class="download-method" data-canvas="globalCleanCanvas" data-suffix="globalne">Pobierz PNG</button>
+      </figure>
+      <figure>
+        <figcaption><span>Brzegowe · bez korekty obwódki</span><span id="edgeRawStats">—</span></figcaption>
+        <div class="canvas-wrap checkerboard"><canvas id="edgeRawCanvas" aria-label="Usuwanie tła połączonego z brzegiem bez korekty obwódki"></canvas></div>
+        <p class="method-description">Ten sam obszar co w metodzie brzegowej, ale bez odbarwienia krawędzi. Pokazuje, czy na logo zostaje jasna obwódka.</p>
+        <button class="download-method" data-canvas="edgeRawCanvas" data-suffix="bez-korekty">Pobierz PNG</button>
+      </figure>
+    </section>
+    <p class="hint">Kliknij „Pobierz kolor z obrazu”, a potem tło na oryginale, jeśli automatycznie wykryty kolor jest niedokładny. Tolerancja określa, jak bliski kolorowi tła piksel staje się przezroczysty. Miękkość ustala, jak szeroki zakres półprzezroczystej krawędzi jest uwzględniany. Obrazy powyżej 1600 px są zmniejszane w podglądzie i eksporcie.</p>
+  </main>
+  <script>if (window.top === window) window.location.replace("https://settings.familiada.online/");</script>
+  <script>
+const fileInput = document.getElementById("imageFile");
+const sourceCanvas = document.getElementById("sourceCanvas");
+const sourceContext = sourceCanvas.getContext("2d", { willReadFrequently: true });
+const backgroundInput = document.getElementById("backgroundColor");
+const toleranceInput = document.getElementById("tolerance");
+const featherInput = document.getElementById("reach");
+const resetButton = document.getElementById("reset");
+const sampleColorButton = document.getElementById("sampleColor");
+const sampleSelect = document.getElementById("sampleSelect");
+const loadSampleButton = document.getElementById("loadSample");
+const statusBox = document.getElementById("suitability");
+const MAX_SIDE = 1600;
+const OUTPUTS = [
+  { canvasId: "edgeCleanCanvas", statsId: "edgeCleanStats", mode: "edge", cleanup: true },
+  { canvasId: "globalCleanCanvas", statsId: "globalCleanStats", mode: "global", cleanup: true },
+  { canvasId: "edgeRawCanvas", statsId: "edgeRawStats", mode: "edge", cleanup: false },
+];
+
+let originalPixels = null;
+let floodQueue = null;
+let visited = null;
+let currentFilename = "logo";
+let autoBackground = "#ffffff";
+let cornerSpread = 0;
+let sampleMode = false;
+let renderFrame = 0;
+
+function rgbFromHex(hex) {
+  const value = hex.replace("#", "");
+  return [0, 2, 4].map(index => parseInt(value.slice(index, index + 2), 16));
+}
+function hexFromRgb(rgb) {
+  return `#${rgb.map(channel => Math.max(0, Math.min(255, Math.round(channel))).toString(16).padStart(2, "0")).join("")}`;
+}
+function colorDelta(data, index, background) {
+  return Math.max(
+    Math.abs(data[index] - background[0]),
+    Math.abs(data[index + 1] - background[1]),
+    Math.abs(data[index + 2] - background[2]),
+  );
+}
+function median(values) {
+  values.sort((a, b) => a - b);
+  const middle = Math.floor(values.length / 2);
+  return values.length % 2 ? values[middle] : (values[middle - 1] + values[middle]) / 2;
+}
+function estimateCornerColor(imageData) {
+  const { data, width, height } = imageData;
+  const patchWidth = Math.max(2, Math.round(width * 0.045));
+  const patchHeight = Math.max(2, Math.round(height * 0.07));
+  const patches = [
+    [0, 0], [width - patchWidth, 0],
+    [0, height - patchHeight], [width - patchWidth, height - patchHeight],
+  ];
+  const patchMedians = patches.map(([left, top]) => {
+    const channels = [[], [], []];
+    const stepX = Math.max(1, Math.floor(patchWidth / 16));
+    const stepY = Math.max(1, Math.floor(patchHeight / 12));
+    for (let y = top; y < top + patchHeight; y += stepY) {
+      for (let x = left; x < left + patchWidth; x += stepX) {
+        const index = (y * width + x) * 4;
+        if (data[index + 3] < 240) continue;
+        for (let channel = 0; channel < 3; channel++) channels[channel].push(data[index + channel]);
+      }
+    }
+    return channels.map(channel => channel.length ? median(channel) : 255);
+  });
+  const color = [0, 1, 2].map(channel => median(patchMedians.map(patch => patch[channel])));
+  cornerSpread = Math.max(...patchMedians.map(patch => Math.max(...patch.map((value, channel) => Math.abs(value - color[channel])))));
+  return color;
+}
+function setSuitability(message, detail, kind = "") {
+  statusBox.className = `status ${kind}`;
+  statusBox.replaceChildren();
+  const heading = document.createElement("strong");
+  const description = document.createElement("span");
+  heading.textContent = message;
+  description.textContent = detail;
+  statusBox.append(heading, description);
+}
+function updateSuitability() {
+  if (!originalPixels) {
+    setSuitability("Wczytaj obraz", "Sprawdzę, czy tło nadaje się do usunięcia.");
+    return;
+  }
+  const [r, g, b] = rgbFromHex(backgroundInput.value);
+  const light = (r * 299 + g * 587 + b * 114) / 1000;
+  if (cornerSpread <= 28 && light >= 205) {
+    setSuitability("Tło wygląda na równe i jasne", `Próbki z rogów różnią się maksymalnie o ${Math.round(cornerSpread)} poziomów.`, "good");
+  } else if (cornerSpread <= 45 && light >= 160) {
+    setSuitability("Tło może wymagać korekty", `Różnica w rogach: ${Math.round(cornerSpread)}. Jasność: ${Math.round(light)}/255; obejrzyj obwódkę.`, "warn");
+  } else {
+    const reason = light < 160 ? `Tło jest ciemne (jasność ${Math.round(light)}/255).` : `Próbki z rogów różnią się o ${Math.round(cornerSpread)} poziomów.`;
+    setSuitability("Tło nie spełnia prostych kryteriów", `${reason} Usuwanie może zniszczyć kolory logo lub zostawić ślady.`, "warn");
+  }
+}
+function prepareImage(image, filename, originalWidth = image.naturalWidth, originalHeight = image.naturalHeight) {
+  const scale = Math.min(1, MAX_SIDE / Math.max(originalWidth, originalHeight));
+  sourceCanvas.width = Math.max(1, Math.round(originalWidth * scale));
+  sourceCanvas.height = Math.max(1, Math.round(originalHeight * scale));
+  sourceContext.clearRect(0, 0, sourceCanvas.width, sourceCanvas.height);
+  sourceContext.drawImage(image, 0, 0, sourceCanvas.width, sourceCanvas.height);
+  originalPixels = sourceContext.getImageData(0, 0, sourceCanvas.width, sourceCanvas.height);
+  floodQueue = new Uint32Array(sourceCanvas.width * sourceCanvas.height);
+  visited = new Uint8Array(sourceCanvas.width * sourceCanvas.height);
+  autoBackground = hexFromRgb(estimateCornerColor(originalPixels));
+  backgroundInput.value = autoBackground;
+  currentFilename = filename.replace(/\.[^.]+$/, "") || "logo";
+  document.getElementById("filename").textContent = filename;
+  document.getElementById("dimensions").textContent = `${originalWidth} × ${originalHeight}${scale < 1 ? " · podgląd zmniejszony do 1600 px" : ""}`;
+  for (const { canvasId } of OUTPUTS) {
+    const canvas = document.getElementById(canvasId);
+    canvas.width = sourceCanvas.width;
+    canvas.height = sourceCanvas.height;
+  }
+  for (const control of [backgroundInput, toleranceInput, featherInput, resetButton, sampleColorButton]) control.disabled = false;
+  for (const button of document.querySelectorAll(".download-method")) button.disabled = false;
+  updateSuitability();
+  scheduleRender();
+}
+function loadFile(file) {
+  if (!file || !["image/png", "image/jpeg", "image/webp"].includes(file.type)) {
+    setSuitability("Nieobsługiwany plik", "Wybierz obraz PNG, JPEG lub WebP.", "warn");
+    return;
+  }
+  const objectUrl = URL.createObjectURL(file);
+  const image = new Image();
+  image.onload = () => {
+    URL.revokeObjectURL(objectUrl);
+    prepareImage(image, file.name);
+  };
+  image.onerror = () => {
+    URL.revokeObjectURL(objectUrl);
+    setSuitability("Nie udało się wczytać obrazu", "Spróbuj wybrać inny plik PNG, JPEG lub WebP.", "warn");
+  };
+  image.src = objectUrl;
+}
+function drawSample(kind) {
+  const width = 1200;
+  const height = 720;
+  sourceCanvas.width = width;
+  sourceCanvas.height = height;
+  const context = sourceContext;
+  context.clearRect(0, 0, width, height);
+
+  if (kind === "white" || kind === "white-detail") {
+    context.fillStyle = "#ffffff";
+    context.fillRect(0, 0, width, height);
+  } else if (kind === "cream") {
+    const gradient = context.createLinearGradient(0, 0, width, height);
+    gradient.addColorStop(0, "#fffaf0");
+    gradient.addColorStop(1, "#eee5d4");
+    context.fillStyle = gradient;
+    context.fillRect(0, 0, width, height);
+    context.fillStyle = "rgba(70,48,18,.09)";
+    context.beginPath();
+    context.ellipse(600, 390, 445, 95, 0, 0, Math.PI * 2);
+    context.fill();
+  } else if (kind === "pattern") {
+    context.fillStyle = "#f9f7ee";
+    context.fillRect(0, 0, width, height);
+    for (let y = 20; y < height; y += 46) {
+      for (let x = 15 + ((y / 46) % 2) * 18; x < width; x += 46) {
+        const shade = ((x * 13 + y * 7) % 3) + 1;
+        context.fillStyle = `rgba(94,114,142,${shade * 0.035})`;
+        context.beginPath();
+        context.arc(x, y, 9 + shade * 2, 0, Math.PI * 2);
+        context.fill();
+      }
+    }
+    const vignette = context.createRadialGradient(600, 360, 180, 600, 360, 760);
+    vignette.addColorStop(0, "rgba(255,255,255,0)");
+    vignette.addColorStop(1, "rgba(80,66,40,.19)");
+    context.fillStyle = vignette;
+    context.fillRect(0, 0, width, height);
+    for (const [x, y, color] of [
+      [0, 0, "rgba(86,126,173,.25)"], [width - 180, 0, "rgba(130,82,65,.22)"],
+      [0, height - 140, "rgba(116,141,98,.24)"], [width - 180, height - 140, "rgba(161,132,74,.26)"],
+    ]) {
+      context.fillStyle = color;
+      context.fillRect(x, y, 180, 140);
+    }
+  } else {
+    const gradient = context.createLinearGradient(0, 0, width, height);
+    gradient.addColorStop(0, "#273a53");
+    gradient.addColorStop(0.5, "#556c84");
+    gradient.addColorStop(1, "#24282f");
+    context.fillStyle = gradient;
+    context.fillRect(0, 0, width, height);
+    for (let i = 0; i < 28; i++) {
+      const x = (i * 173) % width;
+      const y = (i * 97) % height;
+      context.fillStyle = `rgba(255,255,255,${0.025 + (i % 4) * 0.012})`;
+      context.beginPath();
+      context.arc(x, y, 28 + (i % 5) * 13, 0, Math.PI * 2);
+      context.fill();
+    }
+  }
+
+  context.save();
+  context.textAlign = "center";
+  context.textBaseline = "middle";
+  context.lineJoin = "round";
+  context.font = "900 118px system-ui, sans-serif";
+  context.lineWidth = 17;
+  context.strokeStyle = "#aa8800";
+  context.fillStyle = kind === "pattern" ? "#f5ce16" : "#ffcc00";
+  context.shadowColor = kind === "cream" ? "rgba(36,28,16,.34)" : "transparent";
+  context.shadowBlur = kind === "cream" ? 18 : 0;
+  context.shadowOffsetY = kind === "cream" ? 10 : 0;
+  context.strokeText("FAMILIADA", 600, 370);
+  context.fillText("FAMILIADA", 600, 370);
+  context.restore();
+
+  if (kind === "white-detail") {
+    context.fillStyle = "#164f9d";
+    context.beginPath();
+    context.arc(600, 170, 56, 0, Math.PI * 2);
+    context.fill();
+    context.fillStyle = "#ffffff";
+    context.beginPath();
+    context.arc(600, 170, 30, 0, Math.PI * 2);
+    context.fill();
+    context.fillStyle = "#d94132";
+    context.beginPath();
+    context.arc(600, 170, 11, 0, Math.PI * 2);
+    context.fill();
+  }
+  prepareImage(sourceCanvas, `przyklad-${kind}.png`, width, height);
+}
+function isCandidate(index, data, background, threshold) {
+  return data[index + 3] > 0 && colorDelta(data, index, background) <= threshold;
+}
+function addEdgePixel(pixel, data, background, threshold, tail) {
+  if (visited[pixel]) return tail;
+  const index = pixel * 4;
+  if (!isCandidate(index, data, background, threshold)) {
+    visited[pixel] = 2;
+    return tail;
+  }
+  visited[pixel] = 1;
+  floodQueue[tail++] = pixel;
+  return tail;
+}
+function recolorPixel(output, source, index, background, tolerance, feather, cleanEdge) {
+  const delta = colorDelta(source, index, background);
+  const coverage = delta / 255;
+  const cutoff = tolerance / 255;
+  const retained = feather === 0 ? 0 : Math.max(0, Math.min(1, (delta - tolerance) / feather));
+  if (retained === 0) {
+    output[index + 3] = 0;
+    return true;
+  }
+  if (cleanEdge && coverage > 0 && retained < 1) {
+    for (let channel = 0; channel < 3; channel++) {
+      output[index + channel] = Math.max(0, Math.min(255,
+        Math.round((source[index + channel] - background[channel] * (1 - coverage)) / coverage)));
+    }
+  }
+  output[index + 3] = Math.round(source[index + 3] * retained);
+  return output[index + 3] === 0;
+}
+function renderAlgorithm({ canvasId, statsId, mode, cleanup }, data, width, height, background, tolerance, feather) {
+  const canvas = document.getElementById(canvasId);
+  const context = canvas.getContext("2d");
+  const result = context.createImageData(width, height);
+  result.data.set(data);
+  const limit = Math.min(255, tolerance + feather);
+  let area = 0;
+  let transparent = 0;
+
+  if (mode === "global") {
+    for (let pixel = 0, index = 0; pixel < width * height; pixel++, index += 4) {
+      if (!isCandidate(index, data, background, limit)) continue;
+      area++;
+      if (recolorPixel(result.data, data, index, background, tolerance, feather, cleanup)) transparent++;
+    }
+  } else {
+    visited.fill(0);
+    let head = 0;
+    let tail = 0;
+    for (let x = 0; x < width; x++) {
+      tail = addEdgePixel(x, data, background, limit, tail);
+      tail = addEdgePixel((height - 1) * width + x, data, background, limit, tail);
+    }
+    for (let y = 1; y < height - 1; y++) {
+      tail = addEdgePixel(y * width, data, background, limit, tail);
+      tail = addEdgePixel(y * width + width - 1, data, background, limit, tail);
+    }
+    while (head < tail) {
+      const pixel = floodQueue[head++];
+      const index = pixel * 4;
+      area++;
+      if (recolorPixel(result.data, data, index, background, tolerance, feather, cleanup)) transparent++;
+      const x = pixel % width;
+      const y = Math.floor(pixel / width);
+      if (x > 0) tail = addEdgePixel(pixel - 1, data, background, limit, tail);
+      if (x + 1 < width) tail = addEdgePixel(pixel + 1, data, background, limit, tail);
+      if (y > 0) tail = addEdgePixel(pixel - width, data, background, limit, tail);
+      if (y + 1 < height) tail = addEdgePixel(pixel + width, data, background, limit, tail);
+    }
+  }
+
+  context.putImageData(result, 0, 0);
+  const percent = (transparent / (width * height) * 100).toFixed(1).replace(".", ",");
+  document.getElementById(statsId).textContent = `${percent}% · ${area.toLocaleString("pl-PL")} px`;
+}
+function processImage() {
+  if (!originalPixels) return;
+  const { width, height, data } = originalPixels;
+  const background = rgbFromHex(backgroundInput.value);
+  const tolerance = Number(toleranceInput.value);
+  const feather = Number(featherInput.value);
+  for (const algorithm of OUTPUTS) {
+    renderAlgorithm(algorithm, data, width, height, background, tolerance, feather);
+  }
+  updateSuitability();
+}
+function scheduleRender() {
+  if (renderFrame) cancelAnimationFrame(renderFrame);
+  renderFrame = requestAnimationFrame(() => {
+    renderFrame = 0;
+    processImage();
+  });
+}
+function downloadCanvas(canvasId, suffix) {
+  const canvas = document.getElementById(canvasId);
+  canvas.toBlob(blob => {
+    if (!blob) return;
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${currentFilename}-${suffix}.png`;
+    link.click();
+    URL.revokeObjectURL(url);
+  }, "image/png");
+}
+
+fileInput.addEventListener("change", () => loadFile(fileInput.files?.[0]));
+loadSampleButton.addEventListener("click", () => drawSample(sampleSelect.value));
+backgroundInput.addEventListener("input", () => { updateSuitability(); scheduleRender(); });
+toleranceInput.addEventListener("input", scheduleRender);
+featherInput.addEventListener("input", scheduleRender);
+for (const input of [toleranceInput, featherInput]) {
+  input.addEventListener("input", () => {
+    document.getElementById(`${input.id}Value`).value = `${input.value} / 255`;
+  });
+  document.getElementById(`${input.id}Value`).value = `${input.value} / 255`;
+}
+sampleColorButton.addEventListener("click", () => {
+  sampleMode = true;
+  sampleColorButton.textContent = "Kliknij tło na oryginale…";
+});
+sourceCanvas.addEventListener("click", event => {
+  if (!sampleMode || !originalPixels) return;
+  const rect = sourceCanvas.getBoundingClientRect();
+  const scale = Math.min(rect.width / sourceCanvas.width, rect.height / sourceCanvas.height);
+  const drawnWidth = sourceCanvas.width * scale;
+  const drawnHeight = sourceCanvas.height * scale;
+  const left = rect.left + (rect.width - drawnWidth) / 2;
+  const top = rect.top + (rect.height - drawnHeight) / 2;
+  const x = Math.floor((event.clientX - left) / scale);
+  const y = Math.floor((event.clientY - top) / scale);
+  if (x < 0 || y < 0 || x >= originalPixels.width || y >= originalPixels.height) return;
+  const index = (y * originalPixels.width + x) * 4;
+  backgroundInput.value = hexFromRgb([...originalPixels.data.slice(index, index + 3)]);
+  sampleMode = false;
+  sampleColorButton.textContent = "Pobierz kolor z obrazu";
+  updateSuitability();
+  scheduleRender();
+});
+resetButton.addEventListener("click", () => {
+  backgroundInput.value = autoBackground;
+  toleranceInput.value = "20";
+  featherInput.value = "130";
+  for (const input of [toleranceInput, featherInput]) {
+    document.getElementById(`${input.id}Value`).value = `${input.value} / 255`;
+  }
+  updateSuitability();
+  scheduleRender();
+});
+for (const button of document.querySelectorAll(".download-method")) {
+  button.addEventListener("click", () => downloadCanvas(button.dataset.canvas, button.dataset.suffix));
+}
+for (const control of [backgroundInput, toleranceInput, featherInput, resetButton, sampleColorButton]) control.disabled = true;
+for (const button of document.querySelectorAll(".download-method")) button.disabled = true;
+setSuitability("Wczytaj obraz", "Sprawdzę, czy tło nadaje się do usunięcia.");
+
+</script>
+</body>
+</html>
