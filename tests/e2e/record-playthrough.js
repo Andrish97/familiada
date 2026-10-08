@@ -176,23 +176,47 @@ function familiadaGlyphPayload() {
 }
 
 function recordingExampleLogoPayload() {
-  const blank = " ".repeat(30);
-  const centered = (text) => `${" ".repeat(Math.floor((30 - text.length) / 2))}${text}`;
-  return {
-    layers: [{ color: "main", rows: [blank, blank, centered("WZOR"), centered("GWIAZDY"), centered("GWIAZDY"), centered("WZOR"), blank, blank, blank, blank] }],
+  // Rysunkowe logo bitmapowe z trzech gwiazd. Nie używamy typu tekstowego:
+  // nagranie ma pokazywać rzeczywistą grafikę na Display, a tekstowe logo nie
+  // jest obecnie poprawnie obsługiwane w tym przebiegu.
+  const width = 150;
+  const height = 70;
+  const stride = Math.ceil(width / 8);
+  const bits = new Uint8Array(stride * height);
+  const stars = [36, 75, 114].map((cx) => Array.from({ length: 10 }, (_, i) => {
+    const angle = -Math.PI / 2 + i * Math.PI / 5;
+    const radius = i % 2 === 0 ? 25 : 11;
+    return [cx + Math.cos(angle) * radius, 35 + Math.sin(angle) * radius];
+  }));
+  const insidePolygon = (x, y, polygon) => {
+    let inside = false;
+    for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+      const [xi, yi] = polygon[i];
+      const [xj, yj] = polygon[j];
+      if ((yi > y) !== (yj > y) && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) inside = !inside;
+    }
+    return inside;
   };
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      if (stars.some((polygon) => insidePolygon(x + 0.5, y + 0.5, polygon))) {
+        bits[y * stride + (x >> 3)] |= 1 << (7 - (x & 7));
+      }
+    }
+  }
+  return { w: width, h: height, bits_b64: Buffer.from(bits).toString("base64"), source: { mode: "DRAW" } };
 }
 
-async function insertLogo(setupPage, name, payload = familiadaGlyphPayload()) {
-  return setupPage.evaluate(async ({ name, payload }) => {
+async function insertLogo(setupPage, name, payload = familiadaGlyphPayload(), type = "GLYPH_30x10") {
+  return setupPage.evaluate(async ({ name, payload, type }) => {
     const sb = window.__sbClient;
     const { data: userData } = await sb.auth.getUser();
     const { data, error } = await sb.from("user_logos")
-      .insert({ user_id: userData.user.id, name, type: "GLYPH_30x10", payload })
+      .insert({ user_id: userData.user.id, name, type, payload })
       .select("id").single();
     if (error) throw new Error("insert logo failed: " + error.message);
     return data.id;
-  }, { name, payload });
+  }, { name, payload, type });
 }
 
 async function acquireLogoLockExternally(setupPage, logoId, tabId) {
@@ -2092,7 +2116,7 @@ const SCENARIOS = [
   {
     file: "12-poprawki-wieczoru.mp4",
     makeGame: async (setupPage) => {
-      const logoId = await insertLogo(setupPage, `Wzór — Gwiazdy E2E ${Date.now()}`, recordingExampleLogoPayload());
+      const logoId = await insertLogo(setupPage, `Wzór — Gwiazdy E2E ${Date.now()}`, recordingExampleLogoPayload(), "PIX_150x70");
       const game = await restoreDemoGame(setupPage, {
         pickOrds: [1, 2, 8],
         finalPickOrds: [3, 4, 5, 6, 7],
