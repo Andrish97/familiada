@@ -656,3 +656,90 @@ test.describe("games: audyt -- rules_state", () => {
     }
   });
 });
+
+/* ================= Podgląd: przełącznik Gra · Ankieta (E11f) ================= */
+
+test.describe("games: podgląd -- przełącznik Gra · Ankieta", () => {
+
+  test("gra ankietowa: szkic bez wyników, otwarta ankieta pokazuje pytania; gra preparowana bez przełącznika", async ({ page, context }) => {
+    test.setTimeout(120_000);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    const name = `E2E-GM-POLLPREV-${Date.now()}`;
+    const prepared = `E2E-GM-POLLPREV-P-${Date.now()}`;
+    try {
+      await page.evaluate(async (name) => {
+        const sb = window.__sbClient;
+        const { data: u } = await sb.auth.getUser();
+        const { data: g, error } = await sb.from("games")
+          .insert({ name, owner_id: u.user.id, type: "poll_points", status: "draft" })
+          .select("id").single();
+        if (error) throw new Error("insert games: " + error.message);
+        const { data: qs, error: qErr } = await sb.from("questions")
+          .insert(Array.from({ length: 10 }, (_, i) => ({ game_id: g.id, ord: i + 1, text: `Pytanie ankiety ${i + 1}?` })))
+          .select("id");
+        if (qErr) throw new Error("insert questions: " + qErr.message);
+        const { error: aErr } = await sb.from("answers")
+          .insert(qs.flatMap((q) => [1, 2, 3].map((j) => ({ question_id: q.id, ord: j, text: `Odp ${j}`, fixed_points: 0 }))));
+        if (aErr) throw new Error("insert answers: " + aErr.message);
+      }, name);
+      const [row] = await gamesByName(page, name);
+
+      // 1) szkic: przełącznik jest, w "Ankieta" komunikat o nieuruchomionej ankiecie
+      await openGames(page, "?tab=poll_points");
+      const tile = tileByName(page, name);
+      await expect(tile).toBeVisible({ timeout: 15000 });
+      await tile.click();
+      await page.locator("#btnPreview").click();
+      await expect(page.locator("#previewOverlay")).toBeVisible();
+      await expect(page.locator("#previewSwitch")).toBeVisible();
+      await expect(page.locator("#btnPreviewModeGame")).toHaveClass(/gold/);
+      await page.locator("#btnPreviewModePoll").click();
+      await expect(page.locator("#btnPreviewModePoll")).toHaveClass(/gold/);
+      await expect(page.locator("#previewPollMeta")).toHaveText("Ankieta nie była jeszcze uruchomiona", { timeout: 15000 });
+      await page.locator("#btnPreviewClose").click();
+      await expect(page.locator("#previewOverlay")).toBeHidden();
+
+      // 2) otwarta ankieta: w "Ankieta" widać pytania z wynikami
+      await page.evaluate(async (id) => {
+        const sb = window.__sbClient;
+        const { data: g, error } = await sb.from("games").select("share_key_poll").eq("id", id).single();
+        if (error) throw new Error(error.message);
+        const open = await sb.rpc("poll_open", { p_game_id: id, p_key: g.share_key_poll });
+        if (open.error) throw new Error(open.error.message);
+      }, row.id);
+
+      await openGames(page, "?tab=poll_points");
+      await expect(tile).toBeVisible({ timeout: 15000 });
+      await tile.click();
+      await page.locator("#btnPreview").click();
+      await expect(page.locator("#previewSwitch")).toBeVisible();
+      await page.locator("#btnPreviewModePoll").click();
+      await expect(page.locator("#previewPollList .resultQ").first()).toBeVisible({ timeout: 15000 });
+      await expect(page.locator("#previewPollList")).toContainText("Pytanie ankiety 1?");
+      await expect(page.locator("#previewPollList .aRow").first()).toBeVisible();
+      await expect(page.locator("#previewQuestions")).toBeHidden();
+      await page.locator("#btnPreviewModeGame").click();
+      await expect(page.locator("#previewQuestions")).toBeVisible();
+      await expect(page.locator("#previewPoll")).toBeHidden();
+      await page.locator("#btnPreviewClose").click();
+
+      // 3) gra preparowana: bez przełącznika
+      await page.evaluate(async (name) => {
+        const sb = window.__sbClient;
+        const { data: u } = await sb.auth.getUser();
+        const { error } = await sb.from("games").insert({ name, owner_id: u.user.id, type: "prepared", status: "draft" });
+        if (error) throw new Error(error.message);
+      }, prepared);
+      await openGames(page);
+      const ptile = tileByName(page, prepared);
+      await expect(ptile).toBeVisible({ timeout: 15000 });
+      await ptile.click();
+      await page.locator("#btnPreview").click();
+      await expect(page.locator("#previewOverlay")).toBeVisible();
+      await expect(page.locator("#previewSwitch")).toBeHidden();
+    } finally {
+      await deleteGamesByName(page, name);
+      await deleteGamesByName(page, prepared);
+    }
+  });
+});

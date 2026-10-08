@@ -816,6 +816,51 @@ body.games-body > main.wrap{
   margin-bottom: 16px;
 }
 
+.bld-preview-switch {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.bld-preview-switch[hidden],
+.bld-preview-questions[hidden] { display: none; }
+.bld-preview-switch .btn { flex: 1; }
+
+/* Wyniki ankiety w podglądzie (te same klasy co na stronie ankiety) */
+#previewPollList { display: grid; gap: 12px; }
+#previewPollMeta { opacity: .75; font-size: 12px; }
+#previewPollMeta:empty { display: none; }
+.bld-preview-poll .resultQ {
+  border: 1px solid var(--line);
+  background: var(--card2);
+  border-radius: 18px;
+  padding: 12px;
+}
+.bld-preview-poll .resultQ .qTitle { font-weight: 1000; margin-bottom: 8px; line-height: 1.25; }
+.bld-preview-poll .resultQ .aList { display: grid; gap: 6px; }
+.bld-preview-poll .resultQ .aRow {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  height: 38px;
+  box-sizing: border-box;
+  padding: 0 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,.10);
+  background: rgba(255,255,255,.05);
+  overflow: hidden;
+}
+.bld-preview-poll .resultQ .aBar {
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 0;
+  background: linear-gradient(90deg, rgba(255,234,166,.10), rgba(255,234,166,.26));
+  pointer-events: none;
+}
+.bld-preview-poll .resultQ .aTxt { position: relative; font-weight: 900; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bld-preview-poll .resultQ .aVal { position: relative; font-weight: 1000; color: var(--gold); flex: 0 0 auto; min-width: 2ch; text-align: right; font-variant-numeric: tabular-nums; }
+
 .bld-preview-questions {
   max-height: 55vh;
   overflow-y: auto;
