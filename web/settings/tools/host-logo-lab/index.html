@@ -1,7 +1,6 @@
 <!doctype html>
 <html lang="pl">
 <head>
-  <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Familiada — próba logo Hosta z Unbounded</title>
@@ -174,7 +173,7 @@ function drawGlyphRun(context, characters, metrics, options) {
     context.save();
     context.translate(x, BASE_Y + offsetY);
     context.scale(glyphScaleX, heightStretch);
-    context.strokeText(character, 0, 0);
+    if (strokeWidth > 0) context.strokeText(character, 0, 0);
     context.fillText(character, 0, 0);
     context.restore();
     cursor += metric.advance;
@@ -264,13 +263,13 @@ function renderWordmark({ text, dot, weight, width, height, spacing, fisheye, de
   for (let step = steps; step >= 1; step--) {
     drawGlyphRun(context, characters, metrics, {
       weight, size, widthStretch, heightStretch, lens,
-      color: extrusionColor, stroke: extrusionColor, strokeWidth: 2.5,
+      color: extrusionColor, stroke: extrusionColor, strokeWidth: 0,
       offsetX: step * offsetX, offsetY: step * offsetY,
     });
   }
   drawGlyphRun(context, characters, metrics, {
     weight, size, widthStretch, heightStretch, lens,
-    color: dot, stroke: extrusionColor, strokeWidth: 4,
+    color: dot, stroke: extrusionColor, strokeWidth: 0,
     offsetX: 0, offsetY: 0,
   });
   warpVerticalEdges(lens);
