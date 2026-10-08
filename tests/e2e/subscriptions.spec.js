@@ -173,11 +173,11 @@ test("ret nie pozwala opuścić originu, a poprawny powrót jest zachowany", asy
 
   await openSubscriptions(page, "?ret=https%3A%2F%2Fevil.example%2Fphishing");
   await page.locator("#btnBackToGames").click();
-  await page.waitForURL((url) => url.origin === "https://www.familiada.online" && url.pathname === "/games");
+  await page.waitForURL((url) => url.origin === "https://www.familiada.online" && /^\/games\/?$/.test(url.pathname));
 
   await openSubscriptions(page, "?ret=%2Fbases%3Flang%3Den");
   await page.locator("#btnBackToGames").click();
-  await page.waitForURL((url) => url.pathname === "/bases" && url.searchParams.get("lang") === "en");
+  await page.waitForURL((url) => /^\/bases\/?$/.test(url.pathname) && url.searchParams.get("lang") === "en");
 });
 
 test("PL/EN/UK oraz zakładki mają poprawną semantykę, klawiaturę i ?tab= w adresie", async ({ browser }) => {
