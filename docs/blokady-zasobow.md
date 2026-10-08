@@ -11,7 +11,7 @@ Stan sprawdzony w kodzie 2026-10-07 (branch `ccr-4a2edd31-ekjnn8`,
 `supabase/schema.sql`).
 
 **Uwaga (E2, 2026-10-08):** sekcje 1–5 opisują stan **sprzed** wdrożenia
-modelu docelowego (migracja 313, `resource-lock.js`) — zostają jako historia
+modelu docelowego (migracja 314, `resource-lock.js`) — zostają jako historia
 i uzasadnienie. Obowiązuje sekcja 6 oraz „Kroki wdrożenia” (kroki 1–6
 wdrożone; 7 — mapa `PAGES` — jeszcze nie). Najważniejsze różnice: TTL
 **120 s** (nie 25 s), tryb `shared` / `exclusive` w `edit_locks`, zasób
@@ -255,7 +255,7 @@ nazwy / usunięcie odmawia, gdy zasób albo jego „rodzic” (`logos`,
 
 ### Kroki wdrożenia
 
-1. **Wdrożone (E2, migracja `2026-10-08_313_locks_shared_model.sql`).**
+1. **Wdrożone (E2, migracja `2026-10-08_314_locks_shared_model.sql`).**
    `edit_locks.mode` (`exclusive` | `shared`), klucz (typ, id, karta) +
    częściowy indeks unikalny dla wyłącznych; zasób `logos` (id = użytkownik)
    i `base:B` także współdzielone; jedna reguła zgodności w
@@ -269,7 +269,7 @@ nazwy / usunięcie odmawia, gdy zasób albo jego „rodzic” (`logos`,
    (parametr `p_tab_id` — własna karta nie przeszkadza sama sobie).
    `market_remove_from_library` idzie przez `delete_resource_checked` (312).
    Reguły nie używają `holder_context` (kolumna zostaje: statystyki aktywności
-   i powód zajęcia puli logo w komunikatach). Test: `docs/sql/test-locks-313.sql`.
+   i powód zajęcia puli logo w komunikatach). Test: `docs/sql/test-locks-314.sql`.
    *Poza zakresem:* widok aktywności w statystykach (migracje 303 / 307) dalej
    liczy blokady z progiem 25 s.
 2. **Wdrożone.** `resource-lock.js`: `guardResourceLocks([{ type, id, mode,

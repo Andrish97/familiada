@@ -1,13 +1,12 @@
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-08T17384";
-import { cooldownGet, cooldownReserve, cooldownRelease, mailCooldownEmailReserve } from "../../shared/js/core/cooldown.js?v=v2026-10-08T17384";
-import { requireAuth, updateUserLanguage, validatePassword, validateUsername, signOut, niceAuthError, initPasswordToggles, convertGuestToRegisteredEmailOnly } from "../../shared/js/core/auth.js?v=v2026-10-08T17384";
-import { getUserEmailNotificationsFlag, setUserEmailNotificationsFlag } from "../../shared/js/core/user-flags.js?v=v2026-10-08T17384";
-import { initI18n, t, getUiLang, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-08T17384";
-import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-08T17384";
-import { isGuestUser, hideForGuest } from "../../shared/js/core/guest-mode.js?v=v2026-10-08T17384";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-08T17384";
-import { deleteGameSoundsFolder } from "../../shared/js/core/sfx-cloud.js?v=v2026-10-08T17384";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-08T17384";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-08T18185";
+import { cooldownGet, cooldownReserve, cooldownRelease, mailCooldownEmailReserve } from "../../shared/js/core/cooldown.js?v=v2026-10-08T18185";
+import { requireAuth, updateUserLanguage, validatePassword, validateUsername, signOut, niceAuthError, initPasswordToggles, convertGuestToRegisteredEmailOnly } from "../../shared/js/core/auth.js?v=v2026-10-08T18185";
+import { getUserEmailNotificationsFlag, setUserEmailNotificationsFlag } from "../../shared/js/core/user-flags.js?v=v2026-10-08T18185";
+import { initI18n, t, getUiLang, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-08T18185";
+import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-08T18185";
+import { isGuestUser, hideForGuest } from "../../shared/js/core/guest-mode.js?v=v2026-10-08T18185";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-08T18185";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-08T18185";
 
 
 const status = document.getElementById("status");
@@ -560,41 +559,6 @@ async function loadUserRating(userId) {
   }
 }
 
-// Zwraca zestaw imageUrl (logo obrazkowe) i id gier usera — używane jako
-// "zdjęcie przed/po" wokół restore_my_demo, żeby wykryć co realnie
-// przepadło (niezależnie czy przez is_demo=true czy zbieżność nazwy) i
-// skasować tylko te pliki w storage, nic więcej.
-async function snapshotDemoStorageRefs(userId) {
-  const [logosRes, gamesRes] = await Promise.all([
-    sb().from("user_logos").select("payload").eq("user_id", userId),
-    sb().from("games").select("id").eq("owner_id", userId),
-  ]);
-  const imageUrls = new Set(
-    (logosRes.data || [])
-      .map((r) => r?.payload?.source?.imageUrl)
-      .filter(Boolean)
-  );
-  const gameIds = new Set((gamesRes.data || []).map((r) => r.id));
-  return { imageUrls, gameIds };
-}
-
-async function cleanupOrphanedDemoStorage(userId, before, after) {
-  const removedImageUrls = [...before.imageUrls].filter((u) => !after.imageUrls.has(u));
-  const removedGameIds = [...before.gameIds].filter((id) => !after.gameIds.has(id));
-
-  for (const url of removedImageUrls) {
-    const parts = String(url).split("/user-logos/");
-    if (parts.length !== 2) continue;
-    const path = parts[1];
-    if (!path.startsWith(`${userId}/`)) continue; // tylko własny folder
-    await sb().storage.from("user-logos").remove([path]).catch(() => {});
-  }
-
-  for (const gameId of removedGameIds) {
-    await deleteGameSoundsFolder(sb(), userId, gameId).catch(() => {});
-  }
-}
-
 async function wireDemoActions(user) {
   const btn = document.getElementById("demoRestoreBtn");
   if (!btn || !user?.id) return;
@@ -609,23 +573,13 @@ async function wireDemoActions(user) {
     if (!ok) return;
     const lang = localStorage.getItem("uiLang") || "pl";
 
-    const before = await snapshotDemoStorageRefs(user.id).catch(() => null);
-
     const { error } = await sb().rpc("restore_my_demo", { p_lang: lang });
     if (error) {
       console.error("restore_my_demo error:", error);
       return;
     }
 
-    if (before) {
-      try {
-        const after = await snapshotDemoStorageRefs(user.id);
-        await cleanupOrphanedDemoStorage(user.id, before, after);
-      } catch (e) {
-        console.warn("[account] demo storage cleanup failed:", e);
-      }
-    }
-
+    // Pliki usuniętych gier i logo sprząta baza (migracja 313).
     location.href = "/games/";
   });
 }

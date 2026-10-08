@@ -1,9 +1,8 @@
 // familiada/logo/js/db.js
 // Dostęp do tabeli user_logos i plików logo w Storage.
 
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-08T17384";
-import { getTabId } from "../../shared/js/core/resource-lock.js?v=v2026-10-08T17384";
-import { storagePathFromUrl } from "./image.js?v=v2026-10-08T17384";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-08T18185";
+import { getTabId } from "../../shared/js/core/resource-lock.js?v=v2026-10-08T18185";
 
 /** Błąd „zasób zajęty” z RPC *_checked -- reason: logo (inna karta edytuje to logo)
  *  | control | settings (pula logo trzymana przez grę) | locked. */
@@ -60,23 +59,9 @@ export async function updateLogo(id, patch) {
   if (!data?.ok) throw busyError(data);
 }
 
-// Najpierw RPC (blokuje, gdy logo jest używane), dopiero potem plik obrazu
-// w Storage -- inaczej odmowa usunięcia zostawiłaby wiersz bez obrazu.
+// Plik obrazu w Storage usuwa baza razem z wierszem (migracja 313).
 export async function deleteLogo(id) {
-  const { data: logo, error: fetchError } = await sb().from("user_logos").select("payload->source->>imageUrl").eq("id", id).single();
-  if (fetchError) throw fetchError;
-
   const { data: result, error } = await sb().rpc("delete_resource_checked", { p_resource_type: "logo", p_resource_id: id, p_tab_id: getTabId() });
   if (error) throw error;
   if (!result?.ok) throw busyError(result);
-
-  const imageUrl = logo?.imageUrl;
-  if (!imageUrl) return;
-  try {
-    const user = (await sb().auth.getUser())?.data?.user;
-    const path = storagePathFromUrl(imageUrl, user?.id);
-    if (path) await sb().storage.from("user-logos").remove([path]);
-  } catch (e) {
-    console.warn("[logo/db] could not remove image file:", e);
-  }
 }
