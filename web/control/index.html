@@ -114,7 +114,11 @@
     .c2-gameplay-nav:has(.c2-statusbar) { border:0; padding:0; }
     .c2-gameplay-nav:has(.c2-statusbar) .c2-statusbar { width:100%; height:62px; min-height:62px; box-sizing:border-box; padding:8px 2px 0; flex-wrap:nowrap; overflow:hidden; white-space:nowrap; }
     .c2-gameplay-nav:has(.c2-statusbar) .c2-statusbar > span { min-width:0; overflow:hidden; text-overflow:ellipsis; }
-    .c2-topbar-progress { flex:0 0 340px; width:340px; max-width:32vw; min-width:280px; height:37px; min-height:37px; box-sizing:border-box; display:flex; align-items:center; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; font-size:.78rem; font-weight:800; letter-spacing:.02em; color:var(--gold); padding:0 8px; border-left:1px solid rgba(255,255,255,.16); }
+    .topbar-layout-4 .topbar-section-2 { flex-wrap:nowrap; gap:8px; }
+    .topbar-layout-4 .topbar-section-2 .top-status { flex:1 1 0%; min-width:0; flex-wrap:nowrap; gap:6px; }
+    .topbar-layout-4 .topbar-section-2 .top-status .dotRow { flex:0 1 auto; min-width:0; padding:8px; }
+    .topbar-layout-4 .topbar-section-2 .top-status .dotRow .lbl { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .c2-topbar-progress { flex:0 0 280px; width:280px; max-width:32vw; min-width:230px; height:37px; min-height:37px; box-sizing:border-box; display:flex; align-items:center; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; font-size:.76rem; font-weight:800; letter-spacing:.02em; color:var(--gold); padding:0 8px; border-left:1px solid rgba(255,255,255,.16); }
     /* To samo dla Urządzeń/Podsumowania (control.css's .stepFoot, domyślnie
        tylko 10px u góry vs 28px u dołu po odjęciu cardBody's paddingu
        wyżej — teraz 16px u góry == 16px .control-main-card u dołu). */

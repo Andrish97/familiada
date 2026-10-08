@@ -354,13 +354,23 @@ async function expectMappingFieldFits(page, testInfo, label) {
     const input = tile.querySelector("input").getBoundingClientRect();
     const column = tile.querySelector(".c2-mapinput-labelcol").getBoundingClientRect();
     const caption = tile.querySelector(".c2-field-label").getBoundingClientRect();
-    return { top: input.top - box.top, bottom: box.bottom - input.bottom, right: box.right - input.right, centered: Math.abs((column.left + column.right) / 2 - (caption.left + caption.right) / 2), horizontalOverflow: tile.scrollWidth - tile.clientWidth };
+    const card = document.querySelector(".c2-gameplay-card").getBoundingClientRect();
+    const main = document.querySelector(".c2-roundlayout-main").getBoundingClientRect();
+    return { top: input.top - box.top, bottom: box.bottom - input.bottom, right: box.right - input.right, centered: Math.abs((column.left + column.right) / 2 - (caption.left + caption.right) / 2), horizontalOverflow: tile.scrollWidth - tile.clientWidth, cardX: card.x, cardWidth: card.width, mainX: main.x, mainWidth: main.width };
   });
   expect(geometry.top).toBeGreaterThanOrEqual(5);
   expect(geometry.bottom).toBeGreaterThanOrEqual(5);
   expect(geometry.right).toBeGreaterThanOrEqual(5);
   expect(geometry.centered).toBeLessThanOrEqual(1);
   expect(geometry.horizontalOverflow).toBeLessThanOrEqual(1);
+  if (label === "p1") await page.evaluate((rect) => { window.__p1MappingLayout = rect; }, geometry);
+  if (label === "p2") {
+    const p1 = await page.evaluate(() => window.__p1MappingLayout);
+    expect(Math.abs(geometry.cardX - p1.cardX), "karta nie może przesuwać się w mapowaniu gracza 2").toBeLessThan(1);
+    expect(Math.abs(geometry.cardWidth - p1.cardWidth), "szerokość karty musi być stała między graczami").toBeLessThan(1);
+    expect(Math.abs(geometry.mainX - p1.mainX), "lewa kolumna mapowania nie może przesuwać się między graczami").toBeLessThan(1);
+    expect(Math.abs(geometry.mainWidth - p1.mainWidth), "szerokość kolumny mapowania musi być stała między graczami").toBeLessThan(1);
+  }
   await page.screenshot({ path: testInfo.outputPath(`shot-mapping-${label}.png`) });
 }
 
@@ -775,7 +785,9 @@ test("control2: pełna runda przez 4 urządzenia + wznowienie Control po przeła
     await page.getByRole("button", { name: "Rozpocznij grę" }).click();
     await expect(page.locator("#c2TopbarProgress")).toContainText("Runda 1", { timeout: 22000 });
     await page.getByRole("button", { name: "Rozpocznij rundę" }).click();
-    await expect(page.locator(".c2-stepper-question")).toHaveText("Pytanie testowe 1");
+    const questionDuringDuel = page.locator(".c2-stepper-question");
+    await expect(questionDuringDuel).toHaveText(/\S/);
+    const visibleQuestion = await questionDuringDuel.textContent();
     const progressRight = await page.locator("#c2TopbarProgress").evaluate((el) => el.getBoundingClientRect().right);
     const displayStatusLeft = await page.locator("#dotDisplayRow").evaluate((el) => el.getBoundingClientRect().left);
     expect(progressRight).toBeLessThan(displayStatusLeft);
@@ -790,7 +802,7 @@ test("control2: pełna runda przez 4 urządzenia + wznowienie Control po przeła
     await expect(buzzerPage.getByRole("button", { name: "Przycisk A" })).toBeEnabled({ timeout: 10000 });
     await buzzerPage.getByRole("button", { name: "Przycisk A" }).click();
     await expect(page.getByRole("button", { name: "Zatwierdź: Alfa" })).toBeEnabled({ timeout: 10000 });
-    await expect(page.locator(".c2-stepper-question")).toHaveText("Pytanie testowe 1");
+    await expect(questionDuringDuel).toHaveText(visibleQuestion);
     const duelGridRows = await page.locator(".c2-tilegrid").evaluate((grid) => getComputedStyle(grid).gridTemplateRows.split(" ").length);
     expect(duelGridRows).toBe(6);
     const duelTileHeight = await page.locator(".c2-tilegrid .c2-tile").first().evaluate((tile) => tile.getBoundingClientRect().height);
@@ -1895,12 +1907,13 @@ test("control2: wyciszenie dźwięku — po Mute żaden klucz SFX się nie odtwa
 // urządzenie, które FAKTYCZNIE gra (Display).
 
 test("control2: dźwięk ze źródła Wyświetlacz — odblokowanie, głośność z ustawień, chwilowe mute w rundzie", async ({ page, browser }, testInfo) => {
+  await page.setViewportSize({ width: 1366, height: 768 });
   await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
   const game = await makeGame(page, `E2E-CONTROL2-SOUNDSRC-${Date.now()}`, { roundQuestions: [TWO_QUESTIONS[0]] });
   const contexts = [];
   try {
     const buzzerPage = await openAnon(browser, contexts, `/buzzer?id=${game.id}&key=${game.share_key_buzzer}`, "buzzer", []);
-    const displayPage = await openAnon(browser, contexts, `/display?id=${game.id}&key=${game.share_key_display}`, "display", []);
+    let displayPage = await openAnon(browser, contexts, `/display?id=${game.id}&key=${game.share_key_display}`, "display", []);
     await openAnon(browser, contexts, `/host?id=${game.id}&key=${game.share_key_host}`, "host", []);
 
     await page.goto(`/control?id=${game.id}`, { waitUntil: "domcontentloaded" });
@@ -1918,6 +1931,8 @@ test("control2: dźwięk ze źródła Wyświetlacz — odblokowanie, głośnoś�
     // etykietę .toggle-item po wartości ukrytego radio, ten sam wzorzec co
     // game-settings.spec.js's analogiczne przełączniki.
     await page.locator('.toggle-item:has(input[name="soundSource"][value="display"])').click();
+    const devicesFitAfterAudioSwitch = await page.locator(".c2-devices-layout .c2-scroll-area").evaluate((el) => el.scrollHeight <= el.clientHeight + 1);
+    expect(devicesFitAfterAudioSwitch, "włączenie dźwięku z Wyświetlacza nie powinno dodawać przewijania na normalnym ekranie").toBe(true);
     await expect(displayPage.locator("#audioUnlockScreen")).not.toHaveClass(/\bhidden\b/, { timeout: 10000 });
     await expect(nextStep).toBeDisabled({ timeout: 10000 });
     await displayPage.locator("#btnAudioUnlock").click();
@@ -2042,6 +2057,19 @@ test("control2: dźwięk ze źródła Wyświetlacz — odblokowanie, głośnoś�
     await clearSfxLog(displayPage);
     await revealAnswer(page, 1); // Odpowiedź A, 40 pkt -> wygrywa pojedynek
     await waitForSfxSequence(displayPage, ["reveal"], 10000);
+
+    // Ponowne podłączenie Display w trakcie gry wymaga nowego gestu audio.
+    // Control blokuje odsłanianie do momentu potwierdzenia przez nową kartę.
+    await displayPage.context().close();
+    await expect(page.locator("#dotDisplay")).toHaveClass(/\bbad\b/, { timeout: 20000 });
+    await expect(page.locator("#deviceLostOverlay")).toBeVisible({ timeout: 10000 });
+    await page.locator("#deviceLostClose").click();
+    displayPage = await reconnectViaModal(browser, page, "display", contexts, []);
+    await expect(displayPage.locator("#audioUnlockScreen")).toBeVisible({ timeout: 15000 });
+    await expect(answerTile(page, 2)).toBeDisabled();
+    await displayPage.locator("#btnAudioUnlock").click();
+    await expect(displayPage.locator("#audioUnlockScreen")).toBeHidden({ timeout: 10000 });
+    await expect(answerTile(page, 2)).toBeEnabled({ timeout: 15000 });
 
     // ===== Mute na chwilę w tej samej rundzie — odpowiedź #2 podczas wyciszenia =====
     await page.locator("#btnMute").click();

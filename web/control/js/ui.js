@@ -312,13 +312,11 @@ export function createUI({ root, emit }) {
     root.appendChild(h("div", { class: "cardBody" }, [
       // .stepTitle zostaje (niewidoczny, display:none w control.css — testy
       // E2E celują w niego jako stabilny selektor kroku, dokładnie jak w
-      // starym Control) — widoczny nagłówek to osobny .c2-stepper, ten sam
-      // wzorzec (mały, uppercase, linia pod spodem) co w Rundach/Finale.
+      // starym Control) — postęp kroku jest w topbarze, bez osobnego paska.
       // Tekst .stepTitle NIE idzie przez t() celowo — jest zawsze niewidoczny
       // (display:none) i istnieje wyłącznie jako stabilny selektor testów E2E,
       // więc nie jest to string user-facing.
       h("div", { class: "stepTitle", text: "Urządzenia" }),
-      h("div", { class: "c2-stepper", text: t("control.stepDevices") }),
       // Przewija się tylko lista kart urządzeń. Podpowiedź pozostaje obok
       // listy widoczna także po przewinięciu do sekcji dźwięku.
       h("div", { class: "c2-roundlayout c2-devices-layout" }, [
@@ -617,14 +615,9 @@ export function createUI({ root, emit }) {
     const editSettings = root.querySelector("#btnOpenGsModal");
     if (editSettings) bindShortcut(editSettings, "e", () => emit("setup.openSettings"));
     const body = [
-      // .stepTitle zostaje bare "Podsumowanie" — stabilny selektor testów
-      // E2E (patrz control2.spec.js). Widoczny .c2-stepper dostaje opisowy
-      // nagłówek "Podsumowanie ustawień" — PODMIENIONY, nie doklejony za
-      // myślnikiem (w odróżnieniu od "Runda N — rozgrywka"/"— kradzież",
-      // gdzie oba człony niosą osobną informację, tu "Podsumowanie —
-      // podsumowanie ustawień" było czystą tautologią).
+      // .stepTitle pozostaje stabilnym selektorem E2E; postęp kroku jest
+      // pokazany w topbarze, bez dodatkowego paska nad treścią karty.
       h("div", { class: "stepTitle", text: "Podsumowanie" }),
-      h("div", { class: "c2-stepper", text: t("control.summaryStepperTitle") }),
       // .c2-scroll-area: dolne przyciski (Wstecz/Zmień ustawienia/Gotowe) mają
       // zostać wyłączone z przewijania — przewija się TYLKO treść sekcji
       // podsumowania, .stepFoot zawsze zostaje widoczny na dole karty.
@@ -660,17 +653,17 @@ export function createUI({ root, emit }) {
     const navNode = nav
       ? h("div", { class: "c2-gameplay-nav" }, nav)
       : h("div", { class: "c2-gameplay-nav c2-gameplay-nav-empty", "aria-hidden": "true" });
-    root.appendChild(h("div", { class: "c2-card-inner c2-gameplay c2-gameplay-card" }, [
-      h("div", { class: "c2-stepper" }, [
-        (() => {
-          const el = h("div", { class: "c2-stepper-question", text: question || "", title: question || "" });
-          if (question) el.style.fontSize = question.length > 150 ? ".68rem" : question.length > 100 ? ".75rem" : ".86rem";
-          return el;
-        })(),
-      ]),
+    const cardChildren = [];
+    if (question) {
+      const questionHeader = h("div", { class: "c2-stepper-question", text: question, title: question });
+      questionHeader.style.fontSize = question.length > 150 ? ".68rem" : question.length > 100 ? ".75rem" : ".86rem";
+      cardChildren.push(h("div", { class: "c2-stepper" }, [questionHeader]));
+    }
+    cardChildren.push(
       h("div", { class: "c2-gameplay-body" }, body),
       navNode,
-    ]));
+    );
+    root.appendChild(h("div", { class: "c2-card-inner c2-gameplay c2-gameplay-card" }, cardChildren));
   }
 
   // ============================================================
