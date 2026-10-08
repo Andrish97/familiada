@@ -1275,36 +1275,6 @@ async function scenarioFinalFull(pages, { game, summaryAlreadyOpen = false, cont
     await expect(control.getByRole("button", { name: "Rozpocznij rundę" })).toBeEnabled({ timeout: 60_000 });
   }
 
-  if (game.exerciseDeviceDisconnect) {
-    // W czasie aktywnej gry rozłączamy wszystkie urządzenia. Modal ma
-    // wymienić brakujące, pokazać się raz i nie zasłaniać topbara podczas
-    // ponownego parowania po kolei.
-    await expect(control.getByRole("button", { name: "Rozpocznij rundę" })).toBeVisible();
-    await Promise.all([contexts.display.close(), contexts.host.close(), contexts.buzzer.close()]);
-    await Promise.all(["display", "host", "buzzer"].map((kind) => waitForDotStatus(control, kind, "bad")));
-    await expect(control.locator("#deviceLostOverlay")).toBeVisible({ timeout: 15_000 });
-    await expect(control.locator("#deviceLostText")).toContainText("Wyświetlacz");
-    await expect(control.locator("#deviceLostText")).toContainText("Prowadzący");
-    await control.waitForTimeout(1500);
-    await control.locator("#deviceLostClose").click();
-    for (const kind of ["display", "host", "buzzer"]) {
-      const reconnected = await reconnectDeviceViaModal(browser, control, kind);
-      contexts[kind] = reconnected.context;
-      pages[kind] = reconnected.page;
-      if (kind === "display") {
-        display = reconnected.page;
-        await expect(reconnected.page.locator("#audioUnlockScreen")).toBeVisible({ timeout: 10_000 });
-        await reconnected.page.waitForTimeout(1200);
-        await reconnected.page.locator("#btnAudioUnlock").click();
-        await expect(reconnected.page.locator("#audioUnlockScreen")).toBeHidden({ timeout: 10_000 });
-      }
-      if (kind === "host") host = reconnected.page;
-      if (kind === "buzzer") buzzer = reconnected.page;
-      await expect(control.locator("#deviceLostOverlay")).toBeHidden();
-    }
-    await expect(control.getByRole("button", { name: "Rozpocznij rundę" })).toBeEnabled({ timeout: 60_000 });
-  }
-
   await playThreeNaturalRoundsToThreshold(pages);
 
   await clickPaced(control.getByRole("button", { name: "Rozpocznij finał" }));
@@ -1705,6 +1675,33 @@ async function scenarioRecentFixes(pages, { contexts, browser, game }) {
   await expect(preview.locator(".ico")).toHaveClass(/ico-stop/);
   await clickPaced(control.getByRole("button", { name: "Gotowe — przejdź do rozgrywki" }), ADMIN_PACE_MS);
 
+  // Aktywny przebieg ze źródłem dźwięku Control: kilka odłączonych urządzeń
+  // daje jeden modal, a ponowne parowanie po kolei nie zasłania topbara.
+  await clickPaced(control.getByRole("button", { name: "Rozpocznij grę" }), ADMIN_PACE_MS);
+  await clickPaced(control.getByRole("button", { name: "Rozpocznij rundę" }), ADMIN_PACE_MS);
+  await clickPaced(pages.buzzer.getByRole("button", { name: "Przycisk A" }));
+  await armAndConfirmPaced(control.getByRole("button", { name: "Zatwierdź: Alfa" }));
+  await armAndConfirmPaced(answerTile(control, 1));
+  await Promise.all([contexts.display.close(), contexts.host.close(), contexts.buzzer.close()]);
+  await Promise.all(["display", "host", "buzzer"].map((kind) => waitForDotStatus(control, kind, "bad")));
+  await expect(control.locator("#deviceLostOverlay")).toBeVisible({ timeout: 15_000 });
+  await expect(control.locator("#deviceLostText")).toContainText("Wyświetlacz");
+  await expect(control.locator("#deviceLostText")).toContainText("Prowadzący");
+  await control.waitForTimeout(1500);
+  await control.locator("#deviceLostClose").click();
+  for (const kind of ["display", "host", "buzzer"]) {
+    const reconnected = await reconnectDeviceViaModal(browser, control, kind);
+    contexts[kind] = reconnected.context;
+    pages[kind] = reconnected.page;
+    if (kind === "display") display = reconnected.page;
+    await expect(control.locator("#deviceLostOverlay")).toBeHidden();
+  }
+  await expect(control.locator("#dotDisplay")).toHaveClass(/ok/);
+  await expect(control.locator("#dotHost")).toHaveClass(/ok/);
+  await expect(control.locator("#dotBuzzer")).toHaveClass(/ok/);
+  await expect(answerTile(control, 2)).toBeEnabled({ timeout: 30_000 });
+  await control.waitForTimeout(1500); // odpowiedź i wszystkie urządzenia wróciły bez drugiego modala
+
   // Drugi etap tego samego nagrania wykorzystuje świeżą rozgrywkę: finał
   // losowy bierze pięć pytań z puli rund, a po losowaniu zostają trzy
   // pytania na dokładnie trzy rundy. Zachowujemy ten sam, edytowany wygląd.
@@ -1745,7 +1742,6 @@ async function scenarioRecentFixes(pages, { contexts, browser, game }) {
   await control.evaluate(() => { Math.random = window.__recordOriginalRandom; delete window.__recordOriginalRandom; });
 
   randomGame.reunlockDisplayAfterControlReconnect = true;
-  randomGame.exerciseDeviceDisconnect = true;
   await scenarioFinalFull(pages, { game: randomGame, summaryAlreadyOpen: true, contexts, browser });
 }
 
