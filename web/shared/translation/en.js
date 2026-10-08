@@ -2700,6 +2700,7 @@ const en = {
       draft: "DRAFT",
       open: "OPEN",
       closed: "CLOSED",
+      ready: "READY",
     },
     newGame: {
       pollText: "New poll",

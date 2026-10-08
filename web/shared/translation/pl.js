@@ -2587,8 +2587,9 @@ const pl = {
     },
     status: {
       draft: "SZKIC",
-      open: "OTWARTY",
-      closed: "ZAMKNIĘTY",
+      open: "OTWARTA",
+      closed: "ZAMKNIĘTA",
+      ready: "GOTOWA",
     },
     newGame: {
       pollText: "Nowa ankieta",

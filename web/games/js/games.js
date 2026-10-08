@@ -45,6 +45,7 @@ const MSG = {
   statusDraft: () => t("games.status.draft"),
   statusOpen: () => t("games.status.open"),
   statusClosed: () => t("games.status.closed"),
+  statusReady: () => t("games.status.ready"),
   newGamePollText: () => t("games.newGame.pollText"),
   newGamePollPoints: () => t("games.newGame.pollPoints"),
   newGamePrepared: () => t("games.newGame.prepared"),
@@ -681,8 +682,12 @@ function typeLabel(uiType) {
   return String(uiType || t("control.dash")).toUpperCase();
 }
 
-function statusLabel(st) {
+function statusLabel(st, g) {
   const s = st || STATUS.DRAFT;
+  // Preparowana ma zawsze stan „draft” — gotowa do gry to nie szkic.
+  if (g && s === STATUS.DRAFT && uiTypeFromRow(g) === TYPES.PREPARED && rulesFromState(g.rules_state)?.play?.ok) {
+    return MSG.statusReady();
+  }
   if (s === STATUS.DRAFT) return MSG.statusDraft();
   if (s === STATUS.POLL_OPEN) return MSG.statusOpen();
   if (s === STATUS.READY) return MSG.statusClosed();
@@ -861,7 +866,7 @@ function cardGame(g) {
   `;
 
   el.querySelector(".name").textContent = g.name || t("control.dash");
-  el.querySelector(".meta").textContent = `${typeLabel(uiType)} • ${statusLabel(g.status)}`;
+  el.querySelector(".meta").textContent = `${typeLabel(uiType)} • ${statusLabel(g.status, g)}`;
 
   const blocker = tileBlocker(g);
   el.querySelector(".rules").textContent = blocker;

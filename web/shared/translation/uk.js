@@ -2685,8 +2685,9 @@ const uk = {
     },
     status: {
       draft: "ЧЕРНЕТКА",
-      open: "ВІДКРИТО",
-      closed: "ЗАКРИТО",
+      open: "ВІДКРИТА",
+      closed: "ЗАКРИТА",
+      ready: "ГОТОВА",
     },
     newGame: {
       pollText: "Нове опитування",
