@@ -3476,6 +3476,17 @@ const uk = {
   },
 
   pollsHubSubscriptions: {
+    view: {
+      current: "Актуальні",
+      archive: "Архівні",
+      sortLabel: "Сортування",
+      sort: {
+        newest: "Найновіші",
+        oldest: "Найстаріші",
+        nameAsc: "Назва А–Я",
+        nameDesc: "Назва Я–А",
+      },
+    },
     bar: {
       title: "Підписки",
       hintSubscribers: "Натисни плитку, щоб її виділити. Плитка з плюсом додає нового підписника.",

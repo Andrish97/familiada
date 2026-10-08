@@ -8,6 +8,7 @@ import "../../shared/js/core/contact-modal.js?v=v2026-10-08T07385";
 import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-08T07385";
 import { createCooldownTicker } from "../../shared/js/core/cooldown.js?v=v2026-10-08T07385";
 import { enterModalSheet, exitModalSheet, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-08T07385";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-08T07385";
 import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-08T07385";
 
 const i18nReady = initI18n({ withSwitcher: true }).catch((err) => {
@@ -341,6 +342,7 @@ function setActiveTab(tab) {
   const hintKey = { subscribers: "hintSubscribers", subscriptions: "hintSubscriptions", tasks: "hintTasks" }[activeTab];
   if (hintEl) hintEl.textContent = t(`pollsHubSubscriptions.bar.${hintKey}`);
   document.querySelectorAll(".actions [data-for]").forEach((b) => { b.hidden = b.dataset.for !== activeTab; });
+  syncViewControls();
   updateActions();
 }
 
@@ -368,8 +370,94 @@ function updateActions() {
   if (btnVote) btnVote.disabled = !(row && activeTab === "tasks" && row.status === "pending" && row.token);
 }
 
-function sortNewest(list) {
-  return [...list].sort((a, b) => parseDate(b.created_at) - parseDate(a.created_at));
+// Widok per zakładka (tylko w pamięci): aktualne/archiwalne + sortowanie.
+const viewState = {
+  subscribers: { archive: false, sort: "newest" },
+  subscriptions: { archive: false, sort: "newest" },
+  tasks: { archive: false, sort: "newest" },
+};
+const SORTS = ["newest", "oldest", "nameAsc", "nameDesc"];
+let sortSelectApi = null;
+let viewToggleBtns = null;
+
+function isArchivedStatus(status) {
+  return status === "declined" || status === "cancelled" || status === "done";
+}
+
+function sortRows(list, sort, nameOf) {
+  const cmpName = (a, b) => String(nameOf(a)).localeCompare(String(nameOf(b)), getUiLang() || "pl", { sensitivity: "base" });
+  const rows = [...list];
+  if (sort === "oldest") rows.sort((a, b) => parseDate(a.created_at) - parseDate(b.created_at));
+  else if (sort === "nameAsc") rows.sort(cmpName);
+  else if (sort === "nameDesc") rows.sort((a, b) => cmpName(b, a));
+  else rows.sort((a, b) => parseDate(b.created_at) - parseDate(a.created_at));
+  return rows;
+}
+
+function rerenderAll() {
+  renderSubscribers();
+  renderInvites();
+  renderTasks();
+  updateActions();
+}
+
+function syncViewControls() {
+  const v = viewState[activeTab];
+  if (!v || !viewToggleBtns) return;
+  viewToggleBtns.current.classList.toggle("gold", !v.archive);
+  viewToggleBtns.archive.classList.toggle("gold", v.archive);
+  viewToggleBtns.current.setAttribute("aria-pressed", v.archive ? "false" : "true");
+  viewToggleBtns.archive.setAttribute("aria-pressed", v.archive ? "true" : "false");
+  sortSelectApi?.setValue(v.sort, { silent: true });
+}
+
+function initViewControls() {
+  const slot = document.querySelector(".games-bottom-left");
+  if (!slot) return;
+  const group = document.createElement("div");
+  group.className = "subs-view-toggle";
+  group.setAttribute("role", "group");
+  const mk = (archive) => {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "btn sm";
+    b.addEventListener("click", () => {
+      viewState[activeTab].archive = archive;
+      syncViewControls();
+      rerenderAll();
+    });
+    return b;
+  };
+  viewToggleBtns = { current: mk(false), archive: mk(true) };
+  group.append(viewToggleBtns.current, viewToggleBtns.archive);
+
+  const wrap = document.createElement("div");
+  wrap.className = "ui-select subs-sort";
+  wrap.innerHTML = `<button class="btn sm ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false"><span class="ui-select-label">—</span><span class="ui-select-caret" aria-hidden="true"><i class="ico" data-icon="caret-down"></i></span></button><div class="ui-select-menu" role="listbox"></div>`;
+  slot.prepend(wrap);
+  slot.prepend(group);
+
+  const sortOptions = () => SORTS.map((k) => ({ value: k, label: t(`pollsHubSubscriptions.view.sort.${k}`) }));
+  const labelAll = () => {
+    viewToggleBtns.current.textContent = t("pollsHubSubscriptions.view.current");
+    viewToggleBtns.archive.textContent = t("pollsHubSubscriptions.view.archive");
+    wrap.querySelector(".ui-select-btn")?.setAttribute("aria-label", t("pollsHubSubscriptions.view.sortLabel"));
+  };
+  labelAll();
+  sortSelectApi = initUiSelect(wrap, {
+    options: sortOptions(),
+    value: viewState[activeTab].sort,
+    onChange: (val) => {
+      if (!SORTS.includes(val)) return;
+      viewState[activeTab].sort = val;
+      rerenderAll();
+    },
+  });
+  window.addEventListener("i18n:lang", () => {
+    labelAll();
+    sortSelectApi?.setOptions(sortOptions());
+  });
+  syncViewControls();
 }
 
 function tagHtml(variant, text) {
@@ -423,11 +511,11 @@ function renderSubscribers() {
   add.addEventListener("click", openInviteModal);
   el.appendChild(add);
 
-  const visible = sortNewest(subscribers.filter((s) => {
-    if (s.status === "cancelled") return false;
-    if (s.status === "declined") return !s.is_expired;
-    return s.status === "active" || s.status === "pending";
-  }));
+  const arch = viewState.subscribers.archive;
+  const visible = sortRows(subscribers.filter((s) => {
+    if (s.is_expired) return false;
+    return arch ? isArchivedStatus(s.status) : (s.status === "active" || s.status === "pending");
+  }), viewState.subscribers.sort, (r) => r.subscriber_label || "");
   if (!visible.length) renderEmptyTile(el, MSG.emptySubscribers());
 
   for (const row of visible) {
@@ -509,11 +597,11 @@ function renderInvites() {
   const el = grids.subscriptions;
   if (!el) return;
   el.innerHTML = "";
-  const visible = sortNewest(invites.filter((s) => {
-    if (s.status === "cancelled") return false;
-    if (s.status === "declined") return !s.is_expired;
-    return s.status === "active" || s.status === "pending";
-  }));
+  const arch = viewState.subscriptions.archive;
+  const visible = sortRows(invites.filter((s) => {
+    if (s.is_expired) return false;
+    return arch ? isArchivedStatus(s.status) : (s.status === "active" || s.status === "pending");
+  }), viewState.subscriptions.sort, (r) => r.owner_label || "");
   if (!visible.length) renderEmptyTile(el, MSG.emptySubscriptions());
 
   for (const row of visible) {
@@ -576,9 +664,12 @@ function renderTasks() {
   const el = grids.tasks;
   if (!el) return;
   el.innerHTML = "";
-  // Tylko zadania do wykonania: zamknięcie ankiety anuluje jej oczekujące
+  // Aktualne: zadania do wykonania; archiwalne: zrobione / odrzucone / anulowane.
+  // Zamknięcie ankiety anuluje jej oczekujące
   // zadania po stronie bazy, więc „pending” oznacza ankietę otwartą.
-  const visible = sortNewest(tasks.filter((r) => r.status === "pending"));
+  const arch = viewState.tasks.archive;
+  const visible = sortRows(tasks.filter((r) => (r.status === "pending") !== arch), viewState.tasks.sort,
+    (r) => r.game_name || "");
   if (!visible.length) renderEmptyTile(el, MSG.emptyTasks());
 
   for (const task of visible) {
@@ -870,6 +961,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   initTopbarAccountDropdown(user);
   document.querySelector('.topbar')?.classList.add('topbar-ready');
 
+  initViewControls();
   initListSearch({ grids: "#subscribersGrid, #subscriptionsGrid, #tasksGrid", tile: ".card", name: ".name" });
 
   TABS.forEach((k, index) => {

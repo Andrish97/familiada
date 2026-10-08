@@ -3377,6 +3377,17 @@ const pl = {
   },
 
   pollsHubSubscriptions: {
+    view: {
+      current: "Aktualne",
+      archive: "Archiwalne",
+      sortLabel: "Sortowanie",
+      sort: {
+        newest: "Najnowsze",
+        oldest: "Najstarsze",
+        nameAsc: "Nazwa A–Z",
+        nameDesc: "Nazwa Z–A",
+      },
+    },
     bar: {
       title: "Subskrypcje",
       hintSubscribers: "Naciśnij kafelek, żeby go zaznaczyć. Plus dodaje nowego subskrybenta.",
