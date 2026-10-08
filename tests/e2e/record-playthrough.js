@@ -1626,7 +1626,7 @@ async function scenarioDeviceReconnect(pages, { contexts, browser }) {
 // ===== Scenariusz 12: jeden pełny zapis najnowszych poprawek Control 2.
 // Setup i ponowne połączenie, pytania/ustawienia, odblokowanie dźwięku,
 // pełna rozgrywka z losowym finałem i ekranem końcowym. =====
-async function scenarioRecentFixes(pages, { game }) {
+async function scenarioRecentFixes(pages, { contexts, browser, game }) {
   let { control, display } = pages;
   await expect(control.locator(".stepTitle")).toHaveText("Urządzenia");
   for (const kind of ["display", "host", "buzzer"]) await waitForDotStatus(control, kind, "ok");
