@@ -290,7 +290,15 @@
           <div class="mTitle" id="previewTitle">—</div>
           <button class="btn sm" id="btnPreviewClose" type="button" aria-label="Zamknij" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
         </div>
+        <div class="bld-preview-switch" id="previewSwitch" role="group" aria-label="Podgląd" data-i18n-aria-label="games.preview.switchLabel" hidden>
+          <button class="btn sm gold" id="btnPreviewModeGame" type="button" data-i18n="games.preview.modeGame" aria-pressed="true">Gra</button>
+          <button class="btn sm" id="btnPreviewModePoll" type="button" data-i18n="games.preview.modePoll" aria-pressed="false">Ankieta</button>
+        </div>
         <div class="bld-preview-questions" id="previewQuestions"></div>
+        <div class="bld-preview-questions bld-preview-poll" id="previewPoll" hidden>
+          <div class="meta" id="previewPollMeta"></div>
+          <div id="previewPollList"></div>
+        </div>
       </div>
     </div>
 

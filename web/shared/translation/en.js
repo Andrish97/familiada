@@ -2624,6 +2624,11 @@ const en = {
       noQuestions: "No questions.",
       loading: "Loading…",
       pts: "pts",
+      modeGame: "Game",
+      modePoll: "Poll",
+      switchLabel: "Preview mode",
+      pollDraft: "The poll has not been started yet",
+      pollFailed: "Could not load the poll results.",
     },
     tabs: {
       pollText: "Standard poll",

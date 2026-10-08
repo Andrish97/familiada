@@ -10,6 +10,7 @@ import { maybeShowGuestInfoModal } from "../../shared/js/core/guest-info-modal.j
 import { maybeShowGuestMigrateReminder } from "../../shared/js/core/guest-migrate-reminder.js?v=v2026-10-08T09233";
 
 import { initPwa, isStandalone, isMobileDevice } from "../../shared/js/core/pwa.js?v=v2026-10-08T09233";
+import { createPollResults } from "../../shared/js/core/poll-results.js?v=v2026-10-08T09233";
 import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-08T09233";
 
 // Zarejestruj listener PWA jak najwcześniej – beforeinstallprompt może odpalić przed requireAuth
@@ -1427,6 +1428,53 @@ document.addEventListener("DOMContentLoaded", async () => {
   // Numer bieżącego podglądu: odpowiedź dla gry A, która przyszła po
   // zamknięciu i otwarciu podglądu B, nie może nadpisać pytań B.
   let previewSeq = 0;
+  const previewSwitch = document.getElementById("previewSwitch");
+  const btnModeGame = document.getElementById("btnPreviewModeGame");
+  const btnModePoll = document.getElementById("btnPreviewModePoll");
+  const previewPoll = document.getElementById("previewPoll");
+  const previewPollMeta = document.getElementById("previewPollMeta");
+  const previewPollList = document.getElementById("previewPollList");
+  const previewPollResults = createPollResults(previewPollList);
+  let previewPollGameId = null;
+  let previewPollLoaded = false;
+
+  // Wyniki ankiety: migawka z chwili przełączenia (bez odświeżania w tle).
+  const loadPreviewPoll = async () => {
+    const seq = previewSeq;
+    const id = previewPollGameId;
+    if (!id || !previewPollMeta) return;
+    previewPollResults.reset();
+    previewPollMeta.textContent = t("games.preview.loading") || "Ładowanie…";
+    try {
+      const { data, error } = await sb().rpc("get_poll_preview", { p_game_id: id });
+      if (error) throw error;
+      if (seq !== previewSeq) return;
+      if (data?.status === STATUS.DRAFT) {
+        previewPollMeta.textContent = t("games.preview.pollDraft");
+        return;
+      }
+      previewPollMeta.textContent = previewPollResults.render(data);
+      previewPollLoaded = true;
+    } catch (e) {
+      console.error("[games] poll preview failed:", e);
+      if (seq !== previewSeq) return;
+      previewPollMeta.textContent = t("games.preview.pollFailed");
+    }
+  };
+
+  const setPreviewMode = (mode) => {
+    const poll = mode === "poll";
+    btnModeGame?.classList.toggle("gold", !poll);
+    btnModePoll?.classList.toggle("gold", poll);
+    btnModeGame?.setAttribute("aria-pressed", String(!poll));
+    btnModePoll?.setAttribute("aria-pressed", String(poll));
+    if (previewQuestions) previewQuestions.hidden = poll;
+    if (previewPoll) previewPoll.hidden = !poll;
+    if (poll && !previewPollLoaded) void loadPreviewPoll();
+  };
+  btnModeGame?.addEventListener("click", () => setPreviewMode("game"));
+  btnModePoll?.addEventListener("click", () => setPreviewMode("poll"));
+
   const closePreview = () => {
     previewSeq++;
     if (previewOverlay) previewOverlay.style.display = "none";
@@ -1458,6 +1506,15 @@ document.addEventListener("DOMContentLoaded", async () => {
       return;
     }
     const seq = ++previewSeq;
+
+    // Przełącznik Gra · Ankieta tylko dla gier ankietowych
+    const pg = !marketId ? gamesAll.find(x => x.id === gameId) : null;
+    const isPoll = !!pg && (pg.type === TYPES.POLL_TEXT || pg.type === TYPES.POLL_POINTS);
+    previewPollGameId = isPoll ? gameId : null;
+    previewPollLoaded = false;
+    previewPollResults.reset();
+    if (previewSwitch) previewSwitch.hidden = !isPoll;
+    setPreviewMode("game");
 
     // Pokaż modal natychmiast z nazwą i "Ładowanie…"
     if (previewTitle) previewTitle.textContent = gameName;

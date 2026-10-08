@@ -2512,6 +2512,11 @@ const pl = {
       noQuestions: "Brak pytań.",
       loading: "Ładowanie…",
       pts: "pkt",
+      modeGame: "Gra",
+      modePoll: "Ankieta",
+      switchLabel: "Przełącznik podglądu",
+      pollDraft: "Ankieta nie była jeszcze uruchomiona",
+      pollFailed: "Nie udało się wczytać wyników ankiety.",
     },
     tabs: {
       pollText: "Ankieta tekstowa",

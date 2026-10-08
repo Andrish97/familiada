@@ -10,6 +10,7 @@ import { validateGame, gameRuleErrorMessage } from "../../shared/js/core/game-va
 import { mailCooldownCheck } from "../../shared/js/core/cooldown.js?v=v2026-10-08T09233";
 import { sendPollInviteMails } from "../../shared/js/core/poll-mail.js?v=v2026-10-08T09233";
 import "../../shared/js/core/contact-modal.js?v=v2026-10-08T09233";
+import { createPollResults } from "../../shared/js/core/poll-results.js?v=v2026-10-08T09233";
 import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-08T09233";
 
 // initI18n is called at the start of DOMContentLoaded (see below)
@@ -466,150 +467,8 @@ function normalizeCountsTo100(items) {
    nowe na końcu. Sortowanie wg głosów dopiero przy zamykaniu.
 ======================= */
 
-// resDom = { mode, sig, byQ: Map(qid -> { list, rows: Map(key -> { row, bar, val }) }) }
-let resDom = null;
-const textOrder = new Map(); // qid -> [klucze w kolejności pojawienia się]
-
-function resetResultsDom() {
-  resDom = null;
-  textOrder.clear();
-  if (resultsList) resultsList.innerHTML = "";
-}
-
-function resultsMode(status, type) {
-  if (status === STATUS.DRAFT) return "draft";
-  if (status === STATUS.READY) return "final";
-  return type === TYPES.POLL_POINTS ? "points" : "text";
-}
-
-function makeResultRow(text) {
-  const row = document.createElement("div");
-  row.className = "aRow";
-  row.innerHTML = `<div class="aBar"></div><div class="aTxt"></div><div class="aVal">0</div>`;
-  row.querySelector(".aTxt").textContent = text;
-  return { row, bar: row.querySelector(".aBar"), val: row.querySelector(".aVal") };
-}
-
-function setRowValue(r, value, pct) {
-  const next = String(value);
-  if (r.val.textContent !== next) r.val.textContent = next;
-  const w = `${Math.max(0, Math.min(100, pct)).toFixed(1)}%`;
-  if (r.bar.style.width !== w) r.bar.style.width = w;
-}
-
-function buildResultsDom(mode, questions) {
-  resultsList.innerHTML = "";
-  const byQ = new Map();
-  for (const q of questions) {
-    const box = document.createElement("div");
-    box.className = "resultQ";
-    const title = document.createElement("div");
-    title.className = "qTitle";
-    title.textContent = `P${q.ord}: ${q.text}`;
-    box.appendChild(title);
-
-    const list = document.createElement("div");
-    list.className = "aList";
-    box.appendChild(list);
-    resultsList.appendChild(box);
-
-    const rows = new Map();
-    if (mode === "points" || mode === "final") {
-      for (const a of q.answers || []) {
-        const r = makeResultRow(a.text);
-        list.appendChild(r.row);
-        rows.set(a.id, r);
-      }
-    }
-    byQ.set(q.id, { list, rows });
-  }
-  return byQ;
-}
-
-function renderResults(data) {
-  if (!resultsList) return;
-  const { status, type } = data;
-  const questions = data.questions || [];
-  const mode = resultsMode(status, type);
-
-  const sig = [
-    mode,
-    ...questions.map((q) =>
-      mode === "points" || mode === "final"
-        ? `${q.id}:${(q.answers || []).map((a) => a.id).join("|")}`
-        : String(q.id)
-    ),
-  ].join(";");
-
-  if (!resDom || resDom.sig !== sig) {
-    resDom = { mode, sig, byQ: buildResultsDom(mode, questions) };
-  }
-
-  if (mode === "draft") {
-    if (resultsMeta) resultsMeta.textContent = questions.length ? "" : t("polls.results.noQuestions");
-    return;
-  }
-
-  for (const q of questions) {
-    const slot = resDom.byQ.get(q.id);
-    if (!slot) continue;
-
-    if (mode === "final") {
-      for (const a of q.answers || []) {
-        const r = slot.rows.get(a.id);
-        if (r) setRowValue(r, Number(a.fixed_points) || 0, Number(a.fixed_points) || 0);
-      }
-    } else if (mode === "points") {
-      const answers = q.answers || [];
-      const total = answers.reduce((s, a) => s + (Number(a.votes) || 0), 0);
-      for (const a of answers) {
-        const r = slot.rows.get(a.id);
-        const v = Number(a.votes) || 0;
-        if (r) setRowValue(r, v, total ? (100 * v) / total : 0);
-      }
-    } else {
-      renderTextRows(q, slot);
-    }
-  }
-
-  if (resultsMeta) resultsMeta.textContent = mode === "final" ? t("polls.results.final") : "";
-}
-
-function renderTextRows(q, slot) {
-  const rows = q.text_rows || [];
-  const incoming = new Map(rows.map((r) => [String(r.text), Number(r.val) || 0]));
-  const total = rows.reduce((s, r) => s + (Number(r.val) || 0), 0);
-
-  let order = textOrder.get(q.id);
-  if (!order) { order = []; textOrder.set(q.id, order); }
-
-  // nowe — na koniec, w kolejności od najczęstszych
-  for (const r of rows) {
-    const key = String(r.text);
-    if (!order.includes(key)) {
-      order.push(key);
-      const row = makeResultRow(key);
-      slot.list.appendChild(row.row);
-      slot.rows.set(key, row);
-    }
-  }
-
-  // zniknęły z listy (poza TOP 12) — usuń, reszta zostaje na miejscu
-  for (let i = order.length - 1; i >= 0; i--) {
-    const key = order[i];
-    if (!incoming.has(key)) {
-      slot.rows.get(key)?.row.remove();
-      slot.rows.delete(key);
-      order.splice(i, 1);
-    }
-  }
-
-  for (const key of order) {
-    const r = slot.rows.get(key);
-    const v = incoming.get(key) || 0;
-    if (r) setRowValue(r, v, total ? (100 * v) / total : 0);
-  }
-}
+const pollResults = createPollResults(resultsList);
+function resetResultsDom() { pollResults.reset(); }
 
 async function previewResults() {
   if (!game || !resultsList) return;
@@ -621,7 +480,8 @@ async function previewResults() {
 
   const { data, error } = await sb().rpc("get_poll_preview", { p_game_id: gameId });
   if (error) throw error;
-  renderResults(data);
+  const meta = pollResults.render(data);
+  if (resultsMeta) resultsMeta.textContent = meta;
 }
 
 // liczba głosujących = wiersze odpowiedzi na pierwsze pytanie (jeden na osobę na pytanie)
