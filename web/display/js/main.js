@@ -277,15 +277,23 @@ window.addEventListener("DOMContentLoaded", async () => {
     let audioUnlockReported = false;
     let audioUnlockRequestNonce = audioSessionNonce;
     let displaySoundSelected = false;
+    let activeGameStep = null;
     function syncAudioUnlockScreen(row = null) {
       if (!audioUnlockScreen) return;
       const soundSource = row?.detail?.settings?.soundSource;
       if (soundSource === "display" || soundSource === "control") {
         displaySoundSelected = soundSource === "display";
       }
+      if (typeof row?.step === "string") activeGameStep = row.step;
       // Odblokowanie przeglądarki jest potrzebne tylko wtedy, gdy dźwięk ma
       // grać z tego urządzenia. Nie zasłaniaj Display, gdy gra dźwięk z Control.
-      const visible = displaySoundSelected && !audioUnlockReported;
+      // Po wejściu Display w trakcie rozgrywki poczekaj na nonce żądania od
+      // Control. Sam nonce sesji powstaje wcześniej przy ładowaniu Display;
+      // pokazanie go od razu ścigałoby się z żądaniem ponownego odblokowania
+      // po powrocie Control. W kroku Urządzenia przycisk pojawia się od razu.
+      const inGameplay = !!activeGameStep && !/^(devices_|setup_)/.test(activeGameStep);
+      const hasCurrentGameplayRequest = !inGameplay || audioUnlockRequestNonce !== audioSessionNonce;
+      const visible = displaySoundSelected && !audioUnlockReported && hasCurrentGameplayRequest;
       const wasHidden = audioUnlockScreen.classList.contains("hidden");
       audioUnlockScreen.classList.toggle("hidden", !visible);
       audioUnlockScreen.setAttribute("aria-hidden", String(!visible));

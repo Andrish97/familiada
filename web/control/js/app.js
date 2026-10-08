@@ -328,6 +328,7 @@ async function main() {
   let displayAudioUnlockNonce = null;
   let requestedDisplayAudioUnlockNonce = null;
   let displayUnlockRetryTimer = null;
+  let displayUnlockRequestPending = false;
   let refreshDisplayPresence = null;
   let controlOffline = !navigator.onLine;
   let presenceUnavailable = false;
@@ -365,11 +366,43 @@ async function main() {
     // source of truth, so a dropped or duplicated event cannot lose the flag.
     void refreshDisplayPresence?.();
   });
+  function requestDisplayAudioUnlock() {
+    if (store.state.settings.soundSource !== "display"
+      || /^(devices_|setup_)/.test(store.state.step)
+      || store.state.locks.gameEnded) return;
+    requestedDisplayAudioUnlockNonce = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    displayAudioUnlocked = false;
+    const publish = () => {
+      if (!waitingForDisplayAudioUnlock()) {
+        clearInterval(displayUnlockRetryTimer);
+        displayUnlockRetryTimer = null;
+        return;
+      }
+      rt(doorbellTopic(gameId)).sendBroadcast("audio_unlock_required", {
+        nonce: requestedDisplayAudioUnlockNonce,
+      }, { mode: "http" }).catch(() => {});
+    };
+    clearInterval(displayUnlockRetryTimer);
+    const nonce = requestedDisplayAudioUnlockNonce;
+    displayUnlockRequestPending = true;
+    void sb().rpc("request_display_audio_unlock", { p_game_id: gameId, p_nonce: nonce })
+      .then(({ error }) => {
+        // Keep the heartbeat metadata path usable during a rolling deploy.
+        if (error) console.warn("[control2 audio unlock] durable request failed:", error.message);
+        if (nonce !== requestedDisplayAudioUnlockNonce) return;
+        displayUnlockRequestPending = false;
+        publish();
+        displayUnlockRetryTimer = setInterval(publish, 1500);
+        void refreshDisplayPresence?.();
+      }).catch((error) => {
+        displayUnlockRequestPending = false;
+        console.warn("[control2 audio unlock] durable request failed:", error?.message || error);
+      });
+    renderCurrent();
+  }
   function onControlReconnect() {
-    // Control's network returning does not create a new Display audio
-    // session. The Display's own begin_display_audio_session RPC creates the
-    // fresh nonce; minting a second nonce here races the visible unlock button.
     controlOffline = false;
+    requestDisplayAudioUnlock();
     renderCurrent();
   }
   window.addEventListener("offline", () => {
@@ -578,15 +611,15 @@ async function main() {
     gameId,
     onChange: ({ flags, displayAudioUnlocked: audioUnlocked, displayAudioUnlockNonce: audioUnlockNonce, displayAudioUnlockStatus, error }) => {
       const previous = presenceFlags;
+      const displayAudioWasUnlocked = displayAudioUnlocked === true;
+      const displayReconnected = !previous.display && flags.display === true;
+      const displayAudioSessionReset = previous.display === true && flags.display === true
+        && displayAudioWasUnlocked && audioUnlocked !== true;
       presenceFlags = flags;
       displayAudioUnlocked = audioUnlocked;
       displayAudioUnlockNonce = audioUnlockNonce;
-      // The active Display session nonce is the unlock token. Do not replace
-      // it with a Control-generated nonce: after reconnect, Display can show
-      // its button before Control's next presence poll, and an early click
-      // would acknowledge the now-stale session token.
       if (displayAudioUnlockStatus?.requestNonce
-        && displayAudioUnlockStatus.requestNonce !== requestedDisplayAudioUnlockNonce) {
+        && (!displayUnlockRequestPending || displayAudioUnlockStatus.requestNonce === requestedDisplayAudioUnlockNonce)) {
         requestedDisplayAudioUnlockNonce = displayAudioUnlockStatus.requestNonce;
         if (displayAudioUnlockStatus.acknowledgedNonce === displayAudioUnlockStatus.requestNonce) {
           clearInterval(displayUnlockRetryTimer);
@@ -609,6 +642,12 @@ async function main() {
       if (error) presenceUnavailable = true;
       else if (presenceUnavailable) {
         presenceUnavailable = false;
+        requestDisplayAudioUnlock();
+      } else if ((displayReconnected || displayAudioSessionReset) && store.state.settings.soundSource === "display") {
+        // A Display that reconnects during a game needs a fresh browser gesture
+        // even if it reported an unlock before disconnecting. Send a new nonce
+        // so its button returns and keep Control actions gated until it replies.
+        requestDisplayAudioUnlock();
       }
       if (requestedDisplayAudioUnlockNonce && audioUnlocked === true && audioUnlockNonce === requestedDisplayAudioUnlockNonce) {
         clearInterval(displayUnlockRetryTimer);
