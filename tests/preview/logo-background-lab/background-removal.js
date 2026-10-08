@@ -403,7 +403,7 @@ sourceCanvas.addEventListener("click", event => {
 resetButton.addEventListener("click", () => {
   backgroundInput.value = autoBackground;
   toleranceInput.value = "20";
-  featherInput.value = "130";
+  featherInput.value = "20";
   updateIslandLimitReadout();
   for (const input of [toleranceInput, featherInput]) {
     document.getElementById(`${input.id}Value`).value = `${input.value} / 255`;

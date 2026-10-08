@@ -33,7 +33,7 @@ Wspólne parametry do oceny:
 
 - kolor tła: mediana próbek z czterech rogów albo ręczne pobranie z obrazu;
 - tolerancja: 20/255 na start, czyli próg uznania koloru za tło;
-- miękkość krawędzi: 130/255 na start, czyli zakres przejścia do pełnej
+- miękkość krawędzi: 20/255 na start, czyli zakres przejścia do pełnej
   nieprzezroczystości;
 - ocena tła: jasność mediany i różnica kolorów pomiędzy próbkami z rogów.
 

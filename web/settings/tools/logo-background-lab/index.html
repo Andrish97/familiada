@@ -94,7 +94,7 @@
         <input id="tolerance" type="range" min="0" max="100" value="20" disabled>
       </label>
       <label class="control">Miękkość krawędzi <output id="reachValue"></output>
-        <input id="reach" type="range" min="0" max="220" value="130" disabled>
+        <input id="reach" type="range" min="0" max="220" value="20" disabled>
       </label>
       <div class="status" id="suitability"><strong>Wczytaj obraz</strong><span>Sprawdzę, czy tło nadaje się do usunięcia.</span></div>
     </section>
@@ -538,7 +538,7 @@ sourceCanvas.addEventListener("click", event => {
 resetButton.addEventListener("click", () => {
   backgroundInput.value = autoBackground;
   toleranceInput.value = "20";
-  featherInput.value = "130";
+  featherInput.value = "20";
   updateIslandLimitReadout();
   for (const input of [toleranceInput, featherInput]) {
     document.getElementById(`${input.id}Value`).value = `${input.value} / 255`;

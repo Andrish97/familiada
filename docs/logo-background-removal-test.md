@@ -45,7 +45,7 @@ pliku PNG zachowuje jego oryginalne bajty i nazwę.
 
 - Kolor tła: mediana narożników lub próbka wskazana kliknięciem na obrazie.
 - Tolerancja: 20/255. Określa, które piksele stają się całkowicie przezroczyste.
-- Miękkość krawędzi: 130/255. Wyznacza zakres przejścia do pełnej
+- Miękkość krawędzi: 20/255. Wyznacza zakres przejścia do pełnej
   nieprzezroczystości.
 - Podgląd i eksport są ograniczone do 1600 px na dłuższym boku.
 
