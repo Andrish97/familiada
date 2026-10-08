@@ -137,6 +137,23 @@ async function restoreDemoGame(setupPage, { pickOrds = [], settings = {}, finalP
   }, { pickOrds, settings, finalPickOrds });
 }
 
+async function readPickedFinalQuestions(page, gameId) {
+  return page.evaluate(async (id) => {
+    const sb = window.__sbClient;
+    const { data: state, error: stateError } = await sb.from("game_state").select("detail").eq("game_id", id).single();
+    if (stateError) throw stateError;
+    const ids = state.detail.final.picked || [];
+    const { data: questions, error: questionError } = await sb.from("questions").select("id,ord,text").in("id", ids);
+    if (questionError) throw questionError;
+    const { data: answers, error: answerError } = await sb.from("answers").select("id,question_id,ord,text,fixed_points").in("question_id", ids);
+    if (answerError) throw answerError;
+    const byId = new Map(questions.map((q) => [String(q.id), { ...q, answers: [] }]));
+    for (const answer of answers) byId.get(String(answer.question_id))?.answers.push(answer);
+    for (const question of byId.values()) question.answers.sort((a, b) => a.ord - b.ord);
+    return ids.map((questionId) => byId.get(String(questionId)));
+  }, gameId);
+}
+
 async function deleteGame(page, gameId) {
   await page.evaluate(async (gid) => {
     const sb = window.__sbClient;
@@ -158,16 +175,41 @@ function familiadaGlyphPayload() {
   return JSON.parse(fs.readFileSync(path.join(__dirname, "../../web/shared/data/logo_familiada.json"), "utf8"));
 }
 
-async function insertLogo(setupPage, name) {
-  return setupPage.evaluate(async ({ name, payload }) => {
+async function insertLogo(setupPage, name, payload = familiadaGlyphPayload(), type = "GLYPH_30x10") {
+  return setupPage.evaluate(async ({ name, payload, type }) => {
     const sb = window.__sbClient;
     const { data: userData } = await sb.auth.getUser();
     const { data, error } = await sb.from("user_logos")
-      .insert({ user_id: userData.user.id, name, type: "GLYPH_30x10", payload })
+      .insert({ user_id: userData.user.id, name, type, payload })
       .select("id").single();
     if (error) throw new Error("insert logo failed: " + error.message);
     return data.id;
-  }, { name, payload: familiadaGlyphPayload() });
+  }, { name, payload, type });
+}
+
+async function selectDemoImageLogo(page, game) {
+  const logo = await page.evaluate(async () => {
+    const sb = window.__sbClient;
+    const { data: userData } = await sb.auth.getUser();
+    const { data, error } = await sb.from("user_logos")
+      .select("id,name,type,payload")
+      .eq("user_id", userData.user.id).eq("is_demo", true);
+    if (error) throw new Error("select demo logos failed: " + error.message);
+    return (data || []).find((row) => row.type === "PIX_150x70" && row.payload?.source?.mode === "IMAGE" && row.payload?.bits_b64);
+  });
+  if (!logo) throw new Error("demo IMAGE logo (PIX_150x70) was not seeded");
+  game.recordLogoId = logo.id;
+  game.recordLogoName = logo.name;
+  await page.evaluate(async ({ id, logoId }) => {
+    const sb = window.__sbClient;
+    const { data, error } = await sb.from("games").select("settings").eq("id", id).single();
+    if (error) throw error;
+    const settings = data.settings || {};
+    settings.display = { ...(settings.display || {}), logoId };
+    const { error: updateError } = await sb.from("games").update({ settings }).eq("id", id);
+    if (updateError) throw updateError;
+  }, { id: game.id, logoId: logo.id });
+  return game;
 }
 
 async function acquireLogoLockExternally(setupPage, logoId, tabId) {
@@ -471,8 +513,8 @@ async function hostPeekSwipe(hostPage) {
 //   ADMIN_PACE_MS — jawnie podane tam, gdzie NIC się nie ogłasza: kroki
 //     kreatora urządzeń ("Dalej", "Gotowe — przejdź do rozgrywki",
 //     "Rozpocznij grę"), otwarcie/zapis modala ustawień gry.
-const REVEAL_PACE_MS = 3400;
-const ADMIN_PACE_MS = 900;
+const REVEAL_PACE_MS = 4500;
+const ADMIN_PACE_MS = 1400;
 const WRITE_RPC_RE = /\/rpc\/(game_state_write|game_state_buzzer_press)(\?|$)/;
 
 function waitForWrite(page) {
@@ -538,10 +580,10 @@ async function pressBuzzerPaced(buzzerPage, label, ms = REVEAL_PACE_MS) {
 async function armAndConfirmPaced(locator, ms = REVEAL_PACE_MS) {
   const page = locator.page();
   const mappingChoice = await locator.evaluate((el) => !!document.querySelector(".c2-mapinput") && /^(?:[1-6]|w|o|r)$/.test(el.dataset.shortcut || ""));
-  if (mappingChoice) return clickPaced(locator, 500);
+  if (mappingChoice) return clickPaced(locator, 1200);
   const accept = await locator.evaluate(el => el.dataset.shortcut === "c");
   await locator.click();
-  await page.waitForTimeout(accept ? 250 : 700); // widz ma zdążyć zobaczyć złotą obwódkę "uzbrojenia" przed potwierdzeniem (proporcjonalnie do REVEAL_PACE_MS)
+  await page.waitForTimeout(accept ? 600 : 1000); // zostaw wyraźną chwilę na zobaczenie uzbrojenia przed potwierdzeniem
   await clickPaced(locator, accept ? 250 : ms);
 }
 
@@ -584,7 +626,7 @@ async function fillPaced(locator, text, ms = REVEAL_PACE_MS) {
 // nazwach klawiszy, nie na dowolnym Unicode) — wywoływane dopiero PO
 // ustawieniu focusu/kursora przez press("End"), więc trafia we właściwe,
 // aktualne miejsce.
-async function typePaced(locator, text, msPerChar = 90) {
+async function typePaced(locator, text, msPerChar = 180) {
   const page = locator.page();
   for (const ch of text) {
     const responded = waitForWrite(page);
@@ -770,7 +812,7 @@ async function scenarioRoundsMechanics(pages, { contexts }) {
   //
   // DRUGI real bug znaleziony przez failed nagranie (przebieg z 2026-09-25,
   // zrzut ekranu FAILURE.png): zamiast czekać na REALNE potwierdzenie
-  // zapisu, kod czekał tu na stały ADMIN_PACE_MS (900ms, obniżone w tej
+  // zapisu, kod czekał tu na stały ADMIN_PACE_MS (wcześniej 900ms, obniżone w tej
   // sesji z 2200ms) i OD RAZU klikał w tło, żeby zamknąć modal. Jeśli
   // prawdziwy zapis (saveAll(), sieć) trwał dłużej niż ten stały czas --
   // co w CI się zdarza -- klik w tło trafiał, gdy js/pages/game-settings.js's
@@ -1196,6 +1238,25 @@ function matchButtonLabel(a) {
   return `${a.text} (${a.fixed_points})`;
 }
 
+async function assertMappingGridFits(control) {
+  const bounds = await control.locator(".c2-roundlayout-main .c2-tilegrid").evaluate((grid) => {
+    const rect = grid.getBoundingClientRect();
+    const parent = grid.closest(".c2-roundlayout-main").getBoundingClientRect();
+    const layout = grid.closest(".c2-roundlayout").getBoundingClientRect();
+    const card = grid.closest(".c2-gameplay-card").getBoundingClientRect();
+    return {
+      left: rect.left, right: rect.right,
+      parentLeft: parent.left, parentRight: parent.right,
+      layoutLeft: layout.left, layoutRight: layout.right,
+      cardLeft: card.left, cardRight: card.right,
+    };
+  });
+  expect(bounds.left).toBeGreaterThanOrEqual(bounds.parentLeft - 1);
+  expect(bounds.right).toBeLessThanOrEqual(bounds.parentRight + 1);
+  expect(bounds.layoutLeft).toBeGreaterThanOrEqual(bounds.cardLeft - 1);
+  expect(bounds.layoutRight).toBeLessThanOrEqual(bounds.cardRight + 1);
+}
+
 async function keyboardPaced(control, key, { confirm = false, reveal = false } = {}) {
   await control.evaluate(() => document.activeElement?.blur());
   const button = reveal ? control.getByRole("button", { name:key === "points" ? "Pokaż punkty" : "Pokaż odpowiedź" }) : control.locator(`[data-shortcut="${key}"]`);
@@ -1219,23 +1280,33 @@ async function keyboardPaced(control, key, { confirm = false, reveal = false } =
 // control2.spec.js's test "finał — obaj gracze, wszystkie 10 pytań...",
 // tyle że TU liczby są dobrane tak, żeby ostatnie trafienie (gracz 2,
 // pytanie #4) przekroczyło finalTarget (patrz P1_MATCH_RANK/P2_MATCH_RANK
-// i finalTarget:100 w makeGame). Każdy z czterech MATCH-ów trafia w INNE
+// i finalTarget:200 w makeGame). Każdy z czterech MATCH-ów trafia w INNE
 // miejsce rankingu odpowiedzi (2. i 3. u gracza 1, 2. i 1. u gracza 2) —
 // nie mechanicznie zawsze to samo, i nie zawsze najwyższe. Realna suma w
 // kolejności odsłonięć: 28 (P1#1) -> 46 (P1#4, +18) -> 70 (P2#2, +24) -> 105
-// (P2#4, +35) — ostatnie trafienie przekracza próg (100), więc silnik
-// (REVEAL_POINTS w engine.js) skacze PROSTO do f_end zaraz po nim: pytanie
-// #5 gracza 2 (SKIP) nigdy nie zostaje odsłonięte — SKIP jest i tak już
-// pokazany trzykrotnie wcześniej w tym scenariuszu (P1#2, P1#5, P2#3), więc
-// nic realnie nie ginie z demonstrowanej różnorodności. =====
+// (P2#4, +35) — pozostaje poniżej progu 200, więc finał kończy się po
+// przejściu przez wszystkie odpowiedzi, z niższą nagrodą. =====
 
-async function scenarioFinalFull(pages, { game }) {
-  const { control, buzzer, host, display } = pages;
+async function scenarioFinalFull(pages, { game, summaryAlreadyOpen = false, contexts, browser }) {
+  let { control, buzzer, host, display } = pages;
   const fq = game.finalQuestions;
 
-  await clickPaced(control.getByRole("button", { name: "Dalej" }), ADMIN_PACE_MS);
+  if (!summaryAlreadyOpen) await clickPaced(control.getByRole("button", { name: "Dalej" }), ADMIN_PACE_MS);
   await clickPaced(control.getByRole("button", { name: "Gotowe — przejdź do rozgrywki" }), ADMIN_PACE_MS);
   await clickPaced(control.getByRole("button", { name: "Rozpocznij grę" }), ADMIN_PACE_MS);
+
+  if (game.reunlockDisplayAfterControlReconnect) {
+    await expect(control.getByRole("button", { name: "Rozpocznij rundę" })).toBeVisible({ timeout: 45_000 });
+    await control.evaluate(() => window.dispatchEvent(new Event("offline")));
+    await control.waitForTimeout(800);
+    await control.evaluate(() => window.dispatchEvent(new Event("online")));
+    await expect(display.locator("#audioUnlockScreen")).toBeVisible({ timeout: 10_000 });
+    await expect(control.getByRole("button", { name: "Rozpocznij rundę" })).toBeDisabled();
+    await control.waitForTimeout(1600);
+    await display.locator("#btnAudioUnlock").click();
+    await expect(display.locator("#audioUnlockScreen")).toBeHidden({ timeout: 10_000 });
+    await expect(control.getByRole("button", { name: "Rozpocznij rundę" })).toBeEnabled({ timeout: 60_000 });
+  }
 
   await playThreeNaturalRoundsToThreshold(pages);
 
@@ -1247,6 +1318,7 @@ async function scenarioFinalFull(pages, { game }) {
   // tylko lokalna nakładka. Ta próba znika sama na następnej akcji
   // (wpisanie pierwszej odpowiedzi wysyła nowy stan, co resetuje peek).
   await hostPeekSwipe(host);
+  if (game.recordLogoId) await expect(host.locator("#cover2Logo canvas")).toHaveCount(1, { timeout: 15_000 });
   await host.waitForTimeout(1500);
 
   // Nie trzeba wpisywać WSZYSTKICH pięciu odpowiedzi na gracza, żeby
@@ -1292,6 +1364,7 @@ async function scenarioFinalFull(pages, { game }) {
   await expect(control.getByRole("button", { name: "Czas wykorzystany" })).toBeVisible({ timeout:20000 });
 
   await clickPaced(control.getByRole("button", { name: "Dalej" }));
+  await assertMappingGridFits(control);
   for (let i = 0; i < 5; i++) {
     // armAndConfirmPaced, nie clickPaced -- ten kafel wyboru dopasowania
     // idzie przez armableTile (zaznacz -> potwierdź), zwykły pojedynczy
@@ -1343,17 +1416,15 @@ async function scenarioFinalFull(pages, { game }) {
   // starcie zegarka -- reszta to tylko dociągnięcie z zapasem.
   await expect(control.getByRole("button", { name: "Czas wykorzystany" })).toBeVisible({ timeout:25000 });
   await clickPaced(control.getByRole("button", { name: "Dalej" }));
+  await assertMappingGridFits(control);
 
   for (let i = 0; i < 5; i++) {
     if (P2_PLAN[i] === true) await armAndConfirmPaced(control.getByRole("button", { name: matchButtonLabel(answerByRank(fq[i], P2_MATCH_RANK[i])) }));
     await armAndConfirmPaced(control.getByRole("button", { name: "Pokaż odpowiedź" }));
     if (P2_PLAN[i]) await armAndConfirmPaced(control.getByRole("button", { name: "Pokaż punkty" }));
-    // Suma po TYM trafieniu (idx3: 70+35=105) przekracza finalTarget:100
-    // (makeGame) -> REVEAL_POINTS w engine.js skacze PROSTO do f_end, silnik
-    // NIE czeka na kolejne "Dalej" -- ekran mapowania po prostu już nie
-    // istnieje, klik w "Dalej" nie miałby czego trafić. Pytanie #5 gracza 2
-    // (SKIP) nigdy nie zostaje odsłonięte -- drużyna wygrywa finał w tym
-    // właśnie momencie.
+    // Po trafieniu idx3 suma wynosi 105, więc przy progu 200 finał trwa dalej.
+    // Pytanie #5 gracza 2 pokazuje jeszcze ścieżkę SKIP; po nim rozgrywka
+    // przechodzi do wyniku po potwierdzeniu ostatniej planszy.
     const endFinal = control.getByRole("button", { name: "Zakończ finał", exact: true });
     if (await endFinal.count()) {
       await control.waitForTimeout(2000);
@@ -1370,8 +1441,10 @@ async function scenarioFinalFull(pages, { game }) {
   await control.waitForTimeout(2000);
   await clickPaced(control.getByRole("button", { name: "Zakończ grę", exact: true }));
   await expect.poll(() => display.evaluate(() => (window.__displayLog || []).filter((call) => call.call === "api.win.set").at(-1)?.args[0]), { timeout: 20000 }).toBe(1167);
-  await expect(control.getByRole("button", { name: "Wróć do moich gier" })).toBeEnabled({ timeout: 150000 });
-  await control.waitForTimeout(4000); // ekran końcowy widoczny chwilę na nagraniu
+  const returnButton = control.getByRole("button", { name: "Wróć do moich gier" });
+  await expect(returnButton).toBeDisabled();
+  await expect(returnButton).toBeEnabled({ timeout: 45_000 }); // powrót zwalnia się po 30 s, także gdy outro jeszcze gra
+  await control.waitForTimeout(2500); // ekran końcowy widoczny chwilę na nagraniu
 }
 
 // ===== Scenariusz 5: finał z WCZESNYM zakończeniem — pierwsza odpowiedź
@@ -1552,75 +1625,161 @@ async function scenarioDeviceReconnect(pages, { contexts, browser }) {
   await control.waitForTimeout(4000); // ekran końcowy widoczny chwilę na nagraniu
 }
 
-// ===== Scenariusz 12: poprawki z wieczora — zwrot pytań po wyłączeniu
-// finału oraz ponowne odblokowanie dźwięku Display po powrocie Control. =====
-async function scenarioRecentFixes(pages) {
-  const { control, display } = pages;
-
+// ===== Scenariusz 12: jeden pełny zapis najnowszych poprawek Control 2.
+// Setup i ponowne połączenie, pytania/ustawienia, odblokowanie dźwięku,
+// pełna rozgrywka z losowym finałem i ekranem końcowym. =====
+async function scenarioRecentFixes(pages, { contexts, browser, game }) {
+  let { control, display } = pages;
   await expect(control.locator(".stepTitle")).toHaveText("Urządzenia");
-  await control.waitForTimeout(1200); // przypięta podpowiedź pozostaje widoczna na ekranie urządzeń
-  // Kody urządzeń są dostępne również z klikalnych statusów w górnym pasku.
+  for (const kind of ["display", "host", "buzzer"]) await waitForDotStatus(control, kind, "ok");
+  await expect(display.locator("#audioUnlockScreen")).toBeHidden();
+  await expect(control.locator("#deviceLostOverlay")).toBeHidden();
+  await control.waitForTimeout(1200); // lista mieści się na ekranie, a podpowiedź zostaje przypięta
   await control.locator("#dotHostRow").click();
   await expect(control.locator("#qrModalOverlay")).toBeVisible();
   await control.waitForTimeout(1000);
   await control.locator("#qrModalClose").click();
 
-  // Uruchamiamy dźwięk z Display i pokazujemy pierwsze odblokowanie.
-  await control.locator('.toggle-item:has(input[name="soundSource"][value="display"])').click();
-  await expect(display.locator("#audioUnlockScreen")).toBeVisible({ timeout: 10_000 });
-  await control.waitForTimeout(1000);
-  await display.locator("#btnAudioUnlock").click();
-  await expect(display.locator("#audioUnlockScreen")).toBeHidden({ timeout: 10_000 });
+  const originalQuestionPools = await control.evaluate(async () => {
+    const id = new URL(location.href).searchParams.get("id");
+    const { data, error } = await window.__sbClient.from("games").select("settings").eq("id", id).single();
+    if (error) throw error;
+    return {
+      rounds: data.settings.questions.rounds.map((q) => q.id),
+      final: data.settings.questions.final.map((q) => q.id),
+    };
+  });
 
-  // Na ekranie ustawień wyłączamy finał i zapisujemy bez otwierania zakładki
-  // Rundy. Po ponownym otwarciu pokazujemy, że pięć pytań finałowych wróciło
-  // na koniec puli rund (11 + 5).
   await clickPaced(control.getByRole("button", { name: "Dalej" }), ADMIN_PACE_MS);
   await control.getByRole("button", { name: "Zmień ustawienia" }).click();
   const gsFrame = control.frameLocator("#gsFrame");
   await gsFrame.locator("#btnToggleSidebar").click();
+
+  // Widoczne, niedomyślne ustawienia wyglądu: Modern, własny akcent i logo
+  // przykładowe wygenerowane z właściwego familiadowego JSON-u.
+  await gsFrame.locator('.gs-sidebar-item[data-cat="display"]').click();
+  await gsFrame.locator("#gsThemeSelect .ui-select-btn").click();
+  await gsFrame.locator('#gsThemeSelect .ui-select-item[data-value="modern"]').click();
+  await gsFrame.locator('.swatchBtn[data-color-key="A"]').click();
+  await gsFrame.locator("#gsColorHex").fill("00A86B");
+  await gsFrame.locator("#gsColorHex").press("Tab");
+  await gsFrame.locator("#gsColorModalDone").click();
+  await gsFrame.locator(`#gsLogoGrid .gs-logo-tile[data-logo-id="${game.recordLogoId}"]`).click();
+  await control.waitForTimeout(1200); // podgląd pokazuje już zmieniony motyw, kolor i logo
+
+  // Wyłączenie finału bez otwierania zakładki Rundy zwraca wybrane pytania
+  // na koniec. Następnie ponownie włączamy finał losowy, aby ten sam film
+  // pokazał losowanie z puli rund.
+  await gsFrame.locator("#btnToggleSidebar").click();
   await gsFrame.locator('.gs-sidebar-item[data-cat="questions"]').click();
   await gsFrame.locator('.toggle-item:has(input[name="gsHasFinal"][value="no"])').click();
-  await control.waitForTimeout(700); // widz widzi wyłączenie finału przed zapisem
+  await control.waitForTimeout(800);
   const saveButton = gsFrame.getByRole("button", { name: "Zapisz wszystko" });
   await saveButton.click();
   await expect(saveButton).toBeEnabled({ timeout: 15_000 });
   await control.locator("#gsOverlay").click({ position: { x: 5, y: 5 } });
   await control.locator("#gsOverlay").waitFor({ state: "hidden", timeout: 10_000 });
-
-  const restoredCounts = await control.evaluate(async () => {
+  let counts = await control.evaluate(async () => {
     const id = new URL(location.href).searchParams.get("id");
     const { data, error } = await window.__sbClient.from("games").select("settings").eq("id", id).single();
     if (error) throw error;
-    return { rounds: data.settings.questions.rounds.length, final: data.settings.questions.final.length };
+    return {
+      rounds: data.settings.questions.rounds.length,
+      final: data.settings.questions.final.length,
+      display: data.settings.display,
+    };
   });
-  expect(restoredCounts).toEqual({ rounds: 16, final: 0 });
+  expect(counts.rounds).toBe(originalQuestionPools.rounds.length + originalQuestionPools.final.length);
+  expect(counts.final).toBe(0);
+  expect(counts.display).toMatchObject({ logoId: game.recordLogoId, theme: "modern", colors: { A: "#00A86B" } });
+  const returnedQuestionIds = await control.evaluate(async () => {
+    const id = new URL(location.href).searchParams.get("id");
+    const { data, error } = await window.__sbClient.from("games").select("settings").eq("id", id).single();
+    if (error) throw error;
+    return data.settings.questions.rounds.slice(-5).map((q) => q.id);
+  });
+  expect(returnedQuestionIds).toEqual(originalQuestionPools.final);
   await expect(control.locator("#c2DisplayPreview")).toBeVisible();
-  await expect(control.locator(".c2-summary-rounds .c2-qpreview-item")).toHaveCount(16);
-  await control.waitForTimeout(1800); // widok podsumowania: podgląd Display 16:9, ustawienia i pula pytań
-  // Podgląd dźwięku nie może blokować przejścia do gry; Gotowe zatrzymuje go
-  // i od razu przechodzi dalej.
-  await control.locator(".summarySoundPlay").first().click();
-  await control.waitForTimeout(250);
+  await expect(control.locator(".c2-summary-rounds .c2-qpreview-item")).toHaveCount(counts.rounds);
+  await control.waitForTimeout(1800); // podsumowanie pokazuje zmianę puli po wyłączeniu finału
+
+  const preview = control.locator(".summarySoundPlay").first();
+  await preview.click();
+  await expect(preview.locator(".ico")).toHaveClass(/ico-stop/);
   await clickPaced(control.getByRole("button", { name: "Gotowe — przejdź do rozgrywki" }), ADMIN_PACE_MS);
+
+  // Aktywny przebieg ze źródłem dźwięku Control: kilka odłączonych urządzeń
+  // daje jeden modal, a ponowne parowanie po kolei nie zasłania topbara.
   await clickPaced(control.getByRole("button", { name: "Rozpocznij grę" }), ADMIN_PACE_MS);
-  await clickPaced(control.getByRole("button", { name: "Rozpocznij rundę" }));
+  await clickPaced(control.getByRole("button", { name: "Rozpocznij rundę" }), ADMIN_PACE_MS);
   await clickPaced(pages.buzzer.getByRole("button", { name: "Przycisk A" }));
   await armAndConfirmPaced(control.getByRole("button", { name: "Zatwierdź: Alfa" }));
+  await armAndConfirmPaced(answerTile(control, 1));
+  await Promise.all([contexts.display.close(), contexts.host.close(), contexts.buzzer.close()]);
+  await Promise.all(["display", "host", "buzzer"].map((kind) => waitForDotStatus(control, kind, "bad")));
+  await expect(control.locator("#deviceLostOverlay")).toBeVisible({ timeout: 15_000 });
+  await expect(control.locator("#deviceLostText")).toContainText("Wyświetlacz");
+  await expect(control.locator("#deviceLostText")).toContainText("Prowadzący");
+  await control.waitForTimeout(1500);
+  await control.locator("#deviceLostClose").click();
+  for (const kind of ["display", "host", "buzzer"]) {
+    const reconnected = await reconnectDeviceViaModal(browser, control, kind);
+    contexts[kind] = reconnected.context;
+    pages[kind] = reconnected.page;
+    if (kind === "display") display = reconnected.page;
+    await expect(control.locator("#deviceLostOverlay")).toBeHidden();
+  }
+  await expect(control.locator("#dotDisplay")).toHaveClass(/ok/);
+  await expect(control.locator("#dotHost")).toHaveClass(/ok/);
+  await expect(control.locator("#dotBuzzer")).toHaveClass(/ok/);
+  await expect(answerTile(control, 2)).toBeEnabled({ timeout: 30_000 });
+  await control.waitForTimeout(1500); // odpowiedź i wszystkie urządzenia wróciły bez drugiego modala
 
-  // Odwzorowujemy powrót połączenia przeglądarki Control. W czasie żądania
-  // Display ma pokazać przycisk, a akcja odpowiedzi pozostaje zablokowana.
-  await control.evaluate(() => window.dispatchEvent(new Event("offline")));
-  await control.waitForTimeout(800);
-  await control.evaluate(() => window.dispatchEvent(new Event("online")));
+  // Drugi etap tego samego nagrania wykorzystuje świeżą rozgrywkę: finał
+  // losowy bierze pięć pytań z puli rund, a po losowaniu zostają trzy
+  // pytania na dokładnie trzy rundy. Zachowujemy ten sam, edytowany wygląd.
+  const randomGame = await restoreDemoGame(control, {
+    pickOrds: [9, 10, 11, 12, 13, 6, 7, 8],
+    settings: {
+      display: {
+        logoId: game.recordLogoId,
+        theme: "modern",
+        colors: { A: "#00A86B", B: "#e87512", BACKGROUND: "#111827", DOT: "#f4d35e" },
+      },
+      game: {
+        hasFinal: true,
+        finalQuestionsMode: "random",
+        advanced: { finalMinPoints: 280, finalTarget: 200, endScreenMode: "money" },
+      },
+    },
+  });
+  await selectDemoImageLogo(control, randomGame);
+  for (const kind of ["control", "display", "host", "buzzer"]) {
+    const suffix = kind === "control" ? "" : `&key=${randomGame[`share_key_${kind}`]}`;
+    await pages[kind].goto(`/` + (kind === "control" ? `control?id=${randomGame.id}` : `${kind}?id=${randomGame.id}${suffix}`), { waitUntil: "domcontentloaded" });
+  }
+  await expect(control.locator(".stepTitle")).toHaveText("Urządzenia", { timeout: 20_000 });
+  for (const kind of ["display", "host", "buzzer"]) await waitForDotStatus(control, kind, "ok");
+  await control.locator('.toggle-item:has(input[name="soundSource"][value="display"])').click();
   await expect(display.locator("#audioUnlockScreen")).toBeVisible({ timeout: 10_000 });
-  await expect(answerTile(control, 1)).toBeDisabled();
-  await display.waitForTimeout(1800); // czytelne ujęcie przycisku odblokowania na Display
+  const nextStep = control.getByRole("button", { name: "Dalej" });
+  await expect(nextStep).toBeDisabled({ timeout: 10_000 });
   await display.locator("#btnAudioUnlock").click();
   await expect(display.locator("#audioUnlockScreen")).toBeHidden({ timeout: 10_000 });
-  await expect(answerTile(control, 1)).toBeEnabled({ timeout: 10_000 });
-  await armAndConfirmPaced(answerTile(control, 1));
-  await control.waitForTimeout(2500); // widać wznowioną grę po natychmiastowym odblokowaniu
+  await expect(nextStep).toBeEnabled({ timeout: 10_000 });
+  // Stałe losowanie daje powtarzalny film: pierwsze pięć pytań puli rund
+  // (ord 9–13) trafia do finału, a pytania 6–8 zostają w rundach.
+  await control.evaluate(() => { window.__recordOriginalRandom = Math.random; Math.random = () => 0.99; });
+  await clickPaced(control.getByRole("button", { name: "Dalej" }), ADMIN_PACE_MS);
+  await expect(control.locator(".c2-summary-rounds .c2-qpreview-item")).toHaveCount(3);
+  await expect(control.locator(".c2-summary-final-questions .c2-qpreview-item")).toHaveCount(5);
+  await control.waitForTimeout(1800);
+  randomGame.finalQuestions = await readPickedFinalQuestions(control, randomGame.id);
+  expect(randomGame.finalQuestions.map((q) => q.ord)).toEqual([9, 10, 11, 12, 13]);
+  await control.evaluate(() => { Math.random = window.__recordOriginalRandom; delete window.__recordOriginalRandom; });
+
+  randomGame.reunlockDisplayAfterControlReconnect = true;
+  await scenarioFinalFull(pages, { game: randomGame, summaryAlreadyOpen: true, contexts, browser });
 }
 
 // ===== Scenariusz 7: blokada logo — Control czeka, aż logo-editor.js
@@ -1974,10 +2133,13 @@ const SCENARIOS = [
   },
   {
     file: "12-poprawki-wieczoru.mp4",
-    makeGame: (setupPage) => restoreDemoGame(setupPage, {
-      pickOrds: [1, 2, 8, 9, 10, 11, 12, 13, 14, 15, 16],
-      finalPickOrds: [3, 4, 5, 6, 7],
-    }),
+    makeGame: async (setupPage) => {
+      const game = await restoreDemoGame(setupPage, {
+        pickOrds: [1, 2, 8],
+        finalPickOrds: [3, 4, 5, 6, 7],
+      });
+      return selectDemoImageLogo(setupPage, game);
+    },
     run: scenarioRecentFixes,
   },
 ];

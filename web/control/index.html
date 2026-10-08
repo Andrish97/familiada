@@ -12,9 +12,9 @@
   <link rel="preconnect" href="https://supabase.familiada.online">
   <title data-i18n="control.title">Familiada — panel sterowania</title>
 
-  <link rel="icon" href="/favicon.ico?v=v2026-10-07T23002"/>
-  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-07T23002"/>
-  <link rel="stylesheet" href="/control/css/control.css?v=v2026-10-07T23002"/>
+  <link rel="icon" href="/favicon.ico?v=v2026-10-08T07385"/>
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-08T07385"/>
+  <link rel="stylesheet" href="/control/css/control.css?v=v2026-10-08T07385"/>
   <script>
     document.documentElement.classList.add('page-loading');
     try {
@@ -31,12 +31,12 @@
   <style>html[data-mobile-guard]{overflow:hidden;touch-action:none}html[data-mobile-guard] body{visibility:hidden}</style>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-  <script src="/shared/js/core/security-warning.js?v=v2026-10-07T23002" defer></script>
+  <script src="/shared/js/core/security-warning.js?v=v2026-10-08T07385" defer></script>
   <script type="module">
-    import { initI18n } from "/shared/translation/translation.js?v=v2026-10-07T23002";
+    import { initI18n } from "/shared/translation/translation.js?v=v2026-10-08T07385";
     await initI18n({ withSwitcher: true });
     document.documentElement.classList.remove('page-loading');
-    import("/control/js/app.js?v=v2026-10-07T23002");
+    import("/control/js/app.js?v=v2026-10-08T07385");
   </script>
 
   <style>
@@ -64,7 +64,7 @@
        elementy (nagłówek/siatka/pasek statusu) mają wypełniać pełną
        szerokość .control-main-card, dokładnie jak Urządzenia/Podsumowanie i
        jak w starym Control — bez wąskiej, wyśrodkowanej kolumny. */
-    .c2-gameplay { height: 100%; display:flex; flex-direction:column; gap:12px; }
+    .c2-gameplay { height: 100%; min-width:0; display:flex; flex-direction:column; gap:12px; }
     /* "Karta ma być na całą wysokość" (Rundy) — cały łańcuch od .wrap.wide
        w dół dostaje display:flex/flex:1, żeby #app faktycznie wypełniał
        resztę wysokości strony, ZAMIAST tylko dopasowywać się do treści.
@@ -88,7 +88,7 @@
     .shell:has(.c2-gameplay-card, .stepFoot) > .control-tabs-card { flex:1; min-height:0; display:flex; flex-direction:column; overflow:hidden; }
     .control-tabs-card:has(.c2-gameplay-card, .stepFoot) > .control-main-card { flex:1; min-height:0; display:flex; flex-direction:column; overflow:hidden; }
     .control-main-card:has(.c2-gameplay-card, .stepFoot) > #app { flex:1; min-height:0; display:flex; flex-direction:column; overflow:hidden; }
-    .c2-gameplay-card { flex:1; min-height:0; display:flex; flex-direction:column; }
+    .c2-gameplay-card { flex:1; width:100%; min-width:0; min-height:0; box-sizing:border-box; display:flex; flex-direction:column; }
     /* .cardBody (Urządzenia/Podsumowanie) ma już flex:1 z control.css — brakuje
        tylko min-height:0, inaczej flex item nie chce się skurczyć poniżej
        wysokości treści i .c2-scroll-area nigdy realnie nie zaczyna scrollować.
@@ -104,16 +104,31 @@
        przewijania (zgłoszone: "dolne przyciski mają być wyłączone z
        przewijania"). */
     .c2-scroll-area { flex:1; min-height:0; overflow-y:auto; display:flex; flex-direction:column; gap:10px; }
-    .c2-stepper { font-size:.75rem; letter-spacing:.08em; text-transform:uppercase; opacity:.65; border-bottom:1px solid rgba(255,255,255,.12); padding-bottom:8px; }
-    .c2-gameplay-body { flex:1; overflow:hidden; display:flex; flex-direction:column; gap:12px; min-height:0; }
+    .c2-stepper { height:48px; min-height:48px; box-sizing:border-box; display:flex; align-items:center; }
+    .c2-stepper-question { width:100%; min-width:0; max-height:44px; overflow:hidden; text-align:left; font-size:1.08rem; font-weight:700; line-height:1.18; overflow-wrap:anywhere; }
+    .c2-gameplay-body { flex:1; width:100%; min-width:0; box-sizing:border-box; overflow:hidden; display:flex; flex-direction:column; min-height:0; }
     /* padding-top:16px == .control-main-card's własne padding-bottom:16px
        pod spodem — nad i pod przyciskami tyle samo miejsca (zgłoszone). */
-    .c2-gameplay-nav { display:flex; gap:8px; justify-content:flex-end; border-top:1px solid rgba(255,255,255,.12); padding-top:16px; flex-wrap:wrap; }
+    .c2-gameplay-nav { height:62px; min-height:62px; box-sizing:border-box; display:flex; align-items:center; gap:8px; justify-content:flex-end; border-top:1px solid rgba(255,255,255,.12); padding-top:8px; flex-wrap:nowrap; }
+    .c2-gameplay-nav-empty { visibility:hidden; border:0; padding:0; }
+    .c2-gameplay-nav:has(.c2-statusbar) { border:0; padding:0; }
+    .c2-gameplay-nav:has(.c2-statusbar) .c2-statusbar { width:100%; height:62px; min-height:62px; box-sizing:border-box; padding:8px 2px 0; flex-wrap:nowrap; overflow:hidden; white-space:nowrap; }
+    .c2-gameplay-nav:has(.c2-statusbar) .c2-statusbar > span { min-width:0; overflow:hidden; text-overflow:ellipsis; }
+    .topbar-layout-4 { flex-wrap:nowrap; }
+    .topbar-layout-4 .topbar-section { flex-wrap:nowrap; }
+    .topbar-layout-4 .topbar-section-1 { white-space:nowrap; }
+    .topbar-layout-4 .topbar-section-2 { flex-wrap:nowrap; gap:8px; }
+    .topbar-layout-4 .topbar-section-2 .top-status { flex:0 0 auto; min-width:0; margin-left:auto; flex-wrap:nowrap; gap:6px; }
+    .topbar-layout-4 .topbar-section-2 .top-status .dotRow { flex:0 0 48px; width:48px; min-width:48px; padding:6px; justify-content:center; gap:5px; }
+    .topbar-layout-4 .topbar-section-2 .top-status .dotRow .lbl { display:none; }
+    .topbar-layout-4 .topbar-section-2 .top-status .dotRow .ico { width:17px; height:17px; }
+    .c2-topbar-progress { display:flex; flex:0 0 220px; flex-direction:column; gap:2px; min-width:0; min-height:37px; overflow:hidden; }
+    .c2-topbar-progress .title { font-weight:700; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; text-transform:uppercase; }
+    .c2-topbar-progress .subtitle { opacity:.75; font-size:12px; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
     /* To samo dla Urządzeń/Podsumowania (control.css's .stepFoot, domyślnie
        tylko 10px u góry vs 28px u dołu po odjęciu cardBody's paddingu
        wyżej — teraz 16px u góry == 16px .control-main-card u dołu). */
     .stepFoot { padding-top:16px; }
-    .c2-question { font-size:1.05rem; font-weight:700; }
     /* r_intro/r_roundStart ("Rozpocznij grę"/"Rozpocznij rundę") — wyśrodkowana
        "hero" treść zamiast gołego akapitu, zgłoszone jako wyglądające źle. */
     .c2-intro { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; gap:16px; padding:20px; }
@@ -161,9 +176,9 @@
        zachowanie flexboxa), więc .c2-scroll-area's overflow-y:auto wyżej
        nigdy realnie nie dostawało czego przewijać — treść po prostu
        wychodziła poza kartę zamiast scrollować (zgłoszone). */
-    .c2-roundlayout { display:flex; gap:16px; flex:1; min-height:0; }
-    .c2-roundlayout-main { flex:1; min-width:0; min-height:0; display:flex; }
-    .c2-roundlayout-main .c2-tilegrid { flex:1; }
+    .c2-roundlayout { display:flex; gap:16px; flex:1; width:100%; min-width:0; min-height:0; box-sizing:border-box; }
+    .c2-roundlayout-main { flex:1 1 0%; min-width:0; min-height:0; display:flex; }
+    .c2-roundlayout-main .c2-tilegrid { flex:1 1 0%; min-width:0; max-width:100%; width:100%; }
     .c2-roundlayout-main > .c2-scroll-area { flex:1; min-height:0; }
     .c2-roundlayout-divider { width:1px; background:rgba(255,255,255,.14); flex:none; }
     .c2-roundlayout-side { flex:0 0 240px; min-width:0; min-height:0; display:flex; flex-direction:column; }
@@ -303,16 +318,15 @@
       animation:gsSpinner-spin .8s linear infinite;
     }
 
-    /* ---- Siatka 3x5 (jednostka = 1/3 wiersza, "1,5" = pół wiersza) —
-       współdzielona przez Rundy-odsłanianie i Finał-odsłanianie. Wewnętrznie
+    /* ---- Wspólna siatka akcji rozgrywki — sześć rzędów na każdym ekranie,
+       od pojedynku przez rundy i wpisywanie finału po mapowanie. Wewnętrznie
        6 kolumn, żeby zmieścić zarówno jednostki 1/3 (span 2) jak i 1/2
-       (span 3) bez ułamkowych grid-template. Wiersz 4 zostaje pusty, chyba
-       że akurat trzeba w nim pokazać Pass/Kradzież — nieużywane po prostu
-       nie dostają przycisku, więc rytm siatki się nie rusza. ---- */
-    .c2-tilegrid { display:grid; grid-template-columns:repeat(6, 1fr); grid-template-rows:repeat(5, minmax(0,1fr)); gap:10px; flex:1; min-height:0; }
+       (span 3) bez ułamkowych grid-template. Nieużywane pola zostają puste,
+       dzięki czemu siatka nie zmienia rytmu między krokami. ---- */
+    .c2-tilegrid { display:grid; grid-template-columns:repeat(6, minmax(0,1fr)); grid-template-rows:repeat(6, minmax(0,1fr)); gap:10px; flex:1; min-width:0; min-height:0; box-sizing:border-box; }
     .c2-tile {
       touch-action: manipulation;
-      display:flex; align-items:center; justify-content:center; text-align:center;
+      display:flex; min-width:0; max-width:100%; align-items:center; justify-content:center; text-align:center; overflow-wrap:anywhere;
       padding:8px 10px; border-radius:14px; border:1px solid var(--line2);
       background:rgba(255,255,255,.06); color:#fff; font-weight:800; font-size:.88rem; line-height:1.3;
       cursor:pointer; user-select:none; -webkit-tap-highlight-color:transparent;
@@ -512,15 +526,16 @@
            trakcie rozgrywki (restart tabletu itp.), operator musi mieć skąd
            wziąć kod/QR bez wracania do kroku Urządzenia. Otwiera ten sam
            #qrModalOverlay co przycisk "Kod QR" w kroku Urządzenia. -->
+      <div class="c2-topbar-progress" id="c2TopbarProgress" aria-live="polite"></div>
       <div class="top-status" aria-label="Status urządzeń" data-i18n-aria-label="control.statusLabel">
         <div class="dotRow" title="Wyświetlacz" id="dotDisplayRow" data-i18n-title="control.deviceDisplay" style="cursor:pointer;">
-          <span class="dot mid" id="dotDisplay"></span><span class="lbl" data-i18n="control.deviceDisplay">Wyświetlacz</span>
+          <span class="dot mid" id="dotDisplay"></span><i class="ico" data-icon="display" aria-hidden="true"></i><span class="lbl" data-i18n="control.deviceDisplay">Wyświetlacz</span>
         </div>
         <div class="dotRow" title="Prowadzący" id="dotHostRow" data-i18n-title="control.deviceHost" style="cursor:pointer;">
-          <span class="dot mid" id="dotHost"></span><span class="lbl" data-i18n="control.deviceHost">Prowadzący</span>
+          <span class="dot mid" id="dotHost"></span><i class="ico" data-icon="host" aria-hidden="true"></i><span class="lbl" data-i18n="control.deviceHost">Prowadzący</span>
         </div>
         <div class="dotRow" title="Przycisk" id="dotBuzzerRow" data-i18n-title="control.deviceBuzzer" style="cursor:pointer;">
-          <span class="dot mid" id="dotBuzzer"></span><span class="lbl" data-i18n="control.deviceBuzzer">Przycisk do pojedynku</span>
+          <span class="dot mid" id="dotBuzzer"></span><i class="ico" data-icon="buzzer" aria-hidden="true"></i><span class="lbl" data-i18n="control.deviceBuzzer">Przycisk do pojedynku</span>
         </div>
       </div>
     </div>
@@ -648,6 +663,6 @@
       <button class="btn-contact-footer" type="button" data-contact-modal data-i18n="common.contactBtn">Kontakt</button>
     </div>
   </main>
-  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-07T23002"></script>
+  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-08T07385"></script>
 </body>
 </html>

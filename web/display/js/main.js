@@ -1,4 +1,4 @@
-import { renderAndConfirm } from "../../shared/js/gameplay/renderCompletion.js?v=v2026-10-07T23002";
+import { renderAndConfirm } from "../../shared/js/gameplay/renderCompletion.js?v=v2026-10-08T07385";
 // display/js/main.js
 // Punkt wejścia Display v2. Napisane od zera (nie kopia display/js/main.js)
 // — inna orkiestracja: zamiast kanału komend + snapshotu z device_state,
@@ -7,18 +7,18 @@ import { renderAndConfirm } from "../../shared/js/gameplay/renderCompletion.js?v
 // (device_ping) i walidacja klucza (display_auth) to te same, generyczne,
 // niezwiązane z komendami RPC co dziś — reużyte bez zmian.
 
-import { initFullscreenButton } from "../../shared/js/display/fullscreen.js?v=v2026-10-07T23002";
-import { initI18n, setUiLang } from "../../shared/translation/translation.js?v=v2026-10-07T23002";
-import { startKeepAlive } from "../../shared/js/core/keep-alive.js?v=v2026-10-07T23002";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-07T23002";
-import { createScene } from "./scene.js?v=v2026-10-07T23002";
-import { createQRController } from "./qr.js?v=v2026-10-07T23002";
-import { createSubscription } from "../../shared/js/core/game-state-subscribe.js?v=v2026-10-07T23002";
-import { rt } from "../../shared/js/core/realtime.js?v=v2026-10-07T23002";
-import { doorbellTopic } from "../../shared/js/core/game-state-doorbell.js?v=v2026-10-07T23002";
-import { createRenderer } from "./render.js?v=v2026-10-07T23002";
-import { createDisplaySoundReactor } from "./soundReactor.js?v=v2026-10-07T23002";
-import { loadSfxManifest, initSfx, setCurrentGameId, applySfxGameSettings, unlockAudio, getSfxDurationAccurate as getSfxDuration, listSfx, isAnySfxPlaying } from "../../shared/js/core/sfx.js?v=v2026-10-07T23002";
+import { initFullscreenButton } from "../../shared/js/display/fullscreen.js?v=v2026-10-08T07385";
+import { initI18n, setUiLang } from "../../shared/translation/translation.js?v=v2026-10-08T07385";
+import { startKeepAlive } from "../../shared/js/core/keep-alive.js?v=v2026-10-08T07385";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-08T07385";
+import { createScene } from "./scene.js?v=v2026-10-08T07385";
+import { createQRController } from "./qr.js?v=v2026-10-08T07385";
+import { createSubscription } from "../../shared/js/core/game-state-subscribe.js?v=v2026-10-08T07385";
+import { rt } from "../../shared/js/core/realtime.js?v=v2026-10-08T07385";
+import { doorbellTopic } from "../../shared/js/core/game-state-doorbell.js?v=v2026-10-08T07385";
+import { createRenderer } from "./render.js?v=v2026-10-08T07385";
+import { createDisplaySoundReactor } from "./soundReactor.js?v=v2026-10-08T07385";
+import { loadSfxManifest, initSfx, setCurrentGameId, applySfxGameSettings, unlockAudio, getSfxDurationAccurate as getSfxDuration, listSfx, isAnySfxPlaying } from "../../shared/js/core/sfx.js?v=v2026-10-08T07385";
 
 startKeepAlive();
 
@@ -263,11 +263,16 @@ window.addEventListener("DOMContentLoaded", async () => {
     const btnAudioUnlock = $("btnAudioUnlock");
     let audioUnlockReported = false;
     let audioUnlockRequestNonce = null;
-    function syncAudioUnlockScreen() {
+    let displaySoundSelected = false;
+    function syncAudioUnlockScreen(row = null) {
       if (!audioUnlockScreen) return;
-      // Pokaż przycisk na Wyświetlaczu od początku i zostaw go do kliknięcia,
-      // niezależnie od wybranego źródła dźwięku w Panelu sterowania.
-      const visible = !audioUnlockReported;
+      const soundSource = row?.detail?.settings?.soundSource;
+      if (soundSource === "display" || soundSource === "control") {
+        displaySoundSelected = soundSource === "display";
+      }
+      // Odblokowanie przeglądarki jest potrzebne tylko wtedy, gdy dźwięk ma
+      // grać z tego urządzenia. Nie zasłaniaj Display, gdy gra dźwięk z Control.
+      const visible = displaySoundSelected && !audioUnlockReported;
       const wasHidden = audioUnlockScreen.classList.contains("hidden");
       audioUnlockScreen.classList.toggle("hidden", !visible);
       audioUnlockScreen.setAttribute("aria-hidden", String(!visible));

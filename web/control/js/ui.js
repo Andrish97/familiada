@@ -16,14 +16,14 @@
 // setStealMsg/setRevealMsg/ROUNDS_MSG/FINAL_MSG, ale jako czysta funkcja
 // bieżącego game_state (web/js/gameplay/hints.js), nie ulotny stan ustawiany przy
 // każdym zdarzeniu — "wszystko idzie przez tabelę stanów".
-import { getRoundsHint, getFinalHint, getFinalEntryShortcuts, teamName } from "../../shared/js/gameplay/hints.js?v=v2026-10-07T23002";
-import { t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-07T23002";
-import { getSfxCategories, getSfxVariant, isSfxPlaying, playSfx, stopSfx, onSfxEnd, setSfxVolume } from "../../shared/js/core/sfx.js?v=v2026-10-07T23002";
-import { buildDisplayPreviewRow } from "../../shared/js/gameplay/previewRow.js?v=v2026-10-07T23002";
-import { DEFAULT_SETTINGS } from "../../shared/js/gameplay/gameStateShape.js?v=v2026-10-07T23002";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-07T23002";
+import { getRoundsHint, getFinalHint, getFinalEntryShortcuts, teamName } from "../../shared/js/gameplay/hints.js?v=v2026-10-08T07385";
+import { t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-08T07385";
+import { getSfxCategories, getSfxVariant, isSfxPlaying, playSfx, stopSfx, onSfxEnd, setSfxVolume } from "../../shared/js/core/sfx.js?v=v2026-10-08T07385";
+import { buildDisplayPreviewRow } from "../../shared/js/gameplay/previewRow.js?v=v2026-10-08T07385";
+import { DEFAULT_SETTINGS } from "../../shared/js/gameplay/gameStateShape.js?v=v2026-10-08T07385";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-08T07385";
 
-import { previewPendingRoundEndDestination } from "./engine.js?v=v2026-10-07T23002";
+import { previewPendingRoundEndDestination } from "./engine.js?v=v2026-10-08T07385";
 
 const $ = (id) => document.getElementById(id);
 const on = (el, ev, fn) => el && (el[`on${ev}`] = fn);
@@ -42,6 +42,17 @@ function h(tag, attrs = {}, children = []) {
 
 export function createUI({ root, emit }) {
   function clear() { root.innerHTML = ""; }
+  function setTopbarProgress(label) {
+    const el = document.getElementById("c2TopbarProgress");
+    if (el) {
+      const [main = "", detail = ""] = String(label || "").split(/\s+[—–]\s+/, 2);
+      el.replaceChildren(
+        Object.assign(document.createElement("span"), { className: "title", textContent: main }),
+        Object.assign(document.createElement("span"), { className: "subtitle", textContent: detail }),
+      );
+      el.title = label || "";
+    }
+  }
   function stopSummarySoundPreview() {
     getSfxCategories().forEach(({ key }) => { if (isSfxPlaying(key)) stopSfx(key); });
   }
@@ -167,7 +178,7 @@ export function createUI({ root, emit }) {
   // ============================================================
   function renderDevicesStep(state, ctx) {
     clear();
-    const { urls, presenceFlags = {}, connectCodes = {}, shareBadges = {} } = ctx;
+    const { urls, presenceFlags = {}, connectCodes = {}, shareBadges = {}, displayAudioUnlocked } = ctx;
 
     const deviceRow = (label, kind, url, { withQr = false } = {}) => {
       const online = !!presenceFlags[kind];
@@ -290,6 +301,7 @@ export function createUI({ root, emit }) {
     const hostReady = !!presenceFlags.host || state.settings.noHostTablet;
     const buzzerReady = !!presenceFlags.buzzer || state.settings.physicalBuzzer;
     const requiredOnline = displayReady && hostReady && buzzerReady;
+    const displayAudioReady = state.settings.soundSource !== "display" || displayAudioUnlocked === true;
 
     // Ten sam bug co "Gotowe — przejdź do rozgrywki" (punkt 25,
     // docs/control-recording-feedback.md) -- gołe `<button class="btn
@@ -297,20 +309,18 @@ export function createUI({ root, emit }) {
     // rozgrywce. Ujednolicone z tej samej przyczyny (zgłoszone: "zobacz
     // też pozostałe przyciski dalej/wstecz jakie mają style").
     const next = navButton(t("common.next"), {
-      disabled: !requiredOnline,
+      disabled: !requiredOnline || !displayAudioReady,
       onclick: () => emit("devices.next"),
     });
 
     root.appendChild(h("div", { class: "cardBody" }, [
       // .stepTitle zostaje (niewidoczny, display:none w control.css — testy
       // E2E celują w niego jako stabilny selektor kroku, dokładnie jak w
-      // starym Control) — widoczny nagłówek to osobny .c2-stepper, ten sam
-      // wzorzec (mały, uppercase, linia pod spodem) co w Rundach/Finale.
+      // starym Control) — postęp kroku jest w topbarze, bez osobnego paska.
       // Tekst .stepTitle NIE idzie przez t() celowo — jest zawsze niewidoczny
       // (display:none) i istnieje wyłącznie jako stabilny selektor testów E2E,
       // więc nie jest to string user-facing.
       h("div", { class: "stepTitle", text: "Urządzenia" }),
-      h("div", { class: "c2-stepper", text: t("control.stepDevices") }),
       // Przewija się tylko lista kart urządzeń. Podpowiedź pozostaje obok
       // listy widoczna także po przewinięciu do sekcji dźwięku.
       h("div", { class: "c2-roundlayout c2-devices-layout" }, [
@@ -609,14 +619,9 @@ export function createUI({ root, emit }) {
     const editSettings = root.querySelector("#btnOpenGsModal");
     if (editSettings) bindShortcut(editSettings, "e", () => emit("setup.openSettings"));
     const body = [
-      // .stepTitle zostaje bare "Podsumowanie" — stabilny selektor testów
-      // E2E (patrz control2.spec.js). Widoczny .c2-stepper dostaje opisowy
-      // nagłówek "Podsumowanie ustawień" — PODMIENIONY, nie doklejony za
-      // myślnikiem (w odróżnieniu od "Runda N — rozgrywka"/"— kradzież",
-      // gdzie oba człony niosą osobną informację, tu "Podsumowanie —
-      // podsumowanie ustawień" było czystą tautologią).
+      // .stepTitle pozostaje stabilnym selektorem E2E; postęp kroku jest
+      // pokazany w topbarze, bez dodatkowego paska nad treścią karty.
       h("div", { class: "stepTitle", text: "Podsumowanie" }),
-      h("div", { class: "c2-stepper", text: t("control.summaryStepperTitle") }),
       // .c2-scroll-area: dolne przyciski (Wstecz/Zmień ustawienia/Gotowe) mają
       // zostać wyłączone z przewijania — przewija się TYLKO treść sekcji
       // podsumowania, .stepFoot zawsze zostaje widoczny na dole karty.
@@ -642,28 +647,36 @@ export function createUI({ root, emit }) {
   // Wspólny szablon 3 głównych ekranów rozgrywki (sekcja 3b):
   // jedna karta, mały stepper na górze, treść na środku, nawigacja na dole.
   // ============================================================
-  function gameplayShell({ stepLabel, body, nav }) {
+  function gameplayShell({ stepLabel, question, body, nav }) {
     clear();
+    setTopbarProgress(stepLabel);
     // .c2-gameplay-card (720px, wyśrodkowane) tylko TU — na WŁASNYM
     // kontenerze tego szablonu, nie na #app. Urządzenia/Podsumowanie mają
     // zostać na pełną szerokość (patrz control2.html) — tylko te trzy
     // przeprojektowane ekrany rozgrywki mają być węższe (plan, sekcja 3b).
-    root.appendChild(h("div", { class: "c2-card-inner c2-gameplay c2-gameplay-card" }, [
-      h("div", { class: "c2-stepper", text: stepLabel }),
+    const navNode = nav
+      ? h("div", { class: "c2-gameplay-nav" }, nav)
+      : h("div", { class: "c2-gameplay-nav c2-gameplay-nav-empty", "aria-hidden": "true" });
+    const cardChildren = [];
+    if (question) {
+      const questionHeader = h("div", { class: "c2-stepper-question", text: question, title: question });
+      questionHeader.style.fontSize = question.length > 150 ? ".88rem" : question.length > 100 ? ".98rem" : "1.08rem";
+      cardChildren.push(h("div", { class: "c2-stepper" }, [questionHeader]));
+    }
+    cardChildren.push(
       h("div", { class: "c2-gameplay-body" }, body),
-      nav ? h("div", { class: "c2-gameplay-nav" }, nav) : null,
-    ]));
+      navNode,
+    );
+    root.appendChild(h("div", { class: "c2-card-inner c2-gameplay c2-gameplay-card" }, cardChildren));
   }
 
   // ============================================================
-  // Siatka 3x5 współdzielona przez Rundy-odsłanianie i Finał-odsłanianie —
+  // Sześciorzędowa siatka współdzielona przez wszystkie kroki rozgrywki —
   // ustalona wspólnie z właścicielem projektu: jednostka to 1/3 szerokości
   // wiersza, niektóre kafle zajmują 1,5 jednostki (pół wiersza). Wewnętrznie
   // 6 kolumn (LCD z 2 i 3), żeby obie szerokości wyrazić całkowitym `span`.
-  // Wiersz 4 zostaje pusty, chyba że akurat trzeba w nim pokazać coś
-  // rzadkiego (Pass/Kradzież) — nieużywane kafle po prostu nie istnieją w
-  // DOM, więc rytm 5 wierszy się nie rusza niezależnie od tego, co akurat
-  // jest dostępne.
+  // Wiersze mają stałą wysokość; nieobecne akcje zostawiają puste miejsca,
+  // zamiast przesuwać kafle w siatce.
   const THIRD = (i) => `${i * 2 + 1} / ${i * 2 + 3}`; // i=0,1,2 — 1 jednostka
   const HALF = (i) => `${i * 3 + 1} / ${i * 3 + 4}`;  // i=0,1   — 1,5 jednostki
 
@@ -762,7 +775,7 @@ export function createUI({ root, emit }) {
 
   // r_duel PRZED przyjęciem zgłoszenia — patrz komentarz przy jego jedynym
   // wywołaniu w renderRounds(). Odpowiednik starego control.html's osobnego
-  // data-step="r_duel": brak pytania/siatki, tylko "kto naciśnie pierwszy".
+  // data-step="r_duel": pytanie w stałym pasku nagłówka i kafle "kto naciśnie pierwszy".
   // Ten sam wspólny szablon co reszta Rund — TA SAMA siatka 6-kolumnowa
   // (tile/tileGrid) i ten sam c2-roundlayout (siatka + kreska + hint po
   // prawej), tylko zamiast odpowiedzi w kaflach siedzą przyciski
@@ -839,12 +852,12 @@ export function createUI({ root, emit }) {
     }
 
     const body = [h("div", { class: "c2-roundlayout" }, [
-      h("div", { class: "c2-roundlayout-main" }, [tileGrid(tiles)]),
-      h("div", { class: "c2-roundlayout-divider" }),
-      h("div", { class: "c2-roundlayout-side" }, [hintBlock(getRoundsHint(state))]),
-    ])];
+        h("div", { class: "c2-roundlayout-main" }, [tileGrid(tiles)]),
+        h("div", { class: "c2-roundlayout-divider" }),
+        h("div", { class: "c2-roundlayout-side" }, [hintBlock(getRoundsHint(state))]),
+      ])];
 
-    gameplayShell({ stepLabel: t("control.stepDuelTitle", { round: r.roundNo }), body, nav: null });
+    gameplayShell({ stepLabel: t("control.stepDuelTitle", { round: r.roundNo }), question: r.question?.text, body, nav: null });
   }
 
   // ---- Rundy (r_intro..r_gameEnd) ----
@@ -900,11 +913,11 @@ export function createUI({ root, emit }) {
     }
 
     // r_duel PRZED przyjęciem zgłoszenia (r.duel.firstTeam jeszcze puste) —
-    // osobny, mniejszy ekran: nic z pytania/siatki/X/timera nie jest jeszcze
+    // osobny, mniejszy ekran: siatka nie pokazuje jeszcze X ani timera
     // grywalne (nikt nie wygrał prawa do odpowiedzi), więc nie pokazujemy
     // tego wcale, dokładnie jak stary control.html's osobny
-    // data-step="r_duel" (sama "Zatwierdź drużynę A/B"+"Ponów naciśnięcie",
-    // bez treści pytania) — patrz renderDuelAccept().
+    // data-step="r_duel" (drużyny, zatwierdzenie zgłoszenia i pytanie;
+    // X/timer pojawiają się po przyjęciu zgłoszenia) — patrz renderDuelAccept().
     if (state.phase === "DUEL" && !r.duel.firstTeam) {
       return renderDuelAccept(state);
     }
@@ -914,12 +927,11 @@ export function createUI({ root, emit }) {
 
     // r_play / dalsza część DUEL po przyjęciu zgłoszenia (wspólny ekran gry
     // właściwej — drużyna, która wygrała pojedynek, odpowiada na TĘ SAMĄ
-    // widoczną siatkę). Układ: pytanie na górze; poniżej dwie kolumny —
+    // widoczną siatkę). Pytanie jest w stałym pasku nagłówka; poniżej dwie kolumny —
     // siatka odpowiedzi (lewo) i podpowiedź za pionową kreską (prawo); pod
     // tym pasek statusu (kto gra, bank, inne info); na samym dole przyciski
     // nawigacji ("Zakończ rundę" — gameplayShell's nav, jak Finał).
     const body = [];
-    body.push(h("div", { class: "c2-question", text: r.question?.text || t("control.dash") }));
 
     // Raz osiągnięte canEndRound (wszystko odsłonięte albo kradzież już
     // rozstrzygnięta) nie ma już nic do pudłowania/odmierzania — X i zegarek
@@ -974,12 +986,9 @@ export function createUI({ root, emit }) {
       }));
     });
 
-    // Wiersz 4 celowo PUSTY — ta sama przerwa nad akcjami co w Finale-
-    // mapowaniu (renderFinalMapping's pusty wiersz 5 przed kaflami
-    // odsłaniania), żeby rytm siatki (treść / przerwa / akcje) zgadzał się
-    // między wszystkimi kartami rozgrywki (zgłoszone). "Oddaj kontrolę"
-    // schodzi więc na wiersz 5, X/Timer na wiersz 6 — siatka ma teraz 6
-    // wierszy zamiast 5 (nadpisane inline niżej, jak w mapowaniu).
+    // Pytanie jest w stałym pasku po lewej stronie nagłówka. Wiersze siatki
+    // pozostają równe i przeznaczone na kafle akcji; "Oddaj kontrolę" jest
+    // w wierszu 5, X/Timer w wierszu 6.
     if (passAvailable) {
       tiles.push(armableTile("pass", t("control.roundsPassControl"), {
         row: 5, col: "1 / 7", cls: "c2-tile-primary",
@@ -1073,11 +1082,9 @@ export function createUI({ root, emit }) {
     if (state.phase === "STEAL" && r.steal.active) {
       statusItems.push(h("span", {}, [document.createTextNode(t("control.statusStealLabel")), h("b", { text: r.steal.team ? teamName(state, r.steal.team) : t("control.dash") })]));
     }
-    // "Zakończ rundę" mieszka OBOK Gra/Bank, w tym samym pasku (zgłoszone:
-    // za duży odstęp pod kaflami + przycisk ma być obok Gra/Bank) —
-    // .c2-statusbar-end popycha go do prawej krawędzi tego samego wiersza,
-    // zamiast osobnego .c2-gameplay-nav z własnym border-top/padding-top
-    // (stąd nav:null niżej — bez oddzielnego paska nawigacji na tym ekranie).
+    // Wyniki, bank i akcja przejścia tworzą wspólny dolny pasek. gameplayShell
+    // umieszcza go w stałym miejscu pod siatką, więc kafle wypełniają całą
+    // przestrzeń aż do niego.
     if ((state.phase === "PLAY" || state.phase === "STEAL") && r.canEndRound) {
       const label = previewPendingRoundEndDestination(state) === "GAME_END"
         ? t("control.roundsGoToGameEndBtn") : t("control.roundsEndRound");
@@ -1103,7 +1110,7 @@ export function createUI({ root, emit }) {
         onclick: () => emit("game.dispatch", { type: "NEXT_AFTER_REVEAL" }),
       }));
     }
-    body.push(h("div", { class: "c2-statusbar" }, statusItems));
+    const roundStatusBar = h("div", { class: "c2-statusbar" }, statusItems);
 
     // "— kradzież" w STEAL, "— rozgrywka" poza tym (PLAY i odkrywanie
     // reszty w REVEAL) — zgłoszone: te dwa etapy mają się rozróżniać w
@@ -1111,7 +1118,7 @@ export function createUI({ root, emit }) {
     const stepLabel = state.phase === "STEAL"
       ? t("control.stepStealTitle", { round: r.roundNo })
       : t("control.stepPlayTitle", { round: r.roundNo });
-    gameplayShell({ stepLabel, body, nav: null });
+    gameplayShell({ stepLabel, question: r.question?.text, body, nav: [roundStatusBar] });
   }
 
   // 3 przypadki końca gry — wygrana A, wygrana B, remis — jedna linia
@@ -1416,15 +1423,9 @@ export function createUI({ root, emit }) {
     rows.push(timerButton);
     bindShortcut(timerButton, "t", () => emit("final.toggleTimer", { round }));
 
-    // Nagłówek nad siatką — Finał-mapowanie ma nad swoją siatką c2-question
-    // (treść pytania), wpisywanie go dotąd nie miało wcale, przez co jego
-    // siatka dostawała więcej wysokości niż mapowania i wiersze między tymi
-    // dwoma ekranami nie kończyły się na tej samej wysokości (zgłoszone).
-    // Ten ekran nie ma JEDNEGO pytania (5 naraz w wierszach), więc zamiast
-    // treści pytania pokazuje, czyj to krok — sama treść nieważna, chodzi o
-    // zarezerwowanie tej samej wysokości nagłówka co u mapowania.
+    // Pięć pytań jest już widocznych w pięciu rzędach formularza; szósty
+    // zajmuje timer. Stepper u góry określa, który gracz wpisuje odpowiedzi.
     const body = [
-      h("div", { class: "c2-question", text: t("control.finalEntryHeading", { round }) }),
       h("div", { class: "c2-roundlayout" }, [
         h("div", { class: "c2-roundlayout-main" }, [h("div", { class: "c2-entryrows" }, rows)]),
         h("div", { class: "c2-roundlayout-divider" }),
@@ -1692,16 +1693,15 @@ export function createUI({ root, emit }) {
       optionTiles.push(slotEl);
     }
 
-    // 6 wierszy zamiast domyślnych 5 (nadpisanie inline, tylko tu — Rundy
-    // mają teraz 6 wierszy przez własne nadpisanie w renderRounds): wiersz 5
-    // celowo PUSTY, żeby dać kaflom odsłaniania w wierszu 6 CAŁY wiersz
-    // przerwy nad sobą, nie tylko margines. Wszystkie 6 wierszy równe —
+    // Wspólna, sześciorzędowa siatka jak w Rundach. Wiersz 5 zajmuje pytanie
+    // na pełną szerokość, a kafle odsłaniania zostają w wierszu 6. Wszystkie
+    // rzędy mają tę samą wysokość —
     // wcześniejsze przeważanie wiersza 1 (Wpisano) było próbą naprawienia
     // wysokości POLA przez wysokość WIERSZA; prawdziwa naprawa (zgłoszone:
     // "pola wpisywania lepiej żeby były na wysokość kafelka") jest w CSS
     // (.c2-entrytile-input input's flex:1/height:100%) — samo pole
     // wypełnia teraz cały kafelek niezależnie od tego, ile miejsca ma wiersz.
-    const mappingGrid = tileGrid([...row1Tiles, revealAnswerTile, revealPointsTile, ...optionTiles]);
+    const mappingGrid = tileGrid([...row1Tiles, ...optionTiles, revealAnswerTile, revealPointsTile]);
     mappingGrid.style.gridTemplateRows = "repeat(6, minmax(0,1fr))";
 
     // control/js/gameFinal.js's updateSumUI() — operator widział sumę na
@@ -1711,12 +1711,8 @@ export function createUI({ root, emit }) {
     // zgłoszone: "suma finału jak inne włączniki ma być niżej, nie na
     // górze" — w Rundach pasek statusu (Bank/Gra) idzie PO siatce, nie
     // przed nią (patrz renderRounds wyżej); ten ekran miał go odwrotnie.
-    // "Dalej" MIESZKA w TYM SAMYM pasku (c2-statusbar-end, dokładnie jak
-    // "Zakończ rundę" w Rundach, patrz tam) — zgłoszone: "suma finału miała
-    // być na pasku z dalej, a nie na osobnym pasku" — osobny
-    // .c2-gameplay-nav (własny border-top/padding-top) dawał DWA paski
-    // jeden nad drugim zamiast jednego. nav:null niżej — bez osobnego
-    // paska nawigacji na tym ekranie, tak jak w Rundach.
+    // Suma finału i "Dalej" są w dolnym pasku pod siatką, tak samo jak
+    // wyniki i przejście w rundach.
     //
     // NEXT_QUESTION's `idx` to 1-bazowy numer PYTANIA, z którego schodzimy
     // (nextIdx = action.idx+1 w engine.js) — nie 0-bazowy indeks tablicy,
@@ -1738,16 +1734,14 @@ export function createUI({ root, emit }) {
     ]);
 
     const body = [
-      h("div", { class: "c2-question", text: question?.text || t("control.finalUi.questionLabel", { n: idx + 1 }) }),
       h("div", { class: "c2-roundlayout" }, [
         h("div", { class: "c2-roundlayout-main" }, [mappingGrid]),
         h("div", { class: "c2-roundlayout-divider" }),
         h("div", { class: "c2-roundlayout-side" }, [hintBlock(getFinalHint(state), null, "c2-final-hint")]),
       ]),
-      finalStatusBar,
     ];
 
-    gameplayShell({ stepLabel: t("control.finalMappingStepLabel", { n: idx + 1 }), body, nav: null });
+    gameplayShell({ stepLabel: t("control.finalMappingStepLabel", { n: idx + 1 }), question: question?.text || t("control.finalUi.questionLabel", { n: idx + 1 }), body, nav: [finalStatusBar] });
   }
 
   function renderFinalP2Start(state) {
@@ -1824,6 +1818,9 @@ export function createUI({ root, emit }) {
     } : null;
     updateTopbarDots(state, ctx.presenceFlags);
     const s = state.step;
+    if (s === "devices_display") setTopbarProgress(t("control.stepDevices"));
+    else if (s === "setup_finish") setTopbarProgress(t("control.summaryStepperTitle"));
+    else setTopbarProgress("");
     const liveRoot = root;
     if (oldEntry) root = document.createElement("div");
     let freshEntry;

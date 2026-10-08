@@ -96,9 +96,9 @@ test("control2: TV odrzuca inne urządzenia, kod display otwiera nowy Wyświetla
     await expect(tv.locator("#fsBtn")).toBeVisible();
     // The new Display remains directly accessible; its sound prompt works with TV OK.
     await tv.goto(`https://www.familiada.online/display/?id=${game.id}&key=${game.share_key_display}`);
-    // Przycisk jest widoczny od początku i czeka na kliknięcie, niezależnie
-    // od tego, czy panel zdążył już wybrać źródło dźwięku.
-    await expect(tv.locator("#audioUnlockScreen")).toBeVisible({ timeout: 15000 });
+    // Przy domyślnym źródle Control ekran odblokowania dźwięku na Display
+    // pozostaje ukryty; pojawia się dopiero po wybraniu Display jako źródła.
+    await expect(tv.locator("#audioUnlockScreen")).toBeHidden({ timeout: 15000 });
     await page.goto(`/control?id=${game.id}`);
     await expect(page.locator(".stepTitle")).toHaveText("Urządzenia", { timeout: 15000 });
     await page.locator('.toggle-item:has(input[name="soundSource"][value="display"])').click();
@@ -305,7 +305,7 @@ async function revealAnswer(page, n) {
 // więc to zwykłe console.log() PO STRONIE NODE (Playwright/test runner —
 // leci prosto na stdout, widoczne w CI bez żadnego haka).
 async function dumpControlState(page, label) {
-  const stepper = await page.locator(".c2-stepper").textContent().catch((e) => `<err: ${e.message}>`);
+  const stepper = await page.locator("#c2TopbarProgress").textContent().catch((e) => `<err: ${e.message}>`);
   const tiles = await page.locator(".c2-tilegrid button").allTextContents().catch((e) => [`<err: ${e.message}>`]);
   const endBtn = page.getByRole("button", { name: /^(Zakończ rundę|Przejdź do zakończenia gry)$/ });
   const endCount = await endBtn.count().catch(() => -1);
@@ -354,13 +354,23 @@ async function expectMappingFieldFits(page, testInfo, label) {
     const input = tile.querySelector("input").getBoundingClientRect();
     const column = tile.querySelector(".c2-mapinput-labelcol").getBoundingClientRect();
     const caption = tile.querySelector(".c2-field-label").getBoundingClientRect();
-    return { top: input.top - box.top, bottom: box.bottom - input.bottom, right: box.right - input.right, centered: Math.abs((column.left + column.right) / 2 - (caption.left + caption.right) / 2), horizontalOverflow: tile.scrollWidth - tile.clientWidth };
+    const card = document.querySelector(".c2-gameplay-card").getBoundingClientRect();
+    const main = document.querySelector(".c2-roundlayout-main").getBoundingClientRect();
+    return { top: input.top - box.top, bottom: box.bottom - input.bottom, right: box.right - input.right, centered: Math.abs((column.left + column.right) / 2 - (caption.left + caption.right) / 2), horizontalOverflow: tile.scrollWidth - tile.clientWidth, cardX: card.x, cardWidth: card.width, mainX: main.x, mainWidth: main.width };
   });
   expect(geometry.top).toBeGreaterThanOrEqual(5);
   expect(geometry.bottom).toBeGreaterThanOrEqual(5);
   expect(geometry.right).toBeGreaterThanOrEqual(5);
   expect(geometry.centered).toBeLessThanOrEqual(1);
   expect(geometry.horizontalOverflow).toBeLessThanOrEqual(1);
+  if (label === "p1") await page.evaluate((rect) => { window.__p1MappingLayout = rect; }, geometry);
+  if (label === "p2") {
+    const p1 = await page.evaluate(() => window.__p1MappingLayout);
+    expect(Math.abs(geometry.cardX - p1.cardX), "karta nie może przesuwać się w mapowaniu gracza 2").toBeLessThan(1);
+    expect(Math.abs(geometry.cardWidth - p1.cardWidth), "szerokość karty musi być stała między graczami").toBeLessThan(1);
+    expect(Math.abs(geometry.mainX - p1.mainX), "lewa kolumna mapowania nie może przesuwać się między graczami").toBeLessThan(1);
+    expect(Math.abs(geometry.mainWidth - p1.mainWidth), "szerokość kolumny mapowania musi być stała między graczami").toBeLessThan(1);
+  }
   await page.screenshot({ path: testInfo.outputPath(`shot-mapping-${label}.png`) });
 }
 
@@ -684,6 +694,11 @@ test("control2: parowanie urządzeń — linki renderują się bez błędu, Cont
       .toContainText("bez tego start gry będzie zablokowany");
     await expect(displayPage.locator("#audioUnlockScreen")).not.toHaveClass(/hidden/, { timeout: 10000 });
 
+    const nextStep = page.getByRole("button", { name: "Dalej" });
+    await expect(nextStep).toBeDisabled();
+    await displayPage.locator("#btnAudioUnlock").click();
+    await expect(displayPage.locator("#audioUnlockScreen")).toHaveClass(/hidden/);
+    await expect(nextStep).toBeEnabled({ timeout: 10000 });
     await page.getByRole("button", { name: "Dalej" }).click();
     await expect(page.locator(".stepTitle")).toHaveText("Podsumowanie", { timeout: 10000 });
     await expect(page.locator(".c2-summary-rounds .c2-qpreview-text")).toHaveCount(1);
@@ -691,7 +706,7 @@ test("control2: parowanie urządzeń — linki renderują się bez błędu, Cont
     const initialRoundQuestion = await page.locator(".c2-summary-rounds .c2-qpreview-text").textContent();
     const initialFinalQuestions = await page.locator(".c2-summary-final-questions .c2-qpreview-text").allTextContents();
     expect(initialFinalQuestions).not.toContain(initialRoundQuestion);
-    expect(new Set([...initialFinalQuestions, initialRoundQuestion])).toHaveSize(6);
+    expect(new Set([...initialFinalQuestions, initialRoundQuestion]).size).toBe(6);
     await expect(page.locator(".c2-summary-advanced")).toContainText("250");
     const questionCards = await page.locator(".c2-summary-question-grid > .summarySection").evaluateAll((els) => els.map((el) => {
       const rect = el.getBoundingClientRect();
@@ -716,10 +731,8 @@ test("control2: parowanie urządzeń — linki renderują się bez błędu, Cont
 
     const revealPreview = page.locator('.summarySoundRow:has(input[data-sfx-vol="reveal"]) .summarySoundPlay');
     const beginGame = page.getByRole("button", { name: "Gotowe — przejdź do rozgrywki" });
-    await expect(beginGame).toBeDisabled();
+    await expect(beginGame).toBeEnabled();
     await expect(page.locator(".c2-audio-gate-hint")).toHaveCount(0);
-    await displayPage.locator("#btnAudioUnlock").click();
-    await expect(beginGame).toBeEnabled({ timeout: 10000 });
     await revealPreview.click();
     await expect(revealPreview.locator(".ico")).toHaveClass(/ico-stop/);
     await expect(beginGame).toBeEnabled();
@@ -770,8 +783,27 @@ test("control2: pełna runda przez 4 urządzenia + wznowienie Control po przeła
     await page.getByRole("button", { name: "Gotowe — przejdź do rozgrywki" }).click();
 
     await page.getByRole("button", { name: "Rozpocznij grę" }).click();
-    await expect(page.locator(".c2-stepper")).toContainText("Runda 1", { timeout: 22000 });
+    await expect(page.locator("#c2TopbarProgress")).toContainText("Runda 1", { timeout: 22000 });
     await page.getByRole("button", { name: "Rozpocznij rundę" }).click();
+    const questionDuringDuel = page.locator(".c2-stepper-question");
+    await expect(questionDuringDuel).toHaveText(/\S/);
+    const visibleQuestion = await questionDuringDuel.textContent();
+    const topbarLayout = await page.evaluate(() => {
+      const progress = document.querySelector("#c2TopbarProgress").getBoundingClientRect();
+      const display = document.querySelector("#dotDisplayRow").getBoundingClientRect();
+      return {
+        progressRight: progress.right,
+        displayLeft: display.left,
+        progressCenter: progress.top + progress.height / 2,
+        displayCenter: display.top + display.height / 2,
+        progressHeight: progress.height,
+        deviceIconCount: document.querySelectorAll("#dotDisplayRow svg, #dotHostRow svg, #dotBuzzerRow svg").length,
+      };
+    });
+    expect(topbarLayout.progressRight).toBeLessThan(topbarLayout.displayLeft);
+    expect(Math.abs(topbarLayout.progressCenter - topbarLayout.displayCenter)).toBeLessThan(2);
+    expect(topbarLayout.progressHeight).toBeGreaterThanOrEqual(40);
+    expect(topbarLayout.deviceIconCount).toBe(3);
 
     // Regresja: Prowadzący musi widzieć PEŁNĄ treść i punkty KAŻDEJ
     // odpowiedzi od początku rundy, nie tylko już odsłoniętych dla widzów
@@ -783,7 +815,14 @@ test("control2: pełna runda przez 4 urządzenia + wznowienie Control po przeła
     await expect(buzzerPage.getByRole("button", { name: "Przycisk A" })).toBeEnabled({ timeout: 10000 });
     await buzzerPage.getByRole("button", { name: "Przycisk A" }).click();
     await expect(page.getByRole("button", { name: "Zatwierdź: Alfa" })).toBeEnabled({ timeout: 10000 });
+    await expect(questionDuringDuel).toHaveText(visibleQuestion);
+    const duelGridRows = await page.locator(".c2-tilegrid").evaluate((grid) => getComputedStyle(grid).gridTemplateRows.split(" ").length);
+    expect(duelGridRows).toBe(6);
+    const duelTileHeight = await page.locator(".c2-tilegrid .c2-tile").first().evaluate((tile) => tile.getBoundingClientRect().height);
     await armAndConfirm(page.getByRole("button", { name: "Zatwierdź: Alfa" }));
+    const roundTileHeight = await page.locator(".c2-tilegrid .c2-tile").first().evaluate((tile) => tile.getBoundingClientRect().height);
+    expect(Math.abs(roundTileHeight - duelTileHeight)).toBeLessThan(1);
+    await expect(page.locator(".c2-gameplay-nav .c2-statusbar")).toBeVisible();
 
     // Odpowiedź #1 ma najwyższe punkty (40) — trafienie wygrywa pojedynek.
     await dumpControlState(page, "przed-reveal-1");
@@ -805,14 +844,14 @@ test("control2: pełna runda przez 4 urządzenia + wznowienie Control po przeła
     }
 
     // finalizeRound(): próg (300) nieosiągnięty, pula ma jeszcze pytanie 2.
-    await expect(page.locator(".c2-stepper")).toContainText("Runda 2", { timeout: 22000 });
+    await expect(page.locator("#c2TopbarProgress")).toContainText("Runda 2", { timeout: 22000 });
 
     // ===== KLUCZOWY MOMENT: przeładowanie Control w środku rundy 2 =====
     const beforeReload = await readControl2Sessions(page, game.id);
     expect(beforeReload).toHaveLength(1);
     expect(beforeReload[0]).toMatchObject({ rounds_played: 1, rounds_score_a: 90 });
     await page.reload({ waitUntil: "domcontentloaded" });
-    await expect(page.locator(".c2-stepper")).toContainText("Runda 2", { timeout: 22000 });
+    await expect(page.locator("#c2TopbarProgress")).toContainText("Runda 2", { timeout: 22000 });
     await expect(page.getByText("Alfa: 90")).toBeVisible({ timeout: 10000 });
     const afterReload = await readControl2Sessions(page, game.id);
     expect(afterReload).toHaveLength(1);
@@ -850,7 +889,7 @@ test("control2: reset pojedynku, pass, kradzież wygrana/przegrana, odkrywanie r
     await page.getByRole("button", { name: "Rozpocznij grę" }).click();
 
     // ===== RUNDA 1 =====
-    await expect(page.locator(".c2-stepper")).toContainText("Runda 1", { timeout: 22000 });
+    await expect(page.locator("#c2TopbarProgress")).toContainText("Runda 1", { timeout: 22000 });
     await page.getByRole("button", { name: "Rozpocznij rundę" }).click();
 
     await expect(buzzerPage.getByRole("button", { name: "Przycisk A" })).toBeEnabled({ timeout: 10000 });
@@ -904,7 +943,7 @@ test("control2: reset pojedynku, pass, kradzież wygrana/przegrana, odkrywanie r
     await expect(nextRoundBtn).toBeEnabled({ timeout: 10000 });
     await nextRoundBtn.click();
 
-    await expect(page.locator(".c2-stepper")).toContainText("Runda 2", { timeout: 22000 });
+    await expect(page.locator("#c2TopbarProgress")).toContainText("Runda 2", { timeout: 22000 });
     await expect(page.getByText("Alfa: 0")).toBeVisible({ timeout: 10000 });
     await expect(page.getByText("Beta: 70")).toBeVisible({ timeout: 10000 });
 
@@ -936,7 +975,7 @@ test("control2: reset pojedynku, pass, kradzież wygrana/przegrana, odkrywanie r
     await gameEndBtn.click();
 
     // Runda 1 dała bank drużynie B (70), runda 2 zostaje przy A (70) -> remis.
-    await expect(page.locator(".c2-stepper")).toContainText("Koniec gry", { timeout: 22000 });
+    await expect(page.locator("#c2TopbarProgress")).toContainText("Koniec gry", { timeout: 22000 });
 
     // gameEndSummary() (ui.js) renderuje się dopiero PO locks.gameEnded —
     // czyli PO tym kliknięciu, nie przed nim (poprzednia kolejność w tym
@@ -998,10 +1037,10 @@ test("control2: próg w rundzie -> finał, wczesne zakończenie po 4/5 pytaniach
 
     // Próg (300) trafiony, hasFinal=true, finalQuestionsMode="pick" + 5
     // potwierdzonych pytań -> prosto do finału.
-    await expect(page.locator(".c2-stepper")).toContainText("Finał", { timeout: 22000 });
+    await expect(page.locator("#c2TopbarProgress")).toContainText("Finał", { timeout: 22000 });
     await page.getByRole("button", { name: "Rozpocznij finał" }).click();
 
-    await expect(page.locator(".c2-stepper")).toContainText("Finał — gracz 1, wpisywanie", { timeout: 22000 });
+    await expect(page.locator("#c2TopbarProgress")).toContainText("Finał — gracz 1, wpisywanie", { timeout: 22000 });
     // Bez wpisanej odpowiedzi gracza kafel dopasowania zostaje trwale
     // disabled (ui.js's hasTyped) — ta sama luka co w drugim, pełnym teście
     // finału (linia ~846), ale tu brakowało tego kroku w ogóle.
@@ -1019,7 +1058,7 @@ test("control2: próg w rundzie -> finał, wczesne zakończenie po 4/5 pytaniach
     await page.getByRole("button", { name: "Dalej" }).click();
 
     for (let i = 0; i < 4; i++) {
-      await expect(page.locator(".c2-stepper")).toContainText(`Finał — mapowanie ${i + 1}/5`, { timeout: 22000 });
+      await expect(page.locator("#c2TopbarProgress")).toContainText(`Finał — mapowanie ${i + 1}/5`, { timeout: 22000 });
       await armAndConfirm(page.getByRole("button", { name: "Odp. finałowa (50)" }));
       // "Pokaż odpowiedź"/"Pokaż punkty" — kafle odsłaniania (zaznacz ->
       // potwierdź, jak odpowiedzi w Rundach), nazwa stała, druga linijka to
@@ -1041,7 +1080,7 @@ test("control2: próg w rundzie -> finał, wczesne zakończenie po 4/5 pytaniach
     await expect(page.getByRole("button", { name: "Pokaż odpowiedź" })).toBeDisabled();
     await expect(page.getByRole("button", { name: "Pokaż punkty" })).toBeDisabled();
     await page.getByRole("button", { name: "Zakończ finał", exact: true }).click();
-    await expect(page.locator(".c2-stepper")).toContainText("Koniec gry", { timeout: 22000 });
+    await expect(page.locator("#c2TopbarProgress")).toContainText("Koniec gry", { timeout: 22000 });
 
     // finalStatusBar (ui.js's renderFinalMapping) istnieje tylko na
     // ekranach mapowania — tu już zeszliśmy na f_end, gdzie go nie ma.
@@ -1197,7 +1236,7 @@ test("control2: \"Zacznij od nowa\" w trakcie gry wraca do D0", async ({ page, b
     await expect(page.locator("#dotBuzzer")).toHaveClass(/\bok\b/, { timeout: 15000 });
     await page.getByRole("button", { name: "Dalej" }).click();
     await page.getByRole("button", { name: "Gotowe — przejdź do rozgrywki" }).click();
-    await expect(page.locator(".c2-stepper")).toContainText("Rozpoczęcie gry", { timeout: 22000 });
+    await expect(page.locator("#c2TopbarProgress")).toContainText("Rozpoczęcie gry", { timeout: 22000 });
 
     await page.getByRole("button", { name: "Rozpocznij grę", exact: true }).click();
     await expect(page.getByRole("button", { name: "Rozpocznij rundę", exact: true })).toBeDisabled();
@@ -1401,7 +1440,7 @@ test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśni�
     await clickX(page);
     await clickX(page);
     await page.getByRole("button", { name: /^(Zakończ rundę|Przejdź do zakończenia gry)$/ }).click();
-    await expect(page.locator(".c2-stepper")).toContainText("Finał", { timeout: 22000 });
+    await expect(page.locator("#c2TopbarProgress")).toContainText("Finał", { timeout: 22000 });
 
     // ===== F1: start finału =====
     await clearSfxLog(page);
@@ -1419,7 +1458,7 @@ test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśni�
     await expect(hostPage.locator("#cover2")).toHaveClass(/coverOn/, { timeout: 10000 });
 
     // ===== F2/F3: gracz 1 wpisuje, timer wygasa NATURALNIE (bez klikania "Dalej") =====
-    await expect(page.locator(".c2-stepper")).toContainText("Finał — gracz 1, wpisywanie", { timeout: 22000 });
+    await expect(page.locator("#c2TopbarProgress")).toContainText("Finał — gracz 1, wpisywanie", { timeout: 22000 });
     const p1Inputs = page.locator("#app input[type=text]");
     await expect(p1Inputs).toHaveCount(5, { timeout: 10000 });
     await expect(page.getByRole("button", { name: "Dalej", exact: true })).toBeDisabled();
@@ -1444,7 +1483,7 @@ test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśni�
     // ===== F4/F5: mapowanie gracza 1 — trafienie wszystkich 5x15 pkt =====
     await page.getByRole("button", { name: "Dalej" }).click();
     for (let i = 0; i < 5; i++) {
-      await expect(page.locator(".c2-stepper")).toContainText(`Finał — mapowanie ${i + 1}/5`, { timeout: 22000 });
+      await expect(page.locator("#c2TopbarProgress")).toContainText(`Finał — mapowanie ${i + 1}/5`, { timeout: 22000 });
       if (i === 0) {
         await expectMappingFieldFits(page, testInfo, "p1");
         const field = page.locator(".c2-mapinput input");
@@ -1479,7 +1518,7 @@ test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśni�
     // Suma 75 < finalTarget (200) — BEZ wczesnego wyjścia, prosto do F6.
 
     // ===== F6: przejście do gracza 2 — TU jest sedno testu =====
-    await expect(page.locator(".c2-stepper")).toContainText("Finał — start rundy 2", { timeout: 22000 });
+    await expect(page.locator("#c2TopbarProgress")).toContainText("Finał — start rundy 2", { timeout: 22000 });
     await clearDisplayLog(displayPage);
     await page.getByRole("button", { name: "Rozpocznij 2 rundę" }).click();
 
@@ -1520,7 +1559,7 @@ test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśni�
     await expect(hostPage.locator("#cover2")).toHaveClass(/coverOff/, { timeout: 5000 });
 
     // ===== F7: gracz 2 — pytanie #1 oznaczone jako "powtórzenie" =====
-    await expect(page.locator(".c2-stepper")).toContainText("Finał — gracz 2, wpisywanie", { timeout: 22000 });
+    await expect(page.locator("#c2TopbarProgress")).toContainText("Finał — gracz 2, wpisywanie", { timeout: 22000 });
     await clearSfxLog(page);
     // "Powtórzenie" WŁĄCZANE jest teraz zaznacz->potwierdź (konsekwentne:
     // dźwięk + wymuszony SKIP w mapowaniu, ui.js) -- jak reszta kosztownych
@@ -1581,7 +1620,7 @@ test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśni�
         await expect(page.getByRole("button", { name: "Brak odpowiedzi", exact: true })).toBeEnabled();
         await expect(page.getByRole("button", { name: "Powtórzenie", exact: true })).toBeEnabled();
       }
-      await expect(page.locator(".c2-stepper")).toContainText(`Finał — mapowanie ${i + 1}/5`, { timeout: 22000 });
+      await expect(page.locator("#c2TopbarProgress")).toContainText(`Finał — mapowanie ${i + 1}/5`, { timeout: 22000 });
       if (i > 0) await armAndConfirm(page.getByRole("button", { name: "Odp. finałowa (15)" }));
       await armAndConfirm(page.getByRole("button", { name: "Pokaż odpowiedź" }));
       // C2-14 (engine.js's REVEAL_ANSWER_ONLY): dla kind!=MATCH (tu i=0,
@@ -1595,7 +1634,7 @@ test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśni�
     // 75 (gracz 1) + 0 (powtórzenie) + 4x15 (gracz 2) = 135 < 200 — pełne 10/10, bez wczesnego wyjścia.
     await clearSfxLog(page);
     await page.getByRole("button", { name: "Zakończ finał", exact: true }).click();
-    await expect(page.locator(".c2-stepper")).toContainText("Koniec gry", { timeout: 22000 });
+    await expect(page.locator("#c2TopbarProgress")).toContainText("Koniec gry", { timeout: 22000 });
     await expect(page.getByText("Suma finału: 135")).toBeVisible({ timeout: 10000 });
 
     // Najpierw kończy się przejście wyniku; dopiero potem liczymy dźwięki outro.
@@ -1673,7 +1712,7 @@ test("control2: mnożnik rundy — runda 4. z domyślnym ×2 faktycznie przemna�
 
     // Rundy 1-3: mnożnik x1 (domyślne roundMultipliers [1,1,1,2,3]) — A wygrywa za każdym razem, bank 40.
     for (let round = 1; round <= 3; round++) {
-      await expect(page.locator(".c2-stepper")).toContainText(`Runda ${round}`, { timeout: 22000 });
+      await expect(page.locator("#c2TopbarProgress")).toContainText(`Runda ${round}`, { timeout: 22000 });
       await page.getByRole("button", { name: "Rozpocznij rundę" }).click();
       await expect(buzzerPage.getByRole("button", { name: "Przycisk A" })).toBeEnabled({ timeout: 10000 });
       await buzzerPage.getByRole("button", { name: "Przycisk A" }).click();
@@ -1688,7 +1727,7 @@ test("control2: mnożnik rundy — runda 4. z domyślnym ×2 faktycznie przemna�
     await expect(page.getByText("Alfa: 120")).toBeVisible({ timeout: 10000 });
 
     // Runda 4: mnożnik x2 — bank 40 ma dać +80, nie +40.
-    await expect(page.locator(".c2-stepper")).toContainText("Runda 4", { timeout: 22000 });
+    await expect(page.locator("#c2TopbarProgress")).toContainText("Runda 4", { timeout: 22000 });
     await page.getByRole("button", { name: "Rozpocznij rundę" }).click();
     await expect(buzzerPage.getByRole("button", { name: "Przycisk A" })).toBeEnabled({ timeout: 10000 });
     await buzzerPage.getByRole("button", { name: "Przycisk A" }).click();
@@ -1881,20 +1920,23 @@ test("control2: wyciszenie dźwięku — po Mute żaden klucz SFX się nie odtwa
 // urządzenie, które FAKTYCZNIE gra (Display).
 
 test("control2: dźwięk ze źródła Wyświetlacz — odblokowanie, głośność z ustawień, chwilowe mute w rundzie", async ({ page, browser }, testInfo) => {
+  await page.setViewportSize({ width: 1366, height: 768 });
   await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
   const game = await makeGame(page, `E2E-CONTROL2-SOUNDSRC-${Date.now()}`, { roundQuestions: [TWO_QUESTIONS[0]] });
   const contexts = [];
   try {
     const buzzerPage = await openAnon(browser, contexts, `/buzzer?id=${game.id}&key=${game.share_key_buzzer}`, "buzzer", []);
-    const displayPage = await openAnon(browser, contexts, `/display?id=${game.id}&key=${game.share_key_display}`, "display", []);
+    let displayPage = await openAnon(browser, contexts, `/display?id=${game.id}&key=${game.share_key_display}`, "display", []);
     await openAnon(browser, contexts, `/host?id=${game.id}&key=${game.share_key_host}`, "host", []);
 
     await page.goto(`/control?id=${game.id}`, { waitUntil: "domcontentloaded" });
     await expect(page.locator(".stepTitle")).toHaveText("Urządzenia", { timeout: 15000 });
     await expect(page.locator("#dotDisplay")).toHaveClass(/\bok\b/, { timeout: 15000 });
 
-    // Przycisk Display pozostaje widoczny do jawnego kliknięcia.
-    await expect(displayPage.locator("#audioUnlockScreen")).toBeVisible();
+    // Domyślnym źródłem jest Control, więc Display nie prosi o odblokowanie.
+    await expect(displayPage.locator("#audioUnlockScreen")).toBeHidden();
+    const nextStep = page.getByRole("button", { name: "Dalej" });
+    await expect(nextStep).toBeEnabled({ timeout: 10000 });
 
     // Przełącznik dwustanowy (.toggle-group, jak "Losowo"/"Wybierz" w
     // ustawieniach gry) — widoczny tekst opcji to CSS content:attr(data-text)
@@ -1902,9 +1944,13 @@ test("control2: dźwięk ze źródła Wyświetlacz — odblokowanie, głośnoś�
     // etykietę .toggle-item po wartości ukrytego radio, ten sam wzorzec co
     // game-settings.spec.js's analogiczne przełączniki.
     await page.locator('.toggle-item:has(input[name="soundSource"][value="display"])').click();
+    const devicesFitAfterAudioSwitch = await page.locator(".c2-devices-layout .c2-scroll-area").evaluate((el) => el.scrollHeight <= el.clientHeight + 1);
+    expect(devicesFitAfterAudioSwitch, "włączenie dźwięku z Wyświetlacza nie powinno dodawać przewijania na normalnym ekranie").toBe(true);
     await expect(displayPage.locator("#audioUnlockScreen")).not.toHaveClass(/\bhidden\b/, { timeout: 10000 });
+    await expect(nextStep).toBeDisabled({ timeout: 10000 });
     await displayPage.locator("#btnAudioUnlock").click();
     await expect(displayPage.locator("#audioUnlockScreen")).toHaveClass(/\bhidden\b/);
+    await expect(nextStep).toBeEnabled({ timeout: 10000 });
 
     await page.getByRole("button", { name: "Dalej" }).click();
     await expect(page.locator(".stepTitle")).toHaveText("Podsumowanie", { timeout: 10000 });
@@ -2024,6 +2070,19 @@ test("control2: dźwięk ze źródła Wyświetlacz — odblokowanie, głośnoś�
     await clearSfxLog(displayPage);
     await revealAnswer(page, 1); // Odpowiedź A, 40 pkt -> wygrywa pojedynek
     await waitForSfxSequence(displayPage, ["reveal"], 10000);
+
+    // Ponowne podłączenie Display w trakcie gry wymaga nowego gestu audio.
+    // Control blokuje odsłanianie do momentu potwierdzenia przez nową kartę.
+    await displayPage.context().close();
+    await expect(page.locator("#dotDisplay")).toHaveClass(/\bbad\b/, { timeout: 20000 });
+    await expect(page.locator("#deviceLostOverlay")).toBeVisible({ timeout: 10000 });
+    await page.locator("#deviceLostClose").click();
+    displayPage = await reconnectViaModal(browser, page, "display", contexts, []);
+    await expect(displayPage.locator("#audioUnlockScreen")).toBeVisible({ timeout: 15000 });
+    await expect(answerTile(page, 2)).toBeDisabled();
+    await displayPage.locator("#btnAudioUnlock").click();
+    await expect(displayPage.locator("#audioUnlockScreen")).toBeHidden({ timeout: 10000 });
+    await expect(answerTile(page, 2)).toBeEnabled({ timeout: 15000 });
 
     // ===== Mute na chwilę w tej samej rundzie — odpowiedź #2 podczas wyciszenia =====
     await page.locator("#btnMute").click();
@@ -2541,8 +2600,10 @@ test("control2: zerwanie połączenia wszystkich trzech urządzeń naraz i ponow
 
     // ===== Ponowne podłączenie po kolei, przez modal =====
     displayPage = await reconnectViaModal(browser, page, "display", contexts, errors);
+    await expect(page.locator("#deviceLostOverlay")).toBeHidden();
     await expect(answerTile(page, 2)).toBeDisabled();
     await reconnectViaModal(browser, page, "host", contexts, errors);
+    await expect(page.locator("#deviceLostOverlay")).toBeHidden();
     await expect(answerTile(page, 2)).toBeDisabled();
     buzzerPage = await reconnectViaModal(browser, page, "buzzer", contexts, errors);
     await expect(answerTile(page, 2)).toBeEnabled({ timeout: 10000 });
@@ -2563,7 +2624,7 @@ test("control2: zerwanie połączenia wszystkich trzech urządzeń naraz i ponow
     // ===== Runda 2, w CAŁOŚCI na ponownie podłączonym Buzzerze -- dowód, że
     // nowe urządzenie nie tylko świeci na zielono (presence), ale faktycznie
     // bierze udział w rozgrywce (realny zapis przez game_state_buzzer_press).
-    await expect(page.locator(".c2-stepper")).toContainText("Runda 2", { timeout: 22000 });
+    await expect(page.locator("#c2TopbarProgress")).toContainText("Runda 2", { timeout: 22000 });
     await page.getByRole("button", { name: "Rozpocznij rundę" }).click();
     await expect(buzzerPage.getByRole("button", { name: "Przycisk B" })).toBeEnabled({ timeout: 10000 });
     await buzzerPage.getByRole("button", { name: "Przycisk B" }).click();
@@ -2716,9 +2777,9 @@ test("control2: zegarek gracza w finale (15s) wraca do stanu SPRZED startu (used
     await clickX(page);
     await page.getByRole("button", { name: /^(Zakończ rundę|Przejdź do zakończenia gry)$/ }).click();
 
-    await expect(page.locator(".c2-stepper")).toContainText("Finał", { timeout: 22000 });
+    await expect(page.locator("#c2TopbarProgress")).toContainText("Finał", { timeout: 22000 });
     await page.getByRole("button", { name: "Rozpocznij finał" }).click();
-    await expect(page.locator(".c2-stepper")).toContainText("Finał — gracz 1, wpisywanie", { timeout: 22000 });
+    await expect(page.locator("#c2TopbarProgress")).toContainText("Finał — gracz 1, wpisywanie", { timeout: 22000 });
 
     const p1Inputs = page.locator("#app input[type=text]");
     await expect(p1Inputs).toHaveCount(5, { timeout: 10000 });
@@ -2793,7 +2854,7 @@ test("control2: koniec gry bez finału w trybie \"punkty\" — Wyświetlacz poka
     await expect(page.locator(".stepTitle")).toHaveText("Podsumowanie", { timeout: 10000 });
     await page.getByRole("button", { name: "Gotowe — przejdź do rozgrywki" }).click();
     await page.getByRole("button", { name: "Rozpocznij grę" }).click();
-    await expect(page.locator(".c2-stepper")).toContainText("Runda 1", { timeout: 22000 });
+    await expect(page.locator("#c2TopbarProgress")).toContainText("Runda 1", { timeout: 22000 });
     await page.getByRole("button", { name: "Rozpocznij rundę" }).click();
 
     await expect(page.getByRole("button", { name: "Alfa" })).toBeVisible({ timeout: 10000 });
@@ -2808,7 +2869,7 @@ test("control2: koniec gry bez finału w trybie \"punkty\" — Wyświetlacz poka
     // pula (1 pytanie) wyczerpana -> prosto do r_gameEnd, bez R8.
     await expect(hostPage.locator("#paperText2")).not.toBeEmpty();
     await page.getByRole("button", { name: /^(Zakończ rundę|Przejdź do zakończenia gry)$/ }).click();
-    await expect(page.locator(".c2-stepper")).toContainText("Koniec gry", { timeout: 22000 });
+    await expect(page.locator("#c2TopbarProgress")).toContainText("Koniec gry", { timeout: 22000 });
     await expect(hostPage.locator("#paperText1")).toBeEmpty();
     await expect(hostPage.locator("#paperText2")).toBeEmpty();
 
