@@ -696,7 +696,7 @@ test("control2: parowanie urządzeń — linki renderują się bez błędu, Cont
     const initialRoundQuestion = await page.locator(".c2-summary-rounds .c2-qpreview-text").textContent();
     const initialFinalQuestions = await page.locator(".c2-summary-final-questions .c2-qpreview-text").allTextContents();
     expect(initialFinalQuestions).not.toContain(initialRoundQuestion);
-    expect(new Set([...initialFinalQuestions, initialRoundQuestion])).toHaveSize(6);
+    expect(new Set([...initialFinalQuestions, initialRoundQuestion]).size).toBe(6);
     await expect(page.locator(".c2-summary-advanced")).toContainText("250");
     const questionCards = await page.locator(".c2-summary-question-grid > .summarySection").evaluateAll((els) => els.map((el) => {
       const rect = el.getBoundingClientRect();
