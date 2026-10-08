@@ -2462,9 +2462,10 @@
   flex: 1;
   min-width: 0;
   opacity: .7;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: normal;
+  overflow: visible;
+  overflow-wrap: anywhere;
+  text-overflow: unset;
 }
 .summarySoundPlay {
   flex-shrink: 0;
