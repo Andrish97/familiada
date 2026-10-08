@@ -68,7 +68,11 @@ async function createPollGame(page, type) {
     });
     if (openErr) throw new Error("poll_open failed: " + openErr.message);
 
-    return { gameId: game.id, shareKey: game.share_key_poll };
+    // Każde uruchomienie nadaje ankiecie nowy klucz (migracja 310) — link
+    // do głosowania budujemy z klucza po uruchomieniu.
+    const { data: opened, error: keyErr } = await sb.from("games").select("share_key_poll").eq("id", game.id).single();
+    if (keyErr) throw new Error("select share_key_poll failed: " + keyErr.message);
+    return { gameId: game.id, shareKey: opened.share_key_poll };
   }, type);
 }
 
