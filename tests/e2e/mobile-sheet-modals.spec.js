@@ -19,6 +19,13 @@ const MOBILE_VIEWPORT = { width: 390, height: 844 };
 
 // Arkusz na telefonie zajmuje całą szerokość treści strony (main bez
 // paddingu) — margines .wrap (15 px) zostaje, jak treść strony.
+// Na telefonie „✕” w nagłówku arkusza jest ukryty (base.css: .modal--sheet
+// .sheet-active ... button[aria-label]) — arkusz zamyka przycisk „Wstecz”
+// w topbarze (modal-sheet.js przejmuje go na czas otwarcia arkusza).
+async function closeSheetViaBack(page) {
+  await page.locator(".topbar button", { hasText: "Wstecz" }).first().click();
+}
+
 async function contentWidth(page) {
   return page.evaluate(() => {
     const m = document.querySelector("main");
@@ -121,7 +128,7 @@ test.describe("bases: mobile sheet modal (udostępnianie/nazwa)", () => {
       await expect(page.locator(".footer .btn-contact-footer")).toBeHidden();
       await expect(page.locator(".topbar")).toBeVisible();
 
-      await page.locator("#btnShareClose").click();
+      await closeSheetViaBack(page);
       await expect(overlay).toBeHidden({ timeout: 5000 });
       await expect(page.locator(".bar")).toBeVisible();
       await expect(page.locator(".footer .btn-contact-footer")).toBeVisible();
@@ -330,7 +337,7 @@ test.describe("base-explorer: mobile sheet modal (tagi/eksport/pytanie)", () => 
       await expect(page.locator(".explorer-right")).toBeHidden();
       await expect(page.locator(".topbar")).toBeVisible();
 
-      await page.locator("#tagsL1Close").click();
+      await closeSheetViaBack(page);
       await expect(overlay).toBeHidden({ timeout: 5000 });
       await expect(page.locator("#explorerLeft")).toBeVisible();
     } finally {
@@ -378,7 +385,7 @@ test.describe("base-explorer: mobile sheet modal (tagi/eksport/pytanie)", () => 
       await overlay.click({ position: { x: 5, y: 5 } });
       await expect(overlay).toBeVisible();
 
-      await page.locator("#xClose").click();
+      await closeSheetViaBack(page);
       await expect(overlay).toBeHidden({ timeout: 5000 });
       await expect(page.locator("#explorerLeft")).toBeVisible();
     } finally {
@@ -412,7 +419,7 @@ test.describe("base-explorer: mobile sheet modal (tagi/eksport/pytanie)", () => 
       await expect(page.locator("#explorerLeft")).toBeHidden();
       await expect(page.locator(".topbar")).toBeVisible();
 
-      await page.locator("#qClose").click();
+      await closeSheetViaBack(page);
       await expect(overlay).toBeHidden({ timeout: 5000 });
       await expect(page.locator("#explorerLeft")).toBeVisible();
     } finally {
@@ -508,7 +515,7 @@ test.describe("games: mobile sheet modal (eksport do bazy pytań)", () => {
       await expect(page.locator(".footer .btn-contact-footer")).toBeHidden();
       await expect(page.locator(".topbar")).toBeVisible();
 
-      await page.locator("#btnExportBaseCancel").click();
+      await closeSheetViaBack(page);
       await expect(overlay).toBeHidden({ timeout: 5000 });
       await expect(page.locator(".bar")).toBeVisible();
       await expect(page.locator(".footer .btn-contact-footer")).toBeVisible();
@@ -666,7 +673,7 @@ test.describe("polls-hub: mobile sheet modal (udostępnianie/szczegóły ankiety
       await expect(page.locator(".footer .btn-contact-footer")).toBeHidden();
       await expect(page.locator(".topbar")).toBeVisible();
 
-      await page.locator("#btnShareClose").click();
+      await closeSheetViaBack(page);
       await expect(overlay).toBeHidden({ timeout: 5000 });
       await expect(page.locator(".bar")).toBeVisible();
       await expect(page.locator(".footer .btn-contact-footer")).toBeVisible();
@@ -704,7 +711,7 @@ test.describe("polls-hub: mobile sheet modal (udostępnianie/szczegóły ankiety
       await expect(page.locator(".footer .btn-contact-footer")).toBeHidden();
       await expect(page.locator(".topbar")).toBeVisible();
 
-      await page.locator("#btnDetailsClose").click();
+      await closeSheetViaBack(page);
       await expect(overlay).toBeHidden({ timeout: 5000 });
       await expect(page.locator(".bar")).toBeVisible();
       await expect(page.locator(".footer .btn-contact-footer")).toBeVisible();
@@ -812,7 +819,7 @@ test.describe("logo: mobile sheet modal (zmiana nazwy/import)", () => {
     await overlay.click({ position: { x: 5, y: 5 } });
     await expect(overlay).toBeVisible();
 
-    await page.locator("#btnLogoImportCancel").click();
+    await closeSheetViaBack(page);
     await expect(overlay).toBeHidden({ timeout: 5000 });
     await expect(page.locator("#listShell")).toBeVisible();
     await expect(page.locator(".footer .btn-contact-footer")).toBeVisible();
