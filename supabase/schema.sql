@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict EWjTRcvvFVVma68talM1HUnyiXrKrxghD25Wprh0C4gEvDf6wiqcVW54TF1OZOi
+\restrict WZ07mM42ROIYGPsDkodCvoHboUHRXiPmslt9dKFTFzGnp5Ged0bvBUwouhFsI8s
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -539,6 +539,27 @@ begin
   where id = p_game_id;
 end;
 $_$;
+
+
+--
+-- Name: acknowledge_display_audio_unlock("uuid", "text", "text"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."acknowledge_display_audio_unlock"("p_game_id" "uuid", "p_key" "text", "p_nonce" "text") RETURNS boolean
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $$
+DECLARE changed integer;
+BEGIN
+  IF NOT EXISTS(SELECT 1 FROM public.games WHERE id=p_game_id AND share_key_display=p_key) THEN
+    RAISE EXCEPTION 'forbidden';
+  END IF;
+  UPDATE public.display_audio_unlock SET acknowledged_nonce=request_nonce, acknowledged_at=now()
+    WHERE game_id=p_game_id AND request_nonce=p_nonce;
+  GET DIAGNOSTICS changed = ROW_COUNT;
+  RETURN changed=1;
+END;
+$$;
 
 
 --
@@ -1290,6 +1311,31 @@ begin
 
   return coalesce(v_cnt, 0);
 end;
+$$;
+
+
+--
+-- Name: begin_display_audio_session("uuid", "text", "text"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."begin_display_audio_session"("p_game_id" "uuid", "p_key" "text", "p_session_nonce" "text") RETURNS boolean
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $$
+BEGIN
+  IF NOT EXISTS(SELECT 1 FROM public.games WHERE id=p_game_id AND share_key_display=p_key) THEN
+    RAISE EXCEPTION 'forbidden';
+  END IF;
+  IF p_session_nonce IS NULL OR length(p_session_nonce)<8 OR length(p_session_nonce)>100 THEN
+    RAISE EXCEPTION 'invalid nonce';
+  END IF;
+  INSERT INTO public.display_audio_unlock(game_id,session_nonce,request_nonce,acknowledged_nonce,requested_at,acknowledged_at)
+  VALUES(p_game_id,p_session_nonce,p_session_nonce,NULL,now(),NULL)
+  ON CONFLICT(game_id) DO UPDATE SET session_nonce=EXCLUDED.session_nonce,
+    request_nonce=EXCLUDED.request_nonce, acknowledged_nonce=NULL,
+    requested_at=now(), acknowledged_at=NULL;
+  RETURN true;
+END;
 $$;
 
 
@@ -11020,6 +11066,30 @@ $$;
 
 
 --
+-- Name: request_display_audio_unlock("uuid", "text"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."request_display_audio_unlock"("p_game_id" "uuid", "p_nonce" "text") RETURNS boolean
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'auth', 'pg_temp'
+    AS $$
+BEGIN
+  IF auth.uid() IS NULL OR NOT EXISTS (
+    SELECT 1 FROM public.games WHERE id=p_game_id AND owner_id=auth.uid()
+  ) THEN RAISE EXCEPTION 'forbidden'; END IF;
+  IF p_nonce IS NULL OR length(p_nonce)<8 OR length(p_nonce)>100 THEN
+    RAISE EXCEPTION 'invalid nonce';
+  END IF;
+  INSERT INTO public.display_audio_unlock(game_id,request_nonce,acknowledged_nonce,requested_at,acknowledged_at)
+  VALUES(p_game_id,p_nonce,NULL,now(),NULL)
+  ON CONFLICT(game_id) DO UPDATE SET request_nonce=EXCLUDED.request_nonce,
+    acknowledged_nonce=NULL, requested_at=now(), acknowledged_at=NULL;
+  RETURN true;
+END;
+$$;
+
+
+--
 -- Name: request_display_completion(); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -12687,6 +12757,20 @@ CREATE TABLE "public"."device_presence" (
 
 
 --
+-- Name: display_audio_unlock; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE "public"."display_audio_unlock" (
+    "game_id" "uuid" NOT NULL,
+    "session_nonce" "text" NOT NULL,
+    "request_nonce" "text" NOT NULL,
+    "acknowledged_nonce" "text",
+    "requested_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    "acknowledged_at" timestamp with time zone
+);
+
+
+--
 -- Name: e2e_emails; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -13766,6 +13850,14 @@ ALTER TABLE ONLY "public"."device_connect_codes"
 
 ALTER TABLE ONLY "public"."device_presence"
     ADD CONSTRAINT "device_presence_pkey" PRIMARY KEY ("game_id", "device_type", "device_id");
+
+
+--
+-- Name: display_audio_unlock display_audio_unlock_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."display_audio_unlock"
+    ADD CONSTRAINT "display_audio_unlock_pkey" PRIMARY KEY ("game_id");
 
 
 --
@@ -15346,6 +15438,14 @@ ALTER TABLE ONLY "public"."device_presence"
 
 
 --
+-- Name: display_audio_unlock display_audio_unlock_game_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."display_audio_unlock"
+    ADD CONSTRAINT "display_audio_unlock_game_id_fkey" FOREIGN KEY ("game_id") REFERENCES "public"."games"("id") ON DELETE CASCADE;
+
+
+--
 -- Name: game_session_active game_session_active_game_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -16014,6 +16114,21 @@ ALTER TABLE "public"."device_presence" ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "device_presence_owner_read" ON "public"."device_presence" FOR SELECT TO "authenticated" USING ((EXISTS ( SELECT 1
    FROM "public"."games" "g"
   WHERE (("g"."id" = "device_presence"."game_id") AND ("g"."owner_id" = "auth"."uid"())))));
+
+
+--
+-- Name: display_audio_unlock; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE "public"."display_audio_unlock" ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: display_audio_unlock display_audio_unlock_owner_read; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "display_audio_unlock_owner_read" ON "public"."display_audio_unlock" FOR SELECT TO "authenticated" USING ((EXISTS ( SELECT 1
+   FROM "public"."games" "g"
+  WHERE (("g"."id" = "display_audio_unlock"."game_id") AND ("g"."owner_id" = "auth"."uid"())))));
 
 
 --
@@ -17139,5 +17254,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict EWjTRcvvFVVma68talM1HUnyiXrKrxghD25Wprh0C4gEvDf6wiqcVW54TF1OZOi
+\unrestrict WZ07mM42ROIYGPsDkodCvoHboUHRXiPmslt9dKFTFzGnp5Ged0bvBUwouhFsI8s
 
