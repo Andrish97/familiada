@@ -14,6 +14,7 @@ export const hostTheme = {
     "--h-paper-bg": "#fffdf5",
     "--h-ink": "#111",
     "--h-font": '"Caveat-Variable", cursive',
+    "--font-ratio": "1.1",
     "--h-letter-spacing": "normal",
     "--h-line-height-mult": "1",
   },

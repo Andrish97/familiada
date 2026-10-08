@@ -1895,6 +1895,8 @@ test("control2: dźwięk ze źródła Wyświetlacz — odblokowanie, głośnoś�
 
     // Domyślnym źródłem jest Control, więc Display nie prosi o odblokowanie.
     await expect(displayPage.locator("#audioUnlockScreen")).toBeHidden();
+    const nextStep = page.getByRole("button", { name: "Dalej" });
+    await expect(nextStep).toBeEnabled({ timeout: 10000 });
 
     // Przełącznik dwustanowy (.toggle-group, jak "Losowo"/"Wybierz" w
     // ustawieniach gry) — widoczny tekst opcji to CSS content:attr(data-text)
@@ -1903,8 +1905,10 @@ test("control2: dźwięk ze źródła Wyświetlacz — odblokowanie, głośnoś�
     // game-settings.spec.js's analogiczne przełączniki.
     await page.locator('.toggle-item:has(input[name="soundSource"][value="display"])').click();
     await expect(displayPage.locator("#audioUnlockScreen")).not.toHaveClass(/\bhidden\b/, { timeout: 10000 });
+    await expect(nextStep).toBeDisabled({ timeout: 10000 });
     await displayPage.locator("#btnAudioUnlock").click();
     await expect(displayPage.locator("#audioUnlockScreen")).toHaveClass(/\bhidden\b/);
+    await expect(nextStep).toBeEnabled({ timeout: 10000 });
 
     await page.getByRole("button", { name: "Dalej" }).click();
     await expect(page.locator(".stepTitle")).toHaveText("Podsumowanie", { timeout: 10000 });

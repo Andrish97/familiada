@@ -175,38 +175,6 @@ function familiadaGlyphPayload() {
   return JSON.parse(fs.readFileSync(path.join(__dirname, "../../web/shared/data/logo_familiada.json"), "utf8"));
 }
 
-function recordingExampleLogoPayload() {
-  // Rysunkowe logo bitmapowe z trzech gwiazd. Nie używamy typu tekstowego:
-  // nagranie ma pokazywać rzeczywistą grafikę na Display, a tekstowe logo nie
-  // jest obecnie poprawnie obsługiwane w tym przebiegu.
-  const width = 150;
-  const height = 70;
-  const stride = Math.ceil(width / 8);
-  const bits = new Uint8Array(stride * height);
-  const stars = [36, 75, 114].map((cx) => Array.from({ length: 10 }, (_, i) => {
-    const angle = -Math.PI / 2 + i * Math.PI / 5;
-    const radius = i % 2 === 0 ? 25 : 11;
-    return [cx + Math.cos(angle) * radius, 35 + Math.sin(angle) * radius];
-  }));
-  const insidePolygon = (x, y, polygon) => {
-    let inside = false;
-    for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
-      const [xi, yi] = polygon[i];
-      const [xj, yj] = polygon[j];
-      if ((yi > y) !== (yj > y) && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) inside = !inside;
-    }
-    return inside;
-  };
-  for (let y = 0; y < height; y++) {
-    for (let x = 0; x < width; x++) {
-      if (stars.some((polygon) => insidePolygon(x + 0.5, y + 0.5, polygon))) {
-        bits[y * stride + (x >> 3)] |= 1 << (7 - (x & 7));
-      }
-    }
-  }
-  return { w: width, h: height, bits_b64: Buffer.from(bits).toString("base64"), source: { mode: "DRAW" } };
-}
-
 async function insertLogo(setupPage, name, payload = familiadaGlyphPayload(), type = "GLYPH_30x10") {
   return setupPage.evaluate(async ({ name, payload, type }) => {
     const sb = window.__sbClient;
@@ -217,6 +185,31 @@ async function insertLogo(setupPage, name, payload = familiadaGlyphPayload(), ty
     if (error) throw new Error("insert logo failed: " + error.message);
     return data.id;
   }, { name, payload, type });
+}
+
+async function selectDemoImageLogo(page, game) {
+  const logo = await page.evaluate(async () => {
+    const sb = window.__sbClient;
+    const { data: userData } = await sb.auth.getUser();
+    const { data, error } = await sb.from("user_logos")
+      .select("id,name,type,payload")
+      .eq("user_id", userData.user.id).eq("is_demo", true);
+    if (error) throw new Error("select demo logos failed: " + error.message);
+    return (data || []).find((row) => row.type === "PIX_150x70" && row.payload?.source?.mode === "IMAGE" && row.payload?.bits_b64);
+  });
+  if (!logo) throw new Error("demo IMAGE logo (PIX_150x70) was not seeded");
+  game.recordLogoId = logo.id;
+  game.recordLogoName = logo.name;
+  await page.evaluate(async ({ id, logoId }) => {
+    const sb = window.__sbClient;
+    const { data, error } = await sb.from("games").select("settings").eq("id", id).single();
+    if (error) throw error;
+    const settings = data.settings || {};
+    settings.display = { ...(settings.display || {}), logoId };
+    const { error: updateError } = await sb.from("games").update({ settings }).eq("id", id);
+    if (updateError) throw updateError;
+  }, { id: game.id, logoId: logo.id });
+  return game;
 }
 
 async function acquireLogoLockExternally(setupPage, logoId, tabId) {
@@ -1245,6 +1238,25 @@ function matchButtonLabel(a) {
   return `${a.text} (${a.fixed_points})`;
 }
 
+async function assertMappingGridFits(control) {
+  const bounds = await control.locator(".c2-roundlayout-main .c2-tilegrid").evaluate((grid) => {
+    const rect = grid.getBoundingClientRect();
+    const parent = grid.closest(".c2-roundlayout-main").getBoundingClientRect();
+    const layout = grid.closest(".c2-roundlayout").getBoundingClientRect();
+    const card = grid.closest(".c2-gameplay-card").getBoundingClientRect();
+    return {
+      left: rect.left, right: rect.right,
+      parentLeft: parent.left, parentRight: parent.right,
+      layoutLeft: layout.left, layoutRight: layout.right,
+      cardLeft: card.left, cardRight: card.right,
+    };
+  });
+  expect(bounds.left).toBeGreaterThanOrEqual(bounds.parentLeft - 1);
+  expect(bounds.right).toBeLessThanOrEqual(bounds.parentRight + 1);
+  expect(bounds.layoutLeft).toBeGreaterThanOrEqual(bounds.cardLeft - 1);
+  expect(bounds.layoutRight).toBeLessThanOrEqual(bounds.cardRight + 1);
+}
+
 async function keyboardPaced(control, key, { confirm = false, reveal = false } = {}) {
   await control.evaluate(() => document.activeElement?.blur());
   const button = reveal ? control.getByRole("button", { name:key === "points" ? "Pokaż punkty" : "Pokaż odpowiedź" }) : control.locator(`[data-shortcut="${key}"]`);
@@ -1352,6 +1364,7 @@ async function scenarioFinalFull(pages, { game, summaryAlreadyOpen = false, cont
   await expect(control.getByRole("button", { name: "Czas wykorzystany" })).toBeVisible({ timeout:20000 });
 
   await clickPaced(control.getByRole("button", { name: "Dalej" }));
+  await assertMappingGridFits(control);
   for (let i = 0; i < 5; i++) {
     // armAndConfirmPaced, nie clickPaced -- ten kafel wyboru dopasowania
     // idzie przez armableTile (zaznacz -> potwierdź), zwykły pojedynczy
@@ -1403,6 +1416,7 @@ async function scenarioFinalFull(pages, { game, summaryAlreadyOpen = false, cont
   // starcie zegarka -- reszta to tylko dociągnięcie z zapasem.
   await expect(control.getByRole("button", { name: "Czas wykorzystany" })).toBeVisible({ timeout:25000 });
   await clickPaced(control.getByRole("button", { name: "Dalej" }));
+  await assertMappingGridFits(control);
 
   for (let i = 0; i < 5; i++) {
     if (P2_PLAN[i] === true) await armAndConfirmPaced(control.getByRole("button", { name: matchButtonLabel(answerByRank(fq[i], P2_MATCH_RANK[i])) }));
@@ -1739,6 +1753,7 @@ async function scenarioRecentFixes(pages, { contexts, browser, game }) {
       },
     },
   });
+  await selectDemoImageLogo(control, randomGame);
   for (const kind of ["control", "display", "host", "buzzer"]) {
     const suffix = kind === "control" ? "" : `&key=${randomGame[`share_key_${kind}`]}`;
     await pages[kind].goto(`/` + (kind === "control" ? `control?id=${randomGame.id}` : `${kind}?id=${randomGame.id}${suffix}`), { waitUntil: "domcontentloaded" });
@@ -1747,8 +1762,11 @@ async function scenarioRecentFixes(pages, { contexts, browser, game }) {
   for (const kind of ["display", "host", "buzzer"]) await waitForDotStatus(control, kind, "ok");
   await control.locator('.toggle-item:has(input[name="soundSource"][value="display"])').click();
   await expect(display.locator("#audioUnlockScreen")).toBeVisible({ timeout: 10_000 });
+  const nextStep = control.getByRole("button", { name: "Dalej" });
+  await expect(nextStep).toBeDisabled({ timeout: 10_000 });
   await display.locator("#btnAudioUnlock").click();
   await expect(display.locator("#audioUnlockScreen")).toBeHidden({ timeout: 10_000 });
+  await expect(nextStep).toBeEnabled({ timeout: 10_000 });
   // Stałe losowanie daje powtarzalny film: pierwsze pięć pytań puli rund
   // (ord 9–13) trafia do finału, a pytania 6–8 zostają w rundach.
   await control.evaluate(() => { window.__recordOriginalRandom = Math.random; Math.random = () => 0.99; });
@@ -2116,13 +2134,11 @@ const SCENARIOS = [
   {
     file: "12-poprawki-wieczoru.mp4",
     makeGame: async (setupPage) => {
-      const logoId = await insertLogo(setupPage, `Wzór — Gwiazdy E2E ${Date.now()}`, recordingExampleLogoPayload(), "PIX_150x70");
       const game = await restoreDemoGame(setupPage, {
         pickOrds: [1, 2, 8],
         finalPickOrds: [3, 4, 5, 6, 7],
       });
-      game.recordLogoId = logoId;
-      return game;
+      return selectDemoImageLogo(setupPage, game);
     },
     run: scenarioRecentFixes,
   },

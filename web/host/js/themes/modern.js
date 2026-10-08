@@ -18,6 +18,7 @@ export const hostTheme = {
     "--h-paper-bg": "#0a0a0c",
     "--h-ink": "#f5f5f7",
     "--h-font": '"JetBrainsMono-Variable", ui-monospace, "SF Mono", Consolas, monospace',
+    "--font-ratio": "0.82",
     "--h-letter-spacing": "normal",
     "--h-line-height-mult": "1.4",
     "--baseline-shift": "0",

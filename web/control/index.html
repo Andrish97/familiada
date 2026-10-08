@@ -64,7 +64,7 @@
        elementy (nagłówek/siatka/pasek statusu) mają wypełniać pełną
        szerokość .control-main-card, dokładnie jak Urządzenia/Podsumowanie i
        jak w starym Control — bez wąskiej, wyśrodkowanej kolumny. */
-    .c2-gameplay { height: 100%; display:flex; flex-direction:column; gap:12px; }
+    .c2-gameplay { height: 100%; min-width:0; display:flex; flex-direction:column; gap:12px; }
     /* "Karta ma być na całą wysokość" (Rundy) — cały łańcuch od .wrap.wide
        w dół dostaje display:flex/flex:1, żeby #app faktycznie wypełniał
        resztę wysokości strony, ZAMIAST tylko dopasowywać się do treści.
@@ -88,7 +88,7 @@
     .shell:has(.c2-gameplay-card, .stepFoot) > .control-tabs-card { flex:1; min-height:0; display:flex; flex-direction:column; overflow:hidden; }
     .control-tabs-card:has(.c2-gameplay-card, .stepFoot) > .control-main-card { flex:1; min-height:0; display:flex; flex-direction:column; overflow:hidden; }
     .control-main-card:has(.c2-gameplay-card, .stepFoot) > #app { flex:1; min-height:0; display:flex; flex-direction:column; overflow:hidden; }
-    .c2-gameplay-card { flex:1; min-height:0; display:flex; flex-direction:column; }
+    .c2-gameplay-card { flex:1; width:100%; min-width:0; min-height:0; box-sizing:border-box; display:flex; flex-direction:column; }
     /* .cardBody (Urządzenia/Podsumowanie) ma już flex:1 z control.css — brakuje
        tylko min-height:0, inaczej flex item nie chce się skurczyć poniżej
        wysokości treści i .c2-scroll-area nigdy realnie nie zaczyna scrollować.
@@ -105,7 +105,7 @@
        przewijania"). */
     .c2-scroll-area { flex:1; min-height:0; overflow-y:auto; display:flex; flex-direction:column; gap:10px; }
     .c2-stepper { font-size:.75rem; letter-spacing:.08em; text-transform:uppercase; opacity:.65; border-bottom:1px solid rgba(255,255,255,.12); padding-bottom:8px; }
-    .c2-gameplay-body { flex:1; overflow:hidden; display:flex; flex-direction:column; gap:12px; min-height:0; }
+    .c2-gameplay-body { flex:1; width:100%; min-width:0; box-sizing:border-box; overflow:hidden; display:flex; flex-direction:column; gap:12px; min-height:0; }
     /* padding-top:16px == .control-main-card's własne padding-bottom:16px
        pod spodem — nad i pod przyciskami tyle samo miejsca (zgłoszone). */
     .c2-gameplay-nav { display:flex; gap:8px; justify-content:flex-end; border-top:1px solid rgba(255,255,255,.12); padding-top:16px; flex-wrap:wrap; }
@@ -161,9 +161,9 @@
        zachowanie flexboxa), więc .c2-scroll-area's overflow-y:auto wyżej
        nigdy realnie nie dostawało czego przewijać — treść po prostu
        wychodziła poza kartę zamiast scrollować (zgłoszone). */
-    .c2-roundlayout { display:flex; gap:16px; flex:1; min-height:0; }
-    .c2-roundlayout-main { flex:1; min-width:0; min-height:0; display:flex; }
-    .c2-roundlayout-main .c2-tilegrid { flex:1; }
+    .c2-roundlayout { display:flex; gap:16px; flex:1; width:100%; min-width:0; min-height:0; box-sizing:border-box; }
+    .c2-roundlayout-main { flex:1 1 0%; width:0; min-width:0; min-height:0; display:flex; }
+    .c2-roundlayout-main .c2-tilegrid { flex:1 1 0%; min-width:0; max-width:100%; width:100%; }
     .c2-roundlayout-main > .c2-scroll-area { flex:1; min-height:0; }
     .c2-roundlayout-divider { width:1px; background:rgba(255,255,255,.14); flex:none; }
     .c2-roundlayout-side { flex:0 0 240px; min-width:0; min-height:0; display:flex; flex-direction:column; }
@@ -309,10 +309,10 @@
        (span 3) bez ułamkowych grid-template. Wiersz 4 zostaje pusty, chyba
        że akurat trzeba w nim pokazać Pass/Kradzież — nieużywane po prostu
        nie dostają przycisku, więc rytm siatki się nie rusza. ---- */
-    .c2-tilegrid { display:grid; grid-template-columns:repeat(6, 1fr); grid-template-rows:repeat(5, minmax(0,1fr)); gap:10px; flex:1; min-height:0; }
+    .c2-tilegrid { display:grid; grid-template-columns:repeat(6, minmax(0,1fr)); grid-template-rows:repeat(5, minmax(0,1fr)); gap:10px; flex:1; min-width:0; min-height:0; box-sizing:border-box; }
     .c2-tile {
       touch-action: manipulation;
-      display:flex; align-items:center; justify-content:center; text-align:center;
+      display:flex; min-width:0; max-width:100%; align-items:center; justify-content:center; text-align:center; overflow-wrap:anywhere;
       padding:8px 10px; border-radius:14px; border:1px solid var(--line2);
       background:rgba(255,255,255,.06); color:#fff; font-weight:800; font-size:.88rem; line-height:1.3;
       cursor:pointer; user-select:none; -webkit-tap-highlight-color:transparent;

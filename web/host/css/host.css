@@ -1,7 +1,7 @@
 /* /familiada/css/host.css */
 
 :root {
-    --line: clamp(25px, 4.0vmin, 36px);
+    --line: clamp(16px, 4.0vmin, 36px);
     --line-px: 24;
     --font-ratio: 1.1;
     --baseline-shift: 0.12;

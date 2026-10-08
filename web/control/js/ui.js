@@ -167,7 +167,7 @@ export function createUI({ root, emit }) {
   // ============================================================
   function renderDevicesStep(state, ctx) {
     clear();
-    const { urls, presenceFlags = {}, connectCodes = {}, shareBadges = {} } = ctx;
+    const { urls, presenceFlags = {}, connectCodes = {}, shareBadges = {}, displayAudioUnlocked } = ctx;
 
     const deviceRow = (label, kind, url, { withQr = false } = {}) => {
       const online = !!presenceFlags[kind];
@@ -290,6 +290,7 @@ export function createUI({ root, emit }) {
     const hostReady = !!presenceFlags.host || state.settings.noHostTablet;
     const buzzerReady = !!presenceFlags.buzzer || state.settings.physicalBuzzer;
     const requiredOnline = displayReady && hostReady && buzzerReady;
+    const displayAudioReady = state.settings.soundSource !== "display" || displayAudioUnlocked === true;
 
     // Ten sam bug co "Gotowe — przejdź do rozgrywki" (punkt 25,
     // docs/control-recording-feedback.md) -- gołe `<button class="btn
@@ -297,7 +298,7 @@ export function createUI({ root, emit }) {
     // rozgrywce. Ujednolicone z tej samej przyczyny (zgłoszone: "zobacz
     // też pozostałe przyciski dalej/wstecz jakie mają style").
     const next = navButton(t("common.next"), {
-      disabled: !requiredOnline,
+      disabled: !requiredOnline || !displayAudioReady,
       onclick: () => emit("devices.next"),
     });
 
