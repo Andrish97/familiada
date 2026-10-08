@@ -5,6 +5,7 @@ const pl = {
     icon: "flag-pl",
   },
   common: {
+    searchByName: "Szukaj…",
     genericError: "Wystąpił błąd.",
     manualLabel: "Wskazówki",
     contactBtn: "Kontakt",

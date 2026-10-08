@@ -5,6 +5,7 @@ const uk = {
     icon: "flag-ua",
   },
   common: {
+    searchByName: "Пошук…",
     genericError: "Сталася помилка.",
     manualLabel: "Підказки",
     contactBtn: "Контакт",

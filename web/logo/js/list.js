@@ -30,6 +30,7 @@ import { buildExport, downloadJson, parseImport, safeFileName } from "./transfer
 import { initPreviewPinchZoom, lockPageZoomForPreview, unlockPageZoomAfterPreview } from "./preview-zoom.js?v=v2026-10-08T07385";
 import { cannotEditReason } from "./text.js?v=v2026-10-08T07385";
 import { editModeFor, editorUrl, manualUrl } from "./routes.js?v=v2026-10-08T07385";
+import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-08T07385";
 
 const FONT_3x10_URL = "/shared/fonts/display/font_3x10.json?v=v2026-10-08T07385";
 const FONT_5x7_URL = "/shared/fonts/display/font_5x7.json?v=v2026-10-08T07385";
@@ -613,6 +614,7 @@ function bindUi() {
 async function boot() {
   await initI18n({ withSwitcher: true });
   document.documentElement.classList.remove("page-loading");
+  initListSearch({ grids: "#grid", tile: ".logoTile", name: ".logoName" });
 
   currentUser = await requireAuth("/login/");
   initTopbarAccountDropdown(currentUser);

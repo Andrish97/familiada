@@ -15,8 +15,10 @@ import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } fro
 import "../../shared/js/core/contact-modal.js?v=v2026-10-08T07385";
 import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-08T07385";
 import { createCooldownTicker, formatCooldownRemaining } from "../../shared/js/core/cooldown.js?v=v2026-10-08T07385";
+import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-08T07385";
 initI18n({ withSwitcher: true }).then(() => {
   document.documentElement.classList.remove('page-loading');
+  initListSearch({ grids: "#mineGrid, #sharedGrid", tile: ".card", name: ".name" });
 });
 
 /* ================= DOM ================= */

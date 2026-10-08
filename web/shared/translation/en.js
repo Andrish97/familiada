@@ -5,6 +5,7 @@ const en = {
     icon: "lang-en",
   },
   common: {
+    searchByName: "Search…",
     genericError: "Something went wrong.",
     manualLabel: "Help",
     contactBtn: "Contact",

@@ -31,6 +31,7 @@ import {
 import { deleteGameSoundsFolder } from "../../shared/js/core/sfx-cloud.js?v=v2026-10-08T07385";
 import { isResourceBusy } from "../../shared/js/core/resource-lock.js?v=v2026-10-08T07385";
 import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-08T07385";
+import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-08T07385";
 
 const MSG = {
   exportBaseEmpty: () => t("games.exportBase.empty"),
@@ -1140,6 +1141,7 @@ async function refresh() {
 document.addEventListener("DOMContentLoaded", async () => {
   const requireAuthP = requireAuth("/login/"); // start równolegle z initI18n
   await initI18n({ withSwitcher: true });
+  initListSearch({ grids: "#grid", tile: ".card", name: ".name" });
 
   // Blokuj autoInitTopbarAuthButton — games wywołuje setTopbarAccount z withAccountSettings:true
   const _btnLogoutEl = document.getElementById('btnLogout');

@@ -542,6 +542,14 @@ body.games-body > main.wrap{
   flex-wrap: nowrap;
 }
 
+.games-bottom-left{
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
 .games-bottom-right{
   display: flex;
   gap: 8px;
@@ -855,4 +863,13 @@ body.games-body > main.wrap{
   opacity: .55;
   text-align: center;
   padding: 16px 0;
+}
+
+/* wyszukiwanie po nazwie w lewej części dolnego paska list */
+.list-search{
+  width: 220px;
+  max-width: 100%;
+}
+@media (max-width: 600px){
+  .list-search{ width: auto; flex: 1 1 auto; min-width: 0; }
 }
