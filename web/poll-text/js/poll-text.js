@@ -1,7 +1,7 @@
 // js/pages/poll-text.js
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-08T07315";
-import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-08T07315";
-import { initI18n, t } from "../../shared/translation/translation.js?v=v2026-10-08T07315";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-08T07385";
+import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-08T07385";
+import { initI18n, t } from "../../shared/translation/translation.js?v=v2026-10-08T07385";
 
 const i18nReady = initI18n({ withSwitcher: true }).then(() => {
   document.documentElement.classList.remove('page-loading');
