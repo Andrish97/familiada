@@ -53,10 +53,10 @@ const MSG = {
   newGamePrepared: () => t("games.newGame.prepared"),
   deleteTitle: () => t("games.delete.title"),
   deleteText: (name) => t("games.delete.text", { name }),
+  deletePollAbort: () => t("games.delete.pollAbort"),
   deleteOk: () => t("games.delete.ok"),
   deleteCancel: () => t("games.delete.cancel"),
   alertDeleteFailed: () => t("games.alert.deleteFailed"),
-  alertDeleteInUsePollOpen: () => t("games.alert.deleteInUsePollOpen"),
   alertDeleteInUseLocked: () => t("games.alert.deleteInUseLocked"),
   alertCreateFailed: () => t("games.alert.createFailed"),
   hintSelect: () => t("games.hint.select"),
@@ -779,15 +779,15 @@ async function createGame(uiType, name) {
 async function deleteGame(game) {
   const ok = await confirmModal({
     title: MSG.deleteTitle(),
-    text: MSG.deleteText(game.name),
+    // 312: otwarta ankieta nie blokuje usunięcia -- zostaje przerwana
+    text: game.status === STATUS.POLL_OPEN ? `${MSG.deleteText(game.name)} ${MSG.deletePollAbort()}` : MSG.deleteText(game.name),
     okText: MSG.deleteOk(),
     cancelText: MSG.deleteCancel(),
   });
   if (!ok) return;
 
   // Zamiast gołego .from("games").delete() — RPC sprawdza i usuwa
-  // atomowo, blokując gdy gra ma teraz otwartą ankietę (poll_open, żywi
-  // głosujący) albo aktywny edit_lock (edytor/ustawienia/ankieta/control
+  // atomowo, blokując gdy gra ma aktywny edit_lock (edytor/ustawienia/ankieta/control
   // otwarte gdzie indziej) — patrz docs/plan-testy-i-poprawki.md,
   // "Krzyżowe blokady między zasobami". MUSI się wykonać PRZED
   // sprzątaniem plików dźwiękowych niżej — inaczej zablokowane usunięcie
@@ -807,7 +807,7 @@ async function deleteGame(game) {
     if (result?.error === "not_found_or_forbidden") return;
     console.warn("[games] delete blocked:", result);
     void alertModal({
-      text: result?.reason === "poll_open" ? MSG.alertDeleteInUsePollOpen() : MSG.alertDeleteInUseLocked(),
+      text: MSG.alertDeleteInUseLocked(),
     });
     return;
   }

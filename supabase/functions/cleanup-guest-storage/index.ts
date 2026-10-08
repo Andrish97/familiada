@@ -50,34 +50,37 @@ serve(async (req) => {
 });
 
 async function removeUserSoundsFolder(userId: string) {
-  const { data: gameFolders, error: listError } = await admin.storage
-    .from("user-sounds")
-    .list(userId, { limit: 1000 });
-  if (listError) throw listError;
-  if (!gameFolders || gameFolders.length === 0) return;
-
-  for (const entry of gameFolders) {
-    if (entry.id !== null) {
-      await admin.storage.from("user-sounds").remove([`${userId}/${entry.name}`]);
-      continue;
-    }
-    const subPath = `${userId}/${entry.name}`;
-    const { data: files } = await admin.storage.from("user-sounds").list(subPath, { limit: 1000 });
-    if (files && files.length > 0) {
-      const paths = files.map((f) => `${subPath}/${f.name}`);
-      await admin.storage.from("user-sounds").remove(paths);
-    }
-  }
+  await removeFolderRecursive("user-sounds", userId);
 }
 
 async function removeUserLogosFolder(userId: string) {
-  const { data: files, error: listError } = await admin.storage
-    .from("user-logos")
-    .list(userId, { limit: 1000 });
-  if (listError) throw listError;
-  if (!files || files.length === 0) return;
-  const paths = files.map((f) => `${userId}/${f.name}`);
-  await admin.storage.from("user-logos").remove(paths);
+  await removeFolderRecursive("user-logos", userId);
+}
+
+// Usuwa rekurencyjnie wszystko pod prefiksem w buckecie, ze stronicowaniem
+// (list zwraca max 1000 wpisów na stronę). Foldery mają id === null.
+async function removeFolderRecursive(bucket: string, prefix: string) {
+  const PAGE = 1000;
+  for (;;) {
+    // zawsze od początku: po usunięciu plików kolejne wpisy przesuwają się na start
+    const { data: entries, error } = await admin.storage.from(bucket).list(prefix, { limit: PAGE, offset: 0 });
+    if (error) throw error;
+    if (!entries || entries.length === 0) return;
+
+    const files: string[] = [];
+    for (const entry of entries) {
+      const path = `${prefix}/${entry.name}`;
+      if (entry.id === null) await removeFolderRecursive(bucket, path);
+      else files.push(path);
+    }
+    if (files.length === 0) return;
+    const { error: rmError } = await admin.storage.from(bucket).remove(files);
+    if (rmError) throw rmError;
+    if (entries.length < PAGE) {
+      // ostatnia strona; ewentualne foldery zostały już opróżnione rekurencyjnie
+      return;
+    }
+  }
 }
 
 function json(obj: unknown, status = 200) {

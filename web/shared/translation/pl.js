@@ -2641,12 +2641,12 @@ const pl = {
     delete: {
       title: "Usuń grę",
       text: "Czy na pewno chcesz usunąć „{name}”?",
+      pollAbort: "Ankieta zostanie przerwana.",
       ok: "Usuń",
       cancel: "Anuluj",
     },
     alert: {
       deleteFailed: "Nie udało się usunąć gry.",
-      deleteInUsePollOpen: "Nie można usunąć gry — jej ankieta jest właśnie otwarta i ktoś może aktualnie głosować.",
       deleteInUseLocked: "Nie można usunąć gry — jest właśnie otwarta w innej karcie (edytor, ustawienia lub ankieta).",
       createFailed: "Nie udało się utworzyć gry.",
       resetPollFailed: "Nie udało się zresetować statusu ankiety.",
@@ -4662,6 +4662,7 @@ const pl = {
       invalid_stars: "Ocena musi mieć od 1 do 5 gwiazdek.",
       cannot_rate_own_game: "Nie możesz ocenić własnej gry.",
       not_found_or_not_published: "Gra nie istnieje albo nie jest opublikowana.",
+      locked: "Nie można usunąć kopii — gra jest właśnie otwarta w innej karcie (edytor, ustawienia, ankieta lub sterowanie).",
       unknown: "Operacja nie powiodła się. Spróbuj ponownie.",
     },
     mySent: {

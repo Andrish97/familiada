@@ -88,3 +88,7 @@ i niepotwierdzonych kont (`guest_cleanup_expired`).
 3. Zgłoszenia kontaktowe usuniętego konta: usuwane całe.
 4. Usunięcie konta jest nadrzędne — pomija blokady (jedyny wyjątek).
    Usunięcie gry blokady respektuje.
+
+## 5. Stan wdrożenia (E12, 2026-10-08)
+
+Migracja `2026-10-08_312_deletion_unified.sql` + okno usunięcia gry („Ankieta zostanie przerwana”) + wycofanie importu przez RPC + `delete-account` (baza, potem pliki ze stronicowaniem) + `guest_discard_current` czyści Storage. Reguła RLS `games_owner_delete` zostaje (testy e2e sprzątają gry bezpośrednim `delete`). Maile w kolejce gry: dopasowanie po linku `poll-go?t=<token>` w treści (brak kolumny z id gry). Test lokalny: `docs/sql/test-deletion-312.sql`. Do zrobienia: usunięcie pliku dźwięków gry po stronie bazy/funkcji (nadal po stronie przeglądarki), komunikaty „usunięta” na display/host/buzzer (dziś czarny ekran / cicha konsola).

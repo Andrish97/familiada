@@ -147,8 +147,8 @@ export async function importGame(payload, ownerId, onProgress) {
 	try {
 		await importQuestions(game.id, payload.questions || [], onProgress);
 	} catch (e) {
-		const { error: delErr } = await sb().from("games").delete().eq("id", game.id);
-		if (delErr) console.warn("[import] cleanup failed:", delErr);
+		const { data: delRes, error: delErr } = await sb().rpc("delete_resource_checked", { p_resource_type: "game", p_resource_id: game.id });
+		if (delErr || delRes?.ok === false) console.warn("[import] cleanup failed:", delErr || delRes);
 		throw e;
 	}
 
