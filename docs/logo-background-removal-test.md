@@ -6,9 +6,11 @@ nie jest wysyłany na serwer ani zapisywany w bazie.
 
 ## Przykłady i wykrywanie tła
 
-Pięć widocznych kafelków pozwala od razu wybrać przykład: jednolite białe tło,
-kremowe tło z cieniem, tło wzorzyste, ciemne tło, logo z zamkniętym białym
-detalem oraz obiekt z celowo postrzępioną krawędzią. Pliki źródłowe SVG są w
+Siedem widocznych kafelków pozwala od razu wybrać przykład: białe i kremowe
+tło, tło wzorzyste i ciemne, białe detale, postrzępioną krawędź obiektu oraz
+domyślne logo z repozytorium.
+Logo jest wczytywane z `web/assets/img/logo.svg` bez przenoszenia, a jego
+przezroczyste narożniki są oznaczane na stronie. Pliki pozostałych próbek SVG są w
 `web/settings/tools/logo-background-lab/samples/`; podczas budowania strony są
 osadzane w scalonym HTML. Wzorzyste i ciemne obrazy
 powinny dostać ostrzeżenie, a biały detal powinien pozostać przy metodzie

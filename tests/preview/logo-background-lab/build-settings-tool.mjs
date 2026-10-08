@@ -12,11 +12,13 @@ const sampleFiles = {
   DARK: "dark-background.svg",
   WHITE_DETAIL: "white-details.svg",
   ROUGH_EDGES: "rough-edges.svg",
+  DEFAULT_LOGO: path.resolve(dir, "../../../web/assets/img/logo.svg"),
 };
 let html = await fs.readFile(path.join(dir, "index.template.html"), "utf8");
 const app = await fs.readFile(path.join(dir, "background-removal.js"), "utf8");
 for (const [key, filename] of Object.entries(sampleFiles)) {
-  const svg = await fs.readFile(path.join(samplesDir, filename));
+  const source = path.isAbsolute(filename) ? filename : path.join(samplesDir, filename);
+  const svg = await fs.readFile(source);
   html = html.replaceAll(`__SAMPLE_${key}__`, `data:image/svg+xml;base64,${svg.toString("base64")}`);
 }
 html = html.replace("<script>/* APP_SCRIPT */</script>", `<script>\n${app}\n</script>`);

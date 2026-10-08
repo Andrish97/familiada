@@ -21,6 +21,7 @@ let visited = null;
 let currentFilename = "logo";
 let autoBackground = "#ffffff";
 let cornerSpread = 0;
+let transparentCornerRatio = 0;
 let sampleMode = false;
 let renderFrame = 0;
 
@@ -45,6 +46,8 @@ function median(values) {
 }
 function estimateCornerColor(imageData) {
   const { data, width, height } = imageData;
+  let sampledPixels = 0;
+  let transparentPixels = 0;
   const patchWidth = Math.max(2, Math.round(width * 0.045));
   const patchHeight = Math.max(2, Math.round(height * 0.07));
   const patches = [
@@ -58,7 +61,11 @@ function estimateCornerColor(imageData) {
     for (let y = top; y < top + patchHeight; y += stepY) {
       for (let x = left; x < left + patchWidth; x += stepX) {
         const index = (y * width + x) * 4;
-        if (data[index + 3] < 240) continue;
+        sampledPixels++;
+        if (data[index + 3] < 240) {
+          transparentPixels++;
+          continue;
+        }
         for (let channel = 0; channel < 3; channel++) channels[channel].push(data[index + channel]);
       }
     }
@@ -66,6 +73,7 @@ function estimateCornerColor(imageData) {
   });
   const color = [0, 1, 2].map(channel => median(patchMedians.map(patch => patch[channel])));
   cornerSpread = Math.max(...patchMedians.map(patch => Math.max(...patch.map((value, channel) => Math.abs(value - color[channel])))));
+  transparentCornerRatio = sampledPixels ? transparentPixels / sampledPixels : 0;
   return color;
 }
 function setSuitability(message, detail, kind = "") {
@@ -80,6 +88,10 @@ function setSuitability(message, detail, kind = "") {
 function updateSuitability() {
   if (!originalPixels) {
     setSuitability("Wczytaj obraz", "Sprawdzę, czy tło nadaje się do usunięcia.");
+    return;
+  }
+  if (transparentCornerRatio >= 0.75) {
+    setSuitability("Narożniki są przezroczyste", "Tło może być już usunięte. Sprawdź oryginał przed ponownym wycinaniem.", "good");
     return;
   }
   const [r, g, b] = rgbFromHex(backgroundInput.value);
