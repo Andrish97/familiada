@@ -1,7 +1,8 @@
--- SZKIC E11b — NIE STOSOWAĆ (nie jest w supabase/migrations). Zmienia zachowanie
--- (nowy klucz przy uruchomieniu, kody błędów zaproszeń), więc wchodzi razem
--- z frontendem E11c–e jako migracja 31x. Przetestowany na lokalnym Postgresie
--- (docs/wdrozenia.md, „Testowa baza lokalna”).
+-- Migration 310: ankiety — nowy klucz przy każdym uruchomieniu, Przerwij (poll_abort),
+-- zamknięcie bez czekania na zaproszenia, usuwanie udostępnienia (poll_share_remove),
+-- przypomnienie (poll_share_remind), limity maili (docs/maile-granice.md),
+-- zaproszenia ważne tylko z bieżącym kluczem. Spec: docs/ankiety-refaktor.md 4b, 6, 7 (E11b).
+-- Zgodna wstecz ze starą stroną ankiety i hubem; sprawdzona na lokalnym Postgresie.
 -- Migracja 310 (SZKIC E11b): cykl ankiety — klucz na uruchomienie, przerwanie,
 -- zamykanie bez blokady zaproszeń, ważność zaproszeń, limity maili.
 -- Spec: docs/ankiety-refaktor.md 4a, 4b, 6.1–6.7; docs/maile-granice.md.
