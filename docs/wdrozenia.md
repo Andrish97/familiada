@@ -67,7 +67,8 @@ bo `PAGES` deklaruje blokady; adresy po mapie stron; instrukcja na końcu.
    produkcji razem z kodem, który ich wymaga. **Migracje usuwające**
    (funkcje, kolumny, tabele) dopiero po potwierdzeniu testami, że nowa
    droga działa na produkcji.
-5. Dostępne narzędzia testowe: e2e z prawdziwą skrzynką mailową
+5. Dostępne narzędzia testowe: **lokalny Postgres** do wykonania migracji
+   przed wypchnięciem (`docs/sql/local-db.md`); e2e z prawdziwą skrzynką mailową
    (`e2e_mailbox`) i kontami testowymi — używać ich do maili, kont,
    subskrypcji i ankiet.
 3. Oszczędnie z kontekstem: czytać fragmenty plików, wyszukiwanie
@@ -90,4 +91,4 @@ bo `PAGES` deklaruje blokady; adresy po mapie stron; instrukcja na końcu.
 | 2026-10-08 | E10 (część) | `d00e083` stany kafli gier (OTWARTA/ZAMKNIĘTA, GOTOWA) — na `main` | unit 300/300 |
 | 2026-10-08 | E10 (na branchu) | `47f1709` edytory: tytuł w topbarze, wspólne pole nazwy, logo bez informacji o zapisie, ankieta bez podpowiedzi; `e93e446` niższe karty i mniejsze odstępy list; `6b0024f` wyszukiwanie w listach | e2e branch (logo-editor, editor, games) w toku |
 | 2026-10-08 | E11a | `ca71797` na `main`: migracja 309 — uruchom/zamknij ankietę tylko właściciel (nakładki na oryginały `_…_unchecked`) | po zastosowaniu: e2e `editor.spec.js` (woła `poll_open` jako właściciel) |
-
+| 2026-10-08 | E11a/E11b | 309 sprawdzona też lokalnie (anon: brak dostępu, obcy: `not_owner`, właściciel: ok); szkic E11b `docs/sql/e11b_draft.sql` wykonuje się lokalnie (poll_abort, rotacja klucza ok) — czeka na frontend E11c–e | — |
