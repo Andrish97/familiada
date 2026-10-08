@@ -788,9 +788,13 @@ test("control2: pełna runda przez 4 urządzenia + wznowienie Control po przeła
     const questionDuringDuel = page.locator(".c2-stepper-question");
     await expect(questionDuringDuel).toHaveText(/\S/);
     const visibleQuestion = await questionDuringDuel.textContent();
-    const progressRight = await page.locator("#c2TopbarProgress").evaluate((el) => el.getBoundingClientRect().right);
-    const displayStatusLeft = await page.locator("#dotDisplayRow").evaluate((el) => el.getBoundingClientRect().left);
-    expect(progressRight).toBeLessThan(displayStatusLeft);
+    const topbarLayout = await page.evaluate(() => {
+      const progress = document.querySelector("#c2TopbarProgress").getBoundingClientRect();
+      const display = document.querySelector("#dotDisplayRow").getBoundingClientRect();
+      return { progressRight: progress.right, displayLeft: display.left, progressTop: progress.top, displayTop: display.top };
+    });
+    expect(topbarLayout.progressRight).toBeLessThan(topbarLayout.displayLeft);
+    expect(Math.abs(topbarLayout.progressTop - topbarLayout.displayTop)).toBeLessThan(2);
 
     // Regresja: Prowadzący musi widzieć PEŁNĄ treść i punkty KAŻDEJ
     // odpowiedzi od początku rundy, nie tylko już odsłoniętych dla widzów

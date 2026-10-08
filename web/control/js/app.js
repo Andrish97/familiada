@@ -594,7 +594,10 @@ async function main() {
     gameId,
     onChange: ({ flags, displayAudioUnlocked: audioUnlocked, displayAudioUnlockNonce: audioUnlockNonce, error }) => {
       const previous = presenceFlags;
+      const displayAudioWasUnlocked = displayAudioUnlocked === true;
       const displayReconnected = !previous.display && flags.display === true;
+      const displayAudioSessionReset = previous.display === true && flags.display === true
+        && displayAudioWasUnlocked && audioUnlocked !== true;
       presenceFlags = flags;
       displayAudioUnlocked = audioUnlocked;
       displayAudioUnlockNonce = audioUnlockNonce;
@@ -602,7 +605,7 @@ async function main() {
       else if (presenceUnavailable) {
         presenceUnavailable = false;
         requestDisplayAudioUnlock();
-      } else if (displayReconnected && store.state.settings.soundSource === "display") {
+      } else if ((displayReconnected || displayAudioSessionReset) && store.state.settings.soundSource === "display") {
         // A Display that reconnects during a game needs a fresh browser gesture
         // even if it reported an unlock before disconnecting. Send a new nonce
         // so its button returns and keep Control actions gated until it replies.
