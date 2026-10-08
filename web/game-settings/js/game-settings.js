@@ -4,7 +4,7 @@
 // itd.) — trzymana jako osobny plik, żeby modal Control v2 nie zależał od
 // tej samej strony, którą wciąż ładuje stary control.html przez /game-settings.
 import { requireAuth } from "../../shared/js/core/auth.js?v=v2026-10-07T23002";
-import { t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-07T23002";
+import { t, getUiLang, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-07T23002";
 import { setTopbarAccount } from "../../shared/js/core/topbar-controller.js?v=v2026-10-07T23002";
 import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-07T23002";
 import { loadQuestions } from "../../shared/js/core/game-validate.js?v=v2026-10-07T23002";
@@ -1619,7 +1619,7 @@ function showIngameGuard() {
       </div>
     `;
     document.documentElement.appendChild(overlay);
-    overlay.querySelector("#ingameGuardBack").addEventListener("click", () => { location.href = "/games/"; });
+    overlay.querySelector("#ingameGuardBack").addEventListener("click", () => { location.href = withLangParam("/games/"); });
     overlay.querySelector("#ingameGuardUnlock").addEventListener("click", async () => {
       // "Odblokuj ustawienia" — nie jest to wymuszenie: acquire_edit_lock
       // i tak sam zwolni blokadę po ~25s bez odnowienia (Control naprawdę
@@ -1641,7 +1641,7 @@ async function main() {
   document.querySelector('.topbar')?.classList.add('topbar-ready');
 
   if (!gameId) {
-    location.href = "/games/";
+    location.href = withLangParam("/games/");
     return;
   }
 

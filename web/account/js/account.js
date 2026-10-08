@@ -631,7 +631,7 @@ async function wireDemoActions(user) {
 }
 
 async function loadProfile() {
-  const user = await requireAuth("/login/?setup=username");
+  const user = await requireAuth("/login/");
   if (!user) return;
 
   if (isGuestUser(user)) {

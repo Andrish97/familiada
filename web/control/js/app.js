@@ -9,7 +9,7 @@ import { createRenderCompletionGate } from "../../shared/js/gameplay/renderCompl
 
 import { guardDesktopOnly } from "../../shared/js/core/device-guard.js?v=v2026-10-07T23002";
 import { guardResourceLock, guardResourceBusy } from "../../shared/js/core/resource-lock.js?v=v2026-10-07T23002";
-import { initI18n, getUiLang, t } from "../../shared/translation/translation.js?v=v2026-10-07T23002";
+import { initI18n, getUiLang, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-07T23002";
 import { requireAuth } from "../../shared/js/core/auth.js?v=v2026-10-07T23002";
 import { setTopbarAccount } from "../../shared/js/core/topbar-controller.js?v=v2026-10-07T23002";
 import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-07T23002";
@@ -173,7 +173,7 @@ async function main() {
   const root = document.getElementById("app");
   if (!gameId) { root.textContent = "Brak parametru ?id= w URL."; return; }
 
-  const user = await requireAuth();
+  const user = await requireAuth("/login/");
   if (!user) return; // requireAuth already redirected
 
   setTopbarAccount(user, { showAuthEntry: true });
@@ -919,7 +919,7 @@ async function main() {
     // Fire-and-forget, jak dzisiejsze control/js/app.js — nie blokujemy
     // wyjścia na tym, przeglądarka i tak zaraz nawiguje dalej.
     shareDevice.expireShares().catch(() => {});
-    location.href = "/games/";
+    location.href = withLangParam("/games/");
   });
 
   // "Losowo" ma losować RAZ, od razu przy wejściu w Podsumowanie (D3), i
@@ -1206,7 +1206,7 @@ async function main() {
       if (action === "session.finish") {
         // Gra już zakończona (locks.gameEnded) — czysta nawigacja z powrotem
         // do listy gier, bez żadnego dalszego zapisu do game_state.
-        location.href = "/games/";
+        location.href = withLangParam("/games/");
         return;
       }
       if (action === "rounds.introNext") {

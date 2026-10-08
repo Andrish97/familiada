@@ -295,7 +295,7 @@ export async function getUser() {
   }
 }
 
-export async function requireAuth(redirect = "login") {
+export async function requireAuth(redirect = "/login/") {
   const u = await getUser();
   if (!u) {
     location.href = withLangParam(redirect);
