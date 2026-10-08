@@ -43,6 +43,7 @@ utracie kontekstu wystarczy przeczytać ten plik i wskazaną sekcję źródła.
 | 5 | E12 | Usuwanie gry i konta | usuwanie-danych.md | na `main`, e2e main w toku |
 | 5a | E12b | **Pliki w Storage usuwa baza** (atomowo, każde miejsce usuwania): kolejka `storage_cleanup_queue` + edge function `storage-cleanup` (migracja 313); przeglądarka nie kasuje plików przy usuwaniu | usuwanie-danych.md „Pliki w Storage” | baza na `main`; frontend z E2 |
 | 6 | E2 | Blokady wg mapy docelowej (współdzielone, `logos`, `base:B`, odnowienie `locked`, TTL, DB `*_checked`) + blokady stanu i akcji wg kryteriów gier (tabela akcja → warunki) | blokady 6 | na branchu (migracja 314), czeka na zielony `main` |
+| 6a | E15 | **Poprawki zgłoszone 2026-10-08:** a) nowa strona `/polls/` — układ przycisków się rozjeżdża (sprawdzić dokładnie desktop i telefon, wszystkie stany ankiety); b) stopka w manualu przykleja się do tekstu, gdy treść jest krótsza niż ekran (regresja z E10/E11 — stopka ma być na dole strony) | ujednolicenie-wygladu.md | do zrobienia (pierwsze po wznowieniu) |
 | 7 | E4 | `nav-map.js` (`PAGES`, `linkTo`, `backHref`), `ret`, gość na `/` → `/games/` | nawigacja 6.2–6.3 | na branchu `e4` (unit ok), e2e po E2 |
 | 8 | E5 | Adresy a) `/go/` b) ankiety c) gry d) urządzenia + `/connect/` e) bazy, logo f) logowanie | nawigacja 8 | do zrobienia |
 | 9 | E6 | `initPage()`, wspólny overlay gość/urządzenie | nawigacja 6.4 | do zrobienia |
@@ -86,6 +87,11 @@ bo `PAGES` deklaruje blokady; adresy po mapie stron; instrukcja na końcu.
    przypomnienie (`send_later`) na wznowienie pracy. **Stały timer**
    `trig_017RW51bdVmysCgBE7q8fmq5` (co 2 h) wznawia pracę z dziennika;
    wyłączyć, gdy kolejka skończona albo czekamy na decyzję.
+   **Limit (decyzja 2026-10-08):** w trakcie pracy zawsze uzbrojone jedno
+   przypomnienie `send_later` na **teraz + 3 h 1 min**; przy każdym kroku
+   (commit, przebieg e2e, odpowiedź) stare kasowane i ustawiane nowe. Gdy
+   limit zatrzyma pracę, ostatnie przypomnienie wznawia ją 3 h 1 min po
+   ostatniej aktywności. Na pauzie (prośba użytkownika) — bez przypomnień.
 
 ## Dziennik
 
