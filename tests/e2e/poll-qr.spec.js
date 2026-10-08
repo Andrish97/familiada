@@ -159,7 +159,7 @@ test.describe("poll-qr.js audyt", () => {
       // Powinno pokazać komunikat o błędzie zamiast QR
       const qrBox = page.locator(".qr-box");
       const text = await qrBox.textContent();
-      expect(text).toMatch(/Nieprawidłowy|Invalid|Невірний/);
+      expect(text).toMatch(/link wygasł|link has expired|втратило чинність/);
 
       // Nie powinno być img
       const qrImage = page.locator(".qr-box img");
@@ -177,8 +177,8 @@ test.describe("poll-qr.js audyt", () => {
       await loginAsPooledTestUser(page, context, testInfo.parallelIndex);
       const game = await createPollGame(page);
 
-      // Cofnij do draft — jedyny status game_status enum, który poll-qr.js
-      // odrzuca (dozwolone: poll_open, ready — patrz js/pages/poll-qr.js)
+      // Cofnij do draft — poll-qr.js pokazuje wtedy "Ten link wygasł"
+      // (poll_open → QR, ready → "Ankieta została zamknięta")
       await page.evaluate(async (gid) => {
         const sb = window.__sbClient;
         await sb.from("games").update({ status: "draft" }).eq("id", gid);
@@ -192,10 +192,80 @@ test.describe("poll-qr.js audyt", () => {
       await page.goto(pollQrUrl.toString(), { waitUntil: "domcontentloaded" });
       await page.waitForLoadState("networkidle");
 
-      // Powinno pokazać komunikat o niedostępności
+      // Szkic = ankieta nieaktywna → "Ten link wygasł"
       const qrBox = page.locator(".qr-box");
       const text = await qrBox.textContent();
-      expect(text).toMatch(/dostępna|available|недоступне/);
+      expect(text).toMatch(/link wygasł|link has expired|втратило чинність/);
+
+      await deleteGame(page, game.gameId);
+    } finally {
+      await page.close();
+    }
+  });
+
+  test("ekran QR przełącza się na 'Ankieta została zamknięta' po zamknięciu", async ({ page, context }, testInfo) => {
+    try {
+      await loginAsPooledTestUser(page, context, testInfo.parallelIndex);
+      const game = await createPollGame(page);
+
+      // Zamknięcie wymaga głosów (game_poll_close_check) — stan "ready" dla tego
+      // klucza podajemy w odpowiedzi get_poll_game po załadowaniu strony.
+      let closed = false;
+      await page.route("**/rest/v1/rpc/get_poll_game", async (route) => {
+        if (!closed) return route.continue();
+        return route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({
+            game: { id: game.gameId, name: "E2E", type: "poll_points", status: "ready", poll_qr_lang: "pl" },
+            questions: [],
+          }),
+        });
+      });
+
+      const pollQrUrl = new URL("/poll-qr/", "https://www.familiada.online/");
+      pollQrUrl.searchParams.set("id", game.gameId);
+      pollQrUrl.searchParams.set("key", game.shareKey);
+      await page.goto(pollQrUrl.toString(), { waitUntil: "domcontentloaded" });
+      await expect(page.locator(".qr-box img")).toBeVisible({ timeout: 10000 });
+
+      closed = true;
+      // pętla stanu co 4 s
+      await expect(page.locator(".qr-box")).toContainText(/została zamknięta|has been closed|закрито/, { timeout: 15000 });
+      await expect(page.locator(".qr-box img")).toHaveCount(0);
+
+      await deleteGame(page, game.gameId);
+    } finally {
+      await page.close();
+    }
+  });
+
+  test("ekran QR po ponownym uruchomieniu pokazuje 'Ten link wygasł'", async ({ page, context }, testInfo) => {
+    try {
+      await loginAsPooledTestUser(page, context, testInfo.parallelIndex);
+      const game = await createPollGame(page);
+
+      const pollQrUrl = new URL("/poll-qr/", "https://www.familiada.online/");
+      pollQrUrl.searchParams.set("id", game.gameId);
+      pollQrUrl.searchParams.set("key", game.shareKey);
+      await page.goto(pollQrUrl.toString(), { waitUntil: "domcontentloaded" });
+      await expect(page.locator(".qr-box img")).toBeVisible({ timeout: 10000 });
+
+      // Przerwij i uruchom ponownie jako właściciel (nowy klucz) w innej karcie
+      const owner = await context.newPage();
+      instrumentPage(owner);
+      await owner.goto("https://www.familiada.online/polls/index.html", { waitUntil: "domcontentloaded" });
+      await owner.evaluate(async (gid) => {
+        const sb = window.__sbClient;
+        const { data, error } = await sb.rpc("poll_abort", { p_game_id: gid });
+        if (error) throw new Error("poll_abort failed: " + error.message);
+        const { error: openErr } = await sb.rpc("poll_open", { p_game_id: gid, p_key: data.share_key_poll });
+        if (openErr) throw new Error("poll_open failed: " + openErr.message);
+      }, game.gameId);
+      await owner.close();
+
+      await expect(page.locator(".qr-box")).toContainText(/link wygasł|link has expired|втратило чинність/, { timeout: 15000 });
+      await expect(page.locator(".qr-box img")).toHaveCount(0);
 
       await deleteGame(page, game.gameId);
     } finally {

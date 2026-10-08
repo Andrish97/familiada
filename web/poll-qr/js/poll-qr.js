@@ -35,6 +35,34 @@ function withLangInUrl(u, lang){
 const qr = document.getElementById("qr");
 let renderAbortController = null;
 
+// Stan końcowy ekranu: zamiast kodu QR komunikat (ankieta zamknięta / link
+// wygasł / brak ankiety). Po rotacji klucza ten sam klucz już nie wraca do
+// poll_open, więc po wejściu w ten stan niczego więcej nie odświeżamy.
+let ended = false;
+function showEnded(msgKey) {
+  ended = true;
+  if (renderAbortController) renderAbortController.abort();
+  if (pollLangInterval) clearInterval(pollLangInterval);
+  document.querySelector(".qr-container")?.classList.add("is-ended");
+  if (qr) qr.textContent = t(msgKey);
+  document.documentElement.classList.remove("page-loading");
+}
+
+// Komunikat dla błędu get_poll_game ('forbidden' / 'not found'); null = błąd przejściowy
+function endedKeyForError(error) {
+  const m = String(error?.message || "");
+  if (m.includes("forbidden")) return "pollQr.linkExpired";
+  if (m.includes("not found") || m.includes("invalid input syntax")) return "pollQr.pollNotFound";
+  return null;
+}
+
+// Komunikat dla statusu gry; null = ankieta nadal otwarta
+function endedKeyForStatus(status) {
+  if (status === "poll_open") return null;
+  if (status === "ready") return "pollQr.pollClosed";
+  return "pollQr.linkExpired";
+}
+
 async function render(u){
   if (!qr) {
     console.error("[poll-qr] missing #qr element");
@@ -47,6 +75,7 @@ async function render(u){
   const signal = renderAbortController.signal;
 
   qr.innerHTML = "";
+  if (ended) return;
   if(!u){ qr.textContent = t("pollQr.missingUrl"); return; }
 
   try{
@@ -92,17 +121,15 @@ if (!url && paramId && paramKey) {
       // .single() na zapytaniach do tabel, nigdy wyjątków z funkcji RPC),
       // więc ten warunek nigdy nie był prawdziwy i zły klucz zawsze
       // pokazywał ogólny komunikat "Brak URL" zamiast "Nieprawidłowy klucz".
-      if (error.message === "forbidden") {
-        throw new Error("invalid_key");
-      }
+      const k = endedKeyForError(error);
+      if (k) throw new Error(k);
       throw new Error(error.message || "not_found");
     }
-    if (!data?.game) throw new Error("not_found");
+    if (!data?.game) throw new Error("pollQr.pollNotFound");
 
     const game = data.game;
-    if (!["poll_open", "ready"].includes(game.status)) {
-      throw new Error("invalid_status");
-    }
+    const endedKey = endedKeyForStatus(game.status);
+    if (endedKey) throw new Error(endedKey);
 
     const base = game.type === "poll_points" ? "/poll-points/" : "/poll-text/";
     const voteUrl = new URL(base, location.href);
@@ -114,13 +141,12 @@ if (!url && paramId && paramKey) {
     myGameId = paramId;
   } catch(e) {
     console.error("[poll-qr] device init error:", e);
-    const errorMsg = {
-      "invalid_key": "pollQr.invalidKey",
-      "invalid_status": "pollQr.invalidStatus",
-      "not_found": "pollQr.missingUrlOrKey"
-    }[e.message] || "pollQr.missingUrlOrKey";
-    if (qr) qr.textContent = t(errorMsg);
     deviceInitFailed = true;
+    if (String(e.message).startsWith("pollQr.")) {
+      showEnded(e.message);
+    } else if (qr) {
+      qr.textContent = t("pollQr.missingUrlOrKey");
+    }
   }
 }
 
@@ -162,13 +188,24 @@ async function applyLangChange(lang) {
 // komendę z zewnątrz.
 const myKey = myScope.split(":")[1] || "";
 const POLL_LANG_INTERVAL_MS = 4000;
-let pollLangInterval = null;
+var pollLangInterval = null;
 
 async function pollLangOnce() {
   if (!myGameId || !myKey) return;
   try {
     const { data, error } = await sb().rpc("get_poll_game", { p_game_id: myGameId, p_key: myKey });
-    if (error || !data?.game) return;
+    if (ended) return;
+    if (error) {
+      const k = endedKeyForError(error);
+      if (k) showEnded(k);
+      return;
+    }
+    if (!data?.game) return;
+    const k = endedKeyForStatus(data.game.status);
+    if (k) {
+      showEnded(k);
+      return;
+    }
     const lang = data.game.poll_qr_lang;
     if (lang && lang !== getUiLang()) await applyLangChange(lang);
   } catch (e) {

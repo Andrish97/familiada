@@ -23,6 +23,11 @@ const MSG = {
   beforeUnloadWarn: () => t("pollText.beforeUnloadWarn"),
   missingParams: () => t("pollText.missingParams"),
   alreadyVoted: () => t("pollText.alreadyVoted"),
+  linkExpired: () => t("pollText.linkExpired"),
+  pollNotFound: () => t("pollText.pollNotFound"),
+  inviteDone: () => t("pollText.inviteDone"),
+  inviteDeclined: () => t("pollText.inviteDeclined"),
+  inviteExpired: () => t("pollText.inviteExpired"),
   loading: () => t("pollText.loading"),
   wrongType: () => t("pollText.wrongType"),
   openPollFail: (err) => t("pollText.openPollFail", { error: err }),
@@ -107,6 +112,34 @@ function showClosed(on) {
   if (qbox) qbox.style.display = on ? "none" : "";
   if (on && subEl) subEl.style.display = "none"; // Hide loading sub when showing closed/error msg
   else if (!on && subEl) subEl.style.display = "";
+}
+
+// Komunikat stanu (zamknięta / wygasła / brak): zawsze widoczny w bloku #closed.
+function showStatus(msg) {
+  showClosed(true);
+  setSub("");
+  setClosedMsg(msg);
+}
+
+// Rozróżnia, dlaczego payload się nie wczytał (get_poll_game rzuca 'not found'
+// dla braku gry i 'forbidden' dla klucza z wcześniejszego uruchomienia).
+// Zwraca komunikat albo null, gdy to nie jest kwestia stanu ankiety.
+async function describeLinkState() {
+  try {
+    const { data, error } = await sb().rpc("get_poll_game", { p_game_id: gameId, p_key: key });
+    if (error) {
+      const m = String(error.message || "");
+      if (m.includes("not found") || m.includes("invalid input syntax")) return MSG.pollNotFound();
+      if (m.includes("forbidden")) return MSG.linkExpired();
+      return null;
+    }
+    const st = data?.game?.status;
+    if (st === "ready") return MSG.pollClosed();
+    if (st && st !== "poll_open") return MSG.linkExpired();
+    return null;
+  } catch {
+    return null;
+  }
 }
 
 let taskVoterToken = null;
@@ -234,15 +267,21 @@ async function resolveTaskToken() {
   try {
     const { data, error } = await sb().rpc("poll_task_resolve", { p_token: taskToken });
     if (error) throw error;
+    if (data && data.ok === false) {
+      const msgs = {
+        poll_closed: MSG.pollClosed(),
+        already_done: MSG.inviteDone(),
+      };
+      showStatus(msgs[data.error] || MSG.inviteExpired());
+      return;
+    }
     if (!data?.ok || data?.kind !== "task") throw new Error(MSG.taskInvalid());
     if (data.requires_auth) {
-      setSub(MSG.loginToVote());
-      showClosed(true);
+      showStatus(MSG.loginToVote());
       return;
     }
     if (data.needs_email) {
-      setSub(MSG.emailRequired());
-      showClosed(true);
+      showStatus(MSG.emailRequired());
       return;
     }
     gameId = data.game_id;
@@ -252,8 +291,7 @@ async function resolveTaskToken() {
     await markTaskOpened();
   } catch (e) {
     console.error("[poll-text] task resolve error:", e);
-    setSub(MSG.openTaskFail());
-    showClosed(true);
+    showStatus(MSG.openTaskFail());
   }
 }
 
@@ -357,14 +395,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
     if (!taskResolved) return;
     if (!gameId || !key) {
-      setSub(MSG.missingParams());
-      showClosed(true);
+      showStatus(MSG.missingParams());
       return;
     }
     if (hasDone()) {
-      showClosed(true);
-      setSub("");
-      setClosedMsg(MSG.alreadyVoted());
+      showStatus(MSG.alreadyVoted());
       redirectToRoot();
       return;
     }
@@ -374,11 +409,19 @@ document.addEventListener("DOMContentLoaded", async () => {
     setSub(MSG.loading());
     showClosed(false);
 
-    payload = await loadPayload();
+    try {
+      payload = await loadPayload();
+    } catch (e) {
+      const state = await describeLinkState();
+      if (state) {
+        showStatus(state);
+        return;
+      }
+      throw e;
+    }
 
     if ((payload?.game?.type || "") !== "poll_text") {
-      setSub(MSG.wrongType());
-      showClosed(true);
+      showStatus(MSG.wrongType());
       return;
     }
 
@@ -424,7 +467,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   } catch (e) {
     console.error("[poll-text] init error:", e);
-    setSub(MSG.openPollFail(e?.message || e));
-    showClosed(true);
+    showStatus(MSG.openPollFail(e?.message || e));
   }
 });

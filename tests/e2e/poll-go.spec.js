@@ -299,9 +299,59 @@ test.describe("poll-go.js audyt", () => {
       await page.goto(url.toString(), { waitUntil: "domcontentloaded" });
       await page.waitForLoadState("networkidle");
 
-      // Powinno pokazać "Zaproszenie już wykorzystane"
-      const message = page.locator(".poll-go-sub");
-      await expect(message).toContainText(/wykorzystane|used|використано/, { timeout: 10000 });
+      // Odrzucone zaproszenie → "Zaproszenie odrzucone"
+      const title = page.locator(".poll-go-title");
+      await expect(title).toContainText(/Zaproszenie odrzucone|Invitation declined|Запрошення відхилено/, { timeout: 10000 });
+
+      await deleteGame(page, gameId);
+    } finally {
+      await page.close();
+    }
+  });
+
+  test("task invite: ponowne uruchomienie ankiety → 'To zaproszenie wygasło'", async ({ page, context }, testInfo) => {
+    try {
+      await loginAsPooledTestUser(page, context, testInfo.parallelIndex);
+      const { gameId, taskToken } = await createTaskToken(page, "poll_points");
+
+      // poll_abort kasuje zaproszenia i rotuje klucz; poll_open uruchamia z nowym kluczem
+      await page.evaluate(async (gid) => {
+        const sb = window.__sbClient;
+        const { data, error } = await sb.rpc("poll_abort", { p_game_id: gid });
+        if (error) throw new Error("poll_abort failed: " + error.message);
+        const { error: openErr } = await sb.rpc("poll_open", { p_game_id: gid, p_key: data.share_key_poll });
+        if (openErr) throw new Error("poll_open failed: " + openErr.message);
+      }, gameId);
+
+      const url = new URL("poll-go/index.html", "https://www.familiada.online/");
+      url.searchParams.set("t", taskToken);
+      await page.goto(url.toString(), { waitUntil: "domcontentloaded" });
+      await expect(page.locator(".poll-go-title")).toContainText(/zaproszenie wygasło|invitation has expired|запрошення втратило/, { timeout: 10000 });
+
+      await deleteGame(page, gameId);
+    } finally {
+      await page.close();
+    }
+  });
+
+  test("task invite: ankieta zamknięta → 'Ankieta została zamknięta'", async ({ page, context }, testInfo) => {
+    try {
+      await loginAsPooledTestUser(page, context, testInfo.parallelIndex);
+      const { gameId, taskToken } = await createTaskToken(page, "poll_points");
+
+      // Zamknięcie wymaga głosów — poll_go_resolve podajemy jako odpowiedź 'poll_closed'.
+      await page.route("**/rest/v1/rpc/poll_go_resolve", (route) =>
+        route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({ ok: false, error: "poll_closed" }),
+        })
+      );
+
+      const url = new URL("poll-go/index.html", "https://www.familiada.online/");
+      url.searchParams.set("t", taskToken);
+      await page.goto(url.toString(), { waitUntil: "domcontentloaded" });
+      await expect(page.locator(".poll-go-title")).toContainText(/została zamknięta|has been closed|закрито/, { timeout: 10000 });
 
       await deleteGame(page, gameId);
     } finally {
@@ -342,9 +392,9 @@ test.describe("poll-go.js audyt", () => {
       await page.goto(url.toString(), { waitUntil: "domcontentloaded" });
       await page.waitForLoadState("networkidle");
 
-      // Powinno pokazać "Link nieważny" (invalidLinkTitle)
+      // Nieznany token (np. usunięte zadanie) → "To zaproszenie wygasło"
       const title = page.locator(".poll-go-title");
-      await expect(title).toContainText(/nieważny|Invalid|Недійсне/, {
+      await expect(title).toContainText(/zaproszenie wygasło|invitation has expired|запрошення втратило/, {
         timeout: 10000,
       });
     } finally {
