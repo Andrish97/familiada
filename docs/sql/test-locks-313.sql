@@ -116,6 +116,9 @@ begin
   perform pg_temp.check('to samo logo z drugiej karty: locked', pg_temp.acq('logo', l1, 'E3') = 'locked');
   r := public.update_logo_checked(l1, '{"name":"Zapis"}'::jsonb, 'E1');
   perform pg_temp.check('zapis logo własną kartą (trzyma exclusive): ok', (r->>'ok')::boolean);
+  -- zgodność wstecz: wywołanie bez karty (stara wersja strony) nie zderza się z własną blokadą
+  r := public.update_logo_checked(l1, '{"name":"Bez karty"}'::jsonb, null);
+  perform pg_temp.check('zapis logo bez karty przez trzymającego użytkownika: ok', (r->>'ok')::boolean);
   r := public.update_logo_checked(l1, '{"name":"Obca"}'::jsonb, 'E9');
   perform pg_temp.check('zapis logo cudzą kartą: in_use', (r->>'in_use')::boolean);
   r := public.delete_resource_checked('logo', l2, 'E9');
@@ -131,9 +134,12 @@ begin
   perform pg_temp.check('rename game własną kartą: ok', (r->>'ok')::boolean);
   r := public.delete_resource_checked('game', g, 'P2');
   perform pg_temp.check('delete game przy trzymanej: in_use', (r->>'in_use')::boolean);
-  -- stary delete_resource_checked(typ, id) (2 argumenty) nadal działa i odmawia
+  -- stary delete_resource_checked(typ, id) (2 argumenty, bez karty) odmawia przy blokadzie
+  -- innego użytkownika (tu: wiersz przepisany na U2) ...
+  update public.edit_locks set holder_user_id = u2 where resource_type = 'game';
   r := public.delete_resource_checked('game', g);
-  perform pg_temp.check('delete_resource_checked 2 argumenty: in_use', (r->>'in_use')::boolean);
+  perform pg_temp.check('delete_resource_checked 2 argumenty, cudza blokada: in_use', (r->>'in_use')::boolean);
+  update public.edit_locks set holder_user_id = u1 where resource_type = 'game';
   delete from public.edit_locks where resource_type = 'game';
 
   -- 6. stara acquire_edit_lock(typ, id, tab, kontekst) działa jak wyłączne

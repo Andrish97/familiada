@@ -43,7 +43,9 @@ CREATE OR REPLACE FUNCTION "public"."edit_lock_ttl"() RETURNS interval
 
 -- Aktywne trzymania innych kart, które przeszkadzają w zajęciu zasobu
 -- (p_type, p_id) w trybie p_mode. p_tab = karta wołająca (jej własne wiersze
--- nie przeszkadzają); NULL = brak karty, przeszkadza każde trzymanie.
+-- nie przeszkadzają); NULL = wywołanie bez karty (starsza wersja strony
+-- otwarta w chwili wdrożenia) — wtedy nie przeszkadzają trzymania tego samego
+-- użytkownika, jak przed 313 (inaczej edytor blokowałby sam siebie).
 CREATE OR REPLACE FUNCTION "public"."edit_lock_blockers"("p_type" "text", "p_id" "uuid", "p_mode" "text", "p_tab" "text")
     RETURNS SETOF "public"."edit_locks"
     LANGUAGE "sql" STABLE SECURITY DEFINER
@@ -52,7 +54,8 @@ CREATE OR REPLACE FUNCTION "public"."edit_lock_blockers"("p_type" "text", "p_id"
   select l.*
   from public.edit_locks l
   where l.heartbeat_at > now() - public.edit_lock_ttl()
-    and l.holder_tab_id is distinct from p_tab
+    and (case when p_tab is null then l.holder_user_id is distinct from auth.uid()
+              else l.holder_tab_id <> p_tab end)
     and (
       -- ten sam zasób: przeszkadza, gdy którakolwiek strona trzyma wyłącznie
       (l.resource_type = p_type and l.resource_id = p_id
