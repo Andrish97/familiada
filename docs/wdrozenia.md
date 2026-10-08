@@ -81,7 +81,9 @@ bo `PAGES` deklaruje blokady; adresy po mapie stron; instrukcja na końcu.
    Stan pracy zapisywany w „Dzienniku” po każdym kroku, tak żeby po
    kompaktowaniu kontekstu dało się kontynuować z samych dokumentów.
 4. Przed wyczerpaniem limitu: zapisać stan w dzienniku, wypchnąć, ustawić
-   przypomnienie (`send_later`) na wznowienie pracy.
+   przypomnienie (`send_later`) na wznowienie pracy. **Stały timer**
+   `trig_017RW51bdVmysCgBE7q8fmq5` (co 2 h) wznawia pracę z dziennika;
+   wyłączyć, gdy kolejka skończona albo czekamy na decyzję.
 
 ## Dziennik
 
