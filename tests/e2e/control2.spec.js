@@ -446,7 +446,48 @@ test("control2: intro logo i natychmiastowe światło Buzzera przed wysyłką", 
   }
 });
 
-async function makeGame(page, name, { settings = {}, roundQuestions = [], finalAnswerPts = null } = {}) {
+// Blokada stanu "play" (guardGameState, reguła game_validate): gra musi mieć
+// co najmniej 10 pytań, każde z 3-6 odpowiedziami i sumą punktów <= 100.
+// Testy budują małe gry, więc makeGame dopełnia je pytaniami-wypełniaczami
+// (ord 200+, poza rundami i finałem) oraz dopełnia odpowiedzi pytań rund
+// zerowymi odpowiedziami do 3. Zamierzony przepływ pytań zostaje, bo
+// padGame przypina pytania rund trybem "pick" (settings.questions.rounds),
+// więc losowanie nie dobiera wypełniaczy.
+async function padGame(page, gameId) {
+  await page.evaluate(async (gid) => {
+    const sb = window.__sbClient;
+    const { data: qs, error: qErr } = await sb.from("questions").select("id, text, ord").eq("game_id", gid).order("ord");
+    if (qErr) throw new Error("padGame read questions: " + qErr.message);
+    for (let i = 0; (qs.length + i) < 10; i++) {
+      const { data: fq, error: fqErr } = await sb.from("questions")
+        .insert({ game_id: gid, ord: 200 + i, text: `Pytanie dopełniające ${i + 1}` }).select("id").single();
+      if (fqErr) throw new Error("padGame insert question: " + fqErr.message);
+      const { error: faErr } = await sb.from("answers").insert([
+        { question_id: fq.id, ord: 1, text: "Wypełniacz A", fixed_points: 40 },
+        { question_id: fq.id, ord: 2, text: "Wypełniacz B", fixed_points: 30 },
+        { question_id: fq.id, ord: 3, text: "Wypełniacz C", fixed_points: 20 },
+      ]);
+      if (faErr) throw new Error("padGame insert answers: " + faErr.message);
+    }
+    const rounds = qs.filter((q) => q.ord < 100).map((q) => ({ id: q.id, text: q.text }));
+    if (!rounds.length) return;
+    const { data: cur, error: cErr } = await sb.from("games").select("settings").eq("id", gid).single();
+    if (cErr) throw new Error("padGame read settings: " + cErr.message);
+    const st = cur.settings || {};
+    st.game = { ...(st.game || {}), roundsQuestionsMode: "pick" };
+    st.questions = { final: st.questions?.final || [], rounds };
+    const { error: uErr } = await sb.from("games").update({ settings: st }).eq("id", gid);
+    if (uErr) throw new Error("padGame update settings: " + uErr.message);
+  }, gameId);
+}
+
+async function makeGame(page, name, opts = {}) {
+  const g = await makeGameRaw(page, name, opts);
+  await padGame(page, g.id);
+  return g;
+}
+
+async function makeGameRaw(page, name, { settings = {}, roundQuestions = [], finalAnswerPts = null } = {}) {
   return page.evaluate(async ({ name, settings, roundQuestions, finalAnswerPts }) => {
     // js/pages/editor.js's clip17()/normQ() clip answer/question text
     // client-side before a real user's save ever reaches the DB (maxlength=17
@@ -470,6 +511,9 @@ async function makeGame(page, name, { settings = {}, roundQuestions = [], finalA
     if (gErr) throw new Error("insert games failed: " + gErr.message);
 
     for (const q of roundQuestions) {
+      // reguła play: min. 3 odpowiedzi — dopełnienie zerowymi punktami
+      q.answers = [...q.answers];
+      while (q.answers.length < 3) q.answers.push({ ord: q.answers.length + 1, text: `Pusta ${q.answers.length + 1}`, fixed_points: 0 });
       const { data: qRow, error: qErr } = await sb
         .from("questions").insert({ game_id: g.id, ord: q.ord, text: clip200(q.text) }).select("id").single();
       if (qErr) throw new Error("insert questions failed: " + qErr.message);
@@ -640,7 +684,7 @@ test("control2: parowanie urządzeń — linki renderują się bez błędu, Cont
   });
   await page.evaluate(async (gameId) => {
     const sb = window.__sbClient;
-    const { data: questions, error: readError } = await sb.from("questions").select("id, text, ord").eq("game_id", gameId).order("ord");
+    const { data: questions, error: readError } = await sb.from("questions").select("id, text, ord").eq("game_id", gameId).lt("ord", 100).order("ord");
     if (readError) throw new Error(readError.message);
     const { data: current, error: gameError } = await sb.from("games").select("settings").eq("id", gameId).single();
     if (gameError) throw new Error(gameError.message);
@@ -1002,9 +1046,9 @@ test("control2: próg w rundzie -> finał, wczesne zakończenie po 4/5 pytaniach
   test.setTimeout(300000);
   await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
   const game = await makeGame(page, `E2E-CONTROL2-FINAL-${Date.now()}`, {
-    roundQuestions: [{ ord: 1, text: "Pytanie testowe (runda)", answers: [{ ord: 1, text: "Odp. warta 300", fixed_points: 300 }] }],
+    roundQuestions: [{ ord: 1, text: "Pytanie testowe (runda)", answers: [{ ord: 1, text: "Odp. warta 300", fixed_points: 100 }] }],
     finalAnswerPts: 50,
-    settings: { game: { advanced: { endScreenMode: "money" } } },
+    settings: { game: { advanced: { endScreenMode: "money", roundMultipliers: [3] } } },
   });
   const contexts = [];
   const errors = [];
@@ -1407,9 +1451,9 @@ test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśni�
   test.setTimeout(240_000);
   await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
   const game = await makeGame(page, `E2E-CONTROL2-FINALFULL-${Date.now()}`, {
-    roundQuestions: [{ ord: 1, text: "Pytanie testowe (runda)", answers: [{ ord: 1, text: "Odp. warta 300", fixed_points: 300 }] }],
+    roundQuestions: [{ ord: 1, text: "Pytanie testowe (runda)", answers: [{ ord: 1, text: "Odp. warta 300", fixed_points: 100 }] }],
     finalAnswerPts: 15,
-    settings: { game: { advanced: { endScreenMode: "money" } } },
+    settings: { game: { advanced: { endScreenMode: "money", roundMultipliers: [3] } } },
   });
   const contexts = [];
   const errors = [];
@@ -2294,6 +2338,8 @@ test("control2: zablokowany, gdy logo gry jest edytowane w logo-editorze — i w
     return { logoId: logo.id, gameId: game.id, hostKey:game.share_key_host };
   }, { name: logoName, payload: blankGlyphPayload() });
 
+  // stan "play" wymaga >= 10 pytań, inaczej overlay stanu przykrywa blokadę logo
+  await padGame(page, gameId);
   const logoContexts = [];
   let hostPage;
   const lockTabId = `e2e-fake-logo-editor-${Date.now()}`;
@@ -2751,8 +2797,9 @@ test("control2: zegarek 3s w rundach wraca do stanu SPRZED startu (bez naliczeni
 test("control2: zegarek gracza w finale (15s) wraca do stanu SPRZED startu (usedP1 cofnięte), gdy Control zamknięte podczas odliczania", async ({ page, browser }, testInfo) => {
   await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
   const game = await makeGame(page, `E2E-CONTROL2-FINALTIMERREVERT-${Date.now()}`, {
-    roundQuestions: [{ ord: 1, text: "Pytanie testowe (runda)", answers: [{ ord: 1, text: "Odp. warta 300", fixed_points: 300 }] }],
+    roundQuestions: [{ ord: 1, text: "Pytanie testowe (runda)", answers: [{ ord: 1, text: "Odp. warta 300", fixed_points: 100 }] }],
     finalAnswerPts: 50,
+    settings: { game: { advanced: { roundMultipliers: [3] } } },
   });
   const contexts = [];
   try {
