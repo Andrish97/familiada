@@ -1,16 +1,16 @@
 // js/pages/polls.js
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-08T07385";
-import { requireAuth } from "../../shared/js/core/auth.js?v=v2026-10-08T07385";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-08T07385";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-08T09233";
+import { requireAuth } from "../../shared/js/core/auth.js?v=v2026-10-08T09233";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-08T09233";
 import QRCode from "https://cdn.jsdelivr.net/npm/qrcode@1.5.3/+esm";
-import { initI18n, t, withLangParam, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-08T07385";
-import { initTopbarAccountDropdown } from "../../shared/js/core/topbar-controller.js?v=v2026-10-08T07385";
-import { guardResourceLock } from "../../shared/js/core/resource-lock.js?v=v2026-10-08T07385";
-import { validateGame, gameRuleErrorMessage } from "../../shared/js/core/game-validate.js?v=v2026-10-08T07385";
-import { mailCooldownCheck } from "../../shared/js/core/cooldown.js?v=v2026-10-08T07385";
-import { sendPollInviteMails } from "../../shared/js/core/poll-mail.js?v=v2026-10-08T07385";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-08T07385";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-08T07385";
+import { initI18n, t, withLangParam, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-08T09233";
+import { initTopbarAccountDropdown } from "../../shared/js/core/topbar-controller.js?v=v2026-10-08T09233";
+import { guardResourceLock } from "../../shared/js/core/resource-lock.js?v=v2026-10-08T09233";
+import { validateGame, gameRuleErrorMessage } from "../../shared/js/core/game-validate.js?v=v2026-10-08T09233";
+import { mailCooldownCheck } from "../../shared/js/core/cooldown.js?v=v2026-10-08T09233";
+import { sendPollInviteMails } from "../../shared/js/core/poll-mail.js?v=v2026-10-08T09233";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-08T09233";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-08T09233";
 
 // initI18n is called at the start of DOMContentLoaded (see below)
 
