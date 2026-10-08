@@ -38,7 +38,7 @@ utracie kontekstu wystarczy przeczytać ten plik i wskazaną sekcję źródła.
 |---|---|---|---|---|
 | 1 | E0 | Zielone e2e: `mobile-sheet-modals` (szerokość arkusza = szerokość treści, margines 15 px zostaje; tekst przycisku „Wstecz” z ikoną), przekroczenia czasu w eksploratorze bazy | — | zrobione |
 | 2 | E3 | Drobne błędy logowania (`requireAuth` w control/account, domyślny argument, `withLangParam`) | nawigacja 6.1 | zrobione |
-| 3 | E10 | Wygląd: listy (pasek, karty, kafle, dolny pasek), edytory (tytuł i nazwa w topbarze, jedno pole nazwy, logo bez wskaźnika zapisu), ankieta bez podpowiedzi pod tytułem | ujednolicenie-wygladu.md | na `main` (e2e na main w toku) |
+| 3 | E10 | Wygląd: listy (pasek, karty, kafle, dolny pasek), edytory (tytuł i nazwa w topbarze, jedno pole nazwy, logo bez wskaźnika zapisu), ankieta bez podpowiedzi pod tytułem | ujednolicenie-wygladu.md | zrobione |
 | 4 | E11 | Ankiety: luka bezpieczeństwa, klucz na uruchomienie, Przerwij, zaproszenia (3 stany), limity maili, strona ankiety (karty Udostępnianie · Wyniki), hub znika, Subskrypcje + Zadania, podgląd Gra · Ankieta, blokady stanu na stronach gry | ankiety-refaktor.md, maile-granice.md, blokady „Blokady stanu” | do zrobienia |
 | 5 | E12 | Usuwanie gry i konta | usuwanie-danych.md | do zrobienia |
 | 6 | E2 | Blokady wg mapy docelowej (współdzielone, `logos`, `base:B`, odnowienie `locked`, TTL, DB `*_checked`) + blokady stanu i akcji wg kryteriów gier (tabela akcja → warunki) | blokady 6 | do zrobienia |
@@ -102,3 +102,5 @@ bo `PAGES` deklaruje blokady; adresy po mapie stron; instrukcja na końcu.
 | 2026-10-08 | E10 | branch 37745868348: 55/110 źle — kolizja z równoległym przebiegiem na `main` (te same konta); realne: 2 testy logo oczekiwały tekstu stanu zapisu (`a87da93`) | do powtórki po zakończeniu przebiegu E11 |
 | 2026-10-08 | E10/E11 | błąd w `tests/e2e/helpers/branch-code.js`: trasa SPA oddawała HTML zamiast skryptów z folderu strony (`/games/js/games.js`, `/polls/js/…`, `/subscriptions/js/…`) — to on wywołał większość błędów E10 i E11, poprawka `7195f1d` | wspólny przebieg editor, games, polls, subscriptions, frontend-navigation, logo-editor w toku |
 | 2026-10-08 | E10 + E11c/E11d | `d60edb6` na `main`: edytory (tytuł w topbarze, pole nazwy, logo bez stanu zapisu), listy (odstępy, karty, szukaj z ✕), nowa strona ankiety, Subskrypcje z Zadaniami + filtr/sort, hub usunięty | branch 37755057609: 62 ok, 1 zły (ścieżka /games/ w teście — poprawione), 1 niestabilny (mail) |
+| 2026-10-08 | E10/E11c/E11d | main 37813601700: 148 ok, 1 zły (mail subskrypcji — blokada 30 dni po odrzuceniu nie była czyszczona w e2e → migracja 311 `52996fb`), 1 niestabilny (edytor: suma >100) | E10 zrobione |
+| 2026-10-08 | E11g | `cef94d4` na branchu: `guardGameState` (edytor edit, ustawienia/Control play, ankieta poll_entry), edytor: blokada przed resetem | e2e po scaleniu E11e/E11f |
