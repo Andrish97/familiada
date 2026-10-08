@@ -16,6 +16,7 @@
 
   <link rel="icon" href="/favicon.ico?v=v2026-10-08T07385"/>
   <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-08T07385"/>
+  <link rel="stylesheet" href="/games/css/games.css?v=v2026-10-08T07385"/>
   <link rel="stylesheet" href="/shared/css/polls.css?v=v2026-10-08T07385"/>
 
   <script>
@@ -35,7 +36,7 @@
   <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-08T07385" defer></script>
 </head>
 
-<body class="polls-body skel-body">
+<body class="games-body polls-body skel-body">
   <header class="topbar topbar-layout-4">
     <div class="topbar-section topbar-section-1">
       <div class="brand">FAMILIADA</div>
@@ -57,41 +58,88 @@
   </header>
 
   <main class="wrap">
-    <div class="rowTop">
-      <div class="statusBox">
-        <div class="chip" id="chipType"></div>
-        <div class="chip status" id="chipStatus"></div>
+    <!-- A. Pasek stanu: oznaczenia po lewej, przyciski stanu po prawej -->
+    <div class="pollBar" id="pollBar" style="display:none;">
+      <div class="pollBarTags">
+        <span class="tag tag--gold" id="chipType"></span>
+        <span class="tag" id="chipStatus"></span>
+        <span class="tag tag--info" id="chipVotes" style="display:none;"></span>
+      </div>
+      <div class="pollBarActions">
+        <!-- tylko powód, dla którego „Zamknij” jest wyłączone -->
+        <span class="pollBarHint" id="hintTop"></span>
+        <button class="btn sm gold" id="btnPollAction" type="button" style="visibility:hidden"></button>
+        <button class="btn sm" id="btnAbort" type="button" style="display:none;" data-i18n="polls.actions.abort">Przerwij</button>
+        <button class="btn sm" id="btnCancelTextCloseTop" type="button" style="display:none;" data-i18n="polls.actions.cancel">Anuluj</button>
       </div>
     </div>
 
-    <div class="card" id="cardMain" style="display:none;">
-      <div class="name" id="gName"></div>
-      <div class="meta" id="gMeta"></div>
+    <!-- B. Treść: wypustki Udostępnianie · Wyniki -->
+    <section class="games-shell" id="cardMain" style="display:none;">
+      <div class="tabs-card hub-tabs polls-tabs-card" id="pollTabsCard">
+        <div class="tabs-strip" id="pollTabs" role="tablist">
+          <div class="tab-slot slot-share active">
+            <button class="tab-label active" id="tabShare" type="button" role="tab" aria-controls="secShare" aria-selected="true">
+              <span data-i18n="polls.tabs.share">Udostępnianie</span>
+            </button>
+            <div class="tab-wrapper" aria-hidden="true">
+              <div class="tab-active"></div>
+              <div class="tab-corner tab-corner-left"></div>
+              <div class="tab-corner tab-corner-right"></div>
+            </div>
+          </div>
 
-      <div class="qrBox">
-        <div class="qrBox img" id="qr"></div>
+          <div class="tab-slot slot-results">
+            <button class="tab-label" id="tabResults" type="button" role="tab" aria-controls="secResults" aria-selected="false">
+              <span data-i18n="polls.tabs.results">Wyniki</span>
+            </button>
+            <div class="tab-wrapper" aria-hidden="true">
+              <div class="tab-active"></div>
+              <div class="tab-corner tab-corner-left"></div>
+              <div class="tab-corner tab-corner-right"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card games-card polls-card">
+          <!-- Udostępnianie -->
+          <div class="polls-section active" id="secShare" role="tabpanel">
+            <div class="pollsEmpty" id="shareEmpty"></div>
+            <div class="shareCols" id="shareBody" style="display:none;">
+              <section class="pollSec pollLinkSec">
+                <h3 class="pollSecTitle" data-i18n="polls.share.linkTitle">Link i QR</h3>
+                <div class="qrBox img" id="qr"></div>
+                <input class="inp pollLinkInp" id="pollLink" readonly />
+                <div class="pollLinkActions">
+                  <button class="btn sm" id="btnCopy" type="button" disabled data-i18n="polls.actions.copyShort">Kopiuj</button>
+                  <button class="btn sm gold" id="btnOpen" type="button" disabled data-i18n="polls.actions.openShort">Otwórz</button>
+                  <button class="btn sm" id="btnOpenQr" type="button" disabled data-i18n="polls.actions.qrOnDisplay">QR na wyświetlaczu</button>
+                </div>
+              </section>
+
+              <section class="pollSec pollSubsSec">
+                <div class="pollSecHead">
+                  <h3 class="pollSecTitle" data-i18n="polls.share.subsTitle">Subskrybenci</h3>
+                  <button class="btn sm gold" id="btnSendInvites" type="button" disabled data-i18n="polls.share.sendInvites">Wyślij zaproszenia</button>
+                </div>
+                <div class="pollsEmpty" id="subsEmpty" style="display:none;"></div>
+                <div class="grid subsGrid" id="subsGrid"></div>
+              </section>
+            </div>
+          </div>
+
+          <!-- Wyniki -->
+          <div class="polls-section" id="secResults" role="tabpanel">
+            <div class="meta" id="resultsMeta"></div>
+            <div id="resultsList"></div>
+          </div>
+        </div>
       </div>
+    </section>
 
-      <input class="inp pollLinkInp" id="pollLink" readonly placeholder="Link pojawi się po uruchomieniu..." data-i18n-placeholder="polls.linkPlaceholder" />
-
-      <div class="row pollLinkActions">
-        <button class="btn sm" id="btnCopy" type="button" disabled data-i18n="polls.actions.copyLink">Kopiuj link</button>
-        <button class="btn sm gold" id="btnOpen" type="button" disabled data-i18n="polls.actions.openLink">Otwórz link</button>
-        <button class="btn sm" id="btnOpenQr" type="button" data-i18n="polls.actions.qrOnDisplay" disabled>QR na wyświetlaczu</button>
-      </div>
-
-      <div class="row">
-        <button class="btn sm gold" id="btnPollAction" type="button" style="visibility:hidden"></button>
-        <button class="btn sm" id="btnCancelTextCloseTop" type="button" style="display:none;" data-i18n="polls.actions.cancel">Anuluj</button>
-        <button class="btn sm" id="btnRefreshResults" type="button" style="visibility:hidden">
-          <span data-i18n="polls.actions.refresh" data-i18n-icon="refresh">Odśwież wyniki</span>
-        </button>
-      </div>
-      <!-- tylko powód, dla którego przycisku nie da się użyć (bez podpowiedzi „gotowe / możesz”) -->
-      <div class="hint" id="hintTop"></div>
-
-      <!-- panel dla poll_text: edycja/łączenie/usuwanie + finalizacja -->
-      <div class="card" id="textCloseCard" style="display:none; margin-top:12px;">
+    <!-- C. Zamykanie ankiety tekstowej: okno scalania zamiast treści (B) -->
+    <section class="games-shell" id="textCloseShell" style="display:none;">
+      <div class="card games-card" id="textCloseCard">
         <div class="name" style="display:flex; justify-content:space-between; align-items:center;">
           <span data-i18n="polls.textClose.title">Zamykanie — edycja odpowiedzi</span>
           <div class="tcHistoryTools">
@@ -107,27 +155,14 @@
           <button class="btn sm gold" id="btnFinishTextClose" type="button" data-i18n="polls.actions.closeAndNormalize">Zamknij i przelicz</button>
         </div>
       </div>
+    </section>
 
-      <div class="card" id="resultsCard" style="display:none; margin-top:12px;">
-        <div class="name" data-i18n="polls.results.title">Wyniki</div>
-        <div class="meta" id="resultsMeta"></div>
-        <div id="resultsList" style="margin-top:10px;"></div>
-      </div>
-    </div>
-
-    <div class="card" id="cardEmpty">
+    <div class="card" id="cardEmpty" style="display:none;">
       <div class="name" data-i18n="polls.empty.title">Brak gry</div>
       <div class="meta" data-i18n-html="polls.empty.meta">Otwórz stronę z parametrem <b>polls?id=...</b>.</div>
     </div>
 
-    <div class="foot">
-      <div class="msg" id="msg"></div>
-    </div>
-
-    <div class="footer">
-      <div data-i18n="common.footer.left">© 2026 Familiada — system do gry na żywo</div>
-      <button class="btn-contact-footer" type="button" data-contact-modal data-i18n="common.contactBtn">Kontakt</button>
-    </div>
+    <div class="pollToast" id="msg" role="status" aria-live="polite"></div>
   </main>
 
   <!-- Modal QR wyświetlacza ankiety -->

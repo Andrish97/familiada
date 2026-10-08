@@ -1,9 +1,5 @@
 /* css/polls.css */
 
-#hintTop {
-    min-height: 1.4em;
-}
-
 /* ── QR modal (wyświetlacz ankiety) — współdzielone style z control ─────── */
 .qrModalOverlay {
   position: fixed;
@@ -87,65 +83,6 @@
   line-height: 1.4;
 }
 
-body.polls-body {
-    min-height: 100vh;
-    background: var(--bg);
-    color: #fff
-}
-
-.rowTop,.statusBox {
-    display: flex;
-    flex-wrap: wrap;
-    margin-bottom: 10px;
-}
-
-.rowTop {
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: 12px
-}
-
-.statusBox {
-    gap: 10px;
-    align-items: center;
-    margin-top: 10px
-}
-
-.chip {
-    padding: 8px 10px;
-    border-radius: 999px;
-    border: 1px solid rgba(255,255,255,.16);
-    background: var(--card2);
-    font-weight: 1000;
-    letter-spacing: .12em;
-    text-transform: uppercase;
-    font-size: 11px;
-    color: var(--gold)
-}
-
-.chip.status {
-    color: #fff;
-    letter-spacing: .1em
-}
-
-.chip.ok {
-    border-color: rgba(120,255,160,.28);
-    --btn-tint: rgba(120,255,160,.1);
-  background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, #050914); /* kryjące: css/base.css */
-}
-
-.chip.warn {
-    border-color: rgba(255,234,166,.3);
-    --btn-tint: rgba(255,234,166,.1);
-  background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, #050914); /* kryjące: css/base.css */
-}
-
-.chip.bad {
-    border-color: rgba(255,120,120,.35);
-    --btn-tint: rgba(255,120,120,.12);
-  background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, #050914); /* kryjące: css/base.css */
-}
-
 .card {
     border-radius: 20px;
     border: 1px solid var(--line);
@@ -179,31 +116,6 @@ body.polls-body {
     font-weight: 1000;
     margin-bottom: 8px;
     line-height: 1.25
-}
-
-.resultQ .aRow {
-    display: flex;
-    justify-content: space-between;
-    gap: 10px;
-    padding: 8px 10px;
-    border-radius: 14px;
-    border: 1px solid rgba(255,255,255,.1);
-    background: rgba(255,255,255,.05);
-    margin-top: 8px
-}
-
-.resultQ .aTxt {
-    font-weight: 900;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap
-}
-
-.resultQ .aVal {
-    opacity: .95;
-    font-weight: 1000;
-    color: var(--gold);
-    flex: 0 0 auto
 }
 
 .tcQ .head {
@@ -305,46 +217,6 @@ body.polls-body {
     background: rgba(120,200,255,.16);
 }
 
-#resultsMeta {
-    min-height: 1.4em;
-}
-
-#resultsList {
-    display: grid;
-    gap: 12px
-}
-
-.qrFrameSmall{
-  padding: 12px;
-  background: #fff;
-  border-radius: 14px;
-  box-shadow: 0 6px 18px rgba(0,0,0,.22);
-  line-height: 0;
-}
-
-.qrBox.img {
-  display: flex;
-  justify-content: center;
-  margin: 12px 0;
-}
-
-.pollLinkInp {
-  width: 100%;
-  margin-top: 8px;
-  font-weight: 900;
-  font-size: 14px;
-  letter-spacing: .02em;
-  text-align: center;
-}
-
-.pollLinkActions {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 8px;
-  margin-top: 8px;
-}
-
 .tcTxtInp{
   width:100%;
   background:transparent;
@@ -359,23 +231,216 @@ body.polls-body {
 }
 
 
-@media (max-width: 600px) and (orientation: portrait) {
-    .row,
-    .stack {
-        display: grid;
-    }
+/* =========================================================
+   Strona ankiety (właściciel): pasek stanu + wypustki
+   Udostępnianie · Wyniki. Wypustki i kafelki: games.css.
+========================================================= */
 
-    .row {
-        align-items: center;
-        margin-top: 10px;
-        margin-bottom: 10px;
-    }
+/* A. Pasek stanu — pełna szerokość */
+.pollBar{
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 8px 0 10px;
+  border-bottom: 1px solid var(--line2);
+}
+.pollBarTags{ display: flex; align-items: center; gap: 8px; flex-wrap: wrap; min-width: 0; }
+.pollBarActions{ display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end; min-width: 0; }
+/* powód, dla którego akcja jest wyłączona */
+.pollBarHint{
+  font-size: 12px;
+  line-height: 1.3;
+  color: rgba(255,234,166,.75);
+  max-width: 420px;
+  text-align: right;
+}
+.pollBarHint:empty{ display: none; }
 
-    #qr.qrBox.img {
-        width: min(72vw,320px);
-        aspect-ratio: 1/1;
-        margin: 0 auto;
-        display: grid;
-        place-items: center;
-    }
+/* B. Karta z wypustkami (2 × 50%), wzór: bases.css */
+.tabs-card.hub-tabs.polls-tabs-card{
+  --tab-height: 36px;
+  --tab-extra: 1px;
+  --radius: 12px;
+  --surface: #111827;
+  --border-color: var(--line2);
+  overflow: hidden;
+}
+.polls-tabs-card .tabs-strip{ display: flex; gap: 0; }
+.polls-tabs-card .tab-slot{ width: auto; flex: 1 1 0; min-width: 0; }
+.polls-tabs-card .tab-label{ z-index: 4; font-weight: 1000; }
+.polls-tabs-card .tab-label::before{ opacity: 0 !important; }
+@media (hover: hover) and (pointer: fine){
+  .polls-tabs-card .tab-slot:not(.active) .tab-label:hover::before{ opacity: 1 !important; }
+}
+.polls-tabs-card .tab-slot.active .tab-label{ color: #f9fafb; }
+.polls-tabs-card .tab-slot.active .tab-wrapper{ display: block; }
+.polls-tabs-card .tab-active{ z-index: 1; }
+.polls-tabs-card:has(.slot-share.active) .slot-share .tab-corner-left,
+.polls-tabs-card:has(.slot-results.active) .slot-results .tab-corner-right{ display: none; }
+.polls-card{
+  border-top-left-radius: var(--radius);
+  border-top-right-radius: var(--radius);
+}
+.polls-tabs-card:has(.slot-share.active) .polls-card{ border-top-left-radius: 0; }
+.polls-tabs-card:has(.slot-results.active) .polls-card{ border-top-right-radius: 0; }
+@media (max-width: 980px){
+  .tabs-card.hub-tabs.polls-tabs-card{ --tab-height: 44px; }
+}
+
+.polls-section{ display: none; }
+.polls-section.active{
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.pollsEmpty{
+  margin: auto;
+  padding: 24px 12px;
+  text-align: center;
+  opacity: .75;
+  font-size: 14px;
+  line-height: 1.4;
+}
+.pollsEmpty a{ color: var(--gold); }
+
+/* Udostępnianie: link i QR obok subskrybentów */
+.shareCols{
+  display: grid;
+  grid-template-columns: minmax(280px, 380px) minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+@media (max-width: 980px){
+  .shareCols{ grid-template-columns: minmax(0, 1fr); }
+}
+.pollSec{
+  --under: #0b1020;
+  padding: 12px;
+  border-radius: 14px;
+  background: rgba(255,255,255,.04);
+  border: 1px solid rgba(255,255,255,.10);
+  min-width: 0;
+}
+.pollSecHead{ display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.pollSecTitle{
+  margin: 0;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  opacity: .85;
+}
+
+.qrFrameSmall{
+  padding: 12px;
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 6px 18px rgba(0,0,0,.22);
+  line-height: 0;
+}
+.qrFrameSmall canvas{ display: block; width: 100% !important; height: auto !important; max-width: 296px; }
+.qrBox.img{
+  display: flex;
+  justify-content: center;
+  margin: 12px 0;
+}
+.qrBox.img:empty{ display: none; }
+
+.pollLinkInp{
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: 8px;
+  font-weight: 900;
+  font-size: 13px;
+  letter-spacing: .02em;
+  text-align: center;
+}
+.pollLinkActions{
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+/* Subskrybenci: kafle jak na listach (games.css) */
+.subsGrid{
+  margin-top: 10px;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  overflow: visible;
+  padding: 2px;
+}
+.games-body .grid .card.subTile{ min-height: 92px; cursor: default; justify-content: flex-start; gap: 2px; }
+.games-body .grid .card.subTile:hover{ transform: none; box-shadow: none; border-color: rgba(255,255,255,.22); background: #070b16; }
+.games-body .grid .card.subTile .name{ padding-right: 84px; text-transform: none; letter-spacing: .02em; word-break: break-word; }
+.games-body .grid .card.subTile.pick{ cursor: pointer; }
+.games-body .grid .card.subTile.pick:hover{ transform: translateY(-2px); box-shadow: 0 10px 24px rgba(0,0,0,.45); border-color: var(--gold); background: #0b1020; }
+.games-body .grid .card.subTile.pick.selected{ border-color: rgba(255,234,166,.9); background: rgba(255,234,166,.10); }
+.games-body .grid .card.subTile.blocked{ opacity: .7; cursor: not-allowed; }
+.games-body .grid .card.subTile .meta{ display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.games-body .grid .card.subTile .x.x-bell{ right: 46px; }
+.games-body .grid .card.subTile .x:disabled{ opacity: .4; cursor: not-allowed; }
+.subTile .subNote{ margin-top: 8px; font-size: 11px; line-height: 1.3; color: rgba(255,234,166,.65); }
+
+/* Wyniki na żywo: stałe wysokości, zmieniają się tylko liczby i paski */
+#resultsList{ display: grid; gap: 12px; }
+#resultsMeta{ margin: 0 0 8px; }
+#resultsMeta:empty{ display: none; }
+.resultQ .aList{ display: grid; gap: 6px; }
+.resultQ .aRow{
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  height: 38px;
+  box-sizing: border-box;
+  padding: 0 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,.10);
+  background: rgba(255,255,255,.05);
+  overflow: hidden;
+}
+.resultQ .aBar{
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 0;
+  background: linear-gradient(90deg, rgba(255,234,166,.10), rgba(255,234,166,.26));
+  transition: width .6s ease;
+  pointer-events: none;
+}
+.resultQ .aTxt{ position: relative; font-weight: 900; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.resultQ .aVal{ position: relative; opacity: .95; font-weight: 1000; color: var(--gold); flex: 0 0 auto; min-width: 2ch; text-align: right; font-variant-numeric: tabular-nums; }
+
+/* komunikat (toast) */
+.pollToast{
+  position: fixed;
+  left: 50%;
+  bottom: calc(18px + env(safe-area-inset-bottom, 0px));
+  transform: translateX(-50%);
+  max-width: calc(100vw - 32px);
+  padding: 10px 16px;
+  border-radius: 12px;
+  background: rgba(10,15,30,.96);
+  border: 1px solid rgba(255,234,166,.35);
+  box-shadow: 0 10px 30px rgba(0,0,0,.5);
+  font-size: 13px;
+  font-weight: 800;
+  z-index: 1500;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .15s;
+}
+.pollToast.on{ opacity: 1; }
+
+@media (max-width: 600px) and (orientation: portrait){
+  .pollBar{ align-items: stretch; }
+  .pollBarActions{ justify-content: flex-start; width: 100%; }
+  .pollBarHint{ text-align: left; max-width: none; width: 100%; order: 3; }
 }
