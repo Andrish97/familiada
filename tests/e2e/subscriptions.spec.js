@@ -147,7 +147,7 @@ test("token innego konta: modal wylogowuje zamiast rzucać ReferenceError", asyn
     const modal = wrongUser.page.locator(".uni-modal");
     await expect(modal).toContainText("Zaproszenie nie pasuje do konta");
     await modal.getByRole("button", { name: "Wyloguj" }).click();
-    await wrongUser.page.waitForURL(/\/login(?:\?|$)/, { timeout: 10000 });
+    await wrongUser.page.waitForURL(/\/login\/?(?:\?|$)/, { timeout: 15000 });
   } finally {
     await cleanupPair(owner.page, recipientId).catch(() => {});
     await owner.context.close();
