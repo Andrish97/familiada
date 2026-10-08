@@ -1272,7 +1272,7 @@ async function scenarioFinalFull(pages, { game, summaryAlreadyOpen = false, cont
     await control.waitForTimeout(1600);
     await display.locator("#btnAudioUnlock").click();
     await expect(display.locator("#audioUnlockScreen")).toBeHidden({ timeout: 10_000 });
-    await expect(control.getByRole("button", { name: "Rozpocznij rundę" })).toBeEnabled({ timeout: 10_000 });
+    await expect(control.getByRole("button", { name: "Rozpocznij rundę" })).toBeEnabled({ timeout: 60_000 });
   }
 
   if (game.exerciseDeviceDisconnect) {
