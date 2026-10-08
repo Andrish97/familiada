@@ -578,18 +578,22 @@ test("QR w ankietach: zmiana języka w polls.html dociera do już otwartego urz�
     try { localStorage.setItem("uiLang", "pl"); } catch {}
   });
   try {
-    await page.goto(`https://www.familiada.online/polls?id=${pollGame.gameId}`, { waitUntil: "domcontentloaded" });
-    await page.waitForLoadState("networkidle");
-
+    // Ekran QR działa tylko dla otwartej / zamkniętej ankiety (szkic:
+    // invalid_status) — uruchamiamy ją, a klucz czytamy PO uruchomieniu
+    // (każde uruchomienie nadaje nowy klucz, migracja 310).
     const key = await page.evaluate(async (id) => {
-      const { data, error } = await window.__sbClient
-        .from("games")
-        .select("share_key_poll")
-        .eq("id", id)
-        .single();
+      const sb = window.__sbClient;
+      const { data: g0, error: e0 } = await sb.from("games").select("share_key_poll").eq("id", id).single();
+      if (e0) throw new Error("select share_key_poll failed: " + e0.message);
+      const { error: eo } = await sb.rpc("poll_open", { p_game_id: id, p_key: g0.share_key_poll });
+      if (eo) throw new Error("poll_open failed: " + eo.message);
+      const { data, error } = await sb.from("games").select("share_key_poll").eq("id", id).single();
       if (error) throw new Error("select share_key_poll failed: " + error.message);
       return data.share_key_poll;
     }, pollGame.gameId);
+
+    await page.goto(`https://www.familiada.online/polls?id=${pollGame.gameId}`, { waitUntil: "domcontentloaded" });
+    await page.waitForLoadState("networkidle");
 
     const qrPage = await qrContext.newPage();
     instrumentPage(qrPage);
