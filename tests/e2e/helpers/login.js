@@ -215,7 +215,7 @@ async function loginAsTestUser(page, context, opts = {}) {
 }
 
 /** Zakłada świeże konto gościa, zostawia stronę na /games. Gość sam wygaśnie po 5 dniach. */
-async function loginAsGuest(page, context) {
+async function loginAsGuest(page, context, opts = {}) {
   instrumentPage(page);
   await withE2EBypass(context, { suppressRating: opts.suppressRating !== false });
   const res = await page.goto(LOGIN_URL, { waitUntil: "domcontentloaded" });

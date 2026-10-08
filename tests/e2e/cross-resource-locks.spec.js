@@ -30,7 +30,45 @@ async function waitForLock(page, resourceType, resourceId, timeoutMs = 10000) {
     if (found) return;
     await new Promise((r) => setTimeout(r, 300));
   }
-  throw new Error(`Lock ${resourceType}/${resourceId} nie zostały zajęte w ${timeoutMs}ms`);
+  const overlay = await page.locator("#resourceLockGuardMsg, .blockingOverlay, [role=alertdialog]").first().textContent({ timeout: 500 }).catch(() => "");
+  throw new Error(`Lock ${resourceType}/${resourceId} nie został zajęty w ${timeoutMs}ms (url ${page.url()}, overlay: ${String(overlay).trim().slice(0, 200)})`);
+}
+
+// Blokada stanu (guardGameState, reguła game_validate): "play" (ustawienia,
+// Control) wymaga >= 10 pytań z 3-6 odpowiedziami, więc gry otwierane w
+// ustawieniach muszą mieć treść, inaczej overlay stanu przykrywa stronę.
+async function seedQuestions(page, gameId, total = 10) {
+  await page.evaluate(async ({ gameId, total }) => {
+    const sb = window.__sbClient;
+    for (let i = 1; i <= total; i++) {
+      const { data: q, error } = await sb.from("questions")
+        .insert({ game_id: gameId, ord: i, text: `Pytanie ${i}` }).select("id").single();
+      if (error) throw new Error("insert question failed: " + error.message);
+      const { error: aErr } = await sb.from("answers").insert([
+        { question_id: q.id, ord: 1, text: "Odp. A", fixed_points: 40 },
+        { question_id: q.id, ord: 2, text: "Odp. B", fixed_points: 30 },
+        { question_id: q.id, ord: 3, text: "Odp. C", fixed_points: 20 },
+      ]);
+      if (aErr) throw new Error("insert answers failed: " + aErr.message);
+    }
+  }, { gameId, total });
+}
+
+// Cała pula logo jest "zajęta" (edytor logo odmawia wejścia), dopóki
+// gdziekolwiek wisi świeża blokada game z kontekstem settings/control --
+// np. po poprzednim teście, którego karta ustawień dopiero wygasa (TTL).
+async function waitForLogoPoolFree(page, timeoutMs = 40000) {
+  const start = Date.now();
+  while (Date.now() - start < timeoutMs) {
+    const busy = await page.evaluate(async () => {
+      const { data } = await window.__sbClient.from("edit_locks").select("holder_context")
+        .eq("resource_type", "game").in("holder_context", ["settings", "control"])
+        .gt("heartbeat_at", new Date(Date.now() - 25000).toISOString()).limit(1).maybeSingle();
+      return !!data;
+    });
+    if (!busy) return;
+    await new Promise((r) => setTimeout(r, 1000));
+  }
 }
 
 async function gameExists(page, gameId) {
@@ -49,7 +87,7 @@ async function logoExists(page, logoId) {
 
 /* ================= Usuwanie gry ================= */
 
-test("usuwanie gry: zablokowane, gdy jej ankieta jest otwarta (poll_open)", async ({ page, context }) => {
+test("usuwanie gry: dozwolone przy otwartej ankiecie (poll_open) — okno ostrzega, że ankieta zostanie przerwana", async ({ page, context }) => {
   test.setTimeout(60_000);
   await loginAsTestUser(page, context);
 
@@ -74,15 +112,13 @@ test("usuwanie gry: zablokowane, gdy jej ankieta jest otwarta (poll_open)", asyn
     const card = page.locator("#grid .card").filter({ hasText: gameName });
     await expect(card).toBeVisible({ timeout: 10000 });
     await card.locator(".x").click({ timeout: 10000 });
+    // E12 (migracja 312): otwarta ankieta nie blokuje usunięcia — okno
+    // potwierdzenia mówi, że zostanie przerwana.
+    await expect(page.locator(".uni-modal .mSub")).toContainText("Ankieta zostanie przerwana", { timeout: 10000 });
     await page.locator(".uni-foot .btn.gold").click({ timeout: 10000 }); // potwierdź "Usuń"
 
-    // games.html ma własne statyczne modale (eksport do bazy/pliku,
-    // zmiana nazwy), każdy z zawsze obecną w DOM klasą .mSub — jak na
-    // liście logo, goły .mSub jest niejednoznaczny.
-    await expect(page.locator(".uni-modal .mSub")).toContainText("otwarta", { timeout: 10000 });
-    await page.locator(".uni-modal .uni-foot .btn.gold").click(); // zamknij alert blokady
-
-    expect(await gameExists(page, gameId), "gra z otwartą ankietą nie powinna zostać usunięta").toBe(true);
+    await expect(card).toHaveCount(0, { timeout: 15000 });
+    await expect.poll(() => gameExists(page, gameId), { timeout: 15000 }).toBe(false);
   } finally {
     await page.evaluate(async (id) => { await window.__sbClient.from("games").delete().eq("id", id); }, gameId);
   }
@@ -352,6 +388,8 @@ test("edytor blokuje ustawienia tej samej gry", async ({ page, context }) => {
     return data.id;
   });
 
+  await seedQuestions(page, gameId);
+
   const editorPage = await context.newPage();
   try {
     await editorPage.goto(`https://www.familiada.online/editor?id=${gameId}`, { waitUntil: "domcontentloaded" });
@@ -458,11 +496,13 @@ test("edytor blokuje ankietę tej samej gry", async ({ page, context }) => {
     const sb = window.__sbClient;
     const { data: userData } = await sb.auth.getUser();
     const { data, error } = await sb.from("games")
-      .insert({ name: `E2E-XLOCK-POLLS2-${Date.now()}`, owner_id: userData.user.id, type: "prepared" })
+      .insert({ name: `E2E-XLOCK-POLLS2-${Date.now()}`, owner_id: userData.user.id, type: "poll_text" })
       .select("id").single();
     if (error) throw new Error(error.message);
     return data.id;
   });
+
+  await seedQuestions(page, gameId); // ankieta (poll_entry) wymaga >= 10 pytań
 
   const editorPage = await context.newPage();
   try {
@@ -673,6 +713,8 @@ test("edytor logo: druga karta nie może edytować tego samego logo", async ({ p
     if (error) throw new Error(error.message);
     return data.id;
   }, { name: logoName, payload: blankGlyphPayload() });
+
+  await waitForLogoPoolFree(page);
 
   const tabA = await context.newPage();
   try {
