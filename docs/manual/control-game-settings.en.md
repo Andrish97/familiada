@@ -96,7 +96,7 @@ In this mode:
 
 **Device disconnection**
 
-When a required device stops reporting its presence, after about 6.5 seconds the panel shows a one-time dialog naming disconnected devices and blocks further actions. Check the panel's and devices' internet connections. If they do not recover, reconnect using top-bar buttons. Play unlocks when all required devices return. Devices skipped during preparation do not block play.
+When a required device stops reporting its presence, after about 6.5 seconds the panel shows a one-time dialog naming disconnected devices and blocks further actions. Check the panel's and devices' internet connections. If they do not recover, reconnect using top-bar buttons. Play unlocks when all required devices return. If Display is the sound source, unlock sound on Display again after it reconnects. Its button appears automatically and the panel stays blocked until you press it; no page reload is needed. Devices skipped during preparation do not block play.
 
 Previously confirmed actions remain saved. An action already sent may still finish saving; the system does not roll back the result. A returning device displays the current state without replaying missed animations. A running timer keeps counting down.
 
@@ -433,13 +433,13 @@ Select ![](manual-assets/play.svg) beside a category to preview it at the chosen
 
 #### Round question mode
 
-- **Random** draws round questions automatically at game start. No manual selection is needed.
-- **Order** lets you arrange the available questions manually.
+- **Random** shuffles the questions available for rounds when you enter the Control Panel Summary and shows the order. Questions selected manually for the final are skipped. Play then uses one question per round. **Reshuffle** changes the order before the game starts.
+- **Order** uses only the questions selected and arranged in **Questions — Rounds**, in that exact order. No extra questions are added after the list runs out.
 
 #### Final question mode
 
-- **Random** draws five final questions, excluding those used in rounds, when entering the Control Panel Summary.
-- **Manual** requires exactly five questions in Game settings' **Questions — Final** tab. Check them in the panel Summary before starting.
+- **Random final** draws five questions from the rounds pool when entering the Summary, then removes them from the rounds queue so they cannot appear twice. With **Order**, the final is drawn from the manually selected list. **Reshuffle** returns the previous final questions to the end of the rounds queue and draws a new set before play. A full final needs at least five questions in that pool.
+- **Manual final** requires exactly five questions in Game settings' **Questions — Final** tab. These questions are excluded from the rounds queue. Check the final and round lists in the panel Summary before starting.
 
 #### Additional settings
 

@@ -1944,7 +1944,7 @@ const en = {
 <li>Select <span class="m-code">Confirm</span> to accept the choice and continue.</li>
 </ul>
 <p class="m-p"><span class="m-strong">Device disconnection</span></p>
-<p class="m-p">When a required device stops reporting its presence, after about 6.5 seconds the panel shows a one-time dialog naming disconnected devices and blocks further actions. Check the panel&#39;s and devices&#39; internet connections. If they do not recover, reconnect using top-bar buttons. Play unlocks when all required devices return. Devices skipped during preparation do not block play.</p>
+<p class="m-p">When a required device stops reporting its presence, after about 6.5 seconds the panel shows a one-time dialog naming disconnected devices and blocks further actions. Check the panel&#39;s and devices&#39; internet connections. If they do not recover, reconnect using top-bar buttons. Play unlocks when all required devices return. If Display is the sound source, unlock sound on Display again after it reconnects. Its button appears automatically and the panel stays blocked until you press it; no page reload is needed. Devices skipped during preparation do not block play.</p>
 <p class="m-p">Previously confirmed actions remain saved. An action already sent may still finish saving; the system does not roll back the result. A returning device displays the current state without replaying missed animations. A running timer keeps counting down.</p>
 <h4 class="m-h3">Sound</h4>
 <p class="m-p">Choose <span class="m-strong">Control panel</span> or <span class="m-strong">Display</span> as the sound source; only that device plays game audio. For Display audio, press its sound-unlock button; TV OK or Enter also works. Browsers may require a click before permitting playback. Check the TV/speaker volume too.</p>
@@ -2273,13 +2273,13 @@ const en = {
 <p class="m-p"><span class="m-strong">Does the game include a final?</span> enables the final stage. When <span class="m-strong">off</span>, play ends after the main rounds. When <span class="m-strong">on</span>, final-question selection becomes available.</p>
 <h4 class="m-h3">Round question mode</h4>
 <ul class="m-ul">
-<li><span class="m-strong">Random</span> draws round questions automatically at game start. No manual selection is needed.</li>
-<li><span class="m-strong">Order</span> lets you arrange the available questions manually.</li>
+<li><span class="m-strong">Random</span> shuffles the questions available for rounds when you enter the Summary and shows their order. Questions selected manually for the final are skipped. Play then uses questions one by one, one per round. <span class="m-code">Reshuffle</span> changes the order before the game starts.</li>
+<li><span class="m-strong">Order</span> uses only the questions selected and arranged in <span class="m-strong">Questions — Rounds</span>, in that exact order. No extra questions are added after this list runs out.</li>
 </ul>
 <h4 class="m-h3">Final question mode</h4>
 <ul class="m-ul">
-<li><span class="m-strong">Random</span> draws five final questions, excluding those used in rounds, when entering the Control Panel Summary.</li>
-<li><span class="m-strong">Manual</span> requires exactly five questions in Game settings&#39; <span class="m-strong">Questions — Final</span> tab. Check them in the panel Summary before starting.</li>
+<li><span class="m-strong">Random</span> draws five questions from the rounds pool when entering the Summary, then removes them from the rounds queue so they cannot appear twice. With <span class="m-strong">Order</span>, the final is drawn from the manually selected list. <span class="m-code">Reshuffle</span> returns the previous final questions to the end of the rounds queue and draws a new set before play. A full final needs at least five questions in that pool.</li>
+<li><span class="m-strong">Manual</span> requires exactly five questions in Game settings&#39; <span class="m-strong">Questions — Final</span> tab. These questions are excluded from the rounds queue. Check them in the panel Summary before starting.</li>
 </ul>
 <h4 class="m-h3">Additional settings</h4>
 <p class="m-p">Adjust the format&#39;s thresholds and pace without changing the rules.</p>
@@ -4968,10 +4968,10 @@ const en = {
       finaleCount: "Number of finale questions",
       addFinaleQuestion: "+ Add finale question",
       finalModeLabel: "Finale questions mode",
-      finalModeHint: "Random = 5 questions drawn automatically. Manual = pick questions in the \u201CQuestions \u2014 Finale\u201D tab.",
+      finalModeHint: "Random = 5 questions from the rounds pool; they are removed from the rounds queue. Manual = select exactly 5 questions in the \u201CQuestions \u2014 Finale\u201D tab.",
       roundsSection: "Rounds",
       roundsModeLabel: "Rounds question order mode",
-      roundsModeHint: "Random = each round draws a question. Order = questions in fixed order (\u201CQuestions \u2014 Rounds\u201D tab).",
+      roundsModeHint: "Random = available round questions are shuffled when you enter the Summary; manually selected final questions are skipped. Rounds use questions in order. Order = only questions in \u201CQuestions \u2014 Rounds\u201D are used, in their set order.",
       finalRandomRoundsOrderedWarning: "A random finale first takes 5 questions from the rounds pool and removes them from the rounds. When redrawn, the previous finale questions return at the end of the rounds list.",
     },
     finale: {
