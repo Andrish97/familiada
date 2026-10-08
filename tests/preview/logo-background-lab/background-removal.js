@@ -4,7 +4,6 @@ const sourceContext = sourceCanvas.getContext("2d", { willReadFrequently: true }
 const backgroundInput = document.getElementById("backgroundColor");
 const toleranceInput = document.getElementById("tolerance");
 const featherInput = document.getElementById("reach");
-const islandLimitInput = document.getElementById("islandLimit");
 const resetButton = document.getElementById("reset");
 const sampleColorButton = document.getElementById("sampleColor");
 const sampleCards = [...document.querySelectorAll(".sample-card")];
@@ -18,6 +17,7 @@ const OUTPUTS = [
 ];
 
 let originalPixels = null;
+let originalUpload = null;
 let floodQueue = null;
 let visited = null;
 let currentFilename = "logo";
@@ -95,7 +95,7 @@ function updateSuitability() {
     return;
   }
   if (transparentCornerRatio >= 0.75) {
-    setSuitability("Narożniki są przezroczyste", "Tło może być już usunięte. Sprawdź oryginał przed ponownym wycinaniem.", "good");
+    setSuitability("Tło jest już przezroczyste", "Nie zmieniam obrazu. Pobranie PNG zachowa oryginalny plik.", "good");
     return;
   }
   if (cornerSpread <= 14) {
@@ -125,7 +125,7 @@ function prepareImage(image, filename, originalWidth = image.naturalWidth, origi
     canvas.width = sourceCanvas.width;
     canvas.height = sourceCanvas.height;
   }
-  for (const control of [backgroundInput, toleranceInput, featherInput, islandLimitInput, resetButton, sampleColorButton]) control.disabled = false;
+  for (const control of [backgroundInput, toleranceInput, featherInput, resetButton, sampleColorButton]) control.disabled = false;
   for (const button of document.querySelectorAll(".download-method")) button.disabled = false;
   updateSuitability();
   scheduleRender();
@@ -139,6 +139,7 @@ function loadFile(file) {
   const image = new Image();
   image.onload = () => {
     URL.revokeObjectURL(objectUrl);
+    originalUpload = file;
     for (const card of sampleCards) card.setAttribute("aria-pressed", "false");
     prepareImage(image, file.name);
   };
@@ -153,6 +154,7 @@ function drawSample(kind) {
   const image = card?.querySelector("img");
   if (!image) return;
   const activate = () => {
+    originalUpload = null;
     for (const item of sampleCards) item.setAttribute("aria-pressed", String(item === card));
     prepareImage(image, card.dataset.filename || `przyklad-${kind}.svg`, image.naturalWidth, image.naturalHeight);
   };
@@ -176,9 +178,8 @@ function addEdgePixel(pixel, data, background, threshold, tail) {
   floodQueue[tail++] = pixel;
   return tail;
 }
-function removeSmallInteriorIslands(output, data, width, height, background, threshold, tolerance, feather, cleanup) {
+function removeInteriorRegions(output, data, width, height, background, threshold, tolerance, feather, cleanup) {
   const pixelCount = width * height;
-  const maxPixels = Math.max(1, Math.floor(pixelCount * Number(islandLimitInput.value) / 100));
   let removedArea = 0;
   let transparent = 0;
 
@@ -223,7 +224,6 @@ function removeSmallInteriorIslands(output, data, width, height, background, thr
     for (let item = 0; item < tail; item++) {
       const componentPixel = floodQueue[item];
       visited[componentPixel] = 2;
-      if (tail > maxPixels) continue;
       removedArea++;
       if (recolorPixel(output, data, componentPixel * 4, background, tolerance, feather, cleanup)) transparent++;
     }
@@ -287,9 +287,9 @@ function renderAlgorithm({ canvasId, statsId, mode, cleanup }, data, width, heig
       if (y + 1 < height) tail = addEdgePixel(pixel + width, data, background, limit, tail);
     }
     if (mode === "edge-small") {
-      const islands = removeSmallInteriorIslands(result.data, data, width, height, background, limit, tolerance, feather, cleanup);
-      area += islands.area;
-      transparent += islands.transparent;
+      const interiors = removeInteriorRegions(result.data, data, width, height, background, limit, tolerance, feather, cleanup);
+      area += interiors.area;
+      transparent += interiors.transparent;
     }
   }
 
@@ -300,6 +300,18 @@ function renderAlgorithm({ canvasId, statsId, mode, cleanup }, data, width, heig
 function processImage() {
   if (!originalPixels) return;
   const { width, height, data } = originalPixels;
+  if (transparentCornerRatio >= 0.75) {
+    for (const { canvasId, statsId } of OUTPUTS) {
+      const canvas = document.getElementById(canvasId);
+      const context = canvas.getContext("2d");
+      const unchanged = context.createImageData(width, height);
+      unchanged.data.set(data);
+      context.putImageData(unchanged, 0, 0);
+      document.getElementById(statsId).textContent = "bez zmian · tło już przezroczyste";
+    }
+    updateSuitability();
+    return;
+  }
   const background = rgbFromHex(backgroundInput.value);
   const tolerance = Number(toleranceInput.value);
   const feather = Number(featherInput.value);
@@ -333,6 +345,15 @@ function renderImmediately() {
   });
 }
 function downloadCanvas(canvasId, suffix) {
+  if (transparentCornerRatio >= 0.75 && originalUpload?.type === "image/png") {
+    const url = URL.createObjectURL(originalUpload);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = originalUpload.name;
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    return;
+  }
   const canvas = document.getElementById(canvasId);
   canvas.toBlob(blob => {
     if (!blob) return;
@@ -350,13 +371,7 @@ for (const card of sampleCards) card.addEventListener("click", () => drawSample(
 backgroundInput.addEventListener("input", () => { updateSuitability(); scheduleRender(); });
 toleranceInput.addEventListener("input", scheduleRender);
 featherInput.addEventListener("input", scheduleRender);
-islandLimitInput.addEventListener("input", scheduleRender);
-for (const input of [backgroundInput, toleranceInput, featherInput, islandLimitInput]) input.addEventListener("change", renderImmediately);
-function updateIslandLimitReadout() {
-  document.getElementById("islandLimitValue").value = `${Number(islandLimitInput.value).toFixed(3).replace(/0+$/, "").replace(/\.$/, "")}% obrazu`;
-}
-islandLimitInput.addEventListener("input", updateIslandLimitReadout);
-updateIslandLimitReadout();
+for (const input of [backgroundInput, toleranceInput, featherInput]) input.addEventListener("change", renderImmediately);
 for (const input of [toleranceInput, featherInput]) {
   input.addEventListener("input", () => {
     document.getElementById(`${input.id}Value`).value = `${input.value} / 255`;
@@ -389,7 +404,6 @@ resetButton.addEventListener("click", () => {
   backgroundInput.value = autoBackground;
   toleranceInput.value = "20";
   featherInput.value = "130";
-  islandLimitInput.value = "0.03";
   updateIslandLimitReadout();
   for (const input of [toleranceInput, featherInput]) {
     document.getElementById(`${input.id}Value`).value = `${input.value} / 255`;
@@ -400,6 +414,6 @@ resetButton.addEventListener("click", () => {
 for (const button of document.querySelectorAll(".download-method")) {
   button.addEventListener("click", () => downloadCanvas(button.dataset.canvas, button.dataset.suffix));
 }
-for (const control of [backgroundInput, toleranceInput, featherInput, islandLimitInput, resetButton, sampleColorButton]) control.disabled = true;
+for (const control of [backgroundInput, toleranceInput, featherInput, resetButton, sampleColorButton]) control.disabled = true;
 for (const button of document.querySelectorAll(".download-method")) button.disabled = true;
 drawSample("white");

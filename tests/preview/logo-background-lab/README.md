@@ -22,8 +22,8 @@ Strona równolegle porównuje cztery warianty:
 
 - **Brzegowe, czysta krawędź** — usuwa kolor tła połączony z krawędzią i
   odbarwia częściowo przezroczyste piksele, żeby ograniczyć jasną obwódkę.
-- **Brzegowe + małe fragmenty** — poza krawędzią usuwa małe, odizolowane
-  obszary koloru tła. Suwak limitu chroni większe wnętrza liter i kształtów.
+- **Brzegowe + wnętrza** — poza krawędzią usuwa wszystkie odizolowane
+  obszary koloru tła, także większe wnętrza liter i kształtów.
 - **Globalne, czysta krawędź** — usuwa podobny kolor w całym obrazie; może
   wyciąć białe elementy logo.
 - **Brzegowe, bez korekty** — zachowuje oryginalne kolory brzegów i pokazuje
@@ -35,8 +35,10 @@ Wspólne parametry do oceny:
 - tolerancja: 20/255 na start, czyli próg uznania koloru za tło;
 - miękkość krawędzi: 130/255 na start, czyli zakres przejścia do pełnej
   nieprzezroczystości;
-- maksymalny rozmiar dodatkowo usuwanych fragmentów: 0,03% obrazu;
 - ocena tła: jasność mediany i różnica kolorów pomiędzy próbkami z rogów.
+
+Jeśli próbki z narożników wskazują, że PNG ma już przezroczyste tło, wszystkie
+warianty pokazują obraz bez zmian, a pobranie zachowuje oryginalny plik.
 
 Ocena równego tła nie zależy od jasności: różnica próbek do 14 poziomów
 oznacza równe tło, do 45 — ostrzeżenie, a większa — tło nierówne. To

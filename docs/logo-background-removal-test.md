@@ -24,14 +24,18 @@ różnica oznacza tło niespełniające kryterium jednolitości.
 To heurystyka: narożniki mogą być zasłonięte elementem logo, a środek obrazu
 może mieć gradient, którego narożniki nie pokazują.
 
+Jeśli co najmniej 75% próbek z narożników jest przezroczystych, narzędzie
+pomija wszystkie algorytmy i pokazuje obraz bez zmian. Pobranie przesłanego
+pliku PNG zachowuje jego oryginalne bajty i nazwę.
+
 ## Porównywane algorytmy
 
 - **Brzegowe, czysta krawędź**: usuwa piksele podobne do tła, jeśli łączą się
   z krawędzią obrazu. Zrekonstruowany kolor krawędzi ogranicza jasną obwódkę;
   zamknięte białe detale pozostają.
-- **Brzegowe + małe fragmenty**: oprócz tła przy krawędzi usuwa małe,
-  odizolowane obszary podobnego koloru wewnątrz obrazu. Limit ich wielkości
-  można zmienić suwakiem; większe obszary, takie jak wnętrza liter, zostają.
+- **Brzegowe + wnętrza**: oprócz tła przy krawędzi usuwa wszystkie
+  odizolowane obszary podobnego koloru wewnątrz obrazu, także większe
+  wnętrza liter.
 - **Globalne, czysta krawędź**: usuwa podobne piksele w całym obrazie, także
   wewnątrz logo. Pokazuje ryzyko dla białych detali.
 - **Brzegowe, bez korekty obwódki**: pokazuje wynik bez rekonstrukcji koloru
@@ -43,8 +47,6 @@ może mieć gradient, którego narożniki nie pokazują.
 - Tolerancja: 20/255. Określa, które piksele stają się całkowicie przezroczyste.
 - Miękkość krawędzi: 130/255. Wyznacza zakres przejścia do pełnej
   nieprzezroczystości.
-- Limit małych fragmentów: 0,03% obrazu. Dotyczy wariantu brzegowego
-  z usuwaniem małych fragmentów.
 - Podgląd i eksport są ograniczone do 1600 px na dłuższym boku.
 
 Powyższe wartości są startowe. Po obejrzeniu testów na rzeczywistych logo
