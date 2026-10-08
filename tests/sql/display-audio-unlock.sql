@@ -46,11 +46,14 @@ SELECT begin_display_audio_session(
 SELECT pg_temp.assert_true(NOT acknowledge_display_audio_unlock(
   '00000000-0000-0000-0000-000000000001','display-key','request-0001'
 ),'old session request cannot acknowledge a new session');
+SELECT pg_temp.assert_true(acknowledge_display_audio_unlock(
+  '00000000-0000-0000-0000-000000000001','display-key','session-0002'
+),'new Display session nonce remains a valid unlock request');
 RESET ROLE;
 
 SET ROLE authenticated;
 SELECT pg_temp.assert_true((SELECT session_nonce='session-0002'
-  AND acknowledged_nonce IS NULL FROM display_audio_unlock),
-  'new Display session clears the previous acknowledgment');
+  AND request_nonce='session-0002' AND acknowledged_nonce='session-0002'
+  FROM display_audio_unlock),'new Display session acknowledgment is durable');
 RESET ROLE;
 \echo 'Display audio unlock session and request nonce checks passed'
