@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Test usuwania tła logo</title>
+  <style>
+    :root { color-scheme: dark; font: 15px/1.45 system-ui, sans-serif; background: #101116; color: #f8f4e8; }
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: clamp(14px, 3vw, 32px); }
+    main { width: min(1440px, 100%); margin: auto; }
+    h1 { margin: 0 0 5px; font-size: clamp(1.3rem, 3vw, 1.8rem); }
+    .intro { margin: 0 0 18px; color: #b9bbc6; }
+    .toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; padding: 12px; border: 1px solid #343641; border-radius: 12px; background: #191a20; }
+    button, .file-button { min-height: 42px; padding: 9px 14px; border: 1px solid #5d501b; border-radius: 9px; background: #ffcc00; color: #211a00; font: inherit; font-weight: 700; font-size: .92rem; cursor: pointer; }
+    button.secondary { border-color: #414451; background: #20222b; color: #f8f4e8; }
+    button:disabled { opacity: .48; cursor: default; }
+    input[type="file"] { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); }
+    .filename { overflow: hidden; color: #c9cad2; text-overflow: ellipsis; white-space: nowrap; }
+    .sample-section { margin: 16px 0; }
+    .sample-section h2 { margin: 0 0 4px; font-size: 1.05rem; }
+    .sample-section > p { margin: 0 0 10px; color: #b9bbc6; font-size: .88rem; }
+    .sample-gallery { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; }
+    .sample-card { display: grid; grid-template-rows: auto 1fr; gap: 8px; min-width: 0; padding: 7px; text-align: left; border: 1px solid #343641; border-radius: 11px; background: #191a20; color: #f8f4e8; }
+    .sample-card:hover, .sample-card[aria-pressed="true"] { border-color: #ffcc00; background: #222127; }
+    .sample-card img { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 6px; background: #282a31; }
+    .sample-copy { display: grid; gap: 2px; }
+    .sample-copy strong { font-size: .84rem; }
+    .sample-copy small { color: #b9bbc6; font-size: .76rem; line-height: 1.3; }
+    .sample-copy em { color: #ffda4d; font-size: .72rem; font-style: normal; }
+    .controls { display: grid; grid-template-columns: 1.4fr 1fr 1fr 1.2fr; gap: 12px; margin: 12px 0; }
+    .control, .status { min-width: 0; padding: 12px; border: 1px solid #343641; border-radius: 10px; background: #191a20; }
+    label.control { display: grid; align-content: start; gap: 8px; color: #c9cad2; font-size: .9rem; }
+    .control output { color: #fff; font-variant-numeric: tabular-nums; }
+    input[type="range"] { width: 100%; accent-color: #ffcc00; }
+    .color-row { display: flex; gap: 10px; align-items: center; }
+    input[type="color"] { width: 48px; height: 38px; padding: 3px; border: 1px solid #414451; border-radius: 7px; background: #20222b; }
+    .status { display: grid; align-content: center; color: #c9cad2; font-size: .88rem; }
+    .status strong { color: #f8f4e8; }
+    .status.good { border-color: #35664a; }
+    .status.warn { border-color: #796020; }
+    .previews { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+    figure { min-width: 0; margin: 0; overflow: hidden; border: 1px solid #343641; border-radius: 12px; background: #191a20; }
+    figcaption { display: flex; justify-content: space-between; gap: 8px; padding: 10px 13px; color: #d1d2d9; }
+    .canvas-wrap { display: grid; min-height: 240px; aspect-ratio: 16 / 10; place-items: center; overflow: auto; }
+    canvas { display: block; width: 100%; height: 100%; object-fit: contain; }
+    #sourceCanvas { cursor: crosshair; }
+    .checkerboard { background-color: #eee; background-image: linear-gradient(45deg,#bbb 25%,transparent 25%),linear-gradient(-45deg,#bbb 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#bbb 75%),linear-gradient(-45deg,transparent 75%,#bbb 75%); background-size: 24px 24px; background-position: 0 0,0 12px,12px -12px,-12px 0; }
+    .hint { margin: 12px 0 0; color: #9fa1ac; font-size: .85rem; }
+    .method-description { min-height: 78px; margin: 0; padding: 9px 12px 4px; color: #b9bbc6; font-size: .8rem; }
+    .download-method { margin: 6px 12px 12px; }
+    @media (max-width: 1100px) { .controls { grid-template-columns: 1fr 1fr; } .previews { grid-template-columns: 1fr 1fr; } .sample-gallery { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+    @media (max-width: 600px) { .controls, .previews { grid-template-columns: 1fr; } .sample-gallery { grid-template-columns: repeat(2, minmax(0, 1fr)); } .canvas-wrap { min-height: 190px; } .method-description { min-height: auto; } }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Test usuwania tła logo</h1>
+    <p class="intro">Wczytaj obraz z jasnym, możliwie równym tłem. Narzędzie usuwa tło połączone z krawędziami i zachowuje kolory logo.</p>
+
+    <section class="toolbar" aria-label="Plik i eksport">
+      <label class="file-button" for="imageFile">Wybierz obraz</label>
+      <input id="imageFile" type="file" accept="image/png,image/jpeg,image/webp">
+      <span class="filename" id="filename">Nie wybrano obrazu</span>
+      <button class="secondary" id="reset" disabled>Przywróć auto</button>
+    </section>
+
+    <section class="sample-section" aria-labelledby="sampleHeading">
+      <h2 id="sampleHeading">Obrazy testowe</h2>
+      <p>Kliknij widoczną miniaturę, aby od razu porównać metody dla tego obrazu.</p>
+      <div class="sample-gallery" id="sampleGallery">
+        <button class="sample-card" type="button" data-sample="white" aria-pressed="false"><img src="__SAMPLE_WHITE__" alt=""><span class="sample-copy"><strong>Białe, równe tło</strong><small>Łatwy przypadek</small><em>Powinno przejść ocenę</em></span></button>
+        <button class="sample-card" type="button" data-sample="cream" aria-pressed="false"><img src="__SAMPLE_CREAM__" alt=""><span class="sample-copy"><strong>Kremowe z cieniem</strong><small>Jasne tło z gradientem</small><em>Przypadek graniczny</em></span></button>
+        <button class="sample-card" type="button" data-sample="pattern" aria-pressed="false"><img src="__SAMPLE_PATTERN__" alt=""><span class="sample-copy"><strong>Wzorzyste tło</strong><small>Różne kolory przy brzegach</small><em>Nie spełnia kryteriów</em></span></button>
+        <button class="sample-card" type="button" data-sample="dark" aria-pressed="false"><img src="__SAMPLE_DARK__" alt=""><span class="sample-copy"><strong>Ciemne tło</strong><small>Nierówne, ciemne kolory</small><em>Nie spełnia kryteriów</em></span></button>
+        <button class="sample-card" type="button" data-sample="white-detail" aria-pressed="false"><img src="__SAMPLE_WHITE_DETAIL__" alt=""><span class="sample-copy"><strong>Białe detale logo</strong><small>Jasny element wewnątrz znaku</small><em>Test zachowania detali</em></span></button>
+      </div>
+    </section>
+
+    <section class="controls" aria-label="Ustawienia usuwania tła">
+      <label class="control">Kolor tła
+        <span class="color-row"><input id="backgroundColor" type="color" value="#ffffff"><button class="secondary" id="sampleColor" disabled>Pobierz kolor z obrazu</button></span>
+      </label>
+      <label class="control">Tolerancja tła <output id="toleranceValue"></output>
+        <input id="tolerance" type="range" min="0" max="100" value="20" disabled>
+      </label>
+      <label class="control">Miękkość krawędzi <output id="reachValue"></output>
+        <input id="reach" type="range" min="0" max="220" value="130" disabled>
+      </label>
+      <div class="status" id="suitability"><strong>Wczytaj obraz</strong><span>Sprawdzę, czy tło nadaje się do usunięcia.</span></div>
+    </section>
+
+    <section class="previews" aria-label="Porównanie algorytmów">
+      <figure>
+        <figcaption><span>Oryginał</span><span id="dimensions">—</span></figcaption>
+        <div class="canvas-wrap"><canvas id="sourceCanvas" aria-label="Oryginalny obraz"></canvas></div>
+      </figure>
+      <figure>
+        <figcaption><span>Brzegowe · czysta krawędź</span><span id="edgeCleanStats">—</span></figcaption>
+        <div class="canvas-wrap checkerboard"><canvas id="edgeCleanCanvas" aria-label="Usuwanie tła połączonego z brzegiem z oczyszczoną obwódką"></canvas></div>
+        <p class="method-description">Usuwa kolor tła połączony z krawędzią obrazu i koryguje kolor półprzezroczystych pikseli. Zachowuje zamknięte jasne detale.</p>
+        <button class="download-method" data-canvas="edgeCleanCanvas" data-suffix="brzegowe">Pobierz PNG</button>
+      </figure>
+      <figure>
+        <figcaption><span>Globalne · czysta krawędź</span><span id="globalCleanStats">—</span></figcaption>
+        <div class="canvas-wrap checkerboard"><canvas id="globalCleanCanvas" aria-label="Globalne usuwanie koloru tła z oczyszczoną obwódką"></canvas></div>
+        <p class="method-description">Usuwa podobny kolor w całym obrazie. Może też usunąć jasne elementy logo o tym samym kolorze co tło.</p>
+        <button class="download-method" data-canvas="globalCleanCanvas" data-suffix="globalne">Pobierz PNG</button>
+      </figure>
+      <figure>
+        <figcaption><span>Brzegowe · bez korekty obwódki</span><span id="edgeRawStats">—</span></figcaption>
+        <div class="canvas-wrap checkerboard"><canvas id="edgeRawCanvas" aria-label="Usuwanie tła połączonego z brzegiem bez korekty obwódki"></canvas></div>
+        <p class="method-description">Ten sam obszar co w metodzie brzegowej, ale bez odbarwienia krawędzi. Pokazuje, czy na logo zostaje jasna obwódka.</p>
+        <button class="download-method" data-canvas="edgeRawCanvas" data-suffix="bez-korekty">Pobierz PNG</button>
+      </figure>
+    </section>
+    <p class="hint">Kliknij „Pobierz kolor z obrazu”, a potem tło na oryginale, jeśli automatycznie wykryty kolor jest niedokładny. Tolerancja określa, jak bliski kolorowi tła piksel staje się przezroczysty. Miękkość ustala, jak szeroki zakres półprzezroczystej krawędzi jest uwzględniany. Obrazy powyżej 1600 px są zmniejszane w podglądzie i eksporcie.</p>
+  </main>
+  <script>if (window.top === window) window.location.replace("https://settings.familiada.online/");</script>
+  <script>/* APP_SCRIPT */</script>
+</body>
+</html>

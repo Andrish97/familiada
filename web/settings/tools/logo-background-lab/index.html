@@ -1,7 +1,6 @@
 <!doctype html>
 <html lang="pl">
 <head>
-  <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex, nofollow">
@@ -19,7 +18,17 @@
     button:disabled { opacity: .48; cursor: default; }
     input[type="file"] { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); }
     .filename { overflow: hidden; color: #c9cad2; text-overflow: ellipsis; white-space: nowrap; }
-    select { min-height: 42px; max-width: 260px; padding: 8px 34px 8px 10px; border: 1px solid #414451; border-radius: 9px; background: #20222b; color: #f8f4e8; font: inherit; }
+    .sample-section { margin: 16px 0; }
+    .sample-section h2 { margin: 0 0 4px; font-size: 1.05rem; }
+    .sample-section > p { margin: 0 0 10px; color: #b9bbc6; font-size: .88rem; }
+    .sample-gallery { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; }
+    .sample-card { display: grid; grid-template-rows: auto 1fr; gap: 8px; min-width: 0; padding: 7px; text-align: left; border: 1px solid #343641; border-radius: 11px; background: #191a20; color: #f8f4e8; }
+    .sample-card:hover, .sample-card[aria-pressed="true"] { border-color: #ffcc00; background: #222127; }
+    .sample-card img { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 6px; background: #282a31; }
+    .sample-copy { display: grid; gap: 2px; }
+    .sample-copy strong { font-size: .84rem; }
+    .sample-copy small { color: #b9bbc6; font-size: .76rem; line-height: 1.3; }
+    .sample-copy em { color: #ffda4d; font-size: .72rem; font-style: normal; }
     .controls { display: grid; grid-template-columns: 1.4fr 1fr 1fr 1.2fr; gap: 12px; margin: 12px 0; }
     .control, .status { min-width: 0; padding: 12px; border: 1px solid #343641; border-radius: 10px; background: #191a20; }
     label.control { display: grid; align-content: start; gap: 8px; color: #c9cad2; font-size: .9rem; }
@@ -41,8 +50,8 @@
     .hint { margin: 12px 0 0; color: #9fa1ac; font-size: .85rem; }
     .method-description { min-height: 78px; margin: 0; padding: 9px 12px 4px; color: #b9bbc6; font-size: .8rem; }
     .download-method { margin: 6px 12px 12px; }
-    @media (max-width: 1100px) { .controls { grid-template-columns: 1fr 1fr; } .previews { grid-template-columns: 1fr 1fr; } }
-    @media (max-width: 600px) { .controls, .previews { grid-template-columns: 1fr; } .canvas-wrap { min-height: 190px; } .method-description { min-height: auto; } }
+    @media (max-width: 1100px) { .controls { grid-template-columns: 1fr 1fr; } .previews { grid-template-columns: 1fr 1fr; } .sample-gallery { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+    @media (max-width: 600px) { .controls, .previews { grid-template-columns: 1fr; } .sample-gallery { grid-template-columns: repeat(2, minmax(0, 1fr)); } .canvas-wrap { min-height: 190px; } .method-description { min-height: auto; } }
   </style>
 </head>
 <body>
@@ -53,16 +62,20 @@
     <section class="toolbar" aria-label="Plik i eksport">
       <label class="file-button" for="imageFile">Wybierz obraz</label>
       <input id="imageFile" type="file" accept="image/png,image/jpeg,image/webp">
-      <select id="sampleSelect" aria-label="Przykładowy obraz">
-        <option value="white">Przykład: białe tło</option>
-        <option value="cream">Przykład: kremowe tło</option>
-        <option value="pattern">Przykład: złożone tło (niezalecane)</option>
-        <option value="dark">Przykład: ciemne tło (niezalecane)</option>
-        <option value="white-detail">Przykład: białe detale logo</option>
-      </select>
-      <button class="secondary" id="loadSample">Wczytaj przykład</button>
       <span class="filename" id="filename">Nie wybrano obrazu</span>
       <button class="secondary" id="reset" disabled>Przywróć auto</button>
+    </section>
+
+    <section class="sample-section" aria-labelledby="sampleHeading">
+      <h2 id="sampleHeading">Obrazy testowe</h2>
+      <p>Kliknij widoczną miniaturę, aby od razu porównać metody dla tego obrazu.</p>
+      <div class="sample-gallery" id="sampleGallery">
+        <button class="sample-card" type="button" data-sample="white" aria-pressed="false"><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMjAwIiBoZWlnaHQ9IjcyMCIgdmlld0JveD0iMCAwIDEyMDAgNzIwIj48cmVjdCB3aWR0aD0iMTIwMCIgaGVpZ2h0PSI3MjAiIGZpbGw9IiNmZmYiLz48dGV4dCB4PSI2MDAiIHk9IjQwNSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IkFyaWFsIEJsYWNrLEFyaWFsLHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTI2IiBmb250LXdlaWdodD0iOTAwIiBmaWxsPSIjYWE4ODAwIiBzdHJva2U9IiNhYTg4MDAiIHN0cm9rZS13aWR0aD0iMTYiIHBhaW50LW9yZGVyPSJzdHJva2UiPkZBTUlMSUFEQTwvdGV4dD48dGV4dCB4PSI2MDAiIHk9IjM5MyIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IkFyaWFsIEJsYWNrLEFyaWFsLHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTI2IiBmb250LXdlaWdodD0iOTAwIiBmaWxsPSIjZmZjYzAwIj5GQU1JTElBREE8L3RleHQ+PC9zdmc+Cg==" alt=""><span class="sample-copy"><strong>Białe, równe tło</strong><small>Łatwy przypadek</small><em>Powinno przejść ocenę</em></span></button>
+        <button class="sample-card" type="button" data-sample="cream" aria-pressed="false"><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMjAwIiBoZWlnaHQ9IjcyMCIgdmlld0JveD0iMCAwIDEyMDAgNzIwIj48ZGVmcz48bGluZWFyR3JhZGllbnQgaWQ9ImJnIiB4Mj0iMSIgeTI9IjEiPjxzdG9wIHN0b3AtY29sb3I9IiNmZmZhZjAiLz48c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNlZWU1ZDQiLz48L2xpbmVhckdyYWRpZW50PjxmaWx0ZXIgaWQ9InNoYWRvdyIgeD0iLS4xIiB5PSItLjIiIHdpZHRoPSIxLjIiIGhlaWdodD0iMS41Ij48ZmVHYXVzc2lhbkJsdXIgc3RkRGV2aWF0aW9uPSIxMyIvPjwvZmlsdGVyPjwvZGVmcz48cmVjdCB3aWR0aD0iMTIwMCIgaGVpZ2h0PSI3MjAiIGZpbGw9InVybCgjYmcpIi8+PHRleHQgeD0iNjAwIiB5PSI0MTQiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJBcmlhbCBCbGFjayxBcmlhbCxzYW5zLXNlcmlmIiBmb250LXNpemU9IjEyNiIgZm9udC13ZWlnaHQ9IjkwMCIgZmlsbD0iIzM0MmExYiIgb3BhY2l0eT0iLjM2IiBmaWx0ZXI9InVybCgjc2hhZG93KSI+RkFNSUxJQURBPC90ZXh0Pjx0ZXh0IHg9IjYwMCIgeT0iNDA1IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LWZhbWlseT0iQXJpYWwgQmxhY2ssQXJpYWwsc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxMjYiIGZvbnQtd2VpZ2h0PSI5MDAiIGZpbGw9IiNmZmNjMDAiIHN0cm9rZT0iI2FhODgwMCIgc3Ryb2tlLXdpZHRoPSIxNCIgcGFpbnQtb3JkZXI9InN0cm9rZSI+RkFNSUxJQURBPC90ZXh0Pjwvc3ZnPgo=" alt=""><span class="sample-copy"><strong>Kremowe z cieniem</strong><small>Jasne tło z gradientem</small><em>Przypadek graniczny</em></span></button>
+        <button class="sample-card" type="button" data-sample="pattern" aria-pressed="false"><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMjAwIiBoZWlnaHQ9IjcyMCIgdmlld0JveD0iMCAwIDEyMDAgNzIwIj48ZGVmcz48bGluZWFyR3JhZGllbnQgaWQ9ImJnIiB4Mj0iMSIgeTI9IjEiPjxzdG9wIHN0b3AtY29sb3I9IiNmOWY3ZWUiLz48c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNkOGQwYmQiLz48L2xpbmVhckdyYWRpZW50PjxwYXR0ZXJuIGlkPSJkb3RzIiB3aWR0aD0iNTQiIGhlaWdodD0iNTQiIHBhdHRlcm5Vbml0cz0idXNlclNwYWNlT25Vc2UiPjxjaXJjbGUgY3g9IjEyIiBjeT0iMTQiIHI9IjEwIiBmaWxsPSIjNjE3YTk4IiBvcGFjaXR5PSIuMjgiLz48Y2lyY2xlIGN4PSI0MCIgY3k9IjM5IiByPSI3IiBmaWxsPSIjYTc2MzRlIiBvcGFjaXR5PSIuMjUiLz48L3BhdHRlcm4+PC9kZWZzPjxyZWN0IHdpZHRoPSIxMjAwIiBoZWlnaHQ9IjcyMCIgZmlsbD0idXJsKCNiZykiLz48cmVjdCB3aWR0aD0iMTIwMCIgaGVpZ2h0PSI3MjAiIGZpbGw9InVybCgjZG90cykiLz48cGF0aCBmaWxsPSIjNTg3ZWFjIiBvcGFjaXR5PSIuNzIiIGQ9Ik0wIDBoMTgwdjE0MEgweiIvPjxwYXRoIGZpbGw9IiM4MjUyNDEiIG9wYWNpdHk9Ii43NiIgZD0iTTEwMjAgMGgxODB2MTQwaC0xODB6Ii8+PHBhdGggZmlsbD0iIzc0OGQ2MiIgb3BhY2l0eT0iLjcyIiBkPSJNMCA1ODBoMTgwdjE0MEgweiIvPjxwYXRoIGZpbGw9IiNhMTg0NGEiIG9wYWNpdHk9Ii43NiIgZD0iTTEwMjAgNTgwaDE4MHYxNDBoLTE4MHoiLz48dGV4dCB4PSI2MDAiIHk9IjQwNSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IkFyaWFsIEJsYWNrLEFyaWFsLHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTI2IiBmb250LXdlaWdodD0iOTAwIiBmaWxsPSIjZjVjZTE2IiBzdHJva2U9IiM4YjY5MDAiIHN0cm9rZS13aWR0aD0iMTYiIHBhaW50LW9yZGVyPSJzdHJva2UiPkZBTUlMSUFEQTwvdGV4dD48L3N2Zz4K" alt=""><span class="sample-copy"><strong>Wzorzyste tło</strong><small>Różne kolory przy brzegach</small><em>Nie spełnia kryteriów</em></span></button>
+        <button class="sample-card" type="button" data-sample="dark" aria-pressed="false"><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMjAwIiBoZWlnaHQ9IjcyMCIgdmlld0JveD0iMCAwIDEyMDAgNzIwIj48ZGVmcz48bGluZWFyR3JhZGllbnQgaWQ9ImJnIiB4Mj0iMSIgeTI9IjEiPjxzdG9wIHN0b3AtY29sb3I9IiMyNzNhNTMiLz48c3RvcCBvZmZzZXQ9Ii41IiBzdG9wLWNvbG9yPSIjNTU2Yzg0Ii8+PHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjMjQyODJmIi8+PC9saW5lYXJHcmFkaWVudD48cmFkaWFsR3JhZGllbnQgaWQ9Imdsb3ciPjxzdG9wIHN0b3AtY29sb3I9IiM5MWEzYjciIHN0b3Atb3BhY2l0eT0iLjQ4Ii8+PHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjMTExODIwIiBzdG9wLW9wYWNpdHk9IjAiLz48L3JhZGlhbEdyYWRpZW50PjwvZGVmcz48cmVjdCB3aWR0aD0iMTIwMCIgaGVpZ2h0PSI3MjAiIGZpbGw9InVybCgjYmcpIi8+PHJlY3Qgd2lkdGg9IjEyMDAiIGhlaWdodD0iNzIwIiBmaWxsPSJ1cmwoI2dsb3cpIi8+PGcgZmlsbD0iI2ZmY2MwMCIgc3Ryb2tlPSIjYWE4ODAwIiBzdHJva2Utd2lkdGg9IjE2IiBwYWludC1vcmRlcj0ic3Ryb2tlIiBmb250LWZhbWlseT0iQXJpYWwgQmxhY2ssQXJpYWwsc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxMjYiIGZvbnQtd2VpZ2h0PSI5MDAiIHRleHQtYW5jaG9yPSJtaWRkbGUiPjx0ZXh0IHg9IjYwMCIgeT0iNDA1Ij5GQU1JTElBREE8L3RleHQ+PC9nPjwvc3ZnPgo=" alt=""><span class="sample-copy"><strong>Ciemne tło</strong><small>Nierówne, ciemne kolory</small><em>Nie spełnia kryteriów</em></span></button>
+        <button class="sample-card" type="button" data-sample="white-detail" aria-pressed="false"><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMjAwIiBoZWlnaHQ9IjcyMCIgdmlld0JveD0iMCAwIDEyMDAgNzIwIj48cmVjdCB3aWR0aD0iMTIwMCIgaGVpZ2h0PSI3MjAiIGZpbGw9IiNmZmYiLz48dGV4dCB4PSI2MDAiIHk9IjQ4NSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IkFyaWFsIEJsYWNrLEFyaWFsLHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTI2IiBmb250LXdlaWdodD0iOTAwIiBmaWxsPSIjZmZjYzAwIiBzdHJva2U9IiNhYTg4MDAiIHN0cm9rZS13aWR0aD0iMTYiIHBhaW50LW9yZGVyPSJzdHJva2UiPkZBTUlMSUFEQTwvdGV4dD48Y2lyY2xlIGN4PSI2MDAiIGN5PSIxOTAiIHI9IjYyIiBmaWxsPSIjMTY0ZjlkIi8+PGNpcmNsZSBjeD0iNjAwIiBjeT0iMTkwIiByPSIzNSIgZmlsbD0iI2ZmZiIvPjxjaXJjbGUgY3g9IjYwMCIgY3k9IjE5MCIgcj0iMTMiIGZpbGw9IiNkOTQxMzIiLz48L3N2Zz4K" alt=""><span class="sample-copy"><strong>Białe detale logo</strong><small>Jasny element wewnątrz znaku</small><em>Test zachowania detali</em></span></button>
+      </div>
     </section>
 
     <section class="controls" aria-label="Ustawienia usuwania tła">
@@ -114,8 +127,7 @@ const toleranceInput = document.getElementById("tolerance");
 const featherInput = document.getElementById("reach");
 const resetButton = document.getElementById("reset");
 const sampleColorButton = document.getElementById("sampleColor");
-const sampleSelect = document.getElementById("sampleSelect");
-const loadSampleButton = document.getElementById("loadSample");
+const sampleCards = [...document.querySelectorAll(".sample-card")];
 const statusBox = document.getElementById("suitability");
 const MAX_SIDE = 1600;
 const OUTPUTS = [
@@ -235,6 +247,7 @@ function loadFile(file) {
   const image = new Image();
   image.onload = () => {
     URL.revokeObjectURL(objectUrl);
+    for (const card of sampleCards) card.setAttribute("aria-pressed", "false");
     prepareImage(image, file.name);
   };
   image.onerror = () => {
@@ -244,97 +257,18 @@ function loadFile(file) {
   image.src = objectUrl;
 }
 function drawSample(kind) {
-  const width = 1200;
-  const height = 720;
-  sourceCanvas.width = width;
-  sourceCanvas.height = height;
-  const context = sourceContext;
-  context.clearRect(0, 0, width, height);
-
-  if (kind === "white" || kind === "white-detail") {
-    context.fillStyle = "#ffffff";
-    context.fillRect(0, 0, width, height);
-  } else if (kind === "cream") {
-    const gradient = context.createLinearGradient(0, 0, width, height);
-    gradient.addColorStop(0, "#fffaf0");
-    gradient.addColorStop(1, "#eee5d4");
-    context.fillStyle = gradient;
-    context.fillRect(0, 0, width, height);
-    context.fillStyle = "rgba(70,48,18,.09)";
-    context.beginPath();
-    context.ellipse(600, 390, 445, 95, 0, 0, Math.PI * 2);
-    context.fill();
-  } else if (kind === "pattern") {
-    context.fillStyle = "#f9f7ee";
-    context.fillRect(0, 0, width, height);
-    for (let y = 20; y < height; y += 46) {
-      for (let x = 15 + ((y / 46) % 2) * 18; x < width; x += 46) {
-        const shade = ((x * 13 + y * 7) % 3) + 1;
-        context.fillStyle = `rgba(94,114,142,${shade * 0.035})`;
-        context.beginPath();
-        context.arc(x, y, 9 + shade * 2, 0, Math.PI * 2);
-        context.fill();
-      }
-    }
-    const vignette = context.createRadialGradient(600, 360, 180, 600, 360, 760);
-    vignette.addColorStop(0, "rgba(255,255,255,0)");
-    vignette.addColorStop(1, "rgba(80,66,40,.19)");
-    context.fillStyle = vignette;
-    context.fillRect(0, 0, width, height);
-    for (const [x, y, color] of [
-      [0, 0, "rgba(86,126,173,.25)"], [width - 180, 0, "rgba(130,82,65,.22)"],
-      [0, height - 140, "rgba(116,141,98,.24)"], [width - 180, height - 140, "rgba(161,132,74,.26)"],
-    ]) {
-      context.fillStyle = color;
-      context.fillRect(x, y, 180, 140);
-    }
-  } else {
-    const gradient = context.createLinearGradient(0, 0, width, height);
-    gradient.addColorStop(0, "#273a53");
-    gradient.addColorStop(0.5, "#556c84");
-    gradient.addColorStop(1, "#24282f");
-    context.fillStyle = gradient;
-    context.fillRect(0, 0, width, height);
-    for (let i = 0; i < 28; i++) {
-      const x = (i * 173) % width;
-      const y = (i * 97) % height;
-      context.fillStyle = `rgba(255,255,255,${0.025 + (i % 4) * 0.012})`;
-      context.beginPath();
-      context.arc(x, y, 28 + (i % 5) * 13, 0, Math.PI * 2);
-      context.fill();
-    }
+  const card = sampleCards.find(item => item.dataset.sample === kind);
+  const image = card?.querySelector("img");
+  if (!image) return;
+  const activate = () => {
+    for (const item of sampleCards) item.setAttribute("aria-pressed", String(item === card));
+    prepareImage(image, `przyklad-${kind}.svg`, image.naturalWidth, image.naturalHeight);
+  };
+  if (image.complete && image.naturalWidth > 0) activate();
+  else {
+    image.addEventListener("load", activate, { once: true });
+    image.addEventListener("error", () => setSuitability("Nie udało się wczytać przykładu", "Odśwież stronę i spróbuj ponownie.", "warn"), { once: true });
   }
-
-  context.save();
-  context.textAlign = "center";
-  context.textBaseline = "middle";
-  context.lineJoin = "round";
-  context.font = "900 118px system-ui, sans-serif";
-  context.lineWidth = 17;
-  context.strokeStyle = "#aa8800";
-  context.fillStyle = kind === "pattern" ? "#f5ce16" : "#ffcc00";
-  context.shadowColor = kind === "cream" ? "rgba(36,28,16,.34)" : "transparent";
-  context.shadowBlur = kind === "cream" ? 18 : 0;
-  context.shadowOffsetY = kind === "cream" ? 10 : 0;
-  context.strokeText("FAMILIADA", 600, 370);
-  context.fillText("FAMILIADA", 600, 370);
-  context.restore();
-
-  if (kind === "white-detail") {
-    context.fillStyle = "#164f9d";
-    context.beginPath();
-    context.arc(600, 170, 56, 0, Math.PI * 2);
-    context.fill();
-    context.fillStyle = "#ffffff";
-    context.beginPath();
-    context.arc(600, 170, 30, 0, Math.PI * 2);
-    context.fill();
-    context.fillStyle = "#d94132";
-    context.beginPath();
-    context.arc(600, 170, 11, 0, Math.PI * 2);
-    context.fill();
-  }
-  prepareImage(sourceCanvas, `przyklad-${kind}.png`, width, height);
 }
 function isCandidate(index, data, background, threshold) {
   return data[index + 3] > 0 && colorDelta(data, index, background) <= threshold;
@@ -353,7 +287,6 @@ function addEdgePixel(pixel, data, background, threshold, tail) {
 function recolorPixel(output, source, index, background, tolerance, feather, cleanEdge) {
   const delta = colorDelta(source, index, background);
   const coverage = delta / 255;
-  const cutoff = tolerance / 255;
   const retained = feather === 0 ? 0 : Math.max(0, Math.min(1, (delta - tolerance) / feather));
   if (retained === 0) {
     output[index + 3] = 0;
@@ -445,7 +378,7 @@ function downloadCanvas(canvasId, suffix) {
 }
 
 fileInput.addEventListener("change", () => loadFile(fileInput.files?.[0]));
-loadSampleButton.addEventListener("click", () => drawSample(sampleSelect.value));
+for (const card of sampleCards) card.addEventListener("click", () => drawSample(card.dataset.sample));
 backgroundInput.addEventListener("input", () => { updateSuitability(); scheduleRender(); });
 toleranceInput.addEventListener("input", scheduleRender);
 featherInput.addEventListener("input", scheduleRender);
@@ -492,7 +425,7 @@ for (const button of document.querySelectorAll(".download-method")) {
 }
 for (const control of [backgroundInput, toleranceInput, featherInput, resetButton, sampleColorButton]) control.disabled = true;
 for (const button of document.querySelectorAll(".download-method")) button.disabled = true;
-setSuitability("Wczytaj obraz", "Sprawdzę, czy tło nadaje się do usunięcia.");
+drawSample("white");
 
 </script>
 </body>
