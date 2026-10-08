@@ -22,8 +22,8 @@
 import { playSfx, getSfxDurationAccurate as getSfxDuration, stopSfx } from "../../shared/js/core/sfx.js?v=v2026-10-08T17391";
 import { createSoundCueEngine } from "../../shared/js/gameplay/soundCueEngine.js?v=v2026-10-08T17391";
 
-export function createSoundReactor(store) {
-  const engine = createSoundCueEngine({ playSfx, getSfxDuration, stopSfx });
+export function createSoundReactor(store, { waitForStart = null } = {}) {
+  const engine = createSoundCueEngine({ playSfx, getSfxDuration, stopSfx, waitForStart });
   let prevRow = null;
 
   function onStateChange(state) {

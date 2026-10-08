@@ -328,6 +328,8 @@ async function main() {
   let displayAudioUnlockNonce = null;
   let requestedDisplayAudioUnlockNonce = null;
   let displayUnlockRetryTimer = null;
+  let displayUnlockRequestPending = false;
+  let refreshDisplayPresence = null;
   let controlOffline = !navigator.onLine;
   let presenceUnavailable = false;
   let disconnectEpisode = false;
@@ -360,11 +362,9 @@ async function main() {
   rt(doorbellTopic(gameId)).onBroadcast("audio_unlock_completed", (message) => {
     const nonce = message?.payload?.nonce;
     if (typeof nonce !== "string" || nonce !== requestedDisplayAudioUnlockNonce) return;
-    displayAudioUnlocked = true;
-    displayAudioUnlockNonce = nonce;
-    clearInterval(displayUnlockRetryTimer);
-    displayUnlockRetryTimer = null;
-    renderCurrent();
+    // Broadcast is only a nudge. The durable database acknowledgment is the
+    // source of truth, so a dropped or duplicated event cannot lose the flag.
+    void refreshDisplayPresence?.();
   });
   function requestDisplayAudioUnlock() {
     if (store.state.settings.soundSource !== "display"
@@ -383,8 +383,21 @@ async function main() {
       }, { mode: "http" }).catch(() => {});
     };
     clearInterval(displayUnlockRetryTimer);
-    publish();
-    displayUnlockRetryTimer = setInterval(publish, 1500);
+    const nonce = requestedDisplayAudioUnlockNonce;
+    displayUnlockRequestPending = true;
+    void sb().rpc("request_display_audio_unlock", { p_game_id: gameId, p_nonce: nonce })
+      .then(({ error }) => {
+        // Keep the heartbeat metadata path usable during a rolling deploy.
+        if (error) console.warn("[control2 audio unlock] durable request failed:", error.message);
+        if (nonce !== requestedDisplayAudioUnlockNonce) return;
+        displayUnlockRequestPending = false;
+        publish();
+        displayUnlockRetryTimer = setInterval(publish, 1500);
+        void refreshDisplayPresence?.();
+      }).catch((error) => {
+        displayUnlockRequestPending = false;
+        console.warn("[control2 audio unlock] durable request failed:", error?.message || error);
+      });
     renderCurrent();
   }
   function onControlReconnect() {
@@ -596,7 +609,7 @@ async function main() {
 
   const presence = createPresence({
     gameId,
-    onChange: ({ flags, displayAudioUnlocked: audioUnlocked, displayAudioUnlockNonce: audioUnlockNonce, error }) => {
+    onChange: ({ flags, displayAudioUnlocked: audioUnlocked, displayAudioUnlockNonce: audioUnlockNonce, displayAudioUnlockStatus, error }) => {
       const previous = presenceFlags;
       const displayAudioWasUnlocked = displayAudioUnlocked === true;
       const displayReconnected = !previous.display && flags.display === true;
@@ -605,6 +618,27 @@ async function main() {
       presenceFlags = flags;
       displayAudioUnlocked = audioUnlocked;
       displayAudioUnlockNonce = audioUnlockNonce;
+      if (displayAudioUnlockStatus?.requestNonce
+        && (!displayUnlockRequestPending || displayAudioUnlockStatus.requestNonce === requestedDisplayAudioUnlockNonce)) {
+        requestedDisplayAudioUnlockNonce = displayAudioUnlockStatus.requestNonce;
+        if (displayAudioUnlockStatus.acknowledgedNonce === displayAudioUnlockStatus.requestNonce) {
+          clearInterval(displayUnlockRetryTimer);
+          displayUnlockRetryTimer = null;
+        } else if (store.state.settings.soundSource === "display"
+          && !/^(devices_|setup_)/.test(store.state.step) && !displayUnlockRetryTimer) {
+          const nonce = requestedDisplayAudioUnlockNonce;
+          const publish = () => {
+            if (nonce !== requestedDisplayAudioUnlockNonce || !waitingForDisplayAudioUnlock()) {
+              clearInterval(displayUnlockRetryTimer);
+              displayUnlockRetryTimer = null;
+              return;
+            }
+            rt(doorbellTopic(gameId)).sendBroadcast("audio_unlock_required", { nonce }, { mode: "http" }).catch(() => {});
+          };
+          publish();
+          displayUnlockRetryTimer = setInterval(publish, 1500);
+        }
+      }
       if (error) presenceUnavailable = true;
       else if (presenceUnavailable) {
         presenceUnavailable = false;
@@ -649,6 +683,7 @@ async function main() {
       renderCurrent();
     },
   });
+  refreshDisplayPresence = () => presence.refresh();
   presence.start();
   for (const id of ["deviceLostClose", "deviceLostX"]) {
     document.getElementById(id)?.addEventListener("click", () => {
@@ -668,7 +703,33 @@ async function main() {
   });
   shareDevice.refreshBadges();
 
-  const soundReactor = createSoundReactor(store);
+  const displayCueStartWaiters = new Map();
+  rt(doorbellTopic(gameId)).onBroadcast("display_transition_started", (message) => {
+    const seq = Number(message?.payload?.sound_cue_seq);
+    const waiter = displayCueStartWaiters.get(seq);
+    if (!waiter) return;
+    displayCueStartWaiters.delete(seq);
+    clearTimeout(waiter.timer);
+    waiter.resolve();
+  });
+  function waitForDisplayCueStart(soundCueSeq) {
+    const seq = Number(soundCueSeq);
+    if (!Number.isFinite(seq) || seq <= 0) return Promise.resolve();
+    return new Promise((resolve) => {
+      const previous = displayCueStartWaiters.get(seq);
+      if (previous) { clearTimeout(previous.timer); previous.resolve(); }
+      const waiter = { resolve, timer: null };
+      // A transient lost broadcast must never mute a cue or stall Control.
+      // Normal path waits for Display to finish its timing prep and begin the
+      // corresponding render; timeout is the network-failure fallback.
+      waiter.timer = setTimeout(() => {
+        if (displayCueStartWaiters.get(seq) === waiter) displayCueStartWaiters.delete(seq);
+        resolve();
+      }, 1200);
+      displayCueStartWaiters.set(seq, waiter);
+    });
+  }
+  const soundReactor = createSoundReactor(store, { waitForStart: waitForDisplayCueStart });
 
   // Odblokowanie audio po cichu na pierwszej dowolnej interakcji (sekcja 3a
   // pkt 4) — bez osobnego ekranu, bez dźwięku słyszalnego dla operatora.

@@ -441,17 +441,28 @@ export async function getSfxDurationAccurate(key) {
 /* ========= AUDIO UNLOCK ========= */
 
 let unlocked = false;
+let unlockPromise = null;
 
-export function unlockAudio() {
+export async function unlockAudio() {
   if (unlocked) return true;
+  if (unlockPromise) return unlockPromise;
   try {
     const a = new Audio();
     a.volume = 0;
     a.src = "/assets/audio/reveal/classic.mp3?v=v2026-10-08T17391";
-    a.play().catch(() => {});
-    unlocked = true;
-    return true;
-  } catch { return false; }
+    // Call play() synchronously in the gesture handler, then trust its
+    // promise. Previously a rejected autoplay attempt still returned true,
+    // allowing Display to report an unlock the browser had refused.
+    unlockPromise = a.play().then(() => {
+      a.pause();
+      unlocked = true;
+      return true;
+    }).catch(() => false).finally(() => { unlockPromise = null; });
+    return await unlockPromise;
+  } catch {
+    unlockPromise = null;
+    return false;
+  }
 }
 
 export function isAudioUnlocked() { return unlocked; }

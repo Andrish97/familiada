@@ -23,6 +23,7 @@ export function createPresence({ gameId, onChange }) {
   let flags = { display: false, host: false, buzzer: false };
   let displayAudioUnlocked = null;
   let displayAudioUnlockNonce = null;
+  let displayAudioUnlockStatus = { requestNonce: null, acknowledgedNonce: null };
   let lastSeenAt = { display: null, host: null, buzzer: null };
   // Zgłoszone: "cały panel jest zlagowany, przewijanie też" — onChange()
   // (control/js/app.js's renderCurrent(), pełny root.innerHTML="" +
@@ -50,11 +51,18 @@ export function createPresence({ gameId, onChange }) {
     if (inFlight) return;
     inFlight = true;
     try {
-    const { data, error } = await sb()
-      .from("device_presence")
-      .select("device_type,last_seen_at,meta")
-      .eq("game_id", gameId)
-      .abortSignal(AbortSignal.timeout(ONLINE_MS));
+    const [presenceResult, unlockResult] = await Promise.all([
+      sb().from("device_presence")
+        .select("device_type,last_seen_at,meta")
+        .eq("game_id", gameId)
+        .abortSignal(AbortSignal.timeout(ONLINE_MS)),
+      sb().from("display_audio_unlock")
+        .select("request_nonce,acknowledged_nonce")
+        .eq("game_id", gameId)
+        .maybeSingle()
+        .abortSignal(AbortSignal.timeout(ONLINE_MS)),
+    ]);
+    const { data, error } = presenceResult;
 
     if (error) {
       lastSeenAt = { display: null, host: null, buzzer: null };
@@ -69,8 +77,21 @@ export function createPresence({ gameId, onChange }) {
     const d = pickNewest(rows, "display");
     const h = pickNewest(rows, "host");
     const b = pickNewest(rows, "buzzer");
-    displayAudioUnlocked = d?.meta?.audio_unlocked === true;
-    displayAudioUnlockNonce = typeof d?.meta?.audio_unlock_nonce === "string" ? d.meta.audio_unlock_nonce : null;
+    // The database row is authoritative. Heartbeat metadata remains a
+    // compatibility fallback while deployments apply migration 312.
+    if (!unlockResult.error && unlockResult.data) {
+      displayAudioUnlockStatus = {
+        requestNonce: unlockResult.data.request_nonce || null,
+        acknowledgedNonce: unlockResult.data.acknowledged_nonce || null,
+      };
+      displayAudioUnlockNonce = displayAudioUnlockStatus.requestNonce;
+      displayAudioUnlocked = !!displayAudioUnlockNonce
+        && displayAudioUnlockStatus.acknowledgedNonce === displayAudioUnlockNonce;
+    } else {
+      displayAudioUnlockStatus = { requestNonce: null, acknowledgedNonce: null };
+      displayAudioUnlocked = d?.meta?.audio_unlocked === true;
+      displayAudioUnlockNonce = typeof d?.meta?.audio_unlock_nonce === "string" ? d.meta.audio_unlock_nonce : null;
+    }
 
     lastSeenAt = { display: d?.last_seen_at ?? null, host: h?.last_seen_at ?? null, buzzer: b?.last_seen_at ?? null };
     // isOnline() liczy się od Date.now() — flags może się zmienić (online
@@ -78,7 +99,7 @@ export function createPresence({ gameId, onChange }) {
     // porównanie musi patrzeć na WYLICZONE flags, nie na surowe lastSeenAt.
     flags = { display: isOnline(lastSeenAt.display), host: isOnline(lastSeenAt.host), buzzer: isOnline(lastSeenAt.buzzer) };
 
-    reportIfChanged({ flags, lastSeenAt, displayAudioUnlocked, displayAudioUnlockNonce, error: null });
+    reportIfChanged({ flags, lastSeenAt, displayAudioUnlocked, displayAudioUnlockNonce, displayAudioUnlockStatus, error: null });
     } catch (error) {
       lastSeenAt = { display: null, host: null, buzzer: null };
       flags = { display: false, host: false, buzzer: false };
@@ -99,8 +120,9 @@ export function createPresence({ gameId, onChange }) {
       ...payload,
       displayAudioUnlocked: payload.displayAudioUnlocked ?? displayAudioUnlocked,
       displayAudioUnlockNonce: payload.displayAudioUnlockNonce ?? displayAudioUnlockNonce,
+      displayAudioUnlockStatus: payload.displayAudioUnlockStatus ?? displayAudioUnlockStatus,
     };
-    const fp = JSON.stringify({ flags: reported.flags, displayAudioUnlocked: reported.displayAudioUnlocked, displayAudioUnlockNonce: reported.displayAudioUnlockNonce });
+    const fp = JSON.stringify({ flags: reported.flags, displayAudioUnlocked: reported.displayAudioUnlocked, displayAudioUnlockNonce: reported.displayAudioUnlockNonce, displayAudioUnlockStatus: reported.displayAudioUnlockStatus });
     if (fp === lastReported) return;
     lastReported = fp;
     onChange?.(reported);
@@ -125,5 +147,5 @@ export function createPresence({ gameId, onChange }) {
 
   function getFlags() { return { ...flags }; }
 
-  return { start, stop, getFlags };
+  return { start, stop, getFlags, refresh: tick };
 }

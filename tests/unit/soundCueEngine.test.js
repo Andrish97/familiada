@@ -78,6 +78,25 @@ test("prosty cue (bez specjalnego kontekstu) gra bare, bez kombinacji", async ()
   assert.deepEqual(played, ["answer_correct"]);
 });
 
+test("Control czeka na sygnał Display przed uruchomieniem dźwięku powiązanego z animacją", async () => {
+  let releaseStart;
+  const ready = new Promise((resolve) => { releaseStart = resolve; });
+  const played = [];
+  const engine = createSoundCueEngine({
+    playSfx: (key) => played.push(key),
+    getSfxDuration: async () => 0.001,
+    waitForStart: async (seq) => { assert.equal(seq, 7); await ready; },
+  });
+  const previous = row({ sound_cue_seq: 6 });
+  const next = row({ sound_cue_seq: 7, sound_cue_key: "answer_correct" });
+  engine.handleTransition(previous, next);
+  await flush();
+  assert.deepEqual(played, []);
+  releaseStart();
+  await flush();
+  assert.deepEqual(played, ["answer_correct"]);
+});
+
 test("start rundy (r_roundStart -> r_duel/DUEL) z cue round_transition gra synced combo z reveal", async () => {
   const { engine, played } = makeEngine();
   const a = row({ step: "r_roundStart", phase: "READY", sound_cue_seq: 0 });
