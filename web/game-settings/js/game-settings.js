@@ -3,28 +3,28 @@
 // 1 blokad, podgląd Wyświetlacza przez display2?preview=1 + web/js/gameplay/previewRow.js
 // itd.) — trzymana jako osobny plik, żeby modal Control v2 nie zależał od
 // tej samej strony, którą wciąż ładuje stary control.html przez /game-settings.
-import { requireAuth } from "../../shared/js/core/auth.js?v=v2026-10-08T02303";
-import { t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-08T02303";
-import { setTopbarAccount } from "../../shared/js/core/topbar-controller.js?v=v2026-10-08T02303";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-08T02303";
-import { loadQuestions } from "../../shared/js/core/game-validate.js?v=v2026-10-08T02303";
-import { loadFont5x7, buildLogoPreviewCanvas } from "../../shared/js/core/logo-preview.js?v=v2026-10-08T02303";
-import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-08T02303";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-08T02303";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-08T02303";
-import { buildDisplayPreviewRow } from "../../shared/js/gameplay/previewRow.js?v=v2026-10-08T02303";
+import { requireAuth } from "../../shared/js/core/auth.js?v=v2026-10-08T06592";
+import { t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-08T06592";
+import { setTopbarAccount } from "../../shared/js/core/topbar-controller.js?v=v2026-10-08T06592";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-08T06592";
+import { loadQuestions } from "../../shared/js/core/game-validate.js?v=v2026-10-08T06592";
+import { loadFont5x7, buildLogoPreviewCanvas } from "../../shared/js/core/logo-preview.js?v=v2026-10-08T06592";
+import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-08T06592";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-08T06592";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-08T06592";
+import { buildDisplayPreviewRow } from "../../shared/js/gameplay/previewRow.js?v=v2026-10-08T06592";
 import {
   loadSfxManifest, getSfxCategories,
   setSfxCustomBlob, clearSfxCustomFile, clearAllSfxCustomFiles, getSfxCustomFiles,
   playSfx, setSfxVolume,
-} from "../../shared/js/core/sfx.js?v=v2026-10-08T02303";
+} from "../../shared/js/core/sfx.js?v=v2026-10-08T06592";
 import {
   uploadGameSound, deleteGameSound, deleteAllGameSounds,
-} from "../../shared/js/core/sfx-cloud.js?v=v2026-10-08T02303";
-import { guardDesktopOnly } from "../../shared/js/core/device-guard.js?v=v2026-10-08T02303";
-import { guardResourceLock, guardResourceBusy } from "../../shared/js/core/resource-lock.js?v=v2026-10-08T02303";
-import { updateChecked, ROW_GONE } from "../../shared/js/core/db-guard.js?v=v2026-10-08T02303";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-08T02303";
+} from "../../shared/js/core/sfx-cloud.js?v=v2026-10-08T06592";
+import { guardDesktopOnly } from "../../shared/js/core/device-guard.js?v=v2026-10-08T06592";
+import { guardResourceLock, guardResourceBusy } from "../../shared/js/core/resource-lock.js?v=v2026-10-08T06592";
+import { updateChecked, ROW_GONE } from "../../shared/js/core/db-guard.js?v=v2026-10-08T06592";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-08T06592";
 
 guardDesktopOnly();
 
