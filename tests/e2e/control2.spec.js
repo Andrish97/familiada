@@ -2124,7 +2124,13 @@ test("control2: dźwięk ze źródła Wyświetlacz — odblokowanie, głośnoś�
     displayPage = await reconnectViaModal(browser, page, "display", contexts, []);
     await expect(displayPage.locator("#audioUnlockScreen")).toBeVisible({ timeout: 15000 });
     await expect(answerTile(page, 2)).toBeDisabled();
+    const reUnlockAck = displayPage.waitForResponse((response) =>
+      response.url().includes("/rpc/acknowledge_display_audio_unlock")
+    );
     await displayPage.locator("#btnAudioUnlock").click();
+    const reUnlockAckResponse = await reUnlockAck;
+    expect(await reUnlockAckResponse.json(), "reconnected Display's new unlock request must be accepted by the server")
+      .toBe(true);
     await expect(displayPage.locator("#audioUnlockScreen")).toBeHidden({ timeout: 10000 });
     await expect(answerTile(page, 2)).toBeEnabled({ timeout: 15000 });
 
