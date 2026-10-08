@@ -42,43 +42,13 @@ function h(tag, attrs = {}, children = []) {
 
 export function createUI({ root, emit }) {
   function clear() { root.innerHTML = ""; }
-  let topbarProgressWidthReady = false;
-  function sizeTopbarProgressForAllLanguages() {
-    if (topbarProgressWidthReady) return;
-    const el = document.getElementById("c2TopbarProgress");
-    if (!el) return;
-    const canvas = document.createElement("canvas");
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-    const style = getComputedStyle(el);
-    const rootFontSize = Number.parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
-    ctx.font = `900 ${rootFontSize * 0.94}px ${style.fontFamily}`;
-    // Stała szerokość jest liczona z najdłuższych etykiet postępu w trzech
-    // językach, aby przyciski urządzeń nie zmieniały położenia między krokami.
-    const labels = [
-      "Finał — gracz 2, wpisywanie", "Finał — mapowanie 5/5", "Finał — start rundy 2",
-      "Final — player 2, entry", "Final — mapping 5/5", "Final — round 2 start",
-      "Фінал — гравець 2, введення", "Фінал — зіставлення 5/5", "Фінал — старт 2 раунду",
-      "Runda 5 — rozgrywka", "Round 5 — gameplay", "Раунд 5 — гра",
-    ];
-    const maxTextWidth = Math.max(...labels.map((label) => {
-      const measured = ctx.measureText(label).width;
-      return measured + label.length * rootFontSize * 0.94 * 0.02;
-    }));
-    const width = Math.ceil(maxTextWidth + 20);
-    el.style.setProperty("--c2-progress-width", `${width}px`);
-    el.style.width = `${width}px`;
-    el.style.minWidth = `${width}px`;
-    topbarProgressWidthReady = true;
-  }
   function setTopbarProgress(label) {
     const el = document.getElementById("c2TopbarProgress");
     if (el) {
-      sizeTopbarProgressForAllLanguages();
       const [main = "", detail = ""] = String(label || "").split(/\s+[—–]\s+/, 2);
       el.replaceChildren(
-        Object.assign(document.createElement("span"), { className: "c2-topbar-progress-main", textContent: main }),
-        Object.assign(document.createElement("span"), { className: "c2-topbar-progress-detail", textContent: detail }),
+        Object.assign(document.createElement("span"), { className: "title", textContent: main }),
+        Object.assign(document.createElement("span"), { className: "subtitle", textContent: detail }),
       );
       el.title = label || "";
     }

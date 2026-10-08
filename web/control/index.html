@@ -118,13 +118,13 @@
     .topbar-layout-4 .topbar-section { flex-wrap:nowrap; }
     .topbar-layout-4 .topbar-section-1 { white-space:nowrap; }
     .topbar-layout-4 .topbar-section-2 { flex-wrap:nowrap; gap:8px; }
-    .topbar-layout-4 .topbar-section-2 .top-status { flex:0 0 auto; min-width:0; flex-wrap:nowrap; gap:6px; }
+    .topbar-layout-4 .topbar-section-2 .top-status { flex:0 0 auto; min-width:0; margin-left:auto; flex-wrap:nowrap; gap:6px; }
     .topbar-layout-4 .topbar-section-2 .top-status .dotRow { flex:0 0 48px; width:48px; min-width:48px; padding:6px; justify-content:center; gap:5px; }
     .topbar-layout-4 .topbar-section-2 .top-status .dotRow .lbl { display:none; }
     .topbar-layout-4 .topbar-section-2 .top-status .dotRow .ico { width:17px; height:17px; }
-    .c2-topbar-progress { flex:0 0 auto; width:var(--c2-progress-width, 280px); min-width:var(--c2-progress-width, 280px); height:42px; min-height:42px; box-sizing:border-box; display:flex; flex-direction:column; align-items:flex-start; justify-content:center; gap:1px; overflow:hidden; white-space:nowrap; padding:0 8px; }
-    .c2-topbar-progress-main { max-width:100%; overflow:hidden; text-overflow:ellipsis; font-size:.94rem; line-height:1.1; font-weight:900; letter-spacing:.02em; color:var(--gold); }
-    .c2-topbar-progress-detail { max-width:100%; overflow:hidden; text-overflow:ellipsis; font-size:.78rem; line-height:1.1; font-weight:700; color:rgba(255,255,255,.78); }
+    .c2-topbar-progress { display:flex; flex:0 0 220px; flex-direction:column; gap:2px; min-width:0; min-height:37px; overflow:hidden; }
+    .c2-topbar-progress .title { font-weight:700; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; text-transform:uppercase; }
+    .c2-topbar-progress .subtitle { opacity:.75; font-size:12px; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
     /* To samo dla Urządzeń/Podsumowania (control.css's .stepFoot, domyślnie
        tylko 10px u góry vs 28px u dołu po odjęciu cardBody's paddingu
        wyżej — teraz 16px u góry == 16px .control-main-card u dołu). */
