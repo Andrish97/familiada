@@ -91,4 +91,27 @@ i niepotwierdzonych kont (`guest_cleanup_expired`).
 
 ## 5. Stan wdrożenia (E12, 2026-10-08)
 
-Migracja `2026-10-08_312_deletion_unified.sql` + okno usunięcia gry („Ankieta zostanie przerwana”) + wycofanie importu przez RPC + `delete-account` (baza, potem pliki ze stronicowaniem) + `guest_discard_current` czyści Storage. Reguła RLS `games_owner_delete` zostaje (testy e2e sprzątają gry bezpośrednim `delete`). Maile w kolejce gry: dopasowanie po linku `poll-go?t=<token>` w treści (brak kolumny z id gry). Test lokalny: `docs/sql/test-deletion-312.sql`. Do zrobienia: usunięcie pliku dźwięków gry po stronie bazy/funkcji (nadal po stronie przeglądarki), komunikaty „usunięta” na display/host/buzzer (dziś czarny ekran / cicha konsola).
+Migracja `2026-10-08_312_deletion_unified.sql` + okno usunięcia gry („Ankieta zostanie przerwana”) + wycofanie importu przez RPC + `delete-account` (baza, potem pliki ze stronicowaniem) + `guest_discard_current` czyści Storage. Reguła RLS `games_owner_delete` zostaje (testy e2e sprzątają gry bezpośrednim `delete`). Maile w kolejce gry: dopasowanie po linku `poll-go?t=<token>` w treści (brak kolumny z id gry). Test lokalny: `docs/sql/test-deletion-312.sql`. Do zrobienia: komunikaty „usunięta” na display/host/buzzer (dziś czarny ekran / cicha konsola).
+
+## Pliki w Storage — usuwa baza (migracja 313, decyzja 2026-10-08)
+
+Decyzja użytkownika: pliki mają znikać atomowo z wierszem, w każdym miejscu
+usuwania, bez udziału przeglądarki.
+
+- Trigger `AFTER DELETE` na `games` (folder `user-sounds/<właściciel>/<gra>`),
+  `user_logos` (obraz z `payload.source.imageUrl`, tylko własny folder) i
+  `profiles` (cały folder użytkownika w `user-sounds` i `user-logos`) zapisuje
+  wpis w `storage_cleanup_queue` **w tej samej transakcji** — wycofane
+  usunięcie nie zostawia wpisu, zatwierdzone zawsze go ma.
+- Edge function `storage-cleanup` opróżnia kolejkę przez Storage API: wołana
+  przez pg_net po zatwierdzeniu (trigger na instrukcję) i co 10 min przez
+  pg_cron (ponowienia; po 20 próbach wpis zostaje z `last_error`).
+- Przed usunięciem `storage_cleanup_claim()` odrzuca wpisy, których właściciel
+  znów istnieje albo których obraz jest nadal używany (przywrócenie demo).
+- Przeglądarka nie usuwa już plików przy usuwaniu gry, logo, kopii ze
+  Społeczności ani przy przywróceniu demo. Wymiana obrazu w edytorze logo i
+  reset dźwięków w ustawieniach gry (wiersz zostaje) — bez zmian.
+- Do usunięcia po potwierdzeniu na produkcji: edge function
+  `cleanup-guest-storage` i jej wywołania w `guest_cleanup_expired` /
+  `guest_discard_current`, sprzątanie plików w `delete-account`.
+- Test lokalny: `docs/sql/test-storage-313.sql`.
