@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict XVQGxqH7uu22hecGZm1dik7u8G7cDdJ5RXYeYsV2E4BsJwp9ydP81oIc5h5ybnz
+\restrict rDBFPrmdp3dkvo1Rn4xt7F17b4kdeIWLf018HmQc2U4nTpUGcLiSSQq4NxMrlm3
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -222,6 +222,272 @@ CREATE FUNCTION "public"."_norm_email"("p" "text") RETURNS "text"
     AS $$
   select nullif(lower(btrim(p)), '');
 $$;
+
+
+--
+-- Name: _poll_assert_owner("uuid"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."_poll_assert_owner"("p_game_id" "uuid") RETURNS "void"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+BEGIN
+  IF auth.uid() IS NULL THEN
+    RAISE EXCEPTION 'not_authenticated';
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM public.games WHERE id = p_game_id AND owner_id = auth.uid()) THEN
+    RAISE EXCEPTION 'not_owner';
+  END IF;
+END $$;
+
+
+--
+-- Name: _poll_open_unchecked("uuid", "text"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."_poll_open_unchecked"("p_game_id" "uuid", "p_key" "text") RETURNS "void"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+declare
+  v_type public.game_type;
+begin
+  -- weryfikacja klucza + pobranie typu gry
+  select g.type into v_type
+  from public.games g
+  where g.id = p_game_id
+    and g.share_key_poll = p_key;
+
+  if not found then
+    raise exception 'Bad poll key or game not found';
+  end if;
+
+  if v_type = 'prepared' then
+    raise exception 'Prepared game has no poll';
+  end if;
+
+  -- status = poll_open (UWAGA: nie dotykamy games.type!)
+  update public.games
+  set status = 'poll_open',
+      poll_opened_at = now(),
+      poll_closed_at = null,
+      updated_at = now()
+  where id = p_game_id;
+
+  -- restart sesji: usuń stare dane ankietowe
+  delete from public.poll_votes where game_id = p_game_id;
+  delete from public.poll_text_entries where game_id = p_game_id;
+  delete from public.poll_sessions where game_id = p_game_id;
+
+  -- utwórz sesję per pytanie
+  insert into public.poll_sessions (game_id, question_id, question_ord, is_open, created_at, closed_at)
+  select q.game_id, q.id, q.ord, true, now(), null
+  from public.questions q
+  where q.game_id = p_game_id;
+
+end $$;
+
+
+--
+-- Name: _poll_points_close_unchecked("uuid", "text"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."_poll_points_close_unchecked"("p_game_id" "uuid", "p_key" "text") RETURNS "void"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    AS $$
+declare
+  g record;
+begin
+  select id, share_key_poll, type, status
+    into g
+  from public.games
+  where id = p_game_id and share_key_poll = p_key;
+
+  if not found then raise exception 'bad key or game'; end if;
+  if g.type <> 'poll_points' then raise exception 'wrong type'; end if;
+  if g.status <> 'poll_open' then raise exception 'poll is not open'; end if;
+
+  -- policz głosy z ostatniej sesji per pytanie i ustaw fixed_points w answers
+  with last_sess as (
+    select distinct on (ps.question_id)
+      ps.question_id, ps.id as poll_session_id
+    from public.poll_sessions ps
+    where ps.game_id = p_game_id
+    order by ps.question_id, ps.created_at desc
+  ),
+  a as (
+    select q.id as question_id, an.id as answer_id, an.ord as aord
+    from public.questions q
+    join public.answers an on an.question_id = q.id
+    where q.game_id = p_game_id
+  ),
+  c as (
+    select
+      a.question_id,
+      a.answer_id,
+      a.aord,
+      coalesce(count(v.id), 0)::int as cnt
+    from a
+    left join last_sess ls on ls.question_id = a.question_id
+    left join public.poll_votes v
+      on v.poll_session_id = ls.poll_session_id
+     and v.answer_id = a.answer_id
+    group by a.question_id, a.answer_id, a.aord
+  ),
+  c_fixed as (
+    select question_id, answer_id, aord,
+      case when cnt = 0 then 1 else cnt end as cnt1
+    from c
+  ),
+  tot as (
+    select question_id, sum(cnt1)::int as total
+    from c_fixed
+    group by question_id
+  ),
+  raw as (
+    select
+      cf.question_id,
+      cf.answer_id,
+      cf.aord,
+      (100.0 * cf.cnt1 / nullif(t.total, 0)) as raw_p,
+      floor(100.0 * cf.cnt1 / nullif(t.total, 0))::int as base_floor,
+      (100.0 * cf.cnt1 / nullif(t.total, 0)) - floor(100.0 * cf.cnt1 / nullif(t.total, 0)) as frac
+    from c_fixed cf
+    join tot t on t.question_id = cf.question_id
+  ),
+  base as (
+    select question_id, answer_id, aord,
+      greatest(1, base_floor) as p0,
+      frac
+    from raw
+  ),
+  sum_base as (
+    select question_id, sum(p0)::int as s0
+    from base
+    group by question_id
+  ),
+  need as (
+    select b.*, (100 - sb.s0)::int as diff
+    from base b
+    join sum_base sb on sb.question_id = b.question_id
+  ),
+  ranked_plus as (
+    select n.*,
+      row_number() over (partition by question_id order by frac desc, aord asc) as rn_plus
+    from need n
+  ),
+  ranked_minus as (
+    select n.*,
+      row_number() over (partition by question_id order by p0 desc, frac asc, aord desc) as rn_minus
+    from need n
+    where p0 > 1
+  ),
+  final as (
+    select
+      n.question_id,
+      n.answer_id,
+      case
+        when n.diff > 0 then n.p0 + case when rp.rn_plus <= n.diff then 1 else 0 end
+        when n.diff < 0 then n.p0 - case when rm.rn_minus is not null and rm.rn_minus <= abs(n.diff) then 1 else 0 end
+        else n.p0
+      end as p_final
+    from need n
+    left join ranked_plus rp on rp.question_id = n.question_id and rp.answer_id = n.answer_id
+    left join ranked_minus rm on rm.question_id = n.question_id and rm.answer_id = n.answer_id
+  )
+  update public.answers aup
+  set fixed_points = f.p_final
+  from final f
+  where aup.id = f.answer_id;
+
+  update public.poll_sessions
+  set is_open = false, closed_at = now()
+  where game_id = p_game_id and is_open = true;
+
+  update public.games
+  set status = 'ready', poll_closed_at = now()
+  where id = p_game_id;
+end;
+$$;
+
+
+--
+-- Name: _poll_text_close_unchecked("uuid", "text", "jsonb"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."_poll_text_close_unchecked"("p_game_id" "uuid", "p_key" "text", "p_payload" "jsonb") RETURNS "void"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    AS $_$
+declare
+  g record;
+  q record;
+  item jsonb;
+  ans jsonb;
+  i int;
+  atext text;
+  apts int;
+begin
+  select id, share_key_poll, type, status
+    into g
+  from public.games
+  where id = p_game_id and share_key_poll = p_key;
+
+  if not found then raise exception 'bad key or game'; end if;
+  if g.type <> 'poll_text' then raise exception 'wrong type'; end if;
+  if g.status <> 'poll_open' then raise exception 'poll is not open'; end if;
+
+  -- payload format:
+  -- { "items": [ { "question_id": "...", "answers": [ { "text":"...", "points": 12 }, ... ] } ] }
+
+  for item in
+    select jsonb_array_elements(coalesce(p_payload->'items','[]'::jsonb))
+  loop
+    -- wyciągamy question_id
+    for q in
+      select q2.*
+      from public.questions q2
+      where q2.id = (item->>'question_id')::uuid
+        and q2.game_id = p_game_id
+    loop
+      -- czyścimy stare answers (jeśli były)
+      delete from public.answers where question_id = q.id;
+
+      i := 0;
+      for ans in
+        select jsonb_array_elements(coalesce(item->'answers','[]'::jsonb))
+      loop
+        i := i + 1;
+        exit when i > 6;
+
+        atext := coalesce(ans->>'text','');
+        atext := regexp_replace(atext, '^\s+|\s+$', '', 'g');
+        if char_length(atext) < 1 then
+          atext := ('ODP '||i::text);
+        end if;
+        if char_length(atext) > 17 then
+          atext := left(atext,17);
+        end if;
+
+        apts := coalesce((ans->>'points')::int, 0);
+        if apts < 0 then apts := 0; end if;
+        if apts > 100 then apts := 100; end if;
+
+        insert into public.answers(question_id, ord, text, fixed_points)
+        values (q.id, i, atext, apts);
+      end loop;
+    end loop;
+  end loop;
+
+  update public.poll_sessions
+  set is_open = false, closed_at = now()
+  where game_id = p_game_id and is_open = true;
+
+  update public.games
+  set status = 'ready', poll_closed_at = now()
+  where id = p_game_id;
+end;
+$_$;
 
 
 --
@@ -8008,43 +8274,10 @@ CREATE FUNCTION "public"."poll_open"("p_game_id" "uuid", "p_key" "text") RETURNS
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public'
     AS $$
-declare
-  v_type public.game_type;
-begin
-  -- weryfikacja klucza + pobranie typu gry
-  select g.type into v_type
-  from public.games g
-  where g.id = p_game_id
-    and g.share_key_poll = p_key;
-
-  if not found then
-    raise exception 'Bad poll key or game not found';
-  end if;
-
-  if v_type = 'prepared' then
-    raise exception 'Prepared game has no poll';
-  end if;
-
-  -- status = poll_open (UWAGA: nie dotykamy games.type!)
-  update public.games
-  set status = 'poll_open',
-      poll_opened_at = now(),
-      poll_closed_at = null,
-      updated_at = now()
-  where id = p_game_id;
-
-  -- restart sesji: usuń stare dane ankietowe
-  delete from public.poll_votes where game_id = p_game_id;
-  delete from public.poll_text_entries where game_id = p_game_id;
-  delete from public.poll_sessions where game_id = p_game_id;
-
-  -- utwórz sesję per pytanie
-  insert into public.poll_sessions (game_id, question_id, question_ord, is_open, created_at, closed_at)
-  select q.game_id, q.id, q.ord, true, now(), null
-  from public.questions q
-  where q.game_id = p_game_id;
-
-end $$;
+BEGIN
+  PERFORM public._poll_assert_owner(p_game_id);
+  PERFORM public._poll_open_unchecked(p_game_id, p_key);
+END $$;
 
 
 --
@@ -8053,121 +8286,12 @@ end $$;
 
 CREATE FUNCTION "public"."poll_points_close_and_normalize"("p_game_id" "uuid", "p_key" "text") RETURNS "void"
     LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
     AS $$
-declare
-  g record;
-begin
-  select id, share_key_poll, type, status
-    into g
-  from public.games
-  where id = p_game_id and share_key_poll = p_key;
-
-  if not found then raise exception 'bad key or game'; end if;
-  if g.type <> 'poll_points' then raise exception 'wrong type'; end if;
-  if g.status <> 'poll_open' then raise exception 'poll is not open'; end if;
-
-  -- policz głosy z ostatniej sesji per pytanie i ustaw fixed_points w answers
-  with last_sess as (
-    select distinct on (ps.question_id)
-      ps.question_id, ps.id as poll_session_id
-    from public.poll_sessions ps
-    where ps.game_id = p_game_id
-    order by ps.question_id, ps.created_at desc
-  ),
-  a as (
-    select q.id as question_id, an.id as answer_id, an.ord as aord
-    from public.questions q
-    join public.answers an on an.question_id = q.id
-    where q.game_id = p_game_id
-  ),
-  c as (
-    select
-      a.question_id,
-      a.answer_id,
-      a.aord,
-      coalesce(count(v.id), 0)::int as cnt
-    from a
-    left join last_sess ls on ls.question_id = a.question_id
-    left join public.poll_votes v
-      on v.poll_session_id = ls.poll_session_id
-     and v.answer_id = a.answer_id
-    group by a.question_id, a.answer_id, a.aord
-  ),
-  c_fixed as (
-    select question_id, answer_id, aord,
-      case when cnt = 0 then 1 else cnt end as cnt1
-    from c
-  ),
-  tot as (
-    select question_id, sum(cnt1)::int as total
-    from c_fixed
-    group by question_id
-  ),
-  raw as (
-    select
-      cf.question_id,
-      cf.answer_id,
-      cf.aord,
-      (100.0 * cf.cnt1 / nullif(t.total, 0)) as raw_p,
-      floor(100.0 * cf.cnt1 / nullif(t.total, 0))::int as base_floor,
-      (100.0 * cf.cnt1 / nullif(t.total, 0)) - floor(100.0 * cf.cnt1 / nullif(t.total, 0)) as frac
-    from c_fixed cf
-    join tot t on t.question_id = cf.question_id
-  ),
-  base as (
-    select question_id, answer_id, aord,
-      greatest(1, base_floor) as p0,
-      frac
-    from raw
-  ),
-  sum_base as (
-    select question_id, sum(p0)::int as s0
-    from base
-    group by question_id
-  ),
-  need as (
-    select b.*, (100 - sb.s0)::int as diff
-    from base b
-    join sum_base sb on sb.question_id = b.question_id
-  ),
-  ranked_plus as (
-    select n.*,
-      row_number() over (partition by question_id order by frac desc, aord asc) as rn_plus
-    from need n
-  ),
-  ranked_minus as (
-    select n.*,
-      row_number() over (partition by question_id order by p0 desc, frac asc, aord desc) as rn_minus
-    from need n
-    where p0 > 1
-  ),
-  final as (
-    select
-      n.question_id,
-      n.answer_id,
-      case
-        when n.diff > 0 then n.p0 + case when rp.rn_plus <= n.diff then 1 else 0 end
-        when n.diff < 0 then n.p0 - case when rm.rn_minus is not null and rm.rn_minus <= abs(n.diff) then 1 else 0 end
-        else n.p0
-      end as p_final
-    from need n
-    left join ranked_plus rp on rp.question_id = n.question_id and rp.answer_id = n.answer_id
-    left join ranked_minus rm on rm.question_id = n.question_id and rm.answer_id = n.answer_id
-  )
-  update public.answers aup
-  set fixed_points = f.p_final
-  from final f
-  where aup.id = f.answer_id;
-
-  update public.poll_sessions
-  set is_open = false, closed_at = now()
-  where game_id = p_game_id and is_open = true;
-
-  update public.games
-  set status = 'ready', poll_closed_at = now()
-  where id = p_game_id;
-end;
-$$;
+BEGIN
+  PERFORM public._poll_assert_owner(p_game_id);
+  PERFORM public._poll_points_close_unchecked(p_game_id, p_key);
+END $$;
 
 
 --
@@ -8924,76 +9048,12 @@ $$;
 
 CREATE FUNCTION "public"."poll_text_close_apply"("p_game_id" "uuid", "p_key" "text", "p_payload" "jsonb") RETURNS "void"
     LANGUAGE "plpgsql" SECURITY DEFINER
-    AS $_$
-declare
-  g record;
-  q record;
-  item jsonb;
-  ans jsonb;
-  i int;
-  atext text;
-  apts int;
-begin
-  select id, share_key_poll, type, status
-    into g
-  from public.games
-  where id = p_game_id and share_key_poll = p_key;
-
-  if not found then raise exception 'bad key or game'; end if;
-  if g.type <> 'poll_text' then raise exception 'wrong type'; end if;
-  if g.status <> 'poll_open' then raise exception 'poll is not open'; end if;
-
-  -- payload format:
-  -- { "items": [ { "question_id": "...", "answers": [ { "text":"...", "points": 12 }, ... ] } ] }
-
-  for item in
-    select jsonb_array_elements(coalesce(p_payload->'items','[]'::jsonb))
-  loop
-    -- wyciągamy question_id
-    for q in
-      select q2.*
-      from public.questions q2
-      where q2.id = (item->>'question_id')::uuid
-        and q2.game_id = p_game_id
-    loop
-      -- czyścimy stare answers (jeśli były)
-      delete from public.answers where question_id = q.id;
-
-      i := 0;
-      for ans in
-        select jsonb_array_elements(coalesce(item->'answers','[]'::jsonb))
-      loop
-        i := i + 1;
-        exit when i > 6;
-
-        atext := coalesce(ans->>'text','');
-        atext := regexp_replace(atext, '^\s+|\s+$', '', 'g');
-        if char_length(atext) < 1 then
-          atext := ('ODP '||i::text);
-        end if;
-        if char_length(atext) > 17 then
-          atext := left(atext,17);
-        end if;
-
-        apts := coalesce((ans->>'points')::int, 0);
-        if apts < 0 then apts := 0; end if;
-        if apts > 100 then apts := 100; end if;
-
-        insert into public.answers(question_id, ord, text, fixed_points)
-        values (q.id, i, atext, apts);
-      end loop;
-    end loop;
-  end loop;
-
-  update public.poll_sessions
-  set is_open = false, closed_at = now()
-  where game_id = p_game_id and is_open = true;
-
-  update public.games
-  set status = 'ready', poll_closed_at = now()
-  where id = p_game_id;
-end;
-$_$;
+    SET "search_path" TO 'public'
+    AS $$
+BEGIN
+  PERFORM public._poll_assert_owner(p_game_id);
+  PERFORM public._poll_text_close_unchecked(p_game_id, p_key, p_payload);
+END $$;
 
 
 --
@@ -16720,5 +16780,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict XVQGxqH7uu22hecGZm1dik7u8G7cDdJ5RXYeYsV2E4BsJwp9ydP81oIc5h5ybnz
+\unrestrict rDBFPrmdp3dkvo1Rn4xt7F17b4kdeIWLf018HmQc2U4nTpUGcLiSSQq4NxMrlm3
 
