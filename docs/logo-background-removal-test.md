@@ -6,20 +6,20 @@ nie jest wysyłany na serwer ani zapisywany w bazie.
 
 ## Przykłady i wykrywanie tła
 
-Siedem widocznych kafelków pozwala od razu wybrać przykład: białe i kremowe
-tło, tło wzorzyste i ciemne, białe detale, postrzępioną krawędź obiektu oraz
-domyślne logo z repozytorium.
-Logo jest wczytywane z `web/assets/img/logo.svg` bez przenoszenia, a jego
-przezroczyste narożniki są oznaczane na stronie. Pliki pozostałych próbek SVG są w
+Osiem widocznych kafelków pozwala od razu wybrać przykład: białe, jednolite
+niebieskie i kremowe tło, tło wzorzyste i ciemne, białe detale, postrzępioną
+krawędź obiektu oraz obraz używany w demach. Obraz demo jest wczytywany z
+`web/logo/assets/demo-image.png` bez przenoszenia.
+Pliki pozostałych próbek SVG są w
 `web/settings/tools/logo-background-lab/samples/`; podczas budowania strony są
 osadzane w scalonym HTML. Wzorzyste i ciemne obrazy
 powinny dostać ostrzeżenie, a biały detal powinien pozostać przy metodzie
 brzegowej.
 
-Wykrywanie wstępne bierze medianę kolorów z czterech narożników. Różnica do
-28 poziomów kanału RGB i jasność co najmniej 205/255 oznaczają równe, jasne
-tło. Wynik pośredni (różnica do 45 i jasność od 160/255) dostaje ostrzeżenie.
-Większa różnica lub ciemny kolor oznacza tło niespełniające prostych kryteriów.
+Wykrywanie wstępne bierze medianę kolorów z czterech narożników. Równe tło
+może mieć dowolny kolor; ocena nie odrzuca już tła za niską jasność. Różnica
+do 14 poziomów kanału RGB oznacza równe tło, do 45 — ostrzeżenie, a większa
+różnica oznacza tło niespełniające kryterium jednolitości.
 To heurystyka: narożniki mogą być zasłonięte elementem logo, a środek obrazu
 może mieć gradient, którego narożniki nie pokazują.
 

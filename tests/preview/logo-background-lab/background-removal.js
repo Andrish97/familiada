@@ -94,15 +94,12 @@ function updateSuitability() {
     setSuitability("Narożniki są przezroczyste", "Tło może być już usunięte. Sprawdź oryginał przed ponownym wycinaniem.", "good");
     return;
   }
-  const [r, g, b] = rgbFromHex(backgroundInput.value);
-  const light = (r * 299 + g * 587 + b * 114) / 1000;
-  if (cornerSpread <= 28 && light >= 205) {
-    setSuitability("Tło wygląda na równe i jasne", `Próbki z rogów różnią się maksymalnie o ${Math.round(cornerSpread)} poziomów.`, "good");
-  } else if (cornerSpread <= 45 && light >= 160) {
-    setSuitability("Tło może wymagać korekty", `Różnica w rogach: ${Math.round(cornerSpread)}. Jasność: ${Math.round(light)}/255; obejrzyj obwódkę.`, "warn");
+  if (cornerSpread <= 14) {
+    setSuitability("Tło wygląda na jednolite", `Wykryty kolor: ${backgroundInput.value.toUpperCase()}. Próbki z rogów różnią się maksymalnie o ${Math.round(cornerSpread)} poziomów. Sprawdź, czy logo nie zawiera podobnego koloru.`, "good");
+  } else if (cornerSpread <= 45) {
+    setSuitability("Tło może wymagać korekty", `Wykryty kolor: ${backgroundInput.value.toUpperCase()}. Próbki z rogów różnią się o ${Math.round(cornerSpread)} poziomów; obejrzyj krawędzie i dopasuj tolerancję.`, "warn");
   } else {
-    const reason = light < 160 ? `Tło jest ciemne (jasność ${Math.round(light)}/255).` : `Próbki z rogów różnią się o ${Math.round(cornerSpread)} poziomów.`;
-    setSuitability("Tło nie spełnia prostych kryteriów", `${reason} Usuwanie może zniszczyć kolory logo lub zostawić ślady.`, "warn");
+    setSuitability("Tło nie wygląda na jednolite", `Próbki z rogów różnią się o ${Math.round(cornerSpread)} poziomów. Usuwanie może zostawić ślady albo wyciąć podobne kolory logo.`, "warn");
   }
 }
 function prepareImage(image, filename, originalWidth = image.naturalWidth, originalHeight = image.naturalHeight) {
@@ -153,7 +150,7 @@ function drawSample(kind) {
   if (!image) return;
   const activate = () => {
     for (const item of sampleCards) item.setAttribute("aria-pressed", String(item === card));
-    prepareImage(image, `przyklad-${kind}.svg`, image.naturalWidth, image.naturalHeight);
+    prepareImage(image, card.dataset.filename || `przyklad-${kind}.svg`, image.naturalWidth, image.naturalHeight);
   };
   if (image.complete && image.naturalWidth > 0) activate();
   else {
