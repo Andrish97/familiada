@@ -5,8 +5,8 @@
 // później (zmiana karty, odświeżenie) — MutationObserver na siatkach.
 // Stanu nie zapamiętujemy (docs/ujednolicenie-wygladu.md, sekcja 1).
 
-import { t } from "../../translation/translation.js?v=v2026-10-08T22572";
-import { icon } from "./icons.js?v=v2026-10-08T22572";
+import { t } from "../../translation/translation.js?v=v2026-10-08T23051";
+import { icon } from "./icons.js?v=v2026-10-08T23051";
 
 const norm = (s) => String(s || "").toLocaleLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
 
