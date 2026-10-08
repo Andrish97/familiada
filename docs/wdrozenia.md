@@ -106,3 +106,4 @@ bo `PAGES` deklaruje blokady; adresy po mapie stron; instrukcja na końcu.
 | 2026-10-08 | E11g | `cef94d4` na branchu: `guardGameState` (edytor edit, ustawienia/Control play, ankieta poll_entry), edytor: blokada przed resetem | e2e po scaleniu E11e/E11f |
 | 2026-10-08 | E11e/E11f/E11g | scalone na branchu (`768aad7`, `0c25d5e`, `cef94d4`): komunikaty stanów na stronach głosowania i ekranie QR, podgląd Gra · Ankieta (wspólny moduł wyników), blokady stanu; strony głosowania w e2e z kodu brancha (`76d8090`) | e2e branch w toku; potem main + control2/game-settings na main |
 | 2026-10-08 | E12 | agent: szkic migracji 312 + frontend, test na lokalnym Postgresie | w toku |
+| 2026-10-08 | E11e/f/g + E12 | branch 37816982136: zielone (editor, games, polls, poll-voting, poll-go, poll-qr); `fa68229` na `main` z migracją 312 | po wdrożeniu: e2e na main (games, control2, game-settings, account, marketplace, polls, poll-*) |
