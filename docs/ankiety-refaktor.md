@@ -338,8 +338,8 @@ usunięta”.
 | E11b | **migracja 310 na `main` 2026-10-08** (zgodna wstecz; lokalnie sprawdzona). Baza: nowy klucz przy każdym uruchomieniu; „Przerwij” (do szkicu, bez przeliczania); zamknięcie bez warunku czekających zaproszeń; zaproszenia 3 stany (usunięcie udostępnienia = usunięcie zaproszenia i głosu); zaproszenie ważne tylko z bieżącym kluczem; przypomnienie; limity maili wg `maile-granice.md`; usunięcie subskrybenta wycofuje zaproszenia; właściciel + blokada `game:G` w akcjach | — |
 | E11c | **na `main` 2026-10-08** — Strona ankiety: pasek stanu, karty Udostępnianie · Wyniki, kafle subskrybentów (dzwonek, kosz), wyniki na żywo bez skakania | — |
 | E11d | **na `main` 2026-10-08** (z filtrem i sortowaniem) — Subskrypcje: karty Moi subskrybenci · Moje subskrypcje · Zadania, kafel „+” z oknem; hub usunięty; badge i linki z maila na Subskrypcje → Zadania | — |
-| E11e | Strony głosowania, `poll-go`, ekran QR: komunikaty „zamknięta / wygasł / wycofane / usunięta”, QR śledzi stan, kod urządzenia wygasa | — |
-| E11f | Podgląd na liście gier: przełącznik Gra · Ankieta z wynikami | — |
+| E11e | **na branchu 2026-10-08** — Strony głosowania, `poll-go`, ekran QR: komunikaty „zamknięta / wygasł / wycofane / usunięta”, QR śledzi stan, kod urządzenia wygasa | — |
+| E11f | **na branchu 2026-10-08** — Podgląd na liście gier: przełącznik Gra · Ankieta z wynikami | — |
 | E11g | **na branchu 2026-10-08** — Blokady stanu: pełna blokada strony gry przy niedozwolonym stanie (edytor, ustawienia, ankieta, Control), edytor bierze blokadę przed resetem | — |
 | E11h | Migracja usuwająca: nieużywane RPC huba i stare funkcje (po potwierdzeniu testami) | — |
 
