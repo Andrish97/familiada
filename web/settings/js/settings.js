@@ -5161,7 +5161,6 @@ async function loadToolsManifest() {
     // fall back to static list
   }
   return [
-    { value: "/settings/tools/logo-background-lab/index.html", label: "Test usuwania tła logo" },
     { value: "/settings/tools/editor_5x7.html", label: labelFromPath("/settings/tools/editor_5x7.html") },
     { value: "/settings/tools/exporterandeditor.html", label: labelFromPath("/settings/tools/exporterandeditor.html") },
     { value: "/settings/tools/kora-builder.html", label: labelFromPath("/settings/tools/kora-builder.html") },
