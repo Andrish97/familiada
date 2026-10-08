@@ -45,6 +45,10 @@ const MSG = {
   voteLabel: () => t("pollGo.voteLabel"),
   missingLinkTitle: () => t("pollGo.missingLinkTitle"),
   missingLinkText: () => t("pollGo.missingLinkText"),
+  inviteDone: () => t("pollGo.inviteDone"),
+  inviteDeclinedShort: () => t("pollGo.inviteDeclinedShort"),
+  pollClosed: () => t("pollGo.pollClosed"),
+  inviteExpired: () => t("pollGo.inviteExpired"),
   invalidLinkTitle: () => t("pollGo.invalidLinkTitle"),
   invalidLinkText: () => t("pollGo.invalidLinkText"),
   inviteUnknown: () => t("pollGo.inviteUnknown"),
@@ -247,8 +251,17 @@ function showMismatch(head, expectedEmail) {
   showEmailInput(false);
 }
 
-function showExpired(head) {
-  setView({ head, text: MSG.inviteUsed() });
+// status zadania (tylko zaproszenia do ankiety): done / declined mają własne komunikaty
+function showExpired(head, taskStatus) {
+  if (taskStatus === "done") {
+    setView({ head: MSG.inviteDone(), text: "" });
+  } else if (taskStatus === "declined") {
+    setView({ head: MSG.inviteDeclinedShort(), text: "" });
+  } else if (taskStatus) {
+    setView({ head: MSG.inviteExpired(), text: "" });
+  } else {
+    setView({ head, text: MSG.inviteUsed() });
+  }
   clearActions();
   showEmailInput(false);
 }
@@ -461,7 +474,7 @@ async function handleTaskInvite(data, user) {
       return;
     }
     if (!isActive) {
-      showExpired(head);
+      showExpired(head, data.status);
       return;
     }
     showTaskInviteAccountMatch(head, expectedEmail);
@@ -471,7 +484,7 @@ async function handleTaskInvite(data, user) {
   // Case 2: Zalogowany user + email invite (bez account)
   if (user && !hasAccountInvite) {
     if (!isActive) {
-      showExpired(head);
+      showExpired(head, data.status);
       return;
     }
     showTaskInviteLoggedIn(head, data.poll_type);
@@ -480,7 +493,7 @@ async function handleTaskInvite(data, user) {
 
   // Case 3: Niezalogowany — najpierw sprawdzić czy active
   if (!isActive) {
-    showExpired(head);
+    showExpired(head, data.status);
     return;
   }
 
@@ -583,7 +596,18 @@ async function init() {
     const data = await hydrateInviteIdentity(raw);
     resolvedInviteData = data || null;
     if (!data?.ok) {
-      setView({ head: MSG.invalidLinkTitle(), text: MSG.invalidLinkText() });
+      // poll_go_resolve: 'poll_closed' / 'expired' (zaproszenie z wcześniejszego
+      // uruchomienia lub przerwanej ankiety) / 'invalid_token' (np. usunięte zadanie)
+      const byError = {
+        poll_closed: MSG.pollClosed(),
+        expired: MSG.inviteExpired(),
+        invalid_token: MSG.inviteExpired(),
+      };
+      const head = byError[data?.error];
+      clearActions();
+      showEmailInput(false);
+      if (head) setView({ head, text: "" });
+      else setView({ head: MSG.invalidLinkTitle(), text: MSG.invalidLinkText() });
       return;
     }
 

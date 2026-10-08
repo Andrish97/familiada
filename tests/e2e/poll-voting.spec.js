@@ -83,6 +83,41 @@ async function deleteGame(page, gameId) {
   }, gameId);
 }
 
+// Przerwanie + ponowne uruchomienie jako właściciel: nowy klucz (migracja 310),
+// stary link przestaje działać.
+async function relaunchPoll(page, gameId) {
+  return await page.evaluate(async (gid) => {
+    const sb = window.__sbClient;
+    const { data: aborted, error: abortErr } = await sb.rpc("poll_abort", { p_game_id: gid });
+    if (abortErr) throw new Error("poll_abort failed: " + abortErr.message);
+    const { error: openErr } = await sb.rpc("poll_open", { p_game_id: gid, p_key: aborted.share_key_poll });
+    if (openErr) throw new Error("poll_open failed: " + openErr.message);
+    const { data, error } = await sb.from("games").select("share_key_poll").eq("id", gid).single();
+    if (error) throw new Error("select share_key_poll failed: " + error.message);
+    return data.share_key_poll;
+  }, gameId);
+}
+
+// Zamknięcie ankiety wymaga głosów (game_poll_close_check), więc stan "zamknięta"
+// symulujemy odpowiedziami RPC: payload odmawia ("poll is not open"), a
+// get_poll_game zwraca status 'ready' dla tego samego klucza.
+async function mockClosedPoll(page, gameId, type) {
+  await page.route("**/rest/v1/rpc/poll_get_payload", (route) =>
+    route.fulfill({
+      status: 400,
+      contentType: "application/json",
+      body: JSON.stringify({ code: "P0001", message: "poll_get_payload: poll is not open", details: null, hint: null }),
+    })
+  );
+  await page.route("**/rest/v1/rpc/get_poll_game", (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ game: { id: gameId, name: "E2E", type, status: "ready", poll_qr_lang: "pl" }, questions: [] }),
+    })
+  );
+}
+
 test.describe("poll-voting (poll-points.js i poll-text.js) audyt", () => {
   test.use({ serviceWorkers: "block" });
 
@@ -208,7 +243,7 @@ test.describe("poll-voting (poll-points.js i poll-text.js) audyt", () => {
 
       // Powinno pokazać komunikat "Już zagłosowałeś" zamiast pytań
       const closed = page.locator(".closed");
-      await expect(closed).toContainText(/wziąłeś udział|already participated|вже брали участь/, { timeout: 10000 });
+      await expect(closed).toContainText(/oddałeś głos|already voted|проголосували/, { timeout: 10000 });
 
       // Formularz powinien być ukryty
       const qbox = page.locator(".qbox");
@@ -233,7 +268,7 @@ test.describe("poll-voting (poll-points.js i poll-text.js) audyt", () => {
       await page.waitForLoadState("networkidle");
 
       // Powinno pokazać komunikat o błędzie
-      const sub = page.locator(".sub");
+      const sub = page.locator(".closed");
       await expect(sub).toContainText(/Brak|Missing/, { timeout: 10000 });
 
       // Formularz powinien być ukryty
@@ -288,4 +323,72 @@ test.describe("poll-voting (poll-points.js i poll-text.js) audyt", () => {
       await page.close();
     }
   });
+
+  for (const [pollType, dir] of [["poll_text", "poll-text"], ["poll_points", "poll-points"]]) {
+    test(`${dir}: ankieta zamknięta → "Ankieta została zamknięta"`, async ({ page, context }, testInfo) => {
+      try {
+        await loginAsPooledTestUser(page, context, testInfo.parallelIndex);
+        const game = await createPollGame(page, pollType);
+        await mockClosedPoll(page, game.gameId, pollType);
+
+        const url = new URL(`${dir}/index.html`, "https://www.familiada.online/");
+        url.searchParams.set("id", game.gameId);
+        url.searchParams.set("key", game.shareKey);
+        await page.goto(url.toString(), { waitUntil: "domcontentloaded" });
+
+        await expect(page.locator(".closed")).toContainText(/została zamknięta|has been closed|закрито/, { timeout: 10000 });
+        await expect(page.locator(".qbox")).not.toBeVisible();
+
+        await deleteGame(page, game.gameId);
+      } finally {
+        await page.close();
+      }
+    });
+
+    test(`${dir}: link sprzed ponownego uruchomienia → "Ten link wygasł"`, async ({ page, context }, testInfo) => {
+      try {
+        await loginAsPooledTestUser(page, context, testInfo.parallelIndex);
+        const game = await createPollGame(page, pollType);
+        const newKey = await relaunchPoll(page, game.gameId);
+        expect(newKey).not.toBe(game.shareKey);
+
+        const url = new URL(`${dir}/index.html`, "https://www.familiada.online/");
+        url.searchParams.set("id", game.gameId);
+        url.searchParams.set("key", game.shareKey); // stary klucz
+        await page.goto(url.toString(), { waitUntil: "domcontentloaded" });
+
+        await expect(page.locator(".closed")).toContainText(/link wygasł|link has expired|втратило чинність/, { timeout: 10000 });
+        await expect(page.locator(".qbox")).not.toBeVisible();
+
+        // flaga "już głosował" jest per klucz — nowy link działa mimo flagi na starym
+        await page.evaluate(
+          (k) => localStorage.setItem(`fam_poll_done_${k}`, "1"),
+          `${game.gameId}_${game.shareKey}`
+        );
+        const fresh = new URL(`${dir}/index.html`, "https://www.familiada.online/");
+        fresh.searchParams.set("id", game.gameId);
+        fresh.searchParams.set("key", newKey);
+        await page.goto(fresh.toString(), { waitUntil: "domcontentloaded" });
+        await expect(page.locator(".qtext")).toContainText("Pytanie 1", { timeout: 10000 });
+
+        await deleteGame(page, game.gameId);
+      } finally {
+        await page.close();
+      }
+    });
+
+    test(`${dir}: nieistniejąca ankieta → "Nie ma takiej ankiety"`, async ({ context }) => {
+      const page = await context.newPage();
+      instrumentPage(page);
+      try {
+        const url = new URL(`${dir}/index.html`, "https://www.familiada.online/");
+        url.searchParams.set("id", "00000000-0000-0000-0000-000000000000");
+        url.searchParams.set("key", "nie-istnieje");
+        await page.goto(url.toString(), { waitUntil: "domcontentloaded" });
+        await expect(page.locator(".closed")).toContainText(/Nie ma takiej ankiety|no such poll|не існує/, { timeout: 10000 });
+      } finally {
+        await page.close();
+      }
+    });
+  }
 });
