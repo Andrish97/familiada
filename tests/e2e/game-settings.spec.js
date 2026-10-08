@@ -8,7 +8,37 @@
 const { test, expect } = require("@playwright/test");
 const { loginAsTestUser } = require("./helpers/login");
 
-async function createGame(page, { type = "prepared", name, settings } = {}) {
+// Blokada stanu "play" (guardGameState, reguła game_validate) blokuje całą
+// stronę ustawień, dopóki gra nie ma >= 10 pytań, każde z 3-6 odpowiedziami
+// o sumie <= 100. Dlatego createGame dopełnia grę pytaniami-wypełniaczami
+// (ord 100+), chyba że test sam układa pytania (pad: false) i potem woła
+// padQuestions().
+async function createGame(page, { type = "prepared", name, settings, pad = true } = {}) {
+  const id = await createGameRaw(page, { type, name, settings });
+  if (pad) await padQuestions(page, id);
+  return id;
+}
+
+async function padQuestions(page, gameId, total = 10) {
+  await page.evaluate(async ({ gameId, total }) => {
+    const sb = window.__sbClient;
+    const { count, error: cErr } = await sb.from("questions").select("id", { count: "exact", head: true }).eq("game_id", gameId);
+    if (cErr) throw new Error("count questions failed: " + cErr.message);
+    for (let i = 0; (count || 0) + i < total; i++) {
+      const { data: q, error } = await sb.from("questions")
+        .insert({ game_id: gameId, ord: 100 + i, text: `Wypełniacz ${i + 1}` }).select("id").single();
+      if (error) throw new Error("insert filler failed: " + error.message);
+      const { error: aErr } = await sb.from("answers").insert([
+        { question_id: q.id, ord: 1, text: "Odp. A", fixed_points: 40 },
+        { question_id: q.id, ord: 2, text: "Odp. B", fixed_points: 30 },
+        { question_id: q.id, ord: 3, text: "Odp. C", fixed_points: 20 },
+      ]);
+      if (aErr) throw new Error("insert filler answers failed: " + aErr.message);
+    }
+  }, { gameId, total });
+}
+
+async function createGameRaw(page, { type = "prepared", name, settings } = {}) {
   return await page.evaluate(async ({ type, name, settings }) => {
     const sb = window.__sbClient;
     const { data: userData } = await sb.auth.getUser();
@@ -32,6 +62,13 @@ async function addQuestionApi(page, gameId, ord, text) {
       .select("id")
       .single();
     if (error) throw new Error("insert question failed: " + error.message);
+    // reguła play: każde pytanie ma 3-6 odpowiedzi
+    const { error: aErr } = await window.__sbClient.from("answers").insert([
+      { question_id: data.id, ord: 1, text: "Odp. A", fixed_points: 40 },
+      { question_id: data.id, ord: 2, text: "Odp. B", fixed_points: 30 },
+      { question_id: data.id, ord: 3, text: "Odp. C", fixed_points: 20 },
+    ]);
+    if (aErr) throw new Error("insert answers failed: " + aErr.message);
     return data.id;
   }, { gameId, ord, text });
 }
@@ -381,13 +418,13 @@ test("ustawienia gry: finał w trybie 'wybierz' wymaga dokładnie 5 pytań — m
   }
 });
 
-test("ustawienia gry: finał — wybranie dokładnie 5 z 6 pytań zapisuje się, wyklucza je z rund, limit 5 pilnowany w UI", async ({ page, context }) => {
+test("ustawienia gry: finał — wybranie dokładnie 5 z 10 pytań zapisuje się, wyklucza je z rund, limit 5 pilnowany w UI", async ({ page, context }) => {
   test.setTimeout(60_000);
   await loginAsTestUser(page, context);
 
-  const gameId = await createGame(page);
+  const gameId = await createGame(page, { pad: false });
   try {
-    for (let i = 1; i <= 6; i++) await addQuestionApi(page, gameId, i, `Q${i}`);
+    for (let i = 1; i <= 10; i++) await addQuestionApi(page, gameId, i, `Q${i}`);
 
     await openSettings(page, gameId);
     await switchTab(page, "questions");
@@ -407,12 +444,12 @@ test("ustawienia gry: finał — wybranie dokładnie 5 z 6 pytań zapisuje się,
       await page.locator("#gsFinalePool .qRow").first().click();
     }
     await expect(page.locator(".gs-badge-row .tag b")).toHaveText("5");
-    await expect(page.locator("#gsFinalePool .qRow")).toHaveCount(1);
+    await expect(page.locator("#gsFinalePool .qRow")).toHaveCount(5);
 
     // Próba dodania 6-go — handler odrzuca po limicie, bez re-renderu
     await page.locator("#gsFinalePool .qRow").first().click();
     await expect(page.locator(".gs-badge-row .tag b")).toHaveText("5");
-    await expect(page.locator("#gsFinalePool .qRow")).toHaveCount(1);
+    await expect(page.locator("#gsFinalePool .qRow")).toHaveCount(5);
 
     // localSettings.questions.rounds wypełnia się automatycznie dopiero przy
     // wejściu w zakładkę Rundy (renderRounds()) — bez tego zostaje puste
@@ -422,13 +459,13 @@ test("ustawienia gry: finał — wybranie dokładnie 5 z 6 pytań zapisuje się,
     await switchTab(page, "questions");
     await page.locator('.toggle-item:has(input[name="gsRoundsMode"][value="pick"])').click();
     await switchTab(page, "rounds");
-    await expect(page.locator("#gsRoundsOrderList .roundsOrderItem")).toHaveCount(1);
+    await expect(page.locator("#gsRoundsOrderList .roundsOrderItem")).toHaveCount(5);
 
     await saveAndWait(page);
 
     const game = await getGameRow(page, gameId);
     expect(game.settings.questions.final).toHaveLength(5);
-    expect(game.settings.questions.rounds).toHaveLength(1);
+    expect(game.settings.questions.rounds).toHaveLength(5);
     const finalIds = new Set(game.settings.questions.final.map((q) => q.id));
     for (const q of game.settings.questions.rounds) {
       expect(finalIds.has(q.id), "pytanie finałowe nie powinno jednocześnie zostać zapisane jako rundowe").toBe(false);
@@ -441,7 +478,7 @@ test("ustawienia gry: finał — wybranie dokładnie 5 z 6 pytań zapisuje się,
 test("ustawienia gry: wyłączenie finału zwraca jego pytania na koniec puli rund", async ({ page, context }) => {
   test.setTimeout(60_000);
   await loginAsTestUser(page, context);
-  const gameId = await createGame(page);
+  const gameId = await createGame(page, { pad: false });
   try {
     const ids = [];
     for (let i = 1; i <= 15; i++) ids.push(await addQuestionApi(page, gameId, i, `Q${i}`));
@@ -481,11 +518,12 @@ test("ustawienia gry: rundy — zmiana kolejności strzałką zapisuje nową kol
   test.setTimeout(60_000);
   await loginAsTestUser(page, context);
 
-  const gameId = await createGame(page);
+  const gameId = await createGame(page, { pad: false });
   try {
     const q1 = await addQuestionApi(page, gameId, 1, "Alfa");
     const q2 = await addQuestionApi(page, gameId, 2, "Beta");
     const q3 = await addQuestionApi(page, gameId, 3, "Gamma");
+    await padQuestions(page, gameId); // wypełniacze (ord 100+) trafiają za Gammę
 
     await openSettings(page, gameId);
     // Zakładka "rundy" jest domyślnie zablokowana w sidebarze (roundsQuestionsMode
@@ -495,7 +533,7 @@ test("ustawienia gry: rundy — zmiana kolejności strzałką zapisuje nową kol
     await page.locator('.toggle-item:has(input[name="gsRoundsMode"][value="pick"])').click(); // patrz komentarz przy gsHasFinal wyżej
 
     await switchTab(page, "rounds");
-    await expect(page.locator("#gsRoundsOrderList .roundsOrderItem")).toHaveCount(3);
+    await expect(page.locator("#gsRoundsOrderList .roundsOrderItem")).toHaveCount(10);
 
     // Alfa (pozycja 1) w dół -> Beta, Alfa, Gamma
     await page.locator(`.roundsOrderItem[data-qid="${q1}"] .roundsOrderBtn[data-dir="down"]`).click();
@@ -503,7 +541,7 @@ test("ustawienia gry: rundy — zmiana kolejności strzałką zapisuje nową kol
     await saveAndWait(page);
 
     const game = await getGameRow(page, gameId);
-    expect(game.settings.questions.rounds.map((q) => q.id)).toEqual([q2, q1, q3]);
+    expect(game.settings.questions.rounds.slice(0, 3).map((q) => q.id)).toEqual([q2, q1, q3]);
   } finally {
     await deleteGame(page, gameId);
   }
