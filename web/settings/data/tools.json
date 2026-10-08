@@ -5,6 +5,10 @@
       "path": "/settings/tools/logo-background-lab/index.html"
     },
     {
+      "title": "Podgląd nowego logo Hosta",
+      "path": "/settings/tools/host-logo-lab/index.html"
+    },
+    {
       "title": "Edytor 5×7 (import/eksport)",
       "path": "/settings/tools/editor_5x7.html"
     },
