@@ -67,7 +67,7 @@ test("anonim: lista, wyszukiwanie, filtr, sortowanie, URL, klawiatura i i18n", a
   await page.goto(`${URL}?sort=newest`, { waitUntil: "domcontentloaded" });
   await expect(page.locator("#browseGrid .mkt-card").first()).toBeVisible({ timeout: 20_000 });
   await expect(page.locator("#btnMySent")).toBeHidden();
-  await expect(page.locator("#btnGoGames")).toContainText("Strona główna");
+  await expect(page.locator("#btnGoGames")).toContainText("Wróć do: Strona główna");
 
   const first = page.locator("#browseGrid .mkt-card").first();
   const title = (await first.locator(".mkt-card-title").innerText()).trim();

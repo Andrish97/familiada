@@ -3,7 +3,8 @@
 
 import { requireAuth } from "../../shared/js/core/auth.js?v=v2026-10-08T17391";
 import { alertModal } from "../../shared/js/core/modal.js?v=v2026-10-08T17391";
-import { getUiLang, initI18n, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-08T17391";
+import { initI18n, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-08T17391";
+import { linkTo, backHref, renderBackLabel } from "../../shared/js/core/nav-map.js?v=v2026-10-08T17391";
 import { initTopbarAccountDropdown } from "../../shared/js/core/topbar-controller.js?v=v2026-10-08T17391";
 import { VIEW, createState, setRole } from "./state.js?v=v2026-10-08T17391";
 import { renderAll } from "./render.js?v=v2026-10-08T17391";
@@ -31,26 +32,16 @@ function getBaseIdFromUrl() {
   return params.get("base");
 }
 
-function buildManualUrl() {
-  const url = new URL("/manual/", location.href);
-  const ret = `${location.pathname}${location.search}${location.hash}`;
-  url.searchParams.set("ret", ret);
-  url.searchParams.set("lang", getUiLang() || "pl");
-  url.hash = "bases";
-  return url.toString();
-}
-
 /* ================= Events ================= */
 btnManual?.addEventListener("click", () => {
-  location.href = buildManualUrl();
+  location.href = linkTo("manual", { hash: "bases" });
 });
 
 // Znacznik dla contact-modal.js -- patrz js/pages/bases.js dla wyjaśnienia.
 if (btnBack) btnBack.dataset.sheetBack = "1";
 btnBack?.addEventListener("click", () => {
   if (handleSheetBack()) return;
-  // powrót do listy baz (warstwa 1)
-  location.href = withLangParam("/bases/");
+  location.href = backHref("baseExplorer");
 });
 
 
@@ -59,6 +50,7 @@ btnBack?.addEventListener("click", () => {
   const requireAuthP = requireAuth(withLangParam("/login/")); // start równolegle z initI18n
   await initI18n({ withSwitcher: true });
   document.documentElement.classList.remove('page-loading');
+  renderBackLabel(btnBack, "baseExplorer");
 
   const user = await requireAuthP;
   initTopbarAccountDropdown(user, { accountHref: "../account", loginHref: "../login" });
@@ -68,7 +60,7 @@ btnBack?.addEventListener("click", () => {
   const baseId = getBaseIdFromUrl();
   if (!baseId) {
     void alertModal({ text: t("baseExplorer.errors.missingBaseId") });
-    location.href = withLangParam("/bases/");
+    location.href = backHref("baseExplorer");
     return;
   }
 

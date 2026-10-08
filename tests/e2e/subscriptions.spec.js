@@ -175,7 +175,7 @@ test("ret nie pozwala opuścić originu, a poprawny powrót jest zachowany", asy
   await page.locator("#btnBackToGames").click();
   await page.waitForURL((url) => url.origin === "https://www.familiada.online" && /^\/games\/?$/.test(url.pathname));
 
-  await openSubscriptions(page, "?ret=%2Fbases%3Flang%3Den");
+  await openSubscriptions(page, "?lang=en&ret=%2Fbases%2F");
   await page.locator("#btnBackToGames").click();
   await page.waitForURL((url) => /^\/bases\/?$/.test(url.pathname) && url.searchParams.get("lang") === "en");
 });

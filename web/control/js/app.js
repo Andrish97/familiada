@@ -9,7 +9,8 @@ import { createRenderCompletionGate } from "../../shared/js/gameplay/renderCompl
 
 import { guardDesktopOnly } from "../../shared/js/core/device-guard.js?v=v2026-10-08T17391";
 import { guardResourceLock, guardResourceBusy } from "../../shared/js/core/resource-lock.js?v=v2026-10-08T17391";
-import { initI18n, getUiLang, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-08T17391";
+import { initI18n, getUiLang, t } from "../../shared/translation/translation.js?v=v2026-10-08T17391";
+import { backHref, renderBackLabel } from "../../shared/js/core/nav-map.js?v=v2026-10-08T17391";
 import { requireAuth } from "../../shared/js/core/auth.js?v=v2026-10-08T17391";
 import { setTopbarAccount } from "../../shared/js/core/topbar-controller.js?v=v2026-10-08T17391";
 import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-08T17391";
@@ -167,6 +168,7 @@ async function drawFinalPicks(state, roundPool) {
 
 async function main() {
   await initI18n({ withSwitcher: true });
+  renderBackLabel(document.getElementById("btnBack"), "control");
 
   const params = new URLSearchParams(location.search);
   const gameId = params.get("id");
@@ -200,7 +202,7 @@ async function main() {
     resourceId: gameId,
     context: "control",
     message: t("resourceLock.gameMessage"),
-    backHref: "/games/",
+    backHref: backHref("control"),
   });
   if (!lock.ok) return;
 
@@ -222,7 +224,7 @@ async function main() {
       resourceType: "logo",
       resourceId: gameLogoId,
       message: t("resourceLock.logoInUseMessage"),
-      backHref: "/games/",
+      backHref: backHref("control"),
     });
     if (!logoLock.ok) return;
   }
@@ -939,7 +941,7 @@ async function main() {
     // Fire-and-forget, jak dzisiejsze control/js/app.js — nie blokujemy
     // wyjścia na tym, przeglądarka i tak zaraz nawiguje dalej.
     shareDevice.expireShares().catch(() => {});
-    location.href = withLangParam("/games/");
+    location.href = backHref("control");
   });
 
   // "Losowo" ma losować RAZ, od razu przy wejściu w Podsumowanie (D3), i
@@ -1225,8 +1227,8 @@ async function main() {
       }
       if (action === "session.finish") {
         // Gra już zakończona (locks.gameEnded) — czysta nawigacja z powrotem
-        // do listy gier, bez żadnego dalszego zapisu do game_state.
-        location.href = withLangParam("/games/");
+        // do poprzedniej strony, bez żadnego dalszego zapisu do game_state.
+        location.href = backHref("control");
         return;
       }
       if (action === "rounds.introNext") {

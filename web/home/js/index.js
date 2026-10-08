@@ -8,7 +8,11 @@ async function redirectIfSession() {
   try {
     const user = await getUser();
     if (user) {
-      if (isGuestUser(user)) return false;
+      // Gość ma prawie pełne konto: od razu /games/ (nawigacja, decyzja 2026-10-07).
+      if (isGuestUser(user)) {
+        location.replace(withLangParam("/games/"));
+        return true;
+      }
       if (!user.username) {
         location.replace(withLangParam("/login/?setup=username"));
         return true;

@@ -4,6 +4,7 @@ import { requireAuth } from "../../shared/js/core/auth.js?v=v2026-10-08T17391";
 import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-08T17391";
 import QRCode from "https://cdn.jsdelivr.net/npm/qrcode@1.5.3/+esm";
 import { initI18n, t, withLangParam, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-08T17391";
+import { linkTo, backHref, renderBackLabel } from "../../shared/js/core/nav-map.js?v=v2026-10-08T17391";
 import { initTopbarAccountDropdown } from "../../shared/js/core/topbar-controller.js?v=v2026-10-08T17391";
 import { guardResourceLock } from "../../shared/js/core/resource-lock.js?v=v2026-10-08T17391";
 import { validateGame, gameRuleErrorMessage, guardGameState } from "../../shared/js/core/game-validate.js?v=v2026-10-08T17391";
@@ -17,7 +18,6 @@ import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-08T1739
 
 const qs = new URLSearchParams(location.search);
 const gameId = qs.get("id");
-const ret = qs.get("ret");
 
 const $ = (id) => document.getElementById(id);
 
@@ -116,27 +116,6 @@ function redoAction() {
   if (window._textCloseRerenderAll) window._textCloseRerenderAll();
 }
 
-const backTarget = withLangParam(new URL(ret || "/games/", location.origin + "/").href);
-
-
-function getRetPathnameLower() {
-  if (!ret) return "";
-  try {
-    return new URL(ret, location.origin + "/").pathname.toLowerCase();
-  } catch {
-    return "";
-  }
-}
-
-function buildManualUrl() {
-  const url = new URL("/manual/", location.href);
-  const current = `${location.pathname}${location.search}${location.hash}`;
-  url.searchParams.set("ret", current);
-  const lang = (new URLSearchParams(location.search).get("lang") || localStorage.getItem("uiLang") || "pl");
-  url.searchParams.set("lang", lang);
-  url.hash = "polls";
-  return url.toString();
-}
 
 // --- QR modal (wyświetlacz ankiety) ---
 function hidePollQrModal() {
@@ -889,7 +868,7 @@ function renderSubs(force = false) {
     subsGrid.innerHTML = "";
     if (subsEmpty) {
       subsEmpty.style.display = "";
-      subsEmpty.innerHTML = `${escapeHtml(t("polls.share.noSubs"))} <a href="${escapeHtml(withLangParam("/subscriptions/"))}">${escapeHtml(t("polls.share.noSubsLink"))}</a>`;
+      subsEmpty.innerHTML = `${escapeHtml(t("polls.share.noSubs"))} <a href="${escapeHtml(linkTo("subscriptions"))}">${escapeHtml(t("polls.share.noSubsLink"))}</a>`;
     }
     return;
   }
@@ -1327,11 +1306,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   document.querySelector('.topbar')?.classList.add('topbar-ready');
 
   if (btnBack) {
-    btnBack.innerHTML = iconText("arrow-left", t("polls.backToGames"));
+    renderBackLabel(btnBack, "polls");
   }
 
   btnManual?.addEventListener("click", () => {
-    location.href = buildManualUrl();
+    location.href = linkTo("manual", { hash: "polls" });
   });
 
   btnBack?.addEventListener("click", async () => {
@@ -1345,7 +1324,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (!ok) return;
       setTextCloseUi(false);
     }
-    location.href = backTarget;
+    location.href = backHref("polls");
   });
 
   // Guard: jeśli jest otwarty edytor tekstu, potwierdź przed wylogowaniem
@@ -1499,11 +1478,11 @@ document.addEventListener("DOMContentLoaded", async () => {
       resourceId: gameId,
       context: "polls",
       message: t("resourceLock.gameMessage"),
-      backHref: backTarget,
+      backHref: backHref("polls"),
     });
     if (!lock.ok) return;
     // Blokada stanu: strona ankiety tylko dla gry, która może mieć ankietę.
-    if (!(await guardGameState(gameId, "poll_entry", { backHref: backTarget }))) return;
+    if (!(await guardGameState(gameId, "poll_entry", { backHref: backHref("polls") }))) return;
   }
 
   await refresh();

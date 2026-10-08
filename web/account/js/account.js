@@ -2,7 +2,8 @@ import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-08T17391";
 import { cooldownGet, cooldownReserve, cooldownRelease, mailCooldownEmailReserve } from "../../shared/js/core/cooldown.js?v=v2026-10-08T17391";
 import { requireAuth, updateUserLanguage, validatePassword, validateUsername, signOut, niceAuthError, initPasswordToggles, convertGuestToRegisteredEmailOnly } from "../../shared/js/core/auth.js?v=v2026-10-08T17391";
 import { getUserEmailNotificationsFlag, setUserEmailNotificationsFlag } from "../../shared/js/core/user-flags.js?v=v2026-10-08T17391";
-import { initI18n, t, getUiLang, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-08T17391";
+import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-08T17391";
+import { linkTo, backHref, loginUrl, renderBackLabel } from "../../shared/js/core/nav-map.js?v=v2026-10-08T17391";
 import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-08T17391";
 import { isGuestUser, hideForGuest } from "../../shared/js/core/guest-mode.js?v=v2026-10-08T17391";
 import "../../shared/js/core/contact-modal.js?v=v2026-10-08T17391";
@@ -51,14 +52,6 @@ const migrateCancel = document.getElementById("migrateCancel");
 
 function setStatus(m = "") { if (status) status.textContent = m; }
 
-function buildManualUrl() {
-  const url = new URL("/manual/", location.href);
-  const ret = `${location.pathname}${location.search}${location.hash}`;
-  url.searchParams.set("ret", ret);
-  url.searchParams.set("lang", getUiLang() || "pl");
-  url.hash = "general";
-  return url.toString();
-}
 function setErr(m = "") { if (err) err.textContent = m; }
 let emailNotifTimer = null;
 
@@ -122,12 +115,11 @@ async function initEmailNotificationsUi(user) {
 
 
 backToGames?.addEventListener("click", () => {
-  const target = backToGames.dataset.baseHref || "/games/";
-  location.href = withLangParam(target);
+  location.href = backHref("account");
 });
 
 btnManual?.addEventListener("click", () => {
-  location.href = buildManualUrl();
+  location.href = linkTo("manual", { hash: "general" });
 });
 
 // --- cooldowns (anti-spam) ---
@@ -931,7 +923,7 @@ async function handleDeleteAccount() {
     if (!data?.ok) throw new Error(data?.error || t("account.errDeleteFailed"));
 
     await signOut();
-    location.href = withLangParam("/login/");
+    location.href = loginUrl();
   } catch (e) {
     console.error(e);
     setStatus(t("account.statusError"));
@@ -941,6 +933,7 @@ async function handleDeleteAccount() {
 
 document.addEventListener("DOMContentLoaded", async () => {
   await initI18n({ withSwitcher: true });
+  renderBackLabel(backToGames, "account");
   document.documentElement.classList.remove('page-loading');
   initPasswordToggles();
 

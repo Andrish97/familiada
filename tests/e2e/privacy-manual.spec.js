@@ -25,14 +25,14 @@ test("privacy: treść, tytuł i opis SEO przełączają się w PL/EN/UK", async
   }
 });
 
-test("privacy: parametr man dopuszcza tylko bezpieczny powrót w obrębie serwisu", async ({ page }) => {
-  await page.goto(`${ORIGIN}/privacy?lang=en&man=${encodeURIComponent("https://example.com/phishing")}`);
+test("privacy: parametr ret dopuszcza tylko bezpieczny powrót w obrębie serwisu", async ({ page }) => {
+  await page.goto(`${ORIGIN}/privacy?lang=en&ret=${encodeURIComponent("https://example.com/phishing")}`);
   await page.locator("#btnBack").click();
   await page.waitForURL((url) => url.origin === ORIGIN && !url.pathname.startsWith("/privacy"));
   expect(new URL(page.url()).origin).toBe(ORIGIN);
 
-  const safeBack = "manual?modal=control&tab=polls#polls";
-  await page.goto(`${ORIGIN}/privacy?lang=uk&man=${encodeURIComponent(safeBack)}`);
+  const safeBack = "/manual/?modal=control&tab=polls#polls";
+  await page.goto(`${ORIGIN}/privacy?lang=uk&ret=${encodeURIComponent(safeBack)}`);
   await page.locator("#btnBack").click();
   await page.waitForURL(/\/manual/);
   const returned = new URL(page.url());

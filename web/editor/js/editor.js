@@ -15,7 +15,8 @@ import {
 } from "../../shared/js/core/question-form.js?v=v2026-10-08T17391";
 import { guardResourceLock, showBlockingOverlay } from "../../shared/js/core/resource-lock.js?v=v2026-10-08T17391";
 import { updateChecked, ROW_GONE } from "../../shared/js/core/db-guard.js?v=v2026-10-08T17391";
-import { initI18n, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-08T17391";
+import { initI18n, t } from "../../shared/translation/translation.js?v=v2026-10-08T17391";
+import { linkTo, backHref, backLabel } from "../../shared/js/core/nav-map.js?v=v2026-10-08T17391";
 import { initTopbarAccountDropdown } from "../../shared/js/core/topbar-controller.js?v=v2026-10-08T17391";
 import "../../shared/js/core/contact-modal.js?v=v2026-10-08T17391";
 import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-08T17391";
@@ -88,7 +89,7 @@ function setMsg(msg) {
 function ruleBlocked(e) {
   const msg = gameRuleErrorMessage(e);
   if (msg) {
-    showBlockingOverlay({ title: t("gameValidate.lockedTitle"), message: msg, backHref: withLangParam("/games/") });
+    showBlockingOverlay({ title: t("gameValidate.lockedTitle"), message: msg, backHref: backHref("editor") });
   }
   return msg;
 }
@@ -276,7 +277,7 @@ function importPayload(items, cfg) {
 /* ================= Boot ================= */
 async function leaveTo(text) {
   if (text) await alertModal({ text });
-  location.href = withLangParam("/games/");
+  location.href = backHref("editor");
 }
 
 async function boot() {
@@ -294,11 +295,7 @@ async function boot() {
 
   $("btnManual")?.addEventListener("click", async () => {
     await flushSaves();
-    const url = new URL("/manual/", location.href);
-    const ret = `${location.pathname}${location.search}${location.hash}`;
-    url.searchParams.set("ret", ret);
-    url.hash = "edit";
-    location.href = url.toString();
+    location.href = linkTo("manual", { hash: "edit" });
   });
 
   // Enter w polu jednowierszowym = koniec edycji (blur zapisuje)
@@ -329,7 +326,7 @@ async function boot() {
     resourceId: gameId,
     context: "editor",
     message: t("resourceLock.gameMessage"),
-    backHref: withLangParam("/games/"),
+    backHref: backHref("editor"),
   });
   if (!lock.ok) return;
 
@@ -401,7 +398,7 @@ async function boot() {
   function syncMobileEditingState() {
     const on = isMobileLayout() && !!activeQId;
     document.body.classList.toggle("mobile-editing", on);
-    if (btnBack) btnBack.innerHTML = iconText("arrow-left", on ? t("editor.backToQuestions") : t("editor.backToGames"));
+    if (btnBack) btnBack.innerHTML = iconText("arrow-left", on ? t("editor.backToQuestions") : backLabel("editor"));
   }
 
   /* ---------- game name ---------- */
@@ -811,7 +808,7 @@ async function boot() {
       return;
     }
     await flushSaves();
-    location.href = withLangParam("/games/");
+    location.href = backHref("editor");
   });
 
   /* ---------- import ---------- */

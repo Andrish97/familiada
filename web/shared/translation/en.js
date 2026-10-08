@@ -71,6 +71,30 @@ const en = {
       contactBtn: "Contact",
     },
   },
+  nav: {
+    backTo: "Back to: {page}",
+    page: {
+      home: "Home page",
+      login: "Login",
+      games: "My games",
+      editor: "Question editor",
+      polls: "Poll",
+      subscriptions: "Subscriptions",
+      bases: "My bases",
+      baseExplorer: "Base manager",
+      logoEditor: "My logos",
+      logoText: "Logo editor",
+      logoDraw: "Logo editor",
+      logoImage: "Logo editor",
+      control: "Control panel",
+      gameSettings: "Game settings",
+      marketplace: "Community Games",
+      connectDevice: "Connect a device",
+      account: "Account settings",
+      manual: "Guide",
+      privacy: "Privacy",
+    },
+  },
   contact: {
     modal: {
       title: "Contact us",
@@ -461,7 +485,6 @@ const en = {
     errCancelMigrationFailed: "Failed to cancel the migration.",
     title: "Familiada — account",
     pageTitle: "Familiada — my account",
-    backToGames: "My games",
     headerTitle: "Account settings",
     headerHint: "Manage your profile, email, and security.",
     statusLoading: "Loading profile…",
@@ -558,7 +581,6 @@ const en = {
   },
   bases: {
     title: "Familiada — question bases",
-    backToGames: "My games",
     logout: "Log out",
     headerTitle: "Your question bases",
     headerHint: "Press a tile to select it. Double-tap to rename.",
@@ -754,7 +776,6 @@ const en = {
   },
   polls: {
     title: "Familiada — poll and results",
-    backToGames: "My games",
     logout: "Log out",
     pageTitle: "Poll",
     tabs: {
@@ -910,15 +931,6 @@ const en = {
     title: "Familiada — guide",
     tabsLabel: "User guide tabs",
     legal: "Privacy Policy",
-    backToGames: "My games",
-    backToBaseManager: "Base manager",
-    backToLogos: "My logos",
-    backToEditor: "Question editor",
-    backToLogoEditor: "Logo editor",
-    backToPoll: "Poll",
-    backToSubscriptions: "Subscriptions",
-    backToAccount: "Account settings",
-    backToMarketplace: "Community Games",
     logout: "Log out",
     pageTitle: "User guide",
     tabs: {
@@ -2423,7 +2435,6 @@ const en = {
     description: "Familiada Online privacy policy: personal data processing, cookies, and how to contact the administrator.",
     pageTitle: "Familiada Online — Privacy Policy",
     backToManual: "Guide",
-    backToHome: "Home page",
     logout: "Log out",
     content: `
       <p class="m-p"><strong>Familiada Online</strong></p>
@@ -2792,7 +2803,6 @@ const en = {
   editor: {
     pageTitlePrefix: "Game editor",
     title: "Familiada — game editor",
-    backToGames: "My games",
     backToQuestions: "Back",
     logout: "Log out",
     pageTitle: "Editor",
@@ -3276,8 +3286,6 @@ const en = {
   pollsHubPolls: {
     dash: "-",
     title: "Familiada — polls hub",
-    backToGames: "My games",
-    backToBases: "Question bases",
     logout: "Log out",
     header: {
       title: "Polls hub",
@@ -3542,7 +3550,6 @@ const en = {
     taskFrom: "From: {owner}",
     dash: "-",
     title: "Familiada — subscriptions",
-    backToGames: "My games",
     logout: "Log out",
     header: {
       title: "Polls hub",
@@ -3784,10 +3791,6 @@ const en = {
       draw: "Familiada — drawn logo",
       image: "Familiada — image logo",
     },
-    topbar: {
-      backToGames: "My games",
-      backToLogos: "My logos",
-    },
     list: {
       title: "Your logos",
       hint: "Click a tile to select it. Double-click (or long-press on touch) to rename.",
@@ -4015,7 +4018,6 @@ const en = {
   baseExplorer: {
     title: "Familiada — question base manager",
     headerTitle: "Question base manager",
-    backToBases: "My bases",
     logout: "Log out",
     common: {
       close: "Close",
@@ -4265,10 +4267,6 @@ const en = {
     pageTitle: "Community Games — ready-made Familiada questions",
     subtitle: "Browse games created by the community and add them to your library.",
     loading: "Loading…",
-    nav: {
-      myGames: "My games",
-      backHome: "Home",
-    },
     searchPlaceholder: "Search games…",
     searchLabel: "Search games",
     filterLabel: "Language",
@@ -4387,7 +4385,6 @@ const en = {
       networkError: "Could not connect. Check your internet connection and try again.",
     },
     title: "Familiada — connect a device",
-    topbar: { back: "My games" },
     header: {
       title: "Connect device",
       hint: "Scan QR code or open link to connect a device.",
@@ -4434,7 +4431,6 @@ const en = {
     shortcuts: {"mappingAnswers": "1–6 — select a list answer", "answers": "1–6 → Enter — reveal answer", "x": "X → Enter — strike", "t": "T → Enter — timer", "a": "A → Enter — team A", "b": "B → Enter — back / manual team B selection in the duel", "c": "C → Enter — confirm buzzer", "p": "P → Enter — pass control", "n": "N → Enter — current next action", "e": "E → Enter — edit settings", "w": "W — written answer", "o": "O — omitted answer", "r": "R — repeat", "m": "M — mute / unmute", "reveal": "Enter — reveal answer; next Enter — points", "fields": "↑ / ↓ / Enter — previous / next empty field", "entryTimer": "Ctrl+Enter (Cmd+Enter on Mac) — start / stop timer", "entryRepeat": "Shift+Enter in an empty field — repeat"},
     title: "Familiada — control panel",
     loading: "Loading panel…",
-    backToGames: "My games",
     logout: "Logout",
     statusLabel: "Device status",
     optional: "(optional)",
@@ -4895,7 +4891,6 @@ const en = {
   gameSettings: {
     pageTitle: "Game settings",
     title: "Familiada — game settings",
-    back: "My games",
     saveAll: "Save all",
     resetAll: "Restore defaults",
     play: "Play",

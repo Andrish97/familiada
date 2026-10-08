@@ -1,17 +1,17 @@
 // familiada/logo/js/routes.js
 // Adresy stron logo: lista /logo/ i trzy edytory /logo/editor-<tryb>/?id=.
-// Edytor wraca do listy przez ?ret= (lista z kartą, z której wszedł);
-// bez ret — na /logo/ (domyślna karta). Patrz docs/nawigacja-mapa-plan.md.
+// Cele i powroty liczy mapa nawigacji (core/nav-map.js): edytor wraca przez
+// ?ret= do listy z kartą, z której wszedł; bez ret — na /logo/.
+// Patrz docs/nawigacja-mapa-plan.md.
 
-import { withLangParam } from "../../shared/translation/translation.js?v=v2026-10-08T17391";
+import { linkTo, backHref } from "../../shared/js/core/nav-map.js?v=v2026-10-08T17391";
 import { TYPE_GLYPH } from "./render.js?v=v2026-10-08T17391";
 
-export const LIST_PATH = "/logo/";
-
-export const EDITOR_PATHS = {
-  TEXT: "/logo/editor-text/",
-  DRAW: "/logo/editor-draw/",
-  IMAGE: "/logo/editor-image/",
+/** Id strony w mapie nawigacji dla trybu edytora. */
+export const EDITOR_PAGE_IDS = {
+  TEXT: "logoText",
+  DRAW: "logoDraw",
+  IMAGE: "logoImage",
 };
 
 /**
@@ -26,31 +26,16 @@ export function editModeFor(logo) {
   return "DRAW";
 }
 
-export const currentRelativeUrl = () => `${location.pathname}${location.search}${location.hash}`;
-
-export function editorUrl(mode, id, ret = currentRelativeUrl()) {
-  const url = new URL(EDITOR_PATHS[mode], location.origin);
-  url.searchParams.set("id", id);
-  url.searchParams.set("ret", ret);
-  return withLangParam(url.toString());
+export function editorUrl(mode, id) {
+  return linkTo(EDITOR_PAGE_IDS[mode], { id });
 }
 
-/** Powrót z edytora: ?ret= tylko, jeśli wskazuje listę logo w tej domenie. */
-export function listBackUrl() {
-  const raw = new URLSearchParams(location.search).get("ret");
-  if (raw) {
-    try {
-      const url = new URL(raw, location.origin);
-      if (url.origin === location.origin && url.pathname === LIST_PATH) return withLangParam(url.toString());
-    } catch {}
-  }
-  return withLangParam(new URL(LIST_PATH, location.origin).toString());
+/** Powrót z edytora danego trybu: ret (lista logo) albo /logo/. */
+export function listBackUrl(mode) {
+  return backHref(EDITOR_PAGE_IDS[mode]);
 }
 
 /** Instrukcja (karta „logo”); jej „Wstecz” wraca dokładnie na bieżący adres. */
 export function manualUrl() {
-  const url = new URL("/manual/", location.origin);
-  url.searchParams.set("ret", currentRelativeUrl());
-  url.hash = "logo";
-  return withLangParam(url.toString());
+  return linkTo("manual", { hash: "logo" });
 }

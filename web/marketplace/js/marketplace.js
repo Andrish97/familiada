@@ -3,7 +3,8 @@
 import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-08T17391";
 import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-08T17391";
 import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-08T17391";
-import { initI18n, t, getUiLang, withLangParam, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-08T17391";
+import { initI18n, t, getUiLang, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-08T17391";
+import { linkTo, backHref, renderBackLabel } from "../../shared/js/core/nav-map.js?v=v2026-10-08T17391";
 import { initTopbarAccountDropdown } from "../../shared/js/core/topbar-controller.js?v=v2026-10-08T17391";
 import { exportGame } from "../../games/js/games-import-export.js?v=v2026-10-08T17391";
 import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-08T17391";
@@ -802,13 +803,10 @@ function wireEvents() {
   // Nav
   els.btnGoGames?.addEventListener("click", () => {
     if (handleSheetBack()) return;
-    window.location.href = withLangParam(!currentUser ? "/" : "/games/");
+    window.location.href = backHref("marketplace", { anon: !currentUser });
   });
   els.btnManual?.addEventListener("click", () => {
-    const url = new URL("/manual/", location.href);
-    url.searchParams.set("ret", "marketplace");
-    url.hash = "community";
-    location.href = url.toString();
+    location.href = linkTo("manual", { hash: "community" });
   });
   // Browse
   els.btnMySent?.addEventListener("click", async () => {
@@ -929,13 +927,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   document.querySelector('.topbar')?.classList.add('topbar-ready');
 
   if (!currentUser) {
-    // Anonim wraca na Stronę główną; zalogowany użytkownik do „Moich gier”.
-    if (els.btnGoGames) {
-      // applyTranslations() jest wołane niżej, więc zmieniamy również klucz;
-      // inaczej dynamiczny napis zostałby zaraz nadpisany przez „Moje gry”.
-      els.btnGoGames.dataset.i18n = "marketplace.nav.backHome";
-      els.btnGoGames.dataset.i18nIcon = "arrow-left";
-    }
     if (els.btnManual)  els.btnManual.hidden = true;
   }
 
@@ -951,6 +942,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   wireEvents();
   applyTranslations();
+  // Anonim wraca na Stronę główną (ret z landingu lub parentAnon), zalogowany wg mapy.
+  renderBackLabel(els.btnGoGames, "marketplace", () => ({ anon: !currentUser }));
   restoreBrowseParams();
 
 

@@ -42,7 +42,7 @@ utracie kontekstu wystarczy przeczytać ten plik i wskazaną sekcję źródła.
 | 4 | E11 | Ankiety: luka bezpieczeństwa, klucz na uruchomienie, Przerwij, zaproszenia (3 stany), limity maili, strona ankiety (karty Udostępnianie · Wyniki), hub znika, Subskrypcje + Zadania, podgląd Gra · Ankieta, blokady stanu na stronach gry | ankiety-refaktor.md, maile-granice.md, blokady „Blokady stanu” | do zrobienia |
 | 5 | E12 | Usuwanie gry i konta | usuwanie-danych.md | do zrobienia |
 | 6 | E2 | Blokady wg mapy docelowej (współdzielone, `logos`, `base:B`, odnowienie `locked`, TTL, DB `*_checked`) + blokady stanu i akcji wg kryteriów gier (tabela akcja → warunki) | blokady 6 | do zrobienia |
-| 7 | E4 | `nav-map.js` (`PAGES`, `linkTo`, `backHref`), `ret`, gość na `/` → `/games/` | nawigacja 6.2–6.3 | do zrobienia |
+| 7 | E4 | `nav-map.js` (`PAGES`, `linkTo`, `backHref`), `ret`, gość na `/` → `/games/` | nawigacja 6.2–6.3 | na branchu `e4` (e2e do puszczenia) |
 | 8 | E5 | Adresy a) `/go/` b) ankiety c) gry d) urządzenia + `/connect/` e) bazy, logo f) logowanie | nawigacja 8 | do zrobienia |
 | 9 | E6 | `initPage()`, wspólny overlay gość/urządzenie | nawigacja 6.4 | do zrobienia |
 | 10 | E7 | Bez stron modalnych: edytor `?q=`, ustawienia gry z autozapisem, manual/privacy bez `?modal=` | nawigacja 6.5 | do zrobienia |
@@ -106,3 +106,4 @@ bo `PAGES` deklaruje blokady; adresy po mapie stron; instrukcja na końcu.
 | 2026-10-08 | E11g | `cef94d4` na branchu: `guardGameState` (edytor edit, ustawienia/Control play, ankieta poll_entry), edytor: blokada przed resetem | e2e po scaleniu E11e/E11f |
 | 2026-10-08 | E11e/E11f/E11g | scalone na branchu (`768aad7`, `0c25d5e`, `cef94d4`): komunikaty stanów na stronach głosowania i ekranie QR, podgląd Gra · Ankieta (wspólny moduł wyników), blokady stanu; strony głosowania w e2e z kodu brancha (`76d8090`) | e2e branch w toku; potem main + control2/game-settings na main |
 | 2026-10-08 | E12 | agent: szkic migracji 312 + frontend, test na lokalnym Postgresie | w toku |
+| 2026-10-08 | E4 | branch `e4`: `nav-map.js` (`PAGES`, `linkTo`, `backHref`, `loginUrl`, łańcuch `ret` z listą `from`, limit 4), klucze `nav.*`, usunięte tabele etykiet i `?from=games`, gość na `/` → `/games/`; unit 321/321 | e2e do puszczenia: frontend-navigation, subscriptions, privacy-manual, game-settings, marketplace, index, logo-editor, editor, polls, bases |

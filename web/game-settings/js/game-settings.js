@@ -4,7 +4,8 @@
 // itd.) — trzymana jako osobny plik, żeby modal Control v2 nie zależał od
 // tej samej strony, którą wciąż ładuje stary control.html przez /game-settings.
 import { requireAuth } from "../../shared/js/core/auth.js?v=v2026-10-08T17391";
-import { t, getUiLang, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-08T17391";
+import { t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-08T17391";
+import { linkTo, backHref, backTarget, renderBackLabel } from "../../shared/js/core/nav-map.js?v=v2026-10-08T17391";
 import { setTopbarAccount } from "../../shared/js/core/topbar-controller.js?v=v2026-10-08T17391";
 import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-08T17391";
 import { loadQuestions, guardGameState } from "../../shared/js/core/game-validate.js?v=v2026-10-08T17391";
@@ -1619,7 +1620,7 @@ function showIngameGuard() {
       </div>
     `;
     document.documentElement.appendChild(overlay);
-    overlay.querySelector("#ingameGuardBack").addEventListener("click", () => { location.href = withLangParam("/games/"); });
+    overlay.querySelector("#ingameGuardBack").addEventListener("click", () => { location.href = backHref("gameSettings"); });
     overlay.querySelector("#ingameGuardUnlock").addEventListener("click", async () => {
       // "Odblokuj ustawienia" — nie jest to wymuszenie: acquire_edit_lock
       // i tak sam zwolni blokadę po ~25s bez odnowienia (Control naprawdę
@@ -1641,7 +1642,7 @@ async function main() {
   document.querySelector('.topbar')?.classList.add('topbar-ready');
 
   if (!gameId) {
-    location.href = withLangParam("/games/");
+    location.href = linkTo("games");
     return;
   }
 
@@ -1696,7 +1697,7 @@ async function main() {
     resourceId: gameId,
     context: "settings",
     message: t("resourceLock.gameMessage"),
-    backHref: "/games/",
+    backHref: backHref("gameSettings"),
   });
   if (!lock.ok) {
     if (_isModal) window.parent.postMessage({ type: "gs:ready" }, "*");
@@ -1722,7 +1723,7 @@ async function main() {
       resourceType: "logo",
       resourceId: gameLogoId,
       message: t("resourceLock.logoInUseMessage"),
-      backHref: "/games/",
+      backHref: backHref("gameSettings"),
     });
     if (!logoLock.ok) {
       if (_isModal) window.parent.postMessage({ type: "gs:ready" }, "*");
@@ -1744,6 +1745,8 @@ async function main() {
     // Sidebar toggle (☰ button) i przycisk zamknięcia (✕) -- wpięte
     // synchronicznie na poziomie modułu, patrz komentarz przy _isModal na
     // górze pliku.
+  } else {
+    renderBackLabel(btnBack, "gameSettings");
   }
 
   localSettings = mergeSettings(game.settings);
@@ -1777,7 +1780,10 @@ async function main() {
       btnPlay.classList.remove("hidden");
     }
     btnPlay.addEventListener("click", () => {
-      location.href = `/control/?id=${encodeURIComponent(gameId)}`;
+      // Wejście z Control: "Graj" robi to samo co "Wstecz" (bez dokładania poziomu ret).
+      location.href = backTarget("gameSettings")?.pageId === "control"
+        ? backHref("gameSettings")
+        : linkTo("control", { id: gameId });
     });
   }
 
@@ -1819,7 +1825,7 @@ async function main() {
   if (!isModal) {
     btnBack?.addEventListener("click", async () => {
       if (isDirty && !await confirmModal({ text: t("gameSettings.unsavedConfirm") || "Masz niezapisane zmiany. Czy na pewno chcesz wyjść?" })) return;
-      location.href = `/games/`;
+      location.href = backHref("gameSettings");
     });
   }
 

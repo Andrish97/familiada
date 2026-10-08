@@ -15,7 +15,8 @@ import { addRenameGesture } from "../../shared/js/core/rename-gesture.js?v=v2026
 import { loadFont5x7, buildLogoPreviewCanvas } from "../../shared/js/core/logo-preview.js?v=v2026-10-08T17391";
 import { requireAuth } from "../../shared/js/core/auth.js?v=v2026-10-08T17391";
 import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-08T17391";
-import { initI18n, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-08T17391";
+import { initI18n, t } from "../../shared/translation/translation.js?v=v2026-10-08T17391";
+import { backHref, renderBackLabel } from "../../shared/js/core/nav-map.js?v=v2026-10-08T17391";
 import { initTopbarAccountDropdown } from "../../shared/js/core/topbar-controller.js?v=v2026-10-08T17391";
 import { isMobileDevice } from "../../shared/js/core/pwa.js?v=v2026-10-08T17391";
 import { isPhoneScreen } from "../../shared/js/core/device-guard.js?v=v2026-10-08T17391";
@@ -557,7 +558,7 @@ function bindUi() {
   el.btnBack.dataset.sheetBack = "1"; // znacznik dla contact-modal.js (patrz js/pages/bases.js)
   el.btnBack.addEventListener("click", () => {
     if (handleSheetBack()) return;
-    location.href = withLangParam("/games/");
+    location.href = backHref("logoEditor");
   });
   el.btnManual.addEventListener("click", () => { location.href = manualUrl(); });
 
@@ -614,6 +615,7 @@ function bindUi() {
 async function boot() {
   await initI18n({ withSwitcher: true });
   document.documentElement.classList.remove("page-loading");
+  renderBackLabel(el.btnBack, "logoEditor");
   initListSearch({ grids: "#grid", tile: ".logoTile", name: ".logoName" });
 
   currentUser = await requireAuth("/login/");

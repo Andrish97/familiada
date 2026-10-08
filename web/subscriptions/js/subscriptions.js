@@ -3,9 +3,10 @@ import { requireAuth, signOut } from "../../shared/js/core/auth.js?v=v2026-10-08
 import { isGuestUser, showGuestBlockedOverlay } from "../../shared/js/core/guest-mode.js?v=v2026-10-08T17391";
 import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-08T17391";
 import { getUiLang, initI18n, t } from "../../shared/translation/translation.js?v=v2026-10-08T17391";
+import { linkTo, backHref, renderBackLabel } from "../../shared/js/core/nav-map.js?v=v2026-10-08T17391";
 import { initTopbarAccountDropdown } from "../../shared/js/core/topbar-controller.js?v=v2026-10-08T17391";
 import "../../shared/js/core/contact-modal.js?v=v2026-10-08T17391";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-08T17391";
+import { icon } from "../../shared/js/core/icons.js?v=v2026-10-08T17391";
 import { createCooldownTicker } from "../../shared/js/core/cooldown.js?v=v2026-10-08T17391";
 import { enterModalSheet, exitModalSheet, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-08T17391";
 import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-08T17391";
@@ -29,35 +30,6 @@ let focusInviteHandled = false;
 let focusTaskHandled = false;
 let subTokenPrompted = false;
 
-function getRetParam() {
-  return new URLSearchParams(location.search).get("ret");
-}
-
-function getSafeRetUrl() {
-  const raw = getRetParam();
-  if (!raw) return null;
-  try {
-    const url = new URL(raw, location.origin + "/");
-    if (url.origin !== location.origin) return null;
-    return `${url.pathname}${url.search}${url.hash}`;
-  } catch {
-    return null;
-  }
-}
-
-function getRetPathnameLower() {
-  const safe = getSafeRetUrl();
-  if (!safe) return "";
-  try {
-    return new URL(safe, location.origin).pathname.toLowerCase();
-  } catch {
-    return "";
-  }
-}
-
-function getCurrentRelativeUrl() {
-  return `${location.pathname}${location.search}${location.hash}`;
-}
 
 const who = $("who");
 const btnBack = $("btnBackToGames");
@@ -857,7 +829,6 @@ async function refreshData() {
     invites = b.data || [];
     tasks = (c.data || []).map((task) => ({ ...task, token: taskTokenOf(task) }));
 
-    updateBackButtonLabel();
     renderSubscribers();
     renderInvites();
     renderTasks();
@@ -922,40 +893,22 @@ async function refreshData() {
   }
 }
 
-function buildManualUrl() {
-  const url = new URL("/manual/", location.href);
-  url.searchParams.set("ret", getCurrentRelativeUrl());
-  url.searchParams.set("lang", getUiLang() || "pl");
-  url.hash = "subscriptions";
-  return url.toString();
-}
-
-function updateBackButtonLabel() {
-  if (!btnBack) return;
-  const retPath = getRetPathnameLower();
-  if (retPath.endsWith("/bases/")) btnBack.innerHTML = iconText("arrow-left", t("baseExplorer.backToBases"));
-  else btnBack.innerHTML = iconText("arrow-left", t("pollsHubSubscriptions.backToGames"));
-}
-
-function getBackLink() {
-  return getSafeRetUrl() || "/games/";
-}
 
 // Navigation is usable while authentication and lists are still loading.
 // Znacznik dla contact-modal.js: ten przycisk respektuje handleSheetBack().
 if (btnBack) btnBack.dataset.sheetBack = "1";
 btnBack?.addEventListener("click", () => {
   if (handleSheetBack()) return;
-  location.href = getBackLink();
+  location.href = backHref("subscriptions");
 });
-btnManual?.addEventListener("click", () => { location.href = buildManualUrl(); });
+btnManual?.addEventListener("click", () => { location.href = linkTo("manual", { hash: "subscriptions" }); });
 
 document.addEventListener("DOMContentLoaded", async () => {
   await i18nReady;
   const user = await requireAuth("/login/");
   if (isGuestUser(user)) {
     document.querySelector('.topbar')?.classList.add('topbar-ready');
-    showGuestBlockedOverlay({ backHref: "/games/", loginHref: "/login/?force_auth=1", showLoginButton: true });
+    showGuestBlockedOverlay({ backHref: backHref("subscriptions"), loginHref: "/login/?force_auth=1", showLoginButton: true });
     return;
   }
   initTopbarAccountDropdown(user);
@@ -993,10 +946,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   btnInviteOk?.addEventListener("click", () => invite(inviteInput?.value));
   inviteInput?.addEventListener("keydown", (e) => { if (e.key === "Enter") invite(inviteInput.value); });
 
-  updateBackButtonLabel();
+  renderBackLabel(btnBack, "subscriptions");
 
   window.addEventListener("i18n:lang", () => {
-    updateBackButtonLabel();
     setActiveTab(activeTab);
     renderSubscribers();
     renderInvites();
