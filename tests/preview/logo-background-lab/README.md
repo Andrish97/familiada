@@ -10,7 +10,8 @@ Pięć przykładowych obrazów jest widocznych jako klikalne kafelki na stronie.
 Pliki źródłowe SVG znajdują się w
 `web/settings/tools/logo-background-lab/samples/` i są osadzane w scalonym
 HTML podczas budowania. Przykłady sprawdzają białe tło, kremowe z cieniem,
-nierówne i ciemne tła oraz białe detale zamknięte wewnątrz znaku.
+nietypowe i ciemne tła, białe detale oraz celowo postrzępione krawędzie
+głównego obiektu.
 Nierówne i ciemne przykłady powinny zostać oznaczone jako niespełniające
 prostych kryteriów. Jasne elementy odcięte od krawędzi pokazują zaletę
 usuwania obszaru połączonego z brzegiem.

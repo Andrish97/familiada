@@ -11,6 +11,7 @@ const sampleFiles = {
   PATTERN: "patterned-background.svg",
   DARK: "dark-background.svg",
   WHITE_DETAIL: "white-details.svg",
+  ROUGH_EDGES: "rough-edges.svg",
 };
 let html = await fs.readFile(path.join(dir, "index.template.html"), "utf8");
 const app = await fs.readFile(path.join(dir, "background-removal.js"), "utf8");

@@ -21,7 +21,7 @@
     .sample-section { margin: 16px 0; }
     .sample-section h2 { margin: 0 0 4px; font-size: 1.05rem; }
     .sample-section > p { margin: 0 0 10px; color: #b9bbc6; font-size: .88rem; }
-    .sample-gallery { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; }
+    .sample-gallery { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
     .sample-card { display: grid; grid-template-rows: auto 1fr; gap: 8px; min-width: 0; padding: 7px; text-align: left; border: 1px solid #343641; border-radius: 11px; background: #191a20; color: #f8f4e8; }
     .sample-card:hover, .sample-card[aria-pressed="true"] { border-color: #ffcc00; background: #222127; }
     .sample-card img { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 6px; background: #282a31; }
@@ -75,6 +75,7 @@
         <button class="sample-card" type="button" data-sample="pattern" aria-pressed="false"><img src="__SAMPLE_PATTERN__" alt=""><span class="sample-copy"><strong>Wzorzyste tło</strong><small>Różne kolory przy brzegach</small><em>Nie spełnia kryteriów</em></span></button>
         <button class="sample-card" type="button" data-sample="dark" aria-pressed="false"><img src="__SAMPLE_DARK__" alt=""><span class="sample-copy"><strong>Ciemne tło</strong><small>Nierówne, ciemne kolory</small><em>Nie spełnia kryteriów</em></span></button>
         <button class="sample-card" type="button" data-sample="white-detail" aria-pressed="false"><img src="__SAMPLE_WHITE_DETAIL__" alt=""><span class="sample-copy"><strong>Białe detale logo</strong><small>Jasny element wewnątrz znaku</small><em>Test zachowania detali</em></span></button>
+        <button class="sample-card" type="button" data-sample="rough-edges" aria-pressed="false"><img src="__SAMPLE_ROUGH_EDGES__" alt=""><span class="sample-copy"><strong>Postrzępiona krawędź</strong><small>Nierówne brzegi głównego obiektu</small><em>Test zachowania konturu</em></span></button>
       </div>
     </section>
 
