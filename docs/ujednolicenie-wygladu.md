@@ -279,3 +279,23 @@ tiles”). Pozostałe pola komunikatów istnieją. Implementacja: `shared/js/cor
   `.tile` (base.css) dla gier, baz i rynku; sortowanie list gier i baz
   (`?sort=created|name`, domyślnie ostatnio zmienione); ankieta bez dolnego paska.
   Liczba pytań w bazie: brak w danych listy — bez sortowania po niej.
+
+## Decyzje do raportu wzorców (E18, 2026-10-09)
+
+Odpowiedzi na sekcję D w [`wzorce-ui.md`](wzorce-ui.md):
+
+1. **Konto** — tytuł `USTAWIENIA KONTA` w topbarze, bez `.bar`. Tak.
+2. **Społeczność** — obecny wygląd się nie podoba, ale nie ma jeszcze pomysłu
+   na lepszy. **Nie ruszamy** (poprawki C2/C4/C10 bez Społeczności) do czasu
+   nowego pomysłu.
+3. **Przyciski na telefonie** — bez skrótów: pełne słowa albo sama ikona,
+   jeśli jest jednoznaczna (bez podpisu).
+4. **`.btn.danger`** — czerwony obrys w całej aplikacji. Na telefonie
+   przyciski niebezpieczne **nie mogą być w dolnym pasku** (zostają w pasku
+   stanu u góry / przy elemencie).
+5. **Control** — po refaktorze ma własny, dobry styl; zostaje poza wzorcem
+   (kroki, sekcja 2, przyciski `.c2-btn`). Wyjątek: okno QR (pkt 6).
+6. **Okno QR** — `.uni-modal`, także w Control. Osobno: **wygląd samej sekcji
+   „Link” (QR) w ankiecie** do poprawy.
+7. **Instrukcja** — pigułki zostają, tylko adres `?tab=`. Tak.
+8. **Tokeny odstępów** w `base.css`. Tak.
