@@ -101,6 +101,7 @@ test("logo Hosta: zapis w Ustawieniach rozgrywki i podgląd zapisanego wariantu 
     // A fresh settings load must restore the selected option, not just the
     // in-memory preview state.
     await page.reload({ waitUntil: "domcontentloaded" });
+    await expect(page.locator("#gsTeamA")).toBeVisible({ timeout: 15_000 });
     await page.locator('.gs-sidebar-item[data-cat="display"]').click();
     await expect(page.locator('input[name="gsHostLogoMode"][value="source"]')).toBeChecked();
 
