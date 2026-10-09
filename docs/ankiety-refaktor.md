@@ -29,23 +29,26 @@ Stan faktyczny sprawdzony w kodzie 2026-10-07 (opis niżej, sekcja 4).
 - **2026-10-09 — zamknięcie i podliczenie to dwa osobne kroki; karty
   Udostępnianie · Wyniki** (zastępuje wcześniejsze pomysły z tego dnia:
   karta „Zamykanie”, wstrzymanie zależne od blokady, stan „do zatwierdzenia”).
-  - **Zamknij** = koniec głosowania, nic więcej. Stan **ZAMKNIĘTA** —
+  - **Zatrzymaj** (dawniej „Zamknij”) = koniec głosowania, nic więcej.
+    Stan **ZATRZYMANA** —
     trwały, nic samo się nie wznawia; głosujący widzi „Głosowanie
     zakończone”, głos odrzuca baza. Żaden głos nie ginie.
-  - **Podlicz głosy** = osobny krok na zamkniętej ankiecie: ankieta
+  - **Podlicz głosy** = osobny krok na zatrzymanej ankiecie: ankieta
     tekstowa — scalanie/poprawianie odpowiedzi (Cofnij/Ponów, poprawki
     zapisywane w bazie, można wyjść i wrócić) i „Zatwierdź”; ankieta
     punktowa — podliczenie bez poprawiania. Po podliczeniu gra **GOTOWA**.
-  - **Wznów głosowanie** — na zamkniętej, jeszcze niepodliczonej ankiecie:
+  - **Przerwij** zostaje (cofa do szkicu i kasuje głosy) — różni się od
+    Zatrzymaj tym, że głosy znikają.
+  - **Wznów głosowanie** — na zatrzymanej, jeszcze niepodliczonej ankiecie:
     → OTWARTA, ten sam link, głosy zostają.
   - **Karty tylko dwie: Udostępnianie · Wyniki.** Wyniki są uniwersalne:
-    na żywo (otwarta), surowe (zamknięta), w trybie podliczania (ankieta
+    na żywo (otwarta), surowe (zatrzymana), w trybie podliczania (ankieta
     tekstowa), ostateczne (gotowa). Wszystkie akcje na pasku stanu:
-    Uruchom, Zamknij, Przerwij, Wznów głosowanie, Podlicz głosy,
-    Uruchom ponownie. Po „Zamknij” strona sama przechodzi na Wyniki.
+    Uruchom, Zatrzymaj, Przerwij, Wznów głosowanie, Podlicz głosy,
+    Uruchom ponownie. Po „Zatrzymaj” strona sama przechodzi na Wyniki.
   - **Kafle gier** (`/games/`, przejmuje rolę dawnego huba): stan słowem +
-    plakietka — otwarta: liczba głosów („12 głosów”); zamknięta
-    niepodliczona: wyróżniona „do podliczenia”.
+    plakietka — OTWARTA: liczba głosów („12 głosów”); ZATRZYMANA
+    (niepodliczona): wyróżniona „do podliczenia”; po podliczeniu GOTOWA.
 
 ## 2. Co gdzie po zmianie
 
