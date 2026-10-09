@@ -6,21 +6,21 @@
 //   B. Karty Udostępnianie · Wyniki. Wyniki są jedne dla wszystkich stanów:
 //      na żywo, zatrzymane (surowe), podliczanie (poll-tally.js), ostateczne.
 // Stany gry: draft -> poll_open <-> poll_stopped -> ready (migracja 315).
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T08442";
-import { requireAuth } from "../../shared/js/core/auth.js?v=v2026-10-09T08442";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-09T08442";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T11113";
+import { requireAuth } from "../../shared/js/core/auth.js?v=v2026-10-09T11113";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-09T11113";
 import QRCode from "https://cdn.jsdelivr.net/npm/qrcode@1.5.3/+esm";
-import { initI18n, t, withLangParam, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-09T08442";
-import { linkTo, backHref, renderBackLabel } from "../../shared/js/core/nav-map.js?v=v2026-10-09T08442";
-import { initTopbarAccountDropdown } from "../../shared/js/core/topbar-controller.js?v=v2026-10-09T08442";
-import { guardResourceLock } from "../../shared/js/core/resource-lock.js?v=v2026-10-09T08442";
-import { validateGame, gameRuleErrorMessage, guardGameState } from "../../shared/js/core/game-validate.js?v=v2026-10-09T08442";
-import { mailCooldownCheck } from "../../shared/js/core/cooldown.js?v=v2026-10-09T08442";
-import { sendPollInviteMails } from "../../shared/js/core/poll-mail.js?v=v2026-10-09T08442";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-09T08442";
-import { createPollResults } from "../../shared/js/core/poll-results.js?v=v2026-10-09T08442";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-09T08442";
-import { createTally } from "./poll-tally.js?v=v2026-10-09T08442";
+import { initI18n, t, withLangParam, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-09T11113";
+import { linkTo, backHref, renderBackLabel } from "../../shared/js/core/nav-map.js?v=v2026-10-09T11113";
+import { initTopbarAccountDropdown } from "../../shared/js/core/topbar-controller.js?v=v2026-10-09T11113";
+import { guardResourceLock } from "../../shared/js/core/resource-lock.js?v=v2026-10-09T11113";
+import { validateGame, gameRuleErrorMessage, guardGameState } from "../../shared/js/core/game-validate.js?v=v2026-10-09T11113";
+import { mailCooldownCheck } from "../../shared/js/core/cooldown.js?v=v2026-10-09T11113";
+import { sendPollInviteMails } from "../../shared/js/core/poll-mail.js?v=v2026-10-09T11113";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-09T11113";
+import { createPollResults } from "../../shared/js/core/poll-results.js?v=v2026-10-09T11113";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-09T11113";
+import { createTally } from "./poll-tally.js?v=v2026-10-09T11113";
 
 // initI18n is called at the start of DOMContentLoaded (see below)
 
@@ -108,17 +108,6 @@ let votesText = ""; // „12 głosów” w pasku stanu (ankieta otwarta)
 let tallyActive = false; // karta Wyniki w trybie podliczania
 let tallyValid = false;
 
-const backTarget = withLangParam(new URL(ret || "/games/", location.origin + "/").href);
-
-function buildManualUrl() {
-  const url = new URL("/manual/", location.href);
-  const current = `${location.pathname}${location.search}${location.hash}`;
-  url.searchParams.set("ret", current);
-  const lang = (new URLSearchParams(location.search).get("lang") || localStorage.getItem("uiLang") || "pl");
-  url.searchParams.set("lang", lang);
-  url.hash = "polls";
-  return url.toString();
-}
 
 const TYPES = {
   POLL_TEXT: "poll_text",
