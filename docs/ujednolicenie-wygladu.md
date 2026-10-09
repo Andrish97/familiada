@@ -338,9 +338,12 @@ urządzenia.
 **Cel subskrypcji (wyjaśnienie użytkownika 2026-10-09):** subskrypcje są po
 to, żeby mieć **stałą pulę ludzi do głosowania w ankietach** — wysyłasz
 zaproszenie, oni akceptują (zgodzili się, więc chętnie zagłosują, to kilka
-minut), potem masz ich pod ręką i udostępniasz im ankiety. Wniosek do
-potwierdzenia: subskrybenci tylko w ankietach; bazy i urządzenia — tylko
-mailem / nazwą (pkt 7), bez listy subskrybentów.
+minut), potem masz ich pod ręką i udostępniasz im ankiety. **Dodatkowo**
+subskrypcje zarejestrowanych użytkowników działają jak **znajomości**: gdy
+razem organizujecie grę, możesz takiej osobie szybko wysłać bazę albo
+urządzenie (szybkie podłączenie). Stąd kanały z pkt 6 zostają: ankiety —
+wszyscy subskrybenci (także bez konta); bazy i urządzenia — mail / nazwa
+**oraz** szybki wybór z subskrybentów z kontem.
 
 7. **Konto odbiorcy przy udostępnianiu mailem** (decyzja 2026-10-09):
    - **bazy** — e-mail / nazwa **musi należeć do konta** (tak jest dziś:
