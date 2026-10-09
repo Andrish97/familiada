@@ -5,24 +5,23 @@ import { addRenameGesture } from "../../shared/js/core/rename-gesture.js?v=v2026
 
 import { sb, SUPABASE_URL } from "../../shared/js/core/supabase.js?v=v2026-10-09T21300";
 import { ROW_GONE } from "../../shared/js/core/db-guard.js?v=v2026-10-09T21300";
-import { requireAuth } from "../../shared/js/core/auth.js?v=v2026-10-09T21300";
 import { acquireResourceLock, getTabId } from "../../shared/js/core/resource-lock.js?v=v2026-10-09T21300";
 import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-09T21300";
 import { isGuestUser, hideForGuest } from "../../shared/js/core/guest-mode.js?v=v2026-10-09T21300";
 import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-09T21300";
 import { getUiLang, initI18n, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-09T21300";
-import { linkTo, backHref, renderBackLabel } from "../../shared/js/core/nav-map.js?v=v2026-10-09T21300";
-import { initTopbarAccountDropdown } from "../../shared/js/core/topbar-controller.js?v=v2026-10-09T21300";
-import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-09T21300";
+import { linkTo } from "../../shared/js/core/nav-map.js?v=v2026-10-09T21300";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-09T21300";
+import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-09T21300";
 import "../../shared/js/core/contact-modal.js?v=v2026-10-09T21300";
 import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-09T21300";
 import { createCooldownTicker, formatCooldownRemaining } from "../../shared/js/core/cooldown.js?v=v2026-10-09T21300";
 import { renderShareSections } from "../../shared/js/core/share-sections.js?v=v2026-10-09T21300";
 import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-09T21300";
 import { SORT_LIST } from "../../shared/js/core/list-filter.js?v=v2026-10-09T21300";
-initI18n({ withSwitcher: true }).then(() => {
+const i18nReady = initI18n({ withSwitcher: true });
+i18nReady.then(() => {
   document.documentElement.classList.remove('page-loading');
-  renderBackLabel(document.getElementById("btnBack"), "bases");
   // Moje/udostępnione to zakładki — filtr po roli (własna / edycja / odczyt).
   initListSearch({
     grids: "#mineGrid, #sharedGrid", tile: ".card", name: ".name",
@@ -49,7 +48,6 @@ const who = document.getElementById("who");
 const hint = document.getElementById("hint");
 
 const btnBack = document.getElementById("btnBack");
-const btnManual = document.getElementById("btnManual");
 const btnLogout = document.getElementById("btnLogout");
 const btnBrowse = document.getElementById("btnBrowse");
 const btnShare = document.getElementById("btnShare");
@@ -1562,20 +1560,6 @@ document.addEventListener("DOMContentLoaded", () => {
     location.href = linkTo("subscriptions");
   });
 
-  // Znacznik dla contact-modal.js (współdzielony przez wiele stron poza
-  // zakresem sheet mode) -- pozwala mu znaleźć WYŁĄCZNIE przyciski, których
-  // handler faktycznie respektuje handleSheetBack(), zamiast każdego
-  // #btnBack na jakiejkolwiek stronie w aplikacji.
-  if (btnBack) btnBack.dataset.sheetBack = "1";
-  btnBack?.addEventListener("click", () => {
-    if (handleSheetBack()) return;
-    location.href = backHref("bases");
-  });
-
-  btnManual?.addEventListener("click", () => {
-    location.href = linkTo("manual", { hash: "bases" });
-  });
-
   btnBrowse?.addEventListener("click", () => {
     const b = selectedBase();
     if (!b) return;
@@ -1778,7 +1762,7 @@ function initFileLaunch() {
 }
 
 (async function init() {
-  currentUser = await requireAuth("/login/");
+  currentUser = await initPage("bases", { ready: i18nReady });
   if (!currentUser) return;
   guestMode = isGuestUser(currentUser);
   if (guestMode) {
@@ -1786,8 +1770,6 @@ function initFileLaunch() {
     hideForGuest(currentUser, [btnGoAlt, btnShare, basesSectionShared]);
     tabBasesShared?.closest(".tab-slot")?.remove();
   }
-  initTopbarAccountDropdown(currentUser);
-  document.querySelector('.topbar')?.classList.add('topbar-ready');
 
   setActiveTab(tabFromUrl(), { remember: false, updateUrl: false });
   tabBasesMine?.addEventListener("click", () => setActiveTab("mine"));

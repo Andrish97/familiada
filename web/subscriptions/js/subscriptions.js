@@ -1,15 +1,14 @@
 import { sb, SUPABASE_URL } from "../../shared/js/core/supabase.js?v=v2026-10-09T21300";
-import { requireAuth, signOut } from "../../shared/js/core/auth.js?v=v2026-10-09T21300";
-import { isGuestUser, showGuestBlockedOverlay } from "../../shared/js/core/guest-mode.js?v=v2026-10-09T21300";
+import { signOut } from "../../shared/js/core/auth.js?v=v2026-10-09T21300";
 import { toast } from "../../shared/js/core/toast.js?v=v2026-10-09T21300";
 import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-09T21300";
 import { getUiLang, initI18n, t } from "../../shared/translation/translation.js?v=v2026-10-09T21300";
-import { linkTo, backHref, renderBackLabel } from "../../shared/js/core/nav-map.js?v=v2026-10-09T21300";
-import { initTopbarAccountDropdown } from "../../shared/js/core/topbar-controller.js?v=v2026-10-09T21300";
+import { linkTo } from "../../shared/js/core/nav-map.js?v=v2026-10-09T21300";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-09T21300";
 import "../../shared/js/core/contact-modal.js?v=v2026-10-09T21300";
 import { icon } from "../../shared/js/core/icons.js?v=v2026-10-09T21300";
 import { createCooldownTicker } from "../../shared/js/core/cooldown.js?v=v2026-10-09T21300";
-import { enterModalSheet, exitModalSheet, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-09T21300";
+import { enterModalSheet, exitModalSheet } from "../../shared/js/core/modal-sheet.js?v=v2026-10-09T21300";
 import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-09T21300";
 import { renderShareSections } from "../../shared/js/core/share-sections.js?v=v2026-10-09T21300";
 import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-09T21300";
@@ -35,7 +34,6 @@ let subTokenPrompted = false;
 
 const who = $("who");
 const btnBack = $("btnBackToGames");
-const btnManual = $("btnManual");
 const hintEl = $("hint");
 
 const TABS = ["subscribers", "subscriptions", "tasks"];
@@ -924,25 +922,10 @@ async function refreshData() {
 }
 
 
-// Navigation is usable while authentication and lists are still loading.
-// Znacznik dla contact-modal.js: ten przycisk respektuje handleSheetBack().
-if (btnBack) btnBack.dataset.sheetBack = "1";
-btnBack?.addEventListener("click", () => {
-  if (handleSheetBack()) return;
-  location.href = backHref("subscriptions");
-});
-btnManual?.addEventListener("click", () => { location.href = linkTo("manual", { hash: "subscriptions" }); });
-
 document.addEventListener("DOMContentLoaded", async () => {
-  await i18nReady;
-  const user = await requireAuth("/login/");
-  if (isGuestUser(user)) {
-    document.querySelector('.topbar')?.classList.add('topbar-ready');
-    showGuestBlockedOverlay({ backHref: backHref("subscriptions"), loginHref: "/login/?force_auth=1", showLoginButton: true });
-    return;
-  }
-  initTopbarAccountDropdown(user);
-  document.querySelector('.topbar')?.classList.add('topbar-ready');
+  // Dostęp (tylko konto — gość widzi nakładkę), „Wstecz”, „Wskazówki”, konto.
+  const user = await initPage("subscriptions", { ready: i18nReady, back: btnBack });
+  if (!user) return;
 
   initViewControls();
   initListSearch({ grids: "#subscribersGrid, #subscriptionsGrid, #tasksGrid", tile: ".card, .shareRow", name: ".name, .shareEmail" });
@@ -975,8 +958,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   $("btnInviteCancel")?.addEventListener("click", closeInviteModal);
   btnInviteOk?.addEventListener("click", () => invite(inviteInput?.value));
   inviteInput?.addEventListener("keydown", (e) => { if (e.key === "Enter") invite(inviteInput.value); });
-
-  renderBackLabel(btnBack, "subscriptions");
 
   window.addEventListener("i18n:lang", () => {
     setActiveTab(activeTab);
