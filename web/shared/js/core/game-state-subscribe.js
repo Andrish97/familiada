@@ -16,10 +16,10 @@
 // na starym stanie na zawsze" to brak JAKIEJKOLWIEK kolejnej zmiany w grze,
 // co i tak nie ma znaczenia (nic nowego do pokazania).
 
-import { sb } from "./supabase.js?v=v2026-10-09T06383";
-import { rt } from "./realtime.js?v=v2026-10-09T06383";
-import { doorbellTopic } from "./game-state-doorbell.js?v=v2026-10-09T06383";
-import { createRowSync } from "./game-state-sync.js?v=v2026-10-09T06383";
+import { sb } from "./supabase.js?v=v2026-10-09T08064";
+import { rt } from "./realtime.js?v=v2026-10-09T08064";
+import { doorbellTopic } from "./game-state-doorbell.js?v=v2026-10-09T08064";
+import { createRowSync } from "./game-state-sync.js?v=v2026-10-09T08064";
 
 export function createSubscription({ gameId, deviceType, key, onRow, onError, onBroadcast = {}, pollMs = 5000, sameRevChanged = null }) {
   // Limit czasu: zawieszone żądanie trzymało `fetching` na zawsze i wszystkie
