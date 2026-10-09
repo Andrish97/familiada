@@ -19,6 +19,7 @@ import { initI18n, t } from "../../../shared/translation/translation.js?v=v2026-
 import { linkTo, backHref, backLabel } from "../../../shared/js/core/nav-map.js?v=v2026-10-09T22271";
 import "../../../shared/js/core/contact-modal.js?v=v2026-10-09T22271";
 import { icon, iconText } from "../../../shared/js/core/icons.js?v=v2026-10-09T22271";
+import { questionFromSearch, questionHref } from "./question-url.js?v=v2026-10-09T22271";
 // initI18n + remove('page-loading') są w boot() — przed requireAuth, żeby body pojawiło się przed auth/danymi
 
 const MSG = {
@@ -523,6 +524,8 @@ async function boot() {
     saveQuestionDebounced.flush();
     activeQId = id;
     answers = [];
+    const href = questionHref(location.href, id);
+    if (href !== location.pathname + location.search + location.hash) history.replaceState(history.state, "", href);
     markActiveCard();
     renderEditor();
 
@@ -589,7 +592,8 @@ async function boot() {
   });
 
   function defaultActiveQuestionId() {
-    return isMobileLayout() ? null : (questions[0]?.id || null);
+    return questionFromSearch(location.search, questions)
+      || (isMobileLayout() ? null : (questions[0]?.id || null));
   }
 
   // pickActive: funkcja wybierająca aktywne pytanie po wczytaniu (null =
