@@ -46,8 +46,8 @@ utracie kontekstu wystarczy przeczytać ten plik i wskazaną sekcję źródła.
 | 6a | E15 | **Poprawki zgłoszone 2026-10-08:** a) nowa strona `/polls/` — układ przycisków się rozjeżdża (sprawdzić dokładnie desktop i telefon, wszystkie stany ankiety); c) zamknięcie i podliczenie jako osobne kroki, karty Udostępnianie · Wyniki (uniwersalne), plakietki na kaflach gier: liczba głosów / „do podliczenia” (ankiety-refaktor.md, decyzja 2026-10-09); d) tytuł strony w topbarze widoczny też na telefonie (dziś sekcja 2 ukryta) — ankieta, edytory, menedżer bazy, ustawienia gry; b) stopka w manualu przykleja się do tekstu, gdy treść jest krótsza niż ekran (regresja z E10/E11 — stopka ma być na dole strony) | ujednolicenie-wygladu.md | zrobione (e2e main 2026-10-09; tytuł na telefonie także w edytorach) |
 | 7 | E4 | `nav-map.js` (`PAGES`, `linkTo`, `backHref`), `ret`, gość na `/` → `/games/` | nawigacja 6.2–6.3 | zrobione (e2e main 2026-10-09) |
 | 8 | E5 | Adresy a) `/go/` b) ankiety c) gry d) urządzenia + `/connect/` e) bazy, logo f) logowanie | nawigacja 8 | na `main` (migracja 319), e2e w toku |
-| 9 | E6 | `initPage()`, wspólny overlay gość/urządzenie | nawigacja 6.4 | na branchu → `main` po e2e E18, e2e w toku |
-| 10 | E7 | Bez stron modalnych: edytor `?q=`, ustawienia gry z autozapisem, manual/privacy bez `?modal=` | nawigacja 6.5 | do zrobienia |
+| 9 | E6 | `initPage()`, wspólny overlay gość/urządzenie | nawigacja 6.4 | na `main` (`b00f8dc`), e2e w toku |
+| 10 | E7 | Bez stron modalnych: edytor `?q=`, ustawienia gry z autozapisem, manual/privacy bez `?modal=` | nawigacja 6.5 | w toku (agent, worktree) |
 | 11 | E8 | Jeden moduł kart `?tab=`, stan eksploratora | nawigacja 6.6 | do zrobienia |
 | 12 | E9 | Przyciski i `locks` w `PAGES`, diagramy 6 map, e2e map | nawigacja 6.7 | do zrobienia |
 | 12b | E16 | **Komunikaty po akcji:** spis, co każda strona wysyłała do pola komunikatu (tabela w źródle) → wspólny dymek `toast()` zamiast usuniętych pól, tylko gdzie efekt nie jest oczywisty (decyzja 2026-10-09) | ujednolicenie-wygladu.md „Komunikaty po akcji” | na `main`, e2e w toku |
