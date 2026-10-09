@@ -92,3 +92,27 @@ test("manual: treść i etykieta zakładek istnieją w PL/EN/UK", async ({ page 
     await expect(page.locator("#tab-general .m-p").first()).not.toBeEmpty();
   }
 });
+
+test("manual: Host logo jest opisane w Control i Ustawieniach rozgrywki w PL/EN/UK", async ({ page }) => {
+  const cases = [
+    { lang: "pl", control: "Logo prowadzącego", settings: "Przełącznik Logo prowadzącego", source: "Źródło" },
+    { lang: "en", control: "Host logo", settings: "The Host logo selector", source: "Source" },
+    { lang: "uk", control: "Логотип ведучого", settings: "Перемикач Логотип ведучого", source: "Джерело" },
+  ];
+
+  for (const item of cases) {
+    await page.goto(`${ORIGIN}/manual?modal=control&lang=${item.lang}`, { waitUntil: "domcontentloaded" });
+    await page.locator('[data-tab="control"][role="tab"]').click();
+    const control = page.locator("#tab-control .m-doc");
+    await expect(control).toContainText(item.control);
+    await expect(control).toContainText(item.source);
+    await expect(control.locator(".m-ul .m-strong").filter({ hasText: item.control })).toBeVisible();
+
+    await page.locator('[data-tab="gameSettings"][role="tab"]').click();
+    const settings = page.locator("#tab-gameSettings .m-doc");
+    await expect(settings).toContainText(item.settings);
+    await expect(settings).toContainText(item.source);
+    await expect(settings.locator(".m-strong").filter({ hasText: item.control })).toBeVisible();
+    await expect(settings.locator(".m-p").filter({ hasText: /preview|Podgląd|перегляд/i }).first()).toBeVisible();
+  }
+});

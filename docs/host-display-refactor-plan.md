@@ -312,6 +312,19 @@ wariant.
   rozgrywki oraz aktualizację wariantu źródłowego po zmianie DOT.
 - Sprawdzić, że podglądy Wyświetlacza i Hosta (iframe) są obok siebie i
   mieszczą się w ustawieniach na typowych szerokościach okna.
+- **Manual jest częścią odbioru zmian.** Zaktualizować wyłącznie sekcje Panelu
+  sterowania i Ustawień rozgrywki w PL/EN/UK. Opisać warianty Piksele/Źródło,
+  ich różnicę, podgląd Hosta obok Wyświetlacza w ustawieniach oraz wybrany
+  wariant i podgląd w Podsumowaniu Control. Zachować istniejące klasy,
+  typografię, notki i sposób oznaczania przycisków; nie zmieniać innych sekcji.
+- **Sprawdzić wyrenderowany manual** w PL/EN/UK: obie właściwe zakładki mają
+  widoczny, poprawnie wystylowany opis, bez kluczy tłumaczeń, pustych ikon ani
+  rozjechanych elementów. Test ma wejść w zakładki Panel sterowania i Ustawienia
+  rozgrywki, a nie tylko wyszukiwać tekst w plikach językowych.
+- **Sprawdzić pełny przepływ ustawienia:** w Ustawieniach rozgrywki przełączyć
+  Piksele/Źródło, potwierdzić aktualizację podglądu i zapis do gry; następnie
+  otworzyć tę grę w Control, potwierdzić odczyt zapisanego wariantu oraz działanie
+  podglądu Hosta obok Wyświetlacza w Podsumowaniu.
 
 ## Kryteria zakończenia
 

@@ -1961,6 +1961,7 @@ const en = {
 <li><span class="m-strong">Colours</span> — teams, background and dots.</li>
 <li><span class="m-strong">Theme</span> — board appearance.</li>
 <li><span class="m-strong">Logo</span> — shown during play.</li>
+<li><span class="m-strong">Host logo</span> — choose Pixels or Source and check the Host preview beside the Display preview.</li>
 </ul>
 <h4 class="m-h3">Sound</h4>
 <ul class="m-ul">
@@ -2227,6 +2228,7 @@ const en = {
 <p class="m-p">Choose the visual theme for the whole Display. <span class="m-strong">Classic</span> is the default.</p>
 <h4 class="m-h3">Logo</h4>
 <p class="m-p">Choose your own logo under <span class="m-strong">Logo</span>. <span class="m-strong">Default</span> means Familiada&#39;s logo; <span class="m-strong">No logo</span> means no custom mark. The chosen logo appears at the opening; its ending appearance depends on the configured ending screen. Game settings previews unsaved edits, whereas the panel Summary uses saved settings.</p>
+<p class="m-p">The <span class="m-strong">Host logo</span> selector chooses how it appears: <span class="m-strong">Pixels</span> keeps the existing look, while <span class="m-strong">Source</span> renders the saved image, drawing or text. The Host preview sits beside the Display preview; the selected variant also appears in the Control panel Summary.</p>
 <p class="m-p"><span class="m-code">Restore defaults</span> in Appearance resets colours, theme and logo.</p>
 <h3 class="m-h2">Sound</h3>
 <p class="m-p">Each game sound category has separate settings, including <span class="m-strong">Correct answer</span>, <span class="m-strong">Wrong answer</span>, <span class="m-strong">Intro</span>, <span class="m-strong">Round transition</span>, <span class="m-strong">Show outro music</span> and <span class="m-strong">Reveal</span>.</p>

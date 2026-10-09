@@ -1978,6 +1978,7 @@ const pl = {
 <li><span class="m-strong">Kolory</span> — kolory drużyn, tła i kropek.</li>
 <li><span class="m-strong">Motyw</span> — styl wizualny tablicy.</li>
 <li><span class="m-strong">Logo</span> — logo wyświetlane w trakcie rozgrywki.</li>
+<li><span class="m-strong">Logo prowadzącego</span> — wybór między wariantem Piksele i Źródło; obok podglądu Wyświetlacza możesz sprawdzić podgląd prowadzącego.</li>
 </ul>
 <h4 class="m-h3">Dźwięk</h4>
 <ul class="m-ul">
@@ -2244,6 +2245,7 @@ const pl = {
 <p class="m-p">Wybierz motyw wizualny tablicy. Motyw wpływa na styl graficzny całego wyświetlacza. Domyślny motyw to <span class="m-strong">Klasyczny</span>.</p>
 <h4 class="m-h3">Logo</h4>
 <p class="m-p">Jeśli masz własne logo, wybierz je w sekcji „Logo”. Wybór „Domyślne” oznacza logo Familiady, a „Bez logo” rezygnację z własnego znaku. Wybrane logo pojawia się na początku gry; na końcu zależy od ustawionego trybu ekranu końcowego. Podgląd w Ustawieniach rozgrywki pokazuje edytowane wartości przed zapisem. Podsumowanie w Panelu sterowania korzysta z zapisanych ustawień.</p>
+<p class="m-p">Przełącznik <span class="m-strong">Logo prowadzącego</span> wybiera sposób jego wyświetlania: <span class="m-strong">Piksele</span> zachowują dotychczasowy wygląd, a <span class="m-strong">Źródło</span> renderuje zapisany obraz, rysunek lub napis. Podgląd prowadzącego znajduje się obok podglądu Wyświetlacza; wybrany wariant zobaczysz też w Podsumowaniu Panelu sterowania.</p>
 <p class="m-p">Przycisk <span class="m-code">Przywróć domyślne</span> w sekcji Wygląd resetuje kolory, motyw i logo do wartości domyślnych.</p>
 <h3 class="m-h2">Dźwięk</h3>
 <p class="m-p">W tej sekcji konfigurujesz dźwięki używane podczas rozgrywki. Każda kategoria dźwiękowa (np. <span class="m-strong">Poprawna odpowiedź</span>, <span class="m-strong">Błędna odpowiedź</span>, <span class="m-strong">Intro</span>, <span class="m-strong">Przejście rundy</span>, <span class="m-strong">Muzyka outro programu</span>, <span class="m-strong">Odsłanianie</span>) ma własne ustawienia.</p>
