@@ -10,14 +10,14 @@
 // autorytatywny wiersz już to wie), błąd sieci (przycisk wraca do ON,
 // można spróbować ponownie).
 
-import { initI18n, setUiLang } from "../../shared/translation/translation.js?v=v2026-10-09T06383";
-import { startKeepAlive } from "../../shared/js/core/keep-alive.js?v=v2026-10-09T06383";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T06383";
-import { createSubscription } from "../../shared/js/core/game-state-subscribe.js?v=v2026-10-09T06383";
-import { createButtonRenderer, isLockedRow } from "./render.js?v=v2026-10-09T06383";
-import { ringDoorbell } from "../../shared/js/core/game-state-doorbell.js?v=v2026-10-09T06383";
-import { createPressController } from "./press.js?v=v2026-10-09T06383";
-import { icon } from "../../shared/js/core/icons.js?v=v2026-10-09T06383";
+import { initI18n, setUiLang } from "../../shared/translation/translation.js?v=v2026-10-09T08064";
+import { startKeepAlive } from "../../shared/js/core/keep-alive.js?v=v2026-10-09T08064";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T08064";
+import { createSubscription } from "../../shared/js/core/game-state-subscribe.js?v=v2026-10-09T08064";
+import { createButtonRenderer, isLockedRow } from "./render.js?v=v2026-10-09T08064";
+import { ringDoorbell } from "../../shared/js/core/game-state-doorbell.js?v=v2026-10-09T08064";
+import { createPressController } from "./press.js?v=v2026-10-09T08064";
+import { icon } from "../../shared/js/core/icons.js?v=v2026-10-09T08064";
 
 // Tak samo jak Wyświetlacz i Prowadzący, strona utrzymuje ekran aktywny.
 startKeepAlive();
@@ -166,6 +166,10 @@ async function main() {
 
   const subscription = createSubscription({
     gameId, deviceType: "buzzer", key,
+    // game_state_set_lock przesuwa locked_until bez podbicia rev i bez
+    // dzwonka — bez tego Buzzer odblokowywał się wg starszej blokady, a
+    // odrzucone naciśnięcie ("locked") nie dociągało nowszej.
+    sameRevChanged: (prev, next) => prev.locked_until !== next.locked_until,
     onRow: (row) => {
       // Język idzie za operatorem w Control — patrz display/js/main.js.
       const lang = row.detail?.settings?.uiLang;

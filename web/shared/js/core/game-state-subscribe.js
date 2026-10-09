@@ -16,56 +16,37 @@
 // na starym stanie na zawsze" to brak JAKIEJKOLWIEK kolejnej zmiany w grze,
 // co i tak nie ma znaczenia (nic nowego do pokazania).
 
-import { sb } from "./supabase.js?v=v2026-10-09T06383";
-import { rt } from "./realtime.js?v=v2026-10-09T06383";
-import { doorbellTopic } from "./game-state-doorbell.js?v=v2026-10-09T06383";
+import { sb } from "./supabase.js?v=v2026-10-09T08064";
+import { rt } from "./realtime.js?v=v2026-10-09T08064";
+import { doorbellTopic } from "./game-state-doorbell.js?v=v2026-10-09T08064";
+import { createRowSync } from "./game-state-sync.js?v=v2026-10-09T08064";
 
-export function createSubscription({ gameId, deviceType, key, onRow, onError, onBroadcast = {} }) {
-  let lastRev = -1;
-  let fetching = false;
-  let pendingRefetch = false;
-
-  async function fetchOnce() {
-    const { data, error } = await sb().rpc("game_state_get", {
+export function createSubscription({ gameId, deviceType, key, onRow, onError, onBroadcast = {}, pollMs = 5000, sameRevChanged = null }) {
+  // Limit czasu: zawieszone żądanie trzymało `fetching` na zawsze i wszystkie
+  // kolejne dzwonki tylko zaznaczały pendingRefetch (urządzenie zostawało na
+  // starym stanie). Szczegóły: game-state-sync.js.
+  const sync = createRowSync({
+    fetchRow: () => sb().rpc("game_state_get", {
       p_game_id: gameId,
       p_device_type: deviceType,
       p_key: key,
-    });
-    if (error) { onError?.(error); return; }
-    if (!data) return; // Control jeszcze nigdy nic nie zapisał dla tej gry
-    if (data.rev <= lastRev) return; // dzwonek spóźniony/zdublowany — nic nowego
-    lastRev = data.rev;
-    // await: display/js/render.js's renderSnapshot()/renderDiff() mają
-    // realne animacje trwające setki ms-kilka s (matrix down/right, ANIMOUT
-    // przed ANIMIN...) — bez tego await, `fetching` niżej wracał do false
-    // (i fetchGuarded() wpuszczał KOLEJNY dzwonek) ZANIM poprzedni render w
-    // ogóle skończył malować, więc dwa renderDiff() na tym samym płótnie SVG
-    // potrafiły się realnie nałożyć (zgłoszone: "lagi", "podwójny dźwięk
-    // przy odsłanianiu" — dwa nakładające się przebiegi renderDiff() to też
-    // dwa nakładające się wywołania soundReactor.js's handleTransition() dla
-    // RÓŻNYCH par prevRow/nextRow, więc ten sam SOUND_CUE mógł się odtworzyć
-    // z dwóch niezależnych, częściowo równoległych przebiegów). Dla
-    // urządzeń bez realnych animacji (buzzer2, host2) onRow zwraca
-    // undefined/rozwiązaną obietnicę — await na tym jest zerowym kosztem.
-    await onRow(data);
-  }
-
-  async function fetchGuarded() {
-    if (fetching) { pendingRefetch = true; return; }
-    fetching = true;
-    try {
-      await fetchOnce();
-    } finally {
-      fetching = false;
-      if (pendingRefetch) { pendingRefetch = false; fetchGuarded(); }
-    }
-  }
+    }).abortSignal(AbortSignal.timeout(8000)),
+    // await onRow: display/js/render.js's renderSnapshot()/renderDiff() mają
+    // realne animacje trwające setki ms-kilka s — kolejny odczyt nie może się
+    // z nimi nakładać (dwa renderDiff() na tym samym płótnie SVG, podwójny
+    // dźwięk przy odsłanianiu). Dla urządzeń bez animacji (buzzer, host)
+    // onRow zwraca od razu.
+    onRow,
+    onError,
+    sameRevChanged,
+  });
+  const fetchGuarded = sync.fetchGuarded;
 
   function subscribeDoorbell() {
     const channel = rt(doorbellTopic(gameId));
     channel.onBroadcast("rev", (msg) => {
       const rev = msg?.payload?.rev;
-      if (typeof rev === "number" && rev > lastRev) fetchGuarded();
+      if (typeof rev === "number" && rev > sync.lastRev) fetchGuarded();
     });
     for (const [event, handler] of Object.entries(onBroadcast)) {
       if (typeof handler === "function") channel.onBroadcast(event, handler);
@@ -103,6 +84,10 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
     });
     window.addEventListener("pageshow", resync);
     window.addEventListener("online", resync);
+
+    // Siatka bezpieczeństwa na zgubiony dzwonek (patrz game-state-sync.js):
+    // tani odczyt, który i tak jest no-opem, gdy rev się nie zmienił.
+    if (pollMs > 0) setInterval(() => { fetchGuarded(); }, pollMs);
   }
 
   // Dla Buzzera: game_state_buzzer_press zwraca już świeży wiersz w tej
@@ -110,11 +95,7 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
   // zobaczyć efekt własnego kliknięcia — ale trzeba to nakarmić do tego
   // samego licznika lastRev, żeby późniejszy (spóźniony) dzwonek z niższym
   // rev nie próbował go nadpisać wstecz.
-  function applyRow(row) {
-    if (!row || row.rev <= lastRev) return;
-    lastRev = row.rev;
-    onRow(row);
-  }
+  const applyRow = sync.applyRow;
 
   // Wywoływane wprost po błędzie already_pressed z game_state_buzzer_press —
   // ktoś inny właśnie wygrał, więc autorytatywny wiersz już to pokazuje;
