@@ -686,9 +686,20 @@ export function createUI({ root, emit }) {
       ? h("div", { class: "c2-gameplay-nav" }, nav)
       : h("div", { class: "c2-gameplay-nav c2-gameplay-nav-empty", "aria-hidden": "true" });
     const cardChildren = [];
-    if (question) {
-      const questionHeader = h("div", { class: "c2-stepper-question", text: question, title: question });
-      questionHeader.style.fontSize = question.length > 150 ? ".88rem" : question.length > 100 ? ".98rem" : "1.08rem";
+    {
+      // Każdy krok zachowuje ten sam górny slot (48 px), również wtedy, gdy
+      // zgodnie z projektem nie pokazujemy w nim pytania, np. przy wpisywaniu
+      // finału. Bez pustego slotu treść dostawała dodatkowe 48 px + odstęp,
+      // przez co kafle finału były wyższe niż w pozostałych krokach.
+      const questionHeader = h("div", {
+        class: `c2-stepper-question${question ? "" : " c2-stepper-empty"}`,
+        text: question || "",
+        title: question || "",
+        "aria-hidden": question ? undefined : "true",
+      });
+      if (question) {
+        questionHeader.style.fontSize = question.length > 150 ? ".88rem" : question.length > 100 ? ".98rem" : "1.08rem";
+      }
       cardChildren.push(h("div", { class: "c2-stepper" }, [questionHeader]));
     }
     cardChildren.push(
