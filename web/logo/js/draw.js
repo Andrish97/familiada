@@ -1111,7 +1111,7 @@ export function initDrawEditor(ctx) {
     btn[k].innerHTML = icon(name);
     btn[k].setAttribute("aria-label", t(`logoEditor.draw.tooltips.${k === "eye" ? "preview" : k}`).split("\n")[0]);
   }
-  for (const b of document.querySelectorAll(".editorToolbar .tbtn")) {
+  for (const b of document.querySelectorAll(".editorToolbar .btn")) {
     b.addEventListener("mouseenter", () => showTip(b));
     b.addEventListener("focus", () => showTip(b));
     b.addEventListener("mouseleave", hideTip);

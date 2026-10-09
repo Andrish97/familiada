@@ -178,12 +178,7 @@
 }
 /* przyciski stanu: jedna wysokość, tekst nie zawija się w środku przycisku */
 .pollBarActions .btn{ white-space: nowrap; flex: 0 0 auto; }
-/* Przerwij: stonowany, czerwony obrys (zawsze ostatni) */
-.btn.pollAbort{
-  border-color: rgba(255,110,110,.5);
-  color: rgba(255,255,255,.78);
-}
-.btn.pollAbort:hover:not(:disabled){ border-color: rgba(255,110,110,.85); color: #fff; }
+/* Przerwij: .btn.danger (czerwony obrys, base.css), zawsze ostatni */
 
 /* Telefon: bez dolnego paska — stan w pierwszym wierszu, przyciski pod nim
    (równej szerokości, zawijają się dopiero gdy nie mieszczą się w rzędzie). */

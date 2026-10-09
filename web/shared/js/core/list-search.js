@@ -45,7 +45,7 @@ export function initListSearch({ grids, tile, name, filter, sort }) {
   input.className = "searchText";
   const clear = document.createElement("button");
   clear.type = "button";
-  clear.className = "btn ghost";
+  clear.className = "btn";
   clear.innerHTML = icon("close");
   const label = () => {
     input.placeholder = t("common.searchByName");

@@ -198,7 +198,7 @@ export function renderToolbar(state) {
       <div class="searchBox" id="searchBox">
         <div id="searchChips" class="searchChips"></div>
         <input id="searchText" class="searchText" placeholder="${t("baseExplorer.search.placeholder")}" />
-        <button id="searchClearBtn" class="btn ghost" type="button" title="${t("baseExplorer.search.clear")}" aria-label="${t("baseExplorer.search.clear")}">${icon("close")}</button>
+        <button id="searchClearBtn" class="btn" type="button" title="${t("baseExplorer.search.clear")}" aria-label="${t("baseExplorer.search.clear")}">${icon("close")}</button>
       </div>
 
       <div class="toolbar-btns-row">
@@ -558,7 +558,7 @@ export function renderTags(state) {
   const header = `<div style="opacity:.75; margin-bottom:6px;">${t("baseExplorer.tags.header")}</div>`;
   const metaHeader = `<div style="opacity:.75; margin-bottom:6px; margin-top:4px;">${t("baseExplorer.tags.metaHeader")}</div>`;
   const addBtn = `
-    <button id="btnAddTag" class="btn ghost" type="button" style="width:100%; margin-top:10px;">
+    <button id="btnAddTag" class="btn" type="button" style="width:100%; margin-top:10px;">
       ${t("baseExplorer.tags.addTag")}
     </button>
   `;

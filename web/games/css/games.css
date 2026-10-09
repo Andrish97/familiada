@@ -111,13 +111,16 @@ body.games-body > main.wrap{
   opacity: .75;
 }
 
+/* Górny pasek akcji: pełne napisy (także na telefonie), zawijanie całymi
+   przyciskami — do drugiego rzędu spada dopiero przycisk, który się nie mieści. */
 .actions{
   display: flex;
   gap: 8px;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   align-items: center;
   margin: 10px;
 }
+.actions .btn{ white-space: nowrap; }
 
 .btn-group{
   display: none;
@@ -440,13 +443,13 @@ body.games-body > main.wrap{
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 10px;
-  flex-wrap: nowrap;
+  gap: 8px 10px;
+  flex-wrap: wrap; /* cały blok przycisków spada pod wyszukiwanie dopiero, gdy się nie mieści */
 }
 
 .games-bottom-left{
-  flex: 1 1 auto;
-  min-width: 0;
+  flex: 1 1 0;
+  min-width: 300px; /* filtr + wyszukiwanie w jednym rzędzie; węziej: zawija się w środku */
   display: flex;
   gap: 8px;
   align-items: center;
@@ -454,8 +457,11 @@ body.games-body > main.wrap{
 
 .games-bottom-right{
   display: flex;
+  flex-wrap: wrap; /* zawijanie całymi przyciskami, bez łamania tekstu w przycisku */
+  justify-content: flex-end;
   gap: 8px;
-  flex: 0 0 auto; /* przyciski nie kurczą się ani nie łamią tekstu w środku */
+  flex: 0 1 auto;
+  margin-left: auto;
 }
 .games-bottom-right .btn{ white-space: nowrap; }
 
