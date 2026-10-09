@@ -250,7 +250,19 @@ tiles”). Pozostałe pola komunikatów istnieją. Implementacja: `shared/js/cor
    ten sam wspólny kafel: inicjał w kółku + nazwa/e-mail, rząd oznaczeń
    ze stanem zaproszenia, dzwonek i kosz jako ikony w rogu (jak kosz na
    kaflu gry). Do oceny po wdrożeniu.
-5. **Podział na sekcje zamiast kolorów (2026-10-09)** — jak w bazach
+5. **Jeden podział na sekcje wszędzie, gdzie udostępniamy zasób (2026-10-09,
+   doprecyzowanie użytkownika).** Wzorem jest okno udostępniania bazy
+   (Subskrybenci · Oczekujące · Aktywni). Ten sam zestaw i kolejność sekcji,
+   te same nagłówki z podpisem, ten sam kafel — wspólny komponent:
+   - **Subskrybenci** (do zaproszenia — jeszcze bez zaproszenia),
+   - **Oczekujące** (zaproszenie wysłane, bez odpowiedzi),
+   - **Aktywni** (przyjęte; w ankiecie: zagłosowali),
+   - **Odrzucone** (odmowa; tylko gdzie taki stan istnieje).
+   Dotyczy: udostępniania bazy, udostępniania ankiety (karta Udostępnianie),
+   Subskrypcji (moi subskrybenci / moje subskrypcje), udostępniania urządzeń
+   w Control, jeśli ma listę osób. Puste sekcje ukryte.
+   Wcześniejszy opis poniżej — zastąpiony tym punktem:
+   **Podział na sekcje zamiast kolorów (2026-10-09)** — jak w bazach
    (oczekujący / aktywni …): w Subskrypcjach i w karcie Udostępnianie
    ankiety kafle grupowane w sekcje wg stanu (np. Oczekujące · Aktywni ·
    Odrzucone; dla ankiety: Zaproszeni · Zagłosowali · Odrzucili). Miejsce
