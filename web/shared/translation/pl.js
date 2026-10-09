@@ -3866,6 +3866,7 @@ const pl = {
       title: "Import logo",
       confirm: "Importuj",
       steps: {
+        uploadImage: "Wysyłam obraz do magazynu…",
         saveDb: "Zapisuję w bazie…",
       },
     },

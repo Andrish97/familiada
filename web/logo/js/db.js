@@ -48,6 +48,33 @@ export async function createLogo(row) {
   return data.id;
 }
 
+/** Upload a self-contained IMAGE source from an imported .famlogo to Storage. */
+export async function uploadImportedLogoImage(dataUrl, userId) {
+  if (!userId) throw new Error("You must be signed in to upload a logo image");
+  const match = String(dataUrl || "").match(/^data:(image\/(?:jpeg|png|gif|webp));base64,([A-Za-z0-9+/]+=*)$/i);
+  if (!match) throw new Error("Unsupported or invalid embedded logo image");
+  const mime = match[1].toLowerCase();
+  const encoded = match[2];
+  if (encoded.length > Math.ceil((5 * 1024 * 1024) / 3) * 4) throw new Error("Logo image exceeds 5 MB");
+  const bytes = Uint8Array.from(atob(encoded), char => char.charCodeAt(0));
+  if (!bytes.length || bytes.length > 5 * 1024 * 1024) throw new Error("Logo image exceeds 5 MB or is empty");
+  const ext = { "image/jpeg": "jpg", "image/png": "png", "image/gif": "gif", "image/webp": "webp" }[mime];
+  const path = `${userId}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+  const storage = sb().storage.from("user-logos");
+  const { error } = await storage.upload(path, new Blob([bytes], { type: mime }), {
+    cacheControl: "3600", upsert: false, contentType: mime,
+  });
+  if (error) throw error;
+  return storage.getPublicUrl(path).data.publicUrl;
+}
+
+export async function removeLogoImageUrl(imageUrl, userId) {
+  const path = storagePathFromUrl(imageUrl, userId);
+  if (!path) return;
+  const { error } = await sb().storage.from("user-logos").remove([path]);
+  if (error) console.warn("[logo/db] could not remove imported image:", error);
+}
+
 // Przez RPC, nie goły update(): sprawdza atomowo, czy pula logo właściciela
 // nie jest teraz zajęta (rozgrywka / otwarte ustawienia gry) -- patrz
 // docs/plan-testy-i-poprawki.md, „Model: zasób ma stan busy/free”.

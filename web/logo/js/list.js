@@ -25,7 +25,7 @@ import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } fro
 import { icon } from "../../shared/js/core/icons.js?v=v2026-10-09T00020";
 
 import { TYPE_GLYPH, TYPE_PIX, PIX_FORMAT, DOT_W, DOT_H, emptyRows, packBits, renderPreview, logoToPreview } from "./render.js?v=v2026-10-09T00020";
-import { listLogos, fetchLogo, createLogo, updateLogo, deleteLogo, isUniqueViolation } from "./db.js?v=v2026-10-09T00020";
+import { listLogos, fetchLogo, createLogo, updateLogo, deleteLogo, isUniqueViolation, uploadImportedLogoImage, removeLogoImageUrl } from "./db.js?v=v2026-10-09T00021";
 import { buildExport, downloadJson, parseImport, safeFileName } from "./transfer.js?v=v2026-10-09T00020";
 import { initPreviewPinchZoom, lockPageZoomForPreview, unlockPageZoomAfterPreview } from "./preview-zoom.js?v=v2026-10-09T00020";
 import { cannotEditReason } from "./text.js?v=v2026-10-09T00020";
@@ -506,8 +506,27 @@ async function confirmImport() {
   el.importStep.textContent = t("logoEditor.import.steps.saveDb");
   el.importBar.style.width = "60%";
   show(el.importProg, true);
+  let uploadedImageUrl = null;
   try {
-    const id = await createLogo({ user_id: currentUser.id, ...importParsed, name: makeUniqueName(importParsed.name) });
+    let imported = { ...importParsed, payload: { ...importParsed.payload } };
+    const source = imported.payload.source || {};
+    if (source.mode === "IMAGE" && source.imageData) {
+      el.importStep.textContent = t("logoEditor.import.steps.uploadImage");
+      el.importBar.style.width = "35%";
+      uploadedImageUrl = await uploadImportedLogoImage(source.imageData, currentUser.id);
+      const { imageData, ...sourceWithoutData } = source;
+      imported.payload.source = { ...sourceWithoutData, imageUrl: uploadedImageUrl };
+    }
+    el.importStep.textContent = t("logoEditor.import.steps.saveDb");
+    el.importBar.style.width = "70%";
+    let id;
+    try {
+      id = await createLogo({ user_id: currentUser.id, ...imported, name: makeUniqueName(imported.name) });
+    } catch (e) {
+      if (uploadedImageUrl) await removeLogoImageUrl(uploadedImageUrl, currentUser.id);
+      uploadedImageUrl = null;
+      throw e;
+    }
     setActiveListMode(listModeForLogo(importParsed));
     await refresh();
     selectTile(id);
