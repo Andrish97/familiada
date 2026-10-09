@@ -386,3 +386,13 @@ funkcjonalności, nawet osobne strony**. Propozycja układu (do potwierdzenia):
   „+ Zaproś” na górze.
 - `/subscriptions/` znika (bez aliasu — linki z maili idą przez `/go/`,
   zmieniana tylko tabela w `/go/`); w menu gier dwa wejścia.
+
+**Wariant użytkownika 2026-10-09: trzy osobne strony** (propozycja układu):
+
+- `/friends/` — **Znajomi**: bez kart, sekcje wg stanu: Zaproszenia do mnie
+  (Akceptuj, Odrzuć) · Wysłane (Ponów, Cofnij) · Znajomi (Usuń); „+ Zaproś”.
+- `/subscribers/` — **Subskrybenci** (tylko e-mail): sekcje Oczekujący ·
+  Aktywni; „+ Zaproś”.
+- `/tasks/` — **Zadania** (skrzynka: co mi przysłano): sekcje Do zrobienia ·
+  Zrobione (zwinięte); filtr rodzaju: ankiety · bazy · urządzenia. Plakietka
+  z liczbą w menu; linki z maili przez `/go/`.
