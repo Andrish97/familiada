@@ -57,6 +57,24 @@ Stan faktyczny sprawdzony w kodzie 2026-10-07 (opis niżej, sekcja 4).
     | GOTOWA (podliczona) | Uruchom ponownie | nieaktywna | ostateczne |
 
     „Uruchom ponownie” tylko po podliczeniu (nowy klucz, głosy od zera).
+  - **Podliczanie w karcie Wyniki — płynna zmiana widoku (2026-10-09).**
+    Stan dziś: punktowa — baza (`_poll_points_close_unchecked`) liczy głosy
+    z ostatniej sesji, 0 głosów = 1, procent z sumą 100 (największe
+    reszty, min. 1 pkt); tekstowa — przeglądarka bierze zdjęcie
+    `poll_text_entries`, grupuje po `answer_norm`, ręczne łączenie/edycja,
+    `normalizeTo100Int` + przycięcie do 17 znaków, min. 3 odpowiedzi,
+    zapis `poll_text_close_apply`.
+    Docelowo: te same wiersze wyników przechodzą animacją w tryb
+    podliczania (bez przeładowania i przeskoku):
+    - punktowa — liczba głosów zamienia się w punkty (suma 100), słupki
+      w skali 0–100, „Zatwierdź” → GOTOWA; bez edycji;
+    - tekstowa — wiersze dostają uchwyty: przeciągnij na inną = połącz,
+      edycja tekstu, usuń; przy każdym wierszu punkty liczone na bieżąco,
+      licznik „3–6 odpowiedzi” na pytanie; poprawki zapisywane w bazie;
+      „Zatwierdź” → GOTOWA;
+    - wyjście bez zatwierdzenia → zwykły widok wyników, ankieta ZATRZYMANA.
+    Przeliczenie tekstowej na punkty przeniesione do bazy (jedno miejsce dla
+    obu typów).
   - **Karty tylko dwie: Udostępnianie · Wyniki.** Wyniki są uniwersalne:
     na żywo (otwarta), surowe (zatrzymana), w trybie podliczania (ankieta
     tekstowa), ostateczne (gotowa). Wszystkie akcje na pasku stanu:
