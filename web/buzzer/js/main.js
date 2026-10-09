@@ -142,6 +142,10 @@ async function main() {
 
   const subscription = createSubscription({
     gameId, deviceType: "buzzer", key,
+    // game_state_set_lock przesuwa locked_until bez podbicia rev i bez
+    // dzwonka — bez tego Buzzer odblokowywał się wg starszej blokady, a
+    // odrzucone naciśnięcie ("locked") nie dociągało nowszej.
+    sameRevChanged: (prev, next) => prev.locked_until !== next.locked_until,
     onRow: (row) => {
       // Język idzie za operatorem w Control — patrz display/js/main.js.
       const lang = row.detail?.settings?.uiLang;
