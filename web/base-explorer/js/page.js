@@ -1,24 +1,24 @@
 // base-explorerjs/page.js
 // Init strony menadżera bazy (warstwa 2)
 
-import { requireAuth } from "../../shared/js/core/auth.js?v=v2026-10-09T11193";
-import { alertModal } from "../../shared/js/core/modal.js?v=v2026-10-09T11193";
-import { guardResourceLocks } from "../../shared/js/core/resource-lock.js?v=v2026-10-09T11193";
-import { getUiLang, initI18n, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-09T11193";
-import { linkTo, backHref, renderBackLabel } from "../../shared/js/core/nav-map.js?v=v2026-10-09T11193";
-import { initTopbarAccountDropdown } from "../../shared/js/core/topbar-controller.js?v=v2026-10-09T11193";
-import { VIEW, createState, setRole } from "./state.js?v=v2026-10-09T11193";
-import { renderAll } from "./render.js?v=v2026-10-09T11193";
+import { requireAuth } from "../../shared/js/core/auth.js?v=v2026-10-09T11215";
+import { alertModal } from "../../shared/js/core/modal.js?v=v2026-10-09T11215";
+import { guardResourceLocks } from "../../shared/js/core/resource-lock.js?v=v2026-10-09T11215";
+import { getUiLang, initI18n, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-09T11215";
+import { linkTo, backHref, renderBackLabel } from "../../shared/js/core/nav-map.js?v=v2026-10-09T11215";
+import { initTopbarAccountDropdown } from "../../shared/js/core/topbar-controller.js?v=v2026-10-09T11215";
+import { VIEW, createState, setRole } from "./state.js?v=v2026-10-09T11215";
+import { renderAll } from "./render.js?v=v2026-10-09T11215";
 import {
   getBaseMeta,
   getBaseRole,
   listCategories,
   listTags,
   listAllQuestions,
-} from "./repo.js?v=v2026-10-09T11193";
-import { wireActions } from "./actions.js?v=v2026-10-09T11193";
-import { initDrawer, disableDragOnTouch } from "./mobile.js?v=v2026-10-09T11193";
-import { handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-09T11193";
+} from "./repo.js?v=v2026-10-09T11215";
+import { wireActions } from "./actions.js?v=v2026-10-09T11215";
+import { initDrawer, disableDragOnTouch } from "./mobile.js?v=v2026-10-09T11215";
+import { handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-09T11215";
 
 /* ================= DOM ================= */
 const btnBack = document.getElementById("btnBack");
