@@ -1,6 +1,6 @@
-import { initI18n, t } from "../../shared/translation/translation.js?v=v2026-10-09T11441";
+import { initI18n, t } from "../../shared/translation/translation.js?v=v2026-10-09T11461";
 
-const ENDPOINT = "/maintenance-state.json?v=v2026-10-09T11441";
+const ENDPOINT = "/maintenance-state.json?v=v2026-10-09T11461";
 const POLL_MS = 30000;
 
 const FALLBACKS = {
