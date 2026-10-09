@@ -1969,7 +1969,8 @@ body{
 /* ===== Edytory: nazwa strony w topbarze (sekcja 2) =====
    Tytuł = jaki to edytor, wielkimi literami; podtytuł = nazwa zasobu tylko
    tam, gdzie strona nie ma pola nazwy (docs/ujednolicenie-wygladu.md, 4).
-   Na telefonie sekcja 2 topbara jest ukryta (topbar-layout-4). */
+   Na telefonie sekcja 2 topbara jest ukryta (topbar-layout-4) — chyba że <body>
+   ma klasę topbar-title-mobile (patrz niżej). */
 .topbar-title{
   display: flex;
   flex-direction: column;
@@ -1992,6 +1993,38 @@ body{
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* Tytuł strony w topbarze także na telefonie.
+   Domyślnie sekcja 2 topbara (tytuł) jest na telefonie ukryta. Strona, która ma
+   ją pokazać, dodaje do <body> klasę topbar-title-mobile (dziś: strona ankiety;
+   gotowe dla edytorów, menedżera bazy i ustawień gry). Tytuł zajmuje wolne
+   miejsce między „Wstecz” a ikonami, w dwóch krótkich liniach (tytuł + szara
+   linijka) z wielokropkiem. Szerokość 980 px = próg układu telefonicznego. */
+@media (max-width: 980px){
+  body.topbar-title-mobile .topbar-layout-4{
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-areas: "s1 s2 s3";
+  }
+  body.topbar-title-mobile .topbar-layout-4 .topbar-section-2{
+    grid-area: s2;
+    display: flex;
+    min-width: 0;
+    flex-wrap: nowrap;
+  }
+  body.topbar-title-mobile .topbar-layout-4 .topbar-section-2 .topbar-title{
+    flex: 1 1 auto;
+    gap: 1px;
+  }
+  body.topbar-title-mobile .topbar-title .title{
+    font-size: 13px;
+    letter-spacing: .06em;
+    line-height: 1.2;
+  }
+  body.topbar-title-mobile .topbar-title .subtitle{
+    font-size: 11px;
+    line-height: 1.2;
+  }
 }
 
 /* ===== Pole nazwy edytora — jedno dla edytora gier i edytorów logo ===== */
