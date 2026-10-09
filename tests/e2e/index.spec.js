@@ -143,10 +143,10 @@ test("klawiatura, focus, historia i mobilny viewport", async ({ page }) => {
 test("odnośniki prowadzą do właściwych sekcji, a powroty nazywają cel Strona główna", async ({ page }) => {
   await openIndex(page);
   const destinations = [
-    { selector: "#ctaStart", url: /\/login(?:\?|$)/ },
-    { selector: '.hero-cta a[href*="marketplace"]', url: /\/marketplace(?:\?|$)/ },
-    { selector: '.hero-cta a[href*="connect-device"]', url: /\/connect-device(?:\?|$)/ },
-    { selector: '.footer a[href*="privacy"]', url: /\/privacy(?:\?|$)/ },
+    { selector: "#ctaStart", url: /\/login\/?(?:\?|$)/ },
+    { selector: '.hero-cta a[href*="marketplace"]', url: /\/marketplace\/?(?:\?|$)/ },
+    { selector: '.hero-cta a[href*="connect-device"]', url: /\/connect-device\/?(?:\?|$)/ },
+    { selector: '.footer a[href*="privacy"]', url: /\/privacy\/?(?:\?|$)/ },
   ];
   for (const destination of destinations) {
     await page.locator(destination.selector).click();
@@ -185,7 +185,7 @@ test("gość pozostaje na stronie głównej i jest w całości sprzątany", asyn
 test("zalogowany użytkownik trafia do biblioteki gier", async ({ page, context }) => {
   await loginAsTestUser(page, context, { username: testAccountUsername(1) });
   await page.goto(INDEX_URL, { waitUntil: "domcontentloaded" });
-  await expect(page).toHaveURL(/\/games(?:\?|$)/, { timeout: 20_000 });
+  await expect(page).toHaveURL(/\/games\/?(?:\?|$)/, { timeout: 20_000 });
 });
 
 test("fałszywa lub nieprawidłowa sesja nie daje dostępu", async ({ page, context }) => {
