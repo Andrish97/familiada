@@ -213,8 +213,10 @@ jak wszędzie, nie w osobnym bloku z etykietami nad kaflami.
   wyjście = przycisk Wstecz w topbarze, powrót do strony podstawowej.
 - Blokady (urządzenie nieobsługiwane, zasób zajęty) — jeden wygląd:
   pełnoekranowa karta z ikoną, tytułem wielkimi literami, tekstem i „Wróć”.
-- Okno QR (`.qrModalOverlay`) to jedyny dopuszczony wariant (ciemny, wąski) —
-  [PROPOZYCJA: też `.uni-modal`].
+- Okno QR (ankieta `#pollQrModalOverlay`, Control `#qrModalOverlay`) to zwykłe
+  `.uni-modal` (decyzja 6, 2026-10-09); kod urządzenia = `.uni-code` /
+  `.uni-code-val` (`base.css`). W ankiecie na telefonie arkusz (`modal--sheet`),
+  w Control małe okno wyśrodkowane.
 
 ## A11. Przyciski
 
@@ -508,8 +510,8 @@ pokazują stan szkieletu po usunięciu blokady lub komunikat „brak parametru i
   telefonie” z ikoną i „Wróć”), `#resourceLockGuard` („Zajęte w innym miejscu”
   bez ikony), alert „Informacja” (`.uni-modal`) — zrzuty
   `games-settings-m.png`, `logo-text-m.png`, `games-editor-m.png`.
-- **M3 — `.qrModalOverlay`** (`polls.css:5-60`, `control.css`) —
-  trzeci szkielet okna (ciemne tło `#05050a`, inny promień).
+- **M3 — `.qrModalOverlay`** — ZAŁATWIONE: okno QR przeniesione na `.uni-modal`
+  (ankieta i Control), style `.qrModal*` usunięte.
 - **B1 — logowanie:** własny `.btn` (`login/css/login.css:115-131`,
   `padding:12px`, `text-transform:uppercase`, `letter-spacing:.06em`) i
   `.btn.main` (`auth-landing.css:148`) zamiast `.btn.gold`.

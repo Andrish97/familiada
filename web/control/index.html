@@ -585,27 +585,28 @@
   </div>
 
   <!-- Modal QR urządzeń z top bara -->
-  <div class="qrModalOverlay hidden" id="qrModalOverlay">
-    <div class="qrModalBox">
-      <div class="qrModalHead">
-        <div class="qrModalTitle" id="qrModalTitle" data-i18n="control.qrModalTitle">Urządzenie</div>
-        <button class="btn xs" id="qrModalClose" type="button" aria-label="Zamknij" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
+  <div class="overlay hidden" id="qrModalOverlay">
+    <div class="modal uni-modal" role="dialog" aria-modal="true" aria-labelledby="qrModalTitle">
+      <div class="uni-head">
+        <div class="mTitle" id="qrModalTitle" data-i18n="control.qrModalTitle">Urządzenie</div>
+        <button class="btn sm" id="qrModalClose" type="button" aria-label="Zamknij" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
       </div>
 
-      <div class="qrModalBody">
-        <div class="qrModalQr" id="qrModalQrWrap">
+      <div class="uni-body">
+        <div class="uni-qr" id="qrModalQrWrap">
           <img id="qrModalImg" alt="Kod QR" data-i18n-alt="control.qrModalImgAlt"/>
         </div>
 
-        <div class="qrModalCode">
-          <span class="qrModalCodeVal" id="qrModalCodeVal">——————</span>
+        <div class="uni-code">
+          <span class="uni-code-val" id="qrModalCodeVal">——————</span>
         </div>
 
-        <div class="qrModalActions">
-          <button class="btn gold" id="qrModalCopy" type="button" data-i18n="common.copy">Kopiuj</button>
-          <a class="btn hidden" id="qrModalOpen" target="_blank" rel="noopener" data-i18n="common.open">Otwórz</a>
-        </div>
-        <div class="qrModalCodeHint" data-i18n="control.qrModalCodeHint">familiada.online → Podłącz urządzenie → wprowadź kod</div>
+        <div class="uni-hint" data-i18n="control.qrModalCodeHint">familiada.online → Podłącz urządzenie → wprowadź kod</div>
+      </div>
+
+      <div class="uni-foot modal-actions">
+        <a class="btn sm hidden" id="qrModalOpen" target="_blank" rel="noopener" data-i18n="common.open">Otwórz</a>
+        <button class="btn sm gold" id="qrModalCopy" type="button" data-i18n="common.copy">Kopiuj</button>
       </div>
     </div>
   </div>

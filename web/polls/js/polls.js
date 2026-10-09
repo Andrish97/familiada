@@ -20,6 +20,7 @@ import { mailCooldownCheck } from "../../shared/js/core/cooldown.js?v=v2026-10-0
 import { sendPollInviteMails } from "../../shared/js/core/poll-mail.js?v=v2026-10-09T19290";
 import "../../shared/js/core/contact-modal.js?v=v2026-10-09T19290";
 import { createPollResults } from "../../shared/js/core/poll-results.js?v=v2026-10-09T19290";
+import { enterModalSheet, exitModalSheet, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-09T19290";
 import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-09T19290";
 import { toast, hideToast } from "../../shared/js/core/toast.js?v=v2026-10-09T19290";
 import { createTally } from "./poll-tally.js?v=v2026-10-09T19290";
@@ -162,7 +163,16 @@ function formatUntil(untilMs) {
 ======================= */
 
 function hidePollQrModal() {
-  if (pollQrModalOverlay) pollQrModalOverlay.classList.add("hidden");
+  if (!pollQrModalOverlay || pollQrModalOverlay.classList.contains("hidden")) return;
+  pollQrModalOverlay.classList.add("hidden");
+  exitModalSheet(pollQrModalOverlay);
+}
+
+// Otwiera okno; na telefonie wchodzi w tryb arkusza (wyjście = „Wstecz” w topbarze).
+function openPollQrOverlay() {
+  if (!pollQrModalOverlay) return;
+  pollQrModalOverlay.classList.remove("hidden");
+  enterModalSheet(pollQrModalOverlay, { backBtn: btnBack, onClose: hidePollQrModal });
 }
 
 function setQrModalMode(vote) {
@@ -178,7 +188,7 @@ async function showVoteQrModal() {
   if (!url || !pollQrModalVote) return;
   setQrModalMode(true);
   pollQrModalVote.innerHTML = "";
-  pollQrModalOverlay?.classList.remove("hidden");
+  openPollQrOverlay();
   try {
     const wrap = document.createElement("div");
     wrap.className = "qrFrameSmall qrFrameBig";
@@ -204,7 +214,7 @@ async function showPollQrModal() {
   _pollQrOpenUrl = displayUrl.toString();
 
   if (pollQrModalCodeVal) pollQrModalCodeVal.textContent = "——————";
-  if (pollQrModalOverlay) pollQrModalOverlay.classList.remove("hidden");
+  openPollQrOverlay();
 
   try {
     const { data, error } = await sb().rpc("generate_device_connect_code", {
@@ -224,7 +234,8 @@ async function showPollQrModal() {
 
 pollQrModalClose?.addEventListener("click", hidePollQrModal);
 pollQrModalOverlay?.addEventListener("click", (e) => {
-  if (e.target === pollQrModalOverlay) hidePollQrModal();
+  // Na telefonie (arkusz) wyjściem jest przycisk „Wstecz”, nie tło.
+  if (e.target === pollQrModalOverlay && !pollQrModalOverlay.classList.contains("sheet-active")) hidePollQrModal();
 });
 pollQrModalCopy?.addEventListener("click", async () => {
   if (!_pollQrDeviceCode) return;
@@ -1174,6 +1185,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   // Poprawki podliczania zapisują się same (szkic w bazie); przed wyjściem
   // tylko dopychamy ostatni zapis.
   btnBack?.addEventListener("click", async () => {
+    if (handleSheetBack()) return;
     try { await tally.flush(); } catch { /* szkic i tak jest w bazie */ }
     location.href = backHref("polls");
   });

@@ -168,28 +168,28 @@
       <div class="name" data-i18n="polls.empty.title">Brak gry</div>
       <div class="meta" data-i18n-html="polls.empty.meta">Otwórz stronę z parametrem <b>polls?id=...</b>.</div>
     </div>
-  </main>
-
-  <!-- Modal QR wyświetlacza ankiety -->
-  <div class="qrModalOverlay hidden" id="pollQrModalOverlay">
-    <div class="qrModalBox">
-      <div class="qrModalHead">
-        <div class="qrModalTitle" id="pollQrModalTitle" data-i18n="polls.qrModal.title">Wyświetlacz QR</div>
-        <button class="btn xs" id="pollQrModalClose" type="button" aria-label="Zamknij" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
-      </div>
-      <div class="qrModalSubtitle" id="pollQrModalSubtitle" data-i18n="polls.qrModal.subtitle">Kod do podłączenia wyświetlacza — nie do głosowania</div>
-      <div class="qrModalBody">
-        <div class="qrModalVote" id="pollQrModalVote" hidden></div>
-        <div class="qrModalCode" id="pollQrModalCode">
-          <span class="qrModalCodeVal" id="pollQrModalCodeVal">——————</span>
+    <!-- Okno QR: kod wyświetlacza albo powiększony kod do głosowania (.uni-modal; na telefonie arkusz) -->
+    <div class="overlay modal--sheet hidden" id="pollQrModalOverlay">
+      <div class="modal uni-modal" role="dialog" aria-modal="true" aria-labelledby="pollQrModalTitle">
+        <div class="uni-head">
+          <div class="mTitle" id="pollQrModalTitle" data-i18n="polls.qrModal.title">Wyświetlacz QR</div>
+          <button class="btn sm" id="pollQrModalClose" type="button" aria-label="Zamknij" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
         </div>
-        <div class="qrModalActions" id="pollQrModalActions">
-          <button class="btn gold" id="pollQrModalCopy" type="button" data-i18n="polls.qrModal.copyBtn">Kopiuj</button>
-          <button class="btn" id="pollQrModalOpen" type="button" data-i18n="polls.qrModal.openBtn">Otwórz</button>
+        <div class="uni-body">
+          <div class="uni-hint" id="pollQrModalSubtitle" data-i18n="polls.qrModal.subtitle">Kod do podłączenia wyświetlacza — nie do głosowania</div>
+          <div class="pollQrVote" id="pollQrModalVote" hidden></div>
+          <div class="uni-code" id="pollQrModalCode">
+            <span class="uni-code-val" id="pollQrModalCodeVal">——————</span>
+          </div>
+          <div class="uni-hint" id="pollQrModalHint" data-i18n="polls.qrModal.hint">Wejdź na familiada.online → Podłącz urządzenie → wprowadź kod</div>
         </div>
-        <div class="qrModalCodeHint" id="pollQrModalHint" data-i18n="polls.qrModal.hint">Wejdź na familiada.online → Podłącz urządzenie → wprowadź kod</div>
+        <div class="uni-foot modal-actions" id="pollQrModalActions">
+          <button class="btn sm" id="pollQrModalOpen" type="button" data-i18n="polls.qrModal.openBtn">Otwórz</button>
+          <button class="btn sm gold" id="pollQrModalCopy" type="button" data-i18n="polls.qrModal.copyBtn">Kopiuj</button>
+        </div>
       </div>
     </div>
-  </div>
+  </main>
+
 </body>
 </html>
