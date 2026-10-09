@@ -457,10 +457,6 @@ a.btn.gold {
     color: #5dc870;
 }
 
-html, body{
-    min-height: 100%;
-}
-
 body{
     display: flex;
     flex-direction: column;
@@ -520,6 +516,7 @@ main{
 @media (max-width: 600px){
     .footer{
         margin: 12px 0 6px;
+        margin-top: auto; /* stopka na dole ekranu także na telefonie */
         padding-top: 15px;
         gap: 6px;
         font-size: 11px;

@@ -1,23 +1,23 @@
 // base-explorerjs/page.js
 // Init strony menadżera bazy (warstwa 2)
 
-import { requireAuth } from "../../shared/js/core/auth.js?v=v2026-10-08T18212";
-import { alertModal } from "../../shared/js/core/modal.js?v=v2026-10-08T18212";
-import { guardResourceLocks } from "../../shared/js/core/resource-lock.js?v=v2026-10-08T18212";
-import { getUiLang, initI18n, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-08T18212";
-import { initTopbarAccountDropdown } from "../../shared/js/core/topbar-controller.js?v=v2026-10-08T18212";
-import { VIEW, createState, setRole } from "./state.js?v=v2026-10-08T18212";
-import { renderAll } from "./render.js?v=v2026-10-08T18212";
+import { requireAuth } from "../../shared/js/core/auth.js?v=v2026-10-09T01181";
+import { alertModal } from "../../shared/js/core/modal.js?v=v2026-10-09T01181";
+import { guardResourceLocks } from "../../shared/js/core/resource-lock.js?v=v2026-10-09T01181";
+import { getUiLang, initI18n, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-09T01181";
+import { initTopbarAccountDropdown } from "../../shared/js/core/topbar-controller.js?v=v2026-10-09T01181";
+import { VIEW, createState, setRole } from "./state.js?v=v2026-10-09T01181";
+import { renderAll } from "./render.js?v=v2026-10-09T01181";
 import {
   getBaseMeta,
   getBaseRole,
   listCategories,
   listTags,
   listAllQuestions,
-} from "./repo.js?v=v2026-10-08T18212";
-import { wireActions } from "./actions.js?v=v2026-10-08T18212";
-import { initDrawer, disableDragOnTouch } from "./mobile.js?v=v2026-10-08T18212";
-import { handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-08T18212";
+} from "./repo.js?v=v2026-10-09T01181";
+import { wireActions } from "./actions.js?v=v2026-10-09T01181";
+import { initDrawer, disableDragOnTouch } from "./mobile.js?v=v2026-10-09T01181";
+import { handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-09T01181";
 
 /* ================= DOM ================= */
 const btnBack = document.getElementById("btnBack");
