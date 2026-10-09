@@ -374,6 +374,13 @@
   margin-top: 10px;
 }
 .pollLinkActions .btn{ white-space: nowrap; flex: 0 0 auto; }
+/* Telefon: Kopiuj | Otwórz w jednym rzędzie, „QR na wyświetlaczu” pod nimi na
+   całą szerokość — bez osieroconego, wyśrodkowanego trzeciego przycisku. */
+@media (max-width: 600px){
+  .pollLinkActions{ display: grid; grid-template-columns: 1fr 1fr; }
+  .pollLinkActions .btn{ width: 100%; }
+  .pollLinkActions #btnOpenQr{ grid-column: 1 / -1; }
+}
 .pollSecHead .btn{ white-space: nowrap; flex: 0 0 auto; }
 
 /* Zamykanie ankiety tekstowej: narzędzia historii i scalania w jednym rzędzie */
