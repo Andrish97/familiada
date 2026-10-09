@@ -1,40 +1,39 @@
-import { addRenameGesture } from "../../shared/js/core/rename-gesture.js?v=v2026-10-09T23303";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T23303";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-09T23303";
-import { hideForGuest, isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-09T23303";
-import { initI18n, t, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-09T23303";
-import { linkTo, PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-09T23303";
-import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-09T23303";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-09T23303";
-import { initRatingSystem } from "../../shared/js/core/rating-system.js?v=v2026-10-09T23303";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-09T23303";
-import { maybeShowGuestInfoModal } from "../../shared/js/core/guest-info-modal.js?v=v2026-10-09T23303";
-import { maybeShowGuestMigrateReminder } from "../../shared/js/core/guest-migrate-reminder.js?v=v2026-10-09T23303";
+import { addRenameGesture } from "../../shared/js/core/rename-gesture.js?v=v2026-10-09T23342";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T23342";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-09T23342";
+import { initI18n, t, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-09T23342";
+import { linkTo, PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-09T23342";
+import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-09T23342";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-09T23342";
+import { initRatingSystem } from "../../shared/js/core/rating-system.js?v=v2026-10-09T23342";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-09T23342";
+import { maybeShowGuestInfoModal } from "../../shared/js/core/guest-info-modal.js?v=v2026-10-09T23342";
+import { maybeShowGuestMigrateReminder } from "../../shared/js/core/guest-migrate-reminder.js?v=v2026-10-09T23342";
 
-import { initPwa, isStandalone, isMobileDevice } from "../../shared/js/core/pwa.js?v=v2026-10-09T23303";
-import { createPollResults } from "../../shared/js/core/poll-results.js?v=v2026-10-09T23303";
-import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-09T23303";
+import { initPwa, isStandalone, isMobileDevice } from "../../shared/js/core/pwa.js?v=v2026-10-09T23342";
+import { createPollResults } from "../../shared/js/core/poll-results.js?v=v2026-10-09T23342";
+import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-09T23342";
 
 // Zarejestruj listener PWA jak najwcześniej – beforeinstallprompt może odpalić przed requireAuth
 const pwaApi = initPwa();
 // Jeśli beforeinstallprompt już odpalił zanim dodaliśmy listener w IIFE, sprawdzimy po zalogowaniu
 
 
-import { exportGame, importGame, downloadJson } from "./games-import-export.js?v=v2026-10-09T23303";
-import { setTopbarNavPriority } from '../../shared/js/core/topbar-controller.js?v=v2026-10-09T23303';
+import { exportGame, importGame, downloadJson } from "./games-import-export.js?v=v2026-10-09T23342";
+import { setTopbarNavPriority } from '../../shared/js/core/topbar-controller.js?v=v2026-10-09T23342';
 
-import "../../shared/js/core/contact-modal.js?v=v2026-10-09T23303";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-09T23342";
 import {
   TYPES,
   STATUS,
   loadGameBasic,
   validateGame,
   rulesFromState,
-} from "../../shared/js/core/game-validate.js?v=v2026-10-09T23303";
-import { isResourceBusy, acquireResourceLock, getTabId } from "../../shared/js/core/resource-lock.js?v=v2026-10-09T23303";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-09T23303";
-import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-09T23303";
-import { gameStateKey, SORT_LIST } from "../../shared/js/core/list-filter.js?v=v2026-10-09T23303";
+} from "../../shared/js/core/game-validate.js?v=v2026-10-09T23342";
+import { isResourceBusy, acquireResourceLock, getTabId } from "../../shared/js/core/resource-lock.js?v=v2026-10-09T23342";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-09T23342";
+import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-09T23342";
+import { gameStateKey, SORT_LIST } from "../../shared/js/core/list-filter.js?v=v2026-10-09T23342";
 
 const MSG = {
   exportBaseEmpty: () => t("games.exportBase.empty"),
@@ -111,9 +110,6 @@ const btnPlay = document.getElementById("btnPlay");
 const btnPoll = document.getElementById("btnPoll");
 const btnSettings = document.getElementById("btnSettings");
 
-const btnLogoEditor = document.getElementById("btnLogoEditor");
-const btnBases = document.getElementById("btnBases");
-const btnSubscriptionsHub = document.getElementById("btnSubscriptionsHub");
 const subscriptionsHubBadge = document.getElementById("subscriptionsHubBadge");
 const navMore = document.getElementById("navMore");
 const btnMore = document.getElementById("btnMore");
@@ -145,8 +141,6 @@ const tabPollText = document.getElementById("tabPollText");
 const tabPollPoints = document.getElementById("tabPollPoints");
 const tabPrepared = document.getElementById("tabPrepared");
 const tabMarket = document.getElementById("tabMarket");
-const btnMarketplace = document.getElementById("btnMarketplace");
-const btnConnectDevice = document.getElementById("btnConnectDevice");
 const connectDeviceBadge = document.getElementById("connectDeviceBadge");
 
 // Modal importu JSON
@@ -1229,15 +1223,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   currentUser = await userP;
   if (!currentUser) return; // initPage przekierował na logowanie
-  const guestMode = isGuestUser(currentUser);
 
   await maybeShowGuestInfoModal(currentUser);
   maybeShowGuestMigrateReminder(currentUser);
-
-  if (hideForGuest(currentUser, [btnSubscriptionsHub])) {
-    // data-nav-hidden prevents recalc() from resetting display on these buttons
-    if (btnSubscriptionsHub) btnSubscriptionsHub.dataset.navHidden = "true";
-  }
 
   // btnInstall: widoczny gdy pwa:installable odpalił (canInstall) lub iOS Safari — nie standalone
   if (btnInstall) {
@@ -1321,29 +1309,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     // Klik Anuluj nie ustawia LS_KEY — celowo bez pwaApi.dismiss()
   });
 
-  // Przycisk "Podłącz urządzenie":
-  // - desktop/TV: zawsze widoczny
-  // - mobile/tablet: tylko w webapp (standalone)
-  const showConnectDevice = !guestMode;
-  if (showConnectDevice) {
-    // Usuń data-nav-hidden żeby overflow nav wiedział że ten przycisk jest aktywny
-    if (btnConnectDevice) {
-      delete btnConnectDevice.dataset.navHidden;
-      btnConnectDevice.style.display = "";
-    }
+  // Przyciski przejść topbaru (Społeczność, Logo, Podłącz urządzenie, Subskrypcje,
+  // Bazy) podpina i chowa wg roli initPage z PAGES.games.buttons.
 
-    btnConnectDevice?.addEventListener("click", () => {
-      location.href = linkTo("connectDevice");
-    });
-  } else {
-    // Ukryj przez data-nav-hidden (overflow nav ignoruje takie przyciski)
-    if (btnConnectDevice) {
-      btnConnectDevice.dataset.navHidden = "true";
-      btnConnectDevice.style.display = "none";
-    }
-  }
-
-  // Po ustaleniu widoczności btnConnectDevice przelicz overflow nav
+  // Po ustaleniu widoczności przycisków (initPage) przelicz overflow nav
   requestAnimationFrame(() => _navRecalc?.());
 
   // Jeden zapis licznika dla wszystkich przycisków topbara (jak w bazach,
@@ -1449,18 +1418,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 
 
-  btnLogoEditor?.addEventListener("click", async () => {
-    location.href = linkTo("logoEditor");
-  });
-
-  btnBases?.addEventListener("click", async () => {
-    location.href = linkTo("bases");
-  });
-
-  btnSubscriptionsHub?.addEventListener("click", () => {
-    location.href = linkTo("subscriptions");
-  });
-
   tabPollText?.addEventListener("click", () => setActiveTab(TYPES.POLL_TEXT));
   tabPollPoints?.addEventListener("click", () => setActiveTab(TYPES.POLL_POINTS));
   tabPrepared?.addEventListener("click", () => setActiveTab(TYPES.PREPARED));
@@ -1469,10 +1426,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       await loadMarketGames();
     }
     setActiveTab(TYPES.MARKET);
-  });
-
-  btnMarketplace?.addEventListener("click", () => {
-    location.href = linkTo("marketplace");
   });
 
   // games.html nie ma naturalnego przycisku wstecz na mobile (jest

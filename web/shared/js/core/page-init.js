@@ -9,7 +9,11 @@
 //   2. urządzenie  "wide" — guardDesktopOnly (na żywo), "noPhone" — blokada telefonu,
 //   3. topbar   #btnBack (etykieta + cel z backHref, najpierw handleSheetBack()),
 //               #btnManual (linkTo("manual", { tab: wpis.manual })), konto, topbar-ready,
-//   4. zwraca użytkownika (null dla niezalogowanego, zablokowanego albo przekierowanego).
+//   4. przyciski  PAGES[id].buttons: niedostępne dla roli (anon / gość / konto)
+//               albo urządzenia (device wide / noPhone na telefonie) są chowane,
+//               pozostałe dostają przejście przez linkTo() — chyba że opis ma
+//               custom: true (strona coś sprawdza przed przejściem; cel daje strona),
+//   5. zwraca użytkownika (null dla niezalogowanego, zablokowanego albo przekierowanego).
 //
 // Odstępstwa strony przekazujemy przez opts, nie przez zapasowe ścieżki:
 //   ready          Promise (np. initI18n), na który czekamy przed pokazaniem czegokolwiek
@@ -24,16 +28,16 @@
 //   accountOnLang  true — odśwież menu konta po zmianie języka
 //   deps           podmiana zależności (testy)
 
-import { PAGES, backHref, linkTo, loginUrl, renderBackLabel } from "./nav-map.js?v=v2026-10-09T23303";
-import { isGuestUser } from "./guest-mode.js?v=v2026-10-09T23303";
-import { showPageGuard } from "./page-overlay.js?v=v2026-10-09T23303";
+import { PAGES, backHref, buttonHref, buttonVisible, linkTo, loginUrl, renderBackLabel, roleOf } from "./nav-map.js?v=v2026-10-09T23342";
+import { isGuestUser } from "./guest-mode.js?v=v2026-10-09T23342";
+import { showPageGuard } from "./page-overlay.js?v=v2026-10-09T23342";
 
 async function loadDeps() {
   const [auth, topbar, sheet, device] = await Promise.all([
-    import("./auth.js?v=v2026-10-09T23303"),
-    import("./topbar-controller.js?v=v2026-10-09T23303"),
-    import("./modal-sheet.js?v=v2026-10-09T23303"),
-    import("./device-guard.js?v=v2026-10-09T23303"),
+    import("./auth.js?v=v2026-10-09T23342"),
+    import("./topbar-controller.js?v=v2026-10-09T23342"),
+    import("./modal-sheet.js?v=v2026-10-09T23342"),
+    import("./device-guard.js?v=v2026-10-09T23342"),
   ]);
   return {
     getUser: auth.getUser,
@@ -42,6 +46,7 @@ async function loadDeps() {
     handleSheetBack: sheet.handleSheetBack,
     guardDesktopOnly: device.guardDesktopOnly,
     blockPhone: device.blockPhone,
+    isPhoneScreen: device.isPhoneScreen,
   };
 }
 
@@ -82,6 +87,32 @@ function wireManual(id, user, opts) {
   });
 }
 
+function hideButton(btn) {
+  btn.hidden = true;
+  btn.style.display = "none";
+  btn.dataset.navHidden = "true"; // przycisk poza rachunkiem „Więcej” w topbarze
+}
+
+// Przyciski z PAGES[id].buttons: chowa niedostępne dla roli i urządzenia,
+// resztę podpina pod linkTo(). Przycisk, którego strona nie ma w HTML, pomijamy
+// (jedna mapa opisuje też warianty strony); spójność mapy z HTML pilnuje test.
+function wireButtons(id, user, d) {
+  const buttons = PAGES[id].buttons;
+  if (!buttons) return;
+  const role = roleOf(user, isGuestUser(user));
+  const phone = d.isPhoneScreen();
+  for (const [bid, spec] of Object.entries(buttons)) {
+    const btn = document.getElementById(bid);
+    if (!btn) continue;
+    if (!buttonVisible(id, spec, role, phone)) { hideButton(btn); continue; }
+    // HTML startuje z ukrytym przyciskiem, gdy dostępność zależy od roli.
+    if (btn.dataset.navHidden === "true") { delete btn.dataset.navHidden; btn.hidden = false; btn.style.display = ""; }
+    if (spec.custom) continue;
+    if (btn.tagName === "A") { btn.setAttribute("href", buttonHref(spec)); continue; }
+    btn.addEventListener("click", () => { location.href = buttonHref(spec); });
+  }
+}
+
 function wireAccount(user, opts, d) {
   const apply = () => d.setTopbarAccount(user, {
     loginHref: loginUrl(),
@@ -119,6 +150,7 @@ export async function initPage(id, opts = {}) {
   // Topbar działa także pod nakładką — „Wstecz” jest wtedy wyjściem.
   wireBack(id, user, opts, d);
   wireManual(id, user, opts);
+  wireButtons(id, user, d);
   wireAccount(user, opts, d);
   document.querySelector(".topbar")?.classList.add("topbar-ready");
 

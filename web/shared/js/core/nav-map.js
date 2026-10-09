@@ -17,36 +17,68 @@
 //   state         parametry stanu strony (adres z nimi trafia do ?ret=)
 //   tabs          karty strony w ?tab= (pierwsza = domyślna, bez parametru
 //                 w adresie); czyta je tabs.js, strony nie mają własnych list
+//   buttons       przyciski nawigacji strony: id elementu → opis
+//                   to      id strony docelowej (cel buduje linkTo() z ret i językiem)
+//                   roles   kto widzi przycisk: podzbiór ["anon", "guest", "user"]
+//                           (anon — niezalogowany, guest — gość, user — konto);
+//                           brak pola — każdy, kto ma wstęp na stronę
+//                   device  "wide" albo "noPhone" — na telefonie przycisk jest ukryty
+//                   tab     karta strony docelowej (?tab=)
+//                   custom  true — przed przejściem strona coś sprawdza (wybrana
+//                           gra, validateGame…); initPage tylko chowa przycisk wg
+//                           roles i device, a kliknięcie i adres daje strona
+//   locks         blokady zasobów, które strona trzyma (docs/blokady-zasobow.md,
+//                 sekcja 6) — sama deklaracja, mechanizm jest w resource-lock.js:
+//                   type    "game" | "logo" | "base" | "logos" (pula logo użytkownika)
+//                   id      parametr adresu z id zasobu (brak dla "logos")
+//                   mode    "exclusive" (domyślnie) | "shared"
 //
 // ?ret= niesie PEŁNY bieżący adres (razem z jego własnym ret), więc łańcuch
 // powrotów odtwarza się krok po kroku. Każdy poziom jest sprawdzany z listą
 // from strony, która go niesie; łańcuch dłuższy niż MAX_RET_DEPTH, obcy albo
 // zepsuty ret oznacza powrót do parent. Bez fallbacków i aliasów.
 
-import { getUiLang, t } from "../../translation/translation.js?v=v2026-10-09T23303";
-import { iconText } from "./icons.js?v=v2026-10-09T23303";
+import { getUiLang, t } from "../../translation/translation.js?v=v2026-10-09T23342";
+import { iconText } from "./icons.js?v=v2026-10-09T23342";
 
 export const MAX_RET_DEPTH = 4;
 
 export const PAGES = {
   home:          { path: "/",                   access: "public", parent: null },
   login:         { path: "/login/",             access: "public", parent: "home" },
-  games:         { path: "/games/",             access: "guest",  parent: null, from: [], manual: "general", tabs: ["prepared", "poll_text", "poll_points", "market"], state: ["tab"] },
-  editor:        { path: "/games/editor/",     access: "guest",  parent: "games", from: ["games"], manual: "edit", state: ["id", "q"] },
-  polls:         { path: "/polls/",             access: "guest",   parent: "games", from: ["games", "subscriptions"], manual: "polls", tabs: ["share", "results"], state: ["id", "tab"] },
+  games:         { path: "/games/",             access: "guest",  parent: null, from: [], manual: "general", tabs: ["prepared", "poll_text", "poll_points", "market"], state: ["tab"], buttons: {
+    btnMarketplace:      { to: "marketplace" },
+    btnLogoEditor:       { to: "logoEditor" },
+    btnConnectDevice:    { to: "connectDevice", roles: ["user"] },
+    btnSubscriptionsHub: { to: "subscriptions", roles: ["user"] },
+    btnBases:            { to: "bases" },
+    btnPlay:             { to: "control", device: "wide", custom: true },
+    btnSettings:         { to: "gameSettings", device: "wide", custom: true },
+    btnEdit:             { to: "editor", custom: true },
+    btnPoll:             { to: "polls", custom: true },
+  } },
+  editor:        { path: "/games/editor/",     access: "guest",  parent: "games", from: ["games"], manual: "edit", state: ["id", "q"], locks: [{ type: "game", id: "id" }] },
+  polls:         { path: "/polls/",             access: "guest",   parent: "games", from: ["games", "subscriptions"], manual: "polls", tabs: ["share", "results"], state: ["id", "tab"], locks: [{ type: "game", id: "id" }] },
   subscriptions: { path: "/subscriptions/",     access: "user",   parent: "games", from: ["games", "bases", "polls"], manual: "subscriptions", tabs: ["subscribers", "subscriptions", "tasks"], state: ["tab"] },
-  bases:         { path: "/bases/",             access: "guest",  parent: "games", from: ["games", "subscriptions", "baseExplorer"], manual: "bases", tabs: ["mine", "shared"], state: ["tab"] },
-  baseExplorer:  { path: "/bases/explorer/",   access: "guest",  parent: "bases", from: ["bases"], manual: "bases", state: ["id", "folder"] },
+  bases:         { path: "/bases/",             access: "guest",  parent: "games", from: ["games", "subscriptions", "baseExplorer"], manual: "bases", tabs: ["mine", "shared"], state: ["tab"], buttons: {
+    btnGoAlt:  { to: "subscriptions", roles: ["user"] },
+    btnBrowse: { to: "baseExplorer", custom: true },
+  } },
+  baseExplorer:  { path: "/bases/explorer/",   access: "guest",  parent: "bases", from: ["bases"], manual: "bases", state: ["id", "folder"], locks: [{ type: "base", id: "id", mode: "shared" }] },
   logoEditor:    { path: "/logo/",              access: "guest",  parent: "games", from: ["games"], manual: "logo", tabs: ["text", "draw", "image"], state: ["tab"] },
-  logoText:      { path: "/logo/editor/text/",  access: "guest",  parent: "logoEditor", from: ["logoEditor"], manual: "logo", device: "noPhone", state: ["id"] },
-  logoDraw:      { path: "/logo/editor/draw/",  access: "guest",  parent: "logoEditor", from: ["logoEditor"], manual: "logo", device: "noPhone", state: ["id"] },
-  logoImage:     { path: "/logo/editor/image/", access: "guest",  parent: "logoEditor", from: ["logoEditor"], manual: "logo", device: "noPhone", state: ["id"] },
-  control:       { path: "/control/",           access: "guest",  parent: "games", from: ["games", "gameSettings"], manual: "control", device: "wide", state: ["id"] },
-  gameSettings:  { path: "/games/settings/",   access: "guest",  parent: "control", parentParams: ["id"], from: ["games", "control"], manual: "gameSettings", device: "wide", state: ["id"] },
+  logoText:      { path: "/logo/editor/text/",  access: "guest",  parent: "logoEditor", from: ["logoEditor"], manual: "logo", device: "noPhone", state: ["id"], locks: [{ type: "logo", id: "id" }] },
+  logoDraw:      { path: "/logo/editor/draw/",  access: "guest",  parent: "logoEditor", from: ["logoEditor"], manual: "logo", device: "noPhone", state: ["id"], locks: [{ type: "logo", id: "id" }] },
+  logoImage:     { path: "/logo/editor/image/", access: "guest",  parent: "logoEditor", from: ["logoEditor"], manual: "logo", device: "noPhone", state: ["id"], locks: [{ type: "logo", id: "id" }] },
+  control:       { path: "/control/",           access: "guest",  parent: "games", from: ["games", "gameSettings"], manual: "control", device: "wide", state: ["id"], locks: [{ type: "game", id: "id" }, { type: "logos", mode: "shared" }] },
+  gameSettings:  { path: "/games/settings/",   access: "guest",  parent: "control", parentParams: ["id"], from: ["games", "control"], manual: "gameSettings", device: "wide", state: ["id"], buttons: {
+    btnPlay: { to: "control", custom: true },
+  }, locks: [{ type: "game", id: "id" }, { type: "logos", mode: "shared" }] },
   marketplace:   { path: "/marketplace/",       access: "public", parent: "games", parentAnon: "home", subpaths: true, from: ["home", "games"], manual: "community", state: ["q", "filter", "sort"] },
   connectDevice: { path: "/connect/",    access: "public", parent: "games", parentAnon: "home", from: ["home", "games"], manual: "connect" },
   account:       { path: "/account/",           access: "guest",  parent: "games", from: ["games"], manual: "general" },
-  manual:        { path: "/manual/",            access: "guest",  parent: "games", from: [], tabs: ["general", "edit", "community", "bases", "polls", "subscriptions", "logo", "control", "gameSettings", "connect"], state: ["tab"] },
+  manual:        { path: "/manual/",            access: "guest",  parent: "games", from: [], tabs: ["general", "edit", "community", "bases", "polls", "subscriptions", "logo", "control", "gameSettings", "connect"], state: ["tab"], buttons: {
+    btnLegal: { to: "privacy" },
+  } },
   privacy:       { path: "/privacy/",           access: "public", parent: "manual", parentAnon: "home", from: ["home", "manual"] },
 };
 
@@ -54,6 +86,43 @@ export const PAGES = {
 // instrukcji, prywatności, landingu i logowania nie.
 const MANUAL_EXCLUDED = new Set(["manual", "privacy", "home", "login"]);
 PAGES.manual.from = Object.keys(PAGES).filter((id) => !MANUAL_EXCLUDED.has(id));
+
+export const ROLES = ["anon", "guest", "user"];
+
+const ACCESS_ROLES = {
+  public: ["anon", "guest", "user"],
+  guest: ["guest", "user"],
+  user: ["user"],
+};
+
+/** Role, które w ogóle wchodzą na stronę (access). */
+export function pageRoles(pageId) {
+  return ACCESS_ROLES[page(pageId).access];
+}
+
+/** Rola użytkownika: "anon" (null), "guest" (gość) albo "user" (konto). */
+export function roleOf(user, isGuest) {
+  if (!user) return "anon";
+  return isGuest ? "guest" : "user";
+}
+
+/** Role widzące przycisk: roles z opisu, ale tylko spośród tych, które mają wstęp na stronę. */
+export function buttonRoles(pageId, spec) {
+  const allowed = pageRoles(pageId);
+  return spec.roles ? spec.roles.filter((r) => allowed.includes(r)) : allowed;
+}
+
+/** Czy przycisk jest widoczny dla roli i urządzenia (phone: true — telefon). */
+export function buttonVisible(pageId, spec, role, phone) {
+  if (!buttonRoles(pageId, spec).includes(role)) return false;
+  if (phone && (spec.device === "wide" || spec.device === "noPhone")) return false;
+  return true;
+}
+
+/** Adres celu przycisku (bez custom — te adresy składa strona). */
+export function buttonHref(spec, ctx) {
+  return linkTo(spec.to, spec.tab ? { tab: spec.tab } : {}, ctx);
+}
 
 const DUMMY_ORIGIN = "https://nav.invalid";
 

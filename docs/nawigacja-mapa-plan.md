@@ -565,6 +565,235 @@ games: {
   i viewportu (1280×800 / 390×844) klika każdy przycisk i sprawdza cel
   oraz ↩.
 
+Diagramy poniżej są wygenerowane z `PAGES` (`node scripts/nav-maps.mjs`;
+test jednostkowy pilnuje zgodności z dokumentem).
+
+<!-- nav-maps:start -->
+
+<!-- WYGENEROWANE z PAGES przez scripts/nav-maps.mjs — nie edytuj ręcznie. -->
+
+Strzałka ciągła: przycisk z `PAGES[...].buttons` (nazwa = id elementu;
+`*` — przycisk z własnym sprawdzeniem przed przejściem). Strzałka kreskowana:
+↩ „Wstecz” bez `?ret=` (rodzic z mapy). `?` (instrukcja) prowadzi z każdej
+strony z topbarem i nie jest tu rysowane. Przejścia z elementów list
+(kafelki gier, baz, logo) nie są przyciskami mapy.
+
+#### Diagram A1 — Niezalogowany, komputer
+
+```mermaid
+flowchart LR
+  home["/"]
+  login["/login/"]
+  marketplace["/marketplace/"]
+  connectDevice["/connect/"]
+  privacy["/privacy/"]
+  login -.->|↩| home
+  marketplace -.->|↩| home
+  connectDevice -.->|↩| home
+  privacy -.->|↩| home
+```
+
+#### Diagram A2 — Niezalogowany, telefon
+
+```mermaid
+flowchart LR
+  home["/"]
+  login["/login/"]
+  marketplace["/marketplace/"]
+  connectDevice["/connect/"]
+  privacy["/privacy/"]
+  login -.->|↩| home
+  marketplace -.->|↩| home
+  connectDevice -.->|↩| home
+  privacy -.->|↩| home
+```
+
+#### Diagram B1 — Gość, komputer
+
+```mermaid
+flowchart LR
+  home["/"]
+  login["/login/"]
+  games["/games/"]
+  editor["/games/editor/"]
+  polls["/polls/"]
+  bases["/bases/"]
+  baseExplorer["/bases/explorer/"]
+  logoEditor["/logo/"]
+  logoText["/logo/editor/text/"]
+  logoDraw["/logo/editor/draw/"]
+  logoImage["/logo/editor/image/"]
+  control["/control/"]
+  gameSettings["/games/settings/"]
+  marketplace["/marketplace/"]
+  connectDevice["/connect/"]
+  account["/account/"]
+  manual["/manual/"]
+  privacy["/privacy/"]
+  games -->|btnMarketplace| marketplace
+  games -->|btnLogoEditor| logoEditor
+  games -->|btnBases| bases
+  games -->|btnPlay*| control
+  games -->|btnSettings*| gameSettings
+  games -->|btnEdit*| editor
+  games -->|btnPoll*| polls
+  bases -->|btnBrowse*| baseExplorer
+  gameSettings -->|btnPlay*| control
+  manual -->|btnLegal| privacy
+  login -.->|↩| home
+  editor -.->|↩| games
+  polls -.->|↩| games
+  bases -.->|↩| games
+  baseExplorer -.->|↩| bases
+  logoEditor -.->|↩| games
+  logoText -.->|↩| logoEditor
+  logoDraw -.->|↩| logoEditor
+  logoImage -.->|↩| logoEditor
+  control -.->|↩| games
+  gameSettings -.->|↩| control
+  marketplace -.->|↩| games
+  connectDevice -.->|↩| games
+  account -.->|↩| games
+  manual -.->|↩| games
+  privacy -.->|↩| manual
+```
+
+#### Diagram B2 — Gość, telefon
+
+```mermaid
+flowchart LR
+  home["/"]
+  login["/login/"]
+  games["/games/"]
+  editor["/games/editor/"]
+  polls["/polls/"]
+  bases["/bases/"]
+  baseExplorer["/bases/explorer/"]
+  logoEditor["/logo/"]
+  marketplace["/marketplace/"]
+  connectDevice["/connect/"]
+  account["/account/"]
+  manual["/manual/"]
+  privacy["/privacy/"]
+  games -->|btnMarketplace| marketplace
+  games -->|btnLogoEditor| logoEditor
+  games -->|btnBases| bases
+  games -->|btnEdit*| editor
+  games -->|btnPoll*| polls
+  bases -->|btnBrowse*| baseExplorer
+  manual -->|btnLegal| privacy
+  login -.->|↩| home
+  editor -.->|↩| games
+  polls -.->|↩| games
+  bases -.->|↩| games
+  baseExplorer -.->|↩| bases
+  logoEditor -.->|↩| games
+  marketplace -.->|↩| games
+  connectDevice -.->|↩| games
+  account -.->|↩| games
+  manual -.->|↩| games
+  privacy -.->|↩| manual
+```
+
+#### Diagram C1 — Konto, komputer
+
+```mermaid
+flowchart LR
+  home["/"]
+  login["/login/"]
+  games["/games/"]
+  editor["/games/editor/"]
+  polls["/polls/"]
+  subscriptions["/subscriptions/"]
+  bases["/bases/"]
+  baseExplorer["/bases/explorer/"]
+  logoEditor["/logo/"]
+  logoText["/logo/editor/text/"]
+  logoDraw["/logo/editor/draw/"]
+  logoImage["/logo/editor/image/"]
+  control["/control/"]
+  gameSettings["/games/settings/"]
+  marketplace["/marketplace/"]
+  connectDevice["/connect/"]
+  account["/account/"]
+  manual["/manual/"]
+  privacy["/privacy/"]
+  games -->|btnMarketplace| marketplace
+  games -->|btnLogoEditor| logoEditor
+  games -->|btnConnectDevice| connectDevice
+  games -->|btnSubscriptionsHub| subscriptions
+  games -->|btnBases| bases
+  games -->|btnPlay*| control
+  games -->|btnSettings*| gameSettings
+  games -->|btnEdit*| editor
+  games -->|btnPoll*| polls
+  bases -->|btnGoAlt| subscriptions
+  bases -->|btnBrowse*| baseExplorer
+  gameSettings -->|btnPlay*| control
+  manual -->|btnLegal| privacy
+  login -.->|↩| home
+  editor -.->|↩| games
+  polls -.->|↩| games
+  subscriptions -.->|↩| games
+  bases -.->|↩| games
+  baseExplorer -.->|↩| bases
+  logoEditor -.->|↩| games
+  logoText -.->|↩| logoEditor
+  logoDraw -.->|↩| logoEditor
+  logoImage -.->|↩| logoEditor
+  control -.->|↩| games
+  gameSettings -.->|↩| control
+  marketplace -.->|↩| games
+  connectDevice -.->|↩| games
+  account -.->|↩| games
+  manual -.->|↩| games
+  privacy -.->|↩| manual
+```
+
+#### Diagram C2 — Konto, telefon
+
+```mermaid
+flowchart LR
+  home["/"]
+  login["/login/"]
+  games["/games/"]
+  editor["/games/editor/"]
+  polls["/polls/"]
+  subscriptions["/subscriptions/"]
+  bases["/bases/"]
+  baseExplorer["/bases/explorer/"]
+  logoEditor["/logo/"]
+  marketplace["/marketplace/"]
+  connectDevice["/connect/"]
+  account["/account/"]
+  manual["/manual/"]
+  privacy["/privacy/"]
+  games -->|btnMarketplace| marketplace
+  games -->|btnLogoEditor| logoEditor
+  games -->|btnConnectDevice| connectDevice
+  games -->|btnSubscriptionsHub| subscriptions
+  games -->|btnBases| bases
+  games -->|btnEdit*| editor
+  games -->|btnPoll*| polls
+  bases -->|btnGoAlt| subscriptions
+  bases -->|btnBrowse*| baseExplorer
+  manual -->|btnLegal| privacy
+  login -.->|↩| home
+  editor -.->|↩| games
+  polls -.->|↩| games
+  subscriptions -.->|↩| games
+  bases -.->|↩| games
+  baseExplorer -.->|↩| bases
+  logoEditor -.->|↩| games
+  marketplace -.->|↩| games
+  connectDevice -.->|↩| games
+  account -.->|↩| games
+  manual -.->|↩| games
+  privacy -.->|↩| manual
+```
+
+<!-- nav-maps:end -->
+
 
 ---
 
