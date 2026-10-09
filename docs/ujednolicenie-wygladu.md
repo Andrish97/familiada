@@ -396,3 +396,21 @@ funkcjonalności, nawet osobne strony**. Propozycja układu (do potwierdzenia):
 - `/tasks/` — **Zadania** (skrzynka: co mi przysłano): sekcje Do zrobienia ·
   Zrobione (zwinięte); filtr rodzaju: ankiety · bazy · urządzenia. Plakietka
   z liczbą w menu; linki z maili przez `/go/`.
+
+**Decyzje 2026-10-09 (odpowiedź „Tak”):** trzy strony jak wyżej. Zadania
+(`/tasks/`) pokazują **tylko**: ankiety do głosowania, **bazy do
+zaakceptowania** oraz **aktywne udostępnienia urządzeń** z przejściem do
+podłączenia urządzenia (świadomie trochę powiela `/connect/`). Pytania 1 i 2
+przyjęte wg rekomendacji (do korekty przez użytkownika): aktywne subskrypcje
+między kontami → znajomi; subskrybent bez konta, który założy konto, zostaje
+subskrybentem i dostaje zaproszenie do znajomych.
+
+**Usunięcie konta i ponowna rejestracja** (zgodnie z `usuwanie-danych.md`,
+decyzja 2026-10-07 „wszystko, co powiązane z e-mailem, usuwane — ponowna
+rejestracja zaczyna od zera”):
+- usunięcie konta usuwa jego **znajomości** (u obu stron), wysłane i
+  otrzymane zaproszenia do znajomych, **wpisy subskrybenta na jego e-mail**
+  na listach innych, udostępnienia baz i urządzeń, zadania;
+- u znajomych osoba po prostu znika z listy (bez maila);
+- nowe konto na ten sam e-mail **nie odzyskuje** niczego — znajomości
+  i subskrypcje trzeba zaprosić od nowa (zgoda dotyczyła starego konta).
