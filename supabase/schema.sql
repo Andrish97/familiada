@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict EWjTRcvvFVVma68talM1HUnyiXrKrxghD25Wprh0C4gEvDf6wiqcVW54TF1OZOi
+\restrict 8Ht8Pd98FszXtitla0mD6OQa4uLoWBAyU1AHHfE8VVZhD2Dhz0Yn1ftI7oLS9LT
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -210,6 +210,20 @@ BEGIN
 
   RETURN v_token;
 END;
+$$;
+
+
+--
+-- Name: _logo_image_path("jsonb", "uuid"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."_logo_image_path"("p_payload" "jsonb", "p_user" "uuid") RETURNS "text"
+    LANGUAGE "sql" IMMUTABLE
+    AS $$
+  select case when p like (p_user::text || '/%') then p end
+  from (
+    select split_part(split_part(coalesce(p_payload #>> '{source,imageUrl}', ''), '/user-logos/', 2), '?', 1) as p
+  ) x
 $$;
 
 
@@ -539,6 +553,96 @@ begin
   where id = p_game_id;
 end;
 $_$;
+
+
+--
+-- Name: _storage_cleanup_kick_trigger(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."_storage_cleanup_kick_trigger"() RETURNS "trigger"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+begin
+  perform public.storage_cleanup_kick();
+  return null;
+end;
+$$;
+
+
+--
+-- Name: _storage_cleanup_on_game_delete(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."_storage_cleanup_on_game_delete"() RETURNS "trigger"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+begin
+  insert into public.storage_cleanup_queue(bucket, path, is_folder, owner_kind, owner_id)
+  values ('user-sounds', old.owner_id::text || '/' || old.id::text, true, 'game', old.id);
+  return old;
+end;
+$$;
+
+
+--
+-- Name: _storage_cleanup_on_logo_delete(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."_storage_cleanup_on_logo_delete"() RETURNS "trigger"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+declare
+  v_path text := public._logo_image_path(old.payload, old.user_id);
+begin
+  if v_path is not null then
+    insert into public.storage_cleanup_queue(bucket, path, is_folder, owner_kind, owner_id)
+    values ('user-logos', v_path, false, 'logo', old.id);
+  end if;
+  return old;
+end;
+$$;
+
+
+--
+-- Name: _storage_cleanup_on_profile_delete(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."_storage_cleanup_on_profile_delete"() RETURNS "trigger"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+begin
+  -- cały folder użytkownika w obu bucketach (także stare ścieżki sprzed 214)
+  insert into public.storage_cleanup_queue(bucket, path, is_folder, owner_kind, owner_id)
+  values ('user-sounds', old.id::text, true, 'user', old.id),
+         ('user-logos',  old.id::text, true, 'user', old.id);
+  return old;
+end;
+$$;
+
+
+--
+-- Name: acknowledge_display_audio_unlock("uuid", "text", "text"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."acknowledge_display_audio_unlock"("p_game_id" "uuid", "p_key" "text", "p_nonce" "text") RETURNS boolean
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $$
+DECLARE changed integer;
+BEGIN
+  IF NOT EXISTS(SELECT 1 FROM public.games WHERE id=p_game_id AND share_key_display=p_key) THEN
+    RAISE EXCEPTION 'forbidden';
+  END IF;
+  UPDATE public.display_audio_unlock SET acknowledged_nonce=request_nonce, acknowledged_at=now()
+    WHERE game_id=p_game_id AND request_nonce=p_nonce;
+  GET DIAGNOSTICS changed = ROW_COUNT;
+  RETURN changed=1;
+END;
+$$;
 
 
 --
@@ -1290,6 +1394,31 @@ begin
 
   return coalesce(v_cnt, 0);
 end;
+$$;
+
+
+--
+-- Name: begin_display_audio_session("uuid", "text", "text"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."begin_display_audio_session"("p_game_id" "uuid", "p_key" "text", "p_session_nonce" "text") RETURNS boolean
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $$
+BEGIN
+  IF NOT EXISTS(SELECT 1 FROM public.games WHERE id=p_game_id AND share_key_display=p_key) THEN
+    RAISE EXCEPTION 'forbidden';
+  END IF;
+  IF p_session_nonce IS NULL OR length(p_session_nonce)<8 OR length(p_session_nonce)>100 THEN
+    RAISE EXCEPTION 'invalid nonce';
+  END IF;
+  INSERT INTO public.display_audio_unlock(game_id,session_nonce,request_nonce,acknowledged_nonce,requested_at,acknowledged_at)
+  VALUES(p_game_id,p_session_nonce,p_session_nonce,NULL,now(),NULL)
+  ON CONFLICT(game_id) DO UPDATE SET session_nonce=EXCLUDED.session_nonce,
+    request_nonce=EXCLUDED.request_nonce, acknowledged_nonce=NULL,
+    requested_at=now(), acknowledged_at=NULL;
+  RETURN true;
+END;
 $$;
 
 
@@ -11020,6 +11149,30 @@ $$;
 
 
 --
+-- Name: request_display_audio_unlock("uuid", "text"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."request_display_audio_unlock"("p_game_id" "uuid", "p_nonce" "text") RETURNS boolean
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'auth', 'pg_temp'
+    AS $$
+BEGIN
+  IF auth.uid() IS NULL OR NOT EXISTS (
+    SELECT 1 FROM public.games WHERE id=p_game_id AND owner_id=auth.uid()
+  ) THEN RAISE EXCEPTION 'forbidden'; END IF;
+  IF p_nonce IS NULL OR length(p_nonce)<8 OR length(p_nonce)>100 THEN
+    RAISE EXCEPTION 'invalid nonce';
+  END IF;
+  INSERT INTO public.display_audio_unlock(game_id,request_nonce,acknowledged_nonce,requested_at,acknowledged_at)
+  VALUES(p_game_id,p_nonce,NULL,now(),NULL)
+  ON CONFLICT(game_id) DO UPDATE SET request_nonce=EXCLUDED.request_nonce,
+    acknowledged_nonce=NULL, requested_at=now(), acknowledged_at=NULL;
+  RETURN true;
+END;
+$$;
+
+
+--
 -- Name: request_display_completion(); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -11810,6 +11963,103 @@ BEGIN
   DELETE FROM public.stats_excluded_users WHERE user_id = p_user_id;
   RETURN jsonb_build_object('ok', true);
 END;
+$$;
+
+
+--
+-- Name: storage_cleanup_claim(integer); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."storage_cleanup_claim"("p_limit" integer DEFAULT 100) RETURNS TABLE("id" bigint, "bucket" "text", "path" "text", "is_folder" boolean)
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+begin
+  delete from public.storage_cleanup_queue q
+  where (q.owner_kind = 'game' and exists (select 1 from public.games g where g.id = q.owner_id))
+     or (q.owner_kind = 'user' and exists (select 1 from public.profiles p where p.id = q.owner_id))
+     or (q.owner_kind = 'logo' and exists (
+           select 1 from public.user_logos l
+           where l.id = q.owner_id
+              or public._logo_image_path(l.payload, l.user_id) = q.path));
+
+  return query
+  update public.storage_cleanup_queue q
+     set claimed_at = now(), attempts = q.attempts + 1
+   where q.id in (
+     select q2.id from public.storage_cleanup_queue q2
+     where q2.attempts < 20
+       and (q2.claimed_at is null or q2.claimed_at < now() - interval '5 minutes')
+     order by q2.id
+     limit greatest(1, least(coalesce(p_limit, 100), 500))
+     for update skip locked)
+  returning q.id, q.bucket, q.path, q.is_folder;
+end;
+$$;
+
+
+--
+-- Name: storage_cleanup_cron(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."storage_cleanup_cron"() RETURNS "void"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+begin
+  if exists (select 1 from public.storage_cleanup_queue where attempts < 20) then
+    perform public.storage_cleanup_kick();
+  end if;
+end;
+$$;
+
+
+--
+-- Name: storage_cleanup_done(bigint[], "jsonb"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."storage_cleanup_done"("p_done" bigint[], "p_failed" "jsonb" DEFAULT '[]'::"jsonb") RETURNS "void"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+begin
+  delete from public.storage_cleanup_queue where id = any(coalesce(p_done, '{}'));
+  update public.storage_cleanup_queue q
+     set last_error = f.err
+    from (select (e->>'id')::bigint as id, e->>'error' as err from jsonb_array_elements(coalesce(p_failed, '[]'::jsonb)) e) f
+   where q.id = f.id;
+end;
+$$;
+
+
+--
+-- Name: storage_cleanup_kick(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."storage_cleanup_kick"() RETURNS "void"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+declare
+  v_url text;
+  v_jwt text;
+begin
+  select value into v_url from public.app_config where key = 'edge_url';
+  select value into v_jwt from public.app_config where key = 'edge_service_role_jwt';
+  if coalesce(v_url, '') = '' or coalesce(v_jwt, '') = '' then return; end if;
+  perform net.http_post(
+    url := v_url || '/functions/v1/storage-cleanup',
+    headers := jsonb_build_object(
+      'Content-Type', 'application/json',
+      'Authorization', 'Bearer ' || v_jwt,
+      'apikey', v_jwt
+    ),
+    body := '{}'::jsonb
+  );
+exception when others then
+  -- brak pg_net / konfiguracji nie może zablokować usunięcia; cron ponowi
+  raise warning 'storage_cleanup_kick: %', sqlerrm;
+end;
 $$;
 
 
@@ -12683,6 +12933,20 @@ CREATE TABLE "public"."device_presence" (
     "device_id" "text" NOT NULL,
     "last_seen_at" timestamp with time zone DEFAULT "now"() NOT NULL,
     "meta" "jsonb" DEFAULT '{}'::"jsonb" NOT NULL
+);
+
+
+--
+-- Name: display_audio_unlock; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE "public"."display_audio_unlock" (
+    "game_id" "uuid" NOT NULL,
+    "session_nonce" "text" NOT NULL,
+    "request_nonce" "text" NOT NULL,
+    "acknowledged_nonce" "text",
+    "requested_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    "acknowledged_at" timestamp with time zone
 );
 
 
@@ -13598,6 +13862,46 @@ CREATE VIEW "public"."stats_exclusions_effective" AS
 
 
 --
+-- Name: storage_cleanup_queue; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE "public"."storage_cleanup_queue" (
+    "id" bigint NOT NULL,
+    "bucket" "text" NOT NULL,
+    "path" "text" NOT NULL,
+    "is_folder" boolean NOT NULL,
+    "owner_kind" "text" NOT NULL,
+    "owner_id" "uuid" NOT NULL,
+    "attempts" integer DEFAULT 0 NOT NULL,
+    "last_error" "text",
+    "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    "claimed_at" timestamp with time zone,
+    CONSTRAINT "storage_cleanup_queue_bucket_check" CHECK (("bucket" = ANY (ARRAY['user-sounds'::"text", 'user-logos'::"text"]))),
+    CONSTRAINT "storage_cleanup_queue_owner_kind_check" CHECK (("owner_kind" = ANY (ARRAY['game'::"text", 'logo'::"text", 'user'::"text"]))),
+    CONSTRAINT "storage_cleanup_queue_path_check" CHECK ((("path" <> ''::"text") AND ("path" !~~ '/%'::"text")))
+);
+
+
+--
+-- Name: storage_cleanup_queue_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE "public"."storage_cleanup_queue_id_seq"
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: storage_cleanup_queue_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE "public"."storage_cleanup_queue_id_seq" OWNED BY "public"."storage_cleanup_queue"."id";
+
+
+--
 -- Name: user_cooldowns; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -13654,6 +13958,13 @@ CREATE TABLE "public"."user_market_library" (
     "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
     "game_id" "uuid"
 );
+
+
+--
+-- Name: storage_cleanup_queue id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."storage_cleanup_queue" ALTER COLUMN "id" SET DEFAULT "nextval"('"public"."storage_cleanup_queue_id_seq"'::"regclass");
 
 
 --
@@ -13766,6 +14077,14 @@ ALTER TABLE ONLY "public"."device_connect_codes"
 
 ALTER TABLE ONLY "public"."device_presence"
     ADD CONSTRAINT "device_presence_pkey" PRIMARY KEY ("game_id", "device_type", "device_id");
+
+
+--
+-- Name: display_audio_unlock display_audio_unlock_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."display_audio_unlock"
+    ADD CONSTRAINT "display_audio_unlock_pkey" PRIMARY KEY ("game_id");
 
 
 --
@@ -14286,6 +14605,14 @@ ALTER TABLE ONLY "public"."site_activity"
 
 ALTER TABLE ONLY "public"."stats_excluded_users"
     ADD CONSTRAINT "stats_excluded_users_pkey" PRIMARY KEY ("user_id");
+
+
+--
+-- Name: storage_cleanup_queue storage_cleanup_queue_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."storage_cleanup_queue"
+    ADD CONSTRAINT "storage_cleanup_queue_pkey" PRIMARY KEY ("id");
 
 
 --
@@ -15056,6 +15383,48 @@ CREATE TRIGGER "request_display_completion" AFTER INSERT OR UPDATE ON "public"."
 
 
 --
+-- Name: games storage_cleanup_kick; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "storage_cleanup_kick" AFTER DELETE ON "public"."games" FOR EACH STATEMENT EXECUTE FUNCTION "public"."_storage_cleanup_kick_trigger"();
+
+
+--
+-- Name: profiles storage_cleanup_kick; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "storage_cleanup_kick" AFTER DELETE ON "public"."profiles" FOR EACH STATEMENT EXECUTE FUNCTION "public"."_storage_cleanup_kick_trigger"();
+
+
+--
+-- Name: user_logos storage_cleanup_kick; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "storage_cleanup_kick" AFTER DELETE ON "public"."user_logos" FOR EACH STATEMENT EXECUTE FUNCTION "public"."_storage_cleanup_kick_trigger"();
+
+
+--
+-- Name: games storage_cleanup_row; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "storage_cleanup_row" AFTER DELETE ON "public"."games" FOR EACH ROW EXECUTE FUNCTION "public"."_storage_cleanup_on_game_delete"();
+
+
+--
+-- Name: profiles storage_cleanup_row; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "storage_cleanup_row" AFTER DELETE ON "public"."profiles" FOR EACH ROW EXECUTE FUNCTION "public"."_storage_cleanup_on_profile_delete"();
+
+
+--
+-- Name: user_logos storage_cleanup_row; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "storage_cleanup_row" AFTER DELETE ON "public"."user_logos" FOR EACH ROW EXECUTE FUNCTION "public"."_storage_cleanup_on_logo_delete"();
+
+
+--
 -- Name: answers touch_game_from_answers; Type: TRIGGER; Schema: public; Owner: -
 --
 
@@ -15343,6 +15712,14 @@ ALTER TABLE ONLY "public"."device_connect_codes"
 
 ALTER TABLE ONLY "public"."device_presence"
     ADD CONSTRAINT "device_presence_game_id_fkey" FOREIGN KEY ("game_id") REFERENCES "public"."games"("id") ON DELETE CASCADE;
+
+
+--
+-- Name: display_audio_unlock display_audio_unlock_game_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."display_audio_unlock"
+    ADD CONSTRAINT "display_audio_unlock_game_id_fkey" FOREIGN KEY ("game_id") REFERENCES "public"."games"("id") ON DELETE CASCADE;
 
 
 --
@@ -16014,6 +16391,21 @@ ALTER TABLE "public"."device_presence" ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "device_presence_owner_read" ON "public"."device_presence" FOR SELECT TO "authenticated" USING ((EXISTS ( SELECT 1
    FROM "public"."games" "g"
   WHERE (("g"."id" = "device_presence"."game_id") AND ("g"."owner_id" = "auth"."uid"())))));
+
+
+--
+-- Name: display_audio_unlock; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE "public"."display_audio_unlock" ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: display_audio_unlock display_audio_unlock_owner_read; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "display_audio_unlock_owner_read" ON "public"."display_audio_unlock" FOR SELECT TO "authenticated" USING ((EXISTS ( SELECT 1
+   FROM "public"."games" "g"
+  WHERE (("g"."id" = "display_audio_unlock"."game_id") AND ("g"."owner_id" = "auth"."uid"())))));
 
 
 --
@@ -17035,6 +17427,12 @@ ALTER TABLE "public"."site_activity" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "public"."site_activity_hours" ENABLE ROW LEVEL SECURITY;
 
 --
+-- Name: storage_cleanup_queue; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE "public"."storage_cleanup_queue" ENABLE ROW LEVEL SECURITY;
+
+--
 -- Name: user_market_library uml_own; Type: POLICY; Schema: public; Owner: -
 --
 
@@ -17139,5 +17537,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict EWjTRcvvFVVma68talM1HUnyiXrKrxghD25Wprh0C4gEvDf6wiqcVW54TF1OZOi
+\unrestrict 8Ht8Pd98FszXtitla0mD6OQa4uLoWBAyU1AHHfE8VVZhD2Dhz0Yn1ftI7oLS9LT
 

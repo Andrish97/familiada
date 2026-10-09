@@ -117,3 +117,10 @@ Weryfikacja instrukcji: wszystkie robocze uwagi z bieżącej korekty rozstrzygni
 Film 02 jest powtarzany przez 37396346583: skrypt czeka teraz na zakończenie wejścia planszy finału, a dopiero potem pozostawia ją przez cztery sekundy. Poprzedni stały czas czterech sekund mógł uciąć przejście. Pozostałych dziewięciu filmów nie powtarzamy.
 
 Film 02, dogrywka 37396346583 — sukces. Lokalną galerię zaktualizowano do najnowszego pliku; jest komplet 10 MP4 i 10 raportów. Przewodnik wskazuje pochodzenie filmów i różnice wersji: 02 i 07 są po ostatniej korekcie nazwy i Hosta, pozostałe z wcześniejszego przebiegu. Nie twierdzimy, że starsze filmy przedstawiają ostatnie drobne zmiany instrukcji/Hosta.
+
+## Synchronizacja krótkich dźwięków i animacji — 2026-10-08
+
+- Przy dźwięku z Display czas potrzebny do odczytania długości pliku jest przygotowywany przed startem dźwięku i animacji. Zapobiega to sytuacji, w której reveal już gra, a animacja dopiero czeka na dekodowanie metadanych.
+- Przy dźwięku z Control panel czeka na sygnał Display, że przygotowało odpowiadającą mu zmianę planszy. Dźwięk rusza po tym sygnale; po 1,2 s bez sygnału używany jest bezpieczny fallback, żeby utrata broadcastu nie zawiesiła dźwięku ani panelu. Synchronizacja dotyczy wszystkich wpisów `sound_cue_seq`, także powtarzających się krótkich dźwięków.
+- Potwierdzenie odblokowania audio Display jest zapisywane osobno od pulsu obecności. Baza przyjmuje je tylko dla aktualnego nonce; każde ponowne załadowanie Display rozpoczyna nową sesję i unieważnia poprzednie potwierdzenie. Broadcast jedynie przyspiesza odczyt, a panel sprawdza trwały zapis w bazie.
+- Odtwarzacz zgłasza odblokowanie dopiero po spełnieniu obietnicy `play()`, nie po samym wywołaniu. Zmiany kodu i migracja 312 są lokalne; przed wdrożeniem trzeba zastosować migrację, a po publikacji sprawdzić oba źródła dźwięku oraz ponowne załadowanie/ponowne połączenie Display.

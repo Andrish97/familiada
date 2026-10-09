@@ -1,16 +1,16 @@
 // js/pages/marketplace.js
 
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T01181";
-import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-09T01181";
-import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-09T01181";
-import { initI18n, t, getUiLang, withLangParam, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-09T01181";
-import { initTopbarAccountDropdown } from "../../shared/js/core/topbar-controller.js?v=v2026-10-09T01181";
-import { exportGame } from "../../games/js/games-import-export.js?v=v2026-10-09T01181";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-09T01181";
-import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-09T01181";
-import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-09T01181";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-09T01181";
-import { icon, iconText, starRating } from "../../shared/js/core/icons.js?v=v2026-10-09T01181";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T01202";
+import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-09T01202";
+import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-09T01202";
+import { initI18n, t, getUiLang, withLangParam, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-09T01202";
+import { initTopbarAccountDropdown } from "../../shared/js/core/topbar-controller.js?v=v2026-10-09T01202";
+import { exportGame } from "../../games/js/games-import-export.js?v=v2026-10-09T01202";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-09T01202";
+import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-09T01202";
+import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-09T01202";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-09T01202";
+import { icon, iconText, starRating } from "../../shared/js/core/icons.js?v=v2026-10-09T01202";
 
 // Status zgłoszonej gry → wariant oznaczenia (.tag z base.css).
 const MKT_STATUS_TAG = { pending: "tag--warn", published: "tag--ok", rejected: "tag--bad", withdrawn: "tag--muted" };

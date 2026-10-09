@@ -11,7 +11,7 @@
 // game_state przy każdym (re)connect). Ten moduł robi wyłącznie to, co jest
 // realnie faktem obecności: kto jest online, od kiedy.
 
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T01181";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T01202";
 
 const ONLINE_MS = 6_500; // Two missed 3s heartbeats, with a small margin.
 const POLL_MS = 750;
