@@ -114,4 +114,6 @@ usuwania, bez udziału przeglądarki.
 - Do usunięcia po potwierdzeniu na produkcji: edge function
   `cleanup-guest-storage` i jej wywołania w `guest_cleanup_expired` /
   `guest_discard_current`, sprzątanie plików w `delete-account`.
+- Wywołanie funkcji: sekrety `vault` (`project_url`, `anon_key`) — migracja 318
+  (`app_config` z 313 nie był ustawiony; kolejka nie była opróżniana do 2026-10-09).
 - Test lokalny: `docs/sql/test-storage-313.sql`.
