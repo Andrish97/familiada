@@ -144,6 +144,8 @@ plik, to inaczej". Lokalnie to samo bez żadnego dodatkowego ustawienia:
 
 ## Pula kont testX (`test1@familiada.online` … `test10@…`)
 
+> **Zarezerwowane, nie używać w e2e:** test4, test5 (użytkownik — testy równoległe), test9, test10 (druga sesja). Wykluczone w `EXCLUDED_TEST_ACCOUNTS` (`e2e/helpers/login.js`), decyzja 2026-10-09.
+
 Każdy plik/filtr testów **może** korzystać z całej puli do 10 kont
 testowych — login `test<N>@familiada.online` (`testAccountUsername(n)` w
 `e2e/helpers/login.js`, domena stała w kodzie, nie sekret), wspólne

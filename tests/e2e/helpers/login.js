@@ -255,7 +255,7 @@ async function loginAsGuest(page, context, opts = {}) {
 // 2026-10-09): test9 i test10. test5 ma osobno znany problem Supabase
 // ("Database error querying schema") i kod go po prostu omija tam, gdzie
 // już to robi.
-const EXCLUDED_TEST_ACCOUNTS = [9, 10];
+const EXCLUDED_TEST_ACCOUNTS = [4, 5, 9, 10];
 
 // Mapa użycia kont (kto na którym koncie pracuje, żeby równoległe testy
 // nie wchodziły sobie w drogę):
