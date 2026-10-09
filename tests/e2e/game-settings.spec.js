@@ -549,7 +549,10 @@ test("ustawienia gry: multiplikatory rund — niepoprawny format nie nadpisuje z
     await page.locator("#gsMultipliers").fill("abc, xyz");
     await page.locator("#gsMultipliers").press("Tab"); // wymusza 'change'
 
-    await saveAndWait(page);
+    // Niepoprawny format nie zmienia ustawień, więc autozapis może w ogóle
+    // nie wysłać PATCH — czekamy dłużej niż opóźnienie autozapisu (0,8 s)
+    // i sprawdzamy bazę.
+    await page.waitForTimeout(2500);
 
     const game = await getGameRow(page, gameId);
     expect(

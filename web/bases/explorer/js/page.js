@@ -1,22 +1,22 @@
 // base-explorerjs/page.js
 // Init strony menadżera bazy (warstwa 2)
 
-import { alertModal } from "../../../shared/js/core/modal.js?v=v2026-10-09T22521";
-import { guardResourceLocks } from "../../../shared/js/core/resource-lock.js?v=v2026-10-09T22521";
-import { getUiLang, initI18n, t } from "../../../shared/translation/translation.js?v=v2026-10-09T22521";
-import { backHref } from "../../../shared/js/core/nav-map.js?v=v2026-10-09T22521";
-import { initPage } from "../../../shared/js/core/page-init.js?v=v2026-10-09T22521";
-import { VIEW, createState, setRole, pruneTreeOpen } from "./state.js?v=v2026-10-09T22521";
-import { renderAll } from "./render.js?v=v2026-10-09T22521";
+import { alertModal } from "../../../shared/js/core/modal.js?v=v2026-10-09T23200";
+import { guardResourceLocks } from "../../../shared/js/core/resource-lock.js?v=v2026-10-09T23200";
+import { getUiLang, initI18n, t } from "../../../shared/translation/translation.js?v=v2026-10-09T23200";
+import { backHref } from "../../../shared/js/core/nav-map.js?v=v2026-10-09T23200";
+import { initPage } from "../../../shared/js/core/page-init.js?v=v2026-10-09T23200";
+import { VIEW, createState, setRole, pruneTreeOpen } from "./state.js?v=v2026-10-09T23200";
+import { renderAll } from "./render.js?v=v2026-10-09T23200";
 import {
   getBaseMeta,
   getBaseRole,
   listCategories,
   listTags,
   listAllQuestions,
-} from "./repo.js?v=v2026-10-09T22521";
-import { wireActions } from "./actions.js?v=v2026-10-09T22521";
-import { initDrawer, disableDragOnTouch } from "./mobile.js?v=v2026-10-09T22521";
+} from "./repo.js?v=v2026-10-09T23200";
+import { wireActions } from "./actions.js?v=v2026-10-09T23200";
+import { initDrawer, disableDragOnTouch } from "./mobile.js?v=v2026-10-09T23200";
 
 /* ================= DOM ================= */
 const baseNameEl = document.getElementById("baseName");
