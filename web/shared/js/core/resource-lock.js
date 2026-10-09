@@ -12,7 +12,7 @@ import { rt } from "./realtime.js?v=v2026-10-09T02075";
 const TAB_ID_KEY = "familiada:tabId";
 const HEARTBEAT_MS = 8000; // znacznie poniżej TTL (120 s, edit_lock_ttl() w bazie)
 const RETRY_POLL_MS = 5000; // dopóki zablokowani: fallback niezależny od broadcastu
-const LOCK_TTL_MS = 120000; // musi być zgodne z edit_lock_ttl() w bazie (migracja 314)
+const LOCK_TTL_MS = 120000; // musi być zgodne z edit_lock_ttl() w bazie (migracja 316)
 
 function randomId() {
   try {

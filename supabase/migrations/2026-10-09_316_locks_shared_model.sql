@@ -1,5 +1,5 @@
--- Migration 314: docelowy model blokad (docs/blokady-zasobow.md, sekcja 6).
--- Tylko do przodu. Zmiany względem poprzednich ciał funkcji oznaczone "-- 314:".
+-- Migration 316: docelowy model blokad (docs/blokady-zasobow.md, sekcja 6).
+-- Tylko do przodu. Zmiany względem poprzednich ciał funkcji oznaczone "-- 316:".
 --  * edit_locks: kolumna mode ('exclusive' | 'shared'); klucz (typ, id, karta);
 --    wyłączne dalej jeden wiersz na zasób (indeks częściowy), współdzielone
 --    mogą trzymać naprawdę wiele kart naraz.
@@ -21,7 +21,7 @@ BEGIN;
 -- ---------------------------------------------------------------- tabela
 
 ALTER TABLE "public"."edit_locks"
-  ADD COLUMN IF NOT EXISTS "mode" "text" NOT NULL DEFAULT 'exclusive';  -- 314:
+  ADD COLUMN IF NOT EXISTS "mode" "text" NOT NULL DEFAULT 'exclusive';  -- 316:
 
 ALTER TABLE "public"."edit_locks"
   DROP CONSTRAINT IF EXISTS "edit_locks_mode_check";
@@ -39,13 +39,13 @@ CREATE UNIQUE INDEX IF NOT EXISTS "edit_locks_exclusive_uidx"
 
 CREATE OR REPLACE FUNCTION "public"."edit_lock_ttl"() RETURNS interval
     LANGUAGE "sql" IMMUTABLE
-    AS $$ select interval '120 seconds' $$;  -- 314: było 25 s
+    AS $$ select interval '120 seconds' $$;  -- 316: było 25 s
 
 -- Aktywne trzymania innych kart, które przeszkadzają w zajęciu zasobu
 -- (p_type, p_id) w trybie p_mode. p_tab = karta wołająca (jej własne wiersze
 -- nie przeszkadzają); NULL = wywołanie bez karty (starsza wersja strony
 -- otwarta w chwili wdrożenia) — wtedy nie przeszkadzają trzymania tego samego
--- użytkownika, jak przed 314 (inaczej edytor blokowałby sam siebie).
+-- użytkownika, jak przed 316 (inaczej edytor blokowałby sam siebie).
 CREATE OR REPLACE FUNCTION "public"."edit_lock_blockers"("p_type" "text", "p_id" "uuid", "p_mode" "text", "p_tab" "text")
     RETURNS SETOF "public"."edit_locks"
     LANGUAGE "sql" STABLE SECURITY DEFINER
@@ -82,7 +82,7 @@ CREATE OR REPLACE FUNCTION "public"."can_edit_locked_resource"("p_resource_type"
     WHEN 'logo' THEN EXISTS (
       SELECT 1 FROM public.user_logos WHERE id = p_resource_id AND user_id = auth.uid()
     )
-    WHEN 'logos' THEN p_resource_id = auth.uid()  -- 314: pula logo użytkownika
+    WHEN 'logos' THEN p_resource_id = auth.uid()  -- 316: pula logo użytkownika
     WHEN 'base' THEN public.base_can_edit(p_resource_id, auth.uid())
     WHEN 'base_question' THEN EXISTS (
       SELECT 1 FROM public.qb_questions q
@@ -119,16 +119,16 @@ begin
   if coalesce(trim(p_tab_id), '') = '' then
     return jsonb_build_object('ok', false, 'error', 'missing_tab_id');
   end if;
-  if p_mode not in ('exclusive', 'shared') then  -- 314:
+  if p_mode not in ('exclusive', 'shared') then  -- 316:
     return jsonb_build_object('ok', false, 'error', 'unknown_mode');
   end if;
-  if p_resource_type not in ('game', 'logo', 'logos', 'base', 'base_question', 'base_folder', 'base_tag') then  -- 314: + logos
+  if p_resource_type not in ('game', 'logo', 'logos', 'base', 'base_question', 'base_folder', 'base_tag') then  -- 316: + logos
     return jsonb_build_object('ok', false, 'error', 'unknown_resource_type');
   end if;
   v_exists := case p_resource_type
     when 'game' then exists (select 1 from public.games where id = p_resource_id)
     when 'logo' then exists (select 1 from public.user_logos where id = p_resource_id)
-    when 'logos' then p_resource_id = v_uid  -- 314: id = użytkownik
+    when 'logos' then p_resource_id = v_uid  -- 316: id = użytkownik
     when 'base' then exists (select 1 from public.question_bases where id = p_resource_id)
     when 'base_question' then exists (select 1 from public.qb_questions where id = p_resource_id)
     when 'base_folder' then exists (select 1 from public.qb_categories where id = p_resource_id)
@@ -142,7 +142,7 @@ begin
     return jsonb_build_object('ok', false, 'error', 'forbidden');
   end if;
 
-  -- 314: serializacja zajmowania w obrębie zasobu; logo i pula logo użytkownika
+  -- 316: serializacja zajmowania w obrębie zasobu; logo i pula logo użytkownika
   -- dzielą jeden klucz, bo zasady zgodności łączą je ze sobą.
   if p_resource_type = 'logo' then
     select user_id into v_owner from public.user_logos where id = p_resource_id;
@@ -154,7 +154,7 @@ begin
   end if;
   perform pg_advisory_xact_lock(hashtextextended(v_key, 0));
 
-  -- 314: wygasłe trzymania innych kart tego zasobu znikają (zwalniają klucz
+  -- 316: wygasłe trzymania innych kart tego zasobu znikają (zwalniają klucz
   -- wyłączny); wygasłe nie przeszkadzają też w edit_lock_blockers.
   delete from public.edit_locks
    where resource_type = p_resource_type
@@ -221,7 +221,7 @@ begin
     return jsonb_build_object('ok', false, 'error', 'not_found_or_forbidden');
   end if;
 
-  -- 314: to logo (inna karta) albo cała pula logo (Control / ustawienia gry)
+  -- 316: to logo (inna karta) albo cała pula logo (Control / ustawienia gry)
   -- trzymane przez kogoś innego.
   select * into v_blocker
   from public.edit_lock_blockers('logo', p_logo_id, 'exclusive', p_tab_id)
@@ -265,7 +265,7 @@ begin
     -- 312: otwarta ankieta nie blokuje usunięcia (zostaje przerwana: głosy, sesje
     -- i zaproszenia znikają kaskadą). Blokuje tylko zajęta blokada gry.
 
-    -- 314: game:G trzymane przez inną kartę (wyłączne albo współdzielone)
+    -- 316: game:G trzymane przez inną kartę (wyłączne albo współdzielone)
     select * into v_blocker
     from public.edit_lock_blockers('game', p_resource_id, 'exclusive', p_tab_id)
     limit 1;
@@ -292,7 +292,7 @@ begin
       return jsonb_build_object('ok', false, 'error', 'not_found_or_forbidden');
     end if;
 
-    -- 314: logo:L w innej karcie albo pula logo (logos) trzymana przez kogoś
+    -- 316: logo:L w innej karcie albo pula logo (logos) trzymana przez kogoś
     -- innego -- jedna reguła zgodności zamiast kontekstów settings / control.
     select * into v_blocker
     from public.edit_lock_blockers('logo', p_resource_id, 'exclusive', p_tab_id)
@@ -311,7 +311,7 @@ begin
       return jsonb_build_object('ok', false, 'error', 'not_found_or_forbidden');
     end if;
 
-    -- 314: base:B trzymane (współdzielone -- eksplorator, albo wyłączne) przez
+    -- 316: base:B trzymane (współdzielone -- eksplorator, albo wyłączne) przez
     -- kogoś innego.
     select * into v_blocker
     from public.edit_lock_blockers('base', p_resource_id, 'exclusive', p_tab_id)
@@ -326,7 +326,7 @@ begin
     -- bazy skasowałoby go (CASCADE) spod ręki edytującego bez ostrzeżenia.
     if exists (
       select 1 from public.edit_locks l
-      where l.heartbeat_at > now() - public.edit_lock_ttl()  -- 314: TTL
+      where l.heartbeat_at > now() - public.edit_lock_ttl()  -- 316: TTL
         and l.holder_tab_id is distinct from p_tab_id
         and (
           (l.resource_type = 'base_question' and exists (
@@ -352,7 +352,7 @@ begin
 end;
 $$;
 
--- 314: zmiana nazwy gry / bazy / logo po stronie bazy (wcześniej gra i baza:
+-- 316: zmiana nazwy gry / bazy / logo po stronie bazy (wcześniej gra i baza:
 -- zwykły update bez kontroli blokad).
 CREATE OR REPLACE FUNCTION "public"."rename_resource_checked"("p_resource_type" "text", "p_resource_id" "uuid", "p_name" "text", "p_tab_id" "text" DEFAULT NULL::"text") RETURNS "jsonb"
     LANGUAGE "plpgsql" SECURITY DEFINER
@@ -417,7 +417,7 @@ BEGIN
   logo_id := nullif(g.settings->'display'->>'logoId', '')::uuid;
   IF logo_id IS NOT NULL AND NOT EXISTS(SELECT 1 FROM public.user_logos l WHERE l.id = logo_id AND l.user_id = g.owner_id) THEN logo_id := NULL; END IF;
   SELECT EXISTS(SELECT 1 FROM public.edit_locks l WHERE l.resource_type = 'logo' AND l.resource_id = logo_id
-    AND l.heartbeat_at > now() - public.edit_lock_ttl()) INTO busy;  -- 314: TTL
+    AND l.heartbeat_at > now() - public.edit_lock_ttl()) INTO busy;  -- 316: TTL
   IF NOT busy AND logo_id IS NOT NULL THEN
     SELECT jsonb_build_object('type', l.type, 'payload', l.payload, 'name', l.name) INTO logo
     FROM public.user_logos l WHERE l.id = logo_id AND l.user_id = g.owner_id;

@@ -1,8 +1,8 @@
--- Test migracji 314 (model blokad: trzymanie wspólne / wyłączne) na lokalnej bazie
--- (docs/sql/local-db.md). Po schema.sql + migracjach 309–314:
---   psql -h /var/tmp/pgfam_e2 -p 5520 -U postgres -d fam -v ON_ERROR_STOP=1 -f docs/sql/test-locks-314.sql
+-- Test migracji 316 (model blokad: trzymanie wspólne / wyłączne) na lokalnej bazie
+-- (docs/sql/local-db.md). Po schema.sql + migracjach 309–316:
+--   psql -h /var/tmp/pgfam_e2 -p 5520 -U postgres -d fam -v ON_ERROR_STOP=1 -f docs/sql/test-locks-316.sql
 -- Całość w jednej transakcji z ROLLBACK -- nic nie zostaje w bazie. Błąd asercji
--- przerywa skrypt (RAISE EXCEPTION); sukces kończy się napisem "314 OK".
+-- przerywa skrypt (RAISE EXCEPTION); sukces kończy się napisem "316 OK".
 BEGIN;
 
 -- Użytkownik wołający: jak auth.uid() w Supabase.
@@ -191,5 +191,5 @@ DO $$ begin
 end $$;
 RESET ROLE;
 
-SELECT '314 OK' AS wynik;
+SELECT '316 OK' AS wynik;
 ROLLBACK;
