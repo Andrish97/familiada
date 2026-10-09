@@ -1,16 +1,16 @@
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T16262";
-import { cooldownGet, cooldownReserve, cooldownRelease, mailCooldownEmailReserve } from "../../shared/js/core/cooldown.js?v=v2026-10-09T16262";
-import { requireAuth, updateUserLanguage, validatePassword, validateUsername, signOut, niceAuthError, initPasswordToggles, convertGuestToRegisteredEmailOnly } from "../../shared/js/core/auth.js?v=v2026-10-09T16262";
-import { getUserEmailNotificationsFlag, setUserEmailNotificationsFlag } from "../../shared/js/core/user-flags.js?v=v2026-10-09T16262";
-import { initI18n, t, getUiLang, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-09T16262";
-import { linkTo, backHref, loginUrl, renderBackLabel } from "../../shared/js/core/nav-map.js?v=v2026-10-09T16262";
-import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-09T16262";
-import { isGuestUser, hideForGuest } from "../../shared/js/core/guest-mode.js?v=v2026-10-09T16262";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-09T16262";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-09T16262";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T17142";
+import { cooldownGet, cooldownReserve, cooldownRelease, mailCooldownEmailReserve } from "../../shared/js/core/cooldown.js?v=v2026-10-09T17142";
+import { requireAuth, updateUserLanguage, validatePassword, validateUsername, signOut, niceAuthError, initPasswordToggles, convertGuestToRegisteredEmailOnly } from "../../shared/js/core/auth.js?v=v2026-10-09T17142";
+import { getUserEmailNotificationsFlag, setUserEmailNotificationsFlag } from "../../shared/js/core/user-flags.js?v=v2026-10-09T17142";
+import { initI18n, t, getUiLang, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-09T17142";
+import { linkTo, backHref, loginUrl, renderBackLabel } from "../../shared/js/core/nav-map.js?v=v2026-10-09T17142";
+import { toast } from "../../shared/js/core/toast.js?v=v2026-10-09T17142";
+import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-09T17142";
+import { isGuestUser, hideForGuest } from "../../shared/js/core/guest-mode.js?v=v2026-10-09T17142";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-09T17142";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-09T17142";
 
 
-const status = document.getElementById("status");
 const err = document.getElementById("err");
 
 const usernameInput = document.getElementById("username");
@@ -49,7 +49,8 @@ const migratePendingHint = document.getElementById("migratePendingHint");
 const migrateResend = document.getElementById("migrateResend");
 const migrateCancel = document.getElementById("migrateCancel");
 
-function setStatus(m = "") { if (status) status.textContent = m; }
+// Komunikat po akcji = wspólny dymek (toast); pola #status na stronie nie ma.
+function setStatus(m = "") { if (m) toast(m); }
 
 function setErr(m = "") { if (err) err.textContent = m; }
 let emailNotifTimer = null;
@@ -276,7 +277,6 @@ async function handleMigrateSubmit() {
     const rawUsername = String(migrateUsername?.value || "").trim();
     const username = rawUsername ? validateUsername(rawUsername) : "";
 
-    setStatus(t("account.statusMigrating"));
 
     const reserve = await mailCooldownEmailReserve(GUEST_UPGRADE_ACTION_KEY, mail);
     if (!reserve.ok) {
@@ -328,7 +328,6 @@ async function handleMigrateResend() {
       );
     }
 
-    setStatus(t("account.statusMigrateResending"));
 
     const language = getUiLang();
     const redirect = new URL("/login/confirm/", location.origin);
@@ -355,12 +354,10 @@ async function handleMigrateCancel() {
   try {
     await refreshMigrateState();
     if (!migratePendingEmail) {
-      setStatus(t("account.statusLoaded"));
       return;
     }
     emailBeforeCancel = migratePendingEmail; // setMigratePendingUi("") poniżej nadpisuje migratePendingEmail
 
-    setStatus(t("account.statusMigrateCancelling"));
     setMigratePendingUi(""); // optymistyczna aktualizacja UI
 
     // Odkąd submit migracji już NIE flipuje profiles.is_guest przedwcześnie
@@ -437,7 +434,6 @@ function setEmailPendingUi(nextPendingEmail) {
       lockEl(emailInput, true);
     }
     lockEl(saveEmail, true);
-    setStatus(t("account.statusEmailPending"));
   } else {
     if (emailInput) {
       emailInput.value = currentEmail || "";
@@ -600,7 +596,6 @@ async function loadProfile() {
     if (migrateSection) migrateSection.hidden = false;
     await refreshMigrateState();
 
-    setStatus(t("account.statusLoaded"));
     return;
   }
 
@@ -622,7 +617,6 @@ async function loadProfile() {
   await loadUserRating(user.id);
   await wireDemoActions(user);
 
-  setStatus(t("account.statusLoaded"));
   await refreshAuthEmailState();
   await loadCooldownsFromServer();
   startEmailStateWatcher();
@@ -686,7 +680,6 @@ async function handleEmailSave() {
     await reserveCooldownOrThrow(CD.email);
     reserved = true;
 
-    setStatus(t("account.statusSavingEmail"));
 
     const { error } = await sb().auth.updateUser(
       { email: normalizedMail, data: { language, familiada_email_change_pending: normalizedMail } },
@@ -730,7 +723,6 @@ async function handleEmailResend() {
     await reserveCooldownOrThrow(CD.email);
     reserved = true;
 
-    setStatus(t("account.statusEmailResending"));
 
     const { error } = await sb().auth.resend({
       type: "email_change",
@@ -766,12 +758,10 @@ async function handleEmailCancel() {
     await refreshAuthEmailState();
 
     if (!pendingEmail || pendingEmail === currentEmail) {
-      setStatus(t("account.statusLoaded"));
       setEmailPendingUi("");
       return;
     }
 
-    setStatus(t("account.statusEmailCancelling"));
 
     // Optymistyczna aktualizacja UI, aby przycisk Anuluj zniknął natychmiast
     setEmailPendingUi("");
@@ -794,7 +784,6 @@ async function handleEmailCancel() {
     await loadCooldownsFromServer();
   } catch (e) {
     console.error(e);
-    setStatus(t("account.statusError"));
     setErr(niceAuthError(e));
   }
 }
@@ -871,7 +860,6 @@ async function handleDeleteAccount() {
       if (signInError) throw new Error(t("account.errInvalidPassword"));
     }
 
-    setStatus(t("account.statusDeleting"));
     const { data, error } = await sb().functions.invoke("delete-account");
     if (error) throw error;
     if (!data?.ok) throw new Error(data?.error || t("account.errDeleteFailed"));
@@ -880,8 +868,8 @@ async function handleDeleteAccount() {
     location.href = loginUrl();
   } catch (e) {
     console.error(e);
-    setStatus(t("account.statusError"));
     setErr(niceAuthError(e));
+    toast(niceAuthError(e), { kind: "error" });
   }
 }
 

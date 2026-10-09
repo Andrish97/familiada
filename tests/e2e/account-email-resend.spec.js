@@ -110,7 +110,7 @@ test("konto: 'Wyślij ponownie' na zmianę e-maila kończy się sukcesem, nie Re
     // wewnętrzną, klientową rasą, poczekaj aż akcja się zakończy (status) i
     // odśwież stronę na czysto -- świeży load i tak sam wywoła
     // refreshAuthEmailState().
-    await expect(page.locator("#status")).toContainText("Wysłano linki potwierdzające", { timeout: 20000 });
+    await expect(page.locator("#appToast")).toContainText("Wysłano linki potwierdzające", { timeout: 20000 });
     await page.reload({ waitUntil: "domcontentloaded" });
     await page.waitForSelector('[data-skel-step].skel-step-ready', { timeout: 15000 });
 
@@ -128,7 +128,7 @@ test("konto: 'Wyślij ponownie' na zmianę e-maila kończy się sukcesem, nie Re
 
     // Przed poprawką: #err dostawał treść ReferenceError ("normalizedMail is
     // not defined") mimo że resend() realnie się powiódł.
-    await expect(page.locator("#status")).toContainText("Wysłano ponownie", { timeout: 15000 });
+    await expect(page.locator("#appToast")).toContainText("Wysłano ponownie", { timeout: 15000 });
     await expect(page.locator("#err")).toHaveText("");
   } finally {
     // Przywróć konto testowe do stanu bez oczekującej zmiany e-maila i bez

@@ -1250,30 +1250,7 @@ body.tools-fullscreen .tools-frame-wrap iframe{
 }
 
 
-.toast{
-  position: fixed;
-  left: 50%;
-  bottom: 24px;
-  transform: translate(-50%, 10px);
-  background: rgba(12,16,36,.96);
-  border: 1px solid rgba(255,255,255,.2);
-  color: #fff;
-  padding: 14px 20px;
-  border-radius: 14px;
-  font-size: 13px;
-  letter-spacing: .04em;
-  text-transform: uppercase;
-  opacity: 0;
-  transition: opacity .2s ease, transform .2s ease, box-shadow .2s ease;
-  pointer-events: none;
-  z-index: 60;
-  box-shadow: 0 16px 36px rgba(0,0,0,.35);
-}
 
-.toast.show{
-  opacity: 1;
-  transform: translate(-50%, 0);
-}
 
 /* GENERATOR TAB STYLES */
 .gen-game-list-container {
@@ -1490,15 +1467,7 @@ body.tools-fullscreen .tools-frame-wrap iframe{
 .status-bar.err { background: rgba(248,113,113,.08); border: 1px solid rgba(248,113,113,.2); color: var(--red); }
 .status-bar.info { background: rgba(96,165,250,.08); border: 1px solid rgba(96,165,250,.2); color: var(--blue); }
 
-.toast.success{
-  border-color: rgba(255,234,166,.55);
-  color: #ffeaa6;
-}
 
-.toast.error{
-  border-color: rgba(255,160,160,.6);
-  color: #ffb8b8;
-}
 
 /* =========================================================
    MARKETPLACE ADMIN PANEL

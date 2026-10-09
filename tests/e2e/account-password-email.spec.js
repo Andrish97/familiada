@@ -120,7 +120,7 @@ test("konto test12: zmiana nazwy i administracyjne przywrocenie", async ({ page,
     await page.waitForSelector("[data-skel-step].skel-step-ready", { timeout: 20_000 });
     await page.locator("#username").fill(changedUsername);
     await page.locator("#saveUsername").click();
-    await expect(page.locator("#status")).toContainText("zapis", { timeout: 20_000 });
+    await expect(page.locator("#appToast")).toContainText("zapis", { timeout: 20_000 });
     await page.reload({ waitUntil: "domcontentloaded" });
     await page.waitForSelector("[data-skel-step].skel-step-ready", { timeout: 20_000 });
     await expect(page.locator("#username")).toHaveValue(changedUsername);
@@ -145,7 +145,7 @@ test("konto test12: zmiana e-maila przez wiadomosci test12 i test13", async ({ b
     await page.locator("#email").fill(PROFILE_NEW_EMAIL);
     await page.locator("#saveEmail").click();
     lastAuthMailAt.set("test12", Date.now());
-    await expect(page.locator("#status")).toContainText("Wysłano", { timeout: 30_000 });
+    await expect(page.locator("#appToast")).toContainText("Wysłano", { timeout: 30_000 });
 
     const [oldEmail, newEmail] = await Promise.all([
       waitForEmail({ recipient: PROFILE_EMAIL, after }),

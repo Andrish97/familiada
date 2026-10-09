@@ -1,17 +1,18 @@
 // js/pages/marketplace.js
 
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T16262";
-import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-09T16262";
-import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-09T16262";
-import { initI18n, t, getUiLang, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-09T16262";
-import { linkTo, backHref, renderBackLabel } from "../../shared/js/core/nav-map.js?v=v2026-10-09T16262";
-import { initTopbarAccountDropdown } from "../../shared/js/core/topbar-controller.js?v=v2026-10-09T16262";
-import { exportGame } from "../../games/js/games-import-export.js?v=v2026-10-09T16262";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-09T16262";
-import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-09T16262";
-import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-09T16262";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-09T16262";
-import { icon, iconText, starRating } from "../../shared/js/core/icons.js?v=v2026-10-09T16262";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T17142";
+import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-09T17142";
+import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-09T17142";
+import { initI18n, t, getUiLang, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-09T17142";
+import { linkTo, backHref, renderBackLabel } from "../../shared/js/core/nav-map.js?v=v2026-10-09T17142";
+import { initTopbarAccountDropdown } from "../../shared/js/core/topbar-controller.js?v=v2026-10-09T17142";
+import { exportGame } from "../../games/js/games-import-export.js?v=v2026-10-09T17142";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-09T17142";
+import { toast } from "../../shared/js/core/toast.js?v=v2026-10-09T17142";
+import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-09T17142";
+import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-09T17142";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-09T17142";
+import { icon, iconText, starRating } from "../../shared/js/core/icons.js?v=v2026-10-09T17142";
 
 // Status zgłoszonej gry → wariant oznaczenia (.tag z base.css).
 const MKT_STATUS_TAG = { pending: "tag--warn", published: "tag--ok", rejected: "tag--bad", withdrawn: "tag--muted" };
@@ -100,19 +101,13 @@ const els = {
   btnGoGames:  document.getElementById("btnGoGames"),
   btnBackBrowse: document.getElementById("btnBackBrowse"),
   btnManual:     document.getElementById("btnManual"),
-  toast:        document.getElementById("toast"),
 };
 
 /* =========================================================
    Toast
 ========================================================= */
-let toastTimer = null;
 function showToast(msg, type = "info") {
-  if (!els.toast) return;
-  clearTimeout(toastTimer);
-  els.toast.textContent = msg;
-  els.toast.className = `toast show${type === "error" ? " error" : type === "success" ? " success" : ""}`;
-  toastTimer = setTimeout(() => els.toast?.classList.remove("show"), 3500);
+  toast(msg, { kind: type === "error" ? "error" : "info" });
 }
 
 /* =========================================================

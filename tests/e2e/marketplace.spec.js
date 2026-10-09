@@ -122,7 +122,7 @@ test("wolny prawdziwy backend pokazuje loading, a nieistniejący UUID konkretny 
   await expect(page.locator("#browseGrid .mkt-card").first()).toBeVisible({ timeout: 20_000 });
 
   await page.goto(`${URL}/game/00000000-0000-0000-0000-000000000000`, { waitUntil: "domcontentloaded" });
-  await expect(page.locator("#toast")).toContainText("Nie udało się załadować gier.", { timeout: 20_000 });
+  await expect(page.locator("#appToast")).toContainText("Nie udało się załadować gier.", { timeout: 20_000 });
   await expect(page.locator("#gameDetailOverlay")).toBeHidden();
 });
 
