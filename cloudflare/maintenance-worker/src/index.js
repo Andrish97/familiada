@@ -258,9 +258,9 @@ export default {
     const state = await getState(env);
 
     if (!state.enabled || state.mode === "off" || isBypass) {
-      if (["/connect-device/", "/connect-device", "/connect-device/index.html"].includes(url.pathname) && url.searchParams.get("tv") === "1") {
+      if (["/connect/", "/connect", "/connect/index.html"].includes(url.pathname) && url.searchParams.get("tv") === "1") {
         const tvUrl = new URL(url);
-        tvUrl.pathname = "/connect-device/tv/index.html";
+        tvUrl.pathname = "/connect/tv/index.html";
         return withHeaders(await fetchFromOrigin(request, tvUrl, ORIGIN_BASE, ORIGIN_HOST, ORIGIN_RESOLVE), { "Cache-Control": "no-store", Vary: "User-Agent" });
       }
       return fetchWith404(request, ORIGIN_BASE, ORIGIN_HOST, ORIGIN_RESOLVE); // brak prac

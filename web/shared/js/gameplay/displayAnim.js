@@ -1,7 +1,7 @@
 // web/js/gameplay/displayAnim.js
 //
 // STYL animacji Wyświetlacza (typ/kierunek) — jedno źródło prawdy dla
-// display/js/render.js. Czasy trwania (`ms`) NIE są tu już zaszyte na
+// control/display/js/render.js. Czasy trwania (`ms`) NIE są tu już zaszyte na
 // sztywno (zgłoszone: "Pozbądźmy się sztywnych zapisanych ram czasowych...
 // Animacja zawsze = dźwięki") — render.js dolicza `ms` dynamicznie, z
 // web/js/gameplay/transitionTiming.js, na podstawie rzeczywistego czasu trwania

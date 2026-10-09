@@ -261,7 +261,7 @@ test.describe("bases: regresja -- .uni-modal (confirm/alert) zostaje mały na te
    pliku, więc tu nie sprawdzamy punktów footer/btn-contact-footer.
 ===================================================================== */
 
-const BASE_EXPLORER_URL = "https://www.familiada.online/base-explorer";
+const BASE_EXPLORER_URL = "https://www.familiada.online/bases/explorer";
 
 async function createBase(page, name) {
   return await page.evaluate(async (name) => {
@@ -316,7 +316,7 @@ test.describe("base-explorer: mobile sheet modal (tagi/eksport/pytanie)", () => 
         baseId, ord: 1, payload: { text: "Pytanie do tagowania (mobile)", answers: [] },
       });
 
-      await page.goto(`${BASE_EXPLORER_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.goto(`${BASE_EXPLORER_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
       await page.waitForLoadState("networkidle");
 
       const row = page.locator(`#list .row[data-kind="q"][data-id="${qid}"]`);
@@ -360,7 +360,7 @@ test.describe("base-explorer: mobile sheet modal (tagi/eksport/pytanie)", () => 
         if (i === 1) firstQid = qid;
       }
 
-      await page.goto(`${BASE_EXPLORER_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.goto(`${BASE_EXPLORER_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
       await page.waitForLoadState("networkidle");
 
       const row = page.locator(`#list .row[data-kind="q"][data-id="${firstQid}"]`);
@@ -404,7 +404,7 @@ test.describe("base-explorer: mobile sheet modal (tagi/eksport/pytanie)", () => 
         baseId, ord: 1, payload: { text: "Pytanie mobile edycja", answers: [] },
       });
 
-      await page.goto(`${BASE_EXPLORER_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.goto(`${BASE_EXPLORER_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
       await page.waitForLoadState("networkidle");
 
       const row = page.locator(`#list .row[data-kind="q"][data-id="${qid}"]`);
@@ -438,7 +438,7 @@ test.describe("base-explorer: mobile sheet modal (tagi/eksport/pytanie)", () => 
         baseId, ord: 1, payload: { text: "Pytanie do zmiany nazwy (mobile)", answers: [] },
       });
 
-      await page.goto(`${BASE_EXPLORER_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.goto(`${BASE_EXPLORER_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
       await page.waitForLoadState("networkidle");
 
       const row = page.locator(`#list .row[data-kind="q"][data-id="${qid}"]`);
@@ -465,7 +465,7 @@ test.describe("base-explorer: mobile sheet modal (tagi/eksport/pytanie)", () => 
       await btnBack.click();
       await expect(overlay).toBeHidden({ timeout: 5000 });
       await expect(page.locator("#explorerLeft")).toBeVisible();
-      expect(page.url()).toContain("base-explorer");
+      expect(page.url()).toContain("bases/explorer");
     } finally {
       await deleteBase(page, baseId);
     }
@@ -621,7 +621,7 @@ test.describe("marketplace: mobile sheet modal (zgłoszenie gry)", () => {
 /* =====================================================================
    5) lista logo (/logo/) -- modal zmiany nazwy / modal importu logo.
    Tworzenie i edycja logo są na telefonie ukryte (.le-phone) -- edytory
-   to osobne strony /logo/editor-…/, niedostępne na telefonie.
+   to osobne strony /logo/editor/…/, niedostępne na telefonie.
 ===================================================================== */
 
 const LOGO_EDITOR_URL = "https://www.familiada.online/logo/";

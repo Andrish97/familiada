@@ -1,6 +1,6 @@
 // tests/e2e/logo-editor.spec.js
 //
-// Testy logo: lista /logo/ i trzy strony edytorów /logo/editor-*/?id=
+// Testy logo: lista /logo/ i trzy strony edytorów /logo/editor/<tryb>/?id=
 // (zmiany zapisują się same -- L.save czeka na autozapis). Strony są serwowane
 // z BIEŻĄCEGO CHECKOUTU przez lokalny serwer w runnerze (helpers/local-site.js),
 // a nie z www.familiada.online -- testują kod z gałęzi, na prawdziwym
@@ -184,10 +184,10 @@ test.describe("lista", () => {
   test("edytor bez id albo z logo innego typu pokazuje blokadę z powrotem na listę", async ({ page }) => {
     await open(page);
     const id = await L.insertLogo(page, { name: L.uniq("wrongtype"), type: "GLYPH_30x10", payload: L.textPayload("AB") });
-    await page.goto(`${site.origin}/logo/editor-draw/?id=${id}`);
+    await page.goto(`${site.origin}/logo/editor/draw/?id=${id}`);
     await expect(page.locator("#resourceLockGuard")).toBeVisible({ timeout: 15000 });
     await expect(page.locator("#logoName")).toBeDisabled();
-    await page.goto(`${site.origin}/logo/editor-text/`);
+    await page.goto(`${site.origin}/logo/editor/text/`);
     await expect(page.locator("#resourceLockGuard")).toBeVisible({ timeout: 15000 });
     await page.locator("#resourceLockGuardBack").click();
     await page.waitForURL(/\/logo\/(\?|$)/);
@@ -919,7 +919,7 @@ test.describe("blokady", () => {
       await L.openList(tabB, site);
       await tabB.locator(`.logoTile[data-key="${id}"]`).click();
       await tabB.locator("#btnEdit").click();
-      await tabB.waitForURL(/\/logo\/editor-text\/\?id=/);
+      await tabB.waitForURL(/\/logo\/editor\/text\/\?id=/);
       await expect(tabB.locator("#resourceLockGuard")).toBeVisible({ timeout: 10000 });
       await expect(tabB.locator("#logoName")).toBeDisabled();
     } finally {
@@ -1214,7 +1214,7 @@ test.describe("telefon", () => {
   test("adres edytora na telefonie: blokada z powrotem na listę, logo nietknięte", async ({ page }) => {
     await open(page);
     const id = await L.insertLogo(page, { name: L.uniq("mobile-edit"), type: "GLYPH_30x10", payload: L.textPayload("AB") });
-    await page.goto(`${site.origin}/logo/editor-text/?id=${id}`);
+    await page.goto(`${site.origin}/logo/editor/text/?id=${id}`);
     await expect(page.locator("#resourceLockGuardMsg")).toContainText(/większego ekranu/, { timeout: 15000 });
     await expect(page.locator("#logoName")).toBeDisabled();
     expect((await L.readLogo(page, id)).payload.source.text).toBe("AB");

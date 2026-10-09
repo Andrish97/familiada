@@ -6,21 +6,21 @@
 //   B. Karty Udostępnianie · Wyniki. Wyniki są jedne dla wszystkich stanów:
 //      na żywo, zatrzymane (surowe), podliczanie (poll-tally.js), ostateczne.
 // Stany gry: draft -> poll_open <-> poll_stopped -> ready (migracja 315).
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T12084";
-import { requireAuth } from "../../shared/js/core/auth.js?v=v2026-10-09T12084";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-09T12084";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T12404";
+import { requireAuth } from "../../shared/js/core/auth.js?v=v2026-10-09T12404";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-09T12404";
 import QRCode from "https://cdn.jsdelivr.net/npm/qrcode@1.5.3/+esm";
-import { initI18n, t, withLangParam, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-09T12084";
-import { linkTo, backHref, renderBackLabel } from "../../shared/js/core/nav-map.js?v=v2026-10-09T12084";
-import { initTopbarAccountDropdown } from "../../shared/js/core/topbar-controller.js?v=v2026-10-09T12084";
-import { guardResourceLock } from "../../shared/js/core/resource-lock.js?v=v2026-10-09T12084";
-import { validateGame, gameRuleErrorMessage, guardGameState } from "../../shared/js/core/game-validate.js?v=v2026-10-09T12084";
-import { mailCooldownCheck } from "../../shared/js/core/cooldown.js?v=v2026-10-09T12084";
-import { sendPollInviteMails } from "../../shared/js/core/poll-mail.js?v=v2026-10-09T12084";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-09T12084";
-import { createPollResults } from "../../shared/js/core/poll-results.js?v=v2026-10-09T12084";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-09T12084";
-import { createTally } from "./poll-tally.js?v=v2026-10-09T12084";
+import { initI18n, t, withLangParam, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-09T12404";
+import { linkTo, backHref, renderBackLabel } from "../../shared/js/core/nav-map.js?v=v2026-10-09T12404";
+import { initTopbarAccountDropdown } from "../../shared/js/core/topbar-controller.js?v=v2026-10-09T12404";
+import { guardResourceLock } from "../../shared/js/core/resource-lock.js?v=v2026-10-09T12404";
+import { validateGame, gameRuleErrorMessage, guardGameState } from "../../shared/js/core/game-validate.js?v=v2026-10-09T12404";
+import { mailCooldownCheck } from "../../shared/js/core/cooldown.js?v=v2026-10-09T12404";
+import { sendPollInviteMails } from "../../shared/js/core/poll-mail.js?v=v2026-10-09T12404";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-09T12404";
+import { createPollResults } from "../../shared/js/core/poll-results.js?v=v2026-10-09T12404";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-09T12404";
+import { createTally } from "./poll-tally.js?v=v2026-10-09T12404";
 
 // initI18n is called at the start of DOMContentLoaded (see below)
 
@@ -201,7 +201,7 @@ async function showPollQrModal() {
   setQrModalMode(false);
 
   // URL do strony wyświetlacza (poll-qr) — zawiera aktualny język polls
-  const displayUrl = new URL("/poll-qr/", location.href);
+  const displayUrl = new URL("/polls/vote/qr/", location.href);
   displayUrl.searchParams.set("id", game.id);
   displayUrl.searchParams.set("key", game.share_key_poll);
   displayUrl.searchParams.set("lang", getUiLang() || "pl");
@@ -241,7 +241,7 @@ pollQrModalCopy?.addEventListener("click", async () => {
 });
 pollQrModalOpen?.addEventListener("click", () => {
   if (!_pollQrOpenUrl) return;
-  const u = new URL(withLangParam("/poll-qr/"), location.href);
+  const u = new URL(withLangParam("/polls/vote/qr/"), location.href);
   u.searchParams.set("url", _pollQrOpenUrl);
   window.open(u.toString(), "_blank", "noopener,noreferrer");
 });
@@ -312,9 +312,9 @@ function pollLink(g) {
   if (!g) return "";
   const base =
     g.type === TYPES.POLL_TEXT
-      ? "/poll-text/"
+      ? "/polls/vote/text/"
       : g.type === TYPES.POLL_POINTS
-      ? "/poll-points/"
+      ? "/polls/vote/points/"
       : "";
   if (!base) return "";
 

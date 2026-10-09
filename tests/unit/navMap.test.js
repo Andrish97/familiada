@@ -24,8 +24,8 @@ test("ścieżki stron są unikalne i rozpoznawane", () => {
   for (const [id, p] of Object.entries(PAGES)) assert.equal(pageIdForPath(p.path), id);
   assert.equal(pageIdForPath("/marketplace/game/abc"), "marketplace");
   assert.equal(pageIdForPath("/nie-ma/"), null);
-  assert.equal(pageIdForPath("/game-settings"), "gameSettings");
-  assert.equal(pageIdForPath("/logo/editor-draw"), "logoDraw");
+  assert.equal(pageIdForPath("/games/settings"), "gameSettings");
+  assert.equal(pageIdForPath("/logo/editor/draw"), "logoDraw");
 });
 
 test("linkTo niesie w ret pełny bieżący adres", () => {
@@ -36,7 +36,7 @@ test("linkTo niesie w ret pełny bieżący adres", () => {
 
 test("linkTo bez ret, gdy bieżąca strona nie jest na liście from celu", () => {
   const href = linkTo("editor", { id: 1 }, ctx("/account/"));
-  assert.equal(href, "/editor/?id=1");
+  assert.equal(href, "/games/editor/?id=1");
 });
 
 test("linkTo: kotwica w hash", () => {
@@ -63,9 +63,9 @@ test("łańcuch powrotów: games -> subscriptions -> polls -> manual i z powrote
 
 test("ret spoza listy from jest ignorowany i wraca do parent", () => {
   // editor.from = [games]; ret na /account/ jest obcy
-  assert.equal(backHref("editor", ctx("/editor/?id=1&ret=%2Faccount%2F")), "/games/");
+  assert.equal(backHref("editor", ctx("/games/editor/?id=1&ret=%2Faccount%2F")), "/games/");
   // nieznana strona
-  assert.equal(backHref("editor", ctx("/editor/?id=1&ret=%2Fnie-ma%2F")), "/games/");
+  assert.equal(backHref("editor", ctx("/games/editor/?id=1&ret=%2Fnie-ma%2F")), "/games/");
 });
 
 test("obcy, protokołowy i zepsuty ret wraca do parent", () => {
@@ -77,7 +77,7 @@ test("obcy, protokołowy i zepsuty ret wraca do parent", () => {
     "/\\evil.example",
     "",
   ]) {
-    const href = `/editor/?id=1&ret=${encodeURIComponent(bad)}`;
+    const href = `/games/editor/?id=1&ret=${encodeURIComponent(bad)}`;
     assert.equal(backHref("editor", ctx(href)), "/games/", bad);
   }
 });
@@ -125,8 +125,8 @@ test("ret o dozwolonej głębokości (4 poziomy) jest przyjęty", () => {
 });
 
 test("linkTo przycina zepsuty ret bieżącej strony zamiast go przenosić", () => {
-  const href = linkTo("manual", {}, ctx("/editor/?id=1&ret=%2Faccount%2F"));
-  assert.equal(href, "/manual/?ret=%2Feditor%2F%3Fid%3D1");
+  const href = linkTo("manual", {}, ctx("/games/editor/?id=1&ret=%2Faccount%2F"));
+  assert.equal(href, "/manual/?ret=%2Fgames%2Feditor%2F%3Fid%3D1");
 });
 
 test("język: nie-polski trafia na zewnętrzny adres, nie do ret", () => {
@@ -149,20 +149,20 @@ test("język polski: parametr lang znika", () => {
 
 test("backHref bez ret: parent; games nie ma rodzica", () => {
   assert.equal(backHref("polls", ctx("/polls/?id=7")), "/games/");
-  assert.equal(backHref("baseExplorer", ctx("/base-explorer/?base=b1")), "/bases/");
-  assert.equal(backHref("logoDraw", ctx("/logo/editor-draw/?id=3")), "/logo/");
+  assert.equal(backHref("baseExplorer", ctx("/bases/explorer/?id=b1")), "/bases/");
+  assert.equal(backHref("logoDraw", ctx("/logo/editor/draw/?id=3")), "/logo/");
   assert.equal(backHref("games", ctx("/games/")), null);
 });
 
 test("ret zachowuje kartę listy, z której wyszliśmy", () => {
-  const explorer = linkTo("baseExplorer", { base: "b1" }, ctx("/bases/?tab=shared"));
+  const explorer = linkTo("baseExplorer", { id: "b1" }, ctx("/bases/?tab=shared"));
   assert.equal(backHref("baseExplorer", ctx(explorer)), "/bases/?tab=shared");
   const logo = linkTo("logoDraw", { id: 5 }, ctx("/logo/?tab=draw"));
   assert.equal(backHref("logoDraw", ctx(logo)), "/logo/?tab=draw");
 });
 
 test("gameSettings bez ret wraca do Control tej samej gry", () => {
-  assert.equal(backHref("gameSettings", ctx("/game-settings/?id=g1")), "/control/?id=g1");
+  assert.equal(backHref("gameSettings", ctx("/games/settings/?id=g1")), "/control/?id=g1");
   const fromGames = linkTo("gameSettings", { id: "g1" }, ctx("/games/"));
   assert.equal(backHref("gameSettings", ctx(fromGames)), "/games/");
 });
@@ -170,7 +170,7 @@ test("gameSettings bez ret wraca do Control tej samej gry", () => {
 test("strony publiczne: niezalogowany wraca na landing", () => {
   assert.equal(backHref("marketplace", ctx("/marketplace/", { anon: true })), "/");
   assert.equal(backHref("marketplace", ctx("/marketplace/", { anon: false })), "/games/");
-  assert.equal(backHref("connectDevice", ctx("/connect-device/", { anon: true })), "/");
+  assert.equal(backHref("connectDevice", ctx("/connect/", { anon: true })), "/");
   assert.equal(backHref("privacy", ctx("/privacy/", { anon: true })), "/");
 });
 

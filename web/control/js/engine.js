@@ -17,7 +17,7 @@
 //
 // Zero importów przeglądarkowych — testowalne w gołym Node.
 
-import { assertTransition } from "../../shared/js/gameplay/gameStateMachine.js?v=v2026-10-09T12084";
+import { assertTransition } from "../../shared/js/gameplay/gameStateMachine.js?v=v2026-10-09T12404";
 
 const STRIKE_LIMIT = 3;
 const TIMER_SECONDS = { P1: 15, P2: 20 };
@@ -708,7 +708,7 @@ const REDUCERS = {
   // Host pasmo 2 zostaje zasłonięte przez CAŁY finał, obie tury — to nie
   // jest luka (wcześniejszy zapis w planie to twierdził błędnie, odwrócone
   // po uzgodnieniu). Jedyny sposób podejrzenia treści to lokalny gest
-  // peek na urządzeniu Hosta (host/js/render.js), nigdy zapis do
+  // peek na urządzeniu Hosta (control/host/js/render.js), nigdy zapis do
   // game_state. Display, w odróżnieniu od Hosta, dostaje pełne odsłonięcie
   // odpowiedzi gracza 1 przy starcie zegarka gracza 2 (patrz START_TIMER).
   // soundCueKey "round_transition": zgłoszone wprost — "między F7 i F8 miał

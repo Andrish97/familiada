@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
+  <meta name="app-version" content="v2026-10-09T12404"/>
+
+  <meta charset="UTF-8"/>
+  <meta name="robots" content="noindex, nofollow"/>
+  <meta name="mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net">
+  <link rel="preconnect" href="https://supabase.familiada.online">
+  <title data-i18n="logoEditor.titles.text">Familiada — edytor logo</title>
+
+  <link rel="icon" href="/favicon.ico?v=v2026-10-09T12404"/>
+  <link rel="manifest" href="/manifest.json?v=v2026-10-09T12404"/>
+  <meta name="theme-color" content="#050914"/>
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-09T12404"/>
+  <link rel="stylesheet" href="/games/css/games.css?v=v2026-10-09T12404"/>
+  <link rel="stylesheet" href="/logo/css/logo.css?v=v2026-10-09T12404"/>
+  <script>
+    document.documentElement.classList.add('page-loading');
+    try {
+      var _has = false;
+      for (var _i = 0; _i < localStorage.length; _i++) {
+        var _k = localStorage.key(_i);
+        if (_k && _k.startsWith('sb-') && _k.endsWith('-auth-token')) { _has = true; break; }
+      }
+      if (!_has) location.replace('/login/');
+    } catch(_e) {}
+  </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+
+  <script type="module" src="/logo/js/editor-text.js?v=v2026-10-09T12404" defer></script>
+  <script src="/shared/js/core/security-warning.js?v=v2026-10-09T12404" defer></script>
+</head>
+
+<!-- Edytor logo (TEXT) — osobna strona /logo/editor/text/?id=<logo>. Zmiany
+     zapisują się same (bez przycisku „Zapisz” i bez pytań przy wyjściu),
+     wspólna logika: /logo/js/editor-page.js. -->
+<body class="games-body logo-body is-editor skel-body topbar-title-mobile">
+  <header class="topbar topbar-layout-4">
+    <div class="topbar-section topbar-section-1">
+      <div class="brand">FAMILIADA</div>
+      <button class="btn" id="btnBack" type="button">Wstecz</button>
+    </div>
+    <div class="topbar-section topbar-section-2">
+      <div class="topbar-title"><div class="title" data-i18n="logoEditor.editor.editLogoPrefix">Edytor logo</div><div class="subtitle" id="brandTitle"></div></div>
+    </div>
+    <div class="topbar-section topbar-section-3">
+      <button class="btn" id="btnManual" type="button" data-i18n-aria-label="common.manualLabel" data-i18n-title="common.manualLabel" aria-label="Wskazówki" title="Wskazówki"><i class="ico" data-icon="info"></i></button>
+    </div>
+    <div class="topbar-section topbar-section-4">
+      <span class="who" id="who"></span>
+      <button class="btn" id="btnLogout" type="button" data-i18n="common.authEntry">Wyloguj</button>
+    </div>
+  </header>
+
+  <main class="wrap logoWrap">
+    <section class="editorShell" id="editorShell" data-mode="TEXT">
+      <!-- pole nazwy (wspólne z edytorem gier: .name-field w base.css);
+           #saveStatus ukryty — tylko punkt zaczepienia testów, bez informacji
+           o zapisie na stronie -->
+      <div class="name-field">
+        <label class="name-field-label" for="logoName" data-i18n="logoEditor.editor.nameLabel">Nazwa</label>
+        <input class="inp" id="logoName" placeholder="Np. Moje logo" maxlength="80" data-i18n-placeholder="logoEditor.editor.namePlaceholder" disabled/>
+        <span id="saveStatus" data-state="idle" hidden></span>
+      </div>
+
+      <div class="card games-card editorCard">
+        <div class="editorToolbar" id="editorToolbar">
+          <!-- TEXT: input + dozwolone znaki -->
+          <div class="toolRow" id="toolsText">
+            <input class="inp toolGrow" id="textValue" placeholder="Np. FAMILIADA" maxlength="80" data-i18n-placeholder="logoEditor.text.placeholder"/>
+            <button class="btn sm" id="btnCharsToggle" type="button" data-i18n="logoEditor.text.allowedChars">Dozwolone znaki</button>
+          </div>
+
+          <!-- TEXT: pod tym niskie pole z dozwolonymi znakami -->
+          <div class="charsInline" id="charsInline">
+            <div class="charsInlineTop">
+              <div class="warn" id="textWarn"></div>
+              <div class="hint" id="textMeasure">—</div>
+            </div>
+            <div class="charsListInline" id="charsList"></div>
+          </div>
+        </div><!-- /editorToolbar -->
+
+        <div class="editorContent">
+          <!-- TEXT: preview canvas -->
+          <div class="pane" id="paneText">
+            <div class="prevFull">
+              <canvas id="bigPreview" width="900" height="380"></canvas>
+            </div>
+          </div>
+        </div><!-- /editorContent -->
+      </div><!-- /editorCard -->
+    </section>
+
+    <!-- Fullscreen preview (MODAL z X) -->
+    <div class="overlay modal--sheet" id="previewOverlay" style="display:none;">
+      <div class="modal previewModal">
+        <div class="previewModalTitle">
+          <div>
+            <div class="mTitle" data-i18n="logoEditor.preview.title">Podgląd</div>
+            <div class="mSub" data-i18n="logoEditor.preview.subtitle">Tak będzie wyglądać logo na wyświetlaczu</div>
+          </div>
+          <button class="btn sm" id="btnPreviewClose" type="button" aria-label="Zamknij" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
+        </div>
+        <div class="previewModalCanvas">
+          <canvas id="bigPreviewFull" width="1600" height="700"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <div data-i18n="common.footer.left">© 2026 Familiada — system do gry na żywo</div>
+      <button class="btn-contact-footer" type="button" data-contact-modal data-i18n="common.contactBtn">Kontakt</button>
+    </div>
+  </main>
+
+  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-09T12404"></script>
+  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-09T12404"></script>
+</body>
+</html>

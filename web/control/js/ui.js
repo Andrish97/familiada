@@ -16,14 +16,14 @@
 // setStealMsg/setRevealMsg/ROUNDS_MSG/FINAL_MSG, ale jako czysta funkcja
 // bieżącego game_state (web/js/gameplay/hints.js), nie ulotny stan ustawiany przy
 // każdym zdarzeniu — "wszystko idzie przez tabelę stanów".
-import { getRoundsHint, getFinalHint, getFinalEntryShortcuts, teamName } from "../../shared/js/gameplay/hints.js?v=v2026-10-09T12084";
-import { t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-09T12084";
-import { getSfxCategories, getSfxVariant, isSfxPlaying, playSfx, stopSfx, onSfxEnd, setSfxVolume } from "../../shared/js/core/sfx.js?v=v2026-10-09T12084";
-import { buildDisplayPreviewRow } from "../../shared/js/gameplay/previewRow.js?v=v2026-10-09T12084";
-import { DEFAULT_SETTINGS } from "../../shared/js/gameplay/gameStateShape.js?v=v2026-10-09T12084";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-09T12084";
+import { getRoundsHint, getFinalHint, getFinalEntryShortcuts, teamName } from "../../shared/js/gameplay/hints.js?v=v2026-10-09T12404";
+import { t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-09T12404";
+import { getSfxCategories, getSfxVariant, isSfxPlaying, playSfx, stopSfx, onSfxEnd, setSfxVolume } from "../../shared/js/core/sfx.js?v=v2026-10-09T12404";
+import { buildDisplayPreviewRow } from "../../shared/js/gameplay/previewRow.js?v=v2026-10-09T12404";
+import { DEFAULT_SETTINGS } from "../../shared/js/gameplay/gameStateShape.js?v=v2026-10-09T12404";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-09T12404";
 
-import { previewPendingRoundEndDestination } from "./engine.js?v=v2026-10-09T12084";
+import { previewPendingRoundEndDestination } from "./engine.js?v=v2026-10-09T12404";
 
 const $ = (id) => document.getElementById(id);
 const on = (el, ev, fn) => el && (el[`on${ev}`] = fn);
@@ -447,7 +447,7 @@ export function createUI({ root, emit }) {
   // (ta sama funkcja, którą używa też js/pages/game-settings.js's modal
   // ustawień, żeby oba miejsca nie rozjechały się osobnymi implementacjami).
   // BEZ logoPreview — logo tej JUŻ ZAPISANEJ gry pokazuje się przez
-  // scene.js's bindGame(id), wołane w display/js/main.js's bootPreview()
+  // scene.js's bindGame(id), wołane w control/display/js/main.js's bootPreview()
   // wprost z ?id= w URL-u iframe'a (patrz previewSrc niżej).
   function buildPreviewRow(state) {
     return buildDisplayPreviewRow({ teams: state.teams, display: state.display });
@@ -460,17 +460,20 @@ export function createUI({ root, emit }) {
     const hasFinal = s.hasFinal === true;
     const displaySoundNeedsUnlock = s.soundSource === "display" && ctx.displayAudioUnlocked !== true;
 
-    const previewSrc = ctx.urls?.displayUrl
-      ? `${ctx.urls.displayUrl}${ctx.urls.displayUrl.includes("?") ? "&" : "?"}preview=1`
-      : null;
-    let hostPreviewSrc = null;
-    if (ctx.urls?.hostUrl) {
+    // Podglądy to wewnętrzne iframe: prowadzą wprost na /control/<urządzenie>/,
+    // nie przez /go/ (ten służy tylko linkom wychodzącym poza aplikację).
+    const previewUrl = (goUrl) => {
       try {
-        const url = new URL(ctx.urls.hostUrl);
+        const url = new URL(goUrl);
+        const device = url.searchParams.get("d");
+        url.searchParams.delete("d");
+        url.pathname = `/control/${device}/`;
         url.searchParams.set("preview", "1");
-        hostPreviewSrc = url.toString();
-      } catch {}
-    }
+        return url.toString();
+      } catch { return null; }
+    };
+    const previewSrc = ctx.urls?.displayUrl ? previewUrl(ctx.urls.displayUrl) : null;
+    const hostPreviewSrc = ctx.urls?.hostUrl ? previewUrl(ctx.urls.hostUrl) : null;
 
     // Podgląd Wyświetlacza żyje w <iframe> — zweryfikowane (lokalny test z
     // Playwrightem): PRZENIESIENIE/PRZEBUDOWA <iframe> w DOM zawsze

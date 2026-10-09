@@ -46,7 +46,7 @@ test("serveBranchCode mapuje główną trasę / na index.html z brancha", () => 
 });
 
 test("serveBranchCode mapuje zagnieżdżony edytor DRAW na jego własny index.html", () => {
-  assert.equal(localFileFor("/logo/editor-draw/", ["logo"]), path.join(root, "web/logo/editor-draw/index.html"));
+  assert.equal(localFileFor("/logo/editor/draw/", ["logo"]), path.join(root, "web/logo/editor/draw/index.html"));
 });
 
 test("serveBranchCode serwuje moduły manuala i polityki prywatności zamiast HTML strony", () => {
@@ -63,7 +63,7 @@ test("polski interfejs używa nazwy Strona główna", () => {
 });
 
 test("podłącz urządzenie: powrót anonima liczy mapa nawigacji (Strona główna)", () => {
-  const js = read("connect-device/js/connect-device.js");
+  const js = read("connect/js/connect-device.js");
   assert.doesNotMatch(js, /common\.backToHome/);
   assert.match(js, /renderBackLabel\(btnBack, "connectDevice"/);
   for (const dictionary of [pl, en, uk]) {

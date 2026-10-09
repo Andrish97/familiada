@@ -82,11 +82,11 @@ test("konto test11: reset hasla przez prawdziwy e-mail i przywrocenie stanu", as
     await expect(page.locator("#status")).toContainText("Wysłano", { timeout: 30_000 });
 
     const email = await waitForEmail({ recipient: PASSWORD_EMAIL, after, subject: /has|reset|odzysk/i });
-    // Supabase moze wyslac albo bezposredni /reset?token_hash=..., albo
-    // najpierw swoj /auth/v1/verify?...&redirect_to=/reset. Oba warianty
+    // Supabase moze wyslac albo bezposredni /login/reset?token_hash=..., albo
+    // najpierw swoj /auth/v1/verify?...&redirect_to=/login/reset. Oba warianty
     // sa prawidlowym linkiem akcji i koncza na ekranie resetu.
     const resetLink = extractHttpLinks(email).find((link) =>
-      /\/reset(?:[?#]|$)|\/auth\/v1\/verify|token_hash=|type=recovery/i.test(link)
+      /\/login\/reset(?:[?#]|$)|\/auth\/v1\/verify|token_hash=|type=recovery/i.test(link)
     );
     expect(resetLink, "mail resetu powinien zawierac link odzyskiwania").toBeTruthy();
 
@@ -152,7 +152,7 @@ test("konto test12: zmiana e-maila przez wiadomosci test12 i test13", async ({ b
       waitForEmail({ recipient: PROFILE_NEW_EMAIL, after }),
     ]);
     const isEmailChangeLink = (link) =>
-      /\/confirm(?:[?#]|$)|\/auth\/v1\/verify|token_hash=|type=email_change/i.test(link);
+      /\/login\/confirm(?:[?#]|$)|\/auth\/v1\/verify|token_hash=|type=email_change/i.test(link);
     const oldLink = extractHttpLinks(oldEmail).find(isEmailChangeLink);
     const newLink = extractHttpLinks(newEmail).find(isEmailChangeLink);
     expect(oldLink, "mail na stary adres powinien zawierac link potwierdzajacy").toBeTruthy();

@@ -39,7 +39,7 @@
 const { test, expect } = require("@playwright/test");
 const { loginAsTestUser, testAccountUsername } = require("./helpers/login");
 
-const BASE_URL = "https://www.familiada.online/base-explorer";
+const BASE_URL = "https://www.familiada.online/bases/explorer";
 
 /* ================= Seed / DB helpers (bezpośrednio przez window.__sbClient) ================= */
 
@@ -375,7 +375,7 @@ test.describe("base-explorer: naprawy z audytu (nie tylko wiele kart naraz)", ()
         if (i === 1) firstQid = qid;
       }
 
-      await page.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
       await page.waitForLoadState("networkidle");
 
       // zaznacz wszystkie 10 (modal wybiera dokładnie zaznaczenie, bez
@@ -427,7 +427,7 @@ test.describe("base-explorer: naprawy z audytu (nie tylko wiele kart naraz)", ()
       const catA = await createCategory(page, { baseId, parentId: null, name: "Folder A", ord: 1 });
       const catB = await createCategory(page, { baseId, parentId: catA, name: "Folder B", ord: 1 });
 
-      await page.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
       await page.waitForLoadState("networkidle");
 
       // rozwiń A w drzewie, żeby B było widoczne
@@ -470,7 +470,7 @@ test.describe("base-explorer: naprawy z audytu (nie tylko wiele kart naraz)", ()
         payload: { text: "Oryginalny tekst", answers: [{ text: "A1", fixed_points: 10 }] },
       });
 
-      await page.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
       await page.waitForLoadState("networkidle");
 
       const row = page.locator(`#list .row[data-kind="q"][data-id="${qid}"]`);
@@ -531,7 +531,7 @@ test.describe("base-explorer: naprawy z audytu (nie tylko wiele kart naraz)", ()
         payload: { text: "Pytanie w folderze", answers: [] },
       });
 
-      await page.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
       await page.waitForLoadState("networkidle");
 
       const catRow = page.locator(`#list .row[data-kind="cat"][data-id="${catC}"]`);
@@ -581,7 +581,7 @@ test.describe("base-explorer: naprawy z audytu (nie tylko wiele kart naraz)", ()
         payload: { text: "Pytanie do tagowania", answers: [] },
       });
 
-      await page.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
       await page.waitForLoadState("networkidle");
 
       // opóźnij zapytanie o powiązania tag<->pytanie, żeby złapać okno między
@@ -646,7 +646,7 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
       await createQuestion(page, { baseId, ord: 1, payload: { text: "P1", answers: [] } });
       await createQuestion(page, { baseId, ord: 2, payload: { text: "P2", answers: [] } });
 
-      await page.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
       await page.waitForLoadState("networkidle");
 
       await expect(page.locator("#list .row[data-kind]")).toHaveCount(3, { timeout: 15000 });
@@ -675,7 +675,7 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
     try {
       const qid = await createQuestion(page, { baseId, ord: 1, payload: { text: "Pytanie", answers: [] } });
 
-      await page.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
       await page.waitForLoadState("networkidle");
 
       const row = page.locator(`#list .row[data-kind="q"][data-id="${qid}"]`);
@@ -722,7 +722,7 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
     try {
       const qid = await createQuestion(page, { baseId, ord: 1, payload: { text: "Oryginalny tekst", answers: [] } });
 
-      await page.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
       await page.waitForLoadState("networkidle");
 
       const row = page.locator(`#list .row[data-kind="q"][data-id="${qid}"]`);
@@ -788,7 +788,7 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
         },
       });
 
-      await page.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
       await page.waitForLoadState("networkidle");
 
       const row = page.locator(`#list .row[data-kind="q"][data-id="${qid}"]`);
@@ -824,7 +824,7 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
         baseId, ord: 1, payload: { text: "Pytanie bez odpowiedzi", answers: [] },
       });
 
-      await page.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
       await page.waitForLoadState("networkidle");
 
       const row = page.locator(`#list .row[data-kind="q"][data-id="${qid}"]`);
@@ -873,7 +873,7 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
         },
       });
 
-      await page.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
       await page.waitForLoadState("networkidle");
 
       const row = page.locator(`#list .row[data-kind="q"][data-id="${qid}"]`);
@@ -904,7 +904,7 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
         baseId, ord: 1, payload: { text: "Pytanie do przekroczenia sumy", answers: [] },
       });
 
-      await page.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
       await page.waitForLoadState("networkidle");
 
       const row = page.locator(`#list .row[data-kind="q"][data-id="${qid}"]`);
@@ -945,7 +945,7 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
         baseId, ord: 1, payload: { text: "Pytanie do otagowania", answers: [] },
       });
 
-      await page.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
       await page.waitForLoadState("networkidle");
 
       // utwórz tag przez modal (+ Dodaj tag)
@@ -987,7 +987,7 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
       const tagId = await createTag(page, { baseId, name: "e2e-partial" });
       await assignTag(page, { questionId: q1, tagId }); // tylko P1 ma tag -- stan "some" przy zaznaczeniu obu
 
-      await page.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
       await page.waitForLoadState("networkidle");
 
       const row1 = page.locator(`#list .row[data-kind="q"][data-id="${q1}"]`);
@@ -1032,7 +1032,7 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
       const tagId = await createTag(page, { baseId, name: "e2e-do-usuniecia" });
       await assignTag(page, { questionId: qid, tagId });
 
-      await page.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
       await page.waitForLoadState("networkidle");
 
       const tagRow = page.locator(`#tags .row[data-kind="tag"][data-id="${tagId}"]`);
@@ -1066,7 +1066,7 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
       const qMatch = await createQuestion(page, { baseId, ord: 1, payload: { text: `${uniq} tekst`, answers: [] } });
       const qOther = await createQuestion(page, { baseId, ord: 2, payload: { text: "Zupełnie inne pytanie", answers: [] } });
 
-      await page.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
       await page.waitForLoadState("networkidle");
 
       await expect(page.locator(`#list .row[data-id="${qOther}"]`)).toBeVisible({ timeout: 15000 });
@@ -1091,7 +1091,7 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
       const qPlain = await createQuestion(page, { baseId, ord: 2, payload: { text: "Zwykłe pytanie", answers: [] } });
       await assignTag(page, { questionId: qTagged, tagId });
 
-      await page.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
       await page.waitForLoadState("networkidle");
 
       await expect(page.locator(`#list .row[data-id="${qPlain}"]`)).toBeVisible({ timeout: 15000 });
@@ -1119,7 +1119,7 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
       const catTarget = await createCategory(page, { baseId, name: "Cel", ord: 1 });
       const qid = await createQuestion(page, { baseId, ord: 1, payload: { text: "Do przeniesienia", answers: [] } });
 
-      await page.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
       await page.waitForLoadState("networkidle");
 
       const row = page.locator(`#list .row[data-kind="q"][data-id="${qid}"]`);
@@ -1152,7 +1152,7 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
     try {
       const qid = await createQuestion(page, { baseId, ord: 1, payload: { text: "Do skopiowania", answers: [{ text: "A1" }] } });
 
-      await page.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
       await page.waitForLoadState("networkidle");
 
       const row = page.locator(`#list .row[data-kind="q"][data-id="${qid}"]`);
@@ -1183,7 +1183,7 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
       const catTarget = await createCategory(page, { baseId, name: "Cel DnD", ord: 1 });
       const qid = await createQuestion(page, { baseId, ord: 1, payload: { text: "Przeciągane pytanie", answers: [] } });
 
-      await page.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
       await page.waitForLoadState("networkidle");
 
       const qRowSel = `#list .row[data-kind="q"][data-id="${qid}"]`;
@@ -1227,7 +1227,7 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
         if (error) throw new Error(error.message);
       }, { baseId, userId: user2Id });
 
-      await page2.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page2.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
       await page2.waitForLoadState("networkidle");
 
       const btnNewFolder = page2.locator('#toolbar button[data-act="newFolder"]');
@@ -1263,7 +1263,7 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
         if (error) throw new Error(error.message);
       }, { baseId, userId: user2Id });
 
-      await page2.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page2.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
       await page2.waitForLoadState("networkidle");
 
       await expect(page2.locator('#toolbar button[data-act="newFolder"]')).toBeDisabled({ timeout: 15000 });
@@ -1292,7 +1292,7 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
       await createQuestion(page, { baseId, ord: 1, payload: { text: "Beta", answers: [] } });
       await createQuestion(page, { baseId, ord: 2, payload: { text: "Gamma", answers: [] } });
 
-      await page.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
       await page.waitForLoadState("networkidle");
 
       const titles = () => page.locator("#list tbody tr .title-text").allTextContents();
@@ -1316,7 +1316,7 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
       await createQuestion(page, { baseId, ord: 1, payload: { text: "A-pytanie", answers: [] } });
       await createCategory(page, { baseId, name: "Z-folder", ord: 1 });
 
-      await page.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
       await page.waitForLoadState("networkidle");
 
       // .title-text folderu to ikona SVG + spacja + nazwa (render.js) -- spacja
@@ -1348,7 +1348,7 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
       const catA = await createCategory(page, { baseId, name: "Folder A", ord: 1 });
       const qInA = await createQuestion(page, { baseId, categoryId: catA, ord: 1, payload: { text: "W środku A", answers: [] } });
 
-      await page.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
       await page.waitForLoadState("networkidle");
 
       await page.locator(`#list .row[data-kind="cat"][data-id="${catA}"]`).dblclick();
@@ -1377,7 +1377,7 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
         baseId, ord: 1, payload: { text: "Do zduplikowania", answers: [{ text: "A1" }] },
       });
 
-      await page.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
       await page.waitForLoadState("networkidle");
 
       const row = page.locator(`#list .row[data-kind="q"][data-id="${qid}"]`);
@@ -1407,7 +1407,7 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
       const tagId = await createTag(page, { baseId, name: "e2e-ctrlt" });
       await assignTag(page, { questionId: q1, tagId }); // tylko P1 -- przy zaznaczeniu obu stan powinien być "some"
 
-      await page.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
       await page.waitForLoadState("networkidle");
 
       const row1 = page.locator(`#list .row[data-kind="q"][data-id="${q1}"]`);
@@ -1440,7 +1440,7 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
       const catSrc = await createCategory(page, { baseId, name: "Przenoszony folder", ord: 2 });
       const qSrc = await createQuestion(page, { baseId, ord: 1, payload: { text: "Przenoszone pytanie", answers: [] } });
 
-      await page.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
       await page.waitForLoadState("networkidle");
 
       const catSrcRowSel = `#list .row[data-kind="cat"][data-id="${catSrc}"]`;
@@ -1478,7 +1478,7 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
       const catA = await createCategory(page, { baseId, name: "Folder A", ord: 1 });
       const catB = await createCategory(page, { baseId, name: "Folder B", ord: 2 });
 
-      await page.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
       await page.waitForLoadState("networkidle");
 
       // root domyślnie rozwinięty -- oba widoczne bez dodatkowego klikania
@@ -1512,7 +1512,7 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
       const child = await createCategory(page, { baseId, parentId: parent, name: "Dziecko", ord: 1 });
       await createQuestion(page, { baseId, categoryId: child, ord: 1, payload: { text: "W poddrzewie", answers: [] } });
 
-      await page.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
       await page.waitForLoadState("networkidle");
 
       const parentRow = page.locator(`#list .row[data-kind="cat"][data-id="${parent}"]`);
@@ -1556,7 +1556,7 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
       const uniq = `DoUsuniecia${Date.now()}`;
       const qid = await createQuestion(page, { baseId, ord: 1, payload: { text: uniq, answers: [] } });
 
-      await page.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
       await page.waitForLoadState("networkidle");
 
       await page.locator("#searchText").fill(uniq);
@@ -1593,7 +1593,7 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
       const uniq = `DoEdycji${Date.now()}`;
       const qid = await createQuestion(page, { baseId, ord: 1, payload: { text: uniq, answers: [] } });
 
-      await page.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
       await page.waitForLoadState("networkidle");
 
       await page.locator("#searchText").fill(uniq);
@@ -1627,7 +1627,7 @@ test.describe("base-explorer: codzienna funkcjonalność panelu", () => {
       await createQuestion(page, { baseId, ord: 2, payload: { text: "Środkowe", answers: [] }, createdAt: "2021-01-01T00:00:00Z" });
       await createQuestion(page, { baseId, ord: 3, payload: { text: "Najnowsze", answers: [] }, createdAt: "2022-01-01T00:00:00Z" });
 
-      await page.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
       await page.waitForLoadState("networkidle");
 
       const titles = () => page.locator("#list tbody tr .title-text").allTextContents();
@@ -1658,7 +1658,7 @@ test.describe("base-explorer: question-modal.js (edycja pytania)", () => {
         payload: { text: "Pytanie", answers: [{ text: "Stara", fixed_points: 10 }] },
       });
 
-      await page.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
       await page.waitForLoadState("networkidle");
 
       const row = page.locator(`#list .row[data-kind="q"][data-id="${qid}"]`);
@@ -1700,7 +1700,7 @@ test.describe("base-explorer: question-modal.js (edycja pytania)", () => {
         payload: { text: "Pytanie", answers: [{ text: "A1" }, { text: "A2" }, { text: "A3" }] },
       });
 
-      await page.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
       await page.waitForLoadState("networkidle");
 
       const row = page.locator(`#list .row[data-kind="q"][data-id="${qid}"]`);
@@ -1739,7 +1739,7 @@ test.describe("base-explorer: question-modal.js (edycja pytania)", () => {
     try {
       const qid = await createQuestion(page, { baseId, ord: 1, payload: { text: "Pytanie", answers: [] } });
 
-      await page.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
       await page.waitForLoadState("networkidle");
 
       const row = page.locator(`#list .row[data-kind="q"][data-id="${qid}"]`);
@@ -1779,7 +1779,7 @@ test.describe("base-explorer: question-modal.js (edycja pytania)", () => {
       const qid = await createQuestion(page, { baseId, ord: 1, payload: { text: "Pytanie", answers: [] } });
       const long = "A".repeat(250);
 
-      await page.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
       await page.waitForLoadState("networkidle");
 
       const row = page.locator(`#list .row[data-kind="q"][data-id="${qid}"]`);
@@ -1813,7 +1813,7 @@ test.describe("base-explorer: question-modal.js (edycja pytania)", () => {
     try {
       const qid = await createQuestion(page, { baseId, ord: 1, payload: { text: "Pytanie", answers: [] } });
 
-      await page.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
       await page.waitForLoadState("networkidle");
 
       const row = page.locator(`#list .row[data-kind="q"][data-id="${qid}"]`);
@@ -1845,7 +1845,7 @@ test.describe("base-explorer: question-modal.js (edycja pytania)", () => {
         baseId, ord: 1, payload: { text: "Oryginał", answers: [{ text: "A1" }] },
       });
 
-      await page.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
       await page.waitForLoadState("networkidle");
 
       const row = page.locator(`#list .row[data-kind="q"][data-id="${qid}"]`);
@@ -1879,7 +1879,7 @@ test.describe("base-explorer: question-modal.js (edycja pytania)", () => {
     try {
       const qid = await createQuestion(page, { baseId, ord: 1, payload: { text: "Coś tam", answers: [] } });
 
-      await page.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
       await page.waitForLoadState("networkidle");
 
       const row = page.locator(`#list .row[data-kind="q"][data-id="${qid}"]`);
@@ -1915,7 +1915,7 @@ test.describe("base-explorer: export-modal.js ('Utwórz grę')", () => {
     try {
       await seedTenPlainQuestions(page, baseId);
 
-      await page.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
       await page.waitForLoadState("networkidle");
 
       await expect(page.locator("#list .row[data-kind=\"q\"]")).toHaveCount(10, { timeout: 15000 });
@@ -1967,7 +1967,7 @@ test.describe("base-explorer: export-modal.js ('Utwórz grę')", () => {
         baseId, ord: 11, payload: { text: "Za mało odpowiedzi", answers: [] },
       });
 
-      await page.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
       await page.waitForLoadState("networkidle");
       await expect(page.locator('#list .row[data-kind="q"]')).toHaveCount(11, { timeout: 15000 });
 
@@ -2013,7 +2013,7 @@ test.describe("base-explorer: export-modal.js ('Utwórz grę')", () => {
         }));
       }
 
-      await page.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
       await page.waitForLoadState("networkidle");
 
       // zaznacz tylko 3 konkretne pytania (Ctrl+klik)
@@ -2058,7 +2058,7 @@ test.describe("base-explorer: export-modal.js ('Utwórz grę')", () => {
         });
       }
 
-      await page.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
       await page.waitForLoadState("networkidle");
 
       const folderRow = page.locator(`#list .row[data-kind="cat"][data-id="${catId}"]`);
@@ -2081,7 +2081,7 @@ test.describe("base-explorer: export-modal.js ('Utwórz grę')", () => {
     try {
       const ids = await seedTenPlainQuestions(page, baseId);
 
-      await page.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
       await page.waitForLoadState("networkidle");
 
       const firstRow = page.locator(`#list .row[data-kind="q"][data-id="${ids[0]}"]`);
@@ -2120,7 +2120,7 @@ test.describe("base-explorer: export-modal.js ('Utwórz grę')", () => {
         payload: { text: "W sam raz", answers: [{ text: "A" }, { text: "B" }, { text: "C" }, { text: "D" }] },
       });
 
-      await page.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
       await page.waitForLoadState("networkidle");
 
       const rowShort = page.locator(`#list .row[data-kind="q"][data-id="${qShort}"]`);
@@ -2162,7 +2162,7 @@ test.describe("base-explorer: export-modal.js ('Utwórz grę')", () => {
       });
       await seedTenTypeCompatibleQuestions(page, baseId, 2);
 
-      await page.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
       await page.waitForLoadState("networkidle");
 
       const row = page.locator(`#list .row[data-kind="q"][data-id="${qid}"]`);
@@ -2212,7 +2212,7 @@ test.describe("base-explorer: export-modal.js ('Utwórz grę')", () => {
       });
       await seedTenTypeCompatibleQuestions(page, baseId, 2);
 
-      await page.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
       await page.waitForLoadState("networkidle");
 
       const row = page.locator(`#list .row[data-kind="q"][data-id="${qid}"]`);
@@ -2256,7 +2256,7 @@ test.describe("base-explorer: export-modal.js ('Utwórz grę')", () => {
       const gameName = `E2E-XM-SHOULD-NOT-EXIST-${Date.now()}`;
       const ids = await seedTenPlainQuestions(page, baseId);
 
-      await page.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
       await page.waitForLoadState("networkidle");
 
       const row = page.locator(`#list .row[data-kind="q"][data-id="${ids[0]}"]`);
@@ -2284,7 +2284,7 @@ test.describe("base-explorer: export-modal.js ('Utwórz grę')", () => {
     try {
       const qid = await createQuestion(page, { baseId, ord: 1, payload: { text: "Jedyne pytanie", answers: [] } });
 
-      await page.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
       await page.waitForLoadState("networkidle");
 
       const row = page.locator(`#list .row[data-kind="q"][data-id="${qid}"]`);
@@ -2337,7 +2337,7 @@ test.describe("base-explorer: współdzielenie i uprawnienia (dwóch różnych u
       // modala W TEJ CHWILI (fetchQuestionById w openQuestionModal), i to on
       // dostaje nadpisany w całości przy Zapisz, niezależnie od tego co się
       // zmieni w międzyczasie w DB.
-      await page.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
       await page.waitForLoadState("networkidle");
       const row = page.locator(`#list .row[data-kind="q"][data-id="${qid}"]`);
       await expect(row).toBeVisible({ timeout: 15000 });
@@ -2392,7 +2392,7 @@ test.describe("base-explorer: współdzielenie i uprawnienia (dwóch różnych u
 
       const qid = await createQuestion(page, { baseId, ord: 1, payload: { text: "Do usunięcia gdzie indziej", answers: [] } });
 
-      await page.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
       await page.waitForLoadState("networkidle");
       const row = page.locator(`#list .row[data-kind="q"][data-id="${qid}"]`);
       await expect(row).toBeVisible({ timeout: 15000 });
@@ -2437,7 +2437,7 @@ test.describe("base-explorer: współdzielenie i uprawnienia (dwóch różnych u
       const user2Id = await getUserId(page2);
       await shareBaseWith(page, baseId, user2Id, "editor");
 
-      await page2.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page2.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
       await page2.waitForLoadState("networkidle");
       await expect(page2.locator('#toolbar button[data-act="newFolder"]')).toBeEnabled({ timeout: 15000 });
 
@@ -2474,7 +2474,7 @@ test.describe("base-explorer: współdzielenie i uprawnienia (dwóch różnych u
       const user2Id = await getUserId(page2);
       await shareBaseWith(page, baseId, user2Id, "editor");
 
-      await page2.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page2.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
       await page2.waitForLoadState("networkidle");
       await expect(page2.locator('#toolbar button[data-act="newFolder"]')).toBeEnabled({ timeout: 15000 });
 
@@ -2507,7 +2507,7 @@ test.describe("base-explorer: współdzielenie i uprawnienia (dwóch różnych u
       const user2Id = await getUserId(page2);
       await shareBaseWith(page, baseId, user2Id, "viewer");
 
-      await page2.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page2.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
       await page2.waitForLoadState("networkidle");
 
       const questionInsertError = await page2.evaluate(async (baseId) => {
@@ -2544,7 +2544,7 @@ test.describe("base-explorer: współdzielenie i uprawnienia (dwóch różnych u
       const user2Id = await getUserId(page2);
       await shareBaseWith(page, baseId, user2Id, "editor");
 
-      await page2.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page2.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
       await page2.waitForLoadState("networkidle");
 
       // qb_bases_update: USING/WITH CHECK (owner_id = auth.uid()) -- editor
@@ -2585,7 +2585,7 @@ test.describe("base-explorer: współdzielenie i uprawnienia (dwóch różnych u
       const lock = await acquireLockDirect(page2, "base_question", qid, "e2e-test:question-modal");
       expect(lock?.ok, "drugi user musi realnie zająć blokadę przed próbą pierwszego").toBe(true);
 
-      await page.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
       await page.waitForLoadState("networkidle");
       const row = page.locator(`#list .row[data-kind="q"][data-id="${qid}"]`);
       await expect(row).toBeVisible({ timeout: 15000 });
@@ -2631,7 +2631,7 @@ test.describe("base-explorer: współdzielenie i uprawnienia (dwóch różnych u
       const lock = await acquireLockDirect(page2, "base_question", qid, "e2e-test:question-modal");
       expect(lock?.ok).toBe(true);
 
-      await page.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
       await page.waitForLoadState("networkidle");
       const folderRow = page.locator(`#list .row[data-kind="cat"][data-id="${catId}"]`);
       await expect(folderRow).toBeVisible({ timeout: 15000 });
@@ -2682,7 +2682,7 @@ test.describe("base-explorer: współdzielenie i uprawnienia (dwóch różnych u
       const lock = await acquireLockDirect(page2, "base_tag", lockedTagId, "e2e-test:tags-edit");
       expect(lock?.ok).toBe(true);
 
-      await page.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
       await page.waitForLoadState("networkidle");
 
       const row = page.locator(`#list .row[data-kind="q"][data-id="${qid}"]`);
@@ -2732,7 +2732,7 @@ test.describe("base-explorer: Warstwa 2 (updateChecked, ROW_GONE)", () => {
     try {
       const qid = await createQuestion(page, { baseId, ord: 1, payload: { text: "Do usunięcia w trakcie edycji", answers: [] } });
 
-      await page.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
       await page.waitForLoadState("networkidle");
 
       const row = page.locator(`#list .row[data-kind="q"][data-id="${qid}"]`);
@@ -2765,7 +2765,7 @@ test.describe("base-explorer: Warstwa 2 (updateChecked, ROW_GONE)", () => {
     try {
       const qid = await createQuestion(page, { baseId, ord: 1, payload: { text: "Do usunięcia w trakcie edycji", answers: [] } });
 
-      await page.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
       await page.waitForLoadState("networkidle");
 
       const row = page.locator(`#list .row[data-kind="q"][data-id="${qid}"]`);
@@ -2799,7 +2799,7 @@ test.describe("base-explorer: Warstwa 2 (updateChecked, ROW_GONE)", () => {
     try {
       const tagId = await createTag(page, { baseId, name: "e2e-do-znikniecia" });
 
-      await page.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
       await page.waitForLoadState("networkidle");
 
       const tagRow = page.locator(`#tags .row[data-kind="tag"][data-id="${tagId}"]`);
@@ -2889,7 +2889,7 @@ test.describe("base-explorer: mobile.js (drawer, long-press, podwójny tap)", ()
         });
       }
 
-      await page.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
       await page.waitForLoadState("networkidle");
 
       const btnDrawer = page.locator("#btnDrawerToggle");
@@ -2934,7 +2934,7 @@ test.describe("base-explorer: mobile.js (drawer, long-press, podwójny tap)", ()
     const baseId = await createBase(page, `E2E-XM-DRAWERTOOLBAR-${Date.now()}`);
 
     try {
-      await page.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
       await page.waitForLoadState("networkidle");
 
       const btnDrawer = page.locator("#btnDrawerToggle");
@@ -2972,7 +2972,7 @@ test.describe("base-explorer: mobile.js (drawer, long-press, podwójny tap)", ()
     try {
       await createQuestion(page, { baseId, ord: 1, payload: { text: "Jedno pytanie", answers: [] } });
 
-      await page.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
       await page.waitForLoadState("networkidle");
 
       await expect(page.locator('#list .row[data-kind="q"]')).toHaveCount(1, { timeout: 15000 });
@@ -2997,7 +2997,7 @@ test.describe("base-explorer: mobile.js (drawer, long-press, podwójny tap)", ()
     try {
       const qid = await createQuestion(page, { baseId, ord: 1, payload: { text: "Long-press mnie", answers: [] } });
 
-      await page.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
       await page.waitForLoadState("networkidle");
 
       const rowSel = `#list .row[data-kind="q"][data-id="${qid}"]`;
@@ -3021,7 +3021,7 @@ test.describe("base-explorer: mobile.js (drawer, long-press, podwójny tap)", ()
     try {
       const qid = await createQuestion(page, { baseId, ord: 1, payload: { text: "Nie długo trzymane", answers: [] } });
 
-      await page.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
       await page.waitForLoadState("networkidle");
 
       const rowSel = `#list .row[data-kind="q"][data-id="${qid}"]`;
@@ -3079,7 +3079,7 @@ test.describe("base-explorer: mobile.js (drawer, long-press, podwójny tap)", ()
     try {
       const qid = await createQuestion(page, { baseId, ord: 1, payload: { text: "Dotknij mnie dwa razy", answers: [] } });
 
-      await page.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
       await page.waitForLoadState("networkidle");
 
       const rowSel = `#list .row[data-kind="q"][data-id="${qid}"]`;
@@ -3104,7 +3104,7 @@ test.describe("base-explorer: mobile.js (drawer, long-press, podwójny tap)", ()
       const catId = await createCategory(page, { baseId, name: "Folder do wejścia", ord: 1 });
       await createQuestion(page, { baseId, categoryId: catId, ord: 1, payload: { text: "W środku folderu", answers: [] } });
 
-      await page.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+      await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
       await page.waitForLoadState("networkidle");
 
       const catRowSel = `#list .row[data-kind="cat"][data-id="${catId}"]`;

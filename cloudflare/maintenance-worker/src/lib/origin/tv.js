@@ -7,9 +7,10 @@ export function tvRedirect(request, url) {
   if (request.method !== "GET" && request.method !== "HEAD") return null;
   if (request.headers.get("sec-fetch-dest") !== "document" && !(request.headers.get("accept") || "").includes("text/html")) return null;
   const path = url.pathname.replace(/\/index\.html$/, "/").replace(/\/$/, "");
-  if (path === "/connect-device" && url.searchParams.get("tv") === "1") return null;
-  if (["/display", "/poll-qr"].includes(path) && url.searchParams.get("id") && url.searchParams.get("key") && !url.searchParams.has("preview")) return null;
-  const target = new URL("https://www.familiada.online/connect-device/?tv=1");
+  if (path === "/connect" && url.searchParams.get("tv") === "1") return null;
+  if (["/control/display", "/polls/vote/qr"].includes(path) && url.searchParams.get("id") && url.searchParams.get("key") && !url.searchParams.has("preview")) return null;
+  if (path === "/go" && ["display", "qr"].includes(url.searchParams.get("d")) && url.searchParams.get("id") && url.searchParams.get("key") && !url.searchParams.has("preview")) return null;
+  const target = new URL("https://www.familiada.online/connect/?tv=1");
   const lang = url.searchParams.get("lang");
   if (lang && lang !== "pl") target.searchParams.set("lang", lang);
   return new Response(null, { status: 302, headers: { Location: target.href, "Cache-Control": "no-store", Vary: "User-Agent, Accept, Sec-Fetch-Dest" } });

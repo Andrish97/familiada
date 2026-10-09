@@ -64,7 +64,7 @@ test("anonim: pełny render, kontrakt statystyk i bezpieczna obsługa parametró
   expect(realError?.message).toBeTruthy();
   console.log("[e2e-diag] expected real RPC error:", JSON.stringify(realError));
 
-  for (const selector of ["#ctaStart", 'a[href*="marketplace"]', 'a[href*="connect-device"]']) {
+  for (const selector of ["#ctaStart", 'a[href*="marketplace"]', 'a[href*="/connect/"]']) {
     const href = await page.locator(selector).first().getAttribute("href");
     const url = new URL(href, page.url());
     expect(url.origin).toBe("https://www.familiada.online");
@@ -145,7 +145,7 @@ test("odnośniki prowadzą do właściwych sekcji, a powroty nazywają cel Stron
   const destinations = [
     { selector: "#ctaStart", url: /\/login\/?(?:\?|$)/ },
     { selector: '.hero-cta a[href*="marketplace"]', url: /\/marketplace\/?(?:\?|$)/ },
-    { selector: '.hero-cta a[href*="connect-device"]', url: /\/connect-device\/?(?:\?|$)/ },
+    { selector: '.hero-cta a[href*="/connect/"]', url: /\/connect\/?(?:\?|$)/ },
     { selector: '.footer a[href*="privacy"]', url: /\/privacy\/?(?:\?|$)/ },
   ];
   for (const destination of destinations) {

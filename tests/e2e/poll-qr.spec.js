@@ -18,7 +18,7 @@ const { serveBranchCode } = require("./helpers/branch-code");
 // Strony głosowania z brancha (komunikaty stanów, E11e); baza z produkcji.
 test.use({ serviceWorkers: "block" });
 test.beforeEach(async ({ context }) => {
-  await serveBranchCode(context, { pages: ["poll-qr", "poll-text", "poll-points", "polls"] });
+  await serveBranchCode(context, { pages: ["polls/vote/qr", "polls/vote/text", "polls/vote/points", "polls"] });
 });
 const { loginAsPooledTestUser, instrumentPage } = require("./helpers/login");
 
@@ -87,12 +87,12 @@ test.describe("poll-qr.js audyt", () => {
       await loginAsPooledTestUser(page, context, testInfo.parallelIndex);
       const game = await createPollGame(page);
 
-      const voteUrl = new URL("poll-points/index.html", "https://www.familiada.online/");
+      const voteUrl = new URL("polls/vote/points/index.html", "https://www.familiada.online/");
       voteUrl.searchParams.set("id", game.gameId);
       voteUrl.searchParams.set("key", game.shareKey);
 
 
-      const qrPageUrl = new URL("poll-qr/index.html", "https://www.familiada.online/");
+      const qrPageUrl = new URL("polls/vote/qr/index.html", "https://www.familiada.online/");
       qrPageUrl.searchParams.set("url", voteUrl.toString());
 
       await page.goto(qrPageUrl.toString(), { waitUntil: "domcontentloaded" });
@@ -119,7 +119,7 @@ test.describe("poll-qr.js audyt", () => {
       const game = await createPollGame(page);
 
 
-      const pollQrUrl = new URL("/poll-qr/", "https://www.familiada.online/");
+      const pollQrUrl = new URL("/polls/vote/qr/", "https://www.familiada.online/");
       pollQrUrl.searchParams.set("id", game.gameId);
       pollQrUrl.searchParams.set("key", game.shareKey);
 
@@ -135,7 +135,7 @@ test.describe("poll-qr.js audyt", () => {
       // Check the real generated QR, including its destination route.
       const expectedQr = await page.evaluate(async ({ gameId, shareKey }) => {
         const { default: QRCode } = await import("https://cdn.jsdelivr.net/npm/qrcode@1.5.3/+esm");
-        const url = new URL("/poll-points/", location.origin);
+        const url = new URL("/polls/vote/points/", location.origin);
         url.searchParams.set("id", gameId);
         url.searchParams.set("key", shareKey);
         url.searchParams.set("lang", "pl");
@@ -156,7 +156,7 @@ test.describe("poll-qr.js audyt", () => {
       const game = await createPollGame(page);
 
 
-      const pollQrUrl = new URL("poll-qr/index.html", "https://www.familiada.online/");
+      const pollQrUrl = new URL("polls/vote/qr/index.html", "https://www.familiada.online/");
       pollQrUrl.searchParams.set("id", game.gameId);
       pollQrUrl.searchParams.set("key", "invalid-key-123456");
 
@@ -192,7 +192,7 @@ test.describe("poll-qr.js audyt", () => {
       }, game.gameId);
 
 
-      const pollQrUrl = new URL("poll-qr/index.html", "https://www.familiada.online/");
+      const pollQrUrl = new URL("polls/vote/qr/index.html", "https://www.familiada.online/");
       pollQrUrl.searchParams.set("id", game.gameId);
       pollQrUrl.searchParams.set("key", game.shareKey);
 
@@ -230,7 +230,7 @@ test.describe("poll-qr.js audyt", () => {
         });
       });
 
-      const pollQrUrl = new URL("/poll-qr/", "https://www.familiada.online/");
+      const pollQrUrl = new URL("/polls/vote/qr/", "https://www.familiada.online/");
       pollQrUrl.searchParams.set("id", game.gameId);
       pollQrUrl.searchParams.set("key", game.shareKey);
       await page.goto(pollQrUrl.toString(), { waitUntil: "domcontentloaded" });
@@ -252,7 +252,7 @@ test.describe("poll-qr.js audyt", () => {
       await loginAsPooledTestUser(page, context, testInfo.parallelIndex);
       const game = await createPollGame(page);
 
-      const pollQrUrl = new URL("/poll-qr/", "https://www.familiada.online/");
+      const pollQrUrl = new URL("/polls/vote/qr/", "https://www.familiada.online/");
       pollQrUrl.searchParams.set("id", game.gameId);
       pollQrUrl.searchParams.set("key", game.shareKey);
       await page.goto(pollQrUrl.toString(), { waitUntil: "domcontentloaded" });
@@ -286,12 +286,12 @@ test.describe("poll-qr.js audyt", () => {
       await loginAsPooledTestUser(page, context, testInfo.parallelIndex);
       const game = await createPollGame(page);
 
-      const voteUrl = new URL("poll-points/index.html", "https://www.familiada.online/");
+      const voteUrl = new URL("polls/vote/points/index.html", "https://www.familiada.online/");
       voteUrl.searchParams.set("id", game.gameId);
       voteUrl.searchParams.set("key", game.shareKey);
 
 
-      const qrPageUrl = new URL("poll-qr/index.html", "https://www.familiada.online/");
+      const qrPageUrl = new URL("polls/vote/qr/index.html", "https://www.familiada.online/");
       qrPageUrl.searchParams.set("url", voteUrl.toString());
 
       await page.goto(qrPageUrl.toString(), { waitUntil: "domcontentloaded" });
@@ -321,9 +321,9 @@ test.describe("poll-qr.js audyt", () => {
 
 
       // Podaj bardzo długi URL, żeby sprawdzić timeout
-      const longUrl = "https://www.familiada.online/poll-points/index.html?id=test-id-very-very-long-" + "x".repeat(2000);
+      const longUrl = "https://www.familiada.online/polls/vote/points/index.html?id=test-id-very-very-long-" + "x".repeat(2000);
 
-      const qrPageUrl = new URL("poll-qr/index.html", "https://www.familiada.online/");
+      const qrPageUrl = new URL("polls/vote/qr/index.html", "https://www.familiada.online/");
       qrPageUrl.searchParams.set("url", longUrl);
 
       await page.goto(qrPageUrl.toString(), { waitUntil: "domcontentloaded" });
@@ -353,13 +353,13 @@ test.describe("poll-qr.js audyt", () => {
       await loginAsPooledTestUser(page, context, testInfo.parallelIndex);
       const game = await createPollGame(page);
 
-      const voteUrl = new URL("poll-points/index.html", "https://www.familiada.online/");
+      const voteUrl = new URL("polls/vote/points/index.html", "https://www.familiada.online/");
       voteUrl.searchParams.set("id", game.gameId);
       voteUrl.searchParams.set("key", game.shareKey);
       voteUrl.searchParams.set("lang", "pl");
 
 
-      const qrPageUrl = new URL("poll-qr/index.html", "https://www.familiada.online/");
+      const qrPageUrl = new URL("polls/vote/qr/index.html", "https://www.familiada.online/");
       qrPageUrl.searchParams.set("url", voteUrl.toString());
       qrPageUrl.searchParams.set("lang", "pl");
 

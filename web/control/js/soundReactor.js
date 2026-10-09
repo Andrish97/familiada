@@ -7,7 +7,7 @@
 // Subskrybuje WŁASNY, świeży stan Control (store.subscribe), nie odczyt z
 // bazy — zero opóźnienia względem tego, co operator właśnie zrobił. Reguły
 // "który SOUND_CUE gra jaką kombinację" żyją teraz w web/js/gameplay/soundCueEngine.js
-// (reużyte też przez display/js/soundReactor.js — zgłoszone: dźwięk ma móc
+// (reużyte też przez control/display/js/soundReactor.js — zgłoszone: dźwięk ma móc
 // grać z Wyświetlacza zamiast Control).
 //
 // Źródło dźwięku (`settings.soundSource`, "control"/"display") i wyciszenie
@@ -16,11 +16,11 @@
 // tego, które urządzenie faktycznie odtwarza (zgłoszone), więc nie może
 // żyć tylko w tej karcie. Ten reaktor gra WYŁĄCZNIE gdy soundSource==="control"
 // (domyślnie) — gdy operator przełączy na "display", ten sam mechanizm w
-// display/js/soundReactor.js przejmuje odtwarzanie, a ten tutaj po prostu
+// control/display/js/soundReactor.js przejmuje odtwarzanie, a ten tutaj po prostu
 // nic nie robi (zero podwójnego odtwarzania).
 
-import { playSfx, getSfxDurationAccurate as getSfxDuration, stopSfx } from "../../shared/js/core/sfx.js?v=v2026-10-09T12084";
-import { createSoundCueEngine } from "../../shared/js/gameplay/soundCueEngine.js?v=v2026-10-09T12084";
+import { playSfx, getSfxDurationAccurate as getSfxDuration, stopSfx } from "../../shared/js/core/sfx.js?v=v2026-10-09T12404";
+import { createSoundCueEngine } from "../../shared/js/gameplay/soundCueEngine.js?v=v2026-10-09T12404";
 
 export function createSoundReactor(store, { waitForStart = null } = {}) {
   const engine = createSoundCueEngine({ playSfx, getSfxDuration, stopSfx, waitForStart });

@@ -18,14 +18,14 @@ import {
   clearGuestLocalMarker,
   initPasswordToggles,
   resetPasswordToggles,
-} from "../../shared/js/core/auth.js?v=v2026-10-09T12084";
-import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-09T12084";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-09T12084";
+} from "../../shared/js/core/auth.js?v=v2026-10-09T12404";
+import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-09T12404";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-09T12404";
 
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T12084";
-import { mailCooldownEmailCheck, mailCooldownEmailReserve } from "../../shared/js/core/cooldown.js?v=v2026-10-09T12084";
-import { initI18n, t, getUiLang, withLangParam, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-09T12084";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-09T12084";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T12404";
+import { mailCooldownEmailCheck, mailCooldownEmailReserve } from "../../shared/js/core/cooldown.js?v=v2026-10-09T12404";
+import { initI18n, t, getUiLang, withLangParam, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-09T12404";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-09T12404";
 
 const $ = (s) => document.querySelector(s);
 const email = $("#email");
@@ -47,8 +47,8 @@ const btnUsernameSave = $("#btnUsernameSave");
 const setupTitleEl = setupCard?.querySelector(".setup-title");
 const setupSubEl = setupCard?.querySelector(".setup-sub");
 const baseUrls = document.body?.dataset || {};
-const confirmUrl = baseUrls.confirmUrl || "confirm";
-const resetUrl = baseUrls.resetUrl || "reset";
+const confirmUrl = baseUrls.confirmUrl || "/login/confirm/";
+const resetUrl = baseUrls.resetUrl || "/login/reset/";
 const gamesUrl = baseUrls.gamesUrl || "/games/";
 const subscriptionsUrl = baseUrls.subscriptionsUrl;
 const captchaProvider = String(baseUrls.captchaProvider || "hcaptcha").trim().toLowerCase();
@@ -542,7 +542,7 @@ const guestExpired = params.get("guest_expired") === "1";
 const forceAuth = params.get("force_auth") === "1";
 
 function buildAuthRedirect(page) {
-  // page: "confirm" | "reset" (może być też "/confirm/")
+  // page: "/login/confirm/" lub "/login/reset/"
   const p = String(page || "").trim();
 
   // Wymuś ścieżkę absolutną w obrębie tego samego origin
@@ -660,7 +660,7 @@ async function handlePendingEmailResend(emailAddr, pendingIntent) {
   }
 
   const language = getUiLang();
-  const redirect = new URL("/confirm/", location.origin);
+  const redirect = new URL("/login/confirm/", location.origin);
   redirect.searchParams.set("lang", language);
   redirect.searchParams.set("to", emailAddr);
 
@@ -976,7 +976,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
           // No guest session found: fall back to email_change resend.
           const language = getUiLang();
-          const confirmUrl2 = new URL("/confirm/", location.origin);
+          const confirmUrl2 = new URL("/login/confirm/", location.origin);
           confirmUrl2.searchParams.set("lang", language);
           confirmUrl2.searchParams.set("to", mail);
 

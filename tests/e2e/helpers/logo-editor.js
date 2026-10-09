@@ -1,6 +1,6 @@
 // tests/e2e/helpers/logo-editor.js
 // Wspólne kroki testów logo (logo-editor.spec.js): lista /logo/ i trzy
-// strony edytorów /logo/editor-text|draw|image/?id= z autozapisem.
+// strony edytorów /logo/editor/<tryb>/?id= z autozapisem.
 
 const { expect } = require("@playwright/test");
 const { isKnownNoiseText } = require("./login");
@@ -64,7 +64,7 @@ async function readLogoByName(page, name) {
 
 /** Czeka, aż strona edytora wczyta logo (pole nazwy odblokowane). */
 async function waitEditorReady(page, mode) {
-  await page.waitForURL(new RegExp(`/logo/editor-${mode.toLowerCase()}/\\?id=`), { timeout: 15000 });
+  await page.waitForURL(new RegExp(`/logo/editor/${mode.toLowerCase()}/\\?id=`), { timeout: 15000 });
   await expect(page.locator("#editorShell")).toHaveAttribute("data-mode", mode.toUpperCase());
   await expect(page.locator("#logoName")).toBeEnabled({ timeout: 15000 });
   if (mode.toUpperCase() === "DRAW") await page.waitForTimeout(300);

@@ -2,9 +2,9 @@
 //
 // JEDEN silnik liczący RZECZYWISTE czasy trwania dźwięku — używany zarówno
 // przez control/js/actionGate.js (blokada przycisków operatora) JAK I
-// przez display/js/render.js (czas trwania animacji Wyświetlacza).
+// przez control/display/js/render.js (czas trwania animacji Wyświetlacza).
 // Zgłoszone wprost: "Pozbądźmy się sztywnych zapisanych ram czasowych.
-// Animacja... zawsze = dźwięki" — wcześniej display/js/render.js miał
+// Animacja... zawsze = dźwięki" — wcześniej control/display/js/render.js miał
 // własne, ręcznie dobrane stałe (web/js/gameplay/displayAnim.js's `ms`), zupełnie
 // niezależne od tego, ile faktycznie trwa dźwięk temu towarzyszący; ten
 // moduł jest teraz JEDYNYM miejscem, które liczy "ile ma to trwać", żeby
@@ -58,7 +58,7 @@ export function createTransitionTiming({ getSfxDuration }) {
   // faza, w której gra wyłącznie `otherKey`) i "revealMs" (czas trwania
   // samego "reveal", od jego startu do końca całej kombinacji — oba dźwięki
   // zawsze kończą się dokładnie w tym momencie, z definicji synced combo).
-  // display/js/render.js: animOut = offset, animIn ("odsłonięcie") = revealMs
+  // control/display/js/render.js: animOut = offset, animIn ("odsłonięcie") = revealMs
   // — więc animacja odsłaniania faktycznie zaczyna się dokładnie wtedy, gdy
   // zaczyna grać "reveal", i trwa dokładnie tyle, co on.
   async function revealSyncSplit(otherKey) {
