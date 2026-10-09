@@ -71,6 +71,30 @@ const pl = {
       contactBtn: "Kontakt",
     },
   },
+  nav: {
+    backTo: "Wróć do: {page}",
+    page: {
+      home: "Strona główna",
+      login: "Logowanie",
+      games: "Moje gry",
+      editor: "Edytor pytań",
+      polls: "Ankieta",
+      subscriptions: "Subskrypcje",
+      bases: "Moje bazy",
+      baseExplorer: "Menedżer bazy",
+      logoEditor: "Moje logo",
+      logoText: "Edytor logo",
+      logoDraw: "Edytor logo",
+      logoImage: "Edytor logo",
+      control: "Panel sterowania",
+      gameSettings: "Ustawienia gry",
+      marketplace: "Gry Społeczności",
+      connectDevice: "Podłącz urządzenie",
+      account: "Ustawienia konta",
+      manual: "Instrukcja",
+      privacy: "Prywatność",
+    },
+  },
   contact: {
     modal: {
       title: "Napisz do nas",
@@ -115,20 +139,32 @@ const pl = {
     // Wspólny komunikat dla gry — edytor, ustawienia (i docelowo ankieta/
     // control) wzajemnie się wykluczają dla tej samej gry, więc komunikat
     // rozróżnia tylko TYP zasobu, nie która konkretnie strona trzyma blokadę.
-    gameMessage: "Ta gra jest właśnie używana w innej karcie lub przez inne urządzenie.",
+    gameMessage: "Ta gra jest otwarta gdzie indziej.",
     logoMessage: "To logo jest właśnie edytowane w innej karcie lub przez inne urządzenie.",
     // Zgłoszone: w Control/ustawieniach gry operator NIE wie, które
     // konkretnie logo jest zablokowane (gra może korzystać z dowolnego
     // logo z puli) — w odróżnieniu od logoMessage (edytor logo, gdzie
     // zawsze chodzi o jedno, wprost otwarte logo), ten komunikat celowo
     // NIE sugeruje jednego, konkretnego logo.
-    logoInUseMessage: "Loga są właśnie edytowane lub zajęte w innym miejscu.",
     baseItemMessage: "Ten element bazy jest właśnie edytowany w innej karcie lub przez innego użytkownika.",
     // Cała pula logo użytkownika jest blokowana, gdy Control lub
     // game-settings.js mają aktywną którąkolwiek jego grę — niezależnie od
     // tego, czy TO logo jest przez nią referencowane.
     logoPoolBusyControl: "Nie możesz edytować ani usunąć logo, bo prowadzisz rozgrywkę.",
     logoPoolBusySettings: "Nie możesz edytować ani usunąć logo, bo zmieniasz ustawienia rozgrywki.",
+    lostTitle: "Utracono blokadę",
+    lostMessage: "W międzyczasie ten zasób przejęła inna karta (np. po uśpieniu komputera). Odśwież stronę, żeby wejść ponownie.",
+    // Gra otwarta (ustawienia / Control) zajmuje całą pulę logo; edycja któregokolwiek logo
+    // zatrzymuje wejście do Control i ustawień każdej gry.
+    logoEditBlocksControl: "Trwa edycja logo — zamknij edytor logo, żeby otworzyć rozgrywkę.",
+    logoEditBlocksSettings: "Trwa edycja logo — zamknij edytor logo, żeby otworzyć ustawienia.",
+    logoPoolBusyControlEntry: "Trwa rozgrywka.",
+    logoPoolBusySettingsEntry: "Otwarte ustawienia gry.",
+    logoPoolBusy: "Trwa rozgrywka albo otwarte ustawienia gry.",
+    baseOpenMessage: "Baza jest otwarta — zmiana całej bazy niemożliwa.",
+    baseChangingMessage: "Trwa zmiana całej bazy.",
+    baseAccessRevokedTitle: "Odebrano Ci dostęp",
+    baseAccessRevokedMessage: "Odebrano Ci dostęp do tej bazy.",
   },
   guestInfo: {
     title: "Konto gościa",
@@ -463,16 +499,12 @@ const pl = {
     migratePendingHint: "Wysłaliśmy link potwierdzający na {email}. Kliknij go, aby dokończyć migrację.",
     migrateResend: "Wyślij ponownie",
     migrateCancel: "Anuluj",
-    statusMigrating: "Wysyłam link potwierdzający…",
     statusMigrateSent: "Wysłano! Sprawdź wiadomość e-mail, aby dokończyć migrację.",
-    statusMigrateResending: "Wysyłam ponownie…",
     statusMigrateResent: "Wysłano ponownie. Sprawdź wiadomość e-mail.",
-    statusMigrateCancelling: "Anuluję migrację…",
     statusMigrateCancelled: "Migracja anulowana.",
     errCancelMigrationFailed: "Nie udało się anulować migracji.",
     title: "Familiada — konto",
     pageTitle: "Familiada — moje konto",
-    backToGames: "Moje gry",
     headerTitle: "Ustawienia konta",
     headerHint: "Zarządzaj profilem, e-mailem i bezpieczeństwem.",
     statusLoading: "Ładuję profil…",
@@ -517,18 +549,11 @@ const pl = {
       btn: "Przywróć pliki demo",
       btnHint: "Po kliknięciu nastąpi przejście do widoku Moje gry i automatyczne wgranie demo.",
     },
-    statusLoaded: "Profil załadowany.",
     statusUsernameSaved: "Nazwa użytkownika zapisana.",
-    statusSavingEmail: "Zapisywanie adresu e-mail…",
     statusEmailSaved: "Wysłano linki potwierdzające zmianę e-maila. Sprawdź obecną i nową skrzynkę.",
-    statusEmailPending: "Zmiana e-maila jest w toku.",
-    statusEmailResending: "Wysyłam ponownie linki…",
     statusEmailResent: "Wysłano ponownie. Sprawdź skrzynki.",
-    statusEmailCancelling: "Anuluję zmianę…",
     statusEmailCancelled: "Anulowano zmianę e-maila.",
     statusPasswordSaved: "Hasło zostało zmienione.",
-    statusDeleting: "Usuwam konto…",
-    statusError: "Błąd.",
     errInvalidEmail: "Podaj poprawny e-mail.",
     errEmailPending: "Zmiana e-maila jest już w toku. Najpierw dokończ ją lub anuluj.",
     errEmailSameAsCurrent: "To jest Twój obecny adres e-mail.",
@@ -564,7 +589,6 @@ const pl = {
   },
   bases: {
     title: "Familiada — bazy pytań",
-    backToGames: "Moje gry",
     logout: "Wyloguj",
     headerTitle: "Twoje bazy pytań",
     headerHint: "Naciśnij kafelek, żeby go zaznaczyć. Podwójne naciśnięcie zmienia nazwę.",
@@ -760,22 +784,46 @@ const pl = {
   },
   polls: {
     title: "Familiada — ankieta i wyniki",
-    backToGames: "Moje gry",
     logout: "Wyloguj",
     pageTitle: "Ankieta",
+    typeShort: {
+      text: "tekstowa",
+      points: "punktowa",
+    },
+    pageSubtitle: "{type} · {name}",
     tabs: {
       share: "Udostępnianie",
       results: "Wyniki",
     },
-    tags: {
-      votes: "Głosy: {n}",
+    bar: {
+      votes: ({ n }) => {
+        const k = Math.abs(Number(n) || 0);
+        if (k === 1) return "1 głos";
+        const last = k % 10;
+        const tens = k % 100;
+        return last >= 2 && last <= 4 && (tens < 10 || tens >= 20) ? `${k} głosy` : `${k} głosów`;
+      },
+      stoppedInfo: "link nadal ważny",
+      readyInfo: "można grać",
+      tallyInfo: "podliczanie",
     },
     share: {
-      linkTitle: "Link i QR",
+      linkTitle: "Link",
       subsTitle: "Subskrybenci",
       sendInvites: "Wyślij zaproszenia",
+      sendInvitesN: "Wyślij zaproszenia ({n})",
+      sendDisabledStopped: "Ankieta jest zatrzymana — nowe zaproszenia wyślesz po wznowieniu głosowania.",
+      sendAfterStart: "Zaproszenia wyślesz po uruchomieniu ankiety.",
+      linkAfterStart: "Link pojawi się po uruchomieniu",
+      copyLink: "Kopiuj link",
+      showQr: "Pokaż QR",
+      hideQr: "Ukryj QR",
+      enlargeQr: "Powiększ kod QR",
+      summary: "Zaproszeni {invited} · Zagłosowali {voted} · Odrzucili {declined}",
+      selectAll: "Zaznacz wszystkich",
+      deselectAll: "Odznacz wszystkich",
       draftEmpty: "Uruchom ankietę, żeby ją udostępnić",
-      closedEmpty: "Ankieta zamknięta — udostępnianie wygasło",
+      closedEmpty: "Ankieta zakończona — udostępnianie wygasło",
       noSubs: "Nie masz subskrybentów.",
       noSubsLink: "Dodaj ich w Subskrypcjach",
       state: {
@@ -813,6 +861,8 @@ const pl = {
       copied: "Skopiowano kod.",
       copyBtn: "Kopiuj",
       openBtn: "Otwórz",
+      voteTitle: "Kod QR do głosowania",
+      voteSubtitle: "Zeskanuj, żeby wejść do ankiety",
     },
     actions: {
       abort: "Przerwij",
@@ -820,17 +870,23 @@ const pl = {
       openShort: "Otwórz",
       qrOnDisplay: "QR na wyświetlaczu",
       cancel: "Anuluj",
-      closeAndNormalize: "Zamknij i przelicz",
       noPoll: "Brak ankiety",
       openPoll: "Uruchom",
-      closePoll: "Zamknij",
+      openAndInvite: "Uruchom i wyślij zaproszenia ({n})",
+      stopPoll: "Zatrzymaj",
+      resumePoll: "Wznów głosowanie",
+      tallyPoll: "Podlicz głosy",
       reopenPoll: "Uruchom ponownie",
+      approve: "Zatwierdź",
+      leaveTally: "Wyjdź z podliczania",
     },
     results: {
       noQuestions: "Brak pytań.",
       title: "Wyniki",
       final: "Wynik:",
       refreshFailed: "Nie udało się odświeżyć wyników",
+      draftEmpty: "Uruchom ankietę, żeby zbierać głosy.",
+      stopped: "Głosowanie zatrzymane — to zebrane głosy. Możesz wznowić głosowanie albo je podliczyć.",
     },
     empty: {
       title: "Brak gry",
@@ -852,14 +908,29 @@ const pl = {
       open: {
         title: "Uruchomić ankietę?",
         text: "Uruchomić ankietę dla „{name}”?",
+        textInvite: "Uruchomić ankietę dla „{name}” i wysłać zaproszenia ({n})?",
         ok: "Uruchom",
         cancel: "Anuluj",
       },
-      closePoints: {
-        title: "Zakończyć ankietę?",
-        text: "Zamknąć ankietę i przeliczyć punkty do 100?",
-        ok: "Zakończ",
-        cancel: "Anuluj",
+      stop: {
+        title: "Zatrzymać ankietę?",
+        text: "Głosowanie się zakończy, ale zebrane głosy zostają. Link nadal działa i pokaże „Ankieta jest zatrzymana”. Potem możesz wznowić głosowanie albo podliczyć głosy.",
+        ok: "Zatrzymaj",
+      },
+      resume: {
+        title: "Wznowić głosowanie?",
+        text: "Ankieta znów przyjmie głosy pod tym samym linkiem. Zebrane głosy zostają.",
+        ok: "Wznów",
+      },
+      tallyPoints: {
+        title: "Podliczyć głosy?",
+        text: "Punkty zostaną przeliczone do sumy 100 w każdym pytaniu, a linki i zaproszenia wygasną. Gra będzie gotowa.",
+        ok: "Zatwierdź",
+      },
+      tallyText: {
+        title: "Zatwierdzić odpowiedzi?",
+        text: "Zostaną zapisane odpowiedzi z punktami (suma 100 w każdym pytaniu), a linki i zaproszenia wygasną. Gra będzie gotowa.",
+        ok: "Zatwierdź",
       },
       reopen: {
         title: "Uruchomić ponownie?",
@@ -867,65 +938,50 @@ const pl = {
         ok: "Uruchom ponownie",
         cancel: "Anuluj",
       },
-      closeText: {
-        title: "Zamknąć ankietę?",
-        text: "Zamknąć ankietę, wybrać TOP 6 i zapisać punkty do 100 dla każdego pytania?",
-        ok: "Zamknij",
-        cancel: "Anuluj",
-      },
     },
     status: {
       aborted: "Ankieta przerwana — wróciła do szkicu.",
       opened: "Ankieta uruchomiona.",
-      closedPoints: "Ankieta zamknięta. Gra gotowa (unikatowe punkty).",
+      stopped: "Ankieta zatrzymana.",
+      resumed: "Głosowanie wznowione.",
+      tallied: "Głosy podliczone. Gra gotowa.",
       reopened: "Ankieta uruchomiona ponownie.",
-      closed: "Ankieta zamknięta. Gra gotowa.",
     },
     errors: {
       abort: "Nie udało się przerwać ankiety.",
       reopenAborted: "Wyniki zostały usunięte, ale ankiety nie udało się uruchomić — uruchom ją ponownie.",
       open: "Nie udało się uruchomić ankiety.",
-      close: "Nie udało się zamknąć ankiety.",
+      stop: "Nie udało się zatrzymać ankiety.",
+      resume: "Nie udało się wznowić głosowania.",
+      tally: "Nie udało się podliczyć głosów.",
       reopen: "Nie udało się otworzyć ponownie.",
       loadAnswers: "Nie udało się wczytać odpowiedzi.",
+      openedInviteFailed: "Ankieta uruchomiona, ale zaproszeń nie udało się wysłać — zrób to w karcie Udostępnianie.",
     },
-    textClose: {
-      title: "Zamykanie — edycja odpowiedzi",
-      loading: "Ładuję odpowiedzi z ostatniej sesji…",
-      instructions:
-        "Przeciągnij odpowiedź na inną, aby je połączyć (liczby głosów zostaną zsumowane). Możesz usuwać odpowiedzi. Na końcu wybieramy sześć najpopularniejszych i normalizujemy wyniki do 100 punktów.",
-      hint: "Przeciągnij, żeby połączyć • edytuj literówki • final max 17 znaków",
-      mergeTitle: "Scal identyczne",
-      mergeLabel: "Scal identyczne",
-      mergeWith: "Połącz z...",
+    tally: {
+      loading: "Ładuję odpowiedzi…",
+      hintText: "Przeciągnij odpowiedź na inną, żeby je połączyć. Kliknij tekst, żeby poprawić literówkę. Odpowiedzi mają maksymalnie 17 znaków.",
+      hintPoints: "Głosy przeliczone na punkty (suma 100 w każdym pytaniu). Zatwierdź, żeby zakończyć ankietę.",
+      counter: "Odpowiedzi: {n} (wymagane 3–6)",
+      sum: "suma: {n}",
+      votes: "{n} gł.",
+      mergeDup: "Scal identyczne",
+      mergeWith: "Połącz z…",
       remove: "Usuń",
-      editHint: "Edytuj odpowiedzi, a potem kliknij „Zamknij i przelicz”.",
-      cancelled: "Anulowano zamykanie (ankieta dalej otwarta).",
-      minAnswers:
-        "Pytanie {ord}: po edycji zostało mniej niż 3 odpowiedzi. Dodaj/połącz inaczej.",
-      leaveTitle: "Masz otwarte łączenie",
-      leaveText: "Jeśli wyjdziesz teraz, stracisz niezapisane zmiany. Wyjść mimo to?",
-      leaveOk: "Wyjdź",
-      leaveCancel: "Zostań",
-      leaveCheckTitle: "Masz otwarte sprawdzanie odpowiedzi",
-      leaveCheckText: "Wyjście spowoduje utratę niezapisanych zmian. Wyjść?",
-      logoutWarn: "Wylogowanie spowoduje utratę niezapisanych zmian. Wylogować?",
-      logoutOk: "Wyloguj",
+      dragHandle: "Przeciągnij na inną odpowiedź, żeby połączyć",
+      undo: "Cofnij",
+      redo: "Ponów",
+      saving: "Zapisuję…",
+      saved: "Zapisano",
+      saveFailed: "Nie udało się zapisać poprawek",
+      restored: "Przywrócono zapisane poprawki.",
+      belowMin: "Pytanie {ord}: potrzeba co najmniej 3 odpowiedzi.",
     },
   },
   manual: {
     title: "Familiada — wskazówki",
     tabsLabel: "Zakładki wskazówek",
     legal: "Polityka prywatności",
-    backToGames: "Moje gry",
-    backToBaseManager: "Menedżer bazy",
-    backToLogos: "Moje logo",
-    backToEditor: "Edytor pytań",
-    backToLogoEditor: "Edytor logo",
-    backToPoll: "Ankieta",
-    backToSubscriptions: "Subskrypcje",
-    backToAccount: "Ustawienia konta",
-    backToMarketplace: "Gry Społeczności",
     logout: "Wyloguj",
     pageTitle: "Wskazówki dla użytkownika",
     tabs: {
@@ -2329,7 +2385,6 @@ const pl = {
     description: "Polityka prywatności serwisu Familiada Online: zasady przetwarzania danych osobowych, pliki cookies i kontakt z administratorem.",
     pageTitle: "Familiada Online — Polityka Prywatności",
     backToManual: "Wskazówki",
-    backToHome: "Strona główna",
     logout: "Wyloguj",
     content: `
       <p class="m-p"><strong>Familiada Online</strong></p>
@@ -2455,14 +2510,19 @@ const pl = {
     negativePoints: "Pytanie #{ord}: punkty nie mogą być ujemne.",
     answerOver100: "Pytanie #{ord}: odpowiedź nie może mieć więcej niż 100 pkt.",
     sumTooBig: "Pytanie #{ord}: suma punktów nie może przekroczyć {max} (jest: {sum}).",
-    closeOnlyOpen: "Ankietę można zamknąć tylko wtedy, gdy jest otwarta.",
+    closeOnlyOpen: "Głosy można podliczyć tylko w otwartej lub zatrzymanej ankiecie.",
     closeWaitForTasks: "Nie można jeszcze zamknąć — ktoś z zaproszonych jeszcze nie zagłosował.",
     noSession: "Pytanie #{ord}: brak sesji ankiety — uruchom ankietę ponownie.",
-    closeMinPoints: "Pytanie #{ord}: aby zamknąć, co najmniej 3 odpowiedzi muszą mieć ≥ 3 punkty po przeliczeniu głosów.",
-    closeMinText: "Pytanie #{ord}: aby zamknąć, potrzeba co najmniej 3 różnych odpowiedzi.",
+    closeMinPoints: "Pytanie #{ord}: aby podliczyć, co najmniej 3 odpowiedzi muszą mieć ≥ 3 punkty po przeliczeniu głosów.",
+    closeMinText: "Pytanie #{ord}: aby podliczyć, potrzeba co najmniej 3 różnych odpowiedzi.",
     unknownType: "Nieznany typ gry.",
     marketNoEdit: "Gry ze Społeczności nie można edytować.",
     pollOpenNoExport: "Nie można eksportować gry z otwartą ankietą.",
+    pollStoppedNoEdit: "Ankieta jest zatrzymana — edycja zablokowana. Przerwij ankietę, żeby edytować.",
+    pollStopped: "Ankieta jest zatrzymana — wznów głosowanie albo podlicz głosy.",
+    pollStoppedNoExport: "Nie można eksportować gry z zatrzymaną ankietą.",
+    stopOnlyOpen: "Zatrzymać można tylko otwartą ankietę.",
+    resumeOnlyStopped: "Wznowić można tylko zatrzymaną ankietę.",
   },
   gamesImportExport: {
     defaults: {
@@ -2632,8 +2692,18 @@ const pl = {
     status: {
       draft: "SZKIC",
       open: "OTWARTA",
-      closed: "ZAMKNIĘTA",
+      stopped: "ZATRZYMANA",
       ready: "GOTOWA",
+    },
+    badges: {
+      votes: ({ n }) => {
+        const k = Math.abs(Number(n) || 0);
+        if (k === 1) return "1 głos";
+        const last = k % 10;
+        const tens = k % 100;
+        return last >= 2 && last <= 4 && (tens < 10 || tens >= 20) ? `${k} głosy` : `${k} głosów`;
+      },
+      toTally: "do podliczenia",
     },
     newGame: {
       pollText: "Nowa ankieta",
@@ -2682,7 +2752,6 @@ const pl = {
   editor: {
     pageTitlePrefix: "Edytor gry",
     title: "Familiada — edytor gry",
-    backToGames: "Moje gry",
     backToQuestions: "Wstecz",
     logout: "Wyloguj",
     pageTitle: "Edytor",
@@ -2813,6 +2882,8 @@ const pl = {
     openTaskFail: "Nie można otworzyć zadania.",
     pollFallback: "Ankieta",
     pollClosed: "Ankieta została zamknięta",
+    pollStopped: "Ankieta jest zatrzymana",
+    pollEnded: "Ankieta zakończona",
     sending: "Wysyłam…",
     error: "Błąd: {error}",
     questionProgress: "Pytanie {current}/{total}",
@@ -2839,6 +2910,8 @@ const pl = {
     openTaskFail: "Nie można otworzyć zadania.",
     pollFallback: "Ankieta",
     pollClosed: "Ankieta została zamknięta",
+    pollStopped: "Ankieta jest zatrzymana",
+    pollEnded: "Ankieta zakończona",
     sending: "Wysyłam…",
     error: "Błąd: {error}",
     questionProgress: "Pytanie {current}/{total}",
@@ -2874,6 +2947,8 @@ const pl = {
     inviteDone: "Dziękujemy, głos oddany",
     inviteDeclinedShort: "Zaproszenie odrzucone",
     pollClosed: "Ankieta została zamknięta",
+    pollStopped: "Ankieta jest zatrzymana",
+    pollEnded: "Ankieta zakończona",
     inviteExpired: "To zaproszenie wygasło",
     acceptFailed: "Nie udało się zaakceptować.",
     subscriptionActive: "Subskrypcja aktywna",
@@ -3166,8 +3241,6 @@ const pl = {
   pollsHubPolls: {
     dash: "-",
     title: "Familiada — centrum ankiet",
-    backToGames: "Moje gry",
-    backToBases: "Bazy pytań",
     logout: "Wyloguj",
     header: {
       title: "Centrum ankiet",
@@ -3432,7 +3505,6 @@ const pl = {
     taskFrom: "Od: {owner}",
     dash: "-",
     title: "Familiada — subskrypcje",
-    backToGames: "Moje gry",
     logout: "Wyloguj",
     header: {
       title: "Centrum ankiet",
@@ -3674,10 +3746,6 @@ const pl = {
       draw: "Familiada — logo rysunkowe",
       image: "Familiada — logo z obrazu",
     },
-    topbar: {
-      backToGames: "Moje gry",
-      backToLogos: "Moje logo",
-    },
     list: {
       title: "Twoje logo",
       hint: "Kliknij kafelek, żeby go zaznaczyć. Dwuklik (albo przytrzymanie na dotyku) zmienia nazwę.",
@@ -3906,7 +3974,6 @@ const pl = {
   baseExplorer: {
     title: "Familiada — menedżer bazy pytań",
     headerTitle: "Menedżer bazy pytań",
-    backToBases: "Moje bazy",
     logout: "Wyloguj",
     common: {
       close: "Zamknij",
@@ -4135,7 +4202,6 @@ const pl = {
     shortcuts: {"mappingAnswers": "1–6 — zaznacz odpowiedź z listy", "answers": "1–6 → Enter — odsłoń odpowiedź", "x": "X → Enter — pudło", "t": "T → Enter — timer", "a": "A → Enter — drużyna A", "b": "B → Enter — powrót / ręczny wybór drużyny B w pojedynku", "c": "C → Enter — zatwierdź zgłoszenie", "p": "P → Enter — oddaj kontrolę", "n": "N → Enter — przycisk dalszego przejścia", "e": "E → Enter — zmień ustawienia", "w": "W — wpisana odpowiedź", "o": "O — brak odpowiedzi", "r": "R — powtórzenie", "m": "M — wycisz / włącz dźwięk", "reveal": "Enter — odsłoń odpowiedź, kolejny Enter — punkty", "fields": "↑ / ↓ / Enter — poprzednie / następne puste pole", "entryTimer": "Ctrl+Enter (Cmd+Enter na Macu) — start / stop timera", "entryRepeat": "Shift+Enter w pustym polu — powtórzenie"},
     title: "Familiada — panel sterowania",
     loading: "Ładowanie panelu…",
-    backToGames: "Moje gry",
     logout: "Wyloguj",
     statusLabel: "Status urządzeń",
     optional: "(opcjonalnie)",
@@ -4396,6 +4462,7 @@ const pl = {
     dash: "—",
     answerFallback: "Odpowiedź",
     shareDeviceModal: {
+      mailSent: "Wysłano e-mail z linkiem.",
       noneCurrent: "Nie udostępniono jeszcze tego urządzenia.",
       title: "Udostępnij",
       subtitle: "Wybierz subskrybenta lub wpisz e-mail.",
@@ -4622,10 +4689,6 @@ const pl = {
     pageTitle: "Gry Społeczności — gotowe pytania do Familiady",
     subtitle: "Przeglądaj gry stworzone przez społeczność i dodawaj je do swojej biblioteki.",
     loading: "Ładowanie…",
-    nav: {
-      myGames: "Moje gry",
-      backHome: "Strona główna",
-    },
     searchPlaceholder: "Szukaj gry…",
     searchLabel: "Szukaj gier",
     filterLabel: "Język",
@@ -4744,7 +4807,6 @@ const pl = {
       networkError: "Nie udało się połączyć. Sprawdź połączenie internetowe i spróbuj ponownie.",
     },
     title: "Familiada — podłącz urządzenie",
-    topbar: { back: "Moje gry" },
     header: {
       title: "Podłącz urządzenie",
       hint: "Zeskanuj kod QR lub otwórz link, żeby podłączyć urządzenie.",
@@ -4798,7 +4860,6 @@ const pl = {
   gameSettings: {
     pageTitle: "Ustawienia gry",
     title: "Familiada — ustawienia gry",
-    back: "Moje gry",
     saveAll: "Zapisz wszystko",
     resetAll: "Przywróć domyślne",
     play: "Graj",

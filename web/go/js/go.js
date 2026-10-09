@@ -1,0 +1,645 @@
+// web/go/js/go.js
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T17351";
+import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-09T17351";
+import { initI18n, t } from "../../shared/translation/translation.js?v=v2026-10-09T17351";
+import { alertModal } from "../../shared/js/core/modal.js?v=v2026-10-09T17351";
+
+const i18nReady = initI18n({ withSwitcher: true }).then(() => {
+  document.documentElement.classList.remove('page-loading');
+  document.querySelector('.topbar')?.classList.add('topbar-ready');
+});
+
+const MSG = {
+  declined: () => t("pollGo.declined"),
+  taskDeclined: () => t("pollGo.taskDeclined"),
+  error: () => t("pollGo.error"),
+  declineTaskFailed: () => t("pollGo.declineTaskFailed"),
+  declineInviteFailed: () => t("pollGo.declineInviteFailed"),
+  subHeading: (owner) => t("pollGo.subHeading", { owner }),
+  taskHeading: (name, owner) => t("pollGo.taskHeading", { name, owner }),
+  taskName: (name) => t("pollGo.taskName", { name }),
+  pollFallback: () => t("pollGo.pollFallback"),
+  ownerSuffix: (owner) => t("pollGo.ownerSuffix", { owner }),
+  mismatch: (email) => t("pollGo.mismatch", { email }),
+  inviteUsed: () => t("pollGo.inviteUsed"),
+  acceptFailed: () => t("pollGo.acceptFailed"),
+  subscriptionActive: () => t("pollGo.subscriptionActive"),
+  inviteAccepted: () => t("pollGo.inviteAccepted"),
+  inviteDeclined: () => t("pollGo.inviteDeclined"),
+  inviteAcceptFailed: () => t("pollGo.inviteAcceptFailed"),
+  emailMissingTitle: () => t("pollGo.emailMissingTitle"),
+  emailMissingText: () => t("pollGo.emailMissingText"),
+  subscribeFailed: () => t("pollGo.subscribeFailed"),
+  subscribeAdded: () => t("pollGo.subscribeAdded"),
+  subscriptionInviteActive: () => t("pollGo.subscriptionInviteActive"),
+  subscribePrompt: () => t("pollGo.subscribePrompt"),
+  acceptInHub: () => t("pollGo.acceptInHub"),
+  hubLabel: () => t("pollGo.hubLabel"),
+  acceptLabel: () => t("pollGo.acceptLabel"),
+  declineLabel: () => t("pollGo.declineLabel"),
+  subscribeLabel: () => t("pollGo.subscribeLabel"),
+  loginToAccept: () => t("pollGo.loginToAccept"),
+  loginLabel: () => t("pollGo.loginLabel"),
+  loginToVote: () => t("pollGo.loginToVote"),
+  taskInviteActive: () => t("pollGo.taskInviteActive"),
+  voteLabel: () => t("pollGo.voteLabel"),
+  missingLinkTitle: () => t("pollGo.missingLinkTitle"),
+  missingLinkText: () => t("pollGo.missingLinkText"),
+  inviteDone: () => t("pollGo.inviteDone"),
+  inviteDeclinedShort: () => t("pollGo.inviteDeclinedShort"),
+  pollClosed: () => t("pollGo.pollClosed"),
+  pollStopped: () => t("pollGo.pollStopped"),
+  pollEnded: () => t("pollGo.pollEnded"),
+  inviteExpired: () => t("pollGo.inviteExpired"),
+  invalidLinkTitle: () => t("pollGo.invalidLinkTitle"),
+  invalidLinkText: () => t("pollGo.invalidLinkText"),
+  inviteUnknown: () => t("pollGo.inviteUnknown"),
+  openInviteFailed: () => t("pollGo.openInviteFailed"),
+  invitationRecipient: () => t("pollGo.invitationRecipient"),
+  ownerEmailBlocked: (owner) => t("pollGo.ownerEmailBlocked", { owner }),
+  unsubOwnerHeading: (owner) => t("pollGo.unsubOwnerHeading", { owner }),
+  unsubOwnerText: () => t("pollGo.unsubOwnerText"),
+  unsubOwnerBtn: (owner) => t("pollGo.unsubOwnerBtn", { owner }),
+  unsubOwnerDone: (owner) => t("pollGo.unsubOwnerDone", { owner }),
+  unsubOwnerFailed: () => t("pollGo.unsubOwnerFailed"),
+  unsubGlobalHeading: () => t("pollGo.unsubGlobalHeading"),
+  unsubGlobalText: () => t("pollGo.unsubGlobalText"),
+  unsubGlobalBtn: () => t("pollGo.unsubGlobalBtn"),
+  unsubGlobalDone: () => t("pollGo.unsubGlobalDone"),
+  unsubGlobalAlready: () => t("pollGo.unsubGlobalAlready"),
+  unsubGlobalFailed: () => t("pollGo.unsubGlobalFailed"),
+};
+
+const qs = new URLSearchParams(location.search);
+const taskToken = qs.get("t");
+const subToken = qs.get("s");
+const unsubToken = qs.get("u");
+const actionParam = qs.get("action");
+const isUnsubOwner = Boolean(subToken && actionParam === "unsub");
+const isUnsubGlobal = Boolean(unsubToken && !taskToken && !subToken);
+const hasTaskToken = Boolean(taskToken) && !isUnsubOwner;
+const hasSubToken = Boolean(subToken) && !isUnsubOwner;
+const goToken = hasTaskToken === hasSubToken ? null : (hasTaskToken ? taskToken : subToken);
+
+const $ = (id) => document.getElementById(id);
+
+const title = $("title");
+const message = $("message");
+const actions = $("actions");
+const hint = $("hint");
+const emailRow = $("emailRow");
+const emailInput = $("emailInput");
+
+let resolvedInviteData = null;
+
+function setView({ head, text, hintText }) {
+  if (title) title.textContent = head;
+  if (message) message.textContent = text;
+  if (hint) hint.textContent = hintText || "";
+}
+
+function clearActions() {
+  if (actions) actions.innerHTML = "";
+}
+
+function showEmailInput(show) {
+  if (emailRow) emailRow.style.display = show ? "flex" : "none";
+}
+
+function addAction(label, kind, handler) {
+  const btn = document.createElement("button");
+  btn.className = `btn sm ${kind || ""}`.trim();
+  btn.textContent = label;
+  btn.addEventListener("click", handler);
+  actions?.appendChild(btn);
+}
+
+function redirectToLogin() {
+  const url = new URL("/login/", location.href);
+  url.searchParams.set("from", "poll-go");
+  url.searchParams.set("next", taskToken ? "tasks" : "subscriptions");
+  if (taskToken) url.searchParams.set("t", taskToken);
+  if (subToken) url.searchParams.set("s", subToken);
+  location.href = url.toString();
+}
+
+function redirectToHub() {
+  const url = new URL("/subscriptions/", location.href);
+  if (taskToken) {
+    url.searchParams.set("tab", "tasks");
+    url.searchParams.set("t", taskToken);
+  }
+  if (subToken) url.searchParams.set("s", subToken);
+  location.href = url.toString();
+}
+
+function normalizeEmail(value) {
+  return String(value || "").trim().toLowerCase();
+}
+
+async function resolveToken() {
+  const req = sb().rpc("poll_go_resolve", { p_token: goToken });
+  const timeoutMs = 15000;
+  let timer = null;
+  const timeout = new Promise((_, rej) => {
+    timer = setTimeout(() => rej(new Error("Timeout resolving invitation")), timeoutMs);
+  });
+
+  try {
+    const { data, error } = await Promise.race([req, timeout]);
+    if (error) throw error;
+    return data;
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
+
+async function resolveProfileByEmail(email) {
+  const normalized = normalizeEmail(email);
+  if (!normalized) return null;
+  try {
+    const { data, error } = await sb()
+      .from("profiles")
+      .select("id,username,email")
+      .eq("email", normalized)
+      .maybeSingle();
+    if (error || !data?.id) return null;
+    return data;
+  } catch (e) {
+    console.warn("[poll-go] profile email lookup failed:", e);
+    return null;
+  }
+}
+
+async function hydrateInviteIdentity(data) {
+  if (!data) return data;
+
+  // Email-only: możemy dociągnąć label do UI, ale NIE ustawiamy *_user_id
+  if (data.kind === "sub" && !data.subscriber_user_id && data.subscriber_email) {
+    const match = await resolveProfileByEmail(data.subscriber_email);
+    if (match?.id) {
+      return {
+        ...data,
+        subscriber_label: data.subscriber_label || match.username || match.email || data.subscriber_email,
+      };
+    }
+    // Jeśli nie znaleźliśmy profilu, ale mamy email, użyj email jako label
+    if (!data.subscriber_label) {
+      return {
+        ...data,
+        subscriber_label: data.subscriber_email,
+      };
+    }
+  }
+
+  if (data.kind === "task" && !data.recipient_user_id && data.recipient_email) {
+    const match = await resolveProfileByEmail(data.recipient_email);
+    if (match?.id) {
+      return {
+        ...data,
+        recipient_label: data.recipient_label || match.username || match.email || data.recipient_email,
+      };
+    }
+    // Jeśli nie znaleźliśmy profilu, ale mamy email, użyj email jako label
+    if (!data.recipient_label) {
+      return {
+        ...data,
+        recipient_label: data.recipient_email,
+      };
+    }
+  }
+
+  return data;
+}
+
+function openVote(type) {
+  if (!goToken) {
+    console.error("[poll-go] goToken missing in openVote");
+    return;
+  }
+  const page = type === "poll_points" ? "/polls/vote/points/" : "/polls/vote/text/";
+  location.href = `${page}?t=${encodeURIComponent(goToken)}`;
+}
+
+async function declineTask() {
+  try {
+    await sb().rpc("poll_task_decline", { p_token: goToken });
+    setView({ head: MSG.declined(), text: MSG.taskDeclined() });
+    clearActions();
+  } catch (e) {
+    console.error(e);
+    setView({ head: MSG.error(), text: MSG.declineTaskFailed() });
+  }
+}
+
+function buildSubHeading(data) {
+  const owner = data?.owner_label ? MSG.ownerSuffix(data.owner_label) : "";
+  return MSG.subHeading(owner);
+}
+
+function buildTaskHeading(data) {
+  const name = data?.game_name ? MSG.taskName(data.game_name) : MSG.pollFallback();
+  const owner = data?.owner_label ? MSG.ownerSuffix(data.owner_label) : "";
+  return MSG.taskHeading(name, owner);
+}
+
+function showMismatch(head, expectedEmail) {
+  const emailText = expectedEmail || MSG.invitationRecipient();
+  setView({
+    head,
+    text: MSG.mismatch(emailText),
+  });
+  clearActions();
+  showEmailInput(false);
+}
+
+// status zadania (tylko zaproszenia do ankiety): done / declined mają własne komunikaty
+function showExpired(head, taskStatus) {
+  if (taskStatus === "done") {
+    setView({ head: MSG.inviteDone(), text: "" });
+  } else if (taskStatus === "declined") {
+    setView({ head: MSG.inviteDeclinedShort(), text: "" });
+  } else if (taskStatus) {
+    setView({ head: MSG.inviteExpired(), text: "" });
+  } else {
+    setView({ head, text: MSG.inviteUsed() });
+  }
+  clearActions();
+  showEmailInput(false);
+}
+
+function matchesInviteTarget({ user, expectedUserId, expectedEmail }) {
+  if (!user) return false;
+
+  // ✅ Soft allow: jeśli token przypisany do konta → tylko user_id decyduje
+  if (expectedUserId) return user.id === expectedUserId;
+
+  // ✅ Email-only: match po email
+  const u = normalizeEmail(user.email);
+  const e = normalizeEmail(expectedEmail);
+  if (!u || !e) return false;
+  return u === e;
+}
+
+async function acceptSubDirect(email) {
+  try {
+    const { data, error } = await sb().rpc("poll_sub_accept_email", { p_token: goToken, p_email: email });
+    if (error) throw error;
+    if (!data?.ok) throw new Error(data?.error || MSG.acceptFailed());
+    setView({ head: MSG.subscriptionActive(), text: MSG.inviteAccepted() });
+    clearActions();
+    showEmailInput(false);
+  } catch (e) {
+    console.error(e);
+    setView({ head: MSG.error(), text: MSG.inviteAcceptFailed() });
+  }
+}
+
+async function subscribeByEmail() {
+  const email = emailInput?.value.trim();
+  if (!email) {
+    setView({ head: MSG.emailMissingTitle(), text: MSG.emailMissingText() });
+    return;
+  }
+  try {
+    const ownerId = resolvedInviteData?.owner_id;
+    if (ownerId) {
+      const { data: owner } = await sb().from("profiles").select("id,username,email").eq("id", ownerId).maybeSingle();
+      const ownerEmail = normalizeEmail(owner?.email);
+      if (ownerEmail && normalizeEmail(email) === ownerEmail) {
+        await alertModal({ text: MSG.ownerEmailBlocked(owner?.username || owner?.email || "") });
+        return;
+      }
+    }
+
+    const { data, error } = await sb().rpc("poll_go_subscribe_email", { p_token: goToken, p_email: email });
+    if (error) throw error;
+    if (!data) throw new Error(MSG.subscribeFailed());
+    setView({ head: MSG.subscriptionActive(), text: MSG.subscribeAdded() });
+    clearActions();
+    showEmailInput(false);
+  } catch (e) {
+    console.error(e);
+    setView({ head: MSG.error(), text: MSG.subscribeFailed() });
+  }
+}
+
+async function declineSub() {
+  try {
+    const { data, error } = await sb().rpc("poll_sub_decline", { p_token: goToken });
+    if (error) throw error;
+    if (!data?.ok) throw new Error(data?.error || MSG.declineInviteFailed());
+    setView({ head: MSG.declined(), text: MSG.inviteDeclined() });
+    clearActions();
+  } catch (e) {
+    console.error(e);
+    setView({ head: MSG.error(), text: MSG.declineInviteFailed() });
+  }
+}
+
+// Helper: sub invite ze zalogowanym userem i account invite (user_id)
+function showSubInviteAccountMatch(head, expectedEmail) {
+  setView({
+    head,
+    text: MSG.acceptInHub(),
+    hintText: expectedEmail ? `${MSG.invitationRecipient()}: ${expectedEmail}` : "",
+  });
+  clearActions();
+  addAction(MSG.hubLabel(), "gold", redirectToHub);
+  showEmailInput(false);
+}
+
+// Helper: sub invite ze zalogowanym userem bez account invite
+function showSubInviteLoggedIn(head, userEmail, expectedEmail) {
+  setView({ head, text: MSG.subscriptionInviteActive() });
+  clearActions();
+  showEmailInput(false);
+  addAction(MSG.acceptLabel(), "gold", async () => acceptSubDirect(userEmail || expectedEmail));
+  addAction(MSG.declineLabel(), "danger", async () => declineSub());
+}
+
+// Helper: sub invite niezalogowany bez account invite
+function showSubInviteAnonEmail(head, subscriberEmail) {
+  setView({ head, text: MSG.subscriptionInviteActive() });
+  clearActions();
+  showEmailInput(false);
+  addAction(MSG.acceptLabel(), "gold", async () => acceptSubDirect(subscriberEmail));
+  addAction(MSG.declineLabel(), "danger", async () => declineSub());
+}
+
+async function handleSubInvite(data, user) {
+  const head = buildSubHeading(data);
+  const expectedEmail = normalizeEmail(data.subscriber_email);
+  const isActive = data.status === "pending";
+  const hasAccountInvite = Boolean(data.subscriber_user_id);
+  const userEmail = normalizeEmail(user?.email);
+
+  // Case 1: Zalogowany user + account invite
+  if (user && hasAccountInvite) {
+    const okTarget = matchesInviteTarget({
+      user,
+      expectedUserId: data.subscriber_user_id,
+      expectedEmail: data.subscriber_email,
+    });
+    if (!okTarget) {
+      showMismatch(head, data.subscriber_email);
+      return;
+    }
+    if (!isActive) {
+      showExpired(head);
+      return;
+    }
+    showSubInviteAccountMatch(head, expectedEmail);
+    return;
+  }
+
+  // Case 2: Zalogowany user + email invite (bez account)
+  if (user && !hasAccountInvite) {
+    if (!isActive) {
+      showExpired(head);
+      return;
+    }
+    showSubInviteLoggedIn(head, userEmail, expectedEmail);
+    return;
+  }
+
+  // Case 3: Niezalogowany + account invite (wymagaj logowania)
+  if (!user && hasAccountInvite) {
+    if (!isActive) {
+      showExpired(head);
+      return;
+    }
+    setView({ head, text: MSG.loginToAccept() });
+    clearActions();
+    addAction(MSG.loginLabel(), "gold", redirectToLogin);
+    showEmailInput(false);
+    return;
+  }
+
+  // Case 4: Niezalogowany + email invite (bez account)
+  if (!isActive) {
+    setView({ head, text: MSG.subscribePrompt() });
+    showEmailInput(true);
+    clearActions();
+    addAction(MSG.subscribeLabel(), "gold", async () => subscribeByEmail());
+    return;
+  }
+
+  showSubInviteAnonEmail(head, data.subscriber_email);
+}
+
+// Helper: task invite ze zalogowanym userem i account invite
+function showTaskInviteAccountMatch(head, expectedEmail) {
+  setView({
+    head,
+    text: MSG.acceptInHub(),
+    hintText: expectedEmail ? `${MSG.invitationRecipient()}: ${expectedEmail}` : "",
+  });
+  clearActions();
+  addAction(MSG.hubLabel(), "gold", redirectToHub);
+  showEmailInput(false);
+}
+
+// Helper: task invite ze zalogowanym userem bez account invite
+function showTaskInviteLoggedIn(head, pollType) {
+  setView({ head, text: MSG.taskInviteActive() });
+  clearActions();
+  showEmailInput(false);
+  addAction(MSG.voteLabel(), "gold", () => openVote(pollType));
+  addAction(MSG.declineLabel(), "danger", async () => declineTask());
+}
+
+// Helper: task invite niezalogowany bez account invite
+function showTaskInviteAnon(head, pollType) {
+  setView({ head, text: MSG.taskInviteActive() });
+  clearActions();
+  showEmailInput(false);
+  addAction(MSG.voteLabel(), "gold", () => openVote(pollType));
+  addAction(MSG.declineLabel(), "danger", async () => declineTask());
+}
+
+async function handleTaskInvite(data, user) {
+  const expectedEmail = normalizeEmail(data.recipient_email);
+  const head = buildTaskHeading(data);
+  const isActive = ["pending", "opened"].includes(data.status);
+  const hasAccountInvite = Boolean(data.recipient_user_id);
+
+  // Case 1: Zalogowany user + account invite
+  if (user && hasAccountInvite) {
+    const okTarget = matchesInviteTarget({
+      user,
+      expectedUserId: data.recipient_user_id,
+      expectedEmail: data.recipient_email,
+    });
+    if (!okTarget) {
+      showMismatch(head, data.recipient_email);
+      return;
+    }
+    if (!isActive) {
+      showExpired(head, data.status);
+      return;
+    }
+    showTaskInviteAccountMatch(head, expectedEmail);
+    return;
+  }
+
+  // Case 2: Zalogowany user + email invite (bez account)
+  if (user && !hasAccountInvite) {
+    if (!isActive) {
+      showExpired(head, data.status);
+      return;
+    }
+    showTaskInviteLoggedIn(head, data.poll_type);
+    return;
+  }
+
+  // Case 3: Niezalogowany — najpierw sprawdzić czy active
+  if (!isActive) {
+    showExpired(head, data.status);
+    return;
+  }
+
+  // Case 4: Niezalogowany + account invite (wymagaj logowania)
+  if (hasAccountInvite) {
+    setView({ head, text: MSG.loginToVote() });
+    clearActions();
+    addAction(MSG.loginLabel(), "gold", redirectToLogin);
+    showEmailInput(false);
+    return;
+  }
+
+  // Case 5: Niezalogowany + email invite
+  showTaskInviteAnon(head, data.poll_type);
+}
+
+async function handleUnsubOwner() {
+  try {
+    const { data, error } = await sb().rpc("poll_go_resolve", { p_token: subToken });
+    if (error || !data?.ok) {
+      setView({ head: MSG.error(), text: MSG.invalidLinkText() });
+      return;
+    }
+    const ownerLabel = data.owner_label || "";
+    setView({ head: MSG.unsubOwnerHeading(ownerLabel), text: MSG.unsubOwnerText() });
+    clearActions();
+    showEmailInput(false);
+    addAction(MSG.unsubOwnerBtn(ownerLabel), "danger", async () => {
+      try {
+        const { data: res, error: err } = await sb().rpc("poll_sub_unsubscribe", { p_token: subToken });
+        if (err || !res?.ok) throw new Error(err?.message || res?.error || "fail");
+        setView({ head: MSG.declined(), text: MSG.unsubOwnerDone(res.owner_label || ownerLabel) });
+        clearActions();
+      } catch (e) {
+        console.error("[poll-go] unsubscribe owner failed:", e);
+        setView({ head: MSG.error(), text: MSG.unsubOwnerFailed() });
+      }
+    });
+  } catch (e) {
+    console.error("[poll-go] unsub owner init failed:", e);
+    setView({ head: MSG.error(), text: MSG.openInviteFailed() });
+  }
+}
+
+async function handleUnsubGlobal() {
+  try {
+    const { data, error } = await sb().rpc("poll_go_resolve", { p_token: unsubToken });
+    if (error || !data?.ok || data?.kind !== "unsub") {
+      setView({ head: MSG.error(), text: MSG.invalidLinkText() });
+      return;
+    }
+    if (data.already_suppressed) {
+      setView({ head: MSG.unsubGlobalHeading(), text: MSG.unsubGlobalAlready() });
+      clearActions();
+      return;
+    }
+    setView({ head: MSG.unsubGlobalHeading(), text: MSG.unsubGlobalText() });
+    clearActions();
+    showEmailInput(false);
+    addAction(MSG.unsubGlobalBtn(), "danger", async () => {
+      try {
+        const { data: res, error: err } = await sb().rpc("poll_go_global_unsubscribe", { p_token: unsubToken });
+        if (err || !res?.ok) throw new Error(err?.message || res?.error || "fail");
+        setView({ head: MSG.unsubGlobalHeading(), text: MSG.unsubGlobalDone() });
+        clearActions();
+      } catch (e) {
+        console.error("[poll-go] unsub global failed:", e);
+        setView({ head: MSG.error(), text: MSG.unsubGlobalFailed() });
+      }
+    });
+  } catch (e) {
+    console.error("[poll-go] unsub global init failed:", e);
+    setView({ head: MSG.error(), text: MSG.openInviteFailed() });
+  }
+}
+
+async function init() {
+  // ?d=<urządzenie> obsługuje inline-moduł w index.html (przekierowanie przed
+  // ciężkimi importami) — tu nic do roboty.
+  if (qs.has("d")) return;
+  // initI18n() robi dynamic import(pl.js/en.js/uk.js) — bez tego czekania
+  // t()/MSG.X() poniżej mogą wykonać się zanim translations się załaduje,
+  // zwracając surowy klucz zamiast tłumaczenia (patrz t() w translation.js).
+  await i18nReady;
+  if (isUnsubOwner) {
+    await handleUnsubOwner();
+    return;
+  }
+
+  if (isUnsubGlobal) {
+    await handleUnsubGlobal();
+    return;
+  }
+
+  if (!goToken) {
+    setView({ head: MSG.missingLinkTitle(), text: MSG.missingLinkText() });
+    return;
+  }
+
+  const user = await getUser();
+  try {
+    const raw = await resolveToken();
+    const data = await hydrateInviteIdentity(raw);
+    resolvedInviteData = data || null;
+    if (!data?.ok) {
+      // poll_go_resolve: 'poll_stopped' (ankieta zatrzymana) / 'poll_closed' (podliczona)
+      // / 'expired' (zaproszenie z wcześniejszego uruchomienia lub przerwanej ankiety)
+      // / 'invalid_token' (np. usunięte zadanie)
+      const byError = {
+        poll_stopped: MSG.pollStopped(),
+        poll_closed: MSG.pollEnded(),
+        expired: MSG.inviteExpired(),
+        invalid_token: MSG.inviteExpired(),
+      };
+      const head = byError[data?.error];
+      clearActions();
+      showEmailInput(false);
+      if (head) setView({ head, text: "" });
+      else setView({ head: MSG.invalidLinkTitle(), text: MSG.invalidLinkText() });
+      return;
+    }
+
+    if (data.kind === "sub") {
+      await handleSubInvite(data, user);
+      return;
+    }
+
+    if (data.kind === "task") {
+      await handleTaskInvite(data, user);
+      return;
+    }
+
+    setView({ head: MSG.error(), text: MSG.inviteUnknown() });
+  } catch (e) {
+    console.error(e);
+    setView({ head: MSG.error(), text: MSG.openInviteFailed() });
+  }
+}
+
+emailInput?.addEventListener("keydown", async (event) => {
+  if (event.key !== "Enter") return;
+  event.preventDefault();
+  if (!goToken) return;
+  await subscribeByEmail();
+});
+
+init();

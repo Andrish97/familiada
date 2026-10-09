@@ -1,6 +1,6 @@
 // Testy web/shared/js/gameplay/transitionTiming.js — JEDEN silnik liczący rzeczywiste czasy
 // dźwięku, używany zarówno przez control/js/actionGate.js (blokada
-// operatora) jak i display/js/render.js (czas trwania animacji Displaya).
+// operatora) jak i control/display/js/render.js (czas trwania animacji Displaya).
 // getSfxDuration jest tu atrapą (sekundy, nie ms).
 
 import { test } from "node:test";

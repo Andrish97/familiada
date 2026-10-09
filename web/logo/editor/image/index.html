@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
+  <meta name="app-version" content="v2026-10-09T17351"/>
+
+  <meta charset="UTF-8"/>
+  <meta name="robots" content="noindex, nofollow"/>
+  <meta name="mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net">
+  <link rel="preconnect" href="https://supabase.familiada.online">
+  <title data-i18n="logoEditor.titles.image">Familiada — edytor logo</title>
+
+  <link rel="icon" href="/favicon.ico?v=v2026-10-09T17351"/>
+  <link rel="manifest" href="/manifest.json?v=v2026-10-09T17351"/>
+  <meta name="theme-color" content="#050914"/>
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-09T17351"/>
+  <link rel="stylesheet" href="/games/css/games.css?v=v2026-10-09T17351"/>
+  <link rel="stylesheet" href="/logo/css/logo.css?v=v2026-10-09T17351"/>
+  <script>
+    document.documentElement.classList.add('page-loading');
+    try {
+      var _has = false;
+      for (var _i = 0; _i < localStorage.length; _i++) {
+        var _k = localStorage.key(_i);
+        if (_k && _k.startsWith('sb-') && _k.endsWith('-auth-token')) { _has = true; break; }
+      }
+      if (!_has) location.replace('/login/');
+    } catch(_e) {}
+  </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+
+  <script type="module" src="/logo/js/editor-image.js?v=v2026-10-09T17351" defer></script>
+  <script src="/shared/js/core/security-warning.js?v=v2026-10-09T17351" defer></script>
+</head>
+
+<!-- Edytor logo (IMAGE) — osobna strona /logo/editor/image/?id=<logo>. Zmiany
+     zapisują się same (bez przycisku „Zapisz” i bez pytań przy wyjściu),
+     wspólna logika: /logo/js/editor-page.js. -->
+<body class="games-body logo-body is-editor skel-body topbar-title-mobile">
+  <header class="topbar topbar-layout-4">
+    <div class="topbar-section topbar-section-1">
+      <div class="brand">FAMILIADA</div>
+      <button class="btn" id="btnBack" type="button">Wstecz</button>
+    </div>
+    <div class="topbar-section topbar-section-2">
+      <div class="topbar-title"><div class="title" data-i18n="logoEditor.editor.editLogoPrefix">Edytor logo</div><div class="subtitle" id="brandTitle"></div></div>
+    </div>
+    <div class="topbar-section topbar-section-3">
+      <button class="btn" id="btnManual" type="button" data-i18n-aria-label="common.manualLabel" data-i18n-title="common.manualLabel" aria-label="Wskazówki" title="Wskazówki"><i class="ico" data-icon="info"></i></button>
+    </div>
+    <div class="topbar-section topbar-section-4">
+      <span class="who" id="who"></span>
+      <button class="btn" id="btnLogout" type="button" data-i18n="common.authEntry">Wyloguj</button>
+    </div>
+  </header>
+
+  <main class="wrap logoWrap">
+    <section class="editorShell" id="editorShell" data-mode="IMAGE">
+      <!-- pole nazwy (wspólne z edytorem gier: .name-field w base.css);
+           #saveStatus ukryty — tylko punkt zaczepienia testów, bez informacji
+           o zapisie na stronie -->
+      <div class="name-field">
+        <label class="name-field-label" for="logoName" data-i18n="logoEditor.editor.nameLabel">Nazwa</label>
+        <input class="inp" id="logoName" placeholder="Np. Moje logo" maxlength="80" data-i18n-placeholder="logoEditor.editor.namePlaceholder" disabled/>
+        <span id="saveStatus" data-state="idle" hidden></span>
+      </div>
+
+      <div class="card games-card editorCard">
+        <div class="editorToolbar" id="editorToolbar">
+          <!-- IMAGE: toolbar tylko przyciski + folderek -->
+          <div class="toolRow" id="toolsImage">
+            <input type="file" id="imgFile" accept="image/*" hidden />
+            <button class="btn sm" type="button" id="btnPickImage" data-i18n="logoEditor.image.pickImage" data-i18n-icon-after="folder">Wybierz obraz</button>
+
+            <div class="toolSep"></div>
+
+            <button class="btn sm imgRotBtn" type="button" id="btnImgRotL" title="Obróć w lewo o 90°" aria-label="Obróć w lewo o 90°" data-i18n-title="logoEditor.image.rotateLeft" data-i18n-aria-label="logoEditor.image.rotateLeft"><i class="ico" data-icon="rotate-left" aria-hidden="true"></i></button>
+            <button class="btn sm imgRotBtn" type="button" id="btnImgRotR" title="Obróć w prawo o 90°" aria-label="Obróć w prawo o 90°" data-i18n-title="logoEditor.image.rotateRight" data-i18n-aria-label="logoEditor.image.rotateRight"><i class="ico" data-icon="rotate-right" aria-hidden="true"></i></button>
+            <button class="btn sm imgSetBtn" type="button" data-panel="straighten"><span class="imgSetBtnLabel" data-i18n="logoEditor.image.straightenLabel">Prostowanie:</span> <span class="imgSetBtnVal">0°</span></button>
+
+            <div class="toolSep"></div>
+
+            <button class="btn sm imgSetBtn" type="button" data-panel="bright"><span class="imgSetBtnLabel" data-i18n="logoEditor.image.brightnessLabel">Jasność:</span> <span class="imgSetBtnVal">0</span></button>
+            <button class="btn sm imgSetBtn" type="button" data-panel="contrast"><span class="imgSetBtnLabel" data-i18n="logoEditor.image.contrastLabel">Kontrast:</span> <span class="imgSetBtnVal">0</span></button>
+            <button class="btn sm imgSetBtn" type="button" data-panel="gamma"><span class="imgSetBtnLabel" data-i18n="logoEditor.image.gammaLabel">Gamma:</span> <span class="imgSetBtnVal">1.00</span></button>
+            <button class="btn sm imgSetBtn" type="button" data-panel="black"><span class="imgSetBtnLabel" data-i18n="logoEditor.image.blackLabel">Czerń:</span> <span class="imgSetBtnVal">0</span></button>
+            <button class="btn sm imgSetBtn" type="button" data-panel="white"><span class="imgSetBtnLabel" data-i18n="logoEditor.image.whiteLabel">Biel:</span> <span class="imgSetBtnVal">100</span></button>
+            <button class="btn sm imgSetBtn" type="button" data-panel="dither"><span class="imgSetBtnLabel" data-i18n="logoEditor.image.ditherLabel">Dither:</span> <span class="imgSetBtnVal">0.80</span></button>
+
+            <div class="toolSep"></div>
+
+            <label class="chk"><input id="chkImgInvert" type="checkbox"/> <span data-i18n="logoEditor.image.invert">Odwróć</span></label>
+            <button class="btn sm" id="btnImgResetDefault" type="button" data-i18n="logoEditor.image.reset">Przywróć</button>
+          </div>
+
+          <!-- IMAGE: pojedyncze rozwijane ustawienie (accordion) -->
+          <div class="imgPanels" id="imgPanels">
+            <div class="imgPanel" data-panel="straighten">
+              <div class="imgPanelTitle"><span data-i18n="logoEditor.image.straighten">Prostowanie</span> <span class="imgPanelVal" id="valImgStraighten">0°</span></div>
+              <input class="rng v" id="rngImgStraighten" type="range" min="-30" max="30" step="0.5" value="0"/>
+            </div>
+
+            <div class="imgPanel" data-panel="bright">
+              <div class="imgPanelTitle"><span data-i18n="logoEditor.image.brightness">Jasność</span> <span class="imgPanelVal" id="valImgBright">0</span></div>
+              <input class="rng v" id="rngImgBright" type="range" min="-100" max="100" value="0"/>
+            </div>
+
+            <div class="imgPanel" data-panel="contrast">
+              <div class="imgPanelTitle"><span data-i18n="logoEditor.image.contrast">Kontrast</span> <span class="imgPanelVal" id="valImgContrast">0</span></div>
+              <input class="rng v" id="rngImgContrast" type="range" min="-100" max="100" value="0"/>
+            </div>
+
+            <div class="imgPanel" data-panel="gamma">
+              <div class="imgPanelTitle"><span data-i18n="logoEditor.image.gamma">Gamma</span> <span class="imgPanelVal" id="valImgGamma">1.00</span></div>
+              <input class="rng v" id="rngImgGamma" type="range" min="0.20" max="3.00" step="0.01" value="1.00"/>
+            </div>
+
+            <div class="imgPanel" data-panel="black">
+              <div class="imgPanelTitle"><span data-i18n="logoEditor.image.black">Czerń</span> <span class="imgPanelVal" id="valImgBlack">0</span></div>
+              <input class="rng v" id="rngImgBlack" type="range" min="0" max="100" value="0"/>
+            </div>
+
+            <div class="imgPanel" data-panel="white">
+              <div class="imgPanelTitle"><span data-i18n="logoEditor.image.white">Biel</span> <span class="imgPanelVal" id="valImgWhite">100</span></div>
+              <input class="rng v" id="rngImgWhite" type="range" min="0" max="100" value="100"/>
+            </div>
+
+            <div class="imgPanel" data-panel="dither">
+              <div class="imgPanelTitle"><span data-i18n="logoEditor.image.dither">Dither</span> <span class="imgPanelVal" id="valImgDitherAmt">0.80</span></div>
+              <input class="rng v" id="rngImgDitherAmt" type="range" min="0" max="1.00" step="0.01" value="0.80"/>
+            </div>
+          </div>
+        </div><!-- /editorToolbar -->
+
+        <div class="editorContent">
+          <!-- IMAGE: obraz + podgląd -->
+          <div class="pane" id="paneImage">
+            <div class="imgTopGrid">
+
+              <div class="imgCard">
+                <div class="imgCardTitle" data-i18n="logoEditor.image.displayArea">Obszar wyświetlacza</div>
+                <div class="imgStage" id="imgStage">
+                  <img id="imgPreview" alt="" />
+                  <div class="cropFrame" id="cropFrame">
+                    <div class="cropCaption" data-i18n="logoEditor.image.displayArea">Obszar wyświetlacza</div>
+                    <div class="cropHandle tl" data-h="tl"></div>
+                    <div class="cropHandle tr" data-h="tr"></div>
+                    <div class="cropHandle bl" data-h="bl"></div>
+                    <div class="cropHandle br" data-h="br"></div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="imgCard">
+                <div class="imgCardTitle" data-i18n="logoEditor.image.previewTitle">Podgląd jak na wyświetlaczu</div>
+                <div class="imgPrevWrap">
+                  <canvas id="imgBigPreview" width="900" height="380"></canvas>
+                </div>
+                <div class="imgPrevHint" data-i18n="logoEditor.image.previewHint">Kliknij podgląd, żeby otworzyć go na pełnym ekranie.</div>
+              </div>
+
+            </div>
+          </div>
+        </div><!-- /editorContent -->
+      </div><!-- /editorCard -->
+    </section>
+
+    <!-- Fullscreen preview (MODAL z X) -->
+    <div class="overlay modal--sheet" id="previewOverlay" style="display:none;">
+      <div class="modal previewModal">
+        <div class="previewModalTitle">
+          <div>
+            <div class="mTitle" data-i18n="logoEditor.preview.title">Podgląd</div>
+            <div class="mSub" data-i18n="logoEditor.preview.subtitle">Tak będzie wyglądać logo na wyświetlaczu</div>
+          </div>
+          <button class="btn sm" id="btnPreviewClose" type="button" aria-label="Zamknij" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
+        </div>
+        <div class="previewModalCanvas">
+          <canvas id="bigPreviewFull" width="1600" height="700"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <div data-i18n="common.footer.left">© 2026 Familiada — system do gry na żywo</div>
+      <button class="btn-contact-footer" type="button" data-contact-modal data-i18n="common.contactBtn">Kontakt</button>
+    </div>
+  </main>
+
+  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-09T17351"></script>
+  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-09T17351"></script>
+</body>
+</html>

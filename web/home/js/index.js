@@ -1,14 +1,18 @@
-import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-09T08150";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T08150";
-import { initI18n, withLangParam, applyTranslations, getUiLang, t } from "../../shared/translation/translation.js?v=v2026-10-09T08150";
-import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-09T08150";
-import { icon, starRating } from "../../shared/js/core/icons.js?v=v2026-10-09T08150";
+import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-09T17351";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T17351";
+import { initI18n, withLangParam, applyTranslations, getUiLang, t } from "../../shared/translation/translation.js?v=v2026-10-09T17351";
+import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-09T17351";
+import { icon, starRating } from "../../shared/js/core/icons.js?v=v2026-10-09T17351";
 
 async function redirectIfSession() {
   try {
     const user = await getUser();
     if (user) {
-      if (isGuestUser(user)) return false;
+      // Gość ma prawie pełne konto: od razu /games/ (nawigacja, decyzja 2026-10-07).
+      if (isGuestUser(user)) {
+        location.replace(withLangParam("/games/"));
+        return true;
+      }
       if (!user.username) {
         location.replace(withLangParam("/login/?setup=username"));
         return true;

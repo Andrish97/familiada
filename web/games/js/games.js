@@ -1,38 +1,38 @@
-import { addRenameGesture } from "../../shared/js/core/rename-gesture.js?v=v2026-10-09T08150";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T08150";
-import { requireAuth } from "../../shared/js/core/auth.js?v=v2026-10-09T08150";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-09T08150";
-import { hideForGuest, isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-09T08150";
-import { initI18n, t, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-09T08150";
-import { initRatingSystem } from "../../shared/js/core/rating-system.js?v=v2026-10-09T08150";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-09T08150";
-import { maybeShowGuestInfoModal } from "../../shared/js/core/guest-info-modal.js?v=v2026-10-09T08150";
-import { maybeShowGuestMigrateReminder } from "../../shared/js/core/guest-migrate-reminder.js?v=v2026-10-09T08150";
+import { addRenameGesture } from "../../shared/js/core/rename-gesture.js?v=v2026-10-09T17351";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T17351";
+import { requireAuth } from "../../shared/js/core/auth.js?v=v2026-10-09T17351";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-09T17351";
+import { hideForGuest, isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-09T17351";
+import { initI18n, t, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-09T17351";
+import { linkTo } from "../../shared/js/core/nav-map.js?v=v2026-10-09T17351";
+import { initRatingSystem } from "../../shared/js/core/rating-system.js?v=v2026-10-09T17351";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-09T17351";
+import { maybeShowGuestInfoModal } from "../../shared/js/core/guest-info-modal.js?v=v2026-10-09T17351";
+import { maybeShowGuestMigrateReminder } from "../../shared/js/core/guest-migrate-reminder.js?v=v2026-10-09T17351";
 
-import { initPwa, isStandalone, isMobileDevice } from "../../shared/js/core/pwa.js?v=v2026-10-09T08150";
-import { createPollResults } from "../../shared/js/core/poll-results.js?v=v2026-10-09T08150";
-import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-09T08150";
+import { initPwa, isStandalone, isMobileDevice } from "../../shared/js/core/pwa.js?v=v2026-10-09T17351";
+import { createPollResults } from "../../shared/js/core/poll-results.js?v=v2026-10-09T17351";
+import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-09T17351";
 
 // Zarejestruj listener PWA jak najwcześniej – beforeinstallprompt może odpalić przed requireAuth
 const pwaApi = initPwa();
 // Jeśli beforeinstallprompt już odpalił zanim dodaliśmy listener w IIFE, sprawdzimy po zalogowaniu
 
 
-import { exportGame, importGame, downloadJson } from "./games-import-export.js?v=v2026-10-09T08150";
-import { setTopbarNavPriority, setTopbarAccount } from '../../shared/js/core/topbar-controller.js?v=v2026-10-09T08150';
+import { exportGame, importGame, downloadJson } from "./games-import-export.js?v=v2026-10-09T17351";
+import { setTopbarNavPriority, setTopbarAccount } from '../../shared/js/core/topbar-controller.js?v=v2026-10-09T17351';
 
-import "../../shared/js/core/contact-modal.js?v=v2026-10-09T08150";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-09T17351";
 import {
   TYPES,
   STATUS,
   loadGameBasic,
   validateGame,
   rulesFromState,
-} from "../../shared/js/core/game-validate.js?v=v2026-10-09T08150";
-import { deleteGameSoundsFolder } from "../../shared/js/core/sfx-cloud.js?v=v2026-10-09T08150";
-import { isResourceBusy } from "../../shared/js/core/resource-lock.js?v=v2026-10-09T08150";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-09T08150";
-import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-09T08150";
+} from "../../shared/js/core/game-validate.js?v=v2026-10-09T17351";
+import { isResourceBusy, acquireResourceLock, getTabId } from "../../shared/js/core/resource-lock.js?v=v2026-10-09T17351";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-09T17351";
+import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-09T17351";
 
 const MSG = {
   exportBaseEmpty: () => t("games.exportBase.empty"),
@@ -46,7 +46,9 @@ const MSG = {
   typeMarket: () => t("games.types.market"),
   statusDraft: () => t("games.status.draft"),
   statusOpen: () => t("games.status.open"),
-  statusClosed: () => t("games.status.closed"),
+  statusStopped: () => t("games.status.stopped"),
+  badgeVotes: (n) => t("games.badges.votes", { n }),
+  badgeToTally: () => t("games.badges.toTally"),
   statusReady: () => t("games.status.ready"),
   newGamePollText: () => t("games.newGame.pollText"),
   newGamePollPoints: () => t("games.newGame.pollPoints"),
@@ -187,6 +189,7 @@ let marketGamesAll = [];
 let selectedMarketId = null;
 
 let renamingGameId = null;
+let renameLease = null; // blokada game:G trzymana, dopóki okno zmiany nazwy jest otwarte
 let nameMode = "rename"; // "rename" | "create"
 let creatingUiType = null;
 
@@ -356,8 +359,24 @@ function setNameMsg(t) {
   nameMsg.textContent = t || "";
 }
 
-function openRenameModal(game) {
+// Okno zmiany nazwy trzyma game:G wyłącznie do zamknięcia okna (docs/blokady-
+// zasobow.md, sekcja 6) -- w tym czasie nikt nie otworzy tej gry w edytorze,
+// ustawieniach, ankiecie ani Control.
+async function openRenameModal(game) {
   if (!game) return;
+  let lease;
+  try {
+    lease = await acquireResourceLock({ resourceType: "game", resourceId: game.id, context: "games-list" });
+  } catch (e) {
+    console.error("[games] rename lock error:", e);
+    void alertModal({ text: t("games.nameModal.failed") });
+    return;
+  }
+  if (!lease?.ok) {
+    void alertModal({ text: t(lease?.error === "gone" ? "resourceLock.goneMessage" : "resourceLock.gameMessage") });
+    return;
+  }
+  renameLease = lease;
   nameMode = "rename";
   renamingGameId = game.id;
   setNameMsg("");
@@ -382,6 +401,8 @@ function openCreateModal(uiType) {
 }
 
 function closeRenameModal() {
+  renameLease?.release?.();
+  renameLease = null;
   renamingGameId = null;
   creatingUiType = null;
   nameMode = "rename";
@@ -393,21 +414,25 @@ async function renameGame(gameId, newName) {
   const val = String(newName || "").trim();
   if (!val) return true;
 
-  // Zasób "game" jest busy, gdy editor.js/game-settings.js/polls.js mają
-  // ją otwartą gdzie indziej — patrz docs/plan-testy-i-poprawki.md,
-  // "Model: zasób ma stan busy/free". Rename nie otwiera własnej sesji
-  // (jednorazowa akcja), więc dostaje alert modal zamiast overlayu.
-  if (await isResourceBusy("game", gameId)) {
-    void alertModal({ text: t("resourceLock.gameMessage") });
+  // game:G trzyma okno zmiany nazwy (renameLease); baza i tak sprawdza
+  // blokady innych kart (rename_resource_checked, migracja 313) i odmawia.
+  if (renameLease && !renameLease.ok) {
+    void alertModal({ text: t("resourceLock.lostMessage") });
     return false;
   }
 
-  const { error } = await sb()
-    .from("games")
-    .update({ name: val })
-    .eq("id", gameId);
-
+  const { data, error } = await sb().rpc("rename_resource_checked", {
+    p_resource_type: "game",
+    p_resource_id: gameId,
+    p_name: val,
+    p_tab_id: getTabId(),
+  });
   if (error) throw error;
+  if (data?.in_use) {
+    void alertModal({ text: t("resourceLock.gameMessage") });
+    return false;
+  }
+  if (!data?.ok) throw new Error(data?.error || "rename failed");
   return true;
 }
 
@@ -690,7 +715,8 @@ function statusLabel(st, g) {
   }
   if (s === STATUS.DRAFT) return MSG.statusDraft();
   if (s === STATUS.POLL_OPEN) return MSG.statusOpen();
-  if (s === STATUS.READY) return MSG.statusClosed();
+  if (s === STATUS.POLL_STOPPED) return MSG.statusStopped();
+  if (s === STATUS.READY) return MSG.statusReady();
   return String(s).toUpperCase();
 }
 
@@ -780,7 +806,7 @@ async function deleteGame(game) {
   const ok = await confirmModal({
     title: MSG.deleteTitle(),
     // 312: otwarta ankieta nie blokuje usunięcia -- zostaje przerwana
-    text: game.status === STATUS.POLL_OPEN ? `${MSG.deleteText(game.name)} ${MSG.deletePollAbort()}` : MSG.deleteText(game.name),
+    text: (game.status === STATUS.POLL_OPEN || game.status === STATUS.POLL_STOPPED) ? `${MSG.deleteText(game.name)} ${MSG.deletePollAbort()}` : MSG.deleteText(game.name),
     okText: MSG.deleteOk(),
     cancelText: MSG.deleteCancel(),
   });
@@ -795,6 +821,7 @@ async function deleteGame(game) {
   const { data: result, error } = await sb().rpc("delete_resource_checked", {
     p_resource_type: "game",
     p_resource_id: game.id,
+    p_tab_id: getTabId(),
   });
   if (error) {
     console.error("[games] delete error:", error);
@@ -811,13 +838,7 @@ async function deleteGame(game) {
     });
     return;
   }
-
-  try {
-    await deleteGameSoundsFolder(sb(), currentUser.id, game.id);
-  } catch (e) {
-    // Nie blokujemy usuwania gry, jeśli sprzątanie plików audio się nie powiedzie
-    console.warn("[games] deleteGameSoundsFolder failed:", e);
-  }
+  // Folder dźwięków gry usuwa baza (migracja 313, kolejka storage_cleanup_queue).
 }
 
 async function resetPollForEditing(gameId) {
@@ -851,6 +872,29 @@ function tileBlocker(g) {
   return "";
 }
 
+// Liczby głosów otwartych / zatrzymanych ankiet (polls_vote_counts): jedno zapytanie
+// na wczytanie listy, nie na kafelek.
+let pollVoteCounts = new Map();
+
+async function loadPollVoteCounts() {
+  try {
+    const { data, error } = await sb().rpc("polls_vote_counts");
+    if (error) throw error;
+    pollVoteCounts = new Map((data || []).map((r) => [r.game_id, Number(r.votes) || 0]));
+  } catch (e) {
+    console.warn("[games] polls_vote_counts failed:", e);
+    pollVoteCounts = new Map();
+  }
+}
+
+function pollBadge(g) {
+  if (g.status === STATUS.POLL_OPEN) {
+    return pollVoteCounts.has(g.id) ? { cls: "tag--info", text: MSG.badgeVotes(pollVoteCounts.get(g.id)) } : null;
+  }
+  if (g.status === STATUS.POLL_STOPPED) return { cls: "tag--gold pollBadge--tally", text: MSG.badgeToTally() };
+  return null;
+}
+
 function cardGame(g) {
   const uiType = uiTypeFromRow(g);
 
@@ -867,6 +911,15 @@ function cardGame(g) {
 
   el.querySelector(".name").textContent = g.name || t("control.dash");
   el.querySelector(".meta").textContent = `${typeLabel(uiType)} • ${statusLabel(g.status, g)}`;
+
+  // plakietka stanu ankiety: OTWARTA — liczba głosów, ZATRZYMANA — „do podliczenia”
+  const badge = pollBadge(g);
+  if (badge) {
+    const tag = document.createElement("span");
+    tag.className = `tag pollBadge ${badge.cls}`;
+    tag.textContent = badge.text;
+    el.querySelector(".meta").append(" ", tag);
+  }
 
   const blocker = tileBlocker(g);
   el.querySelector(".rules").textContent = blocker;
@@ -1033,14 +1086,6 @@ async function removeFromLibrary(g) {
     return;
   }
 
-  if (g.game_id) {
-    try {
-      await deleteGameSoundsFolder(sb(), currentUser.id, g.game_id);
-    } catch (e) {
-      console.warn("[games] deleteGameSoundsFolder failed:", e);
-    }
-  }
-
   if (selectedMarketId === g.market_game_id) selectedMarketId = null;
   marketGamesAll = marketGamesAll.filter(x => x.market_game_id !== g.market_game_id);
   if (activeTab === TYPES.MARKET) renderMarket();
@@ -1124,7 +1169,8 @@ async function readFileAsText(file) {
 
 /* ================= Main ================= */
 async function refresh() {
-  gamesAll = await listGames();
+  const [games] = await Promise.all([listGames(), loadPollVoteCounts()]);
+  gamesAll = games;
 
   if (selectedId && !gamesAll.some(g => g.id === selectedId)) selectedId = null;
 
@@ -1264,7 +1310,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     btnConnectDevice?.addEventListener("click", () => {
-      location.href = "/connect-device/";
+      location.href = linkTo("connectDevice");
     });
   } else {
     // Ukryj przez data-nav-hidden (overflow nav ignoruje takie przyciski)
@@ -1298,7 +1344,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
 
-  // Licznik = dokładnie to, co pokaże lista na /connect-device/ na tym
+  // Licznik = dokładnie to, co pokaże lista na /connect/ na tym
   // urządzeniu (telefon/tablet: prowadzący + przycisk, komputer/TV:
   // wyświetlacz) — wcześniej liczył wszystkie udostępnienia, więc badge
   // obiecywał więcej pozycji niż było na stronie.
@@ -1382,23 +1428,19 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // btnManual
   btnManual?.addEventListener("click", async () => {
-    const url = new URL("/manual/", location.href);
-    const ret = `${location.pathname}${location.search}${location.hash}`;
-    url.searchParams.set("ret", ret);
-    url.hash = "general";
-    location.href = url.toString();
+    location.href = linkTo("manual", { hash: "general" });
   });
 
   btnLogoEditor?.addEventListener("click", async () => {
-    location.href = "/logo/";
+    location.href = linkTo("logoEditor");
   });
 
   btnBases?.addEventListener("click", async () => {
-    location.href = "/bases/?from=games";
+    location.href = linkTo("bases");
   });
 
   btnSubscriptionsHub?.addEventListener("click", () => {
-    location.href = "/subscriptions/?from=games";
+    location.href = linkTo("subscriptions");
   });
 
   tabPollText?.addEventListener("click", () => setActiveTab(TYPES.POLL_TEXT));
@@ -1412,7 +1454,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 
   btnMarketplace?.addEventListener("click", () => {
-    location.href = "/marketplace/";
+    location.href = linkTo("marketplace");
   });
 
   // games.html nie ma naturalnego przycisku wstecz na mobile (jest
@@ -1601,7 +1643,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
     }
 
-    location.href = `/editor/?id=${encodeURIComponent(g.id)}`;
+    location.href = linkTo("editor", { id: g.id });
   });
 
   // PLAY
@@ -1632,7 +1674,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
 
       if (!gameId) return;
-      location.href = `/control/?id=${encodeURIComponent(gameId)}`;
+      location.href = linkTo("control", { id: gameId });
       return;
     }
 
@@ -1644,7 +1686,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         void alertModal({ text: chk.reason });
         return;
       }
-      location.href = `/control/?id=${encodeURIComponent(selectedId)}`;
+      location.href = linkTo("control", { id: selectedId });
     } catch (e) {
       console.error(e);
       void alertModal({ text: MSG.alertCheckFailed() });
@@ -1663,7 +1705,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         return;
       }
 
-      location.href = `/polls/?id=${encodeURIComponent(selectedId)}&from=games`;
+      location.href = linkTo("polls", { id: selectedId });
     } catch (e) {
       console.error(e);
       void alertModal({ text: MSG.alertOpenPollFailed() });
@@ -1676,7 +1718,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       ? marketGamesAll.find(g => g.market_game_id === selectedMarketId)?.game_id
       : selectedId;
     if (!gameId) return;
-    location.href = `/game-settings/?id=${encodeURIComponent(gameId)}`;
+    location.href = linkTo("gameSettings", { id: gameId });
   });
 
   // EXPORT — pobierz dane z paskiem, potem instant download

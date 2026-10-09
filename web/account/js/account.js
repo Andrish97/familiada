@@ -1,16 +1,16 @@
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T08150";
-import { cooldownGet, cooldownReserve, cooldownRelease, mailCooldownEmailReserve } from "../../shared/js/core/cooldown.js?v=v2026-10-09T08150";
-import { requireAuth, updateUserLanguage, validatePassword, validateUsername, signOut, niceAuthError, initPasswordToggles, convertGuestToRegisteredEmailOnly } from "../../shared/js/core/auth.js?v=v2026-10-09T08150";
-import { getUserEmailNotificationsFlag, setUserEmailNotificationsFlag } from "../../shared/js/core/user-flags.js?v=v2026-10-09T08150";
-import { initI18n, t, getUiLang, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-09T08150";
-import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-09T08150";
-import { isGuestUser, hideForGuest } from "../../shared/js/core/guest-mode.js?v=v2026-10-09T08150";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-09T08150";
-import { deleteGameSoundsFolder } from "../../shared/js/core/sfx-cloud.js?v=v2026-10-09T08150";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-09T08150";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T17351";
+import { cooldownGet, cooldownReserve, cooldownRelease, mailCooldownEmailReserve } from "../../shared/js/core/cooldown.js?v=v2026-10-09T17351";
+import { requireAuth, updateUserLanguage, validatePassword, validateUsername, signOut, niceAuthError, initPasswordToggles, convertGuestToRegisteredEmailOnly } from "../../shared/js/core/auth.js?v=v2026-10-09T17351";
+import { getUserEmailNotificationsFlag, setUserEmailNotificationsFlag } from "../../shared/js/core/user-flags.js?v=v2026-10-09T17351";
+import { initI18n, t, getUiLang, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-09T17351";
+import { linkTo, backHref, loginUrl, renderBackLabel } from "../../shared/js/core/nav-map.js?v=v2026-10-09T17351";
+import { toast } from "../../shared/js/core/toast.js?v=v2026-10-09T17351";
+import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-09T17351";
+import { isGuestUser, hideForGuest } from "../../shared/js/core/guest-mode.js?v=v2026-10-09T17351";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-09T17351";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-09T17351";
 
 
-const status = document.getElementById("status");
 const err = document.getElementById("err");
 
 const usernameInput = document.getElementById("username");
@@ -49,16 +49,9 @@ const migratePendingHint = document.getElementById("migratePendingHint");
 const migrateResend = document.getElementById("migrateResend");
 const migrateCancel = document.getElementById("migrateCancel");
 
-function setStatus(m = "") { if (status) status.textContent = m; }
+// Komunikat po akcji = wspólny dymek (toast); pola #status na stronie nie ma.
+function setStatus(m = "") { if (m) toast(m); }
 
-function buildManualUrl() {
-  const url = new URL("/manual/", location.href);
-  const ret = `${location.pathname}${location.search}${location.hash}`;
-  url.searchParams.set("ret", ret);
-  url.searchParams.set("lang", getUiLang() || "pl");
-  url.hash = "general";
-  return url.toString();
-}
 function setErr(m = "") { if (err) err.textContent = m; }
 let emailNotifTimer = null;
 
@@ -122,12 +115,11 @@ async function initEmailNotificationsUi(user) {
 
 
 backToGames?.addEventListener("click", () => {
-  const target = backToGames.dataset.baseHref || "/games/";
-  location.href = withLangParam(target);
+  location.href = backHref("account");
 });
 
 btnManual?.addEventListener("click", () => {
-  location.href = buildManualUrl();
+  location.href = linkTo("manual", { hash: "general" });
 });
 
 // --- cooldowns (anti-spam) ---
@@ -285,7 +277,6 @@ async function handleMigrateSubmit() {
     const rawUsername = String(migrateUsername?.value || "").trim();
     const username = rawUsername ? validateUsername(rawUsername) : "";
 
-    setStatus(t("account.statusMigrating"));
 
     const reserve = await mailCooldownEmailReserve(GUEST_UPGRADE_ACTION_KEY, mail);
     if (!reserve.ok) {
@@ -337,10 +328,9 @@ async function handleMigrateResend() {
       );
     }
 
-    setStatus(t("account.statusMigrateResending"));
 
     const language = getUiLang();
-    const redirect = new URL("/confirm/", location.origin);
+    const redirect = new URL("/login/confirm/", location.origin);
     redirect.searchParams.set("lang", language);
     redirect.searchParams.set("to", migratePendingEmail);
 
@@ -364,12 +354,10 @@ async function handleMigrateCancel() {
   try {
     await refreshMigrateState();
     if (!migratePendingEmail) {
-      setStatus(t("account.statusLoaded"));
       return;
     }
     emailBeforeCancel = migratePendingEmail; // setMigratePendingUi("") poniżej nadpisuje migratePendingEmail
 
-    setStatus(t("account.statusMigrateCancelling"));
     setMigratePendingUi(""); // optymistyczna aktualizacja UI
 
     // Odkąd submit migracji już NIE flipuje profiles.is_guest przedwcześnie
@@ -446,7 +434,6 @@ function setEmailPendingUi(nextPendingEmail) {
       lockEl(emailInput, true);
     }
     lockEl(saveEmail, true);
-    setStatus(t("account.statusEmailPending"));
   } else {
     if (emailInput) {
       emailInput.value = currentEmail || "";
@@ -560,41 +547,6 @@ async function loadUserRating(userId) {
   }
 }
 
-// Zwraca zestaw imageUrl (logo obrazkowe) i id gier usera — używane jako
-// "zdjęcie przed/po" wokół restore_my_demo, żeby wykryć co realnie
-// przepadło (niezależnie czy przez is_demo=true czy zbieżność nazwy) i
-// skasować tylko te pliki w storage, nic więcej.
-async function snapshotDemoStorageRefs(userId) {
-  const [logosRes, gamesRes] = await Promise.all([
-    sb().from("user_logos").select("payload").eq("user_id", userId),
-    sb().from("games").select("id").eq("owner_id", userId),
-  ]);
-  const imageUrls = new Set(
-    (logosRes.data || [])
-      .map((r) => r?.payload?.source?.imageUrl)
-      .filter(Boolean)
-  );
-  const gameIds = new Set((gamesRes.data || []).map((r) => r.id));
-  return { imageUrls, gameIds };
-}
-
-async function cleanupOrphanedDemoStorage(userId, before, after) {
-  const removedImageUrls = [...before.imageUrls].filter((u) => !after.imageUrls.has(u));
-  const removedGameIds = [...before.gameIds].filter((id) => !after.gameIds.has(id));
-
-  for (const url of removedImageUrls) {
-    const parts = String(url).split("/user-logos/");
-    if (parts.length !== 2) continue;
-    const path = parts[1];
-    if (!path.startsWith(`${userId}/`)) continue; // tylko własny folder
-    await sb().storage.from("user-logos").remove([path]).catch(() => {});
-  }
-
-  for (const gameId of removedGameIds) {
-    await deleteGameSoundsFolder(sb(), userId, gameId).catch(() => {});
-  }
-}
-
 async function wireDemoActions(user) {
   const btn = document.getElementById("demoRestoreBtn");
   if (!btn || !user?.id) return;
@@ -609,23 +561,13 @@ async function wireDemoActions(user) {
     if (!ok) return;
     const lang = localStorage.getItem("uiLang") || "pl";
 
-    const before = await snapshotDemoStorageRefs(user.id).catch(() => null);
-
     const { error } = await sb().rpc("restore_my_demo", { p_lang: lang });
     if (error) {
       console.error("restore_my_demo error:", error);
       return;
     }
 
-    if (before) {
-      try {
-        const after = await snapshotDemoStorageRefs(user.id);
-        await cleanupOrphanedDemoStorage(user.id, before, after);
-      } catch (e) {
-        console.warn("[account] demo storage cleanup failed:", e);
-      }
-    }
-
+    // Pliki usuniętych gier i logo sprząta baza (migracja 313).
     location.href = "/games/";
   });
 }
@@ -654,7 +596,6 @@ async function loadProfile() {
     if (migrateSection) migrateSection.hidden = false;
     await refreshMigrateState();
 
-    setStatus(t("account.statusLoaded"));
     return;
   }
 
@@ -676,7 +617,6 @@ async function loadProfile() {
   await loadUserRating(user.id);
   await wireDemoActions(user);
 
-  setStatus(t("account.statusLoaded"));
   await refreshAuthEmailState();
   await loadCooldownsFromServer();
   startEmailStateWatcher();
@@ -733,14 +673,13 @@ async function handleEmailSave() {
 
     const language = getUiLang();
 
-    const confirmUrl = new URL("/confirm/", location.origin);
+    const confirmUrl = new URL("/login/confirm/", location.origin);
     confirmUrl.searchParams.set("lang", language);
     confirmUrl.searchParams.set("to", normalizedMail);
 
     await reserveCooldownOrThrow(CD.email);
     reserved = true;
 
-    setStatus(t("account.statusSavingEmail"));
 
     const { error } = await sb().auth.updateUser(
       { email: normalizedMail, data: { language, familiada_email_change_pending: normalizedMail } },
@@ -777,14 +716,13 @@ async function handleEmailResend() {
     }
 
     const language = getUiLang();
-    const confirmUrl = new URL("/confirm/", location.origin);
+    const confirmUrl = new URL("/login/confirm/", location.origin);
     confirmUrl.searchParams.set("lang", language);
     confirmUrl.searchParams.set("to", pendingEmail);
 
     await reserveCooldownOrThrow(CD.email);
     reserved = true;
 
-    setStatus(t("account.statusEmailResending"));
 
     const { error } = await sb().auth.resend({
       type: "email_change",
@@ -820,12 +758,10 @@ async function handleEmailCancel() {
     await refreshAuthEmailState();
 
     if (!pendingEmail || pendingEmail === currentEmail) {
-      setStatus(t("account.statusLoaded"));
       setEmailPendingUi("");
       return;
     }
 
-    setStatus(t("account.statusEmailCancelling"));
 
     // Optymistyczna aktualizacja UI, aby przycisk Anuluj zniknął natychmiast
     setEmailPendingUi("");
@@ -848,7 +784,6 @@ async function handleEmailCancel() {
     await loadCooldownsFromServer();
   } catch (e) {
     console.error(e);
-    setStatus(t("account.statusError"));
     setErr(niceAuthError(e));
   }
 }
@@ -925,22 +860,22 @@ async function handleDeleteAccount() {
       if (signInError) throw new Error(t("account.errInvalidPassword"));
     }
 
-    setStatus(t("account.statusDeleting"));
     const { data, error } = await sb().functions.invoke("delete-account");
     if (error) throw error;
     if (!data?.ok) throw new Error(data?.error || t("account.errDeleteFailed"));
 
     await signOut();
-    location.href = withLangParam("/login/");
+    location.href = loginUrl();
   } catch (e) {
     console.error(e);
-    setStatus(t("account.statusError"));
     setErr(niceAuthError(e));
+    toast(niceAuthError(e), { kind: "error" });
   }
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
   await initI18n({ withSwitcher: true });
+  renderBackLabel(backToGames, "account");
   document.documentElement.classList.remove('page-loading');
   initPasswordToggles();
 

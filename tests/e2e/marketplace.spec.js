@@ -67,7 +67,7 @@ test("anonim: lista, wyszukiwanie, filtr, sortowanie, URL, klawiatura i i18n", a
   await page.goto(`${URL}?sort=newest`, { waitUntil: "domcontentloaded" });
   await expect(page.locator("#browseGrid .mkt-card").first()).toBeVisible({ timeout: 20_000 });
   await expect(page.locator("#btnMySent")).toBeHidden();
-  await expect(page.locator("#btnGoGames")).toContainText("Strona główna");
+  await expect(page.locator("#btnGoGames")).toContainText("Wróć do: Strona główna");
 
   const first = page.locator("#browseGrid .mkt-card").first();
   const title = (await first.locator(".mkt-card-title").innerText()).trim();
@@ -122,7 +122,7 @@ test("wolny prawdziwy backend pokazuje loading, a nieistniejący UUID konkretny 
   await expect(page.locator("#browseGrid .mkt-card").first()).toBeVisible({ timeout: 20_000 });
 
   await page.goto(`${URL}/game/00000000-0000-0000-0000-000000000000`, { waitUntil: "domcontentloaded" });
-  await expect(page.locator("#toast")).toContainText("Nie udało się załadować gier.", { timeout: 20_000 });
+  await expect(page.locator("#appToast")).toContainText("Nie udało się załadować gier.", { timeout: 20_000 });
   await expect(page.locator("#gameDetailOverlay")).toBeHidden();
 });
 

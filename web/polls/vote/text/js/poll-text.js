@@ -1,0 +1,491 @@
+// js/pages/poll-text.js
+import { sb } from "../../../../shared/js/core/supabase.js?v=v2026-10-09T17351";
+import { getUser } from "../../../../shared/js/core/auth.js?v=v2026-10-09T17351";
+import { initI18n, t } from "../../../../shared/translation/translation.js?v=v2026-10-09T17351";
+
+const i18nReady = initI18n({ withSwitcher: true }).then(() => {
+  document.documentElement.classList.remove('page-loading');
+});
+
+const MSG = {
+  thanks: () => t("pollText.thanks"),
+  loadTimeout: () => t("pollText.loadTimeout"),
+  enterAnswer: () => t("pollText.enterAnswer"),
+  taskInvalid: () => t("pollText.taskInvalid"),
+  loginToVote: () => t("pollText.loginToVote"),
+  emailRequired: () => t("pollText.emailRequired"),
+  openTaskFail: () => t("pollText.openTaskFail"),
+  pollFallback: () => t("pollText.pollFallback"),
+  pollClosed: () => t("pollText.pollClosed"),
+  pollStopped: () => t("pollText.pollStopped"),
+  pollEnded: () => t("pollText.pollEnded"),
+  sending: () => t("pollText.sending"),
+  error: (err) => t("pollText.error", { error: err }),
+  questionProgress: (current, total) => t("pollText.questionProgress", { current, total }),
+  beforeUnloadWarn: () => t("pollText.beforeUnloadWarn"),
+  missingParams: () => t("pollText.missingParams"),
+  alreadyVoted: () => t("pollText.alreadyVoted"),
+  linkExpired: () => t("pollText.linkExpired"),
+  pollNotFound: () => t("pollText.pollNotFound"),
+  inviteDone: () => t("pollText.inviteDone"),
+  inviteDeclined: () => t("pollText.inviteDeclined"),
+  inviteExpired: () => t("pollText.inviteExpired"),
+  loading: () => t("pollText.loading"),
+  wrongType: () => t("pollText.wrongType"),
+  openPollFail: (err) => t("pollText.openPollFail", { error: err }),
+};
+
+const qs = new URLSearchParams(location.search);
+let gameId = qs.get("id");
+let key = qs.get("key");
+const taskToken = qs.get("t"); // <- opcjonalnie (tylko dla zadań z poll_go)
+
+const $ = (id) => document.getElementById(id);
+
+const titleEl = $("title");
+const subEl = $("sub");
+
+const qbox = $("qbox");
+const qtext = $("qtext");
+const prog = $("prog");
+const closed = $("closed");
+
+const answerInput = $("answerInput");
+const btnSend = $("btnSend");
+const countEl = $("count");
+
+let finished = false;
+let submitting = false;
+
+// lokalny bufor odpowiedzi (wysyłka dopiero na końcu)
+let outbox = [];
+
+/* ====== "już brałeś udział" ====== */
+function doneKey() {
+  return `fam_poll_done_${gameId}_${key}`;
+}
+function hasDone() {
+  if (taskToken) return false;
+  return localStorage.getItem(doneKey()) === "1";
+}
+function markDone() {
+  if (taskToken) return;
+  localStorage.setItem(doneKey(), "1");
+}
+
+function redirectToRoot() {
+  setTimeout(() => {
+    location.href = "/";
+  }, 5000);
+}
+
+function showFinished() {
+  if (finished) return;
+  finished = true;
+
+  markDone();
+
+  const sub = document.getElementById("sub");
+  const qbox = document.getElementById("qbox");
+  const closed = document.getElementById("closed");
+
+  // chowamy całe UI pytań (input + hint + liczniki)
+  if (qbox) qbox.style.display = "none";
+
+  // chowamy "ankieta zamknięta", bo to inny stan
+  if (closed) closed.style.display = "none";
+
+  // pokazujemy tylko jedno podziękowanie
+  if (sub) sub.textContent = MSG.thanks();
+
+  redirectToRoot();
+}
+
+function setClosedMsg(msg) {
+  if (closed) closed.textContent = msg || "";
+}
+
+function setSub(t) {
+  if (subEl) subEl.textContent = t || "";
+}
+
+function showClosed(on) {
+  if (closed) closed.style.display = on ? "" : "none";
+  if (qbox) qbox.style.display = on ? "none" : "";
+  if (on && subEl) subEl.style.display = "none"; // Hide loading sub when showing closed/error msg
+  else if (!on && subEl) subEl.style.display = "";
+}
+
+// Komunikat stanu (zamknięta / wygasła / brak): zawsze widoczny w bloku #closed.
+function showStatus(msg) {
+  showClosed(true);
+  setSub("");
+  setClosedMsg(msg);
+}
+
+// Stan ankiety względem klucza z linku (poll_state, anon): zatrzymana / zakończona /
+// link z wcześniejszego uruchomienia. Zwraca komunikat albo null, gdy ankieta
+// jest otwarta (albo stanu nie da się ustalić -- wtedy decyduje reszta strony).
+function stateMessage(state) {
+  if (state === "stopped") return MSG.pollStopped();
+  if (state === "ended") return MSG.pollEnded();
+  if (state === "expired" || state === "draft") return MSG.linkExpired();
+  if (state === "not_found") return MSG.pollNotFound();
+  return null;
+}
+
+async function describeLinkState() {
+  try {
+    const { data, error } = await sb().rpc("poll_state", { p_game_id: gameId, p_key: key });
+    if (error) {
+      const m = String(error.message || "");
+      if (m.includes("invalid input syntax")) return MSG.pollNotFound();
+      return null;
+    }
+    return stateMessage(data?.state);
+  } catch {
+    return null;
+  }
+}
+
+let taskVoterToken = null;
+let taskResolved = !taskToken;
+function getVoterToken() {
+  if (taskToken && taskVoterToken) return taskVoterToken;
+  const k = `fam_voter_${gameId}_${key}`;
+  let t = localStorage.getItem(k);
+  if (!t) {
+    t = (crypto?.randomUUID?.() || `${Date.now()}_${Math.random().toString(16).slice(2)}`);
+    localStorage.setItem(k, t);
+  }
+  return t;
+}
+
+// normalizacja do porównań
+function norm(s) {
+  return String(s ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, " ");
+}
+
+// timeout bez użycia promise.finally (żeby nie wpaść w “finally is not a function”)
+async function withTimeout(promiseLike, ms, errMsg) {
+  const p = Promise.resolve(promiseLike);
+
+  let timer = null;
+  const timeout = new Promise((_, rej) => {
+    timer = setTimeout(() => rej(new Error(errMsg || "Timeout")), ms);
+  });
+
+  try {
+    return await Promise.race([p, timeout]);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
+
+async function loadPayload() {
+  const req = sb().rpc("poll_get_payload", { p_game_id: gameId, p_key: key });
+  const { data, error } = await withTimeout(req, 15000, MSG.loadTimeout());
+  if (error) throw error;
+  return data;
+}
+
+function validateAndPack(questionId, rawText) {
+  const raw = String(rawText ?? "").trim().slice(0, 17);
+  const normalized = norm(raw);
+
+  if (!raw || !normalized) throw new Error(MSG.enterAnswer());
+
+  return {
+    question_id: questionId,
+    answer_raw: raw,
+    answer_norm: normalized,
+  };
+}
+
+async function submitBatch(items) {
+  const voter = getVoterToken();
+
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+  const callOnce = async (chunk) => {
+    const req = sb().rpc("poll_text_submit_batch", {
+      p_game_id: gameId,
+      p_key: key,
+      p_voter_token: voter,
+      p_items: chunk,
+    });
+    const { error } = await withTimeout(req, 30000, MSG.loadTimeout());
+    if (error) throw error;
+  };
+
+  const callWithRetry = async (chunk, attempt = 1) => {
+    try {
+      await callOnce(chunk);
+    } catch (e) {
+      if (attempt >= 3) throw e;
+      await sleep(650 * attempt);
+      return callWithRetry(chunk, attempt + 1);
+    }
+  };
+
+  const CHUNK = 25;
+  const total = Array.isArray(items) ? items.length : 0;
+  for (let i = 0; i < total; i += CHUNK) {
+    const part = items.slice(i, i + CHUNK);
+    if (subEl) subEl.textContent = `${MSG.sending()} (${Math.min(i + CHUNK, total)}/${total})`;
+    await callWithRetry(part);
+  }
+}
+
+async function markTaskDone() {
+  if (!taskToken) return; // anon flow
+  try {
+    await sb().rpc("poll_task_done", { p_token: taskToken });
+  } catch (e) {
+    // nie blokujemy użytkownika — to tylko „miękka” synchronizacja taska
+    console.warn("[poll-text] poll_task_done failed:", e);
+  }
+}
+
+async function maybeReturnToHub(){
+  if (!taskToken) return;
+  try{
+    const u = await getUser();
+    if (!u) return;
+    setTimeout(() => { location.href = "/subscriptions/?tab=tasks"; }, 650);
+  }catch{}
+}
+
+async function markTaskOpened() {
+  if (!taskToken) return;
+  try {
+    await sb().rpc("poll_task_opened", { p_token: taskToken });
+  } catch (e) {
+    console.warn("[poll-text] poll_task_opened failed:", e);
+  }
+}
+
+async function resolveTaskToken() {
+  if (!taskToken) return;
+  try {
+    const { data, error } = await sb().rpc("poll_task_resolve", { p_token: taskToken });
+    if (error) throw error;
+    if (data && data.ok === false) {
+      const msgs = {
+        poll_closed: MSG.pollEnded(),
+        poll_stopped: MSG.pollStopped(),
+        already_done: MSG.inviteDone(),
+      };
+      showStatus(msgs[data.error] || MSG.inviteExpired());
+      return;
+    }
+    if (!data?.ok || data?.kind !== "task") throw new Error(MSG.taskInvalid());
+    if (data.requires_auth) {
+      showStatus(MSG.loginToVote());
+      return;
+    }
+    if (data.needs_email) {
+      showStatus(MSG.emailRequired());
+      return;
+    }
+    gameId = data.game_id;
+    key = data.key;
+    taskVoterToken = data.voter_token;
+    taskResolved = true;
+    await markTaskOpened();
+  } catch (e) {
+    console.error("[poll-text] task resolve error:", e);
+    showStatus(MSG.openTaskFail());
+  }
+}
+
+let payload = null;
+let idx = 0;
+
+function render() {
+  const game = payload?.game || {};
+  const questions = payload?.questions || [];
+  const q = questions[idx];
+
+  if (titleEl) titleEl.textContent = game.name || MSG.pollFallback();
+
+  // status
+  if (game.status !== "poll_open") {
+    showClosed(true);
+    setSub("");
+    setClosedMsg(game.status === "poll_stopped" ? MSG.pollStopped() : game.status === "ready" ? MSG.pollEnded() : MSG.pollClosed());
+    return;
+  }
+
+  showClosed(false);
+
+  if (!q) {
+    // koniec pytań: wysyłka jednorazowa
+    if (submitting || finished) return;
+
+    submitting = true;
+    if (btnSend) btnSend.disabled = true;
+    if (answerInput) answerInput.disabled = true;
+
+    setSub(MSG.sending());
+
+    submitBatch(outbox)
+      .then(async () => {
+        await markTaskDone();
+        showFinished();
+        await maybeReturnToHub();
+      })
+      .catch(async (e) => {
+        console.error("[poll-text] submit_batch error:", e);
+        submitting = false;
+        // ankieta mogła zostać zatrzymana / zakończona w trakcie odpowiadania
+        const linkState = await describeLinkState();
+        if (linkState) {
+          showStatus(linkState);
+          return;
+        }
+        setSub(MSG.error(e?.message || e));
+        // pozwól spróbować jeszcze raz (render wywoła się ponownie po kliknięciu)
+        if (btnSend) btnSend.disabled = false;
+      });
+
+    return;
+  }
+
+  if (qtext) qtext.textContent = q.text || t("common.dash");
+  if (prog) prog.textContent = MSG.questionProgress(q.ord, questions.length);
+  setSub(""); // zdejmujemy “Ładuję…”
+
+  if (answerInput) {
+    answerInput.disabled = false;
+    answerInput.value = "";
+    answerInput.focus();
+  }
+  if (btnSend) btnSend.disabled = false;
+  if (countEl) countEl.textContent = "0/17";
+}
+
+window.addEventListener("i18n:lang", () => {
+  if (payload) {
+    render();
+  } else if (!finished && !hasDone()) {
+    setSub(MSG.loading());
+  }
+});
+
+function updateCount() {
+  if (!answerInput || !countEl) return;
+  const len = (answerInput.value || "").length;
+  countEl.textContent = `${len}/17`;
+}
+
+function setupBeforeUnloadWarn() {
+  window.addEventListener("beforeunload", (e) => {
+    if (finished) return;
+    if (!outbox.length) return;
+    // przeglądarki iOS/Chrome ignorują czasem własny tekst, ale sam alert działa
+    e.preventDefault();
+    e.returnValue = MSG.beforeUnloadWarn();
+    return e.returnValue;
+  });
+}
+
+document.addEventListener("DOMContentLoaded", async () => {
+  try {
+    // initI18n() robi dynamic import(pl.js/en.js/uk.js) — bez tego czekania
+    // t()/MSG.X() poniżej mogą wykonać się zanim translations się załaduje,
+    // co dla elementów bez data-i18n (np. #closed) zwraca surowy klucz
+    // (np. "pollText.alreadyVoted") zamiast tłumaczenia (patrz t() w
+    // translation.js: value==null -> return key), a dla elementów z
+    // data-i18n applyTranslations() później i tak nadpisze wcześniej
+    // ustawiony programowo tekst błędu z powrotem na "Ładuję…".
+    await i18nReady;
+    if (taskToken) {
+      await resolveTaskToken();
+    }
+    if (!taskResolved) return;
+    if (!gameId || !key) {
+      showStatus(MSG.missingParams());
+      return;
+    }
+    // stan ankiety względem klucza z linku: zatrzymana / zakończona / link wygasł
+    const linkState = await describeLinkState();
+    if (linkState) {
+      showStatus(linkState);
+      return;
+    }
+    if (hasDone()) {
+      showStatus(MSG.alreadyVoted());
+      redirectToRoot();
+      return;
+    }
+
+    setupBeforeUnloadWarn();
+
+    setSub(MSG.loading());
+    showClosed(false);
+
+    try {
+      payload = await loadPayload();
+    } catch (e) {
+      const state = await describeLinkState();
+      if (state) {
+        showStatus(state);
+        return;
+      }
+      throw e;
+    }
+
+    if ((payload?.game?.type || "") !== "poll_text") {
+      showStatus(MSG.wrongType());
+      return;
+    }
+
+    idx = 0;
+    outbox = [];
+    render();
+
+    answerInput?.addEventListener("input", () => {
+      // twardy limit 17
+      if (answerInput.value.length > 17) answerInput.value = answerInput.value.slice(0, 17);
+      updateCount();
+    });
+
+    answerInput?.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        btnSend?.click();
+      }
+    });
+
+    btnSend?.addEventListener("click", async () => {
+      if (finished || submitting) return;
+
+      const q = (payload?.questions || [])[idx];
+      if (!q) return;
+
+      try {
+        setSub(MSG.sending());
+        // pakujemy odpowiedź do outbox (bez wysyłki)
+        const packed = validateAndPack(q.id, answerInput?.value || "");
+
+        // nadpisz jeśli ktoś cofnąłby się kiedyś (na razie nie ma cofania, ale bezpiecznie)
+        const i = outbox.findIndex(x => x.question_id === packed.question_id);
+        if (i >= 0) outbox[i] = packed;
+        else outbox.push(packed);
+
+        idx++;
+        render();
+      } catch (e) {
+        console.error("[poll-text] pack error:", e);
+        setSub(MSG.error(e?.message || e));
+      }
+    });
+  } catch (e) {
+    console.error("[poll-text] init error:", e);
+    showStatus(MSG.openPollFail(e?.message || e));
+  }
+});

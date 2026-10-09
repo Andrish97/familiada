@@ -1,16 +1,18 @@
 // js/pages/marketplace.js
 
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T08150";
-import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-09T08150";
-import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-09T08150";
-import { initI18n, t, getUiLang, withLangParam, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-09T08150";
-import { initTopbarAccountDropdown } from "../../shared/js/core/topbar-controller.js?v=v2026-10-09T08150";
-import { exportGame } from "../../games/js/games-import-export.js?v=v2026-10-09T08150";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-09T08150";
-import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-09T08150";
-import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-09T08150";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-09T08150";
-import { icon, iconText, starRating } from "../../shared/js/core/icons.js?v=v2026-10-09T08150";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T17351";
+import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-09T17351";
+import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-09T17351";
+import { initI18n, t, getUiLang, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-09T17351";
+import { linkTo, backHref, renderBackLabel } from "../../shared/js/core/nav-map.js?v=v2026-10-09T17351";
+import { initTopbarAccountDropdown } from "../../shared/js/core/topbar-controller.js?v=v2026-10-09T17351";
+import { exportGame } from "../../games/js/games-import-export.js?v=v2026-10-09T17351";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-09T17351";
+import { toast } from "../../shared/js/core/toast.js?v=v2026-10-09T17351";
+import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-09T17351";
+import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-09T17351";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-09T17351";
+import { icon, iconText, starRating } from "../../shared/js/core/icons.js?v=v2026-10-09T17351";
 
 // Status zgłoszonej gry → wariant oznaczenia (.tag z base.css).
 const MKT_STATUS_TAG = { pending: "tag--warn", published: "tag--ok", rejected: "tag--bad", withdrawn: "tag--muted" };
@@ -99,19 +101,13 @@ const els = {
   btnGoGames:  document.getElementById("btnGoGames"),
   btnBackBrowse: document.getElementById("btnBackBrowse"),
   btnManual:     document.getElementById("btnManual"),
-  toast:        document.getElementById("toast"),
 };
 
 /* =========================================================
    Toast
 ========================================================= */
-let toastTimer = null;
 function showToast(msg, type = "info") {
-  if (!els.toast) return;
-  clearTimeout(toastTimer);
-  els.toast.textContent = msg;
-  els.toast.className = `toast show${type === "error" ? " error" : type === "success" ? " success" : ""}`;
-  toastTimer = setTimeout(() => els.toast?.classList.remove("show"), 3500);
+  toast(msg, { kind: type === "error" ? "error" : "info" });
 }
 
 /* =========================================================
@@ -802,13 +798,10 @@ function wireEvents() {
   // Nav
   els.btnGoGames?.addEventListener("click", () => {
     if (handleSheetBack()) return;
-    window.location.href = withLangParam(!currentUser ? "/" : "/games/");
+    window.location.href = backHref("marketplace", { anon: !currentUser });
   });
   els.btnManual?.addEventListener("click", () => {
-    const url = new URL("/manual/", location.href);
-    url.searchParams.set("ret", "marketplace");
-    url.hash = "community";
-    location.href = url.toString();
+    location.href = linkTo("manual", { hash: "community" });
   });
   // Browse
   els.btnMySent?.addEventListener("click", async () => {
@@ -929,13 +922,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   document.querySelector('.topbar')?.classList.add('topbar-ready');
 
   if (!currentUser) {
-    // Anonim wraca na Stronę główną; zalogowany użytkownik do „Moich gier”.
-    if (els.btnGoGames) {
-      // applyTranslations() jest wołane niżej, więc zmieniamy również klucz;
-      // inaczej dynamiczny napis zostałby zaraz nadpisany przez „Moje gry”.
-      els.btnGoGames.dataset.i18n = "marketplace.nav.backHome";
-      els.btnGoGames.dataset.i18nIcon = "arrow-left";
-    }
     if (els.btnManual)  els.btnManual.hidden = true;
   }
 
@@ -951,6 +937,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   wireEvents();
   applyTranslations();
+  // Anonim wraca na Stronę główną (ret z landingu lub parentAnon), zalogowany wg mapy.
+  renderBackLabel(els.btnGoGames, "marketplace", () => ({ anon: !currentUser }));
   restoreBrowseParams();
 
 

@@ -26,6 +26,90 @@ Stan faktyczny sprawdzony w kodzie 2026-10-07 (opis niżej, sekcja 4).
   linkiem (sekcja 4b).
 - Osobne liczenie głosów (anonimowe / od subskrybentów) — prawdopodobnie
   zbędne (patrz pytania).
+- **2026-10-09 — zamknięcie i podliczenie to dwa osobne kroki; karty
+  Udostępnianie · Wyniki** (zastępuje wcześniejsze pomysły z tego dnia:
+  karta „Zamykanie”, wstrzymanie zależne od blokady, stan „do zatwierdzenia”).
+  - **Zatrzymaj** (dawniej „Zamknij”) = koniec głosowania, nic więcej.
+    Stan **ZATRZYMANA** —
+    trwały, nic samo się nie wznawia; głosujący widzi „Ankieta jest
+    zatrzymana”, głos odrzuca baza. Żaden głos nie ginie.
+  - **Podlicz głosy** = osobny krok na zatrzymanej ankiecie: ankieta
+    tekstowa — scalanie/poprawianie odpowiedzi (Cofnij/Ponów, poprawki
+    zapisywane w bazie, można wyjść i wrócić) i „Zatwierdź”; ankieta
+    punktowa — podliczenie bez poprawiania. Po podliczeniu gra **GOTOWA**
+    = można grać (Graj aktywne; pytania mają punkty z głosów).
+  - **Przerwij** zostaje (cofa do szkicu i kasuje głosy) — różni się od
+    Zatrzymaj tym, że głosy znikają.
+  - **Wznów głosowanie** — na zatrzymanej, jeszcze niepodliczonej ankiecie:
+    → OTWARTA, ten sam link, głosy zostają.
+  - **Linki (2026-10-09):** ZATRZYMANA — link i zaproszenia nadal ważne,
+    głosujący widzi „Ankieta jest zatrzymana” (bez możliwości głosu); po
+    „Wznów głosowanie” ten sam link znów działa. **Po podliczeniu linki
+    i zaproszenia wygasają** (klucz unieważniony) — głosujący widzi
+    „Ankieta zakończona”. Nowe uruchomienie = nowy klucz (jak dotąd).
+  - **Akcje i karty wg stanu (2026-10-09):**
+
+    | Stan | Akcje na pasku | Udostępnianie | Wyniki |
+    |---|---|---|---|
+    | SZKIC (nieuruchomiona) | Uruchom / Uruchom i wyślij zaproszenia (N) | aktywna — przygotowanie listy | pusta zachęta do uruchomienia |
+    | OTWARTA | Zatrzymaj, Przerwij | aktywna | na żywo |
+    | ZATRZYMANA | Wznów głosowanie, Podlicz głosy, Przerwij | aktywna (link ważny) | surowe; podliczanie |
+    | GOTOWA (podliczona) | Uruchom ponownie | nieaktywna | ostateczne |
+
+    „Uruchom ponownie” tylko po podliczeniu (nowy klucz, głosy od zera).
+  - **Podliczanie w karcie Wyniki — płynna zmiana widoku (2026-10-09).**
+    Stan dziś: punktowa — baza (`_poll_points_close_unchecked`) liczy głosy
+    z ostatniej sesji, 0 głosów = 1, procent z sumą 100 (największe
+    reszty, min. 1 pkt); tekstowa — przeglądarka bierze zdjęcie
+    `poll_text_entries`, grupuje po `answer_norm`, ręczne łączenie/edycja,
+    `normalizeTo100Int` + przycięcie do 17 znaków, min. 3 odpowiedzi,
+    zapis `poll_text_close_apply`.
+    Docelowo: te same wiersze wyników przechodzą animacją w tryb
+    podliczania (bez przeładowania i przeskoku):
+    - punktowa — liczba głosów zamienia się w punkty (suma 100), słupki
+      w skali 0–100, „Zatwierdź” → GOTOWA; bez edycji;
+    - tekstowa — wiersze dostają uchwyty: przeciągnij na inną = połącz,
+      edycja tekstu, usuń; przy każdym wierszu punkty liczone na bieżąco,
+      licznik „3–6 odpowiedzi” na pytanie; poprawki zapisywane w bazie;
+      „Zatwierdź” → GOTOWA;
+    - wyjście bez zatwierdzenia → zwykły widok wyników, ankieta ZATRZYMANA.
+    Przeliczenie tekstowej na punkty przeniesione do bazy (jedno miejsce dla
+    obu typów).
+  - **Karta Udostępnianie — nowy układ (2026-10-09).** Komputer: dwie
+    kolumny wyrównane do góry. Lewa „Link”: pole linku z ikoną kopiowania
+    w środku, pod nim w rzędzie „Otwórz” · „QR na wyświetlaczu”, niżej mały
+    QR (~140 px) powiększany kliknięciem w oknie. Prawa „Subskrybenci”:
+    w nagłówku podsumowanie „Zaproszeni N · Zagłosowali N · Odrzucili N”,
+    „Zaznacz wszystkich”, kafle (3 stany, dzwonek, kosz), na dole
+    „Wyślij zaproszenia (N)” — aktywny, gdy ktoś zaznaczony. Telefon: jedna
+    kolumna — link z ikoną kopiowania, „Otwórz” · „QR na wyświetlaczu”,
+    „Pokaż QR” (domyślnie zwinięty), potem subskrybenci i „Wyślij
+    zaproszenia (N)” na całą szerokość.
+  - **Strona ankiety zostaje, z kartami Udostępnianie · Wyniki; wygląd
+    łączony (2026-10-09, potwierdzone).** Topbar jak w edytorze: ANKIETA
+    + szara linijka „tekstowa · Nazwa gry” (także na telefonie); treść
+    w obecnym, „gamesowym” wyglądzie kart. Lista gier: tylko stan
+    i plakietka, kliknięcie → strona ankiety (akcji nie dublujemy).
+  - **Udostępnianie w SZKICU aktywne jako przygotowanie (2026-10-09,
+    zmienia wcześniejsze „nieaktywne w szkicu”).** Zaznaczasz
+    subskrybentów; zamiast linku „Link pojawi się po uruchomieniu”;
+    przycisk „Uruchom” albo „Uruchom i wyślij zaproszenia (N)”, gdy ktoś
+    zaznaczony — start i wysyłka jednym krokiem. GOTOWA — nieaktywne.
+  - **Pasek stanu (nad kartami) — miejsce wszystkich akcji (2026-10-09).**
+    Lewa strona: stan słowem + krótki opis (np. „OTWARTA · 12 głosów”,
+    „ZATRZYMANA · link nadal ważny”). Prawa: przyciski akcji wg tabeli
+    stanów; główna akcja złota (Uruchom / Zatrzymaj / Podlicz głosy /
+    Uruchom ponownie), Przerwij zawsze ostatni i stonowany (czerwony
+    obrys). Telefon: stan w pierwszym wierszu, przyciski w drugim na całą
+    szerokość, równe.
+  - **Karty tylko dwie: Udostępnianie · Wyniki.** Wyniki są uniwersalne:
+    na żywo (otwarta), surowe (zatrzymana), w trybie podliczania (ankieta
+    tekstowa), ostateczne (gotowa). Wszystkie akcje na pasku stanu:
+    Uruchom, Zatrzymaj, Przerwij, Wznów głosowanie, Podlicz głosy,
+    Uruchom ponownie. Po „Zatrzymaj” strona sama przechodzi na Wyniki.
+  - **Kafle gier** (`/games/`, przejmuje rolę dawnego huba): stan słowem +
+    plakietka — OTWARTA: liczba głosów („12 głosów”); ZATRZYMANA
+    (niepodliczona): wyróżniona „do podliczenia”; po podliczeniu GOTOWA.
 
 ## 2. Co gdzie po zmianie
 

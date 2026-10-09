@@ -1,6 +1,6 @@
 /* =========================================================
    Familiada — logo.css: lista logo (/logo/) i trzy strony edytorów
-   (/logo/editor-text|draw|image/)
+   (/logo/editor/<tryb>/)
    Założenia:
    - brak scrolla strony w widoku edytora
    - Font picker: popover FIXED (nie jest ucinany przez overflow), scroll w liście, X działa

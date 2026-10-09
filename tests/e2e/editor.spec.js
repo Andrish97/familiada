@@ -27,7 +27,7 @@ const { serveBranchCode } = require("./helpers/branch-code");
 test.use({ serviceWorkers: "block" });
 
 test.beforeEach(async ({ context }) => {
-  await serveBranchCode(context, { pages: ["editor", "base-explorer"] });
+  await serveBranchCode(context, { pages: ["games/editor", "bases/explorer"] });
 });
 
 /* ================= Seed / DB helpers (bezpośrednio przez window.__sbClient) ================= */
@@ -110,7 +110,7 @@ async function deleteGame(page, gameId) {
 }
 
 async function openEditor(page, gameId) {
-  await page.goto(`https://www.familiada.online/editor?id=${gameId}`, { waitUntil: "domcontentloaded" });
+  await page.goto(`https://www.familiada.online/games/editor?id=${gameId}`, { waitUntil: "domcontentloaded" });
   // editor.js wiąże listenery/renderuje dopiero po asynchronicznym
   // requireAuth+initI18n+loadGame w boot() — ten sam wyścig co gdzie indziej.
   await page.waitForLoadState("networkidle");
@@ -379,9 +379,12 @@ test("edytor: suma punktów >100 dla 'prepared' to tylko wizualne ostrzeżenie, 
     await expect(page.locator(".qf-sum")).toHaveClass(/over/, { timeout: 5000 });
     await expect(page.locator(".qf-sum b")).toHaveText("130/100");
 
-    const answers = await getAnswersRows(page, qId);
-    const sum = answers.reduce((s, a) => s + a.fixed_points, 0);
-    expect(sum, "obie wartości mają zostać naprawdę zapisane w bazie mimo przekroczenia 100").toBe(130);
+    // „Zapisano.” zostaje po pierwszym zapisie, więc nie potwierdza drugiego —
+    // czekamy na stan w bazie.
+    await expect.poll(async () => {
+      const answers = await getAnswersRows(page, qId);
+      return answers.reduce((s, a) => s + a.fixed_points, 0);
+    }, { timeout: 10000, message: "obie wartości mają zostać naprawdę zapisane w bazie mimo przekroczenia 100" }).toBe(130);
   } finally {
     await deleteGame(page, gameId);
   }
@@ -492,14 +495,14 @@ test("edytor: wejście na edytor gdy ankieta jest otwarta (poll_open) -> pełna 
       if (error) throw new Error(error.message);
     }, { gameId, key: game.share_key_poll });
 
-    await page.goto(`https://www.familiada.online/editor?id=${gameId}`, { waitUntil: "domcontentloaded" });
+    await page.goto(`https://www.familiada.online/games/editor?id=${gameId}`, { waitUntil: "domcontentloaded" });
     // Blokada stanu (docs/blokady-zasobow.md): pełnoekranowa blokada z powodem
     // z game_validate, strona zostaje na miejscu, wyjście tylko do listy gier.
     await expect(page.locator("#resourceLockGuard")).toBeVisible({ timeout: 15000 });
     await expect(page.locator("#resourceLockGuardMsg")).toContainText(/ankiet/i);
-    await expect(page).toHaveURL(/\/editor/);
+    await expect(page).toHaveURL(/\/games\/editor/);
     await page.locator("#resourceLockGuardBack").click();
-    await page.waitForURL(/\/games/, { timeout: 15000 });
+    await page.waitForURL(/\/games\/?(?:\?[^\/]*)?$/, { timeout: 15000 });
   } finally {
     await deleteGame(page, gameId);
   }
@@ -515,10 +518,10 @@ test("edytor: wejście gdy ankieta jest 'ready' i Anuluj w confirmie -> nic się
     const { qId, aId } = await seedPollPointsFull(page, gameId, { firstAnswerPoints: 42 });
     await updateGameStatus(page, gameId, { status: "ready" });
 
-    await page.goto(`https://www.familiada.online/editor?id=${gameId}`, { waitUntil: "domcontentloaded" });
+    await page.goto(`https://www.familiada.online/games/editor?id=${gameId}`, { waitUntil: "domcontentloaded" });
     await expect(page.locator(".uni-modal")).toBeVisible({ timeout: 15000 });
     await page.locator(".uni-foot .btn:not(.gold)").click(); // Anuluj
-    await page.waitForURL(/\/games/, { timeout: 15000 });
+    await page.waitForURL(/\/games\/?(?:\?[^\/]*)?$/, { timeout: 15000 });
 
     const game = await getGameRow(page, gameId);
     expect(game.status, "Anuluj nie powinno zresetować statusu").toBe("ready");
@@ -538,7 +541,7 @@ test("edytor: wejście gdy ankieta jest 'ready' i OK w confirmie -> realny reset
     const { qId, aId } = await seedPollPointsFull(page, gameId, { firstAnswerPoints: 42 });
     await updateGameStatus(page, gameId, { status: "ready" });
 
-    await page.goto(`https://www.familiada.online/editor?id=${gameId}`, { waitUntil: "domcontentloaded" });
+    await page.goto(`https://www.familiada.online/games/editor?id=${gameId}`, { waitUntil: "domcontentloaded" });
     await expect(page.locator(".uni-modal")).toBeVisible({ timeout: 15000 });
     await page.locator(".uni-foot .btn.gold").click(); // OK — resetuj
 
@@ -587,11 +590,11 @@ test("edytor: dwie karty — druga karta jest blokowana overlayem zamiast cichej
     await expect(pageB.locator("#qList .qcard:not(.addTile)")).toHaveCount(0);
 
     // Zamknięcie karty A zwalnia blokadę — best-effort przez pagehide+broadcast,
-    // a jeśli to zawiedzie, fallback to TTL (25s) + polling w karcie B (do 5s) —
+    // a jeśli to zawiedzie, fallback to TTL (120 s) + polling w karcie B (do 5s) —
     // stąd hojny timeout na kolejny expect zamiast zakładania natychmiastowego zwolnienia.
     await pageA.close();
 
-    await expect(pageB.locator("#resourceLockGuard")).toBeHidden({ timeout: 40000 });
+    await expect(pageB.locator("#resourceLockGuard")).toBeHidden({ timeout: 40000 }); // keepalive przy pagehide; TTL 120 s to ostateczność
     await expect(pageB.locator("#qList .qcard:not(.addTile)")).toHaveCount(2, { timeout: 10000 });
   } finally {
     await deleteGame(page, gameId);
@@ -770,7 +773,7 @@ test("edytor: nazwa gry dłuższa niż 80 znaków zostaje ucięta do 80", async 
 
 async function newUserContext(browser, username, contextOptions = {}) {
   const ctx = await browser.newContext({ serviceWorkers: "block", ...contextOptions });
-  await serveBranchCode(ctx, { pages: ["editor", "base-explorer"] });
+  await serveBranchCode(ctx, { pages: ["games/editor", "bases/explorer"] });
   const pg = await ctx.newPage();
   await loginAsTestUser(pg, ctx, { username });
   return { ctx, page: pg };
@@ -980,7 +983,7 @@ test.describe("editor: audyt -- pisanie i zapisy", () => {
       await delayRequests(page, { path: "questions", method: "PATCH", ms: 1500 });
       await page.locator("#qText").fill("Tekst przed wyjściem");
       await page.locator("#btnBack").click();
-      await page.waitForURL(/\/games/, { timeout: 15000 });
+      await page.waitForURL(/\/games\/?(?:\?[^\/]*)?$/, { timeout: 15000 });
 
       const qs = await getQuestionsRows(page, gameId);
       expect(qs.find((q) => q.id === qId).text).toBe("Tekst przed wyjściem");
@@ -1102,11 +1105,11 @@ test.describe("editor: audyt -- import i wejście na stronę", () => {
   test("nieistniejąca gra: komunikat zostaje do kliknięcia OK, potem powrót do listy gier", async ({ page, context }) => {
     test.setTimeout(60_000);
     await loginAsTestUser(page, context);
-    await page.goto("https://www.familiada.online/editor?id=00000000-0000-4000-8000-000000000000", { waitUntil: "domcontentloaded" });
+    await page.goto("https://www.familiada.online/games/editor?id=00000000-0000-4000-8000-000000000000", { waitUntil: "domcontentloaded" });
     await expect(page.locator(".uni-modal .mSub")).toHaveText("Ta gra nie istnieje albo nie masz do niej dostępu.", { timeout: 15000 });
-    await expect(page).toHaveURL(/\/editor/);
+    await expect(page).toHaveURL(/\/games\/editor/);
     await page.locator(".uni-foot .btn.gold").click();
-    await page.waitForURL(/\/games/, { timeout: 15000 });
+    await page.waitForURL(/\/games\/?(?:\?[^\/]*)?$/, { timeout: 15000 });
   });
 
   test("usunięcie pytania: jedno RPC usuwa i przenumerowuje (bez dziur w numeracji)", async ({ page, context }) => {
@@ -1135,7 +1138,7 @@ test.describe("editor: audyt -- import i wejście na stronę", () => {
 
 /* ================= Modal pytania w bazie pytań: wspólny formularz ================= */
 
-const BASE_URL = "https://www.familiada.online/base-explorer";
+const BASE_URL = "https://www.familiada.online/bases/explorer";
 
 async function createBase(page, name) {
   return await page.evaluate(async (name) => {
@@ -1171,7 +1174,7 @@ async function deleteBase(page, baseId) {
 }
 
 async function openQuestionModal(page, baseId, qid) {
-  await page.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+  await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
   await page.waitForLoadState("networkidle");
   const row = page.locator(`#list .row[data-kind="q"][data-id="${qid}"]`);
   await expect(row).toBeVisible({ timeout: 15000 });

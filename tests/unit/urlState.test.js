@@ -34,8 +34,8 @@ test("strona główna odzwierciedla przewijaną sekcję w hash", () => {
 });
 
 test("base-explorer zapisuje konkretny folder i odtwarza go z URL", () => {
-  const page = read("base-explorer/js/page.js");
-  const state = read("base-explorer/js/state.js");
+  const page = read("bases/explorer/js/page.js");
+  const state = read("bases/explorer/js/state.js");
   assert.match(page, /searchParams|get\("folder"\)/);
   assert.match(page, /addEventListener\("popstate"/);
   assert.match(state, /searchParams\.set\("folder", state\.folderId\)/);
@@ -66,7 +66,7 @@ test("edytory logo to osobne strony z id w adresie, autozapisem i bez ✕", () =
   const list = read("logo/index.html");
   assert.doesNotMatch(list, /id="editorShell"|id="btnCloseEditor"|id="helpOverlay"|id="legalOverlay"|fabric/);
   for (const [mode, file, init] of [["TEXT", "text", "initTextEditor"], ["DRAW", "draw", "initDrawEditor"], ["IMAGE", "image", "initImageEditor"]]) {
-    const html = read(`logo/editor-${file}/index.html`);
+    const html = read(`logo/editor/${file}/index.html`);
     const entry = read(`logo/js/editor-${file}.js`);
     assert.match(html, new RegExp(`src="/logo/js/editor-${file}\\.js`));
     assert.match(html, new RegExp(`id="editorShell" data-mode="${mode}"`));

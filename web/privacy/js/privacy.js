@@ -4,47 +4,13 @@
 // - jeśli user zalogowany -> pokazuj username + Wyloguj
 // - jeśli niezalogowany -> ukryj username + Wyloguj, a Wstecz wraca do /
 
-import { initI18n, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-09T08150";
-import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-09T08150";
-import { initTopbarAccountDropdown } from "../../shared/js/core/topbar-controller.js?v=v2026-10-09T08150";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-09T08150";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-09T08150";
+import { initI18n } from "../../shared/translation/translation.js?v=v2026-10-09T17351";
+import { backHref, renderBackLabel } from "../../shared/js/core/nav-map.js?v=v2026-10-09T17351";
+import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-09T17351";
+import { initTopbarAccountDropdown } from "../../shared/js/core/topbar-controller.js?v=v2026-10-09T17351";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-09T17351";
 
 function byId(id) { return document.getElementById(id); }
-
-function hasManualRef() {
-  return new URLSearchParams(location.search).has("man");
-}
-
-function buildGamesBackUrl() {
-  const p = new URLSearchParams(location.search);
-  const lang = p.get("lang") || localStorage.getItem("uiLang") || "pl";
-  return `/games/?lang=${encodeURIComponent(lang)}`;
-}
-
-function normalizeManualBack(raw) {
-  const fallback = buildGamesBackUrl();
-  const trimmed = String(raw || "").trim();
-  if (!trimmed) return fallback;
-
-  try {
-    const target = new URL(trimmed, location.origin + "/");
-    // `man` pochodzi z query stringa. Akceptujemy wyłącznie adres w tym
-    // samym serwisie, żeby przycisk powrotu nie był otwartym przekierowaniem
-    // (ani nawigacją do javascript:/data:).
-    if (target.origin !== location.origin) return fallback;
-    const lang = new URLSearchParams(location.search).get("lang") || localStorage.getItem("uiLang") || "pl";
-    if (!target.searchParams.has("lang")) target.searchParams.set("lang", lang);
-    return `${target.pathname}${target.search}${target.hash}`;
-  } catch {
-    return fallback;
-  }
-}
-
-function decodeManualBack() {
-  const p = new URLSearchParams(location.search);
-  return normalizeManualBack(p.get("man"));
-}
 
 function isControlModal() {
   const p = new URLSearchParams(location.search);
@@ -61,21 +27,9 @@ function applyControlModalLayout() {
 function setBackButton({ loggedIn }) {
   const btn = byId("btnBack");
   if (!btn) return;
-
-  if (hasManualRef()) {
-    btn.innerHTML = iconText("arrow-left", t("privacy.backToManual"));
-    btn.onclick = () => (location.href = decodeManualBack());
-    return;
-  }
-
-  if (!loggedIn) {
-    btn.innerHTML = iconText("arrow-left", t("privacy.backToHome"));
-    btn.onclick = () => (location.href = withLangParam("/"));
-    return;
-  }
-
-  btn.innerHTML = iconText("arrow-left", t("manual.backToGames"));
-  btn.onclick = () => (location.href = decodeManualBack());
+  const getCtx = () => ({ anon: !loggedIn });
+  renderBackLabel(btn, "privacy", getCtx);
+  btn.onclick = () => (location.href = backHref("privacy", getCtx()));
 }
 
 function setAuthUi(user) {

@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { createHostRenderer } from "../../web/host/js/render.js";
+import { createHostRenderer } from "../../web/control/host/js/render.js";
 
 function fakeNode(textContent = "") {
   return { textContent, children: [], classList: { toggle() {} }, appendChild(child) { this.children.push(child); } };

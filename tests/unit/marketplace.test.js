@@ -31,7 +31,7 @@ test("każdy statyczny klucz marketplace użyty w HTML/JS istnieje w PL/EN/UK", 
 test("polski interfejs używa jednej nazwy: Strona główna", () => {
   const login = fs.readFileSync(path.join(ROOT, "web/login/index.html"), "utf8");
   assert.equal(pl.index.backHome, "Strona główna");
-  assert.equal(pl.marketplace.nav.backHome, "Strona główna");
+  assert.equal(pl.nav.page.home, "Strona główna");
   assert.equal(pl.notFound.homeBtn, "Strona główna");
   assert.doesNotMatch(login, /Strona startowa/i);
 });

@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
+  <meta name="app-version" content="v2026-10-09T17351"/>
+
+  <meta charset="utf-8" />
+  <meta name="mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <link rel="preconnect" href="https://cdn.jsdelivr.net">
+  <link rel="preconnect" href="https://supabase.familiada.online">
+  <meta name="robots" content="noindex, nofollow"/>
+  <title data-i18n="baseExplorer.title">Familiada — menedżer bazy pytań</title>
+  
+    <!-- wspólne style aplikacji (jak w games/manual) -->
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-09T17351" />
+  <link rel="stylesheet" href="/games/css/games.css?v=v2026-10-09T17351" />
+  <link rel="stylesheet" href="/shared/css/question-form.css?v=v2026-10-09T17351" />
+  <link rel="stylesheet" href="/bases/explorer/css/base-explorer.css?v=v2026-10-09T17351" />
+
+  <link rel="icon" href="/favicon.ico?v=v2026-10-09T17351"/>
+  <script>
+    document.documentElement.classList.add('page-loading');
+    try {
+      var _has = false;
+      for (var _i = 0; _i < localStorage.length; _i++) {
+        var _k = localStorage.key(_i);
+        if (_k && _k.startsWith('sb-') && _k.endsWith('-auth-token')) { _has = true; break; }
+      }
+      if (!_has) location.replace('/login/');
+    } catch(_e) {}
+  </script>
+
+  <script src='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2' defer></script>
+
+  <script type="module" src="/bases/explorer/js/page.js?v=v2026-10-09T17351"></script>
+
+  <script src="/shared/js/core/security-warning.js?v=v2026-10-09T17351" defer></script>
+</head>
+
+<body class="skel-body topbar-title-mobile">
+
+  <!-- TOPBAR – identyczny wzorzec jak w manualu/stronie gier -->
+  <header class="topbar topbar-layout-4">
+    <div class="topbar-section topbar-section-1">
+      <div class="brand">FAMILIADA</div>
+      <button id="btnBack" class="btn ghost" type="button">Wstecz</button>
+    </div>
+
+    <div class="topbar-section topbar-section-2">
+      <div class="topbar-title">
+        <div class="title" data-i18n="baseExplorer.headerTitle">Menedżer bazy pytań</div>
+        <div class="subtitle" id="baseName">—</div>
+      </div>
+    </div>
+
+    <div class="topbar-section topbar-section-3">
+      <button class="btn ghost" id="btnManual" type="button" data-i18n-aria-label="common.manualLabel" data-i18n-title="common.manualLabel" aria-label="Wskazówki" title="Wskazówki"><i class="ico" data-icon="info"></i></button>
+    </div>
+
+    <div class="topbar-section topbar-section-4">
+      <div id="who" class="who">—</div>
+      <button id="btnLogout" class="btn ghost" data-i18n="baseExplorer.logout">Wyloguj</button>
+    </div>
+  </header>
+
+  <!-- TOOLBAR -->
+  <section id="toolbar" class="toolbar">
+    <!-- wypełniane dynamicznie w JS -->
+  </section>
+
+  <!-- GŁÓWNY LAYOUT: drzewo + zawartość -->
+  <main class="explorer">
+
+    <!-- OVERLAY do zamykania drawera na mobile -->
+    <div id="drawerOverlay" class="drawer-overlay" hidden aria-hidden="true"></div>
+
+    <!-- LEWY PANEL: foldery + tagi -->
+    <aside id="explorerLeft" class="explorer-left">
+      <div id="tree" class="tree">
+        <!-- drzewo kategorii -->
+      </div>
+
+      <div class="left-sep" aria-hidden="true"></div>
+
+      <div id="tags" class="tags">
+        <!-- tagi Finder-style -->
+      </div>
+    </aside>
+
+    <!-- PRAWY PANEL: lista -->
+    <section class="explorer-right">
+      <div id="breadcrumbs" class="breadcrumbs">
+        <!-- ścieżka / aktualny kontekst -->
+      </div>
+      
+      <div id="list" class="list">
+        <!-- foldery i pytania -->
+      </div>
+    </section>
+
+
+  <!-- Modal: tagi (3 warstwy) — styl jak bases (overlay/modal) -->
+  <div class="overlay modal--sheet" id="tagsOverlay" style="display:none;">
+    <div class="modal tags-modal" role="dialog" aria-modal="true" aria-labelledby="tagsTitle">
+  
+      <!-- WARSTWA 1: przypisz -->
+      <section id="tagsL1" class="tags-layer">
+        <div class="tagsHead">
+          <div class="mTitle" id="tagsTitle" data-i18n="baseExplorer.tags.modalTitle">Tagi</div>
+          <button class="btn sm" id="tagsL1Close" type="button" aria-label="Zamknij" data-i18n-aria-label="baseExplorer.common.close" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
+        </div>
+  
+        <div class="mSub" id="tagsAssignInfo">—</div>
+  
+        <div id="tagsAssignList" class="tagsPickList"></div>
+  
+        <div class="tagsFoot">
+          <button class="btn sm" id="tagsAddNew" type="button" data-i18n="baseExplorer.tags.addTag">+ Dodaj tag</button>
+          <div class="tagsFootSpacer"></div>
+          <button class="btn sm gold" id="tagsL1Save" type="button" data-i18n="baseExplorer.common.save">Zapisz</button>
+        </div>
+  
+        <div id="tagsAssignErr" class="importMsg" style="display:none;"></div>
+      </section>
+  
+      <!-- WARSTWA 2: dodaj/edytuj -->
+      <section id="tagsL2" class="tags-layer" style="display:none;">
+        <div class="tagsHead">
+          <div class="mTitle" id="tagsEditTitle" data-i18n="baseExplorer.tags.editTitle">Tag</div>
+          <button class="btn sm" id="tagsL2Close" type="button" aria-label="Zamknij" data-i18n-aria-label="baseExplorer.common.close" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
+        </div>
+  
+        <div class="mSub" id="tagsEditHelp">—</div>
+  
+        <div class="tagsEditGrid">
+          <input id="tagsEditName" class="inp tagsNameCenter" type="text" maxlength="40" autocomplete="off" placeholder="Nazwa taga…" data-i18n-placeholder="baseExplorer.tags.namePlaceholder"/>
+
+          <button id="tagsEditColorTile" class="tagsColorTile" type="button" aria-label="Wybierz kolor" data-i18n-aria-label="baseExplorer.tags.pickColor">
+            <span class="tagsColorDot" id="tagsEditColorDot"></span>
+            <span class="tagsColorLbl" data-i18n="baseExplorer.tags.colorLabel">Kolor</span>
+          </button>
+        </div>
+  
+        <div class="tagsFoot">
+          <div class="tagsFootSpacer"></div>
+          <button class="btn sm gold" id="tagsL2Save" type="button" data-i18n="baseExplorer.common.save">Zapisz</button>
+        </div>
+  
+        <div id="tagsEditErr" class="importMsg" style="display:none;"></div>
+      </section>
+  
+      <!-- WARSTWA 3: picker koloru -->
+      <section id="tagsL3" class="tags-layer" style="display:none;">
+        <div class="tagsHead">
+          <div class="mTitle" data-i18n="baseExplorer.tags.colorModalTitle">Kolor</div>
+          <button class="btn sm" id="tagsL3Close" type="button" aria-label="Zamknij" data-i18n-aria-label="baseExplorer.common.close" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
+        </div>
+  
+        <!-- Twoja warstwa 3 jest OK — zostawiamy układ, poprawiamy tylko przyciski -->
+        <div class="colorModalBody">
+          <div class="colorTopRow">
+            <div class="colorPreview" id="tagsColorPreview" aria-label="Podgląd koloru" data-i18n-aria-label="baseExplorer.tags.colorPreview"></div>
+
+            <div class="field sm" style="min-width:260px;">
+              <div class="lbl2" data-i18n="baseExplorer.tags.hexLabel">HEX</div>
+              <input class="inp" id="tagsColorHex" autocomplete="off" spellcheck="false" inputmode="text" />
+              <div class="hint" style="max-width:360px;" data-i18n-html="baseExplorer.tags.hexHint">Format: <b>#RRGGBB</b></div>
+            </div>
+          </div>
+  
+          <div class="sliders">
+            <div class="sliderRow">
+              <div class="sLbl">R</div>
+              <input class="rng" id="tagsColorR" type="range" min="0" max="255" step="1" />
+              <div class="sVal" id="tagsColorRVal">0</div>
+            </div>
+  
+            <div class="sliderRow">
+              <div class="sLbl">G</div>
+              <input class="rng" id="tagsColorG" type="range" min="0" max="255" step="1" />
+              <div class="sVal" id="tagsColorGVal">0</div>
+            </div>
+  
+            <div class="sliderRow">
+              <div class="sLbl">B</div>
+              <input class="rng" id="tagsColorB" type="range" min="0" max="255" step="1" />
+              <div class="sVal" id="tagsColorBVal">0</div>
+            </div>
+          </div>
+        </div>
+  
+        <div class="tagsFoot">
+          <div class="tagsFootSpacer"></div>
+          <button class="btn sm gold" id="tagsL3Save" type="button" data-i18n="baseExplorer.common.save">Zapisz</button>
+        </div>
+      </section>
+      
+    </div>
+  </div>
+
+    <!-- =======================================================
+       [MODAL: EKSPORT] — overlay + modal (wzorzec jak TAGI)
+       ======================================================= -->
+  <div class="overlay modal--sheet" id="exportOverlay" style="display:none;">
+    <div class="modal tags-modal export-modal" role="dialog" aria-modal="true" aria-labelledby="xTitle">
+
+      <div class="tagsHead">
+        <div class="mTitle" id="xTitle" data-i18n="baseExplorer.export.title">Eksport gry</div>
+        <button class="btn sm" id="xClose" type="button" aria-label="Zamknij" data-i18n-aria-label="baseExplorer.common.close" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
+      </div>
+
+      <div class="mSub" id="xSub" data-i18n="baseExplorer.export.subtitle">
+        Wybierz co najmniej 10 pytań. Czerwone nie spełniają warunków wybranego typu — odhacz je albo popraw dane.
+      </div>
+
+      <div class="xBody">
+        <div class="xField">
+          <div class="lbl2" data-i18n="baseExplorer.export.gameNameLabel">Nazwa gry</div>
+          <input id="xName" class="inp xName" type="text" maxlength="60" autocomplete="off" value="gra" />
+        </div>
+
+        <div class="xGrid2">
+          <div class="xField">
+            <div class="lbl2" data-i18n="baseExplorer.export.questionsLabel">Pytania</div>
+            <div id="xList" class="xPickList"></div>
+          </div>
+
+          <div class="xField">
+            <div class="xTypeBox">
+              <div class="xTypeTop">
+                <div class="xTypeTitle" data-i18n="baseExplorer.export.typeTitle">Typ gry</div>
+                <div class="xTypeHint" id="xTypeHint">—</div>
+              </div>
+
+              <div class="xRange">
+                <input id="xTypeRange" class="rng" type="range" min="0" max="2" step="1" value="2" />
+              </div>
+
+              <div class="xTypeLabels">
+                <div class="xTypeLbl" id="lbl0" data-v="0">
+                  <b data-i18n="baseExplorer.export.typePollText">Ankieta tekstowa</b>
+                </div>
+                <div class="xTypeLbl" id="lbl1" data-v="1">
+                  <b data-i18n="baseExplorer.export.typePollPoints">Punktacja</b>
+                </div>
+                <div class="xTypeLbl" id="lbl2" data-v="2">
+                  <b data-i18n="baseExplorer.export.typePrepared">Preparowana</b>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tagsFoot">
+        <div class="xCountPill" id="xCountPill" title="Zaznaczone (min 10)" data-i18n-title="baseExplorer.export.selectedTitle">
+          <span data-i18n="baseExplorer.export.selectedLabel">WYBRANE</span>
+          <b id="xCountVal">0</b>
+        </div>
+
+        <div class="tagsFootSpacer"></div>
+
+        <div id="xErr" class="importMsg" style="display:none;"></div>
+
+        <div class="xProg" id="xProg" style="display:none;">
+          <div class="xProgTop">
+            <div id="xProgStep" class="xProgStep">—</div>
+            <div id="xProgCount" class="xProgCount">0/0</div>
+          </div>
+        
+          <div class="xProgBar">
+            <div id="xProgBarFill" class="xProgBarFill" style="width:0%"></div>
+          </div>
+        
+          <div id="xProgMsg" class="xProgMsg"></div>
+        </div>
+
+        <button class="btn sm gold" id="xCreate" type="button" disabled data-i18n="baseExplorer.export.create">Utwórz</button>
+      </div>
+
+    </div>
+  </div>
+
+    <!-- =======================================================
+       [MODAL: PYTANIE] — overlay + modal (wzorzec jak TAGI)
+       ======================================================= -->
+  <div class="overlay modal--sheet" id="questionOverlay" style="display:none;">
+    <div class="modal tags-modal question-modal" role="dialog" aria-modal="true" aria-labelledby="qTitle">
+
+      <div class="tagsHead">
+        <div class="mTitle" id="qTitle" data-i18n="baseExplorer.question.title">Pytanie</div>
+        <button class="btn sm" id="qClose" type="button" aria-label="Zamknij" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
+      </div>
+
+      <div class="mSub" data-i18n="baseExplorer.question.subtitle">
+        Edycja pojedynczego pytania. Max 6 odpowiedzi. Punkty opcjonalne.
+        Jeśli wpisane: 0–100, suma ≤ 100.
+      </div>
+
+      <!-- Ten sam układ i style co pytanie w edytorze gry (css/question-form.css);
+           wiersze odpowiedzi i kafelek "+ Dodaj odpowiedź" buduje question-modal.js -->
+      <div class="qBody">
+        <div class="qBlock">
+          <div class="qf-label" data-i18n="baseExplorer.question.textLabel">Treść pytania</div>
+          <textarea id="qText" class="qf-qtext" maxlength="200" spellcheck="false" placeholder="Wpisz treść pytania…" data-i18n-placeholder="baseExplorer.question.textPlaceholder"></textarea>
+        </div>
+
+        <div class="qBlock qAnswersBlock">
+          <div class="qf-sum" id="qSumPill" title="Suma punktów (max 100)" data-i18n-title="baseExplorer.question.sumTitle"></div>
+
+          <div class="qf-head">
+            <div data-i18n="baseExplorer.question.answerHeader">Odpowiedź</div>
+            <div class="c-pts" data-i18n="baseExplorer.question.pointsHeader">Punkty</div>
+            <div></div>
+          </div>
+
+          <div class="qf-listShell">
+            <div id="qAnswers" class="qf-list"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tagsFoot">
+        <div class="tagsFootSpacer"></div>
+
+        <div id="qErr" class="importMsg" style="display:none;"></div>
+
+        <button class="btn sm gold" id="qSave" type="button" data-i18n="baseExplorer.common.save">Zapisz</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Rename modal (spójny z tagsOverlay: overlay + modal) -->
+  <div class="overlay modal--sheet" id="renameModal" hidden>
+    <div class="modal tags-modal rename-modal" role="dialog" aria-modal="true" aria-labelledby="renameModalTitle">
+
+      <div class="tagsHead">
+        <div class="mTitle" id="renameModalTitle" data-i18n="baseExplorer.rename.title">Zmień nazwę</div>
+        <button class="btn sm" id="renameModalClose" type="button" aria-label="Zamknij" data-i18n-aria-label="baseExplorer.common.close" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
+      </div>
+
+      <div class="mSub" id="renameModalHelp" data-i18n="baseExplorer.rename.help">Wpisz nową nazwę i zapisz.</div>
+
+      <div class="renameBody">
+        <input id="renameModalInput" class="inp renameInput" type="text" autocomplete="off" />
+      </div>
+
+      <div class="tagsFoot">
+        <div class="tagsFootSpacer"></div>
+        <button class="btn sm gold" id="renameModalSave" type="button" data-i18n="baseExplorer.common.save">Zapisz</button>
+      </div>
+
+      <div id="renameModalErr" class="importMsg" style="display:none;"></div>
+
+    </div>
+  </div>
+
+  </main>
+
+  <!-- KONTEKST MENU (prawy klik) -->
+  <div id="contextMenu" class="context-menu" hidden></div>
+
+  <!-- MODALE (wstrzykiwane JS-em) -->
+  <div id="modalRoot"></div>
+
+
+</body>
+</html>

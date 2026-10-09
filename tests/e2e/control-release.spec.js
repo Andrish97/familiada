@@ -3,7 +3,7 @@ const {loginAsPooledTestUser}=require('./helpers/login');
 const {generateE2EToken}=require('./helpers/e2e-token');
 
 test('release: canonical routes serve the current app and preserve connection parameters',async({context})=>{
-  const scripts={control:'app.js',display:'main.js',host:'main.js',buzzer:'main.js','game-settings':'game-settings.js'};
+  const scripts={control:'app.js','control/display':'main.js','control/host':'main.js','control/buzzer':'main.js','games/settings':'game-settings.js'};
   for(const [name,script] of Object.entries(scripts)) {
     const response=await context.request.get(`/${name}/?id=release-probe&key=release-key&lang=en&ret=%2Fgames%2F`,{headers:{"X-E2E-Token":generateE2EToken(process.env.E2E_BYPASS_SECRET)}});
     expect(response.status()).toBe(200);
@@ -32,14 +32,14 @@ test('release: approved Polish manual and native icons are published',async({pag
 test('release: Games play and settings links open the new panel',async({page},testInfo)=>{
  await loginAsPooledTestUser(page,page.context(),testInfo.parallelIndex);
  await page.goto('/games/');
- const script=await page.locator('script[src*="/games/js/games.js"]').getAttribute('src');
- const source=await page.request.get(script);
+ // Adresy stron są w mapie nawigacji (E4), games.js buduje linki przez linkTo().
+ const source=await page.request.get('/shared/js/core/nav-map.js');
  expect(source.ok()).toBeTruthy();
  const body=await source.text();
- expect(body).toContain('/control/?id=');
- expect(body).toContain('/game-settings/?id=');
- expect(body).not.toContain('/control2/?id=');
- expect(body).not.toContain('/game-settings2/?id=');
+ expect(body).toContain('"/control/"');
+ expect(body).toContain('"/games/settings/"');
+ expect(body).not.toContain('/control2/');
+ expect(body).not.toContain('/game-settings2/');
 });
 
 for(const [lang,hostLabel,repeatText,outroLimit] of [

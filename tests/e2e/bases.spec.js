@@ -117,7 +117,7 @@ async function acquireLockDirect(page, resourceType, resourceId, context = "e2e-
 
 test("@mailbox bazy: udostępnienie z UI wysyła działający link", async ({ page, context }) => {
   test.setTimeout(120_000);
-  const recipient = testAccountUsername(6);
+  const recipient = testAccountUsername(7); // test6 nie dostaje maili (brak reguły w Email Routing?) — test7 sprawdzony w control2
   const name = `E2E-MAIL-BASE-${Date.now()}`;
   let baseId;
 

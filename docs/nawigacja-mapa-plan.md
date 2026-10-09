@@ -670,6 +670,13 @@ Na najwyższym poziomie zostaje: `/`, `/login/`, `/games/`, `/control/`,
 `/polls/`, `/subscriptions/`, `/bases/`, `/logo/`, `/marketplace/`, `/connect/`, `/go/`,
 `/account/`, `/manual/`, `/privacy/` (+ admin i techniczne).
 
+**Korekta 2026-10-09 (E5):** hub ankiet zniknął (E11), więc strona ankiety
+gry zostaje pod `/polls/?id=` (bez `/polls/editor/`); głosowanie idzie do
+`/polls/vote/…`. Krok 4 (urządzenia `/control/display|host|buzzer/`, `/connect/`, `/go/?d=`)
+robiony na końcu E5 — druga sesja skończyła prace nad Hostem/Buzzerem (2026-10-09).
+
+**E5 krok 7 (2026-10-09, gałąź `e5dev`):** urządzenia przeniesione do `/control/display|host|buzzer/`, `/connect-device/` do `/connect/` (`/connect/tv/`); linki wychodzące (mail, QR, kod) idą przez `/go/?d=display|host|buzzer|qr&id=&key=`; podglądy iframe wskazują wprost adresy wewnętrzne. Klucz statystyk `connect-device` bez zmian (mapowanie w `activity.js`).
+
 ### `/go/` — jedyne adresy, które wychodzą poza aplikację
 
 Dziś na zewnątrz trafiają różne adresy: linki w mailach (`poll-go?t=`,

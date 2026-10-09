@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict wgdddLxvBiBrZvxyCrxgn9cdl74VIxzeXoryXe4EeM5hveahzUTYw3hlmV6aMYI
+\restrict 6vQ7RptP0SLyBSwDy4kjjZTCKgkRY4osgSLCzTmd2rt5gFAsa6A4bcfgsd6e6vN
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -239,6 +239,18 @@ CREATE FUNCTION "public"."_logo_image_path"("p_payload" "jsonb", "p_user" "uuid"
   from (
     select split_part(split_part(coalesce(p_payload #>> '{source,imageUrl}', ''), '/user-logos/', 2), '?', 1) as p
   ) x
+$$;
+
+
+--
+-- Name: _logo_url_path("text", "uuid"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."_logo_url_path"("p_url" "text", "p_user" "uuid") RETURNS "text"
+    LANGUAGE "sql" IMMUTABLE
+    AS $$
+  select case when p like (p_user::text || '/%') then p end
+  from (select split_part(split_part(coalesce(p_url, ''), '/user-logos/', 2), '?', 1) as p) x
 $$;
 
 
@@ -716,15 +728,18 @@ CREATE FUNCTION "public"."_storage_cleanup_on_logo_delete"() RETURNS "trigger"
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public'
     AS $$
+declare
+  v_path text;
 begin
-  insert into public.storage_cleanup_queue(bucket, path, is_folder, owner_kind, owner_id)
-  select 'user-logos', p.path, false, 'logo', old.id
-  from (values
-    (public._logo_image_path(old.payload, old.user_id)),
-    (public._logo_host_raster_path(old.payload, old.user_id))
-  ) as p(path)
-  where p.path is not null
-  on conflict do nothing;
+  for v_path in
+    select distinct p from (values
+      (public._logo_url_path(old.payload #>> '{source,imageUrl}', old.user_id)),
+      (public._logo_url_path(old.payload #>> '{source,hostRasterUrl}', old.user_id))
+    ) t(p) where p is not null
+  loop
+    insert into public.storage_cleanup_queue(bucket, path, is_folder, owner_kind, owner_id)
+    values ('user-logos', v_path, false, 'logo', old.id);
+  end loop;
   return old;
 end;
 $$;
@@ -774,13 +789,26 @@ $$;
 --
 
 CREATE FUNCTION "public"."acquire_edit_lock"("p_resource_type" "text", "p_resource_id" "uuid", "p_tab_id" "text", "p_context" "text" DEFAULT NULL::"text") RETURNS "jsonb"
+    LANGUAGE "sql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+  select public.acquire_edit_lock_mode(p_resource_type, p_resource_id, p_tab_id, p_context, 'exclusive');
+$$;
+
+
+--
+-- Name: acquire_edit_lock_mode("text", "uuid", "text", "text", "text"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."acquire_edit_lock_mode"("p_resource_type" "text", "p_resource_id" "uuid", "p_tab_id" "text", "p_context" "text" DEFAULT NULL::"text", "p_mode" "text" DEFAULT 'exclusive'::"text") RETURNS "jsonb"
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public'
     AS $$
 declare
   v_uid uuid := auth.uid();
   v_exists boolean := false;
-  v_got boolean;
+  v_key text;
+  v_owner uuid;
   v_row public.edit_locks;
 begin
   if v_uid is null then
@@ -789,12 +817,16 @@ begin
   if coalesce(trim(p_tab_id), '') = '' then
     return jsonb_build_object('ok', false, 'error', 'missing_tab_id');
   end if;
-  if p_resource_type not in ('game', 'logo', 'base', 'base_question', 'base_folder', 'base_tag') then
+  if p_mode not in ('exclusive', 'shared') then  -- 316:
+    return jsonb_build_object('ok', false, 'error', 'unknown_mode');
+  end if;
+  if p_resource_type not in ('game', 'logo', 'logos', 'base', 'base_question', 'base_folder', 'base_tag') then  -- 316: + logos
     return jsonb_build_object('ok', false, 'error', 'unknown_resource_type');
   end if;
   v_exists := case p_resource_type
     when 'game' then exists (select 1 from public.games where id = p_resource_id)
     when 'logo' then exists (select 1 from public.user_logos where id = p_resource_id)
+    when 'logos' then p_resource_id = v_uid  -- 316: id = użytkownik
     when 'base' then exists (select 1 from public.question_bases where id = p_resource_id)
     when 'base_question' then exists (select 1 from public.qb_questions where id = p_resource_id)
     when 'base_folder' then exists (select 1 from public.qb_categories where id = p_resource_id)
@@ -808,31 +840,54 @@ begin
     return jsonb_build_object('ok', false, 'error', 'forbidden');
   end if;
 
+  -- 316: serializacja zajmowania w obrębie zasobu; logo i pula logo użytkownika
+  -- dzielą jeden klucz, bo zasady zgodności łączą je ze sobą.
+  if p_resource_type = 'logo' then
+    select user_id into v_owner from public.user_logos where id = p_resource_id;
+    v_key := 'logos:' || v_owner::text;
+  elsif p_resource_type = 'logos' then
+    v_key := 'logos:' || p_resource_id::text;
+  else
+    v_key := p_resource_type || ':' || p_resource_id::text;
+  end if;
+  perform pg_advisory_xact_lock(hashtextextended(v_key, 0));
+
+  -- 316: wygasłe trzymania innych kart tego zasobu znikają (zwalniają klucz
+  -- wyłączny); wygasłe nie przeszkadzają też w edit_lock_blockers.
+  delete from public.edit_locks
+   where resource_type = p_resource_type
+     and resource_id = p_resource_id
+     and holder_tab_id <> p_tab_id
+     and heartbeat_at < now() - public.edit_lock_ttl();
+
+  select * into v_row
+  from public.edit_lock_blockers(p_resource_type, p_resource_id, p_mode, p_tab_id)
+  order by acquired_at
+  limit 1;
+
+  if found then
+    return jsonb_build_object('ok', false, 'error', 'locked',
+      'holder_user_id', v_row.holder_user_id, 'acquired_at', v_row.acquired_at,
+      'blocker_type', v_row.resource_type, 'blocker_mode', v_row.mode,
+      'blocker_context', v_row.holder_context);
+  end if;
+
   insert into public.edit_locks
-    (resource_type, resource_id, holder_tab_id, holder_user_id, holder_context, acquired_at, heartbeat_at)
+    (resource_type, resource_id, holder_tab_id, holder_user_id, holder_context, mode, acquired_at, heartbeat_at)
   values
-    (p_resource_type, p_resource_id, p_tab_id, v_uid, p_context, now(), now())
-  on conflict (resource_type, resource_id) do update
-    set holder_tab_id = excluded.holder_tab_id,
-        holder_user_id = excluded.holder_user_id,
+    (p_resource_type, p_resource_id, p_tab_id, v_uid, p_context, p_mode, now(), now())
+  on conflict (resource_type, resource_id, holder_tab_id) do update
+    set holder_user_id = excluded.holder_user_id,
         holder_context = excluded.holder_context,
         heartbeat_at = excluded.heartbeat_at,
         acquired_at = case
-          when public.edit_locks.holder_tab_id = excluded.holder_tab_id
+          when public.edit_locks.mode = excluded.mode
             then public.edit_locks.acquired_at
           else excluded.acquired_at
-        end
-    where public.edit_locks.holder_tab_id = excluded.holder_tab_id
-       or public.edit_locks.heartbeat_at < now() - interval '25 seconds'
-  returning true into v_got;
+        end,
+        mode = excluded.mode;
 
-  if v_got is true then
-    return jsonb_build_object('ok', true, 'acquired', true);
-  end if;
-  select * into v_row from public.edit_locks
-   where resource_type = p_resource_type and resource_id = p_resource_id;
-  return jsonb_build_object('ok', false, 'error', 'locked',
-    'holder_user_id', v_row.holder_user_id, 'acquired_at', v_row.acquired_at);
+  return jsonb_build_object('ok', true, 'acquired', true);
 end;
 $$;
 
@@ -1610,6 +1665,7 @@ CREATE FUNCTION "public"."can_edit_locked_resource"("p_resource_type" "text", "p
     WHEN 'logo' THEN EXISTS (
       SELECT 1 FROM public.user_logos WHERE id = p_resource_id AND user_id = auth.uid()
     )
+    WHEN 'logos' THEN p_resource_id = auth.uid()  -- 316: pula logo użytkownika
     WHEN 'base' THEN public.base_can_edit(p_resource_id, auth.uid())
     WHEN 'base_question' THEN EXISTS (
       SELECT 1 FROM public.qb_questions q
@@ -2085,16 +2141,16 @@ $$;
 
 
 --
--- Name: delete_resource_checked("text", "uuid"); Type: FUNCTION; Schema: public; Owner: -
+-- Name: delete_resource_checked("text", "uuid", "text"); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION "public"."delete_resource_checked"("p_resource_type" "text", "p_resource_id" "uuid") RETURNS "jsonb"
+CREATE FUNCTION "public"."delete_resource_checked"("p_resource_type" "text", "p_resource_id" "uuid", "p_tab_id" "text" DEFAULT NULL::"text") RETURNS "jsonb"
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public'
     AS $$
 declare
   v_uid uuid := auth.uid();
-  v_blocker record;
+  v_blocker public.edit_locks;
 begin
   if v_uid is null then
     return jsonb_build_object('ok', false, 'error', 'not_authenticated');
@@ -2108,11 +2164,9 @@ begin
     -- 312: otwarta ankieta nie blokuje usunięcia (zostaje przerwana: głosy, sesje
     -- i zaproszenia znikają kaskadą). Blokuje tylko zajęta blokada gry.
 
-    select resource_type into v_blocker
-    from public.edit_locks
-    where resource_type = 'game'
-      and resource_id = p_resource_id
-      and heartbeat_at > now() - interval '25 seconds'
+    -- 316: game:G trzymane przez inną kartę (wyłączne albo współdzielone)
+    select * into v_blocker
+    from public.edit_lock_blockers('game', p_resource_id, 'exclusive', p_tab_id)
     limit 1;
 
     if found then
@@ -2120,11 +2174,11 @@ begin
     end if;
 
     -- 312: maile w kolejce z zaproszeniami do ankiety tej gry (link
-    -- poll-go?t=<token> w treści; mail_queue nie ma kolumny z identyfikatorem gry).
+    -- go?t=<token> w treści; mail_queue nie ma kolumny z identyfikatorem gry).
     delete from public.mail_queue q
     using public.poll_tasks pt
     where pt.game_id = p_resource_id
-      and position(('poll-go?t=' || pt.token::text) in q.html) > 0;
+      and position(('go?t=' || pt.token::text) in q.html) > 0;
 
     -- 312: zapamiętane urządzenia tej gry (FK dałby tylko SET NULL).
     delete from public.shared_devices where game_id = p_resource_id;
@@ -2137,31 +2191,15 @@ begin
       return jsonb_build_object('ok', false, 'error', 'not_found_or_forbidden');
     end if;
 
-    -- Warstwa A: to konkretne logo ma aktywną sesję edycji gdzie indziej
-    -- (logo-editor.js trzyma acquire_edit_lock('logo', ten id, ...)).
-    if exists (
-      select 1 from public.edit_locks
-      where resource_type = 'logo'
-        and resource_id = p_resource_id
-        and heartbeat_at > now() - interval '25 seconds'
-    ) then
-      return jsonb_build_object('ok', false, 'in_use', true, 'reason', 'locked');
-    end if;
-
-    -- Warstwa B: cała pula logo właściciela jest busy, gdy ma aktywną
-    -- rozgrywkę (Control) lub otwarte game-settings.js dla którejkolwiek
-    -- swojej gry -- niezależnie od tego, czy TO konkretne logo jest przez
-    -- nią referencowane.
-    select holder_context into v_blocker
-    from public.edit_locks
-    where resource_type = 'game'
-      and holder_user_id = v_uid
-      and holder_context in ('settings', 'control')
-      and heartbeat_at > now() - interval '25 seconds'
+    -- 316: logo:L w innej karcie albo pula logo (logos) trzymana przez kogoś
+    -- innego -- jedna reguła zgodności zamiast kontekstów settings / control.
+    select * into v_blocker
+    from public.edit_lock_blockers('logo', p_resource_id, 'exclusive', p_tab_id)
     limit 1;
 
     if found then
-      return jsonb_build_object('ok', false, 'in_use', true, 'reason', v_blocker.holder_context);
+      return jsonb_build_object('ok', false, 'in_use', true, 'reason', 'locked',
+        'blocker_type', v_blocker.resource_type, 'blocker_context', v_blocker.holder_context);
     end if;
 
     delete from public.user_logos where id = p_resource_id;
@@ -2172,12 +2210,23 @@ begin
       return jsonb_build_object('ok', false, 'error', 'not_found_or_forbidden');
     end if;
 
+    -- 316: base:B trzymane (współdzielone -- eksplorator, albo wyłączne) przez
+    -- kogoś innego.
+    select * into v_blocker
+    from public.edit_lock_blockers('base', p_resource_id, 'exclusive', p_tab_id)
+    limit 1;
+
+    if found then
+      return jsonb_build_object('ok', false, 'in_use', true, 'reason', 'locked');
+    end if;
+
     -- Którykolwiek element WEWNĄTRZ tej bazy (pytanie/folder/tag) ma teraz
     -- aktywną sesję edycji (Warstwa 1, migracja 257) -- usunięcie całej
     -- bazy skasowałoby go (CASCADE) spod ręki edytującego bez ostrzeżenia.
     if exists (
       select 1 from public.edit_locks l
-      where l.heartbeat_at > now() - interval '25 seconds'
+      where l.heartbeat_at > now() - public.edit_lock_ttl()  -- 316: TTL
+        and l.holder_tab_id is distinct from p_tab_id
         and (
           (l.resource_type = 'base_question' and exists (
             select 1 from public.qb_questions q where q.id = l.resource_id and q.base_id = p_resource_id
@@ -2541,6 +2590,82 @@ BEGIN
   RETURN jsonb_build_object('ok', true, 'deleted', v_deleted, 'mail_cooldowns_deleted', v_mail_cooldowns_deleted);
 END;
 $_$;
+
+
+--
+-- Name: e2e_storage_cleanup_peek("uuid"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."e2e_storage_cleanup_peek"("p_owner_id" "uuid") RETURNS TABLE("bucket" "text", "path" "text", "attempts" integer, "last_error" "text", "created_at" timestamp with time zone, "claimed_at" timestamp with time zone)
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'auth'
+    AS $_$
+declare
+  v_email text;
+begin
+  select u.email into v_email from auth.users u where u.id = auth.uid();
+  if v_email is null or v_email !~ '^test[0-9]+@familiada[.]online$' then
+    raise exception 'e2e_only';
+  end if;
+  return query
+  select q.bucket, q.path, q.attempts, q.last_error, q.created_at, q.claimed_at
+  from public.storage_cleanup_queue q
+  where q.owner_id = p_owner_id and q.path like (auth.uid()::text || '%');
+end;
+$_$;
+
+
+--
+-- Name: edit_locks; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE "public"."edit_locks" (
+    "resource_type" "text" NOT NULL,
+    "resource_id" "uuid" NOT NULL,
+    "holder_tab_id" "text" NOT NULL,
+    "holder_user_id" "uuid" NOT NULL,
+    "acquired_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    "heartbeat_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    "holder_context" "text",
+    "mode" "text" DEFAULT 'exclusive'::"text" NOT NULL,
+    CONSTRAINT "edit_locks_mode_check" CHECK (("mode" = ANY (ARRAY['exclusive'::"text", 'shared'::"text"])))
+);
+
+
+--
+-- Name: edit_lock_blockers("text", "uuid", "text", "text"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."edit_lock_blockers"("p_type" "text", "p_id" "uuid", "p_mode" "text", "p_tab" "text") RETURNS SETOF "public"."edit_locks"
+    LANGUAGE "sql" STABLE SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+  select l.*
+  from public.edit_locks l
+  where l.heartbeat_at > now() - public.edit_lock_ttl()
+    and (case when p_tab is null then l.holder_user_id is distinct from auth.uid()
+              else l.holder_tab_id <> p_tab end)
+    and (
+      -- ten sam zasób: przeszkadza, gdy którakolwiek strona trzyma wyłącznie
+      (l.resource_type = p_type and l.resource_id = p_id
+        and (l.mode = 'exclusive' or p_mode = 'exclusive'))
+      -- logo:L <-> logos tego samego użytkownika
+      or (p_type = 'logo' and l.resource_type = 'logos'
+        and l.resource_id = (select ul.user_id from public.user_logos ul where ul.id = p_id))
+      or (p_type = 'logos' and l.resource_type = 'logo'
+        and exists (select 1 from public.user_logos ul
+                    where ul.id = l.resource_id and ul.user_id = p_id))
+    );
+$$;
+
+
+--
+-- Name: edit_lock_ttl(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."edit_lock_ttl"() RETURNS interval
+    LANGUAGE "sql" IMMUTABLE
+    AS $$ select interval '120 seconds' $$;
 
 
 --
@@ -5871,7 +5996,7 @@ BEGIN
   logo_id := nullif(g.settings->'display'->>'logoId', '')::uuid;
   IF logo_id IS NOT NULL AND NOT EXISTS(SELECT 1 FROM public.user_logos l WHERE l.id = logo_id AND l.user_id = g.owner_id) THEN logo_id := NULL; END IF;
   SELECT EXISTS(SELECT 1 FROM public.edit_locks l WHERE l.resource_type = 'logo' AND l.resource_id = logo_id
-    AND l.heartbeat_at > now() - interval '25 seconds') INTO busy;
+    AND l.heartbeat_at > now() - public.edit_lock_ttl()) INTO busy;  -- 316: TTL
   IF NOT busy AND logo_id IS NOT NULL THEN
     SELECT jsonb_build_object('type', l.type, 'payload', l.payload, 'name', l.name) INTO logo
     FROM public.user_logos l WHERE l.id = logo_id AND l.user_id = g.owner_id;
@@ -9119,11 +9244,11 @@ BEGIN
 
   RETURN jsonb_build_object(
     'ok', true,
-    'task_id', t.id, 'to', v_to, 'token', t.token, 'link', 'poll-go?t=' || t.token::text,
+    'task_id', t.id, 'to', v_to, 'token', t.token, 'link', 'go?t=' || t.token::text,
     'game_name', g.name, 'poll_type', t.poll_type,
     'reminder_count', t.reminder_count + 1,
     'mail', jsonb_build_array(jsonb_build_object(
-      'task_id', t.id, 'to', v_to, 'token', t.token, 'link', 'poll-go?t=' || t.token::text))
+      'task_id', t.id, 'to', v_to, 'token', t.token, 'link', 'go?t=' || t.token::text))
   );
 END $$;
 
@@ -10723,7 +10848,7 @@ begin
     b.status,
     b.created_at,
     b.token,
-    ('poll-go?s=' || b.token::text)::text as go_url,
+    ('go?s=' || b.token::text)::text as go_url,
     (b.status in ('declined','cancelled') and b.last_action_at <= now() - interval '5 days') as is_expired
   from base b
   left join public.profiles p on p.id = b.owner_id
@@ -10824,7 +10949,7 @@ begin
     t.declined_at,
     t.cancelled_at,
     (coalesce(t.done_at, t.declined_at, t.cancelled_at) < now() - interval '5 days') as is_archived,
-    ('poll-go?t=' || t.token::text)::text,
+    ('go?t=' || t.token::text)::text,
     t.owner_id,
     p.username,
     p.email
@@ -11013,7 +11138,7 @@ BEGIN
     (SELECT count(*) FROM ins)::int,
     (SELECT count(*) FROM cooldown)::int,
     coalesce((SELECT jsonb_agg(jsonb_build_object('sub_id', c.sub_id, 'cooldown_until', c.next_allowed_at)) FROM cooldown c), '[]'::jsonb),
-    coalesce(jsonb_agg(jsonb_build_object('task_id', id, 'to', to_email, 'token', token, 'link', ('poll-go?t=' || token::text)))
+    coalesce(jsonb_agg(jsonb_build_object('task_id', id, 'to', to_email, 'token', token, 'link', ('go?t=' || token::text)))
       FILTER (WHERE public._norm_email(to_email) IS NOT NULL), '[]'::jsonb)
   INTO v_created, v_blocked, v_blocked_sub_ids, v_mail
   FROM mail_rows;
@@ -11131,7 +11256,7 @@ BEGIN
     RETURN jsonb_build_object('ok', false, 'err', 'no email for this subscriber');
   END IF;
 
-  v_link := ('poll-go?s=' || v_sub.token::text)::text;
+  v_link := ('go?s=' || v_sub.token::text)::text;
 
   UPDATE public.poll_subscriptions
   SET email_sent_at = now(), email_send_count = email_send_count + 1
@@ -11349,7 +11474,7 @@ BEGIN
 
   IF v_existing.id IS NOT NULL AND v_existing.status IN ('pending','active') THEN
     v_token := v_existing.token;
-    v_go    := ('poll-go?s=' || v_token::text)::text;
+    v_go    := ('go?s=' || v_token::text)::text;
     v_to    := coalesce(v_profile.email, v_existing.subscriber_email);
     -- unsub token tylko dla email-only (niezarejestrowanych)
     IF v_profile.id IS NULL AND public._norm_email(v_to) IS NOT NULL THEN
@@ -11388,7 +11513,7 @@ BEGIN
     v_unsub_token := public._ensure_unsub_token(v_to);
   END IF;
 
-  v_go := ('poll-go?s=' || v_token::text)::text;
+  v_go := ('go?s=' || v_token::text)::text;
 
   RETURN jsonb_build_object(
     'ok', true, 'already', false,
@@ -11614,6 +11739,59 @@ begin
   where resource_type = p_resource_type
     and resource_id = p_resource_id
     and holder_tab_id = p_tab_id;
+
+  return jsonb_build_object('ok', true);
+end;
+$$;
+
+
+--
+-- Name: rename_resource_checked("text", "uuid", "text", "text"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."rename_resource_checked"("p_resource_type" "text", "p_resource_id" "uuid", "p_name" "text", "p_tab_id" "text" DEFAULT NULL::"text") RETURNS "jsonb"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+declare
+  v_uid uuid := auth.uid();
+  v_name text := trim(coalesce(p_name, ''));
+  v_blocker public.edit_locks;
+begin
+  if v_uid is null then
+    return jsonb_build_object('ok', false, 'error', 'not_authenticated');
+  end if;
+  if v_name = '' then
+    return jsonb_build_object('ok', false, 'error', 'invalid_name');
+  end if;
+
+  if p_resource_type = 'game' then
+    if not exists (select 1 from public.games where id = p_resource_id and owner_id = v_uid) then
+      return jsonb_build_object('ok', false, 'error', 'not_found_or_forbidden');
+    end if;
+    select * into v_blocker from public.edit_lock_blockers('game', p_resource_id, 'exclusive', p_tab_id) limit 1;
+    if found then
+      return jsonb_build_object('ok', false, 'in_use', true, 'reason', 'locked');
+    end if;
+    update public.games set name = v_name where id = p_resource_id and owner_id = v_uid;
+
+  elsif p_resource_type = 'base' then
+    if not exists (select 1 from public.question_bases where id = p_resource_id and owner_id = v_uid) then
+      return jsonb_build_object('ok', false, 'error', 'not_found_or_forbidden');
+    end if;
+    select * into v_blocker from public.edit_lock_blockers('base', p_resource_id, 'exclusive', p_tab_id) limit 1;
+    if found then
+      return jsonb_build_object('ok', false, 'in_use', true, 'reason', 'locked');
+    end if;
+    update public.question_bases set name = v_name, updated_at = now()
+     where id = p_resource_id and owner_id = v_uid;
+
+  elsif p_resource_type = 'logo' then
+    return public.update_logo_checked(p_resource_id, jsonb_build_object('name', v_name), p_tab_id);
+
+  else
+    return jsonb_build_object('ok', false, 'error', 'unknown_resource_type');
+  end if;
 
   return jsonb_build_object('ok', true);
 end;
@@ -12454,8 +12632,8 @@ begin
      or (q.owner_kind = 'logo' and exists (
            select 1 from public.user_logos l
            where l.id = q.owner_id
-              or public._logo_image_path(l.payload, l.user_id) = q.path
-              or public._logo_host_raster_path(l.payload, l.user_id) = q.path));
+              or public._logo_url_path(l.payload #>> '{source,imageUrl}', l.user_id) = q.path
+              or public._logo_url_path(l.payload #>> '{source,hostRasterUrl}', l.user_id) = q.path));
 
   return query
   update public.storage_cleanup_queue q
@@ -12512,26 +12690,29 @@ $$;
 
 CREATE FUNCTION "public"."storage_cleanup_kick"() RETURNS "void"
     LANGUAGE "plpgsql" SECURITY DEFINER
-    SET "search_path" TO 'public'
+    SET "search_path" TO 'public', 'pg_temp'
     AS $$
 declare
-  v_url text;
-  v_jwt text;
+  v_base text;
+  v_anon text;
 begin
-  select value into v_url from public.app_config where key = 'edge_url';
-  select value into v_jwt from public.app_config where key = 'edge_service_role_jwt';
-  if coalesce(v_url, '') = '' or coalesce(v_jwt, '') = '' then return; end if;
+  select decrypted_secret into v_base from vault.decrypted_secrets where name = 'project_url';
+  select decrypted_secret into v_anon from vault.decrypted_secrets where name = 'anon_key';
+  if coalesce(v_base, '') = '' or coalesce(v_anon, '') = '' then
+    raise warning 'storage_cleanup_kick: brak project_url/anon_key w vault';
+    return;
+  end if;
   perform net.http_post(
-    url := v_url || '/functions/v1/storage-cleanup',
+    url := v_base || '/functions/v1/storage-cleanup',
     headers := jsonb_build_object(
       'Content-Type', 'application/json',
-      'Authorization', 'Bearer ' || v_jwt,
-      'apikey', v_jwt
+      'Authorization', 'Bearer ' || v_anon,
+      'apikey', v_anon
     ),
     body := '{}'::jsonb
   );
 exception when others then
-  -- brak pg_net / konfiguracji nie może zablokować usunięcia; cron ponowi
+  -- brak pg_net / vault nie może zablokować usunięcia; cron ponowi
   raise warning 'storage_cleanup_kick: %', sqlerrm;
 end;
 $$;
@@ -13176,16 +13357,16 @@ $$;
 
 
 --
--- Name: update_logo_checked("uuid", "jsonb"); Type: FUNCTION; Schema: public; Owner: -
+-- Name: update_logo_checked("uuid", "jsonb", "text"); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION "public"."update_logo_checked"("p_logo_id" "uuid", "p_patch" "jsonb") RETURNS "jsonb"
+CREATE FUNCTION "public"."update_logo_checked"("p_logo_id" "uuid", "p_patch" "jsonb", "p_tab_id" "text" DEFAULT NULL::"text") RETURNS "jsonb"
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public'
     AS $$
 declare
   v_uid uuid := auth.uid();
-  v_blocker record;
+  v_blocker public.edit_locks;
 begin
   if v_uid is null then
     return jsonb_build_object('ok', false, 'error', 'not_authenticated');
@@ -13195,16 +13376,15 @@ begin
     return jsonb_build_object('ok', false, 'error', 'not_found_or_forbidden');
   end if;
 
-  select holder_context into v_blocker
-  from public.edit_locks
-  where resource_type = 'game'
-    and holder_user_id = v_uid
-    and holder_context in ('settings', 'control')
-    and heartbeat_at > now() - interval '25 seconds'
+  -- 316: to logo (inna karta) albo cała pula logo (Control / ustawienia gry)
+  -- trzymane przez kogoś innego.
+  select * into v_blocker
+  from public.edit_lock_blockers('logo', p_logo_id, 'exclusive', p_tab_id)
   limit 1;
 
   if found then
-    return jsonb_build_object('ok', false, 'in_use', true, 'reason', v_blocker.holder_context);
+    return jsonb_build_object('ok', false, 'in_use', true, 'reason', 'locked',
+      'blocker_type', v_blocker.resource_type, 'blocker_context', v_blocker.holder_context);
   end if;
 
   update public.user_logos
@@ -13446,21 +13626,6 @@ CREATE TABLE "public"."e2e_emails" (
 --
 
 COMMENT ON TABLE "public"."e2e_emails" IS 'Krotkozyjaca skrzynka testow E2E; brak dostepu anon/authenticated, TTL 24h.';
-
-
---
--- Name: edit_locks; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE "public"."edit_locks" (
-    "resource_type" "text" NOT NULL,
-    "resource_id" "uuid" NOT NULL,
-    "holder_tab_id" "text" NOT NULL,
-    "holder_user_id" "uuid" NOT NULL,
-    "acquired_at" timestamp with time zone DEFAULT "now"() NOT NULL,
-    "heartbeat_at" timestamp with time zone DEFAULT "now"() NOT NULL,
-    "holder_context" "text"
-);
 
 
 --
@@ -14586,7 +14751,7 @@ ALTER TABLE ONLY "public"."e2e_emails"
 --
 
 ALTER TABLE ONLY "public"."edit_locks"
-    ADD CONSTRAINT "edit_locks_pkey" PRIMARY KEY ("resource_type", "resource_id");
+    ADD CONSTRAINT "edit_locks_pkey" PRIMARY KEY ("resource_type", "resource_id", "holder_tab_id");
 
 
 --
@@ -15195,6 +15360,13 @@ CREATE INDEX "e2e_emails_expires_idx" ON "public"."e2e_emails" USING "btree" ("e
 --
 
 CREATE INDEX "e2e_emails_recipient_received_idx" ON "public"."e2e_emails" USING "btree" ("recipient", "received_at" DESC);
+
+
+--
+-- Name: edit_locks_exclusive_uidx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX "edit_locks_exclusive_uidx" ON "public"."edit_locks" USING "btree" ("resource_type", "resource_id") WHERE ("mode" = 'exclusive'::"text");
 
 
 --
@@ -18052,5 +18224,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict wgdddLxvBiBrZvxyCrxgn9cdl74VIxzeXoryXe4EeM5hveahzUTYw3hlmV6aMYI
+\unrestrict 6vQ7RptP0SLyBSwDy4kjjZTCKgkRY4osgSLCzTmd2rt5gFAsa6A4bcfgsd6e6vN
 

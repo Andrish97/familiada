@@ -1,7 +1,7 @@
 const { test, expect } = require("@playwright/test");
 const { loginAsTestUser, testAccountUsername } = require("./helpers/login");
 const { serveBranchCode } = require("./helpers/branch-code");
-const { clearMailbox, waitForEmail, extractHttpLinks } = require("./helpers/mailbox");
+const { clearMailbox, waitForEmail, extractHttpLinks, resetMailProviderLimits } = require("./helpers/mailbox");
 
 const BASE_URL = "https://www.familiada.online/subscriptions";
 
@@ -55,7 +55,11 @@ async function inviteRegistered(page, recipient) {
   await page.locator("#subscribersGrid .addCard").click();
   await page.locator("#inviteInput").fill(recipient);
   await page.locator("#btnInviteOk").click();
-  await closeAlert(page, /Zaproszenie zapisane|wysyłka maila nie powiodła się/);
+  // E16: sukces = dymek #appToast; błąd wysyłki maila nadal w oknie.
+  const toastEl = page.locator("#appToast");
+  const modal = page.locator(".uni-modal");
+  await expect(toastEl.or(modal)).toContainText(/Zaproszenie zapisane/, { timeout: 15000 });
+  if (await modal.isVisible().catch(() => false)) await modal.locator(".uni-foot .btn.gold").click();
 }
 
 test("pełny przepływ: zaproszenie, akceptacja i anulowanie z czystym stanem", async ({ browser }) => {
@@ -105,6 +109,9 @@ test("@mailbox subskrypcje: zaproszenie z UI dochodzi na prawdziwą skrzynkę", 
   try {
     await cleanupPair(owner.page, subscriberId);
     await clearMailbox(recipient);
+    // Testy wysyłają dziennie dużo maili — bez resetu dzienne limity dostawców
+    // się wyczerpują i mail czeka w kolejce (jak w bases/control2).
+    await resetMailProviderLimits(owner.page);
     await openSubscriptions(owner.page);
     await inviteRegistered(owner.page, recipient);
 
@@ -112,7 +119,7 @@ test("@mailbox subskrypcje: zaproszenie z UI dochodzi na prawdziwą skrzynkę", 
     expect(`${email.body || ""}\n${email.body_html || ""}`).toMatch(/test7|Familiada/i);
     const invitation = extractHttpLinks(email).find((link) => {
       const url = new URL(link);
-      return /\/poll-go(?:\.html)?$/.test(url.pathname) && url.searchParams.has("s");
+      return /\/go(?:\.html)?$/.test(url.pathname) && url.searchParams.has("s");
     });
     expect(invitation, "mail musi zawierać link zaproszenia ?s=").toBeTruthy();
 
@@ -129,7 +136,7 @@ test("@mailbox subskrypcje: zaproszenie z UI dochodzi na prawdziwą skrzynkę", 
 test("token innego konta: modal wylogowuje zamiast rzucać ReferenceError", async ({ browser }) => {
   const owner = await newUser(browser, 7);
   const recipient = await newUser(browser, 8);
-  const wrongUser = await newUser(browser, 9);
+  const wrongUser = await newUser(browser, 6); // test9/test10 wykluczone (CLAUDE.md)
   const recipientId = await userId(recipient.page);
 
   try {
@@ -175,7 +182,7 @@ test("ret nie pozwala opuścić originu, a poprawny powrót jest zachowany", asy
   await page.locator("#btnBackToGames").click();
   await page.waitForURL((url) => url.origin === "https://www.familiada.online" && /^\/games\/?$/.test(url.pathname));
 
-  await openSubscriptions(page, "?ret=%2Fbases%3Flang%3Den");
+  await openSubscriptions(page, "?lang=en&ret=%2Fbases%2F");
   await page.locator("#btnBackToGames").click();
   await page.waitForURL((url) => /^\/bases\/?$/.test(url.pathname) && url.searchParams.get("lang") === "en");
 });

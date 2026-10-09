@@ -4,7 +4,7 @@
 // jest tu atrapą (sekundy, nie ms) — sam moduł nie dotyka window/Audio.
 //
 // Formuły korzystają z web/shared/js/gameplay/transitionTiming.js — TEGO SAMEGO modułu,
-// którego display/js/render.js używa do liczenia czasu animacji, więc
+// którego control/display/js/render.js używa do liczenia czasu animacji, więc
 // gate tutaj z definicji zgadza się z tym, co faktycznie maluje Display
 // (zgłoszone: "Animacja... zawsze = dźwięki" — zero osobno dobranych liczb).
 
@@ -68,7 +68,7 @@ test("START_P2_ROUND: teraz synced(round_transition,reveal) — 'dźwięk przej�
   const prev = row({ step: "f_p2_start", sound_cue_seq: 3 });
   const next = row({ step: "f_p2_entry", sound_cue_key: "round_transition", sound_cue_seq: 4 });
   const ms = await gate.computeGateMs("START_P2_ROUND", prev, next);
-  assert.equal(ms, 1500, "max(round_transition,reveal) — ta sama liczba, którą display/js/render.js liczy dla animIn tej samej akcji");
+  assert.equal(ms, 1500, "max(round_transition,reveal) — ta sama liczba, którą control/display/js/render.js liczy dla animIn tej samej akcji");
 });
 
 test("START_P2_ROUND: round_transition dłuższy niż reveal", async () => {

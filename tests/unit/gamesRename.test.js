@@ -151,8 +151,8 @@ test("powroty do listy gier prowadzą na games (login, confirm, konto, manifest)
   assert.match(read("login/index.html"), /data-games-url="\/games\/"/);
   assert.match(read("login/index.html"), /_dest = '\/games\/'/);
   assert.match(read("login/js/login.js"), /baseUrls\.gamesUrl \|\| "\/games\/"/);
-  assert.match(read("confirm/index.html"), /data-base-href="\/games\/"/);
-  assert.match(read("account/index.html"), /data-base-href="\/games\/"/);
+  assert.match(read("login/confirm/index.html"), /data-base-href="\/games\/"/);
+  assert.match(read("account/js/account.js"), /backHref\("account"\)/);
   assert.doesNotMatch(read("index.html"), /sb-.*auth-token/);
   assert.match(read("home/js/index.js"), /await getUser\(\)/);
   assert.match(read("home/js/index.js"), /location\.replace\(withLangParam\("\/games\/"\)\)/);

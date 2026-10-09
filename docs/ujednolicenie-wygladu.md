@@ -116,6 +116,18 @@ Kafel gry pokazuje „TYP • STAN” (`games.js:684` `statusLabel`, klucze
 - **Preparowane gotowe do gry**: dziś `SZKIC` (gra preparowana ma zawsze
   stan `draft`) — mylące. Gdy gra preparowana spełnia warunki rozgrywki
   (`rules.play.ok`) → **`GOTOWA`**; `SZKIC` tylko, gdy jeszcze nie spełnia.
+- **Zmiana 2026-10-09 (ankiety-refaktor.md, „Zatrzymaj” i „Podlicz głosy”):**
+  `ZAMKNIĘTA` znika. Jeden zestaw stanów dla wszystkich gier:
+
+  | Stan | Gra ankietowa | Gra preparowana |
+  |---|---|---|
+  | `SZKIC` | ankieta nieuruchomiona | nie spełnia warunków gry |
+  | `OTWARTA` | trwa głosowanie (+ plakietka „N głosów”) | — |
+  | `ZATRZYMANA` | głosowanie zatrzymane, niepodliczone (+ plakietka „do podliczenia”) | — |
+  | `GOTOWA` | podliczona — można grać | spełnia warunki gry |
+
+  W bazie: nowy stan `poll_stopped` w `game_status` (migracja dodająca);
+  „Podlicz głosy” przechodzi do `ready`. en / uk — odpowiedniki.
 
 ## 5. Teksty do poprawy
 
@@ -143,3 +155,56 @@ Kafel gry pokazuje „TYP • STAN” (`games.js:684` `statusLabel`, klucze
 Testy: `frontend-layout.spec.js`, `mobile-sheet-modals.spec.js`,
 `logo-editor.spec.js`, spece hubu i subskrypcji — selektory kafli i pól
 do aktualizacji razem ze zmianą.
+
+## Komunikaty po akcji — jeden dymek (decyzja 2026-10-09)
+
+Pola komunikatu na stronach (np. `#status` w Koncie) użytkownik usunął — nie
+podobał mu się ich wygląd. Zamiast nich **jeden wspólny dymek** `toast()`
+(`shared/js/core/toast.js`): na dole ekranu (nad dolnym paskiem), ~3 s,
+zwykły albo błąd (czerwony obrys, do kliknięcia). **Tylko tam, gdzie efekt nie
+jest oczywisty**: wysłany mail/link, zapis formularza bez widocznej zmiany
+(nazwa w Koncie, hasło), skopiowany link, błąd sieci/zapisu. Bez dymka, gdy
+zmiana jest widoczna sama (autozapis w edytorach, kafel znika/pojawia się,
+zmiana stanu ankiety na pasku). Dwie lokalne kopie `showToast` (Społeczność,
+panel admina) przechodzą na wspólny moduł. Strony logowania (`/login/`,
+`/login/reset/`, `/login/confirm/`) zostają przy swoim polu stanu — tam to
+jest treść strony („Sprawdź skrzynkę”), nie komunikat po akcji.
+
+### Inwentarz komunikatów po akcji (stan na 2026-10-09)
+
+Przegląd wszystkich stron w `web/` (poza `settings/` i `tools/`). Skrypt
+porównujący identyfikatory z JS z `id="…"` w HTML wykazał **jeden** brakujący
+element: `#status` w Koncie (usunięty w e13a95272 „Polish account and sharing
+tiles”). Pozostałe pola komunikatów istnieją. Implementacja: `shared/js/core/toast.js`
+(kontener `#appToast`, styl `.app-toast` w `base.css`).
+
+| strona | komunikat (klucz) | kiedy | element istnieje? | decyzja |
+|---|---|---|---|---|
+| Konto | `account.statusUsernameSaved` | zapis nazwy | nie (`#status`) | dymek |
+| Konto | `statusEmailSaved`, `statusEmailResent` | wysłane linki zmiany e-maila | nie | dymek |
+| Konto | `statusEmailCancelled` | anulowanie zmiany e-maila | nie | dymek |
+| Konto | `statusPasswordSaved` | zmiana hasła | nie | dymek |
+| Konto | `statusMigrateSent`, `statusMigrateResent`, `statusMigrateCancelled` | migracja gościa | nie | dymek |
+| Konto | błąd usuwania konta (`niceAuthError`) | usuwanie konta | `#err` tak | zostaje w `#err` + dymek błędu (przycisk na dole strony) |
+| Konto | pozostałe błędy formularzy (`setErr`) | zapisy, migracja | `#err` tak | zostaje |
+| Konto | `statusLoaded`, `statusEmailPending`, `statusMigrating`, `statusMigrateResending`, `statusMigrateCancelling`, `statusSavingEmail`, `statusEmailResending`, `statusEmailCancelling`, `statusDeleting`, `statusError` | ładowanie / „w toku” / błąd (dublował `#err`) | nie | bez (klucze usunięte z pl/en/uk) |
+| Społeczność | `showToast` (dodano do biblioteki, wycofano, wysłano, ocena) | po akcji | lokalny `#toast` | dymek wspólny (lokalna kopia usunięta) |
+| Panel admina (`settings`) | `showToast` | po akcji | lokalny `#toast` | dymek wspólny (lokalna kopia usunięta) |
+| Ankieta | `polls.copy.success/failed`, `polls.qrModal.copied` | kopiowanie linku / kodu | lokalny `.pollToast` | dymek (błąd: czerwony) |
+| Ankieta | `polls.share.invitesSent`, `reminded`, `invitesBlocked` | wysłane zaproszenia / przypomnienia | lokalny `.pollToast` | dymek |
+| Ankieta | `polls.status.opened/stopped/resumed/aborted/reopened/tallied`, `polls.share.removed` | zmiana stanu | lokalny `.pollToast` | bez (stan widać na pasku, wiersz znika) |
+| Ankieta | `polls.missingId`, walidacja otwarcia (`poll_open.reason`), `common.genericError` | błędy | lokalny `.pollToast` | dymek błędu |
+| Ankieta | `onNotice` z liczenia głosów | uwagi edytora wyników | lokalny `.pollToast` | dymek |
+| Panel sterowania | kopiowanie kodu połączenia (modal QR i kafel urządzenia) | dotąd cicho | brak | dymek (`control.copyOk` / `copyFail`) |
+| Panel sterowania | udostępnienie urządzenia e-mailem (`control.shareDeviceModal.mailSent`, nowy) | mail poszedł | `#shareDeviceMsg` tak (błędy) | dymek dla sukcesu, błędy zostają w modalu |
+| Subskrypcje | `statusMsg.inviteSaved` | zaproszenie wysłane | brak (był `alertModal`) | dymek zamiast modala |
+| Subskrypcje | `statusMsg.mailSent` | ponowna wysyłka zaproszenia | brak (cicho) | dymek |
+| Subskrypcje | błędy zaproszeń/mail (`alertModal`) | błędy | modal | zostaje |
+| Bazy | `bases.share.*` (`#shareMsg`), `importMsg`, `nameMsg`, `hint` | udostępnianie, import, nazwa | tak | zostaje w treści modala |
+| Gry | `importMsg`, `exportBaseMsg`, `exportJsonMsg`, `nameMsg`, `hint` | import / eksport / nazwa | tak | zostaje (pobranie pliku jest widoczne) |
+| Logo | `logoEditor.status.deleting/deleted/imported` (`#msg`) | lista logo | tak | zostaje (kafel znika/pojawia się) |
+| Edytor gry | `#msg` („Zapisano.”, „Import zakończony.”) | autozapis, import | tak | zostaje (autozapis) |
+| Podłącz urządzenie (`connect`, `connect/tv`) | `connectDevice.*` (`#msg`, `connectCodeMsg`) | błędy kodu, kamery | tak | zostaje w treści strony |
+| Idź do gry (`go`) | `#message`, `#hint` | stan wejścia | tak | zostaje w treści strony |
+| Logowanie (`/login/`, `/reset/`, `/confirm/`) | `#status`, `#err` | instrukcje i wyniki | tak | zostaje (treść strony) |
+| Dom, Instrukcja, Prywatność, 404, Przerwa | — | brak komunikatów | — | — |

@@ -4,15 +4,16 @@
 // Lista budowana raz; potem tylko liczby i szerokości pasków (przejście CSS).
 // Punktacja: kolejność odpowiedzi z gry. Tekst: kolejność pojawienia się,
 // nowe na końcu. Sortowanie wg głosów dopiero przy zamykaniu.
-import { t } from "../../translation/translation.js?v=v2026-10-09T08150";
+import { t } from "../../translation/translation.js?v=v2026-10-09T17351";
 
+// poll_stopped: te same surowe wiersze co na żywo (głosy już się nie zmieniają)
 function resultsMode(status, type) {
   if (status === "draft") return "draft";
   if (status === "ready") return "final";
   return type === "poll_points" ? "points" : "text";
 }
 
-function makeResultRow(text) {
+export function makeResultRow(text) {
   const row = document.createElement("div");
   row.className = "aRow";
   row.innerHTML = `<div class="aBar"></div><div class="aTxt"></div><div class="aVal">0</div>`;
@@ -20,14 +21,16 @@ function makeResultRow(text) {
   return { row, bar: row.querySelector(".aBar"), val: row.querySelector(".aVal") };
 }
 
-function setRowValue(r, value, pct) {
+export function setRowValue(r, value, pct) {
   const next = String(value);
   if (r.val.textContent !== next) r.val.textContent = next;
   const w = `${Math.max(0, Math.min(100, pct)).toFixed(1)}%`;
   if (r.bar.style.width !== w) r.bar.style.width = w;
 }
 
-// Zwraca { render(data) -> tekst meta, reset() }.
+// Zwraca { render(data) -> tekst meta, reset(), slots() }.
+// slots() = Map(id pytania -> { list, rows }) bieżącego widoku: na tych samych
+// wierszach strona ankiety robi płynne przejście do podliczania (poll-tally.js).
 export function createPollResults(listEl) {
   // resDom = { mode, sig, byQ: Map(qid -> { list, rows: Map(key -> { row, bar, val }) }) }
   let resDom = null;
@@ -151,5 +154,5 @@ export function createPollResults(listEl) {
     return mode === "final" ? t("polls.results.final") : "";
   }
 
-  return { render, reset };
+  return { render, reset, slots: () => (resDom ? resDom.byQ : new Map()), mode: () => (resDom ? resDom.mode : "") };
 }

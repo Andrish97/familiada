@@ -1,7 +1,7 @@
 // js/core/game-validate.js
-import { sb } from "./supabase.js?v=v2026-10-09T08150";
-import { t, withLangParam } from "../../translation/translation.js?v=v2026-10-09T08150";
-import { showBlockingOverlay } from "./resource-lock.js?v=v2026-10-09T08150";
+import { sb } from "./supabase.js?v=v2026-10-09T17351";
+import { t, withLangParam } from "../../translation/translation.js?v=v2026-10-09T17351";
+import { showBlockingOverlay } from "./resource-lock.js?v=v2026-10-09T17351";
 
 /**
  * Typy gier:
@@ -19,7 +19,8 @@ export const TYPES = {
 export const STATUS = {
   DRAFT: "draft",
   POLL_OPEN: "poll_open",
-  READY: "ready", // po zamknięciu ankiety / gotowe do gry
+  POLL_STOPPED: "poll_stopped", // głosowanie zatrzymane, jeszcze niepodliczone (migracja 315)
+  READY: "ready", // po podliczeniu ankiety / gotowe do gry
 };
 
 // Te same liczby co w game_validate (baza) -- tu tylko do podpowiedzi w UI
@@ -67,7 +68,7 @@ export async function loadAnswers(questionId) {
 // RPC game_validate (migracja 273) -- jedno źródło prawdy dla games, editor,
 // polls, subscriptions i control. Tu tylko tłumaczymy kod błędu na tekst.
 // Każda akcja: { ok, reason } (+ needsReset dla edit).
-const ACTIONS = ["edit", "play", "poll_entry", "poll_open", "poll_close", "export"];
+const ACTIONS = ["edit", "play", "poll_entry", "poll_open", "poll_stop", "poll_resume", "poll_close", "export"];
 
 function actionResult(raw) {
   const ok = !!raw?.ok;
@@ -82,7 +83,7 @@ function actionResult(raw) {
 /**
  * Stan gry i wszystkich akcji jednym zapytaniem.
  * Zwraca { game: {id,type,status,rev}, rules, edit, play, poll_entry,
- * poll_open, poll_close, export }. Gra niedostępna -> każda akcja z
+ * poll_open, poll_stop, poll_resume, poll_close, export }. Gra niedostępna -> każda akcja z
  * reason gameValidate.noGame.
  */
 export async function validateGame(gameId) {
@@ -113,15 +114,19 @@ export function rulesFromState(state) {
 
 /**
  * Warstwa 2 (migracja 274): baza sama odrzuca zapis łamiący reguły --
- * 'game_content_locked:<powód>' (treść gry przy otwartej ankiecie / kopii ze
- * Społeczności) albo 'poll_close_blocked:<kod>' (zamknięcie ankiety bez
- * spełnionych warunków). Zwraca przetłumaczony komunikat albo "" dla innych
+ * 'game_content_locked:<powód>' (treść gry przy otwartej lub zatrzymanej
+ * ankiecie / kopii ze Społeczności) albo 'poll_close_blocked:<kod>' (podliczenie
+ * ankiety bez spełnionych warunków). Zwraca przetłumaczony komunikat albo "" dla innych
  * błędów.
  */
 export function gameRuleErrorMessage(err) {
   const m = String(err?.message || "");
   if (m.includes("game_content_locked:poll_open")) return t("gameValidate.pollOpenNoEdit");
+  if (m.includes("game_content_locked:poll_stopped")) return t("gameValidate.pollStoppedNoEdit");
   if (m.includes("game_content_locked:market")) return t("gameValidate.marketNoEdit");
+  // wyjątki RPC Zatrzymaj / Wznów / Podlicz (migracja 315)
+  if (/\bpoll_not_open\b/.test(m)) return t("gameValidate.stopOnlyOpen");
+  if (/\bpoll_not_stopped\b/.test(m)) return t("gameValidate.resumeOnlyStopped");
   const close = m.match(/poll_close_blocked:(\w+):(\d*)/);
   if (close) return t(`gameValidate.${close[1]}`, { ord: close[2] || "?" });
   return "";

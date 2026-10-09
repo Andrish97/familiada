@@ -1,14 +1,16 @@
 // familiada/logo/js/db.js
 // Dostęp do tabeli user_logos i plików logo w Storage.
 
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T08150";
-import { storagePathFromUrl } from "./image.js?v=v2026-10-09T08150";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T17351";
+import { getTabId } from "../../shared/js/core/resource-lock.js?v=v2026-10-09T17351";
+import { storagePathFromUrl } from "./image.js?v=v2026-10-09T17351";
 
-/** Błąd „zasób zajęty” z RPC *_checked -- reason: control | settings | … */
+/** Błąd „zasób zajęty” z RPC *_checked -- reason: logo (inna karta edytuje to logo)
+ *  | control | settings (pula logo trzymana przez grę) | locked. */
 function busyError(result) {
   const e = new Error("logo in use");
   e.code = "RESOURCE_IN_USE";
-  e.reason = result?.reason;
+  e.reason = result?.blocker_type === "logo" ? "logo" : (result?.blocker_context || result?.reason);
   return e;
 }
 
@@ -104,32 +106,19 @@ export async function removeLogoImageUrl(imageUrl, userId) {
   if (error) console.warn("[logo/db] could not remove imported image:", error);
 }
 
-// Przez RPC, nie goły update(): sprawdza atomowo, czy pula logo właściciela
-// nie jest teraz zajęta (rozgrywka / otwarte ustawienia gry) -- patrz
-// docs/plan-testy-i-poprawki.md, „Model: zasób ma stan busy/free”.
+// Przez RPC, nie goły update(): sprawdza atomowo, czy to logo (inna karta) albo
+// pula logo właściciela (rozgrywka / otwarte ustawienia gry) nie są trzymane
+// przez kogoś innego -- docs/blokady-zasobow.md, „Zgodność zasobów”. Własna
+// karta (p_tab_id) nie przeszkadza sama sobie.
 export async function updateLogo(id, patch) {
-  const { data, error } = await sb().rpc("update_logo_checked", { p_logo_id: id, p_patch: patch });
+  const { data, error } = await sb().rpc("update_logo_checked", { p_logo_id: id, p_patch: patch, p_tab_id: getTabId() });
   if (error) throw error;
   if (!data?.ok) throw busyError(data);
 }
 
-// Najpierw RPC (blokuje, gdy logo jest używane), dopiero potem plik obrazu
-// w Storage -- inaczej odmowa usunięcia zostawiłaby wiersz bez obrazu.
+// Plik obrazu w Storage usuwa baza razem z wierszem (migracja 313).
 export async function deleteLogo(id) {
-  const { data: logo, error: fetchError } = await sb().from("user_logos").select("payload->source->>imageUrl,payload->source->>hostRasterUrl").eq("id", id).single();
-  if (fetchError) throw fetchError;
-
-  const { data: result, error } = await sb().rpc("delete_resource_checked", { p_resource_type: "logo", p_resource_id: id });
+  const { data: result, error } = await sb().rpc("delete_resource_checked", { p_resource_type: "logo", p_resource_id: id, p_tab_id: getTabId() });
   if (error) throw error;
   if (!result?.ok) throw busyError(result);
-
-  const urls = [logo?.imageUrl, logo?.hostRasterUrl].filter(Boolean);
-  if (!urls.length) return;
-  try {
-    const user = (await sb().auth.getUser())?.data?.user;
-    const paths = urls.map(url => storagePathFromUrl(url, user?.id)).filter(Boolean);
-    if (paths.length) await sb().storage.from("user-logos").remove(paths);
-  } catch (e) {
-    console.warn("[logo/db] could not remove image file:", e);
-  }
 }

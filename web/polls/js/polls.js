@@ -1,39 +1,52 @@
 // js/pages/polls.js
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T08150";
-import { requireAuth } from "../../shared/js/core/auth.js?v=v2026-10-09T08150";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-09T08150";
+// Strona ankiety (właściciel): /polls/?id=<gra>.
+//   A. Pasek stanu — stan słowem po lewej, WSZYSTKIE akcje po prawej
+//      (Uruchom · Zatrzymaj · Wznów głosowanie · Podlicz głosy · Zatwierdź ·
+//      Uruchom ponownie · Przerwij). Na telefonie akcje w dolnym pasku.
+//   B. Karty Udostępnianie · Wyniki. Wyniki są jedne dla wszystkich stanów:
+//      na żywo, zatrzymane (surowe), podliczanie (poll-tally.js), ostateczne.
+// Stany gry: draft -> poll_open <-> poll_stopped -> ready (migracja 315).
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T17351";
+import { requireAuth } from "../../shared/js/core/auth.js?v=v2026-10-09T17351";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-09T17351";
 import QRCode from "https://cdn.jsdelivr.net/npm/qrcode@1.5.3/+esm";
-import { initI18n, t, withLangParam, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-09T08150";
-import { initTopbarAccountDropdown } from "../../shared/js/core/topbar-controller.js?v=v2026-10-09T08150";
-import { guardResourceLock } from "../../shared/js/core/resource-lock.js?v=v2026-10-09T08150";
-import { validateGame, gameRuleErrorMessage, guardGameState } from "../../shared/js/core/game-validate.js?v=v2026-10-09T08150";
-import { mailCooldownCheck } from "../../shared/js/core/cooldown.js?v=v2026-10-09T08150";
-import { sendPollInviteMails } from "../../shared/js/core/poll-mail.js?v=v2026-10-09T08150";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-09T08150";
-import { createPollResults } from "../../shared/js/core/poll-results.js?v=v2026-10-09T08150";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-09T08150";
+import { initI18n, t, withLangParam, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-09T17351";
+import { linkTo, backHref, renderBackLabel } from "../../shared/js/core/nav-map.js?v=v2026-10-09T17351";
+import { initTopbarAccountDropdown } from "../../shared/js/core/topbar-controller.js?v=v2026-10-09T17351";
+import { guardResourceLock } from "../../shared/js/core/resource-lock.js?v=v2026-10-09T17351";
+import { validateGame, gameRuleErrorMessage, guardGameState } from "../../shared/js/core/game-validate.js?v=v2026-10-09T17351";
+import { mailCooldownCheck } from "../../shared/js/core/cooldown.js?v=v2026-10-09T17351";
+import { sendPollInviteMails } from "../../shared/js/core/poll-mail.js?v=v2026-10-09T17351";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-09T17351";
+import { createPollResults } from "../../shared/js/core/poll-results.js?v=v2026-10-09T17351";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-09T17351";
+import { toast, hideToast } from "../../shared/js/core/toast.js?v=v2026-10-09T17351";
+import { createTally } from "./poll-tally.js?v=v2026-10-09T17351";
 
 // initI18n is called at the start of DOMContentLoaded (see below)
 
 const qs = new URLSearchParams(location.search);
 const gameId = qs.get("id");
-const ret = qs.get("ret");
 
 const $ = (id) => document.getElementById(id);
 
 const btnBack = $("btnBack");
 const btnManual = $("btnManual");
-const msg = $("msg");
 
 // pasek stanu
 const pollBar = $("pollBar");
-const chipType = $("chipType");
-const chipStatus = $("chipStatus");
-const chipVotes = $("chipVotes");
+const pollStateWord = $("pollStateWord");
+const pollStateInfo = $("pollStateInfo");
 const hintTop = $("hintTop");
-const btnPollAction = $("btnPollAction");
+const btnOpenPoll = $("btnOpenPoll");
+const btnStopPoll = $("btnStopPoll");
+const btnResumePoll = $("btnResumePoll");
+const btnTallyPoll = $("btnTallyPoll");
+const btnApproveTally = $("btnApproveTally");
+const btnLeaveTally = $("btnLeaveTally");
+const btnReopenPoll = $("btnReopenPoll");
 const btnAbort = $("btnAbort");
-const btnCancelTextCloseTop = $("btnCancelTextCloseTop");
+const pollActions = $("pollActions");
 
 // treść
 const cardMain = $("cardMain");
@@ -46,108 +59,145 @@ const secResults = $("secResults");
 // Udostępnianie
 const shareEmpty = $("shareEmpty");
 const shareBody = $("shareBody");
+const linkPlaceholder = $("linkPlaceholder");
+const linkLive = $("linkLive");
 const pollLinkEl = $("pollLink");
 const qrBox = $("qr");
 const btnCopy = $("btnCopy");
 const btnOpen = $("btnOpen");
 const btnOpenQr = $("btnOpenQr");
+const btnToggleQr = $("btnToggleQr");
 const btnSendInvites = $("btnSendInvites");
+const btnSelectAll = $("btnSelectAll");
 const subsGrid = $("subsGrid");
 const subsEmpty = $("subsEmpty");
+const subsSummary = $("subsSummary");
+const sendHint = $("sendHint");
 
-// QR modal (wyświetlacz ankiety)
+// QR modal (wyświetlacz ankiety / kod do głosowania)
 const pollQrModalOverlay = $("pollQrModalOverlay");
-
+const pollQrModalTitle = $("pollQrModalTitle");
+const pollQrModalSubtitle = $("pollQrModalSubtitle");
+const pollQrModalVote = $("pollQrModalVote");
+const pollQrModalCode = $("pollQrModalCode");
+const pollQrModalActions = $("pollQrModalActions");
+const pollQrModalHint = $("pollQrModalHint");
 const pollQrModalCodeVal = $("pollQrModalCodeVal");
-const pollQrModalCopy    = $("pollQrModalCopy");
-const pollQrModalOpen    = $("pollQrModalOpen");
-const pollQrModalClose   = $("pollQrModalClose");
+const pollQrModalCopy = $("pollQrModalCopy");
+const pollQrModalOpen = $("pollQrModalOpen");
+const pollQrModalClose = $("pollQrModalClose");
 let _pollQrDeviceCode = "";
-let _pollQrOpenUrl    = "";
+let _pollQrOpenUrl = "";
 
 // Wyniki
 const resultsMeta = $("resultsMeta");
 const resultsList = $("resultsList");
-
-// zamykanie ankiety tekstowej
-const textCloseShell = $("textCloseShell");
-const textCloseMeta = $("textCloseMeta");
-const textCloseList = $("textCloseList");
-const btnCancelTextClose = $("btnCancelTextClose");
-const btnFinishTextClose = $("btnFinishTextClose");
+const tallyBar = $("tallyBar");
+const tallyHint = $("tallyHint");
+const tallyTools = $("tallyTools");
+const tallySave = $("tallySave");
 const btnUndo = $("btnUndo");
 const btnRedo = $("btnRedo");
 
 let game = null;
 let currentUser = null;
-let textCloseModel = null;
-let uiTextCloseOpen = false;
-let busy = false; // trwa akcja stanu (uruchom / zamknij / przerwij)
+let busy = false; // trwa akcja stanu (uruchom / zatrzymaj / podlicz / przerwij)
+let lastCheck = null; // wynik validateGame() z ostatniego odświeżenia
+let lastPreview = null; // ostatnia odpowiedź get_poll_preview
+let votesText = ""; // „12 głosów” w pasku stanu (ankieta otwarta)
+let tallyActive = false; // karta Wyniki w trybie podliczania
+let tallyValid = false;
 
-let undoStack = [];
-let redoStack = [];
 
-function saveSnapshot() {
-  if (!textCloseModel) return;
-  // głęboka kopia modelu
-  undoStack.push(JSON.parse(JSON.stringify(textCloseModel)));
-  redoStack = []; // nowa akcja czyści redo
-  updateHistoryButtons();
+const TYPES = {
+  POLL_TEXT: "poll_text",
+  POLL_POINTS: "poll_points",
+  PREPARED: "prepared",
+};
+const STATUS = {
+  DRAFT: "draft",
+  POLL_OPEN: "poll_open",
+  POLL_STOPPED: "poll_stopped",
+  READY: "ready",
+};
+
+const LIVE_REFRESH_MS = 5000;
+
+function escapeHtml(s) {
+  return String(s ?? "").replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;");
 }
 
-function updateHistoryButtons() {
-  if (btnUndo) btnUndo.disabled = undoStack.length === 0;
-  if (btnRedo) btnRedo.disabled = redoStack.length === 0;
+function setMsg(text, kind = "info") {
+  if (!text) { hideToast(); return; }
+  toast(text, { kind });
 }
 
-function undoAction() {
-  if (!uiTextCloseOpen || undoStack.length === 0) return;
-  redoStack.push(JSON.parse(JSON.stringify(textCloseModel)));
-  textCloseModel = undoStack.pop();
-  updateHistoryButtons();
-  if (window._textCloseRerenderAll) window._textCloseRerenderAll();
+function typeShortLabel(type) {
+  if (type === TYPES.POLL_TEXT) return t("polls.typeShort.text");
+  if (type === TYPES.POLL_POINTS) return t("polls.typeShort.points");
+  return t("games.types.prepared");
 }
 
-function redoAction() {
-  if (!uiTextCloseOpen || redoStack.length === 0) return;
-  undoStack.push(JSON.parse(JSON.stringify(textCloseModel)));
-  textCloseModel = redoStack.pop();
-  updateHistoryButtons();
-  if (window._textCloseRerenderAll) window._textCloseRerenderAll();
+function statusLabel(st) {
+  const s = st || STATUS.DRAFT;
+  if (s === STATUS.DRAFT) return t("games.status.draft");
+  if (s === STATUS.POLL_OPEN) return t("games.status.open");
+  if (s === STATUS.POLL_STOPPED) return t("games.status.stopped");
+  if (s === STATUS.READY) return t("games.status.ready");
+  return String(s).toUpperCase();
 }
 
-const backTarget = withLangParam(new URL(ret || "/games/", location.origin + "/").href);
-
-
-function getRetPathnameLower() {
-  if (!ret) return "";
+function formatUntil(untilMs) {
   try {
-    return new URL(ret, location.origin + "/").pathname.toLowerCase();
+    return new Date(untilMs).toLocaleString(getUiLang() || "pl", {
+      day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit",
+    });
   } catch {
-    return "";
+    return new Date(untilMs).toLocaleString();
   }
 }
 
-function buildManualUrl() {
-  const url = new URL("/manual/", location.href);
-  const current = `${location.pathname}${location.search}${location.hash}`;
-  url.searchParams.set("ret", current);
-  const lang = (new URLSearchParams(location.search).get("lang") || localStorage.getItem("uiLang") || "pl");
-  url.searchParams.set("lang", lang);
-  url.hash = "polls";
-  return url.toString();
-}
+/* =======================
+   QR modal: wyświetlacz (kod urządzenia) albo powiększony kod do głosowania
+======================= */
 
-// --- QR modal (wyświetlacz ankiety) ---
 function hidePollQrModal() {
   if (pollQrModalOverlay) pollQrModalOverlay.classList.add("hidden");
 }
 
+function setQrModalMode(vote) {
+  if (pollQrModalVote) pollQrModalVote.hidden = !vote;
+  for (const el of [pollQrModalCode, pollQrModalActions, pollQrModalHint]) if (el) el.hidden = !!vote;
+  if (pollQrModalTitle) pollQrModalTitle.textContent = vote ? t("polls.qrModal.voteTitle") : t("polls.qrModal.title");
+  if (pollQrModalSubtitle) pollQrModalSubtitle.textContent = vote ? t("polls.qrModal.voteSubtitle") : t("polls.qrModal.subtitle");
+}
+
+// Kliknięcie małego QR: ten sam kod do głosowania, powiększony.
+async function showVoteQrModal() {
+  const url = pollLinkEl?.value;
+  if (!url || !pollQrModalVote) return;
+  setQrModalMode(true);
+  pollQrModalVote.innerHTML = "";
+  pollQrModalOverlay?.classList.remove("hidden");
+  try {
+    const wrap = document.createElement("div");
+    wrap.className = "qrFrameSmall qrFrameBig";
+    const canvas = document.createElement("canvas");
+    await QRCode.toCanvas(canvas, url, { width: 640, margin: 1 });
+    wrap.appendChild(canvas);
+    pollQrModalVote.appendChild(wrap);
+  } catch (e) {
+    console.warn("[polls] big QR failed:", e);
+    pollQrModalVote.textContent = t("polls.qrFailed");
+  }
+}
+
 async function showPollQrModal() {
   if (!game || !pollLinkEl?.value) return;
+  setQrModalMode(false);
 
   // URL do strony wyświetlacza (poll-qr) — zawiera aktualny język polls
-  const displayUrl = new URL("/poll-qr/", location.href);
+  const displayUrl = new URL("/polls/vote/qr/", location.href);
   displayUrl.searchParams.set("id", game.id);
   displayUrl.searchParams.set("key", game.share_key_poll);
   displayUrl.searchParams.set("lang", getUiLang() || "pl");
@@ -168,7 +218,7 @@ async function showPollQrModal() {
     if (pollQrModalCodeVal) pollQrModalCodeVal.textContent = data.code;
   } catch (e) {
     console.warn("[polls] showPollQrModal error", e);
-    setMsg(t("common.genericError") || "Błąd.");
+    setMsg(t("common.genericError") || "Błąd.", "error");
   }
 }
 
@@ -182,24 +232,20 @@ pollQrModalCopy?.addEventListener("click", async () => {
     await navigator.clipboard.writeText(_pollQrDeviceCode);
     setMsg(t("polls.qrModal.copied"));
   } catch {
-    setMsg(t("polls.copy.failed"));
+    setMsg(t("polls.copy.failed"), "error");
   }
 });
 pollQrModalOpen?.addEventListener("click", () => {
   if (!_pollQrOpenUrl) return;
-  const u = new URL(withLangParam("/poll-qr/"), location.href);
+  const u = new URL(withLangParam("/polls/vote/qr/"), location.href);
   u.searchParams.set("url", _pollQrOpenUrl);
   window.open(u.toString(), "_blank", "noopener,noreferrer");
 });
 
 // --- Język QR-a w ankietach (games.poll_qr_lang, migracja 269) ---
-// Wcześniej: broadcast (BroadcastChannel same-browser + Supabase Realtime
-// cross-device) — wymagał, żeby poll-qr.js było podłączone w TEJ SAMEJ
-// chwili, gdy operator zmienia język tutaj; urządzenie offline/dołączone
-// później zostawało trwale z nieaktualnym językiem. Zamiast tego po prostu
-// PERSYSTUJEMY język na games.poll_qr_lang -- poll-qr.js samo się o niego
-// dopytuje (pollowanie, patrz komentarz tam), więc nie ma już czego
-// "wysyłać": broadcastLang() tylko zapisuje, nigdy nie czeka na odbiorcę.
+// Język jest PERSYSTOWANY na games.poll_qr_lang -- poll-qr.js samo się o niego
+// dopytuje (pollowanie), więc broadcastLang() tylko zapisuje, nigdy nie czeka
+// na odbiorcę.
 async function broadcastLang(lang) {
   if (!game?.id) return;
   try {
@@ -214,90 +260,9 @@ window.addEventListener("i18n:lang", (e) => {
   if (!lang) return;
 
   broadcastLang(lang);
+  tally.relabel();
   void refresh();
 });
-
-const TYPES = {
-  POLL_TEXT: "poll_text",
-  POLL_POINTS: "poll_points",
-  PREPARED: "prepared",
-};
-const STATUS = {
-  DRAFT: "draft",
-  POLL_OPEN: "poll_open",
-  READY: "ready",
-};
-
-const LIVE_REFRESH_MS = 5000;
-
-function escapeHtml(s) {
-  return String(s ?? "").replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;");
-}
-
-let msgTimer = null;
-function setMsg(text) {
-  if (!msg) return;
-  msg.textContent = text || "";
-  msg.classList.toggle("on", !!text);
-  clearTimeout(msgTimer);
-  if (text) msgTimer = setTimeout(() => { msg.textContent = ""; msg.classList.remove("on"); }, 2800);
-}
-
-function typeLabel(type) {
-  if (type === TYPES.POLL_TEXT) return t("games.types.pollText");
-  if (type === TYPES.POLL_POINTS) return t("games.types.pollPoints");
-  if (type === TYPES.PREPARED) return t("games.types.prepared");
-  return String(type || "—").toUpperCase();
-}
-
-function statusLabel(st) {
-  const s = st || STATUS.DRAFT;
-  if (s === STATUS.DRAFT) return t("games.status.draft");
-  if (s === STATUS.POLL_OPEN) return t("games.status.open");
-  if (s === STATUS.READY) return t("games.status.closed");
-  return String(s).toUpperCase();
-}
-
-function formatUntil(untilMs) {
-  try {
-    return new Date(untilMs).toLocaleString(getUiLang() || "pl", {
-      day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit",
-    });
-  } catch {
-    return new Date(untilMs).toLocaleString();
-  }
-}
-
-/* =======================
-   A. Pasek stanu
-======================= */
-
-function setChips(g) {
-  if (chipType) chipType.textContent = typeLabel(g?.type);
-
-  if (chipStatus) {
-    const st = g?.status || STATUS.DRAFT;
-    chipStatus.textContent = statusLabel(st);
-    chipStatus.className = "tag " + (st === STATUS.READY ? "tag--ok" : st === STATUS.POLL_OPEN ? "tag--warn" : "tag--muted");
-  }
-
-  if (chipVotes && g?.status !== STATUS.POLL_OPEN) chipVotes.style.display = "none";
-}
-
-function setVotesChip(n) {
-  if (!chipVotes) return;
-  chipVotes.style.display = "";
-  chipVotes.textContent = t("polls.tags.votes", { n: Number(n) || 0 });
-}
-
-function setActionButton(label, disabled, hint) {
-  if (btnPollAction) {
-    btnPollAction.textContent = label || "";
-    btnPollAction.disabled = !!disabled;
-    btnPollAction.style.visibility = "";
-  }
-  if (hintTop) hintTop.textContent = hint || "";
-}
 
 /* =======================
    Link i QR
@@ -308,6 +273,7 @@ function setLinkUiVisible(on) {
   if (btnCopy) btnCopy.disabled = !v;
   if (btnOpen) btnOpen.disabled = !v;
   if (btnOpenQr) btnOpenQr.disabled = !v;
+  if (qrBox) qrBox.disabled = !v;
   if (!v) clearQr();
 }
 
@@ -342,9 +308,9 @@ function pollLink(g) {
   if (!g) return "";
   const base =
     g.type === TYPES.POLL_TEXT
-      ? "/poll-text/"
+      ? "/polls/vote/text/"
       : g.type === TYPES.POLL_POINTS
-      ? "/poll-points/"
+      ? "/polls/vote/points/"
       : "";
   if (!base) return "";
 
@@ -378,97 +344,34 @@ async function listQuestionsBasic() {
   return data || [];
 }
 
-async function getLastSessionIdForQuestion(qid) {
-  const { data, error } = await sb()
-    .from("poll_sessions")
-    .select("id")
-    .eq("game_id", gameId)
-    .eq("question_id", qid)
-    .order("created_at", { ascending: false })
-    .limit(1);
-  if (error) throw error;
-  return data?.[0]?.id || null;
+function rpcErrText(error, data) {
+  return error?.message || error?.details || data?.err || data?.error || t("common.genericError");
 }
 
 /* =======================
-   Walidacje
-======================= */
-
-// Warunki otwarcia / zamknięcia liczy baza (game_validate, migracja 273).
-async function validateCanOpen(g) {
-  if (!g) return { ok: false, reason: t("gameValidate.noGame") };
-  return (await validateGame(g.id)).poll_open;
-}
-
-async function validateCanClose(g) {
-  if (!g) return { ok: false, reason: t("gameValidate.noGame") };
-  return (await validateGame(g.id)).poll_close;
-}
-
-function setTextCloseUi(open) {
-  uiTextCloseOpen = !!open;
-
-  // okno scalania zastępuje treść (wypustki), pasek stanu zostaje
-  if (textCloseShell) textCloseShell.style.display = open ? "" : "none";
-  if (cardMain && game) cardMain.style.display = open ? "none" : "";
-
-  if (btnPollAction) btnPollAction.style.display = open ? "none" : "";
-  if (btnAbort) btnAbort.style.display = open ? "none" : (game?.status === STATUS.POLL_OPEN ? "" : "none");
-  if (btnCancelTextCloseTop) btnCancelTextCloseTop.style.display = open ? "" : "none";
-
-  // czyść historię
-  undoStack = [];
-  redoStack = [];
-  updateHistoryButtons();
-}
-
-function normalizeCountsTo100(items) {
-  const cleaned = (items || [])
-    .map((x) => ({ ...x, count: Math.max(0, Number(x.count) || 0) }))
-    .filter((x) => x.count > 0);
-
-  if (!cleaned.length) return [];
-
-  const total = cleaned.reduce((s, x) => s + x.count, 0) || 1;
-
-  const raw = cleaned.map((x) => {
-    const r = (100 * x.count) / total;
-    const f = Math.floor(r);
-    return { ...x, raw: r, floor: f, frac: r - f };
-  });
-
-  let sum = raw.reduce((s, x) => s + x.floor, 0);
-  let diff = 100 - sum;
-
-  if (diff > 0) {
-    raw.sort((a, b) => b.frac - a.frac);
-    for (let i = 0; i < diff; i++) raw[i % raw.length].floor += 1;
-  } else if (diff < 0) {
-    diff = -diff;
-    raw.sort((a, b) => b.floor - a.floor);
-    let i = 0;
-    while (diff > 0 && i < raw.length * 5) {
-      const idx = i % raw.length;
-      if (raw[idx].floor > 0) {
-        raw[idx].floor -= 1;
-        diff--;
-      }
-      i++;
-    }
-  }
-
-  return raw.map((x) => ({ ...x, points: x.floor }));
-}
-
-/* =======================
-   Wyniki — na żywo, bez skakania
-   Lista budowana raz; potem tylko liczby i szerokości pasków (przejście CSS).
-   Punktacja: kolejność odpowiedzi z gry. Tekst: kolejność pojawienia się,
-   nowe na końcu. Sortowanie wg głosów dopiero przy zamykaniu.
+   Wyniki — jedna lista dla wszystkich stanów
+   Na żywo (otwarta), surowe (zatrzymana), podliczanie (poll-tally.js),
+   ostateczne (gotowa). Lista budowana raz; potem tylko liczby i szerokości
+   pasków (przejścia CSS) — bez skakania.
 ======================= */
 
 const pollResults = createPollResults(resultsList);
 function resetResultsDom() { pollResults.reset(); }
+
+const tally = createTally({
+  gameId,
+  pollResults,
+  ui: {
+    barEl: tallyBar,
+    hintEl: tallyHint,
+    toolsEl: tallyTools,
+    saveEl: tallySave,
+    undoBtn: btnUndo,
+    redoBtn: btnRedo,
+    onValidity: (ok) => { tallyValid = !!ok; renderBar(); },
+    onNotice: (text) => setMsg(text),
+  },
+});
 
 async function previewResults() {
   if (!game || !resultsList) return;
@@ -477,11 +380,21 @@ async function previewResults() {
     if (resultsMeta) resultsMeta.textContent = t("polls.meta.prepared");
     return;
   }
+  if (game.status === STATUS.DRAFT) {
+    resetResultsDom();
+    lastPreview = null;
+    if (resultsMeta) resultsMeta.textContent = t("polls.results.draftEmpty");
+    return;
+  }
 
   const { data, error } = await sb().rpc("get_poll_preview", { p_game_id: gameId });
   if (error) throw error;
+  lastPreview = data;
+  if (tallyActive) return; // podliczanie ma własny widok tych wierszy
   const meta = pollResults.render(data);
-  if (resultsMeta) resultsMeta.textContent = meta;
+  if (resultsMeta) {
+    resultsMeta.textContent = game.status === STATUS.POLL_STOPPED ? t("polls.results.stopped") : meta;
+  }
 }
 
 // liczba głosujących = wiersze odpowiedzi na pierwsze pytanie (jeden na osobę na pytanie)
@@ -503,270 +416,85 @@ async function fetchVotersCount() {
   return count || 0;
 }
 
-async function refreshVotesChip() {
+async function refreshVotes() {
   try {
     const n = await fetchVotersCount();
-    if (n !== null) setVotesChip(n);
+    if (n !== null) {
+      votesText = t("polls.bar.votes", { n });
+      renderBar();
+    }
   } catch (e) {
     console.warn("[polls] votes count failed", e);
   }
 }
 
-
 /* =======================
-   poll_text close panel
+   Podliczanie: wejście, wyjście, zatwierdzenie
 ======================= */
 
-function clip17Final(s) {
-  const t1 = String(s ?? "").trim();
-  if (!t1) return "";
-  return t1.length > 17 ? t1.slice(0, 17) : t1;
-}
-
-// normalizacja 'klasyczna' dla text-close (z Twojej wersji)
-function normalizeTo100Int(items) {
-  const normalized = normalizeCountsTo100(items);
-  if (!normalized.length) return [];
-
-  let filtered = normalized.filter((x) => x.points >= 3);
-  filtered.sort((a, b) => b.points - a.points);
-  if (filtered.length > 6) filtered = filtered.slice(0, 6);
-
-  const base = filtered.map((x) => ({ text: x.text, points: x.points }));
-
-  const used = new Set();
-  for (const x of base) {
-    let p = Number(x.points) || 0;
-    while (p > 0 && used.has(p)) p--;
-    x.points = p;
-    used.add(p);
+async function enterTally() {
+  if (!game || game.status !== STATUS.POLL_STOPPED || tallyActive) return;
+  setActiveTab("results");
+  try {
+    // świeże dane, ta sama lista wierszy co w widoku surowym
+    tallyActive = false;
+    await previewResults();
+    if (!lastPreview) throw new Error("no preview");
+    if (resultsMeta) resultsMeta.textContent = "";
+    if (game.type === TYPES.POLL_POINTS) await tally.enterPoints(lastPreview);
+    else await tally.enterText();
+    tallyActive = true;
+    setMsg("");
+  } catch (e) {
+    console.error("[polls] enter tally:", e);
+    await alertModal({ text: `${t("polls.errors.loadAnswers")}\n\n${e?.message || e}` });
+    try { await tally.leave(); } catch { /* sprzątanie */ }
+    tallyActive = false;
+    resetResultsDom();
+    await previewResults().catch(() => {});
   }
-  return base;
+  renderBar();
 }
 
-function mergeDuplicatesInPlace(items) {
-  const map = new Map();
-  for (const it of items || []) {
-    const key = String(it.text ?? "").trim().toLowerCase();
-    const cnt = Number(it.count) || 0;
-    if (!key || cnt <= 0) continue;
-
-    if (!map.has(key)) map.set(key, { text: String(it.text ?? "").trim(), count: cnt });
-    else map.get(key).count += cnt;
-  }
-  return [...map.values()].sort((a, b) => b.count - a.count);
+async function leaveTally() {
+  if (!tallyActive) return;
+  try { await tally.leave(); } catch (e) { console.warn("[polls] leave tally", e); }
+  tallyActive = false;
+  tallyValid = false;
+  await previewResults().catch(() => {});
+  renderBar();
 }
 
-function validateTextCloseModel() {
-  if (!textCloseModel || !btnFinishTextClose) return;
+async function approveTallyFlow() {
+  if (!game || !tallyActive || !tally.valid()) return;
+  const points = game.type === TYPES.POLL_POINTS;
+  const key = points ? "tallyPoints" : "tallyText";
+  const ok = await confirmModal({
+    title: t(`polls.modals.${key}.title`),
+    text: t(`polls.modals.${key}.text`),
+    okText: t(`polls.modals.${key}.ok`),
+    cancelText: t("polls.actions.cancel"),
+  });
+  if (!ok) return;
 
-  let allOk = true;
-  for (const q of textCloseModel) {
-    const validCount = q.items.filter((it) => it.text?.trim() && Number(it.count) > 0).length;
-    if (validCount < 3) {
-      allOk = false;
-      break;
-    }
-  }
-  btnFinishTextClose.disabled = !allOk;
-}
-
-async function buildTextClosePanel() {
-  // #btnFinishTextClose nie ma domyślnie atrybutu disabled w HTML — bez tego
-  // jest klikalne od razu po załadowaniu strony, na długo zanim poniższe
-  // zapytania (10x sekwencyjnie, sesja + wpisy na pytanie) w ogóle ustawią
-  // textCloseModel. Klik w tym oknie trafia w early-return w handlerze
-  // (textCloseModel jeszcze null) i nie robi kompletnie nic — bez błędu, bez
-  // modala — potwierdzone diagnostyką w e2e. validateTextCloseModel() poniżej
-  // dopiero WYŁĄCZA przycisk gdy walidacja nie przejdzie, nigdy go nie blokuje
-  // na starcie, więc trzeba to zrobić tutaj jawnie.
-  if (btnFinishTextClose) btnFinishTextClose.disabled = true;
-  setTextCloseUi(true);
-  if (textCloseList) textCloseList.innerHTML = "";
-  if (textCloseMeta) textCloseMeta.textContent = t("polls.textClose.loading");
-
-  const qsList = await listQuestionsBasic();
-  const model = [];
-
-  for (const q of qsList) {
-    const sid = await getLastSessionIdForQuestion(q.id);
-    const map = new Map();
-
-    if (sid) {
-      const { data, error } = await sb()
-        .from("poll_text_entries")
-        .select("answer_norm")
-        .eq("poll_session_id", sid)
-        .eq("question_id", q.id);
+  try {
+    if (points) {
+      const { error } = await sb().rpc("poll_points_tally", { p_game_id: gameId });
       if (error) throw error;
-
-      for (const r of data || []) {
-        const k = (r.answer_norm || "").trim();
-        if (!k) continue;
-        map.set(k, (map.get(k) || 0) + 1);
-      }
+    } else {
+      const { error } = await sb().rpc("poll_text_tally_apply", { p_game_id: gameId, p_payload: tally.textPayload() });
+      if (error) throw error;
     }
-
-    const items = [...map.entries()]
-      .map(([txt, count]) => ({ text: txt, count }))
-      .sort((a, b) => b.count - a.count);
-
-    model.push({ question_id: q.id, ord: q.ord, text: q.text, items });
-  }
-
-  textCloseModel = model;
-  window._textCloseRerenderAll = renderTextCloseFromModel;
-  renderTextCloseFromModel();
-
-  return textCloseModel;
-}
-
-function renderTextCloseFromModel() {
-  if (!textCloseList) return;
-  textCloseList.innerHTML = "";
-
-  if (textCloseMeta) textCloseMeta.textContent = t("polls.textClose.instructions");
-
-  for (const q of textCloseModel) {
-    const box = document.createElement("div");
-    box.className = "tcQ";
-    box.innerHTML = `
-      <div class="head">
-        <div>
-          <div class="qTitle">P${q.ord}: ${escapeHtml(q.text)}</div>
-          <div class="qHint">${t("polls.textClose.hint")}</div>
-        </div>
-        <div class="tcTools">
-          <button class="btn sm tcMergeDup" type="button" title="${t("polls.textClose.mergeTitle")}">${t("polls.textClose.mergeLabel")}</button>
-        </div>
-      </div>
-      <div class="tcList"></div>
-    `;
-
-    const list = box.querySelector(".tcList");
-    const btnDup = box.querySelector(".tcMergeDup");
-
-    btnDup?.addEventListener("click", () => {
-      saveSnapshot();
-      q.items = mergeDuplicatesInPlace(q.items);
-      rerender();
-    });
-
-    const rerender = () => {
-      list.innerHTML = "";
-      q.items.sort((a, b) => b.count - a.count);
-      validateTextCloseModel();
-
-      let mergeSrcIdx = null; // tryb merge na touch
-
-      for (let idx = 0; idx < q.items.length; idx++) {
-        const it = q.items[idx];
-
-        const row = document.createElement("div");
-        row.className = "tcItem";
-        row.draggable = true;
-        row.innerHTML = `
-          <input class="tcTxtInp" type="text" />
-          <div class="tcCnt"></div>
-          <button class="tcMergeBtn" type="button" title="${t("polls.textClose.mergeWith")}" aria-label="${t("polls.textClose.mergeWith")}">${icon("merge")}</button>
-          <button class="tcDel" type="button" title="${t("polls.textClose.remove")}" aria-label="${t("polls.textClose.remove")}">${icon("trash")}</button>
-        `;
-
-        const inp = row.querySelector(".tcTxtInp");
-        inp.value = it.text;
-
-        inp.addEventListener("focus", () => {
-          inp._oldValue = inp.value;
-        });
-
-        inp.addEventListener("input", () => {
-          it.text = inp.value;
-          validateTextCloseModel();
-        });
-
-        inp.addEventListener("blur", () => {
-          if (inp.value !== inp._oldValue) {
-            // Przywróć stary stan, zapisz snapshot, potem przywróć nowy
-            const newValue = inp.value;
-            it.text = inp._oldValue;
-            saveSnapshot();
-            it.text = newValue;
-          }
-        });
-
-        row.querySelector(".tcCnt").textContent = String(it.count || 0);
-
-        row.querySelector(".tcDel").addEventListener("click", () => {
-          saveSnapshot();
-          q.items.splice(idx, 1);
-          rerender();
-        });
-
-        row.addEventListener("dragstart", (e) => {
-          row.classList.add("dragging");
-          e.dataTransfer.setData("text/plain", String(idx));
-        });
-        row.addEventListener("dragend", () => row.classList.remove("dragging"));
-        row.addEventListener("dragover", (e) => e.preventDefault());
-
-        row.addEventListener("drop", (e) => {
-          e.preventDefault();
-          const fromIdx = Number(e.dataTransfer.getData("text/plain"));
-          const toIdx = idx;
-          if (!Number.isFinite(fromIdx) || fromIdx === toIdx) return;
-
-          const fromIt = q.items[fromIdx];
-          const toIt = q.items[toIdx];
-          if (!fromIt || !toIt) return;
-
-          saveSnapshot();
-          toIt.count += fromIt.count;
-          q.items.splice(fromIdx, 1);
-          rerender();
-        });
-
-        // Przycisk ⇄ — tryb merge na touch
-        row.querySelector(".tcMergeBtn").addEventListener("click", () => {
-          if (mergeSrcIdx === idx) {
-            // anuluj tryb
-            mergeSrcIdx = null;
-            list.querySelectorAll(".tcItem").forEach(r => r.classList.remove("merge-src", "merge-target"));
-            return;
-          }
-          if (mergeSrcIdx !== null) {
-            // wykonaj merge: mergeSrcIdx → idx
-            const fromIt = q.items[mergeSrcIdx];
-            const toIt = q.items[idx];
-            if (fromIt && toIt) {
-              saveSnapshot();
-              toIt.count += fromIt.count;
-              q.items.splice(mergeSrcIdx, 1);
-            }
-            mergeSrcIdx = null;
-            rerender();
-            return;
-          }
-          // wejdź w tryb wyboru celu
-          mergeSrcIdx = idx;
-          list.querySelectorAll(".tcItem").forEach((r, i) => {
-            r.classList.remove("merge-src", "merge-target");
-            if (i === idx) r.classList.add("merge-src");
-            else r.classList.add("merge-target");
-          });
-        });
-
-        list.appendChild(row);
-      }
-    };
-
-    rerender();
-    textCloseList?.appendChild(box);
+    tally.finish();
+    tallyActive = false;
+  } catch (e) {
+    console.error("[polls] tally error:", e);
+    await alertModal({ text: `${t("polls.errors.tally")}\n\n${gameRuleErrorMessage(e) || e?.message || e}` });
   }
 }
-
 
 /* =======================
-   B. Wypustki Udostępnianie · Wyniki
+   Wypustki Udostępnianie · Wyniki
 ======================= */
 
 let activeTab = "share";
@@ -783,6 +511,15 @@ function setActiveTab(tab, { byUser = false } = {}) {
     btn?.closest(".tab-slot")?.classList.toggle("active", on);
     btn?.setAttribute("aria-selected", on ? "true" : "false");
   }
+}
+
+function setShareTabEnabled(on) {
+  if (tabShare) {
+    tabShare.disabled = !on;
+    tabShare.setAttribute("aria-disabled", on ? "false" : "true");
+  }
+  tabShare?.closest(".tab-slot")?.classList.toggle("is-disabled", !on);
+  if (!on && activeTab === "share") setActiveTab("results");
 }
 
 /* =======================
@@ -820,6 +557,12 @@ function cooldownActive(subId) {
   return until > Date.now() ? until : 0;
 }
 
+// Karta Udostępnianie działa w szkicu (przygotowanie listy), przy otwartej
+// i zatrzymanej ankiecie. Po podliczeniu linki wygasają.
+function sharingAvailable(st = game?.status) {
+  return st === STATUS.DRAFT || st === STATUS.POLL_OPEN || st === STATUS.POLL_STOPPED;
+}
+
 async function loadTasks() {
   if (!game || !currentUser) { tasks = []; return; }
   const { data, error } = await sb()
@@ -833,7 +576,7 @@ async function loadTasks() {
 }
 
 async function loadSubsData() {
-  if (!game || game.status !== STATUS.POLL_OPEN) return;
+  if (!game || !currentUser || !sharingAvailable()) return;
   const { data, error } = await sb().rpc("polls_hub_list_my_subscribers");
   if (error) throw error;
   subsAll = (data || []).filter((s) => s.status === "active");
@@ -855,7 +598,7 @@ async function loadSubsData() {
 }
 
 async function refreshTasksOnly() {
-  if (!game || game.status !== STATUS.POLL_OPEN) return;
+  if (!game || game.status === STATUS.DRAFT || !sharingAvailable()) return;
   await loadTasks();
   renderSubs();
 }
@@ -864,6 +607,16 @@ function tagFor(tk) {
   if (tk.status === "done") return { cls: "tag--ok", text: t("polls.share.state.done") };
   if (tk.status === "declined") return { cls: "tag--bad", text: t("polls.share.state.declined") };
   return { cls: "tag--warn", text: t("polls.share.state.waiting") };
+}
+
+function selectableSubIds() {
+  return subsAll
+    .filter((s) => !taskForSub(s) && !cooldownActive(s.sub_id))
+    .map((s) => String(s.sub_id));
+}
+
+function canSendInvites() {
+  return game?.status === STATUS.POLL_OPEN;
 }
 
 function renderSubs(force = false) {
@@ -875,21 +628,50 @@ function renderSubs(force = false) {
     if (!sub || taskForSub(sub) || cooldownActive(id)) selectedSubIds.delete(id);
   }
 
+  const stopped = game?.status === STATUS.POLL_STOPPED;
   const sig = JSON.stringify([
+    game?.status,
     subsAll.map((s) => [s.sub_id, subLabel(s), cooldownActive(s.sub_id)]),
     tasks.map((tk) => [tk.id, tk.status, tk.reminder_count]),
     [...selectedSubIds].sort(),
+    getUiLang(),
   ]);
   if (!force && sig === subsSig) return;
   subsSig = sig;
 
-  if (btnSendInvites) btnSendInvites.disabled = selectedSubIds.size === 0;
+  // podsumowanie w nagłówku
+  if (subsSummary) {
+    subsSummary.textContent = t("polls.share.summary", {
+      invited: tasks.length,
+      voted: tasks.filter((tk) => tk.status === "done").length,
+      declined: tasks.filter((tk) => tk.status === "declined").length,
+    });
+  }
+
+  // zaznacz wszystkich / odznacz
+  const selectable = selectableSubIds();
+  if (btnSelectAll) {
+    const allOn = selectable.length > 0 && selectable.every((id) => selectedSubIds.has(id));
+    btnSelectAll.textContent = allOn ? t("polls.share.deselectAll") : t("polls.share.selectAll");
+    btnSelectAll.disabled = selectable.length === 0;
+  }
+
+  // wyślij: tylko przy otwartej ankiecie i z zaznaczeniem
+  if (btnSendInvites) {
+    btnSendInvites.textContent = t("polls.share.sendInvitesN", { n: selectedSubIds.size });
+    btnSendInvites.disabled = !canSendInvites() || selectedSubIds.size === 0;
+  }
+  if (sendHint) {
+    sendHint.textContent = stopped ? t("polls.share.sendDisabledStopped")
+      : game?.status === STATUS.DRAFT ? t("polls.share.sendAfterStart") : "";
+  }
+  renderBar();
 
   if (!subsAll.length) {
     subsGrid.innerHTML = "";
     if (subsEmpty) {
       subsEmpty.style.display = "";
-      subsEmpty.innerHTML = `${escapeHtml(t("polls.share.noSubs"))} <a href="${escapeHtml(withLangParam("/subscriptions/"))}">${escapeHtml(t("polls.share.noSubsLink"))}</a>`;
+      subsEmpty.innerHTML = `${escapeHtml(t("polls.share.noSubs"))} <a href="${escapeHtml(linkTo("subscriptions"))}">${escapeHtml(t("polls.share.noSubsLink"))}</a>`;
     }
     return;
   }
@@ -909,18 +691,20 @@ function renderSubs(force = false) {
     const until = cooldownActive(sub.sub_id);
     const waiting = taskIsWaiting(tk);
     const limit = (tk.reminder_count || 0) >= 2;
-    const bellTitle = limit ? t("polls.share.reminderLimit")
+    const bellOff = limit || !!until || stopped;
+    const bellTitle = stopped ? t("polls.share.sendDisabledStopped")
+      : limit ? t("polls.share.reminderLimit")
       : until ? t("polls.share.canResend", { when: formatUntil(until) })
       : t("polls.share.remind");
 
     const tile = document.createElement("div");
     tile.className = "card subTile invited";
     tile.innerHTML = `
-      ${waiting ? `<button class="x x-bell" type="button" data-act="remind" ${limit || until ? "disabled" : ""} title="${escapeHtml(bellTitle)}" aria-label="${escapeHtml(bellTitle)}">${icon("bell")}</button>` : ""}
+      ${waiting ? `<button class="x x-bell" type="button" data-act="remind" ${bellOff ? "disabled" : ""} title="${escapeHtml(bellTitle)}" aria-label="${escapeHtml(bellTitle)}">${icon("bell")}</button>` : ""}
       <button class="x" type="button" data-act="remove" title="${escapeHtml(t("polls.share.remove"))}" aria-label="${escapeHtml(t("polls.share.remove"))}">${icon("trash")}</button>
       <div class="name"></div>
       <div class="meta"><span class="tag ${tag.cls}">${escapeHtml(tag.text)}</span></div>
-      ${waiting && until && !limit ? `<div class="subNote">${escapeHtml(t("polls.share.canResend", { when: formatUntil(until) }))}</div>` : ""}
+      ${waiting && until && !limit && !stopped ? `<div class="subNote">${escapeHtml(t("polls.share.canResend", { when: formatUntil(until) }))}</div>` : ""}
     `;
     tile.querySelector(".name").textContent = subLabel(sub);
     tile.querySelector('[data-act="remove"]').addEventListener("click", () => void removeShare(tk, sub));
@@ -958,36 +742,36 @@ function renderSubs(force = false) {
   subsGrid.replaceChildren(frag);
 }
 
-function rpcErrText(error, data) {
-  return error?.message || error?.details || data?.err || data?.error || t("common.genericError");
+// Wysyłka zaproszeń do zaznaczonych; wywołujący pilnuje `busy`.
+async function sendInvitesCore() {
+  // baza wycofuje czekające zaproszenia spoza listy — więc wysyłamy czekające + nowo zaznaczone
+  const waitingIds = subsAll.filter((s) => taskIsWaiting(taskForSub(s))).map((s) => String(s.sub_id));
+  const ids = [...new Set([...waitingIds, ...selectedSubIds])];
+
+  const { data, error } = await sb().rpc("polls_hub_share_poll", { p_game_id: gameId, p_sub_ids: ids });
+  if (error || data?.ok === false) {
+    throw new Error(rpcErrText(error, data));
+  }
+
+  for (const b of data?.blocked_sub_ids || []) {
+    const until = Date.parse(b.cooldown_until);
+    if (b.sub_id && Number.isFinite(until)) cooldownBySub.set(String(b.sub_id), until);
+  }
+
+  const res = await sendPollInviteMails({ mailItems: data?.mail, pollName: game.name, currentUser });
+  selectedSubIds.clear();
+
+  if (res.failed) await alertModal({ text: `${t("polls.share.mailFailed")} (${res.failed}/${res.total})` });
+  else setMsg(t("polls.share.invitesSent", { n: res.sent }));
+  if (data?.blocked) setMsg(t("polls.share.invitesBlocked", { n: data.blocked }), "error");
 }
 
 async function sendInvites() {
-  if (!game || busy || !selectedSubIds.size) return;
+  if (!game || busy || !selectedSubIds.size || !canSendInvites()) return;
   busy = true;
   if (btnSendInvites) btnSendInvites.disabled = true;
   try {
-    // baza wycofuje czekające zaproszenia spoza listy — więc wysyłamy czekające + nowo zaznaczone
-    const waitingIds = subsAll.filter((s) => taskIsWaiting(taskForSub(s))).map((s) => String(s.sub_id));
-    const ids = [...new Set([...waitingIds, ...selectedSubIds])];
-
-    const { data, error } = await sb().rpc("polls_hub_share_poll", { p_game_id: gameId, p_sub_ids: ids });
-    if (error || data?.ok === false) {
-      await alertModal({ text: `${t("polls.share.inviteFailed")}\n\n${rpcErrText(error, data)}` });
-      return;
-    }
-
-    for (const b of data?.blocked_sub_ids || []) {
-      const until = Date.parse(b.cooldown_until);
-      if (b.sub_id && Number.isFinite(until)) cooldownBySub.set(String(b.sub_id), until);
-    }
-
-    const res = await sendPollInviteMails({ mailItems: data?.mail, pollName: game.name, currentUser });
-    selectedSubIds.clear();
-
-    if (res.failed) await alertModal({ text: `${t("polls.share.mailFailed")} (${res.failed}/${res.total})` });
-    else setMsg(t("polls.share.invitesSent", { n: res.sent }));
-    if (data?.blocked) setMsg(t("polls.share.invitesBlocked", { n: data.blocked }));
+    await sendInvitesCore();
   } catch (e) {
     console.error("[polls] send invites", e);
     await alertModal({ text: `${t("polls.share.inviteFailed")}\n\n${e?.message || e}` });
@@ -998,7 +782,7 @@ async function sendInvites() {
 }
 
 async function remindShare(tk, sub) {
-  if (busy) return;
+  if (busy || game?.status !== STATUS.POLL_OPEN) return;
   busy = true;
   try {
     const { data, error } = await sb().rpc("poll_share_remind", { p_game_id: gameId, p_task_id: tk.id });
@@ -1044,15 +828,14 @@ async function removeShare(tk, sub) {
   try {
     const { data, error } = await sb().rpc("poll_share_remove", { p_game_id: gameId, p_task_id: tk.id });
     if (error || data?.ok === false) throw new Error(rpcErrText(error, data));
-    setMsg(t("polls.share.removed"));
   } catch (e) {
     console.error("[polls] remove share", e);
     await alertModal({ text: `${t("polls.share.removeFailed")}\n\n${e?.message || e}` });
   } finally {
     busy = false;
     await safeLoadSubs();
-    void refreshVotesChip();
-    void previewResults().catch(() => {});
+    void refreshVotes();
+    if (!tallyActive) void previewResults().catch(() => {});
   }
 }
 
@@ -1065,20 +848,89 @@ async function safeLoadSubs() {
 }
 
 /* =======================
+   A. Pasek stanu
+======================= */
+
+function show(btn, on) {
+  if (btn) btn.hidden = !on;
+}
+
+// Stan słowem + krótki opis po lewej; przyciski wg stanu po prawej.
+// Główna akcja złota, „Przerwij” zawsze ostatni (stonowany, czerwony obrys).
+function renderBar() {
+  if (!pollBar || !game) return;
+  const st = game.status || STATUS.DRAFT;
+  const prepared = game.type === TYPES.PREPARED;
+  const tallying = tallyActive && st === STATUS.POLL_STOPPED;
+
+  pollBar.dataset.state = tallying ? "tally" : st;
+  if (pollStateWord) pollStateWord.textContent = statusLabel(st);
+
+  let info = "";
+  if (tallying) info = t("polls.bar.tallyInfo");
+  else if (st === STATUS.POLL_OPEN) info = votesText;
+  else if (st === STATUS.POLL_STOPPED) info = t("polls.bar.stoppedInfo");
+  else if (st === STATUS.READY) info = t("polls.bar.readyInfo");
+  if (pollStateInfo) pollStateInfo.textContent = prepared ? "" : info;
+
+  const chk = lastCheck;
+  const nInvite = selectedSubIds.size;
+  let hint = "";
+
+  show(btnOpenPoll, !prepared && st === STATUS.DRAFT);
+  show(btnStopPoll, !prepared && st === STATUS.POLL_OPEN);
+  show(btnResumePoll, !prepared && st === STATUS.POLL_STOPPED && !tallying);
+  show(btnTallyPoll, !prepared && st === STATUS.POLL_STOPPED && !tallying);
+  show(btnLeaveTally, tallying);
+  show(btnApproveTally, tallying);
+  show(btnReopenPoll, !prepared && st === STATUS.READY);
+  show(btnAbort, !prepared && (st === STATUS.POLL_OPEN || st === STATUS.POLL_STOPPED));
+
+  if (btnOpenPoll) {
+    btnOpenPoll.textContent = nInvite > 0
+      ? t("polls.actions.openAndInvite", { n: nInvite })
+      : t("polls.actions.openPoll");
+    const ok = chk?.poll_open?.ok;
+    btnOpenPoll.disabled = busy || !ok;
+    if (st === STATUS.DRAFT && chk && !ok) hint = chk.poll_open.reason;
+  }
+  if (btnReopenPoll) {
+    const ok = chk?.poll_open?.ok;
+    btnReopenPoll.disabled = busy || !ok;
+    if (st === STATUS.READY && chk && !ok) hint = chk.poll_open.reason;
+  }
+  if (btnStopPoll) btnStopPoll.disabled = busy || (chk ? !chk.poll_stop?.ok : false);
+  if (btnResumePoll) btnResumePoll.disabled = busy;
+  if (btnTallyPoll) {
+    const ok = chk?.poll_close?.ok;
+    btnTallyPoll.disabled = busy || !ok;
+    if (st === STATUS.POLL_STOPPED && !tallying && chk && !ok) hint = chk.poll_close.reason;
+  }
+  if (btnLeaveTally) btnLeaveTally.disabled = busy;
+  if (btnApproveTally) btnApproveTally.disabled = busy || !tallyValid;
+  if (btnAbort) btnAbort.disabled = busy;
+
+  if (hintTop) hintTop.textContent = hint || "";
+}
+
+/* =======================
    Odświeżanie
 ======================= */
 
-let stateKey = null;      // status + klucz: zmiana = nowe uruchomienie / koniec
+let stateKey = null;      // status + klucz: zmiana = nowy stan / nowe uruchomienie
 let refreshSeq = 0;
 
 function renderShareSection(st, link) {
-  const open = st === STATUS.POLL_OPEN;
-  if (shareBody) shareBody.style.display = open ? "" : "none";
+  const available = sharingAvailable(st);
+  const hasLink = st === STATUS.POLL_OPEN || st === STATUS.POLL_STOPPED;
+  if (shareBody) shareBody.style.display = available ? "" : "none";
   if (shareEmpty) {
-    shareEmpty.style.display = open ? "none" : "";
+    shareEmpty.style.display = available ? "none" : "";
     shareEmpty.textContent = st === STATUS.READY ? t("polls.share.closedEmpty") : t("polls.share.draftEmpty");
   }
-  if (open) {
+  if (linkPlaceholder) linkPlaceholder.hidden = st !== STATUS.DRAFT;
+  if (linkLive) linkLive.hidden = st === STATUS.DRAFT;
+  if (hasLink) {
     if (pollLinkEl) pollLinkEl.value = link;
     setLinkUiVisible(true);
     void renderQr(link);
@@ -1087,26 +939,7 @@ function renderShareSection(st, link) {
     setLinkUiVisible(false);
     renderedQrUrl = "";
   }
-}
-
-function applyActionButtons(st, chk) {
-  if (game.type === TYPES.PREPARED) {
-    setActionButton(t("polls.actions.noPoll"), true, "");
-    if (btnAbort) btnAbort.style.display = "none";
-    return;
-  }
-  if (btnAbort) btnAbort.style.display = st === STATUS.POLL_OPEN && !uiTextCloseOpen ? "" : "none";
-  const reason = chk?.ok ? "" : (chk?.reason || "");
-  if (st === STATUS.DRAFT) setActionButton(t("polls.actions.openPoll"), !chk?.ok, reason);
-  else if (st === STATUS.POLL_OPEN) setActionButton(t("polls.actions.closePoll"), !chk?.ok, reason);
-  else if (st === STATUS.READY) setActionButton(t("polls.actions.reopenPoll"), !chk?.ok, reason);
-  else setActionButton("", true, "");
-}
-
-async function validateForState(st) {
-  if (game.type === TYPES.PREPARED) return null;
-  if (st === STATUS.POLL_OPEN) return validateCanClose(game);
-  return validateCanOpen(game); // szkic i zamknięta: te same warunki uruchomienia
+  setShareTabEnabled(st !== STATUS.READY);
 }
 
 async function refresh() {
@@ -1115,72 +948,90 @@ async function refresh() {
     if (pollBar) pollBar.style.display = "none";
     if (cardMain) cardMain.style.display = "none";
     if (cardEmpty) cardEmpty.style.display = "";
-    setMsg(t("polls.missingId"));
+    setMsg(t("polls.missingId"), "error");
     return;
   }
 
+  const prev = game;
   game = await loadGame();
   if (seq !== refreshSeq) return;
 
   if (cardEmpty) cardEmpty.style.display = "none";
   if (pollBar) pollBar.style.display = "";
-  if (cardMain) cardMain.style.display = uiTextCloseOpen ? "none" : "";
+  if (cardMain) cardMain.style.display = "";
 
   const st = game.status || STATUS.DRAFT;
   const key = `${st}:${game.share_key_poll}`;
   if (key !== stateKey) {
-    // nowy stan lub nowe uruchomienie: domyślna wypustka, czysta lista wyników i zaznaczeń
+    // podliczanie kończy się razem ze stanem „zatrzymana” (podliczenie, wznowienie, przerwanie)
+    if (tallyActive && st !== STATUS.POLL_STOPPED) {
+      tally.finish();
+      tallyActive = false;
+      tallyValid = false;
+    }
+    // nowy stan lub nowe uruchomienie: domyślna wypustka, czysta lista wyników
     stateKey = key;
     tabTouchedByUser = false;
-    resetResultsDom();
-    selectedSubIds.clear();
+    if (!tallyActive) resetResultsDom();
+    // zaznaczenia przeżywają szkic -> otwarta -> zatrzymana (ten sam klucz)
+    if (!prev || prev.share_key_poll !== game.share_key_poll || !sharingAvailable(st)) selectedSubIds.clear();
     subsAll = [];
     tasks = [];
     subsSig = "";
     firstQuestionId = null;
+    votesText = "";
   }
-  if (!tabTouchedByUser) setActiveTab(st === STATUS.POLL_OPEN ? "share" : "results");
+  if (!tabTouchedByUser) setActiveTab(st === STATUS.DRAFT || st === STATUS.POLL_OPEN ? "share" : "results");
 
-  setChips(game);
-  const pollGameName = $("pollGameName");
-  if (pollGameName) pollGameName.textContent = game.name || t("polls.defaultName");
+  const nameEl = $("pollGameName");
+  if (nameEl) {
+    nameEl.textContent = t("polls.pageSubtitle", {
+      type: typeShortLabel(game.type),
+      name: game.name || t("polls.defaultName"),
+    });
+  }
 
-  renderShareSection(st, st === STATUS.POLL_OPEN ? pollLink(game) : "");
-
-  if (uiTextCloseOpen) return;
+  renderShareSection(st, st === STATUS.DRAFT ? "" : pollLink(game));
+  renderBar();
 
   try {
     const [chk] = await Promise.all([
-      validateForState(st),
+      game.type === TYPES.PREPARED ? Promise.resolve(null) : validateGame(game.id),
       previewResults(),
-      st === STATUS.POLL_OPEN ? refreshVotesChip() : Promise.resolve(),
-      st === STATUS.POLL_OPEN ? safeLoadSubs() : Promise.resolve(),
+      st === STATUS.POLL_OPEN ? refreshVotes() : Promise.resolve(),
+      sharingAvailable(st) ? safeLoadSubs() : Promise.resolve(),
     ]);
     if (seq !== refreshSeq) return;
-    applyActionButtons(st, chk);
+    lastCheck = chk;
   } catch (e) {
     console.warn("[polls] refresh failed", e);
     if (resultsMeta) resultsMeta.textContent = t("polls.results.refreshFailed");
-    applyActionButtons(st, null);
+    lastCheck = null;
   }
+  renderBar();
 }
 
-// odświeżanie wyników na żywo (bez przebudowy listy)
+// odświeżanie na żywo: wyniki i zaproszenia (otwarta), zmiana stanu z innego okna (zatrzymana)
 async function liveTick() {
-  if (document.hidden || uiTextCloseOpen || busy || !game || game.status !== STATUS.POLL_OPEN) return;
+  if (document.hidden || busy || tallyActive || !game) return;
+  if (game.status !== STATUS.POLL_OPEN && game.status !== STATUS.POLL_STOPPED) return;
   try {
     const g = await loadGame();
     if (g.status !== game.status || g.share_key_poll !== game.share_key_poll) {
       await refresh();
       return;
     }
-    const [chk] = await Promise.all([
-      validateCanClose(game),
-      previewResults(),
-      refreshVotesChip(),
-      refreshTasksOnly(),
-    ]);
-    if (!uiTextCloseOpen && !busy) applyActionButtons(STATUS.POLL_OPEN, chk);
+    if (game.status === STATUS.POLL_OPEN) {
+      const [chk] = await Promise.all([
+        validateGame(game.id),
+        previewResults(),
+        refreshVotes(),
+        refreshTasksOnly(),
+      ]);
+      if (!busy && !tallyActive) { lastCheck = chk; renderBar(); }
+    } else {
+      await refreshTasksOnly();
+    }
   } catch (e) {
     console.warn("[polls] live refresh failed", e);
   }
@@ -1191,12 +1042,15 @@ async function liveTick() {
 ======================= */
 
 async function openPollFlow() {
-  const chk = await validateCanOpen(game);
-  if (!chk.ok) return setMsg(chk.reason);
+  const chk = await validateGame(game.id);
+  if (!chk.poll_open.ok) return setMsg(chk.poll_open.reason, "error");
 
+  const withInvites = selectedSubIds.size > 0;
   const ok = await confirmModal({
     title: t("polls.modals.open.title"),
-    text: t("polls.modals.open.text", { name: game.name }),
+    text: withInvites
+      ? t("polls.modals.open.textInvite", { name: game.name, n: selectedSubIds.size })
+      : t("polls.modals.open.text", { name: game.name }),
     okText: t("polls.modals.open.ok"),
     cancelText: t("polls.modals.open.cancel"),
   });
@@ -1205,48 +1059,58 @@ async function openPollFlow() {
   try {
     const { error } = await sb().rpc("poll_open", { p_game_id: gameId, p_key: game.share_key_poll });
     if (error) throw error;
-    setMsg(t("polls.status.opened"));
   } catch (e) {
     console.error("[polls] open error:", e);
-    await alertModal({ text: `${t("polls.errors.open")}\n\n${e?.message || e}` });
-  }
-}
-
-async function closePollFlow() {
-  const chk = await validateCanClose(game);
-  if (!chk.ok) return setMsg(chk.reason);
-
-  if (game.type === TYPES.POLL_POINTS) {
-    const ok = await confirmModal({
-      title: t("polls.modals.closePoints.title"),
-      text: t("polls.modals.closePoints.text"),
-      okText: t("polls.modals.closePoints.ok"),
-      cancelText: t("polls.modals.closePoints.cancel"),
-    });
-    if (!ok) return;
-
-    try {
-      const { error } = await sb().rpc("poll_points_close_and_normalize", {
-        p_game_id: gameId,
-        p_key: game.share_key_poll,
-      });
-      if (error) throw error;
-      setMsg(t("polls.status.closedPoints"));
-    } catch (e) {
-      console.error("[polls] close points error:", e);
-      await alertModal({ text: `${t("polls.errors.close")}\n\n${gameRuleErrorMessage(e) || e?.message || e}` });
-    }
+    await alertModal({ text: `${t("polls.errors.open")}\n\n${gameRuleErrorMessage(e) || e?.message || e}` });
     return;
   }
 
-  // poll_text: pełnoszerokie okno scalania odpowiedzi
+  // start i wysyłka zaproszeń jednym krokiem
+  if (withInvites) {
+    try {
+      game = await loadGame();
+      await loadSubsData();
+      await sendInvitesCore();
+    } catch (e) {
+      console.error("[polls] open + invites error:", e);
+      await alertModal({ text: `${t("polls.errors.openedInviteFailed")}\n\n${e?.message || e}` });
+    }
+  }
+}
+
+async function stopPollFlow() {
+  const ok = await confirmModal({
+    title: t("polls.modals.stop.title"),
+    text: t("polls.modals.stop.text"),
+    okText: t("polls.modals.stop.ok"),
+    cancelText: t("polls.actions.cancel"),
+  });
+  if (!ok) return;
+
   try {
-    textCloseModel = await buildTextClosePanel();
-    setMsg(t("polls.textClose.editHint"));
+    const { data, error } = await sb().rpc("poll_stop", { p_game_id: gameId });
+    if (error || data?.ok === false) throw error || new Error(rpcErrText(null, data));
   } catch (e) {
-    console.error("[polls] build text close:", e);
-    setTextCloseUi(false);
-    await alertModal({ text: `${t("polls.errors.loadAnswers")}\n\n${e?.message || e}` });
+    console.error("[polls] stop error:", e);
+    await alertModal({ text: `${t("polls.errors.stop")}\n\n${gameRuleErrorMessage(e) || e?.message || e}` });
+  }
+}
+
+async function resumePollFlow() {
+  const ok = await confirmModal({
+    title: t("polls.modals.resume.title"),
+    text: t("polls.modals.resume.text"),
+    okText: t("polls.modals.resume.ok"),
+    cancelText: t("polls.actions.cancel"),
+  });
+  if (!ok) return;
+
+  try {
+    const { data, error } = await sb().rpc("poll_resume", { p_game_id: gameId });
+    if (error || data?.ok === false) throw error || new Error(rpcErrText(null, data));
+  } catch (e) {
+    console.error("[polls] resume error:", e);
+    await alertModal({ text: `${t("polls.errors.resume")}\n\n${gameRuleErrorMessage(e) || e?.message || e}` });
   }
 }
 
@@ -1262,7 +1126,11 @@ async function abortPollFlow() {
   try {
     const { data, error } = await sb().rpc("poll_abort", { p_game_id: gameId });
     if (error || data?.ok === false) throw new Error(rpcErrText(error, data));
-    setMsg(t("polls.status.aborted"));
+    if (tallyActive) {
+      tally.finish();
+      tallyActive = false;
+      tallyValid = false;
+    }
   } catch (e) {
     console.error("[polls] abort error:", e);
     await alertModal({ text: `${t("polls.errors.abort")}\n\n${e?.message || e}` });
@@ -1270,8 +1138,8 @@ async function abortPollFlow() {
 }
 
 async function restartPollFlow() {
-  const chk = await validateCanOpen(game);
-  if (!chk.ok) return setMsg(chk.reason);
+  const chk = await validateGame(game.id);
+  if (!chk.poll_open.ok) return setMsg(chk.poll_open.reason, "error");
 
   const ok = await confirmModal({
     title: t("polls.modals.reopen.title"),
@@ -1288,7 +1156,6 @@ async function restartPollFlow() {
     aborted = true;
     const { error: e2 } = await sb().rpc("poll_open", { p_game_id: gameId, p_key: data.share_key_poll });
     if (e2) throw e2;
-    setMsg(t("polls.status.reopened"));
   } catch (e) {
     console.error("[polls] reopen error:", e);
     await alertModal({ text: `${t("polls.errors.reopen")}${aborted ? `\n${t("polls.errors.reopenAborted")}` : ""}\n\n${e?.message || e}` });
@@ -1298,17 +1165,13 @@ async function restartPollFlow() {
 async function runStateAction(fn) {
   if (!game || busy) return;
   busy = true;
-  if (btnPollAction) btnPollAction.disabled = true;
-  if (btnAbort) btnAbort.disabled = true;
+  renderBar();
   try {
     await fn();
   } finally {
     busy = false;
-    if (btnAbort) btnAbort.disabled = false;
     // stan i klucz zawsze czytamy z bazy od nowa (uruchomienie zmienia share_key_poll)
-    if (!uiTextCloseOpen) {
-      try { await refresh(); } catch (e) { console.warn("[polls] refresh after action", e); }
-    }
+    try { await refresh(); } catch (e) { console.warn("[polls] refresh after action", e); }
   }
 }
 
@@ -1327,48 +1190,22 @@ document.addEventListener("DOMContentLoaded", async () => {
   document.querySelector('.topbar')?.classList.add('topbar-ready');
 
   if (btnBack) {
-    btnBack.innerHTML = iconText("arrow-left", t("polls.backToGames"));
+    renderBackLabel(btnBack, "polls");
   }
 
   btnManual?.addEventListener("click", () => {
-    location.href = buildManualUrl();
+    location.href = linkTo("manual", { hash: "polls" });
   });
 
+  // Poprawki podliczania zapisują się same (szkic w bazie); przed wyjściem
+  // tylko dopychamy ostatni zapis.
   btnBack?.addEventListener("click", async () => {
-    if (uiTextCloseOpen) {
-      const ok = await confirmModal({
-        title: t("polls.textClose.leaveCheckTitle"),
-        text: t("polls.textClose.leaveCheckText"),
-        okText: t("polls.textClose.leaveOk"),
-        cancelText: t("polls.textClose.leaveCancel"),
-      });
-      if (!ok) return;
-      setTextCloseUi(false);
-    }
-    location.href = backTarget;
+    try { await tally.flush(); } catch { /* szkic i tak jest w bazie */ }
+    location.href = backHref("polls");
   });
+  window.addEventListener("pagehide", () => { void tally.flush(); });
 
-  // Guard: jeśli jest otwarty edytor tekstu, potwierdź przed wylogowaniem
-  const btnLogoutMenu = document.getElementById("topbar-account-logout");
-  btnLogoutMenu?.addEventListener("click", async (e) => {
-    if (!uiTextCloseOpen) return;
-
-    e.preventDefault();
-    e.stopImmediatePropagation();
-
-    const ok = await confirmModal({
-      title: t("polls.textClose.leaveCheckTitle"),
-      text: t("polls.textClose.logoutWarn"),
-      okText: t("polls.textClose.logoutOk"),
-      cancelText: t("polls.textClose.leaveCancel"),
-    });
-    if (!ok) return;
-    setTextCloseUi(false);
-
-    btnLogoutMenu.click();
-  }, true); // capture = true, żeby interceptować przed handlerem dropdown
-
-  tabShare?.addEventListener("click", () => setActiveTab("share", { byUser: true }));
+  tabShare?.addEventListener("click", () => { if (!tabShare.disabled) setActiveTab("share", { byUser: true }); });
   tabResults?.addEventListener("click", () => setActiveTab("results", { byUser: true }));
 
   btnCopy?.addEventListener("click", async () => {
@@ -1377,7 +1214,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       await navigator.clipboard.writeText(pollLinkEl.value);
       setMsg(t("polls.copy.success"));
     } catch {
-      setMsg(t("polls.copy.failed"));
+      setMsg(t("polls.copy.failed"), "error");
     }
   });
 
@@ -1390,120 +1227,70 @@ document.addEventListener("DOMContentLoaded", async () => {
     showPollQrModal();
   });
 
+  qrBox?.addEventListener("click", () => { void showVoteQrModal(); });
+
+  btnToggleQr?.addEventListener("click", () => {
+    const on = !linkLive?.classList.contains("qrOpen");
+    linkLive?.classList.toggle("qrOpen", on);
+    btnToggleQr.setAttribute("aria-expanded", on ? "true" : "false");
+    btnToggleQr.textContent = on ? t("polls.share.hideQr") : t("polls.share.showQr");
+  });
+
   btnSendInvites?.addEventListener("click", () => void sendInvites());
 
-  btnPollAction?.addEventListener("click", () => {
-    if (!game) return;
-    const st = game.status || STATUS.DRAFT;
-    if (st === STATUS.DRAFT) return runStateAction(openPollFlow);
-    if (st === STATUS.POLL_OPEN) return runStateAction(closePollFlow);
-    if (st === STATUS.READY) return runStateAction(restartPollFlow);
+  btnSelectAll?.addEventListener("click", () => {
+    const ids = selectableSubIds();
+    const allOn = ids.length > 0 && ids.every((id) => selectedSubIds.has(id));
+    if (allOn) ids.forEach((id) => selectedSubIds.delete(id));
+    else ids.forEach((id) => selectedSubIds.add(id));
+    renderSubs();
   });
 
+  btnOpenPoll?.addEventListener("click", () => runStateAction(openPollFlow));
+  btnStopPoll?.addEventListener("click", () => runStateAction(async () => {
+    await stopPollFlow();
+  }));
+  btnResumePoll?.addEventListener("click", () => runStateAction(resumePollFlow));
+  btnTallyPoll?.addEventListener("click", () => runStateAction(async () => { await enterTally(); }));
+  btnLeaveTally?.addEventListener("click", () => runStateAction(leaveTally));
+  btnApproveTally?.addEventListener("click", () => runStateAction(approveTallyFlow));
+  btnReopenPoll?.addEventListener("click", () => runStateAction(restartPollFlow));
   btnAbort?.addEventListener("click", () => runStateAction(abortPollFlow));
 
-  const cancelTextClose = () => {
-    setTextCloseUi(false);
-    setMsg(t("polls.textClose.cancelled"));
-    void refresh();
-  };
-  btnCancelTextClose?.addEventListener("click", cancelTextClose);
-  btnCancelTextCloseTop?.addEventListener("click", cancelTextClose);
+  btnUndo?.addEventListener("click", () => tally.undo());
+  btnRedo?.addEventListener("click", () => tally.redo());
 
-  btnUndo?.addEventListener("click", undoAction);
-  btnRedo?.addEventListener("click", redoAction);
-
-  // Globalne skróty klawiszowe (tylko w trybie zamykania)
+  // Skróty Cofnij / Ponów w podliczaniu (poza polem tekstu — tam działa natywne cofanie)
   document.addEventListener("keydown", (e) => {
-    if (!uiTextCloseOpen) return;
-
-    const isZ = e.key.toLowerCase() === "z";
-    const isY = e.key.toLowerCase() === "y";
+    if (!tallyActive || tally.mode() !== "text") return;
+    if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+    const k = e.key.toLowerCase();
     const ctrl = e.ctrlKey || e.metaKey;
-    const shift = e.shiftKey;
-
-    if (ctrl && isZ) {
+    if (ctrl && k === "z") {
       e.preventDefault();
-      if (shift) redoAction();
-      else undoAction();
-    } else if (ctrl && isY) {
+      if (e.shiftKey) tally.redo(); else tally.undo();
+    } else if (ctrl && k === "y") {
       e.preventDefault();
-      redoAction();
-    }
-  });
-
-  btnFinishTextClose?.addEventListener("click", async () => {
-    if (!game || game.type !== TYPES.POLL_TEXT) return;
-    if (!textCloseModel) return;
-
-    btnFinishTextClose.disabled = true;
-    btnCancelTextClose.disabled = true;
-    if (btnCancelTextCloseTop) btnCancelTextCloseTop.disabled = true;
-
-    try {
-      const payloadItems = [];
-
-      for (const q of textCloseModel) {
-        const cleaned = q.items
-          .map((x) => ({ text: clip17Final(x.text), count: Number(x.count) || 0 }))
-          .filter((x) => x.text && x.count > 0);
-
-        const final = normalizeTo100Int(cleaned)
-          .map((x) => ({ text: clip17Final(x.text), points: Number(x.points) || 0 }))
-          .filter((x) => x.text);
-
-        if (final.length < 3) {
-          throw new Error(t("polls.textClose.minAnswers", { ord: q.ord }));
-        }
-
-        payloadItems.push({ question_id: q.question_id, answers: final });
-      }
-
-      const ok = await confirmModal({
-        title: t("polls.modals.closeText.title"),
-        text: t("polls.modals.closeText.text"),
-        okText: t("polls.modals.closeText.ok"),
-        cancelText: t("polls.modals.closeText.cancel"),
-      });
-      if (!ok) return;
-
-      const { error } = await sb().rpc("poll_text_close_apply", {
-        p_game_id: gameId,
-        p_key: game.share_key_poll,
-        p_payload: { items: payloadItems },
-      });
-      if (error) throw error;
-
-      setMsg(t("polls.status.closed"));
-      setTextCloseUi(false);
-      resetResultsDom();
-      await refresh();
-    } catch (e) {
-      console.error("[polls] close text error:", e);
-      await alertModal({ text: `${t("polls.errors.close")}\n\n${gameRuleErrorMessage(e) || e?.message || e}` });
-    } finally {
-      btnFinishTextClose.disabled = false;
-      btnCancelTextClose.disabled = false;
-      if (btnCancelTextCloseTop) btnCancelTextCloseTop.disabled = false;
+      tally.redo();
     }
   });
 
   // resourceType: "game" — dołącza do już istniejącego wspólnego klucza
   // z editor.js/game-settings.js (patrz komentarz w editor.js przy tym
-  // samym wywołaniu): zamykanie ankiety zapisuje znormalizowane punkty do
-  // answers.fixed_points, więc otwarcie ankiety wyklucza edytor/ustawienia
-  // tej samej gry i odwrotnie, nie tylko drugą kartę tej samej strony.
+  // samym wywołaniu): podliczenie zapisuje punkty do answers.fixed_points,
+  // więc otwarcie ankiety wyklucza edytor/ustawienia tej samej gry i odwrotnie,
+  // nie tylko drugą kartę tej samej strony.
   if (gameId) {
     const lock = await guardResourceLock({
       resourceType: "game",
       resourceId: gameId,
       context: "polls",
       message: t("resourceLock.gameMessage"),
-      backHref: backTarget,
+      backHref: backHref("polls"),
     });
     if (!lock.ok) return;
     // Blokada stanu: strona ankiety tylko dla gry, która może mieć ankietę.
-    if (!(await guardGameState(gameId, "poll_entry", { backHref: backTarget }))) return;
+    if (!(await guardGameState(gameId, "poll_entry", { backHref: backHref("polls") }))) return;
   }
 
   await refresh();

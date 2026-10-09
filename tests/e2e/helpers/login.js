@@ -266,7 +266,7 @@ const EXCLUDED_TEST_ACCOUNTS = [9, 10];
 //  - test7 (zalogowane) i test8 (zaproszony + odbiorca maili): subscriptions
 //  - test8: cross-resource-locks (usuwanie logo, bez cudzych blokad ustawień)
 //  - odbiorcy maili (clearMailbox kasuje CAŁĄ skrzynkę odbiorcy, więc każdy
-//    test @mailbox ma własnego): subscriptions=test8, bases=test6,
+//    test @mailbox ma własnego): subscriptions=test8, bases=test7 (test6 bez maili),
 //    control2 (udostępnianie urządzenia)=test7
 const EXCLUDED_ACCOUNT_NOTE = "decyzja użytkownika 2026-10-09";
 

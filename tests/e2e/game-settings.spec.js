@@ -87,8 +87,8 @@ async function deleteGame(page, gameId) {
   }, gameId);
 }
 
-async function openSettings(page, gameId) {
-  await page.goto(`https://www.familiada.online/game-settings?id=${gameId}`, { waitUntil: "domcontentloaded" });
+async function openSettings(page, gameId, extraQuery = "") {
+  await page.goto(`https://www.familiada.online/games/settings?id=${gameId}${extraQuery}`, { waitUntil: "domcontentloaded" });
   await page.waitForLoadState("networkidle");
 }
 
@@ -601,7 +601,7 @@ test("ustawienia gry: przycisk Wstecz z niezapisanymi zmianami pyta o potwierdze
 
   const gameId = await createGame(page);
   try {
-    await openSettings(page, gameId);
+    await openSettings(page, gameId, "&ret=%2Fgames%2F");
     await page.locator("#gsTeamA").fill("Coś nowego");
     await expect(page.locator("#gsFooterMsg")).toBeVisible();
 
@@ -613,12 +613,12 @@ test("ustawienia gry: przycisk Wstecz z niezapisanymi zmianami pyta o potwierdze
 
     // Anuluj — zostajemy na stronie ustawień
     await page.locator(".uni-foot .btn:not(.gold)").click();
-    await expect(page).toHaveURL(/game-settings/);
+    await expect(page).toHaveURL(/games\/settings/);
 
     // Ponowna próba, tym razem potwierdzamy wyjście
     await page.locator("#btnBack").click();
     await page.locator(".uni-foot .btn.gold").click();
-    await expect(page).toHaveURL(/\/games/, { timeout: 10000 });
+    await expect(page).toHaveURL(/\/games\/?(?:\?[^\/]*)?$/, { timeout: 10000 });
     // toHaveURL łapie tylko zmianę adresu — window.__sbClient na /games
     // jeszcze się nie zdążył ustawić, a deleteGame() w finally z niego
     // korzysta. Bez tego czekania cleanup pada z "Cannot read properties

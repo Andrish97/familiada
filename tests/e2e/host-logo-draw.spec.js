@@ -9,7 +9,7 @@ test.describe.configure({ mode: "parallel" });
 
 const previewHarness = `<!doctype html><html lang="pl"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Test DRAW Host/Display</title><style>
 *{box-sizing:border-box}body{margin:0;padding:18px;background:#10131a;color:#fff;font:14px system-ui}.grid{height:calc(100vh - 36px);display:grid;grid-template-columns:1fr 1fr;gap:14px}.panel{min-width:0;min-height:0;display:flex;flex-direction:column}.panel b{padding:0 0 7px;text-transform:uppercase;letter-spacing:.06em;color:#ffcc00}.panel iframe{width:100%;height:100%;border:1px solid #424652;border-radius:8px;background:#000}
-</style><div class="grid"><div class="panel"><b>Display</b><iframe id="display" src="/display/?preview=1"></iframe></div><div class="panel"><b>Host</b><iframe id="host" src="/host/?preview=1"></iframe></div></div><script>
+</style><div class="grid"><div class="panel"><b>Display</b><iframe id="display" src="/control/display/?preview=1"></iframe></div><div class="panel"><b>Host</b><iframe id="host" src="/control/host/?preview=1"></iframe></div></div><script>
 const ready=new Set();addEventListener('message',e=>{if(e.origin!==location.origin||!['familiada:preview-ready','familiada:host-preview-ready'].includes(e.data?.type))return;ready.add(e.source);if(ready.size===2)window.previewReady=true});window.applyRow=async row=>{for(const id of ['display','host'])document.getElementById(id).contentWindow.postMessage({type:'familiada:preview-row',row},location.origin);await new Promise(resolve=>setTimeout(resolve,1600))};
 </script></html>`;
 
@@ -55,7 +55,7 @@ async function runDrawRoundTrip(page, context, accountNumber, testInfo) {
         source: { mode: "DRAW" },
       },
     });
-    await page.goto(`${ORIGIN}/logo/editor-draw/?id=${encodeURIComponent(logoId)}`, { waitUntil: "domcontentloaded" });
+    await page.goto(`${ORIGIN}/logo/editor/draw/?id=${encodeURIComponent(logoId)}`, { waitUntil: "domcontentloaded" });
     await expect(page.locator("#editorShell")).toHaveAttribute("data-mode", "DRAW");
     await expect(page.locator("#logoName")).toBeEnabled({ timeout: 15000 });
     await page.evaluate(() => {

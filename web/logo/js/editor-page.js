@@ -1,5 +1,5 @@
 // familiada/logo/js/editor-page.js
-// Wspólna logika trzech stron edytora logo (/logo/editor-text|draw|image/?id=).
+// Wspólna logika trzech stron edytora logo (/logo/editor/<tryb>/?id=).
 // Strona ma jeden tryb i jedno logo (id w adresie). Zmiany zapisują się
 // SAME: bez przycisku „Zapisz”, bez pytań przy wyjściu -- do pracy można
 // wrócić w każdej chwili, także po zamknięciu karty.
@@ -13,28 +13,30 @@
 //   - to logo w innej karcie -> guardResourceLock: komunikat, wejście samo,
 //     gdy tamta karta je zwolni; nasza blokada trzymana do wyjścia ze strony
 //     (pagehide), więc Control/ustawienia gry czekają, aż edytor się zamknie,
-//   - cała pula logo zajęta (Control albo ustawienia którejś gry) -- przy
-//     wejściu i przy każdym zapisie (RPC update_logo_checked): komunikat
-//     z powrotem na listę.
+//   - cała pula logo zajęta (zasób `logos` trzymany współdzielenie przez Control
+//     albo ustawienia którejś gry) wyklucza logo:L w bazie -- przy wejściu to
+//     samo guardResourceLock, przy każdym zapisie RPC update_logo_checked:
+//     komunikat z powrotem na listę.
 
-import { loadFont5x7 } from "../../shared/js/core/logo-preview.js?v=v2026-10-09T08150";
-import { requireAuth } from "../../shared/js/core/auth.js?v=v2026-10-09T08150";
-import { initI18n, t } from "../../shared/translation/translation.js?v=v2026-10-09T08150";
-import { initTopbarAccountDropdown } from "../../shared/js/core/topbar-controller.js?v=v2026-10-09T08150";
-import { isMobileDevice } from "../../shared/js/core/pwa.js?v=v2026-10-09T08150";
-import { isPhoneScreen } from "../../shared/js/core/device-guard.js?v=v2026-10-09T08150";
-import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-09T08150";
-import { guardResourceLock, findBusyContext, showBlockingOverlay } from "../../shared/js/core/resource-lock.js?v=v2026-10-09T08150";
-import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-09T08150";
+import { loadFont5x7 } from "../../shared/js/core/logo-preview.js?v=v2026-10-09T17351";
+import { requireAuth } from "../../shared/js/core/auth.js?v=v2026-10-09T17351";
+import { initI18n, t } from "../../shared/translation/translation.js?v=v2026-10-09T17351";
+import { renderBackLabel } from "../../shared/js/core/nav-map.js?v=v2026-10-09T17351";
+import { initTopbarAccountDropdown } from "../../shared/js/core/topbar-controller.js?v=v2026-10-09T17351";
+import { isMobileDevice } from "../../shared/js/core/pwa.js?v=v2026-10-09T17351";
+import { isPhoneScreen } from "../../shared/js/core/device-guard.js?v=v2026-10-09T17351";
+import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-09T17351";
+import { guardResourceLock, showBlockingOverlay } from "../../shared/js/core/resource-lock.js?v=v2026-10-09T17351";
+import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-09T17351";
 
-import { renderPreview } from "./render.js?v=v2026-10-09T08150";
-import { listLogos, fetchLogo, updateLogo, isUniqueViolation, uploadDrawHostRaster, removeDrawHostRaster } from "./db.js?v=v2026-10-09T08150";
-import { initPreviewPinchZoom, lockPageZoomForPreview, unlockPageZoomAfterPreview } from "./preview-zoom.js?v=v2026-10-09T08150";
-import { cannotEditReason } from "./text.js?v=v2026-10-09T08150";
-import { editModeFor, listBackUrl, manualUrl } from "./routes.js?v=v2026-10-09T08150";
+import { renderPreview } from "./render.js?v=v2026-10-09T17351";
+import { listLogos, fetchLogo, updateLogo, isUniqueViolation, uploadDrawHostRaster, removeDrawHostRaster } from "./db.js?v=v2026-10-09T17351";
+import { initPreviewPinchZoom, lockPageZoomForPreview, unlockPageZoomAfterPreview } from "./preview-zoom.js?v=v2026-10-09T17351";
+import { cannotEditReason } from "./text.js?v=v2026-10-09T17351";
+import { EDITOR_PAGE_IDS, editModeFor, listBackUrl, manualUrl } from "./routes.js?v=v2026-10-09T17351";
 
-const FONT_3x10_URL = "/shared/fonts/display/font_3x10.json?v=v2026-10-09T08150";
-const FONT_5x7_URL = "/shared/fonts/display/font_5x7.json?v=v2026-10-09T08150";
+const FONT_3x10_URL = "/shared/fonts/display/font_3x10.json?v=v2026-10-09T17351";
+const FONT_5x7_URL = "/shared/fonts/display/font_5x7.json?v=v2026-10-09T17351";
 
 const DEBOUNCE_MS = 700;
 const RETRY_MS = 5000;
@@ -92,10 +94,21 @@ export async function bootEditorPage({ mode, initEditor }) {
     if (el.status) el.status.dataset.state = statusState;
   }
 
+  // Zapis odrzucony przez bazę (reason z db.js: logo | control | settings | …).
   function busyMessage(reason) {
     if (reason === "control") return t("resourceLock.logoPoolBusyControl");
     if (reason === "settings") return t("resourceLock.logoPoolBusySettings");
-    return t("resourceLock.logoMessage");
+    if (reason === "logo") return t("resourceLock.logoMessage");
+    return t("resourceLock.logoPoolBusy");
+  }
+
+  // Wejście: odpowiedź acquire_edit_lock_mode mówi, kto przeszkadza --
+  // inna karta z tym logo albo pula logo (logos) trzymana przez Control / ustawienia.
+  function entryBusyMessage(res) {
+    if (res?.blocker_type !== "logos") return t("resourceLock.logoMessage");
+    if (res.blocker_context === "control") return t("resourceLock.logoPoolBusyControlEntry");
+    if (res.blocker_context === "settings") return t("resourceLock.logoPoolBusySettingsEntry");
+    return t("resourceLock.logoPoolBusy");
   }
 
   /** Nazwa niekolidująca (bez względu na wielkość liter) z innymi logo użytkownika. */
@@ -261,14 +274,14 @@ export async function bootEditorPage({ mode, initEditor }) {
 
   /** Strona nie może edytować -- komunikat z jedynym wyjściem: lista logo. */
   function block(message) {
-    showBlockingOverlay({ message, backHref: listBackUrl() });
+    showBlockingOverlay({ message, backHref: listBackUrl(mode) });
   }
 
   /* ---------- UI (działa od razu, także w trakcie wczytywania) ---------- */
   el.btnBack.dataset.sheetBack = "1"; // znacznik dla contact-modal.js
   el.btnBack.addEventListener("click", () => {
     if (el.previewOverlay.style.display !== "none") { closePreview(); return; }
-    void leave(listBackUrl());
+    void leave(listBackUrl(mode));
   });
   el.btnManual.addEventListener("click", () => void leave(manualUrl()));
   el.logoName.addEventListener("input", markDirty);
@@ -288,6 +301,7 @@ export async function bootEditorPage({ mode, initEditor }) {
   await initI18n({ withSwitcher: true });
   document.documentElement.classList.remove("page-loading");
   document.documentElement.classList.toggle("le-phone", isPhoneScreen());
+  renderBackLabel(el.btnBack, EDITOR_PAGE_IDS[mode]);
   renderHeader();
   renderStatus();
 
@@ -312,11 +326,6 @@ export async function bootEditorPage({ mode, initEditor }) {
     return;
   }
 
-  // Cała pula logo jest zajęta, gdy Control albo ustawienia którejś gry są
-  // otwarte (zapis i tak zablokuje RPC -- mówimy o tym od razu).
-  const busy = await findBusyContext("game", ["settings", "control"]).catch(() => null);
-  if (busy) { block(busyMessage(busy)); return; }
-
   let logo;
   try {
     [logo, logos] = await Promise.all([fetchLogo(logoId), listLogos()]);
@@ -330,13 +339,14 @@ export async function bootEditorPage({ mode, initEditor }) {
   const reason = cannotEditReason(logo, mode, FONT_3x10);
   if (reason) { block(reason); return; }
 
-  // To logo edytowane w innej karcie -> pełnoekranowy komunikat.
+  // To logo edytowane w innej karcie albo pula logo zajęta (Control / ustawienia
+  // gry) -> pełnoekranowy komunikat.
   const lock = await guardResourceLock({
     resourceType: "logo",
     resourceId: logo.id,
     context: "logo-editor",
-    message: t("resourceLock.logoMessage"),
-    backHref: listBackUrl(),
+    message: entryBusyMessage,
+    backHref: listBackUrl(mode),
   });
   if (!lock.ok) return;
   logoLock = lock;

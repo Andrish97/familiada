@@ -5,14 +5,14 @@
 // Overlay skopiowany ze sprawdzonego wzorca device-guard.js/guest-mode.js,
 // ale z treścią/przyciskami parametryzowanymi per wywołanie (patrz
 // docs/plan-testy-i-poprawki.md, sekcja "Warstwa 1").
-import { applyTranslations, t, withLangParam } from "../../translation/translation.js?v=v2026-10-09T08150";
-import { sb } from "./supabase.js?v=v2026-10-09T08150";
-import { rt } from "./realtime.js?v=v2026-10-09T08150";
+import { applyTranslations, t, withLangParam } from "../../translation/translation.js?v=v2026-10-09T17351";
+import { sb, SUPABASE_URL, SUPABASE_ANON_KEY } from "./supabase.js?v=v2026-10-09T17351";
+import { rt } from "./realtime.js?v=v2026-10-09T17351";
 
 const TAB_ID_KEY = "familiada:tabId";
-const HEARTBEAT_MS = 8000; // znacznie poniżej TTL (25s) w acquire_edit_lock
+const HEARTBEAT_MS = 8000; // znacznie poniżej TTL (120 s, edit_lock_ttl() w bazie)
 const RETRY_POLL_MS = 5000; // dopóki zablokowani: fallback niezależny od broadcastu
-const LOCK_TTL_MS = 25000; // musi być zgodne z progiem w acquire_edit_lock/delete_resource_checked
+const LOCK_TTL_MS = 120000; // musi być zgodne z edit_lock_ttl() w bazie (migracja 316)
 
 function randomId() {
   try {
@@ -21,7 +21,7 @@ function randomId() {
   return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 }
 
-function getTabId() {
+export function getTabId() {
   try {
     let id = sessionStorage.getItem(TAB_ID_KEY);
     if (!id) {
@@ -40,18 +40,51 @@ function lockChannel(resourceType, resourceId) {
   return rt(`familiada-edit-lock:${resourceType}:${resourceId}`);
 }
 
-async function acquireOnce(resourceType, resourceId, context) {
-  const { data, error } = await sb().rpc("acquire_edit_lock", {
+async function acquireOnce(resourceType, resourceId, context, mode = "exclusive") {
+  void refreshAccessToken();
+  const { data, error } = await sb().rpc("acquire_edit_lock_mode", {
     p_resource_type: resourceType,
     p_resource_id: resourceId,
     p_tab_id: getTabId(),
     p_context: context ?? null,
+    p_mode: mode,
   });
   if (error) throw error;
   return data;
 }
 
-async function releaseOnce(resourceType, resourceId) {
+// Ostatni znany token sesji — pagehide nie może czekać na async getSession().
+let lastAccessToken = null;
+async function refreshAccessToken() {
+  try {
+    const { data } = await sb().auth.getSession();
+    lastAccessToken = data?.session?.access_token || lastAccessToken;
+  } catch {}
+}
+
+// Zwolnienie przy zamykaniu karty: fetch z keepalive przeglądarka dokańcza
+// po zamknięciu strony (zwykłe sb().rpc bywa ubijane) — bez tego blokada
+// wisiała do wygaśnięcia TTL (120 s).
+function releaseRowKeepalive(resourceType, resourceId) {
+  if (!lastAccessToken) return false;
+  try {
+    fetch(`${SUPABASE_URL}/rest/v1/rpc/release_edit_lock`, {
+      method: "POST",
+      keepalive: true,
+      headers: {
+        "Content-Type": "application/json",
+        apikey: SUPABASE_ANON_KEY,
+        Authorization: `Bearer ${lastAccessToken}`,
+      },
+      body: JSON.stringify({ p_resource_type: resourceType, p_resource_id: resourceId, p_tab_id: getTabId() }),
+    }).catch(() => {});
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function releaseRow(resourceType, resourceId) {
   try {
     await sb().rpc("release_edit_lock", {
       p_resource_type: resourceType,
@@ -59,6 +92,10 @@ async function releaseOnce(resourceType, resourceId) {
       p_tab_id: getTabId(),
     });
   } catch {}
+}
+
+async function releaseOnce(resourceType, resourceId) {
+  await releaseRow(resourceType, resourceId);
   try {
     await lockChannel(resourceType, resourceId).sendBroadcast("RELEASED", {}, { mode: "http" });
   } catch {}
@@ -149,23 +186,46 @@ export function showBlockingOverlay({ title, message, backHref }) {
 }
 
 /**
- * Blokada wejścia w edycję zasobu — wołać PO auth, PRZED wyrenderowaniem
+ * Blokada wejścia na stronę, która trzyma JEDEN albo KILKA zasobów naraz
+ * (docs/blokady-zasobow.md, sekcja 6) — wołać PO auth, PRZED wyrenderowaniem
  * edytowalnej treści.
  *
- * Zwraca { ok: true } jeśli blokadę udało się zająć — można renderować
- * dalej. Zwraca { ok: false } jeśli zasób jest zajęty gdzie indziej —
- * overlay jest już pokazany, wywołujący powinien przerwać (return) i nic
- * więcej nie renderować.
+ *   opcje: { title, backHref, context, forbiddenTitle, forbiddenMessage }
+ *   resources: [{ type, id, mode, message, title?, context? }]
+ *     mode    — "exclusive" (domyślnie) albo "shared" (wiele kart naraz;
+ *               wyklucza tylko trzymanie wyłączne, patrz „Zgodność zasobów”)
+ *     message — komunikat, gdy TEN zasób jest zajęty (tekst albo funkcja
+ *               (odpowiedź_bazy) => tekst, np. gdy powód zależy od tego, kto
+ *               trzyma)
  *
- * Dopóki karta żyje, blokada jest odnawiana co ~8s (TTL po stronie serwera
- * to 25s — margines na chwilowe zerwanie sieci, nie na realne zniknięcie
- * karty). Zwalniana jest tylko przy faktycznym zamknięciu/nawigacji
- * (pagehide) — CELOWO NIE przy zwykłym schowaniu karty (visibilitychange),
- * bo alt-tab do innej aplikacji podczas edycji nie powinien oddawać
- * blokady komuś innemu.
+ * Zasoby są zajmowane po kolei, w podanej kolejności: pierwsza przeszkoda
+ * zatrzymuje i jej komunikat trafia na overlay — wszystko albo nic (to, co
+ * już zajęte, jest oddawane). Zajęte → overlay, sprawdzanie co ~5 s + sygnał
+ * RELEASED; gdy da się zająć całość, strona wczytuje się sama.
+ *
+ * Zwraca { ok: true, release } albo { ok: false } (overlay już pokazany,
+ * wywołujący robi return i nic więcej nie renderuje).
+ *
+ * Dopóki karta żyje, blokady są odnawiane co ~8 s oraz od razu po powrocie
+ * karty na wierzch (przeglądarka zwalnia liczniki ukrytych kart). Gdy
+ * odnowienie zwróci `locked` (blokadę w międzyczasie ktoś wziął — uśpiony
+ * laptop, wygasły TTL), strona blokuje się w całości. Zwalnianie tylko
+ * przy faktycznym zamknięciu / nawigacji (pagehide) — NIE przy schowaniu
+ * karty, bo alt-tab podczas edycji nie powinien oddawać blokady.
  */
-export async function guardResourceLock({ resourceType, resourceId, message, title, backHref, context }) {
+export async function guardResourceLocks(resources, { title, backHref, context = null, forbiddenTitle, forbiddenMessage } = {}) {
+  const items = (resources || []).filter((r) => r?.type && r?.id).map((r) => ({
+    type: r.type,
+    id: r.id,
+    mode: r.mode || "exclusive",
+    message: r.message,
+    title: r.title ?? title,
+    context: r.context ?? context,
+  }));
+
   let released = false;
+  let lost = false;
+  let renewing = false;
   let heartbeatTimer = null;
   let retryTimer = null;
 
@@ -179,129 +239,178 @@ export async function guardResourceLock({ resourceType, resourceId, message, tit
 
   function showForbiddenOverlay() {
     showOverlay({
-      title: t("resourceLock.forbiddenTitle"),
-      message: t("resourceLock.forbiddenMessage"),
+      title: forbiddenTitle || t("resourceLock.forbiddenTitle"),
+      message: forbiddenMessage || t("resourceLock.forbiddenMessage"),
       backHref,
     });
   }
 
-  const initial = await acquireOnce(resourceType, resourceId, context);
-
-  if (initial?.error === "gone") {
-    // Zasób usunięty gdzie indziej, zanim zdążyliśmy wejść — inny
-    // komunikat niż "zajęte przez kogoś" i bez pollingu odzyskania (to
-    // się nigdy nie "zwolni").
-    showGoneOverlay();
-    return { ok: false, gone: true };
+  function showLostOverlay() {
+    showOverlay({
+      title: t("resourceLock.lostTitle"),
+      message: t("resourceLock.lostMessage"),
+      backHref,
+    });
   }
 
-  if (!initial?.ok) {
-    showOverlay({ title, message, backHref });
+  // Wszystko albo nic: pierwsza przeszkoda przerywa, zajęte wcześniej oddajemy
+  // (bez broadcastu — to nie jest prawdziwe zwolnienie, tylko wycofanie próby).
+  async function tryAcquireAll() {
+    const got = [];
+    for (const item of items) {
+      const res = await acquireOnce(item.type, item.id, item.context, item.mode);
+      if (!res?.ok) {
+        for (const g of got.reverse()) await releaseRow(g.type, g.id);
+        return { ok: false, item, res };
+      }
+      got.push(item);
+    }
+    return { ok: true };
+  }
 
-    // Gdy zasób się zwolni, NIE chowamy tu tylko overlayu — strona już raz
+  const first = await tryAcquireAll();
+
+  if (!first.ok) {
+    const { item, res } = first;
+
+    if (res?.error === "gone") {
+      // Zasób usunięty gdzie indziej, zanim zdążyliśmy wejść — inny
+      // komunikat niż "zajęte przez kogoś" i bez pollingu odzyskania (to
+      // się nigdy nie "zwolni").
+      showGoneOverlay();
+      return { ok: false, gone: true };
+    }
+    if (res?.error === "forbidden") {
+      showForbiddenOverlay();
+      return { ok: false, forbidden: true };
+    }
+
+    const message = typeof item.message === "function" ? item.message(res) : item.message;
+    showOverlay({ title: item.title, message, backHref });
+
+    // Gdy zasoby się zwolnią, NIE chowamy tu tylko overlayu — strona już raz
     // przerwała renderowanie edytowalnej treści przy pierwszej porażce
     // (wywołujący dostaje { ok:false } i robi return), więc samo schowanie
     // overlayu zostawiłoby pustą, niewyrenderowaną stronę pod spodem.
     // Przeładowanie od zera jest proste i niezawodne: świeży boot() strony
-    // przejdzie normalnie przez guardResourceLock i realnie wyrenderuje
+    // przejdzie normalnie przez guardResourceLocks i realnie wyrenderuje
     // treść, zamiast próbować "wznowić" stan w locie.
     async function recheckAndReload() {
       if (released) return;
-      const res = await acquireOnce(resourceType, resourceId, context).catch(() => null);
-      if (res?.ok) {
+      const again = await tryAcquireAll().catch(() => null);
+      if (again?.ok) {
         clearInterval(retryTimer);
+        // Zajęte na czas próby zostaje trzymane — przeładowana strona odnowi je
+        // tą samą kartą; pagehide zwolni, gdyby przeładowanie się nie udało.
         location.reload();
-      } else if (res?.error === "gone") {
+      } else if (again?.res?.error === "gone") {
         // Zniknęło całkiem, zanim zwolniła je karta, na którą czekaliśmy —
         // dalsze odpytywanie nic już nie zmieni.
         clearInterval(retryTimer);
         showGoneOverlay();
+      } else if (again?.res?.error === "forbidden") {
+        clearInterval(retryTimer);
+        showForbiddenOverlay();
       }
     }
 
     // Broadcast "RELEASED" (natychmiastowe, ale best-effort — wysyłane na
     // pagehide, przeglądarka może ubić żądanie w trakcie nawigacji) +
-    // niezależny polling co ~5s jako fallback, żeby karta bez broadcastu
-    // i tak weszła najpóźniej po wygaśnięciu TTL (25s) po stronie serwera.
-    lockChannel(resourceType, resourceId).onBroadcast("RELEASED", recheckAndReload);
+    // niezależny polling co ~5 s jako fallback (obejmuje też zasoby powiązane
+    // innym kluczem, np. logos ↔ logo:L), żeby karta bez broadcastu i tak
+    // weszła najpóźniej po wygaśnięciu TTL po stronie serwera.
+    for (const it of items) lockChannel(it.type, it.id).onBroadcast("RELEASED", recheckAndReload);
     retryTimer = setInterval(recheckAndReload, RETRY_POLL_MS);
 
     return { ok: false };
   }
 
-  heartbeatTimer = setInterval(async () => {
-    const res = await acquireOnce(resourceType, resourceId, context).catch((e) => {
-      console.warn("[resource-lock] heartbeat failed:", e);
-      return null;
-    });
-    if (res?.error === "gone") {
-      // Zasób zniknął w trakcie edycji (usunięty gdzie indziej, np. przez
-      // Warstwę 2 krzyżowych blokad gdzieś indziej albo mimo niej). Overlay
-      // na wierzchu już wyrenderowanej treści blokuje dalszą interakcję —
-      // nie trzeba nic chować/przerenderowywać pod spodem.
-      clearInterval(heartbeatTimer);
-      showGoneOverlay();
-    } else if (res?.error === "forbidden") {
-      // Utrata prawa edycji w trakcie sesji (np. rola współdzielenia
-      // zdegradowana z editor do viewer gdzie indziej). Ten sam wzorzec co
-      // "gone" -- overlay na wierzchu, bez pollingu odzyskania.
-      clearInterval(heartbeatTimer);
-      showForbiddenOverlay();
+  async function renewAll() {
+    if (released || lost || renewing) return;
+    renewing = true;
+    try {
+      for (const item of items) {
+        const res = await acquireOnce(item.type, item.id, item.context, item.mode).catch((e) => {
+          console.warn("[resource-lock] heartbeat failed:", e);
+          return null;
+        });
+        if (released || lost) return;
+        if (res?.error === "gone") {
+          // Zasób zniknął w trakcie edycji (usunięty gdzie indziej, np. przez
+          // Warstwę 2 krzyżowych blokad albo mimo niej). Overlay na wierzchu
+          // już wyrenderowanej treści blokuje dalszą interakcję — nie trzeba
+          // nic chować/przerenderowywać pod spodem.
+          lost = true;
+          clearInterval(heartbeatTimer);
+          showGoneOverlay();
+          return;
+        }
+        if (res?.error === "forbidden") {
+          // Utrata prawa edycji w trakcie sesji (np. rola współdzielenia
+          // zdegradowana albo odebrany dostęp do bazy). Ten sam wzorzec co
+          // "gone" -- overlay na wierzchu, bez pollingu odzyskania.
+          lost = true;
+          clearInterval(heartbeatTimer);
+          showForbiddenOverlay();
+          return;
+        }
+        if (res && res.ok === false && res.error === "locked") {
+          // Blokadę w międzyczasie przejęła inna karta (nasza wygasła —
+          // uśpiony komputer, spowolnione liczniki w tle). Pełna blokada
+          // strony; reszty nie trzymamy, skoro nic tu już nie wolno.
+          lost = true;
+          clearInterval(heartbeatTimer);
+          showLostOverlay();
+          for (const other of items) if (other !== item) void releaseRow(other.type, other.id);
+          return;
+        }
+      }
+    } finally {
+      renewing = false;
     }
-  }, HEARTBEAT_MS);
+  }
+
+  heartbeatTimer = setInterval(renewAll, HEARTBEAT_MS);
+
+  // Powrót karty na wierzch: odnów od razu, nie czekaj na wolny licznik.
+  const onVisible = () => {
+    if (document.visibilityState === "visible") void renewAll();
+  };
+  document.addEventListener("visibilitychange", onVisible);
 
   // Zwraca Promise zwolnienia: strona, która wychodzi własnym przyciskiem
   // (np. „Wstecz” edytora logo), czeka na nie przed nawigacją -- przy samym
   // pagehide przeglądarka potrafi ubić żądanie w trakcie przejścia i blokada
-  // wisiałaby do wygaśnięcia TTL (25 s).
+  // wisiałaby do wygaśnięcia TTL.
   const release = () => {
     if (released) return Promise.resolve();
     released = true;
     clearInterval(heartbeatTimer);
     clearInterval(retryTimer);
-    return releaseOnce(resourceType, resourceId);
+    document.removeEventListener("visibilitychange", onVisible);
+    return Promise.all(items.map((it) => releaseOnce(it.type, it.id)));
   };
 
-  window.addEventListener("pagehide", release);
+  // Zamknięcie karty: najpierw keepalive (przeżywa zamknięcie), potem zwykła
+  // ścieżka z broadcastem RELEASED dla czekających kart.
+  const releaseOnHide = () => {
+    if (released) return;
+    for (const it of items) releaseRowKeepalive(it.type, it.id);
+    void release();
+  };
+  window.addEventListener("pagehide", releaseOnHide);
 
   return { ok: true, release };
 }
 
 /**
- * Wariant guardResourceLock() dla obserwatora, który sam NIE edytuje ten
- * zasób i nie ma czego trzymać/zwalniać — tylko referuje go (np. Control
- * albo game-settings pokazujące logo, które gra ma ustawione w
- * settings.display.logoId) i chce się zablokować, dopóki go ktoś inny
- * faktycznie edytuje. Bez acquireOnce/heartbeat/release — tylko
- * jednorazowy isResourceBusy() + (gdy busy) ten sam pełnoekranowy overlay
- * i mechanizm odzyskania (broadcast RELEASED + polling) co
- * guardResourceLock(), zakończony location.reload() gdy zasób się zwolni.
- *
- * Zwraca { ok: true } od razu, gdy zasób jest wolny — wywołujący renderuje
- * dalej. Zwraca { ok: false }, gdy zasób jest zajęty — overlay jest już
- * pokazany, wywołujący powinien przerwać (return).
+ * Jedna blokada strony — skrót do guardResourceLocks() z jednym zasobem.
  */
-export async function guardResourceBusy({ resourceType, resourceId, message, title, backHref }) {
-  const busy = await isResourceBusy(resourceType, resourceId);
-  if (!busy) return { ok: true };
-
-  showOverlay({ title, message, backHref });
-
-  let done = false;
-  async function recheckAndReload() {
-    if (done) return;
-    const stillBusy = await isResourceBusy(resourceType, resourceId).catch(() => true);
-    if (!stillBusy) {
-      done = true;
-      clearInterval(retryTimer);
-      location.reload();
-    }
-  }
-
-  lockChannel(resourceType, resourceId).onBroadcast("RELEASED", recheckAndReload);
-  const retryTimer = setInterval(recheckAndReload, RETRY_POLL_MS);
-
-  return { ok: false };
+export function guardResourceLock({ resourceType, resourceId, mode, message, title, backHref, context }) {
+  return guardResourceLocks(
+    [{ type: resourceType, id: resourceId, mode, message }],
+    { title, backHref, context }
+  );
 }
 
 /**
@@ -317,22 +426,22 @@ export async function guardResourceBusy({ resourceType, resourceId, message, tit
  * komunikatem zamiast próbować zapisać -- RLS i tak zablokuje sam zapis,
  * to tylko zamienia generyczny błąd Supabase na jasny komunikat.
  */
-export async function acquireResourceLock({ resourceType, resourceId, context = null } = {}) {
+export async function acquireResourceLock({ resourceType, resourceId, context = null, mode = "exclusive" } = {}) {
   if (!resourceType || !resourceId) return { ok: false, error: "missing_resource" };
 
   let released = false;
   let heartbeatTimer = null;
-  const first = await acquireOnce(resourceType, resourceId, context);
+  const first = await acquireOnce(resourceType, resourceId, context, mode);
   if (!first?.ok) return first || { ok: false, error: "locked" };
 
   const lease = { ok: true, reason: null };
 
   heartbeatTimer = setInterval(async () => {
-    const result = await acquireOnce(resourceType, resourceId, context).catch((error) => {
+    const result = await acquireOnce(resourceType, resourceId, context, mode).catch((error) => {
       console.warn("[resource-lock] scoped heartbeat failed:", error);
       return null;
     });
-    if (result?.error === "gone" || result?.error === "forbidden") {
+    if (result?.error === "gone" || result?.error === "forbidden" || result?.error === "locked") {
       lease.ok = false;
       lease.reason = result.error;
       clearInterval(heartbeatTimer);
@@ -343,10 +452,14 @@ export async function acquireResourceLock({ resourceType, resourceId, context = 
     if (released) return;
     released = true;
     clearInterval(heartbeatTimer);
-    window.removeEventListener("pagehide", release);
+    window.removeEventListener("pagehide", releaseOnHide);
     void releaseOnce(resourceType, resourceId);
   };
-  window.addEventListener("pagehide", release);
+  const releaseOnHide = () => {
+    if (!released) releaseRowKeepalive(resourceType, resourceId);
+    release();
+  };
+  window.addEventListener("pagehide", releaseOnHide);
   lease.release = release;
   return lease;
 }
@@ -403,35 +516,14 @@ export async function acquireResourceLocks(resources, { context = null } = {}) {
  * sekcja "Model: zasób ma stan busy/free".
  */
 export async function isResourceBusy(resourceType, resourceId) {
+  // limit(1) zamiast maybeSingle(): zasób trzymany współdzielenie ma kilka wierszy.
   const { data, error } = await sb()
     .from("edit_locks")
     .select("resource_type")
     .eq("resource_type", resourceType)
     .eq("resource_id", resourceId)
     .gt("heartbeat_at", new Date(Date.now() - LOCK_TTL_MS).toISOString())
-    .maybeSingle();
+    .limit(1);
   if (error) throw error;
-  return !!data;
-}
-
-/**
- * Jak isResourceBusy(), ale bez konkretnego resourceId — pyta "czy JAKIKOLWIEK
- * zasób tego typu ma teraz aktywną blokadę trzymaną z jednego z podanych
- * kontekstów" i zwraca KTÓRY kontekst pasował (albo null). Do reguł "cała
- * pula X busy" (np. logo blokowane w całości, gdy Control lub
- * game-settings.js mają aktywną grę) — patrz "Model: zasób ma stan
- * busy/free" w docs/plan-testy-i-poprawki.md. RLS na edit_locks i tak
- * ogranicza wynik do zasobów własnych wołającego.
- */
-export async function findBusyContext(resourceType, contexts) {
-  const { data, error } = await sb()
-    .from("edit_locks")
-    .select("holder_context")
-    .eq("resource_type", resourceType)
-    .in("holder_context", contexts)
-    .gt("heartbeat_at", new Date(Date.now() - LOCK_TTL_MS).toISOString())
-    .limit(1)
-    .maybeSingle();
-  if (error) throw error;
-  return data?.holder_context || null;
+  return !!data?.length;
 }

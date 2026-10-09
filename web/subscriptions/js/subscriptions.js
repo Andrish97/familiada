@@ -1,15 +1,17 @@
-import { sb, SUPABASE_URL } from "../../shared/js/core/supabase.js?v=v2026-10-09T08150";
-import { requireAuth, signOut } from "../../shared/js/core/auth.js?v=v2026-10-09T08150";
-import { isGuestUser, showGuestBlockedOverlay } from "../../shared/js/core/guest-mode.js?v=v2026-10-09T08150";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-09T08150";
-import { getUiLang, initI18n, t } from "../../shared/translation/translation.js?v=v2026-10-09T08150";
-import { initTopbarAccountDropdown } from "../../shared/js/core/topbar-controller.js?v=v2026-10-09T08150";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-09T08150";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-09T08150";
-import { createCooldownTicker } from "../../shared/js/core/cooldown.js?v=v2026-10-09T08150";
-import { enterModalSheet, exitModalSheet, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-09T08150";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-09T08150";
-import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-09T08150";
+import { sb, SUPABASE_URL } from "../../shared/js/core/supabase.js?v=v2026-10-09T17351";
+import { requireAuth, signOut } from "../../shared/js/core/auth.js?v=v2026-10-09T17351";
+import { isGuestUser, showGuestBlockedOverlay } from "../../shared/js/core/guest-mode.js?v=v2026-10-09T17351";
+import { toast } from "../../shared/js/core/toast.js?v=v2026-10-09T17351";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-09T17351";
+import { getUiLang, initI18n, t } from "../../shared/translation/translation.js?v=v2026-10-09T17351";
+import { linkTo, backHref, renderBackLabel } from "../../shared/js/core/nav-map.js?v=v2026-10-09T17351";
+import { initTopbarAccountDropdown } from "../../shared/js/core/topbar-controller.js?v=v2026-10-09T17351";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-09T17351";
+import { icon } from "../../shared/js/core/icons.js?v=v2026-10-09T17351";
+import { createCooldownTicker } from "../../shared/js/core/cooldown.js?v=v2026-10-09T17351";
+import { enterModalSheet, exitModalSheet, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-09T17351";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-09T17351";
+import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-09T17351";
 
 const i18nReady = initI18n({ withSwitcher: true }).catch((err) => {
   console.error("[subscriptions] i18n nieaktywny:", err);
@@ -29,35 +31,6 @@ let focusInviteHandled = false;
 let focusTaskHandled = false;
 let subTokenPrompted = false;
 
-function getRetParam() {
-  return new URLSearchParams(location.search).get("ret");
-}
-
-function getSafeRetUrl() {
-  const raw = getRetParam();
-  if (!raw) return null;
-  try {
-    const url = new URL(raw, location.origin + "/");
-    if (url.origin !== location.origin) return null;
-    return `${url.pathname}${url.search}${url.hash}`;
-  } catch {
-    return null;
-  }
-}
-
-function getRetPathnameLower() {
-  const safe = getSafeRetUrl();
-  if (!safe) return "";
-  try {
-    return new URL(safe, location.origin).pathname.toLowerCase();
-  } catch {
-    return "";
-  }
-}
-
-function getCurrentRelativeUrl() {
-  return `${location.pathname}${location.search}${location.hash}`;
-}
 
 const who = $("who");
 const btnBack = $("btnBackToGames");
@@ -228,7 +201,7 @@ function buildMailHtml({ title, subtitle, body, actionLabel, actionUrl, unsubTok
       <a href="${accountUrl}" style="color:#ffeaa6;text-decoration:underline;">${t("pollGo.mailAccountSettingsLink")}</a>
     </div>`;
   } else if (unsubToken) {
-    const globalUrl = mailLink(`/poll-go/?u=${encodeURIComponent(unsubToken)}`);
+    const globalUrl = mailLink(`/go/?u=${encodeURIComponent(unsubToken)}`);
     footerExtra = `<div style="margin-top:10px;font-size:11px;opacity:.55;text-align:center;">
       <a href="${globalUrl}" style="color:#ffeaa6;opacity:.7;text-decoration:underline;">${t("pollGo.mailUnsubGlobal")}</a>
     </div>`;
@@ -578,6 +551,7 @@ async function resendSelected() {
       const ownerLabel = who?.querySelector('.account-who')?.textContent || "Familiada";
       try {
         await sendSubscriptionEmail({ to: data.to, link: data.link, ownerLabel, unsubToken: data.unsub_token || null, isRegistered: !!data.registered });
+        toast(t("pollsHubSubscriptions.statusMsg.mailSent"));
       } catch {
         await alertModal({ text: MSG.resendMailFailed() });
       }
@@ -655,7 +629,7 @@ function pollTypeLabel(type) {
 
 function openTask(task) {
   if (!task?.token) return false;
-  const page = task.poll_type === "poll_points" ? "/poll-points/" : "/poll-text/";
+  const page = task.poll_type === "poll_points" ? "/polls/vote/points/" : "/polls/vote/text/";
   location.href = `${page}?t=${encodeURIComponent(task.token)}&lang=${encodeURIComponent(getUiLang() || "pl")}`;
   return true;
 }
@@ -787,7 +761,7 @@ async function invite(value) {
 
     closeInviteModal();
     await refreshData();
-    await alertModal({ text: MSG.inviteSaved() });
+    toast(MSG.inviteSaved());
     return true;
   } catch (e) {
     const m = String(e?.message || "").toLowerCase();
@@ -857,7 +831,6 @@ async function refreshData() {
     invites = b.data || [];
     tasks = (c.data || []).map((task) => ({ ...task, token: taskTokenOf(task) }));
 
-    updateBackButtonLabel();
     renderSubscribers();
     renderInvites();
     renderTasks();
@@ -922,40 +895,22 @@ async function refreshData() {
   }
 }
 
-function buildManualUrl() {
-  const url = new URL("/manual/", location.href);
-  url.searchParams.set("ret", getCurrentRelativeUrl());
-  url.searchParams.set("lang", getUiLang() || "pl");
-  url.hash = "subscriptions";
-  return url.toString();
-}
-
-function updateBackButtonLabel() {
-  if (!btnBack) return;
-  const retPath = getRetPathnameLower();
-  if (retPath.endsWith("/bases/")) btnBack.innerHTML = iconText("arrow-left", t("baseExplorer.backToBases"));
-  else btnBack.innerHTML = iconText("arrow-left", t("pollsHubSubscriptions.backToGames"));
-}
-
-function getBackLink() {
-  return getSafeRetUrl() || "/games/";
-}
 
 // Navigation is usable while authentication and lists are still loading.
 // Znacznik dla contact-modal.js: ten przycisk respektuje handleSheetBack().
 if (btnBack) btnBack.dataset.sheetBack = "1";
 btnBack?.addEventListener("click", () => {
   if (handleSheetBack()) return;
-  location.href = getBackLink();
+  location.href = backHref("subscriptions");
 });
-btnManual?.addEventListener("click", () => { location.href = buildManualUrl(); });
+btnManual?.addEventListener("click", () => { location.href = linkTo("manual", { hash: "subscriptions" }); });
 
 document.addEventListener("DOMContentLoaded", async () => {
   await i18nReady;
   const user = await requireAuth("/login/");
   if (isGuestUser(user)) {
     document.querySelector('.topbar')?.classList.add('topbar-ready');
-    showGuestBlockedOverlay({ backHref: "/games/", loginHref: "/login/?force_auth=1", showLoginButton: true });
+    showGuestBlockedOverlay({ backHref: backHref("subscriptions"), loginHref: "/login/?force_auth=1", showLoginButton: true });
     return;
   }
   initTopbarAccountDropdown(user);
@@ -993,10 +948,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   btnInviteOk?.addEventListener("click", () => invite(inviteInput?.value));
   inviteInput?.addEventListener("keydown", (e) => { if (e.key === "Enter") invite(inviteInput.value); });
 
-  updateBackButtonLabel();
+  renderBackLabel(btnBack, "subscriptions");
 
   window.addEventListener("i18n:lang", () => {
-    updateBackButtonLabel();
     setActiveTab(activeTab);
     renderSubscribers();
     renderInvites();

@@ -64,7 +64,7 @@ test("anonim: pełny render, kontrakt statystyk i bezpieczna obsługa parametró
   expect(realError?.message).toBeTruthy();
   console.log("[e2e-diag] expected real RPC error:", JSON.stringify(realError));
 
-  for (const selector of ["#ctaStart", 'a[href*="marketplace"]', 'a[href*="connect-device"]']) {
+  for (const selector of ["#ctaStart", 'a[href*="marketplace"]', 'a[href*="/connect/"]']) {
     const href = await page.locator(selector).first().getAttribute("href");
     const url = new URL(href, page.url());
     expect(url.origin).toBe("https://www.familiada.online");
@@ -145,7 +145,7 @@ test("odnośniki prowadzą do właściwych sekcji, a powroty nazywają cel Stron
   const destinations = [
     { selector: "#ctaStart", url: /\/login\/?(?:\?|$)/ },
     { selector: '.hero-cta a[href*="marketplace"]', url: /\/marketplace\/?(?:\?|$)/ },
-    { selector: '.hero-cta a[href*="connect-device"]', url: /\/connect-device\/?(?:\?|$)/ },
+    { selector: '.hero-cta a[href*="/connect/"]', url: /\/connect\/?(?:\?|$)/ },
     { selector: '.footer a[href*="privacy"]', url: /\/privacy\/?(?:\?|$)/ },
   ];
   for (const destination of destinations) {
@@ -159,15 +159,17 @@ test("odnośniki prowadzą do właściwych sekcji, a powroty nazywają cel Stron
   await expect(page.locator("#btnBackHome")).toHaveText(/Strona główna/);
   await page.goBack({ waitUntil: "domcontentloaded" });
   await page.locator('.hero-cta a[href*="marketplace"]').click();
-  await expect(page.locator("#btnGoGames")).toContainText("Strona główna");
+  await expect(page.locator("#btnGoGames")).toContainText("Wróć do: Strona główna");
 });
 
-test("gość pozostaje na stronie głównej i jest w całości sprzątany", async ({ page, context }) => {
+test("gość na stronie głównej trafia do /games/ (E4) i jest w całości sprzątany", async ({ page, context }) => {
   test.setTimeout(90_000);
   await loginAsGuest(page, context);
   try {
-    await openIndex(page);
-    await expect(page).toHaveURL(/^https:\/\/www\.familiada\.online\/(?:\?.*)?$/);
+    await page.goto("https://www.familiada.online/", { waitUntil: "domcontentloaded" });
+    // docs/nawigacja-mapa-plan.md, krok 3: gość na „/” → „/games/”.
+    await expect(page).toHaveURL(/\/games\/?(?:\?.*)?$/, { timeout: 20_000 });
+    await page.waitForLoadState("networkidle");
     const user = await page.evaluate(async () => (await window.__sbClient.auth.getUser()).data.user);
     expect(user?.is_anonymous || user?.user_metadata?.is_guest).toBeTruthy();
   } finally {

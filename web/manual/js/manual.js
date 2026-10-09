@@ -2,13 +2,13 @@
 // Zakładki mają działać nawet jeśli auth się nie załaduje.
 // Najpierw UI, potem auth „miękko”.
 
-import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-09T08150";
-import { initI18n, setUiLang, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-09T08150";
-import { initTopbarAccountDropdown } from "../../shared/js/core/topbar-controller.js?v=v2026-10-09T08150";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-09T08150";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-09T08150";
+import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-09T17351";
+import { initI18n, setUiLang } from "../../shared/translation/translation.js?v=v2026-10-09T17351";
+import { linkTo, backHref, renderBackLabel } from "../../shared/js/core/nav-map.js?v=v2026-10-09T17351";
+import { initTopbarAccountDropdown } from "../../shared/js/core/topbar-controller.js?v=v2026-10-09T17351";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-09T17351";
 
-import { decorateManualControls } from "./controls.js?v=v2026-10-09T08150";
+import { decorateManualControls } from "./controls.js?v=v2026-10-09T17351";
 
 function isModalMode() {
   const p = new URLSearchParams(location.search);
@@ -98,33 +98,6 @@ function wireTabs() {
   });
 }
 
-function normalizeRetTarget(rawRet) {
-  const fallback = withLangParam("/games/");
-  const trimmed = String(rawRet || "").trim();
-  if (!trimmed) return fallback;
-
-  try {
-    const target = new URL(trimmed, location.origin + "/");
-    if (target.origin !== location.origin) return fallback;
-    return withLangParam(target.href);
-  } catch {
-    return fallback;
-  }
-}
-
-function decodeRet() {
-  const p = new URLSearchParams(location.search);
-  return normalizeRetTarget(p.get("ret"));
-}
-
-function getRetPathnameLower() {
-  try {
-    return new URL(decodeRet(), location.href).pathname.toLowerCase();
-  } catch {
-    return "/games/";
-  }
-}
-
 function applyControlModalLayout() {
   if (!isModalMode()) return;
   // Ensure the class is set (fallback if inline script didn't run)
@@ -147,52 +120,20 @@ function applyControlModalLayout() {
 }
 
 
-function buildPrivacyUrl() {
-  const url = new URL("/privacy/", location.href);
-  url.searchParams.set("ret", decodeRet());
-  const p = new URLSearchParams(location.search);
-  if (p.get("modal")) url.searchParams.set("modal", p.get("modal"));
-  url.searchParams.set("lang", new URLSearchParams(location.search).get("lang") || localStorage.getItem("uiLang") || "pl");
-  const manualPath = `${location.pathname}${location.search}${location.hash}`;
-  url.searchParams.set("man", manualPath);
-  return url.toString();
-}
-
-
-function resolveBackLabelKey() {
-  const retPath = getRetPathnameLower();
-  if (retPath.endsWith("/base-explorer/")) return "manual.backToBaseManager";
-  if (retPath.endsWith("/bases/")) return "baseExplorer.backToBases";
-  if (retPath === "/logo/") return "manual.backToLogos";
-  if (retPath.startsWith("/logo/editor-")) return "manual.backToLogoEditor";
-  if (retPath.endsWith("/editor/")) return "manual.backToEditor";
-  if (retPath.endsWith("/polls/")) return "manual.backToPoll";
-  if (retPath.endsWith("/subscriptions/")) return "manual.backToSubscriptions";
-  if (retPath.endsWith("/account/")) return "manual.backToAccount";
-  if (retPath.endsWith("/marketplace/")) return "manual.backToMarketplace";
-  return "manual.backToGames";
-}
-
-function updateBackButtonLabel() {
-  const btn = byId("btnBack");
-  if (!btn) return;
-  btn.innerHTML = iconText("arrow-left", t(resolveBackLabelKey()));
-}
-
 function wireFallbackNav() {
   byId("btnBack")?.addEventListener("click", () => {
-    location.href = decodeRet();
+    location.href = backHref("manual");
   });
 
   byId("btnLegal")?.addEventListener("click", () => {
-    location.href = buildPrivacyUrl();
+    location.href = linkTo("privacy", { modal: new URLSearchParams(location.search).get("modal") });
   });
 
 }
 
 
 async function wireAuthSoft() {
-  const auth = await import("../../shared/js/core/auth.js?v=v2026-10-09T08150");
+  const auth = await import("../../shared/js/core/auth.js?v=v2026-10-09T17351");
   // Pełna strona jest częścią panelu użytkownika i wymaga sesji. Wersja
   // modalna jest osadzanym dokumentem pomocy — nie może zamienić iframe'u
   // w ekran logowania, gdy auth jest chwilowo niedostępny lub nie istnieje.
@@ -219,7 +160,7 @@ async function init() {
   decorateManualControls(document, document.documentElement.lang);
   applyControlModalLayout();
   wireTabs();
-  updateBackButtonLabel();
+  renderBackLabel(byId("btnBack"), "manual");
   wireFallbackNav();
 
   wireAuthSoft().catch((err) => {
@@ -232,5 +173,4 @@ void init();
 
 window.addEventListener("i18n:lang", () => {
   decorateManualControls(document, document.documentElement.lang);
-  updateBackButtonLabel();
 });

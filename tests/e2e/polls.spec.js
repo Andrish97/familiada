@@ -1,7 +1,8 @@
 // tests/e2e/polls.spec.js
-// Weryfikuje pełny cykl życia ankiety (js/pages/polls.js + poll-points.js/
-// poll-text.js): utworzenie, zebranie głosów od anonimowych uczestników
-// i zamknięcie, dla obu typów (poll_points, poll_text). Głosy rozkładają
+// Weryfikuje pełny cykl życia ankiety (polls.js + poll-tally.js + poll-points.js/
+// poll-text.js): utworzenie, zebranie głosów od anonimowych uczestników,
+// Zatrzymaj -> Wznów -> Zatrzymaj -> Podlicz głosy -> Zatwierdź (stan GOTOWA),
+// dla obu typów (poll_points, poll_text). Głosy rozkładają
 // się nierówno (kilka popularnych odpowiedzi + długi ogon unikalnych)
 // zamiast idealnie równo — bliżej realnego głosowania.
 //
@@ -19,10 +20,10 @@
 // (w tym realne równoległe obciążenie zapisu/zliczania głosów) — tylko
 // bez kosztu renderowania dodatkowych kart przeglądarki.
 //
-// Drugi test skupia się na panelu zamykania ankiety tekstowej: literówki
-// (różna wielkość liter — auto-scalane przyciskiem "Scal identyczne"),
-// ręczna korekta literówki w polu tekstowym i ręczne scalanie dwóch różnie
-// nazwanych, ale znaczących to samo odpowiedzi (.tcMergeBtn). Tu wszystkie
+// Drugi test skupia się na trybie podliczania ankiety tekstowej (karta Wyniki):
+// literówki (auto-scalane przyciskiem "Scal identyczne"), ręczna korekta
+// literówki w polu tekstowym, scalanie dwóch różnie nazwanych, ale znaczących
+// to samo odpowiedzi (przeciągnięcie uchwytu .tcHandle) i szkic poprawek w bazie. Tu wszystkie
 // głosy idą przez bezpośrednie RPC — przedmiotem testu jest panel, nie
 // mechanika głosowania (tę sprawdza już pierwszy test).
 //
@@ -122,33 +123,83 @@ async function getGameStatus(page, gameId) {
   }, gameId);
 }
 
-/** Diagnostyka: run #34 pokazało "element(s) not found" dla .uni-foot .btn.gold
- * po kliknięciu #btnFinishTextClose — bez żadnego console.error/pageerror, co
- * wyklucza rzucony wyjątek (catch loguje przed alertModal). Zrzut stanu DOM,
- * żeby rozstrzygnąć czy modal w ogóle powstaje, zamiast zgadywać dalej. */
-async function dumpModalState(page, label) {
-  const state = await page.evaluate(() => ({
-    modalCount: document.querySelectorAll(".uni-modal").length,
-    overlayCount: document.querySelectorAll(".overlay").length,
-    btnFinishExists: !!document.querySelector("#btnFinishTextClose"),
-    btnFinishDisabled: document.querySelector("#btnFinishTextClose")?.disabled ?? null,
-    msgText: document.querySelector("#msg")?.textContent ?? null,
-  }));
-  console.log(`[e2e-diag] dumpModalState(${label}):`, JSON.stringify(state));
-}
-
-/** Na stronie /polls?id=... — klika główny przycisk akcji i potwierdza modal, zwraca link do głosowania. */
-async function openPoll(page, gameId) {
+/** Strona /polls?id=... (właściciel). */
+async function gotoOwnerPage(page, gameId) {
   await page.goto(`https://www.familiada.online/polls?id=${gameId}`, { waitUntil: "domcontentloaded" });
   // polls.js wiąże listenery dopiero po asynchronicznym requireAuth+initI18n+refresh
   // w handlerze DOMContentLoaded — ten sam wyścig co przy #btnPrimary na /login.
   await page.waitForLoadState("networkidle");
-  await page.locator("#btnPollAction").click();
-  await page.locator(".uni-foot .btn.gold").click(); // potwierdzenie w modalu (pasek stanu też ma „Uruchom”)
+}
+
+/** Stan paska stanu: draft | poll_open | poll_stopped | tally | ready. */
+async function expectBarState(page, state, timeout = 60000) {
+  await expect(page.locator("#pollBar")).toHaveAttribute("data-state", state, { timeout });
+}
+
+/** OK w confirmModalu (celujemy w klasę, nie w tekst: OK bywa „Zamknij” jak ✕ w nagłówku). */
+async function confirmOk(page) {
+  const ok = page.locator(".uni-foot .btn.gold");
+  await expect(ok).toBeVisible({ timeout: 10000 });
+  await ok.click({ timeout: 10000 });
+}
+
+/** Na stronie /polls?id=... — „Uruchom” w pasku stanu + potwierdzenie, zwraca link do głosowania. */
+async function openPoll(page, gameId) {
+  await gotoOwnerPage(page, gameId);
+  await page.locator("#btnOpenPoll").click();
+  await confirmOk(page);
   await expect(page.locator("#pollLink")).not.toHaveValue("", { timeout: 15000 });
   const link = await page.inputValue("#pollLink");
   const key = new URL(link).searchParams.get("key");
   return { link, key };
+}
+
+/** Zatrzymaj: pasek -> ZATRZYMANA, strona sama przechodzi na kartę Wyniki. */
+async function stopPoll(page, gameId) {
+  await expect(page.locator("#btnStopPoll")).toBeEnabled({ timeout: 60000 });
+  await page.locator("#btnStopPoll").click();
+  await confirmOk(page);
+  await expectBarState(page, "poll_stopped");
+  await expect(page.locator("#secResults")).toHaveClass(/active/);
+  await expect.poll(() => getGameStatus(page, gameId), { timeout: 15000 }).toBe("poll_stopped");
+}
+
+/** Wznów głosowanie: pasek -> OTWARTA, ten sam link. */
+async function resumePoll(page, gameId) {
+  await page.locator("#btnResumePoll").click();
+  await confirmOk(page);
+  await expectBarState(page, "poll_open");
+  await expect.poll(() => getGameStatus(page, gameId), { timeout: 15000 }).toBe("poll_open");
+}
+
+/** Podlicz głosy: wejście w tryb podliczania w karcie Wyniki. */
+async function startTally(page) {
+  await expect(page.locator("#btnTallyPoll")).toBeEnabled({ timeout: 60000 });
+  await page.locator("#btnTallyPoll").click();
+  await expectBarState(page, "tally");
+  await expect(page.locator("#btnApproveTally")).toBeVisible();
+}
+
+/** Zatwierdź: potwierdzenie i status „ready”. */
+async function approveTally(page, gameId) {
+  await expect(page.locator("#btnApproveTally")).toBeEnabled({ timeout: 60000 });
+  await page.locator("#btnApproveTally").click();
+  await confirmOk(page);
+  await expect.poll(() => getGameStatus(page, gameId), {
+    timeout: 60000,
+    message: "po zatwierdzeniu podliczania ankieta powinna mieć status 'ready'",
+  }).toBe("ready");
+  await expectBarState(page, "ready");
+}
+
+/** Ten sam RPC głosujący co UI; po zatrzymaniu baza ma go odrzucić. */
+async function tryVote(page, rpcName, gameId, key, items) {
+  return await page.evaluate(async ({ rpcName, gameId, key, items }) => {
+    const { error } = await window.__sbClient.rpc(rpcName, {
+      p_game_id: gameId, p_key: key, p_voter_token: `e2e-late-${Date.now()}`, p_items: items,
+    });
+    return error ? String(error.message) : null;
+  }, { rpcName, gameId, key, items });
 }
 
 /** Prawdziwy, przeglądarkowy uczestnik (świeży, niezalogowany kontekst) głosuje we wszystkich pytaniach ankiety punktowej. */
@@ -254,8 +305,8 @@ function textItemsForVoter(questions, answerForOrd) {
   });
 }
 
-test("ankieta punktowa i tekstowa: tworzenie, zbieranie głosów i zamknięcie", async ({ page, context, browser }) => {
-  test.setTimeout(300_000); // pierwsza próba padła DOKŁADNIE na 180s (na sprzątaniu ostatniego kroku) — za mało zapasu
+test("ankieta punktowa i tekstowa: głosy, Zatrzymaj, Wznów, Podlicz", async ({ page, context, browser }) => {
+  test.setTimeout(300_000);
 
   await loginAsTestUser(page, context);
 
@@ -266,6 +317,7 @@ test("ankieta punktowa i tekstowa: tworzenie, zbieranie głosów i zamknięcie",
     mark("points seeded, opening poll");
     const { link: pointsLink, key: pointsKey } = await openPoll(page, pointsGame.gameId);
     mark("points poll opened, real UI voter starting");
+    await expectBarState(page, "poll_open");
 
     // Jedno prawdziwe kliknięcie przez przeglądarkę — sprawdza, że
     // mechanizm głosowania (klik odpowiedzi -> RPC) faktycznie działa.
@@ -281,20 +333,27 @@ test("ankieta punktowa i tekstowa: tworzenie, zbieranie głosów i zamknięcie",
     await bulkVote(page, "poll_points_vote_batch", pointsGame.gameId, pointsKey, bulkPlans);
     mark("points bulk voting done, navigating back to owner page");
 
-    await page.goto(`https://www.familiada.online/polls?id=${pointsGame.gameId}`, { waitUntil: "domcontentloaded" });
-    await page.waitForLoadState("networkidle");
-    mark("points owner page reloaded, waiting for close-poll button");
-    await expect(page.locator("#btnPollAction")).toHaveText("Zamknij", { timeout: 60000 });
-    mark("points close button ready, clicking close");
-    await page.locator("#btnPollAction").click();
-    await page.getByRole("button", { name: "Zakończ", exact: true }).click();
-    mark("points close confirmed, waiting for status=ready");
+    await gotoOwnerPage(page, pointsGame.gameId);
+    await expectBarState(page, "poll_open");
+    await expect(page.locator("#pollStateInfo")).toContainText(/\d+/, { timeout: 30000 }); // „100 głosów”
 
-    await expect.poll(() => getGameStatus(page, pointsGame.gameId), {
-      timeout: 15000,
-      message: "ankieta punktowa powinna mieć status 'ready' po zamknięciu",
-    }).toBe("ready");
-    mark("points poll closed successfully");
+    // Zatrzymaj -> Wznów -> Zatrzymaj: głosy zostają, ten sam link
+    await stopPoll(page, pointsGame.gameId);
+    // zatrzymana ankieta odrzuca nowe głosy
+    const lateErr = await tryVote(page, "poll_points_vote_batch", pointsGame.gameId, pointsKey,
+      pointsItemsForVoter(pointsGame.questions, 0));
+    expect(lateErr, "zatrzymana ankieta punktowa powinna odrzucić głos").not.toBeNull();
+    await resumePoll(page, pointsGame.gameId);
+    expect(await page.inputValue("#pollLink")).toBe(pointsLink);
+    await stopPoll(page, pointsGame.gameId);
+
+    // Podlicz: te same wiersze, głosy -> punkty, suma 100 przy każdym pytaniu
+    await startTally(page);
+    const sums = page.locator("#resultsList .resultQ .tallySum");
+    await expect(sums).toHaveCount(QN_COUNT, { timeout: 15000 });
+    await expect(sums.first()).toContainText("100");
+    await approveTally(page, pointsGame.gameId);
+    mark("points poll tallied successfully");
   } finally {
     await deleteGame(page, pointsGame.gameId);
     mark("points game deleted");
@@ -321,44 +380,31 @@ test("ankieta punktowa i tekstowa: tworzenie, zbieranie głosów i zamknięcie",
     await bulkVote(page, "poll_text_submit_batch", textGame.gameId, textKey, bulkPlans);
     mark("text bulk voting done, navigating back to owner page");
 
-    await page.goto(`https://www.familiada.online/polls?id=${textGame.gameId}`, { waitUntil: "domcontentloaded" });
-    await page.waitForLoadState("networkidle");
-    mark("text owner page reloaded, waiting for close-poll button");
-    await expect(page.locator("#btnPollAction")).toHaveText("Zamknij", { timeout: 60000 });
-    mark("text close button ready, opening close panel");
-    await page.locator("#btnPollAction").click(); // dla poll_text otwiera panel scalania, jeszcze nie zamyka
+    await gotoOwnerPage(page, textGame.gameId);
+    await expectBarState(page, "poll_open");
 
-    // buildTextClosePanel() robi 10x2 sekwencyjne zapytania (sesja + wpisy na
-    // pytanie) — pod produkcyjnym obciążeniem to bywa wolniejsze niż 15s.
-    await expect(page.locator("#btnFinishTextClose")).toBeEnabled({ timeout: 60000 });
-    mark("text close panel ready, finishing close");
-    await page.locator("#btnFinishTextClose").click({ timeout: 10000 });
-    mark("text close clicked, waiting for confirm modal");
-    await dumpModalState(page, "test1-post-click");
-    // Otwiera confirmModal z OK-em "Zamknij" — ten sam tekst co aria-label ✕
-    // (modal.js: closeBtn ma aria-label "Zamknij"), więc getByRole("button",
-    // {name:"Zamknij"}) trafia w DWA elementy (strict-mode violation). Celujemy
-    // w OK po klasie (.uni-foot .btn.gold), nie po tekście. Jawny timeout na
-    // każdym kroku, żeby ewentualny brak modala rzucił błąd zamiast wisieć
-    // do końca testu.
-    await expect(page.locator(".uni-foot .btn.gold")).toBeVisible({ timeout: 10000 });
-    mark("confirm modal visible, clicking ok");
-    await page.locator(".uni-foot .btn.gold").click({ timeout: 10000 });
-    mark("text close confirmed, waiting for status=ready");
+    await stopPoll(page, textGame.gameId);
+    const lateErr = await tryVote(page, "poll_text_submit_batch", textGame.gameId, textKey,
+      textItemsForVoter(textGame.questions, () => "Pizza"));
+    expect(lateErr, "zatrzymana ankieta tekstowa powinna odrzucić głos").not.toBeNull();
+    await resumePoll(page, textGame.gameId);
+    await stopPoll(page, textGame.gameId);
 
-    await expect.poll(() => getGameStatus(page, textGame.gameId), {
-      timeout: 60000,
-      message: "ankieta tekstowa powinna mieć status 'ready' po zamknięciu",
-    }).toBe("ready");
-    mark("text poll closed successfully");
+    // Podlicz: wiersze dostają uchwyty i punkty na żywo; licznik „3–6” bez błędu
+    await startTally(page);
+    const firstQ = page.locator("#resultsList .resultQ").first();
+    await expect(firstQ.locator(".aList.tally .aRow").first()).toBeVisible({ timeout: 60000 });
+    await expect(firstQ.locator(".tallyCounter.invalid")).toHaveCount(0);
+    await approveTally(page, textGame.gameId);
+    mark("text poll tallied successfully");
   } finally {
     await deleteGame(page, textGame.gameId);
     mark("text game deleted");
   }
 });
 
-test("ankieta tekstowa: literówki, korekta i scalanie odpowiedzi w panelu zamykania", async ({ page, context }) => {
-  test.setTimeout(180_000); // panel zamykania może teraz czekać do 60s samo w sobie
+test("ankieta tekstowa: literówki, korekta i scalanie odpowiedzi w trybie podliczania", async ({ page, context }) => {
+  test.setTimeout(240_000);
 
   await loginAsTestUser(page, context);
 
@@ -369,39 +415,18 @@ test("ankieta tekstowa: literówki, korekta i scalanie odpowiedzi w panelu zamyk
     const { key: gameKey } = await openPoll(page, game.gameId); // link do głosowania niepotrzebny (głosujemy RPC), ale klucz tak
     mark("merge-test: poll opened, bulk voting");
 
-    // Na pytaniu 1 celowo sadzimy realistyczny bałagan. WAŻNE — sprawdzone
-    // bezpośrednio w kodzie (buildTextClosePanel w polls.js): panel buduje
-    // model z kolumny `answer_norm` (znormalizowany tekst), NIE z surowego
-    // tekstu głosującego — więc różnice samej wielkości liter ("Pizza" vs
-    // "PIZZA") zlewają się w JEDEN wiersz automatycznie, zanim cokolwiek
-    // klikniesz. ".tcMergeDup" ("Scal identyczne") nie służy do łapania
-    // tego — służy do scalania duplikatów, które powstają PO RĘCZNEJ EDYCJI
-    // tekstu w trakcie sesji (np. gdy poprawka literówki sprawi, że dwa
-    // wiersze mają teraz identyczny tekst). Tekst w `.tcTxtInp` też jest
-    // zawsze znormalizowany (małe litery) — nie oryginalną pisownią.
-    // - 5 głosów "Pizza" (dowolna wielkość liter) — mimo to JEDEN wiersz od
-    //   razu, count=5 (test tego istniejącego mechanizmu, nie coś do klikania),
-    // - 1 głos z literówką "Piza" (inne znaki niż "pizza" po normalizacji,
-    //   więc NIE zlewa się automatycznie) — poprawiamy ręcznie w polu tekstowym
-    //   na "pizza", co tworzy surowy duplikat, i DOPIERO WTEDY "Scal identyczne"
-    //   ma sens i faktycznie coś robi,
-    // - "Kotek" (3 głosy) i "Kot domowy" (3 głosy) — różne sformułowania tej
-    //   samej odpowiedzi, nigdy się nie znormalizują tak samo — do ręcznego
-    //   scalenia przeciągnięciem (dawniej przyciskiem ⇄, patrz niżej),
-    // - reszta głosujących: mała pula 4 realistycznych odpowiedzi (nie
-    //   unikalny "długi ogon" na głosującego — run #35 pokazało, że to
-    //   faktycznie psuje zamykanie: finishTextClose() woła
-    //   normalizeTo100Int(), które filtruje odpowiedzi z <3% głosów; przy
-    //   unikalnym ogonie KAŻDA odpowiedź ma ~1 głos na 100 == ~1 punkt, więc
-    //   WSZYSTKIE odpadają i zamknięcie rzuca "po edycji zostało mniej niż 3
-    //   odpowiedzi" — realny bug w projekcie testu, nie w aplikacji: pula
-    //   20 odpowiedzi daje każdej ~4-5% głosów, bezpiecznie powyżej progu).
-    // Pozostałe 9 pytań: ta sama pula 20 odpowiedzi dla wszystkich 100 głosów
-    // (nieistotne dla tego testu, ale z tego samego powodu nie mogą być
-    // unikalne per głosujący). 100 głosujących zostaje bez zmian — zmienia
-    // się tylko liczba RÓŻNYCH odpowiedzi, między którymi się rozkładają.
-    // Wszystkie 100 głosów idą bezpośrednim RPC — przedmiotem testu jest
-    // panel zamykania, nie mechanika samego głosowania (tę sprawdza test wyżej).
+    // Na pytaniu 1 celowo sadzimy realistyczny bałagan. Tryb podliczania
+    // buduje model z kolumny `answer_norm` (znormalizowany tekst), NIE z
+    // surowego tekstu głosującego — więc różnice samej wielkości liter
+    // ("Pizza" vs "PIZZA") zlewają się w JEDEN wiersz automatycznie.
+    // "Scal identyczne" służy do duplikatów, które powstają PO RĘCZNEJ
+    // EDYCJI tekstu (poprawka literówki daje dwa identyczne wiersze).
+    // - 5 głosów "Pizza" (dowolna wielkość liter) — JEDEN wiersz, count=5,
+    // - 1 głos z literówką "Piza" — poprawiamy ręcznie na "pizza", potem
+    //   "Scal identyczne",
+    // - "Kotek" (3 głosy) i "Kot domowy" (3 głosy) — scalenie przeciągnięciem,
+    // - reszta: pula 20 odpowiedzi (każda ~4-5% głosów, powyżej progu 3 pkt;
+    //   unikalny "długi ogon" zepsułby podliczenie — wszystkie odpadłyby).
     const TAIL_POOL = [
       "Burger", "Sushi", "Frytki", "Lody", "Kebab", "Naleśniki", "Pierogi",
       "Sałatka", "Makaron", "Zupa", "Kanapka", "Ciasto", "Owoce", "Ryż",
@@ -423,38 +448,27 @@ test("ankieta tekstowa: literówki, korekta i scalanie odpowiedzi w panelu zamyk
     await bulkVote(page, "poll_text_submit_batch", game.gameId, gameKey, voterPlans);
     mark("merge-test: bulk voting done");
 
-    // Diagnostyka: run #28 pokazał panel z 0 wierszy mimo że bulkVote nie
-    // rzucił błędu (a poll_text_submit rzuca "No open session" gdyby sesji
-    // brakło, więc cichej utraty na poziomie RPC być nie powinno) — sprawdź
-    // wprost w bazie, żeby rozstrzygnąć czy głosy w ogóle tam wylądowały,
-    // zanim zaczniemy podejrzewać panel/timing.
     const q1EntryCount = await countTextEntries(page, game.gameId, game.questions[0].id);
     expect(q1EntryCount, "poll_text_entries dla pytania 1 powinno mieć 100 wpisów po bulkVote").toBe(TOTAL_VOTERS);
-    mark("merge-test: db count confirmed, navigating back to owner page");
 
-    await page.goto(`https://www.familiada.online/polls?id=${game.gameId}`, { waitUntil: "domcontentloaded" });
-    await page.waitForLoadState("networkidle");
-    mark("merge-test: owner page reloaded, waiting for close-poll button");
-    await expect(page.locator("#btnPollAction")).toHaveText("Zamknij", { timeout: 60000 });
-    mark("merge-test: close button ready, opening close panel");
-    await page.locator("#btnPollAction").click();
+    await gotoOwnerPage(page, game.gameId);
+    await expectBarState(page, "poll_open");
+    await stopPoll(page, game.gameId);
+    await startTally(page);
+    mark("merge-test: tally mode entered");
 
-    const firstQuestion = page.locator("#textCloseList .tcQ").first();
-    const items = firstQuestion.locator(".tcList .tcItem");
-    // 24 odrębne odpowiedzi na pytanie 1: pizza (1 wiersz, 5+1 głosów po
-    // scaleniu literówki), kotek, kot domowy, i 20 z puli TAIL_POOL.
+    const firstQuestion = page.locator("#resultsList .resultQ").first();
+    const items = firstQuestion.locator(".aList > .aRow:not(.leaving)");
+    // 24 odrębne odpowiedzi na pytanie 1: pizza (5+1 głosów po scaleniu
+    // literówki), kotek, kot domowy i 20 z puli TAIL_POOL. Widok surowy
+    // pokazywał tylko TOP 12 — podliczanie ma wszystkie.
     const initialRowCount = 24;
-    // Run #28/#29: głosy potwierdzone w bazie (countTextEntries wyżej), ale
-    // panel pokazywał 0 wierszy przez pełne 15s — buildTextClosePanel() robi
-    // 10x2 sekwencyjne zapytania (sesja + wpisy na pytanie), co pod obecnym
-    // obciążeniem produkcji bywa wolniejsze niż 15s. Dłuższy limit zamiast
-    // dalszego zgadywania.
     await expect(items).toHaveCount(initialRowCount, { timeout: 60000 });
-    mark("merge-test: panel rows loaded");
+    mark("merge-test: tally rows loaded");
 
     async function findItemByText(text) {
       for (const item of await items.all()) {
-        if ((await item.locator(".tcTxtInp").inputValue()) === text) return item;
+        if ((await item.locator(".aTxtInp").inputValue()) === text) return item;
       }
       return null;
     }
@@ -462,23 +476,18 @@ test("ankieta tekstowa: literówki, korekta i scalanie odpowiedzi w panelu zamyk
       return parseInt(await item.locator(".tcCnt").innerText(), 10);
     }
 
-    // Panel pokazuje tekst znormalizowany (małe litery) — "Pizza" wysłane
-    // przez głosujących wygląda tu jako "pizza".
+    // Tekst znormalizowany (małe litery) — "Pizza" wysłane przez głosujących to "pizza".
     const pizzaItem = await findItemByText("pizza");
     expect(pizzaItem, "5 głosów 'Pizza' powinno być już jednym wierszem 'pizza'").not.toBeNull();
     await expect.poll(() => itemCount(pizzaItem)).toBe(5);
 
-    // Literówka "Piza" ma inne znaki niż "pizza" po normalizacji, więc nie
-    // zlała się automatycznie — nadal stoi osobno.
     const typoItem = await findItemByText("piza");
     expect(typoItem, "literówka 'piza' nie powinna zniknąć sama, dopóki jej nie poprawimy").not.toBeNull();
-    mark("merge-test: pizza/piza assertions done, fixing typo");
 
-    // --- Poprawiamy literówkę ręcznie w polu tekstowym — dopiero to tworzy
-    // surowy duplikat "pizza" x2, który "Scal identyczne" faktycznie łapie ---
+    // --- Poprawiamy literówkę w polu tekstowym, potem "Scal identyczne" ---
     const pizzaCountBeforeTypoFix = await itemCount(pizzaItem);
-    await typoItem.locator(".tcTxtInp").fill("pizza");
-    await typoItem.locator(".tcTxtInp").blur(); // zmiana zapisuje się dopiero na blur
+    await typoItem.locator(".aTxtInp").fill("pizza");
+    await typoItem.locator(".aTxtInp").blur();
 
     await firstQuestion.locator(".tcMergeDup").click();
 
@@ -488,8 +497,7 @@ test("ankieta tekstowa: literówki, korekta i scalanie odpowiedzi w panelu zamyk
     await expect.poll(() => itemCount(pizzaAfterFix)).toBe(pizzaCountBeforeTypoFix + 1);
     mark("merge-test: auto-merge dup done, manual merge starting");
 
-    // --- Ręczne scalanie dwóch różnie nazwanych, ale tożsamych odpowiedzi
-    // (nigdy się nie znormalizują tak samo, więc to jedyna droga) ---
+    // --- Przeciągnięcie uchwytu jednego wiersza na drugi = połączenie ---
     const kotekItem = await findItemByText("kotek");
     const kotDomowyItem = await findItemByText("kot domowy");
     expect(kotekItem).not.toBeNull();
@@ -497,16 +505,9 @@ test("ankieta tekstowa: literówki, korekta i scalanie odpowiedzi w panelu zamyk
     const kotekCount = await itemCount(kotekItem);
     const kotDomowyCount = await itemCount(kotDomowyItem);
 
-    // .tcMergeBtn ("⇄") jest CELOWO ukryty na desktopie przez CSS —
-    // css/polls.css: "@media (hover: hover) and (pointer: fine) { .tcMergeBtn
-    // { display: none; } }" (komentarz w źródle: "Na desktopie ukryj ⇄ — tam
-    // działa DnD"). Playwright w CI to standardowa przeglądarka desktopowa
-    // (hover:hover, pointer:fine), więc ten przycisk jest tam niewidoczny —
-    // klik na nim wisiał w nieskończoność (run #34: "element is not
-    // visible"). Prawdziwy mechanizm na desktopie to natywny HTML5
-    // drag-and-drop (row.draggable=true, handlery dragstart/dragover/drop w
-    // polls.js) — .tcItem to cały wiersz, więc przeciągamy wiersz na wiersz.
-    await kotekItem.dragTo(kotDomowyItem);
+    // Na komputerze działa natywny HTML5 drag-and-drop z uchwytu (.tcHandle);
+    // „Połącz z…” (.tcMergeBtn) jest tylko na dotyku.
+    await kotekItem.locator(".tcHandle").dragTo(kotDomowyItem);
     mark("merge-test: kotek dragged onto kot domowy");
 
     await expect(items).toHaveCount(initialRowCount - 2, { timeout: 5000 });
@@ -514,25 +515,23 @@ test("ankieta tekstowa: literówki, korekta i scalanie odpowiedzi w panelu zamyk
     expect(kotSurvivor, "scalona odpowiedź 'kot domowy' powinna zostać").not.toBeNull();
     await expect.poll(() => itemCount(kotSurvivor)).toBe(kotekCount + kotDomowyCount);
     expect(await findItemByText("kotek"), "'kotek' powinno zniknąć po scaleniu").toBeNull();
-    mark("merge-test: manual merge done, finishing close");
+    mark("merge-test: manual merge done");
 
-    await expect(page.locator("#btnFinishTextClose")).toBeEnabled({ timeout: 5000 });
-    await page.locator("#btnFinishTextClose").click({ timeout: 10000 });
-    mark("merge-test: close clicked, waiting for confirm modal");
-    await dumpModalState(page, "test2-post-click");
-    // Zobacz komentarz przy analogicznym kliku w teście wyżej — OK confirmModala
-    // ma ten sam tekst "Zamknij" co aria-label przycisku ✕, więc celujemy w
-    // klasę, nie w accessible name.
-    await expect(page.locator(".uni-foot .btn.gold")).toBeVisible({ timeout: 10000 });
-    mark("merge-test: confirm modal visible, clicking ok");
-    await page.locator(".uni-foot .btn.gold").click({ timeout: 10000 });
-    mark("merge-test: close confirmed, waiting for status=ready");
+    // Poprawki same zapisują się w bazie (szkic) ...
+    await expect(page.locator("#tallySave")).toHaveAttribute("data-state", "saved", { timeout: 20000 });
 
-    await expect.poll(() => getGameStatus(page, game.gameId), {
-      timeout: 60000,
-      message: "ankieta powinna mieć status 'ready' po zamknięciu",
-    }).toBe("ready");
-    mark("merge-test: poll closed successfully");
+    // ... więc po przeładowaniu strony tryb podliczania wraca z tym samym stanem.
+    await gotoOwnerPage(page, game.gameId);
+    await expectBarState(page, "poll_stopped");
+    await startTally(page);
+    await expect(items).toHaveCount(initialRowCount - 2, { timeout: 60000 });
+    const restoredSurvivor = await findItemByText("kot domowy");
+    expect(restoredSurvivor, "szkic powinien przywrócić scaloną odpowiedź").not.toBeNull();
+    await expect.poll(() => itemCount(restoredSurvivor)).toBe(kotekCount + kotDomowyCount);
+    mark("merge-test: draft restored after reload");
+
+    await approveTally(page, game.gameId);
+    mark("merge-test: poll tallied successfully");
   } finally {
     await deleteGame(page, game.gameId);
     mark("merge-test: game deleted");
@@ -598,7 +597,7 @@ test("QR w ankietach: zmiana języka w polls.html dociera do już otwartego urz�
     const qrPage = await qrContext.newPage();
     instrumentPage(qrPage);
     await qrPage.goto(
-      `https://www.familiada.online/poll-qr?id=${pollGame.gameId}&key=${key}`,
+      `https://www.familiada.online/polls/vote/qr/?id=${pollGame.gameId}&key=${key}`,
       { waitUntil: "domcontentloaded" }
     );
     await expect(qrPage.locator(".qr-hint")).toHaveText("Zeskanuj QR, aby zagłosować", { timeout: 15000 });
@@ -621,9 +620,9 @@ test("QR w ankietach: zmiana języka w polls.html dociera do już otwartego urz�
   }
 });
 
-// ===== 4. AUDYT (2026-09-28) — Undo/redo w panelu zamykania, blokady przycisków =====
+// ===== 4. Cofnij / Ponów i wyjście z podliczania bez zatwierdzenia =====
 
-test("ankieta tekstowa: undo/redo dla edycji tekstu w panelu zamykania", async ({ page, context }) => {
+test("ankieta tekstowa: cofnij/ponów dla edycji tekstu w trybie podliczania", async ({ page, context }) => {
   test.setTimeout(180_000);
 
   await loginAsTestUser(page, context);
@@ -649,22 +648,20 @@ test("ankieta tekstowa: undo/redo dla edycji tekstu w panelu zamykania", async (
     await bulkVote(page, "poll_text_submit_batch", game.gameId, gameKey, voterPlans);
     mark("undo-test: voting done");
 
-    await page.goto(`https://www.familiada.online/polls?id=${game.gameId}`, { waitUntil: "domcontentloaded" });
-    await page.waitForLoadState("networkidle");
-    await expect(page.locator("#btnPollAction")).toHaveText("Zamknij", { timeout: 60000 });
-    mark("undo-test: opening close panel");
-    await page.locator("#btnPollAction").click();
+    await gotoOwnerPage(page, game.gameId);
+    await expectBarState(page, "poll_open");
+    await stopPoll(page, game.gameId);
+    await startTally(page);
 
-    const firstQuestion = page.locator("#textCloseList .tcQ").first();
-    const items = firstQuestion.locator(".tcList .tcItem");
-    const initialRowCount = 4; // Pizza, Kotek, Rower, + 1 z puli TAIL_POOL
+    const firstQuestion = page.locator("#resultsList .resultQ").first();
+    const items = firstQuestion.locator(".aList > .aRow:not(.leaving)");
+    const initialRowCount = 4; // Pizza, Kotek, Rower, + 1 z puli
     await expect(items).toHaveCount(initialRowCount, { timeout: 60000 });
-    mark("undo-test: panel loaded, testing undo/redo");
+    mark("undo-test: tally ready, testing undo/redo");
 
-    // Znajdź "pizza" i zmień tekst
     async function findItemByText(text) {
       for (const item of await items.all()) {
-        if ((await item.locator(".tcTxtInp").inputValue()) === text) return item;
+        if ((await item.locator(".aTxtInp").inputValue()) === text) return item;
       }
       return null;
     }
@@ -673,25 +670,20 @@ test("ankieta tekstowa: undo/redo dla edycji tekstu w panelu zamykania", async (
     expect(pizzaItem).not.toBeNull();
 
     // Zmień tekst: pizza → pepperoni
-    await pizzaItem.locator(".tcTxtInp").click();
-    await pizzaItem.locator(".tcTxtInp").fill("pepperoni");
-    await pizzaItem.locator(".tcTxtInp").blur();
+    await pizzaItem.locator(".aTxtInp").click();
+    await pizzaItem.locator(".aTxtInp").fill("pepperoni");
+    await pizzaItem.locator(".aTxtInp").blur();
     mark("undo-test: text edited pizza→pepperoni");
 
-    // Undo (Ctrl+Z)
-    await page.keyboard.press("Control+Z");
-    mark("undo-test: undo pressed");
-
-    const pizzaAfterUndo = await findItemByText("pizza");
-    expect(pizzaAfterUndo, "undo powinno przywrócić 'pizza'").not.toBeNull();
+    // Cofnij (przycisk i Ctrl+Z)
+    await expect(page.locator("#btnUndo")).toBeEnabled();
+    await page.locator("#btnUndo").click();
+    await expect.poll(async () => (await findItemByText("pizza")) !== null, { message: "cofnij powinno przywrócić 'pizza'" }).toBe(true);
     mark("undo-test: undo confirmed");
 
-    // Redo (Ctrl+Y)
+    // Ponów (Ctrl+Y poza polem tekstu)
     await page.keyboard.press("Control+Y");
-    mark("undo-test: redo pressed");
-
-    const pepperoniAfterRedo = await findItemByText("pepperoni");
-    expect(pepperoniAfterRedo, "redo powinno przywrócić 'pepperoni'").not.toBeNull();
+    await expect.poll(async () => (await findItemByText("pepperoni")) !== null, { message: "ponów powinno przywrócić 'pepperoni'" }).toBe(true);
     mark("undo-test: redo confirmed");
   } finally {
     await deleteGame(page, game.gameId);
@@ -699,55 +691,50 @@ test("ankieta tekstowa: undo/redo dla edycji tekstu w panelu zamykania", async (
   }
 });
 
-test("ankieta tekstowa: blokada przycisków Cancel przy zapisywaniu", async ({ page, context }) => {
+test("ankieta tekstowa: wyjście z podliczania bez zatwierdzenia zostawia ankietę zatrzymaną, poprawki wracają", async ({ page, context }) => {
   test.setTimeout(180_000);
 
   await loginAsTestUser(page, context);
 
-  mark("cancel-test: start seed");
+  mark("leave-test: start seed");
   const game = await seedPollGame(page, "poll_text");
   try {
-    mark("cancel-test: seeded, opening poll");
     const { key: gameKey } = await openPoll(page, game.gameId);
 
     const voterPlans = Array.from({ length: 20 }, (_, i) => ({
-      token: `e2e-cancel-${Date.now()}-${i}`,
+      token: `e2e-leave-${Date.now()}-${i}`,
       items: textItemsForVoter(game.questions, () => TEXT_POOL[i % TEXT_POOL.length]),
     }));
     await bulkVote(page, "poll_text_submit_batch", game.gameId, gameKey, voterPlans);
-    mark("cancel-test: voting done");
+    mark("leave-test: voting done");
 
-    await page.goto(`https://www.familiada.online/polls?id=${game.gameId}`, { waitUntil: "domcontentloaded" });
-    await page.waitForLoadState("networkidle");
-    await expect(page.locator("#btnPollAction")).toHaveText("Zamknij", { timeout: 60000 });
-    await page.locator("#btnPollAction").click();
+    await gotoOwnerPage(page, game.gameId);
+    await expectBarState(page, "poll_open");
+    await stopPoll(page, game.gameId);
+    await startTally(page);
 
-    await expect(page.locator("#btnFinishTextClose")).toBeEnabled({ timeout: 60000 });
-    mark("cancel-test: close panel ready");
+    const firstQuestion = page.locator("#resultsList .resultQ").first();
+    const items = firstQuestion.locator(".aList > .aRow:not(.leaving)");
+    await expect(items).toHaveCount(TEXT_POOL.length, { timeout: 60000 });
 
-    const finishBtn = page.locator("#btnFinishTextClose");
-    const cancelTopBtn = page.locator("#btnCancelTextCloseTop");
-    const cancelBtn = page.locator("#btnCancelTextClose");
+    // Usuń jedną odpowiedź (kosz) -> 3 wiersze, licznik nadal poprawny
+    await items.last().locator(".tcDel").click();
+    await expect(items).toHaveCount(TEXT_POOL.length - 1, { timeout: 5000 });
 
-    expect(await finishBtn.evaluate(el => el.disabled)).toBe(false);
-    expect(await cancelTopBtn.evaluate(el => el.disabled)).toBe(false);
-    expect(await cancelBtn.evaluate(el => el.disabled)).toBe(false);
+    // Wyjście bez zatwierdzenia: zwykły widok wyników, ankieta dalej ZATRZYMANA
+    await page.locator("#btnLeaveTally").click();
+    await expectBarState(page, "poll_stopped");
+    await expect(page.locator("#resultsList .aList.tally")).toHaveCount(0);
+    expect(await getGameStatus(page, game.gameId)).toBe("poll_stopped");
 
-    await finishBtn.click();
-    await page.waitForTimeout(100);
+    // Powrót do podliczania: usunięta odpowiedź nadal usunięta (szkic w bazie)
+    await startTally(page);
+    await expect(items).toHaveCount(TEXT_POOL.length - 1, { timeout: 60000 });
 
-    expect(await finishBtn.evaluate(el => el.disabled)).toBe(true);
-    expect(await cancelTopBtn.evaluate(el => el.disabled)).toBe(true);
-    expect(await cancelBtn.evaluate(el => el.disabled)).toBe(true);
-    mark("cancel-test: all buttons disabled during save");
-
-    await expect(page.locator(".uni-foot .btn.gold")).toBeVisible({ timeout: 10000 });
-    await page.locator(".uni-foot .btn.gold").click();
-
-    await expect.poll(() => getGameStatus(page, game.gameId), { timeout: 60000 }).toBe("ready");
-    mark("cancel-test: poll closed successfully");
+    await approveTally(page, game.gameId);
+    mark("leave-test: tallied after returning");
   } finally {
     await deleteGame(page, game.gameId);
-    mark("cancel-test: game deleted");
+    mark("leave-test: game deleted");
   }
 });

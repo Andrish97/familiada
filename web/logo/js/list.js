@@ -1,6 +1,6 @@
 // familiada/logo/js/list.js
 // Lista logo (/logo/): kafelki w trzech kartach, modale (nowe / nazwa /
-// import / podgląd), eksport. Edycja to osobne strony /logo/editor-*/
+// import / podgląd), eksport. Edycja to osobne strony /logo/editor/<tryb>/
 // (editor-page.js) -- „Nowe logo” od razu zakłada wiersz w bazie i otwiera
 // edytor z jego id w adresie.
 //
@@ -11,29 +11,30 @@
 //   preview-zoom.js – pinch-zoom pełnoekranowego podglądu
 //   routes.js       – adresy listy i edytorów
 
-import { addRenameGesture } from "../../shared/js/core/rename-gesture.js?v=v2026-10-09T08150";
-import { loadFont5x7, buildLogoPreviewCanvas } from "../../shared/js/core/logo-preview.js?v=v2026-10-09T08150";
-import { requireAuth } from "../../shared/js/core/auth.js?v=v2026-10-09T08150";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-09T08150";
-import { initI18n, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-09T08150";
-import { initTopbarAccountDropdown } from "../../shared/js/core/topbar-controller.js?v=v2026-10-09T08150";
-import { isMobileDevice } from "../../shared/js/core/pwa.js?v=v2026-10-09T08150";
-import { isPhoneScreen } from "../../shared/js/core/device-guard.js?v=v2026-10-09T08150";
-import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-09T08150";
-import { isResourceBusy, findBusyContext } from "../../shared/js/core/resource-lock.js?v=v2026-10-09T08150";
-import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-09T08150";
-import { icon } from "../../shared/js/core/icons.js?v=v2026-10-09T08150";
+import { addRenameGesture } from "../../shared/js/core/rename-gesture.js?v=v2026-10-09T17351";
+import { loadFont5x7, buildLogoPreviewCanvas } from "../../shared/js/core/logo-preview.js?v=v2026-10-09T17351";
+import { requireAuth } from "../../shared/js/core/auth.js?v=v2026-10-09T17351";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-09T17351";
+import { initI18n, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-09T17351";
+import { backHref, renderBackLabel } from "../../shared/js/core/nav-map.js?v=v2026-10-09T17351";
+import { initTopbarAccountDropdown } from "../../shared/js/core/topbar-controller.js?v=v2026-10-09T17351";
+import { isMobileDevice } from "../../shared/js/core/pwa.js?v=v2026-10-09T17351";
+import { isPhoneScreen } from "../../shared/js/core/device-guard.js?v=v2026-10-09T17351";
+import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-09T17351";
+import { isResourceBusy, acquireResourceLock } from "../../shared/js/core/resource-lock.js?v=v2026-10-09T17351";
+import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-09T17351";
+import { icon } from "../../shared/js/core/icons.js?v=v2026-10-09T17351";
 
-import { TYPE_GLYPH, TYPE_PIX, PIX_FORMAT, DOT_W, DOT_H, emptyRows, packBits, renderPreview, logoToPreview } from "./render.js?v=v2026-10-09T08150";
-import { listLogos, fetchLogo, createLogo, updateLogo, deleteLogo, isUniqueViolation, uploadImportedLogoImage, uploadImportedDrawHostRaster, removeDrawHostRaster, removeLogoImageUrl } from "./db.js?v=v2026-10-09T08150";
-import { buildExport, downloadJson, parseImport, safeFileName } from "./transfer.js?v=v2026-10-09T08150";
-import { initPreviewPinchZoom, lockPageZoomForPreview, unlockPageZoomAfterPreview } from "./preview-zoom.js?v=v2026-10-09T08150";
-import { cannotEditReason } from "./text.js?v=v2026-10-09T08150";
-import { editModeFor, editorUrl, manualUrl } from "./routes.js?v=v2026-10-09T08150";
-import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-09T08150";
+import { TYPE_GLYPH, TYPE_PIX, PIX_FORMAT, DOT_W, DOT_H, emptyRows, packBits, renderPreview, logoToPreview } from "./render.js?v=v2026-10-09T17351";
+import { listLogos, fetchLogo, createLogo, updateLogo, deleteLogo, isUniqueViolation, uploadImportedLogoImage, uploadImportedDrawHostRaster, removeDrawHostRaster, removeLogoImageUrl } from "./db.js?v=v2026-10-09T17351";
+import { buildExport, downloadJson, parseImport, safeFileName } from "./transfer.js?v=v2026-10-09T17351";
+import { initPreviewPinchZoom, lockPageZoomForPreview, unlockPageZoomAfterPreview } from "./preview-zoom.js?v=v2026-10-09T17351";
+import { cannotEditReason } from "./text.js?v=v2026-10-09T17351";
+import { editModeFor, editorUrl, manualUrl } from "./routes.js?v=v2026-10-09T17351";
+import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-09T17351";
 
-const FONT_3x10_URL = "/shared/fonts/display/font_3x10.json?v=v2026-10-09T08150";
-const FONT_5x7_URL = "/shared/fonts/display/font_5x7.json?v=v2026-10-09T08150";
+const FONT_3x10_URL = "/shared/fonts/display/font_3x10.json?v=v2026-10-09T17351";
+const FONT_5x7_URL = "/shared/fonts/display/font_5x7.json?v=v2026-10-09T17351";
 // Edycja wymaga miejsca na pasek narzędzi i scenę -- na telefonie dostępna
 // jest tylko lista (podgląd, import/eksport, nazwa, usuwanie); „Edytuj”
 // i „Nowe logo” są ukryte (.le-phone). Telefon wg wspólnej reguły
@@ -136,6 +137,14 @@ function makeUniqueName(baseName, excludeId = null) {
 function busyMessage(reason) {
   if (reason === "control") return t("resourceLock.logoPoolBusyControl");
   if (reason === "settings") return t("resourceLock.logoPoolBusySettings");
+  if (reason === "logo") return t("resourceLock.logoMessage");
+  return t("resourceLock.logoPoolBusy");
+}
+
+/** Komunikat dla odmowy zajęcia logo:L (odpowiedź acquire_edit_lock_mode). */
+function lockBusyMessage(res) {
+  if (res?.error === "gone") return t("resourceLock.goneMessage");
+  if (res?.blocker_type === "logos") return busyMessage(res.blocker_context);
   return t("resourceLock.logoMessage");
 }
 
@@ -341,7 +350,7 @@ async function removeLogo(logo, name) {
 /* =========================================================
    Modal nazwy: zmiana nazwy istniejącego / nazwa nowego logo
 ========================================================= */
-let nameModal = null; // { kind:"rename", logo } | { kind:"create", mode }
+let nameModal = null; // { kind:"rename", logo, lease } | { kind:"create", mode }
 
 function openNameModal(state) {
   nameModal = state;
@@ -354,9 +363,27 @@ function openNameModal(state) {
   setTimeout(() => el.renameInput.select(), 0);
 }
 
-const openRenameModal = (logo) => openNameModal({ kind: "rename", logo });
+// Okno zmiany nazwy trzyma logo:L wyłącznie do zamknięcia okna (docs/blokady-
+// zasobow.md, sekcja 6) -- w tym czasie nikt nie wejdzie w edycję tego logo,
+// a trzymana pula logo (Control / ustawienia gry) nie pozwoli otworzyć okna.
+async function openRenameModal(logo) {
+  let lease;
+  try {
+    lease = await acquireResourceLock({ resourceType: "logo", resourceId: logo.id, context: "logo-list" });
+  } catch (e) {
+    console.error(e);
+    void alertModal({ text: t("logoEditor.rename.failed") });
+    return;
+  }
+  if (!lease?.ok) {
+    void alertModal({ text: lockBusyMessage(lease) });
+    return;
+  }
+  openNameModal({ kind: "rename", logo, lease });
+}
 
 function closeNameModal() {
+  nameModal?.lease?.release?.();
   nameModal = null;
   closeOverlay(el.renameOverlay);
 }
@@ -378,10 +405,10 @@ async function confirmNameModal() {
   el.btnRenameOk.disabled = true;
   el.renameMsg.textContent = "";
   try {
-    // To konkretne logo może być właśnie edytowane w innej karcie -- wtedy
-    // zmiana nazwy stąd nadpisałaby jej zapis. (Zajętość całej puli sprawdza RPC.)
-    if (await isResourceBusy("logo", logo.id)) {
-      el.renameMsg.textContent = t("resourceLock.logoMessage");
+    // Blokada logo:L z otwarcia okna mogła zginąć (uśpiona karta) -- wtedy
+    // zapis stąd nadpisałby cudzą edycję. RPC i tak odmówi, ale mówimy wprost.
+    if (nameModal.lease && !nameModal.lease.ok) {
+      el.renameMsg.textContent = t("resourceLock.lostMessage");
       return;
     }
     if (name !== logo.name) await updateLogo(logo.id, { name: makeUniqueName(name, logo.id) });
@@ -396,7 +423,7 @@ async function confirmNameModal() {
 }
 
 /* =========================================================
-   Edycja: osobne strony /logo/editor-<tryb>/?id=
+   Edycja: osobne strony /logo/editor/<tryb>/?id=
 ========================================================= */
 /** Pusty payload nowego logo danego trybu -- wiersz powstaje od razu, żeby
  *  edytor miał id w adresie od pierwszej chwili. */
@@ -414,10 +441,9 @@ async function createAndOpen(mode, name) {
   el.btnRenameOk.disabled = true;
   el.renameMsg.textContent = "";
   try {
-    // Pula logo zajęta (Control / ustawienia gry) -- edytor i tak by nic nie zapisał.
-    const busy = await findBusyContext("game", ["settings", "control"]).catch(() => null);
-    if (busy) {
-      el.renameMsg.textContent = busyMessage(busy);
+    // Pula logo trzymana (Control / ustawienia gry) -- edytor i tak by nic nie zapisał.
+    if (await isResourceBusy("logos", currentUser.id).catch(() => false)) {
+      el.renameMsg.textContent = t("resourceLock.logoPoolBusy");
       return;
     }
     let finalName = makeUniqueName(name);
@@ -594,7 +620,7 @@ function bindUi() {
   el.btnBack.dataset.sheetBack = "1"; // znacznik dla contact-modal.js (patrz js/pages/bases.js)
   el.btnBack.addEventListener("click", () => {
     if (handleSheetBack()) return;
-    location.href = withLangParam("/games/");
+    location.href = backHref("logoEditor");
   });
   el.btnManual.addEventListener("click", () => { location.href = manualUrl(); });
 
@@ -651,6 +677,7 @@ function bindUi() {
 async function boot() {
   await initI18n({ withSwitcher: true });
   document.documentElement.classList.remove("page-loading");
+  renderBackLabel(el.btnBack, "logoEditor");
   initListSearch({ grids: "#grid", tile: ".logoTile", name: ".logoName" });
 
   currentUser = await requireAuth("/login/");

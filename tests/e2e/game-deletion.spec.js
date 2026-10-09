@@ -76,6 +76,11 @@ test("usunięcie gry przez UI czyści folder audio w buckecie user-sounds", asyn
   // sprząta folder po stronie klienta dopiero PO odpowiedzi RPC -- więc
   // sprawdzenie zaraz po zniknięciu wiersza gry było wyścigiem. Czekamy, a
   // wpisy-zaślepki folderu (.emptyFolderPlaceholder) nie liczą się jako pliki.
+  const queue = await page.evaluate(async (gameId) => {
+    const { data, error } = await window.__sbClient.rpc("e2e_storage_cleanup_peek", { p_owner_id: gameId });
+    return error ? `error: ${error.message}` : data;
+  }, gameId);
+  console.log("[e2e-storage] kolejka po usunięciu gry:", JSON.stringify(queue));
   await expect
     .poll(async () => {
       return await page.evaluate(async ({ userId, gameId }) => {
@@ -90,4 +95,9 @@ test("usunięcie gry przez UI czyści folder audio w buckecie user-sounds", asyn
       message: "plik audio nie powinien już istnieć w buckecie po usunięciu gry",
     })
     .toEqual([]);
+  const queueAfter = await page.evaluate(async (gameId) => {
+    const { data } = await window.__sbClient.rpc("e2e_storage_cleanup_peek", { p_owner_id: gameId });
+    return data;
+  }, gameId);
+  console.log("[e2e-storage] kolejka na koniec:", JSON.stringify(queueAfter));
 });

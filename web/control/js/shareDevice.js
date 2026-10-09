@@ -14,10 +14,11 @@
 // tego refreshBadges() zwraca zwykły obiekt {display,host,buzzer: liczba},
 // który app.js dokłada do ctx.shareBadges na kolejny ui.render().
 
-import { sb, SUPABASE_URL } from "../../shared/js/core/supabase.js?v=v2026-10-09T08150";
-import { t } from "../../shared/translation/translation.js?v=v2026-10-09T08150";
-import { icon } from "../../shared/js/core/icons.js?v=v2026-10-09T08150";
-import { createCooldownTicker, mailCooldownCheck } from "../../shared/js/core/cooldown.js?v=v2026-10-09T08150";
+import { sb, SUPABASE_URL } from "../../shared/js/core/supabase.js?v=v2026-10-09T17351";
+import { t } from "../../shared/translation/translation.js?v=v2026-10-09T17351";
+import { icon } from "../../shared/js/core/icons.js?v=v2026-10-09T17351";
+import { toast } from "../../shared/js/core/toast.js?v=v2026-10-09T17351";
+import { createCooldownTicker, mailCooldownCheck } from "../../shared/js/core/cooldown.js?v=v2026-10-09T17351";
 
 const MAIL_FUNCTION_URL = `${SUPABASE_URL}/functions/v1/send-mail`;
 const SHARE_TTL_MS = 4 * 60 * 60 * 1000;
@@ -78,8 +79,7 @@ async function sendShareEmail({ to, ownerLabel, deviceType, gameId, gameName, sh
   const body = t("control.shareDeviceModal.mailBody", { owner: ownerLabel, type: typeLabel, game: gameName || "—" }) ||
     `${ownerLabel} udostępnił(a) Ci urządzenie: ${typeLabel}${gameName ? ` (gra: ${gameName})` : ""}.`;
 
-  const page = deviceType;
-  const actionUrl = new URL(`/${page}?id=${gameId}&key=${shareKey}`, location.origin).href;
+  const actionUrl = new URL(`/go/?d=${deviceType}&id=${gameId}&key=${shareKey}`, location.origin).href;
 
   const html = buildMailHtml({
     title: subject,
@@ -223,6 +223,7 @@ export function createShareDevice({ currentUser, game, onBadgesChanged }) {
             if (mailSent === false) {
               msgEl && (msgEl.textContent = t("control.shareDeviceModal.mailCooldown") || "Udostępniono, ale e-mail nie poszedł -- niedawno już wysłaliśmy powiadomienie dla tej gry.");
             }
+            if (mailSent !== false) toast(t("control.shareDeviceModal.mailSent"));
           } catch (e) {
             if (msgEl) msgEl.textContent = e?.message || "Błąd.";
           }
@@ -291,6 +292,7 @@ export function createShareDevice({ currentUser, game, onBadgesChanged }) {
       if (mailSent === false) {
         msgEl && (msgEl.textContent = t("control.shareDeviceModal.mailCooldown") || "Udostępniono, ale e-mail nie poszedł -- niedawno już wysłaliśmy powiadomienie dla tej gry.");
       }
+      if (mailSent !== false) toast(t("control.shareDeviceModal.mailSent"));
     } catch (e) {
       if (msgEl) msgEl.textContent = e?.message || "Błąd.";
     }

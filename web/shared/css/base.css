@@ -457,10 +457,6 @@ a.btn.gold {
     color: #5dc870;
 }
 
-html, body{
-    min-height: 100%;
-}
-
 body{
     display: flex;
     flex-direction: column;
@@ -520,6 +516,7 @@ main{
 @media (max-width: 600px){
     .footer{
         margin: 12px 0 6px;
+        margin-top: auto; /* stopka na dole ekranu także na telefonie */
         padding-top: 15px;
         gap: 6px;
         font-size: 11px;
@@ -1972,7 +1969,8 @@ body{
 /* ===== Edytory: nazwa strony w topbarze (sekcja 2) =====
    Tytuł = jaki to edytor, wielkimi literami; podtytuł = nazwa zasobu tylko
    tam, gdzie strona nie ma pola nazwy (docs/ujednolicenie-wygladu.md, 4).
-   Na telefonie sekcja 2 topbara jest ukryta (topbar-layout-4). */
+   Na telefonie sekcja 2 topbara jest ukryta (topbar-layout-4) — chyba że <body>
+   ma klasę topbar-title-mobile (patrz niżej). */
 .topbar-title{
   display: flex;
   flex-direction: column;
@@ -1995,6 +1993,38 @@ body{
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* Tytuł strony w topbarze także na telefonie.
+   Domyślnie sekcja 2 topbara (tytuł) jest na telefonie ukryta. Strona, która ma
+   ją pokazać, dodaje do <body> klasę topbar-title-mobile (ankieta, edytor gry,
+   edytory logo, menedżer bazy, ustawienia gry). Tytuł zajmuje wolne
+   miejsce między „Wstecz” a ikonami, w dwóch krótkich liniach (tytuł + szara
+   linijka) z wielokropkiem. Szerokość 980 px = próg układu telefonicznego. */
+@media (max-width: 980px){
+  body.topbar-title-mobile .topbar-layout-4{
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-areas: "s1 s2 s3";
+  }
+  body.topbar-title-mobile .topbar-layout-4 .topbar-section-2{
+    grid-area: s2;
+    display: flex;
+    min-width: 0;
+    flex-wrap: nowrap;
+  }
+  body.topbar-title-mobile .topbar-layout-4 .topbar-section-2 .topbar-title{
+    flex: 1 1 auto;
+    gap: 1px;
+  }
+  body.topbar-title-mobile .topbar-title .title{
+    font-size: 13px;
+    letter-spacing: .06em;
+    line-height: 1.2;
+  }
+  body.topbar-title-mobile .topbar-title .subtitle{
+    font-size: 11px;
+    line-height: 1.2;
+  }
 }
 
 /* ===== Pole nazwy edytora — jedno dla edytora gier i edytorów logo ===== */
@@ -2051,3 +2081,46 @@ body{
 .searchText::placeholder{ opacity: .65; }
 .searchText::-webkit-search-cancel-button{ display: none; }
 
+
+/* ===== Dymek komunikatu po akcji (shared/js/core/toast.js) ===== */
+.app-toast {
+  position: fixed;
+  left: 50%;
+  /* nad dolnym paskiem stron z listą (.games-bottom) i nad home indicatorem */
+  bottom: calc(max(12px, env(safe-area-inset-bottom)) + 64px);
+  transform: translate(-50%, 12px);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: min(520px, calc(100vw - 30px));
+  padding: 12px 16px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,234,166,.55);
+  background: rgba(12,16,36,.96);
+  color: #fff;
+  font-weight: 900;
+  font-size: 14px;
+  line-height: 1.3;
+  text-align: center;
+  box-shadow: 0 16px 36px rgba(0,0,0,.35);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .2s ease, transform .2s ease;
+  z-index: 10100;
+  cursor: pointer;
+}
+.app-toast.show {
+  opacity: 1;
+  transform: translate(-50%, 0);
+  pointer-events: auto;
+}
+.app-toast.error {
+  border-color: rgba(255,120,120,.85);
+  color: #ffb8b8;
+}
+.app-toast .app-toast-text { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
+.app-toast .app-toast-close { display: none; flex: 0 0 auto; opacity: .75; }
+.app-toast.error .app-toast-close { display: inline; }
+@media (max-width: 600px) {
+  .app-toast { width: calc(100vw - 30px); max-width: none; }
+}

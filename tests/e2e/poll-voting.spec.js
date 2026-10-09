@@ -18,7 +18,7 @@ const { serveBranchCode } = require("./helpers/branch-code");
 // Strony głosowania z brancha (komunikaty stanów, E11e); baza z produkcji.
 test.use({ serviceWorkers: "block" });
 test.beforeEach(async ({ context }) => {
-  await serveBranchCode(context, { pages: ["poll-text", "poll-points"] });
+  await serveBranchCode(context, { pages: ["polls/vote/text", "polls/vote/points"] });
 });
 const { loginAsPooledTestUser, instrumentPage } = require("./helpers/login");
 
@@ -105,22 +105,14 @@ async function relaunchPoll(page, gameId) {
   }, gameId);
 }
 
-// Zamknięcie ankiety wymaga głosów (game_poll_close_check), więc stan "zamknięta"
-// symulujemy odpowiedziami RPC: payload odmawia ("poll is not open"), a
-// get_poll_game zwraca status 'ready' dla tego samego klucza.
-async function mockClosedPoll(page, gameId, type) {
-  await page.route("**/rest/v1/rpc/poll_get_payload", (route) =>
-    route.fulfill({
-      status: 400,
-      contentType: "application/json",
-      body: JSON.stringify({ code: "P0001", message: "poll_get_payload: poll is not open", details: null, hint: null }),
-    })
-  );
-  await page.route("**/rest/v1/rpc/get_poll_game", (route) =>
+// Podliczenie ankiety wymaga głosów (game_poll_close_check), więc stan „zakończona”
+// symulujemy odpowiedzią RPC poll_state (baza podaje ją po kluczu z linku).
+async function mockPollState(page, state, type) {
+  await page.route("**/rest/v1/rpc/poll_state", (route) =>
     route.fulfill({
       status: 200,
       contentType: "application/json",
-      body: JSON.stringify({ game: { id: gameId, name: "E2E", type, status: "ready", poll_qr_lang: "pl" }, questions: [] }),
+      body: JSON.stringify({ ok: true, state, type }),
     })
   );
 }
@@ -133,7 +125,7 @@ test.describe("poll-voting (poll-points.js i poll-text.js) audyt", () => {
       await loginAsPooledTestUser(page, context, testInfo.parallelIndex);
       const game = await createPollGame(page, "poll_points");
 
-      const url = new URL("poll-points/index.html", "https://www.familiada.online/");
+      const url = new URL("polls/vote/points/index.html", "https://www.familiada.online/");
       url.searchParams.set("id", game.gameId);
       url.searchParams.set("key", game.shareKey);
 
@@ -184,7 +176,7 @@ test.describe("poll-voting (poll-points.js i poll-text.js) audyt", () => {
       const game = await createPollGame(page, "poll_text");
 
 
-      const url = new URL("poll-text/index.html", "https://www.familiada.online/");
+      const url = new URL("polls/vote/text/index.html", "https://www.familiada.online/");
       url.searchParams.set("id", game.gameId);
       url.searchParams.set("key", game.shareKey);
 
@@ -241,7 +233,7 @@ test.describe("poll-voting (poll-points.js i poll-text.js) audyt", () => {
         `${game.gameId}_${game.shareKey}`
       );
 
-      const url = new URL("poll-text/index.html", "https://www.familiada.online/");
+      const url = new URL("polls/vote/text/index.html", "https://www.familiada.online/");
       url.searchParams.set("id", game.gameId);
       url.searchParams.set("key", game.shareKey);
 
@@ -269,7 +261,7 @@ test.describe("poll-voting (poll-points.js i poll-text.js) audyt", () => {
     try {
 
       // Brak ?id i ?key
-      await page.goto("https://www.familiada.online/poll-points/index.html", {
+      await page.goto("https://www.familiada.online/polls/vote/points/index.html", {
         waitUntil: "domcontentloaded",
       });
       await page.waitForLoadState("networkidle");
@@ -292,7 +284,7 @@ test.describe("poll-voting (poll-points.js i poll-text.js) audyt", () => {
       const game = await createPollGame(page, "poll_text");
 
 
-      const url = new URL("poll-text/index.html", "https://www.familiada.online/");
+      const url = new URL("polls/vote/text/index.html", "https://www.familiada.online/");
       url.searchParams.set("id", game.gameId);
       url.searchParams.set("key", game.shareKey);
 
@@ -331,19 +323,45 @@ test.describe("poll-voting (poll-points.js i poll-text.js) audyt", () => {
     }
   });
 
-  for (const [pollType, dir] of [["poll_text", "poll-text"], ["poll_points", "poll-points"]]) {
-    test(`${dir}: ankieta zamknięta → "Ankieta została zamknięta"`, async ({ page, context }, testInfo) => {
+  for (const [pollType, dir] of [["poll_text", "polls/vote/text"], ["poll_points", "polls/vote/points"]]) {
+    test(`${dir}: ankieta zakończona → "Ankieta zakończona"`, async ({ page, context }, testInfo) => {
       try {
         await loginAsPooledTestUser(page, context, testInfo.parallelIndex);
         const game = await createPollGame(page, pollType);
-        await mockClosedPoll(page, game.gameId, pollType);
+        await mockPollState(page, "ended", pollType);
 
         const url = new URL(`${dir}/index.html`, "https://www.familiada.online/");
         url.searchParams.set("id", game.gameId);
         url.searchParams.set("key", game.shareKey);
         await page.goto(url.toString(), { waitUntil: "domcontentloaded" });
 
-        await expect(page.locator(".closed")).toContainText(/została zamknięta|has been closed|закрито/, { timeout: 10000 });
+        await expect(page.locator(".closed")).toContainText(/zakończona|has ended|завершено/, { timeout: 10000 });
+        await expect(page.locator(".qbox")).not.toBeVisible();
+
+        await deleteGame(page, game.gameId);
+      } finally {
+        await page.close();
+      }
+    });
+
+    // Prawdziwy stan z bazy: właściciel zatrzymuje ankietę (poll_stop), ten sam link
+    // pokazuje „Ankieta jest zatrzymana” i nie pozwala głosować.
+    test(`${dir}: ankieta zatrzymana → "Ankieta jest zatrzymana", bez głosowania`, async ({ page, context }, testInfo) => {
+      try {
+        await loginAsPooledTestUser(page, context, testInfo.parallelIndex);
+        const game = await createPollGame(page, pollType);
+        const stopErr = await page.evaluate(async (gid) => {
+          const { error } = await window.__sbClient.rpc("poll_stop", { p_game_id: gid });
+          return error ? String(error.message) : null;
+        }, game.gameId);
+        expect(stopErr).toBeNull();
+
+        const url = new URL(`${dir}/index.html`, "https://www.familiada.online/");
+        url.searchParams.set("id", game.gameId);
+        url.searchParams.set("key", game.shareKey);
+        await page.goto(url.toString(), { waitUntil: "domcontentloaded" });
+
+        await expect(page.locator(".closed")).toContainText(/jest zatrzymana|is stopped|зупинено/, { timeout: 10000 });
         await expect(page.locator(".qbox")).not.toBeVisible();
 
         await deleteGame(page, game.gameId);

@@ -1,4 +1,4 @@
-// Test dla buzzer/js/render.js's deriveButtonState() — zgłoszony realny
+// Test dla control/buzzer/js/render.js's deriveButtonState() — zgłoszony realny
 // bug (nagranie): "naciskają, zaświeca ten który pierwszy nacisnął [...]
 // operator to widzi i zatwierdza". Funkcja czytała WYŁĄCZNIE
 // duel.firstTeam (ustawiane dopiero przez ACCEPT_BUZZ, po potwierdzeniu
@@ -8,7 +8,7 @@
 
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { deriveButtonState, STATE } from "../../web/buzzer/js/render.js";
+import { deriveButtonState, STATE } from "../../web/control/buzzer/js/render.js";
 
 function row({ topCard = "rounds", physicalBuzzer = false, duel }) {
   return {

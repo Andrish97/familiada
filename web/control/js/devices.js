@@ -12,11 +12,13 @@
 // 2026-05-30_203) — to czysty lookup "kod -> share_key", niezwiązany z
 // komendami, nie wymaga żadnej zmiany dla v2.
 
-import { getUiLang } from "../../shared/translation/translation.js?v=v2026-10-09T08150";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T08150";
+import { getUiLang } from "../../shared/translation/translation.js?v=v2026-10-09T17351";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T17351";
 
-function makeUrl(path, gameId, key, { lang } = {}) {
-  const u = new URL(path, location.origin);
+// Linki urządzeń wychodzą z aplikacji (mail, QR, zakładki), więc zawsze przez /go/.
+function makeUrl(device, gameId, key, { lang } = {}) {
+  const u = new URL("/go/", location.origin);
+  u.searchParams.set("d", device);
   u.searchParams.set("id", gameId);
   u.searchParams.set("key", key);
   if (lang) u.searchParams.set("lang", lang);
@@ -27,9 +29,9 @@ export function createDevices({ game }) {
   function buildUrls(lang) {
     const targetLang = lang || getUiLang();
     return {
-      displayUrl: makeUrl("../display", game.id, game.share_key_display, { lang: targetLang }),
-      hostUrl: makeUrl("../host", game.id, game.share_key_host, { lang: targetLang }),
-      buzzerUrl: makeUrl("../buzzer", game.id, game.share_key_buzzer || "", { lang: targetLang }),
+      displayUrl: makeUrl("display", game.id, game.share_key_display, { lang: targetLang }),
+      hostUrl: makeUrl("host", game.id, game.share_key_host, { lang: targetLang }),
+      buzzerUrl: makeUrl("buzzer", game.id, game.share_key_buzzer || "", { lang: targetLang }),
     };
   }
 

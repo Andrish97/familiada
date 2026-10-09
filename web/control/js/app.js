@@ -1,4 +1,4 @@
-import { createRenderCompletionGate } from "../../shared/js/gameplay/renderCompletion.js?v=v2026-10-09T08150";
+import { createRenderCompletionGate } from "../../shared/js/gameplay/renderCompletion.js?v=v2026-10-09T17351";
 // control/js/app.js
 // Punkt wejścia Control v2 — spina store/engine/devices/presence/
 // soundReactor/ui. Nawigacja przedmeczowa (devices_display →
@@ -7,20 +7,21 @@ import { createRenderCompletionGate } from "../../shared/js/gameplay/renderCompl
 // engine.js) — ale i tak przechodzi przez assertTransition(), żeby tabela
 // stanów była mechanizmem wszędzie, nie tylko wewnątrz silnika reguł gry.
 
-import { guardDesktopOnly } from "../../shared/js/core/device-guard.js?v=v2026-10-09T08150";
-import { guardResourceLock, guardResourceBusy } from "../../shared/js/core/resource-lock.js?v=v2026-10-09T08150";
-import { initI18n, getUiLang, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-09T08150";
-import { requireAuth } from "../../shared/js/core/auth.js?v=v2026-10-09T08150";
-import { setTopbarAccount } from "../../shared/js/core/topbar-controller.js?v=v2026-10-09T08150";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T08150";
-import { loadQuestions, loadAnswers, guardGameState } from "../../shared/js/core/game-validate.js?v=v2026-10-09T08150";
-import { loadSfxManifest, initSfx, setCurrentGameId, unlockAudio, applySfxGameSettings, loadSfxFromCloud, playSfx, getSfxDurationAccurate as getSfxDuration, listSfx, isAnySfxPlaying } from "../../shared/js/core/sfx.js?v=v2026-10-09T08150";
-import { listGameSounds } from "../../shared/js/core/sfx-cloud.js?v=v2026-10-09T08150";
-import { assertTransition } from "../../shared/js/gameplay/gameStateMachine.js?v=v2026-10-09T08150";
-import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-09T08150";
-import { DEFAULT_SETTINGS } from "../../shared/js/gameplay/gameStateShape.js?v=v2026-10-09T08150";
-import { rt } from "../../shared/js/core/realtime.js?v=v2026-10-09T08150";
-import { doorbellTopic } from "../../shared/js/core/game-state-doorbell.js?v=v2026-10-09T08150";
+import { guardDesktopOnly } from "../../shared/js/core/device-guard.js?v=v2026-10-09T17351";
+import { guardResourceLocks } from "../../shared/js/core/resource-lock.js?v=v2026-10-09T17351";
+import { initI18n, getUiLang, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-09T17351";
+import { backHref, renderBackLabel } from "../../shared/js/core/nav-map.js?v=v2026-10-09T17351";
+import { requireAuth } from "../../shared/js/core/auth.js?v=v2026-10-09T17351";
+import { setTopbarAccount } from "../../shared/js/core/topbar-controller.js?v=v2026-10-09T17351";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T17351";
+import { loadQuestions, loadAnswers, guardGameState } from "../../shared/js/core/game-validate.js?v=v2026-10-09T17351";
+import { loadSfxManifest, initSfx, setCurrentGameId, unlockAudio, applySfxGameSettings, loadSfxFromCloud, playSfx, getSfxDurationAccurate as getSfxDuration, listSfx, isAnySfxPlaying } from "../../shared/js/core/sfx.js?v=v2026-10-09T17351";
+import { listGameSounds } from "../../shared/js/core/sfx-cloud.js?v=v2026-10-09T17351";
+import { assertTransition } from "../../shared/js/gameplay/gameStateMachine.js?v=v2026-10-09T17351";
+import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-09T17351";
+import { DEFAULT_SETTINGS } from "../../shared/js/gameplay/gameStateShape.js?v=v2026-10-09T17351";
+import { rt } from "../../shared/js/core/realtime.js?v=v2026-10-09T17351";
+import { doorbellTopic } from "../../shared/js/core/game-state-doorbell.js?v=v2026-10-09T17351";
 
 function qrImgSrc(url) {
   const u = encodeURIComponent(String(url ?? ""));
@@ -100,17 +101,18 @@ function applyGameSettingsToState(settings, state) {
   }
 }
 
-import { createStore } from "./store.js?v=v2026-10-09T08150";
-import { createEngine } from "./engine.js?v=v2026-10-09T08150";
-import { createActionGate } from "./actionGate.js?v=v2026-10-09T08150";
-import { createDevices } from "./devices.js?v=v2026-10-09T08150";
-import { createPresence } from "./presence.js?v=v2026-10-09T08150";
-import { missingDevices } from "./deviceGate.js?v=v2026-10-09T08150";
-import { createSessionTelemetry } from "./sessionTelemetry.js?v=v2026-10-09T08150";
-import { createSoundReactor } from "./soundReactor.js?v=v2026-10-09T08150";
-import { createUI } from "./ui.js?v=v2026-10-09T08150";
-import { createShareDevice } from "./shareDevice.js?v=v2026-10-09T08150";
-import { icon } from "../../shared/js/core/icons.js?v=v2026-10-09T08150";
+import { createStore } from "./store.js?v=v2026-10-09T17351";
+import { createEngine } from "./engine.js?v=v2026-10-09T17351";
+import { createActionGate } from "./actionGate.js?v=v2026-10-09T17351";
+import { createDevices } from "./devices.js?v=v2026-10-09T17351";
+import { createPresence } from "./presence.js?v=v2026-10-09T17351";
+import { missingDevices } from "./deviceGate.js?v=v2026-10-09T17351";
+import { createSessionTelemetry } from "./sessionTelemetry.js?v=v2026-10-09T17351";
+import { createSoundReactor } from "./soundReactor.js?v=v2026-10-09T17351";
+import { createUI } from "./ui.js?v=v2026-10-09T17351";
+import { createShareDevice } from "./shareDevice.js?v=v2026-10-09T17351";
+import { icon } from "../../shared/js/core/icons.js?v=v2026-10-09T17351";
+import { toast } from "../../shared/js/core/toast.js?v=v2026-10-09T17351";
 
 guardDesktopOnly();
 
@@ -168,6 +170,7 @@ async function drawFinalPicks(state, roundPool) {
 
 async function main() {
   await initI18n({ withSwitcher: true });
+  renderBackLabel(document.getElementById("btnBack"), "control");
 
   const params = new URLSearchParams(location.search);
   const gameId = params.get("id");
@@ -190,43 +193,21 @@ async function main() {
   const { data: game, error: gameError } = await sb().from("games").select("*").eq("id", gameId).single();
   if (gameError || !game) { root.textContent = "Nie znaleziono gry."; return; }
 
-  // Warstwa 1 blokady (docs/plan-testy-i-poprawki.md, sekcja "Control" —
-  // punkt odłożony do teraz, bo dopiero game_state daje realny stan do
-  // przejęcia). resourceType:"game" to WSPÓLNY klucz z game-settings.js/
-  // game-settings.js/editor.js — Control blokuje edycję ustawień w trakcie
-  // rozgrywki, i widzi odwrotnie, gdy ktoś inny (druga karta Control,
-  // ustawienia, edytor) już trzyma tę samą grę.
-  const lock = await guardResourceLock({
-    resourceType: "game",
-    resourceId: gameId,
-    context: "control",
-    message: t("resourceLock.gameMessage"),
-    backHref: "/games/",
-  });
+  // Blokady strony (docs/blokady-zasobow.md, sekcja 6): game:G wyłącznie (wspólny
+  // klucz z edytorem, ustawieniami i ankietą) + logos współdzielone (cała pula
+  // logo użytkownika; id = użytkownik). Kolejność: najpierw gra, potem pula logo
+  // — pierwsza przeszkoda zatrzymuje ze swoim komunikatem. Edycja któregokolwiek
+  // logo (logo:L wyłącznie) wyklucza logos, więc zatrzymuje Control.
+  const { data: { user: lockUser } } = await sb().auth.getUser();
+  const lock = await guardResourceLocks([
+    { type: "game", id: gameId, mode: "exclusive", message: t("resourceLock.gameMessage") },
+    { type: "logos", id: lockUser?.id, mode: "shared", message: t("resourceLock.logoEditBlocksControl") },
+  ], { context: "control", backHref: backHref("control") });
   if (!lock.ok) return;
 
   // Blokada stanu: gra, która nie nadaje się do rozgrywki (np. ankieta
   // otwarta, za mało pytań), blokuje Control w całości.
   if (!(await guardGameState(gameId, "play"))) return;
-
-  // "Logo ↔ Control" (docs/plan-testy-i-poprawki.md, sekcja "Krzyżowe
-  // blokady między zasobami" — druga połowa pary "Logo ↔ trwająca
-  // rozgrywka", odłożona tam na "fundament Control", który właśnie powyżej
-  // powstał). Control nie EDYTUJE logo — tylko je referuje (na żywo na
-  // Wyświetlaczu), więc nie zajmuje własnej blokady "logo" (guardResourceBusy,
-  // w odróżnieniu od guardResourceLock, nic nie trzyma/nie zwalnia) — tylko
-  // czeka, aż logo-editor.js zwolni SWOJĄ. Domyślne logo (logoId === null)
-  // nie ma odpowiadającego wiersza user_logos — nic do sprawdzenia.
-  const gameLogoId = game.settings?.display?.logoId;
-  if (gameLogoId) {
-    const logoLock = await guardResourceBusy({
-      resourceType: "logo",
-      resourceId: gameLogoId,
-      message: t("resourceLock.logoInUseMessage"),
-      backHref: "/games/",
-    });
-    if (!logoLock.ok) return;
-  }
 
   setCurrentGameId(gameId);
   await loadSfxManifest();
@@ -882,7 +863,10 @@ async function main() {
   document.getElementById("qrModalCopy")?.addEventListener("click", async () => {
     const kind = document.getElementById("qrModalOverlay")?.dataset.kind;
     const code = kind && connectCodes[kind];
-    if (code) { try { await navigator.clipboard.writeText(code); } catch {} }
+    if (code) {
+      try { await navigator.clipboard.writeText(code); toast(t("control.copyOk")); }
+      catch { toast(t("control.copyFail"), { kind: "error" }); }
+    }
   });
 
   // Kropki statusu w topbarze są klikalne PRZEZ CAŁĄ GRĘ (nie tylko na
@@ -934,7 +918,7 @@ async function main() {
   // game-settings.js dedykowana dla Control v2, patrz jej nagłówek — Control
   // tylko otwiera ten sam modal co dzisiejszy btnOpenGsModal/gsOverlay,
   // identyczny protokół postMessage gs:requestClose / gs:close). Podgląd
-  // Wyświetlacza wewnątrz modala to WŁASNY iframe game-settings2 (/display?
+  // Wyświetlacza wewnątrz modala to WŁASNY iframe game-settings2 (/control/display?
   // preview=1 + web/js/gameplay/previewRow.js), aktualizowany na żywo przy każdej
   // zmianie — nie jest to sterowanie prawdziwym, sparowanym Display (ten
   // zostaje BLACK przez cały etap ustawień, sekcja 3a pkt 5 planu).
@@ -948,7 +932,7 @@ async function main() {
     // patrzył na pusty prostokąt przez cały ten czas. Chowany dopiero na
     // "gs:ready" niżej.
     gsSpinnerEl?.classList.remove("hidden");
-    if (gsFrameEl) gsFrameEl.src = `/game-settings/?id=${encodeURIComponent(gameId)}&modal=1`;
+    if (gsFrameEl) gsFrameEl.src = `/games/settings/?id=${encodeURIComponent(gameId)}&modal=1`;
     gsOverlayEl?.classList.remove("hidden");
   }
   async function onGsModalClose() {
@@ -1001,7 +985,7 @@ async function main() {
     // Fire-and-forget, jak dzisiejsze control/js/app.js — nie blokujemy
     // wyjścia na tym, przeglądarka i tak zaraz nawiguje dalej.
     shareDevice.expireShares().catch(() => {});
-    location.href = withLangParam("/games/");
+    location.href = backHref("control");
   });
 
   // "Losowo" ma losować RAZ, od razu przy wejściu w Podsumowanie (D3), i
@@ -1216,7 +1200,10 @@ async function main() {
       }
       if (action === "devices.copyCode") {
         const code = connectCodes[payload];
-        if (code) { try { await navigator.clipboard.writeText(code); } catch {} }
+        if (code) {
+      try { await navigator.clipboard.writeText(code); toast(t("control.copyOk")); }
+      catch { toast(t("control.copyFail"), { kind: "error" }); }
+    }
         return;
       }
       if (action === "devices.shareOpen") {
@@ -1287,8 +1274,8 @@ async function main() {
       }
       if (action === "session.finish") {
         // Gra już zakończona (locks.gameEnded) — czysta nawigacja z powrotem
-        // do listy gier, bez żadnego dalszego zapisu do game_state.
-        location.href = withLangParam("/games/");
+        // do poprzedniej strony, bez żadnego dalszego zapisu do game_state.
+        location.href = backHref("control");
         return;
       }
       if (action === "rounds.introNext") {

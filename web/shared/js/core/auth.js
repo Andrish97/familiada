@@ -1,13 +1,13 @@
 // js/core/auth.js
-import { icon } from "./icons.js?v=v2026-10-09T08150";
-import { sb, buildSiteUrl } from "./supabase.js?v=v2026-10-09T08150";
-import { t, withLangParam } from "../../translation/translation.js?v=v2026-10-09T08150";
+import { icon } from "./icons.js?v=v2026-10-09T17351";
+import { sb, buildSiteUrl } from "./supabase.js?v=v2026-10-09T17351";
+import { t, withLangParam } from "../../translation/translation.js?v=v2026-10-09T17351";
 
 const GUEST_LOCAL_MARKER_KEY = "fam:guest:session_seen";
 const GUEST_DISCARD_RPC_MISSING_KEY = "fam:guest:discard_rpc_missing";
 
 function buildAuthRedirect(page, lang) {
-  // page: "confirm" | "reset" lub "/confirm/"
+  // page: "/login/confirm/" lub "/login/reset/"
   const p = String(page || "").trim();
   const path = p.startsWith("/") ? p : `/${p}`;
   const url = new URL(buildSiteUrl(path)); // buildSiteUrl zwraca absolutny URL w Twoim projekcie
@@ -125,7 +125,7 @@ export async function resolveLoginToEmail(loginOrEmail) {
   return await loginToEmail(loginOrEmail);
 }
 
-import { reservedUsernameReason } from "./reserved-usernames.js?v=v2026-10-09T08150";
+import { reservedUsernameReason } from "./reserved-usernames.js?v=v2026-10-09T17351";
 
 export function validateUsername(un, { allowEmpty = false } = {}) {
   const v = String(un || "").trim();
@@ -378,7 +378,7 @@ export async function convertGuestToRegisteredEmailOnly(email, language, captcha
   };
   if (language) payload.data.language = language;
 
-  const confirmUrl = new URL(buildAuthRedirect("/confirm/", language));
+  const confirmUrl = new URL(buildAuthRedirect("/login/confirm/", language));
   confirmUrl.searchParams.set("to", mail);
 
   const options = { emailRedirectTo: confirmUrl.toString() };
@@ -457,7 +457,7 @@ export async function signUp(email, password, redirectTo, usernameInput, languag
   const userData = username ? { username } : null;
 
   // ✅ absolutny redirect + lang (bez withLangParam)
-  const emailRedirectTo = redirectTo || buildAuthRedirect("/confirm/", language);
+  const emailRedirectTo = redirectTo || buildAuthRedirect("/login/confirm/", language);
 
   const options = { emailRedirectTo };
   if (userData || language) {
@@ -525,7 +525,7 @@ export async function resetPassword(loginOrEmail, redirectTo, language, resolved
   const email = (resolvedEmail || await loginToEmail(loginOrEmail))?.toLowerCase?.() || "";
   if (!email) throw new Error(t("index.errResetMissingLogin"));
 
-  const resetRedirectTo = redirectTo || buildAuthRedirect("/reset/", language);
+  const resetRedirectTo = redirectTo || buildAuthRedirect("/login/reset/", language);
 
   const options = { redirectTo: resetRedirectTo };
   if (language) options.data = { language };
