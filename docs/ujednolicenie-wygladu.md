@@ -325,3 +325,13 @@ urządzenia.
    przełącznika archiwum.
 5. Jeden wspólny komponent (rozwinięcie `share-sections.js`) dla wszystkich
    miejsc udostępniania. Realizacja po etapach nawigacji (E6–E9).
+6. **Kanały udostępniania** (uzupełnienie 2026-10-09): bazy i urządzenia
+   udostępnia się na dwa sposoby — **mailem / nazwą użytkownika bez
+   subskrypcji** (`base_share_by_email`, `base_share_by_user`,
+   `share_device`) oraz **subskrybentom**. Z listy subskrybentów do wyboru są
+   **tylko zarejestrowani** (z kontem — `subscriber_user_id`); subskrybent
+   bez konta (sam e-mail) dostaje tylko zaproszenia do ankiet. Komponent ma
+   więc w roli „udostępniam” pole „Udostępnij mailem / nazwą” obok listy
+   subskrybentów, a wiersze odbiorców z obu kanałów w tych samych sekcjach
+   wg stanu (np. Oczekujące · Aktywni), z oznaczeniem kanału (mail /
+   subskrybent) w szarej linijce.
