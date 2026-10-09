@@ -1,14 +1,14 @@
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T17351";
-import { cooldownGet, cooldownReserve, cooldownRelease, mailCooldownEmailReserve } from "../../shared/js/core/cooldown.js?v=v2026-10-09T17351";
-import { requireAuth, updateUserLanguage, validatePassword, validateUsername, signOut, niceAuthError, initPasswordToggles, convertGuestToRegisteredEmailOnly } from "../../shared/js/core/auth.js?v=v2026-10-09T17351";
-import { getUserEmailNotificationsFlag, setUserEmailNotificationsFlag } from "../../shared/js/core/user-flags.js?v=v2026-10-09T17351";
-import { initI18n, t, getUiLang, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-09T17351";
-import { linkTo, backHref, loginUrl, renderBackLabel } from "../../shared/js/core/nav-map.js?v=v2026-10-09T17351";
-import { toast } from "../../shared/js/core/toast.js?v=v2026-10-09T17351";
-import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-09T17351";
-import { isGuestUser, hideForGuest } from "../../shared/js/core/guest-mode.js?v=v2026-10-09T17351";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-09T17351";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-09T17351";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T18180";
+import { cooldownGet, cooldownReserve, cooldownRelease, mailCooldownEmailReserve } from "../../shared/js/core/cooldown.js?v=v2026-10-09T18180";
+import { requireAuth, updateUserLanguage, validatePassword, validateUsername, signOut, niceAuthError, initPasswordToggles, convertGuestToRegisteredEmailOnly } from "../../shared/js/core/auth.js?v=v2026-10-09T18180";
+import { getUserEmailNotificationsFlag, setUserEmailNotificationsFlag } from "../../shared/js/core/user-flags.js?v=v2026-10-09T18180";
+import { initI18n, t, getUiLang, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-09T18180";
+import { linkTo, backHref, loginUrl, renderBackLabel } from "../../shared/js/core/nav-map.js?v=v2026-10-09T18180";
+import { toast } from "../../shared/js/core/toast.js?v=v2026-10-09T18180";
+import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-09T18180";
+import { isGuestUser, hideForGuest } from "../../shared/js/core/guest-mode.js?v=v2026-10-09T18180";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-09T18180";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-09T18180";
 
 
 const err = document.getElementById("err");
