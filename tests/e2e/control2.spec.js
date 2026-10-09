@@ -352,6 +352,24 @@ async function endRoundAndRevealRest(page, nextButtonName, restOrds = [2, 3]) {
   await next.click();
 }
 
+// "Rozpocznij rundę" po R8 bywa klikany w chwili, gdy akcja gry jest jeszcze
+// odrzucana przez busy() w handle() (dźwięk/blokada kończą się tuż po
+// odświeżeniu przycisku) — wtedy START_ROUND po cichu nie idzie, a Buzzer
+// zostaje na stanie poprzedniej rundy (zapalony przycisk zwycięzcy, disabled).
+// Klik jest powtarzany, aż Control faktycznie wyjdzie z ekranu startu rundy.
+async function startRoundConfirmed(page) {
+  const start = page.getByRole("button", { name: "Rozpocznij rundę" });
+  for (let attempt = 0; attempt < 4; attempt++) {
+    await start.click({ timeout: 30000 });
+    try {
+      await expect(start).toHaveCount(0, { timeout: 8000 });
+      return;
+    } catch (e) {
+      if (attempt === 3) throw e;
+    }
+  }
+}
+
 // Symuluje gest przesunięcia (peek) na Hoście — host/js/main.js's
 // setupPeekSwipe(): pointerdown -> pointerup w odległości >= 60px, lokalnie
 // pokazuje treść pod zasłoną pasma 2, BEZ żadnego zapisu do game_state.
@@ -823,6 +841,11 @@ test("control2: parowanie urządzeń — linki renderują się bez błędu, Cont
     // do potwierdzenia, a odpowiedź Display odblokowuje je bez reloadu.
     const startRound = page.getByRole("button", { name: "Rozpocznij rundę" });
     await expect(startRound).toBeVisible();
+    // Źródło dźwięku to Display: przycisk jest zablokowany do końca intro
+    // (dźwięk + animacja na Display, blokada akcji). Dopiero gdy jest aktywny,
+    // blokada po odzyskaniu połączenia pochodzi wyłącznie z braku gestu na
+    // Display — inaczej "odblokowany po gestie" mierzyłby koniec intro.
+    await expect(startRound).toBeEnabled({ timeout: 60000 });
     await page.evaluate(() => {
       window.dispatchEvent(new Event("offline"));
       window.dispatchEvent(new Event("online"));
@@ -1027,7 +1050,7 @@ test("control2: reset pojedynku, pass, kradzież wygrana/przegrana, odkrywanie r
     await expect(page.getByText("Beta: 70")).toBeVisible({ timeout: 10000 });
 
     // ===== RUNDA 2 =====
-    await page.getByRole("button", { name: "Rozpocznij rundę" }).click();
+    await startRoundConfirmed(page);
     // Przycisk Buzzera czeka, aż Display dokończy animację końca poprzedniej
     // rundy (display_animation_pending) — przy 4 workerach to trwa dłużej.
     await expect(buzzerPage.getByRole("button", { name: "Przycisk B" })).toBeEnabled({ timeout: 60000 });
@@ -1046,17 +1069,11 @@ test("control2: reset pojedynku, pass, kradzież wygrana/przegrana, odkrywanie r
     await clickX(page); // 3x pudło A -> auto-KRADZIEŻ dla B
 
     await clickX(page); // B kradnie, ale też PUDŁUJE -> kradzież PRZEGRANA
-    // Poczekaj na zapis END_ROUND, zanim pierwszy klik uzbrajający trafi w
-    // kafel odpowiedzi — inaczej przebudowa DOM po zapisie gubi uzbrojenie.
+    // Pula wyczerpana (2/2), próg nieosiągnięty, hasFinal=false: cel to koniec
+    // gry, więc END_ROUND finalizuje rundę od razu (engine.js, GAME_END) —
+    // bez R8, mimo nieodsłoniętej odpowiedzi #3. Przycisk podpisuje się
+    // "Przejdź do zakończenia gry".
     await clickConfirmed(page.getByRole("button", { name: /^(Zakończ rundę|Przejdź do zakończenia gry)$/ }));
-    await expect(page.locator(".c2-tilegrid button").nth(2)).toBeEnabled({ timeout: 20000 });
-    await revealAnswer(page, 3); // R8 ponownie
-
-    // Pula wyczerpana (2/2), próg nieosiągnięty, hasFinal=false -> r_gameEnd
-    // — przycisk R8 podpisuje się "Przejdź do zakończenia gry".
-    const gameEndBtn = page.getByRole("button", { name: "Przejdź do zakończenia gry" });
-    await expect(gameEndBtn).toBeEnabled({ timeout: 10000 });
-    await gameEndBtn.click();
 
     // Runda 1 dała bank drużynie B (70), runda 2 zostaje przy A (70) -> remis.
     await expect(page.locator("#c2TopbarProgress")).toContainText("Koniec gry", { timeout: 22000 });
@@ -1793,8 +1810,8 @@ test("control2: mnożnik rundy — runda 4. z domyślnym ×2 faktycznie przemna�
     // Rundy 1-3: mnożnik x1 (domyślne roundMultipliers [1,1,1,2,3]) — A wygrywa za każdym razem, bank 40.
     for (let round = 1; round <= 3; round++) {
       await expect(page.locator("#c2TopbarProgress")).toContainText(`Runda ${round}`, { timeout: 22000 });
-      await page.getByRole("button", { name: "Rozpocznij rundę" }).click();
-      await expect(buzzerPage.getByRole("button", { name: "Przycisk A" })).toBeEnabled({ timeout: 25000 });
+      await startRoundConfirmed(page);
+      await expect(buzzerPage.getByRole("button", { name: "Przycisk A" })).toBeEnabled({ timeout: 60000 });
       await buzzerPage.getByRole("button", { name: "Przycisk A" }).click();
       await expect(page.getByRole("button", { name: "Zatwierdź: Alfa" })).toBeEnabled({ timeout: 10000 });
       await armAndConfirm(page.getByRole("button", { name: "Zatwierdź: Alfa" }));
@@ -1806,8 +1823,8 @@ test("control2: mnożnik rundy — runda 4. z domyślnym ×2 faktycznie przemna�
 
     // Runda 4: mnożnik x2 — bank 40 ma dać +80, nie +40.
     await expect(page.locator("#c2TopbarProgress")).toContainText("Runda 4", { timeout: 22000 });
-    await page.getByRole("button", { name: "Rozpocznij rundę" }).click();
-    await expect(buzzerPage.getByRole("button", { name: "Przycisk A" })).toBeEnabled({ timeout: 25000 });
+    await startRoundConfirmed(page);
+    await expect(buzzerPage.getByRole("button", { name: "Przycisk A" })).toBeEnabled({ timeout: 60000 });
     await buzzerPage.getByRole("button", { name: "Przycisk A" }).click();
     await expect(page.getByRole("button", { name: "Zatwierdź: Alfa" })).toBeEnabled({ timeout: 10000 });
     await armAndConfirm(page.getByRole("button", { name: "Zatwierdź: Alfa" }));

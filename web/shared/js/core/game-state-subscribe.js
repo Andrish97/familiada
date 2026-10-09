@@ -75,6 +75,11 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
   async function start() {
     await fetchGuarded();
     subscribeDoorbell();
+    // Dzwonek wysłany między bootstrapem a dołączeniem do kanału przepada
+    // (broadcast nie ma historii), a bez kolejnego zapisu urządzenie zostałoby
+    // na starym stanie. Po SUBSCRIBED dociągnij stan jeszcze raz (tani no-op,
+    // gdy rev się nie zmienił).
+    rt(doorbellTopic(gameId)).whenReady().then((ok) => { if (ok) fetchGuarded(); }).catch(() => {});
 
     // Karta w tle (np. Wyświetlacz na monitorze/TV, nie w foreground; albo
     // ekran urządzenia zgaszony) — przeglądarka potrafi po cichu ubić/zamrozić
