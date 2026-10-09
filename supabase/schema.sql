@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict OwkB2rzEYq2IEMSMIGnVQZGK4MyqoxaHmQgkmIo6Cj2Sk27PW39dLfCIufScElc
+\restrict 6FeacosKUUCafJ1WLnc8xSTAqvcohC6Cxo5THzmrx2YRYfTSZftTjGFYCDBJuPU
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -239,6 +239,18 @@ CREATE FUNCTION "public"."_logo_image_path"("p_payload" "jsonb", "p_user" "uuid"
   from (
     select split_part(split_part(coalesce(p_payload #>> '{source,imageUrl}', ''), '/user-logos/', 2), '?', 1) as p
   ) x
+$$;
+
+
+--
+-- Name: _logo_url_path("text", "uuid"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."_logo_url_path"("p_url" "text", "p_user" "uuid") RETURNS "text"
+    LANGUAGE "sql" IMMUTABLE
+    AS $$
+  select case when p like (p_user::text || '/%') then p end
+  from (select split_part(split_part(coalesce(p_url, ''), '/user-logos/', 2), '?', 1) as p) x
 $$;
 
 
@@ -716,15 +728,18 @@ CREATE FUNCTION "public"."_storage_cleanup_on_logo_delete"() RETURNS "trigger"
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public'
     AS $$
+declare
+  v_path text;
 begin
-  insert into public.storage_cleanup_queue(bucket, path, is_folder, owner_kind, owner_id)
-  select 'user-logos', p.path, false, 'logo', old.id
-  from (values
-    (public._logo_image_path(old.payload, old.user_id)),
-    (public._logo_host_raster_path(old.payload, old.user_id))
-  ) as p(path)
-  where p.path is not null
-  on conflict do nothing;
+  for v_path in
+    select distinct p from (values
+      (public._logo_url_path(old.payload #>> '{source,imageUrl}', old.user_id)),
+      (public._logo_url_path(old.payload #>> '{source,hostRasterUrl}', old.user_id))
+    ) t(p) where p is not null
+  loop
+    insert into public.storage_cleanup_queue(bucket, path, is_folder, owner_kind, owner_id)
+    values ('user-logos', v_path, false, 'logo', old.id);
+  end loop;
   return old;
 end;
 $$;
@@ -2574,6 +2589,29 @@ BEGIN
 
   RETURN jsonb_build_object('ok', true, 'deleted', v_deleted, 'mail_cooldowns_deleted', v_mail_cooldowns_deleted);
 END;
+$_$;
+
+
+--
+-- Name: e2e_storage_cleanup_peek("uuid"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."e2e_storage_cleanup_peek"("p_owner_id" "uuid") RETURNS TABLE("bucket" "text", "path" "text", "attempts" integer, "last_error" "text", "created_at" timestamp with time zone, "claimed_at" timestamp with time zone)
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'auth'
+    AS $_$
+declare
+  v_email text;
+begin
+  select u.email into v_email from auth.users u where u.id = auth.uid();
+  if v_email is null or v_email !~ '^test[0-9]+@familiada[.]online$' then
+    raise exception 'e2e_only';
+  end if;
+  return query
+  select q.bucket, q.path, q.attempts, q.last_error, q.created_at, q.claimed_at
+  from public.storage_cleanup_queue q
+  where q.owner_id = p_owner_id and q.path like (auth.uid()::text || '%');
+end;
 $_$;
 
 
@@ -12594,8 +12632,8 @@ begin
      or (q.owner_kind = 'logo' and exists (
            select 1 from public.user_logos l
            where l.id = q.owner_id
-              or public._logo_image_path(l.payload, l.user_id) = q.path
-              or public._logo_host_raster_path(l.payload, l.user_id) = q.path));
+              or public._logo_url_path(l.payload #>> '{source,imageUrl}', l.user_id) = q.path
+              or public._logo_url_path(l.payload #>> '{source,hostRasterUrl}', l.user_id) = q.path));
 
   return query
   update public.storage_cleanup_queue q
@@ -18183,5 +18221,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict OwkB2rzEYq2IEMSMIGnVQZGK4MyqoxaHmQgkmIo6Cj2Sk27PW39dLfCIufScElc
+\unrestrict 6FeacosKUUCafJ1WLnc8xSTAqvcohC6Cxo5THzmrx2YRYfTSZftTjGFYCDBJuPU
 
