@@ -1,7 +1,7 @@
 const { test, expect } = require("@playwright/test");
 const { loginAsTestUser, testAccountUsername } = require("./helpers/login");
 const { serveBranchCode } = require("./helpers/branch-code");
-const { clearMailbox, waitForEmail, extractHttpLinks } = require("./helpers/mailbox");
+const { clearMailbox, waitForEmail, extractHttpLinks, resetMailProviderLimits } = require("./helpers/mailbox");
 
 const BASE_URL = "https://www.familiada.online/subscriptions";
 
@@ -105,6 +105,9 @@ test("@mailbox subskrypcje: zaproszenie z UI dochodzi na prawdziwą skrzynkę", 
   try {
     await cleanupPair(owner.page, subscriberId);
     await clearMailbox(recipient);
+    // Testy wysyłają dziennie dużo maili — bez resetu dzienne limity dostawców
+    // się wyczerpują i mail czeka w kolejce (jak w bases/control2).
+    await resetMailProviderLimits(owner.page);
     await openSubscriptions(owner.page);
     await inviteRegistered(owner.page, recipient);
 
