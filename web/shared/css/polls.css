@@ -533,28 +533,7 @@
   .resultQ .aRow, .resultQ .aBar, .resultQ .tcHandle, .resultQ .tcCnt, .resultQ .tcBtn, .resultQ .tallyMeta{ transition: none; }
 }
 
-/* komunikat (toast) */
-.pollToast{
-  position: fixed;
-  left: 50%;
-  bottom: calc(18px + env(safe-area-inset-bottom, 0px));
-  transform: translateX(-50%);
-  max-width: calc(100vw - 32px);
-  padding: 10px 16px;
-  border-radius: 12px;
-  background: rgba(10,15,30,.96);
-  border: 1px solid rgba(255,234,166,.35);
-  box-shadow: 0 10px 30px rgba(0,0,0,.5);
-  font-size: 13px;
-  font-weight: 800;
-  z-index: 1500;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity .15s;
-}
-.pollToast.on{ opacity: 1; }
-
-/* telefon: komunikat nad dolnym paskiem akcji */
+/* telefon: dymek (shared toast) nad dolnym paskiem akcji ankiety */
 @media (max-width: 980px){
-  .pollToast{ bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
+  .app-toast{ bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
 }

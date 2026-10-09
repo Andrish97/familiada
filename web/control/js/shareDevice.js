@@ -14,10 +14,11 @@
 // tego refreshBadges() zwraca zwykły obiekt {display,host,buzzer: liczba},
 // który app.js dokłada do ctx.shareBadges na kolejny ui.render().
 
-import { sb, SUPABASE_URL } from "../../shared/js/core/supabase.js?v=v2026-10-09T17121";
-import { t } from "../../shared/translation/translation.js?v=v2026-10-09T17121";
-import { icon } from "../../shared/js/core/icons.js?v=v2026-10-09T17121";
-import { createCooldownTicker, mailCooldownCheck } from "../../shared/js/core/cooldown.js?v=v2026-10-09T17121";
+import { sb, SUPABASE_URL } from "../../shared/js/core/supabase.js?v=v2026-10-09T17164";
+import { t } from "../../shared/translation/translation.js?v=v2026-10-09T17164";
+import { icon } from "../../shared/js/core/icons.js?v=v2026-10-09T17164";
+import { toast } from "../../shared/js/core/toast.js?v=v2026-10-09T17164";
+import { createCooldownTicker, mailCooldownCheck } from "../../shared/js/core/cooldown.js?v=v2026-10-09T17164";
 
 const MAIL_FUNCTION_URL = `${SUPABASE_URL}/functions/v1/send-mail`;
 const SHARE_TTL_MS = 4 * 60 * 60 * 1000;
@@ -222,6 +223,7 @@ export function createShareDevice({ currentUser, game, onBadgesChanged }) {
             if (mailSent === false) {
               msgEl && (msgEl.textContent = t("control.shareDeviceModal.mailCooldown") || "Udostępniono, ale e-mail nie poszedł -- niedawno już wysłaliśmy powiadomienie dla tej gry.");
             }
+            if (mailSent !== false) toast(t("control.shareDeviceModal.mailSent"));
           } catch (e) {
             if (msgEl) msgEl.textContent = e?.message || "Błąd.";
           }
@@ -290,6 +292,7 @@ export function createShareDevice({ currentUser, game, onBadgesChanged }) {
       if (mailSent === false) {
         msgEl && (msgEl.textContent = t("control.shareDeviceModal.mailCooldown") || "Udostępniono, ale e-mail nie poszedł -- niedawno już wysłaliśmy powiadomienie dla tej gry.");
       }
+      if (mailSent !== false) toast(t("control.shareDeviceModal.mailSent"));
     } catch (e) {
       if (msgEl) msgEl.textContent = e?.message || "Błąd.";
     }

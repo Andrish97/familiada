@@ -1,16 +1,17 @@
-import { sb, SUPABASE_URL } from "../../shared/js/core/supabase.js?v=v2026-10-09T17121";
-import { requireAuth, signOut } from "../../shared/js/core/auth.js?v=v2026-10-09T17121";
-import { isGuestUser, showGuestBlockedOverlay } from "../../shared/js/core/guest-mode.js?v=v2026-10-09T17121";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-09T17121";
-import { getUiLang, initI18n, t } from "../../shared/translation/translation.js?v=v2026-10-09T17121";
-import { linkTo, backHref, renderBackLabel } from "../../shared/js/core/nav-map.js?v=v2026-10-09T17121";
-import { initTopbarAccountDropdown } from "../../shared/js/core/topbar-controller.js?v=v2026-10-09T17121";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-09T17121";
-import { icon } from "../../shared/js/core/icons.js?v=v2026-10-09T17121";
-import { createCooldownTicker } from "../../shared/js/core/cooldown.js?v=v2026-10-09T17121";
-import { enterModalSheet, exitModalSheet, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-09T17121";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-09T17121";
-import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-09T17121";
+import { sb, SUPABASE_URL } from "../../shared/js/core/supabase.js?v=v2026-10-09T17164";
+import { requireAuth, signOut } from "../../shared/js/core/auth.js?v=v2026-10-09T17164";
+import { isGuestUser, showGuestBlockedOverlay } from "../../shared/js/core/guest-mode.js?v=v2026-10-09T17164";
+import { toast } from "../../shared/js/core/toast.js?v=v2026-10-09T17164";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-09T17164";
+import { getUiLang, initI18n, t } from "../../shared/translation/translation.js?v=v2026-10-09T17164";
+import { linkTo, backHref, renderBackLabel } from "../../shared/js/core/nav-map.js?v=v2026-10-09T17164";
+import { initTopbarAccountDropdown } from "../../shared/js/core/topbar-controller.js?v=v2026-10-09T17164";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-09T17164";
+import { icon } from "../../shared/js/core/icons.js?v=v2026-10-09T17164";
+import { createCooldownTicker } from "../../shared/js/core/cooldown.js?v=v2026-10-09T17164";
+import { enterModalSheet, exitModalSheet, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-09T17164";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-09T17164";
+import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-09T17164";
 
 const i18nReady = initI18n({ withSwitcher: true }).catch((err) => {
   console.error("[subscriptions] i18n nieaktywny:", err);
@@ -550,6 +551,7 @@ async function resendSelected() {
       const ownerLabel = who?.querySelector('.account-who')?.textContent || "Familiada";
       try {
         await sendSubscriptionEmail({ to: data.to, link: data.link, ownerLabel, unsubToken: data.unsub_token || null, isRegistered: !!data.registered });
+        toast(t("pollsHubSubscriptions.statusMsg.mailSent"));
       } catch {
         await alertModal({ text: MSG.resendMailFailed() });
       }
@@ -759,7 +761,7 @@ async function invite(value) {
 
     closeInviteModal();
     await refreshData();
-    await alertModal({ text: MSG.inviteSaved() });
+    toast(MSG.inviteSaved());
     return true;
   } catch (e) {
     const m = String(e?.message || "").toLowerCase();

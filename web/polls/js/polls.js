@@ -6,21 +6,22 @@
 //   B. Karty Udostępnianie · Wyniki. Wyniki są jedne dla wszystkich stanów:
 //      na żywo, zatrzymane (surowe), podliczanie (poll-tally.js), ostateczne.
 // Stany gry: draft -> poll_open <-> poll_stopped -> ready (migracja 315).
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T17121";
-import { requireAuth } from "../../shared/js/core/auth.js?v=v2026-10-09T17121";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-09T17121";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T17164";
+import { requireAuth } from "../../shared/js/core/auth.js?v=v2026-10-09T17164";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-09T17164";
 import QRCode from "https://cdn.jsdelivr.net/npm/qrcode@1.5.3/+esm";
-import { initI18n, t, withLangParam, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-09T17121";
-import { linkTo, backHref, renderBackLabel } from "../../shared/js/core/nav-map.js?v=v2026-10-09T17121";
-import { initTopbarAccountDropdown } from "../../shared/js/core/topbar-controller.js?v=v2026-10-09T17121";
-import { guardResourceLock } from "../../shared/js/core/resource-lock.js?v=v2026-10-09T17121";
-import { validateGame, gameRuleErrorMessage, guardGameState } from "../../shared/js/core/game-validate.js?v=v2026-10-09T17121";
-import { mailCooldownCheck } from "../../shared/js/core/cooldown.js?v=v2026-10-09T17121";
-import { sendPollInviteMails } from "../../shared/js/core/poll-mail.js?v=v2026-10-09T17121";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-09T17121";
-import { createPollResults } from "../../shared/js/core/poll-results.js?v=v2026-10-09T17121";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-09T17121";
-import { createTally } from "./poll-tally.js?v=v2026-10-09T17121";
+import { initI18n, t, withLangParam, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-09T17164";
+import { linkTo, backHref, renderBackLabel } from "../../shared/js/core/nav-map.js?v=v2026-10-09T17164";
+import { initTopbarAccountDropdown } from "../../shared/js/core/topbar-controller.js?v=v2026-10-09T17164";
+import { guardResourceLock } from "../../shared/js/core/resource-lock.js?v=v2026-10-09T17164";
+import { validateGame, gameRuleErrorMessage, guardGameState } from "../../shared/js/core/game-validate.js?v=v2026-10-09T17164";
+import { mailCooldownCheck } from "../../shared/js/core/cooldown.js?v=v2026-10-09T17164";
+import { sendPollInviteMails } from "../../shared/js/core/poll-mail.js?v=v2026-10-09T17164";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-09T17164";
+import { createPollResults } from "../../shared/js/core/poll-results.js?v=v2026-10-09T17164";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-09T17164";
+import { toast, hideToast } from "../../shared/js/core/toast.js?v=v2026-10-09T17164";
+import { createTally } from "./poll-tally.js?v=v2026-10-09T17164";
 
 // initI18n is called at the start of DOMContentLoaded (see below)
 
@@ -31,7 +32,6 @@ const $ = (id) => document.getElementById(id);
 
 const btnBack = $("btnBack");
 const btnManual = $("btnManual");
-const msg = $("msg");
 
 // pasek stanu
 const pollBar = $("pollBar");
@@ -127,13 +127,9 @@ function escapeHtml(s) {
   return String(s ?? "").replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;");
 }
 
-let msgTimer = null;
-function setMsg(text) {
-  if (!msg) return;
-  msg.textContent = text || "";
-  msg.classList.toggle("on", !!text);
-  clearTimeout(msgTimer);
-  if (text) msgTimer = setTimeout(() => { msg.textContent = ""; msg.classList.remove("on"); }, 2800);
+function setMsg(text, kind = "info") {
+  if (!text) { hideToast(); return; }
+  toast(text, { kind });
 }
 
 function typeShortLabel(type) {
@@ -222,7 +218,7 @@ async function showPollQrModal() {
     if (pollQrModalCodeVal) pollQrModalCodeVal.textContent = data.code;
   } catch (e) {
     console.warn("[polls] showPollQrModal error", e);
-    setMsg(t("common.genericError") || "Błąd.");
+    setMsg(t("common.genericError") || "Błąd.", "error");
   }
 }
 
@@ -236,7 +232,7 @@ pollQrModalCopy?.addEventListener("click", async () => {
     await navigator.clipboard.writeText(_pollQrDeviceCode);
     setMsg(t("polls.qrModal.copied"));
   } catch {
-    setMsg(t("polls.copy.failed"));
+    setMsg(t("polls.copy.failed"), "error");
   }
 });
 pollQrModalOpen?.addEventListener("click", () => {
@@ -491,7 +487,6 @@ async function approveTallyFlow() {
     }
     tally.finish();
     tallyActive = false;
-    setMsg(t("polls.status.tallied"));
   } catch (e) {
     console.error("[polls] tally error:", e);
     await alertModal({ text: `${t("polls.errors.tally")}\n\n${gameRuleErrorMessage(e) || e?.message || e}` });
@@ -768,7 +763,7 @@ async function sendInvitesCore() {
 
   if (res.failed) await alertModal({ text: `${t("polls.share.mailFailed")} (${res.failed}/${res.total})` });
   else setMsg(t("polls.share.invitesSent", { n: res.sent }));
-  if (data?.blocked) setMsg(t("polls.share.invitesBlocked", { n: data.blocked }));
+  if (data?.blocked) setMsg(t("polls.share.invitesBlocked", { n: data.blocked }), "error");
 }
 
 async function sendInvites() {
@@ -833,7 +828,6 @@ async function removeShare(tk, sub) {
   try {
     const { data, error } = await sb().rpc("poll_share_remove", { p_game_id: gameId, p_task_id: tk.id });
     if (error || data?.ok === false) throw new Error(rpcErrText(error, data));
-    setMsg(t("polls.share.removed"));
   } catch (e) {
     console.error("[polls] remove share", e);
     await alertModal({ text: `${t("polls.share.removeFailed")}\n\n${e?.message || e}` });
@@ -954,7 +948,7 @@ async function refresh() {
     if (pollBar) pollBar.style.display = "none";
     if (cardMain) cardMain.style.display = "none";
     if (cardEmpty) cardEmpty.style.display = "";
-    setMsg(t("polls.missingId"));
+    setMsg(t("polls.missingId"), "error");
     return;
   }
 
@@ -1049,7 +1043,7 @@ async function liveTick() {
 
 async function openPollFlow() {
   const chk = await validateGame(game.id);
-  if (!chk.poll_open.ok) return setMsg(chk.poll_open.reason);
+  if (!chk.poll_open.ok) return setMsg(chk.poll_open.reason, "error");
 
   const withInvites = selectedSubIds.size > 0;
   const ok = await confirmModal({
@@ -1065,7 +1059,6 @@ async function openPollFlow() {
   try {
     const { error } = await sb().rpc("poll_open", { p_game_id: gameId, p_key: game.share_key_poll });
     if (error) throw error;
-    setMsg(t("polls.status.opened"));
   } catch (e) {
     console.error("[polls] open error:", e);
     await alertModal({ text: `${t("polls.errors.open")}\n\n${gameRuleErrorMessage(e) || e?.message || e}` });
@@ -1097,7 +1090,6 @@ async function stopPollFlow() {
   try {
     const { data, error } = await sb().rpc("poll_stop", { p_game_id: gameId });
     if (error || data?.ok === false) throw error || new Error(rpcErrText(null, data));
-    setMsg(t("polls.status.stopped"));
   } catch (e) {
     console.error("[polls] stop error:", e);
     await alertModal({ text: `${t("polls.errors.stop")}\n\n${gameRuleErrorMessage(e) || e?.message || e}` });
@@ -1116,7 +1108,6 @@ async function resumePollFlow() {
   try {
     const { data, error } = await sb().rpc("poll_resume", { p_game_id: gameId });
     if (error || data?.ok === false) throw error || new Error(rpcErrText(null, data));
-    setMsg(t("polls.status.resumed"));
   } catch (e) {
     console.error("[polls] resume error:", e);
     await alertModal({ text: `${t("polls.errors.resume")}\n\n${gameRuleErrorMessage(e) || e?.message || e}` });
@@ -1140,7 +1131,6 @@ async function abortPollFlow() {
       tallyActive = false;
       tallyValid = false;
     }
-    setMsg(t("polls.status.aborted"));
   } catch (e) {
     console.error("[polls] abort error:", e);
     await alertModal({ text: `${t("polls.errors.abort")}\n\n${e?.message || e}` });
@@ -1149,7 +1139,7 @@ async function abortPollFlow() {
 
 async function restartPollFlow() {
   const chk = await validateGame(game.id);
-  if (!chk.poll_open.ok) return setMsg(chk.poll_open.reason);
+  if (!chk.poll_open.ok) return setMsg(chk.poll_open.reason, "error");
 
   const ok = await confirmModal({
     title: t("polls.modals.reopen.title"),
@@ -1166,7 +1156,6 @@ async function restartPollFlow() {
     aborted = true;
     const { error: e2 } = await sb().rpc("poll_open", { p_game_id: gameId, p_key: data.share_key_poll });
     if (e2) throw e2;
-    setMsg(t("polls.status.reopened"));
   } catch (e) {
     console.error("[polls] reopen error:", e);
     await alertModal({ text: `${t("polls.errors.reopen")}${aborted ? `\n${t("polls.errors.reopenAborted")}` : ""}\n\n${e?.message || e}` });
@@ -1225,7 +1214,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       await navigator.clipboard.writeText(pollLinkEl.value);
       setMsg(t("polls.copy.success"));
     } catch {
-      setMsg(t("polls.copy.failed"));
+      setMsg(t("polls.copy.failed"), "error");
     }
   });
 
