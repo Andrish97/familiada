@@ -258,7 +258,8 @@ function safeDownloadName(name) {
 }
 
 function downloadJson(filename, obj) {
-  const blob = new Blob([JSON.stringify(obj, null, 2)], { type: "application/json" });
+  // Keep the custom .fambase extension from Android adding ".json" by MIME.
+  const blob = new Blob([JSON.stringify(obj, null, 2)], { type: "application/octet-stream" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
