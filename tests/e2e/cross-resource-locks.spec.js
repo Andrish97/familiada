@@ -267,9 +267,10 @@ test("usuwanie logo: działa normalnie, gdy nic go nie blokuje", async ({ page, 
   // równoległy test "zablokowane, gdy ... otwarte ustawienia" (albo edytor
   // ustawień w innym pliku) zostawiał blokadę 'settings' do 25 s -- ten test
   // dostawał wtedy prawdziwe "zmieniasz ustawienia rozgrywki" (niestabilny
-  // fail, CI 2026-09-27). test9 nie używa nikt inny (pula control2 to
-  // test1..test<liczba workerów>).
-  await loginAsTestUser(page, context, { username: testAccountUsername(9) });
+  // fail, CI 2026-09-27). test8 nie używa nikt inny do ustawień gier/logo
+  // (pula control2 to test1..test<liczba workerów>; subscriptions używa test8
+  // tylko jako zaproszonego, bez ustawień i logo).
+  await loginAsTestUser(page, context, { username: testAccountUsername(8) });
 
   const logoName = `E2E-XLOCK-LOGOFREE-${Date.now()}`;
   const logoId = await page.evaluate(async (logoName) => {

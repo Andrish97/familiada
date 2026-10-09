@@ -36,7 +36,8 @@ on:
 # JEDEN SILNIK TESTÓW, JEDNA KOMENDA WSZĘDZIE: ten sam playwright.config.js,
 # ta sama `playwright test ... --workers="$TEST_WORKERS"` w KAŻDEJ grupie
 # e2e-grouped i w e2e-custom-filter -- bez żadnego "jeśli to ten plik, to
-# inaczej". Pula kont test1@…...test10@… (TEST_ACCOUNT_COUNT kolejnych,
+# inaczej". Pula kont test1@…...test8@… (test9/test10 wykluczone z e2e, decyzja użytkownika 2026-10-09)
+# -- TEST_ACCOUNT_COUNT kolejnych,
 # licząc od test1 — patrz getTestAccountPool w e2e/helpers/login.js) jest
 # dostępna w CAŁOŚCI każdemu filtrowi/grupie, bez sztywnego podziału
 # między plikami — który dokładnie numer trafia do którego testu decyduje
@@ -82,7 +83,7 @@ on:
 # workers=4, to sygnał żeby cofnąć o kolejny krok (4 -> 2), nie iść dalej w
 # górę bez kolejnego czystego przebiegu na obecnej wartości.
 env:
-  TEST_ACCOUNT_COUNT: "10"
+  TEST_ACCOUNT_COUNT: "8"
   TEST_WORKERS: ${{ inputs.workers || '4' }}
 
 jobs:

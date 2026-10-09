@@ -2386,15 +2386,15 @@ test("control2: zablokowany, gdy logo gry jest edytowane w logo-editorze — i w
 // produkującego wideo (e2e-record.yml), nigdy w zwykłym, szybkim cyklu
 // (e2e-tests.yml). Ten test to ten sam przebieg, bez nagrywania: operator
 // (test1) udostępnia urządzenie Prowadzącego drugiemu, PRAWDZIWEMU kontu
-// (test10 — przeciwny koniec puli testX niż loginAsPooledTestUser używa
-// gdzie indziej, żeby nigdy nie kolidować z operatorem niezależnie od tego,
-// który worker to odpala), czeka na realny e-mail (ten sam
+// (test7 — poza pulą control2 (test1..test<workery>) i inny niż odbiorcy
+// maili w bases.spec.js (test6) i subscriptions.spec.js (test8), bo
+// clearMailbox kasuje całą skrzynkę odbiorcy), czeka na realny e-mail (ten sam
 // tests/e2e/helpers/mailbox.js co bases.spec.js's "@mailbox" testy) i
 // dowodzi, że link z maila faktycznie łączy -- NOWY, niezalogowany kontekst
 // przeglądarki otwiera go i dostaje działającą stronę Prowadzącego, bez
 // żadnego logowania (sam share_key_host w URL-u wystarcza).
 test("@mailbox control2: udostępnianie urządzenia (Prowadzący) przez e-mail -- link z maila faktycznie łączy", async ({ page, context, browser }, testInfo) => {
-  const recipient = testAccountUsername(10);
+  const recipient = testAccountUsername(7);
   await loginAsTestUser(page, context, { username: testAccountUsername(1) });
   const game = await makeGame(page, `E2E-CONTROL2-SHAREMAIL-${Date.now()}`);
   const contexts = [];
@@ -2407,7 +2407,7 @@ test("@mailbox control2: udostępnianie urządzenia (Prowadzący) przez e-mail -
     // bazie przed testem. docs/email-system-description.md: mail-worker
     // POMIJA wysyłkę CICHO (bez błędu), gdy user_flags.email_notifications
     // odbiorcy jest false -- wygląda identycznie jak zwykły timeout, tylko
-    // mail nigdy się nie zjawi. test10 jest tu odbiorcą w WIELU przebiegach
+    // mail nigdy się nie zjawi. test7 jest tu odbiorcą w WIELU przebiegach
     // tego testu (każdy dzień CI) -- zamiast liczyć na to, że nikt nigdy
     // nie zgasił tej flagi (np. inny test klikający link wypisujący),
     // wymuszamy ją z powrotem na true PRZED udostępnieniem: logujemy się
@@ -2446,9 +2446,9 @@ test("@mailbox control2: udostępnianie urządzenia (Prowadzący) przez e-mail -
     // bierze po prostu pierwsze dopasowanie. test1 (operator, na stałe) ma
     // "host" udostępniony test2 z osobnego, niepowiązanego przebiegu
     // tests/e2e/record-playthrough.js (ten sam hardcodowany operator) --
-    // e2e_shared_devices_cleanup wyżej czyści tylko parę (test1,test10), nie
+    // e2e_shared_devices_cleanup wyżej czyści tylko parę (test1,test7), nie
     // (test1,test2), więc ten stary wpis został i modal pokazywał "test2"
-    // zamiast świeżo dodanego "test10". Czyścimy więc TU, szeroko, każde
+    // zamiast świeżo dodanego "test7". Czyścimy więc TU, szeroko, każde
     // istniejące "host"-udostępnienie operatora, niezależnie od odbiorcy --
     // to jest czysto porządek testowy (operator i tak zawsze zaczyna ten
     // test z zerowym stanem), nie zmiana produktowego zachowania.
@@ -2473,8 +2473,8 @@ test("@mailbox control2: udostępnianie urządzenia (Prowadzący) przez e-mail -
     await page.getByRole("button", { name: "Dodaj" }).click();
     // Potwierdzenie zapisu w UI (RPC share_device) -- niezależne od tego,
     // czy/kiedy realny e-mail dotrze. shareDevice.js's `current.recipient_
-    // username || current.recipient_email` -- skoro test10 ma ustawiony
-    // username, modal pokazuje SAMĄ nazwę użytkownika ("test10"), nie pełny
+    // username || current.recipient_email` -- skoro test7 ma ustawiony
+    // username, modal pokazuje SAMĄ nazwę użytkownika ("test7"), nie pełny
     // e-mail -- real finding z pierwszego przebiegu CI, nie zgadywane.
     const recipientUsername = recipient.split("@")[0];
     await expect(page.locator("#shareDeviceCurrentContent")).toContainText(recipientUsername, { timeout: 15000 });
