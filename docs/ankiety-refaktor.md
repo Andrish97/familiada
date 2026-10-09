@@ -31,8 +31,8 @@ Stan faktyczny sprawdzony w kodzie 2026-10-07 (opis niżej, sekcja 4).
   karta „Zamykanie”, wstrzymanie zależne od blokady, stan „do zatwierdzenia”).
   - **Zatrzymaj** (dawniej „Zamknij”) = koniec głosowania, nic więcej.
     Stan **ZATRZYMANA** —
-    trwały, nic samo się nie wznawia; głosujący widzi „Głosowanie
-    zakończone”, głos odrzuca baza. Żaden głos nie ginie.
+    trwały, nic samo się nie wznawia; głosujący widzi „Ankieta jest
+    zatrzymana”, głos odrzuca baza. Żaden głos nie ginie.
   - **Podlicz głosy** = osobny krok na zatrzymanej ankiecie: ankieta
     tekstowa — scalanie/poprawianie odpowiedzi (Cofnij/Ponów, poprawki
     zapisywane w bazie, można wyjść i wrócić) i „Zatwierdź”; ankieta
@@ -42,6 +42,11 @@ Stan faktyczny sprawdzony w kodzie 2026-10-07 (opis niżej, sekcja 4).
     Zatrzymaj tym, że głosy znikają.
   - **Wznów głosowanie** — na zatrzymanej, jeszcze niepodliczonej ankiecie:
     → OTWARTA, ten sam link, głosy zostają.
+  - **Linki (2026-10-09):** ZATRZYMANA — link i zaproszenia nadal ważne,
+    głosujący widzi „Ankieta jest zatrzymana” (bez możliwości głosu); po
+    „Wznów głosowanie” ten sam link znów działa. **Po podliczeniu linki
+    i zaproszenia wygasają** (klucz unieważniony) — głosujący widzi
+    „Ankieta zakończona”. Nowe uruchomienie = nowy klucz (jak dotąd).
   - **Karty tylko dwie: Udostępnianie · Wyniki.** Wyniki są uniwersalne:
     na żywo (otwarta), surowe (zatrzymana), w trybie podliczania (ankieta
     tekstowa), ostateczne (gotowa). Wszystkie akcje na pasku stanu:
