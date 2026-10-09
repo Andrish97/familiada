@@ -1,9 +1,9 @@
 // familiada/logo/js/db.js
 // Dostęp do tabeli user_logos i plików logo w Storage.
 
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T08063";
-import { getTabId } from "../../shared/js/core/resource-lock.js?v=v2026-10-09T08063";
-import { storagePathFromUrl } from "./image.js?v=v2026-10-09T08063";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T08442";
+import { getTabId } from "../../shared/js/core/resource-lock.js?v=v2026-10-09T08442";
+import { storagePathFromUrl } from "./image.js?v=v2026-10-09T08442";
 
 /** Błąd „zasób zajęty” z RPC *_checked -- reason: logo (inna karta edytuje to logo)
  *  | control | settings (pula logo trzymana przez grę) | locked. */
@@ -70,6 +70,35 @@ export async function uploadImportedLogoImage(dataUrl, userId) {
   return storage.getPublicUrl(path).data.publicUrl;
 }
 
+/** Upload the flattened, color-neutral DRAW result used by the Host. */
+export async function uploadDrawHostRaster(blob, userId) {
+  if (!userId) throw new Error("You must be signed in to upload a logo image");
+  if (!(blob instanceof Blob) || blob.type !== "image/png" || !blob.size || blob.size > 5 * 1024 * 1024) {
+    throw new Error("Invalid DRAW host image (PNG, up to 5 MB required)");
+  }
+  const path = `${userId}/${Date.now()}-${Math.random().toString(36).slice(2)}-draw-host.png`;
+  const storage = sb().storage.from("user-logos");
+  const { error } = await storage.upload(path, blob, {
+    cacheControl: "3600", upsert: false, contentType: "image/png",
+  });
+  if (error) throw error;
+  return storage.getPublicUrl(path).data.publicUrl;
+}
+
+export async function uploadImportedDrawHostRaster(dataUrl, userId) {
+  const match = String(dataUrl || "").match(/^data:image\/png;base64,([A-Za-z0-9+/]+=*)$/i);
+  if (!match || match[1].length > Math.ceil((5 * 1024 * 1024) / 3) * 4) throw new Error("Invalid embedded DRAW host PNG");
+  const bytes = Uint8Array.from(atob(match[1]), char => char.charCodeAt(0));
+  return uploadDrawHostRaster(new Blob([bytes], { type: "image/png" }), userId);
+}
+
+export async function removeDrawHostRaster(url, userId) {
+  const path = storagePathFromUrl(url, userId);
+  if (!path || !path.endsWith("-draw-host.png")) return;
+  const { error } = await sb().storage.from("user-logos").remove([path]);
+  if (error) console.warn("[logo/db] could not remove old DRAW host raster:", error);
+}
+
 export async function removeLogoImageUrl(imageUrl, userId) {
   const path = storagePathFromUrl(imageUrl, userId);
   if (!path) return;
@@ -89,7 +118,43 @@ export async function updateLogo(id, patch) {
 
 // Plik obrazu w Storage usuwa baza razem z wierszem (migracja 313).
 export async function deleteLogo(id) {
+<<<<<<< HEAD
   const { data: result, error } = await sb().rpc("delete_resource_checked", { p_resource_type: "logo", p_resource_id: id, p_tab_id: getTabId() });
+||||||| 66f5924cd
+  const { data: logo, error: fetchError } = await sb().from("user_logos").select("payload->source->>imageUrl").eq("id", id).single();
+  if (fetchError) throw fetchError;
+
+  const { data: result, error } = await sb().rpc("delete_resource_checked", { p_resource_type: "logo", p_resource_id: id });
+=======
+  const { data: logo, error: fetchError } = await sb().from("user_logos").select("payload->source->>imageUrl,payload->source->>hostRasterUrl").eq("id", id).single();
+  if (fetchError) throw fetchError;
+
+  const { data: result, error } = await sb().rpc("delete_resource_checked", { p_resource_type: "logo", p_resource_id: id });
+>>>>>>> origin/main
   if (error) throw error;
   if (!result?.ok) throw busyError(result);
+<<<<<<< HEAD
+||||||| 66f5924cd
+
+  const imageUrl = logo?.imageUrl;
+  if (!imageUrl) return;
+  try {
+    const user = (await sb().auth.getUser())?.data?.user;
+    const path = storagePathFromUrl(imageUrl, user?.id);
+    if (path) await sb().storage.from("user-logos").remove([path]);
+  } catch (e) {
+    console.warn("[logo/db] could not remove image file:", e);
+  }
+=======
+
+  const urls = [logo?.imageUrl, logo?.hostRasterUrl].filter(Boolean);
+  if (!urls.length) return;
+  try {
+    const user = (await sb().auth.getUser())?.data?.user;
+    const paths = urls.map(url => storagePathFromUrl(url, user?.id)).filter(Boolean);
+    if (paths.length) await sb().storage.from("user-logos").remove(paths);
+  } catch (e) {
+    console.warn("[logo/db] could not remove image file:", e);
+  }
+>>>>>>> origin/main
 }

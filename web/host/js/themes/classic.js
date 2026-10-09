@@ -1,21 +1,15 @@
-// host/js/themes/classic.js
-// Motyw domyślny — dzisiejszy wygląd Hosta (papier w linie, atrament,
-// pismo odręczne Caveat) — bez żadnej zmiany. Jeden plik na motyw,
-// żeby dodanie kolejnego (poza classic/modern) było kopiowaniem tego
-// pliku, nie grzebaniem w wspólnym kodzie renderera.
-//
-// Każdy motyw wypisuje WSZYSTKIE wspólne zmienne jawnie, nawet neutralne
-// (patrz ten sam komentarz w themes/modern.js) — inaczej przełączenie z
-// motywu, który je ustawia, zostawiłoby ich wartość "przyklejoną".
-export const hostTheme = {
-  key: "classic",
-  ruled: true,
-  vars: {
+// Host theme factory. Keep its shape parallel with Display's createTheme().
+export function createTheme(root) {
+  for (const [property, value] of Object.entries({
     "--h-paper-bg": "#fffdf5",
     "--h-ink": "#111",
     "--h-font": '"Caveat-Variable", cursive',
-    "--font-ratio": "1.1",
+    "--font-ratio": "1",
     "--h-letter-spacing": "normal",
     "--h-line-height-mult": "1",
-  },
-};
+    "--baseline-shift": "0.12",
+    "--ios-text-shift": "0px",
+  })) root.style.setProperty(property, value);
+
+  return { ruled: true };
+}

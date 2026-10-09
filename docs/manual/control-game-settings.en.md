@@ -125,6 +125,7 @@ Check names in the Summary. The Display stays black here. Names appear after `Do
 - **Colours** — teams, background and dots.
 - **Theme** — board appearance.
 - **Logo** — shown during play.
+- **Host logo** — choose Pixels or Source and preview it beside the Display.
 
 #### Sound
 
@@ -383,6 +384,8 @@ Choose the visual theme for the whole Display. **Classic** is the default.
 #### Logo
 
 Choose your own logo under **Logo**. **Default** means Familiada's logo; **No logo** means no custom mark. The chosen logo appears at the opening; its ending appearance depends on the configured ending screen. Game settings previews unsaved edits, whereas the panel Summary uses saved settings.
+
+The **Host logo** selector chooses **Pixels** or **Source**. Its preview appears beside the Display preview, and the saved choice appears in the Control Panel Summary.
 
 `Restore defaults` in Appearance resets colours, theme and logo.
 

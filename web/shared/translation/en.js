@@ -2020,6 +2020,7 @@ const en = {
 <li><span class="m-strong">Colours</span> — teams, background and dots.</li>
 <li><span class="m-strong">Theme</span> — board appearance.</li>
 <li><span class="m-strong">Logo</span> — shown during play.</li>
+<li><span class="m-strong">Host logo</span> — the Summary shows the selected variant and Host preview beside the Display preview.</li>
 </ul>
 <h4 class="m-h3">Sound</h4>
 <ul class="m-ul">
@@ -2286,6 +2287,7 @@ const en = {
 <p class="m-p">Choose the visual theme for the whole Display. <span class="m-strong">Classic</span> is the default.</p>
 <h4 class="m-h3">Logo</h4>
 <p class="m-p">Choose your own logo under <span class="m-strong">Logo</span>. <span class="m-strong">Default</span> means Familiada&#39;s logo; <span class="m-strong">No logo</span> means no custom mark. The chosen logo appears at the opening; its ending appearance depends on the configured ending screen. Game settings previews unsaved edits, whereas the panel Summary uses saved settings.</p>
+<p class="m-p">The <span class="m-strong">Host logo</span> selector chooses <span class="m-strong">Pixels</span> (the existing look) or <span class="m-strong">Source</span> (the saved logo). The Host preview sits beside the Display preview.</p>
 <p class="m-p"><span class="m-code">Restore defaults</span> in Appearance resets colours, theme and logo.</p>
 <h3 class="m-h2">Sound</h3>
 <p class="m-p">Each game sound category has separate settings, including <span class="m-strong">Correct answer</span>, <span class="m-strong">Wrong answer</span>, <span class="m-strong">Intro</span>, <span class="m-strong">Round transition</span>, <span class="m-strong">Show outro music</span> and <span class="m-strong">Reveal</span>.</p>
@@ -4606,7 +4608,11 @@ const en = {
     summaryDisplay: "Appearance",
     summaryColors: "Colors",
     summaryTheme: "Theme",
+    themeClassic: "Classic",
+    themeModern: "Modern",
     summaryLogo: "Logo",
+    summaryHostLogo: "Host logo",
+    hostLogoPreviewTitle: "Host logo preview",
     colorBg: "Background",
     colorDot: "Dots",
     summarySound: "Sound",
@@ -5011,6 +5017,11 @@ const en = {
       colorDot: "Dot color",
       colorsReset: "Reset colors",
       theme: "Theme",
+      hostPreview: "Host preview",
+      hostLogoMode: "Host logo",
+      hostLogoPixel: "Pixels",
+      hostLogoSource: "Source",
+      hostLogoHint: "Pixels keep the current look. Source uses the image, drawing or text saved in the logo.",
     },
     questions: {
       modeRandom: "Random",

@@ -12,9 +12,9 @@
   <link rel="preconnect" href="https://supabase.familiada.online">
   <title data-i18n="control.title">Familiada — panel sterowania</title>
 
-  <link rel="icon" href="/favicon.ico?v=v2026-10-09T08063"/>
-  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-09T08063"/>
-  <link rel="stylesheet" href="/control/css/control.css?v=v2026-10-09T08063"/>
+  <link rel="icon" href="/favicon.ico?v=v2026-10-09T08442"/>
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-09T08442"/>
+  <link rel="stylesheet" href="/control/css/control.css?v=v2026-10-09T08442"/>
   <script>
     document.documentElement.classList.add('page-loading');
     try {
@@ -31,12 +31,12 @@
   <style>html[data-mobile-guard]{overflow:hidden;touch-action:none}html[data-mobile-guard] body{visibility:hidden}</style>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-  <script src="/shared/js/core/security-warning.js?v=v2026-10-09T08063" defer></script>
+  <script src="/shared/js/core/security-warning.js?v=v2026-10-09T08442" defer></script>
   <script type="module">
-    import { initI18n } from "/shared/translation/translation.js?v=v2026-10-09T08063";
+    import { initI18n } from "/shared/translation/translation.js?v=v2026-10-09T08442";
     await initI18n({ withSwitcher: true });
     document.documentElement.classList.remove('page-loading');
-    import("/control/js/app.js?v=v2026-10-09T08063");
+    import("/control/js/app.js?v=v2026-10-09T08442");
   </script>
 
   <style>
@@ -496,10 +496,13 @@
        wiersz w tej samej skali co reszta siatki wpisywania (zgłoszone). */
     .c2-timer-row { width:100%; font-size:1.02rem; }
 
-    /* Podgląd Display jest wyśrodkowany, ma stałe proporcje 16:9 i
-       ograniczoną szerokość, żeby nie dominował nad resztą Podsumowania. */
-    #c2DisplayPreview {
-      width:min(100%, 640px);
+    /* Podgląd Wyświetlacza i Hosta w Podsumowaniu: równorzędne, 16:9. */
+    #c2DevicePreviews { width:min(100%, 1280px); margin-inline:auto; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+    .c2-device-preview-card { min-width:0; }
+    .c2-device-preview-title { margin:0 0 5px; font-size:.72rem; font-weight:800; text-transform:uppercase; letter-spacing:.06em; color:var(--gold); }
+    #c2DisplayPreview, #c2HostPreview {
+      width:100%;
+      max-width:640px;
       height:auto;
       box-sizing:border-box;
       aspect-ratio:16/9;
@@ -511,7 +514,8 @@
       position: relative;
       border: 1px solid var(--line2);
     }
-    #c2DisplayPreview iframe { width:100%; height:100%; border:0; display:block; }
+    #c2DisplayPreview iframe, #c2HostPreview iframe { width:100%; height:100%; border:0; display:block; }
+    @media (max-width:760px) { #c2DevicePreviews { grid-template-columns:1fr; } }
   </style>
 </head>
 <body class="control-body skel-body">
@@ -663,6 +667,6 @@
       <button class="btn-contact-footer" type="button" data-contact-modal data-i18n="common.contactBtn">Kontakt</button>
     </div>
   </main>
-  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-09T08063"></script>
+  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-09T08442"></script>
 </body>
 </html>

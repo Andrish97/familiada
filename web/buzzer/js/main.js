@@ -10,14 +10,14 @@
 // autorytatywny wiersz już to wie), błąd sieci (przycisk wraca do ON,
 // można spróbować ponownie).
 
-import { initI18n, setUiLang } from "../../shared/translation/translation.js?v=v2026-10-09T08063";
-import { startKeepAlive } from "../../shared/js/core/keep-alive.js?v=v2026-10-09T08063";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T08063";
-import { createSubscription } from "../../shared/js/core/game-state-subscribe.js?v=v2026-10-09T08063";
-import { createButtonRenderer, isLockedRow } from "./render.js?v=v2026-10-09T08063";
-import { ringDoorbell } from "../../shared/js/core/game-state-doorbell.js?v=v2026-10-09T08063";
-import { createPressController } from "./press.js?v=v2026-10-09T08063";
-import { icon } from "../../shared/js/core/icons.js?v=v2026-10-09T08063";
+import { initI18n, setUiLang } from "../../shared/translation/translation.js?v=v2026-10-09T08442";
+import { startKeepAlive } from "../../shared/js/core/keep-alive.js?v=v2026-10-09T08442";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T08442";
+import { createSubscription } from "../../shared/js/core/game-state-subscribe.js?v=v2026-10-09T08442";
+import { createButtonRenderer, isLockedRow } from "./render.js?v=v2026-10-09T08442";
+import { ringDoorbell } from "../../shared/js/core/game-state-doorbell.js?v=v2026-10-09T08442";
+import { createPressController } from "./press.js?v=v2026-10-09T08442";
+import { icon } from "../../shared/js/core/icons.js?v=v2026-10-09T08442";
 
 // Tak samo jak Wyświetlacz i Prowadzący, strona utrzymuje ekran aktywny.
 startKeepAlive();
@@ -58,12 +58,36 @@ function isIOSSafari() {
   return iOS && webkit && notChrome;
 }
 
+function isStandalone() {
+  return !!(window.navigator.standalone || window.matchMedia?.("(display-mode: standalone)").matches);
+}
+
 function setupFullscreenButton() {
   const btn = document.getElementById("btnFS");
+  const hint = document.getElementById("buzzerA2HS");
+  const close = document.getElementById("buzzerA2HSClose");
   const ico = document.getElementById("fsIco");
   let pseudoFS = false;
 
   function syncIcon() { if (ico) ico.innerHTML = icon((document.fullscreenElement || pseudoFS) ? "fullscreen-exit" : "fullscreen-enter"); }
+
+  function closeHint() {
+    document.documentElement.classList.remove("showA2HS");
+    hint?.setAttribute("aria-hidden", "true");
+    btn?.focus();
+  }
+
+  function openHint() {
+    document.documentElement.classList.add("showA2HS");
+    hint?.setAttribute("aria-hidden", "false");
+    close?.focus();
+  }
+
+  close?.addEventListener("click", closeHint);
+  hint?.addEventListener("click", (event) => { if (event.target === hint) closeHint(); });
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && document.documentElement.classList.contains("showA2HS")) closeHint();
+  });
 
   function setPseudoFS(on) {
     pseudoFS = !!on;
@@ -73,9 +97,9 @@ function setupFullscreenButton() {
   }
 
   btn?.addEventListener("click", async () => {
-    if (isIOSSafari() && !window.navigator.standalone) {
+    if (isIOSSafari() && !isStandalone()) {
       // W Safari nie zrobimy prawdziwego FS — pokaż instrukcję "dodaj do ekranu głównego".
-      document.documentElement.classList.toggle("showA2HS");
+      openHint();
       return;
     }
     try {
@@ -94,7 +118,7 @@ function setupFullscreenButton() {
   });
   document.addEventListener("fullscreenchange", syncIcon);
 
-  if (window.navigator.standalone) document.documentElement.classList.add("webapp");
+  if (isStandalone()) document.documentElement.classList.add("webapp");
 }
 
 async function main() {

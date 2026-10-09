@@ -2014,6 +2014,7 @@ const uk = {
 <li><span class="m-strong">Кольори</span> — команди, тло та крапки.</li>
 <li><span class="m-strong">Тема</span> — вигляд табло.</li>
 <li><span class="m-strong">Логотип</span> — показується під час гри.</li>
+<li><span class="m-strong">Логотип ведучого</span> — у Підсумку видно вибраний варіант і перегляд Ведучого поруч із Дисплеєм.</li>
 </ul>
 <h4 class="m-h3">Звук</h4>
 <ul class="m-ul">
@@ -2280,6 +2281,7 @@ const uk = {
 <p class="m-p">Вибери тему всього Дисплея. Типова тема — <span class="m-strong">Класична</span>.</p>
 <h4 class="m-h3">Логотип</h4>
 <p class="m-p">Вибери власний знак у <span class="m-strong">Логотипі</span>. <span class="m-strong">За замовчуванням</span> означає логотип Familiada, <span class="m-strong">Без логотипа</span> — відмову від власного знака. Логотип з’являється на початку; його показ у кінці залежить від кінцевого екрана. Перегляд у Налаштуваннях гри показує незбережені зміни, а Підсумок панелі використовує збережені налаштування.</p>
+<p class="m-p">Перемикач <span class="m-strong">Логотип ведучого</span> вибирає варіант <span class="m-strong">Пікселі</span> (поточний вигляд) або <span class="m-strong">Джерело</span> (збережений логотип). Перегляд Ведучого розташований поруч із переглядом Дисплея.</p>
 <p class="m-p"><span class="m-code">Відновити типові</span> у Вигляді скидає кольори, тему й логотип.</p>
 <h3 class="m-h2">Звук</h3>
 <p class="m-p">Кожна категорія має окремі налаштування, зокрема <span class="m-strong">Правильна відповідь</span>, <span class="m-strong">Неправильна відповідь</span>, <span class="m-strong">Інтро</span>, <span class="m-strong">Перехід між раундами</span>, <span class="m-strong">Завершальна музика програми</span> й <span class="m-strong">Відкриття та переходи на табло</span>.</p>
@@ -4604,7 +4606,11 @@ const uk = {
     summaryDisplay: "Вигляд",
     summaryColors: "Кольори",
     summaryTheme: "Тема",
+    themeClassic: "Класична",
+    themeModern: "Сучасна",
     summaryLogo: "Логотип",
+    summaryHostLogo: "Логотип ведучого",
+    hostLogoPreviewTitle: "Попередній перегляд логотипа ведучого",
     colorBg: "Фон",
     colorDot: "Крапки",
     summarySound: "Звук",
@@ -5011,6 +5017,11 @@ const uk = {
       colorDot: "Колір крапки",
       colorsReset: "Скинути кольори",
       theme: "Тема",
+      hostPreview: "Попередній перегляд ведучого",
+      hostLogoMode: "Логотип ведучого",
+      hostLogoPixel: "Пікселі",
+      hostLogoSource: "Джерело",
+      hostLogoHint: "Пікселі зберігають теперішній вигляд. Джерело використовує зображення, малюнок або напис, збережений у логотипі.",
     },
     questions: {
       modeRandom: "Випадково",

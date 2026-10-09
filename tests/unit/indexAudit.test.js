@@ -3,12 +3,15 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { createRequire } from "node:module";
 import pl from "../../web/shared/translation/pl.js";
 import en from "../../web/shared/translation/en.js";
 import uk from "../../web/shared/translation/uk.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, "../..");
+const require = createRequire(import.meta.url);
+const { localFileFor } = require("../e2e/helpers/branch-code.js");
 const read = (file) => fs.readFileSync(path.join(root, /^(tests|scripts|supabase|cloudflare|services|docs)\//.test(file) ? file : "web/" + file), "utf8");
 
 function get(object, key) {
@@ -40,6 +43,15 @@ test("serveBranchCode mapuje główną trasę / na index.html z brancha", () => 
   const helper = read("tests/e2e/helpers/branch-code.js");
   assert.match(helper, /!rel && pages\.includes\("index"\)/);
   assert.match(helper, /path\.join\(REPO_ROOT, "index\.html"\)/);
+});
+
+test("serveBranchCode mapuje zagnieżdżony edytor DRAW na jego własny index.html", () => {
+  assert.equal(localFileFor("/logo/editor-draw/", ["logo"]), path.join(root, "web/logo/editor-draw/index.html"));
+});
+
+test("serveBranchCode serwuje moduły manuala i polityki prywatności zamiast HTML strony", () => {
+  assert.equal(localFileFor("/manual/js/manual.js", ["manual"]), path.join(root, "web/manual/js/manual.js"));
+  assert.equal(localFileFor("/privacy/js/privacy.js", ["privacy"]), path.join(root, "web/privacy/js/privacy.js"));
 });
 
 test("polski interfejs używa nazwy Strona główna", () => {

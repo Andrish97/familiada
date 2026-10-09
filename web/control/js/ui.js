@@ -16,14 +16,14 @@
 // setStealMsg/setRevealMsg/ROUNDS_MSG/FINAL_MSG, ale jako czysta funkcja
 // bieżącego game_state (web/js/gameplay/hints.js), nie ulotny stan ustawiany przy
 // każdym zdarzeniu — "wszystko idzie przez tabelę stanów".
-import { getRoundsHint, getFinalHint, getFinalEntryShortcuts, teamName } from "../../shared/js/gameplay/hints.js?v=v2026-10-09T08063";
-import { t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-09T08063";
-import { getSfxCategories, getSfxVariant, isSfxPlaying, playSfx, stopSfx, onSfxEnd, setSfxVolume } from "../../shared/js/core/sfx.js?v=v2026-10-09T08063";
-import { buildDisplayPreviewRow } from "../../shared/js/gameplay/previewRow.js?v=v2026-10-09T08063";
-import { DEFAULT_SETTINGS } from "../../shared/js/gameplay/gameStateShape.js?v=v2026-10-09T08063";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-09T08063";
+import { getRoundsHint, getFinalHint, getFinalEntryShortcuts, teamName } from "../../shared/js/gameplay/hints.js?v=v2026-10-09T08442";
+import { t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-09T08442";
+import { getSfxCategories, getSfxVariant, isSfxPlaying, playSfx, stopSfx, onSfxEnd, setSfxVolume } from "../../shared/js/core/sfx.js?v=v2026-10-09T08442";
+import { buildDisplayPreviewRow } from "../../shared/js/gameplay/previewRow.js?v=v2026-10-09T08442";
+import { DEFAULT_SETTINGS } from "../../shared/js/gameplay/gameStateShape.js?v=v2026-10-09T08442";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-09T08442";
 
-import { previewPendingRoundEndDestination } from "./engine.js?v=v2026-10-09T08063";
+import { previewPendingRoundEndDestination } from "./engine.js?v=v2026-10-09T08442";
 
 const $ = (id) => document.getElementById(id);
 const on = (el, ev, fn) => el && (el[`on${ev}`] = fn);
@@ -348,6 +348,13 @@ export function createUI({ root, emit }) {
     ));
   }
 
+  function displayThemeLabel(theme) {
+    const key = String(theme || "").toLowerCase();
+    if (key === "classic") return t("control.themeClassic");
+    if (key === "modern") return t("control.themeModern");
+    return theme || t("control.summaryDefault");
+  }
+
   function summarySection(title, valueNode, extraClass = "") {
     return h("div", { class: `summarySection ${extraClass}`.trim() }, [
       h("div", { class: "summarySectionTitle", text: title }),
@@ -456,6 +463,14 @@ export function createUI({ root, emit }) {
     const previewSrc = ctx.urls?.displayUrl
       ? `${ctx.urls.displayUrl}${ctx.urls.displayUrl.includes("?") ? "&" : "?"}preview=1`
       : null;
+    let hostPreviewSrc = null;
+    if (ctx.urls?.hostUrl) {
+      try {
+        const url = new URL(ctx.urls.hostUrl);
+        url.searchParams.set("preview", "1");
+        hostPreviewSrc = url.toString();
+      } catch {}
+    }
 
     // Podgląd Wyświetlacza żyje w <iframe> — zweryfikowane (lokalny test z
     // Playwrightem): PRZENIESIENIE/PRZEBUDOWA <iframe> w DOM zawsze
@@ -471,9 +486,9 @@ export function createUI({ root, emit }) {
     // reload podglądu) dzieje się tylko przy REALNEJ zmianie (np. operator
     // przelosował pytania albo zmienił ustawienia w innej karcie).
     const fingerprint = JSON.stringify({
-      previewSrc,
+      previewSrc, hostPreviewSrc,
       teamA: state.teams.teamA, teamB: state.teams.teamB,
-      colors: d.colors, theme: d.theme, logoId: d.logoId, hasFinal,
+      colors: d.colors, theme: d.theme, logoId: d.logoId, hostLogoMode: d.hostLogoMode, hasFinal,
       roundsMode: s.roundsQuestionsMode, roundsPicked: s.roundsPicked, roundsPool: state.rounds._questionPool,
       finalMode: hasFinal ? s.finalQuestionsMode : null, finalPicked: state.final.picked,
       finalPreview: state.final.pickedPreview, finalConfirmed: state.final.confirmed,
@@ -500,6 +515,14 @@ export function createUI({ root, emit }) {
         previewFrame.contentWindow.postMessage({ type: "familiada:preview-row", row: buildPreviewRow(state) }, "*");
       });
     }
+    const hostPreviewFrame = hostPreviewSrc ? h("iframe", { src: hostPreviewSrc, title: t("control.hostLogoPreviewTitle") }) : null;
+    if (hostPreviewFrame) {
+      window.addEventListener("message", function onHostReady(e) {
+        if (e.data?.type !== "familiada:host-preview-ready" || e.source !== hostPreviewFrame.contentWindow) return;
+        window.removeEventListener("message", onHostReady);
+        hostPreviewFrame.contentWindow.postMessage({ type: "familiada:preview-row", row: buildPreviewRow(state) }, location.origin);
+      });
+    }
 
     const sections = [
       summarySection(t("control.summaryTeams"), h("div", { class: "summarySectionValue", text: t("control.teamsVsFormat", {
@@ -508,9 +531,13 @@ export function createUI({ root, emit }) {
       }) }), "c2-summary-teams"),
       summarySection(t("control.summaryDisplay"), h("div", { class: "summaryDisplayInfo" }, [
         h("div", { class: "summaryDisplayRow" }, [h("span", { class: "summaryDisplayLabel", text: `${t("control.summaryColors")}: ` }), colorDots(d.colors)]),
-        h("div", { class: "summaryDisplayRow" }, [h("span", { class: "summaryDisplayLabel", text: `${t("control.summaryTheme")}: ` }), document.createTextNode(d.theme || t("control.summaryDefault"))]),
+        h("div", { class: "summaryDisplayRow" }, [h("span", { class: "summaryDisplayLabel", text: `${t("control.summaryTheme")}: ` }), document.createTextNode(displayThemeLabel(d.theme))]),
         h("div", { class: "summaryDisplayRow" }, [h("span", { class: "summaryDisplayLabel", text: `${t("control.summaryLogo")}: ` }), document.createTextNode(d.logoId ? t("control.summaryLogoCustom") : t("control.summaryDefault"))]),
-        h("div", { id: "c2DisplayPreview" }, previewFrame ? [previewFrame] : []),
+        h("div", { class: "summaryDisplayRow" }, [h("span", { class: "summaryDisplayLabel", text: `${t("control.summaryHostLogo")}: ` }), document.createTextNode(d.hostLogoMode === "source" ? t("gameSettings.display.hostLogoSource") : t("gameSettings.display.hostLogoPixel"))]),
+        h("div", { id: "c2DevicePreviews" }, [
+          h("div", { class: "c2-device-preview-card" }, [h("div", { class: "c2-device-preview-title", text: t("control.displayPreviewTitle") }), h("div", { id: "c2DisplayPreview" }, previewFrame ? [previewFrame] : [])]),
+          h("div", { class: "c2-device-preview-card" }, [h("div", { class: "c2-device-preview-title", text: t("control.hostLogoPreviewTitle") }), h("div", { id: "c2HostPreview" }, hostPreviewFrame ? [hostPreviewFrame] : [])]),
+        ]),
       ]), "c2-summary-display"),
       soundSummarySection(state),
       summarySection(t("control.summaryFinal"), h("div", { class: "summarySectionValue", text: hasFinal ? t("control.toggleYes") : t("control.toggleNo") }), "c2-summary-final"),

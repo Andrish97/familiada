@@ -8,7 +8,7 @@
 // linia narysowana na przerwie między kaflami znika tak jak na prawdziwym
 // wyświetlaczu, a proporcje zgadzają się z tym, co widać na scenie.
 
-import { DOT_W, DOT_H } from "../render.js?v=v2026-10-09T08063";
+import { DOT_W, DOT_H } from "../render.js?v=v2026-10-09T08442";
 
 // Świat nowych rysunków: 26:11, jak cały wyświetlacz. Stare rysunki mają
 // swój rozmiar (patrz draw.js) -- dlatego raster przyjmuje go w parametrze.
@@ -59,4 +59,50 @@ function rasterToBits(data) {
 
 export async function sceneToBits(fabric, json, worldW = WORLD_W, worldH = WORLD_H) {
   return rasterToBits(await renderToRaster(fabric, json, worldW, worldH));
+}
+
+/**
+ * Renderuje złożoną scenę DRAW do przezroczystej maski PNG dla Hosta.
+ * Fabric najpierw składa wszystkie warstwy w ich kolejności i z ich
+ * przezroczystością; dopiero gotowy obraz zamieniamy na maskę jasności.
+ * Biel staje się nieprzezroczystą maską, czerń i puste miejsca — przezroczyste.
+ * Kolor DOT jest nakładany później przez Host.
+ */
+export async function sceneToHostRaster(fabric, json, worldW = WORLD_W, worldH = WORLD_H) {
+  const width = 1280;
+  const height = Math.max(1, Math.round(width * worldH / worldW));
+  const element = fabric.util.createCanvasElement();
+  element.width = width;
+  element.height = height;
+  const scene = new fabric.StaticCanvas(element, {
+    width,
+    height,
+    renderOnAddRemove: false,
+    enableRetinaScaling: false,
+  });
+  try {
+    const scale = width / worldW;
+    scene.setViewportTransform([scale, 0, 0, scale, 0, 0]);
+    await new Promise((resolve, reject) => {
+      try { scene.loadFromJSON(json, resolve); } catch (error) { reject(error); }
+    });
+    scene.setWidth(width);
+    scene.setHeight(height);
+    scene.setViewportTransform([scale, 0, 0, scale, 0, 0]);
+    scene.renderAll();
+
+    const context = element.getContext("2d", { willReadFrequently: true });
+    const image = context.getImageData(0, 0, width, height);
+    const pixels = image.data;
+    for (let i = 0; i < pixels.length; i += 4) {
+      const luminance = 0.2126 * pixels[i] + 0.7152 * pixels[i + 1] + 0.0722 * pixels[i + 2];
+      pixels[i] = pixels[i + 1] = pixels[i + 2] = 255;
+      pixels[i + 3] = Math.round(pixels[i + 3] * luminance / 255);
+    }
+    context.putImageData(image, 0, 0);
+    const blob = await new Promise((resolve, reject) => element.toBlob(value => value ? resolve(value) : reject(new Error("Could not encode DRAW host raster")), "image/png"));
+    return blob;
+  } finally {
+    scene.dispose();
+  }
 }

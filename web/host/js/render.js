@@ -21,7 +21,7 @@
 // to wcześniej na sztywno po polsku, więc zmiana języka w Control (patrz
 // web/js/gameplay/gameStateShape.js's settings.uiLang) nie miała żadnego wpływu na
 // treść, którą prowadzący faktycznie czyta.
-import { t } from "../../shared/translation/translation.js?v=v2026-10-09T08063";
+import { t } from "../../shared/translation/translation.js?v=v2026-10-09T08442";
 
 const $ = (id) => document.getElementById(id);
 const rh = (key, vars) => t(`control.roundsHost.${key}`, vars);
@@ -61,10 +61,15 @@ function appendFragment(el, frag) {
 
 function setLines(el, lines) {
   el.textContent = "";
-  lines.forEach((line, i) => {
-    if (Array.isArray(line)) line.forEach((frag) => appendFragment(el, frag));
-    else appendFragment(el, line);
-    if (i < lines.length - 1) el.appendChild(document.createTextNode("\n"));
+  lines.forEach((line) => {
+    const row = document.createElement("div");
+    row.className = "hostTextLine";
+    const cell = document.createElement("span");
+    cell.className = "hostTextCellContent";
+    if (Array.isArray(line)) line.forEach((frag) => appendFragment(cell, frag));
+    else if (line) appendFragment(cell, line);
+    row.appendChild(cell);
+    el.appendChild(row);
   });
 }
 
@@ -127,12 +132,12 @@ export function createHostRenderer() {
   function setPane1(content) {
     if (!paperText1) return;
     if (Array.isArray(content)) setLines(paperText1, content);
-    else paperText1.textContent = content;
+    else setLines(paperText1, String(content || "").split("\n"));
   }
   function setPane2(content) {
     if (!paperText2) return;
     if (Array.isArray(content)) setLines(paperText2, content);
-    else paperText2.textContent = content;
+    else setLines(paperText2, String(content || "").split("\n"));
   }
 
   // control/js/gameRounds.js's hostTitleForRounds() — dokładnie te same 4

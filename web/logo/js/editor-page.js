@@ -18,25 +18,39 @@
 //     samo guardResourceLock, przy każdym zapisie RPC update_logo_checked:
 //     komunikat z powrotem na listę.
 
-import { loadFont5x7 } from "../../shared/js/core/logo-preview.js?v=v2026-10-09T08063";
-import { requireAuth } from "../../shared/js/core/auth.js?v=v2026-10-09T08063";
-import { initI18n, t } from "../../shared/translation/translation.js?v=v2026-10-09T08063";
-import { renderBackLabel } from "../../shared/js/core/nav-map.js?v=v2026-10-09T08063";
-import { initTopbarAccountDropdown } from "../../shared/js/core/topbar-controller.js?v=v2026-10-09T08063";
-import { isMobileDevice } from "../../shared/js/core/pwa.js?v=v2026-10-09T08063";
-import { isPhoneScreen } from "../../shared/js/core/device-guard.js?v=v2026-10-09T08063";
-import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-09T08063";
-import { guardResourceLock, showBlockingOverlay } from "../../shared/js/core/resource-lock.js?v=v2026-10-09T08063";
-import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-09T08063";
+import { loadFont5x7 } from "../../shared/js/core/logo-preview.js?v=v2026-10-09T08442";
+import { requireAuth } from "../../shared/js/core/auth.js?v=v2026-10-09T08442";
+import { initI18n, t } from "../../shared/translation/translation.js?v=v2026-10-09T08442";
+import { renderBackLabel } from "../../shared/js/core/nav-map.js?v=v2026-10-09T08442";
+import { initTopbarAccountDropdown } from "../../shared/js/core/topbar-controller.js?v=v2026-10-09T08442";
+import { isMobileDevice } from "../../shared/js/core/pwa.js?v=v2026-10-09T08442";
+import { isPhoneScreen } from "../../shared/js/core/device-guard.js?v=v2026-10-09T08442";
+import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-09T08442";
+import { guardResourceLock, showBlockingOverlay } from "../../shared/js/core/resource-lock.js?v=v2026-10-09T08442";
+import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-09T08442";
 
-import { renderPreview } from "./render.js?v=v2026-10-09T08063";
-import { listLogos, fetchLogo, updateLogo, isUniqueViolation } from "./db.js?v=v2026-10-09T08063";
-import { initPreviewPinchZoom, lockPageZoomForPreview, unlockPageZoomAfterPreview } from "./preview-zoom.js?v=v2026-10-09T08063";
-import { cannotEditReason } from "./text.js?v=v2026-10-09T08063";
-import { EDITOR_PAGE_IDS, editModeFor, listBackUrl, manualUrl } from "./routes.js?v=v2026-10-09T08063";
+<<<<<<< HEAD
+import { renderPreview } from "./render.js?v=v2026-10-09T08442";
+import { listLogos, fetchLogo, updateLogo, isUniqueViolation } from "./db.js?v=v2026-10-09T08442";
+import { initPreviewPinchZoom, lockPageZoomForPreview, unlockPageZoomAfterPreview } from "./preview-zoom.js?v=v2026-10-09T08442";
+import { cannotEditReason } from "./text.js?v=v2026-10-09T08442";
+import { EDITOR_PAGE_IDS, editModeFor, listBackUrl, manualUrl } from "./routes.js?v=v2026-10-09T08442";
+||||||| 66f5924cd
+import { renderPreview } from "./render.js?v=v2026-10-09T08442";
+import { listLogos, fetchLogo, updateLogo, isUniqueViolation } from "./db.js?v=v2026-10-09T08442";
+import { initPreviewPinchZoom, lockPageZoomForPreview, unlockPageZoomAfterPreview } from "./preview-zoom.js?v=v2026-10-09T08442";
+import { cannotEditReason } from "./text.js?v=v2026-10-09T08442";
+import { editModeFor, listBackUrl, manualUrl } from "./routes.js?v=v2026-10-09T08442";
+=======
+import { renderPreview } from "./render.js?v=v2026-10-09T08442";
+import { listLogos, fetchLogo, updateLogo, isUniqueViolation, uploadDrawHostRaster, removeDrawHostRaster } from "./db.js?v=v2026-10-09T08442";
+import { initPreviewPinchZoom, lockPageZoomForPreview, unlockPageZoomAfterPreview } from "./preview-zoom.js?v=v2026-10-09T08442";
+import { cannotEditReason } from "./text.js?v=v2026-10-09T08442";
+import { editModeFor, listBackUrl, manualUrl } from "./routes.js?v=v2026-10-09T08442";
+>>>>>>> origin/main
 
-const FONT_3x10_URL = "/shared/fonts/display/font_3x10.json?v=v2026-10-09T08063";
-const FONT_5x7_URL = "/shared/fonts/display/font_5x7.json?v=v2026-10-09T08063";
+const FONT_3x10_URL = "/shared/fonts/display/font_3x10.json?v=v2026-10-09T08442";
+const FONT_5x7_URL = "/shared/fonts/display/font_5x7.json?v=v2026-10-09T08442";
 
 const DEBOUNCE_MS = 700;
 const RETRY_MS = 5000;
@@ -64,6 +78,7 @@ export async function bootEditorPage({ mode, initEditor }) {
   let GLYPH_5x7 = null;
   let currentUser = null;
   let logoId = null;
+  let logoRecord = null;
   let editor = null;
   let logos = [];          // lekka lista -- tylko do unikalnych nazw
   let logoLock = null;     // blokada logo:L (guardResourceLock)
@@ -155,6 +170,8 @@ export async function bootEditorPage({ mode, initEditor }) {
     timer = null;
     const seq = changeSeq;
     let ok = false;
+    let stagedRasterUrl = null;
+    let rasterCommitted = false;
     saving = (async () => {
       setStatus("saving");
       try {
@@ -167,10 +184,17 @@ export async function bootEditorPage({ mode, initEditor }) {
         }
         const payload = res.payload;
         payload.source = { ...(payload.source || {}), mode };
+        const previousRasterUrl = logoRecord?.payload?.source?.hostRasterUrl || null;
+        if (mode === "DRAW") {
+          if (!res.assets?.hostRaster) throw new Error("Missing flattened DRAW image for Host");
+          stagedRasterUrl = await uploadDrawHostRaster(res.assets.hostRaster, currentUser?.id);
+          payload.source.hostRasterUrl = stagedRasterUrl;
+        }
         let name = makeUniqueName(el.logoName.value);
         for (let attempt = 0; ; attempt++) {
           try {
             await updateLogo(logoId, { name, type: res.type, payload });
+            rasterCommitted = true;
             break;
           } catch (e) {
             // Nazwa zajęta przez logo spoza lokalnej listy (np. z innej karty).
@@ -180,12 +204,19 @@ export async function bootEditorPage({ mode, initEditor }) {
             name = next !== name ? next : `${name} (${Date.now() % 100000})`;
           }
         }
+        if (mode === "DRAW") {
+          logoRecord = { ...logoRecord, name, type: res.type, payload };
+          if (previousRasterUrl && previousRasterUrl !== stagedRasterUrl) {
+            await removeDrawHostRaster(previousRasterUrl, currentUser?.id);
+          }
+        }
         if (el.logoName.value.trim() !== name && document.activeElement !== el.logoName) el.logoName.value = name;
         await editor.onSaved?.();
         if (changeSeq === seq) dirty = false;
         ok = true;
         setStatus(dirty ? "dirty" : "saved");
       } catch (e) {
+        if (stagedRasterUrl && !rasterCommitted) await removeDrawHostRaster(stagedRasterUrl, currentUser?.id);
         console.error("[logo/editor] autosave failed:", e);
         if (e?.code === "RESOURCE_IN_USE") {
           // Pula logo zajęła się w trakcie edycji (otwarty Control albo
@@ -318,6 +349,7 @@ export async function bootEditorPage({ mode, initEditor }) {
     return;
   }
   if (editModeFor(logo) !== mode) { block(t("logoEditor.errors.wrongType")); return; }
+  logoRecord = logo;
   const reason = cannotEditReason(logo, mode, FONT_3x10);
   if (reason) { block(reason); return; }
 
