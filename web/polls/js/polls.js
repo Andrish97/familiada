@@ -1,17 +1,17 @@
 // js/pages/polls.js
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T00020";
-import { requireAuth } from "../../shared/js/core/auth.js?v=v2026-10-09T00020";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-09T00020";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T00352";
+import { requireAuth } from "../../shared/js/core/auth.js?v=v2026-10-09T00352";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-09T00352";
 import QRCode from "https://cdn.jsdelivr.net/npm/qrcode@1.5.3/+esm";
-import { initI18n, t, withLangParam, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-09T00020";
-import { initTopbarAccountDropdown } from "../../shared/js/core/topbar-controller.js?v=v2026-10-09T00020";
-import { guardResourceLock } from "../../shared/js/core/resource-lock.js?v=v2026-10-09T00020";
-import { validateGame, gameRuleErrorMessage, guardGameState } from "../../shared/js/core/game-validate.js?v=v2026-10-09T00020";
-import { mailCooldownCheck } from "../../shared/js/core/cooldown.js?v=v2026-10-09T00020";
-import { sendPollInviteMails } from "../../shared/js/core/poll-mail.js?v=v2026-10-09T00020";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-09T00020";
-import { createPollResults } from "../../shared/js/core/poll-results.js?v=v2026-10-09T00020";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-09T00020";
+import { initI18n, t, withLangParam, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-09T00352";
+import { initTopbarAccountDropdown } from "../../shared/js/core/topbar-controller.js?v=v2026-10-09T00352";
+import { guardResourceLock } from "../../shared/js/core/resource-lock.js?v=v2026-10-09T00352";
+import { validateGame, gameRuleErrorMessage, guardGameState } from "../../shared/js/core/game-validate.js?v=v2026-10-09T00352";
+import { mailCooldownCheck } from "../../shared/js/core/cooldown.js?v=v2026-10-09T00352";
+import { sendPollInviteMails } from "../../shared/js/core/poll-mail.js?v=v2026-10-09T00352";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-09T00352";
+import { createPollResults } from "../../shared/js/core/poll-results.js?v=v2026-10-09T00352";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-09T00352";
 
 // initI18n is called at the start of DOMContentLoaded (see below)
 
