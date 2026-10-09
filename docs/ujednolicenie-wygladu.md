@@ -155,3 +155,17 @@ Kafel gry pokazuje „TYP • STAN” (`games.js:684` `statusLabel`, klucze
 Testy: `frontend-layout.spec.js`, `mobile-sheet-modals.spec.js`,
 `logo-editor.spec.js`, spece hubu i subskrypcji — selektory kafli i pól
 do aktualizacji razem ze zmianą.
+
+## Komunikaty po akcji — jeden dymek (decyzja 2026-10-09)
+
+Pola komunikatu na stronach (np. `#status` w Koncie) użytkownik usunął — nie
+podobał mu się ich wygląd. Zamiast nich **jeden wspólny dymek** `toast()`
+(`shared/js/core/toast.js`): na dole ekranu (nad dolnym paskiem), ~3 s,
+zwykły albo błąd (czerwony obrys, do kliknięcia). **Tylko tam, gdzie efekt nie
+jest oczywisty**: wysłany mail/link, zapis formularza bez widocznej zmiany
+(nazwa w Koncie, hasło), skopiowany link, błąd sieci/zapisu. Bez dymka, gdy
+zmiana jest widoczna sama (autozapis w edytorach, kafel znika/pojawia się,
+zmiana stanu ankiety na pasku). Dwie lokalne kopie `showToast` (Społeczność,
+panel admina) przechodzą na wspólny moduł. Strony logowania (`/login/`,
+`/login/reset/`, `/login/confirm/`) zostają przy swoim polu stanu — tam to
+jest treść strony („Sprawdź skrzynkę”), nie komunikat po akcji.

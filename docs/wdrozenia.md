@@ -50,6 +50,7 @@ utracie kontekstu wystarczy przeczytać ten plik i wskazaną sekcję źródła.
 | 10 | E7 | Bez stron modalnych: edytor `?q=`, ustawienia gry z autozapisem, manual/privacy bez `?modal=` | nawigacja 6.5 | do zrobienia |
 | 11 | E8 | Jeden moduł kart `?tab=`, stan eksploratora | nawigacja 6.6 | do zrobienia |
 | 12 | E9 | Przyciski i `locks` w `PAGES`, diagramy 6 map, e2e map | nawigacja 6.7 | do zrobienia |
+| 12b | E16 | **Komunikaty po akcji:** wspólny dymek `toast()` zamiast usuniętych pól komunikatu, tylko gdzie efekt nie jest oczywisty | ujednolicenie-wygladu.md „Komunikaty po akcji” | w toku |
 | 12a | E14 | **Sprzątanie po potwierdzeniu** (migracje usuwające): martwe RPC ankiet i hubu (E11h); `cleanup-guest-storage` i jej wywołania w `guest_cleanup_expired` / `guest_discard_current`; kasowanie plików w `delete-account` (zastąpione przez E12b) | ankiety-refaktor.md, usuwanie-danych.md | czeka na potwierdzenie e2e na `main` |
 | 13 | E13 | **Instrukcja (manual) zaktualizowana do nowych zasad** — ostatni etap | wszystkie | do zrobienia |
 | — | E1 | Edytor logo: lista + 3 strony, autozapis | nawigacja 6.5a | zrobione |
