@@ -124,7 +124,7 @@ test("usuwanie gry: dozwolone przy otwartej ankiecie (poll_open) — okno ostrze
     // E12 (migracja 312): otwarta ankieta nie blokuje usunięcia — okno
     // potwierdzenia mówi, że zostanie przerwana.
     await expect(page.locator(".uni-modal .mSub")).toContainText("Ankieta zostanie przerwana", { timeout: 10000 });
-    await page.locator(".uni-foot .btn.gold").click({ timeout: 10000 }); // potwierdź "Usuń"
+    await page.locator(".uni-foot .btn.gold:visible").click({ timeout: 10000 }); // potwierdź "Usuń"
 
     await expect(card).toHaveCount(0, { timeout: 15000 });
     await expect.poll(() => gameExists(page, gameId), { timeout: 15000 }).toBe(false);
@@ -160,7 +160,7 @@ test("usuwanie gry: zablokowane, gdy edytor jest otwarty w innej karcie", async 
     const card = page.locator("#grid .card").filter({ hasText: gameName });
     await expect(card).toBeVisible({ timeout: 10000 });
     await card.locator(".x").click({ timeout: 10000 });
-    await page.locator(".uni-foot .btn.gold").click({ timeout: 10000 });
+    await page.locator(".uni-foot .btn.gold:visible").click({ timeout: 10000 });
 
     await expect(page.locator(".uni-modal .mSub")).toContainText("innej karcie", { timeout: 10000 });
     await page.locator(".uni-modal .uni-foot .btn.gold").click();
@@ -195,7 +195,7 @@ test("usuwanie gry: działa normalnie, gdy nic jej nie blokuje", async ({ page, 
     const card = page.locator("#grid .card").filter({ hasText: gameName });
     await expect(card).toBeVisible({ timeout: 10000 });
     await card.locator(".x").click({ timeout: 10000 });
-    await page.locator(".uni-foot .btn.gold").click({ timeout: 10000 });
+    await page.locator(".uni-foot .btn.gold:visible").click({ timeout: 10000 });
 
     await expect(card).toHaveCount(0, { timeout: 10000 });
     deleted = true;
@@ -250,8 +250,8 @@ test("usuwanie logo: zablokowane, gdy używająca go gra ma teraz otwarte ustawi
     await tile.locator(".logoX").click({ timeout: 10000 });
     // .uni-foot .btn.gold potwierdzenia usunięcia (confirmModal) — czekamy
     // aż realnie się pojawi, zanim klikniemy.
-    await expect(page.locator(".uni-foot .btn.gold")).toBeVisible({ timeout: 10000 });
-    await page.locator(".uni-foot .btn.gold").click({ timeout: 10000 });
+    await expect(page.locator(".uni-foot .btn.gold:visible")).toBeVisible({ timeout: 10000 });
+    await page.locator(".uni-foot .btn.gold:visible").click({ timeout: 10000 });
 
     // Lista logo (/logo/) ma własne, statyczne modale (create/rename/preview/
     // export) z klasą .mSub zawsze obecną w DOM — goły .mSub jest więc
@@ -311,7 +311,7 @@ test("usuwanie logo: działa normalnie, gdy nic go nie blokuje", async ({ page, 
     // .click() bezpośrednio przez DOM omija symulację myszy w ogóle —
     // gwarantowanie odpala handler na dokładnie tym elemencie.
     await tile.locator(".logoX").evaluate((el) => el.click());
-    await expect(page.locator(".uni-foot .btn.gold")).toBeVisible({ timeout: 10000 });
+    await expect(page.locator(".uni-foot .btn.gold:visible")).toBeVisible({ timeout: 10000 });
 
     // Run #68: kafelek czasem zostawał w DOM przez pełne 10s mimo że klik
     // potwierdzenia "przeszedł" -- deleteLogo() woła delete_resource_checked
@@ -325,7 +325,7 @@ test("usuwanie logo: działa normalnie, gdy nic go nie blokuje", async ({ page, 
         (res) => res.url().includes("/rest/v1/rpc/delete_resource_checked") && res.request().method() === "POST",
         { timeout: 10000 }
       ),
-      page.locator(".uni-foot .btn.gold").click({ timeout: 10000 }),
+      page.locator(".uni-foot .btn.gold:visible").click({ timeout: 10000 }),
     ]);
 
     // Lista logo odświeża się po RPC; pod obciążeniem CI potrafi zostać stary
@@ -581,7 +581,7 @@ test("games.js: zmiana nazwy gry zablokowana alert-modalem, gdy gra jest edytowa
     await expect(page.locator(".uni-modal .mSub")).toBeVisible({ timeout: 10000 });
     await expect(page.locator(".uni-modal .mSub")).toContainText("otwarta gdzie indziej", { timeout: 5000 });
     await expect(page.locator("#nameOverlay")).toBeHidden();
-    await page.locator(".uni-foot .btn.gold").click();
+    await page.locator(".uni-foot .btn.gold:visible").click();
 
     const nameAfter = await page.evaluate(async (id) => {
       const { data } = await window.__sbClient.from("games").select("name").eq("id", id).single();
@@ -638,11 +638,11 @@ test("games.js: reset gry do draftu po ankiecie zablokowany alert-modalem, gdy g
     // confirmModal "na pewno zresetować", dopiero potem (po OK) trafiamy w
     // sprawdzenie busy wewnątrz resetPollForEditing().
     await expect(page.locator(".uni-modal .mSub")).toBeVisible({ timeout: 10000 });
-    await page.locator(".uni-foot .btn.gold").click();
+    await page.locator(".uni-foot .btn.gold:visible").click();
 
     await expect(page.locator(".uni-modal .mSub")).toBeVisible({ timeout: 10000 });
     await expect(page.locator(".uni-modal .mSub")).toContainText("otwarta gdzie indziej", { timeout: 5000 });
-    await page.locator(".uni-foot .btn.gold").click();
+    await page.locator(".uni-foot .btn.gold:visible").click();
 
     await expect(page).toHaveURL(/\/games\/?(?:\?[^\/]*)?$/, { timeout: 5000 });
 

@@ -194,7 +194,7 @@ test("edytor: import tekstowy zawsze zastępuje (wipeuje) istniejącą zawartoś
     await page.locator("#btnImportTxt").click();
     await page.locator("#txtTa").fill("#Nowe pytanie\n1 Nowa odpowiedź /10");
     await page.locator("#btnTxtImport").click();
-    await page.locator(".uni-foot .btn.gold").click(); // potwierdzenie importu
+    await page.locator(".uni-foot .btn.gold:visible").click(); // potwierdzenie importu
     await expectImportDone(page);
 
     const questions = await getQuestionsRows(page, gameId);
@@ -249,7 +249,7 @@ test("edytor: import okalecza odpowiedź zaczynającą się od cyfry (myli ją z
     await page.locator("#btnImportTxt").click();
     await page.locator("#txtTa").fill("#Test\n5 sztuk\nCoś tam");
     await page.locator("#btnTxtImport").click();
-    await page.locator(".uni-foot .btn.gold").click();
+    await page.locator(".uni-foot .btn.gold:visible").click();
     await expectImportDone(page);
 
     const questions = await getQuestionsRows(page, gameId);
@@ -273,7 +273,7 @@ test("edytor: import dwuznacznie tnie tekst na ostatnim '/', nawet gdy to częś
     await page.locator("#btnImportTxt").click();
     await page.locator("#txtTa").fill("#Test\nFormuła 1/2");
     await page.locator("#btnTxtImport").click();
-    await page.locator(".uni-foot .btn.gold").click();
+    await page.locator(".uni-foot .btn.gold:visible").click();
     await expectImportDone(page);
 
     const questions = await getQuestionsRows(page, gameId);
@@ -296,7 +296,7 @@ test("edytor: import przycina ujemne punkty do 0 i zaokrągla w dół dziesiętn
     await page.locator("#btnImportTxt").click();
     await page.locator("#txtTa").fill("#Test\nOdp A /-5\nOdp B /3.7");
     await page.locator("#btnTxtImport").click();
-    await page.locator(".uni-foot .btn.gold").click();
+    await page.locator(".uni-foot .btn.gold:visible").click();
     await expectImportDone(page);
 
     const questions = await getQuestionsRows(page, gameId);
@@ -321,7 +321,7 @@ test("edytor: import po cichu ucina odpowiedzi powyżej limitu 6 na pytanie", as
     await page.locator("#btnImportTxt").click();
     await page.locator("#txtTa").fill(lines);
     await page.locator("#btnTxtImport").click();
-    await page.locator(".uni-foot .btn.gold").click();
+    await page.locator(".uni-foot .btn.gold:visible").click();
     await expectImportDone(page);
 
     const questions = await getQuestionsRows(page, gameId);
@@ -343,7 +343,7 @@ test("edytor: import ignoruje punkty z tekstu dla typu poll_points (zawsze zapis
     await page.locator("#btnImportTxt").click();
     await page.locator("#txtTa").fill("#Test\nOdp /50");
     await page.locator("#btnTxtImport").click();
-    await page.locator(".uni-foot .btn.gold").click();
+    await page.locator(".uni-foot .btn.gold:visible").click();
     await expectImportDone(page);
 
     const questions = await getQuestionsRows(page, gameId);
@@ -408,7 +408,7 @@ test("edytor: nowa odpowiedź zajmuje zwolniony numer (ord) po usunięciu ze śr
 
     // usuń odpowiedź o ord=2 ("A2")
     await aRow(page, 1).locator(".qf-del").click();
-    await page.locator(".uni-foot .btn.gold").click();
+    await page.locator(".uni-foot .btn.gold:visible").click();
     await expect(page.locator("#aList .qf-row:not(.qf-add)")).toHaveCount(3, { timeout: 10000 });
 
     await page.locator("#aList .qf-add").click();
@@ -443,7 +443,7 @@ test("edytor: usunięcie pytania ze środka przenumerowuje resztę, aktywne pyta
     await expect(aRow(page, 0).locator(".qf-text")).toHaveValue("A3text");
 
     await qCard(page, 1).locator(".x").click(); // usuń Q2 (środek)
-    await page.locator(".uni-foot .btn.gold").click();
+    await page.locator(".uni-foot .btn.gold:visible").click();
     await expect(page.locator("#qList .qcard:not(.addTile)")).toHaveCount(2, { timeout: 10000 });
 
     // Q3 dalej aktywne, treść/odpowiedzi bez zmian mimo zmiany numeru porządkowego
@@ -543,7 +543,7 @@ test("edytor: wejście gdy ankieta jest 'ready' i OK w confirmie -> realny reset
 
     await page.goto(`https://www.familiada.online/games/editor?id=${gameId}`, { waitUntil: "domcontentloaded" });
     await expect(page.locator(".uni-modal")).toBeVisible({ timeout: 15000 });
-    await page.locator(".uni-foot .btn.gold").click(); // OK — resetuj
+    await page.locator(".uni-foot .btn.gold:visible").click(); // OK — resetuj
 
     await expect(page.locator("#qText")).toHaveValue("Pytanie 1", { timeout: 15000 });
 
@@ -713,7 +713,7 @@ test("edytor: import do gry typu poll_text nie tworzy żadnych odpowiedzi (allow
     await page.locator("#btnImportTxt").click();
     await page.locator("#txtTa").fill("#Test\n1 Odpowiedź A\n2 Odpowiedź B");
     await page.locator("#btnTxtImport").click();
-    await page.locator(".uni-foot .btn.gold").click();
+    await page.locator(".uni-foot .btn.gold:visible").click();
     await expectImportDone(page);
 
     const questions = await getQuestionsRows(page, gameId);
@@ -910,7 +910,7 @@ test.describe("editor: audyt -- pisanie i zapisy", () => {
       await aRow(page, 0).locator(".qf-pts").fill("30");
       await aRow(page, 2).locator(".qf-del").click();
       await expect(page.locator(".uni-modal"), "potwierdzenie usunięcia po pierwszym kliknięciu").toBeVisible({ timeout: 5000 });
-      await page.locator(".uni-foot .btn.gold").click();
+      await page.locator(".uni-foot .btn.gold:visible").click();
       await expect(aRows(page)).toHaveCount(2, { timeout: 10000 });
 
       const rows = await getAnswersRows(page, qId);
@@ -1035,7 +1035,7 @@ test.describe("editor: audyt -- import i wejście na stronę", () => {
       });
       await expect(page.locator("#txtTa")).toHaveValue(/#Pytanie z pliku/, { timeout: 5000 });
       await page.locator("#btnTxtImport").click();
-      await page.locator(".uni-foot .btn.gold").click();
+      await page.locator(".uni-foot .btn.gold:visible").click();
       await expectImportDone(page);
 
       const qs = await getQuestionsRows(page, gameId);
@@ -1108,7 +1108,7 @@ test.describe("editor: audyt -- import i wejście na stronę", () => {
     await page.goto("https://www.familiada.online/games/editor?id=00000000-0000-4000-8000-000000000000", { waitUntil: "domcontentloaded" });
     await expect(page.locator(".uni-modal .mSub")).toHaveText("Ta gra nie istnieje albo nie masz do niej dostępu.", { timeout: 15000 });
     await expect(page).toHaveURL(/\/games\/editor/);
-    await page.locator(".uni-foot .btn.gold").click();
+    await page.locator(".uni-foot .btn.gold:visible").click();
     await page.waitForURL(/\/games\/?(?:\?[^\/]*)?$/, { timeout: 15000 });
   });
 
@@ -1123,7 +1123,7 @@ test.describe("editor: audyt -- import i wejście na stronę", () => {
 
       const rpc = page.waitForResponse((r) => r.url().includes("/rpc/game_question_delete"));
       await qCard(page, 1).locator(".x").click();
-      await page.locator(".uni-foot .btn.gold").click();
+      await page.locator(".uni-foot .btn.gold:visible").click();
       expect((await rpc).status()).toBe(200);
       await expect(page.locator("#qList .qcard:not(.addTile)")).toHaveCount(3, { timeout: 10000 });
       await expect(qCard(page, 2).locator(".qord")).toHaveText("Pytanie 3");
@@ -1289,7 +1289,7 @@ test.describe("editor: audyt -- modal pytania w bazie (ten sam formularz co edyt
       await expect(page.locator("#qText")).toHaveValue("Zmieniona");
 
       await page.locator("#qClose").click();
-      await page.locator(".uni-foot .btn.gold").click(); // Porzuć
+      await page.locator(".uni-foot .btn.gold:visible").click(); // Porzuć
       await expect(page.locator("#questionOverlay")).toBeHidden({ timeout: 5000 });
       expect((await getBaseQuestion(page, qid)).text).toBe("Treść");
     } finally {

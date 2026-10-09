@@ -138,7 +138,7 @@ async function expectBarState(page, state, timeout = 60000) {
 
 /** OK w confirmModalu (celujemy w klasę, nie w tekst: OK bywa „Zamknij” jak ✕ w nagłówku). */
 async function confirmOk(page) {
-  const ok = page.locator(".uni-foot .btn.gold");
+  const ok = page.locator(".uni-foot .btn.gold:visible");
   await expect(ok).toBeVisible({ timeout: 10000 });
   await ok.click({ timeout: 10000 });
 }

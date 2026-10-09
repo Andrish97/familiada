@@ -228,7 +228,7 @@ async function checkState(page, testInfo, state, tabs, all) {
 }
 
 async function confirmOk(page) {
-  const ok = page.locator(".uni-foot .btn.gold");
+  const ok = page.locator(".uni-foot .btn.gold:visible");
   await expect(ok).toBeVisible({ timeout: 10000 });
   await ok.click({ timeout: 10000 });
 }

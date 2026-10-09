@@ -181,7 +181,7 @@ test("ustawienia gry: Warstwa 2 — zapis po zmianie ustawień z pominięciem UI
       "Te ustawienia zostały w międzyczasie zmienione w innym miejscu. Odśwież stronę i wprowadź zmiany ponownie.",
       { timeout: 10000 }
     );
-    await page.locator(".uni-foot .btn.gold").click();
+    await page.locator(".uni-foot .btn.gold:visible").click();
 
     const game = await getGameRow(page, gameId);
     expect(game.settings.teams.teamA, "zmiana zapisana bezpośrednio w bazie nie powinna zostać cicho nadpisana").toBe("Zmienione gdzie indziej");
@@ -307,7 +307,7 @@ test("ustawienia gry: wygląd — reset sekcji przywraca domyślne kolory", asyn
     await expect(page.locator('.swatchBtn[data-color-key="A"]')).toHaveCSS("background-color", "rgb(17, 17, 17)");
 
     await page.locator("#btnDisplayReset").click();
-    await page.locator(".uni-foot .btn.gold").click(); // potwierdź reset sekcji
+    await page.locator(".uni-foot .btn.gold:visible").click(); // potwierdź reset sekcji
 
     // Domyślny kolor A z DEFAULT_SETTINGS to #c4002f = rgb(196,0,47)
     await expect(page.locator('.swatchBtn[data-color-key="A"]')).toHaveCSS("background-color", "rgb(196, 0, 47)");
@@ -342,7 +342,7 @@ test("ustawienia gry: dźwięk — wybranie 'Własny' bez wgranego pliku blokuje
       "Wybrano własny dźwięk ale nie wgrano pliku dla:",
       { timeout: 10000 }
     );
-    await page.locator(".uni-foot .btn.gold").click();
+    await page.locator(".uni-foot .btn.gold:visible").click();
 
     const game = await getGameRow(page, gameId);
     expect(game.settings, "zapis zablokowany walidacją nie powinien nic zmienić w bazie").toEqual({});
@@ -409,7 +409,7 @@ test("ustawienia gry: finał w trybie 'wybierz' wymaga dokładnie 5 pytań — m
       "Wybierz 5 pytań finałowych (wybrano 1/5).",
       { timeout: 10000 }
     );
-    await page.locator(".uni-foot .btn.gold").click();
+    await page.locator(".uni-foot .btn.gold:visible").click();
 
     const game = await getGameRow(page, gameId);
     expect(game.settings, "zapis zablokowany walidacją nie powinien nic zmienić w bazie").toEqual({});
@@ -586,7 +586,7 @@ test("ustawienia gry: reset wszystkich ustawień przywraca domyślne i zapisuje 
     // resetAll() sam wywołuje saveAll() na końcu, od razu po potwierdzeniu —
     // ten sam network-response wait co saveAndWait(), tylko wyzwolony
     // kliknięciem w modal, nie w #btnSaveAll.
-    await waitForGamesSave(page, () => page.locator(".uni-foot .btn.gold").click());
+    await waitForGamesSave(page, () => page.locator(".uni-foot .btn.gold:visible").click());
 
     const game = await getGameRow(page, gameId);
     expect(game.settings.teams.teamA).toBe("");
@@ -617,7 +617,7 @@ test("ustawienia gry: przycisk Wstecz z niezapisanymi zmianami pyta o potwierdze
 
     // Ponowna próba, tym razem potwierdzamy wyjście
     await page.locator("#btnBack").click();
-    await page.locator(".uni-foot .btn.gold").click();
+    await page.locator(".uni-foot .btn.gold:visible").click();
     await expect(page).toHaveURL(/\/games\/?(?:\?[^\/]*)?$/, { timeout: 10000 });
     // toHaveURL łapie tylko zmianę adresu — window.__sbClient na /games
     // jeszcze się nie zdążył ustawić, a deleteGame() w finally z niego

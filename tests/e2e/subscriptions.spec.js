@@ -52,7 +52,7 @@ async function inviteRegistered(page, recipient) {
   const toastEl = page.locator("#appToast");
   const modal = page.locator(".uni-modal");
   await expect(toastEl.or(modal)).toContainText(/Zaproszenie zapisane/, { timeout: 15000 });
-  if (await modal.isVisible().catch(() => false)) await modal.locator(".uni-foot .btn.gold").click();
+  if (await modal.isVisible().catch(() => false)) await modal.locator(".uni-foot .btn.gold:visible").click();
 }
 
 test("pełny przepływ: zaproszenie, akceptacja i anulowanie z czystym stanem", async ({ browser }) => {

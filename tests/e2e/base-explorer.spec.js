@@ -1860,7 +1860,7 @@ test.describe("base-explorer: question-modal.js (edycja pytania)", () => {
       await page.locator("#qClose").click();
       // przy zmianach modal pyta o porzucenie (wspólny formularz z edytorem)
       await expect(page.locator(".uni-modal .mSub")).toHaveText("Porzucić niezapisane zmiany w pytaniu?", { timeout: 5000 });
-      await page.locator(".uni-foot .btn.gold").click();
+      await page.locator(".uni-foot .btn.gold:visible").click();
       await expect(page.locator("#questionOverlay")).toBeHidden({ timeout: 5000 });
 
       const fresh = await getQuestionRow(page, qid);
