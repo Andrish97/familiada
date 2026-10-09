@@ -144,9 +144,9 @@ test("odnośniki prowadzą do właściwych sekcji, a powroty nazywają cel Stron
   await openIndex(page);
   const destinations = [
     { selector: "#ctaStart", url: /\/login\/?(?:\?|$)/ },
-    { selector: '.hero-cta a[href*="marketplace"]', url: /\/marketplace(?:\?|$)/ },
-    { selector: '.hero-cta a[href*="connect-device"]', url: /\/connect-device(?:\?|$)/ },
-    { selector: '.footer a[href*="privacy"]', url: /\/privacy(?:\?|$)/ },
+    { selector: '.hero-cta a[href*="marketplace"]', url: /\/marketplace\/?(?:\?|$)/ },
+    { selector: '.hero-cta a[href*="connect-device"]', url: /\/connect-device\/?(?:\?|$)/ },
+    { selector: '.footer a[href*="privacy"]', url: /\/privacy\/?(?:\?|$)/ },
   ];
   for (const destination of destinations) {
     await page.locator(destination.selector).click();
