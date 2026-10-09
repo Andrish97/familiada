@@ -17,9 +17,9 @@
 //
 // settings.display.colors.A/B/BACKGROUND nie mają tu wpływu.
 
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T12282";
-import { loadFont5x7, logoToBits150 } from "../../shared/js/core/logo-preview.js?v=v2026-10-09T12282";
-import { renderLogoSource, renderTextLogo } from "./sourceLogo.js?v=v2026-10-09T12282";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T12304";
+import { loadFont5x7, logoToBits150 } from "../../shared/js/core/logo-preview.js?v=v2026-10-09T12304";
+import { renderLogoSource, renderTextLogo } from "./sourceLogo.js?v=v2026-10-09T12304";
 
 const DOT_W = 150, DOT_H = 70;
 const DEFAULT_DOT_COLOR = "#d7ff3d"; // web/js/gameplay/gameStateShape.js's default

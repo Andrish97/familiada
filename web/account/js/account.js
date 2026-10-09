@@ -1,13 +1,13 @@
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T12282";
-import { cooldownGet, cooldownReserve, cooldownRelease, mailCooldownEmailReserve } from "../../shared/js/core/cooldown.js?v=v2026-10-09T12282";
-import { requireAuth, updateUserLanguage, validatePassword, validateUsername, signOut, niceAuthError, initPasswordToggles, convertGuestToRegisteredEmailOnly } from "../../shared/js/core/auth.js?v=v2026-10-09T12282";
-import { getUserEmailNotificationsFlag, setUserEmailNotificationsFlag } from "../../shared/js/core/user-flags.js?v=v2026-10-09T12282";
-import { initI18n, t, getUiLang, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-09T12282";
-import { linkTo, backHref, loginUrl, renderBackLabel } from "../../shared/js/core/nav-map.js?v=v2026-10-09T12282";
-import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-09T12282";
-import { isGuestUser, hideForGuest } from "../../shared/js/core/guest-mode.js?v=v2026-10-09T12282";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-09T12282";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-09T12282";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T12304";
+import { cooldownGet, cooldownReserve, cooldownRelease, mailCooldownEmailReserve } from "../../shared/js/core/cooldown.js?v=v2026-10-09T12304";
+import { requireAuth, updateUserLanguage, validatePassword, validateUsername, signOut, niceAuthError, initPasswordToggles, convertGuestToRegisteredEmailOnly } from "../../shared/js/core/auth.js?v=v2026-10-09T12304";
+import { getUserEmailNotificationsFlag, setUserEmailNotificationsFlag } from "../../shared/js/core/user-flags.js?v=v2026-10-09T12304";
+import { initI18n, t, getUiLang, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-09T12304";
+import { linkTo, backHref, loginUrl, renderBackLabel } from "../../shared/js/core/nav-map.js?v=v2026-10-09T12304";
+import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-09T12304";
+import { isGuestUser, hideForGuest } from "../../shared/js/core/guest-mode.js?v=v2026-10-09T12304";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-09T12304";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-09T12304";
 
 
 const status = document.getElementById("status");
@@ -331,7 +331,7 @@ async function handleMigrateResend() {
     setStatus(t("account.statusMigrateResending"));
 
     const language = getUiLang();
-    const redirect = new URL("/confirm/", location.origin);
+    const redirect = new URL("/login/confirm/", location.origin);
     redirect.searchParams.set("lang", language);
     redirect.searchParams.set("to", migratePendingEmail);
 
@@ -679,7 +679,7 @@ async function handleEmailSave() {
 
     const language = getUiLang();
 
-    const confirmUrl = new URL("/confirm/", location.origin);
+    const confirmUrl = new URL("/login/confirm/", location.origin);
     confirmUrl.searchParams.set("lang", language);
     confirmUrl.searchParams.set("to", normalizedMail);
 
@@ -723,7 +723,7 @@ async function handleEmailResend() {
     }
 
     const language = getUiLang();
-    const confirmUrl = new URL("/confirm/", location.origin);
+    const confirmUrl = new URL("/login/confirm/", location.origin);
     confirmUrl.searchParams.set("lang", language);
     confirmUrl.searchParams.set("to", pendingEmail);
 

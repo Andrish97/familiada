@@ -611,9 +611,9 @@ serve(async (req) => {
       const thNew = tokenHashNew || tokenHash;
 
       const linkCurrent =
-        `${baseOrigin}/confirm/?token_hash=${encodeURIComponent(thCurrent)}&type=email_change&lang=${lang}`;
+        `${baseOrigin}/login/confirm/?token_hash=${encodeURIComponent(thCurrent)}&type=email_change&lang=${lang}`;
       const linkTarget =
-        `${baseOrigin}/confirm/?token_hash=${encodeURIComponent(thNew)}&type=email_change&lang=${lang}`;
+        `${baseOrigin}/login/confirm/?token_hash=${encodeURIComponent(thNew)}&type=email_change&lang=${lang}`;
 
       if (currentEmail && thCurrent) {
         const htmlCurrent = renderEmail(copy, linkCurrent, emailTemplate === "email_change");
@@ -694,19 +694,19 @@ function buildActionLink(payload: HookPayload, lang: EmailLang, baseOrigin: stri
         const tokenHash = payload.email_data.token_hash || "";
   const tokenHashNew = payload.email_data.token_hash_new || "";
 
-  const mk = (page: "confirm/" | "reset/", th: string, t: string) => {
+  const mk = (page: "login/confirm/" | "login/reset/", th: string, t: string) => {
     if (!th) throw new Error(`Missing token_hash for type=${type}`);
     return `${baseOrigin}/${page}?token_hash=${encodeURIComponent(th)}&type=${encodeURIComponent(t)}&lang=${lang}`;
   };
 
-  if (type === "signup") return mk("confirm/", tokenHash, "signup");
-  if (type === "recovery") return mk("reset/", tokenHash, "recovery");
+  if (type === "signup") return mk("login/confirm/", tokenHash, "signup");
+  if (type === "recovery") return mk("login/reset/", tokenHash, "recovery");
 
-  if (type === "email_change") return mk("confirm/", tokenHash, "email_change");
-  if (type === "email_change_current") return mk("confirm/", tokenHash, "email_change");
-  if (type === "email_change_new") return mk("confirm/", tokenHashNew || tokenHash, "email_change");
+  if (type === "email_change") return mk("login/confirm/", tokenHash, "email_change");
+  if (type === "email_change_current") return mk("login/confirm/", tokenHash, "email_change");
+  if (type === "email_change_new") return mk("login/confirm/", tokenHashNew || tokenHash, "email_change");
 
-  return mk("confirm/", tokenHash, type);
+  return mk("login/confirm/", tokenHash, type);
 }
 
 function templateFor(type: string): EmailType {
