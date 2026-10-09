@@ -96,15 +96,10 @@ async function switchTab(page, cat) {
   await page.locator(`.gs-sidebar-item[data-cat="${cat}"]`).click();
 }
 
-// Wcześniej: czekanie na #btnSaveAll disabled->enabled. Realnie wyścig —
-// przy szybkim zapisie (dobre połączenie) całe przełączenie disabled->
-// ->enabled potrafi się zamknąć, zanim Playwright zdąży w ogóle sprawdzić
-// stan "disabled" (potwierdzone w CI: run #58 "drużyny" jako flaka, run
-// #59 "kolor" 2/2 konsekwentnie) — asercja startuje już PO powrocie do
-// enabled i nigdy nie widzi disabled. Czekanie na sam network response
-// zapisu nie ma tego problemu: Playwright nie może "przegapić" response,
-// który przechwytuje na poziomie stosu sieciowego przeglądarki.
-async function waitForGamesSave(page, action) {
+// Ustawienia zapisują się same (autozapis ~0,8 s po zmianie, bez przycisku
+// „Zapisz”). Czekamy na sam network response zapisu — Playwright nie może
+// „przegapić” response, który przechwytuje na poziomie stosu sieciowego.
+async function waitForGamesSave(page, action = async () => {}) {
   const [response] = await Promise.all([
     page.waitForResponse(
       (res) => res.url().includes("/rest/v1/games") && res.request().method() === "PATCH",
@@ -115,8 +110,9 @@ async function waitForGamesSave(page, action) {
   expect(response.ok(), `zapis powinien się udać (status ${response.status()})`).toBe(true);
 }
 
+// Wywoływane PO zmianie ustawienia: czeka na autozapis (debounce < 10 s).
 async function saveAndWait(page) {
-  await waitForGamesSave(page, () => page.locator("#btnSaveAll").click());
+  await waitForGamesSave(page);
 }
 
 /* ================= A: Warstwa 1 — blokada wejścia ================= */
@@ -175,13 +171,12 @@ test("ustawienia gry: Warstwa 2 — zapis po zmianie ustawień z pominięciem UI
     }, gameId);
 
     await page.locator("#gsTeamB").fill("Ekipa B");
-    await page.locator("#btnSaveAll").click();
 
-    await expect(page.locator(".mSub")).toHaveText(
+    // Autozapis trafia w konflikt: komunikat pod paskiem akcji, bez okna.
+    await expect(page.locator("#gsFooterMsg")).toHaveText(
       "Te ustawienia zostały w międzyczasie zmienione w innym miejscu. Odśwież stronę i wprowadź zmiany ponownie.",
       { timeout: 10000 }
     );
-    await page.locator(".uni-foot .btn.gold:visible").click();
 
     const game = await getGameRow(page, gameId);
     expect(game.settings.teams.teamA, "zmiana zapisana bezpośrednio w bazie nie powinna zostać cicho nadpisana").toBe("Zmienione gdzie indziej");
@@ -225,10 +220,9 @@ test("ustawienia gry: Warstwa 2 — zapis filtruje pytanie finału usunięte w m
     }, q2Id);
 
     await openSettings(page, gameId);
-    // Tu nic wcześniej nie ustawiło isDirty, więc #gsFooterMsg jest
-    // ukryty od początku — toBeHidden przeszłoby natychmiast bez czekania
-    // na realne zakończenie zapisu; saveAndWait() (network response) nie
-    // ma tego problemu i działa niezależnie od stanu isDirty.
+    // Samo otwarcie niczego nie zapisuje — drobna zmiana uruchamia autozapis,
+    // który przed zapisem odświeża listę pytań i filtruje martwe id.
+    await page.locator("#gsTeamA").fill("Ekipa");
     await saveAndWait(page);
 
     const game = await getGameRow(page, gameId);
@@ -335,14 +329,11 @@ test("ustawienia gry: dźwięk — wybranie 'Własny' bez wgranego pliku blokuje
     await firstRow.locator(".sfx-variant-select .ui-select-btn").click();
     await firstRow.locator('.ui-select-item[data-value="__custom__"]').click();
 
-    await page.locator("#btnSaveAll").click();
-    // Walidacja odpala PRZED disable/enable #btnSaveAll (return wcześniej w
-    // saveAll()) — sygnałem zakończenia jest tu sam alertModal, nie przycisk.
-    await expect(page.locator(".mSub")).toContainText(
+    // Walidacja autozapisu: komunikat pod paskiem akcji, bez zapisu.
+    await expect(page.locator("#gsFooterMsg")).toContainText(
       "Wybrano własny dźwięk ale nie wgrano pliku dla:",
       { timeout: 10000 }
     );
-    await page.locator(".uni-foot .btn.gold:visible").click();
 
     const game = await getGameRow(page, gameId);
     expect(game.settings, "zapis zablokowany walidacją nie powinien nic zmienić w bazie").toEqual({});
@@ -404,12 +395,10 @@ test("ustawienia gry: finał w trybie 'wybierz' wymaga dokładnie 5 pytań — m
     await switchTab(page, "finale");
     await page.locator("#gsFinalePool .qRow").first().click(); // wybierz tylko 1 z 2
 
-    await page.locator("#btnSaveAll").click();
-    await expect(page.locator(".mSub")).toHaveText(
+    await expect(page.locator("#gsFooterMsg")).toHaveText(
       "Wybierz 5 pytań finałowych (wybrano 1/5).",
       { timeout: 10000 }
     );
-    await page.locator(".uni-foot .btn.gold:visible").click();
 
     const game = await getGameRow(page, gameId);
     expect(game.settings, "zapis zablokowany walidacją nie powinien nic zmienić w bazie").toEqual({});
@@ -583,9 +572,8 @@ test("ustawienia gry: reset wszystkich ustawień przywraca domyślne i zapisuje 
     await saveAndWait(page);
 
     await page.locator("#btnResetAll").click();
-    // resetAll() sam wywołuje saveAll() na końcu, od razu po potwierdzeniu —
-    // ten sam network-response wait co saveAndWait(), tylko wyzwolony
-    // kliknięciem w modal, nie w #btnSaveAll.
+    // resetAll() zapisuje od razu po potwierdzeniu (flush) — ten sam
+    // network-response wait co saveAndWait(), wyzwolony kliknięciem w modal.
     await waitForGamesSave(page, () => page.locator(".uni-foot .btn.gold:visible").click());
 
     const game = await getGameRow(page, gameId);
@@ -595,35 +583,27 @@ test("ustawienia gry: reset wszystkich ustawień przywraca domyślne i zapisuje 
   }
 });
 
-test("ustawienia gry: przycisk Wstecz z niezapisanymi zmianami pyta o potwierdzenie", async ({ page, context }) => {
+test("ustawienia gry: przycisk Wstecz zapisuje zmiany bez pytania i wraca na ret", async ({ page, context }) => {
   test.setTimeout(60_000);
   await loginAsTestUser(page, context);
 
   const gameId = await createGame(page);
   try {
     await openSettings(page, gameId, "&ret=%2Fgames%2F");
+    // Zmiana i natychmiastowe „Wstecz” (przed końcem debounce): zapis idzie
+    // przy wyjściu, bez okna o niezapisanych zmianach.
     await page.locator("#gsTeamA").fill("Coś nowego");
-    await expect(page.locator("#gsFooterMsg")).toBeVisible();
-
     await page.locator("#btnBack").click();
-    await expect(page.locator(".mSub")).toHaveText(
-      "Masz niezapisane zmiany. Czy chcesz opuścić stronę?",
-      { timeout: 10000 }
-    );
-
-    // Anuluj — zostajemy na stronie ustawień
-    await page.locator(".uni-foot .btn:not(.gold)").click();
-    await expect(page).toHaveURL(/games\/settings/);
-
-    // Ponowna próba, tym razem potwierdzamy wyjście
-    await page.locator("#btnBack").click();
-    await page.locator(".uni-foot .btn.gold:visible").click();
+    await expect(page.locator(".uni-modal")).toHaveCount(0);
     await expect(page).toHaveURL(/\/games\/?(?:\?[^\/]*)?$/, { timeout: 10000 });
     // toHaveURL łapie tylko zmianę adresu — window.__sbClient na /games
     // jeszcze się nie zdążył ustawić, a deleteGame() w finally z niego
     // korzysta. Bez tego czekania cleanup pada z "Cannot read properties
     // of undefined (reading 'from')" mimo że sam test już przeszedł.
     await page.waitForLoadState("networkidle");
+
+    const game = await getGameRow(page, gameId);
+    expect(game.settings.teams.teamA).toBe("Coś nowego");
   } finally {
     await deleteGame(page, gameId);
   }

@@ -17,8 +17,10 @@ test('release: canonical routes serve the current app and preserve connection pa
   }
 });
 
-test('release: approved Polish manual and native icons are published',async({page})=>{
- await page.goto('/manual/?modal=1&lang=pl#control');
+test('release: approved Polish manual and native icons are published',async({page},testInfo)=>{
+ // Instrukcja to zwykła strona (bez ?modal=) -- wymaga sesji.
+ await loginAsPooledTestUser(page,page.context(),testInfo.parallelIndex);
+ await page.goto('/manual/?lang=pl#control');
  const control=page.locator('#tab-control');
  await expect(control).toContainText('Ponowne kliknięcie nie usuwa oznaczenia');
  await expect(control).toContainText('oznaczenie usuwa wyłącznie wpisanie tekstu');
@@ -48,7 +50,8 @@ for(const [lang,hostLabel,repeatText,outroLimit] of [
  ['uk','Ведучого','Повторне натискання не прибирає позначки','2 хвилини'],
 ]) {
  test(`release: manual ${lang} has styled Host instructions, notes and native icons`,async({page},testInfo)=>{
-  await page.goto(`/manual/?modal=1&lang=${lang}#control`);
+  await loginAsPooledTestUser(page,page.context(),testInfo.parallelIndex);
+  await page.goto(`/manual/?lang=${lang}#control`);
   const control=page.locator('#tab-control');
   await expect(control).toContainText(repeatText);
   const host=control.locator('.m-host').first();

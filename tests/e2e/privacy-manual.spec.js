@@ -1,5 +1,6 @@
 const { test, expect } = require("@playwright/test");
 const { serveBranchCode } = require("./helpers/branch-code");
+const { loginAsTestUser } = require("./helpers/login");
 
 const ORIGIN = "https://www.familiada.online";
 
@@ -32,28 +33,29 @@ test("privacy: parametr ret dopuszcza tylko bezpieczny powrót w obrębie serwis
   await page.waitForURL((url) => url.origin === ORIGIN && !url.pathname.startsWith("/privacy"));
   expect(new URL(page.url()).origin).toBe(ORIGIN);
 
-  const safeBack = "/manual/?modal=control&tab=polls#polls";
+  const safeBack = "/manual/?tab=polls#polls";
   await page.goto(`${ORIGIN}/privacy?lang=uk&ret=${encodeURIComponent(safeBack)}`);
   await expect(page.locator(".topbar.topbar-ready")).toBeAttached();
   await page.locator("#btnBack").click();
   await page.waitForURL(/\/manual/);
   const returned = new URL(page.url());
   expect(returned.origin).toBe(ORIGIN);
-  expect(returned.searchParams.get("modal")).toBe("control");
   expect(returned.searchParams.get("tab")).toBe("polls");
   expect(returned.searchParams.get("lang")).toBe("uk");
   expect(returned.hash).toBe("#polls");
 });
 
-test("manual modal: działa bez sesji, tłumaczy UI i ma semantykę zakładek", async ({ page }) => {
-  await page.goto(`${ORIGIN}/manual?modal=control&lang=en`, { waitUntil: "domcontentloaded" });
+test("manual: tłumaczy UI i ma semantykę zakładek (zwykła strona, bez ?modal=)", async ({ page, context }) => {
+  await loginAsTestUser(page, context);
+  await page.goto(`${ORIGIN}/manual?lang=en`, { waitUntil: "domcontentloaded" });
   await expect(page.locator("html")).not.toHaveClass(/page-loading/);
   await expect(page).toHaveURL(/\/manual/);
-  await expect(page.locator(".simple-tabs")).toHaveCount(0);
+  await expect(page.locator(".modal-tabs")).toHaveCount(0);
+  await expect(page.locator(".topbar")).toBeVisible();
 
-  const tabs = page.locator('.modal-tabs [role="tab"]');
+  const tabs = page.locator('.simple-tabs [role="tab"]');
   await expect(tabs).toHaveCount(10);
-  await expect(page.locator('.modal-tabs[role="tablist"]')).toHaveAttribute("aria-label", "User guide tabs");
+  await expect(page.locator('.simple-tabs[role="tablist"]')).toHaveAttribute("aria-label", "User guide tabs");
   await expect(tabs.first()).toHaveAttribute("aria-selected", "true");
   await expect(page.locator('#tab-general[role="tabpanel"]')).toBeVisible();
 
@@ -62,8 +64,9 @@ test("manual modal: działa bez sesji, tłumaczy UI i ma semantykę zakładek", 
   await expect(page).toHaveURL(/#edit$/);
 });
 
-test("manual: Back/Forward synchronizuje hash, aktywną zakładkę i treść", async ({ page }) => {
-  await page.goto(`${ORIGIN}/manual?modal=control&lang=pl`, { waitUntil: "domcontentloaded" });
+test("manual: Back/Forward synchronizuje hash, aktywną zakładkę i treść", async ({ page, context }) => {
+  await loginAsTestUser(page, context);
+  await page.goto(`${ORIGIN}/manual?lang=pl`, { waitUntil: "domcontentloaded" });
   await page.locator('[data-tab="edit"][role="tab"]').click();
   await expect(page.locator("#tab-edit")).toBeVisible();
   await page.locator('[data-tab="polls"][role="tab"]').click();
@@ -80,7 +83,8 @@ test("manual: Back/Forward synchronizuje hash, aktywną zakładkę i treść", a
   await expect(page.locator("#tab-polls")).toBeVisible();
 });
 
-test("manual: treść i etykieta zakładek istnieją w PL/EN/UK", async ({ page }) => {
+test("manual: treść i etykieta zakładek istnieją w PL/EN/UK", async ({ page, context }) => {
+  await loginAsTestUser(page, context);
   const cases = [
     { lang: "pl", label: "Zakładki wskazówek", title: "Wskazówki dla użytkownika" },
     { lang: "en", label: "User guide tabs", title: "User guide" },
@@ -88,14 +92,15 @@ test("manual: treść i etykieta zakładek istnieją w PL/EN/UK", async ({ page 
   ];
 
   for (const item of cases) {
-    await page.goto(`${ORIGIN}/manual?modal=control&lang=${item.lang}`, { waitUntil: "domcontentloaded" });
+    await page.goto(`${ORIGIN}/manual?lang=${item.lang}`, { waitUntil: "domcontentloaded" });
     await expect(page.locator("h1")).toHaveText(item.title);
-    await expect(page.locator('.modal-tabs[role="tablist"]')).toHaveAttribute("aria-label", item.label);
+    await expect(page.locator('.simple-tabs[role="tablist"]')).toHaveAttribute("aria-label", item.label);
     await expect(page.locator("#tab-general .m-p").first()).not.toBeEmpty();
   }
 });
 
-test("manual: Host logo jest opisane w Control i Ustawieniach gry w PL/EN/UK", async ({ page }, testInfo) => {
+test("manual: Host logo jest opisane w Control i Ustawieniach gry w PL/EN/UK", async ({ page, context }, testInfo) => {
+  await loginAsTestUser(page, context);
   const cases = [
     { lang: "pl", control: "Logo prowadzącego", settings: "Przełącznik Logo prowadzącego", source: "Źródło" },
     { lang: "en", control: "Host logo", settings: "The Host logo selector", source: "Source" },
@@ -103,7 +108,7 @@ test("manual: Host logo jest opisane w Control i Ustawieniach gry w PL/EN/UK", a
   ];
 
   for (const item of cases) {
-    await page.goto(`${ORIGIN}/manual?modal=control&lang=${item.lang}`, { waitUntil: "domcontentloaded" });
+    await page.goto(`${ORIGIN}/manual?lang=${item.lang}`, { waitUntil: "domcontentloaded" });
     await page.locator('[data-tab="control"][role="tab"]').click();
     const control = page.locator("#tab-control .m-doc");
     await expect(control).toContainText(item.control);

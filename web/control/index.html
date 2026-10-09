@@ -12,9 +12,9 @@
   <link rel="preconnect" href="https://supabase.familiada.online">
   <title data-i18n="control.title">Familiada — panel sterowania</title>
 
-  <link rel="icon" href="/favicon.ico?v=v2026-10-09T22412"/>
-  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-09T22412"/>
-  <link rel="stylesheet" href="/control/css/control.css?v=v2026-10-09T22412"/>
+  <link rel="icon" href="/favicon.ico?v=v2026-10-09T22502"/>
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-09T22502"/>
+  <link rel="stylesheet" href="/control/css/control.css?v=v2026-10-09T22502"/>
   <script>
     document.documentElement.classList.add('page-loading');
     try {
@@ -31,12 +31,12 @@
   <style>html[data-mobile-guard]{overflow:hidden;touch-action:none}html[data-mobile-guard] body{visibility:hidden}</style>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-  <script src="/shared/js/core/security-warning.js?v=v2026-10-09T22412" defer></script>
+  <script src="/shared/js/core/security-warning.js?v=v2026-10-09T22502" defer></script>
   <script type="module">
-    import { initI18n } from "/shared/translation/translation.js?v=v2026-10-09T22412";
+    import { initI18n } from "/shared/translation/translation.js?v=v2026-10-09T22502";
     await initI18n({ withSwitcher: true });
     document.documentElement.classList.remove('page-loading');
-    import("/control/js/app.js?v=v2026-10-09T22412");
+    import("/control/js/app.js?v=v2026-10-09T22502");
   </script>
 
   <style>
@@ -300,28 +300,6 @@
     /* Blokada jest stała; przyciski nawigacji nie pulsują. */
     .c2-btn-busy:disabled { cursor:wait; }
 
-    /* Zgłoszone: "po otwarciu modala ustawień długo nic nie robi" — modal
-       otwiera pusty iframe (game-settings2.html), który sam dopiero
-       ładuje moduł JS i przechodzi przez requireAuth()+kilka RPC blokad
-       zasobów, zanim cokolwiek narysuje (#gsContentInner ma
-       data-skel-step — celowo niewidoczne do tego momentu). Bez żadnej
-       wskazówki operator widział ciemny, pusty prostokąt i nie wiedział,
-       czy modal w ogóle zadziałał. Spinner nad iframe'em, widoczny od
-       razu przy otwarciu, chowany dopiero gdy iframe faktycznie odeśle
-       "gs:ready" (game-settings.js, tuż po odsłonięciu skeletonu) — ten
-       sam komunikat co wyżej: "trwa coś", nie "nic się nie dzieje". */
-    @keyframes gsSpinner-spin { to { transform:rotate(360deg) } }
-    .gsSpinner {
-      position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
-      background:var(--surface, #111827); z-index:1; transition:opacity .2s ease;
-    }
-    .gsSpinner.hidden { opacity:0; pointer-events:none; }
-    .gsSpinner::after {
-      content:""; width:40px; height:40px; border-radius:50%;
-      border:3px solid rgba(255,234,166,.25); border-top-color:var(--gold);
-      animation:gsSpinner-spin .8s linear infinite;
-    }
-
     /* ---- Wspólna siatka akcji rozgrywki — sześć rzędów na każdym ekranie,
        od pojedynku przez rundy i wpisywanie finału po mapowanie. Wewnętrznie
        6 kolumn, żeby zmieścić zarówno jednostki 1/3 (span 2) jak i 1/2
@@ -562,36 +540,6 @@
     </div>
   </header>
 
-  <div class="helpOverlay hidden" id="helpOverlay">
-    <div class="helpModal" role="dialog" aria-modal="true">
-      <div class="helpModalToolbar">
-        <button class="btn btn-sm" id="btnLegal" type="button" data-i18n="manual.legal" data-i18n-icon-after="shield">Polityka prywatności</button>
-        <button class="btn sm" id="btnHelpClose" type="button" aria-label="Zamknij" data-i18n-aria-label="common.modal.closeLabel" onclick="document.getElementById('helpOverlay').classList.add('hidden')"><i class="ico" data-icon="close"></i></button>
-      </div>
-      <iframe id="helpFrame" class="helpFrame" src="" title="Wskazówki"></iframe>
-    </div>
-  </div>
-
-  <div class="legalOverlay hidden" id="legalOverlay">
-    <div class="legalModal" role="dialog" aria-modal="true">
-      <div class="legalModalToolbar">
-        <button class="btn btn-sm" id="btnBackToManual" type="button" data-i18n="privacy.backToManual" data-i18n-icon="arrow-left">Wskazówki</button>
-        <button class="btn sm" id="btnLegalClose" type="button" aria-label="Zamknij" data-i18n-aria-label="common.modal.closeLabel" onclick="document.getElementById('legalOverlay').classList.add('hidden')"><i class="ico" data-icon="close"></i></button>
-      </div>
-      <iframe id="legalFrame" class="legalFrame" src="" title="Polityka prywatności"></iframe>
-    </div>
-  </div>
-
-  <!-- Ustawienia gry NIE są edytowalne w Control — wyłącznie w game-settings2
-       (kopia game-settings.js dedykowana dla tego modala, patrz jej nagłówek),
-       tu tylko otwierane w tym samym modalu co dziś (control.html's gsOverlay). -->
-  <div class="gsOverlay hidden" id="gsOverlay">
-    <div class="gsModal" role="dialog" aria-modal="true">
-      <iframe id="gsFrame" class="gsFrame" src="" title="Ustawienia gry"></iframe>
-      <div class="gsSpinner" id="gsSpinner" aria-hidden="true"></div>
-    </div>
-  </div>
-
   <!-- Modal QR urządzeń z top bara -->
   <div class="overlay hidden" id="qrModalOverlay">
     <div class="modal uni-modal" role="dialog" aria-modal="true" aria-labelledby="qrModalTitle">
@@ -672,6 +620,6 @@
       <button class="btn-contact-footer" type="button" data-contact-modal data-i18n="common.contactBtn">Kontakt</button>
     </div>
   </main>
-  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-09T22412"></script>
+  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-09T22502"></script>
 </body>
 </html>

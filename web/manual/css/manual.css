@@ -3,16 +3,6 @@
    Cel: brak „ramek jak w aplikacji", dużo czytelności jak w dokumentacji.
 */
 
-/* Hide topbar/footer when opened in modal (iframe) */
-html.modal-mode .topbar,
-html.modal-mode .footer {
-    display: none !important;
-    visibility: hidden !important;
-}
-html.modal-mode .wrap {
-    padding-top: 0 !important;
-}
-
 .manual-body {
     background: var(--bg);
     color: #fff
@@ -46,16 +36,14 @@ html.modal-mode .wrap {
     border-radius: 12px;
 }
 
-.simple-tabs,
-.modal-tabs {
+.simple-tabs {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
     gap: 10px;
     margin: 0 0 18px
 }
 
-.simple-tabs .tab,
-.modal-tabs .tab {
+.simple-tabs .tab {
     padding: 10px 16px;
     border-radius: 999px;
     border: 1px solid var(--line);
@@ -82,8 +70,7 @@ html.modal-mode .wrap {
     transform: translateY(1px)
 }
 
-.simple-tabs .tab.active,
-.modal-tabs .tab.active {
+.simple-tabs .tab.active {
     background: var(--gold);
     color: #000;
     border-color: var(--gold)
@@ -275,23 +262,12 @@ html.modal-mode .wrap {
       display: block;
    }
 
-   .simple-tabs,
-   .modal-tabs {
+   .simple-tabs {
       display: flex;
       flex-wrap: wrap;
    }
 }
 
-
-body.manual-in-control-modal .topbar-section-1{ gap:10px; }
-body.manual-in-control-modal .topbar-section-4{ margin-left:auto; }
-body.manual-in-control-modal .wrap{ width: min(1200px, 96vw); }
-
-html.manual-in-control-modal, body.manual-in-control-modal { height: 100%; }
-body.manual-in-control-modal { background: var(--bg); }
-body.manual-in-control-modal .topbar-close-slot{ display:block; }
-body.manual-in-control-modal .topbar { position: sticky; top: 0; z-index: 5; }
-body.manual-in-control-modal .m-wrap { padding-bottom: 16px; }
 
 /* Literal controls in instructions use the same badge and application icon set. */
 .m-code{display:inline-flex;align-items:center;gap:5px;vertical-align:baseline;line-height:1.45}

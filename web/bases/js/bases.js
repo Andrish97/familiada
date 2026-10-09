@@ -1,24 +1,24 @@
 // js/pages/bases.js
 // Lista baz pytań (warstwa 1) – styl i ergonomia jak strona gier (games).
 
-import { addRenameGesture } from "../../shared/js/core/rename-gesture.js?v=v2026-10-09T22412";
+import { addRenameGesture } from "../../shared/js/core/rename-gesture.js?v=v2026-10-09T22502";
 
-import { sb, SUPABASE_URL } from "../../shared/js/core/supabase.js?v=v2026-10-09T22412";
-import { ROW_GONE } from "../../shared/js/core/db-guard.js?v=v2026-10-09T22412";
-import { acquireResourceLock, getTabId } from "../../shared/js/core/resource-lock.js?v=v2026-10-09T22412";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-09T22412";
-import { isGuestUser, hideForGuest } from "../../shared/js/core/guest-mode.js?v=v2026-10-09T22412";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-09T22412";
-import { getUiLang, initI18n, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-09T22412";
-import { linkTo } from "../../shared/js/core/nav-map.js?v=v2026-10-09T22412";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-09T22412";
-import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-09T22412";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-09T22412";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-09T22412";
-import { createCooldownTicker, formatCooldownRemaining } from "../../shared/js/core/cooldown.js?v=v2026-10-09T22412";
-import { renderShareSections } from "../../shared/js/core/share-sections.js?v=v2026-10-09T22412";
-import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-09T22412";
-import { SORT_LIST } from "../../shared/js/core/list-filter.js?v=v2026-10-09T22412";
+import { sb, SUPABASE_URL } from "../../shared/js/core/supabase.js?v=v2026-10-09T22502";
+import { ROW_GONE } from "../../shared/js/core/db-guard.js?v=v2026-10-09T22502";
+import { acquireResourceLock, getTabId } from "../../shared/js/core/resource-lock.js?v=v2026-10-09T22502";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-09T22502";
+import { isGuestUser, hideForGuest } from "../../shared/js/core/guest-mode.js?v=v2026-10-09T22502";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-09T22502";
+import { getUiLang, initI18n, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-09T22502";
+import { linkTo } from "../../shared/js/core/nav-map.js?v=v2026-10-09T22502";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-09T22502";
+import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-09T22502";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-09T22502";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-09T22502";
+import { createCooldownTicker, formatCooldownRemaining } from "../../shared/js/core/cooldown.js?v=v2026-10-09T22502";
+import { renderShareSections } from "../../shared/js/core/share-sections.js?v=v2026-10-09T22502";
+import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-09T22502";
+import { SORT_LIST } from "../../shared/js/core/list-filter.js?v=v2026-10-09T22502";
 const i18nReady = initI18n({ withSwitcher: true });
 i18nReady.then(() => {
   document.documentElement.classList.remove('page-loading');

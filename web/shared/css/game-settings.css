@@ -85,7 +85,7 @@
   padding: 24px 28px;
 }
 
-/* ===== PASEK AKCJI (Zapisz / Przywróć) ===== */
+/* ===== PASEK AKCJI (Przywróć + komunikat zapisu) ===== */
 .gs-actionbar {
   --under: #14171d; /* podłoże dla kryjących teł przycisków (css/base.css) */
   grid-column: 1 / -1;
@@ -820,115 +820,6 @@
   border-color:#2c3038;
   background:#1f222a;
   cursor:default;
-}
-
-/* ===== MANUAL / LEGAL OVERLAYS ===== */
-.helpOverlay{
-  position: fixed; inset: 0; z-index: 9999;
-  background: var(--scrim);
-  display: grid; place-items: center; padding: 4vh 4vw;
-}
-.helpOverlay.hidden{ display:none; }
-.helpModal{
-  position: relative;
-  width: min(1280px, 80vw); height: min(860px, 80vh);
-  border-radius: 16px; overflow: hidden;
-  border: 1px solid rgba(255,255,255,.18);
-  background: #0f1728;
-  box-shadow: 0 20px 60px rgba(0,0,0,.55);
-  display: flex; flex-direction: column;
-}
-.helpModalToolbar{
-  display: flex; align-items: center; justify-content: space-between;
-  gap: 8px; padding: 10px 14px;
-  background: rgba(255,234,166,.08);
-  border-bottom: 1px solid rgba(255,255,255,.1);
-}
-.helpFrame{ width:100%; flex:1; border:0; display:block; background:var(--bg,#0a1020); }
-
-.legalOverlay{
-  position: fixed; inset: 0; z-index: 10000;
-  background: var(--scrim);
-  display: grid; place-items: center; padding: 4vh 4vw;
-}
-.legalOverlay.hidden{ display:none; }
-.legalModal{
-  position: relative;
-  width: min(1280px, 80vw); height: min(860px, 80vh);
-  border-radius: 16px; overflow: hidden;
-  border: 1px solid rgba(255,255,255,.18);
-  background: #0f1728;
-  box-shadow: 0 20px 60px rgba(0,0,0,.55);
-  display: flex; flex-direction: column;
-}
-.legalModalToolbar{
-  display: flex; align-items: center; justify-content: space-between;
-  gap: 8px; padding: 10px 14px;
-  background: rgba(255,234,166,.08);
-  border-bottom: 1px solid rgba(255,255,255,.1);
-}
-.legalFrame{ width:100%; flex:1; border:0; display:block; background:var(--bg,#0a1020); }
-
-/* ===== MODAL MODE (iframe z control-new) ===== */
-/* Klasa dodawana na <html> przez inline script przed renderem body */
-.gs-modal-mode body,
-.gs-modal-mode .gs-body {
-    padding-top: 0 !important;
-}
-.gs-modal-mode .topbar,
-.gs-modal-mode .gs-page-footer {
-    display: none !important;
-}
-
-/* Sidebar: ukryta, pojawia się jako drawer po kliknięciu ☰ */
-.gs-modal-mode .gs-layout {
-    grid-template-columns: 1fr;
-}
-.gs-modal-mode .gs-sidebar {
-    display: none;
-    position: absolute;
-    top: 0;
-    left: 0;
-    bottom: 0;
-    z-index: 50;
-    width: 210px;
-    background: var(--surface, #111827);
-    border-right: 1px solid var(--line);
-    box-shadow: 4px 0 20px rgba(0,0,0,.4);
-}
-.gs-modal-mode .gs-sidebar.gs-sidebar-open {
-    display: flex;
-}
-/* Backdrop żeby klik poza drawerem go zamknął */
-.gs-modal-mode .gs-sidebar-backdrop {
-    display: none;
-    position: absolute;
-    inset: 0;
-    z-index: 49;
-}
-.gs-modal-mode .gs-sidebar-backdrop.gs-sidebar-open {
-    display: block;
-}
-
-/* Przycisk toggle sidebar — widoczny tylko w modal mode */
-.gs-sidebar-toggle {
-    display: none;
-}
-.gs-modal-mode .gs-sidebar-toggle {
-    display: inline-flex !important;
-}
-
-/* Przycisk zamknij modal — widoczny tylko w modal mode */
-.gs-close-btn {
-    display: none;
-}
-.gs-modal-mode .gs-close-btn {
-    display: inline-flex !important;
-}
-
-/* Layout wymaga position:relative na gs-layout żeby absolute działało */
-.gs-modal-mode .gs-layout {
-    position: relative;
 }
 
 /* Ikony z silnika (js/core/icons.js) */

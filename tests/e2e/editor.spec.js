@@ -423,6 +423,29 @@ test("edytor: nowa odpowiedź zajmuje zwolniony numer (ord) po usunięciu ze śr
   }
 });
 
+/* ================= ?q=: otwarte pytanie w adresie ================= */
+test("edytor: otwarte pytanie jest w adresie (?q=) i wejście z ?q= otwiera to pytanie", async ({ page, context }) => {
+  test.setTimeout(60_000);
+  await loginAsTestUser(page, context);
+
+  const gameId = await createGame(page, { type: "prepared" });
+  try {
+    await addQuestionApi(page, gameId, 1, "Q1");
+    const q2Id = await addQuestionApi(page, gameId, 2, "Q2");
+
+    await openEditor(page, gameId);
+    await expect(page.locator("#qList .qcard:not(.addTile)")).toHaveCount(2, { timeout: 15000 });
+    await qCard(page, 1).click();
+    await expect(page.locator("#qText")).toHaveValue("Q2", { timeout: 10000 });
+    await expect(page).toHaveURL(new RegExp(`[?&]q=${q2Id}`));
+
+    await page.goto(`https://www.familiada.online/games/editor?id=${gameId}&q=${q2Id}`, { waitUntil: "domcontentloaded" });
+    await expect(page.locator("#qText")).toHaveValue("Q2", { timeout: 15000 });
+  } finally {
+    await deleteGame(page, gameId);
+  }
+});
+
 /* ================= K: usunięcie pytania ze środka przenumerowuje resztę ================= */
 test("edytor: usunięcie pytania ze środka przenumerowuje resztę, aktywne pytanie zachowuje treść i odpowiedzi", async ({ page, context }) => {
   test.setTimeout(60_000);
