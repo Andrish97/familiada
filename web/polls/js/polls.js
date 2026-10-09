@@ -6,22 +6,22 @@
 //   B. Karty Udostępnianie · Wyniki. Wyniki są jedne dla wszystkich stanów:
 //      na żywo, zatrzymane (surowe), podliczanie (poll-tally.js), ostateczne.
 // Stany gry: draft -> poll_open <-> poll_stopped -> ready (migracja 315).
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T17374";
-import { requireAuth } from "../../shared/js/core/auth.js?v=v2026-10-09T17374";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-09T17374";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T17412";
+import { requireAuth } from "../../shared/js/core/auth.js?v=v2026-10-09T17412";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-09T17412";
 import QRCode from "https://cdn.jsdelivr.net/npm/qrcode@1.5.3/+esm";
-import { initI18n, t, withLangParam, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-09T17374";
-import { linkTo, backHref, renderBackLabel } from "../../shared/js/core/nav-map.js?v=v2026-10-09T17374";
-import { initTopbarAccountDropdown } from "../../shared/js/core/topbar-controller.js?v=v2026-10-09T17374";
-import { guardResourceLock } from "../../shared/js/core/resource-lock.js?v=v2026-10-09T17374";
-import { validateGame, gameRuleErrorMessage, guardGameState } from "../../shared/js/core/game-validate.js?v=v2026-10-09T17374";
-import { mailCooldownCheck } from "../../shared/js/core/cooldown.js?v=v2026-10-09T17374";
-import { sendPollInviteMails } from "../../shared/js/core/poll-mail.js?v=v2026-10-09T17374";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-09T17374";
-import { createPollResults } from "../../shared/js/core/poll-results.js?v=v2026-10-09T17374";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-09T17374";
-import { toast, hideToast } from "../../shared/js/core/toast.js?v=v2026-10-09T17374";
-import { createTally } from "./poll-tally.js?v=v2026-10-09T17374";
+import { initI18n, t, withLangParam, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-09T17412";
+import { linkTo, backHref, renderBackLabel } from "../../shared/js/core/nav-map.js?v=v2026-10-09T17412";
+import { initTopbarAccountDropdown } from "../../shared/js/core/topbar-controller.js?v=v2026-10-09T17412";
+import { guardResourceLock } from "../../shared/js/core/resource-lock.js?v=v2026-10-09T17412";
+import { validateGame, gameRuleErrorMessage, guardGameState } from "../../shared/js/core/game-validate.js?v=v2026-10-09T17412";
+import { mailCooldownCheck } from "../../shared/js/core/cooldown.js?v=v2026-10-09T17412";
+import { sendPollInviteMails } from "../../shared/js/core/poll-mail.js?v=v2026-10-09T17412";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-09T17412";
+import { createPollResults } from "../../shared/js/core/poll-results.js?v=v2026-10-09T17412";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-09T17412";
+import { toast, hideToast } from "../../shared/js/core/toast.js?v=v2026-10-09T17412";
+import { createTally } from "./poll-tally.js?v=v2026-10-09T17412";
 
 // initI18n is called at the start of DOMContentLoaded (see below)
 

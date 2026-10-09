@@ -6,6 +6,8 @@ const uk = {
   },
   common: {
     searchByName: "Пошук…",
+    filterAll: "Усі",
+    noResults: "Немає результатів.",
     genericError: "Сталася помилка.",
     manualLabel: "Підказки",
     contactBtn: "Контакт",
@@ -704,6 +706,12 @@ const uk = {
         questionTags: "Імпорт: зв'язки тегів…",
         categoryTags: "Імпорт: теги папок…",
       },
+    },
+    filter: {
+      label: "Фільтр за роллю",
+      owner: "Моя",
+      editor: "Редагування",
+      viewer: "Читання",
     },
     roles: {
       editorBadge: "РЕДАГ.",
@@ -2785,6 +2793,9 @@ const uk = {
       pollPoints: "БАЛИ",
       prepared: "ПІДГОТОВЛЕНЕ",
       market: "MARKETPLACE",
+    },
+    filter: {
+      label: "Фільтр за станом",
     },
     status: {
       draft: "ЧЕРНЕТКА",

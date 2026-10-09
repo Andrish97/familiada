@@ -943,3 +943,18 @@ body.games-body > main.wrap{
   .list-search{ width: auto; flex: 1 1 auto; }
   .list-search .searchText{ font-size: 16px; } /* 16 px: iOS nie przybliża */
 }
+
+/* filtr obok wyszukiwania (list-search.js) — jak sortowanie w Subskrypcjach */
+.games-bottom-left{ flex-wrap: wrap; }
+.list-filter.ui-select{ min-width: 150px; width: 150px; flex: 0 0 auto; }
+.list-filter .ui-select-btn{ min-height: 0; }
+@media (max-width: 600px){
+  .list-filter.ui-select{ flex: 1 1 0; width: auto; min-width: 0; }
+  .games-bottom-left .list-search{ flex: 1 1 100%; width: 100%; order: 3; }
+}
+.list-empty{
+  opacity: .55;
+  text-align: center;
+  padding: 16px 0;
+}
+.list-empty[hidden]{ display: none; }

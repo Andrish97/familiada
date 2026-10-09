@@ -167,6 +167,42 @@ test.describe("games: audyt -- kafelki", () => {
     }
   });
 
+  test("filtr stanu obok wyszukiwania ukrywa kafle o innym stanie, stan w adresie", async ({ page, context }) => {
+    test.setTimeout(90_000);
+    await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+    const stamp = Date.now();
+    const ready = `E2E-GM-FLT-R-${stamp}`;
+    const draft = `E2E-GM-FLT-D-${stamp}`;
+    try {
+      await page.evaluate(async ({ ready, draft }) => {
+        const sb = window.__sbClient;
+        const { data: u } = await sb.auth.getUser();
+        const { error } = await sb.from("games").insert([
+          { name: ready, owner_id: u.user.id, type: "prepared", status: "ready" },
+          { name: draft, owner_id: u.user.id, type: "prepared", status: "draft" },
+        ]);
+        if (error) throw new Error(error.message);
+      }, { ready, draft });
+      await openGames(page, "?status=ready");
+      await expect(tileByName(page, ready)).toBeVisible({ timeout: 15000 });
+      await expect(tileByName(page, draft)).toBeHidden();
+
+      // przełączenie na „Szkic” przez listę: adres się zmienia, kafle zamieniają się miejscami
+      await page.locator(".list-filter .ui-select-btn").click();
+      await page.locator(".list-filter .ui-select-menu [data-value='draft']").click();
+      await expect(page).toHaveURL(/status=draft/);
+      await expect(tileByName(page, draft)).toBeVisible();
+      await expect(tileByName(page, ready)).toBeHidden();
+
+      // filtr + szukanie bez trafień: komunikat
+      await page.locator(".list-search .searchText").fill(ready);
+      await expect(page.locator(".list-empty")).toBeVisible();
+    } finally {
+      await deleteGamesByName(page, ready);
+      await deleteGamesByName(page, draft);
+    }
+  });
+
   test("usunięcie gry skasowanej w międzyczasie nie pokazuje 'gra jest w użyciu'", async ({ page, context }) => {
     test.setTimeout(90_000);
     await loginAsTestUser(page, context, { username: testAccountUsername(1) });

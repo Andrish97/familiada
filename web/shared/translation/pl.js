@@ -6,6 +6,8 @@ const pl = {
   },
   common: {
     searchByName: "Szukaj…",
+    filterAll: "Wszystkie",
+    noResults: "Brak wyników.",
     genericError: "Wystąpił błąd.",
     manualLabel: "Wskazówki",
     contactBtn: "Kontakt",
@@ -717,6 +719,12 @@ const pl = {
         questionTags: "Import: powiązania tagów…",
         categoryTags: "Import: tagi folderów…",
       },
+    },
+    filter: {
+      label: "Filtruj wg roli",
+      owner: "Moja",
+      editor: "Edycja",
+      viewer: "Odczyt",
     },
     roles: {
       editorBadge: "EDYCJA",
@@ -2688,6 +2696,9 @@ const pl = {
       pollPoints: "PUNKTACJA",
       prepared: "PREPAROWANA",
       market: "GRY SPOŁECZNOŚCI",
+    },
+    filter: {
+      label: "Filtruj wg stanu",
     },
     status: {
       draft: "SZKIC",

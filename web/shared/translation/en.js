@@ -6,6 +6,8 @@ const en = {
   },
   common: {
     searchByName: "Search…",
+    filterAll: "All",
+    noResults: "No results.",
     genericError: "Something went wrong.",
     manualLabel: "Help",
     contactBtn: "Contact",
@@ -709,6 +711,12 @@ const en = {
         questionTags: "Import: question tags…",
         categoryTags: "Import: category tags…",
       },
+    },
+    filter: {
+      label: "Filter by role",
+      owner: "Mine",
+      editor: "Edit",
+      viewer: "Read-only",
     },
     roles: {
       editorBadge: "EDIT",
@@ -2793,6 +2801,9 @@ const en = {
       pollPoints: "POINTS",
       prepared: "PREPARED",
       market: "MARKETPLACE",
+    },
+    filter: {
+      label: "Filter by state",
     },
     status: {
       draft: "DRAFT",
