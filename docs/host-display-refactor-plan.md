@@ -86,20 +86,20 @@ To jest zakres i lista kontroli dla refaktoru.
   testu jest w `tests/preview/host-logo-source-screenshots.mjs`.
 - Uruchomienie lokalne: `node tests/preview/host-logo-source-screenshots.mjs`.
   Test używa wyłącznie lokalnego serwera i losowego portu; nie łączy się z
-  bazą ani nie zmienia danych. Test produkcyjny jest osobnym krokiem po
-  wdrożeniu Pages: przed startem trzeba sprawdzić, czy nikt inny nie używa
+  bazą ani nie zmienia danych. Test produkcyjny jest osobnym krokiem przed
+  wdrożeniem Pages; przed startem trzeba sprawdzić, czy nikt inny nie używa
   wybranego konta, gry i urządzeń.
-- Pełny przebieg edytora DRAW jest w `tests/e2e/host-logo-draw.spec.js`.
-  Otwiera kod strony z bieżącego brancha, loguje konta `test9` i `test10`,
-  rysuje przez scenę Fabric edytora, czeka na autozapis, pobiera zapisany
-  wiersz i ogląda go równocześnie w prawdziwych podglądach Host/Display.
-  Test usuwa po sobie wyłącznie utworzone logo. Używa dwóch osobnych kont,
-  więc oba przypadki można uruchomić równolegle (`--workers=2`). Przed
-  uruchomieniem sprawdź, czy inny test lub operator nie korzysta już z tych
-  kont; nie uruchamiaj równoległego przebiegu na tym samym koncie.
-- Test nie zmienia schematu bazy ani ustawień gry. Jedyny zapis to chwilowe
-  logo testowe w `user_logos`, usuwane w `finally`; wdrożenie aplikacji
-  następuje przez Pages po przejściu testów.
+- Pełny przebieg edytora DRAW z zapisem do produkcyjnego `user_logos` nie jest
+  obecnie uruchamiany: pula E2E wyklucza konta `test9` i `test10`, a nie
+  wskazano innych kont do użycia. Nie loguj testu na inne konto ani nie
+  zapisuj testowego logo w bazie bez przydzielenia konta. Po przydzieleniu
+  konta trzeba dodać przebieg: otworzyć edytor z bieżącego brancha, narysować
+  warstwy Fabric, poczekać na autosave, odczytać zapisany payload i wyrenderować
+  go równocześnie na Host/Display; po teście usunąć wyłącznie utworzone logo.
+- Dotychczasowy test lokalny nie łączy się z bazą: odtwarza payload DRAW w
+  prawdziwym rendererze Host/Display i sprawdza piksele warstw. Przed
+  wdrożeniem Pages pozostaje wykonać przebieg zapisu/odczytu w edytorze na
+  przydzielonym koncie. Nie zmieniać schematu bazy ani ustawień gry.
 
 ## Narzędzia testowe logo
 
