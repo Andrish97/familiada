@@ -36,7 +36,8 @@ Stan faktyczny sprawdzony w kodzie 2026-10-07 (opis niżej, sekcja 4).
   - **Podlicz głosy** = osobny krok na zatrzymanej ankiecie: ankieta
     tekstowa — scalanie/poprawianie odpowiedzi (Cofnij/Ponów, poprawki
     zapisywane w bazie, można wyjść i wrócić) i „Zatwierdź”; ankieta
-    punktowa — podliczenie bez poprawiania. Po podliczeniu gra **GOTOWA**.
+    punktowa — podliczenie bez poprawiania. Po podliczeniu gra **GOTOWA**
+    = można grać (Graj aktywne; pytania mają punkty z głosów).
   - **Przerwij** zostaje (cofa do szkicu i kasuje głosy) — różni się od
     Zatrzymaj tym, że głosy znikają.
   - **Wznów głosowanie** — na zatrzymanej, jeszcze niepodliczonej ankiecie:
