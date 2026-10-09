@@ -13,16 +13,16 @@
 //
 // Moduł zmienia tylko DOM wyników przekazanych przez pollResults.slots();
 // stan ankiety, przyciski i potwierdzenia zostają w polls.js.
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T21300";
-import { t } from "../../shared/translation/translation.js?v=v2026-10-09T21300";
-import { icon } from "../../shared/js/core/icons.js?v=v2026-10-09T21300";
-import { makeResultRow } from "../../shared/js/core/poll-results.js?v=v2026-10-09T21300";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T21322";
+import { t } from "../../shared/translation/translation.js?v=v2026-10-09T21322";
+import { icon } from "../../shared/js/core/icons.js?v=v2026-10-09T21322";
+import { makeResultRow } from "../../shared/js/core/poll-results.js?v=v2026-10-09T21322";
 import {
   pointsPollPreview,
   textTallyPoints,
   ANSWERS_MIN,
   TEXT_MAX_LEN,
-} from "../../shared/js/core/poll-tally-math.js?v=v2026-10-09T21300";
+} from "../../shared/js/core/poll-tally-math.js?v=v2026-10-09T21322";
 
 const SAVE_DEBOUNCE_MS = 900;
 const UNDO_LIMIT = 100;
