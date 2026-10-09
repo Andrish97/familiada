@@ -117,9 +117,9 @@ test("logo Hosta: zapis w Ustawieniach rozgrywki i podgląd zapisanego wariantu 
     await page.getByLabel("Nie używaj tabletu prowadzącego").check();
     await page.getByRole("button", { name: "Dalej", exact: true }).click();
     await expect(page.locator(".stepTitle")).toHaveText("Podsumowanie", { timeout: 15_000 });
-    await expect(page.locator("#c2-summary-display")).toContainText("Źródło");
-    await expect(page.locator("#c2-summary-display")).toContainText("Nowoczesny");
-    await expect(page.locator("#c2-summary-display .summaryDisplayInfo .summaryDisplayRow:first-child > span:last-child span").nth(3)).toHaveCSS("background-color", "rgb(51, 170, 255)");
+    await expect(page.locator(".c2-summary-display")).toContainText("Źródło");
+    await expect(page.locator(".c2-summary-display")).toContainText("Nowoczesny");
+    await expect(page.locator(".c2-summary-display .summaryDisplayInfo .summaryDisplayRow:first-child > span:last-child span").nth(3)).toHaveCSS("background-color", "rgb(51, 170, 255)");
     await expect(page.locator("#c2DisplayPreview iframe")).toBeVisible();
     await expect(page.locator("#c2HostPreview iframe")).toBeVisible();
     const controlHost = page.frameLocator("#c2HostPreview iframe");
