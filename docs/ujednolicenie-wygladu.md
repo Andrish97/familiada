@@ -354,3 +354,23 @@ wszyscy subskrybenci (także bez konta); bazy i urządzenia — mail / nazwa
      **zmiana do zrobienia w E19**: odbiorca bez konta zapisany po e-mailu
      (nowa kolumna / RPC, migracja dodająca), widoczny w wierszach z kanałem
      „mail”, z możliwością cofnięcia; odbiorca z kontem jak dziś.
+
+### Znajomi i subskrybenci — propozycja użytkownika 2026-10-09 (czeka na 2 odpowiedzi)
+
+- **Znajomi** = relacja **dwustronna między kontami**: zaproszenie → akceptacja
+  → obie strony mogą sobie nawzajem wysyłać ankiety, bazy i urządzenia.
+- **Subskrybenci** = **tylko osoby bez konta** (sam e-mail), którym wysyłasz
+  ankiety (jednostronnie).
+- Jedno pole „+ Zaproś”: e-mail/nazwa z kontem → zaproszenie do znajomych;
+  e-mail bez konta → zaproszenie subskrybenta.
+- Karty Subskrypcji: **Znajomi** (Zaproszenia do mnie · Wysłane · Znajomi) ·
+  **Subskrybenci** (Oczekujący · Aktywni) · **Zadania**.
+- Udostępnianie: ankiety → znajomi + subskrybenci; bazy → znajomi + e-mail
+  konta; urządzenia → znajomi + dowolny e-mail.
+- Baza: dziś `poll_subscriptions` (jednostronne, `subscriber_user_id` albo
+  `subscriber_email`). Znajomi jako osobna relacja (migracja dodająca), stare
+  aktywne subskrypcje kont → znajomi (pyt. 1).
+
+Pytania: (1) istniejące aktywne subskrypcje między kontami — zamienić
+automatycznie na znajomych? (2) subskrybent bez konta, który założy konto na
+ten sam e-mail — zostaje subskrybentem czy automatycznie staje się znajomym?
