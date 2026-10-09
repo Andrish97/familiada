@@ -1,4 +1,6 @@
 const { test, expect } = require("./helpers/production-test");
+const fs = require("node:fs/promises");
+const path = require("node:path");
 const { loginAsTestUser } = require("./helpers/login");
 const { serveBranchCode } = require("./helpers/branch-code");
 const L = require("./helpers/logo-editor");
@@ -33,7 +35,11 @@ test("DRAW: każda figura i nakładanie warstw — Canvas Fabric kontra przezroc
     const cases = await page.evaluate(makeShapeSource(), { width, height });
     expect(cases.length).toBeGreaterThan(35);
     expect(cases.every(item => !item.logo.payload.source.hostRasterUrl && !item.logo.payload.source.hostRasterData)).toBe(true);
-    await testInfo.attach("draw-fabric-editor-layered-scene.png", { body: await page.locator("#drawStage").screenshot(), contentType: "image/png" });
+    const fabricScreenshot = await page.locator("#drawStage").screenshot();
+    const fabricShotPath = testInfo.outputPath("shot-draw-fabric-editor-layered.png");
+    await fs.mkdir(path.dirname(fabricShotPath), { recursive: true });
+    await fs.writeFile(fabricShotPath, fabricScreenshot);
+    await testInfo.attach("draw-fabric-editor-layered-scene.png", { body: fabricScreenshot, contentType: "image/png" });
 
     // Persist the final layered scene as a legacy row without a PNG, then
     // leave the editor and exercise the real Host source renderer.
@@ -54,10 +60,18 @@ test("DRAW: każda figura i nakładanie warstw — Canvas Fabric kontra przezroc
     await page.goto(`${ORIGIN}/__host_svg_fabric_audit`, { waitUntil: "domcontentloaded" });
     await page.waitForFunction(() => window.ready, null, { timeout: 25_000 });
     await page.evaluate(items => window.addItems(items), cases);
-    await testInfo.attach("draw-fabric-vs-host-svg-overlay.png", { body: await page.screenshot({ fullPage: true, animations: "disabled" }), contentType: "image/png" });
-    const details = await page.locator(".stats").allTextContents();
-    await testInfo.attach("draw-fabric-vs-host-svg-metrics.txt", { body: details.join("\n"), contentType: "text/plain" });
-    const worstDiff = Math.max(...details.map(text => Number(text.match(/\((\d+\.\d+)%\)/)?.[1] || 0)));
+    const comparisonScreenshot = await page.screenshot({ fullPage: true, animations: "disabled" });
+    const comparisonShotPath = testInfo.outputPath("shot-draw-fabric-vs-host-svg.png");
+    await fs.mkdir(path.dirname(comparisonShotPath), { recursive: true });
+    await fs.writeFile(comparisonShotPath, comparisonScreenshot);
+    await testInfo.attach("draw-fabric-vs-host-svg-overlay.png", { body: comparisonScreenshot, contentType: "image/png" });
+    const details = await page.locator(".card").evaluateAll(cards => cards.map(card => ({
+      name: card.querySelector(".title")?.textContent || "",
+      metrics: card.querySelector(".stats")?.textContent || "",
+    })));
+    console.log("DRAW Fabric/Host SVG comparison:", JSON.stringify(details));
+    await testInfo.attach("draw-fabric-vs-host-svg-metrics.json", { body: JSON.stringify(details, null, 2), contentType: "application/json" });
+    const worstDiff = Math.max(...details.map(({ metrics }) => Number(metrics.match(/\((\d+\.\d+)%\)/)?.[1] || 0)));
     expect(worstDiff, `Największa różnica alpha: ${worstDiff}%`).toBeLessThan(8);
   } finally {
     if (logoId) await page.evaluate(async id => {
