@@ -84,6 +84,8 @@ test("logo Hosta: zapis w Ustawieniach rozgrywki i podgląd zapisanego wariantu 
     await expect(hostPreview.locator("#cover2")).toHaveClass(/coverOn/);
     await expect(hostPreview.locator("#cover2Logo canvas")).toBeVisible();
     await expect.poll(() => hostPreview.locator("#cover2Logo").evaluate(el => el.childElementCount)).toBeGreaterThan(0);
+    const settingsDisplay = page.frameLocator("#gsDisplayPreview");
+    await expect.poll(() => settingsDisplay.locator("#displays").evaluate(el => el.innerHTML.length)).toBeGreaterThan(0);
     await page.locator("#gsLivePreviewWrap").screenshot({ path: testInfo.outputPath("shot-host-logo-game-settings.png") });
 
     const save = page.locator("#btnSaveAll");
@@ -125,6 +127,8 @@ test("logo Hosta: zapis w Ustawieniach rozgrywki i podgląd zapisanego wariantu 
     await expect(page.locator(".c2-summary-display .summaryDisplayInfo .summaryDisplayRow:first-child > span:last-child span").nth(3)).toHaveCSS("background-color", "rgb(51, 170, 255)");
     await expect(page.locator("#c2DisplayPreview iframe")).toBeVisible();
     await expect(page.locator("#c2HostPreview iframe")).toBeVisible();
+    const controlDisplay = page.frameLocator("#c2DisplayPreview iframe");
+    await expect.poll(() => controlDisplay.locator("#displays").evaluate(el => el.innerHTML.length)).toBeGreaterThan(0);
     const controlHost = page.frameLocator("#c2HostPreview iframe");
     await expect(controlHost.locator("#cover2Logo")).toBeVisible({ timeout: 15_000 });
     await expect.poll(() => controlHost.locator("html").evaluate(el => getComputedStyle(el).getPropertyValue("--host-cover-accent").trim().toLowerCase())).toBe("#33aaff");
