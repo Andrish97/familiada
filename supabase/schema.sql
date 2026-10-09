@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict zqbOSyksB3kafNAWF7m7ZNxmTY30g6fQgd9SZxOFgfwvpggJlvOq6O7JKEGeurj
+\restrict wgdddLxvBiBrZvxyCrxgn9cdl74VIxzeXoryXe4EeM5hveahzUTYw3hlmV6aMYI
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -211,6 +211,20 @@ BEGIN
 
   RETURN v_token;
 END;
+$$;
+
+
+--
+-- Name: _logo_host_raster_path("jsonb", "uuid"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."_logo_host_raster_path"("p_payload" "jsonb", "p_user" "uuid") RETURNS "text"
+    LANGUAGE "sql" IMMUTABLE
+    AS $$
+  select case when p like (p_user::text || '/%') then p end
+  from (
+    select split_part(split_part(coalesce(p_payload #>> '{source,hostRasterUrl}', ''), '/user-logos/', 2), '?', 1) as p
+  ) x
 $$;
 
 
@@ -702,13 +716,15 @@ CREATE FUNCTION "public"."_storage_cleanup_on_logo_delete"() RETURNS "trigger"
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public'
     AS $$
-declare
-  v_path text := public._logo_image_path(old.payload, old.user_id);
 begin
-  if v_path is not null then
-    insert into public.storage_cleanup_queue(bucket, path, is_folder, owner_kind, owner_id)
-    values ('user-logos', v_path, false, 'logo', old.id);
-  end if;
+  insert into public.storage_cleanup_queue(bucket, path, is_folder, owner_kind, owner_id)
+  select 'user-logos', p.path, false, 'logo', old.id
+  from (values
+    (public._logo_image_path(old.payload, old.user_id)),
+    (public._logo_host_raster_path(old.payload, old.user_id))
+  ) as p(path)
+  where p.path is not null
+  on conflict do nothing;
   return old;
 end;
 $$;
@@ -12438,7 +12454,8 @@ begin
      or (q.owner_kind = 'logo' and exists (
            select 1 from public.user_logos l
            where l.id = q.owner_id
-              or public._logo_image_path(l.payload, l.user_id) = q.path));
+              or public._logo_image_path(l.payload, l.user_id) = q.path
+              or public._logo_host_raster_path(l.payload, l.user_id) = q.path));
 
   return query
   update public.storage_cleanup_queue q
@@ -18035,5 +18052,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict zqbOSyksB3kafNAWF7m7ZNxmTY30g6fQgd9SZxOFgfwvpggJlvOq6O7JKEGeurj
+\unrestrict wgdddLxvBiBrZvxyCrxgn9cdl74VIxzeXoryXe4EeM5hveahzUTYw3hlmV6aMYI
 
