@@ -47,6 +47,16 @@ Stan faktyczny sprawdzony w kodzie 2026-10-07 (opis niżej, sekcja 4).
     „Wznów głosowanie” ten sam link znów działa. **Po podliczeniu linki
     i zaproszenia wygasają** (klucz unieważniony) — głosujący widzi
     „Ankieta zakończona”. Nowe uruchomienie = nowy klucz (jak dotąd).
+  - **Akcje i karty wg stanu (2026-10-09):**
+
+    | Stan | Akcje na pasku | Udostępnianie | Wyniki |
+    |---|---|---|---|
+    | SZKIC (nieuruchomiona) | Uruchom | nieaktywna | pusta zachęta do uruchomienia |
+    | OTWARTA | Zatrzymaj, Przerwij | aktywna | na żywo |
+    | ZATRZYMANA | Wznów głosowanie, Podlicz głosy, Przerwij | aktywna (link ważny) | surowe; podliczanie |
+    | GOTOWA (podliczona) | Uruchom ponownie | nieaktywna | ostateczne |
+
+    „Uruchom ponownie” tylko po podliczeniu (nowy klucz, głosy od zera).
   - **Karty tylko dwie: Udostępnianie · Wyniki.** Wyniki są uniwersalne:
     na żywo (otwarta), surowe (zatrzymana), w trybie podliczania (ankieta
     tekstowa), ostateczne (gotowa). Wszystkie akcje na pasku stanu:
