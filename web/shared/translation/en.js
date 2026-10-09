@@ -3988,6 +3988,7 @@ const en = {
       title: "Import logo",
       confirm: "Import",
       steps: {
+        uploadImage: "Uploading image to storage…",
         saveDb: "Saving to database…",
       },
     },

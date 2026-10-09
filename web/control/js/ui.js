@@ -16,14 +16,14 @@
 // setStealMsg/setRevealMsg/ROUNDS_MSG/FINAL_MSG, ale jako czysta funkcja
 // bieżącego game_state (web/js/gameplay/hints.js), nie ulotny stan ustawiany przy
 // każdym zdarzeniu — "wszystko idzie przez tabelę stanów".
-import { getRoundsHint, getFinalHint, getFinalEntryShortcuts, teamName } from "../../shared/js/gameplay/hints.js?v=v2026-10-09T01243";
-import { t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-09T01243";
-import { getSfxCategories, getSfxVariant, isSfxPlaying, playSfx, stopSfx, onSfxEnd, setSfxVolume } from "../../shared/js/core/sfx.js?v=v2026-10-09T01243";
-import { buildDisplayPreviewRow } from "../../shared/js/gameplay/previewRow.js?v=v2026-10-09T01243";
-import { DEFAULT_SETTINGS } from "../../shared/js/gameplay/gameStateShape.js?v=v2026-10-09T01243";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-09T01243";
+import { getRoundsHint, getFinalHint, getFinalEntryShortcuts, teamName } from "../../shared/js/gameplay/hints.js?v=v2026-10-09T02075";
+import { t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-09T02075";
+import { getSfxCategories, getSfxVariant, isSfxPlaying, playSfx, stopSfx, onSfxEnd, setSfxVolume } from "../../shared/js/core/sfx.js?v=v2026-10-09T02075";
+import { buildDisplayPreviewRow } from "../../shared/js/gameplay/previewRow.js?v=v2026-10-09T02075";
+import { DEFAULT_SETTINGS } from "../../shared/js/gameplay/gameStateShape.js?v=v2026-10-09T02075";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-09T02075";
 
-import { previewPendingRoundEndDestination } from "./engine.js?v=v2026-10-09T01243";
+import { previewPendingRoundEndDestination } from "./engine.js?v=v2026-10-09T02075";
 
 const $ = (id) => document.getElementById(id);
 const on = (el, ev, fn) => el && (el[`on${ev}`] = fn);
@@ -547,9 +547,8 @@ export function createUI({ root, emit }) {
       ].filter(Boolean)), "c2-summary-final-questions"));
     }
 
-    // Grupy informacji zajmują obie kolumny zamiast układać się w długą,
-    // wąską kolumnę. Podgląd Display zostaje po lewej; dźwięk i ustawienia
-    // gry po prawej, bez pustego pasa szerokiej karty.
+    // Sekcje ustawień układają się w dwóch kolumnach. Dźwięk dostaje cały
+    // wiersz, bo jego nazwy plików i sterowanie głośnością potrzebują miejsca.
     const displaySummarySection = sections.find((section) => section.classList.contains("c2-summary-display"));
     const isQuestionSection = (section) => section.classList.contains("c2-summary-rounds") || section.classList.contains("c2-summary-final-questions");
     const questionSummarySections = sections.filter(isQuestionSection);
@@ -588,6 +587,8 @@ export function createUI({ root, emit }) {
     if (advancedRows.length) {
       leftSummarySections.push(summarySection(t("control.summaryGame"), h("div", { class: "c2-advanced-settings" }, advancedRows), "c2-summary-advanced"));
     }
+    // Po dodaniu sekcji ustawień zaawansowanych (push do leftSummarySections).
+    const settingSummarySections = [...leftSummarySections, ...rightSummarySections];
 
     const finalIncomplete = hasFinal && (state.final.picked?.length !== 5 || !state.final.confirmed);
     // Zgłoszone: "Gotowe przejdź do rozgrywki ma inny styl niż pozostałe
@@ -627,10 +628,7 @@ export function createUI({ root, emit }) {
       // podsumowania, .stepFoot zawsze zostaje widoczny na dole karty.
       h("div", { class: "c2-scroll-area c2-summary-grid" }, [
         displaySummarySection,
-        h("div", { class: "c2-summary-columns" }, [
-          h("div", { class: "c2-summary-column" }, leftSummarySections),
-          h("div", { class: "c2-summary-column" }, rightSummarySections),
-        ]),
+        h("div", { class: "c2-summary-columns" }, settingSummarySections),
         h("div", { class: `c2-summary-question-grid${hasFinal ? " has-final" : ""}` }, questionSummarySections),
       ]),
       h("div", { class: "stepFoot" }, [

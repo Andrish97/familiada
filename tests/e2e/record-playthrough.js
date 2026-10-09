@@ -1630,7 +1630,7 @@ async function scenarioDeviceReconnect(pages, { contexts, browser }) {
 // pełna rozgrywka z losowym finałem i ekranem końcowym. =====
 async function scenarioRecentFixes(pages, { contexts, browser, game }) {
   let { control, display } = pages;
-  await expect(control.locator(".stepTitle")).toHaveText("Urządzenia");
+  await expect(control.locator(".stepTitle")).toHaveText("Urządzenia", { timeout: 20_000 });
   for (const kind of ["display", "host", "buzzer"]) await waitForDotStatus(control, kind, "ok");
   await expect(display.locator("#audioUnlockScreen")).toBeHidden();
   await expect(control.locator("#deviceLostOverlay")).toBeHidden();

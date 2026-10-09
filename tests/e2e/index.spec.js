@@ -133,7 +133,10 @@ test("klawiatura, focus, historia i mobilny viewport", async ({ page }) => {
   await page.locator('a[href*="marketplace"]').first().click();
   await expect(page).toHaveURL(/\/marketplace/);
   await page.goBack({ waitUntil: "domcontentloaded" });
-  await expect(page).toHaveURL(/^https:\/\/www\.familiada\.online\/(?:\?.*)?$/);
+  // Strona główna zapisuje bieżącą sekcję w adresie (home/js/index.js:
+  // pushState przy kliknięciu węzła rury, replaceState przy przewijaniu), więc
+  // powrót z /marketplace wraca na "/#section-about", nie na gołe "/".
+  await expect(page).toHaveURL(/^https:\/\/www\.familiada\.online\/(?:\?[^#]*)?(?:#section-[a-z-]+)?$/);
   await expect(page.locator(".hero-card h1")).toBeVisible();
 });
 

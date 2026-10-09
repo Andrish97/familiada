@@ -1,4 +1,4 @@
-import { createRenderCompletionGate } from "../../shared/js/gameplay/renderCompletion.js?v=v2026-10-09T01243";
+import { createRenderCompletionGate } from "../../shared/js/gameplay/renderCompletion.js?v=v2026-10-09T02075";
 // control/js/app.js
 // Punkt wejścia Control v2 — spina store/engine/devices/presence/
 // soundReactor/ui. Nawigacja przedmeczowa (devices_display →
@@ -7,20 +7,20 @@ import { createRenderCompletionGate } from "../../shared/js/gameplay/renderCompl
 // engine.js) — ale i tak przechodzi przez assertTransition(), żeby tabela
 // stanów była mechanizmem wszędzie, nie tylko wewnątrz silnika reguł gry.
 
-import { guardDesktopOnly } from "../../shared/js/core/device-guard.js?v=v2026-10-09T01243";
-import { guardResourceLocks } from "../../shared/js/core/resource-lock.js?v=v2026-10-09T01243";
-import { initI18n, getUiLang, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-09T01243";
-import { requireAuth } from "../../shared/js/core/auth.js?v=v2026-10-09T01243";
-import { setTopbarAccount } from "../../shared/js/core/topbar-controller.js?v=v2026-10-09T01243";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T01243";
-import { loadQuestions, loadAnswers, guardGameState } from "../../shared/js/core/game-validate.js?v=v2026-10-09T01243";
-import { loadSfxManifest, initSfx, setCurrentGameId, unlockAudio, applySfxGameSettings, loadSfxFromCloud, playSfx, getSfxDurationAccurate as getSfxDuration, listSfx, isAnySfxPlaying } from "../../shared/js/core/sfx.js?v=v2026-10-09T01243";
-import { listGameSounds } from "../../shared/js/core/sfx-cloud.js?v=v2026-10-09T01243";
-import { assertTransition } from "../../shared/js/gameplay/gameStateMachine.js?v=v2026-10-09T01243";
-import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-09T01243";
-import { DEFAULT_SETTINGS } from "../../shared/js/gameplay/gameStateShape.js?v=v2026-10-09T01243";
-import { rt } from "../../shared/js/core/realtime.js?v=v2026-10-09T01243";
-import { doorbellTopic } from "../../shared/js/core/game-state-doorbell.js?v=v2026-10-09T01243";
+import { guardDesktopOnly } from "../../shared/js/core/device-guard.js?v=v2026-10-09T02075";
+import { guardResourceLocks } from "../../shared/js/core/resource-lock.js?v=v2026-10-09T02075";
+import { initI18n, getUiLang, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-09T02075";
+import { requireAuth } from "../../shared/js/core/auth.js?v=v2026-10-09T02075";
+import { setTopbarAccount } from "../../shared/js/core/topbar-controller.js?v=v2026-10-09T02075";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T02075";
+import { loadQuestions, loadAnswers, guardGameState } from "../../shared/js/core/game-validate.js?v=v2026-10-09T02075";
+import { loadSfxManifest, initSfx, setCurrentGameId, unlockAudio, applySfxGameSettings, loadSfxFromCloud, playSfx, getSfxDurationAccurate as getSfxDuration, listSfx, isAnySfxPlaying } from "../../shared/js/core/sfx.js?v=v2026-10-09T02075";
+import { listGameSounds } from "../../shared/js/core/sfx-cloud.js?v=v2026-10-09T02075";
+import { assertTransition } from "../../shared/js/gameplay/gameStateMachine.js?v=v2026-10-09T02075";
+import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-09T02075";
+import { DEFAULT_SETTINGS } from "../../shared/js/gameplay/gameStateShape.js?v=v2026-10-09T02075";
+import { rt } from "../../shared/js/core/realtime.js?v=v2026-10-09T02075";
+import { doorbellTopic } from "../../shared/js/core/game-state-doorbell.js?v=v2026-10-09T02075";
 
 function qrImgSrc(url) {
   const u = encodeURIComponent(String(url ?? ""));
@@ -99,17 +99,17 @@ function applyGameSettingsToState(settings, state) {
   }
 }
 
-import { createStore } from "./store.js?v=v2026-10-09T01243";
-import { createEngine } from "./engine.js?v=v2026-10-09T01243";
-import { createActionGate } from "./actionGate.js?v=v2026-10-09T01243";
-import { createDevices } from "./devices.js?v=v2026-10-09T01243";
-import { createPresence } from "./presence.js?v=v2026-10-09T01243";
-import { missingDevices } from "./deviceGate.js?v=v2026-10-09T01243";
-import { createSessionTelemetry } from "./sessionTelemetry.js?v=v2026-10-09T01243";
-import { createSoundReactor } from "./soundReactor.js?v=v2026-10-09T01243";
-import { createUI } from "./ui.js?v=v2026-10-09T01243";
-import { createShareDevice } from "./shareDevice.js?v=v2026-10-09T01243";
-import { icon } from "../../shared/js/core/icons.js?v=v2026-10-09T01243";
+import { createStore } from "./store.js?v=v2026-10-09T02075";
+import { createEngine } from "./engine.js?v=v2026-10-09T02075";
+import { createActionGate } from "./actionGate.js?v=v2026-10-09T02075";
+import { createDevices } from "./devices.js?v=v2026-10-09T02075";
+import { createPresence } from "./presence.js?v=v2026-10-09T02075";
+import { missingDevices } from "./deviceGate.js?v=v2026-10-09T02075";
+import { createSessionTelemetry } from "./sessionTelemetry.js?v=v2026-10-09T02075";
+import { createSoundReactor } from "./soundReactor.js?v=v2026-10-09T02075";
+import { createUI } from "./ui.js?v=v2026-10-09T02075";
+import { createShareDevice } from "./shareDevice.js?v=v2026-10-09T02075";
+import { icon } from "../../shared/js/core/icons.js?v=v2026-10-09T02075";
 
 guardDesktopOnly();
 

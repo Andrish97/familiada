@@ -4,7 +4,7 @@
 // Lista budowana raz; potem tylko liczby i szerokości pasków (przejście CSS).
 // Punktacja: kolejność odpowiedzi z gry. Tekst: kolejność pojawienia się,
 // nowe na końcu. Sortowanie wg głosów dopiero przy zamykaniu.
-import { t } from "../../translation/translation.js?v=v2026-10-09T01243";
+import { t } from "../../translation/translation.js?v=v2026-10-09T02075";
 
 function resultsMode(status, type) {
   if (status === "draft") return "draft";
