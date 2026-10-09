@@ -282,6 +282,9 @@ async function leaveTo(text) {
 async function boot() {
   /* ---------- i18n + early body reveal ---------- */
   const i18nP = initI18n({ withSwitcher: true }); // auth startuje równolegle (initPage)
+  // flushSaves działa na strukturach tworzonych po wczytaniu gry; do tego czasu
+  // „Wstecz” / „Wskazówki” nie mają czego dopychać.
+  let flushHook = async () => {};
   const userP = initPage("editor", {
     ready: i18nP,
     // Etykietę „Wstecz” ustawia syncMobileEditingState (tryb edycji pytania).
@@ -292,11 +295,11 @@ async function boot() {
         leaveQuestionEditor();
         return;
       }
-      await flushSaves();
+      await flushHook();
       location.href = href;
     },
     onManual: async (href) => {
-      await flushSaves();
+      await flushHook();
       location.href = href;
     },
   });
@@ -812,6 +815,7 @@ async function boot() {
     saveQuestionDebounced.flush();
     await Promise.allSettled([...pendingSaves]);
   }
+  flushHook = flushSaves;
 
   /* ---------- import ---------- */
   const txtFile = $("txtFile");

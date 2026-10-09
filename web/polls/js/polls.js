@@ -926,6 +926,7 @@ function renderShareSection(st, link) {
 }
 
 async function refresh() {
+  if (!currentUser) return; // initPage jeszcze nie wpuścił (albo pokazał nakładkę gościa)
   const seq = ++refreshSeq;
   if (!gameId) {
     if (pollBar) pollBar.style.display = "none";

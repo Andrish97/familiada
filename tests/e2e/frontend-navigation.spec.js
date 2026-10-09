@@ -5,6 +5,7 @@ const { loginAsPooledTestUser } = require("./helpers/login");
 for (const path of ["/connect", "/connect/"]) {
   test(`anonim: powrót z ${path} ma strzałkę i prowadzi na stronę główną`, async ({ page }) => {
     await page.goto(path, { waitUntil: "networkidle" });
+    await expect(page.locator(".topbar.topbar-ready")).toBeAttached();
     const back = page.locator("#btnBack");
     await expect(back.locator("svg.ico-arrow-left")).toBeVisible();
     await back.click();
@@ -16,6 +17,7 @@ test("instrukcja: powrót zachowuje ścieżkę, parametry i fragment", async ({ 
   await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
   const target = "/connect/?lang=en#connect";
   await page.goto(`/manual/?lang=en&ret=${encodeURIComponent(target)}`, { waitUntil: "networkidle" });
+  await expect(page.locator(".topbar.topbar-ready")).toBeAttached();
   await page.locator("#btnBack").click();
   await expect.poll(() => new URL(page.url()).pathname).toBe("/connect/");
   expect(new URL(page.url()).searchParams.get("lang")).toBe("en");
@@ -28,12 +30,14 @@ test("zalogowany: Bazy → Subskrypcje → Bazy oraz powrót do gier", async ({ 
   await page.locator("#btnGoAlt").click();
   await expect.poll(() => new URL(page.url()).pathname).toBe("/subscriptions/");
   expect(new URL(page.url()).searchParams.get("ret")).toBe("/bases/");
-  // Adres zmienia się przed wykonaniem modułu strony — obsługa przycisku
-  // jest podpięta dopiero po DOMContentLoaded.
+  // Adres zmienia się przed wykonaniem modułu strony — „Wstecz” podpina
+  // initPage dopiero po auth (topbar-ready).
   await page.waitForLoadState("domcontentloaded");
+  await expect(page.locator(".topbar.topbar-ready")).toBeAttached();
   await page.locator("#btnBackToGames").click();
   await expect.poll(() => new URL(page.url()).pathname).toBe("/bases/");
   await page.waitForLoadState("domcontentloaded");
+  await expect(page.locator(".topbar.topbar-ready")).toBeAttached();
   await page.locator("#btnBack").click();
   await expect.poll(() => new URL(page.url()).pathname).toBe("/games/");
 });
@@ -41,6 +45,7 @@ test("zalogowany: Bazy → Subskrypcje → Bazy oraz powrót do gier", async ({ 
 test("zalogowany: subskrypcje wracają do gier bez doklejania folderu", async ({ page }, testInfo) => {
   await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
   await page.goto("/subscriptions/", { waitUntil: "networkidle" });
+  await expect(page.locator(".topbar.topbar-ready")).toBeAttached();
   await page.locator("#btnBackToGames").click();
   await expect.poll(() => new URL(page.url()).pathname).toBe("/games/");
 });
