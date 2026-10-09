@@ -164,14 +164,15 @@ pogrubiało ich dodatkowo. Domyślny napis FAMILIADA korzysta z tego samego
 silnika tekstowego co wariant TEXT; plik SVG pozostaje w repozytorium i nie
 jest już źródłem domyślnego logo Hosta.
 
-Wariant Hostowy jest renderowany z danych źródłowych w przeglądarce i nie
-zapisuje dodatkowego pliku. Nie zmienia `bits_b64`, warstw edytora ani logo
-na Wyświetlaczu. Użytkownik nie dostaje narzędzi do ręcznego usuwania tła
-ani osobnego procesu eksportu. DRAW i TEXT wymagają odpowiednio
-`source.fabricData` i `source.text`; przy braku źródła Host nie pokazuje
-wariantu źródłowego i nie przełącza go po cichu na piksele. IMAGE zachowuje
-oryginalne kolory, a DOT dla DRAW/TEXT jest nakładany przy każdym renderze,
-więc zmiana koloru nie tworzy nieaktualnego pliku.
+Wariant Hostowy korzysta z przygotowanego obrazu i nie zmienia `bits_b64`,
+warstw edytora ani logo na Wyświetlaczu. DRAW jest składany przez Fabric przy
+autozapisie do przezroczystej maski PNG w rozdzielczości Hosta; PNG trafia do
+bucketa `user-logos`, a jego URL do `payload.source.hostRasterUrl`. Białe
+obszary są maską koloru DOT, czarne i puste — przezroczyste. Przy zmianie
+logo edytor wgrywa nowy plik, aktualizuje rekord i usuwa poprzedni. Eksport
+osadza PNG w pliku `.famlogo`, a import zapisuje go ponownie w Storage.
+IMAGE zachowuje oryginalne kolory, a DOT dla DRAW/TEXT jest nakładany przy
+renderowaniu Hosta.
 
 W ustawieniach rozgrywki jest jedna wartość „Logo prowadzącego” z dwoma
 wariantami: dotychczasowe logo pikselowe, ostre i bez wygładzania, albo
@@ -193,10 +194,9 @@ logo. Zasłona i elementy sterujące nadal respektują safe area.
   zachować obraz bez zmian. W edytorze obrazu dodać krótką podpowiedź, że
   jasne, jednolite tło ułatwia jego usunięcie; nie zakładać, że każde logo
   ma białe tło.
-- **DRAW:** odtworzyć zapisaną scenę `source.fabricData` w jej wymiarach
-  `source.world` i użyć kadru rysunku. Białe elementy rysunku przyjmują
-  kolor DOT, czarne stają się przezroczyste. Przyciąć do nieprzezroczystej
-  zawartości i dopasować do pełnej szerokości zasłony.
+- **DRAW:** odtworzyć i złożyć `source.fabricData` przez Fabric w kolejności
+  warstw, przekształcić wynik w przezroczystą maskę PNG i zapisać w Storage.
+  Host pobiera ten PNG i nakłada aktualny kolor DOT; nie składa warstw ponownie.
 - **TEXT:** użyć zapisanego `source.text`; nie odtwarzać napisu ze starych
   warstw glifów.
   Wariant Hostowy ma mieć krój podobny do znaku Familiady: cały napis ma
@@ -319,12 +319,9 @@ wariant.
   mieszczą się w ustawieniach na typowych szerokościach okna.
 - **Manual jest częścią odbioru zmian.** Zaktualizować wyłącznie sekcje Panelu
   sterowania i Ustawień rozgrywki w PL/EN/UK. Opisać warianty Piksele/Źródło,
-  ich różnicę, podgląd Hosta obok Wyświetlacza w ustawieniach oraz wybrany
-  wariant i podgląd w Podsumowaniu Control. Manual opisuje też dopasowanie
-  Hosta do rozmiaru i orientacji ekranu, motywy i kolory używane na Hostcie,
-  układ przycisków Buzzerza w pionie i poziomie oraz wskazówkę pełnego ekranu
-  w Safari na iPhonie. Zachować istniejące klasy, typografię, notki i sposób
-  oznaczania przycisków; nie zmieniać innych sekcji.
+  ich różnicę i podgląd obok Wyświetlacza w Ustawieniach rozgrywki. W opisie
+  Podsumowania Control podać wybrany wariant i podgląd Hosta. Treść ma być
+  krótka i dotyczyć tylko tych opcji. Zachować istniejące style manuala.
 - **Sprawdzić wyrenderowany manual** w PL/EN/UK: obie właściwe zakładki mają
   widoczny, poprawnie wystylowany opis, bez kluczy tłumaczeń, pustych ikon ani
   rozjechanych elementów. Test ma wejść w zakładki Panel sterowania i Ustawienia
@@ -344,13 +341,16 @@ wariant.
   podgląd Display, przezroczystość i kolorowanie wariantu źródłowego; dla IMAGE
   także odczyt obrazu ze Storage. Dodatkowy test DRAW zapisał warstwy Fabric,
   odtworzył je i sprawdził kolejność bieli/czerni oraz przezroczystość.
+  To potwierdza te przypadki nakładania, ale nie stanowi porównania pikselowego
+  dla wszystkich typów obiektów i efektów dostępnych w Fabric.
+- Przebieg DRAW sprawdza zapis PNG do bucketa, osadzenie go w eksporcie logo,
+  zachowanie w imporcie oraz kolorowanie zapisanej maski na Hoście.
 - E2E na koncie testowym 9 zapisał ustawienie Źródło, motyw Nowoczesny i kolor
   DOT, przeładował Ustawienia, a następnie sprawdził oba podglądy w Control.
   Zrzuty kontrolne są w artefakcie `e2e-shots` uruchomienia GitHub Actions
   `37878643663`.
-- Manual jest zaktualizowany w treści widocznej użytkownikom PL/EN/UK oraz w
-  źródłowych plikach EN/UK. Oprócz logo opisuje teraz dopasowanie widoków do
-  orientacji, motywy i kolory Hosta, układ Buzzerza oraz wskazówkę iOS.
+- Manual opisuje w sekcji Wygląd Ustawień rozgrywki przełącznik logo i podgląd
+  Hosta, a w Podsumowaniu Control — wybrany wariant i podgląd.
 - Po aktualizacji treści cały ukierunkowany przebieg manuala przeszedł 6/6;
   sprawdza odpowiednie informacje w obu zakładkach we wszystkich trzech
   językach.

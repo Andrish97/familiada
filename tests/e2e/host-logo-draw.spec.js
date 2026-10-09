@@ -17,10 +17,15 @@ async function cleanupPreviousDrawRows(page, accountNumber) {
   const prefix = `E2E-HOST-DRAW-${accountNumber}-`;
   await page.evaluate(async namePrefix => {
     const sb = window.__sbClient;
-    const { data, error } = await sb.from("user_logos").select("id").like("name", `${namePrefix}%`);
+    const { data, error } = await sb.from("user_logos").select("id,payload->source->>hostRasterUrl").like("name", `${namePrefix}%`);
     if (error) throw new Error(error.message);
     const ids = (data || []).map(row => row.id);
     if (!ids.length) return;
+    const paths = data.map(row => String(row.hostRasterUrl || "").split("/user-logos/")[1]?.split("?")[0]).filter(Boolean);
+    if (paths.length) {
+      const { error: storageError } = await sb.storage.from("user-logos").remove(paths);
+      if (storageError) throw new Error(storageError.message);
+    }
     const { error: deleteError } = await sb.from("user_logos").delete().in("id", ids);
     if (deleteError) throw new Error(deleteError.message);
   }, prefix);
@@ -76,6 +81,23 @@ async function runDrawRoundTrip(page, context, accountNumber, testInfo) {
     }, logoId);
     expect(saved.payload.source.mode).toBe("DRAW");
     expect(saved.payload.source.fabricData.objects).toHaveLength(3);
+    expect(saved.payload.source.hostRasterUrl).toMatch(/^https:\/\/.+\/user-logos\/.+-draw-host\.png$/);
+
+    const transfer = await page.evaluate(async logo => {
+      const { buildExport, parseImport } = await import("/logo/js/transfer.js?v=v2026-10-09TDRAWHOST1");
+      const file = await buildExport(logo, "test");
+      const imported = parseImport(JSON.stringify(file), "test");
+      return {
+        embeddedPng: /^data:image\/png;base64,/.test(file.payload.source.hostRasterData || ""),
+        exportedUrlRemoved: !file.payload.source.hostRasterUrl,
+        importRetainsEmbeddedPng: /^data:image\/png;base64,/.test(imported.payload.source.hostRasterData || ""),
+        dataBytes: file.payload.source.hostRasterData?.length || 0,
+      };
+    }, saved);
+    expect(transfer.embeddedPng).toBe(true);
+    expect(transfer.exportedUrlRemoved).toBe(true);
+    expect(transfer.importRetainsEmbeddedPng).toBe(true);
+    expect(transfer.dataBytes).toBeGreaterThan(1000);
 
     await context.route(`${ORIGIN}/__host_draw_preview`, route => route.fulfill({ status: 200, contentType: "text/html; charset=utf-8", body: previewHarness }));
     await page.goto(`${ORIGIN}/__host_draw_preview`, { waitUntil: "domcontentloaded" });
@@ -93,11 +115,9 @@ async function runDrawRoundTrip(page, context, accountNumber, testInfo) {
     };
     await page.evaluate(data => window.applyRow(data), row);
     const host = page.frameLocator("#host");
-    await expect(host.locator("#cover2Logo img")).toBeVisible();
-    const pixels = await host.locator("#cover2Logo img").evaluate(async image => {
-      await image.decode();
-      const canvas = document.createElement("canvas"); canvas.width = image.naturalWidth; canvas.height = image.naturalHeight;
-      const context = canvas.getContext("2d", { willReadFrequently: true }); context.drawImage(image, 0, 0);
+    await expect(host.locator("#cover2Logo canvas")).toBeVisible();
+    const pixels = await host.locator("#cover2Logo canvas").evaluate(canvas => {
+      const context = canvas.getContext("2d", { willReadFrequently: true });
       const alpha = (x, y) => context.getImageData(Math.round(x * canvas.width), Math.round(y * canvas.height), 1, 1).data[3];
       return {
         whiteShowsDot: alpha(.15, .30) > 200,
@@ -112,7 +132,13 @@ async function runDrawRoundTrip(page, context, accountNumber, testInfo) {
   } finally {
     // Zwolnij blokadę edytora przed skasowaniem wyłącznie utworzonego logo.
     await page.goto(`${ORIGIN}/games/`, { waitUntil: "domcontentloaded" }).catch(() => {});
-    if (logoId) await page.evaluate(async id => { await window.__sbClient.from("user_logos").delete().eq("id", id); }, logoId).catch(() => {});
+    if (logoId) await page.evaluate(async id => {
+      const sb = window.__sbClient;
+      const { data } = await sb.from("user_logos").select("payload->source->>hostRasterUrl").eq("id", id).maybeSingle();
+      const path = String(data?.hostRasterUrl || "").split("/user-logos/")[1]?.split("?")[0];
+      if (path) await sb.storage.from("user-logos").remove([path]);
+      await sb.from("user_logos").delete().eq("id", id);
+    }, logoId).catch(() => {});
   }
 }
 

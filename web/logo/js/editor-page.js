@@ -28,7 +28,7 @@ import { guardResourceLock, findBusyContext, showBlockingOverlay } from "../../s
 import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-09T02074";
 
 import { renderPreview } from "./render.js?v=v2026-10-09T02074";
-import { listLogos, fetchLogo, updateLogo, isUniqueViolation } from "./db.js?v=v2026-10-09T02074";
+import { listLogos, fetchLogo, updateLogo, isUniqueViolation, uploadDrawHostRaster, removeDrawHostRaster } from "./db.js?v=v2026-10-09TDRAWHOST1";
 import { initPreviewPinchZoom, lockPageZoomForPreview, unlockPageZoomAfterPreview } from "./preview-zoom.js?v=v2026-10-09T02074";
 import { cannotEditReason } from "./text.js?v=v2026-10-09T02074";
 import { editModeFor, listBackUrl, manualUrl } from "./routes.js?v=v2026-10-09T02074";
@@ -62,6 +62,7 @@ export async function bootEditorPage({ mode, initEditor }) {
   let GLYPH_5x7 = null;
   let currentUser = null;
   let logoId = null;
+  let logoRecord = null;
   let editor = null;
   let logos = [];          // lekka lista -- tylko do unikalnych nazw
   let logoLock = null;     // blokada logo:L (guardResourceLock)
@@ -142,6 +143,8 @@ export async function bootEditorPage({ mode, initEditor }) {
     timer = null;
     const seq = changeSeq;
     let ok = false;
+    let stagedRasterUrl = null;
+    let rasterCommitted = false;
     saving = (async () => {
       setStatus("saving");
       try {
@@ -154,10 +157,17 @@ export async function bootEditorPage({ mode, initEditor }) {
         }
         const payload = res.payload;
         payload.source = { ...(payload.source || {}), mode };
+        const previousRasterUrl = logoRecord?.payload?.source?.hostRasterUrl || null;
+        if (mode === "DRAW") {
+          if (!res.assets?.hostRaster) throw new Error("Missing flattened DRAW image for Host");
+          stagedRasterUrl = await uploadDrawHostRaster(res.assets.hostRaster, currentUser?.id);
+          payload.source.hostRasterUrl = stagedRasterUrl;
+        }
         let name = makeUniqueName(el.logoName.value);
         for (let attempt = 0; ; attempt++) {
           try {
             await updateLogo(logoId, { name, type: res.type, payload });
+            rasterCommitted = true;
             break;
           } catch (e) {
             // Nazwa zajęta przez logo spoza lokalnej listy (np. z innej karty).
@@ -167,12 +177,19 @@ export async function bootEditorPage({ mode, initEditor }) {
             name = next !== name ? next : `${name} (${Date.now() % 100000})`;
           }
         }
+        if (mode === "DRAW") {
+          logoRecord = { ...logoRecord, name, type: res.type, payload };
+          if (previousRasterUrl && previousRasterUrl !== stagedRasterUrl) {
+            await removeDrawHostRaster(previousRasterUrl, currentUser?.id);
+          }
+        }
         if (el.logoName.value.trim() !== name && document.activeElement !== el.logoName) el.logoName.value = name;
         await editor.onSaved?.();
         if (changeSeq === seq) dirty = false;
         ok = true;
         setStatus(dirty ? "dirty" : "saved");
       } catch (e) {
+        if (stagedRasterUrl && !rasterCommitted) await removeDrawHostRaster(stagedRasterUrl, currentUser?.id);
         console.error("[logo/editor] autosave failed:", e);
         if (e?.code === "RESOURCE_IN_USE") {
           // Pula logo zajęła się w trakcie edycji (otwarty Control albo
@@ -309,6 +326,7 @@ export async function bootEditorPage({ mode, initEditor }) {
     return;
   }
   if (editModeFor(logo) !== mode) { block(t("logoEditor.errors.wrongType")); return; }
+  logoRecord = logo;
   const reason = cannotEditReason(logo, mode, FONT_3x10);
   if (reason) { block(reason); return; }
 

@@ -12,7 +12,7 @@ import { startKeepAlive } from "../../shared/js/core/keep-alive.js?v=v2026-10-09
 import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09THOSTLOGO";
 import { createSubscription } from "../../shared/js/core/game-state-subscribe.js?v=v2026-10-09THOSTLOGO";
 import { createHostRenderer } from "./render.js?v=v2026-10-09THOSTLOGO";
-import { createCoverLogoRenderer } from "./coverLogo.js?v=v2026-10-09THOSTLOGO";
+import { createCoverLogoRenderer } from "./coverLogo.js?v=v2026-10-09TDRAWHOST1";
 import { createHostThemeApplier } from "./hostThemeManager.js?v=v2026-10-09THOSTLOGO";
 import { icon } from "../../shared/js/core/icons.js?v=v2026-10-09THOSTLOGO";
 

@@ -1928,7 +1928,6 @@ const en = {
 <p class="m-p">You can also open the Display link copied from the panel directly on the TV. If the browser is not recognised, open the <a href="https://www.familiada.online/connect-device/tv/">TV connection page</a> and enter the code. This also applies to custom browsers on Apple TV. TVs accept game Display or poll QR Display codes; Host and Buzzer codes are rejected.</p>
 <h4 class="m-h3">Host and Buzzer</h4>
 <p class="m-p">Connect the Host device and Buzzer next. Each has a <span class="m-strong">6-digit code</span> and QR code. Two separate phones, or a phone and tablet, are usually convenient.</p>
-<p class="m-p">The Host view adjusts text size and row layout to the screen and its orientation. Classic uses a light ruled page; Modern uses a dark background and monospaced text. The background extends to the screen edges while content stays in the safe area. The Buzzer rearranges its team buttons by orientation: side by side in landscape and stacked in portrait. In iPhone Safari, the fullscreen button explains how to add the page to the Home Screen.</p>
 <p class="m-p"><span class="m-code">QR on display</span> shows the QR codes on the connected large screen so the team can scan them without copying links.</p>
 <p class="m-p">Use <span class="m-code">Share</span> to send a link by email or share it with your subscribers. Registered recipients find shared devices under <span class="m-code">Connect device</span> <span class="m-code"><i class="ico" data-icon="phone"></i></span>. Unregistered recipients receive an email link.</p>
 <p class="m-p"><span class="m-strong">Connecting a device conveniently</span></p>
@@ -1962,9 +1961,8 @@ const en = {
 <li><span class="m-strong">Colours</span> — teams, background and dots.</li>
 <li><span class="m-strong">Theme</span> — board appearance.</li>
 <li><span class="m-strong">Logo</span> — shown during play.</li>
-<li><span class="m-strong">Host logo</span> — choose Pixels or Source and check the Host preview beside the Display preview.</li>
+<li><span class="m-strong">Host logo</span> — the Summary shows the selected variant and Host preview beside the Display preview.</li>
 </ul>
-<p class="m-p">The Host also uses the game theme and colours. Team colours tint the corresponding elements, and the dot colour (DOT) accents the cover and generated logo. In <span class="m-strong">Pixels</span> mode, a custom logo keeps its pixel-grid look. <span class="m-strong">Source</span> uses the saved image, drawing or text: images keep their colours, while drawings and text use the dot colour. The Game settings preview responds before saving; the Control panel Summary shows the saved variant.</p>
 <h4 class="m-h3">Sound</h4>
 <ul class="m-ul">
 <li>Each category shows the current <span class="m-strong">variant</span>, such as Classic or a custom filename.</li>
@@ -2230,7 +2228,7 @@ const en = {
 <p class="m-p">Choose the visual theme for the whole Display. <span class="m-strong">Classic</span> is the default.</p>
 <h4 class="m-h3">Logo</h4>
 <p class="m-p">Choose your own logo under <span class="m-strong">Logo</span>. <span class="m-strong">Default</span> means Familiada&#39;s logo; <span class="m-strong">No logo</span> means no custom mark. The chosen logo appears at the opening; its ending appearance depends on the configured ending screen. Game settings previews unsaved edits, whereas the panel Summary uses saved settings.</p>
-<p class="m-p">The <span class="m-strong">Host logo</span> selector chooses how it appears: <span class="m-strong">Pixels</span> keeps the existing pixel-grid look, while <span class="m-strong">Source</span> uses the saved image, drawing or text. Images keep their own colours; drawings and text use the dot colour (DOT). The Host preview sits beside the Display preview and responds to changes before saving; the Control panel Summary shows the saved variant.</p>
+<p class="m-p">The <span class="m-strong">Host logo</span> selector chooses <span class="m-strong">Pixels</span> (the existing look) or <span class="m-strong">Source</span> (the saved logo). The Host preview sits beside the Display preview.</p>
 <p class="m-p"><span class="m-code">Restore defaults</span> in Appearance resets colours, theme and logo.</p>
 <h3 class="m-h2">Sound</h3>
 <p class="m-p">Each game sound category has separate settings, including <span class="m-strong">Correct answer</span>, <span class="m-strong">Wrong answer</span>, <span class="m-strong">Intro</span>, <span class="m-strong">Round transition</span>, <span class="m-strong">Show outro music</span> and <span class="m-strong">Reveal</span>.</p>
