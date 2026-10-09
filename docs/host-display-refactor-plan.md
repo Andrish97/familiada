@@ -90,16 +90,17 @@ To jest zakres i lista kontroli dla refaktoru.
   wdrożeniem Pages; przed startem trzeba sprawdzić, czy nikt inny nie używa
   wybranego konta, gry i urządzeń.
 - Pełny przebieg edytora DRAW z zapisem do produkcyjnego `user_logos` nie jest
-  obecnie uruchamiany: pula E2E wyklucza konta `test9` i `test10`, a nie
-  wskazano innych kont do użycia. Nie loguj testu na inne konto ani nie
-  zapisuj testowego logo w bazie bez przydzielenia konta. Po przydzieleniu
-  konta trzeba dodać przebieg: otworzyć edytor z bieżącego brancha, narysować
-  warstwy Fabric, poczekać na autosave, odczytać zapisany payload i wyrenderować
-  go równocześnie na Host/Display; po teście usunąć wyłącznie utworzone logo.
+  wspólnej puli, ale dedykowany test `tests/e2e/host-logo-draw.spec.js` może
+  używać `test9` i `test10` na wyraźne polecenie użytkownika. Konta pozostają
+  wyłączone z pozostałych E2E i z puli współdzielonej. Test otwiera edytor z
+  bieżącego brancha, rysuje warstwy Fabric, czeka na autosave, odczytuje
+  payload i renderuje go równocześnie na Host/Display; po teście usuwa tylko
+  utworzone logo.
 - Dotychczasowy test lokalny nie łączy się z bazą: odtwarza payload DRAW w
   prawdziwym rendererze Host/Display i sprawdza piksele warstw. Przed
-  wdrożeniem Pages pozostaje wykonać przebieg zapisu/odczytu w edytorze na
-  przydzielonym koncie. Nie zmieniać schematu bazy ani ustawień gry.
+  wdrożeniem Pages uruchom dedykowany test produkcyjny z `--workers=2`, o ile
+  konta nie są zajęte innym testem. Nie zmieniać schematu bazy ani ustawień
+  gry.
 
 ## Narzędzia testowe logo
 
