@@ -1,7 +1,7 @@
 import QRCode from "https://cdn.jsdelivr.net/npm/qrcode@1.5.3/+esm";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T02075";
-import { initI18n, setUiLang, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-09T02075";
-import { icon } from "../../shared/js/core/icons.js?v=v2026-10-09T02075";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T02340";
+import { initI18n, setUiLang, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-09T02340";
+import { icon } from "../../shared/js/core/icons.js?v=v2026-10-09T02340";
 
 // 1. Inicjalizacja i18n
 await initI18n({ withSwitcher: false });
@@ -56,9 +56,10 @@ function endedKeyForError(error) {
   return null;
 }
 
-// Komunikat dla statusu gry; null = ankieta nadal otwarta
+// Komunikat dla statusu gry; null = ankieta nadal otwarta albo tylko zatrzymana
+// (zatrzymana może wrócić do głosowania tym samym linkiem, więc QR zostaje)
 function endedKeyForStatus(status) {
-  if (status === "poll_open") return null;
+  if (status === "poll_open" || status === "poll_stopped") return null;
   if (status === "ready") return "pollQr.pollClosed";
   return "pollQr.linkExpired";
 }

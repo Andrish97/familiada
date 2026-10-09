@@ -462,6 +462,18 @@ body.games-body > main.wrap{
   color: rgba(236,239,244,.9);
 }
 
+/* Plakietka stanu ankiety na kafelku: liczba głosów / „do podliczenia” */
+.games-body .grid .card .meta .pollBadge{
+  margin-left: 4px;
+  text-transform: none;
+  letter-spacing: .02em;
+}
+.games-body .grid .card .meta .pollBadge--tally{
+  border-color: rgba(255,234,166,.8);
+  background: rgba(255,234,166,.24);
+  box-shadow: 0 0 0 1px rgba(255,234,166,.18);
+}
+
 /* Czego brakuje do następnego kroku (games.rules_state z bazy) */
 .games-body .grid .card .rules{
   margin-top: 4px;

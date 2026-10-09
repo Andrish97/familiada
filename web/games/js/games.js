@@ -1,37 +1,37 @@
-import { addRenameGesture } from "../../shared/js/core/rename-gesture.js?v=v2026-10-09T02075";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T02075";
-import { requireAuth } from "../../shared/js/core/auth.js?v=v2026-10-09T02075";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-09T02075";
-import { hideForGuest, isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-09T02075";
-import { initI18n, t, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-09T02075";
-import { initRatingSystem } from "../../shared/js/core/rating-system.js?v=v2026-10-09T02075";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-09T02075";
-import { maybeShowGuestInfoModal } from "../../shared/js/core/guest-info-modal.js?v=v2026-10-09T02075";
-import { maybeShowGuestMigrateReminder } from "../../shared/js/core/guest-migrate-reminder.js?v=v2026-10-09T02075";
+import { addRenameGesture } from "../../shared/js/core/rename-gesture.js?v=v2026-10-09T02340";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T02340";
+import { requireAuth } from "../../shared/js/core/auth.js?v=v2026-10-09T02340";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-09T02340";
+import { hideForGuest, isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-09T02340";
+import { initI18n, t, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-09T02340";
+import { initRatingSystem } from "../../shared/js/core/rating-system.js?v=v2026-10-09T02340";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-09T02340";
+import { maybeShowGuestInfoModal } from "../../shared/js/core/guest-info-modal.js?v=v2026-10-09T02340";
+import { maybeShowGuestMigrateReminder } from "../../shared/js/core/guest-migrate-reminder.js?v=v2026-10-09T02340";
 
-import { initPwa, isStandalone, isMobileDevice } from "../../shared/js/core/pwa.js?v=v2026-10-09T02075";
-import { createPollResults } from "../../shared/js/core/poll-results.js?v=v2026-10-09T02075";
-import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-09T02075";
+import { initPwa, isStandalone, isMobileDevice } from "../../shared/js/core/pwa.js?v=v2026-10-09T02340";
+import { createPollResults } from "../../shared/js/core/poll-results.js?v=v2026-10-09T02340";
+import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-09T02340";
 
 // Zarejestruj listener PWA jak najwcześniej – beforeinstallprompt może odpalić przed requireAuth
 const pwaApi = initPwa();
 // Jeśli beforeinstallprompt już odpalił zanim dodaliśmy listener w IIFE, sprawdzimy po zalogowaniu
 
 
-import { exportGame, importGame, downloadJson } from "./games-import-export.js?v=v2026-10-09T02075";
-import { setTopbarNavPriority, setTopbarAccount } from '../../shared/js/core/topbar-controller.js?v=v2026-10-09T02075';
+import { exportGame, importGame, downloadJson } from "./games-import-export.js?v=v2026-10-09T02340";
+import { setTopbarNavPriority, setTopbarAccount } from '../../shared/js/core/topbar-controller.js?v=v2026-10-09T02340';
 
-import "../../shared/js/core/contact-modal.js?v=v2026-10-09T02075";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-09T02340";
 import {
   TYPES,
   STATUS,
   loadGameBasic,
   validateGame,
   rulesFromState,
-} from "../../shared/js/core/game-validate.js?v=v2026-10-09T02075";
-import { isResourceBusy, acquireResourceLock, getTabId } from "../../shared/js/core/resource-lock.js?v=v2026-10-09T02075";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-09T02075";
-import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-09T02075";
+} from "../../shared/js/core/game-validate.js?v=v2026-10-09T02340";
+import { isResourceBusy, acquireResourceLock, getTabId } from "../../shared/js/core/resource-lock.js?v=v2026-10-09T02340";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-09T02340";
+import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-09T02340";
 
 const MSG = {
   exportBaseEmpty: () => t("games.exportBase.empty"),
@@ -45,7 +45,9 @@ const MSG = {
   typeMarket: () => t("games.types.market"),
   statusDraft: () => t("games.status.draft"),
   statusOpen: () => t("games.status.open"),
-  statusClosed: () => t("games.status.closed"),
+  statusStopped: () => t("games.status.stopped"),
+  badgeVotes: (n) => t("games.badges.votes", { n }),
+  badgeToTally: () => t("games.badges.toTally"),
   statusReady: () => t("games.status.ready"),
   newGamePollText: () => t("games.newGame.pollText"),
   newGamePollPoints: () => t("games.newGame.pollPoints"),
@@ -712,7 +714,8 @@ function statusLabel(st, g) {
   }
   if (s === STATUS.DRAFT) return MSG.statusDraft();
   if (s === STATUS.POLL_OPEN) return MSG.statusOpen();
-  if (s === STATUS.READY) return MSG.statusClosed();
+  if (s === STATUS.POLL_STOPPED) return MSG.statusStopped();
+  if (s === STATUS.READY) return MSG.statusReady();
   return String(s).toUpperCase();
 }
 
@@ -802,7 +805,7 @@ async function deleteGame(game) {
   const ok = await confirmModal({
     title: MSG.deleteTitle(),
     // 312: otwarta ankieta nie blokuje usunięcia -- zostaje przerwana
-    text: game.status === STATUS.POLL_OPEN ? `${MSG.deleteText(game.name)} ${MSG.deletePollAbort()}` : MSG.deleteText(game.name),
+    text: (game.status === STATUS.POLL_OPEN || game.status === STATUS.POLL_STOPPED) ? `${MSG.deleteText(game.name)} ${MSG.deletePollAbort()}` : MSG.deleteText(game.name),
     okText: MSG.deleteOk(),
     cancelText: MSG.deleteCancel(),
   });
@@ -868,6 +871,29 @@ function tileBlocker(g) {
   return "";
 }
 
+// Liczby głosów otwartych / zatrzymanych ankiet (polls_vote_counts): jedno zapytanie
+// na wczytanie listy, nie na kafelek.
+let pollVoteCounts = new Map();
+
+async function loadPollVoteCounts() {
+  try {
+    const { data, error } = await sb().rpc("polls_vote_counts");
+    if (error) throw error;
+    pollVoteCounts = new Map((data || []).map((r) => [r.game_id, Number(r.votes) || 0]));
+  } catch (e) {
+    console.warn("[games] polls_vote_counts failed:", e);
+    pollVoteCounts = new Map();
+  }
+}
+
+function pollBadge(g) {
+  if (g.status === STATUS.POLL_OPEN) {
+    return pollVoteCounts.has(g.id) ? { cls: "tag--info", text: MSG.badgeVotes(pollVoteCounts.get(g.id)) } : null;
+  }
+  if (g.status === STATUS.POLL_STOPPED) return { cls: "tag--gold pollBadge--tally", text: MSG.badgeToTally() };
+  return null;
+}
+
 function cardGame(g) {
   const uiType = uiTypeFromRow(g);
 
@@ -884,6 +910,15 @@ function cardGame(g) {
 
   el.querySelector(".name").textContent = g.name || t("control.dash");
   el.querySelector(".meta").textContent = `${typeLabel(uiType)} • ${statusLabel(g.status, g)}`;
+
+  // plakietka stanu ankiety: OTWARTA — liczba głosów, ZATRZYMANA — „do podliczenia”
+  const badge = pollBadge(g);
+  if (badge) {
+    const tag = document.createElement("span");
+    tag.className = `tag pollBadge ${badge.cls}`;
+    tag.textContent = badge.text;
+    el.querySelector(".meta").append(" ", tag);
+  }
 
   const blocker = tileBlocker(g);
   el.querySelector(".rules").textContent = blocker;
@@ -1133,7 +1168,8 @@ async function readFileAsText(file) {
 
 /* ================= Main ================= */
 async function refresh() {
-  gamesAll = await listGames();
+  const [games] = await Promise.all([listGames(), loadPollVoteCounts()]);
+  gamesAll = games;
 
   if (selectedId && !gamesAll.some(g => g.id === selectedId)) selectedId = null;
 

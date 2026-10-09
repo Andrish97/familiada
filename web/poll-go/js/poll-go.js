@@ -1,8 +1,8 @@
 // js/pages/poll-go.js
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T02075";
-import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-09T02075";
-import { initI18n, t } from "../../shared/translation/translation.js?v=v2026-10-09T02075";
-import { alertModal } from "../../shared/js/core/modal.js?v=v2026-10-09T02075";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T02340";
+import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-09T02340";
+import { initI18n, t } from "../../shared/translation/translation.js?v=v2026-10-09T02340";
+import { alertModal } from "../../shared/js/core/modal.js?v=v2026-10-09T02340";
 
 const i18nReady = initI18n({ withSwitcher: true }).then(() => {
   document.documentElement.classList.remove('page-loading');
@@ -48,6 +48,8 @@ const MSG = {
   inviteDone: () => t("pollGo.inviteDone"),
   inviteDeclinedShort: () => t("pollGo.inviteDeclinedShort"),
   pollClosed: () => t("pollGo.pollClosed"),
+  pollStopped: () => t("pollGo.pollStopped"),
+  pollEnded: () => t("pollGo.pollEnded"),
   inviteExpired: () => t("pollGo.inviteExpired"),
   invalidLinkTitle: () => t("pollGo.invalidLinkTitle"),
   invalidLinkText: () => t("pollGo.invalidLinkText"),
@@ -596,10 +598,12 @@ async function init() {
     const data = await hydrateInviteIdentity(raw);
     resolvedInviteData = data || null;
     if (!data?.ok) {
-      // poll_go_resolve: 'poll_closed' / 'expired' (zaproszenie z wcześniejszego
-      // uruchomienia lub przerwanej ankiety) / 'invalid_token' (np. usunięte zadanie)
+      // poll_go_resolve: 'poll_stopped' (ankieta zatrzymana) / 'poll_closed' (podliczona)
+      // / 'expired' (zaproszenie z wcześniejszego uruchomienia lub przerwanej ankiety)
+      // / 'invalid_token' (np. usunięte zadanie)
       const byError = {
-        poll_closed: MSG.pollClosed(),
+        poll_stopped: MSG.pollStopped(),
+        poll_closed: MSG.pollEnded(),
         expired: MSG.inviteExpired(),
         invalid_token: MSG.inviteExpired(),
       };

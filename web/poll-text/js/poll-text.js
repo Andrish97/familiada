@@ -1,7 +1,7 @@
 // js/pages/poll-text.js
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T02075";
-import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-09T02075";
-import { initI18n, t } from "../../shared/translation/translation.js?v=v2026-10-09T02075";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T02340";
+import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-09T02340";
+import { initI18n, t } from "../../shared/translation/translation.js?v=v2026-10-09T02340";
 
 const i18nReady = initI18n({ withSwitcher: true }).then(() => {
   document.documentElement.classList.remove('page-loading');
@@ -17,6 +17,8 @@ const MSG = {
   openTaskFail: () => t("pollText.openTaskFail"),
   pollFallback: () => t("pollText.pollFallback"),
   pollClosed: () => t("pollText.pollClosed"),
+  pollStopped: () => t("pollText.pollStopped"),
+  pollEnded: () => t("pollText.pollEnded"),
   sending: () => t("pollText.sending"),
   error: (err) => t("pollText.error", { error: err }),
   questionProgress: (current, total) => t("pollText.questionProgress", { current, total }),
@@ -121,22 +123,26 @@ function showStatus(msg) {
   setClosedMsg(msg);
 }
 
-// Rozróżnia, dlaczego payload się nie wczytał (get_poll_game rzuca 'not found'
-// dla braku gry i 'forbidden' dla klucza z wcześniejszego uruchomienia).
-// Zwraca komunikat albo null, gdy to nie jest kwestia stanu ankiety.
+// Stan ankiety względem klucza z linku (poll_state, anon): zatrzymana / zakończona /
+// link z wcześniejszego uruchomienia. Zwraca komunikat albo null, gdy ankieta
+// jest otwarta (albo stanu nie da się ustalić -- wtedy decyduje reszta strony).
+function stateMessage(state) {
+  if (state === "stopped") return MSG.pollStopped();
+  if (state === "ended") return MSG.pollEnded();
+  if (state === "expired" || state === "draft") return MSG.linkExpired();
+  if (state === "not_found") return MSG.pollNotFound();
+  return null;
+}
+
 async function describeLinkState() {
   try {
-    const { data, error } = await sb().rpc("get_poll_game", { p_game_id: gameId, p_key: key });
+    const { data, error } = await sb().rpc("poll_state", { p_game_id: gameId, p_key: key });
     if (error) {
       const m = String(error.message || "");
-      if (m.includes("not found") || m.includes("invalid input syntax")) return MSG.pollNotFound();
-      if (m.includes("forbidden")) return MSG.linkExpired();
+      if (m.includes("invalid input syntax")) return MSG.pollNotFound();
       return null;
     }
-    const st = data?.game?.status;
-    if (st === "ready") return MSG.pollClosed();
-    if (st && st !== "poll_open") return MSG.linkExpired();
-    return null;
+    return stateMessage(data?.state);
   } catch {
     return null;
   }
@@ -269,7 +275,8 @@ async function resolveTaskToken() {
     if (error) throw error;
     if (data && data.ok === false) {
       const msgs = {
-        poll_closed: MSG.pollClosed(),
+        poll_closed: MSG.pollEnded(),
+        poll_stopped: MSG.pollStopped(),
         already_done: MSG.inviteDone(),
       };
       showStatus(msgs[data.error] || MSG.inviteExpired());
@@ -309,7 +316,7 @@ function render() {
   if (game.status !== "poll_open") {
     showClosed(true);
     setSub("");
-    setClosedMsg(MSG.pollClosed());
+    setClosedMsg(game.status === "poll_stopped" ? MSG.pollStopped() : game.status === "ready" ? MSG.pollEnded() : MSG.pollClosed());
     return;
   }
 
@@ -331,10 +338,16 @@ function render() {
         showFinished();
         await maybeReturnToHub();
       })
-      .catch((e) => {
+      .catch(async (e) => {
         console.error("[poll-text] submit_batch error:", e);
-        setSub(MSG.error(e?.message || e));
         submitting = false;
+        // ankieta mogła zostać zatrzymana / zakończona w trakcie odpowiadania
+        const linkState = await describeLinkState();
+        if (linkState) {
+          showStatus(linkState);
+          return;
+        }
+        setSub(MSG.error(e?.message || e));
         // pozwól spróbować jeszcze raz (render wywoła się ponownie po kliknięciu)
         if (btnSend) btnSend.disabled = false;
       });
@@ -396,6 +409,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (!taskResolved) return;
     if (!gameId || !key) {
       showStatus(MSG.missingParams());
+      return;
+    }
+    // stan ankiety względem klucza z linku: zatrzymana / zakończona / link wygasł
+    const linkState = await describeLinkState();
+    if (linkState) {
+      showStatus(linkState);
       return;
     }
     if (hasDone()) {
