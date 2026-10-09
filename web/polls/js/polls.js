@@ -974,7 +974,8 @@ async function refresh() {
     firstQuestionId = null;
     votesText = "";
   }
-  if (!tabTouchedByUser) setActiveTab(st === STATUS.DRAFT || st === STATUS.POLL_OPEN ? "share" : "results");
+  // Wypustka z adresu / wybrana przez użytkownika zostaje; inaczej wg stanu ankiety.
+  setActiveTab(tabTouchedByUser ? activeTab : (st === STATUS.DRAFT || st === STATUS.POLL_OPEN ? "share" : "results"));
 
   const nameEl = $("pollGameName");
   if (nameEl) {
