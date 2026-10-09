@@ -14,12 +14,12 @@
 // tego refreshBadges() zwraca zwykły obiekt {display,host,buzzer: liczba},
 // który app.js dokłada do ctx.shareBadges na kolejny ui.render().
 
-import { sb, SUPABASE_URL } from "../../shared/js/core/supabase.js?v=v2026-10-09T19290";
-import { t } from "../../shared/translation/translation.js?v=v2026-10-09T19290";
-import { icon } from "../../shared/js/core/icons.js?v=v2026-10-09T19290";
-import { renderShareSections, shareRowEl } from "../../shared/js/core/share-sections.js?v=v2026-10-09T19290";
-import { toast } from "../../shared/js/core/toast.js?v=v2026-10-09T19290";
-import { createCooldownTicker, mailCooldownCheck } from "../../shared/js/core/cooldown.js?v=v2026-10-09T19290";
+import { sb, SUPABASE_URL } from "../../shared/js/core/supabase.js?v=v2026-10-09T19310";
+import { t } from "../../shared/translation/translation.js?v=v2026-10-09T19310";
+import { icon } from "../../shared/js/core/icons.js?v=v2026-10-09T19310";
+import { renderShareSections, shareRowEl } from "../../shared/js/core/share-sections.js?v=v2026-10-09T19310";
+import { toast } from "../../shared/js/core/toast.js?v=v2026-10-09T19310";
+import { createCooldownTicker, mailCooldownCheck } from "../../shared/js/core/cooldown.js?v=v2026-10-09T19310";
 
 const MAIL_FUNCTION_URL = `${SUPABASE_URL}/functions/v1/send-mail`;
 const SHARE_TTL_MS = 4 * 60 * 60 * 1000;
