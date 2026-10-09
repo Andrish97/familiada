@@ -84,8 +84,8 @@ const PAGE_ROUTES = new Set([
   "game-settings", "games", "host", "login",
   "logo", "logo/editor-draw", "logo/editor-image", "logo/editor-text",
   "maintenance", "manual", "marketplace", "go",
-  "poll-points", "poll-qr", "poll-text", "polls", "privacy",
-  "reset", "subscriptions",
+  "polls", "polls/vote/points", "polls/vote/qr", "polls/vote/text",
+  "privacy", "reset", "subscriptions",
 ]);
 
 export function pageIndexPath(pathname) {

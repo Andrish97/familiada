@@ -14,7 +14,7 @@ const { serveBranchCode } = require("./helpers/branch-code");
 // Strony głosowania z brancha (komunikaty stanów, E11e); baza z produkcji.
 test.use({ serviceWorkers: "block" });
 test.beforeEach(async ({ context }) => {
-  await serveBranchCode(context, { pages: ["go", "poll-text", "poll-points"] });
+  await serveBranchCode(context, { pages: ["go", "polls/vote/text", "polls/vote/points"] });
 });
 const { loginAsPooledTestUser } = require("./helpers/login");
 
@@ -149,7 +149,7 @@ test.describe("go.js audyt", () => {
       await page.waitForLoadState("networkidle");
 
       // Sprawdź że URL zmienił się na poll-points
-      expect(page.url()).toContain("poll-points");
+      expect(page.url()).toContain("polls/vote/points");
 
       await deleteGame(page, gameId);
     } finally {

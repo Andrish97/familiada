@@ -597,7 +597,7 @@ test("QR w ankietach: zmiana języka w polls.html dociera do już otwartego urz�
     const qrPage = await qrContext.newPage();
     instrumentPage(qrPage);
     await qrPage.goto(
-      `https://www.familiada.online/poll-qr?id=${pollGame.gameId}&key=${key}`,
+      `https://www.familiada.online/polls/vote/qr/?id=${pollGame.gameId}&key=${key}`,
       { waitUntil: "domcontentloaded" }
     );
     await expect(qrPage.locator(".qr-hint")).toHaveText("Zeskanuj QR, aby zagłosować", { timeout: 15000 });

@@ -1,5 +1,5 @@
-import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-09T12125";
-import { initI18n, t, getUiLang } from "../../../shared/translation/translation.js?v=v2026-10-09T12125";
+import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-09T12154";
+import { initI18n, t, getUiLang } from "../../../shared/translation/translation.js?v=v2026-10-09T12154";
 await initI18n();
 const form = document.getElementById("tvConnectForm");
 const input = document.getElementById("tvCode");
@@ -57,7 +57,7 @@ form.addEventListener("submit", async (event) => {
     if (error || !data?.ok) { setMessage("invalidCode"); return; }
     if (!["display", "poll_qr"].includes(data.device_type)) { setMessage("wrongDevice"); return; }
     if (!data.game_id || !data.share_key) throw new Error("missing display credentials");
-    const target = new URL(data.device_type === "poll_qr" ? "/poll-qr/" : "/display/", location.origin);
+    const target = new URL(data.device_type === "poll_qr" ? "/polls/vote/qr/" : "/display/", location.origin);
     target.searchParams.set("id", data.game_id);
     target.searchParams.set("key", data.share_key);
     target.searchParams.set("lang", getUiLang());

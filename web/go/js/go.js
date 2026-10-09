@@ -1,8 +1,8 @@
 // web/go/js/go.js
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T12125";
-import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-09T12125";
-import { initI18n, t } from "../../shared/translation/translation.js?v=v2026-10-09T12125";
-import { alertModal } from "../../shared/js/core/modal.js?v=v2026-10-09T12125";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T12154";
+import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-09T12154";
+import { initI18n, t } from "../../shared/translation/translation.js?v=v2026-10-09T12154";
+import { alertModal } from "../../shared/js/core/modal.js?v=v2026-10-09T12154";
 
 const i18nReady = initI18n({ withSwitcher: true }).then(() => {
   document.documentElement.classList.remove('page-loading');
@@ -217,7 +217,7 @@ function openVote(type) {
     console.error("[poll-go] goToken missing in openVote");
     return;
   }
-  const page = type === "poll_points" ? "/poll-points/" : "/poll-text/";
+  const page = type === "poll_points" ? "/polls/vote/points/" : "/polls/vote/text/";
   location.href = `${page}?t=${encodeURIComponent(goToken)}`;
 }
 

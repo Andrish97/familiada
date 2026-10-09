@@ -18,7 +18,7 @@ const { serveBranchCode } = require("./helpers/branch-code");
 // Strony głosowania z brancha (komunikaty stanów, E11e); baza z produkcji.
 test.use({ serviceWorkers: "block" });
 test.beforeEach(async ({ context }) => {
-  await serveBranchCode(context, { pages: ["poll-text", "poll-points"] });
+  await serveBranchCode(context, { pages: ["polls/vote/text", "polls/vote/points"] });
 });
 const { loginAsPooledTestUser, instrumentPage } = require("./helpers/login");
 
@@ -125,7 +125,7 @@ test.describe("poll-voting (poll-points.js i poll-text.js) audyt", () => {
       await loginAsPooledTestUser(page, context, testInfo.parallelIndex);
       const game = await createPollGame(page, "poll_points");
 
-      const url = new URL("poll-points/index.html", "https://www.familiada.online/");
+      const url = new URL("polls/vote/points/index.html", "https://www.familiada.online/");
       url.searchParams.set("id", game.gameId);
       url.searchParams.set("key", game.shareKey);
 
@@ -176,7 +176,7 @@ test.describe("poll-voting (poll-points.js i poll-text.js) audyt", () => {
       const game = await createPollGame(page, "poll_text");
 
 
-      const url = new URL("poll-text/index.html", "https://www.familiada.online/");
+      const url = new URL("polls/vote/text/index.html", "https://www.familiada.online/");
       url.searchParams.set("id", game.gameId);
       url.searchParams.set("key", game.shareKey);
 
@@ -233,7 +233,7 @@ test.describe("poll-voting (poll-points.js i poll-text.js) audyt", () => {
         `${game.gameId}_${game.shareKey}`
       );
 
-      const url = new URL("poll-text/index.html", "https://www.familiada.online/");
+      const url = new URL("polls/vote/text/index.html", "https://www.familiada.online/");
       url.searchParams.set("id", game.gameId);
       url.searchParams.set("key", game.shareKey);
 
@@ -261,7 +261,7 @@ test.describe("poll-voting (poll-points.js i poll-text.js) audyt", () => {
     try {
 
       // Brak ?id i ?key
-      await page.goto("https://www.familiada.online/poll-points/index.html", {
+      await page.goto("https://www.familiada.online/polls/vote/points/index.html", {
         waitUntil: "domcontentloaded",
       });
       await page.waitForLoadState("networkidle");
@@ -284,7 +284,7 @@ test.describe("poll-voting (poll-points.js i poll-text.js) audyt", () => {
       const game = await createPollGame(page, "poll_text");
 
 
-      const url = new URL("poll-text/index.html", "https://www.familiada.online/");
+      const url = new URL("polls/vote/text/index.html", "https://www.familiada.online/");
       url.searchParams.set("id", game.gameId);
       url.searchParams.set("key", game.shareKey);
 
@@ -323,7 +323,7 @@ test.describe("poll-voting (poll-points.js i poll-text.js) audyt", () => {
     }
   });
 
-  for (const [pollType, dir] of [["poll_text", "poll-text"], ["poll_points", "poll-points"]]) {
+  for (const [pollType, dir] of [["poll_text", "polls/vote/text"], ["poll_points", "polls/vote/points"]]) {
     test(`${dir}: ankieta zakończona → "Ankieta zakończona"`, async ({ page, context }, testInfo) => {
       try {
         await loginAsPooledTestUser(page, context, testInfo.parallelIndex);

@@ -1,15 +1,15 @@
 // js/pages/connect-device.js
 
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T12125";
-import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-09T12125";
-import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-09T12125";
-import { isMobileDevice } from "../../shared/js/core/pwa.js?v=v2026-10-09T12125";
-import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-09T12125";
-import { linkTo, backHref, renderBackLabel } from "../../shared/js/core/nav-map.js?v=v2026-10-09T12125";
-import { initTopbarAccountDropdown } from "../../shared/js/core/topbar-controller.js?v=v2026-10-09T12125";
-import { alertModal } from "../../shared/js/core/modal.js?v=v2026-10-09T12125";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-09T12125";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-09T12125";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T12154";
+import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-09T12154";
+import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-09T12154";
+import { isMobileDevice } from "../../shared/js/core/pwa.js?v=v2026-10-09T12154";
+import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-09T12154";
+import { linkTo, backHref, renderBackLabel } from "../../shared/js/core/nav-map.js?v=v2026-10-09T12154";
+import { initTopbarAccountDropdown } from "../../shared/js/core/topbar-controller.js?v=v2026-10-09T12154";
+import { alertModal } from "../../shared/js/core/modal.js?v=v2026-10-09T12154";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-09T12154";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-09T12154";
 
 const btnBack             = document.getElementById("btnBack");
 const btnManual           = document.getElementById("btnManual");
@@ -93,7 +93,7 @@ btnDevicePreviewConnect?.addEventListener("click", () => {
   hideDevicePreview();
   const lang = getUiLang() || "pl";
   if (info.device_type === "poll_qr") {
-    window.location.href = `/poll-qr/?id=${info.game_id}&key=${info.share_key}&lang=${lang}`;
+    window.location.href = `/polls/vote/qr/?id=${info.game_id}&key=${info.share_key}&lang=${lang}`;
   } else {
     const page = info.device_type;
     window.location.href = `/${page}?id=${info.game_id}&key=${info.share_key}&lang=${lang}`;

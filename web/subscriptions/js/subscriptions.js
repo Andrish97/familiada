@@ -1,16 +1,16 @@
-import { sb, SUPABASE_URL } from "../../shared/js/core/supabase.js?v=v2026-10-09T12125";
-import { requireAuth, signOut } from "../../shared/js/core/auth.js?v=v2026-10-09T12125";
-import { isGuestUser, showGuestBlockedOverlay } from "../../shared/js/core/guest-mode.js?v=v2026-10-09T12125";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-09T12125";
-import { getUiLang, initI18n, t } from "../../shared/translation/translation.js?v=v2026-10-09T12125";
-import { linkTo, backHref, renderBackLabel } from "../../shared/js/core/nav-map.js?v=v2026-10-09T12125";
-import { initTopbarAccountDropdown } from "../../shared/js/core/topbar-controller.js?v=v2026-10-09T12125";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-09T12125";
-import { icon } from "../../shared/js/core/icons.js?v=v2026-10-09T12125";
-import { createCooldownTicker } from "../../shared/js/core/cooldown.js?v=v2026-10-09T12125";
-import { enterModalSheet, exitModalSheet, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-09T12125";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-09T12125";
-import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-09T12125";
+import { sb, SUPABASE_URL } from "../../shared/js/core/supabase.js?v=v2026-10-09T12154";
+import { requireAuth, signOut } from "../../shared/js/core/auth.js?v=v2026-10-09T12154";
+import { isGuestUser, showGuestBlockedOverlay } from "../../shared/js/core/guest-mode.js?v=v2026-10-09T12154";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-09T12154";
+import { getUiLang, initI18n, t } from "../../shared/translation/translation.js?v=v2026-10-09T12154";
+import { linkTo, backHref, renderBackLabel } from "../../shared/js/core/nav-map.js?v=v2026-10-09T12154";
+import { initTopbarAccountDropdown } from "../../shared/js/core/topbar-controller.js?v=v2026-10-09T12154";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-09T12154";
+import { icon } from "../../shared/js/core/icons.js?v=v2026-10-09T12154";
+import { createCooldownTicker } from "../../shared/js/core/cooldown.js?v=v2026-10-09T12154";
+import { enterModalSheet, exitModalSheet, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-09T12154";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-09T12154";
+import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-09T12154";
 
 const i18nReady = initI18n({ withSwitcher: true }).catch((err) => {
   console.error("[subscriptions] i18n nieaktywny:", err);
@@ -627,7 +627,7 @@ function pollTypeLabel(type) {
 
 function openTask(task) {
   if (!task?.token) return false;
-  const page = task.poll_type === "poll_points" ? "/poll-points/" : "/poll-text/";
+  const page = task.poll_type === "poll_points" ? "/polls/vote/points/" : "/polls/vote/text/";
   location.href = `${page}?t=${encodeURIComponent(task.token)}&lang=${encodeURIComponent(getUiLang() || "pl")}`;
   return true;
 }
