@@ -39,6 +39,10 @@ function localFileFor(pathname, pages) {
   if (CODE_DIRS.some((d) => rel.startsWith(d))) {
     const abs = path.join(REPO_ROOT, rel);
     if (abs.startsWith(REPO_ROOT + path.sep) && fs.existsSync(abs) && fs.statSync(abs).isFile()) return abs;
+    // Nested page folders such as /logo/editor-draw/ have their own
+    // index.html. Resolve that before the SPA fallback to /logo/index.html.
+    const nestedIndex = path.join(REPO_ROOT, rel, "index.html");
+    if (nestedIndex.startsWith(REPO_ROOT + path.sep) && fs.existsSync(nestedIndex) && fs.statSync(nestedIndex).isFile()) return nestedIndex;
   }
   const routedPage = pages.find((name) => rel.startsWith(`${name}/`));
   if (routedPage) return path.join(REPO_ROOT, `${routedPage}/index.html`);
@@ -63,4 +67,4 @@ async function serveBranchCode(context, { pages }) {
   });
 }
 
-module.exports = { serveBranchCode };
+module.exports = { serveBranchCode, localFileFor };
