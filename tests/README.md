@@ -144,12 +144,12 @@ plik, to inaczej". Lokalnie to samo bez żadnego dodatkowego ustawienia:
 
 ## Pula kont testX (`test1@familiada.online` … `test10@…`)
 
-> **Zarezerwowane, nie używać w e2e:** test4, test5 (użytkownik — testy równoległe), test9, test10 (druga sesja). Wykluczone w `EXCLUDED_TEST_ACCOUNTS` (`e2e/helpers/login.js`), decyzja 2026-10-09.
+> **Zwykła pula pomija:** test4 i test5 (zarezerwowane dla odizolowanych przebiegów) oraz test9 i test10 (druga sesja). test4/test5 można użyć wyłącznie po jawnym wskazaniu `test_accounts=4,5` w workflow. test9/test10 pozostają całkowicie wykluczone.
 
-Każdy plik/filtr testów **może** korzystać z całej puli do 10 kont
+Każdy plik/filtr testów **może** korzystać ze zwykłej puli kont
 testowych — login `test<N>@familiada.online` (`testAccountUsername(n)` w
 `e2e/helpers/login.js`, domena stała w kodzie, nie sekret), wspólne
-`TEST_PASSWORD`. **Brak sztywnego podziału/rezerwacji między plikami** —
+`TEST_PASSWORD`. **Brak sztywnego podziału między plikami** —
 który dokładnie numer trafia do którego testu decyduje kod TEGO pliku, nie
 jakaś globalna alokacja:
 
@@ -167,6 +167,12 @@ jakaś globalna alokacja:
    po indeksie workera — każdy równoległy worker loguje się na **inne**
    konto, więc nikt nie czeka w kolejce za cudzym logowaniem.
 
+Konta test4 i test5 są zarezerwowane: testy równoległe nie dostają ich
+automatycznie. W razie potrzeby izolowanego przebiegu wybiera się je jawnie
+wejściem workflow `test_accounts=4,5`; wtedy `loginAsPooledTestUser` przydziela
+je workerom po indeksie. Nie przypisujemy tych kont na stałe do testów.
+test9 i test10 są wyłączone bez wyjątków.
+
 Domyślne konto (gdy test nie podaje jawnego `username`) to zawsze
 `test1@familiada.online` — reszta testów (game-deletion, editor,
 cross-resource-locks, ...) loguje się właśnie na nie i idzie szeregowo w
@@ -174,9 +180,12 @@ swojej grupie.
 
 **Dwie osobne, jawne (NIE sekretne) liczby w `env:` na górze
 `.github/workflows/e2e-tests.yml`** — celowo NIE jedna:
-- `TEST_ACCOUNT_COUNT` — rozmiar puli kont (`test1@…`…`testN@…`). Załóż na
-  produkcji tyle kont, ile wynosi ta liczba — bezpiecznie może być wysoka
-  (np. 10), bo samo istnienie konta niczego nie kosztuje.
+- `TEST_ACCOUNT_COUNT` — górny numer zwykłej puli (`test1@…`…`testN@…`);
+  konta zarezerwowane są pomijane. Załóż na produkcji tyle kont, ile wynosi
+  ta liczba — samo istnienie konta niczego nie kosztuje.
+- `TEST_ACCOUNT_NUMBERS` — opcjonalna, jawna pula dla odizolowanego przebiegu;
+  workflow przyjmuje ją jako `test_accounts` (np. `4,5`). Nie używaj jej
+  równolegle z innym testem korzystającym z tych kont.
 - `TEST_WORKERS` — ile z tych kont **faktycznie działa naraz** (przekazywane
   jako `--workers`). **Musi zostać niskie** (patrz "Pułapki" niżej) —
   podnoś ostrożnie, po jednym, sprawdzając realny wynik przebiegu, nie z

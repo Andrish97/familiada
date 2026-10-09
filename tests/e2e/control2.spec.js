@@ -1543,6 +1543,10 @@ test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśni�
     await expect(page.getByRole("button", { name: "Zatwierdź: Alfa" })).toHaveClass(/c2-tile-armed/);
     await page.keyboard.press("Enter");
     await settleAfterWrite(page);
+    await expect(page.locator(".c2-tilegrid")).toBeVisible();
+    const standardGameplayRowHeight = await page.locator(".c2-tilegrid").evaluate((grid) =>
+      Number.parseFloat(getComputedStyle(grid).gridTemplateRows.split(" ")[0]));
+    expect(standardGameplayRowHeight).toBeGreaterThan(0);
     await revealAnswer(page, 1);
     await strikeOutAndLoseSteal(page);
     await endRoundAndRevealRest(page, "Przejdź do finału");
@@ -1692,6 +1696,15 @@ test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśni�
     expect(p1AnswerBounds.height).toBeGreaterThan(0);
     expect(p1AnswerBounds.top).toBeGreaterThanOrEqual(p1AnswerBounds.tileTop);
     expect(p1AnswerBounds.bottom).toBeLessThanOrEqual(p1AnswerBounds.tileBottom);
+    const p2EntryGrid = await page.locator(".c2-entryrows").evaluate((grid) => ({
+      tracks: getComputedStyle(grid).gridTemplateRows.split(" ").map((value) => Number.parseFloat(value)),
+      gap: Number.parseFloat(getComputedStyle(grid).rowGap),
+    }));
+    expect(p2EntryGrid.tracks).toHaveLength(6);
+    expect(p2EntryGrid.gap).toBe(10);
+    for (const height of p2EntryGrid.tracks) {
+      expect(Math.abs(height - standardGameplayRowHeight), "kafle wpisywania mają tę samą wysokość co kafle pozostałych kroków").toBeLessThan(1);
+    }
     const repeatFirst = page.locator(".c2-entryrow .c2-btn-repeat").first();
     await expect(repeatFirst).toHaveClass(/\bon\b/);
     await expect(repeatFirst).toBeEnabled();

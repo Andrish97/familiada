@@ -251,18 +251,20 @@ async function loginAsGuest(page, context, opts = {}) {
   await clearE2EBypass(context);
 }
 
-// Konta testowe, których e2e NIGDY nie używa (decyzja użytkownika
-// 2026-10-09): test9 i test10. test5 ma osobno znany problem Supabase
-// ("Database error querying schema") i kod go po prostu omija tam, gdzie
-// już to robi.
+// test4/test5 są zarezerwowane dla odizolowanych przebiegów użytkownika:
+// nie trafiają do zwykłej puli, ale można wskazać je jawnie przez
+// TEST_ACCOUNT_NUMBERS (workflow input `test_accounts`). test9/test10 są
+// wyłączone całkowicie i nie wolno ich wskazywać.
+const RESERVED_TEST_ACCOUNTS = [4, 5];
 const EXCLUDED_TEST_ACCOUNTS = [4, 5, 9, 10];
+const NEVER_USE_TEST_ACCOUNTS = [9, 10];
 
 // Mapa użycia kont (kto na którym koncie pracuje, żeby równoległe testy
 // nie wchodziły sobie w drogę):
 //  - test1: domyślne konto loginAsTestUser; bases, base-explorer, games,
 //    editor, marketplace, index, operator w control2 (@mailbox: udostępnianie)
 //  - test1..test<workers>: pula control2 (loginAsPooledTestUser)
-//  - test2,3,4,6,7: edytor logo (LOGO_E2E_ACCOUNTS)
+//  - test2,3,6,7: edytor logo (LOGO_E2E_ACCOUNTS; 4/5 zarezerwowane)
 //  - test7 (zalogowane) i test8 (zaproszony + odbiorca maili): subscriptions
 //  - test8: cross-resource-locks (usuwanie logo, bez cudzych blokad ustawień)
 //  - odbiorcy maili (clearMailbox kasuje CAŁĄ skrzynkę odbiorcy, więc każdy
@@ -279,21 +281,34 @@ const EXCLUDED_ACCOUNT_NOTE = "decyzja użytkownika 2026-10-09";
  * odsłania. Dla wykluczonego numeru rzuca błąd.
  */
 function testAccountUsername(n) {
-  if (EXCLUDED_TEST_ACCOUNTS.includes(n)) {
+  if (RESERVED_TEST_ACCOUNTS.includes(n)) {
+    throw new Error(`Konto test${n} jest zarezerwowane; wybierz je wyłącznie przez TEST_ACCOUNT_NUMBERS w odizolowanym przebiegu`);
+  }
+  if (NEVER_USE_TEST_ACCOUNTS.includes(n)) {
     throw new Error(`Konto test${n} jest wykluczone z e2e (${EXCLUDED_ACCOUNT_NOTE})`);
   }
   return `test${n}@${TEST_ACCOUNT_DOMAIN}`;
 }
 
 /**
- * Pula N kolejnych kont z testX (test1, test2, ..., testN) do prawdziwej
+ * Pula kont z testX do prawdziwej
  * równoległości WEWNĄTRZ jednego pliku testów -- każdy worker Playwrighta
  * loguje się na inne konto, więc nikt nie czeka w kolejce za cudzym
  * logowaniem. Rozmiar sterowany jedną, jawną (NIE sekretną) liczbą w
- * workflow -- TEST_ACCOUNT_COUNT -- więcej równoległości = zmiana jednej
- * cyfry, bez zmian w kodzie. COUNT<1 -> pula jednoelementowa (samo test1).
+ * workflow -- TEST_ACCOUNT_COUNT określa górny numer, a konta zarezerwowane
+ * są pomijane. Dedykowany przebieg może podać jawne TEST_ACCOUNT_NUMBERS;
+ * wtedy konta 4/5 są dozwolone wyłącznie jako osobna, uzgodniona pula.
  */
 function getTestAccountPool() {
+  const selected = String(process.env.TEST_ACCOUNT_NUMBERS || "").trim();
+  if (selected) {
+    const numbers = selected.split(",").map((value) => Number(value.trim()));
+    if (numbers.some((n) => !Number.isInteger(n) || n < 1 || n > 10 || NEVER_USE_TEST_ACCOUNTS.includes(n))) {
+      throw new Error("TEST_ACCOUNT_NUMBERS może wskazywać konta 1–8; test4/test5 wymagają jawnego wyboru do odizolowanego przebiegu; test9/test10 są wyłączone");
+    }
+    const uniqueNumbers = [...new Set(numbers)];
+    return uniqueNumbers.map((n) => `test${n}@${TEST_ACCOUNT_DOMAIN}`);
+  }
   const count = parseInt(process.env.TEST_ACCOUNT_COUNT || "1", 10);
   const n = Number.isFinite(count) && count > 0 ? count : 1;
   // Pula = dozwolone numery 1..n (wykluczone pomijane); zawsze co najmniej test1.
