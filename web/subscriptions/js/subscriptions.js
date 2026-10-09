@@ -3,7 +3,8 @@ import { signOut } from "../../shared/js/core/auth.js?v=v2026-10-09T22521";
 import { toast } from "../../shared/js/core/toast.js?v=v2026-10-09T22521";
 import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-09T22521";
 import { getUiLang, initI18n, t } from "../../shared/translation/translation.js?v=v2026-10-09T22521";
-import { linkTo } from "../../shared/js/core/nav-map.js?v=v2026-10-09T22521";
+import { linkTo, PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-09T22521";
+import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-09T22521";
 import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-09T22521";
 import "../../shared/js/core/contact-modal.js?v=v2026-10-09T22521";
 import { icon } from "../../shared/js/core/icons.js?v=v2026-10-09T22521";
@@ -36,7 +37,8 @@ const who = $("who");
 const btnBack = $("btnBackToGames");
 const hintEl = $("hint");
 
-const TABS = ["subscribers", "subscriptions", "tasks"];
+const TABS = PAGES.subscriptions.tabs;
+const DEFAULT_TAB = TABS[0];
 const tabBtns = { subscribers: $("tabSubscribers"), subscriptions: $("tabSubscriptions"), tasks: $("tabTasks") };
 const sections = { subscribers: $("subsSectionSubscribers"), subscriptions: $("subsSectionSubscriptions"), tasks: $("subsSectionTasks") };
 const grids = { subscribers: $("subscribersGrid"), subscriptions: $("subscriptionsGrid"), tasks: $("tasksGrid") };
@@ -289,22 +291,17 @@ function setBadge(id, count) {
 
 // ===== zakładki + zaznaczenie =====
 
-let activeTab = "subscribers";
+let activeTab = DEFAULT_TAB;
 let selected = null; // { tab, id }
 
-function tabFromUrl() {
-  const tab = new URLSearchParams(location.search).get("tab");
-  if (TABS.includes(tab)) return tab;
-  return focusTaskToken ? "tasks" : "subscribers";
+// Link z tokenem zadania (?t=) bez ?tab= otwiera kartę „Zadania”.
+function startTab() {
+  return tabFromUrl(TABS, focusTaskToken ? "tasks" : DEFAULT_TAB);
 }
 
 function setActiveTab(tab) {
-  activeTab = TABS.includes(tab) ? tab : "subscribers";
-  const url = new URL(location.href);
-  if (url.searchParams.get("tab") !== activeTab) {
-    url.searchParams.set("tab", activeTab);
-    history.replaceState(history.state, "", url);
-  }
+  activeTab = TABS.includes(tab) ? tab : DEFAULT_TAB;
+  setTab(activeTab, DEFAULT_TAB);
   for (const k of TABS) {
     const on = k === activeTab;
     sections[k]?.classList.toggle("active", on);
@@ -945,7 +942,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       tabBtns[next]?.focus();
     });
   });
-  setActiveTab(tabFromUrl());
+  setActiveTab(startTab());
 
   btnResend?.addEventListener("click", resendSelected);
   btnAccept?.addEventListener("click", acceptSelected);

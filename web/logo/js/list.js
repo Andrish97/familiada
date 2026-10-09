@@ -16,6 +16,8 @@ import { loadFont5x7, buildLogoPreviewCanvas } from "../../shared/js/core/logo-p
 import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-09T22521";
 import { initI18n, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-09T22521";
 import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-09T22521";
+import { PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-09T22521";
+import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-09T22521";
 import { isMobileDevice } from "../../shared/js/core/pwa.js?v=v2026-10-09T22521";
 import { isPhoneScreen } from "../../shared/js/core/device-guard.js?v=v2026-10-09T22521";
 import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-09T22521";
@@ -149,11 +151,12 @@ function modeLabel(mode) {
   return t(`logoEditor.modes.${String(mode || "image").toLowerCase()}`);
 }
 
-const LIST_MODES = new Set(["TEXT", "DRAW", "IMAGE"]);
+// Karty z mapy stron (nazwy małymi literami w adresie, tryby wielkimi w kodzie).
+const LOGO_TABS = PAGES.logoEditor.tabs;
+const DEFAULT_LOGO_TAB = LOGO_TABS[0];
 
 function listModeFromUrl() {
-  const mode = String(new URLSearchParams(location.search).get("tab") || "text").toUpperCase();
-  return LIST_MODES.has(mode) ? mode : "TEXT";
+  return tabFromUrl(LOGO_TABS, DEFAULT_LOGO_TAB).toUpperCase();
 }
 
 function listModeForLogo(logo) {
@@ -163,7 +166,7 @@ function listModeForLogo(logo) {
 }
 
 function setActiveListMode(mode, { updateUrl = true } = {}) {
-  activeListMode = LIST_MODES.has(mode) ? mode : "TEXT";
+  activeListMode = String(mode || "").toUpperCase();
   const hintKeys = {
     TEXT: "logoEditor.create.textSubtitle",
     DRAW: "logoEditor.create.drawSubtitle",
@@ -178,12 +181,7 @@ function setActiveListMode(mode, { updateUrl = true } = {}) {
   const selected = logos.find((logo) => logo.id === selectedId);
   if (selected && listModeForLogo(selected) !== activeListMode) selectedId = null;
   if (updateUrl) {
-    const url = new URL(location.href);
-    if (activeListMode === "TEXT") url.searchParams.delete("tab");
-    else url.searchParams.set("tab", activeListMode.toLowerCase());
-    // replaceState: przeglądarkowe „Wstecz” wraca do poprzedniej STRONY,
-    // nie przełącza kart (docs/nawigacja-mapa-plan.md).
-    if (url.href !== location.href) history.replaceState(history.state, "", url);
+    setTab(activeListMode.toLowerCase(), DEFAULT_LOGO_TAB);
   }
   renderList();
 }
