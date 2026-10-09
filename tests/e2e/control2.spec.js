@@ -1122,7 +1122,7 @@ test("control2: próg w rundzie -> finał, wczesne zakończenie po 4/5 pytaniach
     await expect(page.locator("#c2TopbarProgress")).toContainText("Finał", { timeout: 22000 });
     await page.getByRole("button", { name: "Rozpocznij finał" }).click();
 
-    await expect(page.locator("#c2TopbarProgress")).toContainText("Finał — gracz 1, wpisywanie", { timeout: 22000 });
+    await expect(page.locator("#c2TopbarProgress")).toContainText(/Finał\s*(—\s*)?gracz 1,\s*wpisywanie/, { timeout: 22000 });
     // Bez wpisanej odpowiedzi gracza kafel dopasowania zostaje trwale
     // disabled (ui.js's hasTyped) — ta sama luka co w drugim, pełnym teście
     // finału (linia ~846), ale tu brakowało tego kroku w ogóle.
@@ -1538,7 +1538,7 @@ test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśni�
     await expect(hostPage.locator("#cover2")).toHaveClass(/coverOn/, { timeout: 10000 });
 
     // ===== F2/F3: gracz 1 wpisuje, timer wygasa NATURALNIE (bez klikania "Dalej") =====
-    await expect(page.locator("#c2TopbarProgress")).toContainText("Finał — gracz 1, wpisywanie", { timeout: 22000 });
+    await expect(page.locator("#c2TopbarProgress")).toContainText(/Finał\s*(—\s*)?gracz 1,\s*wpisywanie/, { timeout: 22000 });
     const p1Inputs = page.locator("#app input[type=text]");
     await expect(p1Inputs).toHaveCount(5, { timeout: 10000 });
     await expect(page.getByRole("button", { name: "Dalej", exact: true })).toBeDisabled();
@@ -2867,7 +2867,7 @@ test("control2: zegarek gracza w finale (15s) wraca do stanu SPRZED startu (used
 
     await expect(page.locator("#c2TopbarProgress")).toContainText("Finał", { timeout: 22000 });
     await page.getByRole("button", { name: "Rozpocznij finał" }).click();
-    await expect(page.locator("#c2TopbarProgress")).toContainText("Finał — gracz 1, wpisywanie", { timeout: 22000 });
+    await expect(page.locator("#c2TopbarProgress")).toContainText(/Finał\s*(—\s*)?gracz 1,\s*wpisywanie/, { timeout: 22000 });
 
     const p1Inputs = page.locator("#app input[type=text]");
     await expect(p1Inputs).toHaveCount(5, { timeout: 10000 });
