@@ -84,7 +84,7 @@ export function createUI({ root, emit }) {
     return el;
   }
   function shortcutsAllowed() {
-    return ![...document.querySelectorAll(".overlay, .gsOverlay, .helpOverlay, .legalOverlay, .qrModalOverlay, [role='dialog']")].some((el) => el.getClientRects().length && getComputedStyle(el).visibility !== "hidden");
+    return ![...document.querySelectorAll(".overlay, .gsOverlay, .helpOverlay, .legalOverlay, [role='dialog']")].some((el) => el.getClientRects().length && getComputedStyle(el).visibility !== "hidden");
   }
   document.addEventListener("pointerdown", (event) => {
     if (root.contains(event.target)) keyboardTarget = null;

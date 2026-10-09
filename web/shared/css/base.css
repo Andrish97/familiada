@@ -820,6 +820,35 @@ main{
     min-height: 140px
 }
 
+/* Kod połączenia urządzenia w oknie (okno QR w ankiecie i w Control) */
+.uni-code {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    max-width: 260px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 18px;
+    background: rgba(255,234,166,.07);
+    border: 1px solid rgba(255,234,166,.22);
+    border-radius: 12px;
+    box-sizing: border-box
+}
+
+.uni-code-val {
+    font-size: 2rem;
+    font-weight: 900;
+    letter-spacing: .32em;
+    color: #ffeaa6;
+    font-variant-numeric: tabular-nums;
+    font-family: ui-monospace, 'SF Mono', Monaco, 'Cascadia Mono', monospace
+}
+
+.uni-modal .uni-hint {
+    text-align: center;
+    line-height: 1.4
+}
+
 .uni-foot {
     margin-top: 14px;
     padding-top: 12px;

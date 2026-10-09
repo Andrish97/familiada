@@ -1075,7 +1075,7 @@ async function main() {
   document.addEventListener("keydown", (e) => {
     const main = isMacLike() ? e.metaKey : e.ctrlKey;
     if (!main || e.key !== "Enter" || e.shiftKey || e.altKey || e.repeat || e.isComposing || (isMacLike() ? e.ctrlKey : e.metaKey)) return;
-    if ([...document.querySelectorAll(".overlay, .gsOverlay, .helpOverlay, .legalOverlay, .qrModalOverlay, [role='dialog']")].some((el) => el.getClientRects().length && getComputedStyle(el).visibility !== "hidden")) return;
+    if ([...document.querySelectorAll(".overlay, .gsOverlay, .helpOverlay, .legalOverlay, [role='dialog']")].some((el) => el.getClientRects().length && getComputedStyle(el).visibility !== "hidden")) return;
     const step = store.state.step;
     if (step !== "f_p1_entry" && step !== "f_p2_entry") return;
     // Skrót woła engine.dispatch() BEZPOŚREDNIO, z pominięciem
