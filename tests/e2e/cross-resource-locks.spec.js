@@ -12,6 +12,15 @@
 const { test, expect } = require("@playwright/test");
 const { loginAsTestUser, testAccountUsername } = require("./helpers/login");
 
+// Testy puli logo (Warstwa B: otwarte ustawienia/Control KTÓREJKOLWIEK gry
+// właściciela blokują edycję i usuwanie wszystkich jego logo) muszą działać na
+// koncie, na którym nikt inny nie prowadzi rozgrywki ani nie otwiera ustawień:
+// test1..test<workery> to pula control2 (Control w równoległych plikach tego
+// samego przebiegu), a test1 używa też record-playthrough. test8 nie jest ani
+// w puli Control (4 workery), ani w edytorach gier; subscriptions używa go
+// tylko jako zaproszonego i odbiorcy maili.
+const LOGO_POOL_ACCOUNT = testAccountUsername(8);
+
 async function waitForLock(page, resourceType, resourceId, timeoutMs = 10000) {
   const start = Date.now();
   while (Date.now() - start < timeoutMs) {
@@ -198,7 +207,7 @@ test("usuwanie gry: działa normalnie, gdy nic jej nie blokuje", async ({ page, 
 
 test("usuwanie logo: zablokowane, gdy używająca go gra ma teraz otwarte ustawienia", async ({ page, context }) => {
   test.setTimeout(60_000);
-  await loginAsTestUser(page, context);
+  await loginAsTestUser(page, context, { username: LOGO_POOL_ACCOUNT });
 
   const logoName = `E2E-XLOCK-LOGO-${Date.now()}`;
   const { logoId, gameId } = await page.evaluate(async (logoName) => {
@@ -267,7 +276,8 @@ test("usuwanie logo: działa normalnie, gdy nic go nie blokuje", async ({ page, 
   // fail, CI 2026-09-27). test8 nie używa nikt inny do ustawień gier/logo
   // (pula control2 to test1..test<liczba workerów>; subscriptions używa test8
   // tylko jako zaproszonego, bez ustawień i logo).
-  await loginAsTestUser(page, context, { username: testAccountUsername(8) });
+  await loginAsTestUser(page, context, { username: LOGO_POOL_ACCOUNT });
+  await waitForLogoPoolFree(page); // poprzedni test mógł zostawić blokadę ustawień (TTL)
 
   const logoName = `E2E-XLOCK-LOGOFREE-${Date.now()}`;
   const logoId = await page.evaluate(async (logoName) => {
@@ -516,7 +526,7 @@ test("edytor blokuje ankietę tej samej gry", async ({ page, context }) => {
     await editorPage.close();
 
     await expect(page.locator("#resourceLockGuard")).toBeHidden({ timeout: 40000 });
-    await expect(page.locator("#gName")).not.toBeEmpty({ timeout: 10000 });
+    await expect(page.locator("#pollGameName")).not.toBeEmpty({ timeout: 10000 });
   } finally {
     await page.evaluate(async (id) => { await window.__sbClient.from("games").delete().eq("id", id); }, gameId);
   }
@@ -700,7 +710,7 @@ function blankGlyphPayload() {
 
 test("edytor logo: druga karta nie może edytować tego samego logo", async ({ page, context }) => {
   test.setTimeout(60_000);
-  await loginAsTestUser(page, context);
+  await loginAsTestUser(page, context, { username: LOGO_POOL_ACCOUNT });
 
   const logoName = `E2E-XLOCK-LOGOEDIT-${Date.now()}`;
   const logoId = await page.evaluate(async ({ name, payload }) => {
@@ -747,7 +757,7 @@ test("edytor logo: druga karta nie może edytować tego samego logo", async ({ p
 
 test("edytor logo: edycja i zmiana nazwy DOWOLNEGO logo zablokowane, gdy game-settings.js ma otwartą inną grę użytkownika", async ({ page, context }) => {
   test.setTimeout(60_000);
-  await loginAsTestUser(page, context);
+  await loginAsTestUser(page, context, { username: LOGO_POOL_ACCOUNT });
 
   const logoName = `E2E-XLOCK-LOGOPOOL-${Date.now()}`;
   const { logoId, gameId } = await page.evaluate(async ({ name, payload }) => {

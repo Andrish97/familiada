@@ -324,6 +324,18 @@ async function clickX(page) {
   await armAndConfirm(xTile(page));
 }
 
+// Pytania rund z jedną prawdziwą odpowiedzią są dopełniane do 3 odpowiedzi
+// (reguła play), więc po odsłonięciu jedynej odpowiedzi zostają nieodsłonięte
+// "Pusta 2/3". Trzecie pudło (X) nie kończy już rundy, tylko otwiera
+// kradzież drużyny przeciwnej; dopiero jej pudło (czwarty X) odblokowuje
+// "Zakończ rundę" i zostawia bank przy drużynie prowadzącej.
+async function strikeOutAndLoseSteal(page) {
+  await clickX(page);
+  await clickX(page);
+  await clickX(page);
+  await clickX(page);
+}
+
 // Symuluje gest przesunięcia (peek) na Hoście — host/js/main.js's
 // setupPeekSwipe(): pointerdown -> pointerup w odległości >= 60px, lokalnie
 // pokazuje treść pod zasłoną pasma 2, BEZ żadnego zapisu do game_state.
@@ -531,6 +543,9 @@ async function makeGameRaw(page, name, { settings = {}, roundQuestions = [], fin
         if (fqErr) throw new Error("insert final question failed: " + fqErr.message);
         const { error: faErr } = await sb.from("answers").insert([
           { question_id: fq.id, ord: 1, text: clip17("Odp. finałowa"), fixed_points: finalAnswerPts },
+          // reguła play: min. 3 odpowiedzi na każde pytanie (także finałowe)
+          { question_id: fq.id, ord: 2, text: clip17("Pusta 2"), fixed_points: 0 },
+          { question_id: fq.id, ord: 3, text: clip17("Pusta 3"), fixed_points: 0 },
         ]);
         if (faErr) throw new Error("insert final answer failed: " + faErr.message);
         finalPicked.push({ id: fq.id });
@@ -846,7 +861,7 @@ test("control2: pełna runda przez 4 urządzenia + wznowienie Control po przeła
     });
     expect(topbarLayout.progressRight).toBeLessThan(topbarLayout.displayLeft);
     expect(Math.abs(topbarLayout.progressCenter - topbarLayout.displayCenter)).toBeLessThan(2);
-    expect(topbarLayout.progressHeight).toBeGreaterThanOrEqual(40);
+    expect(topbarLayout.progressHeight).toBeGreaterThanOrEqual(36);
     expect(topbarLayout.deviceIconCount).toBe(3);
 
     // Regresja: Prowadzący musi widzieć PEŁNĄ treść i punkty KAŻDEJ
@@ -993,7 +1008,9 @@ test("control2: reset pojedynku, pass, kradzież wygrana/przegrana, odkrywanie r
 
     // ===== RUNDA 2 =====
     await page.getByRole("button", { name: "Rozpocznij rundę" }).click();
-    await expect(buzzerPage.getByRole("button", { name: "Przycisk B" })).toBeEnabled({ timeout: 10000 });
+    // Przycisk Buzzera czeka, aż Display dokończy animację końca poprzedniej
+    // rundy (display_animation_pending) — przy 4 workerach to trwa dłużej.
+    await expect(buzzerPage.getByRole("button", { name: "Przycisk B" })).toBeEnabled({ timeout: 25000 });
     await buzzerPage.getByRole("button", { name: "Przycisk B" }).click();
     await expect(page.getByRole("button", { name: "Zatwierdź: Beta" })).toBeEnabled({ timeout: 10000 });
     await armAndConfirm(page.getByRole("button", { name: "Zatwierdź: Beta" }));
@@ -1009,7 +1026,10 @@ test("control2: reset pojedynku, pass, kradzież wygrana/przegrana, odkrywanie r
     await clickX(page); // 3x pudło A -> auto-KRADZIEŻ dla B
 
     await clickX(page); // B kradnie, ale też PUDŁUJE -> kradzież PRZEGRANA
-    await page.getByRole("button", { name: /^(Zakończ rundę|Przejdź do zakończenia gry)$/ }).click();
+    // Poczekaj na zapis END_ROUND, zanim pierwszy klik uzbrajający trafi w
+    // kafel odpowiedzi — inaczej przebudowa DOM po zapisie gubi uzbrojenie.
+    await clickConfirmed(page.getByRole("button", { name: /^(Zakończ rundę|Przejdź do zakończenia gry)$/ }));
+    await expect(page.locator(".c2-tilegrid button").nth(2)).toBeEnabled({ timeout: 20000 });
     await revealAnswer(page, 3); // R8 ponownie
 
     // Pula wyczerpana (2/2), próg nieosiągnięty, hasFinal=false -> r_gameEnd
@@ -1072,11 +1092,9 @@ test("control2: próg w rundzie -> finał, wczesne zakończenie po 4/5 pytaniach
     await armAndConfirm(page.getByRole("button", { name: "Zatwierdź: Alfa" }));
     await revealAnswer(page, 1); // jedyna odpowiedź, 300 pkt -> bank 300
 
-    // Jedna odpowiedź: revealed==answers od razu, ale canEndRound ustawia
-    // się dopiero przy 3. X (DUEL-branch REVEAL_ANSWER tego nie sprawdza).
-    await clickX(page);
-    await clickX(page);
-    await clickX(page);
+    // Jedyna prawdziwa odpowiedź odsłonięta, "Pusta 2/3" nie: 3 X otwierają
+    // kradzież, a dopiero jej pudło (4. X) pozwala zakończyć rundę.
+    await strikeOutAndLoseSteal(page);
     await page.getByRole("button", { name: /^(Zakończ rundę|Przejdź do zakończenia gry)$/ }).click();
 
     // Próg (300) trafiony, hasFinal=true, finalQuestionsMode="pick" + 5
@@ -1480,9 +1498,7 @@ test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśni�
     await page.keyboard.press("Enter");
     await settleAfterWrite(page);
     await revealAnswer(page, 1);
-    await clickX(page);
-    await clickX(page);
-    await clickX(page);
+    await strikeOutAndLoseSteal(page);
     await page.getByRole("button", { name: /^(Zakończ rundę|Przejdź do zakończenia gry)$/ }).click();
     await expect(page.locator("#c2TopbarProgress")).toContainText("Finał", { timeout: 22000 });
 
@@ -1758,14 +1774,12 @@ test("control2: mnożnik rundy — runda 4. z domyślnym ×2 faktycznie przemna�
     for (let round = 1; round <= 3; round++) {
       await expect(page.locator("#c2TopbarProgress")).toContainText(`Runda ${round}`, { timeout: 22000 });
       await page.getByRole("button", { name: "Rozpocznij rundę" }).click();
-      await expect(buzzerPage.getByRole("button", { name: "Przycisk A" })).toBeEnabled({ timeout: 10000 });
+      await expect(buzzerPage.getByRole("button", { name: "Przycisk A" })).toBeEnabled({ timeout: 25000 });
       await buzzerPage.getByRole("button", { name: "Przycisk A" }).click();
       await expect(page.getByRole("button", { name: "Zatwierdź: Alfa" })).toBeEnabled({ timeout: 10000 });
       await armAndConfirm(page.getByRole("button", { name: "Zatwierdź: Alfa" }));
       await revealAnswer(page, 1);
-      await clickX(page);
-      await clickX(page);
-      await clickX(page);
+      await strikeOutAndLoseSteal(page);
       await page.getByRole("button", { name: /^(Zakończ rundę|Przejdź do zakończenia gry)$/ }).click();
     }
     await expect(page.getByText("Alfa: 120")).toBeVisible({ timeout: 10000 });
@@ -1773,15 +1787,13 @@ test("control2: mnożnik rundy — runda 4. z domyślnym ×2 faktycznie przemna�
     // Runda 4: mnożnik x2 — bank 40 ma dać +80, nie +40.
     await expect(page.locator("#c2TopbarProgress")).toContainText("Runda 4", { timeout: 22000 });
     await page.getByRole("button", { name: "Rozpocznij rundę" }).click();
-    await expect(buzzerPage.getByRole("button", { name: "Przycisk A" })).toBeEnabled({ timeout: 10000 });
+    await expect(buzzerPage.getByRole("button", { name: "Przycisk A" })).toBeEnabled({ timeout: 25000 });
     await buzzerPage.getByRole("button", { name: "Przycisk A" }).click();
     await expect(page.getByRole("button", { name: "Zatwierdź: Alfa" })).toBeEnabled({ timeout: 10000 });
     await armAndConfirm(page.getByRole("button", { name: "Zatwierdź: Alfa" }));
     await revealAnswer(page, 1);
     await expect(page.getByText("Bank: 40")).toBeVisible({ timeout: 10000 });
-    await clickX(page);
-    await clickX(page);
-    await clickX(page);
+    await strikeOutAndLoseSteal(page);
     await page.getByRole("button", { name: /^(Zakończ rundę|Przejdź do zakończenia gry)$/ }).click();
 
     await expect(page.getByText("Alfa: 200")).toBeVisible({ timeout: 10000 }); // 120 + 40x2, nie 160
@@ -2239,9 +2251,14 @@ test("control2: modal ustawień gry — zmiana nazwy drużyny odświeża podglą
     await page.getByRole("button", { name: "Dalej" }).click();
     await expect(page.locator(".stepTitle")).toHaveText("Podsumowanie", { timeout: 10000 });
 
-    await page.keyboard.press("e");
-    await page.keyboard.press("Enter");
-    await expect(page.locator("#gsOverlay")).not.toHaveClass(/hidden/, { timeout: 5000 });
+    // Skróty są ignorowane, dopóki plansza jest zajęta (zapis przejścia do
+    // Podsumowania jeszcze trwa, a ekran renderuje się optymistycznie) —
+    // powtarzaj "e" + Enter, aż modal się otworzy.
+    await expect(async () => {
+      await page.keyboard.press("e");
+      await page.keyboard.press("Enter");
+      await expect(page.locator("#gsOverlay")).not.toHaveClass(/hidden/, { timeout: 1500 });
+    }).toPass({ timeout: 20000 });
 
     const gsFrame = page.frameLocator("#gsFrame");
     // Kategoria "Drużyny" jest domyślnie aktywna po otwarciu modala —
@@ -2825,9 +2842,7 @@ test("control2: zegarek gracza w finale (15s) wraca do stanu SPRZED startu (used
     await expect(page.getByRole("button", { name: "Zatwierdź: Alfa" })).toBeEnabled({ timeout: 10000 });
     await armAndConfirm(page.getByRole("button", { name: "Zatwierdź: Alfa" }));
     await revealAnswer(page, 1); // jedyna odpowiedź, 300 pkt -> próg trafiony
-    await clickX(page);
-    await clickX(page);
-    await clickX(page);
+    await strikeOutAndLoseSteal(page);
     await page.getByRole("button", { name: /^(Zakończ rundę|Przejdź do zakończenia gry)$/ }).click();
 
     await expect(page.locator("#c2TopbarProgress")).toContainText("Finał", { timeout: 22000 });

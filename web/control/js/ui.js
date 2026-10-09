@@ -554,7 +554,6 @@ export function createUI({ root, emit }) {
     const questionSummarySections = sections.filter(isQuestionSection);
     const leftSummarySections = sections.filter((section) => !section.classList.contains("c2-summary-display") && !section.classList.contains("c2-summary-sound") && !isQuestionSection(section));
     const rightSummarySections = sections.filter((section) => section.classList.contains("c2-summary-sound"));
-    const settingSummarySections = [...leftSummarySections, ...rightSummarySections];
 
     const defaultAdvanced = {
       roundMultipliers: DEFAULT_SETTINGS.roundMultipliers,
@@ -588,6 +587,8 @@ export function createUI({ root, emit }) {
     if (advancedRows.length) {
       leftSummarySections.push(summarySection(t("control.summaryGame"), h("div", { class: "c2-advanced-settings" }, advancedRows), "c2-summary-advanced"));
     }
+    // Po dodaniu sekcji ustawień zaawansowanych (push do leftSummarySections).
+    const settingSummarySections = [...leftSummarySections, ...rightSummarySections];
 
     const finalIncomplete = hasFinal && (state.final.picked?.length !== 5 || !state.final.confirmed);
     // Zgłoszone: "Gotowe przejdź do rozgrywki ma inny styl niż pozostałe

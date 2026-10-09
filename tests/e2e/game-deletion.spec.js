@@ -69,11 +69,25 @@ test("usunięcie gry przez UI czyści folder audio w buckecie user-sounds", asyn
     }, { timeout: 15000, message: "gra powinna zniknąć z bazy po usunięciu" })
     .toBe(0);
 
-  // Kluczowa asercja: folder w buckecie user-sounds ma być pusty/nie istnieć
-  const after = await page.evaluate(async ({ userId, gameId }) => {
-    const sb = window.__sbClient;
-    const { data } = await sb.storage.from("user-sounds").list(`${userId}/${gameId}`);
-    return data;
-  }, { userId, gameId });
-  expect(after?.length ?? 0, "plik audio nie powinien już istnieć w buckecie po usunięciu gry").toBe(0);
+  // Kluczowa asercja: folder w buckecie user-sounds ma być pusty/nie istnieć.
+  // Pliki usuwa teraz baza asynchronicznie (kolejka storage_cleanup_queue,
+  // migracja 313: edge function storage-cleanup wołana przez pg_net po
+  // zatwierdzeniu, ponowienia co 10 min z pg_cron), a games.js dodatkowo
+  // sprząta folder po stronie klienta dopiero PO odpowiedzi RPC -- więc
+  // sprawdzenie zaraz po zniknięciu wiersza gry było wyścigiem. Czekamy, a
+  // wpisy-zaślepki folderu (.emptyFolderPlaceholder) nie liczą się jako pliki.
+  await expect
+    .poll(async () => {
+      return await page.evaluate(async ({ userId, gameId }) => {
+        const sb = window.__sbClient;
+        const { data, error } = await sb.storage.from("user-sounds").list(`${userId}/${gameId}`);
+        if (error) return `error: ${error.message}`;
+        return (data || []).filter((f) => f.name !== ".emptyFolderPlaceholder").map((f) => f.name);
+      }, { userId, gameId });
+    }, {
+      timeout: 60000,
+      intervals: [1000, 2000, 3000],
+      message: "plik audio nie powinien już istnieć w buckecie po usunięciu gry",
+    })
+    .toEqual([]);
 });
