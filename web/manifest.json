@@ -10,12 +10,12 @@
   "orientation": "any",
   "icons": [
     {
-      "src": "/assets/img/icon.png?v=v2026-10-09T20233",
+      "src": "/assets/img/icon.png?v=v2026-10-09T20381",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "/assets/img/icon.png?v=v2026-10-09T20233",
+      "src": "/assets/img/icon.png?v=v2026-10-09T20381",
       "sizes": "512x512",
       "type": "image/png"
     }

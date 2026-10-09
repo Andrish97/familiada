@@ -1,18 +1,18 @@
 // js/pages/marketplace.js
 
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T20233";
-import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-09T20233";
-import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-09T20233";
-import { initI18n, t, getUiLang, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-09T20233";
-import { linkTo, backHref, renderBackLabel } from "../../shared/js/core/nav-map.js?v=v2026-10-09T20233";
-import { initTopbarAccountDropdown } from "../../shared/js/core/topbar-controller.js?v=v2026-10-09T20233";
-import { exportGame } from "../../games/js/games-import-export.js?v=v2026-10-09T20233";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-09T20233";
-import { toast } from "../../shared/js/core/toast.js?v=v2026-10-09T20233";
-import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-09T20233";
-import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-09T20233";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-09T20233";
-import { icon, iconText, starRating } from "../../shared/js/core/icons.js?v=v2026-10-09T20233";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T20381";
+import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-09T20381";
+import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-09T20381";
+import { initI18n, t, getUiLang, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-09T20381";
+import { linkTo, backHref, renderBackLabel } from "../../shared/js/core/nav-map.js?v=v2026-10-09T20381";
+import { initTopbarAccountDropdown } from "../../shared/js/core/topbar-controller.js?v=v2026-10-09T20381";
+import { exportGame } from "../../games/js/games-import-export.js?v=v2026-10-09T20381";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-09T20381";
+import { toast } from "../../shared/js/core/toast.js?v=v2026-10-09T20381";
+import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-09T20381";
+import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-09T20381";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-09T20381";
+import { icon, iconText, starRating } from "../../shared/js/core/icons.js?v=v2026-10-09T20381";
 
 // Status zgłoszonej gry → wariant oznaczenia (.tag z base.css).
 const MKT_STATUS_TAG = { pending: "tag--warn", published: "tag--ok", rejected: "tag--bad", withdrawn: "tag--muted" };
