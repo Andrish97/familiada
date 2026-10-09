@@ -10,7 +10,7 @@
 // blokady, lista i sprzątanie jednego testu nie wpływają na inne. Pula:
 // LOGO_E2E_ACCOUNTS (domyślnie 2,3,4,6,7) -- bez test1@ (na nim działa
 // nagrywanie rozgrywki e2e-record.yml, a trwająca gra blokuje edycję logo:
-// „prowadzisz rozgrywkę”) i bez test5@/test9@ (Supabase: "Database error
+// „prowadzisz rozgrywkę”) i bez test5@/test9@/test10@ (Supabase: "Database error
 // querying schema"). Logowanie raz na workera (captureSession). Każdy test
 // sprząta swoje logo i pliki (prefiks).
 //

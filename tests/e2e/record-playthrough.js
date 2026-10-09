@@ -1806,7 +1806,7 @@ async function scenarioRecentFixes(pages, { contexts, browser, game }) {
 // /host?id=&key=<share_key_host> -- DOKŁADNIE tym samym mechanizmem co
 // QR/kod, tylko dostarczonym pocztą zamiast zeskanowania. test2@familiada.online
 // to drugie konto z tej samej puli testX co test1 (login.js) -- gwarantowane
-// istniejące na produkcji (e2e-tests.yml's TEST_ACCOUNT_COUNT=10), więc
+// istniejące na produkcji (e2e-tests.yml's TEST_ACCOUNT_COUNT=8), więc
 // resolveToUserId zawsze je znajdzie.
 async function scenarioShareDeviceEmail(pages, { browser }) {
   const { control } = pages;
@@ -1823,7 +1823,7 @@ async function scenarioShareDeviceEmail(pages, { browser }) {
   // logujemy się NA KONTO ODBIORCY w osobnym, efemerycznym kontekście
   // (user_flags ma RLS tylko na własny wiersz -- auth.uid()=user_id) i
   // nadpisujemy. Identyczny wzorzec jak w control2.spec.js's @mailbox test
-  // dla tego samego scenariusza (tam na test10, nie test2 -- inne konto
+  // dla tego samego scenariusza (tam na test7, nie test2 -- inne konto
   // odbiorcy, ten sam mechanizm).
   //
   // Ten sam kontekst usuwa też od razu udostępnienie z poprzedniego

@@ -117,7 +117,7 @@ async function acquireLockDirect(page, resourceType, resourceId, context = "e2e-
 
 test("@mailbox bazy: udostępnienie z UI wysyła działający link", async ({ page, context }) => {
   test.setTimeout(120_000);
-  const recipient = testAccountUsername(10);
+  const recipient = testAccountUsername(6);
   const name = `E2E-MAIL-BASE-${Date.now()}`;
   let baseId;
 
