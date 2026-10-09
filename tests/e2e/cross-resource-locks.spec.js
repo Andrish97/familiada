@@ -150,7 +150,7 @@ test("usuwanie gry: zablokowane, gdy edytor jest otwarty w innej karcie", async 
 
   const editorPage = await context.newPage();
   try {
-    await editorPage.goto(`https://www.familiada.online/editor?id=${gameId}`, { waitUntil: "domcontentloaded" });
+    await editorPage.goto(`https://www.familiada.online/games/editor?id=${gameId}`, { waitUntil: "domcontentloaded" });
     await editorPage.waitForLoadState("networkidle");
     await waitForLock(editorPage, "game", gameId);
 
@@ -237,7 +237,7 @@ test("usuwanie logo: zablokowane, gdy używająca go gra ma teraz otwarte ustawi
 
   const settingsPage = await context.newPage();
   try {
-    await settingsPage.goto(`https://www.familiada.online/game-settings?id=${gameId}`, { waitUntil: "domcontentloaded" });
+    await settingsPage.goto(`https://www.familiada.online/games/settings?id=${gameId}`, { waitUntil: "domcontentloaded" });
     await settingsPage.waitForLoadState("networkidle");
     await waitForLock(settingsPage, "game", gameId);
 
@@ -362,7 +362,7 @@ test("edytor: zasób usunięty w trakcie edycji (gdziekolwiek, nie tylko przez d
   }, gameName);
 
   try {
-    await page.goto(`https://www.familiada.online/editor?id=${gameId}`, { waitUntil: "domcontentloaded" });
+    await page.goto(`https://www.familiada.online/games/editor?id=${gameId}`, { waitUntil: "domcontentloaded" });
     await page.waitForLoadState("networkidle");
     await waitForLock(page, "game", gameId);
 
@@ -410,11 +410,11 @@ test("edytor blokuje ustawienia tej samej gry", async ({ page, context }) => {
 
   const editorPage = await context.newPage();
   try {
-    await editorPage.goto(`https://www.familiada.online/editor?id=${gameId}`, { waitUntil: "domcontentloaded" });
+    await editorPage.goto(`https://www.familiada.online/games/editor?id=${gameId}`, { waitUntil: "domcontentloaded" });
     await editorPage.waitForLoadState("networkidle");
     await waitForLock(editorPage, "game", gameId);
 
-    await page.goto(`https://www.familiada.online/game-settings?id=${gameId}`, { waitUntil: "domcontentloaded" });
+    await page.goto(`https://www.familiada.online/games/settings?id=${gameId}`, { waitUntil: "domcontentloaded" });
     await page.waitForLoadState("networkidle");
 
     await expect(page.locator("#resourceLockGuard")).toBeVisible({ timeout: 10000 });
@@ -446,11 +446,11 @@ test("ustawienia blokują edytor tej samej gry", async ({ page, context }) => {
 
   const settingsPage = await context.newPage();
   try {
-    await settingsPage.goto(`https://www.familiada.online/game-settings?id=${gameId}`, { waitUntil: "domcontentloaded" });
+    await settingsPage.goto(`https://www.familiada.online/games/settings?id=${gameId}`, { waitUntil: "domcontentloaded" });
     await settingsPage.waitForLoadState("networkidle");
     await waitForLock(settingsPage, "game", gameId);
 
-    await page.goto(`https://www.familiada.online/editor?id=${gameId}`, { waitUntil: "domcontentloaded" });
+    await page.goto(`https://www.familiada.online/games/editor?id=${gameId}`, { waitUntil: "domcontentloaded" });
     await page.waitForLoadState("networkidle");
 
     await expect(page.locator("#resourceLockGuard")).toBeVisible({ timeout: 10000 });
@@ -492,7 +492,7 @@ test("ankieta blokuje edytor tej samej gry", async ({ page, context }) => {
     await pollsPage.waitForLoadState("networkidle");
     await waitForLock(pollsPage, "game", gameId);
 
-    await page.goto(`https://www.familiada.online/editor?id=${gameId}`, { waitUntil: "domcontentloaded" });
+    await page.goto(`https://www.familiada.online/games/editor?id=${gameId}`, { waitUntil: "domcontentloaded" });
     await page.waitForLoadState("networkidle");
 
     await expect(page.locator("#resourceLockGuard")).toBeVisible({ timeout: 10000 });
@@ -524,7 +524,7 @@ test("edytor blokuje ankietę tej samej gry", async ({ page, context }) => {
 
   const editorPage = await context.newPage();
   try {
-    await editorPage.goto(`https://www.familiada.online/editor?id=${gameId}`, { waitUntil: "domcontentloaded" });
+    await editorPage.goto(`https://www.familiada.online/games/editor?id=${gameId}`, { waitUntil: "domcontentloaded" });
     await editorPage.waitForLoadState("networkidle");
     await waitForLock(editorPage, "game", gameId);
 
@@ -565,7 +565,7 @@ test("games.js: zmiana nazwy gry zablokowana alert-modalem, gdy gra jest edytowa
 
   const editorPage = await context.newPage();
   try {
-    await editorPage.goto(`https://www.familiada.online/editor?id=${gameId}`, { waitUntil: "domcontentloaded" });
+    await editorPage.goto(`https://www.familiada.online/games/editor?id=${gameId}`, { waitUntil: "domcontentloaded" });
     await editorPage.waitForLoadState("networkidle");
     await waitForLock(editorPage, "game", gameId);
 
@@ -618,7 +618,7 @@ test("games.js: reset gry do draftu po ankiecie zablokowany alert-modalem, gdy g
 
   const settingsPage = await context.newPage();
   try {
-    await settingsPage.goto(`https://www.familiada.online/game-settings?id=${gameId}`, { waitUntil: "domcontentloaded" });
+    await settingsPage.goto(`https://www.familiada.online/games/settings?id=${gameId}`, { waitUntil: "domcontentloaded" });
     await settingsPage.waitForLoadState("networkidle");
     await waitForLock(settingsPage, "game", gameId);
 
@@ -677,7 +677,7 @@ test("games.js: eksport gry zablokowany alert-modalem, gdy gra jest edytowana gd
 
   const editorPage = await context.newPage();
   try {
-    await editorPage.goto(`https://www.familiada.online/editor?id=${gameId}`, { waitUntil: "domcontentloaded" });
+    await editorPage.goto(`https://www.familiada.online/games/editor?id=${gameId}`, { waitUntil: "domcontentloaded" });
     await editorPage.waitForLoadState("networkidle");
     await waitForLock(editorPage, "game", gameId);
 
@@ -787,7 +787,7 @@ test("edytor logo: edycja i zmiana nazwy DOWOLNEGO logo zablokowane, gdy game-se
 
   const settingsPage = await context.newPage();
   try {
-    await settingsPage.goto(`https://www.familiada.online/game-settings?id=${gameId}`, { waitUntil: "domcontentloaded" });
+    await settingsPage.goto(`https://www.familiada.online/games/settings?id=${gameId}`, { waitUntil: "domcontentloaded" });
     await settingsPage.waitForLoadState("networkidle");
     await waitForLock(settingsPage, "game", gameId);
 

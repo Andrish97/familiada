@@ -21,8 +21,8 @@
 // from strony, która go niesie; łańcuch dłuższy niż MAX_RET_DEPTH, obcy albo
 // zepsuty ret oznacza powrót do parent. Bez fallbacków i aliasów.
 
-import { getUiLang, t } from "../../translation/translation.js?v=v2026-10-09T12154";
-import { iconText } from "./icons.js?v=v2026-10-09T12154";
+import { getUiLang, t } from "../../translation/translation.js?v=v2026-10-09T12183";
+import { iconText } from "./icons.js?v=v2026-10-09T12183";
 
 export const MAX_RET_DEPTH = 4;
 
@@ -30,7 +30,7 @@ export const PAGES = {
   home:          { path: "/",                   access: "public", parent: null },
   login:         { path: "/login/",             access: "public", parent: "home" },
   games:         { path: "/games/",             access: "guest",  parent: null, from: [], manual: "general", state: ["tab"] },
-  editor:        { path: "/editor/",            access: "guest",  parent: "games", from: ["games"], manual: "edit", state: ["id", "q"] },
+  editor:        { path: "/games/editor/",     access: "guest",  parent: "games", from: ["games"], manual: "edit", state: ["id", "q"] },
   polls:         { path: "/polls/",             access: "user",   parent: "games", from: ["games", "subscriptions"], manual: "polls", state: ["id"] },
   subscriptions: { path: "/subscriptions/",     access: "user",   parent: "games", from: ["games", "bases", "polls"], manual: "subscriptions", state: ["tab"] },
   bases:         { path: "/bases/",             access: "guest",  parent: "games", from: ["games", "subscriptions", "baseExplorer"], manual: "bases", state: ["tab"] },
@@ -40,7 +40,7 @@ export const PAGES = {
   logoDraw:      { path: "/logo/editor-draw/",  access: "guest",  parent: "logoEditor", from: ["logoEditor"], manual: "logo", device: "noPhone", state: ["id"] },
   logoImage:     { path: "/logo/editor-image/", access: "guest",  parent: "logoEditor", from: ["logoEditor"], manual: "logo", device: "noPhone", state: ["id"] },
   control:       { path: "/control/",           access: "guest",  parent: "games", from: ["games", "gameSettings"], manual: "control", device: "wide", state: ["id"] },
-  gameSettings:  { path: "/game-settings/",     access: "guest",  parent: "control", parentParams: ["id"], from: ["games", "control"], manual: "gameSettings", device: "wide", state: ["id"] },
+  gameSettings:  { path: "/games/settings/",   access: "guest",  parent: "control", parentParams: ["id"], from: ["games", "control"], manual: "gameSettings", device: "wide", state: ["id"] },
   marketplace:   { path: "/marketplace/",       access: "public", parent: "games", parentAnon: "home", subpaths: true, from: ["home", "games"], manual: "community", state: ["tab"] },
   connectDevice: { path: "/connect-device/",    access: "public", parent: "games", parentAnon: "home", from: ["home", "games"], manual: "connect" },
   account:       { path: "/account/",           access: "guest",  parent: "games", from: ["games"], manual: "general" },

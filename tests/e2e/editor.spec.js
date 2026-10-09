@@ -27,7 +27,7 @@ const { serveBranchCode } = require("./helpers/branch-code");
 test.use({ serviceWorkers: "block" });
 
 test.beforeEach(async ({ context }) => {
-  await serveBranchCode(context, { pages: ["editor", "base-explorer"] });
+  await serveBranchCode(context, { pages: ["games/editor", "base-explorer"] });
 });
 
 /* ================= Seed / DB helpers (bezpośrednio przez window.__sbClient) ================= */
@@ -110,7 +110,7 @@ async function deleteGame(page, gameId) {
 }
 
 async function openEditor(page, gameId) {
-  await page.goto(`https://www.familiada.online/editor?id=${gameId}`, { waitUntil: "domcontentloaded" });
+  await page.goto(`https://www.familiada.online/games/editor?id=${gameId}`, { waitUntil: "domcontentloaded" });
   // editor.js wiąże listenery/renderuje dopiero po asynchronicznym
   // requireAuth+initI18n+loadGame w boot() — ten sam wyścig co gdzie indziej.
   await page.waitForLoadState("networkidle");
@@ -492,12 +492,12 @@ test("edytor: wejście na edytor gdy ankieta jest otwarta (poll_open) -> pełna 
       if (error) throw new Error(error.message);
     }, { gameId, key: game.share_key_poll });
 
-    await page.goto(`https://www.familiada.online/editor?id=${gameId}`, { waitUntil: "domcontentloaded" });
+    await page.goto(`https://www.familiada.online/games/editor?id=${gameId}`, { waitUntil: "domcontentloaded" });
     // Blokada stanu (docs/blokady-zasobow.md): pełnoekranowa blokada z powodem
     // z game_validate, strona zostaje na miejscu, wyjście tylko do listy gier.
     await expect(page.locator("#resourceLockGuard")).toBeVisible({ timeout: 15000 });
     await expect(page.locator("#resourceLockGuardMsg")).toContainText(/ankiet/i);
-    await expect(page).toHaveURL(/\/editor/);
+    await expect(page).toHaveURL(/\/games\/editor/);
     await page.locator("#resourceLockGuardBack").click();
     await page.waitForURL(/\/games/, { timeout: 15000 });
   } finally {
@@ -515,7 +515,7 @@ test("edytor: wejście gdy ankieta jest 'ready' i Anuluj w confirmie -> nic się
     const { qId, aId } = await seedPollPointsFull(page, gameId, { firstAnswerPoints: 42 });
     await updateGameStatus(page, gameId, { status: "ready" });
 
-    await page.goto(`https://www.familiada.online/editor?id=${gameId}`, { waitUntil: "domcontentloaded" });
+    await page.goto(`https://www.familiada.online/games/editor?id=${gameId}`, { waitUntil: "domcontentloaded" });
     await expect(page.locator(".uni-modal")).toBeVisible({ timeout: 15000 });
     await page.locator(".uni-foot .btn:not(.gold)").click(); // Anuluj
     await page.waitForURL(/\/games/, { timeout: 15000 });
@@ -538,7 +538,7 @@ test("edytor: wejście gdy ankieta jest 'ready' i OK w confirmie -> realny reset
     const { qId, aId } = await seedPollPointsFull(page, gameId, { firstAnswerPoints: 42 });
     await updateGameStatus(page, gameId, { status: "ready" });
 
-    await page.goto(`https://www.familiada.online/editor?id=${gameId}`, { waitUntil: "domcontentloaded" });
+    await page.goto(`https://www.familiada.online/games/editor?id=${gameId}`, { waitUntil: "domcontentloaded" });
     await expect(page.locator(".uni-modal")).toBeVisible({ timeout: 15000 });
     await page.locator(".uni-foot .btn.gold").click(); // OK — resetuj
 
@@ -770,7 +770,7 @@ test("edytor: nazwa gry dłuższa niż 80 znaków zostaje ucięta do 80", async 
 
 async function newUserContext(browser, username, contextOptions = {}) {
   const ctx = await browser.newContext({ serviceWorkers: "block", ...contextOptions });
-  await serveBranchCode(ctx, { pages: ["editor", "base-explorer"] });
+  await serveBranchCode(ctx, { pages: ["games/editor", "base-explorer"] });
   const pg = await ctx.newPage();
   await loginAsTestUser(pg, ctx, { username });
   return { ctx, page: pg };
@@ -1102,9 +1102,9 @@ test.describe("editor: audyt -- import i wejście na stronę", () => {
   test("nieistniejąca gra: komunikat zostaje do kliknięcia OK, potem powrót do listy gier", async ({ page, context }) => {
     test.setTimeout(60_000);
     await loginAsTestUser(page, context);
-    await page.goto("https://www.familiada.online/editor?id=00000000-0000-4000-8000-000000000000", { waitUntil: "domcontentloaded" });
+    await page.goto("https://www.familiada.online/games/editor?id=00000000-0000-4000-8000-000000000000", { waitUntil: "domcontentloaded" });
     await expect(page.locator(".uni-modal .mSub")).toHaveText("Ta gra nie istnieje albo nie masz do niej dostępu.", { timeout: 15000 });
-    await expect(page).toHaveURL(/\/editor/);
+    await expect(page).toHaveURL(/\/games\/editor/);
     await page.locator(".uni-foot .btn.gold").click();
     await page.waitForURL(/\/games/, { timeout: 15000 });
   });

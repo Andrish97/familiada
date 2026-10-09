@@ -50,13 +50,13 @@ test("logo Hosta: zapis w Ustawieniach rozgrywki i podgląd zapisanego wariantu 
   test.setTimeout(150_000);
   // Konto 9 jest przeznaczone wyłącznie do tych dedykowanych testów; nie jest
   // dodawane do puli kont współdzielonej przez przebiegi Control.
-  await serveBranchCode(context, { pages: ["game-settings", "control", "host", "display"] });
+  await serveBranchCode(context, { pages: ["games/settings", "control", "host", "display"] });
   await loginAsTestUser(page, context, { username: "test9@familiada.online" });
   let game;
   let displayContext;
   try {
     game = await createHostLogoGame(page);
-    await page.goto(`${ORIGIN}/game-settings?id=${game.id}`, { waitUntil: "domcontentloaded" });
+    await page.goto(`${ORIGIN}/games/settings?id=${game.id}`, { waitUntil: "domcontentloaded" });
     await expect(page.locator("#btnSaveAll")).toBeVisible({ timeout: 20_000 });
     // The page skeleton exposes the footer before async setup finishes; wait
     // for the first rendered category so the sidebar handler is installed.

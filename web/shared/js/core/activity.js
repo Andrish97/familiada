@@ -4,7 +4,7 @@ const PAGES = new Set(['home','games','control','editor','game-settings','bases'
 // podfolderów, które mają się liczyć osobno (lista rośnie z przenosinami
 // adresów) i dla stron głosowania uczestnika z zewnątrz (nie są częścią obecności).
 const EXCLUDED_PREFIXES = ['polls/vote'];
-const SUBPAGES = {};
+const SUBPAGES = {'games/editor':'editor','games/settings':'game-settings'};
 export function activityPage(pathname) {
   const segments = pathname.split('/').filter(Boolean);
   const joined = segments.join('/');

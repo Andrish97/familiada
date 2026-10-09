@@ -473,7 +473,7 @@ test.describe("games: audyt -- migracja 272", () => {
       await page.locator("#btnEdit").click();
       await expect(page.locator(".uni-modal .mSub")).toBeVisible({ timeout: 5000 });
       await page.locator(".uni-modal .uni-foot .btn.gold").click();
-      await page.waitForURL(/\/editor/, { timeout: 20000 });
+      await page.waitForURL(/\/games\/editor/, { timeout: 20000 });
 
       const st = await page.evaluate(async (id) => {
         const sb = window.__sbClient;

@@ -40,12 +40,12 @@ test("frontend HTML, module imports, CSS fonts and literal data URLs resolve", (
 });
 
 test("current device pages occupy the canonical folders without legacy copies", () => {
-  for (const device of ["control", "display", "host", "buzzer", "game-settings"]) {
+  for (const device of ["control", "display", "host", "buzzer", "games/settings"]) {
     const dir = path.join(ROOT, device);
     assert.ok(fs.existsSync(path.join(dir, "index.html")), `${device}/index.html`);
     assert.equal(fs.existsSync(path.join(ROOT, `${device}2`)), false, `${device}2 was removed`);
   }
-  for (const file of files.filter(f => /\/(?:control|display|host|buzzer|game-settings|shared)\//.test(f) && f.endsWith(".js"))) {
+  for (const file of files.filter(f => /\/(?:control|display|host|buzzer|games\/settings|shared)\//.test(f) && f.endsWith(".js"))) {
     const source = fs.readFileSync(file, "utf8");
     assert.doesNotMatch(source, /["'`]\/(?:control|display|host|buzzer|game-settings)2(?:\/|\?|["'`])/);
   }

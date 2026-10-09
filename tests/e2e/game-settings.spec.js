@@ -88,7 +88,7 @@ async function deleteGame(page, gameId) {
 }
 
 async function openSettings(page, gameId, extraQuery = "") {
-  await page.goto(`https://www.familiada.online/game-settings?id=${gameId}${extraQuery}`, { waitUntil: "domcontentloaded" });
+  await page.goto(`https://www.familiada.online/games/settings?id=${gameId}${extraQuery}`, { waitUntil: "domcontentloaded" });
   await page.waitForLoadState("networkidle");
 }
 
@@ -613,7 +613,7 @@ test("ustawienia gry: przycisk Wstecz z niezapisanymi zmianami pyta o potwierdze
 
     // Anuluj — zostajemy na stronie ustawień
     await page.locator(".uni-foot .btn:not(.gold)").click();
-    await expect(page).toHaveURL(/game-settings/);
+    await expect(page).toHaveURL(/games\/settings/);
 
     // Ponowna próba, tym razem potwierdzamy wyjście
     await page.locator("#btnBack").click();

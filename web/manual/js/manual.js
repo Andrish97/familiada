@@ -2,13 +2,13 @@
 // Zakładki mają działać nawet jeśli auth się nie załaduje.
 // Najpierw UI, potem auth „miękko”.
 
-import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-09T12154";
-import { initI18n, setUiLang } from "../../shared/translation/translation.js?v=v2026-10-09T12154";
-import { linkTo, backHref, renderBackLabel } from "../../shared/js/core/nav-map.js?v=v2026-10-09T12154";
-import { initTopbarAccountDropdown } from "../../shared/js/core/topbar-controller.js?v=v2026-10-09T12154";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-09T12154";
+import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-09T12183";
+import { initI18n, setUiLang } from "../../shared/translation/translation.js?v=v2026-10-09T12183";
+import { linkTo, backHref, renderBackLabel } from "../../shared/js/core/nav-map.js?v=v2026-10-09T12183";
+import { initTopbarAccountDropdown } from "../../shared/js/core/topbar-controller.js?v=v2026-10-09T12183";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-09T12183";
 
-import { decorateManualControls } from "./controls.js?v=v2026-10-09T12154";
+import { decorateManualControls } from "./controls.js?v=v2026-10-09T12183";
 
 function isModalMode() {
   const p = new URLSearchParams(location.search);
@@ -133,7 +133,7 @@ function wireFallbackNav() {
 
 
 async function wireAuthSoft() {
-  const auth = await import("../../shared/js/core/auth.js?v=v2026-10-09T12154");
+  const auth = await import("../../shared/js/core/auth.js?v=v2026-10-09T12183");
   // Pełna strona jest częścią panelu użytkownika i wymaga sesji. Wersja
   // modalna jest osadzanym dokumentem pomocy — nie może zamienić iframe'u
   // w ekran logowania, gdy auth jest chwilowo niedostępny lub nie istnieje.
