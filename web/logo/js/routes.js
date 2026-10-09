@@ -34,8 +34,3 @@ export function editorUrl(mode, id) {
 export function listBackUrl(mode) {
   return backHref(EDITOR_PAGE_IDS[mode]);
 }
-
-/** Instrukcja (karta „logo”); jej „Wstecz” wraca dokładnie na bieżący adres. */
-export function manualUrl() {
-  return linkTo("manual", { hash: "logo" });
-}

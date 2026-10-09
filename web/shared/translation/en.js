@@ -4060,7 +4060,6 @@ const en = {
       missingBits: "The logo file is damaged — the image is missing.",
       unknownImportFormat: "Unknown file format. Choose a logo file exported from Familiada (.famlogo).",
       deleteFailed: "Couldn't delete.\n\n{error}",
-      noMobileEdit: "Editing a logo needs a bigger screen — open it on a computer or a tablet.",
       noSourceText: "The text of this logo can't be read back, so editing would clear it. Create a new text logo.",
       loadFailed: "Couldn't load the logo.\n\n{error}",
     },

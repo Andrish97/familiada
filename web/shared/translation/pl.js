@@ -3961,7 +3961,6 @@ const pl = {
       missingBits: "Plik logo jest uszkodzony — brak obrazu.",
       unknownImportFormat: "Nieznany format pliku. Wybierz plik logo wyeksportowany z Familiady (.famlogo).",
       deleteFailed: "Nie udało się usunąć.\n\n{error}",
-      noMobileEdit: "Edycja logo wymaga większego ekranu — otwórz ją na komputerze albo tablecie.",
       noSourceText: "Nie da się odczytać napisu z tego logo, więc edycja by go wyczyściła. Utwórz nowe logo tekstowe.",
       loadFailed: "Nie udało się wczytać logo.\n\n{error}",
     },

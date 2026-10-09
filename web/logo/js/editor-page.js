@@ -19,10 +19,8 @@
 //     komunikat z powrotem na listę.
 
 import { loadFont5x7 } from "../../shared/js/core/logo-preview.js?v=v2026-10-09T21300";
-import { requireAuth } from "../../shared/js/core/auth.js?v=v2026-10-09T21300";
 import { initI18n, t } from "../../shared/translation/translation.js?v=v2026-10-09T21300";
-import { renderBackLabel } from "../../shared/js/core/nav-map.js?v=v2026-10-09T21300";
-import { initTopbarAccountDropdown } from "../../shared/js/core/topbar-controller.js?v=v2026-10-09T21300";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-09T21300";
 import { isMobileDevice } from "../../shared/js/core/pwa.js?v=v2026-10-09T21300";
 import { isPhoneScreen } from "../../shared/js/core/device-guard.js?v=v2026-10-09T21300";
 import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-09T21300";
@@ -33,7 +31,7 @@ import { renderPreview } from "./render.js?v=v2026-10-09T21300";
 import { listLogos, fetchLogo, updateLogo, isUniqueViolation } from "./db.js?v=v2026-10-09T21300";
 import { initPreviewPinchZoom, lockPageZoomForPreview, unlockPageZoomAfterPreview } from "./preview-zoom.js?v=v2026-10-09T21300";
 import { cannotEditReason } from "./text.js?v=v2026-10-09T21300";
-import { EDITOR_PAGE_IDS, editModeFor, listBackUrl, manualUrl } from "./routes.js?v=v2026-10-09T21300";
+import { EDITOR_PAGE_IDS, editModeFor, listBackUrl } from "./routes.js?v=v2026-10-09T21300";
 
 const FONT_3x10_URL = "/shared/fonts/display/font_3x10.json?v=v2026-10-09T21300";
 const FONT_5x7_URL = "/shared/fonts/display/font_5x7.json?v=v2026-10-09T21300";
@@ -51,7 +49,6 @@ const $ = (id) => document.getElementById(id);
 export async function bootEditorPage({ mode, initEditor }) {
   const el = {
     btnBack: $("btnBack"),
-    btnManual: $("btnManual"),
     brandTitle: $("brandTitle"),
     logoName: $("logoName"),
     status: $("saveStatus"),
@@ -263,12 +260,6 @@ export async function bootEditorPage({ mode, initEditor }) {
   }
 
   /* ---------- UI (działa od razu, także w trakcie wczytywania) ---------- */
-  el.btnBack.dataset.sheetBack = "1"; // znacznik dla contact-modal.js
-  el.btnBack.addEventListener("click", () => {
-    if (el.previewOverlay.style.display !== "none") { closePreview(); return; }
-    void leave(listBackUrl(mode));
-  });
-  el.btnManual.addEventListener("click", () => void leave(manualUrl()));
   el.logoName.addEventListener("input", markDirty);
   $("btnPreviewClose")?.addEventListener("click", closePreview);
   el.previewOverlay.addEventListener("click", (ev) => {
@@ -283,19 +274,25 @@ export async function bootEditorPage({ mode, initEditor }) {
   window.addEventListener("i18n:lang", () => { renderHeader(); renderStatus(); });
 
   /* ---------- start ---------- */
-  await initI18n({ withSwitcher: true });
+  const i18nP = initI18n({ withSwitcher: true });
+  // Dostęp, telefon (nakładka urządzenia), „Wstecz”, „Wskazówki”, konto — wg mapy.
+  // Zapis przed wyjściem; otwarty podgląd na komputerze zamyka się „Wstecz”.
+  const userP = initPage(EDITOR_PAGE_IDS[mode], {
+    ready: i18nP,
+    onBack: async (href) => {
+      if (el.previewOverlay.style.display !== "none") { closePreview(); return; }
+      await leave(href);
+    },
+    onManual: (href) => leave(href),
+  });
+  await i18nP;
   document.documentElement.classList.remove("page-loading");
   document.documentElement.classList.toggle("le-phone", isPhoneScreen());
-  renderBackLabel(el.btnBack, EDITOR_PAGE_IDS[mode]);
   renderHeader();
   renderStatus();
 
-  currentUser = await requireAuth("/login/");
-  if (!currentUser) return;
-  initTopbarAccountDropdown(currentUser);
-  document.querySelector(".topbar")?.classList.add("topbar-ready");
-
-  if (isPhoneScreen()) { block(t("logoEditor.errors.noMobileEdit")); return; }
+  currentUser = await userP;
+  if (!currentUser) return; // przekierowanie na logowanie albo nakładka telefonu
 
   logoId = new URLSearchParams(location.search).get("id");
   if (!logoId) { block(t("logoEditor.errors.notFound")); return; }
