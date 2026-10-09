@@ -39,7 +39,7 @@ const BASE_URL = "https://www.familiada.online";
 const DISPLAY_NUM = process.env.DISPLAY || ":99";
 const PULSE_SINK = process.env.PULSE_SINK || "CaptureSink";
 const OUT_DIR = process.env.RECORD_OUT_DIR || path.join(__dirname, "..", "recordings");
-// control/js/app.js's guardDesktopOnly() blokuje interakcję (#deviceGuard
+// control/js/app.js's initPage() (guardDesktopOnly) blokuje interakcję (#pageGuard
 // overlay przechwytuje kliknięcia) pod matchMedia('(max-width:980px)') —
 // pierwszy przebieg z ćwiartkami 960px szerokości nadział się dokładnie na
 // to. 2560x1440 -> ćwiartki 1280x720, bezpiecznie powyżej progu 980px.
@@ -274,7 +274,7 @@ async function positionWindow(context, page, bounds) {
   // tyłu -- zaobserwowane w CI (run #27): goto() wystrzelony zaraz po tym
   // await trafiał na window.innerWidth jeszcze ze STAREGO (domyślnego,
   // węższego niż 980px) rozmiaru okna, więc guardDesktopOnly()'s PIERWSZY
-  // apply() (na starcie strony) ustawiał #deviceGuard na "narrow" i
+  // apply() (na starcie strony) ustawiał #pageGuard na "narrow" i
   // przechwytywał kliknięcia na stałe (overlay odświeża się tylko na
   // kolejny "resize", którego już nie było, bo okno nie zmieniało już
   // rozmiaru po nawigacji). Komentarz wyżej (SCREEN_W/QUAD_W) opisywał
@@ -691,7 +691,7 @@ async function scenarioRoundsMechanics(pages, { contexts }) {
   // WYŻEJ zmniejszał więc CAŁE współdzielone okno do RECIPIENT_QUAD (900px,
   // poniżej progu 980px guardDesktopOnly), a samo zamknięcie karty nie
   // przywracało rozmiaru oknu z powrotem. `control` zostawał trwale zbyt
-  // wąski -- dokładnie ten sam objaw ("#deviceGuard narrow" blokuje
+  // wąski -- dokładnie ten sam objaw ("#pageGuard narrow" blokuje
   // kliknięcia), co wcześniej (błędnie) przypisano samemu wyścigowi
   // CDP-resize w positionWindow() (patrz komentarz tam). Jawne przywrócenie
   // rozmiaru okna do właściwej ćwiartki Control, zanim cokolwiek dalej na

@@ -7,12 +7,10 @@ import { createRenderCompletionGate } from "../../shared/js/gameplay/renderCompl
 // engine.js) — ale i tak przechodzi przez assertTransition(), żeby tabela
 // stanów była mechanizmem wszędzie, nie tylko wewnątrz silnika reguł gry.
 
-import { guardDesktopOnly } from "../../shared/js/core/device-guard.js?v=v2026-10-09T21300";
 import { guardResourceLocks } from "../../shared/js/core/resource-lock.js?v=v2026-10-09T21300";
 import { initI18n, getUiLang, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-09T21300";
-import { backHref, renderBackLabel } from "../../shared/js/core/nav-map.js?v=v2026-10-09T21300";
-import { requireAuth } from "../../shared/js/core/auth.js?v=v2026-10-09T21300";
-import { setTopbarAccount } from "../../shared/js/core/topbar-controller.js?v=v2026-10-09T21300";
+import { backHref } from "../../shared/js/core/nav-map.js?v=v2026-10-09T21300";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-09T21300";
 import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T21300";
 import { loadQuestions, loadAnswers, guardGameState } from "../../shared/js/core/game-validate.js?v=v2026-10-09T21300";
 import { loadSfxManifest, initSfx, setCurrentGameId, unlockAudio, applySfxGameSettings, loadSfxFromCloud, playSfx, getSfxDurationAccurate as getSfxDuration, listSfx, isAnySfxPlaying } from "../../shared/js/core/sfx.js?v=v2026-10-09T21300";
@@ -114,8 +112,6 @@ import { createShareDevice } from "./shareDevice.js?v=v2026-10-09T21300";
 import { icon } from "../../shared/js/core/icons.js?v=v2026-10-09T21300";
 import { toast } from "../../shared/js/core/toast.js?v=v2026-10-09T21300";
 
-guardDesktopOnly();
-
 async function pickQuestionPool(state) {
   const all = await loadQuestions(state.gameId);
   const finalPicked = new Set((state.final.picked || []).map(String));
@@ -169,26 +165,30 @@ async function drawFinalPicks(state, roundPool) {
 }
 
 async function main() {
-  await initI18n({ withSwitcher: true });
-  renderBackLabel(document.getElementById("btnBack"), "control");
+  // Wyjście z Control: przed „Wstecz” sprawdzenie rozgrywki; podmieniane po
+  // utworzeniu store (do tego czasu wyjście jest swobodne).
+  let beforeLeave = async () => true;
+  const i18nP = initI18n({ withSwitcher: true });
+  // initPage: dostęp, nakładka wąskiego okna / telefonu, „Wstecz”, konto wg mapy.
+  // „Wskazówki” otwierają okno pomocy (osadzona instrukcja) — obsługuje je strona.
+  const userP = initPage("control", {
+    ready: i18nP,
+    manual: false,
+    onBack: async (href) => {
+      if (!(await beforeLeave())) return;
+      location.href = href;
+    },
+  });
+  await i18nP;
 
   const params = new URLSearchParams(location.search);
   const gameId = params.get("id");
   const root = document.getElementById("app");
+
+  const user = await userP;
+  if (!user) return; // initPage przekierował na logowanie
+
   if (!gameId) { root.textContent = "Brak parametru ?id= w URL."; return; }
-
-  const user = await requireAuth("/login/");
-  if (!user) return; // requireAuth already redirected
-
-  setTopbarAccount(user, { showAuthEntry: true });
-  // css/base.css's skel-body reveal (".topbar-section-3/4" — mute/"Zacznij
-  // od nowa"/info, who/wyloguj — trzymane na opacity:0 aż to się doda,
-  // wzorem KAŻDEJ innej strony w repo, np. control/js/app.js:237) —
-  // zgubione przy pisaniu control2 od zera. Bez tego te przyciski są
-  // NA STAŁE niewidoczne (ale wciąż klikalne/obecne w DOM — dlatego testy
-  // E2E, które celują w selektory, tego nie złapały; zgłoszone przez
-  // właściciela na żywej grze, gdzie po prostu nie było widać ↺/ℹ️/wyloguj).
-  document.querySelector(".topbar")?.classList.add("topbar-ready");
 
   const { data: game, error: gameError } = await sb().from("games").select("*").eq("id", gameId).single();
   if (gameError || !game) { root.textContent = "Nie znaleziono gry."; return; }
@@ -970,7 +970,7 @@ async function main() {
     if (ev.data?.type === "gs:ready" && ev.source === gsFrameEl?.contentWindow) gsSpinnerEl?.classList.add("hidden");
   });
 
-  document.getElementById("btnBack")?.addEventListener("click", async () => {
+  beforeLeave = async () => {
     // Ostrzeżenie tylko w trakcie realnej rozgrywki (jak dzisiejsze
     // shouldWarnBeforeUnload()) — z D0-D3 wychodzimy bez pytania.
     if (store.state.locks.gameStarted && !store.state.locks.gameEnded) {
@@ -980,13 +980,13 @@ async function main() {
         okText: t("control.leaveOk"),
         cancelText: t("control.leaveCancel"),
       });
-      if (!ok) return;
+      if (!ok) return false;
     }
     // Fire-and-forget, jak dzisiejsze control/js/app.js — nie blokujemy
     // wyjścia na tym, przeglądarka i tak zaraz nawiguje dalej.
     shareDevice.expireShares().catch(() => {});
-    location.href = backHref("control");
-  });
+    return true;
+  };
 
   // "Losowo" ma losować RAZ, od razu przy wejściu w Podsumowanie (D3), i
   // pokazać co wylosowano — nie dopiero leniwie przy pierwszym Starcie

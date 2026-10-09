@@ -65,7 +65,7 @@ test("polski interfejs używa nazwy Strona główna", () => {
 test("podłącz urządzenie: powrót anonima liczy mapa nawigacji (Strona główna)", () => {
   const js = read("connect/js/connect-device.js");
   assert.doesNotMatch(js, /common\.backToHome/);
-  assert.match(js, /renderBackLabel\(btnBack, "connectDevice"/);
+  assert.match(js, /initPage\("connectDevice"/); // etykieta i cel „Wstecz” z mapy (initPage)
   for (const dictionary of [pl, en, uk]) {
     assert.equal(typeof dictionary.index.backHome, "string");
     assert.notEqual(dictionary.index.backHome, "index.backHome");

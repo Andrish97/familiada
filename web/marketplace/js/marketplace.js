@@ -1,11 +1,9 @@
 // js/pages/marketplace.js
 
 import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T21300";
-import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-09T21300";
 import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-09T21300";
 import { initI18n, t, getUiLang, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-09T21300";
-import { linkTo, backHref, renderBackLabel } from "../../shared/js/core/nav-map.js?v=v2026-10-09T21300";
-import { initTopbarAccountDropdown } from "../../shared/js/core/topbar-controller.js?v=v2026-10-09T21300";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-09T21300";
 import { exportGame } from "../../games/js/games-import-export.js?v=v2026-10-09T21300";
 import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-09T21300";
 import { toast } from "../../shared/js/core/toast.js?v=v2026-10-09T21300";
@@ -791,18 +789,9 @@ function rpcErrorMessage(error) {
    Wire events
 ========================================================= */
 function wireEvents() {
-  // Znaczniki dla contact-modal.js -- patrz js/pages/bases.js dla wyjaśnienia.
-  if (els.btnGoGames) els.btnGoGames.dataset.sheetBack = "1";
+  // Znacznik dla contact-modal.js (btnGoGames dostaje go z initPage).
   if (els.btnBackBrowse) els.btnBackBrowse.dataset.sheetBack = "1";
 
-  // Nav
-  els.btnGoGames?.addEventListener("click", () => {
-    if (handleSheetBack()) return;
-    window.location.href = backHref("marketplace", { anon: !currentUser });
-  });
-  els.btnManual?.addEventListener("click", () => {
-    location.href = linkTo("manual", { hash: "community" });
-  });
   // Browse
   els.btnMySent?.addEventListener("click", async () => {
     if (isGuest || !currentUser) return;
@@ -908,22 +897,16 @@ function restoreBrowseParams() {
    Init
 ========================================================= */
 document.addEventListener("DOMContentLoaded", async () => {
-  const getUserP = getUser().catch(() => null); // start równolegle z initI18n
-  await initI18n({ withSwitcher: true });
+  const i18nP = initI18n({ withSwitcher: true });
+  // Strona publiczna: user albo null. Anonim wraca na Stronę główną (mapa), bez „Wskazówek”.
+  const userP = initPage("marketplace", { ready: i18nP, back: els.btnGoGames, account: { showAuthEntry: false } });
+  await i18nP;
   document.documentElement.classList.remove('page-loading');
   initBrowseUiSelects();
   window.addEventListener("i18n:lang", refreshBrowseSelectLabels);
 
-  currentUser = await getUserP;
+  currentUser = await userP;
   isGuest = !currentUser || isGuestUser(currentUser);
-
-  // Topbar — user info (account dropdown)
-  initTopbarAccountDropdown(currentUser, { showAuthEntry: false });
-  document.querySelector('.topbar')?.classList.add('topbar-ready');
-
-  if (!currentUser) {
-    if (els.btnManual)  els.btnManual.hidden = true;
-  }
 
   // "Moje wysłane" button — only for logged-in non-guests
   if (els.btnMySent) els.btnMySent.hidden = isGuest || !currentUser;
@@ -937,8 +920,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   wireEvents();
   applyTranslations();
-  // Anonim wraca na Stronę główną (ret z landingu lub parentAnon), zalogowany wg mapy.
-  renderBackLabel(els.btnGoGames, "marketplace", () => ({ anon: !currentUser }));
   restoreBrowseParams();
 
 

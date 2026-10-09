@@ -13,16 +13,14 @@
 
 import { addRenameGesture } from "../../shared/js/core/rename-gesture.js?v=v2026-10-09T21300";
 import { loadFont5x7, buildLogoPreviewCanvas } from "../../shared/js/core/logo-preview.js?v=v2026-10-09T21300";
-import { requireAuth } from "../../shared/js/core/auth.js?v=v2026-10-09T21300";
 import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-09T21300";
 import { initI18n, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-09T21300";
-import { backHref, renderBackLabel } from "../../shared/js/core/nav-map.js?v=v2026-10-09T21300";
-import { initTopbarAccountDropdown } from "../../shared/js/core/topbar-controller.js?v=v2026-10-09T21300";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-09T21300";
 import { isMobileDevice } from "../../shared/js/core/pwa.js?v=v2026-10-09T21300";
 import { isPhoneScreen } from "../../shared/js/core/device-guard.js?v=v2026-10-09T21300";
 import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-09T21300";
 import { isResourceBusy, acquireResourceLock } from "../../shared/js/core/resource-lock.js?v=v2026-10-09T21300";
-import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-09T21300";
+import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-09T21300";
 import { icon } from "../../shared/js/core/icons.js?v=v2026-10-09T21300";
 
 import { TYPE_GLYPH, TYPE_PIX, PIX_FORMAT, DOT_W, DOT_H, emptyRows, packBits, renderPreview, logoToPreview } from "./render.js?v=v2026-10-09T21300";
@@ -30,7 +28,7 @@ import { listLogos, fetchLogo, createLogo, updateLogo, deleteLogo, isUniqueViola
 import { buildExport, downloadJson, parseImport, safeFileName } from "./transfer.js?v=v2026-10-09T21300";
 import { initPreviewPinchZoom, lockPageZoomForPreview, unlockPageZoomAfterPreview } from "./preview-zoom.js?v=v2026-10-09T21300";
 import { cannotEditReason } from "./text.js?v=v2026-10-09T21300";
-import { editModeFor, editorUrl, manualUrl } from "./routes.js?v=v2026-10-09T21300";
+import { editModeFor, editorUrl } from "./routes.js?v=v2026-10-09T21300";
 import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-09T21300";
 
 const FONT_3x10_URL = "/shared/fonts/display/font_3x10.json?v=v2026-10-09T21300";
@@ -47,7 +45,6 @@ const FONT_5x7_URL = "/shared/fonts/display/font_5x7.json?v=v2026-10-09T21300";
 const $ = (id) => document.getElementById(id);
 const el = {
   btnBack: $("btnBack"),
-  btnManual: $("btnManual"),
 
   listShell: $("listShell"),
   grid: $("grid"),
@@ -600,14 +597,6 @@ async function loadFonts() {
 }
 
 function bindUi() {
-  // topbar
-  el.btnBack.dataset.sheetBack = "1"; // znacznik dla contact-modal.js (patrz js/pages/bases.js)
-  el.btnBack.addEventListener("click", () => {
-    if (handleSheetBack()) return;
-    location.href = backHref("logoEditor");
-  });
-  el.btnManual.addEventListener("click", () => { location.href = manualUrl(); });
-
   // lista
   el.btnEdit.addEventListener("click", () => void editSelected());
   el.btnPreview.addEventListener("click", () => {
@@ -659,14 +648,14 @@ function bindUi() {
 }
 
 async function boot() {
-  await initI18n({ withSwitcher: true });
+  const i18nP = initI18n({ withSwitcher: true });
+  const userP = initPage("logoEditor", { ready: i18nP }); // auth startuje równolegle z i18n
+  await i18nP;
   document.documentElement.classList.remove("page-loading");
-  renderBackLabel(el.btnBack, "logoEditor");
   initListSearch({ grids: "#grid", tile: ".logoTile", name: ".logoName" });
 
-  currentUser = await requireAuth("/login/");
-  initTopbarAccountDropdown(currentUser);
-  document.querySelector(".topbar")?.classList.add("topbar-ready");
+  currentUser = await userP;
+  if (!currentUser) return; // initPage przekierował na logowanie
 
   try {
     await loadFonts();

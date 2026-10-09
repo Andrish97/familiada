@@ -1,9 +1,10 @@
 import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T21300";
 import { cooldownGet, cooldownReserve, cooldownRelease, mailCooldownEmailReserve } from "../../shared/js/core/cooldown.js?v=v2026-10-09T21300";
-import { requireAuth, updateUserLanguage, validatePassword, validateUsername, signOut, niceAuthError, initPasswordToggles, convertGuestToRegisteredEmailOnly } from "../../shared/js/core/auth.js?v=v2026-10-09T21300";
+import { updateUserLanguage, validatePassword, validateUsername, signOut, niceAuthError, initPasswordToggles, convertGuestToRegisteredEmailOnly } from "../../shared/js/core/auth.js?v=v2026-10-09T21300";
 import { getUserEmailNotificationsFlag, setUserEmailNotificationsFlag } from "../../shared/js/core/user-flags.js?v=v2026-10-09T21300";
 import { initI18n, t, getUiLang, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-09T21300";
-import { linkTo, backHref, loginUrl, renderBackLabel } from "../../shared/js/core/nav-map.js?v=v2026-10-09T21300";
+import { loginUrl } from "../../shared/js/core/nav-map.js?v=v2026-10-09T21300";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-09T21300";
 import { toast } from "../../shared/js/core/toast.js?v=v2026-10-09T21300";
 import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-09T21300";
 import { isGuestUser, hideForGuest } from "../../shared/js/core/guest-mode.js?v=v2026-10-09T21300";
@@ -26,7 +27,6 @@ const saveEmail = document.getElementById("saveEmail");
 const savePass = document.getElementById("savePass");
 const deleteAccount = document.getElementById("deleteAccount");
 const backToGames = document.getElementById("backToGames");
-const btnManual = document.getElementById("btnManual");
 
 const usernameCooldownEl = document.getElementById("usernameCooldown");
 const emailCooldownEl = document.getElementById("emailCooldown");
@@ -113,14 +113,6 @@ async function initEmailNotificationsUi(user) {
   });
 }
 
-
-backToGames?.addEventListener("click", () => {
-  location.href = backHref("account");
-});
-
-btnManual?.addEventListener("click", () => {
-  location.href = linkTo("manual", { hash: "general" });
-});
 
 // --- cooldowns (anti-spam) ---
 // Per-user (server-side) cooldown via RPC (cross-device).
@@ -569,9 +561,8 @@ async function wireDemoActions(user) {
   });
 }
 
-async function loadProfile() {
-  const user = await requireAuth("/login/");
-  if (!user) return;
+async function loadProfile(user) {
+  if (!user) return; // initPage przekierował na logowanie
 
   if (isGuestUser(user)) {
     // Gość nie ma username/email/hasła ani oceny/demo (demo dotyka
@@ -865,8 +856,10 @@ async function handleDeleteAccount() {
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
-  await initI18n({ withSwitcher: true });
-  renderBackLabel(backToGames, "account");
+  const i18nP = initI18n({ withSwitcher: true });
+  // Dostęp, „Wstecz”, „Wskazówki” i konto w topbarze wg mapy (auth równolegle z i18n).
+  const userP = initPage("account", { ready: i18nP, back: backToGames });
+  await i18nP;
   document.documentElement.classList.remove('page-loading');
   initPasswordToggles();
 
@@ -876,8 +869,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   bindCooldown({ key: CD.password, labelEl: passwordCooldownEl, disableEls: [pass1, pass2, savePass] });
   startCooldownTicker();
 
-  await loadProfile().finally(() => {
-    document.querySelector('.topbar')?.classList.add('topbar-ready');
+  await loadProfile(await userP).finally(() => {
     document.querySelectorAll('[data-skel-step]').forEach(el => el.classList.add('skel-step-ready'));
   });
 

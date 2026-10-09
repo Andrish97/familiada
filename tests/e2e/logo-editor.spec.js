@@ -1215,9 +1215,16 @@ test.describe("telefon", () => {
     await open(page);
     const id = await L.insertLogo(page, { name: L.uniq("mobile-edit"), type: "GLYPH_30x10", payload: L.textPayload("AB") });
     await page.goto(`${site.origin}/logo/editor/text/?id=${id}`);
-    await expect(page.locator("#resourceLockGuardMsg")).toContainText(/większego ekranu/, { timeout: 15000 });
+    // Wspólna nakładka urządzenia (page-overlay.js), nie blokada zasobu.
+    await expect(page.locator("#pageGuard")).toBeVisible({ timeout: 15000 });
+    await expect(page.locator("#pageGuard")).toHaveAttribute("data-kind", "device");
+    await expect(page.locator("#pageGuard")).toHaveAttribute("data-state", "phone");
+    await expect(page.locator("#pageGuardMsg")).toContainText(/większego ekranu/);
     await expect(page.locator("#logoName")).toBeDisabled();
     expect((await L.readLogo(page, id)).payload.source.text).toBe("AB");
+    // „Wróć” prowadzi na adres z mapy (lista logo), bez history.back()
+    await page.locator("#pageGuardBack").click();
+    await expect(page).toHaveURL(/\/logo\/(?:\?.*)?$/);
   });
 });
 

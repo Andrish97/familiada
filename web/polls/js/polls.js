@@ -8,19 +8,18 @@
 // Stany gry: draft -> poll_open <-> poll_stopped -> ready (migracja 315).
 import { renderShareSections } from "../../shared/js/core/share-sections.js?v=v2026-10-09T21300";
 import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T21300";
-import { requireAuth } from "../../shared/js/core/auth.js?v=v2026-10-09T21300";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-09T21300";
 import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-09T21300";
 import QRCode from "https://cdn.jsdelivr.net/npm/qrcode@1.5.3/+esm";
 import { initI18n, t, withLangParam, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-09T21300";
-import { linkTo, backHref, renderBackLabel } from "../../shared/js/core/nav-map.js?v=v2026-10-09T21300";
-import { initTopbarAccountDropdown } from "../../shared/js/core/topbar-controller.js?v=v2026-10-09T21300";
+import { linkTo, backHref } from "../../shared/js/core/nav-map.js?v=v2026-10-09T21300";
 import { guardResourceLock } from "../../shared/js/core/resource-lock.js?v=v2026-10-09T21300";
 import { validateGame, gameRuleErrorMessage, guardGameState } from "../../shared/js/core/game-validate.js?v=v2026-10-09T21300";
 import { mailCooldownCheck } from "../../shared/js/core/cooldown.js?v=v2026-10-09T21300";
 import { sendPollInviteMails } from "../../shared/js/core/poll-mail.js?v=v2026-10-09T21300";
 import "../../shared/js/core/contact-modal.js?v=v2026-10-09T21300";
 import { createPollResults } from "../../shared/js/core/poll-results.js?v=v2026-10-09T21300";
-import { enterModalSheet, exitModalSheet, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-09T21300";
+import { enterModalSheet, exitModalSheet } from "../../shared/js/core/modal-sheet.js?v=v2026-10-09T21300";
 import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-09T21300";
 import { toast, hideToast } from "../../shared/js/core/toast.js?v=v2026-10-09T21300";
 import { createTally } from "./poll-tally.js?v=v2026-10-09T21300";
@@ -33,7 +32,6 @@ const gameId = qs.get("id");
 const $ = (id) => document.getElementById(id);
 
 const btnBack = $("btnBack");
-const btnManual = $("btnManual");
 
 // pasek stanu
 const pollBar = $("pollBar");
@@ -928,6 +926,7 @@ function renderShareSection(st, link) {
 }
 
 async function refresh() {
+  if (!currentUser) return; // initPage jeszcze nie wpuścił (albo pokazał nakładkę gościa)
   const seq = ++refreshSeq;
   if (!gameId) {
     if (pollBar) pollBar.style.display = "none";
@@ -1165,30 +1164,23 @@ async function runStateAction(fn) {
 ======================= */
 
 document.addEventListener("DOMContentLoaded", async () => {
-  const requireAuthP = requireAuth("/login/"); // start równolegle z initI18n
-  await initI18n({ withSwitcher: true });
-  document.documentElement.classList.remove('page-loading');
-
-  const u = await requireAuthP;
-  currentUser = u;
-  initTopbarAccountDropdown(u);
-  document.querySelector('.topbar')?.classList.add('topbar-ready');
-
-  if (btnBack) {
-    renderBackLabel(btnBack, "polls");
-  }
-
-  btnManual?.addEventListener("click", () => {
-    location.href = linkTo("manual", { hash: "polls" });
-  });
-
+  const i18nP = initI18n({ withSwitcher: true });
   // Poprawki podliczania zapisują się same (szkic w bazie); przed wyjściem
   // tylko dopychamy ostatni zapis.
-  btnBack?.addEventListener("click", async () => {
-    if (handleSheetBack()) return;
-    try { await tally.flush(); } catch { /* szkic i tak jest w bazie */ }
-    location.href = backHref("polls");
+  const userP = initPage("polls", {
+    ready: i18nP,
+    onBack: async (href) => {
+      try { await tally.flush(); } catch { /* szkic i tak jest w bazie */ }
+      location.href = href;
+    },
   });
+  await i18nP;
+  document.documentElement.classList.remove('page-loading');
+
+  const u = await userP;
+  if (!u) return; // przekierowanie na logowanie albo nakładka gościa
+  currentUser = u;
+
   window.addEventListener("pagehide", () => { void tally.flush(); });
 
   tabShare?.addEventListener("click", () => { if (!tabShare.disabled) setActiveTab("share", { byUser: true }); });

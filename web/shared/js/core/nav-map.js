@@ -212,10 +212,14 @@ export function backHref(pageId, ctx) {
   return backTarget(pageId, ctx)?.href ?? null;
 }
 
-/** Adres logowania — po zalogowaniu zawsze /games/ (wyjątek: next= z maila). */
+/**
+ * Adres logowania — po zalogowaniu zawsze /games/ (wyjątek: next= z maila).
+ * ctx.forceAuth — gość, który chce przejść do logowania mimo otwartej sesji.
+ */
 export function loginUrl(ctx) {
   const c = resolveCtx(ctx);
   const u = new URL(PAGES.login.path, DUMMY_ORIGIN);
+  if (c.forceAuth) u.searchParams.set("force_auth", "1");
   applyLang(u, c.lang);
   return rel(u);
 }

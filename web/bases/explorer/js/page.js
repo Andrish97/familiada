@@ -1,12 +1,11 @@
 // base-explorerjs/page.js
 // Init strony menadżera bazy (warstwa 2)
 
-import { requireAuth } from "../../../shared/js/core/auth.js?v=v2026-10-09T21300";
 import { alertModal } from "../../../shared/js/core/modal.js?v=v2026-10-09T21300";
 import { guardResourceLocks } from "../../../shared/js/core/resource-lock.js?v=v2026-10-09T21300";
-import { getUiLang, initI18n, t, withLangParam } from "../../../shared/translation/translation.js?v=v2026-10-09T21300";
-import { linkTo, backHref, renderBackLabel } from "../../../shared/js/core/nav-map.js?v=v2026-10-09T21300";
-import { initTopbarAccountDropdown } from "../../../shared/js/core/topbar-controller.js?v=v2026-10-09T21300";
+import { getUiLang, initI18n, t } from "../../../shared/translation/translation.js?v=v2026-10-09T21300";
+import { backHref } from "../../../shared/js/core/nav-map.js?v=v2026-10-09T21300";
+import { initPage } from "../../../shared/js/core/page-init.js?v=v2026-10-09T21300";
 import { VIEW, createState, setRole } from "./state.js?v=v2026-10-09T21300";
 import { renderAll } from "./render.js?v=v2026-10-09T21300";
 import {
@@ -18,13 +17,8 @@ import {
 } from "./repo.js?v=v2026-10-09T21300";
 import { wireActions } from "./actions.js?v=v2026-10-09T21300";
 import { initDrawer, disableDragOnTouch } from "./mobile.js?v=v2026-10-09T21300";
-import { handleSheetBack } from "../../../shared/js/core/modal-sheet.js?v=v2026-10-09T21300";
 
 /* ================= DOM ================= */
-const btnBack = document.getElementById("btnBack");
-const btnLogout = document.getElementById("btnLogout");
-const btnManual = document.getElementById("btnManual");
-const who = document.getElementById("who");
 const baseNameEl = document.getElementById("baseName");
 
 /* ================= Helpers ================= */
@@ -33,29 +27,15 @@ function getBaseIdFromUrl() {
   return params.get("id");
 }
 
-/* ================= Events ================= */
-btnManual?.addEventListener("click", () => {
-  location.href = linkTo("manual", { hash: "bases" });
-});
-
-// Znacznik dla contact-modal.js -- patrz js/pages/bases.js dla wyjaśnienia.
-if (btnBack) btnBack.dataset.sheetBack = "1";
-btnBack?.addEventListener("click", () => {
-  if (handleSheetBack()) return;
-  location.href = backHref("baseExplorer");
-});
-
-
 /* ================= Init ================= */
 (async function init() {
-  const requireAuthP = requireAuth(withLangParam("/login/")); // start równolegle z initI18n
-  await initI18n({ withSwitcher: true });
+  const i18nP = initI18n({ withSwitcher: true });
+  const userP = initPage("baseExplorer", { ready: i18nP }); // auth startuje równolegle z i18n
+  await i18nP;
   document.documentElement.classList.remove('page-loading');
-  renderBackLabel(btnBack, "baseExplorer");
 
-  const user = await requireAuthP;
-  initTopbarAccountDropdown(user, { accountHref: "/account/", loginHref: "/login/" });
-  document.querySelector('.topbar')?.classList.add('topbar-ready');
+  const user = await userP;
+  if (!user) return; // initPage przekierował na logowanie
 
   // base id z URL
   const baseId = getBaseIdFromUrl();
@@ -89,7 +69,7 @@ btnBack?.addEventListener("click", () => {
         [{ type: "base", id: baseId, mode: "shared", message: t("resourceLock.baseChangingMessage") }],
         {
           context: "base-explorer",
-          backHref: "/bases/",
+          backHref: backHref("baseExplorer"),
           forbiddenTitle: t("resourceLock.baseAccessRevokedTitle"),
           forbiddenMessage: t("resourceLock.baseAccessRevokedMessage"),
         }

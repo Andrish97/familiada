@@ -3,11 +3,10 @@
 // - publiczna strona (bez wymuszania logowania)
 // - jeśli user zalogowany -> pokazuj username + Wyloguj
 // - jeśli niezalogowany -> ukryj username + Wyloguj, a Wstecz wraca do /
+//   (initPage: konto, „Wstecz” i etykieta wg mapy nawigacji)
 
 import { initI18n } from "../../shared/translation/translation.js?v=v2026-10-09T21300";
-import { backHref, renderBackLabel } from "../../shared/js/core/nav-map.js?v=v2026-10-09T21300";
-import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-09T21300";
-import { initTopbarAccountDropdown } from "../../shared/js/core/topbar-controller.js?v=v2026-10-09T21300";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-09T21300";
 import "../../shared/js/core/contact-modal.js?v=v2026-10-09T21300";
 
 function byId(id) { return document.getElementById(id); }
@@ -24,35 +23,16 @@ function applyControlModalLayout() {
   document.body.classList.add("manual-in-control-modal");
 }
 
-function setBackButton({ loggedIn }) {
-  const btn = byId("btnBack");
-  if (!btn) return;
-  const getCtx = () => ({ anon: !loggedIn });
-  renderBackLabel(btn, "privacy", getCtx);
-  btn.onclick = () => (location.href = backHref("privacy", getCtx()));
-}
-
-function setAuthUi(user) {
-  initTopbarAccountDropdown(user, { showAuthEntry: false });
-  setBackButton({ loggedIn: !!user });
-}
-
 window.dispatchEvent(new Event("resize"));
 
 document.addEventListener("DOMContentLoaded", async () => {
-  const getUserP = getUser().catch(() => null); // start równolegle z initI18n
-  await initI18n({ withSwitcher: !(new URLSearchParams(location.search).get("modal") === "control") });
+  const i18nP = initI18n({ withSwitcher: !(new URLSearchParams(location.search).get("modal") === "control") });
+  // Strona publiczna: zalogowany widzi konto, niezalogowany wraca na landing.
+  // Menu konta odświeża się po zmianie języka (etykiety są tekstem, nie data-i18n).
+  const pageP = initPage("privacy", { ready: i18nP, account: { showAuthEntry: false }, accountOnLang: true });
+  await i18nP;
   document.documentElement.classList.remove('page-loading');
-  document.querySelector('.topbar')?.classList.add('topbar-ready');
 
   applyControlModalLayout();
-
-  const user = await getUserP;
-  setAuthUi(user);
-
-  window.addEventListener("i18n:lang", () => {
-    // Zmiana języka nie zmienia sesji. Ponowne pytanie auth mogło zawieść
-    // chwilowo i zostawić przycisk z etykietą w poprzednim języku.
-    setAuthUi(user);
-  });
+  await pageP;
 });

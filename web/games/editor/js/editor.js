@@ -4,7 +4,7 @@
 // pola, punkty: przy wyjściu z pola). Limity i obsługa pól są wspólne z
 // modalem pytania w bazie pytań (js/core/question-form.js).
 import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-09T21300";
-import { requireAuth } from "../../../shared/js/core/auth.js?v=v2026-10-09T21300";
+import { initPage } from "../../../shared/js/core/page-init.js?v=v2026-10-09T21300";
 import { alertModal, confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-09T21300";
 import { parseQaText } from "../../../shared/js/core/text-import.js?v=v2026-10-09T21300";
 import { validateGame, gameRuleErrorMessage, guardGameState, RULES as GV_RULES, TYPES } from "../../../shared/js/core/game-validate.js?v=v2026-10-09T21300";
@@ -17,7 +17,6 @@ import { guardResourceLock, showBlockingOverlay } from "../../../shared/js/core/
 import { updateChecked, ROW_GONE } from "../../../shared/js/core/db-guard.js?v=v2026-10-09T21300";
 import { initI18n, t } from "../../../shared/translation/translation.js?v=v2026-10-09T21300";
 import { linkTo, backHref, backLabel } from "../../../shared/js/core/nav-map.js?v=v2026-10-09T21300";
-import { initTopbarAccountDropdown } from "../../../shared/js/core/topbar-controller.js?v=v2026-10-09T21300";
 import "../../../shared/js/core/contact-modal.js?v=v2026-10-09T21300";
 import { icon, iconText } from "../../../shared/js/core/icons.js?v=v2026-10-09T21300";
 // initI18n + remove('page-loading') są w boot() — przed requireAuth, żeby body pojawiło się przed auth/danymi
@@ -282,21 +281,36 @@ async function leaveTo(text) {
 
 async function boot() {
   /* ---------- i18n + early body reveal ---------- */
-  const requireAuthP = requireAuth("/login/"); // start równolegle z initI18n
-  await initI18n({ withSwitcher: true });
+  const i18nP = initI18n({ withSwitcher: true }); // auth startuje równolegle (initPage)
+  // flushSaves działa na strukturach tworzonych po wczytaniu gry; do tego czasu
+  // „Wstecz” / „Wskazówki” nie mają czego dopychać.
+  let flushHook = async () => {};
+  const userP = initPage("editor", {
+    ready: i18nP,
+    // Etykietę „Wstecz” ustawia syncMobileEditingState (tryb edycji pytania).
+    backLabel: false,
+    // Oczekujące zapisy przed wyjściem; na telefonie „Wstecz” zamyka pytanie.
+    onBack: async (href) => {
+      if (document.body.classList.contains("mobile-editing")) {
+        leaveQuestionEditor();
+        return;
+      }
+      await flushHook();
+      location.href = href;
+    },
+    onManual: async (href) => {
+      await flushHook();
+      location.href = href;
+    },
+  });
+  await i18nP;
   document.documentElement.classList.remove("page-loading");
 
   /* ---------- auth/topbar ---------- */
-  const user = await requireAuthP;
-  initTopbarAccountDropdown(user);
-  document.querySelector(".topbar")?.classList.add("topbar-ready");
+  const user = await userP;
+  if (!user) return; // initPage przekierował na logowanie
 
   const btnBack = $("btnBack");
-
-  $("btnManual")?.addEventListener("click", async () => {
-    await flushSaves();
-    location.href = linkTo("manual", { hash: "edit" });
-  });
 
   // Enter w polu jednowierszowym = koniec edycji (blur zapisuje)
   document.addEventListener("keydown", (e) => {
@@ -801,15 +815,7 @@ async function boot() {
     saveQuestionDebounced.flush();
     await Promise.allSettled([...pendingSaves]);
   }
-
-  btnBack?.addEventListener("click", async () => {
-    if (document.body.classList.contains("mobile-editing")) {
-      leaveQuestionEditor();
-      return;
-    }
-    await flushSaves();
-    location.href = backHref("editor");
-  });
+  flushHook = flushSaves;
 
   /* ---------- import ---------- */
   const txtFile = $("txtFile");

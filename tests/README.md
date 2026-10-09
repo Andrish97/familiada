@@ -250,10 +250,12 @@ główna (`index.html`) i sam `/login`.
 
 **Gość** (`user.is_guest === true`, konto założone przyciskiem "Wejdź
 jako gość") **ma sesję, więc mija powyższą blokadę**, ale trafia na
-pełnoekranowy, blokujący overlay (`showGuestBlockedOverlay`,
-`js/core/guest-mode.js`) na konkretnej stronie — treść
-`guestGuard.message` w tłumaczeniach mówi wprost które to funkcje:
-- `/subscriptions` (`js/pages/subscriptions.js:699`) — subskrypcje.
+pełnoekranowy, blokujący overlay (`#pageGuard`, `data-kind="guest"`,
+`js/core/page-overlay.js`, wołany przez `initPage()` w `js/core/page-init.js`)
+na stronach z `access: "user"` — treść
+`pageGuard.guestMessage` w tłumaczeniach mówi wprost które to funkcje:
+- `/polls` — Centrum ankiet.
+- `/subscriptions` — subskrypcje.
 
 **`/account` jest częściowym wyjątkiem** — gość NIE dostaje pełnego
 blokującego overlaya. `loadProfile()` (`js/pages/account.js`) chowa mu
