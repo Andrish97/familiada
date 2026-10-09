@@ -80,7 +80,7 @@ test("logo Hosta: zapis w Ustawieniach rozgrywki i podgląd zapisanego wariantu 
     await page.locator("#gsColorHex").press("Tab");
     await page.locator("#gsColorModalDone").click();
     await expect(hostPreview.locator("#cover2Logo")).toBeVisible({ timeout: 15_000 });
-    await expect.poll(() => hostPreview.locator("html").evaluate(el => getComputedStyle(el).getPropertyValue("--host-cover-accent").trim())).toBe("#33aaff");
+    await expect.poll(() => hostPreview.locator("html").evaluate(el => getComputedStyle(el).getPropertyValue("--host-cover-accent").trim().toLowerCase())).toBe("#33aaff");
     await page.screenshot({ path: testInfo.outputPath("shot-host-logo-game-settings.png"), fullPage: true });
 
     const save = page.locator("#btnSaveAll");
@@ -123,7 +123,7 @@ test("logo Hosta: zapis w Ustawieniach rozgrywki i podgląd zapisanego wariantu 
     await expect(page.locator("#c2HostPreview iframe")).toBeVisible();
     const controlHost = page.frameLocator("#c2HostPreview iframe");
     await expect(controlHost.locator("#cover2Logo")).toBeVisible({ timeout: 15_000 });
-    await expect.poll(() => controlHost.locator("html").evaluate(el => getComputedStyle(el).getPropertyValue("--host-cover-accent").trim())).toBe("#33aaff");
+    await expect.poll(() => controlHost.locator("html").evaluate(el => getComputedStyle(el).getPropertyValue("--host-cover-accent").trim().toLowerCase())).toBe("#33aaff");
     await page.screenshot({ path: testInfo.outputPath("shot-host-logo-control-summary.png"), fullPage: true });
   } finally {
     await displayContext?.close();
