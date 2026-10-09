@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict TsKg07qhkFooYx1dJhVud5iRwLW7KunpBjgWNlxdF9ZaxRvIpZa6bvmJvARdyUH
+\restrict 6vQ7RptP0SLyBSwDy4kjjZTCKgkRY4osgSLCzTmd2rt5gFAsa6A4bcfgsd6e6vN
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -2174,11 +2174,11 @@ begin
     end if;
 
     -- 312: maile w kolejce z zaproszeniami do ankiety tej gry (link
-    -- poll-go?t=<token> w treści; mail_queue nie ma kolumny z identyfikatorem gry).
+    -- go?t=<token> w treści; mail_queue nie ma kolumny z identyfikatorem gry).
     delete from public.mail_queue q
     using public.poll_tasks pt
     where pt.game_id = p_resource_id
-      and position(('poll-go?t=' || pt.token::text) in q.html) > 0;
+      and position(('go?t=' || pt.token::text) in q.html) > 0;
 
     -- 312: zapamiętane urządzenia tej gry (FK dałby tylko SET NULL).
     delete from public.shared_devices where game_id = p_resource_id;
@@ -9244,11 +9244,11 @@ BEGIN
 
   RETURN jsonb_build_object(
     'ok', true,
-    'task_id', t.id, 'to', v_to, 'token', t.token, 'link', 'poll-go?t=' || t.token::text,
+    'task_id', t.id, 'to', v_to, 'token', t.token, 'link', 'go?t=' || t.token::text,
     'game_name', g.name, 'poll_type', t.poll_type,
     'reminder_count', t.reminder_count + 1,
     'mail', jsonb_build_array(jsonb_build_object(
-      'task_id', t.id, 'to', v_to, 'token', t.token, 'link', 'poll-go?t=' || t.token::text))
+      'task_id', t.id, 'to', v_to, 'token', t.token, 'link', 'go?t=' || t.token::text))
   );
 END $$;
 
@@ -10848,7 +10848,7 @@ begin
     b.status,
     b.created_at,
     b.token,
-    ('poll-go?s=' || b.token::text)::text as go_url,
+    ('go?s=' || b.token::text)::text as go_url,
     (b.status in ('declined','cancelled') and b.last_action_at <= now() - interval '5 days') as is_expired
   from base b
   left join public.profiles p on p.id = b.owner_id
@@ -10949,7 +10949,7 @@ begin
     t.declined_at,
     t.cancelled_at,
     (coalesce(t.done_at, t.declined_at, t.cancelled_at) < now() - interval '5 days') as is_archived,
-    ('poll-go?t=' || t.token::text)::text,
+    ('go?t=' || t.token::text)::text,
     t.owner_id,
     p.username,
     p.email
@@ -11138,7 +11138,7 @@ BEGIN
     (SELECT count(*) FROM ins)::int,
     (SELECT count(*) FROM cooldown)::int,
     coalesce((SELECT jsonb_agg(jsonb_build_object('sub_id', c.sub_id, 'cooldown_until', c.next_allowed_at)) FROM cooldown c), '[]'::jsonb),
-    coalesce(jsonb_agg(jsonb_build_object('task_id', id, 'to', to_email, 'token', token, 'link', ('poll-go?t=' || token::text)))
+    coalesce(jsonb_agg(jsonb_build_object('task_id', id, 'to', to_email, 'token', token, 'link', ('go?t=' || token::text)))
       FILTER (WHERE public._norm_email(to_email) IS NOT NULL), '[]'::jsonb)
   INTO v_created, v_blocked, v_blocked_sub_ids, v_mail
   FROM mail_rows;
@@ -11256,7 +11256,7 @@ BEGIN
     RETURN jsonb_build_object('ok', false, 'err', 'no email for this subscriber');
   END IF;
 
-  v_link := ('poll-go?s=' || v_sub.token::text)::text;
+  v_link := ('go?s=' || v_sub.token::text)::text;
 
   UPDATE public.poll_subscriptions
   SET email_sent_at = now(), email_send_count = email_send_count + 1
@@ -11474,7 +11474,7 @@ BEGIN
 
   IF v_existing.id IS NOT NULL AND v_existing.status IN ('pending','active') THEN
     v_token := v_existing.token;
-    v_go    := ('poll-go?s=' || v_token::text)::text;
+    v_go    := ('go?s=' || v_token::text)::text;
     v_to    := coalesce(v_profile.email, v_existing.subscriber_email);
     -- unsub token tylko dla email-only (niezarejestrowanych)
     IF v_profile.id IS NULL AND public._norm_email(v_to) IS NOT NULL THEN
@@ -11513,7 +11513,7 @@ BEGIN
     v_unsub_token := public._ensure_unsub_token(v_to);
   END IF;
 
-  v_go := ('poll-go?s=' || v_token::text)::text;
+  v_go := ('go?s=' || v_token::text)::text;
 
   RETURN jsonb_build_object(
     'ok', true, 'already', false,
@@ -18224,5 +18224,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict TsKg07qhkFooYx1dJhVud5iRwLW7KunpBjgWNlxdF9ZaxRvIpZa6bvmJvARdyUH
+\unrestrict 6vQ7RptP0SLyBSwDy4kjjZTCKgkRY4osgSLCzTmd2rt5gFAsa6A4bcfgsd6e6vN
 
