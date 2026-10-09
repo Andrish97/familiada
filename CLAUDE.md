@@ -29,7 +29,7 @@ przepisuje CI), Supabase, Cloudflare Worker. Strony w `web/`.
   stosowane po pushu na `main`; `schema.sql` aktualizuje CI.
 - Scalanie `main` z konfliktami wersji `?v=`: `python3 scripts/resolve-version-conflicts.py`
   (po `git -c merge.conflictstyle=diff3 merge`; rozwiązuje tylko hunki, gdzie jedna strona zmieniła same wersje), resztę ręcznie, potem
-  `node scripts/version-assets.js`. **Nigdy `git checkout --ours -- web`** — zgubiło
+  `node scripts/version-assets.js`; przed commitem unit (test `noConflictMarkers`). **Nigdy `git checkout --ours -- web`** ani `git add -A` przy nierozwiązanych konfliktach — zgubiło
   zmiany innych sesji (2026-10-09).
 - Bez fallbacków: żadnych aliasów starych adresów ani przekierowań.
 - Komentarz w JS nie może zawierać `*/` (np. `editor-*/` w ścieżce).
