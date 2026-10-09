@@ -27,7 +27,9 @@ CROSS JOIN old_draw_payload AS old;
 
 -- Three untouched demo copies should update; edited and non-demo rows should not.
 INSERT INTO public.user_logos (is_demo, payload)
-SELECT true, payload FROM old_draw_payload
+SELECT true, old.payload
+FROM (VALUES ('pl'), ('en'), ('uk')) AS languages(lang)
+CROSS JOIN old_draw_payload AS old
 UNION ALL
 SELECT true, payload || '{"edited":true}'::jsonb FROM old_draw_payload
 UNION ALL
