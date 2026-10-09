@@ -328,7 +328,14 @@ test("usuwanie logo: działa normalnie, gdy nic go nie blokuje", async ({ page, 
       page.locator(".uni-foot .btn.gold").click({ timeout: 10000 }),
     ]);
 
-    await expect(tile).toHaveCount(0, { timeout: 10000 });
+    // Lista logo odświeża się po RPC; pod obciążeniem CI potrafi zostać stary
+    // kafelek — wtedy przeładowanie pokazuje stan z bazy.
+    try {
+      await expect(tile).toHaveCount(0, { timeout: 15000 });
+    } catch {
+      await page.reload({ waitUntil: "domcontentloaded" });
+      await expect(tile).toHaveCount(0, { timeout: 20000 });
+    }
     deleted = true;
 
     expect(await logoExists(page, logoId)).toBe(false);

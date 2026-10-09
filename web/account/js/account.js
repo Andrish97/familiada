@@ -1,12 +1,12 @@
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T02365";
-import { cooldownGet, cooldownReserve, cooldownRelease, mailCooldownEmailReserve } from "../../shared/js/core/cooldown.js?v=v2026-10-09T02365";
-import { requireAuth, updateUserLanguage, validatePassword, validateUsername, signOut, niceAuthError, initPasswordToggles, convertGuestToRegisteredEmailOnly } from "../../shared/js/core/auth.js?v=v2026-10-09T02365";
-import { getUserEmailNotificationsFlag, setUserEmailNotificationsFlag } from "../../shared/js/core/user-flags.js?v=v2026-10-09T02365";
-import { initI18n, t, getUiLang, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-09T02365";
-import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-09T02365";
-import { isGuestUser, hideForGuest } from "../../shared/js/core/guest-mode.js?v=v2026-10-09T02365";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-09T02365";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-09T02365";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T02490";
+import { cooldownGet, cooldownReserve, cooldownRelease, mailCooldownEmailReserve } from "../../shared/js/core/cooldown.js?v=v2026-10-09T02490";
+import { requireAuth, updateUserLanguage, validatePassword, validateUsername, signOut, niceAuthError, initPasswordToggles, convertGuestToRegisteredEmailOnly } from "../../shared/js/core/auth.js?v=v2026-10-09T02490";
+import { getUserEmailNotificationsFlag, setUserEmailNotificationsFlag } from "../../shared/js/core/user-flags.js?v=v2026-10-09T02490";
+import { initI18n, t, getUiLang, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-09T02490";
+import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-09T02490";
+import { isGuestUser, hideForGuest } from "../../shared/js/core/guest-mode.js?v=v2026-10-09T02490";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-09T02490";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-09T02490";
 
 
 const status = document.getElementById("status");
