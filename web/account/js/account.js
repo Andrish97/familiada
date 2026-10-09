@@ -3,7 +3,7 @@ import { cooldownGet, cooldownReserve, cooldownRelease, mailCooldownEmailReserve
 import { updateUserLanguage, validatePassword, validateUsername, signOut, niceAuthError, initPasswordToggles, convertGuestToRegisteredEmailOnly } from "../../shared/js/core/auth.js?v=v2026-10-09T23200";
 import { getUserEmailNotificationsFlag, setUserEmailNotificationsFlag } from "../../shared/js/core/user-flags.js?v=v2026-10-09T23200";
 import { initI18n, t, getUiLang, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-09T23200";
-import { loginUrl } from "../../shared/js/core/nav-map.js?v=v2026-10-09T23200";
+import { linkTo, loginUrl } from "../../shared/js/core/nav-map.js?v=v2026-10-09T23200";
 import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-09T23200";
 import { toast } from "../../shared/js/core/toast.js?v=v2026-10-09T23200";
 import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-09T23200";
@@ -557,7 +557,7 @@ async function wireDemoActions(user) {
     }
 
     // Pliki usuniętych gier i logo sprząta baza (migracja 313).
-    location.href = "/games/";
+    location.href = linkTo("games");
   });
 }
 

@@ -35,6 +35,7 @@ import { updateChecked, updateCheckedMany, ROW_GONE } from "../../../shared/js/c
 import { acquireResourceLock, acquireResourceLocks } from "../../../shared/js/core/resource-lock.js?v=v2026-10-09T23200";
 import { alertModal, confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-09T23200";
 import { t } from "../../../shared/translation/translation.js?v=v2026-10-09T23200";
+import { linkTo } from "../../../shared/js/core/nav-map.js?v=v2026-10-09T23200";
 import { addLongPress, addDoubleTap, isTouchContextMenuWindow } from "./mobile.js?v=v2026-10-09T23200";
 import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../../shared/js/core/modal-sheet.js?v=v2026-10-09T23200";
 
@@ -4608,7 +4609,7 @@ export function wireActions({ state }) {
       const gameId = res.result?.gameId;
 
       // (opcjonalnie) nawigacja do strony gier:
-      location.href = `/games/`;
+      location.href = linkTo("games");
 
       return true;
     } catch (e) {

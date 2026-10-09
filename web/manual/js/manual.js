@@ -4,7 +4,7 @@
 
 import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-09T23200";
 import { initI18n, setUiLang } from "../../shared/translation/translation.js?v=v2026-10-09T23200";
-import { linkTo, PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-09T23200";
+import { PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-09T23200";
 import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-09T23200";
 import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-09T23200";
 import "../../shared/js/core/contact-modal.js?v=v2026-10-09T23200";
@@ -87,12 +87,6 @@ function wireTabs() {
   setActive(tabFromUrl(MANUAL_TABS, DEFAULT_MANUAL_TAB), { updateUrl: false });
 }
 
-function wireLegalLink() {
-  byId("btnLegal")?.addEventListener("click", () => {
-    location.href = linkTo("privacy");
-  });
-}
-
 
 /* ================= Init ================= */
 async function init() {
@@ -108,7 +102,6 @@ async function init() {
 
   decorateManualControls(document, document.documentElement.lang);
   wireTabs();
-  wireLegalLink();
 }
 
 void init();

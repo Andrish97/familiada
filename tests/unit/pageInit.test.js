@@ -51,6 +51,7 @@ function makeDeps(over = {}) {
     handleSheetBack: () => { calls.sheet++; return over.sheetOpen === true; },
     guardDesktopOnly: (o) => { calls.wide.push(o); return { refresh() {} }; },
     blockPhone: (o) => { calls.phone.push(o); return over.phone === true; },
+    isPhoneScreen: () => over.phoneScreen === true,
   };
   return { deps, calls };
 }
@@ -217,4 +218,84 @@ test("klucze pageGuard są w pl/en/uk, stare deviceGuard i guestGuard zniknęły
     assert.equal(dict.deviceGuard, undefined, `${lang}.deviceGuard`);
     assert.equal(dict.guestGuard, undefined, `${lang}.guestGuard`);
   }
+});
+
+// --- przyciski z PAGES[id].buttons ---------------------------------------
+
+function gamesButtons() {
+  for (const id of ["btnMarketplace", "btnLogoEditor", "btnConnectDevice", "btnSubscriptionsHub", "btnBases", "btnPlay", "btnSettings", "btnEdit", "btnPoll"]) {
+    els[id] = fakeEl();
+  }
+  els.btnConnectDevice.dataset.navHidden = "true";
+  els.btnConnectDevice.style.display = "none";
+  loc.pathname = "/games/";
+  loc.search = "?lang=pl";
+}
+
+test("przyciski: konto widzi wszystkie, przejście przez linkTo", async () => {
+  gamesButtons();
+  const { deps } = makeDeps();
+  await initPage("games", { deps });
+  assert.equal(els.btnSubscriptionsHub.hidden, false);
+  assert.equal(els.btnConnectDevice.dataset.navHidden, undefined, "zdjęte domyślne ukrycie z HTML");
+  assert.equal(els.btnConnectDevice.style.display, "");
+  await els.btnBases.click();
+  assert.equal(loc.href, "/bases/?ret=%2Fgames%2F");
+  await els.btnConnectDevice.click();
+  assert.equal(loc.href, "/connect/?ret=%2Fgames%2F");
+});
+
+test("przyciski: gość nie dostaje przycisków dla konta (roles: user)", async () => {
+  gamesButtons();
+  const guest = { id: "g1", user_metadata: { is_guest: true } };
+  const { deps } = makeDeps({ user: guest });
+  await initPage("games", { deps });
+  for (const id of ["btnSubscriptionsHub", "btnConnectDevice"]) {
+    assert.equal(els[id].hidden, true, id);
+    assert.equal(els[id].style.display, "none", id);
+    assert.equal(els[id].dataset.navHidden, "true", id);
+    assert.equal(els[id].listeners.click, undefined, id);
+  }
+  assert.equal(els.btnBases.hidden, false);
+  assert.ok(els.btnBases.listeners.click);
+});
+
+test("przyciski: device wide jest ukryty na telefonie, na komputerze zostaje", async () => {
+  gamesButtons();
+  await initPage("games", { deps: makeDeps({ phoneScreen: true }).deps });
+  for (const id of ["btnPlay", "btnSettings"]) {
+    assert.equal(els[id].hidden, true, id);
+    assert.equal(els[id].style.display, "none", id);
+  }
+  assert.equal(els.btnEdit.hidden, false);
+  assert.equal(els.btnMarketplace.hidden, false);
+
+  gamesButtons();
+  await initPage("games", { deps: makeDeps({ phoneScreen: false }).deps });
+  assert.equal(els.btnPlay.hidden, false);
+  assert.equal(els.btnSettings.hidden, false);
+});
+
+test("przyciski custom: initPage nie podpina kliknięcia, cel daje strona", async () => {
+  gamesButtons();
+  await initPage("games", { deps: makeDeps().deps });
+  for (const id of ["btnPlay", "btnSettings", "btnEdit", "btnPoll"]) {
+    assert.equal(els[id].listeners.click, undefined, id);
+  }
+});
+
+test("przyciski: brak elementu w HTML nie przeszkadza, a strona bez buttons jest pomijana", async () => {
+  loc.pathname = "/games/";
+  await initPage("games", { deps: makeDeps().deps });
+  loc.pathname = "/account/";
+  await initPage("account", { deps: makeDeps().deps });
+});
+
+test("przyciski: odnośnik <a> dostaje href zamiast nasłuchu", async () => {
+  els.btnLegal = fakeEl("A");
+  loc.pathname = "/manual/";
+  loc.search = "?lang=pl";
+  await initPage("manual", { deps: makeDeps().deps });
+  assert.equal(els.btnLegal.attrs.href, "/privacy/?ret=%2Fmanual%2F");
+  assert.equal(els.btnLegal.listeners.click, undefined);
 });

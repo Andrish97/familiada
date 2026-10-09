@@ -1541,10 +1541,6 @@ function readFileAsText(file) {
 
 
 document.addEventListener("DOMContentLoaded", () => {
-  btnGoAlt?.addEventListener("click", async () => {
-    location.href = linkTo("subscriptions");
-  });
-
   btnBrowse?.addEventListener("click", () => {
     const b = selectedBase();
     if (!b) return;
@@ -1752,7 +1748,7 @@ function initFileLaunch() {
   guestMode = isGuestUser(currentUser);
   if (guestMode) {
     document.body.classList.add("bases-guest");
-    hideForGuest(currentUser, [btnGoAlt, btnShare, basesSectionShared]);
+    hideForGuest(currentUser, [btnShare, basesSectionShared]);
     tabBasesShared?.closest(".tab-slot")?.remove();
   }
 
