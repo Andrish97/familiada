@@ -154,7 +154,7 @@ jobs:
           done
           ssh -i ~/.ssh/id_ed25519 "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" \
             'docker exec -i supabase-db psql -U supabase_admin -d postgres -v ON_ERROR_STOP=1' \
-            < tests/sql/remove-draw-host-png-production.sql
+            < tests/sql/remove-draw-png-production.sql
 
       - name: Verify activity writes and exclusions on production database
         run: |
