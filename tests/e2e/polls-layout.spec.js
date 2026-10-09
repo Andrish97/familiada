@@ -16,8 +16,10 @@
 //  d) przyciski w jednym rzędzie (ten sam rodzic, pokrywające się w pionie)
 //     mają tę samą wysokość (±1 px).
 //
-// Stany: szkic (gotowa do uruchomienia), otwarta (z głosami), zamykanie
-// (tylko poll_text: panel scalania odpowiedzi), zamknięta. Subskrybenci
+// Stany (pasek stanu: data-state): szkic, otwarta (z głosami), zatrzymana,
+// podliczanie (oba typy; tekstowa z uchwytami i polami edycji), gotowa
+// (karta Udostępnianie nieaktywna). Na telefonie akcje są w dolnym pasku
+// przyklejonym do ekranu, przyciski równej szerokości. Subskrybenci
 // wymagają osobnego konta subskrybenta, którego tu nie zakładamy — kafelki
 // subskrybentów są mierzone tylko, jeśli konto testowe już jakichś ma.
 
@@ -225,6 +227,16 @@ async function checkState(page, testInfo, state, tabs, all) {
   }
 }
 
+async function confirmOk(page) {
+  const ok = page.locator(".uni-foot .btn.gold");
+  await expect(ok).toBeVisible({ timeout: 10000 });
+  await ok.click({ timeout: 10000 });
+}
+
+async function expectBarState(page, state) {
+  await expect(page.locator("#pollBar")).toHaveAttribute("data-state", state, { timeout: 60000 });
+}
+
 async function runStates(page, context, testInfo, type) {
   const all = [];
   await page.setViewportSize({ width: 1400, height: 900 });
@@ -232,51 +244,63 @@ async function runStates(page, context, testInfo, type) {
   const game = await seedPollGame(page, type);
   const tag = type;
   try {
-    // 1. szkic — gotowa do uruchomienia
+    // 1. szkic — Udostępnianie aktywne jako przygotowanie („Link pojawi się po uruchomieniu”)
     await gotoPoll(page, game.gameId);
+    await expectBarState(page, "draft");
     await checkState(page, testInfo, `${tag}-draft`, ["#tabShare", "#tabResults"], all);
 
     // 2. otwarta, z głosami
     await page.setViewportSize({ width: 1400, height: 900 });
-    await page.locator("#btnPollAction").click();
-    await page.locator(".uni-foot .btn.gold").click();
+    await page.locator("#btnOpenPoll").click();
+    await confirmOk(page);
     await expect(page.locator("#pollLink")).not.toHaveValue("", { timeout: 15000 });
     const key = new URL(await page.inputValue("#pollLink")).searchParams.get("key");
     await bulkVote(page, type === "poll_points" ? "poll_points_vote_batch" : "poll_text_submit_batch", game.gameId, key, votePlans(type, game.questions));
     await gotoPoll(page, game.gameId);
-    await expect(page.locator("#btnPollAction")).toHaveText("Zamknij", { timeout: 60000 });
+    await expectBarState(page, "poll_open");
+    await expect(page.locator("#btnStopPoll")).toBeEnabled({ timeout: 60000 });
     await checkState(page, testInfo, `${tag}-open`, ["#tabShare", "#tabResults"], all);
 
-    // 3. zamykanie
+    // 3. zatrzymana — surowe wyniki, link nadal ważny
     await page.setViewportSize({ width: 1400, height: 900 });
-    await page.locator("#tabShare").click();
-    await page.locator("#btnPollAction").click();
-    if (type === "poll_text") {
-      await expect(page.locator("#btnFinishTextClose")).toBeEnabled({ timeout: 60000 });
-      await checkState(page, testInfo, `${tag}-closing`, [null], all);
-      await page.setViewportSize({ width: 1400, height: 900 });
-      await page.locator("#btnFinishTextClose").click();
-      await page.locator(".uni-foot .btn.gold").click();
-    } else {
-      await page.getByRole("button", { name: "Zakończ", exact: true }).click();
-    }
-    await expect.poll(() => getGameStatus(page, game.gameId), { timeout: 60000 }).toBe("ready");
+    await page.locator("#btnStopPoll").click();
+    await confirmOk(page);
+    await expectBarState(page, "poll_stopped");
+    await expect(page.locator("#secResults")).toHaveClass(/active/);
+    await expect.poll(() => getGameStatus(page, game.gameId), { timeout: 30000 }).toBe("poll_stopped");
+    await expect(page.locator("#btnTallyPoll")).toBeEnabled({ timeout: 60000 });
+    await checkState(page, testInfo, `${tag}-stopped`, ["#tabShare", "#tabResults"], all);
 
-    // 4. zamknięta
+    // 4. podliczanie (te same wiersze: punkty / uchwyty i edycja)
+    await page.setViewportSize({ width: 1400, height: 900 });
+    await page.locator("#tabResults").click();
+    await page.locator("#btnTallyPoll").click();
+    await expectBarState(page, "tally");
+    await expect(page.locator("#resultsList .aList.tally").first()).toBeVisible({ timeout: 60000 });
+    await expect(page.locator("#btnApproveTally")).toBeEnabled({ timeout: 60000 });
+    await checkState(page, testInfo, `${tag}-tally`, [null], all);
+
+    // 5. gotowa — Udostępnianie nieaktywne
+    await page.setViewportSize({ width: 1400, height: 900 });
+    await page.locator("#btnApproveTally").click();
+    await confirmOk(page);
+    await expect.poll(() => getGameStatus(page, game.gameId), { timeout: 60000 }).toBe("ready");
     await gotoPoll(page, game.gameId);
-    await checkState(page, testInfo, `${tag}-closed`, ["#tabShare", "#tabResults"], all);
+    await expectBarState(page, "ready");
+    await expect(page.locator("#tabShare")).toBeDisabled();
+    await checkState(page, testInfo, `${tag}-ready`, ["#tabResults"], all);
   } finally {
     await deleteGame(page, game.gameId);
   }
   expect(all).toEqual([]);
 }
 
-test("układ przycisków: ankieta punktowa (szkic, otwarta, zamknięta)", async ({ page, context }, testInfo) => {
-  test.setTimeout(300_000);
+test("układ przycisków: ankieta punktowa (szkic, otwarta, zatrzymana, podliczanie, gotowa)", async ({ page, context }, testInfo) => {
+  test.setTimeout(420_000);
   await runStates(page, context, testInfo, "poll_points");
 });
 
-test("układ przycisków: ankieta tekstowa (szkic, otwarta, zamykanie, zamknięta)", async ({ page, context }, testInfo) => {
-  test.setTimeout(300_000);
+test("układ przycisków: ankieta tekstowa (szkic, otwarta, zatrzymana, podliczanie, gotowa)", async ({ page, context }, testInfo) => {
+  test.setTimeout(420_000);
   await runStates(page, context, testInfo, "poll_text");
 });
