@@ -1,38 +1,38 @@
-import { addRenameGesture } from "../../shared/js/core/rename-gesture.js?v=v2026-10-09T17345";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T17345";
-import { requireAuth } from "../../shared/js/core/auth.js?v=v2026-10-09T17345";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-09T17345";
-import { hideForGuest, isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-09T17345";
-import { initI18n, t, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-09T17345";
-import { linkTo } from "../../shared/js/core/nav-map.js?v=v2026-10-09T17345";
-import { initRatingSystem } from "../../shared/js/core/rating-system.js?v=v2026-10-09T17345";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-09T17345";
-import { maybeShowGuestInfoModal } from "../../shared/js/core/guest-info-modal.js?v=v2026-10-09T17345";
-import { maybeShowGuestMigrateReminder } from "../../shared/js/core/guest-migrate-reminder.js?v=v2026-10-09T17345";
+import { addRenameGesture } from "../../shared/js/core/rename-gesture.js?v=v2026-10-09T17374";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T17374";
+import { requireAuth } from "../../shared/js/core/auth.js?v=v2026-10-09T17374";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-09T17374";
+import { hideForGuest, isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-09T17374";
+import { initI18n, t, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-09T17374";
+import { linkTo } from "../../shared/js/core/nav-map.js?v=v2026-10-09T17374";
+import { initRatingSystem } from "../../shared/js/core/rating-system.js?v=v2026-10-09T17374";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-09T17374";
+import { maybeShowGuestInfoModal } from "../../shared/js/core/guest-info-modal.js?v=v2026-10-09T17374";
+import { maybeShowGuestMigrateReminder } from "../../shared/js/core/guest-migrate-reminder.js?v=v2026-10-09T17374";
 
-import { initPwa, isStandalone, isMobileDevice } from "../../shared/js/core/pwa.js?v=v2026-10-09T17345";
-import { createPollResults } from "../../shared/js/core/poll-results.js?v=v2026-10-09T17345";
-import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-09T17345";
+import { initPwa, isStandalone, isMobileDevice } from "../../shared/js/core/pwa.js?v=v2026-10-09T17374";
+import { createPollResults } from "../../shared/js/core/poll-results.js?v=v2026-10-09T17374";
+import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-09T17374";
 
 // Zarejestruj listener PWA jak najwcześniej – beforeinstallprompt może odpalić przed requireAuth
 const pwaApi = initPwa();
 // Jeśli beforeinstallprompt już odpalił zanim dodaliśmy listener w IIFE, sprawdzimy po zalogowaniu
 
 
-import { exportGame, importGame, downloadJson } from "./games-import-export.js?v=v2026-10-09T17345";
-import { setTopbarNavPriority, setTopbarAccount } from '../../shared/js/core/topbar-controller.js?v=v2026-10-09T17345';
+import { exportGame, importGame, downloadJson } from "./games-import-export.js?v=v2026-10-09T17374";
+import { setTopbarNavPriority, setTopbarAccount } from '../../shared/js/core/topbar-controller.js?v=v2026-10-09T17374';
 
-import "../../shared/js/core/contact-modal.js?v=v2026-10-09T17345";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-09T17374";
 import {
   TYPES,
   STATUS,
   loadGameBasic,
   validateGame,
   rulesFromState,
-} from "../../shared/js/core/game-validate.js?v=v2026-10-09T17345";
-import { isResourceBusy, acquireResourceLock, getTabId } from "../../shared/js/core/resource-lock.js?v=v2026-10-09T17345";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-09T17345";
-import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-09T17345";
+} from "../../shared/js/core/game-validate.js?v=v2026-10-09T17374";
+import { isResourceBusy, acquireResourceLock, getTabId } from "../../shared/js/core/resource-lock.js?v=v2026-10-09T17374";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-09T17374";
+import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-09T17374";
 
 const MSG = {
   exportBaseEmpty: () => t("games.exportBase.empty"),
@@ -889,10 +889,19 @@ async function loadPollVoteCounts() {
 
 function pollBadge(g) {
   if (g.status === STATUS.POLL_OPEN) {
-    return pollVoteCounts.has(g.id) ? { cls: "tag--info", text: MSG.badgeVotes(pollVoteCounts.get(g.id)) } : null;
+    return pollVoteCounts.has(g.id) ? { cls: "tag--muted", text: MSG.badgeVotes(pollVoteCounts.get(g.id)) } : null;
   }
   if (g.status === STATUS.POLL_STOPPED) return { cls: "tag--gold pollBadge--tally", text: MSG.badgeToTally() };
   return null;
+}
+
+// Kolor oznaczenia stanu: szkic wyciszony, otwarta niebieska, zatrzymana złota, gotowa zielona.
+function statusTagClass(g) {
+  const label = statusLabel(g.status, g);
+  if (label === MSG.statusReady()) return "tag--ok";
+  if (g.status === STATUS.POLL_OPEN) return "tag--info";
+  if (g.status === STATUS.POLL_STOPPED) return "tag--gold";
+  return "tag--muted";
 }
 
 function cardGame(g) {
@@ -907,19 +916,24 @@ function cardGame(g) {
     <div class="name"></div>
     <div class="meta"></div>
     <div class="rules"></div>
+    <div class="cardTags"></div>
   `;
 
   el.querySelector(".name").textContent = g.name || t("control.dash");
-  el.querySelector(".meta").textContent = `${typeLabel(uiType)} • ${statusLabel(g.status, g)}`;
+  el.querySelector(".meta").textContent = typeLabel(uiType);
 
-  // plakietka stanu ankiety: OTWARTA — liczba głosów, ZATRZYMANA — „do podliczenia”
-  const badge = pollBadge(g);
-  if (badge) {
+  // Rząd oznaczeń: stan zawsze (ta sama wysokość i odstęp na każdym kaflu),
+  // obok plakietka ankiety — OTWARTA: liczba głosów, ZATRZYMANA: „do podliczenia”.
+  const tags = el.querySelector(".cardTags");
+  const addTag = (text, cls) => {
     const tag = document.createElement("span");
-    tag.className = `tag pollBadge ${badge.cls}`;
-    tag.textContent = badge.text;
-    el.querySelector(".meta").append(" ", tag);
-  }
+    tag.className = `tag ${cls}`;
+    tag.textContent = text;
+    tags.append(tag);
+  };
+  addTag(statusLabel(g.status, g), `cardStatus ${statusTagClass(g)}`);
+  const badge = pollBadge(g);
+  if (badge) addTag(badge.text, `pollBadge ${badge.cls}`);
 
   const blocker = tileBlocker(g);
   el.querySelector(".rules").textContent = blocker;

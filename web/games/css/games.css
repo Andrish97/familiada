@@ -404,7 +404,7 @@ body.games-body > main.wrap{
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: flex-start; /* nazwa i typ u góry, oznaczenia przy dole (margin-top:auto) */
   min-height: 130px;
 }
 
@@ -462,13 +462,24 @@ body.games-body > main.wrap{
   color: rgba(236,239,244,.9);
 }
 
-/* Plakietka stanu ankiety na kafelku: liczba głosów / „do podliczenia” */
-.games-body .grid .card .meta .pollBadge{
-  margin-left: 4px;
-  text-transform: none;
-  letter-spacing: .02em;
+/* Rząd oznaczeń na kafelku: stan + plakietka ankiety — równa wysokość,
+   stały odstęp, zawijanie całymi oznaczeniami (nie w środku tekstu). */
+.games-body .grid .card .cardTags{
+  margin-top: auto; /* rząd oznaczeń zawsze przy dole kafla, równo w całej siatce */
+  padding-top: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
 }
-.games-body .grid .card .meta .pollBadge--tally{
+.games-body .grid .card .cardTags .tag{
+  height: 22px;
+  padding: 0 8px;
+  font-size: 10.5px;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.games-body .grid .card .cardTags .pollBadge--tally{
   border-color: rgba(255,234,166,.8);
   background: rgba(255,234,166,.24);
   box-shadow: 0 0 0 1px rgba(255,234,166,.18);
