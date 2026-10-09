@@ -81,6 +81,8 @@ test("logo Hosta: zapis w Ustawieniach rozgrywki i podgląd zapisanego wariantu 
     await page.locator("#gsColorModalDone").click();
     await expect(hostPreview.locator("#cover2Logo")).toBeVisible({ timeout: 15_000 });
     await expect.poll(() => hostPreview.locator("html").evaluate(el => getComputedStyle(el).getPropertyValue("--host-cover-accent").trim().toLowerCase())).toBe("#33aaff");
+    await expect(hostPreview.locator("#cover2")).toHaveClass(/coverOn/);
+    await expect(hostPreview.locator("#cover2Logo svg")).toBeVisible();
     await expect.poll(() => hostPreview.locator("#cover2Logo").evaluate(el => el.childElementCount)).toBeGreaterThan(0);
     await page.locator("#gsLivePreviewWrap").screenshot({ path: testInfo.outputPath("shot-host-logo-game-settings.png") });
 
@@ -126,6 +128,8 @@ test("logo Hosta: zapis w Ustawieniach rozgrywki i podgląd zapisanego wariantu 
     const controlHost = page.frameLocator("#c2HostPreview iframe");
     await expect(controlHost.locator("#cover2Logo")).toBeVisible({ timeout: 15_000 });
     await expect.poll(() => controlHost.locator("html").evaluate(el => getComputedStyle(el).getPropertyValue("--host-cover-accent").trim().toLowerCase())).toBe("#33aaff");
+    await expect(controlHost.locator("#cover2")).toHaveClass(/coverOn/);
+    await expect(controlHost.locator("#cover2Logo svg")).toBeVisible();
     await expect.poll(() => controlHost.locator("#cover2Logo").evaluate(el => el.childElementCount)).toBeGreaterThan(0);
     await page.screenshot({ path: testInfo.outputPath("shot-host-logo-control-summary.png"), fullPage: true });
   } finally {

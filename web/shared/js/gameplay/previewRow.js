@@ -60,7 +60,10 @@ export function buildDisplayPreviewRow({ teams, display, logoPreview } = {}) {
       rounds: { roundNo: 1, bankPts: 0, xA: 0, xB: 0, totals: { A: 0, B: 0 } },
       final: { runtime: {} },
       display: displayDetail,
-      host: { covered: false },
+      // Settings/Control previews must show the Host's covered band: this is
+      // where the selected Host logo is presented. It is preview-only state;
+      // live game state still owns the actual cover gesture.
+      host: { covered: true },
       locks: { gameEnded: false },
     },
   };

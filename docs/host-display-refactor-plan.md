@@ -153,6 +153,8 @@ przezroczystym tłem pozostaje bez zmian. Jednolite tło usuwa się wg progów
 Podgląd Hosta obok podglądu Wyświetlacza w Ustawieniach rozgrywki reaguje na
 niezapisane zmiany, w tym przełącznik, kolor DOT i wybór logo. Podsumowanie
 Control pokazuje ten sam wariant Hosta i krótko opisuje aktywne ustawienie.
+W obu podglądach pasmo 2 jest zasłonięte, aby wybrane logo Hosta było od razu
+widoczne; nie zmienia to stanu ani gestu zasłony w trwającej rozgrywce.
 Nazwa motywu w podsumowaniu jest lokalizowana (Klasyczny/Nowoczesny,
 Classic/Modern, Класична/Сучасна), a nie pokazywana jako klucz `classic` lub
 `modern`.
