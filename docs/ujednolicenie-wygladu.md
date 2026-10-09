@@ -335,3 +335,12 @@ urządzenia.
    subskrybentów, a wiersze odbiorców z obu kanałów w tych samych sekcjach
    wg stanu (np. Oczekujące · Aktywni), z oznaczeniem kanału (mail /
    subskrybent) w szarej linijce.
+7. **Konto odbiorcy przy udostępnianiu mailem** (decyzja 2026-10-09):
+   - **bazy** — e-mail / nazwa **musi należeć do konta** (tak jest dziś:
+     `base_share_by_email` szuka w `profiles`, bez konta błąd),
+   - **urządzenia (Control)** — **konto niekonieczne**: na dowolny e-mail
+     idzie link urządzenia (`/go/?d=…`). Dziś `shareDevice.js` wymaga konta
+     („Nie znaleziono użytkownika”, `share_device(p_recipient_user_id)`) —
+     **zmiana do zrobienia w E19**: odbiorca bez konta zapisany po e-mailu
+     (nowa kolumna / RPC, migracja dodająca), widoczny w wierszach z kanałem
+     „mail”, z możliwością cofnięcia; odbiorca z kontem jak dziś.
