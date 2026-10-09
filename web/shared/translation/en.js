@@ -132,19 +132,17 @@ const en = {
       chooseFiles: "Choose files",
     },
   },
-  deviceGuard: {
-    title: "Not available on a phone",
-    message: "This page needs a bigger screen. Switch to a computer or a tablet.",
+  // Wspólna nakładka blokady strony (page-overlay.js): urządzenie i gość.
+  pageGuard: {
+    phoneTitle: "Not available on a phone",
+    phoneMessage: "This page needs a bigger screen. Switch to a computer or a tablet.",
     rotateTitle: "Rotate your tablet",
     rotateMessage: "This page works in landscape. Rotate your tablet — the page will appear on its own.",
     narrowTitle: "Window too narrow",
     narrowMessage: "Make the browser window wider to use this page.",
-    back: "Go back",
-  },
-  guestGuard: {
-    title: "Not available for guest account",
-    message: "This section is available only for registered users. Sign in or create an account to use sharing, subscriptions, and the polls hub.",
-    back: "Back to my games",
+    back: "Back",
+    guestTitle: "Not available for guest account",
+    guestMessage: "This section is available only for registered users. Sign in or create an account to use sharing, subscriptions, and the polls hub.",
     login: "Sign in / Create account",
   },
   resourceLock: {

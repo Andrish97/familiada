@@ -1,10 +1,10 @@
 import { addRenameGesture } from "../../shared/js/core/rename-gesture.js?v=v2026-10-09T21300";
 import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T21300";
-import { requireAuth } from "../../shared/js/core/auth.js?v=v2026-10-09T21300";
 import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-09T21300";
 import { hideForGuest, isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-09T21300";
 import { initI18n, t, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-09T21300";
 import { linkTo } from "../../shared/js/core/nav-map.js?v=v2026-10-09T21300";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-09T21300";
 import { initRatingSystem } from "../../shared/js/core/rating-system.js?v=v2026-10-09T21300";
 import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-09T21300";
 import { maybeShowGuestInfoModal } from "../../shared/js/core/guest-info-modal.js?v=v2026-10-09T21300";
@@ -20,7 +20,7 @@ const pwaApi = initPwa();
 
 
 import { exportGame, importGame, downloadJson } from "./games-import-export.js?v=v2026-10-09T21300";
-import { setTopbarNavPriority, setTopbarAccount } from '../../shared/js/core/topbar-controller.js?v=v2026-10-09T21300';
+import { setTopbarNavPriority } from '../../shared/js/core/topbar-controller.js?v=v2026-10-09T21300';
 
 import "../../shared/js/core/contact-modal.js?v=v2026-10-09T21300";
 import {
@@ -110,7 +110,6 @@ const btnPlay = document.getElementById("btnPlay");
 const btnPoll = document.getElementById("btnPoll");
 const btnSettings = document.getElementById("btnSettings");
 
-const btnManual = document.getElementById("btnManual");
 const btnLogoEditor = document.getElementById("btnLogoEditor");
 const btnBases = document.getElementById("btnBases");
 const btnSubscriptionsHub = document.getElementById("btnSubscriptionsHub");
@@ -1206,8 +1205,10 @@ async function refresh() {
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
-  const requireAuthP = requireAuth("/login/"); // start równolegle z initI18n
-  await initI18n({ withSwitcher: true });
+  const i18nP = initI18n({ withSwitcher: true });
+  // initPage: dostęp, topbar i konto wg mapy (auth startuje równolegle z i18n)
+  const userP = initPage("games", { ready: i18nP, account: { withAccountSettings: true } });
+  await i18nP;
   // Typ to zakładki (preparowana/tekstowa/punktowa/rynek) — filtr tylko po stanie.
   initListSearch({
     grids: "#grid", tile: ".card", name: ".name",
@@ -1219,10 +1220,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     },
   });
 
-  // Blokuj autoInitTopbarAuthButton — games wywołuje setTopbarAccount z withAccountSettings:true
-  const _btnLogoutEl = document.getElementById('btnLogout');
-  if (_btnLogoutEl) _btnLogoutEl.dataset.topbarAuthReady = '1';
-
   // Nav priority BEFORE remove('page-loading') — recalc via RAF fires before first paint,
   // so user never sees buttons jump from "all visible" to "some in Więcej"
   const { recalc: _navRecalc } = setTopbarNavPriority({
@@ -1233,7 +1230,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   document.documentElement.classList.remove('page-loading'); // translations ready — show skeleton
   initRatingSystem();
 
-  currentUser = await requireAuthP;
+  currentUser = await userP;
+  if (!currentUser) return; // initPage przekierował na logowanie
   const guestMode = isGuestUser(currentUser);
 
   await maybeShowGuestInfoModal(currentUser);
@@ -1243,9 +1241,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     // data-nav-hidden prevents recalc() from resetting display on these buttons
     if (btnSubscriptionsHub) btnSubscriptionsHub.dataset.navHidden = "true";
   }
-
-  setTopbarAccount(currentUser, { withAccountSettings: true });
-  document.querySelector('.topbar')?.classList.add('topbar-ready');
 
   // btnInstall: widoczny gdy pwa:installable odpalił (canInstall) lub iOS Safari — nie standalone
   if (btnInstall) {
@@ -1456,11 +1451,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (document.visibilityState === "visible") refreshBadges({ force: true });
   });
 
-
-  // btnManual
-  btnManual?.addEventListener("click", async () => {
-    location.href = linkTo("manual", { hash: "general" });
-  });
 
   btnLogoEditor?.addEventListener("click", async () => {
     location.href = linkTo("logoEditor");

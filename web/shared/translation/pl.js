@@ -132,19 +132,17 @@ const pl = {
       chooseFiles: "Wybierz pliki",
     },
   },
-  deviceGuard: {
-    title: "Niedostępne na telefonie",
-    message: "Ta strona potrzebuje większego ekranu. Przełącz się na komputer albo tablet.",
+  // Wspólna nakładka blokady strony (page-overlay.js): urządzenie i gość.
+  pageGuard: {
+    phoneTitle: "Niedostępne na telefonie",
+    phoneMessage: "Ta strona potrzebuje większego ekranu. Przełącz się na komputer albo tablet.",
     rotateTitle: "Obróć tablet",
     rotateMessage: "Ta strona działa w poziomie. Obróć tablet — strona pojawi się sama.",
     narrowTitle: "Za wąskie okno",
     narrowMessage: "Poszerz okno przeglądarki, żeby korzystać z tej strony.",
     back: "Wróć",
-  },
-  guestGuard: {
-    title: "Niedostępne w koncie gościa",
-    message: "Ta sekcja jest dostępna tylko dla zarejestrowanych użytkowników. Zaloguj się lub załóż konto, aby korzystać z udostępniania, subskrypcji i Centrum ankiet.",
-    back: "Wróć do moich gier",
+    guestTitle: "Niedostępne w koncie gościa",
+    guestMessage: "Ta sekcja jest dostępna tylko dla zarejestrowanych użytkowników. Zaloguj się lub załóż konto, aby korzystać z udostępniania, subskrypcji i Centrum ankiet.",
     login: "Zaloguj / Załóż konto",
   },
   resourceLock: {
