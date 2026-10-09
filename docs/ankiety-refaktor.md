@@ -30,17 +30,18 @@ Stan faktyczny sprawdzony w kodzie 2026-10-07 (opis niżej, sekcja 4).
   w ankiecie tekstowej pojawia się karta **„Zamykanie” jako pierwsza**:
   Zamykanie · Udostępnianie · Wyniki (aktywna od razu). W niej scalanie
   i edycja odpowiedzi, Cofnij/Ponów, „Zamknij i przelicz”. Pozostałe karty
-  dostępne w trakcie edycji. Jedno „Anuluj” — na pasku stanu (chowa kartę,
-  odrzuca edycję). Ankieta punktowa bez zmian.
-- **2026-10-09 — głosowanie wstrzymane na czas zamykania** (użytkownik zostawił
-  wybór mnie). Powód: panel zamykania pracuje na zdjęciu odpowiedzi z chwili
-  „Zamknij”, a „Zamknij i przelicz” liczy tylko je — głosy oddane w trakcie
-  edycji dziś giną po cichu. Wstrzymanie trwa tyle, co blokada `game:G`
-  karty zamykającej (kontekst zamykania, TTL): zamknięcie karty / utrata
-  połączenia samo wznawia głosowanie, bez stanu „zawieszona na zawsze”.
-  „Anuluj” zwalnia wstrzymanie od razu. Głosujący w tym czasie widzi
-  komunikat „Ankieta jest właśnie zamykana — spróbuj za chwilę”, a głos
-  odrzuca baza (nie tylko strona).
+  dostępne w trakcie edycji. Ankieta punktowa bez zmian.
+- **2026-10-09 — zamykanie ankiety tekstowej: stan DO ZATWIERDZENIA**
+  (wymóg użytkownika: logicznie i intuicyjnie; zastępuje wcześniejszy pomysł
+  wstrzymania zależnego od blokady karty). „Zamknij” kończy głosowanie —
+  ankieta tekstowa przechodzi w trwały stan **DO ZATWIERDZENIA** (kafel,
+  pasek stanu). Karta „Zamykanie” (pierwsza): scalanie/edycja odpowiedzi,
+  Cofnij/Ponów; poprawki zapisywane w bazie — można wyjść i wrócić.
+  Przyciski: **„Zatwierdź wyniki”** (przelicza → ZAMKNIĘTA, gra gotowa) i
+  **„Wznów głosowanie”** (→ OTWARTA, ten sam link, głosy zostają; zastępuje
+  „Anuluj”). Głosujący w tym stanie widzi „Głosowanie zakończone”, głos
+  odrzuca baza. Bez timerów i ukrytego wznawiania; żaden głos nie ginie
+  (dziś panel liczy zdjęcie z chwili otwarcia). Ankieta punktowa bez zmian.
 
 ## 2. Co gdzie po zmianie
 
