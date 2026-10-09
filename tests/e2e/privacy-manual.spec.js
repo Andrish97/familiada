@@ -93,7 +93,7 @@ test("manual: treść i etykieta zakładek istnieją w PL/EN/UK", async ({ page 
   }
 });
 
-test("manual: Host logo jest opisane w Control i Ustawieniach rozgrywki w PL/EN/UK", async ({ page }, testInfo) => {
+test("manual: Host logo jest opisane w Control i Ustawieniach gry w PL/EN/UK", async ({ page }, testInfo) => {
   const cases = [
     { lang: "pl", control: "Logo prowadzącego", settings: "Przełącznik Logo prowadzącego", source: "Źródło" },
     { lang: "en", control: "Host logo", settings: "The Host logo selector", source: "Source" },

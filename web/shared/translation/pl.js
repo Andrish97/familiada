@@ -169,7 +169,7 @@ const pl = {
     // game-settings.js mają aktywną którąkolwiek jego grę — niezależnie od
     // tego, czy TO logo jest przez nią referencowane.
     logoPoolBusyControl: "Nie możesz edytować ani usunąć logo, bo prowadzisz rozgrywkę.",
-    logoPoolBusySettings: "Nie możesz edytować ani usunąć logo, bo zmieniasz ustawienia rozgrywki.",
+    logoPoolBusySettings: "Nie możesz edytować ani usunąć logo, bo zmieniasz ustawienia gry.",
     lostTitle: "Utracono blokadę",
     lostMessage: "W międzyczasie ten zasób przejęła inna karta (np. po uśpieniu komputera). Odśwież stronę, żeby wejść ponownie.",
     // Gra otwarta (ustawienia / Control) zajmuje całą pulę logo; edycja któregokolwiek logo
@@ -524,7 +524,6 @@ const pl = {
     title: "Familiada — konto",
     pageTitle: "Familiada — moje konto",
     headerTitle: "Ustawienia konta",
-    headerHint: "Zarządzaj profilem, e-mailem i bezpieczeństwem.",
     statusLoading: "Ładuję profil…",
     usernameTitle: "Nazwa użytkownika",
     usernameHint: "Widoczna dla subskrybentów i w panelu.",
@@ -1019,7 +1018,7 @@ const pl = {
       control: "Panel sterowania",
       demo: "Materiały Demo",
       community: "Gry Społeczności",
-      gameSettings: "Ustawienia rozgrywki",
+      gameSettings: "Ustawienia gry",
     },
     demo: {
       modalTitle: "Przywrócić pliki demo?",
@@ -2052,7 +2051,7 @@ const pl = {
 <p class="m-p">Gdy urządzenia są połączone, przechodzisz do podsumowania ustawień. Wszystkie opcje (kolory, dźwięk, parametry gry) możesz wcześniej skonfigurować na stronie <span class="m-strong">Ustawień rozgrywki</span> — Panel sterowania wczyta je automatycznie.</p>
 <p class="m-p"><span class="m-strong">Skróty:</span> W Podsumowaniu E zaznacza zmianę ustawień, a Enter ją otwiera. B i Enter wracają, gdy powrót jest dostępny.</p>
 <h4 class="m-h3">Nazwy drużyn</h4>
-<p class="m-p">Nazwy drużyn sprawdź w Podsumowaniu. Wyświetlacz pozostaje wtedy czarny; nazwy pojawią się dopiero po <span class="m-code">Gotowe — przejdź do rozgrywki</span>, na ekranie z przyciskiem <span class="m-code">Rozpocznij grę</span>. Puste pola w Ustawieniach rozgrywki oznaczają nazwy „Drużyna A” i „Drużyna B”.</p>
+<p class="m-p">Nazwy drużyn sprawdź w Podsumowaniu. Wyświetlacz pozostaje wtedy czarny; nazwy pojawią się dopiero po <span class="m-code">Gotowe — przejdź do rozgrywki</span>, na ekranie z przyciskiem <span class="m-code">Rozpocznij grę</span>. Puste pola w Ustawieniach gry oznaczają nazwy „Drużyna A” i „Drużyna B”.</p>
 <h4 class="m-h3">Wygląd</h4>
 <ul class="m-ul">
 <li><span class="m-strong">Kolory</span> — kolory drużyn, tła i kropek.</li>
@@ -2066,13 +2065,13 @@ const pl = {
 <li>Suwak <span class="m-strong">głośności</span> pozwala dostosować poziom każdego dźwięku.</li>
 <li>Przycisk <span class="m-code"><i class="ico" data-icon="play"></i></span> pozwala odsłuchać dźwięk przed rozgrywką.</li>
 </ul>
-<p class="m-p">Jeśli zmienisz poziom głośności tutaj, zostanie on zmieniony tylko dla tej konkretnej rozgrywki. Przy ponownym uruchomieniu rozgrywki zostaną wczytane wartości nadane w <span class="m-strong">Ustawieniach rozgrywki</span>.</p>
+<p class="m-p">Jeśli zmienisz poziom głośności tutaj, zostanie on zmieniony tylko dla tej konkretnej rozgrywki. Przy ponownym uruchomieniu rozgrywki zostaną wczytane wartości nadane w <span class="m-strong">Ustawieniach gry</span>.</p>
 <h4 class="m-h3">Finał</h4>
 <p class="m-p">Tu zobaczysz tylko potwierdzenie, czy rozgrywka ma finał.</p>
 <p class="m-p">Jeśli finał jest włączony i wybrano tryb <span class="m-strong">Ręcznie</span> — tutaj zobaczysz wybrane przez Ciebie 5 pytań finałowych. Przy trybie <span class="m-strong">Losuj</span> zobaczysz wylosowane pytania finałowe. Możesz użyć <span class="m-code">Losuj ponownie</span> przy tej sekcji, aby zmienić zestaw przed rozpoczęciem gry. Wybrana kolejność i ręcznie wybrane pytania finału pozostają bez zmian.</p>
 <h4 class="m-h3">Rundy: kolejność pytań</h4>
 <p class="m-p">Jeśli wybrano tryb <span class="m-strong">Kolejność</span> dla pytań rund — tutaj będzie widoczna kolejność pytań, które zostaną użyte podczas rozgrywki zasadniczej. Przy trybie <span class="m-strong">Losuj</span> zobaczysz wylosowane pytania rund.  Możesz użyć <span class="m-code">Losuj ponownie</span> przy pytaniach rund, aby zmienić ich kolejność przed rozpoczęciem gry.</p>
-<p class="m-p">Zawsze możesz wybrać <span class="m-code">Zmień ustawienia</span>, aby otworzyć okno ustawień. Szczegóły znajdziesz w <a href="#gameSettings">Ustawieniach rozgrywki</a>.</p>
+<p class="m-p">Zawsze możesz wybrać <span class="m-code">Zmień ustawienia</span>, aby otworzyć okno ustawień. Szczegóły znajdziesz w <a href="#gameSettings">Ustawieniach gry</a>.</p>
 <p class="m-p">Gdy wszystko się zgadza — kliknij <span class="m-code">Gotowe — przejdź do rozgrywki</span>.</p>
 <h4 class="m-h3">Zaznaczanie i zatwierdzanie</h4>
 <p class="m-p">Pierwsze kliknięcie kafelka wymagającego potwierdzenia zaznacza go. Drugie zatwierdza czynność. W ten sposób przyjmujesz zgłoszenie, odsłaniasz odpowiedzi w rundach, dodajesz X i oddajesz kontrolę. Samo zaznaczenie nie zmienia wyniku. Wyszarzone przyciski są niedostępne; podczas dźwięku lub przejścia poczekaj, aż panel je odblokuje. Wskazówki do bieżącego kroku znajdziesz w kolumnie podpowiedzi.</p>
@@ -2124,7 +2123,7 @@ const pl = {
 <h3 class="m-h2">5) Finał</h3>
 <p class="m-p">W finale dwóch zawodników odpowiada na te same <span class="m-strong">5 pytań</span>. Ich punkty sumują się; celem jest ustawiony próg finału, domyślnie <span class="m-strong">200 punktów</span>. Zwykle grają dwie osoby z drużyny zwycięskiej. Za jej zgodą możesz organizacyjnie wybrać po jednym zawodniku z każdej drużyny — system nadal rozlicza jeden wspólny finał zwycięzców.</p>
 <h4 class="m-h3">Przygotowanie finału</h4>
-<p class="m-p">Przed grą sprawdź pięć pytań w Podsumowaniu. Przy trybie <span class="m-strong">Ręcznie</span> wybierz je w Ustawieniach rozgrywki; przy trybie <span class="m-strong">Losuj</span> system dobiera je automatycznie. Przygotuj miejsce oczekiwania i słuchawki z muzyką dla drugiego zawodnika: podczas pierwszej rundy nie może słyszeć pytań ani odpowiedzi.</p>
+<p class="m-p">Przed grą sprawdź pięć pytań w Podsumowaniu. Przy trybie <span class="m-strong">Ręcznie</span> wybierz je w Ustawieniach gry; przy trybie <span class="m-strong">Losuj</span> system dobiera je automatycznie. Przygotuj miejsce oczekiwania i słuchawki z muzyką dla drugiego zawodnika: podczas pierwszej rundy nie może słyszeć pytań ani odpowiedzi.</p>
 <p class="m-p"><span class="m-code">Rozpocznij finał</span> otwiera planszę finału. Wynik zwycięskiej drużyny pozostaje widoczny, a miejsce wyniku przeciwnej drużyny jest przeznaczone na zegar. Suma finału jest pokazywana w banku na górze.</p>
 <div class="m-host"><strong class="m-host-title">Prowadzący:</strong> Podczas przygotowania finału tablet nie pokazuje materiałów. Materiały pojawiają się po rozpoczęciu pierwszej rundy.</div>
 <h4 class="m-h3">Gracz 1 — przygotowanie i wpisywanie</h4>
@@ -2308,7 +2307,7 @@ const pl = {
         Wyróżniają się dedykowaną odznaką.
       </p>`,
       gameSettings: `<p class="m-p">Strona Ustawień rozgrywki pozwala skonfigurować grę na spokojnie — zanim wejdziesz do Panelu sterowania i zaczniesz rozgrywkę na żywo. Wszystko, co tu ustawisz, jest zapisane do gry i zostanie automatycznie wczytane przez Panel sterowania.</p>
-<p class="m-p">Otworzysz ją ze strony <span class="m-strong">Moje gry</span> przyciskiem <span class="m-strong">Ustawienia rozgrywki</span> przy wybranej grze.</p>
+<p class="m-p">Otworzysz ją ze strony <span class="m-strong">Moje gry</span> przyciskiem <span class="m-strong">Ustawienia gry</span> przy wybranej grze.</p>
 <h3 class="m-h2">Drużyny</h3>
 <p class="m-p">Wpisz nazwy drużyn i sprawdź je na podglądzie oraz w Podsumowaniu. Na Wyświetlaczu gry pojawią się dopiero na ekranie z przyciskiem <span class="m-code">Rozpocznij grę</span>, po przygotowaniu urządzeń i ustawień.</p>
 <p class="m-p">Jeśli nie wpiszesz nic — zostaną wyświetlone domyślne wartości <span class="m-strong">Drużyna A</span> i <span class="m-strong">Drużyna B</span>.</p>
@@ -2324,7 +2323,7 @@ const pl = {
 <h4 class="m-h3">Motyw</h4>
 <p class="m-p">Wybierz motyw wizualny tablicy. Motyw wpływa na styl graficzny całego wyświetlacza. Domyślny motyw to <span class="m-strong">Klasyczny</span>.</p>
 <h4 class="m-h3">Logo</h4>
-<p class="m-p">Jeśli masz własne logo, wybierz je w sekcji „Logo”. Wybór „Domyślne” oznacza logo Familiady, a „Bez logo” rezygnację z własnego znaku. Wybrane logo pojawia się na początku gry; na końcu zależy od ustawionego trybu ekranu końcowego. Podgląd w Ustawieniach rozgrywki pokazuje edytowane wartości przed zapisem. Podsumowanie w Panelu sterowania korzysta z zapisanych ustawień.</p>
+<p class="m-p">Jeśli masz własne logo, wybierz je w sekcji „Logo”. Wybór „Domyślne” oznacza logo Familiady, a „Bez logo” rezygnację z własnego znaku. Wybrane logo pojawia się na początku gry; na końcu zależy od ustawionego trybu ekranu końcowego. Podgląd w Ustawieniach gry pokazuje edytowane wartości przed zapisem. Podsumowanie w Panelu sterowania korzysta z zapisanych ustawień.</p>
 <p class="m-p">Przełącznik <span class="m-strong">Logo prowadzącego</span> wybiera wariant <span class="m-strong">Piksele</span> (dotychczasowy wygląd) lub <span class="m-strong">Źródło</span> (zapisane logo). Podgląd Hosta znajduje się obok podglądu Wyświetlacza.</p>
 <p class="m-p">Przycisk <span class="m-code">Przywróć domyślne</span> w sekcji Wygląd resetuje kolory, motyw i logo do wartości domyślnych.</p>
 <h3 class="m-h2">Dźwięk</h3>
@@ -2593,7 +2592,7 @@ const pl = {
       exportBaseMobile: "Exp.bz",
       import: "Importuj",
       importMobile: "Imp",
-      settings: "Ustawienia rozgrywki",
+      settings: "Ustawienia gry",
     },
     preview: {
       noQuestions: "Brak pytań.",
@@ -2611,7 +2610,6 @@ const pl = {
       pollPoints: "Punktacja",
       pollPointsMobile: "Punkty",
       prepared: "Preparowana",
-      preparedMobile: "Gotowa",
       market: "Gry Społeczności",
       marketMobile: "Społ.",
     },
@@ -4338,7 +4336,7 @@ const pl = {
     summaryFinal: "Finał",
     summaryFinalQuestions: "Pytania finału",
     summaryRoundsQuestions: "Pytania rund",
-    summaryDefaultSettings: "Używasz domyślnych ustawień rozgrywki. Możesz je dostosować w Ustawieniach rozgrywki.",
+    summaryDefaultSettings: "Używasz domyślnych ustawień gry. Możesz je dostosować w Ustawieniach gry.",
     summarySettingsLink: "Zmień ustawienia",
     summaryDisplay: "Wygląd",
     summaryColors: "Kolory",
@@ -4905,7 +4903,7 @@ const pl = {
     loadError: "Nie można załadować gry: ",
     unknownError: "nieznany błąd",
     errorPrefix: "Błąd: ",
-    pageTitle: "Ustawienia rozgrywki",
+    pageTitle: "Ustawienia gry",
     defaultGameName: "Gra",
     categories: {
       teams: "Drużyny",

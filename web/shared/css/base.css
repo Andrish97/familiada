@@ -2062,6 +2062,7 @@ body{
   align-items: center;
   gap: 10px;
   min-width: 0;
+  width: 100%; /* także jako element flex (.rowTop edytora gry): ta sama szerokość pola co w edytorach logo */
 }
 .name-field-label{
   font-weight: 900;

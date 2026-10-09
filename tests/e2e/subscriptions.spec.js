@@ -44,18 +44,11 @@ async function openSubscriptions(page, suffix = "") {
   await expect(page.locator("[data-skel-step]").first()).toHaveClass(/skel-step-ready/, { timeout: 10000 });
 }
 
-async function closeAlert(page, expected) {
-  const modal = page.locator(".uni-modal");
-  await expect(modal).toBeVisible({ timeout: 15000 });
-  await expect(modal).toContainText(expected);
-  await modal.locator(".uni-foot .btn.gold").click();
-}
-
 async function inviteRegistered(page, recipient) {
   await page.locator("#subscribersGrid .addCard").click();
   await page.locator("#inviteInput").fill(recipient);
   await page.locator("#btnInviteOk").click();
-  // E16: sukces = dymek #appToast; błąd wysyłki maila nadal w oknie.
+  // sukces i błąd wysyłki maila = dymek #appToast
   const toastEl = page.locator("#appToast");
   const modal = page.locator(".uni-modal");
   await expect(toastEl.or(modal)).toContainText(/Zaproszenie zapisane/, { timeout: 15000 });
@@ -171,7 +164,8 @@ test("niepoprawny adres nie czyści pola i nie pozostawia aktywnego progressu", 
   await page.locator("#subscribersGrid .addCard").click();
   await page.locator("#inviteInput").fill("błędny@adres");
   await page.locator("#btnInviteOk").click();
-  await closeAlert(page, "Niepoprawny e-mail");
+  // A9: błąd zapisu = dymek błędu #appToast (nie okno)
+  await expect(page.locator("#appToast")).toContainText("Niepoprawny e-mail", { timeout: 15000 });
   await expect(page.locator("#inviteInput")).toHaveValue("błędny@adres");
   await expect(page.locator("#progressOverlay")).toBeHidden();
   await expect(page.locator("#btnInviteOk")).toBeEnabled();

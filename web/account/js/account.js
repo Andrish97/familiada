@@ -11,7 +11,6 @@ import "../../shared/js/core/contact-modal.js?v=v2026-10-09T19290";
 import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-09T19290";
 
 
-const err = document.getElementById("err");
 
 const usernameInput = document.getElementById("username");
 const emailInput = document.getElementById("email");
@@ -52,7 +51,8 @@ const migrateCancel = document.getElementById("migrateCancel");
 // Komunikat po akcji = wspólny dymek (toast); pola #status na stronie nie ma.
 function setStatus(m = "") { if (m) toast(m); }
 
-function setErr(m = "") { if (err) err.textContent = m; }
+// Błąd = dymek błędu (toast kind:"error"); pustego wywołania nie ma, bo dymek zastępuje poprzedni.
+function setErr(m = "") { if (m) toast(m, { kind: "error" }); }
 let emailNotifTimer = null;
 
 function showEmailNotifSaved(msg = "", kind = "check") {
@@ -262,7 +262,6 @@ async function refreshMigrateState() {
 }
 
 async function handleMigrateSubmit() {
-  setErr("");
   try {
     const mail = String(migrateEmail?.value || "").trim().toLowerCase();
     if (!mail || !mail.includes("@")) throw new Error(t("index.errInvalidEmail"));
@@ -314,7 +313,6 @@ async function handleMigrateSubmit() {
 }
 
 async function handleMigrateResend() {
-  setErr("");
   try {
     if (!migratePendingEmail) throw new Error(t("account.errNoPendingEmail"));
 
@@ -349,7 +347,6 @@ async function handleMigrateResend() {
 }
 
 async function handleMigrateCancel() {
-  setErr("");
   let emailBeforeCancel = "";
   try {
     await refreshMigrateState();
@@ -623,7 +620,6 @@ async function loadProfile() {
 }
 
 async function handleUsernameSave() {
-  setErr("");
   let reserved = false;
   try {
     const username = validateUsername(usernameInput.value || "");
@@ -658,7 +654,6 @@ async function handleUsernameSave() {
 }
 
 async function handleEmailSave() {
-  setErr("");
   let reserved = false;
   try {
     if (pendingEmail && pendingEmail !== currentEmail) {
@@ -708,7 +703,6 @@ async function handleEmailSave() {
 }
 
 async function handleEmailResend() {
-  setErr("");
   let reserved = false;
   try {
     if (!pendingEmail || pendingEmail === currentEmail) {
@@ -752,7 +746,6 @@ async function handleEmailResend() {
 }
 
 async function handleEmailCancel() {
-  setErr("");
   try {
     // state might have changed on another device (confirmed already)
     await refreshAuthEmailState();
@@ -789,7 +782,6 @@ async function handleEmailCancel() {
 }
 
 async function handlePassSave() {
-  setErr("");
   let reserved = false;
   try {
     const a = String(pass1.value || "");
@@ -820,7 +812,6 @@ async function handlePassSave() {
 }
 
 async function handleDeleteAccount() {
-  setErr("");
   try {
     const { data: userData, error: userError } = await sb().auth.getUser();
     if (userError || !userData?.user) throw new Error(t("index.errNoSession"));

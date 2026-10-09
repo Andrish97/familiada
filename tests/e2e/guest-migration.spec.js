@@ -142,7 +142,7 @@ test("migracja konta gościa: stan pending po submit, cooldown na resend, anulow
     // natychmiastowy klik "Wyślij ponownie" MUSI zostać odrzucony, nie wysłać
     // kolejnego maila. To realna ochrona przed spamem, nie tylko UI-owy detal.
     await page.locator("#migrateResend").click();
-    await expect(page.locator("#err")).not.toHaveText("", { timeout: 10000 });
+    await expect(page.locator("#appToast.show")).not.toHaveText("", { timeout: 10000 });
 
     // Mimo aktywnego cooldownu na resend, "Anuluj" musi zadziałać od razu —
     // to inna operacja (czyści new_email), nie objęta tym limitem.
