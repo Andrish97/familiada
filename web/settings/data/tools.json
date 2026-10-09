@@ -1,7 +1,7 @@
 {
   "tools": [
     {
-      "title": "Test usuwania tła logo",
+      "title": "Test obrazu IMAGE i usuwania tła",
       "path": "/settings/tools/logo-background-lab/index.html"
     },
     {
