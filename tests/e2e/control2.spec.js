@@ -2584,8 +2584,8 @@ test("@mailbox control2: udostępnianie urządzenia (Prowadzący) przez e-mail -
     // marginesem ponad to, tylko dokładnie na jego granicy (realny powód
     // sporadycznych "Nie otrzymano maila... w 60000 ms" w CI, nie infra flake).
     const email = await waitForEmail({ recipient, after, subject: /Udostępniono urządzenie/ });
-    const links = extractHttpLinks(email).filter((u) => u.includes("/control/host"));
-    expect(links.length, "mail musi zawierać działający link do /control/host").toBeGreaterThan(0);
+    const links = extractHttpLinks(email).filter((u) => u.includes("/go/") && u.includes("d=host"));
+    expect(links.length, "mail musi zawierać działający link do /go/?d=host").toBeGreaterThan(0);
 
     await page.locator("#btnShareDeviceClose").click();
 

@@ -1919,8 +1919,8 @@ async function scenarioShareDeviceEmail(pages, { browser }) {
     subject: /Udostępniono urządzenie/,
     timeout: 180_000,
   });
-  const links = extractHttpLinks(email).filter((u) => u.includes("/control/host"));
-  if (!links.length) throw new Error("[record] e-mail udostępnienia nie zawierał linku do /control/host");
+  const links = extractHttpLinks(email).filter((u) => u.includes("/go/") && u.includes("d=host"));
+  if (!links.length) throw new Error("[record] e-mail udostępnienia nie zawierał linku do /go/?d=host");
   const shareLink = links[0];
   console.log("[record] link z maila:", shareLink);
 
