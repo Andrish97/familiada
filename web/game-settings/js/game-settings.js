@@ -3,28 +3,29 @@
 // 1 blokad, podgląd Wyświetlacza przez display2?preview=1 + web/js/gameplay/previewRow.js
 // itd.) — trzymana jako osobny plik, żeby modal Control v2 nie zależał od
 // tej samej strony, którą wciąż ładuje stary control.html przez /game-settings.
-import { requireAuth } from "../../shared/js/core/auth.js?v=v2026-10-09T02490";
-import { t, getUiLang, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-09T02490";
-import { setTopbarAccount } from "../../shared/js/core/topbar-controller.js?v=v2026-10-09T02490";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T02490";
-import { loadQuestions, guardGameState } from "../../shared/js/core/game-validate.js?v=v2026-10-09T02490";
-import { loadFont5x7, buildLogoPreviewCanvas } from "../../shared/js/core/logo-preview.js?v=v2026-10-09T02490";
-import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-09T02490";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-09T02490";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-09T02490";
-import { buildDisplayPreviewRow } from "../../shared/js/gameplay/previewRow.js?v=v2026-10-09T02490";
+import { requireAuth } from "../../shared/js/core/auth.js?v=v2026-10-09T02514";
+import { t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-09T02514";
+import { linkTo, backHref, backTarget, renderBackLabel } from "../../shared/js/core/nav-map.js?v=v2026-10-09T02514";
+import { setTopbarAccount } from "../../shared/js/core/topbar-controller.js?v=v2026-10-09T02514";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T02514";
+import { loadQuestions, guardGameState } from "../../shared/js/core/game-validate.js?v=v2026-10-09T02514";
+import { loadFont5x7, buildLogoPreviewCanvas } from "../../shared/js/core/logo-preview.js?v=v2026-10-09T02514";
+import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-09T02514";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-09T02514";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-09T02514";
+import { buildDisplayPreviewRow } from "../../shared/js/gameplay/previewRow.js?v=v2026-10-09T02514";
 import {
   loadSfxManifest, getSfxCategories,
   setSfxCustomBlob, clearSfxCustomFile, clearAllSfxCustomFiles, getSfxCustomFiles,
   playSfx, setSfxVolume,
-} from "../../shared/js/core/sfx.js?v=v2026-10-09T02490";
+} from "../../shared/js/core/sfx.js?v=v2026-10-09T02514";
 import {
   uploadGameSound, deleteGameSound, deleteAllGameSounds,
-} from "../../shared/js/core/sfx-cloud.js?v=v2026-10-09T02490";
-import { guardDesktopOnly } from "../../shared/js/core/device-guard.js?v=v2026-10-09T02490";
-import { guardResourceLocks } from "../../shared/js/core/resource-lock.js?v=v2026-10-09T02490";
-import { updateChecked, ROW_GONE } from "../../shared/js/core/db-guard.js?v=v2026-10-09T02490";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-09T02490";
+} from "../../shared/js/core/sfx-cloud.js?v=v2026-10-09T02514";
+import { guardDesktopOnly } from "../../shared/js/core/device-guard.js?v=v2026-10-09T02514";
+import { guardResourceLocks } from "../../shared/js/core/resource-lock.js?v=v2026-10-09T02514";
+import { updateChecked, ROW_GONE } from "../../shared/js/core/db-guard.js?v=v2026-10-09T02514";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-09T02514";
 
 guardDesktopOnly();
 
@@ -1619,7 +1620,7 @@ function showIngameGuard() {
       </div>
     `;
     document.documentElement.appendChild(overlay);
-    overlay.querySelector("#ingameGuardBack").addEventListener("click", () => { location.href = withLangParam("/games/"); });
+    overlay.querySelector("#ingameGuardBack").addEventListener("click", () => { location.href = backHref("gameSettings"); });
     overlay.querySelector("#ingameGuardUnlock").addEventListener("click", async () => {
       // "Odblokuj ustawienia" — nie jest to wymuszenie: acquire_edit_lock
       // i tak sam zwolni blokadę po ~120 s bez odnowienia (Control naprawdę
@@ -1641,7 +1642,7 @@ async function main() {
   document.querySelector('.topbar')?.classList.add('topbar-ready');
 
   if (!gameId) {
-    location.href = withLangParam("/games/");
+    location.href = linkTo("games");
     return;
   }
 
@@ -1695,7 +1696,7 @@ async function main() {
   const lock = await guardResourceLocks([
     { type: "game", id: gameId, mode: "exclusive", message: t("resourceLock.gameMessage") },
     { type: "logos", id: lockUser?.id, mode: "shared", message: t("resourceLock.logoEditBlocksSettings") },
-  ], { context: "settings", backHref: "/games/" });
+  ], { context: "settings", backHref: backHref("gameSettings") });
   if (!lock.ok) {
     if (_isModal) window.parent.postMessage({ type: "gs:ready" }, "*");
     return;
@@ -1721,6 +1722,8 @@ async function main() {
     // Sidebar toggle (☰ button) i przycisk zamknięcia (✕) -- wpięte
     // synchronicznie na poziomie modułu, patrz komentarz przy _isModal na
     // górze pliku.
+  } else {
+    renderBackLabel(btnBack, "gameSettings");
   }
 
   localSettings = mergeSettings(game.settings);
@@ -1754,7 +1757,10 @@ async function main() {
       btnPlay.classList.remove("hidden");
     }
     btnPlay.addEventListener("click", () => {
-      location.href = `/control/?id=${encodeURIComponent(gameId)}`;
+      // Wejście z Control: "Graj" robi to samo co "Wstecz" (bez dokładania poziomu ret).
+      location.href = backTarget("gameSettings")?.pageId === "control"
+        ? backHref("gameSettings")
+        : linkTo("control", { id: gameId });
     });
   }
 
@@ -1796,7 +1802,7 @@ async function main() {
   if (!isModal) {
     btnBack?.addEventListener("click", async () => {
       if (isDirty && !await confirmModal({ text: t("gameSettings.unsavedConfirm") || "Masz niezapisane zmiany. Czy na pewno chcesz wyjść?" })) return;
-      location.href = `/games/`;
+      location.href = backHref("gameSettings");
     });
   }
 

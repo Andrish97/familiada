@@ -18,24 +18,25 @@
 //     samo guardResourceLock, przy każdym zapisie RPC update_logo_checked:
 //     komunikat z powrotem na listę.
 
-import { loadFont5x7 } from "../../shared/js/core/logo-preview.js?v=v2026-10-09T02490";
-import { requireAuth } from "../../shared/js/core/auth.js?v=v2026-10-09T02490";
-import { initI18n, t } from "../../shared/translation/translation.js?v=v2026-10-09T02490";
-import { initTopbarAccountDropdown } from "../../shared/js/core/topbar-controller.js?v=v2026-10-09T02490";
-import { isMobileDevice } from "../../shared/js/core/pwa.js?v=v2026-10-09T02490";
-import { isPhoneScreen } from "../../shared/js/core/device-guard.js?v=v2026-10-09T02490";
-import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-09T02490";
-import { guardResourceLock, showBlockingOverlay } from "../../shared/js/core/resource-lock.js?v=v2026-10-09T02490";
-import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-09T02490";
+import { loadFont5x7 } from "../../shared/js/core/logo-preview.js?v=v2026-10-09T02514";
+import { requireAuth } from "../../shared/js/core/auth.js?v=v2026-10-09T02514";
+import { initI18n, t } from "../../shared/translation/translation.js?v=v2026-10-09T02514";
+import { renderBackLabel } from "../../shared/js/core/nav-map.js?v=v2026-10-09T02514";
+import { initTopbarAccountDropdown } from "../../shared/js/core/topbar-controller.js?v=v2026-10-09T02514";
+import { isMobileDevice } from "../../shared/js/core/pwa.js?v=v2026-10-09T02514";
+import { isPhoneScreen } from "../../shared/js/core/device-guard.js?v=v2026-10-09T02514";
+import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-09T02514";
+import { guardResourceLock, showBlockingOverlay } from "../../shared/js/core/resource-lock.js?v=v2026-10-09T02514";
+import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-09T02514";
 
-import { renderPreview } from "./render.js?v=v2026-10-09T02490";
-import { listLogos, fetchLogo, updateLogo, isUniqueViolation } from "./db.js?v=v2026-10-09T02490";
-import { initPreviewPinchZoom, lockPageZoomForPreview, unlockPageZoomAfterPreview } from "./preview-zoom.js?v=v2026-10-09T02490";
-import { cannotEditReason } from "./text.js?v=v2026-10-09T02490";
-import { editModeFor, listBackUrl, manualUrl } from "./routes.js?v=v2026-10-09T02490";
+import { renderPreview } from "./render.js?v=v2026-10-09T02514";
+import { listLogos, fetchLogo, updateLogo, isUniqueViolation } from "./db.js?v=v2026-10-09T02514";
+import { initPreviewPinchZoom, lockPageZoomForPreview, unlockPageZoomAfterPreview } from "./preview-zoom.js?v=v2026-10-09T02514";
+import { cannotEditReason } from "./text.js?v=v2026-10-09T02514";
+import { EDITOR_PAGE_IDS, editModeFor, listBackUrl, manualUrl } from "./routes.js?v=v2026-10-09T02514";
 
-const FONT_3x10_URL = "/shared/fonts/display/font_3x10.json?v=v2026-10-09T02490";
-const FONT_5x7_URL = "/shared/fonts/display/font_5x7.json?v=v2026-10-09T02490";
+const FONT_3x10_URL = "/shared/fonts/display/font_3x10.json?v=v2026-10-09T02514";
+const FONT_5x7_URL = "/shared/fonts/display/font_5x7.json?v=v2026-10-09T02514";
 
 const DEBOUNCE_MS = 700;
 const RETRY_MS = 5000;
@@ -256,14 +257,14 @@ export async function bootEditorPage({ mode, initEditor }) {
 
   /** Strona nie może edytować -- komunikat z jedynym wyjściem: lista logo. */
   function block(message) {
-    showBlockingOverlay({ message, backHref: listBackUrl() });
+    showBlockingOverlay({ message, backHref: listBackUrl(mode) });
   }
 
   /* ---------- UI (działa od razu, także w trakcie wczytywania) ---------- */
   el.btnBack.dataset.sheetBack = "1"; // znacznik dla contact-modal.js
   el.btnBack.addEventListener("click", () => {
     if (el.previewOverlay.style.display !== "none") { closePreview(); return; }
-    void leave(listBackUrl());
+    void leave(listBackUrl(mode));
   });
   el.btnManual.addEventListener("click", () => void leave(manualUrl()));
   el.logoName.addEventListener("input", markDirty);
@@ -283,6 +284,7 @@ export async function bootEditorPage({ mode, initEditor }) {
   await initI18n({ withSwitcher: true });
   document.documentElement.classList.remove("page-loading");
   document.documentElement.classList.toggle("le-phone", isPhoneScreen());
+  renderBackLabel(el.btnBack, EDITOR_PAGE_IDS[mode]);
   renderHeader();
   renderStatus();
 
@@ -326,7 +328,7 @@ export async function bootEditorPage({ mode, initEditor }) {
     resourceId: logo.id,
     context: "logo-editor",
     message: entryBusyMessage,
-    backHref: listBackUrl(),
+    backHref: listBackUrl(mode),
   });
   if (!lock.ok) return;
   logoLock = lock;

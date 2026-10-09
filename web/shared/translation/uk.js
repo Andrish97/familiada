@@ -71,6 +71,30 @@ const uk = {
       contactBtn: "Контакт",
     },
   },
+  nav: {
+    backTo: "Повернутися до: {page}",
+    page: {
+      home: "Головна сторінка",
+      login: "Вхід",
+      games: "Мої ігри",
+      editor: "Редактор питань",
+      polls: "Опитування",
+      subscriptions: "Підписки",
+      bases: "Мої бази",
+      baseExplorer: "Менеджер бази",
+      logoEditor: "Мої логотипи",
+      logoText: "Редактор логотипу",
+      logoDraw: "Редактор логотипу",
+      logoImage: "Редактор логотипу",
+      control: "Панель керування",
+      gameSettings: "Налаштування гри",
+      marketplace: "Ігри Спільноти",
+      connectDevice: "Підключити пристрій",
+      account: "Налаштування акаунта",
+      manual: "Інструкція",
+      privacy: "Приватність",
+    },
+  },
   contact: {
     modal: {
       title: "Написати нам",
@@ -471,7 +495,6 @@ const uk = {
     errCancelMigrationFailed: "Не вдалося скасувати міграцію.",
     title: "Familiada — акаунт",
     pageTitle: "Familiada — мій акаунт",
-    backToGames: "Мої ігри",
     headerTitle: "Налаштування акаунта",
     headerHint: "Керуй профілем, e-mail та безпекою.",
     statusLoading: "Завантажую профіль…",
@@ -563,7 +586,6 @@ const uk = {
   },
   bases: {
     title: "Familiada — бази питань",
-    backToGames: "Мої ігри",
     logout: "Вийти",
     headerTitle: "Твої бази питань",
     headerHint: "Натисни плитку, щоб вибрати. Подвійне натискання змінює назву.",
@@ -759,7 +781,6 @@ const uk = {
   },
   polls: {
     title: "Familiada — опитування та результати",
-    backToGames: "Мої ігри",
     logout: "Вийти",
     pageTitle: "Опитування",
     typeShort: {
@@ -958,15 +979,6 @@ const uk = {
     title: "Familiada — підказки",
     tabsLabel: "Вкладки підказок",
     legal: "Політика конфіденційності",
-    backToGames: "Мої ігри",
-    backToBaseManager: "Менеджер бази",
-    backToLogos: "Мої логотипи",
-    backToEditor: "Редактор питань",
-    backToLogoEditor: "Редактор логотипу",
-    backToPoll: "Опитування",
-    backToSubscriptions: "Підписки",
-    backToAccount: "Налаштування акаунта",
-    backToMarketplace: "Ігри Спільноти",
     logout: "Вийти",
     pageTitle: "Підказки для користувача",
     tabs: {
@@ -2461,7 +2473,6 @@ const uk = {
     description: "Політика конфіденційності Familiada Online: обробка персональних даних, файли cookie та зв’язок з адміністратором.",
     pageTitle: "Familiada Online — Політика конфіденційності",
     backToManual: "Підказки",
-    backToHome: "Головна сторінка",
     logout: "Вийти",
     content: `
       <p class="m-p"><strong>Familiada Online</strong></p>
@@ -2846,7 +2857,6 @@ const uk = {
   editor: {
     pageTitlePrefix: "Редактор гри",
     title: "Familiada — редактор гри",
-    backToGames: "Мої ігри",
     backToQuestions: "Назад",
     logout: "Вийти",
     pageTitle: "Редактор",
@@ -3336,8 +3346,6 @@ const uk = {
   pollsHubPolls: {
     dash: "-",
     title: "Familiada — центр опитувань",
-    backToGames: "Мої ігри",
-    backToBases: "Бази питань",
     logout: "Вийти",
     header: {
       title: "Центр опитувань",
@@ -3602,7 +3610,6 @@ const uk = {
     taskFrom: "Від: {owner}",
     dash: "-",
     title: "Familiada — підписки",
-    backToGames: "Мої ігри",
     logout: "Вийти",
     header: {
       title: "Центр опитувань",
@@ -3844,10 +3851,6 @@ const uk = {
       draw: "Familiada — намальований логотип",
       image: "Familiada — логотип із зображення",
     },
-    topbar: {
-      backToGames: "Мої ігри",
-      backToLogos: "Мої логотипи",
-    },
     list: {
       title: "Твої логотипи",
       hint: "Натисни плитку, щоб її вибрати. Подвійне натискання (або утримання на сенсорному екрані) змінює назву.",
@@ -4076,7 +4079,6 @@ const uk = {
   baseExplorer: {
     title: "Familiada — менеджер бази питань",
     headerTitle: "Менеджер бази питань",
-    backToBases: "Мої бази",
     logout: "Вийти",
     common: {
       close: "Закрити",
@@ -4326,10 +4328,6 @@ const uk = {
     pageTitle: "Ігри Спільноти — готові питання для Familiada",
     subtitle: "Переглядай ігри від спільноти та додавай їх до своєї бібліотеки.",
     loading: "Завантаження…",
-    nav: {
-      myGames: "Мої ігри",
-      backHome: "Головна",
-    },
     searchPlaceholder: "Пошук гри…",
     searchLabel: "Пошук ігор",
     filterLabel: "Мова",
@@ -4448,7 +4446,6 @@ const uk = {
       networkError: "Не вдалося підключитися. Перевірте підключення до інтернету та спробуйте ще раз.",
     },
     title: "Familiada — підключити пристрій",
-    topbar: { back: "Мої ігри" },
     header: {
       title: "Підключити пристрій",
       hint: "Відскануй QR-код або відкрий посилання, щоб підключити пристрій.",
@@ -4495,7 +4492,6 @@ const uk = {
     shortcuts: {"mappingAnswers": "1–6 — вибрати відповідь зі списку", "answers": "1–6 → Enter — відкрити відповідь", "x": "X → Enter — помилка", "t": "T → Enter — таймер", "a": "A → Enter — команда A", "b": "B → Enter — назад / ручний вибір команди B у дуелі", "c": "C → Enter — підтвердити натискання", "p": "P → Enter — передати контроль", "n": "N → Enter — поточна дія переходу", "e": "E → Enter — змінити налаштування", "w": "W — введена відповідь", "o": "O — немає відповіді", "r": "R — повторення", "m": "M — вимкнути / увімкнути звук", "reveal": "Enter — відкрити відповідь; наступний Enter — бали", "fields": "↑ / ↓ / Enter — попереднє / наступне порожнє поле", "entryTimer": "Ctrl+Enter (Cmd+Enter на Mac) — запуск / зупинка таймера", "entryRepeat": "Shift+Enter у порожньому полі — повторення"},
     title: "Familiada — панель керування",
     loading: "Завантаження панелі…",
-    backToGames: "Мої ігри",
     logout: "Вийти",
     statusLabel: "Статус пристроїв",
     optional: "(опціонально)",
@@ -4958,7 +4954,6 @@ const uk = {
   gameSettings: {
     pageTitle: "Налаштування гри",
     title: "Familiada — налаштування гри",
-    back: "Мої ігри",
     saveAll: "Зберегти все",
     resetAll: "Відновити типові",
     play: "Грати",

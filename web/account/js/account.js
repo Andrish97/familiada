@@ -1,12 +1,13 @@
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T02490";
-import { cooldownGet, cooldownReserve, cooldownRelease, mailCooldownEmailReserve } from "../../shared/js/core/cooldown.js?v=v2026-10-09T02490";
-import { requireAuth, updateUserLanguage, validatePassword, validateUsername, signOut, niceAuthError, initPasswordToggles, convertGuestToRegisteredEmailOnly } from "../../shared/js/core/auth.js?v=v2026-10-09T02490";
-import { getUserEmailNotificationsFlag, setUserEmailNotificationsFlag } from "../../shared/js/core/user-flags.js?v=v2026-10-09T02490";
-import { initI18n, t, getUiLang, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-09T02490";
-import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-09T02490";
-import { isGuestUser, hideForGuest } from "../../shared/js/core/guest-mode.js?v=v2026-10-09T02490";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-09T02490";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-09T02490";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T02514";
+import { cooldownGet, cooldownReserve, cooldownRelease, mailCooldownEmailReserve } from "../../shared/js/core/cooldown.js?v=v2026-10-09T02514";
+import { requireAuth, updateUserLanguage, validatePassword, validateUsername, signOut, niceAuthError, initPasswordToggles, convertGuestToRegisteredEmailOnly } from "../../shared/js/core/auth.js?v=v2026-10-09T02514";
+import { getUserEmailNotificationsFlag, setUserEmailNotificationsFlag } from "../../shared/js/core/user-flags.js?v=v2026-10-09T02514";
+import { initI18n, t, getUiLang, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-09T02514";
+import { linkTo, backHref, loginUrl, renderBackLabel } from "../../shared/js/core/nav-map.js?v=v2026-10-09T02514";
+import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-09T02514";
+import { isGuestUser, hideForGuest } from "../../shared/js/core/guest-mode.js?v=v2026-10-09T02514";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-09T02514";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-09T02514";
 
 
 const status = document.getElementById("status");
@@ -50,14 +51,6 @@ const migrateCancel = document.getElementById("migrateCancel");
 
 function setStatus(m = "") { if (status) status.textContent = m; }
 
-function buildManualUrl() {
-  const url = new URL("/manual/", location.href);
-  const ret = `${location.pathname}${location.search}${location.hash}`;
-  url.searchParams.set("ret", ret);
-  url.searchParams.set("lang", getUiLang() || "pl");
-  url.hash = "general";
-  return url.toString();
-}
 function setErr(m = "") { if (err) err.textContent = m; }
 let emailNotifTimer = null;
 
@@ -121,12 +114,11 @@ async function initEmailNotificationsUi(user) {
 
 
 backToGames?.addEventListener("click", () => {
-  const target = backToGames.dataset.baseHref || "/games/";
-  location.href = withLangParam(target);
+  location.href = backHref("account");
 });
 
 btnManual?.addEventListener("click", () => {
-  location.href = buildManualUrl();
+  location.href = linkTo("manual", { hash: "general" });
 });
 
 // --- cooldowns (anti-spam) ---
@@ -885,7 +877,7 @@ async function handleDeleteAccount() {
     if (!data?.ok) throw new Error(data?.error || t("account.errDeleteFailed"));
 
     await signOut();
-    location.href = withLangParam("/login/");
+    location.href = loginUrl();
   } catch (e) {
     console.error(e);
     setStatus(t("account.statusError"));
@@ -895,6 +887,7 @@ async function handleDeleteAccount() {
 
 document.addEventListener("DOMContentLoaded", async () => {
   await initI18n({ withSwitcher: true });
+  renderBackLabel(backToGames, "account");
   document.documentElement.classList.remove('page-loading');
   initPasswordToggles();
 

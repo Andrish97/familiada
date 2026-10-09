@@ -47,17 +47,17 @@ test("polski interfejs używa nazwy Strona główna", () => {
     .map(read).join("\n");
   assert.doesNotMatch(files, /Strona startowa/i);
   assert.equal(pl.index.backHome, "Strona główna");
-  assert.equal(pl.privacy.backToHome, "Strona główna");
-  assert.equal(pl.marketplace.nav.backHome, "Strona główna");
+  assert.equal(pl.nav.page.home, "Strona główna");
 });
 
-test("podłącz urządzenie: powrót anonima używa istniejącego klucza Strona główna", () => {
+test("podłącz urządzenie: powrót anonima liczy mapa nawigacji (Strona główna)", () => {
   const js = read("connect-device/js/connect-device.js");
   assert.doesNotMatch(js, /common\.backToHome/);
-  assert.match(js, /btnBack\.dataset\.i18n = "index\.backHome"/);
+  assert.match(js, /renderBackLabel\(btnBack, "connectDevice"/);
   for (const dictionary of [pl, en, uk]) {
     assert.equal(typeof dictionary.index.backHome, "string");
     assert.notEqual(dictionary.index.backHome, "index.backHome");
+    assert.equal(typeof dictionary.nav.page.home, "string");
   }
 });
 

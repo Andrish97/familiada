@@ -3,22 +3,23 @@
 // Każde pole zapisuje się samo (tekst: po pauzie w pisaniu i przy wyjściu z
 // pola, punkty: przy wyjściu z pola). Limity i obsługa pól są wspólne z
 // modalem pytania w bazie pytań (js/core/question-form.js).
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T02490";
-import { requireAuth } from "../../shared/js/core/auth.js?v=v2026-10-09T02490";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-09T02490";
-import { parseQaText } from "../../shared/js/core/text-import.js?v=v2026-10-09T02490";
-import { validateGame, gameRuleErrorMessage, guardGameState, RULES as GV_RULES, TYPES } from "../../shared/js/core/game-validate.js?v=v2026-10-09T02490";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T02514";
+import { requireAuth } from "../../shared/js/core/auth.js?v=v2026-10-09T02514";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-09T02514";
+import { parseQaText } from "../../shared/js/core/text-import.js?v=v2026-10-09T02514";
+import { validateGame, gameRuleErrorMessage, guardGameState, RULES as GV_RULES, TYPES } from "../../shared/js/core/game-validate.js?v=v2026-10-09T02514";
 import {
   LIMITS, normQuestionText, normAnswerText, parsePoints,
   wireTextLimit, wirePointsInput, sumPoints, renderSumPill, questionProblems,
   buildAnswerRow, buildAddAnswerTile,
-} from "../../shared/js/core/question-form.js?v=v2026-10-09T02490";
-import { guardResourceLock, showBlockingOverlay } from "../../shared/js/core/resource-lock.js?v=v2026-10-09T02490";
-import { updateChecked, ROW_GONE } from "../../shared/js/core/db-guard.js?v=v2026-10-09T02490";
-import { initI18n, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-09T02490";
-import { initTopbarAccountDropdown } from "../../shared/js/core/topbar-controller.js?v=v2026-10-09T02490";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-09T02490";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-09T02490";
+} from "../../shared/js/core/question-form.js?v=v2026-10-09T02514";
+import { guardResourceLock, showBlockingOverlay } from "../../shared/js/core/resource-lock.js?v=v2026-10-09T02514";
+import { updateChecked, ROW_GONE } from "../../shared/js/core/db-guard.js?v=v2026-10-09T02514";
+import { initI18n, t } from "../../shared/translation/translation.js?v=v2026-10-09T02514";
+import { linkTo, backHref, backLabel } from "../../shared/js/core/nav-map.js?v=v2026-10-09T02514";
+import { initTopbarAccountDropdown } from "../../shared/js/core/topbar-controller.js?v=v2026-10-09T02514";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-09T02514";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-09T02514";
 // initI18n + remove('page-loading') są w boot() — przed requireAuth, żeby body pojawiło się przed auth/danymi
 
 const MSG = {
@@ -88,7 +89,7 @@ function setMsg(msg) {
 function ruleBlocked(e) {
   const msg = gameRuleErrorMessage(e);
   if (msg) {
-    showBlockingOverlay({ title: t("gameValidate.lockedTitle"), message: msg, backHref: withLangParam("/games/") });
+    showBlockingOverlay({ title: t("gameValidate.lockedTitle"), message: msg, backHref: backHref("editor") });
   }
   return msg;
 }
@@ -276,7 +277,7 @@ function importPayload(items, cfg) {
 /* ================= Boot ================= */
 async function leaveTo(text) {
   if (text) await alertModal({ text });
-  location.href = withLangParam("/games/");
+  location.href = backHref("editor");
 }
 
 async function boot() {
@@ -294,11 +295,7 @@ async function boot() {
 
   $("btnManual")?.addEventListener("click", async () => {
     await flushSaves();
-    const url = new URL("/manual/", location.href);
-    const ret = `${location.pathname}${location.search}${location.hash}`;
-    url.searchParams.set("ret", ret);
-    url.hash = "edit";
-    location.href = url.toString();
+    location.href = linkTo("manual", { hash: "edit" });
   });
 
   // Enter w polu jednowierszowym = koniec edycji (blur zapisuje)
@@ -329,7 +326,7 @@ async function boot() {
     resourceId: gameId,
     context: "editor",
     message: t("resourceLock.gameMessage"),
-    backHref: withLangParam("/games/"),
+    backHref: backHref("editor"),
   });
   if (!lock.ok) return;
 
@@ -401,7 +398,7 @@ async function boot() {
   function syncMobileEditingState() {
     const on = isMobileLayout() && !!activeQId;
     document.body.classList.toggle("mobile-editing", on);
-    if (btnBack) btnBack.innerHTML = iconText("arrow-left", on ? t("editor.backToQuestions") : t("editor.backToGames"));
+    if (btnBack) btnBack.innerHTML = iconText("arrow-left", on ? t("editor.backToQuestions") : backLabel("editor"));
   }
 
   /* ---------- game name ---------- */
@@ -811,7 +808,7 @@ async function boot() {
       return;
     }
     await flushSaves();
-    location.href = withLangParam("/games/");
+    location.href = backHref("editor");
   });
 
   /* ---------- import ---------- */

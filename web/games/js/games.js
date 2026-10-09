@@ -1,37 +1,38 @@
-import { addRenameGesture } from "../../shared/js/core/rename-gesture.js?v=v2026-10-09T02490";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T02490";
-import { requireAuth } from "../../shared/js/core/auth.js?v=v2026-10-09T02490";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-09T02490";
-import { hideForGuest, isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-09T02490";
-import { initI18n, t, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-09T02490";
-import { initRatingSystem } from "../../shared/js/core/rating-system.js?v=v2026-10-09T02490";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-09T02490";
-import { maybeShowGuestInfoModal } from "../../shared/js/core/guest-info-modal.js?v=v2026-10-09T02490";
-import { maybeShowGuestMigrateReminder } from "../../shared/js/core/guest-migrate-reminder.js?v=v2026-10-09T02490";
+import { addRenameGesture } from "../../shared/js/core/rename-gesture.js?v=v2026-10-09T02514";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T02514";
+import { requireAuth } from "../../shared/js/core/auth.js?v=v2026-10-09T02514";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-09T02514";
+import { hideForGuest, isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-09T02514";
+import { initI18n, t, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-09T02514";
+import { linkTo } from "../../shared/js/core/nav-map.js?v=v2026-10-09T02514";
+import { initRatingSystem } from "../../shared/js/core/rating-system.js?v=v2026-10-09T02514";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-09T02514";
+import { maybeShowGuestInfoModal } from "../../shared/js/core/guest-info-modal.js?v=v2026-10-09T02514";
+import { maybeShowGuestMigrateReminder } from "../../shared/js/core/guest-migrate-reminder.js?v=v2026-10-09T02514";
 
-import { initPwa, isStandalone, isMobileDevice } from "../../shared/js/core/pwa.js?v=v2026-10-09T02490";
-import { createPollResults } from "../../shared/js/core/poll-results.js?v=v2026-10-09T02490";
-import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-09T02490";
+import { initPwa, isStandalone, isMobileDevice } from "../../shared/js/core/pwa.js?v=v2026-10-09T02514";
+import { createPollResults } from "../../shared/js/core/poll-results.js?v=v2026-10-09T02514";
+import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-09T02514";
 
 // Zarejestruj listener PWA jak najwcześniej – beforeinstallprompt może odpalić przed requireAuth
 const pwaApi = initPwa();
 // Jeśli beforeinstallprompt już odpalił zanim dodaliśmy listener w IIFE, sprawdzimy po zalogowaniu
 
 
-import { exportGame, importGame, downloadJson } from "./games-import-export.js?v=v2026-10-09T02490";
-import { setTopbarNavPriority, setTopbarAccount } from '../../shared/js/core/topbar-controller.js?v=v2026-10-09T02490';
+import { exportGame, importGame, downloadJson } from "./games-import-export.js?v=v2026-10-09T02514";
+import { setTopbarNavPriority, setTopbarAccount } from '../../shared/js/core/topbar-controller.js?v=v2026-10-09T02514';
 
-import "../../shared/js/core/contact-modal.js?v=v2026-10-09T02490";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-09T02514";
 import {
   TYPES,
   STATUS,
   loadGameBasic,
   validateGame,
   rulesFromState,
-} from "../../shared/js/core/game-validate.js?v=v2026-10-09T02490";
-import { isResourceBusy, acquireResourceLock, getTabId } from "../../shared/js/core/resource-lock.js?v=v2026-10-09T02490";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-09T02490";
-import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-09T02490";
+} from "../../shared/js/core/game-validate.js?v=v2026-10-09T02514";
+import { isResourceBusy, acquireResourceLock, getTabId } from "../../shared/js/core/resource-lock.js?v=v2026-10-09T02514";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-09T02514";
+import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-09T02514";
 
 const MSG = {
   exportBaseEmpty: () => t("games.exportBase.empty"),
@@ -1309,7 +1310,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     btnConnectDevice?.addEventListener("click", () => {
-      location.href = "/connect-device/";
+      location.href = linkTo("connectDevice");
     });
   } else {
     // Ukryj przez data-nav-hidden (overflow nav ignoruje takie przyciski)
@@ -1427,23 +1428,19 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // btnManual
   btnManual?.addEventListener("click", async () => {
-    const url = new URL("/manual/", location.href);
-    const ret = `${location.pathname}${location.search}${location.hash}`;
-    url.searchParams.set("ret", ret);
-    url.hash = "general";
-    location.href = url.toString();
+    location.href = linkTo("manual", { hash: "general" });
   });
 
   btnLogoEditor?.addEventListener("click", async () => {
-    location.href = "/logo/";
+    location.href = linkTo("logoEditor");
   });
 
   btnBases?.addEventListener("click", async () => {
-    location.href = "/bases/?from=games";
+    location.href = linkTo("bases");
   });
 
   btnSubscriptionsHub?.addEventListener("click", () => {
-    location.href = "/subscriptions/?from=games";
+    location.href = linkTo("subscriptions");
   });
 
   tabPollText?.addEventListener("click", () => setActiveTab(TYPES.POLL_TEXT));
@@ -1457,7 +1454,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 
   btnMarketplace?.addEventListener("click", () => {
-    location.href = "/marketplace/";
+    location.href = linkTo("marketplace");
   });
 
   // games.html nie ma naturalnego przycisku wstecz na mobile (jest
@@ -1646,7 +1643,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
     }
 
-    location.href = `/editor/?id=${encodeURIComponent(g.id)}`;
+    location.href = linkTo("editor", { id: g.id });
   });
 
   // PLAY
@@ -1677,7 +1674,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
 
       if (!gameId) return;
-      location.href = `/control/?id=${encodeURIComponent(gameId)}`;
+      location.href = linkTo("control", { id: gameId });
       return;
     }
 
@@ -1689,7 +1686,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         void alertModal({ text: chk.reason });
         return;
       }
-      location.href = `/control/?id=${encodeURIComponent(selectedId)}`;
+      location.href = linkTo("control", { id: selectedId });
     } catch (e) {
       console.error(e);
       void alertModal({ text: MSG.alertCheckFailed() });
@@ -1708,7 +1705,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         return;
       }
 
-      location.href = `/polls/?id=${encodeURIComponent(selectedId)}&from=games`;
+      location.href = linkTo("polls", { id: selectedId });
     } catch (e) {
       console.error(e);
       void alertModal({ text: MSG.alertOpenPollFailed() });
@@ -1721,7 +1718,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       ? marketGamesAll.find(g => g.market_game_id === selectedMarketId)?.game_id
       : selectedId;
     if (!gameId) return;
-    location.href = `/game-settings/?id=${encodeURIComponent(gameId)}`;
+    location.href = linkTo("gameSettings", { id: gameId });
   });
 
   // EXPORT — pobierz dane z paskiem, potem instant download

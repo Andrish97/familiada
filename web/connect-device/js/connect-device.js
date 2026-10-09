@@ -1,14 +1,15 @@
 // js/pages/connect-device.js
 
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T02490";
-import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-09T02490";
-import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-09T02490";
-import { isMobileDevice } from "../../shared/js/core/pwa.js?v=v2026-10-09T02490";
-import { initI18n, t, getUiLang, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-09T02490";
-import { initTopbarAccountDropdown } from "../../shared/js/core/topbar-controller.js?v=v2026-10-09T02490";
-import { alertModal } from "../../shared/js/core/modal.js?v=v2026-10-09T02490";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-09T02490";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-09T02490";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T02514";
+import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-09T02514";
+import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-09T02514";
+import { isMobileDevice } from "../../shared/js/core/pwa.js?v=v2026-10-09T02514";
+import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-09T02514";
+import { linkTo, backHref, renderBackLabel } from "../../shared/js/core/nav-map.js?v=v2026-10-09T02514";
+import { initTopbarAccountDropdown } from "../../shared/js/core/topbar-controller.js?v=v2026-10-09T02514";
+import { alertModal } from "../../shared/js/core/modal.js?v=v2026-10-09T02514";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-09T02514";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-09T02514";
 
 const btnBack             = document.getElementById("btnBack");
 const btnManual           = document.getElementById("btnManual");
@@ -55,18 +56,6 @@ function deviceTypeIcon(type) {
 }
 
 const _isMobile = isMobileDevice();
-
-function getCurrentRelativeUrl() {
-  return `${location.pathname}${location.search}${location.hash}`;
-}
-
-function buildManualUrl() {
-  const url = new URL("/manual/", location.href);
-  url.searchParams.set("ret", getCurrentRelativeUrl());
-  url.searchParams.set("lang", getUiLang() || "pl");
-  url.hash = "connect";
-  return url.toString();
-}
 
 // ── Device preview modal ───────────────────────────────────────────────────────
 let _previewDeviceInfo = null;
@@ -366,21 +355,16 @@ async function startQrScan() {
   }
   document.querySelector('.topbar')?.classList.add('topbar-ready');
 
+  const backCtx = () => ({ anon: !isLoggedIn });
   btnBack?.addEventListener("click", () => {
-    location.href = (isLoggedIn && !guestMode)
-      ? withLangParam("/games/")
-      : withLangParam("/");
+    location.href = backHref("connectDevice", backCtx());
   });
+  renderBackLabel(btnBack, "connectDevice", backCtx);
 
   if (isLoggedIn && !guestMode) {
-    if (btnBack) btnBack.innerHTML = iconText("arrow-left", t("connectDevice.topbar.back") || "Moje gry");
     if (btnManual) btnManual.style.display = "";
-    btnManual?.addEventListener("click", () => { location.href = buildManualUrl(); });
+    btnManual?.addEventListener("click", () => { location.href = linkTo("manual", { hash: "connect" }); });
   } else {
-    if (btnBack) {
-      btnBack.dataset.i18n = "index.backHome";
-      btnBack.innerHTML = iconText("arrow-left", t("index.backHome") || "Strona główna");
-    }
     if (btnManual) btnManual.style.display = "none";
   }
 

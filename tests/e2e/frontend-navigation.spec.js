@@ -24,10 +24,10 @@ test("instrukcja: powrót zachowuje ścieżkę, parametry i fragment", async ({ 
 
 test("zalogowany: Bazy → Subskrypcje → Bazy oraz powrót do gier", async ({ page }, testInfo) => {
   await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
-  await page.goto("/bases/?from=games", { waitUntil: "networkidle" });
+  await page.goto("/bases/", { waitUntil: "networkidle" });
   await page.locator("#btnGoAlt").click();
   await expect.poll(() => new URL(page.url()).pathname).toBe("/subscriptions/");
-  expect(new URL(page.url()).searchParams.get("ret")).toBe("/bases/?from=games");
+  expect(new URL(page.url()).searchParams.get("ret")).toBe("/bases/");
   await page.locator("#btnBackToGames").click();
   await expect.poll(() => new URL(page.url()).pathname).toBe("/bases/");
   await page.locator("#btnBack").click();

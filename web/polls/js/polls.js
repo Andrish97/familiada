@@ -6,26 +6,26 @@
 //   B. Karty Udostępnianie · Wyniki. Wyniki są jedne dla wszystkich stanów:
 //      na żywo, zatrzymane (surowe), podliczanie (poll-tally.js), ostateczne.
 // Stany gry: draft -> poll_open <-> poll_stopped -> ready (migracja 315).
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T02490";
-import { requireAuth } from "../../shared/js/core/auth.js?v=v2026-10-09T02490";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-09T02490";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T02514";
+import { requireAuth } from "../../shared/js/core/auth.js?v=v2026-10-09T02514";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-09T02514";
 import QRCode from "https://cdn.jsdelivr.net/npm/qrcode@1.5.3/+esm";
-import { initI18n, t, withLangParam, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-09T02490";
-import { initTopbarAccountDropdown } from "../../shared/js/core/topbar-controller.js?v=v2026-10-09T02490";
-import { guardResourceLock } from "../../shared/js/core/resource-lock.js?v=v2026-10-09T02490";
-import { validateGame, gameRuleErrorMessage, guardGameState } from "../../shared/js/core/game-validate.js?v=v2026-10-09T02490";
-import { mailCooldownCheck } from "../../shared/js/core/cooldown.js?v=v2026-10-09T02490";
-import { sendPollInviteMails } from "../../shared/js/core/poll-mail.js?v=v2026-10-09T02490";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-09T02490";
-import { createPollResults } from "../../shared/js/core/poll-results.js?v=v2026-10-09T02490";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-09T02490";
-import { createTally } from "./poll-tally.js?v=v2026-10-09T02490";
+import { initI18n, t, withLangParam, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-09T02514";
+import { linkTo, backHref, renderBackLabel } from "../../shared/js/core/nav-map.js?v=v2026-10-09T02514";
+import { initTopbarAccountDropdown } from "../../shared/js/core/topbar-controller.js?v=v2026-10-09T02514";
+import { guardResourceLock } from "../../shared/js/core/resource-lock.js?v=v2026-10-09T02514";
+import { validateGame, gameRuleErrorMessage, guardGameState } from "../../shared/js/core/game-validate.js?v=v2026-10-09T02514";
+import { mailCooldownCheck } from "../../shared/js/core/cooldown.js?v=v2026-10-09T02514";
+import { sendPollInviteMails } from "../../shared/js/core/poll-mail.js?v=v2026-10-09T02514";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-09T02514";
+import { createPollResults } from "../../shared/js/core/poll-results.js?v=v2026-10-09T02514";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-09T02514";
+import { createTally } from "./poll-tally.js?v=v2026-10-09T02514";
 
 // initI18n is called at the start of DOMContentLoaded (see below)
 
 const qs = new URLSearchParams(location.search);
 const gameId = qs.get("id");
-const ret = qs.get("ret");
 
 const $ = (id) => document.getElementById(id);
 
@@ -687,7 +687,7 @@ function renderSubs(force = false) {
     subsGrid.innerHTML = "";
     if (subsEmpty) {
       subsEmpty.style.display = "";
-      subsEmpty.innerHTML = `${escapeHtml(t("polls.share.noSubs"))} <a href="${escapeHtml(withLangParam("/subscriptions/"))}">${escapeHtml(t("polls.share.noSubsLink"))}</a>`;
+      subsEmpty.innerHTML = `${escapeHtml(t("polls.share.noSubs"))} <a href="${escapeHtml(linkTo("subscriptions"))}">${escapeHtml(t("polls.share.noSubsLink"))}</a>`;
     }
     return;
   }
@@ -1212,18 +1212,18 @@ document.addEventListener("DOMContentLoaded", async () => {
   document.querySelector('.topbar')?.classList.add('topbar-ready');
 
   if (btnBack) {
-    btnBack.innerHTML = iconText("arrow-left", t("polls.backToGames"));
+    renderBackLabel(btnBack, "polls");
   }
 
   btnManual?.addEventListener("click", () => {
-    location.href = buildManualUrl();
+    location.href = linkTo("manual", { hash: "polls" });
   });
 
   // Poprawki podliczania zapisują się same (szkic w bazie); przed wyjściem
   // tylko dopychamy ostatni zapis.
   btnBack?.addEventListener("click", async () => {
     try { await tally.flush(); } catch { /* szkic i tak jest w bazie */ }
-    location.href = backTarget;
+    location.href = backHref("polls");
   });
   window.addEventListener("pagehide", () => { void tally.flush(); });
 
@@ -1308,11 +1308,11 @@ document.addEventListener("DOMContentLoaded", async () => {
       resourceId: gameId,
       context: "polls",
       message: t("resourceLock.gameMessage"),
-      backHref: backTarget,
+      backHref: backHref("polls"),
     });
     if (!lock.ok) return;
     // Blokada stanu: strona ankiety tylko dla gry, która może mieć ankietę.
-    if (!(await guardGameState(gameId, "poll_entry", { backHref: backTarget }))) return;
+    if (!(await guardGameState(gameId, "poll_entry", { backHref: backHref("polls") }))) return;
   }
 
   await refresh();

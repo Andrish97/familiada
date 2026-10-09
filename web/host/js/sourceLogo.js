@@ -1,4 +1,4 @@
-import { logoToBits150 } from "../../shared/js/core/logo-preview.js?v=v2026-10-09T02490";
+import { logoToBits150 } from "../../shared/js/core/logo-preview.js?v=v2026-10-09T02514";
 
 const W = 1280, H = 720, ASPECT = W / H;
 let fontReady;
@@ -6,7 +6,7 @@ let fontReady;
 function loadWordmarkFont() {
   if (!fontReady) {
     fontReady = (async () => {
-      const face = new FontFace("HostUnbounded", 'url("/host/fonts/Unbounded-Variable.ttf?v=v2026-10-09T02490")', { weight: "200 900" });
+      const face = new FontFace("HostUnbounded", 'url("/host/fonts/Unbounded-Variable.ttf?v=v2026-10-09T02514")', { weight: "200 900" });
       await face.load();
       document.fonts.add(face);
     })();

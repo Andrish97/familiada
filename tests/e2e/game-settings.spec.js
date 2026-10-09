@@ -87,8 +87,8 @@ async function deleteGame(page, gameId) {
   }, gameId);
 }
 
-async function openSettings(page, gameId) {
-  await page.goto(`https://www.familiada.online/game-settings?id=${gameId}`, { waitUntil: "domcontentloaded" });
+async function openSettings(page, gameId, extraQuery = "") {
+  await page.goto(`https://www.familiada.online/game-settings?id=${gameId}${extraQuery}`, { waitUntil: "domcontentloaded" });
   await page.waitForLoadState("networkidle");
 }
 
@@ -601,7 +601,7 @@ test("ustawienia gry: przycisk Wstecz z niezapisanymi zmianami pyta o potwierdze
 
   const gameId = await createGame(page);
   try {
-    await openSettings(page, gameId);
+    await openSettings(page, gameId, "&ret=%2Fgames%2F");
     await page.locator("#gsTeamA").fill("Coś nowego");
     await expect(page.locator("#gsFooterMsg")).toBeVisible();
 
