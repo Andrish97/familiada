@@ -339,7 +339,12 @@ function safeXml(value) {
 function stabilizeDrawStrokes(scene) {
   const visit = (object) => {
     if (!object || typeof object !== "object") return;
-    if (object.stroke && object.stroke !== "transparent" && Number(object.strokeWidth) > 0) object.strokeUniform = true;
+    // Fabric's SVG exporter keeps strokeUniform as non-scaling-stroke. The
+    // SVG is then fitted from the saved world to Host's 1280px canvas, while
+    // Fabric's Host raster scales the scene before drawing. Keep strokes in
+    // world units so the SVG viewBox scales them with the scene just like the
+    // Fabric canvas renderer; never mutate the saved source object itself.
+    if (object.stroke && object.stroke !== "transparent" && Number(object.strokeWidth) > 0) object.strokeUniform = false;
     object.objects?.forEach(visit);
   };
   scene.objects?.forEach(visit);
