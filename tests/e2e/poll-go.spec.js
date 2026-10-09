@@ -341,12 +341,12 @@ test.describe("poll-go.js audyt", () => {
     }
   });
 
-  test("task invite: ankieta zamknięta → 'Ankieta została zamknięta'", async ({ page, context }, testInfo) => {
+  test("task invite: ankieta zakończona (podliczona) → 'Ankieta zakończona'", async ({ page, context }, testInfo) => {
     try {
       await loginAsPooledTestUser(page, context, testInfo.parallelIndex);
       const { gameId, taskToken } = await createTaskToken(page, "poll_points");
 
-      // Zamknięcie wymaga głosów — poll_go_resolve podajemy jako odpowiedź 'poll_closed'.
+      // Podliczenie wymaga głosów — poll_go_resolve podajemy jako odpowiedź 'poll_closed'.
       await page.route("**/rest/v1/rpc/poll_go_resolve", (route) =>
         route.fulfill({
           status: 200,
@@ -358,7 +358,32 @@ test.describe("poll-go.js audyt", () => {
       const url = new URL("poll-go/index.html", "https://www.familiada.online/");
       url.searchParams.set("t", taskToken);
       await page.goto(url.toString(), { waitUntil: "domcontentloaded" });
-      await expect(page.locator(".poll-go-title")).toContainText(/została zamknięta|has been closed|закрито/, { timeout: 10000 });
+      await expect(page.locator(".poll-go-title")).toContainText(/zakończona|has ended|завершено/, { timeout: 10000 });
+
+      await deleteGame(page, gameId);
+    } finally {
+      await page.close();
+    }
+  });
+
+  test("task invite: ankieta zatrzymana → 'Ankieta jest zatrzymana'", async ({ page, context }, testInfo) => {
+    try {
+      await loginAsPooledTestUser(page, context, testInfo.parallelIndex);
+      const { gameId, taskToken } = await createTaskToken(page, "poll_points");
+
+      // Stan zatrzymania — poll_go_resolve podajemy jako odpowiedź 'poll_stopped'.
+      await page.route("**/rest/v1/rpc/poll_go_resolve", (route) =>
+        route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({ ok: false, error: "poll_stopped" }),
+        })
+      );
+
+      const url = new URL("poll-go/index.html", "https://www.familiada.online/");
+      url.searchParams.set("t", taskToken);
+      await page.goto(url.toString(), { waitUntil: "domcontentloaded" });
+      await expect(page.locator(".poll-go-title")).toContainText(/jest zatrzymana|is stopped|зупинено/, { timeout: 10000 });
 
       await deleteGame(page, gameId);
     } finally {

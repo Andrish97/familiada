@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
-  <meta name="app-version" content="v2026-10-09T02075"/>
+  <meta name="app-version" content="v2026-10-09T02340"/>
 
   <meta charset="UTF-8"/>
   <meta name="robots" content="noindex, nofollow"/>
@@ -14,10 +14,10 @@
   <link rel="preconnect" href="https://supabase.familiada.online">
   <title data-i18n="polls.title">Familiada — ankieta i wyniki</title>
 
-  <link rel="icon" href="/favicon.ico?v=v2026-10-09T02075"/>
-  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-09T02075"/>
-  <link rel="stylesheet" href="/games/css/games.css?v=v2026-10-09T02075"/>
-  <link rel="stylesheet" href="/shared/css/polls.css?v=v2026-10-09T02075"/>
+  <link rel="icon" href="/favicon.ico?v=v2026-10-09T02340"/>
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-09T02340"/>
+  <link rel="stylesheet" href="/games/css/games.css?v=v2026-10-09T02340"/>
+  <link rel="stylesheet" href="/shared/css/polls.css?v=v2026-10-09T02340"/>
 
   <script>
     document.documentElement.classList.add('page-loading');
@@ -31,12 +31,12 @@
     } catch(_e) {}
   </script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-  <script src="/shared/js/core/security-warning.js?v=v2026-10-09T02075" defer></script>
-  <script type="module" src="/polls/js/polls.js?v=v2026-10-09T02075" defer></script>
-  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-09T02075" defer></script>
+  <script src="/shared/js/core/security-warning.js?v=v2026-10-09T02340" defer></script>
+  <script type="module" src="/polls/js/polls.js?v=v2026-10-09T02340" defer></script>
+  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-09T02340" defer></script>
 </head>
 
-<body class="games-body polls-body skel-body">
+<body class="games-body polls-body topbar-title-mobile skel-body">
   <header class="topbar topbar-layout-4">
     <div class="topbar-section topbar-section-1">
       <div class="brand">FAMILIADA</div>
@@ -58,19 +58,23 @@
   </header>
 
   <main class="wrap">
-    <!-- A. Pasek stanu: oznaczenia po lewej, przyciski stanu po prawej -->
-    <div class="pollBar" id="pollBar" style="display:none;">
-      <div class="pollBarTags">
-        <span class="tag tag--gold" id="chipType"></span>
-        <span class="tag" id="chipStatus"></span>
-        <span class="tag tag--info" id="chipVotes" style="display:none;"></span>
-      </div>
-      <div class="pollBarActions">
-        <!-- tylko powód, dla którego „Zamknij” jest wyłączone -->
+    <!-- A. Pasek stanu: stan słowem po lewej, WSZYSTKIE akcje po prawej
+         (telefon: stan u góry, akcje w dolnym pasku przyklejonym do ekranu) -->
+    <div class="pollBar" id="pollBar" data-state="" style="display:none;">
+      <div class="pollBarState">
+        <span class="pollStateWord" id="pollStateWord"></span>
+        <span class="pollStateInfo" id="pollStateInfo"></span>
         <span class="pollBarHint" id="hintTop"></span>
-        <button class="btn sm gold" id="btnPollAction" type="button" style="visibility:hidden"></button>
-        <button class="btn sm" id="btnAbort" type="button" style="display:none;" data-i18n="polls.actions.abort">Przerwij</button>
-        <button class="btn sm" id="btnCancelTextCloseTop" type="button" style="display:none;" data-i18n="polls.actions.cancel">Anuluj</button>
+      </div>
+      <div class="pollBarActions" id="pollActions">
+        <button class="btn sm" id="btnResumePoll" type="button" hidden data-i18n="polls.actions.resumePoll">Wznów głosowanie</button>
+        <button class="btn sm" id="btnLeaveTally" type="button" hidden data-i18n="polls.actions.leaveTally">Wyjdź z podliczania</button>
+        <button class="btn sm gold" id="btnOpenPoll" type="button" hidden data-i18n="polls.actions.openPoll">Uruchom</button>
+        <button class="btn sm gold" id="btnStopPoll" type="button" hidden data-i18n="polls.actions.stopPoll">Zatrzymaj</button>
+        <button class="btn sm gold" id="btnTallyPoll" type="button" hidden data-i18n="polls.actions.tallyPoll">Podlicz głosy</button>
+        <button class="btn sm gold" id="btnApproveTally" type="button" hidden data-i18n="polls.actions.approve">Zatwierdź</button>
+        <button class="btn sm gold" id="btnReopenPoll" type="button" hidden data-i18n="polls.actions.reopenPoll">Uruchom ponownie</button>
+        <button class="btn sm pollAbort" id="btnAbort" type="button" hidden data-i18n="polls.actions.abort">Przerwij</button>
       </div>
     </div>
 
@@ -107,52 +111,53 @@
             <div class="pollsEmpty" id="shareEmpty"></div>
             <div class="shareCols" id="shareBody" style="display:none;">
               <section class="pollSec pollLinkSec">
-                <h3 class="pollSecTitle" data-i18n="polls.share.linkTitle">Link i QR</h3>
-                <div class="qrBox img" id="qr"></div>
-                <input class="inp pollLinkInp" id="pollLink" readonly />
-                <div class="pollLinkActions">
-                  <button class="btn sm" id="btnCopy" type="button" disabled data-i18n="polls.actions.copyShort">Kopiuj</button>
-                  <button class="btn sm gold" id="btnOpen" type="button" disabled data-i18n="polls.actions.openShort">Otwórz</button>
-                  <button class="btn sm" id="btnOpenQr" type="button" disabled data-i18n="polls.actions.qrOnDisplay">QR na wyświetlaczu</button>
+                <h3 class="pollSecTitle" data-i18n="polls.share.linkTitle">Link</h3>
+                <div class="pollLinkPlaceholder" id="linkPlaceholder" data-i18n="polls.share.linkAfterStart" hidden>Link pojawi się po uruchomieniu</div>
+                <div class="pollLinkLive" id="linkLive">
+                  <div class="linkField">
+                    <input class="inp pollLinkInp" id="pollLink" readonly />
+                    <button class="btn xs linkCopyBtn" id="btnCopy" type="button" disabled data-i18n-aria-label="polls.share.copyLink" data-i18n-title="polls.share.copyLink" aria-label="Kopiuj link" title="Kopiuj link"><i class="ico" data-icon="copy"></i></button>
+                  </div>
+                  <div class="pollLinkActions">
+                    <button class="btn sm" id="btnOpen" type="button" disabled data-i18n="polls.actions.openShort">Otwórz</button>
+                    <button class="btn sm" id="btnOpenQr" type="button" disabled data-i18n="polls.actions.qrOnDisplay">QR na wyświetlaczu</button>
+                  </div>
+                  <button class="btn sm qrToggle" id="btnToggleQr" type="button" aria-expanded="false" data-i18n="polls.share.showQr">Pokaż QR</button>
+                  <button class="qrBox img" id="qr" type="button" data-i18n-aria-label="polls.share.enlargeQr" data-i18n-title="polls.share.enlargeQr" aria-label="Powiększ kod QR" title="Powiększ kod QR"></button>
                 </div>
               </section>
 
               <section class="pollSec pollSubsSec">
                 <div class="pollSecHead">
                   <h3 class="pollSecTitle" data-i18n="polls.share.subsTitle">Subskrybenci</h3>
-                  <button class="btn sm gold" id="btnSendInvites" type="button" disabled data-i18n="polls.share.sendInvites">Wyślij zaproszenia</button>
+                  <span class="subsSummary" id="subsSummary"></span>
+                </div>
+                <div class="subsTools" id="subsTools">
+                  <button class="btn xs" id="btnSelectAll" type="button" data-i18n="polls.share.selectAll">Zaznacz wszystkich</button>
                 </div>
                 <div class="pollsEmpty" id="subsEmpty" style="display:none;"></div>
                 <div class="grid subsGrid" id="subsGrid"></div>
+                <div class="subsFoot">
+                  <span class="pollBarHint subsSendHint" id="sendHint"></span>
+                  <button class="btn sm gold" id="btnSendInvites" type="button" disabled data-i18n="polls.share.sendInvites">Wyślij zaproszenia</button>
+                </div>
               </section>
             </div>
           </div>
 
-          <!-- Wyniki -->
+          <!-- Wyniki: na żywo / zatrzymane / podliczanie / ostateczne — te same wiersze -->
           <div class="polls-section" id="secResults" role="tabpanel">
             <div class="meta" id="resultsMeta"></div>
+            <div class="tallyBar" id="tallyBar" hidden>
+              <div class="tallyHint" id="tallyHint"></div>
+              <div class="tallyTools" id="tallyTools">
+                <span class="tallySave" id="tallySave" role="status"></span>
+                <button class="btn sm" id="btnUndo" type="button" disabled data-i18n-title="polls.tally.undo" data-i18n-aria-label="polls.tally.undo" title="Cofnij" aria-label="Cofnij"><i class="ico" data-icon="undo"></i></button>
+                <button class="btn sm" id="btnRedo" type="button" disabled data-i18n-title="polls.tally.redo" data-i18n-aria-label="polls.tally.redo" title="Ponów" aria-label="Ponów"><i class="ico" data-icon="redo"></i></button>
+              </div>
+            </div>
             <div id="resultsList"></div>
           </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- C. Zamykanie ankiety tekstowej: okno scalania zamiast treści (B) -->
-    <section class="games-shell" id="textCloseShell" style="display:none;">
-      <div class="card games-card" id="textCloseCard">
-        <div class="name" style="display:flex; justify-content:space-between; align-items:center;">
-          <span data-i18n="polls.textClose.title">Zamykanie — edycja odpowiedzi</span>
-          <div class="tcHistoryTools">
-            <button class="btn sm" id="btnUndo" type="button" title="Cofnij" aria-label="Cofnij" disabled><i class="ico" data-icon="undo"></i></button>
-            <button class="btn sm" id="btnRedo" type="button" title="Ponów" aria-label="Ponów" disabled><i class="ico" data-icon="redo"></i></button>
-          </div>
-        </div>
-        <div class="meta" id="textCloseMeta">—</div>
-        <div id="textCloseList" style="margin-top:10px; display:grid; gap:12px;"></div>
-
-        <div class="row" style="margin-top:12px;">
-          <button class="btn sm" id="btnCancelTextClose" type="button" data-i18n="polls.actions.cancel">Anuluj</button>
-          <button class="btn sm gold" id="btnFinishTextClose" type="button" data-i18n="polls.actions.closeAndNormalize">Zamknij i przelicz</button>
         </div>
       </div>
     </section>
@@ -172,16 +177,17 @@
         <div class="qrModalTitle" id="pollQrModalTitle" data-i18n="polls.qrModal.title">Wyświetlacz QR</div>
         <button class="btn xs" id="pollQrModalClose" type="button" aria-label="Zamknij" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
       </div>
-      <div class="qrModalSubtitle" data-i18n="polls.qrModal.subtitle">Kod do podłączenia wyświetlacza — nie do głosowania</div>
+      <div class="qrModalSubtitle" id="pollQrModalSubtitle" data-i18n="polls.qrModal.subtitle">Kod do podłączenia wyświetlacza — nie do głosowania</div>
       <div class="qrModalBody">
-        <div class="qrModalCode">
+        <div class="qrModalVote" id="pollQrModalVote" hidden></div>
+        <div class="qrModalCode" id="pollQrModalCode">
           <span class="qrModalCodeVal" id="pollQrModalCodeVal">——————</span>
         </div>
-        <div class="qrModalActions">
+        <div class="qrModalActions" id="pollQrModalActions">
           <button class="btn gold" id="pollQrModalCopy" type="button" data-i18n="polls.qrModal.copyBtn">Kopiuj</button>
           <button class="btn" id="pollQrModalOpen" type="button" data-i18n="polls.qrModal.openBtn">Otwórz</button>
         </div>
-        <div class="qrModalCodeHint" data-i18n="polls.qrModal.hint">Wejdź na familiada.online → Podłącz urządzenie → wprowadź kod</div>
+        <div class="qrModalCodeHint" id="pollQrModalHint" data-i18n="polls.qrModal.hint">Wejdź na familiada.online → Podłącz urządzenie → wprowadź kod</div>
       </div>
     </div>
   </div>
