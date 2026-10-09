@@ -132,12 +132,12 @@ test("control2: własne outro ponad 30 sekund — ustawienia, zapis i podsumowan
     await expect(page.locator('.summarySoundRow:has(input[data-sfx-vol="show_outro"])')).toContainText("Muzyka outro programu");
     await expect(page.locator('.summarySoundRow:has(input[data-sfx-vol="reveal"])')).toContainText("Odsłanianie");
     await page.getByRole("button", { name: "Zmień ustawienia" }).click();
-    const frame = page.frameLocator("#gsFrame");
-    await expect(frame.locator("#gsTeamA")).toBeVisible({ timeout: 15000 });
-    await frame.locator("#btnToggleSidebar").click();
-    await frame.locator('.gs-sidebar-item[data-cat="sound"]').click();
-    await expect(frame.locator('.sfx-row[data-key="reveal"]')).toContainText("Odsłanianie");
-    const fileInput = frame.locator('input[data-sfx-key="show_outro"]');
+    // Zwykłe przejście na stronę ustawień (bez okna / iframe).
+    await page.waitForURL(/\/games\/settings\//, { timeout: 15000 });
+    await expect(page.locator("#gsTeamA")).toBeVisible({ timeout: 15000 });
+    await page.locator('.gs-sidebar-item[data-cat="sound"]').click();
+    await expect(page.locator('.sfx-row[data-key="reveal"]')).toContainText("Odsłanianie");
+    const fileInput = page.locator('input[data-sfx-key="show_outro"]');
     await expect(fileInput).toHaveAttribute("accept", "audio/mpeg,audio/wav,audio/ogg");
     // A real 31-second PCM WAV verifies the separate outro limit (>30s).
     const sampleRate = 8000;
@@ -150,12 +150,10 @@ test("control2: własne outro ponad 30 sekund — ustawienia, zapis i podsumowan
     wav.writeUInt32LE(samples * 2, 40);
     for (let i = 0; i < samples; i++) wav.writeInt16LE(Math.round(Math.sin(i * 2 * Math.PI * 440 / sampleRate) * 500), 44 + i * 2);
     await fileInput.setInputFiles({ name: "outro-test-31s.wav", mimeType: "audio/wav", buffer: wav });
-    await expect(frame.locator('.sfx-row:has(input[data-sfx-key="show_outro"]) .sfx-file-name')).toHaveText("outro-test-31s.wav", { timeout: 15000 });
-    const save = frame.getByRole("button", { name: "Zapisz wszystko" });
-    await save.click();
-    await expect(save).toBeEnabled({ timeout: 30000 });
-    await page.locator("#gsOverlay").click({ position: { x: 5, y: 5 } });
-    await expect(page.locator("#gsOverlay")).toHaveClass(/hidden/, { timeout: 10000 });
+    await expect(page.locator('.sfx-row:has(input[data-sfx-key="show_outro"]) .sfx-file-name')).toHaveText("outro-test-31s.wav", { timeout: 15000 });
+    // Autozapis; „Wstecz” zapisuje od razu i wraca do Control (ret).
+    await page.locator("#btnBack").click();
+    await page.waitForURL(/\/control\//, { timeout: 30000 });
     await page.reload({ waitUntil: "domcontentloaded" });
     await expect(page.locator(".stepTitle")).toHaveText("Podsumowanie", { timeout: 15000 });
     const inspectAudio = () => page.evaluate(async () => {
@@ -2023,7 +2021,7 @@ test("control2: wyciszenie dźwięku — po Mute żaden klucz SFX się nie odtwa
 // kliknięcie musi je schować) -> DWA różne suwaki, dwie różne kategorie
 // dźwięku (żeby nie dało się ich pomylić w asercjach): (a) modal "Zmień
 // ustawienia" -> games.settings.sound jako punkt wyjściowy, denormalizacja
-// do game_state dopiero po zamknięciu modala; (b) suwak BEZPOŚREDNIO w
+// do game_state dopiero po powrocie z ustawień; (b) suwak BEZPOŚREDNIO w
 // sekcji "Dźwięk" Podsumowania (control/js/ui.js's soundSummarySection)
 // -> zapis prosto do game_state na żywo, bez modala. Oba muszą dotrzeć do
 // Display (nie do Control — sprawdzone osobno, że Control zostaje cicho
@@ -2072,7 +2070,7 @@ test("control2: dźwięk ze źródła Wyświetlacz — odblokowanie, głośnoś�
     // ich pomylić w asercjach:
     //
     // (a) Modal "Zmień ustawienia" -> games.settings.sound -> denormalizacja
-    //     do game_state DOPIERO po zamknięciu modala (onGsModalClose() w
+    //     do game_state DOPIERO po powrocie z ustawień (applyGameSettingsToState() w
     //     control/js/app.js). To jest "punkt wyjściowy" — trwały, per-gra
     //     domyślny zapis, edytowalny tylko tam (warianty/pliki własne też).
     //
@@ -2086,61 +2084,26 @@ test("control2: dźwięk ze źródła Wyświetlacz — odblokowanie, głośnoś�
     // zmienia "reveal", więc każda asercja wiąże się jednoznacznie z jednym
     // z dwóch mechanizmów.
 
-    // (a) games.settings jako punkt wyjściowy — modal ustawień.
+    // (a) games.settings jako punkt wyjściowy — strona ustawień (zwykłe
+    // przejście z Control, ustawienia zapisują się same).
     await page.getByRole("button", { name: "Zmień ustawienia" }).click();
-    await expect(page.locator("#gsOverlay")).not.toHaveClass(/hidden/, { timeout: 5000 });
-    const gsFrame = page.frameLocator("#gsFrame");
-    // Poczekaj, aż async inicjalizacja modala (js/pages/game-settings.js's
-    // główna funkcja init -- await requireAuth()/guardResourceLock()/
-    // guardResourceBusy(), realnie 0.5-1s RPC-ów) faktycznie się skończy,
-    // ZANIM zaczniemy klikać po sidebarze. #gsTeamA staje się widoczny
-    // dopiero jako efekt setActiveCat("teams") na samym końcu tego łańcucha
-    // -- to ten sam, już sprawdzony wzorzec co w teście "modal ustawień
-    // gry" niżej. Bez tego kliknięcie kategorii "sound" potrafiło trafić w
-    // to samo okno wyścigu co #btnToggleSidebar (naprawione w poprzednim
-    // commicie): sidebar?.addEventListener("click", ...setActiveCat...) w
-    // js/pages/game-settings.js jest wpięty dopiero w tym łańcuchu, więc
-    // klik na ".gs-sidebar-item[data-cat=sound]" trafiający przed jego
-    // zakończeniem był no-opem -- renderSound() nigdy się nie wykonywał
-    // (diagnostyka .evaluate() potwierdziła: #gsContentInner zostawał z
-    // nietkniętym placeholderem "<!-- rendered by JS -->" z markupu).
-    await expect(gsFrame.locator("#gsTeamA")).toBeVisible({ timeout: 10000 });
-    // W trybie modal (iframe z control2) sidebar startuje jako schowany
-    // drawer (css/game-settings.css's .gs-modal-mode .gs-sidebar — domyślnie
-    // display:none, otwierany dopiero po kliknięciu ☰ #btnToggleSidebar,
-    // patrz js/pages/game-settings.js's openSidebar()) — bez tego kliknięcia
-    // .gs-sidebar-item istnieje w DOM, ale nie jest "visible" dla Playwrighta.
-    await gsFrame.locator("#btnToggleSidebar").click();
-    await gsFrame.locator('.gs-sidebar-item[data-cat="sound"]').click();
-    const transitionSlider = gsFrame.locator('input.sfx-vol[data-sfx-vol="round_transition"]');
+    await page.waitForURL(/\/games\/settings\//, { timeout: 15000 });
+    // #gsTeamA staje się widoczny dopiero po zakończeniu async inicjalizacji
+    // (blokady, wczytanie gry) — dopiero wtedy sidebar ma podpięte handlery.
+    await expect(page.locator("#gsTeamA")).toBeVisible({ timeout: 15000 });
+    await page.locator('.gs-sidebar-item[data-cat="sound"]').click();
+    const transitionSlider = page.locator('input.sfx-vol[data-sfx-vol="round_transition"]');
     await expect(transitionSlider).toBeVisible({ timeout: 10000 });
     // .fill() na <input type="range"> nie zawsze niezawodnie odpala "input"
-    // (na czym wisi handler ustawiający localSettings.sound.volumes w
-    // js/pages/game-settings.js) — ustawiamy value i wysyłamy zdarzenie
-    // wprost.
+    // — ustawiamy value i wysyłamy zdarzenie wprost.
     await transitionSlider.evaluate((el) => {
       el.value = "70";
       el.dispatchEvent(new Event("input", { bubbles: true }));
     });
-    const btnSaveAll = gsFrame.getByRole("button", { name: "Zapisz wszystko" });
-    await btnSaveAll.click();
-    // saveAll() (js/pages/game-settings.js) jest asynchroniczny (realny
-    // zapis do bazy) i czyści isDirty dopiero PO zakończeniu -- klik na tło
-    // modala (niżej) trafiający przed tym momentem widzi isDirty=true i
-    // tryClose() pokazuje confirmModal() "Masz niezapisane zmiany", którego
-    // nic tu nie obsługuje -- modal wisi w nieskończoność, #gsOverlay nigdy
-    // nie znika. Root cause znaleziony diagnostyką console.warn() w
-    // tryClose(): btnSaveAll.disabled szedł na `true` DOPIERO tuż przed
-    // realnym zapisem, PO dwóch wcześniejszych, nieblokujących wizualnie
-    // zapytaniach sieciowych (loadQuestions()/getSfxCustomFiles()) -- więc
-    // to `await expect(...).toBeEnabled()` przechodziło natychmiast (bo
-    // przycisk nigdy nie zdążył się jeszcze wyłączyć), zanim zapis w ogóle
-    // się zaczął. Naprawione w saveAll(): `disabled=true` jest teraz
-    // pierwszą instrukcją funkcji, więc "enabled" na powrót jest już
-    // niezawodnym sygnałem zakończenia całego try/finally.
-    await expect(btnSaveAll).toBeEnabled({ timeout: 10000 });
-    await page.locator("#gsOverlay").click({ position: { x: 5, y: 5 } });
-    await page.locator("#gsOverlay").waitFor({ state: "hidden", timeout: 10000 });
+    // „Wstecz” zapisuje zmiany od razu (bez pytania) i wraca do Control (ret).
+    await page.locator("#btnBack").click();
+    await page.waitForURL(/\/control\//, { timeout: 15000 });
+    await expect(page.locator(".stepTitle")).toHaveText("Podsumowanie", { timeout: 15000 });
 
     await expect.poll(
       () => displayPage.evaluate(() => localStorage.getItem("sfx_vol_round_transition")),
@@ -2289,7 +2252,7 @@ test("control2: zmiana języka w Control propaguje się do Hosta — tytuł fazy
 // formularza musi się pojawić w window.__displayLog ZAGNIEŻDŻONEGO iframe'a
 // podglądu (control/display/js/main.js's instrumentSceneApi(), dodane też do trybu
 // podglądu w tej samej naprawie) jako wywołanie api.small.long1(...).
-test("control2: modal ustawień gry — zmiana nazwy drużyny odświeża podgląd Wyświetlacza", async ({ page, browser }, testInfo) => {
+test("control2: strona ustawień gry — zmiana nazwy drużyny odświeża podgląd Wyświetlacza", async ({ page, browser }, testInfo) => {
   await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
   const game = await makeGame(page, `E2E-CONTROL2-GSPREVIEW-${Date.now()}`);
   const contexts = [];
@@ -2310,41 +2273,27 @@ test("control2: modal ustawień gry — zmiana nazwy drużyny odświeża podglą
 
     // Skróty są ignorowane, dopóki plansza jest zajęta (zapis przejścia do
     // Podsumowania jeszcze trwa, a ekran renderuje się optymistycznie) —
-    // powtarzaj "e" + Enter, aż modal się otworzy.
+    // powtarzaj "e" + Enter, aż Control przejdzie na stronę ustawień.
     await expect(async () => {
       await page.keyboard.press("e");
       await page.keyboard.press("Enter");
-      await expect(page.locator("#gsOverlay")).not.toHaveClass(/hidden/, { timeout: 1500 });
+      await page.waitForURL(/\/games\/settings\//, { timeout: 1500 });
     }).toPass({ timeout: 20000 });
 
-    const gsFrame = page.frameLocator("#gsFrame");
-    // Kategoria "Drużyny" jest domyślnie aktywna po otwarciu modala —
-    // pole nazwy drużyny A jest widoczne od razu, bez przełączania zakładek.
-    await expect(gsFrame.locator("#gsTeamA")).toBeVisible({ timeout: 10000 });
+    // Kategoria "Drużyny" jest domyślnie aktywna — pole nazwy drużyny A jest
+    // widoczne od razu, bez przełączania zakładek.
+    await expect(page.locator("#gsTeamA")).toBeVisible({ timeout: 15000 });
 
-    // Zagnieżdżony iframe podglądu (control/display/js/main.js's bootPreview()) —
-    // dostępny wprost z page.frames() (ten sam origin, zwykła strona), nie
-    // przez frameLocator zagnieżdżony w innym frameLocator. UWAGA: D3
-    // (control/js/ui.js's renderSetupFinish) ma WŁASNY, NIEZALEŻNY
-    // podgląd-iframe (`/control/display?id=...&key=...&preview=1`), zamontowany w
-    // Control jeszcze PRZED otwarciem tego modala -- samo filtrowanie po
-    // "/control/display"+"preview=1" w page.frames() (płaska lista wszystkich
-    // ramek na stronie) łapało WTEDY ten D3-owy iframe zamiast modala,
-    // bo pasował do filtra i był w drzewie ramek wcześniej (zgłoszone:
-    // test wisiał na __displayLog, mimo że modal realnie wysyłał i
-    // odbierał poprawne wiadomości -- po prostu do INNEJ ramki). Naprawa:
-    // szukamy WYŁĄCZNIE wśród potomków samej ramki #gsFrame, więc D3-owy
-    // podgląd (sibling w drzewie, nie potomek modala) nigdy nie pasuje.
-    const gsFrameHandle = await page.$("#gsFrame");
-    const gsFrameObj = await gsFrameHandle.contentFrame();
-    const previewFrame = () => gsFrameObj.childFrames().find((f) => f.url().includes("/control/display") && f.url().includes("preview=1"));
+    // Iframe podglądu (control/display/js/main.js's bootPreview()) osadzony
+    // przez samą stronę ustawień — dostępny wprost z page.frames().
+    const previewFrame = () => page.frames().find((f) => f.url().includes("/control/display") && f.url().includes("preview=1"));
     await expect.poll(() => previewFrame()?.url(), { timeout: 10000 }).toBeTruthy();
     await expect.poll(async () => {
       try { return await previewFrame().evaluate(() => Array.isArray(window.__displayLog)); } catch { return false; }
     }, { timeout: 10000 }).toBe(true);
 
     await previewFrame().evaluate(() => { window.__displayLog = []; });
-    await gsFrame.locator("#gsTeamA").fill("Testowi Mistrzowie");
+    await page.locator("#gsTeamA").fill("Testowi Mistrzowie");
 
     await expect.poll(async () => {
       const log = await previewFrame().evaluate(() => window.__displayLog || []);

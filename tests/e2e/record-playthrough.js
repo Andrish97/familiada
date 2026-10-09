@@ -639,7 +639,7 @@ async function typePaced(locator, text, msPerChar = 180) {
 
 // Zgłoszone (po realnym nagraniu, punkt 3/C2-05): "modal ustawień wisi, nie
 // widać wpisywania z klawiatury/suwaka" — do tego momentu suwaki w tym
-// skrypcie (#gsFrame's input.sfx-vol, control2's input.summarySoundVol)
+// skrypcie (strona ustawień: input.sfx-vol, control2's input.summarySoundVol)
 // dostawały wartość docelową JEDNYM .evaluate(), bez żadnego kroku
 // pośredniego — na nagraniu wygląda to jak nic (kilkaset ms zera akcji),
 // potem nagle inna wartość, zamiast widocznego przesunięcia uchwytu.
@@ -647,6 +647,14 @@ async function typePaced(locator, text, msPerChar = 180) {
 // z krótką pauzą między nimi, więc widz faktycznie widzi suwak jadący do
 // nowej pozycji — identyczny mechanizm zapisu (set value + dispatch
 // "input", na końcu też "change"), tylko rozciągnięty w czasie.
+// Ustawienia gry to zwykła strona (autozapis): „Wstecz” zapisuje zmiany od
+// razu i wraca do Control (ret), który po powrocie wznawia stan z bazy.
+async function backToControlFromSettings(control) {
+  await control.locator("#btnBack").click();
+  await control.waitForURL(/\/control\//, { timeout: 20_000 });
+  await control.locator(".stepTitle").waitFor({ state: "visible", timeout: 20_000 });
+}
+
 async function animateSlider(locator, toValue, { steps = 8, stepDelay = 70 } = {}) {
   const from = Number(await locator.evaluate((el) => el.value));
   const to = Number(toValue);
@@ -745,19 +753,16 @@ async function scenarioRoundsMechanics(pages, { contexts }) {
   await clickPaced(control.getByRole("button", { name: "Dalej" }), ADMIN_PACE_MS);
 
   // Zgłoszone: "dodaj zmianę ustawień do... nagrywania" — pokaż na nagraniu,
-  // że modal ustawień gry (naprawiony w tej sesji: podgląd Wyświetlacza był
-  // martwy w trybie modalu) faktycznie działa. Zmiana nazwy drużyny w
-  // formularzu, zapis, zamknięcie kliknięciem poza treścią modala (tak
-  // zamyka się go naprawdę — control/js/app.js's gsOverlayEl click handler).
+  // że strona ustawień gry działa: zmiana nazwy drużyny z podglądem
+  // Wyświetlacza na żywo, autozapis i powrót „Wstecz” do Control.
   //
-  // Zgłoszone (po realnym nagraniu): "na modalu ustawień wisi bardzo długo"
-  // — cały ten blok to demo administracyjne (operator NIC nie ogłasza na
+  // Cały ten blok to demo administracyjne (operator NIC nie ogłasza na
   // głos tutaj), więc ADMIN_PACE_MS + odchudzone pauzy lokalne, nie
-  // REVEAL_PACE_MS na każdym kroku jak wcześniej.
+  // REVEAL_PACE_MS na każdym kroku.
   // Otwarcie formularza nie wywołuje game_state_write — bez 15 s timeoutu.
   await control.getByRole("button", { name: "Zmień ustawienia" }).click();
-  const gsFrame = control.frameLocator("#gsFrame");
-  const gsTeamAInput = gsFrame.locator("#gsTeamA");
+  await control.waitForURL(/\/games\/settings\//, { timeout: 20_000 });
+  const gsTeamAInput = control.locator("#gsTeamA");
   // Zgłoszone (punkt 3/C2-05): ".fill() wsadza cały tekst na raz, na
   // nagraniu wygląda to jak wklejenie, nie jak realne wpisywanie z
   // klawiatury" — tu, w odróżnieniu od typePaced() (control2's #app,
@@ -782,17 +787,9 @@ async function scenarioRoundsMechanics(pages, { contexts }) {
   // ("round_transition") od tego w samym Podsumowaniu niżej ("reveal"), żeby
   // nagranie pokazywało obie ścieżki osobno, nie jedną zamiast drugiej.
   //
-  // W trybie modal sidebar startuje jako schowany drawer (css/game-settings.css's
-  // .gs-modal-mode .gs-sidebar — domyślnie display:none, otwierany dopiero po
-  // kliknięciu ☰ #btnToggleSidebar, patrz js/pages/game-settings.js's
-  // openSidebar()) — bez tego kliknięcia .gs-sidebar-item istnieje w DOM, ale
-  // nie jest "visible" (real bug znaleziony przez failed nagranie: locator.click
-  // Timeout 30000ms, "element is not visible").
-  await gsFrame.locator("#btnToggleSidebar").click();
-  await control.waitForTimeout(350); // niech nagranie złapie drawer się otwierający
-  await gsFrame.locator('.gs-sidebar-item[data-cat="sound"]').click();
+  await control.locator('.gs-sidebar-item[data-cat="sound"]').click();
   await control.waitForTimeout(400);
-  const transitionSlider = gsFrame.locator('input.sfx-vol[data-sfx-vol="round_transition"]');
+  const transitionSlider = control.locator('input.sfx-vol[data-sfx-vol="round_transition"]');
   await transitionSlider.waitFor({ state: "visible", timeout: 10_000 });
   // Zgłoszone (punkt 3/C2-05): jeden skok wartości wygląda na nagraniu jak
   // nic się nie dzieje, a potem nagła zmiana — animateSlider() (patrz wyżej)
@@ -800,41 +797,10 @@ async function scenarioRoundsMechanics(pages, { contexts }) {
   await animateSlider(transitionSlider, 70);
   await control.waitForTimeout(400); // niech nagranie złapie zaktualizowaną etykietę %
 
-  // Real bug znaleziony przez failed nagranie (przebieg #12/#13): "Zapisz
-  // wszystko" (#btnSaveAll) jest zdefiniowany w game-settings2.html, więc
-  // renderuje się WEWNĄTRZ #gsFrame -- control.getByRole(...) (bez
-  // przenikania do iframe'ów w Playwright) nigdy go nie znajdował, więc
-  // locator.click() wisiał pełne 30s zanim rzucił TimeoutError. Poprawny
-  // zakres to gsFrame. Zwykły klik, nie clickPaced -- saveAll() zapisuje
-  // przez updateChecked("games",...), nie przez game_state_write/
-  // game_state_buzzer_press (WRITE_RPC_RE), więc clickPaced's waitForWrite
-  // i tak zawsze czekałby pełne 15s na coś, co nigdy nie nadejdzie.
-  //
-  // DRUGI real bug znaleziony przez failed nagranie (przebieg z 2026-09-25,
-  // zrzut ekranu FAILURE.png): zamiast czekać na REALNE potwierdzenie
-  // zapisu, kod czekał tu na stały ADMIN_PACE_MS (wcześniej 900ms, obniżone w tej
-  // sesji z 2200ms) i OD RAZU klikał w tło, żeby zamknąć modal. Jeśli
-  // prawdziwy zapis (saveAll(), sieć) trwał dłużej niż ten stały czas --
-  // co w CI się zdarza -- klik w tło trafiał, gdy js/pages/game-settings.js's
-  // isDirty było WCIĄŻ true, więc tryClose() pokazywał
-  // confirmModal("Masz niezapisane zmiany...", dokładnie to, co widać na
-  // zrzucie), którego nic tu nie obsługiwało -- #gsOverlay nigdy nie
-  // znikał, oczekiwanie niżej wisiało pełne 10s, a scenariusz padał kilka
-  // kroków później na "Gotowe — przejdź do rozgrywki" (modal wciąż
-  // otwarty). To DOKŁADNIE ten sam wyścig, co już raz opisany i naprawiony
-  // w control2.spec.js (patrz tam identyczny komentarz) -- ten plik
-  // powtórzył błąd stałego czasu zamiast Playwrightowego auto-czekania.
-  // Naprawa (ten sam wzorzec co control2.spec.js): czekamy na REALNE
-  // potwierdzenie -- przycisk wraca na "enabled" dopiero PO zakończeniu
-  // saveAll() (js/pages/game-settings.js's disabled=true jest pierwszą
-  // instrukcją funkcji, więc "enabled" z powrotem jest niezawodnym
-  // sygnałem) -- zamiast zgadywać, ile trwa zapis.
-  const btnSaveAll = gsFrame.getByRole("button", { name: "Zapisz wszystko" });
-  await btnSaveAll.click();
-  await expect(btnSaveAll).toBeEnabled({ timeout: 10_000 });
-  await control.waitForTimeout(ADMIN_PACE_MS); // widz ma zdążyć zobaczyć potwierdzony zapis
-  await control.locator("#gsOverlay").click({ position: { x: 5, y: 5 } });
-  await control.locator("#gsOverlay").waitFor({ state: "hidden", timeout: 10_000 });
+  // Autozapis zapisuje zmiany po krótkiej przerwie; „Wstecz” zapisuje od
+  // razu. Czekamy na REALNY powrót do Control zamiast na stały czas.
+  await control.waitForTimeout(ADMIN_PACE_MS); // widz ma zdążyć zobaczyć zmianę
+  await backToControlFromSettings(control);
   await control.waitForTimeout(500);
 
   // Drugi, NIEZALEŻNY mechanizm — suwak BEZPOŚREDNIO w sekcji "Dźwięk"
@@ -1652,33 +1618,27 @@ async function scenarioRecentFixes(pages, { contexts, browser, game }) {
 
   await clickPaced(control.getByRole("button", { name: "Dalej" }), ADMIN_PACE_MS);
   await control.getByRole("button", { name: "Zmień ustawienia" }).click();
-  const gsFrame = control.frameLocator("#gsFrame");
-  await gsFrame.locator("#btnToggleSidebar").click();
+  await control.waitForURL(/\/games\/settings\//, { timeout: 20_000 });
 
   // Widoczne, niedomyślne ustawienia wyglądu: Modern, własny akcent i logo
   // przykładowe wygenerowane z właściwego familiadowego JSON-u.
-  await gsFrame.locator('.gs-sidebar-item[data-cat="display"]').click();
-  await gsFrame.locator("#gsThemeSelect .ui-select-btn").click();
-  await gsFrame.locator('#gsThemeSelect .ui-select-item[data-value="modern"]').click();
-  await gsFrame.locator('.swatchBtn[data-color-key="A"]').click();
-  await gsFrame.locator("#gsColorHex").fill("00A86B");
-  await gsFrame.locator("#gsColorHex").press("Tab");
-  await gsFrame.locator("#gsColorModalDone").click();
-  await gsFrame.locator(`#gsLogoGrid .gs-logo-tile[data-logo-id="${game.recordLogoId}"]`).click();
+  await control.locator('.gs-sidebar-item[data-cat="display"]').click();
+  await control.locator("#gsThemeSelect .ui-select-btn").click();
+  await control.locator('#gsThemeSelect .ui-select-item[data-value="modern"]').click();
+  await control.locator('.swatchBtn[data-color-key="A"]').click();
+  await control.locator("#gsColorHex").fill("00A86B");
+  await control.locator("#gsColorHex").press("Tab");
+  await control.locator("#gsColorModalDone").click();
+  await control.locator(`#gsLogoGrid .gs-logo-tile[data-logo-id="${game.recordLogoId}"]`).click();
   await control.waitForTimeout(1200); // podgląd pokazuje już zmieniony motyw, kolor i logo
 
   // Wyłączenie finału bez otwierania zakładki Rundy zwraca wybrane pytania
   // na koniec. Następnie ponownie włączamy finał losowy, aby ten sam film
   // pokazał losowanie z puli rund.
-  await gsFrame.locator("#btnToggleSidebar").click();
-  await gsFrame.locator('.gs-sidebar-item[data-cat="questions"]').click();
-  await gsFrame.locator('.toggle-item:has(input[name="gsHasFinal"][value="no"])').click();
+  await control.locator('.gs-sidebar-item[data-cat="questions"]').click();
+  await control.locator('.toggle-item:has(input[name="gsHasFinal"][value="no"])').click();
   await control.waitForTimeout(800);
-  const saveButton = gsFrame.getByRole("button", { name: "Zapisz wszystko" });
-  await saveButton.click();
-  await expect(saveButton).toBeEnabled({ timeout: 15_000 });
-  await control.locator("#gsOverlay").click({ position: { x: 5, y: 5 } });
-  await control.locator("#gsOverlay").waitFor({ state: "hidden", timeout: 10_000 });
+  await backToControlFromSettings(control);
   let counts = await control.evaluate(async () => {
     const id = new URL(location.href).searchParams.get("id");
     const { data, error } = await window.__sbClient.from("games").select("settings").eq("id", id).single();

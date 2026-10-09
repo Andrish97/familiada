@@ -9,7 +9,7 @@ import { createRenderCompletionGate } from "../../shared/js/gameplay/renderCompl
 
 import { guardResourceLocks } from "../../shared/js/core/resource-lock.js?v=v2026-10-09T22271";
 import { initI18n, getUiLang, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-09T22271";
-import { backHref } from "../../shared/js/core/nav-map.js?v=v2026-10-09T22271";
+import { backHref, linkTo } from "../../shared/js/core/nav-map.js?v=v2026-10-09T22271";
 import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-09T22271";
 import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T22271";
 import { loadQuestions, loadAnswers, guardGameState } from "../../shared/js/core/game-validate.js?v=v2026-10-09T22271";
@@ -169,15 +169,23 @@ async function main() {
   // utworzeniu store (do tego czasu wyjście jest swobodne).
   let beforeLeave = async () => true;
   const i18nP = initI18n({ withSwitcher: true });
-  // initPage: dostęp, nakładka wąskiego okna / telefonu, „Wstecz”, konto wg mapy.
-  // „Wskazówki” otwierają okno pomocy (osadzona instrukcja) — obsługuje je strona.
+  // Blokady strony (guardResourceLocks): zwalniane przed przejściem do
+  // instrukcji / ustawień gry, żeby tamta strona mogła je od razu zająć.
+  let pageLock = null;
+  async function leaveTo(href) {
+    await pageLock?.release?.().catch(() => {});
+    location.href = href;
+  }
+  // initPage: dostęp, nakładka wąskiego okna / telefonu, „Wstecz”, „Wskazówki”
+  // (zwykłe przejście na /manual/ z ret = Control) i konto wg mapy. Stan gry
+  // jest w bazie, więc po powrocie store.hydrate() wznawia rozgrywkę.
   const userP = initPage("control", {
     ready: i18nP,
-    manual: false,
     onBack: async (href) => {
       if (!(await beforeLeave())) return;
       location.href = href;
     },
+    onManual: (href) => leaveTo(href),
   });
   await i18nP;
 
@@ -205,6 +213,7 @@ async function main() {
     { type: "logos", id: user.id, mode: "shared", message: t("resourceLock.logoEditBlocksControl") },
   ], { context: "control", backHref: backHref("control") });
   if (!lock.ok) return;
+  pageLock = lock;
 
   // Blokada stanu: gra, która nie nadaje się do rozgrywki (np. ankieta
   // otwarta, za mało pytań), blokuje Control w całości.
@@ -906,95 +915,6 @@ async function main() {
   document.getElementById("dotHostRow")?.addEventListener("click", () => showQrModal("host"));
   document.getElementById("dotBuzzerRow")?.addEventListener("click", () => showQrModal("buzzer"));
 
-  // ===== Info / Polityka prywatności — identyczna logika co dzisiejszy
-  // control/js/app.js (helpOverlay -> iframe /manual, legalOverlay -> /privacy). =====
-  const helpOverlay = document.getElementById("helpOverlay");
-  const helpFrame = document.getElementById("helpFrame");
-  const legalOverlay = document.getElementById("legalOverlay");
-  const legalFrame = document.getElementById("legalFrame");
-  function buildHelpUrl() {
-    const url = new URL("/manual/", location.href);
-    url.searchParams.set("modal", "control");
-    url.searchParams.set("lang", getUiLang() || "pl");
-    url.searchParams.set("tab", "control");
-    url.hash = "control";
-    return url.toString();
-  }
-  function buildLegalUrl() {
-    const url = new URL("/privacy/", location.href);
-    url.searchParams.set("modal", "control");
-    url.searchParams.set("lang", getUiLang() || "pl");
-    url.hash = "control";
-    return url.toString();
-  }
-  function openHelpModal() { if (helpFrame) helpFrame.src = buildHelpUrl(); helpOverlay?.classList.remove("hidden"); }
-  function closeHelpModal() { helpOverlay?.classList.add("hidden"); }
-  function openLegalModal() { if (legalFrame) legalFrame.src = buildLegalUrl(); legalOverlay?.classList.remove("hidden"); }
-  function closeLegalModal() { legalOverlay?.classList.add("hidden"); }
-  document.getElementById("btnManual")?.addEventListener("click", openHelpModal);
-  document.getElementById("btnHelpClose")?.addEventListener("click", (ev) => { ev.stopImmediatePropagation(); closeHelpModal(); });
-  helpOverlay?.addEventListener("click", (ev) => { if (ev.target === helpOverlay) closeHelpModal(); });
-  document.getElementById("btnLegal")?.addEventListener("click", (ev) => { ev.stopImmediatePropagation(); openLegalModal(); });
-  document.getElementById("btnBackToManual")?.addEventListener("click", (ev) => { ev.stopImmediatePropagation(); closeLegalModal(); openHelpModal(); });
-  document.getElementById("btnLegalClose")?.addEventListener("click", (ev) => { ev.stopImmediatePropagation(); closeLegalModal(); });
-  legalOverlay?.addEventListener("click", (ev) => { if (ev.target === legalOverlay) closeLegalModal(); });
-
-  // ===== Modal ustawień gry (edycja WYŁĄCZNIE w game-settings2 — kopia
-  // game-settings.js dedykowana dla Control v2, patrz jej nagłówek — Control
-  // tylko otwiera ten sam modal co dzisiejszy btnOpenGsModal/gsOverlay,
-  // identyczny protokół postMessage gs:requestClose / gs:close). Podgląd
-  // Wyświetlacza wewnątrz modala to WŁASNY iframe game-settings2 (/control/display?
-  // preview=1 + web/js/gameplay/previewRow.js), aktualizowany na żywo przy każdej
-  // zmianie — nie jest to sterowanie prawdziwym, sparowanym Display (ten
-  // zostaje BLACK przez cały etap ustawień, sekcja 3a pkt 5 planu).
-  const gsOverlayEl = document.getElementById("gsOverlay");
-  const gsFrameEl = document.getElementById("gsFrame");
-  const gsSpinnerEl = document.getElementById("gsSpinner");
-  function openGsModal() {
-    // Spinner widoczny OD RAZU (zgłoszone: "po otwarciu modala ustawień
-    // długo nic nie robi") — iframe sam wczyta moduł i przejdzie przez
-    // requireAuth()+RPC blokad, zanim cokolwiek narysuje; bez tego operator
-    // patrzył na pusty prostokąt przez cały ten czas. Chowany dopiero na
-    // "gs:ready" niżej.
-    gsSpinnerEl?.classList.remove("hidden");
-    if (gsFrameEl) gsFrameEl.src = `/games/settings/?id=${encodeURIComponent(gameId)}&modal=1`;
-    gsOverlayEl?.classList.remove("hidden");
-  }
-  async function onGsModalClose() {
-    gsOverlayEl?.classList.add("hidden");
-    if (gsFrameEl) gsFrameEl.src = "";
-    // Ustawienia mogły się zmienić (drużyny/finał/pytania/dźwięk) —
-    // odśwież podsumowanie D3, tylko gdy gra jeszcze nie wystartowała
-    // (patrz applyGameSettingsToState — po starcie to już wyłącznie
-    // game_state, nie games.settings).
-    if (!store.state.locks.gameStarted) {
-      try {
-        const { data: freshGame } = await sb().from("games").select("settings").eq("id", gameId).single();
-        applyGameSettingsToState(freshGame?.settings, store.state);
-        // Wyłączenie finału zwraca jego dotychczasowe pytania do puli rund.
-        // Odbuduj pulę z aktualnych ustawień (w tym ręcznej kolejności), aby
-        // Podsumowanie nie pokazywało np. 10/15 po odjęciu pytań finałowych.
-        if (store.state.settings.hasFinal !== true
-          && (store.state.final.picked?.length || store.state.final.pickedPreview?.length)) {
-          store.state.final.picked = [];
-          store.state.final.pickedPreview = [];
-          store.state.final.confirmed = false;
-          store.state.rounds._questionPool = await pickQuestionPool(store.state);
-        }
-        await store.commit();
-      } catch (e) { console.warn("[control2] odświeżenie ustawień po zamknięciu modala nie powiodło się:", e); }
-    }
-  }
-  function requestGsModalClose() {
-    gsFrameEl?.contentWindow?.postMessage({ type: "gs:requestClose" }, "*");
-  }
-  document.getElementById("btnOpenGsModal")?.addEventListener("click", openGsModal);
-  gsOverlayEl?.addEventListener("click", (ev) => { if (ev.target === gsOverlayEl) requestGsModalClose(); });
-  window.addEventListener("message", (ev) => {
-    if (ev.data?.type === "gs:close" && ev.source === gsFrameEl?.contentWindow) onGsModalClose();
-    if (ev.data?.type === "gs:ready" && ev.source === gsFrameEl?.contentWindow) gsSpinnerEl?.classList.add("hidden");
-  });
-
   beforeLeave = async () => {
     // Ostrzeżenie tylko w trakcie realnej rozgrywki (jak dzisiejsze
     // shouldWarnBeforeUnload()) — z D0-D3 wychodzimy bez pytania.
@@ -1100,7 +1020,7 @@ async function main() {
   document.addEventListener("keydown", (e) => {
     const main = isMacLike() ? e.metaKey : e.ctrlKey;
     if (!main || e.key !== "Enter" || e.shiftKey || e.altKey || e.repeat || e.isComposing || (isMacLike() ? e.ctrlKey : e.metaKey)) return;
-    if ([...document.querySelectorAll(".overlay, .gsOverlay, .helpOverlay, .legalOverlay, [role='dialog']")].some((el) => el.getClientRects().length && getComputedStyle(el).visibility !== "hidden")) return;
+    if ([...document.querySelectorAll(".overlay, [role='dialog']")].some((el) => el.getClientRects().length && getComputedStyle(el).visibility !== "hidden")) return;
     const step = store.state.step;
     if (step !== "f_p1_entry" && step !== "f_p2_entry") return;
     // Skrót woła engine.dispatch() BEZPOŚREDNIO, z pominięciem
@@ -1247,7 +1167,9 @@ async function main() {
         return;
       }
       if (action === "setup.openSettings") {
-        openGsModal();
+        // Zwykłe przejście na /games/settings/ (ret = Control); ustawienia
+        // zapisują się same, a Control po powrocie wczytuje je od nowa.
+        await leaveTo(linkTo("gameSettings", { id: gameId }));
         return;
       }
       if (action === "setup.back") {

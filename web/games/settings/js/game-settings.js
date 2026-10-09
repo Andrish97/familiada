@@ -1,8 +1,8 @@
-// js/pages/game-settings.js — kopia game-settings.js dedykowana dla modala
-// Control v2 (control2.html). Identyczna funkcjonalnie z oryginałem (Warstwa
-// 1 blokad, podgląd Wyświetlacza przez display2?preview=1 + web/js/gameplay/previewRow.js
-// itd.) — trzymana jako osobny plik, żeby modal Control v2 nie zależał od
-// tej samej strony, którą wciąż ładuje stary control.html przez /game-settings.
+// Ustawienia gry (/games/settings/?id=<gra>): zwykła strona z autozapisem.
+// Każda zmiana zapisuje się sama po krótkiej przerwie (jak edytory logo i
+// edytor pytań), przy wyjściu zapis idzie od razu — bez przycisku „Zapisz”
+// i bez pytań o niezapisane zmiany. Podgląd Wyświetlacza i Prowadzącego:
+// ramki /control/display/?preview=1 (shared/js/gameplay/previewRow.js).
 import { t, getUiLang } from "../../../shared/translation/translation.js?v=v2026-10-09T22271";
 import { linkTo, backHref, backTarget } from "../../../shared/js/core/nav-map.js?v=v2026-10-09T22271";
 import { initPage } from "../../../shared/js/core/page-init.js?v=v2026-10-09T22271";
@@ -120,104 +120,14 @@ let _displayReady = false;
 let _hostIframe = null;
 let _hostReady = false;
 
-// Wykryj modal mode już na poziomie modułu (inline script w <head> dodaje klasę przed renderem)
-const _isModal = document.documentElement.classList.contains("gs-modal-mode");
-
-// Drawer sidebar (☰) w trybie modal -- czysto UI (żadna zależność od
-// auth/game/locków), więc wpięte SYNCHRONICZNIE tu, na poziomie modułu, a
-// NIE w głównej async funkcji init (po await requireAuth()/
-// guardResourceLocks() -- realnie 0.5-1s RPC-ów).
-//
-// Root cause znaleziony przez e2e "dźwięk ze źródła Wyświetlacz"
-// (diagnostyka .evaluate() z testu, nie console.warn z przeglądarki --
-// ten nigdy nie pokazywał logu z WNĘTRZA click handlera, co był
-// właściwym tropem): #btnToggleSidebar staje się WIZUALNIE gotowy
-// natychmiast po wstrzyknięciu klasy .gs-modal-mode na <html> (inline
-// script w <head>, przed jakimkolwiek JS modułu) -- css/game-settings.css's
-// `.gs-modal-mode .gs-sidebar-toggle { display:inline-flex !important; }`
-// (2 klasy) ma WYŻSZĄ specyficzność niż `.hidden { display:none !important; }`
-// (1 klasa), więc przycisk jest klikalny NIEZALEŻNIE od tego, czy klasa
-// "hidden" w markupie została już usunięta przez JS. Ale listener kliku był
-// wpinany dopiero w głównej async funkcji, PO tych RPC-ach -- realny/testowy
-// klik trafiający w to okno (przycisk wygląda gotowy, ale jeszcze bez
-// żadnego handlera) był całkowitym no-opem: sidebar nigdy się nie otwierał,
-// bo klik, który miał to zrobić, już minął, zanim JS zdążył go obsłużyć.
-if (_isModal) {
-  const btnToggle  = document.getElementById("btnToggleSidebar");
-  const sidebarEl  = document.getElementById("gsSidebar");
-  const backdropEl = document.getElementById("gsSidebarBackdrop");
-  if (btnToggle) btnToggle.classList.remove("hidden");
-
-  const openSidebar = () => {
-    sidebarEl?.classList.add("gs-sidebar-open");
-    backdropEl?.classList.add("gs-sidebar-open");
-  };
-  const closeSidebar = () => {
-    sidebarEl?.classList.remove("gs-sidebar-open");
-    backdropEl?.classList.remove("gs-sidebar-open");
-  };
-  btnToggle?.addEventListener("click", openSidebar);
-  backdropEl?.addEventListener("click", closeSidebar);
-  // Zamknij drawer po wyborze kategorii
-  sidebarEl?.addEventListener("click", (e) => {
-    if (e.target.closest(".gs-sidebar-item")) closeSidebar();
-  });
-
-  // Przycisk zamknięcia (✕) -- IDENTYCZNY problem co #btnToggleSidebar
-  // wyżej: `.gs-modal-mode .gs-close-btn { display:inline-flex !important; }`
-  // (2 klasy) też wygrywa specyficznością nad `.hidden` (1 klasa), więc jest
-  // klikalny natychmiast, niezależnie od klasy "hidden" w markupie. Znalezione
-  // przy audycie po tym samym bugu ze sidebarem, nie osobnym zgłoszeniem --
-  // tryClose()/message listener nie zależą od żadnych danych z auth/game/
-  // locków (tylko isDirty, confirmModal, t -- wszystkie dostępne od razu na
-  // poziomie modułu), więc też wpięte tu, synchronicznie.
-  async function tryClose() {
-    // Zgłoszone: modal ma NIE zamykać się (ani pytać o niezapisane zmiany)
-    // w trakcie trwania zapisu -- saveAll() czyści isDirty dopiero PO
-    // zakończeniu (patrz komentarz tam), więc próba zamknięcia tuż po
-    // kliknięciu "Zapisz wszystko", zanim realny zapis sieciowy się
-    // skończy, widziała jeszcze isDirty=true i pokazywała mylący dialog
-    // "Masz niezapisane zmiany..." -- mimo że operator WŁAŚNIE kazał
-    // zapisać (potwierdzone realnym zrzutem ekranu z nagrania e2e).
-    // btnSaveAll.disabled jest już dziś niezawodnym sygnałem "trwa zapis"
-    // (ustawiane jako pierwsza instrukcja saveAll(), patrz tam) -- podczas
-    // gdy jest true, próba zamknięcia jest po prostu ignorowana (bez
-    // dialogu, bez zamykania); operator może spróbować ponownie po
-    // zakończeniu zapisu i zobaczy już poprawny stan.
-    if (btnSaveAll?.disabled) return;
-    if (isDirty) {
-      if (!await confirmModal({ text: t("gameSettings.unsavedConfirmModal") || "Masz niezapisane zmiany. Czy chcesz zamknąć ustawienia?" })) return;
-    }
-    // Reset defaultValue na wszystkich inputach żeby przeglądarka nie pokazała
-    // natywnego "Masz niezapisane zmiany" przy nawigacji iframe
-    document.querySelectorAll("input, textarea, select").forEach(el => {
-      if (el.type === "checkbox" || el.type === "radio") el.defaultChecked = el.checked;
-      else el.defaultValue = el.value;
-    });
-    window.parent.postMessage({ type: "gs:close" }, "*");
-  }
-
-  window.addEventListener("message", (ev) => {
-    if (ev.data?.type === "gs:requestClose") tryClose();
-  });
-
-  const btnGsModalClose = document.getElementById("btnGsModalClose");
-  if (btnGsModalClose) {
-    btnGsModalClose.classList.remove("hidden");
-    btnGsModalClose.addEventListener("click", tryClose);
-  }
-}
-
 // Color modal state — labels populated lazily from t()
 let colorModalTarget = null;
 let colorModalR = 0, colorModalG = 0, colorModalB = 0;
 
 // ===== ELEMENTS =====
 const titleEl = document.getElementById("gsTitle");
-const btnSaveAll = document.getElementById("btnSaveAll");
 const btnResetAll = document.getElementById("btnResetAll");
 const btnPlay = document.getElementById("btnPlay");
-const btnBack = document.getElementById("btnBack");
 const content = document.getElementById("gsContentInner");
 const sidebar = document.getElementById("gsSidebar");
 const sidebarFinale = document.getElementById("sidebarFinale");
@@ -237,113 +147,172 @@ const colorPreviewEl = document.getElementById("gsColorPreview");
 const colorModalClose = document.getElementById("gsColorModalClose");
 const colorModalDone = document.getElementById("gsColorModalDone");
 
-// ===== DIRTY / SAVE =====
+// ===== AUTOZAPIS =====
+// Wzorzec jak web/logo/js/editor-page.js: markDirty() planuje zapis po
+// DEBOUNCE_MS, flush() zapisuje od razu (wyjście, schowanie karty). Stanu,
+// którego nie da się zapisać (np. za mało pytań finału), nie zapisujemy —
+// w bazie zostaje poprzedni zapis, a pod paskiem akcji widać powód.
+const DEBOUNCE_MS = 800;
+const RETRY_MS = 5000;
+let ready = false;        // ustawienia wczytane, zmiany się liczą
+let changeSeq = 0;        // rośnie z każdą zmianą; zapis wie, czy w trakcie przyszło coś nowego
+let saveTimer = null;
+let saving = null;        // Promise trwającego zapisu
+let stopped = false;      // konflikt zapisu: dalszy autozapis wstrzymany
+let soundTouched = false; // zmiana wariantów/plików dźwięku: po zapisie zsynchronizuj bucket
+let pageLock = null;      // blokada zasobów strony (release przed wyjściem)
+
+// Komunikat pod paskiem akcji: tylko dla stanów, które wymagają uwagi
+// (nie do zapisania / błąd / konflikt). Zwykły zapis nic nie pokazuje.
+function setSaveStatus(state, text = "") {
+  const el = document.getElementById("gsFooterMsg");
+  if (!el) return;
+  el.dataset.state = state;
+  el.textContent = text;
+  el.classList.toggle("hidden", !text);
+}
+
 function markDirty() {
+  if (!ready || stopped) return;
   isDirty = true;
-  document.getElementById("gsFooterMsg")?.classList.remove("hidden");
+  changeSeq++;
+  scheduleSave(DEBOUNCE_MS);
 }
 
-function clearDirty() {
-  isDirty = false;
-  document.getElementById("gsFooterMsg")?.classList.add("hidden");
+function markSoundDirty() {
+  soundTouched = true;
+  markDirty();
 }
 
+function scheduleSave(ms) {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => { saveTimer = null; void saveAll(); }, ms);
+}
+
+// Zapis od razu (wyjście ze strony, schowanie karty, „Przywróć domyślne”).
+async function flush() {
+  clearTimeout(saveTimer);
+  saveTimer = null;
+  await saveAll({ force: true }).catch(() => {});
+}
+
+// Wyjście: zapis, zwolnienie blokad (kolejna strona bierze je od razu),
+// przejście. Bez pytań.
+async function leaveTo(href) {
+  await flush();
+  ready = false;
+  await pageLock?.release?.().catch(() => {});
+  location.href = href;
+}
+
+// Zwraca true, gdy po zapisie nic nie zostało do zapisania.
 async function saveAll() {
-  // btnSaveAll.disabled=true jest TU, jako pierwsza instrukcja, celowo --
-  // poprzednio szło dopiero tuż przed zapisem, PO dwóch realnych zapytaniach
-  // sieciowych (loadQuestions()/getSfxCustomFiles() niżej), więc przycisk
-  // zostawał "enabled" przez cały ten wstępny odcinek. To był realny bug
-  // (e2e "dźwięk ze źródła Wyświetlacz", root cause znaleziony diagnostyką
-  // .evaluate()/console.warn w tryClose(): klik na tło modala tuż po
-  // "Zapisz wszystko" trafiał w to okno, `await expect(btnSaveAll).
-  // toBeEnabled()` w teście przechodził natychmiast -- bo przycisk nigdy
-  // nie zdążył się jeszcze wyłączyć -- więc isDirty było wciąż `true`,
-  // tryClose() pokazywał confirmModal(), a #gsOverlay nigdy nie znikał).
-  // Ten sam wyścig groził realnemu użytkownikowi: drugi klik "Zapisz" albo
-  // wyjście z modala w tym oknie nie miały żadnego wizualnego ostrzeżenia,
-  // że zapis już trwa.
-  if (btnSaveAll) btnSaveAll.disabled = true;
-  try {
-    // Warstwa 2 (świeżość referencji): allQuestions/final/rounds mogły
-    // wczytać się raz przy starcie i od tego czasu ktoś (np. w edytorze,
-    // inna karta) mógł usunąć któreś z wybranych pytań. Odśwież przed
-    // zapisem i wyczyść martwe odniesienia — inaczej settings zapisałoby
-    // wskazanie na już nieistniejące pytanie.
-    try {
-      const freshQuestions = await loadQuestions(gameId);
-      const freshIds = new Set(freshQuestions.map(q => q.id));
-      localSettings.questions.final = localSettings.questions.final.filter(q => freshIds.has(q.id));
-      localSettings.questions.rounds = localSettings.questions.rounds.filter(q => freshIds.has(q.id));
-      allQuestions = freshQuestions;
-    } catch (e) {
-      console.warn("[game-settings2] refresh questions before save failed:", e);
-    }
-
-    const hasFinal = localSettings.game.hasFinal === true;
-
-    // Finał wyłączony — oddaj jego pytania do puli rund PRZED wyczyszczeniem
-    // listy finałowej. Zmiana może zostać zapisana bez otwierania zakładki
-    // Rundy, więc renderRounds() nie może być jedynym miejscem uzupełnienia.
-    if (!hasFinal) {
-      const inRounds = new Set(localSettings.questions.rounds.map(q => String(q.id)));
-      const returned = localSettings.questions.final.filter(q => q?.id && !inRounds.has(String(q.id)));
-      localSettings.questions.rounds = [...localSettings.questions.rounds, ...returned];
-      localSettings.questions.final = [];
-      if (localSettings.game.finalQuestionsMode !== "random") localSettings.game.finalQuestionsMode = "random";
-    }
-
-    // Walidacja: finale w trybie "pick" wymaga dokładnie 5 pytań
-    if (hasFinal && localSettings.game.finalQuestionsMode === "pick") {
-      const count = localSettings.questions.final.length;
-      if (count < 5) {
-        alertModal({ text: t("gameSettings.saveErrorFinalNeed5", { count }) });
-        setActiveCat("finale");
-        return;
-      }
-    }
-
-    // Walidacja: nie można zapisać gdy wybrano "Własny" bez wgranego pliku
-    {
-      let cfCheck = new Map();
-      try { cfCheck = await getSfxCustomFiles(gameId); } catch {}
-      const missing = getSfxCategories().filter(cat =>
-        localSettings.sound.variants[cat.key] === VARIANT_CUSTOM && !cfCheck.get(cat.key)
-      );
-      if (missing.length > 0) {
-        const names = missing.map(cat => t("control.sfxDesc." + cat.key) || cat.key).join(", ");
-        alertModal({ text: (t("gameSettings.saveErrorCustomNoFile") || "Wgraj plik dla: {names}").replace("{names}", names) });
-        return;
-      }
-    }
-
-    // Uzupełnij filenames w sound settings (do streszczenia w control-new)
-    await _syncSoundFilenames();
-
-    const payload = JSON.parse(JSON.stringify(localSettings));
-    // CAS: nadpisz TYLKO jeśli settings w bazie wciąż równe temu, co
-    // wczytaliśmy (albo co sami ostatnio zapisaliśmy) — inaczej dwie karty
-    // otwarte na tych samych ustawieniach mogłyby bezpowrotnie skasować
-    // nawzajem swoje zmiany. 0 dopasowanych wierszy = ktoś inny zapisał
-    // w międzyczasie (albo gra zniknęła) → updateChecked rzuca ROW_GONE.
-    await updateChecked("games", { id: gameId, settings: lastSavedSettingsRaw }, { settings: payload });
-    lastSavedSettingsRaw = payload;
-
-    // Synchronizuj custom pliki audio z bucketem (po sukcesie zapisu do DB)
-    await _syncSoundBucket().catch(e => {
-      console.warn("[game-settings2] bucket sync partial failure:", e);
-    });
-
-    clearDirty();
-  } catch (e) {
-    console.error("[game-settings2] saveAll error:", e);
-    if (e?.code === ROW_GONE) {
-      await alertModal({ text: t("gameSettings.saveConflict") });
-    } else {
-      alertModal({ text: t("gameSettings.saveErrorPrefix") + (e?.message || e?.code || String(e)) });
-    }
-  } finally {
-    if (btnSaveAll) btnSaveAll.disabled = false;
+  if (!ready || !isDirty || stopped) return true;
+  if (saving) {
+    await saving;
+    return isDirty ? saveAll() : true;
   }
+  clearTimeout(saveTimer);
+  saveTimer = null;
+  const seq = changeSeq;
+  let ok = false;
+  saving = (async () => {
+    try {
+      // Warstwa 2 (świeżość referencji): allQuestions/final/rounds mogły
+      // wczytać się raz przy starcie i od tego czasu ktoś (np. w edytorze,
+      // inna karta) mógł usunąć któreś z wybranych pytań. Odśwież przed
+      // zapisem i wyczyść martwe odniesienia — inaczej settings zapisałoby
+      // wskazanie na już nieistniejące pytanie.
+      try {
+        const freshQuestions = await loadQuestions(gameId);
+        const freshIds = new Set(freshQuestions.map(q => q.id));
+        localSettings.questions.final = localSettings.questions.final.filter(q => freshIds.has(q.id));
+        localSettings.questions.rounds = localSettings.questions.rounds.filter(q => freshIds.has(q.id));
+        allQuestions = freshQuestions;
+      } catch (e) {
+        console.warn("[game-settings] refresh questions before save failed:", e);
+      }
+
+      const hasFinal = localSettings.game.hasFinal === true;
+
+      // Finał wyłączony — oddaj jego pytania do puli rund PRZED wyczyszczeniem
+      // listy finałowej. Zmiana może zostać zapisana bez otwierania zakładki
+      // Rundy, więc renderRounds() nie może być jedynym miejscem uzupełnienia.
+      if (!hasFinal) {
+        const inRounds = new Set(localSettings.questions.rounds.map(q => String(q.id)));
+        const returned = localSettings.questions.final.filter(q => q?.id && !inRounds.has(String(q.id)));
+        localSettings.questions.rounds = [...localSettings.questions.rounds, ...returned];
+        localSettings.questions.final = [];
+        if (localSettings.game.finalQuestionsMode !== "random") localSettings.game.finalQuestionsMode = "random";
+      }
+
+      // Walidacja: finał w trybie "pick" wymaga dokładnie 5 pytań
+      if (hasFinal && localSettings.game.finalQuestionsMode === "pick") {
+        const count = localSettings.questions.final.length;
+        if (count < 5) {
+          setSaveStatus("invalid", t("gameSettings.saveErrorFinalNeed5", { count }));
+          return;
+        }
+      }
+
+      // Walidacja: wybrano "Własny" bez wgranego pliku
+      {
+        let cfCheck = new Map();
+        try { cfCheck = await getSfxCustomFiles(gameId); } catch {}
+        const missing = getSfxCategories().filter(cat =>
+          localSettings.sound.variants[cat.key] === VARIANT_CUSTOM && !cfCheck.get(cat.key)
+        );
+        if (missing.length > 0) {
+          const names = missing.map(cat => t("control.sfxDesc." + cat.key) || cat.key).join(", ");
+          setSaveStatus("invalid", (t("gameSettings.saveErrorCustomNoFile") || "Wgraj plik dla: {names}").replace("{names}", names));
+          return;
+        }
+      }
+
+      // Uzupełnij filenames w sound settings (do streszczenia w Control)
+      await _syncSoundFilenames();
+
+      const payload = JSON.parse(JSON.stringify(localSettings));
+      // CAS: nadpisz TYLKO jeśli settings w bazie wciąż równe temu, co
+      // wczytaliśmy (albo co sami ostatnio zapisaliśmy) — inaczej dwie karty
+      // otwarte na tych samych ustawieniach mogłyby bezpowrotnie skasować
+      // nawzajem swoje zmiany. 0 dopasowanych wierszy = ktoś inny zapisał
+      // w międzyczasie (albo gra zniknęła) → updateChecked rzuca ROW_GONE.
+      await updateChecked("games", { id: gameId, settings: lastSavedSettingsRaw }, { settings: payload });
+      lastSavedSettingsRaw = payload;
+      if (changeSeq === seq) isDirty = false;
+      ok = true;
+      setSaveStatus("saved");
+
+      // Synchronizuj custom pliki audio z bucketem (po sukcesie zapisu do DB);
+      // tylko gdy dźwięk się zmienił — nie przy każdej literze w nazwie drużyny.
+      if (soundTouched) {
+        soundTouched = false;
+        await _syncSoundBucket().catch(e => {
+          soundTouched = true;
+          console.warn("[game-settings] bucket sync partial failure:", e);
+        });
+      }
+    } catch (e) {
+      console.error("[game-settings] autosave error:", e);
+      if (e?.code === ROW_GONE) {
+        // Ktoś zapisał te ustawienia w międzyczasie: nie nadpisujemy.
+        stopped = true;
+        clearTimeout(saveTimer);
+        setSaveStatus("conflict", t("gameSettings.saveConflict"));
+        return;
+      }
+      setSaveStatus("error", t("gameSettings.saveErrorPrefix") + (e?.message || e?.code || String(e)));
+      scheduleSave(RETRY_MS);
+    }
+  })();
+  try {
+    await saving;
+  } finally {
+    saving = null;
+  }
+  if (ok && isDirty) scheduleSave(DEBOUNCE_MS); // zmiany w trakcie zapisu
+  return ok && !isDirty;
 }
 
 async function _getSoundUserId() {
@@ -582,21 +551,13 @@ function renderTeams() {
 }
 
 // --- WYGLĄD ---
-// Podgląd Wyświetlacza: NIE komendy tekstowe do starego /control/display (dawny
-// _isModal-forward do window.parent liczył na to, że Control ma gdzie je
-// przekazać — w Control v2 nikt tego nie robi, komend już nie ma wcale, więc
-// ta ścieżka była martwa: podgląd w modalu nic nie pokazywał). Zamiast tego,
-// niezależnie od trybu (modal/samodzielnie), ta strona sama osadza
-// /control/display?preview=1 (control/display/js/main.js's bootPreview() — tryb podglądu:
-// zero autoryzacji/subskrypcji, tylko postMessage z gotowym wierszem
-// game_state) i przesyła mu spreparowany wiersz — dokładnie ten sam
-// mechanizm i ta sama funkcja budująca wiersz (web/js/gameplay/previewRow.js) co
-// control2's D3.
-// Wybrane logo (localSettings.display.logoId) jest JESZCZE NIEZAPISANE —
-// przekazujemy jego surowy payload wprost do podglądu (web/js/gameplay/previewRow.js's
-// logoPreview), bo scene.js's bindGame()/reload() czytają logo z bazy i
-// nie zobaczyłyby tego wyboru wcale, dopóki operator nie kliknie "Zapisz
-// wszystko". null = domyślne logo.
+// Podgląd Wyświetlacza: strona sama osadza /control/display?preview=1
+// (control/display/js/main.js's bootPreview() — tryb podglądu: zero
+// autoryzacji/subskrypcji, tylko postMessage z gotowym wierszem game_state)
+// i przesyła mu spreparowany wiersz (shared/js/gameplay/previewRow.js).
+// Wybrane logo (localSettings.display.logoId) może jeszcze nie być zapisane
+// (autozapis idzie z opóźnieniem) — przekazujemy jego surowy payload wprost
+// do podglądu, bo scene.js czyta logo z bazy. null = domyślne logo.
 function resolveLogoPreview() {
   const id = localSettings.display.logoId;
   if (!id) return null;
@@ -937,14 +898,14 @@ async function renderSound() {
           const fileTag = row.querySelector(".sfx-file-tag");
           if (fileTag) fileTag.hidden = !hasCustom;
           localSettings.sound.variants[key] = VARIANT_CUSTOM;
-          markDirty();
+          markSoundDirty();
         } else {
           if (uploadBtn) uploadBtn.hidden = true;
           if (previewBtn) previewBtn.disabled = false;
           const fileTag = row.querySelector(".sfx-file-tag");
           if (fileTag) fileTag.hidden = true;
           localSettings.sound.variants[key] = val;
-          markDirty();
+          markSoundDirty();
         }
       },
     });
@@ -1056,7 +1017,7 @@ async function renderSound() {
         await setSfxCustomBlob(key, file, file.name, gameId);
         customFiles.set(key, { blob: file, filename: file.name });
         localSettings.sound.variants[key] = VARIANT_CUSTOM;
-        markDirty();
+        markSoundDirty();
         // Odblokuj podgląd po wgraniu pliku
         const row = input.closest(".sfx-row");
         const previewBtn = row?.querySelector("[data-sfx-preview]");
@@ -1080,7 +1041,7 @@ async function renderSound() {
       });
       customFiles.delete(key);
       delete localSettings.sound.variants[key];
-      markDirty();
+      markSoundDirty();
 
       const row = btn.closest(".sfx-row");
       if (!row) return;
@@ -1111,7 +1072,7 @@ async function renderSound() {
       });
     }
 
-    markDirty();
+    markSoundDirty();
     renderSound();
   });
 }
@@ -1674,17 +1635,12 @@ function showIngameGuard() {
 
 // ===== MAIN =====
 async function main() {
-  // Dostęp, nakładka wąskiego okna / telefonu, „Wstecz” i konto wg mapy.
-  // W trybie modal (iframe Control) nie ma „Wstecz”; instrukcja otwiera się
-  // w nakładce, więc „Wskazówki” obsługuje strona.
+  // Dostęp, nakładka wąskiego okna / telefonu, „Wstecz”, „Wskazówki” i konto
+  // wg mapy. Wyjście zapisuje ustawienia od razu, bez pytań.
   const user = await initPage("gameSettings", {
-    back: _isModal ? false : "btnBack",
-    manual: false,
     account: { showAuthEntry: false },
-    onBack: async (href) => {
-      if (isDirty && !await confirmModal({ text: t("gameSettings.unsavedConfirm") || "Masz niezapisane zmiany. Czy na pewno chcesz wyjść?" })) return;
-      location.href = href;
-    },
+    onBack: (href) => leaveTo(href),
+    onManual: (href) => leaveTo(href),
   });
   if (!user) return; // initPage przekierował na logowanie
 
@@ -1703,11 +1659,6 @@ async function main() {
   const { data: game, error: gameErr } = gameResult;
   if (gameErr || !game) {
     if (content) content.innerHTML = `<p style="color:red;padding:20px">${escText(t("gameSettings.loadError"))}${escText(gameErr?.message || t("gameSettings.unknownError"))}</p>`;
-    // "gs:ready": patrz komentarz przy wywołaniu na końcu main() — KAŻDY
-    // wczesny return (łącznie z tym, błędem ładowania gry) musi też zdjąć
-    // spinner Control2 nad iframe'em, inaczej overlay/komunikat błędu
-    // zostaje na zawsze przykryty przez spinner rodzica.
-    if (_isModal) window.parent.postMessage({ type: "gs:ready" }, "*");
     return;
   }
 
@@ -1716,12 +1667,9 @@ async function main() {
   // (kontekst "control"), pokaż dedykowany komunikat "Gra w toku" zamiast
   // ogólnego resourceLock — inny tekst, bo tu przyczyna jest konkretna i
   // znana (rozgrywka jest prowadzona na żywo), nie "ktoś inny edytuje".
-  // Pominięte w trybie modala (otwartego z samego Control): iframe dzieli
-  // ten sam tab_id co strona nadrzędna, więc acquire_edit_lock i tak
-  // pozwala mu przejąć/odnowić własną blokadę bez kolizji — pre-check
-  // tutaj wykrywałby wyłącznie WŁASNĄ blokadę Control i fałszywie blokował
-  // operatora we własnym modalu.
-  if (!_isModal) {
+  // Control zwalnia blokadę przed przejściem tutaj (app.js), więc świeża
+  // blokada "control" oznacza prawdziwą rozgrywkę w innej karcie.
+  {
     const { data: controlLock } = await sb()
       .from("edit_locks")
       .select("holder_context")
@@ -1744,32 +1692,16 @@ async function main() {
     { type: "game", id: gameId, mode: "exclusive", message: t("resourceLock.gameMessage") },
     { type: "logos", id: lockUser?.id, mode: "shared", message: t("resourceLock.logoEditBlocksSettings") },
   ], { context: "settings", backHref: backHref("gameSettings") });
-  if (!lock.ok) {
-    if (_isModal) window.parent.postMessage({ type: "gs:ready" }, "*");
-    return;
-  }
+  if (!lock.ok) return;
+  pageLock = lock;
 
   // Blokada stanu: ustawienia gry tylko dla gry, którą da się grać.
-  if (!(await guardGameState(gameId, "play"))) {
-    if (_isModal) window.parent.postMessage({ type: "gs:ready" }, "*");
-    return;
-  }
+  if (!(await guardGameState(gameId, "play"))) return;
 
   lastSavedSettingsRaw = game.settings ?? {};
 
   if (titleEl) titleEl.textContent = game.name || "—";
   document.title = `${game.name || t("gameSettings.defaultGameName")} — ${t("gameSettings.pageTitle")}`;
-
-  // Modal mode (opened from control-new) — odczyt z modułowej stałej _isModal
-  const isModal = _isModal;
-  if (isModal) {
-    // Hide back button — modal backdrop closes it
-    if (btnBack) btnBack.classList.add("hidden");
-
-    // Sidebar toggle (☰ button) i przycisk zamknięcia (✕) -- wpięte
-    // synchronicznie na poziomie modułu, patrz komentarz przy _isModal na
-    // górze pliku.
-  }
 
   localSettings = mergeSettings(game.settings);
 
@@ -1796,16 +1728,16 @@ async function main() {
 
   resolveThemeLabels();
 
-  // Show "Graj" button if game has questions — only outside modal mode
-  if (btnPlay && !isModal) {
+  // Przycisk "Graj" tylko gdy gra ma pytania
+  if (btnPlay) {
     if (allQuestions.length > 0) {
       btnPlay.classList.remove("hidden");
     }
     btnPlay.addEventListener("click", () => {
       // Wejście z Control: "Graj" robi to samo co "Wstecz" (bez dokładania poziomu ret).
-      location.href = backTarget("gameSettings")?.pageId === "control"
+      void leaveTo(backTarget("gameSettings")?.pageId === "control"
         ? backHref("gameSettings")
-        : linkTo("control", { id: gameId });
+        : linkTo("control", { id: gameId }));
     });
   }
 
@@ -1819,12 +1751,9 @@ async function main() {
     if (cat) setActiveCat(cat);
   });
 
-  // Save buttons
-  btnSaveAll?.addEventListener("click", saveAll);
-
   // Reset to defaults
   btnResetAll?.addEventListener("click", async () => {
-    if (!await confirmModal({ text: t("gameSettings.resetAllConfirm") || "Przywrócić ustawienia domyślne? Niezapisane zmiany zostaną utracone." })) return;
+    if (!await confirmModal({ text: t("gameSettings.resetAllConfirm") || "Przywrócić ustawienia domyślne?" })) return;
 
     // Wyczyść custom pliki dźwiękowe (IndexedDB + bucket)
     let customKeys = [];
@@ -1837,78 +1766,27 @@ async function main() {
     }
 
     localSettings = mergeSettings(null);
-    markDirty();
+    markSoundDirty();
     updateSubTabStates();
     setActiveCat(activeCat);
-    await saveAll();
+    await flush();
   });
 
   initColorModal();
 
-  // Manual / Legal overlays
-  const helpOverlay = document.getElementById("helpOverlay");
-  const helpFrame   = document.getElementById("helpFrame");
-  const legalOverlay = document.getElementById("legalOverlay");
-  const legalFrame   = document.getElementById("legalFrame");
-  const btnManual     = document.getElementById("btnManual");
-  const btnHelpClose  = document.getElementById("btnHelpClose");
-  const btnLegal      = document.getElementById("btnLegal");
-  const btnBackToManual = document.getElementById("btnBackToManual");
-  const btnLegalClose = document.getElementById("btnLegalClose");
-
-  function buildHelpUrl() {
-    const url = new URL("/manual/", location.href);
-    url.searchParams.set("ret", `game-settings${location.search}`);
-    url.searchParams.set("modal", "control");
-    url.searchParams.set("lang", getUiLang() || "pl");
-    url.searchParams.set("tab", "gameSettings");
-    return url.toString();
-  }
-  function buildLegalUrl() {
-    const url = new URL("/privacy/", location.href);
-    url.searchParams.set("ret", `game-settings${location.search}`);
-    url.searchParams.set("modal", "control");
-    url.searchParams.set("lang", getUiLang() || "pl");
-    return url.toString();
-  }
-
-  btnManual?.addEventListener("click", () => {
-    if (helpFrame) helpFrame.src = buildHelpUrl();
-    helpOverlay?.classList.remove("hidden");
-  });
-  btnHelpClose?.addEventListener("click", () => helpOverlay?.classList.add("hidden"));
-  helpOverlay?.addEventListener("click", (ev) => { if (ev.target === helpOverlay) helpOverlay.classList.add("hidden"); });
-
-  btnLegal?.addEventListener("click", (ev) => {
-    ev.stopImmediatePropagation();
-    if (legalFrame) legalFrame.src = buildLegalUrl();
-    legalOverlay?.classList.remove("hidden");
-  });
-  btnBackToManual?.addEventListener("click", () => {
-    legalOverlay?.classList.add("hidden");
-    if (helpFrame) helpFrame.src = buildHelpUrl();
-    helpOverlay?.classList.remove("hidden");
-  });
-  btnLegalClose?.addEventListener("click", () => legalOverlay?.classList.add("hidden"));
-  legalOverlay?.addEventListener("click", (ev) => { if (ev.target === legalOverlay) legalOverlay.classList.add("hidden"); });
-
   // Podgląd Wyświetlacza — ta strona sama osadza /control/display?preview=1 i
-  // przesyła mu postMessage (patrz postPreviewRow() wyżej), niezależnie od
-  // trybu (modal/samodzielnie): modal nie polega już na Control, żeby
-  // przekazać dalej "prawdziwemu" Displayowi — komend już nie ma.
+  // przesyła mu postMessage (patrz postPreviewRow() wyżej).
   createDisplayIframe();
   createHostIframe();
 
   setActiveCat("teams");
   document.querySelectorAll('[data-skel-step]').forEach(el => el.classList.add('skel-step-ready'));
-  // Zgłoszone: "po otwarciu modala ustawień długo nic nie robi" — Control
-  // (control/js/app.js's openGsModal) pokazuje spinner NAD tym iframe'em od
-  // razu przy otwarciu, bo do TEGO momentu #gsContentInner jest celowo
-  // niewidoczne (data-skel-step). To jedyny niezawodny sygnał "naprawdę
-  // gotowe" — load iframe'a sam w sobie tego nie gwarantuje (HTML potrafi się
-  // załadować, zanim requireAuth()/guardResourceLocks()
-  // niżej w main() w ogóle ruszą).
-  if (_isModal) window.parent.postMessage({ type: "gs:ready" }, "*");
+  ready = true;
+  // Schowanie karty / przejście do innej aplikacji: zapis od razu.
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "hidden") void flush();
+  });
+  window.addEventListener("pagehide", () => { void flush(); });
 
   window.addEventListener("i18n:lang", () => {
     resolveThemeLabels();
@@ -1917,10 +1795,6 @@ async function main() {
 }
 
 main().catch(err => {
-  console.error("[game-settings2]", err);
+  console.error("[game-settings]", err);
   if (content) content.innerHTML = `<p style="color:red;padding:20px">${escText(t("gameSettings.errorPrefix"))}${escText(String(err?.message || err))}</p>`;
-  // Nieoczekiwany wyjątek też musi zdjąć spinner Control2 (patrz komentarz
-  // przy pozostałych "gs:ready" w main()) — inaczej błąd zostaje na zawsze
-  // ukryty pod spinnerem rodzica.
-  if (_isModal) window.parent.postMessage({ type: "gs:ready" }, "*");
 });
