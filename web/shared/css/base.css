@@ -1997,8 +1997,8 @@ body{
 
 /* Tytuł strony w topbarze także na telefonie.
    Domyślnie sekcja 2 topbara (tytuł) jest na telefonie ukryta. Strona, która ma
-   ją pokazać, dodaje do <body> klasę topbar-title-mobile (dziś: strona ankiety;
-   gotowe dla edytorów, menedżera bazy i ustawień gry). Tytuł zajmuje wolne
+   ją pokazać, dodaje do <body> klasę topbar-title-mobile (ankieta, edytor gry,
+   edytory logo, menedżer bazy, ustawienia gry). Tytuł zajmuje wolne
    miejsce między „Wstecz” a ikonami, w dwóch krótkich liniach (tytuł + szara
    linijka) z wielokropkiem. Szerokość 980 px = próg układu telefonicznego. */
 @media (max-width: 980px){
