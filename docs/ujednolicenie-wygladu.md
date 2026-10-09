@@ -208,3 +208,25 @@ tiles”). Pozostałe pola komunikatów istnieją. Implementacja: `shared/js/cor
 | Idź do gry (`go`) | `#message`, `#hint` | stan wejścia | tak | zostaje w treści strony |
 | Logowanie (`/login/`, `/reset/`, `/confirm/`) | `#status`, `#err` | instrukcje i wyniki | tak | zostaje (treść strony) |
 | Dom, Instrukcja, Prywatność, 404, Przerwa | — | brak komunikatów | — | — |
+
+## Poprawki zgłoszone 2026-10-09 (E17)
+
+1. **Przycisk powrotu bez „Wróć do:”** — strzałka już to mówi. Etykieta =
+   sama nazwa strony docelowej (`← Moje gry`, `← Ankieta`), klucz `nav.backTo`
+   → `{page}` (pl/en/uk).
+2. **Strona ankiety na telefonie:**
+   - przyciski akcji w dolnym pasku mniejsze (wysokość jak `.btn.sm`, nie
+     42 px), pasek niższy;
+   - równe marginesy lewo/prawo (15 px po obu stronach, bez przesunięcia
+     treści względem paska stanu i kart);
+   - sekcja Link i QR — ładniejsza: kod QR duży (na telefonie prawie
+     szerokość treści, na komputerze ok. 240–280 px), wyśrodkowany na
+     białym tle z marginesem, pole linku i przyciski pod nim w jednej
+     linii; bez „Pokaż QR” chowającego kod, jeśli mieści się czytelnie.
+3. **Filtrowanie na listach przy wyszukiwaniu** (w dolnym pasku obok
+   pola szukania, ten sam wygląd co filtr w Subskrypcjach):
+   - Gry: typ (Preparowana / Tekstowa / Punktowa) i stan (Szkic / Otwarta /
+     Zatrzymana / Gotowa), łączone z wyszukiwaniem po nazwie;
+   - Logo: typ (Tekst / Rysunek / Obraz);
+   - Bazy: moje / udostępnione (jeśli to nie karta) i rola;
+   - filtr pamiętany w adresie (`?type=&status=`), jak karta.

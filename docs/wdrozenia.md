@@ -51,6 +51,7 @@ utracie kontekstu wystarczy przeczytać ten plik i wskazaną sekcję źródła.
 | 11 | E8 | Jeden moduł kart `?tab=`, stan eksploratora | nawigacja 6.6 | do zrobienia |
 | 12 | E9 | Przyciski i `locks` w `PAGES`, diagramy 6 map, e2e map | nawigacja 6.7 | do zrobienia |
 | 12b | E16 | **Komunikaty po akcji:** spis, co każda strona wysyłała do pola komunikatu (tabela w źródle) → wspólny dymek `toast()` zamiast usuniętych pól, tylko gdzie efekt nie jest oczywisty (decyzja 2026-10-09) | ujednolicenie-wygladu.md „Komunikaty po akcji” | na `main`, e2e w toku |
+| 12c | E17 | **Poprawki 2026-10-09:** powrót bez „Wróć do:”; ankieta na telefonie (mniejsze przyciski dolnego paska, równe marginesy, ładniejsza sekcja QR z dużym kodem); filtry typ/stan przy wyszukiwaniu na listach gier, logo, baz | ujednolicenie-wygladu.md „Poprawki zgłoszone 2026-10-09” | w toku |
 | 12a | E14 | **Sprzątanie po potwierdzeniu** (migracje usuwające): martwe RPC ankiet i hubu (E11h); `cleanup-guest-storage` i jej wywołania w `guest_cleanup_expired` / `guest_discard_current`; kasowanie plików w `delete-account` (zastąpione przez E12b) | ankiety-refaktor.md, usuwanie-danych.md | czeka na potwierdzenie e2e na `main` |
 | 13 | E13 | **Instrukcja (manual) zaktualizowana do nowych zasad** — ostatni etap | wszystkie | do zrobienia |
 | — | E1 | Edytor logo: lista + 3 strony, autozapis | nawigacja 6.5a | zrobione |
