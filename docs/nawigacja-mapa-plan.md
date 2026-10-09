@@ -670,6 +670,12 @@ Na najwyższym poziomie zostaje: `/`, `/login/`, `/games/`, `/control/`,
 `/polls/`, `/subscriptions/`, `/bases/`, `/logo/`, `/marketplace/`, `/connect/`, `/go/`,
 `/account/`, `/manual/`, `/privacy/` (+ admin i techniczne).
 
+**Korekta 2026-10-09 (E5):** hub ankiet zniknął (E11), więc strona ankiety
+gry zostaje pod `/polls/?id=` (bez `/polls/editor/`); głosowanie idzie do
+`/polls/vote/…`. Krok 4 (urządzenia `/control/display|host|buzzer/`,
+`/connect/`) czeka, aż druga sesja skończy prace nad Hostem/Buzzerem —
+przenosiny folderów w trakcie jej zmian dałyby konflikty.
+
 ### `/go/` — jedyne adresy, które wychodzą poza aplikację
 
 Dziś na zewnątrz trafiają różne adresy: linki w mailach (`poll-go?t=`,
