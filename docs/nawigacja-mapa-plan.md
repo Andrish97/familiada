@@ -676,6 +676,8 @@ gry zostaje pod `/polls/?id=` (bez `/polls/editor/`); głosowanie idzie do
 `/connect/`) czeka, aż druga sesja skończy prace nad Hostem/Buzzerem —
 przenosiny folderów w trakcie jej zmian dałyby konflikty.
 
+**E5 krok 7 (2026-10-09, gałąź `e5dev`):** urządzenia przeniesione do `/control/display|host|buzzer/`, `/connect-device/` do `/connect/` (`/connect/tv/`); linki wychodzące (mail, QR, kod) idą przez `/go/?d=display|host|buzzer|qr&id=&key=`; podglądy iframe wskazują wprost adresy wewnętrzne. Klucz statystyk `connect-device` bez zmian (mapowanie w `activity.js`).
+
 ### `/go/` — jedyne adresy, które wychodzą poza aplikację
 
 Dziś na zewnątrz trafiają różne adresy: linki w mailach (`poll-go?t=`,

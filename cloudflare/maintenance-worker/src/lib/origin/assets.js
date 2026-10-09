@@ -84,7 +84,7 @@ export function isMaintenanceAsset(pathname) {
 }
 
 export function isSettingsAsset(pathname) {
-  return isSharedAssetPath(pathname) || ["/settings/js/", "/settings/css/", "/settings/data/", "/games/css/", "/host/fonts/"].some(prefix => pathname.startsWith(prefix));
+  return isSharedAssetPath(pathname) || ["/settings/js/", "/settings/css/", "/settings/data/", "/games/css/", "/control/host/fonts/"].some(prefix => pathname.startsWith(prefix));
 }
 
 export function isCommonAsset(pathname) {

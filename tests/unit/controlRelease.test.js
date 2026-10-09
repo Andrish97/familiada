@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import pl from '../../web/shared/translation/pl.js';
-const entryScripts={control:'app.js',display:'main.js',host:'main.js',buzzer:'main.js','games/settings':'game-settings.js'};
+const entryScripts={control:'app.js','control/display':'main.js','control/host':'main.js','control/buzzer':'main.js','games/settings':'game-settings.js'};
 for(const route of Object.keys(entryScripts)) {
  test(`${route} serves the current application at its canonical route`,()=>{
   const html=readFileSync(new URL(`../../web/${route}/index.html`,import.meta.url),'utf8');

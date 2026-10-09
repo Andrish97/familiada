@@ -40,12 +40,12 @@ test("frontend HTML, module imports, CSS fonts and literal data URLs resolve", (
 });
 
 test("current device pages occupy the canonical folders without legacy copies", () => {
-  for (const device of ["control", "display", "host", "buzzer", "games/settings"]) {
+  for (const device of ["control", "control/display", "control/host", "control/buzzer", "games/settings"]) {
     const dir = path.join(ROOT, device);
     assert.ok(fs.existsSync(path.join(dir, "index.html")), `${device}/index.html`);
     assert.equal(fs.existsSync(path.join(ROOT, `${device}2`)), false, `${device}2 was removed`);
   }
-  for (const file of files.filter(f => /\/(?:control|display|host|buzzer|games\/settings|shared)\//.test(f) && f.endsWith(".js"))) {
+  for (const file of files.filter(f => /\/(?:control|games\/settings|shared)\//.test(f) && f.endsWith(".js"))) {
     const source = fs.readFileSync(file, "utf8");
     assert.doesNotMatch(source, /["'`]\/(?:control|display|host|buzzer|game-settings)2(?:\/|\?|["'`])/);
   }
@@ -88,7 +88,7 @@ test("sound manifest and display theme modules point to existing assets", () => 
     assert.ok(fs.existsSync(hostModule), theme.hostModule);
     assert.match(fs.readFileSync(hostModule, "utf8"), /export function createTheme\(root\)/, theme.hostModule);
   }
-  const hostThemeCss = fs.readFileSync(path.join(ROOT, "host/css/host.css"), "utf8");
+  const hostThemeCss = fs.readFileSync(path.join(ROOT, "control/host/css/host.css"), "utf8");
   assert.match(hostThemeCss, /data-host-ruled="false"/);
   assert.doesNotMatch(hostThemeCss, /data-host-theme="modern"/);
   for (const name of ["font_5x7.json", "font_3x10.json", "font_win.json"]) assert.ok(fs.existsSync(path.join(ROOT, "shared/fonts/display", name)));

@@ -98,7 +98,7 @@ async function assertTextRowsFollowGrid(page, textId, name) {
 
 async function applyModernTheme(page) {
   await page.evaluate(async () => {
-    const { createHostThemeApplier } = await import("/host/js/hostThemeManager.js?v=v2026-10-08T19512");
+    const { createHostThemeApplier } = await import("/control/host/js/hostThemeManager.js?v=v2026-10-08T19512");
     const applier = await createHostThemeApplier();
     await applier.apply({ detail: { display: { theme: "modern", colors: { A: "#b52b5d", B: "#285fae", DOT: "#f0dc35" } } } });
     window.__hostThemeApplier = applier;
@@ -224,7 +224,7 @@ async function setHostLogoCase(page, mode, demoPayload = null, smooth = true) {
 
 try {
   {
-    const { context, page } = await openPage("/host/", { width: 393, height: 852 }, "host-classic-portrait");
+    const { context, page } = await openPage("/control/host/", { width: 393, height: 852 }, "host-classic-portrait");
     await setSafeInsets(page, { top: 44, right: 0, bottom: 34, left: 0 });
     await addRows(page, "paperText1", [
       { text: "RUNDA 2 — ROZGRYWKA" },
@@ -283,7 +283,7 @@ try {
   }
 
   {
-    const { context, page } = await openPage("/host/", { width: 852, height: 393 }, "host-modern-landscape");
+    const { context, page } = await openPage("/control/host/", { width: 852, height: 393 }, "host-modern-landscape");
     await setSafeInsets(page, { top: 0, right: 44, bottom: 0, left: 44 });
     await applyModernTheme(page);
     await addRows(page, "paperText1", [
@@ -306,7 +306,7 @@ try {
   }
 
   {
-    const { context, page } = await openPage("/host/", { width: 393, height: 852 }, "host-modern-portrait");
+    const { context, page } = await openPage("/control/host/", { width: 393, height: 852 }, "host-modern-portrait");
     await setSafeInsets(page, { top: 44, right: 0, bottom: 34, left: 0 });
     await applyModernTheme(page);
     await addRows(page, "paperText1", [
@@ -329,7 +329,7 @@ try {
   }
 
   {
-    const { context, page } = await openPage("/buzzer/", { width: 852, height: 393 }, "buzzer-landscape");
+    const { context, page } = await openPage("/control/buzzer/", { width: 852, height: 393 }, "buzzer-landscape");
     await setSafeInsets(page, { top: 0, right: 44, bottom: 0, left: 44 });
     await page.evaluate(() => {
       document.getElementById("arena").hidden = false;
@@ -341,7 +341,7 @@ try {
   }
 
   {
-    const { context, page } = await openPage("/buzzer/", { width: 393, height: 852 }, "buzzer-portrait");
+    const { context, page } = await openPage("/control/buzzer/", { width: 393, height: 852 }, "buzzer-portrait");
     await setSafeInsets(page, { top: 44, right: 0, bottom: 34, left: 0 });
     await page.evaluate(() => { document.getElementById("arena").hidden = false; });
     await page.screenshot({ path: path.join(output, "buzzer-portrait.png") });

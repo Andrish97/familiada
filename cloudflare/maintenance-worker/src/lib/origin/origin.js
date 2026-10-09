@@ -71,17 +71,17 @@ export function isBlockedPath(host, pathname) {
 }
 
 export function fetchFromOrigin(request, url, originBase, originHost, resolveOverride) {
-  const isTvConnect = ["/connect-device", "/connect-device/", "/connect-device/index.html"].includes(url.pathname)
+  const isTvConnect = ["/connect", "/connect/", "/connect/index.html"].includes(url.pathname)
     && url.searchParams.get("tv") === "1";
-  const targetPath = isTvConnect ? "/connect-device/tv/index.html" : pageIndexPath(url.pathname);
+  const targetPath = isTvConnect ? "/connect/tv/index.html" : pageIndexPath(url.pathname);
   const target = new URL(targetPath + url.search, originBase);
   return fetchWithOrigin(target.toString(), request, originHost, resolveOverride);
 }
 
 const PAGE_ROUTES = new Set([
-  "account", "bases", "bases/explorer", "buzzer",
-  "connect-device", "connect-device/tv", "control", "display",
-  "games", "games/editor", "games/settings", "host", "login", "login/confirm", "login/reset",
+  "account", "bases", "bases/explorer",
+  "connect", "connect/tv", "control", "control/buzzer", "control/display", "control/host",
+  "games", "games/editor", "games/settings", "login", "login/confirm", "login/reset",
   "logo", "logo/editor/draw", "logo/editor/image", "logo/editor/text",
   "maintenance", "manual", "marketplace", "go",
   "polls", "polls/vote/points", "polls/vote/qr", "polls/vote/text",

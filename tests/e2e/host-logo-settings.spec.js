@@ -114,7 +114,7 @@ test("logo Hosta: zapis w Ustawieniach rozgrywki i podgląd zapisanego wariantu 
     displayContext = await browser.newContext({ locale: "pl-PL" });
     await serveBranchCode(displayContext, { pages: ["display"] });
     const displayPage = await displayContext.newPage();
-    await displayPage.goto(`${ORIGIN}/display?id=${game.id}&key=${game.share_key_display}`, { waitUntil: "domcontentloaded" });
+    await displayPage.goto(`${ORIGIN}/control/display?id=${game.id}&key=${game.share_key_display}`, { waitUntil: "domcontentloaded" });
 
     await page.goto(`${ORIGIN}/control?id=${game.id}`, { waitUntil: "domcontentloaded" });
     await expect(page.locator(".stepTitle")).toHaveText("Urządzenia", { timeout: 20_000 });

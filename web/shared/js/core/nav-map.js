@@ -21,8 +21,8 @@
 // from strony, która go niesie; łańcuch dłuższy niż MAX_RET_DEPTH, obcy albo
 // zepsuty ret oznacza powrót do parent. Bez fallbacków i aliasów.
 
-import { getUiLang, t } from "../../translation/translation.js?v=v2026-10-09T12334";
-import { iconText } from "./icons.js?v=v2026-10-09T12334";
+import { getUiLang, t } from "../../translation/translation.js?v=v2026-10-09T12404";
+import { iconText } from "./icons.js?v=v2026-10-09T12404";
 
 export const MAX_RET_DEPTH = 4;
 
@@ -42,7 +42,7 @@ export const PAGES = {
   control:       { path: "/control/",           access: "guest",  parent: "games", from: ["games", "gameSettings"], manual: "control", device: "wide", state: ["id"] },
   gameSettings:  { path: "/games/settings/",   access: "guest",  parent: "control", parentParams: ["id"], from: ["games", "control"], manual: "gameSettings", device: "wide", state: ["id"] },
   marketplace:   { path: "/marketplace/",       access: "public", parent: "games", parentAnon: "home", subpaths: true, from: ["home", "games"], manual: "community", state: ["tab"] },
-  connectDevice: { path: "/connect-device/",    access: "public", parent: "games", parentAnon: "home", from: ["home", "games"], manual: "connect" },
+  connectDevice: { path: "/connect/",    access: "public", parent: "games", parentAnon: "home", from: ["home", "games"], manual: "connect" },
   account:       { path: "/account/",           access: "guest",  parent: "games", from: ["games"], manual: "general" },
   manual:        { path: "/manual/",            access: "guest",  parent: "games", from: [], state: ["tab"] },
   privacy:       { path: "/privacy/",           access: "public", parent: "manual", parentAnon: "home", from: ["home", "manual"] },

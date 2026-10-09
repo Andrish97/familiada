@@ -1,13 +1,13 @@
 // js/core/logo-preview.js
 // Shared logo preview rendering (used by control and logo-editor)
-// Identyczna logika jak display/js/fonts.js + scene.js
+// Identyczna logika jak control/display/js/fonts.js + scene.js
 
 const DOT_W = 150;
 const DOT_H = 70;
 const TILES_X = 30;
 const TILES_Y = 10;
 
-// Identycznie jak display/js/fonts.js buildGlyphMap — zwraca Map
+// Identycznie jak control/display/js/fonts.js buildGlyphMap — zwraca Map
 function buildGlyphMap(fontJson) {
   const map = new Map();
   for (const [groupName, groupVal] of Object.entries(fontJson || {})) {
@@ -20,7 +20,7 @@ function buildGlyphMap(fontJson) {
   return map;
 }
 
-// Identycznie jak display/js/fonts.js resolveGlyph — obsługuje aliasy "@"
+// Identycznie jak control/display/js/fonts.js resolveGlyph — obsługuje aliasy "@"
 function resolveGlyph(glyphs, ch) {
   const v = glyphs.get(ch);
   if (!v) return glyphs.get(" ") || [0, 0, 0, 0, 0, 0, 0];
@@ -30,9 +30,9 @@ function resolveGlyph(glyphs, ch) {
   return v;
 }
 
-import { v } from './cache-bust.js?v=v2026-10-09T12334';
+import { v } from './cache-bust.js?v=v2026-10-09T12404';
 
-export async function loadFont5x7(url = "/shared/fonts/display/font_5x7.json?v=v2026-10-09T12334") {
+export async function loadFont5x7(url = "/shared/fonts/display/font_5x7.json?v=v2026-10-09T12404") {
   const r = await fetch(await v(url), { cache: "force-cache" });
   if (!r.ok) throw new Error(`Font 5x7: HTTP ${r.status}`);
   const json = await r.json();
@@ -112,7 +112,7 @@ function drawThumbFlat150x70(canvas, bits150) {
  * (Uint8Array, 1=zapalony/lit, 0=zgaszony) — ten sam kształt niezależnie od
  * typu źródłowego. Wydzielone z buildLogoPreviewCanvas(), żeby dało się
  * reużyć samo rozstrzygnięcie bitów bez rysowania na canvasie (np.
- * host/js/coverLogo.js rysuje siatkę litych kwadratów SVG zamiast obrazka).
+ * control/host/js/coverLogo.js rysuje siatkę litych kwadratów SVG zamiast obrazka).
  * @param {object|null} logo   - { type, payload } — wiersz z bazy albo skonstruowany obiekt
  * @param {Map|null}    glyphs - wynik loadFont5x7() (Map) — wymagane dla typu GLYPH
  */

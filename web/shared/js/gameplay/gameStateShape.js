@@ -25,7 +25,7 @@ export const DEFAULT_SETTINGS = {
   mainPrizeAmount: 25000,
   // Dźwięk (zgłoszone: przełącznik źródła w kroku Urządzeń) — "control"
   // (domyślnie, jak dotąd) albo "display": dokładnie JEDNO z dwóch urządzeń
-  // faktycznie odtwarza, gated w control/js/soundReactor.js i display/js/
+  // faktycznie odtwarza, gated w control/js/soundReactor.js i control/display/js/
   // soundReactor.js osobno, oba przez ten sam web/js/gameplay/soundCueEngine.js.
   // soundMuted było wcześniej WYŁĄCZNIE lokalne dla Control (localStorage,
   // patrz control/js/soundReactor.js) — teraz musi być tutaj, bo mute ma

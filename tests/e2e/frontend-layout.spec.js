@@ -5,7 +5,7 @@ const productionGet = (request, url) => request.get(url, {headers:{"X-E2E-Token"
 // Requests and browser navigation use the deployed production files.
 // No route interception or local source replacement.
 test("refaktor: strony i ich bezpośrednie zasoby działają na produkcji", async ({ request }) => {
-  for (const route of ["/", "/games/", "/games/settings/", "/control/", "/display/", "/host/", "/buzzer/", "/bases/", "/logo/", "/logo/editor/draw/", "/connect-device/"]) {
+  for (const route of ["/", "/games/", "/games/settings/", "/control/", "/control/display/", "/control/host/", "/control/buzzer/", "/bases/", "/logo/", "/logo/editor/draw/", "/connect/"]) {
     const response = await productionGet(request,route);
     expect(response.status(), route).toBe(200);
     const html = await response.text();
@@ -27,7 +27,7 @@ test("refaktor: domyślne logo, fonty, tłumaczenia i outro są dostępne", asyn
     expect(response.status(), path).toBe(200);
     expect(await response.json(), path).toBeTruthy();
   }
-  for (const path of ["/shared/translation/pl.js", "/shared/translation/en.js", "/shared/translation/uk.js", "/host/fonts/Caveat-Variable.woff2", "/assets/audio/show_outro/classic.mp3"]) {
+  for (const path of ["/shared/translation/pl.js", "/shared/translation/en.js", "/shared/translation/uk.js", "/control/host/fonts/Caveat-Variable.woff2", "/assets/audio/show_outro/classic.mp3"]) {
     const response = await productionGet(request,path);
     expect(response.status(), path).toBe(200);
     expect(response.headers()["content-type"], path).not.toContain("text/html");

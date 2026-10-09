@@ -1,6 +1,6 @@
 // Testy web/shared/js/gameplay/soundCueEngine.js — reguły "który SOUND_CUE gra jaką
 // kombinację", wyciągnięte z control/js/soundReactor.js tak, żeby
-// display/js/soundReactor.js mogło je reużyć 1:1 (zgłoszone: dźwięk ma móc
+// control/display/js/soundReactor.js mogło je reużyć 1:1 (zgłoszone: dźwięk ma móc
 // grać z Wyświetlacza zamiast Control). playSfx/getSfxDuration są tu
 // atrapami (bez js/core/sfx.js — ten moduł dotyka window/Audio już na
 // etapie importu) — testujemy WYŁĄCZNIE logikę sekwencjonowania.

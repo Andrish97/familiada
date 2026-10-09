@@ -170,7 +170,7 @@ test("gameSettings bez ret wraca do Control tej samej gry", () => {
 test("strony publiczne: niezalogowany wraca na landing", () => {
   assert.equal(backHref("marketplace", ctx("/marketplace/", { anon: true })), "/");
   assert.equal(backHref("marketplace", ctx("/marketplace/", { anon: false })), "/games/");
-  assert.equal(backHref("connectDevice", ctx("/connect-device/", { anon: true })), "/");
+  assert.equal(backHref("connectDevice", ctx("/connect/", { anon: true })), "/");
   assert.equal(backHref("privacy", ctx("/privacy/", { anon: true })), "/");
 });
 

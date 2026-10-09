@@ -353,9 +353,9 @@ async function openTiledDevices(browser, game, operatorStorageState) {
 
   await Promise.all([
     pages.control.goto(`/control?id=${game.id}`, { waitUntil: "domcontentloaded" }),
-    pages.display.goto(`/display?id=${game.id}&key=${game.share_key_display}`, { waitUntil: "domcontentloaded" }),
-    pages.host.goto(`/host?id=${game.id}&key=${game.share_key_host}`, { waitUntil: "domcontentloaded" }),
-    pages.buzzer.goto(`/buzzer?id=${game.id}&key=${game.share_key_buzzer}`, { waitUntil: "domcontentloaded" }),
+    pages.display.goto(`/control/display?id=${game.id}&key=${game.share_key_display}`, { waitUntil: "domcontentloaded" }),
+    pages.host.goto(`/control/host?id=${game.id}&key=${game.share_key_host}`, { waitUntil: "domcontentloaded" }),
+    pages.buzzer.goto(`/control/buzzer?id=${game.id}&key=${game.share_key_buzzer}`, { waitUntil: "domcontentloaded" }),
   ]);
 
   // ZNALEZIONA REALNA PRZYCZYNA (run #334, scenario_filter jako JEDYNY
@@ -438,12 +438,12 @@ async function reconnectDeviceViaModal(browser, control, kind) {
   return { context, page };
 }
 
-// Symuluje gest przesunięcia (peek) na Hoście — host/js/main.js's
+// Symuluje gest przesunięcia (peek) na Hoście — control/host/js/main.js's
 // setupPeekSwipe(): pointerdown -> pointerup w odległości >= 60px, lokalnie
 // pokazuje to, co jest pod zasłoną pasma 2, BEZ żadnego zapisu do
 // game_state (patrz notatka w figurze 7 "Mapa Rozgrywki": Host ma treść
 // zawsze, zasłona to tylko wizualna nakładka). Ten podgląd sam się cofa
-// przy KOLEJNEJ zmianie stanu (host/js/render.js's `peeked = false` na
+// przy KOLEJNEJ zmianie stanu (control/host/js/render.js's `peeked = false` na
 // nowym wierszu) — więc następna scripted akcja w scenariuszu naturalnie
 // pokaże na nagraniu, że zasłona wraca sama.
 async function hostPeekSwipe(hostPage) {
@@ -1803,7 +1803,7 @@ async function scenarioRecentFixes(pages, { contexts, browser, game }) {
 // adres spoza puli testX skończyłby się "Nie znaleziono użytkownika", bez
 // wysłania czegokolwiek), RPC share_device zapisuje udostępnienie, a
 // js/core/send-mail (Edge Function) wysyła PRAWDZIWY e-mail z linkiem
-// /host?id=&key=<share_key_host> -- DOKŁADNIE tym samym mechanizmem co
+// /control/host?id=&key=<share_key_host> -- DOKŁADNIE tym samym mechanizmem co
 // QR/kod, tylko dostarczonym pocztą zamiast zeskanowania. test2@familiada.online
 // to drugie konto z tej samej puli testX co test1 (login.js) -- gwarantowane
 // istniejące na produkcji (e2e-tests.yml's TEST_ACCOUNT_COUNT=8), więc
@@ -1919,8 +1919,8 @@ async function scenarioShareDeviceEmail(pages, { browser }) {
     subject: /Udostępniono urządzenie/,
     timeout: 180_000,
   });
-  const links = extractHttpLinks(email).filter((u) => u.includes("/host"));
-  if (!links.length) throw new Error("[record] e-mail udostępnienia nie zawierał linku do /host");
+  const links = extractHttpLinks(email).filter((u) => u.includes("/control/host"));
+  if (!links.length) throw new Error("[record] e-mail udostępnienia nie zawierał linku do /control/host");
   const shareLink = links[0];
   console.log("[record] link z maila:", shareLink);
 
@@ -1936,7 +1936,7 @@ async function scenarioShareDeviceEmail(pages, { browser }) {
   await positionWindow(recipientContext, recipientPage, RECIPIENT_QUAD);
   await recipientPage.goto(shareLink, { waitUntil: "domcontentloaded" });
 
-  // Dowód, że link faktycznie działa: strona /host z kluczem z maila
+  // Dowód, że link faktycznie działa: strona /control/host z kluczem z maila
   // ładuje się normalnie (ten sam widok co Host w głównej siatce), bez
   // żadnego logowania -- share_key_host w URL-u wystarcza, dokładnie jak
   // dla kodu/QR. host2.html NIE MA elementu "#app" (selektor skopiowany

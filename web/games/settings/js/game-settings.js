@@ -3,29 +3,29 @@
 // 1 blokad, podgląd Wyświetlacza przez display2?preview=1 + web/js/gameplay/previewRow.js
 // itd.) — trzymana jako osobny plik, żeby modal Control v2 nie zależał od
 // tej samej strony, którą wciąż ładuje stary control.html przez /game-settings.
-import { requireAuth } from "../../../shared/js/core/auth.js?v=v2026-10-09T12334";
-import { t, getUiLang } from "../../../shared/translation/translation.js?v=v2026-10-09T12334";
-import { linkTo, backHref, backTarget, renderBackLabel } from "../../../shared/js/core/nav-map.js?v=v2026-10-09T12334";
-import { setTopbarAccount } from "../../../shared/js/core/topbar-controller.js?v=v2026-10-09T12334";
-import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-09T12334";
-import { loadQuestions, guardGameState } from "../../../shared/js/core/game-validate.js?v=v2026-10-09T12334";
-import { loadFont5x7, buildLogoPreviewCanvas } from "../../../shared/js/core/logo-preview.js?v=v2026-10-09T12334";
-import { v as cacheBust } from "../../../shared/js/core/cache-bust.js?v=v2026-10-09T12334";
-import { alertModal, confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-09T12334";
-import { initUiSelect } from "../../../shared/js/core/ui-select.js?v=v2026-10-09T12334";
-import { buildDisplayPreviewRow } from "../../../shared/js/gameplay/previewRow.js?v=v2026-10-09T12334";
+import { requireAuth } from "../../../shared/js/core/auth.js?v=v2026-10-09T12404";
+import { t, getUiLang } from "../../../shared/translation/translation.js?v=v2026-10-09T12404";
+import { linkTo, backHref, backTarget, renderBackLabel } from "../../../shared/js/core/nav-map.js?v=v2026-10-09T12404";
+import { setTopbarAccount } from "../../../shared/js/core/topbar-controller.js?v=v2026-10-09T12404";
+import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-09T12404";
+import { loadQuestions, guardGameState } from "../../../shared/js/core/game-validate.js?v=v2026-10-09T12404";
+import { loadFont5x7, buildLogoPreviewCanvas } from "../../../shared/js/core/logo-preview.js?v=v2026-10-09T12404";
+import { v as cacheBust } from "../../../shared/js/core/cache-bust.js?v=v2026-10-09T12404";
+import { alertModal, confirmModal } from "../../../shared/js/core/modal.js?v=v2026-10-09T12404";
+import { initUiSelect } from "../../../shared/js/core/ui-select.js?v=v2026-10-09T12404";
+import { buildDisplayPreviewRow } from "../../../shared/js/gameplay/previewRow.js?v=v2026-10-09T12404";
 import {
   loadSfxManifest, getSfxCategories,
   setSfxCustomBlob, clearSfxCustomFile, clearAllSfxCustomFiles, getSfxCustomFiles,
   playSfx, setSfxVolume,
-} from "../../../shared/js/core/sfx.js?v=v2026-10-09T12334";
+} from "../../../shared/js/core/sfx.js?v=v2026-10-09T12404";
 import {
   uploadGameSound, deleteGameSound, deleteAllGameSounds,
-} from "../../../shared/js/core/sfx-cloud.js?v=v2026-10-09T12334";
-import { guardDesktopOnly } from "../../../shared/js/core/device-guard.js?v=v2026-10-09T12334";
-import { guardResourceLocks } from "../../../shared/js/core/resource-lock.js?v=v2026-10-09T12334";
-import { updateChecked, ROW_GONE } from "../../../shared/js/core/db-guard.js?v=v2026-10-09T12334";
-import { icon, iconText } from "../../../shared/js/core/icons.js?v=v2026-10-09T12334";
+} from "../../../shared/js/core/sfx-cloud.js?v=v2026-10-09T12404";
+import { guardDesktopOnly } from "../../../shared/js/core/device-guard.js?v=v2026-10-09T12404";
+import { guardResourceLocks } from "../../../shared/js/core/resource-lock.js?v=v2026-10-09T12404";
+import { updateChecked, ROW_GONE } from "../../../shared/js/core/db-guard.js?v=v2026-10-09T12404";
+import { icon, iconText } from "../../../shared/js/core/icons.js?v=v2026-10-09T12404";
 
 guardDesktopOnly();
 
@@ -586,12 +586,12 @@ function renderTeams() {
 }
 
 // --- WYGLĄD ---
-// Podgląd Wyświetlacza: NIE komendy tekstowe do starego /display (dawny
+// Podgląd Wyświetlacza: NIE komendy tekstowe do starego /control/display (dawny
 // _isModal-forward do window.parent liczył na to, że Control ma gdzie je
 // przekazać — w Control v2 nikt tego nie robi, komend już nie ma wcale, więc
 // ta ścieżka była martwa: podgląd w modalu nic nie pokazywał). Zamiast tego,
 // niezależnie od trybu (modal/samodzielnie), ta strona sama osadza
-// /display?preview=1 (display/js/main.js's bootPreview() — tryb podglądu:
+// /control/display?preview=1 (control/display/js/main.js's bootPreview() — tryb podglądu:
 // zero autoryzacji/subskrypcji, tylko postMessage z gotowym wierszem
 // game_state) i przesyła mu spreparowany wiersz — dokładnie ten sam
 // mechanizm i ta sama funkcja budująca wiersz (web/js/gameplay/previewRow.js) co
@@ -623,12 +623,12 @@ function createDisplayIframe() {
 
   _displayIframe = document.createElement("iframe");
   _displayIframe.id = "gsDisplayPreview";
-  _displayIframe.src = "/display/?preview=1";
+  _displayIframe.src = "/control/display/?preview=1";
   _displayIframe.style.cssText = "width:100%;height:100%;border:none;display:block";
   _displayIframe.title = "Display preview";
   _displayReady = false;
 
-  // display/js/main.js's bootPreview() posła "familiada:preview-ready" po
+  // control/display/js/main.js's bootPreview() posła "familiada:preview-ready" po
   // starcie sceny — sygnał gotowości zamiast pollowania obecności
   // window.handleCommand (który już nie istnieje, komend nie ma).
   window.addEventListener("message", (e) => {
@@ -658,7 +658,7 @@ function createHostIframe() {
   if (!holder) return;
   _hostIframe = document.createElement("iframe");
   _hostIframe.id = "gsHostPreview";
-  _hostIframe.src = "/host/?preview=1";
+  _hostIframe.src = "/control/host/?preview=1";
   _hostIframe.style.cssText = "width:100%;height:100%;border:none;display:block";
   _hostIframe.title = t("gameSettings.display.hostPreview");
   _hostReady = false;
@@ -1896,7 +1896,7 @@ async function main() {
   btnLegalClose?.addEventListener("click", () => legalOverlay?.classList.add("hidden"));
   legalOverlay?.addEventListener("click", (ev) => { if (ev.target === legalOverlay) legalOverlay.classList.add("hidden"); });
 
-  // Podgląd Wyświetlacza — ta strona sama osadza /display?preview=1 i
+  // Podgląd Wyświetlacza — ta strona sama osadza /control/display?preview=1 i
   // przesyła mu postMessage (patrz postPreviewRow() wyżej), niezależnie od
   // trybu (modal/samodzielnie): modal nie polega już na Control, żeby
   // przekazać dalej "prawdziwemu" Displayowi — komend już nie ma.

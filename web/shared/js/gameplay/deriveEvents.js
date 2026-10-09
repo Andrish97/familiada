@@ -109,7 +109,7 @@ export function deriveEvents(prevRow, nextRow) {
   // wyżej, ale osobny typ zdarzenia (osobne źródło w detail.rounds.timer3,
   // nie detail.final.runtime.timer). Zgłoszone: "timer ma być odnotowany w
   // bazie i jeśli się nie skończył to i display i host mają o tym wiedzieć
-  // jednoznacznie" -- bez tego zdarzenia Display (display/js/render.js) nie
+  // jednoznacznie" -- bez tego zdarzenia Display (control/display/js/render.js) nie
   // miał żadnego sposobu odróżnić "trwa 3s odliczanie" od zwykłego stanu
   // PLAY/DUEL/STEAL, więc reconnect/live update w trakcie tego zegarka nie
   // pokazywał nic widzom.

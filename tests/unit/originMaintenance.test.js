@@ -24,9 +24,9 @@ test('TV entry uses the simplified page through the same proxy used by bypass',a
  const original=globalThis.fetch;let target;
  globalThis.fetch=async url=>{target=url;return new Response('TV',{headers:{'Content-Type':'text/html'}});};
  try {
-  const request=new Request('https://www.familiada.online/connect-device/?tv=1&lang=uk');
+  const request=new Request('https://www.familiada.online/connect/?tv=1&lang=uk');
   await fetchFromOrigin(request,new URL(request.url),'https://familiada.online','familiada.online','andrish97.github.io');
-  assert.equal(target,'https://familiada.online/connect-device/tv/index.html?tv=1&lang=uk');
+  assert.equal(target,'https://familiada.online/connect/tv/index.html?tv=1&lang=uk');
   assert.equal(pageIndexPath('/'),'/index.html');
  } finally {globalThis.fetch=original;}
 });

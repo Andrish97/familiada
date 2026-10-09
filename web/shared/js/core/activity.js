@@ -3,8 +3,8 @@ const PAGES = new Set(['home','games','control','editor','game-settings','bases'
 // Klucz strony w statystykach to pierwszy segment adresu, z wyjątkami dla
 // podfolderów, które mają się liczyć osobno (lista rośnie z przenosinami
 // adresów) i dla stron głosowania uczestnika z zewnątrz (nie są częścią obecności).
-const EXCLUDED_PREFIXES = ['polls/vote'];
-const SUBPAGES = {'bases/explorer':'base-explorer','games/editor':'editor','games/settings':'game-settings'};
+const EXCLUDED_PREFIXES = ['polls/vote','control/display','control/host','control/buzzer'];
+const SUBPAGES = {'bases/explorer':'base-explorer','games/editor':'editor','games/settings':'game-settings',connect:'connect-device'};
 export function activityPage(pathname) {
   const segments = pathname.split('/').filter(Boolean);
   const joined = segments.join('/');

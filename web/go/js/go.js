@@ -1,8 +1,8 @@
 // web/go/js/go.js
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T12334";
-import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-09T12334";
-import { initI18n, t } from "../../shared/translation/translation.js?v=v2026-10-09T12334";
-import { alertModal } from "../../shared/js/core/modal.js?v=v2026-10-09T12334";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T12404";
+import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-09T12404";
+import { initI18n, t } from "../../shared/translation/translation.js?v=v2026-10-09T12404";
+import { alertModal } from "../../shared/js/core/modal.js?v=v2026-10-09T12404";
 
 const i18nReady = initI18n({ withSwitcher: true }).then(() => {
   document.documentElement.classList.remove('page-loading');
@@ -573,6 +573,9 @@ async function handleUnsubGlobal() {
 }
 
 async function init() {
+  // ?d=<urządzenie> obsługuje inline-moduł w index.html (przekierowanie przed
+  // ciężkimi importami) — tu nic do roboty.
+  if (qs.has("d")) return;
   // initI18n() robi dynamic import(pl.js/en.js/uk.js) — bez tego czekania
   // t()/MSG.X() poniżej mogą wykonać się zanim translations się załaduje,
   // zwracając surowy klucz zamiast tłumaczenia (patrz t() w translation.js).

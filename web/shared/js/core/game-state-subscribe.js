@@ -16,10 +16,10 @@
 // na starym stanie na zawsze" to brak JAKIEJKOLWIEK kolejnej zmiany w grze,
 // co i tak nie ma znaczenia (nic nowego do pokazania).
 
-import { sb } from "./supabase.js?v=v2026-10-09T12334";
-import { rt } from "./realtime.js?v=v2026-10-09T12334";
-import { doorbellTopic } from "./game-state-doorbell.js?v=v2026-10-09T12334";
-import { createRowSync } from "./game-state-sync.js?v=v2026-10-09T12334";
+import { sb } from "./supabase.js?v=v2026-10-09T12404";
+import { rt } from "./realtime.js?v=v2026-10-09T12404";
+import { doorbellTopic } from "./game-state-doorbell.js?v=v2026-10-09T12404";
+import { createRowSync } from "./game-state-sync.js?v=v2026-10-09T12404";
 
 export function createSubscription({ gameId, deviceType, key, onRow, onError, onBroadcast = {}, pollMs = 5000, sameRevChanged = null }) {
   // Limit czasu: zawieszone żądanie trzymało `fetching` na zawsze i wszystkie
@@ -31,7 +31,7 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
       p_device_type: deviceType,
       p_key: key,
     }).abortSignal(AbortSignal.timeout(8000)),
-    // await onRow: display/js/render.js's renderSnapshot()/renderDiff() mają
+    // await onRow: control/display/js/render.js's renderSnapshot()/renderDiff() mają
     // realne animacje trwające setki ms-kilka s — kolejny odczyt nie może się
     // z nimi nakładać (dwa renderDiff() na tym samym płótnie SVG, podwójny
     // dźwięk przy odsłanianiu). Dla urządzeń bez animacji (buzzer, host)

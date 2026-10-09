@@ -2,7 +2,7 @@ const { test, expect } = require("@playwright/test");
 const { loginAsPooledTestUser } = require("./helpers/login");
 
 // Exercise actual production navigation without replacing routes or files.
-for (const path of ["/connect-device", "/connect-device/"]) {
+for (const path of ["/connect", "/connect/"]) {
   test(`anonim: powrót z ${path} ma strzałkę i prowadzi na stronę główną`, async ({ page }) => {
     await page.goto(path, { waitUntil: "networkidle" });
     const back = page.locator("#btnBack");
@@ -14,10 +14,10 @@ for (const path of ["/connect-device", "/connect-device/"]) {
 
 test("instrukcja: powrót zachowuje ścieżkę, parametry i fragment", async ({ page }, testInfo) => {
   await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
-  const target = "/connect-device/?lang=en#connect";
+  const target = "/connect/?lang=en#connect";
   await page.goto(`/manual/?lang=en&ret=${encodeURIComponent(target)}`, { waitUntil: "networkidle" });
   await page.locator("#btnBack").click();
-  await expect.poll(() => new URL(page.url()).pathname).toBe("/connect-device/");
+  await expect.poll(() => new URL(page.url()).pathname).toBe("/connect/");
   expect(new URL(page.url()).searchParams.get("lang")).toBe("en");
   expect(new URL(page.url()).hash).toBe("#connect");
 });
