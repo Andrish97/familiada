@@ -395,11 +395,12 @@
        wypchnąć kafel i ucinać tekst przy dolnej krawędzi. */
     .c2-entryrow.p2 .c2-entrytile-p1ans { flex:1 1 auto; min-height:0; overflow:hidden; display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; }
     .c2-entryrow.p2 > .c2-entrytile:first-child { padding:6px 10px; gap:3px; }
-    .c2-entryrows:has(.p2) { grid-template-rows:repeat(6,minmax(0,1fr)); gap:6px; }
-    @media (max-height:620px), (max-width:760px) {
-      .c2-entryrows:has(.p2) { grid-template-rows:repeat(6,minmax(58px,1fr)); }
-      .c2-gameplay-body:has(.c2-entryrow.p2) { overflow-y:auto; }
-    }
+    .c2-entryrows:has(.p2) { grid-template-rows:repeat(6,minmax(72px,1fr)); gap:6px; }
+    /* Wpisywanie gracza 2 ma zawsze dość miejsca na pytanie i dwie linie
+       odpowiedzi gracza 1. Gdy dostępna wysokość jest mniejsza, przewija się
+       obszar gry zamiast przycinać zawartość kafla. */
+    .c2-roundlayout:has(.c2-entryrow.p2) { flex:0 0 462px; }
+    .c2-gameplay-body:has(.c2-entryrow.p2) { overflow-y:auto; }
     .c2-devices-layout { align-items:stretch; }
     @media (min-width:981px) {
       .c2-devicerows { grid-template-columns:repeat(2,minmax(0,1fr)); }
