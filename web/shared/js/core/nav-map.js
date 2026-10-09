@@ -21,8 +21,8 @@
 // from strony, która go niesie; łańcuch dłuższy niż MAX_RET_DEPTH, obcy albo
 // zepsuty ret oznacza powrót do parent. Bez fallbacków i aliasów.
 
-import { getUiLang, t } from "../../translation/translation.js?v=v2026-10-09T12183";
-import { iconText } from "./icons.js?v=v2026-10-09T12183";
+import { getUiLang, t } from "../../translation/translation.js?v=v2026-10-09T12261";
+import { iconText } from "./icons.js?v=v2026-10-09T12261";
 
 export const MAX_RET_DEPTH = 4;
 
@@ -34,7 +34,7 @@ export const PAGES = {
   polls:         { path: "/polls/",             access: "user",   parent: "games", from: ["games", "subscriptions"], manual: "polls", state: ["id"] },
   subscriptions: { path: "/subscriptions/",     access: "user",   parent: "games", from: ["games", "bases", "polls"], manual: "subscriptions", state: ["tab"] },
   bases:         { path: "/bases/",             access: "guest",  parent: "games", from: ["games", "subscriptions", "baseExplorer"], manual: "bases", state: ["tab"] },
-  baseExplorer:  { path: "/base-explorer/",     access: "guest",  parent: "bases", from: ["bases"], manual: "bases", state: ["base", "folder"] },
+  baseExplorer:  { path: "/bases/explorer/",   access: "guest",  parent: "bases", from: ["bases"], manual: "bases", state: ["id", "folder"] },
   logoEditor:    { path: "/logo/",              access: "guest",  parent: "games", from: ["games"], manual: "logo", state: ["tab"] },
   logoText:      { path: "/logo/editor-text/",  access: "guest",  parent: "logoEditor", from: ["logoEditor"], manual: "logo", device: "noPhone", state: ["id"] },
   logoDraw:      { path: "/logo/editor-draw/",  access: "guest",  parent: "logoEditor", from: ["logoEditor"], manual: "logo", device: "noPhone", state: ["id"] },

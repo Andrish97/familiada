@@ -149,13 +149,13 @@ test("język polski: parametr lang znika", () => {
 
 test("backHref bez ret: parent; games nie ma rodzica", () => {
   assert.equal(backHref("polls", ctx("/polls/?id=7")), "/games/");
-  assert.equal(backHref("baseExplorer", ctx("/base-explorer/?base=b1")), "/bases/");
+  assert.equal(backHref("baseExplorer", ctx("/bases/explorer/?id=b1")), "/bases/");
   assert.equal(backHref("logoDraw", ctx("/logo/editor-draw/?id=3")), "/logo/");
   assert.equal(backHref("games", ctx("/games/")), null);
 });
 
 test("ret zachowuje kartę listy, z której wyszliśmy", () => {
-  const explorer = linkTo("baseExplorer", { base: "b1" }, ctx("/bases/?tab=shared"));
+  const explorer = linkTo("baseExplorer", { id: "b1" }, ctx("/bases/?tab=shared"));
   assert.equal(backHref("baseExplorer", ctx(explorer)), "/bases/?tab=shared");
   const logo = linkTo("logoDraw", { id: 5 }, ctx("/logo/?tab=draw"));
   assert.equal(backHref("logoDraw", ctx(logo)), "/logo/?tab=draw");

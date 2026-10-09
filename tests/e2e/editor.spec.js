@@ -27,7 +27,7 @@ const { serveBranchCode } = require("./helpers/branch-code");
 test.use({ serviceWorkers: "block" });
 
 test.beforeEach(async ({ context }) => {
-  await serveBranchCode(context, { pages: ["games/editor", "base-explorer"] });
+  await serveBranchCode(context, { pages: ["games/editor", "bases/explorer"] });
 });
 
 /* ================= Seed / DB helpers (bezpośrednio przez window.__sbClient) ================= */
@@ -770,7 +770,7 @@ test("edytor: nazwa gry dłuższa niż 80 znaków zostaje ucięta do 80", async 
 
 async function newUserContext(browser, username, contextOptions = {}) {
   const ctx = await browser.newContext({ serviceWorkers: "block", ...contextOptions });
-  await serveBranchCode(ctx, { pages: ["games/editor", "base-explorer"] });
+  await serveBranchCode(ctx, { pages: ["games/editor", "bases/explorer"] });
   const pg = await ctx.newPage();
   await loginAsTestUser(pg, ctx, { username });
   return { ctx, page: pg };
@@ -1135,7 +1135,7 @@ test.describe("editor: audyt -- import i wejście na stronę", () => {
 
 /* ================= Modal pytania w bazie pytań: wspólny formularz ================= */
 
-const BASE_URL = "https://www.familiada.online/base-explorer";
+const BASE_URL = "https://www.familiada.online/bases/explorer";
 
 async function createBase(page, name) {
   return await page.evaluate(async (name) => {
@@ -1171,7 +1171,7 @@ async function deleteBase(page, baseId) {
 }
 
 async function openQuestionModal(page, baseId, qid) {
-  await page.goto(`${BASE_URL}?base=${baseId}`, { waitUntil: "domcontentloaded" });
+  await page.goto(`${BASE_URL}?id=${baseId}`, { waitUntil: "domcontentloaded" });
   await page.waitForLoadState("networkidle");
   const row = page.locator(`#list .row[data-kind="q"][data-id="${qid}"]`);
   await expect(row).toBeVisible({ timeout: 15000 });

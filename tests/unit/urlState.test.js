@@ -34,8 +34,8 @@ test("strona główna odzwierciedla przewijaną sekcję w hash", () => {
 });
 
 test("base-explorer zapisuje konkretny folder i odtwarza go z URL", () => {
-  const page = read("base-explorer/js/page.js");
-  const state = read("base-explorer/js/state.js");
+  const page = read("bases/explorer/js/page.js");
+  const state = read("bases/explorer/js/state.js");
   assert.match(page, /searchParams|get\("folder"\)/);
   assert.match(page, /addEventListener\("popstate"/);
   assert.match(state, /searchParams\.set\("folder", state\.folderId\)/);
