@@ -81,17 +81,6 @@ test("usunięcie gry przez UI czyści folder audio w buckecie user-sounds", asyn
     return error ? `error: ${error.message}` : data;
   }, gameId);
   console.log("[e2e-storage] kolejka po usunięciu gry:", JSON.stringify(queue));
-  // Diagnoza: czy edge function storage-cleanup odpowiada (404 = nie wdrożona w routerze).
-  const fnProbe = await page.evaluate(async () => {
-    const { data } = await window.__sbClient.auth.getSession();
-    const res = await fetch("https://api.familiada.online/functions/v1/storage-cleanup", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${data?.session?.access_token}` },
-      body: "{}",
-    }).catch((e) => ({ status: -1, text: async () => String(e) }));
-    return { status: res.status, body: (await res.text()).slice(0, 300) };
-  });
-  console.log("[e2e-storage] storage-cleanup:", JSON.stringify(fnProbe));
   await expect
     .poll(async () => {
       return await page.evaluate(async ({ userId, gameId }) => {
