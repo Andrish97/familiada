@@ -143,7 +143,7 @@ test("klawiatura, focus, historia i mobilny viewport", async ({ page }) => {
 test("odnośniki prowadzą do właściwych sekcji, a powroty nazywają cel Strona główna", async ({ page }) => {
   await openIndex(page);
   const destinations = [
-    { selector: "#ctaStart", url: /\/login(?:\?|$)/ },
+    { selector: "#ctaStart", url: /\/login\/?(?:\?|$)/ },
     { selector: '.hero-cta a[href*="marketplace"]', url: /\/marketplace(?:\?|$)/ },
     { selector: '.hero-cta a[href*="connect-device"]', url: /\/connect-device(?:\?|$)/ },
     { selector: '.footer a[href*="privacy"]', url: /\/privacy(?:\?|$)/ },
