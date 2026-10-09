@@ -69,7 +69,10 @@ test("logo Hosta: zapis w Ustawieniach rozgrywki i podgląd zapisanego wariantu 
     await expect(page.locator("#gsHostPreview")).toBeVisible();
     await expect(page.locator("#gsDisplayPreview")).toBeVisible();
     await expect(page.locator('input[name="gsHostLogoMode"][value="pixel"]')).toBeChecked();
-    await page.locator('input[name="gsHostLogoMode"][value="source"]').check();
+    // Radio inputs are visually hidden behind the designed toggle; click the
+    // actual visible control, then assert the input state it drives.
+    await page.locator(".gs-host-logo-mode .toggle-item").nth(1).click();
+    await expect(page.locator('input[name="gsHostLogoMode"][value="source"]')).toBeChecked();
     await page.locator("#gsThemeSelect .ui-select-btn").click();
     await page.locator('#gsThemeSelect .ui-select-item[data-value="modern"]').click();
     await page.locator('.swatchBtn[data-color-key="DOT"]').click();
