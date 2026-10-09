@@ -112,9 +112,13 @@ async function runDrawRoundTrip(page, context, accountNumber, testInfo) {
     };
     await page.evaluate(data => window.applyRow(data), row);
     const host = page.frameLocator("#host");
-    await expect(host.locator("#cover2Logo canvas")).toBeVisible();
-    const pixels = await host.locator("#cover2Logo canvas").evaluate(canvas => {
+    await expect(host.locator("#cover2Logo img")).toBeVisible();
+    const pixels = await host.locator("#cover2Logo img").evaluate(async image => {
+      await image.decode();
+      const canvas = document.createElement("canvas");
+      canvas.width = image.naturalWidth; canvas.height = image.naturalHeight;
       const context = canvas.getContext("2d", { willReadFrequently: true });
+      context.drawImage(image, 0, 0);
       const alpha = (x, y) => context.getImageData(Math.round(x * canvas.width), Math.round(y * canvas.height), 1, 1).data[3];
       return {
         whiteShowsDot: alpha(.15, .30) > 200,
