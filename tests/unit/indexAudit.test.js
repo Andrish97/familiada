@@ -49,6 +49,11 @@ test("serveBranchCode mapuje zagnieżdżony edytor DRAW na jego własny index.ht
   assert.equal(localFileFor("/logo/editor-draw/", ["logo"]), path.join(root, "web/logo/editor-draw/index.html"));
 });
 
+test("serveBranchCode serwuje moduły manuala i polityki prywatności zamiast HTML strony", () => {
+  assert.equal(localFileFor("/manual/js/manual.js", ["manual"]), path.join(root, "web/manual/js/manual.js"));
+  assert.equal(localFileFor("/privacy/js/privacy.js", ["privacy"]), path.join(root, "web/privacy/js/privacy.js"));
+});
+
 test("polski interfejs używa nazwy Strona główna", () => {
   const files = ["index.html", "login/index.html", "404.html", "shared/translation/pl.js"]
     .map(read).join("\n");

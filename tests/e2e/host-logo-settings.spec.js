@@ -58,7 +58,12 @@ test("logo Hosta: zapis w Ustawieniach rozgrywki i podgląd zapisanego wariantu 
     game = await createHostLogoGame(page);
     await page.goto(`${ORIGIN}/game-settings?id=${game.id}`, { waitUntil: "domcontentloaded" });
     await expect(page.locator("#btnSaveAll")).toBeVisible({ timeout: 20_000 });
+    // The page skeleton exposes the footer before async setup finishes; wait
+    // for the first rendered category so the sidebar handler is installed.
+    await expect(page.locator("#gsTeamA")).toBeVisible({ timeout: 20_000 });
     await page.locator('.gs-sidebar-item[data-cat="display"]').click();
+    await expect(page.locator('.gs-sidebar-item[data-cat="display"]')).toHaveClass(/\bactive\b/);
+    await expect(page.locator("#gsLivePreviewWrap")).toBeVisible();
 
     const hostPreview = page.frameLocator("#gsHostPreview");
     await expect(page.locator("#gsHostPreview")).toBeVisible();
