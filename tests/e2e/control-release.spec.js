@@ -20,7 +20,7 @@ test('release: canonical routes serve the current app and preserve connection pa
 test('release: approved Polish manual and native icons are published',async({page},testInfo)=>{
  // Instrukcja to zwykła strona (bez ?modal=) -- wymaga sesji.
  await loginAsPooledTestUser(page,page.context(),testInfo.parallelIndex);
- await page.goto('/manual/?lang=pl#control');
+ await page.goto('/manual/?lang=pl&tab=control');
  const control=page.locator('#tab-control');
  await expect(control).toContainText('Ponowne kliknięcie nie usuwa oznaczenia');
  await expect(control).toContainText('oznaczenie usuwa wyłącznie wpisanie tekstu');
@@ -51,7 +51,7 @@ for(const [lang,hostLabel,repeatText,outroLimit] of [
 ]) {
  test(`release: manual ${lang} has styled Host instructions, notes and native icons`,async({page},testInfo)=>{
   await loginAsPooledTestUser(page,page.context(),testInfo.parallelIndex);
-  await page.goto(`/manual/?lang=${lang}#control`);
+  await page.goto(`/manual/?lang=${lang}&tab=control`);
   const control=page.locator('#tab-control');
   await expect(control).toContainText(repeatText);
   const host=control.locator('.m-host').first();
