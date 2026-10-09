@@ -5,10 +5,10 @@
 //
 // Eksportuje: setTopbarNavPriority, setTopbarAccount (alias: initTopbarAccountDropdown), autoInitTopbarAuthButton
 
-import { signOut } from './auth.js?v=v2026-10-09T18195';
-import { isGuestUser } from './guest-mode.js?v=v2026-10-09T18195';
-import { t, withLangParam } from '../../translation/translation.js?v=v2026-10-09T18195';
-import { icon } from './icons.js?v=v2026-10-09T18195';
+import { signOut } from './auth.js?v=v2026-10-09T18231';
+import { isGuestUser } from './guest-mode.js?v=v2026-10-09T18231';
+import { t, withLangParam } from '../../translation/translation.js?v=v2026-10-09T18231';
+import { icon } from './icons.js?v=v2026-10-09T18231';
 
 // ── Narzędzie: pozycjonowanie fixed dropdown ──────────────────────────────────
 function repositionDropdown(anchorEl, dropdownEl) {
@@ -379,7 +379,7 @@ export { setTopbarAccount as initTopbarAccountDropdown };
 export async function autoInitTopbarAuthButton(btn = document.getElementById('btnLogout')) {
   if (!btn) return;
   if (btn.dataset.topbarAuthReady === '1') return;
-  const { getUser } = await import('./auth.js?v=v2026-10-09T18195');
+  const { getUser } = await import('./auth.js?v=v2026-10-09T18231');
   if (btn.dataset.topbarAuthReady === '1') return;
   const user = await getUser();
   if (btn.dataset.topbarAuthReady === '1') return;
@@ -515,6 +515,11 @@ function initTopbarController() {
     _accountState?.expand();
     _mobileActive = true;
 
+    // Tytuł strony (.topbar-title) zostaje w topbarze — na telefonie pokazuje
+    // go klasa body.topbar-title-mobile; do menu trafiają tylko przyciski.
+    section2.querySelectorAll(':scope > .topbar-title').forEach((el) => {
+      section2.insertBefore(el, section2Placeholder);
+    });
     while (section2Placeholder.nextSibling) group2.appendChild(section2Placeholder.nextSibling);
     while (section4Placeholder.nextSibling) group4.appendChild(section4Placeholder.nextSibling);
 
@@ -545,7 +550,7 @@ function initTopbarController() {
     closeBtn.addEventListener('pointerdown', close);
     overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
 
-    section2.style.display = 'none';
+    if (!section2.querySelector(':scope > .topbar-title')) section2.style.display = 'none';
     section4.style.display = 'none';
 
     const backBtn = section1.querySelector('#btnBack,#btnBackToGames');
