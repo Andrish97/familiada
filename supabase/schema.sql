@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 6FeacosKUUCafJ1WLnc8xSTAqvcohC6Cxo5THzmrx2YRYfTSZftTjGFYCDBJuPU
+\restrict TsKg07qhkFooYx1dJhVud5iRwLW7KunpBjgWNlxdF9ZaxRvIpZa6bvmJvARdyUH
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -12690,26 +12690,29 @@ $$;
 
 CREATE FUNCTION "public"."storage_cleanup_kick"() RETURNS "void"
     LANGUAGE "plpgsql" SECURITY DEFINER
-    SET "search_path" TO 'public'
+    SET "search_path" TO 'public', 'pg_temp'
     AS $$
 declare
-  v_url text;
-  v_jwt text;
+  v_base text;
+  v_anon text;
 begin
-  select value into v_url from public.app_config where key = 'edge_url';
-  select value into v_jwt from public.app_config where key = 'edge_service_role_jwt';
-  if coalesce(v_url, '') = '' or coalesce(v_jwt, '') = '' then return; end if;
+  select decrypted_secret into v_base from vault.decrypted_secrets where name = 'project_url';
+  select decrypted_secret into v_anon from vault.decrypted_secrets where name = 'anon_key';
+  if coalesce(v_base, '') = '' or coalesce(v_anon, '') = '' then
+    raise warning 'storage_cleanup_kick: brak project_url/anon_key w vault';
+    return;
+  end if;
   perform net.http_post(
-    url := v_url || '/functions/v1/storage-cleanup',
+    url := v_base || '/functions/v1/storage-cleanup',
     headers := jsonb_build_object(
       'Content-Type', 'application/json',
-      'Authorization', 'Bearer ' || v_jwt,
-      'apikey', v_jwt
+      'Authorization', 'Bearer ' || v_anon,
+      'apikey', v_anon
     ),
     body := '{}'::jsonb
   );
 exception when others then
-  -- brak pg_net / konfiguracji nie może zablokować usunięcia; cron ponowi
+  -- brak pg_net / vault nie może zablokować usunięcia; cron ponowi
   raise warning 'storage_cleanup_kick: %', sqlerrm;
 end;
 $$;
@@ -18221,5 +18224,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 6FeacosKUUCafJ1WLnc8xSTAqvcohC6Cxo5THzmrx2YRYfTSZftTjGFYCDBJuPU
+\unrestrict TsKg07qhkFooYx1dJhVud5iRwLW7KunpBjgWNlxdF9ZaxRvIpZa6bvmJvARdyUH
 
