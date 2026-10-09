@@ -74,7 +74,7 @@ const en = {
     },
   },
   nav: {
-    backTo: "Back to: {page}",
+    backTo: "{page}",
     page: {
       home: "Home page",
       login: "Login",
@@ -810,8 +810,6 @@ const en = {
       sendAfterStart: "You can send invitations once the poll has started.",
       linkAfterStart: "The link will appear after the poll starts",
       copyLink: "Copy link",
-      showQr: "Show QR",
-      hideQr: "Hide QR",
       enlargeQr: "Enlarge QR code",
       summary: "Invited {invited} · Voted {voted} · Declined {declined}",
       selectAll: "Select all",

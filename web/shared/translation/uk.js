@@ -74,7 +74,7 @@ const uk = {
     },
   },
   nav: {
-    backTo: "Повернутися до: {page}",
+    backTo: "{page}",
     page: {
       home: "Головна сторінка",
       login: "Вхід",
@@ -811,8 +811,6 @@ const uk = {
       sendAfterStart: "Запрошення можна буде надіслати після запуску опитування.",
       linkAfterStart: "Посилання з’явиться після запуску",
       copyLink: "Копіювати посилання",
-      showQr: "Показати QR",
-      hideQr: "Сховати QR",
       enlargeQr: "Збільшити QR-код",
       summary: "Запрошено {invited} · Проголосували {voted} · Відхилили {declined}",
       selectAll: "Вибрати всіх",
