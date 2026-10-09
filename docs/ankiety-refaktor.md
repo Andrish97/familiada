@@ -75,6 +75,23 @@ Stan faktyczny sprawdzony w kodzie 2026-10-07 (opis niżej, sekcja 4).
     - wyjście bez zatwierdzenia → zwykły widok wyników, ankieta ZATRZYMANA.
     Przeliczenie tekstowej na punkty przeniesione do bazy (jedno miejsce dla
     obu typów).
+  - **Karta Udostępnianie — nowy układ (2026-10-09).** Komputer: dwie
+    kolumny wyrównane do góry. Lewa „Link”: pole linku z ikoną kopiowania
+    w środku, pod nim w rzędzie „Otwórz” · „QR na wyświetlaczu”, niżej mały
+    QR (~140 px) powiększany kliknięciem w oknie. Prawa „Subskrybenci”:
+    w nagłówku podsumowanie „Zaproszeni N · Zagłosowali N · Odrzucili N”,
+    „Zaznacz wszystkich”, kafle (3 stany, dzwonek, kosz), na dole
+    „Wyślij zaproszenia (N)” — aktywny, gdy ktoś zaznaczony. Telefon: jedna
+    kolumna — link z ikoną kopiowania, „Otwórz” · „QR na wyświetlaczu”,
+    „Pokaż QR” (domyślnie zwinięty), potem subskrybenci i „Wyślij
+    zaproszenia (N)” na całą szerokość.
+  - **Pasek stanu (nad kartami) — miejsce wszystkich akcji (2026-10-09).**
+    Lewa strona: stan słowem + krótki opis (np. „OTWARTA · 12 głosów”,
+    „ZATRZYMANA · link nadal ważny”). Prawa: przyciski akcji wg tabeli
+    stanów; główna akcja złota (Uruchom / Zatrzymaj / Podlicz głosy /
+    Uruchom ponownie), Przerwij zawsze ostatni i stonowany (czerwony
+    obrys). Telefon: stan w pierwszym wierszu, przyciski w drugim na całą
+    szerokość, równe.
   - **Karty tylko dwie: Udostępnianie · Wyniki.** Wyniki są uniwersalne:
     na żywo (otwarta), surowe (zatrzymana), w trybie podliczania (ankieta
     tekstowa), ostateczne (gotowa). Wszystkie akcje na pasku stanu:
