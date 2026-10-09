@@ -46,7 +46,7 @@ async function deleteHostLogoGame(page, gameId) {
   }, gameId);
 }
 
-test("logo Hosta: zapis w Ustawieniach rozgrywki i podgląd zapisanego wariantu w Control (test9)", async ({ page, browser, context }) => {
+test("logo Hosta: zapis w Ustawieniach rozgrywki i podgląd zapisanego wariantu w Control (test9)", async ({ page, browser, context }, testInfo) => {
   test.setTimeout(150_000);
   // Konto 9 jest przeznaczone wyłącznie do tych dedykowanych testów; nie jest
   // dodawane do puli kont współdzielonej przez przebiegi Control.
@@ -65,7 +65,15 @@ test("logo Hosta: zapis w Ustawieniach rozgrywki i podgląd zapisanego wariantu 
     await expect(page.locator("#gsDisplayPreview")).toBeVisible();
     await expect(page.locator('input[name="gsHostLogoMode"][value="pixel"]')).toBeChecked();
     await page.locator('input[name="gsHostLogoMode"][value="source"]').check();
+    await page.locator("#gsThemeSelect .ui-select-btn").click();
+    await page.locator('#gsThemeSelect .ui-select-item[data-value="modern"]').click();
+    await page.locator('.swatchBtn[data-color-key="DOT"]').click();
+    await page.locator("#gsColorHex").fill("#33aaff");
+    await page.locator("#gsColorHex").press("Tab");
+    await page.locator("#gsColorModalDone").click();
     await expect(hostPreview.locator("#cover2Logo")).toBeVisible({ timeout: 15_000 });
+    await expect.poll(() => hostPreview.locator("html").evaluate(el => getComputedStyle(el).getPropertyValue("--host-cover-accent").trim())).toBe("#33aaff");
+    await page.screenshot({ path: testInfo.outputPath("shot-host-logo-game-settings.png"), fullPage: true });
 
     const save = page.locator("#btnSaveAll");
     const [saveResponse] = await Promise.all([
@@ -76,9 +84,11 @@ test("logo Hosta: zapis w Ustawieniach rozgrywki i podgląd zapisanego wariantu 
     const persistedMode = await page.evaluate(async id => {
       const { data, error } = await window.__sbClient.from("games").select("settings").eq("id", id).single();
       if (error) throw new Error(error.message);
-      return data.settings?.display?.hostLogoMode;
+      return data.settings?.display;
     }, game.id);
-    expect(persistedMode).toBe("source");
+    expect(persistedMode.hostLogoMode).toBe("source");
+    expect(persistedMode.theme).toBe("modern");
+    expect(persistedMode.colors.DOT).toBe("#33aaff");
 
     // A fresh settings load must restore the selected option, not just the
     // in-memory preview state.
@@ -99,10 +109,14 @@ test("logo Hosta: zapis w Ustawieniach rozgrywki i podgląd zapisanego wariantu 
     await page.getByRole("button", { name: "Dalej", exact: true }).click();
     await expect(page.locator(".stepTitle")).toHaveText("Podsumowanie", { timeout: 15_000 });
     await expect(page.locator("#c2-summary-display")).toContainText("Źródło");
+    await expect(page.locator("#c2-summary-display")).toContainText("Nowoczesny");
+    await expect(page.locator("#c2-summary-display .summaryDisplayInfo .summaryDisplayRow:first-child > span:last-child span").nth(3)).toHaveCSS("background-color", "rgb(51, 170, 255)");
     await expect(page.locator("#c2DisplayPreview iframe")).toBeVisible();
     await expect(page.locator("#c2HostPreview iframe")).toBeVisible();
     const controlHost = page.frameLocator("#c2HostPreview iframe");
     await expect(controlHost.locator("#cover2Logo")).toBeVisible({ timeout: 15_000 });
+    await expect.poll(() => controlHost.locator("html").evaluate(el => getComputedStyle(el).getPropertyValue("--host-cover-accent").trim())).toBe("#33aaff");
+    await page.screenshot({ path: testInfo.outputPath("shot-host-logo-control-summary.png"), fullPage: true });
   } finally {
     await displayContext?.close();
     await page.goto(`${ORIGIN}/games/`, { waitUntil: "domcontentloaded" }).catch(() => {});
