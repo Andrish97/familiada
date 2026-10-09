@@ -10,12 +10,6 @@ import "../../shared/js/core/contact-modal.js?v=v2026-10-09T22271";
 
 import { decorateManualControls } from "./controls.js?v=v2026-10-09T22271";
 
-function isModalMode() {
-  const p = new URLSearchParams(location.search);
-  const m = p.get("modal");
-  return m && m !== "false";
-}
-
 async function initManualI18n() {
   const params = new URLSearchParams(location.search);
   const hasLangParam = params.has("lang");
@@ -25,14 +19,14 @@ async function initManualI18n() {
     await setUiLang("pl", { persist: true, updateUrl: true, apply: false });
   }
 
-  await initI18n({ withSwitcher: !isModalMode() });
+  await initI18n({ withSwitcher: true });
 }
 
 function qsa(sel) { return Array.from(document.querySelectorAll(sel)); }
 function byId(id) { return document.getElementById(id); }
 
 function getTabs() {
-  return Array.from(document.querySelectorAll(".simple-tabs .tab, .modal-tabs .tab"));
+  return Array.from(document.querySelectorAll(".simple-tabs .tab"));
 }
 
 function updateMobileTabSubtitle(name) {
@@ -98,55 +92,26 @@ function wireTabs() {
   });
 }
 
-function applyControlModalLayout() {
-  if (!isModalMode()) return;
-  // Ensure the class is set (fallback if inline script didn't run)
-  document.documentElement.classList.add("modal-mode");
-  document.body.classList.add("manual-in-control-modal");
-  byId("btnBack")?.remove();
-  byId("who")?.remove();
-  byId("btnLogout")?.remove();
-
-  // Remove topbar sections so mobile controller has nothing to move
-  document.querySelector(".topbar-section-2")?.remove();
-  document.querySelector(".topbar-section-4")?.remove();
-
-  // Replace simple-tabs with modal-tabs so topbar-controller doesn't pick it up
-  const tabs = document.querySelector(".simple-tabs");
-  if (tabs) {
-    tabs.classList.remove("simple-tabs");
-    tabs.classList.add("modal-tabs");
-  }
-}
-
-
 function wireLegalLink() {
   byId("btnLegal")?.addEventListener("click", () => {
-    location.href = linkTo("privacy", { modal: new URLSearchParams(location.search).get("modal") });
+    location.href = linkTo("privacy");
   });
 }
 
 
 /* ================= Init ================= */
 async function init() {
-  // Wersja modalna to osadzony dokument pomocy (iframe w Control): bez topbaru,
-  // bez wymuszania logowania. Pełna strona idzie przez initPage.
   const i18nP = initManualI18n().catch((err) => {
     console.error("[manual] i18n nieaktywny:", err);
   }).finally(() => {
     document.documentElement.classList.remove('page-loading');
   });
-  if (isModalMode()) {
-    document.querySelector('.topbar')?.classList.add('topbar-ready');
-  } else {
-    initPage("manual", { ready: i18nP }).catch((err) => {
-      console.warn("[manual] initPage nieaktywny:", err);
-    });
-  }
+  initPage("manual", { ready: i18nP }).catch((err) => {
+    console.warn("[manual] initPage nieaktywny:", err);
+  });
   await i18nP;
 
   decorateManualControls(document, document.documentElement.lang);
-  applyControlModalLayout();
   wireTabs();
   wireLegalLink();
 }

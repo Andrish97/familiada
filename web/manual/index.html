@@ -17,34 +17,17 @@
 
   <link rel="icon" href="/favicon.ico?v=v2026-10-09T22271" />
 
-  <!-- Hide topbar/footer in modal mode — MUST be before base.css -->
-  <style id="modalHideStyle">
-    /* Filled by script if modal mode */
-  </style>
-  <script>
-    try {
-      const modal = new URLSearchParams(location.search).get("modal");
-      if (modal && modal !== "false") {
-        document.getElementById("modalHideStyle").textContent = ".topbar,.footer{display:none!important;visibility:hidden!important}.wrap{padding-top:0!important}.simple-tabs,.modal-tabs{display:flex!important;flex-wrap:wrap!important}";
-        document.documentElement.classList.add("modal-mode");
-      }
-    } catch(e){}
-  </script>
-
   <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-09T22271" />
   <link rel="stylesheet" href="/manual/css/manual.css?v=v2026-10-09T22271" />
   <script>
     document.documentElement.classList.add('page-loading');
     try {
-      var _modal = new URLSearchParams(location.search).get('modal');
-      if (!_modal || _modal === 'false') {
-        var _has = false;
-        for (var _i = 0; _i < localStorage.length; _i++) {
-          var _k = localStorage.key(_i);
-          if (_k && _k.startsWith('sb-') && _k.endsWith('-auth-token')) { _has = true; break; }
-        }
-        if (!_has) location.replace('/login/');
+      var _has = false;
+      for (var _i = 0; _i < localStorage.length; _i++) {
+        var _k = localStorage.key(_i);
+        if (_k && _k.startsWith('sb-') && _k.endsWith('-auth-token')) { _has = true; break; }
       }
+      if (!_has) location.replace('/login/');
     } catch(_e) {}
   </script>
 
