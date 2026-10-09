@@ -672,9 +672,8 @@ Na najwyższym poziomie zostaje: `/`, `/login/`, `/games/`, `/control/`,
 
 **Korekta 2026-10-09 (E5):** hub ankiet zniknął (E11), więc strona ankiety
 gry zostaje pod `/polls/?id=` (bez `/polls/editor/`); głosowanie idzie do
-`/polls/vote/…`. Krok 4 (urządzenia `/control/display|host|buzzer/`,
-`/connect/`) czeka, aż druga sesja skończy prace nad Hostem/Buzzerem —
-przenosiny folderów w trakcie jej zmian dałyby konflikty.
+`/polls/vote/…`. Krok 4 (urządzenia `/control/display|host|buzzer/`, `/connect/`, `/go/?d=`)
+robiony na końcu E5 — druga sesja skończyła prace nad Hostem/Buzzerem (2026-10-09).
 
 ### `/go/` — jedyne adresy, które wychodzą poza aplikację
 
