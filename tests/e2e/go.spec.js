@@ -1,5 +1,5 @@
-// tests/e2e/poll-go.spec.js
-// Weryfikuje stronę przekierowania z maila (poll-go.js):
+// tests/e2e/go.spec.js
+// Weryfikuje stronę przekierowania z maila (go.js):
 // - task invite (?t=token) — zaproszenie do głosowania zadania
 // - subscription invite (?s=token) — zaproszenie do subskrypcji
 // - unsub owner (?s=token&action=unsub) — wypisanie się z subskrypcji
@@ -14,7 +14,7 @@ const { serveBranchCode } = require("./helpers/branch-code");
 // Strony głosowania z brancha (komunikaty stanów, E11e); baza z produkcji.
 test.use({ serviceWorkers: "block" });
 test.beforeEach(async ({ context }) => {
-  await serveBranchCode(context, { pages: ["poll-go", "poll-text", "poll-points"] });
+  await serveBranchCode(context, { pages: ["go", "poll-text", "poll-points"] });
 });
 const { loginAsPooledTestUser } = require("./helpers/login");
 
@@ -120,7 +120,7 @@ async function deleteGame(page, gameId) {
   }, gameId);
 }
 
-test.describe("poll-go.js audyt", () => {
+test.describe("go.js audyt", () => {
   test.use({ serviceWorkers: "block" });
 
   test("task invite: zalogowany user bez account invite → głos", async ({ page, context }, testInfo) => {
@@ -130,7 +130,7 @@ test.describe("poll-go.js audyt", () => {
       const { gameId, taskToken, pollType } = await createTaskToken(page, "poll_points");
 
 
-      const url = new URL("poll-go/index.html", "https://www.familiada.online/");
+      const url = new URL("go/index.html", "https://www.familiada.online/");
       url.searchParams.set("t", taskToken);
 
       await page.goto(url.toString(), { waitUntil: "domcontentloaded" });
@@ -160,7 +160,7 @@ test.describe("poll-go.js audyt", () => {
   test("task invite: niezalogowany user → redirect do login", async ({ page, browser }, testInfo) => {
     // Task musi mieć recipient_user_id (account invite) — tylko wtedy
     // niezalogowany widz dostaje prompt logowania (handleTaskInvite Case 4
-    // w js/pages/poll-go.js); recipient_email-only jest Case 5, wolny głos
+    // w js/pages/go.js); recipient_email-only jest Case 5, wolny głos
     // bez logowania. Setup w IZOLOWANYM kontekście, żeby zalogowanie ownera
     // nie zaraziło cookies głównego `page` (współdzielone w jednym context).
     const setupContext = await browser.newContext();
@@ -177,7 +177,7 @@ test.describe("poll-go.js audyt", () => {
       gameId = created.gameId;
       const taskToken = created.taskToken;
 
-      const url = new URL("poll-go/index.html", "https://www.familiada.online/");
+      const url = new URL("go/index.html", "https://www.familiada.online/");
       url.searchParams.set("t", taskToken);
 
       // `page` nigdy się nie loguje (test sprawdza właśnie widok dla
@@ -212,7 +212,7 @@ test.describe("poll-go.js audyt", () => {
       const { subToken } = await createSubToken(page);
 
 
-      const url = new URL("poll-go/index.html", "https://www.familiada.online/");
+      const url = new URL("go/index.html", "https://www.familiada.online/");
       url.searchParams.set("s", subToken);
 
       await page.goto(url.toString(), { waitUntil: "domcontentloaded" });
@@ -244,7 +244,7 @@ test.describe("poll-go.js audyt", () => {
     // Setup w izolowanym kontekście (insert wymaga zalogowanego ownera; nie
     // chcemy zarazić cookies głównego `page`, które ma zostać niezalogowane).
     // Dla subscriber_email-only + status pending, handleSubInvite (Case 4 w
-    // js/pages/poll-go.js) pokazuje od razu przyciski Zaakceptuj/Odrzuć dla
+    // js/pages/go.js) pokazuje od razu przyciski Zaakceptuj/Odrzuć dla
     // ZNANEGO emaila zaproszenia — email input (#emailInput) jest tylko dla
     // scenariusza !isActive (status inny niż "pending"), którego to nie testuje.
     const setupContext = await browser.newContext();
@@ -253,7 +253,7 @@ test.describe("poll-go.js audyt", () => {
       await loginAsPooledTestUser(setupPage, setupContext, testInfo.parallelIndex);
       const { subToken } = await createSubToken(setupPage);
 
-      const url = new URL("poll-go/index.html", "https://www.familiada.online/");
+      const url = new URL("go/index.html", "https://www.familiada.online/");
       url.searchParams.set("s", subToken);
 
       // `page` nigdy się nie loguje (test ma zostać niezalogowany) -- bez
@@ -300,7 +300,7 @@ test.describe("poll-go.js audyt", () => {
       }, taskToken);
 
 
-      const url = new URL("poll-go/index.html", "https://www.familiada.online/");
+      const url = new URL("go/index.html", "https://www.familiada.online/");
       url.searchParams.set("t", taskToken);
 
       await page.goto(url.toString(), { waitUntil: "domcontentloaded" });
@@ -330,7 +330,7 @@ test.describe("poll-go.js audyt", () => {
         if (openErr) throw new Error("poll_open failed: " + openErr.message);
       }, gameId);
 
-      const url = new URL("poll-go/index.html", "https://www.familiada.online/");
+      const url = new URL("go/index.html", "https://www.familiada.online/");
       url.searchParams.set("t", taskToken);
       await page.goto(url.toString(), { waitUntil: "domcontentloaded" });
       await expect(page.locator(".poll-go-title")).toContainText(/zaproszenie wygasło|invitation has expired|запрошення втратило/, { timeout: 10000 });
@@ -355,7 +355,7 @@ test.describe("poll-go.js audyt", () => {
         })
       );
 
-      const url = new URL("poll-go/index.html", "https://www.familiada.online/");
+      const url = new URL("go/index.html", "https://www.familiada.online/");
       url.searchParams.set("t", taskToken);
       await page.goto(url.toString(), { waitUntil: "domcontentloaded" });
       await expect(page.locator(".poll-go-title")).toContainText(/zakończona|has ended|завершено/, { timeout: 10000 });
@@ -380,7 +380,7 @@ test.describe("poll-go.js audyt", () => {
         })
       );
 
-      const url = new URL("poll-go/index.html", "https://www.familiada.online/");
+      const url = new URL("go/index.html", "https://www.familiada.online/");
       url.searchParams.set("t", taskToken);
       await page.goto(url.toString(), { waitUntil: "domcontentloaded" });
       await expect(page.locator(".poll-go-title")).toContainText(/jest zatrzymana|is stopped|зупинено/, { timeout: 10000 });
@@ -396,7 +396,7 @@ test.describe("poll-go.js audyt", () => {
     try {
 
       // Brak ?t= i ?s=
-      await page.goto("https://www.familiada.online/poll-go/index.html", {
+      await page.goto("https://www.familiada.online/go/index.html", {
         waitUntil: "domcontentloaded",
       });
       await page.waitForLoadState("networkidle");
@@ -418,7 +418,7 @@ test.describe("poll-go.js audyt", () => {
       // error) zamiast dojść do gałęzi "nie znaleziono" (ok:false), co
       // zamiast "Link nieważny" pokazuje ogólny MSG.error()/"Błąd". Dlatego
       // tu poprawny format UUID, którego po prostu nie ma w bazie.
-      const url = new URL("poll-go/index.html", "https://www.familiada.online/");
+      const url = new URL("go/index.html", "https://www.familiada.online/");
       url.searchParams.set("t", "00000000-0000-0000-0000-000000000000");
 
       await page.goto(url.toString(), { waitUntil: "domcontentloaded" });

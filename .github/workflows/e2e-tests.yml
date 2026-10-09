@@ -101,7 +101,7 @@ jobs:
               e2e/cross-resource-locks.spec.js
               e2e/editor.spec.js e2e/game-settings.spec.js
               e2e/game-state-realtime-spike.spec.js e2e/polls.spec.js
-              e2e/poll-qr.spec.js e2e/poll-voting.spec.js e2e/poll-go.spec.js
+              e2e/poll-qr.spec.js e2e/poll-voting.spec.js e2e/go.spec.js
           - name: konto-drugie
             files: e2e/base-explorer.spec.js e2e/bases.spec.js
           - name: goscie-i-statyka

@@ -112,7 +112,7 @@ test("@mailbox subskrypcje: zaproszenie z UI dochodzi na prawdziwą skrzynkę", 
     expect(`${email.body || ""}\n${email.body_html || ""}`).toMatch(/test7|Familiada/i);
     const invitation = extractHttpLinks(email).find((link) => {
       const url = new URL(link);
-      return /\/poll-go(?:\.html)?$/.test(url.pathname) && url.searchParams.has("s");
+      return /\/go(?:\.html)?$/.test(url.pathname) && url.searchParams.has("s");
     });
     expect(invitation, "mail musi zawierać link zaproszenia ?s=").toBeTruthy();
 

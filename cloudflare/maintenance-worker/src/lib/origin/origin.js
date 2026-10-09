@@ -83,7 +83,7 @@ const PAGE_ROUTES = new Set([
   "connect-device", "connect-device/tv", "control", "display", "editor",
   "game-settings", "games", "host", "login",
   "logo", "logo/editor-draw", "logo/editor-image", "logo/editor-text",
-  "maintenance", "manual", "marketplace", "poll-go",
+  "maintenance", "manual", "marketplace", "go",
   "poll-points", "poll-qr", "poll-text", "polls", "privacy",
   "reset", "subscriptions",
 ]);

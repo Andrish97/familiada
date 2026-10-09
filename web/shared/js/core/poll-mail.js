@@ -1,8 +1,8 @@
 // Maile z zaproszeniem do ankiety / przypomnieniem — wspólne dla strony ankiety
 // (i, do czasu usunięcia, Centrum ankiet). Baza rezerwuje cooldown "poll:share"
 // przed wysyłką; tu budujemy treść, wysyłamy i oznaczamy zaproszenia jako wysłane.
-import { sb, SUPABASE_URL } from "./supabase.js?v=v2026-10-09T12084";
-import { t } from "../../translation/translation.js?v=v2026-10-09T12084";
+import { sb, SUPABASE_URL } from "./supabase.js?v=v2026-10-09T12125";
+import { t } from "../../translation/translation.js?v=v2026-10-09T12125";
 
 const MAIL_FUNCTION_URL = `${SUPABASE_URL}/functions/v1/send-mail`;
 
@@ -41,11 +41,11 @@ export function buildMailHtml({ title, subtitle, body, actionLabel, actionUrl, s
   } else if (subToken || unsubToken) {
     const parts = [];
     if (subToken) {
-      const unsubOwnerUrl = new URL(`/poll-go/?s=${encodeURIComponent(subToken)}&action=unsub`, location.origin).href;
+      const unsubOwnerUrl = new URL(`/go/?s=${encodeURIComponent(subToken)}&action=unsub`, location.origin).href;
       parts.push(`<a href="${unsubOwnerUrl}" style="color:#ffeaa6;opacity:.7;text-decoration:underline;">${t("pollGo.mailUnsubOwner", { owner: ownerLabelUnsub || "" })}</a>`);
     }
     if (unsubToken) {
-      const globalUrl = new URL(`/poll-go/?u=${encodeURIComponent(unsubToken)}`, location.origin).href;
+      const globalUrl = new URL(`/go/?u=${encodeURIComponent(unsubToken)}`, location.origin).href;
       parts.push(`<a href="${globalUrl}" style="color:#ffeaa6;opacity:.7;text-decoration:underline;">${t("pollGo.mailUnsubGlobal")}</a>`);
     }
     if (parts.length) {
