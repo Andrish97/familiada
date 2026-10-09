@@ -333,6 +333,25 @@ wariant.
 
 ## Kryteria zakończenia
 
+### Weryfikacja wykonana 9 października 2026
+
+- Lokalny przegląd przeglądarkowy wyrenderował wszystkie kombinacje IMAGE,
+  DRAW, TEXT i logo warstwowego: Ustawienia rozgrywki oraz Podsumowanie Control,
+  każdy w trybie Piksele i Źródło. Sprawdzono niepusty render Hosta, aktywny
+  podgląd Display, przezroczystość i kolorowanie wariantu źródłowego; dla IMAGE
+  także odczyt obrazu ze Storage. Dodatkowy test DRAW zapisał warstwy Fabric,
+  odtworzył je i sprawdził kolejność bieli/czerni oraz przezroczystość.
+- E2E na koncie testowym 9 zapisał ustawienie Źródło, motyw Nowoczesny i kolor
+  DOT, przeładował Ustawienia, a następnie sprawdził oba podglądy w Control.
+  Zrzuty kontrolne są w artefakcie `e2e-shots` uruchomienia GitHub Actions
+  `37878643663`.
+- E2E manuala potwierdził opis logo Hosta w sekcjach Control i Ustawień
+  rozgrywki w PL, EN i UK. Wszystkie 7 testów tego przebiegu zakończyło się
+  powodzeniem.
+- Weryfikacja wyglądu na fizycznym iPhonie pozostaje osobnym testem odbiorowym;
+  zrzuty z Playwrighta potwierdzają renderowanie w Chromium, nie zastępują
+  sprawdzenia Safari/iOS i safe area na urządzeniu.
+
 - Tło, linie i tło covera dochodzą do krawędzi ekranu także w safe area; safe area nie ucina żadnego z tych elementów.
 - Logo, podpowiedzi i elementy klikalne pozostają wewnątrz safe area, z dala od krawędzi systemowych.
 - Na małym ekranie tekst nie jest nieproporcjonalnie duży, Classic i Modern mają porównywalną wielkość optyczną, a odstępy i linie siatki pozostają zgodne.
