@@ -26,6 +26,13 @@ Stan faktyczny sprawdzony w kodzie 2026-10-07 (opis niżej, sekcja 4).
   linkiem (sekcja 4b).
 - Osobne liczenie głosów (anonimowe / od subskrybentów) — prawdopodobnie
   zbędne (patrz pytania).
+- **2026-10-09 — zamykanie ankiety tekstowej jako karta.** Po „Zamknij”
+  w ankiecie tekstowej pojawia się karta **„Zamykanie” jako pierwsza**:
+  Zamykanie · Udostępnianie · Wyniki (aktywna od razu). W niej scalanie
+  i edycja odpowiedzi, Cofnij/Ponów, „Zamknij i przelicz”. Pozostałe karty
+  dostępne w trakcie edycji. Jedno „Anuluj” — na pasku stanu (chowa kartę,
+  odrzuca edycję). Ankieta punktowa bez zmian. Otwarte: czy „Zamknij”
+  wstrzymuje głosowanie na czas edycji (propozycja: tak).
 
 ## 2. Co gdzie po zmianie
 
