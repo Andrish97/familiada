@@ -27,6 +27,10 @@ przepisuje CI), Supabase, Cloudflare Worker. Strony w `web/`.
 - Migracje bezpieczne (dodające) od razu na `main`, potem testy.
 - Migracje tylko do przodu: `supabase/migrations/YYYY-MM-DD_NNN_*.sql`,
   stosowane po pushu na `main`; `schema.sql` aktualizuje CI.
+- Scalanie `main` z konfliktami wersji `?v=`: `python3 scripts/resolve-version-conflicts.py`
+  (rozwiązuje tylko hunki z samymi wersjami), resztę ręcznie, potem
+  `node scripts/version-assets.js`. **Nigdy `git checkout --ours -- web`** — zgubiło
+  zmiany innych sesji (2026-10-09).
 - Bez fallbacków: żadnych aliasów starych adresów ani przekierowań.
 - Komentarz w JS nie może zawierać `*/` (np. `editor-*/` w ścieżce).
 
