@@ -21,8 +21,8 @@
 // from strony, która go niesie; łańcuch dłuższy niż MAX_RET_DEPTH, obcy albo
 // zepsuty ret oznacza powrót do parent. Bez fallbacków i aliasów.
 
-import { getUiLang, t } from "../../translation/translation.js?v=v2026-10-09T11134";
-import { iconText } from "./icons.js?v=v2026-10-09T11134";
+import { getUiLang, t } from "../../translation/translation.js?v=v2026-10-09T11155";
+import { iconText } from "./icons.js?v=v2026-10-09T11155";
 
 export const MAX_RET_DEPTH = 4;
 
