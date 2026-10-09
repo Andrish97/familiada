@@ -21,8 +21,8 @@
 // from strony, która go niesie; łańcuch dłuższy niż MAX_RET_DEPTH, obcy albo
 // zepsuty ret oznacza powrót do parent. Bez fallbacków i aliasów.
 
-import { getUiLang, t } from "../../translation/translation.js?v=v2026-10-09T21300";
-import { iconText } from "./icons.js?v=v2026-10-09T21300";
+import { getUiLang, t } from "../../translation/translation.js?v=v2026-10-09T22024";
+import { iconText } from "./icons.js?v=v2026-10-09T22024";
 
 export const MAX_RET_DEPTH = 4;
 
@@ -31,7 +31,7 @@ export const PAGES = {
   login:         { path: "/login/",             access: "public", parent: "home" },
   games:         { path: "/games/",             access: "guest",  parent: null, from: [], manual: "general", state: ["tab"] },
   editor:        { path: "/games/editor/",     access: "guest",  parent: "games", from: ["games"], manual: "edit", state: ["id", "q"] },
-  polls:         { path: "/polls/",             access: "user",   parent: "games", from: ["games", "subscriptions"], manual: "polls", state: ["id"] },
+  polls:         { path: "/polls/",             access: "guest",   parent: "games", from: ["games", "subscriptions"], manual: "polls", state: ["id"] },
   subscriptions: { path: "/subscriptions/",     access: "user",   parent: "games", from: ["games", "bases", "polls"], manual: "subscriptions", state: ["tab"] },
   bases:         { path: "/bases/",             access: "guest",  parent: "games", from: ["games", "subscriptions", "baseExplorer"], manual: "bases", state: ["tab"] },
   baseExplorer:  { path: "/bases/explorer/",   access: "guest",  parent: "bases", from: ["bases"], manual: "bases", state: ["id", "folder"] },

@@ -1,17 +1,17 @@
-import { sb, SUPABASE_URL } from "../../shared/js/core/supabase.js?v=v2026-10-09T21300";
-import { signOut } from "../../shared/js/core/auth.js?v=v2026-10-09T21300";
-import { toast } from "../../shared/js/core/toast.js?v=v2026-10-09T21300";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-09T21300";
-import { getUiLang, initI18n, t } from "../../shared/translation/translation.js?v=v2026-10-09T21300";
-import { linkTo } from "../../shared/js/core/nav-map.js?v=v2026-10-09T21300";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-09T21300";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-09T21300";
-import { icon } from "../../shared/js/core/icons.js?v=v2026-10-09T21300";
-import { createCooldownTicker } from "../../shared/js/core/cooldown.js?v=v2026-10-09T21300";
-import { enterModalSheet, exitModalSheet } from "../../shared/js/core/modal-sheet.js?v=v2026-10-09T21300";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-09T21300";
-import { renderShareSections } from "../../shared/js/core/share-sections.js?v=v2026-10-09T21300";
-import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-09T21300";
+import { sb, SUPABASE_URL } from "../../shared/js/core/supabase.js?v=v2026-10-09T22024";
+import { signOut } from "../../shared/js/core/auth.js?v=v2026-10-09T22024";
+import { toast } from "../../shared/js/core/toast.js?v=v2026-10-09T22024";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-09T22024";
+import { getUiLang, initI18n, t } from "../../shared/translation/translation.js?v=v2026-10-09T22024";
+import { linkTo } from "../../shared/js/core/nav-map.js?v=v2026-10-09T22024";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-09T22024";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-09T22024";
+import { icon } from "../../shared/js/core/icons.js?v=v2026-10-09T22024";
+import { createCooldownTicker } from "../../shared/js/core/cooldown.js?v=v2026-10-09T22024";
+import { enterModalSheet, exitModalSheet } from "../../shared/js/core/modal-sheet.js?v=v2026-10-09T22024";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-09T22024";
+import { renderShareSections } from "../../shared/js/core/share-sections.js?v=v2026-10-09T22024";
+import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-09T22024";
 
 const i18nReady = initI18n({ withSwitcher: true }).catch((err) => {
   console.error("[subscriptions] i18n nieaktywny:", err);
