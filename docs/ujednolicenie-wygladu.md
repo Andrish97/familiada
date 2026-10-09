@@ -250,3 +250,12 @@ tiles”). Pozostałe pola komunikatów istnieją. Implementacja: `shared/js/cor
    ten sam wspólny kafel: inicjał w kółku + nazwa/e-mail, rząd oznaczeń
    ze stanem zaproszenia, dzwonek i kosz jako ikony w rogu (jak kosz na
    kaflu gry). Do oceny po wdrożeniu.
+5. **Podział na sekcje zamiast kolorów (2026-10-09)** — jak w bazach
+   (oczekujący / aktywni …): w Subskrypcjach i w karcie Udostępnianie
+   ankiety kafle grupowane w sekcje wg stanu (np. Oczekujące · Aktywni ·
+   Odrzucone; dla ankiety: Zaproszeni · Zagłosowali · Odrzucili). Miejsce
+   mówi o stanie; kolor co najwyżej pomocniczo. Puste sekcje ukryte.
+6. **Ankieta bez dolnego paska (2026-10-09)** — także na telefonie akcje
+   zostają w pasku stanu u góry (stan w pierwszym wierszu, przyciski pod
+   nim). Zmienia wcześniejszą decyzję o dolnym pasku na telefonie
+   (ankiety-refaktor.md).

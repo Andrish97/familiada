@@ -100,8 +100,8 @@ Stan faktyczny sprawdzony w kodzie 2026-10-07 (opis niżej, sekcja 4).
     „ZATRZYMANA · link nadal ważny”). Prawa: przyciski akcji wg tabeli
     stanów; główna akcja złota (Uruchom / Zatrzymaj / Podlicz głosy /
     Uruchom ponownie), Przerwij zawsze ostatni i stonowany (czerwony
-    obrys). Telefon: stan w pierwszym wierszu, przyciski w drugim na całą
-    szerokość, równe.
+    obrys). Telefon: stan w pierwszym wierszu, przyciski w drugim, w pasku
+    stanu u góry — **bez dolnego paska** (decyzja 2026-10-09).
   - **Karty tylko dwie: Udostępnianie · Wyniki.** Wyniki są uniwersalne:
     na żywo (otwarta), surowe (zatrzymana), w trybie podliczania (ankieta
     tekstowa), ostateczne (gotowa). Wszystkie akcje na pasku stanu:
