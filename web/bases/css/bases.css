@@ -42,34 +42,6 @@
 .share-subs-input .ui-select{ width: 100%; }
 .share-submit-btn{ width: 100%; }
 
-.shareSection{
-  --under: #202331; /* podłoże przycisków (css/base.css) */
-  margin-top: 16px;
-  padding: 10px;
-  border-radius: 14px;
-  background: rgba(255,255,255,.06);
-  border: 1px solid rgba(255,255,255,.10);
-}
-.shareSection:first-of-type{ margin-top: 0; }
-
-.shareSectionTitle{ font-weight: 800; letter-spacing: .2px; }
-.shareSectionSub{ margin-top: 4px; opacity: .75; font-size: 13px; }
-
-.shareRow{
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 10px;
-  align-items: center;
-  padding: 8px 10px;
-  border-radius: 12px;
-  background: var(--card2, rgba(255,255,255,.03));
-  border: 1px solid var(--line2, rgba(255,255,255,.10));
-  margin-top: 8px;
-}
-
-.shareEmail{ overflow: hidden; text-overflow: ellipsis; white-space: nowrap; opacity: .95; }
-.shareRowActions{ display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-
 .share-role-select{
   background: rgba(255,255,255,.08);
   border: 1px solid rgba(255,255,255,.15);
@@ -95,20 +67,9 @@
   box-shadow: 0 0 0 1px rgba(255, 210, 80, .35) inset, 0 0 18px rgba(255, 210, 80, .12);
 }
 
-.card .meta{
-  display:flex;
-  flex-wrap:wrap;
-  gap:6px;
-  margin-top:8px;
-}
 
 /* oznaczenia na kafelku: .tag z base.css (kolor wg data-kind w bases.js) */
 
-/* X jest tu <button> — wygląd (ramka jak w logo) z games.css */
-.games-body .grid .card .x{
-  appearance: none;
-  -webkit-appearance: none;
-}
 /* =========================================================
    KARTA Z WYPUSTKAMI (wszystkie szerokości)
    Kształt wypustek jak w games.css (.tab-active + .tab-corner), ale 2 × 50%.

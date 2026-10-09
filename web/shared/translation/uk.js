@@ -5,6 +5,12 @@ const uk = {
     icon: "flag-ua",
   },
   common: {
+    sort: {
+      label: "Сортування",
+      updated: "Нещодавно змінені",
+      created: "Найновіші",
+      name: "Назва А–Я",
+    },
     searchByName: "Пошук…",
     filterAll: "Усі",
     noResults: "Немає результатів.",
@@ -72,6 +78,16 @@ const uk = {
       left: "© {year} Familiada — система для гри наживо",
       contactBtn: "Контакт",
     },
+  },
+  shareSections: {
+    subscribers: "Підписники",
+    subscribersSub: "Ще без запрошення — оберіть, кого запросити.",
+    pending: "Очікують",
+    pendingSub: "Запрошення надіслано, чекаємо на відповідь.",
+    active: "Активні",
+    activeSub: "Прийняли запрошення.",
+    declined: "Відхилені",
+    declinedSub: "Відмовилися від запрошення.",
   },
   nav: {
     backTo: "{page}",
@@ -803,6 +819,7 @@ const uk = {
       tallyInfo: "підрахунок",
     },
     share: {
+      activeSub: "Проголосували в цьому опитуванні.",
       linkTitle: "Посилання",
       subsTitle: "Підписники",
       sendInvites: "Надіслати запрошення",

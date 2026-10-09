@@ -1,39 +1,39 @@
-import { addRenameGesture } from "../../shared/js/core/rename-gesture.js?v=v2026-10-09T17431";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T17431";
-import { requireAuth } from "../../shared/js/core/auth.js?v=v2026-10-09T17431";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-09T17431";
-import { hideForGuest, isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-09T17431";
-import { initI18n, t, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-09T17431";
-import { linkTo } from "../../shared/js/core/nav-map.js?v=v2026-10-09T17431";
-import { initRatingSystem } from "../../shared/js/core/rating-system.js?v=v2026-10-09T17431";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-09T17431";
-import { maybeShowGuestInfoModal } from "../../shared/js/core/guest-info-modal.js?v=v2026-10-09T17431";
-import { maybeShowGuestMigrateReminder } from "../../shared/js/core/guest-migrate-reminder.js?v=v2026-10-09T17431";
+import { addRenameGesture } from "../../shared/js/core/rename-gesture.js?v=v2026-10-09T17551";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T17551";
+import { requireAuth } from "../../shared/js/core/auth.js?v=v2026-10-09T17551";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-09T17551";
+import { hideForGuest, isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-09T17551";
+import { initI18n, t, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-09T17551";
+import { linkTo } from "../../shared/js/core/nav-map.js?v=v2026-10-09T17551";
+import { initRatingSystem } from "../../shared/js/core/rating-system.js?v=v2026-10-09T17551";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-09T17551";
+import { maybeShowGuestInfoModal } from "../../shared/js/core/guest-info-modal.js?v=v2026-10-09T17551";
+import { maybeShowGuestMigrateReminder } from "../../shared/js/core/guest-migrate-reminder.js?v=v2026-10-09T17551";
 
-import { initPwa, isStandalone, isMobileDevice } from "../../shared/js/core/pwa.js?v=v2026-10-09T17431";
-import { createPollResults } from "../../shared/js/core/poll-results.js?v=v2026-10-09T17431";
-import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-09T17431";
+import { initPwa, isStandalone, isMobileDevice } from "../../shared/js/core/pwa.js?v=v2026-10-09T17551";
+import { createPollResults } from "../../shared/js/core/poll-results.js?v=v2026-10-09T17551";
+import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-09T17551";
 
 // Zarejestruj listener PWA jak najwcześniej – beforeinstallprompt może odpalić przed requireAuth
 const pwaApi = initPwa();
 // Jeśli beforeinstallprompt już odpalił zanim dodaliśmy listener w IIFE, sprawdzimy po zalogowaniu
 
 
-import { exportGame, importGame, downloadJson } from "./games-import-export.js?v=v2026-10-09T17431";
-import { setTopbarNavPriority, setTopbarAccount } from '../../shared/js/core/topbar-controller.js?v=v2026-10-09T17431';
+import { exportGame, importGame, downloadJson } from "./games-import-export.js?v=v2026-10-09T17551";
+import { setTopbarNavPriority, setTopbarAccount } from '../../shared/js/core/topbar-controller.js?v=v2026-10-09T17551';
 
-import "../../shared/js/core/contact-modal.js?v=v2026-10-09T17431";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-09T17551";
 import {
   TYPES,
   STATUS,
   loadGameBasic,
   validateGame,
   rulesFromState,
-} from "../../shared/js/core/game-validate.js?v=v2026-10-09T17431";
-import { isResourceBusy, acquireResourceLock, getTabId } from "../../shared/js/core/resource-lock.js?v=v2026-10-09T17431";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-09T17431";
-import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-09T17431";
-import { gameStateKey } from "../../shared/js/core/list-filter.js?v=v2026-10-09T17431";
+} from "../../shared/js/core/game-validate.js?v=v2026-10-09T17551";
+import { isResourceBusy, acquireResourceLock, getTabId } from "../../shared/js/core/resource-lock.js?v=v2026-10-09T17551";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-09T17551";
+import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-09T17551";
+import { gameStateKey, SORT_LIST } from "../../shared/js/core/list-filter.js?v=v2026-10-09T17551";
 
 const MSG = {
   exportBaseEmpty: () => t("games.exportBase.empty"),
@@ -913,8 +913,10 @@ function cardGame(g) {
   const uiType = uiTypeFromRow(g);
 
   const el = document.createElement("div");
-  el.className = "card";
+  el.className = "card tile";
   el.dataset.gameId = g.id;
+  el.dataset.created = g.created_at || "";
+  el.dataset.updated = g.updated_at || "";
   el.dataset.status = statusKey(g.status, g);
 
   el.innerHTML = `
@@ -922,7 +924,7 @@ function cardGame(g) {
     <div class="name"></div>
     <div class="meta"></div>
     <div class="rules"></div>
-    <div class="cardTags"></div>
+    <div class="tileTags"></div>
   `;
 
   el.querySelector(".name").textContent = g.name || t("control.dash");
@@ -930,7 +932,7 @@ function cardGame(g) {
 
   // Rząd oznaczeń: stan zawsze (ta sama wysokość i odstęp na każdym kaflu),
   // obok plakietka ankiety — OTWARTA: liczba głosów, ZATRZYMANA: „do podliczenia”.
-  const tags = el.querySelector(".cardTags");
+  const tags = el.querySelector(".tileTags");
   const addTag = (text, cls) => {
     const tag = document.createElement("span");
     tag.className = `tag ${cls}`;
@@ -1062,7 +1064,7 @@ function setMarketButtonsState() {
 
 function cardMarket(g) {
   const el = document.createElement("div");
-  el.className = "card";
+  el.className = "card tile";
   el.dataset.marketId = g.market_game_id;
   el.innerHTML = `
     <div class="name">${escapeHtml(g.title || "—")}</div>
@@ -1209,6 +1211,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   // Typ to zakładki (preparowana/tekstowa/punktowa/rynek) — filtr tylko po stanie.
   initListSearch({
     grids: "#grid", tile: ".card", name: ".name",
+    sort: SORT_LIST,
     filter: {
       param: "status", attr: "status",
       options: ["draft", "open", "stopped", "ready"].map((k) => ({ value: k, labelKey: `games.status.${k}` })),

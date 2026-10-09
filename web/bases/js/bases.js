@@ -1,29 +1,32 @@
 // js/pages/bases.js
 // Lista baz pytań (warstwa 1) – styl i ergonomia jak strona gier (games).
 
-import { addRenameGesture } from "../../shared/js/core/rename-gesture.js?v=v2026-10-09T17431";
+import { addRenameGesture } from "../../shared/js/core/rename-gesture.js?v=v2026-10-09T17551";
 
-import { sb, SUPABASE_URL } from "../../shared/js/core/supabase.js?v=v2026-10-09T17431";
-import { ROW_GONE } from "../../shared/js/core/db-guard.js?v=v2026-10-09T17431";
-import { requireAuth } from "../../shared/js/core/auth.js?v=v2026-10-09T17431";
-import { acquireResourceLock, getTabId } from "../../shared/js/core/resource-lock.js?v=v2026-10-09T17431";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-09T17431";
-import { isGuestUser, hideForGuest } from "../../shared/js/core/guest-mode.js?v=v2026-10-09T17431";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-09T17431";
-import { getUiLang, initI18n, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-09T17431";
-import { linkTo, backHref, renderBackLabel } from "../../shared/js/core/nav-map.js?v=v2026-10-09T17431";
-import { initTopbarAccountDropdown } from "../../shared/js/core/topbar-controller.js?v=v2026-10-09T17431";
-import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-09T17431";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-09T17431";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-09T17431";
-import { createCooldownTicker, formatCooldownRemaining } from "../../shared/js/core/cooldown.js?v=v2026-10-09T17431";
-import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-09T17431";
+import { sb, SUPABASE_URL } from "../../shared/js/core/supabase.js?v=v2026-10-09T17551";
+import { ROW_GONE } from "../../shared/js/core/db-guard.js?v=v2026-10-09T17551";
+import { requireAuth } from "../../shared/js/core/auth.js?v=v2026-10-09T17551";
+import { acquireResourceLock, getTabId } from "../../shared/js/core/resource-lock.js?v=v2026-10-09T17551";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-09T17551";
+import { isGuestUser, hideForGuest } from "../../shared/js/core/guest-mode.js?v=v2026-10-09T17551";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-09T17551";
+import { getUiLang, initI18n, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-09T17551";
+import { linkTo, backHref, renderBackLabel } from "../../shared/js/core/nav-map.js?v=v2026-10-09T17551";
+import { initTopbarAccountDropdown } from "../../shared/js/core/topbar-controller.js?v=v2026-10-09T17551";
+import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-09T17551";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-09T17551";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-09T17551";
+import { createCooldownTicker, formatCooldownRemaining } from "../../shared/js/core/cooldown.js?v=v2026-10-09T17551";
+import { renderShareSections } from "../../shared/js/core/share-sections.js?v=v2026-10-09T17551";
+import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-09T17551";
+import { SORT_LIST } from "../../shared/js/core/list-filter.js?v=v2026-10-09T17551";
 initI18n({ withSwitcher: true }).then(() => {
   document.documentElement.classList.remove('page-loading');
   renderBackLabel(document.getElementById("btnBack"), "bases");
   // Moje/udostępnione to zakładki — filtr po roli (własna / edycja / odczyt).
   initListSearch({
     grids: "#mineGrid, #sharedGrid", tile: ".card", name: ".name",
+    sort: SORT_LIST,
     filter: {
       param: "role", attr: "role",
       options: ["owner", "editor", "viewer"].map((k) => ({ value: k, labelKey: `bases.filter.${k}` })),
@@ -89,8 +92,7 @@ const exportJsonMsg = document.getElementById("exportJsonMsg");
 
 // Modal share
 const shareOverlay = document.getElementById("shareOverlay");
-const sharePendingList = document.getElementById("sharePendingList");
-const shareSharedList = document.getElementById("shareSharedList");
+const shareSectionsHost = document.getElementById("shareSectionsHost");
 
 const shareEmail = document.getElementById("shareEmail");
 const shareEmailWrap = document.getElementById("shareEmailWrap");
@@ -942,8 +944,7 @@ shareCooldownTicker.start();
 async function renderShareModal() {
   const b = selectedBase();
   if (!b || !isOwner(b)) {
-    if (sharePendingList) sharePendingList.innerHTML = "";
-    if (shareSharedList) shareSharedList.innerHTML = "";
+    shareSectionsHost?.replaceChildren();
     return;
   }
 
@@ -1001,112 +1002,81 @@ async function renderShareModal() {
       .map((x) => [x.recipient_user_id, x])
   );
 
-  // ── PENDING LIST (wszyscy oczekujący) ──
-  if (sharePendingList) {
-    const rows = pending || [];
-    if (!rows.length) {
-      sharePendingList.innerHTML = `<div class="share-empty-state">${t("bases.shareModal.emptyPending")}</div>`;
-    } else {
-      sharePendingList.innerHTML = "";
-      for (const r of rows) {
-        const label = r.recipient_username || r.recipient_email || "—";
-        const title = r.recipient_email || label;
+  // ── Sekcje Oczekujące · Aktywni: wspólny komponent (share-sections.js) ──
+  if (!shareSectionsHost) return;
 
-        const row = document.createElement("div");
-        row.className = "shareRow";
-        row.innerHTML = `
-          <div class="shareEmail" title="${escapeHtml(title)}">
-            ${escapeHtml(label)}
-          </div>
-          <div class="shareRowActions">
-            <button class="btn xsm" data-cancel type="button" title="${escapeHtml(t("bases.shareModal.cancelPending"))}">${icon("trash")}</button>
-          </div>
-        `;
-
-        row.querySelector("[data-cancel]")?.addEventListener("click", async (e) => {
-          e.stopPropagation();
+  const pendingRows = (pending || []).map((r) => {
+    const label = r.recipient_username || r.recipient_email || "—";
+    return {
+      id: r.task_id,
+      label,
+      title: r.recipient_email || label,
+      actions: [{
+        key: "cancel",
+        icon: "trash",
+        title: t("bases.shareModal.cancelPending"),
+        onClick: async () => {
           setMsg(shareMsg, "");
-          if (r.task_id) {
-            const { data: ok, error } = await sb().rpc("base_share_cancel_task", { p_task_id: r.task_id });
-            if (error || !ok) {
-              await alertModal({ text: t("bases.share.failed") });
-              return;
-            }
-            invalidateShareModalCache(b.id);
-            await renderShareModal();
+          if (!r.task_id) return;
+          const { data: ok, error } = await sb().rpc("base_share_cancel_task", { p_task_id: r.task_id });
+          if (error || !ok) {
+            await alertModal({ text: t("bases.share.failed") });
+            return;
           }
+          invalidateShareModalCache(b.id);
+          await renderShareModal();
+        },
+      }],
+    };
+  });
+
+  const activeRows = (shared || []).map((r) => {
+    const userId = r.user_id;
+    const label = r.email || r.username || "—";
+    const role = r.role || "viewer";
+
+    const roleEl = document.createElement("div");
+    roleEl.className = "ui-select share-role-select";
+    roleEl.dataset.userId = String(userId);
+    roleEl.innerHTML = `
+      <button class="btn sm ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
+        <span class="ui-select-label">—</span>
+        <span class="ui-select-caret" aria-hidden="true"><i class="ico" data-icon="caret-down"></i></span>
+      </button>
+      <div class="ui-select-menu" role="listbox"></div>`;
+    const roleSelectInst = initUiSelect(roleEl, {
+      options: [
+        { value: "editor", label: t("bases.share.roleEditor") || "Edycja" },
+        { value: "viewer", label: t("bases.share.roleViewer") || "Przeglądanie" },
+      ],
+      value: role,
+      onChange: async (newRole) => {
+        roleSelectInst?.setDisabled(true);
+        setMsg(shareMsg, "");
+        const { data, error } = await sb().rpc("update_base_share_role", {
+          p_base_id: b.id,
+          p_user_id: userId,
+          p_role: newRole,
         });
-        sharePendingList.appendChild(row);
-      }
-    }
-  }
+        roleSelectInst?.setDisabled(false);
+        const rowRes = Array.isArray(data) ? data[0] : data;
+        const ok = !error && !!rowRes?.ok;
+        invalidateShareModalCache(b.id);
+        await renderShareModal(); // czyści komunikat -- ustawiamy go dopiero potem
+        setMsg(shareMsg, ok ? t("bases.share.roleChanged") : t("bases.share.failed"));
+      },
+    });
 
-  // ── SHARED LIST (aktywni - którzy zaakceptowali) ──
-  if (shareSharedList) {
-    const rows = shared || [];
-    if (!rows.length) {
-      const empty = document.createElement("div");
-      empty.className = "share-empty-state";
-      empty.textContent = t("bases.shareModal.emptyShared");
-      shareSharedList.replaceChildren(empty);
-    } else {
-      shareSharedList.innerHTML = "";
-      for (const r of rows) {
-        const userId = r.user_id;
-        const label = r.email || r.username || "—";
-        const title = r.email || label;
-        const role = r.role || "viewer";
-
-        const row = document.createElement("div");
-        row.className = "shareRow";
-        row.innerHTML = `
-          <div class="shareEmail" title="${escapeHtml(title)}">
-            ${escapeHtml(label)}
-          </div>
-          <div class="shareRowActions">
-            <div class="ui-select share-role-select" data-user-id="${escapeHtml(userId)}">
-              <button class="btn sm ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
-                <span class="ui-select-label">—</span>
-                <span class="ui-select-caret" aria-hidden="true"><i class="ico" data-icon="caret-down"></i></span>
-              </button>
-              <div class="ui-select-menu" role="listbox"></div>
-            </div>
-            <button class="btn xsm" data-x type="button" title="${escapeHtml(t("bases.share.remove"))}">${icon("trash")}</button>
-          </div>
-        `;
-
-        // Zmiana roli
-        const roleSelectEl = row.querySelector(".share-role-select");
-        const roleSelectInst = initUiSelect(roleSelectEl, {
-          options: [
-            { value: "editor", label: t("bases.share.roleEditor") || "Edycja" },
-            { value: "viewer", label: t("bases.share.roleViewer") || "Przeglądanie" },
-          ],
-          value: role,
-          onChange: async (newRole) => {
-            const selUserId = roleSelectEl?.dataset.userId;
-            if (!selUserId) return;
-            roleSelectInst?.setDisabled(true);
-            setMsg(shareMsg, "");
-
-            const { data, error } = await sb().rpc("update_base_share_role", {
-              p_base_id: b.id,
-              p_user_id: selUserId,
-              p_role: newRole,
-            });
-
-            roleSelectInst?.setDisabled(false);
-            const rowRes = Array.isArray(data) ? data[0] : data;
-            const ok = !error && !!rowRes?.ok;
-            invalidateShareModalCache(b.id);
-            await renderShareModal(); // czyści komunikat -- ustawiamy go dopiero potem
-            setMsg(shareMsg, ok ? t("bases.share.roleChanged") : t("bases.share.failed"));
-          },
-        });
-
-        // Usuń
-        row.querySelector("[data-x]")?.addEventListener("click", async (e) => {
-          e.stopPropagation();
+    return {
+      id: userId,
+      label,
+      title: r.email || label,
+      extras: [roleEl],
+      actions: [{
+        key: "remove",
+        icon: "trash",
+        title: t("bases.share.remove"),
+        onClick: async () => {
           const ok = await confirmModal({
             title: t("bases.share.removeTitle"),
             text: t("bases.share.removeText", { email: label }),
@@ -1121,11 +1091,15 @@ async function renderShareModal() {
           }
           invalidateShareModalCache(b.id);
           await renderShareModal();
-        });
-        shareSharedList.appendChild(row);
-      }
-    }
-  }
+        },
+      }],
+    };
+  });
+
+  renderShareSections(shareSectionsHost, {
+    pending: { rows: pendingRows, subtitle: t("bases.shareModal.sectionPendingSub") },
+    active: { rows: activeRows, subtitle: t("bases.shareModal.sectionSharedSub") },
+  });
 }
 
 // Enter w polu + klik "Dodaj" (albo dwa kliki) nie mogą wysłać dwóch zaproszeń/maili.
@@ -1294,8 +1268,10 @@ function render() {
 
   const renderTile = (b, hostEl) => {
     const tile = document.createElement("div");
-    tile.className = "card";
+    tile.className = "card tile";
     tile.dataset.baseId = b.id;
+    tile.dataset.created = b.created_at || "";
+    tile.dataset.updated = b.updated_at || "";
     tile.dataset.role = b.sharedRole || (b.proposed ? b.proposedRole : null) || "owner";
     if (b.id === selectedId) tile.classList.add("selected");
     if (b.proposed) tile.classList.add("proposed");
@@ -1366,12 +1342,11 @@ function render() {
           .join("")
       : "";
 
+      // wspólny kafel (base.css .tile): nazwa, oznaczenia przy dole, ikona w rogu
       tile.innerHTML = `
         ${deleteBtn}
-        <div>
-          <div class="name">${escapeHtml(b.name || t("bases.defaults.baseLabel"))}</div>
-          <div class="meta">${badgesHtml}</div>
-        </div>
+        <div class="name">${escapeHtml(b.name || t("bases.defaults.baseLabel"))}</div>
+        <div class="tileTags">${badgesHtml}</div>
         ${proposedBtns}
       `;
     

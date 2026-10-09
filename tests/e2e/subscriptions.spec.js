@@ -76,13 +76,15 @@ test("pełny przepływ: zaproszenie, akceptacja i anulowanie z czystym stanem", 
     await expect(owner.page.locator("#subscribersGrid")).toContainText("Oczekujące");
 
     await openSubscriptions(subscriber.page, "?tab=subscriptions");
-    const subscriptionRow = subscriber.page.locator("#subscriptionsGrid .card").filter({ hasText: /test7/i });
-    await expect(subscriptionRow).toContainText("Oczekujące");
+    // stan = sekcja (Oczekujące · Aktywni), nie plakietka na kaflu
+    const subscriptionRow = subscriber.page.locator("#subscriptionsGrid .shareRow").filter({ hasText: /test7/i });
+    const inSection = (name) => subscriber.page.locator("#subscriptionsGrid .shareSection").filter({ has: subscriber.page.locator(".shareSectionTitle", { hasText: name }) }).locator(".shareRow").filter({ hasText: /test7/i });
+    await expect(inSection("Oczekujące")).toHaveCount(1);
     await subscriptionRow.click();
     await subscriber.page.locator("#btnAccept").click();
-    await expect(subscriptionRow).toContainText("Aktywny");
+    await expect(inSection("Aktywni")).toHaveCount(1);
 
-    await subscriptionRow.locator(".x").click();
+    await subscriptionRow.locator('[data-act="remove"]').click();
     const confirm = subscriber.page.locator(".uni-modal");
     await expect(confirm).toContainText("anulować tę subskrypcję");
     await confirm.getByRole("button", { name: "Anuluj subskrypcję" }).click();

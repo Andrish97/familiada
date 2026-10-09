@@ -40,3 +40,14 @@ export function gameStateKey(status, { isPrepared = false, playOk = false } = {}
 export function showEmptyResult({ hasQuery, filterValue, total, visible }) {
   return (!!hasQuery || !!filterValue) && total > 0 && visible === 0;
 }
+
+/** Wspólne sortowanie list gier i baz (list-search.js, opcja sort); ustawienie w adresie (?sort=). */
+export const SORT_LIST = {
+  param: "sort",
+  defaultKey: "common.sort.updated",
+  ariaKey: "common.sort.label",
+  options: [
+    { value: "created", labelKey: "common.sort.created" },
+    { value: "name", labelKey: "common.sort.name" },
+  ],
+};

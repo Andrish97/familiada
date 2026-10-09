@@ -5,6 +5,12 @@ const pl = {
     icon: "flag-pl",
   },
   common: {
+    sort: {
+      label: "Sortowanie",
+      updated: "Ostatnio zmienione",
+      created: "Najnowsze",
+      name: "Nazwa A–Z",
+    },
     searchByName: "Szukaj…",
     filterAll: "Wszystkie",
     noResults: "Brak wyników.",
@@ -72,6 +78,16 @@ const pl = {
       left: "© {year} Familiada — system do gry na żywo",
       contactBtn: "Kontakt",
     },
+  },
+  shareSections: {
+    subscribers: "Subskrybenci",
+    subscribersSub: "Jeszcze bez zaproszenia — zaznacz, kogo zaprosić.",
+    pending: "Oczekujące",
+    pendingSub: "Zaproszenie wysłane, czekamy na odpowiedź.",
+    active: "Aktywni",
+    activeSub: "Przyjęli zaproszenie.",
+    declined: "Odrzucone",
+    declinedSub: "Odmówili zaproszenia.",
   },
   nav: {
     backTo: "{page}",
@@ -816,6 +832,7 @@ const pl = {
       tallyInfo: "podliczanie",
     },
     share: {
+      activeSub: "Zagłosowali w tej ankiecie.",
       linkTitle: "Link",
       subsTitle: "Subskrybenci",
       sendInvites: "Wyślij zaproszenia",
