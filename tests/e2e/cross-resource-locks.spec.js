@@ -644,7 +644,7 @@ test("games.js: reset gry do draftu po ankiecie zablokowany alert-modalem, gdy g
     await expect(page.locator(".uni-modal .mSub")).toContainText("otwarta gdzie indziej", { timeout: 5000 });
     await page.locator(".uni-foot .btn.gold").click();
 
-    await expect(page).toHaveURL(/\/games/, { timeout: 5000 });
+    await expect(page).toHaveURL(/\/games\/(?:\?[^\/]*)?$/, { timeout: 5000 });
 
     const after = await page.evaluate(async ({ gameId, questionId }) => {
       const sb = window.__sbClient;

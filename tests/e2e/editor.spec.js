@@ -499,7 +499,7 @@ test("edytor: wejście na edytor gdy ankieta jest otwarta (poll_open) -> pełna 
     await expect(page.locator("#resourceLockGuardMsg")).toContainText(/ankiet/i);
     await expect(page).toHaveURL(/\/games\/editor/);
     await page.locator("#resourceLockGuardBack").click();
-    await page.waitForURL(/\/games/, { timeout: 15000 });
+    await page.waitForURL(/\/games\/(?:\?[^\/]*)?$/, { timeout: 15000 });
   } finally {
     await deleteGame(page, gameId);
   }
@@ -518,7 +518,7 @@ test("edytor: wejście gdy ankieta jest 'ready' i Anuluj w confirmie -> nic się
     await page.goto(`https://www.familiada.online/games/editor?id=${gameId}`, { waitUntil: "domcontentloaded" });
     await expect(page.locator(".uni-modal")).toBeVisible({ timeout: 15000 });
     await page.locator(".uni-foot .btn:not(.gold)").click(); // Anuluj
-    await page.waitForURL(/\/games/, { timeout: 15000 });
+    await page.waitForURL(/\/games\/(?:\?[^\/]*)?$/, { timeout: 15000 });
 
     const game = await getGameRow(page, gameId);
     expect(game.status, "Anuluj nie powinno zresetować statusu").toBe("ready");
@@ -980,7 +980,7 @@ test.describe("editor: audyt -- pisanie i zapisy", () => {
       await delayRequests(page, { path: "questions", method: "PATCH", ms: 1500 });
       await page.locator("#qText").fill("Tekst przed wyjściem");
       await page.locator("#btnBack").click();
-      await page.waitForURL(/\/games/, { timeout: 15000 });
+      await page.waitForURL(/\/games\/(?:\?[^\/]*)?$/, { timeout: 15000 });
 
       const qs = await getQuestionsRows(page, gameId);
       expect(qs.find((q) => q.id === qId).text).toBe("Tekst przed wyjściem");
@@ -1106,7 +1106,7 @@ test.describe("editor: audyt -- import i wejście na stronę", () => {
     await expect(page.locator(".uni-modal .mSub")).toHaveText("Ta gra nie istnieje albo nie masz do niej dostępu.", { timeout: 15000 });
     await expect(page).toHaveURL(/\/games\/editor/);
     await page.locator(".uni-foot .btn.gold").click();
-    await page.waitForURL(/\/games/, { timeout: 15000 });
+    await page.waitForURL(/\/games\/(?:\?[^\/]*)?$/, { timeout: 15000 });
   });
 
   test("usunięcie pytania: jedno RPC usuwa i przenumerowuje (bez dziur w numeracji)", async ({ page, context }) => {
