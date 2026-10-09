@@ -72,7 +72,7 @@ const pl = {
     },
   },
   nav: {
-    backTo: "Wróć do: {page}",
+    backTo: "{page}",
     page: {
       home: "Strona główna",
       login: "Logowanie",
@@ -816,8 +816,6 @@ const pl = {
       sendAfterStart: "Zaproszenia wyślesz po uruchomieniu ankiety.",
       linkAfterStart: "Link pojawi się po uruchomieniu",
       copyLink: "Kopiuj link",
-      showQr: "Pokaż QR",
-      hideQr: "Ukryj QR",
       enlargeQr: "Powiększ kod QR",
       summary: "Zaproszeni {invited} · Zagłosowali {voted} · Odrzucili {declined}",
       selectAll: "Zaznacz wszystkich",

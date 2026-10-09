@@ -21,8 +21,8 @@
 // from strony, która go niesie; łańcuch dłuższy niż MAX_RET_DEPTH, obcy albo
 // zepsuty ret oznacza powrót do parent. Bez fallbacków i aliasów.
 
-import { getUiLang, t } from "../../translation/translation.js?v=v2026-10-09T17345";
-import { iconText } from "./icons.js?v=v2026-10-09T17345";
+import { getUiLang, t } from "../../translation/translation.js?v=v2026-10-09T17394";
+import { iconText } from "./icons.js?v=v2026-10-09T17394";
 
 export const MAX_RET_DEPTH = 4;
 
@@ -220,7 +220,7 @@ export function loginUrl(ctx) {
   return rel(u);
 }
 
-/** Etykieta przycisku „Wstecz”: „Wróć do: {strona}”. */
+/** Etykieta przycisku „Wstecz”: „{strona}”. */
 export function backLabel(pageId, ctx) {
   const target = backTarget(pageId, ctx);
   if (!target) return "";
@@ -228,7 +228,7 @@ export function backLabel(pageId, ctx) {
 }
 
 /**
- * Wstawia do przycisku ikonę i etykietę „Wróć do: …” i odświeża ją przy
+ * Wstawia do przycisku ikonę i etykietę „{strona}” i odświeża ją przy
  * zmianie języka. getCtx — funkcja zwracająca kontekst (np. { anon }).
  */
 export function renderBackLabel(btn, pageId, getCtx) {
