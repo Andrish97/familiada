@@ -3,10 +3,9 @@
 // 1 blokad, podgląd Wyświetlacza przez display2?preview=1 + web/js/gameplay/previewRow.js
 // itd.) — trzymana jako osobny plik, żeby modal Control v2 nie zależał od
 // tej samej strony, którą wciąż ładuje stary control.html przez /game-settings.
-import { requireAuth } from "../../../shared/js/core/auth.js?v=v2026-10-09T21300";
 import { t, getUiLang } from "../../../shared/translation/translation.js?v=v2026-10-09T21300";
-import { linkTo, backHref, backTarget, renderBackLabel } from "../../../shared/js/core/nav-map.js?v=v2026-10-09T21300";
-import { setTopbarAccount } from "../../../shared/js/core/topbar-controller.js?v=v2026-10-09T21300";
+import { linkTo, backHref, backTarget } from "../../../shared/js/core/nav-map.js?v=v2026-10-09T21300";
+import { initPage } from "../../../shared/js/core/page-init.js?v=v2026-10-09T21300";
 import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-09T21300";
 import { loadQuestions, guardGameState } from "../../../shared/js/core/game-validate.js?v=v2026-10-09T21300";
 import { loadFont5x7, buildLogoPreviewCanvas } from "../../../shared/js/core/logo-preview.js?v=v2026-10-09T21300";
@@ -22,12 +21,9 @@ import {
 import {
   uploadGameSound, deleteGameSound, deleteAllGameSounds,
 } from "../../../shared/js/core/sfx-cloud.js?v=v2026-10-09T21300";
-import { guardDesktopOnly } from "../../../shared/js/core/device-guard.js?v=v2026-10-09T21300";
 import { guardResourceLocks } from "../../../shared/js/core/resource-lock.js?v=v2026-10-09T21300";
 import { updateChecked, ROW_GONE } from "../../../shared/js/core/db-guard.js?v=v2026-10-09T21300";
 import { icon, iconText } from "../../../shared/js/core/icons.js?v=v2026-10-09T21300";
-
-guardDesktopOnly();
 
 const qs = new URLSearchParams(location.search);
 const gameId = qs.get("id");
@@ -1678,9 +1674,19 @@ function showIngameGuard() {
 
 // ===== MAIN =====
 async function main() {
-  const user = await requireAuth("/login/");
-  setTopbarAccount(user, { showAuthEntry: false });
-  document.querySelector('.topbar')?.classList.add('topbar-ready');
+  // Dostęp, nakładka wąskiego okna / telefonu, „Wstecz” i konto wg mapy.
+  // W trybie modal (iframe Control) nie ma „Wstecz”; instrukcja otwiera się
+  // w nakładce, więc „Wskazówki” obsługuje strona.
+  const user = await initPage("gameSettings", {
+    back: _isModal ? false : "btnBack",
+    manual: false,
+    account: { showAuthEntry: false },
+    onBack: async (href) => {
+      if (isDirty && !await confirmModal({ text: t("gameSettings.unsavedConfirm") || "Masz niezapisane zmiany. Czy na pewno chcesz wyjść?" })) return;
+      location.href = href;
+    },
+  });
+  if (!user) return; // initPage przekierował na logowanie
 
   if (!gameId) {
     location.href = linkTo("games");
@@ -1763,8 +1769,6 @@ async function main() {
     // Sidebar toggle (☰ button) i przycisk zamknięcia (✕) -- wpięte
     // synchronicznie na poziomie modułu, patrz komentarz przy _isModal na
     // górze pliku.
-  } else {
-    renderBackLabel(btnBack, "gameSettings");
   }
 
   localSettings = mergeSettings(game.settings);
@@ -1838,14 +1842,6 @@ async function main() {
     setActiveCat(activeCat);
     await saveAll();
   });
-
-  // Back button
-  if (!isModal) {
-    btnBack?.addEventListener("click", async () => {
-      if (isDirty && !await confirmModal({ text: t("gameSettings.unsavedConfirm") || "Masz niezapisane zmiany. Czy na pewno chcesz wyjść?" })) return;
-      location.href = backHref("gameSettings");
-    });
-  }
 
   initColorModal();
 
