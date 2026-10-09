@@ -85,6 +85,7 @@ test("logo Hosta: zapis w Ustawieniach rozgrywki i podgląd zapisanego wariantu 
     await expect(hostPreview.locator("#cover2Logo canvas")).toBeVisible();
     await expect.poll(() => hostPreview.locator("#cover2Logo").evaluate(el => el.childElementCount)).toBeGreaterThan(0);
     const settingsDisplay = page.frameLocator("#gsDisplayPreview");
+    await expect(settingsDisplay.locator("#gameScreen")).toBeVisible({ timeout: 15_000 });
     await expect.poll(() => settingsDisplay.locator("#displays").evaluate(el => el.innerHTML.length)).toBeGreaterThan(0);
     await page.locator("#gsLivePreviewWrap").screenshot({ path: testInfo.outputPath("shot-host-logo-game-settings.png") });
 
@@ -128,21 +129,8 @@ test("logo Hosta: zapis w Ustawieniach rozgrywki i podgląd zapisanego wariantu 
     await expect(page.locator("#c2DisplayPreview iframe")).toBeVisible();
     await expect(page.locator("#c2HostPreview iframe")).toBeVisible();
     const controlDisplay = page.frameLocator("#c2DisplayPreview iframe");
+    await expect(controlDisplay.locator("#gameScreen")).toBeVisible({ timeout: 15_000 });
     await expect.poll(() => controlDisplay.locator("#displays").evaluate(el => el.innerHTML.length)).toBeGreaterThan(0);
-    console.log("Control Display preview:", JSON.stringify({
-      src: await page.locator("#c2DisplayPreview iframe").getAttribute("src"),
-      location: await controlDisplay.locator("#displayRoot").evaluate(() => location.href),
-      state: await controlDisplay.locator("#displayRoot").evaluate(el => ({
-      className: el.className,
-      size: { width: el.getBoundingClientRect().width, height: el.getBoundingClientRect().height },
-      gameScreen: document.getElementById("gameScreen")?.className,
-      blackScreen: document.getElementById("blackScreen")?.className,
-      baseNodes: document.getElementById("baseSvg")?.childElementCount,
-      displayNodes: document.getElementById("displays")?.childElementCount,
-      displayText: document.getElementById("displays")?.textContent?.trim(),
-      })),
-    }));
-    await controlDisplay.locator("#displayRoot").screenshot({ path: testInfo.outputPath("shot-control-display-frame.png") });
     const controlHost = page.frameLocator("#c2HostPreview iframe");
     await expect(controlHost.locator("#cover2Logo")).toBeVisible({ timeout: 15_000 });
     await expect.poll(() => controlHost.locator("html").evaluate(el => getComputedStyle(el).getPropertyValue("--host-cover-accent").trim().toLowerCase())).toBe("#33aaff");
