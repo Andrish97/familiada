@@ -258,6 +258,11 @@
   text-align: right;
 }
 .pollBarHint:empty{ display: none; }
+/* przyciski stanu: jedna wysokość, tekst nie zawija się w środku przycisku */
+.pollBarActions .btn{ white-space: nowrap; flex: 0 0 auto; }
+@media (max-width: 980px){
+  .pollBarHint{ max-width: min(420px, 100%); }
+}
 
 /* B. Karta z wypustkami (2 × 50%), wzór: bases.css */
 .tabs-card.hub-tabs.polls-tabs-card{
@@ -367,6 +372,20 @@
   justify-content: center;
   gap: 8px;
   margin-top: 10px;
+}
+.pollLinkActions .btn{ white-space: nowrap; flex: 0 0 auto; }
+.pollSecHead .btn{ white-space: nowrap; flex: 0 0 auto; }
+
+/* Zamykanie ankiety tekstowej: narzędzia historii i scalania w jednym rzędzie */
+.tcHistoryTools{ display: flex; align-items: center; gap: 8px; flex: 0 0 auto; }
+.tcQ .head > div:first-child{ min-width: 0; }
+.tcTools{ display: flex; align-items: center; gap: 8px; flex: 0 0 auto; }
+.tcTools .btn{ white-space: nowrap; }
+#textCloseCard > .row{ margin-top: 15px; margin-bottom: 0; justify-content: flex-end; }
+#textCloseCard > .row .btn{ white-space: nowrap; }
+@media (max-width: 600px){
+  #textCloseCard > .row{ justify-content: stretch; }
+  #textCloseCard > .row .btn{ flex: 1 1 0; }
 }
 
 /* Subskrybenci: kafle jak na listach (games.css) */
