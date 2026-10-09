@@ -8,10 +8,10 @@
 // sam wygląd co sortowanie w Subskrypcjach; wartość w adresie (?param=).
 // Kafel niesie wartość w atrybucie data-* (filter.attr).
 
-import { t } from "../../translation/translation.js?v=v2026-10-09T19290";
-import { icon } from "./icons.js?v=v2026-10-09T19290";
-import { initUiSelect } from "./ui-select.js?v=v2026-10-09T19290";
-import { filterFromSearch, filterToHref, matchesFilter, showEmptyResult } from "./list-filter.js?v=v2026-10-09T19290";
+import { t } from "../../translation/translation.js?v=v2026-10-09T19401";
+import { icon } from "./icons.js?v=v2026-10-09T19401";
+import { initUiSelect } from "./ui-select.js?v=v2026-10-09T19401";
+import { filterFromSearch, filterToHref, matchesFilter, showEmptyResult } from "./list-filter.js?v=v2026-10-09T19401";
 
 const norm = (s) => String(s || "").toLocaleLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
 
@@ -45,7 +45,7 @@ export function initListSearch({ grids, tile, name, filter, sort }) {
   input.className = "searchText";
   const clear = document.createElement("button");
   clear.type = "button";
-  clear.className = "btn ghost";
+  clear.className = "btn";
   clear.innerHTML = icon("close");
   const label = () => {
     input.placeholder = t("common.searchByName");

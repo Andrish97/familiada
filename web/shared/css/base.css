@@ -447,8 +447,14 @@ a.btn.gold {
 }
 
 .btn.danger {
-    --btn-tint: rgba(255,120,120,.12);
-    border-color: rgba(255,120,120,.35)
+    /* Niebezpieczny: stonowany, czerwony obrys (bez czerwonego wypełnienia) */
+    border-color: rgba(255,110,110,.5);
+    color: rgba(255,255,255,.78)
+}
+
+.btn.danger:hover:not(:disabled) {
+    border-color: rgba(255,110,110,.85);
+    color: #fff
 }
 
 .btn.green {
@@ -546,7 +552,6 @@ main{
     border-color: #3a3629;
 }
 .btn.danger:disabled {
-    --btn-tint: rgba(255,120,120,.05);
     color: #7a5a62;
     border-color: #3a2630;
 }
@@ -2081,7 +2086,7 @@ body{
 }
 
 /* ===== Pole szukania — jedno dla menedżera bazy i list (gry, bazy, logo) =====
-   .searchBox > input.searchText + button.btn.ghost (✕ czyści). Szerokość
+   .searchBox > input.searchText + button.btn (✕ czyści). Szerokość
    i dodatki (chipy w menedżerze bazy) ustawia strona. */
 .searchBox{
   display: flex;

@@ -112,26 +112,7 @@ input:focus {
     justify-content: space-between;
 }
 
-.btn {
-    padding: 12px;
-    border-radius: 14px;
-    border: 1px solid rgba(255,255,255,.18);
-    --btn-tint: rgba(255,255,255,.06);
-    background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, #050914); /* kryjące: css/base.css */
-    color: #fff;
-    cursor: pointer;
-    font-weight: 900;
-    letter-spacing: .06em;
-    text-transform: uppercase;
-}
-
-.btn.main {
-    border-color: rgba(255,220,120,.35);
-    --btn-tint: rgba(255,220,120,.18); /* kryjące tło: css/base.css */
-}
-
-.btn:hover { filter: brightness(1.08); }
-.btn:active { transform: translateY(1px); }
+/* Przyciski: wspólne .btn / .btn.gold z shared/css/base.css */
 
 /* ── misc ── */
 

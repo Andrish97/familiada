@@ -593,19 +593,14 @@ const uk = {
   },
   bases: {
     title: "Familiada — бази питань",
-    logout: "Вийти",
     headerTitle: "Твої бази питань",
     headerHint: "Натисни плитку, щоб вибрати. Подвійне натискання змінює назву.",
     headerHintShared: "Натисни плитку, щоб вибрати.",
     actions: {
       browse: "Переглянути",
-      browseMobile: "Перегл.",
       share: "Поділитися",
-      shareMobile: "Поділ.",
       export: "Експорт",
-      exportMobile: "Експ",
       import: "Імпорт",
-      importMobile: "Імп",
       remove: "Видалити",
       leaveShared: "Прибрати зі списку",
     },
@@ -794,7 +789,6 @@ const uk = {
   },
   polls: {
     title: "Familiada — опитування та результати",
-    logout: "Вийти",
     pageTitle: "Опитування",
     typeShort: {
       text: "текстове",
@@ -992,7 +986,6 @@ const uk = {
     title: "Familiada — підказки",
     tabsLabel: "Вкладки підказок",
     legal: "Політика конфіденційності",
-    logout: "Вийти",
     pageTitle: "Підказки для користувача",
     tabs: {
       general: "Загальний опис",
@@ -2488,7 +2481,6 @@ const uk = {
     description: "Політика конфіденційності Familiada Online: обробка персональних даних, файли cookie та зв’язок з адміністратором.",
     pageTitle: "Familiada Online — Політика конфіденційності",
     backToManual: "Підказки",
-    logout: "Вийти",
     content: `
       <p class="m-p"><strong>Familiada Online</strong></p>
       <p class="m-p">Останнє оновлення: 15 липня 2026 року</p>
@@ -2676,19 +2668,12 @@ const uk = {
     },
     actions: {
       edit: "Редагувати",
-      editMobile: "Редаг.",
       preview: "Перегляд",
-      previewMobile: "Перегл.",
       play: "Грати",
-      playMobile: "Грати",
       poll: "Опитування",
-      pollMobile: "Опит.",
       exportFile: "Експортувати у файл",
-      exportFileMobile: "Експ.файл",
       exportBase: "Експортувати у базу",
-      exportBaseMobile: "Експ.база",
       import: "Імпорт",
-      importMobile: "Імп.",
       settings: "Налаштування гри",
     },
     preview: {
@@ -2875,7 +2860,6 @@ const uk = {
     pageTitlePrefix: "Редактор гри",
     title: "Familiada — редактор гри",
     backToQuestions: "Назад",
-    logout: "Вийти",
     pageTitle: "Редактор",
     gameNamePlaceholder: "Назва гри",
     questionsTitle: "Питання",
@@ -3131,7 +3115,6 @@ const uk = {
   },
   pollsHub: {
     title: "Familiada — центр опитувань",
-    logout: "Вийти",
     header: {
       title: "Центр опитувань",
       hint: "Керуй опитуваннями та запрошеннями до голосування.",
@@ -3363,7 +3346,6 @@ const uk = {
   pollsHubPolls: {
     dash: "-",
     title: "Familiada — центр опитувань",
-    logout: "Вийти",
     header: {
       title: "Центр опитувань",
       hint: "Керуй опитуваннями та запрошеннями до голосування.",
@@ -3627,7 +3609,6 @@ const uk = {
     taskFrom: "Від: {owner}",
     dash: "-",
     title: "Familiada — підписки",
-    logout: "Вийти",
     header: {
       title: "Центр опитувань",
       hint: "Керуй опитуваннями та запрошеннями до голосування.",
@@ -3655,7 +3636,6 @@ const uk = {
     },
     actions: {
       resendLong: "Надіслати знову",
-      resendShort: "Знову",
       vote: "Голосувати",
       share: "Поділитися",
       details: "Деталі",
@@ -4096,7 +4076,6 @@ const uk = {
   baseExplorer: {
     title: "Familiada — менеджер бази питань",
     headerTitle: "Менеджер бази питань",
-    logout: "Вийти",
     common: {
       close: "Закрити",
       save: "Зберегти",

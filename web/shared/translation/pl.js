@@ -606,19 +606,14 @@ const pl = {
   },
   bases: {
     title: "Familiada — bazy pytań",
-    logout: "Wyloguj",
     headerTitle: "Twoje bazy pytań",
     headerHint: "Naciśnij kafelek, żeby go zaznaczyć. Podwójne naciśnięcie zmienia nazwę.",
     headerHintShared: "Naciśnij kafelek, żeby go zaznaczyć.",
     actions: {
       browse: "Przeglądaj",
-      browseMobile: "Przegl.",
       share: "Udostępnij",
-      shareMobile: "Udos.",
       export: "Eksport",
-      exportMobile: "Exp",
       import: "Import",
-      importMobile: "Imp",
       remove: "Usuń",
       leaveShared: "Usuń z listy",
     },
@@ -807,7 +802,6 @@ const pl = {
   },
   polls: {
     title: "Familiada — ankieta i wyniki",
-    logout: "Wyloguj",
     pageTitle: "Ankieta",
     typeShort: {
       text: "tekstowa",
@@ -1005,7 +999,6 @@ const pl = {
     title: "Familiada — wskazówki",
     tabsLabel: "Zakładki wskazówek",
     legal: "Polityka prywatności",
-    logout: "Wyloguj",
     pageTitle: "Wskazówki dla użytkownika",
     tabs: {
       general: "Ogólny opis",
@@ -2408,7 +2401,6 @@ const pl = {
     description: "Polityka prywatności serwisu Familiada Online: zasady przetwarzania danych osobowych, pliki cookies i kontakt z administratorem.",
     pageTitle: "Familiada Online — Polityka Prywatności",
     backToManual: "Wskazówki",
-    logout: "Wyloguj",
     content: `
       <p class="m-p"><strong>Familiada Online</strong></p>
       <p class="m-p">Data ostatniej aktualizacji: 15 lipca 2026 r.</p>
@@ -2579,19 +2571,12 @@ const pl = {
     },
     actions: {
       edit: "Edytuj",
-      editMobile: "Edyt.",
       preview: "Podgląd",
-      previewMobile: "Podgl.",
       play: "Graj",
-      playMobile: "Graj",
       poll: "Ankieta",
-      pollMobile: "Ankieta",
       exportFile: "Eksportuj do pliku",
-      exportFileMobile: "Exp.plk",
       exportBase: "Eksportuj do bazy",
-      exportBaseMobile: "Exp.bz",
       import: "Importuj",
-      importMobile: "Imp",
       settings: "Ustawienia gry",
     },
     preview: {
@@ -2778,7 +2763,6 @@ const pl = {
     pageTitlePrefix: "Edytor gry",
     title: "Familiada — edytor gry",
     backToQuestions: "Wstecz",
-    logout: "Wyloguj",
     pageTitle: "Edytor",
     gameNamePlaceholder: "Nazwa gry",
     questionsTitle: "Pytania",
@@ -3034,7 +3018,6 @@ const pl = {
   },
   pollsHub: {
     title: "Familiada — centrum ankiet",
-    logout: "Wyloguj",
     header: {
       title: "Centrum ankiet",
       hint: "Zarządzaj ankietami oraz zaproszeniami do ankiety.",
@@ -3266,7 +3249,6 @@ const pl = {
   pollsHubPolls: {
     dash: "-",
     title: "Familiada — centrum ankiet",
-    logout: "Wyloguj",
     header: {
       title: "Centrum ankiet",
       hint: "Zarządzaj ankietami oraz zaproszeniami do ankiety.",
@@ -3530,7 +3512,6 @@ const pl = {
     taskFrom: "Od: {owner}",
     dash: "-",
     title: "Familiada — subskrypcje",
-    logout: "Wyloguj",
     header: {
       title: "Centrum ankiet",
       hint: "Zarządzaj ankietami oraz zaproszeniami do ankiety.",
@@ -3558,7 +3539,6 @@ const pl = {
     },
     actions: {
       resendLong: "Ponów zaproszenie",
-      resendShort: "Ponów",
       vote: "Głosuj",
       share: "Udostępnij",
       details: "Szczegóły",
@@ -3999,7 +3979,6 @@ const pl = {
   baseExplorer: {
     title: "Familiada — menedżer bazy pytań",
     headerTitle: "Menedżer bazy pytań",
-    logout: "Wyloguj",
     common: {
       close: "Zamknij",
       save: "Zapisz",

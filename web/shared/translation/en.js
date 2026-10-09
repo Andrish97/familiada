@@ -598,19 +598,14 @@ const en = {
   },
   bases: {
     title: "Familiada — question bases",
-    logout: "Log out",
     headerTitle: "Your question bases",
     headerHint: "Press a tile to select it. Double-tap to rename.",
     headerHintShared: "Press a tile to select it.",
     actions: {
       browse: "Browse",
-      browseMobile: "Browse",
       share: "Share",
-      shareMobile: "Share",
       export: "Export",
-      exportMobile: "Exp",
       import: "Import",
-      importMobile: "Imp",
       remove: "Delete",
       leaveShared: "Remove from list",
     },
@@ -799,7 +794,6 @@ const en = {
   },
   polls: {
     title: "Familiada — poll and results",
-    logout: "Log out",
     pageTitle: "Poll",
     typeShort: {
       text: "text",
@@ -991,7 +985,6 @@ const en = {
     title: "Familiada — guide",
     tabsLabel: "User guide tabs",
     legal: "Privacy Policy",
-    logout: "Log out",
     pageTitle: "User guide",
     tabs: {
       general: "Overview",
@@ -2497,7 +2490,6 @@ const en = {
     description: "Familiada Online privacy policy: personal data processing, cookies, and how to contact the administrator.",
     pageTitle: "Familiada Online — Privacy Policy",
     backToManual: "Guide",
-    logout: "Log out",
     content: `
       <p class="m-p"><strong>Familiada Online</strong></p>
       <p class="m-p">Last updated: July 15, 2026</p>
@@ -2684,19 +2676,12 @@ const en = {
     },
     actions: {
       edit: "Edit",
-      editMobile: "Edit",
       preview: "Preview",
-      previewMobile: "Preview",
       play: "Play",
-      playMobile: "Play",
       poll: "Poll",
-      pollMobile: "Poll",
       exportFile: "Export to file",
-      exportFileMobile: "Exp.file",
       exportBase: "Export to base",
-      exportBaseMobile: "Exp.base",
       import: "Import",
-      importMobile: "Import",
       settings: "Game settings",
     },
     preview: {
@@ -2877,7 +2862,6 @@ const en = {
     pageTitlePrefix: "Game editor",
     title: "Familiada — game editor",
     backToQuestions: "Back",
-    logout: "Log out",
     pageTitle: "Editor",
     gameNamePlaceholder: "Game name",
     questionsTitle: "Questions",
@@ -3133,7 +3117,6 @@ const en = {
   },
   pollsHub: {
     title: "Familiada — polls hub",
-    logout: "Log out",
     header: {
       title: "Polls hub",
       hint: "Manage polls and voting invitations.",
@@ -3365,7 +3348,6 @@ const en = {
   pollsHubPolls: {
     dash: "-",
     title: "Familiada — polls hub",
-    logout: "Log out",
     header: {
       title: "Polls hub",
       hint: "Manage polls and voting invitations.",
@@ -3629,7 +3611,6 @@ const en = {
     taskFrom: "From: {owner}",
     dash: "-",
     title: "Familiada — subscriptions",
-    logout: "Log out",
     header: {
       title: "Polls hub",
       hint: "Manage polls and voting invitations.",
@@ -3657,7 +3638,6 @@ const en = {
     },
     actions: {
       resendLong: "Resend invitation",
-      resendShort: "Resend",
       vote: "Vote",
       share: "Share",
       details: "Details",
@@ -4098,7 +4078,6 @@ const en = {
   baseExplorer: {
     title: "Familiada — question base manager",
     headerTitle: "Question base manager",
-    logout: "Log out",
     common: {
       close: "Close",
       save: "Save",
