@@ -320,8 +320,11 @@ wariant.
 - **Manual jest częścią odbioru zmian.** Zaktualizować wyłącznie sekcje Panelu
   sterowania i Ustawień rozgrywki w PL/EN/UK. Opisać warianty Piksele/Źródło,
   ich różnicę, podgląd Hosta obok Wyświetlacza w ustawieniach oraz wybrany
-  wariant i podgląd w Podsumowaniu Control. Zachować istniejące klasy,
-  typografię, notki i sposób oznaczania przycisków; nie zmieniać innych sekcji.
+  wariant i podgląd w Podsumowaniu Control. Manual opisuje też dopasowanie
+  Hosta do rozmiaru i orientacji ekranu, motywy i kolory używane na Hostcie,
+  układ przycisków Buzzerza w pionie i poziomie oraz wskazówkę pełnego ekranu
+  w Safari na iPhonie. Zachować istniejące klasy, typografię, notki i sposób
+  oznaczania przycisków; nie zmieniać innych sekcji.
 - **Sprawdzić wyrenderowany manual** w PL/EN/UK: obie właściwe zakładki mają
   widoczny, poprawnie wystylowany opis, bez kluczy tłumaczeń, pustych ikon ani
   rozjechanych elementów. Test ma wejść w zakładki Panel sterowania i Ustawienia
@@ -345,9 +348,12 @@ wariant.
   DOT, przeładował Ustawienia, a następnie sprawdził oba podglądy w Control.
   Zrzuty kontrolne są w artefakcie `e2e-shots` uruchomienia GitHub Actions
   `37878643663`.
-- E2E manuala potwierdził opis logo Hosta w sekcjach Control i Ustawień
-  rozgrywki w PL, EN i UK. Wszystkie 7 testów tego przebiegu zakończyło się
-  powodzeniem.
+- Manual jest zaktualizowany w treści widocznej użytkownikom PL/EN/UK oraz w
+  źródłowych plikach EN/UK. Oprócz logo opisuje teraz dopasowanie widoków do
+  orientacji, motywy i kolory Hosta, układ Buzzerza oraz wskazówkę iOS.
+- Po aktualizacji treści cały ukierunkowany przebieg manuala przeszedł 6/6;
+  sprawdza odpowiednie informacje w obu zakładkach we wszystkich trzech
+  językach.
 - Weryfikacja wyglądu na fizycznym iPhonie pozostaje osobnym testem odbiorowym;
   zrzuty z Playwrighta potwierdzają renderowanie w Chromium, nie zastępują
   sprawdzenia Safari/iOS i safe area na urządzeniu.

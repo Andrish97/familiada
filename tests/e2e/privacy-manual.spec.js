@@ -95,9 +95,9 @@ test("manual: treść i etykieta zakładek istnieją w PL/EN/UK", async ({ page 
 
 test("manual: Host logo jest opisane w Control i Ustawieniach rozgrywki w PL/EN/UK", async ({ page }, testInfo) => {
   const cases = [
-    { lang: "pl", control: "Logo prowadzącego", settings: "Przełącznik Logo prowadzącego", source: "Źródło" },
-    { lang: "en", control: "Host logo", settings: "The Host logo selector", source: "Source" },
-    { lang: "uk", control: "Логотип ведучого", settings: "Перемикач Логотип ведучого", source: "Джерело" },
+    { lang: "pl", control: "Logo prowadzącego", settings: "Przełącznik Logo prowadzącego", source: "Źródło", layout: "w poziomie są obok siebie", imageColors: "Obraz zachowuje własne barwy" },
+    { lang: "en", control: "Host logo", settings: "The Host logo selector", source: "Source", layout: "side by side in landscape", imageColors: "Images keep their own colours" },
+    { lang: "uk", control: "Логотип ведучого", settings: "Перемикач Логотип ведучого", source: "Джерело", layout: "поруч у горизонтальному режимі", imageColors: "Зображення зберігає власні кольори" },
   ];
 
   for (const item of cases) {
@@ -106,6 +106,7 @@ test("manual: Host logo jest opisane w Control i Ustawieniach rozgrywki w PL/EN/
     const control = page.locator("#tab-control .m-doc");
     await expect(control).toContainText(item.control);
     await expect(control).toContainText(item.source);
+    await expect(control).toContainText(item.layout);
     await expect(control.locator(".m-ul .m-strong").filter({ hasText: item.control })).toBeVisible();
     if (item.lang === "pl") await page.screenshot({ path: testInfo.outputPath("shot-manual-control-pl.png"), fullPage: true });
 
@@ -113,6 +114,7 @@ test("manual: Host logo jest opisane w Control i Ustawieniach rozgrywki w PL/EN/
     const settings = page.locator("#tab-gameSettings .m-doc");
     await expect(settings).toContainText(item.settings);
     await expect(settings).toContainText(item.source);
+    await expect(settings).toContainText(item.imageColors);
     await expect(settings.locator(".m-strong").filter({ hasText: item.control })).toBeVisible();
     await expect(settings.locator(".m-p").filter({ hasText: /preview|Podgląd|перегляд/i }).first()).toBeVisible();
     if (item.lang === "pl") await page.screenshot({ path: testInfo.outputPath("shot-manual-settings-pl.png"), fullPage: true });

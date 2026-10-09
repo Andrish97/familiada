@@ -70,6 +70,8 @@ You can also open the Display link copied from the panel directly on the TV. If 
 
 Connect the Host device and Buzzer next. Each has a **6-digit code** and QR code. Two separate phones, or a phone and tablet, are usually convenient.
 
+The Host view adjusts text size and row layout to the screen and its orientation. Classic uses a light ruled page; Modern uses a dark background and monospaced text. The background extends to the screen edges while content stays in the safe area. The Buzzer rearranges its team buttons by orientation: side by side in landscape and stacked in portrait. In iPhone Safari, the fullscreen button explains how to add the page to the Home Screen.
+
 `QR on display` shows the QR codes on the connected large screen so the team can scan them without copying links.
 
 Use `Share` to send a link by email or share it with your subscribers. Registered recipients find shared devices under `Connect device` ![](manual-assets/phone.svg). Unregistered recipients receive an email link.
@@ -125,6 +127,9 @@ Check names in the Summary. The Display stays black here. Names appear after `Do
 - **Colours** — teams, background and dots.
 - **Theme** — board appearance.
 - **Logo** — shown during play.
+- **Host logo** — choose Pixels or Source and preview it beside the Display.
+
+The Host also uses the game theme and colours. Team colours tint the corresponding elements, and the dot colour (DOT) accents the cover and generated logo. **Pixels** keeps a custom logo's pixel-grid look. **Source** uses the saved image, drawing or text: images keep their colours, while drawings and text use the dot colour. The Game settings preview responds before saving; the Control Panel Summary shows the saved variant.
 
 #### Sound
 
@@ -383,6 +388,8 @@ Choose the visual theme for the whole Display. **Classic** is the default.
 #### Logo
 
 Choose your own logo under **Logo**. **Default** means Familiada's logo; **No logo** means no custom mark. The chosen logo appears at the opening; its ending appearance depends on the configured ending screen. Game settings previews unsaved edits, whereas the panel Summary uses saved settings.
+
+The **Host logo** selector chooses between **Pixels**, which keeps the pixel-grid look, and **Source**, which uses the saved image, drawing or text. Images keep their colours; drawings and text use the dot colour (DOT). The Host preview appears beside the Display preview and updates before saving.
 
 `Restore defaults` in Appearance resets colours, theme and logo.
 
