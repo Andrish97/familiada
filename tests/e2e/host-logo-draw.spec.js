@@ -13,6 +13,19 @@ const previewHarness = `<!doctype html><html lang="pl"><meta charset="utf-8"><me
 const ready=new Set();addEventListener('message',e=>{if(e.origin!==location.origin||!['familiada:preview-ready','familiada:host-preview-ready'].includes(e.data?.type))return;ready.add(e.source);if(ready.size===2)window.previewReady=true});window.applyRow=async row=>{for(const id of ['display','host'])document.getElementById(id).contentWindow.postMessage({type:'familiada:preview-row',row},location.origin);await new Promise(resolve=>setTimeout(resolve,1600))};
 </script></html>`;
 
+async function cleanupPreviousDrawRows(page, accountNumber) {
+  const prefix = `E2E-HOST-DRAW-${accountNumber}-`;
+  await page.evaluate(async namePrefix => {
+    const sb = window.__sbClient;
+    const { data, error } = await sb.from("user_logos").select("id").like("name", `${namePrefix}%`);
+    if (error) throw new Error(error.message);
+    const ids = (data || []).map(row => row.id);
+    if (!ids.length) return;
+    const { error: deleteError } = await sb.from("user_logos").delete().in("id", ids);
+    if (deleteError) throw new Error(deleteError.message);
+  }, prefix);
+}
+
 async function runDrawRoundTrip(page, context, accountNumber, testInfo) {
   test.setTimeout(120_000);
   await serveBranchCode(context, { pages: ["logo", "host", "display"] });
@@ -20,11 +33,26 @@ async function runDrawRoundTrip(page, context, accountNumber, testInfo) {
   // remain excluded from the shared account pool and general E2E suites.
   await loginAsTestUser(page, context, { username: `test${accountNumber}@familiada.online` });
   const name = `E2E-HOST-DRAW-${accountNumber}-${Date.now()}`;
-  const site = { origin: ORIGIN };
   let logoId = null;
   try {
-    await L.openList(page, site, "/logo/?tab=draw");
-    logoId = await L.createNew(page, "Draw", name);
+    // A prior interrupted run may have stopped before its finally cleanup.
+    // The account-specific prefix is reserved for this spec only.
+    await cleanupPreviousDrawRows(page, accountNumber);
+    // Insert only the empty DRAW row, then exercise the real editor. The
+    // list's create action is guarded while an account has an active game or
+    // settings lock; that guard is covered by the existing logo E2E.
+    logoId = await L.insertLogo(page, {
+      name,
+      type: "PIX_150x70",
+      payload: {
+        w: 150, h: 70, format: "BITPACK_MSB_FIRST_ROW_MAJOR",
+        bits_b64: Buffer.alloc(19 * 70).toString("base64"),
+        source: { mode: "DRAW" },
+      },
+    });
+    await page.goto(`${ORIGIN}/logo/editor-draw/?id=${encodeURIComponent(logoId)}`, { waitUntil: "domcontentloaded" });
+    await expect(page.locator("#editorShell")).toHaveAttribute("data-mode", "DRAW");
+    await expect(page.locator("#logoName")).toBeEnabled({ timeout: 15000 });
     await page.evaluate(() => {
       const canvas = window.__drawFabric;
       const fabric = window.fabric;
