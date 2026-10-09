@@ -251,18 +251,37 @@ async function loginAsGuest(page, context, opts = {}) {
   await clearE2EBypass(context);
 }
 
+// Konta testowe, których e2e NIGDY nie używa (decyzja użytkownika
+// 2026-10-09): test9 i test10. test5 ma osobno znany problem Supabase
+// ("Database error querying schema") i kod go po prostu omija tam, gdzie
+// już to robi.
+const EXCLUDED_TEST_ACCOUNTS = [9, 10];
+
+// Mapa użycia kont (kto na którym koncie pracuje, żeby równoległe testy
+// nie wchodziły sobie w drogę):
+//  - test1: domyślne konto loginAsTestUser; bases, base-explorer, games,
+//    editor, marketplace, index, operator w control2 (@mailbox: udostępnianie)
+//  - test1..test<workers>: pula control2 (loginAsPooledTestUser)
+//  - test2,3,4,6,7: edytor logo (LOGO_E2E_ACCOUNTS)
+//  - test7 (zalogowane) i test8 (zaproszony + odbiorca maili): subscriptions
+//  - test8: cross-resource-locks (usuwanie logo, bez cudzych blokad ustawień)
+//  - odbiorcy maili (clearMailbox kasuje CAŁĄ skrzynkę odbiorcy, więc każdy
+//    test @mailbox ma własnego): subscriptions=test8, bases=test6,
+//    control2 (udostępnianie urządzenia)=test7
+const EXCLUDED_ACCOUNT_NOTE = "decyzja użytkownika 2026-10-09";
+
 /**
  * Login n-tego konta z globalnej puli testX (1-indeksowane) —
- * test1@familiada.online, test2@familiada.online, ..., do test10.
- * Wszystkie z tym samym TEST_PASSWORD. Domena jest stałą w kodzie (patrz
- * TEST_ACCOUNT_DOMAIN), więc wygenerowanie loginu nie zależy od żadnego
- * sekretu -- sam login bez prawdziwego hasła niczego nie odsłania.
- * Dowolny plik/filtr testów może użyć DOWOLNEGO numeru z całej puli 1-10 —
- * brak sztywnego podziału/rezerwacji między plikami. Konta trzeba
- * oczywiście realnie założyć na produkcji, tyle ile faktycznie
- * wykorzystywane.
+ * test1@familiada.online, test2@familiada.online, ... (bez
+ * EXCLUDED_TEST_ACCOUNTS). Wszystkie z tym samym TEST_PASSWORD. Domena jest
+ * stałą w kodzie (patrz TEST_ACCOUNT_DOMAIN), więc wygenerowanie loginu nie
+ * zależy od żadnego sekretu -- sam login bez prawdziwego hasła niczego nie
+ * odsłania. Dla wykluczonego numeru rzuca błąd.
  */
 function testAccountUsername(n) {
+  if (EXCLUDED_TEST_ACCOUNTS.includes(n)) {
+    throw new Error(`Konto test${n} jest wykluczone z e2e (${EXCLUDED_ACCOUNT_NOTE})`);
+  }
   return `test${n}@${TEST_ACCOUNT_DOMAIN}`;
 }
 
@@ -277,7 +296,13 @@ function testAccountUsername(n) {
 function getTestAccountPool() {
   const count = parseInt(process.env.TEST_ACCOUNT_COUNT || "1", 10);
   const n = Number.isFinite(count) && count > 0 ? count : 1;
-  return Array.from({ length: n }, (_, i) => testAccountUsername(i + 1));
+  // Pula = dozwolone numery 1..n (wykluczone pomijane); zawsze co najmniej test1.
+  const numbers = [];
+  for (let i = 1; i <= n; i++) {
+    if (!EXCLUDED_TEST_ACCOUNTS.includes(i)) numbers.push(i);
+  }
+  if (!numbers.length) numbers.push(1);
+  return numbers.map(testAccountUsername);
 }
 
 /**
@@ -299,6 +324,7 @@ module.exports = {
   loginAsPooledTestUser,
   getTestAccountPool,
   testAccountUsername,
+  EXCLUDED_TEST_ACCOUNTS,
   isKnownNoiseText,
   isKnownNoiseUrl,
   instrumentPage,
