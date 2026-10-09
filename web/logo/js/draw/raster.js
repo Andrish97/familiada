@@ -8,7 +8,7 @@
 // linia narysowana na przerwie między kaflami znika tak jak na prawdziwym
 // wyświetlaczu, a proporcje zgadzają się z tym, co widać na scenie.
 
-import { DOT_W, DOT_H } from "../render.js?v=v2026-10-09T14550";
+import { DOT_W, DOT_H } from "../render.js?v=v2026-10-09T14580";
 
 // Świat nowych rysunków: 26:11, jak cały wyświetlacz. Stare rysunki mają
 // swój rozmiar (patrz draw.js) -- dlatego raster przyjmuje go w parametrze.
