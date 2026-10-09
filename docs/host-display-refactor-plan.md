@@ -174,6 +174,14 @@ osadza PNG w pliku `.famlogo`, a import zapisuje go ponownie w Storage.
 IMAGE zachowuje oryginalne kolory, a DOT dla DRAW/TEXT jest nakładany przy
 renderowaniu Hosta.
 
+Demo DRAW korzysta ze wspólnego `web/logo/assets/demo-draw-host.png` z GitHub
+Pages zamiast kopii PNG w Storage każdego użytkownika. Migracja 317 podmienia
+szablony i kopie demo tylko wtedy, gdy payload kopii dokładnie odpowiadał
+staremu szablonowi; zmienione przez użytkownika demo pozostaje bez zmian.
+Scena Fabric zostaje w payloadzie, aby logo nadal można było edytować. Obraz
+demonstracyjny ma czarne elementy na białym tle, dlatego jego wspólna maska
+zachowuje czarne elementy, a tło pozostaje przezroczyste.
+
 W ustawieniach rozgrywki jest jedna wartość „Logo prowadzącego” z dwoma
 wariantami: dotychczasowe logo pikselowe, ostre i bez wygładzania, albo
 logo przygotowane ze źródła (IMAGE, DRAW lub TEXT). To wybór wariantu

@@ -66,6 +66,12 @@ jobs:
         run: |
           psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -c 'CREATE DATABASE display_audio_unlock_test'
           psql -h localhost -U postgres -d display_audio_unlock_test -v ON_ERROR_STOP=1 -f tests/sql/display-audio-unlock.sql
+      - name: Check shared demo DRAW PNG updates only untouched copies
+        env:
+          PGPASSWORD: test-only-password
+        run: |
+          psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -c 'CREATE DATABASE demo_draw_test'
+          psql -h localhost -U postgres -d demo_draw_test -v ON_ERROR_STOP=1 -f tests/sql/demo-draw-shared-png.sql
   migrate:
     needs: verify-control-statistics
     runs-on: ubuntu-latest
