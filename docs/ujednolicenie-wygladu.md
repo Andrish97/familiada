@@ -230,3 +230,7 @@ tiles”). Pozostałe pola komunikatów istnieją. Implementacja: `shared/js/cor
    - Logo: typ (Tekst / Rysunek / Obraz);
    - Bazy: moje / udostępnione (jeśli to nie karta) i rola;
    - filtr pamiętany w adresie (`?type=&status=`), jak karta.
+   - Wdrożone (E17b): wspólny filtr w `list-search.js` (opcja `filter`) +
+     czysta logika w `list-filter.js`. Gry: tylko stan (`?status=`) — typ to
+     zakładki. Bazy: rola własna/edycja/odczyt (`?role=`), moje/udostępnione
+     to zakładki. Logo: bez filtra — typ (Tekst/Rysunek/Obraz) to zakładki.

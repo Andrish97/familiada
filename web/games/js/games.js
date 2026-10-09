@@ -1,38 +1,39 @@
-import { addRenameGesture } from "../../shared/js/core/rename-gesture.js?v=v2026-10-09T17345";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T17345";
-import { requireAuth } from "../../shared/js/core/auth.js?v=v2026-10-09T17345";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-09T17345";
-import { hideForGuest, isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-09T17345";
-import { initI18n, t, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-09T17345";
-import { linkTo } from "../../shared/js/core/nav-map.js?v=v2026-10-09T17345";
-import { initRatingSystem } from "../../shared/js/core/rating-system.js?v=v2026-10-09T17345";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-09T17345";
-import { maybeShowGuestInfoModal } from "../../shared/js/core/guest-info-modal.js?v=v2026-10-09T17345";
-import { maybeShowGuestMigrateReminder } from "../../shared/js/core/guest-migrate-reminder.js?v=v2026-10-09T17345";
+import { addRenameGesture } from "../../shared/js/core/rename-gesture.js?v=v2026-10-09T17383";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T17383";
+import { requireAuth } from "../../shared/js/core/auth.js?v=v2026-10-09T17383";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-09T17383";
+import { hideForGuest, isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-09T17383";
+import { initI18n, t, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-09T17383";
+import { linkTo } from "../../shared/js/core/nav-map.js?v=v2026-10-09T17383";
+import { initRatingSystem } from "../../shared/js/core/rating-system.js?v=v2026-10-09T17383";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-09T17383";
+import { maybeShowGuestInfoModal } from "../../shared/js/core/guest-info-modal.js?v=v2026-10-09T17383";
+import { maybeShowGuestMigrateReminder } from "../../shared/js/core/guest-migrate-reminder.js?v=v2026-10-09T17383";
 
-import { initPwa, isStandalone, isMobileDevice } from "../../shared/js/core/pwa.js?v=v2026-10-09T17345";
-import { createPollResults } from "../../shared/js/core/poll-results.js?v=v2026-10-09T17345";
-import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-09T17345";
+import { initPwa, isStandalone, isMobileDevice } from "../../shared/js/core/pwa.js?v=v2026-10-09T17383";
+import { createPollResults } from "../../shared/js/core/poll-results.js?v=v2026-10-09T17383";
+import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-09T17383";
 
 // Zarejestruj listener PWA jak najwcześniej – beforeinstallprompt może odpalić przed requireAuth
 const pwaApi = initPwa();
 // Jeśli beforeinstallprompt już odpalił zanim dodaliśmy listener w IIFE, sprawdzimy po zalogowaniu
 
 
-import { exportGame, importGame, downloadJson } from "./games-import-export.js?v=v2026-10-09T17345";
-import { setTopbarNavPriority, setTopbarAccount } from '../../shared/js/core/topbar-controller.js?v=v2026-10-09T17345';
+import { exportGame, importGame, downloadJson } from "./games-import-export.js?v=v2026-10-09T17383";
+import { setTopbarNavPriority, setTopbarAccount } from '../../shared/js/core/topbar-controller.js?v=v2026-10-09T17383';
 
-import "../../shared/js/core/contact-modal.js?v=v2026-10-09T17345";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-09T17383";
 import {
   TYPES,
   STATUS,
   loadGameBasic,
   validateGame,
   rulesFromState,
-} from "../../shared/js/core/game-validate.js?v=v2026-10-09T17345";
-import { isResourceBusy, acquireResourceLock, getTabId } from "../../shared/js/core/resource-lock.js?v=v2026-10-09T17345";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-09T17345";
-import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-09T17345";
+} from "../../shared/js/core/game-validate.js?v=v2026-10-09T17383";
+import { isResourceBusy, acquireResourceLock, getTabId } from "../../shared/js/core/resource-lock.js?v=v2026-10-09T17383";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-09T17383";
+import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-09T17383";
+import { gameStateKey } from "../../shared/js/core/list-filter.js?v=v2026-10-09T17383";
 
 const MSG = {
   exportBaseEmpty: () => t("games.exportBase.empty"),
@@ -707,17 +708,21 @@ function typeLabel(uiType) {
   return String(uiType || t("control.dash")).toUpperCase();
 }
 
-function statusLabel(st, g) {
-  const s = st || STATUS.DRAFT;
+// Klucz stanu kafla (draft/open/stopped/ready) — wspólny dla etykiety i filtra.
+function statusKey(st, g) {
   // Preparowana ma zawsze stan „draft” — gotowa do gry to nie szkic.
-  if (g && s === STATUS.DRAFT && uiTypeFromRow(g) === TYPES.PREPARED && rulesFromState(g.rules_state)?.play?.ok) {
-    return MSG.statusReady();
-  }
-  if (s === STATUS.DRAFT) return MSG.statusDraft();
-  if (s === STATUS.POLL_OPEN) return MSG.statusOpen();
-  if (s === STATUS.POLL_STOPPED) return MSG.statusStopped();
-  if (s === STATUS.READY) return MSG.statusReady();
-  return String(s).toUpperCase();
+  return gameStateKey(st, {
+    isPrepared: !!g && uiTypeFromRow(g) === TYPES.PREPARED,
+    playOk: !!g && !!rulesFromState(g.rules_state)?.play?.ok,
+  });
+}
+
+function statusLabel(st, g) {
+  const k = statusKey(st, g);
+  if (k === "ready") return MSG.statusReady();
+  if (k === "open") return MSG.statusOpen();
+  if (k === "stopped") return MSG.statusStopped();
+  return MSG.statusDraft();
 }
 
 function setButtonsState({ hasSel, canEdit, canPlay, canPoll, canExport }) {
@@ -901,6 +906,7 @@ function cardGame(g) {
   const el = document.createElement("div");
   el.className = "card";
   el.dataset.gameId = g.id;
+  el.dataset.status = statusKey(g.status, g);
 
   el.innerHTML = `
     <div class="x" title="${t("games.card.delete")}">${icon("trash")}</div>
@@ -1186,7 +1192,15 @@ async function refresh() {
 document.addEventListener("DOMContentLoaded", async () => {
   const requireAuthP = requireAuth("/login/"); // start równolegle z initI18n
   await initI18n({ withSwitcher: true });
-  initListSearch({ grids: "#grid", tile: ".card", name: ".name" });
+  // Typ to zakładki (preparowana/tekstowa/punktowa/rynek) — filtr tylko po stanie.
+  initListSearch({
+    grids: "#grid", tile: ".card", name: ".name",
+    filter: {
+      param: "status", attr: "status",
+      options: ["draft", "open", "stopped", "ready"].map((k) => ({ value: k, labelKey: `games.status.${k}` })),
+      allKey: "common.filterAll", ariaKey: "games.filter.label",
+    },
+  });
 
   // Blokuj autoInitTopbarAuthButton — games wywołuje setTopbarAccount z withAccountSettings:true
   const _btnLogoutEl = document.getElementById('btnLogout');
