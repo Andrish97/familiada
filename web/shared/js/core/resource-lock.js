@@ -5,9 +5,9 @@
 // Overlay skopiowany ze sprawdzonego wzorca device-guard.js/guest-mode.js,
 // ale z treścią/przyciskami parametryzowanymi per wywołanie (patrz
 // docs/plan-testy-i-poprawki.md, sekcja "Warstwa 1").
-import { applyTranslations, t, withLangParam } from "../../translation/translation.js?v=v2026-10-09T11134";
-import { sb } from "./supabase.js?v=v2026-10-09T11134";
-import { rt } from "./realtime.js?v=v2026-10-09T11134";
+import { applyTranslations, t, withLangParam } from "../../translation/translation.js?v=v2026-10-09T11193";
+import { sb, SUPABASE_URL, SUPABASE_ANON_KEY } from "./supabase.js?v=v2026-10-09T11193";
+import { rt } from "./realtime.js?v=v2026-10-09T11193";
 
 const TAB_ID_KEY = "familiada:tabId";
 const HEARTBEAT_MS = 8000; // znacznie poniżej TTL (120 s, edit_lock_ttl() w bazie)
@@ -41,6 +41,7 @@ function lockChannel(resourceType, resourceId) {
 }
 
 async function acquireOnce(resourceType, resourceId, context, mode = "exclusive") {
+  void refreshAccessToken();
   const { data, error } = await sb().rpc("acquire_edit_lock_mode", {
     p_resource_type: resourceType,
     p_resource_id: resourceId,
@@ -50,6 +51,37 @@ async function acquireOnce(resourceType, resourceId, context, mode = "exclusive"
   });
   if (error) throw error;
   return data;
+}
+
+// Ostatni znany token sesji — pagehide nie może czekać na async getSession().
+let lastAccessToken = null;
+async function refreshAccessToken() {
+  try {
+    const { data } = await sb().auth.getSession();
+    lastAccessToken = data?.session?.access_token || lastAccessToken;
+  } catch {}
+}
+
+// Zwolnienie przy zamykaniu karty: fetch z keepalive przeglądarka dokańcza
+// po zamknięciu strony (zwykłe sb().rpc bywa ubijane) — bez tego blokada
+// wisiała do wygaśnięcia TTL (120 s).
+function releaseRowKeepalive(resourceType, resourceId) {
+  if (!lastAccessToken) return false;
+  try {
+    fetch(`${SUPABASE_URL}/rest/v1/rpc/release_edit_lock`, {
+      method: "POST",
+      keepalive: true,
+      headers: {
+        "Content-Type": "application/json",
+        apikey: SUPABASE_ANON_KEY,
+        Authorization: `Bearer ${lastAccessToken}`,
+      },
+      body: JSON.stringify({ p_resource_type: resourceType, p_resource_id: resourceId, p_tab_id: getTabId() }),
+    }).catch(() => {});
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 async function releaseRow(resourceType, resourceId) {
@@ -359,7 +391,14 @@ export async function guardResourceLocks(resources, { title, backHref, context =
     return Promise.all(items.map((it) => releaseOnce(it.type, it.id)));
   };
 
-  window.addEventListener("pagehide", release);
+  // Zamknięcie karty: najpierw keepalive (przeżywa zamknięcie), potem zwykła
+  // ścieżka z broadcastem RELEASED dla czekających kart.
+  const releaseOnHide = () => {
+    if (released) return;
+    for (const it of items) releaseRowKeepalive(it.type, it.id);
+    void release();
+  };
+  window.addEventListener("pagehide", releaseOnHide);
 
   return { ok: true, release };
 }
@@ -413,10 +452,14 @@ export async function acquireResourceLock({ resourceType, resourceId, context = 
     if (released) return;
     released = true;
     clearInterval(heartbeatTimer);
-    window.removeEventListener("pagehide", release);
+    window.removeEventListener("pagehide", releaseOnHide);
     void releaseOnce(resourceType, resourceId);
   };
-  window.addEventListener("pagehide", release);
+  const releaseOnHide = () => {
+    if (!released) releaseRowKeepalive(resourceType, resourceId);
+    release();
+  };
+  window.addEventListener("pagehide", releaseOnHide);
   lease.release = release;
   return lease;
 }

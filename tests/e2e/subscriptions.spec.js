@@ -129,7 +129,7 @@ test("@mailbox subskrypcje: zaproszenie z UI dochodzi na prawdziwą skrzynkę", 
 test("token innego konta: modal wylogowuje zamiast rzucać ReferenceError", async ({ browser }) => {
   const owner = await newUser(browser, 7);
   const recipient = await newUser(browser, 8);
-  const wrongUser = await newUser(browser, 9);
+  const wrongUser = await newUser(browser, 6); // test9/test10 wykluczone (CLAUDE.md)
   const recipientId = await userId(recipient.page);
 
   try {

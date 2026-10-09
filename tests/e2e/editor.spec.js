@@ -587,11 +587,11 @@ test("edytor: dwie karty — druga karta jest blokowana overlayem zamiast cichej
     await expect(pageB.locator("#qList .qcard:not(.addTile)")).toHaveCount(0);
 
     // Zamknięcie karty A zwalnia blokadę — best-effort przez pagehide+broadcast,
-    // a jeśli to zawiedzie, fallback to TTL (25s) + polling w karcie B (do 5s) —
+    // a jeśli to zawiedzie, fallback to TTL (120 s) + polling w karcie B (do 5s) —
     // stąd hojny timeout na kolejny expect zamiast zakładania natychmiastowego zwolnienia.
     await pageA.close();
 
-    await expect(pageB.locator("#resourceLockGuard")).toBeHidden({ timeout: 40000 });
+    await expect(pageB.locator("#resourceLockGuard")).toBeHidden({ timeout: 40000 }); // keepalive przy pagehide; TTL 120 s to ostateczność
     await expect(pageB.locator("#qList .qcard:not(.addTile)")).toHaveCount(2, { timeout: 10000 });
   } finally {
     await deleteGame(page, gameId);
