@@ -6,6 +6,7 @@ import {
   META_ORDER,
   setViewAll,
   setViewFolder,
+  saveTreeOpen,
   selectionClear,
   selectionSetSingle,
   selectionToggle,
@@ -3304,6 +3305,7 @@ export function wireActions({ state }) {
       if (!(state.treeOpen instanceof Set)) state.treeOpen = new Set();
       if (state.treeOpen.has(id)) state.treeOpen.delete(id);
       else state.treeOpen.add(id);
+      saveTreeOpen(state.baseId, state.treeOpen);
   
       scheduleRenderTree();
       return;
