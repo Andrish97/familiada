@@ -9,24 +9,6 @@ main.account-wrap {
   padding-bottom: 28px;
 }
 
-main.account-wrap .bar > div {
-  flex: 1;
-  min-width: 0;
-}
-
-.account-status {
-  margin-top: 8px;
-  display: grid;
-  gap: 6px;
-}
-
-.account-status .err {
-  min-height: 18px;
-  color: #ff9d9d;
-  font-size: 13px;
-}
-.account-status .err:empty { display: none; }
-
 .account-grid {
   margin-top: 16px;
   display: grid;

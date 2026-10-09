@@ -257,8 +257,8 @@ test("usuwanie logo: zablokowane, gdy używająca go gra ma teraz otwarte ustawi
     // export) z klasą .mSub zawsze obecną w DOM — goły .mSub jest więc
     // niejednoznaczny. .uni-modal .mSub celuje tylko w dynamiczny modal
     // core/modal.js (confirmModal/alertModal). Komunikat od kroku 4 dotyczy
-    // już całej puli logo ("ustawienia rozgrywki"), nie tylko referencji.
-    await expect(page.locator(".uni-modal .mSub")).toContainText("ustawienia rozgrywki", { timeout: 10000 });
+    // już całej puli logo ("ustawienia gry"), nie tylko referencji.
+    await expect(page.locator(".uni-modal .mSub")).toContainText("ustawienia gry", { timeout: 10000 });
     await page.locator(".uni-modal .uni-foot .btn.gold").click({ timeout: 10000 }); // zamknij alert blokady
 
     expect(await logoExists(page, logoId), "logo używane przez grę z otwartymi ustawieniami nie powinno zostać usunięte").toBe(true);
@@ -275,7 +275,7 @@ test("usuwanie logo: działa normalnie, gdy nic go nie blokuje", async ({ page, 
   // wszystkich logo właściciela (Warstwa B, migracja 256). Na wspólnym test1
   // równoległy test "zablokowane, gdy ... otwarte ustawienia" (albo edytor
   // ustawień w innym pliku) zostawiał blokadę 'settings' do 25 s -- ten test
-  // dostawał wtedy prawdziwe "zmieniasz ustawienia rozgrywki" (niestabilny
+  // dostawał wtedy prawdziwe "zmieniasz ustawienia gry" (niestabilny
   // fail, CI 2026-09-27). test8 nie używa nikt inny do ustawień gier/logo
   // (pula control2 to test1..test<liczba workerów>; subscriptions używa test8
   // tylko jako zaproszonego, bez ustawień i logo).
@@ -813,7 +813,7 @@ test("edytor logo: edycja i zmiana nazwy DOWOLNEGO logo zablokowane, gdy game-se
     // Okno zmiany nazwy trzyma logo:L wyłącznie -- przy trzymanym `logos`
     // (ustawienia gry) okno się nie otwiera, jest alert-modal z powodem.
     await tile.dblclick();
-    await expect(page.locator(".uni-modal .mSub")).toContainText("ustawienia rozgrywki", { timeout: 5000 });
+    await expect(page.locator(".uni-modal .mSub")).toContainText("ustawienia gry", { timeout: 5000 });
     await expect(page.locator("#renameOverlay")).toBeHidden();
     await page.locator(".uni-modal .uni-foot .btn.gold").click();
 

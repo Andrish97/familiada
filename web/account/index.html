@@ -36,13 +36,17 @@
   <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-09T19290" defer></script>
 </head>
 
-<body class="account-body skel-body">
+<body class="account-body skel-body topbar-title-mobile">
   <header class="topbar topbar-layout-4">
     <div class="topbar-section topbar-section-1">
       <div class="brand">FAMILIADA</div>
       <button class="btn" id="backToGames" type="button">Wstecz</button>
     </div>
-    <div class="topbar-section topbar-section-2"></div>
+    <div class="topbar-section topbar-section-2">
+      <div class="topbar-title">
+        <div class="title" data-i18n="account.headerTitle">Ustawienia konta</div>
+      </div>
+    </div>
     <div class="topbar-section topbar-section-3">
       <button class="btn" id="btnManual" type="button" data-i18n-aria-label="common.manualLabel" data-i18n-title="common.manualLabel" aria-label="Wskazówki" title="Wskazówki"><i class="ico" data-icon="info"></i></button>
     </div>
@@ -50,17 +54,6 @@
   </header>
 
   <main class="wrap account-wrap">
-    <div class="bar">
-      <div>
-        <div class="title" data-i18n="account.headerTitle">Ustawienia konta</div>
-        <div class="hint" data-i18n="account.headerHint">Zarządzaj profilem, e-mailem i bezpieczeństwem.</div>
-      </div>
-    </div>
-
-    <div class="account-status">
-      <div class="err" id="err"></div>
-    </div>
-
     <div class="account-grid" data-skel-step>
       <section class="account-panel" id="migrateSection" hidden>
         <div class="section-title" data-i18n="account.migrateTitle">Zapisz swoje dane</div>

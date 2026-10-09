@@ -514,7 +514,7 @@ function renderSubscribers() {
             if (selected?.tab === "subscribers" && String(selected.id) === String(row.sub_id)) selected = null;
             await refreshData();
           } catch {
-            await alertModal({ text: MSG.removeFail() });
+            toast(MSG.removeFail(), { kind: "error" });
           }
         },
       }] : [],
@@ -571,12 +571,12 @@ async function resendSelected() {
         await sendSubscriptionEmail({ to: data.to, link: data.link, ownerLabel, unsubToken: data.unsub_token || null, isRegistered: !!data.registered });
         toast(t("pollsHubSubscriptions.statusMsg.mailSent"));
       } catch {
-        await alertModal({ text: MSG.resendMailFailed() });
+        toast(MSG.resendMailFailed(), { kind: "error" });
       }
     }
     await refreshData();
   } catch {
-    await alertModal({ text: MSG.resendFail() });
+    toast(MSG.resendFail(), { kind: "error" });
   } finally {
     resendInFlight = false;
     updateActions();
@@ -622,7 +622,7 @@ function renderInvites() {
             if (selected?.tab === "subscriptions" && String(selected.id) === String(row.sub_id)) selected = null;
             await refreshData();
           } catch {
-            await alertModal({ text: MSG.updateFail() });
+            toast(MSG.updateFail(), { kind: "error" });
           }
         },
       }] : [],
@@ -643,7 +643,7 @@ async function acceptSelected() {
     await callSubscriptionAction(row, "accept");
     await refreshData();
   } catch {
-    await alertModal({ text: MSG.acceptFail() });
+    toast(MSG.acceptFail(), { kind: "error" });
   } finally {
     updateActions();
   }
@@ -699,13 +699,13 @@ function renderTasks() {
         if (selected?.tab === "tasks" && String(selected.id) === String(task.task_id)) selected = null;
         await refreshData();
       } catch {
-        await alertModal({ text: MSG.declineTaskFail() });
+        toast(MSG.declineTaskFail(), { kind: "error" });
       } finally {
         setProgress({ show: false });
       }
     });
     tile.addEventListener("dblclick", async () => {
-      if (!openTask(task)) await alertModal({ text: MSG.loadFail() });
+      if (!openTask(task)) toast(MSG.loadFail(), { kind: "error" });
     });
     el.appendChild(tile);
   }
@@ -780,7 +780,7 @@ async function invite(value) {
           });
         } catch {
           closeInviteModal();
-          await alertModal({ text: MSG.inviteMailFailed() });
+          toast(MSG.inviteMailFailed(), { kind: "error" });
           await refreshData();
           return true;
         }
@@ -793,10 +793,10 @@ async function invite(value) {
     return true;
   } catch (e) {
     const m = String(e?.message || "").toLowerCase();
-    if (m.includes("invalid_email")) await alertModal({ text: MSG.invalidEmail() });
-    else if (m.includes("unknown_user") || m.includes("unknown")) await alertModal({ text: MSG.unknownUser() });
-    else if (m.includes("email")) await alertModal({ text: MSG.invalidEmail() });
-    else await alertModal({ text: MSG.inviteFail() });
+    if (m.includes("invalid_email")) toast(MSG.invalidEmail(), { kind: "error" });
+    else if (m.includes("unknown_user") || m.includes("unknown")) toast(MSG.unknownUser(), { kind: "error" });
+    else if (m.includes("email")) toast(MSG.invalidEmail(), { kind: "error" });
+    else toast(MSG.inviteFail(), { kind: "error" });
     return false;
   } finally {
     setProgress({ show: false });
@@ -912,7 +912,7 @@ async function refreshData() {
       }
     }
   } catch {
-    await alertModal({ text: MSG.loadFail() });
+    toast(MSG.loadFail(), { kind: "error" });
   }
   })();
 

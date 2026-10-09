@@ -46,7 +46,7 @@ async function deleteHostLogoGame(page, gameId) {
   }, gameId);
 }
 
-test("logo Hosta: zapis w Ustawieniach rozgrywki i podgląd zapisanego wariantu w Control (test9)", async ({ page, browser, context }, testInfo) => {
+test("logo Hosta: zapis w Ustawieniach gry i podgląd zapisanego wariantu w Control (test9)", async ({ page, browser, context }, testInfo) => {
   test.setTimeout(150_000);
   // Konto 9 jest przeznaczone wyłącznie do tych dedykowanych testów; nie jest
   // dodawane do puli kont współdzielonej przez przebiegi Control.

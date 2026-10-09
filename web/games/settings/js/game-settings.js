@@ -1743,7 +1743,7 @@ async function main() {
     return;
   }
 
-  // Blokada stanu: ustawienia rozgrywki tylko dla gry, którą da się grać.
+  // Blokada stanu: ustawienia gry tylko dla gry, którą da się grać.
   if (!(await guardGameState(gameId, "play"))) {
     if (_isModal) window.parent.postMessage({ type: "gs:ready" }, "*");
     return;

@@ -1274,7 +1274,8 @@ function render() {
     tile.dataset.updated = b.updated_at || "";
     tile.dataset.role = b.sharedRole || (b.proposed ? b.proposedRole : null) || "owner";
     if (b.id === selectedId) tile.classList.add("selected");
-    if (b.proposed) tile.classList.add("proposed");
+    // zaproszenie to zwykły kafel z tagiem (bez koloru całego kafla); znacznik tylko dla selektorów
+    if (b.proposed) tile.dataset.proposed = "1";
     const badges = [];
 
     if (b.proposed) {

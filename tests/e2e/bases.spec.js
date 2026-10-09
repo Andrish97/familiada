@@ -502,7 +502,7 @@ test.describe("bases: audyt -- zaproszenia i link z maila", () => {
       await expect(page2.locator("#basesSharedBadge")).not.toBeEmpty();
       await page2.locator("#tabBasesShared").click();
 
-      const tile = page2.locator("#sharedGrid .card.proposed", { hasText: name });
+      const tile = page2.locator("#sharedGrid .card[data-proposed]", { hasText: name });
       await expect(tile).toBeVisible({ timeout: 15000 });
       await expect(tile.locator('.tileBadge[data-kind="from"]')).toBeVisible();
       await expect(tile.locator('.tileBadge[data-kind="role"]')).toHaveAttribute("title", "Masz dostęp z edycją");
@@ -515,7 +515,7 @@ test.describe("bases: audyt -- zaproszenia i link z maila", () => {
 
       await tile.locator("[data-accept]").click();
       const accepted = page2.locator("#sharedGrid .card", { hasText: name });
-      await expect(accepted).not.toHaveClass(/proposed/, { timeout: 10000 });
+      await expect(accepted).not.toHaveAttribute("data-proposed", "1", { timeout: 10000 });
       // zaznaczenie przetrwało akceptację -- teraz to już dostęp, więc Przeglądaj działa
       await expect(accepted).toHaveClass(/selected/);
       await expect(page2.locator("#btnBrowse")).toBeEnabled();
@@ -538,7 +538,7 @@ test.describe("bases: audyt -- zaproszenia i link z maila", () => {
 
       // adresat
       await page2.goto(`${BASE_URL}?share=${token}`, { waitUntil: "domcontentloaded" });
-      await expect(page2.locator("#sharedGrid .card.proposed.selected", { hasText: name })).toBeVisible({ timeout: 15000 });
+      await expect(page2.locator("#sharedGrid .card[data-proposed].selected", { hasText: name })).toBeVisible({ timeout: 15000 });
       expect(await countUniModals(page2, 2500), "adresat nie powinien dostać żadnego komunikatu").toBe(0);
       await expect(page2).not.toHaveURL(/share=/);
 

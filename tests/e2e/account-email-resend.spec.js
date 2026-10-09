@@ -126,10 +126,10 @@ test("konto: 'Wyślij ponownie' na zmianę e-maila kończy się sukcesem, nie Re
     await expect(page.locator("#resendEmailChange")).toBeEnabled({ timeout: 15000 });
     await page.locator("#resendEmailChange").click();
 
-    // Przed poprawką: #err dostawał treść ReferenceError ("normalizedMail is
+    // Przed poprawką: dymek błędu dostawał treść ReferenceError ("normalizedMail is
     // not defined") mimo że resend() realnie się powiódł.
     await expect(page.locator("#appToast")).toContainText("Wysłano ponownie", { timeout: 15000 });
-    await expect(page.locator("#err")).toHaveText("");
+    await expect(page.locator("#appToast")).not.toHaveClass(/error/);
   } finally {
     // Przywróć konto testowe do stanu bez oczekującej zmiany e-maila i bez
     // wypalonego cooldownu — dla kolejnych przebiegów e2e na tym samym
