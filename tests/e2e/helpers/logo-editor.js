@@ -92,10 +92,10 @@ async function editLogo(page, site, id) {
   await page.locator("#btnEdit").click();
   // Edycja zablokowana na liście (alert) zostawia stronę -- wtedy nie czekamy na edytor.
   await Promise.race([
-    page.waitForURL(/\/logo\/editor-/, { timeout: 15000 }),
+    page.waitForURL(/\/logo\/editor\//, { timeout: 15000 }),
     page.locator(".uni-modal").waitFor({ state: "visible", timeout: 15000 }),
   ]);
-  if (/\/logo\/editor-/.test(page.url()) && !(await page.locator("#resourceLockGuard").isVisible().catch(() => false))) {
+  if (/\/logo\/editor\//.test(page.url()) && !(await page.locator("#resourceLockGuard").isVisible().catch(() => false))) {
     await expect(page.locator("#logoName")).toBeEnabled({ timeout: 15000 }).catch(() => {});
   }
 }
