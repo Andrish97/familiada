@@ -96,7 +96,7 @@ test("logo Hosta: zapis w Ustawieniach rozgrywki i podgląd zapisanego wariantu 
     }, game.id);
     expect(persistedMode.hostLogoMode).toBe("source");
     expect(persistedMode.theme).toBe("modern");
-    expect(persistedMode.colors.DOT).toBe("#33aaff");
+    expect(persistedMode.colors.DOT.toLowerCase()).toBe("#33aaff");
 
     // A fresh settings load must restore the selected option, not just the
     // in-memory preview state.
