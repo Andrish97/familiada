@@ -74,7 +74,7 @@ function wireManual(id, user, opts) {
   if (!btn) return;
   const anchor = PAGES[id].manual;
   // Instrukcja jest dla konta albo gościa — niezalogowany nie ma po co jej szukać.
-  if (!user && PAGES.manual.access !== "public") { btn.hidden = true; return; }
+  if (!user && PAGES.manual.access !== "public") { btn.hidden = true; btn.style.display = "none"; return; }
   btn.addEventListener("click", async (ev) => {
     const href = linkTo("manual", { hash: anchor });
     if (opts.onManual) { await opts.onManual(href, ev); return; }

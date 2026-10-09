@@ -1,11 +1,11 @@
 // js/pages/manual.js
 // Zakładki mają działać nawet jeśli auth się nie załaduje.
-// Najpierw UI, potem auth „miękko”.
+// Najpierw UI, potem initPage (dostęp, „Wstecz”, konto) „miękko”.
 
 import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-09T21300";
 import { initI18n, setUiLang } from "../../shared/translation/translation.js?v=v2026-10-09T21300";
-import { linkTo, backHref, renderBackLabel } from "../../shared/js/core/nav-map.js?v=v2026-10-09T21300";
-import { initTopbarAccountDropdown } from "../../shared/js/core/topbar-controller.js?v=v2026-10-09T21300";
+import { linkTo } from "../../shared/js/core/nav-map.js?v=v2026-10-09T21300";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-09T21300";
 import "../../shared/js/core/contact-modal.js?v=v2026-10-09T21300";
 
 import { decorateManualControls } from "./controls.js?v=v2026-10-09T21300";
@@ -120,52 +120,35 @@ function applyControlModalLayout() {
 }
 
 
-function wireFallbackNav() {
-  byId("btnBack")?.addEventListener("click", () => {
-    location.href = backHref("manual");
-  });
-
+function wireLegalLink() {
   byId("btnLegal")?.addEventListener("click", () => {
     location.href = linkTo("privacy", { modal: new URLSearchParams(location.search).get("modal") });
   });
-
 }
 
-
-async function wireAuthSoft() {
-  const auth = await import("../../shared/js/core/auth.js?v=v2026-10-09T21300");
-  // Pełna strona jest częścią panelu użytkownika i wymaga sesji. Wersja
-  // modalna jest osadzanym dokumentem pomocy — nie może zamienić iframe'u
-  // w ekran logowania, gdy auth jest chwilowo niedostępny lub nie istnieje.
-  const user = isModalMode()
-    ? await auth.getUser().catch(() => null)
-    : await auth.requireAuth("/login/");
-
-  if (!user && !isModalMode()) return;
-
-  initTopbarAccountDropdown(user);
-  document.querySelector('.topbar')?.classList.add('topbar-ready');
-}
 
 /* ================= Init ================= */
 async function init() {
-  try {
-    await initManualI18n();
-  } catch (err) {
+  // Wersja modalna to osadzony dokument pomocy (iframe w Control): bez topbaru,
+  // bez wymuszania logowania. Pełna strona idzie przez initPage.
+  const i18nP = initManualI18n().catch((err) => {
     console.error("[manual] i18n nieaktywny:", err);
-  } finally {
+  }).finally(() => {
     document.documentElement.classList.remove('page-loading');
+  });
+  if (isModalMode()) {
+    document.querySelector('.topbar')?.classList.add('topbar-ready');
+  } else {
+    initPage("manual", { ready: i18nP }).catch((err) => {
+      console.warn("[manual] initPage nieaktywny:", err);
+    });
   }
+  await i18nP;
 
   decorateManualControls(document, document.documentElement.lang);
   applyControlModalLayout();
   wireTabs();
-  renderBackLabel(byId("btnBack"), "manual");
-  wireFallbackNav();
-
-  wireAuthSoft().catch((err) => {
-    console.warn("[manual] auth nieaktywny:", err);
-  });
+  wireLegalLink();
 }
 
 void init();

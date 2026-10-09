@@ -1,17 +1,14 @@
 // js/pages/connect-device.js
 
 import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T21300";
-import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-09T21300";
 import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-09T21300";
 import { isMobileDevice } from "../../shared/js/core/pwa.js?v=v2026-10-09T21300";
 import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-09T21300";
-import { linkTo, backHref, renderBackLabel } from "../../shared/js/core/nav-map.js?v=v2026-10-09T21300";
-import { initTopbarAccountDropdown } from "../../shared/js/core/topbar-controller.js?v=v2026-10-09T21300";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-09T21300";
 import { alertModal } from "../../shared/js/core/modal.js?v=v2026-10-09T21300";
 import "../../shared/js/core/contact-modal.js?v=v2026-10-09T21300";
 import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-09T21300";
 
-const btnBack             = document.getElementById("btnBack");
 const btnManual           = document.getElementById("btnManual");
 const btnScanQr           = document.getElementById("btnScanQr");
 const sharedDevicesCard   = document.getElementById("sharedDevicesCard");
@@ -337,32 +334,19 @@ async function startQrScan() {
 
 // ── Bootstrap ──────────────────────────────────────────────────────────────────
 (async () => {
-  const getUserP = getUser().catch(() => null); // start równolegle z initI18n
-  await initI18n({ withSwitcher: true });
+  const i18nP = initI18n({ withSwitcher: true });
+  // Strona publiczna: user albo null (anonim wraca na landing, bez „Wskazówek”).
+  const userP = initPage("connectDevice", { ready: i18nP });
+  await i18nP;
   document.documentElement.classList.remove('page-loading');
 
-  let currentUser = await getUserP;
+  const currentUser = await userP;
 
   const isLoggedIn = !!currentUser;
   const guestMode  = isLoggedIn ? isGuestUser(currentUser) : true;
 
-  if (isLoggedIn) {
-    initTopbarAccountDropdown(currentUser);
-  }
-  document.querySelector('.topbar')?.classList.add('topbar-ready');
-
-  const backCtx = () => ({ anon: !isLoggedIn });
-  btnBack?.addEventListener("click", () => {
-    location.href = backHref("connectDevice", backCtx());
-  });
-  renderBackLabel(btnBack, "connectDevice", backCtx);
-
-  if (isLoggedIn && !guestMode) {
-    if (btnManual) btnManual.style.display = "";
-    btnManual?.addEventListener("click", () => { location.href = linkTo("manual", { hash: "connect" }); });
-  } else {
-    if (btnManual) btnManual.style.display = "none";
-  }
+  // Gość nie dostaje „Wskazówek” na tej stronie (jak dotąd).
+  if (guestMode && btnManual) btnManual.style.display = "none";
 
   if (pageHint) pageHint.textContent = _isMobile
     ? (t("connectDevice.header.hintMobile") || "Podłącz się jako prowadzący lub Przycisk do pojedynku albo zeskanuj kod QR z Panelu sterowania.")
