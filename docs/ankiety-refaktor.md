@@ -26,22 +26,26 @@ Stan faktyczny sprawdzony w kodzie 2026-10-07 (opis niżej, sekcja 4).
   linkiem (sekcja 4b).
 - Osobne liczenie głosów (anonimowe / od subskrybentów) — prawdopodobnie
   zbędne (patrz pytania).
-- **2026-10-09 — zamykanie ankiety tekstowej jako karta.** Po „Zamknij”
-  w ankiecie tekstowej pojawia się karta **„Zamykanie” jako pierwsza**:
-  Zamykanie · Udostępnianie · Wyniki (aktywna od razu). W niej scalanie
-  i edycja odpowiedzi, Cofnij/Ponów, „Zamknij i przelicz”. Pozostałe karty
-  dostępne w trakcie edycji. Ankieta punktowa bez zmian.
-- **2026-10-09 — zamykanie ankiety tekstowej: stan DO ZATWIERDZENIA**
-  (wymóg użytkownika: logicznie i intuicyjnie; zastępuje wcześniejszy pomysł
-  wstrzymania zależnego od blokady karty). „Zamknij” kończy głosowanie —
-  ankieta tekstowa przechodzi w trwały stan **DO ZATWIERDZENIA** (kafel,
-  pasek stanu). Karta „Zamykanie” (pierwsza): scalanie/edycja odpowiedzi,
-  Cofnij/Ponów; poprawki zapisywane w bazie — można wyjść i wrócić.
-  Przyciski: **„Zatwierdź wyniki”** (przelicza → ZAMKNIĘTA, gra gotowa) i
-  **„Wznów głosowanie”** (→ OTWARTA, ten sam link, głosy zostają; zastępuje
-  „Anuluj”). Głosujący w tym stanie widzi „Głosowanie zakończone”, głos
-  odrzuca baza. Bez timerów i ukrytego wznawiania; żaden głos nie ginie
-  (dziś panel liczy zdjęcie z chwili otwarcia). Ankieta punktowa bez zmian.
+- **2026-10-09 — zamknięcie i podliczenie to dwa osobne kroki; karty
+  Udostępnianie · Wyniki** (zastępuje wcześniejsze pomysły z tego dnia:
+  karta „Zamykanie”, wstrzymanie zależne od blokady, stan „do zatwierdzenia”).
+  - **Zamknij** = koniec głosowania, nic więcej. Stan **ZAMKNIĘTA** —
+    trwały, nic samo się nie wznawia; głosujący widzi „Głosowanie
+    zakończone”, głos odrzuca baza. Żaden głos nie ginie.
+  - **Podlicz głosy** = osobny krok na zamkniętej ankiecie: ankieta
+    tekstowa — scalanie/poprawianie odpowiedzi (Cofnij/Ponów, poprawki
+    zapisywane w bazie, można wyjść i wrócić) i „Zatwierdź”; ankieta
+    punktowa — podliczenie bez poprawiania. Po podliczeniu gra **GOTOWA**.
+  - **Wznów głosowanie** — na zamkniętej, jeszcze niepodliczonej ankiecie:
+    → OTWARTA, ten sam link, głosy zostają.
+  - **Karty tylko dwie: Udostępnianie · Wyniki.** Wyniki są uniwersalne:
+    na żywo (otwarta), surowe (zamknięta), w trybie podliczania (ankieta
+    tekstowa), ostateczne (gotowa). Wszystkie akcje na pasku stanu:
+    Uruchom, Zamknij, Przerwij, Wznów głosowanie, Podlicz głosy,
+    Uruchom ponownie. Po „Zamknij” strona sama przechodzi na Wyniki.
+  - **Kafle gier** (`/games/`, przejmuje rolę dawnego huba): stan słowem +
+    plakietka — otwarta: liczba głosów („12 głosów”); zamknięta
+    niepodliczona: wyróżniona „do podliczenia”.
 
 ## 2. Co gdzie po zmianie
 
