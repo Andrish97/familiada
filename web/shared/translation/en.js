@@ -819,7 +819,8 @@ const en = {
     },
     share: {
       activeSub: "Voted in this poll.",
-      linkTitle: "Link",
+      linkTitle: "Voting link",
+      scanHint: "Scan with your phone to vote",
       subsTitle: "Subscribers",
       sendInvites: "Send invitations",
       sendInvitesN: "Send invitations ({n})",

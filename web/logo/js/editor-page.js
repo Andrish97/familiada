@@ -18,25 +18,25 @@
 //     samo guardResourceLock, przy każdym zapisie RPC update_logo_checked:
 //     komunikat z powrotem na listę.
 
-import { loadFont5x7 } from "../../shared/js/core/logo-preview.js?v=v2026-10-09T18280";
-import { requireAuth } from "../../shared/js/core/auth.js?v=v2026-10-09T18280";
-import { initI18n, t } from "../../shared/translation/translation.js?v=v2026-10-09T18280";
-import { renderBackLabel } from "../../shared/js/core/nav-map.js?v=v2026-10-09T18280";
-import { initTopbarAccountDropdown } from "../../shared/js/core/topbar-controller.js?v=v2026-10-09T18280";
-import { isMobileDevice } from "../../shared/js/core/pwa.js?v=v2026-10-09T18280";
-import { isPhoneScreen } from "../../shared/js/core/device-guard.js?v=v2026-10-09T18280";
-import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-09T18280";
-import { guardResourceLock, showBlockingOverlay } from "../../shared/js/core/resource-lock.js?v=v2026-10-09T18280";
-import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-09T18280";
+import { loadFont5x7 } from "../../shared/js/core/logo-preview.js?v=v2026-10-09T19271";
+import { requireAuth } from "../../shared/js/core/auth.js?v=v2026-10-09T19271";
+import { initI18n, t } from "../../shared/translation/translation.js?v=v2026-10-09T19271";
+import { renderBackLabel } from "../../shared/js/core/nav-map.js?v=v2026-10-09T19271";
+import { initTopbarAccountDropdown } from "../../shared/js/core/topbar-controller.js?v=v2026-10-09T19271";
+import { isMobileDevice } from "../../shared/js/core/pwa.js?v=v2026-10-09T19271";
+import { isPhoneScreen } from "../../shared/js/core/device-guard.js?v=v2026-10-09T19271";
+import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-09T19271";
+import { guardResourceLock, showBlockingOverlay } from "../../shared/js/core/resource-lock.js?v=v2026-10-09T19271";
+import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-09T19271";
 
-import { renderPreview } from "./render.js?v=v2026-10-09T18280";
-import { listLogos, fetchLogo, updateLogo, isUniqueViolation, uploadDrawHostRaster, removeDrawHostRaster } from "./db.js?v=v2026-10-09T18280";
-import { initPreviewPinchZoom, lockPageZoomForPreview, unlockPageZoomAfterPreview } from "./preview-zoom.js?v=v2026-10-09T18280";
-import { cannotEditReason } from "./text.js?v=v2026-10-09T18280";
-import { EDITOR_PAGE_IDS, editModeFor, listBackUrl, manualUrl } from "./routes.js?v=v2026-10-09T18280";
+import { renderPreview } from "./render.js?v=v2026-10-09T19271";
+import { listLogos, fetchLogo, updateLogo, isUniqueViolation, uploadDrawHostRaster, removeDrawHostRaster } from "./db.js?v=v2026-10-09T19271";
+import { initPreviewPinchZoom, lockPageZoomForPreview, unlockPageZoomAfterPreview } from "./preview-zoom.js?v=v2026-10-09T19271";
+import { cannotEditReason } from "./text.js?v=v2026-10-09T19271";
+import { EDITOR_PAGE_IDS, editModeFor, listBackUrl, manualUrl } from "./routes.js?v=v2026-10-09T19271";
 
-const FONT_3x10_URL = "/shared/fonts/display/font_3x10.json?v=v2026-10-09T18280";
-const FONT_5x7_URL = "/shared/fonts/display/font_5x7.json?v=v2026-10-09T18280";
+const FONT_3x10_URL = "/shared/fonts/display/font_3x10.json?v=v2026-10-09T19271";
+const FONT_5x7_URL = "/shared/fonts/display/font_5x7.json?v=v2026-10-09T19271";
 
 const DEBOUNCE_MS = 700;
 const RETRY_MS = 5000;

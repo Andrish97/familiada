@@ -1,39 +1,39 @@
-import { addRenameGesture } from "../../shared/js/core/rename-gesture.js?v=v2026-10-09T18280";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T18280";
-import { requireAuth } from "../../shared/js/core/auth.js?v=v2026-10-09T18280";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-09T18280";
-import { hideForGuest, isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-09T18280";
-import { initI18n, t, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-09T18280";
-import { linkTo } from "../../shared/js/core/nav-map.js?v=v2026-10-09T18280";
-import { initRatingSystem } from "../../shared/js/core/rating-system.js?v=v2026-10-09T18280";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-09T18280";
-import { maybeShowGuestInfoModal } from "../../shared/js/core/guest-info-modal.js?v=v2026-10-09T18280";
-import { maybeShowGuestMigrateReminder } from "../../shared/js/core/guest-migrate-reminder.js?v=v2026-10-09T18280";
+import { addRenameGesture } from "../../shared/js/core/rename-gesture.js?v=v2026-10-09T19271";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T19271";
+import { requireAuth } from "../../shared/js/core/auth.js?v=v2026-10-09T19271";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-09T19271";
+import { hideForGuest, isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-09T19271";
+import { initI18n, t, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-09T19271";
+import { linkTo } from "../../shared/js/core/nav-map.js?v=v2026-10-09T19271";
+import { initRatingSystem } from "../../shared/js/core/rating-system.js?v=v2026-10-09T19271";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-09T19271";
+import { maybeShowGuestInfoModal } from "../../shared/js/core/guest-info-modal.js?v=v2026-10-09T19271";
+import { maybeShowGuestMigrateReminder } from "../../shared/js/core/guest-migrate-reminder.js?v=v2026-10-09T19271";
 
-import { initPwa, isStandalone, isMobileDevice } from "../../shared/js/core/pwa.js?v=v2026-10-09T18280";
-import { createPollResults } from "../../shared/js/core/poll-results.js?v=v2026-10-09T18280";
-import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-09T18280";
+import { initPwa, isStandalone, isMobileDevice } from "../../shared/js/core/pwa.js?v=v2026-10-09T19271";
+import { createPollResults } from "../../shared/js/core/poll-results.js?v=v2026-10-09T19271";
+import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-09T19271";
 
 // Zarejestruj listener PWA jak najwcześniej – beforeinstallprompt może odpalić przed requireAuth
 const pwaApi = initPwa();
 // Jeśli beforeinstallprompt już odpalił zanim dodaliśmy listener w IIFE, sprawdzimy po zalogowaniu
 
 
-import { exportGame, importGame, downloadJson } from "./games-import-export.js?v=v2026-10-09T18280";
-import { setTopbarNavPriority, setTopbarAccount } from '../../shared/js/core/topbar-controller.js?v=v2026-10-09T18280';
+import { exportGame, importGame, downloadJson } from "./games-import-export.js?v=v2026-10-09T19271";
+import { setTopbarNavPriority, setTopbarAccount } from '../../shared/js/core/topbar-controller.js?v=v2026-10-09T19271';
 
-import "../../shared/js/core/contact-modal.js?v=v2026-10-09T18280";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-09T19271";
 import {
   TYPES,
   STATUS,
   loadGameBasic,
   validateGame,
   rulesFromState,
-} from "../../shared/js/core/game-validate.js?v=v2026-10-09T18280";
-import { isResourceBusy, acquireResourceLock, getTabId } from "../../shared/js/core/resource-lock.js?v=v2026-10-09T18280";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-09T18280";
-import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-09T18280";
-import { gameStateKey, SORT_LIST } from "../../shared/js/core/list-filter.js?v=v2026-10-09T18280";
+} from "../../shared/js/core/game-validate.js?v=v2026-10-09T19271";
+import { isResourceBusy, acquireResourceLock, getTabId } from "../../shared/js/core/resource-lock.js?v=v2026-10-09T19271";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-09T19271";
+import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-09T19271";
+import { gameStateKey, SORT_LIST } from "../../shared/js/core/list-filter.js?v=v2026-10-09T19271";
 
 const MSG = {
   exportBaseEmpty: () => t("games.exportBase.empty"),

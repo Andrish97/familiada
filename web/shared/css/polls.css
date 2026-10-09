@@ -330,39 +330,59 @@
 }
 .pollLinkActions{
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr);
   gap: 8px;
   margin-top: 10px;
 }
-/* przyciski mogą zawinąć tekst w węższej kolumnie, nigdy go nie obcinają */
-.pollLinkActions .btn{ white-space: normal; width: 100%; line-height: 1.15; min-height: 38px; }
+/* szersza kolumna dla dłuższej etykiety; w ostateczności tekst się zawija, nigdy nie jest obcinany */
+.pollLinkActions .btn{ white-space: normal; width: 100%; line-height: 1.15; min-height: 38px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+.pollLinkActions .btn .ico{ flex: 0 0 auto; width: 16px; height: 16px; }
 
-/* QR: duży, wyśrodkowany na białym kafelku z marginesem (strefa ciszy);
-   kliknięcie powiększa go w oknie. Telefon: prawie szerokość treści (max 320 px),
-   komputer: 260 px. */
+/* QR: na jasnym kafelku (strefa ciszy) w spokojnej, obramowanej „scenie”
+   z podpisem; kliknięcie powiększa go w oknie. Telefon: do 260 px,
+   komputer: 220 px. */
+.pollQrStage{
+  margin-top: 10px;
+  padding: 18px 14px 14px;
+  border-radius: 14px;
+  background: rgba(255,255,255,.035);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+.pollQrHint{
+  font-size: 12px;
+  line-height: 1.3;
+  text-align: center;
+  opacity: .7;
+}
 .qrFrameSmall{
-  padding: 14px;
+  padding: 12px;
   background: #fff;
-  border-radius: 16px;
-  box-shadow: 0 6px 18px rgba(0,0,0,.22);
+  border-radius: 12px;
   line-height: 0;
 }
 .qrFrameSmall canvas{ display: block; width: 100% !important; height: auto !important; }
 .qrBox.img{
   display: block;
-  width: min(100%, 260px);
-  margin: 12px auto 0;
+  width: min(100%, 220px);
+  margin: 0;
   padding: 0;
   border: 0;
   background: none;
+  border-radius: 12px;
   cursor: zoom-in;
+  transition: transform .15s ease;
 }
+.qrBox.img:not(:disabled):hover{ transform: scale(1.02); }
 .qrBox.img:empty{ display: none; }
+.qrBox.img:empty + .pollQrHint{ display: none; }
 .qrBox.img:disabled{ cursor: default; }
 .qrFrameBig{ width: min(340px, 100%); margin: 0 auto; padding: 14px; border-radius: 16px; }
 .qrModalVote{ display: flex; justify-content: center; }
 @media (max-width: 980px){
-  .qrBox.img{ width: min(100%, 320px); }
+  .qrBox.img{ width: min(100%, 260px); }
 }
 
 /* Subskrybenci: nagłówek z podsumowaniem, „Zaznacz wszystkich”, kafle, wyślij na dole */

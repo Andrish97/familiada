@@ -1,18 +1,18 @@
-import { sb, SUPABASE_URL } from "../../shared/js/core/supabase.js?v=v2026-10-09T18280";
-import { requireAuth, signOut } from "../../shared/js/core/auth.js?v=v2026-10-09T18280";
-import { isGuestUser, showGuestBlockedOverlay } from "../../shared/js/core/guest-mode.js?v=v2026-10-09T18280";
-import { toast } from "../../shared/js/core/toast.js?v=v2026-10-09T18280";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-09T18280";
-import { getUiLang, initI18n, t } from "../../shared/translation/translation.js?v=v2026-10-09T18280";
-import { linkTo, backHref, renderBackLabel } from "../../shared/js/core/nav-map.js?v=v2026-10-09T18280";
-import { initTopbarAccountDropdown } from "../../shared/js/core/topbar-controller.js?v=v2026-10-09T18280";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-09T18280";
-import { icon } from "../../shared/js/core/icons.js?v=v2026-10-09T18280";
-import { createCooldownTicker } from "../../shared/js/core/cooldown.js?v=v2026-10-09T18280";
-import { enterModalSheet, exitModalSheet, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-09T18280";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-09T18280";
-import { renderShareSections } from "../../shared/js/core/share-sections.js?v=v2026-10-09T18280";
-import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-09T18280";
+import { sb, SUPABASE_URL } from "../../shared/js/core/supabase.js?v=v2026-10-09T19271";
+import { requireAuth, signOut } from "../../shared/js/core/auth.js?v=v2026-10-09T19271";
+import { isGuestUser, showGuestBlockedOverlay } from "../../shared/js/core/guest-mode.js?v=v2026-10-09T19271";
+import { toast } from "../../shared/js/core/toast.js?v=v2026-10-09T19271";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-09T19271";
+import { getUiLang, initI18n, t } from "../../shared/translation/translation.js?v=v2026-10-09T19271";
+import { linkTo, backHref, renderBackLabel } from "../../shared/js/core/nav-map.js?v=v2026-10-09T19271";
+import { initTopbarAccountDropdown } from "../../shared/js/core/topbar-controller.js?v=v2026-10-09T19271";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-09T19271";
+import { icon } from "../../shared/js/core/icons.js?v=v2026-10-09T19271";
+import { createCooldownTicker } from "../../shared/js/core/cooldown.js?v=v2026-10-09T19271";
+import { enterModalSheet, exitModalSheet, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-09T19271";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-09T19271";
+import { renderShareSections } from "../../shared/js/core/share-sections.js?v=v2026-10-09T19271";
+import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-09T19271";
 
 const i18nReady = initI18n({ withSwitcher: true }).catch((err) => {
   console.error("[subscriptions] i18n nieaktywny:", err);

@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
-  <meta name="app-version" content="v2026-10-09T18280"/>
+  <meta name="app-version" content="v2026-10-09T19271"/>
 
   <meta charset="UTF-8"/>
   <meta name="robots" content="noindex, nofollow"/>
@@ -14,10 +14,10 @@
   <link rel="preconnect" href="https://supabase.familiada.online">
   <title data-i18n="polls.title">Familiada — ankieta i wyniki</title>
 
-  <link rel="icon" href="/favicon.ico?v=v2026-10-09T18280"/>
-  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-09T18280"/>
-  <link rel="stylesheet" href="/games/css/games.css?v=v2026-10-09T18280"/>
-  <link rel="stylesheet" href="/shared/css/polls.css?v=v2026-10-09T18280"/>
+  <link rel="icon" href="/favicon.ico?v=v2026-10-09T19271"/>
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-09T19271"/>
+  <link rel="stylesheet" href="/games/css/games.css?v=v2026-10-09T19271"/>
+  <link rel="stylesheet" href="/shared/css/polls.css?v=v2026-10-09T19271"/>
 
   <script>
     document.documentElement.classList.add('page-loading');
@@ -31,9 +31,9 @@
     } catch(_e) {}
   </script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-  <script src="/shared/js/core/security-warning.js?v=v2026-10-09T18280" defer></script>
-  <script type="module" src="/polls/js/polls.js?v=v2026-10-09T18280" defer></script>
-  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-09T18280" defer></script>
+  <script src="/shared/js/core/security-warning.js?v=v2026-10-09T19271" defer></script>
+  <script type="module" src="/polls/js/polls.js?v=v2026-10-09T19271" defer></script>
+  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-09T19271" defer></script>
 </head>
 
 <body class="games-body polls-body topbar-title-mobile skel-body">
@@ -114,14 +114,17 @@
                 <h3 class="pollSecTitle" data-i18n="polls.share.linkTitle">Link</h3>
                 <div class="pollLinkPlaceholder" id="linkPlaceholder" data-i18n="polls.share.linkAfterStart" hidden>Link pojawi się po uruchomieniu</div>
                 <div class="pollLinkLive" id="linkLive">
-                  <button class="qrBox img" id="qr" type="button" data-i18n-aria-label="polls.share.enlargeQr" data-i18n-title="polls.share.enlargeQr" aria-label="Powiększ kod QR" title="Powiększ kod QR"></button>
+                  <div class="pollQrStage">
+                    <button class="qrBox img" id="qr" type="button" data-i18n-aria-label="polls.share.enlargeQr" data-i18n-title="polls.share.enlargeQr" aria-label="Powiększ kod QR" title="Powiększ kod QR"></button>
+                    <div class="pollQrHint" data-i18n="polls.share.scanHint">Zeskanuj telefonem, żeby zagłosować</div>
+                  </div>
                   <div class="linkField">
                     <input class="inp pollLinkInp" id="pollLink" readonly />
                     <button class="btn xs linkCopyBtn" id="btnCopy" type="button" disabled data-i18n-aria-label="polls.share.copyLink" data-i18n-title="polls.share.copyLink" aria-label="Kopiuj link" title="Kopiuj link"><i class="ico" data-icon="copy"></i></button>
                   </div>
                   <div class="pollLinkActions">
-                    <button class="btn sm" id="btnOpen" type="button" disabled data-i18n="polls.actions.openShort">Otwórz</button>
-                    <button class="btn sm" id="btnOpenQr" type="button" disabled data-i18n="polls.actions.qrOnDisplay">QR na wyświetlaczu</button>
+                    <button class="btn sm" id="btnOpen" type="button" disabled><i class="ico" data-icon="eye"></i><span data-i18n="polls.actions.openShort">Otwórz</span></button>
+                    <button class="btn sm" id="btnOpenQr" type="button" disabled><i class="ico" data-icon="display"></i><span data-i18n="polls.actions.qrOnDisplay">QR na wyświetlaczu</span></button>
                   </div>
                 </div>
               </section>

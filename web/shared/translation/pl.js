@@ -833,7 +833,8 @@ const pl = {
     },
     share: {
       activeSub: "Zagłosowali w tej ankiecie.",
-      linkTitle: "Link",
+      linkTitle: "Link do głosowania",
+      scanHint: "Zeskanuj telefonem, żeby zagłosować",
       subsTitle: "Subskrybenci",
       sendInvites: "Wyślij zaproszenia",
       sendInvitesN: "Wyślij zaproszenia ({n})",
