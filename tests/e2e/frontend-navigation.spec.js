@@ -28,8 +28,12 @@ test("zalogowany: Bazy → Subskrypcje → Bazy oraz powrót do gier", async ({ 
   await page.locator("#btnGoAlt").click();
   await expect.poll(() => new URL(page.url()).pathname).toBe("/subscriptions/");
   expect(new URL(page.url()).searchParams.get("ret")).toBe("/bases/");
+  // Adres zmienia się przed wykonaniem modułu strony — obsługa przycisku
+  // jest podpięta dopiero po DOMContentLoaded.
+  await page.waitForLoadState("domcontentloaded");
   await page.locator("#btnBackToGames").click();
   await expect.poll(() => new URL(page.url()).pathname).toBe("/bases/");
+  await page.waitForLoadState("domcontentloaded");
   await page.locator("#btnBack").click();
   await expect.poll(() => new URL(page.url()).pathname).toBe("/games/");
 });
