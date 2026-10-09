@@ -8,10 +8,11 @@
 //
 // Testy idą równolegle; każdy worker ma WŁASNE konto (po parallelIndex), więc
 // blokady, lista i sprzątanie jednego testu nie wpływają na inne. Pula:
-// LOGO_E2E_ACCOUNTS (domyślnie 2,3,4,6,7) -- bez test1@ (na nim działa
+// LOGO_E2E_ACCOUNTS (domyślnie 2,3,6,7) -- bez test1@ (na nim działa
 // nagrywanie rozgrywki e2e-record.yml, a trwająca gra blokuje edycję logo:
-// „prowadzisz rozgrywkę”) i bez test5@/test9@/test10@ (Supabase: "Database error
-// querying schema"). Logowanie raz na workera (captureSession). Każdy test
+// „prowadzisz rozgrywkę”), test4@/test5@ (zarezerwowane dla odizolowanych
+// przebiegów), i test9@/test10@ (Supabase: "Database error querying schema").
+// Logowanie raz na workera (captureSession). Każdy test
 // sprząta swoje logo i pliki (prefiks).
 //
 // Sprawdzamy WYNIK w bazie (payload, bity, które widzi wyświetlacz), nie
@@ -30,7 +31,7 @@ const OTHER_IMAGE = path.resolve(__dirname, "../../web/assets/img/icon.png");
 test.use({ viewport: { width: 1440, height: 900 }, serviceWorkers: "block" });
 test.describe.configure({ mode: "parallel" });
 
-const ACCOUNTS = String(process.env.LOGO_E2E_ACCOUNTS || "2,3,4,6,7").split(",").map(Number).filter(Boolean);
+const ACCOUNTS = String(process.env.LOGO_E2E_ACCOUNTS || "2,3,6,7").split(",").map(Number).filter(Boolean);
 
 let site;
 let session;

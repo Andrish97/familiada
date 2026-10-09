@@ -11,6 +11,10 @@ on:
         description: 'Liczba workerów; 1 do diagnostyki współdzielonych kont i poczty.'
         required: false
         default: "4"
+      test_accounts:
+        description: 'Opcjonalna, odizolowana pula kont, np. 4,5. Pusta wartość używa zwykłej puli bez kont zarezerwowanych.'
+        required: false
+        default: ""
       retain_statistics_games:
         description: 'Zachowaj gry, których rekordy statystyk odczytano w wybranych testach Control2, do ręcznego sprawdzenia w panelu.'
         type: boolean
@@ -36,9 +40,11 @@ on:
 # JEDEN SILNIK TESTÓW, JEDNA KOMENDA WSZĘDZIE: ten sam playwright.config.js,
 # ta sama `playwright test ... --workers="$TEST_WORKERS"` w KAŻDEJ grupie
 # e2e-grouped i w e2e-custom-filter -- bez żadnego "jeśli to ten plik, to
-# inaczej". Pula kont test1@…...test8@… (test4, test5, test9, test10 wykluczone z e2e — zarezerwowane dla użytkownika i drugiej sesji, decyzja 2026-10-09)
-# -- TEST_ACCOUNT_COUNT kolejnych,
-# licząc od test1 — patrz getTestAccountPool w e2e/helpers/login.js) jest
+# inaczej". Zwykła pula kont test1@…...test8@… pomija test4 i test5
+# (zarezerwowane do odizolowanych przebiegów) oraz test9 i test10 (druga
+# sesja). Dedykowany przebieg może ustawić wejście `test_accounts=4,5`.
+# TEST_ACCOUNT_COUNT określa górny numer zwykłej puli — patrz
+# getTestAccountPool w e2e/helpers/login.js. Pula jest
 # dostępna w CAŁOŚCI każdemu filtrowi/grupie, bez sztywnego podziału
 # między plikami — który dokładnie numer trafia do którego testu decyduje
 # kod TEGO pliku (np. control2.spec.js woła loginAsPooledTestUser z
@@ -84,6 +90,7 @@ on:
 # górę bez kolejnego czystego przebiegu na obecnej wartości.
 env:
   TEST_ACCOUNT_COUNT: "8"
+  TEST_ACCOUNT_NUMBERS: ${{ inputs.test_accounts || '' }}
   TEST_WORKERS: ${{ inputs.workers || '4' }}
 
 jobs:
