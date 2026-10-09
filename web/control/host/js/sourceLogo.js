@@ -402,25 +402,13 @@ async function renderDrawLogo(logo, dot) {
   }
 }
 
-async function renderDrawRaster(source, dot) {
-  if (!source?.hostRasterUrl) return null;
-  const image = await loadImage(source.hostRasterUrl);
-  const canvas = canvasOf(image.naturalWidth || image.width, image.naturalHeight || image.height);
-  const context = canvas.getContext("2d");
-  context.drawImage(image, 0, 0);
-  context.globalCompositeOperation = "source-in";
-  context.fillStyle = colorHex(dot);
-  context.fillRect(0, 0, canvas.width, canvas.height);
-  return canvas;
-}
-
 export async function renderLogoSource(logo, dot) {
   const mode = logo?.payload?.source?.mode;
   const logoDot = String(dot || "").toLowerCase() === DEFAULT_DOT_COLOR ? DEFAULT_LOGO_FACE : dot;
   try {
     if (mode === "TEXT") return renderTextLogo(logo.payload.source.text, logoDot, { fillWidth: true });
     if (mode === "IMAGE") return await renderImageLogo(logo.payload.source);
-    if (mode === "DRAW") return await (await renderDrawRaster(logo.payload.source, logoDot)) || await renderDrawLogo(logo, logoDot);
+    if (mode === "DRAW") return await renderDrawLogo(logo, logoDot);
   } catch (error) {
     console.error(`[host/logo] ${mode || "source"} rendering failed`, error);
   }

@@ -20,7 +20,7 @@ import { t } from "../../shared/translation/translation.js?v=v2026-10-09T20233";
 import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-09T20233";
 import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-09T20233";
 import { DOT_W, DOT_H, TYPE_PIX, PIX_FORMAT, packBits, unpackBits } from "./render.js?v=v2026-10-09T20233";
-import { WORLD_W, WORLD_H, sceneToBits, sceneToHostRaster } from "./draw/raster.js?v=v2026-10-09T20233";
+import { WORLD_W, WORLD_H, sceneToBits } from "./draw/raster.js?v=v2026-10-09T20233";
 import { SHAPES, shapeById, buildShapePath, buildArrowPath } from "./draw/shapes.js?v=v2026-10-09T20233";
 
 const TOOL = { SELECT: "SELECT", PAN: "PAN", TEXT: "TEXT", BRUSH: "BRUSH", ERASER: "ERASER", SHAPES: "SHAPES" };
@@ -1617,12 +1617,10 @@ export function initDrawEditor(ctx) {
 
       const fabricData = snapshot();
       bits = await sceneToBits(fabric(), fabricData, worldW, worldH);
-      const hostRaster = await sceneToHostRaster(fabric(), fabricData, worldW, worldH);
       ctx.onPreview?.({ kind: "PIX", bits });
       return {
         ok: true,
         type: TYPE_PIX,
-        assets: { hostRaster },
         payload: {
           w: DOT_W,
           h: DOT_H,

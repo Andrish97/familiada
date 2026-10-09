@@ -71,34 +71,6 @@ export async function uploadImportedLogoImage(dataUrl, userId) {
 }
 
 /** Upload the flattened, color-neutral DRAW result used by the Host. */
-export async function uploadDrawHostRaster(blob, userId) {
-  if (!userId) throw new Error("You must be signed in to upload a logo image");
-  if (!(blob instanceof Blob) || blob.type !== "image/png" || !blob.size || blob.size > 5 * 1024 * 1024) {
-    throw new Error("Invalid DRAW host image (PNG, up to 5 MB required)");
-  }
-  const path = `${userId}/${Date.now()}-${Math.random().toString(36).slice(2)}-draw-host.png`;
-  const storage = sb().storage.from("user-logos");
-  const { error } = await storage.upload(path, blob, {
-    cacheControl: "3600", upsert: false, contentType: "image/png",
-  });
-  if (error) throw error;
-  return storage.getPublicUrl(path).data.publicUrl;
-}
-
-export async function uploadImportedDrawHostRaster(dataUrl, userId) {
-  const match = String(dataUrl || "").match(/^data:image\/png;base64,([A-Za-z0-9+/]+=*)$/i);
-  if (!match || match[1].length > Math.ceil((5 * 1024 * 1024) / 3) * 4) throw new Error("Invalid embedded DRAW host PNG");
-  const bytes = Uint8Array.from(atob(match[1]), char => char.charCodeAt(0));
-  return uploadDrawHostRaster(new Blob([bytes], { type: "image/png" }), userId);
-}
-
-export async function removeDrawHostRaster(url, userId) {
-  const path = storagePathFromUrl(url, userId);
-  if (!path || !path.endsWith("-draw-host.png")) return;
-  const { error } = await sb().storage.from("user-logos").remove([path]);
-  if (error) console.warn("[logo/db] could not remove old DRAW host raster:", error);
-}
-
 export async function removeLogoImageUrl(imageUrl, userId) {
   const path = storagePathFromUrl(imageUrl, userId);
   if (!path) return;
