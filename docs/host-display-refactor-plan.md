@@ -153,6 +153,9 @@ przezroczystym tłem pozostaje bez zmian. Jednolite tło usuwa się wg progów
 Podgląd Hosta obok podglądu Wyświetlacza w Ustawieniach rozgrywki reaguje na
 niezapisane zmiany, w tym przełącznik, kolor DOT i wybór logo. Podsumowanie
 Control pokazuje ten sam wariant Hosta i krótko opisuje aktywne ustawienie.
+Nazwa motywu w podsumowaniu jest lokalizowana (Klasyczny/Nowoczesny,
+Classic/Modern, Класична/Сучасна), a nie pokazywana jako klucz `classic` lub
+`modern`.
 
 W DRAW kontury są renderowane z `strokeUniform`, aby skalowanie grup Fabric nie
 pogrubiało ich dodatkowo. Domyślny napis FAMILIADA korzysta z tego samego

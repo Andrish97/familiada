@@ -348,6 +348,13 @@ export function createUI({ root, emit }) {
     ));
   }
 
+  function displayThemeLabel(theme) {
+    const key = String(theme || "").toLowerCase();
+    if (key === "classic") return t("control.themeClassic");
+    if (key === "modern") return t("control.themeModern");
+    return theme || t("control.summaryDefault");
+  }
+
   function summarySection(title, valueNode, extraClass = "") {
     return h("div", { class: `summarySection ${extraClass}`.trim() }, [
       h("div", { class: "summarySectionTitle", text: title }),
@@ -524,7 +531,7 @@ export function createUI({ root, emit }) {
       }) }), "c2-summary-teams"),
       summarySection(t("control.summaryDisplay"), h("div", { class: "summaryDisplayInfo" }, [
         h("div", { class: "summaryDisplayRow" }, [h("span", { class: "summaryDisplayLabel", text: `${t("control.summaryColors")}: ` }), colorDots(d.colors)]),
-        h("div", { class: "summaryDisplayRow" }, [h("span", { class: "summaryDisplayLabel", text: `${t("control.summaryTheme")}: ` }), document.createTextNode(d.theme || t("control.summaryDefault"))]),
+        h("div", { class: "summaryDisplayRow" }, [h("span", { class: "summaryDisplayLabel", text: `${t("control.summaryTheme")}: ` }), document.createTextNode(displayThemeLabel(d.theme))]),
         h("div", { class: "summaryDisplayRow" }, [h("span", { class: "summaryDisplayLabel", text: `${t("control.summaryLogo")}: ` }), document.createTextNode(d.logoId ? t("control.summaryLogoCustom") : t("control.summaryDefault"))]),
         h("div", { class: "summaryDisplayRow" }, [h("span", { class: "summaryDisplayLabel", text: `${t("control.summaryHostLogo")}: ` }), document.createTextNode(d.hostLogoMode === "source" ? t("gameSettings.display.hostLogoSource") : t("gameSettings.display.hostLogoPixel"))]),
         h("div", { id: "c2DevicePreviews" }, [

@@ -4550,6 +4550,8 @@ const en = {
     summaryDisplay: "Appearance",
     summaryColors: "Colors",
     summaryTheme: "Theme",
+    themeClassic: "Classic",
+    themeModern: "Modern",
     summaryLogo: "Logo",
     summaryHostLogo: "Host logo",
     hostLogoPreviewTitle: "Host logo preview",

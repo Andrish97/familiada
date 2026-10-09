@@ -4250,6 +4250,8 @@ const pl = {
     summaryDisplay: "Wygląd",
     summaryColors: "Kolory",
     summaryTheme: "Motyw",
+    themeClassic: "Klasyczny",
+    themeModern: "Nowoczesny",
     summaryLogo: "Logo",
     summaryHostLogo: "Logo prowadzącego",
     hostLogoPreviewTitle: "Podgląd logo prowadzącego",

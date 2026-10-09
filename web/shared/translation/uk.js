@@ -4537,6 +4537,8 @@ const uk = {
     summaryDisplay: "Вигляд",
     summaryColors: "Кольори",
     summaryTheme: "Тема",
+    themeClassic: "Класична",
+    themeModern: "Сучасна",
     summaryLogo: "Логотип",
     summaryHostLogo: "Логотип ведучого",
     hostLogoPreviewTitle: "Попередній перегляд логотипа ведучого",
