@@ -1,21 +1,21 @@
 // js/pages/bases.js
 // Lista baz pytań (warstwa 1) – styl i ergonomia jak strona gier (games).
 
-import { addRenameGesture } from "../../shared/js/core/rename-gesture.js?v=v2026-10-09T00380";
+import { addRenameGesture } from "../../shared/js/core/rename-gesture.js?v=v2026-10-09T00385";
 
-import { sb, SUPABASE_URL } from "../../shared/js/core/supabase.js?v=v2026-10-09T00380";
-import { updateChecked, ROW_GONE } from "../../shared/js/core/db-guard.js?v=v2026-10-09T00380";
-import { requireAuth } from "../../shared/js/core/auth.js?v=v2026-10-09T00380";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-09T00380";
-import { isGuestUser, hideForGuest } from "../../shared/js/core/guest-mode.js?v=v2026-10-09T00380";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-09T00380";
-import { getUiLang, initI18n, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-09T00380";
-import { initTopbarAccountDropdown } from "../../shared/js/core/topbar-controller.js?v=v2026-10-09T00380";
-import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-09T00380";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-09T00380";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-09T00380";
-import { createCooldownTicker, formatCooldownRemaining } from "../../shared/js/core/cooldown.js?v=v2026-10-09T00380";
-import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-09T00380";
+import { sb, SUPABASE_URL } from "../../shared/js/core/supabase.js?v=v2026-10-09T00385";
+import { updateChecked, ROW_GONE } from "../../shared/js/core/db-guard.js?v=v2026-10-09T00385";
+import { requireAuth } from "../../shared/js/core/auth.js?v=v2026-10-09T00385";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-09T00385";
+import { isGuestUser, hideForGuest } from "../../shared/js/core/guest-mode.js?v=v2026-10-09T00385";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-09T00385";
+import { getUiLang, initI18n, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-09T00385";
+import { initTopbarAccountDropdown } from "../../shared/js/core/topbar-controller.js?v=v2026-10-09T00385";
+import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-09T00385";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-09T00385";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-09T00385";
+import { createCooldownTicker, formatCooldownRemaining } from "../../shared/js/core/cooldown.js?v=v2026-10-09T00385";
+import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-09T00385";
 initI18n({ withSwitcher: true }).then(() => {
   document.documentElement.classList.remove('page-loading');
   initListSearch({ grids: "#mineGrid, #sharedGrid", tile: ".card", name: ".name" });
