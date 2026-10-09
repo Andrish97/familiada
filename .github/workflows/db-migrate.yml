@@ -137,6 +137,12 @@ jobs:
             "export GITHUB_SHA='${{ github.sha }}'; \
              bash \"$STAGING/apply-migrations.sh\" \"$STAGING\""
 
+      - name: Verify shared demo DRAW PNG migration on production
+        run: |
+          ssh -i ~/.ssh/id_ed25519 "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" \
+            'docker exec -i supabase-db psql -U supabase_admin -d postgres -v ON_ERROR_STOP=1' \
+            < tests/sql/demo-draw-shared-png-production.sql
+
       - name: Verify activity writes and exclusions on production database
         run: |
           ssh -i ~/.ssh/id_ed25519 "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" \
