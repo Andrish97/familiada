@@ -299,3 +299,29 @@ Odpowiedzi na sekcję D w [`wzorce-ui.md`](wzorce-ui.md):
    „Link” (QR) w ankiecie** do poprawy.
 7. **Instrukcja** — pigułki zostają, tylko adres `?tab=`. Tak.
 8. **Tokeny odstępów** w `base.css`. Tak.
+
+## Udostępnianie — wiersze, role, sekcje wg stanu (decyzja 2026-10-09, E19)
+
+Zaakceptowane przez użytkownika („bardzo dobry wzór … Akceptuję. Podział na
+role ma być we wszystkich udostępnianiach”). Wzór obowiązuje **wszędzie, gdzie
+coś udostępniamy**: Subskrypcje, subskrybenci w ankiecie, udostępnianie bazy,
+urządzenia.
+
+1. **Podział na role** (karty): to, co **ja udostępniam / moi odbiorcy**
+   oddzielnie od tego, co **udostępniono mnie**. Subskrypcje: Moi subskrybenci ·
+   Moje subskrypcje · Zadania (z licznikami). Bazy: analogicznie (udostępnione
+   przeze mnie · udostępnione mnie).
+2. **Wiersze zamiast kafli** (osoby to nie zasoby): inicjał w kółku, nazwa /
+   e-mail, szara linijka stanu („zaproszony 3 dni temu”, „od 12.09”), akcje po
+   prawej **w wierszu** (bez zaznaczania i górnego paska akcji). Komputer:
+   pełne słowa; telefon: ikony. Usuwanie zawsze ikoną w wierszu, nigdy w dolnym
+   pasku (decyzja 4 z E18).
+3. **Sekcje wg stanu miejscem, nie kolorem**:
+   - Moi subskrybenci: „+ Zaproś” na górze; Oczekujące (Ponów, Usuń) · Aktywni (Usuń),
+   - Moje subskrypcje: Zaproszenia do mnie (Akceptuj, Odrzuć) · Subskrybuję (Anuluj),
+   - Zadania: Do zrobienia (ankieta, od kogo, Głosuj) · Zrobione (zwinięte).
+4. Komputer: jedna kolumna ok. 760 px, wyśrodkowana. Wyszukiwanie (nazwa /
+   e-mail) dopiero przy dłuższej liście; „Pokaż zakończone” zamiast osobnego
+   przełącznika archiwum.
+5. Jeden wspólny komponent (rozwinięcie `share-sections.js`) dla wszystkich
+   miejsc udostępniania. Realizacja po etapach nawigacji (E6–E9).
