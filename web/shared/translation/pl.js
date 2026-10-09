@@ -2048,7 +2048,7 @@ const pl = {
 <li><span class="m-strong">Kolory</span> — kolory drużyn, tła i kropek.</li>
 <li><span class="m-strong">Motyw</span> — styl wizualny tablicy.</li>
 <li><span class="m-strong">Logo</span> — logo wyświetlane w trakcie rozgrywki.</li>
-<li><span class="m-strong">Logo prowadzącego</span> — w Podsumowaniu zobaczysz wybrany wariant i podgląd Hosta obok podglądu Wyświetlacza.</li>
+<li><span class="m-strong">Logo prowadzącego</span> — wariant <span class="m-strong">Piksele</span> albo <span class="m-strong">Źródło</span> wybierasz w Ustawieniach gry; w Podsumowaniu zobaczysz wybrany wariant i podgląd Hosta obok podglądu Wyświetlacza.</li>
 </ul>
 <h4 class="m-h3">Dźwięk</h4>
 <ul class="m-ul">

@@ -2024,7 +2024,7 @@ const en = {
 <li><span class="m-strong">Colours</span> — teams, background and dots.</li>
 <li><span class="m-strong">Theme</span> — board appearance.</li>
 <li><span class="m-strong">Logo</span> — shown during play.</li>
-<li><span class="m-strong">Host logo</span> — the Summary shows the selected variant and Host preview beside the Display preview.</li>
+<li><span class="m-strong">Host logo</span> — choose <span class="m-strong">Pixels</span> or <span class="m-strong">Source</span> in Game settings; the Summary shows the selected variant and Host preview beside the Display preview.</li>
 </ul>
 <h4 class="m-h3">Sound</h4>
 <ul class="m-ul">

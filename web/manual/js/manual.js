@@ -2,13 +2,13 @@
 // Zakładki mają działać nawet jeśli auth się nie załaduje.
 // Najpierw UI, potem initPage (dostęp, „Wstecz”, konto) „miękko”.
 
-import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-09T22271";
-import { initI18n, setUiLang } from "../../shared/translation/translation.js?v=v2026-10-09T22271";
-import { linkTo } from "../../shared/js/core/nav-map.js?v=v2026-10-09T22271";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-09T22271";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-09T22271";
+import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-09T22412";
+import { initI18n, setUiLang } from "../../shared/translation/translation.js?v=v2026-10-09T22412";
+import { linkTo } from "../../shared/js/core/nav-map.js?v=v2026-10-09T22412";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-09T22412";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-09T22412";
 
-import { decorateManualControls } from "./controls.js?v=v2026-10-09T22271";
+import { decorateManualControls } from "./controls.js?v=v2026-10-09T22412";
 
 function isModalMode() {
   const p = new URLSearchParams(location.search);

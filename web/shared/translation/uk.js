@@ -2018,7 +2018,7 @@ const uk = {
 <li><span class="m-strong">Кольори</span> — команди, тло та крапки.</li>
 <li><span class="m-strong">Тема</span> — вигляд табло.</li>
 <li><span class="m-strong">Логотип</span> — показується під час гри.</li>
-<li><span class="m-strong">Логотип ведучого</span> — у Підсумку видно вибраний варіант і перегляд Ведучого поруч із Дисплеєм.</li>
+<li><span class="m-strong">Логотип ведучого</span> — варіант <span class="m-strong">Пікселі</span> або <span class="m-strong">Джерело</span> обирається в Налаштуваннях гри; у Підсумку видно вибраний варіант і перегляд Ведучого поруч із Дисплеєм.</li>
 </ul>
 <h4 class="m-h3">Звук</h4>
 <ul class="m-ul">
