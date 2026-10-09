@@ -55,7 +55,11 @@ async function inviteRegistered(page, recipient) {
   await page.locator("#subscribersGrid .addCard").click();
   await page.locator("#inviteInput").fill(recipient);
   await page.locator("#btnInviteOk").click();
-  await closeAlert(page, /Zaproszenie zapisane|wysyłka maila nie powiodła się/);
+  // E16: sukces = dymek #appToast; błąd wysyłki maila nadal w oknie.
+  const toastEl = page.locator("#appToast");
+  const modal = page.locator(".uni-modal");
+  await expect(toastEl.or(modal)).toContainText(/Zaproszenie zapisane/, { timeout: 15000 });
+  if (await modal.isVisible().catch(() => false)) await modal.locator(".uni-foot .btn.gold").click();
 }
 
 test("pełny przepływ: zaproszenie, akceptacja i anulowanie z czystym stanem", async ({ browser }) => {

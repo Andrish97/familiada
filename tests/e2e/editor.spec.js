@@ -379,9 +379,12 @@ test("edytor: suma punktów >100 dla 'prepared' to tylko wizualne ostrzeżenie, 
     await expect(page.locator(".qf-sum")).toHaveClass(/over/, { timeout: 5000 });
     await expect(page.locator(".qf-sum b")).toHaveText("130/100");
 
-    const answers = await getAnswersRows(page, qId);
-    const sum = answers.reduce((s, a) => s + a.fixed_points, 0);
-    expect(sum, "obie wartości mają zostać naprawdę zapisane w bazie mimo przekroczenia 100").toBe(130);
+    // „Zapisano.” zostaje po pierwszym zapisie, więc nie potwierdza drugiego —
+    // czekamy na stan w bazie.
+    await expect.poll(async () => {
+      const answers = await getAnswersRows(page, qId);
+      return answers.reduce((s, a) => s + a.fixed_points, 0);
+    }, { timeout: 10000, message: "obie wartości mają zostać naprawdę zapisane w bazie mimo przekroczenia 100" }).toBe(130);
   } finally {
     await deleteGame(page, gameId);
   }

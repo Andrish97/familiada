@@ -172,7 +172,7 @@ test("konto test12: zmiana e-maila przez wiadomosci test12 i test13", async ({ b
     const loginContext = await browser.newContext();
     const loginPage = await loginContext.newPage();
     await loginAsTestUser(loginPage, loginContext, { username: PROFILE_NEW_EMAIL });
-    await expect(loginPage).toHaveURL(/\/games(?:[?#]|$)/);
+    await expect(loginPage).toHaveURL(/\/games\/?(?:[?#]|$)/);
     await loginContext.close();
   } finally {
     await context.close().catch(() => {});
