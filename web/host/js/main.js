@@ -7,22 +7,18 @@
 // snap-to-grid z dzisiejszego host.js (kosmetyka do dostrojenia wizualnie
 // później, nie architektura).
 
-import { initI18n, setUiLang } from "../../shared/translation/translation.js?v=v2026-10-09T02074";
-import { startKeepAlive } from "../../shared/js/core/keep-alive.js?v=v2026-10-09T02074";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T02074";
-import { createSubscription } from "../../shared/js/core/game-state-subscribe.js?v=v2026-10-09T02074";
-import { createHostRenderer } from "./render.js?v=v2026-10-09T02074";
-import { createCoverLogoRenderer } from "./coverLogo.js?v=v2026-10-09T02074";
-import { createHostThemeApplier } from "./hostThemeManager.js?v=v2026-10-09T02074";
-import { icon } from "../../shared/js/core/icons.js?v=v2026-10-09T02074";
-
-// Wszystkie trzy urządzenia utrzymują ekran aktywny przez Wake Lock
-// oraz zapasowy, wyciszony strumień wideo.
-startKeepAlive();
+import { initI18n, setUiLang } from "../../shared/translation/translation.js?v=v2026-10-09THOSTLOGO";
+import { startKeepAlive } from "../../shared/js/core/keep-alive.js?v=v2026-10-09THOSTLOGO";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09THOSTLOGO";
+import { createSubscription } from "../../shared/js/core/game-state-subscribe.js?v=v2026-10-09THOSTLOGO";
+import { createHostRenderer } from "./render.js?v=v2026-10-09THOSTLOGO";
+import { createCoverLogoRenderer } from "./coverLogo.js?v=v2026-10-09THOSTLOGO";
+import { createHostThemeApplier } from "./hostThemeManager.js?v=v2026-10-09THOSTLOGO";
+import { icon } from "../../shared/js/core/icons.js?v=v2026-10-09THOSTLOGO";
 
 function parseParams() {
   const u = new URL(location.href);
-  return { gameId: u.searchParams.get("id") || "", key: u.searchParams.get("key") || "" };
+  return { gameId: u.searchParams.get("id") || "", key: u.searchParams.get("key") || "", preview: u.searchParams.get("preview") === "1" };
 }
 
 function startPresenceHeartbeat({ gameId, key }, pingMs = 3000) {
@@ -74,18 +70,115 @@ function setupOrientationClass() {
   window.addEventListener("resize", apply);
 }
 
+function isIOSSafari() {
+  const ua = navigator.userAgent || "";
+  const ios = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  return ios && /WebKit/.test(ua) && !/CriOS|FxiOS|EdgiOS/.test(ua);
+}
+
+function isStandalone() {
+  return !!(navigator.standalone || window.matchMedia?.("(display-mode: standalone)").matches);
+}
+
 function setupFullscreenButton() {
   const btn = document.getElementById("btnFS");
+  const hint = document.getElementById("hostA2HS");
+  const close = document.getElementById("hostA2HSClose");
   const ico = document.getElementById("fsIco");
-  function syncIcon() { if (ico) ico.innerHTML = icon(document.fullscreenElement ? "fullscreen-exit" : "fullscreen-enter"); }
+  let pseudoFS = false;
+  function syncIcon() { if (ico) ico.innerHTML = icon((document.fullscreenElement || pseudoFS) ? "fullscreen-exit" : "fullscreen-enter"); }
+  function closeHint() {
+    document.documentElement.classList.remove("showA2HS");
+    hint?.setAttribute("aria-hidden", "true");
+    btn?.focus();
+  }
+  function openHint() {
+    document.documentElement.classList.add("showA2HS");
+    hint?.setAttribute("aria-hidden", "false");
+    close?.focus();
+  }
+  close?.addEventListener("click", closeHint);
+  hint?.addEventListener("click", (event) => { if (event.target === hint) closeHint(); });
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && document.documentElement.classList.contains("showA2HS")) closeHint();
+  });
   btn?.addEventListener("click", async () => {
+    if (isIOSSafari() && !isStandalone()) { openHint(); return; }
     try {
-      if (document.fullscreenElement) await document.exitFullscreen();
-      else await document.documentElement.requestFullscreen?.({ navigationUI: "hide" });
-    } catch {}
+      if (document.fullscreenElement) await document.exitFullscreen?.();
+      else if (pseudoFS) {
+        pseudoFS = false;
+        document.documentElement.classList.remove("pseudoFS");
+      } else {
+        const request = document.documentElement.requestFullscreen || document.documentElement.webkitRequestFullscreen;
+        if (!request) throw new Error("Fullscreen API unavailable");
+        await request.call(document.documentElement, { navigationUI: "hide" });
+      }
+    } catch {
+      pseudoFS = !pseudoFS;
+      document.documentElement.classList.toggle("pseudoFS", pseudoFS);
+      if (pseudoFS) setTimeout(() => window.scrollTo(0, 1), 50);
+    }
     syncIcon();
   });
   document.addEventListener("fullscreenchange", syncIcon);
+}
+
+function setupResponsivePaper() {
+  const root = document.documentElement;
+  const panes = [
+    [document.querySelector(".pane1"), document.getElementById("lineGrid1")],
+    [document.querySelector(".pane2"), document.getElementById("lineGrid2")],
+  ].filter(([pane, grid]) => pane && grid);
+  const renderedCounts = new WeakMap();
+  const scrollBound = new WeakSet();
+
+  function update() {
+    // Ta sama bazowa wysokość wiersza dla obu orientacji; na małym ekranie
+    // ogranicza ją krótszy bok i pionowa przestrzeń, a na tablecie rośnie.
+    const line = Math.max(15, Math.min(34, window.innerWidth * 0.042, window.innerHeight / 24));
+    root.style.setProperty("--line", `${line}px`);
+    // Tekst zaczyna się na granicy wiersza siatki. Linie same pozostają
+    // rozciągnięte od krawędzi do krawędzi, także przez safe area.
+    for (const [id, property] of [
+      ["paperText1", "--host-text-top-1"],
+      ["paperText2", "--host-text-top-2"],
+    ]) {
+      const el = document.getElementById(id);
+      if (!el) continue;
+      root.style.removeProperty(property);
+      const computedTop = parseFloat(getComputedStyle(el).top);
+      if (!Number.isFinite(computedTop)) continue;
+      root.style.setProperty(property, `${Math.ceil(computedTop / line) * line}px`);
+    }
+    for (const [pane, grid] of panes) {
+      const rows = Math.ceil(pane.clientHeight / line) + 1;
+      if (renderedCounts.get(grid) !== rows) {
+        const fragment = document.createDocumentFragment();
+        for (let i = 0; i < rows; i++) fragment.appendChild(document.createElement("span"));
+        grid.replaceChildren(fragment);
+        renderedCounts.set(grid, rows);
+      }
+      const text = pane.querySelector(".text");
+      if (text) {
+        const syncScroll = () => {
+          const activeLine = parseFloat(getComputedStyle(root).getPropertyValue("--line")) || line;
+          grid.style.transform = `translateY(-${text.scrollTop % activeLine}px)`;
+        };
+        if (!scrollBound.has(text)) {
+          text.addEventListener("scroll", syncScroll, { passive: true });
+          scrollBound.add(text);
+        }
+        syncScroll();
+      }
+    }
+  }
+
+  update();
+  const observer = new ResizeObserver(update);
+  panes.forEach(([pane]) => observer.observe(pane));
+  window.addEventListener("resize", update, { passive: true });
+  window.visualViewport?.addEventListener("resize", update, { passive: true });
 }
 
 // ZGŁOSZONY, REALNY BUG (nie tylko test): było `renderer.setPeek(!renderer.isCovered())`.
@@ -99,7 +192,11 @@ function setupFullscreenButton() {
 function setupPeekSwipe(renderer) {
   let sx = 0, sy = 0, active = false;
   const MIN = 60;
-  document.addEventListener("pointerdown", (e) => { sx = e.clientX; sy = e.clientY; active = true; }, { passive: true });
+  document.addEventListener("pointerdown", (e) => {
+    const inText = e.target.closest?.(".text");
+    if (inText && document.documentElement.classList.contains("portrait")) { active = false; return; }
+    sx = e.clientX; sy = e.clientY; active = true;
+  }, { passive: true });
   document.addEventListener("pointerup", (e) => {
     if (!active) return;
     active = false;
@@ -108,17 +205,38 @@ function setupPeekSwipe(renderer) {
     if (Math.hypot(dx, dy) < MIN) return;
     renderer.setPeek(!renderer.isPeeked());
   }, { passive: true });
+  document.addEventListener("pointercancel", () => { active = false; }, { passive: true });
 }
 
 async function main() {
   await initI18n({ withSwitcher: false });
   setupFullscreenButton();
   setupOrientationClass();
+  setupResponsivePaper();
   document.documentElement.classList.remove("page-loading");
 
-  const { gameId, key } = parseParams();
+  const { gameId, key, preview } = parseParams();
+  if (preview) {
+    const renderer = createHostRenderer();
+    const coverLogo = createCoverLogoRenderer({ gameId, key });
+    const hostTheme = await createHostThemeApplier();
+    window.addEventListener("message", async event => {
+      if (event.origin !== location.origin || event.source !== window.parent || event.data?.type !== "familiada:preview-row") return;
+      const row = event.data.row;
+      if (!row?.detail?.display) return;
+      await hostTheme.apply(row);
+      renderer.render(row);
+      await coverLogo.apply(row);
+    });
+    if (window.parent !== window) window.parent.postMessage({ type: "familiada:host-preview-ready" }, location.origin);
+    return;
+  }
+
   if (!gameId || !key) return;
 
+  // Wszystkie trzy urządzenia utrzymują ekran aktywny przez Wake Lock
+  // oraz zapasowy, wyciszony strumień wideo. Podgląd w ustawieniach nie.
+  startKeepAlive();
   startPresenceHeartbeat({ gameId, key });
   const renderer = createHostRenderer();
   // Zmiana orientacji w locie (obrót tabletu) ma przeliczyć podpowiedź

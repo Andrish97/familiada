@@ -81,7 +81,16 @@ test("sound manifest and display theme modules point to existing assets", () => 
   const sounds = JSON.parse(fs.readFileSync(path.join(ROOT, "shared/data/sounds.json"), "utf8"));
   for (const category of sounds.categories) for (const sound of category.sounds) assert.ok(fs.existsSync(path.join(ROOT, "assets/audio", category.folder, sound.file.split("?")[0])), category.folder + "/" + sound.file);
   const themes = JSON.parse(fs.readFileSync(path.join(ROOT, "shared/data/display-themes.json"), "utf8"));
-  for (const theme of themes.themes) assert.ok(fs.existsSync(path.resolve(ROOT, "shared/js/display", theme.module.split("?")[0])), theme.module);
+  for (const theme of themes.themes) {
+    assert.ok(fs.existsSync(path.resolve(ROOT, "shared/js/display", theme.module.split("?")[0])), theme.module);
+    assert.ok(theme.hostModule, `${theme.key} hostModule`);
+    const hostModule = path.join(ROOT, theme.hostModule.replace(/^\//, "").split("?")[0]);
+    assert.ok(fs.existsSync(hostModule), theme.hostModule);
+    assert.match(fs.readFileSync(hostModule, "utf8"), /export function createTheme\(root\)/, theme.hostModule);
+  }
+  const hostThemeCss = fs.readFileSync(path.join(ROOT, "host/css/host.css"), "utf8");
+  assert.match(hostThemeCss, /data-host-ruled="false"/);
+  assert.doesNotMatch(hostThemeCss, /data-host-theme="modern"/);
   for (const name of ["font_5x7.json", "font_3x10.json", "font_win.json"]) assert.ok(fs.existsSync(path.join(ROOT, "shared/fonts/display", name)));
   assert.doesNotThrow(() => JSON.parse(fs.readFileSync(path.join(ROOT, "shared/data/logo_familiada.json"), "utf8")));
 });

@@ -3,28 +3,28 @@
 // 1 blokad, podgląd Wyświetlacza przez display2?preview=1 + web/js/gameplay/previewRow.js
 // itd.) — trzymana jako osobny plik, żeby modal Control v2 nie zależał od
 // tej samej strony, którą wciąż ładuje stary control.html przez /game-settings.
-import { requireAuth } from "../../shared/js/core/auth.js?v=v2026-10-09T02074";
-import { t, getUiLang, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-09T02074";
-import { setTopbarAccount } from "../../shared/js/core/topbar-controller.js?v=v2026-10-09T02074";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T02074";
-import { loadQuestions, guardGameState } from "../../shared/js/core/game-validate.js?v=v2026-10-09T02074";
-import { loadFont5x7, buildLogoPreviewCanvas } from "../../shared/js/core/logo-preview.js?v=v2026-10-09T02074";
-import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-09T02074";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-09T02074";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-09T02074";
-import { buildDisplayPreviewRow } from "../../shared/js/gameplay/previewRow.js?v=v2026-10-09T02074";
+import { requireAuth } from "../../shared/js/core/auth.js?v=v2026-10-09THOSTLOGO";
+import { t, getUiLang, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-09THOSTLOGO";
+import { setTopbarAccount } from "../../shared/js/core/topbar-controller.js?v=v2026-10-09THOSTLOGO";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09THOSTLOGO";
+import { loadQuestions, guardGameState } from "../../shared/js/core/game-validate.js?v=v2026-10-09THOSTLOGO";
+import { loadFont5x7, buildLogoPreviewCanvas } from "../../shared/js/core/logo-preview.js?v=v2026-10-09THOSTLOGO";
+import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-09THOSTLOGO";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-09THOSTLOGO";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-09THOSTLOGO";
+import { buildDisplayPreviewRow } from "../../shared/js/gameplay/previewRow.js?v=v2026-10-09THOSTLOGO";
 import {
   loadSfxManifest, getSfxCategories,
   setSfxCustomBlob, clearSfxCustomFile, clearAllSfxCustomFiles, getSfxCustomFiles,
   playSfx, setSfxVolume,
-} from "../../shared/js/core/sfx.js?v=v2026-10-09T02074";
+} from "../../shared/js/core/sfx.js?v=v2026-10-09THOSTLOGO";
 import {
   uploadGameSound, deleteGameSound, deleteAllGameSounds,
-} from "../../shared/js/core/sfx-cloud.js?v=v2026-10-09T02074";
-import { guardDesktopOnly } from "../../shared/js/core/device-guard.js?v=v2026-10-09T02074";
-import { guardResourceLock, guardResourceBusy } from "../../shared/js/core/resource-lock.js?v=v2026-10-09T02074";
-import { updateChecked, ROW_GONE } from "../../shared/js/core/db-guard.js?v=v2026-10-09T02074";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-09T02074";
+} from "../../shared/js/core/sfx-cloud.js?v=v2026-10-09THOSTLOGO";
+import { guardDesktopOnly } from "../../shared/js/core/device-guard.js?v=v2026-10-09THOSTLOGO";
+import { guardResourceLock, guardResourceBusy } from "../../shared/js/core/resource-lock.js?v=v2026-10-09THOSTLOGO";
+import { updateChecked, ROW_GONE } from "../../shared/js/core/db-guard.js?v=v2026-10-09THOSTLOGO";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-09THOSTLOGO";
 
 guardDesktopOnly();
 
@@ -38,6 +38,7 @@ const DEFAULT_SETTINGS = {
     colors: { A: "#c4002f", B: "#2a62ff", BACKGROUND: "#d21180", DOT: "#d7ff3d" },
     theme: null,
     logoId: null,
+    hostLogoMode: "pixel",
   },
   game: {
     hasFinal: null,
@@ -78,6 +79,7 @@ function mergeSettings(saved) {
       },
       theme: s.display?.theme ?? defs.display.theme,
       logoId: s.display?.logoId ?? defs.display.logoId,
+      hostLogoMode: s.display?.hostLogoMode === "source" ? "source" : "pixel",
     },
     game: {
       hasFinal: s.game?.hasFinal ?? defs.game.hasFinal,
@@ -118,6 +120,8 @@ let _loadedLogos = [];
 // Display preview iframe
 let _displayIframe = null;
 let _displayReady = false;
+let _hostIframe = null;
+let _hostReady = false;
 
 // Wykryj modal mode już na poziomie modułu (inline script w <head> dodaje klasę przed renderem)
 const _isModal = document.documentElement.classList.contains("gs-modal-mode");
@@ -526,13 +530,13 @@ function escText(s) {
 }
 
 function parkDisplayIframe() {
-  const holder = document.getElementById("gsDisplayIframeHolder");
+  const holder = document.getElementById("gsLivePreviewWrap");
   if (holder) holder.style.display = "none";
 }
 
 function showDisplayIframe() {
-  const holder = document.getElementById("gsDisplayIframeHolder");
-  if (holder) holder.style.display = "";
+  const holder = document.getElementById("gsLivePreviewWrap");
+  if (holder) holder.style.display = "grid";
 }
 
 // ===== RENDER CATEGORIES =====
@@ -604,10 +608,10 @@ function resolveLogoPreview() {
 }
 
 function postPreviewRow() {
-  if (!_displayReady || !_displayIframe?.contentWindow) return;
   try {
     const row = buildDisplayPreviewRow({ teams: localSettings.teams, display: localSettings.display, logoPreview: resolveLogoPreview() });
-    _displayIframe.contentWindow.postMessage({ type: "familiada:preview-row", row }, "*");
+    if (_displayReady && _displayIframe?.contentWindow) _displayIframe.contentWindow.postMessage({ type: "familiada:preview-row", row }, "*");
+    if (_hostReady && _hostIframe?.contentWindow) _hostIframe.contentWindow.postMessage({ type: "familiada:preview-row", row }, "*");
   } catch {}
 }
 
@@ -647,6 +651,24 @@ function createDisplayIframe() {
   holder.appendChild(_displayIframe);
 }
 
+function createHostIframe() {
+  if (_hostIframe) return;
+  const holder = document.getElementById("gsHostIframeHolder");
+  if (!holder) return;
+  _hostIframe = document.createElement("iframe");
+  _hostIframe.id = "gsHostPreview";
+  _hostIframe.src = "/host/?preview=1";
+  _hostIframe.style.cssText = "width:100%;height:100%;border:none;display:block";
+  _hostIframe.title = t("gameSettings.display.hostPreview");
+  _hostReady = false;
+  window.addEventListener("message", e => {
+    if (e.data?.type !== "familiada:host-preview-ready" || e.source !== _hostIframe?.contentWindow) return;
+    _hostReady = true;
+    postPreviewRow();
+  });
+  holder.appendChild(_hostIframe);
+}
+
 function stopDisplayPreview() {
   parkDisplayIframe();
 }
@@ -683,6 +705,20 @@ function renderDisplay() {
       <div class="gs-label">${t("gameSettings.display.logo")}</div>
       <div id="gsLogoGrid" class="gs-logo-grid"></div>
     </div>
+    <div class="gs-section">
+      <div class="gs-label">${t("gameSettings.display.hostLogoMode")}</div>
+      <div class="toggle-group gs-host-logo-mode" role="radiogroup" aria-label="${escAttr(t("gameSettings.display.hostLogoMode"))}">
+        <label class="toggle-item">
+          <input type="radio" name="gsHostLogoMode" value="pixel" ${localSettings.display.hostLogoMode === "pixel" ? "checked" : ""}/>
+          <span class="toggle-slider" data-text="${escAttr(t("gameSettings.display.hostLogoPixel"))}"></span>
+        </label>
+        <label class="toggle-item">
+          <input type="radio" name="gsHostLogoMode" value="source" ${localSettings.display.hostLogoMode === "source" ? "checked" : ""}/>
+          <span class="toggle-slider" data-text="${escAttr(t("gameSettings.display.hostLogoSource"))}"></span>
+        </label>
+      </div>
+      <div class="gs-hint">${t("gameSettings.display.hostLogoHint")}</div>
+    </div>
     <div class="sfx-foot">
       <button class="btn" id="btnDisplayReset" type="button">${t("gameSettings.resetSection") || "Przywróć domyślne"}</button>
     </div>
@@ -691,6 +727,11 @@ function renderDisplay() {
   content.querySelectorAll(".swatchBtn").forEach(btn => {
     btn.addEventListener("click", () => openColorModal(btn.dataset.colorKey));
   });
+  content.querySelectorAll("[name='gsHostLogoMode']").forEach(radio => radio.addEventListener("change", () => {
+    localSettings.display.hostLogoMode = radio.value === "source" ? "source" : "pixel";
+    markDirty();
+    postPreviewRow();
+  }));
 
   initUiSelect(document.getElementById("gsThemeSelect"), {
     options: themeList.map(th => ({ value: th.key, label: th.label })),
@@ -1877,6 +1918,7 @@ async function main() {
   // trybu (modal/samodzielnie): modal nie polega już na Control, żeby
   // przekazać dalej "prawdziwemu" Displayowi — komend już nie ma.
   createDisplayIframe();
+  createHostIframe();
 
   setActiveCat("teams");
   document.querySelectorAll('[data-skel-step]').forEach(el => el.classList.add('skel-step-ready'));

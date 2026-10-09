@@ -1,18 +1,8 @@
 # Test usuwania tła logo
 
-Narzędzie jest dostępne w Ustawienia → Narzędzia → **Test obrazu IMAGE i usuwania tła**.
-Obróbka działa lokalnie w przeglądarce: obraz nie jest wysyłany na serwer ani
-zapisywany w bazie. Strona korzysta ze wspólnych stylów i renderera Hosta.
-
-Można wczytać zwykły obraz albo zapis logo IMAGE w JSON. Dla zapisu IMAGE
-narzędzie pobiera `imageData`/`imageUrl`, odczytuje `rotate`, `straighten` i
-zapisany kadr `crop` v2, a następnie uruchamia porównanie usuwania tła na
-przyciętym obrazie. Pasek obrotu, rozwijany suwak prostowania, cztery uchwyty
-kadru oraz jego proporcja 26:11 odpowiadają edytorowi IMAGE. Obraz roboczy ma
-limit 2560 px. Po zastosowaniu kadru strona używa wspólnego renderera Hosta
-(`renderImageSource`) do przygotowania planszy 1280×720, a dopiero potem
-sprawdza usuwanie tła. Renderer obsługuje też zapisane prostowanie obrazu.
-
+Narzędzie jest dostępne w Ustawienia → Narzędzia → **Test usuwania tła logo**.
+Strona ładuje się jako pojedynczy HTML. Działa lokalnie w przeglądarce: obraz
+nie jest wysyłany na serwer ani zapisywany w bazie.
 
 ## Przykłady i wykrywanie tła
 
@@ -24,8 +14,8 @@ używany w demach. Obraz demo jest wczytywany z
 Pliki pozostałych próbek SVG są w
 `web/settings/tools/logo-background-lab/samples/`; podczas budowania strony są
 osadzane w scalonym HTML. Wzorzyste i ciemne obrazy
-powinny dostać ostrzeżenie; jasny detal może zostać usunięty, jeśli ma kolor
-zbliżony do tła.
+powinny dostać ostrzeżenie, a biały detal powinien pozostać przy metodzie
+brzegowej.
 
 Wykrywanie wstępne bierze medianę kolorów z czterech narożników. Równe tło
 może mieć dowolny kolor; ocena nie odrzuca już tła za niską jasność. Różnica
@@ -35,26 +25,31 @@ To heurystyka: narożniki mogą być zasłonięte elementem logo, a środek obra
 może mieć gradient, którego narożniki nie pokazują.
 
 Jeśli co najmniej 75% próbek z narożników jest przezroczystych, narzędzie
-pomija usuwanie tła. Sam obraz nadal przechodzi przez obrót, kadr i skalowanie
-do 1280×720, ale jego przezroczystość pozostaje bez zmian.
+pomija wszystkie algorytmy i pokazuje obraz bez zmian. Pobranie przesłanego
+pliku PNG zachowuje jego oryginalne bajty i nazwę.
 
-## Usuwanie tła
+## Porównywane algorytmy
 
-Jedna metoda globalna usuwa piksele zbliżone do koloru tła w całym kadrze,
-również w zamkniętych obszarach. Może więc wyciąć jasne detale podobne do
-tła; wynik sprawdza się w podglądzie na szachownicy.
+- **Brzegowe, czysta krawędź**: usuwa piksele podobne do tła, jeśli łączą się
+  z krawędzią obrazu. Zrekonstruowany kolor krawędzi ogranicza jasną obwódkę;
+  zamknięte białe detale pozostają.
+- **Brzegowe + wnętrza**: oprócz tła przy krawędzi usuwa wszystkie
+  odizolowane obszary podobnego koloru wewnątrz obrazu, także większe
+  wnętrza liter.
+- **Globalne, czysta krawędź**: usuwa podobne piksele w całym obrazie, także
+  wewnątrz logo. Pokazuje ryzyko dla białych detali.
+- **Brzegowe, bez korekty obwódki**: pokazuje wynik bez rekonstrukcji koloru
+  półprzezroczystych pikseli.
 
-## Parametry
+## Parametry robocze do zatwierdzenia
 
 - Kolor tła: mediana narożników lub próbka wskazana kliknięciem na obrazie.
 - Tolerancja: 20/255. Określa, które piksele stają się całkowicie przezroczyste.
 - Miękkość krawędzi: 20/255. Wyznacza zakres przejścia do pełnej
   nieprzezroczystości.
-- Wynik ma rozmiar 1280×720, zgodny z planszą Hosta.
+- Podgląd i eksport są ograniczone do 1600 px na dłuższym boku.
 
-Laboratorium pokazuje jedną metodę globalną z tolerancją i miękkością
-ustawionymi początkowo na 20/20. W widoku „Oryginał” obrót, prostowanie, przesuwanie i cztery uchwyty kadru
-mają ten sam wygląd i zachowanie co w edytorze logo. Obraz po kadrze jest skalowany do planszy Hosta
-1280×720, a wynik globalnego usuwania tła aktualizuje się z bieżącego kadru.
-Eksport PNG służy wyłącznie do oceny; narzędzie nie podmienia logo w grze ani
-w ustawieniach.
+Powyższe wartości są startowe. Po obejrzeniu testów na rzeczywistych logo
+trzeba zdecydować, czy lepiej sprawdza się usuwanie brzegowe oraz jakie
+ustawić tolerancję i miękkość. Eksport PNG służy wyłącznie do oceny; narzędzie
+nie podmienia logo w grze ani w ustawieniach.

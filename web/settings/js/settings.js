@@ -5161,6 +5161,7 @@ async function loadToolsManifest() {
     // fall back to static list
   }
   return [
+    { value: "/settings/tools/host-logo-lab/index.html", label: "Podgląd nowego logo Hosta" },
     { value: "/settings/tools/editor_5x7.html", label: labelFromPath("/settings/tools/editor_5x7.html") },
     { value: "/settings/tools/exporterandeditor.html", label: labelFromPath("/settings/tools/exporterandeditor.html") },
     { value: "/settings/tools/kora-builder.html", label: labelFromPath("/settings/tools/kora-builder.html") },

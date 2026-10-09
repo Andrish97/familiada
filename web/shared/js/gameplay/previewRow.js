@@ -47,6 +47,7 @@ export function buildDisplayPreviewRow({ teams, display, logoPreview } = {}) {
     colors: display?.colors,
     theme: display?.theme,
     logoId: display?.logoId,
+    hostLogoMode: display?.hostLogoMode === "source" ? "source" : "pixel",
     qr: { host: { show: false }, buzzer: { show: false } },
   };
   if (logoPreview !== undefined) displayDetail.logoPreview = logoPreview;

@@ -1,55 +1,66 @@
-// host/js/hostThemeManager.js
-// Motyw Hosta idzie za tym samym ustawieniem co Display (row.detail.display.theme,
-// patrz control/js/app.js), ale Host nie ma płótna SVG do przerysowania jak
-// display/js/scene.js — to tylko zestaw tokenów CSS (kolor tła/atramentu,
-// czcionka) nałożonych na <html>. Rejestr kluczy motywów (classic/modern,
-// wraz z domyślnym) to WSPÓLNY plik z Display (display/js/themes.json) —
-// host2.html leży w tym samym katalogu głównym co display2.html, więc ta
-// sama względna ścieżka działa tu bez zmian. Host czyta stamtąd wyłącznie
-// "key"/"default" — pole "module" (fabryka SVG planszy) go nie dotyczy.
-const THEMES_JSON_URL = "/shared/data/display-themes.json?v=v2026-10-09T02074";
+// Loads Host theme factories from the same manifest Display uses. Each
+// entry maps a shared theme key to a Host-specific createTheme(root) module.
+const THEMES_URL = "/shared/data/display-themes.json?v=v2026-10-08T19512";
 const FALLBACK_KEY = "classic";
+const DEFAULT_COLORS = { A: "#c4002f", B: "#2a62ff", DOT: "#d7ff3d" };
 
-async function loadRegistryDefault() {
+async function loadRegistry() {
   try {
-    const res = await fetch(THEMES_JSON_URL);
-    const json = await res.json();
-    return json.default || FALLBACK_KEY;
-  } catch {
-    return FALLBACK_KEY;
+    const response = await fetch(THEMES_URL);
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const registry = await response.json();
+    return {
+      defaultKey: registry.default || FALLBACK_KEY,
+      modules: new Map((registry.themes || [])
+        .filter((entry) => entry.key && entry.hostModule)
+        .map((entry) => [entry.key, entry.hostModule])),
+    };
+  } catch (error) {
+    console.warn("[host2] nie udało się wczytać rejestru motywów:", error);
+    return { defaultKey: FALLBACK_KEY, modules: new Map() };
   }
 }
 
-// Jeden plik na motyw (host/js/themes/<key>.js) — dodanie kolejnego motywu
-// to nowy plik w tym katalogu, bez dotykania tego managera ani render.js.
-async function loadHostTheme(key) {
-  try {
-    const mod = await import(`./themes/${key}.js`);
-    if (mod?.hostTheme) return mod.hostTheme;
-  } catch {}
-  const fallback = await import(`./themes/${FALLBACK_KEY}.js`);
-  return fallback.hostTheme;
-}
-
 export async function createHostThemeApplier() {
-  const defaultKey = await loadRegistryDefault();
-  const cache = new Map();
+  const { defaultKey, modules } = await loadRegistry();
+  const factories = new Map();
   let currentKey = null;
 
-  async function apply(row) {
-    document.documentElement.style.setProperty("--h-dot", row.detail?.display?.colors?.DOT || "#ffcc00");
-    const key = row.detail?.display?.theme || defaultKey;
-    if (key === currentKey) return;
-    currentKey = key;
-
-    if (!cache.has(key)) cache.set(key, loadHostTheme(key));
-    const theme = await cache.get(key);
-
-    const root = document.documentElement;
-    root.setAttribute("data-host-theme", theme.key);
-    for (const [prop, value] of Object.entries(theme.vars || {})) {
-      root.style.setProperty(prop, value);
+  async function loadFactory(key) {
+    if (factories.has(key)) return factories.get(key);
+    const modulePath = modules.get(key);
+    if (!modulePath) throw new Error(`Brak hostModule dla motywu "${key}"`);
+    const module = await import(modulePath);
+    if (typeof module.createTheme !== "function") {
+      throw new Error(`Motyw Hosta "${key}" nie eksportuje createTheme(root)`);
     }
+    factories.set(key, module.createTheme);
+    return module.createTheme;
+  }
+
+  async function activate(key, root) {
+    try {
+      const createTheme = await loadFactory(key);
+      const theme = createTheme(root) || {};
+      root.dataset.hostTheme = key;
+      root.dataset.hostRuled = String(theme.ruled !== false);
+      return key;
+    } catch (error) {
+      console.warn(`[host2] nie udało się wczytać motywu "${key}":`, error);
+      if (key === FALLBACK_KEY) return currentKey;
+      return activate(FALLBACK_KEY, root);
+    }
+  }
+
+  async function apply(row) {
+    const root = document.documentElement;
+    const key = row.detail?.display?.theme || defaultKey;
+    if (key !== currentKey) currentKey = await activate(key, root);
+
+    const colors = row.detail?.display?.colors || {};
+    root.style.setProperty("--h-dot", colors.DOT || DEFAULT_COLORS.DOT);
+    root.style.setProperty("--cover-grad-a", colors.A || DEFAULT_COLORS.A);
+    root.style.setProperty("--cover-grad-b", colors.B || DEFAULT_COLORS.B);
   }
 
   return { apply };

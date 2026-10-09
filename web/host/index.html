@@ -6,24 +6,34 @@
   <meta name="robots" content="noindex, nofollow"/>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"/>
   <title data-i18n="host.title">Familiada — prowadzący</title>
-  <link rel="icon" href="/favicon.ico?v=v2026-10-09T02074"/>
-  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-09T02074"/>
-  <link rel="stylesheet" href="/host/css/host.css?v=v2026-10-09T02074"/>
+  <link rel="icon" href="/favicon.ico?v=v2026-10-09THOSTLOGO"/>
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-09THOSTLOGO"/>
+  <link rel="stylesheet" href="/host/css/host.css?v=v2026-10-09THOSTLOGO"/>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-  <script type="module" src="/host/js/main.js?v=v2026-10-09T02074" defer></script>
+  <script type="module" src="/host/js/main.js?v=v2026-10-09THOSTLOGO" defer></script>
 </head>
 <body class="host-body">
   <button class="fsBtn" id="btnFS" type="button" aria-label="Pełny ekran" title="Pełny ekran" data-i18n-aria-label="common.fullscreen" data-i18n-title="common.fullscreen">
     <span class="ico" id="fsIco" aria-hidden="true"><i class="ico" data-icon="fullscreen-enter"></i></span>
   </button>
 
+  <div class="a2hs" id="hostA2HS" role="dialog" aria-modal="true" aria-labelledby="hostA2HSTitle" aria-hidden="true">
+    <div class="a2hsCard">
+      <h2 class="a2hsTitle" id="hostA2HSTitle" data-i18n="common.a2hsTitle">Pełny ekran na iPhone</h2>
+      <p class="a2hsText" data-i18n-html="common.a2hsHost">W Safari nie da się wymusić prawdziwego pełnego ekranu. Użyj <b>Udostępnij</b> → <b>Do ekranu początkowego</b>, a potem uruchom jako aplikację.</p>
+      <button class="btn a2hsClose" id="hostA2HSClose" type="button" data-i18n="common.a2hsOk">OK</button>
+    </div>
+  </div>
+
   <main class="paper paperSplit" id="paper">
     <i class="redMargin" aria-hidden="true"></i>
     <section class="pane pane1" aria-label="Tekst 1">
+      <div class="lineGrid" id="lineGrid1" aria-hidden="true"></div>
       <pre class="text" id="paperText1"></pre>
     </section>
     <div class="splitLine" id="splitLine" aria-hidden="true"></div>
     <section class="pane pane2" aria-label="Tekst 2">
+      <div class="lineGrid" id="lineGrid2" aria-hidden="true"></div>
       <pre class="text" id="paperText2"></pre>
       <div class="cover2 coverOn" id="cover2" aria-hidden="true">
         <div class="cover2Content">
