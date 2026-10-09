@@ -58,7 +58,9 @@ export async function buildExport(logo, fallbackName) {
 }
 
 export function downloadJson(obj, fileName) {
-  const blob = new Blob([JSON.stringify(obj, null, 2)], { type: "application/json" });
+  // The file contents are JSON, but application/json makes Android append
+  // ".json" to the custom .famlogo filename. Keep the custom extension intact.
+  const blob = new Blob([JSON.stringify(obj, null, 2)], { type: "application/octet-stream" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
