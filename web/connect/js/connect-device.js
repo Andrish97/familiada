@@ -1,15 +1,15 @@
 // js/pages/connect-device.js
 
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T15283";
-import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-09T15283";
-import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-09T15283";
-import { isMobileDevice } from "../../shared/js/core/pwa.js?v=v2026-10-09T15283";
-import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-09T15283";
-import { linkTo, backHref, renderBackLabel } from "../../shared/js/core/nav-map.js?v=v2026-10-09T15283";
-import { initTopbarAccountDropdown } from "../../shared/js/core/topbar-controller.js?v=v2026-10-09T15283";
-import { alertModal } from "../../shared/js/core/modal.js?v=v2026-10-09T15283";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-09T15283";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-09T15283";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T15303";
+import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-09T15303";
+import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-09T15303";
+import { isMobileDevice } from "../../shared/js/core/pwa.js?v=v2026-10-09T15303";
+import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-09T15303";
+import { linkTo, backHref, renderBackLabel } from "../../shared/js/core/nav-map.js?v=v2026-10-09T15303";
+import { initTopbarAccountDropdown } from "../../shared/js/core/topbar-controller.js?v=v2026-10-09T15303";
+import { alertModal } from "../../shared/js/core/modal.js?v=v2026-10-09T15303";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-09T15303";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-09T15303";
 
 const btnBack             = document.getElementById("btnBack");
 const btnManual           = document.getElementById("btnManual");
