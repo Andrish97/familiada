@@ -374,3 +374,15 @@ wszyscy subskrybenci (także bez konta); bazy i urządzenia — mail / nazwa
 Pytania: (1) istniejące aktywne subskrypcje między kontami — zamienić
 automatycznie na znajomych? (2) subskrybent bez konta, który założy konto na
 ten sam e-mail — zostaje subskrybentem czy automatycznie staje się znajomym?
+
+**Uzupełnienie użytkownika 2026-10-09:** znajomi i subskrybenci to **osobne
+funkcjonalności, nawet osobne strony**. Propozycja układu (do potwierdzenia):
+
+- `/friends/` — **Znajomi** (konta, dwustronnie): karty **Znajomi** ·
+  **Zaproszenia** (do mnie · wysłane) · **Od znajomych** (ankiety do
+  głosowania, bazy, urządzenia — dzisiejsze „Zadania”).
+- `/subscribers/` — **Subskrybenci** (tylko e-mail, jednostronnie, tylko
+  ankiety): bez kart ról (zawsze „ja wysyłam”), sekcje Oczekujący · Aktywni,
+  „+ Zaproś” na górze.
+- `/subscriptions/` znika (bez aliasu — linki z maili idą przez `/go/`,
+  zmieniana tylko tabela w `/go/`); w menu gier dwa wejścia.
