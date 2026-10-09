@@ -335,6 +335,13 @@ urządzenia.
    subskrybentów, a wiersze odbiorców z obu kanałów w tych samych sekcjach
    wg stanu (np. Oczekujące · Aktywni), z oznaczeniem kanału (mail /
    subskrybent) w szarej linijce.
+**Cel subskrypcji (wyjaśnienie użytkownika 2026-10-09):** subskrypcje są po
+to, żeby mieć **stałą pulę ludzi do głosowania w ankietach** — wysyłasz
+zaproszenie, oni akceptują (zgodzili się, więc chętnie zagłosują, to kilka
+minut), potem masz ich pod ręką i udostępniasz im ankiety. Wniosek do
+potwierdzenia: subskrybenci tylko w ankietach; bazy i urządzenia — tylko
+mailem / nazwą (pkt 7), bez listy subskrybentów.
+
 7. **Konto odbiorcy przy udostępnianiu mailem** (decyzja 2026-10-09):
    - **bazy** — e-mail / nazwa **musi należeć do konta** (tak jest dziś:
      `base_share_by_email` szuka w `profiles`, bez konta błąd),
