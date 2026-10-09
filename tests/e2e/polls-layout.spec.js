@@ -168,19 +168,12 @@ function measureInPage() {
     violations.push({ kind: "page-hscroll", scrollWidth: document.documentElement.scrollWidth, innerWidth: window.innerWidth });
   }
 
-  const isPinned = (el) => {
-    const bar = el.closest(".pollBarActions");
-    return !!bar && /^(sticky|fixed)$/.test(getComputedStyle(bar).position);
-  };
   const mainBoxes = boxes.filter((b) => inMain.includes(b.el));
   for (const b of mainBoxes) {
     const { r } = b;
     // a) nakładanie na inne widoczne przyciski
     for (const o of boxes) {
       if (o === b || o.el.contains(b.el) || b.el.contains(o.el)) continue;
-      // Przypięty dolny pasek akcji (telefon) leży nad przewijaną treścią —
-      // to zamierzone, nie nakładanie się układu.
-      if (isPinned(b.el) !== isPinned(o.el)) continue;
       const w = Math.min(r.right, o.r.right) - Math.max(r.left, o.r.left);
       const h = Math.min(r.bottom, o.r.bottom) - Math.max(r.top, o.r.top);
       if (w > 0 && h > 0 && w * h > 1 && boxes.indexOf(o) > boxes.indexOf(b)) {

@@ -2,26 +2,27 @@
 // Strona ankiety (właściciel): /polls/?id=<gra>.
 //   A. Pasek stanu — stan słowem po lewej, WSZYSTKIE akcje po prawej
 //      (Uruchom · Zatrzymaj · Wznów głosowanie · Podlicz głosy · Zatwierdź ·
-//      Uruchom ponownie · Przerwij). Na telefonie akcje w dolnym pasku.
+//      Uruchom ponownie · Przerwij). Na telefonie stan u góry, przyciski pod nim.
 //   B. Karty Udostępnianie · Wyniki. Wyniki są jedne dla wszystkich stanów:
 //      na żywo, zatrzymane (surowe), podliczanie (poll-tally.js), ostateczne.
 // Stany gry: draft -> poll_open <-> poll_stopped -> ready (migracja 315).
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T18180";
-import { requireAuth } from "../../shared/js/core/auth.js?v=v2026-10-09T18180";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-09T18180";
+import { renderShareSections } from "../../shared/js/core/share-sections.js?v=v2026-10-09T18200";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T18200";
+import { requireAuth } from "../../shared/js/core/auth.js?v=v2026-10-09T18200";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-09T18200";
 import QRCode from "https://cdn.jsdelivr.net/npm/qrcode@1.5.3/+esm";
-import { initI18n, t, withLangParam, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-09T18180";
-import { linkTo, backHref, renderBackLabel } from "../../shared/js/core/nav-map.js?v=v2026-10-09T18180";
-import { initTopbarAccountDropdown } from "../../shared/js/core/topbar-controller.js?v=v2026-10-09T18180";
-import { guardResourceLock } from "../../shared/js/core/resource-lock.js?v=v2026-10-09T18180";
-import { validateGame, gameRuleErrorMessage, guardGameState } from "../../shared/js/core/game-validate.js?v=v2026-10-09T18180";
-import { mailCooldownCheck } from "../../shared/js/core/cooldown.js?v=v2026-10-09T18180";
-import { sendPollInviteMails } from "../../shared/js/core/poll-mail.js?v=v2026-10-09T18180";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-09T18180";
-import { createPollResults } from "../../shared/js/core/poll-results.js?v=v2026-10-09T18180";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-09T18180";
-import { toast, hideToast } from "../../shared/js/core/toast.js?v=v2026-10-09T18180";
-import { createTally } from "./poll-tally.js?v=v2026-10-09T18180";
+import { initI18n, t, withLangParam, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-09T18200";
+import { linkTo, backHref, renderBackLabel } from "../../shared/js/core/nav-map.js?v=v2026-10-09T18200";
+import { initTopbarAccountDropdown } from "../../shared/js/core/topbar-controller.js?v=v2026-10-09T18200";
+import { guardResourceLock } from "../../shared/js/core/resource-lock.js?v=v2026-10-09T18200";
+import { validateGame, gameRuleErrorMessage, guardGameState } from "../../shared/js/core/game-validate.js?v=v2026-10-09T18200";
+import { mailCooldownCheck } from "../../shared/js/core/cooldown.js?v=v2026-10-09T18200";
+import { sendPollInviteMails } from "../../shared/js/core/poll-mail.js?v=v2026-10-09T18200";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-09T18200";
+import { createPollResults } from "../../shared/js/core/poll-results.js?v=v2026-10-09T18200";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-09T18200";
+import { toast, hideToast } from "../../shared/js/core/toast.js?v=v2026-10-09T18200";
+import { createTally } from "./poll-tally.js?v=v2026-10-09T18200";
 
 // initI18n is called at the start of DOMContentLoaded (see below)
 
@@ -66,7 +67,6 @@ const qrBox = $("qr");
 const btnCopy = $("btnCopy");
 const btnOpen = $("btnOpen");
 const btnOpenQr = $("btnOpenQr");
-const btnToggleQr = $("btnToggleQr");
 const btnSendInvites = $("btnSendInvites");
 const btnSelectAll = $("btnSelectAll");
 const subsGrid = $("subsGrid");
@@ -603,12 +603,6 @@ async function refreshTasksOnly() {
   renderSubs();
 }
 
-function tagFor(tk) {
-  if (tk.status === "done") return { cls: "tag--ok", text: t("polls.share.state.done") };
-  if (tk.status === "declined") return { cls: "tag--bad", text: t("polls.share.state.declined") };
-  return { cls: "tag--warn", text: t("polls.share.state.waiting") };
-}
-
 function selectableSubIds() {
   return subsAll
     .filter((s) => !taskForSub(s) && !cooldownActive(s.sub_id))
@@ -677,18 +671,28 @@ function renderSubs(force = false) {
   }
   if (subsEmpty) subsEmpty.style.display = "none";
 
-  const invited = [];
-  const rest = [];
+  const groups = { subscribers: { rows: [] }, pending: { rows: [] }, active: { rows: [] }, declined: { rows: [] } };
+
   for (const sub of subsAll) {
     const tk = taskForSub(sub);
-    (tk ? invited : rest).push({ sub, tk });
-  }
-
-  const frag = document.createDocumentFragment();
-
-  for (const { sub, tk } of invited) {
-    const tag = tagFor(tk);
     const until = cooldownActive(sub.sub_id);
+    if (!tk) {
+      const id = String(sub.sub_id);
+      const toggle = () => {
+        if (selectedSubIds.has(id)) selectedSubIds.delete(id); else selectedSubIds.add(id);
+        renderSubs();
+      };
+      groups.subscribers.rows.push({
+        id,
+        label: subLabel(sub),
+        selected: selectedSubIds.has(id),
+        disabled: !!until,
+        role: "checkbox",
+        note: until ? t("polls.share.canResend", { when: formatUntil(until) }) : "",
+        onClick: toggle,
+      });
+      continue;
+    }
     const waiting = taskIsWaiting(tk);
     const limit = (tk.reminder_count || 0) >= 2;
     const bellOff = limit || !!until || stopped;
@@ -696,50 +700,20 @@ function renderSubs(force = false) {
       : limit ? t("polls.share.reminderLimit")
       : until ? t("polls.share.canResend", { when: formatUntil(until) })
       : t("polls.share.remind");
-
-    const tile = document.createElement("div");
-    tile.className = "card subTile invited";
-    tile.innerHTML = `
-      ${waiting ? `<button class="x x-bell" type="button" data-act="remind" ${bellOff ? "disabled" : ""} title="${escapeHtml(bellTitle)}" aria-label="${escapeHtml(bellTitle)}">${icon("bell")}</button>` : ""}
-      <button class="x" type="button" data-act="remove" title="${escapeHtml(t("polls.share.remove"))}" aria-label="${escapeHtml(t("polls.share.remove"))}">${icon("trash")}</button>
-      <div class="name"></div>
-      <div class="meta"><span class="tag ${tag.cls}">${escapeHtml(tag.text)}</span></div>
-      ${waiting && until && !limit && !stopped ? `<div class="subNote">${escapeHtml(t("polls.share.canResend", { when: formatUntil(until) }))}</div>` : ""}
-    `;
-    tile.querySelector(".name").textContent = subLabel(sub);
-    tile.querySelector('[data-act="remove"]').addEventListener("click", () => void removeShare(tk, sub));
-    tile.querySelector('[data-act="remind"]')?.addEventListener("click", () => void remindShare(tk, sub));
-    frag.appendChild(tile);
+    const actions = [];
+    if (waiting) actions.push({ key: "remind", icon: "bell", title: bellTitle, disabled: bellOff, onClick: () => void remindShare(tk, sub) });
+    actions.push({ key: "remove", icon: "trash", title: t("polls.share.remove"), onClick: () => void removeShare(tk, sub) });
+    const row = {
+      id: String(sub.sub_id),
+      label: subLabel(sub),
+      actions,
+      note: waiting && until && !limit && !stopped ? t("polls.share.canResend", { when: formatUntil(until) }) : "",
+    };
+    (tk.status === "done" ? groups.active : tk.status === "declined" ? groups.declined : groups.pending).rows.push(row);
   }
+  groups.active.subtitle = t("polls.share.activeSub");
 
-  for (const { sub } of rest) {
-    const id = String(sub.sub_id);
-    const until = cooldownActive(id);
-    const tile = document.createElement("div");
-    tile.className = "card subTile pick" + (selectedSubIds.has(id) ? " selected" : "") + (until ? " blocked" : "");
-    tile.setAttribute("role", "checkbox");
-    tile.setAttribute("aria-checked", selectedSubIds.has(id) ? "true" : "false");
-    tile.innerHTML = `
-      <div class="name" style="padding-right:0"></div>
-      <div class="meta"><span class="tag tag--muted">${escapeHtml(t("polls.share.state.notInvited"))}</span></div>
-      ${until ? `<div class="subNote">${escapeHtml(t("polls.share.canResend", { when: formatUntil(until) }))}</div>` : ""}
-    `;
-    tile.querySelector(".name").textContent = subLabel(sub);
-    if (!until) {
-      tile.tabIndex = 0;
-      const toggle = () => {
-        if (selectedSubIds.has(id)) selectedSubIds.delete(id); else selectedSubIds.add(id);
-        renderSubs();
-      };
-      tile.addEventListener("click", toggle);
-      tile.addEventListener("keydown", (e) => {
-        if (e.key === " " || e.key === "Enter") { e.preventDefault(); toggle(); }
-      });
-    }
-    frag.appendChild(tile);
-  }
-
-  subsGrid.replaceChildren(frag);
+  renderShareSections(subsGrid, groups, { grid: true });
 }
 
 // Wysyłka zaproszeń do zaznaczonych; wywołujący pilnuje `busy`.
@@ -1228,13 +1202,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 
   qrBox?.addEventListener("click", () => { void showVoteQrModal(); });
-
-  btnToggleQr?.addEventListener("click", () => {
-    const on = !linkLive?.classList.contains("qrOpen");
-    linkLive?.classList.toggle("qrOpen", on);
-    btnToggleQr.setAttribute("aria-expanded", on ? "true" : "false");
-    btnToggleQr.textContent = on ? t("polls.share.hideQr") : t("polls.share.showQr");
-  });
 
   btnSendInvites?.addEventListener("click", () => void sendInvites());
 

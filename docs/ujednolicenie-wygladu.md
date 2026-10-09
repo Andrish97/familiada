@@ -208,3 +208,74 @@ tiles”). Pozostałe pola komunikatów istnieją. Implementacja: `shared/js/cor
 | Idź do gry (`go`) | `#message`, `#hint` | stan wejścia | tak | zostaje w treści strony |
 | Logowanie (`/login/`, `/reset/`, `/confirm/`) | `#status`, `#err` | instrukcje i wyniki | tak | zostaje (treść strony) |
 | Dom, Instrukcja, Prywatność, 404, Przerwa | — | brak komunikatów | — | — |
+
+## Poprawki zgłoszone 2026-10-09 (E17)
+
+1. **Przycisk powrotu bez „Wróć do:”** — strzałka już to mówi. Etykieta =
+   sama nazwa strony docelowej (`← Moje gry`, `← Ankieta`), klucz `nav.backTo`
+   → `{page}` (pl/en/uk).
+2. **Strona ankiety na telefonie:**
+   - przyciski akcji w dolnym pasku mniejsze (wysokość jak `.btn.sm`, nie
+     42 px), pasek niższy;
+   - równe marginesy lewo/prawo (15 px po obu stronach, bez przesunięcia
+     treści względem paska stanu i kart);
+   - sekcja Link i QR — ładniejsza: kod QR duży (na telefonie prawie
+     szerokość treści, na komputerze ok. 240–280 px), wyśrodkowany na
+     białym tle z marginesem, pole linku i przyciski pod nim w jednej
+     linii; bez „Pokaż QR” chowającego kod, jeśli mieści się czytelnie.
+3. **Filtrowanie na listach przy wyszukiwaniu** (w dolnym pasku obok
+   pola szukania, ten sam wygląd co filtr w Subskrypcjach):
+   - Gry: typ (Preparowana / Tekstowa / Punktowa) i stan (Szkic / Otwarta /
+     Zatrzymana / Gotowa), łączone z wyszukiwaniem po nazwie;
+   - Logo: typ (Tekst / Rysunek / Obraz);
+   - Bazy: moje / udostępnione (jeśli to nie karta) i rola;
+   - filtr pamiętany w adresie (`?type=&status=`), jak karta.
+   - Wdrożone (E17b): wspólny filtr w `list-search.js` (opcja `filter`) +
+     czysta logika w `list-filter.js`. Gry: tylko stan (`?status=`) — typ to
+     zakładki. Bazy: rola własna/edycja/odczyt (`?role=`), moje/udostępnione
+     to zakładki. Logo: bez filtra — typ (Tekst/Rysunek/Obraz) to zakładki.
+
+## Poprawki zgłoszone 2026-10-09, cz. 2 (E17c)
+
+1. **Przyciski akcji przeskakują do drugiego rzędu, choć jest miejsce** —
+   sprawdzić paski akcji (pasek stanu ankiety, dolne paski list, paski
+   edytorów) i usunąć przedwczesne zawijanie (sztywne szerokości, `flex-basis`,
+   `min-width`, `gap`/padding liczone podwójnie).
+2. **Filtry:** logo bez filtra (zostaje). Gry i bazy — dodać sensowne filtry
+   poza już zrobionymi (gry: stan; bazy: rola).
+3. **Wspólny styl kafli** gier, baz (i subskrybentów): nazwa, linia opisu,
+   rząd oznaczeń (`.tag`) przy dole kafla, akcje jako małe ikony w rogu;
+   jedna klasa/komponent w `base.css`.
+4. **Kafle subskrybentów** — użytkownik nie wie, jak lepiej; propozycja:
+   ten sam wspólny kafel: inicjał w kółku + nazwa/e-mail, rząd oznaczeń
+   ze stanem zaproszenia, dzwonek i kosz jako ikony w rogu (jak kosz na
+   kaflu gry). Do oceny po wdrożeniu.
+5. **Jeden podział na sekcje wszędzie, gdzie udostępniamy zasób (2026-10-09,
+   doprecyzowanie użytkownika).** Wzorem jest okno udostępniania bazy
+   (Subskrybenci · Oczekujące · Aktywni). Ten sam zestaw i kolejność sekcji,
+   te same nagłówki z podpisem, ten sam kafel — wspólny komponent:
+   - **Subskrybenci** (do zaproszenia — jeszcze bez zaproszenia),
+   - **Oczekujące** (zaproszenie wysłane, bez odpowiedzi),
+   - **Aktywni** (przyjęte; w ankiecie: zagłosowali),
+   - **Odrzucone** (odmowa; tylko gdzie taki stan istnieje).
+   Dotyczy: udostępniania bazy, udostępniania ankiety (karta Udostępnianie),
+   Subskrypcji (moi subskrybenci / moje subskrypcje), udostępniania urządzeń
+   w Control, jeśli ma listę osób. Puste sekcje ukryte.
+   Wcześniejszy opis poniżej — zastąpiony tym punktem:
+   **Podział na sekcje zamiast kolorów (2026-10-09)** — jak w bazach
+   (oczekujący / aktywni …): w Subskrypcjach i w karcie Udostępnianie
+   ankiety kafle grupowane w sekcje wg stanu (np. Oczekujące · Aktywni ·
+   Odrzucone; dla ankiety: Zaproszeni · Zagłosowali · Odrzucili). Miejsce
+   mówi o stanie; kolor co najwyżej pomocniczo. Puste sekcje ukryte.
+6. **Ankieta bez dolnego paska (2026-10-09)** — także na telefonie akcje
+   zostają w pasku stanu u góry (stan w pierwszym wierszu, przyciski pod
+   nim). Zmienia wcześniejszą decyzję o dolnym pasku na telefonie
+   (ankiety-refaktor.md).
+
+- Wdrożone (E17c): sekcje udostępniania — jeden komponent
+  `shared/js/core/share-sections.js` (+ `.shareSection`/`.shareRow` w base.css) w
+  oknie udostępniania bazy, karcie Udostępnianie ankiety, Subskrypcjach
+  (subskrybenci / subskrypcje) i udostępnianiu urządzeń w Control; wspólny kafel
+  `.tile` (base.css) dla gier, baz i rynku; sortowanie list gier i baz
+  (`?sort=created|name`, domyślnie ostatnio zmienione); ankieta bez dolnego paska.
+  Liczba pytań w bazie: brak w danych listy — bez sortowania po niej.

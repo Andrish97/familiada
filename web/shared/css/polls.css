@@ -144,6 +144,7 @@
   gap: 8px;
   flex-wrap: wrap;
   min-width: 0;
+  flex: 1 1 260px; /* zajmuje resztę rzędu i zwęża się; akcje spadają niżej tylko, gdy się nie mieszczą */
 }
 .pollStateWord{
   font-weight: 1000;
@@ -173,6 +174,7 @@
   gap: 8px;
   flex-wrap: wrap;
   min-width: 0;
+  flex: 0 1 auto;
 }
 /* przyciski stanu: jedna wysokość, tekst nie zawija się w środku przycisku */
 .pollBarActions .btn{ white-space: nowrap; flex: 0 0 auto; }
@@ -183,41 +185,26 @@
 }
 .btn.pollAbort:hover:not(:disabled){ border-color: rgba(255,110,110,.85); color: #fff; }
 
-/* Telefon: stan w pierwszym wierszu; akcje w dolnym pasku przyklejonym do dołu
-   ekranu (jak dolny pasek list, .games-bottom), przyciski równej szerokości.
-   .pollBar „znika” (display: contents), a jego dwie części są elementami
-   kolumny main.wrap — akcje trafiają na koniec (order). */
+/* Telefon: bez dolnego paska — stan w pierwszym wierszu, przyciski pod nim
+   (równej szerokości, zawijają się dopiero gdy nie mieszczą się w rzędzie). */
 @media (max-width: 980px){
-  .pollBar{ display: contents; }
-  .pollBarState{
-    order: 0;
-    flex: 0 0 auto;
-    padding: 8px 0 10px;
-    border-bottom: 1px solid var(--line2);
-    margin-bottom: 8px;
-  }
+  .pollBarState{ flex: 1 1 100%; }
   .pollBarHint{ flex: 1 1 100%; max-width: none; }
   .pollBarActions{
-    order: 9;
-    flex: 0 0 auto;
-    position: sticky;
-    bottom: 0;
-    z-index: 5;
-    flex-wrap: nowrap;
+    flex: 1 1 100%;
+    justify-content: stretch;
     align-items: stretch;
     gap: 8px;
-    margin-top: 8px;
-    padding: 8px 0 calc(8px + env(safe-area-inset-bottom, 0px));
-    border-top: 1px solid rgba(255,255,255,.12);
-    background: var(--bg);
   }
   .pollBarActions .btn:not([hidden]){
     flex: 1 1 0;
-    min-width: 0;
-    white-space: normal;
-    padding: 9px 6px;
-    min-height: 42px;
+    min-width: max-content;
+    white-space: nowrap;
+    padding: 7px 10px;
+    min-height: 0;
+    border-radius: 12px;
     font-size: 13px;
+    letter-spacing: .04em;
     line-height: 1.15;
   }
 }
@@ -284,6 +271,9 @@
 }
 @media (max-width: 980px){
   .shareCols{ grid-template-columns: minmax(0, 1fr); }
+  /* równe marginesy: sekcje bez własnej ramki (karta ma już swój margines),
+     przewijanie nie odejmuje pasa od jednej strony */
+  .card.games-card.polls-card{ padding: 12px 12px 8px; }
 }
 .pollSec{
   --under: #0b1020;
@@ -292,6 +282,9 @@
   background: rgba(255,255,255,.04);
   border: 1px solid rgba(255,255,255,.10);
   min-width: 0;
+}
+@media (max-width: 980px){
+  .pollSec{ padding: 4px 0 8px; background: none; border: 0; border-radius: 0; }
 }
 .pollSecHead{ display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
 .pollSecTitle{
@@ -344,19 +337,21 @@
 /* przyciski mogą zawinąć tekst w węższej kolumnie, nigdy go nie obcinają */
 .pollLinkActions .btn{ white-space: normal; width: 100%; line-height: 1.15; min-height: 38px; }
 
-/* mały QR (~140 px), kliknięcie powiększa go w oknie */
+/* QR: duży, wyśrodkowany na białym kafelku z marginesem (strefa ciszy);
+   kliknięcie powiększa go w oknie. Telefon: prawie szerokość treści (max 320 px),
+   komputer: 260 px. */
 .qrFrameSmall{
-  padding: 8px;
+  padding: 14px;
   background: #fff;
-  border-radius: 12px;
+  border-radius: 16px;
   box-shadow: 0 6px 18px rgba(0,0,0,.22);
   line-height: 0;
 }
 .qrFrameSmall canvas{ display: block; width: 100% !important; height: auto !important; }
 .qrBox.img{
   display: block;
-  width: 140px;
-  margin: 12px 0 0;
+  width: min(100%, 260px);
+  margin: 12px auto 0;
   padding: 0;
   border: 0;
   background: none;
@@ -366,12 +361,8 @@
 .qrBox.img:disabled{ cursor: default; }
 .qrFrameBig{ width: min(340px, 100%); margin: 0 auto; padding: 14px; border-radius: 16px; }
 .qrModalVote{ display: flex; justify-content: center; }
-.qrToggle{ display: none; width: 100%; margin-top: 10px; }
-/* telefon: kod QR zwinięty, „Pokaż QR” go rozwija */
 @media (max-width: 980px){
-  .qrToggle{ display: block; }
-  .pollLinkLive:not(.qrOpen) .qrBox.img{ display: none; }
-  .qrBox.img{ margin-left: auto; margin-right: auto; }
+  .qrBox.img{ width: min(100%, 320px); }
 }
 
 /* Subskrybenci: nagłówek z podsumowaniem, „Zaznacz wszystkich”, kafle, wyślij na dole */
@@ -393,24 +384,13 @@
   .subsSendHint{ text-align: left; flex: 0 0 auto; }
 }
 
-/* Subskrybenci: kafle jak na listach (games.css) */
+/* Subskrybenci: sekcje udostępniania (share-sections.js, base.css) */
 .subsGrid{
+  display: block;
   margin-top: 10px;
-  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
   overflow: visible;
   padding: 2px;
 }
-.games-body .grid .card.subTile{ min-height: 92px; cursor: default; justify-content: flex-start; gap: 2px; }
-.games-body .grid .card.subTile:hover{ transform: none; box-shadow: none; border-color: rgba(255,255,255,.22); background: #070b16; }
-.games-body .grid .card.subTile .name{ padding-right: 84px; text-transform: none; letter-spacing: .02em; word-break: break-word; }
-.games-body .grid .card.subTile.pick{ cursor: pointer; }
-.games-body .grid .card.subTile.pick:hover{ transform: translateY(-2px); box-shadow: 0 10px 24px rgba(0,0,0,.45); border-color: var(--gold); background: #0b1020; }
-.games-body .grid .card.subTile.pick.selected{ border-color: rgba(255,234,166,.9); background: rgba(255,234,166,.10); }
-.games-body .grid .card.subTile.blocked{ opacity: .7; cursor: not-allowed; }
-.games-body .grid .card.subTile .meta{ display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
-.games-body .grid .card.subTile .x.x-bell{ right: 46px; }
-.games-body .grid .card.subTile .x:disabled{ opacity: .4; cursor: not-allowed; }
-.subTile .subNote{ margin-top: 8px; font-size: 11px; line-height: 1.3; color: rgba(255,234,166,.65); }
 
 /* Wyniki: stałe wysokości, zmieniają się tylko liczby i paski */
 #resultsList{ display: grid; gap: 12px; }
@@ -535,5 +515,5 @@
 
 /* telefon: dymek (shared toast) nad dolnym paskiem akcji ankiety */
 @media (max-width: 980px){
-  .app-toast{ bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
+  .app-toast{ bottom: calc(64px + env(safe-area-inset-bottom, 0px)); }
 }

@@ -159,7 +159,7 @@ test("odnośniki prowadzą do właściwych sekcji, a powroty nazywają cel Stron
   await expect(page.locator("#btnBackHome")).toHaveText(/Strona główna/);
   await page.goBack({ waitUntil: "domcontentloaded" });
   await page.locator('.hero-cta a[href*="marketplace"]').click();
-  await expect(page.locator("#btnGoGames")).toContainText("Wróć do: Strona główna");
+  await expect(page.locator("#btnGoGames")).toContainText("Strona główna");
 });
 
 test("gość na stronie głównej trafia do /games/ (E4) i jest w całości sprzątany", async ({ page, context }) => {

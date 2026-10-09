@@ -5,7 +5,15 @@ const en = {
     icon: "lang-en",
   },
   common: {
+    sort: {
+      label: "Sort",
+      updated: "Recently modified",
+      created: "Newest",
+      name: "Name A–Z",
+    },
     searchByName: "Search…",
+    filterAll: "All",
+    noResults: "No results.",
     genericError: "Something went wrong.",
     manualLabel: "Help",
     contactBtn: "Contact",
@@ -71,8 +79,18 @@ const en = {
       contactBtn: "Contact",
     },
   },
+  shareSections: {
+    subscribers: "Subscribers",
+    subscribersSub: "Not invited yet — pick who to invite.",
+    pending: "Pending",
+    pendingSub: "Invitation sent, waiting for an answer.",
+    active: "Active",
+    activeSub: "Accepted the invitation.",
+    declined: "Declined",
+    declinedSub: "Turned the invitation down.",
+  },
   nav: {
-    backTo: "Back to: {page}",
+    backTo: "{page}",
     page: {
       home: "Home page",
       login: "Login",
@@ -710,6 +728,12 @@ const en = {
         categoryTags: "Import: category tags…",
       },
     },
+    filter: {
+      label: "Filter by role",
+      owner: "Mine",
+      editor: "Edit",
+      viewer: "Read-only",
+    },
     roles: {
       editorBadge: "EDIT",
       viewerBadge: "READ",
@@ -794,6 +818,7 @@ const en = {
       tallyInfo: "counting",
     },
     share: {
+      activeSub: "Voted in this poll.",
       linkTitle: "Link",
       subsTitle: "Subscribers",
       sendInvites: "Send invitations",
@@ -802,8 +827,6 @@ const en = {
       sendAfterStart: "You can send invitations once the poll has started.",
       linkAfterStart: "The link will appear after the poll starts",
       copyLink: "Copy link",
-      showQr: "Show QR",
-      hideQr: "Hide QR",
       enlargeQr: "Enlarge QR code",
       summary: "Invited {invited} · Voted {voted} · Declined {declined}",
       selectAll: "Select all",
@@ -2793,6 +2816,9 @@ const en = {
       pollPoints: "POINTS",
       prepared: "PREPARED",
       market: "MARKETPLACE",
+    },
+    filter: {
+      label: "Filter by state",
     },
     status: {
       draft: "DRAFT",

@@ -5,7 +5,15 @@ const uk = {
     icon: "flag-ua",
   },
   common: {
+    sort: {
+      label: "Сортування",
+      updated: "Нещодавно змінені",
+      created: "Найновіші",
+      name: "Назва А–Я",
+    },
     searchByName: "Пошук…",
+    filterAll: "Усі",
+    noResults: "Немає результатів.",
     genericError: "Сталася помилка.",
     manualLabel: "Підказки",
     contactBtn: "Контакт",
@@ -71,8 +79,18 @@ const uk = {
       contactBtn: "Контакт",
     },
   },
+  shareSections: {
+    subscribers: "Підписники",
+    subscribersSub: "Ще без запрошення — оберіть, кого запросити.",
+    pending: "Очікують",
+    pendingSub: "Запрошення надіслано, чекаємо на відповідь.",
+    active: "Активні",
+    activeSub: "Прийняли запрошення.",
+    declined: "Відхилені",
+    declinedSub: "Відмовилися від запрошення.",
+  },
   nav: {
-    backTo: "Повернутися до: {page}",
+    backTo: "{page}",
     page: {
       home: "Головна сторінка",
       login: "Вхід",
@@ -705,6 +723,12 @@ const uk = {
         categoryTags: "Імпорт: теги папок…",
       },
     },
+    filter: {
+      label: "Фільтр за роллю",
+      owner: "Моя",
+      editor: "Редагування",
+      viewer: "Читання",
+    },
     roles: {
       editorBadge: "РЕДАГ.",
       viewerBadge: "ЧИТ.",
@@ -795,6 +819,7 @@ const uk = {
       tallyInfo: "підрахунок",
     },
     share: {
+      activeSub: "Проголосували в цьому опитуванні.",
       linkTitle: "Посилання",
       subsTitle: "Підписники",
       sendInvites: "Надіслати запрошення",
@@ -803,8 +828,6 @@ const uk = {
       sendAfterStart: "Запрошення можна буде надіслати після запуску опитування.",
       linkAfterStart: "Посилання з’явиться після запуску",
       copyLink: "Копіювати посилання",
-      showQr: "Показати QR",
-      hideQr: "Сховати QR",
       enlargeQr: "Збільшити QR-код",
       summary: "Запрошено {invited} · Проголосували {voted} · Відхилили {declined}",
       selectAll: "Вибрати всіх",
@@ -2785,6 +2808,9 @@ const uk = {
       pollPoints: "БАЛИ",
       prepared: "ПІДГОТОВЛЕНЕ",
       market: "MARKETPLACE",
+    },
+    filter: {
+      label: "Фільтр за станом",
     },
     status: {
       draft: "ЧЕРНЕТКА",

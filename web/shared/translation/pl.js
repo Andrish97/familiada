@@ -5,7 +5,15 @@ const pl = {
     icon: "flag-pl",
   },
   common: {
+    sort: {
+      label: "Sortowanie",
+      updated: "Ostatnio zmienione",
+      created: "Najnowsze",
+      name: "Nazwa A–Z",
+    },
     searchByName: "Szukaj…",
+    filterAll: "Wszystkie",
+    noResults: "Brak wyników.",
     genericError: "Wystąpił błąd.",
     manualLabel: "Wskazówki",
     contactBtn: "Kontakt",
@@ -71,8 +79,18 @@ const pl = {
       contactBtn: "Kontakt",
     },
   },
+  shareSections: {
+    subscribers: "Subskrybenci",
+    subscribersSub: "Jeszcze bez zaproszenia — zaznacz, kogo zaprosić.",
+    pending: "Oczekujące",
+    pendingSub: "Zaproszenie wysłane, czekamy na odpowiedź.",
+    active: "Aktywni",
+    activeSub: "Przyjęli zaproszenie.",
+    declined: "Odrzucone",
+    declinedSub: "Odmówili zaproszenia.",
+  },
   nav: {
-    backTo: "Wróć do: {page}",
+    backTo: "{page}",
     page: {
       home: "Strona główna",
       login: "Logowanie",
@@ -718,6 +736,12 @@ const pl = {
         categoryTags: "Import: tagi folderów…",
       },
     },
+    filter: {
+      label: "Filtruj wg roli",
+      owner: "Moja",
+      editor: "Edycja",
+      viewer: "Odczyt",
+    },
     roles: {
       editorBadge: "EDYCJA",
       viewerBadge: "ODCZYT",
@@ -808,6 +832,7 @@ const pl = {
       tallyInfo: "podliczanie",
     },
     share: {
+      activeSub: "Zagłosowali w tej ankiecie.",
       linkTitle: "Link",
       subsTitle: "Subskrybenci",
       sendInvites: "Wyślij zaproszenia",
@@ -816,8 +841,6 @@ const pl = {
       sendAfterStart: "Zaproszenia wyślesz po uruchomieniu ankiety.",
       linkAfterStart: "Link pojawi się po uruchomieniu",
       copyLink: "Kopiuj link",
-      showQr: "Pokaż QR",
-      hideQr: "Ukryj QR",
       enlargeQr: "Powiększ kod QR",
       summary: "Zaproszeni {invited} · Zagłosowali {voted} · Odrzucili {declined}",
       selectAll: "Zaznacz wszystkich",
@@ -2688,6 +2711,9 @@ const pl = {
       pollPoints: "PUNKTACJA",
       prepared: "PREPAROWANA",
       market: "GRY SPOŁECZNOŚCI",
+    },
+    filter: {
+      label: "Filtruj wg stanu",
     },
     status: {
       draft: "SZKIC",

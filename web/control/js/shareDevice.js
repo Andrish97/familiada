@@ -14,11 +14,12 @@
 // tego refreshBadges() zwraca zwykły obiekt {display,host,buzzer: liczba},
 // który app.js dokłada do ctx.shareBadges na kolejny ui.render().
 
-import { sb, SUPABASE_URL } from "../../shared/js/core/supabase.js?v=v2026-10-09T18180";
-import { t } from "../../shared/translation/translation.js?v=v2026-10-09T18180";
-import { icon } from "../../shared/js/core/icons.js?v=v2026-10-09T18180";
-import { toast } from "../../shared/js/core/toast.js?v=v2026-10-09T18180";
-import { createCooldownTicker, mailCooldownCheck } from "../../shared/js/core/cooldown.js?v=v2026-10-09T18180";
+import { sb, SUPABASE_URL } from "../../shared/js/core/supabase.js?v=v2026-10-09T18200";
+import { t } from "../../shared/translation/translation.js?v=v2026-10-09T18200";
+import { icon } from "../../shared/js/core/icons.js?v=v2026-10-09T18200";
+import { renderShareSections, shareRowEl } from "../../shared/js/core/share-sections.js?v=v2026-10-09T18200";
+import { toast } from "../../shared/js/core/toast.js?v=v2026-10-09T18200";
+import { createCooldownTicker, mailCooldownCheck } from "../../shared/js/core/cooldown.js?v=v2026-10-09T18200";
 
 const MAIL_FUNCTION_URL = `${SUPABASE_URL}/functions/v1/send-mail`;
 const SHARE_TTL_MS = 4 * 60 * 60 * 1000;
@@ -146,18 +147,27 @@ export function createShareDevice({ currentUser, game, onBadgesChanged }) {
       if (current) {
         currentWrap.style.display = "";
         const label = current.recipient_username || current.recipient_email || "—";
-        currentCont.innerHTML = `
-          <div class="shareRow">
-            <div class="shareEmail">${esc(label)}</div>
-            <div class="shareRowActions">
-              <button class="btn xsm gold" id="btnRevokeDevice" type="button" aria-label="${esc(t("bases.share.remove"))}" title="${esc(t("bases.share.remove"))}">${icon("trash")}</button>
-            </div>
-          </div>`;
-        document.getElementById("btnRevokeDevice")?.addEventListener("click", async () => {
-          await sb().rpc("unshare_device", { p_recipient_user_id: current.recipient_id, p_device_type: _deviceType });
-          await renderModal();
-          await refreshBadges();
+        renderShareSections(currentCont, {
+          active: {
+            subtitle: t("control.shareDeviceModal.currentLabel"),
+            rows: [{
+              id: current.recipient_id,
+              label,
+              actions: [{
+                key: "revoke",
+                icon: "trash",
+                gold: true,
+                title: t("bases.share.remove"),
+                onClick: async () => {
+                  await sb().rpc("unshare_device", { p_recipient_user_id: current.recipient_id, p_device_type: _deviceType });
+                  await renderModal();
+                  await refreshBadges();
+                },
+              }],
+            }],
+          },
         });
+        currentCont.querySelector('[data-act="revoke"]')?.setAttribute("id", "btnRevokeDevice");
         if (emailInp) emailInp.disabled = true;
         if (btnAdd) btnAdd.disabled = true;
       } else {
@@ -192,43 +202,49 @@ export function createShareDevice({ currentUser, game, onBadgesChanged }) {
         } catch { /* nieblokujące */ }
       }));
 
-      subsList.innerHTML = "";
-      for (const sub of activeSubs) {
+      const rows = activeSubs.map((sub) => {
         const label = sub.subscriber_label || sub.subscriber_email || "—";
-        const row = document.createElement("div");
-        row.className = "shareRow";
-        row.style.marginBottom = "8px";
-        row.innerHTML = `
-          <div class="shareEmail" title="${esc(sub.subscriber_email || label)}">${esc(label)}</div>
-          <div class="shareRowActions">
-            <span class="shareCooldownHint" style="font-size:.75rem;opacity:.7;" hidden></span>
-            <button class="btn xsm" data-uid="${esc(sub.subscriber_user_id)}" data-email="${esc(sub.subscriber_email || "")}" type="button" ${current ? "disabled" : ""}>
-              ${t("bases.shareModal.add") || "Dodaj"}
-            </button>
-          </div>`;
-
-        const btn = row.querySelector("button");
-        const hintEl = row.querySelector(".shareCooldownHint");
-        if (!current) {
+        const hint = document.createElement("span");
+        hint.className = "shareCooldownHint";
+        hint.style.cssText = "font-size:.75rem;opacity:.7;";
+        hint.hidden = true;
+        return {
+          id: sub.subscriber_user_id,
+          label,
+          title: sub.subscriber_email || label,
+          extras: [hint],
+          actions: [{
+            key: "add",
+            text: t("bases.shareModal.add") || "Dodaj",
+            title: t("bases.shareModal.add") || "Dodaj",
+            disabled: !!current,
+            onClick: async () => {
+              if (msgEl) msgEl.textContent = "";
+              try {
+                const mailSent = await doShare(sub.subscriber_user_id, sub.subscriber_email);
+                await renderModal();
+                await refreshBadges();
+                if (mailSent === false) {
+                  msgEl && (msgEl.textContent = t("control.shareDeviceModal.mailCooldown") || "Udostępniono, ale e-mail nie poszedł -- niedawno już wysłaliśmy powiadomienie dla tej gry.");
+                }
+                if (mailSent !== false) toast(t("control.shareDeviceModal.mailSent"));
+              } catch (e) {
+                if (msgEl) msgEl.textContent = e?.message || "Błąd.";
+              }
+            },
+          }],
+        };
+      });
+      renderShareSections(subsList, { subscribers: { rows, subtitle: t("control.shareDeviceModal.subtitle") } });
+      if (!current) {
+        for (const sub of activeSubs) {
+          const rowEl = subsList.querySelector(`.shareRow[data-id="${CSS.escape(String(sub.subscriber_user_id))}"]`);
+          const btn = rowEl?.querySelector('[data-act="add"]');
+          const hintEl = rowEl?.querySelector(".shareCooldownHint");
+          if (!btn || !hintEl) continue;
           cooldownTicker.bind({ key: `device:${sub.subscriber_user_id}`, labelEl: hintEl, disableEls: [btn] });
           cooldownTicker.setEndMs(`device:${sub.subscriber_user_id}`, cooldownUntilBySub.get(sub.subscriber_user_id) || 0);
         }
-
-        btn?.addEventListener("click", async () => {
-          if (msgEl) msgEl.textContent = "";
-          try {
-            const mailSent = await doShare(sub.subscriber_user_id, sub.subscriber_email);
-            await renderModal();
-            await refreshBadges();
-            if (mailSent === false) {
-              msgEl && (msgEl.textContent = t("control.shareDeviceModal.mailCooldown") || "Udostępniono, ale e-mail nie poszedł -- niedawno już wysłaliśmy powiadomienie dla tej gry.");
-            }
-            if (mailSent !== false) toast(t("control.shareDeviceModal.mailSent"));
-          } catch (e) {
-            if (msgEl) msgEl.textContent = e?.message || "Błąd.";
-          }
-        });
-        subsList.appendChild(row);
       }
     }
   }
