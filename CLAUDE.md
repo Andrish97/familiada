@@ -21,7 +21,8 @@ przepisuje CI), Supabase, Cloudflare Worker. Strony w `web/`.
 - E2E: workflow `e2e-tests.yml` (workflow_dispatch) z niepustym
   `spec_filter` — nigdy całego zestawu. Spece z `tests/e2e/helpers/local-site.js`
   testują kod brancha; pozostałe chodzą po produkcji.
-- **Konta testowe test9@ i test10@ — nie używać** (decyzja 2026-10-09);
+- **Konta testowe test9@ i test10@ — nie używać** (decyzja 2026-10-09: na nich
+  równolegle chodzą inne testy);
   pula e2e: test1–test8.
 - Migracje bezpieczne (dodające) od razu na `main`, potem testy.
 - Migracje tylko do przodu: `supabase/migrations/YYYY-MM-DD_NNN_*.sql`,
