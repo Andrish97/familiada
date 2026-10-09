@@ -8,8 +8,8 @@
         "en": "Classic",
         "uk": "Класична"
       },
-      "module": "./theme_classic.js?v=v2026-10-09T11234",
-      "hostModule": "/host/js/themes/classic.js?v=v2026-10-09T11234"
+      "module": "./theme_classic.js?v=v2026-10-09T11441",
+      "hostModule": "/host/js/themes/classic.js?v=v2026-10-09T11441"
     },
     {
       "key": "modern",
@@ -18,8 +18,8 @@
         "en": "Modern",
         "uk": "Сучасна"
       },
-      "module": "./theme_modern.js?v=v2026-10-09T11234",
-      "hostModule": "/host/js/themes/modern.js?v=v2026-10-09T11234"
+      "module": "./theme_modern.js?v=v2026-10-09T11441",
+      "hostModule": "/host/js/themes/modern.js?v=v2026-10-09T11441"
     }
   ]
 }
