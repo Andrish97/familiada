@@ -1696,14 +1696,25 @@ test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśni�
     expect(p1AnswerBounds.height).toBeGreaterThan(0);
     expect(p1AnswerBounds.top).toBeGreaterThanOrEqual(p1AnswerBounds.tileTop);
     expect(p1AnswerBounds.bottom).toBeLessThanOrEqual(p1AnswerBounds.tileBottom);
-    const p2EntryGrid = await page.locator(".c2-entryrows").evaluate((grid) => ({
-      tracks: getComputedStyle(grid).gridTemplateRows.split(" ").map((value) => Number.parseFloat(value)),
-      gap: Number.parseFloat(getComputedStyle(grid).rowGap),
-    }));
+    const p2EntryGrid = await page.locator(".c2-entryrows").evaluate((grid) => {
+      const rect = (node) => {
+        const { x, y, width, height, left, right } = node.getBoundingClientRect();
+        return { x, y, width, height, left, right };
+      };
+      return {
+        tracks: getComputedStyle(grid).gridTemplateRows.split(" ").map((value) => Number.parseFloat(value)),
+        gap: Number.parseFloat(getComputedStyle(grid).rowGap),
+        entry: rect(grid),
+        main: rect(grid.closest(".c2-roundlayout-main")),
+        layout: rect(grid.closest(".c2-roundlayout")),
+        card: rect(document.querySelector(".control-main-card")),
+        viewport: { width: innerWidth, scrollX, scrollWidth: document.documentElement.scrollWidth },
+      };
+    });
     expect(p2EntryGrid.tracks).toHaveLength(6);
     expect(p2EntryGrid.gap).toBe(10);
     for (const height of p2EntryGrid.tracks) {
-      expect(Math.abs(height - standardGameplayRowHeight), "kafle wpisywania mają tę samą wysokość co kafle pozostałych kroków").toBeLessThan(1);
+      expect(Math.abs(height - standardGameplayRowHeight), `kafle wpisywania mają tę samą wysokość co pozostałe; wpisywanie=${height}px, runda=${standardGameplayRowHeight}px, układ=${JSON.stringify(p2EntryGrid)}`).toBeLessThan(1);
     }
     const repeatFirst = page.locator(".c2-entryrow .c2-btn-repeat").first();
     await expect(repeatFirst).toHaveClass(/\bon\b/);
