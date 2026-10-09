@@ -31,8 +31,16 @@ Stan faktyczny sprawdzony w kodzie 2026-10-07 (opis niżej, sekcja 4).
   Zamykanie · Udostępnianie · Wyniki (aktywna od razu). W niej scalanie
   i edycja odpowiedzi, Cofnij/Ponów, „Zamknij i przelicz”. Pozostałe karty
   dostępne w trakcie edycji. Jedno „Anuluj” — na pasku stanu (chowa kartę,
-  odrzuca edycję). Ankieta punktowa bez zmian. Otwarte: czy „Zamknij”
-  wstrzymuje głosowanie na czas edycji (propozycja: tak).
+  odrzuca edycję). Ankieta punktowa bez zmian.
+- **2026-10-09 — głosowanie wstrzymane na czas zamykania** (użytkownik zostawił
+  wybór mnie). Powód: panel zamykania pracuje na zdjęciu odpowiedzi z chwili
+  „Zamknij”, a „Zamknij i przelicz” liczy tylko je — głosy oddane w trakcie
+  edycji dziś giną po cichu. Wstrzymanie trwa tyle, co blokada `game:G`
+  karty zamykającej (kontekst zamykania, TTL): zamknięcie karty / utrata
+  połączenia samo wznawia głosowanie, bez stanu „zawieszona na zawsze”.
+  „Anuluj” zwalnia wstrzymanie od razu. Głosujący w tym czasie widzi
+  komunikat „Ankieta jest właśnie zamykana — spróbuj za chwilę”, a głos
+  odrzuca baza (nie tylko strona).
 
 ## 2. Co gdzie po zmianie
 
