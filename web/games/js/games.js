@@ -3,7 +3,8 @@ import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T22521";
 import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-09T22521";
 import { hideForGuest, isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-09T22521";
 import { initI18n, t, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-09T22521";
-import { linkTo } from "../../shared/js/core/nav-map.js?v=v2026-10-09T22521";
+import { linkTo, PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-09T22521";
+import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-09T22521";
 import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-09T22521";
 import { initRatingSystem } from "../../shared/js/core/rating-system.js?v=v2026-10-09T22521";
 import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-09T22521";
@@ -734,23 +735,19 @@ function setButtonsState({ hasSel, canEdit, canPlay, canPoll, canExport }) {
   if (btnExportBase) btnExportBase.disabled = !hasSel || !canExport;
 }
 /* ================= Tabs ================= */
-const GAME_TABS = new Set([TYPES.POLL_TEXT, TYPES.POLL_POINTS, TYPES.PREPARED, TYPES.MARKET]);
+// Karty i domyślna (pierwsza) z mapy stron; nazwy kart = wartości TYPES.
+const GAME_TABS = PAGES.games.tabs;
+const DEFAULT_GAME_TAB = GAME_TABS[0];
 
 function gameTabFromUrl() {
-  const tab = new URLSearchParams(location.search).get("tab");
-  return GAME_TABS.has(tab) ? tab : TYPES.PREPARED;
+  return tabFromUrl(GAME_TABS, DEFAULT_GAME_TAB);
 }
 
 function setActiveTab(type, { updateUrl = true } = {}) {
-  type = GAME_TABS.has(type) ? type : TYPES.PREPARED;
+  type = GAME_TABS.includes(type) ? type : DEFAULT_GAME_TAB;
   activeTab = type;
 
-  if (updateUrl) {
-    const url = new URL(location.href);
-    if (type === TYPES.PREPARED) url.searchParams.delete("tab");
-    else url.searchParams.set("tab", type);
-    if (url.href !== location.href) history.pushState(history.state, "", url);
-  }
+  if (updateUrl) setTab(type, DEFAULT_GAME_TAB);
 
   tabPollText?.classList.toggle("active", type === TYPES.POLL_TEXT);
   tabPollPoints?.classList.toggle("active", type === TYPES.POLL_POINTS);
@@ -2011,12 +2008,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   // Stan zakładki jest częścią adresu, dzięki czemu link można odświeżyć
   // i udostępnić bez utraty kontekstu.
   setActiveTab(gameTabFromUrl(), { updateUrl: false });
-
-  window.addEventListener("popstate", async () => {
-    const tab = gameTabFromUrl();
-    if (tab === TYPES.MARKET && activeTab !== TYPES.MARKET) await loadMarketGames();
-    setActiveTab(tab, { updateUrl: false });
-  });
 
   try {
     await refresh();

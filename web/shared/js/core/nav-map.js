@@ -14,7 +14,9 @@
 //   from          strony, na które „Wstecz” wolno wrócić przez ?ret=
 //                 (lista id albo "*" — każda strona z mapy)
 //   manual        kotwica instrukcji dla przycisku „?”
-//   state         parametry stanu strony (używane w kolejnych krokach)
+//   state         parametry stanu strony (adres z nimi trafia do ?ret=)
+//   tabs          karty strony w ?tab= (pierwsza = domyślna, bez parametru
+//                 w adresie); czyta je tabs.js, strony nie mają własnych list
 //
 // ?ret= niesie PEŁNY bieżący adres (razem z jego własnym ret), więc łańcuch
 // powrotów odtwarza się krok po kroku. Każdy poziom jest sprawdzany z listą
@@ -29,22 +31,22 @@ export const MAX_RET_DEPTH = 4;
 export const PAGES = {
   home:          { path: "/",                   access: "public", parent: null },
   login:         { path: "/login/",             access: "public", parent: "home" },
-  games:         { path: "/games/",             access: "guest",  parent: null, from: [], manual: "general", state: ["tab"] },
+  games:         { path: "/games/",             access: "guest",  parent: null, from: [], manual: "general", tabs: ["prepared", "poll_text", "poll_points", "market"], state: ["tab"] },
   editor:        { path: "/games/editor/",     access: "guest",  parent: "games", from: ["games"], manual: "edit", state: ["id", "q"] },
-  polls:         { path: "/polls/",             access: "guest",   parent: "games", from: ["games", "subscriptions"], manual: "polls", state: ["id"] },
-  subscriptions: { path: "/subscriptions/",     access: "user",   parent: "games", from: ["games", "bases", "polls"], manual: "subscriptions", state: ["tab"] },
-  bases:         { path: "/bases/",             access: "guest",  parent: "games", from: ["games", "subscriptions", "baseExplorer"], manual: "bases", state: ["tab"] },
+  polls:         { path: "/polls/",             access: "guest",   parent: "games", from: ["games", "subscriptions"], manual: "polls", tabs: ["share", "results"], state: ["id", "tab"] },
+  subscriptions: { path: "/subscriptions/",     access: "user",   parent: "games", from: ["games", "bases", "polls"], manual: "subscriptions", tabs: ["subscribers", "subscriptions", "tasks"], state: ["tab"] },
+  bases:         { path: "/bases/",             access: "guest",  parent: "games", from: ["games", "subscriptions", "baseExplorer"], manual: "bases", tabs: ["mine", "shared"], state: ["tab"] },
   baseExplorer:  { path: "/bases/explorer/",   access: "guest",  parent: "bases", from: ["bases"], manual: "bases", state: ["id", "folder"] },
-  logoEditor:    { path: "/logo/",              access: "guest",  parent: "games", from: ["games"], manual: "logo", state: ["tab"] },
+  logoEditor:    { path: "/logo/",              access: "guest",  parent: "games", from: ["games"], manual: "logo", tabs: ["text", "draw", "image"], state: ["tab"] },
   logoText:      { path: "/logo/editor/text/",  access: "guest",  parent: "logoEditor", from: ["logoEditor"], manual: "logo", device: "noPhone", state: ["id"] },
   logoDraw:      { path: "/logo/editor/draw/",  access: "guest",  parent: "logoEditor", from: ["logoEditor"], manual: "logo", device: "noPhone", state: ["id"] },
   logoImage:     { path: "/logo/editor/image/", access: "guest",  parent: "logoEditor", from: ["logoEditor"], manual: "logo", device: "noPhone", state: ["id"] },
   control:       { path: "/control/",           access: "guest",  parent: "games", from: ["games", "gameSettings"], manual: "control", device: "wide", state: ["id"] },
   gameSettings:  { path: "/games/settings/",   access: "guest",  parent: "control", parentParams: ["id"], from: ["games", "control"], manual: "gameSettings", device: "wide", state: ["id"] },
-  marketplace:   { path: "/marketplace/",       access: "public", parent: "games", parentAnon: "home", subpaths: true, from: ["home", "games"], manual: "community", state: ["tab"] },
+  marketplace:   { path: "/marketplace/",       access: "public", parent: "games", parentAnon: "home", subpaths: true, from: ["home", "games"], manual: "community", state: ["q", "filter", "sort"] },
   connectDevice: { path: "/connect/",    access: "public", parent: "games", parentAnon: "home", from: ["home", "games"], manual: "connect" },
   account:       { path: "/account/",           access: "guest",  parent: "games", from: ["games"], manual: "general" },
-  manual:        { path: "/manual/",            access: "guest",  parent: "games", from: [], state: ["tab"] },
+  manual:        { path: "/manual/",            access: "guest",  parent: "games", from: [], tabs: ["general", "edit", "community", "bases", "polls", "subscriptions", "logo", "control", "gameSettings", "connect"], state: ["tab"] },
   privacy:       { path: "/privacy/",           access: "public", parent: "manual", parentAnon: "home", from: ["home", "manual"] },
 };
 

@@ -39,15 +39,38 @@ test("linkTo bez ret, gdy bieżąca strona nie jest na liście from celu", () =>
   assert.equal(href, "/games/editor/?id=1");
 });
 
-test("linkTo: kotwica w hash", () => {
-  const href = linkTo("manual", { hash: "polls" }, ctx("/polls/?id=7"));
-  assert.equal(href, "/manual/?ret=%2Fpolls%2F%3Fid%3D7#polls");
+test("linkTo: karta instrukcji w ?tab=, hash zostaje kotwicą w karcie", () => {
+  const href = linkTo("manual", { tab: "polls" }, ctx("/polls/?id=7"));
+  assert.equal(href, "/manual/?tab=polls&ret=%2Fpolls%2F%3Fid%3D7");
+  const anchor = linkTo("manual", { tab: "polls", hash: "x" }, ctx("/polls/?id=7"));
+  assert.ok(anchor.endsWith("#x"));
+});
+
+test("ret niesie kartę: powrót z podstrony wraca na tę samą kartę", () => {
+  const bases = linkTo("baseExplorer", { id: "b1" }, ctx("/bases/?tab=shared"));
+  assert.equal(backHref("baseExplorer", ctx(bases)), "/bases/?tab=shared");
+  const subs = linkTo("subscriptions", {}, ctx("/games/?tab=poll_text"));
+  assert.equal(backHref("subscriptions", ctx(subs)), "/games/?tab=poll_text");
+  const manual = linkTo("manual", { tab: "bases" }, ctx("/bases/?tab=shared"));
+  assert.equal(backHref("manual", ctx(manual)), "/bases/?tab=shared");
+});
+
+test("karty w mapie: tabs jest listą niepustych nazw, a state je wymienia", () => {
+  for (const [id, p] of Object.entries(PAGES)) {
+    if (!p.tabs) continue;
+    assert.ok(Array.isArray(p.tabs) && p.tabs.length > 1, `${id}.tabs`);
+    assert.equal(new Set(p.tabs).size, p.tabs.length, `${id}.tabs bez powtórzeń`);
+    assert.ok(p.state?.includes("tab"), `${id}.state ma tab`);
+  }
+  for (const id of ["games", "bases", "polls", "subscriptions", "logoEditor", "manual"]) {
+    assert.ok(PAGES[id].tabs, `${id} ma karty`);
+  }
 });
 
 test("łańcuch powrotów: games -> subscriptions -> polls -> manual i z powrotem", () => {
   const subs = linkTo("subscriptions", {}, ctx("/games/"));
   const polls = linkTo("polls", { id: 7 }, ctx(subs));
-  const manual = linkTo("manual", { hash: "polls" }, ctx(polls));
+  const manual = linkTo("manual", { tab: "polls" }, ctx(polls));
 
   const b1 = backTarget("manual", ctx(manual));
   assert.equal(b1.pageId, "polls");
@@ -175,7 +198,7 @@ test("strony publiczne: niezalogowany wraca na landing", () => {
 });
 
 test("instrukcja i prywatność: powrót przez wszystkie kroki", () => {
-  const manual = linkTo("manual", { hash: "polls" }, ctx("/polls/?id=7&ret=%2Fgames%2F"));
+  const manual = linkTo("manual", { tab: "polls" }, ctx("/polls/?id=7&ret=%2Fgames%2F"));
   const privacy = linkTo("privacy", {}, ctx(manual));
   const b1 = backTarget("privacy", ctx(privacy));
   assert.equal(b1.pageId, "manual");

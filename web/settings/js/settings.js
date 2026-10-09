@@ -20,6 +20,7 @@ import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } fro
 import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T22521";
 import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-09T22521";
 import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-09T22521";
+import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-09T22521";
 
 // settings.html nie ma naturalnego przycisku wstecz na mobile (panel admina
 // bez nawigacji "do tyłu") -- btnBackSheet istnieje wyłącznie na potrzeby
@@ -5199,27 +5200,23 @@ function closeTools() {
   setActiveTab(previousTabBeforeTools || "maintenance");
 }
 
-const SETTINGS_TABS = new Set([
+// Strona administratora (poza mapą PAGES): lista kart lokalnie, pierwsza = domyślna.
+const SETTINGS_TABS = [
   "maintenance", "mail", "marketplace", "ratings", "stats", "generator",
   "reports", "marketing", "marketingContacts",
-]);
+];
+const DEFAULT_SETTINGS_TAB = SETTINGS_TABS[0];
 
 function settingsTabFromUrl() {
-  const tab = new URLSearchParams(location.search).get("tab");
-  return SETTINGS_TABS.has(tab) ? tab : "maintenance";
+  return tabFromUrl(SETTINGS_TABS, DEFAULT_SETTINGS_TAB);
 }
 
 function setActiveTab(tab, { updateUrl = true } = {}) {
-  if (tab !== "tools" && !SETTINGS_TABS.has(tab)) tab = "maintenance";
+  if (tab !== "tools" && !SETTINGS_TABS.includes(tab)) tab = DEFAULT_SETTINGS_TAB;
   activeTab = tab;
   window.activeTab = tab;
 
-  if (updateUrl && tab !== "tools") {
-    const url = new URL(location.href);
-    if (tab === "maintenance") url.searchParams.delete("tab");
-    else url.searchParams.set("tab", tab);
-    if (url.href !== location.href) history.pushState(history.state, "", url);
-  }
+  if (updateUrl && tab !== "tools") setTab(tab, DEFAULT_SETTINGS_TAB);
   
   const btn = document.getElementById("btnTabMaintenance");
   const btnMail = document.getElementById("btnTabMail");
@@ -6510,7 +6507,6 @@ function wireEvents() {
   startCountdownTimer();
   await initToolsSelect();
   wireEvents();
-  window.addEventListener("popstate", activateSettingsTabFromUrl);
 
 
   // Initialize TinyMCE for marketing message area

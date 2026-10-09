@@ -4,7 +4,8 @@
 
 import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-09T22521";
 import { initI18n, setUiLang } from "../../shared/translation/translation.js?v=v2026-10-09T22521";
-import { linkTo } from "../../shared/js/core/nav-map.js?v=v2026-10-09T22521";
+import { linkTo, PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-09T22521";
+import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-09T22521";
 import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-09T22521";
 import "../../shared/js/core/contact-modal.js?v=v2026-10-09T22521";
 
@@ -40,8 +41,12 @@ const pages = Object.fromEntries(
   qsa(".tab-panel[data-tab]").map((el) => [el.dataset.tab, el])
 );
 
-function setActive(name, { updateHash = true } = {}) {
-  if (!pages[name]) name = "general";
+// Pigułki (karty) z mapy stron; karta w ?tab=, #hash zostaje kotwicą w karcie.
+const MANUAL_TABS = PAGES.manual.tabs;
+const DEFAULT_MANUAL_TAB = MANUAL_TABS[0];
+
+function setActive(name, { updateUrl = true } = {}) {
+  if (!pages[name]) name = DEFAULT_MANUAL_TAB;
 
   getTabs().forEach((tab) => {
     const active = tab.dataset.tab === name;
@@ -54,7 +59,7 @@ function setActive(name, { updateHash = true } = {}) {
     el?.classList.toggle("active", active);
     if (el) el.hidden = !active;
   });
-  if (updateHash && location.hash !== `#${name}`) location.hash = name;
+  if (updateUrl) setTab(name, DEFAULT_MANUAL_TAB);
   updateMobileTabSubtitle(name);
 }
 
@@ -79,17 +84,7 @@ function wireTabs() {
 
   Object.values(pages).forEach((panel) => panel.setAttribute("role", "tabpanel"));
 
-  const hashInitial = (location.hash || "").replace("#", "");
-  const p = new URLSearchParams(location.search);
-  const paramInitial = p.get("tab") || "";
-  const initial = hashInitial || paramInitial;
-  if (initial && pages[initial]) setActive(initial, { updateHash: false });
-  else setActive("general", { updateHash: false });
-
-  window.addEventListener("hashchange", () => {
-    const name = location.hash.replace(/^#/, "");
-    setActive(pages[name] ? name : "general", { updateHash: false });
-  });
+  setActive(tabFromUrl(MANUAL_TABS, DEFAULT_MANUAL_TAB), { updateUrl: false });
 }
 
 function wireLegalLink() {

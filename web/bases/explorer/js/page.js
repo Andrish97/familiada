@@ -6,7 +6,7 @@ import { guardResourceLocks } from "../../../shared/js/core/resource-lock.js?v=v
 import { getUiLang, initI18n, t } from "../../../shared/translation/translation.js?v=v2026-10-09T22521";
 import { backHref } from "../../../shared/js/core/nav-map.js?v=v2026-10-09T22521";
 import { initPage } from "../../../shared/js/core/page-init.js?v=v2026-10-09T22521";
-import { VIEW, createState, setRole } from "./state.js?v=v2026-10-09T22521";
+import { VIEW, createState, setRole, pruneTreeOpen } from "./state.js?v=v2026-10-09T22521";
 import { renderAll } from "./render.js?v=v2026-10-09T22521";
 import {
   getBaseMeta,
@@ -85,6 +85,7 @@ function getBaseIdFromUrl() {
     ]);
 
     state.categories = cats;
+    pruneTreeOpen(state.treeOpen, cats);
     state.tags = tags;
     state.questions = qs;
 
@@ -103,20 +104,6 @@ function getBaseIdFromUrl() {
     // ===== akcje UI (klik folder, search, selekcja) =====
     const api = wireActions({ state });
     state._syncFolderUrl = true;
-
-    window.addEventListener("popstate", async () => {
-      const folderId = new URLSearchParams(location.search).get("folder");
-      state._syncFolderUrl = false;
-      if (folderId && state.categories.some((cat) => cat.id === folderId)) {
-        state.view = VIEW.FOLDER;
-        state.folderId = folderId;
-      } else {
-        state.view = VIEW.ALL;
-        state.folderId = null;
-      }
-      state._syncFolderUrl = true;
-      await api.refreshList();
-    });
 
     window.addEventListener("i18n:lang", async () => {
       await api.refreshList();

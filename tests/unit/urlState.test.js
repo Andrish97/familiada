@@ -7,24 +7,26 @@ import { fileURLToPath } from "node:url";
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const read = (file) => fs.readFileSync(path.join(root, /^(tests|scripts|supabase|cloudflare|services|docs)\//.test(file) ? file : "web/" + file), "utf8");
 
-test("zakładki stron zapisują stan w URL i obsługują historię", () => {
-  const cases = [
-    ["games/js/games.js", /searchParams\.set\("tab", type\)/, /addEventListener\("popstate"/],
-    ["bases/js/bases.js", /searchParams\.set\("tab", activeTab\)/, /addEventListener\("popstate"/],
-    ["settings/js/settings.js", /searchParams\.set\("tab", tab\)/, /addEventListener\("popstate"/],
-    ["subscriptions/js/subscriptions.js", /searchParams\.set\("tab", activeTab\)/, /history\.replaceState/],
+test("wszystkie strony z kartami używają wspólnego tabs.js (replaceState, bez sessionStorage)", () => {
+  const files = [
+    "games/js/games.js", "bases/js/bases.js", "settings/js/settings.js", "polls/js/polls.js",
+    "subscriptions/js/subscriptions.js", "logo/js/list.js", "manual/js/manual.js",
   ];
-  for (const [file, writeUrl, history] of cases) {
+  for (const file of files) {
     const source = read(file);
-    assert.match(source, writeUrl, `${file}: zapis URL`);
-    assert.match(source, history, `${file}: historia przeglądarki`);
+    assert.match(source, /shared\/js\/core\/tabs\.js/, `${file}: import tabs.js`);
+    assert.match(source, /\bsetTab\(/, `${file}: zapis karty przez setTab`);
+    assert.match(source, /\btabFromUrl\(/, `${file}: odczyt karty przez tabFromUrl`);
+    assert.doesNotMatch(source, /searchParams\.(set|delete)\("tab"/, `${file}: bez własnego zapisu ?tab=`);
+    assert.doesNotMatch(source, /history\.pushState|addEventListener\("popstate"/, `${file}: bez pushState/popstate`);
+    assert.doesNotMatch(source, /sessionStorage|localStorage\.\w+Item\(["'`]\w*[Tt]ab/, `${file}: karta tylko w adresie`);
   }
 });
 
-test("manual zachowuje istniejący routing sekcji przez hash", () => {
+test("manual: karta w ?tab=, bez hashchange i #hash jako karty", () => {
   const source = read("manual/js/manual.js");
-  assert.match(source, /location\.hash = name/);
-  assert.match(source, /addEventListener\("hashchange"/);
+  assert.doesNotMatch(source, /hashchange|location\.hash/);
+  assert.doesNotMatch(read("shared/js/core/page-init.js"), /linkTo\("manual", \{ hash:/);
 });
 
 test("strona główna odzwierciedla przewijaną sekcję w hash", () => {
@@ -37,7 +39,9 @@ test("base-explorer zapisuje konkretny folder i odtwarza go z URL", () => {
   const page = read("bases/explorer/js/page.js");
   const state = read("bases/explorer/js/state.js");
   assert.match(page, /searchParams|get\("folder"\)/);
-  assert.match(page, /addEventListener\("popstate"/);
+  assert.doesNotMatch(page, /addEventListener\("popstate"/);
+  assert.match(state, /history\.replaceState/);
+  assert.doesNotMatch(state, /history\.pushState/);
   assert.match(state, /searchParams\.set\("folder", state\.folderId\)/);
   assert.match(state, /searchParams\.delete\("folder"\)/);
 });
@@ -52,9 +56,9 @@ test("logo ma trzy zakładki, dynamiczny hint i geometrię wypustek", () => {
   }
   assert.doesNotMatch(html, /id="createOverlay"|id="pickText"|id="pickDraw"|id="pickImage"/);
   assert.match(js, /el\.hint\.textContent = t\(hintKeys\[activeListMode\]\)/);
-  // Karta w ?tab= przez replaceState: przeglądarkowe „Wstecz” wraca do
-  // poprzedniej strony, nie przełącza kart (docs/nawigacja-mapa-plan.md).
-  assert.match(js, /history\.replaceState\(history\.state, "", url\)/);
+  // Karta w ?tab= przez wspólny tabs.js (replaceState): przeglądarkowe „Wstecz”
+  // wraca do poprzedniej strony, nie przełącza kart.
+  assert.match(js, /setTab\(activeListMode\.toLowerCase\(\)/);
   assert.doesNotMatch(js, /history\.pushState|addEventListener\("popstate"/);
   assert.match(css, /tabLogoText\.active[\s\S]*tab-corner-left/);
   assert.match(css, /tabLogoImage\.active[\s\S]*tab-corner-right/);

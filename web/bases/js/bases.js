@@ -10,7 +10,8 @@ import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-
 import { isGuestUser, hideForGuest } from "../../shared/js/core/guest-mode.js?v=v2026-10-09T22521";
 import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-09T22521";
 import { getUiLang, initI18n, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-09T22521";
-import { linkTo } from "../../shared/js/core/nav-map.js?v=v2026-10-09T22521";
+import { linkTo, PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-09T22521";
+import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-09T22521";
 import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-09T22521";
 import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-09T22521";
 import "../../shared/js/core/contact-modal.js?v=v2026-10-09T22521";
@@ -1216,24 +1217,15 @@ async function shareAddInner() {
 }
 
 /* ================= Wypustki (mine/shared) ================= */
-const TAB_STORAGE_KEY = "basesMobileTab";
-let activeTab = "mine";
+// Karty z mapy stron (pierwsza = domyślna); adres jest jedynym źródłem.
+const BASE_TABS = PAGES.bases.tabs;
+const DEFAULT_BASE_TAB = BASE_TABS[0];
+let activeTab = DEFAULT_BASE_TAB;
 
-function tabFromUrl() {
-  const tab = new URLSearchParams(location.search).get("tab");
-  if (tab === "mine" || tab === "shared") return tab;
-  return storedTab();
-}
-
-function setActiveTab(tab, { remember = true, updateUrl = true } = {}) {
-  if (guestMode) tab = "mine";
-  activeTab = tab === "shared" ? "shared" : "mine";
-  if (updateUrl) {
-    const url = new URL(location.href);
-    if (activeTab === "mine") url.searchParams.delete("tab");
-    else url.searchParams.set("tab", activeTab);
-    if (url.href !== location.href) history.pushState(history.state, "", url);
-  }
+function setActiveTab(tab, { updateUrl = true } = {}) {
+  if (guestMode || !BASE_TABS.includes(tab)) tab = DEFAULT_BASE_TAB;
+  activeTab = tab;
+  if (updateUrl) setTab(activeTab, DEFAULT_BASE_TAB);
   const mineOn = activeTab === "mine";
   basesSectionMine?.classList.toggle("active", mineOn);
   basesSectionShared?.classList.toggle("active", !mineOn);
@@ -1242,13 +1234,6 @@ function setActiveTab(tab, { remember = true, updateUrl = true } = {}) {
     btn?.setAttribute("aria-selected", on ? "true" : "false");
   }
   setHint(mineOn ? t("bases.headerHint") : t("bases.headerHintShared"));
-  if (remember) {
-    try { sessionStorage.setItem(TAB_STORAGE_KEY, activeTab); } catch {}
-  }
-}
-
-function storedTab() {
-  try { return sessionStorage.getItem(TAB_STORAGE_KEY) === "shared" ? "shared" : "mine"; } catch { return "mine"; }
 }
 
 function setSharedBasesBadge(n) {
@@ -1771,12 +1756,9 @@ function initFileLaunch() {
     tabBasesShared?.closest(".tab-slot")?.remove();
   }
 
-  setActiveTab(tabFromUrl(), { remember: false, updateUrl: false });
+  setActiveTab(tabFromUrl(BASE_TABS, DEFAULT_BASE_TAB), { updateUrl: false });
   tabBasesMine?.addEventListener("click", () => setActiveTab("mine"));
   tabBasesShared?.addEventListener("click", () => setActiveTab("shared"));
-  window.addEventListener("popstate", () => {
-    setActiveTab(tabFromUrl(), { remember: false, updateUrl: false });
-  });
 
   initShareRoleSelect();
   initShareRecipientTypeSelect();
@@ -1785,7 +1767,7 @@ function initFileLaunch() {
     initShareRoleSelect();
     initShareRecipientTypeSelect();
     initShareSubscriberSelect();
-    setActiveTab(activeTab, { remember: false }); // podpowiedź w nowym języku
+    setActiveTab(activeTab); // podpowiedź w nowym języku
     render();
     setButtonsState();
   });

@@ -25,6 +25,41 @@ export const META = {
 // kolejność wyświetlania
 export const META_ORDER = ["prepared", "poll_points", "poll_text"];
 
+/* ===== Rozwinięte foldery drzewa — localStorage per baza =====
+   Stan widoku, za długi do adresu (otwarty folder jest w ?folder=). */
+export const TREE_KEY_PREFIX = "explorer:tree:";
+
+export function treeStorageKey(baseId) {
+  return `${TREE_KEY_PREFIX}${baseId}`;
+}
+
+/** Zbiór rozwiniętych węzłów z zapisanego JSON-a; "root" zawsze rozwinięty. */
+export function parseTreeOpen(raw) {
+  const out = new Set(["root"]);
+  try {
+    const arr = JSON.parse(raw);
+    if (Array.isArray(arr)) for (const id of arr) if (typeof id === "string") out.add(id);
+  } catch {}
+  return out;
+}
+
+export function loadTreeOpen(baseId, storage = typeof localStorage !== "undefined" ? localStorage : null) {
+  let raw = null;
+  try { raw = storage?.getItem(treeStorageKey(baseId)) ?? null; } catch {}
+  return parseTreeOpen(raw);
+}
+
+export function saveTreeOpen(baseId, treeOpen, storage = typeof localStorage !== "undefined" ? localStorage : null) {
+  try { storage?.setItem(treeStorageKey(baseId), JSON.stringify([...treeOpen])); } catch {}
+}
+
+/** Zostawia tylko foldery, które istnieją w bazie (usunięte znikają z zapisu). */
+export function pruneTreeOpen(treeOpen, categories) {
+  const ids = new Set((categories || []).map((c) => c.id));
+  for (const id of [...treeOpen]) if (id !== "root" && !ids.has(id)) treeOpen.delete(id);
+  return treeOpen;
+}
+
 export function createState({ baseId, role = "viewer" }) {
   return {
     // kontekst
@@ -45,7 +80,7 @@ export function createState({ baseId, role = "viewer" }) {
     // folderem najwyższego poziomu widocznym, dopóki user ręcznie nie
     // kliknie strzałki. Auto-rozwijanie ścieżki do aktualnego folderu
     // (refreshList()) i tak nigdy nie dodaje "root" samo z siebie.
-    treeOpen: new Set(["root"]),
+    treeOpen: loadTreeOpen(baseId),
 
     // widok
     view: VIEW.ALL,
@@ -133,7 +168,9 @@ function syncFolderUrl(state) {
   const url = new URL(location.href);
   if (state.view === VIEW.FOLDER && state.folderId) url.searchParams.set("folder", state.folderId);
   else url.searchParams.delete("folder");
-  if (url.href !== location.href) history.pushState(history.state, "", url);
+  // replaceState: przeglądarkowe „Wstecz” wraca do poprzedniej STRONY, nie
+  // przewija folderów (docs/nawigacja-mapa-plan.md, karty i stan strony).
+  if (url.href !== location.href) history.replaceState(history.state, "", url);
 }
 
 export function setViewTags(state, tagIds) {

@@ -33,7 +33,7 @@ test("privacy: parametr ret dopuszcza tylko bezpieczny powrót w obrębie serwis
   await page.waitForURL((url) => url.origin === ORIGIN && !url.pathname.startsWith("/privacy"));
   expect(new URL(page.url()).origin).toBe(ORIGIN);
 
-  const safeBack = "/manual/?tab=polls#polls";
+  const safeBack = "/manual/?tab=polls";
   await page.goto(`${ORIGIN}/privacy?lang=uk&ret=${encodeURIComponent(safeBack)}`);
   await expect(page.locator(".topbar.topbar-ready")).toBeAttached();
   await page.locator("#btnBack").click();
@@ -42,7 +42,7 @@ test("privacy: parametr ret dopuszcza tylko bezpieczny powrót w obrębie serwis
   expect(returned.origin).toBe(ORIGIN);
   expect(returned.searchParams.get("tab")).toBe("polls");
   expect(returned.searchParams.get("lang")).toBe("uk");
-  expect(returned.hash).toBe("#polls");
+  await expect(page.locator("#tab-polls")).toBeVisible();
 });
 
 test("manual: tłumaczy UI i ma semantykę zakładek (zwykła strona, bez ?modal=)", async ({ page, context }) => {
@@ -61,26 +61,25 @@ test("manual: tłumaczy UI i ma semantykę zakładek (zwykła strona, bez ?modal
 
   await tabs.first().press("ArrowRight");
   await expect(page.locator('#tab-edit')).toBeVisible();
-  await expect(page).toHaveURL(/#edit$/);
+  await expect(page).toHaveURL(/[?&]tab=edit(?:&|$)/);
 });
 
-test("manual: Back/Forward synchronizuje hash, aktywną zakładkę i treść", async ({ page, context }) => {
+test("manual: karta w ?tab= (replaceState): odświeżenie ją zachowuje, nieznana to ogólny opis", async ({ page, context }) => {
   await loginAsTestUser(page, context);
   await page.goto(`${ORIGIN}/manual?lang=pl`, { waitUntil: "domcontentloaded" });
+  const historyBefore = await page.evaluate(() => history.length);
   await page.locator('[data-tab="edit"][role="tab"]').click();
-  await expect(page.locator("#tab-edit")).toBeVisible();
   await page.locator('[data-tab="polls"][role="tab"]').click();
   await expect(page.locator("#tab-polls")).toBeVisible();
+  await expect(page).toHaveURL(/[?&]tab=polls(?:&|$)/);
+  expect(await page.evaluate(() => history.length)).toBe(historyBefore); // zmiana karty nie dokłada wpisów historii
 
-  await page.goBack();
-  await expect(page).toHaveURL(/#edit$/);
-  await expect(page.locator('[data-tab="edit"][role="tab"]')).toHaveAttribute("aria-selected", "true");
-  await expect(page.locator("#tab-edit")).toBeVisible();
-  await expect(page.locator("#tab-polls")).toBeHidden();
-
-  await page.goForward();
-  await expect(page).toHaveURL(/#polls$/);
+  await page.reload({ waitUntil: "domcontentloaded" });
   await expect(page.locator("#tab-polls")).toBeVisible();
+  await expect(page.locator('[data-tab="polls"][role="tab"]')).toHaveAttribute("aria-selected", "true");
+
+  await page.goto(`${ORIGIN}/manual?lang=pl&tab=nieznana`, { waitUntil: "domcontentloaded" });
+  await expect(page.locator("#tab-general")).toBeVisible();
 });
 
 test("manual: treść i etykieta zakładek istnieją w PL/EN/UK", async ({ page, context }) => {

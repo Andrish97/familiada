@@ -12,7 +12,8 @@ import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-09T22521"
 import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-09T22521";
 import QRCode from "https://cdn.jsdelivr.net/npm/qrcode@1.5.3/+esm";
 import { initI18n, t, withLangParam, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-09T22521";
-import { linkTo, backHref } from "../../shared/js/core/nav-map.js?v=v2026-10-09T22521";
+import { linkTo, backHref, PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-09T22521";
+import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-09T22521";
 import { guardResourceLock } from "../../shared/js/core/resource-lock.js?v=v2026-10-09T22521";
 import { validateGame, gameRuleErrorMessage, guardGameState } from "../../shared/js/core/game-validate.js?v=v2026-10-09T22521";
 import { mailCooldownCheck } from "../../shared/js/core/cooldown.js?v=v2026-10-09T22521";
@@ -506,12 +507,19 @@ async function approveTallyFlow() {
    Wypustki Udostępnianie · Wyniki
 ======================= */
 
-let activeTab = "share";
-let tabTouchedByUser = false;
+// Karty z mapy stron (pierwsza = domyślna, bez parametru w adresie). Wypustka
+// z ?tab= obowiązuje od wejścia, dopóki stan ankiety się nie zmieni; bez
+// ?tab= wypustkę dobiera stan ankiety (szkic/otwarta: Udostępnianie).
+const POLL_TABS = PAGES.polls.tabs;
+const DEFAULT_POLL_TAB = POLL_TABS[0];
+let activeTab = tabFromUrl(POLL_TABS, DEFAULT_POLL_TAB);
+let tabTouchedByUser = new URLSearchParams(location.search).has("tab");
+let urlTabPending = tabTouchedByUser;
 
 function setActiveTab(tab, { byUser = false } = {}) {
-  activeTab = tab === "results" ? "results" : "share";
+  activeTab = POLL_TABS.includes(tab) ? tab : DEFAULT_POLL_TAB;
   if (byUser) tabTouchedByUser = true;
+  setTab(activeTab, DEFAULT_POLL_TAB);
   const shareOn = activeTab === "share";
   secShare?.classList.toggle("active", shareOn);
   secResults?.classList.toggle("active", !shareOn);
@@ -955,7 +963,8 @@ async function refresh() {
     }
     // nowy stan lub nowe uruchomienie: domyślna wypustka, czysta lista wyników
     stateKey = key;
-    tabTouchedByUser = false;
+    tabTouchedByUser = urlTabPending;
+    urlTabPending = false;
     if (!tallyActive) resetResultsDom();
     // zaznaczenia przeżywają szkic -> otwarta -> zatrzymana (ten sam klucz)
     if (!prev || prev.share_key_poll !== game.share_key_poll || !sharingAvailable(st)) selectedSubIds.clear();
@@ -965,7 +974,8 @@ async function refresh() {
     firstQuestionId = null;
     votesText = "";
   }
-  if (!tabTouchedByUser) setActiveTab(st === STATUS.DRAFT || st === STATUS.POLL_OPEN ? "share" : "results");
+  // Wypustka z adresu / wybrana przez użytkownika zostaje; inaczej wg stanu ankiety.
+  setActiveTab(tabTouchedByUser ? activeTab : (st === STATUS.DRAFT || st === STATUS.POLL_OPEN ? "share" : "results"));
 
   const nameEl = $("pollGameName");
   if (nameEl) {
