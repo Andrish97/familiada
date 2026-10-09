@@ -1,9 +1,11 @@
 // Żaden plik w repo nie może zawierać znaczników konfliktu scalania
 // (2026-10-09: zatwierdzone znaczniki w web/logo/js zepsuły listę logo na produkcji).
-const test = require("node:test");
-const assert = require("node:assert");
-const { execSync } = require("node:child_process");
-const path = require("node:path");
+import test from "node:test";
+import assert from "node:assert";
+import { execSync } from "node:child_process";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 test("brak znaczników konfliktu (<<<<<<< / >>>>>>> / |||||||) w plikach repo", () => {
   const root = path.resolve(__dirname, "..", "..");
