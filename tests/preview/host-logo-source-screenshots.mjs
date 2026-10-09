@@ -140,46 +140,19 @@ try {
   });
   if (!(drawResult.width > 0 && drawResult.hasWhite && drawResult.blackCutsThroughWhite && drawResult.whiteTopLayerRestoresDot && drawResult.outsideTransparent)) throw new Error(`DRAW warstwy po zapisie i odczycie nie zgadzają się: ${JSON.stringify(drawResult)}`);
 
-  // Exercise the actual editor rasterizer: flatten Fabric first, make a
-  // transparent luminance mask, then let Host tint that saved PNG.
-  const hostRasterData = await hostFrame.evaluate(async () => {
-    const { sceneToHostRaster } = await import("/logo/js/draw/raster.js?v=v2026-10-09TDRAWHOST1");
-    const scene = new fabric.StaticCanvas(document.createElement("canvas"), { width: 1040, height: 440, renderOnAddRemove: false });
-    scene.backgroundColor = "#000";
-    scene.add(new fabric.Rect({ left: 100, top: 100, width: 600, height: 220, fill: "#fff", strokeWidth: 0 }));
-    scene.add(new fabric.Rect({ left: 250, top: 170, width: 200, height: 100, fill: "#000", strokeWidth: 0 }));
-    scene.add(new fabric.Circle({ left: 320, top: 190, radius: 30, fill: "#fff", strokeWidth: 0 }));
-    const blob = await sceneToHostRaster(fabric, scene.toJSON(), 1040, 440);
-    scene.dispose();
-    return await new Promise((resolve, reject) => {
-      const reader = new FileReader(); reader.onload = () => resolve(reader.result); reader.onerror = reject; reader.readAsDataURL(blob);
-    });
-  });
-  const rasterLogo = structuredClone(drawRoundTrip);
-  rasterLogo.payload.source.hostRasterUrl = hostRasterData;
-  await page.evaluate(logo => window.setCase("draw-roundtrip-raster", "source", "control", logo), rasterLogo);
-  const rasterResult = await drawFrame.locator("#cover2Logo canvas").evaluate(canvas => {
-    const context = canvas.getContext("2d", { willReadFrequently: true });
-    const read = (x, y) => context.getImageData(Math.round(x * canvas.width / 1040), Math.round(y * canvas.height / 440), 1, 1).data;
-    const white = read(150, 140), cut = read(270, 185), restored = read(350, 220), outside = read(800, 350);
-    return { width: canvas.width, height: canvas.height, white: [...white], blackAlpha: cut[3], restoredAlpha: restored[3], outsideAlpha: outside[3] };
-  });
-  if (!(rasterResult.width === 1280 && rasterResult.height > 500 && rasterResult.white[3] > 200 && rasterResult.white[0] === 255 && rasterResult.white[1] === 204 && rasterResult.white[2] === 0 && rasterResult.blackAlpha < 40 && rasterResult.restoredAlpha > 200 && rasterResult.outsideAlpha < 40)) {
-    throw new Error(`Niepoprawny PNG DRAW z warstwami Fabric: ${JSON.stringify(rasterResult)}`);
-  }
-  const transferResult = await hostFrame.evaluate(async imageData => {
-    const { buildExport, parseImport } = await import("/logo/js/transfer.js?v=v2026-10-09TDRAWHOST1");
-    const logo = { name: "DRAW transfer", type: "PIX_150x70", payload: { w: 150, h: 70, format: "BITPACK_MSB_FIRST_ROW_MAJOR", bits_b64: "AA==", source: { mode: "DRAW", hostRasterUrl: imageData } } };
+  const transferResult = await hostFrame.evaluate(async () => {
+    const { buildExport, parseImport } = await import("/logo/js/transfer.js?v=svg-draw-no-png");
+    const logo = JSON.parse(localStorage.getItem("host-logo-draw-roundtrip"));
     const exported = await buildExport(logo, "DRAW transfer");
     const imported = parseImport(JSON.stringify(exported), "DRAW transfer");
     return {
-      embeddedPng: exported.payload.source.hostRasterData?.startsWith("data:image/png;base64,") || false,
-      removedStorageUrl: !exported.payload.source.hostRasterUrl,
-      importKeepsPng: imported.payload.source.hostRasterData?.startsWith("data:image/png;base64,") || false,
+      exportedHasRaster: Object.hasOwn(exported.payload.source, "hostRasterUrl") || Object.hasOwn(exported.payload.source, "hostRasterData"),
+      importedHasRaster: Object.hasOwn(imported.payload.source, "hostRasterUrl") || Object.hasOwn(imported.payload.source, "hostRasterData"),
+      retainedScene: imported.payload.source.fabricData?.objects?.length === 3,
     };
-  }, hostRasterData);
-  if (!transferResult.embeddedPng || !transferResult.removedStorageUrl || !transferResult.importKeepsPng) {
-    throw new Error(`Eksport/import DRAW nie zachował PNG: ${JSON.stringify(transferResult)}`);
+  });
+  if (transferResult.exportedHasRaster || transferResult.importedHasRaster || !transferResult.retainedScene) {
+    throw new Error(`Eksport/import DRAW nie zachował czystej sceny SVG: ${JSON.stringify(transferResult)}`);
   }
   await page.screenshot({ path: path.join(out, "draw-roundtrip-control-source.png") });
 

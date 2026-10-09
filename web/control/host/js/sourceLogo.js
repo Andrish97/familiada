@@ -24,7 +24,7 @@ function canvasOf(width, height) {
 function loadWordmarkFont() {
   if (!fontPromise) {
     fontPromise = (async () => {
-      const font = new FontFace("HostUnbounded", 'url("/control/host/fonts/Unbounded-Variable.ttf?v=v2026-10-09T19401")', { weight: "200 900" });
+      const font = new FontFace("HostUnbounded", 'url("/control/host/fonts/Unbounded-Variable.ttf?v=v2026-10-09T21300")', { weight: "200 900" });
       await font.load();
       document.fonts.add(font);
       await document.fonts.load(`900 ${FONT_SIZE}px HostUnbounded`);
@@ -339,7 +339,12 @@ function safeXml(value) {
 function stabilizeDrawStrokes(scene) {
   const visit = (object) => {
     if (!object || typeof object !== "object") return;
-    if (object.stroke && object.stroke !== "transparent" && Number(object.strokeWidth) > 0) object.strokeUniform = true;
+    // Fabric's SVG exporter keeps strokeUniform as non-scaling-stroke. The
+    // SVG is then fitted from the saved world to Host's 1280px canvas, while
+    // Fabric's Host raster scales the scene before drawing. Keep strokes in
+    // world units so the SVG viewBox scales them with the scene just like the
+    // Fabric canvas renderer; never mutate the saved source object itself.
+    if (object.stroke && object.stroke !== "transparent" && Number(object.strokeWidth) > 0) object.strokeUniform = false;
     object.objects?.forEach(visit);
   };
   scene.objects?.forEach(visit);
@@ -397,25 +402,13 @@ async function renderDrawLogo(logo, dot) {
   }
 }
 
-async function renderDrawRaster(source, dot) {
-  if (!source?.hostRasterUrl) return null;
-  const image = await loadImage(source.hostRasterUrl);
-  const canvas = canvasOf(image.naturalWidth || image.width, image.naturalHeight || image.height);
-  const context = canvas.getContext("2d");
-  context.drawImage(image, 0, 0);
-  context.globalCompositeOperation = "source-in";
-  context.fillStyle = colorHex(dot);
-  context.fillRect(0, 0, canvas.width, canvas.height);
-  return canvas;
-}
-
 export async function renderLogoSource(logo, dot) {
   const mode = logo?.payload?.source?.mode;
   const logoDot = String(dot || "").toLowerCase() === DEFAULT_DOT_COLOR ? DEFAULT_LOGO_FACE : dot;
   try {
     if (mode === "TEXT") return renderTextLogo(logo.payload.source.text, logoDot, { fillWidth: true });
     if (mode === "IMAGE") return await renderImageLogo(logo.payload.source);
-    if (mode === "DRAW") return await (await renderDrawRaster(logo.payload.source, logoDot)) || await renderDrawLogo(logo, logoDot);
+    if (mode === "DRAW") return await renderDrawLogo(logo, logoDot);
   } catch (error) {
     console.error(`[host/logo] ${mode || "source"} rendering failed`, error);
   }

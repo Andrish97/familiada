@@ -5,8 +5,8 @@
 //   (A) { kind:"GLYPH"|"PIX", name, payload:{ rows | layers | bits_b64, source } }  -- nasz eksport
 //   (B) { type:"GLYPH_30x10"|"PIX_150x70", name, payload }                          -- stary zrzut z bazy
 
-import { t } from "../../shared/translation/translation.js?v=v2026-10-09T19401";
-import { DOT_W, DOT_H, TYPE_GLYPH, TYPE_PIX, PIX_FORMAT, normalizeRows } from "./render.js?v=v2026-10-09T19401";
+import { t } from "../../shared/translation/translation.js?v=v2026-10-09T21300";
+import { DOT_W, DOT_H, TYPE_GLYPH, TYPE_PIX, PIX_FORMAT, normalizeRows } from "./render.js?v=v2026-10-09T21300";
 
 /** Nazwa pliku z nazwy logo -- zostawia litery każdego alfabetu, wycina znaki zakazane w systemach plików. */
 export function safeFileName(name, fallback) {
@@ -40,16 +40,10 @@ export async function buildExport(logo, fallbackName) {
         console.warn("[logo/export] could not embed image:", e);
       }
     }
-    if (source.hostRasterUrl && !source.hostRasterData) {
-      try {
-        source.hostRasterData = await fetchImageAsDataUrl(source.hostRasterUrl);
-      } catch (e) {
-        console.warn("[logo/export] could not embed DRAW host raster:", e);
-      }
-    }
     // Z osadzonym obrazem plik jest samowystarczalny; URL zostaje tylko, gdy osadzenie się nie udało.
     if (source.imageData) delete source.imageUrl;
-    if (source.hostRasterData) delete source.hostRasterUrl;
+    delete source.hostRasterUrl;
+    delete source.hostRasterData;
     delete source.editHistory;
     return {
       kind: "PIX",
@@ -98,7 +92,8 @@ export function parseImport(text, fallbackName) {
   delete source.editHistory;
   // Osadzony obraz ma pierwszeństwo przed URL-em ze Storage innego konta/instalacji.
   if (source.imageData) delete source.imageUrl;
-  if (source.hostRasterData) delete source.hostRasterUrl;
+  delete source.hostRasterUrl;
+  delete source.hostRasterData;
 
   if (kind === "GLYPH") {
     const rows = normalizeRows(p.rows ?? p.layers?.[0]?.rows ?? obj?.rows);

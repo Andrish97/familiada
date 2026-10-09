@@ -72,6 +72,12 @@ jobs:
         run: |
           psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -c 'CREATE DATABASE demo_draw_test'
           psql -h localhost -U postgres -d demo_draw_test -v ON_ERROR_STOP=1 -f tests/sql/demo-draw-shared-png.sql
+      - name: Check removal of DRAW Host PNG references and Storage queueing
+        env:
+          PGPASSWORD: test-only-password
+        run: |
+          psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -c 'CREATE DATABASE draw_raster_removal_test'
+          psql -h localhost -U postgres -d draw_raster_removal_test -v ON_ERROR_STOP=1 -f tests/sql/remove-draw-host-png.sql
   migrate:
     needs: verify-control-statistics
     runs-on: ubuntu-latest
@@ -137,11 +143,18 @@ jobs:
             "export GITHUB_SHA='${{ github.sha }}'; \
              bash \"$STAGING/apply-migrations.sh\" \"$STAGING\""
 
-      - name: Verify shared demo DRAW PNG migration on production
+      - name: Verify DRAW Host PNG references and Storage objects are removed
         run: |
+          for attempt in $(seq 1 30); do
+            remaining=$(ssh -i ~/.ssh/id_ed25519 "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" \
+              "docker exec supabase-db psql -U supabase_admin -d postgres -Atc \"SELECT count(*) FROM storage.objects WHERE bucket_id = 'user-logos' AND name LIKE '%-draw-host.png'\"")
+            if [ "$remaining" = "0" ]; then break; fi
+            if [ "$attempt" = "30" ]; then echo "DRAW Host PNG cleanup timed out ($remaining objects remain)"; exit 1; fi
+            sleep 10
+          done
           ssh -i ~/.ssh/id_ed25519 "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" \
             'docker exec -i supabase-db psql -U supabase_admin -d postgres -v ON_ERROR_STOP=1' \
-            < tests/sql/demo-draw-shared-png-production.sql
+            < tests/sql/remove-draw-png-production.sql
 
       - name: Verify activity writes and exclusions on production database
         run: |

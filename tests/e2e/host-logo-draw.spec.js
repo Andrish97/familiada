@@ -81,23 +81,20 @@ async function runDrawRoundTrip(page, context, accountNumber, testInfo) {
     }, logoId);
     expect(saved.payload.source.mode).toBe("DRAW");
     expect(saved.payload.source.fabricData.objects).toHaveLength(3);
-    expect(saved.payload.source.hostRasterUrl).toMatch(/^https:\/\/.+\/user-logos\/.+-draw-host\.png$/);
+    expect(saved.payload.source).not.toHaveProperty("hostRasterUrl");
+    expect(saved.payload.source).not.toHaveProperty("hostRasterData");
 
     const transfer = await page.evaluate(async logo => {
-      const { buildExport, parseImport } = await import("/logo/js/transfer.js?v=v2026-10-09TDRAWHOST1");
+      const { buildExport, parseImport } = await import("/logo/js/transfer.js?v=svg-draw-no-png");
       const file = await buildExport(logo, "test");
       const imported = parseImport(JSON.stringify(file), "test");
       return {
-        embeddedPng: /^data:image\/png;base64,/.test(file.payload.source.hostRasterData || ""),
-        exportedUrlRemoved: !file.payload.source.hostRasterUrl,
-        importRetainsEmbeddedPng: /^data:image\/png;base64,/.test(imported.payload.source.hostRasterData || ""),
-        dataBytes: file.payload.source.hostRasterData?.length || 0,
+        exportedHasRaster: Object.hasOwn(file.payload.source, "hostRasterUrl") || Object.hasOwn(file.payload.source, "hostRasterData"),
+        importedHasRaster: Object.hasOwn(imported.payload.source, "hostRasterUrl") || Object.hasOwn(imported.payload.source, "hostRasterData"),
+        fabricObjects: imported.payload.source.fabricData?.objects?.length || 0,
       };
     }, saved);
-    expect(transfer.embeddedPng).toBe(true);
-    expect(transfer.exportedUrlRemoved).toBe(true);
-    expect(transfer.importRetainsEmbeddedPng).toBe(true);
-    expect(transfer.dataBytes).toBeGreaterThan(1000);
+    expect(transfer).toEqual({ exportedHasRaster: false, importedHasRaster: false, fabricObjects: 3 });
 
     await context.route(`${ORIGIN}/__host_draw_preview`, route => route.fulfill({ status: 200, contentType: "text/html; charset=utf-8", body: previewHarness }));
     await page.goto(`${ORIGIN}/__host_draw_preview`, { waitUntil: "domcontentloaded" });
@@ -115,9 +112,13 @@ async function runDrawRoundTrip(page, context, accountNumber, testInfo) {
     };
     await page.evaluate(data => window.applyRow(data), row);
     const host = page.frameLocator("#host");
-    await expect(host.locator("#cover2Logo canvas")).toBeVisible();
-    const pixels = await host.locator("#cover2Logo canvas").evaluate(canvas => {
+    await expect(host.locator("#cover2Logo img")).toBeVisible();
+    const pixels = await host.locator("#cover2Logo img").evaluate(async image => {
+      await image.decode();
+      const canvas = document.createElement("canvas");
+      canvas.width = image.naturalWidth; canvas.height = image.naturalHeight;
       const context = canvas.getContext("2d", { willReadFrequently: true });
+      context.drawImage(image, 0, 0);
       const alpha = (x, y) => context.getImageData(Math.round(x * canvas.width), Math.round(y * canvas.height), 1, 1).data[3];
       return {
         whiteShowsDot: alpha(.15, .30) > 200,

@@ -11,30 +11,30 @@
 //   preview-zoom.js – pinch-zoom pełnoekranowego podglądu
 //   routes.js       – adresy listy i edytorów
 
-import { addRenameGesture } from "../../shared/js/core/rename-gesture.js?v=v2026-10-09T19401";
-import { loadFont5x7, buildLogoPreviewCanvas } from "../../shared/js/core/logo-preview.js?v=v2026-10-09T19401";
-import { requireAuth } from "../../shared/js/core/auth.js?v=v2026-10-09T19401";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-09T19401";
-import { initI18n, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-09T19401";
-import { backHref, renderBackLabel } from "../../shared/js/core/nav-map.js?v=v2026-10-09T19401";
-import { initTopbarAccountDropdown } from "../../shared/js/core/topbar-controller.js?v=v2026-10-09T19401";
-import { isMobileDevice } from "../../shared/js/core/pwa.js?v=v2026-10-09T19401";
-import { isPhoneScreen } from "../../shared/js/core/device-guard.js?v=v2026-10-09T19401";
-import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-09T19401";
-import { isResourceBusy, acquireResourceLock } from "../../shared/js/core/resource-lock.js?v=v2026-10-09T19401";
-import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-09T19401";
-import { icon } from "../../shared/js/core/icons.js?v=v2026-10-09T19401";
+import { addRenameGesture } from "../../shared/js/core/rename-gesture.js?v=v2026-10-09T21300";
+import { loadFont5x7, buildLogoPreviewCanvas } from "../../shared/js/core/logo-preview.js?v=v2026-10-09T21300";
+import { requireAuth } from "../../shared/js/core/auth.js?v=v2026-10-09T21300";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-09T21300";
+import { initI18n, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-09T21300";
+import { backHref, renderBackLabel } from "../../shared/js/core/nav-map.js?v=v2026-10-09T21300";
+import { initTopbarAccountDropdown } from "../../shared/js/core/topbar-controller.js?v=v2026-10-09T21300";
+import { isMobileDevice } from "../../shared/js/core/pwa.js?v=v2026-10-09T21300";
+import { isPhoneScreen } from "../../shared/js/core/device-guard.js?v=v2026-10-09T21300";
+import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-09T21300";
+import { isResourceBusy, acquireResourceLock } from "../../shared/js/core/resource-lock.js?v=v2026-10-09T21300";
+import { enterModalSheet, exitModalSheet, isSheetViewport, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-09T21300";
+import { icon } from "../../shared/js/core/icons.js?v=v2026-10-09T21300";
 
-import { TYPE_GLYPH, TYPE_PIX, PIX_FORMAT, DOT_W, DOT_H, emptyRows, packBits, renderPreview, logoToPreview } from "./render.js?v=v2026-10-09T19401";
-import { listLogos, fetchLogo, createLogo, updateLogo, deleteLogo, isUniqueViolation, uploadImportedLogoImage, uploadImportedDrawHostRaster, removeDrawHostRaster, removeLogoImageUrl } from "./db.js?v=v2026-10-09T19401";
-import { buildExport, downloadJson, parseImport, safeFileName } from "./transfer.js?v=v2026-10-09T19401";
-import { initPreviewPinchZoom, lockPageZoomForPreview, unlockPageZoomAfterPreview } from "./preview-zoom.js?v=v2026-10-09T19401";
-import { cannotEditReason } from "./text.js?v=v2026-10-09T19401";
-import { editModeFor, editorUrl, manualUrl } from "./routes.js?v=v2026-10-09T19401";
-import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-09T19401";
+import { TYPE_GLYPH, TYPE_PIX, PIX_FORMAT, DOT_W, DOT_H, emptyRows, packBits, renderPreview, logoToPreview } from "./render.js?v=v2026-10-09T21300";
+import { listLogos, fetchLogo, createLogo, updateLogo, deleteLogo, isUniqueViolation, uploadImportedLogoImage, removeLogoImageUrl } from "./db.js?v=v2026-10-09T21300";
+import { buildExport, downloadJson, parseImport, safeFileName } from "./transfer.js?v=v2026-10-09T21300";
+import { initPreviewPinchZoom, lockPageZoomForPreview, unlockPageZoomAfterPreview } from "./preview-zoom.js?v=v2026-10-09T21300";
+import { cannotEditReason } from "./text.js?v=v2026-10-09T21300";
+import { editModeFor, editorUrl, manualUrl } from "./routes.js?v=v2026-10-09T21300";
+import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-09T21300";
 
-const FONT_3x10_URL = "/shared/fonts/display/font_3x10.json?v=v2026-10-09T19401";
-const FONT_5x7_URL = "/shared/fonts/display/font_5x7.json?v=v2026-10-09T19401";
+const FONT_3x10_URL = "/shared/fonts/display/font_3x10.json?v=v2026-10-09T21300";
+const FONT_5x7_URL = "/shared/fonts/display/font_5x7.json?v=v2026-10-09T21300";
 // Edycja wymaga miejsca na pasek narzędzi i scenę -- na telefonie dostępna
 // jest tylko lista (podgląd, import/eksport, nazwa, usuwanie); „Edytuj”
 // i „Nowe logo” są ukryte (.le-phone). Telefon wg wspólnej reguły
@@ -533,7 +533,6 @@ async function confirmImport() {
   el.importBar.style.width = "60%";
   show(el.importProg, true);
   let uploadedImageUrl = null;
-  let uploadedHostRasterUrl = null;
   try {
     let imported = { ...importParsed, payload: { ...importParsed.payload } };
     const source = imported.payload.source || {};
@@ -544,17 +543,6 @@ async function confirmImport() {
       const { imageData, ...sourceWithoutData } = source;
       imported.payload.source = { ...sourceWithoutData, imageUrl: uploadedImageUrl };
     }
-    const sourceWithRaster = imported.payload.source || {};
-    if (sourceWithRaster.mode === "DRAW" && sourceWithRaster.hostRasterData) {
-      if (!/^data:image\/png;base64,/i.test(sourceWithRaster.hostRasterData)) {
-        throw new Error("Invalid embedded DRAW host image");
-      }
-      el.importStep.textContent = t("logoEditor.import.steps.uploadImage");
-      el.importBar.style.width = "50%";
-      uploadedHostRasterUrl = await uploadImportedDrawHostRaster(sourceWithRaster.hostRasterData, currentUser.id);
-      const { hostRasterData, ...sourceWithoutRaster } = sourceWithRaster;
-      imported.payload.source = { ...sourceWithoutRaster, hostRasterUrl: uploadedHostRasterUrl };
-    }
     el.importStep.textContent = t("logoEditor.import.steps.saveDb");
     el.importBar.style.width = "70%";
     let id;
@@ -562,13 +550,10 @@ async function confirmImport() {
       id = await createLogo({ user_id: currentUser.id, ...imported, name: makeUniqueName(imported.name) });
     } catch (e) {
       if (uploadedImageUrl) await removeLogoImageUrl(uploadedImageUrl, currentUser.id);
-      if (uploadedHostRasterUrl) await removeDrawHostRaster(uploadedHostRasterUrl, currentUser.id);
       uploadedImageUrl = null;
-      uploadedHostRasterUrl = null;
       throw e;
     }
     uploadedImageUrl = null;
-    uploadedHostRasterUrl = null;
     setActiveListMode(listModeForLogo(importParsed));
     await refresh();
     selectTile(id);
@@ -577,7 +562,6 @@ async function confirmImport() {
   } catch (e) {
     console.error(e);
     if (uploadedImageUrl) await removeLogoImageUrl(uploadedImageUrl, currentUser.id);
-    if (uploadedHostRasterUrl) await removeDrawHostRaster(uploadedHostRasterUrl, currentUser.id);
     el.importErr.textContent = t("logoEditor.errors.importFailedDetailed", { error: e?.message || e });
     show(el.importErr, true);
     show(el.importProg, false);

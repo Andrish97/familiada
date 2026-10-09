@@ -164,23 +164,11 @@ pogrubiało ich dodatkowo. Domyślny napis FAMILIADA korzysta z tego samego
 silnika tekstowego co wariant TEXT; plik SVG pozostaje w repozytorium i nie
 jest już źródłem domyślnego logo Hosta.
 
-Wariant Hostowy korzysta z przygotowanego obrazu i nie zmienia `bits_b64`,
-warstw edytora ani logo na Wyświetlaczu. DRAW jest składany przez Fabric przy
-autozapisie do przezroczystej maski PNG w rozdzielczości Hosta; PNG trafia do
-bucketa `user-logos`, a jego URL do `payload.source.hostRasterUrl`. Białe
-obszary są maską koloru DOT, czarne i puste — przezroczyste. Przy zmianie
-logo edytor wgrywa nowy plik, aktualizuje rekord i usuwa poprzedni. Eksport
-osadza PNG w pliku `.famlogo`, a import zapisuje go ponownie w Storage.
-IMAGE zachowuje oryginalne kolory, a DOT dla DRAW/TEXT jest nakładany przy
-renderowaniu Hosta.
-
-Demo DRAW korzysta ze wspólnego `web/logo/assets/demo-draw-host.png` z GitHub
-Pages zamiast kopii PNG w Storage każdego użytkownika. Migracja 317 podmienia
-szablony i kopie demo tylko wtedy, gdy payload kopii dokładnie odpowiadał
-staremu szablonowi; zmienione przez użytkownika demo pozostaje bez zmian.
-Scena Fabric zostaje w payloadzie, aby logo nadal można było edytować. Obraz
-demonstracyjny ma czarne elementy na białym tle, dlatego jego wspólna maska
-zachowuje czarne elementy, a tło pozostaje przezroczyste.
+Wariant Hostowy nie zmienia `bits_b64`, warstw edytora ani logo na Wyświetlaczu.
+Host składa scenę DRAW z JSON-a Fabric bezpośrednio do SVG: białe obszary
+przyjmują kolor DOT, a czarne i puste miejsca pozostają przezroczyste. Nie
+powstaje dodatkowy PNG. Stare odwołania i pliki `*-draw-host.png` są usuwane
+przez migrację oraz kolejkę Storage; obrazy IMAGE pozostają bez zmian.
 
 W ustawieniach rozgrywki jest jedna wartość „Logo prowadzącego” z dwoma
 wariantami: dotychczasowe logo pikselowe, ostre i bez wygładzania, albo
