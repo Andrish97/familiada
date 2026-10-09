@@ -162,12 +162,14 @@ test("odnośniki prowadzą do właściwych sekcji, a powroty nazywają cel Stron
   await expect(page.locator("#btnGoGames")).toContainText("Wróć do: Strona główna");
 });
 
-test("gość pozostaje na stronie głównej i jest w całości sprzątany", async ({ page, context }) => {
+test("gość na stronie głównej trafia do /games/ (E4) i jest w całości sprzątany", async ({ page, context }) => {
   test.setTimeout(90_000);
   await loginAsGuest(page, context);
   try {
-    await openIndex(page);
-    await expect(page).toHaveURL(/^https:\/\/www\.familiada\.online\/(?:\?.*)?$/);
+    await page.goto("https://www.familiada.online/", { waitUntil: "domcontentloaded" });
+    // docs/nawigacja-mapa-plan.md, krok 3: gość na „/” → „/games/”.
+    await expect(page).toHaveURL(/\/games\/?(?:\?.*)?$/, { timeout: 20_000 });
+    await page.waitForLoadState("networkidle");
     const user = await page.evaluate(async () => (await window.__sbClient.auth.getUser()).data.user);
     expect(user?.is_anonymous || user?.user_metadata?.is_guest).toBeTruthy();
   } finally {
