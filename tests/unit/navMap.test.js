@@ -25,7 +25,7 @@ test("ścieżki stron są unikalne i rozpoznawane", () => {
   assert.equal(pageIdForPath("/marketplace/game/abc"), "marketplace");
   assert.equal(pageIdForPath("/nie-ma/"), null);
   assert.equal(pageIdForPath("/games/settings"), "gameSettings");
-  assert.equal(pageIdForPath("/logo/editor-draw"), "logoDraw");
+  assert.equal(pageIdForPath("/logo/editor/draw"), "logoDraw");
 });
 
 test("linkTo niesie w ret pełny bieżący adres", () => {
@@ -150,7 +150,7 @@ test("język polski: parametr lang znika", () => {
 test("backHref bez ret: parent; games nie ma rodzica", () => {
   assert.equal(backHref("polls", ctx("/polls/?id=7")), "/games/");
   assert.equal(backHref("baseExplorer", ctx("/bases/explorer/?id=b1")), "/bases/");
-  assert.equal(backHref("logoDraw", ctx("/logo/editor-draw/?id=3")), "/logo/");
+  assert.equal(backHref("logoDraw", ctx("/logo/editor/draw/?id=3")), "/logo/");
   assert.equal(backHref("games", ctx("/games/")), null);
 });
 

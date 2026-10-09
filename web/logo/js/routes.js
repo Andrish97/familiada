@@ -1,11 +1,11 @@
 // familiada/logo/js/routes.js
-// Adresy stron logo: lista /logo/ i trzy edytory /logo/editor-<tryb>/?id=.
+// Adresy stron logo: lista /logo/ i trzy edytory /logo/editor/<tryb>/?id=.
 // Cele i powroty liczy mapa nawigacji (core/nav-map.js): edytor wraca przez
 // ?ret= do listy z kartą, z której wszedł; bez ret — na /logo/.
 // Patrz docs/nawigacja-mapa-plan.md.
 
-import { linkTo, backHref } from "../../shared/js/core/nav-map.js?v=v2026-10-09T12261";
-import { TYPE_GLYPH } from "./render.js?v=v2026-10-09T12261";
+import { linkTo, backHref } from "../../shared/js/core/nav-map.js?v=v2026-10-09T12282";
+import { TYPE_GLYPH } from "./render.js?v=v2026-10-09T12282";
 
 /** Id strony w mapie nawigacji dla trybu edytora. */
 export const EDITOR_PAGE_IDS = {

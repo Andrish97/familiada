@@ -704,7 +704,7 @@ test("games.js: eksport gry zablokowany alert-modalem, gdy gra jest edytowana gd
 /* ================= Krok 4: edytor logo — Warstwa A (per logo) i Warstwa B (cała pula) ================= */
 // Warstwa A: dwie karty nie mogą edytować TEGO SAMEGO logo naraz (ten sam
 // wzorzec co editor.js/game-settings.js dla gry -- lock trzymany przez
-// stronę edytora /logo/editor-*/?id= od wejścia do wyjścia).
+// stronę edytora /logo/editor/<tryb>/?id= od wejścia do wyjścia).
 // Warstwa B: Control/game-settings.js trzymają `logos` współdzielone i blokują
 // edycję/zmianę nazwy/usunięcie WSZYSTKICH logo użytkownika, nawet gdy dany logo nie jest w ogóle
 // referencowany przez żadną grę -- patrz docs/plan-testy-i-poprawki.md,
@@ -743,7 +743,7 @@ test("edytor logo: druga karta nie może edytować tego samego logo", async ({ p
     await tileA.evaluate((el) => el.click());
     await expect(tabA.locator("#btnEdit")).toBeEnabled({ timeout: 10000 });
     await tabA.locator("#btnEdit").click();
-    await tabA.waitForURL(/\/logo\/editor-text\/\?id=/, { timeout: 10000 });
+    await tabA.waitForURL(/\/logo\/editor\/text\/\?id=/, { timeout: 10000 });
     await waitForLock(tabA, "logo", logoId);
 
     await page.goto("https://www.familiada.online/logo/", { waitUntil: "domcontentloaded" });
@@ -753,7 +753,7 @@ test("edytor logo: druga karta nie może edytować tego samego logo", async ({ p
     await tileB.evaluate((el) => el.click());
     await expect(page.locator("#btnEdit")).toBeEnabled({ timeout: 10000 });
     await page.locator("#btnEdit").click();
-    await page.waitForURL(/\/logo\/editor-text\/\?id=/, { timeout: 10000 });
+    await page.waitForURL(/\/logo\/editor\/text\/\?id=/, { timeout: 10000 });
 
     await expect(page.locator("#resourceLockGuard")).toBeVisible({ timeout: 10000 });
     // Edytor się nie wczytał: nazwa zostaje zablokowana, pole tekstu puste.
@@ -799,7 +799,7 @@ test("edytor logo: edycja i zmiana nazwy DOWOLNEGO logo zablokowane, gdy game-se
     await tile.evaluate((el) => el.click());
     await expect(page.locator("#btnEdit")).toBeEnabled({ timeout: 10000 });
     await page.locator("#btnEdit").click();
-    await page.waitForURL(/\/logo\/editor-text\/\?id=/, { timeout: 10000 });
+    await page.waitForURL(/\/logo\/editor\/text\/\?id=/, { timeout: 10000 });
 
     // Strona edytora pokazuje blokadę z jedynym wyjściem: powrót na listę.
     // Wejście do edytora: logo:L wyklucza się z `logos` trzymanym przez ustawienia gry.

@@ -55,7 +55,7 @@ async function runDrawRoundTrip(page, context, accountNumber, testInfo) {
         source: { mode: "DRAW" },
       },
     });
-    await page.goto(`${ORIGIN}/logo/editor-draw/?id=${encodeURIComponent(logoId)}`, { waitUntil: "domcontentloaded" });
+    await page.goto(`${ORIGIN}/logo/editor/draw/?id=${encodeURIComponent(logoId)}`, { waitUntil: "domcontentloaded" });
     await expect(page.locator("#editorShell")).toHaveAttribute("data-mode", "DRAW");
     await expect(page.locator("#logoName")).toBeEnabled({ timeout: 15000 });
     await page.evaluate(() => {

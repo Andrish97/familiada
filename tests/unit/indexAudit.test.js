@@ -46,7 +46,7 @@ test("serveBranchCode mapuje główną trasę / na index.html z brancha", () => 
 });
 
 test("serveBranchCode mapuje zagnieżdżony edytor DRAW na jego własny index.html", () => {
-  assert.equal(localFileFor("/logo/editor-draw/", ["logo"]), path.join(root, "web/logo/editor-draw/index.html"));
+  assert.equal(localFileFor("/logo/editor/draw/", ["logo"]), path.join(root, "web/logo/editor/draw/index.html"));
 });
 
 test("serveBranchCode serwuje moduły manuala i polityki prywatności zamiast HTML strony", () => {

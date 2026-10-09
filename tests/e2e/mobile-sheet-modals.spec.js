@@ -621,7 +621,7 @@ test.describe("marketplace: mobile sheet modal (zgłoszenie gry)", () => {
 /* =====================================================================
    5) lista logo (/logo/) -- modal zmiany nazwy / modal importu logo.
    Tworzenie i edycja logo są na telefonie ukryte (.le-phone) -- edytory
-   to osobne strony /logo/editor-…/, niedostępne na telefonie.
+   to osobne strony /logo/editor/…/, niedostępne na telefonie.
 ===================================================================== */
 
 const LOGO_EDITOR_URL = "https://www.familiada.online/logo/";
