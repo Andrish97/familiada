@@ -116,6 +116,18 @@ Kafel gry pokazuje „TYP • STAN” (`games.js:684` `statusLabel`, klucze
 - **Preparowane gotowe do gry**: dziś `SZKIC` (gra preparowana ma zawsze
   stan `draft`) — mylące. Gdy gra preparowana spełnia warunki rozgrywki
   (`rules.play.ok`) → **`GOTOWA`**; `SZKIC` tylko, gdy jeszcze nie spełnia.
+- **Zmiana 2026-10-09 (ankiety-refaktor.md, „Zatrzymaj” i „Podlicz głosy”):**
+  `ZAMKNIĘTA` znika. Jeden zestaw stanów dla wszystkich gier:
+
+  | Stan | Gra ankietowa | Gra preparowana |
+  |---|---|---|
+  | `SZKIC` | ankieta nieuruchomiona | nie spełnia warunków gry |
+  | `OTWARTA` | trwa głosowanie (+ plakietka „N głosów”) | — |
+  | `ZATRZYMANA` | głosowanie zatrzymane, niepodliczone (+ plakietka „do podliczenia”) | — |
+  | `GOTOWA` | podliczona — można grać | spełnia warunki gry |
+
+  W bazie: nowy stan `poll_stopped` w `game_status` (migracja dodająca);
+  „Podlicz głosy” przechodzi do `ready`. en / uk — odpowiedniki.
 
 ## 5. Teksty do poprawy
 
