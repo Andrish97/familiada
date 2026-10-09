@@ -5,8 +5,8 @@
 //   (A) { kind:"GLYPH"|"PIX", name, payload:{ rows | layers | bits_b64, source } }  -- nasz eksport
 //   (B) { type:"GLYPH_30x10"|"PIX_150x70", name, payload }                          -- stary zrzut z bazy
 
-import { t } from "../../shared/translation/translation.js?v=v2026-10-09T02340";
-import { DOT_W, DOT_H, TYPE_GLYPH, TYPE_PIX, PIX_FORMAT, normalizeRows } from "./render.js?v=v2026-10-09T02340";
+import { t } from "../../shared/translation/translation.js?v=v2026-10-09T02365";
+import { DOT_W, DOT_H, TYPE_GLYPH, TYPE_PIX, PIX_FORMAT, normalizeRows } from "./render.js?v=v2026-10-09T02365";
 
 /** Nazwa pliku z nazwy logo -- zostawia litery każdego alfabetu, wycina znaki zakazane w systemach plików. */
 export function safeFileName(name, fallback) {
@@ -58,7 +58,9 @@ export async function buildExport(logo, fallbackName) {
 }
 
 export function downloadJson(obj, fileName) {
-  const blob = new Blob([JSON.stringify(obj, null, 2)], { type: "application/json" });
+  // The file contents are JSON, but application/json makes Android append
+  // ".json" to the custom .famlogo filename. Keep the custom extension intact.
+  const blob = new Blob([JSON.stringify(obj, null, 2)], { type: "application/octet-stream" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;

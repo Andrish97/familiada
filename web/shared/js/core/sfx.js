@@ -1,7 +1,7 @@
 // js/core/sfx.js
 // Rozszerzony moduł dźwięku: manifest, warianty, głośności, własne pliki (IndexedDB).
 
-const MANIFEST_PATH = "/shared/data/sounds.json?v=v2026-10-09T02340";
+const MANIFEST_PATH = "/shared/data/sounds.json?v=v2026-10-09T02365";
 const AUDIO_BASE    = "/assets/audio/";
 const IDB_NAME      = "familiada-sfx";
 const IDB_STORE     = "custom-files";
@@ -441,17 +441,28 @@ export async function getSfxDurationAccurate(key) {
 /* ========= AUDIO UNLOCK ========= */
 
 let unlocked = false;
+let unlockPromise = null;
 
-export function unlockAudio() {
+export async function unlockAudio() {
   if (unlocked) return true;
+  if (unlockPromise) return unlockPromise;
   try {
     const a = new Audio();
     a.volume = 0;
-    a.src = "/assets/audio/reveal/classic.mp3?v=v2026-10-09T02340";
-    a.play().catch(() => {});
-    unlocked = true;
-    return true;
-  } catch { return false; }
+    a.src = "/assets/audio/reveal/classic.mp3?v=v2026-10-09T02365";
+    // Call play() synchronously in the gesture handler, then trust its
+    // promise. Previously a rejected autoplay attempt still returned true,
+    // allowing Display to report an unlock the browser had refused.
+    unlockPromise = a.play().then(() => {
+      a.pause();
+      unlocked = true;
+      return true;
+    }).catch(() => false).finally(() => { unlockPromise = null; });
+    return await unlockPromise;
+  } catch {
+    unlockPromise = null;
+    return false;
+  }
 }
 
 export function isAudioUnlocked() { return unlocked; }
@@ -479,7 +490,7 @@ export async function initSfx() {
 
 /**
  * Nadpisuje ustawienia z game.settings.sound (per-game).
- * volumes: { key: 0–100 }, variants: { key: "classic.mp3?v=v2026-10-09T02340" }
+ * volumes: { key: 0–100 }, variants: { key: "classic.mp3?v=v2026-10-09T02365" }
  */
 export function applySfxGameSettings({ volumes = {}, variants = {} } = {}) {
   for (const [key, pct] of Object.entries(volumes)) {

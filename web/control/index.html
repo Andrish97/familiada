@@ -12,9 +12,9 @@
   <link rel="preconnect" href="https://supabase.familiada.online">
   <title data-i18n="control.title">Familiada — panel sterowania</title>
 
-  <link rel="icon" href="/favicon.ico?v=v2026-10-09T02340"/>
-  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-09T02340"/>
-  <link rel="stylesheet" href="/control/css/control.css?v=v2026-10-09T02340"/>
+  <link rel="icon" href="/favicon.ico?v=v2026-10-09T02365"/>
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-09T02365"/>
+  <link rel="stylesheet" href="/control/css/control.css?v=v2026-10-09T02365"/>
   <script>
     document.documentElement.classList.add('page-loading');
     try {
@@ -31,12 +31,12 @@
   <style>html[data-mobile-guard]{overflow:hidden;touch-action:none}html[data-mobile-guard] body{visibility:hidden}</style>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-  <script src="/shared/js/core/security-warning.js?v=v2026-10-09T02340" defer></script>
+  <script src="/shared/js/core/security-warning.js?v=v2026-10-09T02365" defer></script>
   <script type="module">
-    import { initI18n } from "/shared/translation/translation.js?v=v2026-10-09T02340";
+    import { initI18n } from "/shared/translation/translation.js?v=v2026-10-09T02365";
     await initI18n({ withSwitcher: true });
     document.documentElement.classList.remove('page-loading');
-    import("/control/js/app.js?v=v2026-10-09T02340");
+    import("/control/js/app.js?v=v2026-10-09T02365");
   </script>
 
   <style>
@@ -233,8 +233,8 @@
        całą szerokość, a reszta informacji układa się w dwóch kolumnach. */
     .c2-summary-grid { display:flex; flex-direction:column; gap:12px; }
     .c2-summary-columns { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); align-items:start; gap:12px; }
-    .c2-summary-column { display:flex; flex-direction:column; gap:10px; min-width:0; }
-    .c2-summary-column > .summarySection { min-width:0; margin:0; }
+    .c2-summary-columns > .summarySection { min-width:0; margin:0; }
+    .c2-summary-columns > .c2-summary-sound { grid-column:1/-1; }
     .c2-summary-question-grid { display:grid; grid-template-columns:minmax(0,1fr); gap:12px; }
     .c2-summary-question-grid.has-final { grid-template-columns:repeat(2,minmax(0,1fr)); }
     .c2-summary-question-grid > .summarySection { min-width:0; margin:0; }
@@ -663,6 +663,6 @@
       <button class="btn-contact-footer" type="button" data-contact-modal data-i18n="common.contactBtn">Kontakt</button>
     </div>
   </main>
-  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-09T02340"></script>
+  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-09T02365"></script>
 </body>
 </html>

@@ -1,4 +1,4 @@
-import { renderAndConfirm } from "../../shared/js/gameplay/renderCompletion.js?v=v2026-10-09T02340";
+import { renderAndConfirm } from "../../shared/js/gameplay/renderCompletion.js?v=v2026-10-09T02365";
 // display/js/main.js
 // Punkt wejścia Display v2. Napisane od zera (nie kopia display/js/main.js)
 // — inna orkiestracja: zamiast kanału komend + snapshotu z device_state,
@@ -7,18 +7,18 @@ import { renderAndConfirm } from "../../shared/js/gameplay/renderCompletion.js?v
 // (device_ping) i walidacja klucza (display_auth) to te same, generyczne,
 // niezwiązane z komendami RPC co dziś — reużyte bez zmian.
 
-import { initFullscreenButton } from "../../shared/js/display/fullscreen.js?v=v2026-10-09T02340";
-import { initI18n, setUiLang } from "../../shared/translation/translation.js?v=v2026-10-09T02340";
-import { startKeepAlive } from "../../shared/js/core/keep-alive.js?v=v2026-10-09T02340";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T02340";
-import { createScene } from "./scene.js?v=v2026-10-09T02340";
-import { createQRController } from "./qr.js?v=v2026-10-09T02340";
-import { createSubscription } from "../../shared/js/core/game-state-subscribe.js?v=v2026-10-09T02340";
-import { rt } from "../../shared/js/core/realtime.js?v=v2026-10-09T02340";
-import { doorbellTopic } from "../../shared/js/core/game-state-doorbell.js?v=v2026-10-09T02340";
-import { createRenderer } from "./render.js?v=v2026-10-09T02340";
-import { createDisplaySoundReactor } from "./soundReactor.js?v=v2026-10-09T02340";
-import { loadSfxManifest, initSfx, setCurrentGameId, applySfxGameSettings, unlockAudio, getSfxDurationAccurate as getSfxDuration, listSfx, isAnySfxPlaying } from "../../shared/js/core/sfx.js?v=v2026-10-09T02340";
+import { initFullscreenButton } from "../../shared/js/display/fullscreen.js?v=v2026-10-09T02365";
+import { initI18n, setUiLang } from "../../shared/translation/translation.js?v=v2026-10-09T02365";
+import { startKeepAlive } from "../../shared/js/core/keep-alive.js?v=v2026-10-09T02365";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T02365";
+import { createScene } from "./scene.js?v=v2026-10-09T02365";
+import { createQRController } from "./qr.js?v=v2026-10-09T02365";
+import { createSubscription } from "../../shared/js/core/game-state-subscribe.js?v=v2026-10-09T02365";
+import { rt } from "../../shared/js/core/realtime.js?v=v2026-10-09T02365";
+import { doorbellTopic } from "../../shared/js/core/game-state-doorbell.js?v=v2026-10-09T02365";
+import { createRenderer } from "./render.js?v=v2026-10-09T02365";
+import { createDisplaySoundReactor } from "./soundReactor.js?v=v2026-10-09T02365";
+import { loadSfxManifest, initSfx, setCurrentGameId, applySfxGameSettings, unlockAudio, getSfxDurationAccurate as getSfxDuration, isAnySfxPlaying } from "../../shared/js/core/sfx.js?v=v2026-10-09T02365";
 
 startKeepAlive();
 
@@ -248,6 +248,19 @@ window.addEventListener("DOMContentLoaded", async () => {
   try {
     const { gameId, key } = parseParams();
     const game = await authDisplayOrThrow(gameId, key);
+    const audioSessionNonce = globalThis.crypto?.randomUUID?.()
+      || `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    // Every Display page load starts a fresh atomic unlock generation. This
+    // catches reloads even when the 6.5 s presence timeout never elapsed.
+    const audioSessionRegistration = sb().rpc("begin_display_audio_session", {
+      p_game_id: game.id, p_key: key, p_session_nonce: audioSessionNonce,
+    }).then(({ error }) => {
+      if (error) console.warn("[display2 audio unlock] session registration failed:", error.message);
+      return !error;
+    }).catch((error) => {
+      console.warn("[display2 audio unlock] session registration failed:", error?.message || error);
+      return false;
+    });
     const displayPresence = startPresenceHeartbeat({ gameId: game.id, key });
 
     // Dźwięk "ze źródła Wyświetlacz" (zgłoszone) — ten sam js/core/sfx.js co
@@ -262,17 +275,25 @@ window.addEventListener("DOMContentLoaded", async () => {
     const audioUnlockScreen = $("audioUnlockScreen");
     const btnAudioUnlock = $("btnAudioUnlock");
     let audioUnlockReported = false;
-    let audioUnlockRequestNonce = null;
+    let audioUnlockRequestNonce = audioSessionNonce;
     let displaySoundSelected = false;
+    let activeGameStep = null;
     function syncAudioUnlockScreen(row = null) {
       if (!audioUnlockScreen) return;
       const soundSource = row?.detail?.settings?.soundSource;
       if (soundSource === "display" || soundSource === "control") {
         displaySoundSelected = soundSource === "display";
       }
+      if (typeof row?.step === "string") activeGameStep = row.step;
       // Odblokowanie przeglądarki jest potrzebne tylko wtedy, gdy dźwięk ma
       // grać z tego urządzenia. Nie zasłaniaj Display, gdy gra dźwięk z Control.
-      const visible = displaySoundSelected && !audioUnlockReported;
+      // Po wejściu Display w trakcie rozgrywki poczekaj na nonce żądania od
+      // Control. Sam nonce sesji powstaje wcześniej przy ładowaniu Display;
+      // pokazanie go od razu ścigałoby się z żądaniem ponownego odblokowania
+      // po powrocie Control. W kroku Urządzenia przycisk pojawia się od razu.
+      const inGameplay = !!activeGameStep && !/^(devices_|setup_)/.test(activeGameStep);
+      const hasCurrentGameplayRequest = !inGameplay || audioUnlockRequestNonce !== audioSessionNonce;
+      const visible = displaySoundSelected && !audioUnlockReported && hasCurrentGameplayRequest;
       const wasHidden = audioUnlockScreen.classList.contains("hidden");
       audioUnlockScreen.classList.toggle("hidden", !visible);
       audioUnlockScreen.setAttribute("aria-hidden", String(!visible));
@@ -281,17 +302,31 @@ window.addEventListener("DOMContentLoaded", async () => {
     syncAudioUnlockScreen();
     btnAudioUnlock?.addEventListener("click", async () => {
       enterFullscreen();
-      if (!unlockAudio()) return;
+      if (!await unlockAudio()) return;
       // Nie chowaj przycisku przed potwierdzeniem serwera. Jeśli połączenie
       // chwilowo nie działa, operator może ponowić kliknięcie zamiast zostać
       // zablokowanym bez widocznego sposobu odblokowania.
       btnAudioUnlock.disabled = true;
       let reported = false;
       try {
-        reported = await displayPresence.setMeta({
-          audio_unlocked: true,
-          audio_unlock_nonce: audioUnlockRequestNonce,
-        });
+        const sessionRegistered = await audioSessionRegistration;
+        if (audioUnlockRequestNonce && sessionRegistered) {
+          const { data, error } = await sb().rpc("acknowledge_display_audio_unlock", {
+            p_game_id: game.id, p_key: key, p_nonce: audioUnlockRequestNonce,
+          }).abortSignal(AbortSignal.timeout(6500));
+          if (!error) reported = data === true;
+          else {
+            // Compatibility fallback for a rolling deploy where migration
+            // 312 is not installed yet. Once installed, the dedicated row is
+            // authoritative and heartbeat writes cannot clear this ack.
+            reported = await displayPresence.setMeta({
+              audio_unlocked: true,
+              audio_unlock_nonce: audioUnlockRequestNonce,
+            });
+          }
+        } else {
+          reported = await displayPresence.setMeta({ audio_unlocked: true, audio_unlock_nonce: null });
+        }
       }
       catch { /* pozostaw widoczny przycisk, aby można było ponowić */ }
       if (reported) {
@@ -338,6 +373,24 @@ window.addEventListener("DOMContentLoaded", async () => {
     };
 
     const renderer = createRenderer({ scene, qr, getSfxDuration });
+    async function warmCueTiming(row, previous) {
+      const keys = new Set();
+      const key = row?.sound_cue_key;
+      if (key) keys.add(key);
+      if (key === "round_transition" || key === "show_intro") keys.add("reveal");
+      if (key === "final_theme" && row.step === "f_end") keys.add("reveal");
+      if (key === "final_theme" && previous?.step === "f_start" && row.step === "f_p1_entry") {
+        keys.add("round_transition");
+        keys.add("reveal");
+      }
+      const pressed = row.detail?.rounds?.duel?.lastPressed;
+      if (row.step === "r_duel" && pressed && !previous?.detail?.rounds?.duel?.lastPressed
+        && !row.detail?.settings?.physicalBuzzer) keys.add("buzzer_press");
+      // Resolve the exact shared timings before either side starts. Otherwise
+      // Display audio can start immediately while renderDiff waits for MP3
+      // decoding, making the animation finish after the sound.
+      await Promise.all([...keys].map(getSfxDuration));
+    }
     let prevRow = null;
     let renderQueue = Promise.resolve();
     let renderGeneration = 0;
@@ -400,7 +453,12 @@ window.addEventListener("DOMContentLoaded", async () => {
         if (row.detail?.settings?.sound) {
           applySfxGameSettings(row.detail.settings.sound);
         }
-        void Promise.all(listSfx().map(getSfxDuration));
+        const prev = prevRow;
+        const displayOwnsSound = row.detail?.settings?.soundSource === "display"
+          && !row.detail?.settings?.soundMuted;
+        const cueTimingReady = warmCueTiming(row, prev);
+        if (displayOwnsSound) await cueTimingReady;
+        else void cueTimingReady;
         soundReactor.onRow(row);
         syncAudioUnlockScreen(row);
 
@@ -421,13 +479,25 @@ window.addEventListener("DOMContentLoaded", async () => {
 
         // Rendering is serialized separately from RPC reads. A new restart
         // can cancel the current animation without waiting for its sound.
-        const prev = prevRow;
         prevRow = row;
         const restarting = row.top_card === "devices" && prev?.top_card !== "devices";
         if (restarting) { renderGeneration++; renderer.cancel(); }
         const token = renderGeneration;
         renderQueue = renderQueue.then(async () => {
           if (token !== renderGeneration) return;
+          // For Control as the sound source, let its sound reactor start the
+          // cue only after this Display has prepared timing and is about to
+          // render the matching revision. The signal is keyed by cue sequence
+          // so repeated identical sounds remain distinct.
+          await cueTimingReady;
+          if (token !== renderGeneration) return;
+          if (prev && row.sound_cue_seq !== prev.sound_cue_seq
+            && row.detail?.settings?.soundSource === "control"
+            && !row.detail?.settings?.soundMuted) {
+            rt(doorbellTopic(game.id)).sendBroadcast("display_transition_started", {
+              sound_cue_seq: row.sound_cue_seq,
+            }, { mode: "http" }).catch(() => {});
+          }
           await renderAndConfirm(
             () => !prev || restarting ? renderer.renderSnapshot(row) : renderer.renderDiff(prev, row),
             async () => {

@@ -1,8 +1,8 @@
-import { deriveEvents } from "./deriveEvents.js?v=v2026-10-09T02340";
+import { deriveEvents } from "./deriveEvents.js?v=v2026-10-09T02365";
 
-import { createTransitionTiming } from "./transitionTiming.js?v=v2026-10-09T02340";
+import { createTransitionTiming } from "./transitionTiming.js?v=v2026-10-09T02365";
 
-export function createSoundCueEngine({ playSfx, getSfxDuration, stopSfx = () => {} }) {
+export function createSoundCueEngine({ playSfx, getSfxDuration, stopSfx = () => {}, waitForStart = null }) {
   const timing = createTransitionTiming({ getSfxDuration });
   let generation = 0;
   const timers = new Set();
@@ -37,13 +37,18 @@ export function createSoundCueEngine({ playSfx, getSfxDuration, stopSfx = () => 
     const lead = await duration("final_theme");
     if (token === generation) await synced("round_transition", "reveal", token, lead);
   }
-  function handleTransition(previous, next) {
+  async function handleTransition(previous, next) {
     if (!previous || !next) return;
     if (next.top_card === "devices" || next.step === "devices_display" || next.step === "setup_finish") { cancel(); return; }
     const token = generation;
+    const events = deriveEvents(previous, next);
+    if (waitForStart && events.some((event) => event.kind === "SOUND_CUE" && event.key)) {
+      await waitForStart(next.sound_cue_seq);
+      if (token !== generation) return;
+    }
     const pressed = next.detail?.rounds?.duel?.lastPressed;
     if (next.step === "r_duel" && pressed && !previous.detail?.rounds?.duel?.lastPressed && !next.detail?.settings?.physicalBuzzer) play("buzzer_press", token);
-    for (const event of deriveEvents(previous, next)) {
+    for (const event of events) {
       if (event.kind !== "SOUND_CUE" || !event.key) continue;
       if (event.key === "buzzer_press" && !next.detail?.settings?.physicalBuzzer) continue;
       if (event.key === "round_transition") synced("round_transition", "reveal", token);
