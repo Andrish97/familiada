@@ -89,9 +89,9 @@ export function getFinalHint(state) {
     // Runda 2: przypomnienie o przycisku "Powtórzenie" — dopisane do KAŻDEJ
     // gałęzi poza "czas wykorzystany" (tam nie ma już czego pilnować),
     // żeby operator nie wpisywał ręcznie tego, co gracz 2 tylko powtórzył.
-    if (used && !running) return "Czas minął. Uzupełnij odpowiedzi lub kliknij „Dalej”.";
-    if (running) return `Wpisz odpowiedzi gracza ${round}. Timer działa.`;
-    return `Wpisz odpowiedzi gracza ${round} i uruchom timer.`;
+    if (used && !running) return "Czas minął. Uzupełnij pola i przejdź dalej.";
+    if (running) return `Wpisz odpowiedzi gracza ${round}. Odliczanie trwa.`;
+    return `Wpisz odpowiedzi gracza ${round} i uruchom odliczanie.`;
   }
 
   if (step === "f_p2_start") return "Odpowiedzi gracza 1 są ukryte.";
@@ -112,9 +112,9 @@ export function getFinalHint(state) {
     // operator ma wiedzieć NARAZ że to powtórzenie ORAZ co ma zrobić dalej,
     // nie dwa osobne, następujące po sobie stany hinta.
     if (round === 2 && entry.repeat && !row.revealedAnswer) {
-      return "Powtórzenie liczy się jak brak. Sprawdź i odsłoń odpowiedź.";
+      return "Powtórzenie: brak punktów. Odsłoń odpowiedź.";
     }
-    if (!row.revealedAnswer) return "Sprawdź dopasowanie i odsłoń odpowiedź.";
+    if (!row.revealedAnswer) return "Sprawdź odpowiedź i odsłoń ją.";
     if (!row.revealedPoints) return "Odsłoń punkty.";
     return "Przejdź dalej.";
   }

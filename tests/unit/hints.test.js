@@ -108,15 +108,15 @@ test("getFinalHint: f_start i etap wpisywania (zegarek jeszcze nieużyty / w tra
   assert.match(getFinalHint(store.state), /Rozpocznij finał/);
 
   await engine.dispatch({ type: "START_FINAL" });
-  assert.match(getFinalHint(store.state), /Wpisz odpowiedzi gracza 1 i uruchom timer/);
+  assert.match(getFinalHint(store.state), /Wpisz odpowiedzi gracza 1 i uruchom odliczanie/);
 
   // Krótka podpowiedź odzwierciedla aktywny timer.
   await engine.dispatch({ type: "START_TIMER", phase: "P1" });
-  assert.match(getFinalHint(store.state), /Wpisz odpowiedzi gracza 1.*Timer działa/);
+  assert.match(getFinalHint(store.state), /Wpisz odpowiedzi gracza 1.*Odliczanie trwa/);
 
   t += 15_000;
   await engine.dispatch({ type: "EXPIRE_TIMER" });
-  assert.match(getFinalHint(store.state), /Czas minął.*Uzupełnij odpowiedzi/);
+  assert.match(getFinalHint(store.state), /Czas minął.*Uzupełnij pola/);
 });
 
 test("getFinalHint: mapowanie pytania — puste, wpisane, odsłonięte, z punktami; powtórzenie u gracza 2", async () => {
@@ -134,10 +134,10 @@ test("getFinalHint: mapowanie pytania — puste, wpisane, odsłonięte, z punkta
 
   // Rozstrzygnięcie jest zawsze już jakieś (domyślne MISS/SKIP) — hint nie
   // różnicuje już puste/wpisane, tylko mówi "potwierdź, żeby odsłonić".
-  assert.match(getFinalHint(store.state), /odsłoń odpowiedź/i);
+  assert.match(getFinalHint(store.state), /odsłoń (odpowiedź|ją)/i);
 
   await engine.dispatch({ type: "SET_ENTRY_TEXT", round: 1, idx: 0, text: "Mleko" });
-  assert.match(getFinalHint(store.state), /odsłoń odpowiedź/i);
+  assert.match(getFinalHint(store.state), /odsłoń (odpowiedź|ją)/i);
 
   await engine.dispatch({ type: "RESOLVE_MAPPING", round: 1, idx: 0, mode: "MANUAL", kind: "MATCH", matchId: "a1", outText: "Mleko", pts: 10 });
   await engine.dispatch({ type: "REVEAL_ANSWER_ONLY", round: 1, idx: 0 });
@@ -164,11 +164,11 @@ test("getFinalHint: powtórzenie u gracza 2 pokazuje się RAZEM ze zwykłą podp
   store.state.final.runtime.timer.usedP2 = true;
   await engine.dispatch({ type: "START_MAPPING", round: 2 });
 
-  assert.match(getFinalHint(store.state), /odsłoń odpowiedź/i);
+  assert.match(getFinalHint(store.state), /odsłoń (odpowiedź|ją)/i);
 
   await engine.dispatch({ type: "SET_REPEAT", round: 2, idx: 0, repeat: true });
   // Krótko: powtórzenie jest wyjaśnione razem z akcją odsłonięcia.
-  assert.match(getFinalHint(store.state), /Powtórzenie.*odsłoń odpowiedź/);
+  assert.match(getFinalHint(store.state), /Powtórzenie.*odsłoń odpowiedź/i);
 
   await engine.dispatch({ type: "RESOLVE_MAPPING", round: 2, idx: 0, mode: "MANUAL", kind: "SKIP", matchId: null, outText: "", pts: 0 });
   await engine.dispatch({ type: "REVEAL_ANSWER_ONLY", round: 2, idx: 0 });
