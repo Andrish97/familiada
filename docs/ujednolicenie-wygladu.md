@@ -234,3 +234,19 @@ tiles”). Pozostałe pola komunikatów istnieją. Implementacja: `shared/js/cor
      czysta logika w `list-filter.js`. Gry: tylko stan (`?status=`) — typ to
      zakładki. Bazy: rola własna/edycja/odczyt (`?role=`), moje/udostępnione
      to zakładki. Logo: bez filtra — typ (Tekst/Rysunek/Obraz) to zakładki.
+
+## Poprawki zgłoszone 2026-10-09, cz. 2 (E17c)
+
+1. **Przyciski akcji przeskakują do drugiego rzędu, choć jest miejsce** —
+   sprawdzić paski akcji (pasek stanu ankiety, dolne paski list, paski
+   edytorów) i usunąć przedwczesne zawijanie (sztywne szerokości, `flex-basis`,
+   `min-width`, `gap`/padding liczone podwójnie).
+2. **Filtry:** logo bez filtra (zostaje). Gry i bazy — dodać sensowne filtry
+   poza już zrobionymi (gry: stan; bazy: rola).
+3. **Wspólny styl kafli** gier, baz (i subskrybentów): nazwa, linia opisu,
+   rząd oznaczeń (`.tag`) przy dole kafla, akcje jako małe ikony w rogu;
+   jedna klasa/komponent w `base.css`.
+4. **Kafle subskrybentów** — użytkownik nie wie, jak lepiej; propozycja:
+   ten sam wspólny kafel: inicjał w kółku + nazwa/e-mail, rząd oznaczeń
+   ze stanem zaproszenia, dzwonek i kosz jako ikony w rogu (jak kosz na
+   kaflu gry). Do oceny po wdrożeniu.
