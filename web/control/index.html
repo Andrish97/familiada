@@ -12,9 +12,9 @@
   <link rel="preconnect" href="https://supabase.familiada.online">
   <title data-i18n="control.title">Familiada — panel sterowania</title>
 
-  <link rel="icon" href="/favicon.ico?v=v2026-10-09T22024"/>
-  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-09T22024"/>
-  <link rel="stylesheet" href="/control/css/control.css?v=v2026-10-09T22024"/>
+  <link rel="icon" href="/favicon.ico?v=v2026-10-09T22271"/>
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-09T22271"/>
+  <link rel="stylesheet" href="/control/css/control.css?v=v2026-10-09T22271"/>
   <script>
     document.documentElement.classList.add('page-loading');
     try {
@@ -31,15 +31,19 @@
   <style>html[data-mobile-guard]{overflow:hidden;touch-action:none}html[data-mobile-guard] body{visibility:hidden}</style>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-  <script src="/shared/js/core/security-warning.js?v=v2026-10-09T22024" defer></script>
+  <script src="/shared/js/core/security-warning.js?v=v2026-10-09T22271" defer></script>
   <script type="module">
-    import { initI18n } from "/shared/translation/translation.js?v=v2026-10-09T22024";
+    import { initI18n } from "/shared/translation/translation.js?v=v2026-10-09T22271";
     await initI18n({ withSwitcher: true });
     document.documentElement.classList.remove('page-loading');
-    import("/control/js/app.js?v=v2026-10-09T22024");
+    import("/control/js/app.js?v=v2026-10-09T22271");
   </script>
 
   <style>
+    /* Zmiana kroku nie może przesuwać całej karty, gdy treść raz mieści się
+       w wysokości, a raz wymaga przewijania (różnica odpowiada szerokości
+       paska przewijania). Stabilny gutter utrzymuje stałe centrowanie. */
+    html { scrollbar-gutter: stable; }
     /* Tylko to, czego NIE ma dzisiejszy control.css: nowy, wspólny szablon
        trzech ekranów rozgrywki (Rundy / Finał-wpisywanie / Finał-odsłanianie
        — plan, sekcja 3b). Topbar/urządzenia/podsumowanie ustawień/modale
@@ -64,7 +68,7 @@
        elementy (nagłówek/siatka/pasek statusu) mają wypełniać pełną
        szerokość .control-main-card, dokładnie jak Urządzenia/Podsumowanie i
        jak w starym Control — bez wąskiej, wyśrodkowanej kolumny. */
-    .c2-gameplay { height: 100%; min-width:0; display:flex; flex-direction:column; gap:12px; }
+    .c2-gameplay { height:100%; width:100%; max-width:100%; min-width:0; display:flex; flex-direction:column; gap:12px; }
     /* "Karta ma być na całą wysokość" (Rundy) — cały łańcuch od .wrap.wide
        w dół dostaje display:flex/flex:1, żeby #app faktycznie wypełniał
        resztę wysokości strony, ZAMIAST tylko dopasowywać się do treści.
@@ -84,10 +88,10 @@
        łańcucha (karta, cardBody, scroll-area) i tak dostaje własne
        ograniczenie wysokości niżej, więc to tylko domyka górny poziom. */
     .wrap.wide:has(.c2-gameplay-card, .stepFoot) { height:calc(100dvh - var(--topbar-h, 70px)); min-height:0; display:flex; flex-direction:column; overflow:hidden; }
-    .wrap.wide:has(.c2-gameplay-card, .stepFoot) > .shell { flex:1; min-height:0; display:flex; flex-direction:column; overflow:hidden; }
-    .shell:has(.c2-gameplay-card, .stepFoot) > .control-tabs-card { flex:1; min-height:0; display:flex; flex-direction:column; overflow:hidden; }
-    .control-tabs-card:has(.c2-gameplay-card, .stepFoot) > .control-main-card { flex:1; min-height:0; display:flex; flex-direction:column; overflow:hidden; }
-    .control-main-card:has(.c2-gameplay-card, .stepFoot) > #app { flex:1; min-height:0; display:flex; flex-direction:column; overflow:hidden; }
+    .wrap.wide:has(.c2-gameplay-card, .stepFoot) > .shell { flex:1; width:100%; min-width:0; min-height:0; display:flex; flex-direction:column; overflow:hidden; }
+    .shell:has(.c2-gameplay-card, .stepFoot) > .control-tabs-card { flex:1; width:100%; min-width:0; min-height:0; display:flex; flex-direction:column; overflow:hidden; }
+    .control-tabs-card:has(.c2-gameplay-card, .stepFoot) > .control-main-card { flex:1; width:100%; min-width:0; min-height:0; display:flex; flex-direction:column; overflow:hidden; }
+    .control-main-card:has(.c2-gameplay-card, .stepFoot) > #app { flex:1; width:100%; min-width:0; min-height:0; display:flex; flex-direction:column; overflow:hidden; }
     .c2-gameplay-card { flex:1; width:100%; min-width:0; min-height:0; box-sizing:border-box; display:flex; flex-direction:column; }
     /* .cardBody (Urządzenia/Podsumowanie) ma już flex:1 z control.css — brakuje
        tylko min-height:0, inaczej flex item nie chce się skurczyć poniżej
@@ -106,7 +110,7 @@
     .c2-scroll-area { flex:1; min-height:0; overflow-y:auto; display:flex; flex-direction:column; gap:10px; }
     .c2-stepper { height:48px; min-height:48px; box-sizing:border-box; display:flex; align-items:center; }
     .c2-stepper-question { width:100%; min-width:0; max-height:44px; overflow:hidden; text-align:left; font-size:1.08rem; font-weight:700; line-height:1.18; overflow-wrap:anywhere; }
-    .c2-gameplay-body { flex:1; width:100%; min-width:0; box-sizing:border-box; overflow:hidden; display:flex; flex-direction:column; min-height:0; }
+    .c2-gameplay-body { flex:1 1 0%; width:100%; max-width:100%; min-width:0; box-sizing:border-box; overflow:hidden; display:flex; flex-direction:column; min-height:0; }
     /* padding-top:16px == .control-main-card's własne padding-bottom:16px
        pod spodem — nad i pod przyciskami tyle samo miejsca (zgłoszone). */
     .c2-gameplay-nav { height:62px; min-height:62px; box-sizing:border-box; display:flex; align-items:center; gap:8px; justify-content:flex-end; border-top:1px solid rgba(255,255,255,.12); padding-top:8px; flex-wrap:nowrap; }
@@ -176,8 +180,8 @@
        zachowanie flexboxa), więc .c2-scroll-area's overflow-y:auto wyżej
        nigdy realnie nie dostawało czego przewijać — treść po prostu
        wychodziła poza kartę zamiast scrollować (zgłoszone). */
-    .c2-roundlayout { display:flex; gap:16px; flex:1; width:100%; min-width:0; min-height:0; box-sizing:border-box; }
-    .c2-roundlayout-main { flex:1 1 0%; min-width:0; min-height:0; display:flex; }
+    .c2-roundlayout { display:flex; gap:16px; flex:1 1 0%; width:100%; max-width:100%; min-width:0; min-height:0; box-sizing:border-box; }
+    .c2-roundlayout-main { flex:1 1 0%; width:0; max-width:100%; min-width:0; min-height:0; display:flex; }
     .c2-roundlayout-main .c2-tilegrid { flex:1 1 0%; min-width:0; max-width:100%; width:100%; }
     .c2-roundlayout-main > .c2-scroll-area { flex:1; min-height:0; }
     .c2-roundlayout-divider { width:1px; background:rgba(255,255,255,.14); flex:none; }
@@ -370,12 +374,12 @@
        [Odpowiedź gracza 2][Powtórzenie] (3 kafle), dokładnie jak stara
        4-kolumnowa tabela control/js/gameFinal.js's renderP2Entry, tylko z
        pierwszymi dwiema kolumnami połączonymi w jeden kafel. ---- */
-    .c2-entryrows { display:grid; grid-template-rows:repeat(6, minmax(0,1fr)); gap:10px; flex:1; min-height:0; }
-    .c2-entryrow { display:grid; gap:10px; min-height:0; }
-    .c2-entryrow.p1 { grid-template-columns:2fr 1.3fr; }
+    .c2-entryrows { display:grid; grid-template-rows:repeat(6,minmax(0,1fr)); gap:10px; flex:1 1 0%; width:100%; max-width:100%; min-width:0; min-height:0; }
+    .c2-entryrow { display:grid; gap:10px; width:100%; max-width:100%; min-width:0; min-height:0; }
+    .c2-entryrow.p1 { grid-template-columns:minmax(0,2fr) minmax(0,1.3fr); }
     /* Powtórzenie węższe niż odpowiedź gracza 2 (zgłoszone: "trochę mniejsza
        szerokość") — 0.85fr zamiast 1fr, reszta idzie do pytania+odp. gracza 1. */
-    .c2-entryrow.p2 { grid-template-columns:2fr 1.1fr .85fr; }
+    .c2-entryrow.p2 { grid-template-columns:minmax(0,2fr) minmax(0,1.1fr) minmax(0,.85fr); }
     .c2-entrytile {
       display:flex; flex-direction:column; justify-content:center; gap:4px; min-width:0; min-height:0;
       border-radius:14px; border:1px solid var(--line2); background:rgba(255,255,255,.06);
@@ -386,6 +390,10 @@
        mniejsza (zgłoszone) — odróżnia się kolorem (gold na wartości), nie rozmiarem. */
     .c2-entrytile-p1ans { font-size:.92rem; line-height:1.25; opacity:.85; font-weight:600; flex-shrink:0; overflow:visible; white-space:normal; overflow-wrap:anywhere; }
     .c2-entryrow.p2 .c2-entrytile-q { flex-shrink:0; -webkit-line-clamp:1; }
+    /* Wpisana odpowiedź gracza 1 zajmuje drugi wiersz tego kafelka. Ogranicz
+       ją do dwóch pełnych linii w dostępnej wysokości, zamiast pozwalać jej
+       wypchnąć kafel i ucinać tekst przy dolnej krawędzi. */
+    .c2-entryrow.p2 .c2-entrytile-p1ans { flex:1 1 auto; min-height:0; overflow:hidden; display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; }
     .c2-entryrow.p2 > .c2-entrytile:first-child { padding:6px 10px; gap:3px; }
     .c2-entryrows:has(.p2) { grid-template-rows:repeat(6,minmax(0,1fr)); gap:6px; }
     @media (max-height:620px), (max-width:760px) {
@@ -664,6 +672,6 @@
       <button class="btn-contact-footer" type="button" data-contact-modal data-i18n="common.contactBtn">Kontakt</button>
     </div>
   </main>
-  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-09T22024"></script>
+  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-09T22271"></script>
 </body>
 </html>

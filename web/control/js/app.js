@@ -1,4 +1,4 @@
-import { createRenderCompletionGate } from "../../shared/js/gameplay/renderCompletion.js?v=v2026-10-09T22024";
+import { createRenderCompletionGate } from "../../shared/js/gameplay/renderCompletion.js?v=v2026-10-09T22271";
 // control/js/app.js
 // Punkt wejścia Control v2 — spina store/engine/devices/presence/
 // soundReactor/ui. Nawigacja przedmeczowa (devices_display →
@@ -7,19 +7,19 @@ import { createRenderCompletionGate } from "../../shared/js/gameplay/renderCompl
 // engine.js) — ale i tak przechodzi przez assertTransition(), żeby tabela
 // stanów była mechanizmem wszędzie, nie tylko wewnątrz silnika reguł gry.
 
-import { guardResourceLocks } from "../../shared/js/core/resource-lock.js?v=v2026-10-09T22024";
-import { initI18n, getUiLang, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-09T22024";
-import { backHref } from "../../shared/js/core/nav-map.js?v=v2026-10-09T22024";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-09T22024";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T22024";
-import { loadQuestions, loadAnswers, guardGameState } from "../../shared/js/core/game-validate.js?v=v2026-10-09T22024";
-import { loadSfxManifest, initSfx, setCurrentGameId, unlockAudio, applySfxGameSettings, loadSfxFromCloud, playSfx, getSfxDurationAccurate as getSfxDuration, listSfx, isAnySfxPlaying } from "../../shared/js/core/sfx.js?v=v2026-10-09T22024";
-import { listGameSounds } from "../../shared/js/core/sfx-cloud.js?v=v2026-10-09T22024";
-import { assertTransition } from "../../shared/js/gameplay/gameStateMachine.js?v=v2026-10-09T22024";
-import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-09T22024";
-import { DEFAULT_SETTINGS } from "../../shared/js/gameplay/gameStateShape.js?v=v2026-10-09T22024";
-import { rt } from "../../shared/js/core/realtime.js?v=v2026-10-09T22024";
-import { doorbellTopic } from "../../shared/js/core/game-state-doorbell.js?v=v2026-10-09T22024";
+import { guardResourceLocks } from "../../shared/js/core/resource-lock.js?v=v2026-10-09T22271";
+import { initI18n, getUiLang, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-09T22271";
+import { backHref } from "../../shared/js/core/nav-map.js?v=v2026-10-09T22271";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-09T22271";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-09T22271";
+import { loadQuestions, loadAnswers, guardGameState } from "../../shared/js/core/game-validate.js?v=v2026-10-09T22271";
+import { loadSfxManifest, initSfx, setCurrentGameId, unlockAudio, applySfxGameSettings, loadSfxFromCloud, playSfx, getSfxDurationAccurate as getSfxDuration, listSfx, isAnySfxPlaying } from "../../shared/js/core/sfx.js?v=v2026-10-09T22271";
+import { listGameSounds } from "../../shared/js/core/sfx-cloud.js?v=v2026-10-09T22271";
+import { assertTransition } from "../../shared/js/gameplay/gameStateMachine.js?v=v2026-10-09T22271";
+import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-09T22271";
+import { DEFAULT_SETTINGS } from "../../shared/js/gameplay/gameStateShape.js?v=v2026-10-09T22271";
+import { rt } from "../../shared/js/core/realtime.js?v=v2026-10-09T22271";
+import { doorbellTopic } from "../../shared/js/core/game-state-doorbell.js?v=v2026-10-09T22271";
 
 function qrImgSrc(url) {
   const u = encodeURIComponent(String(url ?? ""));
@@ -99,18 +99,18 @@ function applyGameSettingsToState(settings, state) {
   }
 }
 
-import { createStore } from "./store.js?v=v2026-10-09T22024";
-import { createEngine } from "./engine.js?v=v2026-10-09T22024";
-import { createActionGate } from "./actionGate.js?v=v2026-10-09T22024";
-import { createDevices } from "./devices.js?v=v2026-10-09T22024";
-import { createPresence } from "./presence.js?v=v2026-10-09T22024";
-import { missingDevices } from "./deviceGate.js?v=v2026-10-09T22024";
-import { createSessionTelemetry } from "./sessionTelemetry.js?v=v2026-10-09T22024";
-import { createSoundReactor } from "./soundReactor.js?v=v2026-10-09T22024";
-import { createUI } from "./ui.js?v=v2026-10-09T22024";
-import { createShareDevice } from "./shareDevice.js?v=v2026-10-09T22024";
-import { icon } from "../../shared/js/core/icons.js?v=v2026-10-09T22024";
-import { toast } from "../../shared/js/core/toast.js?v=v2026-10-09T22024";
+import { createStore } from "./store.js?v=v2026-10-09T22271";
+import { createEngine } from "./engine.js?v=v2026-10-09T22271";
+import { createActionGate } from "./actionGate.js?v=v2026-10-09T22271";
+import { createDevices } from "./devices.js?v=v2026-10-09T22271";
+import { createPresence } from "./presence.js?v=v2026-10-09T22271";
+import { missingDevices } from "./deviceGate.js?v=v2026-10-09T22271";
+import { createSessionTelemetry } from "./sessionTelemetry.js?v=v2026-10-09T22271";
+import { createSoundReactor } from "./soundReactor.js?v=v2026-10-09T22271";
+import { createUI } from "./ui.js?v=v2026-10-09T22271";
+import { createShareDevice } from "./shareDevice.js?v=v2026-10-09T22271";
+import { icon } from "../../shared/js/core/icons.js?v=v2026-10-09T22271";
+import { toast } from "../../shared/js/core/toast.js?v=v2026-10-09T22271";
 
 async function pickQuestionPool(state) {
   const all = await loadQuestions(state.gameId);
@@ -198,10 +198,11 @@ async function main() {
   // logo użytkownika; id = użytkownik). Kolejność: najpierw gra, potem pula logo
   // — pierwsza przeszkoda zatrzymuje ze swoim komunikatem. Edycja któregokolwiek
   // logo (logo:L wyłącznie) wyklucza logos, więc zatrzymuje Control.
-  const { data: { user: lockUser } } = await sb().auth.getUser();
   const lock = await guardResourceLocks([
     { type: "game", id: gameId, mode: "exclusive", message: t("resourceLock.gameMessage") },
-    { type: "logos", id: lockUser?.id, mode: "shared", message: t("resourceLock.logoEditBlocksControl") },
+    // Reuse the already authenticated owner. A second auth.getUser() here
+    // could transiently return null and silently omit the logo-pool lock.
+    { type: "logos", id: user.id, mode: "shared", message: t("resourceLock.logoEditBlocksControl") },
   ], { context: "control", backHref: backHref("control") });
   if (!lock.ok) return;
 
@@ -477,10 +478,33 @@ async function main() {
     committing = true;
     typingCommit = action.type === "SET_ENTRY_TEXT";
     let nextRow = null;
+    // START_ROUND ma dodatkową blokadę po stronie bazy, gdy Wyświetlacz
+    // kończy animację poprzedniej rundy. Sprawdź ten sam trwały znacznik
+    // przed zapisem, żeby kliknięcie nie trafiało w wyścig z potwierdzeniem.
+    async function waitForDisplayRender() {
+      const deadline = Date.now() + 60_000;
+      while (Date.now() < deadline) {
+        if (controlOffline || presenceFlags.display === false) return false;
+        try {
+          const { data, error } = await sb().from("game_state_display_completion")
+            .select("rendered_rev,requested_rev").eq("game_id", gameId).maybeSingle()
+            .abortSignal(AbortSignal.timeout(6500));
+          if (!error && data && data.rendered_rev >= data.requested_rev) return true;
+        } catch { /* Retry while the Display remains connected. */ }
+        await new Promise(resolve => setTimeout(resolve, 300));
+      }
+      return false;
+    }
     // TYMCZASOWA diagnostyka -- patrz komentarz przy armLock().
     const _dgT0 = Date.now();
     console.log(`[e2e-diag-state] t=${_dgT0} dispatchGatedNow START type=${action.type}`);
+    let displayWaitFailed = false;
     try {
+      if (action.type === "START_ROUND") {
+        renderCurrent();
+        displayWaitFailed = !(await waitForDisplayRender());
+      }
+      if (displayWaitFailed) return null;
       // Naprawiona luka: ten renderCurrent() (i cała reszta funkcji) była
       // POZA try/finally chroniącym `committing` -- rzucony tu wyjątek
       // (np. błąd w konkretnej gałęzi render()) zostawiał `committing`
@@ -497,6 +521,7 @@ async function main() {
     } finally {
       typingCommit = false;
       committing = false;
+      if (displayWaitFailed) renderCurrent();
     }
     console.log(`[e2e-diag-state] t=${Date.now()} dispatchGatedNow AFTER-ENGINE type=${action.type} afterMs=${Date.now() - _dgT0} nextRowRev=${nextRow?.rev}`);
     const ms = await actionGate.computeGateMs(action.type, prevRow, nextRow);

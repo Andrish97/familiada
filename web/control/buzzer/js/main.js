@@ -10,14 +10,14 @@
 // autorytatywny wiersz już to wie), błąd sieci (przycisk wraca do ON,
 // można spróbować ponownie).
 
-import { initI18n, setUiLang } from "../../../shared/translation/translation.js?v=v2026-10-09T22024";
-import { startKeepAlive } from "../../../shared/js/core/keep-alive.js?v=v2026-10-09T22024";
-import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-09T22024";
-import { createSubscription } from "../../../shared/js/core/game-state-subscribe.js?v=v2026-10-09T22024";
-import { createButtonRenderer, isLockedRow } from "./render.js?v=v2026-10-09T22024";
-import { ringDoorbell } from "../../../shared/js/core/game-state-doorbell.js?v=v2026-10-09T22024";
-import { createPressController } from "./press.js?v=v2026-10-09T22024";
-import { icon } from "../../../shared/js/core/icons.js?v=v2026-10-09T22024";
+import { initI18n, setUiLang } from "../../../shared/translation/translation.js?v=v2026-10-09T22271";
+import { startKeepAlive } from "../../../shared/js/core/keep-alive.js?v=v2026-10-09T22271";
+import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-09T22271";
+import { createSubscription } from "../../../shared/js/core/game-state-subscribe.js?v=v2026-10-09T22271";
+import { createButtonRenderer, isLockedRow } from "./render.js?v=v2026-10-09T22271";
+import { ringDoorbell } from "../../../shared/js/core/game-state-doorbell.js?v=v2026-10-09T22271";
+import { createPressController } from "./press.js?v=v2026-10-09T22271";
+import { icon } from "../../../shared/js/core/icons.js?v=v2026-10-09T22271";
 
 // Tak samo jak Wyświetlacz i Prowadzący, strona utrzymuje ekran aktywny.
 startKeepAlive();
@@ -133,19 +133,29 @@ async function main() {
   let lastRow = null;
   let appliedLang = null;
   let lockTimer = null;
-  let displayReady = false;
-  let displayCheckPending = false;
+  let displayReadyKey = null;
+  let displayCheckPendingKey = null;
+  const requestKeyOf = (row) => `${row?.step || ""}:${row?.sound_cue_seq ?? ""}`;
+  const isDisplayReady = (row) => Boolean(row && displayReadyKey === requestKeyOf(row));
   async function checkDisplayReady() {
-    if (displayCheckPending || !lastRow || displayReady) return;
-    displayCheckPending = true;
+    if (!lastRow) return;
     const row = lastRow;
+    const requestKey = requestKeyOf(row);
+    if (displayReadyKey === requestKey || displayCheckPendingKey === requestKey) return;
+    // A pending RPC for an older transition must not delay the current one.
+    // Keep one in-flight request per transition; late replies are ignored.
+    displayCheckPendingKey = requestKey;
     try {
       const { data, error } = await sb().rpc("game_state_display_is_ready", { p_game_id: gameId, p_key: key }).abortSignal(AbortSignal.timeout(6500));
-      if (!error && row === lastRow && data === true) {
-        displayReady = true;
+      // Completion is requested only when step or sound_cue_seq changes
+      // (migration 305). Unrelated revisions, including a buzzer press or
+      // locked_until update, must not invalidate an acknowledgment already
+      // received for this visual/audio transition.
+      if (!error && requestKey === requestKeyOf(lastRow) && data === true) {
+        displayReadyKey = requestKey;
         presses.render(lastRow);
       }
-    } finally { displayCheckPending = false; }
+    } finally { if (displayCheckPendingKey === requestKey) displayCheckPendingKey = null; }
   }
   setInterval(() => { void checkDisplayReady(); }, 500);
 
@@ -184,7 +194,6 @@ async function main() {
           .catch((e) => console.warn("[buzzer2] setUiLang nie powiodło się, spróbuję ponownie przy kolejnym wierszu:", e));
       }
       lastRow = row;
-      displayReady = false;
       presses.render(row);
       void checkDisplayReady();
       scheduleUnlockRerender(row);
@@ -193,8 +202,8 @@ async function main() {
   });
 
   const presses = createPressController({
-    getRow: () => lastRow ? { ...lastRow, display_animation_pending: !displayReady } : null,
-    render: (row, team) => renderer.render(row ? { ...row, display_animation_pending: !displayReady } : row, team),
+    getRow: () => lastRow ? { ...lastRow, display_animation_pending: !isDisplayReady(lastRow) } : null,
+    render: (row, team) => renderer.render(row ? { ...row, display_animation_pending: !isDisplayReady(row) } : row, team),
     send: (team) => sb().rpc("game_state_buzzer_press", {
       p_game_id: gameId, p_key: key, p_team: team,
     }),

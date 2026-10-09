@@ -408,13 +408,17 @@ async function expectMappingFieldFits(page, testInfo, label) {
     const caption = tile.querySelector(".c2-field-label").getBoundingClientRect();
     const card = document.querySelector(".c2-gameplay-card").getBoundingClientRect();
     const main = document.querySelector(".c2-roundlayout-main").getBoundingClientRect();
-    return { top: input.top - box.top, bottom: box.bottom - input.bottom, right: box.right - input.right, centered: Math.abs((column.left + column.right) / 2 - (caption.left + caption.right) / 2), horizontalOverflow: tile.scrollWidth - tile.clientWidth, cardX: card.x, cardWidth: card.width, mainX: main.x, mainWidth: main.width };
+    return { top: input.top - box.top, bottom: box.bottom - input.bottom, right: box.right - input.right, centered: Math.abs((column.left + column.right) / 2 - (caption.left + caption.right) / 2), horizontalOverflow: tile.scrollWidth - tile.clientWidth, cardX: card.x, cardRight: card.right, viewportWidth: document.documentElement.clientWidth, cardWidth: card.width, mainX: main.x, mainRight: main.right, mainWidth: main.width };
   });
   expect(geometry.top).toBeGreaterThanOrEqual(5);
   expect(geometry.bottom).toBeGreaterThanOrEqual(5);
   expect(geometry.right).toBeGreaterThanOrEqual(5);
   expect(geometry.centered).toBeLessThanOrEqual(1);
   expect(geometry.horizontalOverflow).toBeLessThanOrEqual(1);
+  expect(geometry.cardX).toBeGreaterThanOrEqual(0);
+  expect(geometry.cardRight).toBeLessThanOrEqual(geometry.viewportWidth);
+  expect(geometry.mainX).toBeGreaterThanOrEqual(geometry.cardX);
+  expect(geometry.mainRight).toBeLessThanOrEqual(geometry.cardRight);
   if (label === "p1") await page.evaluate((rect) => { window.__p1MappingLayout = rect; }, geometry);
   if (label === "p2") {
     const p1 = await page.evaluate(() => window.__p1MappingLayout);
@@ -818,15 +822,16 @@ test("control2: parowanie urządzeń — linki renderują się bez błędu, Cont
     await expect(page.locator(".c2-summary-final-questions .c2-qpreview-text")).not.toHaveText(initialFinalQuestions);
     await expect(page.locator(".c2-summary-rounds .c2-qpreview-text")).toHaveText([initialFinalQuestions[4]]);
     await page.evaluate(() => { Math.random = window.__originalRandom; delete window.__originalRandom; });
-    const displayPreview = page.locator("#c2DisplayPreview");
-    const previewBox = await displayPreview.evaluate((el) => {
-      const rect = el.getBoundingClientRect();
-      const section = el.closest(".c2-summary-display").getBoundingClientRect();
-      return { width: rect.width, height: rect.height, left: rect.left, sectionLeft: section.left, sectionWidth: section.width };
-    });
-    expect(previewBox.width).toBeLessThanOrEqual(641);
-    expect(previewBox.width / previewBox.height).toBeCloseTo(16 / 9, 1);
-    expect(Math.abs((previewBox.left + previewBox.width / 2) - (previewBox.sectionLeft + previewBox.sectionWidth / 2))).toBeLessThan(2);
+    for (const previewId of ["#c2DisplayPreview", "#c2HostPreview"]) {
+      const previewBox = await page.locator(previewId).evaluate((el) => {
+        const rect = el.getBoundingClientRect();
+        const card = el.closest(".c2-device-preview-card").getBoundingClientRect();
+        return { width: rect.width, height: rect.height, left: rect.left, cardLeft: card.left, cardWidth: card.width };
+      });
+      expect(previewBox.width).toBeLessThanOrEqual(641);
+      expect(previewBox.width / previewBox.height).toBeCloseTo(16 / 9, 1);
+      expect(Math.abs((previewBox.left + previewBox.width / 2) - (previewBox.cardLeft + previewBox.cardWidth / 2))).toBeLessThan(2);
+    }
 
     const revealPreview = page.locator('.summarySoundRow:has(input[data-sfx-vol="reveal"]) .summarySoundPlay');
     const beginGame = page.getByRole("button", { name: "Gotowe — przejdź do rozgrywki" });
@@ -1680,6 +1685,15 @@ test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśni�
       await expect.poll(() => page.locator(".c2-gameplay-body").evaluate(el => el.scrollHeight <= el.clientHeight + 2)).toBe(true);
     }
     await page.setViewportSize({ width:1366, height:768 });
+    const p1AnswerTile = page.locator(".c2-entrytile-p1ans").first();
+    const p1AnswerBounds = await p1AnswerTile.evaluate((el) => {
+      const text = el.getBoundingClientRect();
+      const tile = el.parentElement.getBoundingClientRect();
+      return { top: text.top, bottom: text.bottom, tileTop: tile.top, tileBottom: tile.bottom, height: text.height };
+    });
+    expect(p1AnswerBounds.height).toBeGreaterThan(0);
+    expect(p1AnswerBounds.top).toBeGreaterThanOrEqual(p1AnswerBounds.tileTop);
+    expect(p1AnswerBounds.bottom).toBeLessThanOrEqual(p1AnswerBounds.tileBottom);
     const repeatFirst = page.locator(".c2-entryrow .c2-btn-repeat").first();
     await expect(repeatFirst).toHaveClass(/\bon\b/);
     await expect(repeatFirst).toBeEnabled();
@@ -2410,7 +2424,8 @@ test("control2: zablokowany, gdy logo gry jest edytowane w logo-editorze — i w
   let hostPage;
   const lockTabId = `e2e-fake-logo-editor-${Date.now()}`;
   try {
-    await acquireLogoLock(page, logoId, lockTabId);
+    const acquired = await acquireLogoLock(page, logoId, lockTabId);
+    expect(acquired, "fixture must hold an exclusive logo lock before opening Control").toMatchObject({ ok: true, acquired: true });
     hostPage = await openAnon(browser, logoContexts, `/control/host?id=${gameId}&key=${hostKey}`, "host", []);
 
     await page.goto(`/control?id=${gameId}`, { waitUntil: "domcontentloaded" });
