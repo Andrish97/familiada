@@ -391,130 +391,9 @@ body.games-body > main.wrap{
   -webkit-overflow-scrolling: touch;
 }
 
-/* Kafelki w gridzie – bez zmian funkcjonalnych */
-.games-body .grid .card{
-  --under: #070b16; /* podłoże kryjących przycisków (css/base.css) */
-  position: relative;
-  background: #070b16;
-  border-radius: 18px;
-  border: 1px solid rgba(255,255,255,.22);
-  padding: 14px 14px 12px;
-  cursor: pointer;
-  transition: transform .12s ease-out, box-shadow .12s ease-out, border-color .12s ease-out, background .12s ease-out;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start; /* nazwa i typ u góry, oznaczenia przy dole (margin-top:auto) */
-  min-height: 130px;
-}
-
-/* Kosz na kafelku — przycisk w ramce jak .logoX w edytorze logo */
-.games-body .grid .card .x{
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-sizing: border-box;
-  border-radius: 10px;
-  border: 1px solid rgba(255,255,255,.14);
-  --btn-tint: rgba(0,0,0,.16);
-  background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, #050914); /* kryjące: css/base.css */
-
-  color: #fff;
-  padding: 0;
-  font-size: 14px;
-  line-height: 1;
-  cursor: pointer;
-  user-select: none;
-  transition: background .12s, border-color .12s;
-}
-.games-body .grid .card .x:hover{
-  border-color: var(--gold);
-  --btn-tint: rgba(0,0,0,.32);
-  background: linear-gradient(var(--btn-tint), var(--btn-tint)) var(--under, #050914); /* kryjące: css/base.css */
-
-}
-
-.games-body .grid .card .name{
-  font-weight: 900;
-  font-size: 14px;
-  letter-spacing: .06em;
-  text-transform: uppercase;
-  padding-right: 40px;
-  color: #fdfdfd;
-  line-height: 1.3;
-
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.games-body .grid .card .meta{
-  margin-top: 6px;
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: .08em;
-  color: rgba(236,239,244,.9);
-}
-
-/* Rząd oznaczeń na kafelku: stan + plakietka ankiety — równa wysokość,
-   stały odstęp, zawijanie całymi oznaczeniami (nie w środku tekstu). */
-.games-body .grid .card .cardTags{
-  margin-top: auto; /* rząd oznaczeń zawsze przy dole kafla, równo w całej siatce */
-  padding-top: 8px;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px;
-}
-.games-body .grid .card .cardTags .tag{
-  height: 22px;
-  padding: 0 8px;
-  font-size: 10.5px;
-  letter-spacing: .06em;
-  text-transform: uppercase;
-}
-.games-body .grid .card .cardTags .pollBadge--tally{
-  border-color: rgba(255,234,166,.8);
-  background: rgba(255,234,166,.24);
-  box-shadow: 0 0 0 1px rgba(255,234,166,.18);
-}
-
-/* Czego brakuje do następnego kroku (games.rules_state z bazy) */
-.games-body .grid .card .rules{
-  margin-top: 4px;
-  font-size: 11px;
-  line-height: 1.3;
-  /* stonowane złoto Familiady (--gold), nie jaskrawy pomarańcz */
-  color: rgba(255,234,166,.55);
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-.games-body .grid .card .rules:empty{ display: none; }
-.games-body .grid .card.not-ready:not(.selected) .name{ color: rgba(253,253,253,.72); }
-
-.addCard:hover,
-.games-body .grid .card:hover{
+.addCard:hover{
   transform: translateY(-2px);
   box-shadow: 0 10px 24px rgba(0,0,0,.45);
-}
-.games-body .grid .card:hover{
-  border-color: var(--gold);
-  background: #0b1020;
-}
-.games-body .grid .card.selected{
-  border-color: rgba(255,234,166,.9);
-  background: rgba(255,234,166,.10);
-  box-shadow:
-    0 0 0 2px rgba(255,234,166,.55),
-    0 10px 22px rgba(0,0,0,.35);
 }
 
 /* Add card */
@@ -576,7 +455,9 @@ body.games-body > main.wrap{
 .games-bottom-right{
   display: flex;
   gap: 8px;
+  flex: 0 0 auto; /* przyciski nie kurczą się ani nie łamią tekstu w środku */
 }
+.games-bottom-right .btn{ white-space: nowrap; }
 
 /* =========================================================
    MODALS (jak było)
@@ -935,22 +816,25 @@ body.games-body > main.wrap{
 
 /* wyszukiwanie po nazwie w lewej części dolnego paska list */
 .list-search{
-  width: 240px;
-  max-width: 100%;
+  /* rośnie do 240 px, ale umie się zwęzić: do drugiego rzędu spada dopiero,
+     gdy nie mieści się nawet w minimum */
+  flex: 1 1 140px;
+  min-width: 140px;
+  max-width: 240px;
 }
 .list-search .btn{ padding: 2px 6px; min-height: 0; }
 @media (max-width: 600px){
-  .list-search{ width: auto; flex: 1 1 auto; }
+  .list-search{ width: auto; flex: 1 1 auto; max-width: none; }
   .list-search .searchText{ font-size: 16px; } /* 16 px: iOS nie przybliża */
 }
 
 /* filtr obok wyszukiwania (list-search.js) — jak sortowanie w Subskrypcjach */
 .games-bottom-left{ flex-wrap: wrap; }
-.list-filter.ui-select{ min-width: 150px; width: 150px; flex: 0 0 auto; }
-.list-filter .ui-select-btn{ min-height: 0; }
+.list-filter.ui-select, .list-sort.ui-select{ min-width: 150px; width: 150px; flex: 0 0 auto; }
+.list-filter .ui-select-btn, .list-sort .ui-select-btn{ min-height: 0; }
 @media (max-width: 600px){
-  .list-filter.ui-select{ flex: 1 1 0; width: auto; min-width: 0; }
-  .games-bottom-left .list-search{ flex: 1 1 100%; width: 100%; order: 3; }
+  .list-filter.ui-select, .list-sort.ui-select{ flex: 1 1 0; width: auto; min-width: 0; }
+  .games-bottom-left .list-search{ flex: 1 1 100%; width: 100%; max-width: none; order: 3; }
 }
 .list-empty{
   opacity: .55;

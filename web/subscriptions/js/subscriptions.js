@@ -1,17 +1,18 @@
-import { sb, SUPABASE_URL } from "../../shared/js/core/supabase.js?v=v2026-10-09T17431";
-import { requireAuth, signOut } from "../../shared/js/core/auth.js?v=v2026-10-09T17431";
-import { isGuestUser, showGuestBlockedOverlay } from "../../shared/js/core/guest-mode.js?v=v2026-10-09T17431";
-import { toast } from "../../shared/js/core/toast.js?v=v2026-10-09T17431";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-09T17431";
-import { getUiLang, initI18n, t } from "../../shared/translation/translation.js?v=v2026-10-09T17431";
-import { linkTo, backHref, renderBackLabel } from "../../shared/js/core/nav-map.js?v=v2026-10-09T17431";
-import { initTopbarAccountDropdown } from "../../shared/js/core/topbar-controller.js?v=v2026-10-09T17431";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-09T17431";
-import { icon } from "../../shared/js/core/icons.js?v=v2026-10-09T17431";
-import { createCooldownTicker } from "../../shared/js/core/cooldown.js?v=v2026-10-09T17431";
-import { enterModalSheet, exitModalSheet, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-09T17431";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-09T17431";
-import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-09T17431";
+import { sb, SUPABASE_URL } from "../../shared/js/core/supabase.js?v=v2026-10-09T17551";
+import { requireAuth, signOut } from "../../shared/js/core/auth.js?v=v2026-10-09T17551";
+import { isGuestUser, showGuestBlockedOverlay } from "../../shared/js/core/guest-mode.js?v=v2026-10-09T17551";
+import { toast } from "../../shared/js/core/toast.js?v=v2026-10-09T17551";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-09T17551";
+import { getUiLang, initI18n, t } from "../../shared/translation/translation.js?v=v2026-10-09T17551";
+import { linkTo, backHref, renderBackLabel } from "../../shared/js/core/nav-map.js?v=v2026-10-09T17551";
+import { initTopbarAccountDropdown } from "../../shared/js/core/topbar-controller.js?v=v2026-10-09T17551";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-09T17551";
+import { icon } from "../../shared/js/core/icons.js?v=v2026-10-09T17551";
+import { createCooldownTicker } from "../../shared/js/core/cooldown.js?v=v2026-10-09T17551";
+import { enterModalSheet, exitModalSheet, handleSheetBack } from "../../shared/js/core/modal-sheet.js?v=v2026-10-09T17551";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-09T17551";
+import { renderShareSections } from "../../shared/js/core/share-sections.js?v=v2026-10-09T17551";
+import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-09T17551";
 
 const i18nReady = initI18n({ withSwitcher: true }).catch((err) => {
   console.error("[subscriptions] i18n nieaktywny:", err);
@@ -329,7 +330,7 @@ function selectedRow() {
 function selectTile(tab, id) {
   selected = selected && selected.tab === tab && String(selected.id) === String(id) ? null : { tab, id };
   for (const k of TABS) {
-    grids[k]?.querySelectorAll(".card").forEach((el) => {
+    grids[k]?.querySelectorAll(".card, .shareRow").forEach((el) => {
       el.classList.toggle("selected", !!selected && selected.tab === k && el.dataset.id === String(selected.id));
     });
   }
@@ -455,7 +456,7 @@ function trashButtonHtml(title) {
 
 function buildTile(tab, id, { name, sub = "", metaHtml = "", trashTitle = "" }) {
   const tile = document.createElement("div");
-  tile.className = "card";
+  tile.className = "card tile";
   tile.dataset.id = String(id);
   if (selected && selected.tab === tab && String(selected.id) === String(id)) tile.classList.add("selected");
   tile.innerHTML = `
@@ -491,35 +492,52 @@ function renderSubscribers() {
   }), viewState.subscribers.sort, (r) => r.subscriber_label || "");
   if (!visible.length) renderEmptyTile(el, MSG.emptySubscribers());
 
+  const groups = { pending: { rows: [] }, active: { rows: [] }, declined: { rows: [] } };
   for (const row of visible) {
     const key = `resend:${row.sub_id}`;
-    const tile = buildTile("subscribers", row.sub_id, {
-      name: row.subscriber_label || MSG.dash(),
-      metaHtml: statusTagHtml(row.status) + (row.status === "pending" ? `<span class="tag tag--muted tag--cooldown tileBadge" hidden></span>` : ""),
-      trashTitle: row.status !== "declined" ? t("pollsHubSubscriptions.actions.remove") : "",
+    const isSel = selected?.tab === "subscribers" && String(selected.id) === String(row.sub_id);
+    const item = {
+      id: row.sub_id,
+      label: row.subscriber_label || MSG.dash(),
+      selected: isSel,
+      onClick: () => selectTile("subscribers", row.sub_id),
+      tags: row.status === "pending" ? [{ text: "", cls: "tag--muted tag--cooldown" }] : [],
+      actions: row.status !== "declined" ? [{
+        key: "remove",
+        icon: "trash",
+        title: t("pollsHubSubscriptions.actions.remove"),
+        onClick: async () => {
+          const ok = await confirmModal({ title: MSG.removeTitle(), text: MSG.removeText(), okText: MSG.removeOk(), cancelText: MSG.removeCancel() });
+          if (!ok) return;
+          try {
+            await callOkRpc("polls_hub_subscriber_remove", { p_id: row.sub_id });
+            if (selected?.tab === "subscribers" && String(selected.id) === String(row.sub_id)) selected = null;
+            await refreshData();
+          } catch {
+            await alertModal({ text: MSG.removeFail() });
+          }
+        },
+      }] : [],
+    };
+    (row.status === "active" ? groups.active : row.status === "pending" ? groups.pending : groups.declined).rows.push(item);
+  }
+  const host = document.createElement("div");
+  host.className = "shareHost";
+  el.appendChild(host);
+  renderShareSections(host, groups, { grid: true });
+
+  for (const row of visible) {
+    if (row.status !== "pending") continue;
+    const key = `resend:${row.sub_id}`;
+    const cd = host.querySelector(`.shareRow[data-id="${CSS.escape(String(row.sub_id))}"] .tag--cooldown`);
+    if (!cd) continue;
+    cd.hidden = true;
+    resendCooldownTicker.bind({
+      key,
+      labelEl: cd,
+      formatText: (ms) => cooldownTextFromUntil(Date.now() + ms),
     });
-    const cd = tile.querySelector(".tag--cooldown");
-    if (cd) {
-      resendCooldownTicker.bind({
-        key,
-        labelEl: cd,
-        formatText: (ms) => cooldownTextFromUntil(Date.now() + ms),
-      });
-      resendCooldownTicker.setEndMs(key, cooldownUntil(row.email_sent_at));
-    }
-    tile.querySelector(".x")?.addEventListener("click", async (e) => {
-      e.stopPropagation();
-      const ok = await confirmModal({ title: MSG.removeTitle(), text: MSG.removeText(), okText: MSG.removeOk(), cancelText: MSG.removeCancel() });
-      if (!ok) return;
-      try {
-        await callOkRpc("polls_hub_subscriber_remove", { p_id: row.sub_id });
-        if (selected?.tab === "subscribers" && String(selected.id) === String(row.sub_id)) selected = null;
-        await refreshData();
-      } catch {
-        await alertModal({ text: MSG.removeFail() });
-      }
-    });
-    el.appendChild(tile);
+    resendCooldownTicker.setEndMs(key, cooldownUntil(row.email_sent_at));
   }
 }
 
@@ -578,33 +596,43 @@ function renderInvites() {
   }), viewState.subscriptions.sort, (r) => r.owner_label || "");
   if (!visible.length) renderEmptyTile(el, MSG.emptySubscriptions());
 
+  const groups = { pending: { rows: [] }, active: { rows: [] }, declined: { rows: [] } };
   for (const row of visible) {
     const isPending = row.status === "pending";
-    const tile = buildTile("subscriptions", row.sub_id, {
-      name: row.owner_label || MSG.dash(),
-      metaHtml: statusTagHtml(row.status),
-      trashTitle: row.status !== "declined" ? t(`pollsHubSubscriptions.actions.${isPending ? "decline" : "cancel"}`) : "",
-    });
-    tile.querySelector(".x")?.addEventListener("click", async (e) => {
-      e.stopPropagation();
-      const ok = await confirmModal({
-        title: MSG.updateTitle(),
-        text: isPending ? MSG.updateTextPending() : MSG.updateTextActive(),
-        okText: isPending ? MSG.updateOkPending() : MSG.updateOkActive(),
-        // Dolny przycisk "Zamknij" zbędny — modal zamyka X w nagłówku.
-        showCancel: false,
-      });
-      if (!ok) return;
-      try {
-        await callSubscriptionAction(row, isPending ? "reject" : "cancel");
-        if (selected?.tab === "subscriptions" && String(selected.id) === String(row.sub_id)) selected = null;
-        await refreshData();
-      } catch {
-        await alertModal({ text: MSG.updateFail() });
-      }
-    });
-    el.appendChild(tile);
+    const item = {
+      id: row.sub_id,
+      label: row.owner_label || MSG.dash(),
+      selected: selected?.tab === "subscriptions" && String(selected.id) === String(row.sub_id),
+      onClick: () => selectTile("subscriptions", row.sub_id),
+      actions: row.status !== "declined" ? [{
+        key: "remove",
+        icon: "trash",
+        title: t(`pollsHubSubscriptions.actions.${isPending ? "decline" : "cancel"}`),
+        onClick: async () => {
+          const ok = await confirmModal({
+            title: MSG.updateTitle(),
+            text: isPending ? MSG.updateTextPending() : MSG.updateTextActive(),
+            okText: isPending ? MSG.updateOkPending() : MSG.updateOkActive(),
+            // Dolny przycisk "Zamknij" zbędny — modal zamyka X w nagłówku.
+            showCancel: false,
+          });
+          if (!ok) return;
+          try {
+            await callSubscriptionAction(row, isPending ? "reject" : "cancel");
+            if (selected?.tab === "subscriptions" && String(selected.id) === String(row.sub_id)) selected = null;
+            await refreshData();
+          } catch {
+            await alertModal({ text: MSG.updateFail() });
+          }
+        },
+      }] : [],
+    };
+    (row.status === "active" ? groups.active : isPending ? groups.pending : groups.declined).rows.push(item);
   }
+  const host = document.createElement("div");
+  host.className = "shareHost";
+  el.appendChild(host);
+  renderShareSections(host, groups, { grid: true });
 }
 
 async function acceptSelected() {
@@ -917,7 +945,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   document.querySelector('.topbar')?.classList.add('topbar-ready');
 
   initViewControls();
-  initListSearch({ grids: "#subscribersGrid, #subscriptionsGrid, #tasksGrid", tile: ".card", name: ".name" });
+  initListSearch({ grids: "#subscribersGrid, #subscriptionsGrid, #tasksGrid", tile: ".card, .shareRow", name: ".name, .shareEmail" });
 
   TABS.forEach((k, index) => {
     const btn = tabBtns[k];

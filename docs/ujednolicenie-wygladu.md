@@ -271,3 +271,11 @@ tiles”). Pozostałe pola komunikatów istnieją. Implementacja: `shared/js/cor
    zostają w pasku stanu u góry (stan w pierwszym wierszu, przyciski pod
    nim). Zmienia wcześniejszą decyzję o dolnym pasku na telefonie
    (ankiety-refaktor.md).
+
+- Wdrożone (E17c): sekcje udostępniania — jeden komponent
+  `shared/js/core/share-sections.js` (+ `.shareSection`/`.shareRow` w base.css) w
+  oknie udostępniania bazy, karcie Udostępnianie ankiety, Subskrypcjach
+  (subskrybenci / subskrypcje) i udostępnianiu urządzeń w Control; wspólny kafel
+  `.tile` (base.css) dla gier, baz i rynku; sortowanie list gier i baz
+  (`?sort=created|name`, domyślnie ostatnio zmienione); ankieta bez dolnego paska.
+  Liczba pytań w bazie: brak w danych listy — bez sortowania po niej.

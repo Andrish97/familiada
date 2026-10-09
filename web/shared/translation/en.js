@@ -5,6 +5,12 @@ const en = {
     icon: "lang-en",
   },
   common: {
+    sort: {
+      label: "Sort",
+      updated: "Recently modified",
+      created: "Newest",
+      name: "Name A–Z",
+    },
     searchByName: "Search…",
     filterAll: "All",
     noResults: "No results.",
@@ -72,6 +78,16 @@ const en = {
       left: "© {year} Familiada — live game system",
       contactBtn: "Contact",
     },
+  },
+  shareSections: {
+    subscribers: "Subscribers",
+    subscribersSub: "Not invited yet — pick who to invite.",
+    pending: "Pending",
+    pendingSub: "Invitation sent, waiting for an answer.",
+    active: "Active",
+    activeSub: "Accepted the invitation.",
+    declined: "Declined",
+    declinedSub: "Turned the invitation down.",
   },
   nav: {
     backTo: "{page}",
@@ -802,6 +818,7 @@ const en = {
       tallyInfo: "counting",
     },
     share: {
+      activeSub: "Voted in this poll.",
       linkTitle: "Link",
       subsTitle: "Subscribers",
       sendInvites: "Send invitations",
