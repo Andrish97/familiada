@@ -1,3 +1,75 @@
+# Przekazanie pracy — pauza 2026-10-11 (Codex)
+
+**Praca zatrzymana na prośbę użytkownika. Nie uruchamiać testów ani dalszych
+wdrożeń bez wyraźnego wznowienia w nowej sesji.** Wszystkie zmiany kodu
+zapisane i wypchnięte na **`codex/e19-3`** w repo `Andrish97/familiada`.
+Ostatni commit kodu przed tym przekazaniem: **`6761989e5`**.
+
+## Bieżący stan — przeczytaj przed historycznym przekazaniem poniżej
+
+- **E7b zrobione na produkcji**: zmiany `b9cc476ac`, testy brancha
+  38089479328 (14 testów ok, dwie asercje naprawione), powtórka
+  38091455118 ✓ (2/2 + unit 401/401), Pages 38091648065 ✓,
+  kontrola produkcji **38091756034 ✓ (5/5 + unit 401/401)**.
+- **Reguła obciążenia lokalnego** (decyzja 2026-10-11) w AGENTS.md,
+  CLAUDE.md, nawigacja sekcja 7 i Dzienniku: ograniczać ciężkie zadania
+  i symulacje tutaj; e2e na GitHub Actions; wymagane sprawdzenia pojedynczo
+  z ograniczoną współbieżnością lub na odizolowanym runnerze.
+- **E19 krok 3 — kod na branchu, NIE wdrożony**. Migracja
+  `2026-10-11_321_friends_subscribers.sql` także **NIE na produkcji**.
+  Nie traktować kroku jako skończonego. Strony `/friends/` i `/subscribers/`,
+  wspólny moduł list `contacts-page.js`, `invite-mail.js`, mapy i Worker,
+  usunięcie `/subscriptions/`, przekierowania z logowania i głosowania,
+  migracja claim/udostępniania ankiet/usuwania danych są przygotowane.
+- Commity E19: `2c225d5da`, `bbf28ee61` (merge main i wersje CI),
+  `c919ce131` (fixture unit), `43604a54d` (zachowanie własnego dźwięku
+  ze Storage + plakietka znajomych na Bazach), `6761989e5` (walidacja
+  e-maila + regresja dźwięku). Dokumentacyjny `72b2356cf` potwierdza E7b.
+- Unit na runnerze **401/401 ✓** w 38092186340 i 38092310787.
+- SQL 38092094724: brak polityk maili w fixture; poprawione.
+  SQL 38092186340: brak walidacji e-maila (`_norm_email` tylko normalizuje);
+  poprawione. **SQL 38092310787 nadal czerwony**:
+  `docs/sql/test-friends-subscribers-321.sql:66: permission denied for table friendships`.
+  To zapytanie fixture pod rolą authenticated czyta `friendships` ze zrzutu
+  schematu; następna sesja ma ustalić i poprawić przyczynę uprawnień w
+  odizolowanym odtworzeniu (nie osłabiać produkcyjnego RLS).
+- **E2E dźwięku 38092315064 anulowane na prośbę użytkownika**.
+  Scenariusze `game-settings.spec.js --grep 'własny.dźwięk.z.chmury|bez.pliku'`
+  wymagają ponownego testu brancha i kontroli produkcji po wdrożeniu.
+- Nie uruchomiono jeszcze e2e nowych `friends.spec.js` / `subscribers.spec.js`.
+  Zawierają scenariusze mailowe, więc uruchamiać pojedynczo (konta 7/8
+  dla Znajomych; domyślne konto puli dla Subskrybentów; odbiorca test14
+  jest wyłącznie skrzynką bez konta).
+
+## Wznowienie w nowej sesji Codexa (również w aplikacji ChatGPT)
+
+1. Pobierz repo i przejdź na **`codex/e19-3`**, nie zaczynaj od nowego
+   brancha z main. Przeczytaj AGENTS.md, ten plik, wdrozenia.md,
+   e19-znajomi-plan.md (sekcje 5–6).
+2. Po wyraźnym wznowieniu: popraw test SQL 321 / odtworzenie schematu.
+   Workflow `agent-checks.yml` na branchu z wejściem
+   `verify_e19_321=true` uruchamia unit pojedynczo i odizolowany Postgres 16.
+   Zrzut schematu odtwarzany ze stubami Supabase (jak local-db.md),
+   diagnostyka restore jest artefaktem `e19-sql-restore`.
+3. Punktowy e2e brancha: test zachowania własnego dźwięku wskazany wyżej,
+   przez `REF=codex/e19-3 bash scripts/agent-tools/e2e-seq.sh ...`.
+   Skrypt nie ma prawa wykonywania w tym środowisku — wywoływać przez bash.
+4. Po zielonych SQL/unit: migracja 321 **razem z wymagającym jej frontem**
+   (wyjątek cyklu dla migracji zmieniających zachowanie). Sprawdzić
+   zastosowanie w `supabase/migration_logs/latest.log`, Pages i Worker.
+   Od razu punktowe testy kontrolne: friends, subscribers, go,
+   frontend-navigation, account-deletion i regresja własnego dźwięku.
+5. Dopiero po zielonej produkcji zamknąć krok 3; dalej E19 kroki 4–7,
+   potem E14 i E13. Control i control2 należą do drugiej sesji:
+   przed krokiem 6 skoordynować zakres. E18 pozostaje wstrzymane.
+
+Uwaga przy merge: resolver wersji przy konflikcie modify/delete przywrócił
+usuwane `web/subscriptions/index.html` i JS. Sprawdzono, że main zmieniał
+tylko wersje CI, po czym oba pliki usunięto ręcznie. Nie przywracać starej
+strony i nie dodawać aliasów. `version-assets.js` wykonano po merge.
+
+---
+
 # Przekazanie pracy — stan na 2026-10-10
 
 Dla kolejnego agenta (Codex). Zasady pracy: `AGENTS.md` (identyczne z
