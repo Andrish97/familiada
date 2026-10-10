@@ -668,12 +668,25 @@ async function attachStatistics(testInfo, label, rows) {
   await testInfo.attach(name, { path, contentType: "application/json" });
 }
 
-test("control2: statystyki: zdarzenia pokazują przerwy i błędy bez pustych sekcji", async ({ page }) => {
+test("control2: statystyki: zdarzenia pokazują przerwy i błędy bez pustych sekcji", async ({ page, request }) => {
   await page.goto("/", { waitUntil: "domcontentloaded" });
-  const result = await page.evaluate(async () => {
-    const response = await fetch("/settings/js/settings.js", { cache: "no-store" });
-    if (!response.ok) throw new Error(`settings.js: ${response.status}`);
-    const source = await response.text();
+  let source;
+  if (process.env.TEST_BRANCH_CODE === "0") {
+    // Publiczna domena blokuje /settings/. Pobierz opublikowany zasób
+    // bezpośrednio z originu Pages, tak samo jak proxy Workera.
+    const response = await request.get("https://andrish97.github.io/settings/js/settings.js", {
+      headers: { Host: "familiada.online", "Cache-Control": "no-cache" },
+    });
+    expect(response.status()).toBe(200);
+    source = await response.text();
+  } else {
+    source = await page.evaluate(async () => {
+      const response = await fetch("/settings/js/settings.js", { cache: "no-store" });
+      if (!response.ok) throw new Error(`settings.js: ${response.status}`);
+      return response.text();
+    });
+  }
+  const result = await page.evaluate(source => {
     const start = source.indexOf("function buildSessionRunDetails(");
     const end = source.indexOf("const SESSION_STATUS_LABELS", start);
     if (start < 0 || end < 0) throw new Error("Missing statistics renderer");
@@ -689,7 +702,7 @@ test("control2: statystyki: zdarzenia pokazują przerwy i błędy bez pustych se
       outage: inspect([event("disconnect", { devices: ["display"], message: "presence:display=offline,host=online,buzzer=online" }), event("reconnect")]),
       error: inspect([event("error", { message: "Nie można odczytać statusu urządzeń." })]),
     };
-  });
+  }, source);
   expect(result.empty).toEqual({ sections: 0, rows: [] });
   expect(result.orphan).toEqual({ sections: 0, rows: [] });
   expect(result.outage.sections).toBe(1);

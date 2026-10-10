@@ -122,7 +122,7 @@ test("manual: Host logo jest opisane w Control i Ustawieniach gry w PL/EN/UK", a
     await expect(settings).toContainText(item.settings);
     await expect(settings).toContainText(item.source);
     await expect(settings).toContainText(item.detail);
-    await expect(settings.locator(".m-strong").filter({ hasText: item.control })).toBeVisible();
+    await expect(settings.locator(".m-strong").filter({ hasText: item.control }).first()).toBeVisible();
     await expect(settings.locator(".m-p").filter({ hasText: /preview|Podgląd|перегляд/i }).first()).toBeVisible();
     if (item.lang === "pl") await page.screenshot({ path: testInfo.outputPath("shot-manual-settings-pl.png"), fullPage: true });
   }
