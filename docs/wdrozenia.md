@@ -57,7 +57,7 @@ Praca przechodzi do Codexa: stan, otwarte sprawy i następny krok —
 | 8 | E5 | Adresy a) `/go/` b) ankiety c) gry d) urządzenia + `/connect/` e) bazy, logo f) logowanie | nawigacja 8 | zrobione (e2e main 2026-10-09/10) |
 | 9 | E6 | `initPage()`, wspólny overlay gość/urządzenie | nawigacja 6.4 | zrobione (e2e main 2026-10-09) |
 | 10 | E7 | Bez stron modalnych: edytor `?q=`, ustawienia gry z autozapisem, manual/privacy bez `?modal=` | nawigacja 6.5 | zrobione (e2e main 2026-10-10) |
-| 10a | E7b | Ustawienia gry: ostrzeżenie przy wyjściu ze stanem niepoprawnym, reset niepoprawnych wartości przy zapisie (decyzja 2026-10-10) | nawigacja 7 | w toku (branch `codex/e7b-e19`) |
+| 10a | E7b | Ustawienia gry: ostrzeżenie przy wyjściu ze stanem niepoprawnym, reset niepoprawnych wartości przy zapisie (decyzja 2026-10-10) | nawigacja 7 | zrobione (produkcja 38091756034 ✓) |
 | 11 | E8 | Jeden moduł kart `?tab=`, stan eksploratora | nawigacja 6.6 | zrobione (e2e main 2026-10-10) |
 | 12 | E9 | Przyciski i `locks` w `PAGES`, diagramy 6 map, e2e map | nawigacja 6.7 | zrobione (e2e main 2026-10-10) |
 | 12b | E16 | **Komunikaty po akcji:** spis, co każda strona wysyłała do pola komunikatu (tabela w źródle) → wspólny dymek `toast()` zamiast usuniętych pól, tylko gdzie efekt nie jest oczywisty (decyzja 2026-10-09) | ujednolicenie-wygladu.md „Komunikaty po akcji” | zrobione (e2e main 2026-10-09) |
@@ -183,3 +183,4 @@ bo `PAGES` deklaruje blokady; adresy po mapie stron; instrukcja na końcu.
 | 2026-10-11 | sprawdzenia na runnerze | Dodano ręczny workflow `agent-checks.yml`: wymagane unit na GitHub Actions, współbieżność plików 1; umożliwia zachowanie bramki unit bez obciążania lokalnego urządzenia | lokalnie tylko składnia i `git diff --check` ✓ |
 | 2026-10-11 | E7b / commit testów | `509d7e4cb`: poprawione dwie asercje; dodano unit również do punktowego przebiegu e2e (nowy workflow samodzielny zostanie zarejestrowany dopiero na main) | punktowa powtórka CAS i finału z unit na runnerze |
 | 2026-10-11 | E7b / branch zielony | `b9cc476ac`, `2844533d8`, `509d7e4cb`, `011cd0b6b`; e2e 38091455118 ✓ (2/2 CAS i niepełny finał), unit na runnerze 401/401; wcześniejsze 14 pozostałych testów ustawień w 38089479328 ✓. Merge origin/main bez zmian i konfliktów | wdrożenie Pages, potem punktowa kontrola produkcji |
+| 2026-10-11 | E7b — zrobione | `b9cc476ac`, `509d7e4cb`, `011cd0b6b`, `663295083`; Pages 38091648065 ✓. Branch: 14 scenariuszy w 38089479328 ✓, dwa pozostałe w 38091455118 ✓. Produkcja: 38091756034 ✓ (5/5: CAS, finał, własny dźwięk, mnożniki, anulowanie i potwierdzenie wyjścia); unit runner 401/401 | dalej E19 krok 3 |
