@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict VNcu6Dhckfex8YvXzOdYQK5yBHkDKUItePSr7XBK5N6soOo7SlynTM88gUmsVfL
+\restrict h2EzQj6V6HxPM9qEO4jctGAdWisSILwXZOrCYLHIEQ87V80dGgJeMdQQNWYC5rn
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -211,6 +211,45 @@ BEGIN
 
   RETURN v_token;
 END;
+$$;
+
+
+--
+-- Name: _friend_drop_pair_tasks("uuid", "uuid"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."_friend_drop_pair_tasks"("p_a" "uuid", "p_b" "uuid") RETURNS "void"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+BEGIN
+  DELETE FROM public.poll_tasks pt
+  WHERE pt.status IN ('pending', 'opened')
+    AND ((pt.owner_id = p_a AND pt.recipient_user_id = p_b)
+      OR (pt.owner_id = p_b AND pt.recipient_user_id = p_a));
+
+  DELETE FROM public.base_share_tasks bt
+  WHERE bt.status IN ('pending', 'opened')
+    AND ((bt.owner_id = p_a AND bt.recipient_user_id = p_b)
+      OR (bt.owner_id = p_b AND bt.recipient_user_id = p_a));
+END;
+$$;
+
+
+--
+-- Name: _friend_mail_limit_until("uuid", "uuid"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."_friend_mail_limit_until"("p_requester" "uuid", "p_addressee" "uuid") RETURNS timestamp with time zone
+    LANGUAGE "sql" STABLE SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+  SELECT CASE WHEN coalesce(sum(f.email_send_count), 0) >= 2
+              THEN max(f.email_sent_at) + interval '30 days' END
+  FROM public.friendships f
+  WHERE f.requester_id = p_requester
+    AND f.addressee_id = p_addressee
+    AND f.email_sent_at > now() - interval '30 days'
 $$;
 
 
@@ -1021,6 +1060,23 @@ $$;
 
 
 --
+-- Name: are_friends("uuid", "uuid"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."are_friends"("a" "uuid", "b" "uuid") RETURNS boolean
+    LANGUAGE "sql" STABLE SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM public.friendships f
+    WHERE f.status = 'active'
+      AND ((f.requester_id = a AND f.addressee_id = b)
+        OR (f.requester_id = b AND f.addressee_id = a))
+  )
+$$;
+
+
+--
 -- Name: assert_game_answers_minmax(); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -1165,6 +1221,43 @@ BEGIN
   RETURN true;
 END;
 $_$;
+
+
+--
+-- Name: badges_get(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."badges_get"() RETURNS "jsonb"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+DECLARE
+  v_uid     uuid := auth.uid();
+  v_polls   integer;
+  v_bases   integer;
+  v_friends integer;
+BEGIN
+  IF v_uid IS NULL THEN
+    RETURN jsonb_build_object('tasks_pending', 0, 'friends_pending', 0);
+  END IF;
+  PERFORM public.poll_claim_email_records();
+
+  SELECT count(*) INTO v_polls
+  FROM public.poll_tasks t
+  WHERE t.recipient_user_id = v_uid
+    AND t.done_at IS NULL AND t.declined_at IS NULL AND t.cancelled_at IS NULL;
+
+  SELECT count(*) INTO v_bases
+  FROM public.base_share_tasks bt
+  WHERE bt.recipient_user_id = v_uid AND bt.status IN ('pending', 'opened');
+
+  SELECT count(*) INTO v_friends
+  FROM public.friendships f
+  WHERE f.addressee_id = v_uid AND f.status = 'pending';
+
+  RETURN jsonb_build_object('tasks_pending', v_polls + v_bases, 'friends_pending', v_friends);
+END;
+$$;
 
 
 --
@@ -2423,6 +2516,48 @@ end $$;
 
 
 --
+-- Name: e2e_friendships_cleanup("uuid"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."e2e_friendships_cleanup"("p_other_user_id" "uuid") RETURNS "jsonb"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $_$
+DECLARE
+  v_uid uuid := auth.uid();
+  v_caller_email text;
+  v_other_email text;
+  v_deleted integer := 0;
+  v_mail_cooldowns_deleted integer := 0;
+BEGIN
+  SELECT lower(email) INTO v_caller_email FROM auth.users WHERE id = v_uid;
+  SELECT lower(email) INTO v_other_email FROM auth.users WHERE id = p_other_user_id;
+
+  IF v_uid IS NULL
+     OR v_caller_email !~ '^test([1-9]|1[0-3])@familiada[.]online$'
+     OR v_other_email !~ '^test([1-9]|1[0-3])@familiada[.]online$' THEN
+    RETURN jsonb_build_object('ok', false, 'error', 'test accounts required');
+  END IF;
+
+  DELETE FROM public.friendships
+  WHERE (requester_id = v_uid AND addressee_id = p_other_user_id)
+     OR (requester_id = p_other_user_id AND addressee_id = v_uid);
+  GET DIAGNOSTICS v_deleted = ROW_COUNT;
+
+  DELETE FROM public.mail_cooldowns
+  WHERE action_key LIKE 'friend:%'
+    AND (
+      target_key LIKE 'pair:' || v_uid::text || ':' || p_other_user_id::text || '%'
+      OR target_key LIKE 'pair:' || p_other_user_id::text || ':' || v_uid::text || '%'
+    );
+  GET DIAGNOSTICS v_mail_cooldowns_deleted = ROW_COUNT;
+
+  RETURN jsonb_build_object('ok', true, 'deleted', v_deleted, 'mail_cooldowns_deleted', v_mail_cooldowns_deleted);
+END;
+$_$;
+
+
+--
 -- Name: e2e_marketplace_cleanup("text"); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -2902,6 +3037,383 @@ begin
 
   return query select true, v_report.id, v_report.email, v_report.lang;
 end;
+$$;
+
+
+--
+-- Name: friend_invites_from_subscriptions(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."friend_invites_from_subscriptions"() RETURNS "jsonb"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+DECLARE
+  v_uid     uuid := auth.uid();
+  v_email   text;
+  v_created integer := 0;
+  r         record;
+  v_cd_ok   boolean;
+  v_n       integer;
+BEGIN
+  IF v_uid IS NULL THEN
+    RETURN jsonb_build_object('ok', false, 'err', 'auth required');
+  END IF;
+  v_email := public.poll_my_email();
+
+  FOR r IN
+    SELECT DISTINCT s.owner_id
+    FROM public.poll_subscriptions s
+    WHERE s.status IN ('pending', 'active')
+      AND s.owner_id <> v_uid
+      AND (s.subscriber_user_id = v_uid
+        OR (v_email IS NOT NULL AND v_email <> ''
+            AND lower(trim(s.subscriber_email)) = v_email))
+  LOOP
+    IF EXISTS (
+      SELECT 1 FROM public.friendships f
+      WHERE LEAST(f.requester_id, f.addressee_id) = LEAST(r.owner_id, v_uid)
+        AND GREATEST(f.requester_id, f.addressee_id) = GREATEST(r.owner_id, v_uid)
+    ) THEN
+      CONTINUE;
+    END IF;
+
+    SELECT c.ok INTO v_cd_ok
+    FROM public.mail_cooldown_check('friend:invite_after_reject', 'pair:' || r.owner_id::text || ':' || v_uid::text) c;
+    IF NOT v_cd_ok THEN
+      CONTINUE;
+    END IF;
+
+    INSERT INTO public.friendships (requester_id, addressee_id, status)
+    VALUES (r.owner_id, v_uid, 'pending')
+    ON CONFLICT DO NOTHING;
+    GET DIAGNOSTICS v_n = ROW_COUNT;
+    v_created := v_created + v_n;
+  END LOOP;
+
+  RETURN jsonb_build_object('ok', true, 'created', v_created);
+END;
+$$;
+
+
+--
+-- Name: friends_accept("uuid"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."friends_accept"("p_id" "uuid") RETURNS "jsonb"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+DECLARE
+  v_uid uuid := auth.uid();
+BEGIN
+  IF v_uid IS NULL THEN
+    RETURN jsonb_build_object('ok', false, 'err', 'auth required');
+  END IF;
+  UPDATE public.friendships
+     SET status = 'active', accepted_at = now()
+   WHERE id = p_id AND addressee_id = v_uid AND status = 'pending';
+  IF NOT FOUND THEN
+    RETURN jsonb_build_object('ok', false, 'err', 'not_found');
+  END IF;
+  RETURN jsonb_build_object('ok', true, 'action', 'accepted', 'id', p_id);
+END;
+$$;
+
+
+--
+-- Name: friends_cancel("uuid"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."friends_cancel"("p_id" "uuid") RETURNS "jsonb"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+DECLARE
+  v_uid  uuid := auth.uid();
+  v_addr uuid;
+BEGIN
+  IF v_uid IS NULL THEN
+    RETURN jsonb_build_object('ok', false, 'err', 'auth required');
+  END IF;
+  DELETE FROM public.friendships
+   WHERE id = p_id AND requester_id = v_uid AND status = 'pending'
+  RETURNING addressee_id INTO v_addr;
+  IF NOT FOUND THEN
+    RETURN jsonb_build_object('ok', false, 'err', 'not_found');
+  END IF;
+  PERFORM public._friend_drop_pair_tasks(v_uid, v_addr);
+  RETURN jsonb_build_object('ok', true, 'action', 'cancelled', 'id', p_id);
+END;
+$$;
+
+
+--
+-- Name: friends_invite("text"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."friends_invite"("p_handle" "text") RETURNS "jsonb"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+DECLARE
+  v_uid      uuid := auth.uid();
+  v_h        text := trim(coalesce(p_handle, ''));
+  v_is_email boolean := position('@' in trim(coalesce(p_handle, ''))) > 1;
+  v_prof     public.profiles%rowtype;
+  v_ex       public.friendships%rowtype;
+  v_target   text;
+  v_cd_ok    boolean;
+  v_cd_until timestamptz;
+  v_id       uuid;
+  v_token    uuid;
+BEGIN
+  IF v_uid IS NULL THEN
+    RETURN jsonb_build_object('ok', false, 'err', 'auth required');
+  END IF;
+  IF v_h = '' THEN
+    RETURN jsonb_build_object('ok', false, 'err', 'empty handle');
+  END IF;
+
+  SELECT * INTO v_prof
+  FROM public.profiles p
+  WHERE (lower(p.username) = lower(v_h) OR lower(p.email) = lower(v_h))
+    AND NOT p.is_guest
+  ORDER BY (lower(p.username) = lower(v_h)) DESC
+  LIMIT 1;
+
+  IF NOT FOUND THEN
+    RETURN jsonb_build_object('ok', false, 'err', 'unknown_user', 'has_email_only', v_is_email);
+  END IF;
+
+  IF v_prof.id = v_uid THEN
+    RETURN jsonb_build_object('ok', false, 'err', 'self');
+  END IF;
+
+  SELECT * INTO v_ex
+  FROM public.friendships f
+  WHERE LEAST(f.requester_id, f.addressee_id) = LEAST(v_uid, v_prof.id)
+    AND GREATEST(f.requester_id, f.addressee_id) = GREATEST(v_uid, v_prof.id);
+
+  IF FOUND THEN
+    IF v_ex.status = 'pending' AND v_ex.addressee_id = v_uid THEN
+      -- Zaproszenie krzyżowe: druga strona już zaprosiła mnie — od razu aktywne, bez maila.
+      UPDATE public.friendships
+         SET status = 'active', accepted_at = now()
+       WHERE id = v_ex.id;
+      RETURN jsonb_build_object('ok', true, 'id', v_ex.id, 'token', v_ex.token,
+                                'to', v_prof.email, 'mail_allowed', false,
+                                'accepted', true, 'status', 'active');
+    END IF;
+    RETURN jsonb_build_object('ok', false, 'err', 'already', 'id', v_ex.id, 'status', v_ex.status);
+  END IF;
+
+  v_target := 'pair:' || v_uid::text || ':' || v_prof.id::text;
+
+  SELECT c.ok, c.next_allowed_at INTO v_cd_ok, v_cd_until
+  FROM public.mail_cooldown_check('friend:invite_after_reject', v_target) c;
+  IF NOT v_cd_ok THEN
+    RETURN jsonb_build_object('ok', false, 'err', 'cooldown', 'cooldown_until', v_cd_until, 'reason', 'after_reject');
+  END IF;
+
+  SELECT c.ok, c.next_allowed_at INTO v_cd_ok, v_cd_until
+  FROM public.mail_cooldown_check('friend:invite', v_target) c;
+  IF NOT v_cd_ok THEN
+    RETURN jsonb_build_object('ok', false, 'err', 'cooldown', 'cooldown_until', v_cd_until, 'reason', 'invite');
+  END IF;
+
+  BEGIN
+    INSERT INTO public.friendships (requester_id, addressee_id, status, email_sent_at, email_send_count)
+    VALUES (v_uid, v_prof.id, 'pending', now(), 1)
+    RETURNING id, token INTO v_id, v_token;
+  EXCEPTION WHEN unique_violation THEN
+    RETURN jsonb_build_object('ok', false, 'err', 'already');
+  END;
+
+  PERFORM public.mail_cooldown_reserve('friend:invite', v_target);
+
+  RETURN jsonb_build_object('ok', true, 'id', v_id, 'token', v_token,
+                            'to', v_prof.email, 'mail_allowed', true,
+                            'accepted', false, 'status', 'pending');
+END;
+$$;
+
+
+--
+-- Name: friends_list(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."friends_list"() RETURNS TABLE("id" "uuid", "user_id" "uuid", "label" "text", "email" "text", "status" "text", "direction" "text", "created_at" timestamp with time zone, "accepted_at" timestamp with time zone, "email_sent_at" timestamp with time zone, "email_send_count" integer)
+    LANGUAGE "plpgsql" STABLE SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+#variable_conflict use_column
+DECLARE
+  v_uid uuid := auth.uid();
+BEGIN
+  IF v_uid IS NULL THEN
+    RETURN;
+  END IF;
+  RETURN QUERY
+  SELECT f.id,
+         p.id,
+         coalesce(nullif(p.username, ''), p.email),
+         p.email,
+         f.status,
+         CASE WHEN f.status = 'active' THEN 'friend'
+              WHEN f.requester_id = v_uid THEN 'outgoing'
+              ELSE 'incoming' END,
+         f.created_at, f.accepted_at, f.email_sent_at, f.email_send_count
+  FROM public.friendships f
+  JOIN public.profiles p
+    ON p.id = CASE WHEN f.requester_id = v_uid THEN f.addressee_id ELSE f.requester_id END
+  WHERE f.requester_id = v_uid OR f.addressee_id = v_uid
+  ORDER BY f.created_at DESC;
+END;
+$$;
+
+
+--
+-- Name: friends_reject("uuid"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."friends_reject"("p_id" "uuid") RETURNS "jsonb"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+DECLARE
+  v_uid uuid := auth.uid();
+  v_req uuid;
+BEGIN
+  IF v_uid IS NULL THEN
+    RETURN jsonb_build_object('ok', false, 'err', 'auth required');
+  END IF;
+  DELETE FROM public.friendships
+   WHERE id = p_id AND addressee_id = v_uid AND status = 'pending'
+  RETURNING requester_id INTO v_req;
+  IF NOT FOUND THEN
+    RETURN jsonb_build_object('ok', false, 'err', 'not_found');
+  END IF;
+  PERFORM public._friend_drop_pair_tasks(v_req, v_uid);
+  -- blokada ponownego zaproszenia od zapraszającego na 30 dni
+  PERFORM public.mail_cooldown_reserve('friend:invite_after_reject', 'pair:' || v_req::text || ':' || v_uid::text);
+  RETURN jsonb_build_object('ok', true, 'action', 'rejected', 'id', p_id);
+END;
+$$;
+
+
+--
+-- Name: friends_remove("uuid"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."friends_remove"("p_id" "uuid") RETURNS "jsonb"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+DECLARE
+  v_uid uuid := auth.uid();
+  v_req uuid;
+  v_adr uuid;
+BEGIN
+  IF v_uid IS NULL THEN
+    RETURN jsonb_build_object('ok', false, 'err', 'auth required');
+  END IF;
+  DELETE FROM public.friendships
+   WHERE id = p_id AND status = 'active'
+     AND (requester_id = v_uid OR addressee_id = v_uid)
+  RETURNING requester_id, addressee_id INTO v_req, v_adr;
+  IF NOT FOUND THEN
+    RETURN jsonb_build_object('ok', false, 'err', 'not_found');
+  END IF;
+  PERFORM public._friend_drop_pair_tasks(v_req, v_adr);
+  RETURN jsonb_build_object('ok', true, 'action', 'removed', 'id', p_id);
+END;
+$$;
+
+
+--
+-- Name: friends_resend("uuid"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."friends_resend"("p_id" "uuid") RETURNS "jsonb"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+DECLARE
+  v_uid      uuid := auth.uid();
+  v_f        public.friendships%rowtype;
+  v_to       text;
+  v_target   text;
+  v_cd_ok    boolean;
+  v_cd_until timestamptz;
+  v_lim      timestamptz;
+BEGIN
+  IF v_uid IS NULL THEN
+    RETURN jsonb_build_object('ok', false, 'err', 'auth required');
+  END IF;
+
+  SELECT * INTO v_f FROM public.friendships WHERE id = p_id AND requester_id = v_uid;
+  IF NOT FOUND THEN
+    RETURN jsonb_build_object('ok', false, 'err', 'not_found');
+  END IF;
+  IF v_f.status <> 'pending' THEN
+    RETURN jsonb_build_object('ok', false, 'err', 'only pending can be resent');
+  END IF;
+
+  v_lim := public._friend_mail_limit_until(v_uid, v_f.addressee_id);
+  IF v_lim IS NOT NULL THEN
+    RETURN jsonb_build_object('ok', false, 'err', 'cooldown', 'cooldown_until', v_lim, 'reason', 'mail_limit');
+  END IF;
+
+  v_target := 'pair:' || v_uid::text || ':' || v_f.addressee_id::text;
+  SELECT c.ok, c.next_allowed_at INTO v_cd_ok, v_cd_until
+  FROM public.mail_cooldown_check('friend:resend', v_target) c;
+  IF NOT v_cd_ok THEN
+    RETURN jsonb_build_object('ok', false, 'err', 'cooldown', 'cooldown_until', v_cd_until);
+  END IF;
+
+  SELECT lower(p.email) INTO v_to FROM public.profiles p WHERE p.id = v_f.addressee_id;
+  IF public._norm_email(v_to) IS NULL THEN
+    RETURN jsonb_build_object('ok', false, 'err', 'no email for this user');
+  END IF;
+
+  UPDATE public.friendships
+     SET email_sent_at = now(), email_send_count = email_send_count + 1
+   WHERE id = p_id;
+
+  PERFORM public.mail_cooldown_reserve('friend:resend', v_target);
+
+  RETURN jsonb_build_object('ok', true, 'to', v_to, 'kind', 'friend_invite',
+                            'link', 'go?f=' || v_f.token::text, 'token', v_f.token);
+END;
+$$;
+
+
+--
+-- Name: friends_token_info("uuid"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."friends_token_info"("p_token" "uuid") RETURNS "jsonb"
+    LANGUAGE "plpgsql" STABLE SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+DECLARE
+  v_f     public.friendships%rowtype;
+  v_label text;
+BEGIN
+  SELECT * INTO v_f FROM public.friendships WHERE token = p_token;
+  IF NOT FOUND THEN
+    RETURN jsonb_build_object('ok', false, 'err', 'not_found');
+  END IF;
+  SELECT coalesce(nullif(p.username, ''), p.email) INTO v_label
+  FROM public.profiles p WHERE p.id = v_f.requester_id;
+  RETURN jsonb_build_object(
+    'ok', true,
+    'status', v_f.status,
+    'requester_label', v_label,
+    'addressee_matches_me', (auth.uid() IS NOT NULL AND v_f.addressee_id = auth.uid())
+  );
+END;
 $$;
 
 
@@ -12488,7 +13000,7 @@ DECLARE uid uuid := auth.uid(); gid uuid;
 BEGIN
  IF uid IS NULL THEN RAISE EXCEPTION 'unauthorized'; END IF;
  IF p_tab_id IS NULL OR p_page IS NULL OR p_page NOT IN
- ('home','games','control','editor','game-settings','bases','base-explorer','logo','polls','polls-hub','subscriptions','account','marketplace','manual','connect-device') THEN RAISE EXCEPTION 'invalid_page'; END IF;
+ ('home','games','control','editor','game-settings','bases','base-explorer','logo','polls','polls-hub','subscriptions','friends','subscribers','tasks','account','marketplace','manual','connect-device') THEN RAISE EXCEPTION 'invalid_page'; END IF;
  IF p_game_id IS NOT NULL AND p_page IN ('control','editor','game-settings','polls') THEN
    SELECT id INTO gid FROM public.games WHERE id=p_game_id AND owner_id=uid;
  END IF;
@@ -12878,6 +13390,76 @@ BEGIN
     avg_rating   = COALESCE((SELECT ROUND(AVG(stars::numeric), 2) FROM public.market_game_ratings WHERE market_game_id = v_id), 0)
   WHERE id = v_id;
   RETURN NULL;
+END;
+$$;
+
+
+--
+-- Name: tasks_list("text"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."tasks_list"("p_kind" "text" DEFAULT NULL::"text") RETURNS TABLE("kind" "text", "id" "uuid", "state" "text", "title" "text", "owner_label" "text", "created_at" timestamp with time zone, "done_at" timestamp with time zone, "token" "uuid", "poll_type" "text", "role" "text", "device_type" "text", "game_id" "uuid", "expires_at" timestamp with time zone)
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+#variable_conflict use_column
+DECLARE
+  v_uid uuid := auth.uid();
+BEGIN
+  IF v_uid IS NULL THEN
+    RETURN;
+  END IF;
+  PERFORM public.poll_claim_email_records();
+
+  IF p_kind IS NULL OR p_kind = 'poll' THEN
+    RETURN QUERY
+    SELECT 'poll'::text, t.id,
+           CASE WHEN t.done_at IS NOT NULL THEN 'done' ELSE 'todo' END,
+           coalesce(g.name, ('Sondaż ' || left(t.game_id::text, 8))::text),
+           coalesce(nullif(p.username, ''), p.email),
+           t.created_at, t.done_at, t.token,
+           t.poll_type, NULL::text, NULL::text, t.game_id, NULL::timestamptz
+    FROM public.poll_tasks t
+    LEFT JOIN public.games g ON g.id = t.game_id
+    LEFT JOIN public.profiles p ON p.id = t.owner_id
+    WHERE t.recipient_user_id = v_uid
+      AND t.declined_at IS NULL AND t.cancelled_at IS NULL
+      AND (t.done_at IS NULL OR t.done_at > now() - interval '5 days')
+    ORDER BY t.created_at DESC;
+  END IF;
+
+  IF p_kind IS NULL OR p_kind = 'base' THEN
+    RETURN QUERY
+    SELECT 'base'::text, bt.id,
+           CASE WHEN bt.status IN ('pending', 'opened') THEN 'todo' ELSE 'done' END,
+           coalesce(b.name, 'Baza pytań'),
+           coalesce(nullif(p.username, ''), p.email),
+           bt.created_at,
+           CASE WHEN bt.status = 'done' THEN bt.accepted_at END,
+           bt.token,
+           NULL::text, bt.role::text, NULL::text, NULL::uuid, NULL::timestamptz
+    FROM public.base_share_tasks bt
+    LEFT JOIN public.question_bases b ON b.id = bt.base_id
+    LEFT JOIN public.profiles p ON p.id = bt.owner_id
+    WHERE bt.recipient_user_id = v_uid
+      AND (bt.status IN ('pending', 'opened')
+        OR (bt.status = 'done' AND bt.accepted_at > now() - interval '5 days'))
+    ORDER BY bt.created_at DESC;
+  END IF;
+
+  IF p_kind IS NULL OR p_kind = 'device' THEN
+    RETURN QUERY
+    SELECT 'device'::text, sd.id, 'todo'::text,
+           coalesce(nullif(sd.game_name, ''), sd.device_type),
+           coalesce(nullif(p.username, ''), p.email),
+           sd.created_at, NULL::timestamptz, NULL::uuid,
+           NULL::text, NULL::text, sd.device_type, sd.game_id, sd.expires_at
+    FROM public.shared_devices sd
+    LEFT JOIN public.profiles p ON p.id = sd.owner_id
+    WHERE sd.recipient_id = v_uid
+      AND (sd.expires_at IS NULL OR sd.expires_at > now())
+    ORDER BY sd.created_at DESC;
+  END IF;
 END;
 $$;
 
@@ -13678,6 +14260,27 @@ CREATE TABLE "public"."example_table" (
     "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
     "notes" "text"
 );
+
+
+--
+-- Name: friendships; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE "public"."friendships" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "requester_id" "uuid" NOT NULL,
+    "addressee_id" "uuid" NOT NULL,
+    "status" "text" DEFAULT 'pending'::"text" NOT NULL,
+    "token" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    "accepted_at" timestamp with time zone,
+    "email_sent_at" timestamp with time zone,
+    "email_send_count" integer DEFAULT 0 NOT NULL,
+    CONSTRAINT "friendships_distinct_chk" CHECK (("requester_id" <> "addressee_id")),
+    CONSTRAINT "friendships_status_check" CHECK (("status" = ANY (ARRAY['pending'::"text", 'active'::"text"])))
+);
+
+ALTER TABLE ONLY "public"."friendships" FORCE ROW LEVEL SECURITY;
 
 
 --
@@ -14785,6 +15388,22 @@ ALTER TABLE ONLY "public"."example_table"
 
 
 --
+-- Name: friendships friendships_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."friendships"
+    ADD CONSTRAINT "friendships_pkey" PRIMARY KEY ("id");
+
+
+--
+-- Name: friendships friendships_token_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."friendships"
+    ADD CONSTRAINT "friendships_token_key" UNIQUE ("token");
+
+
+--
 -- Name: game_gen_queue game_gen_queue_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -15370,6 +15989,27 @@ CREATE INDEX "email_intents_status_idx" ON "public"."email_intents" USING "btree
 --
 
 CREATE INDEX "example_table_created_at_idx" ON "public"."example_table" USING "btree" ("created_at" DESC);
+
+
+--
+-- Name: friendships_addressee_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX "friendships_addressee_idx" ON "public"."friendships" USING "btree" ("addressee_id");
+
+
+--
+-- Name: friendships_pair_uniq; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX "friendships_pair_uniq" ON "public"."friendships" USING "btree" (LEAST("requester_id", "addressee_id"), GREATEST("requester_id", "addressee_id"));
+
+
+--
+-- Name: friendships_requester_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX "friendships_requester_idx" ON "public"."friendships" USING "btree" ("requester_id");
 
 
 --
@@ -16378,6 +17018,22 @@ ALTER TABLE ONLY "public"."display_audio_unlock"
 
 
 --
+-- Name: friendships friendships_addressee_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."friendships"
+    ADD CONSTRAINT "friendships_addressee_id_fkey" FOREIGN KEY ("addressee_id") REFERENCES "public"."profiles"("id") ON DELETE CASCADE;
+
+
+--
+-- Name: friendships friendships_requester_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."friendships"
+    ADD CONSTRAINT "friendships_requester_id_fkey" FOREIGN KEY ("requester_id") REFERENCES "public"."profiles"("id") ON DELETE CASCADE;
+
+
+--
 -- Name: game_session_active game_session_active_game_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -17143,6 +17799,19 @@ CREATE POLICY "email_providers_read_all" ON "public"."email_providers" FOR SELEC
 --
 
 ALTER TABLE "public"."email_unsub_tokens" ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: friendships; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE "public"."friendships" ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: friendships friendships_select_parties; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "friendships_select_parties" ON "public"."friendships" FOR SELECT TO "authenticated" USING ((("requester_id" = "auth"."uid"()) OR ("addressee_id" = "auth"."uid"())));
+
 
 --
 -- Name: game_gen_queue; Type: ROW SECURITY; Schema: public; Owner: -
@@ -18206,5 +18875,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict VNcu6Dhckfex8YvXzOdYQK5yBHkDKUItePSr7XBK5N6soOo7SlynTM88gUmsVfL
+\unrestrict h2EzQj6V6HxPM9qEO4jctGAdWisSILwXZOrCYLHIEQ87V80dGgJeMdQQNWYC5rn
 
