@@ -50,7 +50,6 @@ const baseUrls = document.body?.dataset || {};
 const confirmUrl = baseUrls.confirmUrl || "/login/confirm/";
 const resetUrl = baseUrls.resetUrl || "/login/reset/";
 const gamesUrl = baseUrls.gamesUrl || "/games/";
-const subscriptionsUrl = baseUrls.subscriptionsUrl;
 const captchaProvider = String(baseUrls.captchaProvider || "hcaptcha").trim().toLowerCase();
 const captchaSiteKey = String(baseUrls.captchaSiteKey || "").trim();
 let captchaLoadPromise = null;
@@ -535,7 +534,7 @@ function setBusy(v) {
 const params = new URLSearchParams(location.search);
 const nextTarget = params.get("next");
 const nextTask = params.get("t");
-const nextSub = params.get("s");
+const nextFriend = params.get("f");
 const guestUsername = params.get("guest_username") === "1";
 const setupUsername = params.get("setup") === "username";
 const guestExpired = params.get("guest_expired") === "1";
@@ -556,15 +555,9 @@ function buildAuthRedirect(page) {
 }
 
 function buildNextUrl() {
-  const target = subscriptionsUrl;
-  if (!target) throw new Error(t("index.statusError"));
-  const url = new URL(target.startsWith("/") ? target : `/${target}`, location.origin);
-
-  if (nextTarget === "subscriptions" && nextSub) url.searchParams.set("s", nextSub);
-  if (nextTarget === "tasks") {
-    url.searchParams.set("tab", "tasks");
-    if (nextTask) url.searchParams.set("t", nextTask);
-  }
+  const url = new URL(nextTarget === "friends" ? "/friends/" : "/tasks/", location.origin);
+  if (nextTarget === "friends" && nextFriend) url.searchParams.set("f", nextFriend);
+  if (nextTarget === "tasks" && nextTask) url.searchParams.set("t", nextTask);
 
   url.searchParams.set("lang", getUiLang());
   return url.toString();
@@ -838,7 +831,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       await syncLanguage();
       if (setupUsername || !u.username) {
         openUsernameSetup();
-      } else if (nextTarget === "tasks" || nextTarget === "subscriptions") {
+      } else if (nextTarget === "tasks" || nextTarget === "friends") {
         location.href = buildNextUrl();
       } else {
         location.href = withLangParam(gamesUrl);
@@ -1036,7 +1029,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         await syncLanguage();
         if (!authed?.username) {
           openUsernameSetup();
-        } else if (nextTarget === "tasks" || nextTarget === "subscriptions") {
+        } else if (nextTarget === "tasks" || nextTarget === "friends") {
           location.href = buildNextUrl();
         } else {
           location.href = withLangParam(gamesUrl);

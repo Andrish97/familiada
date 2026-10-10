@@ -1,5 +1,5 @@
 // Operational presence only. Device pages are intentionally excluded.
-const PAGES = new Set(['home','games','control','editor','game-settings','bases','base-explorer','logo','polls','subscriptions','account','marketplace','manual','connect-device']);
+const PAGES = new Set(['home','games','control','editor','game-settings','bases','base-explorer','logo','polls','friends','subscribers','tasks','account','marketplace','manual','connect-device']);
 // Klucz strony w statystykach to pierwszy segment adresu, z wyjątkami dla
 // podfolderów, które mają się liczyć osobno (lista rośnie z przenosinami
 // adresów) i dla stron głosowania uczestnika z zewnątrz (nie są częścią obecności).

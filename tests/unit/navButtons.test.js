@@ -80,7 +80,7 @@ test("w kodzie stron nie ma twardych przejść na adresy z mapy", () => {
   ];
   for (const f of files) {
     const code = readFileSync(path.join(WEB, f), "utf8").replace(/\/\/[^\n]*/g, "");
-    assert.doesNotMatch(code, /location\.href\s*=\s*[`"']\/(games|bases|subscriptions|polls|logo|marketplace|connect|manual|privacy)\//, f);
+    assert.doesNotMatch(code, /location\.href\s*=\s*[`"']\/(games|bases|friends|polls|logo|marketplace|connect|manual|privacy)\//, f);
   }
 });
 
@@ -101,7 +101,7 @@ test("role: anon, guest, user; wstęp na stronę wg access", () => {
   assert.equal(roleOf({}, false), "user");
   assert.deepEqual(pageRoles("marketplace"), ["anon", "guest", "user"]);
   assert.deepEqual(pageRoles("games"), ["guest", "user"]);
-  assert.deepEqual(pageRoles("subscriptions"), ["user"]);
+  assert.deepEqual(pageRoles("friends"), ["user"]);
 });
 
 test("locks: znane typy, id z parametrów stanu strony, tryb exclusive/shared", () => {
@@ -150,7 +150,7 @@ test("mapy: telefon nie ma stron i przycisków wide, komputer ma", () => {
   assert.ok(!phone.buttons.some((b) => b.label.startsWith("btnPlay")));
   assert.ok(desktop.buttons.some((b) => b.from === "games" && b.to === "control"));
   const guest = mapGraph({ role: "guest", phone: false });
-  assert.ok(!guest.nodes.includes("subscriptions"));
+  assert.ok(!guest.nodes.includes("friends"));
   assert.ok(!guest.buttons.some((b) => b.label === "btnConnectDevice"));
   assert.equal(MAPS.length, 6);
 });

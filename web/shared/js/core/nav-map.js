@@ -50,7 +50,8 @@ export const PAGES = {
     btnMarketplace:      { to: "marketplace" },
     btnLogoEditor:       { to: "logoEditor" },
     btnConnectDevice:    { to: "connectDevice", roles: ["user"] },
-    btnSubscriptionsHub: { to: "subscriptions", roles: ["user"] },
+    btnFriends:          { to: "friends", roles: ["user"] },
+    btnSubscribers:      { to: "subscribers", roles: ["user"] },
     btnTasks:            { to: "tasks", roles: ["user"] },
     btnBases:            { to: "bases" },
     btnPlay:             { to: "control", device: "wide", custom: true },
@@ -59,11 +60,12 @@ export const PAGES = {
     btnPoll:             { to: "polls", custom: true },
   } },
   editor:        { path: "/games/editor/",     access: "guest",  parent: "games", from: ["games"], manual: "edit", state: ["id", "q"], locks: [{ type: "game", id: "id" }] },
-  polls:         { path: "/polls/",             access: "guest",   parent: "games", from: ["games", "subscriptions"], manual: "polls", tabs: ["share", "results"], state: ["id", "tab"], locks: [{ type: "game", id: "id" }] },
-  subscriptions: { path: "/subscriptions/",     access: "user",   parent: "games", from: ["games", "bases", "polls"], manual: "subscriptions", tabs: ["subscribers", "subscriptions", "tasks"], state: ["tab"] },
+  polls:         { path: "/polls/",             access: "guest",   parent: "games", from: ["games", "friends", "subscribers", "tasks"], manual: "polls", tabs: ["share", "results"], state: ["id", "tab"], locks: [{ type: "game", id: "id" }] },
+  friends:       { path: "/friends/", access: "user", parent: "games", from: ["games", "subscribers", "bases", "polls"], manual: "polls", state: ["f"] },
+  subscribers:   { path: "/subscribers/", access: "user", parent: "games", from: ["games", "friends", "polls"], manual: "polls", state: [] },
   tasks:         { path: "/tasks/",             access: "user",   parent: "games", from: ["games"], manual: "polls", state: ["kind"] },
-  bases:         { path: "/bases/",             access: "guest",  parent: "games", from: ["games", "subscriptions", "baseExplorer"], manual: "bases", tabs: ["mine", "shared"], state: ["tab"], buttons: {
-    btnGoAlt:  { to: "subscriptions", roles: ["user"] },
+  bases:         { path: "/bases/",             access: "guest",  parent: "games", from: ["games", "friends", "subscribers", "tasks", "baseExplorer"], manual: "bases", tabs: ["mine", "shared"], state: ["tab"], buttons: {
+    btnGoAlt:  { to: "friends", roles: ["user"] },
     btnBrowse: { to: "baseExplorer", custom: true },
   } },
   baseExplorer:  { path: "/bases/explorer/",   access: "guest",  parent: "bases", from: ["bases"], manual: "bases", state: ["id", "folder"], locks: [{ type: "base", id: "id", mode: "shared" }] },
@@ -78,7 +80,7 @@ export const PAGES = {
   marketplace:   { path: "/marketplace/",       access: "public", parent: "games", parentAnon: "home", subpaths: true, from: ["home", "games"], manual: "community", state: ["q", "filter", "sort"] },
   connectDevice: { path: "/connect/",    access: "public", parent: "games", parentAnon: "home", from: ["home", "games", "tasks"], manual: "connect", state: ["share"] },
   account:       { path: "/account/",           access: "guest",  parent: "games", from: ["games"], manual: "general" },
-  manual:        { path: "/manual/",            access: "guest",  parent: "games", from: [], tabs: ["general", "edit", "community", "bases", "polls", "subscriptions", "logo", "control", "gameSettings", "connect"], state: ["tab"], buttons: {
+  manual:        { path: "/manual/",            access: "guest",  parent: "games", from: [], tabs: ["general", "edit", "community", "bases", "polls", "logo", "control", "gameSettings", "connect"], state: ["tab"], buttons: {
     btnLegal: { to: "privacy" },
   } },
   privacy:       { path: "/privacy/",           access: "public", parent: "manual", parentAnon: "home", from: ["home", "manual"] },

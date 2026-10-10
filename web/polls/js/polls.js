@@ -682,7 +682,7 @@ function renderSubs(force = false) {
     subsGrid.innerHTML = "";
     if (subsEmpty) {
       subsEmpty.style.display = "";
-      subsEmpty.innerHTML = `${escapeHtml(t("polls.share.noSubs"))} <a href="${escapeHtml(linkTo("subscriptions"))}">${escapeHtml(t("polls.share.noSubsLink"))}</a>`;
+      subsEmpty.innerHTML = `${escapeHtml(t("polls.share.noSubs"))} <a href="${escapeHtml(linkTo("subscribers"))}">${escapeHtml(t("polls.share.noSubsLink"))}</a>`;
     }
     return;
   }

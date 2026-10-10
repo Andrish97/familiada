@@ -2667,6 +2667,8 @@ const en = {
     nav: {
       pollsHubPolls: "Polls",
       pollsHubSubs: "Subscriptions",
+      friends: "Friends",
+      subscribers: "Subscribers",
       tasks: "Tasks",
       bases: "Question bases",
       logo: "Logo",
@@ -4977,6 +4979,60 @@ const en = {
   security: {
     selfXssWarning: "Using this console may allow attackers to impersonate you and steal your information using an attack called Self-XSS. Do not enter or paste code that you do not understand.",
   },
+  contacts: {
+    "friends": {
+        "title": "Friends",
+        "hint": "Invitations and people you are friends with.",
+        "empty": "No friends or invitations yet."
+    },
+    "subscribers": {
+        "title": "Subscribers",
+        "hint": "People without an account who want to receive your polls.",
+        "empty": "No subscribers yet."
+    },
+    "invite": "+ Invite",
+    "handle": "Email or username",
+    "email": "Email address",
+    "go": "Go →",
+    "sent": "Invitation saved.",
+    "mailFailed": "Invitation saved, but the email could not be sent. You can resend it.",
+    "accountCreated": "An account was created — the friend invitation is waiting for acceptance.",
+    "sections": {
+        "incoming": "Received invitations",
+        "outgoing": "Sent",
+        "friend": "Friends",
+        "pending": "Pending",
+        "active": "Active"
+    },
+    "actions": {
+        "accept": "Accept",
+        "reject": "Decline",
+        "cancel": "Withdraw",
+        "remove": "Remove",
+        "resend": "Resend"
+    },
+    "confirm": {
+        "reject": "Decline this invitation?",
+        "cancel": "Withdraw this invitation?",
+        "remove": "Remove this person? Pending invitations and tasks will be deleted. Accepted bases and devices remain — you can revoke them separately."
+    },
+    "errors": {
+        "hasAccount": "This email belongs to a Familiada account — you can invite this person as a friend.",
+        "emailOnly": "This email has no Familiada account — you can add this person as a subscriber.",
+        "cooldown": "You can send another invitation after: {date}.",
+        "already": "This person is already on the list.",
+        "action": "The action failed."
+    },
+    "mail": {
+        "friendTitle": "{owner} invites you to be friends on Familiada",
+        "friendBody": "{owner} wants to add you as a friend. Accept the invitation on Familiada.",
+        "friendAction": "Open invitation"
+    },
+    "goTitle": "Friend invitation",
+    "goBody": "{owner} invites you to be friends.",
+    "open": "Open Friends"
+},
+
   gameSettings: {
     pageTitle: "Game settings",
     title: "Familiada — game settings",

@@ -16,7 +16,7 @@ test("tasks: wpis w PAGES, trasa Workera, przycisk na liście gier", () => {
   assert.ok(PAGES.tasks.from.includes("games"));
   assert.deepEqual(PAGES.tasks.state, ["kind"]);
   assert.deepEqual(PAGES.games.buttons.btnTasks, { to: "tasks", roles: ["user"] });
-  assert.match(read("cloudflare/maintenance-worker/src/lib/origin/origin.js"), /"subscriptions", "tasks"/);
+  assert.match(read("cloudflare/maintenance-worker/src/lib/origin/origin.js"), /"friends", "subscribers", "tasks"/);
   assert.match(read("web/games/index.html"), /id="btnTasks"/);
   assert.match(read("web/tasks/js/tasks.js"), /initPage\("tasks"/);
 });

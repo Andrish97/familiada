@@ -73,13 +73,15 @@ const MSG = {
 const qs = new URLSearchParams(location.search);
 const taskToken = qs.get("t");
 const subToken = qs.get("s");
+const friendToken = qs.get("f");
 const unsubToken = qs.get("u");
 const actionParam = qs.get("action");
 const isUnsubOwner = Boolean(subToken && actionParam === "unsub");
 const isUnsubGlobal = Boolean(unsubToken && !taskToken && !subToken);
 const hasTaskToken = Boolean(taskToken) && !isUnsubOwner;
 const hasSubToken = Boolean(subToken) && !isUnsubOwner;
-const goToken = hasTaskToken === hasSubToken ? null : (hasTaskToken ? taskToken : subToken);
+const tokenCount = [taskToken, subToken, friendToken].filter(Boolean).length;
+const goToken = tokenCount === 1 ? (friendToken || taskToken || subToken) : null;
 
 const $ = (id) => document.getElementById(id);
 
@@ -117,19 +119,21 @@ function addAction(label, kind, handler) {
 function redirectToLogin() {
   const url = new URL("/login/", location.href);
   url.searchParams.set("from", "poll-go");
-  url.searchParams.set("next", taskToken ? "tasks" : "subscriptions");
+  url.searchParams.set("next", friendToken || resolvedInviteData?.kind === "friend" ? "friends" : "tasks");
+  if (friendToken || resolvedInviteData?.kind === "friend") url.searchParams.set("f", friendToken || subToken);
   if (taskToken) url.searchParams.set("t", taskToken);
-  if (subToken) url.searchParams.set("s", subToken);
+  if (subToken && resolvedInviteData?.kind !== "friend") url.searchParams.set("s", subToken);
+  if (friendToken || resolvedInviteData?.kind === "friend") url.searchParams.set("f", friendToken || subToken);
   location.href = url.toString();
 }
 
 function redirectToHub() {
-  const url = new URL("/subscriptions/", location.href);
+  const url = new URL(taskToken ? "/tasks/" : "/friends/", location.href);
   if (taskToken) {
-    url.searchParams.set("tab", "tasks");
     url.searchParams.set("t", taskToken);
   }
-  if (subToken) url.searchParams.set("s", subToken);
+  if (subToken && resolvedInviteData?.kind !== "friend") url.searchParams.set("s", subToken);
+  if (friendToken || resolvedInviteData?.kind === "friend") url.searchParams.set("f", friendToken || subToken);
   location.href = url.toString();
 }
 
@@ -618,6 +622,15 @@ async function init() {
       return;
     }
 
+    if (data.kind === "friend") {
+      clearActions();
+      showEmailInput(false);
+      setView({ head: t("contacts.goTitle"), text: t("contacts.goBody", { owner: data.owner_label }) });
+      if (!user) addAction(MSG.loginLabel(), "gold", redirectToLogin);
+      else if (data.recipient_matches_me) addAction(t("contacts.open"), "gold", redirectToHub);
+      else setView({ head: t("contacts.goTitle"), text: MSG.invitationRecipient() });
+      return;
+    }
     if (data.kind === "sub") {
       await handleSubInvite(data, user);
       return;

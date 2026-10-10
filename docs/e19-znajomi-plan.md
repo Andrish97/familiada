@@ -44,7 +44,7 @@ sprzed E12).
 | Znajomi | `friends_invite(handle)`, `friends_list()`, `friends_accept/reject/cancel/remove/resend(id)`, `friends_token_info(token)` | — | `polls_hub_list_my_subscriptions`, `polls_hub_subscription_accept/_reject/_cancel/_invite/_invite_a`, `poll_sub_accept` |
 | Subskrybenci | `subscribers_invite(email)` (konto → `has_account`), `subscribers_list()` (+`friend_user_id`) | `poll_claim_email_records`, `poll_go_resolve` | kolumna `subscriber_user_id`, CHECK, indeks |
 | Ankieta | `poll_share_send(game, friend_ids[], subscriber_ids[])` | — | `polls_hub_share_poll` |
-| Bazy | — | `base_share_by_user` wymaga znajomości (`not_friend`); linki `go?b=` zamiast `/bases?share=` | `bases_count_incoming_share_invites` (jeśli zbędne) |
+| Bazy | — | `base_share_by_user` wyszukuje konto (znajomość nie jest wymagana); linki `go?b=` zamiast `/bases?share=` | `bases_count_incoming_share_invites` (jeśli zbędne) |
 | Urządzenia | `device_share_create(user|email, …)`, `device_shares_list_mine()`, `device_share_revoke(id)` | `e2e_shared_devices_cleanup` | `share_device`, `unshare_device`, `list_my_device_shares` |
 | Zadania | `tasks_list()` (ankiety, bazy do akceptacji, aktywne urządzenia), `badges_get()` | `site_activity_ping` (+friends/subscribers/tasks) | `polls_badge_get`, `polls_hub_overview`, `polls_hub_list_tasks` |
 | Testy | `e2e_friendships_cleanup` | `294_e2e_cleanup_mail_cooldowns` (+`friend:*`) | — |
@@ -84,7 +84,7 @@ znajomy+subskrybent; stare linki `/bases?share=` martwe po kroku 5 (≤ 5 dni).
 Specy: przepisanie `subscriptions.spec.js` na `friends.spec.js` /
 `subscribers.spec.js`, nowe `tasks.spec.js`, zmiany `go`, `bases`, `control2`
 (urządzenia), `frontend-navigation`, `account-deletion`. Konta tylko z puli —
-test4/5/9/10 zarezerwowane.
+pula test1–test8; test9/test10 zarezerwowane.
 
 ## 5. Stan kroków (2026-10-10)
 
@@ -92,7 +92,7 @@ test4/5/9/10 zarezerwowane.
 |---|---|
 | 1. Migracja 320 (`friendships`, `friends_*`, `tasks_list`, `badges_get`, kopia subskrypcji kont) | **zrobione** — na produkcji (`d38e829`), test SQL `docs/sql/test-friendships-320.sql` 60/60 |
 | 2. Komponent wierszy (`renderRowSections`/`rowEl` w `share-sections.js`) + `/tasks/` | **zrobione** — e2e `tasks`, `frontend-navigation`, `go` zielone |
-| 3. `/friends/`, `/subscribers/` + migracja 321 (przełączenie), usunięcie `/subscriptions/` | **następny** |
+| 3. `/friends/`, `/subscribers/` + migracja 321 (przełączenie), usunięcie `/subscriptions/` | **w toku** — branch `codex/e19-3`; migracja 321 i front przygotowane, wymagane SQL/unit na runnerze, wdrożenie razem i kontrola produkcji |
 | 4. Ankieta: udostępnianie oknem (Znajomi · Subskrybenci), jedna lista odbiorców | do zrobienia |
 | 5. Bazy: jedno okno (udostępnieni + dodawanie), `go?b=`, akceptacja w `/tasks/` | do zrobienia |
 | 6. Urządzenia: jedno okno, klucz na udostępnienie z sesją rozgrywki, odbiorca bez konta | do zrobienia (dotyka Control — obszar drugiej sesji, ostrożnie) |

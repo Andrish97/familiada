@@ -110,7 +110,7 @@ const btnPlay = document.getElementById("btnPlay");
 const btnPoll = document.getElementById("btnPoll");
 const btnSettings = document.getElementById("btnSettings");
 
-const subscriptionsHubBadge = document.getElementById("subscriptionsHubBadge");
+const friendsBadge = document.getElementById("friendsBadge");
 const tasksBadge = document.getElementById("tasksBadge");
 const navMore = document.getElementById("navMore");
 const btnMore = document.getElementById("btnMore");
@@ -1322,21 +1322,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (badgeEl) badgeEl.textContent = n > 99 ? "99+" : (n > 0 ? String(n) : "");
   }
 
-  async function refreshPollsHubDot(){
-    // dot ma się pokazać, gdy są aktywne zadania / zaproszenia
-    try{
-      const { data, error } = await sb().rpc("polls_badge_get");
-      if (error) throw error;
-
-      const row = Array.isArray(data) ? data[0] : data;
-      // jeden przycisk „Subskrypcje”: zaproszenia + zadania do wypełnienia
-      setNavBadge(subscriptionsHubBadge, Number(row?.subs_pending ?? 0) + Number(row?.tasks_pending ?? 0));
-    } catch (e){
-      // jak RPC nie istnieje / nie zwróci pól — nie blokujemy UI
-      setNavBadge(subscriptionsHubBadge, 0);
-    }
-  }
-
   // Zadania (ankiety + bazy do akceptacji): badges_get().tasks_pending.
   async function refreshTasksBadge(){
     try{
@@ -1344,8 +1329,10 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (error) throw error;
       const row = Array.isArray(data) ? data[0] : data;
       setNavBadge(tasksBadge, Number(row?.tasks_pending ?? 0));
+      setNavBadge(friendsBadge, Number(row?.friends_pending ?? 0));
     } catch (e){
       setNavBadge(tasksBadge, 0);
+      setNavBadge(friendsBadge, 0);
     }
   }
 
@@ -1387,7 +1374,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   async function refreshBadgesNow(){
     if (badgesRefreshInFlight) return badgesRefreshInFlight;
     badgesRefreshInFlight = (async () => {
-      await Promise.allSettled([refreshPollsHubDot(), refreshTasksBadge(), refreshBasesBadge(), refreshConnectDeviceBadge()]);
+      await Promise.allSettled([refreshTasksBadge(), refreshBasesBadge(), refreshConnectDeviceBadge()]);
       lastBadgesRefreshAt = Date.now();
     })();
     try {

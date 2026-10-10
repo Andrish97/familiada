@@ -14,7 +14,7 @@ const { serveBranchCode } = require("./helpers/branch-code");
 // Strony głosowania z brancha (komunikaty stanów, E11e); baza z produkcji.
 test.use({ serviceWorkers: "block" });
 test.beforeEach(async ({ context }) => {
-  await serveBranchCode(context, { pages: ["go", "polls/vote/text", "polls/vote/points"] });
+  if (process.env.TEST_BRANCH_CODE !== "0") await serveBranchCode(context, { pages: ["go", "polls/vote/text", "polls/vote/points"] });
 });
 const { loginAsPooledTestUser } = require("./helpers/login");
 
@@ -100,8 +100,8 @@ async function createSubToken(page) {
     // poll_subscriptions ma RLS bez INSERT policy dla klientów — jedyna
     // droga stworzenia zaproszenia to RPC polls_hub_subscription_invite,
     // tak samo jak robi to prawdziwy UI (subscriptions.js).
-    const { data, error } = await sb.rpc("polls_hub_subscription_invite", {
-      p_recipient: `e2e-subscriber-${Date.now()}@example.com`,
+    const { data, error } = await sb.rpc("subscribers_invite", {
+      p_email: `e2e-subscriber-${Date.now()}@example.com`,
     });
     if (error) throw new Error("polls_hub_subscription_invite failed: " + error.message);
     if (!data?.ok) throw new Error("polls_hub_subscription_invite returned not ok: " + JSON.stringify(data));

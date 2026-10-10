@@ -34,9 +34,9 @@
             var _next = _p.get('next');
             var _dest;
             if (_next === 'tasks') {
-              _dest = '/subscriptions/?tab=tasks' + (_p.get('t') ? '&t=' + _p.get('t') : '');
-            } else if (_next === 'subscriptions') {
-              _dest = '/subscriptions/' + (_p.get('s') ? '?s=' + _p.get('s') : '');
+              _dest = '/tasks/' + (_p.get('t') ? '?t=' + _p.get('t') : '');
+            } else if (_next === 'friends') {
+              _dest = '/friends/' + (_p.get('f') ? '?f=' + _p.get('f') : '');
             } else {
               _dest = '/games/';
             }
@@ -50,7 +50,7 @@
   <script src="/shared/js/core/security-warning.js?v=v2026-10-10T21370" defer></script>
   <script type="module" src="/login/js/login.js?v=v2026-10-10T21370" defer></script>
 </head>
-<body class="login-body mode-login no-footer-line skel-body" data-confirm-url="/login/confirm/" data-reset-url="/login/reset/" data-games-url="/games/" data-subscriptions-url="/subscriptions/" data-captcha-provider="turnstile" data-captcha-site-key="0x4AAAAAACgSBNCEZ9064to_">
+<body class="login-body mode-login no-footer-line skel-body" data-confirm-url="/login/confirm/" data-reset-url="/login/reset/" data-games-url="/games/" data-captcha-provider="turnstile" data-captcha-site-key="0x4AAAAAACgSBNCEZ9064to_">
   <a href="/"
      class="login-back-fixed"
      id="btnBackHome"

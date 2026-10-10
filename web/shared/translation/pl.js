@@ -2562,6 +2562,8 @@ const pl = {
     nav: {
       pollsHubPolls: "Ankiety",
       pollsHubSubs: "Subskrypcje",
+      friends: "Znajomi",
+      subscribers: "Subskrybenci",
       tasks: "Zadania",
       bases: "Bazy pytań",
       logo: "Logo",
@@ -4886,6 +4888,60 @@ const pl = {
   security: {
     selfXssWarning: "Używanie tej konsoli może pozwolić atakującym na podszywanie się pod Ciebie i kradzież informacji przy użyciu ataku zwanego Self-XSS. Nie wprowadzaj ani nie wklejaj kodu, którego nie rozumiesz.",
   },
+  contacts: {
+    "friends": {
+        "title": "Znajomi",
+        "hint": "Zaproszenia i osoby, z którymi masz dwustronną znajomość.",
+        "empty": "Nie masz jeszcze znajomych ani zaproszeń."
+    },
+    "subscribers": {
+        "title": "Subskrybenci",
+        "hint": "Osoby bez konta, które chcą otrzymywać Twoje ankiety.",
+        "empty": "Nie masz jeszcze subskrybentów."
+    },
+    "invite": "+ Zaproś",
+    "handle": "E-mail lub nazwa użytkownika",
+    "email": "Adres e-mail",
+    "go": "Przejdź →",
+    "sent": "Zaproszenie zapisane.",
+    "mailFailed": "Zaproszenie zapisane, ale nie udało się wysłać maila. Możesz ponowić wysyłkę.",
+    "accountCreated": "Założono konto — zaproszenie do znajomych czeka na przyjęcie.",
+    "sections": {
+        "incoming": "Zaproszenia do mnie",
+        "outgoing": "Wysłane",
+        "friend": "Znajomi",
+        "pending": "Oczekujące",
+        "active": "Aktywni"
+    },
+    "actions": {
+        "accept": "Przyjmij",
+        "reject": "Odrzuć",
+        "cancel": "Cofnij",
+        "remove": "Usuń",
+        "resend": "Wyślij ponownie"
+    },
+    "confirm": {
+        "reject": "Odrzucić zaproszenie?",
+        "cancel": "Cofnąć zaproszenie?",
+        "remove": "Usunąć tę osobę? Oczekujące zaproszenia i zadania zostaną usunięte. Przyjęte bazy i urządzenia zostają — można je cofnąć osobno."
+    },
+    "errors": {
+        "hasAccount": "Do tego maila jest przypisane konto w systemie Familiada — możesz zaprosić tę osobę do znajomych.",
+        "emailOnly": "Do tego maila nie jest przypisane konto w systemie Familiada — możesz dodać tę osobę jako subskrybenta.",
+        "cooldown": "Kolejne zaproszenie można wysłać po: {date}.",
+        "already": "Ta osoba jest już na liście.",
+        "action": "Nie udało się wykonać akcji."
+    },
+    "mail": {
+        "friendTitle": "{owner} zaprasza Cię do znajomych w Familiadzie",
+        "friendBody": "{owner} chce dodać Cię do znajomych. Przyjmij zaproszenie w Familiadzie.",
+        "friendAction": "Otwórz zaproszenie"
+    },
+    "goTitle": "Zaproszenie do znajomych",
+    "goBody": "{owner} zaprasza Cię do znajomych.",
+    "open": "Otwórz Znajomych"
+},
+
   gameSettings: {
     pageTitle: "Ustawienia gry",
     title: "Familiada — ustawienia gry",

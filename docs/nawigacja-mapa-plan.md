@@ -704,7 +704,8 @@ flowchart LR
   games["/games/"]
   editor["/games/editor/"]
   polls["/polls/"]
-  subscriptions["/subscriptions/"]
+  friends["/friends/"]
+  subscribers["/subscribers/"]
   tasks["/tasks/"]
   bases["/bases/"]
   baseExplorer["/bases/explorer/"]
@@ -722,21 +723,23 @@ flowchart LR
   games -->|btnMarketplace| marketplace
   games -->|btnLogoEditor| logoEditor
   games -->|btnConnectDevice| connectDevice
-  games -->|btnSubscriptionsHub| subscriptions
+  games -->|btnFriends| friends
+  games -->|btnSubscribers| subscribers
   games -->|btnTasks| tasks
   games -->|btnBases| bases
   games -->|btnPlay*| control
   games -->|btnSettings*| gameSettings
   games -->|btnEdit*| editor
   games -->|btnPoll*| polls
-  bases -->|btnGoAlt| subscriptions
+  bases -->|btnGoAlt| friends
   bases -->|btnBrowse*| baseExplorer
   gameSettings -->|btnPlay*| control
   manual -->|btnLegal| privacy
   login -.->|↩| home
   editor -.->|↩| games
   polls -.->|↩| games
-  subscriptions -.->|↩| games
+  friends -.->|↩| games
+  subscribers -.->|↩| games
   tasks -.->|↩| games
   bases -.->|↩| games
   baseExplorer -.->|↩| bases
@@ -762,7 +765,8 @@ flowchart LR
   games["/games/"]
   editor["/games/editor/"]
   polls["/polls/"]
-  subscriptions["/subscriptions/"]
+  friends["/friends/"]
+  subscribers["/subscribers/"]
   tasks["/tasks/"]
   bases["/bases/"]
   baseExplorer["/bases/explorer/"]
@@ -775,18 +779,20 @@ flowchart LR
   games -->|btnMarketplace| marketplace
   games -->|btnLogoEditor| logoEditor
   games -->|btnConnectDevice| connectDevice
-  games -->|btnSubscriptionsHub| subscriptions
+  games -->|btnFriends| friends
+  games -->|btnSubscribers| subscribers
   games -->|btnTasks| tasks
   games -->|btnBases| bases
   games -->|btnEdit*| editor
   games -->|btnPoll*| polls
-  bases -->|btnGoAlt| subscriptions
+  bases -->|btnGoAlt| friends
   bases -->|btnBrowse*| baseExplorer
   manual -->|btnLegal| privacy
   login -.->|↩| home
   editor -.->|↩| games
   polls -.->|↩| games
-  subscriptions -.->|↩| games
+  friends -.->|↩| games
+  subscribers -.->|↩| games
   tasks -.->|↩| games
   bases -.->|↩| games
   baseExplorer -.->|↩| bases

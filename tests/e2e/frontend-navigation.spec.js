@@ -3,7 +3,11 @@ const { pathToFileURL } = require("url");
 const path = require("path");
 const { loginAsPooledTestUser, loginAsGuest } = require("./helpers/login");
 
-// Exercise actual production navigation without replacing routes or files.
+const { serveBranchCode } = require("./helpers/branch-code");
+test.use({ serviceWorkers: "block" });
+test.beforeEach(async ({ context }) => {
+  if (process.env.TEST_BRANCH_CODE !== "0") await serveBranchCode(context, { pages: ["games", "bases", "friends", "subscribers", "tasks", "manual", "connect", "logo", "marketplace", "account"] });
+});
 for (const path of ["/connect", "/connect/"]) {
   test(`anonim: powrót z ${path} ma strzałkę i prowadzi na stronę główną`, async ({ page }) => {
     await page.goto(path, { waitUntil: "networkidle" });
@@ -26,17 +30,17 @@ test("instrukcja: powrót zachowuje ścieżkę, parametry i fragment", async ({ 
   expect(new URL(page.url()).hash).toBe("#connect");
 });
 
-test("zalogowany: Bazy → Subskrypcje → Bazy oraz powrót do gier", async ({ page }, testInfo) => {
+test("zalogowany: Bazy → Znajomi → Bazy oraz powrót do gier", async ({ page }, testInfo) => {
   await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
   await page.goto("/bases/", { waitUntil: "networkidle" });
   await page.locator("#btnGoAlt").click();
-  await expect.poll(() => new URL(page.url()).pathname).toBe("/subscriptions/");
+  await expect.poll(() => new URL(page.url()).pathname).toBe("/friends/");
   expect(new URL(page.url()).searchParams.get("ret")).toBe("/bases/");
   // Adres zmienia się przed wykonaniem modułu strony — „Wstecz” podpina
   // initPage dopiero po auth (topbar-ready).
   await page.waitForLoadState("domcontentloaded");
   await expect(page.locator(".topbar.topbar-ready")).toBeAttached();
-  await page.locator("#btnBackToGames").click();
+  await page.locator("#btnBack").click();
   await expect.poll(() => new URL(page.url()).pathname).toBe("/bases/");
   await page.waitForLoadState("domcontentloaded");
   await expect(page.locator(".topbar.topbar-ready")).toBeAttached();
@@ -44,11 +48,11 @@ test("zalogowany: Bazy → Subskrypcje → Bazy oraz powrót do gier", async ({ 
   await expect.poll(() => new URL(page.url()).pathname).toBe("/games/");
 });
 
-test("zalogowany: subskrypcje wracają do gier bez doklejania folderu", async ({ page }, testInfo) => {
+test("zalogowany: znajomi wracają do gier bez doklejania folderu", async ({ page }, testInfo) => {
   await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
-  await page.goto("/subscriptions/", { waitUntil: "networkidle" });
+  await page.goto("/friends/", { waitUntil: "networkidle" });
   await expect(page.locator(".topbar.topbar-ready")).toBeAttached();
-  await page.locator("#btnBackToGames").click();
+  await page.locator("#btnBack").click();
   await expect.poll(() => new URL(page.url()).pathname).toBe("/games/");
 });
 
@@ -70,7 +74,7 @@ const clickEl = (locator) => locator.evaluate((el) => el.click());
 // Id przycisku „Wstecz” na stronie docelowej (nie każda strona ma #btnBack).
 const BACK_ID = {
   marketplace: "btnGoGames",
-  subscriptions: "btnBackToGames",
+  friends: "btnBack",
   account: "backToGames",
 };
 
