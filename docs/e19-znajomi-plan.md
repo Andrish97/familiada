@@ -149,3 +149,14 @@ wygaśnięcia linku urządzenia liczona od ostatniej aktywności rozgrywki?
   odbiorców); **już wybrani nie pokazują się w oknie**. Na stronie ankiety
   zostaje jedna lista odbiorców z oznaczeniem roli i akcjami w wierszu
   (przypomnij, usuń).
+
+### Odpowiedzi 2026-10-10 (cz. 3)
+
+- **Pkt 8 — tak**: subskrybent, który przyjmie zaproszenie do znajomych,
+  **znika z listy subskrybentów** i zostaje tylko znajomym (ankiety dostaje
+  jako znajomy).
+- **Bazy i urządzenia — jedno okno**: w oknie udostępniania widać **już
+  udostępnionych i dodawanie** (mail / nazwa + znajomi) razem. **Ankieta**
+  inaczej: udostępnieni na stronie ankiety (panel), dodawanie w oknie.
+- Godzina wygaśnięcia linku urządzenia: bez odpowiedzi — przyjmuję
+  rekomendację (liczona od ostatniej aktywności rozgrywki), do korekty.
