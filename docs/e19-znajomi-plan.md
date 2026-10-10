@@ -90,6 +90,36 @@ test4/5/9/10 zarezerwowane.
 
 Lista w rozmowie 2026-10-09; odpowiedzi zapisywać tutaj, w „Decyzje”.
 
-## Decyzje
+## Decyzje (2026-10-10)
 
-(brak)
+1. **Subskrybent zakłada konto** → zaproszenie do znajomych tylko na
+   `/friends/` + plakietka, **bez maila**.
+2. **Pomyłka strony**: komunikat, np. „Do tego maila jest przypisane konto
+   w systemie Familiada — możesz zaprosić tę osobę do znajomych. Przejdź →”
+   (link do `/friends/`); odwrotnie na `/friends/` dla e-maila bez konta →
+   „…możesz dodać ją jako subskrybenta. Przejdź →”. Bez automatycznego
+   przełączania.
+3. **Usunięcie znajomego**: kasuje oczekujące zaproszenia i zadania między
+   parą; przyjęte bazy i urządzenia zostają (udostępnia się je głównie
+   mailem). Okno potwierdzenia usunięcia **mówi o tym** i że można je cofnąć
+   osobno.
+4. **Link urządzenia**: osobny klucz na udostępnienie, **wygasa sam** —
+   po zakończeniu sesji rozgrywki (`game_sessions`), najpóźniej np. po
+   godzinie bezczynności. Urządzenia są „tu i teraz”. Po wygaśnięciu
+   komunikat „Zaproszenie wygasło — poproś o nowy link”.
+5. **Link musi nieść sesję rozgrywki**, nie tylko grę; po wygaśnięciu prośba
+   o nowy link. **Link do skopiowania z panelu Control działa tak samo.**
+6. **Mail z urządzeniem do osoby bez konta** — tak (limit + wypisanie).
+   **Plakietka Zadań**: urządzenia mogą się liczyć, chyba że dublowałoby to
+   plakietkę na przycisku urządzeń — wtedy nie (interpretacja: liczymy
+   ankiety i bazy; urządzenia mają własną plakietkę na „Podłącz urządzenie”).
+7. **Baza zawsze na konto**; e-mail służy tylko do wyszukania konta. Wybór ze
+   znajomych to skrót, serwer nie wymaga znajomości. **Zadanie dla konta =
+   zawsze powiadomienie mailem**, z globalnym wyłączeniem
+   (`user_flags.email_notifications`).
+8. **Subskrybent, który przyjmie zaproszenie do znajomych** — „lepiej nie”
+   zostawiać: wpis subskrybenta **znika** (staje się znajomym; subskrybenci
+   to tylko osoby bez konta). Do potwierdzenia przy kroku 3.
+9. „Podłącz” w Zadaniach → `/connect/` z wybranym udostępnieniem. Tak.
+10. Filtr rodzaju w Zadaniach w adresie (`?kind=`). Filtry to listy
+    rozwijane **`ui-select`** (wspólne `list-search.js` już ich używa).
