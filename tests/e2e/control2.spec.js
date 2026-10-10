@@ -2430,7 +2430,9 @@ test("control2: zablokowany, gdy logo gry jest edytowane w logo-editorze — i w
     // jest wołane zanim Control zdąży namalować krok "Urządzenia").
     await expect(page.locator(".stepTitle")).toHaveCount(0);
 
-    await expect(hostPage.locator("#cover2Logo svg")).toHaveCount(1, {timeout:10000});
+    // Host renders the pixel logo as a canvas; SVG is only used by the
+    // source variant. This fixture is defaulting to the pixel renderer.
+    await expect(hostPage.locator("#cover2Logo canvas")).toHaveCount(1, {timeout:10000});
     await releaseLogoLock(page, logoId, lockTabId);
 
     // Odzyskanie działa DWIEMA niezależnymi drogami (broadcast RELEASED +
