@@ -12,9 +12,9 @@
   <link rel="preconnect" href="https://supabase.familiada.online">
   <title data-i18n="control.title">Familiada — panel sterowania</title>
 
-  <link rel="icon" href="/favicon.ico?v=v2026-10-10T00395"/>
-  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-10T00395"/>
-  <link rel="stylesheet" href="/control/css/control.css?v=v2026-10-10T00395"/>
+  <link rel="icon" href="/favicon.ico?v=v2026-10-10T06225"/>
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-10T06225"/>
+  <link rel="stylesheet" href="/control/css/control.css?v=v2026-10-10T06225"/>
   <script>
     document.documentElement.classList.add('page-loading');
     try {
@@ -31,12 +31,12 @@
   <style>html[data-mobile-guard]{overflow:hidden;touch-action:none}html[data-mobile-guard] body{visibility:hidden}</style>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-  <script src="/shared/js/core/security-warning.js?v=v2026-10-10T00395" defer></script>
+  <script src="/shared/js/core/security-warning.js?v=v2026-10-10T06225" defer></script>
   <script type="module">
-    import { initI18n } from "/shared/translation/translation.js?v=v2026-10-10T00395";
+    import { initI18n } from "/shared/translation/translation.js?v=v2026-10-10T06225";
     await initI18n({ withSwitcher: true });
     document.documentElement.classList.remove('page-loading');
-    import("/control/js/app.js?v=v2026-10-10T00395");
+    import("/control/js/app.js?v=v2026-10-10T06225");
   </script>
 
   <style>
@@ -87,7 +87,11 @@
        overflow:hidden na .wrap.wide samo w sobie nic nie ucina — reszta
        łańcucha (karta, cardBody, scroll-area) i tak dostaje własne
        ograniczenie wysokości niżej, więc to tylko domyka górny poziom. */
-    .wrap.wide:has(.c2-gameplay-card, .stepFoot) { height:calc(100dvh - var(--topbar-h, 70px)); min-height:0; display:flex; flex-direction:column; overflow:hidden; }
+    /* Ten wrapper ma tylko przycinać zawartość do wysokości ekranu. Hidden
+       tworzy programowo przewijalny kontener; przy przywracaniu fokusu pola
+       przeglądarka zmieniała jego scrollLeft i przesuwała całą kartę. clip
+       zachowuje przycinanie, ale nie pozwala zmienić poziomego położenia. */
+    .wrap.wide:has(.c2-gameplay-card, .stepFoot) { height:calc(100dvh - var(--topbar-h, 70px)); min-height:0; display:flex; flex-direction:column; overflow:clip; }
     .wrap.wide:has(.c2-gameplay-card, .stepFoot) > .shell { flex:1; width:100%; min-width:0; min-height:0; display:flex; flex-direction:column; overflow:hidden; }
     .shell:has(.c2-gameplay-card, .stepFoot) > .control-tabs-card { flex:1; width:100%; min-width:0; min-height:0; display:flex; flex-direction:column; overflow:hidden; }
     .control-tabs-card:has(.c2-gameplay-card, .stepFoot) > .control-main-card { flex:1; width:100%; min-width:0; min-height:0; display:flex; flex-direction:column; overflow:hidden; }
@@ -380,6 +384,11 @@
     @media (min-width:981px) {
       .c2-devicerows { grid-template-columns:repeat(2,minmax(0,1fr)); }
       .c2-devices-layout { display:grid; grid-template-columns:minmax(0,1fr); grid-template-rows:minmax(0,1fr) auto; gap:8px; }
+      /* .c2-roundlayout-main ma width:0 dla bazowego układu flex z kolumną
+         podpowiedzi. Tutaj staje się elementem grida, więc musi rozciągnąć
+         się na szerokość swojego toru; inaczej lista urządzeń zapada się i
+         przechwytuje kliknięcia mimo że jej elementy są w DOM. */
+      .c2-devices-layout > .c2-roundlayout-main { width:100%; }
       .c2-devices-layout .c2-roundlayout-divider { display:none; }
       .c2-devices-layout .c2-roundlayout-side { padding-top:0; flex:none; }
       .c2-devicerows .device-row { padding:7px 9px; gap:4px; }
@@ -618,6 +627,6 @@
       <button class="btn-contact-footer" type="button" data-contact-modal data-i18n="common.contactBtn">Kontakt</button>
     </div>
   </main>
-  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-10T00395"></script>
+  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-10T06225"></script>
 </body>
 </html>

@@ -153,7 +153,9 @@ test("control2: własne outro ponad 30 sekund — ustawienia, zapis i podsumowan
     await expect(page.locator('.sfx-row:has(input[data-sfx-key="show_outro"]) .sfx-file-name')).toHaveText("outro-test-31s.wav", { timeout: 15000 });
     // Autozapis; „Wstecz” zapisuje od razu i wraca do Control (ret).
     await page.locator("#btnBack").click();
-    await page.waitForURL(/\/control\//, { timeout: 30000 });
+    // Control is intentionally opened by the production link as /control?id=…
+    // (without a trailing slash); accept both canonical forms.
+    await page.waitForURL(/\/control(?:\/|\?)/, { timeout: 30000 });
     await page.reload({ waitUntil: "domcontentloaded" });
     await expect(page.locator(".stepTitle")).toHaveText("Podsumowanie", { timeout: 15000 });
     const inspectAudio = () => page.evaluate(async () => {
@@ -181,7 +183,7 @@ test("control2: własne outro ponad 30 sekund — ustawienia, zapis i podsumowan
     await deleteGame(page, game.id);
   }
 });
-const { loginAsPooledTestUser, loginAsTestUser, testAccountUsername, isKnownNoiseText, isKnownNoiseUrl } = require("./helpers/login");
+const { loginAsPooledTestUser, loginAsTestUser, testAccountUsername, getTestAccountPool, isKnownNoiseText, isKnownNoiseUrl } = require("./helpers/login");
 const { clearMailbox, waitForEmail, extractHttpLinks, resetMailProviderLimits } = require("./helpers/mailbox");
 
 test.setTimeout(150_000);
@@ -406,7 +408,17 @@ async function expectMappingFieldFits(page, testInfo, label) {
     const caption = tile.querySelector(".c2-field-label").getBoundingClientRect();
     const card = document.querySelector(".c2-gameplay-card").getBoundingClientRect();
     const main = document.querySelector(".c2-roundlayout-main").getBoundingClientRect();
-    return { top: input.top - box.top, bottom: box.bottom - input.bottom, right: box.right - input.right, centered: Math.abs((column.left + column.right) / 2 - (caption.left + caption.right) / 2), horizontalOverflow: tile.scrollWidth - tile.clientWidth, cardX: card.x, cardRight: card.right, viewportWidth: document.documentElement.clientWidth, cardWidth: card.width, mainX: main.x, mainRight: main.right, mainWidth: main.width, windowWidth: innerWidth, scrollX, documentWidth: document.documentElement.scrollWidth, bodyWidth: document.body.scrollWidth };
+    const ancestors = ["html", "body", ".wrap.wide", ".shell", ".control-tabs-card", ".control-main-card", "#app", ".c2-gameplay-card", ".c2-roundlayout"]
+      .map((selector) => {
+        const el = document.querySelector(selector);
+        if (!el) return { selector, missing: true };
+        const rect = el.getBoundingClientRect();
+        const style = getComputedStyle(el);
+        const parent = el.parentElement;
+        const parentRect = parent?.getBoundingClientRect();
+        return { selector, className: typeof el.className === "string" ? el.className : "", x: rect.x, width: rect.width, offsetLeft: el.offsetLeft, offsetWidth: el.offsetWidth, scrollLeft: el.scrollLeft, scrollWidth: el.scrollWidth, clientWidth: el.clientWidth, offsetParent: el.offsetParent?.className || el.offsetParent?.tagName || null, parentX: parentRect?.x ?? null, parentWidth: parentRect?.width ?? null, marginLeft: style.marginLeft, marginRight: style.marginRight, paddingLeft: style.paddingLeft, boxSizing: style.boxSizing, position: style.position, left: style.left, right: style.right, transform: style.transform, display: style.display, flex: style.flex, flexBasis: style.flexBasis, alignItems: style.alignItems, alignSelf: style.alignSelf, direction: style.direction, overflow: style.overflow, overflowY: style.overflowY, scrollbarGutter: style.scrollbarGutter };
+      });
+    return { top: input.top - box.top, bottom: box.bottom - input.bottom, right: box.right - input.right, centered: Math.abs((column.left + column.right) / 2 - (caption.left + caption.right) / 2), horizontalOverflow: tile.scrollWidth - tile.clientWidth, cardX: card.x, cardRight: card.right, viewportWidth: document.documentElement.clientWidth, cardWidth: card.width, mainX: main.x, mainRight: main.right, mainWidth: main.width, windowWidth: innerWidth, scrollX, documentWidth: document.documentElement.scrollWidth, bodyWidth: document.body.scrollWidth, ancestors };
   });
   expect(geometry.top).toBeGreaterThanOrEqual(5);
   expect(geometry.bottom).toBeGreaterThanOrEqual(5);
@@ -1547,7 +1559,7 @@ test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśni�
     await settleAfterWrite(page);
     await expect(page.locator(".c2-tilegrid")).toBeVisible();
     const standardGameplayRowHeight = await page.locator(".c2-tilegrid").evaluate((grid) =>
-      Number.parseFloat(getComputedStyle(grid).gridTemplateRows.split(" ")[0]));
+      grid.firstElementChild?.getBoundingClientRect().height || 0);
     expect(standardGameplayRowHeight).toBeGreaterThan(0);
     await revealAnswer(page, 1);
     await strikeOutAndLoseSteal(page);
@@ -2132,7 +2144,7 @@ test("control2: dźwięk ze źródła Wyświetlacz — odblokowanie, głośnoś�
     });
     // „Wstecz” zapisuje zmiany od razu (bez pytania) i wraca do Control (ret).
     await page.locator("#btnBack").click();
-    await page.waitForURL(/\/control\//, { timeout: 15000 });
+    await page.waitForURL(/\/control(?:\/|\?)/, { timeout: 15000 });
     await expect(page.locator(".stepTitle")).toHaveText("Podsumowanie", { timeout: 15000 });
 
     await expect.poll(
@@ -2359,8 +2371,8 @@ function blankGlyphPayload() {
 
 async function acquireLogoLock(page, logoId, tabId) {
   return page.evaluate(async ({ logoId, tabId }) => {
-    const { data, error } = await window.__sbClient.rpc("acquire_edit_lock", {
-      p_resource_type: "logo", p_resource_id: logoId, p_tab_id: tabId, p_context: "logo-editor",
+    const { data, error } = await window.__sbClient.rpc("acquire_edit_lock_mode", {
+      p_resource_type: "logo", p_resource_id: logoId, p_tab_id: tabId, p_context: "logo-editor", p_mode: "exclusive",
     });
     if (error) throw new Error("acquire_edit_lock failed: " + error.message);
     return data;
@@ -2376,7 +2388,11 @@ async function releaseLogoLock(page, logoId, tabId) {
 }
 
 test("control2: zablokowany, gdy logo gry jest edytowane w logo-editorze — i wznawia się samo po zwolnieniu", async ({ page, context, browser }, testInfo) => {
-  await loginAsPooledTestUser(page, context, testInfo.parallelIndex);
+  // Ten test sam zakłada wyłączny lock logo. Bierzemy drugie konto z jawnej
+  // puli, by wcześniejszy Control z tego samego worker-a nie zostawił jeszcze
+  // wspólnego locka `logos` podczas zamykania karty i nie zablokował fixture.
+  const lockTestPool = getTestAccountPool();
+  await loginAsTestUser(page, context, { username: lockTestPool[1] || lockTestPool[0] });
 
   const logoName = `E2E-CONTROL2-LOGOLOCK-${Date.now()}`;
   const { logoId, gameId, hostKey } = await page.evaluate(async ({ name, payload }) => {
@@ -2404,7 +2420,7 @@ test("control2: zablokowany, gdy logo gry jest edytowane w logo-editorze — i w
   const lockTabId = `e2e-fake-logo-editor-${Date.now()}`;
   try {
     const acquired = await acquireLogoLock(page, logoId, lockTabId);
-    expect(acquired, "fixture must hold an exclusive logo lock before opening Control").toMatchObject({ ok: true, acquired: true });
+    expect(acquired, `fixture must hold an exclusive logo lock before opening Control; RPC returned ${JSON.stringify(acquired)}`).toMatchObject({ ok: true, acquired: true });
     hostPage = await openAnon(browser, logoContexts, `/control/host?id=${gameId}&key=${hostKey}`, "host", []);
 
     await page.goto(`/control?id=${gameId}`, { waitUntil: "domcontentloaded" });
@@ -2414,7 +2430,9 @@ test("control2: zablokowany, gdy logo gry jest edytowane w logo-editorze — i w
     // jest wołane zanim Control zdąży namalować krok "Urządzenia").
     await expect(page.locator(".stepTitle")).toHaveCount(0);
 
-    await expect(hostPage.locator("#cover2Logo svg")).toHaveCount(1, {timeout:10000});
+    // Host renders the pixel logo as a canvas; SVG is only used by the
+    // source variant. This fixture is defaulting to the pixel renderer.
+    await expect(hostPage.locator("#cover2Logo canvas")).toHaveCount(1, {timeout:10000});
     await releaseLogoLock(page, logoId, lockTabId);
 
     // Odzyskanie działa DWIEMA niezależnymi drogami (broadcast RELEASED +
