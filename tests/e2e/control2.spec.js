@@ -153,7 +153,9 @@ test("control2: własne outro ponad 30 sekund — ustawienia, zapis i podsumowan
     await expect(page.locator('.sfx-row:has(input[data-sfx-key="show_outro"]) .sfx-file-name')).toHaveText("outro-test-31s.wav", { timeout: 15000 });
     // Autozapis; „Wstecz” zapisuje od razu i wraca do Control (ret).
     await page.locator("#btnBack").click();
-    await page.waitForURL(/\/control\//, { timeout: 30000 });
+    // Control is intentionally opened by the production link as /control?id=…
+    // (without a trailing slash); accept both canonical forms.
+    await page.waitForURL(/\/control(?:\/|\?)/, { timeout: 30000 });
     await page.reload({ waitUntil: "domcontentloaded" });
     await expect(page.locator(".stepTitle")).toHaveText("Podsumowanie", { timeout: 15000 });
     const inspectAudio = () => page.evaluate(async () => {
@@ -2142,7 +2144,7 @@ test("control2: dźwięk ze źródła Wyświetlacz — odblokowanie, głośnoś�
     });
     // „Wstecz” zapisuje zmiany od razu (bez pytania) i wraca do Control (ret).
     await page.locator("#btnBack").click();
-    await page.waitForURL(/\/control\//, { timeout: 15000 });
+    await page.waitForURL(/\/control(?:\/|\?)/, { timeout: 15000 });
     await expect(page.locator(".stepTitle")).toHaveText("Podsumowanie", { timeout: 15000 });
 
     await expect.poll(
@@ -2369,8 +2371,8 @@ function blankGlyphPayload() {
 
 async function acquireLogoLock(page, logoId, tabId) {
   return page.evaluate(async ({ logoId, tabId }) => {
-    const { data, error } = await window.__sbClient.rpc("acquire_edit_lock", {
-      p_resource_type: "logo", p_resource_id: logoId, p_tab_id: tabId, p_context: "logo-editor",
+    const { data, error } = await window.__sbClient.rpc("acquire_edit_lock_mode", {
+      p_resource_type: "logo", p_resource_id: logoId, p_tab_id: tabId, p_context: "logo-editor", p_mode: "exclusive",
     });
     if (error) throw new Error("acquire_edit_lock failed: " + error.message);
     return data;
@@ -2414,7 +2416,7 @@ test("control2: zablokowany, gdy logo gry jest edytowane w logo-editorze — i w
   const lockTabId = `e2e-fake-logo-editor-${Date.now()}`;
   try {
     const acquired = await acquireLogoLock(page, logoId, lockTabId);
-    expect(acquired, "fixture must hold an exclusive logo lock before opening Control").toMatchObject({ ok: true, acquired: true });
+    expect(acquired, `fixture must hold an exclusive logo lock before opening Control; RPC returned ${JSON.stringify(acquired)}`).toMatchObject({ ok: true, acquired: true });
     hostPage = await openAnon(browser, logoContexts, `/control/host?id=${gameId}&key=${hostKey}`, "host", []);
 
     await page.goto(`/control?id=${gameId}`, { waitUntil: "domcontentloaded" });
