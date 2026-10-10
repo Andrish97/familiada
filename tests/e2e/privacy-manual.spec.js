@@ -1,4 +1,4 @@
-const { test, expect } = require("@playwright/test");
+const { test, expect } = require("./helpers/production-test");
 const { serveBranchCode } = require("./helpers/branch-code");
 const { loginAsTestUser } = require("./helpers/login");
 
@@ -7,7 +7,7 @@ const ORIGIN = "https://www.familiada.online";
 test.use({ serviceWorkers: "block" });
 
 test.beforeEach(async ({ context }) => {
-  await serveBranchCode(context, { pages: ["privacy", "manual"] });
+  if (process.env.TEST_BRANCH_CODE !== "0") await serveBranchCode(context, { pages: ["privacy", "manual"] });
 });
 
 test("privacy: treść, tytuł i opis SEO przełączają się w PL/EN/UK", async ({ page }) => {
@@ -103,9 +103,9 @@ test("manual: treść i etykieta zakładek istnieją w PL/EN/UK", async ({ page,
 test("manual: Host logo jest opisane w Control i Ustawieniach gry w PL/EN/UK", async ({ page, context }, testInfo) => {
   await loginAsTestUser(page, context);
   const cases = [
-    { lang: "pl", control: "Logo prowadzącego", settings: "Przełącznik Logo prowadzącego", source: "Źródło" },
-    { lang: "en", control: "Host logo", settings: "The Host logo selector", source: "Source" },
-    { lang: "uk", control: "Логотип ведучого", settings: "Перемикач Логотип ведучого", source: "Джерело" },
+    { lang: "pl", control: "Logo prowadzącego", settings: "Przełącznik Logo prowadzącego", source: "Źródło", detail: "czerń jest przezroczysta" },
+    { lang: "en", control: "Host logo", settings: "The Host logo selector", source: "Source", detail: "black made transparent" },
+    { lang: "uk", control: "Логотип ведучого", settings: "Перемикач Логотип ведучого", source: "Джерело", detail: "чорний стає прозорим" },
   ];
 
   for (const item of cases) {
@@ -121,6 +121,7 @@ test("manual: Host logo jest opisane w Control i Ustawieniach gry w PL/EN/UK", a
     const settings = page.locator("#tab-gameSettings .m-doc");
     await expect(settings).toContainText(item.settings);
     await expect(settings).toContainText(item.source);
+    await expect(settings).toContainText(item.detail);
     await expect(settings.locator(".m-strong").filter({ hasText: item.control })).toBeVisible();
     await expect(settings.locator(".m-p").filter({ hasText: /preview|Podgląd|перегляд/i }).first()).toBeVisible();
     if (item.lang === "pl") await page.screenshot({ path: testInfo.outputPath("shot-manual-settings-pl.png"), fullPage: true });

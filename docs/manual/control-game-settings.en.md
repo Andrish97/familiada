@@ -383,9 +383,14 @@ Choose the visual theme for the whole Display. **Classic** is the default.
 
 #### Logo
 
-Choose your own logo under **Logo**. **Default** means Familiada's logo; **No logo** means no custom mark. The chosen logo appears at the opening; its ending appearance depends on the configured ending screen. Game settings previews unsaved edits, whereas the panel Summary uses saved settings.
+Choose your own logo under **Logo**. **Default** means Familiada’s logo. The selected logo appears at the start of the game; its appearance at the end depends on the configured ending screen.
 
-The **Host logo** selector chooses **Pixels** or **Source**. Its preview appears beside the Display preview, and the saved choice appears in the Control Panel Summary.
+The **Host logo** selector has two variants:
+
+- **Pixels** — the logo looks the same as on the Display, but the dots are squares (pixels).
+- **Source** — shows the logo in higher quality, depending on its type: **Text** — text in the style of Familiada’s logo; **Drawing** — the original drawing, with white replaced by the configured Display dot colour and black made transparent; **Image** — the original image from the centre of the logo, with a uniform background removed.
+
+Game settings previews unsaved edits, whereas the Control Panel Summary uses saved settings. The Host preview sits beside the Display preview.
 
 `Restore defaults` in Appearance resets colours, theme and logo.
 

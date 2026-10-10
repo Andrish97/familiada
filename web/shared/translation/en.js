@@ -2291,8 +2291,13 @@ const en = {
 <h4 class="m-h3">Theme</h4>
 <p class="m-p">Choose the visual theme for the whole Display. <span class="m-strong">Classic</span> is the default.</p>
 <h4 class="m-h3">Logo</h4>
-<p class="m-p">Choose your own logo under <span class="m-strong">Logo</span>. <span class="m-strong">Default</span> means Familiada&#39;s logo; <span class="m-strong">No logo</span> means no custom mark. The chosen logo appears at the opening; its ending appearance depends on the configured ending screen. Game settings previews unsaved edits, whereas the panel Summary uses saved settings.</p>
-<p class="m-p">The <span class="m-strong">Host logo</span> selector chooses <span class="m-strong">Pixels</span> (the existing look) or <span class="m-strong">Source</span> (the saved logo). The Host preview sits beside the Display preview.</p>
+<p class="m-p">Choose your own logo under <span class="m-strong">Logo</span>. <span class="m-strong">Default</span> means Familiada’s logo. The selected logo appears at the start of the game; its appearance at the end depends on the configured ending screen.</p>
+<p class="m-p">The <span class="m-strong">Host logo</span> selector has two variants:</p>
+<ul class="m-ul">
+<li><span class="m-strong">Pixels</span> — the logo looks the same as on the Display, but the dots are squares (pixels).</li>
+<li><span class="m-strong">Source</span> — shows the logo in higher quality, depending on its type: <span class="m-strong">Text</span> — text in the style of Familiada’s logo; <span class="m-strong">Drawing</span> — the original drawing, with white replaced by the configured Display dot colour and black made transparent; <span class="m-strong">Image</span> — the original image from the centre of the logo, with a uniform background removed.</li>
+</ul>
+<p class="m-p">Game settings previews unsaved edits, whereas the Control Panel Summary uses saved settings. The Host preview sits beside the Display preview.</p>
 <p class="m-p"><span class="m-code">Restore defaults</span> in Appearance resets colours, theme and logo.</p>
 <h3 class="m-h2">Sound</h3>
 <p class="m-p">Each game sound category has separate settings, including <span class="m-strong">Correct answer</span>, <span class="m-strong">Wrong answer</span>, <span class="m-strong">Intro</span>, <span class="m-strong">Round transition</span>, <span class="m-strong">Show outro music</span> and <span class="m-strong">Reveal</span>.</p>

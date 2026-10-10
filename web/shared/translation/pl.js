@@ -2315,8 +2315,13 @@ const pl = {
 <h4 class="m-h3">Motyw</h4>
 <p class="m-p">Wybierz motyw wizualny tablicy. Motyw wpływa na styl graficzny całego wyświetlacza. Domyślny motyw to <span class="m-strong">Klasyczny</span>.</p>
 <h4 class="m-h3">Logo</h4>
-<p class="m-p">Jeśli masz własne logo, wybierz je w sekcji „Logo”. Wybór „Domyślne” oznacza logo Familiady, a „Bez logo” rezygnację z własnego znaku. Wybrane logo pojawia się na początku gry; na końcu zależy od ustawionego trybu ekranu końcowego. Podgląd w Ustawieniach gry pokazuje edytowane wartości przed zapisem. Podsumowanie w Panelu sterowania korzysta z zapisanych ustawień.</p>
-<p class="m-p">Przełącznik <span class="m-strong">Logo prowadzącego</span> wybiera wariant <span class="m-strong">Piksele</span> (dotychczasowy wygląd) lub <span class="m-strong">Źródło</span> (zapisane logo). Podgląd Hosta znajduje się obok podglądu Wyświetlacza.</p>
+<p class="m-p">Jeśli masz własne logo, wybierz je w sekcji „Logo”. Wybór „Domyślne” oznacza logo Familiady. Wybrane logo pojawia się na początku gry; jego wyświetlanie na końcu zależy od ustawionego trybu ekranu końcowego.</p>
+<p class="m-p">Przełącznik <span class="m-strong">Logo prowadzącego</span> ma dwa warianty:</p>
+<ul class="m-ul">
+<li><span class="m-strong">Piksele</span> — logo wygląda tak samo jak na Wyświetlaczu, ale kropki mają kształt kwadratów (pikseli).</li>
+<li><span class="m-strong">Źródło</span> — pokazuje logo w lepszej jakości, zależnie od jego typu: <span class="m-strong">Tekst</span> — tekst w stylu logo Familiady; <span class="m-strong">Rysunek</span> — źródłowy rysunek, w którym biel przyjmuje ustawiony kolor kropek Wyświetlacza, a czerń jest przezroczysta; <span class="m-strong">Obraz</span> — oryginalny obraz ze środka logo, z usuniętym jednolitym tłem.</li>
+</ul>
+<p class="m-p">Podgląd w Ustawieniach gry pokazuje edytowane wartości przed zapisem. Podsumowanie w Panelu sterowania korzysta z zapisanych ustawień. Podgląd Prowadzącego znajduje się obok podglądu Wyświetlacza.</p>
 <p class="m-p">Przycisk <span class="m-code">Przywróć domyślne</span> w sekcji Wygląd resetuje kolory, motyw i logo do wartości domyślnych.</p>
 <h3 class="m-h2">Dźwięk</h3>
 <p class="m-p">W tej sekcji konfigurujesz dźwięki używane podczas rozgrywki. Każda kategoria dźwiękowa (np. <span class="m-strong">Poprawna odpowiedź</span>, <span class="m-strong">Błędna odpowiedź</span>, <span class="m-strong">Intro</span>, <span class="m-strong">Przejście rundy</span>, <span class="m-strong">Muzyka outro programu</span>, <span class="m-strong">Odsłanianie</span>) ma własne ustawienia.</p>

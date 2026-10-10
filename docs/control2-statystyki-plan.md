@@ -48,6 +48,10 @@ Dowody odczytano z artefaktu `production-statistics-records` w powyższym przebi
 
 ## Decyzje
 
+- 2026-10-10: poprawiony opis logo w manualu PL/EN/UK: Piksele oraz Źródło
+  z zachowaniem właściwym dla tekstu, rysunku i obrazu. Użytkownik polecił
+  opublikować opis od razu, a kontrolę produkcji wykonać po publikacji.
+
 - 2026-10-10: wdrożyć zachowane lokalne poprawki odczytu obecności i listy
   zdarzeń; posprzątać nieaktualne dokumenty i jednorazowe testy diagnostyczne.
 - Błąd odczytu obecności zachowuje ostatni znany stan urządzeń i blokuje akcje
