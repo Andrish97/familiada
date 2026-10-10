@@ -63,7 +63,12 @@ INSERT INTO result SELECT 'share',public.poll_share_send('a1a1a1a1-3210-0000-000
 SELECT pg_temp.check_result((SELECT (v->>'created')::int=2 FROM result WHERE k='share'),'only friend and own active subscriber receive tasks');
 INSERT INTO result SELECT 'shareagain',public.poll_share_send('a1a1a1a1-3210-0000-0000-000000000001',ARRAY['bbbbbbbb-3210-0000-0000-000000000002']::uuid[],ARRAY[(SELECT id FROM public.subscribers_list() LIMIT 1)]);
 SELECT pg_temp.check_result((SELECT (v->>'created')::int=0 AND (v->>'kept')::int=2 FROM result WHERE k='shareagain'),'sharing idempotent');
-INSERT INTO result SELECT 'resolve',public.poll_go_resolve((SELECT token FROM public.friendships LIMIT 1));
+RESET ROLE;
+-- Token jest pobierany jako fixture/admin: FORCE RLS celowo blokuje bezpośredni SELECT authenticated.
+INSERT INTO result SELECT 'friend-token',jsonb_build_object('token',token) FROM public.friendships LIMIT 1;
+SET ROLE authenticated;
+SELECT set_config('request.jwt.claim.sub','aaaaaaaa-3210-0000-0000-000000000001',true);
+INSERT INTO result SELECT 'resolve',public.poll_go_resolve((SELECT (v->>'token')::uuid FROM result WHERE k='friend-token'));
 SELECT pg_temp.check_result((SELECT v->>'kind'='friend' FROM result WHERE k='resolve'),'friend token resolves before old subscription');
 RESET ROLE;
 -- Niezalogowany nie może dodać subskrybenta ani wysłać ankiety.
