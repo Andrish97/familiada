@@ -134,9 +134,12 @@ async function renderSharedDevices() {
     return;
   }
 
+  // ?share=<id> (z Zadań): to udostępnienie jest na liście zawsze i jest podświetlone.
+  const focusShare = new URLSearchParams(location.search).get("share");
   const items = (data || []).filter(item =>
-    _isMobile ? (item.device_type === "host" || item.device_type === "buzzer")
-              : item.device_type === "display"
+    (focusShare && String(item.share_id) === focusShare) ||
+    (_isMobile ? (item.device_type === "host" || item.device_type === "buzzer")
+               : item.device_type === "display")
   );
 
   if (!items.length) {
@@ -150,6 +153,7 @@ async function renderSharedDevices() {
   for (const item of items) {
     const row = document.createElement("div");
     row.className = "connect-device-tile";
+    row.dataset.shareId = String(item.share_id);
 
     const ownerLabel = escapeHtml(item.owner_username || item.owner_email || "—");
     const gameName   = escapeHtml(item.game_name || t("connectDevice.shared.noName") || "—");
@@ -189,6 +193,14 @@ async function renderSharedDevices() {
     });
 
     sharedDevicesList.appendChild(row);
+  }
+
+  if (focusShare) {
+    const hit = sharedDevicesList.querySelector(`[data-share-id="${CSS.escape(focusShare)}"]`);
+    if (hit) {
+      hit.style.borderColor = "rgba(255,234,166,.9)";
+      hit.scrollIntoView({ block: "center" });
+    }
   }
 }
 

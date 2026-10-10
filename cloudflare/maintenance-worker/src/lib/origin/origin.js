@@ -85,7 +85,7 @@ const PAGE_ROUTES = new Set([
   "logo", "logo/editor/draw", "logo/editor/image", "logo/editor/text",
   "maintenance", "manual", "marketplace", "go",
   "polls", "polls/vote/points", "polls/vote/qr", "polls/vote/text",
-  "privacy", "subscriptions",
+  "privacy", "subscriptions", "tasks",
 ]);
 
 export function pageIndexPath(pathname) {

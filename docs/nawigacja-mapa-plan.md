@@ -705,6 +705,7 @@ flowchart LR
   editor["/games/editor/"]
   polls["/polls/"]
   subscriptions["/subscriptions/"]
+  tasks["/tasks/"]
   bases["/bases/"]
   baseExplorer["/bases/explorer/"]
   logoEditor["/logo/"]
@@ -722,6 +723,7 @@ flowchart LR
   games -->|btnLogoEditor| logoEditor
   games -->|btnConnectDevice| connectDevice
   games -->|btnSubscriptionsHub| subscriptions
+  games -->|btnTasks| tasks
   games -->|btnBases| bases
   games -->|btnPlay*| control
   games -->|btnSettings*| gameSettings
@@ -735,6 +737,7 @@ flowchart LR
   editor -.->|↩| games
   polls -.->|↩| games
   subscriptions -.->|↩| games
+  tasks -.->|↩| games
   bases -.->|↩| games
   baseExplorer -.->|↩| bases
   logoEditor -.->|↩| games
@@ -760,6 +763,7 @@ flowchart LR
   editor["/games/editor/"]
   polls["/polls/"]
   subscriptions["/subscriptions/"]
+  tasks["/tasks/"]
   bases["/bases/"]
   baseExplorer["/bases/explorer/"]
   logoEditor["/logo/"]
@@ -772,6 +776,7 @@ flowchart LR
   games -->|btnLogoEditor| logoEditor
   games -->|btnConnectDevice| connectDevice
   games -->|btnSubscriptionsHub| subscriptions
+  games -->|btnTasks| tasks
   games -->|btnBases| bases
   games -->|btnEdit*| editor
   games -->|btnPoll*| polls
@@ -782,6 +787,7 @@ flowchart LR
   editor -.->|↩| games
   polls -.->|↩| games
   subscriptions -.->|↩| games
+  tasks -.->|↩| games
   bases -.->|↩| games
   baseExplorer -.->|↩| bases
   logoEditor -.->|↩| games

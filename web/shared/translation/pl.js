@@ -88,6 +88,7 @@ const pl = {
     activeSub: "Przyjęli zaproszenie.",
     declined: "Odrzucone",
     declinedSub: "Odmówili zaproszenia.",
+    channel: { friend: "Znajomy", subscriber: "Subskrybent", mail: "E-mail" },
   },
   nav: {
     backTo: "{page}",
@@ -2556,6 +2557,7 @@ const pl = {
     nav: {
       pollsHubPolls: "Ankiety",
       pollsHubSubs: "Subskrypcje",
+      tasks: "Zadania",
       bases: "Bazy pytań",
       logo: "Logo",
       marketplace: "Gry Społeczności",
@@ -3477,6 +3479,27 @@ const pl = {
     shareCooldownAlert: "Ponowne zaproszenie do ankiety możliwe za {hours} godz.",
   },
 
+  tasks: {
+    title: "Familiada — zadania",
+    bar: {
+      title: "Zadania",
+      hint: "Ankiety, bazy i urządzenia, które ktoś Ci udostępnił.",
+    },
+    sections: { todo: "Do zrobienia", done: "Zrobione" },
+    filter: { aria: "Rodzaj zadania", all: "Wszystkie", poll: "Ankiety", base: "Bazy", device: "Urządzenia" },
+    from: "od {owner}",
+    received: "otrzymano {date}",
+    doneAt: "zrobione {date}",
+    expires: "ważne do {date}",
+    pollType: { text: "Ankieta tekstowa", points: "Ankieta punktowa" },
+    baseTitle: "Baza: {name}",
+    role: { viewer: "tylko odczyt", editor: "z edycją" },
+    deviceType: { host: "Prowadzący", buzzer: "Przycisk do pojedynku", display: "Wyświetlacz", poll_qr: "Wyświetlacz QR" },
+    actions: { vote: "Głosuj", decline: "Odrzuć", accept: "Akceptuj", connect: "Podłącz" },
+    declinePoll: { title: "Odrzucić zadanie?", text: "Ankieta zniknie z Twojej listy.", ok: "Odrzuć", cancel: "Anuluj" },
+    empty: "Nic do zrobienia.",
+    errors: { load: "Nie udało się wczytać zadań.", decline: "Nie udało się odrzucić zadania.", accept: "Nie udało się zaakceptować bazy.", baseDecline: "Nie udało się odrzucić bazy." },
+  },
   pollsHubSubscriptions: {
     view: {
       current: "Aktualne",

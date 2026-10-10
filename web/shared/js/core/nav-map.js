@@ -51,6 +51,7 @@ export const PAGES = {
     btnLogoEditor:       { to: "logoEditor" },
     btnConnectDevice:    { to: "connectDevice", roles: ["user"] },
     btnSubscriptionsHub: { to: "subscriptions", roles: ["user"] },
+    btnTasks:            { to: "tasks", roles: ["user"] },
     btnBases:            { to: "bases" },
     btnPlay:             { to: "control", device: "wide", custom: true },
     btnSettings:         { to: "gameSettings", device: "wide", custom: true },
@@ -60,6 +61,7 @@ export const PAGES = {
   editor:        { path: "/games/editor/",     access: "guest",  parent: "games", from: ["games"], manual: "edit", state: ["id", "q"], locks: [{ type: "game", id: "id" }] },
   polls:         { path: "/polls/",             access: "guest",   parent: "games", from: ["games", "subscriptions"], manual: "polls", tabs: ["share", "results"], state: ["id", "tab"], locks: [{ type: "game", id: "id" }] },
   subscriptions: { path: "/subscriptions/",     access: "user",   parent: "games", from: ["games", "bases", "polls"], manual: "subscriptions", tabs: ["subscribers", "subscriptions", "tasks"], state: ["tab"] },
+  tasks:         { path: "/tasks/",             access: "user",   parent: "games", from: ["games"], manual: "polls", state: ["kind"] },
   bases:         { path: "/bases/",             access: "guest",  parent: "games", from: ["games", "subscriptions", "baseExplorer"], manual: "bases", tabs: ["mine", "shared"], state: ["tab"], buttons: {
     btnGoAlt:  { to: "subscriptions", roles: ["user"] },
     btnBrowse: { to: "baseExplorer", custom: true },
@@ -74,7 +76,7 @@ export const PAGES = {
     btnPlay: { to: "control", custom: true },
   }, locks: [{ type: "game", id: "id" }, { type: "logos", mode: "shared" }] },
   marketplace:   { path: "/marketplace/",       access: "public", parent: "games", parentAnon: "home", subpaths: true, from: ["home", "games"], manual: "community", state: ["q", "filter", "sort"] },
-  connectDevice: { path: "/connect/",    access: "public", parent: "games", parentAnon: "home", from: ["home", "games"], manual: "connect" },
+  connectDevice: { path: "/connect/",    access: "public", parent: "games", parentAnon: "home", from: ["home", "games", "tasks"], manual: "connect", state: ["share"] },
   account:       { path: "/account/",           access: "guest",  parent: "games", from: ["games"], manual: "general" },
   manual:        { path: "/manual/",            access: "guest",  parent: "games", from: [], tabs: ["general", "edit", "community", "bases", "polls", "subscriptions", "logo", "control", "gameSettings", "connect"], state: ["tab"], buttons: {
     btnLegal: { to: "privacy" },

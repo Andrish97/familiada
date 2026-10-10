@@ -266,6 +266,7 @@ const NEVER_USE_TEST_ACCOUNTS = [9, 10];
 //  - test1..test<workers>: pula control2 (loginAsPooledTestUser)
 //  - test2,3,6,7: edytor logo (LOGO_E2E_ACCOUNTS; 4/5 zarezerwowane)
 //  - test7 (zalogowane) i test8 (zaproszony + odbiorca maili): subscriptions
+//  - test2 (właściciel) i test3 (odbiorca): tasks (udostępnienie bazy)
 //  - test8: cross-resource-locks (usuwanie logo, bez cudzych blokad ustawień)
 //  - odbiorcy maili (clearMailbox kasuje CAŁĄ skrzynkę odbiorcy, więc każdy
 //    test @mailbox ma własnego): subscriptions=test8, bases=test7 (test6 bez maili),

@@ -88,6 +88,7 @@ const en = {
     activeSub: "Accepted the invitation.",
     declined: "Declined",
     declinedSub: "Turned the invitation down.",
+    channel: { friend: "Friend", subscriber: "Subscriber", mail: "E-mail" },
   },
   nav: {
     backTo: "{page}",
@@ -2661,6 +2662,7 @@ const en = {
     nav: {
       pollsHubPolls: "Polls",
       pollsHubSubs: "Subscriptions",
+      tasks: "Tasks",
       bases: "Question bases",
       logo: "Logo",
       marketplace: "Community Games",
@@ -3576,6 +3578,27 @@ const en = {
     shareCooldownAlert: "You can invite again in {hours}h.",
   },
 
+  tasks: {
+    title: "Familiada — tasks",
+    bar: {
+      title: "Tasks",
+      hint: "Polls, bases and devices that someone shared with you.",
+    },
+    sections: { todo: "To do", done: "Done" },
+    filter: { aria: "Task type", all: "All", poll: "Polls", base: "Bases", device: "Devices" },
+    from: "from {owner}",
+    received: "received {date}",
+    doneAt: "done {date}",
+    expires: "valid until {date}",
+    pollType: { text: "Text poll", points: "Points poll" },
+    baseTitle: "Base: {name}",
+    role: { viewer: "read only", editor: "can edit" },
+    deviceType: { host: "Host", buzzer: "Duel buzzer", display: "Display", poll_qr: "QR display" },
+    actions: { vote: "Vote", decline: "Decline", accept: "Accept", connect: "Connect" },
+    declinePoll: { title: "Decline the task?", text: "The poll will disappear from your list.", ok: "Decline", cancel: "Cancel" },
+    empty: "Nothing to do.",
+    errors: { load: "Could not load tasks.", decline: "Could not decline the task.", accept: "Could not accept the base.", baseDecline: "Could not decline the base." },
+  },
   pollsHubSubscriptions: {
     view: {
       current: "Current",
