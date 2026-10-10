@@ -130,9 +130,10 @@ export function createPresence({ gameId, onChange }) {
   function start() {
     tick();
     timer = setInterval(tick, POLL_MS);
-    // Expire locally even when a presence query is still waiting for the network.
+    // Przeliczaj czas tylko przy dostępnym odczycie. W trakcie żądania
+    // (także ponowień HTTP) brak świeżego wyniku nie dowodzi rozłączenia.
     expiryTimer = setInterval(() => {
-      if (readUnavailable) return;
+      if (inFlight || readUnavailable) return;
       flags = Object.fromEntries(Object.entries(lastSeenAt).map(([kind, at]) => [kind, isOnline(at)]));
       reportIfChanged({ flags, lastSeenAt, error: null });
     }, 250);

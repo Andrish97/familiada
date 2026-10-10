@@ -33,13 +33,18 @@ test("wyjątek z fetchRow (np. przerwane żądanie) też jest ponawiany", async 
   assert.deepEqual(seen, [3]);
 });
 
-test("po przerwanym odczycie okresowy odczyt nie czeka na retry i dostaje świeży wiersz", async () => {
+test("po przerwanym odczycie okresowy odczyt nie czeka na retry i dostaje świeży wiersz", async (t) => {
   const seen = [];
   let calls = 0;
   const sync = createRowSync({
     fetchRow: () => (++calls === 1 ? Promise.reject(new Error("timeout")) : Promise.resolve({ data: row(9) })),
     onRow: (r) => seen.push(r.rev),
     retryMs: 100000,
+    setTimer: (fn, ms) => {
+      const timer = setTimeout(fn, ms);
+      t.after(() => clearTimeout(timer));
+      return timer;
+    },
   });
   await sync.fetchGuarded();
   await sync.fetchGuarded();
