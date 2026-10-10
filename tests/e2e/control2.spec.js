@@ -412,7 +412,9 @@ async function expectMappingFieldFits(page, testInfo, label) {
         if (!el) return { selector, missing: true };
         const rect = el.getBoundingClientRect();
         const style = getComputedStyle(el);
-        return { selector, x: rect.x, width: rect.width, marginLeft: style.marginLeft, paddingLeft: style.paddingLeft, position: style.position, transform: style.transform, display: style.display, overflow: style.overflow, overflowY: style.overflowY, scrollbarGutter: style.scrollbarGutter };
+        const parent = el.parentElement;
+        const parentRect = parent?.getBoundingClientRect();
+        return { selector, className: typeof el.className === "string" ? el.className : "", x: rect.x, width: rect.width, offsetLeft: el.offsetLeft, offsetWidth: el.offsetWidth, offsetParent: el.offsetParent?.className || el.offsetParent?.tagName || null, parentX: parentRect?.x ?? null, parentWidth: parentRect?.width ?? null, marginLeft: style.marginLeft, marginRight: style.marginRight, paddingLeft: style.paddingLeft, boxSizing: style.boxSizing, position: style.position, left: style.left, right: style.right, transform: style.transform, display: style.display, flex: style.flex, flexBasis: style.flexBasis, alignItems: style.alignItems, alignSelf: style.alignSelf, direction: style.direction, overflow: style.overflow, overflowY: style.overflowY, scrollbarGutter: style.scrollbarGutter };
       });
     return { top: input.top - box.top, bottom: box.bottom - input.bottom, right: box.right - input.right, centered: Math.abs((column.left + column.right) / 2 - (caption.left + caption.right) / 2), horizontalOverflow: tile.scrollWidth - tile.clientWidth, cardX: card.x, cardRight: card.right, viewportWidth: document.documentElement.clientWidth, cardWidth: card.width, mainX: main.x, mainRight: main.right, mainWidth: main.width, windowWidth: innerWidth, scrollX, documentWidth: document.documentElement.scrollWidth, bodyWidth: document.body.scrollWidth, ancestors };
   });
