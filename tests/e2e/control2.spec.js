@@ -406,7 +406,15 @@ async function expectMappingFieldFits(page, testInfo, label) {
     const caption = tile.querySelector(".c2-field-label").getBoundingClientRect();
     const card = document.querySelector(".c2-gameplay-card").getBoundingClientRect();
     const main = document.querySelector(".c2-roundlayout-main").getBoundingClientRect();
-    return { top: input.top - box.top, bottom: box.bottom - input.bottom, right: box.right - input.right, centered: Math.abs((column.left + column.right) / 2 - (caption.left + caption.right) / 2), horizontalOverflow: tile.scrollWidth - tile.clientWidth, cardX: card.x, cardRight: card.right, viewportWidth: document.documentElement.clientWidth, cardWidth: card.width, mainX: main.x, mainRight: main.right, mainWidth: main.width, windowWidth: innerWidth, scrollX, documentWidth: document.documentElement.scrollWidth, bodyWidth: document.body.scrollWidth };
+    const ancestors = ["html", "body", ".wrap.wide", ".shell", ".control-tabs-card", ".control-main-card", "#app", ".c2-gameplay-card", ".c2-roundlayout"]
+      .map((selector) => {
+        const el = document.querySelector(selector);
+        if (!el) return { selector, missing: true };
+        const rect = el.getBoundingClientRect();
+        const style = getComputedStyle(el);
+        return { selector, x: rect.x, width: rect.width, marginLeft: style.marginLeft, paddingLeft: style.paddingLeft, position: style.position, transform: style.transform, display: style.display, overflow: style.overflow, overflowY: style.overflowY, scrollbarGutter: style.scrollbarGutter };
+      });
+    return { top: input.top - box.top, bottom: box.bottom - input.bottom, right: box.right - input.right, centered: Math.abs((column.left + column.right) / 2 - (caption.left + caption.right) / 2), horizontalOverflow: tile.scrollWidth - tile.clientWidth, cardX: card.x, cardRight: card.right, viewportWidth: document.documentElement.clientWidth, cardWidth: card.width, mainX: main.x, mainRight: main.right, mainWidth: main.width, windowWidth: innerWidth, scrollX, documentWidth: document.documentElement.scrollWidth, bodyWidth: document.body.scrollWidth, ancestors };
   });
   expect(geometry.top).toBeGreaterThanOrEqual(5);
   expect(geometry.bottom).toBeGreaterThanOrEqual(5);
