@@ -143,3 +143,9 @@ Lista w rozmowie 2026-10-09; odpowiedzi zapisywać tutaj, w „Decyzje”.
 
 Otwarte: pkt 8 (subskrybent → znajomy: wpis subskrybenta znika?), godzina
 wygaśnięcia linku urządzenia liczona od ostatniej aktywności rozgrywki?
+- **Ankieta — udostępnianie oknem** (2026-10-10): przycisk otwiera okno
+  (`.uni-modal`) z **dwiema listami do wyboru: Znajomi · Subskrybenci**;
+  zaznaczasz i zatwierdzasz. **Działa w jedną stronę** (tylko dodaje
+  odbiorców); **już wybrani nie pokazują się w oknie**. Na stronie ankiety
+  zostaje jedna lista odbiorców z oznaczeniem roli i akcjami w wierszu
+  (przypomnij, usuń).
