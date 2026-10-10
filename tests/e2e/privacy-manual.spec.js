@@ -26,7 +26,9 @@ test("privacy: treść, tytuł i opis SEO przełączają się w PL/EN/UK", async
   }
 });
 
-test("privacy: parametr ret dopuszcza tylko bezpieczny powrót w obrębie serwisu", async ({ page }) => {
+test("privacy: parametr ret dopuszcza tylko bezpieczny powrót w obrębie serwisu", async ({ page, context }) => {
+  // Powrót prowadzi do instrukcji, która wymaga sesji (bez niej: logowanie).
+  await loginAsTestUser(page, context);
   await page.goto(`${ORIGIN}/privacy?lang=en&ret=${encodeURIComponent("https://example.com/phishing")}`);
   await expect(page.locator(".topbar.topbar-ready")).toBeAttached(); // „Wstecz” podpina initPage
   await page.locator("#btnBack").click();

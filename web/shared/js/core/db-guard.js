@@ -1,5 +1,5 @@
 // js/core/db-guard.js
-import { sb } from "./supabase.js?v=v2026-10-09T23342";
+import { sb } from "./supabase.js?v=v2026-10-10T00380";
 
 // Supabase/PostgREST UPDATE ... WHERE trafiający w 0 wierszy NIE zwraca
 // błędu — to mechanizm stojący za "cichym sukcesem" przy edycji czegoś,
@@ -18,7 +18,10 @@ export async function updateChecked(table, match, patch) {
     // JSON i całe zapytanie kończy się 400 (potwierdzone w e2e). Serializuj
     // ręcznie — PostgREST rzutuje string filtra na typ kolumny (jsonb), więc
     // porównanie wciąż jest po wartości, nie tekście.
-    const filterVal = val && typeof val === "object" ? JSON.stringify(val) : val;
+    // NULL nie jest równy niczemu (`eq.null` nigdy nie trafia) — dopasowanie
+    // pustej kolumny (np. settings nowej gry) wymaga `is null`.
+    if (val === null || val === undefined) { q = q.is(col, null); continue; }
+    const filterVal = typeof val === "object" ? JSON.stringify(val) : val;
     q = q.eq(col, filterVal);
   }
   const { data, error } = await q.select("id");

@@ -23,9 +23,9 @@
 // opóźnienia między krokami tej samej zmiany) wymagają dostrojenia
 // wizualnego względem prawdziwego wyglądu — nie zgadywane tu na ślepo.
 
-import { deriveEvents } from "../../../shared/js/gameplay/deriveEvents.js?v=v2026-10-09T23342";
-import { resolveRoundsEndScreen, resolveFinalEndScreen } from "../../../shared/js/gameplay/endScreen.js?v=v2026-10-09T23342";
-import { createTransitionTiming } from "../../../shared/js/gameplay/transitionTiming.js?v=v2026-10-09T23342";
+import { deriveEvents } from "../../../shared/js/gameplay/deriveEvents.js?v=v2026-10-10T00380";
+import { resolveRoundsEndScreen, resolveFinalEndScreen } from "../../../shared/js/gameplay/endScreen.js?v=v2026-10-10T00380";
+import { createTransitionTiming } from "../../../shared/js/gameplay/transitionTiming.js?v=v2026-10-10T00380";
 import {
   ROUND_INTRO_ANIM,
   ROUND_OUT_ANIM,
@@ -34,7 +34,7 @@ import {
   FINAL_OUT_ANIM,
   LOGO_IN_ANIM,
   LOGO_OUT_ANIM,
-} from "../../../shared/js/gameplay/displayAnim.js?v=v2026-10-09T23342";
+} from "../../../shared/js/gameplay/displayAnim.js?v=v2026-10-10T00380";
 
 function pad3(n) { return String(Math.max(0, Number(n) || 0)).padStart(3, " "); }
 

@@ -546,6 +546,12 @@ test("ustawienia gry: multiplikatory rund — niepoprawny format nie nadpisuje z
     await switchTab(page, "game");
     await expect(page.locator("#gsMultipliers")).toHaveValue("1, 1, 1, 2, 3");
 
+    // Najpierw poprawna wartość — autozapis ją utrwala (nowa gra ma puste settings).
+    await waitForGamesSave(page, async () => {
+      await page.locator("#gsMultipliers").fill("1, 2, 3, 4, 5");
+      await page.locator("#gsMultipliers").press("Tab");
+    });
+
     await page.locator("#gsMultipliers").fill("abc, xyz");
     await page.locator("#gsMultipliers").press("Tab"); // wymusza 'change'
 
@@ -558,7 +564,7 @@ test("ustawienia gry: multiplikatory rund — niepoprawny format nie nadpisuje z
     expect(
       game.settings.game.advanced.roundMultipliers,
       "parsowanie zwracające 0 poprawnych liczb nie powinno nadpisać poprzedniej wartości"
-    ).toEqual([1, 1, 1, 2, 3]);
+    ).toEqual([1, 2, 3, 4, 5]);
   } finally {
     await deleteGame(page, gameId);
   }
