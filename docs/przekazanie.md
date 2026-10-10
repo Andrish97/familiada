@@ -72,8 +72,10 @@ planie E19 sekcja 2) i na końcu **E13** (instrukcja).
 ## 4. Jak pracować (skrót)
 
 - Branch roboczy `ccr-4a2edd31-ekjnn8` (Claude) — Codex: własny branch od
-  `main`. Tok: branch → unit (`cd tests && node --test unit/*.test.js`) →
-  push na `main` → e2e na `main` dla dotkniętych speców.
+  `main`. **Cykl wdrożenia** (`AGENTS.md`): baza najpierw → e2e kodu z
+  brancha na produkcyjnej bazie (`serveBranchCode`, `REF=<branch>`) → push
+  na `main` → punktowe testy kontrolne na produkcji. Unit przed każdym
+  commitem (`cd tests && node --test unit/*.test.js`).
 - e2e: `scripts/agent-tools/e2e-seq.sh "e2e/a.spec.js e2e/b.spec.js"` —
   nigdy cały zestaw; domyślnie jeden przebieg naraz. Lżejsze przebiegi mogą
   iść równolegle z rozłącznymi kontami: `ACCOUNTS=1,2,3 PARALLEL=1

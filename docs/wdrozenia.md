@@ -20,10 +20,13 @@ utracie kontekstu wystarczy przeczytać ten plik i wskazaną sekcję źródła.
    - granice maili do innych osób: [`maile-granice.md`](maile-granice.md) (część E11).
 2. **Decyzja użytkownika** → w tej samej turze dopisana do sekcji
    „Decyzje” właściwego źródła (z datą), commit. Nie w samej rozmowie.
-3. **Tok pracy**: branch roboczy → testy jednostkowe
-   (`cd tests && node --test unit/*.test.js`) → e2e na branchu
-   (`e2e-tests.yml`, `spec_filter` nigdy pusty) → dopiero wtedy push na
-   `main` → e2e na `main` dla tych samych speców.
+3. **Tok pracy (cykl wdrożenia, decyzja 2026-10-10)**: baza najpierw
+   (migracja dodająca → `main` → log zastosowania) → e2e kodu z brancha na
+   produkcyjnej bazie (`serveBranchCode`, workflow na branchu) → push na
+   `main` (Pages) → punktowe testy kontrolne na produkcji. Testy zawsze
+   punktowo (wybrane spece / `--grep`), przy niejasnym błędzie logi
+   szczątkowe zamiast szerszych przebiegów. Szczegóły: `CLAUDE.md` /
+   `AGENTS.md`, „Cykl wdrożenia”.
 4. **Bez fallbacków** (aliasy starych adresów, przekierowania, zgadywanie
    karty, `history.back()`/`referrer`) — patrz nawigacja, sekcja 2.
 5. Po każdym etapie: status tutaj + commity + numer przebiegu e2e
@@ -159,3 +162,4 @@ bo `PAGES` deklaruje blokady; adresy po mapie stron; instrukcja na końcu.
 | 2026-10-10 | E19 krok 2 e2e | 38062595206: 20 ok, 2 źle (mapy C1/C2 — Zadania miały `#btnBackToGames`; ujednolicone na `#btnBack`, `affc2be`); 38064192238 ✓ frontend-navigation. Krok 2 zrobiony | krok 3 czeka na pkt 8 |
 | 2026-10-10 | przekazanie | E19 decyzje uporządkowane (`e19-znajomi-plan.md` sekcje 5–6: stan kroków, wszystkie decyzje), statusy kolejki zaktualizowane, `docs/przekazanie.md` (podsumowanie, następny krok, otwarte sprawy), `AGENTS.md` (= CLAUDE.md, dla Codexa), narzędzia w `scripts/agent-tools/` (e2e po kolei, lint no-undef, atrapa Supabase, qrcode ESM). `usuwanie-danych.md`: tabela „dziś” oznaczona jako historyczna | następny: E19 krok 3 |
 | 2026-10-10 | decyzje / konta | E7b (ostrzeżenie + reset niepoprawnych ustawień) dodany do kolejki; link urządzenia: ostatnia aktywność + 1 h. Konta test4/test5 wróciły do puli (`EXCLUDED_TEST_ACCOUNTS = [9, 10]`); zasada równoległych lżejszych przebiegów z rozłącznym `test_accounts` (README, CLAUDE/AGENTS, `e2e-seq.sh` `ACCOUNTS`/`PARALLEL`). Ostatnie e2e zielone | następny: E7b, E19 krok 3 |
+| 2026-10-10 | zasady | **Cykl wdrożenia** zapisany (CLAUDE/AGENTS, wdrożenia pkt 3, przekazanie): baza najpierw → e2e kodu z brancha na produkcyjnej bazie (`serveBranchCode`) → Pages → punktowe testy kontrolne; testy punktowo, logi szczątkowe zamiast szerszych przebiegów | — |

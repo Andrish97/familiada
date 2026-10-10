@@ -15,6 +15,26 @@ przepisuje CI), Supabase, Cloudflare Worker. Strony w `web/`.
   dokumentu (`docs/nawigacja-mapa-plan.md`, `docs/blokady-zasobow.md`,
   `docs/ujednolicenie-wygladu.md`, `docs/e19-znajomi-plan.md`, `docs/ankiety-refaktor.md`).
 
+## Cykl wdrożenia (decyzja 2026-10-10) — każda zmiana potwierdzona testem na produkcji
+
+1. **Baza najpierw, bezpiecznie**: migracja dodająca (zgodna wstecz z
+   działającym kodem) — lokalny Postgres + test SQL → push na `main` →
+   sprawdzić log zastosowania (`supabase/migration_logs/latest.log`).
+2. **Testy kodu z brancha na produkcyjnej bazie**: e2e z
+   `serveBranchCode` (`tests/e2e/helpers/branch-code.js` — strony i cały
+   front z plików brancha, baza/Worker/konta produkcyjne), workflow uruchomiony
+   na branchu (`REF=<branch>`). Nowy katalog strony dopisać do `CODE_DIRS`.
+3. **Wdrożenie Pages** (push na `main`) dopiero po zielonych testach z pkt 2.
+4. **Testy kontrolne na produkcji** po wdrożeniu — te same, punktowe spece.
+5. Etap jest zrobiony dopiero po pkt 4 (wpis w Dzienniku z numerem przebiegu).
+
+Testy zawsze **punktowo** (wybrane spece / `--grep` na konkretne testy),
+nigdy cały zestaw — szybciej; przy niejasnym błędzie dołożyć logi
+szczątkowe (diagnostyka `[e2e-diag]`, zrzuty) zamiast puszczać więcej testów.
+Migracje zmieniające zachowanie — razem z kodem, który ich wymaga (pkt 2
+na branchu przed migracją jest wtedy niemożliwy: przetestować na lokalnym
+Postgresie, wdrożyć razem i od razu testy kontrolne).
+
 ## Tok pracy
 
 - Zasady działania i kolejka: `docs/wdrozenia.md` (sekcje „Kolejka”,
