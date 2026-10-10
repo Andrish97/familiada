@@ -30,7 +30,7 @@ Poprawki błędów po drodze (warte zapamiętania):
   `noConflictMarkers`; niezdefiniowane `ret` → lint `no-undef`
   (`scripts/agent-tools/eslint-undef.config.mjs`).
 
-## 2. Następny krok: E19 krok 3
+## 2. Następny krok: E7b (krótki), potem E19 krok 3
 
 Plan: [`e19-znajomi-plan.md`](e19-znajomi-plan.md) — sekcje 1–4 (model, RPC,
 strony, kroki) i **sekcja 6 (wszystkie decyzje użytkownika)**. Krok 3:
@@ -53,17 +53,18 @@ planie E19 sekcja 2) i na końcu **E13** (instrukcja).
 
 ## 3. Otwarte sprawy
 
-- **Decyzja do zebrania (E7)**: ustawienia gry w stanie niezapisywalnym
-  (finał „wybierz” < 5 pytań, własny dźwięk bez pliku) nie zapisują się —
-  powód w pasku akcji, zmiana ginie przy wyjściu. Zostawić czy ostrzegać przy
-  wyjściu? (pytanie zadane, bez odpowiedzi).
+- **E7b — do zrobienia przed E19 krok 3 (decyzja 2026-10-10)**: ustawienia
+  gry w stanie niepoprawnym — przy wyjściu **ostrzeżenie** jak przy
+  niezapisanych zmianach; przy zapisie niepoprawne wartości **resetować do
+  poprawnych** (np. finał „wybierz” przy < 5 pytaniach → tryb losowania;
+  własny dźwięk bez pliku → domyślny), tak żeby autozapis zawsze coś zapisał.
+  `web/games/settings/js/game-settings.js`, spec `game-settings.spec.js`.
 - **E18 — reszta wstrzymana** (decyzja „bez dopieszczania wyglądu”): #2 kafle
   logo, #3, #4, #7 marginesy + tokeny, #10, #12 reszta okien, #13 pusty stan.
   Społeczność (marketplace) — bez zmian do czasu pomysłu użytkownika.
-- **Control** (`web/control/`, `control2.spec.js`) — obszar drugiej sesji;
-  znane czerwone testy (centrowanie podglądu, mapowanie finału, blokada logo
-  na Control) są jej. Krok 6 E19 (linki urządzeń z sesją) dotyka Control —
-  koordynować.
+- **Control** (`web/control/`, `control2.spec.js`) — obszar drugiej sesji.
+  Ostatnie przebiegi e2e (10.10) są zielone, także control2 drugiej sesji.
+  Krok 6 E19 (linki urządzeń z sesją) dotyka Control — koordynować.
 - `host-logo-settings.spec.js`, `host-logo-draw.spec.js`,
   `host-logo-svg-fabric-audit.spec.js` używają test9/test10 — testy drugiej
   sesji, **nie uruchamiać**.
@@ -74,9 +75,11 @@ planie E19 sekcja 2) i na końcu **E13** (instrukcja).
   `main`. Tok: branch → unit (`cd tests && node --test unit/*.test.js`) →
   push na `main` → e2e na `main` dla dotkniętych speców.
 - e2e: `scripts/agent-tools/e2e-seq.sh "e2e/a.spec.js e2e/b.spec.js"` —
-  nigdy dwa przebiegi naraz, nigdy cały zestaw. Konta: pula test1–3, test6–8;
-  **test4, test5, test9, test10 — nie używać**. **test14@** — skrzynka bez
-  konta do scenariuszy „odbiorca bez konta” (nie zakładać konta).
+  nigdy cały zestaw; domyślnie jeden przebieg naraz. Lżejsze przebiegi mogą
+  iść równolegle z rozłącznymi kontami: `ACCOUNTS=1,2,3 PARALLEL=1
+  scripts/agent-tools/e2e-seq.sh …` (zasady: `tests/README.md`, „Pula kont”).
+  Konta: pula test1–test8; **test9, test10 — nie używać**. **test14@** —
+  skrzynka bez konta do scenariuszy „odbiorca bez konta” (nie zakładać konta).
 - Migracje: dodające od razu na `main` (najpierw lokalny Postgres —
   `docs/sql/local-db.md`, test SQL w `docs/sql/`), usuwające dopiero po
   potwierdzeniu e2e (E14). Log zastosowania: `supabase/migration_logs/latest.log`

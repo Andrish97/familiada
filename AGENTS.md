@@ -23,13 +23,16 @@ przepisuje CI), Supabase, Cloudflare Worker. Strony w `web/`.
 - Najpierw branch roboczy, testy, potem push na `main`.
 - Unit: `cd tests && node --test unit/*.test.js`.
 - E2E: workflow `e2e-tests.yml` (workflow_dispatch) z niepustym
-  `spec_filter` — nigdy całego zestawu. Spece z `tests/e2e/helpers/local-site.js`
+  `spec_filter` — nigdy całego zestawu (`scripts/agent-tools/e2e-seq.sh`). Spece z `tests/e2e/helpers/local-site.js`
   testują kod brancha; pozostałe chodzą po produkcji.
-- **Konta testowe test4@, test5@, test9@ i test10@ — NIE UŻYWAĆ** w e2e ani
-  ręcznie (decyzja 2026-10-09: test9/test10 — testy drugiej sesji; test4/test5 —
-  odstąpione użytkownikowi do jego równoległych testów). Wykluczone w
-  `EXCLUDED_TEST_ACCOUNTS` (`tests/e2e/helpers/login.js`); pula e2e: test1–3,
-  test6–8 (test6/7/8 przypisane też na stałe w `subscriptions.spec.js`).
+- **Konta testowe test9@ i test10@ — NIE UŻYWAĆ** (testy drugiej sesji;
+  `EXCLUDED_TEST_ACCOUNTS` w `tests/e2e/helpers/login.js`). Pula e2e:
+  test1–test8 (test4/test5 wróciły do puli 2026-10-10).
+- **Równoległe przebiegi e2e**: domyślnie jeden naraz. Lżejsze przebiegi
+  wolno puszczać równolegle, gdy każdy dostaje **rozłączny zestaw kont**
+  (wejście workflow `test_accounts`, np. `1,2,3` i `4,5,6`) i spece logują się
+  tylko przez pulę. Spece z kontami na stałe albo `@mailbox` — pojedynczo
+  (szczegóły: `tests/README.md`, „Pula kont”).
 - **test14@familiada.online — skrzynka BEZ konta** (podpięta pod Worker jak
   inne, do testów „bez konta”: subskrybent tylko e-mail, urządzenie na e-mail
   bez konta). Nie zakładać na nim konta.

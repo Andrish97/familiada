@@ -40,9 +40,9 @@ on:
 # JEDEN SILNIK TESTÓW, JEDNA KOMENDA WSZĘDZIE: ten sam playwright.config.js,
 # ta sama `playwright test ... --workers="$TEST_WORKERS"` w KAŻDEJ grupie
 # e2e-grouped i w e2e-custom-filter -- bez żadnego "jeśli to ten plik, to
-# inaczej". Zwykła pula kont test1@…...test8@… pomija test4 i test5
-# (zarezerwowane do odizolowanych przebiegów) oraz test9 i test10 (druga
-# sesja). Dedykowany przebieg może ustawić wejście `test_accounts=4,5`.
+# inaczej". Zwykła pula kont test1@…...test8@… (test9/test10 wyłączone —
+# druga sesja). Równoległe lżejsze przebiegi: każdy z rozłącznym zestawem
+# kont przez wejście `test_accounts` (np. 1,2,3 i 4,5,6).
 # TEST_ACCOUNT_COUNT określa górny numer zwykłej puli — patrz
 # getTestAccountPool w e2e/helpers/login.js. Pula jest
 # dostępna w CAŁOŚCI każdemu filtrowi/grupie, bez sztywnego podziału

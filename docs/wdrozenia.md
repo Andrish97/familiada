@@ -54,6 +54,7 @@ Praca przechodzi do Codexa: stan, otwarte sprawy i następny krok —
 | 8 | E5 | Adresy a) `/go/` b) ankiety c) gry d) urządzenia + `/connect/` e) bazy, logo f) logowanie | nawigacja 8 | zrobione (e2e main 2026-10-09/10) |
 | 9 | E6 | `initPage()`, wspólny overlay gość/urządzenie | nawigacja 6.4 | zrobione (e2e main 2026-10-09) |
 | 10 | E7 | Bez stron modalnych: edytor `?q=`, ustawienia gry z autozapisem, manual/privacy bez `?modal=` | nawigacja 6.5 | zrobione (e2e main 2026-10-10) |
+| 10a | E7b | Ustawienia gry: ostrzeżenie przy wyjściu ze stanem niepoprawnym, reset niepoprawnych wartości przy zapisie (decyzja 2026-10-10) | nawigacja 7 | do zrobienia (przed E19 krok 3) |
 | 11 | E8 | Jeden moduł kart `?tab=`, stan eksploratora | nawigacja 6.6 | zrobione (e2e main 2026-10-10) |
 | 12 | E9 | Przyciski i `locks` w `PAGES`, diagramy 6 map, e2e map | nawigacja 6.7 | zrobione (e2e main 2026-10-10) |
 | 12b | E16 | **Komunikaty po akcji:** spis, co każda strona wysyłała do pola komunikatu (tabela w źródle) → wspólny dymek `toast()` zamiast usuniętych pól, tylko gdzie efekt nie jest oczywisty (decyzja 2026-10-09) | ujednolicenie-wygladu.md „Komunikaty po akcji” | zrobione (e2e main 2026-10-09) |
@@ -81,7 +82,8 @@ bo `PAGES` deklaruje blokady; adresy po mapie stron; instrukcja na końcu.
    produkcji razem z kodem, który ich wymaga. **Migracje usuwające**
    (funkcje, kolumny, tabele) dopiero po potwierdzeniu testami, że nowa
    droga działa na produkcji.
-6. **Nigdy dwa przebiegi e2e naraz** — dzielą konta testowe i bazę
+6. **Domyślnie jeden przebieg e2e naraz** (wyjątek: lżejsze przebiegi z
+   rozłącznymi zestawami kont przez `test_accounts` — `tests/README.md`) — dzielą konta testowe i bazę
    produkcyjną, wzajemnie sprzątają sobie dane (przebieg E10 z 2026-10-08:
    55 fałszywych błędów przez równoległy przebieg testów ankiet).
 5. Dostępne narzędzia testowe: **lokalny Postgres** do wykonania migracji
@@ -156,3 +158,4 @@ bo `PAGES` deklaruje blokady; adresy po mapie stron; instrukcja na końcu.
 | 2026-10-10 | E19 krok 2 | `renderRowSections`/`rowEl` w `share-sections.js` (wiersze: inicjał, szara linijka, kanał, akcje w wierszu; CSS `.rows*`), strona `/tasks/` (Do zrobienia · Zrobione; bazy tylko do akceptacji, urządzenia tylko aktywne; filtr `?kind=` na `ui-select`; fokus `?t=`/`?b=`), `PAGES.tasks`, `btnTasks` + plakietka, `/connect/?share=`, `PAGE_ROUTES` +tasks. Unit 400/400. Na `main` `7925749`. Decyzje: udostępnianie ankiety oknem (2 listy, w jedną stronę) | e2e tasks, frontend-navigation, go |
 | 2026-10-10 | E19 krok 2 e2e | 38062595206: 20 ok, 2 źle (mapy C1/C2 — Zadania miały `#btnBackToGames`; ujednolicone na `#btnBack`, `affc2be`); 38064192238 ✓ frontend-navigation. Krok 2 zrobiony | krok 3 czeka na pkt 8 |
 | 2026-10-10 | przekazanie | E19 decyzje uporządkowane (`e19-znajomi-plan.md` sekcje 5–6: stan kroków, wszystkie decyzje), statusy kolejki zaktualizowane, `docs/przekazanie.md` (podsumowanie, następny krok, otwarte sprawy), `AGENTS.md` (= CLAUDE.md, dla Codexa), narzędzia w `scripts/agent-tools/` (e2e po kolei, lint no-undef, atrapa Supabase, qrcode ESM). `usuwanie-danych.md`: tabela „dziś” oznaczona jako historyczna | następny: E19 krok 3 |
+| 2026-10-10 | decyzje / konta | E7b (ostrzeżenie + reset niepoprawnych ustawień) dodany do kolejki; link urządzenia: ostatnia aktywność + 1 h. Konta test4/test5 wróciły do puli (`EXCLUDED_TEST_ACCOUNTS = [9, 10]`); zasada równoległych lżejszych przebiegów z rozłącznym `test_accounts` (README, CLAUDE/AGENTS, `e2e-seq.sh` `ACCOUNTS`/`PARALLEL`). Ostatnie e2e zielone | następny: E7b, E19 krok 3 |

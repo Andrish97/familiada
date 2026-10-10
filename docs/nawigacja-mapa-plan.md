@@ -973,6 +973,11 @@ komunikatem, wynika z zasobów (tabela „Kto rozpoznaje” w tamtym pliku).
 
 ## 7. Decyzje
 
+- **2026-10-10 (E7b, ustawienia gry z autozapisem):** stan niepoprawny →
+  przy wyjściu ostrzeżenie jak przy niezapisanych zmianach; przy zapisie
+  niepoprawne wartości resetowane do poprawnych (np. finał „wybierz” przy
+  < 5 pytaniach → losowanie), żeby autozapis zawsze zapisywał.
+
 Podjęte (2026-10-07):
 - **Gość na `/`** → od razu `/games/` — konto gościa to prawie pełne konto.
 - **`/manual/`** — tylko z kontem/gościem. Publiczna jest tylko polityka

@@ -59,8 +59,8 @@ test("zalogowany: subskrypcje wracają do gier bez doklejania folderu", async ({
 // telefonu są schowane, pozostałe (poza custom — te sprawdzają coś przed
 // przejściem i wymagają wybranej gry) przechodzą na cel z poprawnym ?ret=,
 // a „Wstecz” na celu wraca na stronę wyjściową.
-// Konta: gość z loginAsGuest, konto z puli (loginAsPooledTestUser; test4/5/9/10
-// zarezerwowane — EXCLUDED_TEST_ACCOUNTS w helpers/login.js).
+// Konta: gość z loginAsGuest, konto z puli (loginAsPooledTestUser; test9/10
+// wyłączone — EXCLUDED_TEST_ACCOUNTS w helpers/login.js).
 // ---------------------------------------------------------------------------
 
 // Klik programowy: przycisk topbaru bywa w „Więcej” (komputer) albo w ☰

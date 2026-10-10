@@ -251,12 +251,12 @@ async function loginAsGuest(page, context, opts = {}) {
   await clearE2EBypass(context);
 }
 
-// test4/test5 są zarezerwowane dla odizolowanych przebiegów użytkownika:
-// nie trafiają do zwykłej puli, ale można wskazać je jawnie przez
-// TEST_ACCOUNT_NUMBERS (workflow input `test_accounts`). test9/test10 są
-// wyłączone całkowicie i nie wolno ich wskazywać.
-const RESERVED_TEST_ACCOUNTS = [4, 5];
-const EXCLUDED_TEST_ACCOUNTS = [4, 5, 9, 10];
+// test9/test10 są wyłączone całkowicie (testy drugiej sesji) i nie wolno ich
+// wskazywać. test4/test5 wróciły do zwykłej puli (2026-10-10 — praca
+// użytkownika na nich zakończona). Równoległe przebiegi: każdy z rozłącznym
+// zestawem kont przez TEST_ACCOUNT_NUMBERS (workflow input `test_accounts`).
+const RESERVED_TEST_ACCOUNTS = [];
+const EXCLUDED_TEST_ACCOUNTS = [9, 10];
 const NEVER_USE_TEST_ACCOUNTS = [9, 10];
 
 // Mapa użycia kont (kto na którym koncie pracuje, żeby równoległe testy
@@ -264,7 +264,7 @@ const NEVER_USE_TEST_ACCOUNTS = [9, 10];
 //  - test1: domyślne konto loginAsTestUser; bases, base-explorer, games,
 //    editor, marketplace, index, operator w control2 (@mailbox: udostępnianie)
 //  - test1..test<workers>: pula control2 (loginAsPooledTestUser)
-//  - test2,3,6,7: edytor logo (LOGO_E2E_ACCOUNTS; 4/5 zarezerwowane)
+//  - test2,3,6,7: edytor logo (LOGO_E2E_ACCOUNTS)
 //  - test7 (zalogowane) i test8 (zaproszony + odbiorca maili): subscriptions
 //  - test2 (właściciel) i test3 (odbiorca): tasks (udostępnienie bazy)
 //  - test8: cross-resource-locks (usuwanie logo, bez cudzych blokad ustawień)
@@ -297,15 +297,15 @@ function testAccountUsername(n) {
  * loguje się na inne konto, więc nikt nie czeka w kolejce za cudzym
  * logowaniem. Rozmiar sterowany jedną, jawną (NIE sekretną) liczbą w
  * workflow -- TEST_ACCOUNT_COUNT określa górny numer, a konta zarezerwowane
- * są pomijane. Dedykowany przebieg może podać jawne TEST_ACCOUNT_NUMBERS;
- * wtedy konta 4/5 są dozwolone wyłącznie jako osobna, uzgodniona pula.
+ * są pomijane. Przebieg może podać jawne TEST_ACCOUNT_NUMBERS (rozłączne
+ * zestawy kont pozwalają puszczać lżejsze przebiegi równolegle).
  */
 function getTestAccountPool() {
   const selected = String(process.env.TEST_ACCOUNT_NUMBERS || "").trim();
   if (selected) {
     const numbers = selected.split(",").map((value) => Number(value.trim()));
     if (numbers.some((n) => !Number.isInteger(n) || n < 1 || n > 10 || NEVER_USE_TEST_ACCOUNTS.includes(n))) {
-      throw new Error("TEST_ACCOUNT_NUMBERS może wskazywać konta 1–8; test4/test5 wymagają jawnego wyboru do odizolowanego przebiegu; test9/test10 są wyłączone");
+      throw new Error("TEST_ACCOUNT_NUMBERS może wskazywać konta 1–8; test9/test10 są wyłączone");
     }
     const uniqueNumbers = [...new Set(numbers)];
     return uniqueNumbers.map((n) => `test${n}@${TEST_ACCOUNT_DOMAIN}`);

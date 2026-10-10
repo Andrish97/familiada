@@ -3,7 +3,7 @@
 // bases.spec.js), B widzi ją w „Do zrobienia”, filtr ?kind=, akceptuje —
 // wiersz znika z listy (bazy nie trafiają do „Zrobione”).
 // Chodzi po produkcji (po wdrożeniu strony). Konta tylko z puli: test2 (A)
-// i test3 (B); test4/5/9/10 nie używać.
+// i test3 (B); test9/10 nie używać.
 
 const { test, expect } = require("@playwright/test");
 const { loginAsTestUser, testAccountUsername } = require("./helpers/login");

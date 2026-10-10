@@ -129,8 +129,8 @@ Odpowiedzi na pytania planu:
    cofnąć osobno).
 4. Link urządzenia → **osobny klucz na udostępnienie, przypięty do sesji
    rozgrywki** (`game_sessions`), wygasa sam po jej zakończeniu, najpóźniej
-   ok. 1 h (liczona od ostatniej aktywności rozgrywki — rekomendacja,
-   użytkownik nie zaprzeczył). Otwarty wygasły link: „Zaproszenie wygasło —
+   **ostatnia aktywność rozgrywki + 1 h, potem wygasa automatycznie**
+   (potwierdzone 2026-10-10). Otwarty wygasły link: „Zaproszenie wygasło —
    poproś o nowy link”; w Zadaniach i na liście urządzeń wygasłe **nie są
    widoczne**. **Link do skopiowania z panelu Control działa tak samo.**
 5. Plakietka Zadań → ankiety + bazy do zaakceptowania (urządzenia mają własną
