@@ -380,6 +380,11 @@
     @media (min-width:981px) {
       .c2-devicerows { grid-template-columns:repeat(2,minmax(0,1fr)); }
       .c2-devices-layout { display:grid; grid-template-columns:minmax(0,1fr); grid-template-rows:minmax(0,1fr) auto; gap:8px; }
+      /* .c2-roundlayout-main ma width:0 dla bazowego układu flex z kolumną
+         podpowiedzi. Tutaj staje się elementem grida, więc musi rozciągnąć
+         się na szerokość swojego toru; inaczej lista urządzeń zapada się i
+         przechwytuje kliknięcia mimo że jej elementy są w DOM. */
+      .c2-devices-layout > .c2-roundlayout-main { width:100%; }
       .c2-devices-layout .c2-roundlayout-divider { display:none; }
       .c2-devices-layout .c2-roundlayout-side { padding-top:0; flex:none; }
       .c2-devicerows .device-row { padding:7px 9px; gap:4px; }
