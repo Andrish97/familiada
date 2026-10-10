@@ -1,6 +1,13 @@
 -- Wyłącznie odizolowana baza po local-stubs + schema.sql + migracji 321.
 \set ON_ERROR_STOP on
 BEGIN;
+-- schema.sql zawiera definicje bez danych; odtwórz wymagane polityki maili.
+INSERT INTO public.mail_cooldown_policies(action_key,scope,cooldown_seconds,enforce) VALUES
+('poll:invite','pair',86400,true),('poll:resend','pair',86400,true),
+('poll:share','pair',86400,true),('poll:invite_after_reject','pair',2592000,true),
+('friend:invite','pair',86400,true),('friend:resend','pair',86400,true),
+('friend:invite_after_reject','pair',2592000,true)
+ON CONFLICT(action_key) DO NOTHING;
 CREATE FUNCTION pg_temp.check_result(ok boolean, label text) RETURNS void LANGUAGE plpgsql AS $$
 BEGIN
   IF ok IS DISTINCT FROM true THEN RAISE EXCEPTION 'FAIL: %',label; END IF;
