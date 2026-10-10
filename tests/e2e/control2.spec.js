@@ -183,7 +183,7 @@ test("control2: własne outro ponad 30 sekund — ustawienia, zapis i podsumowan
     await deleteGame(page, game.id);
   }
 });
-const { loginAsPooledTestUser, loginAsTestUser, testAccountUsername, isKnownNoiseText, isKnownNoiseUrl } = require("./helpers/login");
+const { loginAsPooledTestUser, loginAsTestUser, testAccountUsername, getTestAccountPool, isKnownNoiseText, isKnownNoiseUrl } = require("./helpers/login");
 const { clearMailbox, waitForEmail, extractHttpLinks, resetMailProviderLimits } = require("./helpers/mailbox");
 
 test.setTimeout(150_000);
@@ -2388,7 +2388,11 @@ async function releaseLogoLock(page, logoId, tabId) {
 }
 
 test("control2: zablokowany, gdy logo gry jest edytowane w logo-editorze — i wznawia się samo po zwolnieniu", async ({ page, context, browser }, testInfo) => {
-  await loginAsPooledTestUser(page, context, testInfo.parallelIndex);
+  // Ten test sam zakłada wyłączny lock logo. Bierzemy drugie konto z jawnej
+  // puli, by wcześniejszy Control z tego samego worker-a nie zostawił jeszcze
+  // wspólnego locka `logos` podczas zamykania karty i nie zablokował fixture.
+  const lockTestPool = getTestAccountPool();
+  await loginAsTestUser(page, context, { username: lockTestPool[1] || lockTestPool[0] });
 
   const logoName = `E2E-CONTROL2-LOGOLOCK-${Date.now()}`;
   const { logoId, gameId, hostKey } = await page.evaluate(async ({ name, payload }) => {
