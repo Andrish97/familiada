@@ -5500,8 +5500,10 @@ function buildSessionRunDetails(r) {
     heading.textContent = "Zdarzenia";
     group.appendChild(heading);
     let outage = null;
+    let hasVisibleEvent = false;
     const addOutage = end => {
       if (!outage) return;
+      hasVisibleEvent = true;
       const row = document.createElement("div");
       row.className = "stats-session-event";
       const devices = [...outage.devices].map(kind => names[kind] || kind).join(", ") || "Urządzenie";
@@ -5522,14 +5524,9 @@ function buildSessionRunDetails(r) {
         outage.state = presenceOf(event);
       } else if (event.kind === "reconnect") {
         if (outage) addOutage(event);
-        else {
-          const row = document.createElement("div");
-          row.className = "stats-session-event";
-          row.textContent = `${timeOf(event)} · Połączenie przywrócone`;
-          group.appendChild(row);
-        }
       } else {
         addOutage();
+        hasVisibleEvent = true;
         const error = document.createElement("div");
         error.className = "stats-session-event stats-session-event-error";
         error.textContent = `${timeOf(event)} · Błąd${event.message ? ` · ${event.message}` : ""}`;
@@ -5537,7 +5534,7 @@ function buildSessionRunDetails(r) {
       }
     });
     addOutage();
-    details.appendChild(group);
+    if (hasVisibleEvent) details.appendChild(group);
   }
   return details;
 }

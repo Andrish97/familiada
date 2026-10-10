@@ -65,6 +65,22 @@
 // narysował (SVG dot-matrix, nie tekst).
 
 const { test, expect } = require("./helpers/production-test");
+const { serveBranchCode } = require("./helpers/branch-code");
+test.use({ serviceWorkers: "block" });
+test.beforeEach(async ({ context }) => {
+  if (process.env.TEST_BRANCH_CODE === "1") {
+    await serveBranchCode(context, { pages: ["control", "settings"] });
+  }
+});
+
+
+async function controlContext(browser, options = {}) {
+  const context = await browser.newContext({ ...options, serviceWorkers: "block" });
+  if (process.env.TEST_BRANCH_CODE === "1") {
+    await serveBranchCode(context, { pages: ["control", "settings"] });
+  }
+  return context;
+}
 
 // Pasek postępu Control rysuje „główny” i „szczegół” w osobnych spanach
 // (bez „ — ” w tekście); pełna etykieta jest w atrybucie title.
@@ -76,7 +92,7 @@ test("control2: TV odrzuca inne urządzenia, kod display otwiera nowy Wyświetla
   test.setTimeout(120000);
   await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
   const game = await makeGame(page, `E2E-TV-${Date.now()}`, { roundQuestions: [TWO_QUESTIONS[0]] });
-  const context = await browser.newContext({ locale: "pl-PL", userAgent: "Mozilla/5.0 (SMART-TV; LINUX; Tizen 6.0) TV Safari/537.36" });
+  const context = await controlContext(browser, { locale: "pl-PL", userAgent: "Mozilla/5.0 (SMART-TV; LINUX; Tizen 6.0) TV Safari/537.36" });
   try {
     const codes = await page.evaluate(async (game) => {
       const result = {};
@@ -652,34 +668,37 @@ async function attachStatistics(testInfo, label, rows) {
   await testInfo.attach(name, { path, contentType: "application/json" });
 }
 
-test("control2: widoczność zachowanych statystyk w panelu administratora", async ({ page }, testInfo) => {
-  test.skip(process.env.KEEP_STATISTICS_GAMES !== "1", "Only inspect explicitly retained production games.");
-  await loginAsPooledTestUser(page, page.context(), testInfo.parallelIndex);
-  const report = await page.evaluate(async () => {
-    const sb = window.__sbClient;
-    const { data: user, error: authError } = await sb.auth.getUser();
-    if (authError) throw authError;
-    const { data: games, error: gamesError } = await sb.from("games").select("id,name")
-      .eq("owner_id", user.user.id).like("name", "E2E-CONTROL2-%");
-    if (gamesError) throw gamesError;
-    const { data: history, error: historyError } = await sb.rpc("get_stats_detail", { p_type: "gameplay", p_limit: 200 });
-    if (historyError) throw historyError;
-    const names = new Set((games || []).map(game => game.name));
-    const { data: excluded, error: excludedError } = await sb.rpc("stats_excluded_list");
-    if (excludedError) throw excludedError;
+test("control2: statystyki: zdarzenia pokazują przerwy i błędy bez pustych sekcji", async ({ page }) => {
+  await page.goto("/", { waitUntil: "domcontentloaded" });
+  const result = await page.evaluate(async () => {
+    const response = await fetch("/settings/js/settings.js", { cache: "no-store" });
+    if (!response.ok) throw new Error(`settings.js: ${response.status}`);
+    const source = await response.text();
+    const start = source.indexOf("function buildSessionRunDetails(");
+    const end = source.indexOf("const SESSION_STATUS_LABELS", start);
+    if (start < 0 || end < 0) throw new Error("Missing statistics renderer");
+    const render = new Function(`${source.slice(start, end)}; return buildSessionRunDetails;`)();
+    const event = (kind, extra = {}) => ({ kind, at: "2026-10-10T12:00:00Z", ...extra });
+    const inspect = events => {
+      const root = render({ game_name: "E2E", stats_detail: { events } });
+      return { sections: root.querySelectorAll(".stats-session-events").length, rows: [...root.querySelectorAll(".stats-session-event")].map(row => row.textContent) };
+    };
     return {
-      account: user.user.email,
-      excludedFromStatistics: (excluded || []).some(row => row.user_id === user.user.id),
-      games: games || [],
-      // Return only these owned test games, never unrelated users' history.
-      visibleRows: (history || []).filter(row => names.has(row.game_name)),
+      empty: inspect([]),
+      orphan: inspect([event("reconnect")]),
+      outage: inspect([event("disconnect", { devices: ["display"], message: "presence:display=offline,host=online,buzzer=online" }), event("reconnect")]),
+      error: inspect([event("error", { message: "Nie można odczytać statusu urządzeń." })]),
     };
   });
-  expect(report.games.length).toBeGreaterThanOrEqual(2);
-  const path = testInfo.outputPath("statistics-panel-visibility.json");
-  await require("node:fs/promises").writeFile(path, JSON.stringify(report, null, 2));
-  await testInfo.attach("statistics-panel-visibility.json", { path, contentType: "application/json" });
-  console.log(`[statistics-review] ${report.account}: ${report.games.length} owned games, ${report.visibleRows.length} rows visible in admin history, excluded=${report.excludedFromStatistics}`);
+  expect(result.empty).toEqual({ sections: 0, rows: [] });
+  expect(result.orphan).toEqual({ sections: 0, rows: [] });
+  expect(result.outage.sections).toBe(1);
+  expect(result.outage.rows).toHaveLength(1);
+  expect(result.outage.rows[0]).toContain("Przerwa: Wyświetlacz");
+  expect(result.outage.rows[0]).toContain("Prowadzący: online");
+  expect(result.error.sections).toBe(1);
+  expect(result.error.rows).toHaveLength(1);
+  expect(result.error.rows[0]).toContain("Błąd · Nie można odczytać statusu urządzeń.");
 });
 
 function trackErrors(p, label, bucket) {
@@ -731,7 +750,7 @@ function instrumentAnon(p, label) {
 }
 
 async function openAnon(browser, contexts, path, label, errors) {
-  const ctx = await browser.newContext();
+  const ctx = await controlContext(browser, );
   contexts.push(ctx);
   const p = await ctx.newPage();
   trackErrors(p, label, errors);
@@ -2502,7 +2521,7 @@ test("@mailbox control2: udostępnianie urządzenia (Prowadzący) przez e-mail -
       const { data } = await window.__sbClient.auth.getUser();
       return data?.user?.id || null;
     });
-    const recipientSetupContext = await browser.newContext();
+    const recipientSetupContext = await controlContext(browser, );
     const recipientSetupPage = await recipientSetupContext.newPage();
     let recipientUid = null;
     try {
@@ -2604,7 +2623,7 @@ test("@mailbox control2: udostępnianie urządzenia (Prowadzący) przez e-mail -
     // Odbiorca klika link z maila -- zupełnie NOWY, niezalogowany kontekst
     // (nie ten sam user/sesja co operator) -- dowód, że share_key_host w
     // URL-u wystarcza, bez żadnego logowania.
-    const recipientContext = await browser.newContext();
+    const recipientContext = await controlContext(browser, );
     contexts.push(recipientContext);
     const recipientPage = await recipientContext.newPage();
     await recipientPage.goto(links[0], { waitUntil: "domcontentloaded" });
@@ -2657,7 +2676,7 @@ async function reconnectViaModal(browser, control, kind, contexts, errors) {
   await control.locator(rowId).click();
   const url = await readDeviceUrlFromModal(control, kind);
   if (!url) throw new Error(`modal (${kind}) nie pokazał żadnego URL-a do ponownego podłączenia`);
-  const ctx = await browser.newContext();
+  const ctx = await controlContext(browser, );
   contexts.push(ctx);
   const p = await ctx.newPage();
   trackErrors(p, kind, errors);
@@ -2697,17 +2716,33 @@ test("control2: zerwanie połączenia wszystkich trzech urządzeń naraz i ponow
     await clearDisplayLog(displayPage);
     await revealAnswer(page, 1); // odp. #1 (top) -> wygrywa pojedynek, reszta rundy zostaje NIEODSŁONIĘTA
 
+    // Awaria odczytu nie jest dowodem rozłączenia urządzeń.
+    const presenceRoute = "**/rest/v1/device_presence?*";
+    let failedReads = 0;
+    await page.route(presenceRoute, route => {
+      failedReads++;
+      return route.fulfill({ status: 503, contentType: "application/json", body: JSON.stringify({ message: "E2E: presence read unavailable" }) });
+    });
+    await expect.poll(() => failedReads).toBeGreaterThan(0);
+    await expect(answerTile(page, 2)).toBeDisabled();
+    await page.waitForTimeout(7500); // Przekrocz TTL urządzeń podczas awarii odczytu.
+    for (const id of ["dotDisplay", "dotHost", "dotBuzzer"]) {
+      await expect(page.locator(`#${id}`)).toHaveClass(/\bok\b/);
+    }
+    await expect(page.locator("#deviceLostOverlay")).toBeHidden();
+    await expect.poll(async () => {
+      const sessions = await readControl2Sessions(page, game.id);
+      return (sessions[0]?.stats_detail.events || []).filter(event => event.kind === "error" && event.message === "Nie można odczytać statusu urządzeń.").length;
+    }).toBe(1);
+    const unavailableSessions = await readControl2Sessions(page, game.id);
+    expect((unavailableSessions[0].stats_detail.events || []).filter(event => event.kind === "disconnect")).toHaveLength(0);
+    await page.unroute(presenceRoute);
+    await expect(answerTile(page, 2)).toBeEnabled({ timeout: 10000 });
+
     // ===== Zerwanie wszystkich trzech naraz =====
     const toClose = contexts.splice(0, contexts.length); // zdejmij z listy sprzątanej w finally -- zamykamy je TU, świadomie
     await Promise.all(toClose.map((ctx) => ctx.close()));
-    // Ten sam wzorzec co naprawiony timeout maila (patrz test #16 wyżej):
-    // margines MUSI przekraczać realne worst-case opóźnienie, nie być mu
-    // dokładnie równy. control/js/presence.js: ONLINE_MS=15_000 (ostatni
-    // ping musi być starszy niż 15s, żeby isOnline() zwróciło false) + do
-    // POLL_MS=1_500 na kolejny tick, który to w ogóle przeliczy i odświeży
-    // #dotX -- worst-case to ~16.5s, nie 15s. 15000ms (dokładnie na granicy)
-    // bywał za ciasny pod obciążeniem runnera CI (real finding: ten test
-    // padał powtarzalnie w CI, nie losowo).
+    // TTL obecności 6,5 s + margines na odczyt i render pod obciążeniem.
     await expect(page.locator("#dotDisplay")).toHaveClass(/\bbad\b/, { timeout: 8500 });
     await expect(page.locator("#dotHost")).toHaveClass(/\bbad\b/, { timeout: 8500 });
     await expect(page.locator("#dotBuzzer")).toHaveClass(/\bbad\b/, { timeout: 8500 });

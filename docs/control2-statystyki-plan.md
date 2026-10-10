@@ -46,17 +46,30 @@ Sesje zaczęte przed instalacją statystyk mogą zawierać tylko obserwowany od 
 
 Dowody odczytano z artefaktu `production-statistics-records` w powyższym przebiegu: sześć plików `statistics-*.json`. Nie są to dane z atrapy ani z lokalnej bazy. Kod i baza starego Control nadal mogą działać równolegle; archiwizacja obecnych wpisów pozostaje odłożona do zakończenia migracji produktu.
 
-## Zachowane gry do ręcznego sprawdzenia
+## Decyzje
 
-Na prośbę użytkownika powtórzono dwa prawdziwe przypadki na koncie **test1@familiada.online** i pozostawiono gry oraz ich sesje w bazie. [Przebieg 37489529236](https://github.com/Andrish97/familiada/actions/runs/37489529236): 2/2 zaliczone, 4,2 minuty.
+- 2026-10-10: wdrożyć zachowane lokalne poprawki odczytu obecności i listy
+  zdarzeń; posprzątać nieaktualne dokumenty i jednorazowe testy diagnostyczne.
+- Błąd odczytu obecności zachowuje ostatni znany stan urządzeń i blokuje akcje
+  trwającej gry do poprawnego odczytu. Zapisuje błąd odczytu, bez fałszywego
+  zdarzenia rozłączenia. Powrót połączenia bez poprzedniej przerwy jest
+  pomijany w szczegółach, a pusta sekcja zdarzeń nie jest wyświetlana.
 
-| Gra | ID | Zapis |
-|---|---|---|
-| E2E-CONTROL2-FINALFULL-1791301296021 | `c0dd5c27-4961-431a-932a-2bec105376af` | Pełny finał, 135 pkt finału, 300:0 w rundach, 435:0 końcowo, nagroda 1 305. |
-| E2E-CONTROL2-ENDPOINTS-1791301486589 | `f0690caf-a871-4e0e-acaf-2cd17677e6c0` | Zakończenie bez finału, jedna runda, 90:0. |
+## Status „Utracono kontakt”
 
-Kontrola widoczności na produkcji potwierdziła, że konto test1 jest wykluczone ze statystyk, dlatego standardowy `get_stats_detail` nie pokazuje jego rozgrywek. [Przebieg 37491323090](https://github.com/Andrish97/familiada/actions/runs/37491323090). Wykluczenie nie blokuje zapisywania danych i nie zostało automatycznie usunięte.
+Widok `game_sessions_effective` nadaje ten status niezakończonej sesji po
+ponad godzinie od `last_seen_at`. Aktywność odświeżają zatwierdzone zmiany
+stanu gry oraz telemetryka Control (co 5 minut i przy powrocie do karty).
+Możliwą przyczyną jest zamknięcie karty, uśpienie urządzenia lub brak sieci.
+Sam status nie zamyka gry ani nie usuwa wyniku; wznowienie aktywności
+przywraca bieżący status tej samej sesji. Przerwy urządzeń w rozwiniętym
+przebiegu są osobnymi zdarzeniami, wykrywanymi po 6,5 s bez ich aktywności.
 
-Aby zobaczyć gry w standardowej historii administratora, w sekcji **Wykluczenia ze statystyk** usuń konto test1 z listy i ponownie otwórz Rozgrywki. Przywrócenie wykluczenia ponownie ukryje jego dane w zbiorczych statystykach; zapisane sesje pozostaną w bazie.
+## Ręczna kontrola statystyk
 
-Workflow testów otrzymał opcję `retain_statistics_games`, domyślnie wyłączoną. Przy jej świadomym włączeniu pozostają wyłącznie gry, dla których test odczytał rekordy statystyk; standardowe przebiegi nadal sprzątają swoje gry.
+Konta testowe są wykluczone ze statystyk zbiorczych; wykluczenie nie blokuje
+zapisu sesji. Do ręcznej kontroli można użyć `retain_statistics_games` w
+workflow e2e, a następnie czasowo usunąć odpowiednie konto z wykluczeń w
+panelu administratora. Domyślnie testy usuwają utworzone gry.
+Historyczne potwierdzenie zachowania i wykluczeń: przebiegi 37489529236 i
+37491323090. Jednorazowy test zależny od pozostawionych wtedy gier usunięto.

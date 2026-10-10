@@ -89,6 +89,7 @@ on:
 # workers=4, to sygnał żeby cofnąć o kolejny krok (4 -> 2), nie iść dalej w
 # górę bez kolejnego czystego przebiegu na obecnej wartości.
 env:
+  TEST_BRANCH_CODE: ${{ github.ref_name != 'main' && '1' || '0' }}
   TEST_ACCOUNT_COUNT: "8"
   TEST_ACCOUNT_NUMBERS: ${{ inputs.test_accounts || '' }}
   TEST_WORKERS: ${{ inputs.workers || '4' }}

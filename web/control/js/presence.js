@@ -25,6 +25,7 @@ export function createPresence({ gameId, onChange }) {
   let displayAudioUnlockNonce = null;
   let displayAudioUnlockStatus = { requestNonce: null, acknowledgedNonce: null };
   let lastSeenAt = { display: null, host: null, buzzer: null };
+  let readUnavailable = false;
   // Zgłoszone: "cały panel jest zlagowany, przewijanie też" — onChange()
   // (control/js/app.js's renderCurrent(), pełny root.innerHTML="" +
   // odbudowa dla większości ekranów) leciał na KAŻDY tick (co 1.5s), NAWET
@@ -65,13 +66,14 @@ export function createPresence({ gameId, onChange }) {
     const { data, error } = presenceResult;
 
     if (error) {
-      lastSeenAt = { display: null, host: null, buzzer: null };
-      flags = { display: false, host: false, buzzer: false };
-      displayAudioUnlocked = null;
-      displayAudioUnlockNonce = null;
+      // A failed read says nothing about device connectivity. Keep the last
+      // observed status; Control separately blocks actions until reads recover.
+      readUnavailable = true;
       reportIfChanged({ flags, lastSeenAt, displayAudioUnlocked, displayAudioUnlockNonce, error });
       return;
     }
+
+    readUnavailable = false;
 
     const rows = data || [];
     const d = pickNewest(rows, "display");
@@ -101,10 +103,7 @@ export function createPresence({ gameId, onChange }) {
 
     reportIfChanged({ flags, lastSeenAt, displayAudioUnlocked, displayAudioUnlockNonce, displayAudioUnlockStatus, error: null });
     } catch (error) {
-      lastSeenAt = { display: null, host: null, buzzer: null };
-      flags = { display: false, host: false, buzzer: false };
-      displayAudioUnlocked = null;
-      displayAudioUnlockNonce = null;
+      readUnavailable = true;
       reportIfChanged({ flags, lastSeenAt, displayAudioUnlocked, displayAudioUnlockNonce, error });
     } finally {
       inFlight = false;
@@ -122,7 +121,7 @@ export function createPresence({ gameId, onChange }) {
       displayAudioUnlockNonce: payload.displayAudioUnlockNonce ?? displayAudioUnlockNonce,
       displayAudioUnlockStatus: payload.displayAudioUnlockStatus ?? displayAudioUnlockStatus,
     };
-    const fp = JSON.stringify({ flags: reported.flags, displayAudioUnlocked: reported.displayAudioUnlocked, displayAudioUnlockNonce: reported.displayAudioUnlockNonce, displayAudioUnlockStatus: reported.displayAudioUnlockStatus });
+    const fp = JSON.stringify({ flags: reported.flags, readUnavailable: !!reported.error, displayAudioUnlocked: reported.displayAudioUnlocked, displayAudioUnlockNonce: reported.displayAudioUnlockNonce, displayAudioUnlockStatus: reported.displayAudioUnlockStatus });
     if (fp === lastReported) return;
     lastReported = fp;
     onChange?.(reported);
@@ -133,6 +132,7 @@ export function createPresence({ gameId, onChange }) {
     timer = setInterval(tick, POLL_MS);
     // Expire locally even when a presence query is still waiting for the network.
     expiryTimer = setInterval(() => {
+      if (readUnavailable) return;
       flags = Object.fromEntries(Object.entries(lastSeenAt).map(([kind, at]) => [kind, isOnline(at)]));
       reportIfChanged({ flags, lastSeenAt, error: null });
     }, 250);

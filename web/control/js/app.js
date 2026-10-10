@@ -424,7 +424,8 @@ async function main() {
   // Dźwięk odsłuchiwany w Podsumowaniu jest podglądem, nie dźwiękiem akcji
   // gry. Nie może blokować przejścia do rozgrywki; UI zatrzymuje go przy
   // wyjściu z Podsumowania. Poza tym krokiem aktywne SFX nadal blokują akcje.
-  function busy() { return controlOffline || waitingForDisplayAudioUnlock() || queuedGameAction || (soundBusy() && store.state.step !== "setup_finish") || committing || lockConfirmPending || waitingForDisplay() || Date.now() < lockedUntil || missingDevices(store.state, presenceFlags).length > 0; }
+  function presenceReadBlocksGame() { return presenceUnavailable && store.state.locks.gameStarted && !store.state.locks.gameEnded; }
+  function busy() { return controlOffline || presenceReadBlocksGame() || waitingForDisplayAudioUnlock() || queuedGameAction || (soundBusy() && store.state.step !== "setup_finish") || committing || lockConfirmPending || waitingForDisplay() || Date.now() < lockedUntil || missingDevices(store.state, presenceFlags).length > 0; }
 
   // Uzbraja klienckie `lockedUntil` na czas `ms` (potwierdzonego dźwięku/
   // animacji) I dociąga je do realnego czasu, w którym serwer (migracja
@@ -481,7 +482,7 @@ async function main() {
     if (controlOffline || waitingForDisplayAudioUnlock()) return null;
     // Expiration records real elapsed time even while an endpoint is absent.
     // Queued operator actions are rechecked when they actually execute.
-    if (!action.type.startsWith("EXPIRE_") && missingDevices(store.state, presenceFlags).length) return null;
+    if (!action.type.startsWith("EXPIRE_") && (presenceReadBlocksGame() || missingDevices(store.state, presenceFlags).length)) return null;
     if (waitingForDisplay() && !action.type.startsWith("EXPIRE_")) return null;
     const prevRow = store.state.__row || null;
     committing = true;
@@ -655,7 +656,12 @@ async function main() {
           displayUnlockRetryTimer = setInterval(publish, 1500);
         }
       }
-      if (error) presenceUnavailable = true;
+      if (error) {
+        if (!presenceUnavailable) void sessionTelemetry.report({ kind: "error", message: "Nie można odczytać statusu urządzeń." });
+        presenceUnavailable = true;
+        renderCurrent();
+        return;
+      }
       else if (presenceUnavailable) {
         presenceUnavailable = false;
         requestDisplayAudioUnlock();
@@ -799,7 +805,7 @@ async function main() {
     if (ended && !outroReturnReady && !outroUnlockTimer) {
       outroUnlockTimer = setTimeout(() => { outroUnlockTimer = null; renderCurrent(); }, Math.max(0, 30_000 - (Date.now() - outroStartedAt)) + 20);
     }
-    return { urls, presenceFlags, displayAudioUnlocked, connectCodes, shareBadges, typingPending:typingCommit, outroReturnReady, busy: controlOffline || waitingForDisplayAudioUnlock() || queuedGameAction || (soundBusy() && store.state.step !== "setup_finish") || (committing && !typingCommit) || lockConfirmPending || waitingForDisplay() || Date.now() < lockedUntil || missingDevices(store.state, presenceFlags).length > 0, devicesBlocked: missingDevices(store.state, presenceFlags).length > 0 };
+    return { urls, presenceFlags, displayAudioUnlocked, connectCodes, shareBadges, typingPending:typingCommit, outroReturnReady, busy: controlOffline || presenceReadBlocksGame() || waitingForDisplayAudioUnlock() || queuedGameAction || (soundBusy() && store.state.step !== "setup_finish") || (committing && !typingCommit) || lockConfirmPending || waitingForDisplay() || Date.now() < lockedUntil || missingDevices(store.state, presenceFlags).length > 0, devicesBlocked: presenceReadBlocksGame() || missingDevices(store.state, presenceFlags).length > 0 };
   }
 
   function renderCurrent() {
@@ -1050,7 +1056,7 @@ async function main() {
         finally { queuedGameAction = false; }
       }
       if (gameAction && busy() && payload?.type !== "SET_ENTRY_TEXT") return;
-      if (gameAction && missingDevices(store.state, presenceFlags).length) return;
+      if (gameAction && (presenceReadBlocksGame() || missingDevices(store.state, presenceFlags).length)) return;
       if (action === "ui.flushTyping") { await _dispatchGatedQueue; return; }
       if (action === "ui.rerender") {
         // Czysto lokalna zmiana UI (np. zaznaczenie drużyny w trybie
