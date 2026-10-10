@@ -123,3 +123,23 @@ Lista w rozmowie 2026-10-09; odpowiedzi zapisywać tutaj, w „Decyzje”.
 9. „Podłącz” w Zadaniach → `/connect/` z wybranym udostępnieniem. Tak.
 10. Filtr rodzaju w Zadaniach w adresie (`?kind=`). Filtry to listy
     rozwijane **`ui-select`** (wspólne `list-search.js` już ich używa).
+
+### Doprecyzowania użytkownika (2026-10-10, cz. 2)
+
+- **Wygasły link urządzenia**: otwarty link pokazuje wyjaśnienie („Zaproszenie
+  wygasło — poproś o nowy link”), ale w Zadaniach i na liście urządzeń
+  wygasłe udostępnienia **nie są widoczne**.
+- **Urządzenia** (jak bazy, prawie): udostępnia się mailem / nazwą, znajomi to
+  skrót. **Odbiorca z kontem widzi udostępnienie w panelu** (Zadania /
+  Podłącz urządzenie), **bez konta — tylko w mailu**.
+- **Zadania — bazy**: tylko bazy do zaakceptowania; po akceptacji
+  (lub odrzuceniu) **znikają**. „Zrobione” tylko dla ankiet.
+- **Listy już udostępnionych** (bazy, urządzenia): **jedna lista**, bez
+  podziału na sekcje wg kanału — na kaflu/wierszu tylko oznaczenie, czy to
+  znajomy. **Ankieta**: tak samo jedna lista, oznaczenie roli (subskrybent /
+  znajomy).
+- Wcześniejsze „PS” (zadanie dla konta = mail, globalnie wyłączalne) dotyczy
+  pkt 7.
+
+Otwarte: pkt 8 (subskrybent → znajomy: wpis subskrybenta znika?), godzina
+wygaśnięcia linku urządzenia liczona od ostatniej aktywności rozgrywki?
