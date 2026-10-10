@@ -75,7 +75,8 @@ planie E19 sekcja 2) i na końcu **E13** (instrukcja).
   push na `main` → e2e na `main` dla dotkniętych speców.
 - e2e: `scripts/agent-tools/e2e-seq.sh "e2e/a.spec.js e2e/b.spec.js"` —
   nigdy dwa przebiegi naraz, nigdy cały zestaw. Konta: pula test1–3, test6–8;
-  **test4, test5, test9, test10 — nie używać**.
+  **test4, test5, test9, test10 — nie używać**. **test14@** — skrzynka bez
+  konta do scenariuszy „odbiorca bez konta” (nie zakładać konta).
 - Migracje: dodające od razu na `main` (najpierw lokalny Postgres —
   `docs/sql/local-db.md`, test SQL w `docs/sql/`), usuwające dopiero po
   potwierdzeniu e2e (E14). Log zastosowania: `supabase/migration_logs/latest.log`

@@ -30,6 +30,9 @@ przepisuje CI), Supabase, Cloudflare Worker. Strony w `web/`.
   odstąpione użytkownikowi do jego równoległych testów). Wykluczone w
   `EXCLUDED_TEST_ACCOUNTS` (`tests/e2e/helpers/login.js`); pula e2e: test1–3,
   test6–8 (test6/7/8 przypisane też na stałe w `subscriptions.spec.js`).
+- **test14@familiada.online — skrzynka BEZ konta** (podpięta pod Worker jak
+  inne, do testów „bez konta”: subskrybent tylko e-mail, urządzenie na e-mail
+  bez konta). Nie zakładać na nim konta.
 - Migracje bezpieczne (dodające) od razu na `main`, potem testy.
 - Migracje tylko do przodu: `supabase/migrations/YYYY-MM-DD_NNN_*.sql`,
   stosowane po pushu na `main`; `schema.sql` aktualizuje CI.

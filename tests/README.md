@@ -144,6 +144,8 @@ plik, to inaczej". Lokalnie to samo bez żadnego dodatkowego ustawienia:
 
 ## Pula kont testX (`test1@familiada.online` … `test10@…`)
 
+> **test14@familiada.online** — skrzynka pocztowa **bez konta** (Worker przekazuje maile jak dla innych kont), do scenariuszy „odbiorca bez konta” (subskrybent tylko e-mail, urządzenie na e-mail); nie zakładać na nim konta.
+>
 > **Zwykła pula pomija:** test4 i test5 (zarezerwowane dla odizolowanych przebiegów) oraz test9 i test10 (druga sesja). test4/test5 można użyć wyłącznie po jawnym wskazaniu `test_accounts=4,5` w workflow. test9/test10 pozostają całkowicie wykluczone.
 
 Każdy plik/filtr testów **może** korzystać ze zwykłej puli kont
