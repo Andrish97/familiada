@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
+  <meta name="app-version" content="v2026-10-10T06225"/>
+
+  <meta charset="UTF-8"/>
+  <meta name="robots" content="noindex, nofollow"/>
+  <meta name="mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net">
+  <link rel="preconnect" href="https://supabase.familiada.online">
+  <title data-i18n="tasks.title">Familiada — zadania</title>
+
+  <link rel="icon" href="/favicon.ico?v=v2026-10-10T06225"/>
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-10T06225"/>
+  <link rel="stylesheet" href="/games/css/games.css?v=v2026-10-10T06225"/>
+  <link rel="stylesheet" href="/tasks/css/tasks.css?v=v2026-10-10T06225"/>
+  <script>
+    document.documentElement.classList.add('page-loading');
+    try {
+      var _has = false;
+      for (var _i = 0; _i < localStorage.length; _i++) {
+        var _k = localStorage.key(_i);
+        if (_k && _k.startsWith('sb-') && _k.endsWith('-auth-token')) { _has = true; break; }
+      }
+      if (!_has) location.replace('/login/');
+    } catch(_e) {}
+  </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+  <script type="module" src="/tasks/js/tasks.js?v=v2026-10-10T06225" defer></script>
+  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-10T06225" defer></script>
+  <script src="/shared/js/core/security-warning.js?v=v2026-10-10T06225" defer></script>
+</head>
+
+<body class="games-body skel-body">
+  <header class="topbar topbar-layout-4">
+    <div class="topbar-section topbar-section-1">
+      <div class="brand">FAMILIADA</div>
+      <button class="btn" id="btnBackToGames" type="button">Wstecz</button>
+    </div>
+    <div class="topbar-section topbar-section-2"></div>
+    <div class="topbar-section topbar-section-3">
+      <button class="btn" id="btnManual" type="button" data-i18n-aria-label="common.manualLabel" data-i18n-title="common.manualLabel" aria-label="Wskazówki" title="Wskazówki"><i class="ico" data-icon="info"></i></button>
+    </div>
+    <div class="topbar-section topbar-section-4">
+      <span class="who" id="who">—</span>
+      <button class="btn" id="btnLogout" type="button" data-i18n="common.authEntry">Zaloguj / Załóż konto</button>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <div class="bar">
+      <div>
+        <div class="title" data-i18n="tasks.bar.title">Zadania</div>
+        <div class="hint" id="hint" data-i18n="tasks.bar.hint">Ankiety, bazy i urządzenia, które ktoś Ci udostępnił.</div>
+      </div>
+    </div>
+
+    <section class="games-shell">
+      <div class="card games-card tasks-card">
+        <div class="tasks-scroll" data-skel-step>
+          <div class="rowsPage" id="tasksHost"></div>
+        </div>
+        <div class="games-bottom">
+          <div class="games-bottom-left"></div>
+          <div class="games-bottom-right"></div>
+        </div>
+      </div>
+    </section>
+
+    <div class="footer">
+      <div data-i18n="common.footer.left">© 2026 Familiada — system do gry na żywo</div>
+      <button class="btn-contact-footer" type="button" data-contact-modal data-i18n="common.contactBtn">Kontakt</button>
+    </div>
+  </main>
+</body>
+</html>

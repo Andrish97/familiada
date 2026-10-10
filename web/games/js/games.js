@@ -111,6 +111,7 @@ const btnPoll = document.getElementById("btnPoll");
 const btnSettings = document.getElementById("btnSettings");
 
 const subscriptionsHubBadge = document.getElementById("subscriptionsHubBadge");
+const tasksBadge = document.getElementById("tasksBadge");
 const navMore = document.getElementById("navMore");
 const btnMore = document.getElementById("btnMore");
 const navMoreDropdown = document.getElementById("navMoreDropdown");
@@ -1336,6 +1337,18 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
 
+  // Zadania (ankiety + bazy do akceptacji): badges_get().tasks_pending.
+  async function refreshTasksBadge(){
+    try{
+      const { data, error } = await sb().rpc("badges_get");
+      if (error) throw error;
+      const row = Array.isArray(data) ? data[0] : data;
+      setNavBadge(tasksBadge, Number(row?.tasks_pending ?? 0));
+    } catch (e){
+      setNavBadge(tasksBadge, 0);
+    }
+  }
+
   // Licznik = dokładnie to, co pokaże lista na /connect/ na tym
   // urządzeniu (telefon/tablet: prowadzący + przycisk, komputer/TV:
   // wyświetlacz) — wcześniej liczył wszystkie udostępnienia, więc badge
@@ -1374,7 +1387,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   async function refreshBadgesNow(){
     if (badgesRefreshInFlight) return badgesRefreshInFlight;
     badgesRefreshInFlight = (async () => {
-      await Promise.allSettled([refreshPollsHubDot(), refreshBasesBadge(), refreshConnectDeviceBadge()]);
+      await Promise.allSettled([refreshPollsHubDot(), refreshTasksBadge(), refreshBasesBadge(), refreshConnectDeviceBadge()]);
       lastBadgesRefreshAt = Date.now();
     })();
     try {

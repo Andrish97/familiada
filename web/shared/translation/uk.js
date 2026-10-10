@@ -88,6 +88,7 @@ const uk = {
     activeSub: "Прийняли запрошення.",
     declined: "Відхилені",
     declinedSub: "Відмовилися від запрошення.",
+    channel: { friend: "Друг", subscriber: "Підписник", mail: "E-mail" },
   },
   nav: {
     backTo: "{page}",
@@ -2653,6 +2654,7 @@ const uk = {
     nav: {
       pollsHubPolls: "Опитування",
       pollsHubSubs: "Підписки",
+      tasks: "Завдання",
       bases: "Бази питань",
       logo: "Лого",
       marketplace: "Ігри Спільноти",
@@ -3574,6 +3576,27 @@ const uk = {
     shareCooldownAlert: "Повторно запросити до голосування можна через {hours} год.",
   },
 
+  tasks: {
+    title: "Familiada — завдання",
+    bar: {
+      title: "Завдання",
+      hint: "Опитування, бази та пристрої, якими з вами поділилися.",
+    },
+    sections: { todo: "Треба зробити", done: "Зроблено" },
+    filter: { aria: "Тип завдання", all: "Усі", poll: "Опитування", base: "Бази", device: "Пристрої" },
+    from: "від {owner}",
+    received: "отримано {date}",
+    doneAt: "зроблено {date}",
+    expires: "дійсне до {date}",
+    pollType: { text: "Текстове опитування", points: "Опитування з балами" },
+    baseTitle: "База: {name}",
+    role: { viewer: "лише перегляд", editor: "з редагуванням" },
+    deviceType: { host: "Ведучий", buzzer: "Кнопка для двобою", display: "Дисплей", poll_qr: "QR-дисплей" },
+    actions: { vote: "Голосувати", decline: "Відхилити", accept: "Прийняти", connect: "Підключити" },
+    declinePoll: { title: "Відхилити завдання?", text: "Опитування зникне зі списку.", ok: "Відхилити", cancel: "Скасувати" },
+    empty: "Нічого робити.",
+    errors: { load: "Не вдалося завантажити завдання.", decline: "Не вдалося відхилити завдання.", accept: "Не вдалося прийняти базу.", baseDecline: "Не вдалося відхилити базу." },
+  },
   pollsHubSubscriptions: {
     view: {
       current: "Актуальні",

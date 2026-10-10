@@ -101,3 +101,109 @@ export function renderShareSections(host, groups, opts = {}) {
   }
   host.replaceChildren(frag);
 }
+
+// ===== Wiersze z sekcjami wg strony (E19: Zadania, Znajomi, Subskrybenci) =====
+// Sekcje podaje strona w swojej kolejności (nie ma stałej listy jak wyżej).
+// Wiersz: inicjał w kółku, tytuł, szara linijka stanu, opcjonalny kanał
+// (friend|subscriber|mail), akcje po prawej w wierszu. Komputer: tekst
+// akcji, telefon: sama ikona (aria-label zostaje); usuwanie zawsze ikoną.
+// Wygląd: base.css (.rowsPage, .rowsSection, .rowsRow).
+
+const ROW_CHANNELS = ["friend", "subscriber", "mail"];
+
+/**
+ * Pojedynczy wiersz.
+ * @param {object} row
+ * @param {string|number} [row.id]
+ * @param {string} row.title
+ * @param {string} [row.avatar]   tekst, z którego bierzemy inicjał (domyślnie tytuł)
+ * @param {string} [row.note]     szara linijka stanu
+ * @param {"friend"|"subscriber"|"mail"} [row.channel]
+ * @param {Record<string,string>} [row.data]  atrybuty data-* wiersza (np. kind)
+ * @param {{key:string,text?:string,icon?:string,title?:string,gold?:boolean,iconOnly?:boolean,disabled?:boolean,onClick:Function}[]} [row.actions]
+ */
+export function rowEl(row) {
+  const el = document.createElement("div");
+  el.className = "rowsRow";
+  if (row.id != null) el.dataset.id = String(row.id);
+  for (const [k, v] of Object.entries(row.data || {})) el.dataset[k] = String(v);
+  const initial = Array.from(String(row.avatar || row.title || "?").trim())[0] || "?";
+  const channel = ROW_CHANNELS.includes(row.channel) ? row.channel : "";
+  const noteParts = [];
+  if (channel) noteParts.push(`<span class="rowsChannel rowsChannel--${channel}">${esc(t(`shareSections.channel.${channel}`))}</span>`);
+  if (row.note) noteParts.push(esc(row.note));
+  el.innerHTML = `
+    <span class="rowsAvatar" aria-hidden="true">${esc(initial.toLocaleUpperCase())}</span>
+    <div class="rowsMain">
+      <div class="rowsTitle" title="${esc(row.title)}">${esc(row.title)}</div>
+      ${noteParts.length ? `<div class="rowsNote">${noteParts.join(" · ")}</div>` : ""}
+    </div>
+    <div class="rowsActions"></div>`;
+  const acts = el.querySelector(".rowsActions");
+  for (const a of row.actions || []) {
+    const label = a.title || a.text || a.key;
+    const iconOnly = a.iconOnly || a.icon === "trash" || !a.text;
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "btn xsm rowsAct" + (a.gold ? " gold" : "") + (iconOnly ? " rowsAct--icon" : "");
+    b.dataset.act = a.key;
+    b.title = label;
+    b.setAttribute("aria-label", label);
+    if (a.disabled) b.disabled = true;
+    b.innerHTML = (a.text && !iconOnly ? `<span class="rowsActText">${esc(a.text)}</span>` : "")
+      + (a.icon ? `<span class="rowsActIcon">${icon(a.icon)}</span>` : "");
+    b.addEventListener("click", (e) => { e.stopPropagation(); a.onClick?.(e, b); });
+    acts.append(b);
+  }
+  return el;
+}
+
+/**
+ * Wyrysowuje sekcje w kolejności podanej przez stronę; pusta sekcja nie powstaje.
+ * Sekcja z polem `collapsed` (true/false) jest zwijana; ostatni wybór
+ * użytkownika zostaje w hoście przy kolejnych rysowaniach.
+ * @param {HTMLElement} host
+ * @param {{key:string,title:string,rows:object[],collapsed?:boolean}[]} sections
+ * @param {{emptyText?:string}} [opts]  emptyText: tekst, gdy żadna sekcja nie ma wierszy
+ */
+export function renderRowSections(host, sections, opts = {}) {
+  const state = host._rowsCollapsed || (host._rowsCollapsed = {});
+  const frag = document.createDocumentFragment();
+  for (const s of sections) {
+    if (!s.rows?.length) continue;
+    const sec = document.createElement("section");
+    sec.className = "rowsSection rowsSection--" + s.key;
+    sec.dataset.section = s.key;
+    const collapsible = typeof s.collapsed === "boolean";
+    const collapsed = collapsible && (s.key in state ? state[s.key] : s.collapsed);
+    const head = document.createElement(collapsible ? "button" : "div");
+    head.className = "rowsSectionHead";
+    if (collapsible) {
+      head.type = "button";
+      head.setAttribute("aria-expanded", collapsed ? "false" : "true");
+    }
+    head.innerHTML = `<span class="rowsSectionTitle">${esc(s.title)}</span><span class="rowsSectionCount">${s.rows.length}</span>${collapsible ? `<span class="rowsSectionCaret" aria-hidden="true">${icon(collapsed ? "caret-down" : "caret-up")}</span>` : ""}`;
+    const list = document.createElement("div");
+    list.className = "rowsList";
+    list.hidden = collapsed;
+    for (const r of s.rows) list.append(rowEl(r));
+    if (collapsible) {
+      head.addEventListener("click", () => {
+        const now = !list.hidden;
+        list.hidden = now;
+        state[s.key] = now;
+        head.setAttribute("aria-expanded", now ? "false" : "true");
+        head.querySelector(".rowsSectionCaret").innerHTML = icon(now ? "caret-down" : "caret-up");
+      });
+    }
+    sec.append(head, list);
+    frag.append(sec);
+  }
+  if (!frag.childNodes.length && opts.emptyText) {
+    const d = document.createElement("div");
+    d.className = "rowsEmpty";
+    d.textContent = opts.emptyText;
+    frag.append(d);
+  }
+  host.replaceChildren(frag);
+}

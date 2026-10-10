@@ -146,7 +146,7 @@ export function initListSearch({ grids, tile, name, filter, sort }) {
         if (hit) visible++;
       }
       // sekcje udostępniania (share-sections.js): bez widocznych wierszy znikają razem z nagłówkiem
-      for (const sec of grid.querySelectorAll(".shareSection")) {
+      for (const sec of grid.querySelectorAll(".shareSection, .rowsSection")) {
         sec.hidden = ![...sec.querySelectorAll(tile)].some((e) => !e.hidden);
       }
       emptyFor(grid).hidden = !showEmptyResult({ hasQuery: !!q, filterValue, total, visible });
