@@ -4898,6 +4898,7 @@ const pl = {
     saveErrorPrefix: "Błąd zapisu: ",
     saveErrorFinalNeed5: (v) => `Wybierz 5 pytań finałowych (wybrano ${v.count}/5).`,
     saveErrorCustomNoFile: "Wybrano własny dźwięk ale nie wgrano pliku dla: {names}",
+    leaveInvalidConfirm: "Ustawienia zawierają niepoprawne wartości. Przy zapisie zostaną przywrócone poprawne wartości (losowanie pytań finału, domyślny dźwięk lub ostatnia poprawna liczba). Zapisać i wyjść?",
     saveConflict: "Te ustawienia zostały w międzyczasie zmienione w innym miejscu. Odśwież stronę i wprowadź zmiany ponownie.",
     loadError: "Nie można załadować gry: ",
     unknownError: "nieznany błąd",

@@ -31,11 +31,11 @@ test("Control otwiera ustawienia i instrukcję zwykłym przejściem, bez iframe"
   assert.doesNotMatch(app, /postMessage|gsFrame|helpFrame|legalFrame/);
 });
 
-test("ustawienia gry zapisują się same: bez przycisku Zapisz i pytań o niezapisane zmiany", () => {
+test("ustawienia gry zapisują się same: bez przycisku Zapisz; ostrzeżenie chroni niepoprawny stan", () => {
   const html = read("games/settings/index.html");
   const js = read("games/settings/js/game-settings.js");
   assert.doesNotMatch(html, /btnSaveAll|btnGsModalClose|btnToggleSidebar|helpOverlay/);
-  assert.doesNotMatch(js, /unsavedConfirm|beforeunload|btnSaveAll/);
+  assert.doesNotMatch(js, /unsavedConfirm|btnSaveAll/);
   assert.match(js, /visibilitychange/);
   assert.match(js, /pagehide/);
 });

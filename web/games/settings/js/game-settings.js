@@ -1,7 +1,7 @@
 // Ustawienia gry (/games/settings/?id=<gra>): zwykła strona z autozapisem.
 // Każda zmiana zapisuje się sama po krótkiej przerwie (jak edytory logo i
 // edytor pytań), przy wyjściu zapis idzie od razu — bez przycisku „Zapisz”
-// i bez pytań o niezapisane zmiany. Podgląd Wyświetlacza i Prowadzącego:
+// z ostrzeżeniem, jeśli ustawienia wymagają poprawienia. Podgląd Wyświetlacza i Prowadzącego:
 // ramki /control/display/?preview=1 (shared/js/gameplay/previewRow.js).
 import { t, getUiLang } from "../../../shared/translation/translation.js?v=v2026-10-10T21370";
 import { linkTo, backHref, backTarget } from "../../../shared/js/core/nav-map.js?v=v2026-10-10T21370";
@@ -149,9 +149,8 @@ const colorModalDone = document.getElementById("gsColorModalDone");
 
 // ===== AUTOZAPIS =====
 // Wzorzec jak web/logo/js/editor-page.js: markDirty() planuje zapis po
-// DEBOUNCE_MS, flush() zapisuje od razu (wyjście, schowanie karty). Stanu,
-// którego nie da się zapisać (np. za mało pytań finału), nie zapisujemy —
-// w bazie zostaje poprzedni zapis, a pod paskiem akcji widać powód.
+// DEBOUNCE_MS, flush() zapisuje od razu (wyjście, schowanie karty).
+// Niepoprawne wartości przy zapisie wracają do poprawnych ustawień.
 const DEBOUNCE_MS = 800;
 const RETRY_MS = 5000;
 let ready = false;        // ustawienia wczytane, zmiany się liczą
@@ -160,6 +159,9 @@ let saveTimer = null;
 let saving = null;        // Promise trwającego zapisu
 let stopped = false;      // konflikt zapisu: dalszy autozapis wstrzymany
 let soundTouched = false; // zmiana wariantów/plików dźwięku: po zapisie zsynchronizuj bucket
+let customSoundKeys = new Set();
+const invalidInputs = new Map();
+let leaving = false;
 let pageLock = null;      // blokada zasobów strony (release przed wyjściem)
 
 // Komunikat pod paskiem akcji: tylko dla stanów, które wymagają uwagi
@@ -196,9 +198,28 @@ async function flush() {
   await saveAll({ force: true }).catch(() => {});
 }
 
-// Wyjście: zapis, zwolnienie blokad (kolejna strona bierze je od razu),
-// przejście. Bez pytań.
+function hasInvalidSettings() {
+  return invalidInputs.size > 0
+    || (localSettings.game.hasFinal === true && localSettings.game.finalQuestionsMode === "pick"
+      && localSettings.questions.final.length !== 5)
+    || Object.entries(localSettings.sound.variants).some(([key, value]) =>
+      value === VARIANT_CUSTOM && !customSoundKeys.has(key));
+}
+
+// Przed zapisem przy wyjściu użytkownik może zostać i poprawić wartości.
 async function leaveTo(href) {
+  if (leaving) return;
+  leaving = true;
+  if (hasInvalidSettings()) {
+    clearTimeout(saveTimer);
+    saveTimer = null;
+    const confirmed = await confirmModal({ text: t("gameSettings.leaveInvalidConfirm") });
+    if (!confirmed) {
+      leaving = false;
+      if (isDirty) scheduleSave(DEBOUNCE_MS);
+      return;
+    }
+  }
   await flush();
   ready = false;
   await pageLock?.release?.().catch(() => {});
@@ -249,9 +270,14 @@ async function saveAll() {
       // Walidacja: finał w trybie "pick" wymaga dokładnie 5 pytań
       if (hasFinal && localSettings.game.finalQuestionsMode === "pick") {
         const count = localSettings.questions.final.length;
-        if (count < 5) {
-          setSaveStatus("invalid", t("gameSettings.saveErrorFinalNeed5", { count }));
-          return;
+        if (count !== 5) {
+          localSettings.game.finalQuestionsMode = "random";
+          const inRounds = new Set(localSettings.questions.rounds.map(q => q.id));
+          localSettings.questions.rounds.push(...localSettings.questions.final.filter(q => !inRounds.has(q.id)));
+          localSettings.questions.final = [];
+          updateSubTabStates();
+          if (activeCat === "finale") setActiveCat("questions");
+          else if (activeCat === "questions" || activeCat === "rounds") renderCat(activeCat);
         }
       }
 
@@ -262,12 +288,16 @@ async function saveAll() {
         const missing = getSfxCategories().filter(cat =>
           localSettings.sound.variants[cat.key] === VARIANT_CUSTOM && !cfCheck.get(cat.key)
         );
-        if (missing.length > 0) {
-          const names = missing.map(cat => t("control.sfxDesc." + cat.key) || cat.key).join(", ");
-          setSaveStatus("invalid", (t("gameSettings.saveErrorCustomNoFile") || "Wgraj plik dla: {names}").replace("{names}", names));
-          return;
-        }
+        customSoundKeys = new Set(cfCheck.keys());
+        for (const cat of missing) delete localSettings.sound.variants[cat.key];
+        if (missing.length && activeCat === "sound") await renderSound();
       }
+
+      for (const [id, value] of invalidInputs) {
+        const input = document.getElementById(id);
+        if (input) input.value = value;
+      }
+      invalidInputs.clear();
 
       // Uzupełnij filenames w sound settings (do streszczenia w Control)
       await _syncSoundFilenames();
@@ -822,6 +852,7 @@ async function renderSound() {
   let customFiles = new Map();
   try { customFiles = await getSfxCustomFiles(gameId); } catch {}
 
+  customSoundKeys = new Set(customFiles.keys());
   const tableEl = document.getElementById("sfxTableGs");
   if (!tableEl) return;
 
@@ -1016,6 +1047,7 @@ async function renderSound() {
       try {
         await setSfxCustomBlob(key, file, file.name, gameId);
         customFiles.set(key, { blob: file, filename: file.name });
+        customSoundKeys.add(key);
         localSettings.sound.variants[key] = VARIANT_CUSTOM;
         markSoundDirty();
         // Odblokuj podgląd po wgraniu pliku
@@ -1040,6 +1072,7 @@ async function renderSound() {
         if (userId) deleteGameSound(sb(), userId, gameId, key).catch(console.warn);
       });
       customFiles.delete(key);
+      customSoundKeys.delete(key);
       delete localSettings.sound.variants[key];
       markSoundDirty();
 
@@ -1545,25 +1578,32 @@ function renderGame() {
     </div>
   `;
 
-  document.getElementById("gsMultipliers")?.addEventListener("change", e => {
-    const parts = e.target.value.split(/[,\s]+/)
-      .map(s => parseInt(s.trim(), 10))
-      .filter(n => Number.isFinite(n) && n > 0);
-    if (parts.length > 0) {
-      localSettings.game.advanced.roundMultipliers = parts;
-      markDirty();
+  function updateNumberInput(event, key, minimum, maximum = Infinity) {
+    const input = event.target;
+    const value = Number(input.value);
+    if (input.value.trim() && Number.isInteger(value) && value >= minimum) {
+      localSettings.game.advanced[key] = Math.min(value, maximum);
+      invalidInputs.delete(input.id);
+    } else {
+      invalidInputs.set(input.id, String(localSettings.game.advanced[key]));
     }
+    markDirty();
+  }
+
+  document.getElementById("gsMultipliers")?.addEventListener("change", e => {
+    const tokens = e.target.value.trim().split(/[,\s]+/);
+    const parts = tokens.map(Number);
+    if (tokens.every(token => /^\d+$/.test(token)) && parts.every(n => Number.isSafeInteger(n) && n > 0)) {
+      localSettings.game.advanced.roundMultipliers = parts;
+      invalidInputs.delete(e.target.id);
+    } else {
+      invalidInputs.set(e.target.id, localSettings.game.advanced.roundMultipliers.join(", "));
+    }
+    markDirty();
   });
 
-  document.getElementById("gsFinalMinPts")?.addEventListener("change", e => {
-    const v = parseInt(e.target.value, 10);
-    if (Number.isFinite(v) && v >= 0) { localSettings.game.advanced.finalMinPoints = v; markDirty(); }
-  });
-
-  document.getElementById("gsFinalTarget")?.addEventListener("change", e => {
-    const v = parseInt(e.target.value, 10);
-    if (Number.isFinite(v) && v > 0) { localSettings.game.advanced.finalTarget = v; markDirty(); }
-  });
+  document.getElementById("gsFinalMinPts")?.addEventListener("change", e => updateNumberInput(e, "finalMinPoints", 0));
+  document.getElementById("gsFinalTarget")?.addEventListener("change", e => updateNumberInput(e, "finalTarget", 1));
 
   content.querySelectorAll("[name='gsEndMode']").forEach(radio => {
     radio.addEventListener("change", () => {
@@ -1576,15 +1616,8 @@ function renderGame() {
     });
   });
 
-  document.getElementById("gsMainPrize")?.addEventListener("change", e => {
-    const v = parseInt(e.target.value, 10);
-    if (Number.isFinite(v) && v > 0) { localSettings.game.advanced.mainPrizeAmount = Math.min(v, 99999); markDirty(); }
-  });
-
-  document.getElementById("gsPrizeMultiplier")?.addEventListener("change", e => {
-    const v = parseInt(e.target.value, 10);
-    if (Number.isFinite(v) && v > 0) { localSettings.game.advanced.finalPrizeMultiplier = v; markDirty(); }
-  });
+  document.getElementById("gsMainPrize")?.addEventListener("change", e => updateNumberInput(e, "mainPrizeAmount", 1, 99999));
+  document.getElementById("gsPrizeMultiplier")?.addEventListener("change", e => updateNumberInput(e, "finalPrizeMultiplier", 1));
 
   document.getElementById("btnGameReset")?.addEventListener("click", async () => {
     if (!await confirmModal({ text: t("gameSettings.resetSectionConfirm") || "Przywrócić domyślne ustawienia gry?" })) return;
@@ -1766,6 +1799,8 @@ async function main() {
     }
 
     localSettings = mergeSettings(null);
+    invalidInputs.clear();
+    customSoundKeys.clear();
     markSoundDirty();
     updateSubTabStates();
     setActiveCat(activeCat);
@@ -1785,6 +1820,11 @@ async function main() {
   // Schowanie karty / przejście do innej aplikacji: zapis od razu.
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "hidden") void flush();
+  });
+  window.addEventListener("beforeunload", e => {
+    if (!ready || leaving || (!isDirty && !hasInvalidSettings())) return;
+    e.preventDefault();
+    e.returnValue = "";
   });
   window.addEventListener("pagehide", () => { void flush(); });
 

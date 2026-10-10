@@ -7,6 +7,13 @@
 
 const { test, expect } = require("@playwright/test");
 const { loginAsTestUser } = require("./helpers/login");
+const { serveBranchCode } = require("./helpers/branch-code");
+test.use({ serviceWorkers: "block" });
+test.beforeEach(async ({ context }) => {
+  if (process.env.TEST_BRANCH_CODE !== "0") {
+    await serveBranchCode(context, { pages: ["games/settings", "games"] });
+  }
+});
 
 // Blokada stanu "play" (guardGameState, reguła game_validate) blokuje całą
 // stronę ustawień, dopóki gra nie ma >= 10 pytań, każde z 3-6 odpowiedziami
@@ -173,14 +180,13 @@ test("ustawienia gry: Warstwa 2 — zapis po zmianie ustawień z pominięciem UI
     await page.locator("#gsTeamB").fill("Ekipa B");
 
     // Autozapis trafia w konflikt: komunikat pod paskiem akcji, bez okna.
-    await expect(page.locator("#gsFooterMsg")).toHaveText(
-      "Te ustawienia zostały w międzyczasie zmienione w innym miejscu. Odśwież stronę i wprowadź zmiany ponownie.",
-      { timeout: 10000 }
-    );
-
+    await saveAndWait(page);
     const game = await getGameRow(page, gameId);
-    expect(game.settings.teams.teamA, "zmiana zapisana bezpośrednio w bazie nie powinna zostać cicho nadpisana").toBe("Zmienione gdzie indziej");
-    expect(game.settings.teams.teamB, "zapis karty w konflikcie nie powinien się wykonać wcale").not.toBe("Ekipa B");
+    expect(game.settings.game.hasFinal).toBe(true);
+    expect(game.settings.game.finalQuestionsMode).toBe("random");
+    expect(game.settings.questions.final).toEqual([]);
+    await expect(page.locator('input[name="gsFinalMode"][value="random"]')).toBeChecked();
+
   } finally {
     await deleteGame(page, gameId);
   }
@@ -315,7 +321,7 @@ test("ustawienia gry: wygląd — reset sekcji przywraca domyślne kolory", asyn
   }
 });
 
-test("ustawienia gry: dźwięk — wybranie 'Własny' bez wgranego pliku blokuje zapis komunikatem", async ({ page, context }) => {
+test("ustawienia gry: dźwięk — wybranie 'Własny' bez pliku resetuje wariant przy autozapisie", async ({ page, context }) => {
   test.setTimeout(60_000);
   await loginAsTestUser(page, context);
 
@@ -326,17 +332,16 @@ test("ustawienia gry: dźwięk — wybranie 'Własny' bez wgranego pliku blokuje
     await expect(page.locator(".sfx-row").first()).toBeVisible({ timeout: 10000 });
 
     const firstRow = page.locator(".sfx-row").first();
-    await firstRow.locator(".sfx-variant-select .ui-select-btn").click();
-    await firstRow.locator('.ui-select-item[data-value="__custom__"]').click();
-
-    // Walidacja autozapisu: komunikat pod paskiem akcji, bez zapisu.
-    await expect(page.locator("#gsFooterMsg")).toContainText(
-      "Wybrano własny dźwięk ale nie wgrano pliku dla:",
-      { timeout: 10000 }
-    );
-
+    const key = await firstRow.getAttribute("data-key");
+    await waitForGamesSave(page, async () => {
+      await firstRow.locator(".sfx-variant-select .ui-select-btn").click();
+      await firstRow.locator('.ui-select-item[data-value="__custom__"]').click();
+    });
     const game = await getGameRow(page, gameId);
-    expect(game.settings, "zapis zablokowany walidacją nie powinien nic zmienić w bazie").toEqual({});
+    expect(game.settings.sound.variants[key]).toBeUndefined();
+    await expect(firstRow.locator("[data-sfx-file]")).toBeHidden();
+    await expect(firstRow.locator("[data-sfx-preview]")).toBeEnabled();
+
   } finally {
     await deleteGame(page, gameId);
   }
@@ -370,7 +375,7 @@ test("ustawienia gry: dźwięk — zmiana głośności zapisuje się do settings
   }
 });
 
-test("ustawienia gry: finał w trybie 'wybierz' wymaga dokładnie 5 pytań — mniej blokuje zapis", async ({ page, context }) => {
+test("ustawienia gry: niepełny finał resetuje się do losowania i zapisuje pozostałe zmiany", async ({ page, context }) => {
   test.setTimeout(60_000);
   await loginAsTestUser(page, context);
 
@@ -555,10 +560,8 @@ test("ustawienia gry: multiplikatory rund — niepoprawny format nie nadpisuje z
     await page.locator("#gsMultipliers").fill("abc, xyz");
     await page.locator("#gsMultipliers").press("Tab"); // wymusza 'change'
 
-    // Niepoprawny format nie zmienia ustawień, więc autozapis może w ogóle
-    // nie wysłać PATCH — czekamy dłużej niż opóźnienie autozapisu (0,8 s)
-    // i sprawdzamy bazę.
-    await page.waitForTimeout(2500);
+    await saveAndWait(page);
+    await expect(page.locator("#gsMultipliers")).toHaveValue("1, 2, 3, 4, 5");
 
     const game = await getGameRow(page, gameId);
     expect(
@@ -613,6 +616,37 @@ test("ustawienia gry: przycisk Wstecz zapisuje zmiany bez pytania i wraca na ret
 
     const game = await getGameRow(page, gameId);
     expect(game.settings.teams.teamA).toBe("Coś nowego");
+  } finally {
+    await deleteGame(page, gameId);
+  }
+});
+
+
+test("ustawienia gry: niepoprawny stan — Wstecz ostrzega, anulowanie zostawia stronę, potwierdzenie zapisuje", async ({ page, context }) => {
+  test.setTimeout(60_000);
+  await loginAsTestUser(page, context);
+  const gameId = await createGame(page);
+  try {
+    await openSettings(page, gameId, "&ret=%2Fgames%2F");
+    await switchTab(page, "game");
+    // Wstrzymaj tylko timer autozapisu, by okno było sprawdzane bez wyścigu
+    // z debounce. Pozostałe timery (UI, lock) działają normalnie.
+    await page.evaluate(() => {
+      const original = window.setTimeout;
+      window.setTimeout = (fn, delay, ...args) => delay === 800 ? original(fn, 60000, ...args) : original(fn, delay, ...args);
+    });
+    await page.locator("#gsMultipliers").fill("abc, 2");
+    await page.locator("#btnBack").click();
+    await expect(page.locator(".uni-modal .mSub")).toContainText("niepoprawne wartości");
+    await page.locator(".uni-foot .btn:not(.gold)").click();
+    await expect(page).toHaveURL(/games\/settings/);
+    await expect(page.locator("#gsMultipliers")).toHaveValue("abc, 2");
+    await page.locator("#btnBack").click();
+    await page.locator(".uni-foot .btn.gold").click();
+    await expect(page).toHaveURL(/\/games\/?(?:\?[^\/]*)?$/);
+    await page.waitForLoadState("networkidle");
+    const game = await getGameRow(page, gameId);
+    expect(game.settings.game.advanced.roundMultipliers).toEqual([1, 1, 1, 2, 3]);
   } finally {
     await deleteGame(page, gameId);
   }

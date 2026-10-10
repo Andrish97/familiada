@@ -57,7 +57,7 @@ Praca przechodzi do Codexa: stan, otwarte sprawy i następny krok —
 | 8 | E5 | Adresy a) `/go/` b) ankiety c) gry d) urządzenia + `/connect/` e) bazy, logo f) logowanie | nawigacja 8 | zrobione (e2e main 2026-10-09/10) |
 | 9 | E6 | `initPage()`, wspólny overlay gość/urządzenie | nawigacja 6.4 | zrobione (e2e main 2026-10-09) |
 | 10 | E7 | Bez stron modalnych: edytor `?q=`, ustawienia gry z autozapisem, manual/privacy bez `?modal=` | nawigacja 6.5 | zrobione (e2e main 2026-10-10) |
-| 10a | E7b | Ustawienia gry: ostrzeżenie przy wyjściu ze stanem niepoprawnym, reset niepoprawnych wartości przy zapisie (decyzja 2026-10-10) | nawigacja 7 | do zrobienia (przed E19 krok 3) |
+| 10a | E7b | Ustawienia gry: ostrzeżenie przy wyjściu ze stanem niepoprawnym, reset niepoprawnych wartości przy zapisie (decyzja 2026-10-10) | nawigacja 7 | w toku (branch `codex/e7b-e19`) |
 | 11 | E8 | Jeden moduł kart `?tab=`, stan eksploratora | nawigacja 6.6 | zrobione (e2e main 2026-10-10) |
 | 12 | E9 | Przyciski i `locks` w `PAGES`, diagramy 6 map, e2e map | nawigacja 6.7 | zrobione (e2e main 2026-10-10) |
 | 12b | E16 | **Komunikaty po akcji:** spis, co każda strona wysyłała do pola komunikatu (tabela w źródle) → wspólny dymek `toast()` zamiast usuniętych pól, tylko gdzie efekt nie jest oczywisty (decyzja 2026-10-09) | ujednolicenie-wygladu.md „Komunikaty po akcji” | zrobione (e2e main 2026-10-09) |
@@ -171,3 +171,5 @@ bo `PAGES` deklaruje blokady; adresy po mapie stron; instrukcja na końcu.
 | 2026-10-10 | Manual / Logo | Uzupełnienie decyzji: ustawienie Logo prowadzącego dotyczy logo na zasłonie tabletu prowadzącego; PL/EN/UK | publikacja razem z poprawkami Control; kontrola produkcji po ostatnim wdrożeniu |
 | 2026-10-10 | Control / produkcja | Pages 38088199184 i 38088289432 ✓; commity `846743f59`, `0f89aab11`. E2E 38088340380: rzeczywiste rozłączenie i powrót urządzeń ✓; dwa błędy testów (publiczne /settings celowo 404; dwa wystąpienia etykiety w manualu). Poprawiono pobieranie opublikowanego JS z originu Pages i selektor manuala | powtórzyć tylko renderer statystyk i opis logo PL/EN/UK |
 | 2026-10-10 | Control / porządki / manual — zrobione | `2d518df90`, `0ab1b155b`, `846743f59`, `0f89aab11`, `efc59e230`; Pages 38088199184 i 38088289432 ✓. Zachowana kopia sprzed zmian w stash; robocze zrzuty i test podglądu nie dodane do repo | unit 401/401; branch: renderer w 38087573138 ✓, rozłączenie w 38087918377 ✓; produkcja: rozłączenie w 38088340380 ✓, renderer opublikowanego JS i manual PL/EN/UK w 38088655683 ✓ (2/2 bez ponowień) |
+
+| 2026-10-10 | E7b / implementacja | Branch `codex/e7b-e19`: reset niepełnego finału do losowania, własnego dźwięku bez pliku do domyślnego; niepoprawne liczby do ostatnich poprawnych. Ostrzeżenie przy wyjściu, natywne ostrzeżenie przy zamknięciu z niezapisanym stanem. Spec korzysta z `serveBranchCode` i sprawdza zapis oraz anulowanie wyjścia | unit i punktowe e2e przed publikacją |

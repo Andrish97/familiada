@@ -4989,6 +4989,7 @@ const en = {
     saveErrorPrefix: "Save error: ",
     saveErrorFinalNeed5: (v) => `Select 5 finale questions (${v.count}/5 selected).`,
     saveErrorCustomNoFile: "Custom sound selected but no file uploaded for: {names}",
+    leaveInvalidConfirm: "Some settings are invalid. Saving will restore valid values (random final questions, default sound or the last valid number). Save and leave?",
     saveConflict: "These settings were changed elsewhere in the meantime. Refresh the page and re-apply your changes.",
     loadError: "Could not load game: ",
     unknownError: "unknown error",
