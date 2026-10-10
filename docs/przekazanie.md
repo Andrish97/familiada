@@ -59,6 +59,9 @@ planie E19 sekcja 2) i na końcu **E13** (instrukcja).
   poprawnych** (np. finał „wybierz” przy < 5 pytaniach → tryb losowania;
   własny dźwięk bez pliku → domyślny), tak żeby autozapis zawsze coś zapisał.
   `web/games/settings/js/game-settings.js`, spec `game-settings.spec.js`.
+- **Wygląd**: symetria, równowaga, spójność podobnych elementów; zmiany
+  konsultować z użytkownikiem **hurtowo** (paczka wg wzorca ze zrzutami
+  przed/po) — zasada w `AGENTS.md`, wzorce w `wzorce-ui.md`.
 - **E18 — reszta wstrzymana** (decyzja „bez dopieszczania wyglądu”): #2 kafle
   logo, #3, #4, #7 marginesy + tokeny, #10, #12 reszta okien, #13 pusty stan.
   Społeczność (marketplace) — bez zmian do czasu pomysłu użytkownika.

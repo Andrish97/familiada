@@ -35,6 +35,18 @@ Migracje zmieniające zachowanie — razem z kodem, który ich wymaga (pkt 2
 na branchu przed migracją jest wtedy niemożliwy: przetestować na lokalnym
 Postgresie, wdrożyć razem i od razu testy kontrolne).
 
+## Wygląd (decyzja 2026-10-10)
+
+- Zasady: **symetria, równowaga i spójność** — elementy podobne funkcjonalnie
+  (kafle, wiersze, paski akcji, okna, karty, filtry, puste stany) wyglądają
+  i zachowują się tak samo na wszystkich stronach. Źródło wzorców:
+  [`docs/wzorce-ui.md`](docs/wzorce-ui.md) (etap ujednolicenia E18; reszta
+  poprawek wstrzymana — lista w `docs/przekazanie.md`).
+- **Konsultacja z użytkownikiem hurtowo**: zmiany wyglądu zbierać w paczki
+  (wg wzorca, nie strona po stronie), pokazać zrzuty przed/po (telefon 390 px
+  i komputer 1400 px) i pytać raz o całą paczkę — nie o każdy drobiazg.
+  Funkcje i poprawki błędów — bez pytania.
+
 ## Tok pracy
 
 - Zasady działania i kolejka: `docs/wdrozenia.md` (sekcje „Kolejka”,

@@ -1,5 +1,9 @@
 # Wzorce interfejsu — jeden wygląd w całej aplikacji
 
+> **Zasady (decyzja 2026-10-10):** symetria, równowaga, spójność elementów
+> podobnych funkcjonalnie. Zmiany wyglądu konsultowane z użytkownikiem
+> **hurtowo** — paczka wg wzorca, zrzuty przed/po (390 / 1400 px), jedno pytanie.
+
 Etap **E18** w [`wdrozenia.md`](wdrozenia.md). Decyzja użytkownika 2026-10-09:
 ujednolicić wygląd całej aplikacji. Ten dokument ma trzy części:
 
