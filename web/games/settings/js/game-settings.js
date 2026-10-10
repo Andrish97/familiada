@@ -1737,6 +1737,22 @@ async function main() {
   document.title = `${game.name || t("gameSettings.defaultGameName")} — ${t("gameSettings.pageTitle")}`;
 
   localSettings = mergeSettings(game.settings);
+  // Walidacja działa także bez otwierania zakładki Dźwięk. Zachowaj własne
+  // pliki zapisane w chmurze, gdy tę grę otwarto na innym urządzeniu.
+  await loadSfxManifest();
+  const customFiles = await getSfxCustomFiles(gameId);
+  for (const [key, variant] of Object.entries(localSettings.sound.variants)) {
+    if (variant !== VARIANT_CUSTOM || customFiles.has(key)) continue;
+    const { data: blob, error } = await sb().storage.from("user-sounds").download(`${user.id}/${gameId}/${key}`);
+    if (error) {
+      if (String(error.status || error.statusCode) === "404" || /not found|does not exist/i.test(error.message || "")) continue;
+      throw error;
+    }
+    const filename = game.settings?.sound?.filenames?.[key] || `${key}.mp3`;
+    await setSfxCustomBlob(key, blob, filename, gameId);
+    customFiles.set(key, { blob, filename });
+  }
+  customSoundKeys = new Set(customFiles.keys());
 
   // Cleanup: usuń pytania finałowe z rounds (mogły tam trafić przed wdrożeniem tej logiki)
   // — tylko gdy finał faktycznie włączony, inaczej martwa lista finałowa

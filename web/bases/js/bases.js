@@ -1671,10 +1671,10 @@ const TILE_TAG_VARIANT = { proposed: "tag--warn", from: "tag--info", role: "tag-
 
 async function refreshAltBadge() {
   try {
-    const { data, error } = await sb().rpc("polls_badge_get");
+    const { data, error } = await sb().rpc("badges_get");
     if (error) throw error;
     const row = Array.isArray(data) ? data[0] : data;
-    const n = Number(row?.subs_pending || 0);
+    const n = Number(row?.friends_pending || 0);
     if (!altBadgeEl || !btnGoAlt) return;
     altBadgeEl.textContent = n > 99 ? "99+" : (n > 0 ? String(n) : "");
   } catch {}
