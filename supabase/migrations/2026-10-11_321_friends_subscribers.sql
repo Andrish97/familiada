@@ -25,7 +25,9 @@ DECLARE
   v_id uuid; v_token uuid; v_ok boolean; v_until timestamptz; v_target text;
 BEGIN
   IF v_uid IS NULL THEN RETURN jsonb_build_object('ok',false,'err','auth required'); END IF;
-  IF v_email IS NULL THEN RETURN jsonb_build_object('ok',false,'err','invalid_email'); END IF;
+  IF v_email IS NULL OR v_email !~ '^[^[:space:]@<>]+@[^[:space:]@<>]+[.][^[:space:]@<>]+$' THEN
+    RETURN jsonb_build_object('ok',false,'err','invalid_email');
+  END IF;
   IF EXISTS(SELECT 1 FROM public.profiles WHERE lower(trim(email))=v_email AND NOT is_guest) THEN
     RETURN jsonb_build_object('ok',false,'err','has_account');
   END IF;
