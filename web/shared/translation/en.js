@@ -2292,7 +2292,7 @@ const en = {
 <p class="m-p">Choose the visual theme for the whole Display. <span class="m-strong">Classic</span> is the default.</p>
 <h4 class="m-h3">Logo</h4>
 <p class="m-p">Choose your own logo under <span class="m-strong">Logo</span>. <span class="m-strong">Default</span> means Familiada’s logo. The selected logo appears at the start of the game; its appearance at the end depends on the configured ending screen.</p>
-<p class="m-p">The <span class="m-strong">Host logo</span> selector has two variants:</p>
+<p class="m-p">The <span class="m-strong">Host logo</span> setting controls the appearance of the logo on the host tablet’s cover screen. The <span class="m-strong">Host logo</span> selector has two variants:</p>
 <ul class="m-ul">
 <li><span class="m-strong">Pixels</span> — the logo looks the same as on the Display, but the dots are squares (pixels).</li>
 <li><span class="m-strong">Source</span> — shows the logo in higher quality, depending on its type: <span class="m-strong">Text</span> — text in the style of Familiada’s logo; <span class="m-strong">Drawing</span> — the original drawing, with white replaced by the configured Display dot colour and black made transparent; <span class="m-strong">Image</span> — the original image from the centre of the logo, with a uniform background removed.</li>

@@ -401,7 +401,7 @@ Wybierz motyw wizualny tablicy. Motyw wpływa na styl graficzny całego wyświet
 
 Jeśli masz własne logo, wybierz je w sekcji „Logo”. Wybór „Domyślne” oznacza logo Familiady. Wybrane logo pojawia się na początku gry; jego wyświetlanie na końcu zależy od ustawionego trybu ekranu końcowego.
 
-Przełącznik **Logo prowadzącego** ma dwa warianty:
+Ustawienie **Logo prowadzącego** dotyczy wyglądu logo pokazywanego na zasłonie tabletu prowadzącego. Przełącznik **Logo prowadzącego** ma dwa warianty:
 
 - **Piksele** — logo wygląda tak samo jak na Wyświetlaczu, ale kropki mają kształt kwadratów (pikseli).
 - **Źródło** — pokazuje logo w lepszej jakości, zależnie od jego typu: **Tekst** — tekst w stylu logo Familiady; **Rysunek** — źródłowy rysunek, w którym biel przyjmuje ustawiony kolor kropek Wyświetlacza, a czerń jest przezroczysta; **Obraz** — oryginalny obraz ze środka logo, z usuniętym jednolitym tłem.

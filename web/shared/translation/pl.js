@@ -2316,7 +2316,7 @@ const pl = {
 <p class="m-p">Wybierz motyw wizualny tablicy. Motyw wpływa na styl graficzny całego wyświetlacza. Domyślny motyw to <span class="m-strong">Klasyczny</span>.</p>
 <h4 class="m-h3">Logo</h4>
 <p class="m-p">Jeśli masz własne logo, wybierz je w sekcji „Logo”. Wybór „Domyślne” oznacza logo Familiady. Wybrane logo pojawia się na początku gry; jego wyświetlanie na końcu zależy od ustawionego trybu ekranu końcowego.</p>
-<p class="m-p">Przełącznik <span class="m-strong">Logo prowadzącego</span> ma dwa warianty:</p>
+<p class="m-p">Ustawienie <span class="m-strong">Logo prowadzącego</span> dotyczy wyglądu logo pokazywanego na zasłonie tabletu prowadzącego. Przełącznik <span class="m-strong">Logo prowadzącego</span> ma dwa warianty:</p>
 <ul class="m-ul">
 <li><span class="m-strong">Piksele</span> — logo wygląda tak samo jak na Wyświetlaczu, ale kropki mają kształt kwadratów (pikseli).</li>
 <li><span class="m-strong">Źródło</span> — pokazuje logo w lepszej jakości, zależnie od jego typu: <span class="m-strong">Tekst</span> — tekst w stylu logo Familiady; <span class="m-strong">Rysunek</span> — źródłowy rysunek, w którym biel przyjmuje ustawiony kolor kropek Wyświetlacza, a czerń jest przezroczysta; <span class="m-strong">Obraz</span> — oryginalny obraz ze środka logo, z usuniętym jednolitym tłem.</li>

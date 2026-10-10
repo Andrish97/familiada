@@ -385,7 +385,7 @@ Choose the visual theme for the whole Display. **Classic** is the default.
 
 Choose your own logo under **Logo**. **Default** means Familiada’s logo. The selected logo appears at the start of the game; its appearance at the end depends on the configured ending screen.
 
-The **Host logo** selector has two variants:
+The **Host logo** setting controls the appearance of the logo on the host tablet’s cover screen. The **Host logo** selector has two variants:
 
 - **Pixels** — the logo looks the same as on the Display, but the dots are squares (pixels).
 - **Source** — shows the logo in higher quality, depending on its type: **Text** — text in the style of Familiada’s logo; **Drawing** — the original drawing, with white replaced by the configured Display dot colour and black made transparent; **Image** — the original image from the centre of the logo, with a uniform background removed.
