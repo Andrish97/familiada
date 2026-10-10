@@ -49,6 +49,14 @@ Postgresie, wdrożyć razem i od razu testy kontrolne).
 
 ## Tok pracy
 
+- **Ograniczenie obciążenia lokalnego (decyzja 2026-10-11):** w tym
+  środowisku ograniczać ciężkie zadania i testy symulacyjne — powodują lagi
+  i awarie. Nie uruchamiać lokalnie przeglądarek e2e, rozbudowanych
+  symulacji ani wielu ciężkich procesów naraz. E2E wykonywać punktowo
+  w GitHub Actions; wymagane unit i testy SQL wykonywać pojedynczo,
+  z ograniczoną współbieżnością, a cięższe sprawdzenia przenosić
+  do odizolowanego runnera. Zachować wymagane bramki przed wdrożeniem.
+
 - Zasady działania i kolejka: `docs/wdrozenia.md` (sekcje „Kolejka”,
   „Zasady działania”). Praca w tle bez pytania o zgodę.
 

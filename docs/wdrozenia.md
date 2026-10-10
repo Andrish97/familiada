@@ -77,6 +77,10 @@ bo `PAGES` deklaruje blokady; adresy po mapie stron; instrukcja na końcu.
 
 ## Zasady działania (decyzja 2026-10-07)
 
+0. **Obciążenie lokalne (2026-10-11):** ograniczać ciężkie zadania i testy
+   symulacyjne; punktowe e2e w GitHub Actions, wymagane unit/SQL pojedynczo
+   z ograniczoną współbieżnością lub na odizolowanym runnerze. Decyzja:
+   `nawigacja-mapa-plan.md`, sekcja 7; reguła w AGENTS.md/CLAUDE.md.
 1. Praca w tle, bez pytania o zgodę na kolejne kroki; pytam tylko, gdy
    brakuje decyzji, której nie ma w dokumentach.
 2. Kod: branch → testy (unit + e2e z filtrem) → `main` → e2e na `main`.
@@ -173,3 +177,5 @@ bo `PAGES` deklaruje blokady; adresy po mapie stron; instrukcja na końcu.
 | 2026-10-10 | Control / porządki / manual — zrobione | `2d518df90`, `0ab1b155b`, `846743f59`, `0f89aab11`, `efc59e230`; Pages 38088199184 i 38088289432 ✓. Zachowana kopia sprzed zmian w stash; robocze zrzuty i test podglądu nie dodane do repo | unit 401/401; branch: renderer w 38087573138 ✓, rozłączenie w 38087918377 ✓; produkcja: rozłączenie w 38088340380 ✓, renderer opublikowanego JS i manual PL/EN/UK w 38088655683 ✓ (2/2 bez ponowień) |
 
 | 2026-10-10 | E7b / implementacja | Branch `codex/e7b-e19`: reset niepełnego finału do losowania, własnego dźwięku bez pliku do domyślnego; niepoprawne liczby do ostatnich poprawnych. Ostrzeżenie przy wyjściu, natywne ostrzeżenie przy zamknięciu z niezapisanym stanem. Spec korzysta z `serveBranchCode` i sprawdza zapis oraz anulowanie wyjścia | unit i punktowe e2e przed publikacją |
+| 2026-10-10 | E7b / commit | `b9cc476ac` na `codex/e7b-e19`; unit 401/401, `git diff --check` ✓; zaktualizowany stary test E7 zabraniający `beforeunload` | uruchomiono `e2e/game-settings.spec.js` z kodem brancha |
+| 2026-10-11 | decyzja / środowisko | Użytkownik wznowił pracę; ograniczenie ciężkich zadań i testów symulacyjnych lokalnie zapisane w AGENTS/CLAUDE i nawigacja 7. Zatrzymano rozpoczęte lokalne przygotowanie Postgresa; dalsze cięższe sprawdzenia na runnerze | E7b: unit 401/401 z poprzedniej tury, oczekiwanie na wynik e2e brancha |

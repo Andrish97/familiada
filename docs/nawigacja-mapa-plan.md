@@ -973,6 +973,11 @@ komunikatem, wynika z zasobów (tabela „Kto rozpoznaje” w tamtym pliku).
 
 ## 7. Decyzje
 
+- **2026-10-11 (środowisko pracy):** ograniczać ciężkie zadania i testy
+  symulacyjne lokalnie (lagi i awarie); punktowe e2e w GitHub Actions,
+  wymagane sprawdzenia pojedynczo z ograniczoną współbieżnością lub
+  na odizolowanym runnerze. Zasada zapisana też w AGENTS.md i CLAUDE.md.
+
 - **2026-10-10 (E7b, ustawienia gry z autozapisem):** stan niepoprawny →
   przy wyjściu ostrzeżenie jak przy niezapisanych zmianach; przy zapisie
   niepoprawne wartości resetowane do poprawnych (np. finał „wybierz” przy
