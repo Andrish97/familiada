@@ -1,8 +1,8 @@
 
-import { sb as supabase } from "../../shared/js/core/supabase.js?v=v2026-10-10T06005";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-10T06005";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-10T06005";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-10T06005";
+import { sb as supabase } from "../../shared/js/core/supabase.js?v=v2026-10-10T06103";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-10T06103";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-10T06103";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-10T06103";
 
 let games = [];
 let genLangSelect = null;
@@ -935,7 +935,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const json = JSON.stringify(example, null, 2);
     const a = document.createElement('a');
     a.href = 'data:application/json;charset=utf-8,' + encodeURIComponent(json);
-    a.download = 'przykladowa-gra.json?v=v2026-10-10T06005';
+    a.download = 'przykladowa-gra.json?v=v2026-10-10T06103';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
