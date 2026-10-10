@@ -65,6 +65,9 @@ planie E19 sekcja 2) i na końcu **E13** (instrukcja).
 - **E18 — reszta wstrzymana** (decyzja „bez dopieszczania wyglądu”): #2 kafle
   logo, #3, #4, #7 marginesy + tokeny, #10, #12 reszta okien, #13 pusty stan.
   Społeczność (marketplace) — bez zmian do czasu pomysłu użytkownika.
+- **Control**: poprawki obecności/statystyk i opis Logo prowadzącego wdrożone
+  2026-10-10; produkcja: rozłączenie 38088340380 ✓, renderer i manual
+  PL/EN/UK 38088655683 ✓. Szczegóły: `control2-statystyki-plan.md`.
 - **Control** (`web/control/`, `control2.spec.js`) — obszar drugiej sesji.
   Ostatnie przebiegi e2e (10.10) są zielone, także control2 drugiej sesji.
   Krok 6 E19 (linki urządzeń z sesją) dotyka Control — koordynować.

@@ -59,6 +59,17 @@ Dowody odczytano z artefaktu `production-statistics-records` w powyższym przebi
   zdarzenia rozłączenia. Powrót połączenia bez poprzedniej przerwy jest
   pomijany w szczegółach, a pusta sekcja zdarzeń nie jest wyświetlana.
 
+## Poprawki wdrożone 2026-10-10
+
+Zachowanie obecności poprawione także podczas ponowień odczytu HTTP.
+Usunięto osierocone wpisy powrotu połączenia i puste sekcje zdarzeń.
+Unit: 401/401. Pages: 38088199184 i 38088289432. Potwierdzenie rozłączenia
+na produkcji: 38088340380; renderer statystyk z opublikowanego zasobu Pages
+oraz opis logo manuala PL/EN/UK: 38088655683 (2/2 bez ponowień).
+Panel administratora pozostaje na chronionej domenie `settings.familiada.online`;
+test renderera używa opublikowanego JS i prawdziwego DOM, bez odczytu prywatnych
+danych administratora.
+
 ## Status „Utracono kontakt”
 
 Widok `game_sessions_effective` nadaje ten status niezakończonej sesji po
