@@ -32,6 +32,12 @@ utracie kontekstu wystarczy przeczytać ten plik i wskazaną sekcję źródła.
 6. Statusy: `do zrobienia` · `w toku` · `na branchu (e2e ok)` · `zrobione` ·
    `czeka na decyzję`.
 
+## Przekazanie (2026-10-10)
+
+Praca przechodzi do Codexa: stan, otwarte sprawy i następny krok —
+[`przekazanie.md`](przekazanie.md). Zasady dla agenta: `AGENTS.md`
+(= `CLAUDE.md`).
+
 ## Kolejka
 
 | # | ID | Etap | Źródło | Status |
@@ -45,17 +51,17 @@ utracie kontekstu wystarczy przeczytać ten plik i wskazaną sekcję źródła.
 | 6 | E2 | Blokady wg mapy docelowej (współdzielone, `logos`, `base:B`, odnowienie `locked`, TTL, DB `*_checked`) + blokady stanu i akcji wg kryteriów gier (tabela akcja → warunki) | blokady 6 | zrobione (e2e main 2026-10-09) |
 | 6a | E15 | **Poprawki zgłoszone 2026-10-08:** a) nowa strona `/polls/` — układ przycisków się rozjeżdża (sprawdzić dokładnie desktop i telefon, wszystkie stany ankiety); c) zamknięcie i podliczenie jako osobne kroki, karty Udostępnianie · Wyniki (uniwersalne), plakietki na kaflach gier: liczba głosów / „do podliczenia” (ankiety-refaktor.md, decyzja 2026-10-09); d) tytuł strony w topbarze widoczny też na telefonie (dziś sekcja 2 ukryta) — ankieta, edytory, menedżer bazy, ustawienia gry; b) stopka w manualu przykleja się do tekstu, gdy treść jest krótsza niż ekran (regresja z E10/E11 — stopka ma być na dole strony) | ujednolicenie-wygladu.md | zrobione (e2e main 2026-10-09; tytuł na telefonie także w edytorach) |
 | 7 | E4 | `nav-map.js` (`PAGES`, `linkTo`, `backHref`), `ret`, gość na `/` → `/games/` | nawigacja 6.2–6.3 | zrobione (e2e main 2026-10-09) |
-| 8 | E5 | Adresy a) `/go/` b) ankiety c) gry d) urządzenia + `/connect/` e) bazy, logo f) logowanie | nawigacja 8 | na `main` (migracja 319), e2e w toku |
+| 8 | E5 | Adresy a) `/go/` b) ankiety c) gry d) urządzenia + `/connect/` e) bazy, logo f) logowanie | nawigacja 8 | zrobione (e2e main 2026-10-09/10) |
 | 9 | E6 | `initPage()`, wspólny overlay gość/urządzenie | nawigacja 6.4 | zrobione (e2e main 2026-10-09) |
 | 10 | E7 | Bez stron modalnych: edytor `?q=`, ustawienia gry z autozapisem, manual/privacy bez `?modal=` | nawigacja 6.5 | zrobione (e2e main 2026-10-10) |
 | 11 | E8 | Jeden moduł kart `?tab=`, stan eksploratora | nawigacja 6.6 | zrobione (e2e main 2026-10-10) |
 | 12 | E9 | Przyciski i `locks` w `PAGES`, diagramy 6 map, e2e map | nawigacja 6.7 | zrobione (e2e main 2026-10-10) |
-| 12b | E16 | **Komunikaty po akcji:** spis, co każda strona wysyłała do pola komunikatu (tabela w źródle) → wspólny dymek `toast()` zamiast usuniętych pól, tylko gdzie efekt nie jest oczywisty (decyzja 2026-10-09) | ujednolicenie-wygladu.md „Komunikaty po akcji” | na `main`, e2e w toku |
-| 12c | E17 | **Poprawki 2026-10-09:** powrót bez „Wróć do:”; ankieta na telefonie (mniejsze przyciski dolnego paska, równe marginesy, ładniejsza sekcja QR z dużym kodem); filtry typ/stan przy wyszukiwaniu na listach gier, logo, baz | ujednolicenie-wygladu.md „Poprawki zgłoszone 2026-10-09” | w toku |
-| 12d | E17c | Przyciski akcji bez przedwczesnego zawijania; filtry gier i baz rozszerzone; wspólny styl kafli gier/baz/subskrybentów | ujednolicenie-wygladu.md „cz. 2” | w toku |
-| 12e | E18 | **Ujednolicenie wyglądu (decyzja 2026-10-09):** `docs/wzorce-ui.md` — wzorce (rodzaje stron, topbar, karty, paski akcji, kafel, sekcje udostępniania, oznaczenia, wyszukiwanie/filtry, dymki, okna) + przegląd wszystkich stron (tabela zgodności, zrzuty telefon/komputer) → akceptacja użytkownika → poprawki wzorcami, nie stronami | wzorce-ui.md | dokument i przegląd gotowe (2026-10-09), czeka na akceptację użytkownika (sekcja D) |
-| 12f | E19 | **Udostępnianie — wiersze, role, sekcje wg stanu** (decyzja 2026-10-09): Subskrypcje, subskrybenci w ankiecie, udostępnianie bazy, urządzenia — jeden komponent; po E6–E9 | ujednolicenie-wygladu.md „Udostępnianie — wiersze, role…”, plan: [`e19-znajomi-plan.md`](e19-znajomi-plan.md) | w toku (decyzje 2026-10-10 w planie) |
-| 12a | E14 | **Sprzątanie po potwierdzeniu** (migracje usuwające): martwe RPC ankiet i hubu (E11h); `cleanup-guest-storage` i jej wywołania w `guest_cleanup_expired` / `guest_discard_current`; kasowanie plików w `delete-account` (zastąpione przez E12b) | ankiety-refaktor.md, usuwanie-danych.md | czeka na potwierdzenie e2e na `main` |
+| 12b | E16 | **Komunikaty po akcji:** spis, co każda strona wysyłała do pola komunikatu (tabela w źródle) → wspólny dymek `toast()` zamiast usuniętych pól, tylko gdzie efekt nie jest oczywisty (decyzja 2026-10-09) | ujednolicenie-wygladu.md „Komunikaty po akcji” | zrobione (e2e main 2026-10-09) |
+| 12c | E17 | **Poprawki 2026-10-09:** powrót bez „Wróć do:”; ankieta na telefonie (mniejsze przyciski dolnego paska, równe marginesy, ładniejsza sekcja QR z dużym kodem); filtry typ/stan przy wyszukiwaniu na listach gier, logo, baz | ujednolicenie-wygladu.md „Poprawki zgłoszone 2026-10-09” | zrobione (e2e main 2026-10-09) |
+| 12d | E17c | Przyciski akcji bez przedwczesnego zawijania; filtry gier i baz rozszerzone; wspólny styl kafli gier/baz/subskrybentów | ujednolicenie-wygladu.md „cz. 2” | zrobione (e2e main 2026-10-09) |
+| 12e | E18 | **Ujednolicenie wyglądu (decyzja 2026-10-09):** `docs/wzorce-ui.md` — wzorce (rodzaje stron, topbar, karty, paski akcji, kafel, sekcje udostępniania, oznaczenia, wyszukiwanie/filtry, dymki, okna) + przegląd wszystkich stron (tabela zgodności, zrzuty telefon/komputer) → akceptacja użytkownika → poprawki wzorcami, nie stronami | wzorce-ui.md | częściowo: poprawki #1, #5, #6, #8, #9 (bazy), #11, #12 (okno QR), #14, #15 + sekcja QR ankiety — na `main`; **reszta wstrzymana** (decyzja 2026-10-09: „bez dopieszczania wyglądu” — #2 kafle logo, #3, #4, #7, #10, #12 reszta, #13) |
+| 12f | E19 | **Udostępnianie — wiersze, role, sekcje wg stanu** (decyzja 2026-10-09): Subskrypcje, subskrybenci w ankiecie, udostępnianie bazy, urządzenia — jeden komponent; po E6–E9 | ujednolicenie-wygladu.md „Udostępnianie — wiersze, role…”, plan: [`e19-znajomi-plan.md`](e19-znajomi-plan.md) | w toku: krok 1 (migracja 320) i krok 2 (`/tasks/`) zrobione; **następny krok 3** — plan [`e19-znajomi-plan.md`](e19-znajomi-plan.md) |
+| 12a | E14 | **Sprzątanie po potwierdzeniu** (migracje usuwające): martwe RPC ankiet i hubu (E11h); `cleanup-guest-storage` i jej wywołania w `guest_cleanup_expired` / `guest_discard_current`; kasowanie plików w `delete-account` (zastąpione przez E12b) | ankiety-refaktor.md, usuwanie-danych.md | po E19 (lista uzupełniona o RPC zastępowane w E19 — `e19-znajomi-plan.md` sekcja 2) |
 | 13 | E13 | **Instrukcja (manual) zaktualizowana do nowych zasad** — ostatni etap | wszystkie | do zrobienia |
 | — | E1 | Edytor logo: lista + 3 strony, autozapis | nawigacja 6.5a | zrobione |
 
@@ -88,15 +94,12 @@ bo `PAGES` deklaruje blokady; adresy po mapie stron; instrukcja na końcu.
    mocniejszy tylko gdy zadanie tego wymaga (decyzja 2026-10-07).
    Stan pracy zapisywany w „Dzienniku” po każdym kroku, tak żeby po
    kompaktowaniu kontekstu dało się kontynuować z samych dokumentów.
-4. Przed wyczerpaniem limitu: zapisać stan w dzienniku, wypchnąć, ustawić
-   przypomnienie (`send_later`) na wznowienie pracy. **Stały timer**
-   `trig_017RW51bdVmysCgBE7q8fmq5` (co 2 h) wznawia pracę z dziennika;
-   wyłączyć, gdy kolejka skończona albo czekamy na decyzję.
-   **Limit (decyzja 2026-10-08):** w trakcie pracy zawsze uzbrojone jedno
-   przypomnienie `send_later` na **teraz + 3 h 1 min**; przy każdym kroku
-   (commit, przebieg e2e, odpowiedź) stare kasowane i ustawiane nowe. Gdy
-   limit zatrzyma pracę, ostatnie przypomnienie wznawia ją 3 h 1 min po
-   ostatniej aktywności. Na pauzie (prośba użytkownika) — bez przypomnień.
+4. **Stan pracy w „Dzienniku” po każdym kroku** (commit, przebieg e2e,
+   decyzja), tak żeby kolejna sesja — także innego agenta (Codex, od
+   2026-10-10) — mogła kontynuować z samych dokumentów. Claude: dodatkowo
+   jedno przypomnienie `send_later` (+3 h 1 min) w trakcie pracy, kasowane
+   i ustawiane na nowo przy każdym kroku; na pauzie żadnych przypomnień.
+   Codex: przypomnień nie ma — wystarczy Dziennik.
 
 ## Dziennik
 
@@ -152,3 +155,4 @@ bo `PAGES` deklaruje blokady; adresy po mapie stron; instrukcja na końcu.
 | 2026-10-10 | E19 krok 1 | decyzje użytkownika w `e19-znajomi-plan.md` (pytania 6/7/8/10 dopytane — odpowiedzi w rozmowie; 4/5: godzina od ostatniej aktywności — do potwierdzenia). Migracja 320 (`friendships`, `are_friends`, `friends_*`, `friends_token_info`, `friend_invites_from_subscriptions` niepodpięta, `tasks_list`, `badges_get`, `e2e_friendships_cleanup`, kopia subskrypcji kont, `site_activity_ping` +3 strony); lokalnie test SQL 60/60; na `main` `d38e829`, zastosowana (38061558833 ✓) | krok 2: komponent wierszy + `/tasks/` |
 | 2026-10-10 | E19 krok 2 | `renderRowSections`/`rowEl` w `share-sections.js` (wiersze: inicjał, szara linijka, kanał, akcje w wierszu; CSS `.rows*`), strona `/tasks/` (Do zrobienia · Zrobione; bazy tylko do akceptacji, urządzenia tylko aktywne; filtr `?kind=` na `ui-select`; fokus `?t=`/`?b=`), `PAGES.tasks`, `btnTasks` + plakietka, `/connect/?share=`, `PAGE_ROUTES` +tasks. Unit 400/400. Na `main` `7925749`. Decyzje: udostępnianie ankiety oknem (2 listy, w jedną stronę) | e2e tasks, frontend-navigation, go |
 | 2026-10-10 | E19 krok 2 e2e | 38062595206: 20 ok, 2 źle (mapy C1/C2 — Zadania miały `#btnBackToGames`; ujednolicone na `#btnBack`, `affc2be`); 38064192238 ✓ frontend-navigation. Krok 2 zrobiony | krok 3 czeka na pkt 8 |
+| 2026-10-10 | przekazanie | E19 decyzje uporządkowane (`e19-znajomi-plan.md` sekcje 5–6: stan kroków, wszystkie decyzje), statusy kolejki zaktualizowane, `docs/przekazanie.md` (podsumowanie, następny krok, otwarte sprawy), `AGENTS.md` (= CLAUDE.md, dla Codexa), narzędzia w `scripts/agent-tools/` (e2e po kolei, lint no-undef, atrapa Supabase, qrcode ESM). `usuwanie-danych.md`: tabela „dziś” oznaczona jako historyczna | następny: E19 krok 3 |

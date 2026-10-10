@@ -86,77 +86,72 @@ Specy: przepisanie `subscriptions.spec.js` na `friends.spec.js` /
 (urządzenia), `frontend-navigation`, `account-deletion`. Konta tylko z puli —
 test4/5/9/10 zarezerwowane.
 
-## 5. Pytania (czekają na decyzję)
+## 5. Stan kroków (2026-10-10)
 
-Lista w rozmowie 2026-10-09; odpowiedzi zapisywać tutaj, w „Decyzje”.
+| Krok | Stan |
+|---|---|
+| 1. Migracja 320 (`friendships`, `friends_*`, `tasks_list`, `badges_get`, kopia subskrypcji kont) | **zrobione** — na produkcji (`d38e829`), test SQL `docs/sql/test-friendships-320.sql` 60/60 |
+| 2. Komponent wierszy (`renderRowSections`/`rowEl` w `share-sections.js`) + `/tasks/` | **zrobione** — e2e `tasks`, `frontend-navigation`, `go` zielone |
+| 3. `/friends/`, `/subscribers/` + migracja 321 (przełączenie), usunięcie `/subscriptions/` | **następny** |
+| 4. Ankieta: udostępnianie oknem (Znajomi · Subskrybenci), jedna lista odbiorców | do zrobienia |
+| 5. Bazy: jedno okno (udostępnieni + dodawanie), `go?b=`, akceptacja w `/tasks/` | do zrobienia |
+| 6. Urządzenia: jedno okno, klucz na udostępnienie z sesją rozgrywki, odbiorca bez konta | do zrobienia (dotyka Control — obszar drugiej sesji, ostrożnie) |
+| 7. Przegląd wzorców | do zrobienia |
 
-## Decyzje (2026-10-10)
+## 6. Decyzje użytkownika (wszystkie, stan na 2026-10-10)
 
-1. **Subskrybent zakłada konto** → zaproszenie do znajomych tylko na
-   `/friends/` + plakietka, **bez maila**.
-2. **Pomyłka strony**: komunikat, np. „Do tego maila jest przypisane konto
-   w systemie Familiada — możesz zaprosić tę osobę do znajomych. Przejdź →”
-   (link do `/friends/`); odwrotnie na `/friends/` dla e-maila bez konta →
-   „…możesz dodać ją jako subskrybenta. Przejdź →”. Bez automatycznego
+Model (z `ujednolicenie-wygladu.md`, E19):
+- **Trzy osobne strony**: `/friends/` (Znajomi — konta, dwustronnie),
+  `/subscribers/` (Subskrybenci — tylko e-mail bez konta, jednostronnie, tylko
+  ankiety), `/tasks/` (Zadania — co mi przysłano). `/subscriptions/` znika
+  (bez aliasu; linki z maili przez `/go/`).
+- **Kanały**: ankiety → znajomi + subskrybenci; bazy → zawsze **konto**
+  (e-mail/nazwa tylko do wyszukania konta; znajomi = skrót, znajomość nie
+  jest wymagana); urządzenia → e-mail/nazwa, **konto niekonieczne** (bez
+  konta — tylko mail; z kontem — widać w Zadaniach i „Podłącz urządzenie”);
+  znajomi = skrót.
+- **Zadanie dla konta = zawsze mail**, globalnie wyłączalny
+  (`user_flags.email_notifications`).
+- **Usunięcie konta**: znajomości (obie strony), zaproszenia, wpisy
+  subskrybenta na jego e-mail, udostępnienia baz/urządzeń, zadania — usunięte;
+  u znajomych osoba znika bez maila; nowe konto na ten sam e-mail nie
+  odzyskuje niczego.
+
+Odpowiedzi na pytania planu:
+1. Subskrybent zakłada konto → zaproszenie do znajomych tylko na `/friends/` +
+   plakietka, **bez maila**.
+2. Pomyłka strony → komunikat: „Do tego maila jest przypisane konto w systemie
+   Familiada — możesz zaprosić tę osobę do znajomych. Przejdź →” (i odwrotnie:
+   „…możesz dodać ją jako subskrybenta. Przejdź →”). Bez automatycznego
    przełączania.
-3. **Usunięcie znajomego**: kasuje oczekujące zaproszenia i zadania między
-   parą; przyjęte bazy i urządzenia zostają (udostępnia się je głównie
-   mailem). Okno potwierdzenia usunięcia **mówi o tym** i że można je cofnąć
-   osobno.
-4. **Link urządzenia**: osobny klucz na udostępnienie, **wygasa sam** —
-   po zakończeniu sesji rozgrywki (`game_sessions`), najpóźniej np. po
-   godzinie bezczynności. Urządzenia są „tu i teraz”. Po wygaśnięciu
-   komunikat „Zaproszenie wygasło — poproś o nowy link”.
-5. **Link musi nieść sesję rozgrywki**, nie tylko grę; po wygaśnięciu prośba
-   o nowy link. **Link do skopiowania z panelu Control działa tak samo.**
-6. **Mail z urządzeniem do osoby bez konta** — tak (limit + wypisanie).
-   **Plakietka Zadań**: urządzenia mogą się liczyć, chyba że dublowałoby to
-   plakietkę na przycisku urządzeń — wtedy nie (interpretacja: liczymy
-   ankiety i bazy; urządzenia mają własną plakietkę na „Podłącz urządzenie”).
-7. **Baza zawsze na konto**; e-mail służy tylko do wyszukania konta. Wybór ze
-   znajomych to skrót, serwer nie wymaga znajomości. **Zadanie dla konta =
-   zawsze powiadomienie mailem**, z globalnym wyłączeniem
-   (`user_flags.email_notifications`).
-8. **Subskrybent, który przyjmie zaproszenie do znajomych** — „lepiej nie”
-   zostawiać: wpis subskrybenta **znika** (staje się znajomym; subskrybenci
-   to tylko osoby bez konta). Do potwierdzenia przy kroku 3.
-9. „Podłącz” w Zadaniach → `/connect/` z wybranym udostępnieniem. Tak.
-10. Filtr rodzaju w Zadaniach w adresie (`?kind=`). Filtry to listy
-    rozwijane **`ui-select`** (wspólne `list-search.js` już ich używa).
+3. Usunięcie znajomego → kasuje oczekujące zaproszenia/zadania pary; przyjęte
+   bazy i urządzenia **zostają**; okno potwierdzenia o tym mówi (można je
+   cofnąć osobno).
+4. Link urządzenia → **osobny klucz na udostępnienie, przypięty do sesji
+   rozgrywki** (`game_sessions`), wygasa sam po jej zakończeniu, najpóźniej
+   ok. 1 h (liczona od ostatniej aktywności rozgrywki — rekomendacja,
+   użytkownik nie zaprzeczył). Otwarty wygasły link: „Zaproszenie wygasło —
+   poproś o nowy link”; w Zadaniach i na liście urządzeń wygasłe **nie są
+   widoczne**. **Link do skopiowania z panelu Control działa tak samo.**
+5. Plakietka Zadań → ankiety + bazy do zaakceptowania (urządzenia mają własną
+   plakietkę na „Podłącz urządzenie” — nie dublujemy).
+6. Mail z urządzeniem do osoby bez konta → tak, z limitem i linkiem wypisania.
+7. Baza zawsze na konto (patrz wyżej).
+8. Subskrybent, który przyjmie zaproszenie do znajomych → **znika z listy
+   subskrybentów**, zostaje znajomym (ankiety dostaje jako znajomy).
+9. „Podłącz” w Zadaniach → `/connect/?share=<id>` z wybranym udostępnieniem.
+10. Filtr rodzaju w Zadaniach w adresie (`?kind=`), lista rozwijana `ui-select`.
 
-### Doprecyzowania użytkownika (2026-10-10, cz. 2)
-
-- **Wygasły link urządzenia**: otwarty link pokazuje wyjaśnienie („Zaproszenie
-  wygasło — poproś o nowy link”), ale w Zadaniach i na liście urządzeń
-  wygasłe udostępnienia **nie są widoczne**.
-- **Urządzenia** (jak bazy, prawie): udostępnia się mailem / nazwą, znajomi to
-  skrót. **Odbiorca z kontem widzi udostępnienie w panelu** (Zadania /
-  Podłącz urządzenie), **bez konta — tylko w mailu**.
-- **Zadania — bazy**: tylko bazy do zaakceptowania; po akceptacji
-  (lub odrzuceniu) **znikają**. „Zrobione” tylko dla ankiet.
-- **Listy już udostępnionych** (bazy, urządzenia): **jedna lista**, bez
-  podziału na sekcje wg kanału — na kaflu/wierszu tylko oznaczenie, czy to
-  znajomy. **Ankieta**: tak samo jedna lista, oznaczenie roli (subskrybent /
-  znajomy).
-- Wcześniejsze „PS” (zadanie dla konta = mail, globalnie wyłączalne) dotyczy
-  pkt 7.
-
-Otwarte: pkt 8 (subskrybent → znajomy: wpis subskrybenta znika?), godzina
-wygaśnięcia linku urządzenia liczona od ostatniej aktywności rozgrywki?
-- **Ankieta — udostępnianie oknem** (2026-10-10): przycisk otwiera okno
-  (`.uni-modal`) z **dwiema listami do wyboru: Znajomi · Subskrybenci**;
-  zaznaczasz i zatwierdzasz. **Działa w jedną stronę** (tylko dodaje
-  odbiorców); **już wybrani nie pokazują się w oknie**. Na stronie ankiety
-  zostaje jedna lista odbiorców z oznaczeniem roli i akcjami w wierszu
-  (przypomnij, usuń).
-
-### Odpowiedzi 2026-10-10 (cz. 3)
-
-- **Pkt 8 — tak**: subskrybent, który przyjmie zaproszenie do znajomych,
-  **znika z listy subskrybentów** i zostaje tylko znajomym (ankiety dostaje
-  jako znajomy).
-- **Bazy i urządzenia — jedno okno**: w oknie udostępniania widać **już
-  udostępnionych i dodawanie** (mail / nazwa + znajomi) razem. **Ankieta**
-  inaczej: udostępnieni na stronie ankiety (panel), dodawanie w oknie.
-- Godzina wygaśnięcia linku urządzenia: bez odpowiedzi — przyjmuję
-  rekomendację (liczona od ostatniej aktywności rozgrywki), do korekty.
+Wygląd i układ:
+- Wiersze zamiast kafli, akcje w wierszu (komputer: tekst, telefon: ikona;
+  usuwanie ikoną), jedna kolumna ok. 760 px.
+- **Zadania**: bazy tylko do zaakceptowania (po akceptacji/odrzuceniu
+  znikają), urządzenia tylko aktywne, „Zrobione” tylko ankiety.
+- **Listy już udostępnionych** (bazy, urządzenia, ankieta): **jedna lista**,
+  bez podziału na sekcje wg kanału; na wierszu oznaczenie znajomy /
+  subskrybent.
+- **Ankieta**: udostępnieni widoczni na stronie ankiety (panel), **dodawanie
+  w oknie** z dwiema listami (Znajomi · Subskrybenci), w jedną stronę (tylko
+  dodaje), już wybrani nie pokazują się w oknie.
+- **Bazy i urządzenia**: **jedno okno** — w nim lista już udostępnionych
+  i dodawanie (pole mail/nazwa + znajomi).

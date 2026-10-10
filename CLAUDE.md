@@ -5,11 +5,15 @@ przepisuje CI), Supabase, Cloudflare Worker. Strony w `web/`.
 
 ## Zanim zaczniesz
 
+- Przekazanie z 2026-10-10: [`docs/przekazanie.md`](docs/przekazanie.md).
+  `AGENTS.md` (Codex) ma te same zasady — zmieniaj oba pliki razem.
+
 - Przeczytaj [`docs/wdrozenia.md`](docs/wdrozenia.md) — kolejka etapów,
   stan, zasady i odnośniki do sekcji z decyzjami. To jest plan; rozmowa
   nim nie jest.
 - Decyzje użytkownika zapisuj od razu w sekcji „Decyzje” właściwego
-  dokumentu (`docs/nawigacja-mapa-plan.md`, `docs/blokady-zasobow.md`).
+  dokumentu (`docs/nawigacja-mapa-plan.md`, `docs/blokady-zasobow.md`,
+  `docs/ujednolicenie-wygladu.md`, `docs/e19-znajomi-plan.md`, `docs/ankiety-refaktor.md`).
 
 ## Tok pracy
 

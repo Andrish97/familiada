@@ -27,7 +27,11 @@ Głosujący / urządzenia po usunięciu: linki i QR dają „nie znaleziono”,
 zaproszenie „nieprawidłowy token”, wyświetlacz „zły klucz albo gra nie
 istnieje” — działa, ale komunikaty są techniczne.
 
-## 2. Usunięcie konta — dziś
+## 2. Usunięcie konta — stan sprzed E12 (historyczny)
+
+> Tabela opisuje stan **przed** E12. Obowiązuje mapa docelowa z sekcji 3
+> (zrobione w E12): wszystko powiązane z e-mailem jest usuwane. E19 dokłada
+> znajomości i udostępnienia urządzeń po e-mailu (`e19-znajomi-plan.md`).
 
 Wejścia: strona Konto (funkcja `delete-account` → `delete_user_everything`),
 „porzuć konto gościa” (`guest_discard_current`), nocne czyszczenie gości
