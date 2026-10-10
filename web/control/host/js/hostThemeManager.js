@@ -1,6 +1,6 @@
 // Loads Host theme factories from the same manifest Display uses. Each
 // entry maps a shared theme key to a Host-specific createTheme(root) module.
-const THEMES_URL = "/shared/data/display-themes.json?v=v2026-10-10T06225";
+const THEMES_URL = "/shared/data/display-themes.json?v=v2026-10-10T15075";
 const FALLBACK_KEY = "classic";
 const DEFAULT_COLORS = { A: "#c4002f", B: "#2a62ff", DOT: "#d7ff3d" };
 
