@@ -180,13 +180,14 @@ test("ustawienia gry: Warstwa 2 — zapis po zmianie ustawień z pominięciem UI
     await page.locator("#gsTeamB").fill("Ekipa B");
 
     // Autozapis trafia w konflikt: komunikat pod paskiem akcji, bez okna.
-    await saveAndWait(page);
-    const game = await getGameRow(page, gameId);
-    expect(game.settings.game.hasFinal).toBe(true);
-    expect(game.settings.game.finalQuestionsMode).toBe("random");
-    expect(game.settings.questions.final).toEqual([]);
-    await expect(page.locator('input[name="gsFinalMode"][value="random"]')).toBeChecked();
+    await expect(page.locator("#gsFooterMsg")).toHaveText(
+      "Te ustawienia zostały w międzyczasie zmienione w innym miejscu. Odśwież stronę i wprowadź zmiany ponownie.",
+      { timeout: 10000 }
+    );
 
+    const game = await getGameRow(page, gameId);
+    expect(game.settings.teams.teamA, "zmiana zapisana bezpośrednio w bazie nie powinna zostać cicho nadpisana").toBe("Zmienione gdzie indziej");
+    expect(game.settings.teams.teamB, "zapis karty w konflikcie nie powinien się wykonać wcale").not.toBe("Ekipa B");
   } finally {
     await deleteGame(page, gameId);
   }
@@ -400,13 +401,13 @@ test("ustawienia gry: niepełny finał resetuje się do losowania i zapisuje poz
     await switchTab(page, "finale");
     await page.locator("#gsFinalePool .qRow").first().click(); // wybierz tylko 1 z 2
 
-    await expect(page.locator("#gsFooterMsg")).toHaveText(
-      "Wybierz 5 pytań finałowych (wybrano 1/5).",
-      { timeout: 10000 }
-    );
-
+    await saveAndWait(page);
     const game = await getGameRow(page, gameId);
-    expect(game.settings, "zapis zablokowany walidacją nie powinien nic zmienić w bazie").toEqual({});
+    expect(game.settings.game.hasFinal).toBe(true);
+    expect(game.settings.game.finalQuestionsMode).toBe("random");
+    expect(game.settings.questions.final).toEqual([]);
+    await expect(page.locator('input[name="gsFinalMode"][value="random"]')).toBeChecked();
+
   } finally {
     await deleteGame(page, gameId);
   }
