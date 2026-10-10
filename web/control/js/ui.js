@@ -16,14 +16,14 @@
 // setStealMsg/setRevealMsg/ROUNDS_MSG/FINAL_MSG, ale jako czysta funkcja
 // bieżącego game_state (web/js/gameplay/hints.js), nie ulotny stan ustawiany przy
 // każdym zdarzeniu — "wszystko idzie przez tabelę stanów".
-import { getRoundsHint, getFinalHint, getFinalEntryShortcuts, teamName } from "../../shared/js/gameplay/hints.js?v=v2026-10-10T00380";
-import { t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-10T00380";
-import { getSfxCategories, getSfxVariant, isSfxPlaying, playSfx, stopSfx, onSfxEnd, setSfxVolume } from "../../shared/js/core/sfx.js?v=v2026-10-10T00380";
-import { buildDisplayPreviewRow } from "../../shared/js/gameplay/previewRow.js?v=v2026-10-10T00380";
-import { DEFAULT_SETTINGS } from "../../shared/js/gameplay/gameStateShape.js?v=v2026-10-10T00380";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-10T00380";
+import { getRoundsHint, getFinalHint, getFinalEntryShortcuts, teamName } from "../../shared/js/gameplay/hints.js?v=v2026-10-10T00395";
+import { t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-10T00395";
+import { getSfxCategories, getSfxVariant, isSfxPlaying, playSfx, stopSfx, onSfxEnd, setSfxVolume } from "../../shared/js/core/sfx.js?v=v2026-10-10T00395";
+import { buildDisplayPreviewRow } from "../../shared/js/gameplay/previewRow.js?v=v2026-10-10T00395";
+import { DEFAULT_SETTINGS } from "../../shared/js/gameplay/gameStateShape.js?v=v2026-10-10T00395";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-10T00395";
 
-import { previewPendingRoundEndDestination } from "./engine.js?v=v2026-10-10T00380";
+import { previewPendingRoundEndDestination } from "./engine.js?v=v2026-10-10T00395";
 
 const $ = (id) => document.getElementById(id);
 const on = (el, ev, fn) => el && (el[`on${ev}`] = fn);
@@ -686,9 +686,20 @@ export function createUI({ root, emit }) {
       ? h("div", { class: "c2-gameplay-nav" }, nav)
       : h("div", { class: "c2-gameplay-nav c2-gameplay-nav-empty", "aria-hidden": "true" });
     const cardChildren = [];
-    if (question) {
-      const questionHeader = h("div", { class: "c2-stepper-question", text: question, title: question });
-      questionHeader.style.fontSize = question.length > 150 ? ".88rem" : question.length > 100 ? ".98rem" : "1.08rem";
+    {
+      // Każdy krok zachowuje ten sam górny slot (48 px), również wtedy, gdy
+      // zgodnie z projektem nie pokazujemy w nim pytania, np. przy wpisywaniu
+      // finału. Bez pustego slotu treść dostawała dodatkowe 48 px + odstęp,
+      // przez co kafle finału były wyższe niż w pozostałych krokach.
+      const questionHeader = h("div", {
+        class: `c2-stepper-question${question ? "" : " c2-stepper-empty"}`,
+        text: question || "",
+        title: question || "",
+        "aria-hidden": question ? undefined : "true",
+      });
+      if (question) {
+        questionHeader.style.fontSize = question.length > 150 ? ".88rem" : question.length > 100 ? ".98rem" : "1.08rem";
+      }
       cardChildren.push(h("div", { class: "c2-stepper" }, [questionHeader]));
     }
     cardChildren.push(

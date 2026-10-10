@@ -406,7 +406,7 @@ async function expectMappingFieldFits(page, testInfo, label) {
     const caption = tile.querySelector(".c2-field-label").getBoundingClientRect();
     const card = document.querySelector(".c2-gameplay-card").getBoundingClientRect();
     const main = document.querySelector(".c2-roundlayout-main").getBoundingClientRect();
-    return { top: input.top - box.top, bottom: box.bottom - input.bottom, right: box.right - input.right, centered: Math.abs((column.left + column.right) / 2 - (caption.left + caption.right) / 2), horizontalOverflow: tile.scrollWidth - tile.clientWidth, cardX: card.x, cardRight: card.right, viewportWidth: document.documentElement.clientWidth, cardWidth: card.width, mainX: main.x, mainRight: main.right, mainWidth: main.width };
+    return { top: input.top - box.top, bottom: box.bottom - input.bottom, right: box.right - input.right, centered: Math.abs((column.left + column.right) / 2 - (caption.left + caption.right) / 2), horizontalOverflow: tile.scrollWidth - tile.clientWidth, cardX: card.x, cardRight: card.right, viewportWidth: document.documentElement.clientWidth, cardWidth: card.width, mainX: main.x, mainRight: main.right, mainWidth: main.width, windowWidth: innerWidth, scrollX, documentWidth: document.documentElement.scrollWidth, bodyWidth: document.body.scrollWidth };
   });
   expect(geometry.top).toBeGreaterThanOrEqual(5);
   expect(geometry.bottom).toBeGreaterThanOrEqual(5);
@@ -420,10 +420,12 @@ async function expectMappingFieldFits(page, testInfo, label) {
   if (label === "p1") await page.evaluate((rect) => { window.__p1MappingLayout = rect; }, geometry);
   if (label === "p2") {
     const p1 = await page.evaluate(() => window.__p1MappingLayout);
-    expect(Math.abs(geometry.cardX - p1.cardX), "karta nie może przesuwać się w mapowaniu gracza 2").toBeLessThan(1);
-    expect(Math.abs(geometry.cardWidth - p1.cardWidth), "szerokość karty musi być stała między graczami").toBeLessThan(1);
-    expect(Math.abs(geometry.mainX - p1.mainX), "lewa kolumna mapowania nie może przesuwać się między graczami").toBeLessThan(1);
-    expect(Math.abs(geometry.mainWidth - p1.mainWidth), "szerokość kolumny mapowania musi być stała między graczami").toBeLessThan(1);
+    await page.screenshot({ path: testInfo.outputPath("shot-mapping-p2.png") });
+    const detail = `P1=${JSON.stringify(p1)} P2=${JSON.stringify(geometry)}`;
+    expect(Math.abs(geometry.cardX - p1.cardX), `karta nie może przesuwać się w mapowaniu gracza 2; ${detail}`).toBeLessThan(1);
+    expect(Math.abs(geometry.cardWidth - p1.cardWidth), `szerokość karty musi być stała między graczami; ${detail}`).toBeLessThan(1);
+    expect(Math.abs(geometry.mainX - p1.mainX), `lewa kolumna mapowania nie może przesuwać się między graczami; ${detail}`).toBeLessThan(1);
+    expect(Math.abs(geometry.mainWidth - p1.mainWidth), `szerokość kolumny mapowania musi być stała między graczami; ${detail}`).toBeLessThan(1);
   }
   await page.screenshot({ path: testInfo.outputPath(`shot-mapping-${label}.png`) });
 }
@@ -1696,6 +1698,7 @@ test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśni�
     expect(p1AnswerBounds.height).toBeGreaterThan(0);
     expect(p1AnswerBounds.top).toBeGreaterThanOrEqual(p1AnswerBounds.tileTop);
     expect(p1AnswerBounds.bottom).toBeLessThanOrEqual(p1AnswerBounds.tileBottom);
+    await page.screenshot({ path: testInfo.outputPath("shot-final-p2-entry.png") });
     const p2EntryGrid = await page.locator(".c2-entryrows").evaluate((grid) => {
       const rect = (node) => {
         const { x, y, width, height, left, right } = node.getBoundingClientRect();
@@ -1713,6 +1716,9 @@ test("control2: finał — obaj gracze, wszystkie 10 pytań, naturalne wygaśni�
     });
     expect(p2EntryGrid.tracks).toHaveLength(6);
     expect(p2EntryGrid.gap).toBe(10);
+    expect(p2EntryGrid.layout.left).toBeGreaterThanOrEqual(p2EntryGrid.card.left);
+    expect(p2EntryGrid.layout.right).toBeLessThanOrEqual(p2EntryGrid.card.right);
+    expect(p2EntryGrid.viewport.scrollWidth).toBeLessThanOrEqual(p2EntryGrid.viewport.width);
     for (const height of p2EntryGrid.tracks) {
       expect(Math.abs(height - standardGameplayRowHeight), `kafle wpisywania mają tę samą wysokość co pozostałe; wpisywanie=${height}px, runda=${standardGameplayRowHeight}px, układ=${JSON.stringify(p2EntryGrid)}`).toBeLessThan(1);
     }
