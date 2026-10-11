@@ -303,12 +303,12 @@ test("@mailbox znajomi346: wypisanie obu stron, własna odmowa, undo i unieważn
       await expect(toggle).toHaveAttribute("aria-expanded", "false");
       for (const width of [390, 1400]) {
         await actor.page.setViewportSize({ width, height: 900 });
-        await actor.page.screenshot({ path: testInfo.outputPath(`friend346-actor${number}-collapsed-${width}.png`), fullPage: true });
+        await actor.page.screenshot({ path: testInfo.outputPath(`shot-friend346-actor${number}-collapsed-${width}.png`), fullPage: true });
         await toggle.click();
         await expect(ownRefusal).toBeVisible();
         await expect(ownRefusal.locator('[data-act="undo_reject"]')).toBeEnabled();
         await expect(ownRefusal.locator('[data-act="resend"]')).toHaveCount(0);
-        await actor.page.screenshot({ path: testInfo.outputPath(`friend346-actor${number}-expanded-${width}.png`), fullPage: true });
+        await actor.page.screenshot({ path: testInfo.outputPath(`shot-friend346-actor${number}-expanded-${width}.png`), fullPage: true });
         await toggle.click();
       }
       const ownInfo = await rpc(actor.page, "friends_token_info", { p_token: token });
