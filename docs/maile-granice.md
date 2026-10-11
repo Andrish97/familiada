@@ -275,3 +275,19 @@ E2E importuje rzeczywiste moduły przeglądarki. To nie jest pełna kontrola
 autoryzowanego panelu administracyjnego. SMTP15 i ilustracje potwierdzone
 branch38172035648; po tej zmianie niezmienieni producenci nie wymagają
 powtórzenia SMTP na branchu, main obejmie15mail+preview.
+
+### Pkt6 — aktualny stan wdrożony i zweryfikowany
+
+Worker38172431062, Edge38172431290, Pages38172431095 ✓.
+Main38172503834 ✓2/2 bez retry/unit447:15 rzeczywiście odebranych maili
+(35–49s), wszystkie treści/lang/formatowanie,4 ilustracje HTTP200 oraz
+opublikowane moduły przeglądarki podglądu. Pierwsza paczka sharing/auth/
+flag:13 poprawnych38170191574 i wypisanie38171488172 ✓.
+Pkt6 zamknięty; wcześniejsze draft/do wdrożenia są historią realizacji.
+
+Pokrycie nie oznacza pełnego autoryzowanego panelu admina/publicznego
+kontaktu: handler admina sprawdzony unit ze sztucznym transportem,
+kontaktowy i marketingowy kod rzeczywistych szablonów + prawdziwy SMTP
+przez send-mail. Auth4typy×3lang renderer unit; reset i zmiana e-maila mają
+prawdziwe przepływy E2E oraz treściPL/EN/UK. Signup/guest migration nie były
+nowym funkcjonalnym E2E tej paczki. Audyt atomowości queue/historia pkt7.

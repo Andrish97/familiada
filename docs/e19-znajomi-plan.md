@@ -1157,3 +1157,23 @@ z13 green38170191574 pierwsza paczka wdrożona i zweryfikowana. Marketing
 ma wspólny builder podgląd/wysyłka i wspólną ramkę dla wszystkich3 szablonów.
 Najnowszy test mail-content obejmuje15 faktycznych szablonów i SMTP test14.
 Unit443 lokalnie; bramki izolowane/branch/main wymagane przed zamknięciem.
+
+### §5 pkt6 Maile — zamknięty produkcyjnie (2026-10-11)
+
+Pierwsza paczka: Pages38170086375 / Edge38170086411 ✓, main13/14
+38170191574 oraz świeże wypisanie38171488172 ✓ (poprawiona dawna asercja
+wygasło po odmowie). Sharing, rzeczywista kolejka/flag i auth reset/change
+z przywróceniem oraz treści PL/EN/UK sprawdzone.
+Druga paczka: Worker38172431062 / Edge38172431290 / Pages38172431095 ✓.
+Main38172503834 ✓2/2 bez retry/unit447:15 faktycznie odebranych maili,
+cztery ilustracje HTTP200 i zapisane podglądy przez opublikowane moduły.
+Branch SMTP38172035648 i preview38172320249 oraz Agent38172318043 ✓.
+Wspólny szablon obejmuje wszystkie zinwentaryzowane generatory; zakres
+kontroli i jego granice opisane w maile-granice.md. Pełnego panelu admina
+ani signup/guest migration jako prawdziwego przepływu nie uznawać za
+sprawdzonego kontrolą szablonów (auth4typy×3lang unit, reset/change E2E).
+
+Następny pkt7: pełny graf, starsze wypisanie Znajomych, kaskady, locks,
+Go dla wszystkich linków oraz łagodny limit przeglądarki. Kolejka i historia
+admina są nadal osobnymi zapisami; spójność po awarii zapisu historii do
+audytu grafu. Manual ostatni.

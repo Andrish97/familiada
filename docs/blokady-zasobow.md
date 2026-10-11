@@ -408,3 +408,23 @@ blokady rodzica po wcześniejszym SHARE, co zapobiega upgrade deadlock.
 Usunięcie konta odbiorcy zachowuje swój obecny cleanup także po e-mailu
 w delete_user_everything; pkt7 ma przetestować całą macierz, w tym dawne
 email-taski i ponowne założenie konta. Fizyczna kaskada Baz pozostaje otwarta.
+
+### Pkt7 — audyt po domknięciu maili (2026-10-11)
+
+- friends_remove nadal fizycznie DELETE active; odmowa przy dobrowolnym
+  zakończeniu musi znać osobę podejmującą decyzję niezależnie od pierwotnego
+  kierunku zaproszenia. Własne undo przywraca pending, potem osobne accept.
+- friends_cancel usuwa declined, a cooldown po odmowie ma klucz tylko
+  requester→addressee. Cofnięcie nie może pozwolić obejść30 dni odwrotnym
+  kierunkiem; token cofnięty nie może pozwalać undo/accept.
+- _friend_drop_pair_tasks usuwa pending/opened poll/base tasks. Zbadać
+  powiązane częściowe głosy oraz pending mail; zachować niezależne przyjęte
+  uprawnienia do Baz/urządzeń, zgodnie z drzewem E19.
+- _friend_mail_limit_until liczy rekordy friendships. Usunięcie rekordu
+  może zgubić licznik; audyt trwałości obejmie również kontakty, tak jak
+  zrobiona trwałość ankiet342. Samo ukrycie nie resetuje budżetu.
+- Admin queue i zapis historii są dwiema operacjami. Awaria historii po
+  queued nie może sugerować użytkownikowi bezpiecznego ponowienia wysyłki.
+
+To wyniki przeglądu kodu, nie wykonane poprawki. Bazy bez FK, routing Go,
+blokady rodziców i anonimowy token pozostają pozostałą częścią pkt7.

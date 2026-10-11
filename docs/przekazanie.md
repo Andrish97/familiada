@@ -1,47 +1,29 @@
 # Wznowienie pracy — 2026-10-11
 
-## Bieżąca kontynuacja: kolejka §5 pkt 6 Maile
+## Bieżąca kontynuacja: kolejka §5 pkt7 Graf zależności
 
-Pkt4 Bazy337–339 zamknięty produkcyjnie: Pages38161940974 ✓,
-main38162414519 ✓ 3/3 bez retry, unit413/413, rzeczywisty mail39s.
-Zrzuty390/1400 i zwijane odmowy w docs/img/e19-bases. Kontrola wcześniejsza
-38162015503:2/3; trzeci helper czekał5s przy13s odpowiedzi initPage,
-poprawiono30s, świeży komplet zaliczony. Parent guards oraz wyścigi337–338
-zrobione; fizyczna kaskada base_share_tasks bez FK do bazy nadal pkt7.
+Pkt4 Bazy337–339 i pkt5 Ankiety340–344 zamknięte produkcyjnie.
+Pkt6 Maile też zamknięty: pierwsza paczka13 green38170191574 + świeże
+wypisanie38171488172 ✓. Druga: Worker38172431062 / Edge38172431290 /
+Pages38172431095 ✓; main38172503834 ✓2/2 bez retry/unit447,15 realnych
+maili kontakt/ręczny/marketing do test14, HTTP200 czterech ilustracji,
+moduły przeglądarki zapisanych podglądów. Branch SMTP38172035648,
+preview38172320249, isolated38172318043 ✓. Zrzuty docs/img/e19-mails.
+Szczegółowe granice pokrycia w maile-granice.md; nie nazywać samych
+szablonów pełnym testem publicznego kontaktu/admina/signup/guest migration.
 
-Backend Ankiet340–344 zastosowany na main: DB38165033358 ✓,
-340/34118:45:40UTC,342/34318:45:41UTC; DB38165841575 ✓,34418:57:12UTC.
-Izolowane38164791524 i38165592194 ✓: kontrakty/ACL/flag/refusal/current-run,
-trwały3/24h także po dostarczeniu i usunięciu taska/gry; wyścigi i atomowy
-complete ostatniej paczki tekst/punkty. Odmowa usuwa niepełne głosy.
-Głosowania anonymous bez taska nie zmieniono; limit urządzenia nadal pkt7.
+Teraz pkt7: graf/locks/kaskady/Go/anon, zgodnie z E19 §7 i blokady-zasobow.md.
+Wypisanie=odmowa wszędzie zapisane, starsze friends_remove nadal DELETE
+aktywnej relacji; dopiąć aktora decyzji, oba kierunki, undo→pending→accept,
+niezresetowany zegar po ukryciu/cofnięciu i wygaśnięcie. friends_cancel
+kasuje declined i blokuje tylko stary kierunek cooldown — wykryty zakres
+audytu, nie oznaczać jako wdrożonej reguły. _friend_drop_pair_tasks usuwa
+pending/opened taski pary; zbadać też częściowe głosy i oczekujące maile.
+base_share_tasks nadal bez fizycznego FK do bazy; guards338 są kontrolą
+ważności, nie fizyczną kaskadą. Queue/historia admina mają osobne zapisy.
 
-Pkt5 Ankiety zamknięty produkcyjnie: Pages38167986176 ✓, siedemGo main
-38168027593 passed i pięćpoll-share38168458967 ✓ bez retry, unit414/414.
-Rzeczywiste Pages/mail8/14/tekst/punkty/partial/refusal/same-run/flag-off/UI
-oraz trzy dostarczone maile i trwały limit czwartego. Błąd gotowości helpera
-pierwszego main naprawiony (Pytanie1 oraz każde przejście1–10), świeży
-pełny zakres poll-share przeszedł. Nie powtarzać pkt5 bez nowej zmiany.
-
-Pierwsza paczka maili pkt6 wdrożona: Pages38170086375 i Edge38170086411 ✓.
-Main38170191574:13/14 bez retry/unit431, realne sharing maile, queued0/noqueue,
-reset11 i zmiana12→13 z przywróceniem oraz treści authPL/EN/UK. Świeży main38171488172 ✓ domknął Subskrybentów po poprawie starej asercji
-wygasło na odmowę po wypisaniu/ukryciu. Cały zakres pierwszej paczki zaliczony.
-
-Druga paczka kontakt/Settings lokalnie: wspólny renderer z kopią Worker,
-rich HTML i opcjonalną akcją. Kontakt3typy×3lang; ręczne podgląd/wysyłka ten
-sam helper. Admin compose/marketing raportują rzeczywistą kolejkę i nie
-zapisują historii pominiętych adresów. Unit440/440 ✓; zrzuty390/1400.
-mail-content.spec.js sprawdza15 szablonów i SMTP do test14 bez publicznego
-formularza (Telegram admina). Następnie izolowane → branch15mail →
-Worker/Pages → identyczny main. Marketing invitation/newsletter/custom ma jeden wspólny builder preview/send
-i zachowaną treść/ilustracje. Unit443 lokalnie; świeże bramki nadal wymagane.
-Audyt reszty pkt6 otwarty.
-
-Dalej pkt6 maile (audyt wejść w maile-granice.md), pkt7 graf/kaskady/Go/
-lekki anonimowy token, UI/E20 i landscape; manual ostatni. Wypisanie=odmowa
-w każdym miejscu jest zapisane; starsze usuwanie Znajomych nadal do dopięcia
-w audycie grafu. Kontynuować bez kończenia tury po paczce.
+Dalej UI/E20 i landscape każdej strony; manual ostatni. Kontynuować bez
+kończenia tury po paczce, screeny po wykonaniu bez czekania na ocenę.
 
 
 ## Najnowszy stan: E19 krok 7 w realizacji
