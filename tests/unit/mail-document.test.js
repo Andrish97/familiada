@@ -124,7 +124,7 @@ test('device mail transport rejects missing session, network and HTTP failure, s
   const source = read('web/control/js/shareDevice.js');
   const helper = source.slice(source.indexOf('function buildMailHtml'), source.indexOf('export function createShareDevice'));
   for (const lang of ['pl','en','uk']) {
-    let response = { ok: true }, session = { access_token: 'test-token' }, request;
+    let response = { ok: true, json: async () => ({ ok: true, queued: 1 }) }, session = { access_token: 'test-token' }, request;
     const context = vm.createContext({ URL, location: { origin: 'https://www.familiada.online' }, getUiLang: () => lang,
       t: (key, params) => translate(lang, key, params), renderMailDocument, deviceTypeLabel: () => 'Display',
       sb: () => ({ auth: { getSession: async () => ({ data: { session } }) } }), MAIL_FUNCTION_URL: 'https://example.com/send-mail',
@@ -142,7 +142,7 @@ test('device mail transport rejects missing session, network and HTTP failure, s
     }
     response = { ok: false }; await assert.rejects(context.sendShareEmail(args));
     response = new Error('Network failed'); await assert.rejects(context.sendShareEmail(args));
-    response = { ok: true }; session = null; await assert.rejects(context.sendShareEmail(args));
+    response = { ok: true, json: async () => ({ ok: true, queued: 1 }) }; session = null; await assert.rejects(context.sendShareEmail(args));
   }
 });
 test('auth provider token validation refuses missing/empty/non-string tokens and caches valid token', async () => {
@@ -154,4 +154,34 @@ test('auth provider token validation refuses missing/empty/non-string tokens and
   context.response = 'valid-test-token'; assert.equal(await context.getSendpulseToken(), 'valid-test-token');
   context.fetch = async () => { throw new Error('cache should avoid network'); };
   assert.equal(await context.getSendpulseToken(), 'valid-test-token');
+});
+test('poll sender marks only queued tasks as emailed and reports muted recipients as skipped', async () => {
+  const source = read('web/shared/js/core/poll-mail.js');
+  const sender = source.slice(source.indexOf('export async function sendPollInviteMails')).replace('export ', '');
+  const marked = [];
+  const context = vm.createContext({ t: (key, params) => translate('pl', key, params), buildMailHtml: item => JSON.stringify(item), mailLink: value => value,
+    sb: () => ({ rpc: async (name, args) => { if (name === 'polls_hub_tasks_mark_emailed') marked.push(args.p_task_ids); return { data: [] }; } }),
+    sendMailBatch: async () => ({ results: [{ to: 'test8@familiada.online', ok: true, queued: false, skipped: true }, { to: 'test14@familiada.online', ok: true, queued: true }] }) });
+  vm.runInContext(sender, context);
+  const args = { mailItems: [{ to: 'test8@familiada.online', link: '/go/?t=muted', task_id: 'muted' }, { to: 'test14@familiada.online', link: '/go/?t=queued', task_id: 'queued' }], pollName: 'Poll', currentUser: { id: 'owner', username: 'Owner' } };
+  const result = await context.sendPollInviteMails(args);
+  assert.equal(result.sent, 1); assert.equal(result.skipped, 1); assert.equal(result.failed, 0);
+  assert.deepEqual(Array.from(marked[0]), ['queued']);
+});
+test('single sharing mail transports report queue omission and legacy queued count without false success', async () => {
+  for (const file of ['web/shared/js/core/invite-mail.js','web/bases/js/bases.js']) {
+    const source = read(file);
+    const helper = source.match(/async function sendMail\([\s\S]*?\n\}/)?.[0]; assert.ok(helper);
+    let payload;
+    const context = vm.createContext({ sb: () => ({ auth: { getSession: async () => ({ data: { session: { access_token: 'test' } } }) } }), t: key => key,
+      MAIL_FUNCTION_URL: 'https://example.com/mail', fetch: async () => ({ ok: true, status: 200, json: async () => payload }) });
+    vm.runInContext(helper, context);
+    const args = { to: 'test8@familiada.online', subject: 'Test', html: '<p>Test</p>', cooldownActionKey: 'friend:invite', cooldownTargetKey: 'email:test8@familiada.online' };
+    for (const queued of [true,false]) {
+      payload = { ok: true, queued: queued ? 1 : 0, results: [{ to: args.to, ok: true, queued }] };
+      assert.equal(await context.sendMail(args), queued);
+      payload = { ok: true, queued: queued ? 1 : 0 }; assert.equal(await context.sendMail(args), queued);
+    }
+    payload = { ok: false }; await assert.rejects(context.sendMail(args));
+  }
 });

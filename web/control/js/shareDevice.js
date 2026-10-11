@@ -62,6 +62,9 @@ async function sendShareEmail({ to, ownerLabel, deviceType, gameId, gameName, sh
     body: JSON.stringify({ to, subject, html, cooldownActionKey: "device:share", cooldownTargetKey }),
   });
   if (!response.ok) throw new Error(t("pollsHubSubscriptions.errors.mailSend"));
+  const payload = await response.json();
+  if (!payload?.ok) throw new Error(t("pollsHubSubscriptions.errors.mailSend"));
+  return payload.results?.[0]?.queued ?? (Number(payload.queued) > 0);
 }
 
 export function createShareDevice({ currentUser, game, onBadgesChanged }) {
@@ -284,7 +287,7 @@ export function createShareDevice({ currentUser, game, onBadgesChanged }) {
       return res?.mail_disabled ? "disabled" : false;
     }
 
-    await sendShareEmail({
+    const queued = await sendShareEmail({
       to: email,
       ownerLabel: currentUser?.username || currentUser?.email || "—",
       deviceType: _deviceType,
@@ -294,7 +297,7 @@ export function createShareDevice({ currentUser, game, onBadgesChanged }) {
       cooldownTargetKey: res.cooldown_target_key,
       isRegistered: !!userId,
     });
-    return true;
+    return queued ? true : "disabled";
   }
 
   btnAdd?.addEventListener("click", async () => {

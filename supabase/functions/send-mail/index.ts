@@ -1,6 +1,8 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
+import { mailQueueResult } from "../_shared/mail-queue-results.js";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -87,7 +89,7 @@ serve(async (req) => {
       cooldown_target_key: it.cooldownTargetKey,
     }));
 
-    const { error } = await sbAdmin.from("mail_queue").insert(rows);
+    const { data: inserted, error } = await sbAdmin.from("mail_queue").insert(rows).select("to_email");
     if (error) {
       // Trigger w bazie (migracja 289) odrzuca nierozpoznany action_key i
       // wiersze wciąż w cooldownie (baseline:recipient) wyjątkiem -- to
@@ -98,7 +100,7 @@ serve(async (req) => {
       throw error;
     }
 
-    return json({ ok: true, queued: rows.length });
+    return json(mailQueueResult(validItems, inserted, toQueue.length));
   } catch (e) {
     return json({ ok: false, error: String(e) }, 500);
   }

@@ -1009,4 +1009,4 @@ jobs:
           node scripts/sync-mail-document.cjs
           git diff --exit-code -- web/shared/js/core/mail-document.js
       - name: Check authentication Edge function
-        run: npx --yes deno check supabase/functions/send-email/index.ts
+        run: npx --yes deno check supabase/functions/send-email/index.ts supabase/functions/send-mail/index.ts

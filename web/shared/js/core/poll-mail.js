@@ -75,7 +75,7 @@ export async function sendMailBatch(items) {
  */
 export async function sendPollInviteMails({ mailItems, pollName, currentUser, reminder = false }) {
   const list = (Array.isArray(mailItems) ? mailItems : []).filter((it) => it?.to && it?.link);
-  if (!list.length) return { total: 0, sent: 0, failed: 0 };
+  if (!list.length) return { total: 0, sent: 0, failed: 0, skipped: 0 };
 
   const ownerLabel = currentUser?.username || currentUser?.email || t("pollsHubPolls.ownerFallback");
   const name = pollName || t("pollsHubPolls.pollFallback");
@@ -123,15 +123,18 @@ export async function sendPollInviteMails({ mailItems, pollName, currentUser, re
 
   let sent = 0;
   let failed = 0;
+  let skipped = 0;
   const sentTaskIds = [];
   try {
     const out = await sendMailBatch(items);
     for (const r of Array.isArray(out?.results) ? out.results : []) {
       const emailKey = String(r?.to || "").toLowerCase();
-      if (r?.ok) {
+      if (r?.ok && r?.queued !== false) {
         sent += 1;
         const tid = emailToTaskId.get(emailKey);
         if (tid) sentTaskIds.push(tid);
+      } else if (r?.skipped) {
+        skipped += 1;
       } else if (emailKey) {
         failed += 1;
       }
@@ -143,5 +146,5 @@ export async function sendPollInviteMails({ mailItems, pollName, currentUser, re
   if (sentTaskIds.length) {
     try { await sb().rpc("polls_hub_tasks_mark_emailed", { p_task_ids: sentTaskIds }); } catch { /* nieblokujące */ }
   }
-  return { total: items.length, sent, failed };
+  return { total: items.length, sent, failed, skipped };
 }

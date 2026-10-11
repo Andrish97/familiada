@@ -1,6 +1,6 @@
 # Wznowienie pracy — 2026-10-11
 
-## Bieżąca kontynuacja: kolejka §5 pkt 5 Ankiety
+## Bieżąca kontynuacja: kolejka §5 pkt 6 Maile
 
 Pkt4 Bazy337–339 zamknięty produkcyjnie: Pages38161940974 ✓,
 main38162414519 ✓ 3/3 bez retry, unit413/413, rzeczywisty mail39s.
@@ -16,18 +16,23 @@ trwały3/24h także po dostarczeniu i usunięciu taska/gry; wyścigi i atomowy
 complete ostatniej paczki tekst/punkty. Odmowa usuwa niepełne głosy.
 Głosowania anonymous bez taska nie zmieniono; limit urządzenia nadal pkt7.
 
-Front Ankiet opublikowany Pages38167986176 ✓. Main38168027593: siedemGo ✓,
-pierwszy poll-share miał błąd gotowości helpera (pole widoczne przed init
-pytań), pozostałe cztery serial pominięte. Helper czeka Pytanie1 i sprawdza
-postęp1–10. Świeże pięć poll-share38168458967 na main w toku (e55d51d24d),
-unit publikacji414/414. Dopiero zielony wynik zamyka pkt5.
+Pkt5 Ankiety zamknięty produkcyjnie: Pages38167986176 ✓, siedemGo main
+38168027593 passed i pięćpoll-share38168458967 ✓ bez retry, unit414/414.
+Rzeczywiste Pages/mail8/14/tekst/punkty/partial/refusal/same-run/flag-off/UI
+oraz trzy dostarczone maile i trwały limit czwartego. Błąd gotowości helpera
+pierwszego main naprawiony (Pytanie1 oraz każde przejście1–10), świeży
+pełny zakres poll-share przeszedł. Nie powtarzać pkt5 bez nowej zmiany.
 
 Maile pkt6 są draftem brancha: kanoniczny renderer Edge + generowana
 identyczna kopia front, sześć wejść, odrębne reminders/rola Bazy/langstopki,
-16 zrzutów docs/img/e19-mails. Lokalnie unit424/424 i Deno check ✓.
+16 zrzutów docs/img/e19-mails. Lokalnie unit428/428 i Deno check auth/send-mail ✓.
 Nowe helpery E2E weryfikują HTML faktycznie dostarczonego maila; izolowany
-verify_e19_mail i realne branch/main + auth języki jeszcze wymagane.
-Nie publikować draftu przed zamknięciem Ankiet. Kod Deno typuje się po
+38168702507 ✓ dla renderer/auth. Kolejny draft raportuje prawdziwy queue
+wynik per adres (NULL z triggera to skipped, nie success); frontend nie
+oznacza pominiętego taska jako emailed. Świeży runner auth+send-mail oraz
+realne branch/main + auth języki/flag-at-insert jeszcze wymagane.
+Pkt5 już zamknięty; przed promocją maili wymagany świeży branch z ich kodem.
+Kod Deno typuje się po
 jawnych guardach usuwających sześć odtworzonych błędów starego HEAD.
 
 Dalej pkt6 maile (audyt wejść w maile-granice.md), pkt7 graf/kaskady/Go/

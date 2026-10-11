@@ -789,6 +789,9 @@ async function sendMail({ to, subject, html, cooldownActionKey, cooldownTargetKe
     console.warn("[bases] sendMail failed:", await res.text());
     throw new Error(t("bases.mail.failed"));
   }
+  const payload = await res.json();
+  if (!payload?.ok) throw new Error(t("pollsHubSubscriptions.errors.mailSend"));
+  return payload.results?.[0]?.queued ?? (Number(payload.queued) > 0);
 }
 
 // cooldownTargetKey musi być IDENTYCZNY jak w base_share_by_email/by_user
@@ -803,7 +806,7 @@ async function sendBaseShareEmail({ to, link, baseName, ownerLabel, recipientId,
     actionLabel: t("sharingMail.baseAction"),
     actionUrl,
   });
-  await sendMail({
+  return sendMail({
     to,
     subject: t(reminder ? "sharingMail.baseReminderSubject" : "bases.mail.subject", { base: baseName || "—" }),
     html,
@@ -903,9 +906,9 @@ async function renderShareModal() {
         try {
           const { data: response, error } = await sb().rpc("base_share_resend", { p_task_id: recipient.task_id });
           if (error || !response?.ok) { showShareMessage(baseShareError(response)); return; }
-          if (response.mail_allowed) await deliverBaseShare(response, b.id, { role: recipient.role, reminder: true });
+          const queued = response.mail_allowed && await deliverBaseShare(response, b.id, { role: recipient.role, reminder: true });
           await renderShareModal();
-          showShareMessage(t(response.mail_allowed ? "bases.share.success" : "control.shareDeviceModal.friendMailDisabled"));
+          showShareMessage(t(queued ? "bases.share.success" : "control.shareDeviceModal.friendMailDisabled"));
         } catch { showShareMessage(t("bases.share.emailFailed")); }
         finally { button.disabled = false; }
       },
@@ -944,7 +947,7 @@ function baseShareError(row) {
 }
 async function deliverBaseShare(row, baseId, { role, reminder = false } = {}) {
   if (!row?.mail_to || !row?.mail_link) return;
-  await sendBaseShareEmail({ to: row.mail_to, link: row.mail_link, baseName: row.base_name,
+  return sendBaseShareEmail({ to: row.mail_to, link: row.mail_link, baseName: row.base_name,
     ownerLabel: row.owner_label, recipientId: row.recipient_id, baseId, role, reminder });
 }
 let shareAddInFlight = false;
@@ -963,7 +966,10 @@ async function shareAdd(friendIds = null) {
         : { p_base_id: b.id, p_user_lookup: raw, p_role: shareRoleValue });
       const row = Array.isArray(data) ? data[0] : data;
       if (error || !row?.ok) { message = baseShareError(row); continue; }
-      try { await deliverBaseShare(row, b.id, { role: id ? friendsRoleValue : shareRoleValue }); }
+      try {
+        const queued = await deliverBaseShare(row, b.id, { role: id ? friendsRoleValue : shareRoleValue });
+        if (queued === false) message = t("control.shareDeviceModal.friendMailDisabled");
+      }
       catch { message = t("bases.share.emailFailed"); }
       if (!friendIds) shareEmail.value = "";
     }

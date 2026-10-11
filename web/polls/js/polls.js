@@ -715,6 +715,7 @@ async function sendInvitesCore() {
   selectedFriendIds.clear();
 
   if (res.failed) await alertModal({ text: `${t("polls.share.mailFailed")} (${res.failed}/${res.total})` });
+  else if (res.skipped) setMsg(t("pollSharePanel.mailDisabled"));
   else setMsg(t("polls.share.invitesSent", { n: data?.created || res.sent }));
   if (data?.blocked) setMsg(t("polls.share.invitesBlocked", { n: data.blocked }), "error");
 }
@@ -855,7 +856,7 @@ async function remindShare(tk, sub) {
     if (data.mail_allowed === false) { setMsg(t("pollSharePanel.mailDisabled")); return; }
     const res = await sendPollInviteMails({ mailItems: data.mail, pollName: game.name, currentUser, reminder: true });
     if (res.failed) await alertModal({ text: `${t("polls.share.mailFailed")} (${res.failed}/${res.total})` });
-    else setMsg(t("polls.share.reminded"));
+    else setMsg(t(res.skipped ? "pollSharePanel.mailDisabled" : "polls.share.reminded"));
     // Po akcji ponownie pobieramy rzeczywiste zegary i flagi z bazy.
   } catch (e) {
     console.error("[polls] remind", e);

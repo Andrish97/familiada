@@ -41,13 +41,16 @@ async function sendMail({ to, subject, html, cooldownActionKey, cooldownTargetKe
     if (freshToken) res = await doReq(freshToken);
   }
   if (!res.ok) throw new Error((await res.text()) || t("pollsHubSubscriptions.errors.mailSend"));
+  const payload = await res.json();
+  if (!payload?.ok) throw new Error(t("pollsHubSubscriptions.errors.mailSend"));
+  return payload.results?.[0]?.queued ?? (Number(payload.queued) > 0);
 }
 
 
 export async function sendInviteMail({ to, link, ownerLabel, unsubToken = null, kind = "subscriber", actionKey, reminder = false }) {
   const friend = kind === "friend";
   const subject = reminder ? t(friend ? "sharingMail.friendReminderSubject" : "sharingMail.subscriberReminderSubject", { owner: ownerLabel }) : friend ? t("contacts.mail.friendTitle", { owner: ownerLabel }) : t("pollsHubSubscriptions.mail.subscriptionTitle", { owner: ownerLabel });
-  await sendMail({
+  return sendMail({
     to, subject,
     cooldownActionKey: actionKey || (friend ? "friend:invite" : "poll:resend"),
     cooldownTargetKey: `email:${String(to || "").trim().toLowerCase()}`,
