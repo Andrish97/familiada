@@ -649,8 +649,8 @@ function renderSubs(force = false) {
   if (subsSummary) {
     subsSummary.textContent = t("polls.share.summary", {
       invited: tasks.filter(tk => !tk.hidden).length,
-      voted: tasks.filter((tk) => tk.status === "done").length,
-      declined: tasks.filter((tk) => tk.status === "declined").length,
+      voted: tasks.filter((tk) => !tk.hidden && tk.status === "done").length,
+      declined: tasks.filter((tk) => !tk.hidden && tk.status === "declined").length,
     });
   }
 

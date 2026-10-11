@@ -19,8 +19,8 @@ test.beforeEach(async ({ context }) => {
 const { loginAsPooledTestUser } = require("./helpers/login");
 
 async function createTaskToken(page, pollType = "poll_points", opts = {}) {
-  const { recipientUserId = null } = opts;
-  return await page.evaluate(async ({ type, recipientUserId }) => {
+  const { recipientPage = null } = opts;
+  const game = await page.evaluate(async ({ type }) => {
     const sb = window.__sbClient;
     const { data: userData } = await sb.auth.getUser();
     const userId = userData.user.id;
@@ -59,36 +59,49 @@ async function createTaskToken(page, pollType = "poll_points", opts = {}) {
       }
     }
 
-    // Teraz otwórz ankietę
-    const { error: openErr } = await sb.from("games").update({ status: "poll_open" }).eq("id", game.id);
-    if (openErr) throw new Error("update games poll_open failed: " + openErr.message);
-
-    // Utwórz task (zaproszenie) — poll_tasks wymaga poll_type (nie "type")
-    // i share_key_poll (kopiowany z games.share_key_poll, NOT NULL).
-    // Constraint poll_tasks_one_recipient_chk: dokładnie jedno z
-    // recipient_user_id/recipient_email (XOR) — account invite vs email-only.
-    const { data: task, error: taskErr } = await sb
-      .from("poll_tasks")
-      .insert({
-        owner_id: userId,
-        game_id: game.id,
-        poll_type: type,
-        share_key_poll: game.share_key_poll,
-        ...(recipientUserId
-          ? { recipient_user_id: recipientUserId }
-          : { recipient_email: "invited@example.com" }),
-        status: "pending",
-      })
-      .select("token")
-      .single();
-    if (taskErr) throw new Error("insert poll_tasks failed: " + taskErr.message);
-
-    return {
-      gameId: game.id,
-      taskToken: task.token,
-      pollType: type,
-    };
-  }, { type: pollType, recipientUserId });
+    const { error: openErr } = await sb.rpc("poll_open", { p_game_id: game.id, p_key: game.share_key_poll });
+    if (openErr) throw new Error("poll_open failed: " + openErr.message);
+    return game;
+  }, { type: pollType });
+  let recipientUserId = null, subId = null;
+  try {
+  if (recipientPage) {
+    const user = await recipientPage.evaluate(async () => (await window.__sbClient.auth.getUser()).data.user);
+    recipientUserId = user.id;
+    const friendship = await page.evaluate(async user => {
+      const sb = window.__sbClient;
+      await sb.rpc("e2e_friendships_cleanup", { p_other_user_id: user.id });
+      const { data, error } = await sb.rpc("friends_invite", { p_handle: user.email });
+      if (error || !data?.ok) throw new Error(error?.message || data?.error || "friend fixture failed");
+      return data;
+    }, user);
+    await recipientPage.evaluate(async id => {
+      const { data, error } = await window.__sbClient.rpc("friends_accept", { p_id: id });
+      if (error || !data?.ok) throw new Error(error?.message || "friend acceptance failed");
+    }, friendship.id);
+  } else {
+    subId = await page.evaluate(async () => {
+      const sb = window.__sbClient, email = "test14@familiada.online";
+      const { data: cleaned, error: cleanupError } = await sb.rpc("e2e_subscriber_email_cleanup", { p_email: email });
+      if (cleanupError || !cleaned?.ok) throw new Error(cleanupError?.message || "subscriber fixture cleanup failed");
+      const { data: invite, error } = await sb.rpc("subscribers_invite", { p_email: email });
+      if (error || !invite?.ok) throw new Error(error?.message || "subscriber fixture invitation failed");
+      const { data: accepted, error: acceptError } = await sb.rpc("poll_sub_accept_email", { p_token: invite.token, p_email: email });
+      if (acceptError || !accepted?.ok) throw new Error(acceptError?.message || "subscriber fixture acceptance failed");
+      return invite.id;
+    });
+  }
+  const taskToken = await page.evaluate(async ({ gameId, recipientUserId, subId }) => {
+    const sb = window.__sbClient;
+    const { data, error } = await sb.rpc("poll_share_send", { p_game_id: gameId,
+      p_friend_ids: recipientUserId ? [recipientUserId] : [], p_subscriber_ids: subId ? [subId] : [] });
+    if (error || !data?.ok || data.created !== 1) throw new Error(error?.message || "canonical task fixture failed");
+    const { data: task, error: readError } = await sb.from("poll_tasks").select("token").eq("game_id", gameId).single();
+    if (readError) throw readError;
+    return task.token;
+  }, { gameId: game.id, recipientUserId, subId });
+  return { gameId: game.id, taskToken, pollType };
+  } catch (error) { await deleteGame(page, game.id); throw error; }
 }
 
 async function createSubToken(page) {
@@ -114,9 +127,18 @@ async function createSubToken(page) {
 }
 
 async function deleteGame(page, gameId) {
-  return await page.evaluate(async (gid) => {
+  return page.evaluate(async gid => {
     const sb = window.__sbClient;
-    await sb.from("games").delete().eq("id", gid);
+    const { data: tasks, error: readError } = await sb.from("poll_tasks").select("recipient_user_id,recipient_email").eq("game_id", gid);
+    if (readError) throw readError;
+    const { error } = await sb.from("games").delete().eq("id", gid);
+    if (error) throw error;
+    for (const task of tasks || []) {
+      const name = task.recipient_user_id ? "e2e_friendships_cleanup" : "e2e_subscriber_email_cleanup";
+      const args = task.recipient_user_id ? { p_other_user_id: task.recipient_user_id } : { p_email: task.recipient_email };
+      const { error: cleanupError } = await sb.rpc(name, args);
+      if (cleanupError) throw cleanupError;
+    }
   }, gameId);
 }
 
@@ -130,7 +152,7 @@ test.describe("go.js audyt", () => {
       const { gameId, taskToken, pollType } = await createTaskToken(page, "poll_points");
 
 
-      const url = new URL("go/index.html", "https://www.familiada.online/");
+      const url = new URL("/go/", "https://www.familiada.online/");
       url.searchParams.set("t", taskToken);
 
       await page.goto(url.toString(), { waitUntil: "domcontentloaded" });
@@ -165,19 +187,17 @@ test.describe("go.js audyt", () => {
     // nie zaraziło cookies głównego `page` (współdzielone w jednym context).
     const setupContext = await browser.newContext();
     const setupPage = await setupContext.newPage();
+    const recipientContext = await browser.newContext({ serviceWorkers: "block" });
+    const recipientPage = await recipientContext.newPage();
     let gameId;
     try {
       await loginAsPooledTestUser(setupPage, setupContext, testInfo.parallelIndex);
-      const recipientUserId = await setupPage.evaluate(async () => {
-        const sb = window.__sbClient;
-        const { data } = await sb.auth.getUser();
-        return data.user.id;
-      });
-      const created = await createTaskToken(setupPage, "poll_points", { recipientUserId });
+      await loginAsPooledTestUser(recipientPage, recipientContext, (testInfo.parallelIndex + 1) % 2);
+      const created = await createTaskToken(setupPage, "poll_points", { recipientPage });
       gameId = created.gameId;
       const taskToken = created.taskToken;
 
-      const url = new URL("go/index.html", "https://www.familiada.online/");
+      const url = new URL("/go/", "https://www.familiada.online/");
       url.searchParams.set("t", taskToken);
 
       // `page` nigdy się nie loguje (test sprawdza właśnie widok dla
@@ -201,6 +221,7 @@ test.describe("go.js audyt", () => {
       await expect(loginBtn).toBeVisible();
     } finally {
       if (gameId) await deleteGame(setupPage, gameId);
+      await recipientContext.close();
       await setupContext.close();
     }
   });
@@ -212,7 +233,7 @@ test.describe("go.js audyt", () => {
       const { subToken } = await createSubToken(page);
 
 
-      const url = new URL("go/index.html", "https://www.familiada.online/");
+      const url = new URL("/go/", "https://www.familiada.online/");
       url.searchParams.set("s", subToken);
 
       await page.goto(url.toString(), { waitUntil: "domcontentloaded" });
@@ -256,7 +277,7 @@ test.describe("go.js audyt", () => {
       await loginAsPooledTestUser(setupPage, setupContext, testInfo.parallelIndex);
       const { subToken } = await createSubToken(setupPage);
 
-      const url = new URL("go/index.html", "https://www.familiada.online/");
+      const url = new URL("/go/", "https://www.familiada.online/");
       url.searchParams.set("s", subToken);
 
       // `page` nigdy się nie loguje (test ma zostać niezalogowany) -- bez
@@ -299,14 +320,12 @@ test.describe("go.js audyt", () => {
       // Ustaw task na "declined" (expired)
       await page.evaluate(async (token) => {
         const sb = window.__sbClient;
-        await sb
-          .from("poll_tasks")
-          .update({ status: "declined" })
-          .eq("token", token);
+        const { data, error } = await sb.rpc("poll_task_decline", { p_token: token });
+        if (error || data !== "ok") throw new Error(error?.message || "canonical fixture decline failed");
       }, taskToken);
 
 
-      const url = new URL("go/index.html", "https://www.familiada.online/");
+      const url = new URL("/go/", "https://www.familiada.online/");
       url.searchParams.set("t", taskToken);
 
       await page.goto(url.toString(), { waitUntil: "domcontentloaded" });
@@ -336,7 +355,7 @@ test.describe("go.js audyt", () => {
         if (openErr) throw new Error("poll_open failed: " + openErr.message);
       }, gameId);
 
-      const url = new URL("go/index.html", "https://www.familiada.online/");
+      const url = new URL("/go/", "https://www.familiada.online/");
       url.searchParams.set("t", taskToken);
       await page.goto(url.toString(), { waitUntil: "domcontentloaded" });
       await expect(page.locator(".poll-go-title")).toContainText(/zaproszenie wygasło|invitation has expired|запрошення втратило/, { timeout: 10000 });
@@ -361,7 +380,7 @@ test.describe("go.js audyt", () => {
         })
       );
 
-      const url = new URL("go/index.html", "https://www.familiada.online/");
+      const url = new URL("/go/", "https://www.familiada.online/");
       url.searchParams.set("t", taskToken);
       await page.goto(url.toString(), { waitUntil: "domcontentloaded" });
       await expect(page.locator(".poll-go-title")).toContainText(/zakończona|has ended|завершено/, { timeout: 10000 });
@@ -386,7 +405,7 @@ test.describe("go.js audyt", () => {
         })
       );
 
-      const url = new URL("go/index.html", "https://www.familiada.online/");
+      const url = new URL("/go/", "https://www.familiada.online/");
       url.searchParams.set("t", taskToken);
       await page.goto(url.toString(), { waitUntil: "domcontentloaded" });
       await expect(page.locator(".poll-go-title")).toContainText(/jest zatrzymana|is stopped|зупинено/, { timeout: 10000 });
@@ -424,7 +443,7 @@ test.describe("go.js audyt", () => {
       // error) zamiast dojść do gałęzi "nie znaleziono" (ok:false), co
       // zamiast "Link nieważny" pokazuje ogólny MSG.error()/"Błąd". Dlatego
       // tu poprawny format UUID, którego po prostu nie ma w bazie.
-      const url = new URL("go/index.html", "https://www.familiada.online/");
+      const url = new URL("/go/", "https://www.familiada.online/");
       url.searchParams.set("t", "00000000-0000-0000-0000-000000000000");
 
       await page.goto(url.toString(), { waitUntil: "domcontentloaded" });
@@ -439,4 +458,25 @@ test.describe("go.js audyt", () => {
       await page.close();
     }
   });
+});
+
+test("task invite: odmowa po zatrzymaniu nie pokazuje fałszywego sukcesu", async ({ page, context }, testInfo) => {
+  await loginAsPooledTestUser(page, context, testInfo.parallelIndex);
+  const { gameId, taskToken } = await createTaskToken(page, "poll_text");
+  try {
+    await page.goto(`https://www.familiada.online/go/?t=${taskToken}`);
+    await expect(page.getByRole("button", { name: "Odrzuć", exact: true })).toBeVisible({ timeout: 30_000 });
+    await page.evaluate(async id => {
+      const { error } = await window.__sbClient.rpc("poll_stop", { p_game_id: id });
+      if (error) throw error;
+    }, gameId);
+    await page.getByRole("button", { name: "Odrzuć", exact: true }).click();
+    await expect(page.locator(".poll-go-title")).toContainText(/zatrzymana/);
+    await expect(page.getByRole("button", { name: "Odrzuć", exact: true })).toHaveCount(0);
+    const task = await page.evaluate(async id => {
+      const { data, error } = await window.__sbClient.from("poll_tasks").select("status,declined_at").eq("game_id", id).single();
+      if (error) throw error; return data;
+    }, gameId);
+    expect(task).toMatchObject({ status: "opened", declined_at: null });
+  } finally { await deleteGame(page, gameId); }
 });
