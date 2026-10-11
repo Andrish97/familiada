@@ -6,7 +6,7 @@ const path = require('node:path');
 const { pathToFileURL } = require('node:url');
 const { loginAsPooledTestUser } = require('./helpers/login');
 const { clearMailbox, waitForEmail, resetMailProviderLimits } = require('./helpers/mailbox');
-const { expectMailDocument, escapeMailText } = require('./helpers/mail-document');
+const { expectMailDocument } = require('./helpers/mail-document');
 const ROOT = path.resolve(__dirname, '../..');
 const EMAIL = 'test14@familiada.online';
 test.use({ serviceWorkers: 'block' });
@@ -69,7 +69,9 @@ test('mail content: contact/manual PL/EN/UK and marketing templates delivered', 
     for (let n = 0; n < items.length; n++) {
       const item = items[n], email = received[n];
       expect(email.subject).toBe(item.subject);
-      expectMailDocument(email, { lang: item.lang, text: [escapeMailText(item.expected)] });
+      expectMailDocument(email, { lang: item.lang });
+      const containsText = await page.evaluate(({html,expected}) => new DOMParser().parseFromString(html, 'text/html').body.textContent.includes(expected), { html: email.body_html, expected: item.expected });
+      expect(containsText, `rendered text ${item.subject}`).toBe(true);
       expect(email.body_html).not.toContain('<Example>');
       if (item.type === 'manual') {
         expect(email.body_html).toContain('<strong>Formatted body</strong>');

@@ -42,3 +42,11 @@ test('marketing preview and send use the same builder; skipped compose retains e
   assert.match(compose,/if \(json\.queued === 0\) \{[\s\S]+?return;/);
   assert.ok(send.indexOf('if (!json.queued) return;') < send.indexOf('emailInput.value = ""'));
 });
+
+test('Worker dependency binaries use real paths without browser cache query', () => {
+  const lock = JSON.parse(read('cloudflare/maintenance-worker/package-lock.json'));
+  for (const entry of Object.values(lock.packages)) {
+    for (const binary of Object.values(entry.bin || {})) assert.doesNotMatch(binary, /\?v=/);
+  }
+  assert.equal(lock.packages['node_modules/wrangler'].bin.wrangler, 'bin/wrangler.js');
+});
