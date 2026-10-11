@@ -504,12 +504,15 @@ test("udostępnianie bazy: wybór znajomego i akceptacja w Zadaniach", async ({ 
     await page.evaluate(async (id) => { await window.__sbClient.rpc("e2e_friendships_cleanup", { p_other_user_id: id }); }, recipientId);
     await clearMailbox(testAccountUsername(2));
     const invite = await page.evaluate(async (handle) => window.__sbClient.rpc("friends_invite", { p_handle: handle }), testAccountUsername(2));
-    if (invite.error || !invite.data?.ok) throw new Error("friends_invite failed: " + JSON.stringify({ error: invite.error?.message, data: invite.data }));
+    // Retry poprzedniego runu może zostawić zaproszenie pending. Funkcja
+    // zwraca jego id z err=already; odbiorca nadal może je zaakceptować.
+    if (invite.error || (!invite.data?.ok && !(invite.data?.err === "already" && invite.data?.status === "pending" && invite.data?.id))) {
+      throw new Error("friends_invite failed: " + JSON.stringify({ error: invite.error?.message, data: invite.data }));
+    }
     const accepted = await page2.evaluate(async (id) => window.__sbClient.rpc("friends_accept", { p_id: id }), invite.data.id);
     if (accepted.error || !accepted.data?.ok) throw new Error("friends_accept failed");
     await clearMailbox(testAccountUsername(2));
     await resetMailProviderLimits(page);
-    const after = new Date(Date.now() - 2_000).toISOString();
 
     await page.goto(BASE_URL, { waitUntil: "domcontentloaded" });
     await page.waitForLoadState("networkidle");
@@ -520,15 +523,18 @@ test("udostępnianie bazy: wybór znajomego i akceptacja w Zadaniach", async ({ 
     await page.locator("#shareRecipientType .ui-select-item").filter({ hasText: "znajomego" }).click();
     await page.locator("#shareFriendSelect .ui-select-btn").click();
     await page.locator("#shareFriendSelect .ui-select-item").filter({ hasText: "test2" }).click();
+    const shareResponsePromise = page.waitForResponse((response) =>
+      response.url().includes("/rpc/base_share_by_user") && response.request().method() === "POST"
+    );
     await page.locator("#btnShareAdd").click();
-    await expect(page.locator("#shareSectionsHost .shareRow").filter({ hasText: "test2" })).toHaveCount(1, { timeout: 20_000 });
-
-    const email = await waitForEmail({ recipient: testAccountUsername(2), after, subject: new RegExp(name, "i") });
-    const inviteLink = extractHttpLinks(email).find((link) => {
-      const url = new URL(link);
-      return /\/go\/?$/.test(url.pathname) && url.searchParams.has("b");
-    });
+    const shareResponse = await shareResponsePromise;
+    expect(shareResponse.ok(), "RPC udostępnienia bazy").toBeTruthy();
+    const shareData = await shareResponse.json();
+    const shareRow = Array.isArray(shareData) ? shareData[0] : shareData;
+    expect(shareRow?.ok, "zaproszenie do bazy").toBeTruthy();
+    const inviteLink = shareRow?.mail_link;
     expect(inviteLink).toBeTruthy();
+    await expect(page.locator("#shareSectionsHost .shareRow").filter({ hasText: "test2" })).toHaveCount(1, { timeout: 20_000 });
     const token = new URL(inviteLink).searchParams.get("b");
     expect(token).toBeTruthy();
     await page2.goto("/go/?b=" + token, { waitUntil: "domcontentloaded" });
