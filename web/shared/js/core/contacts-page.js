@@ -1,13 +1,13 @@
 // Znajomi i subskrybenci: wspólne listy, akcje, zaproszenia i odświeżanie.
-import { sb } from "./supabase.js?v=v2026-10-11T10464";
-import { initPage } from "./page-init.js?v=v2026-10-11T10464";
-import { linkTo } from "./nav-map.js?v=v2026-10-11T10464";
-import { toast } from "./toast.js?v=v2026-10-11T10464";
-import { confirmModal, alertModal } from "./modal.js?v=v2026-10-11T10464";
-import { shareSectionEl } from "./share-sections.js?v=v2026-10-11T10464";
-import { sendInviteMail } from "./invite-mail.js?v=v2026-10-11T10464";
-import { initI18n, t } from "../../translation/translation.js?v=v2026-10-11T10464";
-import "./contact-modal.js?v=v2026-10-11T10464";
+import { sb } from "./supabase.js?v=v2026-10-11T11071";
+import { initPage } from "./page-init.js?v=v2026-10-11T11071";
+import { linkTo } from "./nav-map.js?v=v2026-10-11T11071";
+import { toast } from "./toast.js?v=v2026-10-11T11071";
+import { confirmModal, alertModal } from "./modal.js?v=v2026-10-11T11071";
+import { shareSectionEl } from "./share-sections.js?v=v2026-10-11T11071";
+import { sendInviteMail } from "./invite-mail.js?v=v2026-10-11T11071";
+import { initI18n, t } from "../../translation/translation.js?v=v2026-10-11T11071";
+import "./contact-modal.js?v=v2026-10-11T11071";
 
 export async function initContactsPage(pageId) {
   const friends = pageId === "friends";
