@@ -484,3 +484,5 @@ Stan szczegółowy:
 
 
 | 2026-10-11 | Bazy339 / zastosowanie SQL potwierdzone | DB38161533605 ✓; log OK339 17:55:27 UTC, schema45a3ea29eb. Runner33938161069869 ✓; nowy test własnej flagi test8 zapisuje/przywraca jej poprzednią wartość. | Trzy punktowe bazy337 branch --retries=0/pula7–8, potem Pages i identyczne main. |
+
+| 2026-10-11 | Bazy337–339 / komplet brancha zielony | 38161754445 ✓:3/3 bez retry, unit413/413. Rzeczywisty mail/Go/odmowa/undo/leave/role/revoke; kontrolowany UI390/1400 ze scrollami/blobem/odmowami; rzeczywista flaga test8: dostęp mimo zegara24h, brak queue/events, odmowa nadal30d. SQL339 log OK17:55:27, DB38161533605. | Publikacja Pages oraz identyczne trzy main na rzeczywistych plikach, dopiero potem zamknięcie pkt4. |
