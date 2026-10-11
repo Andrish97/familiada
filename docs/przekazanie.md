@@ -12,9 +12,10 @@ kontrolne produkcji: `friends`, `subscribers`, `go`,
 `frontend-navigation`, `account-deletion` i regresję dźwięku. E19 krok 3 pozostaje otwarty do zielonej kontroli produkcji. Produkcyjne e2e
 Znajomych 38097255431 zaliczyło główny przepływ maila/przyjęcia/usunięcia (po
 retry), ale test e-maila bez konta ujawnił, że `alertModal` odrzuca opcję `body`
-i przez to nie renderuje linku do Subskrybentów. Poprawka jest przygotowana
-lokalnie w `web/shared/js/core/modal.js`; po branch e2e należy ją wdrożyć
-ponownie na Pages, po czym wznowić pozostałe testy kontrolne.
+i przez to nie renderuje linku do Subskrybentów. Poprawiono `alertModal`, aby przekazywał `body` do wspólnego okna (commit
+`9e94f2258`). Branch e2e `friends.spec.js --grep 'e-mail bez konta'`
+38097620398 ✓ (1/1), unit 401/401 ✓. Następnie wdrożyć poprawkę na Pages,
+ponowić friends na produkcji i kontynuować pozostałe testy kontrolne.
 
 ---
 
