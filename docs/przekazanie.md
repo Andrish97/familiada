@@ -492,3 +492,7 @@ bez retry, z rzeczywistymi mailami. 331 nie jest zamknięta do tej kontroli.
 332 SQL OK 15:33:35 UTC, DB 38151652553 ✓, schema 714682fa74;
 unit 412/412 po merge. Branch 38151820876 trwa; czekać, nie uruchamiać
 równolegle kolejnych maili. Po czystym wyniku ta sama kontrola main.
+
+331–332 branch 38151820876 ✓ 3/3 bez retry, unit 412/412, dostarczone
+maile 57/107 s. Następnie main ten sam spec, --retries=0; nie zamykać
+przed jego wynikiem. Pozostały pkt 3 odmów/flag/claim to paczka 333.
