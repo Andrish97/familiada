@@ -418,3 +418,8 @@ nie pionowe panele; zapisane w E19/UI, jeszcze do wdrożenia.
 Korekta Zadań: branch 38147051449 ✓ 2/2, Pages 38147149505 ✓,
 kontrola main 38147198385 w toku. Następnie zapisać wynik; nie uruchamiać
 równolegle drugiej kontroli. Pozostałe otwarte paczki zachowane.
+
+Uproszczenie Zadań zamknięte: main 38147198385 ✓ 2/2, unit 410/410;
+Pages 38147149505 ✓. Bieżąca kolejna korekta: usunięcie Zaakceptowano
+z aktywnych kafelków znajomych/subskrybentów, bez zmian pending/declined.
+Zakładki z wypustkami nadal otwarte, nie zrealizowane przy tej korekcie.

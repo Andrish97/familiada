@@ -383,3 +383,7 @@ Stan szczegółowy:
 | 2026-10-11 | Zadania / uproszczenie branch zielony | 38147051449 ✓: 2/2, unit 410/410. Cztery warianty ankiet, brak wyszukiwarki/dolnego paska/etykiet typu, ikony/nadawca/akcje, zwijanie, odstępy, pusty stan i brak overflow 1400/390. Zrzuty simple-*. | Promocja Pages i te same dwa testy na main. |
 
 | 2026-10-11 | Zadania / uproszczenie opublikowane | Promocja b5adc26be; Pages 38147149505 ✓. Punktowa kontrola main 38147198385 na rzeczywistych plikach Pages, dwa widoki i konto 2. Scalono aktualizację wersji CI b590bc8ef bez konfliktów. | Wynik kontroli i unit po synchronizacji przed zamknięciem. |
+
+| 2026-10-11 | Kontakty / bez zbędnego Zaakceptowano | Polecenie użytkownika: status aktywnego znajomego/subskrybenta wynika z listy. Wspólny renderer pomija tag active i jego rząd, pending/declined zachowane. Nowy kontrolowany E2E obu stron 1400/390. | Unit, zrzuty, branch i kontrola main; wypustki telefonu osobna otwarta paczka. |
+
+| 2026-10-11 | Zadania / uproszczenie zamknięte | Main 38147198385 ✓: dwa widoki 1400/390 bez retry, unit 410/410, brak wyszukiwania i etykiet typu; reszta kontraktu kafelków zachowana. Pages 38147149505 ✓. | Gotowe; dalej wspólny renderer kontaktów bez zbędnego statusu active. |

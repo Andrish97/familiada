@@ -795,3 +795,14 @@ z przykładowymi danymi. Widok domyślny: simple-default-*.png.
 **dwie zakładki z wypustkami, jak w Grach**, przełączające zawartość.
 Użyć tego samego wzorca wyglądu wypustek i wspólnego tabs.js; plakietka
 na wypustce właściwej zakładki. Na komputerze dwie kolumny.
+
+**Kontakty — decyzja 2026-10-11:** na listach istniejących Znajomych i
+aktywnych Subskrybentów nie pokazywać etykiety „Zaakceptowano” (stan
+wynika z listy). Nadal pokazywać Oczekuje/Odrzucono przy zaproszeniach.
+Wspólna reguła renderera; brak pustego rzędu/odstępu po usuniętej etykiecie.
+
+Podgląd bez statusu active: Znajomi [telefon](img/e19-friends/active-phone.png) /
+[komputer](img/e19-friends/active-desktop.png), Subskrybenci
+[telefon](img/e19-subscribers/active-phone.png) /
+[komputer](img/e19-subscribers/active-desktop.png). Obecny układ przed
+wdrożeniem mobilnych zakładek z wypustkami.

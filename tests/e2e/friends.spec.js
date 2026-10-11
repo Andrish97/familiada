@@ -123,6 +123,32 @@ test("kontakty: wspólny licznik wygasa na żywo, flaga mailowa ukrywa ponowieni
   } finally { await owner.context.close(); }
 });
 
+// Aktywna lista określa stan; nie powtarzamy etykiety zaakceptowania.
+test("kontakty: aktywni bez zbędnego statusu desktop/mobile", async ({ browser }) => {
+  const owner = await user(browser, 7);
+  try {
+    await owner.context.route("**/rest/v1/rpc/contacts_list", route => {
+      const kind = route.request().postDataJSON().p_kind;
+      return route.fulfill({ json: [
+        { id: "active-preview", label: "Maja", email: "maja@example.net", status: "active", direction: kind === "friends" ? "friend" : undefined },
+        { id: "pending-preview", label: "Alicja", email: "alicja@example.net", status: "pending", direction: "outgoing", email_enabled: false },
+        { id: "declined-preview", label: "Piotr", email: "piotr@example.net", status: "declined", direction: "outgoing", email_enabled: false },
+      ] });
+    });
+    for (const width of [1400, 390]) for (const kind of ["friends", "subscribers"]) {
+      await owner.page.setViewportSize({ width, height: 900 });
+      await owner.page.goto(`https://www.familiada.online/${kind}/`);
+      const row = owner.page.locator('[data-id="active-preview"]');
+      await expect(row).toBeVisible();
+      await expect(row.locator(".shareTags")).toHaveCount(0);
+      await expect(row.locator('[data-act="remove"]')).toBeEnabled();
+      await expect(owner.page.locator('[data-id="pending-preview"]')).toContainText("Oczekuje");
+      if (kind === "friends") await expect(owner.page.locator('[data-id="declined-preview"]')).toContainText("Odrzucono");
+      await owner.page.screenshot({ path: test.info().outputPath(`shot-${kind}-active-${width}.png`), fullPage: true });
+    }
+  } finally { await owner.context.close(); }
+});
+
 // Widok decyzji i dostępność akcji: kontrolowane dane, bez tworzenia maili.
 test("kontakty: odmowa znajomości zachowuje stan i właściwe akcje", async ({ browser }, testInfo) => {
   const owner = await user(browser, 7);
