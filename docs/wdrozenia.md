@@ -72,7 +72,7 @@ Użytkownik potwierdził, że poprzednia sesja nie pracuje już nad Control.
 | 12c | E17 | **Poprawki 2026-10-09:** powrót bez „Wróć do:”; ankieta na telefonie (mniejsze przyciski dolnego paska, równe marginesy, ładniejsza sekcja QR z dużym kodem); filtry typ/stan przy wyszukiwaniu na listach gier, logo, baz | ujednolicenie-wygladu.md „Poprawki zgłoszone 2026-10-09” | zrobione (e2e main 2026-10-09) |
 | 12d | E17c | Przyciski akcji bez przedwczesnego zawijania; filtry gier i baz rozszerzone; wspólny styl kafli gier/baz/subskrybentów | ujednolicenie-wygladu.md „cz. 2” | zrobione (e2e main 2026-10-09) |
 | 12e | E18 | **Ujednolicenie wyglądu (decyzja 2026-10-09):** `docs/wzorce-ui.md` — wzorce (rodzaje stron, topbar, karty, paski akcji, kafel, sekcje udostępniania, oznaczenia, wyszukiwanie/filtry, dymki, okna) + przegląd wszystkich stron (tabela zgodności, zrzuty telefon/komputer) → akceptacja użytkownika → poprawki wzorcami, nie stronami | wzorce-ui.md | częściowo: poprawki #1, #5, #6, #8, #9 (bazy), #11, #12 (okno QR), #14, #15 + sekcja QR ankiety — na `main`; **reszta wstrzymana** (decyzja 2026-10-09: „bez dopieszczania wyglądu” — #2 kafle logo, #3, #4, #7, #10, #12 reszta, #13) |
-| 12f | E19 | **Ujednolicenie zasobów i udostępnień**: graf rodziców/potomków; blokady; cofanie; kaskadowe usuwanie; Control TTL; Ankiety/Bazy/Control/Znajomi/Subskrybenci; wspólna bramka flagi mailowej; jeden `/go/` z pełną walidacją i komunikatami wszystkich stanów; wspólny CSS sekcji; globalne akcje Ankiet w stylu Gier, kompaktowe na telefonie; łagodny limit anonimowych głosów | [`blokady-zasobow.md`](blokady-zasobow.md) §7, [`ujednolicenie-wygladu.md`](ujednolicenie-wygladu.md), [`e19-znajomi-plan.md`](e19-znajomi-plan.md) §7, [`maile-granice.md`](maile-granice.md) | kroki 1–5 zrobione; graf, routing i wymagania doprecyzowane 2026-10-11; implementacja do zrobienia |
+| 12f | E19 | **Ujednolicenie zasobów i udostępnień**: graf rodziców/potomków; blokady; cofanie; kaskadowe usuwanie; Control TTL; Ankiety/Bazy/Control/Znajomi/Subskrybenci; wspólna bramka flagi mailowej; jeden `/go/` z pełną walidacją i komunikatami wszystkich stanów; wspólny CSS sekcji; globalne akcje Ankiet w stylu Gier, kompaktowe na telefonie; łagodny limit anonimowych głosów | [`blokady-zasobow.md`](blokady-zasobow.md) §7, [`ujednolicenie-wygladu.md`](ujednolicenie-wygladu.md), [`e19-znajomi-plan.md`](e19-znajomi-plan.md) §7, [`maile-granice.md`](maile-granice.md) | kroki 1–5 zrobione; krok 6 w toku lokalnie (21 asercji SQL + unit 401/401; UI/E2E i produkcja otwarte); graf/routing pozostałych obszarów do zrobienia |
 | 12a | E14 | **Sprzątanie po potwierdzeniu** (migracje usuwające): martwe RPC ankiet i hubu (E11h); `cleanup-guest-storage` i jej wywołania w `guest_cleanup_expired` / `guest_discard_current`; kasowanie plików w `delete-account` (zastąpione przez E12b) | ankiety-refaktor.md, usuwanie-danych.md | po E19 (lista uzupełniona o RPC zastępowane w E19 — `e19-znajomi-plan.md` sekcja 2) |
 | 13 | E13 | **Instrukcja (manual) zaktualizowana do nowych zasad** — ostatni etap | wszystkie | do zrobienia |
 | — | E1 | Edytor logo: lista + 3 strony, autozapis | nawigacja 6.5a | zrobione |
@@ -119,6 +119,23 @@ bo `PAGES` deklaruje blokady; adresy po mapie stron; instrukcja na końcu.
    Codex: przypomnień nie ma — wystarczy Dziennik.
 
 ## Dziennik
+
+### 2026-10-11 — E19 krok 6 wznowiony
+
+Użytkownik wznowił wdrożenia i dopuścił cięższe zadania lokalnie na serwerze
+Codexa. Na `codex/e19-3` rozpoczęto migrację 324 i front Control: sesja runtime
+Control z godziną bezczynności, token parowania per sesję, token grantu per
+odbiorca, cofanie tokenu, walidacja przez RPC urządzeń, wyświetlenie grantów
+odbiorcy w „Podłącz urządzenie” bez zależności od maila oraz resolver linku
+Control przez `/go/`. Commit `432cd4b08` wypchnięty na branch.
+Test 324 przeszedł w lokalnym Postgresie 16 i GitHub Actions
+`38128975422` (21 asercji); unit 401/401 w runnerze i lokalnie;
+`node --check` i `git diff --check` zielone. Stare globalne
+udostępnienia urządzeń są czyszczone, gdyż nie są przypięte do sesji ani osoby.
+Brak wdrożenia produkcyjnego. Następnie: E2E CI punktowo (parowanie, udostępnienie
+mailowe i wygaśnięcie), poprawić błędy, dopiero potem migracja i front razem na
+`main`, a po nich punktowe kontrole produkcyjne. Stan szczegółowy:
+[`e19-znajomi-plan.md`](e19-znajomi-plan.md) §7.
 
 | Data | Etap | Commity (`main`) | e2e |
 |---|---|---|---|

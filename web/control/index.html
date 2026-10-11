@@ -12,9 +12,9 @@
   <link rel="preconnect" href="https://supabase.familiada.online">
   <title data-i18n="control.title">Familiada — panel sterowania</title>
 
-  <link rel="icon" href="/favicon.ico?v=v2026-10-11T01405"/>
-  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-11T01405"/>
-  <link rel="stylesheet" href="/control/css/control.css?v=v2026-10-11T01405"/>
+  <link rel="icon" href="/favicon.ico?v=v2026-10-11T09355"/>
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-11T09355"/>
+  <link rel="stylesheet" href="/control/css/control.css?v=v2026-10-11T09355"/>
   <script>
     document.documentElement.classList.add('page-loading');
     try {
@@ -31,12 +31,12 @@
   <style>html[data-mobile-guard]{overflow:hidden;touch-action:none}html[data-mobile-guard] body{visibility:hidden}</style>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-  <script src="/shared/js/core/security-warning.js?v=v2026-10-11T01405" defer></script>
+  <script src="/shared/js/core/security-warning.js?v=v2026-10-11T09355" defer></script>
   <script type="module">
-    import { initI18n } from "/shared/translation/translation.js?v=v2026-10-11T01405";
+    import { initI18n } from "/shared/translation/translation.js?v=v2026-10-11T09355";
     await initI18n({ withSwitcher: true });
     document.documentElement.classList.remove('page-loading');
-    import("/control/js/app.js?v=v2026-10-11T01405");
+    import("/control/js/app.js?v=v2026-10-11T09355");
   </script>
 
   <style>
@@ -593,6 +593,7 @@
         <button class="btn sm" id="btnShareDeviceClose" type="button" aria-label="Zamknij" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
       </div>
       <div id="shareDeviceCurrentWrap" class="shareCurrent">
+        <div class="shareSectionTitle">Udostępnione w tej sesji</div>
         <div id="shareDeviceCurrentContent"></div>
       </div>
 
@@ -609,7 +610,11 @@
         <div class="importMsg" id="shareDeviceMsg"></div>
       </div>
 
-      <div id="shareDeviceSubsList"></div>
+      <div class="shareSection">
+        <div class="shareSectionTitle">Znajomi, którym możesz udostępnić</div>
+        <div id="shareDeviceSubsList"></div>
+        <button class="btn sm gold" id="btnShareDeviceFriends" type="button" disabled>Udostępnij zaznaczonym</button>
+      </div>
     </div>
   </div>
 
@@ -627,6 +632,6 @@
       <button class="btn-contact-footer" type="button" data-contact-modal data-i18n="common.contactBtn">Kontakt</button>
     </div>
   </main>
-  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-11T01405"></script>
+  <script type="module" src="/shared/js/core/contact-modal.js?v=v2026-10-11T09355"></script>
 </body>
 </html>
