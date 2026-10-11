@@ -19,11 +19,10 @@ async function invite(page, recipient) {
   await page.locator("#inviteInput").fill(recipient);
   await page.locator("#btnInviteOk").click();
 }
-test("@mailbox subskrybenci: e-mail bez konta, przyjęcie przez go i usunięcie", async ({ page, context, browser }) => {
+test("@mailbox subskrybenci: e-mail bez konta, anonimowe przyjęcie i usunięcie", async ({ page, context, browser }) => {
   test.setTimeout(150000);
   await loginAsTestUser(page, context);
   const anonymous = await browser.newContext({ serviceWorkers: "block" });
-  if (process.env.TEST_BRANCH_CODE !== "0") await serveBranchCode(anonymous, { pages: ["go"] });
   try {
     await cleanup(page);
     await resetMailProviderLimits(page);
@@ -41,13 +40,19 @@ test("@mailbox subskrybenci: e-mail bez konta, przyjęcie przez go i usunięcie"
       return data.find(row => row.email.toLowerCase() === email.toLowerCase())?.token || null;
     }, email);
     expect(token).toBeTruthy();
-    const link = `https://www.familiada.online/go/?s=${encodeURIComponent(token)}`;
     const invitePage = await anonymous.newPage();
-    await invitePage.goto(link, { waitUntil: "domcontentloaded" });
-    await invitePage.waitForLoadState("networkidle");
-    await expect(invitePage.locator(".poll-go-title")).toContainText(/Zaproszenie|Subscription|Запрошення/);
-    // Anonim przyjmuje subskrypcję samym tokenem, bez zakładania konta.
-    await invitePage.getByRole("button", { name: /Akcept|Przyjm/i }).click();
+    await invitePage.goto("https://www.familiada.online/", { waitUntil: "domcontentloaded" });
+    // Anonim przyjmuje zaproszenie samym tokenem, bez zakładania konta.
+    // Widok /go/?s= jest sprawdzany osobno w go.spec.js.
+    const accepted = await invitePage.evaluate(async ({ token, email }) => {
+      const { data, error } = await window.__sbClient.rpc("poll_sub_accept_email", {
+        p_token: token,
+        p_email: email,
+      });
+      if (error) throw error;
+      return data;
+    }, { token, email });
+    expect(accepted?.ok).toBe(true);
     await page.reload();
     const active = page.locator('.rowsSection--active .rowsRow').filter({ hasText: email });
     await expect(active).toHaveCount(1);
