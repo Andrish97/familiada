@@ -32,12 +32,18 @@ konektor GitHub przy wznowieniu); HEAD eaa40581ee. Lokalne regresje
 i wyścigi ✓; ponowny kontrakt347 obu typów ankiet też ✓. SQL347 zastosowany:
 DB38178919162 success/log OK22:05:58 UTC, schema368f847bcc. Lokalnie również
 wyścig uruchomienia przez psql -1 jak w skrypcie wdrażania ✓.
-Branch38179100034 w toku: ankieta347 + okno Znajomi, retries0/pula7–8,
+Branch38179100034 failure (błędna nazwa RPC w teście). Poprawiona nazwa
+poll_task_opened; nowy38179382545 w toku: ankieta347 + okno Znajomi, retries0/pula7–8,
 rzeczywiste maile8/14. Po sukcesie ten sam punktowy zestaw na main;
 nie zamykać347 przed kontrolą main. Brak zmian Pages w tej paczce.
 Przejściowy błąd401 CLI GitHub ustąpił po ponownej próbie na prośbę
 użytkownika: gh api user i odczyt38177985246 działają. Wznowić promocję
 i obowiązkową kontrolę produkcji; nie pomijać bramek wdrożenia.
+Draft348 w osobnym checkout /tmp/familiada-348-isolated, branch
+codex/e19-348/afcd3cd6e3, bez produkcji: FK odbiorców CASCADE. Lokalny
+kontrakt wszystkich stanów obu typów/Baz/legacy subskrypcji i owner cascade
+success; komplet zostaje, partial znika, niezależni/anonimowi zachowani.
+Wymaga wyścigów, isolated i punktowego real-mail/account deletion.
 Pending kolejka i proweniencja maili, Go/anon nadal dalszy zakres pkt7.
 
 Dalej UI/E20 i landscape każdej strony; manual ostatni, bez technicznego
