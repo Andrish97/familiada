@@ -11,12 +11,12 @@ ON CONFLICT(id) DO UPDATE SET email=excluded.email,username=excluded.username;
 INSERT INTO public.games(id,owner_id,name,type,status,share_key_poll) VALUES
  ('dddddddd-3480-0000-0000-000000000004','aaaaaaaa-3480-0000-0000-000000000001','Text348','poll_text','poll_open','text348'),
  ('dddddddd-3480-0000-0000-000000000005','aaaaaaaa-3480-0000-0000-000000000001','Points348','poll_points','poll_open','points348');
-INSERT INTO public.questions(game_id,ord,text) SELECT g.id,n,'Q'||n FROM public.games g CROSS JOIN generate_series(1,10) n WHERE g.owner_id='aaaaaaaa-3480-0000-0000-000000000001';
+INSERT INTO public.questions(game_id,ord,text) SELECT g.id,n,'Q'||n FROM public.games g CROSS JOIN generate_series(1,10) n WHERE g.id IN ('dddddddd-3480-0000-0000-000000000004','dddddddd-3480-0000-0000-000000000005');
 INSERT INTO public.answers(question_id,ord,text) SELECT q.id,n,'A'||n FROM public.questions q CROSS JOIN generate_series(1,4) n WHERE q.game_id='dddddddd-3480-0000-0000-000000000005';
 INSERT INTO public.poll_sessions(game_id,question_id,question_ord) SELECT game_id,id,ord FROM public.questions WHERE game_id IN ('dddddddd-3480-0000-0000-000000000004','dddddddd-3480-0000-0000-000000000005');
 DO $$ DECLARE g record; target text; tid uuid; tok uuid; items jsonb; BEGIN
  PERFORM set_config('request.jwt.claim.sub','bbbbbbbb-3480-0000-0000-000000000002',true);
- FOR g IN SELECT * FROM public.games WHERE owner_id='aaaaaaaa-3480-0000-0000-000000000001' LOOP
+ FOR g IN SELECT * FROM public.games WHERE id IN ('dddddddd-3480-0000-0000-000000000004','dddddddd-3480-0000-0000-000000000005') LOOP
   SELECT jsonb_agg(jsonb_build_object('question_id',q.id,'answer_id',ans.id,'answer_raw','Kot','answer_norm','kot') ORDER BY q.ord) INTO items FROM public.questions q LEFT JOIN public.answers ans ON ans.question_id=q.id AND ans.ord=1 WHERE q.game_id=g.id;
   FOREACH target IN ARRAY ARRAY['pending','opened','done','declined','cancelled'] LOOP
    INSERT INTO public.poll_tasks(owner_id,recipient_user_id,game_id,poll_type,share_key_poll) VALUES(g.owner_id,'bbbbbbbb-3480-0000-0000-000000000002',g.id,g.type::text,g.share_key_poll) RETURNING id,token INTO tid,tok;
@@ -58,7 +58,7 @@ DO $$ DECLARE t record; n integer; BEGIN
   ELSE SELECT count(*) INTO n FROM public.poll_votes WHERE voter_token=public.poll_task_voter_token(t.id); END IF;
   IF n IS DISTINCT FROM (CASE WHEN t.status='done' THEN 10 ELSE 0 END) THEN RAISE EXCEPTION 'wrong aggregate cleanup % %',t.status,n; END IF;
  END LOOP;
- IF (SELECT count(*) FROM public.games WHERE owner_id='aaaaaaaa-3480-0000-0000-000000000001')<>2 THEN RAISE EXCEPTION 'recipient removed owner games'; END IF;
+ IF (SELECT count(*) FROM public.games g WHERE g.id IN ('dddddddd-3480-0000-0000-000000000004','dddddddd-3480-0000-0000-000000000005'))<>2 THEN RAISE EXCEPTION 'recipient removed owner games'; END IF;
  DELETE FROM auth.users WHERE id='aaaaaaaa-3480-0000-0000-000000000001';
  IF EXISTS(SELECT 1 FROM public.poll_tasks WHERE owner_id='aaaaaaaa-3480-0000-0000-000000000001') OR EXISTS(SELECT 1 FROM public.base_share_tasks WHERE owner_id='aaaaaaaa-3480-0000-0000-000000000001') THEN RAISE EXCEPTION 'owner cascade incomplete'; END IF;
  RAISE NOTICE '348 all states/types: recipient cascade, tokens unavailable, partial removed, completed retained, independent and anonymous preserved, owner cascade';
