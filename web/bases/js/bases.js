@@ -17,6 +17,7 @@ import "../../shared/js/core/contact-modal.js?v=v2026-10-11T17203";
 import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-11T17203";
 import { createCooldownTicker, formatCooldownRemaining } from "../../shared/js/core/cooldown.js?v=v2026-10-11T17203";
 import { shareRowEl, shareSectionEl, shareCooldownEl } from "../../shared/js/core/share-sections.js?v=v2026-10-11T17203";
+import { TOAST_DEFAULT_MS } from "../../shared/js/core/toast.js?v=v2026-10-11T17203";
 import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-11T17203";
 import { SORT_LIST } from "../../shared/js/core/list-filter.js?v=v2026-10-11T17203";
 const i18nReady = initI18n({ withSwitcher: true });
@@ -226,7 +227,7 @@ function showShareMessage(message) {
   shareMsg.textContent = message || "";
   if (message) {
     requestAnimationFrame(() => shareMsg.classList.add("show"));
-    shareMessageTimer = setTimeout(() => { shareMsg.classList.remove("show"); shareMsg.hidden = true; }, 3000);
+    shareMessageTimer = setTimeout(() => { shareMsg.classList.remove("show"); shareMsg.hidden = true; }, TOAST_DEFAULT_MS);
   }
 }
 
@@ -914,10 +915,15 @@ async function renderShareModal() {
     checkbox.setAttribute("aria-label", friend.label || friend.email);
     checkbox.addEventListener("change", updateBaseShareSelection);
     row.prepend(checkbox);
+    row.addEventListener("click", event => {
+      if (checkbox.disabled || event.target.closest("input,button")) return;
+      checkbox.checked = !checkbox.checked;
+      checkbox.dispatchEvent(new Event("change", { bubbles: true }));
+    });
     const { element, labelEl } = shareCooldownEl(); row.querySelector(".shareRowActions").append(element);
     const key = `friend:${friend.user_id}`;
     shareCooldownTicker.bind({ key, labelEl, disableEls: [checkbox], onTick: (_, active) => {
-      element.hidden = !active; row.classList.toggle("is-cooling-down", active);
+      element.hidden = !active; row.classList.toggle("is-cooling-down", active); row.classList.toggle("pick", !active);
       if (active) checkbox.checked = false;
       updateBaseShareSelection();
     }});
