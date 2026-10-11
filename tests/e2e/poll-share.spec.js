@@ -1,6 +1,6 @@
 const { test, expect } = require("@playwright/test");
 const { serveBranchCode } = require("./helpers/branch-code");
-const { loginAsTestUser, testAccountUsername } = require("./helpers/login");
+const { loginAsTestUser, loginAsPooledTestUser, testAccountUsername } = require("./helpers/login");
 const { clearMailbox, resetMailProviderLimits, waitForEmail } = require("./helpers/mailbox");
 
 const subscriberEmail = "test14@familiada.online"; // Skrzynka bez konta.
@@ -8,7 +8,7 @@ test.use({ serviceWorkers: "block" });
 test.describe.configure({ mode: "serial" });
 
 test.beforeEach(async ({ context }) => {
-  if (process.env.TEST_BRANCH_CODE !== "0") await serveBranchCode(context, { pages: ["polls"] });
+  if (process.env.GITHUB_REF_NAME !== "main" && process.env.TEST_BRANCH_CODE !== "0") await serveBranchCode(context, { pages: ["polls"] });
 });
 
 async function rpc(page, name, args) {
@@ -47,7 +47,7 @@ test("ankieta: okno Znajomi · Subskrybenci dodaje obie grupy, już zaproszeni z
   const ownerContext = await browser.newContext({ serviceWorkers: "block" });
   const friendContext = await browser.newContext({ serviceWorkers: "block" });
   const anonymousContext = await browser.newContext({ serviceWorkers: "block" });
-  if (process.env.TEST_BRANCH_CODE !== "0") await serveBranchCode(ownerContext, { pages: ["polls"] });
+  if (process.env.GITHUB_REF_NAME !== "main" && process.env.TEST_BRANCH_CODE !== "0") await serveBranchCode(ownerContext, { pages: ["polls"] });
   const ownerPage = await ownerContext.newPage();
   const friendPage = await friendContext.newPage();
   let gameId = null;
@@ -107,5 +107,50 @@ test("ankieta: okno Znajomi · Subskrybenci dodaje obie grupy, już zaproszeni z
     if (gameId) await ownerPage.evaluate(async (id) => { await window.__sbClient.from("games").delete().eq("id", id); }, gameId).catch(() => {});
     if (friendId) await cleanup(ownerPage, friendId).catch(() => {});
     await Promise.all([ownerContext.close(), friendContext.close(), anonymousContext.close()]);
+  }
+});
+
+test("ankieta: odbiorca z kontem nie przechodzi starym kanałem Subskrybentów", async ({ page, context, browser }) => {
+  await loginAsPooledTestUser(page, context, 0);
+  const recipientContext = await browser.newContext({ serviceWorkers: "block" });
+  const recipientPage = await recipientContext.newPage();
+  let gameId = null, subId = null, recipientId = null;
+  try {
+    await loginAsTestUser(recipientPage, recipientContext, { username: testAccountUsername(8) });
+    recipientId = await recipientPage.evaluate(async () => (await window.__sbClient.auth.getUser()).data.user.id);
+    await cleanup(page, recipientId);
+    const ids = await page.evaluate(async ({ recipientId, email }) => {
+      const sb = window.__sbClient;
+      const ownerId = (await sb.auth.getUser()).data.user.id;
+      const { data: areFriends, error: friendError } = await sb.rpc("are_friends", { a: ownerId, b: recipientId });
+      if (friendError || areFriends) throw friendError || new Error("fixture must have no accepted Friendship");
+      const { data, error } = await sb.from("poll_subscriptions")
+        .insert({ owner_id: ownerId, subscriber_email: email, status: "active" }).select("id").single();
+      if (error) throw error;
+      return data;
+    }, { recipientId, email: testAccountUsername(8) });
+    subId = ids.id;
+    const game = await seedPoll(page);
+    gameId = game.id;
+    await rpc(page, "poll_open", { p_game_id: gameId, p_key: game.share_key_poll });
+    const direct = await rpc(page, "poll_share_send", { p_game_id: gameId, p_friend_ids: [], p_subscriber_ids: [subId] });
+    expect(direct).toMatchObject({ ok: true, created: 0, mail: [] });
+    const legacy = await rpc(page, "polls_hub_share_poll", { p_game_id: gameId, p_sub_ids: [subId] });
+    expect(legacy).toMatchObject({ ok: true, created: 0, mail: [] });
+    const rows = await page.evaluate(async id => {
+      const { data, error } = await window.__sbClient.from("poll_tasks").select("id").eq("game_id", id);
+      if (error) throw error;
+      return data;
+    }, gameId);
+    expect(rows).toEqual([]);
+    await page.goto(`https://www.familiada.online/polls/?id=${gameId}`);
+    await page.locator("#btnAddRecipients").click();
+    await expect(page.locator("#pollRecipientsOverlay")).toBeVisible();
+    await expect(page.locator("#pollRecipientsSubs .shareRow").filter({ hasText: testAccountUsername(8) })).toHaveCount(0);
+  } finally {
+    if (subId) await page.evaluate(async id => { await window.__sbClient.from("poll_subscriptions").delete().eq("id", id); }, subId);
+    if (gameId) await page.evaluate(async id => { await window.__sbClient.from("games").delete().eq("id", id); }, gameId);
+    if (recipientId) await cleanup(page, recipientId);
+    await recipientContext.close();
   }
 });

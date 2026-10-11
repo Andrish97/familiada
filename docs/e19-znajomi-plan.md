@@ -983,3 +983,10 @@ Zrzuty Go z przykładowymi danymi:
 [konto, telefon](img/e19-subscribers/go-account-390.png),
 [konto, komputer](img/e19-subscribers/go-account-1400.png),
 [globalne wypisanie, telefon](img/e19-subscribers/go-global-390.png).
+
+Audyt pkt 3 wykrył dodatkowe wejście po rejestracji: dawny aktywny wpis
+email był dostępny w selektorze ankiety i obu RPC wysyłania przed
+akceptacją Friendship. Paczka 335 domyka kwalifikację: znane konto
+korzysta wyłącznie ze Znajomych, także przy dawnym aktywnym wpisie
+subskrypcji. To dopięcie modelu pkt 3; pełny wygląd Ankiet pozostaje
+pkt 5. Draft Baz otrzyma 336, z zachowaniem zmian Go 333.

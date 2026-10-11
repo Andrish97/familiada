@@ -16,6 +16,8 @@ async function cleanup(page) {
   }, email);
 }
 async function invite(page, recipient) {
+  await expect(page.locator("[data-skel-step]")).toHaveClass(/skel-step-ready/);
+  await expect(page.locator("#btnInvite")).toBeEnabled();
   await page.locator("#inviteInput").fill(recipient);
   await page.locator("#btnInvite").click();
 }

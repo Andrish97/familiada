@@ -601,7 +601,7 @@ async function loadSubsData() {
   ]);
   if (subsRes.error) throw subsRes.error;
   if (friendsRes.error) throw friendsRes.error;
-  subsAll = (subsRes.data || []).filter((s) => s.status === "active");
+  subsAll = (subsRes.data || []).filter((s) => s.status === "active" && !s.friend_user_id);
   friendsAll = (friendsRes.data || []).filter((f) => f.status === "active" && f.user_id);
   await loadTasks();
 
