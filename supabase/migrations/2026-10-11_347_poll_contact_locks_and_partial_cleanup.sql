@@ -3,8 +3,8 @@ BEGIN;
 CREATE OR REPLACE FUNCTION public._poll_task_cleanup_partial_votes()
 RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=public,pg_temp AS $$
 BEGIN
- IF OLD.status IN ('pending','opened') AND OLD.done_at IS NULL
- AND (TG_OP='DELETE' OR NEW.status='cancelled') THEN
+ IF OLD.done_at IS NULL AND OLD.status<>'done'
+ AND (TG_OP='DELETE' OR NEW.status IN ('declined','cancelled')) THEN
   DELETE FROM public.poll_votes WHERE game_id=OLD.game_id AND voter_token=public.poll_task_voter_token(OLD.id);
   DELETE FROM public.poll_text_entries WHERE game_id=OLD.game_id AND voter_token=public.poll_task_voter_token(OLD.id);
  END IF;
@@ -12,6 +12,7 @@ BEGIN
  RETURN NEW;
 END $$;
 REVOKE ALL ON FUNCTION public._poll_task_cleanup_partial_votes() FROM PUBLIC,anon,authenticated;
+DROP TRIGGER IF EXISTS poll_tasks_cleanup_partial_votes ON public.poll_tasks;
 CREATE TRIGGER poll_tasks_cleanup_partial_votes
 BEFORE DELETE OR UPDATE OF status ON public.poll_tasks
 FOR EACH ROW EXECUTE FUNCTION public._poll_task_cleanup_partial_votes();
@@ -138,14 +139,26 @@ BEGIN
 END;
 $$;
 
+-- Publish the trigger before historical cleanup. Holding its DDL table lock
+-- while waiting on vote rows can deadlock with game/account cascades.
+COMMIT;
+BEGIN;
 -- Rows explicitly declined/cancelled and never completed are known partials.
 -- Do not guess the state of orphaned historical task tokens: account deletion
 -- intentionally preserves completed aggregate votes without a task record.
-DELETE FROM public.poll_votes v USING public.poll_tasks t
-WHERE t.game_id=v.game_id AND v.voter_token=public.poll_task_voter_token(t.id)
-AND t.status IN ('declined','cancelled') AND t.done_at IS NULL;
-DELETE FROM public.poll_text_entries v USING public.poll_tasks t
-WHERE t.game_id=v.game_id AND v.voter_token=public.poll_task_voter_token(t.id)
-AND t.status IN ('declined','cancelled') AND t.done_at IS NULL;
+-- A concurrent cascade owns its rows and the new delete trigger cleans them.
+-- Skip those rows instead of retaining locks that the cascade also needs.
+DELETE FROM public.poll_votes WHERE id IN (
+ SELECT v.id FROM public.poll_votes v JOIN public.poll_tasks t
+ ON t.game_id=v.game_id AND v.voter_token=public.poll_task_voter_token(t.id)
+ WHERE t.status IN ('declined','cancelled') AND t.done_at IS NULL
+ FOR UPDATE OF v SKIP LOCKED);
+COMMIT;
+BEGIN;
+DELETE FROM public.poll_text_entries WHERE id IN (
+ SELECT v.id FROM public.poll_text_entries v JOIN public.poll_tasks t
+ ON t.game_id=v.game_id AND v.voter_token=public.poll_task_voter_token(t.id)
+ WHERE t.status IN ('declined','cancelled') AND t.done_at IS NULL
+ FOR UPDATE OF v SKIP LOCKED);
 COMMIT;
 NOTIFY pgrst,'reload schema';

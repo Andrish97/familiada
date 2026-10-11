@@ -1199,6 +1199,7 @@ jobs:
           psql -v ON_ERROR_STOP=1 -f docs/sql/test-poll-task-boundaries-341.sql
           psql -v ON_ERROR_STOP=1 -f docs/sql/test-friend-withdrawal-346.sql
           psql -v ON_ERROR_STOP=1 -f docs/sql/test-subscriber-refusal-333.sql
+          bash docs/sql/test-poll-cleanup-347-ddl-concurrency.sh
           bash docs/sql/test-poll-contact-cleanup-347-concurrency.sh
           bash docs/sql/test-poll-task-completion-344-concurrency.sh
       - name: Upload schema restore diagnostics
