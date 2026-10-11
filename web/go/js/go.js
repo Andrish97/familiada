@@ -157,7 +157,7 @@ function addAction(label, kind, handler) {
 function redirectToLogin() {
   const url = new URL("/login/", location.href);
   url.searchParams.set("from", "poll-go");
-  url.searchParams.set("next", friendToken || resolvedInviteData?.kind === "friend" ? "friends" : "tasks");
+  url.searchParams.set("next", friendToken || resolvedInviteData?.kind === "friend" ? "friends" : baseToken || resolvedInviteData?.kind === "base" ? "bases" : "tasks");
   if (friendToken || resolvedInviteData?.kind === "friend") url.searchParams.set("f", friendToken || subToken);
   if (baseToken) url.searchParams.set("b", baseToken);
   if (taskToken) url.searchParams.set("t", taskToken);
@@ -167,7 +167,7 @@ function redirectToLogin() {
 }
 
 function redirectToHub() {
-  const url = new URL((taskToken || baseToken || resolvedInviteData?.kind === "base") ? "/tasks/" : "/friends/", location.href);
+  const url = new URL(baseToken || resolvedInviteData?.kind === "base" ? "/bases/" : taskToken ? "/tasks/" : "/friends/", location.href);
   if (baseToken) url.searchParams.set("b", baseToken);
   if (taskToken) {
     url.searchParams.set("t", taskToken);
@@ -632,8 +632,8 @@ function handleBaseInvite(data, user) {
     setView({ head: t("pollGo.baseInviteTitle"), text: t("pollGo.baseInviteHandled") });
     return;
   }
-  setView({ head: t("pollGo.baseInviteTitle"), text: t("pollGo.baseInviteTasks", { owner: data.owner_label || "" }) });
-  addAction(t("pollGo.baseInviteTasksAction"), "gold", redirectToHub);
+  setView({ head: t("pollGo.baseInviteTitle"), text: t("pollGo.baseInviteBases", { owner: data.owner_label || "" }) });
+  addAction(t("pollGo.baseInviteBasesAction"), "gold", redirectToHub);
 }
 
 async function init() {

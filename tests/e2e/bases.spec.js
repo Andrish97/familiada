@@ -30,12 +30,12 @@ const BASE_URL = "https://www.familiada.online/bases";
 // service worker obsłużyłby żądania z własnego cache z pominięciem page.route
 test.use({ serviceWorkers: "block" });
 test.beforeEach(async ({ context }) => {
-  if (process.env.TEST_BRANCH_CODE !== "0") await serveBranchCode(context, { pages: ["bases", "go", "tasks"] });
+  if (process.env.GITHUB_REF_NAME !== "main" && process.env.TEST_BRANCH_CODE !== "0") await serveBranchCode(context, { pages: ["bases", "go", "tasks"] });
 });
 
 async function newUserContext(browser, username, contextOptions = {}) {
   const ctx = await browser.newContext({ serviceWorkers: "block", ...contextOptions });
-  if (process.env.TEST_BRANCH_CODE !== "0") await serveBranchCode(ctx, { pages: ["bases", "go", "tasks"] });
+  if (process.env.GITHUB_REF_NAME !== "main" && process.env.TEST_BRANCH_CODE !== "0") await serveBranchCode(ctx, { pages: ["bases", "go", "tasks"] });
   const pg = await ctx.newPage();
   await loginAsTestUser(pg, ctx, { username });
   return { ctx, page: pg };
@@ -120,11 +120,13 @@ async function acquireLockDirect(page, resourceType, resourceId, context = "e2e-
   return { ...data, tabId };
 }
 
-test("@mailbox bazy: udostępnienie z UI wysyła działający link", async ({ page, context }) => {
-  test.setTimeout(180_000);
+test("@mailbox bazy: udostępnienie z UI wysyła działający link", async ({ page, context, browser }) => {
+  test.setTimeout(240_000);
   const recipient = testAccountUsername(8); // skrzynka test8 jest używana w kontrolach dostarczania maili
   const name = `E2E-MAIL-BASE-${Date.now()}`;
   let baseId;
+  let recipientContext;
+  let anonymousContext;
 
   try {
     await loginAsTestUser(page, context, { username: testAccountUsername(1) });
@@ -151,8 +153,29 @@ test("@mailbox bazy: udostępnienie z UI wysyła działający link", async ({ pa
       return /\/go\/?$/.test(url.pathname) && url.searchParams.has("b");
     });
     expect(invitation, "mail musi zawierać link /go/?b=").toBeTruthy();
+    anonymousContext = await browser.newContext({ serviceWorkers: "block" });
+    if (process.env.GITHUB_REF_NAME !== "main") await serveBranchCode(anonymousContext, { pages: ["go", "login"] });
+    const anonymousPage = await anonymousContext.newPage();
+    await anonymousPage.goto(invitation);
+    await anonymousPage.locator('#actions button').click();
+    await expect.poll(() => new URL(anonymousPage.url()).pathname).toBe('/login/');
+    expect(new URL(anonymousPage.url()).searchParams.get('next')).toBe('bases');
+    expect(new URL(anonymousPage.url()).searchParams.get('b')).toBe(new URL(invitation).searchParams.get('b'));
+    const recipientUser = await newUserContext(browser, recipient);
+    recipientContext = recipientUser.ctx;
+    await recipientUser.page.goto(invitation);
+    await recipientUser.page.getByRole('button', { name: 'Otwórz Bazy' }).click();
+    await expect.poll(() => new URL(recipientUser.page.url()).pathname).toBe('/bases/');
+    const tile = recipientUser.page.locator('#sharedGrid .card', { hasText: name });
+    await expect(tile).toHaveClass(/selected/);
+    await tile.locator('[data-accept]').click();
+    await expect(recipientUser.page.locator('#sharedGrid .card[data-proposed="1"]', { hasText: name })).toHaveCount(0);
+    await expect(recipientUser.page.locator('#sharedGrid .card', { hasText: name })).toBeVisible();
+
   } finally {
     if (baseId) await deleteBaseDirect(page, baseId).catch(() => {});
+    await recipientContext?.close();
+    await anonymousContext?.close();
     await clearMailbox(recipient).catch(() => {});
   }
 });
@@ -492,7 +515,7 @@ test.describe("bases: audyt -- układ i gesty", () => {
   });
 });
 
-test("udostępnianie bazy: wybór znajomego i akceptacja w Zadaniach", async ({ page, context, browser }) => {
+test("udostępnianie bazy: wybór znajomego i akceptacja w Bazach", async ({ page, context, browser }) => {
   test.setTimeout(180_000);
   await loginAsTestUser(page, context, { username: testAccountUsername(1) });
   const name = "E2E-BS-FRIEND-" + Date.now();
@@ -542,11 +565,11 @@ test("udostępnianie bazy: wybór znajomego i akceptacja w Zadaniach", async ({ 
     await page2.goto("/go/?b=" + token, { waitUntil: "domcontentloaded" });
     await expect(page2.locator("#message")).toContainText("udostępnia Ci bazę", { timeout: 15_000 });
     await page2.locator("#actions button").click();
-    await expect.poll(() => new URL(page2.url()).pathname).toBe("/tasks/");
-    const taskRow = page2.locator('.rowsRow[data-kind="base"][data-token="' + token + '"]');
-    await expect(taskRow).toHaveClass(/rowsFocus/);
-    await taskRow.getByRole("button", { name: /akceptuj|przyjmij/i }).click();
-    await expect(taskRow).toHaveCount(0);
+    await expect.poll(() => new URL(page2.url()).pathname).toBe("/bases/");
+    const tile = page2.locator('#sharedGrid .card', { hasText: name });
+    await expect(tile).toHaveClass(/selected/);
+    await tile.locator('[data-accept]').click();
+    await expect(page2.locator('#sharedGrid .card[data-proposed="1"]', { hasText: name })).toHaveCount(0);
   } finally {
     if (recipientId) await page.evaluate(async (id) => { await window.__sbClient.rpc("e2e_friendships_cleanup", { p_other_user_id: id }); }, recipientId).catch(() => {});
     if (ctx2) await ctx2.close();
@@ -611,8 +634,8 @@ test.describe("bases: audyt -- zaproszenia i link z maila", () => {
       await page2.goto(`/go/?b=${token}`, { waitUntil: "domcontentloaded" });
       await expect(page2.locator("#message")).toContainText("udostępnia Ci bazę", { timeout: 15000 });
       await page2.locator("#actions button").click();
-      await expect(page2).toHaveURL(new RegExp(`/tasks/\\?b=${token}$`));
-      await expect(page2.locator(`.rowsRow[data-kind="base"][data-token="${token}"]`)).toHaveClass(/rowsFocus/);
+      await expect.poll(() => new URL(page2.url()).pathname).toBe("/bases/");
+      await expect(page2.locator("#sharedGrid .card", { hasText: name })).toHaveClass(/selected/);
       expect(await countUniModals(page2, 2500), "adresat nie powinien dostać żadnego komunikatu").toBe(0);
 
       // ktoś inny (tu: sam właściciel) z tym samym linkiem

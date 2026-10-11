@@ -1670,12 +1670,12 @@ async function refreshAltBadge() {
 function removeShareParam() {
   try {
     const u = new URL(location.href);
-    u.searchParams.delete("share");
+    u.searchParams.delete("b");
     history.replaceState(history.state, "", u.toString());
   } catch {}
 }
 
-// Wejście z maila: ?share=<token>. Sama decyzja (przyjmij/odrzuć) jest na
+// Wejście z Go: ?b=<token>. Sama decyzja (przyjmij/odrzuć) jest na
 // kafelku zaproszenia -- tu tylko wyjaśniamy, dlaczego kafelka może nie być.
 async function handleShareLink(token) {
   let info = null;
@@ -1767,6 +1767,6 @@ function initFileLaunch() {
   });
   startAutoRefresh();
 
-  const shareToken = new URLSearchParams(location.search).get("share");
+  const shareToken = new URLSearchParams(location.search).get("b");
   if (!guestMode && shareToken && loaded) await handleShareLink(shareToken);
 })();

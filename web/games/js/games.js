@@ -1322,7 +1322,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (badgeEl) badgeEl.textContent = n > 99 ? "99+" : (n > 0 ? String(n) : "");
   }
 
-  // Zadania (ankiety + bazy do akceptacji): badges_get().tasks_pending.
+  // Zadania (tylko ankiety): badges_get().tasks_pending.
   async function refreshTasksBadge(){
     try{
       const { data, error } = await sb().rpc("badges_get");

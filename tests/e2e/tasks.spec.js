@@ -20,12 +20,12 @@ async function newUserContext(browser, username) {
   const page = await ctx.newPage();
   await loginAsTestUser(page, ctx, { username });
   // Na main sprawdzamy opublikowane pliki Pages; na branchu kandydat do wdrożenia.
-  if (process.env.GITHUB_REF_NAME !== "main") await serveBranchCode(ctx, { pages: ["tasks"] });
+  if (process.env.GITHUB_REF_NAME !== "main") await serveBranchCode(ctx, { pages: ["tasks", "bases", "go"] });
   return { ctx, page };
 }
 
 test.describe("tasks: baza udostępniona drugiemu kontu", () => {
-  test("B widzi bazę w „Do zrobienia”, filtr ?kind=base, akceptacja usuwa wiersz", async ({ browser }) => {
+  test("baza pozostaje w Bazach i nie powiela się w Zadaniach ani ich plakietce", async ({ browser }) => {
     test.setTimeout(120_000);
     const a = await newUserContext(browser, testAccountUsername(2));
     const b = await newUserContext(browser, testAccountUsername(3));
@@ -42,35 +42,32 @@ test.describe("tasks: baza udostępniona drugiemu kontu", () => {
         return data.id;
       }, baseName);
 
-      await a.page.evaluate(async ({ baseId, recipientId }) => {
+      const before = await b.page.evaluate(async () => (await window.__sbClient.rpc("badges_get")).data.tasks_pending);
+      const proposal = await a.page.evaluate(async ({ baseId, recipientId }) => {
         const { data, error } = await window.__sbClient.rpc("base_share_by_user", {
           p_base_id: baseId, p_recipient_user_id: recipientId, p_role: "viewer",
         });
         if (error) throw new Error(error.message);
         const row = Array.isArray(data) ? data[0] : data;
         if (!row?.ok) throw new Error("base_share_by_user: " + row?.err);
+        return row;
       }, { baseId, recipientId });
 
-      // Wszystkie rodzaje: baza w „Do zrobienia”.
       await b.page.goto(TASKS_URL, { waitUntil: "domcontentloaded" });
-      const row = b.page.locator(".rowsSection--todo .rowsRow", { hasText: baseName });
-      await expect(row).toBeVisible({ timeout: 20_000 });
-      await expect(row.locator('[data-act="accept"]')).toBeVisible();
-
-      // Filtr rodzaju w adresie: ?kind=base pokazuje bazę, ?kind=poll ją ukrywa.
-      await b.page.goto(`${TASKS_URL}?kind=base`, { waitUntil: "domcontentloaded" });
-      await expect(b.page.locator(".rowsRow", { hasText: baseName })).toBeVisible({ timeout: 20_000 });
-      await expect(b.page.locator('.rowsRow:not([hidden])[data-kind="poll"]')).toHaveCount(0);
-      await b.page.goto(`${TASKS_URL}?kind=poll`, { waitUntil: "domcontentloaded" });
-      await expect(b.page.locator(".rowsRow", { hasText: baseName })).toBeHidden({ timeout: 20_000 });
-
-      // Akceptacja: wiersz znika (nie przechodzi do „Zrobione”).
-      await b.page.goto(`${TASKS_URL}?kind=base`, { waitUntil: "domcontentloaded" });
-      const again = b.page.locator(".rowsSection--todo .rowsRow", { hasText: baseName });
-      await expect(again).toBeVisible({ timeout: 20_000 });
-      await again.locator('[data-act="accept"]').click();
-      await expect(b.page.locator(".rowsRow", { hasText: baseName })).toHaveCount(0, { timeout: 20_000 });
-      await expect(b.page.locator(".rowsSection--done .rowsRow", { hasText: baseName })).toHaveCount(0);
+      await expect(b.page.locator('[data-skel-step]')).toHaveClass(/skel-step-ready/);
+      await expect(b.page.locator('.rowsRow[data-kind="base"],.rowsRow[data-kind="device"]')).toHaveCount(0);
+      const after = await b.page.evaluate(async () => (await window.__sbClient.rpc("badges_get")).data.tasks_pending);
+      expect(after).toBe(before);
+      const token = new URL(proposal.mail_link, TASKS_URL).searchParams.get("b");
+      expect(token).toBeTruthy();
+      await b.page.goto(`/go/?b=${token}`);
+      await b.page.getByRole('button', { name: 'Otwórz Bazy' }).click();
+      await expect.poll(() => new URL(b.page.url()).pathname).toBe('/bases/');
+      const tile = b.page.locator('#sharedGrid .card', { hasText: baseName });
+      await expect(tile).toHaveClass(/selected/);
+      await tile.locator('[data-accept]').click();
+      await expect(b.page.locator('#sharedGrid .card[data-proposed="1"]', { hasText: baseName })).toHaveCount(0);
+      await expect(b.page.locator('#sharedGrid .card', { hasText: baseName })).toBeVisible();
     } finally {
       if (baseId) {
         await a.page.evaluate(async (id) => { await window.__sbClient.from("question_bases").delete().eq("id", id); }, baseId).catch(() => {});
@@ -90,13 +87,14 @@ for (const width of [1400, 390]) {
       let fixture = tasksPreview;
       await page.route("**/rest/v1/rpc/tasks_list", (route) => route.fulfill({ json: fixture }));
       await page.goto(TASKS_URL);
-      await expect(page.locator(".rowsRow")).toHaveCount(10);
-      await expect(page.locator(".rowsSection--todo .rowsRow")).toHaveCount(8);
+      await expect(page.locator(".rowsRow")).toHaveCount(4);
+      await expect(page.locator('.rowsRow[data-kind="base"],.rowsRow[data-kind="device"]')).toHaveCount(0);
+      await expect(page.locator(".rowsSection--todo .rowsRow")).toHaveCount(2);
       await expect(page.locator(".rowsSection--done .rowsList")).toBeHidden();
       await page.locator(".rowsSection--done .rowsSectionHead").click();
       await expect(page.locator(".rowsSection--done .rowsRow")).toHaveCount(2);
       await expect(page.locator(".rowsSection--done .rowsAct")).toHaveCount(0);
-      for (const task of tasksPreview) {
+      for (const task of tasksPreview.filter(task => task.kind === "poll")) {
         const row = page.locator(`.rowsRow[data-id="${task.id}"]`);
         await expect(row).toBeVisible();
         await expect(row.locator(".rowsTitle")).toHaveText(task.title);
@@ -116,12 +114,6 @@ for (const width of [1400, 390]) {
         await expect(row.locator(".rowsAct")).toHaveCount(actions.length);
         for (const action of actions) await expect(row.locator(`[data-act="${action}"]`)).toHaveAttribute("aria-label", /.+/);
       }
-      const colors = await page.evaluate(() => Object.fromEntries(["poll", "base", "device"].map((kind) => {
-        const row = document.querySelector(`.rowsRow[data-kind="${kind}"]`);
-        return [kind, { accent: getComputedStyle(row).borderLeftColor, icon: getComputedStyle(row.querySelector(".rowsAvatar")).color }];
-      })));
-      expect(new Set(Object.values(colors).map((x) => x.accent)).size).toBe(3);
-      expect(new Set(Object.values(colors).map((x) => x.icon)).size).toBe(3);
       const metrics = await page.evaluate(() => {
         const rect = (s) => document.querySelector(s).getBoundingClientRect();
         const first = rect(".rowsSection--todo .rowsRow");
@@ -138,10 +130,6 @@ for (const width of [1400, 390]) {
       expect(metrics.overflow).toBe(false);
       expect(metrics.noteWrap).toBe("normal");
       await page.screenshot({ path: test.info().outputPath(`tasks-${width}.png`), fullPage: true });
-      for (const [kind, count] of [["poll", 4], ["base", 2], ["device", 4]]) {
-        await page.goto(`${TASKS_URL}?kind=${kind}`);
-        await expect(page.locator(".rowsRow:not([hidden])")).toHaveCount(count);
-      }
       fixture = [];
       await page.goto(TASKS_URL);
       await expect(page.locator(".rowsEmpty")).toBeVisible();

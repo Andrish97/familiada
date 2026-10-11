@@ -711,3 +711,21 @@ Znajomi: [zwinięta komputer](img/e19-friends/refusal-collapsed-desktop.png),
 Lokalny SQL 329 + dwa wyścigi (resend i zaproszenia przeciwne) ✓, unit
 408/408 ✓. Pełny cykl runner/Pages/DB/E2E jeszcze do wykonania; nie
 traktować tej paczki jako zamkniętej produkcyjnie.
+
+### Paczka 330 — Zadania wyłącznie ankiety
+
+SQL 330: izolowany runner 38144647258 ✓, migracja main 38144761004 ✓,
+log OK 330 13:52:06 UTC. Front w przygotowaniu: usunięte akcje/wiersze baz
+i urządzeń, filtr rodzajów; zachowane ankiety tekstowe/punktowe todo/done
+i wyszukiwarka. Go b i login next=bases kierują do Bases b; Bases wskazuje
+propozycję w Udostępnione. Opisy PL/EN/UK i PAGES/diagramy zgodne z zakresem.
+Nowy test bazy sprawdza brak w Tasks i niezmieniony tasks_pending, potem
+akceptację w Bazach. Test mailowy baz rozszerzony o dostarczony link,
+login-parametry anonimowego wejścia oraz rzeczywistą akceptację odbiorcy.
+
+Zrzuty renderera: [domyślnie komputer](img/e19-tasks/poll-only-default-desktop.png),
+[domyślnie telefon](img/e19-tasks/poll-only-default-phone.png),
+[Zrobione rozwinięte komputer](img/e19-tasks/poll-only-all-desktop.png),
+[Zrobione rozwinięte telefon](img/e19-tasks/poll-only-all-phone.png).
+Kontrolowany test dostaje też stare rodzaje, żeby sprawdzić, że frontend
+nie pokazuje baz/urządzeń; widoczne tylko cztery warianty ankiet.

@@ -79,8 +79,8 @@ export const PAGES = {
   subscribers:   { path: "/subscribers/", access: "user", parent: "games", from: ["games", "friends", "polls", "bases"], manual: "polls", state: [], buttons: {
     btnFriends: { to: "friends", roles: ["user"] },
   } },
-  tasks:         { path: "/tasks/",             access: "user",   parent: "games", from: ["games"], manual: "polls", state: ["kind"] },
-  bases:         { path: "/bases/",             access: "guest",  parent: "games", from: ["games", "friends", "subscribers", "tasks", "baseExplorer"], manual: "bases", tabs: ["mine", "shared"], state: ["tab"], buttons: {
+  tasks:         { path: "/tasks/",             access: "user",   parent: "games", from: ["games"], manual: "polls", state: ["t"] },
+  bases:         { path: "/bases/",             access: "guest",  parent: "games", from: ["games", "friends", "subscribers", "baseExplorer"], manual: "bases", tabs: ["mine", "shared"], state: ["tab", "b"], buttons: {
     btnGoAlt:  { to: "friends", roles: ["user"] },
     btnSubscribers: { to: "subscribers", roles: ["user"] },
     btnBrowse: { to: "baseExplorer", custom: true },
@@ -97,7 +97,7 @@ export const PAGES = {
     btnPlay: { to: "control", custom: true },
   }, locks: [{ type: "game", id: "id" }, { type: "logos", mode: "shared" }] },
   marketplace:   { path: "/marketplace/",       access: "public", parent: "games", parentAnon: "home", subpaths: true, from: ["home", "games"], manual: "community", state: ["q", "filter", "sort"] },
-  connectDevice: { path: "/connect/",    access: "public", parent: "games", parentAnon: "home", from: ["home", "games", "tasks"], manual: "connect", state: ["share"] },
+  connectDevice: { path: "/connect/",    access: "public", parent: "games", parentAnon: "home", from: ["home", "games"], manual: "connect", state: ["share"] },
   account:       { path: "/account/",           access: "guest",  parent: "games", from: ["games"], manual: "general" },
   manual:        { path: "/manual/",            access: "guest",  parent: "games", from: [], tabs: ["general", "edit", "community", "bases", "polls", "logo", "control", "gameSettings", "connect"], state: ["tab"], buttons: {
     btnLegal: { to: "privacy" },

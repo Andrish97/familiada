@@ -556,10 +556,10 @@ function buildAuthRedirect(page) {
 }
 
 function buildNextUrl() {
-  const url = new URL(nextTarget === "friends" ? "/friends/" : "/tasks/", location.origin);
+  const url = new URL(nextTarget === "friends" ? "/friends/" : nextTarget === "bases" ? "/bases/" : "/tasks/", location.origin);
   if (nextTarget === "friends" && nextFriend) url.searchParams.set("f", nextFriend);
   if (nextTarget === "tasks" && nextTask) url.searchParams.set("t", nextTask);
-  if (nextTarget === "tasks" && nextBase) url.searchParams.set("b", nextBase);
+  if (nextTarget === "bases" && nextBase) url.searchParams.set("b", nextBase);
 
   url.searchParams.set("lang", getUiLang());
   return url.toString();
@@ -833,7 +833,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       await syncLanguage();
       if (setupUsername || !u.username) {
         openUsernameSetup();
-      } else if (nextTarget === "tasks" || nextTarget === "friends") {
+      } else if (nextTarget === "tasks" || nextTarget === "friends" || nextTarget === "bases") {
         location.href = buildNextUrl();
       } else {
         location.href = withLangParam(gamesUrl);
@@ -1031,7 +1031,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         await syncLanguage();
         if (!authed?.username) {
           openUsernameSetup();
-        } else if (nextTarget === "tasks" || nextTarget === "friends") {
+        } else if (nextTarget === "tasks" || nextTarget === "friends" || nextTarget === "bases") {
           location.href = buildNextUrl();
         } else {
           location.href = withLangParam(gamesUrl);

@@ -1079,3 +1079,13 @@ nie usunięcie samego `disabled` w HTML.
 
 Ten przegląd jest częścią domknięcia E19, przed porządkami E14 i manualem E13.
 Nie uznawać go za wykonany tylko dlatego, że wcześniejszy E7 jest zamknięty.
+
+### Aktualizacja E19: Zadania tylko ankiety (2026-10-11)
+
+Tasks obsługuje token t i tylko ankiety; usunąć cele baz/urządzeń z tej
+strony i ich zliczanie przez dzwonek. Go b → Bases b; logowanie zachowuje
+next=bases i b, Bases wskazuje propozycję w Udostępnione. PAGES: Tasks
+state t, Bases state tab/b, bez from Tasks dla Bases i Connect. Znajomości
+pozostają Friends f; urządzenia Connect share. Nie dodajemy aliasu starego
+/bases?share ani przekierowania starego /tasks?b. Blokada Friends w Control
+modalPagesReview pozostaje. Implementacja frontu w paczce 330.
