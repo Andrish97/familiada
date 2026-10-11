@@ -65,3 +65,19 @@ body.games-body > main.wrap > .bar{
   background: rgba(var(--task-accent), .10);
   border-color: rgba(var(--task-accent), .28);
 }
+
+/* Telefon: krótka treść, bez dat, ograniczona wysokość kafelka. */
+@media (max-width: 640px){
+  .tasks-card .rowsRow{ gap: 8px; }
+  .tasks-card .rowsAvatar{ width: 30px; height: 30px; }
+  .tasks-card .rowsAvatar > svg{ width: 20px; height: 20px; }
+  .tasks-card .rowsTitle,
+  .tasks-card .rowsNote--mobile{
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+  }
+  .tasks-card .rowsTitle{ line-height: 1.25; }
+  .tasks-card .rowsNote{ margin-top: 3px; line-height: 1.35; }
+}

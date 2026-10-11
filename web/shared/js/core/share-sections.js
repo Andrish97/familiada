@@ -161,6 +161,7 @@ const ROW_CHANNELS = ["friend", "subscriber", "mail"];
  * @param {string} [row.avatar]   tekst, z którego bierzemy inicjał (domyślnie tytuł)
  * @param {string} [row.avatarIcon] ikona pochodzenia zamiast inicjału
  * @param {string} [row.note]     szara linijka stanu
+ * @param {string} [row.noteMobile] skrócony opis na telefonie
  * @param {"friend"|"subscriber"|"mail"} [row.channel]
  * @param {Record<string,string>} [row.data]  atrybuty data-* wiersza (np. kind)
  * @param {{key:string,text?:string,icon?:string,title?:string,gold?:boolean,iconOnly?:boolean,disabled?:boolean,onClick:Function}[]} [row.actions]
@@ -179,7 +180,8 @@ export function rowEl(row) {
     <span class="rowsAvatar" aria-hidden="true">${row.avatarIcon ? icon(row.avatarIcon) : esc(initial.toLocaleUpperCase())}</span>
     <div class="rowsMain">
       <div class="rowsTitle" title="${esc(row.title)}">${esc(row.title)}</div>
-      ${noteParts.length ? `<div class="rowsNote">${noteParts.join(" · ")}</div>` : ""}
+      ${noteParts.length ? `<div class="rowsNote${row.noteMobile != null ? " rowsNote--desktop" : ""}">${noteParts.join(" · ")}</div>` : ""}
+      ${row.noteMobile != null ? `<div class="rowsNote rowsNote--mobile">${esc(row.noteMobile)}</div>` : ""}
     </div>
     <div class="rowsActions"></div>`;
   const acts = el.querySelector(".rowsActions");

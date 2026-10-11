@@ -78,6 +78,7 @@ function rowOf(task) {
     return {
       ...base,
       title: task.title,
+      noteMobile: [type, owner].join(" · "),
       note: [type, owner, done ? t("tasks.doneAt", { date: fmtDate(task.done_at) }) : t("tasks.received", { date: fmtDate(task.created_at) })].join(" · "),
       actions: done ? [] : [
         { key: "vote", text: t("tasks.actions.vote"), icon: "polls", gold: true, onClick: () => { location.href = pollVoteHref(task); } },
@@ -90,6 +91,7 @@ function rowOf(task) {
     return {
       ...base,
       title: task.title,
+      noteMobile: [owner, role].join(" · "),
       note: [owner, role, t("tasks.received", { date: fmtDate(task.created_at) })].join(" · "),
       actions: [
         { key: "accept", text: t("tasks.actions.accept"), icon: "check", gold: true, onClick: () => respondBase(task, "base_share_accept", "tasks.errors.accept") },
@@ -101,6 +103,7 @@ function rowOf(task) {
   return {
     ...base,
     title: task.title,
+    noteMobile: [typeLabel, owner].join(" · "),
     note: [typeLabel, owner, task.expires_at ? t("tasks.expires", { date: fmtDate(task.expires_at) }) : ""].filter(Boolean).join(" · "),
     actions: [
       { key: "connect", text: t("tasks.actions.connect"), icon: "arrow-right", gold: true, onClick: () => { location.href = linkTo("connectDevice", { share: task.id }); } },

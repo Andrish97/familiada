@@ -468,3 +468,5 @@ Zrzuty po poprawce:
 **Decyzja użytkownika — ikony pochodzenia Zadania (2026-10-11):** po lewej zamiast inicjału nadawcy ikona rodzaju zasobu: ankieta `polls`, baza `drawer`, urządzenia `host` / `buzzer` / `display` (również wyświetlacz QR). Nazwa nadawcy pozostaje w opisie. Ikona jest taka sama przed i po wykonaniu ankiety. Wspólny renderer wierszy obsługuje opcjonalne `avatarIcon`; korzysta ze wspólnego silnika ikon.
 
 **Doprecyzowanie kolorów Zadania (2026-10-11):** delikatne oznaczenie rodzaju zasobu: ankiety złote, bazy niebieskie, urządzenia zielonkawe. Kolor ikony, jej subtelne tło i lewa krawędź kafelka; teksty/akcje nadal wspólne. Kolor nie zastępuje ikony ani nazwy rodzaju. To samo oznaczenie ankiety w Do zrobienia i Zrobione.
+
+**Korekta mobilnych kafelków Zadania (2026-10-11):** użytkownik zgłosił zbyt dużo informacji i nadmierną wysokość. Na telefonie skrócony opis bez dat otrzymania, głosowania i ważności; pozostaje rodzaj/rola oraz nadawca. Tytuł i opis maksymalnie po dwie linie, ikona pochodzenia 30 px. Pełny opis nadal na komputerze. Zastępuje wcześniejsze doprecyzowanie pełnego zawijania tekstów na mobile; wykonana poprawka odstępów zostaje.

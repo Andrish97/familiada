@@ -103,6 +103,15 @@ for (const width of [1400, 390]) {
         const sourceIcon = task.kind === "poll" ? "polls" : task.kind === "base" ? "drawer" : task.device_type === "poll_qr" ? "display" : task.device_type;
         await expect(row.locator(`.rowsAvatar svg.ico-${sourceIcon}`)).toHaveCount(1);
         await expect(row.locator(".rowsAvatar")).toHaveText("");
+        if (width === 390) {
+          await expect(row.locator(".rowsNote--desktop")).toBeHidden();
+          await expect(row.locator(".rowsNote--mobile")).toBeVisible();
+          await expect(row.locator(".rowsNote--mobile")).not.toContainText("11.10.2026");
+          expect((await row.boundingBox()).height).toBeLessThanOrEqual(104);
+        } else {
+          await expect(row.locator(".rowsNote--desktop")).toBeVisible();
+          await expect(row.locator(".rowsNote--mobile")).toBeHidden();
+        }
         const actions = task.state === "done" ? [] : task.kind === "poll" ? ["vote", "decline"] : task.kind === "base" ? ["accept", "decline"] : ["connect"];
         await expect(row.locator(".rowsAct")).toHaveCount(actions.length);
         for (const action of actions) await expect(row.locator(`[data-act="${action}"]`)).toHaveAttribute("aria-label", /.+/);
