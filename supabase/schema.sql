@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict NO3XF0Qa1TRSvGMvqgznABXMoegtaZHhcYrR74Qn5E1KT3TdmeSkNYbKZQOwF4t
+\restrict G1a1Vz4CzfS9D3cUNsbTiikcAk1BpT4GPoMrP2ogg6YxGTSGpzHBl4Q3ueBogCg
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -17702,7 +17702,7 @@ ALTER TABLE ONLY "public"."base_share_tasks"
 --
 
 ALTER TABLE ONLY "public"."base_share_tasks"
-    ADD CONSTRAINT "base_share_tasks_recipient_user_id_fkey" FOREIGN KEY ("recipient_user_id") REFERENCES "auth"."users"("id") ON DELETE SET NULL;
+    ADD CONSTRAINT "base_share_tasks_recipient_user_id_fkey" FOREIGN KEY ("recipient_user_id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
 
 
 --
@@ -18006,7 +18006,7 @@ ALTER TABLE ONLY "public"."poll_subscriptions"
 --
 
 ALTER TABLE ONLY "public"."poll_subscriptions"
-    ADD CONSTRAINT "poll_subscriptions_subscriber_user_id_fkey" FOREIGN KEY ("subscriber_user_id") REFERENCES "auth"."users"("id") ON DELETE SET NULL;
+    ADD CONSTRAINT "poll_subscriptions_subscriber_user_id_fkey" FOREIGN KEY ("subscriber_user_id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
 
 
 --
@@ -18038,7 +18038,7 @@ ALTER TABLE ONLY "public"."poll_tasks"
 --
 
 ALTER TABLE ONLY "public"."poll_tasks"
-    ADD CONSTRAINT "poll_tasks_recipient_user_id_fkey" FOREIGN KEY ("recipient_user_id") REFERENCES "auth"."users"("id") ON DELETE SET NULL;
+    ADD CONSTRAINT "poll_tasks_recipient_user_id_fkey" FOREIGN KEY ("recipient_user_id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
 
 
 --
@@ -19687,5 +19687,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict NO3XF0Qa1TRSvGMvqgznABXMoegtaZHhcYrR74Qn5E1KT3TdmeSkNYbKZQOwF4t
+\unrestrict G1a1Vz4CzfS9D3cUNsbTiikcAk1BpT4GPoMrP2ogg6YxGTSGpzHBl4Q3ueBogCg
 
