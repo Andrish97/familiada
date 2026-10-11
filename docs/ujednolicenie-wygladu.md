@@ -298,8 +298,9 @@ etykieta kanału, miejsce akcji, widoczny cooldown oraz reguła maila z
 |---|---|---|---|
 | Control — urządzenie | „Mail lub nazwa użytkownika” z polem i przyciskiem; nad polem znika komunikat o cooldownie lub wcześniejszym udostępnieniu w bieżącej sesji. Osobna lista znajomych z checkboxami i jednym przyciskiem na dole. | Sekcja „Udostępnione”: odbiorcy dla konkretnego urządzenia i sesji gry. Pokazać nazwę i typ: znajomy, konto albo mail. Udostępniony znajomy znika z listy wyboru. | Cooldown widoczny przy polu i znajomym. Cofnięcie przez X/kosz natychmiast unieważnia link. Ponowienie nie występuje; wysyłka ponowna wymaga cofnięcia i nowego udostępnienia. |
 | Baza | Dwie drogi: mail/nazwa konta albo znajomi. Obie mają wybór Edytor/Przeglądający; znajomi używają checkboxów i wspólnego przycisku. | Jedna lista ze statusem (oczekuje, zaakceptowano, odrzucono), etykietą kanału i aktualną rolą. | Rola zmieniana bezpośrednio w wierszu. Cofnięcie unieważnia dostęp. Odrzucone: ponowienie przypominającego maila z cooldownem; wyłączone powiadomienia ukrywają przycisk. |
-| Ankieta — karta „Głosy” | Osobna karta strony ankiety. Jej wygląd pozostaje zgodny z projektem rozpisanym przez użytkownika. | Poza zakresem tej tabeli E19. | Nie zmieniać podczas poprawy karty Udostępnianie. |
-| Ankieta — karta „Udostępnianie” | Dwie sekcje: „Anonimowo” (link anonimowy i QR) oraz „Znajomi i subskrybenci” (wybór checkboxami, bez ręcznego pola e-mail). | Sekcja anonimowa opisuje otwarty link; sekcja odbiorców pokazuje oczekuje/otworzył, zagłosował albo odrzucił, tylko dla bieżącego uruchomienia. | Przyciski tej karty wymagają poprawy wizualnej. Oczekującym bez głosu i odrzuconym można wysłać przypominający e-mail z cooldownem (przycisk ukryty przy wyłączonych powiadomieniach). |
+| Ankieta — karta „Wyniki” (głosy) | Osobna karta. Widok zmienia się zależnie od stanu ankiety: wyniki na żywo, surowe po zatrzymaniu, tryb podliczania i wyniki końcowe. | Na żywo aktualizują się liczby i paski bez przeskakiwania listy; przejście do podliczania jest płynne/animowane. Szczegóły: `ankiety-refaktor.md` §1 i §7. | Zachować dotychczasowy projekt tej karty. |
+| Ankieta — karta „Udostępnianie” | Dwie sekcje: „Anonimowo” (link anonimowy i QR) oraz „Znajomi i subskrybenci” (wybór checkboxami, bez ręcznego pola e-mail). | Sekcja anonimowa opisuje otwarty link; sekcja odbiorców pokazuje oczekuje/otworzył, zagłosował albo odrzucił, tylko dla bieżącego uruchomienia. | Układ i przyciski wewnątrz karty pozostają zgodne z jej opisem. Oczekującym bez głosu i odrzuconym można wysłać przypominający e-mail z cooldownem (przycisk ukryty przy wyłączonych powiadomieniach). |
+| Ankieta — globalny pasek akcji | Poza kartami; akcje zależą od stanu ankiety (np. Uruchom, Zamknij, Przerwij, Podlicz głosy, Uruchom ponownie). | Stan i akcje pozostają zgodne z `ankiety-refaktor.md` §1 i §7. | To te globalne przyciski wymagają poprawy wyglądu: hierarchia, rozmiar, odstępy, wyrównanie i stany hover/disabled. Nie zmieniać przycisków wewnątrz kart ani globalnego Zamknij nawigacji/okna. |
 | Znajomi | Komputer: lewa kolumna dodawania (e-mail/nazwa, zaproszenia wychodzące); prawa: znajomi i zaproszenia przychodzące. Telefon: cztery sekcje albo dwie karty. | Wiersze z etykietą stanu: oczekuje, odrzucono, znajomy, zaproszenie przychodzące. | X cofa oczekujące zaproszenie; usuń kasuje relację znajomości. Oczekujące i odrzucone zaproszenie można przypomnieć mailem po cooldownie; przy wyłączonych powiadomieniach brak przycisku. |
 | Subskrybenci | Analogiczna lista jednostronna bez zaproszeń przychodzących/propozycji. | Wiersze oczekujące i aktywne, z etykietą e-mail. | Ponów = przypominający e-mail do istniejącego zaproszenia; cooldown i ukrywanie przycisku takie jak wyżej. Usunięcie kończy subskrypcję. |
 
@@ -310,14 +311,13 @@ etykiety kanału i stanu, puste stany, akcje oraz zachowanie responsywne. Per
 strona zmienia się tylko zawartość i zestaw dozwolonych akcji; nie dodajemy
 lokalnych wariantów CSS, które rozjeżdżają wygląd sekcji.
 
-**Przyciski Ankiet:** poprawka dotyczy przycisków karty „Udostępnianie” —
-w szczególności kontrolek wyboru odbiorców oraz akcji udostępnienia/wysłania.
-Karty „Głosy” nie zmieniamy w ramach tej poprawki. Zakres nie obejmuje
-globalnych przycisków interfejsu, np. „Zamknij”, nawigacji ani zamykania
-okna/karty. Poprawić rozmiar, hierarchię, odstępy, wyrównanie oraz stany
-hover/disabled tylko przycisków wewnątrz karty Udostępnianie. Zachować odrębne
-przeznaczenie i układ obu kart; nie tworzyć osobnych styli dla każdego
-przycisku.
+**Globalne przyciski akcji Ankiet:** poprawa dotyczy przycisków na pasku akcji
+nad kartami (np. Uruchom, Zamknij, Przerwij, Podlicz głosy, Uruchom ponownie),
+których dostępność zależy od stanu ankiety. Poprawić ich hierarchię, rozmiar,
+odstępy, wyrównanie oraz stany hover/disabled. Nie zmieniać przycisków
+wewnątrz kart „Wyniki” ani „Udostępnianie” i nie obejmować globalnych akcji
+nawigacji lub zamykania okien/dialogów. Zachować opisane płynne przejścia
+stanów karty wyników i istniejący układ karty udostępniania.
 
 Wspólne dla wszystkich ekranów: przypomnienie nie tworzy rekordu dostępu ani
 nowego tokenu. Flaga `user_flags.email_notifications` jest sprawdzana przed
