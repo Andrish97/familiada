@@ -33,10 +33,16 @@ async function templates() {
     const composeSource = fs.readFileSync(path.join(ROOT, 'web/shared/js/core/compose-mail.js'), 'utf8').replace(/from "[^\"]+"/, `from "${renderer}"`);
     const { buildComposeMailHtml } = await import('data:text/javascript;base64,' + Buffer.from(composeSource).toString('base64'));
     for (const lang of ['pl','en','uk']) items.push({ lang, type: 'manual', subject: `E2E-PKT6-${stamp}-${lang}-manual`, expected: '<Quote> & text', html: buildComposeMailHtml({ lang, subject: `E2E-PKT6-${stamp}-${lang}-manual`, bodyHtml: '<p><strong>Formatted body</strong></p>#quote', quote: '<Quote> & text', greeting: 'Hello', farewell: 'Team' }) });
+    const marketingSource = fs.readFileSync(path.join(ROOT, 'web/shared/js/core/marketing-mail.js'), 'utf8').replace(/from "[^\"]+"/, `from "${renderer}"`);
+    const { buildMarketingMailHtml } = await import('data:text/javascript;base64,' + Buffer.from(marketingSource).toString('base64'));
+    for (const template of ['invitation','newsletter','custom']) {
+      const subject = `E2E-PKT6-${stamp}-marketing-${template}`;
+      items.push({ lang:'pl', type: 'marketing', subject, expected: template === 'invitation' ? 'Niezależny widok prowadzącego' : 'Campaign body', html: buildMarketingMailHtml({ template, subject, bodyHtml: '<p><strong>Campaign body</strong></p>' }) });
+    }
     return items;
   } finally { globalThis.fetch = originalFetch; }
 }
-test('mail content: contact confirmation/reply/compose and manual editor PL/EN/UK delivered', async ({ page, context }) => {
+test('mail content: contact/manual PL/EN/UK and marketing templates delivered', async ({ page, context }) => {
   test.setTimeout(240000);
   await loginAsPooledTestUser(page, context, 0);
   const items = await templates();

@@ -59,10 +59,21 @@ test('admin marketing: only actually queued normalized recipients get sent histo
   assert.equal(failed.result.error,'queue_insert_failed');
 });
 test('admin marketing: malformed recipients, empty subject and over 500 unique emails never reach queue', async () => {
-  for (const [body,error] of [[{},'missing_emails'],[{emails:['a@b.com']},'missing_subject'],[{emails:['invalid'],subject:'S'},'no_valid_emails'],[{emails:Array.from({length:501},(_,i)=>`u${i}@example.com`),subject:'S'},'too_many_emails']]) {
+  for (const [body,error] of [[{},'missing_emails'],[{emails:['a@b.com'],subject:'S'},'missing_body'],[{emails:['a@b.com']},'missing_subject'],[{emails:['invalid'],subject:'S',custom_body:'Body'},'no_valid_emails'],[{emails:Array.from({length:501},(_,i)=>`u${i}@example.com`),subject:'S',custom_body:'Body'},'too_many_emails']]) {
     const result = await invoke(handleAdminMarketingApi,'/_admin_api/marketing/send',body,[]);
     assert.equal(result.status,400);
     assert.equal(result.result.error,error);
     assert.equal(result.calls.length,0);
+  }
+});
+
+test('admin compose plain fallback uses escaped common document; missing destination/body cannot queue', async () => {
+  const plain = await invoke(handleAdminMessagesApi, '/_admin_api/messages/send', {to_email:'test14@familiada.online',subject:'<Subject>',body:'<Body> & text',lang:'uk'}, [[201,[{id:'q'}]],[200,'m']]);
+  assert.ok(plain.calls[0].body.html.includes('<html lang="uk">'));
+  assert.ok(plain.calls[0].body.html.includes('&lt;Body&gt; &amp; text'));
+  assert.ok(plain.calls[0].body.html.includes('&lt;Subject&gt;'));
+  for (const body of [{}, {to_email:'test14@familiada.online'}]) {
+    const invalid = await invoke(handleAdminMessagesApi,'/_admin_api/messages/send',body,[]);
+    assert.equal(invalid.status,400);
   }
 });

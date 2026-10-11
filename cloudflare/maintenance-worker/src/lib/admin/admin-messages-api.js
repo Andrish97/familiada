@@ -6,6 +6,7 @@ import { supabaseRpc, supabaseRequest, summarizeSupabaseError, normalizeRpcValue
 import { deleteAttachmentStorageFiles } from "../core/cleanup.js";
 import { downloadFromStorage } from "../core/storage.js";
 import { htmlToPlainTextPreview } from "../email/html-to-text.js";
+import { renderMailDocument } from "../email/mail-document.js";
 
 export async function handleAdminMessagesApi(request, env, url) {
 
@@ -113,8 +114,11 @@ export async function handleAdminMessagesApi(request, env, url) {
     const { to_email, subject: msgSubject, body: msgBody, body_html, report_id, attachments: sendAttachments } = body || {};
     if (!to_email || !msgBody) return json({ ok: false, error: "missing_to_email_or_body" }, 400);
 
-    // Use body_html from client if provided (TinyMCE HTML), otherwise use plain text
-    const emailHtml = body_html || String(msgBody);
+    // TinyMCE sends its full document; plain text uses the same escaped frame.
+    const emailHtml = body_html || renderMailDocument({
+      lang: ["pl", "en", "uk"].includes(body.lang) ? body.lang : "pl",
+      title: String(msgSubject || ""), subtitle: "familiada.online", body: String(msgBody),
+    });
 
     const emailText = htmlToPlainTextPreview(emailHtml);
 

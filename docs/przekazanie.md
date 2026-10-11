@@ -25,17 +25,18 @@ pełny zakres poll-share przeszedł. Nie powtarzać pkt5 bez nowej zmiany.
 
 Pierwsza paczka maili pkt6 wdrożona: Pages38170086375 i Edge38170086411 ✓.
 Main38170191574:13/14 bez retry/unit431, realne sharing maile, queued0/noqueue,
-reset11 i zmiana12→13 z przywróceniem oraz treści authPL/EN/UK. Subskrybenci
-wymagają świeżego testu: stara asercja wygasło poprawiona na odmowę po
-wypisaniu/ukryciu; aplikacja prawidłowo pokazała Odrzucono.
+reset11 i zmiana12→13 z przywróceniem oraz treści authPL/EN/UK. Świeży main38171488172 ✓ domknął Subskrybentów po poprawie starej asercji
+wygasło na odmowę po wypisaniu/ukryciu. Cały zakres pierwszej paczki zaliczony.
 
 Druga paczka kontakt/Settings lokalnie: wspólny renderer z kopią Worker,
 rich HTML i opcjonalną akcją. Kontakt3typy×3lang; ręczne podgląd/wysyłka ten
 sam helper. Admin compose/marketing raportują rzeczywistą kolejkę i nie
 zapisują historii pominiętych adresów. Unit440/440 ✓; zrzuty390/1400.
-mail-content.spec.js sprawdza12 szablonów i SMTP do test14 bez publicznego
+mail-content.spec.js sprawdza15 szablonów i SMTP do test14 bez publicznego
 formularza (Telegram admina). Następnie izolowane → branch12mail →
-Worker/Pages → identyczny main. Wygląd marketingu i audyt reszty otwarte.
+Worker/Pages → identyczny main. Marketing invitation/newsletter/custom ma jeden wspólny builder preview/send
+i zachowaną treść/ilustracje. Unit443 lokalnie; świeże bramki nadal wymagane.
+Audyt reszty pkt6 otwarty.
 
 Dalej pkt6 maile (audyt wejść w maile-granice.md), pkt7 graf/kaskady/Go/
 lekki anonimowy token, UI/E20 i landscape; manual ostatni. Wypisanie=odmowa

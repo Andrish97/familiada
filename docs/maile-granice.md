@@ -221,12 +221,12 @@ Marketing liczy tylko rzeczywiste INSERT RETURNING i tylko dla nich zapisuje
 historię. Wynik queued/skipped jest widoczny również przy całym batch mail-off.
 Odrębne zapisy kolejki i historii nie są jeszcze jedną transakcją: błąd
 historii po zakolejkowaniu wymaga audytu spójności w pkt7. Szablony wizualne
-marketingu pozostają dalszą pracą pkt6.
+marketingu dopięte w następnej części tego draftu (poniżej).
 
 Unit całych handlerów sprawdza queued0/mixed/full, normalizację/dedup,
 brak historii dla mail-off, błędy kolejki/historii, id i załączniki oraz limit500.
-Punktowy E2E mail-content uruchamia kod12 szablonów (3 kontaktowe + ręczny
-×3lang) i wysyła przez send-mail do test14. Nie wywołuje publicznego formularza
+Punktowy E2E mail-content uruchamia kod15 szablonów (3 kontaktowe + ręczny
+×3lang oraz trzy marketingowe) i wysyła przez send-mail do test14. Nie wywołuje publicznego formularza
 kontaktu, który powiadamia też administratora przez Telegram. Ten E2E nie
 jest kontrolą publicznego formularza ani autoryzowanego interfejsu admina.
 
@@ -237,3 +237,22 @@ Zrzuty po wykonaniu, bez overflow390/1400:
 [ręczny390](img/e19-mails/contact-manual-pl-390.png),
 [długa nazwa390](img/e19-mails/long-resource-390.png).
 Dostarczenie i kontrola branch/main wymagane przed zamknięciem paczki.
+
+### Marketing i pierwsza kontrola main — aktualizacja
+
+Pierwsza paczka wdrożona i sprawdzona: main38170191574 ma13 poprawnych
+scenariuszy; świeży main38171488172 ✓ wypisanie z poprawną asercją odmowy.
+Nie powtarzać niezmienionych13. Pkt6 jako całość nadal otwarty.
+
+Marketing invitation/newsletter/custom używa jednego helpera zarówno do
+podglądu, jak i wysyłki, wspólnej ramki, akcji i stopki. Zachowano bogatą
+treść zaproszenia, cztery ilustracje i edytowalny HTML newsletter/custom.
+Obecny marketing ma polskie treści bez selektora języka; dokument jawnie
+lang=pl. Ręczny tekst bez body_html w API jest escapowany we wspólnej ramce.
+Pusty dokument marketingowy jest odrzucany przed kolejką.
+Nowy E2E obejmuje15 rzeczywistych szablonów na test14; unit443 lokalnie.
+
+Zrzuty [marketing390](img/e19-mails/marketing-invitation-390.png),
+[marketing1400](img/e19-mails/marketing-invitation-1400.png),
+[newsletter390](img/e19-mails/marketing-newsletter-390.png),
+[własny390](img/e19-mails/marketing-custom-390.png), wszystkie bez overflow.

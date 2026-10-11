@@ -11,6 +11,7 @@ export async function handleAdminMarketingApi(request, env, url) {
     const { emails, subject: mktSubject, template_id, custom_body } = body || {};
     if (!Array.isArray(emails) || !emails.length) return json({ ok: false, error: "missing_emails" }, 400);
     if (!mktSubject) return json({ ok: false, error: "missing_subject" }, 400);
+    if (typeof custom_body !== "string" || !custom_body.trim()) return json({ ok: false, error: "missing_body" }, 400);
 
     const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     const validEmails = [...new Set(emails.map(e => String(e).trim().toLowerCase()).filter(e => emailRe.test(e)))];
