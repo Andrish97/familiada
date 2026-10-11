@@ -101,9 +101,8 @@ limitu.
 Cooldowny cofnięcia i zmiany roli nie są tu ustalonymi wartościami. Szczegółowa tabela zachowań jest w
 `e19-znajomi-plan.md`, sekcja 7.
 
-**Różnica do wdrożenia:** `mail-worker` już sprawdza `user_flags.email_notifications`
-przed wysyłką z kolejki. Trigger `mail_queue_cooldown_guard` egzekwuje obecnie
-klucz/cooldown, ale nie tę flagę przed insertem. Wymaganie 2026-10-11 przenosi
-lub uzupełnia kontrolę tak, by mail w ogóle nie trafiał do kolejki, gdy odbiorca
-ma wyłączone powiadomienia. Audyt musi też uwzględnić maile bez `user_id`
-(odbiorcę wskazuje sam adres) oraz wyścig między sprawdzeniem i insertem.
+**Stan E19 (2026-10-11):** migracja `2026-10-11_323` dodaje wspólny
+`BEFORE INSERT` trigger na `mail_queue`. Wyłączona flaga pomija wstawienie
+przed rezerwacją cooldownu; adres bez konta pozostaje dozwolony. Lokalny
+test PG16 potwierdził wszystkie trzy przypadki. Pozostało uruchomić punktowy
+job SQL, wdrożyć migrację i sprawdzić ją po wdrożeniu.

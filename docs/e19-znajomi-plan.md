@@ -212,6 +212,11 @@ od niej.
   pozostały czas. Stan dostępu zmienia się wyłącznie przez udostępnienie,
   cofnięcie lub zakończenie nadrzędnej sesji/zasobu.
 
+**Postęp implementacji:** wspólna bramka przed kolejką jest na branchu w
+migracji `2026-10-11_323`; pełny restore PG16 i test SQL lokalnie przechodzą.
+Do potwierdzenia zostały izolowany job CI, wdrożenie na produkcję i kontrola
+po wdrożeniu. Pozostałe zachowania tabeli nadal są planem do wykonania.
+
 ### Zasady per funkcja
 
 | Obszar | Kto może być odbiorcą i jak dodać | Lista udostępnionych / stany | Ponowienie, cooldown i cofnięcie |
