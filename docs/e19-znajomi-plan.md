@@ -899,10 +899,10 @@ idempotentna. To pierwsza paczka pkt 3, nie realizacja całego kontraktu
 Testy: rollback SQL wszystkich statusów/adresów i ACL anon, wyścigi
 akceptacji z odmową/cofnięciem, punktowe E2E na rzeczywistych mailach
 test14: akceptacja/usunięcie i odmowa przez Go, bez zakładania konta.
-Następna migracja odmów Subskrybentów otrzyma 332; draft Baz trzeba
+Następna migracja odmów Subskrybentów otrzyma 333; draft Baz trzeba
 przenumerować dopiero przy właściwym pkt 4.
 
-Audyt dla 332 obejmuje również starsze RPC
+Audyt dla 333 obejmuje również starsze RPC
 polls_hub_subscription_invite i polls_hub_subscription_invite_a:
 oba nadal tworzą subskrypcje kont, a drugi ma osobne 5-dniowe ograniczenie
 zamiast wspólnego kontraktu. Ich brak w obecnym froncie nie wystarcza:
@@ -914,7 +914,7 @@ zadań ankietowych i wywołuje konwersję znajomości; nie podpina już sam
 anonimowego wpisu subskrypcji do konta.
 
 Flagi: aktualny _contact_mail_enabled sprawdza user_flags konta,
-ale nie email_unsub_tokens.suppressed_at. Testy 332 muszą rozdzielać
+ale nie email_unsub_tokens.suppressed_at. Testy 333 muszą rozdzielać
 flagę konta, globalną rezygnację adresu bez konta i wypisanie z konkretnej
 aktywnej subskrypcji. Brak naliczenia maila przy rezygnacji należy sprawdzić
 w RPC i kolejce; nie zakładać, że odrzucenie maila przez Worker oznacza

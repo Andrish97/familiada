@@ -476,3 +476,11 @@ i punktowe branch/main Subscribers. E2E po reload czeka na komunikat Go,
 331 branch 38150591218 ✓ 3/3 bez retry, unit 411/411; dwa rzeczywiste
 maile test14 w 48/104 s. SQL OK 15:15:33 UTC, DB 38150405080 ✓.
 Do domknięcia ta sama kontrola main; frontend/CSS w 331 nie zmieniony.
+
+**331 main nie jest czystą kontrolą:** 38150902827 success, lecz 1 flaky
+(429 baseline:recipient przy drugim scenariuszu); retry przechodzi.
+Powód: helper E2E nie czyścił dodatkowej podłogi kolejki. 332 ograniczona
+do helpera własnej pary test1–8→test14; nie zmienia cooldownów użytkowników
+ani wyjątków kolejki. Lokalny rollback zakresu/ACL ✓, unit 412/412.
+Runner 332 → SQL main/log → świeże branch/main Subscribers bez retry.
+Następna właściwa paczka odmów/flag/claim otrzymuje 333 (332 zajęta).
