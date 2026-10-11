@@ -523,3 +523,5 @@ Stan szczegółowy:
 
 
 | 2026-10-11 | Ankiety344 / zastosowanie potwierdzone, świeży branch | DB38165841575 ✓, log OK34418:57:12UTC, schema0f5adaa872. Izolowany38165592194 ✓; branch38166057247 w toku,12 scenariuszy --retries=0/pula7–8: tekst i punkty complete, partial→decline, rzeczywiste maile, trwały limit i wspólne UI. Go konto poprawione copy Zadania; zrzuty390/1400 po wykonaniu. | Pages dopiero po pełnym zielonym branch, potem identyczny main. |
+
+| 2026-10-11 | Ankiety / fixture mail-off poprawiony przed oceną bramki | W przeglądzie znaleziono nieistniejącą kolumnę last_sent_at w E2E. Prawdziwy kontrakt to email_sent_at/email_send_count; SQL i aplikacja używają właściwych pól.38166057247 zatrzymany, nie liczyć jako kontroli aplikacji. | Po zakończeniu anulowania świeży komplet12 bez retry, jeden worker/pula7–8; nie pomijać mail-off. |

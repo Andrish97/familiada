@@ -253,10 +253,10 @@ test("ankieta: mail-off daje zadanie mimo zegara, bez maila i przypomnienia", as
     const delivery = await readMailDelivery({ recipient: user.email, after });
     expect(delivery.queue || []).toEqual([]); expect(delivery.events || []).toEqual([]);
     const task = await page.evaluate(async id => {
-      const { data, error } = await window.__sbClient.from("poll_tasks").select("token,last_sent_at,reminder_count").eq("game_id", id).single();
+      const { data, error } = await window.__sbClient.from("poll_tasks").select("token,email_sent_at,email_send_count,reminder_count").eq("game_id", id).single();
       if (error) throw error; return data;
     }, gameId);
-    expect(task).toMatchObject({ last_sent_at: null, reminder_count: 0 });
+    expect(task).toMatchObject({ email_sent_at: null, email_send_count: 0, reminder_count: 0 });
     const qid = await page.evaluate(async id => {
       const { data, error } = await window.__sbClient.from("questions").select("id").eq("game_id", id).eq("ord", 1).single();
       if (error) throw error; return data.id;
