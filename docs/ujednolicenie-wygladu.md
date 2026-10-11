@@ -342,6 +342,27 @@ przycisków wewnątrz kart, nawigacji czy zamykania okien/dialogów. Zachowujemy
 płynne przejścia stanów karty Głosy oraz już wykonane zmiany; ten zapis
 zastępuje wcześniejsze sprzeczne opisy zakresu, nie cofa wdrożonych prac.
 
+### Doprecyzowanie układu stron (2026-10-11)
+
+To uzupełnienie wcześniejszych ustaleń o konkretny podział przestrzeni na
+tych stronach. Pozostałe decyzje i już wdrożone komponenty pozostają w mocy.
+
+- **Gry — dwie niewidoczne kolumny także na mobile.** W górnym wierszu nazwa/
+  tytuł jest po lewej, akcje po prawej. W dolnym wierszu filtrowanie i
+  wyszukiwanie są po lewej, eksport i import po prawej. Podział nie ma
+  widocznej kreski. Każda kolumna zawija swoje elementy we własnym obrębie,
+  więc zawartość jednej strony nie spycha ani nie miesza się z drugą.
+- **Ankiety — układ edytora.** Tytuł ankiety znajduje się w topbarze. Treść
+  ma dwie karty: Udostępnianie i Głosy. Stan, podsumowanie całości i akcje
+  zależne od stanu tworzą odrębną, estetyczną sekcję nad kartami; nie są
+  wkładane do kart ani przenoszone do dolnego paska. Istniejąca decyzja o
+  kompaktowych `.btn.sm` dla globalnych akcji na mobile pozostaje w mocy.
+- **Znajomi i Subskrybenci — własny typ stron.** Stosować układ sekcji
+  rozpisany dla każdej strony w `e19-znajomi-plan.md`: bez wyszukiwarki i bez
+  dolnego paska narzędziowego. Sekcje odpowiadające sobie mają identyczny
+  CSS; różnice wynikają wyłącznie z przepływu (Znajomi są dwustronni,
+  Subskrybenci jednostronni) i właściwych im akcji.
+
 Wspólne dla wszystkich ekranów: przypomnienie nie tworzy rekordu dostępu ani
 nowego tokenu. Flaga `user_flags.email_notifications` jest sprawdzana przed
 dodaniem maila do kolejki. Samo udostępnienie kontu pozostaje dostępne w
