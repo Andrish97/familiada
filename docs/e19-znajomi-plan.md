@@ -267,17 +267,32 @@ przeszedł. Pozostałe zachowania tabeli nadal są planem do wykonania.
 - Przyjęty parametr realizacji: **30 dni od pierwszej odmowy** do jej
   wygaśnięcia (zgodnie z dotychczasową karencją znajomości/subskrypcji).
   Użytkownik nie wskazał liczby dni; to założenie realizacji. Dla znikania
-  kafelka z list pozostaje **propozycja 5 dni**, nie ustalony osobno wymóg.
+  kafelka z list **nadawcy** pozostaje **propozycja 5 dni**, nie ustalony
+  osobno wymóg. Odbiorca zachowuje własną odmowę do jej wygaśnięcia.
   Ponowne kliknięcie Odrzuć nie przesuwa terminu. Ukrycie przed upływem
   30 dni nie pozwala obejść blokady przez mail/nazwę, cofnięcie lub usunięcie.
 - Wygaśnięcie nie uruchamia żadnego maila, nie akceptuje zaproszenia ani
   nie nadaje dostępu. Dopiero jawne dodanie po karencji tworzy nowe pending
   z nowym tokenem i wymaga nowej decyzji odbiorcy. Stary token pozostaje
   nieważny i nie może przyjąć nowego zaproszenia.
-- Zmiana decyzji przed wygaśnięciem: odbiorca musi mieć jawną akcję
-  przyjęcia starego zaproszenia przez jego link lub właściwy ekran.
-  Akcja jest świadoma, autoryzowana i nie wysyła przypominającego maila.
-  Dziś nie wszystkie funkcje to umożliwiają — trzeba je ujednolicić.
+- **Cofnięcie własnej odmowy (doprecyzowanie użytkownika):** odbiorca
+  zachowuje odrzucone przez siebie zaproszenie przez cały okres ważności
+  odmowy, nawet po ukryciu kafelka u nadawcy. Kompaktowa, domyślnie zwinięta
+  sekcja „Odrzucone przeze mnie” z akcją **„Cofnij odmowę”**. Nie mieszać
+  jej z aktywnymi propozycjami ani Zrobione.
+- „Cofnij odmowę” przywraca istniejące zaproszenie do **oczekujących**.
+  Nie oznacza akceptacji: znajomość, subskrypcja i dostęp do bazy wymagają
+  jeszcze jawnego „Akceptuj”. Nie powstaje nowy rekord/token/mail; daty
+  wysyłek i zużyte limity pozostają. Samo cofnięcie nie wysyła przypomnienia.
+  Przywrócony wiersz przechodzi do zwykłych oczekujących.
+- Dostępność tej sekcji: Znajomi — przy Propozycjach; zaproszenia do baz
+  i subskrypcji na konto — przy zadaniach odbiorcy. U subskrybenta bez
+  konta tę samą akcję udostępnia istniejący link /go/. Nie dodajemy
+  propozycji przychodzących na jednostronnej stronie Subskrybenci nadawcy.
+- Cofnąć odmowę może wyłącznie właściwy odbiorca (konto albo ważny token
+  dla obsługi bez konta). Serwer sprawdza ważność i stan nadrzędnego zasobu.
+  Jeśli nadawca cofnął zaproszenie, usunął zasób/konto lub odmowa wygasła,
+  akcja nie przywraca niczego; UI/Go pokazują powód niedostępności.
   Po wygaśnięciu/cofnięciu starego wpisu potrzebne jest nowe zaproszenie.
 - Ankiety nie potrzebują takiej ścieżki zmiany decyzji; zaproszenie pozostaje
   przypisane do uruchomienia. Odmowa nie pozwala przypominać w tym przebiegu.
@@ -293,7 +308,7 @@ przeszedł. Pozostałe zachowania tabeli nadal są planem do wykonania.
 | Ta osoba już jest znajomym | „Ta osoba jest już Twoim znajomym.” |
 | Ta osoba wysłała nam oczekującą prośbę | „Masz oczekującą prośbę od tej osoby. Sprawdź Propozycje.”; wskazać właściwy wpis, bez automatycznej akceptacji. |
 | My już wysłaliśmy oczekującą prośbę | „Zaproszenie do tej osoby już oczekuje na odpowiedź.”; wskazać wpis, bez ponownej wysyłki. |
-| My odrzuciliśmy jej prośbę, odmowa jeszcze ważna | Możliwość jawnego przyjęcia przez odbiorcę; bez automatycznego maila. |
+| My odrzuciliśmy jej prośbę, odmowa jeszcze ważna | „Cofnij odmowę” w „Odrzucone przeze mnie”, potem zwykłe „Akceptuj”; bez automatycznego maila. |
 | Ta osoba odrzuciła naszą prośbę, odmowa jeszcze ważna | Informacja o odmowie, bez Ponów i bez nowego zaproszenia, również po ukryciu kafelka. |
 | Odmowa wygasła | Można jawnie utworzyć nowe zaproszenie z nowym tokenem, z normalną kontrolą flagi mailowej i limitów. |
 
@@ -304,10 +319,12 @@ Odrzucony rekord sam nie wygasa i blokuje nowe dodanie przez `already`.
 Powyższy kontrakt jest korektą do wdrożenia, nie opisem działającej wersji.
 
 Pokrycie korekty: oba kierunki, pending/active/declined, e-mail/nazwa,
-zmiana decyzji przed wygaśnięciem, ukryta odmowa, granica 30 dni,
+cofnięcie odmowy przed wygaśnięciem, osobna akceptacja, odmowa widoczna
+odbiorcy/ukryta nadawcy, granica 30 dni,
 nowe zaproszenie po wygaśnięciu, nieważny stary token, brak automatycznej
 kolejki, wyłączone maile, bezpośredni RPC, wyścigi nowych zaproszeń,
-cofnięcie/usunięcie konta/rodzica, osobno rezygnacja z subskrypcji.
+cofnięcie/usunięcie konta/rodzica, osobno rezygnacja z subskrypcji,
+niezmienione limity po cofnięciu odmowy, cudze RPC/tokeny, konto/bez konta.
 
 ### Zasady per funkcja
 

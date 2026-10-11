@@ -349,6 +349,15 @@ etykieta kanału, miejsce akcji, widoczny cooldown oraz reguła maila z
 | Znajomi | Komputer: lewa kolumna dodawania (e-mail/nazwa, zaproszenia wychodzące); prawa: znajomi i zaproszenia przychodzące. Telefon: cztery sekcje albo dwie karty. | Wiersze z etykietą stanu: oczekuje, odrzucono, znajomy, zaproszenie przychodzące. | X cofa oczekujące zaproszenie; usuń kasuje relację znajomości. Tylko oczekujące zaproszenie można przypomnieć mailem po cooldownie; przy wyłączonych powiadomieniach brak przycisku. |
 | Subskrybenci | Analogiczna lista jednostronna bez zaproszeń przychodzących/propozycji. | Wiersze oczekujące i aktywne, z etykietą e-mail. | Ponów = przypominający e-mail do istniejącego zaproszenia; cooldown i ukrywanie przycisku takie jak wyżej. Usunięcie kończy subskrypcję. |
 
+**Doprecyzowanie odmów (2026-10-11):** odbiorca zachowuje własne odmowy
+przez cały okres ich ważności w kompaktowej, zwiniętej sekcji
+„Odrzucone przeze mnie”. Wspólne wiersze/CSS i akcja „Cofnij odmowę”
+przywracają oczekujące, bez automatycznej akceptacji lub maila. Znajomi:
+przy Propozycjach; bazy/subskrypcje konta: przy Zadaniach; subskrypcja
+bez konta: istniejący link /go/. Ukrywanie wpisu wcześniej dotyczy tylko
+nadawcy. To nowy zakres do realizacji, nie zmiana historii wykonanej
+listy Zrobione. Szczegółowy kontrakt w E19 §7.
+
 **CSS sekcji:** wszystkie odpowiadające sobie sekcje udostępniania na tych
 stronach mają wyglądać identycznie i korzystać z tego samego markup/componentu
 oraz tych samych reguł CSS. Wspólne są nagłówek, podpis, odstępy, lista, wiersz,

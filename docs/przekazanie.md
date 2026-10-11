@@ -56,7 +56,12 @@ z list i sama odmowa wygasa po czasie, umożliwiając nowe dodanie osoby
 znikanie z list wcześniej: propozycja 5 dni. Stary token unieważniony,
 nowe zaproszenie wymaga ponownej akceptacji; bez automatycznej wysyłki.
 Nie mylić odmowy zaproszenia z wypisaniem się z aktywnej subskrypcji.
-Przed wygaśnięciem odbiorca powinien móc świadomie przyjąć przez link/ekran.
+Najnowsze doprecyzowanie: odbiorca ma zachować własne odmowy do wygaśnięcia,
+w zwiniętej sekcji „Odrzucone przeze mnie”. „Cofnij odmowę” przywraca
+oczekujące; osobne Akceptuj dopiero tworzy relację/dostęp. Bez nowego
+maila/tokenu i resetowania limitów. Znajomi przy Propozycjach, bazy
+i subskrypcje konta przy Zadaniach, bez konta przez /go/. Ukrywanie po
+5 dniach dotyczy tylko nadawcy. Cofnięty/wygasły/usunięty zasób blokuje akcję.
 Plan E19 §7 zawiera tabelę osobnych komunikatów dla znajomego, własnej
 prośby i prośby przychodzącej. Docelowo prośba krzyżowa wskazuje
 Propozycje, bez automatycznej akceptacji. To korekta do wdrożenia;

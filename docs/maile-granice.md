@@ -47,6 +47,9 @@ sprawdzane w bazie (nie w przeglądarce).
   zaproszenia do subskrypcji i bazy wygasają po czasie (założenie 30 dni);
   dopiero jawne nowe dodanie może wysłać nowy mail. Wygaśnięcie nie
   wysyła maila i nie znosi wypisania/globalnej flagi. Szczegóły w E19 §7.
+- Cofnięcie własnej odmowy przez odbiorcę przywraca oczekujące, nie wysyła
+  maila i nie resetuje dotychczasowych limitów. Akceptacja pozostaje
+  osobną akcją. Dostępność i ważność odmowy opisuje E19 §7.
 - Cooldown ogranicza wysłanie maila. UI pokazuje pozostały czas, backend
   autorytatywnie rozstrzyga możliwość wysłania; cooldown nie opóźnia
   przyznania ani cofnięcia dostępu.
