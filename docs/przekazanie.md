@@ -1,3 +1,19 @@
+# Wznowienie pracy — 2026-10-11
+
+Użytkownik wznowił pracę. Repo jest na `codex/e19-3`; poprawiono test SQL 321
+(commit `6a8753616`): fixture pobiera token jako administrator ze względu na
+`FORCE ROW LEVEL SECURITY`, po czym resolver jest nadal wywoływany w roli
+`authenticated`. Walidacja runnera 38096872246: unit i SQL ✓. Punktowe e2e
+brancha 38096917201: dźwięk własny bez pliku i dźwięk Storage ✓ (2/2).
+
+Następny krok zgodnie z planem: wdrożyć migrację 321 razem z frontem na `main`,
+sprawdzić log migracji, Pages i Worker, a potem wykonać punktowe testy
+kontrolne produkcji: `friends`, `subscribers`, `go`,
+`frontend-navigation`, `account-deletion` i regresję dźwięku. E19 krok 3
+pozostaje otwarty do zielonej kontroli produkcji.
+
+---
+
 # Przekazanie pracy — pauza 2026-10-11 (Codex)
 
 **Praca zatrzymana na prośbę użytkownika. Nie uruchamiać testów ani dalszych
