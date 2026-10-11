@@ -121,7 +121,7 @@ async function acquireLockDirect(page, resourceType, resourceId, context = "e2e-
 }
 
 test("@mailbox bazy: udostępnienie z UI wysyła działający link", async ({ page, context }) => {
-  test.setTimeout(120_000);
+  test.setTimeout(180_000);
   const recipient = testAccountUsername(8); // skrzynka test8 jest używana w kontrolach dostarczania maili
   const name = `E2E-MAIL-BASE-${Date.now()}`;
   let baseId;
@@ -144,7 +144,7 @@ test("@mailbox bazy: udostępnienie z UI wysyła działający link", async ({ pa
     await page.locator("#btnShareAdd").click();
     await expect(page.locator("#shareMsg")).toContainText(/udostępn|wysłan|dodano/i, { timeout: 20_000 });
 
-    const email = await waitForEmail({ recipient, after, subject: new RegExp(name, "i") });
+    const email = await waitForEmail({ recipient, after, subject: new RegExp(name, "i"), timeout: 150_000 });
     expect(`${email.body || ""}\n${email.body_html || ""}`).toContain(name);
     const invitation = extractHttpLinks(email).find((link) => {
       const url = new URL(link);

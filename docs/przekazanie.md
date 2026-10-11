@@ -29,10 +29,11 @@ na `main`, Pages 38102630814 ✓. Produkcyjne E2E 38102671588: flow znajomego,
 link `/go/?b=` i akceptacja w `/tasks/` ✓; test maila do test8 nie dostał
 wiadomości także po retry. Diagnostyka obu wpisów: `status=pending`,
 `attempts=0`, `last_attempt_at=null`, `last_error=null` — wygląda na nieuruchomiony
-mail-worker/pg_cron, nie błąd generowania zaproszenia. Dodano do testu skrzynki
-read-only odczyt `mail_cron_status()`, by rozpoznać konfigurację crona w kolejnym
-runie. Krok 5 pozostaje otwarty do diagnozy kolejki i zielonej kontroli maila.
-Przed krokiem 6 skoordynować obszar Control z drugą sesją.
+run 38103011217 potwierdził aktywny cron `*/2 * * * *` i dostarczenie
+poprzedniego maila przez ZeptoMail. Przyczyną był timeout testu 90 s, krótszy
+niż okres crona; podniesiono oczekiwanie do 150 s (limit testu 180 s). Krok 5
+pozostaje otwarty do zielonej produkcyjnej kontroli maila. Przed krokiem 6
+skoordynować obszar Control z drugą sesją.
 
 Produkcyjne e2e
 Znajomych 38097255431 zaliczyło główny przepływ maila/przyjęcia/usunięcia (po
