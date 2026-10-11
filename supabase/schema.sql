@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict sRcCY6kSf7LeiYIn3sbrQGxQbPfi5l5WarKVbkhNcz0TM6vakk54hT8R4RLINMu
+\restrict c0wFwzL4UkeUTrMJ10XtocyhFJL2zsZ7EsIHrX04oKcHRHBIOMs4mnam3K67lM9
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -1673,7 +1673,7 @@ BEGIN
  IF uid IS NULL OR NOT FOUND THEN RETURN jsonb_build_object('ok',false,'err','not_owner'); END IF;
  SELECT coalesce(jsonb_agg(jsonb_build_object('user_id',f.user_id,'label',f.label,'email',f.email,
   'cooldown_until',greatest(public._base_share_refusal_until(p_base_id,f.user_id),
-   (SELECT max(c.next_allowed_at) FROM public.mail_cooldowns c WHERE c.action_key='base:share' AND c.next_allowed_at>now()
+   (SELECT max(c.next_allowed_at) FROM public.mail_cooldowns c WHERE public._contact_mail_enabled(f.email) AND c.action_key='base:share' AND c.next_allowed_at>now()
     AND c.target_key='pair:'||uid||':'||f.user_id||':base:'||p_base_id)),
   'email_enabled',public._contact_mail_enabled(f.email)) ORDER BY f.label),'[]'::jsonb) INTO friends
  FROM public.friends_list() f WHERE f.status='active' AND f.direction='friend'
@@ -19459,5 +19459,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict sRcCY6kSf7LeiYIn3sbrQGxQbPfi5l5WarKVbkhNcz0TM6vakk54hT8R4RLINMu
+\unrestrict c0wFwzL4UkeUTrMJ10XtocyhFJL2zsZ7EsIHrX04oKcHRHBIOMs4mnam3K67lM9
 
