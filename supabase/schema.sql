@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 5pvYi10PBEyxOyJ9TX3RhbywTwfEzj29SAvIg4OhraIubSDUehcD9DzY8g86sI1
+\restrict fpBfcpu5a3OaPd7LdD5HYpAuEda3QOsH1llP0h2K769WlRradDs0mgo7ZlDtkCv
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -1264,7 +1264,6 @@ CREATE FUNCTION "public"."badges_get"() RETURNS "jsonb"
 DECLARE
   v_uid     uuid := auth.uid();
   v_polls   integer;
-  v_bases   integer;
   v_friends integer;
 BEGIN
   IF v_uid IS NULL THEN
@@ -1277,15 +1276,11 @@ BEGIN
   WHERE t.recipient_user_id = v_uid
     AND t.done_at IS NULL AND t.declined_at IS NULL AND t.cancelled_at IS NULL;
 
-  SELECT count(*) INTO v_bases
-  FROM public.base_share_tasks bt
-  WHERE bt.recipient_user_id = v_uid AND bt.status IN ('pending', 'opened');
-
   SELECT count(*) INTO v_friends
   FROM public.friendships f
   WHERE f.addressee_id = v_uid AND f.status = 'pending';
 
-  RETURN jsonb_build_object('tasks_pending', v_polls + v_bases, 'friends_pending', v_friends);
+  RETURN jsonb_build_object('tasks_pending', v_polls, 'friends_pending', v_friends);
 END;
 $$;
 
@@ -14033,38 +14028,6 @@ BEGIN
     ORDER BY t.created_at DESC;
   END IF;
 
-  IF p_kind IS NULL OR p_kind = 'base' THEN
-    RETURN QUERY
-    SELECT 'base'::text, bt.id,
-           CASE WHEN bt.status IN ('pending', 'opened') THEN 'todo' ELSE 'done' END,
-           coalesce(b.name, 'Baza pytań'),
-           coalesce(nullif(p.username, ''), p.email),
-           bt.created_at,
-           CASE WHEN bt.status = 'done' THEN bt.accepted_at END,
-           bt.token,
-           NULL::text, bt.role::text, NULL::text, NULL::uuid, NULL::timestamptz
-    FROM public.base_share_tasks bt
-    LEFT JOIN public.question_bases b ON b.id = bt.base_id
-    LEFT JOIN public.profiles p ON p.id = bt.owner_id
-    WHERE bt.recipient_user_id = v_uid
-      AND (bt.status IN ('pending', 'opened')
-        OR (bt.status = 'done' AND bt.accepted_at > now() - interval '5 days'))
-    ORDER BY bt.created_at DESC;
-  END IF;
-
-  IF p_kind IS NULL OR p_kind = 'device' THEN
-    RETURN QUERY
-    SELECT 'device'::text, sd.id, 'todo'::text,
-           coalesce(nullif(sd.game_name, ''), sd.device_type),
-           coalesce(nullif(p.username, ''), p.email),
-           sd.created_at, NULL::timestamptz, NULL::uuid,
-           NULL::text, NULL::text, sd.device_type, sd.game_id, sd.expires_at
-    FROM public.shared_devices sd
-    LEFT JOIN public.profiles p ON p.id = sd.owner_id
-    WHERE sd.recipient_id = v_uid
-      AND (sd.expires_at IS NULL OR sd.expires_at > now())
-    ORDER BY sd.created_at DESC;
-  END IF;
 END;
 $$;
 
@@ -19714,5 +19677,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 5pvYi10PBEyxOyJ9TX3RhbywTwfEzj29SAvIg4OhraIubSDUehcD9DzY8g86sI1
+\unrestrict fpBfcpu5a3OaPd7LdD5HYpAuEda3QOsH1llP0h2K769WlRradDs0mgo7ZlDtkCv
 
