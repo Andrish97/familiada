@@ -859,3 +859,23 @@ z danymi przykładowymi; etap dopiero po kontrolach branch/main.
 wysokości kart i scrolla wewnętrznego na pozostałe strony, stosownie do
 ich funkcji. Kontrakt w ujednolicenie-wygladu.md. Realizować przy
 właściwych punktach kolejki, bez ponownego przestawiania planu.
+
+### §5 pkt 3 — audyt przed kolejną migracją
+
+Po domknięciu zakładek kontynuować Subskrybentów. Odczyt aktualnego
+schema.sql wykazał: subscribers_list nie zwraca declined; contacts_list
+nie dołącza declined_at subskrybenta; poll_go_sub_decline zachowuje rekord,
+ale nie rezerwuje 30-dniowej karencji; subscribers_invite może więc
+utworzyć kolejne pending obok odmowy. Resend dopuszcza tylko pending,
+ale nie blokuje wiersza i nie sprawdza flagi przed naliczeniem maila.
+Stare poll_sub_accept wciąż podpina adres do subscriber_user_id po
+logowaniu — do zabezpieczenia zgodnie z rozstrzygniętym modelem.
+
+Testy paczki: oba kierunki/statusy, brak undo/akceptacji w panelu, odmowa
+w Go, granice 5/30 dni, nieważny stary token/nowe jawne zaproszenie,
+ponów tylko pending, flag-mailowa przed limitem/kolejką, wyścigi,
+cofnięcie bez skrócenia karencji, rejestracja/claim bez obejścia odmowy,
+osobno wypisanie z aktywnej subskrypcji i globalna rezygnacja z maili.
+Wypisanie nie może zostać przypadkowo uznane za wygasającą odmowę
+zaproszenia; obecny status declined jest wspólny — rozróżnić przyczynę
+zgodnie z kontraktem §7 przed wdrożeniem cleanupu.

@@ -1089,3 +1089,8 @@ state t, Bases state tab/b, bez from Tasks dla Bases i Connect. Znajomości
 pozostają Friends f; urządzenia Connect share. Nie dodajemy aliasu starego
 /bases?share ani przekierowania starego /tasks?b. Blokada Friends w Control
 modalPagesReview pozostaje. Implementacja frontu w paczce 330.
+
+**Mobile landscape — decyzja 2026-10-11:** zbadać i dopuścić każdą stronę
+w poziomie na telefonie, w tym obecne guardy wide/małego ekranu. Przegląd
+PAGES, dostępności/guardów i układu w UI/E20 przed manualem; szczegóły
+w ujednolicenie-wygladu.md. Nie usuwać guardów przed weryfikacją strony.

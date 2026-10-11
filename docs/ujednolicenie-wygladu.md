@@ -702,3 +702,45 @@ potrzebne wyjątki małej wysokości/landscape i czytelność formularzy;
 sprawdzić telefon, komputer, przełączenie zakładki, rozwiniętą sekcję,
 pustą/długą listę, brak uciętych akcji i niezamierzonego scrolla strony.
 Zrzuty po wykonaniu; przegląd reszty w E20/UI, manual zawsze ostatni.
+
+### Dopracowanie wyglądu — mobilne paski akcji i narzędzi (2026-10-11)
+
+Zgłoszenie użytkownika: obecny układ przycisków akcji, eksportu,
+wyszukiwania i pozostałych narzędzi na telefonie wygląda niespójnie.
+Uwzględnić w etapie dopracowania/UI/E20, zachowując kolejność wdrożeń.
+
+Zakres przeglądu:
+- przyciski akcji zaznaczonego kafla i globalne akcje: jednakowe rozmiary,
+  kompaktowość mobilna, wyrównanie ikon/tekstów i grupowanie;
+- eksport/import, wyszukiwanie, filtry i kategorie: sensowne szerokości,
+  odstępy i zawijanie w obrębie swoich grup, bez przypadkowego mieszania;
+- zachować ustalony niewidoczny podział lewo/prawo pasków na stronach
+  typu Gry (nazwa/akcje oraz filtrowanie-wyszukiwanie/eksport-import);
+- stany disabled, wybrany kafel, długie nazwy/tłumaczenia, widoczność
+  i przewijanie przy małej wysokości ekranu; bez uciętych akcji/overflow;
+- wspólne CSS/wzorce zamiast osobnych doraźnych poprawek na każdej stronie.
+
+Przegląd 390 px i mniejszych szerokości oraz landscape; zrzuty po
+wykonaniu z przykładowymi danymi i punktowe testy. Nie dodawać usuniętych
+wyszukiwarek do Zadań/Znajomych/Subskrybentów. Manual zawsze ostatni.
+
+### Mobile landscape — wszystkie strony (2026-10-11)
+
+Użytkownik wymaga zbadania i dopuszczenia telefonu w poziomie na każdej
+stronie. Osobny przegląd całej mapy PAGES przed manualem, w etapie UI/E20.
+Obejmuje także strony dotychczas ograniczone guardem małego ekranu
+(Control/edytory); sam obrót nie może pozostawić nieuzasadnionej blokady.
+
+Dla każdej strony sprawdzić dostęp do funkcji, niewielką wysokość
+viewportu, topbar/wypustki/akcje/narzędzia, formularze i klawiaturę,
+modale/overlays, dotyk oraz scroll i osiągalność wszystkich przycisków.
+Zweryfikować portrait→landscape→portrait bez utraty wpisanych danych,
+wyboru zakładki, zaznaczenia i obowiązującej blokady zasobu. Dopasować
+regułę pełnej wysokości/scrolla do małej wysokości; żadnych uciętych
+akcji ani powierzchni bez możliwości przewinięcia.
+
+Testy punktowe i przykładowe zrzuty dla każdej zmienionej strony;
+przejrzeć mapę dostępności i guardy razem z CSS, nie tylko szerokość
+układu. Nie odblokowywać całej mapy przed tym przeglądem. Ta decyzja
+wyznacza docelową dostępność landscape i rozszerza wcześniejszy zakres
+ujednolicenia; bieżąca kolejność E19 pozostaje zachowana.
