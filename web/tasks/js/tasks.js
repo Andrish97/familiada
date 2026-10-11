@@ -68,7 +68,8 @@ function rowOf(task) {
   const owner = t("tasks.from", { owner: ownerOf(task) });
   const base = {
     id: task.id,
-    avatar: ownerOf(task),
+    avatarIcon: task.kind === "poll" ? "polls" : task.kind === "base" ? "drawer"
+      : ({ host: "host", buzzer: "buzzer", display: "display", poll_qr: "display" })[task.device_type],
     data: { kind: task.kind, ...(task.token ? { token: task.token } : {}) },
   };
   if (task.kind === "poll") {

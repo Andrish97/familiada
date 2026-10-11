@@ -464,3 +464,5 @@ Zrzuty po poprawce:
 | Wszystkie 10 wariantów, Zrobione rozwinięte | [zrzut](img/e19-tasks/all-desktop.png) | [zrzut](img/e19-tasks/all-phone.png) |
 | Normalna wysokość strony, Zrobione zwinięte | [zrzut](img/e19-tasks/default-desktop.png) | [zrzut](img/e19-tasks/default-phone.png) |
 | Pusta lista | [zrzut](img/e19-tasks/empty-desktop.png) | [zrzut](img/e19-tasks/empty-phone.png) |
+
+**Decyzja użytkownika — ikony pochodzenia Zadania (2026-10-11):** po lewej zamiast inicjału nadawcy ikona rodzaju zasobu: ankieta `polls`, baza `drawer`, urządzenia `host` / `buzzer` / `display` (również wyświetlacz QR). Nazwa nadawcy pozostaje w opisie. Ikona jest taka sama przed i po wykonaniu ankiety. Wspólny renderer wierszy obsługuje opcjonalne `avatarIcon`; korzysta ze wspólnego silnika ikon.

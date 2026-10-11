@@ -159,6 +159,7 @@ const ROW_CHANNELS = ["friend", "subscriber", "mail"];
  * @param {string|number} [row.id]
  * @param {string} row.title
  * @param {string} [row.avatar]   tekst, z którego bierzemy inicjał (domyślnie tytuł)
+ * @param {string} [row.avatarIcon] ikona pochodzenia zamiast inicjału
  * @param {string} [row.note]     szara linijka stanu
  * @param {"friend"|"subscriber"|"mail"} [row.channel]
  * @param {Record<string,string>} [row.data]  atrybuty data-* wiersza (np. kind)
@@ -175,7 +176,7 @@ export function rowEl(row) {
   if (channel) noteParts.push(`<span class="rowsChannel rowsChannel--${channel}">${esc(t(`shareSections.channel.${channel}`))}</span>`);
   if (row.note) noteParts.push(esc(row.note));
   el.innerHTML = `
-    <span class="rowsAvatar" aria-hidden="true">${esc(initial.toLocaleUpperCase())}</span>
+    <span class="rowsAvatar" aria-hidden="true">${row.avatarIcon ? icon(row.avatarIcon) : esc(initial.toLocaleUpperCase())}</span>
     <div class="rowsMain">
       <div class="rowsTitle" title="${esc(row.title)}">${esc(row.title)}</div>
       ${noteParts.length ? `<div class="rowsNote">${noteParts.join(" · ")}</div>` : ""}
