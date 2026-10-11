@@ -1,14 +1,22 @@
 # Wznowienie pracy — 2026-10-11
 
-## Bieżąca kontynuacja: kolejka §5 pkt 4 Bazy
+## Bieżąca kontynuacja: kolejka §5 pkt 5 Ankiety
 
-Pkt 3 Subskrybenci333–336 zamknięty produkcyjnie: Pages38158473415 ✓,
-main38158524056 ✓ 7/7 bez retry, unit413/413, cztery prawdziwe maile
-test14. Wypisanie=odmowa w każdym miejscu; flagę globalnego mail-off
-zachować niezależnie. Bazy337 na branchu, izolowany runner38158617062 ✓,
-front z sześcioma zrzutami; wymaga E2E i cyklu SQL/log→branch→Pages→main.
-Dalej Ankiety, maile, graf/kaskady/Go/anonimowy token, UI/E20 i landscape,
-manual ostatni. Kontynuować bez kończenia tury po paczce.
+Pkt4 Bazy337–339 zamknięty produkcyjnie: Pages38161940974 ✓,
+main38162414519 ✓ 3/3 bez retry, unit413/413, rzeczywisty mail39s.
+Zrzuty390/1400 i zwijane odmowy w docs/img/e19-bases. Kontrola wcześniejsza
+38162015503:2/3; trzeci helper czekał5s przy13s odpowiedzi initPage,
+poprawiono30s, świeży komplet zaliczony. Parent guards oraz wyścigi337–338
+zrobione; fizyczna kaskada base_share_tasks bez FK do bazy nadal pkt7.
+
+Ankiety340–341 są wyłącznie na branchu: flagi przed mailowym budżetem,
+metadata, odmowa current-run ukrywana5d, zachowana po owner remove,
+parent/actor guards i zamknięte stare writes. Lokalny SQL oraz wyścigi ✓,
+izolowany38162672508 w toku. Front/fixture Go/pełne E2E jeszcze przed
+wdrożeniem. Audyt limitu3mail/24h ujawnił, że _poll_daily_cap_until liczy
+kolejkę usuwaną po dostarczeniu; dopiąć trwały budżet zanim pkt5 zostanie
+opublikowany. Dalej maile, graf/kaskady/Go/anonimowy token, UI/E20 i
+landscape, manual ostatni. Kontynuować bez kończenia tury po paczce.
 
 
 ## Najnowszy stan: E19 krok 7 w realizacji

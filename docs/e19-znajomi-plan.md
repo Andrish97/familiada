@@ -1023,3 +1023,45 @@ Wykonany podgląd Baz, jeszcze przed produkcją:
 [rozwinięte telefon](img/e19-bases/refusal-expanded-390.png),
 [zwinięte komputer](img/e19-bases/refusal-collapsed-1400.png),
 [rozwinięte komputer](img/e19-bases/refusal-expanded-1400.png).
+
+
+### Pkt 5 / Ankiety — audyt kontraktów po Bazach (340)
+
+Zwykły cooldown mailowy nie blokuje utworzenia zadania przy mail-off;
+sprawdzać flagę przed limitami i rezerwacją, także w przypomnieniu.
+Odmowa zostaje związana z bieżącym kluczem uruchomienia. Po pięciu dniach
+kafelek ukryty, lecz rekord odmowy pozostaje do końca uruchomienia.
+Usunięcie udostępnienia przez właściciela zamyka token i usuwa głos,
+nie kasuje historii odmowy. Zwykłe cofnięcie pending bez odmowy pozwala
+na nowe udostępnienie po istniejącym cooldownie; nowe zadanie/nowy token.
+Wznowienie zatrzymanej ankiety zachowuje decyzje, nowe uruchomienie ma
+nowy klucz. `poll_share_panel` dostarcza flagi/zegary/stany z jednego RPC.
+
+Audyt ujawnił dalsze obejścia do zamknięcia w tej paczce przed produkcją:
+bezpośredni INSERT/UPDATE/DELETE właściciela w poll_tasks, stare
+poll_task_send oraz polls_hub_share_poll, zmiana odmowy przez
+poll_admin_delete_vote i mutacje tokenu bez kontroli rodzica/odbiorcy.
+Fixture Go muszą tworzyć zaproszenie kanonicznie. Lokalny draft340
+sprawdza mail-off/dedup/5d/refusal po usunięciu, same-run resume kontra
+new-run, reminder2/same token, role i metadata ACL. Front/izolowany
+runner oraz komplet granic jeszcze do wykonania; nie oznaczać pkt5
+jako gotowego i nie publikować draftu na podstawie samego SQL lokalnego.
+
+
+### Pkt 4 zamknięty; pkt 5 w realizacji — 2026-10-11
+
+Bazy337–339: SQL/log oraz izolowane runnery ✓, branch38161754445 ✓
+3/3 bez retry, Pages38161940974 ✓, main38162414519 ✓ 3/3 bez retry,
+unit413/413. Rzeczywisty mail39s na main, pełny cykl odmowy/undo/accept/
+opuszczenia/ról/revoke/Go, UI390/1400 i prawdziwa flaga mail-off/noqueue.
+Zrzuty wyżej dokumentują gotowy wygląd. Fizyczna kaskada tasków po
+usunięciu bazy jest osobną otwartą pracą pkt7, guards już wdrożone.
+
+Ankiety340–341 pozostają draftem brancha. Dołożony audyt: obecny limit
+trzech maili/24h używa mail_queue, lecz worker usuwa dostarczony wiersz.
+Zachować zatwierdzone trzy/24h, liczyć trwałe zdarzenia zakolejkowania;
+nie resetować przez dostarczenie/usunięcie taska/gry. Klucz owner→email,
+bez zapisywania treści, hash normalizowanego emaila. Flaga przed kolejką,
+atomowa kontrola wyścigów przy insercie; historia wygasa po24h, konto
+usuwa własne zdarzenia kaskadowo. Przypomnienie nadal dwa na uruchomienie
+oraz24h dla tej gry. Sprawdzić obie niezależne bramki i granice czasowe.
