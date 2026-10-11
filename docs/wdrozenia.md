@@ -127,8 +127,10 @@ Codexa. Na `codex/e19-3` rozpoczęto migrację 324 i front Control: sesja runtim
 Control z godziną bezczynności, token parowania per sesję, token grantu per
 odbiorca, cofanie tokenu, walidacja przez RPC urządzeń, wyświetlenie grantów
 odbiorcy w „Podłącz urządzenie” bez zależności od maila oraz resolver linku
-Control przez `/go/`. Test 324 przeszedł w lokalnym Postgresie 16 — 21 asercji;
-unit 401/401; `node --check` i `git diff --check` zielone. Stare globalne
+Control przez `/go/`. Commit `432cd4b08` wypchnięty na branch.
+Test 324 przeszedł w lokalnym Postgresie 16 i GitHub Actions
+`38128975422` (21 asercji); unit 401/401 w runnerze i lokalnie;
+`node --check` i `git diff --check` zielone. Stare globalne
 udostępnienia urządzeń są czyszczone, gdyż nie są przypięte do sesji ani osoby.
 Brak wdrożenia produkcyjnego. Następnie: E2E CI punktowo (parowanie, udostępnienie
 mailowe i wygaśnięcie), poprawić błędy, dopiero potem migracja i front razem na

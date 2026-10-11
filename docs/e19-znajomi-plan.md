@@ -239,7 +239,8 @@ atomowe cofnięcie tokenu, gateway `/go/`, listę odbiorcy w
 telemetrii, presence, kodów i odblokowania audio. Każde urządzenie waliduje
 token przy ping/read/write/logo/audio. Stare globalne udostępnienia są
 unieważniane, bo nie mają informacji o sesji. Lokalny restore PG16 + test SQL
-324 zaliczył 21 asercji, w tym aktywne/odrzucone tokeny, wyłączone powiadomienia
+324 zaliczył 21 asercji lokalnie i w izolowanym GitHub Actions
+(`38128975422`), w tym aktywne/odrzucone tokeny, wyłączone powiadomienia
 i odkrywanie grantu bez maila. Unit: 401/401. Nie wdrożono jeszcze na produkcję;
 pozostaje dostosowanie testów i UI, workflow CI, branch E2E, wdrożenie i testy
 kontrolne.
