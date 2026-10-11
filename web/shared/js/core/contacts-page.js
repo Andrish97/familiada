@@ -69,8 +69,8 @@ export async function initContactsPage(pageId) {
           onTick: (_, active) => { rowEl.classList.toggle("blocked", active); rowEl.classList.toggle("is-cooling-down", active); } });
         cooldowns.setEndMs(key, Date.parse(row.resend_available_at) || 0);
       } : undefined });
-    if (friends && row.direction === "incoming") { add("accept", "check", true); add("reject", "cancel"); }
-    else if (row.status === "pending") {
+    if (friends && row.direction === "incoming") { add("accept", "check", true); if (row.status === "pending") add("reject", "cancel"); }
+    else if (["pending", "declined"].includes(row.status)) {
       if (row.email_enabled !== false) add("resend", "refresh");
       add(friends ? "cancel" : "remove", "trash", false, true);
     }

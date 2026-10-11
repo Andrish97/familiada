@@ -692,7 +692,8 @@ async function init() {
     if (data.kind === "friend") {
       clearActions();
       showEmailInput(false);
-      setView({ head: t("contacts.goTitle"), text: t("contacts.goBody", { owner: data.owner_label }) });
+      const head = ["active", "declined"].includes(data.status) ? t(`contacts.status.${data.status}`) : t("contacts.goTitle");
+      setView({ head, text: t("contacts.goBody", { owner: data.owner_label }) });
       if (!user) addAction(MSG.loginLabel(), "gold", redirectToLogin);
       else if (data.recipient_matches_me) addAction(t("contacts.open"), "gold", redirectToHub);
       else setView({ head: t("contacts.goTitle"), text: MSG.invitationRecipient() });
