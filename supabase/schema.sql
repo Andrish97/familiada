@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict aiLawcEwuOA23yCkMMBwklEE5wzBCIRt9DWeNgmM8JNla1m2f47gRPxF7bgvFLI
+\restrict uyIGSPzEr32tgy4alNK96wqEQddgB7h941m8IbGeF2jJaX7M2IuXuQmOK7RF7BE
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -1983,7 +1983,7 @@ BEGIN
   FOR v_row IN SELECT value FROM jsonb_array_elements(v_rows) LOOP
     v_until:=NULL;
     v_enabled:=public._contact_mail_enabled(v_row->>'email');
-    IF v_row->>'status'='pending' AND (p_kind='subscribers' OR v_row->>'direction'='outgoing') THEN
+    IF v_row->>'status' IN ('pending','declined') AND (p_kind='subscribers' OR v_row->>'direction'='outgoing') THEN
       IF p_kind='friends' THEN
         v_target:='pair:'||v_uid::text||':'||(v_row->>'user_id');
         SELECT greatest(max(next_allowed_at),public._friend_mail_limit_until(v_uid,(v_row->>'user_id')::uuid))
@@ -3600,8 +3600,8 @@ BEGIN
     RETURN jsonb_build_object('ok', false, 'err', 'auth required');
   END IF;
   UPDATE public.friendships
-     SET status = 'active', accepted_at = now()
-   WHERE id = p_id AND addressee_id = v_uid AND status = 'pending';
+     SET status = 'active', accepted_at = now(), declined_at = NULL
+   WHERE id = p_id AND addressee_id = v_uid AND status IN ('pending','declined');
   IF NOT FOUND THEN
     RETURN jsonb_build_object('ok', false, 'err', 'not_found');
   END IF;
@@ -3626,7 +3626,7 @@ BEGIN
     RETURN jsonb_build_object('ok', false, 'err', 'auth required');
   END IF;
   DELETE FROM public.friendships
-   WHERE id = p_id AND requester_id = v_uid AND status = 'pending'
+   WHERE id = p_id AND requester_id = v_uid AND status IN ('pending','declined')
   RETURNING addressee_id INTO v_addr;
   IF NOT FOUND THEN
     RETURN jsonb_build_object('ok', false, 'err', 'not_found');
@@ -3685,10 +3685,10 @@ BEGIN
     AND GREATEST(f.requester_id, f.addressee_id) = GREATEST(v_uid, v_prof.id);
 
   IF FOUND THEN
-    IF v_ex.status = 'pending' AND v_ex.addressee_id = v_uid THEN
+    IF v_ex.status IN ('pending','declined') AND v_ex.addressee_id = v_uid THEN
       -- Zaproszenie krzyżowe: druga strona już zaprosiła mnie — od razu aktywne, bez maila.
       UPDATE public.friendships
-         SET status = 'active', accepted_at = now()
+         SET status = 'active', accepted_at = now(), declined_at = NULL
        WHERE id = v_ex.id;
       RETURN jsonb_build_object('ok', true, 'id', v_ex.id, 'token', v_ex.token,
                                 'to', v_prof.email, 'mail_allowed', false,
@@ -3777,7 +3777,7 @@ BEGIN
   IF v_uid IS NULL THEN
     RETURN jsonb_build_object('ok', false, 'err', 'auth required');
   END IF;
-  DELETE FROM public.friendships
+  UPDATE public.friendships SET status='declined',declined_at=now()
    WHERE id = p_id AND addressee_id = v_uid AND status = 'pending'
   RETURNING requester_id INTO v_req;
   IF NOT FOUND THEN
@@ -3841,12 +3841,12 @@ BEGIN
     RETURN jsonb_build_object('ok', false, 'err', 'auth required');
   END IF;
 
-  SELECT * INTO v_f FROM public.friendships WHERE id = p_id AND requester_id = v_uid;
+  SELECT * INTO v_f FROM public.friendships WHERE id = p_id AND requester_id = v_uid FOR UPDATE;
   IF NOT FOUND THEN
     RETURN jsonb_build_object('ok', false, 'err', 'not_found');
   END IF;
-  IF v_f.status <> 'pending' THEN
-    RETURN jsonb_build_object('ok', false, 'err', 'only pending can be resent');
+  IF v_f.status NOT IN ('pending','declined') THEN
+    RETURN jsonb_build_object('ok', false, 'err', 'only pending or declined can be reminded');
   END IF;
 
   SELECT lower(p.email) INTO v_to FROM public.profiles p WHERE p.id = v_f.addressee_id;
@@ -14905,8 +14905,9 @@ CREATE TABLE "public"."friendships" (
     "accepted_at" timestamp with time zone,
     "email_sent_at" timestamp with time zone,
     "email_send_count" integer DEFAULT 0 NOT NULL,
+    "declined_at" timestamp with time zone,
     CONSTRAINT "friendships_distinct_chk" CHECK (("requester_id" <> "addressee_id")),
-    CONSTRAINT "friendships_status_check" CHECK (("status" = ANY (ARRAY['pending'::"text", 'active'::"text"])))
+    CONSTRAINT "friendships_status_check" CHECK (("status" = ANY (ARRAY['pending'::"text", 'active'::"text", 'declined'::"text"])))
 );
 
 ALTER TABLE ONLY "public"."friendships" FORCE ROW LEVEL SECURITY;
@@ -19684,5 +19685,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict aiLawcEwuOA23yCkMMBwklEE5wzBCIRt9DWeNgmM8JNla1m2f47gRPxF7bgvFLI
+\unrestrict uyIGSPzEr32tgy4alNK96wqEQddgB7h941m8IbGeF2jJaX7M2IuXuQmOK7RF7BE
 
