@@ -674,3 +674,8 @@ pozwala zaprosić, przypomnieć oczekującym według flagi/limitu i usunąć/cof
 Odbiorca bez konta akceptuje/odrzuca przez dostarczony link Go z maila.
 Przy odmowie przypomnienia zabronione; po 30 dniach dopiero nowe
 zaproszenie. Liczba sekcji/zakładki nie jest plakietką przychodzących spraw.
+
+**Korekta wypustek kontaktów:** wysokość 36 px, jak zmniejszony bazowy
+wzorzec Gier; nie dziedziczyć starego mobilnego nadpisania games.css
+do 56 px. Kontakty używają tych samych kącików i CSS wypustek, z lokalnym
+ustawieniem wspólnego wymiaru 36/1 px. E2E sprawdza wysokość 36 px.

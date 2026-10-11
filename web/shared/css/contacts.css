@@ -22,7 +22,7 @@
 }
 
 /* Wypustki korzystają wprost z games.css; na komputerze obie kolumny. */
-.contacts-tabs{ margin: 0; }
+.contacts-tabs{ margin: 0; --tab-height: 36px; --tab-extra: 1px; }
 .contacts-tabs > .tabs-strip{ display: none; }
 .contacts-card[hidden]{ display: none; }
 @media (max-width: 720px){
