@@ -769,3 +769,10 @@ Zrzuty po wdrożeniu: 1400/390, dane przykładowe i odmowy zwinięte/rozwinięte
 
 To aktualizacja otwartego zakresu; wykonana wcześniej wersja mobilna
 z dwiema kartami ułożonymi pionowo nie realizuje przełączanych kart.
+
+**330 — realizacja zakończona:** branch 38145406627 ✓ 7/7, Pages
+38146034897 ✓, main 38146083458 ✓ 7/7 bez retry + unit 409/409.
+Dostarczony mail test8 i rzeczywista akceptacja w Bazach, anonimowy
+Go/login, izolacja Tasks/licznika, blokady ról i obcy/cofnięty token.
+Nowy wygląd udostępniania Baz i mobilne karty kontaktów nie są częścią
+tego zakończonego zakresu i pozostają do wykonania.

@@ -395,3 +395,15 @@ telefon/puste listy zapisane na końcu E19 i ujednolicenie-wygladu: dwie
 przełączane karty z plakietką, wspólny pusty stan. Nowy wygląd udostępniania
 Baz nadal do wykonania; SQL odmów 331 to tylko lokalny draft /tmp, nie etap
 wdrożony.
+
+Promocja 330: commit 63a2a4481 na main, Pages 38146034897 ✓, kontrola
+main 38146083458 w toku. Po zakończeniu wpisać wynik; nie ponawiać
+przebiegu równolegle. Lokalny /tmp/base331-draft.sql zawiera także
+warunkową rezerwację maila i uczciwy wynik cancel; nadal wymaga pełnych
+testów SQL/wyścigów i frontu. Nie generować go ponownie starym build331.py.
+
+**330 zakończona:** main 38146083458 ✓ 7/7 bez retry + unit 409/409,
+rzeczywisty mail test8 67 s. Pages 38146034897 ✓; SQL 330 OK. Następna
+paczka: odmowy Baz i wspólny wygląd udostępniania; potem przełączane
+karty mobilne kontaktów/plakietki/puste listy. Nie powtarzać zakończonej
+kontroli 330. Brak odpowiedzi o modelu subskrypcji nie blokuje Baz/UI.
