@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict fZxHIMQenkSaPysQn1YdBdEAe8P7pdu3BcI02sEGKNW3PdDm6zORbHfVXdg8v5E
+\restrict fOHhdN3QIdYDJMMcZqFcyKzAqgDZPlFDacPLFmNJWJFz7fPbPFOPjxhcMdub5Ho
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -3286,6 +3286,31 @@ BEGIN
     AND target_key='pair:'||v_uid::text||':'||md5(v_email);
   DELETE FROM public.email_cooldowns WHERE email_hash=md5(v_email);
   RETURN jsonb_build_object('ok',true);
+END; $_$;
+
+
+--
+-- Name: e2e_subscriber_mail_flag(boolean); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."e2e_subscriber_mail_flag"("p_reset" boolean DEFAULT false) RETURNS "jsonb"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'auth', 'pg_temp'
+    AS $_$
+DECLARE caller text; stamp timestamptz;
+BEGIN
+ SELECT lower(email) INTO caller FROM auth.users WHERE id=auth.uid();
+ IF caller IS NULL OR caller !~ '^test[1-8]@familiada[.]online$' THEN
+   RETURN jsonb_build_object('ok',false,'err','test accounts required');
+ END IF;
+ SELECT suppressed_at INTO stamp FROM public.email_unsub_tokens
+ WHERE public._norm_email(email)='test14@familiada.online';
+ IF coalesce(p_reset,false) THEN
+   UPDATE public.email_unsub_tokens SET suppressed_at=NULL
+   WHERE public._norm_email(email)='test14@familiada.online';
+ END IF;
+ RETURN jsonb_build_object('ok',true,'previous_suppressed_at',stamp,
+   'suppressed_at',CASE WHEN coalesce(p_reset,false) THEN NULL ELSE stamp END);
 END; $_$;
 
 
@@ -19365,5 +19390,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict fZxHIMQenkSaPysQn1YdBdEAe8P7pdu3BcI02sEGKNW3PdDm6zORbHfVXdg8v5E
+\unrestrict fOHhdN3QIdYDJMMcZqFcyKzAqgDZPlFDacPLFmNJWJFz7fPbPFOPjxhcMdub5Ho
 
