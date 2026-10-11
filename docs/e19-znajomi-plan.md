@@ -901,3 +901,14 @@ akceptacji z odmową/cofnięciem, punktowe E2E na rzeczywistych mailach
 test14: akceptacja/usunięcie i odmowa przez Go, bez zakładania konta.
 Następna migracja odmów Subskrybentów otrzyma 332; draft Baz trzeba
 przenumerować dopiero przy właściwym pkt 4.
+
+Audyt dla 332 obejmuje również starsze RPC
+polls_hub_subscription_invite i polls_hub_subscription_invite_a:
+oba nadal tworzą subskrypcje kont, a drugi ma osobne 5-dniowe ograniczenie
+zamiast wspólnego kontraktu. Ich brak w obecnym froncie nie wystarcza:
+wywołanie bezpośrednie nie może obchodzić reguły konto→Znajomi ani
+karencji odmowy. Zweryfikować także polls_hub_subscription_accept/reject,
+poll_sub_accept, konwersję friend_invites_from_subscriptions i istniejące
+rekordy historyczne. poll_claim_email_records obecnie przepisuje odbiorcę
+zadań ankietowych i wywołuje konwersję znajomości; nie podpina już sam
+anonimowego wpisu subskrypcji do konta.
