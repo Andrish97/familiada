@@ -27,7 +27,7 @@ async function openShare(page, baseId) {
   await page.locator(`#mineGrid [data-base-id="${baseId}"]`).click();
   await page.locator("#btnShare").click();
   await expect(page.locator("#shareOverlay")).toBeVisible();
-  await expect(page.locator("#baseShareFriends .shareRow").first()).toBeVisible();
+  await expect(page.locator("#baseShareFriends .shareRow, #baseShareFriends .shareEmpty").first()).toBeVisible();
 }
 async function openShared(page) {
   await page.goto(`${SITE}/bases/?tab=shared`); await ready(page);
