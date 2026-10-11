@@ -1190,7 +1190,9 @@ jobs:
       - name: Verify contact locks, partial cleanup and old vote contracts
         run: |
           psql -v ON_ERROR_STOP=1 -c 'DROP TRIGGER IF EXISTS poll_tasks_cleanup_partial_votes ON public.poll_tasks'
+          psql -v ON_ERROR_STOP=1 -f docs/sql/seed-poll-contact-cleanup-347.sql
           psql -v ON_ERROR_STOP=1 -f supabase/migrations/2026-10-11_347_poll_contact_locks_and_partial_cleanup.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-poll-cleanup-backfill-347.sql
           psql -v ON_ERROR_STOP=1 -f docs/sql/test-poll-contact-cleanup-347.sql
           psql -v ON_ERROR_STOP=1 -f docs/sql/test-poll-task-completion-344.sql
           psql -v ON_ERROR_STOP=1 -f docs/sql/test-poll-share-contract-340.sql

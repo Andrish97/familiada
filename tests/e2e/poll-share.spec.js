@@ -28,22 +28,134 @@ async function cleanup(ownerPage, friendId) {
   await rpc(ownerPage, "e2e_subscriber_email_cleanup", { p_email: subscriberEmail });
 }
 
-async function seedPoll(page) {
-  return page.evaluate(async () => {
+async function seedPoll(page, { type = "poll_text" } = {}) {
+  return page.evaluate(async type => {
     const sb = window.__sbClient;
     const { data: userData } = await sb.auth.getUser();
     const { data: game, error } = await sb.from("games")
-      .insert({ name: `E2E-POLL-SHARE-${Date.now()}`, owner_id: userData.user.id, type: "poll_text", status: "draft" })
+      .insert({ name: `E2E-POLL-SHARE-${Date.now()}`, owner_id: userData.user.id, type, status: "draft" })
       .select("id,share_key_poll,name").single();
     if (error) throw error;
     for (let ord = 1; ord <= 10; ord++) {
-      const { error: questionError } = await sb.from("questions")
-        .insert({ game_id: game.id, ord, text: `Pytanie ${ord}` });
+      const { data: question, error: questionError } = await sb.from("questions")
+        .insert({ game_id: game.id, ord, text: `Pytanie ${ord}` }).select("id").single();
       if (questionError) throw questionError;
+      if (type === "poll_points") {
+        const { error: answerError } = await sb.from("answers").insert(
+          [1, 2, 3, 4].map(answerOrd => ({ question_id: question.id, ord: answerOrd, text: `Odpowiedź ${answerOrd}` })),
+        );
+        if (answerError) throw answerError;
+      }
     }
     return game;
-  });
+  }, type);
 }
+
+test("@mailbox ankieta347: wypisanie kontaktów usuwa niepełne tekst i punkty", async ({ browser }, testInfo) => {
+  test.setTimeout(600000);
+  const ownerContext = await browser.newContext({ serviceWorkers: "block" });
+  const friendContext = await browser.newContext({ serviceWorkers: "block" });
+  const anonymousContext = await browser.newContext({ serviceWorkers: "block" });
+  if (process.env.GITHUB_REF_NAME !== "main" && process.env.TEST_BRANCH_CODE !== "0") {
+    for (const context of [ownerContext, friendContext, anonymousContext]) {
+      await serveBranchCode(context, { pages: ["polls", "go", "tasks"] });
+    }
+  }
+  const ownerPage = await ownerContext.newPage();
+  const friendPage = await friendContext.newPage();
+  const anonymousPage = await anonymousContext.newPage();
+  let friendId = null;
+  let gameId = null;
+  try {
+    await loginAsTestUser(ownerPage, ownerContext, { username: testAccountUsername(7) });
+    await loginAsTestUser(friendPage, friendContext, { username: testAccountUsername(8) });
+    friendId = await friendPage.evaluate(async () => (await window.__sbClient.auth.getUser()).data.user.id);
+    for (const type of ["poll_text", "poll_points"]) {
+      await cleanup(ownerPage, friendId);
+      await clearMailbox(testAccountUsername(8));
+      await clearMailbox(subscriberEmail);
+      await resetMailProviderLimits(ownerPage);
+      const invitation = await rpc(ownerPage, "friends_invite", { p_handle: testAccountUsername(8) });
+      expect(invitation.ok).toBe(true);
+      expect((await rpc(friendPage, "friends_accept", { p_id: invitation.id })).ok).toBe(true);
+      const subscription = await rpc(ownerPage, "subscribers_invite", { p_email: subscriberEmail });
+      expect(subscription.ok).toBe(true);
+      await anonymousPage.goto("https://www.familiada.online/", { waitUntil: "domcontentloaded" });
+      expect((await rpc(anonymousPage, "poll_sub_accept_email", { p_token: subscription.token, p_email: subscriberEmail })).ok).toBe(true);
+      const game = await seedPoll(ownerPage, { type });
+      gameId = game.id;
+      await ownerPage.goto(`https://www.familiada.online/polls/?id=${gameId}`);
+      await ownerPage.locator("#btnAddRecipients").click();
+      await ownerPage.locator("#pollRecipientsFriends .shareRow").filter({ hasText: "test8" }).click();
+      await ownerPage.locator("#pollRecipientsSubs .shareRow").filter({ hasText: subscriberEmail }).click();
+      await ownerPage.locator("#pollRecipientsAdd").click();
+      const after = new Date(Date.now() - 2000).toISOString();
+      await ownerPage.locator("#btnOpenPoll").click();
+      await ownerPage.locator(".uni-foot .btn.gold:visible").click();
+      await expect(ownerPage.locator("#subsGrid .shareRow")).toHaveCount(2);
+      const emails = await Promise.all([
+        waitForEmail({ recipient: testAccountUsername(8), after, subject: /Zaproszenie do ankiety/i, timeout: 150000 }),
+        waitForEmail({ recipient: subscriberEmail, after, subject: /Zaproszenie do ankiety/i, timeout: 150000 }),
+      ]);
+      expectMailDocument(emails[0], { accountFooter: true });
+      expectMailDocument(emails[1], { globalUnsub: true });
+      const links = emails.map(email => extractHttpLinks(email).find(url => new URL(url).pathname === "/go/" && new URL(url).searchParams.has("t")));
+      expect(links.every(Boolean)).toBe(true);
+      const tasks = (await rpc(ownerPage, "poll_share_panel", { p_game_id: gameId })).tasks;
+      const item = await ownerPage.evaluate(async gameId => {
+        const sb = window.__sbClient;
+        const { data: question, error } = await sb.from("questions").select("id").eq("game_id", gameId).eq("ord", 1).single();
+        if (error) throw error;
+        const { data: answer, error: answerError } = await sb.from("answers").select("id").eq("question_id", question.id).eq("ord", 1).maybeSingle();
+        if (answerError) throw answerError;
+        return { question_id: question.id, answer_id: answer?.id, answer_raw: "Kot", answer_norm: "kot" };
+      }, gameId);
+      const table = type === "poll_text" ? "poll_text_entries" : "poll_votes";
+      const count = async id => ownerPage.evaluate(async ({ table, gameId, id }) => {
+        const { count, error } = await window.__sbClient.from(table).select("id", { count: "exact", head: true }).eq("game_id", gameId).eq("voter_token", `task:${id}`);
+        if (error) throw error;
+        return count;
+      }, { table, gameId, id });
+      for (const [index, page] of [[0, friendPage], [1, anonymousPage]]) {
+        const token = new URL(links[index]).searchParams.get("t");
+        await page.goto(links[index]);
+        await page.waitForFunction(() => !!window.__sbClient);
+        const resolved = await rpc(page, "poll_go_resolve", { p_token: token });
+        expect(resolved).toMatchObject({ ok: true, kind: "task", game_id: gameId });
+        const task = tasks.find(task => task.id === resolved.task_id);
+        expect(task).toBeTruthy();
+        expect(task.recipient_user_id || null).toBe(index === 0 ? friendId : null);
+        expect(await rpc(page, "poll_task_open", { p_token: token })).toBe("ok");
+        await rpc(page, type === "poll_text" ? "poll_text_submit_batch" : "poll_points_vote_batch", {
+          p_game_id: gameId, p_key: task.share_key_poll, p_voter_token: `task:${task.id}`, p_items: [item],
+        });
+        expect(await count(task.id)).toBe(1);
+        expect(await rpc(page, "poll_task_done", { p_token: token })).toBe("votes_incomplete");
+        const withdrawn = index === 0
+          ? await rpc(page, "friends_remove", { p_id: invitation.id })
+          : await rpc(page, "poll_sub_unsubscribe", { p_token: subscription.token });
+        expect(withdrawn.ok).toBe(true);
+        expect(await count(task.id)).toBe(0);
+        expect(await rpc(page, "poll_task_open", { p_token: token })).toBe(index === 0 ? "not_found" : "already_used");
+        await page.goto(links[index]);
+        await expect(page.locator("#title")).toContainText(/cofnięt|anulowan|nieważn|niedostępn|wygas|nieprawidł/i);
+      }
+      expect(await rpc(ownerPage, "poll_share_send", { p_game_id: gameId, p_friend_ids: [friendId], p_subscriber_ids: [subscription.id] })).toMatchObject({ ok: true, created: 0 });
+      await ownerPage.reload();
+      await expect(ownerPage.locator("#subsGrid .shareRow")).toHaveCount(0);
+      await ownerPage.screenshot({ path: testInfo.outputPath(`shot-poll347-${type}-contacts-withdrawn.png`), fullPage: true, animations: "disabled" });
+      await ownerPage.evaluate(async id => {
+        const { error } = await window.__sbClient.from("games").delete().eq("id", id);
+        if (error) throw error;
+      }, gameId);
+      gameId = null;
+    }
+  } finally {
+    if (gameId) await ownerPage.evaluate(async id => { await window.__sbClient.from("games").delete().eq("id", id); }, gameId).catch(() => {});
+    if (friendId) await cleanup(ownerPage, friendId).catch(() => {});
+    await Promise.all([ownerContext.close(), friendContext.close(), anonymousContext.close()]);
+  }
+});
 
 test("ankieta: okno Znajomi · Subskrybenci dodaje obie grupy, już zaproszeni znikają z wyboru", async ({ browser }) => {
   test.setTimeout(360000);
