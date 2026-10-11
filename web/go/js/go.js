@@ -414,9 +414,29 @@ function showSubInviteAnonEmail(head, subscriberEmail) {
 async function handleSubInvite(data, user) {
   const head = buildSubHeading(data);
   const expectedEmail = normalizeEmail(data.subscriber_email);
-  const isActive = data.status === "pending";
   const hasAccountInvite = Boolean(data.subscriber_user_id);
   const userEmail = normalizeEmail(user?.email);
+
+  // Nieaktywne zaproszenie pokazuje rzeczywisty stan, także po odświeżeniu.
+  // Link konkretnej osoby nie staje się formularzem nowej subskrypcji.
+  if (data.status !== "pending") {
+    if (user && hasAccountInvite && !matchesInviteTarget({
+      user, expectedUserId: data.subscriber_user_id, expectedEmail,
+    })) {
+      showMismatch(head, expectedEmail);
+      return;
+    }
+    if (data.status === "active") {
+      setView({ head: MSG.subscriptionActive(), text: MSG.inviteAccepted() });
+    } else if (data.status === "declined") {
+      setView({ head: MSG.declined(), text: MSG.inviteDeclined() });
+    } else {
+      setView({ head: MSG.inviteExpired(), text: "" });
+    }
+    clearActions();
+    showEmailInput(false);
+    return;
+  }
 
   // Case 1: Zalogowany user + account invite
   if (user && hasAccountInvite) {
@@ -429,30 +449,18 @@ async function handleSubInvite(data, user) {
       showMismatch(head, data.subscriber_email);
       return;
     }
-    if (!isActive) {
-      showExpired(head);
-      return;
-    }
     showSubInviteAccountMatch(head, expectedEmail);
     return;
   }
 
   // Case 2: Zalogowany user + email invite (bez account)
   if (user && !hasAccountInvite) {
-    if (!isActive) {
-      showExpired(head);
-      return;
-    }
     showSubInviteLoggedIn(head, userEmail, expectedEmail);
     return;
   }
 
   // Case 3: Niezalogowany + account invite (wymagaj logowania)
   if (!user && hasAccountInvite) {
-    if (!isActive) {
-      showExpired(head);
-      return;
-    }
     setView({ head, text: MSG.loginToAccept() });
     clearActions();
     addAction(MSG.loginLabel(), "gold", redirectToLogin);
@@ -461,14 +469,6 @@ async function handleSubInvite(data, user) {
   }
 
   // Case 4: Niezalogowany + email invite (bez account)
-  if (!isActive) {
-    setView({ head, text: MSG.subscribePrompt() });
-    showEmailInput(true);
-    clearActions();
-    addAction(MSG.subscribeLabel(), "gold", async () => subscribeByEmail());
-    return;
-  }
-
   showSubInviteAnonEmail(head, data.subscriber_email);
 }
 

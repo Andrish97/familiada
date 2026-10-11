@@ -60,6 +60,9 @@ test("@mailbox subskrybenci: e-mail bez konta, anonimowe przyjęcie i usunięcie
     await active.locator('[data-act="remove"]').click();
     await page.locator(".uni-foot .btn.gold").click();
     await expect(active).toHaveCount(0);
+    await invitePage.reload();
+    await expect(invitePage.getByRole("button", { name: "Akceptuj", exact: true })).toHaveCount(0);
+    await expect(invitePage.locator("#emailInput")).toBeHidden();
   } finally {
     await cleanup(page).catch(() => {});
     await anonymous.close();

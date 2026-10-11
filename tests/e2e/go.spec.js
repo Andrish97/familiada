@@ -235,6 +235,9 @@ test.describe("go.js audyt", () => {
 
       // Powinno pokazać "Odrzucono" (declined heading)
       await expect(title).toContainText(/Odrzucono|Declined|Відхилено/, { timeout: 5000 });
+      await page.reload();
+      await expect(title).toContainText(/Odrzucono|Declined|Відхилено/);
+      await expect(page.locator("#emailInput")).toBeHidden();
     } finally {
       await page.close();
     }
@@ -279,6 +282,9 @@ test.describe("go.js audyt", () => {
       // Powinno pokazać "Subskrypcja aktywna" (subscriptionActive)
       const title = page.locator(".poll-go-title");
       await expect(title).toContainText(/aktywna|active|активна/, { timeout: 5000 });
+      await page.reload();
+      await expect(title).toContainText(/aktywna|active|активна/);
+      await expect(page.locator("#emailInput")).toBeHidden();
     } finally {
       await setupContext.close();
     }
