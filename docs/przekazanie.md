@@ -26,24 +26,26 @@ Branch38174928575 ✓3/3,38175511620 ✓1/1 (artefakt screenshotów),
 main38175836595 ✓3/3 bez retry/unit447: trzy realne maile, oba aktory,
 Go/undo/badge/cancel i ukrycie pustej sekcji.346 zamknięte produkcyjnie.
 Lokalne podglądy z przykładowymi danymi: docs/img/e19-friends/withdraw-*.
-347 na pomocniczym codex/e19-347/checkout /tmp/familiada-347-isolated:
-Finalny isolated38177985246 ✓ (unit i verify-e19-347 potwierdzone przez
-konektor GitHub przy wznowieniu); HEAD eaa40581ee. Lokalne regresje
-i wyścigi ✓; ponowny kontrakt347 obu typów ankiet też ✓. SQL347 zastosowany:
-DB38178919162 success/log OK22:05:58 UTC, schema368f847bcc. Lokalnie również
-wyścig uruchomienia przez psql -1 jak w skrypcie wdrażania ✓.
-Branch38179100034 failure (błędna nazwa RPC w teście). Poprawiona nazwa
-poll_task_opened; nowy38179382545 success2/2: ankieta347 + okno Znajomi, retries0/pula7–8,
-sześć rzeczywistych maili8/14 w9/101/94s. Teraz ten sam punktowy zestaw na main;
-nie zamykać347 przed kontrolą main. Brak zmian Pages w tej paczce.
-Przejściowy błąd401 CLI GitHub ustąpił po ponownej próbie na prośbę
-użytkownika: gh api user i odczyt38177985246 działają. Wznowić promocję
-i obowiązkową kontrolę produkcji; nie pomijać bramek wdrożenia.
-Draft348 w osobnym checkout /tmp/familiada-348-isolated, branch
-codex/e19-348/afcd3cd6e3, bez produkcji: FK odbiorców CASCADE. Lokalny
-kontrakt wszystkich stanów obu typów/Baz/legacy subskrypcji i owner cascade
-success; komplet zostaje, partial znika, niezależni/anonimowi zachowani.
-Wymaga wyścigów, isolated i punktowego real-mail/account deletion.
+347 zamknięte produkcyjnie: finalny isolated38177985246 success,
+SQL DB38178919162/log OK22:05:58 UTC/schema368f847bcc. Poprawiony
+branch38179382545 success2/2, main38179873750 success2/2 bez retry,
+unit447/447, sześć realnych maili8/14 w56/96–101/84–87s.
+Oba typy i oba kontakty: częściowy batch przez RPC po mailu/Go,
+wypisanie usuwa partial, stary token bez dostępu; regresja pełnego
+tekstu w UI też success. Pierwszy38179100034 failure dotyczył tylko
+błędnej nazwy RPC w teście; poprawiono na poll_task_opened.
+
+Teraz348: /tmp/familiada-348-isolated, branch codex/e19-348,
+HEAD f4d3595b3a, jeszcze bez produkcji. Finalny isolated38180137558
+success (wstępny38179824305 też). Trzy FK odbiorcy CASCADE;
+lokalnie wszystkie stany/oba typy/Bazy/legacy subskrypcje, niezależni
+i anonimowi odbiorcy oraz owner cascade success. Osiem wyścigów
+partial/complete × vote-first/delete-first × tekst/punkty success.
+Stary blokujący DDL odtwarza deadlock z child-first account cleanup;
+finalny NOWAIT/retry zwalnia wszystkie locki nieudanej podtransakcji,
+test psql -1 wdrożenia success. Dalej przygotować punktowy rzeczywisty
+mail + usuwanie/odtworzenie konta odbiorcy i stare Go, potem promocja,
+SQL/log oraz branch/main. Test14 nadal bez konta.
 Pending kolejka i proweniencja maili, Go/anon nadal dalszy zakres pkt7.
 
 Dalej UI/E20 i landscape każdej strony; manual ostatni, bez technicznego

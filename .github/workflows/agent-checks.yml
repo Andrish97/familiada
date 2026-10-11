@@ -116,6 +116,11 @@ on:
         type: boolean
         default: false
 
+      verify_e19_348:
+        description: 'Verify physical recipient account cascades and completed poll aggregates'
+        type: boolean
+        default: false
+
 permissions:
   contents: read
 
@@ -1145,7 +1150,7 @@ jobs:
           path: /tmp/fam-restore.log
 
   verify-e19-347:
-    if: ${{ inputs.verify_e19_347 }}
+    if: ${{ inputs.verify_e19_347 || inputs.verify_e19_348 }}
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -1201,6 +1206,16 @@ jobs:
           psql -v ON_ERROR_STOP=1 -f docs/sql/test-subscriber-refusal-333.sql
           bash docs/sql/test-poll-cleanup-347-ddl-concurrency.sh
           bash docs/sql/test-poll-contact-cleanup-347-concurrency.sh
+          bash docs/sql/test-poll-task-completion-344-concurrency.sh
+      - name: Verify physical recipient account cascade and retained aggregates
+        if: ${{ inputs.verify_e19_348 }}
+        run: |
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/2026-10-11_348_recipient_task_account_cascade.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-recipient-account-cascade-348.sql
+          bash docs/sql/test-recipient-cascade-348-ddl-concurrency.sh
+          bash docs/sql/test-recipient-account-cascade-348-concurrency.sh
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-base-task-cascade-345.sql
+          psql -v ON_ERROR_STOP=1 -f docs/sql/test-poll-contact-cleanup-347.sql
           bash docs/sql/test-poll-task-completion-344-concurrency.sh
       - name: Upload schema restore diagnostics
         if: always()

@@ -1257,3 +1257,17 @@ cztery deterministyczne wyścigi wysyłanie×wypisanie friend/subscriber oraz
 równoległe ukończenia344 ✓. Brancha pomocniczy codex/e19-347 służy tylko
 bramce isolated; SQL347 nie zastosowany na produkcji. Anulowanie kolejki
 mailowej i trwała proweniencja maili są kolejną krawędzią grafu.
+
+### Pkt7 — 347 zamknięte produkcyjnie
+
+SQL DB38178919162/log22:05:58, finalny isolated38177985246 oraz
+branch38179382545/main38179873750 success. Main2/2 bez retry/unit447,
+sześć rzeczywistych maili8/14. Oba typy i oba kontakty: partial przez
+RPC po mailu/Go, wypisanie sprząta głosy, stary token zamknięty.
+Regresja pełnego tekstu w UI również success. Front bez zmian; aktualne
+Pages38172431095. Nie rozszerzać tego na anulowanie kolejki mailowej.
+
+Następne348: konto odbiorcy → taski Baz/Ankiet i legacy subskrypcje.
+Trzy FK CASCADE, completed aggregate chroniony347. Draft na osobnym
+branchu codex/e19-348, finalny isolated38180137558 success; nie produkcja.
+Dalej punktowy real-mail/account deletion, SQL/log i kontrola branch/main.
