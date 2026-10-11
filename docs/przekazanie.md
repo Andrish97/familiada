@@ -12,13 +12,12 @@ Wyniki produkcyjne: `friends` 38099344264 (2/2), `subscribers` 38099196468
 (2/2), `go --grep 'subscription invite'` 38099459575 (2/2),
 `frontend-navigation` 38099534030 (11/11), `account-deletion` 38099771245
 (1/1), regresja dźwięku 38099849073 (2/2); unit 401/401 w każdym przebiegu.
-E19 krok 4 jest w toku na `codex/e19-3`: strona ankiety używa `poll_share_send`,
-ma okno wyboru Znajomych i Subskrybentów oraz jedną listę aktualnych odbiorców;
-punktowy `poll-share.spec.js` run 38100836116 jest zielony (1/1, unit
-401/401); sprawdził obie grupy, dostarczenie maila test8 i ukrywanie
-zaproszonych. Następne: promocja na `main`, Pages i punktowa kontrola
-produkcyjna `poll-share.spec.js`. Przed krokiem 6 skoordynować obszar Control
-z drugą sesją.
+E19 krok 4 jest zamknięty: branch po synchronizacji 38100967351 ✓; Pages
+38101052370 ✓; kontrola produkcyjna `poll-share.spec.js` 38101089865 ✓, unit
+401/401. Scenariusz sprawdza obie grupy, mail test8 i ukrywanie zaproszonych.
+Pierwsza próba testu przekroczyła limit oczekiwania na mail (pozostawał pending
+w kolejce); retry przeszedł. Rozpoczęty E19 krok 5: udostępnianie baz jednym\	oknem, link `go?b=`, akceptacja w `/tasks/`. Przed krokiem 6 skoordynować
+obszar Control z drugą sesją.
 
 Produkcyjne e2e
 Znajomych 38097255431 zaliczyło główny przepływ maila/przyjęcia/usunięcia (po
