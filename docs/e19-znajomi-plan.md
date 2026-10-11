@@ -289,6 +289,24 @@ przeszedł. Pozostałe zachowania tabeli nadal są planem do wykonania.
   i subskrypcji na konto — przy zadaniach odbiorcy. U subskrybenta bez
   konta tę samą akcję udostępnia istniejący link /go/. Nie dodajemy
   propozycji przychodzących na jednostronnej stronie Subskrybenci nadawcy.
+- **Wygląd cofnięcia (doprecyzowanie 2026-10-11):** użyć istniejącej
+  ikony `undo` (zawinięta strzałka w lewo), bez napisu w przycisku;
+  title/aria-label „Cofnij odmowę”. Ten sam komponent, rozmiar i miejsce
+  po prawej co pozostałe akcje wiersza. Bez licznika; ikona `refresh`
+  nadal oznacza wysłanie przypomnienia, więc nie używać jej dla cofnięcia.
+  Nazwa po lewej, drugi wiersz: nadawca/rola i status Odrzucono.
+- Nagłówek zwijanej sekcji: chevron + „Odrzucone przeze mnie” + liczba
+  wpisów. Ukryć sekcję, gdy jest pusta; po otwarciu własne przewijanie
+  zgodnie ze wspólnym komponentem. Znajomi: ostatnia sekcja prawej karty,
+  pod Propozycjami; Zadania: ostatnia sekcja istniejącej karty, pod Zrobione,
+  z istniejącymi filtrami rodzajów. Bez nowej karty i bez zakładki w Bazach.
+- **Bazy — rozdzielenie stron relacji:** zaproszenia odbiorca rozpatruje
+  w Zadaniach; tam zachowuje odrzucone z nazwą bazy, nadawcą i oferowaną
+  rolą. Cofnięcie odmowy przenosi wpis do Do zrobienia; Akceptuj dopiero
+  udostępnia bazę na stronie Bazy → Udostępnione. Właściciel widzi odmowę
+  tylko w istniejącym oknie udostępniania swojej bazy i nie może jej cofnąć
+  za odbiorcę. Przed przywróceniem sprawdzić aktualną ważność zaproszenia,
+  bazę i aktualną oferowaną rolę; nie odtwarzać danych z kafelka.
 - Cofnąć odmowę może wyłącznie właściwy odbiorca (konto albo ważny token
   dla obsługi bez konta). Serwer sprawdza ważność i stan nadrzędnego zasobu.
   Jeśli nadawca cofnął zaproszenie, usunął zasób/konto lub odmowa wygasła,
