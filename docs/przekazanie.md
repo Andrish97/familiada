@@ -23,20 +23,20 @@ oraz trzy dostarczone maile i trwały limit czwartego. Błąd gotowości helpera
 pierwszego main naprawiony (Pytanie1 oraz każde przejście1–10), świeży
 pełny zakres poll-share przeszedł. Nie powtarzać pkt5 bez nowej zmiany.
 
-Maile pkt6 są draftem brancha: kanoniczny renderer Edge + generowana
-identyczna kopia front, sześć wejść, odrębne reminders/rola Bazy/langstopki,
-16 zrzutów docs/img/e19-mails. Lokalnie unit431/431 i Deno check auth/send-mail ✓.
-Nowe helpery E2E weryfikują HTML faktycznie dostarczonego maila; izolowany
-38168702507 ✓ dla renderer/auth. Kolejny draft raportuje prawdziwy queue
-wynik per adres (NULL z triggera to skipped, nie success); frontend nie
-oznacza pominiętego taska jako emailed. Izolowany38169686125 ✓ (431unit/Deno auth+send-mail/copy). Branch
-38169157737 ✓ pięćUI/sześć realnych maili. Promocja Edge/Pages teraz,
-potem te same main + authPL/EN/UK/queued0; dopiero po kontroli zaznaczyć
-pierwszą paczkę maili jako wdrożoną. Kontakt/Settings i audyt reszty
-pozostają otwarte.
-Pkt5 już zamknięty; przed promocją maili wymagany świeży branch z ich kodem.
-Kod Deno typuje się po
-jawnych guardach usuwających sześć odtworzonych błędów starego HEAD.
+Pierwsza paczka maili pkt6 wdrożona: Pages38170086375 i Edge38170086411 ✓.
+Main38170191574:13/14 bez retry/unit431, realne sharing maile, queued0/noqueue,
+reset11 i zmiana12→13 z przywróceniem oraz treści authPL/EN/UK. Świeży main38171488172 ✓ domknął Subskrybentów po poprawie starej asercji
+wygasło na odmowę po wypisaniu/ukryciu. Cały zakres pierwszej paczki zaliczony.
+
+Druga paczka kontakt/Settings lokalnie: wspólny renderer z kopią Worker,
+rich HTML i opcjonalną akcją. Kontakt3typy×3lang; ręczne podgląd/wysyłka ten
+sam helper. Admin compose/marketing raportują rzeczywistą kolejkę i nie
+zapisują historii pominiętych adresów. Unit440/440 ✓; zrzuty390/1400.
+mail-content.spec.js sprawdza15 szablonów i SMTP do test14 bez publicznego
+formularza (Telegram admina). Następnie izolowane → branch15mail →
+Worker/Pages → identyczny main. Marketing invitation/newsletter/custom ma jeden wspólny builder preview/send
+i zachowaną treść/ilustracje. Unit443 lokalnie; świeże bramki nadal wymagane.
+Audyt reszty pkt6 otwarty.
 
 Dalej pkt6 maile (audyt wejść w maile-granice.md), pkt7 graf/kaskady/Go/
 lekki anonimowy token, UI/E20 i landscape; manual ostatni. Wypisanie=odmowa
@@ -560,3 +560,9 @@ zasobu), dla Subskrybentów wspólne 5/30 także stare RPC; globalny mail-off
 trwały. SQL/wyścigi lokalne ✓, unit 412/412. Front pokazuje odmowy nadawcy
 bez ponowienia; Go konta→Znajomi. Runner/produkcja jeszcze do sprawdzenia;
 nie oznaczać pkt 3 zamkniętego. Zrzuty refusal-* w e19-subscribers.
+
+Bieżąca druga bramka: Agent38172033341 ✓ unit444/Deno/kopie/Worker build;
+branch38172035648 ✓15 SMTP i4 HTTP200 ilustracje. Zapisane podglądy Settings
+dopięte przez stored-mail; potrzebne unit447/isolated i punktowy browser
+preview, potem Worker/Pages oraz main15mail+preview. Producentów maili
+na branchu nie zmieniono po zielonym SMTP.

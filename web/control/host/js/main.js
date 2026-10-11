@@ -7,14 +7,14 @@
 // snap-to-grid z dzisiejszego host.js (kosmetyka do dostrojenia wizualnie
 // później, nie architektura).
 
-import { initI18n, setUiLang } from "../../../shared/translation/translation.js?v=v2026-10-11T19561";
-import { startKeepAlive } from "../../../shared/js/core/keep-alive.js?v=v2026-10-11T19561";
-import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-11T19561";
-import { createSubscription } from "../../../shared/js/core/game-state-subscribe.js?v=v2026-10-11T19561";
-import { createHostRenderer } from "./render.js?v=v2026-10-11T19561";
-import { createCoverLogoRenderer } from "./coverLogo.js?v=v2026-10-11T19561";
-import { createHostThemeApplier } from "./hostThemeManager.js?v=v2026-10-11T19561";
-import { icon } from "../../../shared/js/core/icons.js?v=v2026-10-11T19561";
+import { initI18n, setUiLang } from "../../../shared/translation/translation.js?v=v2026-10-11T20282";
+import { startKeepAlive } from "../../../shared/js/core/keep-alive.js?v=v2026-10-11T20282";
+import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-11T20282";
+import { createSubscription } from "../../../shared/js/core/game-state-subscribe.js?v=v2026-10-11T20282";
+import { createHostRenderer } from "./render.js?v=v2026-10-11T20282";
+import { createCoverLogoRenderer } from "./coverLogo.js?v=v2026-10-11T20282";
+import { createHostThemeApplier } from "./hostThemeManager.js?v=v2026-10-11T20282";
+import { icon } from "../../../shared/js/core/icons.js?v=v2026-10-11T20282";
 
 function parseParams() {
   const u = new URL(location.href);

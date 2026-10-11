@@ -206,3 +206,72 @@ maili systemowych, wszystkie języki dostarczania i granice pozostają w zakresi
   pomijać wiersz, a wynik nadal sugeruje zakolejkowanie. Domknąć prawdziwy
   wynik i zachowanie per adres/flag race w pkt6, z testem faktycznej kolejki;
   nie oznaczać pierwszej paczki rendererów jako rozwiązania tej granicy.
+
+### Druga paczka pkt6 — kontakt i Settings (draft)
+
+Kontakt confirmation/reply/compose używa wspólnego dokumentu z jawnym
+lang PL/EN/UK. Renderer ma identyczne generowane kopie frontu oraz Workera.
+Jawne wejście rich HTML zachowuje formatowanie TinyMCE; nagłówki, cytaty
+i podpisy nadal są escapowane. Przycisk akcji jest opcjonalny.
+Settings podgląd i wysyłka ręcznej wiadomości używają tej samej funkcji.
+
+Admin compose sprawdza błąd INSERT i rzeczywisty id kolejki. Pominięty mail
+nie zapisuje wysłanej historii ani załączników; edytor pozostaje otwarty.
+Marketing liczy tylko rzeczywiste INSERT RETURNING i tylko dla nich zapisuje
+historię. Wynik queued/skipped jest widoczny również przy całym batch mail-off.
+Odrębne zapisy kolejki i historii nie są jeszcze jedną transakcją: błąd
+historii po zakolejkowaniu wymaga audytu spójności w pkt7. Szablony wizualne
+marketingu dopięte w następnej części tego draftu (poniżej).
+
+Unit całych handlerów sprawdza queued0/mixed/full, normalizację/dedup,
+brak historii dla mail-off, błędy kolejki/historii, id i załączniki oraz limit500.
+Punktowy E2E mail-content uruchamia kod15 szablonów (3 kontaktowe + ręczny
+×3lang oraz trzy marketingowe) i wysyła przez send-mail do test14. Nie wywołuje publicznego formularza
+kontaktu, który powiadamia też administratora przez Telegram. Ten E2E nie
+jest kontrolą publicznego formularza ani autoryzowanego interfejsu admina.
+
+Zrzuty po wykonaniu, bez overflow390/1400:
+[kontakt390](img/e19-mails/contact-confirmation-pl-390.png),
+[kontakt1400](img/e19-mails/contact-confirmation-pl-1400.png),
+[odpowiedźUK1400](img/e19-mails/contact-reply-uk-1400.png),
+[ręczny390](img/e19-mails/contact-manual-pl-390.png),
+[długa nazwa390](img/e19-mails/long-resource-390.png).
+Dostarczenie i kontrola branch/main wymagane przed zamknięciem paczki.
+
+### Marketing i pierwsza kontrola main — aktualizacja
+
+Pierwsza paczka wdrożona i sprawdzona: main38170191574 ma13 poprawnych
+scenariuszy; świeży main38171488172 ✓ wypisanie z poprawną asercją odmowy.
+Nie powtarzać niezmienionych13. Pkt6 jako całość nadal otwarty.
+
+Marketing invitation/newsletter/custom używa jednego helpera zarówno do
+podglądu, jak i wysyłki, wspólnej ramki, akcji i stopki. Zachowano bogatą
+treść zaproszenia, cztery ilustracje i edytowalny HTML newsletter/custom.
+Obecny marketing ma polskie treści bez selektora języka; dokument jawnie
+lang=pl. Ręczny tekst bez body_html w API jest escapowany we wspólnej ramce.
+Pusty dokument marketingowy jest odrzucany przed kolejką.
+Nowy E2E obejmuje15 rzeczywistych szablonów na test14; unit443 lokalnie.
+
+Zrzuty [marketing390](img/e19-mails/marketing-invitation-390.png),
+[marketing1400](img/e19-mails/marketing-invitation-1400.png),
+[newsletter390](img/e19-mails/marketing-newsletter-390.png),
+[własny390](img/e19-mails/marketing-custom-390.png), wszystkie bez overflow.
+
+Przegląd screenshotów marketingu wykrył legacy /img/pl/ zwracające404.
+Aktualne /assets/img/pl/ zwraca200 image/webp. Zrzuty odświeżone z czterema
+ilustracjami; unit weryfikuje lokalne pliki i ścieżki, E2E sprawdza HTTP
+każdego obrazka przed SMTP. Izolowana bramka buduje też Worker przez
+Wrangler --dry-run, bez wdrożenia.
+
+### Zapisane podglądy Settings — uzupełnienie audytu
+
+Pięć miejsc pokazywania wiadomości/wątku/dwukliku używa jednego helpera
+stored-mail. Pełny body_html wyświetla się dokładnie jak zapisano, bez
+dokładania drugiego nagłówka/dokumentu oraz nadpisywania CSS. Fragmenty
+body_html zachowują formatowanie we wspólnej ramce; body bez HTML jest
+wyświetlany jako zwykły tekst, również gdy zawiera znaki przypominające tagi.
+Unit sprawdza dokument/fragment/tekst i wszystkie pięć wywołań; punktowy
+E2E importuje rzeczywiste moduły przeglądarki. To nie jest pełna kontrola
+autoryzowanego panelu administracyjnego. SMTP15 i ilustracje potwierdzone
+branch38172035648; po tej zmianie niezmienieni producenci nie wymagają
+powtórzenia SMTP na branchu, main obejmie15mail+preview.

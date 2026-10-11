@@ -1139,3 +1139,21 @@ wyścig helpera przed załadowaniem pytań; poprawione oczekiwanie Pytanie1
 oraz przejścia1–10, świeży komplet pięciu zielony. Pkt5 zamknięty;
 kolejny pkt6 maile w realizacji na branchu. Graf/anonimowy token/Go wszędzie
 nadal pkt7; nie rozszerzać tego wyniku na te niewykonane części.
+
+### Pkt6 — druga paczka kontakt/Settings, stan roboczy
+
+Wspólny renderer obejmuje kontakt PL/EN/UK i podgląd/wysyłkę ręcznej
+wiadomości z HTML edytora oraz escapowanymi cytatami i podpisami. Admin
+compose i marketing raportują rzeczywistą kolejkę i nie zapisują historii
+pominiętych adresów. Unit440/440 lokalnie; wymagane bramki branch/main.
+Szczegóły, ograniczenia pokrycia i zrzuty w maile-granice.md. Wygląd
+marketingu nadal do ujednolicenia. Pierwsza paczka main38170191574:13/14;
+powtórzyć tylko Subskrybenci z poprawną asercją odmowy po wypisaniu/ukryciu.
+
+### Pkt6 — domknięcie pierwszej kontroli, marketing na branchu
+
+Main38171488172 ✓: świeże wypisanie/odmowa po poprawie starej asercji; razem
+z13 green38170191574 pierwsza paczka wdrożona i zweryfikowana. Marketing
+ma wspólny builder podgląd/wysyłka i wspólną ramkę dla wszystkich3 szablonów.
+Najnowszy test mail-content obejmuje15 faktycznych szablonów i SMTP test14.
+Unit443 lokalnie; bramki izolowane/branch/main wymagane przed zamknięciem.
