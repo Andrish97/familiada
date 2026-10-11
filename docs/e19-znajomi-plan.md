@@ -996,3 +996,15 @@ normalnego INSERT (prawidłowo zabroniony). Helper 336 ograniczony do
 własnej pary test1–7→test8, bez maili i zmiany relacji. Draft Baz
 otrzymuje 337. Sześć Subscribers w 38156858860 przeszło bez retry;
 test kwalifikacji ankiety wymaga świeżej kontroli po wdrożeniu helpera.
+
+### Pkt 4 / Bazy — uzupełnienie audytu wejść (337)
+
+Wypisanie przez `leave_shared_base` zapisuje odmowę i odbiera dostęp;
+undo przywraca pending, a osobna akceptacja ponownie udziela dostępu.
+Wspólny lock pary obejmuje udostępnienie, decyzje, role i cofnięcie.
+Nie zmieniać roli aktywnego dostępu przez próbę ponownego zaproszenia.
+Stare `share_base_by_email` i zapis bezpośredni `qb_shares_write`
+omijają akceptację: zamknąć uprawnienia starego RPC i politykę zapisu,
+zachować odczyt oraz kanoniczne RPC. Fixture E2E Baz/Explorera muszą
+przechodzić przez zaproszenie i akceptację, bez przywracania obejścia.
+SQL 337 przygotowany lokalnie, jeszcze niewdrożony produkcyjnie.
