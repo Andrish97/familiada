@@ -130,6 +130,8 @@ test("@mailbox bazy: udostępnienie z UI wysyła działający link", async ({ pa
     await loginAsTestUser(page, context, { username: testAccountUsername(1) });
     baseId = await createBaseDirect(page, name);
     await resetMailProviderLimits(page);
+    const cronStatus = await page.evaluate(async () => window.__sbClient.rpc("mail_cron_status"));
+    console.log("[e2e-mail] mail cron status", JSON.stringify({ data: cronStatus.data, error: cronStatus.error?.message }));
     await clearMailbox(recipient);
     const after = new Date(Date.now() - 2_000).toISOString();
 

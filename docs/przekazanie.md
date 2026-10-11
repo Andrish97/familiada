@@ -24,10 +24,15 @@ nazwie/e-mailu, link `/go/?b=`, prowadzenie do `/tasks/` (zachowuje `b`
 przez logowanie). Punktowe E2E brancha `bases.spec.js` run 38102116117
 wykryło pozostawione zaproszenie znajomości `pending` z poprzedniego runu;
 run 38102345561 potwierdził obsługę tego stanu, ale wskazał względny
-`mail_link` (test poprawiono, by rozwiązywał go względem domeny) oraz mail
-test8 pozostający `pending` bez prób dostawy. Ponowić punktowe E2E, potem
-promować front na `main`, Pages i kontrola produkcji. Przed krokiem 6
-skoordynować obszar Control z drugą sesją.
+`mail_link` (naprawiono w teście; run brancha 38102541764 ✓). Front wypchnięto
+na `main`, Pages 38102630814 ✓. Produkcyjne E2E 38102671588: flow znajomego,
+link `/go/?b=` i akceptacja w `/tasks/` ✓; test maila do test8 nie dostał
+wiadomości także po retry. Diagnostyka obu wpisów: `status=pending`,
+`attempts=0`, `last_attempt_at=null`, `last_error=null` — wygląda na nieuruchomiony
+mail-worker/pg_cron, nie błąd generowania zaproszenia. Dodano do testu skrzynki
+read-only odczyt `mail_cron_status()`, by rozpoznać konfigurację crona w kolejnym
+runie. Krok 5 pozostaje otwarty do diagnozy kolejki i zielonej kontroli maila.
+Przed krokiem 6 skoordynować obszar Control z drugą sesją.
 
 Produkcyjne e2e
 Znajomych 38097255431 zaliczyło główny przepływ maila/przyjęcia/usunięcia (po
