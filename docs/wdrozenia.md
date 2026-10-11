@@ -446,3 +446,5 @@ Stan szczegółowy:
 | 2026-10-11 | E19 / 336 izolowany runner zielony | 38158091772 ✓: unit 413/413, rollback SQL ACL/zakres/idempotence helpera wyłącznie test1–7→test8. Sześć Subscribers w 38156858860 passed bez retry; test ankiety wymaga tego fixture zamiast zabronionego INSERT. | SQL 336 na main/log → punktowy gate ankiety; następnie Pages i komplet siedmiu main. |
 
 | 2026-10-11 | E19 / 336 SQL zastosowany | DB 38158153709 ✓, log OK 336 17:06:55 UTC, schema 7d76e66465. | Świeży punktowy gate ankiety bez retry; sześć Subscribers już passed w 38156858860. Po zielonym Pages i komplet siedmiu main. |
+
+| 2026-10-11 | Pkt 3 / branch gotowy do Pages | Subscribers 38156858860: 6/6 passed bez retry (realne maile, wypisanie, odmowa, konto/Go/login, globalny mail-off bez kolejki/count). Świeży gate ankiety 38158358302 ✓: 1/1 bez retry, oba RPC bez zadania/maila dla dawnej subskrypcji konta, selektor pusty; unit 413/413. SQL 333–336 zastosowany. | Promocja frontu, Pages i komplet siedmiu main --retries=0 na opublikowanych plikach. Pkt 3 zamknąć dopiero po tej kontroli. |
