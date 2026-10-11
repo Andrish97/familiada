@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict qqsnCbSXagud5w3d3N6oVUVatNF3OdS2Wmrlz6AyzjbsfN5vD3LJqUW1jLwADuJ
+\restrict sRcCY6kSf7LeiYIn3sbrQGxQbPfi5l5WarKVbkhNcz0TM6vakk54hT8R4RLINMu
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -1497,6 +1497,8 @@ BEGIN
  SELECT * INTO t FROM public.base_share_tasks WHERE id=p_task_id AND recipient_user_id=uid;
  IF NOT FOUND THEN RETURN false; END IF;
  PERFORM public._base_share_pair_lock(t.base_id,uid);
+ PERFORM 1 FROM public.question_bases WHERE id=t.base_id AND owner_id=t.owner_id FOR KEY SHARE;
+ IF NOT FOUND THEN RETURN false; END IF;
  SELECT * INTO t FROM public.base_share_tasks WHERE id=p_task_id AND recipient_user_id=uid FOR UPDATE;
  IF NOT FOUND OR t.recipient_user_id IS DISTINCT FROM uid OR t.status NOT IN ('pending','opened') OR t.cancelled_at IS NOT NULL
  OR coalesce(t.declined_at+interval '30 days',t.created_at+interval '5 days')<=now() THEN RETURN false; END IF;
@@ -1572,7 +1574,6 @@ DECLARE uid uuid:=auth.uid(); owner uuid; title text; label text; email text;
  target text; allowed boolean; deadline timestamptz; enabled boolean; t public.base_share_tasks%rowtype;
 BEGIN
  IF uid IS NULL THEN RETURN QUERY SELECT false,'auth required',NULL::text,NULL::text,NULL::text,NULL::text,NULL::timestamptz,NULL::uuid; RETURN; END IF;
- PERFORM public.base_share_tasks_cleanup();
  SELECT b.owner_id,b.name INTO owner,title FROM public.question_bases b WHERE id=p_base_id;
  IF NOT FOUND OR owner<>uid THEN RETURN QUERY SELECT false,'not_owner',NULL::text,NULL::text,NULL::text,NULL::text,NULL::timestamptz,NULL::uuid; RETURN; END IF;
  IF p_role IS NULL THEN RETURN QUERY SELECT false,'invalid_role',NULL::text,NULL::text,NULL::text,NULL::text,NULL::timestamptz,p_recipient_user_id; RETURN; END IF;
@@ -1582,6 +1583,9 @@ BEGIN
  PERFORM public._base_share_pair_lock(p_base_id,p_recipient_user_id);
  SELECT b.name INTO title FROM public.question_bases b WHERE id=p_base_id AND b.owner_id=uid FOR KEY SHARE;
  IF NOT FOUND THEN RETURN QUERY SELECT false,'not_owner',NULL::text,NULL::text,NULL::text,NULL::text,NULL::timestamptz,p_recipient_user_id; RETURN; END IF;
+ DELETE FROM public.base_share_tasks bt WHERE bt.base_id=p_base_id AND bt.recipient_user_id=p_recipient_user_id
+ AND bt.status IN ('pending','opened','declined')
+ AND coalesce(bt.declined_at+interval '30 days',bt.created_at+interval '5 days')<=now();
  IF EXISTS(SELECT 1 FROM public.question_base_shares WHERE base_id=p_base_id AND user_id=p_recipient_user_id) THEN
    RETURN QUERY SELECT false,'already_active',NULL::text,NULL::text,title,NULL::text,NULL::timestamptz,p_recipient_user_id; RETURN; END IF;
  IF EXISTS(SELECT 1 FROM public.base_share_tasks bt WHERE bt.base_id=p_base_id AND bt.owner_id=uid AND bt.recipient_user_id=p_recipient_user_id
@@ -1618,6 +1622,8 @@ BEGIN
  SELECT * INTO t FROM public.base_share_tasks WHERE id=p_task_id AND owner_id=auth.uid();
  IF NOT FOUND THEN RETURN false; END IF;
  PERFORM public._base_share_pair_lock(t.base_id,t.recipient_user_id);
+ PERFORM 1 FROM public.question_bases WHERE id=t.base_id AND owner_id=t.owner_id FOR KEY SHARE;
+ IF NOT FOUND THEN RETURN false; END IF;
  UPDATE public.base_share_tasks SET status='cancelled',cancelled_at=now()
  WHERE id=p_task_id AND owner_id=auth.uid() AND status IN ('pending','opened','declined');
  RETURN FOUND;
@@ -1638,6 +1644,8 @@ BEGIN
  SELECT * INTO v_t FROM public.base_share_tasks WHERE id=p_task_id AND recipient_user_id=v_uid;
  IF NOT FOUND THEN RETURN false; END IF;
  PERFORM public._base_share_pair_lock(v_t.base_id,v_uid);
+ PERFORM 1 FROM public.question_bases WHERE id=v_t.base_id AND owner_id=v_t.owner_id FOR KEY SHARE;
+ IF NOT FOUND THEN RETURN false; END IF;
  SELECT * INTO v_t FROM public.base_share_tasks WHERE id=p_task_id AND recipient_user_id=v_uid FOR UPDATE;
  IF NOT FOUND OR v_t.status NOT IN ('pending','opened') OR v_t.cancelled_at IS NOT NULL THEN RETURN false; END IF;
  PERFORM 1 FROM public.question_bases WHERE id=v_t.base_id AND owner_id=v_t.owner_id;
@@ -1707,6 +1715,8 @@ BEGIN
  SELECT * INTO t FROM public.base_share_tasks WHERE id=p_task_id AND owner_id=auth.uid();
  IF NOT FOUND THEN RETURN jsonb_build_object('ok',false,'err','not_found'); END IF;
  PERFORM public._base_share_pair_lock(t.base_id,t.recipient_user_id);
+ PERFORM 1 FROM public.question_bases WHERE id=t.base_id AND owner_id=t.owner_id FOR KEY SHARE;
+ IF NOT FOUND THEN RETURN jsonb_build_object('ok',false,'err','not_found'); END IF;
  SELECT * INTO t FROM public.base_share_tasks WHERE id=p_task_id AND owner_id=auth.uid() FOR UPDATE;
  IF NOT FOUND OR t.status NOT IN ('pending','opened') OR t.cancelled_at IS NOT NULL THEN
    RETURN jsonb_build_object('ok',false,'err','not_pending'); END IF;
@@ -1779,6 +1789,8 @@ BEGIN
  SELECT * INTO v_t FROM public.base_share_tasks WHERE id=p_task_id AND recipient_user_id=v_uid;
  IF NOT FOUND THEN RETURN jsonb_build_object('ok',false,'err','not_found'); END IF;
  PERFORM public._base_share_pair_lock(v_t.base_id,v_uid);
+ PERFORM 1 FROM public.question_bases WHERE id=v_t.base_id AND owner_id=v_t.owner_id FOR KEY SHARE;
+ IF NOT FOUND THEN RETURN jsonb_build_object('ok',false,'err','not_found'); END IF;
  SELECT * INTO v_t FROM public.base_share_tasks WHERE id=p_task_id AND recipient_user_id=v_uid FOR UPDATE;
  IF NOT FOUND THEN RETURN jsonb_build_object('ok',false,'err','not_found'); END IF;
  IF v_t.status<>'declined' OR v_t.cancelled_at IS NOT NULL THEN RETURN jsonb_build_object('ok',false,'err','not_declined'); END IF;
@@ -1805,6 +1817,8 @@ BEGIN
  SELECT * INTO t FROM public.base_share_tasks WHERE id=p_task_id AND owner_id=auth.uid();
  IF NOT FOUND THEN RETURN jsonb_build_object('ok',false,'err','not_found'); END IF;
  PERFORM public._base_share_pair_lock(t.base_id,t.recipient_user_id);
+ PERFORM 1 FROM public.question_bases WHERE id=t.base_id AND owner_id=t.owner_id FOR KEY SHARE;
+ IF NOT FOUND THEN RETURN jsonb_build_object('ok',false,'err','not_found'); END IF;
  UPDATE public.base_share_tasks SET role=p_role WHERE id=p_task_id AND owner_id=auth.uid()
  AND status IN ('pending','opened','declined') AND cancelled_at IS NULL
  AND coalesce(declined_at+interval '30 days',created_at+interval '5 days')>now();
@@ -7321,13 +7335,15 @@ CREATE FUNCTION "public"."leave_shared_base"("p_base_id" "uuid") RETURNS boolean
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public', 'pg_temp'
     AS $$
-DECLARE uid uuid:=auth.uid(); owner_id uuid; v_share_role public.base_share_role;
+DECLARE uid uuid:=auth.uid(); v_owner_id uuid; v_share_role public.base_share_role;
  t public.base_share_tasks%rowtype; email text;
 BEGIN
  IF uid IS NULL THEN RETURN false; END IF;
- SELECT b.owner_id INTO owner_id FROM public.question_bases b WHERE id=p_base_id;
- IF NOT FOUND OR owner_id=uid THEN RETURN false; END IF;
+ SELECT b.owner_id INTO v_owner_id FROM public.question_bases b WHERE id=p_base_id;
+ IF NOT FOUND OR v_owner_id=uid THEN RETURN false; END IF;
  PERFORM public._base_share_pair_lock(p_base_id,uid);
+ PERFORM 1 FROM public.question_bases b WHERE b.id=p_base_id AND b.owner_id=v_owner_id FOR KEY SHARE;
+ IF NOT FOUND THEN RETURN false; END IF;
  SELECT role INTO v_share_role FROM public.question_base_shares WHERE base_id=p_base_id AND user_id=uid FOR UPDATE;
  IF NOT FOUND THEN RETURN false; END IF;
  SELECT * INTO t FROM public.base_share_tasks WHERE base_id=p_base_id AND recipient_user_id=uid AND status='done'
@@ -7336,12 +7352,12 @@ BEGIN
    IF FOUND THEN UPDATE public.base_share_tasks SET status='cancelled',cancelled_at=now() WHERE id=t.id; END IF;
    SELECT public._norm_email(p.email) INTO email FROM public.profiles p WHERE id=uid;
    INSERT INTO public.base_share_tasks(owner_id,base_id,recipient_user_id,recipient_email,role,status,declined_at)
-   VALUES(owner_id,p_base_id,uid,email,v_share_role,'declined',now());
-   PERFORM public.mail_cooldown_reserve('base:share_after_reject','pair:'||owner_id||':'||uid||':base:'||p_base_id);
+   VALUES(v_owner_id,p_base_id,uid,email,v_share_role,'declined',now());
+   PERFORM public.mail_cooldown_reserve('base:share_after_reject','pair:'||v_owner_id||':'||uid||':base:'||p_base_id);
  ELSE
    UPDATE public.base_share_tasks SET status='declined',role=v_share_role,declined_at=coalesce(declined_at,now()) WHERE id=t.id;
    IF t.declined_at IS NULL THEN
-     PERFORM public.mail_cooldown_reserve('base:share_after_reject','pair:'||owner_id||':'||uid||':base:'||p_base_id);
+     PERFORM public.mail_cooldown_reserve('base:share_after_reject','pair:'||v_owner_id||':'||uid||':base:'||p_base_id);
    END IF;
  END IF;
  DELETE FROM public.question_base_shares WHERE base_id=p_base_id AND user_id=uid;
@@ -12814,12 +12830,14 @@ CREATE FUNCTION "public"."revoke_base_share"("p_base_id" "uuid", "p_user_id" "uu
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public', 'pg_temp'
     AS $$
-DECLARE owner_id uuid;
+DECLARE v_owner_id uuid;
 BEGIN
  IF auth.uid() IS NULL THEN RETURN false; END IF;
- SELECT b.owner_id INTO owner_id FROM public.question_bases b WHERE id=p_base_id;
- IF NOT FOUND OR owner_id<>auth.uid() THEN RETURN false; END IF;
+ SELECT b.owner_id INTO v_owner_id FROM public.question_bases b WHERE id=p_base_id;
+ IF NOT FOUND OR v_owner_id<>auth.uid() THEN RETURN false; END IF;
  PERFORM public._base_share_pair_lock(p_base_id,p_user_id);
+ PERFORM 1 FROM public.question_bases b WHERE b.id=p_base_id AND b.owner_id=v_owner_id FOR KEY SHARE;
+ IF NOT FOUND THEN RETURN false; END IF;
  DELETE FROM public.question_base_shares WHERE base_id=p_base_id AND user_id=p_user_id;
  IF NOT FOUND THEN RETURN false; END IF;
  UPDATE public.base_share_tasks SET status='cancelled',cancelled_at=now()
@@ -14229,14 +14247,16 @@ CREATE FUNCTION "public"."update_base_share_role"("p_base_id" "uuid", "p_user_id
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public', 'pg_temp'
     AS $$
-DECLARE owner_id uuid;
+DECLARE v_owner_id uuid;
 BEGIN
  IF auth.uid() IS NULL THEN RETURN QUERY SELECT false,'auth required'; RETURN; END IF;
- SELECT b.owner_id INTO owner_id FROM public.question_bases b WHERE id=p_base_id;
+ SELECT b.owner_id INTO v_owner_id FROM public.question_bases b WHERE id=p_base_id;
  IF NOT FOUND THEN RETURN QUERY SELECT false,'base_not_found'; RETURN; END IF;
- IF owner_id<>auth.uid() THEN RETURN QUERY SELECT false,'not_owner'; RETURN; END IF;
+ IF v_owner_id<>auth.uid() THEN RETURN QUERY SELECT false,'not_owner'; RETURN; END IF;
  IF p_role IS NULL THEN RETURN QUERY SELECT false,'invalid_role'; RETURN; END IF;
  PERFORM public._base_share_pair_lock(p_base_id,p_user_id);
+ PERFORM 1 FROM public.question_bases b WHERE b.id=p_base_id AND b.owner_id=v_owner_id FOR KEY SHARE;
+ IF NOT FOUND THEN RETURN QUERY SELECT false,'base_not_found'; RETURN; END IF;
  UPDATE public.question_base_shares SET role=p_role WHERE base_id=p_base_id AND user_id=p_user_id;
  IF NOT FOUND THEN RETURN QUERY SELECT false,'share_not_found'; RETURN; END IF;
  RETURN QUERY SELECT true,NULL::text;
@@ -19439,5 +19459,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict qqsnCbSXagud5w3d3N6oVUVatNF3OdS2Wmrlz6AyzjbsfN5vD3LJqUW1jLwADuJ
+\unrestrict sRcCY6kSf7LeiYIn3sbrQGxQbPfi5l5WarKVbkhNcz0TM6vakk54hT8R4RLINMu
 
