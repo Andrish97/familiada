@@ -549,3 +549,24 @@ rejestracja zaczyna od zera”):
 - u znajomych osoba po prostu znika z listy (bez maila);
 - nowe konto na ten sam e-mail **nie odzyskuje** niczego — znajomości
   i subskrypcje trzeba zaprosić od nowa (zgoda dotyczyła starego konta).
+
+## E20 — mniej nieobowiązkowych informacji na telefonie (2026-10-11)
+
+**Decyzja użytkownika:** dane nieobowiązkowe, które zabierają miejsce
+na telefonie, mają znikać. Przejrzeć wszystkie strony i wspólne
+komponenty; stosować zasadę konsekwentnie, nie tylko w Zadaniach.
+
+- Na telefonie ukrywać zbędne daty, rozbudowane opisy pomocnicze,
+  powtarzające się etykiety i metadane, jeśli nie pomagają wykonać akcji.
+- Zachować nazwę zasobu/nadawcy, potrzebny stan, rolę/uprawnienie,
+  komunikaty błędów, blokad i wymagane liczniki oraz przyciski akcji.
+  Dokładny zestaw zależy od funkcji danego kafelka/sekcji.
+- Kompaktowy wariant telefonu i pełny wariant komputera korzystają
+  ze wspólnego komponentu/CSS; bez osobnego przepisywania każdej strony.
+- Długie teksty mają kontrolowaną liczbę linii; kafelki nie rosną
+  nadmiernie przez dodatkowe informacje. Ikony pozostają czytelne.
+- Przegląd desktop/mobile dokumentować zrzutami z przykładowymi danymi
+  po wykonaniu; sprawdzić także długie nazwy i poszczególne stany.
+
+**Stan:** do wykonania jako przegląd całego systemu. Zadania są pierwszym
+wdrożeniem tej zasady, nie oznaczają zamknięcia E20. **Manual nadal ostatni.**

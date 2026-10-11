@@ -44,6 +44,13 @@ Sześć zrzutów w `docs/img/e19-tasks/`, tabela stanów i linki w planie E19.
 Ankiety z głosem: Zrobione 5 dni; bazy po decyzji znikają; urządzenia
 podłączone pozostają do cofnięcia/wygaśnięcia. Nie zmieniano tych zasad.
 
+## E20 — kompaktowe informacje na telefonie
+
+Nowa decyzja użytkownika: ukrywać na telefonie nieobowiązkowe informacje
+zabierające miejsce, konsekwentnie na wszystkich stronach/komponentach.
+Zakres w `ujednolicenie-wygladu.md` §E20, etap w kolejce przed manualem.
+Zadania są pierwszym wzorcem; cały przegląd E20 nadal do wykonania.
+
 ## Tymczasowa blokada skrótu Control (2026-10-11)
 
 Przycisk „Znajomi” w Control ma być widoczny z ikoną `people`, ale zablokowany.
