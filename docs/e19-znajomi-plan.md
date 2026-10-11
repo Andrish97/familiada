@@ -303,6 +303,12 @@ przeszedł. Pozostałe zachowania tabeli nadal są planem do wykonania.
   wpisów. Ukryć sekcję, gdy jest pusta; po otwarciu własne przewijanie
   zgodnie ze wspólnym komponentem. Znajomi: ostatnia sekcja prawej karty,
   pod Propozycjami; bazy: pod listą w istniejącej zakładce Bazy → Udostępnione.
+- **Doprecyzowanie 2026-10-11:** każda sekcja „Odrzucone przeze mnie”
+  jest całkowicie ukryta, gdy nie ma wpisów (bez nagłówka ani pustego stanu).
+  W Bazach pozostaje na dole zakładki Udostępnione, nad paskiem narzędzi;
+  kafelki baz i rozwinięta lista odmów przewijają się niezależnie.
+  Dotyczy również docelowego landscape; istniejący wyjątek przewijania
+  całej strony wymaga poprawy w przeglądzie E20, nie jest docelową regułą.
   Bez nowej karty lub zakładki w Bazach. Zadania nie pokazują odmów baz.
 - **Bazy — korekta opisu miejsca:** obecnie Akceptuj/Odrzuć istnieją
   zarówno w Bazy → Udostępnione, jak i w Zadaniach; oba ekrany używają

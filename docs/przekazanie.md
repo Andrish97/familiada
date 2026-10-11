@@ -19,8 +19,10 @@ niezresetowany zegar po ukryciu/cofnięciu i wygaśnięcie. friends_cancel
 kasuje declined i blokuje tylko stary kierunek cooldown — wykryty zakres
 audytu, nie oznaczać jako wdrożonej reguły. _friend_drop_pair_tasks usuwa
 pending/opened taski pary; zbadać też częściowe głosy i oczekujące maile.
-base_share_tasks nadal bez fizycznego FK do bazy; guards338 są kontrolą
-ważności, nie fizyczną kaskadą. Queue/historia admina mają osobne zapisy.
+Kaskada345 wdrożona: FK base_share_tasks→question_bases ON DELETE CASCADE,
+DB38173636101/log OK20:48:43 UTC i rollbackowy smoke ✓; punktowy rzeczywisty
+Base mail/Go/odmowy/role main38173864796 ✓ bez retry. Wypisanie Znajomych346
+nadal w lokalnym draftcie; nie jest wdrożone. Queue/historia admina mają osobne zapisy.
 
 Dalej UI/E20 i landscape każdej strony; manual ostatni. Kontynuować bez
 kończenia tury po paczce, screeny po wykonaniu bez czekania na ocenę.
