@@ -6,7 +6,6 @@ import { getUiLang, initI18n, t } from "../../shared/translation/translation.js?
 import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-11T14093";
 import "../../shared/js/core/contact-modal.js?v=v2026-10-11T14093";
 import { renderRowSections } from "../../shared/js/core/share-sections.js?v=v2026-10-11T14093";
-import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-11T14093";
 
 const i18nReady = initI18n({ withSwitcher: true }).catch((err) => {
   console.error("[tasks] i18n nieaktywny:", err);
@@ -50,14 +49,13 @@ async function declinePoll(task) {
 
 function rowOf(task) {
   const owner = t("tasks.from", { owner: ownerOf(task) });
-  const type = t(task.poll_type === "poll_points" ? "tasks.pollType.points" : "tasks.pollType.text");
   const done = task.state === "done";
   return {
     id: task.id, avatarIcon: "polls",
     data: { kind: "poll", token: task.token },
     title: task.title,
-    noteMobile: [type, owner].join(" · "),
-    note: [type, owner, done ? t("tasks.doneAt", { date: fmtDate(task.done_at) }) : t("tasks.received", { date: fmtDate(task.created_at) })].join(" · "),
+    noteMobile: owner,
+    note: [owner, done ? t("tasks.doneAt", { date: fmtDate(task.done_at) }) : t("tasks.received", { date: fmtDate(task.created_at) })].join(" · "),
     actions: done ? [] : [
       { key: "vote", text: t("tasks.actions.vote"), icon: "polls", gold: true, onClick: () => { location.href = pollVoteHref(task); } },
       { key: "decline", text: t("tasks.actions.decline"), icon: "cancel", onClick: () => declinePoll(task) },
@@ -113,13 +111,6 @@ async function refresh() {
 document.addEventListener("DOMContentLoaded", async () => {
   const user = await initPage("tasks", { ready: i18nReady, back: $("btnBack") });
   if (!user) return;
-
-  initListSearch({
-    grids: "#tasksHost",
-    tile: ".rowsRow",
-    name: ".rowsTitle",
-
-  });
 
   window.addEventListener("i18n:lang", render);
   document.addEventListener("visibilitychange", () => { if (!document.hidden) refresh(); });

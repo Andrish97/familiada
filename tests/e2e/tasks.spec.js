@@ -1,7 +1,5 @@
 // tests/e2e/tasks.spec.js
-// Strona /tasks/ (E19 krok 2): konto A udostępnia bazę kontu B (RPC jak w
-// bases.spec.js), B widzi ją w „Do zrobienia”, filtr ?kind=, akceptuje —
-// wiersz znika z listy (bazy nie trafiają do „Zrobione”).
+// Zadania tylko ankiety; bazy obsługiwane wyłącznie w Bases.
 // Chodzi po produkcji (po wdrożeniu strony). Konta tylko z puli: test2 (A)
 // i test3 (B); test9/10 nie używać.
 
@@ -88,6 +86,7 @@ for (const width of [1400, 390]) {
       await page.route("**/rest/v1/rpc/tasks_list", (route) => route.fulfill({ json: fixture }));
       await page.goto(TASKS_URL);
       await expect(page.locator(".rowsRow")).toHaveCount(4);
+      await expect(page.locator('input[type="search"], .list-search, .games-bottom')).toHaveCount(0);
       await expect(page.locator('.rowsRow[data-kind="base"],.rowsRow[data-kind="device"]')).toHaveCount(0);
       await expect(page.locator(".rowsSection--todo .rowsRow")).toHaveCount(2);
       await expect(page.locator(".rowsSection--done .rowsList")).toBeHidden();
@@ -98,9 +97,13 @@ for (const width of [1400, 390]) {
         const row = page.locator(`.rowsRow[data-id="${task.id}"]`);
         await expect(row).toBeVisible();
         await expect(row.locator(".rowsTitle")).toHaveText(task.title);
-        const sourceIcon = task.kind === "poll" ? "polls" : task.kind === "base" ? "drawer" : task.device_type === "poll_qr" ? "display" : task.device_type;
+        const sourceIcon = "polls";
         await expect(row.locator(`.rowsAvatar svg.ico-${sourceIcon}`)).toHaveCount(1);
         await expect(row.locator(".rowsAvatar")).toHaveText("");
+        for (const note of [".rowsNote--mobile", ".rowsNote--desktop"]) {
+          await expect(row.locator(note)).not.toContainText(/Ankieta tekstowa|Punktacja|Ankieta punktowa/);
+          await expect(row.locator(note)).toContainText(task.owner_label);
+        }
         if (width === 390) {
           await expect(row.locator(".rowsNote--desktop")).toBeHidden();
           await expect(row.locator(".rowsNote--mobile")).toBeVisible();
@@ -110,7 +113,7 @@ for (const width of [1400, 390]) {
           await expect(row.locator(".rowsNote--desktop")).toBeVisible();
           await expect(row.locator(".rowsNote--mobile")).toBeHidden();
         }
-        const actions = task.state === "done" ? [] : task.kind === "poll" ? ["vote", "decline"] : task.kind === "base" ? ["accept", "decline"] : ["connect"];
+        const actions = task.state === "done" ? [] : ["vote", "decline"];
         await expect(row.locator(".rowsAct")).toHaveCount(actions.length);
         for (const action of actions) await expect(row.locator(`[data-act="${action}"]`)).toHaveAttribute("aria-label", /.+/);
       }

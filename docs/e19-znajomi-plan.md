@@ -776,3 +776,17 @@ Dostarczony mail test8 i rzeczywista akceptacja w Bazach, anonimowy
 Go/login, izolacja Tasks/licznika, blokady ról i obcy/cofnięty token.
 Nowy wygląd udostępniania Baz i mobilne karty kontaktów nie są częścią
 tego zakończonego zakresu i pozostają do wykonania.
+
+### Zadania — uproszczenie po zawężeniu do ankiet (2026-10-11)
+
+Decyzja użytkownika: wyszukiwanie i tekstowe oznaczenie typu zasobu na
+liście Zadań są niepotrzebne. Usunąć wyszukiwarkę, jej pusty dolny pasek
+i etykiety Ankieta tekstowa/Punktacja z opisów wierszy. Pozostają nazwa,
+nadawca, istotny stan i akcje, wspólna ikona ankiety oraz Do zrobienia /
+Zrobione. Typ ankiety nadal określa właściwą stronę głosowania wewnętrznie.
+Zastępuje zapis paczki 330 o zachowaniu wyszukiwarki; historyczne wyniki
+330 pozostają bez zmian. Nowe zrzuty i punktowe testy po implementacji.
+
+Zrzuty uproszczonych Zadań: [telefon](img/e19-tasks/simple-all-phone.png),
+[komputer](img/e19-tasks/simple-all-desktop.png); Do zrobienia i Zrobione
+z przykładowymi danymi. Widok domyślny: simple-default-*.png.

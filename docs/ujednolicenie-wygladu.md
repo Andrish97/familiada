@@ -631,3 +631,13 @@ Zrzuty po wdrożeniu: 1400/390, dane przykładowe i odmowy zwinięte/rozwinięte
 
 To aktualizacja otwartego zakresu; wykonana wcześniej wersja mobilna
 z dwiema kartami ułożonymi pionowo nie realizuje przełączanych kart.
+
+### Zadania — uproszczenie po zawężeniu do ankiet (2026-10-11)
+
+Decyzja użytkownika: wyszukiwanie i tekstowe oznaczenie typu zasobu na
+liście Zadań są niepotrzebne. Usunąć wyszukiwarkę, jej pusty dolny pasek
+i etykiety Ankieta tekstowa/Punktacja z opisów wierszy. Pozostają nazwa,
+nadawca, istotny stan i akcje, wspólna ikona ankiety oraz Do zrobienia /
+Zrobione. Typ ankiety nadal określa właściwą stronę głosowania wewnętrznie.
+Zastępuje zapis paczki 330 o zachowaniu wyszukiwarki; historyczne wyniki
+330 pozostają bez zmian. Nowe zrzuty i punktowe testy po implementacji.

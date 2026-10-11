@@ -47,3 +47,10 @@ test("tasks: tylko ankiety, bez akcji baz lub urządzeń i filtra rodzaju", () =
   assert.doesNotMatch(src, /base_share_accept|base_share_decline|connectDevice|focusBaseToken|labelKey: "tasks\.filter/);
   assert.match(read("web/go/js/go.js"), /baseInviteBasesAction/);
 });
+
+test("tasks: bez wyszukiwania, dolnego paska i tekstowej etykiety typu", () => {
+  const src = read("web/tasks/js/tasks.js");
+  assert.doesNotMatch(src, /initListSearch|list-search|tasks\.pollType/);
+  assert.doesNotMatch(read("web/tasks/index.html"), /games-bottom/);
+  assert.match(src, /noteMobile: owner/);
+});
