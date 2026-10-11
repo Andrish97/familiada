@@ -18,14 +18,14 @@ import {
   clearGuestLocalMarker,
   initPasswordToggles,
   resetPasswordToggles,
-} from "../../shared/js/core/auth.js?v=v2026-10-11T01124";
-import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-11T01124";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-11T01124";
+} from "../../shared/js/core/auth.js?v=v2026-10-11T01251";
+import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-11T01251";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-11T01251";
 
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-11T01124";
-import { mailCooldownEmailCheck, mailCooldownEmailReserve } from "../../shared/js/core/cooldown.js?v=v2026-10-11T01124";
-import { initI18n, t, getUiLang, withLangParam, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-11T01124";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-11T01124";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-11T01251";
+import { mailCooldownEmailCheck, mailCooldownEmailReserve } from "../../shared/js/core/cooldown.js?v=v2026-10-11T01251";
+import { initI18n, t, getUiLang, withLangParam, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-11T01251";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-11T01251";
 
 const $ = (s) => document.querySelector(s);
 const email = $("#email");
@@ -534,6 +534,7 @@ function setBusy(v) {
 const params = new URLSearchParams(location.search);
 const nextTarget = params.get("next");
 const nextTask = params.get("t");
+const nextBase = params.get("b");
 const nextFriend = params.get("f");
 const guestUsername = params.get("guest_username") === "1";
 const setupUsername = params.get("setup") === "username";
@@ -558,6 +559,7 @@ function buildNextUrl() {
   const url = new URL(nextTarget === "friends" ? "/friends/" : "/tasks/", location.origin);
   if (nextTarget === "friends" && nextFriend) url.searchParams.set("f", nextFriend);
   if (nextTarget === "tasks" && nextTask) url.searchParams.set("t", nextTask);
+  if (nextTarget === "tasks" && nextBase) url.searchParams.set("b", nextBase);
 
   url.searchParams.set("lang", getUiLang());
   return url.toString();

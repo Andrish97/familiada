@@ -23,14 +23,19 @@ const fs = require("fs");
 const { test, expect } = require("@playwright/test");
 const { loginAsTestUser, testAccountUsername } = require("./helpers/login");
 const { clearMailbox, waitForEmail, extractHttpLinks, resetMailProviderLimits } = require("./helpers/mailbox");
+const { serveBranchCode } = require("./helpers/branch-code");
 
 const BASE_URL = "https://www.familiada.online/bases";
 
 // service worker obsłużyłby żądania z własnego cache z pominięciem page.route
 test.use({ serviceWorkers: "block" });
+test.beforeEach(async ({ context }) => {
+  if (process.env.TEST_BRANCH_CODE !== "0") await serveBranchCode(context, { pages: ["bases", "go", "tasks"] });
+});
 
 async function newUserContext(browser, username, contextOptions = {}) {
   const ctx = await browser.newContext({ serviceWorkers: "block", ...contextOptions });
+  if (process.env.TEST_BRANCH_CODE !== "0") await serveBranchCode(ctx, { pages: ["bases", "go", "tasks"] });
   const pg = await ctx.newPage();
   await loginAsTestUser(pg, ctx, { username });
   return { ctx, page: pg };
@@ -141,9 +146,9 @@ test("@mailbox bazy: udostępnienie z UI wysyła działający link", async ({ pa
     expect(`${email.body || ""}\n${email.body_html || ""}`).toContain(name);
     const invitation = extractHttpLinks(email).find((link) => {
       const url = new URL(link);
-      return /\/bases\/?$/.test(url.pathname) && url.searchParams.has("share");
+      return /\/go\/?$/.test(url.pathname) && url.searchParams.has("b");
     });
-    expect(invitation, "mail musi zawierać link /bases?share=").toBeTruthy();
+    expect(invitation, "mail musi zawierać link /go/?b=").toBeTruthy();
   } finally {
     if (baseId) await deleteBaseDirect(page, baseId).catch(() => {});
     await clearMailbox(recipient).catch(() => {});
@@ -401,7 +406,8 @@ async function inviteUser(ownerPage, baseId, recipientUserId, role = "viewer") {
     if (error) throw new Error(error.message);
     const row = Array.isArray(data) ? data[0] : data;
     if (!row?.ok) throw new Error("base_share_by_user: " + row?.err);
-    return new URL(row.mail_link, location.origin).searchParams.get("share");
+    const url = new URL(row.mail_link, location.origin);
+    return url.searchParams.get("b") || url.searchParams.get("share");
   }, { baseId, recipientUserId, role });
 }
 
@@ -484,6 +490,63 @@ test.describe("bases: audyt -- układ i gesty", () => {
   });
 });
 
+test("udostępnianie bazy: wybór znajomego i akceptacja w Zadaniach", async ({ page, context, browser }) => {
+  test.setTimeout(180_000);
+  await loginAsTestUser(page, context, { username: testAccountUsername(1) });
+  const name = "E2E-BS-FRIEND-" + Date.now();
+  const baseId = await createBaseDirect(page, name);
+  let ctx2 = null;
+  let recipientId = null;
+  try {
+    let page2;
+    ({ ctx: ctx2, page: page2 } = await newUserContext(browser, testAccountUsername(2)));
+    recipientId = await getUserId(page2);
+    await page.evaluate(async (id) => { await window.__sbClient.rpc("e2e_friendships_cleanup", { p_other_user_id: id }); }, recipientId);
+    await clearMailbox(testAccountUsername(2));
+    const invite = await page.evaluate(async () => window.__sbClient.rpc("friends_invite", { p_handle: "test2" }));
+    if (invite.error || !invite.data?.ok) throw new Error("friends_invite failed");
+    const accepted = await page2.evaluate(async (id) => window.__sbClient.rpc("friends_accept", { p_id: id }), invite.data.id);
+    if (accepted.error || !accepted.data?.ok) throw new Error("friends_accept failed");
+    await clearMailbox(testAccountUsername(2));
+    await resetMailProviderLimits(page);
+    const after = new Date(Date.now() - 2_000).toISOString();
+
+    await page.goto(BASE_URL, { waitUntil: "domcontentloaded" });
+    await page.waitForLoadState("networkidle");
+    await page.locator("#mineGrid .card", { hasText: name }).click();
+    await page.locator("#btnShare").click();
+    await expect(page.locator("#shareOverlay")).toBeVisible();
+    await page.locator("#shareRecipientType .ui-select-btn").click();
+    await page.locator("#shareRecipientType .ui-select-item").filter({ hasText: "znajomego" }).click();
+    await page.locator("#shareFriendSelect .ui-select-btn").click();
+    await page.locator("#shareFriendSelect .ui-select-item").filter({ hasText: "test2" }).click();
+    await page.locator("#btnShareAdd").click();
+    await expect(page.locator("#shareSectionsHost .shareRow").filter({ hasText: "test2" })).toHaveCount(1, { timeout: 20_000 });
+
+    const email = await waitForEmail({ recipient: testAccountUsername(2), after, subject: new RegExp(name, "i") });
+    const inviteLink = extractHttpLinks(email).find((link) => {
+      const url = new URL(link);
+      return /\/go\/?$/.test(url.pathname) && url.searchParams.has("b");
+    });
+    expect(inviteLink).toBeTruthy();
+    const token = new URL(inviteLink).searchParams.get("b");
+    expect(token).toBeTruthy();
+    await page2.goto("/go/?b=" + token, { waitUntil: "domcontentloaded" });
+    await expect(page2.locator("#message")).toContainText("udostępnia Ci bazę", { timeout: 15_000 });
+    await page2.locator("#actions button").click();
+    await expect.poll(() => new URL(page2.url()).pathname).toBe("/tasks/");
+    const taskRow = page2.locator('.rowsRow[data-kind="base"][data-token="' + token + '"]');
+    await expect(taskRow).toHaveClass(/rowsFocus/);
+    await taskRow.getByRole("button", { name: /akceptuj|przyjmij/i }).click();
+    await expect(taskRow).toHaveCount(0);
+  } finally {
+    if (recipientId) await page.evaluate(async (id) => { await window.__sbClient.rpc("e2e_friendships_cleanup", { p_other_user_id: id }); }, recipientId).catch(() => {});
+    if (ctx2) await ctx2.close();
+    await deleteBaseDirect(page, baseId);
+    await clearMailbox(testAccountUsername(2)).catch(() => {});
+  }
+});
+
 test.describe("bases: audyt -- zaproszenia i link z maila", () => {
 
   test("zaproszenie: kafelek pokazuje od kogo i rolę, Przeglądaj/Eksport zablokowane do akceptacji", async ({ page, context, browser }) => {
@@ -537,24 +600,24 @@ test.describe("bases: audyt -- zaproszenia i link z maila", () => {
       const token = await inviteUser(page, baseId, await getUserId(page2));
 
       // adresat
-      await page2.goto(`${BASE_URL}?share=${token}`, { waitUntil: "domcontentloaded" });
-      await expect(page2.locator("#sharedGrid .card[data-proposed].selected", { hasText: name })).toBeVisible({ timeout: 15000 });
+      await page2.goto(`/go/?b=${token}`, { waitUntil: "domcontentloaded" });
+      await expect(page2.locator("#message")).toContainText("udostępnia Ci bazę", { timeout: 15000 });
+      await page2.locator("#actions button").click();
+      await expect(page2).toHaveURL(new RegExp(`/tasks/\\?b=${token}$`));
+      await expect(page2.locator(`.rowsRow[data-kind="base"][data-token="${token}"]`)).toHaveClass(/rowsFocus/);
       expect(await countUniModals(page2, 2500), "adresat nie powinien dostać żadnego komunikatu").toBe(0);
-      await expect(page2).not.toHaveURL(/share=/);
 
       // ktoś inny (tu: sam właściciel) z tym samym linkiem
-      await page.goto(`${BASE_URL}?share=${token}`, { waitUntil: "domcontentloaded" });
-      await expect(page.locator(".uni-modal .mSub")).toContainText("innego użytkownika", { timeout: 15000 });
-      expect(await countUniModals(page, 3000)).toBe(1);
+      await page.goto(`/go/?b=${token}`, { waitUntil: "domcontentloaded" });
+      await expect(page.locator("#message")).toContainText("innego konta", { timeout: 15000 });
 
       // cofnięte zaproszenie
       await page.evaluate(async (baseId) => {
         const { data } = await window.__sbClient.rpc("list_base_share_tasks_outgoing", { p_base_id: baseId });
         for (const r of data || []) await window.__sbClient.rpc("base_share_cancel_task", { p_task_id: r.task_id });
       }, baseId);
-      await page2.goto(`${BASE_URL}?share=${token}`, { waitUntil: "domcontentloaded" });
-      await expect(page2.locator(".uni-modal .mSub")).toContainText("cofnięte", { timeout: 15000 });
-      expect(await countUniModals(page2, 3000)).toBe(1);
+      await page2.goto(`/go/?b=${token}`, { waitUntil: "domcontentloaded" });
+      await expect(page2.locator("#message")).toContainText("zostało cofnięte", { timeout: 15000 });
     } finally {
       if (ctx2) await ctx2.close();
       await deleteBaseDirect(page, baseId);

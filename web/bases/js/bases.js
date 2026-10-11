@@ -1,25 +1,25 @@
 // js/pages/bases.js
 // Lista baz pytań (warstwa 1) – styl i ergonomia jak strona gier (games).
 
-import { addRenameGesture } from "../../shared/js/core/rename-gesture.js?v=v2026-10-11T01124";
+import { addRenameGesture } from "../../shared/js/core/rename-gesture.js?v=v2026-10-11T01251";
 
-import { sb, SUPABASE_URL } from "../../shared/js/core/supabase.js?v=v2026-10-11T01124";
-import { ROW_GONE } from "../../shared/js/core/db-guard.js?v=v2026-10-11T01124";
-import { acquireResourceLock, getTabId } from "../../shared/js/core/resource-lock.js?v=v2026-10-11T01124";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-11T01124";
-import { isGuestUser, hideForGuest } from "../../shared/js/core/guest-mode.js?v=v2026-10-11T01124";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-11T01124";
-import { getUiLang, initI18n, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-11T01124";
-import { linkTo, PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-11T01124";
-import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-11T01124";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-11T01124";
-import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-11T01124";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-11T01124";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-11T01124";
-import { createCooldownTicker, formatCooldownRemaining } from "../../shared/js/core/cooldown.js?v=v2026-10-11T01124";
-import { renderShareSections } from "../../shared/js/core/share-sections.js?v=v2026-10-11T01124";
-import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-11T01124";
-import { SORT_LIST } from "../../shared/js/core/list-filter.js?v=v2026-10-11T01124";
+import { sb, SUPABASE_URL } from "../../shared/js/core/supabase.js?v=v2026-10-11T01251";
+import { ROW_GONE } from "../../shared/js/core/db-guard.js?v=v2026-10-11T01251";
+import { acquireResourceLock, getTabId } from "../../shared/js/core/resource-lock.js?v=v2026-10-11T01251";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-11T01251";
+import { isGuestUser, hideForGuest } from "../../shared/js/core/guest-mode.js?v=v2026-10-11T01251";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-11T01251";
+import { getUiLang, initI18n, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-11T01251";
+import { linkTo, PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-11T01251";
+import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-11T01251";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-11T01251";
+import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-11T01251";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-11T01251";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-11T01251";
+import { createCooldownTicker, formatCooldownRemaining } from "../../shared/js/core/cooldown.js?v=v2026-10-11T01251";
+import { renderShareSections } from "../../shared/js/core/share-sections.js?v=v2026-10-11T01251";
+import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-11T01251";
+import { SORT_LIST } from "../../shared/js/core/list-filter.js?v=v2026-10-11T01251";
 const i18nReady = initI18n({ withSwitcher: true });
 i18nReady.then(() => {
   document.documentElement.classList.remove('page-loading');
@@ -98,8 +98,8 @@ const shareEmailWrap = document.getElementById("shareEmailWrap");
 const shareEmailError = document.getElementById("shareEmailError");
 const shareRole = document.getElementById("shareRole");
 const shareRecipientType = document.getElementById("shareRecipientType");
-const shareSubscriberSelect = document.getElementById("shareSubscriberSelect");
-const shareSubsWrap = document.getElementById("shareSubsWrap");
+const shareFriendSelect = document.getElementById("shareFriendSelect");
+const shareFriendsWrap = document.getElementById("shareFriendsWrap");
 const btnShareAdd = document.getElementById("btnShareAdd");
 const btnShareClose = document.getElementById("btnShareClose");
 const shareMsg = document.getElementById("shareMsg");
@@ -170,7 +170,7 @@ function stopAutoRefresh() {
 
 let shareRoleSelect = null;
 let shareRecipientTypeSelect = null;
-let shareSubscriberSelectInst = null;
+let shareFriendSelectInst = null;
 const SHARE_MODAL_CACHE_TTL_MS = 20_000;
 const shareModalCache = new Map();
 
@@ -205,7 +205,7 @@ function shareRoleOptions() {
 function shareRecipientTypeOptions() {
   return [
     { value: "email", label: t("bases.shareModal.recipientEmail") || "Wpisz adres e-mail lub nazwę użytkownika" },
-    { value: "subscriber", label: t("bases.shareModal.recipientSubscriber") || "Wybierz subskrybenta" },
+    { value: "friend", label: t("bases.shareModal.recipientFriend") || "Wybierz znajomego" },
   ];
 }
 
@@ -237,25 +237,25 @@ function initShareRecipientTypeSelect() {
   onRecipientTypeChange("email");
 }
 
-function initShareSubscriberSelect() {
-  if (!shareSubscriberSelect) return;
-  if (!shareSubscriberSelectInst) {
-    shareSubscriberSelectInst = initUiSelect(shareSubscriberSelect, {
+function initShareFriendSelect() {
+  if (!shareFriendSelect) return;
+  if (!shareFriendSelectInst) {
+    shareFriendSelectInst = initUiSelect(shareFriendSelect, {
       options: [],
       value: "",
-      placeholder: t("bases.shareModal.selectSubscriber") || "Wybierz...",
+      placeholder: t("bases.shareModal.selectFriend") || "Wybierz...",
     });
     return;
   }
-  shareSubscriberSelectInst.setOptions([]);
-  shareSubscriberSelectInst.setValue("", { silent: true });
+  shareFriendSelectInst.setOptions([]);
+  shareFriendSelectInst.setValue("", { silent: true });
 }
 
 function onRecipientTypeChange(val) {
   const showEmail = val === "email";
-  const showSubs = val === "subscriber";
+  const showFriends = val === "friend";
   if (shareEmailWrap) shareEmailWrap.style.display = showEmail ? "" : "none";
-  if (shareSubsWrap) shareSubsWrap.style.display = showSubs ? "" : "none";
+  if (shareFriendsWrap) shareFriendsWrap.style.display = showFriends ? "" : "none";
 }
 
 function safeName(s) {
@@ -954,52 +954,38 @@ async function renderShareModal() {
   shareRoleSelect?.setValue("editor", { silent: true });
   shareRecipientTypeSelect?.setValue("email", { silent: true });
   onRecipientTypeChange("email");
-  shareSubscriberSelectInst?.setValue("", { silent: true });
+  shareFriendSelectInst?.setValue("", { silent: true });
 
   const cached = getShareModalCache(b.id);
-  let registeredSubs = cached?.registeredSubs || [];
+  let friends = cached?.friends || [];
   let pending = cached?.pending || [];
   let shared = cached?.shared || [];
 
   if (!cached) {
-    const [subsRes, pendingRes, sharedRes] = await Promise.all([
-      sb().rpc("polls_hub_list_my_subscribers"),
+    const [friendsRes, pendingRes, sharedRes] = await Promise.all([
+      sb().rpc("friends_list"),
       sb().rpc("list_base_share_tasks_outgoing", { p_base_id: b.id }),
       sb().rpc("list_base_shares", { p_base_id: b.id }),
     ]);
 
-    if (subsRes.error) console.warn("[bases] polls_hub_list_my_subscriptions error:", subsRes.error);
+    if (friendsRes.error) console.warn("[bases] friends_list error:", friendsRes.error);
     if (pendingRes.error) console.warn("[bases] list_base_share_tasks_outgoing error:", pendingRes.error);
     if (sharedRes.error) console.warn("[bases] list_base_shares error:", sharedRes.error);
 
-    registeredSubs = (subsRes.data || [])
-      .filter((r) => r.status === "active")
-      .filter((r) => !!r.subscriber_user_id);
+    friends = (friendsRes.data || []).filter((r) => r.status === "active" && r.direction === "friend");
     pending = pendingRes.data || [];
     shared = sharedRes.data || [];
 
-    setShareModalCache(b.id, { registeredSubs, pending, shared });
+    setShareModalCache(b.id, { friends, pending, shared });
   }
 
-  // Populate subscriber select
-  if (shareSubscriberSelectInst) {
-    const subOptions = registeredSubs.map((r) => ({
-      value: r.subscriber_user_id,
-      label: r.subscriber_username || r.subscriber_email || r.subscriber_label || "—",
-    }));
-    if (!subOptions.length) {
-      subOptions.push({ value: "", label: t("bases.shareModal.noSubscribers") || "Brak subskrybentów" });
-    }
-    shareSubscriberSelectInst.setOptions(subOptions);
-    shareSubscriberSelectInst.setValue("", { silent: true });
+  // Znajomi są skrótem. Pole e-mail/nazwa nadal pozwala wskazać dowolne konto.
+  if (shareFriendSelectInst) {
+    const friendOptions = friends.map((r) => ({ value: r.user_id, label: r.label || r.email || "—" }));
+    if (!friendOptions.length) friendOptions.push({ value: "", label: t("bases.shareModal.noFriends") || "Brak znajomych" });
+    shareFriendSelectInst.setOptions(friendOptions);
+    shareFriendSelectInst.setValue("", { silent: true });
   }
-
-  const sharedByUser = new Map((shared || []).map((x) => [x.user_id, x]));
-  const pendingByUser = new Map(
-    (pending || [])
-      .filter((x) => x.recipient_user_id)
-      .map((x) => [x.recipient_user_id, x])
-  );
 
   // ── Sekcje Oczekujące · Aktywni: wspólny komponent (share-sections.js) ──
   if (!shareSectionsHost) return;
@@ -1141,9 +1127,9 @@ async function shareAddInner() {
     }
     if (shareEmailError) shareEmailError.style.display = "none";
   } else {
-    targetUserId = shareSubscriberSelectInst?.getValue?.();
+    targetUserId = shareFriendSelectInst?.getValue?.();
     if (!targetUserId) {
-      setMsg(shareMsg, t("bases.share.selectSubscriber") || "Wybierz subskrybenta");
+      setMsg(shareMsg, t("bases.shareModal.selectFriend") || "Wybierz znajomego");
       return;
     }
   }
@@ -1165,9 +1151,9 @@ async function shareAddInner() {
       p_role: role,
     }));
   } else {
-    ({ data, error } = await sb().rpc("base_share_by_email", {
+    ({ data, error } = await sb().rpc("base_share_by_user", {
       p_base_id: b.id,
-      p_email: targetEmail,
+      p_user_lookup: targetEmail,
       p_role: role,
     }));
   }
@@ -1758,11 +1744,11 @@ function initFileLaunch() {
 
   initShareRoleSelect();
   initShareRecipientTypeSelect();
-  initShareSubscriberSelect();
+  initShareFriendSelect();
   window.addEventListener("i18n:lang", () => {
     initShareRoleSelect();
     initShareRecipientTypeSelect();
-    initShareSubscriberSelect();
+    initShareFriendSelect();
     setActiveTab(activeTab); // podpowiedź w nowym języku
     render();
     setButtonsState();

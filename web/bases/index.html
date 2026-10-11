@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
-  <meta name="app-version" content="v2026-10-11T01124"/>
+  <meta name="app-version" content="v2026-10-11T01251"/>
 
   <meta charset="UTF-8"/>
   <meta name="robots" content="noindex, nofollow"/>
@@ -14,11 +14,11 @@
   <link rel="preconnect" href="https://supabase.familiada.online">
   <title data-i18n="bases.title">Familiada — bazy pytań</title>
 
-  <link rel="icon" href="/favicon.ico?v=v2026-10-11T01124"/>
-  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-11T01124"/>
+  <link rel="icon" href="/favicon.ico?v=v2026-10-11T01251"/>
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-11T01251"/>
   <!-- Reużywamy stylu strony gier, żeby było spójnie -->
-  <link rel="stylesheet" href="/games/css/games.css?v=v2026-10-11T01124"/>
-  <link rel="stylesheet" href="/bases/css/bases.css?v=v2026-10-11T01124"/>
+  <link rel="stylesheet" href="/games/css/games.css?v=v2026-10-11T01251"/>
+  <link rel="stylesheet" href="/bases/css/bases.css?v=v2026-10-11T01251"/>
 
   <script>
     document.documentElement.classList.add('page-loading');
@@ -32,9 +32,9 @@
     } catch(_e) {}
   </script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-  <script type="module" src="/bases/js/bases.js?v=v2026-10-11T01124" defer></script>
-  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-11T01124" defer></script>
-  <script src="/shared/js/core/security-warning.js?v=v2026-10-11T01124" defer></script>
+  <script type="module" src="/bases/js/bases.js?v=v2026-10-11T01251" defer></script>
+  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-11T01251" defer></script>
+  <script src="/shared/js/core/security-warning.js?v=v2026-10-11T01251" defer></script>
 </head>
 
 <body class="games-body skel-body">
@@ -166,7 +166,7 @@
             </div>
           </div>
 
-          <!-- Wybór: subskrybent czy nowy email -->
+          <!-- Wybór znajomego albo wyszukanie konta -->
           <div class="share-recipient-select" style="margin-top:10px">
             <div class="ui-select" id="shareRecipientType">
               <button class="ui-select-btn inp" type="button" aria-haspopup="listbox" aria-expanded="false">
@@ -185,9 +185,9 @@
             <div class="share-email-error" id="shareEmailError" style="display:none;color:#f87171;font-size:12px;margin-top:4px"></div>
           </div>
 
-          <!-- Lista subskrybentów (pokazuje się gdy wybrano "wybierz subskrybenta") -->
-          <div class="share-subs-input" id="shareSubsWrap" style="display:none;margin-top:10px">
-            <div class="ui-select" id="shareSubscriberSelect">
+          <!-- Lista znajomych jako skrót do udostępniania kontu -->
+          <div class="share-subs-input" id="shareFriendsWrap" style="display:none;margin-top:10px">
+            <div class="ui-select" id="shareFriendSelect">
               <button class="ui-select-btn inp" type="button" aria-haspopup="listbox" aria-expanded="false">
                 <span class="ui-select-label">—</span>
                 <span class="ui-select-caret" aria-hidden="true"><i class="ico" data-icon="caret-down"></i></span>

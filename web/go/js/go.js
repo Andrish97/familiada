@@ -1,8 +1,8 @@
 // web/go/js/go.js
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-11T01124";
-import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-11T01124";
-import { initI18n, t } from "../../shared/translation/translation.js?v=v2026-10-11T01124";
-import { alertModal } from "../../shared/js/core/modal.js?v=v2026-10-11T01124";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-11T01251";
+import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-11T01251";
+import { initI18n, t } from "../../shared/translation/translation.js?v=v2026-10-11T01251";
+import { alertModal } from "../../shared/js/core/modal.js?v=v2026-10-11T01251";
 
 const i18nReady = initI18n({ withSwitcher: true }).then(() => {
   document.documentElement.classList.remove('page-loading');
@@ -74,14 +74,15 @@ const qs = new URLSearchParams(location.search);
 const taskToken = qs.get("t");
 const subToken = qs.get("s");
 const friendToken = qs.get("f");
+const baseToken = qs.get("b");
 const unsubToken = qs.get("u");
 const actionParam = qs.get("action");
 const isUnsubOwner = Boolean(subToken && actionParam === "unsub");
 const isUnsubGlobal = Boolean(unsubToken && !taskToken && !subToken);
 const hasTaskToken = Boolean(taskToken) && !isUnsubOwner;
 const hasSubToken = Boolean(subToken) && !isUnsubOwner;
-const tokenCount = [taskToken, subToken, friendToken].filter(Boolean).length;
-const goToken = tokenCount === 1 ? (friendToken || taskToken || subToken) : null;
+const tokenCount = [taskToken, subToken, friendToken, baseToken].filter(Boolean).length;
+const goToken = tokenCount === 1 ? (friendToken || baseToken || taskToken || subToken) : null;
 
 const $ = (id) => document.getElementById(id);
 
@@ -121,6 +122,7 @@ function redirectToLogin() {
   url.searchParams.set("from", "poll-go");
   url.searchParams.set("next", friendToken || resolvedInviteData?.kind === "friend" ? "friends" : "tasks");
   if (friendToken || resolvedInviteData?.kind === "friend") url.searchParams.set("f", friendToken || subToken);
+  if (baseToken) url.searchParams.set("b", baseToken);
   if (taskToken) url.searchParams.set("t", taskToken);
   if (subToken && resolvedInviteData?.kind !== "friend") url.searchParams.set("s", subToken);
   if (friendToken || resolvedInviteData?.kind === "friend") url.searchParams.set("f", friendToken || subToken);
@@ -128,7 +130,8 @@ function redirectToLogin() {
 }
 
 function redirectToHub() {
-  const url = new URL(taskToken ? "/tasks/" : "/friends/", location.href);
+  const url = new URL((taskToken || baseToken || resolvedInviteData?.kind === "base") ? "/tasks/" : "/friends/", location.href);
+  if (baseToken) url.searchParams.set("b", baseToken);
   if (taskToken) {
     url.searchParams.set("t", taskToken);
   }
@@ -576,6 +579,26 @@ async function handleUnsubGlobal() {
   }
 }
 
+function handleBaseInvite(data, user) {
+  clearActions();
+  showEmailInput(false);
+  if (!user) {
+    setView({ head: t("pollGo.baseInviteTitle"), text: t("pollGo.baseInviteLogin") });
+    addAction(MSG.loginLabel(), "gold", redirectToLogin);
+    return;
+  }
+  if (!data.recipient_matches_me) {
+    setView({ head: t("pollGo.baseInviteTitle"), text: t("pollGo.baseInviteMismatch", { email: data.recipient_email || "" }) });
+    return;
+  }
+  if (!['pending', 'opened'].includes(data.status)) {
+    setView({ head: t("pollGo.baseInviteTitle"), text: t("pollGo.baseInviteHandled") });
+    return;
+  }
+  setView({ head: t("pollGo.baseInviteTitle"), text: t("pollGo.baseInviteTasks", { owner: data.owner_label || "" }) });
+  addAction(t("pollGo.baseInviteTasksAction"), "gold", redirectToHub);
+}
+
 async function init() {
   // ?d=<urządzenie> obsługuje inline-moduł w index.html (przekierowanie przed
   // ciężkimi importami) — tu nic do roboty.
@@ -638,6 +661,10 @@ async function init() {
 
     if (data.kind === "task") {
       await handleTaskInvite(data, user);
+      return;
+    }
+    if (data.kind === "base") {
+      handleBaseInvite(data, user);
       return;
     }
 
