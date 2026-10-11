@@ -1,7 +1,7 @@
 const { test, expect } = require("@playwright/test");
 const { loginAsPooledTestUser } = require("./helpers/login");
 const { serveBranchCode } = require("./helpers/branch-code");
-const { clearMailbox, waitForEmail, extractHttpLinks, resetMailProviderLimits } = require("./helpers/mailbox");
+const { clearMailbox, waitForEmail, extractHttpLinks, resetMailProviderLimits, readMailDelivery } = require("./helpers/mailbox");
 const SITE = "https://www.familiada.online";
 const branch = process.env.GITHUB_REF_NAME !== "main" && process.env.TEST_BRANCH_CODE !== "0";
 test.use({ serviceWorkers: "block" });
@@ -186,5 +186,71 @@ test("bazy337: wspólne sekcje, wszystkie stany, osobne przewijanie i blob 390/1
     await page.unroute("**/rest/v1/rpc/base_declines_list_mine");
     await page.unroute("**/rest/v1/rpc/base_share_by_user");
     await page.evaluate(async id => { const { error } = await window.__sbClient.from("question_bases").delete().eq("id", id); if (error) throw error; }, baseId);
+  }
+});
+
+test("bazy337: mail-off udostępnia mimo mailowego cooldownu, bez kolejki; odmowa nadal blokuje", async ({ page, context, browser }) => {
+  test.setTimeout(120_000);
+  await loginAsPooledTestUser(page, context, 0);
+  const recipientContext = await browser.newContext({ serviceWorkers: "block" });
+  if (branch) await serveBranchCode(recipientContext, { pages: ["bases", "go"] });
+  const recipient = await recipientContext.newPage();
+  let baseId = null, recipientId = null, previousFlag = null;
+  async function setFlag(enabled) {
+    await recipient.evaluate(async ({ userId, enabled }) => {
+      const { error } = await window.__sbClient.from("user_flags").upsert({ user_id: userId, email_notifications: enabled });
+      if (error) throw error;
+    }, { userId: recipientId, enabled });
+  }
+  try {
+    await loginAsPooledTestUser(recipient, recipientContext, 1);
+    const user = await recipient.evaluate(async () => (await window.__sbClient.auth.getUser()).data.user);
+    recipientId = user.id;
+    previousFlag = await recipient.evaluate(async userId => {
+      const { data, error } = await window.__sbClient.from("user_flags").select("email_notifications").eq("user_id", userId).maybeSingle();
+      if (error) throw error; return data?.email_notifications ?? true;
+    }, recipientId);
+    await setFlag(true);
+    await rpc(page, "e2e_friendships_cleanup", { p_other_user_id: recipientId });
+    const friendship = await rpc(page, "friends_invite", { p_handle: user.email });
+    expect(friendship.ok).toBe(true); expect((await rpc(recipient, "friends_accept", { p_id: friendship.id })).ok).toBe(true);
+    baseId = await createBase(page, `E2E-B339-MUTED-${Date.now()}`);
+    const ownerId = await page.evaluate(async () => (await window.__sbClient.auth.getUser()).data.user.id);
+    const key = `pair:${ownerId}:${recipientId}:base:${baseId}`;
+    const clock = await rpc(page, "mail_cooldown_reserve", { p_action_key: "base:share", p_target_key: key });
+    const initialUntil = clock[0].next_allowed_at;
+    await openShare(page, baseId);
+    const checkbox = page.locator(`#baseShareFriends [data-id="${recipientId}"] input`);
+    await expect(checkbox).toBeDisabled();
+    await setFlag(false);
+    await page.locator("#btnShareClose").click(); await openShare(page, baseId);
+    await expect(checkbox).toBeEnabled();
+    const after = new Date().toISOString();
+    await checkbox.check(); await page.locator("#btnBaseShareFriends").click();
+    const rows = page.locator("#shareSectionsHost .shareRow"); await expect(rows).toHaveCount(1);
+    await expect(rows.locator('[data-act="resend"]')).toHaveCount(0);
+    const panel = await rpc(page, "base_share_panel", { p_base_id: baseId });
+    expect(panel.outgoing[0].email_enabled).toBe(false);
+    expect(await rpc(page, "base_share_resend", { p_task_id: panel.outgoing[0].task_id })).toEqual({ ok: true, mail_allowed: false });
+    const unchanged = await rpc(page, "mail_cooldown_check", { p_action_key: "base:share", p_target_key: key });
+    expect(unchanged[0].next_allowed_at).toBe(initialUntil);
+    const delivery = await readMailDelivery({ recipient: user.email, after });
+    expect(delivery.queue || []).toEqual([]); expect(delivery.events || []).toEqual([]);
+    await openShared(recipient);
+    const proposed = recipient.locator(`#sharedGrid [data-base-id="${baseId}"][data-proposed="1"]`);
+    await proposed.locator('[data-accept]').click(); await expect(proposed).toHaveCount(0);
+    expect(await rpc(recipient, "leave_shared_base", { p_base_id: baseId })).toBe(true);
+    await page.locator("#btnShareClose").click(); await openShare(page, baseId);
+    await expect(checkbox).toBeDisabled();
+    const refused = await rpc(page, "base_share_panel", { p_base_id: baseId });
+    expect(refused.friends[0].email_enabled).toBe(false);
+    expect(Date.parse(refused.friends[0].cooldown_until)).toBeGreaterThan(Date.now() + 29 * 86400000);
+    const duplicate = await rpc(page, "base_share_by_user", { p_base_id: baseId, p_recipient_user_id: recipientId, p_role: "editor" });
+    expect(duplicate[0].err).toBe("declined");
+  } finally {
+    if (previousFlag !== null) await setFlag(previousFlag);
+    if (baseId) await page.evaluate(async id => { const { error } = await window.__sbClient.from("question_bases").delete().eq("id", id); if (error) throw error; }, baseId);
+    if (recipientId) await rpc(page, "e2e_friendships_cleanup", { p_other_user_id: recipientId });
+    await recipientContext.close();
   }
 });
