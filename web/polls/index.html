@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
-  <meta name="app-version" content="v2026-10-11T00380"/>
+  <meta name="app-version" content="v2026-10-11T01005"/>
 
   <meta charset="UTF-8"/>
   <meta name="robots" content="noindex, nofollow"/>
@@ -14,10 +14,10 @@
   <link rel="preconnect" href="https://supabase.familiada.online">
   <title data-i18n="polls.title">Familiada — ankieta i wyniki</title>
 
-  <link rel="icon" href="/favicon.ico?v=v2026-10-11T00380"/>
-  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-11T00380"/>
-  <link rel="stylesheet" href="/games/css/games.css?v=v2026-10-11T00380"/>
-  <link rel="stylesheet" href="/shared/css/polls.css?v=v2026-10-11T00380"/>
+  <link rel="icon" href="/favicon.ico?v=v2026-10-11T01005"/>
+  <link rel="stylesheet" href="/shared/css/base.css?v=v2026-10-11T01005"/>
+  <link rel="stylesheet" href="/games/css/games.css?v=v2026-10-11T01005"/>
+  <link rel="stylesheet" href="/shared/css/polls.css?v=v2026-10-11T01005"/>
 
   <script>
     document.documentElement.classList.add('page-loading');
@@ -31,9 +31,9 @@
     } catch(_e) {}
   </script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-  <script src="/shared/js/core/security-warning.js?v=v2026-10-11T00380" defer></script>
-  <script type="module" src="/polls/js/polls.js?v=v2026-10-11T00380" defer></script>
-  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-11T00380" defer></script>
+  <script src="/shared/js/core/security-warning.js?v=v2026-10-11T01005" defer></script>
+  <script type="module" src="/polls/js/polls.js?v=v2026-10-11T01005" defer></script>
+  <script type="module" src="/shared/js/core/topbar-controller.js?v=v2026-10-11T01005" defer></script>
 </head>
 
 <body class="games-body polls-body topbar-title-mobile skel-body">
@@ -131,17 +131,16 @@
 
               <section class="pollSec pollSubsSec">
                 <div class="pollSecHead">
-                  <h3 class="pollSecTitle" data-i18n="polls.share.subsTitle">Subskrybenci</h3>
+                  <h3 class="pollSecTitle" data-i18n="polls.share.recipientsTitle">Udostępniono</h3>
                   <span class="subsSummary" id="subsSummary"></span>
                 </div>
                 <div class="subsTools" id="subsTools">
-                  <button class="btn xs" id="btnSelectAll" type="button" data-i18n="polls.share.selectAll">Zaznacz wszystkich</button>
+                  <button class="btn sm gold" id="btnAddRecipients" type="button" data-i18n="polls.share.addRecipients">Dodaj odbiorców</button>
                 </div>
                 <div class="pollsEmpty" id="subsEmpty" style="display:none;"></div>
                 <div class="grid subsGrid" id="subsGrid"></div>
                 <div class="subsFoot">
                   <span class="pollBarHint subsSendHint" id="sendHint"></span>
-                  <button class="btn sm gold" id="btnSendInvites" type="button" disabled data-i18n="polls.share.sendInvites">Wyślij zaproszenia</button>
                 </div>
               </section>
             </div>
@@ -167,6 +166,25 @@
     <div class="card" id="cardEmpty" style="display:none;">
       <div class="name" data-i18n="polls.empty.title">Brak gry</div>
       <div class="meta" data-i18n-html="polls.empty.meta">Otwórz stronę z parametrem <b>polls?id=...</b>.</div>
+    </div>
+    <div class="overlay modal--sheet" id="pollRecipientsOverlay" style="display:none;">
+      <div class="modal uni-modal pollRecipientsModal" role="dialog" aria-modal="true" aria-labelledby="pollRecipientsTitle">
+        <div class="uni-head">
+          <div class="mTitle" id="pollRecipientsTitle" data-i18n="polls.share.addRecipients">Dodaj odbiorców</div>
+          <button class="btn sm" id="pollRecipientsClose" type="button" aria-label="Zamknij" data-i18n-aria-label="common.modal.closeLabel"><i class="ico" data-icon="close"></i></button>
+        </div>
+        <div class="uni-body">
+          <div class="uni-hint" data-i18n="polls.share.addRecipientsHint">Wybierz osoby, które chcesz zaprosić do tej ankiety.</div>
+          <div id="pollRecipientsEmpty" class="pollsEmpty" hidden></div>
+          <div id="pollRecipientsFriends" class="pollRecipientGroup"></div>
+          <div id="pollRecipientsSubs" class="pollRecipientGroup"></div>
+        </div>
+        <div class="uni-foot modal-actions">
+          <span class="importMsg" id="pollRecipientsCount" aria-live="polite"></span>
+          <button class="btn sm" id="pollRecipientsCancel" type="button" data-i18n="common.cancel">Anuluj</button>
+          <button class="btn sm gold" id="pollRecipientsAdd" type="button" disabled data-i18n="polls.share.addSelected">Dodaj wybrane</button>
+        </div>
+      </div>
     </div>
     <!-- Okno QR: kod wyświetlacza albo powiększony kod do głosowania (.uni-modal; na telefonie arkusz) -->
     <div class="overlay modal--sheet hidden" id="pollQrModalOverlay">

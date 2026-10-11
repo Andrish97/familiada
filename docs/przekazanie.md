@@ -12,9 +12,12 @@ Wyniki produkcyjne: `friends` 38099344264 (2/2), `subscribers` 38099196468
 (2/2), `go --grep 'subscription invite'` 38099459575 (2/2),
 `frontend-navigation` 38099534030 (11/11), `account-deletion` 38099771245
 (1/1), regresja dźwięku 38099849073 (2/2); unit 401/401 w każdym przebiegu.
-Następny krok zgodnie z planem: E19 krok 4 — okno udostępniania ankiety
-(Znajomi · Subskrybenci), RPC `poll_share_send`, specyfikacja i punktowe testy.
-Przed krokiem 6 skoordynować obszar Control z drugą sesją.
+E19 krok 4 jest w toku na `codex/e19-3`: strona ankiety używa `poll_share_send`,
+ma okno wyboru Znajomych i Subskrybentów oraz jedną listę aktualnych odbiorców;
+punktowy `poll-share.spec.js` sprawdza obie grupy i ukrywanie już zaproszonych.
+Następne: branch E2E na produkcyjnej bazie i poprawki według wyniku, potem
+wdrożenie Pages oraz punktowa kontrola produkcji. Przed krokiem 6 skoordynować
+obszar Control z drugą sesją.
 
 Produkcyjne e2e
 Znajomych 38097255431 zaliczyło główny przepływ maila/przyjęcia/usunięcia (po

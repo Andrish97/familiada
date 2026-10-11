@@ -323,6 +323,11 @@
   overflow: visible;
   padding: 2px;
 }
+.pollRecipientGroup:empty{ display:none; }
+.pollRecipientsModal .uni-body{ min-height: 140px; }
+.pollRecipientsModal .shareSection{ margin-top: 0; }
+.pollRecipientsModal .shareSection + .shareSection{ margin-top: 12px; }
+.pollRecipientsModal .uni-foot{ align-items: center; }
 
 /* Wyniki: stałe wysokości, zmieniają się tylko liczby i paski */
 #resultsList{ display: grid; gap: 12px; }

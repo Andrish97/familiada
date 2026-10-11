@@ -93,7 +93,7 @@ pula test1–test8; test9/test10 zarezerwowane.
 | 1. Migracja 320 (`friendships`, `friends_*`, `tasks_list`, `badges_get`, kopia subskrypcji kont) | **zrobione** — na produkcji (`d38e829`), test SQL `docs/sql/test-friendships-320.sql` 60/60 |
 | 2. Komponent wierszy (`renderRowSections`/`rowEl` w `share-sections.js`) + `/tasks/` | **zrobione** — e2e `tasks`, `frontend-navigation`, `go` zielone |
 | 3. `/friends/`, `/subscribers/` + migracja 321 (przełączenie), usunięcie `/subscriptions/` | **zrobione** — migracja 321, front, Pages i Worker wdrożone; runner SQL/unit 38096872246 ✓; kontrole produkcji: friends 38099344264 (2/2), subscribers 38099196468 (2/2), go 38099459575 (2/2), frontend-navigation 38099534030 (11/11), account-deletion 38099771245 (1/1), regresja dźwięku 38099849073 (2/2); unit 401/401 w każdym przebiegu |
-| 4. Ankieta: udostępnianie oknem (Znajomi · Subskrybenci), jedna lista odbiorców | do zrobienia |
+| 4. Ankieta: udostępnianie oknem (Znajomi · Subskrybenci), jedna lista odbiorców | **w toku** — `polls.js` przechodzi na `poll_share_send`; nowe okno wyboru dwóch grup, wspólna lista udostępnień i punktowy scenariusz E2E `poll-share.spec.js` przygotowane na branchu `codex/e19-3`; trwa walidacja brancha na produkcyjnej bazie |
 | 5. Bazy: jedno okno (udostępnieni + dodawanie), `go?b=`, akceptacja w `/tasks/` | do zrobienia |
 | 6. Urządzenia: jedno okno, klucz na udostępnienie z sesją rozgrywki, odbiorca bez konta | do zrobienia (dotyka Control — obszar drugiej sesji, ostrożnie) |
 | 7. Przegląd wzorców | do zrobienia |
