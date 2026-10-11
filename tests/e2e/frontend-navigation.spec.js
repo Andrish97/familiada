@@ -213,14 +213,24 @@ test("tablet: hamburger closes before navigating without touch filter layers", a
     await expect(button).toHaveAttribute('data-nav-href', /friends/);
     await expect.poll(() => button.evaluate(el => getComputedStyle(el).filter)).toBe('none');
     await page.screenshot({ path: testInfo.outputPath('shot-tablet-menu-open.png'), fullPage: true });
+    let capture;
+    const clicked = new Promise(resolve => { capture = resolve; });
+    await page.exposeFunction('__captureMenuClick', capture);
+    await page.evaluate(() => document.addEventListener('click', event => {
+      if (!event.target.closest('#btnFriends')) return;
+      window.__captureMenuClick({
+        open: document.querySelector('.topbar-mobile-overlay').classList.contains('is-open'),
+        locked: document.body.classList.contains('topbar-mobile-lock'),
+      });
+    }));
     let release;
     const gate = new Promise(resolve => { release = resolve; });
     await context.route('**/friends/**', async route => { if (route.request().isNavigationRequest()) await gate; await route.continue(); });
     const tap = button.tap({ noWaitAfter: true });
     try {
-      await expect(panel).not.toHaveClass(/is-open/);
-      await expect(page.locator('body')).not.toHaveClass(/topbar-mobile-lock/);
-      await page.screenshot({ path: testInfo.outputPath('shot-tablet-menu-navigating.png'), fullPage: true });
+      // Locators wait for a pending navigation, so inspect the final old-page
+      // state from the click event before that navigation starts instead.
+      expect(await clicked).toEqual({ open: false, locked: false });
     } finally { release(); }
     await tap;
     await expect.poll(() => new URL(page.url()).pathname).toBe('/friends/');
