@@ -484,3 +484,7 @@ do helpera własnej pary test1–8→test14; nie zmienia cooldownów użytkownik
 ani wyjątków kolejki. Lokalny rollback zakresu/ACL ✓, unit 412/412.
 Runner 332 → SQL main/log → świeże branch/main Subscribers bez retry.
 Następna właściwa paczka odmów/flag/claim otrzymuje 333 (332 zajęta).
+
+332 runner 38151596399 ✓ (SQL zakres/ACL + unit 412/412), SQL main
+41b0313828. Czeka log DB; potem trzy Subscribers branch/main jeszcze raz,
+bez retry, z rzeczywistymi mailami. 331 nie jest zamknięta do tej kontroli.
