@@ -197,6 +197,10 @@ async function main() {
 
   const user = await userP;
   if (!user) return; // initPage przekierował na logowanie
+  document.getElementById("btnFriends")?.addEventListener("click", async () => {
+    if (!(await beforeLeave())) return;
+    await leaveTo(linkTo("friends"));
+  });
 
   if (!gameId) { root.textContent = "Brak parametru ?id= w URL."; return; }
 

@@ -221,3 +221,14 @@ test("loginUrl: /login/ z językiem", () => {
 test("nieznana strona to błąd programisty", () => {
   assert.throws(() => linkTo("nieMaTakiej", {}, ctx("/")), /nieznana strona/);
 });
+
+test("Control → Znajomi → Control zachowuje grę, język i łańcuch powrotów", () => {
+  const source = "/control/?id=game123&lang=en&ret=%2Fgames%2F%3Ftab%3Dprepared";
+  const target = linkTo("friends", {}, ctx(source, {lang:"en"}));
+  assert.equal(retOf(target), "/control/?id=game123&ret=%2Fgames%2F%3Ftab%3Dprepared");
+  const back = new URL(backHref("friends", ctx(target, {lang:"en"})), "https://x.test");
+  assert.equal(back.pathname, "/control/");
+  assert.equal(back.searchParams.get("id"), "game123");
+  assert.equal(back.searchParams.get("lang"), "en");
+  assert.equal(back.searchParams.get("ret"), "/games/?tab=prepared");
+});
