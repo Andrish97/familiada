@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict TkKASf4shh9fSAnisMwIA7DX4tlgF7R7hZAMN0nraFEgdIaESTOGbIklfwdtmTS
+\restrict UC6SkV5x2XYzn4yp0vfxoqhdY5u4ruxkc3P9bQUieNSYH1O9A08FosxdLzhV5De
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -3209,13 +3209,15 @@ DECLARE v_uid uuid:=auth.uid(); v_caller text; v_email text:=lower(trim(p_email)
 BEGIN
   SELECT lower(email) INTO v_caller FROM auth.users WHERE id=v_uid;
   IF v_caller IS NULL OR v_caller !~ '^test[1-8]@familiada[.]online$'
-    OR v_email <> 'test14@familiada.online' THEN
+    OR v_email IS DISTINCT FROM 'test14@familiada.online' THEN
     RETURN jsonb_build_object('ok',false,'err','test accounts required');
   END IF;
   DELETE FROM public.poll_tasks WHERE owner_id=v_uid AND lower(recipient_email)=v_email;
   DELETE FROM public.poll_subscriptions WHERE owner_id=v_uid AND lower(subscriber_email)=v_email;
   DELETE FROM public.mail_cooldowns WHERE action_key LIKE 'poll:%'
     AND target_key LIKE 'pair:'||v_uid::text||':email:'||md5(v_email)||'%';
+  DELETE FROM public.mail_cooldowns WHERE action_key='baseline:recipient'
+    AND target_key='pair:'||v_uid::text||':'||md5(v_email);
   DELETE FROM public.email_cooldowns WHERE email_hash=md5(v_email);
   RETURN jsonb_build_object('ok',true);
 END; $_$;
@@ -19607,5 +19609,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict TkKASf4shh9fSAnisMwIA7DX4tlgF7R7hZAMN0nraFEgdIaESTOGbIklfwdtmTS
+\unrestrict UC6SkV5x2XYzn4yp0vfxoqhdY5u4ruxkc3P9bQUieNSYH1O9A08FosxdLzhV5De
 
