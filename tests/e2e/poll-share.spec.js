@@ -47,6 +47,7 @@ test("ankieta: okno Znajomi · Subskrybenci dodaje obie grupy, już zaproszeni z
   const ownerContext = await browser.newContext({ serviceWorkers: "block" });
   const friendContext = await browser.newContext({ serviceWorkers: "block" });
   const anonymousContext = await browser.newContext({ serviceWorkers: "block" });
+  if (process.env.TEST_BRANCH_CODE !== "0") await serveBranchCode(ownerContext, { pages: ["polls"] });
   const ownerPage = await ownerContext.newPage();
   const friendPage = await friendContext.newPage();
   let gameId = null;
