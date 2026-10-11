@@ -5177,4 +5177,20 @@ const pl = {
   },
 };
 
+pl.sharingMail = {
+  "friendReminderSubject": "{owner} przypomina o zaproszeniu do znajomych",
+  "friendReminderBody": "Zaproszenie od {owner} nadal czeka na Twoją decyzję. Możesz je zaakceptować lub odrzucić.",
+  "subscriberReminderSubject": "Przypomnienie o subskrypcji u {owner}",
+  "subscriberReminderBody": "{owner} przypomina o zaproszeniu do subskrypcji. Zaakceptuj je, jeśli chcesz otrzymywać ankiety od tej osoby, lub odrzuć.",
+  "pollReminderBody": "{owner} przypomina o ankiecie {name}. Twoje zadanie nadal czeka na głos lub odmowę.",
+  "baseReminderSubject": "Przypomnienie: baza {base}",
+  "baseReminderTitle": "Zaproszenie do bazy nadal czeka",
+  "baseBody": "{owner} zaprasza Cię do bazy „{base}” z uprawnieniem: {role}. Dostęp otrzymasz po akceptacji zaproszenia.",
+  "baseReminderBody": "Zaproszenie od {owner} do bazy „{base}” nadal czeka na decyzję. Uprawnienie: {role}. Możesz zaakceptować lub odrzucić zaproszenie.",
+  "baseAction": "Sprawdź zaproszenie",
+  "editor": "edytor",
+  "viewer": "przeglądający",
+  "deviceSubtitle": "Udostępnienie urządzenia"
+};
+
 export default pl;

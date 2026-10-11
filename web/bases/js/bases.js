@@ -1,25 +1,26 @@
 // js/pages/bases.js
 // Lista baz pytań (warstwa 1) – styl i ergonomia jak strona gier (games).
 
-import { addRenameGesture } from "../../shared/js/core/rename-gesture.js?v=v2026-10-11T19260";
+import { addRenameGesture } from "../../shared/js/core/rename-gesture.js?v=v2026-10-11T19555";
 
-import { sb, SUPABASE_URL } from "../../shared/js/core/supabase.js?v=v2026-10-11T19260";
-import { ROW_GONE } from "../../shared/js/core/db-guard.js?v=v2026-10-11T19260";
-import { acquireResourceLock, getTabId } from "../../shared/js/core/resource-lock.js?v=v2026-10-11T19260";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-11T19260";
-import { isGuestUser, hideForGuest } from "../../shared/js/core/guest-mode.js?v=v2026-10-11T19260";
-import { getUiLang, initI18n, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-11T19260";
-import { linkTo, PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-11T19260";
-import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-11T19260";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-11T19260";
-import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-11T19260";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-11T19260";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-11T19260";
-import { createCooldownTicker, formatCooldownRemaining } from "../../shared/js/core/cooldown.js?v=v2026-10-11T19260";
-import { shareRowEl, shareSectionEl, shareCooldownEl } from "../../shared/js/core/share-sections.js?v=v2026-10-11T19260";
-import { TOAST_DEFAULT_MS } from "../../shared/js/core/toast.js?v=v2026-10-11T19260";
-import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-11T19260";
-import { SORT_LIST } from "../../shared/js/core/list-filter.js?v=v2026-10-11T19260";
+import { sb, SUPABASE_URL } from "../../shared/js/core/supabase.js?v=v2026-10-11T19555";
+import { ROW_GONE } from "../../shared/js/core/db-guard.js?v=v2026-10-11T19555";
+import { acquireResourceLock, getTabId } from "../../shared/js/core/resource-lock.js?v=v2026-10-11T19555";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-11T19555";
+import { isGuestUser, hideForGuest } from "../../shared/js/core/guest-mode.js?v=v2026-10-11T19555";
+import { getUiLang, initI18n, t, withLangParam } from "../../shared/translation/translation.js?v=v2026-10-11T19555";
+import { linkTo, PAGES } from "../../shared/js/core/nav-map.js?v=v2026-10-11T19555";
+import { tabFromUrl, setTab } from "../../shared/js/core/tabs.js?v=v2026-10-11T19555";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-11T19555";
+import { enterModalSheet, exitModalSheet, isSheetViewport } from "../../shared/js/core/modal-sheet.js?v=v2026-10-11T19555";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-11T19555";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-11T19555";
+import { createCooldownTicker, formatCooldownRemaining } from "../../shared/js/core/cooldown.js?v=v2026-10-11T19555";
+import { shareRowEl, shareSectionEl, shareCooldownEl } from "../../shared/js/core/share-sections.js?v=v2026-10-11T19555";
+import { TOAST_DEFAULT_MS } from "../../shared/js/core/toast.js?v=v2026-10-11T19555";
+import { initListSearch } from "../../shared/js/core/list-search.js?v=v2026-10-11T19555";
+import { SORT_LIST } from "../../shared/js/core/list-filter.js?v=v2026-10-11T19555";
+import { renderMailDocument } from "../../shared/js/core/mail-document.js?v=v2026-10-11T19555";
 const i18nReady = initI18n({ withSwitcher: true });
 i18nReady.then(() => {
   document.documentElement.classList.remove('page-loading');
@@ -761,70 +762,13 @@ function mailLink(link) {
   return u.href;
 }
 
-function escapeMail(s) {
-  return String(s ?? "").replace(/[&<>"']/g, (c) => ({
-    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
-  }[c]));
-}
-
-function wrapEmailDoc(innerHtml) {
-  return `<!doctype html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="color-scheme" content="dark">
-  <meta name="supported-color-schemes" content="dark">
-  <style>:root { color-scheme: dark; }</style>
-</head>
-<body style="margin:0;padding:0;background:#050914;color:#ffffff;">
-${innerHtml}
-</body>
-</html>`;
-}
-
 function buildMailHtml({ title, body, actionLabel, actionUrl }) {
-  const safeTitle = escapeMail(title || t("bases.mail.title"));
-  const safeBody = escapeMail(body || "");
-  const safeActionLabel = escapeMail(actionLabel || t("bases.mail.action"));
-  const safeActionUrl = escapeMail(actionUrl || "");
-
-  const subtitle = escapeMail(t("bases.mail.subtitle"));
-  const footer = escapeMail(t("bases.mail.footer"));
-  const linkLabel = escapeMail(t("bases.mail.linkLabel"));
-
-  const inner = `
-<div style="margin:0;padding:0;background:#050914;color:#ffffff;">
-  <div style="max-width:560px;margin:0 auto;padding:26px 16px;font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:#ffffff;background:#050914;">
-    <div style="padding:14px 14px;background:#0b1020;background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.12);border-radius:18px;backdrop-filter:blur(10px);">
-      <div style="font-weight:1000;letter-spacing:.18em;text-transform:uppercase;color:#ffeaa6;">FAMILIADA</div>
-      <div style="margin-top:6px;font-size:12px;opacity:.85;letter-spacing:.08em;text-transform:uppercase;">${subtitle}</div>
-    </div>
-
-    <div style="margin-top:14px;padding:18px;border-radius:20px;border:1px solid rgba(255,255,255,.14);background:#111827;background:rgba(255,255,255,.06);box-shadow:0 24px 60px rgba(0,0,0,.45);">
-      <div style="font-weight:1000;font-size:18px;letter-spacing:.06em;color:#ffeaa6;margin:0 0 10px;">${safeTitle}</div>
-      <div style="font-size:14px;opacity:.9;line-height:1.45;margin:0 0 14px;">${safeBody}</div>
-
-      <div style="margin:16px 0;">
-        <a href="${safeActionUrl}" style="display:block;text-align:center;padding:12px 14px;border-radius:14px;border:1px solid rgba(255,234,166,.35);background:#2a2b1a;background:rgba(255,234,166,.10);color:#ffeaa6;text-decoration:none;font-weight:1000;letter-spacing:.06em;text-transform:uppercase;">
-          ${safeActionLabel}
-        </a>
-      </div>
-
-      <div style="margin-top:10px;font-size:12px;opacity:.75;line-height:1.4;">
-        ${linkLabel}
-        <div style="margin-top:6px;padding:10px 12px;border-radius:16px;border:1px solid rgba(255,255,255,.18);background:#0a0f1e;background:rgba(0,0,0,.18);word-break:break-all;">
-          ${safeActionUrl}
-        </div>
-      </div>
-    </div>
-
-    <div style="margin-top:14px;font-size:12px;opacity:.7;text-align:center;">${footer}</div>
-  </div>
-</div>
-`.trim();
-
-  return wrapEmailDoc(inner);
+  return renderMailDocument({ lang: getUiLang(), title, body, actionLabel, actionUrl,
+    subtitle: t("bases.mail.subtitle"), ignoreNote: t("bases.mail.footer"),
+    linkHint: t("bases.mail.linkLabel"),
+    autoNote: t("pollsHubSubscriptions.mail.autoNote"),
+    footerText: t("pollGo.mailAccountSettings"),
+    footerLinks: [{ url: mailLink("/account/"), label: t("pollGo.mailAccountSettingsLink") }] });
 }
 
 async function sendMail({ to, subject, html, cooldownActionKey, cooldownTargetKey }) {
@@ -845,23 +789,26 @@ async function sendMail({ to, subject, html, cooldownActionKey, cooldownTargetKe
     console.warn("[bases] sendMail failed:", await res.text());
     throw new Error(t("bases.mail.failed"));
   }
+  const payload = await res.json();
+  if (!payload?.ok) throw new Error(t("pollsHubSubscriptions.errors.mailSend"));
+  return payload.results?.[0]?.queued ?? (Number(payload.queued) > 0);
 }
 
 // cooldownTargetKey musi być IDENTYCZNY jak w base_share_by_email/by_user
 // (migracja 291) -- "pair:<owner>:<recipient>:base:<base_id>" -- inaczej
 // trigger na mail_queue rezerwowałby inny, niezależny koszyk niż to, co RPC
 // właśnie sprawdziło/zarezerwowało.
-async function sendBaseShareEmail({ to, link, baseName, ownerLabel, recipientId, baseId }) {
+async function sendBaseShareEmail({ to, link, baseName, ownerLabel, recipientId, baseId, role, reminder = false }) {
   const actionUrl = mailLink(link);
   const html = buildMailHtml({
-    title: t("bases.mail.title"),
-    body: t("bases.mail.body", { owner: ownerLabel || "—", base: baseName || "—" }),
-    actionLabel: t("bases.mail.action"),
+    title: t(reminder ? "sharingMail.baseReminderTitle" : "bases.mail.title"),
+    body: t(reminder ? "sharingMail.baseReminderBody" : "sharingMail.baseBody", { owner: ownerLabel || "—", base: baseName || "—", role: t(`sharingMail.${role}`) }),
+    actionLabel: t("sharingMail.baseAction"),
     actionUrl,
   });
-  await sendMail({
+  return sendMail({
     to,
-    subject: t("bases.mail.subject", { base: baseName || "—" }),
+    subject: t(reminder ? "sharingMail.baseReminderSubject" : "bases.mail.subject", { base: baseName || "—" }),
     html,
     cooldownActionKey: "base:share",
     cooldownTargetKey: `pair:${currentUser.id}:${recipientId}:base:${baseId}`,
@@ -959,9 +906,9 @@ async function renderShareModal() {
         try {
           const { data: response, error } = await sb().rpc("base_share_resend", { p_task_id: recipient.task_id });
           if (error || !response?.ok) { showShareMessage(baseShareError(response)); return; }
-          if (response.mail_allowed) await deliverBaseShare(response, b.id);
+          const queued = response.mail_allowed && await deliverBaseShare(response, b.id, { role: recipient.role, reminder: true });
           await renderShareModal();
-          showShareMessage(t(response.mail_allowed ? "bases.share.success" : "control.shareDeviceModal.friendMailDisabled"));
+          showShareMessage(t(queued ? "bases.share.success" : "control.shareDeviceModal.friendMailDisabled"));
         } catch { showShareMessage(t("bases.share.emailFailed")); }
         finally { button.disabled = false; }
       },
@@ -998,10 +945,10 @@ function baseShareError(row) {
   if (row?.err === "unknown_user") return t("bases.share.unknownUser");
   return t("bases.share.failed");
 }
-async function deliverBaseShare(row, baseId) {
+async function deliverBaseShare(row, baseId, { role, reminder = false } = {}) {
   if (!row?.mail_to || !row?.mail_link) return;
-  await sendBaseShareEmail({ to: row.mail_to, link: row.mail_link, baseName: row.base_name,
-    ownerLabel: row.owner_label, recipientId: row.recipient_id, baseId });
+  return sendBaseShareEmail({ to: row.mail_to, link: row.mail_link, baseName: row.base_name,
+    ownerLabel: row.owner_label, recipientId: row.recipient_id, baseId, role, reminder });
 }
 let shareAddInFlight = false;
 async function shareAdd(friendIds = null) {
@@ -1019,7 +966,10 @@ async function shareAdd(friendIds = null) {
         : { p_base_id: b.id, p_user_lookup: raw, p_role: shareRoleValue });
       const row = Array.isArray(data) ? data[0] : data;
       if (error || !row?.ok) { message = baseShareError(row); continue; }
-      try { await deliverBaseShare(row, b.id); }
+      try {
+        const queued = await deliverBaseShare(row, b.id, { role: id ? friendsRoleValue : shareRoleValue });
+        if (queued === false) message = t("control.shareDeviceModal.friendMailDisabled");
+      }
       catch { message = t("bases.share.emailFailed"); }
       if (!friendIds) shareEmail.value = "";
     }

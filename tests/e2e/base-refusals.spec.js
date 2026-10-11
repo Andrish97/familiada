@@ -1,3 +1,4 @@
+const { expectMailDocument } = require("./helpers/mail-document");
 const { test, expect } = require("@playwright/test");
 const { loginAsPooledTestUser } = require("./helpers/login");
 const { serveBranchCode } = require("./helpers/branch-code");
@@ -73,6 +74,7 @@ test("bazy337: rzeczywisty mail, odmowa i opuszczenie, undo, role oraz cofnięci
     await expect(page.locator("#shareMsg")).toBeHidden({ timeout: 6000 });
     expect((await rpc(page, "list_base_share_tasks_outgoing", { p_base_id: baseId })).length).toBe(1);
     const email = await waitForEmail({ recipient: recipientEmail, after, subject: /baz|base/i, timeout: 150_000 });
+    expectMailDocument(email, { accountFooter: true, text: ["przeglądający", "Dostęp otrzymasz po akceptacji zaproszenia."] });
     const link = extractHttpLinks(email).find(url => new URL(url).pathname === "/go/" && new URL(url).searchParams.has("b"));
     expect(link).toBeTruthy();
     await recipient.goto(link); await expect(recipient.locator("#message")).toContainText(/udostępnia.*bazę/);

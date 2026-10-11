@@ -1125,3 +1125,17 @@ UI390/1400 i trzy dostarczone maile14 z trwałym limitem czwartego.
 Unit414/414 ✓. Front gotowy do Pages, pkt5 nadal wymaga tych samych12
 na rzeczywistej publikacji main. Starsze określenia draft/status wyżej
 opisują stan w chwili zapisu; migracje są już wykonane i nie są edytowane.
+
+### §5 pkt5 Ankiety zamknięty produkcyjnie — 2026-10-11
+
+SQL340–344/logi oraz izolowane regresje/wyścigi ✓. Front Pages38167986176 ✓.
+Main: siedemGo38168027593 passed, pięćpoll-share38168458967 ✓ bez retry
+(prawdziwe pliki Pages, unit414/414). Wszystkie12 wskazanych scenariuszy
+potwierdzone produkcyjnie: mail8/14, pełny tekst/punkty i atomowe done,
+odmowa/remove/same-run, partial→decline bez głosów, legacykonto wykluczone,
+mail-off/noqueue/no clock, UI390/1400 oraz trzy dostarczone maile i blokada
+czwartego po usunięciu queue/taska/gry. Pierwszy main poll-share miał
+wyścig helpera przed załadowaniem pytań; poprawione oczekiwanie Pytanie1
+oraz przejścia1–10, świeży komplet pięciu zielony. Pkt5 zamknięty;
+kolejny pkt6 maile w realizacji na branchu. Graf/anonimowy token/Go wszędzie
+nadal pkt7; nie rozszerzać tego wyniku na te niewykonane części.

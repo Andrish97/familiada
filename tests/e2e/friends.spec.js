@@ -1,3 +1,4 @@
+const { expectMailDocument } = require("./helpers/mail-document");
 const { test, expect } = require("@playwright/test");
 const { serveBranchCode } = require("./helpers/branch-code");
 const { loginAsTestUser, testAccountUsername } = require("./helpers/login");
@@ -50,6 +51,7 @@ test("@mailbox znajomi: zaproszenie z UI, mail, go, przyjęcie i usunięcie", as
     expect(blocked.err).toBe("cooldown");
     await owner.page.screenshot({ path: testInfo.outputPath("shot-friends-layout.png"), fullPage: true });
     const email = await waitForEmail({ recipient: testAccountUsername(8), after, subject: /znajom|friends/i, timeout: 150000 });
+    expectMailDocument(email, { accountFooter: true });
     const link = extractHttpLinks(email).find(url => new URL(url).searchParams.has("f"));
     expect(link).toBeTruthy();
     await recipient.page.goto(link);
@@ -205,6 +207,7 @@ test("@mailbox znajomi: odmowa zachowuje link, świadoma akceptacja i cofnięcie
     await open(owner.page);
     await invite(owner.page, testAccountUsername(8));
     const email = await waitForEmail({ recipient: testAccountUsername(8), after, subject: /znajom|friends/i, timeout: 150000 });
+    expectMailDocument(email, { accountFooter: true });
     const link = extractHttpLinks(email).find(url => new URL(url).searchParams.has("f"));
     expect(link).toBeTruthy();
     const token = new URL(link).searchParams.get("f");

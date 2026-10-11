@@ -1,15 +1,15 @@
 // Znajomi i subskrybenci: wspólne listy, akcje, zaproszenia i odświeżanie.
-import { sb } from "./supabase.js?v=v2026-10-11T19260";
-import { initPage } from "./page-init.js?v=v2026-10-11T19260";
-import { linkTo, PAGES } from "./nav-map.js?v=v2026-10-11T19260";
-import { tabFromUrl, setTab } from "./tabs.js?v=v2026-10-11T19260";
-import { toast } from "./toast.js?v=v2026-10-11T19260";
-import { confirmModal, alertModal } from "./modal.js?v=v2026-10-11T19260";
-import { shareSectionEl } from "./share-sections.js?v=v2026-10-11T19260";
-import { createCooldownTicker } from "./cooldown.js?v=v2026-10-11T19260";
-import { sendInviteMail } from "./invite-mail.js?v=v2026-10-11T19260";
-import { initI18n, t } from "../../translation/translation.js?v=v2026-10-11T19260";
-import "./contact-modal.js?v=v2026-10-11T19260";
+import { sb } from "./supabase.js?v=v2026-10-11T19555";
+import { initPage } from "./page-init.js?v=v2026-10-11T19555";
+import { linkTo, PAGES } from "./nav-map.js?v=v2026-10-11T19555";
+import { tabFromUrl, setTab } from "./tabs.js?v=v2026-10-11T19555";
+import { toast } from "./toast.js?v=v2026-10-11T19555";
+import { confirmModal, alertModal } from "./modal.js?v=v2026-10-11T19555";
+import { shareSectionEl } from "./share-sections.js?v=v2026-10-11T19555";
+import { createCooldownTicker } from "./cooldown.js?v=v2026-10-11T19555";
+import { sendInviteMail } from "./invite-mail.js?v=v2026-10-11T19555";
+import { initI18n, t } from "../../translation/translation.js?v=v2026-10-11T19555";
+import "./contact-modal.js?v=v2026-10-11T19555";
 
 export async function initContactsPage(pageId) {
   const friends = pageId === "friends";
@@ -98,8 +98,8 @@ export async function initContactsPage(pageId) {
       }
       const data = await call(friends ? `friends_${kind}` : kind === "resend" ? "polls_hub_subscriber_resend" : "polls_hub_subscriber_remove", { p_id: row.id });
       if (kind === "resend" && data.to && data.link) {
-        await sendInviteMail({ to: data.to, link: data.link, ownerLabel, unsubToken: data.unsub_token, kind: friends ? "friend" : "subscriber", actionKey: friends ? "friend:resend" : "poll:resend" });
-        toast(t("contacts.sent"));
+        const queued = await sendInviteMail({ to: data.to, link: data.link, ownerLabel, unsubToken: data.unsub_token, kind: friends ? "friend" : "subscriber", reminder: true, actionKey: friends ? "friend:resend" : "poll:resend" });
+        toast(t(queued ? "contacts.sent" : "control.shareDeviceModal.friendMailDisabled"));
       }
       await refresh();
     } catch (error) { await report(error); }
@@ -188,12 +188,13 @@ export async function initContactsPage(pageId) {
       if (friends && data.mail_allowed) mail = { to: data.to, link: `/go/?f=${data.token}`, actionKey: "friend:invite" };
       if (!friends && !data.already) mail = await call("polls_hub_subscriber_resend", { p_id: data.id });
       await refresh();
+      let mailSkipped = false;
       if (mail?.to && mail.link) {
-        try { await sendInviteMail({ ...mail, ownerLabel, unsubToken: mail.unsub_token, kind: friends ? "friend" : "subscriber" }); }
+        try { mailSkipped = !await sendInviteMail({ ...mail, ownerLabel, unsubToken: mail.unsub_token, kind: friends ? "friend" : "subscriber" }); }
         catch (error) { console.warn("[contacts] mail:", error); toast(t("contacts.mailFailed"), { kind: "error" }); return; }
       }
       input.value = "";
-      toast(t(data.already ? "contacts.errors.already" : "contacts.sent"));
+      toast(t(data.already ? "contacts.errors.already" : mailSkipped ? "control.shareDeviceModal.friendMailDisabled" : "contacts.sent"));
     } catch (error) { await report(error); }
     finally { button.disabled = false; }
   });

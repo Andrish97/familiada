@@ -45,8 +45,10 @@ sprawdzane w bazie (nie w przeglądarce).
   RPC. Ponów dotyczy wyłącznie oczekujących bez odmowy. Zniknięcie odmowy
   z listy nie resetuje limitów przed końcem karencji. Odmowy znajomości,
   zaproszenia do subskrypcji i bazy wygasają po czasie (założenie 30 dni);
-  dopiero jawne nowe dodanie może wysłać nowy mail. Wygaśnięcie nie
-  wysyła maila i nie znosi wypisania/globalnej flagi. Szczegóły w E19 §7.
+  dopiero jawne nowe dodanie może wysłać nowy mail. Wygaśnięcie odmowy nie
+  wysyła maila ani automatycznie nie przywraca relacji/dostępu. Po30 dniach
+  także wypisanie odbiorcy pozwala na nowe zaproszenie; globalna flaga
+  wyłączenia maili pozostaje osobna i trwała. Szczegóły w E19 §7.
 - Cofnięcie własnej odmowy przez odbiorcę przywraca oczekujące, nie wysyła
   maila i nie resetuje dotychczasowych limitów. Akceptacja pozostaje
   osobną akcją. Wyjątek ustalony przez użytkownika: odmowa subskrypcji
@@ -57,6 +59,12 @@ sprawdzane w bazie (nie w przeglądarce).
   przyznania ani cofnięcia dostępu.
 
 ## 2. Tabela granic (decyzja 2026-10-07)
+
+**Tabela historyczna z 2026-10-07.** Jej dawne „wypisał się → nigdy”
+zastępuje zatwierdzone E19: wypisanie odbiorcy = odmowa5/30 dni
+(Znajomi/Subskrybenci/Bazy), bez przypomnień. Ankieta: koniec możliwości
+w bieżącym uruchomieniu, bez undo. Globalne wyłączenie maili jest niezależne.
+Aktualne kontrakty/wyjątki i obie strony są w E19 §7, limity w §5 poniżej.
 
 | Mail | Kiedy wolno | Limit | Po odmowie / braku odpowiedzi |
 |---|---|---|---|
@@ -150,3 +158,51 @@ linki uwierzytelniania według własnego przepływu logowania.
 To jest wynik przeglądu źródeł, nie oznaczenie wdrożenia ani dostarczenia.
 Pkt5 Ankiet nadal wymaga końcowej bramki branch/Pages/main; nie promować
 kolejnego frontu mailowego razem z niedomkniętymi Ankietami.
+
+### Pkt6 / wspólny szablon — branch, jeszcze niewdrożony
+
+Kanoniczny czysty renderer: supabase/functions/_shared/mail-document.js.
+Przeglądarka otrzymuje identyczną wygenerowaną kopię przez
+scripts/sync-mail-document.cjs; unit wykrywa rozjazd. Jeden dokument
+obsługuje Znajomych/Subskrybentów/Ankiety/Bazy/Control/auth, z escapowaniem
+tekstu i atrybutów, PL/EN/UK, jednolitą typografią/przyciskiem/linkiem.
+Bez rozmycia i wersalików, których klienci pocztowi nie wspierali spójnie.
+Przypomnienia mają odrębną treść i temat przy zachowaniu tokenu/limitu;
+Bazy podają aktualną rolę i wymaganie akceptacji. Control nadal bez
+przypomnień; błędy transportu są sygnalizowane, dostęp już powstały nie
+jest cofany przez awarię wysyłki. Linki i stopki zachowują język.
+
+424/424 unit lokalnie ✓. Deno check obecnego auth początkowo wykazał sześć
+starszych problemów typów (identycznie odtworzonych na niezmienionym HEAD):
+nullable service client/token oraz URL|null. Jawne guardy i walidacja tokenu
+usuwają je, świeży check ✓. Osobny izolowany runner verify_e19_mail oraz
+kontrola rzeczywistych maili/UI nadal wymagane przed publikacją.
+
+Zrzuty z faktycznych funkcji rendererów i danych przykładowych:
+[znajomi390](img/e19-mails/friend-reminder-pl-390.png),
+[subskrybenci390](img/e19-mails/subscriber-reminder-pl-390.png),
+[ankiety390](img/e19-mails/poll-reminder-pl-390.png),
+[baza390](img/e19-mails/base-viewer-pl-390.png),
+[urządzenie390](img/e19-mails/device-pl-390.png),
+[auth1400](img/e19-mails/auth-recovery-pl-1400.png),
+[baza EN390](img/e19-mails/base-viewer-en-390.png),
+[baza UK390](img/e19-mails/base-viewer-uk-390.png).
+Wszystkie sześć rodzajów ma też wersję1400, bez overflow390/1400.
+Zrzuty dokumentują wykonanie wyglądu, nie dowód dostarczenia nowego maila.
+Nie zamykać pkt6 na podstawie unit/check/zrzutów. Audyt treści pozostałych
+maili systemowych, wszystkie języki dostarczania i granice pozostają w zakresie.
+
+### Dalsze wejścia i wynik transportu — audyt pkt6
+
+- Worker contact-email.js: potwierdzenie zgłoszenia/odpowiedź/compose ma
+  własny dokument560px i escapowane cytaty, lecz inną typografię oraz brak
+  jawnego języka. Dopiąć po pierwszej paczce sześciu wejść; wiadomość
+  kontaktowa nie potrzebuje sztucznego przycisku akcji.
+- Settings: ręczna poczta HTML/odpowiedzi/marketing mają osobne opakowania,
+  podpis i załączniki. Zachować funkcję edytora HTML podczas ujednolicenia;
+  nie wprowadzać escaping całego zamierzonego HTML z edytora.
+- send-mail zwraca queued=rows.length bez odczytania rzeczywiście
+  wstawionych rekordów. Flaga zmieniona między RPC a BEFORE INSERT może
+  pomijać wiersz, a wynik nadal sugeruje zakolejkowanie. Domknąć prawdziwy
+  wynik i zachowanie per adres/flag race w pkt6, z testem faktycznej kolejki;
+  nie oznaczać pierwszej paczki rendererów jako rozwiązania tej granicy.

@@ -5267,4 +5267,20 @@ const en = {
     play: "Play this game",
   },
 };
+en.sharingMail = {
+  "friendReminderSubject": "{owner} reminds you about a friend invitation",
+  "friendReminderBody": "The invitation from {owner} is still waiting for your decision. You can accept or decline it.",
+  "subscriberReminderSubject": "Subscription reminder from {owner}",
+  "subscriberReminderBody": "{owner} reminds you about a subscription invitation. Accept it to receive polls from this person, or decline.",
+  "pollReminderBody": "{owner} reminds you about the poll {name}. Your task is still waiting for your vote or refusal.",
+  "baseReminderSubject": "Reminder: base {base}",
+  "baseReminderTitle": "Your base invitation is still waiting",
+  "baseBody": "{owner} invites you to the question base “{base}” with the role: {role}. Access starts after you accept the invitation.",
+  "baseReminderBody": "The invitation from {owner} to the base “{base}” is still waiting for your decision. Role: {role}. You can accept or decline the invitation.",
+  "baseAction": "View invitation",
+  "editor": "editor",
+  "viewer": "viewer",
+  "deviceSubtitle": "Device sharing"
+};
+
 export default en;
