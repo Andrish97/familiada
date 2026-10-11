@@ -5,6 +5,7 @@ import { linkTo } from "./nav-map.js?v=v2026-10-11T11231";
 import { toast } from "./toast.js?v=v2026-10-11T11231";
 import { confirmModal, alertModal } from "./modal.js?v=v2026-10-11T11231";
 import { shareSectionEl } from "./share-sections.js?v=v2026-10-11T11231";
+import { createCooldownTicker } from "./cooldown.js?v=v2026-10-11T11231";
 import { sendInviteMail } from "./invite-mail.js?v=v2026-10-11T11231";
 import { initI18n, t } from "../../translation/translation.js?v=v2026-10-11T11231";
 import "./contact-modal.js?v=v2026-10-11T11231";
@@ -15,6 +16,7 @@ export async function initContactsPage(pageId) {
   const user = await initPage(pageId, { ready, back: document.getElementById("btnBack") });
   if (!user) return;
   const host = document.getElementById("contactsHost");
+  const cooldowns = createCooldownTicker();
   let rows = [];
   let inFlight = null;
   const ownerLabel = user.user_metadata?.username || user.email || "Familiada";
@@ -41,6 +43,7 @@ export async function initContactsPage(pageId) {
     }
   }
   async function action(row, kind, button) {
+    button.dataset.locked = "1";
     button.disabled = true;
     try {
       if (["remove", "cancel", "reject"].includes(kind)) {
@@ -53,14 +56,24 @@ export async function initContactsPage(pageId) {
       }
       await refresh();
     } catch (error) { await report(error); }
-    finally { button.disabled = false; }
+    finally { delete button.dataset.locked; button.disabled = false; cooldowns.tick(); }
   }
   function rowOf(row) {
     const actions = [];
     const add = (kind, icon, gold = false, iconOnly = false) => actions.push({ key: kind, icon, gold, iconOnly,
-      title: t(`contacts.actions.${kind}`), onClick: (_, button) => action(row, kind, button) });
+      title: t(`contacts.actions.${kind}`), onClick: (_, button) => action(row, kind, button),
+      countdown: kind === "resend",
+      onMount: kind === "resend" ? ({ rowEl, button, labelEl }) => {
+        const key = `contact:${row.id}`;
+        cooldowns.bind({ key, labelEl, disableEls: [button],
+          onTick: (_, active) => { rowEl.classList.toggle("blocked", active); rowEl.classList.toggle("is-cooling-down", active); } });
+        cooldowns.setEndMs(key, Date.parse(row.resend_available_at) || 0);
+      } : undefined });
     if (friends && row.direction === "incoming") { add("accept", "check", true); add("reject", "cancel"); }
-    else if (row.status === "pending") { add("resend", "refresh"); add(friends ? "cancel" : "remove", "trash", false, true); }
+    else if (row.status === "pending") {
+      if (row.email_enabled !== false) add("resend", "refresh");
+      add(friends ? "cancel" : "remove", "trash", false, true);
+    }
     else add("remove", "trash", false, true);
     const state = friends && row.direction === "friend" ? "active" : row.status;
     return { id: row.id, label: friends ? row.label : row.email, compact: true,
@@ -69,6 +82,7 @@ export async function initContactsPage(pageId) {
       actions };
   }
   function render() {
+    cooldowns.resetBindings();
     const make = (key) => {
       const section = shareSectionEl({ key, title: t(`contacts.sections.${key}`),
         rows: rows.filter(row => (friends ? row.direction : row.status) === key).map(rowOf),
@@ -85,7 +99,7 @@ export async function initContactsPage(pageId) {
     inFlight = (async () => {
       try {
         await call("friend_invites_from_subscriptions");
-        const data = await call(friends ? "friends_list" : "subscribers_list");
+        const data = await call("contacts_list", { p_kind: friends ? "friends" : "subscribers" });
         rows = Array.isArray(data) ? data : [];
         render();
       } catch (error) { await report(error); }
@@ -115,10 +129,14 @@ export async function initContactsPage(pageId) {
     finally { button.disabled = false; }
   });
   window.addEventListener("i18n:lang", render);
-  document.addEventListener("visibilitychange", () => { if (!document.hidden) void refresh(); });
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) cooldowns.stop();
+    else { cooldowns.start(); void refresh(); }
+  });
   const timer = setInterval(() => { if (!document.hidden) void refresh(); }, 20000);
-  window.addEventListener("pagehide", () => clearInterval(timer), { once: true });
+  window.addEventListener("pagehide", () => { clearInterval(timer); cooldowns.stop(); }, { once: true });
   await refresh();
+  cooldowns.start();
   const token = new URLSearchParams(location.search).get("f");
   if (friends && token) {
     try {

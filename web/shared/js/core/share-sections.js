@@ -71,7 +71,16 @@ export function shareRowEl(row) {
     if (a.disabled) b.disabled = true;
     b.innerHTML = a.icon ? icon(a.icon) : esc(a.text || "");
     b.addEventListener("click", (e) => { e.stopPropagation(); a.onClick?.(e, b); });
+    let labelEl = null;
+    if (a.countdown) {
+      b.classList.add("shareActionCountdown");
+      labelEl = document.createElement("span");
+      labelEl.className = "shareCountdown";
+      labelEl.hidden = true;
+      b.append(labelEl);
+    }
     acts.append(b);
+    a.onMount?.({ rowEl: el, button: b, labelEl });
   }
   if (row.onClick && !row.disabled) {
     el.tabIndex = 0;

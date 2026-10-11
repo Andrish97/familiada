@@ -45,8 +45,12 @@ test("@mailbox subskrybenci: e-mail bez konta, anonimowe przyjęcie i usunięcie
     await expect(page.locator("#appToast")).toContainText("Ta osoba jest już na liście");
     const pending = page.locator('.rowsSection--pending .shareRow').filter({ hasText: email });
     await expect(pending).toHaveCount(1);
-    await pending.locator('[data-act="resend"]').click();
-    await expect(page.locator("#appToast")).toContainText("Kolejne zaproszenie można wysłać po");
+    await expect(pending.locator('[data-act="resend"]')).toBeDisabled();
+    await expect(pending.locator('[data-act="resend"] .shareCountdown')).toBeVisible();
+    await expect(pending).toHaveClass(/blocked/);
+    await expect(pending.locator('[data-act="remove"]')).toBeEnabled();
+    const blocked = await page.evaluate(async id => (await window.__sbClient.rpc("polls_hub_subscriber_resend", { p_id: id })).data, await pending.getAttribute("data-id"));
+    expect(blocked.err).toBe("cooldown");
     const invitePage = await anonymous.newPage();
     await invitePage.goto(link);
     await expect(invitePage.getByRole("button", { name: "Akceptuj", exact: true })).toBeVisible();
