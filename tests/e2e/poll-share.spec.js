@@ -14,7 +14,7 @@ test.beforeEach(async ({ context }) => {
 async function rpc(page, name, args) {
   return page.evaluate(async ({ name, args }) => {
     const { data, error } = await window.__sbClient.rpc(name, args);
-    if (error) throw error;
+    if (error) throw new Error(`${name}: ${error.message} (${error.code || ""})`);
     return data;
   }, { name, args });
 }
@@ -262,7 +262,7 @@ test("ankieta: mail-off daje zadanie mimo zegara, bez maila i przypomnienia", as
       const { data, error } = await window.__sbClient.from("questions").select("id").eq("game_id", id).eq("ord", 1).single();
       if (error) throw error; return data.id;
     }, gameId);
-    await rpc(recipient, "poll_text_submit_batch", { p_game_id: gameId, p_key: game.share_key_poll,
+    await rpc(recipient, "poll_text_submit_batch", { p_game_id: gameId, p_key: panel.tasks[0].share_key_poll,
       p_voter_token: `task:${panel.tasks[0].id}`, p_items: [{ question_id: qid, answer_raw: "Kot", answer_norm: "kot" }] });
     expect(await rpc(recipient, "poll_task_done", { p_token: task.token })).toBe("votes_incomplete");
     expect(await rpc(recipient, "poll_task_decline", { p_token: task.token })).toBe("ok");
