@@ -281,13 +281,13 @@ przeszedł. Pozostałe zachowania tabeli nadal są planem do wykonania.
   sekcja „Odrzucone przeze mnie” z akcją **„Cofnij odmowę”**. Nie mieszać
   jej z aktywnymi propozycjami ani Zrobione.
 - „Cofnij odmowę” przywraca istniejące zaproszenie do **oczekujących**.
-  Nie oznacza akceptacji: znajomość, subskrypcja i dostęp do bazy wymagają
+  Nie oznacza akceptacji: znajomość i dostęp do bazy wymagają
   jeszcze jawnego „Akceptuj”. Nie powstaje nowy rekord/token/mail; daty
   wysyłek i zużyte limity pozostają. Samo cofnięcie nie wysyła przypomnienia.
   Przywrócony wiersz przechodzi do zwykłych oczekujących.
 - Dostępność tej sekcji: Znajomi — przy Propozycjach; zaproszenia do baz
-  — w Bazy → Udostępnione; subskrypcje na konto — w ich właściwym miejscu
-  obsługi (lokalizacja do dopięcia), **poza Zadaniami**.
+  — w Bazy → Udostępnione. Subskrypcje dotyczą wyłącznie osób bez konta;
+  nie mają listy własnych odmów ani cofnięcia odmowy.
   **Subskrypcja bez konta: odmowa nieprzywracalna przez 30 dni**, bez
   akcji undo w /go/. Nie dodajemy
   propozycji przychodzących na jednostronnej stronie Subskrybenci nadawcy.
@@ -300,7 +300,7 @@ przeszedł. Pozostałe zachowania tabeli nadal są planem do wykonania.
 - Nagłówek zwijanej sekcji: chevron + „Odrzucone przeze mnie” + liczba
   wpisów. Ukryć sekcję, gdy jest pusta; po otwarciu własne przewijanie
   zgodnie ze wspólnym komponentem. Znajomi: ostatnia sekcja prawej karty,
-  pod Propozycjami; subskrypcje na konto: przy ich właściwej liście; bazy: pod listą w istniejącej zakładce Bazy → Udostępnione.
+  pod Propozycjami; bazy: pod listą w istniejącej zakładce Bazy → Udostępnione.
   Bez nowej karty lub zakładki w Bazach. Zadania nie pokazują odmów baz.
 - **Bazy — korekta opisu miejsca:** obecnie Akceptuj/Odrzuć istnieją
   zarówno w Bazy → Udostępnione, jak i w Zadaniach; oba ekrany używają
@@ -363,7 +363,6 @@ pozostaje do wygaśnięcia. Nie odnawiać okresu przez powtórne Odrzuć.
 | Przypadek | Nadawca po odmowie | Odbiorca po odmowie | Cofnięcie i koniec ważności |
 |---|---|---|---|
 | Znajomość | Wychodzące: Odrzucono, bez Ponów; ukrycie po proponowanych 5 dniach. Nowe dodanie zablokowane do 30 dni niezależnie od maila/nazwy lub usunięcia kafelka. | Zwinięte „Odrzucone przeze mnie” pod Propozycjami w prawej karcie Znajomych, do 30 dni. | Odbiorca: undo → oczekująca propozycja → osobne Akceptuj. Po 30 dniach odmowa wygasa, oba wpisy znikają, stary token nieważny. Nowa prośba możliwa w dowolnym kierunku. |
-| Subskrypcja — odbiorca z kontem | Wychodzące w Subskrybentach: Odrzucono, bez Ponów; ukrycie po proponowanych 5 dniach. Nowe zaproszenie zablokowane do 30 dni. | Zwinięte „Odrzucone przeze mnie” przy właściwej liście subskrypcji odbiorcy, do 30 dni; poza Zadaniami, lokalizacja do dopięcia. | Odbiorca: undo → oczekujące → osobne Akceptuj. Po 30 dniach stary token nieważny i można utworzyć nowe zaproszenie. Nie dotyczy wypisania z aktywnej subskrypcji. |
 | Subskrypcja — odbiorca bez konta | Tak samo: bez Ponów, ukrycie po proponowanych 5 dniach, nowe zaproszenie dopiero po 30 dniach. | Brak listy własnych odmów. Go pokazuje Odrzucono, **bez cofnięcia i bez Akceptuj**. | **Decyzja użytkownika: odmowa nieprzywracalna aż do wygaśnięcia 30 dni.** Potem nowe jawne zaproszenie z nowym linkiem; starego nie reaktywujemy. Założenie konta w międzyczasie nie omija tej blokady (zachować tryb odmowy). |
 | Baza | Właściciel: Odrzucono w oknie udostępniania danej bazy, bez Ponów; ukrycie po proponowanych 5 dniach. Kolejne udostępnienie tej samej bazy temu odbiorcy zablokowane przez 30 dni, również po zmianie roli/cofnięciu. Inna baza jest osobnym zaproszeniem. | Zwinięte „Odrzucone przeze mnie” w Bazy → Udostępnione, pod listą baz, do 30 dni. Nazwa bazy, nadawca, rola, Odrzucono, undo; bez dostępu do zawartości. | Undo → oczekująca propozycja; Akceptuj w Bazach nadaje dostęp. Obecne Akceptuj/Odrzuć w Zadaniach usuwamy w kolejnej paczce; docelowo obsługa tylko w Bazach. Po 30 dniach stary token nieważny i możliwe nowe udostępnienie. |
 | Ankieta — zadanie w konkretnym uruchomieniu | Lista odbiorców: Odrzucono, bez Ponów w całym tym uruchomieniu; kafelek można ukryć po proponowanych 5 dniach lub wcześniej przy końcu nadrzędnego przebiegu. Ukrycie nie umożliwia kolejnego zaproszenia w tym samym przebiegu. | Zadanie znika z Do zrobienia natychmiast po odmowie; nie trafia do Zrobione ani Odrzucone przeze mnie. | Zgodnie z wcześniejszym ustaleniem brak cofnięcia odmowy ankiety. Brak reguły 30 dni; decyzja związana z uruchomieniem. Nowe uruchomienie czyści poprzednie udostępnienia i może tworzyć nowe. |
@@ -664,7 +663,7 @@ nową paczką, nie oznaczamy dotychczasowych testów jako pokrycia nowej decyzji
 |---|---|---|
 | Ankieta | Zadania: Do zrobienia / Zrobione | Oczekujące ankiety, bez głosów wykonanych i odmów |
 | Znajomość | Znajomi: Propozycje / Odrzucone przeze mnie | Przychodzące oczekujące prośby |
-| Subskrypcja | Właściwe miejsce obsługi subskrypcji na konto; jego lokalizację dopiąć bez przywracania usuniętego /subscriptions/ | Przychodzące oczekujące zaproszenia, bez sumowania z Zadaniami |
+| Subskrypcja (wyłącznie bez konta) | Nadawca: Subskrybenci; odbiorca: link Go z maila | Brak przychodzących subskrypcji konta i ich plakietki |
 | Baza | Bazy → Udostępnione: propozycje / Odrzucone przeze mnie | Oczekujące propozycje baz |
 | Urządzenie | Podłącz urządzenie: Udostępnione dla mnie | Licznik według kontraktu tego ekranu; bez kopii w Zadaniach |
 
@@ -672,13 +671,13 @@ Zakres realizacji:
 - tasks_list i plakietka Tasks tylko ankiety; usunąć z Tasks wiersze,
   akcje i filtrowanie baz/urządzeń. Zachować poll_text/poll_points,
   wygląd kompaktowy i Zrobione z głosami przez 5 dni.
-- Undo znajomości/bazy/subskrypcji poza Zadaniami. Odmowy ankiet nadal
+- Undo znajomości/bazy poza Zadaniami. Subskrypcja bez konta nie ma undo. Odmowy ankiet nadal
   nie mają undo i znikają z Do zrobienia od razu.
 - Go i linki z maili kierują bazy do Bases, urządzenia do Connect,
   znajomości do Friends, ankiety do Tasks/głosowania. Przejrzeć także
   logowanie/powroty, wyróżnienie wiersza i nieaktywne/wygasłe tokeny.
 - badges_get, badges klienta i odświeżanie stron nie liczą tego samego
-  zaproszenia na więcej niż jednej ikonie. Brak maili nie ukrywa zaproszeń.
+  zaproszenia na więcej niż jednej ikonie. Brak maili nie ukrywa zaproszeń konta. Subskrybent bez konta używa linku z maila.
 - Nowe testy lokalne/SQL i punktowe E2E obejmują izolację liczników,
   dostarczone linki, akcje po właściwej stronie, stare/nowe tokeny,
   odmowy/cofnięcia, telefon/komputer; nowe zrzuty po realizacji.
@@ -745,7 +744,7 @@ kolumny ustawione jedna pod drugą). Zachować sekcje i formularz dodawania.
 | Strona | Karta 1 | Karta 2 | Plakietka wymagająca działania |
 |---|---|---|---|
 | Znajomi | Dodaj znajomego + Wysłane | Znajomi + Propozycje + Odrzucone przeze mnie | Na karcie 2: przychodzące pending; nie liczyć znajomych, wysłanych i odmów |
-| Subskrybenci | Dodaj subskrybenta + Oczekujące | Subskrybenci | Liczba sekcji może być zwykłym licznikiem; plakietka spraw do obsługi tylko jeśli istnieją przychodzące zaproszenia zgodnie z rozstrzygniętym modelem kont |
+| Subskrybenci | Dodaj subskrybenta + Oczekujące | Subskrybenci | Zwykłe liczniki sekcji; bez przychodzących propozycji kont i ich plakietki |
 
 Plakietka na karcie korzysta z tego samego źródła i klasy `.badge` co
 skrót strony; nie sumować jej ponownie w Zadaniach. Zero ukrywa plakietkę.
@@ -806,3 +805,26 @@ Podgląd bez statusu active: Znajomi [telefon](img/e19-friends/active-phone.png)
 [telefon](img/e19-subscribers/active-phone.png) /
 [komputer](img/e19-subscribers/active-desktop.png). Obecny układ przed
 wdrożeniem mobilnych zakładek z wypustkami.
+
+### Model Subskrybentów — rozstrzygnięcie 2026-10-11
+
+Użytkownik potwierdził: **subskrybent wyłącznie bez konta; konto → Znajomi**.
+Obecne subscribers_invite zwraca has_account dla istniejącego konta.
+Nie dodawać niezależnej subskrypcji konta, jego listy przychodzących
+propozycji/odmów ani plakietki. Zadania pozostają wyłącznie ankietowe.
+Wcześniejsze otwarte propozycje subskrypcji konta są zastąpione tą decyzją.
+
+Założenie konta przez subskrybenta: istniejąca ścieżka może utworzyć
+oczekującą propozycję znajomości; nie tworzy aktywnej znajomości ani
+subskrypcji konta. Dopiero akceptacja znajomości usuwa stary wpis
+subskrybenta. Odmowa anonimowej subskrypcji i karencja 30 dni nie mogą
+zostać ominięte rejestracją/claim; zweryfikować ten przypadek w paczce
+odmów Subskrybentów. Brak undo tej odmowy zachowany.
+
+**Subskrybenci — panel nadawcy (doprecyzowanie użytkownika):** bez
+mechanizmu akceptacji, przychodzących propozycji i cofania odmowy w panelu.
+Dwie zakładki telefonu: Dodaj + Oczekujące oraz Subskrybenci. Panel
+pozwala zaprosić, przypomnieć oczekującym według flagi/limitu i usunąć/cofnąć.
+Odbiorca bez konta akceptuje/odrzuca przez dostarczony link Go z maila.
+Przy odmowie przypomnienia zabronione; po 30 dniach dopiero nowe
+zaproszenie. Liczba sekcji/zakładki nie jest plakietką przychodzących spraw.

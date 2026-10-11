@@ -353,8 +353,8 @@ etykieta kanału, miejsce akcji, widoczny cooldown oraz reguła maila z
 przez cały okres ich ważności w kompaktowej, zwiniętej sekcji
 „Odrzucone przeze mnie”. Wspólne wiersze/CSS i akcja „Cofnij odmowę”
 przywracają oczekujące, bez automatycznej akceptacji lub maila. Znajomi:
-przy Propozycjach; bazy: Bazy → Udostępnione pod listą; subskrypcje
-konta: przy właściwej liście subskrypcji, poza Zadaniami. Subskrypcja bez konta: brak cofnięcia aż do
+przy Propozycjach; bazy: Bazy → Udostępnione pod listą. Subskrypcje
+dotyczą tylko osób bez konta: brak cofnięcia aż do
 wygaśnięcia 30 dni, także w /go/. Ukrywanie wpisu wcześniej dotyczy tylko
 nadawcy. To nowy zakres do realizacji, nie zmiana historii wykonanej
 listy Zrobione. Szczegółowy kontrakt w E19 §7.
@@ -607,7 +607,7 @@ kolumny ustawione jedna pod drugą). Zachować sekcje i formularz dodawania.
 | Strona | Karta 1 | Karta 2 | Plakietka wymagająca działania |
 |---|---|---|---|
 | Znajomi | Dodaj znajomego + Wysłane | Znajomi + Propozycje + Odrzucone przeze mnie | Na karcie 2: przychodzące pending; nie liczyć znajomych, wysłanych i odmów |
-| Subskrybenci | Dodaj subskrybenta + Oczekujące | Subskrybenci | Liczba sekcji może być zwykłym licznikiem; plakietka spraw do obsługi tylko jeśli istnieją przychodzące zaproszenia zgodnie z rozstrzygniętym modelem kont |
+| Subskrybenci | Dodaj subskrybenta + Oczekujące | Subskrybenci | Zwykłe liczniki sekcji; bez przychodzących propozycji kont i ich plakietki |
 
 Plakietka na karcie korzysta z tego samego źródła i klasy `.badge` co
 skrót strony; nie sumować jej ponownie w Zadaniach. Zero ukrywa plakietkę.
@@ -651,3 +651,26 @@ na wypustce właściwej zakładki. Na komputerze dwie kolumny.
 aktywnych Subskrybentów nie pokazywać etykiety „Zaakceptowano” (stan
 wynika z listy). Nadal pokazywać Oczekuje/Odrzucono przy zaproszeniach.
 Wspólna reguła renderera; brak pustego rzędu/odstępu po usuniętej etykiecie.
+
+### Model Subskrybentów — rozstrzygnięcie 2026-10-11
+
+Użytkownik potwierdził: **subskrybent wyłącznie bez konta; konto → Znajomi**.
+Obecne subscribers_invite zwraca has_account dla istniejącego konta.
+Nie dodawać niezależnej subskrypcji konta, jego listy przychodzących
+propozycji/odmów ani plakietki. Zadania pozostają wyłącznie ankietowe.
+Wcześniejsze otwarte propozycje subskrypcji konta są zastąpione tą decyzją.
+
+Założenie konta przez subskrybenta: istniejąca ścieżka może utworzyć
+oczekującą propozycję znajomości; nie tworzy aktywnej znajomości ani
+subskrypcji konta. Dopiero akceptacja znajomości usuwa stary wpis
+subskrybenta. Odmowa anonimowej subskrypcji i karencja 30 dni nie mogą
+zostać ominięte rejestracją/claim; zweryfikować ten przypadek w paczce
+odmów Subskrybentów. Brak undo tej odmowy zachowany.
+
+**Subskrybenci — panel nadawcy (doprecyzowanie użytkownika):** bez
+mechanizmu akceptacji, przychodzących propozycji i cofania odmowy w panelu.
+Dwie zakładki telefonu: Dodaj + Oczekujące oraz Subskrybenci. Panel
+pozwala zaprosić, przypomnieć oczekującym według flagi/limitu i usunąć/cofnąć.
+Odbiorca bez konta akceptuje/odrzuca przez dostarczony link Go z maila.
+Przy odmowie przypomnienia zabronione; po 30 dniach dopiero nowe
+zaproszenie. Liczba sekcji/zakładki nie jest plakietką przychodzących spraw.

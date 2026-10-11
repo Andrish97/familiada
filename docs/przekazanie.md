@@ -423,3 +423,8 @@ Uproszczenie Zadań zamknięte: main 38147198385 ✓ 2/2, unit 410/410;
 Pages 38147149505 ✓. Bieżąca kolejna korekta: usunięcie Zaakceptowano
 z aktywnych kafelków znajomych/subskrybentów, bez zmian pending/declined.
 Zakładki z wypustkami nadal otwarte, nie zrealizowane przy tej korekcie.
+
+**Pytanie o model Subskrybentów rozstrzygnięte:** tylko adresy bez konta,
+konto→Znajomi, zgodnie z obecnym subscribers_invite. Nie pytać ponownie,
+nie tworzyć osobnej obsługi subskrypcji kont ani jej plakietki. Otwarte
+kontrakty E19/UI skorygowane; historia wcześniejszego pytania zachowana.

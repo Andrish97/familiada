@@ -387,3 +387,9 @@ Stan szczegółowy:
 | 2026-10-11 | Kontakty / bez zbędnego Zaakceptowano | Polecenie użytkownika: status aktywnego znajomego/subskrybenta wynika z listy. Wspólny renderer pomija tag active i jego rząd, pending/declined zachowane. Nowy kontrolowany E2E obu stron 1400/390. | Unit, zrzuty, branch i kontrola main; wypustki telefonu osobna otwarta paczka. |
 
 | 2026-10-11 | Zadania / uproszczenie zamknięte | Main 38147198385 ✓: dwa widoki 1400/390 bez retry, unit 410/410, brak wyszukiwania i etykiet typu; reszta kontraktu kafelków zachowana. Pages 38147149505 ✓. | Gotowe; dalej wspólny renderer kontaktów bez zbędnego statusu active. |
+
+| 2026-10-11 | E19 / rozstrzygnięty model Subskrybentów | Użytkownik wskazał, że subskrybentem nie powinna być osoba z kontem. Obecne RPC odrzuca konto przez has_account; utrzymujemy konto→Znajomi. Usunięto z otwartego kontraktu obsługę subskrypcji kont/undo/incoming badge, zachowano historię. | Pytanie architektoniczne zamknięte; odmowy Subskrybentów bez konta i kontrola rejestracji/claim w kolejnej paczce. |
+
+| 2026-10-11 | Subskrybenci / bez akceptacji w panelu | Użytkownik doprecyzował: panel Subskrybentów nie obsługuje akceptacji. Nadawca zaprasza/przypomina/cofa; odbiorca bez konta decyduje w Go z maila. Zapisano w E19/UI. | Zachować jednostronny panel i regułę odmowy bez undo przez 30 dni. |
+
+| 2026-10-11 | Kontakty / active branch zielony | 38147347570 ✓: oba panele 1400/390, aktywny kafelek bez tagu/rzędu statusu, usuwanie działa, pending/declined nadal oznaczone. Unit 410/410 i cztery zrzuty ✓. | Promocja main, Pages i ten sam punktowy test produkcyjny. |
