@@ -183,3 +183,18 @@ Wszystkie sześć rodzajów ma też wersję1400, bez overflow390/1400.
 Zrzuty dokumentują wykonanie wyglądu, nie dowód dostarczenia nowego maila.
 Nie zamykać pkt6 na podstawie unit/check/zrzutów. Audyt treści pozostałych
 maili systemowych, wszystkie języki dostarczania i granice pozostają w zakresie.
+
+### Dalsze wejścia i wynik transportu — audyt pkt6
+
+- Worker contact-email.js: potwierdzenie zgłoszenia/odpowiedź/compose ma
+  własny dokument560px i escapowane cytaty, lecz inną typografię oraz brak
+  jawnego języka. Dopiąć po pierwszej paczce sześciu wejść; wiadomość
+  kontaktowa nie potrzebuje sztucznego przycisku akcji.
+- Settings: ręczna poczta HTML/odpowiedzi/marketing mają osobne opakowania,
+  podpis i załączniki. Zachować funkcję edytora HTML podczas ujednolicenia;
+  nie wprowadzać escaping całego zamierzonego HTML z edytora.
+- send-mail zwraca queued=rows.length bez odczytania rzeczywiście
+  wstawionych rekordów. Flaga zmieniona między RPC a BEFORE INSERT może
+  pomijać wiersz, a wynik nadal sugeruje zakolejkowanie. Domknąć prawdziwy
+  wynik i zachowanie per adres/flag race w pkt6, z testem faktycznej kolejki;
+  nie oznaczać pierwszej paczki rendererów jako rozwiązania tej granicy.
